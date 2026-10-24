@@ -5,25 +5,25 @@
     "old": "      } else {\n        // HALO-REMAINS (2026-10-09",
     "new": "      } else if (primary) {\n        // HALO-REMAINS (2026-10-09",
     "tests": [
-      "test/haloremains.test.js"
+      "test/net/haloremains.test.js"
     ]
   },
   {
     "name": "HALOREM-take-to-primary",
-    "file": "src/net/wildRemains.js",
-    "old": "          if (!send({ k: 'take', r: rec.r, i: info.i, n: k }, rec.room)) {",
-    "new": "          if (!send({ k: 'take', r: rec.r, i: info.i, n: k })) {",
+    "file": "src/net/wild/wildRemains.js",
+    "old": "      if (!send({ k: 'take', r: rec.r, i: info.i, n: k }, rec.room)) {",
+    "new": "      if (!send({ k: 'take', r: rec.r, i: info.i, n: k })) {",
     "tests": [
-      "test/haloremains.test.js"
+      "test/net/haloremains.test.js"
     ]
   },
   {
     "name": "HALOREM-crossing-clears",
-    "file": "src/net/wildRemains.js",
+    "file": "src/net/wild/wildRemains.js",
     "old": "        if (rooms.has(rec.room)) continue;\n",
     "new": "",
     "tests": [
-      "test/haloremains.test.js"
+      "test/net/haloremains.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "halo ? (halo.status === 'open' && halo.wildOk ? halo.ws : null)",
     "new": "halo ? null",
     "tests": [
-      "test/haloremains.test.js"
+      "test/net/haloremains.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    wildRemains.setRooms(online?.status === 'open' ? online.heldRooms() : []);",
     "new": "    wildRemains.setRooms(online?.status === 'open' ? [online.room] : []);",
     "tests": [
-      "test/haloremains.test.js"
+      "test/net/haloremains.test.js"
     ]
   }
 ]

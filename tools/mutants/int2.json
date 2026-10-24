@@ -5,7 +5,7 @@
     "old": "else if (summary && summary.level != null && summary.level !== level) out.push({ code: 'level-claim' });",
     "new": "",
     "tests": [
-      "test/int2_judge.test.js"
+      "test/server/int2_judge.test.js"
     ]
   },
   {
@@ -14,16 +14,17 @@
     "old": "if (v != null && !(Number.isInteger(v) && v >= 0 && v <= MAX_STAT_VALUE)) out.push({ code: 'stat', at: k });",
     "new": "if (v != null && !(Number.isInteger(v) && v >= 0)) out.push({ code: 'stat', at: k });",
     "tests": [
-      "test/int2_judge.test.js"
+      "test/server/int2_judge.test.js"
     ]
   },
   {
     "name": "INT2-the-world-owned",
-    "file": "server-account/src/judge.js",
+    "file": "src/systems/item/possessedItems.js",
+    "note": "AUDIT AUTO-HOLD (PIN MOVED): re-aimed by content - possessedItemLists moved from the judge to its one home, which the judge hands on",
     "old": "    if (rooms.has(sc) || rented.has(sc?.sceneName)) for (const c of arrayOf(sc?.lootContainers))",
     "new": "    for (const c of arrayOf(sc?.lootContainers))",
     "tests": [
-      "test/int2_judge.test.js"
+      "test/server/int2_judge.test.js"
     ]
   },
   {
@@ -32,34 +33,36 @@
     "old": "  const w = Math.trunc(purse + banks - Math.min(owed, realmLoanOwedMax(Number(level))) + deeds + goods);",
     "new": "  const w = Math.trunc(purse + banks + deeds + goods);",
     "tests": [
-      "test/int2_judge.test.js"
+      "test/server/int2_judge.test.js"
     ]
   },
   {
     "name": "INT2-the-bound-worth",
     "file": "server-account/src/judge.js",
-    "old": "      goods += liquid > 0 ? liquid : worthless(it) ? 0 : itemWorth(it);",
-    "new": "      goods += liquid > 0 ? liquid : itemWorth(it);",
+    "old": "liquid > 0 ? liquid : worthless(it) ? 0 : itemWorth(it));",
+    "new": "liquid > 0 ? liquid : itemWorth(it));",
     "tests": [
-      "test/int2_judge.test.js"
+      "test/server/int2_judge.test.js"
     ]
   },
   {
     "name": "INT3-no-hold-for-law",
     "file": "server-account/src/verdict.js",
-    "old": "  if (law > 0 || (prev === 'law' && strikes >= STRIKES_FOR_REVIEW)) return 'law';",
-    "new": "  if (prev === 'law' && strikes >= STRIKES_FOR_REVIEW) return 'law';",
+    "note": "AUTO-HOLD (PIN MOVED): re-aimed by content - holdOf reads a timed hold, `until`, where it read strikes",
+    "old": "  if (law > 0 || (until != null && until > nowS)) return 'law';",
+    "new": "  if (until != null && until > nowS) return 'law';",
     "tests": [
-      "test/int2_judge.test.js"
+      "test/server/int2_judge.test.js"
     ]
   },
   {
     "name": "INT3-strikes-forgotten",
     "file": "server-account/src/verdict.js",
-    "old": "  if (law > 0 || (prev === 'law' && strikes >= STRIKES_FOR_REVIEW)) return 'law';",
+    "note": "AUTO-HOLD (PIN MOVED): re-aimed by content - holdOf reads a timed hold, `until`, where it read strikes",
+    "old": "  if (law > 0 || (until != null && until > nowS)) return 'law';",
     "new": "  if (law > 0) return 'law';",
     "tests": [
-      "test/int2_judge.test.js"
+      "test/server/int2_judge.test.js"
     ]
   },
   {
@@ -68,7 +71,7 @@
     "old": "  if (outbound) {\n    const held = holdRefusal(row);\n    if (held) return held;\n  }\n",
     "new": "",
     "tests": [
-      "test/int2_judge.test.js"
+      "test/server/int2_judge.test.js"
     ]
   },
   {
@@ -77,7 +80,7 @@
     "old": "  if (row.judged_seq == null) return { error: 'record-unjudged' };\n",
     "new": "",
     "tests": [
-      "test/int2_judge.test.js"
+      "test/server/int2_judge.test.js"
     ]
   },
   {
@@ -86,7 +89,7 @@
     "old": "  if (heldBy) return refuse(db, sid, `${heldBy.error}:${heldA ? 'a' : 'b'}`, playerId, asker, true);\n",
     "new": "",
     "tests": [
-      "test/int2_judge.test.js"
+      "test/server/int2_judge.test.js"
     ]
   },
   {
@@ -95,16 +98,16 @@
     "old": "  }, { outbound: true, escrow: true });   // INT3: a listing hands the piece to the market's buyers",
     "new": "  }, { escrow: true });   // INT3: a listing hands the piece to the market's buyers",
     "tests": [
-      "test/int2_judge.test.js"
+      "test/server/int2_judge.test.js"
     ]
   },
   {
     "name": "INT5-the-write-unwitnessed",
     "file": "server-account/src/realm.js",
-    "old": ".bind(at.seq + 1, bytes, key, nowS, wealthOf(save) - before, at.id, playerId, at.lease, at.seq),",
+    "old": ".bind(at.seq + 1, bytes, key, nowS, witness ? wealthOf(save) - before : 0, at.id, playerId, at.lease, at.seq),",
     "new": ".bind(at.seq + 1, bytes, key, nowS, 0, at.id, playerId, at.lease, at.seq),",
     "tests": [
-      "test/int2_judge.test.js"
+      "test/server/int2_judge.test.js"
     ]
   },
   {
@@ -113,7 +116,7 @@
     "old": "  const keep = new Set([key, row.obj, stood.clean_obj].filter(Boolean));",
     "new": "  const keep = new Set([key, row.obj].filter(Boolean));",
     "tests": [
-      "test/int2_judge.test.js"
+      "test/server/int2_judge.test.js"
     ]
   },
   {
@@ -122,7 +125,7 @@
     "old": "  if (!isDeveloper(player, env)) return { error: 'not-developer' };\n",
     "new": "",
     "tests": [
-      "test/int2_judge.test.js"
+      "test/server/int2_judge.test.js"
     ]
   }
 ]

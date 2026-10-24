@@ -1,0 +1,1007 @@
+[
+  {
+    "name": "EGZR-momentum-step",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_MOMENTUM_STEP = 0.04;",
+    "new": "export const EG_MOMENTUM_STEP = 0.05;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "Momentum 5% a stack"
+  },
+  {
+    "name": "EGZR-second-wind-line",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_SECOND_WIND_UNDER = 0.3;",
+    "new": "export const EG_SECOND_WIND_UNDER = 0.35;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "Second Wind under 35%"
+  },
+  {
+    "name": "EGZR-bloodied-line",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_BLOODIED_UNDER = 0.5;",
+    "new": "export const EG_BLOODIED_UNDER = 0.4;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "Bloodied Fury under 40%"
+  },
+  {
+    "name": "EGZR-echo-share",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_ECHO_SHARE = 0.5;",
+    "new": "export const EG_ECHO_SHARE = 0.6;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "an Echo at 60%"
+  },
+  {
+    "name": "EGZR-hymn-seconds",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_HYMN_MS = 4000;",
+    "new": "export const EG_HYMN_MS = 3000;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js",
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "Shield-Hymn 3 s"
+  },
+  {
+    "name": "EGZR-accord-reach",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_ACCORD_M = 10;",
+    "new": "export const EG_ACCORD_M = 11;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js",
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "an Accord at 11 m"
+  },
+  {
+    "name": "EGZR-second-wind-line-literal",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "falling under ${pc(EG_SECOND_WIND_UNDER)} health heals",
+    "new": "falling under ${pc(EG_BLOODIED_UNDER)} health heals",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the line reads another law's number"
+  },
+  {
+    "name": "EGZR-momentum-line-literal",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "adds ${pc(EG_MOMENTUM_STEP)} damage",
+    "new": "adds ${pc(EG_ECHO_SHARE)} damage",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the line reads another law's number"
+  },
+  {
+    "name": "EGZR-hymn-one-member",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "rally.some((r) => r.sub !== b.sub && ",
+    "new": "rally.some((r) => ",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "one member holding both is a pair"
+  },
+  {
+    "name": "EGZR-hymn-reach-open",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "Math.hypot(r.x - b.x, r.z - b.z) <= EG_ACCORD_M",
+    "new": "Math.hypot(r.x - b.x, r.z - b.z) < EG_ACCORD_M",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "ten metres is not within"
+  },
+  {
+    "name": "EGZR-hymn-reach-z",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "Math.hypot(r.x - b.x, r.z - b.z) <= EG_ACCORD_M",
+    "new": "Math.hypot(r.x - b.x, 0) <= EG_ACCORD_M",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js",
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "the pair read along x alone"
+  },
+  {
+    "name": "EGZR-hymn-bastion-unread",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "return ms.filter((b) => egRankOf(b.vs, 'bastion') > 0 && rally.some(",
+    "new": "return ms.filter((b) => rally.some(",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "any member near a Rally holder"
+  },
+  {
+    "name": "EGZR-hymn-rally-unread",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "const rally = ms.filter((m) => egRankOf(m.vs, 'rally') > 0);",
+    "new": "const rally = ms;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "any member a Rally holder"
+  },
+  {
+    "name": "EGZR-hymn-never-stepped",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "why: 'rally' }); egHymnStep(B, now); }",
+    "new": "why: 'rally' }); }",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "the door's Rally gives no hymn"
+  },
+  {
+    "name": "EGZR-pose-hall-unstamped",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "B.mem[b.sub].pose = { x: b.x, z: b.z, h: B.h };",
+    "new": "B.mem[b.sub].pose = { x: b.x, z: b.z };",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "a pose knows no hall"
+  },
+  {
+    "name": "EGZR-hymn-other-hall",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "egHymnOf(living(B).filter(([, m]) => m.pose?.h === B.h)",
+    "new": "egHymnOf(living(B).filter(([, m]) => m.pose)",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "another hall's place read"
+  },
+  {
+    "name": "EGZR-hymn-window-long",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (hy.length) B.hy = [now, now + EG_HYMN_MS, hy];",
+    "new": "if (hy.length) B.hy = [now, now + 2 * EG_HYMN_MS, hy];",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "the window twice its length"
+  },
+  {
+    "name": "EGZR-hymn-empty-minted",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (hy.length) B.hy = [now, now + EG_HYMN_MS, hy];",
+    "new": "B.hy = [now, now + EG_HYMN_MS, hy];",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "a door with no pair mints an empty window"
+  },
+  {
+    "name": "EGZR-census-hymn-early",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const hymn = B.hy && t >= B.hy[0] && t <= B.hy[1] ?",
+    "new": "const hymn = B.hy && t <= B.hy[1] ?",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "a blow before the door spared"
+  },
+  {
+    "name": "EGZR-census-hymn-last-out",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const hymn = B.hy && t >= B.hy[0] && t <= B.hy[1] ?",
+    "new": "const hymn = B.hy && t >= B.hy[0] && t < B.hy[1] ?",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "the window's last instant out"
+  },
+  {
+    "name": "EGZR-census-hymn-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const bast = [...new Set([...near(EG_BASTION_M), ...hymn])]",
+    "new": "const bast = [...new Set([...near(EG_BASTION_M)])]",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "the census reads no hymn"
+  },
+  {
+    "name": "EGZR-census-holder-twice",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const bast = [...new Set([...near(EG_BASTION_M), ...hymn])]",
+    "new": "const bast = [...near(EG_BASTION_M), ...hymn]",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "a holder near and in the hymn counted twice"
+  },
+  {
+    "name": "EGZR-census-own-bastion",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "living(B).filter(([s]) => s !== h.sub && B.hy[2].includes(s))",
+    "new": "living(B).filter(([s]) => B.hy[2].includes(s))",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "my own Bastion in the hymn spares me"
+  },
+  {
+    "name": "EGZR-census-fallen-holder",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "living(B).filter(([s]) => s !== h.sub && B.hy[2].includes(s))",
+    "new": "Object.entries(B.mem).filter(([s]) => s !== h.sub && B.hy[2].includes(s))",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "a fallen holder still shields"
+  },
+  {
+    "name": "EGZR-share-of-cushion",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "raw = strikeDamage(pct * k, spireBodyMax(e), base * k)",
+    "new": "raw = strikeDamage(pct * k, e.maxHealth, base * k)",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "a blow's share of the cushioned maximum"
+  },
+  {
+    "name": "EGZR-screen-hymn-unread",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "trail, peerFeet, ll, hymn);",
+    "new": "trail, peerFeet, ll);",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "the screen's hymn unread"
+  },
+  {
+    "name": "EGZR-breach-hy-dropped",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "return { h: E?.h ?? 0, mem, ...(hy ? { hy } : {}) };",
+    "new": "return { h: E?.h ?? 0, mem };",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "the screen's breach carries no hymn"
+  },
+  {
+    "name": "EGZR-stacks-any-body",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "stacks: !tick && mom.i === i ? mom.n : 0,",
+    "new": "stacks: !tick && mom.n,",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "stacks on another body"
+  },
+  {
+    "name": "EGZR-bloodied-at-half",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "e.health < e.maxHealth * EG_BLOODIED_UNDER",
+    "new": "e.health <= e.maxHealth * EG_BLOODIED_UNDER",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "half health is under half"
+  },
+  {
+    "name": "EGZR-bloodied-unread",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "low: !!e && e.health < e.maxHealth * EG_BLOODIED_UNDER",
+    "new": "low: false",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "Bloodied Fury never fights"
+  },
+  {
+    "name": "EGZR-holder-blow-unapplied",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "const dmg = Math.round(egHolderBlow(vs, d, r, {",
+    "new": "const dmg = Math.round(egHolderBlow([], d, r, {",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the blow carries nothing held"
+  },
+  {
+    "name": "EGZR-stacks-per-body",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (q !== mom.q) mom = { i, n:",
+    "new": "mom = { i, n:",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "a blow builds a stack on every body it meets"
+  },
+  {
+    "name": "EGZR-stacks-unbuilt",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "mom = { i, n: mom.i === i ? mom.n + 1 : 1, q };",
+    "new": "mom = { i, n: 1, q };",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "stacks never build"
+  },
+  {
+    "name": "EGZR-stacks-never-reset",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "mom = { i, n: mom.i === i ? mom.n + 1 : 1, q };",
+    "new": "mom = { i, n: mom.n + 1, q };",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "another body's blow keeps the stacks"
+  },
+  {
+    "name": "EGZR-stacks-unsent",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (!sendHit({ i, q, d: dmg, r })) return false;",
+    "new": "sendHit({ i, q, d: dmg, r });",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "a blow the wire refused builds a stack and answers sent"
+  },
+  {
+    "name": "EGZR-echo-on-every-kind",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      if (r === HIT_KINDS.Spell) {\n        if (q !== echo.q)",
+    "new": "      if (true) {\n        if (q !== echo.q)",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "a melee blow echoes"
+  },
+  {
+    "name": "EGZR-echo-roll-each-body",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (q !== echo.q) { const v = egVOf(vs, 'echo');",
+    "new": "{ const v = egVOf(vs, 'echo');",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "a roll for each body a cast meets"
+  },
+  {
+    "name": "EGZR-echo-roll-boundary",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "on: v > 0 && rand() < v }",
+    "new": "on: v > 0 && rand() <= v }",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the rank's share itself echoes"
+  },
+  {
+    "name": "EGZR-echo-full",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "sendHit({ i, q: q + EG_ECHO_Q, d: dmg, r });",
+    "new": "sendHit({ i, q: q + EG_ECHO_Q, d: Math.max(1, Math.round(dmg / 2)), r });",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the screen halving an Echo (EG-ZS: claimed at the cast's whole, the relay takes its share)"
+  },
+  {
+    "name": "EGZR-echo-same-number",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "sendHit({ i, q: q + EG_ECHO_Q, d:",
+    "new": "sendHit({ i, q, d:",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the echo rides the cast's blow"
+  },
+  {
+    "name": "EGZR-echo-q",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_ECHO_Q = 0x40000000;",
+    "new": "export const EG_ECHO_Q = 0x40000001;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the echo's numbering"
+  },
+  {
+    "name": "EGZR-rally-fallen-counted",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (m?.in && m.alive && !m.home && p) ms.push(",
+    "new": "if (p) ms.push(",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "the screen's door counts the fallen"
+  },
+  {
+    "name": "EGZR-rally-feet-y",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "p = c[0] === sub ? myFeet() : q && [q[0], q[2]];",
+    "new": "p = c[0] === sub ? myFeet() : q && [q[0], q[1]];",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "a companion's height read as its depth"
+  },
+  {
+    "name": "EGZR-rally-empty-kept",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (hy.length) hymn = [at, at + EG_HYMN_MS, hy];",
+    "new": "hymn = [at, at + EG_HYMN_MS, hy];",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "a Rally with no pair opens an empty window"
+  },
+  {
+    "name": "EGZR-rally-window-long",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (hy.length) hymn = [at, at + EG_HYMN_MS, hy];",
+    "new": "if (hy.length) hymn = [at, at + 2 * EG_HYMN_MS, hy];",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "the screen's window twice its length"
+  },
+  {
+    "name": "EGZR-immovable-always",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "{ sub, at: now() }, [{ sub, tr: trail }]) > 0;",
+    "new": "{ sub, at: now() }, [{ sub, tr: trail }]) >= 0;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "Immovable without the stillness"
+  },
+  {
+    "name": "EGZR-immovable-mast-unread",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      const mast = egRunOfMember(E, sub).mast;\n      if (mast !== IMMOVABLE_ID) return false;",
+    "new": "      const mast = 100;\n      if (mast !== IMMOVABLE_ID) return false;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "Immovable without the Mastery"
+  },
+  {
+    "name": "EGZR-holder-home",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (!E.b || E.end || !m?.in || !m.alive || m.home) return null;",
+    "new": "if (!E.b || E.end || !m?.in || !m.alive) return null;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "a member gone home still holds"
+  },
+  {
+    "name": "EGZR-holder-out-of-spire",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (!inSpire() || witness) return null;\n    const E = link.state();\n    // AUDIT EG III (lane4 #10)",
+    "new": "    if (witness) return null;\n    const E = link.state();\n    // AUDIT EG III (lane4 #10)",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "held out of the Spire"
+  },
+  {
+    "name": "EGZR-holder-never-handed",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      spireHolderStep(entity, holderNow());",
+    "new": "      spireHolderStep(entity, null);",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the frame hands no holder"
+  },
+  {
+    "name": "EGZR-holder-kept-away",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "seedFrame({ silent: true }); spireHolderStep(entity, null); }",
+    "new": "seedFrame({ silent: true }); }",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "online gone, still held"
+  },
+  {
+    "name": "EGZR-lash-of-cushion",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "Math.round(-p * spireBodyMax(entity))",
+    "new": "Math.round(-p * max)",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the lash's share of the cushioned maximum"
+  },
+  {
+    "name": "EGZR-toll-of-cushion",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "Math.round(q * EG_TOLL_STEP * spireBodyMax(entity))",
+    "new": "Math.round(q * EG_TOLL_STEP * (entity.maxHealth ?? 0))",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the toll's share of the cushioned maximum"
+  },
+  {
+    "name": "EGZR-castback-tenth",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "const share = egCastBackCost(egRunOfMember(link.state(), me()).vs), max",
+    "new": "const share = EG_CAST_BACK_LOSS, max",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "Featherstep's cast-back unread"
+  },
+  {
+    "name": "EGZR-castback-of-cushion",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "max = spireBodyMax(entity), cut = Math.min(share * max,",
+    "new": "max = entity.maxHealth ?? 0, cut = Math.min(share * max,",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the void's share of the cushioned maximum"
+  },
+  {
+    "name": "EGZR-castback-said-tenth",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "castBackBeat(cut > 0, Math.round(cut) / (entity.maxHealth || 1));",
+    "new": "castBackBeat(cut > 0);",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "every cast-back said -10%",
+    "note": "AUDIT EG III: re-aimed by content - the cast-back says what it took"
+  },
+  {
+    "name": "EGZR-castback-word-unsaid",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "beatNow('castBack', { t: EG_PRES_TEXT.castBackCost(share) });",
+    "new": "beatNow('castBack');",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the cost taken never said"
+  },
+  {
+    "name": "EGZR-footing-immovable-unread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "return fight?.immovable?.() || egResonance(vs).includes('stone') ? 1 :",
+    "new": "return false || egResonance(vs).includes('stone') ? 1 :",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "Immovable's push half unread"
+  },
+  {
+    "name": "EGZR-footing-immovable-share",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "return fight?.immovable?.() || egResonance(vs).includes('stone') ? 1 :",
+    "new": "return fight?.immovable?.() || egResonance(vs).includes('stone') ? 0.9 :",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "Immovable a share of the push"
+  },
+  {
+    "name": "EGZR-rally-word-any-heal",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (w.k === 'eheal' && (w.why === 'rally' || (w.why === 'cry' && w.p > 0))) fight?.rally?.(",
+    "new": "if (w.k === 'eheal') fight?.rally?.(",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "a Mending heard as Rally's"
+  },
+  {
+    "name": "EGZR-rally-word-late",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "fight?.rally?.(now() - egClockHalfRtt(clock));",
+    "new": "fight?.rally?.(now());",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges_hymn.test.js"
+    ],
+    "why": "the word's way here kept"
+  },
+  {
+    "name": "EGZR-mender-share",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "return k > 0 ? healMine(entity, n * k) : 0;",
+    "new": "return k > 0 ? healMine(entity, n) : 0;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "Mender's Grace doubles a heal"
+  },
+  {
+    "name": "EGZR-mender-mine",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "(sub && sub !== me ? egVOf(egRunOfMember(E, sub).vs, 'mender') : 0)",
+    "new": "(sub ? egVOf(egRunOfMember(E, sub).vs, 'mender') : 0)",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "my own heal graced"
+  },
+  {
+    "name": "EGZR-mender-out-of-spire",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (!inSpire() || witness || !(n > 0) || !(entity.health > 0) || typeof id !== 'string') return 0;",
+    "new": "if (witness || !(n > 0) || !(entity.health > 0) || typeof id !== 'string') return 0;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "graced out of the Spire"
+  },
+  {
+    "name": "EGZR-world-mender-door",
+    "file": "src/scenes/world.js",
+    "old": " egClient?.menderGrace?.(id, playerEntity.health - before);",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the host's ally cast never reaches Mender's Grace"
+  },
+  {
+    "name": "EGZR-castback-words-fixed",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "words: (n, t) => t ?? EG_PRES_TEXT.castBack,",
+    "new": "words: () => EG_PRES_TEXT.castBack,",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the cast-back's word never the cost taken"
+  },
+  {
+    "name": "EGZR-crumble-wait-unread",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "on.wait = SD_CRUMBLE_DELAY + spireCrumbleWait();",
+    "new": "on.wait = SD_CRUMBLE_DELAY;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "Featherstep unread"
+  },
+  {
+    "name": "EGZR-crumble-fall-at-delay",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "const since = t - st.touched, wait = st.wait;",
+    "new": "const since = t - st.touched, wait = SD_CRUMBLE_DELAY;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the fall at Daggerfall's delay"
+  },
+  {
+    "name": "EGZR-crumble-stages-at-delay",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "Math.floor((since / st.wait) * 3)",
+    "new": "Math.floor((since / SD_CRUMBLE_DELAY) * 3)",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the cracks across Daggerfall's delay"
+  },
+  {
+    "name": "EGZR-crumble-chunks-at-delay",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "const f = solid ? -1 : since - st.wait, back",
+    "new": "const f = solid ? -1 : since - SD_CRUMBLE_DELAY, back",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the chunks at Daggerfall's delay"
+  },
+  {
+    "name": "EGZR-stoneskin-of-cushion",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "Math.round(spireBodyMax(entity) * skin)",
+    "new": "Math.round(entity.maxHealth * skin)",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "Stoneskin's share of its own cushion"
+  },
+  {
+    "name": "EGZR-stoneskin-trunc",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "Math.round(spireBodyMax(entity) * skin)",
+    "new": "Math.trunc(spireBodyMax(entity) * skin)",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "Stoneskin's points truncated"
+  },
+  {
+    "name": "EGZR-spellbane-unrefolded",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "if (bane !== _bane) { _bane = bane; computeEntityMods(entity); }",
+    "new": "if (bane !== _bane) { _bane = bane; }",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the fold never folded again"
+  },
+  {
+    "name": "EGZR-spellbane-element",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "  for (const el of RESIST_ELEMENTS) m.resist[el] = v;",
+    "new": "  for (const el of RESIST_ELEMENTS.slice(1)) m.resist[el] = v;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "fire missed"
+  },
+  {
+    "name": "EGZR-held-any-entity",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "(_held && entity === _held.entity ? egVOf(_held.vs, key) : 0)",
+    "new": "(_held ? egVOf(_held.vs, key) : 0)",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "another entity's cast cheapened"
+  },
+  {
+    "name": "EGZR-focus-dearer",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "return v ? sp * (1 - v) : sp;",
+    "new": "return v ? sp * (1 + v) : sp;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "Focus a price raised"
+  },
+  {
+    "name": "EGZR-weaver-any-shield",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "(a?.bundleSelfCast ? 1 + heldV('shieldweaver', entity) : 1)",
+    "new": "(1 + heldV('shieldweaver', entity))",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "a mate's Shield woven"
+  },
+  {
+    "name": "EGZR-weaver-unapplied",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "registerShieldSoakMod(SPIRE_VESTIGES, weaverSoak);",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "Shieldweaver on no door"
+  },
+  {
+    "name": "EGZR-fleet-unapplied",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "const fleetRun = () => 1 + heldV('fleetfoot');",
+    "new": "const fleetRun = () => 1;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "Fleetfoot on no run"
+  },
+  {
+    "name": "EGZR-wind-line-from",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "if (!(before >= line && after < line) || _wind === hall) return;",
+    "new": "if (!(before > line && after < line) || _wind === hall) return;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "falling from the line itself unheard"
+  },
+  {
+    "name": "EGZR-wind-line-at",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "if (!(before >= line && after < line) || _wind === hall) return;",
+    "new": "if (!(before >= line && after <= line) || _wind === hall) return;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "left at 30% is under it"
+  },
+  {
+    "name": "EGZR-wind-every-hurt",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "if (!(before >= line && after < line) || _wind === hall) return;",
+    "new": "if (!(after < line) || _wind === hall) return;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "a hurt already under heals"
+  },
+  {
+    "name": "EGZR-wind-once-forgotten",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "  _wind = hall;\n  const healed = healMine(entity, max * v);",
+    "new": "  const healed = healMine(entity, max * v);",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "once a hall forgotten",
+    "note": "AUDIT EG III: re-aimed by content - the heal's points kept for its beat"
+  },
+  {
+    "name": "EGZR-wind-hall-unread",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "hall = `${_held?.b}:${_held?.h}`;",
+    "new": "hall = `${_held?.b}`;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "once a breach, not a hall"
+  },
+  {
+    "name": "EGZR-wind-breach-unread",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "hall = `${_held?.b}:${_held?.h}`;",
+    "new": "hall = `${_held?.h}`;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "another breach's hall the same hall"
+  },
+  {
+    "name": "EGZR-wind-saved",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "if (!v || saved || !(after > 0) || !(max > 0)) return;",
+    "new": "if (!v || !(after > 0) || !(max > 0)) return;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "a saved killing blow healed"
+  },
+  {
+    "name": "EGZR-wind-share",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "healMine(entity, max * v);",
+    "new": "healMine(entity, max * 0.35);",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "every rank heals 35%"
+  },
+  {
+    "name": "EGZR-blow-searing-any",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "  if (r === HIT_KINDS.Melee) x += egVOf(vs, 'searing');",
+    "new": "  x += egVOf(vs, 'searing');",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "Searing Edge's fire on an arrow and a spell"
+  },
+  {
+    "name": "EGZR-blow-momentum-uncapped",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "x *= 1 + EG_MOMENTUM_STEP * Math.min(stacks, egVOf(vs, 'momentum'));",
+    "new": "x *= 1 + EG_MOMENTUM_STEP * stacks;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "stacks past the rank"
+  },
+  {
+    "name": "EGZR-blow-overcharge-any",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "  if (r === HIT_KINDS.Spell) x *= 1 + egVOf(vs, 'overcharge');",
+    "new": "  x *= 1 + egVOf(vs, 'overcharge');",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "Overcharge on a sword"
+  },
+  {
+    "name": "EGZR-blow-bloodied-unread",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "  if (low) x *= 1 + egVOf(vs, 'bloodied');",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "Bloodied Fury on no blow"
+  },
+  {
+    "name": "EGZR-soak-unspent",
+    "file": "src/characters/playerEntity.js",
+    "old": "a.shieldRemaining -= k === 1 ? dmg : dmg / k;",
+    "new": "a.shieldRemaining -= dmg;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the pool spends a point a point"
+  },
+  {
+    "name": "EGZR-soak-overflow-unscaled",
+    "file": "src/characters/playerEntity.js",
+    "old": "return k === 1 ? overflow : Math.round(overflow * k);",
+    "new": "return overflow;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the excess at the pool's points"
+  },
+  {
+    "name": "EGZR-soak-overflow-unrounded",
+    "file": "src/characters/playerEntity.js",
+    "old": "return k === 1 ? overflow : Math.round(overflow * k);",
+    "new": "return k === 1 ? overflow : overflow * k;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the excess unrounded"
+  },
+  {
+    "name": "EGZR-run-mods-unread",
+    "file": "src/player/motor.js",
+    "old": "      else if (_runMods.size) speed *= runSpeedMult();",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the run's modifiers unread"
+  },
+  {
+    "name": "EGZR-run-mods-gallop",
+    "file": "src/player/motor.js",
+    "old": "      else if (_runMods.size) speed *= runSpeedMult();",
+    "new": "      if (_runMods.size) speed *= runSpeedMult();",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "a horse's gallop the rider's run"
+  },
+  {
+    "name": "EGZR-skin-fraction-unkept",
+    "file": "src/systems/renownLayer.js",
+    "old": "  if (Number.isFinite(entity.health)) entity.health = keepFraction(entity.health, from, entity.maxHealth);\n  return pts;",
+    "new": "  return pts;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the fraction unkept"
+  },
+  {
+    "name": "EGZR-skin-any-entity",
+    "file": "src/systems/renownLayer.js",
+    "old": "  if (!entity || !Object.getOwnPropertyDescriptor(entity, 'maxHealth')?.get) return 0;",
+    "new": "  if (!entity) return 0;",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "a plain entity given points"
+  },
+  {
+    "name": "EGZR-body-max-whole",
+    "file": "src/systems/renownLayer.js",
+    "old": "export const spireBodyMax = (e) => Math.max(0, (e?.maxHealth ?? 0) - spireHpOf(e));",
+    "new": "export const spireBodyMax = (e) => Math.max(0, e?.maxHealth ?? 0);",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the body the whole cushioned maximum"
+  },
+  {
+    "name": "EGZR-accessor-unread",
+    "file": "src/systems/chargen.js",
+    "old": "      return own + renownHpOf(this) + spireHpOf(this);",
+    "new": "      return own + renownHpOf(this);",
+    "tests": [
+      "test/net/eliteGates/egz_vestiges.test.js"
+    ],
+    "why": "the live maximum carries no Stoneskin"
+  }
+]

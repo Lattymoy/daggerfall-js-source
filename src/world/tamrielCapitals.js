@@ -8,7 +8,7 @@
 // copy of another game's level design. Pure: the world host (scenes/world.js `_locationToBuild`) asks it of a capital's
 // pixel before anything else past the Bay, and stands the answer in its index.
 //
-// WHERE: the capital's point on Daggerfall's map of Tamriel (world/tamrielGeography.js CITIES - TAMRIEL1's, the port's own
+// WHERE: the capital's point on Daggerfall's map of Tamriel (world/tamriel/tamrielGeography.js CITIES - TAMRIEL1's, the port's own
 // reading of the picture), on the live fit - every client's the same pixel, with Arena attached or not. With Arena
 // attached, Arena's place of the capital's name stands on it too (world/arenaPlaces.js standArenaPixels' `pinned`), so its
 // roads, its map ink and a portal's end all lead here (TESA-NO-FAST: the map is no journey past the Bay).
@@ -21,12 +21,12 @@
 // pixel its search finds (capitalPixel - every one of its pixels its province's land) and the ones about it, each a
 // SLICE (its index sy * span + sx from the north-west, the centre its main one) - a location of its own with its own id
 // (capitalPlaceId's slice ordinal), its own name (`sliceNames`), the plan's cells under it and the buildings of its
-// blocks; every slice flattened to the centre's ground (world/terrainGen.js flattenAt); Arena's place of its name pinned
+// blocks; every slice flattened to the centre's ground (world/terrain/terrainGen.js flattenAt); Arena's place of its name pinned
 // to the centre and no other place on the rest (world/arenaPlaces.js standArenaPixels' `reserved`); its landmarks each
 // carried by its own slice (`carry`: a model's slice, the first of its own blocks there).
 //
 // THE BUILDINGS ARE THE BLOCKS' OWN (capitalBuildings): Daggerfall names, staffs and serves a building off its location's
-// list, drawn by type in grid order (systems/talkTopics.js drawNamedBuildings); a capital's list is each block's own
+// list, drawn by type in grid order (systems/talk/talkTopics.js drawNamedBuildings); a capital's list is each block's own
 // records in that order (its guild's faction, its temple's, its shop's quality) under name seeds of the capital's, so every
 // building draws its own record and is named afresh.
 //
@@ -51,8 +51,8 @@
 // index its own negative, past the lairs'.
 import { mapPixelToLongitudeLatitude, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { hash32, BLOCK_M } from './spawnedDungeons.js';
-import { pictureToBay, tamrielFit, inBay } from './tamrielFrame.js';
-import { provinceKeyBeyondBay, tamrielLandVersion } from './tamrielLand.js';
+import { pictureToBay, tamrielFit, inBay } from './tamriel/tamrielFrame.js';
+import { provinceKeyBeyondBay, tamrielLandVersion } from './tamriel/tamrielLand.js';
 import { IMPERIAL_CITY_PLAN, IMPERIAL_DISTRICTS, IMPERIAL_BLOCKS, IMPERIAL_MODELS, IMPERIAL_CARRY, IMPERIAL_SLICE_NAMES, IMPERIAL_SPAN } from './imperialCity.js';   // TESA11: the Imperial City over nine pixels
 import {
   MOURNHOLD_PLAN, MOURNHOLD_DISTRICTS, MOURNHOLD_BLOCKS, ALINOR_PLAN, ALINOR_DISTRICTS, ALINOR_BLOCKS, FALINESTI_PLAN, FALINESTI_DISTRICTS,
@@ -65,8 +65,8 @@ export const CAPITAL_LANE = 0x341;
 export const CAPITAL_INDEX_BASE = 41000000;
 /** The hash's salt. */
 export const CAPITAL_SALT = 0xca9c;
-/** The port blocks' fixed indices (formats/worldDataReplacement.js registerPortBlock: past any BSA; the arena's 900100;
- *  AUDIT-TESA: past the Shadow Realm's 900200 too - world/sdRealm.js SD_REALM_BLOCK_INDEX). */
+/** The port blocks' fixed indices (formats/worldData/worldDataReplacement.js registerPortBlock: past any BSA; the arena's 900100;
+ *  AUDIT-TESA: past the Shadow Realm's 900200 too - world/superDungeon/sdRealm.js SD_REALM_BLOCK_INDEX). */
 export const CAPITAL_BLOCK_INDEX = 900400;
 /** The port's own blocks a capital lays, by name. */
 export const CAPITAL_BLOCKS = Object.freeze({
@@ -166,7 +166,7 @@ export const SOLITUDE_DISTRICTS = Object.freeze({
 });
 
 /** The capitals the port builds, in their ordinal order: the name (Arena's and TAMRIEL1's), the province, the point on
- *  the picture (world/tamrielGeography.js CITIES), whether it stands on the shore, the plan and its districts, its
+ *  the picture (world/tamriel/tamrielGeography.js CITIES), whether it stands on the shore, the plan and its districts, its
  *  anchor, its start markers (AUDIT-TESA A6-1: the anchor's metres, on its own open ground - a plaza, a terrace, a
  *  quay), its own blocks and its models; its tag (AUDIT-TESA A6-2: its gardens' names, capitalGardenName); and (TESA11) its
  *  span in pixels, its slices' names and the slice each of its models is carried by - one pixel, its name and its carrier
@@ -212,7 +212,7 @@ export const isCapitalPlaceId = (id) => ((Number(id) >>> 20) & 0xfff) === CAPITA
  *  lies from TAMRIEL1's point (world/arenaPlaces.js SHORE_REACH's). */
 export const CAPITAL_REACH = 320;
 const RING8 = Object.freeze([[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]);
-/** Is a pixel past the Bay the sea - no province's land under its centre (world/tamrielLand.js: the trace's, or the
+/** Is a pixel past the Bay the sea - no province's land under its centre (world/tamriel/tamrielLand.js: the trace's, or the
  *  authored shape's where none is set). */
 const seaAt = (bx, by) => !inBay(bx, by) && provinceKeyBeyondBay(bx, by) === null;
 /**
@@ -397,15 +397,15 @@ export function capitalBuildings(blockNames, blockOf, k, locationId, seedBase = 
 // ---------------------------------------------------------------- the port blocks
 
 /** A tile's centre and an automap cell's, in the block's own metres (x east, z the grid's y): the stamp flips both rows
- *  (world/terrainTiles.js setLocationTiles `[x][15 - y]`, world/cityNavigation.js setBlockData `63 - y`). */
+ *  (world/terrain/terrainTiles.js setLocationTiles `[x][15 - y]`, world/city/cityNavigation.js setBlockData `63 - y`). */
 export const tileCentre = (tx, ty) => [(tx + 0.5) * TILE_M, (15 - ty + 0.5) * TILE_M];
 export const autoCentre = (ax, ay) => [(ax + 0.5) * AUTO_M, (63 - ay + 0.5) * AUTO_M];
 
-/** AUDIT-TESA A6-5: a closed automap cell's byte - in no quarter and no show-all byte (ui/townQuarters.js quarterOf,
- *  isShowAllByte): the walkers' navgrid shut there (world/cityNavigation.js: any byte but 0), the town map painting none
+/** AUDIT-TESA A6-5: a closed automap cell's byte - in no quarter and no show-all byte (ui/town/townQuarters.js quarterOf,
+ *  isShowAllByte): the walkers' navgrid shut there (world/city/cityNavigation.js: any byte but 0), the town map painting none
  *  - a wall's byte 1 was BuildingType 0 + 1, an alchemist's, drawn and pressed as a shop. */
 export const CAPITAL_CLOSED_BYTE = 0xfe;
-/** A block of the port's own in DFU's world-data JSON (formats/worldDataReplacement.js blockFromJson): its ground tiles
+/** A block of the port's own in DFU's world-data JSON (formats/worldData/worldDataReplacement.js blockFromJson): its ground tiles
  *  (`tile(x, z)` - a record, by the tile centre's metres), its trees (`tree(x, z)` - a scenery record or -1), its automap
  *  (`closed(x, z)`), its misc models and (AUDIT-TESA A6-1) its flats.
  * @param {string} name
@@ -475,8 +475,8 @@ const TILE_CELLS = Object.freeze([-2.4, -0.8, 0.8, 2.4].flatMap((a) => [-2.4, -0
  * garden's grass and trees at its plan's cells. `footprint(cap)` (world/capitalModels.js capitalFootprint) answers
  * where the capital's models stand - `(x, z) => boolean`, the anchor's metres - and every one of its blocks closes its
  * automap there, its gardens' trees kept off it: a wall the models raise over a garden or an own block is a wall to the
- * walkers too (world/cityNavigation.js), not ground to cross. Each block's JSON is built when it is first read
- * (`json`, a getter; formats/worldDataReplacement.js registerPortBlock takes it as a function), the footprint with
+ * walkers too (world/city/cityNavigation.js), not ground to cross. Each block's JSON is built when it is first read
+ * (`json`, a getter; formats/worldData/worldDataReplacement.js registerPortBlock takes it as a function), the footprint with
  * it: a capital's models are built when one of its blocks is.
  * @param {{ footprint?: (cap: any) => ((x: number, z: number) => boolean) | null }} [o]
  * @returns {Array<{ name: string, index: number, json: any }>}

@@ -5,7 +5,7 @@
     "old": "export const ELITE_FOE_OVERWORLD_CHANCE = 0.05;",
     "new": "export const ELITE_FOE_OVERWORLD_CHANCE = 0.02;",
     "tests": [
-      "test/elitefloor_foetitle.test.js"
+      "test/systems/elitefloor_foetitle.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const ELITE_FOE_NORMAL_DUNGEON_CHANCE = 0.2;",
     "new": "export const ELITE_FOE_NORMAL_DUNGEON_CHANCE = 0.1;",
     "tests": [
-      "test/elitefloor_foetitle.test.js"
+      "test/systems/elitefloor_foetitle.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const ELITE_FOE_DUNGEON_MIN = 3;",
     "new": "export const ELITE_FOE_DUNGEON_MIN = 2;",
     "tests": [
-      "test/elitefloor_foetitle.test.js"
+      "test/systems/elitefloor_foetitle.test.js"
     ]
   },
   {
@@ -32,16 +32,16 @@
     "old": "(revenant ? revenant.elite : rollOverworldElite(Math.random))) promoteEliteFoe(entity);",
     "new": "(revenant ? revenant.elite : foes.every((f) => f.dead || !f.entity?.eliteFoe) && rollOverworldElite(Math.random))) promoteEliteFoe(entity);",
     "tests": [
-      "test/elitefloor_foetitle.test.js"
+      "test/systems/elitefloor_foetitle.test.js"
     ]
   },
   {
     "name": "ELITE-RATES-the-loose-stand-refused",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "!replacing && !team && !inLocation() && elitesAllowed(",
-    "new": "!replacing && !team && !loose && !inLocation() && elitesAllowed(",
+    "old": "eliteFoe === undefined && !puppet && !allied && !questBehaviour && !replacing && !team && !inLocation() && elitesAllowed(",
+    "new": "eliteFoe === undefined && !puppet && !allied && !questBehaviour && !replacing && !team && !loose && !inLocation() && elitesAllowed(",
     "tests": [
-      "test/elitefloor_foetitle.test.js"
+      "test/systems/elitefloor_foetitle.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "(revenant ? revenant.elite : rollOverworldElite(Math.random))) promoteEliteFoe(entity);",
     "new": "(rollOverworldElite(Math.random))) promoteEliteFoe(entity);",
     "tests": [
-      "test/elitefloor_foetitle.test.js"
+      "test/systems/elitefloor_foetitle.test.js"
     ]
   }
 ]

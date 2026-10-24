@@ -1,6 +1,6 @@
 // FIELD BUGS 2026-09-29 (the sea) #4 - "Water flickers from a distance". A synthetic coast drawn by the port's own
 // passes on a real GL pipeline (SwiftShader): Iliac Puddle No More's floor and surface top (render/deepWatersRender.js)
-// and Come Sail Away's waves (render/comeSailAwayRender.js, its mesh from systems/comeSailAwayWaves.js buildWaveMesh,
+// and Come Sail Away's waves (render/comeSailAwayRender.js, its mesh from systems/comeSailAway/comeSailAwayWaves.js buildWaveMesh,
 // the author's own two paints from vendor/come-sail-away), under the world's lens (0.2 to 6000). The camera bobs by
 // centimetres, as a deck carries it; a pixel whose colour changes between two bobs of a still scene is a flicker.
 //     node tools/fbseaWaterProbe.mjs [--solid] [--time]   (--solid: the waves painted flat - their depth alone, no texels;
@@ -34,7 +34,7 @@ const out = await page.evaluate(async (solidWaves) => {
   gl.enable(gl.CULL_FACE); gl.cullFace(gl.BACK); gl.frontFace(gl.CW);   // the renderer's own (renderer.js, the mirrored lens)
   const { DeepWatersRenderer } = await import('/src/render/deepWatersRender.js');
   const { ComeSailAwayRenderer } = await import('/src/render/comeSailAwayRender.js');
-  const { buildWaveMesh, waveDitherOf, WAVE_SCALE } = await import('/src/systems/comeSailAwayWaves.js');
+  const { buildWaveMesh, waveDitherOf, WAVE_SCALE } = await import('/src/systems/comeSailAway/comeSailAwayWaves.js');
   const { perspective, lookAt, multiply, mirrorProjectionX } = await import('/src/world/mat4.js');
   // the renderer's frame, as the two passes read it
   const r = {

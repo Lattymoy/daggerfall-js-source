@@ -1,51 +1,79 @@
 [
   {
     "name": "UNCOUNTED-held-keys-unread",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  for (const k of new Set([...(book.state.carried?.keys?.() ?? []), ...(heldKeys?.() ?? [])])) {",
     "new": "  for (const k of new Set([...(book.state.carried?.keys?.() ?? [])])) {",
-    "tests": ["test/fb1009c_uncounted.test.js"]
+    "tests": ["test/systems/professions/fb1009c_uncounted.test.js"]
   },
   {
     "name": "UNCOUNTED-said-as-carried",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "    row.carried = Math.max(0, n);",
     "new": "    row.carried = Math.max(0, n) + uncounted;",
-    "tests": ["test/fb1009c_uncounted.test.js"]
+    "tests": ["test/systems/professions/fb1009c_uncounted.test.js"]
   },
   {
     "name": "UNCOUNTED-the-card-silent",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": ", r.uncounted ? BAG_PAGE_WORDS.uncountedSplit(r.uncounted) : null].filter(Boolean)",
     "new": "].filter(Boolean)",
-    "tests": ["test/fb1009c_uncounted.test.js"]
+    "tests": ["test/systems/professions/fb1009c_uncounted.test.js"]
   },
   {
     "name": "UNCOUNTED-the-why-unsaid",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "    if (pick.uncounted > 0) detail.append(el('p', 'px-note prof-why', BAG_PAGE_WORDS.uncounted));",
     "new": "    if (pick.uncounted > 0) void 0;",
-    "tests": ["test/fb1009c_uncounted.test.js"]
+    "tests": ["test/systems/professions/fb1009c_uncounted.test.js"]
   },
   {
     "name": "UNCOUNTED-the-row-filtered-out",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  }).filter((r) => r.total + r.carried + r.uncounted > 0 &&",
     "new": "  }).filter((r) => r.total + r.carried > 0 &&",
-    "tests": ["test/fb1009c_uncounted.test.js"]
+    "tests": ["test/systems/professions/fb1009c_uncounted.test.js"]
   },
   {
     "name": "UNCOUNTED-the-pack-unread",
     "file": "src/systems/materialsBag.js",
     "old": "  for (const list of [entity?.items ?? [], entity?.bagItems ?? [], entity?.wagonItems ?? []]) {\n    for (const it of list) { const k = materialKeyOfItem(it); if (k) keys.add(k); }",
     "new": "  for (const list of [entity?.bagItems ?? [], entity?.wagonItems ?? []]) {\n    for (const it of list) { const k = materialKeyOfItem(it); if (k) keys.add(k); }",
-    "tests": ["test/fb1009c_uncounted.test.js"]
+    "tests": ["test/systems/professions/fb1009c_uncounted.test.js"]
   },
   {
     "name": "UNCOUNTED-the-host-unwired",
     "file": "src/scenes/world.js",
     "old": "        heldKeys: () => bagHeldKeysOf(playerEntity),",
     "new": "",
-    "tests": ["test/fb1009c_uncounted.test.js"]
+    "tests": ["test/systems/professions/fb1009c_uncounted.test.js"]
+  },
+  {
+    "name": "LOOT-LOOSE-the-loose-left-out",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    const inMost = Math.min(DEPOSIT_MAX, pick.carried + (pick.uncounted | 0), storesRoomOf(book, pick));",
+    "new": "    const inMost = Math.min(DEPOSIT_MAX, pick.carried, storesRoomOf(book, pick));",
+    "tests": ["test/systems/professions/fb1009c_uncounted.test.js"]
+  },
+  {
+    "name": "LOOT-LOOSE-the-loose-by-all",
+    "file": "src/ui/professions/profPages.js",
+    "old": "{ material: pick.material, qty: q - counted, order: 'work' }",
+    "new": "{ material: pick.material, qty: q - counted, order: 'all' }",
+    "tests": ["test/systems/professions/fb1009c_uncounted.test.js"]
+  },
+  {
+    "name": "LOOT-LOOSE-everything-in-by-all",
+    "file": "src/ui/professions/profPages.js",
+    "old": "[[r.carried, 'all'], [r.uncounted | 0, 'work']]",
+    "new": "[[r.carried, 'all'], [r.uncounted | 0, 'all']]",
+    "tests": ["test/systems/professions/fb1009c_uncounted.test.js"]
+  },
+  {
+    "name": "LOOT-LOOSE-the-host-drops-the-order",
+    "file": "src/scenes/world.js",
+    "old": "deposit: async (plan) => (await profBook.depositMany(plan)).map((r, i) => ",
+    "new": "deposit: async (plan) => (await profBook.depositMany(plan.map((d) => ({ ...d, order: 'all' })))).map((r, i) => ",
+    "tests": ["test/systems/professions/fb1009c_uncounted.test.js"]
   }
 ]

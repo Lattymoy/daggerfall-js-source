@@ -6,9 +6,9 @@
 //
 // THE GAME'S ROADS. Sitting at a card table opens Hold'em (CARDS4); its panel offers "Play Iliac Hand" (and a pack - the
 // house sells them: CARDS9). This game's panel (ui/iliacTableHud.js) asks for a deck (the binder's lawful decks the pack
-// holds - ui/cardBinderPage.js deckRefusal) and a regular (the table's free chairs, each with his temper and his deck:
-// systems/iliacPatrons.js, by his seed - the same deck every evening), and whether to play for a card; then it plays
-// the offline game (systems/iliacTableSession.js), the cloth showing it (world/iliacCloth.js, render/iliacTableDraw.js).
+// holds - ui/card/cardBinderPage.js deckRefusal) and a regular (the table's free chairs, each with his temper and his deck:
+// systems/iliac/iliacPatrons.js, by his seed - the same deck every evening), and whether to play for a card; then it plays
+// the offline game (systems/iliac/iliacTableSession.js), the cloth showing it (world/iliacCloth.js, render/iliacTableDraw.js).
 // Every road off the seat closes it: a game under way is conceded (for keeps, the player's card is the regular's).
 //
 // FOR KEEPS - AND ONLINE. A card won from a regular is minted on this device; a realm character's or an online page's
@@ -19,21 +19,21 @@
 // (a game under way is watched, the spectator's view), and "Sit at the table" sits the chosen deck in this chair - for
 // the season's board when the realm vouches for it (`ranked`: the service's deck order, asked first) - and waits for a
 // second player; the relay deals, runs the clock, and deals again after a game while both still sit. A ranked game's
-// signed result is carried by the host's claims (net/iliacClaims.js). Alone in the room, "Play a regular instead" plays
+// signed result is carried by the host's claims (net/iliac/iliacClaims.js). Alone in the room, "Play a regular instead" plays
 // the offline game, friendly. Standing up stands at the relay too (a game under way conceded there).
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
-import { IliacTableSession, forfeitsFor, forfeitsAfter } from '../systems/iliacTableSession.js';
-import { patronDeck, ILIAC_TEMPER_NAMES } from '../systems/iliacPatrons.js';
-import { binderOf, binderDecks, mintIliacCard, isIliacCard } from '../systems/iliacItems.js';
+import { IliacTableSession, forfeitsFor, forfeitsAfter } from '../systems/iliac/iliacTableSession.js';
+import { patronDeck, ILIAC_TEMPER_NAMES } from '../systems/iliac/iliacPatrons.js';
+import { binderOf, binderDecks, mintIliacCard, isIliacCard } from '../systems/iliac/iliacItems.js';
 import { addItem } from '../systems/inventory.js';
-import { deckRefusal, DECK_REFUSAL_WORDS } from '../ui/cardBinderPage.js';
+import { deckRefusal, DECK_REFUSAL_WORDS } from '../ui/card/cardBinderPage.js';
 import { iliacHudModel, createIliacTableHud, stagedRefusal, ILIAC_REFUSAL_WORDS } from '../ui/iliacTableHud.js';
 import { iliacPlaces, iliacPoses, iliacLanded } from '../world/iliacCloth.js';
-import { RemoteIliacTable } from '../systems/iliacRemoteTable.js';
+import { RemoteIliacTable } from '../systems/iliac/iliacRemoteTable.js';
 import { createIliacTableDraw } from '../render/iliacTableDraw.js';
-import { cardById } from '../net/iliacCards.js';
-import { ILIAC_IDLE_TURNS } from '../net/iliacTable.js';
+import { cardById } from '../net/iliac/iliacCards.js';
+import { ILIAC_IDLE_TURNS } from '../net/iliac/iliacTable.js';
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
 /** A regular's temper at Iliac Hand by his seed - Hold'em's three names (AUDIT CARDS-6 B9: his Hold'em temper is that
@@ -55,10 +55,10 @@ export function iliacEventLine(/** @type {any} */ e, /** @type {string[]} */ nam
 /** CARDS10: the relay's refusals of an Iliac word, as the panel says them. */
 export const ILIAC_ONLINE_REFUSALS = Object.freeze({
   taken: 'Someone sits in that chair.', full: 'Two already play at this table.', seated: 'You already sit here.', 'bad deck': 'The table will not take that deck.',
-  'other game': 'Hold\'em is being played at this table.', 'account seated': 'Your account already sits at a table here.', busy: 'The room is busy - try again.',
-  'table differs': 'That table is laid differently.', 'deck refused': 'The realm could not vouch for that deck.', 'ranked closed': 'Ranked games are closed here.',
+  'other game': 'Another game is being played at this table.', 'account seated': 'Your account already sits at a table here.', busy: 'The room is busy. Try again.',
+  'table differs': 'That table has changed.', 'deck refused': 'The realm could not confirm that deck.', 'ranked closed': 'Ranked games are closed here.',
   'no game': 'No game is under way.', 'not seated': 'You do not sit in this game.', 'no table': 'Nobody sits at this table.',
-  stale: 'Too late - that turn had already turned over.',   // AUDIT CARDS-6 C3: a commit for a turn gone
+  stale: 'Too late. That turn has already ended.',   // AUDIT CARDS-6 C3: a commit for a turn gone
 });
 /** AUDIT CARDS-6 C10: a refusal's words, never a word a book merely inherits ('constructor' said a function's source). */
 const wordOf = (/** @type {any} */ book, /** @type {string} */ k) => (Object.hasOwn(book, k) ? book[k] : null);
@@ -68,15 +68,15 @@ export function iliacOnlineLine(/** @type {any} */ e, /** @type {(string|null)[]
   const who = (p) => (p === me ? 'You' : names[p] ?? 'A player');
   switch (e.t) {
     case 'sit': return `${who(e.seat)} ${e.seat === me ? 'sit' : 'sits'} down to Iliac Hand.`;
-    case 'leave': return e.idle ? `${e.seat === me ? 'You are' : `${e.name ?? 'A player'} is`} stood up - the clock passed ${e.seat === me ? 'you' : 'them'} ${ILIAC_IDLE_TURNS} turns running.`   // AUDIT CARDS-6 C6
+    case 'leave': return e.idle ? `${e.seat === me ? 'You are' : `${e.name ?? 'A player'} is`} removed from the seat: the clock passed ${e.seat === me ? 'you' : 'them'} ${ILIAC_IDLE_TURNS} turns in a row.`   // AUDIT CARDS-6 C6
       : `${e.seat === me ? 'You' : e.name ?? 'A player'} ${e.seat === me ? 'stand' : 'stands'} up.`;
-    case 'gone': return `${who(e.seat)} ${e.seat === me ? 'have' : 'has'} lost the link - the seat is kept a moment.`;   // AUDIT CARDS-6 C7
+    case 'gone': return `${who(e.seat)} ${e.seat === me ? 'have' : 'has'} lost the connection. The seat is held for a moment.`;   // AUDIT CARDS-6 C7
     case 'back': return `${who(e.seat)} ${e.seat === me ? 'are' : 'is'} back at the table.`;
     case 'game': return `The holdings: ${e.holdings.map((id) => cardById(id)?.name ?? id).join(', ')}.${e.ranked ? ' A ranked game.' : ''}`;
-    case 'commit': return e.seat === me ? (e.timeout ? 'Your time runs out - you pass.' : '') : `${who(e.seat)} ${e.timeout ? 'runs out of time and passes' : 'commits'}.`;
+    case 'commit': return e.seat === me ? (e.timeout ? 'Your time runs out and you pass.' : '') : `${who(e.seat)} ${e.timeout ? 'runs out of time and passes' : 'commits'}.`;
     case 'turn': return `Turn ${e.turn}.`;
     case 'unveil': return 'The face-down cards are turned up.';
-    case 'end': return e.how === 'left' ? `${who(1 - e.winner)} ${1 - e.winner === me ? 'concede' : 'concedes'} the game.` : e.how === 'void' ? 'No contest - the game is let go.' : '';   // AUDIT CARDS-6 C7/E13
+    case 'end': return e.how === 'left' ? `${who(1 - e.winner)} ${1 - e.winner === me ? 'concede' : 'concedes'} the game.` : e.how === 'void' ? 'No contest. The game is abandoned.' : '';   // AUDIT CARDS-6 C7/E13
     default: return '';
   }
 }
@@ -84,10 +84,10 @@ export function iliacOnlineLine(/** @type {any} */ e, /** @type {(string|null)[]
 /** CARDS10: a watched game's end, as its watcher hears it (the relay's `last`). */
 export function lastLineOf(/** @type {any} */ last) {
   if (!last) return null;
-  if (last.how === 'void') return 'No contest - the game was let go.';   // AUDIT CARDS-6 C7/E13
+  if (last.how === 'void') return 'No contest. The game was abandoned.';   // AUDIT CARDS-6 C7/E13
   if (last.winner === null || last.winner === undefined) return 'The game is drawn.';
   const w = last.names?.[last.winner] ?? 'A player', l = last.names?.[1 - last.winner] ?? 'the other';
-  return last.how === 'left' ? `${l} concedes - ${w} wins.` : `${w} beats ${l}${last.how === 'holdings' ? ' on the holdings' : last.how === 'power' ? ' on power' : ''}.`;
+  return last.how === 'left' ? `${l} concedes. ${w} wins.` : `${w} beats ${l}${last.how === 'holdings' ? ' on the holdings' : last.how === 'power' ? ' on power' : ''}.`;
 }
 
 /**
@@ -97,6 +97,7 @@ export function lastLineOf(/** @type {any} */ last) {
  *   rand32: () => number, now: () => number, day: number|(() => number), key: string, grade: number, friendly: boolean,
  *   regulars: {name: string, seed: number, chair: number}[], frame: any, mySeatFeet: number[], chairFeet: (k: number) => number[],
  *   packPrice?: () => number|null, buyPack?: () => {ok: boolean, price: number}, onHoldem: () => void, onStand: () => void,
+ *   gambit?: () => boolean, onGambit?: () => void,
  *   online?: {send: (w: any) => boolean, myId: () => (string|null), table: number, chairs: number, chair: number, now: () => number,
  *     rankedWhy: () => (string|null), vouch: (deck: string[]) => Promise<{ok: boolean, order?: string, why?: string}>,
  *     board?: () => Promise<any>, welcomes?: () => number}|null}} d
@@ -149,7 +150,7 @@ export function openIliacTableGame(d) {
       const view = g.remote.view();
       g.hud.render(iliacHudModel({
         phase: g.phase, view, staged: g.staged, pick: g.pick, log: g.log, why: g.why, friendly: false, online: onlineModel(d.online.now()),
-        setup: { decks: decks(), foes: [], deck: g.setup.deck, foe: null }, end: g.endWhy, packPrice: d.packPrice?.() ?? null,
+        setup: { decks: decks(), foes: [], deck: g.setup.deck, foe: null }, end: g.endWhy, packPrice: d.packPrice?.() ?? null, gambit: !!d.gambit?.(),
       }));
       return;
     }
@@ -158,11 +159,11 @@ export function openIliacTableGame(d) {
     g.hud.render(iliacHudModel({
       phase: g.phase, view, staged: g.staged, pick: g.pick, log: g.log, why: g.why, friendly: d.friendly,
       setup: { decks: decks(), foes: foes(), deck: g.setup.deck, foe: g.setup.foe, forKeeps: g.setup.forKeeps, keepsOk: !keepsWhy(), keepsWhy: keepsWhy() },
-      end: s?.over ?? null, prize: s?.prize ?? null, packPrice: d.packPrice?.() ?? null,
+      end: s?.over ?? null, prize: s?.prize ?? null, packPrice: d.packPrice?.() ?? null, gambit: !!d.gambit?.(),   // KG3: the third game offered
     }));
   };
   /** AUDIT CARDS-6 B1: one card `id` lifted out of the pack - a stack's one minted apart (a split mints a fresh record,
-   *  systems/iliacItems.js), a lone record taken whole - or null when the pack holds none. */
+   *  systems/iliac/iliacItems.js), a lone record taken whole - or null when the pack holds none. */
   const liftCard = (/** @type {any[]} */ items, /** @type {string|null} */ id) => {
     const at = id ? items.findIndex((x) => isIliacCard(x) && x.card === id) : -1;
     if (at < 0) return null;
@@ -189,7 +190,7 @@ export function openIliacTableGame(d) {
     g.landed.clear();
     g.phase = 'playing';
     g.staged = []; g.pick = null; g.log = []; g.why = null;
-    d.say(forKeeps ? `You deal Iliac Hand with ${foe.name}, for a card - your ${cardById(g.escrow.card)?.name ?? 'card'} lies on the table.` : `You deal Iliac Hand with ${foe.name}.`);
+    d.say(forKeeps ? `You deal Iliac Hand with ${foe.name}, playing for a card. Your ${cardById(g.escrow.card)?.name ?? 'card'} is on the table.` : `You deal Iliac Hand with ${foe.name}.`);
     frame(now);
   };
   /** The game is decided (or conceded): the card that changes hands moved, the book written. AUDIT CARDS-6 B1: the
@@ -251,7 +252,8 @@ export function openIliacTableGame(d) {
     const now = d.now();
     if (id === 'stand') { d.onStand(); return; }
     if (id === 'holdem') { d.onHoldem(); return; }
-    if (id === 'pack') { const r = d.buyPack?.(); if (r) d.say(r.ok ? `You buy a pack of Iliac Hand cards for ${r.price} gold. Use it from your pack to open it.` : `A pack costs ${r.price} gold - your purse is short.`); paint(); return; }
+    if (id === 'gambit') { d.onGambit?.(); return; }   // KG3: The King's Gambit at this table
+    if (id === 'pack') { const r = d.buyPack?.(); if (r) d.say(r.ok ? `You buy a pack of Iliac Hand cards for ${r.price} gold. Use it from your pack to open it.` : `A pack costs ${r.price} gold, and you cannot afford it.`); paint(); return; }
     if (online()) { pressOnline(id, value); return; }
     if (g.phase === 'setup') {
       if (id === 'deck') g.setup.deck = value;
@@ -310,7 +312,7 @@ export function openIliacTableGame(d) {
       const at = { gameNo: g.remote.mine?.gameNo ?? -1, turn: view.turn };
       if (g.latch && g.latch.gameNo === at.gameNo && g.latch.turn === at.turn) { paint(); return; }
       if (d.online.send({ op: 'commit', table: d.online.table, gameNo: at.gameNo, turn: at.turn, plays: g.staged })) { g.latch = at; g.log.push(g.staged.length ? `You commit ${g.staged.length} ${g.staged.length === 1 ? 'play' : 'plays'}.` : 'You pass.'); g.why = null; }
-      else g.why = 'The relay is not answering - try again.';
+      else g.why = 'The table is not responding. Try again.';
     }
     paint();
   }
@@ -326,7 +328,7 @@ export function openIliacTableGame(d) {
       if (g.closed || !g.rankedSeat) return;
       if (r?.ok && r.order) { d.online.send({ op: 'vouch', table: d.online.table, order: r.order }); return; }
       g.rankedSeat = false;
-      g.why = `${r?.why ?? 'The realm could not vouch for that deck.'} You play friendly at this table from now.`;
+      g.why = `${r?.why ?? 'The realm could not confirm that deck.'} You play friendly games at this table from now on.`;
       paint();
     }, () => { g.vouching = false; });
   }
@@ -339,9 +341,9 @@ export function openIliacTableGame(d) {
     d.online.board().then((r) => {
       g.boardBusy = false;
       if (g.closed) return;
-      g.board = r?.ok && r.data ? r.data : { error: 'The season board is not answering - try again.' };
+      g.board = r?.ok && r.data ? r.data : { error: 'The season board is not responding. Try again.' };
       paint();
-    }, () => { g.boardBusy = false; if (!g.closed) { g.board = { error: 'The season board is not answering - try again.' }; paint(); } });
+    }, () => { g.boardBusy = false; if (!g.closed) { g.board = { error: 'The season board is not responding. Try again.' }; paint(); } });
   }
   /** CARDS10: the chosen deck sat in this chair - ranked, the realm's order on it asked first. */
   function sitOnline() {
@@ -350,7 +352,7 @@ export function openIliacTableGame(d) {
     const go = (order) => {
       if (g.closed || !online() || g.phase !== 'setup') return;   // AUDIT CARDS-6 E4: the panel left the room's setup meanwhile - no sit
       const ok = d.online.send({ op: 'sit', table: d.online.table, chair: d.online.chair, chairs: d.online.chairs, deck: deck.cards.slice(), ...(order ? { order } : {}) });
-      if (!ok) { g.why = 'The relay is not answering - try again.'; paint(); return; }
+      if (!ok) { g.why = 'The table is not responding. Try again.'; paint(); return; }
       g.sat = true; g.phase = 'playing'; g.staged = []; g.pick = null; g.why = null; g.rankedLine = null;
       g.satDeck = deck.cards.slice(); g.rankedSeat = !!order;   // AUDIT CARDS-6 C5: the deck the relay's asks vouch for again
       g.sitWelcome = g.welcomes;   // AUDIT CARDS-6 E5: the socket that carried it
@@ -361,9 +363,9 @@ export function openIliacTableGame(d) {
       d.online.vouch(deck.cards.slice()).then((r) => {
         g.busy = false;
         if (g.closed) return;
-        if (!r?.ok || !r.order) { g.why = r?.why ?? 'The realm could not vouch for that deck.'; paint(); return; }
+        if (!r?.ok || !r.order) { g.why = r?.why ?? 'The realm could not confirm that deck.'; paint(); return; }
         go(r.order);
-      }, () => { g.busy = false; if (!g.closed) { g.why = 'The realm is not answering - try again.'; paint(); } });
+      }, () => { g.busy = false; if (!g.closed) { g.why = 'The realm is not responding. Try again.'; paint(); } });
       return;
     }
     go(null);
@@ -386,7 +388,7 @@ export function openIliacTableGame(d) {
       paint();
       return;
     }
-    if (typeof f.receipt === 'string') { g.rankedLine = 'The result goes to the season\'s board.'; paint(); return; }   // carried by the host's claims (scenes/worldModes.js iliacOnlineFrame)
+    if (typeof f.receipt === 'string') { g.rankedLine = 'The result counts on the season board.'; paint(); return; }   // carried by the host's claims (scenes/worldModes.js iliacOnlineFrame)
     const me = mySeat();
     const st = g.remote.state;
     const names = st?.seats?.map((x) => x?.name ?? null) ?? [];
@@ -410,7 +412,7 @@ export function openIliacTableGame(d) {
     if (ended) { g.staged = []; g.pick = null; }
     // AUDIT CARDS-6 E5: the table as it stands (a look's answer: no events) after a new socket, without me in it - a sit
     // the old socket carried never landed
-    if (me < 0 && g.sat && !g.seated && f.state && f.events?.length === 0 && g.sitWelcome < g.welcomes) { g.sat = false; g.why = 'The table did not hear you sit down - sit again.'; }
+    if (me < 0 && g.sat && !g.seated && f.state && f.events?.length === 0 && g.sitWelcome < g.welcomes) { g.sat = false; g.why = 'Your seat did not register. Sit down again.'; }
     // the phase is the table's: seated, a game played, or between games the end of mine, or waiting for one; my sit on
     // its way; standing, the watcher's
     if (me >= 0) { g.sat = true; g.seated = true; g.phase = st?.game ? 'playing' : g.myGame && st?.last?.gameNo === g.myGame ? 'over' : 'playing'; }

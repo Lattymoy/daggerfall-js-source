@@ -5,7 +5,7 @@
 //   node tools/mintGateKeys.mjs --pipe   both halves, bare, one per line
 //
 // Prints and keeps nothing. NOTHING IS EVER WRITTEN TO DISK, and
-// test/wb5b_gate_claim.test.js reads this file to keep it that way.
+// test/net/gate/wb5b_gate_claim.test.js reads this file to keep it that way.
 //
 // GATE-KEYS (2026-09-26): THE ACCOUNT DEPLOY RUNS THIS, ONCE. Its step
 // "Mint the gate receipt pair" (.github/workflows/account-deploy.yml)
@@ -13,7 +13,7 @@
 // missing, so nobody has to; by hand it is the same two `secret put`s.
 //
 //   GATE_SIGNING_KEY  the RELAY's secret, base64 PKCS8 - the key a kill
-//                     receipt is signed with (src/net/gateReceipt.js).
+//                     receipt is signed with (src/net/gate/gateReceipt.js).
 //                     `npx wrangler secret put GATE_SIGNING_KEY` from
 //                     server/. NEVER into a file, a toml, or a command
 //                     line a shell will remember.

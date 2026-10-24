@@ -58,10 +58,11 @@
 //    the same door.
 //
 // Everything else is the mod's, and is pinned against the Lua in
-// test/orl1_leveling.test.js.
+// test/systems/orl1_leveling.test.js.
 
 import { modSetting } from './modSettings.js';
 import { STAT_KEYS_ORDER, hitPointsPerLevelUp } from './chargen.js';
+import { refreshOnlineLayer } from './renownLayer.js';   // LEVEL-EVEN (systems/levelEven.js)
 
 /** The vendor key - the registry row, the Mods pane and the store. */
 export const ORL_VENDOR = 'oblivion-remaster-leveling';
@@ -518,6 +519,7 @@ export function commitVirtueLevelUp(entity, deltas, purse, s, rolls = Math.rando
     if (d > 0) entity.stats[key] = entity.stats[key] + d;
   }
   entity.level += 1;
+  refreshOnlineLayer(entity, { keepHealth: true });   // LEVEL-EVEN: the online health floor over the new level and maximum (AUDIT LEVEL-EVEN L2-1: health as it stands)
   rollOverLevelProgress(entity);
   entity.readyToLevelUp = false;
   entity.pendingLevel = null;

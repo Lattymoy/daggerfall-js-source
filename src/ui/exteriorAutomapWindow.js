@@ -40,14 +40,14 @@
 // the M-outside dispatch (DaggerfallUI.cs:633-650).
 //
 // NEW HERE: the native AMAP00I0 + TOWN00I0 chrome through the SHARED
-// ui/automapChrome.js tables (the same nine rects the dungeon window
+// ui/automap/automapChrome.js tables (the same nine rects the dungeon window
 // uses, wired to EXTERIOR_ACTIONS), the compass on the MAP camera's
 // yaw, the four border jumps on the arrows' right button, drag pan at
 // dragSpeed 0.00345 x orthoSize and drag rotate at 5.0, max/min zoom,
 // the four backgrounds, and the real mesh-99900 arrow through
 // ui/meshStamp.js. THE HOTKEYS ARE DFU'S OWN: all thirty ExtAutomap*
 // rows of systems/dialogShortcuts.js (DialogShortcuts.txt:267-296)
-// through the same ShortcutOrFallback door ui/automapWindow.js reads
+// through the same ShortcutOrFallback door ui/automap/automapWindow.js reads
 // the Automap* half with, in DFU's two poll classes.
 //
 // ROAD-E E1 RETIRED ONE OF THE DEPARTURES THIS HEADER CARRIED. It read:
@@ -91,7 +91,7 @@
 //    plateless.
 //  - THE TEN BUTTON TOOLTIPS (UpdateButtonToolTipsText, :230-239).
 //    Internal_Strings.csv:908-917 now sits beside the dungeon block in
-//    ui/automapText.js, formatted by THE SAME two laws
+//    ui/automap/automapText.js, formatted by THE SAME two laws
 //    (ShortcutOrFallback onto KeyCode.Home, String.Format over
 //    HotkeySequence.ToString) with the ExtAutomap* shortcut names, and
 //    the chrome's own hover clock - which already returned the rested
@@ -119,42 +119,43 @@
 // per-pixel during the paint.
 
 import { drawText, measureText } from './text.js';
-import { getBool, getInt, getString } from '../systems/settings.js';
-import { hexColor32 } from './automapWindow.js';
+import { getBool, getInt, getString } from '../systems/settings/settings.js';
+import { hexColor32 } from './automap/automapWindow.js';
 // EM7: the byte groups and DFU's own four colours have ONE HOME, and
 // the enhanced town sheet reads them there too - they sat in this file
-// and in ui/inkTown.js at once, which is how the same building could
+// and in ui/ink/inkTown.js at once, which is how the same building could
 // have come to be drawn as a shop on one map and a house on the next.
 import {
   QUARTERS, quarterOf, isShowAllByte, CLASSIC_ARGB, CLASSIC_SETTING,
-} from './townQuarters.js';
-import { shortcutOrFallback, exteriorAutomapTooltipFor } from './automapText.js';
+} from './town/townQuarters.js';
+import { shortcutOrFallback, exteriorAutomapTooltipFor } from './automap/automapText.js';
 import { bindings } from './input.js';
 import { getBinding } from '../systems/inputActions.js';
 import { normalizeCode, keyboardModifiers, checkSetModifiers } from '../systems/dialogShortcuts.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
-import { resolveNameplates, nameplateAnchor, WORLD_PER_PX } from './nameplateLayout.js';   // EM4: WORLD_PER_PX has one home there
+import { resolveNameplates, nameplateAnchor, WORLD_PER_PX, STAR_PLATE } from './nameplateLayout.js';   // EM4: WORLD_PER_PX has one home there; FB1020c STAR-PLATE: and the surrender's "*"
 import { shownBuildingName } from '../systems/discovery.js';   // EMPIRE-BANK
 import {
   nativeMetrics, drawImg, drawRect, loadImg, NATIVE_W, NATIVE_H, SCREEN_DIM,
-} from './nativePanel.js';
+} from './native/nativePanel.js';
 import {
   AutomapChrome, CHROME_RECTS, CAPTION_STRIP, CAPTION_SWATCHES, EXTERIOR_ACTIONS,
   compassHeading01,
-} from './automapChrome.js';
+} from './automap/automapChrome.js';
 import {
   EXT_SCROLL_LEFT_RIGHT_SPEED, EXT_SCROLL_UP_DOWN_SPEED, EXT_ROTATE_SPEED,
   EXT_ZOOM_SPEED, EXT_ZOOM_SPEED_MOUSE_WHEEL, EXT_DRAG_ROTATE_SPEED,
   EXT_MAX_ZOOM, EXT_MIN_ZOOM, EXT_NUM_MAX_BLOCKS, EXT_LAYOUT_MULTIPLIER,
   computeExteriorZoom, exteriorZoom, exteriorApplyMinZoom, exteriorApplyMaxZoom,
   exteriorRotate, exteriorRotateAroundPlayerPos, exteriorDragPan, getLocationBorderPos,
-} from './automapCamera.js';
+} from './automap/automapCamera.js';
 import { rasterizeTopDown, rasterizeDisc } from './meshStamp.js';
-import { drawCompassStrip } from './hud.js';   // ONE HOME for the strip (hud.js:"HUDCompass.DrawCompass")
+import { drawCompassStrip } from './hud/hud.js';   // ONE HOME for the strip (hud.js:"HUDCompass.DrawCompass")
 import { drawToolTipBox } from './toolTip.js';
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { registerCommand } from '../systems/consoleCommands.js';   // E3: the console command database
+import { processGrammar } from '../systems/textManager.js';   // L10N3g: a plate's words through the grammar (:878, :885)
 
 // E3: RevealUndiscoveredBuildings (:230-234) - the persistent
 // component's flag, set by the console with no window open and read by
@@ -200,7 +201,7 @@ export const MARKER_STAMP_BIAS = 0.8;                    // -normalize(forward) 
 const STAMP_PX = 128;                                    // the rasteriser's edge (meshStamp.js records the oversampling)
 
 // the byte groups (ExteriorAutomap.cs:1482-1541; byte = BuildingType + 1)
-// live in ui/townQuarters.js, imported above - see EM7.
+// live in ui/town/townQuarters.js, imported above - see EM7.
 export const VIEW_MODES = ['original', 'extra', 'all'];   // (showAll, removeGroundFlats) = (f,t) (t,t) (t,f) (:318-337)
 
 /**
@@ -336,7 +337,7 @@ export function playerMarkerLayoutPos(tileXZ, isCustomLocation = false) {
  *   px = w/2 + dot(p - c, right) / orthoSize * (h/2) / aspect * aspect
  * which reduces to h/(2*orthoSize) pixels per world unit in BOTH axes
  * (window :864 then :866-867 flips y into the panel's top-down space).
- * `cam` is ui/automapCamera.js's exterior lens; `rect` is the panel in
+ * `cam` is ui/automap/automapCamera.js's exterior lens; `rect` is the panel in
  * canvas pixels, top-left origin. The yaw sign is automapCamera's own
  * (screen-right = (cos, 0, -sin)).
  */
@@ -596,7 +597,7 @@ export class ExteriorAutomapWindow {
    *  property on the PERSISTENT component, not on the window - the
    *  console sets it while no map is open and the next open reads it -
    *  so the flag lives at module scope here (the shape
-   *  ui/travelMapWindow.js has always used for its own pair) and the
+   *  ui/travel/travelMapWindow.js has always used for its own pair) and the
    *  window's property is the same value under the name the drawing
    *  code and its pins already read. */
   get revealUndiscoveredBuildings() { return _revealUndiscoveredBuildings; }
@@ -618,7 +619,7 @@ export class ExteriorAutomapWindow {
 
   set background(b) { _background = b; }
 
-  // ---- the verb table (ui/automapChrome.js answers NAMES) -----------
+  // ---- the verb table (ui/automap/automapChrome.js answers NAMES) -----------
 
   /** ActionFocusPlayerPosition (:1293-1299): the camera goes to the
    *  player marker, keeping its own height - here, its centre does. */
@@ -643,7 +644,7 @@ export class ExteriorAutomapWindow {
     return playerMarkerLayoutPos([local[0] + o[0], 0, local[2] + o[2]], !!this.deps.isCustomLocation);
   }
 
-  /** the DFU verb names ui/automapChrome.js's EXTERIOR_ACTIONS table
+  /** the DFU verb names ui/automap/automapChrome.js's EXTERIOR_ACTIONS table
    *  answers, bound to this window's camera. `dt` is the frame's. */
   runVerb(verb, dt) {
     const c = this.cam;
@@ -1034,7 +1035,7 @@ export class ExteriorAutomapWindow {
       for (let i = 0; i < plates.length; i++) {
         const p = plates[i], r = this._plates[i] ?? { offY: 0, replaced: false };
         const y = p.y + r.offY;
-        drawText(renderer, font, r.replaced ? '*' : p.text, p.x, y - p.h / 2, p.scale, NAMEPLATE_YELLOW);
+        drawText(renderer, font, r.replaced ? STAR_PLATE : p.text, p.x, y - p.h / 2, p.scale, NAMEPLATE_YELLOW);
         if (hv && hv[0] >= p.x && hv[0] < p.x + p.w && hv[1] >= y - p.h / 2 && hv[1] < y + p.h / 2) {
           this._hoverPlate = p;   // ToolTipDelay 0 (:874) - it shows at once
         }
@@ -1095,16 +1096,22 @@ export class ExteriorAutomapWindow {
       if (!name) continue;
       const anchor = nameplateAnchor(b.blockX, b.blockY, b.position);
       const [sx, sy] = toPanelScreen(this.cam, rect, anchor[0] - this.layoutW / 2, anchor[1] - this.layoutH / 2);
-      const text = custom || name;
+      // L10N3g: the label's Text is ProcessGrammar(displayName) (:885)
+      // and its ToolTipText ProcessGrammar(name) (:878), so a name a
+      // translation wrote with grammar tokens ({.FS}..., {.le}...) is
+      // drawn, measured and offered to the rename box
+      // (renamingLabelRef.Text) resolved; `name` stays the canonical key
+      // the rename falls back to. English is the identity.
+      const text = processGrammar(custom || name);
       out.push({
         x: sx, y: sy, w: measureText(font.fnt, text) * scale, h: lineH,
-        text, name, scale, buildingKey: b.buildingKey, isResidence: !!b.isResidence,
+        text, name, tip: processGrammar(name), scale, buildingKey: b.buildingKey, isResidence: !!b.isResidence,
       });
     }
-    // ARENA-MAP: a block's LANDMARK - a named place that is no building of the list (the Arena, world/arenaCity.js
+    // ARENA-MAP: a block's LANDMARK - a named place that is no building of the list (the Arena, world/arena/arenaCity.js
     // arenaTownLandmark) - lettered by this same plate law, always: no door discovers it, no record renames it
     // (_renameAt). The arena's own departure (Ledger A, its ARENA1 row). YARDS-FOUND: and its PLACES by the same law -
-    // the town's Stable and Wagon Yard standing in it (world/merchantYardMap.js yardTownBlocks)
+    // the town's Stable and Wagon Yard standing in it (world/merchantYards/merchantYardMap.js yardTownBlocks)
     for (const bl of this.deps.blocks ?? []) {
       for (const lm of [bl?.landmark, ...(bl?.places ?? [])]) {
         if (!lm?.name) continue;
@@ -1178,7 +1185,7 @@ export class ExteriorAutomapWindow {
     }
     // THE EIGHT BUTTON TOOLTIPS + THE COMPASS PANEL'S
     // (UpdateButtonToolTipsText, :230-239), through the block
-    // ui/automapText.js now carries for BOTH windows. These ride the
+    // ui/automap/automapText.js now carries for BOTH windows. These ride the
     // window's SHARED `defaultToolTip`, so unlike the plate tooltip
     // below they ARE behind EnableToolTips (DaggerfallBaseWindow.cs
     // :50-56) - drawToolTipBox's own default - and they wait out
@@ -1214,7 +1221,10 @@ export class ExteriorAutomapWindow {
     // departure.
     const t = this._hoverPlate;
     if (t && this._hoverAt) {
-      drawToolTipBox(renderer, m, font, t.name, this._hoverAt[0], this._hoverAt[1],
+      // L10N3g: the plate's ToolTipText, already through the grammar
+      // (:878) - and the tooltip runs it once more as it draws (ToolTip
+      // .cs:215), as DFU does.
+      drawToolTipBox(renderer, m, font, t.tip ?? t.name, this._hoverAt[0], this._hoverAt[1],
         { ignoreEnableSetting: true });
     }
   }

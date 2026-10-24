@@ -1,0 +1,83 @@
+[
+  {
+    "name": "HOLD-MONUMENT-back-in-gothway",
+    "file": "src/world/lefayMonument.js",
+    "old": "export const LEFAY_TOWN = 'Privateer\\'s Hold';",
+    "new": "export const LEFAY_TOWN = 'Gothway Garden';",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-MONUMENT-the-camp-not-closed",
+    "file": "src/world/lefayMonument.js",
+    "old": "  if (camp?.models?.length) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-MONUMENT-the-ruins-kept-as-tents",
+    "file": "src/world/lefayMonument.js",
+    "old": "isRuinModel(m.modelId) ? MONUMENT_RUIN_KEEP_M : MONUMENT_CAMP_KEEP_M",
+    "new": "MONUMENT_CAMP_KEEP_M",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-MONUMENT-the-landing-not-kept",
+    "file": "src/world/lefayMonument.js",
+    "old": "  for (const [x, , z] of markers) closeRound(nav, x, z, MONUMENT_LANDING_M);",
+    "new": "",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-MONUMENT-searched-from-the-middle",
+    "file": "src/world/lefayMonument.js",
+    "old": "  return lefaySpot(nav, from && { gx: from[0], gy: from[1] });",
+    "new": "  return lefaySpot(nav);",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-MONUMENT-the-from-cell-a-corner",
+    "file": "src/world/lefayMonument.js",
+    "old": "const mx = from ? from.gx + 0.5 : nav.width / 2",
+    "new": "const mx = from ? from.gx : nav.width / 2",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-MONUMENT-world-hands-no-camp",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "lefaySpotOf(loc, { camp: { block: PRIVATEERS_HOLD_BLOCK, models: HOLD_MODELS }, exit:",
+    "new": "lefaySpotOf(loc, { exit:",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-MONUMENT-the-way-out-kept-open",
+    "file": "src/world/lefayMonument.js",
+    "old": "closeRound(nav, exit.x + nx * t, exit.z + nz * t, MONUMENT_LANDING_M);",
+    "new": "void t;",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-MONUMENT-searched-not-from-the-exit",
+    "file": "src/world/lefayMonument.js",
+    "old": "    return lefaySpot(nav, { gx: at[0], gy: at[1] });",
+    "new": "    return lefaySpot(nav, null);",
+    "tests": [
+      "test/world/lefay1_monument.test.js"
+    ]
+  }
+]

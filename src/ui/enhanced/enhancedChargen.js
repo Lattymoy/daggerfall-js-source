@@ -1,0 +1,1888 @@
+// ═══════════════════════════════════════════════════════════════════
+// ENHANCED — CHARACTER CREATION
+//
+// THE FLOW IS NOT REBUILT. ui/chargen.js's ChargenFlow carries every
+// law of DFU's wizard - the eleven stages in DaggerfallStartNewGame-
+// Wizard's own enum order, the stat and skill pools, the biography
+// grammar, the class questions, the custom-class builder, and the
+// back arms AUDIT 17j spent seven findings getting right - and it is
+// pinned across five test files. None of that is touched here.
+//
+// This is a VIEW. It reads flow state and speaks back through
+// flow.applyHit() and flow.input(), the same two doors the classic
+// screens use, so the two skins cannot disagree about what the wizard
+// does. It is the settings split again: ~1900 lines of law reused,
+// only the drawing replaced.
+//
+// ── ONE STAGE AT A TIME ──────────────────────────────────────────
+//
+// Design pieces one by one; bulk design is forbidden here for the
+// reason it usually is - fifteen screens designed at once are fifteen
+// screens nobody looked at. This carries the CHROME (the stage rail,
+// the action bar, the button language) and the FIRST stage, the race
+// map, which is the one Mac named. Every other stage says plainly
+// that it has not been redesigned yet rather than showing a
+// half-built version of itself.
+//
+// ── THE MAP ──────────────────────────────────────────────────────
+//
+// Vector, traced at runtime from the player's own TAMRIEL2.IMG - see
+// ui/provinceMap.js for why that file and why no smoothing. The
+// classic screen draws a 320x200 picture and reads a pixel to find
+// out what you clicked; this draws eight shapes that know their own
+// race, so a province can light up under a cursor, carry its name at
+// a readable size, and answer a thumb at any scale.
+//
+// A path resolves to the race whose mask it was traced FROM, so there
+// is no second geography to keep in step. At an anti-aliased edge the
+// two differ in one direction only and harmlessly: the classic pixel
+// read returns 0 and nothing happens, where a path click lands on the
+// province you can see.
+// ═══════════════════════════════════════════════════════════════════
+
+import { RACE_TEMPLATES } from '../../systems/races.js';
+import { CLASS_DESCRIPTION_TEXT_ID, SUMMARY_BONUS_TEXT_ID, PLAYER_REFLEXES, repBoxRowsFrom } from '../chargenArt.js';   // ONE DFU MEMBER, ONE EXPORT
+import { generateBackstory } from '../../systems/biography.js';
+import { FACES_PER_RACE } from '../../systems/races.js';
+import { bitmapCanvas } from '../bitmapCanvas.js';
+import { STAT_KEYS_ORDER } from '../../systems/chargen.js';
+import { overlayAction, isTextEntryTarget } from '../input.js';   // CG2: one definition of 'a DOM field's key is the field's'
+import { SKILL_NAMES } from '../../systems/skills.js';
+import { reviseClassDescription } from '../../systems/stockClasses.js';   // CLASS-USE: the description names the revised skills
+import { QUESTION_COUNT } from '../../systems/classQuestions.js';        // AUDIT 39: the quiz's own count, not a tenth copy of ten
+import { HELP_TOPICS, REP_GROUPS, REP_MAX, DIFFICULTY_MIN, DIFFICULTY_MAX, advancementMultiplier, daggerFraction, customClassDoc } from '../../systems/customClass.js';              // AUDIT 39: the builder's help picker; CC-REP: the reputation ledger's groups and reach; UXB1-H/I: the class document, the dagger
+import { ATTRIBUTE_BLURB, attributeLabel as attrName } from '../levelUp/levelUpView.js';   // UXB1-G: the port's own line per attribute, each true of the code (LV1's audit)
+import { labelFor } from '../../systems/specialAdvantages.js';           // AUDIT 39: DFU's own words for an advantage key
+import { NAME_MAX_CHARACTERS as NAME_MAX } from '../chargen.js';
+import { traceProvinces, MAP_W, MAP_H, PROVINCE_NAMES } from '../provinceMap.js';
+import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { repaintKeepingScroll } from '../domRepaint.js';
+// PX13: the wizard stands on the same living sky as every other
+// enhanced face - drawn by the one module, clocked by this mount.
+import { drawPixelGround } from '../pixelGround.js';
+import { localizedStrings } from '../../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { raceDisplayName } from '../../systems/talk/talkSession.js';   // L10N3d: RaceTemplate.Name, read in the player's language
+
+/** DFU's WizardStages, in the order the flow walks them, with the
+ *  words a player reads. The flow's own state names are the keys.
+ *  `classMethod`/`bioMethod` and the two question paths are stages of
+ *  the wizard but not of the JOURNEY - they are how you answer the
+ *  stage before them - so the rail folds them into their parent. */
+export const STAGE_RAIL = Object.freeze([
+  { id: 'race', label: 'Homeland', states: ['race'] },
+  { id: 'gender', label: 'Sex', states: ['gender'] },
+  { id: 'class', label: 'Class', states: ['classMethod', 'classQuestions', 'class', 'customClass'] },
+  { id: 'biography', label: 'History', states: ['bioMethod', 'biography'] },
+  { id: 'name', label: 'Name', states: ['name'] },
+  { id: 'face', label: 'Face', states: ['face'] },
+  { id: 'stats', label: 'Attributes', states: ['stats'] },
+  { id: 'skills', label: 'Skills', states: ['skills'] },
+  { id: 'reflexes', label: 'Reflexes', states: ['reflexes'] },
+  { id: 'summary', label: 'Review', states: ['summary'] },
+]);
+
+const stageOf = (state) => STAGE_RAIL.findIndex((s) => s.states.includes(state));
+
+const el = (t, cls, txt) => {
+  const n = document.createElement(t);
+  if (cls) n.className = cls;
+  if (txt != null) n.textContent = txt;
+  return n;
+};
+const svg = (t, attrs = {}) => {
+  const n = document.createElementNS('http://www.w3.org/2000/svg', t);
+  for (const [k, v] of Object.entries(attrs)) n.setAttribute(k, v);
+  return n;
+};
+
+let host = null;
+let flow = null;
+let faces = null;       // { key, canvases[] } for the current identity
+let loadFaces = null;   // (raceKey, gender) => Promise<DFBitmap[]>
+let provinces = [];
+let hover = null;      // the race key under the cursor, for the readout
+let onExit = () => {};
+let keyHandler = null;
+let lockHandler = null;
+
+// ── THE MAP ──────────────────────────────────────────────────────
+
+function mapPane() {
+  const wrap = el('div', 'mappane');
+  hoverTitle = null;
+  hoverBody = null;
+
+  if (!provinces.length) {
+    // NEVER TRAPS, the law every art-backed screen here follows: no
+    // TAMRIEL2 means no map, and the eight homelands become a plain
+    // list rather than a blank rectangle. A missing file costs the
+    // picture, never the character.
+    const list = el('div', 'racegrid');
+    for (const race of RACE_TEMPLATES) {
+      const b = el('button', `racecell${race.key === flow.race.key ? ' on' : ''}`, raceDisplayName(race.key));
+      b.onclick = () => pick(race.key);
+      list.append(b);
+    }
+    wrap.append(el('p', 'mapnote', 'The province map needs TAMRIEL2.IMG. Choose a homeland by name instead.'));
+    wrap.append(list);
+    return wrap;
+  }
+
+  const frame = svg('svg', {
+    viewBox: `0 0 ${MAP_W} ${MAP_H}`,
+    class: 'map',
+    preserveAspectRatio: 'xMidYMid meet',
+  });
+  const sel = flow.race.key;
+  for (const p of provinces) {
+    // The listeners go on the PATH, not on a wrapping group: a group's
+    // box is its bounding rectangle and Tamriel's provinces are not
+    // rectangles, so a hover on the sea inside High Rock's bounds
+    // would have lit High Rock.
+    const path = svg('path', {
+      d: p.d, 'fill-rule': 'evenodd', 'data-prov': p.key,
+      class: `prov${p.inert ? ' inert' : ''}${p.key === sel ? ' on' : ''}`,
+    });
+    // The Imperial Province is drawn and NOT offered: no homeland, no
+    // hover, no press. It is there because Tamriel is there.
+    if (!p.inert) {
+      // HOVER MUST NOT REPAINT, and this is not a nicety - it is the
+      // bug Mac found in play. Setting `hover` and calling paint()
+      // rebuilds the whole screen, which DESTROYS the node the pointer
+      // is over; the browser then fires pointerenter on the fresh one
+      // and the screen repaints again, forever. The map took no clicks
+      // at all, because a mousedown and a mouseup have to land on the
+      // SAME node for a click to exist and this one never survived
+      // between them. Every prototype walk had dispatched a synthetic
+      // click straight at the element, so not one of them touched the
+      // path a real mouse takes.
+      //
+      // The highlight is CSS `:hover` now, and the readout beside the
+      // map is updated by writing to two text nodes rather than by
+      // rebuilding the screen that contains them.
+      path.addEventListener('pointerenter', () => { hover = p.key; refreshHover(); });
+      path.addEventListener('pointerleave', () => { if (hover === p.key) { hover = null; refreshHover(); } });
+      path.addEventListener('click', () => pick(p.key));
+    }
+    frame.append(path);
+  }
+  // UI-CALM (2026-10-14, a player: "letters overlapping ... the highlighting of words is bad"): THE NAMES ARE THE PAGE'S
+  // OWN WORDS, NOT THE MAP'S. Said in map units inside the SVG, a name was as tall as the dress's type made it - DFO
+  // Grimoire's face stands only at its whole sizes (16, 32, 48), so a 6-unit label became a 16-unit one, three times the
+  // map's own scale, and High Rock ran into Hammerfell and Valenwood into Elsweyr. Each name is now a small plate laid
+  // over the map at its province's label point, in the screen's own pixels (crisp in either dress), and a name that
+  // would touch another is moved off it (untangleLabels) - the Imperial Province's, the one no one can choose, first.
+  const box = el('div', 'mapbox');
+  box.append(frame);
+  const names = el('div', 'maplabels');
+  const plates = [];
+  for (const p of provinces) {
+    const tag = el(p.inert ? 'span' : 'button', `maplabel${p.inert ? ' inert' : ''}${p.key === sel ? ' on' : ''}`, p.name);
+    tag.dataset.prov = p.key;
+    if (tag.style) { tag.style.left = `${(p.label[0] / MAP_W) * 100}%`; tag.style.top = `${(p.label[1] / MAP_H) * 100}%`; }
+    if (!p.inert) {
+      tag.type = 'button';
+      tag.onclick = () => pick(p.key);
+      tag.addEventListener?.('pointerenter', () => { hover = p.key; refreshHover(); });
+      tag.addEventListener?.('pointerleave', () => { if (hover === p.key) { hover = null; refreshHover(); } });
+    }
+    names.append(tag);
+    plates.push({ tag, inert: !!p.inert, x: p.label[0] / MAP_W, y: p.label[1] / MAP_H });
+  }
+  box.append(names);
+  const lay = () => {
+    const W = box.clientWidth, H = box.clientHeight;
+    if (!W || !H) return;
+    const at = untangleLabels(plates.map((q) => ({ x: q.x * W, y: q.y * H, w: q.tag.offsetWidth, h: q.tag.offsetHeight, inert: q.inert })), { width: W, height: H });
+    plates.forEach((q, i) => { q.tag.style.left = `${at[i].x}px`; q.tag.style.top = `${at[i].y}px`; });
+  };
+  globalThis.requestAnimationFrame?.(lay);
+  // AUDIT UICALM-FIRM1 L3 M6: each plate watched too - a dress's face that arrives late widens the names after the first
+  // lay, and laid once they touched and left the map (its left and top move no plate's size, so no loop)
+  if (typeof globalThis.ResizeObserver === 'function') {
+    const ro = new globalThis.ResizeObserver(() => lay());
+    ro.observe(box);
+    for (const q of plates) ro.observe(q.tag);
+  }
+  wrap.append(box);
+  return wrap;
+}
+
+/**
+ * UI-CALM: names that would touch are moved apart, up and down - never across, so a name stays over its own land. Each
+ * item is a plate's centre and size in pixels (`inert` a name no one can choose, which gives way first and alone); the
+ * answer is each plate's centre, kept inside `bounds`. Pure, for the pins.
+ * @param {{ x: number, y: number, w: number, h: number, inert?: boolean }[]} items
+ * @param {{ width: number, height: number }} bounds
+ */
+export function untangleLabels(items, { width, height }, gap = 4) {
+  const at = items.map((q) => ({ x: q.x, y: q.y }));
+  const clampY = (i) => { const h = items[i].h / 2; at[i].y = Math.max(h, Math.min(height - h, at[i].y)); };
+  const clampX = (i) => { const w = items[i].w / 2; at[i].x = Math.max(w, Math.min(width - w, at[i].x)); };
+  items.forEach((_, i) => { clampX(i); clampY(i); });
+  for (let round = 0; round < 60; round++) {
+    let moved = false;
+    for (let i = 0; i < items.length; i++) {
+      for (let j = i + 1; j < items.length; j++) {
+        const dx = (items[i].w + items[j].w) / 2 + gap - Math.abs(at[i].x - at[j].x);
+        const dy = (items[i].h + items[j].h) / 2 + gap - Math.abs(at[i].y - at[j].y);
+        if (dx <= 0 || dy <= 0) continue;
+        moved = true;
+        const down = at[j].y > at[i].y || (at[j].y === at[i].y && j > i) ? 1 : -1;   // j moves the way it already leans
+        const [si, sj] = items[i].inert === items[j].inert ? [0.5, 0.5] : items[i].inert ? [1, 0] : [0, 1];
+        at[i].y -= down * dy * si;
+        at[j].y += down * dy * sj;
+        clampY(i); clampY(j);
+      }
+    }
+    if (!moved) break;
+  }
+  return at;
+}
+
+let hoverTitle = null;
+let hoverBody = null;
+
+/** The readout under the pointer, written into the two nodes that
+ *  carry it. See the pointerenter handler for why this is not a
+ *  repaint. */
+function refreshHover() {
+  // UI-CALM: the land and its name light together, whichever the pointer is on (a class, never a repaint - see above)
+  for (const n of host?.querySelectorAll?.('[data-prov]') ?? []) n.classList.toggle('hot', !!hover && n.dataset.prov === hover);
+  if (!hoverTitle || !hoverBody) return;
+  const who = hover ? RACE_TEMPLATES.find((r) => r.key === hover) : null;
+  hoverTitle.textContent = who ? (PROVINCE_NAMES[who.key] ?? who.name) : 'Where are you from?';
+  hoverBody.textContent = who
+    ? `Home of the ${who.name}. Click to read what it means to be born here.`
+    : 'Your homeland sets your face, your name and how much of Tamriel greets you kindly.';
+}
+
+/** A province press. The flow owns what happens next: setRace records
+ *  it, plays the race's clip and OPENS the description - DFU does not
+ *  accept a homeland on the click (CreateCharRaceSelect's Yes/No), and
+ *  neither do we. Only the shape of the box is ours. */
+function pick(raceKey) {
+  const race = RACE_TEMPLATES.find((r) => r.key === raceKey);
+  flow.applyHit({ setRace: raceKey, describe: flow.describeRace?.(race) ?? null });
+  paint();
+}
+
+function raceStage() {
+  const pane = el('div', 'stagebody stacked-short');   // the pre-merge audit (0927b): on a SHORT phone the map and its prompt scroll as one - in landscape the map had 0-30px
+  pane.classList.add('mapstage');   // UI-CALM: the map's stage takes the wider column (uiCalmStyle.js)
+  pane.append(mapPane());
+
+  // THE DETAIL IS ONLY A SHEET WHEN IT HAS TO BE. On a desk it is the
+  // third column and always present. On a phone it is one column, so
+  // the prompt sits INLINE under the map and only the description -
+  // which is long, modal in DFU, and raised by the press that chose a
+  // province - comes up over it. A prompt that lived off-screen behind
+  // a sheet would leave a phone showing a map and nothing else.
+  // PX17a ROOT CAUSE of the smooshed confirm: 'sheet' here meant the
+  // PHONE-SHEET STATE, but the char sheet window owns `.sheet` as a
+  // THREE-COLUMN LAYOUT class in the same stylesheet - so the race
+  // confirm inherited three minmax(0,1fr) columns inside a 340px
+  // slot and set its prose one word per line. The codebase has paid
+  // this exact generic-name toll twice before (.detail, .packcol);
+  // the state class is now the wizard's own word.
+  const detail = el('div', `detail${flow.raceConfirm ? ' wizsheet open' : ''}`);
+  const close = el('button', 'sheet-close', 'Back to the map');
+  close.onclick = () => { flow.applyHit({ cancelRace: true }); paint(); };
+  detail.append(close);
+
+  if (flow.raceConfirm) {
+    const d = el('div', 'dcard');
+    d.append(el('h3', null, `${PROVINCE_NAMES[flow.race.key] ?? flow.race.name} \u00b7 ${raceDisplayName(flow.race.key)}`));
+    // PX17a (Mac: the right-hand text smooshed): TEXT.RSC hands lines
+    // HARD-WRAPPED for the classic 320px screen; rendering each as
+    // its own paragraph fights every other viewport - ragged on a
+    // desk, re-wrapped mush on a phone. So the lines are JOINED into
+    // flowing prose and the browser wraps them for the width it has;
+    // a BLANK line in the record is the paragraph break it always
+    // meant. The flow's data is untouched - this is the view's job.
+    // UI-CALM ("the summary board looks cut off"): the words scroll inside the card and its two presses stand under them,
+    // always on screen - TEXT.RSC's longest ran past the card's foot and took "Play as" with it
+    const body = el('div', 'dscroll');
+    d.classList.add('confirm');
+    d.append(body);
+    let para = [];
+    const flush = () => { if (para.length) { body.append(el('p', null, para.join(' '))); para = []; } };
+    for (const line of flow.raceConfirm) {
+      const text = (typeof line === 'string' ? line : line.text) ?? '';
+      if (text.trim()) para.push(text.trim()); else flush();
+    }
+    flush();
+    const a = el('div', 'acts');
+    const yes = el('button', 'act primary', `Play as ${raceDisplayName(flow.race.key)}`);
+    // AUDIT 64 F32: the box's own hit, not the shared 'confirm' - on
+    // which Return is inert here (no default button,
+    // CreateCharRaceSelect.cs:107-108).
+    yes.onclick = () => { flow.applyHit({ confirmRace: true }); paint(); };
+    const no = el('button', 'act', 'Choose again');
+    no.onclick = () => { flow.applyHit({ cancelRace: true }); paint(); };
+    a.append(yes, no);
+    d.append(a);
+    detail.append(d);
+  } else {
+    // The MAP says the place; the readout says the people. Naming both
+    // in one line is what makes "Hammerfell" and "Redguard" the same
+    // answer to the same question.
+    const d = el('div', 'dcard');
+    hoverTitle = el('h3', null, '');
+    hoverBody = el('p', null, '');
+    d.append(hoverTitle, hoverBody);
+    detail.append(d);
+    refreshHover();
+  }
+  pane.append(detail);
+  return pane;
+}
+
+// ── SEX ──────────────────────────────────────────────────────────
+// DFU's is a two-button message box, and the buttons SET AND CLOSE -
+// there is no separate confirm (U14 found the port had invented one).
+// Two choices deserve two large targets and nothing else on the
+// screen, so this is the one stage that is only its own question.
+function genderStage() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  wrap.append(el('h2', null, 'Are you a man or a woman?'));
+  const row = el('div', 'bigchoice');
+  for (const [key, label] of [['male', 'Man'], ['female', 'Woman']]) {
+    const b = el('button', `bigbtn${flow.gender === key ? ' on' : ''}`, label);
+    b.onclick = () => { flow.applyHit({ setGender: key }); paint(); };
+    row.append(b);
+  }
+  wrap.append(row);
+  pane.append(wrap);
+  return pane;
+}
+
+// ── HOW YOU CHOOSE A CLASS ───────────────────────────────────────
+// WizardStages.SelectClassMethod. DFU's BUTN01I0 screen: pick from the
+// list, or answer the questions and be told what you are. Both buttons
+// close, and an Escape goes to the LIST rather than back - the
+// OnClose has no cancelled arm at all (U18).
+function classMethodStage() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  wrap.append(el('h2', null, 'How do you want to choose?'));
+  const row = el('div', 'bigchoice tall');
+  const list = el('button', 'bigbtn');
+  list.append(el('span', 'bigk', 'Choose from a list'));
+  list.append(el('span', 'bign', 'The eighteen classic classes, or build your own.'));
+  list.onclick = () => { flow.applyHit({ classMethod: 'list' }); paint(); };
+  const quiz = el('button', 'bigbtn');
+  quiz.append(el('span', 'bigk', 'Answer ten questions'));
+  quiz.append(el('span', 'bign', 'The game picks a class from your answers.'));
+  quiz.onclick = () => { flow.applyHit({ classMethod: 'questions' }); paint(); };
+  row.append(list, quiz);
+  wrap.append(row);
+  pane.append(wrap);
+  return pane;
+}
+
+// ── THE TEN QUESTIONS ────────────────────────────────────────────
+// WizardStages.ClassQuestions (CreateCharClassQuestions), behind the
+// method screen's quiz button. AUDIT 39: the state was REACHABLE from
+// that button and had no renderer at all, so pressing it landed the
+// player on an empty pane that only the A/B/C keys could drive.
+//
+// The classic screen paints the question onto a scrolling parchment
+// and reads the ROW under the click to decide which of a), b) and c)
+// was pressed; displayQuestion already hands the view where each
+// answer starts (aIndex/bIndex/cIndex), so here they are three
+// buttons and the scroll has nothing left to do.
+//
+// AUDIT-39r: AND THE ANSWER MUST LAND ON THE PRESS. The first draft
+// said the constellation could not play here because this view loads
+// no CEL art - which was false twice over. `_art` is a MODULE
+// singleton and every host warms it at boot (preloadChargenArt, with
+// no skin gate), so startConstellationAnim reports a real length; and
+// nothing on this side ticks the flow, so the lock it sets would only
+// have come off on the wall-clock watchdog, three to seven seconds
+// later, with the press that finally landed applying the player's
+// choice to the NEXT question. muteConstellation is the answer: this
+// view paints no chart, so it plays no animation.
+function classQuestionsStage() {
+  const pane = el('div', 'stagebody solo');
+  // EndQuestions' description box (:_endClassQuestions) is a Yes/No
+  // over the questions, exactly as the class list's is over the list.
+  if (flow.qConfirm) {
+    const wrap = el('div', 'choose');
+    const named = flow.classRowName(flow.qClassIndex);
+    wrap.append(el('h2', null, `The answers make you a ${named}`));
+    const card = el('div', 'card repbox');
+    for (const line of flow.qConfirm) {
+      const text = typeof line === 'string' ? line : line.text;
+      if (text?.trim()) card.append(el('p', null, text));
+    }
+    const a = el('div', 'acts');
+    const yes = el('button', 'act primary', `Play as ${/^[aeiou]/i.test(named) ? 'an' : 'a'} ${named}`);   // AUDIT UICALM-FIRM1 L3 N2: an Acrobat
+    yes.onclick = () => { flow.applyHit({ confirmQClass: true }); paint(); };
+    const no = el('button', 'act', 'Choose again');
+    no.onclick = () => { flow.applyHit({ cancelQClass: true }); paint(); };
+    a.append(yes, no);
+    card.append(a);
+    wrap.append(card);
+    pane.append(wrap);
+    return pane;
+  }
+  if (!flow.qDisplay) return pendingStage(STAGE_RAIL[stageOf(flow.state)]);
+  const { lines, aIndex, bIndex, cIndex } = flow.qDisplay;
+  const join = (from, to) => lines.slice(from, to).join(' ').trim();
+  const wrap = el('div', 'question');
+  wrap.append(el('div', 'qcount', `Question ${Math.min(flow.qAnswered + 1, QUESTION_COUNT)} of ${QUESTION_COUNT}`));
+  wrap.append(el('h2', null, join(0, aIndex)));
+  const answers = el('div', 'answers');
+  // The a)/b)/c) markers stay in the text: the words are TEXT.RSC
+  // 9000's own and the screen prints them, it does not rewrite them.
+  [[aIndex, bIndex], [bIndex, cIndex], [cIndex, lines.length]].forEach(([from, to], i) => {
+    const b = el('button', 'answer', join(from, to));
+    b.onclick = () => { flow.applyHit({ answerClass: i }); paint(); };
+    answers.append(b);
+  });
+  wrap.append(answers);
+  pane.append(wrap);
+  return pane;
+}
+
+// ── THE CLASS LIST ───────────────────────────────────────────────
+// A ListBox with two gestures, which U17 landed after Mac reported
+// double-tap not working: MouseClick SELECTS, MouseDoubleClick USES,
+// and picking is not choosing - OnItemPicked opens the class
+// DESCRIPTION in a Yes/No box on TEXT.RSC 2100 + index.
+//
+// A list on a phone does not need a double tap to mean something
+// different from a single one, so the enhanced screen gives the second
+// gesture its own BUTTON and lets a tap select. The flow's own
+// clickClassRow is still what a tap calls, double-tap included, so the
+// classic gesture keeps working for anyone who uses it.
+/**
+ * UI-CALM (2026-10-14, a player: "Character selection and creation look like placeholders made of text and buttons"):
+ * THE CLASS IS SHOWN BEFORE IT IS READ ABOUT. Each row says, under its name, the two attributes the class leans on; the
+ * list stands in Daggerfall's three ways - its manual's mages, thieves and warriors - each under its own head; and the
+ * card beside it is the class's own profile before a word of TEXT.RSC is asked for: its eight attributes as bars, its
+ * primary and major skills, its hit points a level. Every number is the career's own (CLASS*.CFG); nothing here is law.
+ */
+export const CLASS_WAYS = Object.freeze([
+  Object.freeze(['Magic', Object.freeze(['Mage', 'Spellsword', 'Battlemage', 'Sorcerer', 'Healer', 'Nightblade'])]),
+  Object.freeze(['Stealth', Object.freeze(['Bard', 'Burglar', 'Rogue', 'Acrobat', 'Thief', 'Assassin'])]),
+  Object.freeze(['Combat', Object.freeze(['Monk', 'Archer', 'Ranger', 'Barbarian', 'Warrior', 'Knight'])]),
+]);
+/** UI-CALM: the way a class walks, by its career's KEY (CLASS*.CFG's own name, never the shown one - a translated name
+ *  matched no way and every head went; AUDIT UICALM-FIRM1 L3 M3) - null for one Daggerfall does not ship (a custom class). */
+export const classWayOf = (name) => CLASS_WAYS.find(([, names]) => names.includes(name))?.[0] ?? null;
+/** UI-CALM: a career's two strongest attributes, by name, strongest first (ties in the sheet's order). */
+export function leadingAttributes(career, n = 2) {
+  if (!career) return [];
+  return STAT_KEYS_ORDER.map((k, i) => [k, Number(career[k]) || 0, i]).sort((a, b) => b[1] - a[1] || a[2] - b[2]).slice(0, n).map(([k]) => attrName(k));
+}
+/** UI-CALM: the class's profile on its card - its attributes as bars, its skills, its hit points a level. */
+function classProfile(career) {
+  const box = el('div', 'cprofile');
+  const attrs = el('div', 'cprof-attrs');
+  for (const k of STAT_KEYS_ORDER) {
+    const v = Math.max(0, Math.min(100, Number(career[k]) || 0));
+    const row = el('div', 'cprof-attr');
+    const bar = el('span', 'cprof-bar');
+    const fill = el('i', 'cprof-fill');
+    if (fill.style) fill.style.width = `${v}%`;
+    bar.append(fill);
+    row.append(el('span', 'cprof-name', attrName(k)), bar, el('span', 'cprof-v', String(v)));
+    attrs.append(row);
+  }
+  box.append(attrs);
+  const skills = (label, ids) => {
+    const names = (ids ?? []).map((id) => SKILL_NAMES[id]).filter(Boolean);
+    if (!names.length) return null;
+    const p = el('p', 'cprof-skills');
+    p.append(el('span', 'cprof-label', label), document.createTextNode(names.join(', ')));
+    return p;
+  };
+  for (const p of [skills('Primary', career.primarySkills), skills('Major', career.majorSkills)]) if (p) box.append(p);
+  if (Number.isFinite(career.hitPointsPerLevel)) {
+    const hp = el('p', 'cprof-skills');
+    // AUDIT UICALM-FIRM1 L3 L2: a level's roll is half the career's to all of it, Endurance's modifier on top
+    // (systems/chargen.js hitPointsPerLevelUp) - "up to N" undersold every hardy character
+    hp.append(el('span', 'cprof-label', 'Health'), document.createTextNode(`${Math.trunc(career.hitPointsPerLevel / 2)}-${career.hitPointsPerLevel} a level, more with Endurance`));
+    box.append(hp);
+  }
+  return box;
+}
+
+function classStage() {
+  const pane = el('div', 'stagebody stacked-short');   // the pre-merge audit (0927b): on a SHORT phone the list and its detail scroll as one - in landscape the list had 0-8px; a tall one keeps its rows, "Read about" on screen
+
+  const list = el('div', 'list classlist');   // UXB1-J: two columns on a desk (enhancedStyle.js)
+  let way = null;
+  for (let i = 0; i < flow.classRowCount(); i++) {
+    const name = flow.classRowName(i);
+    const custom = i === flow.careers.length;
+    // UI-CALM: a head where the way changes (the careers stand in the ways' own order, CLASS00..17)
+    const w = custom ? 'Your own' : classWayOf(flow.careers[i]?.name);   // AUDIT UICALM-FIRM1 L3 M3: by the career's own key - its shown name is the player's language's
+    if (w && w !== way) list.append(el('div', 'classway', w));
+    way = w;
+    const row = el('div', `row${i === flow.classListIndex ? ' on' : ''}`);
+    const main = el('button', 'row-main');
+    main.append(el('div', 'row-name', name));
+    if (custom) main.append(el('div', 'row-sub', 'Build a class of your own'));
+    else {
+      const lead = leadingAttributes(flow.careers[i]?.career);
+      if (lead.length) main.append(el('div', 'row-sub', lead.join(' · ')));
+    }
+    main.onclick = () => { flow.clickClassRow(i, flow._now()); paint(); };
+    row.append(main);
+    list.append(row);
+  }
+  pane.append(list);
+
+  const detail = el('div', `detail${flow.classConfirm ? ' wizsheet open' : ''}`);   // PX17a: same rename as the race confirm - the class stage pays the same toll
+  const close = el('button', 'sheet-close', 'Back to the list');
+  close.onclick = () => { flow.applyHit({ cancelClass: true }); paint(); };
+  detail.append(close);
+  const d = el('div', 'dcard');
+  const picked = flow.classRowName(flow.classListIndex);
+  d.append(el('h3', null, picked));
+  const pickedWay = flow.classListIndex === flow.careers.length ? null : classWayOf(flow.careers[flow.classListIndex]?.name);
+  if (pickedWay) d.append(el('div', 'cprof-way', pickedWay));
+  if (flow.classConfirm) {
+    const body = el('div', 'dscroll');   // UI-CALM: the words scroll, the presses stand (the race's card, above)
+    d.classList.add('confirm');
+    d.append(body);
+    // and its hard-wrapped lines flow as the race's do (PX17a): a blank line is the paragraph's end
+    let para = [];
+    const flush = () => { if (para.length) { body.append(el('p', null, para.join(' '))); para = []; } };
+    for (const line of flow.classConfirm) {
+      const text = (typeof line === 'string' ? line : line.text) ?? '';
+      if (text.trim()) para.push(text.trim()); else flush();
+    }
+    flush();
+    const a = el('div', 'acts');
+    const yes = el('button', 'act primary', `Play as ${/^[aeiou]/i.test(picked) ? 'an' : 'a'} ${picked}`);   // AUDIT UICALM-FIRM1 L3 N2: an Archer, an Assassin
+    yes.onclick = () => { flow.applyHit({ confirmClass: true }); paint(); };
+    const no = el('button', 'act', 'Choose again');
+    no.onclick = () => { flow.applyHit({ cancelClass: true }); paint(); };
+    a.append(yes, no);
+    d.append(a);
+  } else {
+    const career = flow.classListIndex === flow.careers.length ? null : flow.careers[flow.classListIndex]?.career;
+    if (career) d.append(classProfile(career));
+    d.append(el('p', null, flow.classListIndex === flow.careers.length
+      ? 'Twelve skills, your own attributes, your own advantages, and a difficulty that moves as you spend.'
+      : 'Read what this class is before you commit to it.'));
+    const a = el('div', 'acts');
+    const read = el('button', 'act primary',
+      flow.classListIndex === flow.careers.length ? 'Build it' : `Read about the ${picked}`);
+    read.onclick = () => { flow.useClass(); paint(); };
+    a.append(read);
+    d.append(a);
+  }
+  detail.append(d);
+  pane.append(detail);
+  return pane;
+}
+
+// ── BUILD A CLASS OF YOUR OWN ────────────────────────────────────
+// WizardStages.CustomClassBuilder (CreateCharCustomClass), behind the
+// class list's last row. AUDIT 39: that row was drawn and pressable
+// and the state it opened had no renderer, so "Build it" landed on an
+// empty pane - and the keyboard could reach it too, so hiding the row
+// would not have closed the door.
+//
+// EVERY LAW HERE IS THE FLOW'S. The twelve slots and their picker, the
+// 4..30 hit points, the freeEdit stat ledger with its zero-sum pool,
+// the two special-advantage windows and the four exit refusals all
+// live in ui/chargen.js and are pinned there; this reads `flow.custom`
+// and presses the same applyHit doors the classic screen's rects do.
+//
+// THE REPUTATION WINDOW (CreateCharReputationWindow) IS DRAWN NOW -
+// CC-REP (2026-09-16, Ember on the Discord: "Class creation menu seems
+// to be missing a reputation setting. By default in DFU when making a
+// class you can select how it affects your reputation with various
+// factions"). AUDIT 39 recorded it as the one classic window this view
+// did not draw: its only door was `repClick(lx, ly)`, a pixel hit on a
+// 168x189 panel, and this view wanted a control shaped for a thumb.
+// The flow has that door now (`repStep`, customClass.js - the same
+// value law as a bar click: an integer -10..10 per group, the ledger
+// the negated sum) and customRepPane below is the window: five rows
+// with steppers, the points to distribute, and Done through the
+// window's own exit gate (the balance must be zero, TEXT.RSC 303).
+const CUSTOM_SKILL_GROUPS = Object.freeze([
+  ['Primary', 0, 3], ['Major', 3, 6], ['Minor', 6, 12],
+]);
+
+/** The ONE picker, three sources - the twelve skill slots, the two
+ *  special lists and the help topics. The flow's own usePickRow
+ *  answers all three, and a tap is enough: a list on a phone does not
+ *  need a double tap to mean something different from a single one
+ *  (the class list's own argument). */
+function customPickerPane(c) {
+  const rows = c.pickList
+    ? c.pickList.map((k) => labelFor(k) || k)
+    : c.sub === 'help'
+      ? HELP_TOPICS.map(([name]) => name)
+      : (c.pickItems ?? []).map((id) => SKILL_NAMES[id] ?? `Skill ${id}`);
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'skillpane');
+  wrap.append(el('h2', null, c.pickList
+    ? (c.pickPrimary ? `${labelFor(c.pickPrimary)} of what?` : 'Which one?')
+    : c.sub === 'help' ? 'What do you want to know?' : 'Which skill?'));
+  const list = el('div', 'list');
+  rows.forEach((name, i) => {
+    const row = el('div', `row${i === c.pickCursor ? ' on' : ''}`);
+    const main = el('button', 'row-main');
+    main.append(el('div', 'row-name', name));
+    main.onclick = () => { flow.usePickRow(i); paint(); };
+    row.append(main);
+    list.append(row);
+  });
+  wrap.append(list);
+  pane.append(wrap);
+  return pane;
+}
+
+/** A refusal or a help topic: ClickAnywhereToClose in DFU, one button
+ *  here, through the flow's own arm. */
+function customBoxPane(c) {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  const card = el('div', 'card repbox');
+  for (const row of c.box) {
+    const text = typeof row === 'string' ? row : row.text;
+    if (text?.trim()) card.append(el('p', null, text));
+  }
+  const a = el('div', 'acts');
+  const ok = el('button', 'act primary', 'Go on');
+  ok.onclick = () => { flow.applyHit({ customBox: true }); paint(); };
+  a.append(ok);
+  card.append(a);
+  wrap.append(card);
+  pane.append(wrap);
+  return pane;
+}
+
+/** CreateCharSpecialAdvantageWindow, both halves - the picks it holds
+ *  and the two buttons that edit them. A press on a ROW removes it,
+ *  which is AdvantageLabel_OnMouseClick's own law (:436-460) and the
+ *  only removal there is, so the row says so. */
+function customAdvPane(c) {
+  const list = c.sub === 'advantage' ? c.advantages : c.disadvantages;
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'skillpane');
+  wrap.append(el('h2', null, c.sub === 'advantage' ? 'Special advantages' : 'Special disadvantages'));
+  // UXB1-I: the dagger stays in sight while the picks that move it are made - the classic dagger stands beside this
+  // window (its trails keep animating under it, UI-Arc's U20b note); this pane replaces the builder, so it carries it
+  wrap.append(daggerGauge(flow.customDifficulty()));
+  const rows = el('div', 'list');
+  list.forEach((item, i) => {
+    const row = el('div', 'row');
+    const main = el('button', 'row-main');
+    main.append(el('div', 'row-name', labelFor(item.primary) || item.primary));
+    if (item.secondary) main.append(el('div', 'row-sub', labelFor(item.secondary) || item.secondary));
+    main.append(el('div', 'row-note', 'Click to remove'));
+    main.onclick = () => { flow.applyHit({ advRemove: i }); paint(); };
+    row.append(main);
+    rows.append(row);
+  });
+  if (!list.length) rows.append(el('p', 'mapnote', 'None taken.'));
+  wrap.append(rows);
+  const a = el('div', 'acts');
+  const add = el('button', 'act primary', 'Add one');
+  add.onclick = () => { flow.applyHit({ advAdd: true }); paint(); };
+  const done = el('button', 'act', 'Done');
+  done.onclick = () => { flow.applyHit({ advExit: true }); paint(); };
+  a.append(add, done);
+  wrap.append(a);
+  pane.append(wrap);
+  return pane;
+}
+
+/** CC-REP: the reputation window - ReputationButton opens it over
+ *  the builder (`c.sub === 'rep'`), the exit gate closes it. The five
+ *  groups in the window's own column order; a positive number is a
+ *  group that thinks well of the class at the start, and the ledger
+ *  must balance to zero before the window lets go. */
+const REP_LABELS = localizedStrings({ merchants: 'Merchants', commoners: 'Peasants', scholars: 'Scholars', nobility: 'Nobility', underworld: 'Underworld' }), repLabel = (g) => REP_LABELS[g === 'peasants' ? 'commoners' : g];   // the painted art's word; DFU keys the group 'commoners'
+function customRepPane(c) {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'skillpane');
+  const sec = el('div', 'skillgroup');
+  const head = el('div', 'skillhead');
+  head.append(el('span', 'skillk', 'Reputations'));
+  const pts = c.repPoints ?? 0;
+  head.append(el('span', 'skillpool', pts === 0 ? 'balanced' : `${pts} to distribute`));
+  sec.append(head);
+  sec.append(el('div', 'row-note', 'How each group regards a new member of this class, from -' + REP_MAX + ' to +' + REP_MAX + '. Every point you add to one group must come from another.'));
+  for (const group of REP_GROUPS) {
+    const row = el('div', 'row');
+    const main = el('div', 'row-main');
+    main.append(el('div', 'row-name', repLabel(group)));
+    row.append(main);
+    row.append(stepper(c.reps?.[group] ?? 0, (dir) => { flow.applyHit({ repStep: { group, dir } }); paint(); }));
+    sec.append(row);
+  }
+  wrap.append(sec);
+  const a = el('div', 'acts');
+  const done = el('button', 'act primary', 'Done');
+  done.onclick = () => { flow.applyHit({ repExit: true }); paint(); };
+  a.append(done);
+  wrap.append(a);
+  pane.append(wrap);
+  return pane;
+}
+
+function customClassStage() {
+  const c = flow.custom;
+  if (!c) return pendingStage(STAGE_RAIL[stageOf(flow.state)]);
+  // Every popup is MODAL over the builder, in the flow's own order.
+  if (c.box) return customBoxPane(c);
+  if (c.pickList || c.sub === 'skillPick' || c.sub === 'help') return customPickerPane(c);
+  if (c.sub === 'advantage' || c.sub === 'disadvantage') return customAdvPane(c);
+  if (c.sub === 'rep') return customRepPane(c);   // CC-REP
+
+  const pane = el('div', 'stagebody solo');
+  // CC-GRID (Ember: "the custom class building menu being in a list is
+  // a bit clunky ... as a list it means having to scroll around to see
+  // all the options"): the builder is a grid on a wide screen - the
+  // twelve skills down one side, the attributes and the class itself
+  // beside them, the name across the top and the acts across the foot -
+  // so the whole class is on one page. Below 900px it is the one list it
+  // always was (enhancedStyle.js .skillpane.builder). UXB1-J: THREE
+  // columns on a desk - the skills, the attributes, and the class itself
+  // under its name with the acts beneath - so 16:9 needs no scroll; the
+  // DOM keeps the phone's reading order and the grid areas place it.
+  const wrap = el('div', 'skillpane builder');
+
+  // THE NAME. The FLOW owns the text, as the name screen's box does -
+  // its cap is the TextBox default the flow enforces, not this input's.
+  const box = el('input', 'namebox');
+  box.type = 'text';
+  box.value = c.className;
+  box.maxLength = NAME_MAX;
+  box.autocomplete = 'off';
+  box.spellcheck = false;
+  box.setAttribute('aria-label', 'What is this class called?');
+  box.placeholder = 'What is this class called?';
+  box.oninput = () => {
+    const next = box.value;
+    while (flow.custom.className.length) flow.input('backspace');
+    for (const ch of next) flow.input(`char:${ch}`);
+    box.value = flow.custom.className;
+  };
+  box.classList.add('span');
+  box.classList.add('b-name');
+  wrap.append(box);
+
+  // THE TWELVE SLOTS, in the three groups the builder writes them to.
+  const skillsCol = el('div', 'builder-col b-skills');
+  for (const [label, from, to] of CUSTOM_SKILL_GROUPS) {
+    const sec = el('div', 'skillgroup');
+    const head = el('div', 'skillhead');
+    head.append(el('span', 'skillk', label));
+    sec.append(head);
+    for (let slot = from; slot < to; slot++) {
+      const id = c.skills[slot];
+      const row = el('div', 'row');
+      const main = el('button', 'row-main');
+      main.append(el('div', 'row-name', id == null ? 'Choose a skill' : (SKILL_NAMES[id] ?? `Skill ${id}`)));
+      main.onclick = () => { flow.applyHit({ customSkill: slot }); paint(); };
+      row.append(main);
+      sec.append(row);
+    }
+    skillsCol.append(sec);
+  }
+  wrap.append(skillsCol);
+
+  // THE FREE-EDIT LEDGER. StatsRollout's spinners clamp 10..75 and the
+  // POOL is free to go negative - the exit gate is what demands the
+  // balance, so the pool is shown rather than the buttons disabled.
+  const attrsCol = el('div', 'builder-col b-attrs');
+  const stats = el('div', 'skillgroup');
+  const statHead = el('div', 'skillhead');
+  statHead.append(el('span', 'skillk', 'Attributes'));
+  statHead.append(el('span', 'skillpool', c.statPool === 0 ? 'balanced' : `${c.statPool} in hand`));
+  stats.append(statHead);
+  STAT_KEYS_ORDER.forEach((key, i) => {
+    const row = el('div', `row${i === c.statCursor ? ' on' : ''}`);
+    const main = el('button', 'row-main');
+    main.append(el('div', 'row-name', attrName(key)));
+    main.title = ATTRIBUTE_BLURB[key];   // UXB1-G
+    main.onclick = () => { flow.applyHit({ customStatCursor: i }); paint(); };
+    row.append(main);
+    row.append(stepper(c.stats[key], (dir) => {
+      flow.applyHit({ customStatCursor: i });
+      flow.applyHit({ customStatStep: dir });
+      paint();
+    }));
+    stats.append(row);
+  });
+  stats.append(attrHelp(STAT_KEYS_ORDER[c.statCursor]));   // UXB1-G: the selected attribute, in words
+  attrsCol.append(stats);
+  wrap.append(attrsCol);
+
+  // THE SHAPE OF THE CLASS: hit points, what it is good and bad at,
+  // and the dagger - which reads difficultyPoints over the hit points
+  // AND both special adjustments, so it moves as you spend.
+  const classCol = el('div', 'builder-col b-class');
+  const shape = el('div', 'skillgroup');
+  const shapeHead = el('div', 'skillhead');
+  shapeHead.append(el('span', 'skillk', 'The class itself'));
+  shape.append(shapeHead);
+  const hp = el('div', 'row');
+  const hpMain = el('div', 'row-main');
+  hpMain.append(el('div', 'row-name', 'Hit points per level'));
+  hp.append(hpMain);
+  hp.append(stepper(c.hp, (dir) => { flow.applyHit({ customHp: dir }); paint(); }));
+  shape.append(hp);
+  // CC-REP: the ReputationButton's row - what the ledger says now, and
+  // the window behind it.
+  const repSet = REP_GROUPS.filter((g) => (c.reps?.[g] ?? 0) !== 0);
+  const repNote = !repSet.length ? 'every group neutral'
+    : repSet.map((g) => `${repLabel(g)} ${c.reps[g] > 0 ? '+' : ''}${c.reps[g]}`).join(', ');
+  for (const [label, note, hit] of [
+    ['Special advantages', c.advantages.length ? `${c.advantages.length} taken` : 'none taken', { customAdvantage: true }],
+    ['Special disadvantages', c.disadvantages.length ? `${c.disadvantages.length} taken` : 'none taken', { customDisadvantage: true }],
+    ['Reputations', repNote, { customRep: true }],
+  ]) {
+    const row = el('div', 'row');
+    const main = el('button', 'row-main');
+    main.append(el('div', 'row-name', label));
+    main.append(el('div', 'row-note', note));
+    main.onclick = () => { flow.applyHit(hit); paint(); };
+    row.append(main);
+    shape.append(row);
+  }
+  shape.append(daggerGauge(flow.customDifficulty()));   // UXB1-I: the dagger, where the tally stood
+  classCol.append(shape);
+  wrap.append(classCol);
+
+  const a = el('div', 'acts span b-acts');
+  const make = el('button', 'act primary', 'Create this class');
+  make.onclick = () => { flow.applyHit({ customExit: true }); paint(); };
+  const help = el('button', 'act', 'What do these mean?');
+  help.onclick = () => { flow.applyHit({ customHelp: true }); paint(); };
+  // UXB1-H: the class, to a file or the clipboard and back
+  const exp = el('button', `act class-export${classIo === 'export' ? ' on' : ''}`, 'Export');
+  exp.onclick = () => { classIo = classIo === 'export' ? null : 'export'; classIoNote = null; paint(); };
+  const imp = el('button', `act class-import${classIo === 'import' ? ' on' : ''}`, 'Import');
+  imp.onclick = () => { classIo = classIo === 'import' ? null : 'import'; classIoNote = null; paint(); };
+  a.append(make, help, exp, imp);
+  wrap.append(a);
+  if (classIo) wrap.append(classIoCard());
+  pane.append(wrap);
+  return pane;
+}
+
+// ── UXB1-G: WHAT AN ATTRIBUTE DOES ───────────────────────────────
+// (2026-09-25, the UX backlog: "Stat explanations on hover/tiny button (Minimizes need for external resources)".)
+// DFU's stats screen explains nothing - its attribute buttons only select (chargenArt.js's setStatCursor) - so a
+// new player met eight bare words. The lines are the level-up screen's (levelUpView.js ATTRIBUTE_BLURB: the port's
+// own words, each annotated with the formula it is true of), shown on hover (a row's title) and, for the attribute
+// selected - by a click, a tap or the arrows - in words beside it.
+function attrHelp(key) {
+  const box = el('div', 'attrhelp');
+  box.append(el('h4', null, attrName(key ?? '')));
+  box.append(el('p', null, ATTRIBUTE_BLURB[key] ?? ''));
+  return box;
+}
+
+// ── UXB1-I: THE DIFFICULTY DAGGER ────────────────────────────────
+// (2026-09-25, the UX backlog: "Restore the difficulty dagger or some other similar visual indicator".) The classic
+// builder slides CUST08I0's dagger up its gauge as the class grows stronger (UpdateDifficulty :500-511); this view
+// showed one bare number. The gauge is DFU's track laid on its side: the dagger stands where daggerY puts it
+// (customClass.js daggerFraction - the same lopsided scale), the band between the two limits is the one Create
+// allows (-12..40, TEXT.RSC 306 outside it), and the words say what the dagger costs: the advancement multiplier the
+// career will carry (:498), which is how much slower every skill trains.
+function daggerGauge(points) {
+  const inRange = points >= DIFFICULTY_MIN && points <= DIFFICULTY_MAX;
+  const g = el('div', `dagger${inRange ? '' : ' red'}`);
+  g.setAttribute('role', 'meter');
+  g.setAttribute('aria-valuemin', String(DIFFICULTY_MIN));
+  g.setAttribute('aria-valuemax', String(DIFFICULTY_MAX));
+  g.setAttribute('aria-valuenow', String(points));
+  const head = el('div', 'dagger-head');
+  head.append(el('span', 'skillk', 'Difficulty'));
+  head.append(el('span', 'dagger-val', `${points > 0 ? '+' : ''}${points}`));
+  g.append(head);
+  const track = el('div', 'dagger-track');
+  const pct = (p) => `${(daggerFraction(p) * 100).toFixed(2)}%`;
+  const band = el('span', 'dagger-band');
+  band.style.left = pct(DIFFICULTY_MIN);
+  band.style.width = `${((daggerFraction(DIFFICULTY_MAX) - daggerFraction(DIFFICULTY_MIN)) * 100).toFixed(2)}%`;
+  const zero = el('span', 'dagger-zero');
+  zero.style.left = pct(0);
+  const mark = el('span', 'dagger-mark');
+  mark.style.left = pct(points);
+  mark.append(daggerGlyph());
+  track.append(band, zero, mark);
+  g.append(track);
+  const ends = el('div', 'dagger-ends');
+  ends.append(el('span', null, 'weaker'), el('span', null, 'stronger'));
+  g.append(ends);
+  g.append(el('div', 'row-note dagger-note', inRange
+    ? `Skills advance at \u00d7${advancementMultiplier(points).toFixed(2)} the effort.`
+    : 'The dagger is in the red: bring it back inside the band to create this class.'));
+  return g;
+}
+/** The port's own dagger, drawn in the skin's ink - a blade, a guard, a grip (not CUST08I0: this view reads no art). */
+function daggerGlyph() {
+  const g = svg('svg', { viewBox: '0 0 16 40', width: '16', height: '40', 'aria-hidden': 'true', class: 'dagger-glyph' });
+  g.append(svg('path', { d: 'M8 0 L11 23 L5 23 Z', class: 'dagger-blade' }));
+  g.append(svg('rect', { x: '1', y: '23', width: '14', height: '3', class: 'dagger-guard' }));
+  g.append(svg('rect', { x: '6.5', y: '26', width: '3', height: '10', class: 'dagger-grip' }));
+  g.append(svg('circle', { cx: '8', cy: '37.5', r: '2.5', class: 'dagger-guard' }));
+  return g;
+}
+
+// ── UXB1-H: THE CLASS, TO A FILE AND BACK ────────────────────────
+// (2026-09-25, the UX backlog: "Export/Import class from file/clipboard.") The document and every law it is read
+// back through are systems/customClass.js's (customClassDoc / parseCustomClassDoc); the flow's one door loads it
+// (ChargenFlow.customImport). This is only the card: the clipboard and a file each way, and a box to paste into
+// where a browser will not let the page read the clipboard.
+let classIo = null;       // null | 'export' | 'import' - which card the acts opened (the view's own state, not the flow's)
+let classIoNote = null;   // the card's last word: done, or why not
+export const CLASS_FILE_EXT = '.dfclass.json';
+export const classFileName = (name) => `${String(name || 'custom class').trim().replace(/[^\w -]+/g, '').replace(/\s+/g, '-').toLowerCase() || 'custom-class'}${CLASS_FILE_EXT}`;
+const classDocText = () => JSON.stringify(customClassDoc(flow.custom), null, 2);
+function classIoCard() {
+  const card = el('div', 'card classio span b-io');
+  const say = (t) => { classIoNote = t; paint(); };
+  if (classIo === 'export') {
+    card.append(el('h3', null, 'Export this class'));
+    card.append(el('p', 'row-note', 'Everything you chose here: the name, skills, attributes, special advantages and disadvantages, and reputations.'));
+    const acts = el('div', 'acts');
+    const copy = el('button', 'act primary', 'Copy to clipboard');
+    copy.onclick = async () => {
+      try { await globalThis.navigator.clipboard.writeText(classDocText()); say('Copied. Paste it into Import on any DFO Online character.'); }
+      catch { say('The browser blocked copying to the clipboard. Save it as a file instead.'); }
+    };
+    const save = el('button', 'act', 'Save as a file');
+    save.onclick = () => {
+      const name = classFileName(flow.custom.className);
+      const url = URL.createObjectURL(new Blob([classDocText()], { type: 'application/json' }));
+      const link = document.createElement('a');
+      link.href = url; link.download = name;
+      document.body.append(link); link.click(); link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      say(`Saved as ${name}.`);
+    };
+    acts.append(copy, save);
+    card.append(acts);
+  } else {
+    card.append(el('h3', null, 'Import a class'));
+    card.append(el('p', 'row-note', 'A class exported from this screen. It replaces the class you are building, and Create still checks it.'));
+    const field = el('textarea', 'classio-text');
+    field.setAttribute('aria-label', 'Paste a class here');
+    field.placeholder = 'Paste a class here';
+    field.rows = 3;
+    field.spellcheck = false;
+    card.append(field);
+    const load = (text) => {
+      const r = flow.customImport(text);
+      if (!r.ok) { say(r.error); return; }
+      classIo = null;
+      say(r.skipped.length ? `Loaded. ${r.skipped.length} special pick${r.skipped.length === 1 ? '' : 's'} this screen could not take ${r.skipped.length === 1 ? 'was' : 'were'} left out.` : 'Loaded.');
+    };
+    const acts = el('div', 'acts');
+    const go = el('button', 'act primary', 'Load');
+    go.onclick = () => load(field.value);
+    const paste = el('button', 'act', 'Paste from clipboard');
+    paste.onclick = async () => {
+      try { load(await globalThis.navigator.clipboard.readText()); }
+      catch { say('The browser blocked reading the clipboard. Paste into the box instead.'); }
+    };
+    const open = el('button', 'act', 'Open a file');
+    open.onclick = () => {
+      const input = document.createElement('input');
+      input.type = 'file';
+      input.accept = `${CLASS_FILE_EXT},.json,application/json,text/plain`;
+      input.onchange = async () => { const f = input.files?.[0]; if (f) load(await f.text()); };
+      input.click();
+    };
+    acts.append(go, paste, open);
+    card.append(acts);
+  }
+  if (classIoNote) card.append(el('p', 'classio-note', classIoNote));
+  return card;
+}
+
+// ── HOW YOUR HISTORY IS WRITTEN ──────────────────────────────────
+// WizardStages.SelectBiographyMethod. Same two-button shape as the
+// class method, and the same law: both handlers close, so a press
+// chooses and goes. The GENERATE arm is not a skip - it answers every
+// question at rand.Next(0, Count) and lands every effect, which is why
+// it says so rather than reading as "none of this".
+function bioMethodStage() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  wrap.append(el('h2', null, 'Where have you been?'));
+  const row = el('div', 'bigchoice tall');
+  const ask = el('button', 'bigbtn');
+  ask.append(el('span', 'bigk', 'Answer twelve questions'));
+  ask.append(el('span', 'bign', 'Your answers move skills, gold, gear and how people take to you.'));
+  ask.onclick = () => { flow.applyHit({ bioMethod: 'questions' }); paint(); };
+  const auto = el('button', 'bigbtn');
+  auto.append(el('span', 'bigk', 'Let it be written for you'));
+  auto.append(el('span', 'bign', 'Answered at random, and every answer still counts.'));
+  auto.onclick = () => { flow.applyHit({ bioMethod: 'generate' }); paint(); };
+  row.append(ask, auto);
+  wrap.append(row);
+  pane.append(wrap);
+  return pane;
+}
+
+// ── THE TWELVE QUESTIONS ─────────────────────────────────────────
+// One question, its answers, and nothing else - DFU's screen shows the
+// question above ten answer buttons in two columns, and the reason to
+// keep it to one column here is that the answers are SENTENCES, not
+// labels. The last answer composes the backstory and pops the
+// reputation box (TEXT.RSC 35), which is a ClickAnywhereToClose in
+// DFU and a single button here.
+function biographyStage() {
+  const pane = el('div', 'stagebody solo');
+  const q = flow.biogQuestion();
+  if (!q) return pendingStage(STAGE_RAIL[stageOf(flow.state)]);
+  const wrap = el('div', 'question');
+  const total = flow.biogFor?.(flow.classIndex)?.questions?.length ?? 0;
+  wrap.append(el('div', 'qcount', total ? `Question ${flow.biogQuestionIndex + 1} of ${total}` : ''));
+  // BiogFile parses a question as TWO lines (q.text is [l0, l1]) and
+  // the second is often empty - a question is one sentence here, so
+  // the pair joins rather than the first winning.
+  wrap.append(el('h2', null, (Array.isArray(q.text) ? q.text : [q.text])
+    .filter((l) => l && l.trim()).join(' ')));
+  const answers = el('div', 'answers');
+  (q.answers ?? []).forEach((a, i) => {
+    const b = el('button', 'answer', a.text ?? String(a));
+    b.onclick = () => { flow.answerBiography(i); paint(); };
+    answers.append(b);
+  });
+  wrap.append(answers);
+  pane.append(wrap);
+  return pane;
+}
+
+/**
+ * THE REPUTATION BOX IS NOT A STAGE, it is a box over one - and over
+ * EITHER of two, which is why it sits here and not inside a stage
+ * renderer. DFU pushes it over the biography questions when the last
+ * answer lands and over the bio-METHOD screen when the generate arm
+ * runs (:444), so the state underneath is 'biography' one way and
+ * 'bioMethod' the other. Keying it to a state rendered it in one case
+ * and swallowed it in the other, which is exactly what the walk found:
+ * the generate arm appeared to do nothing at all.
+ *
+ * ClickAnywhereToClose in DFU; one button here, through the flow's own
+ * key arm so the close and the advance stay its decision.
+ */
+function repBoxPane() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  wrap.append(el('h2', null, 'Word gets around'));
+  const card = el('div', 'card repbox');
+  for (const row of flow.biogRepBox) {
+    const text = typeof row === 'string' ? row : row.text;
+    if (text?.trim()) card.append(el('p', null, text));
+  }
+  wrap.append(card);
+  pane.append(wrap);
+  // CHARGEN-REFLEX: declared, not drawn - see reflexStage.
+  stagePrimary = { label: 'Go on', act: () => { flow.input('confirm'); paint(); } };
+  return pane;
+}
+
+// ── YOUR NAME ────────────────────────────────────────────────────
+// A text box and the RANDOM button, which is not a garnish: DFU
+// disables it until a race template exists (which is what forced U15's
+// reorder) and reseeds DFRandom on every push of the screen, because
+// without that every character of a race and gender got the same
+// suggestion on every boot (AUDIT 17j F1). The reseed already happened
+// in _enterName; this only has to press the button.
+//
+// An EMPTY name does not advance - AcceptName's own law - so the
+// primary is disabled rather than silently inert.
+function nameStage() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  wrap.append(el('h2', null, 'What are you called?'));
+
+  const box = el('input', 'namebox');
+  box.type = 'text';
+  box.value = flow.name;
+  box.maxLength = NAME_MAX;
+  box.autocomplete = 'off';
+  box.spellcheck = false;
+  // The FLOW owns the text, so typing is fed through its own char /
+  // backspace actions rather than assigned: NAME_MAX_CHARACTERS is
+  // TextBox's 31 (AUDIT 17j F5 - the port had capped it at 16, short
+  // enough to cut real names and to mint a random name you could not
+  // retype), and the cap belongs to the flow, not to this input.
+  box.oninput = () => {
+    const next = box.value;
+    while (flow.name.length) flow.input('backspace');
+    for (const ch of next) flow.input(`char:${ch}`);
+    box.value = flow.name;
+    if (nameOk) nameOk.disabled = !flow.name.length;
+  };
+  box.onkeydown = (e) => { if (e.key === 'Enter' && flow.name.length) { flow.input('confirm'); paint(); } };
+  wrap.append(box);
+
+  // 'Suggest one' is not the stage's PRIMARY and stays on the stage;
+  // Continue is declared, so the action bar carries it (CHARGEN-REFLEX).
+  const a = el('div', 'acts');
+  const dice = el('button', 'act', 'Suggest one');
+  dice.onclick = () => { flow.applyHit({ randomName: true }); paint(); };
+  a.append(dice);
+  wrap.append(a);
+  pane.append(wrap);
+  // AcceptName (CreateCharNameSelect.cs:137-140) leaves an empty name
+  // INERT rather than refusing loudly; the enhanced skin shows that as
+  // a disabled primary instead, so the button has to follow the box as
+  // it is typed into - `bind` hands the stage the button the bar drew.
+  stagePrimary = {
+    label: 'Continue',
+    disabled: !flow.name.length,
+    act: () => { flow.input('confirm'); paint(); },
+    bind: (btn) => { nameOk = btn; },
+  };
+  requestAnimationFrame(() => box.focus());
+  return pane;
+}
+
+// ── YOUR FACE ────────────────────────────────────────────────────
+// Ten head records in the race-and-gender FACE CIF. DFU shows ONE with
+// a previous/next pair, because it has 320x200; ten portraits fit here
+// side by side, and a picker you can see all of is a picker you make
+// one decision in rather than ten.
+//
+// The picker's value is the SCREEN's, not the document's (AUDIT 18:
+// SetFaceTextures runs `facePicker.FaceIndex = 0` on every push, so
+// re-entering always shows face 0, while the cancel arm writes nothing
+// back and the previously accepted face survives an Escape). So this
+// reads and writes flow.facePick and lets the flow's own confirm
+// commit it.
+function faceStage() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  wrap.append(el('h2', null, 'Which face is yours?'));
+
+  if (!faces?.canvases?.length) {
+    // NEVER TRAPS: no CIF, no portraits, and the wizard still walks.
+    wrap.append(el('p', 'mapnote', 'The portraits for this race could not be loaded. Any of the ten will do.'));
+  }
+  const grid = el('div', 'facegrid');
+  for (let i = 0; i < FACES_PER_RACE; i++) {
+    const b = el('button', `facecell${i === flow.facePick ? ' on' : ''}`);
+    const art = faces?.canvases?.[i];
+    // NOT cloneNode: cloning a canvas copies its size and NOT its
+    // pixels, which is a blank portrait that looks exactly like a
+    // portrait that failed to load. The nodes are cached per identity
+    // and simply move into the fresh DOM on each repaint.
+    if (art) b.append(art);
+    else b.append(el('span', 'facenum', String(i + 1)));
+    b.onclick = () => { flow.facePick = i; paint(); };
+    grid.append(b);
+  }
+  wrap.append(grid);
+
+  const a = el('div', 'acts');
+  const ok = el('button', 'act primary', 'This one');
+  ok.onclick = () => { flow.input('confirm'); paint(); };
+  a.append(ok);
+  wrap.append(a);
+  pane.append(wrap);
+  ensureFaces();
+  return pane;
+}
+
+/** Load the identity's ten heads, once, and repaint when they land.
+ *  Coalesces the way chargenArt's own loader does - a race change
+ *  mid-load must not leave a Khajiit wearing Breton heads. */
+function ensureFaces() {
+  if (!loadFaces) return;
+  const want = `${flow.race.key}|${flow.gender}`;
+  if (faces?.key === want || faces?.pending === want) return;
+  faces = { key: null, pending: want, canvases: [] };
+  loadFaces(flow.race.key, flow.gender).then((set) => {
+    if (faces?.pending !== want) return;
+    faces = { key: want, canvases: set ?? [] };
+    if (flow.state === 'face') paint();
+  }).catch((e) => {
+    console.warn('[chargen] the FACE CIF would not load', e);
+    faces = { key: want, canvases: [] };
+  });
+}
+
+// ── ATTRIBUTES ───────────────────────────────────────────────────
+// StatsRollout: eight values rolled for the career, a bonus pool to
+// spend, and the seven DERIVED figures that move as you spend - which
+// belong to CreateCharAddBonusStats' own panel and not to the rollout
+// (U16 found them drawn across the summary's skill panels for exactly
+// that reason).
+//
+// The pool is the gate: DFU will not leave this screen until it is
+// spent, so the primary says how many are left rather than refusing
+// silently.
+function statsStage() {
+  const pane = el('div', 'stagebody stacked');   // FIELD 2026-09-27: one scrolling column on a phone (enhancedStyle.js)
+
+  const list = el('div', 'list');
+  // CHAR1 (2026-09-15, a player through Mac: "show the total dice rolls
+  // in the enhanced character creator"): the roll said out loud. The
+  // eight values and the bonus pool are both rolled, and nothing on
+  // either screen ever added them up - so "is this a good roll?" was
+  // eight numbers of mental arithmetic before every press of Roll
+  // again. The pair is `now -> final` while the pool is unspent,
+  // because the final figure is the one that does not move (the steps
+  // are zero-sum, ChargenFlow.statTotalFinal) and is what the
+  // character walks out with; once the pool is spent they are the same
+  // number and only one is shown.
+  list.append(poolBar('points to spend', flow.statPool, {
+    label: 'attribute total',
+    value: flow.statPool > 0 ? `${flow.statTotalNow} \u2192 ${flow.statTotalFinal}` : flow.statTotalNow,
+  }));
+  STAT_KEYS_ORDER.forEach((key, i) => {
+    const row = el('div', `row${i === flow.statCursor ? ' on' : ''}`);
+    const main = el('button', 'row-main');
+    main.append(el('div', 'row-name', attrName(key)));
+    main.title = ATTRIBUTE_BLURB[key];   // UXB1-G: on hover
+    main.onclick = () => { flow.applyHit({ setStatCursor: i }); paint(); };
+    row.append(main);
+    row.append(stepper(flow.stats?.[key] ?? 0, (dir) => {
+      flow.applyHit({ setStatCursor: i });
+      flow.applyHit({ statStep: dir });
+      paint();
+    }));
+    list.append(row);
+  });
+  pane.append(list);
+
+  const detail = el('div', 'detail');
+  const d = el('div', 'dcard');
+  d.append(attrHelp(STAT_KEYS_ORDER[flow.statCursor]));   // UXB1-G: and for the one selected - the pointer-less way in
+  d.append(el('h3', null, 'What these buy you'));
+  const dl = el('dl', 'stats');
+  const derived = flow.derived() ?? {};
+  for (const [k, label] of [['damage', 'Damage'], ['encumbrance', 'Carry weight'],
+    ['spellPoints', 'Spell points'], ['magicResist', 'Magic resistance'],
+    ['toHit', 'To hit'], ['hitPoints', 'Hit points'], ['healingRate', 'Healing rate']]) {
+    if (derived[k] == null) continue;
+    dl.append(el('dt', null, label), el('dd', null, derived[k]));
+  }
+  d.append(dl);
+  const a = el('div', 'acts');
+  const ok = el('button', 'act primary', flow.statPool > 0 ? `${flow.statPool} left to spend` : 'Continue');
+  ok.disabled = flow.statPool > 0;
+  ok.onclick = () => { flow.input('confirm'); paint(); };
+  const again = el('button', 'act', 'Roll again');
+  again.onclick = () => { flow.reroll(); paint(); };
+  a.append(ok, again);
+  d.append(a);
+  detail.append(d);
+  pane.append(detail);
+  return pane;
+}
+
+// ── SKILLS ───────────────────────────────────────────────────────
+// SkillsRollout has THREE spinners, one per group, each with its own
+// selected skill and its OWN pool (U17 shipped that after the port had
+// drawn one spinner on a shared row and left two pools invisible). So
+// the groups are three sections with three pools, and a skill's own
+// group is where its points come from.
+function skillsStage() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'skillpane skills3');   // UXB1-J: the three groups side by side on a desk
+  let cursor = 0;
+  for (const [group, ids] of flow.skillRows()) {
+    const sec = el('div', 'skillgroup');
+    const head = el('div', 'skillhead');
+    head.append(el('span', 'skillk', group[0].toUpperCase() + group.slice(1)));
+    head.append(el('span', 'skillpool', `${flow.pools?.[group] ?? 0} to spend`));
+    sec.append(head);
+    for (const id of ids) {
+      const at = cursor++;
+      const row = el('div', `row${at === flow.skillCursor ? ' on' : ''}`);
+      const main = el('button', 'row-main');
+      main.append(el('div', 'row-name', SKILL_NAMES[id] ?? `Skill ${id}`));
+      main.onclick = () => { flow.applyHit({ setSkillCursor: at }); paint(); };
+      row.append(main);
+      row.append(stepper(flow.skills?.[id] ?? 0, (dir) => {
+        flow.applyHit({ setSkillCursor: at });
+        flow.applyHit({ skillStep: dir, group });
+        paint();
+      }));
+      sec.append(row);
+    }
+    wrap.append(sec);
+  }
+  const left = Object.values(flow.pools ?? {}).reduce((n, v) => n + v, 0);
+  const a = el('div', 'acts');
+  const ok = el('button', 'act primary', left > 0 ? `${left} left to spend` : 'Continue');
+  ok.disabled = left > 0;
+  ok.onclick = () => { flow.input('confirm'); paint(); };
+  a.append(ok);
+  wrap.append(a);
+  pane.append(wrap);
+  return pane;
+}
+
+// CHAR1: the bar carries one figure or two. It is STICKY, so a second
+// bar would have sat on top of the first one the moment the list
+// scrolled - the total joins the pool in the one row instead.
+function poolBar(label, n, right = null) {
+  const row = el('div', 'poolbar');
+  const cell = (k, v) => {
+    const c = el('span', 'poolcell');
+    c.append(el('span', 'poolk', k));
+    c.append(el('span', 'poolv', String(v)));
+    return c;
+  };
+  row.append(cell(label, n ?? 0));
+  if (right) row.append(cell(right.label, right.value));
+  return row;
+}
+
+function stepper(value, step) {
+  const ctl = el('div', 'ctl');
+  ctl.append(el('span', 'val', String(value)));
+  // CC-STEP (Ember: "the + and - symbols on the buttons seem a bit
+  // small"): a MINUS SIGN and a PLUS, drawn at the button's own size
+  // (enhancedStyle.js .step), in place of the single angle quotes
+  // that read as specks on a large monitor.
+  for (const [dir, glyph] of [[-1, '\u2212'], [1, '+']]) {
+    const b = el('button', 'step', glyph);
+    b.setAttribute('aria-label', dir < 0 ? 'less' : 'more');
+    b.onclick = () => step(dir);
+    ctl.append(b);
+  }
+  return ctl;
+}
+
+// ── REFLEXES ─────────────────────────────────────────────────────
+// Five bands, and not cosmetic: the EnemyAttack melee timer and the
+// monster multi-attack gate both read this, and both read a hardcoded
+// Average for slices because nothing could set it until U13 built the
+// screen. Faster reflexes mean faster enemies, which is why the band
+// says what it costs rather than only what it is.
+const REFLEX_ROWS = Object.freeze([
+  ['VeryHigh', 'Very High', 'Enemies strike fastest.'],
+  ['High', 'High', 'Enemies strike faster.'],
+  ['Average', 'Average', 'The pace the game is balanced for.'],
+  ['Low', 'Low', 'Enemies strike slower.'],
+  ['VeryLow', 'Very Low', 'Enemies strike slowest.'],
+]);
+
+function reflexStage() {
+  const pane = el('div', 'stagebody solo');
+  const wrap = el('div', 'choose');
+  wrap.append(el('h2', null, 'How quick are you?'));
+  const col = el('div', 'bigchoice tall');
+  for (const [key, label, note] of REFLEX_ROWS) {
+    const v = PLAYER_REFLEXES[key];
+    const b = el('button', `bigbtn${flow.reflexes === v ? ' on' : ''}`);
+    b.append(el('span', 'bigk', label));
+    b.append(el('span', 'bign', note));
+    b.onclick = () => { flow.applyHit({ setReflexes: v }); paint(); };
+    col.append(b);
+  }
+  wrap.append(col);
+  pane.append(wrap);
+  // CHARGEN-REFLEX: this stage's Continue is DECLARED, not drawn here.
+  // It used to live in a `.acts` row at the bottom of `.choose`, and
+  // `.choose` is centred and full-height: on any window shorter than
+  // the five answers need, the row overflowed past the bottom of
+  // `.stagebody` and the opaque `.actionbar` painted straight over it.
+  // The button was visible and un-clickable - `elementFromPoint` at
+  // its centre answered `.actionbar` - which is what a player reported
+  // as a wizard that could not be finished. Every OTHER `.choose`
+  // stage advances on the ANSWER itself and so has no such row; this
+  // one needs a separate confirm because the band is pre-selected.
+  // So the confirm goes where Back already lives: the action bar is
+  // outside the scrolling stage and is always on screen.
+  stagePrimary = { label: 'Continue', act: () => { flow.input('confirm'); paint(); } };
+  return pane;
+}
+
+// ── REVIEW ───────────────────────────────────────────────────────
+// CreateCharSummary, and the stage that CLOSES the wizard - nothing
+// else sets state to 'done'. It is barely a layout of its own in DFU
+// either: it composites the stats rollout, the skills rollout, the
+// face picker, the reflex picker and a name box, all of which exist.
+//
+// THE OK GATE IS FOUR POOLS, not one, because the summary lets you
+// take points back DOWN off any of them, and unspent points pop
+// TEXT.RSC 14 rather than closing the window.
+//
+// AND THE NAME AND REFLEXES ARE THE SUMMARY'S OWN. Backing out reverts
+// both - SummaryWindow_OnClose's cancel copies back the skills, the
+// stats, the pools and the face and nothing else - so this edits
+// sumName and sumReflexes and lets confirmSummary write them through.
+// RESTART is soft: the document survives.
+function summaryStage() {
+  const pane = el('div', 'stagebody stacked');   // FIELD 2026-09-27: one scrolling column on a phone (enhancedStyle.js)
+
+  if (flow.poolBox) {
+    const solo = el('div', 'stagebody solo');
+    const wrap = el('div', 'choose');
+    wrap.append(el('h2', null, 'Points left to spend'));
+    const card = el('div', 'card repbox');
+    for (const row of flow.poolBox) {
+      const text = typeof row === 'string' ? row : row.text;
+      if (text?.trim()) card.append(el('p', null, text));
+    }
+    const a = el('div', 'acts');
+    const ok = el('button', 'act primary', 'Back to it');
+    ok.onclick = () => { flow.input('confirm'); paint(); };
+    a.append(ok);
+    card.append(a);
+    wrap.append(card);
+    solo.append(wrap);
+    return solo;
+  }
+
+  const list = el('div', 'list');
+  const face = faces?.canvases?.[flow.faceIndex] ?? null;
+  const who = el('div', 'reviewhead');
+  const portrait = el('div', 'reviewface');
+  if (face) portrait.append(face);
+  who.append(portrait);
+
+  const box = el('input', 'namebox small');
+  box.type = 'text';
+  box.value = flow.sumName ?? '';
+  box.oninput = () => {
+    const next = box.value;
+    while (flow.sumName.length) flow.input('backspace');
+    for (const ch of next) flow.input(`char:${ch}`);
+    box.value = flow.sumName;
+  };
+  const idcol = el('div', 'reviewid');
+  idcol.append(box);
+  idcol.append(el('div', 'reviewsub',
+    `${PROVINCE_NAMES[flow.race.key] ?? ''} \u00b7 ${raceDisplayName(flow.race.key)} \u00b7 ${flow.classRowName(flow.classIndex)}`));
+  who.append(idcol);
+  list.append(who);
+
+  // UXB1-J: the review in three columns on a desk - the attributes, the primary and major skills, the minor ones -
+  // so the whole character is one screen at 16:9; one column (the list it was) everywhere else.
+  const grid = el('div', 'reviewgrid');
+  const cols = [el('div', 'reviewcol'), el('div', 'reviewcol'), el('div', 'reviewcol')];
+  // AUDIT 64 F33: the SUMMARY's own rollout pool. CHAR1: and its own
+  // total, because this screen edits the same eight values and asks the
+  // same question - statTotalFinal reads whichever pool is on screen.
+  cols[0].append(sectionHead('Attributes', flow.sumStatPool ?? 0, flow.statTotalFinal));
+  STAT_KEYS_ORDER.forEach((key, i) => {
+    const row = reviewRow(attrName(key), flow.stats?.[key] ?? 0, (dir) => {
+      flow.applyHit({ setStatCursor: i });
+      flow.applyHit({ statStep: dir });
+      paint();
+    });
+    row.title = ATTRIBUTE_BLURB[key];   // UXB1-G
+    cols[0].append(row);
+  });
+
+  let cursor = 0;
+  flow.skillRows().forEach(([group, ids], g) => {
+    const col = cols[g < 2 ? 1 : 2];   // primary and major share the middle column, minor the last
+    col.append(sectionHead(group[0].toUpperCase() + group.slice(1), flow.pools?.[group] ?? 0));
+    for (const id of ids) {
+      const at = cursor++;
+      col.append(reviewRow(SKILL_NAMES[id] ?? `Skill ${id}`, flow.skills?.[id] ?? 0, (dir) => {
+        flow.applyHit({ setSkillCursor: at });
+        flow.applyHit({ skillStep: dir, group });
+        paint();
+      }));
+    }
+  });
+  grid.append(...cols);
+  list.append(grid);
+  pane.append(list);
+
+  const detail = el('div', 'detail');
+  const d = el('div', 'dcard');
+  d.append(el('h3', null, 'Reflexes'));
+  const rf = el('div', 'reflexpick');
+  for (const [key, label] of REFLEX_ROWS) {
+    const v = PLAYER_REFLEXES[key];
+    const b = el('button', `reflexbtn${flow.sumReflexes === v ? ' on' : ''}`, label);
+    b.onclick = () => { flow.applyHit({ setReflexes: v }); paint(); };
+    rf.append(b);
+  }
+  d.append(rf);
+
+  d.append(el('h3', null, 'Face'));
+  const fa = el('div', 'acts');
+  for (const [dir, label] of [[-1, 'Previous'], [1, 'Next']]) {
+    const b = el('button', 'act', label);
+    b.onclick = () => { flow.applyHit({ faceStep: dir }); paint(); };
+    fa.append(b);
+  }
+  d.append(fa);
+
+  const left = (flow.sumStatPool ?? 0) + Object.values(flow.pools ?? {}).reduce((n, v) => n + v, 0);   // AUDIT 64 F33
+  // UI-CALM: THE LAST PRESS OF THE WIZARD IS ITS LOUDEST - Begin your life stands in the action bar, where every stage's
+  // way on stands (stagePrimary), not among the face's presses; Start over keeps the card, out of the way
+  stagePrimary = { label: left > 0 ? `${left} left to spend` : 'Begin your life', act: () => { flow.confirmSummary(); if (flow.done) onExit('done'); else paint(); } };
+  // UI-CALM (a player: "start over looks misplaced"): Start over leaves the face's presses for the action bar, beside
+  // Back - the bar's two ways out, the way on at its far end
+  stageSecondary = { label: 'Start over', act: () => { flow.applyHit({ restart: true }); paint(); } };
+  detail.append(d);
+  pane.append(detail);
+  ensureFaces();
+  return pane;
+}
+
+function sectionHead(label, pool, total = null) {
+  const h = el('div', 'skillhead review');
+  h.append(el('span', 'skillk', label));
+  const note = [total == null ? null : `total ${total}`, pool > 0 ? `${pool} to spend` : null].filter(Boolean);
+  h.append(el('span', 'skillpool', note.join('  \u00b7  ')));
+  return h;
+}
+
+function reviewRow(label, value, step) {
+  const row = el('div', 'row');
+  const main = el('div', 'row-main');
+  main.append(el('div', 'row-name', label));
+  row.append(main);
+  row.append(stepper(value, step));
+  return row;
+}
+
+// ── A STAGE WITH NOTHING TO SHOW ─────────────────────────────────
+// AUDIT 39 corrected the words this pane used to carry. It named a
+// classic screen as the stage's real owner, and no classic screen is
+// behind it: systems/chargenSession.js mounts THIS view for enhanced
+// and nothing else, so a pane naming a screen the player cannot reach
+// was a drawn door onto nothing. Every state the flow can be in has a
+// renderer now, and this is what one of them draws when the DATA it
+// needs did not arrive - a biography with no question, a builder with
+// no document.
+function pendingStage(stage) {
+  const pane = el('div', 'stagebody solo');
+  const e = el('div', 'empty');
+  e.append(el('h3', null, `${stage?.label ?? 'This stage'} has nothing to show`));
+  e.append(el('p', null, 'This step could not load what it needed. Go back and choose again.'));
+  pane.append(e);
+  return pane;
+}
+
+// ── SHELL ────────────────────────────────────────────────────────
+
+function paint() {
+  repaintKeepingScroll(host, () => paintInto());
+}
+
+/** The rebuild itself. Wrapped rather than rewritten, so a tap on a
+ *  stepper does not throw the skills list back to the top - see
+ *  ui/domRepaint.js for why every repaint needs that. */
+let groundTimer = null;   // PX13: the wizard sky's 8fps clock - cleared by every repaint and by unmount
+
+// CHARGEN-REFLEX: a stage that needs a primary action the player can
+// always reach declares it here, and the action bar draws it beside
+// Back. Reset on every repaint BEFORE the stage runs, so a stage that
+// declares nothing cannot inherit the last one's button.
+let stagePrimary = null;
+/** UI-CALM: a stage's quieter press in the action bar, beside Back (the review's Start over) - or null. */
+let stageSecondary = null;
+let nameOk = null;   // the name stage's own handle on the bar's button
+
+function paintInto() {
+  if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
+  host.innerHTML = '';
+  // PX13: the sky behind the walk - same drawPixelGround, same 8fps
+  // cadence, same reduced-motion opt-out as the menu's faces. Every
+  // repaint replaces the canvas, so every repaint re-owns the clock.
+  {
+    const ground = document.createElement('canvas');
+    ground.className = 'px-ground';
+    const vw = () => globalThis.innerWidth ?? 1280;
+    const vh = () => globalThis.innerHeight ?? 720;
+    drawPixelGround(ground, vw(), vh(), 0);
+    const still = typeof globalThis.matchMedia === 'function' && globalThis.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (!still) {
+      const t0 = Date.now();
+      groundTimer = setInterval(() => drawPixelGround(ground, vw(), vh(), (Date.now() - t0) / 1000), 125);
+    }
+    const vig = el('div', 'px-vignette');
+    host.append(ground, vig);
+  }
+  const shell = el('div', 'shell wizard');
+
+  const side = el('aside', 'side');
+  const brand = el('div', 'brand');
+  brand.append(el('h1', null, 'New Character'));
+  brand.append(el('div', 'sub', 'DFO Online'));
+  side.append(brand);
+
+  const here = stageOf(flow.state);
+  const rail = el('nav', 'rail');
+  STAGE_RAIL.forEach((stage, i) => {
+    const state = i === here ? ' on' : (i < here ? ' done' : ' todo');
+    const b = el('button', `railbtn${state}`);
+    b.append(el('span', 'rk', stage.label));
+    // the wizard is a walk, not a menu: nothing here is pressed (DISC10-B - the finished steps were left enabled and
+    // styled as the menu's pressable rail, so a player clicked back through them and nothing happened; Back is the way)
+    b.disabled = i > here;
+    b.tabIndex = -1;
+    b.setAttribute('aria-disabled', 'true');
+    if (i === here) b.setAttribute('aria-current', 'step');
+    rail.append(b);
+  });
+  side.append(rail);
+
+  // THE PHONE GETS A PROGRESS STRIP, NOT THE RAIL. The menu's rail is
+  // navigation and belongs in the thumb's arc; this one is a WALK you
+  // cannot jump around in, so ten full-height buttons down there would
+  // be a third of the screen spent telling you where you are not. The
+  // strip says the same thing in one line, and the rail is hidden
+  // rather than duplicated - one of the two draws at any width.
+  const strip = el('div', 'stepstrip');
+  const segs = el('div', 'segs');
+  STAGE_RAIL.forEach((_, i) => segs.append(el('i', i <= here ? 'seg on' : 'seg')));
+  strip.append(segs);
+  strip.append(el('div', 'steptext',
+    `${Math.max(here, 0) + 1} of ${STAGE_RAIL.length} \u00b7 ${STAGE_RAIL[here]?.label ?? ''}`));
+  side.append(strip);
+
+  const foot = el('div', 'foot');
+  foot.append(document.createTextNode(`step ${Math.max(here, 0) + 1} of ${STAGE_RAIL.length}`));
+  side.append(foot);
+
+  const pane = el('main', 'pane');
+  // EVERY STATE ui/chargen.js's STATES can hold, 'done' apart, has a
+  // renderer here. AUDIT 39: two of them did not - the ten class
+  // questions and the custom-class builder - and both are reached from
+  // THIS screen's own buttons, so the fallback pane below was a door
+  // drawn onto nothing rather than a stage waiting its turn.
+  const STAGES = {
+    race: raceStage, gender: genderStage,
+    classMethod: classMethodStage, classQuestions: classQuestionsStage,
+    class: classStage, customClass: customClassStage,
+    bioMethod: bioMethodStage, biography: biographyStage, name: nameStage,
+    face: faceStage, stats: statsStage, skills: skillsStage,
+    reflexes: reflexStage, summary: summaryStage,
+  };
+  if (flow.state !== 'customClass') { classIo = null; classIoNote = null; }   // UXB1-H: the card is the builder's, and leaves with it
+  stageSecondary = null;   // UI-CALM: the bar's quieter press, cleared with its primary
+  stagePrimary = null;
+  nameOk = null;
+  pane.append(flow.biogRepBox?.length
+    ? repBoxPane()
+    : (STAGES[flow.state] ?? (() => pendingStage(STAGE_RAIL[here])))());
+
+  // THE ACTION BAR. Back is always here, because AUDIT 17j found the
+  // wizard's back arms wrong on every screen it checked and the fix
+  // deserves a control the player can see. Backing out of the FIRST
+  // stage cancels the wizard, which is DFU's own arm
+  // (RaceSelectWindow_OnClose's Cancelled) and U27's unwind.
+  const bar = el('div', 'actionbar');
+  const back = el('button', 'act', here <= 0 ? 'Cancel' : 'Back');
+  back.onclick = () => {
+    if (here <= 0 && !flow.raceConfirm) { onExit('cancel'); return; }
+    flow.input('back');
+    paint();
+  };
+  bar.append(back);
+  if (stageSecondary) {
+    const b2 = el('button', 'act', stageSecondary.label);
+    b2.onclick = stageSecondary.act;
+    bar.append(b2);
+  }
+  if (stagePrimary) {
+    const go = el('button', 'act primary', stagePrimary.label);
+    go.disabled = !!stagePrimary.disabled;
+    go.onclick = stagePrimary.act;
+    bar.append(go);
+    stagePrimary.bind?.(go);
+  }
+  pane.append(bar);
+
+  shell.append(side, pane);
+  host.append(shell);
+}
+
+/**
+ * THE TEXT SEAM. ChargenFlow exposes describeRace/describeClass/
+ * describeText as injectable hooks - they default to chargenArt's
+ * copies, which read a TEXT.RSC the CLASSIC art load happens to have
+ * parked in a module variable. A DOM view loads no GL art, so without
+ * this every race description came back empty, and an empty
+ * description is not cosmetic: DFU's own arm accepts the homeland
+ * outright when there is nothing to show (chargen.js `else this.state
+ * = 'gender'`), so the description box would silently never appear.
+ *
+ * TEXT.RSC is a plain reader with no renderer in it, so the view can
+ * hold its own and hand the flow the same three functions.
+ */
+export function attachChargenText(f, textRsc) {
+  if (!textRsc) return f;
+  f.describeRace = (race) => (race ? textRsc.linesById(race.descriptionId) : []);
+  f.describeClass = (i) => reviseClassDescription(i, textRsc.linesById(CLASS_DESCRIPTION_TEXT_ID + i));
+  f.describeText = (id) => textRsc.linesById(id);
+  // THE BIOGRAPHY'S TWO TEXT SOURCES, and they are not decoration. The
+  // BACKSTORY is what U13 built and what the character sheet's History
+  // page reads for the rest of the game, and the REPUTATION BOX is
+  // TEXT.RSC 35 with %r1..%r5 filled from DigestRepChanges - the one
+  // moment the player is told what their answers did. Both hang off
+  // chargenArt's _art.textRsc, so a DOM view got an empty backstory
+  // and no box at all, and the flow's own arm reads a missing box as
+  // "nothing to show" and walks straight past it. Silent, and
+  // permanent: the backstory is written once.
+  f.buildBackstory = (backstoryId, effects, ctx) =>
+    generateBackstory(textRsc, backstoryId, effects, ctx).map((r) => r.text);
+  f.bonusPointsRows = () => textRsc.linesById(SUMMARY_BONUS_TEXT_ID);
+  // AUDIT 64 F30: the rendering law has ONE home now - this skin used
+  // to restate the substitution and so printed the signed integer
+  // where BiogFileMCP.GetChangeStr (:35-47) speaks Lower/Higher/
+  // Unchanged, and could drift from the classic skin besides.
+  f.repBoxRows = (changed) => repBoxRowsFrom(textRsc, changed);
+  return f;
+}
+
+/**
+ * THE KEYBOARD, and it is not an extra.
+ *
+ * The classic wizard answers a full keyboard - twenty-two back arms,
+ * confirm, up/down, typing, the stat and skill spinners - and while
+ * ENHANCED is the default skin, a pointer-only wizard is a regression
+ * against the path it replaced. U14 made this same point in reverse
+ * when the dungeon host had no pointer seam and chargen there was
+ * keyboard-only.
+ *
+ * It is wired through overlayAction, the SHARED table ui/input.js
+ * already owns and the classic window already routes through - not a
+ * second key map. So the flow's own arms answer, every one of them,
+ * and a key does here exactly what it does there.
+ *
+ * TWO THINGS IT MUST NOT DO. It must not steal a key from a real text
+ * field: the name boxes feed the flow themselves, so a keystroke
+ * landing in one would be typed twice. And it must not preventDefault
+ * on a key it did not use, or Tab stops moving focus and the screen
+ * becomes unreachable to anyone driving it that way.
+ */
+function onKey(e) {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  const action = overlayAction(e);
+  // CG2: a field owns every key it can TYPE - and no field types Escape. DISC10-B (Discord: "once you reach name
+  // selection you can't go back to any previous step"): nameStage focuses its box on every paint, so this line used to
+  // return on EVERY key there and Name was the one stage the keyboard could not leave. DFU cancels the name window with
+  // its TextBox focused (DaggerfallPopupWindow.Update -> GetBackButtonUp -> CancelWindow), and so do the custom-class
+  // and summary name boxes.
+  if (isTextEntryTarget(e.target) && action !== 'back') return;   // the field's key: it bubbles to the host, whose ladder (CG2) leaves it to the field
+  if (!action) return;
+  e.preventDefault();
+  // A MODAL OVERLAY OWNS ITS INPUT. Mac, playing the deployed build:
+  // the wizard came up over a live dungeon and the game kept reading
+  // the keyboard underneath it. The listener is on CAPTURE and stops
+  // the event here, so the host's own window keydown - which walks the
+  // player, routes dungeon keys and re-takes the look - never sees a
+  // key the wizard used. The `!action` return above is what leaves
+  // everything else alone.
+  e.stopPropagation();
+  flow.input(action);
+  if (flow.done) { onExit('done'); return; }
+  if (flow.cancelled) { onExit('cancel'); return; }   // DISC10-B: Escape off the FIRST stage is RaceSelectWindow_OnClose's Cancelled - the Cancel button's own arm; the classic window reads it (chargenSession), this view did not
+  paint();
+}
+
+/**
+ * AND THE POINTER LOCK, which is the same report's other half: the
+ * cursor was captured and the view swung with the mouse while the map
+ * ignored every click.
+ *
+ * A locked pointer does not travel through the DOM at all - every
+ * mouse event goes to the locked element as a movement delta - so a
+ * fixed div over the canvas is invisible to it however high its
+ * z-index. The hosts' own gate only stops them RE-taking the lock
+ * (`!townTalk.overlayActive`); nothing released a lock already held,
+ * and the classic wizard never had to care because it draws INSIDE
+ * the canvas that holds it.
+ *
+ * So the view drops the lock on mount and keeps dropping it: a host
+ * that re-takes it while the wizard is up gets it taken back, once,
+ * rather than the wizard fighting for clicks it cannot receive.
+ */
+function releaseLock() {
+  try {
+    if (typeof document !== 'undefined' && document.pointerLockElement) document.exitPointerLock();
+  } catch { /* a browser that refuses is a browser with no lock to drop */ }
+}
+
+/**
+ * AUDIT-39r R20 - THE CONSTELLATION SEAM, CUT FOR THIS SKIN.
+ *
+ * ChargenFlow times exactly one thing: the constellation CEL an
+ * answered question lights, which locks the questions screen until
+ * CEL_OnAnimEnd releases it (ui/chargen.js:"Input is LOCKED while", ui/chargen.js:"AnswerAndPlayAnim (:310-354)"). The
+ * CLASSIC screen paints that chart and its host ticks the flow every
+ * frame, so the lock is the animation you are watching. This view
+ * paints no chart and its overlay ticks nothing, so the same lock is
+ * three to seven seconds of dead buttons over a picture nobody drew.
+ *
+ * The seam is injectable for exactly this reason (ui/chargen.js:"this.describeClass =",
+ * "so the headless suite drives an animation with no renderer"), and
+ * a start that reports 0 is the flow's own signal to run the anim-end
+ * body AT ONCE - the same path a host with no art takes. Nothing else
+ * about the answer changes: the weight, the class resolve and the
+ * Ignite one-shot all still happen in answerClassQuestion.
+ */
+export function muteConstellation(f) {
+  if (f) f.constellationAnim = { start: () => 0, tick: () => false, stop: () => {} };
+  // UI-CALM: and the class list is browsed quietly - a double click is two on one row, the drums the choice's
+  // (ui/chargen.js clickClassRow, useClass, confirmClass)
+  if (f) f.classCalm = true;
+  return f;
+}
+
+/**
+ * Mount the wizard. `picker` is TAMRIEL2's DFBitmap when the caller
+ * has it - absent, the map degrades to the named list and the wizard
+ * runs on regardless.
+ */
+export function mountEnhancedChargen(hostEl, {
+  flow: f, picker = null, picture = null, palette = null,
+  loadFaces: faceLoader = null, onExit: exit = () => {},
+} = {}) {
+  injectEnhancedStyle();
+  injectEnhancedFonts();
+  host = hostEl;
+  flow = muteConstellation(f);
+  onExit = exit;
+  loadFaces = faceLoader;
+  faces = null;
+  hover = null;
+  try {
+    provinces = picker ? traceProvinces(picker, { picture, palette }) : [];
+  } catch (e) {
+    console.warn('[chargen] TAMRIEL2 would not trace; the map falls back to a list', e);
+    provinces = [];
+  }
+  keyHandler = onKey;
+  globalThis.addEventListener('keydown', keyHandler, { capture: true });
+  lockHandler = releaseLock;
+  releaseLock();
+  document.addEventListener('pointerlockchange', lockHandler);
+  paint();
+  globalThis.__chargen = () => JSON.stringify({
+    state: flow.state, race: flow.race.key, gender: flow.gender,
+    stage: stageOf(flow.state), provinces: provinces.length,
+    confirming: !!flow.raceConfirm,
+  });
+  return {
+    repaint: paint,
+    unmount() {
+      // EVERY LISTENER HAS AN OWNER. A window-level keydown outlives
+      // the DOM it was mounted for, so a wizard torn down without this
+      // keeps eating keys for the whole session. The sky's clock has
+      // the same owner for the same reason (PX13).
+      if (groundTimer) { clearInterval(groundTimer); groundTimer = null; }
+      if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
+      if (lockHandler) document.removeEventListener('pointerlockchange', lockHandler);
+      keyHandler = null;
+      lockHandler = null;
+      hostEl.innerHTML = '';
+      delete globalThis.__chargen;
+    },
+  };
+}

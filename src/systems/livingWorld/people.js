@@ -11,7 +11,7 @@
 // character's own hand deaths (relations.js HAND_KINDS), told by their place and the name they bore.
 import { mintResident, travellerRoster } from './census.js';
 import { companyOfPlace, namedIn } from './companies.js';   // LW13: the companies the known walk with
-import { regardStanding } from './relations.js';
+import { regardStanding, FRIEND_AT, ENEMY_AT, HOSTILE_AT, REGARD_MAX } from './relations.js';
 import { placeKeyOf } from './lives.js';
 
 /** A resident's id, read: the town's map id, the roll, the slot and the generation (null: the census's own). */
@@ -91,8 +91,31 @@ export function peoplePage(rel, day, townOf) {
 export function personWords(p) {
   if (p.fate === 'slain') return 'Slain by your hand.';
   if (p.fate === 'died') return 'Fell fighting at your side.';
-  const said = p.standing === 'friend' ? 'A friend.' : p.standing === 'hostile' ? 'Hostile - they mean you harm.'
-    : p.standing === 'enemy' ? 'An enemy - they will not speak to you.' : 'Knows you.';
+  const said = p.standing === 'friend' ? 'A friend.' : p.standing === 'hostile' ? 'Hostile. They mean you harm.'
+    : p.standing === 'enemy' ? 'An enemy. They will not speak to you.' : 'Knows you.';
   const seen = p.days === 0 ? 'Seen today.' : p.days === 1 ? 'Last seen yesterday.' : `Last seen ${p.days} days ago.`;
   return `${said} ${seen}`;
+}
+
+/** PLAIN-UI (bible/10-UI/Plain-Words.md; a player: "Where's the UI for relationship in the talk window?"): each standing's
+ *  name on the talk panel's badge. */
+export const STANDING_NAMES = Object.freeze({ friend: 'Friend', neutral: 'Known', enemy: 'Enemy', hostile: 'Hostile' });   // the Chronicle's People page's words
+/**
+ * PLAIN-UI: THE TALK PANEL'S REGARD BADGE for a resident spoken with - `card` the town's answer (`{ regard, standing }`,
+ * livingTown.js regardCard), null for one the living world does not hold (no badge). `label` the standing's name,
+ * `value` the regard signed ("+45"), `share` where it stands from -100 to +100 (0 to 1, the bar), and `words` what it
+ * is and what moves it. Pure.
+ * @param {{ regard: number, standing: string } | null} card
+ */
+export function regardBadge(card) {
+  if (!card || !Number.isFinite(card.regard)) return null;
+  // AUDIT PLAIN-UI W6: toward nought, as the standing reads it - a regard of 39.5 (a half day's easing) read "Known +40"
+  // beside "A friend from +40", and Courtship stayed hidden (marriage.js reads the regard unrounded)
+  const r = Math.trunc(card.regard) || 0;
+  const standing = /** @type {keyof typeof STANDING_NAMES} */ (Object.hasOwn(STANDING_NAMES, card.standing) ? card.standing : regardStanding(r));
+  return {
+    standing, label: STANDING_NAMES[standing], value: `${r > 0 ? '+' : ''}${r}`, share: (r + REGARD_MAX) / (2 * REGARD_MAX),
+    words: `How they regard you: ${r > 0 ? '+' : ''}${r}, from -${REGARD_MAX} to +${REGARD_MAX}. A friend from +${FRIEND_AT}; an enemy from ${ENEMY_AT}, who will not speak to you; hostile from ${HOSTILE_AT}. `
+      + 'Talking once a day, speaking in a tone they like and fighting at their side raise it. A tone they dislike, a crime they see, a blow, and worst of all killing one of their own lower it. Townsfolk prefer Blunt to Polite. It fades back toward 0 by half a point for each of your days apart - time away from the game does not count. A townsperson who is your friend - not one of the watch, a traveller or your own blood - can be courted: ask about Courtship under Tell me about.',   // TONE-TASTE; FIELD BUGS 2026-10-21d REGARD-OWN: the fade in the character's own days, and where a courtship begins (AUDIT FB1021d RO-7: as marriage.js courtable reads it)
+  };
 }

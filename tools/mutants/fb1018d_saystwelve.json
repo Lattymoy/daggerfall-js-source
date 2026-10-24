@@ -1,0 +1,42 @@
+[
+  {
+    "name": "SAYS-TWELVE-past-the-end",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "for (let k = lastSay ? F.says.indexOf(lastSay) + 1 : 0; k < F.says.length; k++)",
+    "new": "for (let k = lastSay ? F.says.length : 0; k < F.says.length; k++)",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_saystwelve.test.js"
+    ],
+    "why": "the words after the last said never found: nothing said past the first frame"
+  },
+  {
+    "name": "SAYS-TWELVE-last-unkept",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    lastSay = F.says.at(-1) ?? lastSay;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_saystwelve.test.js"
+    ],
+    "why": "every word the fold keeps said again every frame"
+  },
+  {
+    "name": "SAYS-TWELVE-new-screen-says-all",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    beat = null; beatNext = []; lastSay = E.fight.says.at(-1) ?? null;",
+    "new": "    beat = null; beatNext = []; lastSay = null;",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_saystwelve.test.js"
+    ],
+    "why": "a screen opened on a running fight says its whole kept list"
+  },
+  {
+    "name": "SAYS-TWELVE-dropped-last-says-none",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "for (let k = lastSay ? F.says.indexOf(lastSay) + 1 : 0; k < F.says.length; k++)",
+    "new": "for (let k = lastSay ? (F.says.indexOf(lastSay) + 1 || F.says.length) : 0; k < F.says.length; k++)",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_saystwelve.test.js"
+    ],
+    "why": "AUDIT FB1018D L5-5: more than twelve words between two frames - the last said folded out - read as all of them said, and none of the twelve kept said"
+  }
+]

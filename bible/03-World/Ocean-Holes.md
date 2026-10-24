@@ -17,12 +17,12 @@ its ceiling, stripped of its lights and filled with the deep's own foes.
 
 | slice | what | the port's modules | state |
 |---|---|---|---|
-| OH-A | THE REGISTRATION: the vendored assembly, manifest and settings; the seven sliders; Features, credits, the registry; the online lane | `vendor/ocean-holes/`, `systems/modSettings.js`, `systems/features.js`, `systems/onlineLane.js`, `ui/credits.js`, `ui/enhancedMenu.js` | landed |
-| OH-B | THE PIT'S PLACE AND THE CUT: the hash, the pixels it picks, the placement, the tile queue and its gates, the bake's verification, the depth, the seafloor's cut through Iliac Puddle No More's API | `world/oceanHoles.js`, `scenes/oceanHolesHost.js`, `scenes/deepWatersHost.js` (the API), `scenes/world.js` | landed |
+| OH-A | THE REGISTRATION: the vendored assembly, manifest and settings; the seven sliders; Features, credits, the registry; the online lane | `vendor/ocean-holes/`, `systems/modSettings.js`, `systems/features.js`, `systems/online/onlineLane.js`, `ui/credits.js`, `ui/enhanced/enhancedMenu.js` | landed |
+| OH-B | THE PIT'S PLACE AND THE CUT: the hash, the pixels it picks, the placement, the tile queue and its gates, the bake's verification, the depth, the seafloor's cut through Iliac Puddle No More's API | `world/oceanHoles.js`, `scenes/oceanHolesHost.js`, `scenes/deepWater/deepWatersHost.js` (the API), `scenes/world.js` | landed |
 | OH-C | THE PIT'S LOOK AND ITS DOOR: the three discs, the miasma, the entrance a swimmer touches | `render/oceanHolesRender.js`, `world/oceanHolesMiasma.js`, `render/deepWatersRender.js` (`updateFloor`), `scenes/world.js` | landed |
 | OH-D | THE ABYSS: the template, the clone, the entry, the flood, the exit to the pit, the recall, the save | `scenes/oceanHolesAbyss.js`, `scenes/worldModes.js` (`enterAbyss`, the four DFU events, the layout's dungeon, the build's own location, the dungeon save's mod records), `scenes/world.js` | landed |
-| OH-E | THE ABYSS'S CONTENTS: the flame foes gone, the replacements, the aquatic quota, the lights, the quest resources, the loot, the fog and the light | `scenes/dungeonContext.js` (`abyss`), `world/oceanHoles.js` (the loot pair), `systems/loot.js` (`lootMatrix`, `tableLootSpawned`), `characters/enemyEntity.js` (`enemyLootSpawned`), `combat/enemyEquipment.js` (`weaponOfMaterial`) | landed |
-| OH-F | THE CLOSE: the audit (three lanes against the assembly), its eleven fixes, the docs, the patch notes | `scenes/oceanHolesHost.js` (`checkSettings`, indoors), `world/oceanHolesMiasma.js` (`miasmaReach`), `scenes/oceanHolesAbyss.js` (`loadRebuilds`, `entering`, `returnPoint`), `scenes/dungeonContext.js` (the destroy saved, the settled restore, the spawn's marks at the build), `characters/dungeonEnemies.js` (`enemyHierarchyOrder`), `scenes/hostCombat.js` / `systems/loot.js` (the rolling host), `scenes/world.js` | landed |
+| OH-E | THE ABYSS'S CONTENTS: the flame foes gone, the replacements, the aquatic quota, the lights, the quest resources, the loot, the fog and the light | `scenes/dungeonContext.js` (`abyss`), `world/oceanHoles.js` (the loot pair), `systems/loot/loot.js` (`lootMatrix`, `tableLootSpawned`), `characters/enemy/enemyEntity.js` (`enemyLootSpawned`), `combat/enemyEquipment.js` (`weaponOfMaterial`) | landed |
+| OH-F | THE CLOSE: the audit (three lanes against the assembly), its eleven fixes, the docs, the patch notes | `scenes/oceanHolesHost.js` (`checkSettings`, indoors), `world/oceanHolesMiasma.js` (`miasmaReach`), `scenes/oceanHolesAbyss.js` (`loadRebuilds`, `entering`, `returnPoint`), `scenes/dungeonContext.js` (the destroy saved, the settled restore, the spawn's marks at the build), `characters/dungeonEnemies.js` (`enemyHierarchyOrder`), `scenes/hostCombat.js` / `systems/loot/loot.js` (the rolling host), `scenes/world.js` | landed |
 
 ## The settings (OH-A)
 
@@ -40,7 +40,7 @@ ApplySettings reads them (`scenes/oceanHolesHost.js` `oceanHolesSettings`):
 | DungeonVisualDarkness | the abyss's fog 85% of the way to its colour | clamped (OH-E) |
 
 GetScaledSliderValue is Iliac Puddle No More's own member, the same
-formula; the port has one home for it (`world/deepWaterLook.js`
+formula; the port has one home for it (`world/deepWater/deepWaterLook.js`
 `scaledSliderValue`, re-exported). A change to any of the first five
 re-cuts every loaded floor (RefreshLoadedPits, forced); the two abyss dials
 do not. Online, `Enabled`, `PitSpawnRate` and `SeafloorHoleSize` are the
@@ -92,7 +92,7 @@ cut once per build version: a pit lost on the same floor is stood again
 without a second cut.
 
 The cut is committed through Iliac Puddle No More's own API, which the
-port's Deep Waters host now carries (`scenes/deepWatersHost.js`):
+port's Deep Waters host now carries (`scenes/deepWater/deepWatersHost.js`):
 `isSeafloorCurrent`, `seafloorBuildVersion`, `tryGetSeafloor`,
 `commitSeafloorChanges` (CommitExternalMeshChanges: the vertices taken,
 the 65 x 65 height grid read back off the first 4,225 of them, the walls'
@@ -223,7 +223,11 @@ quest behind it, SetupDemoEnemy's, not one of the deep's roster, not the
 Seducer, General (a class may be Guard), with a shadow and no glow is
 replaced by the enemy hash (the pit's pixel XORed with the LoadID's two
 words): a class (128-146) always, from the roster's undead, and marked
-WasHumanoid; a monster one hash in three, by the third of it.
+WasHumanoid; a monster one hash in three, by the third of it. (AUDIT DEX
+C4: the class is the mod's own range, `EntityType == EnemyClass` AND an ID
+of 128-146 - DEX1 had widened it to DFU's 128 bit, and the abyss took every
+one of Daggerfall Enemy Expansion's classes, always; its classes, 384-398,
+are monsters to this mod, as its IL reads.)
 EnsureAquaticEnemyQuota wants `CeilToInt(living x 0.3f)` aquatic - in
 floats: ten living want three, fifty want sixteen (50 x 0.3f is
 15.000000953674316 as a float) - taken first from the enemies never humanoid, then from those
@@ -455,7 +459,7 @@ fixed:
 
 ## Tests
 
-`test/oh_abyss.test.js` (the abyss over a fake world: TryEnterPit's gates
+`test/scenes/oh_abyss.test.js` (the abyss over a fake world: TryEnterPit's gates
 and the data it writes, the build's flood / rename / enemies, the arrival,
 the failed door and the port's refusal, the way up by the entrance, the
 depth and the surface, the Recall binding and IsPendingAbyssRecall while
@@ -463,11 +467,11 @@ the dungeon is laid out, the respawner, the save and the load, Update's
 names and releases, ProcessAbyssEnemy's gates and picks, the quota in
 floats, OnEnemySpawn, the presentation; the loot pair against the mod's
 own diagnostics case, the arrow, `weaponOfMaterial`, `lootMatrix`, and the
-two loot events and their wiring), `test/oh_placement.test.js` (the pure law against the assembly: the hash,
+two loot events and their wiring), `test/world/oh_placement.test.js` (the pure law against the assembly: the hash,
 the buckets, the placement, the fall, the cut's vertex pass, the grid, the
 rays, the names and ids, the roster, the fixtures, the armour ladder, the
 template, the flood, the disc, the puff, the miasma's particle system, the
-midpoint colour) and `test/oh_host.test.js` (the tile host: the gates in
+midpoint colour) and `test/scenes/oh_host.test.js` (the tile host: the gates in
 order, the waits, the bake's rejections, the depth, the state machine, the
 suppression, the settings' re-cut, the entrance's once-a-second, the
 dependency's half of the API, RefreshLoadedTile through the sea's own

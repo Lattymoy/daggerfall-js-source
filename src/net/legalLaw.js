@@ -17,7 +17,7 @@
 //
 // A VERSION IS ITS DOCUMENT'S "LAST UPDATED" DATE, because that is how
 // the Terms say a revision is marked (section 15). The pages carry it as
-// `<time datetime>`, and test/terms1.test.js holds each page's date to
+// `<time datetime>`, and test/ui/enhanced/terms1.test.js holds each page's date to
 // its version here and each page's words to a hash - so the text cannot
 // change without somebody deciding whether that is a new version.
 //
@@ -35,18 +35,21 @@
 // relative link "would open nothing there".)
 // ═══════════════════════════════════════════════════════════════════
 
-/** The Terms of Service a new account agrees to - its Last Updated date.
+/** The Terms of Service a new account agrees to - its Last Updated date. SAFE7 (2026-10-17,
+ *  bible/11-Multiplayer/Chat-Safety-Arc.md): a new version - the conduct section names hate by what it attacks and the
+ *  in-game Code of Conduct as part of the Terms, a change in substance, so a new date.
  *  BR5 (2026-10-11): the operator's name became DFO Online in both
  *  documents and nothing else did - the same project and the same terms
  *  under its new name, so the same version, the words re-hashed
- *  (test/terms1.test.js). A new version would refuse every account an
+ *  (test/ui/enhanced/terms1.test.js). A new version would refuse every account an
  *  older build tries to make (`terms-stale`), which a rename does not
  *  earn (AUDIT BR5). */
-export const TERMS_VERSION = '2026-09-28';
+export const TERMS_VERSION = '2026-10-17';
 
 /** The Privacy Policy a new account agrees to - its Last Updated date (BR5,
- *  as the Terms). */
-export const PRIVACY_VERSION = '2026-09-28';
+ *  as the Terms). SAFE5 (2026-10-17): a new version - stamped messages and reports, the automated review of public chat
+ *  by a third-party AI provider, the block list and the moderation record, and how long each is kept. */
+export const PRIVACY_VERSION = '2026-10-17';
 
 /** What a version looks like. A dated answer that is not the current one
  *  is a player who ticked text the service no longer holds (an old tab, a

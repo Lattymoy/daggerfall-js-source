@@ -1,0 +1,401 @@
+[
+  {
+    "name": "AUDITPOI-P1-the-dot-read-as-a-cosine",
+    "file": "src/poi/poiDiff.js",
+    "old": "  const [x, y, z, w] = quatMultiply(a, [-b[0], -b[1], -b[2], b[3]]);\n  return (2 * Math.atan2(Math.hypot(x, y, z), Math.abs(w)) * 180) / Math.PI;",
+    "new": "  const d = Math.min(1, Math.abs(a[0] * b[0] + a[1] * b[1] + a[2] * b[2] + a[3] * b[3]));\n  return (2 * Math.acos(d) * 180) / Math.PI;",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P12-the-part-move-in-its-frame",
+    "file": "src/poi/poiDiff.js",
+    "old": "if (dist3(old.t, q.t) * p1.s > MOVE_EPS) what.push('moved');",
+    "new": "if (dist3(old.t, q.t) > MOVE_EPS) what.push('moved');",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T2-the-words-unread",
+    "file": "src/poi/poiDiff.js",
+    "old": "  if ((before.about ?? '') !== (after.about ?? '')) out.push({ code: 'about' });\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T2-the-tags-unread",
+    "file": "src/poi/poiDiff.js",
+    "old": "  if (!same(before.tags ?? [], after.tags ?? [])) out.push({ code: 'tags', tags: [...(after.tags ?? [])] });\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T2-a-shrink-read-as-none",
+    "file": "src/poi/poiDiff.js",
+    "old": "  if (Math.abs(p1.s / p0.s - 1) > SIZE_EPS)",
+    "new": "  if (p1.s / p0.s - 1 > SIZE_EPS)",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T2-the-pixel-ignored",
+    "file": "src/poi/poiDiff.js",
+    "old": "const mapSpot = (p) => [p.px * POI_PIXEL_M + p.x, p.y, -p.py * POI_PIXEL_M + p.z];",
+    "new": "const mapSpot = (p) => [p.x, p.y, p.z];",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T2-the-north-read-south",
+    "file": "src/poi/poiDiff.js",
+    "old": "const mapSpot = (p) => [p.px * POI_PIXEL_M + p.x, p.y, -p.py * POI_PIXEL_M + p.z];",
+    "new": "const mapSpot = (p) => [p.px * POI_PIXEL_M + p.x, p.y, p.py * POI_PIXEL_M + p.z];",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T2-the-height-ignored",
+    "file": "src/poi/poiDiff.js",
+    "old": "const mapSpot = (p) => [p.px * POI_PIXEL_M + p.x, p.y, -p.py * POI_PIXEL_M + p.z];",
+    "new": "const mapSpot = (p) => [p.px * POI_PIXEL_M + p.x, 0, -p.py * POI_PIXEL_M + p.z];",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T2-a-part-turn-unread",
+    "file": "src/poi/poiDiff.js",
+    "old": "    if (quatAngleDeg(old.r, q.r) > TURN_EPS) what.push('turned');\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T2-a-part-size-unread",
+    "file": "src/poi/poiDiff.js",
+    "old": "    if (old.s.some((c, i) => Math.abs(q.s[i] / c - 1) > SIZE_EPS)) what.push('sized');\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T2-a-part-shrink-read-as-none",
+    "file": "src/poi/poiDiff.js",
+    "old": "Math.abs(q.s[i] / c - 1) > SIZE_EPS",
+    "new": "q.s[i] / c - 1 > SIZE_EPS",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T2-the-shadow-unread",
+    "file": "src/poi/poiDiff.js",
+    "old": "old.collide !== q.collide || old.shadow !== q.shadow",
+    "new": "old.collide !== q.collide",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T2-the-solidity-unread",
+    "file": "src/poi/poiDiff.js",
+    "old": "old.collide !== q.collide || old.shadow !== q.shadow",
+    "new": "old.shadow !== q.shadow",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P2-the-export-unasked",
+    "file": "src/poi/poiTransfer.js",
+    "old": "  const refused = packRefusal({ pois, shelf });\n  if (refused) return { ok: false, ...refused };\n  const assets = new Map();",
+    "new": "  const assets = new Map();",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P2-the-writer-unasked",
+    "file": "src/poi/poiPack.js",
+    "old": "  const refused = packRefusal({ pois, shelf });\n  if (refused) return { ok: false, ...refused };\n  const named = new Set();",
+    "new": "  const named = new Set();",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P2-what-they-wear-unwritten",
+    "file": "src/poi/poiPack.js",
+    "old": "  const worn = wornRefusal(pois, shelf, (sha) => facts.get(sha) ?? null);\n  if (worn) return { ok: false, ...worn };",
+    "new": "",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P2-the-files-unbounded-written",
+    "file": "src/poi/poiPack.js",
+    "old": "  if (named.size + 1 > POI_PACK_LIMITS.files) return { ok: false, code: 'pack-too-large' };\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P2-the-bytes-unbounded-written",
+    "file": "src/poi/poiPack.js",
+    "old": "  if (total > POI_PACK_LIMITS.bytes) return { ok: false, code: 'pack-too-large' };\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P2-a-bad-asset-written",
+    "file": "src/poi/poiPack.js",
+    "old": "    if (!f) return { ok: false, code: 'pack-asset-bad', sha };\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P3-what-they-wear-unread",
+    "file": "src/poi/poiPack.js",
+    "old": "  const worn = wornRefusal(pois, shelf, (sha) => assets.get(sha) ?? null);\n  if (worn) return { ok: false, ...worn };",
+    "new": "",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P7-an-id-twice-taken",
+    "file": "src/poi/poiPack.js",
+    "old": "if (seen.has(d.id)) return { code, index: i, id: d.id, name: String(d.name) }; ",
+    "new": "",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P10-the-folder-kept",
+    "file": "src/poi/poiPack.js",
+    "old": "  const top = /^[^/]+\\//.exec(real[0] ?? '')?.[0];",
+    "new": "  const top = null;",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P10-the-shadows-read",
+    "file": "src/poi/poiPack.js",
+    "old": "  const real = names.filter((n) => !n.startsWith('__MACOSX/'));",
+    "new": "  const real = names;",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P11-a-file-nothing-names-kept",
+    "file": "src/poi/poiPack.js",
+    "old": "    if (!m || !named.has(m[1])) continue;",
+    "new": "    if (!m) continue;",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P5-every-file-inflated",
+    "file": "src/poi/poiPack.js",
+    "old": "      pick: (names) => names.filter(wanted),",
+    "new": "      pick: (names) => names,",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P5-the-count-unasked",
+    "file": "src/poi/poiPack.js",
+    "old": "    if (count > POI_PACK_LIMITS.files) return { ok: false, code: 'pack-too-large' };\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P5-a-kinds-bound-unasked",
+    "file": "src/poi/poiPack.js",
+    "old": "Math.min(name.endsWith('.mesh') ? POI_MESH_LIMITS.bytes : POI_IMAGE_LIMITS.bytes, room)",
+    "new": "room",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P5-the-whole-unbounded",
+    "file": "src/poi/poiPack.js",
+    "old": "room -= size; return max;",
+    "new": "return max;",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P5-pack-json-unbounded",
+    "file": "src/poi/poiPack.js",
+    "old": "      limit: () => POI_PACK_LIMITS.headBytes,",
+    "new": "      limit: () => Infinity,",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P5-T4-a-zip-error-thrown",
+    "file": "src/poi/poiPack.js",
+    "old": "    return { ok: false, code: e?.code === 'zip-too-large' ? 'pack-too-large' : 'pack-not-a-pack' };",
+    "new": "    throw e;",
+    "tests": ["test/poi/auditpoi_packs.test.js", "test/poi/poi6_review.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P5-the-bounds-asked-as-it-inflates",
+    "file": "src/scenes/dataSource.js",
+    "old": "  if (limit) for (const d of picked) if (!(d.size <= limit(d.name, d.size)) || (d.method === 0 && d.compSize > d.size)) throw zipTooLarge(d.name);\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P5-a-stored-entry-longer-than-it-says",
+    "file": "src/scenes/dataSource.js",
+    "old": " || (d.method === 0 && d.compSize > d.size)",
+    "new": "",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P5-an-inflation-never-stopped",
+    "file": "src/scenes/dataSource.js",
+    "old": "    if (n > max) { await reader.cancel().catch(() => {}); throw zipTooLarge(name); }\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P4-the-store-unasked",
+    "file": "src/poi/poiTransfer.js",
+    "old": "    const had = await shelfEntry(id);",
+    "new": "    const had = { ok: false, error: 'not-found' };",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P4-one-alike-put-again",
+    "file": "src/poi/poiTransfer.js",
+    "old": "if (contentOf(had.data.item) === content) return { ok: true, id, copied: k >= 0, already: true }; ",
+    "new": "",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P4-a-copy-id-random",
+    "file": "src/poi/poiTransfer.js",
+    "old": "k < POI_COPY_IDS ? await copyIdOf(entry, k, content) : mintShelfId(rand)",
+    "new": "mintShelfId(rand)",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P4-a-taken-off-entry-not-passed",
+    "file": "src/poi/poiTransfer.js",
+    "old": "    if (r.error !== 'poi-not-author' && r.error !== 'poi-gone') return r;",
+    "new": "    if (r.error !== 'poi-not-author') return r;",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P4-content-in-its-written-order",
+    "file": "src/poi/poiTransfer.js",
+    "old": "Object.keys(v).sort()",
+    "new": "Object.keys(v)",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-C5-the-problems-dropped",
+    "file": "src/poi/poiTransfer.js",
+    "old": ", ...(r.problems ? { problems: r.problems } : {})",
+    "new": "",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T1-a-missing-mesh-passed",
+    "file": "src/poi/poiPack.js",
+    "old": "    for (const s of meshes) if (assets.get(s)?.kind !== 'mesh') return { ok: false, code: 'pack-missing-asset', sha: s, name: String(d.name) };\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T1-the-kind-unchecked",
+    "file": "src/poi/poiPack.js",
+    "old": "    for (const s of textures) if (assets.get(s)?.kind !== 'texture')",
+    "new": "    for (const s of textures) if (!assets.has(s))",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T1-the-entry-law-unasked",
+    "file": "src/poi/poiPack.js",
+    "old": "  for (const [i, d] of shelf.entries()) { const ps = poiShelfProblems(d); if (ps.length) return { code: 'pack-bad-entry', index: i, name: String(d?.name ?? ''), problem: ps[0], problems: ps }; }\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T1-the-picture-unread",
+    "file": "src/poi/poiPack.js",
+    "old": "      if ('error' in im) return { ok: false, code: 'pack-asset-bad', sha: m[1] };\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T1-the-documents-uncounted",
+    "file": "src/poi/poiPack.js",
+    "old": "  if (pois.length > POI_PACK_LIMITS.pois || shelf.length > POI_PACK_LIMITS.shelf) return { code: 'pack-too-large' };",
+    "new": "  if (shelf.length > POI_PACK_LIMITS.shelf) return { code: 'pack-too-large' };",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T1-the-entries-uncounted",
+    "file": "src/poi/poiPack.js",
+    "old": "  if (pois.length > POI_PACK_LIMITS.pois || shelf.length > POI_PACK_LIMITS.shelf) return { code: 'pack-too-large' };",
+    "new": "  if (pois.length > POI_PACK_LIMITS.pois) return { code: 'pack-too-large' };",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T1-the-files-uncounted",
+    "file": "src/poi/poiPack.js",
+    "old": "  if (entries.length > POI_PACK_LIMITS.files) return { ok: false, code: 'pack-too-large' };\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T1-no-live-one-read-as-live",
+    "file": "src/poi/poiTransfer.js",
+    "old": "state: h.data.liveRev ? 'live' : 'draft' });",
+    "new": "state: 'live' });",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T1-any-refusal-read-as-new",
+    "file": "src/poi/poiTransfer.js",
+    "old": "    } else if (h.error === 'not-found') {",
+    "new": "    } else if (true) {",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T1-the-assets-progress-unsaid",
+    "file": "src/poi/poiTransfer.js",
+    "old": "    if (r.data.existed) existed++; else uploaded++;\n    progress(++done, total);\n",
+    "new": "    if (r.data.existed) existed++; else uploaded++;\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T1-the-glow-left-behind",
+    "file": "src/poi/poiTransfer.js",
+    "old": "      for (const sha of [m.texture, m.emissive]) {",
+    "new": "      for (const sha of [m.texture]) {",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T3-the-refused-picture-ignored",
+    "file": "src/poi/poiShelf.js",
+    "old": "    if (!r.ok) return { ok: false, error: r.error };\n",
+    "new": "    if (!r.ok) return { ok: true };\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T3-the-lights-shared",
+    "file": "src/poi/poiShelf.js",
+    "old": "lights: lights.map((l) => structuredClone(l)), thumb: null,",
+    "new": "lights, thumb: null,",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T3-the-solidity-dropped",
+    "file": "src/poi/poiShelf.js",
+    "old": "    if (p.collide) part.collide = p.collide;\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T3-the-shadow-dropped",
+    "file": "src/poi/poiShelf.js",
+    "old": "    if (typeof p.shadow === 'boolean') part.shadow = p.shadow;\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T3-the-turn-and-size-dropped",
+    "file": "src/poi/poiShelf.js",
+    "old": "t: p.t ?? [0, 0, 0], r: p.r, s: p.s });",
+    "new": "t: p.t ?? [0, 0, 0] });",
+    "tests": ["test/poi/auditpoi_packs.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T5-the-history-not-drawn-again",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    await loadHistory(h.id);\n  }\n",
+    "new": "  }\n",
+    "tests": ["test/poi/poi6_review.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T6-a-clean-open-poi-kept",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "      if (edit.has(o.id) && edit.dirty(o.id)) { kept++; continue; }",
+    "new": "      if (edit.has(o.id)) { kept++; continue; }",
+    "tests": ["test/poi/poi6_review.test.js"]
+  }
+]

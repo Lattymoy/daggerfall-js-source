@@ -1,4 +1,4 @@
-// Regenerate src/characters/enemyBasics.js from DFU's EnemyBasics.cs
+// Regenerate src/characters/enemy/enemyBasics.js from DFU's EnemyBasics.cs
 // Enemies table (MIT, Daggerfall Workshop). C3 extracted the visual
 // fields; E3a re-extracts with the combat/entity fields. HARD RULE:
 // the three C3 fields must come out byte-identical for every existing
@@ -7,7 +7,7 @@
 //
 // AUDIT 24 (wave 23): the extraction itself now lives in
 // extractEnemyBasics.lib.mjs as a pure function, so the SAME code the
-// gate in test/audit24_enemytable.test.js runs is the code that writes
+// gate in test/systems/audit24_enemytable.test.js runs is the code that writes
 // this file. A column the extraction never looked at used to be
 // invisible from both sides - see the library header.
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -20,7 +20,7 @@ const scPath = process.argv[3] || join(dirname(process.argv[2]), '..', 'SoundCli
 const out = extractEnemyBasics(src, readFileSync(scPath, 'utf8'));
 
 // Assert C3 parity before writing
-const cur = (await import(new URL('../src/characters/enemyBasics.js', import.meta.url).href)).ENEMY_BASICS;
+const cur = (await import(new URL('../src/characters/enemy/enemyBasics.js', import.meta.url).href)).ENEMY_BASICS;
 for (const [k, v] of Object.entries(cur)) {
   const n = out[k];
   if (!n) throw new Error(`ASSERT FAIL: key ${k} missing from re-extraction`);
@@ -31,7 +31,7 @@ for (const [k, v] of Object.entries(cur)) {
 console.log(`ASSERT: C3 parity holds for ${Object.keys(cur).length} keys; re-extracted ${Object.keys(out).length}`);
 
 const body = JSON.stringify(out, null, 1).replace(/"([a-zA-Z][a-zA-Z0-9]*)":/g, "'$1':").replace(/"/g, "'");
-writeFileSync(new URL('../src/characters/enemyBasics.js', import.meta.url),
+writeFileSync(new URL('../src/characters/enemy/enemyBasics.js', import.meta.url),
 `// Enemy visual/behaviour/entity basics (Characters C3, re-extracted
 // E3a with combat fields). Generated from DFU's EnemyBasics.cs
 // Enemies table (MIT, Daggerfall Workshop): textures + Behaviour
@@ -42,6 +42,17 @@ writeFileSync(new URL('../src/characters/enemyBasics.js', import.meta.url),
 // Class entries (128+) carry no health/level/damage - those come
 // from the career (CLASS*.CFG) + FormulaHelper, per SetEnemyCareer.
 // Do not hand-edit; regenerate: node tools/extract-enemy-basics.mjs
-export const ENEMY_BASICS = Object.freeze(${body});
+// DEX1: the table itself is not frozen, as DFU's EnemyBasics.Enemies is not - a mod's enemies join it
+// (registerEnemyRows) and a mod's edits are written over its rows, which every reader then sees (as RR1's
+// enemyAppearance writes over them). Its classic rows are DFU's, generated; only a mod's install writes it.
+export const ENEMY_BASICS = (${body});
+
+/** DEX1: THE TABLE AS DFU SHIPS IT - EnemyBasics.Enemies' own initializer, copied before any mod writes a row (this
+ *  module's evaluation ends before an importer runs) and frozen to the leaf. For the readers a mod's edit must never
+ *  reach: King's Gambit's roster is one for every client and the relay (bible/11-Multiplayer/Kings-Gambit.md, "the
+ *  vanilla rows, never a mod's overlay"), and a client evaluating it after Daggerfall Enemy Expansion's Start wrote its
+ *  classic rows would build another. */
+const deepFreeze = (o) => { for (const v of Object.values(o)) if (v && typeof v === 'object') deepFreeze(v); return Object.freeze(o); };
+export const VANILLA_ENEMY_BASICS = deepFreeze(structuredClone(ENEMY_BASICS));
 `);
 console.log('written');

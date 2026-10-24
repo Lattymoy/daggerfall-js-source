@@ -1,0 +1,142 @@
+[
+  {
+    "name": "LEAP-SLOW-the-gate-reads-the-spell-on-the-ground",
+    "file": "src/combat/techniques.js",
+    "old": "(m.slowFalling && !m.grounded)",
+    "new": "(m.slowFalling && m.grounded)",
+    "tests": [
+      "test/combat/fb1018d_leapslow.test.js"
+    ],
+    "why": "the report itself: a worn Slowfalling piece refuses every leap and dash on the ground"
+  },
+  {
+    "name": "LEAP-SLOW-the-gate-blind-to-the-spell-in-the-air",
+    "file": "src/combat/techniques.js",
+    "old": "(m.slowFalling && !m.grounded)",
+    "new": "(m.slowFallin && !m.grounded)",
+    "tests": [
+      "test/combat/fb1018d_leapslow.test.js"
+    ],
+    "why": "the Flying Kick goes from the air under the spell - KICK-AIR's refusal lost"
+  },
+  {
+    "name": "LEAP-SLOW-the-launch-reads-the-spell-on-the-ground",
+    "file": "src/player/motor.js",
+    "old": "(this.slowFalling && !this.grounded)",
+    "new": "(this.slowFalling && this.grounded)",
+    "tests": [
+      "test/combat/fb1018d_leapslow.test.js"
+    ],
+    "why": "the gate lets the leap go and the motor refuses its flight: \"You cannot leap from here.\" from execute"
+  },
+  {
+    "name": "LEAP-SLOW-the-launch-blind-to-the-spell-in-the-air",
+    "file": "src/player/motor.js",
+    "old": "(this.slowFalling && !this.grounded)",
+    "new": "(this.slowFallin && !this.grounded)",
+    "tests": [
+      "test/combat/fb1018d_leapslow.test.js"
+    ],
+    "why": "the motor flies a technique launched in the air under the spell"
+  },
+  {
+    "name": "LEAP-SLOW-the-glide-takes-the-flight",
+    "file": "src/player/motor.js",
+    "old": "        if (this.techFlight && this.jumping) this.velY -= GRAVITY * dt;",
+    "new": "        if (!this.techFlight && this.jumping) this.velY -= GRAVITY * dt;",
+    "tests": [
+      "test/combat/fb1018d_leapslow.test.js"
+    ],
+    "why": "the flight glides: a 9 m Leap Strike lands at 12.9 m after 1.15 s, past its foe and off its strike's clock"
+  },
+  {
+    "name": "LEAP-SLOW-the-flight-without-its-jumping",
+    "file": "src/player/motor.js",
+    "old": "        if (this.techFlight && this.jumping) this.velY -= GRAVITY * dt;",
+    "new": "        if (this.techFlight && this.jumpin) this.velY -= GRAVITY * dt;",
+    "tests": [
+      "test/combat/fb1018d_leapslow.test.js"
+    ],
+    "why": "the exemption never holds: the flight glides"
+  },
+  {
+    "name": "LEAP-SLOW-the-flight-read-without-jumping",
+    "file": "src/player/motor.js",
+    "old": "        if (this.techFlight && this.jumping) this.velY -= GRAVITY * dt;",
+    "new": "        if (this.techFlight) this.velY -= GRAVITY * dt;",
+    "tests": [
+      "test/combat/fb1018d_leapslow.test.js"
+    ],
+    "why": "a flight cut short by a placement keeps its arc: the fall after it is never the spell's"
+  },
+  {
+    "name": "LEAP-SLOW-every-jump-a-flight",
+    "file": "src/player/motor.js",
+    "old": "        if (this.techFlight && this.jumping) this.velY -= GRAVITY * dt;",
+    "new": "        if (this.techFlight || this.jumping) this.velY -= GRAVITY * dt;",
+    "tests": [
+      "test/combat/fb1018d_leapslow.test.js"
+    ],
+    "why": "JUMP-SLOW's glide from a jump's apex lost under the spell"
+  },
+  {
+    "name": "LEAP-SLOW-the-water-and-the-air-leave-the-flight-on",
+    "file": "src/player/motor.js",
+    "old": "      this.techFlight = false;   // FB1018D LEAP-SLOW: and a technique's flight with it - a fall after is the slow fall's to glide\n",
+    "new": "",
+    "tests": [
+      "test/combat/fb1018d_leapslow.test.js"
+    ],
+    "why": "a levitation let go mid-flight drops on plain gravity - Jumping still stands from the launch"
+  },
+  {
+    "name": "LEAP-SLOW-a-wall-keeps-the-flight",
+    "file": "src/player/motor.js",
+    "old": "    this.techFlight = false;   // FB1018D LEAP-SLOW (AUDIT FB1018D L2-2): a wall taken ends a technique's flight - a grab mid-flight is no move (_pkGrab), and an eject from it is the parkour leap's own flight, the slow fall's to glide\n",
+    "new": "",
+    "tests": [
+      "test/combat/fb1018d_leapslow.test.js"
+    ],
+    "why": "AUDIT FB1018D L2-2: a flight that grabs a wall keeps techFlight - its eject (the parkour leap) drops at plain gravity under the spell (the clear moved here from _pkLaunch, whose every path now begins on the ground or a wall)"
+  },
+  {
+    "name": "LEAP-SLOW-the-ground-leaves-the-flight-on",
+    "file": "src/player/motor.js",
+    "old": "      this.techFlight = false;   // TECH1: a technique's flight ends on the ground\n",
+    "new": "",
+    "tests": [
+      "test/combat/fb1018d_leapslow.test.js"
+    ],
+    "why": "a jump after the landing is still the flight: its descent never glides"
+  },
+  {
+    "name": "LEAP-SLOW-a-catch-keeps-the-flight",
+    "file": "src/player/motor.js",
+    "old": "    this.techFlight = false;   // FB1018D LEAP-SLOW (AUDIT FB1018D L2-2): and a technique's - a clamber's or a vault's exit sets Jumping again, and the drop after it is the slow fall's to glide\n",
+    "new": "",
+    "tests": [
+      "test/combat/fb1018d_leapslow.test.js"
+    ],
+    "why": "AUDIT FB1018D L2-2: a flight caught in a hang keeps techFlight, and the clamber's exit drops at plain gravity under the spell"
+  },
+  {
+    "name": "LEAP-SLOW-the-flight-never-reanchored",
+    "file": "src/player/motor.js",
+    "old": "      if (this.slowFalling && this.falling && !(this.jumping && this.velY > 0)) {   // JUMP-SLOW: a jump's rise is the jump's",
+    "new": "      if (this.slowFalling && this.falling && !(this.jumping && this.velY > 0) && !(this.techFlight && this.jumping)) {   // JUMP-SLOW: a jump's rise is the jump's",
+    "tests": [
+      "test/combat/fb1018d_leapslow.test.js"
+    ],
+    "why": "AUDIT FB1018D L2-3: the flight on the plain-gravity arm, its fall never re-anchored - a leap down 3 m billed 3 m"
+  },
+  {
+    "name": "LEAP-SLOW-the-air-read-off-jumping",
+    "file": "src/combat/techniques.js",
+    "old": "(m.slowFalling && !m.grounded)",
+    "new": "(m.slowFalling && m.jumping)",
+    "tests": [
+      "test/combat/fb1018d_leapslow.test.js"
+    ],
+    "why": "AUDIT FB1018D L2-3: a fall that is no jump (a walk off an edge) read as the ground - the kick aims in the glide"
+  }
+]

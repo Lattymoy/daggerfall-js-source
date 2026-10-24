@@ -5,8 +5,8 @@
     "old": "export const CLAIM_THRESHOLD = Object.freeze({ palace: 6000, crown: 30000 });",
     "new": "export const CLAIM_THRESHOLD = Object.freeze({ palace: 5000, crown: 30000 });",
     "tests": [
-      "test/seat1c_service.test.js",
-      "test/seat1c_client.test.js"
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -15,7 +15,7 @@
     "old": "export const CLAIM_THRESHOLD = Object.freeze({ palace: 6000, crown: 30000 });",
     "new": "export const CLAIM_THRESHOLD = Object.freeze({ palace: 6000, crown: 6000 });",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -24,8 +24,8 @@
     "old": "export const CLAIM_FEE = Object.freeze({ palace: 8000, crown: 80000 });",
     "new": "export const CLAIM_FEE = Object.freeze({ palace: 800, crown: 80000 });",
     "tests": [
-      "test/seat1c_service.test.js",
-      "test/seat1c_client.test.js"
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -34,8 +34,8 @@
     "old": "export const CONTESTED_MARGIN = 0.1;",
     "new": "export const CONTESTED_MARGIN = 0.2;",
     "tests": [
-      "test/seat1c_service.test.js",
-      "test/seat1c_client.test.js"
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -44,8 +44,8 @@
     "old": "(s - STANDING_START) * 0.005 : (s - STANDING_START) * 0.01);",
     "new": "(s - STANDING_START) * 0.01 : (s - STANDING_START) * 0.01);",
     "tests": [
-      "test/seat1c_service.test.js",
-      "test/seat1c_client.test.js"
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -54,7 +54,7 @@
     "old": "(s - STANDING_START) * 0.005 : (s - STANDING_START) * 0.01);",
     "new": "(s - STANDING_START) * 0.005 : (s - STANDING_START) * 0.005);",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -63,8 +63,8 @@
     "old": "export const claimTotal = (g) => amountOf(g.influence) + amountOf(g.legacy);",
     "new": "export const claimTotal = (g) => amountOf(g.influence);",
     "tests": [
-      "test/seat1c_service.test.js",
-      "test/seat1c_client.test.js"
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -73,7 +73,7 @@
     "old": "  || (a.pledgedAt ?? Infinity) - (b.pledgedAt ?? Infinity) ||",
     "new": "  || (b.pledgedAt ?? Infinity) - (a.pledgedAt ?? Infinity) ||",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -82,7 +82,7 @@
     "old": "export const bySeatStanding = (a, b) => claimTotal(b) - claimTotal(a) || (b.legacy ?? 0) - (a.legacy ?? 0)",
     "new": "export const bySeatStanding = (a, b) => claimTotal(b) - claimTotal(a)",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -91,8 +91,8 @@
     "old": "  + Math.max(0, own?.legacy ?? 0);\n",
     "new": "  + 0;\n",
     "tests": [
-      "test/seat1c_service.test.js",
-      "test/seat1c_client.test.js"
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -101,7 +101,7 @@
     "old": "Math.floor(Math.max(0, own?.influence ?? 0) * (1 + standingModifier(standing)) * overreachDefence(extra) * (held ? SIEGE_DEFENCE_BONUS : 1) + 1e-9)",
     "new": "Math.floor(Math.max(0, own?.influence ?? 0) * overreachDefence(extra) * (held ? SIEGE_DEFENCE_BONUS : 1) + 1e-9)",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -110,8 +110,8 @@
     "old": "      const amount = Math.floor(Math.max(0, g.influence) * SEAT_LEGACY_SHARE);",
     "new": "      const amount = Math.floor(Math.max(0, g.influence) * 0.2);",
     "tests": [
-      "test/seat1c_service.test.js",
-      "test/seat1c_client.test.js"
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -120,7 +120,7 @@
     "old": "    purse.set(taker.guild, (purse.get(taker.guild) ?? 0) - fee);\n",
     "new": "",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -129,8 +129,8 @@
     "old": "    const passed = s.guilds.filter((g) => claimTotal(g) >= CLAIM_THRESHOLD[s.tier]).sort(bySeatStanding);",
     "new": "    const passed = s.guilds.filter(() => true).sort(bySeatStanding);",
     "tests": [
-      "test/seat1c_service.test.js",
-      "test/seat1c_client.test.js"
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -139,8 +139,8 @@
     "old": "    const taker = passed.find((g) => (purse.get(g.guild) ?? 0) >= fee);",
     "new": "    const taker = (purse.get(passed[0].guild) ?? 0) >= fee ? passed[0] : null;",
     "tests": [
-      "test/seat1c_service.test.js",
-      "test/seat1c_client.test.js"
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -149,8 +149,8 @@
     "old": "    if (!keeps(s) || s.holder.truceWeek === week) continue;",
     "new": "    if (!keeps(s)) continue;",
     "tests": [
-      "test/seat1c_service.test.js",
-      "test/seat1c_client.test.js"
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -159,8 +159,8 @@
     "old": "      if (total >= CLAIM_THRESHOLD[s.tier] && total > defence) candidates.push",
     "new": "      if (total >= CLAIM_THRESHOLD[s.tier]) candidates.push",
     "tests": [
-      "test/seat1c_service.test.js",
-      "test/seat1c_client.test.js"
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -169,8 +169,8 @@
     "old": "    if (seatTaken.has(c.key) || guildTaken.has(c.guild)) continue;",
     "new": "    if (seatTaken.has(c.key)) continue;",
     "tests": [
-      "test/seat1c_service.test.js",
-      "test/seat1c_client.test.js"
+      "test/net/seat1c_service.test.js",
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -179,7 +179,7 @@
     "old": "    if (seatTaken.has(c.key) || guildTaken.has(c.guild)) continue;",
     "new": "    if (guildTaken.has(c.guild)) continue;",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -188,7 +188,7 @@
     "old": "  return { standing: Math.max(0, Math.min(STANDING_MAX, standing + sum)), changes };",
     "new": "  return { standing: Math.max(0, standing + sum), changes };",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -197,7 +197,7 @@
     "old": "  ? `Held by ${guildWords(holder.guild)} since ${seatWeekName(holder.since)}. Standing ${holder.standing}${standingTrendWords(standingTrend(holder))}.`",
     "new": "  ? `Held since ${seatWeekName(holder.since)}. Standing ${holder.standing}${standingTrendWords(standingTrend(holder))}.`",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -206,7 +206,7 @@
     "old": "  const fill = h ? heraldryHex(h.field) : null;",
     "new": "  const fill = null;",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -215,7 +215,7 @@
     "old": "  const split = !seat.holder && b?.kind === 'tourney' ?",
     "new": "  const split = false ?",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -224,7 +224,7 @@
     "old": "export const seatBannerOf = (seat) => seat?.holder?.guild?.heraldry ?? seatPlainBanner(seat);",
     "new": "export const seatBannerOf = (seat) => seatPlainBanner(seat);",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -233,7 +233,7 @@
     "old": "  const stmts = [db.prepare('INSERT INTO town_seat_weeks (week, settled_at) VALUES (?, ?)').bind(week, nowS)];",
     "new": "  const stmts = [db.prepare('INSERT OR IGNORE INTO town_seat_weeks (week, settled_at) VALUES (?, ?)').bind(week, nowS)];",
     "tests": [
-      "test/seat1c_service.test.js"
+      "test/net/seat1c_service.test.js"
     ]
   },
   {
@@ -242,7 +242,7 @@
     "old": "      .bind(c.key, c.guild, registry.get(c.key).region, registry.get(c.key).tier, next, STANDING_START, next, nowS));",
     "new": "      .bind(c.key, c.guild, registry.get(c.key).region, registry.get(c.key).tier, week, STANDING_START, next, nowS));",
     "tests": [
-      "test/seat1c_service.test.js"
+      "test/net/seat1c_service.test.js"
     ]
   },
   {
@@ -251,7 +251,7 @@
     "old": "      .bind(c.key, c.guild, registry.get(c.key).region, registry.get(c.key).tier, next, STANDING_START, next, nowS));",
     "new": "      .bind(c.key, c.guild, registry.get(c.key).region, registry.get(c.key).tier, next, STANDING_START, null, nowS));",
     "tests": [
-      "test/seat1c_service.test.js"
+      "test/net/seat1c_service.test.js"
     ]
   },
   {
@@ -260,7 +260,7 @@
     "old": "    stmts.push(db.prepare('INSERT INTO town_seat_legacy (week, key, guild_id, amount) VALUES (?, ?, ?, ?)').bind(next, l.key, l.guild, l.amount));",
     "new": "    stmts.push(db.prepare('INSERT INTO town_seat_legacy (week, key, guild_id, amount) VALUES (?, ?, ?, ?)').bind(week + 2, l.key, l.guild, l.amount));",
     "tests": [
-      "test/seat1c_service.test.js"
+      "test/net/seat1c_service.test.js"
     ]
   },
   {
@@ -269,7 +269,7 @@
     "old": "    stmts.push(db.prepare('UPDATE town_seat_holds SET standing = ? WHERE key = ? AND guild_id = ?').bind(ending ? seasonStanding(w.standing) : w.standing, w.key, w.guild));",
     "new": "    stmts.push(db.prepare('SELECT ?, ?, ?').bind(w.standing, w.key, w.guild));",
     "tests": [
-      "test/seat1c_service.test.js"
+      "test/net/seat1c_service.test.js"
     ]
   },
   {
@@ -278,7 +278,7 @@
     "old": "  const from = Math.max(last == null ? current - 1 : Number(last) + 1, current - SETTLE_WEEKS_MAX);",
     "new": "  const from = current;",
     "tests": [
-      "test/seat1c_service.test.js"
+      "test/net/seat1c_service.test.js"
     ]
   },
   {
@@ -287,7 +287,7 @@
     "old": "  if (Number(a.me.rank) !== GUILD_RANK_MASTER) return { error: 'guild-rank' };\n",
     "new": "",
     "tests": [
-      "test/seat1c_service.test.js"
+      "test/net/seat1c_service.test.js"
     ]
   },
   {
@@ -296,7 +296,7 @@
     "old": "  if (await db.prepare('SELECT 1 FROM town_seat_holds WHERE guild_id = ? AND region = ?').bind(gid, seat.region).first()) return { error: 'seat-held-here' };",
     "new": "",
     "tests": [
-      "test/seat1c_service.test.js"
+      "test/net/seat1c_service.test.js"
     ]
   },
   {
@@ -305,7 +305,7 @@
     "old": "  if (held) return Number(held.key);\n",
     "new": "",
     "tests": [
-      "test/seat1c_service.test.js"
+      "test/net/seat1c_service.test.js"
     ]
   },
   {
@@ -314,7 +314,7 @@
     "old": "  if (held && !out.has(held.guild_id)) out.set(held.guild_id, Number(held.at));",
     "new": "",
     "tests": [
-      "test/seat1c_service.test.js"
+      "test/net/seat1c_service.test.js"
     ]
   },
   {
@@ -323,17 +323,18 @@
     "old": "`EXISTS (SELECT 1 FROM town_seat_holds WHERE guild_id = ${p})`",
     "new": "`0`",
     "tests": [
-      "test/seat1c_service.test.js"
+      "test/net/seat1c_service.test.js"
     ]
   },
   {
     "name": "SEAT1c-list-undressed",
     "file": "server-account/src/index.js",
-    "old": "            return 'error' in r ? r : { ...r, seats: await seatsWithHolders(ctx.db, r.seats, nowS), red: await redOf(ctx.db, nowS), zero: seasonZeroOf(env.SEASON_ZERO_WEEK) };   // SEAT1c: each seat's holder and battle   // CROWN2: the server's red lines   // SEASON1 part two: the week Season 0 began, for the client's Tides",
+    "old": "            return 'error' in r ? r : { ...r, ...(await seatsBoard(ctx.db, r.seats, nowS)), zero: seasonZeroOf(env.SEASON_ZERO_WEEK) };",
     "new": "            return r;",
     "tests": [
-      "test/seat1c_service.test.js"
-    ]
+      "test/net/seat1c_service.test.js"
+    ],
+    "note": "PRIMARY-TRIPS (re-aimed by content): the list's line is seatsBoard's"
   },
   {
     "name": "SEAT1c-no-settle-on-read",
@@ -341,7 +342,7 @@
     "old": "        if (seatsOpenFor(who.player, env) && (await settleDueOnce(ctx.db, nowS, seasonZeroOf(env.SEASON_ZERO_WEEK))).pending && !SEAT_READS.has(path)) return no('seats-settling', 503, origin);   // SEASON1: a Season's end at its Turning\n",
     "new": "",
     "tests": [
-      "test/seat1c_service.test.js"
+      "test/net/seat1c_service.test.js"
     ]
   },
   {
@@ -350,7 +351,7 @@
     "old": "    dressed: (seat) => (seat ? { ...seat, holder: dress.get(seat.key)?.holder ?? null, battle: dress.get(seat.key)?.battle ?? null, forts:",
     "new": "    dressed: (seat) => (seat ? { ...seat, holder: null, battle: null, forts:",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -359,7 +360,7 @@
     "old": "          if (!armed()) { armedAt = ui.nowS() * 1000; ui.rerender(); disarmLater(); return null; }",
     "new": "",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -368,7 +369,7 @@
     "old": "        if (ruling && data.mine.rank === GUILD_RANK_MASTER) {",
     "new": "        if (ruling) {",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -377,25 +378,25 @@
     "old": "      const lines = (data.chronicle ?? []).map((r) => chronicleLine(r, seat, book.zero ?? null)).filter(Boolean);",
     "new": "      const lines = [];",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
     "name": "SEAT1c-ink-no-fill",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  } else if (mark.fill) {",
     "new": "  } else if (false) {",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
     "name": "SEAT1c-ink-no-siege-edge",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  ctx.strokeStyle = mark.siege ? SEAT_RING_SIEGE : mark.ring;",
     "new": "  ctx.strokeStyle = mark.ring;",
     "tests": [
-      "test/seat1c_client.test.js"
+      "test/ui/seat1c_client.test.js"
     ]
   },
   {
@@ -404,7 +405,7 @@
     "old": "  if (titleClaimed(c.t) ? !seatTitleClaimOk(c.ts) : c.ts !== undefined) return false;",
     "new": "  if (!titleClaimed(c.t) && c.ts !== undefined) return false;",
     "tests": [
-      "test/seat1c_titles.test.js"
+      "test/net/seat1c_titles.test.js"
     ]
   },
   {
@@ -413,7 +414,7 @@
     "old": "  if (titleClaimed(c.t) ? !seatTitleClaimOk(c.ts) : c.ts !== undefined) return false;",
     "new": "  if (titleClaimed(c.t) && !seatTitleClaimOk(c.ts)) return false;",
     "tests": [
-      "test/seat1c_titles.test.js"
+      "test/net/seat1c_titles.test.js"
     ]
   },
   {
@@ -422,7 +423,7 @@
     "old": "  && Number.isSafeInteger(ts[1]) && ts[1] >= 0 && ts[1] <= 9999;",
     "new": "  && Number.isSafeInteger(ts[1]) && ts[1] >= 0;",
     "tests": [
-      "test/seat1c_titles.test.js"
+      "test/net/seat1c_titles.test.js"
     ]
   },
   {
@@ -431,7 +432,7 @@
     "old": "  if (typeof t === 'string' && titleClaimed(t) && seatTitleClaimOk(from?.ts)) row.ts = from.ts;",
     "new": "",
     "tests": [
-      "test/seat1c_titles.test.js"
+      "test/net/seat1c_titles.test.js"
     ]
   },
   {
@@ -440,7 +441,7 @@
     "old": "  if (typeof t === 'string' && titleClaimed(t) && seatTitleClaimOk(from?.ts)) row.ts = from.ts;",
     "new": "  if (from?.ts) row.ts = from.ts;",
     "tests": [
-      "test/seat1c_titles.test.js"
+      "test/net/seat1c_titles.test.js"
     ]
   },
   {
@@ -449,7 +450,7 @@
     "old": "  return ts ? { title, glyphs, ts } : { title, glyphs };",
     "new": "  return { title, glyphs };",
     "tests": [
-      "test/seat1c_titles.test.js"
+      "test/net/seat1c_titles.test.js"
     ]
   },
   {
@@ -458,7 +459,7 @@
     "old": "title: c.t, ts: c.ts, glyphs: c.g,",
     "new": "title: c.t, glyphs: c.g,",
     "tests": [
-      "test/seat1c_titles.test.js"
+      "test/net/seat1c_titles.test.js"
     ]
   },
   {
@@ -467,7 +468,7 @@
     "old": "  if (crown) return { title: 'protector', ts: [crown.key, season] };",
     "new": "",
     "tests": [
-      "test/seat1c_titles.test.js"
+      "test/net/seat1c_titles.test.js"
     ]
   },
   {
@@ -476,7 +477,7 @@
     "old": "    if (h.tier === 'crown') { const g = SEAT_CROWN_GLYPHS[CROWN_SEAT_REGIONS[h.region]]; if (g) out.add(g); } else out.add('tower');",
     "new": "    out.add('tower');",
     "tests": [
-      "test/seat1c_titles.test.js"
+      "test/net/seat1c_titles.test.js"
     ]
   },
   {
@@ -485,7 +486,7 @@
     "old": ": SEAT_TITLES.includes(wornT) ? (seatBadge?.title === wornT ? { t: wornT, ts: seatBadge.ts } : {})\n",
     "new": ": SEAT_TITLES.includes(wornT) ? { t: wornT, ts: seatBadge?.ts ?? [0, 0] }\n",
     "tests": [
-      "test/seat1c_titles.test.js"
+      "test/net/seat1c_titles.test.js"
     ]
   },
   {
@@ -494,7 +495,7 @@
     "old": "          g: [...glyphsOf(who.player, env, nowS), ...(seatBadge?.glyphs ?? [])],",
     "new": "          g: glyphsOf(who.player, env, nowS),",
     "tests": [
-      "test/seat1c_titles.test.js"
+      "test/net/seat1c_titles.test.js"
     ]
   },
   {
@@ -503,7 +504,7 @@
     "old": "  if (Array.isArray(player?.seatTitles)) for (const t of player.seatTitles) if (SEAT_TITLES.includes(t) && !held.includes(t)) held.push(t);",
     "new": "",
     "tests": [
-      "test/seat1c_titles.test.js"
+      "test/net/seat1c_titles.test.js"
     ]
   },
   {
@@ -512,7 +513,7 @@
     "old": "  const t = Number(m.rank) === GUILD_RANK_MASTER ? seatTitleOf(holds, season) : null;",
     "new": "  const t = seatTitleOf(holds, season);",
     "tests": [
-      "test/seat1c_titles.test.js"
+      "test/net/seat1c_titles.test.js"
     ]
   },
   {
@@ -521,7 +522,7 @@
     "old": "const text = (SEAT_TITLES.includes(key) ? seatTitleText(key, peer?.ts, _seatPlace) : CHAPTER_TITLES.includes(key)",
     "new": "const text = (SEAT_TITLES.includes(key) ? null : CHAPTER_TITLES.includes(key)",
     "tests": [
-      "test/seat1c_titles.test.js"
+      "test/net/seat1c_titles.test.js"
     ]
   }
 ]

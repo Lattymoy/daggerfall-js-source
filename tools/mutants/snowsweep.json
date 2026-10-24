@@ -1,0 +1,56 @@
+[
+  {
+    "name": "SS-the-whole-sweep-in-one-frame",
+    "file": "src/scenes/snowCoverHost.js",
+    "old": "        sweepUntil(w0 + budgetFor(arriving ? SNOW_COVER.arriveMs : SNOW_COVER.budgetMs));",
+    "new": "        sweepUntil(Infinity);",
+    "tests": [
+      "test/render/snowsweep.test.js"
+    ]
+  },
+  {
+    "name": "SS-the-deadline-only-between-pixels",
+    "file": "src/scenes/snowCoverHost.js",
+    "old": "          if (!turnedNow && (i / 5) % SWEEP_FLATS_A_READ === SWEEP_FLATS_A_READ - 1 && i + 5 < s.flats.length && clock() >= deadline) { sweepFlat = i + 5; return found; }\n",
+    "new": "",
+    "tests": [
+      "test/render/snowsweep.test.js"
+    ]
+  },
+  {
+    "name": "SS-the-stopped-flat-kept-for-a-new-build",
+    "file": "src/scenes/snowCoverHost.js",
+    "old": "      if (s !== sweepSnow) { sweepSnow = s; sweepFlat = 0; }",
+    "new": "      if (s !== sweepSnow) { sweepSnow = s; }",
+    "tests": [
+      "test/render/snowsweep.test.js"
+    ]
+  },
+  {
+    "name": "SS-a-budget-of-its-own",
+    "file": "src/scenes/snowCoverHost.js",
+    "old": "sweepUntil(w0 + budgetFor(arriving ? SNOW_COVER.arriveMs : SNOW_COVER.budgetMs));",
+    "new": "sweepUntil(w0 + (arriving ? SNOW_COVER.arriveMs : SNOW_COVER.budgetMs));",
+    "tests": [
+      "test/render/snowsweep.test.js"
+    ]
+  },
+  {
+    "name": "SS-its-spend-unshared",
+    "file": "src/scenes/snowCoverHost.js",
+    "old": "        spent += clock() - w0;\n      }\n    },",
+    "new": "      }\n    },",
+    "tests": [
+      "test/render/snowsweep.test.js"
+    ]
+  },
+  {
+    "name": "SS-walked-while-the-window-catches-up",
+    "file": "src/scenes/snowCoverHost.js",
+    "old": "      if (ready && sweepKeys) {",
+    "new": "      if (sweepKeys) {",
+    "tests": [
+      "test/render/snowsweep.test.js"
+    ]
+  }
+]

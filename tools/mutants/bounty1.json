@@ -1,74 +1,74 @@
 [
   {
     "name": "BOUNTY1-1-a-short-pack-pays-a-full-purse",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "export const purseShare = (n) => 0.6 + 0.1 *",
     "new": "export const purseShare = (n) => 1 + 0 *",
     "tests": [
-      "test/bounty1.test.js"
+      "test/systems/bounty1.test.js"
     ]
   },
   {
     "name": "BOUNTY1-2-a-dungeon-pack-pays-as-its-own-count",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "    ? BOUNTY_PACK_MIN + 2 * (Math.max(BOUNTY_DUNGEON_PACK_MIN",
     "new": "    ? BOUNTY_PACK_MIN + 1 * (Math.max(BOUNTY_DUNGEON_PACK_MIN",
     "tests": [
-      "test/bounty1.test.js"
+      "test/systems/bounty1.test.js"
     ]
   },
   {
     "name": "BOUNTY1-3-blue-below-level-four",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "  if (l <= 3) return { condition: 0.5, magicChance: 0 };",
     "new": "  if (l <= 3) return { condition: 0.5, magicChance: 0.5 };",
     "tests": [
-      "test/bounty1.test.js"
+      "test/systems/bounty1.test.js"
     ]
   },
   {
     "name": "BOUNTY1-4-a-share-across-tiers-fits",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "bountyTierIndex(b.level) === bountyTierIndex(level); };",
     "new": "bountyTierIndex(b.level) <= bountyTierIndex(level); };",
     "tests": [
-      "test/bounty1.test.js"
+      "test/systems/bounty1.test.js"
     ]
   },
   {
     "name": "BOUNTY1-5-one-dungeon-slot-however-many-dungeons",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "export const dungeonSlotsFor = (n) => (n >= 2 ? [2, 3] :",
     "new": "export const dungeonSlotsFor = (n) => (n >= 2 ? [3] :",
     "tests": [
-      "test/bounty1.test.js"
+      "test/systems/bounty1.test.js"
     ]
   },
   {
     "name": "BOUNTY1-6-the-bounty-boards-are-the-first-half-not-every-other",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "out.size < want; k += 2) out.add(order[k][1]);",
     "new": "out.size < want; k += 1) out.add(order[k][1]);",
     "tests": [
-      "test/bounty1.test.js"
+      "test/systems/bounty1.test.js"
     ]
   },
   {
     "name": "BOUNTY1-7-a-bounty-outlives-its-day",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "nowMinutes - h.takenAt >= BOUNTY_LIFETIME_MINUTES);",
     "new": "nowMinutes - h.takenAt > BOUNTY_LIFETIME_MINUTES);",
     "tests": [
-      "test/bounty1.test.js"
+      "test/systems/bounty1.test.js"
     ]
   },
   {
     "name": "BOUNTY1-8-the-highest-account-stands-the-pack",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "    if (rowOf(p) && String(m.acct) < String(owner)) owner = m.acct;",
     "new": "    if (rowOf(p) && String(m.acct) > String(owner)) owner = m.acct;",
     "tests": [
-      "test/bounty1.test.js"
+      "test/systems/bounty1.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "const killedOf = (f) => !!f?.dead && (!!f.corpse || (Number(f.entity?.health) || 0) <= 0);",
     "new": "const killedOf = (f) => !!f?.dead;",
     "tests": [
-      "test/bounty1.test.js"
+      "test/systems/bounty1.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    addGoldPieces(entity, posting.gold);\n",
     "new": "",
     "tests": [
-      "test/bounty1.test.js"
+      "test/systems/bounty1.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    if (deps.showNotice(notices[0])) notices.shift();",
     "new": "    deps.showNotice(notices[0]); notices.shift();",
     "tests": [
-      "test/bounty1.test.js"
+      "test/systems/bounty1.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "        if (!bountyTierFits(r.i, deps.level())) {",
     "new": "        if (false) {",
     "tests": [
-      "test/bounty1.test.js"
+      "test/systems/bounty1.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "          if (held && bountyClearPays(r, held.takenAt)) pay(held.id, { byMate:",
     "new": "          if (false) pay(held.id, { byMate:",
     "tests": [
-      "test/bounty1.test.js"
+      "test/systems/bounty1.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "typeof r.i !== 'string' || !BOUNTY_POSE_ID_RE.test(r.i)) continue;",
     "new": "typeof r.i !== 'string') continue;",
     "tests": [
-      "test/bounty1.test.js"
+      "test/systems/bounty1.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "if (Number.isSafeInteger(p.lv) && p.lv >= 1 && p.lv <= BOUNTY_POSE_LV_MAX) out.lv = p.lv;",
     "new": "if (Number.isSafeInteger(p.lv) && p.lv >= 0 && p.lv <= BOUNTY_POSE_LV_MAX) out.lv = p.lv;",
     "tests": [
-      "test/bounty1.test.js"
+      "test/systems/bounty1.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "Math.hypot(feet[0] - c[0], feet[2] - c[2]) > FARM_LINGER_M) takeDown(f);",
     "new": "Math.hypot(feet[0] - c[0], feet[2] - c[2]) > 0) takeDown(f);",
     "tests": [
-      "test/bounty1.test.js"
+      "test/systems/bounty1.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "      // stacks (`modes.overlayHeld`): a mate's clear lands while a shop or the pack is open, and must not stand over it\n      if ((townTalk.overlayActive && !townTalk.overlayDone) || (modes?.overlayHeld ?? false) || (modes?.deathUp?.() ?? false)) return false;",
     "new": "      // stacks (`modes.overlayHeld`): a mate's clear lands while a shop or the pack is open, and must not stand over it\n      if ((townTalk.overlayActive && !townTalk.overlayDone) || (modes?.deathUp?.() ?? false)) return false;",
     "tests": [
-      "test/auditbounty1.test.js"
+      "test/systems/auditbounty1.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "mobileTypes: Array(count).fill(mobileType), fixed: true,",
     "new": "mobileTypes: Array(count).fill(mobileType),",
     "tests": [
-      "test/auditbounty1.test.js"
+      "test/systems/auditbounty1.test.js"
     ]
   },
   {
@@ -167,16 +167,16 @@
     "old": "for (const mobileType of (hit.fixed ? hit.mobileTypes : campMembers(hit.mobileTypes))) {",
     "new": "for (const mobileType of campMembers(hit.mobileTypes)) {",
     "tests": [
-      "test/auditbounty1.test.js"
+      "test/systems/auditbounty1.test.js"
     ]
   },
   {
     "name": "AUDIT-BOUNTY1-B2-the-pack-is-saved-and-capped",
     "file": "src/scenes/world.js",
-    "old": "        ...(hit.spawnOpts ?? {}),   // BOUNTY1: a bounty's pack stands `loose` and `transient`\n",
-    "new": "",
+    "old": "...(hit.spawnOpts ?? {}), grantKind:",
+    "new": "grantKind:",
     "tests": [
-      "test/auditbounty1.test.js"
+      "test/systems/auditbounty1.test.js"
     ]
   },
   {
@@ -185,9 +185,9 @@
     "old": "export const DEATH_GOLD_DIVISOR = 10;",
     "new": "export const DEATH_GOLD_DIVISOR = 5;",
     "tests": [
-      "test/deathpenalty.test.js",
-      "test/donline1_respawn.test.js",
-      "test/risestuck.test.js"
+      "test/systems/deathpenalty.test.js",
+      "test/scenes/donline1_respawn.test.js",
+      "test/systems/travel/risestuck.test.js"
     ]
   },
   {
@@ -196,32 +196,32 @@
     "old": "  return Math.floor(g / DEATH_GOLD_DIVISOR);",
     "new": "  return Math.ceil(g / DEATH_GOLD_DIVISOR);",
     "tests": [
-      "test/deathpenalty.test.js",
-      "test/donline1_respawn.test.js",
-      "test/risestuck.test.js"
+      "test/systems/deathpenalty.test.js",
+      "test/scenes/donline1_respawn.test.js",
+      "test/systems/travel/risestuck.test.js"
     ]
   },
   {
     "name": "DEATH-PENALTY-3-the-offline-screen-claims-gold",
     "file": "src/ui/deathScreen.js",
-    "old": "this.goldLoss = respawns ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
+    "old": "this.goldLoss = respawns && penalty !== false ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
     "new": "this.goldLoss = deathGoldLoss(goldPiecesOf(entity));",
     "tests": [
-      "test/deathpenalty.test.js",
-      "test/donline1_respawn.test.js",
-      "test/risestuck.test.js"
+      "test/systems/deathpenalty.test.js",
+      "test/scenes/donline1_respawn.test.js",
+      "test/systems/travel/risestuck.test.js"
     ],
     "note": "BAL4 (PIN MOVED): a death that respawns - online, or a Project Legacy rise offline - states the loss; one with no respawn still claims none. Re-aimed by content."
   },
   {
     "name": "DEATH-PENALTY-4-the-respawn-takes-nothing",
     "file": "src/scenes/world.js",
-    "old": "    const goldLost = wildRise ? 0 : applyDeathPenalty(playerEntity);",
+    "old": "    const goldLost = wildRise || madeRuleHere('deathPenalty') === 'none' ? 0 : applyDeathPenalty(playerEntity);",
     "new": "    const goldLost = 0;",
     "tests": [
-      "test/deathpenalty.test.js",
-      "test/donline1_respawn.test.js",
-      "test/risestuck.test.js"
+      "test/systems/deathpenalty.test.js",
+      "test/scenes/donline1_respawn.test.js",
+      "test/systems/travel/risestuck.test.js"
     ]
   },
   {
@@ -230,9 +230,9 @@
     "old": "                const goldLost = applyDeathPenalty(playerEntity);   // DEATH-PENALTY: Privateer's Hold",
     "new": "                const goldLost = 0;   // DEATH-PENALTY: Privateer's Hold",
     "tests": [
-      "test/deathpenalty.test.js",
-      "test/donline1_respawn.test.js",
-      "test/risestuck.test.js"
+      "test/systems/deathpenalty.test.js",
+      "test/scenes/donline1_respawn.test.js",
+      "test/systems/travel/risestuck.test.js"
     ],
     "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content. BAL4 (PIN MOVED): the arm runs online or at a Legacy rise, and both pay the tenth now; re-aimed by content."
   },
@@ -242,7 +242,7 @@
     "old": "  return Math.floor(g / DEATH_GOLD_DIVISOR);",
     "new": "  return Math.floor(g * DEATH_GOLD_FRACTION);",
     "tests": [
-      "test/deathpenalty.test.js"
+      "test/systems/deathpenalty.test.js"
     ],
     "note": "AUDIT DEATH-TENTH: 0.1 is a hair over a tenth in binary - past 3 x 2^51 a purse ending in 9 lost a coin more than a tenth."
   }

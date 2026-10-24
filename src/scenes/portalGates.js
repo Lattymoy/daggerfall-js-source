@@ -44,6 +44,7 @@ export function createPortalGates({
   const gates = [];
   let _seq = 0;
   let _lastTick = null, _lastFeet = null;
+  let _also = null;   // EG-F: another pool's portals, drawn with these (drawAlso)
   const holdFor = (ms) => Math.max(0, ms - PORTAL_MS.open - PORTAL_MS.close);
 
   function stand(g) { g.fx = fx.open(toScene(g.native), { holdMs: holdFor(g.until - now()), fixed: true }); }
@@ -138,7 +139,9 @@ export function createPortalGates({
   return {
     open, mine, applyOwner, tick, wireRecord, forgetSteps,
     /** The vortexes, drawn with the street's flats. */
-    batches: () => fx.batches(),
+    batches: () => { const more = _also?.(); return more?.length ? [...fx.batches(), ...more] : fx.batches(); },
+    /** EG-F: another pool's portals drawn with these, on the same axis - the Elite call's (scenes/eliteGates/egCall.js). */
+    drawAlso(batchesOf) { _also = batchesOf; },
     /** Every portal, for the tests. */
     get gates() { return gates; },
     /** A teardown: every portal and its batch gone. */

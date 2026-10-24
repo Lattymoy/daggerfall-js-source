@@ -5,7 +5,7 @@
   "old": "      for (const [id, hp, max, down] of g.f) roll[id] = { hp, max, down: down === 1 };",
   "new": "      for (const [id, hp, max] of g.f) roll[id] = { hp, max, down: false };",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "    case 'hp': return { ...s, roll: { ...s.roll, [g.id]: { hp: g.h, max: g.m, down: g.h <= 0 } }, heardAt: now };",
   "new": "    case 'hp': return { ...s, roll: { ...s.roll, [g.id]: { hp: g.h, max: g.m, down: false } }, heardAt: now };",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "return { ...s, roll: { ...s.roll, [g.id]: { hp: 0, max: was?.max ?? 0, down: true } }, heardAt: now }; }",
   "new": "return { ...s, heardAt: now }; }",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "      delete asks[g.a]; delete asks[g.b];\n",
   "new": "",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "bout: s.bout?.n === g.n ? null : s.bout,",
   "new": "bout: null,",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "    case 'lad': return { ...s, ladder: g.l.map((r) => r.slice()), heardAt: now };",
   "new": "    case 'lad': return s;",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "    case 'ask': return { ...s, asks: { ...s.asks, [g.id]: now }, heardAt: now };",
   "new": "    case 'ask': return s;",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "    case 'no': return { ...s, no: g.m, heardAt: now };",
   "new": "    case 'no': return s;",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "export const royalAskStands = (s, id, now) => Number.isFinite(s.asks[id]) && now - s.asks[id] <= ROYAL_RING.askMs;",
   "new": "export const royalAskStands = (s, id, now) => Number.isFinite(s.asks[id]);",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -86,7 +86,7 @@
   "old": "prize ${Number(t.prize ?? 0).toLocaleString('en-US')} silver",
   "new": "prize ${t.prize} silver",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -95,7 +95,7 @@
   "old": "return h >= 24 ? `${Math.floor(h / 24)}d ${h % 24}h`",
   "new": "return h >= 48 ? `${Math.floor(h / 24)}d ${h % 24}h`",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -104,7 +104,7 @@
   "old": "    : now < b.s ? `BOUT ${b.n}:",
   "new": "    : false ? `BOUT ${b.n}:",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -113,7 +113,7 @@
   "old": "  const ladder = s.ladder.slice(0, ROYAL_HUD_ROWS).map(",
   "new": "  const ladder = s.ladder.map(",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -122,7 +122,7 @@
   "old": "${r[0] ? who(r[0]) : 'someone gone'}",
   "new": "${who(r[0])}",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -131,7 +131,7 @@
   "old": "    if (f && b && (b.a === me || b.b === me)) {",
   "new": "    if (f) {",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -140,7 +140,7 @@
   "old": "    self.push(mine ? `You: ${mine[1]} ${mine[1] === 1 ? 'win' : 'wins'}, ${mine[2]} ${mine[2] === 1 ? 'loss' : 'losses'}` : 'You have no bout won yet.');",
   "new": "    self.push('You have no bout won yet.');",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -149,7 +149,7 @@
   "old": "    for (const id of Object.keys(s.asks)) if (royalAskStands(s, id, now)) self.push(",
   "new": "    for (const id of Object.keys(s.asks)) if (true) self.push(",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -158,7 +158,7 @@
   "old": "now - s.last.at < ROYAL_LAST_SHOWN_MS) {",
   "new": "true) {",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -167,7 +167,7 @@
   "old": "self.push(s.last.w === me ? (s.last.c ? 'You won the bout.' :",
   "new": "self.push(s.last.w === me ? (true ? 'You won the bout.' :",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -176,7 +176,7 @@
   "old": "  if (watching) self.push('Watching the Royal Tourney');\n  else {",
   "new": "  {",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -185,7 +185,7 @@
   "old": "      if (!relayOk()) { say(ROYAL_SESSION_TEXT.old); return false; }",
   "new": "",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -194,7 +194,7 @@
   "old": "      if (!field) { say(ROYAL_SESSION_TEXT.notHere(seat?.name ?? 'the city')); return false; }",
   "new": "",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -203,7 +203,7 @@
   "old": "      if (r?.error === 'ring-unsettled') { s.tries++; s.retryAt = nowMs() + passRetryMs(s.tries, ROYAL_PASS_RETRY_MS); if (s.tries === 1) say(r.text); return; }",
   "new": "",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -212,7 +212,7 @@
   "old": "      if (!s.joined) { if (s.retryAt && now >= s.retryAt) { s.retryAt = 0; ask(); } return; }",
   "new": "      if (!s.joined) { if (s.retryAt) { s.retryAt = 0; ask(); } return; }",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -221,7 +221,7 @@
   "old": "    s.room = royalRoomKey(s.seat.key, r.week);",
   "new": "    s.room = royalRoomKey(s.seat.key, 0);",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -230,7 +230,7 @@
   "old": "    online.mintSiegePass = s.mint;",
   "new": "",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -239,7 +239,7 @@
   "old": "      else if (!s.sentIn) s.sentIn = online.sendSiege({ k: 'in' });",
   "new": "      else online.sendSiege({ k: 'in' });",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -248,7 +248,7 @@
   "old": "      if (s.ends && now >= s.ends) { api.leave(); return; }",
   "new": "",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -257,7 +257,7 @@
   "old": "      if (!s || room !== s.room) return;\n      s.state = foldRoyal",
   "new": "      if (!s) return;\n      s.state = foldRoyal",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -266,7 +266,7 @@
   "old": "      if (g.k === 'back') movePlayer(g.p);",
   "new": "",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -275,7 +275,7 @@
   "old": "      if (g.k === 'ask') say(ROYAL_SESSION_TEXT.asked(name(g.id) || 'A contender'));",
   "new": "",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -284,7 +284,7 @@
   "old": "      if (g.k === 'won' && readRoyalReceipt(g.rc) && claims) { claims.keep(g.rc); claims.offer({ force: true }); }",
   "new": "",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -293,7 +293,7 @@
   "old": "      if (g.k === 'won' && readRoyalReceipt(g.rc) && claims)",
   "new": "      if (g.k === 'won' && claims)",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -302,7 +302,7 @@
   "old": "      if (!s?.joined || s.side === 'watch' || !peer || peer === online.id) return false;",
   "new": "      if (!s?.joined || !peer || peer === online.id) return false;",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -311,7 +311,7 @@
   "old": "      if (!s?.joined || s.side === 'watch' || !peer || peer === online.id) return false;",
   "new": "      if (!s?.joined || s.side === 'watch' || !peer) return false;",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -320,7 +320,7 @@
   "old": "      if (royalAskStands(s.state, peer, nowMs())) return online.sendSiege({ k: 'yes', to: peer });\n",
   "new": "",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -329,7 +329,7 @@
   "old": "    return b && now >= b.s && now < b.e && (b.a === online.id || b.b === online.id) ? b : null;",
   "new": "    return b && now < b.e && (b.a === online.id || b.b === online.id) ? b : null;",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -338,7 +338,7 @@
   "old": "    return b && now >= b.s && now < b.e && (b.a === online.id || b.b === online.id) ? b : null;",
   "new": "    return b && now >= b.s && now < b.e ? b : null;",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -347,7 +347,7 @@
   "old": "    blow(to, { w, m, d, r }) { return api.foes().includes(to) && online.sendSiege(",
   "new": "    blow(to, { w, m, d, r }) { return online.sendSiege(",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -356,7 +356,7 @@
   "old": "      return b && (b.a === online.id || b.b === online.id) ? { centre: s.field[0], radius: ROYAL_RING.radiusM } : null;",
   "new": "      return b ? { centre: s.field[0], radius: ROYAL_RING.radiusM } : null;",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -365,61 +365,61 @@
   "old": "      if (mint && online.mintSiegePass === mint) online.mintSiegePass = null;",
   "new": "      void 0;",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
   "name": "CROWN1C-claims-key",
-  "file": "src/net/siegeClaims.js",
+  "file": "src/net/siege/siegeClaims.js",
   "old": "export const ROYAL_CLAIMS_KEY = 'crown1.royalClaims';",
   "new": "export const ROYAL_CLAIMS_KEY = 'seat2a.siegeClaims';",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
   "name": "CROWN1C-claims-read",
-  "file": "src/net/siegeClaims.js",
+  "file": "src/net/siege/siegeClaims.js",
   "old": "storeKey: ROYAL_CLAIMS_KEY, read: readRoyalReceipt,",
   "new": "storeKey: ROYAL_CLAIMS_KEY, read: readSiegeReceipt,",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
   "name": "CROWN1C-claims-settles",
-  "file": "src/net/siegeClaims.js",
+  "file": "src/net/siege/siegeClaims.js",
   "old": "settles: royalClaimSettles, max: ROYAL_CLAIMS_MAX });",
   "new": "max: ROYAL_CLAIMS_MAX });",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
   "name": "CROWN1C-claims-over",
-  "file": "src/net/siegeClaims.js",
+  "file": "src/net/siege/siegeClaims.js",
   "old": "  if (r?.error === 'royal-none' || r?.error === 'royal-over') return true;",
   "new": "  if (r?.error === 'royal-none') return true;",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
   "name": "CROWN1C-claims-mend",
-  "file": "src/net/siegeClaims.js",
+  "file": "src/net/siege/siegeClaims.js",
   "old": "  if (r?.error === 'royal-none' || r?.error === 'royal-over') return true;\n  if (r?.error === 'receipt') return !MENDABLE.includes(r?.why);",
   "new": "  if (r?.error === 'royal-none' || r?.error === 'royal-over') return true;\n  if (r?.error === 'receipt') return true;",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
   "name": "CROWN1C-claims-max",
-  "file": "src/net/siegeClaims.js",
+  "file": "src/net/siege/siegeClaims.js",
   "old": "export const ROYAL_CLAIMS_MAX = 40;",
   "new": "export const ROYAL_CLAIMS_MAX = 16;",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -428,7 +428,7 @@
   "old": "? [siegeWorldPoint(px, py, f.banners[3])] : null);",
   "new": "? [siegeWorldPoint(px, py, f.banners[0])] : null);",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -437,7 +437,7 @@
   "old": "(f && f.banners.length >= 4 ?",
   "new": "(f ?",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -446,8 +446,8 @@
   "old": "(isRoyalRoom(this.room) ? this.royalOk : this.siegeOk)",
   "new": "this.siegeOk",
   "tests": [
-   "test/crown1_royal_client.test.js",
-   "test/seat2a_siege_play.test.js"
+   "test/net/crown1_royal_client.test.js",
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -456,7 +456,7 @@
   "old": "this.royalOk = relayRunsRoyal(relayV); }",
   "new": "this.royalOk = relayFightsBattles(relayV); }",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -465,8 +465,8 @@
   "old": "      if (!primary || !isBattleRoom(room)) return;   // CROWN1 part two",
   "new": "      if (!primary || !isRoyalRoom(room) === isRoyalRoom(room)) return;   // CROWN1 part two",
   "tests": [
-   "test/crown1_royal_client.test.js",
-   "test/seat2a_siege_play.test.js"
+   "test/net/crown1_royal_client.test.js",
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -475,7 +475,7 @@
   "old": "The week's champion takes ${Number(r.prize ?? 0).toLocaleString('en-US')} silver",
   "new": "The week's champion takes ${r.prize} silver",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -484,7 +484,7 @@
   "old": "  const rows = (r.ladder ?? []).map((x, i) => `${i + 1}. ${x.name || 'Someone'} - ${x.wins} won, ${x.losses} lost`);",
   "new": "  const rows = (r.ladder ?? []).map((x, i) => `${i + 1}. ${x.name} - ${x.wins} won, ${x.losses} lost`);",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -493,7 +493,7 @@
   "old": "  return [...out, ...(rows.length ? rows : ['No bout has been won yet.'])];",
   "new": "  return [...out, ...rows];",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -502,7 +502,7 @@
   "old": "        if (data.royal) b.append(royalNode(data.royal));\n",
   "new": "",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -511,7 +511,7 @@
   "old": "const doors = [['notice-seat-royal-enter', 'Enter the Royal Tourney', false, 'To the ring.'], ['notice-seat-royal-watch', 'Watch the Royal Tourney', true,",
   "new": "const doors = [['notice-seat-royal-enter', 'Enter the Royal Tourney', false, 'To the ring.'], ['notice-seat-royal-watch', 'Watch the Royal Tourney', false,",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  },
  {
@@ -520,7 +520,7 @@
   "old": "...(deps.seatRoyal ? { enterRoyal: deps.seatRoyal } : {}),",
   "new": "",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  }
 ]

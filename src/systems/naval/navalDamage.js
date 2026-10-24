@@ -262,6 +262,14 @@ export function createShipDamage({ hullHp, sailHp, crew, player = false }) {
      *  discharge's twin: her state as it stands (a wreck stays a wreck - only the hull's mending floats her), no fire put
      *  out. */
     muster(crew) { if (Number.isFinite(crew)) s.crew = Math.min(s.maxCrew, Math.max(s.crew, crew)); },
+    /** HOLDINGS (AUDIT 2026-10-17): her whole made `hullHp` and `sailHp` - a refit, her captain's stars - her hull and
+     *  canvas kept the share of it they were, and nothing else touched: her crew, her fires, her state, her last blow. */
+    rewhole({ hullHp, sailHp }) {
+      const h = Number.isFinite(hullHp) ? Math.max(1, hullHp) : s.maxHull, sl = Number.isFinite(sailHp) ? Math.max(0, sailHp) : s.maxSail;
+      s.hull = (s.hull / s.maxHull) * h;
+      s.sail = s.maxSail > 0 ? (s.sail / s.maxSail) * sl : sl;
+      s.maxHull = h; s.maxSail = sl;
+    },
     /** What the save or the wire keeps. */
     snapshot: () => ({ hull: Math.round(s.hull), sail: Math.round(s.sail), crew: s.crew, fire: +d.fire.toFixed(1), state: s.state }),
 

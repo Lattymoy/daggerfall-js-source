@@ -1,0 +1,42 @@
+[
+ {
+  "name": "DISPLAYREPLICA-town-dropped",
+  "file": "server-account/src/service.js",
+  "old": "  ['/v1/homes/town', 'POST'],\n  ['/v1/homes/mine', 'POST'],",
+  "new": "  ['/v1/homes/mine', 'POST'],",
+  "tests": [
+   "test/server/display_replica.test.js"
+  ],
+  "note": "the busiest display read back on the binding"
+ },
+ {
+  "name": "DISPLAYREPLICA-board-dropped",
+  "file": "server-account/src/service.js",
+  "old": "  ['/v1/saves', 'GET'],\n  ['/v1/arena/board', 'POST'],\n  ['/v1/festival/town'",
+  "new": "  ['/v1/saves', 'GET'],\n  ['/v1/festival/town'",
+  "tests": [
+   "test/server/display_replica.test.js"
+  ],
+  "note": "the arena's board back on the binding"
+ },
+ {
+  "name": "DISPLAYREPLICA-client-town-dropped",
+  "file": "src/net/accountClient.js",
+  "old": "  ['/v1/homes/town', 'POST'],\n  ['/v1/homes/mine', 'POST'],",
+  "new": "  ['/v1/homes/mine', 'POST'],",
+  "tests": [
+   "test/server/display_replica.test.js"
+  ],
+  "note": "the page sends no bookmark on a town's homes, and forgets its own on each"
+ },
+ {
+  "name": "DISPLAYREPLICA-request-session",
+  "file": "server-account/src/townSeats.js",
+  "old": "const opener = typeof db?.withSession === 'function' ? db : root;",
+  "new": "const opener = db;",
+  "tests": [
+   "test/server/display_replica.test.js"
+  ],
+  "note": "a seat read asked from a request's session reads on that session"
+ }
+]

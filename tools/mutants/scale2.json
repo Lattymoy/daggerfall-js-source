@@ -5,7 +5,7 @@
     "old": "if (!held || room == null || held.rooms.has(room) || held.secret",
     "new": "if (!held || room == null || held.secret",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (!(now() - held.at < TOKEN_REUSE_MS)) return null;\n    return held.token;",
     "new": "    if (!(now() - held.at < TOKEN_REUSE_MS)) return null;\n    return null;",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (!(now() - held.at < TOKEN_REUSE_MS)) return null;\n",
     "new": "",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (minting) {\n",
     "new": "    if (false) {\n",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": " || held.character !== named) return null;",
     "new": ") return null;",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": " || held.secret !== secret || ",
     "new": " || ",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (!held || room == null || ",
     "new": "if (!held || ",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    minter.lastWhy = answer.error ?? 'refused';\n",
     "new": "",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
@@ -77,16 +77,16 @@
     "old": "if (!session) { minter.lastWhy = 'no-session'; console.warn",
     "new": "if (!session) { console.warn",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
     "name": "SCALE2-A-the-session-names-no-room",
     "file": "src/net/online.js",
-    "old": "        this.token = await this._mint(room);",
-    "new": "        this.token = await this._mint();",
+    "old": "        const minted = await this._mint(room);",
+    "new": "        const minted = await this._mint();",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
@@ -95,43 +95,43 @@
     "old": "      if (code === CLOSE_POLICY && tokenRetryable(this._tokenless.get(ws))) {",
     "new": "      if (false) {",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
     "name": "SCALE2-B-every-policy-close-retried",
     "file": "src/net/online.js",
-    "old": "export const tokenRetryable = (/** @type {string|null|undefined} */ why) => typeof why === 'string' && why !== 'no-session' && why !== 'auth';",
+    "old": "export const tokenRetryable = (/** @type {string|null|undefined} */ why) => typeof why === 'string' && why !== 'no-session' && why !== 'auth' && why !== 'banned';",
     "new": "export const tokenRetryable = (/** @type {string|null|undefined} */ why) => true;",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
     "name": "SCALE2-B-auth-retried",
     "file": "src/net/online.js",
-    "old": " && why !== 'no-session' && why !== 'auth';",
-    "new": " && why !== 'no-session';",
+    "old": " && why !== 'no-session' && why !== 'auth' && why !== 'banned';",
+    "new": " && why !== 'no-session' && why !== 'banned';",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
     "name": "SCALE2-B-the-tokenless-hello-unremembered",
     "file": "src/net/online.js",
-    "old": "        if (this.token) this._tokenless.delete(ws); else this._tokenless.set(ws, this._tokenWhy ?? 'refused');\n",
+    "old": "        if (tok) this._tokenless.delete(ws); else this._tokenless.set(ws, minted.why ?? 'refused');\n",
     "new": "",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
     "name": "SCALE2-B-the-retry-not-backed-off",
     "file": "src/net/online.js",
-    "old": "this.error = 'waiting for the account service'; this._backoff = Math.max(this._backoff, BACKOFF_MAX_MS / 2); this._scheduleRetry();",
-    "new": "this.error = 'waiting for the account service'; this._scheduleRetry();",
+    "old": "this.error = t('net.online.waitingAccount', 'waiting for the account service'); this._backoff = Math.max(this._backoff, BACKOFF_MAX_MS / 2); this._scheduleRetry();",
+    "new": "this.error = t('net.online.waitingAccount', 'waiting for the account service'); this._scheduleRetry();",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "if (code === CLOSE_REPLACED || (code === CLOSE_POLICY && !noToken))",
     "new": "if (code === CLOSE_REPLACED || code === CLOSE_POLICY)",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "if (code === CLOSE_BUSY || noToken) h.backoff",
     "new": "if (code === CLOSE_BUSY) h.backoff",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "this._rejoinFactor = 0.5 + this._rand();",
     "new": "this._rejoinFactor = 1;",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "if (this.terminal && this._rejoinFor !== this.terminalAt) {",
     "new": "if (this.terminal) {",
     "tests": [
-      "test/scale2.test.js"
+      "test/net/scale2.test.js"
     ]
   }
 ]

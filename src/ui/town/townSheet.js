@@ -1,0 +1,461 @@
+// @ts-check
+// ═══════════════════════════════════════════════════════════════════
+// EM4 — THE TOWN SHEET: the streets behind the sheet contract, on the
+// same parchment as the bay and the dungeon.
+//
+// Mac (2026-09-21): "instead of 3 seperate keybinds, adding a tab
+// toggle on the map itself... we're going to put our own spin on the
+// automap and town map themselves."
+//
+// The second sheet written to `ui/map/mapStrip.js`'s SHEET_MEMBERS from
+// outside the window: no back-reference, no DOM, no renderer. It is
+// handed the town's block grids, its building summaries and its
+// discovery record, and it answers a coordinate space, some ink and a
+// pointer.
+//
+// THE SPACE IS LAYOUT PIXELS - gridW*64 by gridH*64 - and it already
+// starts at zero, so unlike the dungeon's plan there is nothing to
+// shift. The nameplate anchors land in the same space by construction
+// (`ui/nameplateLayout.js` computes them in it), which is why the names
+// need no second transform.
+//
+// THE NAMES ARE THE POINT. The shipped town map's own ladder is kept
+// whole, because it is the discovery law and not a presentation choice:
+// a discovered building that is not a residence shows its name (the
+// player's own custom name winning over the canonical one); a
+// discovered RESIDENCE shows a name only when a quest has marked it;
+// and an undiscovered building shows nothing at all unless the console
+// has been told to reveal them. What changes is the HAND - the
+// hand-lettered face, haloed against the parchment - and that the plan
+// under them is traced rather than stamped.
+//
+// THE PLATES ARE LAID OUT THROUGH DFU'S OWN SOLVER
+// (`resolveNameplates`), which is the thing that keeps a dense quarter
+// from becoming a smear, and the layout is CACHED on the view: it is
+// the most expensive thing this sheet does and the view moves far more
+// often than the town does.
+// ═══════════════════════════════════════════════════════════════════
+
+import { boundarySegments, linkSegments, fitView, toPaper, viewCentredOn, SCALE_MAX, NAME_FACE } from '../ink/inkMap.js';
+import {
+  townBytes, townChains, quarterChains, quarterOfType, isBuilt, QUARTERS, sheetY,
+  paintTownStatic, paintTownOverlay, BLOCK_PX, TOWN_MARK_HALF,
+} from '../ink/inkTown.js';
+import { nameplateAnchor, resolveNameplates, WORLD_PER_PX, STAR_PLATE } from '../nameplateLayout.js';   // FB1020c STAR-PLATE: the surrender's "*", one home
+import { readPartyBodies, PARTY_MARK_CSS } from '../partyMapMarks.js';   // DISC23-A: the party's bodies in the streets
+import { readTownBoards, readTownHomes, TOWN_MARK_REACH } from './townMapMarks.js';   // TOWN-MARKS: the Notice Boards and the player housing
+
+/** The fit at rest has ONE HOME in ui/ink/inkMap.js - re-exported so a
+ *  pin that has this sheet does not also have to reach for it. */
+export { FIT_MARGIN } from '../ink/inkMap.js';
+
+/** A name's size in paper pixels, and the band it is held in. A town
+ *  fitted whole would letter its names at nothing; a street zoomed into
+ *  would letter them like headlines. */
+export const NAME_SIZE = 13;
+export const NAME_SIZE_MIN = 9;
+export const NAME_SIZE_MAX = 20;
+/**
+ * EM8 — NOT EVERY NAME IS WORTH THE SAME. Mac: "let's enhance the
+ * location names on the buildings more."
+ *
+ * A town plan is read to FIND something, and the things a player
+ * navigates BY are not the things they are hunting FOR. So a plate's
+ * size is its own quarter's weight times the zoom's size, and the two
+ * exceptions are the ones that matter: the LANDMARKS a player steers
+ * off - the temple on the hill and the tavern on the corner - stand a
+ * little proud of the run of shops, and a QUEST'S name stands proud of
+ * everything, because a quest is why the map is open at all.
+ *
+ * The weights are a RATIO rather than a size, so they ride the zoom
+ * band, and MIN/MAX are applied after so a bump can never carry a plate
+ * past the size a name stops being a name at.
+ */
+export const NAME_WEIGHT = Object.freeze({ temple: 1.12, tavern: 1.12, shop: 1, house: 1 });
+export const QUEST_WEIGHT = 1.2;
+/** Below this zoom no name is laid at all - at a whole-town fit they
+ *  are a grey band rather than words, and the solver's work is wasted. */
+export const NAME_ZOOM_MIN = 0.55;
+/** FINDME-TOWN: Find me's street zoom - this many blocks across the paper's short side. Near enough that the streets
+ *  round the player read and their names are lettered (far past NAME_ZOOM_MIN), far enough that the next block over is
+ *  on the paper too. */
+export const FIND_ME_BLOCKS = 2;
+
+const EMPTY_SIZE = Object.freeze({ width: 1, height: 1 });
+
+/**
+ * @typedef {{buildingKey?: number, blockX?: number, blockY?: number, position?: number[],
+ *            name?: string, isResidence?: boolean, questName?: string, questMarked?: boolean,
+ *            buildingType?: number}} Summary
+ * @typedef {{buildingKey?: number, displayName?: string, customUserDisplayName?: string,
+ *            isOverrideName?: boolean}} Discovered
+ *
+ * @param {{
+ *   gridW?: number, gridH?: number,
+ *   blocks?: Array<{x:number,y:number,autoMap?:Uint8Array|number[]|null,landmark?:{name:string,position:number[],buildingType?:number}|null}>,
+ *   buildings?: () => Array<Summary>,
+ *   discovered?: () => Array<Discovered>,
+ *   revealAll?: () => boolean,
+ *   player?: () => {x:number, y:number, yaw?:number}|null,
+ *   party?: () => Array<{acct?: string|null, name?: string, feet?: number[], yaw?: number}>,
+ *   boards?: () => Array<{feet: number[], label?: string}>,
+ *   homes?: () => Array<{buildingKey: number, own?: boolean, label: string}>,
+ *   homesVersion?: () => number,
+ *   questBuildings?: () => Array<{buildingKey: number, followed?: boolean}>,
+ *   title?: string,
+ * }} deps
+ */
+/** DISC23-A: how near a pointer must come to a party member's caret, in paper pixels (the automap's MARK_REACH). */
+const PARTY_REACH = 12;
+
+export function createTownSheet(deps = {}) {
+  let field = null;      // the town's bytes, built once
+  let plan = null;       // { chains, wash }, traced once
+  let plates = null;     // { key, rows } - laid out per view
+  let lastView = null;
+  let lastPaper = 0;
+  let paintedHomes = null;   // TOWN-MARKS: the homes' version the overlay last painted
+
+  function ensureField() {
+    if (field) return field;
+    field = townBytes(deps.gridW ?? 0, deps.gridH ?? 0, deps.blocks ?? []);
+    plan = {
+      // the whole town's footprint, one outline...
+      chains: townChains(field, { segments: boundarySegments, link: linkSegments, pick: isBuilt }),
+      // ...and EM7's four islands under it, one per quarter
+      quarters: quarterChains(field, { segments: boundarySegments, link: linkSegments }),
+    };
+    return field;
+  }
+
+  /** The discovery record, by key, so the ladder below is a lookup
+   *  rather than a scan per building. */
+  function discoveredBy() {
+    const m = new Map();
+    for (const d of deps.discovered?.() ?? []) if (d?.buildingKey != null) m.set(d.buildingKey, d);
+    return m;
+  }
+
+  /**
+   * WHICH BUILDINGS GET A NAME, and what that name is. The shipped
+   * town map's own ladder (ui/exteriorAutomapWindow.js:"- a plate with an".."const rect = this.panelRect(m);"),
+   * kept whole because it is the DISCOVERY law rather than a
+   * presentation choice.
+   */
+  function named() {
+    const found = discoveredBy();
+    const reveal = !!deps.revealAll?.();
+    const out = [];
+    for (const b of deps.buildings?.() ?? []) {
+      const rec = found.get(b.buildingKey);
+      let text = '';
+      let quest = false;
+      if (rec) {
+        if (!b.isResidence || rec.isOverrideName) {
+          // the player's own name for it wins over the canonical one
+          text = rec.customUserDisplayName || rec.displayName || b.name || '';
+          quest = !!b.questMarked;   // RES-RING: a quest's marked residence, override-named at its discovery
+        } else if (b.questName) {
+          // a discovered residence is named ONLY by a quest
+          text = b.questName;
+          quest = true;
+        }
+      } else if (reveal) {
+        text = b.name || '';
+      }
+      if (!text) continue;
+      const [ax, ay] = nameplateAnchor(b.blockX ?? 0, b.blockY ?? 0, b.position ?? [0, 0, 0]);
+      // EM-BUG3: the anchor grows with +Z and the sheet draws +Z
+      // upward, so a plate crosses into sheet space here - the one
+      // transform, the same one the field was laid through.
+      const sy = sheetY(ensureField().h, ay);
+      // EM8: the SAME ladder the building's own pixels go through -
+      // the grid's byte is this type PLUS ONE, and quarterOfType is the
+      // one place that plus-one is written, so a name and the wash
+      // under it cannot come to disagree about what the building is.
+      out.push({ text, quest, x: ax, y: sy, key: b.buildingKey, quarter: quarterOfType(b.buildingType) });
+    }
+    // ARENA-MAP: a block's LANDMARK (the Arena, world/arena/arenaCity.js arenaTownLandmark) - always named, as the classic
+    // window names it, at its place and in its quarter's ink (the ring under it is that quarter's byte). YARDS-FOUND: and
+    // its PLACES the same way - the town's yards standing in it (world/merchantYards/merchantYardMap.js yardTownBlocks), a shop's ink
+    for (const bl of deps.blocks ?? []) {
+      for (const lm of [bl?.landmark, ...(bl?.places ?? [])]) {
+        if (!lm?.name) continue;
+        const [ax, ay] = nameplateAnchor(bl.x ?? 0, bl.y ?? 0, lm.position ?? [0, 0, 0]);
+        out.push({ text: lm.name, quest: false, x: ax, y: sheetY(ensureField().h, ay), key: null, quarter: quarterOfType(lm.buildingType) });
+      }
+    }
+    return out;
+  }
+
+  /** EM-BUG3 - THE CARET CROSSES THE SAME SEAM AS THE PLATES. The host
+   *  hands the player in anchor space (`local.z / WORLD_PER_PX`, which
+   *  grows with +Z), and the sheet draws +Z upward. Both readers - the
+   *  overlay and the rest view - go through here, because a caret that
+   *  crossed on one path and not the other is the bug this whole slice
+   *  is about, one layer up. */
+  function playerOnSheet() {
+    const p = deps.player?.() ?? null;
+    if (!p) return null;
+    return { ...p, y: sheetY(ensureField().h, p.y) };
+  }
+
+  /** DISC23-A: the party members in the streets, in sheet space. The host hands their feet in the LOCATION's own
+   *  frame - the frame it measures the player's `local` in (scenes/exteriorAutomapToggle.js townHere) - so a member
+   *  crosses into the sheet by the player's own two steps: metres to layout pixels (WORLD_PER_PX, the host's
+   *  townPlayer division), then +Z up (sheetY, EM-BUG3's one seam). Read fresh each paint: they walk. */
+  function partyOnSheet() {
+    const h = ensureField().h;
+    return readPartyBodies(deps.party).map((m) => ({
+      x: m.feet[0] / WORLD_PER_PX, y: sheetY(h, m.feet[2] / WORLD_PER_PX), yaw: m.yaw, name: m.name,
+    }));
+  }
+
+  /** TOWN-MARKS: the town's Notice Boards, in sheet space - the host hands each at its foot in the location's frame,
+   *  and it crosses into the sheet by the party's two steps (metres to layout pixels, then +Z up). */
+  function boardsOnSheet() {
+    const h = ensureField().h;
+    return readTownBoards(deps.boards).map((b) => ({ x: b.feet[0] / WORLD_PER_PX, y: sheetY(h, b.feet[2] / WORLD_PER_PX), label: b.label }));
+  }
+
+  /** TOWN-MARKS: the player housing, in sheet space - each home at its building's place, by the plates' own anchor law
+   *  (nameplateAnchor, then sheetY), so a home's mark and its building's name stand on one place. */
+  function homesOnSheet() {
+    const rows = readTownHomes(deps.homes);
+    if (!rows.length) return [];
+    const at = new Map();
+    for (const b of deps.buildings?.() ?? []) if (b?.buildingKey != null) at.set(b.buildingKey, b);
+    const h = ensureField().h;
+    const out = [];
+    for (const r of rows) {
+      const b = at.get(r.buildingKey);
+      if (!b) continue;
+      const [x, y] = nameplateAnchor(b.blockX ?? 0, b.blockY ?? 0, b.position ?? [0, 0, 0]);
+      out.push({ x, y: sheetY(h, y), own: r.own, label: r.label });
+    }
+    return out;
+  }
+
+  /** Every residence a quest has marked, named or not, in layout
+   *  pixels - the ring is the thing a player is actually hunting for. */
+  function questMarks() {
+    const found = discoveredBy();
+    // GUIDE8's Town tier (AUDIT DELVE): the buildings a quest's journal names in this town, ringed found or not - the
+    // host hands them only while the tier is on (systems/quest/questGuidance.js townQuestBuildings)
+    const named = new Set((deps.questBuildings?.() ?? []).map((q) => q?.buildingKey).filter((k) => k > 0));
+    const out = [];
+    for (const b of deps.buildings?.() ?? []) {
+      if (!named.has(b?.buildingKey) && (!(b?.questName || b?.questMarked) || !found.has(b.buildingKey))) continue;   // RES-RING
+      const [x, y] = nameplateAnchor(b.blockX ?? 0, b.blockY ?? 0, b.position ?? [0, 0, 0]);
+      out.push({ x, y: sheetY(ensureField().h, y) });   // EM-BUG3: into sheet space, as the plates are
+    }
+    return out;
+  }
+
+  /**
+   * The size a name is lettered at, for this zoom - and, EM8, for what
+   * the name IS.
+   *
+   * THE BAND BOUNDS THE BASELINE, AND THE WEIGHT IS APPLIED AFTER, and
+   * that order is the whole of it. The first cut multiplied inside the
+   * clamp, which looked right and quietly threw the hierarchy away at
+   * both ends of the zoom: past scale 2.4 every plate is already at
+   * NAME_SIZE_MAX, so a landmark and the shop beside it came out the
+   * same size exactly where the map is most read. A weight is a RATIO
+   * against the run of names beside it, so a landmark now stands its
+   * weight proud of them at EVERY zoom, and the true ceiling is the
+   * band's own times the largest weight there is.
+   */
+  function nameSize(view, n = null) {
+    const weight = n?.quest ? QUEST_WEIGHT : (NAME_WEIGHT[n?.quarter ?? ''] ?? 1);
+    const base = Math.max(NAME_SIZE_MIN, Math.min(NAME_SIZE_MAX, NAME_SIZE * Math.sqrt(view.scale)));
+    return base * weight;
+  }
+
+  /**
+   * The plates, in PAPER pixels, through DFU's own collision solver.
+   * Cached on the view and the paper, because this is the most
+   * expensive thing the sheet does and the view moves far more often
+   * than the town does.
+   */
+  function ensurePlates(view, paperW, paperH, measure, reserveTop = 0, hands = null) {
+    // TOWN-MARKS: a building a home's glyph stands on has its name lettered UNDER the glyph - so which buildings wear
+    // one is part of what the plates were laid for
+    const marked = new Set(readTownHomes(deps.homes).map((r) => r.buildingKey));
+    const key = [Math.round(view.ox), Math.round(view.oy), Math.round(view.scale * 100),
+      Math.round(paperW), Math.round(paperH), Math.round(reserveTop), hands?.length ?? 0, [...marked].join(',')].join('|');
+    if (plates?.key === key) return plates.rows;
+    const rows = [];
+    if (view.scale >= NAME_ZOOM_MIN) {
+      const raw = named().map((n) => {
+        const [x, y] = toPaper(view, n.x, n.y);
+        // EM8: a size PER PLATE, so the solver unpicks the plates as
+        // they will actually be lettered rather than as an average of
+        // them - a landmark asks for more room and now gets it.
+        const size = nameSize(view, n);
+        const w = measure ? measure(n.text, size) : n.text.length * size * 0.52;
+        const h = size * 1.15;
+        // TOWN-MARKS: under the glyph, clear of it by a pixel - the glyph is the building's tick, and the plate's own
+        // place (its `anchorY`) is the glyph's foot, so a name the solver leaves where it was laid draws no leader
+        if (marked.has(n.key)) return { ...n, size, px: x, py: y + TOWN_MARK_HALF + 1 + h / 2, foot: y + TOWN_MARK_HALF, marked: true, w, h };
+        return { ...n, size, px: x, py: y, w, h };
+      // only what is ON the paper is worth solving for
+      // only what is on the paper is worth solving for - and the band
+      // the TAB STRIP has taken is not the paper, for a name: the probe
+      // wrote "The Rusty Nail" straight through "Town" before this.
+      // A NAME IS ONLY LAID WHERE THE PLAYER CAN READ IT: on the
+      // paper, below the tab strip's band, and clear of the gauntlets.
+      // The plan's own lines still run under a thumb - a wall behind a
+      // hand is a wall you pan to see - but a word there is a word
+      // nobody gets.
+        }).filter((n) => n.px > -n.w && n.px < paperW + n.w
+          && n.py - n.h / 2 > reserveTop && n.py < paperH + n.h
+          && !(hands ?? []).some((r) => n.px + n.w / 2 > r.x0 && n.px - n.w / 2 < r.x1
+            && n.py + n.h / 2 > r.y0 && n.py - n.h / 2 < r.y1));
+      const solved = resolveNameplates(raw.map((n) => ({ x: n.px - n.w / 2, y: n.py - n.h / 2, w: n.w, h: n.h })));
+      raw.forEach((n, i) => {
+        const s = solved[i];
+        if (!s) return;
+        // FB1020c STAR-PLATE (a player's report, 2026-10-20: "citizens who mark locations on your map don't leave a mark"):
+        // A PLATE THE SOLVER GAVE UP ON IS DFU'S "*", NEVER NOTHING. The surrender (ui/nameplateLayout.js resolveNameplates,
+        // ExteriorAutomap.cs:1365-1376) letters it "*" where the solver left it, its building's name kept for the pointer
+        // (DaggerfallExteriorAutomapWindow.cs:870-878, :900-904) - as the classic window does. This sheet dropped it, so a
+        // building an NPC had just marked on a crowded town's plan had no mark at all: Daggerfall with 152 others found
+        // lettered 85 of its 153 names at rest, the marked one not among them.
+        // EM8: the plate carries its QUARTER (its ink) and its
+        // ANCHOR (where its building actually is) as well as where the
+        // solver put its words - the overlay needs all three to tick
+        // the building and lead back to it when the words have moved.
+        rows.push({
+          text: s.replaced ? STAR_PLATE : n.text, name: n.text, quest: n.quest, quarter: n.quarter, size: n.size,
+          x: n.px, y: n.py + (s.offY ?? 0), anchorY: n.marked ? n.foot : n.py,
+          ...(n.marked ? { marked: true } : {}),
+        });
+      });
+    }
+    plates = { key, rows };
+    return rows;
+  }
+
+  return {
+    id: 'town',
+
+    size() {
+      const f = ensureField();
+      if (!f || f.w <= 1) return EMPTY_SIZE;
+      return { width: f.w, height: f.h };
+    },
+
+    ensure() {
+      ensureField();
+      return plan?.chains?.length ? plan : null;
+    },
+
+    staticKey() {
+      const f = ensureField();
+      // EM7: the four quarters are part of what is INKED, so they are
+      // part of what says the ink is stale - a key that named only the
+      // footprint would have kept an old wash under a new outline.
+      const q = QUARTERS.map((n) => plan?.quarters?.[n]?.length ?? 0).join(',');
+      return `${f.w}x${f.h}|${plan?.chains?.length ?? 0}|${q}`;
+    },
+
+    paintStatic(ctx, env) {
+      paintTownStatic(ctx, env.model ?? plan, env.view, {
+        paperW: env.paperW, paperH: env.paperH, dpr: env.dpr,
+      });
+      lastView = env.view;
+      lastPaper = env.paperW;
+    },
+
+    paintOverlay(ctx, env) {
+      lastView = env.view;
+      lastPaper = env.paperW;
+      paintTownOverlay(ctx, env.view, {
+        paperW: env.paperW, paperH: env.paperH, dpr: env.dpr, pulse: env.pulse,
+        quests: questMarks(),
+        plates: ensurePlates(env.view, env.paperW, env.paperH,
+          ctx?.measureText ? (t, s) => { ctx.font = `${Math.round(s)}px ${NAME_FACE}`; return ctx.measureText(t).width; } : null,
+          env.reserveTop ?? 0, env.reserveHands ?? null),
+        player: playerOnSheet(),
+        party: partyOnSheet(),   // DISC23-A
+        partyFill: PARTY_MARK_CSS,
+        homes: homesOnSheet(),   // TOWN-MARKS
+        boards: boardsOnSheet(),
+      });
+      paintedHomes = deps.homesVersion?.() ?? null;
+    },
+
+    pickAt() { /* a town plan picks nothing yet - the names are read, not chosen */ },
+
+    hoverLabel(px, py) {
+      // the name under the pointer, off the plates as they were LAID -
+      // so what the player is told is what the player can see, rather
+      // than a building the solver dropped
+      if (lastView) {
+        // DISC23-A: a party member under the pointer answers their name first - a friend stands in front of a shop
+        for (const m of partyOnSheet()) {
+          const [x, y] = toPaper(lastView, m.x, m.y);
+          if ((x - px) ** 2 + (y - py) ** 2 <= PARTY_REACH * PARTY_REACH) return { label: m.name, cursor: '' };
+        }
+        // TOWN-MARKS: a board's or a home's glyph under the pointer names it - the glyph stands on its place
+        for (const m of [...boardsOnSheet(), ...homesOnSheet()]) {
+          const [x, y] = toPaper(lastView, m.x, m.y);
+          if ((x - px) ** 2 + (y - py) ** 2 <= TOWN_MARK_REACH * TOWN_MARK_REACH) return { label: m.label, cursor: '' };
+        }
+        for (const p of plates?.rows ?? []) {
+          if (Math.abs(p.x - px) <= p.size * p.text.length * 0.3 && Math.abs(p.y - py) <= p.size) {
+            return { label: p.name ?? p.text, cursor: 'pointer' };   // FB1020c STAR-PLATE: a "*" names its building, as DFU's tooltip does
+          }
+        }
+      }
+      return { label: deps.title ?? '', cursor: '' };
+    },
+
+    /** DISC23-A: the street plan repaints on the window's beat while a party member walks it. TOWN-MARKS: and once more
+     *  when the town's homes have changed since it was painted - the service's answer lands after the map is open. */
+    breathes() {
+      return readPartyBodies(deps.party).length > 0 || (!!deps.homesVersion && deps.homesVersion() !== paintedHomes);
+    },
+
+    mark() { /* the middle button marks a place on the BAY; a street has none */ },
+    key() { return false; },
+    tick() { /* the plates are rebuilt off the view, on demand */ },
+    mount() { /* the town claims none of the world map's chrome */ },
+    unmount() { },
+    context() { return false; },   // WAYPOINTS: a waypoint is the bay's - a street takes none
+
+    /** At rest the whole town is on the sheet, centred on the player. */
+    homeView(limits) {
+      return fitView(limits, playerOnSheet());
+    },
+
+    /** FINDME-TOWN: where the player stands on the streets - their caret, which the window's Find me crosses. */
+    me: playerOnSheet,
+
+    /** FINDME-TOWN: THE WINDOW'S FIND ME, ON THE STREETS - the view centred on the player's own caret at street zoom
+     *  (FIND_ME_BLOCKS blocks across the paper's short side), or nearer where the plan is zoomed past it already. Null
+     *  where the host hands no player: no town door hands the bay's pixel, and none is ever read here.
+     *  @param {{paperW:number, paperH:number}} limits @param {{scale:number}|null} [view] */
+    findMe(limits, view = null) {
+      const me = playerOnSheet();
+      if (!me) return null;
+      const street = Math.min(limits.paperW, limits.paperH) / (FIND_ME_BLOCKS * BLOCK_PX);
+      return viewCentredOn(me.x, me.y, Math.min(SCALE_MAX, Math.max(street, view?.scale ?? 0)), limits);
+    },
+
+    // ── handles for the pins ────────────────────────────────────────
+    get field() { return ensureField(); },
+    get plan() { ensureField(); return plan; },
+    names: named,
+    quests: questMarks,
+    party: partyOnSheet,
+    boards: boardsOnSheet,   // TOWN-MARKS
+    homes: homesOnSheet,
+    platesAt: (view, paperW, paperH, measure, reserveTop = 0, hands = null) => ensurePlates(view, paperW, paperH, measure, reserveTop, hands),
+    get paperW() { return lastPaper; },
+    /** One block is this many layout pixels - re-exported so a caller
+     *  that has the sheet does not also have to import the ink. */
+    get blockPx() { return BLOCK_PX; },
+  };
+}

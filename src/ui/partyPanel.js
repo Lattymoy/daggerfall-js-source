@@ -18,7 +18,7 @@
 // edges over the world, and every card carried a line of digits and a place whether or not they said anything. A
 // row is now a portrait in a 1px frame with a hard shadow, the green name, ONE real health bar (5px) and two
 // hairlines (2px, stamina and magicka side by side) under it, with no plate behind any of it - the HUD's own hard
-// pixel shadow under the text is what keeps it legible, the way ui/hudVitals.js' bars stand over the world. And
+// pixel shadow under the text is what keeps it legible, the way ui/hud/hudVitals.js' bars stand over the world. And
 // EACH FACT APPEARS ONLY WHEN IT IS ACTIONABLE: the health digits are drawn only while a seat is under half
 // health, in the health's red (a healthy party is names and bars and nothing else); the place line is drawn only
 // for a seat that is NOT where I am (a party walking together says nothing under the bars; the one who wandered
@@ -34,12 +34,12 @@
 // health in digits only while it is low (PARTY8-B): a bar says the shape of a vital at a glance and the digits say the rest.
 //
 // MY OWN CARD IS NOT HERE, and that is deliberate rather than an omission. The HUD already draws my health, my
-// fatigue and my magicka (ui/hudVitals.js) and my own face is on my paper doll; a fourth copy of my own vitals in the
+// fatigue and my magicka (ui/hud/hudVitals.js) and my own face is on my paper doll; a fourth copy of my own vitals in the
 // corner would be the only thing on this panel a player could not act on. So the list is `social.others()` - the
 // party's members other than me, in SEAT ORDER (the hub's own order, which is the order everyone in the party sees).
 //
 // THE ART IS THE GAME'S. A portrait is the SAME CIF record the paper doll and the quest-escort faces read
-// (systems/races.js raceArt -> FACE##I0.CIF -> CifRciFile.getDFBitmap -> ui/hud.js bitmapToColor32), picked by the
+// (systems/races.js raceArt -> FACE##I0.CIF -> CifRciFile.getDFBitmap -> ui/hud/hud.js bitmapToColor32), picked by the
 // race, gender and face index the member's own pose carries (net/wire.js validPartyPose bounds all three). Nothing
 // here invents a stand-in face: a party member who looks like a Redguard woman with face 4 in her own chargen looks
 // like exactly that here. The decode is cached per race|gender|face, because eight seats over a long session are at
@@ -70,13 +70,13 @@
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { raceArt, FACES_PER_RACE } from '../systems/races.js';
 import { bitmapToColor32 } from '../formats/color32Order.js';   // the same indexed-to-RGBA door every classic screen reads
-import { isTouchDevice } from './touch.js';
+import { isTouchDevice } from './touch/touch.js';
 import { PARTY_GREEN_CSS, lastOnlineText } from '../net/social.js';   // one home for the green - "should turn green"
 import { PARTY_MAX } from '../net/wire.js';   // PARTY8: the seat count in the title
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';   // FONT1: the enhanced skin's own face, unsmoothed, with Silkscreen's five
 import { partyFxKey, partyFxAbbrev, partyHealOf } from '../net/partyBuffs.js';   // PARTY-BUFFS: a member's own effects, and the heal they gained
-import { spellIconUrl } from './enhancedArt.js';   // PARTY-BUFFS: the spell's own icon, cut from ICON00I0 as the enhanced spellbook cuts it
-import { SHIPPED_START_CELL } from '../systems/startDungeon.js';   // AUDIT FB1007b H5: the tutorial dungeon's cell - nobody is with anybody there
+import { portraitRenderer } from '../render/portraitRenderer.js';   // PORTRAIT3D: the renderer a Morrowind head is taken with (a leaf)
+import { spellIconUrl } from './enhanced/enhancedArt.js';   // PARTY-BUFFS: the spell's own icon, cut from ICON00I0 as the enhanced spellbook cuts it
 
 export const PARTY_STYLE_ID = 'dagger-party-style';
 
@@ -92,7 +92,7 @@ export const FACE_BLANK_MARK = '?';
 export const FACE_BOX_W = 32;   // PARTY8-B: the widest head record measured in FACE##I0.CIF is 31x32 (tools/partyHudProbe.mjs' note): 1x fits, and the plate is no bigger than the face
 export const FACE_BOX_H = 34;
 
-/** The panel's sheet: the enhanced skin's tokens (ui/enhancedStyle.js) where they exist, a fallback where the
+/** The panel's sheet: the enhanced skin's tokens (ui/enhanced/enhancedStyle.js) where they exist, a fallback where the
  *  skin's sheet is not loaded - the same shape ui/chatPanel.js uses, so the two surfaces agree over the world.
  *
  *  FONT1 (2026-09-16, Mac: "Any enhanced UI or text must be our enhanced version"): this HUD stands over the world
@@ -105,7 +105,7 @@ ${PIXELIFY_FIVE_FACE}
    it is FOUR LINES tall with the renderer's counts on - measured at 76px in Chromium, bottom edge 84 - so a HUD at
    40 put its first card's portrait straight through the middle of it. 92 clears the read-out with eight pixels to
    spare; the touch value stays 76, which is the number that clears the touch layer's own top-right buttons. */
-/* GUIDE4: ...and it steps under the quest tracker's card, which stands on the same line (ui/questTracker.js publishes
+/* GUIDE4: ...and it steps under the quest tracker's card, which stands on the same line (ui/quest/questTracker.js publishes
    its height as --dfquest-h, 0 with no card), so the two never cover each other. */
 .dfparty { position: fixed; right: calc(8px + env(safe-area-inset-right, 0px)); top: calc(92px + var(--dfquest-h, 0px) + env(safe-area-inset-top, 0px));
   width: 200px; max-width: calc(100vw - 16px); z-index: 5; pointer-events: none;
@@ -114,11 +114,11 @@ ${PIXELIFY_FIVE_FACE}
   display: flex; flex-direction: column; gap: 3px;
   ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9);
   -webkit-user-select: none; user-select: none; }
-/* below the touch layer's own top-right row of buttons (ui/touch.js: top 16, 44 tall) */
+/* below the touch layer's own top-right row of buttons (ui/touch/touch.js: top 16, 44 tall) */
 .dfparty.touch { top: calc(76px + var(--dfquest-h, 0px) + env(safe-area-inset-top, 0px)); }
 /* AUDIT SOC C7: A PHONE HAS NO TOP-RIGHT CORNER TO SPARE. At 430x860 with the touch skin the HUD covered most of every
    chat peek line and the open friends panel under it besides. Narrower AND out of that corner: the HUD drops to the
-   bottom right, above the touch layer's own jump and sheathe column (ui/touch.js: bottom 16, 48 tall, so 76 clears
+   bottom right, above the touch layer's own jump and sheathe column (ui/touch/touch.js: bottom 16, 48 tall, so 76 clears
    them), where nothing is written and the finger never goes (the HUD takes no pointer). */
 @media (max-width: 560px) {
   .dfparty, .dfparty.touch { width: 180px; top: auto; bottom: calc(76px + env(safe-area-inset-bottom, 0px)); }
@@ -129,7 +129,7 @@ ${PIXELIFY_FIVE_FACE}
 @media (max-height: 560px) and (min-width: 561px) {
   .dfparty.touch { max-height: calc(100dvh - 152px - var(--dfquest-h, 0px) - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)); overflow: hidden; }
 }
-/* AUDIT PRE-MERGE 1003 U4: A BOUT'S VERSUS BAR (ui/arenaHud.js, 560 wide, centred under the compass) reaches this corner on
+/* AUDIT PRE-MERGE 1003 U4: A BOUT'S VERSUS BAR (ui/arena/arenaHud.js, 560 wide, centred under the compass) reaches this corner on
    a screen under 980 - its half and this list's 208 from the edge - and stood on the list there; the list steps aside
    while the bar stands, as the quest card does. A phone's list is at the foot (above), clear of it. */
 @media (min-width: 561px) and (max-width: 980px) { body:has(.arena-hud.on) .dfparty { visibility: hidden; } }
@@ -230,7 +230,7 @@ export function injectPartyStyle(doc = document) {
   (doc.head ?? doc.body).append(el);
 }
 
-/** The three bars, in the order the HUD draws them (ui/hudVitals.js VITAL_KEYS): the pose's field pairs and the
+/** The three bars, in the order the HUD draws them (ui/hud/hudVitals.js VITAL_KEYS): the pose's field pairs and the
  *  colour class the sheet paints. "health/stamins/magicia" - health red, stamina green, magicka blue. */
 export const PARTY_VITALS = Object.freeze([
   Object.freeze({ key: 'health', now: 'h', max: 'hm', label: 'Health' }),
@@ -271,9 +271,7 @@ export const HP_DIGITS_BELOW = 50;
  *  the host last composed; none yet means nothing can be said to be with me, and the line is drawn. */
 export const withMe = (p, here) => !!p && !!here
   && p.px === here.px && p.py === here.py && (p.in ?? 0) === (here.in ?? 0)
-  && ((p.in ?? 0) !== 2 || (p.bk ?? null) === (here.bk ?? null))
-  // AUDIT FB1007b H5: never in the tutorial dungeon - each member there is in their own (HOLD-SOLO)
-  && !((p.in ?? 0) === 1 && p.px === SHIPPED_START_CELL.x && p.py === SHIPPED_START_CELL.y);
+  && ((p.in ?? 0) !== 2 || (p.bk ?? null) === (here.bk ?? null));
 /** The one string a frame compares to know whether my place moved (paintLive) - the coordinates withMe reads. */
 export const hereKeyOf = (h) => (h ? `${h.px},${h.py},${h.in ?? 0},${h.bk ?? ''}` : '');
 
@@ -286,13 +284,38 @@ export function vitalsText(v, max) {
 
 /**
  * THE REAL PORTRAIT PATH, as a seam. Hands back `(pose) => Promise<{width, height, colors}|null>` - the same
- * indexed-to-RGBA shape ui/hud.js bitmapToColor32 returns, which is what a canvas wants. The CIF files are held per
+ * indexed-to-RGBA shape ui/hud/hud.js bitmapToColor32 returns, which is what a canvas wants. The CIF files are held per
  * NAME (a race's two genders are two files, and every face in one file shares the load), exactly as
- * ui/hudEscortFaces.js holds them.
+ * ui/hud/hudEscortFaces.js holds them.
  *
  * It is a seam rather than a hard call so the panel can be driven with no WebGL, no data files and no browser: a
  * test injects `faceLoader` and the bitmap-to-ImageData step is the only part left to prove (test/soc4_partyhud).
+ *
+ * PORTRAIT3D: with Morrowind's data attached the face is the Morrowind head first (characters/headPortraits.js
+ * poseHeadImage - a seat's, a member's, a townsperson wed in's), at the record's own shape HEAD_RECORD.scale times over:
+ * `scale` says so, and a well draws it that many times smaller, smooth. The record where none is drawn.
  */
+/** PORTRAIT3D: the data's stamp a seat's face key carries (`|mw<generation>`), so a face drawn before Morrowind's data
+ *  came is drawn again as its head - '' with no renderer, no data, or until the heads' module has loaded (behind a door). */
+let _heads = null, _headsAsked = false;
+export function headSuffix() {
+  if (!portraitRenderer()) return '';
+  if (!_heads) {
+    if (!_headsAsked) { _headsAsked = true; import('../characters/headPortraits.js').then((m) => { _heads = m; }).catch(() => {}); }
+    return '';
+  }
+  const g = _heads.headDataStamp();
+  return g ? `|mw${g}` : '';
+}
+/** PORTRAIT3D: a pose's Morrowind head as the loader answers it - `{ width, height, colors, scale }`, or null. */
+async function morrowindFaceOf(pose) {
+  const { poseHeadImage, HEAD_RECORD } = await import('../characters/headPortraits.js');
+  const img = await poseHeadImage(pose, { px: HEAD_RECORD.w * HEAD_RECORD.scale, ph: HEAD_RECORD.h * HEAD_RECORD.scale });
+  if (!img) return null;
+  const colors = new Uint8ClampedArray(img.width * img.height * 4);
+  colors.set(img.data);
+  return { width: img.width, height: img.height, colors, scale: HEAD_RECORD.scale };
+}
 /** The talk's common faces (DaggerfallTalkWindow's CommonFaces archive). */
 export const COMMON_FACES_FILE = 'TFAC00I0.RCI';
 export function createFaceLoader({ fetchBytes, palette } = {}) {
@@ -306,9 +329,11 @@ export function createFaceLoader({ fetchBytes, palette } = {}) {
     return p;
   };
   return async (pose) => {
+    const head = portraitRenderer() ? await morrowindFaceOf(pose).catch(() => null) : null;
+    if (head) return head;
     if (!fetchBytes || !palette) return null;
     // AUDIT LEGACY III P17: a townsperson's own face - the talk window's CommonFaces record, the one the census gave them
-    // for life (COMMON_FACES_FILE: ui/nativeTalk.js PORTRAIT_ARCHIVE.CommonFaces, pinned equal - never imported, so the
+    // for life (COMMON_FACES_FILE: ui/native/nativeTalk.js PORTRAIT_ARCHIVE.CommonFaces, pinned equal - never imported, so the
     // party HUD stays light)
     if (Number.isInteger(pose?.common) && pose.common >= 0) {
       const cif = await load(COMMON_FACES_FILE);
@@ -326,7 +351,7 @@ export function createFaceLoader({ fetchBytes, palette } = {}) {
 /**
  * The party HUD over `social` (net/social.js SocialState).
  *
- * `art` is the host's data pair - `{ fetchBytes, palette }`, the same two ui/hudEscortFaces.js is mounted with in
+ * `art` is the host's data pair - `{ fetchBytes, palette }`, the same two ui/hud/hudEscortFaces.js is mounted with in
  * scenes/world.js - and is only read to build the default `faceLoader`; hand `faceLoader` instead and no art is
  * touched. `doc` and `touch` are handed in so the panel runs headless.
  *
@@ -378,6 +403,14 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
   const comps = () => { try { const l = companions?.() ?? []; return Array.isArray(l) ? l : []; } catch { return []; } };
   let alive = true;
   let warned = false;
+  // EG-G1 (bible/11-Multiplayer/Elite-Gates.md section 27.4): THE SPIRE'S ROWS - the host's word, by account, of each
+  // member's state in a breach (ui/eliteGates/egParty.js egPartyDeco: the numeral, the classes, the mark, the title, the absent
+  // ring, the place line), painted over the card only where it moved; null outside a breach.
+  let spire = null;
+  let spireWas = null;
+  /** AUDIT EG V (c, L7-7; Elite-Gates.md section 16.5 - "a tap on a party row"): the host's word on a row tapped in a breach
+   *  (a witness watching that member) - the one press the quiet panel takes, on a row the Spire's deco marks `eg-tap`. */
+  let spireTap = null;
 
   const applyVisible = () => {
     const want = (!covered && showing) ? '' : 'none';
@@ -410,9 +443,11 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     card.pix.height = img.height;
     // AN INTEGER SCALE OR NONE. The backing store is the record's own pixels; the CSS size is a whole multiple of
     // it, so the plate shows NEAREST-scaled 1996 art rather than a smeared bilinear one.
-    const s = Math.max(1, Math.min(Math.floor(FACE_BOX_W / img.width), Math.floor(FACE_BOX_H / img.height)));
+    // PORTRAIT3D: a Morrowind head is its picture `scale` times smaller, smooth - the record's own size
+    const s = img.scale > 0 ? 1 / img.scale : Math.max(1, Math.min(Math.floor(FACE_BOX_W / img.width), Math.floor(FACE_BOX_H / img.height)));
     card.pix.style.width = `${img.width * s}px`;
     card.pix.style.height = `${img.height * s}px`;
+    card.pix.style.imageRendering = img.scale > 0 ? 'auto' : '';
     const px = ctx.createImageData(img.width, img.height);
     px.data.set(new Uint8ClampedArray(img.colors.buffer));
     ctx.putImageData(px, 0, 0);
@@ -551,7 +586,7 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     card.hpH = h;
     paintFx(card, m.online ? p?.fx : null);
     card.hpPct = pct;
-    const key = p ? faceKeyOf(p) : null;
+    const key = p ? `${faceKeyOf(p)}${headSuffix()}` : null;   // PORTRAIT3D: and the data's stamp
     if (key !== card.faceKey) {
       card.faceKey = key;
       card.drawn = null;
@@ -586,6 +621,40 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     for (const card of cards.values()) {
       if (!card.away) continue;
       setText(card.where, lastOnlineText(false, card.away.seen, social.now()));
+    }
+    paintSpire();   // EG-G1
+  };
+
+  /** EG-G1: THE SPIRE'S ROWS onto the cards - written only when the host's word moved (its key), or after a paint that
+   *  rewrote the cards' own parts. A card's Spire nodes are made the first time it needs one. A place line the Spire
+   *  took is given back by a repaint. */
+  const paintSpire = () => {
+    let deco = null;
+    try { deco = spire?.() ?? null; } catch { deco = null; }
+    const key = deco ? [...deco].map(([s, d]) => `${s}|${d.num}|${d.cls}|${d.mark}|${d.ring == null ? '' : Math.round(d.ring * 100)}|${d.where ?? ''}|${d.title}`).join('#') : '';
+    if (key === spireWas) return;
+    spireWas = key;
+    for (const [acct, card] of cards) {
+      if (acct.startsWith('companion:')) continue;
+      const d = deco?.get(acct) ?? null;
+      if (d && !card.egNum) {
+        const head = card.name.parentNode ?? card.name.parent;
+        card.egNum = el('span', 'dfparty-egn'); card.egMark = el('span', 'dfparty-egm'); card.egRing = el('div', 'dfparty-egring');
+        card.egMark.setAttribute('aria-hidden', 'true');
+        head?.insertBefore?.(card.egNum, card.name); head?.insertBefore?.(card.egMark, card.lead);
+        card.facebox.append(card.egRing);
+        card.node.addEventListener?.('click', () => { if (String(card.node.className).split(/\s+/).includes('eg-tap')) spireTap?.(acct); });   // AUDIT EG V (c, L7-7)
+      }
+      if (!card.egNum) continue;
+      setText(card.egNum, d ? d.num : '');
+      setText(card.egMark, d ? d.mark : '');
+      const base = String(card.node.className).split(/\s+/).filter((c) => c && !c.startsWith('eg-')).join(' ');
+      setCls(card.node, d?.cls ? `${base} ${d.cls}` : base);
+      card.node.setAttribute('title', d?.title ?? '');
+      const ring = d?.ring == null ? '' : String(Math.round(d.ring * 1000) / 1000);
+      if (card.egRing.style.getPropertyValue?.('--eg-ring') !== ring) card.egRing.style.setProperty?.('--eg-ring', ring);
+      if (d?.where) { setText(card.where, d.where); setCls(card.where, 'dfparty-where'); card.egWhere = true; }
+      else if (card.egWhere) { card.egWhere = false; painted = -1; }
     }
   };
 
@@ -652,6 +721,7 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     if (!same(list, order)) list.replaceChildren(...order);
     if (!same(mateList, mateOrder)) mateList.replaceChildren(...mateOrder);
     applyVisible();
+    spireWas = null; paintSpire();   // EG-G1: the cards' own parts rewritten, the Spire's laid over them again
   };
 
   return {
@@ -682,6 +752,8 @@ export function createPartyPanel({ social, doc = document, art = null, faceLoade
     },
     /** COMPANION-KIT: the host's companions seam, handed in after the build (the party's panel is made over `social`). */
     setCompanions(fn) { companions = typeof fn === 'function' ? fn : null; compPainted = null; },
+    /** EG-G1: the host's Spire rows seam (ui/eliteGates/egParty.js egPartyDeco by account, or null outside a breach). */
+    setSpire(fn, onTap = null) { spire = typeof fn === 'function' ? fn : null; spireTap = typeof onTap === 'function' ? onTap : null; spireWas = null; },   // AUDIT EG V (c, L7-7): and a row's tap
     /** What the panel currently draws, for a host or a pin that wants it without walking the DOM. */
     cardCount: () => cards.size,
     cardFor: (acct) => cards.get(acct) ?? null,

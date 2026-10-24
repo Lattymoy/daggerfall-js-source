@@ -1,0 +1,213 @@
+[
+  {
+    "name": "INT19-the-listing-unguarded",
+    "file": "server-account/src/market.js",
+    "old": "    ...(prep ? [mustChange(db), pieceEscrowStep(db, provenance, character, me, prep.moved, nowS, listed, [me, rid, nonce])] : []),",
+    "new": "    ...(prep ? [pieceEscrowStep(db, provenance, character, me, prep.moved, nowS, listed, [me, rid, nonce])] : []),",
+    "tests": [
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-the-wear-the-tabs",
+    "file": "server-account/src/market.js",
+    "old": "  if (prep) wear = wearOf(prep.moved);\n",
+    "new": "",
+    "tests": [
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-the-record-not-held",
+    "file": "server-account/src/market.js",
+    "old": "    ...(prep ? [mustChange(db), pieceEscrowStep(db, provenance, character, me, prep.moved, nowS, listed, [me, rid, nonce])] : []),",
+    "new": "    ...(prep ? [mustChange(db)] : []),",
+    "tests": [
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-the-ledger-not-escrowed",
+    "file": "server-account/src/market.js",
+    "old": "  const prep = at ? await prepareCraftedPiece(ctx, me, at, provenance, true) : null;",
+    "new": "  const prep = at ? await prepareCraftedPiece(ctx, me, at, provenance, false) : null;",
+    "tests": [
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-the-auction-unguarded",
+    "file": "server-account/src/market.js",
+    "old": "    mustChange(db),   // INT19: no auction, no piece out of the record\n",
+    "new": "",
+    "tests": [
+      "test/net/prof5b_service.test.js",
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-the-auction-wear-the-tabs",
+    "file": "server-account/src/market.js",
+    "old": "  wear = wearOf(prep.moved);\n",
+    "new": "",
+    "tests": [
+      "test/net/prof5b_service.test.js",
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-back-never-the-record",
+    "file": "server-account/src/market.js",
+    "old": "      SELECT ?${n + 1}, r.seller, r.char_id, e.item, 'returned', r.region, ?${n + 2}, ?${n + 2} FROM (${row}) r JOIN piece_escrow e ON e.provenance = r.provenance`).bind(...binds, id, nowS),",
+    "new": "      SELECT ?${n + 1}, r.seller, r.char_id, e.item, 'returned', r.region, ?${n + 2}, ?${n + 2} FROM (${row}) r JOIN piece_escrow e ON e.provenance = r.provenance AND 0`).bind(...binds, id, nowS),",
+    "tests": [
+      "test/server/int19_crafted_record.test.js",
+      "test/net/prof5b_service.test.js"
+    ]
+  },
+  {
+    "name": "INT19-back-minted-too",
+    "file": "server-account/src/market.js",
+    "old": "const NO_ESCROW = (p) => `NOT EXISTS (SELECT 1 FROM piece_escrow WHERE provenance = ${p})`;",
+    "new": "const NO_ESCROW = (p) => `${p} = ${p}`;",
+    "tests": [
+      "test/server/int19_crafted_record.test.js",
+      "test/net/prof5b_service.test.js"
+    ]
+  },
+  {
+    "name": "INT19-sold-the-market-keeps-it",
+    "file": "server-account/src/market.js",
+    "old": "    ...pieceSoldSteps(db, \"SELECT provenance FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'piece'\", [me, rid, nonce]),   // INT19\n    // the price table",
+    "new": "    // the price table",
+    "tests": [
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-won-the-market-keeps-it",
+    "file": "server-account/src/market.js",
+    "old": "      ...pieceSoldSteps(db, `SELECT a.provenance ${won}`, [a.id, nonce]),   // INT19: the record the market held, handed on\n",
+    "new": "",
+    "tests": [
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-sold-the-ledger-keeps-it",
+    "file": "server-account/src/market.js",
+    "old": "  db.prepare(`DELETE FROM item_uids WHERE uid = (${p}) AND state = 'escrow' AND EXISTS (SELECT 1 FROM piece_escrow WHERE provenance = item_uids.uid)`).bind(...binds),\n",
+    "new": "",
+    "tests": [
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-the-fill-unguarded",
+    "file": "server-account/src/writs.js",
+    "old": "    mustChange(db),   // INT19: no fill, no piece out of the record - the record's step rolls back with it\n",
+    "new": "",
+    "tests": [
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-the-fill-worn-by-the-tab",
+    "file": "server-account/src/writs.js",
+    "old": "(moved) => (wearOf(moved) === WEAR_WHOLE ? null : 'commission-worn')",
+    "new": "() => null",
+    "tests": [
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-the-fill-asks-no-record",
+    "file": "server-account/src/writs.js",
+    "old": "  if (!side.at) return { error: 'realm-needed' };   // a crafted piece is handed on out of a realm record alone\n",
+    "new": "",
+    "tests": [
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-coming-back-listed",
+    "file": "server-account/src/market.js",
+    "old": " || await pieceComingBack(db, me, provenance)) return 'market-uncollected';",
+    "new": " ) return 'market-uncollected';",
+    "tests": [
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-coming-back-auctioned",
+    "file": "server-account/src/market.js",
+    "old": "  if (await pieceComingBack(db, me, provenance)) return { error: 'market-uncollected' };   // INT19: back as its record, still to collect\n",
+    "new": "",
+    "tests": [
+      "test/net/prof5b_service.test.js"
+    ]
+  },
+  {
+    "name": "INT19-coming-back-filled",
+    "file": "server-account/src/writs.js",
+    "old": "  if (await pieceComingBack(db, me, provenance)) return 'market-uncollected';   // INT19: back as its record, still to collect\n",
+    "new": "",
+    "tests": [
+      "test/net/audit31_service.test.js"
+    ]
+  },
+  {
+    "name": "INT19-coming-back-listable",
+    "file": "server-account/src/market.js",
+    "old": "        OR EXISTS (SELECT 1 FROM market_deliveries d WHERE d.player = p.owner AND d.collected = 0 AND d.item IS NOT NULL AND json_extract(d.item, '$.provenance') = p.provenance)) AS road,",
+    "new": "        OR 0) AS road,",
+    "tests": [
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-a-worn-piece-taken",
+    "file": "server-account/src/craftedPiece.js",
+    "old": "rec?.provenance === provenance && tradeableRecord(rec)",
+    "new": "rec?.provenance === provenance",
+    "tests": [
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-the-home-unread",
+    "file": "server-account/src/craftedPiece.js",
+    "old": "  return h >= 0 ? home.splice(h, 1)[0] : null;",
+    "new": "  return null;",
+    "tests": [
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-the-book-names-no-record",
+    "file": "src/net/marketBook.js",
+    "old": "door[route]({ ...body, realm: at })",
+    "new": "door[route](body)",
+    "tests": [
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-the-writs-name-no-record",
+    "file": "src/net/writBook.js",
+    "old": "door.fulfil({ ...body, realm: at })",
+    "new": "door.fulfil(body)",
+    "tests": [
+      "test/server/int19_crafted_record.test.js"
+    ]
+  },
+  {
+    "name": "INT19-the-piece-taken-before-the-hold",
+    "file": "src/net/marketBook.js",
+    "old": "      if (!asked) { asked = true; taken = !!piece?.take?.(); }\n      if (!taken) return Promise.resolve({ ok: false, error: 'piece-held', status: 409 });",
+    "new": "      if (!asked) { asked = true; taken = true; }\n      if (!taken) return Promise.resolve({ ok: false, error: 'piece-held', status: 409 });",
+    "tests": [
+      "test/server/int19_crafted_record.test.js"
+    ]
+  }
+]

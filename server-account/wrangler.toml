@@ -64,21 +64,42 @@ enabled = true
 binding = "METRICS"
 dataset = "daggerfall_accounts"
 
-# SCALE1: SMART PLACEMENT. A request here makes its D1 round trips one
-# after another - a checkpoint seven, a harvest up to seventeen, a
-# market read about twenty - and each pays the distance between the
-# Worker and the database. Cloudflare runs the Worker where that sum is
-# least (near the database) once it has seen the traffic; a Worker with
-# no bindings to reach would stay at the edge.
+# D1-NEAR (2026-10-12, from play: "a lot of UI elements that utilize the
+# server (like searching players, the guild menu, etc) take an insane
+# amount of time to load"; bible/11-Multiplayer/Scale-Arc.md D1-NEAR,
+# audited in bible/01-Overview/audits/Audit-D1-Near.md): THE WORKER RUNS BESIDE
+# ITS DATABASE'S PRIMARY, BY NAME. A request here makes its D1 round trips
+# one after another - a guild look thirteen or fourteen, a seat board
+# nineteen to thirty-five - and each pays the distance between the Worker
+# and the primary, so what a route costs is that distance times its round
+# trips.
+#
+# SCALE1 set `mode = "smart"` on the word that Cloudflare would run the
+# Worker near the database, and nothing said where it ran. On 2026-10-12
+# it ran in SYDNEY (`cf-placement: remote-SYD` on 2,208 answers of 2,238)
+# while one statement on the primary cost it ~150-180 ms: the primary is
+# in western North America (the record has the bounds), and a guild look
+# spent some 2-2.5 s on round trips before any load. Cloudflare says Smart
+# Placement weighs request durations in places the Worker has already run;
+# why it chose Sydney, it does not say.
+#
+# `region` runs the Worker beside the cloud region named - Northern
+# California, central to western North America: a player pays one trip to
+# it, and each statement after that costs D1's own time and a short hop.
+# D1 placed the primary when the database was made and does not currently
+# move it. Every deploy reads, and says, where D1 says its primary answered
+# from, where the Worker runs, and what a statement costs it there
+# (account-deploy.yml, "Report where the account Worker runs"): a primary
+# not near this region is the cue to change this line.
 [placement]
-mode = "smart"
+region = "aws:us-west-1"
 
 # SCALE4b (2026-10-08): THE SERVICE'S OWN CLOCK (src/cron.js). Every
 # minute the settlements a read should not wait on (the auctions, the
 # guilds' writs and contracts, the seats' Turning, the day's
 # Motherlodes); each hour the sweeps no read runs any more and the
 # retention the tables never had. The two strings are src/cron.js's
-# CRON_MINUTE and CRON_HOUR - test/scale4b.test.js holds them together,
+# CRON_MINUTE and CRON_HOUR - test/server/scale4b.test.js holds them together,
 # because a schedule this file names and the module does not runs
 # nothing. `wrangler deploy` publishes them with the Worker.
 [triggers]
@@ -87,9 +108,9 @@ crons = ["* * * * *", "41 * * * *"]
 [vars]
 # Answered by /health so a deploy that did not happen cannot look like
 # one that did. Kept in step with ACCOUNT_VERSION in src/service.js.
-ACCOUNT_VERSION = "acct120"
+ACCOUNT_VERSION = "acct179"
 # WB5b: THE RELAY'S PUBLIC HALF, GATE_PUBLIC_KEY - the key an Oblivion
-# Gate's kill receipts verify with (src/net/gateReceipt.js) - is NOT a
+# Gate's kill receipts verify with (src/net/gate/gateReceipt.js) - is NOT a
 # var here. GATE-KEYS (2026-09-26): the account deploy mints the pair
 # once (.github/workflows/account-deploy.yml, "Mint the gate receipt
 # pair") and puts this half as a SECRET on this Worker, the private one,
@@ -126,7 +147,48 @@ ALLOWED_ORIGIN = "*"
 # set and the developers' Seraph Wings. The handle exactly - "RookieG(Dev)"
 # (a handle may carry brackets, net/handleShape.js HANDLE_RE) is another
 # account and holds none of it.
-DEVELOPER_HANDLES = "Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG"
+# DEV5 (2026-10-16, Mac: "Remove trashBattery ingame as a dev"): off the
+# list, and the whole set goes with the handle - the title, the glyph, the
+# wings, /red, /mute and /unmute, the developer's acts (titles.js
+# isDeveloper) and the POI editor's builder door - on their next token
+# and next call.
+# DEV6 (2026-10-16, Mac: "Give roderic the developer access ingame
+# (title/glyph)"): Roderic, the fifth again, with the same whole set - the
+# title, the glyph, the Seraph Wings, /red, /mute and /unmute, the developer's
+# acts and the POI editor's builder door - on their next token and next call.
+# Case-folded as every list is: the account roderic, Roderic or RODERIC.
+# STAFF-PANEL1 (2026-10-22, mob: "can we just add me to the dev and my shadow fang just becomes vanity and i gain admin as
+# well?"): SirMcMobdon, with the whole set above - the developer's acts include the relay's live settings (/relay) and
+# the trade-freeze review's clear and roll back - and the staff panel's Admin role (server-account/src/staff.js), which is
+# this list. SHADOW_FANG_HANDLES still names them: that title, glyph and cloak stay theirs to wear.
+# STAFF-PANEL1 (2026-10-22, mob: "kpblca_1 needs added to them as welll"): the account kpblca_1, with the same whole set.
+DEVELOPER_HANDLES = "Lattymoy,LostMyLeg,Tabby,RookieG,Roderic,SirMcMobdon,kpblca_1"
+# STAFF-PANEL1 (2026-10-22, server-account/src/staff.js): THE STAFF PANEL'S OWNERS (mob: "only mob and Latty" read the audit
+# log) - staff who may also read the audit log of every staff sign-in and act, invite a staff member to enrol one more
+# extension (a new invite replaces the member's unspent one; keys stay) and cut one off (every key and session ended). A handle here that no role list names is no owner (staff.js isOwner). Comma-separated,
+# case-insensitive, read at every call.
+OWNER_HANDLES = "Lattymoy,SirMcMobdon"
+# STAFF-PANEL1: AN OWNER'S FIRST WAY IN - `handle:publicKey`, comma-separated, the key raw Ed25519 in base64url. The owner's own
+# staff panel extension minted the pair on their computer and holds the private half; this half only checks its signature,
+# so it is safe in a public repository. It is that owner's first way in; every other staff member is invited from the
+# panel. Empty: no owner can enrol (no key is a shut door, never an open one).
+# STAFF-PANEL1 (2026-10-22, mob pasted the key his panel showed): SirMcMobdon's first computer. Latty enrols by mob's invite,
+# or adds a pair here.
+OWNER_KEYS = "SirMcMobdon:1c9fniJJmmIwXevvrTVajM6SeIFagO8KEzYiAM08mYM"
+# POI-1 (2026-10-14, the POI editor; bible/06-Systems/POI-Editor-Arc.md): WHO BUILDS AND WHO APPROVES. Mac, asked how a
+# POI reaches players: "I need to be able to approve changes"; asked who uses the editor: "Developers + Builders". A
+# BUILDER imports models, places POIs, saves drafts and submits them - every developer above is one, and BUILDER_HANDLES
+# adds map makers who are not. An APPROVER decides what goes live (server-account/src/poi.js); nothing reaches a player
+# unapproved. Comma-separated handles, case-insensitive, read at every call - a handle taken off loses the door at once.
+BUILDER_HANDLES = ""
+APPROVER_HANDLES = "Lattymoy"
+# PRIVATE-REPORT (2026-10-17, Mac: "Can we add a private disclosure method for exploits/bugs with the client";
+# bible/06-Systems/Private-Reports.md): WHO READS THE PRIVATE REPORTS - the exploits, bugs and security holes players
+# send from the mailbox (/bug). Nobody else sees one: not a moderator, not a developer this list does not name, because
+# an exploit read by one more person is one more person who can use it before it is fixed. Comma-separated handles,
+# case-insensitive, read at every call - a handle taken off loses the inbox on its next request. Empty: the reports wait,
+# unread, until a handle is written here.
+REPORT_READER_HANDLES = "Lattymoy"
 # MOD1: THE MODERATORS - the blue shield beside the name, and /mute and
 # /unmute in chat. Comma-separated handles, case-insensitive, the same
 # as the line above; a developer may already moderate without being
@@ -137,6 +199,41 @@ DEVELOPER_HANDLES = "Lattymoy,trashBattery,LostMyLeg,Tabby,RookieG"
 # ingame"): the second, with the same shield and commands. MOD3 (same
 # day, Mac: "Also add Starempire42 as a moderator"): the third.
 MODERATOR_HANDLES = "Asynian,tabbyvish,Starempire42"
+# SAFE1-SAFE8 (2026-10-17, Mac: "Lets do every single thing here. I want a full fledged future proof system";
+# bible/11-Multiplayer/Chat-Safety-Arc.md): THE CHAT'S SAFETY.
+#
+# RELAY_LAW_URL - SAFE4: the relay's door for a mute or a ban decided with no moderator's client to carry its order to
+# the rooms (one from Discord, an automatic one): the relay's own host and SAFE_LAW_PATH (src/net/wire.js), which the
+# hub applies and hands to its target's own client. Empty: the order lands on the target's next connection instead.
+# AUDIT SAFE RELAY S1: the order goes through the RELAY service binding below, which this address only names the path
+# for - one Worker fetching another's workers.dev address on the same account may be refused (Cloudflare's error 1042).
+RELAY_LAW_URL = "https://daggerfall-online.mackcothran.workers.dev/v1/law"
+# MOD_AI - SAFE5: the reviewer (src/modAi.js) - "off"; "shadow", which reads the relay's feed of public lines and the
+# reported cases and says its verdict beside each case, marked as a shadow's, and does nothing on it; or "on", which
+# also mutes for half an hour on its severest, surest verdicts. Shipped "shadow" (INT5's law, Mac's "Measure 7 days,
+# then enforce"): read what it says for a fortnight, then turn it on. It reads nothing until the deploy has put
+# ANTHROPIC_API_KEY beside it - a secret, from the repository's own secrets, never here.
+MOD_AI = "shadow"
+# MOD_AI_MODEL: the model, empty for the current Haiku (src/modAi.js MOD_AI_MODEL_DEFAULT). MOD_AI_DAILY_MAX: its calls
+# a UTC day, empty for 1,500.
+MOD_AI_MODEL = ""
+MOD_AI_DAILY_MAX = ""
+# SAFE8: THE MODERATORS' QUEUE IN DISCORD (src/discord.js). DISCORD_MOD_CHANNEL: the private channel's id the bot posts
+# each case to. DISCORD_PUBLIC_KEY: the Discord application's public key (hex - not a secret), which every press and
+# /mod is signed with. DISCORD_MODERATORS: "<discord user id>:<game handle>", comma-separated - a press is that
+# handle's act, and only while it holds MODERATOR_HANDLES or DEVELOPER_HANDLES. The bot's token is DISCORD_BOT_TOKEN, a
+# secret the deploy puts, never here. Empty: no cards and no presses - the cases still gather, and the game's
+# /mute, /ban and /strikes still answer. The setup: bible/11-Multiplayer/Chat-Safety-Arc.md section 9.
+DISCORD_MOD_CHANNEL = "1560996671440293908"
+DISCORD_PUBLIC_KEY = "36e74945022f94ec7955a84ccccb270e63780100e558d30777742337b62de3e0"
+# 2026-10-17 (Mac): the queue's channel and the application's public key set. The moderators' Discord ids, each
+# `<discord user id>:<in-game handle>` - the handle must also stand in MODERATOR_HANDLES or DEVELOPER_HANDLES, which
+# every press and /mod re-checks (discord.js actorOf); anyone not here is answered that only the game's moderators may act
+DISCORD_MODERATORS = "128705730965536768:Lattymoy"
+# STAFF-PANEL5-FREEZE (2026-10-22, mob, 03:22Z; design doc "DFO Staff Panel: design", Freeze player): DISCORD_INVITE_URL - the
+# server's Discord invite the frozen player's Staff tab shows beside its Copy button (server-account/src/staffFreeze.js
+# discordInvite), so it changes without a game update. An https address; empty, the tab shows none.
+DISCORD_INVITE_URL = "https://discord.gg/QADbZYQ73j"
 # FOUNDER5 (2026-10-07, Mac: "Can we grant every account before sept 25th
 # the founder title"): THE FOUNDERS BY NAME. Founder is held by every
 # registered account that first played by the end of 24 September on any
@@ -155,6 +252,24 @@ FOUNDER_HANDLES = ""
 # First Hour (titles.js isHoursFirst). Comma-separated handles,
 # case-insensitive, the same as the lines above; held while listed.
 HOURS_FIRST_HANDLES = "aether,ArtemisGodfrey,CycleD0se,Duck,Kobakk,MackyWackyDeeJew,mayaamano,Nirnroot,ofrizz,rosalina,ShikiX3,Temegast,Terra"
+# EG-E2 (2026-10-12, bible/11-Multiplayer/Elite-Gates.md section 19, THE
+# HONOURS): FIRST OF THE SPIRE - the first company ever to take Redoubt 10
+# of the Elite Breach, by name, granted as Hour's First is. The title First
+# of the Spire and its aura, Firstlight (titles.js isSpireFirst). Its Redoubt
+# 10 receipts' accounts go here (and the mailbox, as Hour's First's did).
+# Comma-separated handles, case-insensitive. SPIRE-FIRST (2026-10-20): the
+# company came - one player, alone, in 1:17:40 (the herald's post, and the
+# Descent's Alone bracket; "Saturday night", 2026-10-17, on the player's
+# own word) - and the owner: "Since hes world first. He should get this
+# title plus a custom aura". Firstlight was rebuilt as that aura
+# (render/auraRing.js SPIRE-FIRST). The list is closed with him: there is
+# one first company. SPIRE-FIRST-NAME (2026-10-20, the owner: "Its
+# Serveride. You did the wrong name"): the account is Serveride. The
+# herald read SEVERIDE - his character's name, which he chose to be shown
+# by (NAME-AS: the token's name is the account's or the character's) - and
+# this list is matched against the account's handle, never the name the
+# room reads. A handle goes here, never a name off the herald.
+EG_FIRST_HANDLES = "Serveride"
 # TITLE-N (2026-09-24, Mac): the Dungeon Master - the orange title, the
 # die beside the name, and /dm's orange line (the relay reads the right
 # off the `dm` glyph in the signed token, as /red reads `dev`). "This
@@ -211,7 +326,26 @@ SEATS_OPEN = "on"
 # "on" - shut, nobody's). CHAP2b: a receipt's standing; CHAP3a: a member's own writ and its Merit; CHAP3b: the sheet
 # (/v1/chapters/list) and the Turning - AUDIT CHAP3 S2: nothing settles and no hall writ posts while it is "off", and the
 # first week settled "on" after weeks at "dev" starts every chapter's Strength from 50 - all by the same switch.
-CHAPTERS_OPEN = "dev"
+# CHAPTERS-ON (2026-10-12, Mac: "Turn them on", of a player's report that the Chapters never reached a board - #734's
+# patch notes had told everyone; Field-Bugs-2026-10-12.md): "on" - the Chapters are everyone's. CHAPTER_TITLES below is
+# its own switch and stays off.
+CHAPTERS_OPEN = "on"
+# FIRM1 (bible/06-Systems/Firmament.md): THE FIRMAMENT by this switch - "off", "dev" (the DEVELOPER_HANDLES alone) or
+# "on". Shipped at "dev": the developers plan their trees, pay their refunds and gather under them first; opened to
+# everyone by this one line. FIRMAMENT-ON (2026-10-15, the owner, at the audit's merge: "switch it on for players"):
+# "on" - the Firmament is everyone's.
+FIRMAMENT_OPEN = "on"
+# QL12 (bible/06-Systems/Questlines-Arc.md section 5.3): THE QUESTLINES' CLAIM by this switch - "off", "dev" (the
+# DEVELOPER_HANDLES alone) or "on". The service pays a questline only what it witnessed - a step's endgame receipt written
+# after the step was opened here - a line's title, held for good, and the Covens' Hoard's Weir Key, once an account
+# (server-account/src/questlines.js). Shut, every claim is refused (`ql-closed`) and the client's lines still move on
+# its own quests, as the design has it: the service pays, it never gates. "on" - the owner's ask is the whole arc live.
+QUESTLINES_OPEN = "on"
+# WITCH1 (bible/06-Systems/Witches-Festival.md): THE WITCHES' FESTIVAL by this switch - "off", "dev" (the DEVELOPER_HANDLES
+# alone) or "on". Inside the festival's days (src/net/festivalLaw.js FESTIVALS) it opens the finds, the Wyrd Sisters' sales
+# and the Hearth Offerings (server-account/src/festival.js); outside them the days shut it whatever this says. Shut,
+# nothing is found, sold or set out, and every count is kept. "on" - the owner's ask is the event live for everyone.
+FESTIVAL_OPEN = "on"
 # CHAP4c (Chapters-Arc 6): THE CHAPTERS' TITLES - a seat's Master, officer and Former Master signed on the token - by
 # this switch, "on" or anything else for off. Shipped OFF: the relay must carry the five ids first (RELAY_VERSION
 # world183, which relay-deploy.yml deploys on the merge to main - AUDIT CHAP4 R2; CHAP6e's High Master and Season
@@ -267,6 +401,15 @@ PRIMARCH_HANDLES = "GA00250"
 # next token. Flylighter stays a Disciple (DISCIPLE_HANDLES) - a second title
 # held, one worn.
 CRYSTAL_FIST_HANDLES = "Flylighter"
+# WIKIMAID (2026-10-17, for SylviaBun: "Honestly as dumb as this is gonna
+# sound the WikiMaid title and a purple aura with bunnies would be dope as
+# hell" - "Lets go all out for this"): WikiMaid - the title in an amethyst
+# into lilac into a bunny's blush, the wikimaid glyph (a rabbit's head, its
+# ears up, in a maid's frilled headband) and the Lilac Warren, rabbits
+# hopping round the feet on a ring of lilac light, their prints fading
+# behind them. A list that grants an aura (titles.js TIER_AURA); taking the
+# handle off takes all three on the next token.
+WIKIMAID_HANDLES = "SylviaBun"
 # PATREON-LINK (2026-10-01, Mac: "With patron and having to manually hand
 # out titles. Im running into a workflow where its really hard to keep up
 # with it"; asked, "Patreon auto-link"): A PATRON'S TITLE FOLLOWS THEIR
@@ -290,8 +433,12 @@ PATREON_CLIENT_ID = "xyF8_xJg78YwVgT0xRhs6uhPVeAdOzJu7_dcpaGqvqH-5DNdbLp-gugahtf
 # Heriophant is custom and Herald doesnt exist ingame yet. Supporter doesnt
 # recieve a title/glyph"): Disciple (29666211) is mapped, and Herald
 # (29666234) since HERALD gave it its title in the game. Supporter
-# (29701293) holds none; Hierophant (29666221) is custom, granted by name.
-PATREON_TIERS = "29666211:disciple,29666234:herald"
+# (29701293) holds none.
+# HIEROPHANT-TIER (2026-10-17, Mac: "The $50 patreon tier doesnt have a
+# title/glyph ingame. The Heirophant"): Hierophant (29666221) is mapped
+# too - its pledge holds TITLE-N's Hierophant, the rose title and the
+# crown. A title made for one patron is still granted by name, beside it.
+PATREON_TIERS = "29666211:disciple,29666234:herald,29666221:hierophant"
 
 [[d1_databases]]
 binding = "DB"
@@ -308,12 +455,12 @@ migrations_dir = "migrations"
 # checkout, then run wrangler. Nothing is committed back.
 #
 # The sentinel below is what the workflow substitutes, so the two are
-# one fact in two files - and test/accountdeploy.test.js reads both and
+# one fact in two files - and test/server/accountdeploy.test.js reads both and
 # fails if they ever stop agreeing.
 database_id = "resolved-by-account-deploy-workflow"
 
 # IDENTITY_PRIVATE_KEY is NOT here and must never be. It is a secret
-# (`wrangler secret put`), and test/accountworker.test.js reads this
+# (`wrangler secret put`), and test/server/accountworker.test.js reads this
 # file to make sure nobody ever pastes one in.
 #
 # IDENTITY_PUBLIC_KEY is not here either, for the opposite reason: it is
@@ -324,7 +471,7 @@ database_id = "resolved-by-account-deploy-workflow"
 
 # ── ACC2: THE SAVE BLOBS ───────────────────────────────────────────
 # R2 rather than D1 for one measured reason: a Daggerfall save already
-# hits QuotaExceededError in localStorage (systems/save.js handles it by
+# hits QuotaExceededError in localStorage (systems/save/save.js handles it by
 # name), which puts its size class above D1's practical per-row ceiling
 # and above a Worker's JSON body cap. R2 also has no egress fee, which
 # matters for a game nobody pays for.
@@ -349,6 +496,14 @@ bucket_name = "daggerfall-saves"
 [[durable_objects.bindings]]
 name = "ADMIT"
 class_name = "AdmitGate"
+
+# AUDIT SAFE RELAY S1 (bible/11-Multiplayer/Chat-Safety-Arc.md section 5): THE RELAY, BOUND - the service's door to the
+# relay (src/sanctions.js pushLaw) goes Worker to Worker through this binding, never out to the relay's public address,
+# which one Worker of an account may be refused to fetch from another (Cloudflare's error 1042). The relay binds this
+# service back (server/wrangler.toml ACCOUNTS) for its reviewer's feed; both Workers exist, so either deploys first.
+[[services]]
+binding = "RELAY"
+service = "daggerfall-online"
 
 [[migrations]]
 tag = "admit1"

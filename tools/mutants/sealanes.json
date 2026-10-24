@@ -5,7 +5,7 @@
     "old": "  for (let r = 1; r <= ROADSTEAD_PX; r++) {",
     "new": "  for (let r = 1; r < ROADSTEAD_PX; r++) {",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "        if (d < bd) { bd = d; best = { x, y }; }",
     "new": "        if (bd === Infinity || d > bd) { bd = d; best = { x, y }; }",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "        if (Math.max(Math.abs(dx), Math.abs(dy)) !== r) continue;\n",
     "new": "",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ],
     "equivalent": true,
     "why": "a ring's inner pixels were the rings before it, asked and found closed - asked again they answer nothing new"
@@ -34,7 +34,7 @@
     "old": "      .filter((x) => x.d > 0 && x.d <= LANE_MAX_PX).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, LANE_NEIGHBOURS);",
     "new": "      .filter((x) => x.d > 0 && x.d <= LANE_MAX_PX).sort((x, y) => x.d - y.d || x.q.id - y.q.id).slice(0, LANE_NEIGHBOURS + 1);",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "      .filter((x) => x.d > 0 && x.d <= LANE_MAX_PX).sort(",
     "new": "      .filter((x) => x.d > 0 && x.d < LANE_MAX_PX).sort(",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": ".sort((x, y) => x.d - y.d || x.q.id - y.q.id)",
     "new": ".sort((x, y) => y.d - x.d || x.q.id - y.q.id)",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": ".sort((x, y) => x.d - y.d || x.q.id - y.q.id)",
     "new": ".sort((x, y) => x.d - y.d)",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ],
     "equivalent": true,
     "why": "the ports are walked in id order and Array.prototype.sort is stable: a tie of distances keeps the lower id first without the second key - kept as the law said aloud"
@@ -72,7 +72,7 @@
     "old": "  const sea = [...ports].sort((p, q) => p.id - q.id).map(",
     "new": "  const sea = [...ports].map(",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -81,7 +81,7 @@
     "old": "      const [a, b] = p.id < q.id ? [p, q] : [q, p];",
     "new": "      const [a, b] = [p, q];",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -90,7 +90,7 @@
     "old": ".map((p) => ({ ...p, road: roadsteadOf(p, open) })).filter((p) => p.road);",
     "new": ".map((p) => ({ ...p, road: roadsteadOf(p, open) ?? { x: p.px, y: p.py } }));",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -99,7 +99,7 @@
     "old": "  if (!water(from.x, from.y) || !water(to.x, to.y)) return null;\n",
     "new": "",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -108,7 +108,7 @@
     "old": "        if (dx && dy && (!water(x + dx, y) || !water(x, y + dy))) continue;   // no corner cut past land\n",
     "new": "",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -117,7 +117,7 @@
     "old": "        const ng = gk + (dx && dy ? Math.SQRT2 : 1);",
     "new": "        const ng = gk + 1;",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -126,7 +126,7 @@
     "old": "        if (ng >= (g.get(nk) ?? Infinity) || ng > LANE_PATH_PX) continue;",
     "new": "        if (ng >= (g.get(nk) ?? Infinity)) continue;",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -135,7 +135,7 @@
     "old": "        if (ng >= (g.get(nk) ?? Infinity) || ng > LANE_PATH_PX) continue;",
     "new": "        if (g.has(nk) || ng > LANE_PATH_PX) continue;",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -144,7 +144,7 @@
     "old": "  for (let i = 1; i < n; i++) if (!waterNative(a.x + ((b.x - a.x) * i) / n, a.z + ((b.z - a.z) * i) / n)) return false;",
     "new": "  for (let i = 1; i < n; i++) if (false) return false;",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -153,7 +153,7 @@
     "old": "    while (j > i + 1 && !holds(pts[i], pts[j], waterNative)) j--;",
     "new": "    j = i + 1;",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -162,7 +162,7 @@
     "old": "  for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z) * M_PER_NATIVE;",
     "new": "  for (let i = 1; i < pts.length; i++) len += Math.hypot(pts[i].x - pts[i - 1].x, pts[i].z - pts[i - 1].z);",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -171,7 +171,7 @@
     "old": "  const faction = r() < LANE_NAVY ? 'navy' : 'merchant';",
     "new": "  const faction = r() < 0 ? 'navy' : 'merchant';",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -180,7 +180,7 @@
     "old": "  if (cls?.hull === HULL.LargeGalley) cls = classFor(faction, 1, r());",
     "new": "  if (false) cls = classFor(faction, 1, r());",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -189,7 +189,7 @@
     "old": "  let cls = classFor(faction, LANE_LEVEL, r());",
     "new": "  let cls = classFor(faction, 1, r());",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -198,7 +198,7 @@
     "old": "  return { seed, cls, speed: (cls?.speed ?? 4) * LANE_CRUISE,",
     "new": "  return { seed, cls, speed: (cls?.speed ?? 4),",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -207,7 +207,7 @@
     "old": "phase: (mulberry32(laneSeed(lane))() + k / Math.max(1, count)) % 1 };",
     "new": "phase: mulberry32(laneSeed(lane))() % 1 };",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -216,7 +216,7 @@
     "old": "  const seed = hash32(laneSeed(lane), k >>> 0, LANE_SALT);",
     "new": "  const seed = hash32(laneSeed(lane), 0, LANE_SALT);",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -225,7 +225,7 @@
     "old": "  const count = Math.max(1, Math.round((2 * (leg + LANE_DWELL_S)) / LANE_HEADWAY_S));",
     "new": "  const count = Math.max(1, Math.ceil((2 * (leg + LANE_DWELL_S)) / LANE_HEADWAY_S));",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -234,7 +234,7 @@
     "old": "  for (let k = 0; k < count; k++) out.push(packetAt(lane, way, ms, k, count));",
     "new": "  out.push(packetAt(lane, way, ms, 0, count));",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -243,8 +243,8 @@
     "old": "  for (let j = 0; j < LANE_LINEAGE; j++) seeds.push(hash32(p.seed, (voyage - j) >>> 0, LANE_SALT));",
     "new": "  for (let j = 0; j < LANE_LINEAGE; j++) seeds.push(hash32(p.seed, j >>> 0, LANE_SALT));",
     "tests": [
-      "test/sealanes.test.js",
-      "test/auditbay_lanes.test.js"
+      "test/systems/naval/sealanes.test.js",
+      "test/systems/naval/auditbay_lanes.test.js"
     ]
   },
   {
@@ -253,7 +253,7 @@
     "old": "    return { ...base, phase: 'sail', from, to, port: null, at: { x: here.x, z: here.z }, dir: { x: here.dx, z: here.dz }, leg: pts, until: null };",
     "new": "    return { ...base, phase: 'sail', from, to, port: null, at: { x: here.x, z: here.z }, dir: { x: here.dx, z: here.dz }, leg: way.pts, until: null };",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ],
     "note": "AUDIT BAY A6 re-aimed: the place ahead (`ahead`) is gone - her leg is what she is steered along, and home it is her way reversed"
   },
@@ -263,7 +263,7 @@
     "old": "  if (tau < leg + LANE_DWELL_S) {",
     "new": "  if (tau < leg + LANE_DWELL_S / 2) {",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -272,7 +272,7 @@
     "old": "port: lane.b, at: { x: e.x, z: e.z }, dir: { x: 0, z: 0 }, leg: way.pts, until: start + leg + LANE_DWELL_S };",
     "new": "port: lane.b, at: { x: e.x, z: e.z }, dir: { x: 0, z: 0 }, leg: way.pts, until: start + leg };",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -281,7 +281,7 @@
     "old": "    return { ...base, phase: 'dwell', from: lane.a, to: lane.a, port: lane.b,",
     "new": "    return { ...base, phase: 'dwell', from: lane.a, to: lane.b, port: lane.b,",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -290,7 +290,7 @@
     "old": "  if (tau < 2 * leg + LANE_DWELL_S) return sailing(rev, (tau - leg - LANE_DWELL_S) * p.speed, lane.b, lane.a);",
     "new": "  if (tau < 2 * leg + LANE_DWELL_S) return sailing(way.pts, (tau - leg - LANE_DWELL_S) * p.speed, lane.b, lane.a);",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -299,249 +299,249 @@
     "old": "dir: { x: 0, z: 0 }, leg: rev, until: start + period };",
     "new": "dir: { x: 0, z: 0 }, leg: rev, until: start + leg };",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "LINER-stand-far",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (!(density > 0) || dist2d(l.pos, me) > LINER_STAND_M || spentLiners.has(seed)) continue;",
     "new": "      if (!(density > 0) || dist2d(l.pos, me) > LINER_DROP_M || spentLiners.has(seed)) continue;",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "LINER-off-stands-at-berth",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (!(density > 0) || dist2d(l.pos, me) > LINER_STAND_M || spentLiners.has(seed)) continue;",
     "new": "      if (dist2d(l.pos, me) > LINER_STAND_M || spentLiners.has(seed)) continue;",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "LINER-spent-stood",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (!(density > 0) || dist2d(l.pos, me) > LINER_STAND_M || spentLiners.has(seed)) continue;",
     "new": "      if (!(density > 0) || dist2d(l.pos, me) > LINER_STAND_M) continue;",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "LINER-unsorted",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    for (const l of [...list].sort((a, b) => dist2d(a.pos, me) - dist2d(b.pos, me))) {",
     "new": "    for (const l of [...list]) {",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "LINER-copy-stood",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "(x.ship.seed === seed || (seeds.has(x.ship.seed) && x.ship.damage.state === SHIP_STATES.afloat)))) continue;",
     "new": "(seeds.has(x.ship.seed) && x.ship.damage.state === SHIP_STATES.afloat && x.ship.seed !== seed))) continue;",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "LINER-twice",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if ([...sea.values()].some((x) => x.ship.damage.state !== SHIP_STATES.sunk && (x.ship.seed === seed ||",
     "new": "      if (false && [...sea.values()].some((x) => x.ship.damage.state !== SHIP_STATES.sunk && (x.ship.seed === seed ||",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "LINER-galley-berthed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const berth = h?.harbour && cls.hull !== HULL.LargeGalley ? openBerth(h) : -1;",
     "new": "      const berth = h?.harbour ? openBerth(h) : -1;",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "LINER-sails-set-at-berth",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (e) { e.ship.sails = 0; e.ship.sailsWant = 0; }\n",
     "new": "",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "LINER-cap-unheld",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (l.phase !== 'sail' || under >= max) continue;",
     "new": "        if (l.phase !== 'sail') continue;",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "LINER-cap-uncounted",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (e) under++;\n",
     "new": "",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "LINER-on-land",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (!deps.isWater(l.pos[0], l.pos[2], cls.hull)) continue;   // her place not yet water deep enough for her hull here\n",
     "new": "",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "LINER-never-far",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (dist2d(e.ship.pos, me) <= LINER_DROP_M) { e.handOn = null; e.retiring = false; continue; }   // back as she faded: she stays",
     "new": "      if (true) { e.handOn = null; e.retiring = false; continue; }   // back as she faded: she stays",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "LINER-let-go-fighting",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (linerKept(e) || e.retiring) continue;",
     "new": "      if (e.retiring) continue;",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "LINER-back-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (dist2d(e.ship.pos, me) <= LINER_DROP_M) { e.handOn = null; e.retiring = false; continue; }   // back as she faded: she stays",
     "new": "      if (dist2d(e.ship.pos, me) <= LINER_DROP_M) { e.handOn = null; continue; }   // back as she faded: she stays",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "LINER-never-spent",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    for (const e of sea.values()) if (e.liner && e.ship.damage.state !== SHIP_STATES.afloat) spendLiner(e);",
     "new": "    for (const e of sea.values()) if (false) spendLiner(e);",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "STEER-unread-lane",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        e.liner = linerTag(l, e.liner ?? firstWay(l, s));",
     "new": "        e.liner ??= linerTag(l, e.liner ?? firstWay(l, s));",
     "tests": [
-      "test/sealanes.test.js",
-      "test/auditbay_lanes.test.js"
+      "test/systems/naval/sealanes.test.js",
+      "test/systems/naval/auditbay_lanes.test.js"
     ],
     "note": "AUDIT BAY re-aimed: her lane read again each list (the tag kept from her first)"
   },
   {
     "name": "STEER-steers-a-fight",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!linerFree(e) || !l.leg?.length) return;",
     "new": "    if (!l.leg?.length) return;",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "STEER-out-over-the-quay",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      s.errand = { kind: 'depart', harbour: r.harbour, berth: r.kind === 'moored' ? r.berth : -1, path: null, i: 0 };   // under way: out through its mouth first",
     "new": "      s.errand = null;   // under way: out through its mouth first",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "STEER-depart-cut-short",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (r?.kind === 'depart') { s.course = null; return; }\n",
     "new": "",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "STEER-back-for-it",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const p = pursue(l.way, s.pos[0], s.pos[2], LINER_LOOKAHEAD_M);",
     "new": "    const p = pursue(l.way, l.way[0][0], l.way[0][1], LINER_LOOKAHEAD_M);",
     "tests": [
-      "test/sealanes.test.js",
-      "test/auditbay_lanes.test.js"
+      "test/systems/naval/sealanes.test.js",
+      "test/systems/naval/auditbay_lanes.test.js"
     ],
     "note": "AUDIT BAY A6 re-aimed: pursued from her leg's start, not from where she is - back for a place she passed"
   },
   {
     "name": "STEER-on-from-her-place",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const p = pursue(l.way, s.pos[0], s.pos[2], LINER_LOOKAHEAD_M);",
     "new": "    const p = pursue(l.way, s.pos[0], s.pos[2], 0);",
     "tests": [
-      "test/sealanes.test.js",
-      "test/auditbay_lanes.test.js"
+      "test/systems/naval/sealanes.test.js",
+      "test/systems/naval/auditbay_lanes.test.js"
     ],
     "note": "AUDIT BAY A6 re-aimed: no lookahead - steered for the nearest point of her leg, never on along it"
   },
   {
     "name": "STEER-moored-for-ever",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (h && r.harbour === h.key) { if (r.kind === 'moored') r.until = Infinity; return; }   // in her port: the clock sails her",
     "new": "      if (h && r.harbour === h.key) { return; }   // in her port: the clock sails her",
     "tests": [
-      "test/sealanes.test.js",
-      "test/auditbay_lanes.test.js"
+      "test/systems/naval/sealanes.test.js",
+      "test/systems/naval/auditbay_lanes.test.js"
     ],
     "note": "AUDIT BAY A6 re-aimed: her own dwell left to end and sail her, the clock's never waited for"
   },
   {
     "name": "STEER-never-berths",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (berth >= 0) { s.errand = { kind: 'arrive', harbour: h.key, berth, path: null, i: 0 }; return; }\n",
     "new": "",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "STEER-galley-berths",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const berth = h?.harbour && s.hull !== HULL.LargeGalley ? openBerth(h) : -1;",
     "new": "    const berth = h?.harbour ? openBerth(h) : -1;",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "STEER-lurk-anew",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (r?.kind !== 'lurk') s.errand = { kind: 'lurk', harbour: null, at: [end[0], end[1]],",
     "new": "    if (true) s.errand = { kind: 'lurk', harbour: null, at: [end[0], end[1]],",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "STEER-lurk-nowhere",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "s.errand = { kind: 'lurk', harbour: null, at: [end[0], end[1]],",
     "new": "s.errand = { kind: 'lurk', harbour: null, at: [0, 0],",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -550,7 +550,7 @@
     "old": "    if (t - _laneAt < LANE_LIST_MS || !naval?.enabled || !mapDict) return;",
     "new": "    if (!naval?.enabled || !mapDict) return;",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -559,7 +559,7 @@
     "old": "    if (t - _laneAt < LANE_LIST_MS || !naval?.enabled || !mapDict) return;",
     "new": "    if (t - _laneAt < LANE_LIST_MS || !mapDict) return;",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -568,8 +568,8 @@
     "old": "        list.push({ id: p.id, seed: p.seed, seeds: p.seeds,",
     "new": "        if (Math.hypot(x - player.feetAt()[0], z - player.feetAt()[2]) <= 1600) list.push({ id: p.id, seed: p.seed, seeds: p.seeds,",
     "tests": [
-      "test/sealanes.test.js",
-      "test/auditbay_lanes.test.js"
+      "test/systems/naval/sealanes.test.js",
+      "test/systems/naval/auditbay_lanes.test.js"
     ],
     "note": "AUDIT BAY A19 re-aimed: the near ones alone put back - every packet of the lanes about the player is handed over"
   },
@@ -579,8 +579,8 @@
     "old": "      for (const p of packetsAt(lane, way, ms)) {",
     "new": "      for (const p of packetsAt(lane, way, ms / 1000)) {",
     "tests": [
-      "test/sealanes.test.js",
-      "test/auditbay_lanes.test.js"
+      "test/systems/naval/sealanes.test.js",
+      "test/systems/naval/auditbay_lanes.test.js"
     ],
     "note": "AUDIT BAY A6 re-aimed: the clock's second is no longer handed over - the packets are read off the clock in its own milliseconds"
   },
@@ -590,7 +590,7 @@
     "old": "      if (!near(lane.a) && !near(lane.b)) continue;",
     "new": "      if (false && !near(lane.a) && !near(lane.b)) continue;",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -599,7 +599,7 @@
     "old": "      if (way === undefined) { way = laneWay(lane, laneOpen, laneOpenNative); _laneWays.set(lane.key, way); }",
     "new": "      way = laneWay(lane, laneOpen, laneOpenNative); _laneWays.set(lane.key, way);",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -608,7 +608,7 @@
     "old": "  const laneOpen = (px, py) => px >= 0 && py >= 0 && px < 1000 && py < 500 && tvWater(px, py) && maps.getClimateIndex(px, py) === CLIMATES.Ocean;",
     "new": "  const laneOpen = (px, py) => px >= 0 && py >= 0 && px < 1000 && py < 500 && tvWater(px, py);",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -617,7 +617,7 @@
     "old": "    const portOf = (p) => (p ? { key: `port:${p.id}`, name: p.name } : null);",
     "new": "    const portOf = (p) => (p ? { key: p.id, name: p.name } : null);",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -626,7 +626,7 @@
     "old": "leg: p.leg === way.pts ? out : home, port: portOf(p.port), to: portOf(p.to), from: portOf(p.from) });",
     "new": "leg: p.leg === way.pts ? out : home, port: portOf(p.port), to: null, from: portOf(p.from) });",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -635,16 +635,16 @@
     "old": "yaw: Math.atan2(dx - x, dz - z),",
     "new": "yaw: 0,",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
     "name": "FEED-after-the-frame",
     "file": "src/scenes/world.js",
-    "old": "    if (_mode() === 'exterior' && !gamePaused() && !_loading) laneShips();   // SEA-LANES: the Bay's packets about the player, stood and steered before the frame poses them\n",
+    "old": "    if (_mode() === 'exterior' && !gamePaused() && !_loading) { laneShips(); seaVentures.step(lightning?.strikes ?? 0); }   // SEA-LANES: the Bay's packets about the player, stood and steered before the frame poses them; SEA-EVENTS: the treasure fleet's, the Aether Storm's\n",
     "new": "",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ]
   },
   {
@@ -653,7 +653,7 @@
     "old": "    return { key: `port:${t.id}`, name: t.name, rect, ready, reach };",
     "new": "    return { key: `port:${t.id}`, rect, ready, reach };",
     "tests": [
-      "test/sealanes.test.js"
+      "test/systems/naval/sealanes.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   }

@@ -96,6 +96,7 @@ export function roomSigner(env, now = () => Date.now()) {
     if (who.ts !== undefined) claims.ts = who.ts;   // SEAT1c: a seat title's claim
     if (who.g !== undefined) claims.g = who.g;
     if (who.mu !== undefined) claims.mu = who.mu;   // MOD1: a muted player's token
+    if (who.fz !== undefined) claims.fz = who.fz;   // STAFF-PANEL5-FREEZE: a frozen player's token
     if (who.lv !== undefined) claims.lv = who.lv;   // RENOWN1: the Renown level the service signed in
     if (who.gi !== undefined || who.gt !== undefined || who.gm !== undefined) Object.assign(claims, { gi: who.gi, gt: who.gt, gm: who.gm });   // GUILD1c: the character's guild the service signed in
     if (who.rc !== undefined) claims.rc = who.rc;   // REALM-DOOR: whether the service found the named character the realm's
@@ -106,7 +107,8 @@ export function roomSigner(env, now = () => Date.now()) {
     if (who.cl !== undefined) claims.cl = who.cl;   // ARENA4b: the named character's level the service signed in
     if (who.wa !== undefined) claims.wa = who.wa;   // INT7: the realm character's arms the service signed in (beside `rc` 1)
     for (const k of ['hn', 'hc', 'hb', 'hg']) if (who[k] !== undefined) claims[k] = who[k];   // LEGACY7: the realm character's house the service signed in
-    const key = `${claims.s}|${claims.n}|${claims.k}|${claims.t ?? ''}|${(claims.ts ?? []).join('/')}|${(claims.g ?? []).join('+')}|${claims.mu ?? ''}|${claims.lv ?? ''}|${claims.gi ?? ''}|${claims.gm ?? ''}|${claims.rc ?? ''}|${claims.ci ?? ''}|${claims.au ?? ''}|${(claims.rb ?? []).join('/')}|${claims.ar ?? ''}|${claims.cl ?? ''}|${claims.hn ?? ''}|${claims.hc ?? ''}|${claims.hb ?? ''}|${claims.hg ?? ''}`;
+    if (who.hd !== undefined) claims.hd = who.hd;   // STAFF-PANEL5-HIDDEN: a hidden staff spectator's mark
+    const key = `${claims.s}|${claims.n}|${claims.k}|${claims.t ?? ''}|${(claims.ts ?? []).join('/')}|${(claims.g ?? []).join('+')}|${claims.mu ?? ''}|${claims.fz ?? ''}|${claims.lv ?? ''}|${claims.gi ?? ''}|${claims.gm ?? ''}|${claims.rc ?? ''}|${claims.ci ?? ''}|${claims.au ?? ''}|${(claims.rb ?? []).join('/')}|${claims.ar ?? ''}|${claims.cl ?? ''}|${claims.hn ?? ''}|${claims.hc ?? ''}|${claims.hb ?? ''}|${claims.hg ?? ''}|${claims.hd ?? ''}`;
     const nowS = Math.floor(now() / 1000);
     const kept = lastI.get(key) ?? { last: undefined, used: new Set() };
     let i = nowS - 1;
@@ -124,7 +126,7 @@ export function roomSigner(env, now = () => Date.now()) {
   return { token, signer };
 }
 
-export function fakeRoom(key, { now = () => Date.now(), ROOMS = null } = {}) {
+export function fakeRoom(key, { now = () => Date.now(), ROOMS = null, poll = 'driven' } = {}) {
   const sockets = [];
   const store = new Map();
   const alarm = { at: null };
@@ -156,7 +158,9 @@ export function fakeRoom(key, { now = () => Date.now(), ROOMS = null } = {}) {
   // ACC1g: the room's config, filled in by `signer()` before the first
   // hello reaches it. The object identity is what matters - the Room
   // captures it at construction and reads the key lazily.
-  const env = ROOMS ? { ROOMS } : {};   // HCC-PARK: a shared binding, so one object can reach another (fakeRooms below)
+  // HCC-PARK: a shared binding, so one object can reach another (fakeRooms below). HUB-PULL: a shard's poll is the
+  // harness's to ask (`_hubPoll`, in each world's settle) unless a pin asks for the loop the runtime runs (`poll: 'held'`)
+  const env = ROOMS ? { ROOMS, ...(poll === 'driven' ? { HUB_POLL: 'driven' } : {}) } : {};
   let room = new Room(state, env);
   const wake = () => { room = new Room(state, env); };
   const { token, signer } = roomSigner(env, now);
@@ -189,10 +193,10 @@ export function fakeRoom(key, { now = () => Date.now(), ROOMS = null } = {}) {
     // never laid on the frame - the relay ignores what a client says
     // about its own badge, and a harness that could set one on the
     // frame would be testing the wrong half forever.
-    const tok = 'tok' in over ? over.tok : await token(id, { s: over.tokenSub ?? over.acct, n: over.name ?? String(id), k: over.kind, t: over.title, ts: over.ts, g: over.glyphs, mu: over.mu, lv: over.lv, gi: over.gi, gt: over.gt, gm: over.gm, rc: over.rc, ci: over.ci, au: over.au, rb: over.rb, ar: over.ar, cl: over.charLevel, wa: over.wa });   // INT7: `wa` the arms the token signs   // ARENA4b: `charLevel` the character's level the token signs as `cl` (never the frame's own `cl`, ONE-SEAT's claim of the seat)   // ARENA4: `kind` 'linked' for a registered account, `ar` its season's rating   // AUDIT HCC-PARK: `tokenSub` names the verified account the token carries (default acct-<id>; never a frame field - a social hello's own `acct` is the hub's) - one player in a second tab is one account under two ids
+    const tok = 'tok' in over ? over.tok : await token(id, { s: over.tokenSub ?? over.acct, n: over.name ?? String(id), k: over.kind, t: over.title, ts: over.ts, g: over.glyphs, mu: over.mu, fz: over.fz, lv: over.lv, gi: over.gi, gt: over.gt, gm: over.gm, rc: over.rc, ci: over.ci, au: over.au, rb: over.rb, ar: over.ar, cl: over.charLevel, wa: over.wa, hd: over.hd });   // INT7: `wa` the arms the token signs   // ARENA4b: `charLevel` the character's level the token signs as `cl` (never the frame's own `cl`, ONE-SEAT's claim of the seat)   // ARENA4: `kind` 'linked' for a registered account, `ar` its season's rating   // AUDIT HCC-PARK: `tokenSub` names the verified account the token carries (default acct-<id>; never a frame field - a social hello's own `acct` is the hub's) - one player in a second tab is one account under two ids
     // AUDIT FRIENDS-SYNC F5: a hello with an account is a current build's - it says `ps` - unless the pin asks for an old one (`ps: undefined`)
     const frame = { t: 'hello', id, secret: 'secret-of-' + id, name: id, look, pose, ...(over.acct && !('ps' in over) ? { ps: 1 } : {}), ...over };
-    delete frame.title; delete frame.ts; delete frame.glyphs; delete frame.mu; delete frame.lv; delete frame.tokenSub; delete frame.gi; delete frame.gt; delete frame.gm; delete frame.rc; delete frame.ci; delete frame.au; delete frame.rb; delete frame.kind; delete frame.ar; delete frame.charLevel; delete frame.wa;   // ACC3/MOD1/RENOWN1/GUILD1c/REALM-DOOR/WB9g/SEASON1/ARENA4/ARENA4b/INT7: they went into the token above; the wire has no such hello field
+    delete frame.title; delete frame.ts; delete frame.glyphs; delete frame.mu; delete frame.fz; delete frame.lv; delete frame.tokenSub; delete frame.gi; delete frame.gt; delete frame.gm; delete frame.rc; delete frame.ci; delete frame.au; delete frame.rb; delete frame.kind; delete frame.ar; delete frame.charLevel; delete frame.wa; delete frame.hd;   // ACC3/MOD1/RENOWN1/GUILD1c/REALM-DOOR/WB9g/SEASON1/ARENA4/ARENA4b/INT7: they went into the token above; the wire has no such hello field
     if (tok == null) delete frame.tok; else frame.tok = tok;
     return room.webSocketMessage(ws, JSON.stringify(frame));
   };
@@ -213,7 +217,7 @@ export function fakeRoom(key, { now = () => Date.now(), ROOMS = null } = {}) {
  * park registry, a cell's drop) reaches a real Room over its own fake state. Each named object is made on its first
  * use and kept, as the runtime keeps a Durable Object's storage; `room(name)` is the harness of that one.
  */
-export function fakeRooms({ now = () => Date.now() } = {}) {
+export function fakeRooms({ now = () => Date.now(), poll = 'driven' } = {}) {
   const made = new Map();
   const ROOMS = {
     idFromName: (name) => name,
@@ -221,7 +225,7 @@ export function fakeRooms({ now = () => Date.now() } = {}) {
   };
   function room(name) {
     let r = made.get(name);
-    if (!r) { r = fakeRoom(name, { now, ROOMS }); made.set(name, r); }
+    if (!r) { r = fakeRoom(name, { now, ROOMS, poll }); made.set(name, r); }
     return r;
   }
   return { room, ROOMS, made };

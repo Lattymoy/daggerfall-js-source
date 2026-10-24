@@ -1,58 +1,58 @@
 [
   {
     "name": "WOD7-larger-id-wins",
-    "file": "src/world/wodShared.js",
+    "file": "src/world/worldOfDaggerfall/wodShared.js",
     "old": "  if (Math.abs(myAge - theirAge) <= WOD_CLAIM_WINDOW_MS) return theirs < mine;",
     "new": "  if (Math.abs(myAge - theirAge) <= WOD_CLAIM_WINDOW_MS) return theirs > mine;",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
     "name": "WOD7-no-claim-window",
-    "file": "src/world/wodShared.js",
+    "file": "src/world/worldOfDaggerfall/wodShared.js",
     "old": "  if (Math.abs(myAge - theirAge) <= WOD_CLAIM_WINDOW_MS) return theirs < mine;\n  return theirAge > myAge;",
     "new": "  return theirs < mine;",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
     "name": "WOD7-self-yields",
-    "file": "src/world/wodShared.js",
+    "file": "src/world/worldOfDaggerfall/wodShared.js",
     "old": "mine === theirs) return false;",
     "new": "false) return false;",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ],
     "equivalent": true,
     "why": "belt: with mine === theirs, theirs < mine is already false, so the guard only states the case"
   },
   {
     "name": "WOD7-sites-unbounded",
-    "file": "src/world/wodShared.js",
+    "file": "src/world/worldOfDaggerfall/wodShared.js",
     "old": "    if (out.length >= WOD_SITES_MAX) break;\n    if (!Array.isArray(e) || e.length !== 2) continue;",
     "new": "    if (!Array.isArray(e) || e.length !== 2) continue;",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
     "name": "WOD7-sites-duplicated",
-    "file": "src/world/wodShared.js",
+    "file": "src/world/worldOfDaggerfall/wodShared.js",
     "old": " || seen.has(s) || !Number.isFinite(age)) continue;",
     "new": " || !Number.isFinite(age)) continue;",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
     "name": "WOD7-tags-unchecked",
-    "file": "src/world/wodShared.js",
+    "file": "src/world/worldOfDaggerfall/wodShared.js",
     "old": "if (Number.isInteger(i) && i >= 0 && typeof s === 'string' && WOD_SITE_RE.test(s)) out.set(i, s);",
     "new": "out.set(i, s);",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "if (f.puppet || (_questLike(f) && !qt) || (f.placed && !f.site) || (f.dead && !f.corpse)) continue;",
     "new": "if (f.puppet || (_questLike(f) && !qt) || f.placed || (f.dead && !f.corpse)) continue;",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "...(f.placed && !f.site ? [] : _questLike(f) ? questPeerCandidates(f) : peerCandidates())",
     "new": "...(f.placed ? [] : _questLike(f) ? questPeerCandidates(f) : peerCandidates())",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "...(st.length ? { st } : {})",
     "new": "...{}",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "...(sp.length ? { sp } : {})",
     "new": "...{}",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -97,16 +97,16 @@
     "old": "      sp = [...(_sprungOf?.() ?? [])];",
     "new": "      sp = [];",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
     "name": "WOD7-camp-under-encounter-cap",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (site && livePuppetsOf(from, false, true) >= WOD_CAMP_PUPPETS_MAX) { refused.add(site); continue; }",
-    "new": "      if (site && livePuppetsOf(from) >= CELL_PUPPETS_MAX) { refused.add(site); continue; }",
+    "old": "      if (site && (isStarSite(site) ? livePuppetsOf(from, false, false, false, false, false, true) >= WOD_STAR_PUPPETS_MAX : livePuppetsOf(from, false, true) >= WOD_CAMP_PUPPETS_MAX)) { refused.add(site); continue; }",
+    "new": "      if (site && (isStarSite(site) ? livePuppetsOf(from, false, false, false, false, false, true) >= WOD_STAR_PUPPETS_MAX : livePuppetsOf(from) >= CELL_PUPPETS_MAX)) { refused.add(site); continue; }",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "level: r.l ?? null, site, allied:",
     "new": "level: r.l ?? null, allied:",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "    if (spent.size) _onSites?.(from, [...spent]);\n",
     "new": "",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "if (f.site === site && !f.puppet) questPoolOps.removeFoe(f);",
     "new": "if (f.site && !f.puppet) questPoolOps.removeFoe(f);",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -142,8 +142,8 @@
     "old": "        if (_wodPeerSprung.has(wodSiteOf(p, w))) { w.spawner.active = false; continue; }   // WOD7: a peer sprang it - its camp is everyone's\n",
     "new": "",
     "tests": [
-      "test/wod7_sharedcamps.test.js",
-      "test/audit_wod_branch.test.js"
+      "test/scenes/wod7_sharedcamps.test.js",
+      "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
   },
   {
@@ -152,8 +152,8 @@
     "old": " if (act.kind === 'foe' || act.kind === 'loot') wodSprang(wodSiteOf(p, w)); }",
     "new": " }",
     "tests": [
-      "test/wod7_sharedcamps.test.js",
-      "test/audit_wod_branch.test.js"
+      "test/scenes/wod7_sharedcamps.test.js",
+      "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
   },
   {
@@ -162,7 +162,7 @@
     "old": "    if (!online) return;\n    _wodSprung.delete(site);",
     "new": "    _wodSprung.delete(site);",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -171,8 +171,8 @@
     "old": "    _wodSprungChanged = true;\n  }",
     "new": "  }",
     "tests": [
-      "test/wod7_sharedcamps.test.js",
-      "test/audit_wod_branch.test.js"
+      "test/scenes/wod7_sharedcamps.test.js",
+      "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
     ]
   },
   {
@@ -181,7 +181,7 @@
     "old": "        _wodSprung.delete(s);\n        exteriorFoes.removeSiteFoes(s);\n",
     "new": "",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -190,7 +190,7 @@
     "old": "        if (!yieldsTo(online?.id ?? '', from, performance.now() - mine, age)) continue;",
     "new": "",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -199,7 +199,7 @@
     "old": "        if (_wodPeerSprung.has(hs)) p.privateersHold.state.rolled = true;   // WOD7: a peer's roll stands here\n        else { standHold(p, hs); wodSprang(hs); }",
     "new": "        standHold(p, hs); wodSprang(hs);",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -208,7 +208,7 @@
     "old": "        site: f.site ?? null,   // WOD7: and a shared camp's foe keeps riding for its site\n",
     "new": "",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -217,34 +217,34 @@
     "old": "        if (typeof sf.site === 'string') f.site = sf.site;   // WOD7: a shared camp's foe keeps riding for its site\n",
     "new": "",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
     "name": "WOD7-younger-spring-wins",
-    "file": "src/world/wodShared.js",
+    "file": "src/world/worldOfDaggerfall/wodShared.js",
     "old": "  return theirAge > myAge;",
     "new": "  return theirAge < myAge;",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
     "name": "WOD7-unheard-age-decides",
-    "file": "src/world/wodShared.js",
+    "file": "src/world/worldOfDaggerfall/wodShared.js",
     "old": "  if (!Number.isFinite(theirAge) || !Number.isFinite(myAge)) return false;\n",
     "new": "",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
     "name": "WOD7-age-unclamped",
-    "file": "src/world/wodShared.js",
+    "file": "src/world/worldOfDaggerfall/wodShared.js",
     "old": "    out.push([s, Math.max(0, Math.min(WOD_AGE_MAX, age))]);",
     "new": "    out.push([s, age]);",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -253,7 +253,7 @@
     "old": "      sp = sp.slice(0, WOD_SITES_MAX);",
     "new": "      sp = sp.slice(-WOD_SITES_MAX);",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -262,7 +262,7 @@
     "old": "    for (const [s, age] of validSites(data.sp)) if (!refused.has(s) || stood.has(s)) spent.set(s, age);",
     "new": "    for (const [s, age] of validSites(data.sp)) spent.set(s, age);",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -271,7 +271,7 @@
     "old": "      if (site && !f.puppet && _lostSites.has(site)) { questPoolOps.removeFoe(f); return null; }",
     "new": "",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -280,7 +280,7 @@
     "old": "    _lostSites.add(site);   // AUDIT WOD7: and one still building ends as it lands\n",
     "new": "",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -289,7 +289,7 @@
     "old": "    if (_wodSprung.size > WOD_SPRUNG_MAX) _wodSprung.delete(_wodSprung.keys().next().value);\n",
     "new": "",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -298,7 +298,7 @@
     "old": "return [..._wodSprung].reverse().map(",
     "new": "return [..._wodSprung].map(",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -307,7 +307,7 @@
     "old": "for (const s of [..._wodPeerSprung]) if (s.startsWith(`${key}:`)) _wodPeerSprung.delete(s);",
     "new": "",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
@@ -316,25 +316,25 @@
     "old": "wodSiteId(p.px, p.py, w.oid ?? 'x', w.oidN ?? 0)",
     "new": "wodSiteId(p.px, p.py, w.oid ?? 'x', 0)",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
     "name": "WOD7-oid-index-unminted",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const n = oidSeen.get(s.objectID) ?? 0; oidSeen.set(s.objectID, n + 1);",
     "new": "const n = 0;",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   },
   {
     "name": "WOD7-fresh-promote-remembers",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    if (!wodKept.life) wodForgetPeerSites(key);   // AUDIT WOD7: a fresh promote's markers are its own again\n",
     "new": "",
     "tests": [
-      "test/wod7_sharedcamps.test.js"
+      "test/scenes/wod7_sharedcamps.test.js"
     ]
   }
 ]

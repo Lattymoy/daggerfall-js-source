@@ -31,7 +31,8 @@ export function loadHours(raw) {
   return h;
 }
 
-const since = (h) => `timestamp > NOW() - INTERVAL '${loadHours(h)}' HOUR`;
+/** The window's WHERE over the last `h` whole hours (loadHours: refused before it reaches the SQL). */
+export const since = (h) => `timestamp > NOW() - INTERVAL '${loadHours(h)}' HOUR`;
 /** Weighted sums of the point's doubles (metrics.js names each). */
 const W = {
   n: 'SUM(_sample_interval)',
@@ -60,13 +61,25 @@ export const QUESTIONS = Object.freeze([
     (h) => `SELECT blob1 AS route, blob3 AS status, blob4 AS word, ${W.n} AS requests FROM ${DATASET} WHERE ${since(h)} AND NOT startsWith(blob3, '2') GROUP BY route, status, word ORDER BY requests DESC LIMIT 40`],
 ]);
 
-const questionOf = (name) => {
-  const q = QUESTIONS.find(([n]) => n === name);
-  if (!q) throw new Error(`no question ${JSON.stringify(name)} - one of ${QUESTIONS.map(([n]) => n).join(', ')}`);
-  return q;
-};
+/** AUDIT PLAN-1000 A9 (tools/relayLoad.mjs asks its own book the same way): A BOOK OF QUESTIONS - each `[name, title,
+ *  columns, sql(hours)]` - asked by name: its SQL over a window, as JSON, and its answer drawn. One home for both tools. */
+export function questionBook(questions) {
+  const questionOf = (name) => {
+    const q = questions.find(([n]) => n === name);
+    if (!q) throw new Error(`no question ${JSON.stringify(name)} - one of ${questions.map(([n]) => n).join(', ')}`);
+    return q;
+  };
+  return {
+    names: () => questions.map(([n]) => n),
+    /** One question's SQL over the last `hours`, asked as JSON. */
+    loadSql: (name, hours) => `${questionOf(name)[3](hours)} FORMAT JSON`,
+    /** An answer as a Markdown table under its title - the columns the question names, in order. */
+    loadTable: (name, answer) => { const [, title, cols] = questionOf(name); return answerTable(name, title, cols, answer); },
+  };
+}
+const book = questionBook(QUESTIONS);
 /** One question's SQL over the last `hours`, asked as JSON. */
-export const loadSql = (name, hours) => `${questionOf(name)[3](hours)} FORMAT JSON`;
+export const loadSql = book.loadSql;
 
 const cell = (v) => {
   if (v == null) return '';
@@ -80,7 +93,10 @@ const cell = (v) => {
  * @param {string} name @param {any} answer the SQL API's body (`{ data: [...] }`)
  */
 export function loadTable(name, answer) {
-  const [, title, cols] = questionOf(name);
+  return book.loadTable(name, answer);
+}
+/** RELAY-LOAD: the drawing itself, any question's (questionBook's). */
+export function answerTable(name, title, cols, answer) {
   const rows = answer?.data;
   if (!Array.isArray(rows)) throw new Error(`${name}: the answer carries no rows - ${JSON.stringify(answer).slice(0, 300)}`);
   const head = `**${title}**\n\n`;
@@ -88,10 +104,15 @@ export function loadTable(name, answer) {
   return `${head}| ${cols.join(' | ')} |\n|${cols.map(() => '---').join('|')}|\n${rows.map((r) => `| ${cols.map((c) => cell(r[c])).join(' | ')} |`).join('\n')}\n`;
 }
 
-if (isMain(import.meta.url)) {
-  const [flag, a, b] = process.argv.slice(2);
-  if (flag === '--names') console.log(QUESTIONS.map(([n]) => n).join('\n'));
-  else if (flag === '--sql') console.log(loadSql(a, b));
-  else if (flag === '--table') process.stdout.write(loadTable(a, JSON.parse(readFileSync(b, 'utf8'))));
-  else { console.error('usage: d1Load.mjs --names | --sql <name> [hours] | --table <name> <answer.json>'); process.exit(2); }
+/** AUDIT PLAN-1000 A9: a book's command line - `--names`, `--sql <name> [hours]`, `--table <name> <answer.json>`, and
+ *  `--hours [hours]`, the window a run asks (an empty input is loadHours' own hour, said as the SQL will say it). */
+export function runBook(b, tool, argv = process.argv.slice(2)) {
+  const [flag, x, y] = argv;
+  if (flag === '--names') console.log(b.names().join('\n'));
+  else if (flag === '--sql') console.log(b.loadSql(x, y));
+  else if (flag === '--table') process.stdout.write(b.loadTable(x, JSON.parse(readFileSync(y, 'utf8'))));
+  else if (flag === '--hours') console.log(loadHours(x));
+  else { console.error(`usage: ${tool} --names | --sql <name> [hours] | --table <name> <answer.json> | --hours [hours]`); process.exit(2); }
 }
+
+if (isMain(import.meta.url)) runBook(book, 'd1Load.mjs');

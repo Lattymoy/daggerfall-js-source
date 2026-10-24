@@ -1,0 +1,42 @@
+[
+  {
+    "name": "PVP-BLOOD-duel-street",
+    "file": "src/scenes/world.js",
+    "old": "        (modes?.liveHitEffects?.() ?? hitEffects).showBloodSplash(0, [b.feet[0], b.feet[1] + (b.height ?? CAPSULE_HEIGHT) / 2, b.feet[2]], null, bloodHit(g.d, { maxHealth: theirs?.[2] ?? 1 }, { fromPlayer: true, weapon: _duelLastWeapon }));",
+    "new": "        hitEffects.showBloodSplash(0, [b.feet[0], b.feet[1] + (b.height ?? CAPSULE_HEIGHT) / 2, b.feet[2]], null, bloodHit(g.d, { maxHealth: theirs?.[2] ?? 1 }, { fromPlayer: true, weapon: _duelLastWeapon }));",
+    "tests": [
+      "test/scenes/fb1018_pvpblood.test.js"
+    ],
+    "why": "a duel's blow indoors bleeds into the street's frozen pool and ring"
+  },
+  {
+    "name": "PVP-BLOOD-zone-street",
+    "file": "src/scenes/world.js",
+    "old": "        (modes?.liveHitEffects?.() ?? hitEffects).showBloodSplash(0, [b.feet[0], b.feet[1] + (b.height ?? CAPSULE_HEIGHT) / 2, b.feet[2]], null, bloodHit(g.d, { maxHealth: theirs?.[2] ?? 1 }, { fromPlayer: true, weapon: _wildLastWeapon }));",
+    "new": "        hitEffects.showBloodSplash(0, [b.feet[0], b.feet[1] + (b.height ?? CAPSULE_HEIGHT) / 2, b.feet[2]], null, bloodHit(g.d, { maxHealth: theirs?.[2] ?? 1 }, { fromPlayer: true, weapon: _wildLastWeapon }));",
+    "tests": [
+      "test/scenes/fb1018_pvpblood.test.js"
+    ],
+    "why": "the open zone's blow in its halls bleeds into the street's pool"
+  },
+  {
+    "name": "PVP-BLOOD-peer-street",
+    "file": "src/scenes/world.js",
+    "old": "        (modes?.liveHitEffects?.() ?? hitEffects).showBloodSplash(0, at, null, bloodHit(share, { maxHealth: 1 }));",
+    "new": "        hitEffects.showBloodSplash(0, at, null, bloodHit(share, { maxHealth: 1 }));",
+    "tests": [
+      "test/scenes/fb1018_pvpblood.test.js"
+    ],
+    "why": "a peer struck indoors bleeds into the street's pool (the seam the fix copies)"
+  },
+  {
+    "name": "PVP-BLOOD-halls-by-pose",
+    "file": "src/scenes/world.js",
+    "old": "    return modes?.mode === 'dungeon' || wildAtWire(duelWorldOf(peerId));",
+    "new": "    return wildAtWire(duelWorldOf(peerId));",
+    "tests": [
+      "test/scenes/fb1018_pvpblood.test.js"
+    ],
+    "why": "AUDIT FB1018 L3-5: every peer in the zone's halls refused - the dungeon-frame pose read as the map's corner"
+  }
+]

@@ -4,7 +4,7 @@
     "file": "app/lib/launcherState.cjs",
     "old": "  if (s.launch === 'requested') return 'launch';\n",
     "new": "  if (s.launch === 'requested' || s.update.status === 'current') return 'launch';\n",
-    "tests": ["test/da10_launcher.test.js"],
+    "tests": ["test/tooling/da10_launcher.test.js"],
     "note": "DA8's splash again: the front door shuts before the player has read a line of it."
   },
   {
@@ -12,7 +12,7 @@
     "file": "app/lib/launcherState.cjs",
     "old": "const canPlay = (s) => !s.launch && SETUP_DONE.has(s.setup.status) && !UPDATE_HOLDS.has(s.update.status);\n",
     "new": "const canPlay = (s) => !s.launch && SETUP_DONE.has(s.setup.status);\n",
-    "tests": ["test/da10_launcher.test.js", "test/da8_launcher.test.js"],
+    "tests": ["test/tooling/da10_launcher.test.js", "test/tooling/da8_launcher.test.js"],
     "note": "A player who presses Play in the first second launches the build before the last one - DA8's whole reason."
   },
   {
@@ -20,64 +20,64 @@
     "file": "app/lib/launcherState.cjs",
     "old": "const canPlay = (s) => !s.launch && SETUP_DONE.has(s.setup.status) && !UPDATE_HOLDS.has(s.update.status);\n",
     "new": "const canPlay = (s) => !s.launch && !UPDATE_HOLDS.has(s.update.status);\n",
-    "tests": ["test/da10_launcher.test.js", "test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js", "test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA10-4-the-install-cuts-off-the-players-own-card",
     "file": "app/lib/launcherState.cjs",
     "old": "  if (s.update.status === 'installing') return SETUP_DONE.has(s.setup.status) ? 'install' : 'wait';",
     "new": "  if (s.update.status === 'installing') return 'install';",
-    "tests": ["test/da10_launcher.test.js"],
+    "tests": ["test/tooling/da10_launcher.test.js"],
     "note": "The app vanishes for a restart while the player is choosing their files."
   },
   {
     "name": "DA10-5-an-update-found-after-play-hijacks-the-handover",
     "file": "app/lib/launcherState.cjs",
-    "old": "      if (s.launch || !MAY_FIND.has(u.status)) break;\n",
-    "new": "      if (!MAY_FIND.has(u.status)) break;\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "old": "      if (s.launch || !MAY_FIND.has(u.status)) break;\n      u.version = ev.version ?? null;\n      if (s.transport",
+    "new": "      if (!MAY_FIND.has(u.status)) break;\n      u.version = ev.version ?? null;\n      if (s.transport",
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-6-a-launcher-left-open-never-hears-a-late-answer",
     "file": "app/lib/launcherState.cjs",
     "old": "const MAY_FIND = new Set(['checking', 'offline', 'current', 'failed', 'notice']);\n",
     "new": "const MAY_FIND = new Set(['checking', 'notice']);\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-7-new-marks-the-version-played-before",
     "file": "app/lib/launcherState.cjs",
     "old": "    if (last ? cmpV(v, last) > 0 : s.returning && c === 0) return 'new';\n",
     "new": "    if (last ? cmpV(v, last) >= 0 : s.returning && c === 0) return 'new';\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-8-an-update-on-its-way-is-not-marked",
     "file": "app/lib/launcherState.cjs",
     "old": "    if (c > 0) return 'update';\n",
     "new": "",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-9-placeholder-releases-flood-the-news",
     "file": "app/lib/launcherState.cjs",
     "old": "  const said = items.filter((n) => n.badge || (n.text && !isPlaceholder(n.text)));\n",
     "new": "  const said = items.filter((n) => n.text);\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-10-the-players-own-version-is-hidden-when-its-notes-are-bare",
     "file": "app/lib/launcherState.cjs",
     "old": "  const said = items.filter((n) => n.badge || (n.text && !isPlaceholder(n.text)));\n",
     "new": "  const said = items.filter((n) => n.text && !isPlaceholder(n.text));\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-11-the-version-last-played-is-never-kept",
     "file": "app/main.cjs",
-    "old": "  launcherDispatch({ type: 'launching' });\n  saveConfig({ ...loadConfig(), lastPlayed: app.getVersion() });\n",
-    "new": "  launcherDispatch({ type: 'launching' });\n",
-    "tests": ["test/da10_launcher.test.js"],
+    "old": "  launcherDispatch({ type: 'launching' });\n  saveConfig({ ...loadConfig(), lastPlayed: gameVersion() });",
+    "new": "  launcherDispatch({ type: 'launching' });\n ",
+    "tests": ["test/tooling/da10_launcher.test.js"],
     "note": "Every version is NEW for ever, or none is - the marks say nothing."
   },
   {
@@ -85,7 +85,7 @@
     "file": "app/main.cjs",
     "old": "  if (checkEnabled) {\n    startLaunchCheck();\n    fetchNews();\n    startRechecks();\n  }\n",
     "new": "  fetchNews();\n  if (checkEnabled) {\n    startLaunchCheck();\n    startRechecks();\n  }\n",
-    "tests": ["test/autoupdate.test.js", "test/da10_launcher.test.js"],
+    "tests": ["test/tooling/autoupdate.test.js", "test/tooling/da10_launcher.test.js"],
     "note": "A player who turned the check off, and every probe, still asks GitHub at launch."
   },
   {
@@ -93,42 +93,42 @@
     "file": "app/main.cjs",
     "old": "      news: loadNews(),\n",
     "new": "      news: [],\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-14-a-failed-fetch-blanks-the-kept-news",
     "file": "app/lib/launcherState.cjs",
     "old": "      if (s.news.status === 'loading') s.news.status = 'failed';\n",
     "new": "      if (s.news.status === 'loading') { s.news.status = 'failed'; s.news.items = []; }\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-15-news-json-is-read-on-trust",
     "file": "app/lib/launcherState.cjs",
     "old": "    .filter((n) => n && parseVersion(n.version) && typeof n.text === 'string')\n",
     "new": "    .filter((n) => n)\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-16-anything-truthy-turns-the-check-on",
     "file": "app/main.cjs",
     "old": "    case 'set-update-check': setCheckOnLaunch(arg === true); break;\n",
     "new": "    case 'set-update-check': setCheckOnLaunch(!!arg); break;\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-17-the-switch-turned-on-waits-for-the-next-launch",
     "file": "app/main.cjs",
     "old": "    launcherDispatch({ type: 'check-start' });\n    startLaunchCheck();\n",
     "new": "    launcherDispatch({ type: 'check-start' });\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-18-the-launcher-grows-the-games-menu-bar",
     "file": "app/main.cjs",
     "old": "  if (process.platform !== 'darwin' && launcher && !launcher.win.isDestroyed()) launcher.win.removeMenu();\n",
     "new": "",
-    "tests": ["test/da10_launcher.test.js"],
+    "tests": ["test/tooling/da10_launcher.test.js"],
     "note": "Windows and Linux: a File/View bar appears on the launcher at the handover and on every notice (Electron 42, measured)."
   },
   {
@@ -136,7 +136,7 @@
     "file": "app/main.cjs",
     "old": "  if (arena2Dir && !win.isDestroyed() && await clearIngestIfPending(win.webContents) && !win.isDestroyed()) win.reload();\n",
     "new": "",
-    "tests": ["test/da10_launcher.test.js"],
+    "tests": ["test/tooling/da10_launcher.test.js"],
     "note": "Audit DA F-DA2 through the launcher: the stored ingest answers first, and the folder the player chose changes nothing."
   },
   {
@@ -144,146 +144,146 @@
     "file": "app/main.cjs",
     "old": "  return r === 'cleared';\n}",
     "new": "  return true;\n}",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-21-the-in-game-choice-is-asked-every-launch",
     "file": "app/main.cjs",
     "old": "      inGamePicker: cfg.arena2InGame === true || !!process.env.DAGGER_SKIP_ARENA2_PROMPT,\n",
     "new": "      inGamePicker: !!process.env.DAGGER_SKIP_ARENA2_PROMPT,\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-22-the-install-ignores-an-open-dialog",
     "file": "app/main.cjs",
     "old": "  } else if (step === 'install') { if (!launcher.dialogs) installFromLauncher(); } else if (step === 'launch') launchGame();\n",
     "new": "  } else if (step === 'install') { installFromLauncher(); } else if (step === 'launch') launchGame();\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-23-a-second-launch-shows-the-half-built-game",
     "file": "app/main.cjs",
     "old": "  const w = live.find((x) => x.isVisible()) ?? live.find((x) => x.isMinimized()) ?? null;\n",
     "new": "  const w = live[0] ?? null;\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-24-reinstall-opens-without-asking",
     "file": "app/main.cjs",
     "old": "  if (goesAhead(response)) shell.openExternal(ownDownloadUrl());\n}\n\n/** The handover",
     "new": "  shell.openExternal(ownDownloadUrl());\n}\n\n/** The handover",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-25-a-dock-click-skips-the-launcher",
     "file": "app/main.cjs",
     "old": "  app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0 && !directStarting) runLauncher(); });\n",
     "new": "  app.on('activate', () => { if (BrowserWindow.getAllWindows().length === 0 && !directStarting) createWindow(); });\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-26-a-held-play-still-sends",
     "file": "app/launcher/launcher.js",
     "old": "    if (act && !act.disabled) bridge.act(act.dataset.act);\n",
     "new": "    if (act) bridge.act(act.dataset.act);\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-27-a-mark-is-whatever-string-the-view-carries",
     "file": "app/launcher/launcher.js",
     "old": "    if (Object.hasOwn(BADGE, note.badge)) head.append(el('span', `badge ${note.badge}`, BADGE[note.badge]));\n",
     "new": "    if (note.badge) head.append(el('span', `badge ${note.badge}`, note.badge));\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-28-an-updater-that-declines-to-check-is-waited-out",
     "file": "app/main.cjs",
     "old": "      .then((r) => { if (!r) launcherDispatch({ type: 'check-failed' }); })\n",
     "new": "      .then(() => {})\n",
-    "tests": ["test/autoupdate.test.js"]
+    "tests": ["test/tooling/autoupdate.test.js"]
   },
   {
     "name": "DA10-29-a-found-folder-by-anything-the-page-sends",
     "file": "app/main.cjs",
     "old": "      const f = Number.isInteger(arg) ? st.setup.found[arg] : null;\n",
     "new": "      const f = st.setup.found[Number(arg)];\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-30-a-returning-player-is-not-told-the-build-is-new",
     "file": "app/lib/launcherState.cjs",
     "old": "  return last ? cmpV(cur, last) > 0 : s.returning;\n",
     "new": "  return last ? cmpV(cur, last) > 0 : false;\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-31-a-reinstalled-older-copy-reads-as-updated",
     "file": "app/lib/launcherState.cjs",
     "old": "  return last ? cmpV(cur, last) > 0 : s.returning;\n",
     "new": "  return last ? cmpV(cur, last) !== 0 : s.returning;\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-32-checks-off-says-the-news-is-loading",
     "file": "app/lib/launcherState.cjs",
     "old": "    news: { status: checkEnabled ? 'loading' : 'off', items: Array.isArray(news) ? news : [] },\n",
     "new": "    news: { status: 'loading', items: Array.isArray(news) ? news : [] },\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-33-the-switch-re-asks-an-answered-check",
     "file": "app/lib/launcherState.cjs",
     "old": "      if (u.status === 'skipped') u.status = 'checking';\n",
     "new": "      u.status = 'checking';\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-34-a-folder-picked-after-play-moves-the-game",
     "file": "app/lib/launcherState.cjs",
     "old": "      if (ev.dir && !s.launch) {\n        st.status = 'ready';",
     "new": "      if (ev.dir) {\n        st.status = 'ready';",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-35-a-launcher-left-open-never-hears-the-hourly-notice",
     "file": "app/main.cjs",
     "old": "    if (launcher) launcherDispatch({ type: 'check-available', version: r.version, download: r.download });\n    tellNotice(r);\n",
     "new": "    tellNotice(r);\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-36-locate-arena2-goes-around-the-open-launcher",
     "file": "app/main.cjs",
     "old": "            if (launcher) { launcherChooseFolder(); return; }\n",
     "new": "",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-37-play-is-never-drawn-held",
     "file": "app/launcher/launcher.js",
     "old": "    play.disabled = !v.play.enabled;\n",
     "new": "    play.disabled = false;\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-38-play-without-updating-plays-without-files",
     "file": "app/lib/launcherState.cjs",
     "old": "        if (canPlay(s)) s.launch = 'requested';\n",
     "new": "        s.launch = 'requested';\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   },
   {
     "name": "DA10-39-a-dialog-opened-during-the-notice-is-cut-off",
     "file": "app/main.cjs",
     "old": "    if (l.dialogs) { l.installing = false; return; }\n",
     "new": "",
-    "tests": ["test/da8_launcher.test.js"]
+    "tests": ["test/tooling/da8_launcher.test.js"]
   },
   {
     "name": "DA10-40-a-minimized-game-is-never-restored",
     "file": "app/main.cjs",
     "old": "  const w = live.find((x) => x.isVisible()) ?? live.find((x) => x.isMinimized()) ?? null;\n",
     "new": "  const w = live.find((x) => x.isVisible()) ?? null;\n",
-    "tests": ["test/da10_launcher.test.js"]
+    "tests": ["test/tooling/da10_launcher.test.js"]
   }
 ]

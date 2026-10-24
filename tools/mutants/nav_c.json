@@ -5,7 +5,7 @@
     "old": "  const pool = SHIP_CLASSES.filter((c) => c.faction === faction && c.minLevel <= Math.max(1, level | 0));",
     "new": "  const pool = SHIP_CLASSES.filter((c) => c.faction === faction);",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (f === 'navy') return (contact.notoriety ?? notoriety)(ship.names?.crown ?? null) >= NAVY_HUNTS;",
     "new": "    if (f === 'navy') return (contact.notoriety ?? notoriety)(null) >= NAVY_HUNTS;",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if ((ship.provoked.get(contact.id) ?? -Infinity) > now - PROVOKED_S) return true;",
     "new": "  if (ship.provoked.has(contact.id)) return true;",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (!isWater(x, z) || !isWater(x + r[0] * half, z + r[2] * half) || !isWater(x - r[0] * half, z - r[2] * half)) return false;",
     "new": "    if (!isWater(x, z) || !isWater(x + r[0] * half, z + r[2] * half)) return false;",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "export const AVOID_SWINGS = Object.freeze([25, -25, 50, -50, 80, -80, 115, -115, 150, -150, 180]);",
     "new": "export const AVOID_SWINGS = Object.freeze([-25, 25, -50, 50, -80, 80, -115, 115, -150, 150, 180]);",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    p = [target[0] + rel[0] * t, target[1], target[2] + rel[2] * t];",
     "new": "    p = [target[0], target[1], target[2]];",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  battery('starboard', 90, RUN_OUT_DEG, BEAR_DEG);",
     "new": "  battery('starboard', -90, RUN_OUT_DEG, BEAR_DEG);",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "(ship.cls.faction === 'pirate' && !ship.cls.flagship && ship.damage.hullShare() < PIRATE_RUNS_AT",
     "new": "(ship.cls.faction === 'pirate' && ship.damage.hullShare() < PIRATE_RUNS_AT",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  return !!enemy.crippled || (enemy.hullShare ?? 1) < GRAPPLE_HULL || (ship.stillFor.get(enemy.id) ?? 0) >= GRAPPLE_STILL_S;",
     "new": "  return !!enemy.crippled || (enemy.hullShare ?? 1) < GRAPPLE_HULL;",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": ": bearingTo(ship, q.pos).dist <= GRAPPLE_RANGE;\n    if (close) out.grapple = q.id;",
     "new": ": true;\n    if (close) out.grapple = q.id;",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  if (st === SHIP_STATES.struck || st === SHIP_STATES.prize || ship.boarded) {",
     "new": "  if (st === SHIP_STATES.prize || ship.boarded) {",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  if (ship.cls.tactic === 'bow' && ship.guns.ready('bow') &&",
     "new": "  if (false &&",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    if (ship.hull === HULL.LargeGalley) best = Math.max(best, ship.cls.speed * OARS_FLOOR);",
     "new": "",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "        const d = SPAWN_RING[0] + rng() * (SPAWN_RING[1] - SPAWN_RING[0]);",
     "new": "        const d = rng() * SPAWN_RING[1];",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "        if (nearest(pos) < SPAWN_CLEAR) continue;",
     "new": "",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "      const seed = hash32(ctx.seedBase >>> 0, count++);",
     "new": "      const seed = hash32(ctx.seedBase >>> 0, count);",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "if (!s.engaged && !s.theirs && nearest(s.pos) > DESPAWN_BEYOND) out.despawn.push(s.id);",
     "new": "if (!s.theirs && nearest(s.pos) > DESPAWN_BEYOND) out.despawn.push(s.id);",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "      if (alive >= (ctx.density ?? 0) + (distress ? 1 : 0) || random() >= SHIP_SPAWN_CHANCE) return out;",
     "new": "      if (random() >= SHIP_SPAWN_CHANCE) return out;",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "      if (cls?.flagship && (ctx.ships ?? []).some((s) => s.classId === cls.id)) cls = classFor(faction, 1, rng());   // one flagship at a time",
     "new": "",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "        const yaw = hunter ? toPlayer : toPlayer + (rng() < 0.5 ? 1 : -1) * (0.6 + rng() * 0.9);",
     "new": "        const yaw = toPlayer + (rng() < 0.5 ? 1 : -1) * (0.6 + rng() * 0.9);",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "  if (nearPort) { w.merchant += PORT_WEIGHTS.merchant; w.navy += PORT_WEIGHTS.navy; w.pirate *= PORT_PIRATE_K; }",
     "new": "  if (nearPort) { w.pirate *= PORT_PIRATE_K; }",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "  } finally { setSeed(saved); }",
     "new": "  } finally { /* left where the name moved it */ }",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
@@ -203,8 +203,8 @@
     "old": "  const crown = shipClass.faction === 'navy' ? crownIn ?? crownOf(0, 0, null, regionIndex) : null;",
     "new": "  const crown = shipClass.faction === 'navy' ? CROWNS[0] : null;",
     "tests": [
-      "test/nav_c_ships.test.js",
-      "test/shipnames.test.js"
+      "test/systems/naval/nav_c_ships.test.js",
+      "test/systems/naval/shipnames.test.js"
     ]
   },
   {
@@ -213,16 +213,16 @@
     "old": "    if (d < bd) { bd = d; best = crown; }",
     "new": "    if (d > bd || bd === Infinity) { bd = d; best = crown; }",
     "tests": [
-      "test/nav_c_ships.test.js"
+      "test/systems/naval/nav_c_ships.test.js"
     ]
   },
   {
     "name": "NAV-C-a-sea-ship-mine",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "    seaBoats.push(boat);\n    return boat;",
     "new": "    boats.push(boat);\n    return boat;",
     "tests": [
-      "test/nav_g_online.test.js"
+      "test/systems/naval/nav_g_online.test.js"
     ]
   }
 ]

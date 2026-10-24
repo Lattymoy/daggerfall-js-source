@@ -47,7 +47,7 @@ export async function signingKey(env, subtle) {
 
 /** WB5b: THE RELAY'S PUBLIC HALF - `GATE_PUBLIC_KEY`, base64url raw,
  * the key an Oblivion Gate's kill receipts verify with
- * (src/net/gateReceipt.js; the relay signs with GATE_SIGNING_KEY).
+ * (src/net/gate/gateReceipt.js; the relay signs with GATE_SIGNING_KEY).
  * Imported once per isolate like the private one, and NULL IS A REAL
  * ANSWER here too: a service with no key declines every claim, and the
  * client keeps its receipts until one is set - they carry a week. It is

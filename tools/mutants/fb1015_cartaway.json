@@ -1,0 +1,183 @@
+[
+  {
+    "name": "CART-AWAY-the-option-ignored-in-takeWildDeath",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "  const cart = withCart && Array.isArray(entity?.wagonItems) ? entity.wagonItems : [];\n  const lit =",
+    "new": "  const cart = Array.isArray(entity?.wagonItems) ? entity.wagonItems : [];\n  const lit =",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-the-gold-share-still-taken",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "  const coin = takeWildGold(entity, { cart: withCart, packs });",
+    "new": "  const coin = takeWildGold(entity, { packs });",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-takeWildGold-option-ignored",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "  const cart = withCart && Array.isArray(entity?.wagonItems) ? entity.wagonItems.find(",
+    "new": "  const cart = Array.isArray(entity?.wagonItems) ? entity.wagonItems.find(",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-the-candidates-keep-the-cart",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "  const cart = withCart && Array.isArray(entity?.wagonItems) ? entity.wagonItems : [];\n  const k = wildPickOf(bag, w, wt);",
+    "new": "  const cart = Array.isArray(entity?.wagonItems) ? entity.wagonItems : [];\n  const k = wildPickOf(bag, w, wt);",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-no-record-may-be-away",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "  if (!rec || typeof rec !== 'object') return false;",
+    "new": "  if (!rec || typeof rec !== 'object') return true;",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-parked-never-away",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "  if (rec.Mode === WAGON_MODE.None || rec.Mode === WAGON_MODE.Deployed) return true;",
+    "new": "  if (rec.Mode === WAGON_MODE.None) return true;",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-no-wagon-never-away",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "  if (rec.Mode === WAGON_MODE.None || rec.Mode === WAGON_MODE.Deployed) return true;",
+    "new": "  if (rec.Mode === WAGON_MODE.Deployed) return true;",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-following-read-as-away",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "  if (rec.Mode === WAGON_MODE.None || rec.Mode === WAGON_MODE.Deployed) return true;",
+    "new": "  if (rec.Mode === WAGON_MODE.None || rec.Mode === WAGON_MODE.Deployed || rec.Mode === WAGON_MODE.FollowingPlayer) return true;",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-stabled-not-read-as-away",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "  return rec.Mode === WAGON_MODE.WithPlayer && rec.WagonStabled === true;",
+    "new": "  return false;",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-beside-them-read-as-away",
+    "file": "src/systems/wild/wildDropLaw.js",
+    "old": "  return rec.Mode === WAGON_MODE.WithPlayer && rec.WagonStabled === true;",
+    "new": "  return rec.Mode === WAGON_MODE.WithPlayer;",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-the-services-consistency-check-removed",
+    "file": "server-account/src/wild.js",
+    "old": "  const away = !seize && body?.cart === 0 && wildCartMayBeAway(wildCartRecordOf(stored));",
+    "new": "  const away = !seize && body?.cart === 0;",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-a-seizure-honours-the-word",
+    "file": "server-account/src/wild.js",
+    "old": "  const away = !seize && body?.cart === 0 && wildCartMayBeAway(wildCartRecordOf(stored));",
+    "new": "  const away = body?.cart === 0 && wildCartMayBeAway(wildCartRecordOf(stored));",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-the-word-unread",
+    "file": "server-account/src/wild.js",
+    "old": "  const away = !seize && body?.cart === 0 && wildCartMayBeAway(wildCartRecordOf(stored));",
+    "new": "  const away = !seize && wildCartMayBeAway(wildCartRecordOf(stored));",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-the-take-not-told",
+    "file": "server-account/src/wild.js",
+    "old": "    drop = takeWildDeath(save, w, keep, wt, cart);",
+    "new": "    drop = takeWildDeath(save, w, keep, wt);",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-the-client-Deployed-inside-read-as-away",
+    "file": "src/systems/wild/wildCart.js",
+    "old": "  return !wildInside(mask, p.x, p.y) && !(etherWildRingAt(p.x, p.y) > 0);",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-the-client-band-read-as-the-zone",
+    "file": "src/systems/wild/wildCart.js",
+    "old": "  return !wildInside(mask, p.x, p.y) && !(etherWildRingAt(p.x, p.y) > 0);",
+    "new": "  return !(wildInside(mask, p.x, p.y) || mask.near[p.y * mask.width + p.x] === 1) && !(etherWildRingAt(p.x, p.y) > 0);",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-the-client-stabled-and-none-read-as-with",
+    "file": "src/systems/wild/wildCart.js",
+    "old": "  if (rec.Mode !== WAGON_MODE.Deployed) return true;",
+    "new": "  if (rec.Mode !== WAGON_MODE.Deployed) return false;",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-the-client-mask-unread",
+    "file": "src/systems/wild/wildCart.js",
+    "old": "  if (!mask) return false;   // no map files, no word\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-the-client-mods-switch-unread",
+    "file": "src/systems/wild/wildCart.js",
+    "old": "({ cart: on && wildCartAway(rec, mask) ? 0 : 1 })",
+    "new": "({ cart: wildCartAway(rec, mask) ? 0 : 1 })",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ]
+  },
+  {
+    "name": "CART-AWAY-the-host-says-nothing",
+    "file": "src/scenes/world.js",
+    "old": ", ...wildFallWords(hccOn(), hccRuntime.getSaveData(), wildMaskOf(maps)) }),",
+    "new": " }),",
+    "tests": [
+      "test/systems/fb1015_cartaway.test.js"
+    ],
+    "note": "AUDIT FB1019f B2 (re-aimed): the fallen's own ask says its words through wildFallWords (systems/wild/wildDeath.js), the wagon's among them."
+  }
+]

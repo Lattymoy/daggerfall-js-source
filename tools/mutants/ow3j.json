@@ -5,7 +5,7 @@
     "old": "&& travelOptions?.isTravelActive && tvOwnsJourneys()) travelOptions.messages.pauseTravel(); },",
     "new": "&& travelOptions?.isTravelActive && tvOwnsJourneys()) travelOptions.interruptTravel(); },",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "The view brought down interrupts past the panel: the journey still reads active, the view rises again over it, the held map never offers Resume."
   },
@@ -15,17 +15,17 @@
     "old": " || !travelOptions.isTravelActive || !travelOptions.state?.autopilot) return;",
     "new": " || !travelOptions.isTravelActive) return;",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "The view is raised over a panel left up with nothing driving - a frozen journey."
   },
   {
     "name": "OW3-J1-pause-closes-nothing",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "    pauseTravel: () => { if (ui?.isShowing) ui.closeWindow(); },",
     "new": "    pauseTravel: () => { interruptTravel(); },",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "The mod's own pause stops the walk and leaves its panel up: the journey reads active."
   },
@@ -35,7 +35,7 @@
     "old": "      if (opts?.playerControlled && tvRoutesJourneys()) return;\n",
     "new": "",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "A walked trip the Overworld refused falls through to DFU's fast travel - a paid teleport past the mountain rule."
   },
@@ -45,7 +45,7 @@
     "old": "if (!beginAcceleratedTravel(pick, opts, { coords: true }) && !tvRoutesJourneys())",
     "new": "if (!beginAcceleratedTravel(pick, opts, { coords: true }))",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "A coordinate pick the Overworld refused (and said why) is also told 'You cannot travel there now.'"
   },
@@ -55,87 +55,87 @@
     "old": "function tvOwnsJourneys() { return !!travelOptions && !modSetting(TRAVEL_OPTIONS_VENDOR, 'GeneralOptions.FirstPersonTravel') && isEnhanced() && !!travelView; }",
     "new": "function tvOwnsJourneys() { return false; }",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "The enhanced interface's walked trip is nobody's: the map's pick goes the classic ground journey's way, and a refusal teleports."
   },
   {
     "name": "OW3-J3-no-rejoin",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "    r.join = rejoinPoint(r);\n",
     "new": "    r.join = null;\n",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "A resume heads straight for the run's far end, beside the road."
   },
   {
     "name": "OW3-J3-join-never-walked",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "    if (r.join) {\n",
     "new": "    if (false) {\n",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "The rejoin is computed and never aimed at."
   },
   {
     "name": "OW3-J3-join-never-spent",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "r.join = null; startRouteLeg(); };",
     "new": "startRouteLeg(); };",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "The join, reached, is aimed at again and again - the leg after it never begun."
   },
   {
     "name": "OW3-J3-join-in-the-legs-pixel",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "const j = r.join, jp = worldCoordToMapPixel(j.x, j.z);",
     "new": "const j = r.join, jp = r.legs[r.i];",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "The join is aimed in the leg's pixel: the autopilot asks for its arrival where the join is not, and walks past it."
   },
   {
     "name": "OW3-J3-open-ground-rejoined",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "    if (!leg || !prev || leg.kind === 'open' || leg.ring || prev.ring) return null;",
     "new": "    if (!leg || !prev || leg.ring || prev.ring) return null;",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "A journey across country is detoured to a line no road runs along."
   },
   {
     "name": "OW3-J3-join-at-the-end",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": " && Math.hypot(j.x - end.x, j.z - end.z) > P_SIZE / 2 ? j : null;",
     "new": " ? j : null;",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "A rejoin at the run's own end is a second target on the leg's own point."
   },
   {
     "name": "OW3-J3-stale-join-walked",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "    if (r.legs[best]?.at && !r.legs[best].ring && best + 1 < r.legs.length) best++;   // OW-TOWN-RING: a ring's point is no join\n",
     "new": "",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "A traveller knocked out of the start pixel walks back to where the old join lay, not to the road nearest them."
   },
   {
     "name": "OW3-J3-line-beside",
     "file": "src/scenes/world.js",
-    "old": "    const j = travelOptions.route?.join;\n",
-    "new": "    const j = null;\n",
+    "old": "    const j = travelOptions.route?.join, sw = ",
+    "new": "    const j = null, sw = ",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "The view's line runs straight to the leg's end while the walk rejoins the road first."
   },
@@ -145,37 +145,37 @@
     "old": "    tvTrip.natives = routeDrawPoints(state.worldCoords(player.pos), legs, { x: n.x, z: n.z }, tvLegMid);",
     "new": "    tvTrip.natives = routeDrawPoints(state.worldCoords(player.pos), [], { x: n.x, z: n.z }, tvLegMid);",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "A spot's drawn route is [traveller, spot]: the routed walk leaves it at its first bend."
   },
   {
     "name": "OW3-J4-last-leg-drawn",
-    "file": "src/systems/travelRoute.js",
+    "file": "src/systems/travel/travelRoute.js",
     "old": "...legs.slice(0, -1).map(",
     "new": "...legs.map(",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "The last leg's pixel middle is drawn before the end: the line doubles through the place's middle and the leg index cuts it one short."
   },
   {
     "name": "OW3-J5-start-exempt-again",
-    "file": "src/systems/travelRoute.js",
+    "file": "src/systems/travel/travelRoute.js",
     "old": ": goalExempt ? 2 : 1, leaving);",
     "new": ": goalExempt ? 2 : 1, leaving || c === start);",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "The step out of the start is exempt again: a one-pixel ridge beside it is crossed, a cliff beside it climbed."
   },
   {
     "name": "OW3-J5-plateau-climbed",
-    "file": "src/systems/travelRoute.js",
+    "file": "src/systems/travel/travelRoute.js",
     "old": "n !== goal ? 0 : goalExempt ? 2 : 1, leaving);",
     "new": "n !== goal ? 0 : 2, leaving);",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "The step onto a spot is never asked: a plateau is walked straight up its cliff (Mac's lag and fall)."
   },
@@ -185,8 +185,8 @@
     "old": "let plan = planRoute(from, pix, { roads: wnet?.roads ?? null, tracks: wnet?.tracks ?? null, ...tvRouteGround(), goalExempt: !!door, sea: seaAsk });",
     "new": "let plan = planRoute(from, pix, { roads: wnet?.roads ?? null, tracks: wnet?.tracks ?? null, ...tvRouteGround(), sea: seaAsk });",
     "tests": [
-      "test/tv2_click_to_move.test.js",
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js",
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "The spot's journey exempts its last step: up the plateau's cliff."
   },
@@ -196,7 +196,7 @@
     "old": "grow: face?.grow > 1 ? face.grow : 1, up: face?.up ?? null, horse });",
     "new": "grow: 1, up: face?.up ?? null, horse });",
     "tests": [
-      "test/eotb_view.test.js"
+      "test/player/eotb_view.test.js"
     ],
     "note": "Under the travel view the Morrowind body stays a speck at its own size."
   },
@@ -206,7 +206,7 @@
     "old": "const thirdUnit = (grow) => (grow > 1 ? grow : 1) / MW_UNITS_PER_METER;",
     "new": "const thirdUnit = (grow) => 1 / MW_UNITS_PER_METER;",
     "tests": [
-      "test/prbow1_bow.test.js"
+      "test/render/prbow1_bow.test.js"
     ],
     "note": "drawThird is handed the view's grow and draws the body at its own size."
   },
@@ -216,7 +216,7 @@
     "old": "const reach = Math.max(4, halfW + boxH + 1);",
     "new": "const reach = 4;",
     "tests": [
-      "test/mwhead1_window.test.js"
+      "test/world/mwhead1_window.test.js"
     ],
     "note": "A grown body's picture keeps the fixed 4 m eye and 0.1..8 m planes: sliced front and back."
   },
@@ -226,7 +226,7 @@
     "old": "      if (tvWater(pick.pixel.x, pick.pixel.y) || at[1] <= tvSeaY() + TV_SEA_EPS_M) { tvSay(TRAVEL_VIEW_TEXT.water); return false; }\n",
     "new": "",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "A held map's coordinate pick on the sea walks the traveller out into it."
   },
@@ -236,7 +236,7 @@
     "old": "if (tvWater(pick.pixel.x, pick.pixel.y) || at[1]",
     "new": "if (at[1]",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "A sea pixel whose middle the far ring's clamp stands at a hair over the surface is walked into."
   },
@@ -246,7 +246,7 @@
     "old": "    const legs = tvJoinedLegs(from, plan, roads);\n    const ok = travelOptions.beginTravelAlongRoute({ legs, summary,",
     "new": "    const legs = routeLegs(plan.pixels, plan.kinds);\n    const ok = travelOptions.beginTravelAlongRoute({ legs, summary,",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "A place's journey walks its first road run beside the road again (the OW-ROADSIDE fix reverted)."
   },
@@ -256,7 +256,7 @@
     "old": "tracks: wnet?.tracks ?? null, ...tvRouteGround(), goalExempt: !!door, sea: seaAsk });",
     "new": "tracks: wnet?.tracks ?? null, isWater: tvWater, goalExempt: !!door, sea: seaAsk });",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "A spot's journey is routed straight over the mountains."
   },
@@ -266,7 +266,7 @@
     "old": "tracks: net?.tracks ?? null, ...tvRouteGround(), sea: tvSeaAsk(means, 'land') });   // OW-MOUNTAINS",
     "new": "tracks: net?.tracks ?? null, isWater: tvWater, sea: tvSeaAsk(means, 'land') });   // OW-MOUNTAINS",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "A place's journey is routed straight over the mountains."
   },
@@ -276,7 +276,7 @@
     "old": "      (x, y) => (tvWildFree(x, y) && woods.getHeightMapValue(x, y) > WATER_BYTE ? 0 : maps.getClimateIndex(x, y)),\n      (x, y) => { const h = woods.getHeightMapValue(x, y); return tvWildFree(x, y) && h > WATER_BYTE ? WATER_BYTE + 8 : h; },",
     "new": "      (x, y) => { const h = woods.getHeightMapValue(x, y); return tvWildFree(x, y) && h > WATER_BYTE ? WATER_BYTE + 8 : h; },\n      (x, y) => (tvWildFree(x, y) && woods.getHeightMapValue(x, y) > WATER_BYTE ? 0 : maps.getClimateIndex(x, y)),",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "The peaks' law reads the heightmap as the climate and the climate as the height - no mountain is ever one."
   }

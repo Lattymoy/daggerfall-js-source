@@ -1,0 +1,20 @@
+[
+  {
+    "name": "ONE-BODY-the-cell-rooms-left-out",
+    "file": "server/src/index.js",
+    "old": "isSdRoom(a.key) || isCellRoom(a.key) || isWorldRoom(a.key)) && who.subject)",
+    "new": "isSdRoom(a.key) || isWorldRoom(a.key)) && who.subject)",
+    "tests": [
+      "test/net/fb1015c_onebody.test.js"
+    ]
+  },
+  {
+    "name": "ONE-BODY-the-world-rooms-left-out",
+    "file": "server/src/index.js",
+    "old": "isSdRoom(a.key) || isCellRoom(a.key) || isWorldRoom(a.key)) && who.subject)",
+    "new": "isSdRoom(a.key) || isCellRoom(a.key)) && who.subject)",
+    "tests": [
+      "test/net/fb1015c_onebody.test.js"
+    ]
+  }
+]

@@ -16,11 +16,11 @@
 //     rasterizer the three masks share, and the Basic Roads classifier the context reads roads with;
 //   - SnowContextData's pure members (OutsideWeight, IsVanillaLocation) and BlanketSurfaceSamples.InterpolateQuad.
 // Single precision where the C# computes in float (Math.fround at every float operation), double where it computes
-// in double - pinned against the reference harness's traces (test/snowfall1_model.test.js).
+// in double - pinned against the reference harness's traces (test/systems/snowfall1_model.test.js).
 
 import { modSetting } from './modSettings.js';
 import { roundToInt, lerpF } from './mathf.js';   // Mathf.RoundToInt (banker's), Mathf.Lerp in float
-import { bytesToBase64, base64ToBytes } from './saveTransfer.js';   // Convert.ToBase64String / FromBase64String
+import { bytesToBase64, base64ToBytes } from './save/saveTransfer.js';   // Convert.ToBase64String / FromBase64String
 import { deflateRaw, inflateRaw } from '../formats/rawDeflate.js';   // DeflateStream
 
 const f32 = Math.fround;
@@ -704,7 +704,7 @@ export class PersistentTrackField {
    *  TV-SAVE (FIELD BUGS 2026-10-09: "the game is starting to slow down, and especially freeze"): a field unchanged since
    *  the last record writes that record's text again rather than packing it again - the same text, character for
    *  character. A full field (65,536 cells) packed in 80-90 ms on this thread, and every save asked it: online, the
-   *  checkpoint every two minutes. */
+   *  periodic checkpoint (systems/online/onlineCheckpoint.js ONLINE_CHECKPOINT_MS). */
   writeSaveData(data) {
     if (!data) return;
     data.FormatVersion = 1;

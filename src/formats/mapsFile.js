@@ -52,7 +52,7 @@
 //     NULL on failure where C# returns a default-constructed DFRegion or
 //     DFLocation with Loaded = false (MapsFile.cs:723-816). This is the
 //     port-wide convention and every consumer found - scenes/world.js,
-//     systems/quest/place.js, ui/travelMapWindow.js, systems/mapDirectory.js,
+//     systems/quest/place.js, ui/travel/travelMapWindow.js, systems/map/mapDirectory.js,
 //     ui/heldMap.js, world/roadsProducer.js - already guards with
 //     `?.` / `?? null`.
 //   - loadRegion memoizes; C# re-reads the four records every call. See the
@@ -67,7 +67,7 @@
 // rebuild.
 
 import { BsaFile, DIRECTORY_TYPES } from './bsaFile.js';
-import { worldDataDoor } from './worldDataDoor.js';   // RR3b: WorldDataReplacement's three asks (MapsFile.cs:984, :999, :1027)
+import { worldDataDoor } from './worldData/worldDataDoor.js';   // RR3b: WorldDataReplacement's three asks (MapsFile.cs:984, :999, :1027)
 import { PakFile } from './pakFile.js';
 import { readBuildingData, BUILDING_DATA_SIZE } from './blocksFile.js';
 // PROF1: the three FALL.EXE / MapsFile tables and the map's bounds the account service reads too, in a module that reads no file (mapsTables.js) -
@@ -357,14 +357,16 @@ export class MapsFile {
 
     if (this.autoDiscard && this._lastRegion !== -1) this.discardRegion(this._lastRegion);
 
-    // Four consecutive records per region.
+    // Four consecutive records per region. REGION-VIEWS: read where MAPS.BSA holds them - the readers below only ever
+    // read them, and with one region resident (autoDiscard) every walk over the regions copied all four again - 357 KB
+    // a region on the mean, 2.3 MB the Wrothgarian Mountains' and 2.1 MB Daggerfall's: 364 regions read by a boot's 40th frame.
     const record = region * 4;
     const rec = {
       name: REGION_NAMES[region],
-      mapPItem: this._bsa.getRecordBytes(record),
-      mapDItem: this._bsa.getRecordBytes(record + 1),
-      mapTable: this._bsa.getRecordBytes(record + 2),
-      mapNames: this._bsa.getRecordBytes(record + 3),
+      mapPItem: this._bsa.getRecordView(record),
+      mapDItem: this._bsa.getRecordView(record + 1),
+      mapTable: this._bsa.getRecordView(record + 2),
+      mapNames: this._bsa.getRecordView(record + 3),
       dfRegion: null,
     };
     if (
@@ -400,7 +402,7 @@ export class MapsFile {
   }
 
   /** HUB1: how many locations the region's own MAPNAMES holds - a world-data mod's additions are appended past it
-   *  (formats/worldDataReplacement.js), so a row below this count is the game's own. 0 for an empty region. */
+   *  (formats/worldData/worldDataReplacement.js), so a row below this count is the game's own. 0 for an empty region. */
   baseLocationCount(region) {
     if (!this.loadRegion(region)) return 0;
     return this._readLocationCount(region);
@@ -422,7 +424,7 @@ export class MapsFile {
 
     dfLocation.regionIndex = region;
     dfLocation.locationIndex = location;
-    worldDataDoor()?.editLocation?.(dfLocation, this);   // ARENA1: the port's own edits (world/arenaCity.js - Daggerfall's cell 4,3), on every layout's read
+    worldDataDoor()?.editLocation?.(dfLocation, this);   // ARENA1: the port's own edits (world/arena/arenaCity.js - Daggerfall's cell 4,3), on every layout's read
     return dfLocation;
   }
 
@@ -641,7 +643,7 @@ export class MapsFile {
 
   /**
    * WD3: the location as MAPS.BSA holds it - past the world-data door (no replacement served), with its indices set
-   * as getLocation sets them. What a mod's `location-<r>-<i>.json` edit is taken against (formats/worldDataPack.js).
+   * as getLocation sets them. What a mod's `location-<r>-<i>.json` edit is taken against (formats/worldData/worldDataPack.js).
    * @returns {object|null}
    */
   readClassicLocation(region, location) {

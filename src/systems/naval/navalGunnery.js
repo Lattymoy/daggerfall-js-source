@@ -29,8 +29,16 @@
 // at a Large Boat's swivels - takes RELOAD_SINGLEHANDED. BRACING (the brace key held) halves what the hull takes and
 // silences the guns while it is held (navalDamage.js BRACE_TAKEN) - and, AUDIT NAV1, stops the reload: a crew holding
 // on is not loading, so the brace is an answer to a broadside, not a stance held for free.
+//
+// SHOT-KINDS (2026-10-17, bible/03-World/Naval-Refit.md SHOT-KINDS): WHAT EACH BATTERY IS LOADED WITH. A deck keeps one
+// load for each of its gun groups (LOAD_GROUPS: the broadsides together, the bow, the stern), each its bore's own
+// (shotKinds.js naturalShot) until the captain changes it. The aim and the volley are laid and flown with the gun as it
+// fires that load (shotKinds.js shotGun: its muzzle speed, its scatter), its reload is the load's, and a change draws a
+// loaded battery and loads it again in SHOT_SWITCH of the new load's reload - one already reloading takes the new shot
+// in, its clock scaled to the new load's. A fire barrel carries none.
 
 import { GUNS, SIDE_DIR, batteryOf, BARREL } from './navalShips.js';
+import { shotGun, naturalShot, shotId, SHOT_SWITCH } from './shotKinds.js';
 import { launchVelocity, elevationForRange, landing, maxRange, volleyRandom, scatter, flatUnit, NAVAL_DEG } from './navalBallistics.js';
 import { quatRotate } from '../../world/quat.js';
 
@@ -49,6 +57,12 @@ export const READY_FLASH_S = 0.7;
 export const BARREL_DROP_S = 1.2;
 /** AUDIT NAV1 (the helm): the most the zone moves out a degree of the look's pitch (m) - see `lookReach`. */
 export const AIM_SLOPE = 30;
+/** SHOT-KINDS: the deck's load groups - the two broadsides load as one, the bow and the stern each their own. */
+export const LOAD_GROUPS = Object.freeze(['broadside', 'bow', 'stern']);
+/** SHOT-KINDS: the load group a battery's side is in. */
+export const loadGroupOf = (side) => (side === 'starboard' || side === 'port' ? 'broadside' : side === 'bow' || side === 'stern' ? side : null);
+/** SHOT-KINDS: the load a gun of `gunKind` fires for a deck's `shot` - its own when none is said (null: a barrel's). */
+export const loadOf = (gunKind, shot) => (gunKind === 'barrel' ? null : shot == null ? naturalShot(gunKind) : shotId(shot));
 
 const clamp = (v, lo, hi) => (v < lo ? lo : v > hi ? hi : v);
 
@@ -105,24 +119,26 @@ export const toWorld = (ship, p) => {
  * @param {{ origin: number[], dir: number[], at?: number[] | null } | null} look - the camera's ray (null: lay for `range`); `at`
  *   the point on a ship it meets (the host's ray: her hull or her rig), laid for itself
  * @param {number} seaY - the sea's height
- * @param {{ range?: number, target?: number[], targetY?: number }} [opts] - with no look: a range to lay for, or a world
+ * @param {{ range?: number, target?: number[], targetY?: number, shot?: string | null }} [opts] - with no look: a range to lay for, or a world
  *   point to lay on (the AI's lead - its distance out from the guns, along the fire); `targetY` the height the lay
- *   meets at that range (the sea's, unless given - a captain laying his chain for a rig)
- * @returns {null | { side: string, gun: string, barrel: boolean, elevation: number, range: number, maxRange: number,
+ *   meets at that range (the sea's, unless given - a captain laying his chain for a rig); SHOT-KINDS: `shot` the battery's
+ *   load (null: its bore's own) - laid with that load's muzzle speed, and said on the solution (`shot`)
+ * @returns {null | { side: string, gun: string, barrel: boolean, shot: string | null, elevation: number, range: number, maxRange: number,
  *   dir: number[], muzzles: number[][], launches: { p0: number[], v0: number[] }[], landings: ({ t: number, point: number[] } | null)[],
  *   width: number, lookPoint: number[] | null }}
  */
-export function aimSolution(ship, side, look, seaY, { range = null, target = null, targetY = null } = {}) {
+export function aimSolution(ship, side, look, seaY, { range = null, target = null, targetY = null, shot = null } = {}) {
   const battery = batteryOf(ship.hull, side);
   if (!battery) return null;
-  const gun = GUNS[battery.gun];
+  const load = loadOf(battery.gun, shot);
+  const gun = shotGun(battery.gun, GUNS[battery.gun], load);
   const muzzles = battery.muzzles.map((m) => toWorld(ship, m));
   const local = SIDE_DIR[side];
   const dir = flatUnit(quatRotate(ship.rotation, local)) ?? [0, 0, 1];
   if (battery.gun === 'barrel') {
     // a barrel is dropped, not laid: it lands on the sea under the stern's muzzle
     const drops = muzzles.map((m) => [m[0] + dir[0] * 1.5, seaY, m[2] + dir[2] * 1.5]);
-    return { side, gun: battery.gun, barrel: true, elevation: 0, range: 1.5, maxRange: 1.5, dir, muzzles, launches: [], landings: drops.map((point) => ({ t: 0, point })), width: 1, lookPoint: null };
+    return { side, gun: battery.gun, barrel: true, shot: null, elevation: 0, range: 1.5, maxRange: 1.5, dir, muzzles, launches: [], landings: drops.map((point) => ({ t: 0, point })), width: 1, lookPoint: null };
   }
   // the battery's centre: where the range is measured from
   const c = muzzles.reduce((s, m) => [s[0] + m[0] / muzzles.length, s[1] + m[1] / muzzles.length, s[2] + m[2] / muzzles.length], [0, 0, 0]);
@@ -152,7 +168,7 @@ export function aimSolution(ship, side, look, seaY, { range = null, target = nul
   const reached = landings.filter(Boolean);
   const meanRange = reached.length ? reached.reduce((s, l) => s + Math.hypot(l.point[0] - c[0], l.point[2] - c[2]), 0) / reached.length : 0;
   return {
-    side, gun: battery.gun, barrel: false, elevation, range: meanRange, maxRange: far, dir, muzzles, launches, landings,
+    side, gun: battery.gun, barrel: false, shot: load, elevation, range: meanRange, maxRange: far, dir, muzzles, launches, landings,
     width: Math.max(2, 2 * meanRange * Math.tan(gun.yawSpread * NAVAL_DEG)), lookPoint,
   };
 }
@@ -163,35 +179,39 @@ export function aimSolution(ship, side, look, seaY, { range = null, target = nul
  * wait. `skill` (0..1) is a gun crew's: the scatter at (1.5 - skill) of the gun's own, so a poor crew throws wider and
  * a crack one tighter than the zone's half-width.
  * GALLEON-WEIGHT: each launch carries the `weight` of metal it throws (navalShips.js playerBatteryWeight - a player's
- * galleon's broadside), to its ball and its hit.
- * @returns {{ delay: number, p0: number[], v0: number[], gun: string, weight: number, index: number }[]}
+ * galleon's broadside), to its ball and its hit. SHOT-KINDS: and the solution's load (`shot` - its bore's own when the
+ * solution says none), flown with that load's speed and scatter.
+ * @returns {{ delay: number, p0: number[], v0: number[], gun: string, shot: string, weight: number, index: number }[]}
  */
 export function volleyLaunches(solution, seed, { skill = 0.5, carry = null, weight = 1 } = {}) {
   if (!solution || solution.barrel) return [];
   const w = Number.isFinite(weight) && weight > 0 ? weight : 1;
-  const gun = GUNS[solution.gun];
+  const shot = loadOf(solution.gun, solution.shot);
+  const gun = shotGun(solution.gun, GUNS[solution.gun], shot);
   const rand = volleyRandom(seed);
   const k = clamp(1.5 - skill, 0.4, 1.5);
   const c = carry ?? [0, 0, 0];
   return solution.muzzles.map((p0, index) => {
     const s = scatter(solution.dir, solution.elevation, gun.yawSpread * k, gun.pitchSpread * k, rand);
     const delay = index * RIPPLE_S;
-    return { delay, p0: [p0[0] + (c[0] ?? 0) * delay, p0[1] + (c[1] ?? 0) * delay, p0[2] + (c[2] ?? 0) * delay], v0: launchVelocity(s.dir, s.elevation, gun.speed, carry), gun: solution.gun, weight: w, index };
+    return { delay, p0: [p0[0] + (c[0] ?? 0) * delay, p0[1] + (c[1] ?? 0) * delay, p0[2] + (c[2] ?? 0) * delay], v0: launchVelocity(s.dir, s.elevation, gun.speed, carry), gun: solution.gun, shot, weight: w, index };
   });
 }
 
-/** A battery's reload, in seconds: the gun's own at a full crew, slower undermanned, slower still single-handed. */
-export function reloadSeconds(gunKind, crewShare, crewed) {
-  const g = GUNS[gunKind];
-  if (!g) return 0;
+/** A battery's reload, in seconds: the gun's own at a full crew, slower undermanned, slower still single-handed -
+ *  SHOT-KINDS: for its load (`shot`, null its bore's own). */
+export function reloadSeconds(gunKind, crewShare, crewed, shot = null) {
+  if (!GUNS[gunKind]) return 0;
   if (gunKind === 'barrel') return BARREL_DROP_S;
+  const g = shotGun(gunKind, GUNS[gunKind], loadOf(gunKind, shot));
   if (!crewed) return g.reload * RELOAD_SINGLEHANDED;
   return g.reload * (1 + RELOAD_UNDERMANNED * (1 - clamp(crewShare, 0, 1)));
 }
 
 /**
- * One ship's gun deck: each battery's clock, the barrels aboard, the brace. `step(dt)` runs the clocks; `ready`
- * asks; `fired` starts a battery's reload. Pure state the host and the AI share.
+ * One ship's gun deck: each battery's clock, the barrels aboard, the brace - SHOT-KINDS: and each load group's load
+ * (`load`, `setLoad`). `step(dt)` runs the clocks; `ready` asks; `fired` starts a battery's reload. Pure state the host
+ * and the AI share.
  * @param {number} hull
  * @param {{ crewed?: boolean, crewShare?: () => number, barrels?: number, reloadScale?: () => number }} [opts]
  */
@@ -200,6 +220,11 @@ export function createGunDeck(hull, { crewed = true, crewShare = () => 1, barrel
   /** @type {Record<string, number>} */ const length = { starboard: 1, port: 1, bow: 1, stern: 1 };
   /** @type {number} */ let barrelStock = barrels;
   let braced = false;
+  /** SHOT-KINDS: each load group's load - null its bores' own (shotKinds.js naturalShot). */
+  /** @type {Record<string, string | null>} */ const loads = { broadside: null, bow: null, stern: null };
+  const scaleNow = () => Math.max(0.5, Math.min(1.5, Number(reloadScale()) || 1));
+  /** The load a side fires: its group's, else its bore's own (null: no battery, or a barrel's). */
+  const loadAt = (side) => { const b = batteryOf(hull, side); return b ? loadOf(b.gun, loads[loadGroupOf(side)]) : null; };
   const deck = {
     hull,
     /** The seconds left on a battery (0: loaded). */
@@ -217,9 +242,33 @@ export function createGunDeck(hull, { crewed = true, crewShare = () => 1, barrel
       const b = batteryOf(hull, side);
       if (!b) return;
       // SHIP-CREW: a player's crew's spirits and standing order scale it (shipCrew.js reloadScaleOf), never a barrel's drop
-      const s = reloadSeconds(b.gun, crewShare(), crewed) * (b.gun === 'barrel' ? 1 : Math.max(0.5, Math.min(1.5, Number(reloadScale()) || 1)));
+      const s = reloadSeconds(b.gun, crewShare(), crewed, loadAt(side)) * (b.gun === 'barrel' ? 1 : scaleNow());
       clocks[side] = s; length[side] = s || 1;
       if (b.gun === 'barrel') barrelStock = Math.max(0, barrelStock - 1);
+    },
+    /** SHOT-KINDS: the load `side` fires (its group's, else its bore's own; null: no guns there, or the barrels). */
+    load: loadAt,
+    /**
+     * SHOT-KINDS: load `side`'s group with `shot` - every battery of it with guns (the barrels carry none). A battery
+     * standing loaded is drawn and loaded again (SHOT_SWITCH of the new load's reload); one reloading takes the new shot
+     * in, its clock scaled to the new load's. Its bores' own load is said as none (`loads` null). False: nothing changed.
+     */
+    setLoad(side, shot) {
+      const group = loadGroupOf(side);
+      const sides = group === 'broadside' ? ['starboard', 'port'] : [group];
+      const armed = sides.filter((x) => { const b = batteryOf(hull, x); return b && b.gun !== 'barrel'; });
+      if (!armed.length) return false;
+      const next = shotId(shot);
+      if (armed.every((x) => loadAt(x) === next)) return false;
+      for (const x of armed) {
+        const b = batteryOf(hull, x);
+        const was = reloadSeconds(b.gun, crewShare(), crewed, loadAt(x));
+        const now = reloadSeconds(b.gun, crewShare(), crewed, next);
+        if (clocks[x] > 0) { const k = now / (was || 1); clocks[x] *= k; length[x] *= k; }
+        else { const t = SHOT_SWITCH * now * scaleNow(); clocks[x] = t; length[x] = t || 1; }
+      }
+      loads[group] = armed.every((x) => naturalShot(batteryOf(hull, x).gun) === next) ? null : next;
+      return true;
     },
     /** The clocks run - but not while the crew holds on (the brace). */
     step(dt) { if (braced) return; for (const k of Object.keys(clocks)) if (clocks[k] > 0) clocks[k] = Math.max(0, clocks[k] - Math.max(0, dt)); },
@@ -227,12 +276,23 @@ export function createGunDeck(hull, { crewed = true, crewShare = () => 1, barrel
     set barrels(n) { barrelStock = Math.max(0, Math.min(99, n | 0)); },
     get braced() { return braced; },
     set braced(v) { braced = !!v; },
-    /** The deck as a save or the wire keeps it. */
-    snapshot: () => ({ clocks: { ...clocks }, barrels: barrelStock }),
+    /** The deck as a save or the wire keeps it - SHOT-KINDS: its loads, a group at its bores' own said as none. */
+    snapshot: () => ({ clocks: { ...clocks }, barrels: barrelStock, loads: { ...loads } }),
     restore(s) {
       if (!s || typeof s !== 'object') return;
       for (const k of Object.keys(clocks)) { const v = Number(s.clocks?.[k]); clocks[k] = Number.isFinite(v) && v > 0 ? Math.min(v, 60) : 0; }
       if (Number.isFinite(s.barrels)) deck.barrels = s.barrels;
+      if (s.loads && typeof s.loads === 'object') deck.restoreLoads(s.loads);
+    },
+    /** SHOT-KINDS: the loads as a save keeps them (`snapshot().loads`), the clocks untouched - a group's bores' own load
+     *  (or an unknown one) said as none, as `setLoad` says it. */
+    restoreLoads(l) {
+      for (const g of LOAD_GROUPS) {
+        const sides = g === 'broadside' ? ['starboard', 'port'] : [g];
+        const guns = sides.map((x) => batteryOf(hull, x)?.gun).filter((k) => k && k !== 'barrel');
+        const want = typeof l?.[g] === 'string' && guns.length ? shotId(l[g]) : null;
+        loads[g] = want && !guns.every((k) => naturalShot(k) === want) ? want : null;
+      }
     },
   };
   return deck;

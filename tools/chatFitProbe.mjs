@@ -8,14 +8,16 @@
 // ChatLog, the real CHAT_CSS over the real enhanced sheet) in Chromium
 // at a desktop and a phone-landscape viewport, with a roster of 24 long
 // names wearing titles and glyphs and a conversation whose authors wear
-// them too, and measures.
+// them too, and measures. (TITLE-C, 2026-10-12: a line draws its author's
+// glyphs and never the title - the authors here still wear one, so a
+// title drawn on a line would show.)
 //
 //     node tools/chatFitProbe.mjs
 import { chromium } from 'playwright';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ENHANCED_CSS, ENHANCED_TOKENS } from '../src/ui/enhancedStyle.js';
+import { ENHANCED_CSS, ENHANCED_TOKENS } from '../src/ui/enhanced/enhancedStyle.js';
 
 process.env.PLAYWRIGHT_BROWSERS_PATH ??= '/opt/pw-browsers';
 const ROOT = normalize(join(fileURLToPath(import.meta.url), '..', '..'));
@@ -91,7 +93,7 @@ for (const [W, H, label] of [[1280, 720, 'desktop'], [900, 420, 'phone']]) {
   check(`${label}: the list scrolls - more content than room`, m.listScroll > m.listClient + 20, `${m.listScroll} in ${m.listClient}`);
   check(`${label}: every roster row is ONE line`, m.rows.every((r) => r.h <= m.lineH + 1), `tallest ${Math.max(...m.rows.map((r) => r.h)).toFixed(1)} against a ${m.lineH}px line`);
   check(`${label}: a long name is cut with an ellipsis rather than folded`, m.rows.some((r) => r.cut), `${m.rows.filter((r) => r.cut).map((r) => r.name).join(', ')}`);
-  check(`${label}: the chat lines wear their authors' badges`, m.lines[0].title === 'Founder' && m.lines[0].glyphs === 1 && m.lines[1].title === null && m.lines[1].glyphs === 0 && m.lines[4].glyphs === 1, JSON.stringify(m.lines));
+  check(`${label}: the chat lines wear their authors' glyphs and no title (TITLE-C)`, m.lines.every((l) => l.title === null) && m.lines[0].glyphs === 1 && m.lines[1].glyphs === 0 && m.lines[4].glyphs === 1, JSON.stringify(m.lines));
   console.log('  shot:', shot);
   await ctx.close();
 }

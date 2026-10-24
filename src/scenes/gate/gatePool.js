@@ -1,0 +1,338 @@
+// @ts-check
+// WB2 (2026-09-25, Mac: "A gate model would be spawned with a timer that leads to a completely different area"):
+// THE GATE THE WORLD HOST STANDS - the pool on the runtime pools' shape (scenes/camps.js, scenes/horseCartPool.js):
+// the stone (world/gate/gateModel.js, uploaded once with its own art - world/gate/gateArt.js), the fire and the beacon
+// (render/gate/gatePass.js), its collider, its light, the eye's box and its names, the countdown over the screen, and
+// the door into the arena. Design: bible/11-Multiplayer/World-Bosses.md section 3.
+//
+// NOTHING HERE IS SAVED OR SENT. Where and when a gate stands is the clock's (net/gate/gateLaw.js) over the map files
+// (systems/gate/gateSite.js) - the omen hands it over (systems/gate/gateOmen.js standing()), and this pool stands the stone
+// where that says, every frame, in THIS scene's frame: the pixel's translation plus the spot (the streaming host's
+// own sum), so a floating-origin recentre moves the gate with the world and the collider is stood again when its
+// matrix moves. The ground is the built pixel's (the host's `heightAt`). GATE-SEEN (2026-09-26, Mac: "Somepeople cant
+// see the gate spawn" - "No oblivion portal to enter"): a gate on a pixel NOT yet built stood nowhere, the beacon too -
+// and the streamed grid is the Land View Distance's, so from the town the omen names (2 to 4 pixels off) a player on a
+// short view saw no gate at all, and "the gate is found by looking up" was false for them. Such a gate stands its
+// BEACON alone now, on the ground the pixel will be built from (the host's `groundAt` - the terrain sampler's own
+// kernel): no stone, no collider, no light, no door, until the pixel is built and the gate stands whole.
+//
+// ITS LIFE, off the phase: RISING (it climbs out of the ground over GATE_RISE_MS, the fire and the beacon fading in),
+// SEALED (the fire an ember, the countdown to the opening), OPEN (the fire blazing, walked through or activated to
+// enter), CLOSED (sealed again after 22:00, no way in), COLLAPSING (the kill or the wrath: it sinks over
+// GATE_COLLAPSE_MS and the beacon goes out). The collider stands only while the gate stands risen.
+//
+// THE DOOR. Activate the fire, or walk through it while it is open: `enter(gate)` - the host's arena door (WB3).
+// A gate that is not open says why; a relay that cannot hold a gate's arena says "not yet" (`ready()` false - the
+// wire's relaySupportsGate, WB3), and nothing else happens.
+//
+// EG-F (2026-10-12, the Elite Gates arc; bible/11-Multiplayer/Elite-Gates.md section 6.3): AND THE ELITE BREACHES'
+// ARCHES, which are this stone at 0.62 (scenes/eliteGates/egArch.js, the pool that owns them, handed in as `arches`): stood in this
+// pool's frame, their stones drawn in its world pass, their fires and gold beacons in its pass beside the gate's (each
+// with its own per-draw values - render/gate/gatePass.js gatePassValues; the gate's record names none and draws as it drew),
+// their lights, eye boxes, plaques and presses answered beside the gate's. The host's frame already runs this pool's
+// every door, so the arches need no statement of their own there (PERF-V8).
+//
+// Not a DFU member. Ledger A (WB).
+import { buildGateModel, gateArchProfile, insideGateStone, GATE_ARCHIVE, GATE_HEIGHT, GATE_HALF_W, PORTAL_CENTRE_Y, ARCH_Y0, ARCH_Y1, ARCH_PROFILE_N } from '../../world/gate/gateModel.js';
+import { gateArt } from '../../world/gate/gateArt.js';
+import { GatePassRenderer, GATE_PASS_PROGRAMS, gateSpinRate } from '../../render/gate/gatePass.js';
+import { compiledPass } from '../../render/glProgram.js';   // SHADER-STALL: the fire built once its programs are done
+import { gateSceneXZ } from '../../systems/gate/gateOmen.js';
+import { gateYaw, gatePhase, gateCountdown, countdownText, countdownWords, gateModsOf, gatePortentsOf, gateBossOf, GATE_RISE_MS, GATE_COLLAPSE_MS } from '../../net/gate/gateLaw.js';
+import { marksCardModel } from '../../ui/gate/gateMarksView.js';   // WB9a: tonight's marks, over the screen before the gate is entered
+import { trs } from '../../world/mat4.js';
+import { RAY_DISTANCE } from '../../player/activate.js';
+import { CAPSULE_RADIUS } from '../../player/motor.js';
+import { adoptLight } from '../../render/lightId.js';   // LIGHT-ID: the gate's fire named by its gate
+
+/** The collider's bucket for the gate's stone. */
+export const GATE_BUCKET = 'wb:gate';
+/** The eye's reach to the fire (the activation's own), and the ray's length. */
+export const GATE_REACH = 4;
+/** The countdown stands at the top of the screen within this many metres of the gate. */
+export const GATE_BANNER_M = 60;
+/** The fire's light: over the threshold, and how far it reaches. */
+export const GATE_LIGHT_UP = PORTAL_CENTRE_Y;
+export const GATE_LIGHT_RANGE = 24;
+/** How fast the fire eases between sealed and open (per second). */
+export const GATE_OPEN_EASE = 0.6;
+/** AUDIT WB C7: the one empty answer for no gate - the host asks for the lights and the targets every frame. */
+const NO_GATE = Object.freeze([]);
+/** AUDIT GATE-FBX E3: how far under the ground the stone's crown waits before it rises, metres - its lintel's flat top
+ *  sank to the ground's own plane and shimmered through it for the rise's first second, and on a slope across the arch
+ *  the lintel's downhill end stood out of the ground before the rise began (the ground at its ends is asked too). */
+export const RISE_SLACK_M = 0.3;
+/** A refusal said again no sooner than this (a player pressing at a sealed gate hears it once a while). */
+export const GATE_SAY_MS = 3000;
+/** How close to the fire's plane a step through it counts (metres either side). */
+export const GATE_STEP_M = 1.5;
+
+/** The words a gate answers with. */
+export const GATE_TEXT = Object.freeze({
+  name: 'Dagon\'s Breach',   // WB12a (Mac: "Dagon's Breach"): the event's name - the arch it wears is still "the gate"
+  opensIn: (left) => `The gate opens in ${left}.`,   // WB13b
+  sealed: 'The gate has sealed.',
+  collapsesIn: (left) => `The gate has sealed. It collapses in ${left}.`,   // GATE-COLLAPSE: the sealed hours say when they end
+  notYet: 'The gate will not open to you yet.',
+});
+
+/**
+ * The gate's place in the scene now: its foot (the ground under the spot, the rise already in y), its turn, how open
+ * its fire is and how far it has faded in - or null when it stands nowhere. Pure.
+ * @param {{day:number, px:number, py:number, spot:number[], phase:string, t:{omenAt:number, riseAt:number, openAt:number, sealAt:number, wrathAt:number}, fellAt:number|null}} g the omen's `standing()`
+ * @param {{pixelTranslation:(px:number, py:number)=>number[], heightAt:(x:number, z:number)=>number, now:number, groundAt?:((px:number, py:number, x:number, z:number)=>number)|null}} at
+ */
+export function gatePlacement(g, { pixelTranslation, heightAt, now, groundAt = null }) {
+  if (!g) return null;
+  const [x, z] = gateSceneXZ(g, pixelTranslation(g.px, g.py));
+  let ground = heightAt(x, z);
+  // GATE-SEEN: a pixel not built yet - the beacon alone, on the ground it will be built from
+  const coarse = !Number.isFinite(ground);
+  if (coarse) ground = groundAt ? groundAt(g.px, g.py, x, z) : NaN;
+  if (!Number.isFinite(ground)) return null;
+  const phase = gatePhase(g.t, now, g.fellAt);
+  let rise = 1, fade = 1;
+  if (phase === 'rising') { rise = Math.max(0, Math.min(1, (now - g.t.riseAt) / GATE_RISE_MS)); fade = rise; }
+  if (phase === 'collapsing') {
+    const end = Number.isFinite(g.fellAt) ? Math.min(/** @type {number} */ (g.fellAt), g.t.wrathAt) : g.t.wrathAt;
+    const sink = Math.max(0, Math.min(1, (now - end) / GATE_COLLAPSE_MS));
+    rise = 1 - sink; fade = 1 - sink;
+  }
+  if (phase === 'gone' || phase === 'quiet' || phase === 'omen') return null;
+  const eased = rise * rise * (3 - 2 * rise);   // it heaves out of the ground and settles, not at a constant crawl
+  const yaw = gateYaw(g.day);
+  // AUDIT GATE-FBX E3: sunk whole before it rises - its crown under the ground at the middle, and at both its ends
+  let sunk = GATE_HEIGHT + RISE_SLACK_M;
+  if (rise < 1 && !coarse) for (const e of [-GATE_HALF_W, GATE_HALF_W]) {
+    const h = heightAt(x + Math.cos(yaw) * e, z - Math.sin(yaw) * e);
+    if (Number.isFinite(h)) sunk = Math.max(sunk, GATE_HEIGHT + RISE_SLACK_M + (ground - h));
+  }
+  return { day: g.day, phase, origin: [x, ground - (1 - eased) * sunk, z], ground, yaw, fade, risen: rise >= 1, coarse };
+}
+
+/** The half-width of the fire's opening at a height over the gate's foot (the arch's own profile, as the pass reads it). */
+export function openingHalfWidth(profile, y) {
+  if (!(y >= ARCH_Y0 && y <= ARCH_Y1)) return 0;
+  const t = ((y - ARCH_Y0) / (ARCH_Y1 - ARCH_Y0)) * (ARCH_PROFILE_N - 1);
+  const i = Math.min(ARCH_PROFILE_N - 1, Math.floor(t)), j = Math.min(ARCH_PROFILE_N - 1, i + 1);
+  return profile[i] + (profile[j] - profile[i]) * (t - i);
+}
+
+/** The fire's slab as a box in the scene: its widest half-width, the arch's height, a metre deep - turned with the
+ *  gate and boxed again (the eight corners' bounds). */
+export function fireBox(place, profile, halfW = null) {
+  const w = halfW ?? Math.max(...profile), c = Math.cos(place.yaw), s = Math.sin(place.yaw), o = place.origin;
+  const min = [Infinity, o[1] + ARCH_Y0, Infinity], max = [-Infinity, o[1] + ARCH_Y1, -Infinity];
+  for (const lx of [-w, w]) for (const lz of [-0.5, 0.5]) {
+    const x = o[0] + c * lx + s * lz, z = o[2] - s * lx + c * lz;
+    min[0] = Math.min(min[0], x); max[0] = Math.max(max[0], x); min[2] = Math.min(min[2], z); max[2] = Math.max(max[2], z);
+  }
+  return { min, max };
+}
+
+/** AUDIT WBX W1 (2026-09-26, Mac: "Do a comprehensive audit on everything so far"): A BODY SEALED IN THE STONE - the
+ *  stone rises for GATE_RISE_MS with no collider, and stands whole on it in one frame: a capsule inside the stone's shell
+ *  was held there by the shell's own push, out of reach of the fire, and /unstuck answers nothing outdoors. AUDIT GATE-FBX
+ *  E1/E2: asked of the stone itself now (world/gate/gateModel.js insideGateStone, its closed pieces) at the capsule's axis -
+ *  its foot's sphere, its middle and its head's sphere (player/motor.js: 1.8 m, CAPSULE_RADIUS) - as high as the stone
+ *  stands. The ellipse WB2's horns took, refitted to Mac's feet, held 2.8 m and no higher: a body on a hillside in a
+ *  pillar, or held up in one as it rose, was sealed in until the collapse; and it took the threshold's free edge and
+ *  the ground before a foot, and set those players down before the gate. */
+export const SEALED_AT = Object.freeze([CAPSULE_RADIUS, 0.9, 1.8 - CAPSULE_RADIUS]);
+/** Whether a body with its feet at `p` (the scene's frame) is sealed in the stone of the gate at `place`. Pure. */
+export function inGateRoot(place, p) {
+  const [lx, ly, lz] = gateLocal(place, p);
+  return SEALED_AT.some((h) => insideGateStone([lx, ly + h, lz]));
+}
+
+/** A point in the gate's own frame (x across the arch, y up from its foot, z through the fire) - trs's R_y undone. */
+export function gateLocal(place, p) {
+  const dx = p[0] - place.origin[0], dz = p[2] - place.origin[2];
+  const c = Math.cos(place.yaw), s = Math.sin(place.yaw);
+  return [c * dx - s * dz, p[1] - place.origin[1], s * dx + c * dz];
+}
+
+/**
+ * @param {{
+ *   renderer?: any, gl?: WebGL2RenderingContext|null, collider?: () => any,
+ *   standing: () => any, pixelTranslation: (px:number, py:number) => number[], heightAt: (x:number, z:number) => number,
+ *   now: () => number, feet?: () => (number[]|null), say?: (text: string) => void, banner?: (text: string|null) => void,
+ *   ready?: () => boolean, enter?: (gate: any) => void, landBefore?: (gate: any) => boolean,
+ *   groundAt?: ((px:number, py:number, x:number, z:number) => number)|null,
+ *   marks?: (card: any) => void, arches?: any,
+ * }} deps
+ *   WB9a: `marks` is handed the marks' card while the banner stands (ui/gate/gateMarksView.js marksCardModel - the day's
+ *   marks, the ones the relay's fight is born under), null otherwise.
+ */
+export function createGatePool({
+  renderer = null, gl = null, collider = () => null, standing, pixelTranslation, heightAt, now,
+  feet = () => null, say = () => {}, banner = () => {}, ready = () => false, enter = () => {}, groundAt = null,
+  landBefore = () => false, marks = () => {}, arches = null,
+}) {
+  const model = buildGateModel();
+  /** AUDIT WBX W6: the fire's box, made when the gate's place moves - the hover asked for a new one every frame */
+  let box = null, boxAt = null;
+  const profile = gateArchProfile(model);
+  let mesh = null, meshTried = false;
+  let pass = null;
+  // SHADER-STALL (render/glProgram.js compiledPass): the fire built the first frame a gate stands AND its programs are done
+  // - the beacon a frame or two later, never a frame frozen on their compile
+  const firePass = compiledPass(gl, GATE_PASS_PROGRAMS, () => new GatePassRenderer(gl, profile), (e) => console.warn('[gate] the fire would not build', e?.message ?? e));
+  let place = null, g = null;
+  let open = 0;
+  /** AUDIT WB C6: the vortex's turn, accumulated at the open's rate as it eases (a turn in [0, 1)) */
+  let spin = 0;
+  let colliderAt = null;   // the matrix the collider's stone stands at, or null
+  let lastLz = null;
+  let saidAt = -Infinity;
+
+  /** AUDIT WB C7: the stone's matrix, made again only when its place moves (the draw and the collider ask every frame) */
+  let _mat = null, _matKey = '';
+  const matrixOf = (p) => { const k = `${p.origin[0]},${p.origin[1]},${p.origin[2]},${p.yaw}`; if (k !== _matKey) { _matKey = k; _mat = trs(p.origin[0], p.origin[1], p.origin[2], 0, (p.yaw * 180) / Math.PI, 0); } return _mat; };
+  /** AUDIT WB C7: the fire's half-width, measured once (the box asks every frame) */
+  const fireHalfW = Math.max(...profile);
+  const sameMatrix = (a, b) => { if (!a || !b) return false; for (let i = 0; i < 16; i++) if (Math.abs(a[i] - b[i]) >= 5e-4) return false; return true; };
+
+  function ensureMesh() {
+    if (mesh || meshTried || !renderer?.createMesh) return;
+    meshTried = true;
+    try {
+      for (const [rec, art] of gateArt()) {
+        renderer.uploadTexture?.(GATE_ARCHIVE, rec, art.albedo);
+        renderer.uploadEmissionTexture?.(GATE_ARCHIVE, rec, art.emission, { white: true });   // AUDIT GATE-FBX G4: its fire its own colour, never the window's
+      }
+      mesh = renderer.createMesh(model);
+    } catch (e) { console.warn('[gate] the stone would not build', e?.message ?? e); mesh = null; }
+  }
+  function ensurePass() { pass ??= firePass(); }
+  function standCollider() {
+    const col = collider();
+    if (!col?.addMesh) return;
+    const want = place?.risen && !place.coarse ? matrixOf(place) : null;   // GATE-SEEN: a beacon alone stands nothing to walk into
+    if (want ? sameMatrix(want, colliderAt) : colliderAt === null) return;
+    col.removeBucket?.(GATE_BUCKET);
+    colliderAt = null;
+    if (!want) return;
+    col.addMesh(GATE_BUCKET, model.positions, model.indices, want);
+    colliderAt = want;
+    // AUDIT WBX W1: the stone stood whole under a player in a pillar's root - they are set down before the gate, not left
+    // inside it (the host's landing, the way home's own). Asked at every stand: its first, and a stand where it moved
+    // (AUDIT WBX2 M7: a `first` read after the clear was always true - this is what it did, now said)
+    const f = feet();
+    if (f && g && inGateRoot(place, f)) landBefore(g);
+  }
+  /** Say `text`, but not again inside GATE_SAY_MS. */
+  function refuse(text) {
+    const t = now();
+    if (t - saidAt < GATE_SAY_MS) return;
+    saidAt = t;
+    say(text);
+  }
+  /** The door: open and a relay that holds arenas, the host's; else the reason, once a while. */
+  function tryEnter() {
+    if (!place || !g || place.coarse) return false;
+    if (place.phase === 'open') {
+      if (!ready()) { refuse(GATE_TEXT.notYet); return false; }
+      enter({ day: g.day, near: g.near, origin: place.origin, yaw: place.yaw, px: g.px, py: g.py, spot: g.spot });
+      return true;
+    }
+    const cd = gateCountdown(g.t, now(), place.phase);
+    refuse(cd?.to === 'open' ? GATE_TEXT.opensIn(countdownText(cd.ms)) : cd?.to === 'collapse' ? GATE_TEXT.collapsesIn(countdownText(cd.ms)) : GATE_TEXT.sealed);
+    return false;
+  }
+
+  return {
+    /** One frame: where the gate stands now, its fire's ease, its collider, the step through it, the countdown. */
+    frame(dt = 0) {
+      try { arches?.frame?.(dt); } catch (e) { console.warn('[eg] arches', e?.message ?? e); }   // EG-F: the Elite Breaches' arches, stood beside the gate
+      if (arches?.stands?.()) ensurePass();
+      g = standing?.() ?? null;
+      place = g ? gatePlacement(g, { pixelTranslation, heightAt, now: now(), groundAt }) : null;
+      const target = place?.phase === 'open' ? 1 : 0;
+      open += Math.sign(target - open) * Math.min(Math.abs(target - open), GATE_OPEN_EASE * Math.max(0, dt));
+      spin = (spin + gateSpinRate(open) * Math.max(0, dt)) % 1;
+      if (place) { ensureMesh(); ensurePass(); }
+      standCollider();
+      // the step through the fire: the feet crossing its plane inside the opening, while it stands open
+      const f = place && !place.coarse ? feet() : null;   // GATE-SEEN: no step, no countdown at a beacon alone
+      if (f && place.phase === 'open') {
+        const [lx, ly, lz] = gateLocal(place, f);
+        const inside = Math.abs(lx) < openingHalfWidth(profile, Math.max(ARCH_Y0 + 0.05, ly + 0.9)) && Math.abs(lz) < GATE_STEP_M;
+        if (inside && lastLz !== null && Math.sign(lz) !== Math.sign(lastLz) && lz !== 0) tryEnter();
+        lastLz = inside ? lz : null;
+      } else lastLz = null;
+      // the countdown over the screen, near the gate
+      if (place && f && Math.hypot(f[0] - place.origin[0], f[2] - place.origin[2]) <= GATE_BANNER_M) {
+        const cd = gateCountdown(g.t, now(), place.phase);
+        banner(cd ? `${GATE_TEXT.name} - ${cd.to === 'collapse' ? 'sealed, ' : ''}${countdownWords(cd)}` : null);   // GATE-COLLAPSE: the sealed hours count down to the collapse
+        // WB9a (Mac: "Allow people to see the modifers/trial as a popup before it starts"): TONIGHT'S MARKS beside the
+        // countdown, while it stands - the day's draw (net/gate/gateLaw.js gateModsOf), which is what the relay's fight is
+        // born under; a gate collapsing (its master fallen, or the Wrath) has none to show
+        marks(cd && place.phase !== 'collapsing' ? marksCardModel(gateModsOf(g.day), gateBossOf(g.day), { mode: 'gate', pt: gatePortentsOf(g.day) }) : null);
+      } else { banner(null); marks(null); }
+      return place;
+    },
+    /** The stone, in the host's world pass. */
+    draw(r = renderer, texRemap = null) {
+      const n = arches?.draw?.(r, texRemap) ?? 0;   // EG-F: the arches' stones
+      if (!place || place.coarse || !mesh || !r?.drawMesh) return n;
+      r.drawMesh(mesh, matrixOf(place), texRemap);
+      return 1 + n;
+    },
+    /** AUDIT WB C7: whether a gate stands to be drawn - the host builds the pass's arguments only then. EG-F: or an arch. */
+    stands: () => !!pass && (!!place || !!arches?.stands?.()),
+    /** The fire and the beacon: one foreign pass, after the world's (the duel wall's seat). EG-F: the gate's record first,
+     *  as it always was, then each arch's. */
+    drawPass(proj, view, eye, seconds, fog = null) {
+      if (!pass) return 0;
+      const list = place ? [{ origin: place.origin, yaw: place.yaw, open, fade: place.fade, spin, beaconOnly: !!place.coarse }] : [];
+      for (const d of arches?.passDraws?.() ?? NO_GATE) list.push(d);
+      if (!list.length) return 0;
+      pass.draw(list, proj, view, eye, seconds, fog);
+      return pass.drawn;
+    },
+    /** The fire's light over the threshold, for the host's list. EG-F: and each arch's. */
+    lights() {
+      const al = arches?.lights?.() ?? NO_GATE;
+      if (!place || place.coarse || place.fade <= 0) return al.length ? al : NO_GATE;
+      const gl1 = adoptLight({ x: place.origin[0], y: place.origin[1] + GATE_LIGHT_UP, z: place.origin[2], range: GATE_LIGHT_RANGE * place.fade * (0.5 + 0.5 * open) }, place);   // LIGHT-ID: the gate's fire, frame to frame
+      return al.length ? [gl1, ...al] : [gl1];
+    },
+    /** The eye's box: the FIRE, not the stone - a player standing in the threshold is inside the gate's own bounds, and a
+     *  box they stand in would win every press they made there. The opening's slab, turned with the gate. */
+    targets() {
+      const at = arches?.targets?.() ?? NO_GATE;   // EG-F: each arch's fire
+      if (!place || !place.risen || place.coarse) return at.length ? at : NO_GATE;
+      const o = place.origin;
+      if (!box || !boxAt || boxAt[0] !== o[0] || boxAt[1] !== o[1] || boxAt[2] !== o[2] || boxAt[3] !== place.yaw || boxAt[4] !== place.day) {
+        boxAt = [o[0], o[1], o[2], place.yaw, place.day];
+        box = [{ key: `gate:${place.day}`, aabb: fireBox(place, profile, fireHalfW), distance: RAY_DISTANCE, reach: GATE_REACH, noSurface: true }];
+      }
+      return at.length ? [...box, ...at] : box;
+    },
+    /** WORLD-HOVER: the gate's name, and its countdown under it. SET7: a RECORD, `{ title, subs }` - the ladder's shape
+     *  (systems/worldHover.js composeNamer takes the first answer with a `title`): the string this answered was no answer
+     *  at all, and the plaque never named the gate. */
+    hoverName(key) {
+      if (typeof key === 'string' && key.startsWith('egarch:')) return arches?.hoverName?.(key) ?? null;   // EG-F: an arch's plaque
+      if (typeof key !== 'string' || !key.startsWith('gate:') || !place || !g) return null;
+      const cd = gateCountdown(g.t, now(), place.phase);
+      const words = countdownWords(cd);
+      return { title: GATE_TEXT.name, subs: words ? [...(cd.to === 'collapse' ? ['Sealed'] : []), words[0].toUpperCase() + words.slice(1)] : [] };   // GATE-COLLAPSE: sealed, and when it goes
+    },
+    /** A press on the gate. */
+    activate(key) { if (typeof key === 'string' && key.startsWith('egarch:')) return !!arches?.activate?.(key); return typeof key === 'string' && key.startsWith('gate:') ? tryEnter() : false; },   // EG-F: an arch's door is its pool's
+    /** The pool's state, for the tests and the probes. */
+    state: () => ({ place, open, collider: !!colliderAt, mesh: !!mesh, pass: !!pass }),
+    /** SET7 / AUDIT SET W5: where the gate stands this frame (gatePlacement's record), for the Broker who stands by it -
+     *  read every frame, so the record itself and no state object around it. */
+    place: () => place,
+    /** A transition takes the stone's collider down (the next frame stands it again where it belongs). */
+    destroyAll() {
+      collider()?.removeBucket?.(GATE_BUCKET);
+      arches?.downColliders?.();   // EG-F: and the arches' stones (stood again where they belong, next frame)
+      colliderAt = null; place = null; lastLz = null;
+      banner(null);
+    },
+  };
+}

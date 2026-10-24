@@ -1,8 +1,9 @@
-// The Dwarven Thunderlock's numbers, and NOTHING ELSE - no imports at
-// all, on purpose.
+// The port's own guns' numbers - the Dwarven Thunderlock's, and since
+// PISTOLET (2026-10-21) the Dwarven Pistolet's - and NOTHING ELSE: no
+// imports at all, on purpose.
 //
 // systems/thunderlock.js is the weapon's home, but it reaches
-// systems/itemTemplates.js to register its rows, and that file imports
+// systems/item/itemTemplates.js to register its rows, and that file imports
 // characters/weapons.js for the condition ladder. So a weapons.js that
 // wanted the indices from the home would close a cycle
 // (weapons -> thunderlock -> itemTemplates -> weapons) and leave one
@@ -23,6 +24,19 @@ export const PELLET_TEMPLATE = 561;
 export const THUNDERLOCK_ARCHIVE = 560;
 export const PELLET_ARCHIVE = 561;
 
+/** PISTOLET (2026-10-21, the owner: "a dwarven flintlock style pistol" that "can also be duel wielded", and "The gun
+ *  should use the same ammo the thunderlock uses"; named the Dwarven Pistolet). The second gun: the next index past the
+ *  Thunderlock's pair, its art archive the same number. It spends the Pellet - no ammunition of its own. */
+export const PISTOLET_TEMPLATE = 562;
+export const PISTOLET_ARCHIVE = 562;
+/** Its damage span, CalculateWeaponMin/MaxDamage's shape - here, ONCE, because characters/weapons.js answers it and
+ *  systems/pistolet.js publishes it, and two literals would drift (Home.md, ONE DFU MEMBER, ONE EXPORT). The owner's
+ *  pick: 4-15 against the Thunderlock's 7-26 - one-handed, so a pair is two of them (bible/05-Combat/Dwarven-Pistolet.md). */
+export const PISTOLET_SPAN = Object.freeze({ min: 4, max: 15 });
+
+/** Is this item one of the port's own guns? The one question every reader that is not about ONE of them asks. */
+export const isGunTemplate = (templateIndex) => templateIndex === THUNDERLOCK_TEMPLATE || templateIndex === PISTOLET_TEMPLATE;
+
 /**
  * THE AMMUNITION LINK: what does this weapon spend?
  *
@@ -34,7 +48,7 @@ export const PELLET_ARCHIVE = 561;
  * (Arrow, 131) stays with the bow.
  */
 export const ammoTemplateFor = (item) =>
-  (item?.templateIndex === THUNDERLOCK_TEMPLATE ? PELLET_TEMPLATE : null);
+  (isGunTemplate(item?.templateIndex) ? PELLET_TEMPLATE : null);   // PISTOLET: both guns eat the Pellet
 
 /**
  * WHAT COMES OUT OF THE BARREL.
@@ -70,7 +84,7 @@ export const ORB_RECORD = 0;
 /** Does this weapon's shot fly as an orb? The archive, or null for
  *  every weapon whose shot is a shaft - which is all of DFU's. */
 export const orbArchiveFor = (item) =>
-  (item?.templateIndex === THUNDERLOCK_TEMPLATE ? ORB_ARCHIVE : null);
+  (isGunTemplate(item?.templateIndex) ? ORB_ARCHIVE : null);   // PISTOLET: the Pellet flies as the same orb from either gun
 
 /**
  * THE ORB'S OWN COLOUR, SAMPLED RATHER THAN NAMED.
@@ -90,7 +104,7 @@ export const orbArchiveFor = (item) =>
  * existed - so a shot fired on the frame the texture is still loading
  * looks exactly like the port did yesterday rather than like nothing.
  *
- * Here on the leaf because BOTH askers are: combat/weaponRig.js paints
+ * Here on the leaf because BOTH askers are: combat/weapon/weaponRig.js paints
  * the flash, systems/thunderlock.js answers the light, and
  * combat/arrowFlight.js is what sees the texture. A parked value and a
  * pure reducer add no imports, which is this file's whole rule.

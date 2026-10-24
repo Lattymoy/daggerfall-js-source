@@ -1,0 +1,503 @@
+[
+  {
+    "name": "AEOW-C1-1-bay-through-door",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "  const raw = Object.prototype.hasOwnProperty.call(woods, '_bytes') || isValidMapPixel(mapPixelX, mapPixelY);",
+    "new": "  const raw = Object.prototype.hasOwnProperty.call(woods, '_bytes');",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "A composed reader's Bay pixels asked through the sea's door again, not off the bytes."
+  },
+  {
+    "name": "AEOW-C1-2-bay-adopt-unbounded",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "    if (last !== null) this._keep((last % this.frame.w) + this.frame.x0, Math.floor(last / this.frame.w) + this.frame.y0);",
+    "new": "",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "The main thread's adopted planes grow for the session, the Bay's and the Eltheric's."
+  },
+  {
+    "name": "AEOW-C1-2-keep-at-max",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "    if (this._caches().some((c) => c.size > PLANE_KEEP_MAX)) this.evictOutside(px, py, PLANE_KEEP_RADIUS);",
+    "new": "    if (this._caches().some((c) => c.size >= PLANE_KEEP_MAX)) this.evictOutside(px, py, PLANE_KEEP_RADIUS);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "The planes let go at the bound, not past it."
+  },
+  {
+    "name": "AEOW-C1-2-keep-all-gone",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "    if (this._caches().some((c) => c.size > PLANE_KEEP_MAX)) this.evictOutside(px, py, PLANE_KEEP_RADIUS);",
+    "new": "    if (this._caches().some((c) => c.size > PLANE_KEEP_MAX)) this.evictOutside(px, py, -1);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "Past the bound every plane let go, the near ones too - each built again."
+  },
+  {
+    "name": "AEOW-C1-2-evict-frame-x0",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "        const x = (i % w) + x0, y = Math.floor(i / w) + y0;",
+    "new": "        const x = (i % w), y = Math.floor(i / w) + y0;",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "An eviction reads a plane's pixel without the frame's west edge: the Eltheric's near planes let go."
+  },
+  {
+    "name": "AEOW-C1-2-evict-frame-y0",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "        const x = (i % w) + x0, y = Math.floor(i / w) + y0;",
+    "new": "        const x = (i % w) + x0, y = Math.floor(i / w);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "An eviction reads a plane's pixel without the frame's north edge."
+  },
+  {
+    "name": "AEOW-C1-2-prepare-unbounded",
+    "file": "src/world/etherWatersBake.js",
+    "old": "    this._keep(px, py);\n    super.prepare(px, py);",
+    "new": "    super.prepare(px, py);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "The Eltheric's planes kept for ever on the thread that floods them."
+  },
+  {
+    "name": "AEOW-C1-2-classes-kept",
+    "file": "src/world/etherWatersBake.js",
+    "old": "  _caches() { return [this._fine, this._full, this._dist, this._edge, this._sea, this._cls]; }",
+    "new": "  _caches() { return [this._fine, this._full, this._dist, this._edge, this._sea]; }",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "The pixel classes never let go with the planes."
+  },
+  {
+    "name": "AEOW-C1-3-ether-holds-all",
+    "file": "src/world/etherWatersBake.js",
+    "old": "    for (const [x, y] of [[px, py], [px - 1, py], [px + 1, py], [px, py - 1], [px, py + 1]]) if (this.inFrame(x, y) && !this._sea.has(this._index(x, y))) return false;",
+    "new": "",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "Every Eltheric pixel said held: the dry check floods a fresh cell on the main thread."
+  },
+  {
+    "name": "AEOW-C1-3-ether-holds-own",
+    "file": "src/world/etherWatersBake.js",
+    "old": "    for (const [x, y] of [[px, py], [px - 1, py], [px + 1, py], [px, py - 1], [px, py + 1]]) if (this.inFrame(x, y) && !this._sea.has(this._index(x, y))) return false;",
+    "new": "    for (const [x, y] of [[px, py]]) if (this.inFrame(x, y) && !this._sea.has(this._index(x, y))) return false;",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "The pixel's own bits read, its neighbours' (the dry check reads them too) not."
+  },
+  {
+    "name": "AEOW-C1-3-host-unasked",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "    if (!bake || bake.holdsSea?.(pixel.px, pixel.py) === false || bake.mapPixelOrCardinalNeighborHasWaterCells(pixel.px, pixel.py)) return false;",
+    "new": "    if (!bake || bake.mapPixelOrCardinalNeighborHasWaterCells(pixel.px, pixel.py)) return false;",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "The host's dry check floods a fresh Eltheric cell on the main thread before the trip."
+  },
+  {
+    "name": "AEOW-C1-3-pair-bay",
+    "file": "src/world/etherWatersBake.js",
+    "old": "  holdsSea(px, py) { return this.of(px, py).holdsSea(px, py); }",
+    "new": "  holdsSea(px, py) { return this.bay.holdsSea(px, py); }",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "The pair asks the Bay whether the Eltheric's bits are held."
+  },
+  {
+    "name": "AEOW-C2-1-sites-anywhere",
+    "file": "src/net/motherlodeLaw.js",
+    "old": ".filter((c) => c && watchPixelOk(c.x, c.y) && motherlodeGround(c.climate))",
+    "new": ".filter((c) => c && motherlodeGround(c.climate))",
+    "tests": [
+      "test/systems/audit_etherow.test.js",
+      "test/net/prof2b_motherlode.test.js"
+    ],
+    "note": "A Motherlode sited on an isle past the Veil, where no Watch receipt is minted: nobody can strike it."
+  },
+  {
+    "name": "AEOW-C2-1-watch-world",
+    "file": "src/net/watchReceipt.js",
+    "old": "export const watchPixelOk = (x, y) => Number.isSafeInteger(x) && Number.isSafeInteger(y) && x >= 0 && x < 1000 && y >= 0 && y < 500;",
+    "new": "export const watchPixelOk = (x, y) => Number.isSafeInteger(x) && Number.isSafeInteger(y) && x < 1000 && y < 500;",
+    "tests": [
+      "test/systems/audit_etherow.test.js"
+    ],
+    "note": "The Watch's ground read as the world's: an isle's pixel a site and a receipt."
+  },
+  {
+    "name": "AEOW-C2-2-key-finds-alone",
+    "file": "src/scenes/world.js",
+    "old": "  const tvKnownGen = () => `${discoveryGeneration()}:${captainLedger.chartedCount()}`;",
+    "new": "  const tvKnownGen = () => discoveryGeneration();",
+    "tests": [
+      "test/systems/audit_etherow.test.js"
+    ],
+    "note": "An isle charted on the pixel the captain stands on is no plate until they move."
+  },
+  {
+    "name": "AEOW-C2-2-count-unread",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "    chartedCount: () => ether.charted.length,",
+    "new": "    chartedCount: () => 0,",
+    "tests": [
+      "test/systems/audit_etherow.test.js"
+    ],
+    "note": "The charts' count never moves: the lists never read again for a chart."
+  },
+  {
+    "name": "AEOW-C2-3-board-across",
+    "file": "src/scenes/world.js",
+    "old": "    if (!playerEntity.boardShipPosition && veilRefused(t.go)) return;",
+    "new": "    if (!playerEntity.boardShipPosition && veilRefused(null) && false) return;",
+    "tests": [
+      "test/systems/audit_etherow.test.js"
+    ],
+    "note": "Your Ship boarded from past the Veil: a teleport over it without the crossing."
+  },
+  {
+    "name": "AEOW-C2-3-leave-refused",
+    "file": "src/scenes/world.js",
+    "old": "    if (!playerEntity.boardShipPosition && veilRefused(t.go)) return;",
+    "new": "    if (veilRefused(t.go)) return;",
+    "tests": [
+      "test/systems/audit_etherow.test.js"
+    ],
+    "note": "A captain aboard who boarded past the Veil can never leave the ship."
+  },
+  {
+    "name": "AEOW-C2-3-raiders-no-fight",
+    "file": "src/scenes/world.js",
+    "old": "    if (inEther(px, py) && !navalRaidersOn()) return false;   // AUDIT ETHER-OW C2-3",
+    "new": "",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "With the sea fight off a raider is born past the Veil, and the mod's raid boards the Bay's ship."
+  },
+  {
+    "name": "AEOW-T-chaser-z-unread",
+    "file": "src/systems/travel/travelBands.js",
+    "old": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "new": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE));",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "A chase word's row never read: a band said past the world's north or south edge is heard."
+  },
+  {
+    "name": "AEOW-T-chaser-z-any-number",
+    "file": "src/systems/travel/travelBands.js",
+    "old": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "new": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "A chase word's row any number, a fraction of a native unit heard."
+  },
+  {
+    "name": "AEOW-T-chaser-x-trunc",
+    "file": "src/systems/travel/travelBands.js",
+    "old": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "new": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.trunc(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "A chase word's column truncated, not floored: the pixel past the world's west edge heard as its last."
+  },
+  {
+    "name": "AEOW-T-chaser-z-500",
+    "file": "src/systems/travel/travelBands.js",
+    "old": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "new": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(500 - Math.floor(z / PIXEL_NATIVE));",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "A chase word's row read in the Bay's 500 rows, not the world's."
+  },
+  {
+    "name": "AEOW-T-chaser-z-row-unflipped",
+    "file": "src/systems/travel/travelBands.js",
+    "old": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "new": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(Math.floor(z / PIXEL_NATIVE));",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "A chase word's row read without its flip from the native z: the world's north read as its south."
+  },
+  {
+    "name": "AEOW-T-place-isle-any-row",
+    "file": "src/world/etherPlaces.js",
+    "old": "  return isle && isle.px === x && isle.py === y && PLACE_KINDS.includes(isle.kind) ? isle : null;",
+    "new": "  return isle && isle.px === x && PLACE_KINDS.includes(isle.kind) ? isle : null;",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "Every pixel of a place's centre column read as the place."
+  },
+  {
+    "name": "AEOW-T-rows-circle-open",
+    "file": "src/world/etherPlaces.js",
+    "old": "  return islesNear(at.x, at.y, Math.ceil(reach)).filter((i) => i.kind === kind && Math.hypot(i.px - at.x, i.py - at.y) <= reach)",
+    "new": "  return islesNear(at.x, at.y, Math.ceil(reach)).filter((i) => i.kind === kind && Math.hypot(i.px - at.x, i.py - at.y) < reach)",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "A place exactly the reach away left out of the far range's circle."
+  },
+  {
+    "name": "AEOW-T-rows-region-0",
+    "file": "src/world/etherPlaces.js",
+    "old": "    .map((isle) => ({ x: isle.px, y: isle.py, isle, row: { mapID: etherPlaceId(isle), regionIndex: ETHER_REGION } }));",
+    "new": "    .map((isle) => ({ x: isle.px, y: isle.py, isle, row: { mapID: etherPlaceId(isle), regionIndex: 0 } }));",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "An isle's place filed in region 0, not the isles' own: its discovery named for the wrong region."
+  },
+  {
+    "name": "AEOW-T-find-rows-bay",
+    "file": "src/scenes/world.js",
+    "old": "    const list = nearDungeons({ at, range: TV_FIND_REACH, max: Infinity, dungeons: tvDungeonRowsAt(at, TV_FIND_REACH),\n      locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y) }).filter((g) => !g.found).map((g) => {",
+    "new": "    const list = nearDungeons({ at, range: TV_FIND_REACH, max: Infinity, dungeons: (_tvDungeonRows ??= dungeonRows(mapDict)),\n      locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y) }).filter((g) => !g.found).map((g) => {",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "The find on approach reads the Bay's rows alone: no isle ruin past the Veil is ever found by walking up to it."
+  },
+  {
+    "name": "AEOW-T-find-loc-index",
+    "file": "src/scenes/world.js",
+    "old": "    const list = nearDungeons({ at, range: TV_FIND_REACH, max: Infinity, dungeons: tvDungeonRowsAt(at, TV_FIND_REACH),\n      locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y) }).filter((g) => !g.found).map((g) => {",
+    "new": "    const list = nearDungeons({ at, range: TV_FIND_REACH, max: Infinity, dungeons: tvDungeonRowsAt(at, TV_FIND_REACH),\n      locAt: (x, y) => locationIndex.get(`${x},${y}`), isFound: (x, y) => !!tvPlaceSummary(x, y) }).filter((g) => !g.found).map((g) => {",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "The find reads the index alone: an isle's ruin not yet built has no place to find."
+  },
+  {
+    "name": "AEOW-T-models-rows-bay",
+    "file": "src/scenes/travelViewDungeonModels.js",
+    "old": "    const near = nearDungeons({ at, dungeons: tvDungeonRowsAt(at), locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y),",
+    "new": "    const near = nearDungeons({ at, dungeons: (_tvDungeonRows ??= dungeonRows(mapDict)), locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y),",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "No isle ruin past the Veil stands as a model on the Overworld."
+  },
+  {
+    "name": "AEOW-T-models-loc-index",
+    "file": "src/scenes/travelViewDungeonModels.js",
+    "old": "    const near = nearDungeons({ at, dungeons: tvDungeonRowsAt(at), locAt: tvDungeonAt, isFound: (x, y) => !!tvPlaceSummary(x, y),",
+    "new": "    const near = nearDungeons({ at, dungeons: tvDungeonRowsAt(at), locAt: (x, y) => locationIndex.get(`${x},${y}`), isFound: (x, y) => !!tvPlaceSummary(x, y),",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "An isle ruin stands as a model only once its pixel has built."
+  },
+  {
+    "name": "AEOW-T-level-tier",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const level = (deps.level?.() ?? 1) + (w.ether ? BANDS.find((b) => b.id === w.ether.band)?.level ?? 0 : 0);",
+    "new": "    const level = (deps.level?.() ?? 1) + (w.ether ? BANDS.find((b) => b.id === w.ether.band)?.tier ?? 0 : 0);",
+    "tests": [
+      "test/systems/naval/nav_r_raiders.test.js"
+    ],
+    "note": "A raider past the Veil drawn at the band's tier, not its levels."
+  },
+  {
+    "name": "AEOW-T-inframe-south-closed",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "export const inFrame = (f, px, py) => px >= f.x0 && py >= f.y0 && px < f.x0 + f.w && py < f.y0 + f.h;",
+    "new": "export const inFrame = (f, px, py) => px >= f.x0 && py >= f.y0 && px < f.x0 + f.w && py <= f.y0 + f.h;",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "A frame's south edge open: the row past it routed as the frame's own."
+  },
+  {
+    "name": "AEOW-T-ether-takes-bay-rows",
+    "file": "src/world/etherWatersBake.js",
+    "old": "    this.ether.adoptPlanes(list.filter((r) => r?.f === ETHER_ROW));",
+    "new": "    this.ether.adoptPlanes(list);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "The Eltheric's bake adopts the Bay's rows: their slots land on box pixels and poison its planes."
+  },
+  {
+    "name": "AEOW-T-evict-ether-kept",
+    "file": "src/world/etherWatersBake.js",
+    "old": "  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); this.ether.evictOutside(px, py, radius); }",
+    "new": "  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); }",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "The worker's eviction lets the Bay's planes go and keeps the Eltheric's for ever."
+  },
+  {
+    "name": "AEOW-T-evict-bay-kept",
+    "file": "src/world/etherWatersBake.js",
+    "old": "  evictOutside(px, py, radius) { this.bay.evictOutside(px, py, radius); this.ether.evictOutside(px, py, radius); }",
+    "new": "  evictOutside(px, py, radius) { this.ether.evictOutside(px, py, radius); }",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "The worker's eviction lets the Eltheric's planes go and keeps the Bay's for ever."
+  },
+  {
+    "name": "AEOW-T-local-edge-bay",
+    "file": "src/world/etherWatersBake.js",
+    "old": "  sampleLocalEdgeDistanceMeters(x, y, fx, fz) { return this.of(x, y).sampleLocalEdgeDistanceMeters(x, y, fx, fz); }",
+    "new": "  sampleLocalEdgeDistanceMeters(x, y, fx, fz) { return this.bay.sampleLocalEdgeDistanceMeters(x, y, fx, fz); }",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "The local edge distance always asked of the Bay: an isle's shore reads the Bay's clamped corner."
+  },
+  {
+    "name": "AEOW-T-cardinal-bay",
+    "file": "src/world/etherWatersBake.js",
+    "old": "  mapPixelOrCardinalNeighborHasWaterCells(x, y) { return this.of(x, y).mapPixelOrCardinalNeighborHasWaterCells(x, y); }",
+    "new": "  mapPixelOrCardinalNeighborHasWaterCells(x, y) { return this.bay.mapPixelOrCardinalNeighborHasWaterCells(x, y); }",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "The dry check's water always asked of the Bay: an Eltheric pixel by the sea dried."
+  },
+  {
+    "name": "AEOW-T-landcells-bay",
+    "file": "src/world/etherWatersBake.js",
+    "old": "  mapPixelHasLandCells(x, y) { return this.of(x, y).mapPixelHasLandCells(x, y); }",
+    "new": "  mapPixelHasLandCells(x, y) { return this.bay.mapPixelHasLandCells(x, y); }",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "An isle's land cells asked of the Bay: its shore pixel's ground hidden or shown wrongly."
+  },
+  {
+    "name": "AEOW-T-tile-climate-safe-bay",
+    "file": "src/world/deepWater/deepWaterTileData.js",
+    "old": "    if (mapX < f.x0 || mapY < f.y0 || mapX >= f.x0 + f.w || mapY >= f.y0 + f.h) return fallback;",
+    "new": "    if (mapX < 0 || mapY < 0 || mapX >= 1000 || mapY >= 500) return fallback;",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "A tile's neighbour climates kept to the Bay's map: an ocean pixel by an isle never wears the isle's."
+  },
+  {
+    "name": "AEOW-T-tile-climate-pixel-bay",
+    "file": "src/world/deepWater/deepWaterTileData.js",
+    "old": "    return this._climateAt(clampInt(mapX, f.x0, f.x0 + f.w - 1), clampInt(mapY, f.y0, f.y0 + f.h - 1));",
+    "new": "    return this._climateAt(clampInt(mapX, 0, 999), clampInt(mapY, 0, 499));",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "A tile's climates clamped to the Bay's map: every Eltheric pixel reads the Bay's row 0."
+  },
+  {
+    "name": "AEOW-T-tile-global-x-edge",
+    "file": "src/world/deepWater/deepWaterTileData.js",
+    "old": "    if (mapPixelX < f.x0) { mapPixelX = f.x0; fracX = 0; } else if (mapPixelX >= f.x0 + f.w) { mapPixelX = f.x0 + f.w - 1; fracX = 1; } else fracX = clamp01(fracX);",
+    "new": "    if (mapPixelX < f.x0) { mapPixelX = f.x0; fracX = 0; } else if (mapPixelX > f.x0 + f.w) { mapPixelX = f.x0 + f.w - 1; fracX = 1; } else fracX = clamp01(fracX);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "A tile's query at the box's east edge routed one pixel past it, to the Bay's bake."
+  },
+  {
+    "name": "AEOW-T-rects-ruins-as-towns",
+    "file": "src/world/etherWatersBake.js",
+    "old": "ruins: rows(templates?.ruins) };",
+    "new": "ruins: rows(templates?.towns) };",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "A ruin's pixel blended with a town template's rect."
+  },
+  {
+    "name": "AEOW-T-rects-towns-as-ruins",
+    "file": "src/world/etherWatersBake.js",
+    "old": "towns: rows(templates?.towns),",
+    "new": "towns: rows(templates?.ruins),",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ],
+    "note": "A port's pixel blended with a dungeon template's rect."
+  },
+  {
+    "name": "AEOW-T-chart-shell-label",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  shell.setAttribute('aria-label', chartTitle());",
+    "new": "  shell.setAttribute('aria-label', 'A chart');",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "The chart's dialog no longer named for the sea - a reader hears only 'A chart'."
+  },
+  {
+    "name": "AEOW-T-pits-ether-only",
+    "file": "src/scenes/oceanHolesHost.js",
+    "old": "    if (!isValidMapPixel(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }",
+    "new": "    if (st.mapY < -2688 && st.mapY >= -7680 && st.mapX >= 64 && st.mapX < 8128) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ],
+    "note": "The pit hold refuses the box alone: a pixel of the continent west of the Bay cut for an abyss."
+  },
+  {
+    "name": "AEOW-T-band-ground-dropped",
+    "file": "src/scenes/world.js",
+    "old": "    return onBayOrEther(px, py) && !tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);   // AUDIT OW4 B2",
+    "new": "    return !tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);   // AUDIT OW4 B2",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "A band born on the continent's land past the map's edge or the box's."
+  },
+  {
+    "name": "AEOW-L10N-key-at-load",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "const keyRow = (what, words) => Object.freeze(Object.defineProperty([what], 1, { enumerable: true, get: words }));",
+    "new": "const keyRow = (what, words) => Object.freeze([what, words()]);",
+    "tests": [
+      "test/systems/audit_etherow.test.js"
+    ],
+    "note": "The chart's key read once at load, in English whatever language the player chose."
+  },
+  {
+    "name": "AEOW-L10N-scale-english",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  return { leagues, px: leagues * per, words: t('sea.chart.scale', '{n, plural, one {# league} other {# leagues}}', { n: leagues }) };",
+    "new": "  return { leagues, px: leagues * per, words: `${leagues} ${leagues === 1 ? 'league' : 'leagues'}` };",
+    "tests": [
+      "test/systems/audit_etherow.test.js"
+    ],
+    "note": "The scale's words left English in every language."
+  },
+  {
+    "name": "AEOW-L10N-title-english",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "export const chartTitle = () => t('sea.chart.title', 'A chart of {sea}', { sea: ETHER_SEA_NAME });",
+    "new": "export const chartTitle = () => `A chart of ${ETHER_SEA_NAME}`;",
+    "tests": [
+      "test/systems/audit_etherow.test.js"
+    ],
+    "note": "The chart's title and its dialog's name left English in every language."
+  }
+]

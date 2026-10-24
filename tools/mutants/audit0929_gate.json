@@ -1,52 +1,52 @@
 [
   {
     "name": "AUDIT0929-W1-1-a-fall-with-no-part-feeds",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "      if (!p || !b.dead || p.fed || !(f.max > 0) || !hasPart(p) || (f.feeds ?? 0) >= P.feedsMax) continue;",
     "new": "      if (!p || !b.dead || p.fed || !(f.max > 0) || (f.feeds ?? 0) >= P.feedsMax) continue;",
     "tests": [
-      "test/audit0929_gate.test.js",
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/audit0929_gate.test.js",
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "AUDIT0929-W1-1-the-ceiling-unread",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "      if (!p || !b.dead || p.fed || !(f.max > 0) || !hasPart(p) || (f.feeds ?? 0) >= P.feedsMax) continue;",
     "new": "      if (!p || !b.dead || p.fed || !(f.max > 0) || !hasPart(p)) continue;",
     "tests": [
-      "test/audit0929_gate.test.js",
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/audit0929_gate.test.js",
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "AUDIT0929-W1-1-the-part-by-time-strict",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "export const hasPart = (p) => p.dealt >= RECEIPT_SHARE * p.share || p.stoodMs >= SEAT_KEEP_MS;",
     "new": "export const hasPart = (p) => p.dealt >= RECEIPT_SHARE * p.share || p.stoodMs > SEAT_KEEP_MS;",
     "tests": [
-      "test/audit0929_gate.test.js",
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/audit0929_gate.test.js",
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "AUDIT0929-W1-2-the-cone-unscaled",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "A.shape === 'cone' ? A.r + BOSS_R * (size - 1) : A.r,",
     "new": "A.r,",
     "tests": [
-      "test/audit0929_gate.test.js",
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/audit0929_gate.test.js",
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "AUDIT0929-W1-3-a-name-a-beat",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "      out.push({ k: 'fed', ns, h: Math.round(f.hp), m: Math.round(f.max), at: now });",
     "new": "      out.push({ k: 'fed', ns: ns.slice(0, 1), h: Math.round(f.hp), m: Math.round(f.max), at: now });",
     "tests": [
-      "test/audit0929_gate.test.js",
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/audit0929_gate.test.js",
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
@@ -55,56 +55,56 @@
     "old": "m.ns.length >= 1 && m.ns.length <= GATE_FEEDS_MAX && ",
     "new": "m.ns.length >= 1 && ",
     "tests": [
-      "test/audit0929_gate.test.js",
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/audit0929_gate.test.js",
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "AUDIT0929-W1-3-the-names-joined-wrong",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "    return `${boss} feeds on the souls of ${ns.slice(0, -1).join(', ')} and ${ns[ns.length - 1]}.`;",
     "new": "    return `${boss} feeds on the souls of ${ns.join(', ')}.`;",
     "tests": [
-      "test/wb8c_gate_detail.test.js"
+      "test/net/gate/wb8c_gate_detail.test.js"
     ]
   },
   {
     "name": "AUDIT0929-W2-2-the-profile-reread",
-    "file": "src/net/gateBrain.js",
-    "old": "  let P = _profileByMd.get(md);",
-    "new": "  let P = null;",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  let P = md == null || typeof md !== 'object' ? fightProfile(md) : _profileByMd.get(md);",
+    "new": "  let P = md == null || typeof md !== 'object' ? fightProfile(md) : null;",
     "tests": [
-      "test/audit0929_gate.test.js",
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/audit0929_gate.test.js",
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "AUDIT0929-W2-2-the-trials-joined-a-frame",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "trials: P.trialsLine,",
     "new": "trials: P.trials.map((t) => t.name).join(' - '),",
     "tests": [
-      "test/audit0929_gate.test.js",
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/audit0929_gate.test.js",
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "AUDIT0929-W2-2-the-card-worded-a-frame",
-    "file": "src/systems/gateOmen.js",
+    "file": "src/systems/gate/gateOmen.js",
     "old": "  if (day !== _marksDay) {",
     "new": "  if (true) {",
     "tests": [
-      "test/audit0929_gate.test.js",
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/audit0929_gate.test.js",
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "AUDIT0929-W2-3-a-stale-feeding-said",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "if (t - s.fed.at <= FED_LATE_MS) {",
     "new": "if (true) {",
     "tests": [
-      "test/wb8c_gate_detail.test.js"
+      "test/net/gate/wb8c_gate_detail.test.js"
     ]
   }
 ]

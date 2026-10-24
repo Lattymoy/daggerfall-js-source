@@ -11,7 +11,7 @@
 //   prince   | pointed arch              | yes      | yes          | Oblivion's purple, the emblem in gold
 //   location | wide landscape, name atop | no       | no           | the Bay's green
 //
-// DECIDED (section 6.2): rarity is the loot's. The frame is RARITIES[tier].colour (systems/lootRarity.js) - imported,
+// DECIDED (section 6.2): rarity is the loot's. The frame is RARITIES[tier].colour (systems/loot/lootRarity.js) - imported,
 // never copied - and the higher the tier the heavier the frame: studs from rare, a double rule from legendary, and an
 // inner glow line for the aetheric and the artifact.
 //
@@ -20,7 +20,7 @@
 // a picture. The card stock is the house deck's own (cardFaces.js STOCK): one tavern, one card stock.
 //
 // THE TABLES ARE PURE (EMBLEM_PAINTERS' keys, KIND_ART, TIER_FRAMES, iliacLayout, wrapCardText): pinned by
-// test/cards8_faces.test.js against a recording context; only the painting needs a page.
+// test/net/iliac/cards8_faces.test.js against a recording context; only the painting needs a page.
 //
 // SCALE: every measure is in u = h / 100, so one painter serves the Collections grid's 78 x 112 tile (CSS px, at a
 // devicePixelRatio of 1 or 2), the large view of a pressed card (about 260 x 371) and a 350 x 500 card held up to read.
@@ -36,7 +36,8 @@
 // pale rims are 1.1:1 against the stock without one), and the digits sit wholly on the gem's dark facets.
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
-import { RARITIES } from '../systems/lootRarity.js';
+import { RARITIES } from '../systems/loot/lootRarity.js';
+import { cardWords } from '../systems/iliac/iliacCardWords.js';
 import { STOCK } from './cardFaces.js';
 
 /** The card's shape, width over height: the house deck's poker proportion, a little narrower. */
@@ -47,6 +48,8 @@ export const COST_GEM = '#2456c8';        // the magicka gem - blue, as the game
 const COST_GEM_LIGHT = '#7da6f2';
 export const POWER_SHIELD = '#8e2a1c';    // the power shield - a war-red heater
 const FRAME_DARK = '#2a2118';
+/** KG3: a PICTURE's rim - the house stock's warm bronze, no tier's colour (a unit of The King's Gambit has no rarity). */
+const PICTURE_RIM = '#8a7454';
 const GOLD = '#c9a24a';
 const GOLD_DARK = '#8a6a24';
 const TEXT_INK = '#2a2018';
@@ -85,7 +88,7 @@ export const TIER_FRAMES = Object.freeze({
   legendary: Object.freeze({ band: 2.6, studs: 8, double: true, glow: false }),
   aetheric: Object.freeze({ band: 2.8, studs: 8, double: true, glow: true }),
   artifact: Object.freeze({ band: 3.0, studs: 8, double: true, glow: true }),
-  gilded: Object.freeze({ band: 3.2, studs: 8, double: true, glow: true }),   // GILDED1's rung (merged under the arc): the widest band, every stud, gold leaf over everything
+  gilded: Object.freeze({ band: 3.2, studs: 8, double: true, glow: true }),   // GILDED1's rung (merged under the arc): the widest band, every stud, over everything (GILDED-RED: in the rung's crimson)
 });
 
 // ---- the emblems -------------------------------------------------------------------------------------------------
@@ -700,6 +703,98 @@ const GLYPHS = {
     poly(ctx, [[-0.13, -0.17], [0.13, -0.17], [0.025, 0], [0.13, 0.17], [-0.13, 0.17], [-0.025, 0]]);   // the hourglass in it
     part(ctx);
   },
+  // KG-SET (2026-10-13, Kings-Gambit.md section 10.3): the nine The King's Gambit brought into the set - their own pictures.
+  bear(ctx) {         // a bear's head, full face: round ears and their hollows, the broad brow, small eyes, the muzzle's rim and nose
+    for (const m of [1, -1]) { circ(ctx, 0.3 * m, -0.31, 0.13); circ(ctx, 0.32 * m, -0.33, 0.06); part(ctx, 'evenodd'); }
+    mirrorQ(ctx, [[0, -0.34], [0.22, -0.36, 0.34, -0.18], [0.44, 0.0, 0.34, 0.22], [0.24, 0.42, 0, 0.44]]);
+    for (const m of [1, -1]) oval(ctx, 0.15 * m, -0.07, 0.045, 0.04);
+    oval(ctx, 0, 0.21, 0.19, 0.15); oval(ctx, 0, 0.21, 0.15, 0.115);
+    mirrorQ(ctx, [[0, 0.08], [0.08, 0.08], [0.07, 0.14, 0, 0.18]]);
+    part(ctx, 'evenodd');
+  },
+  cat(ctx) {          // a sabretooth's head, full face: short ears, slanted eyes, the nose, and the two sabres hanging past its jaw
+    mirrorQ(ctx, [[0, -0.32], [0.14, -0.33], [0.28, -0.46], [0.32, -0.22], [0.42, -0.06, 0.36, 0.12], [0.26, 0.3, 0, 0.3]]);
+    for (const m of [1, -1]) poly(ctx, [[0.07 * m, -0.07], [0.23 * m, -0.13], [0.19 * m, -0.02]]);
+    mirrorQ(ctx, [[0, 0.06], [0.07, 0.06], [0, 0.14]]);
+    for (const m of [1, -1]) poly(ctx, [[0.18 * m, -0.31], [0.26 * m, -0.39], [0.28 * m, -0.26]]);
+    part(ctx, 'evenodd');
+    for (const m of [1, -1]) {
+      ctx.moveTo(0.03 * m, 0.2); ctx.lineTo(0.14 * m, 0.2); ctx.quadraticCurveTo(0.16 * m, 0.38, 0.08 * m, 0.5);
+      ctx.quadraticCurveTo(0.07 * m, 0.34, 0.03 * m, 0.2); ctx.closePath(); part(ctx);
+    }
+  },
+  spider(ctx) {       // a spider let down on its thread: the head, the round body and the hourglass on it, eight bent legs
+    ctx.moveTo(0, -0.5); ctx.lineTo(0, -0.2); line(ctx, 0.03);
+    for (const m of [1, -1]) {
+      for (const [a, b, c] of [[[0.05, -0.16], [0.24, -0.34], [0.4, -0.16]], [[0.07, -0.12], [0.3, -0.16], [0.47, 0.02]],
+        [[0.07, -0.08], [0.3, 0.04], [0.42, 0.24]], [[0.05, -0.05], [0.2, 0.18], [0.27, 0.42]]]) {
+        ctx.moveTo(a[0] * m, a[1]); ctx.lineTo(b[0] * m, b[1]); ctx.lineTo(c[0] * m, c[1]);
+      }
+    }
+    line(ctx, 0.045);
+    circ(ctx, 0, -0.12, 0.085);
+    oval(ctx, 0, 0.17, 0.16, 0.19);
+    poly(ctx, [[-0.06, 0.07], [0.06, 0.07], [0, 0.16], [0.06, 0.25], [-0.06, 0.25], [0, 0.16]]);
+    part(ctx, 'evenodd');
+  },
+  fish(ctx) {         // a slaughterfish turned to bite: the long body, the forked tail, a spined fin, the eye, a jaw full of teeth
+    ctx.moveTo(-0.48, -0.05); ctx.quadraticCurveTo(-0.22, -0.3, 0.16, -0.12);
+    ctx.lineTo(0.34, -0.04); ctx.lineTo(0.5, -0.26); ctx.lineTo(0.43, 0.02); ctx.lineTo(0.5, 0.28); ctx.lineTo(0.34, 0.08);
+    ctx.quadraticCurveTo(0.0, 0.26, -0.32, 0.16); ctx.lineTo(-0.46, 0.14); ctx.lineTo(-0.3, 0.04); ctx.closePath();
+    oval(ctx, -0.28, -0.1, 0.035, 0.035);
+    part(ctx, 'evenodd');
+    poly(ctx, [[-0.12, -0.19], [-0.04, -0.37], [0.03, -0.21], [0.1, -0.31], [0.15, -0.13]]);
+    // the teeth along both jaws, each pointing into the bite
+    /** @type {[number, number, number, number, number][]} */
+    const jaws = [[-0.48, -0.05, -0.3, 0.04, 1], [-0.46, 0.14, -0.3, 0.04, -1]];   // each jaw from its tip to the gape, its teeth's side
+    for (const [ax, ay, bx, by, into] of jaws) {
+      const len = Math.hypot(bx - ax, by - ay), dx = (bx - ax) / len, dy = (by - ay) / len, nx = -dy * into, ny = dx * into;
+      for (const k of [0.22, 0.48, 0.74]) {
+        const px = ax + (bx - ax) * k, py = ay + (by - ay) * k;
+        poly(ctx, [[px - dx * 0.025, py - dy * 0.025], [px + nx * 0.05, py + ny * 0.05], [px + dx * 0.025, py + dy * 0.025]]);
+      }
+    }
+    part(ctx);
+  },
+  mummy(ctx) {        // the wrapped dead, its arms out before it: the bound head and its eyes, the bands wound across it
+    mirrorQ(ctx, [[0, -0.47], [0.1, -0.47, 0.12, -0.36], [0.12, -0.26, 0.07, -0.22], [0.07, -0.2], [0.2, -0.19], [0.47, -0.16],
+      [0.51, -0.11, 0.47, -0.06], [0.22, -0.06], [0.2, 0.2], [0.16, 0.46], [0, 0.46]]);
+    for (const m of [1, -1]) poly(ctx, [[0.03 * m, -0.31], [0.09 * m, -0.32], [0.09 * m, -0.29], [0.03 * m, -0.28]]);
+    poly(ctx, [[-0.075, -0.39], [0.075, -0.42], [0.075, -0.4], [-0.075, -0.37]]);
+    const half = (y) => (y < 0.2 ? 0.22 - (0.02 * (y + 0.06)) / 0.26 : 0.2 - (0.04 * (y - 0.2)) / 0.26) - 0.035;
+    for (const y of [0.0, 0.11, 0.22, 0.33]) poly(ctx, [[-half(y + 0.02), y + 0.02], [half(y - 0.03), y - 0.03], [half(y - 0.01), y - 0.01], [-half(y + 0.04), y + 0.04]]);
+    for (const m of [1, -1]) for (const x of [0.29, 0.39]) poly(ctx, [[x * m, -0.15], [(x + 0.02) * m, -0.15], [(x + 0.035) * m, -0.075], [(x + 0.015) * m, -0.075]]);
+    part(ctx, 'evenodd');
+  },
+  bow(ctx) {          // a bow drawn: the recurved stave, its string pulled back to the nock, the arrow across it, head and fletching
+    ctx.moveTo(0.12, -0.49); ctx.quadraticCurveTo(0.03, -0.46, 0.06, -0.38); ctx.quadraticCurveTo(0.36, 0, 0.06, 0.38);
+    ctx.quadraticCurveTo(0.03, 0.46, 0.12, 0.49);
+    line(ctx, 0.075);
+    ctx.moveTo(0.07, -0.43); ctx.lineTo(-0.3, 0); ctx.lineTo(0.07, 0.43); line(ctx, 0.022);
+    ctx.moveTo(-0.34, 0); ctx.lineTo(0.4, 0); line(ctx, 0.04);
+    poly(ctx, [[0.5, 0], [0.38, -0.06], [0.41, 0], [0.38, 0.06]]);
+    for (const m of [1, -1]) poly(ctx, [[-0.2, 0], [-0.28, 0.07 * m], [-0.4, 0.07 * m], [-0.32, 0]]);
+    part(ctx);
+  },
+  // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): the Witches' Festival's two - a coven's cauldron, a tallow candle
+  witch(ctx) {        // a coven's cauldron: the black pot on its three legs, its rim, its brew bubbling over (the mage's hat is the mage's)
+    ctx.moveTo(-0.36, -0.06); ctx.lineTo(0.36, -0.06); ctx.quadraticCurveTo(0.38, 0.3, 0, 0.36); ctx.quadraticCurveTo(-0.38, 0.3, -0.36, -0.06);
+    ctx.closePath(); part(ctx);
+    poly(ctx, [[-0.42, -0.16], [0.42, -0.16], [0.42, -0.07], [-0.42, -0.07]]); part(ctx);
+    for (const m of [1, -1]) poly(ctx, [[0.19 * m, 0.3], [0.29 * m, 0.3], [0.33 * m, 0.46], [0.26 * m, 0.46]]);
+    poly(ctx, [[-0.04, 0.34], [0.04, 0.34], [0.03, 0.46], [-0.03, 0.46]]); part(ctx);
+    circ(ctx, -0.14, -0.26, 0.08); circ(ctx, 0.06, -0.33, 0.06); circ(ctx, 0.2, -0.24, 0.045); circ(ctx, -0.02, -0.45, 0.035); part(ctx);
+  },
+  candle(ctx) {       // a tallow candle on its dish: the flame and its halo, the wick, the stub with a drip run down it
+    ctx.moveTo(0, -0.46); ctx.quadraticCurveTo(0.11, -0.3, 0.06, -0.2); ctx.quadraticCurveTo(0, -0.14, -0.06, -0.2);
+    ctx.quadraticCurveTo(-0.11, -0.3, 0, -0.46); ctx.closePath(); part(ctx);
+    ctx.moveTo(-0.13, -0.12); ctx.lineTo(0.13, -0.12); ctx.lineTo(0.13, 0.3); ctx.lineTo(-0.13, 0.3); ctx.closePath();
+    ctx.moveTo(0.13, -0.08); ctx.quadraticCurveTo(0.2, 0.0, 0.17, 0.12); ctx.quadraticCurveTo(0.14, 0.16, 0.13, 0.08); ctx.closePath();
+    part(ctx);
+    ctx.moveTo(-0.4, 0.32); ctx.quadraticCurveTo(0, 0.28, 0.4, 0.32); ctx.quadraticCurveTo(0.42, 0.4, 0, 0.42); ctx.quadraticCurveTo(-0.42, 0.4, -0.4, 0.32); ctx.closePath();
+    part(ctx);
+    ctx.moveTo(0.18, -0.31); ctx.arc(0, -0.31, 0.18, 0, TAU); line(ctx, 0.02);
+  },
 };
 
 /** One painter per emblem, `(ctx, cx, cy, size, ink)`: the glyph `size` across, centred on (cx, cy), in `ink`. */
@@ -723,7 +818,7 @@ function painter(trace) {
 }
 
 /**
- * The emblems the catalog's cards carry (net/iliacCards.js CARD_EMBLEMS), each its painter. Creatures, callings,
+ * The emblems the catalog's cards carry (net/iliac/iliacCards.js CARD_EMBLEMS), each its painter. Creatures, callings,
  * princes and things, the schools of a spell, and the lie of a land.
  */
 export const EMBLEM_PAINTERS = Object.freeze(Object.fromEntries(Object.entries(GLYPHS).map(([k, trace]) => [k, painter(trace)])));
@@ -731,8 +826,9 @@ export const EMBLEM_PAINTERS = Object.freeze(Object.fromEntries(Object.entries(G
 /**
  * EMBLEM_PAINTERS' keys in their order: the first set's 34 (its beetle gone - no card is an insect once the scorpion
  * has its own), then AUDIT CARDS-5's 14 (razor, staff, book, claymore, rose, daedric, scorpion, bat, boar, tree,
- * gargoyle, banish, recall, sun), then CARDS9's 3 (gate, serpent, gear - the bosses' own) - net/iliacCards.js
- * CARD_EMBLEMS, the same list. 'prince', the moon and the star, is
+ * gargoyle, banish, recall, sun), then CARDS9's 3 (gate, serpent, gear - the bosses' own), then KG-SET's 6 (bear, cat,
+ * spider, fish, mummy, bow - the nine The King's Gambit brought into the set), then WITCH1's 2 (witch, candle - the
+ * Witches' Festival's) - net/iliac/iliacCards.js CARD_EMBLEMS, the same list. 'prince', the moon and the star, is
  * Azura's own; 'daedric' is the sigil of a Prince who has no picture of their own.
  */
 export const EMBLEM_KEYS = Object.freeze(Object.keys(GLYPHS));
@@ -742,11 +838,15 @@ const KIND_EMBLEM = Object.freeze({ unit: 'warrior', spell: 'shock', prince: 'da
 
 // ---- the words ----------------------------------------------------------------------------------------------------
 
+/** KG-SET: where a card's words may break - white space, but never a no-break space (U+00A0, U+2007, U+202F). */
+export const CARD_BREAK = /[^\S\u00a0\u2007\u202f]+/;
 /**
  * Break `text` into lines no wider than `maxWidth` by the context's own measure (its current font): words go whole
  * where they fit, a word wider than the line is broken by letters, and a newline in the text always breaks.
  * `maxWidth` may be a function of the line's index, for a box whose lines are not all one width (the lines that pass
- * beside the power shield are shorter).
+ * beside the power shield are shorter). KG-SET: a NO-BREAK SPACE is no place to break, and is kept - the words are the
+ * player's language's now, and French sets one before a colon ("Continu\u00a0:"), which a split on every white space
+ * had broken onto the next line's head and turned into a plain space (CARD_BREAK).
  * @param {CanvasRenderingContext2D} ctx
  * @param {string} text
  * @param {number | ((line: number) => number)} maxWidth
@@ -757,7 +857,7 @@ export function wrapCardText(ctx, text, maxWidth) {
   const limit = typeof maxWidth === 'function' ? maxWidth : () => maxWidth;
   const lines = [];
   for (const para of String(text ?? '').split('\n')) {
-    const words = para.split(/\s+/).filter(Boolean);
+    const words = para.split(CARD_BREAK).filter(Boolean);
     let cur = '';
     for (const word of words) {
       const next = cur ? `${cur} ${word}` : word;
@@ -846,13 +946,16 @@ const KEYLINE = 1.3;
  * Where a card's parts sit at w x h: the panel's inset, the rim and its keyline, the studs, the art window (x, y, w, h
  * and its shape), the emblem's centre and size, the banner and the name's box inside its notches, the text box (null
  * in TILE MODE), the gem's and the shield's centres (null where the kind has none). Pure - the painter and the pins
- * both read it.
+ * both read it. KG3: a PICTURE (`picture`) is the art window alone in the panel - no banner, no gem, no shield, no text
+ * box - for The King's Gambit, whose units are the cards' pictures and whose numbers are its own (Kings-Gambit.md
+ * section 14.1, AUDIT KG D12).
  * @param {string} kind
  * @param {string} tier
  * @param {number} w
  * @param {number} h
+ * @param {{picture?: boolean}} [o]
  */
-export function iliacLayout(kind, tier, w, h) {
+export function iliacLayout(kind, tier, w, h, { picture = false } = {}) {
   const u = h / 100, art = KIND_ART[kind] ?? KIND_ART.unit, frame = TIER_FRAMES[tier] ?? TIER_FRAMES.common;
   const tile = h <= ILIAC_TILE_MAX_H;
   const rimIn = (1 + frame.band) * u, p = rimIn + KEYLINE * u, innerW = w - 2 * p;
@@ -890,6 +993,10 @@ export function iliacLayout(kind, tier, w, h) {
     size: Math.min(win.w, win.h) * (landscape ? 0.86 : tile ? 0.8 : 0.78),
   };
   if (tile && art.window === 'arch') emblem.cy = win.y + win.h * 0.56;
+  if (picture) {   // KG3: the window takes the panel, the picture centred in it; no word, no number
+    const pw = { x: p + 1.2 * u, y: p + 1.2 * u, w: innerW - 2.4 * u, h: h - 2 * p - 2.4 * u };
+    return { u, p, tile, frame, art, rim, studs, studR, win: pw, emblem: { cx: pw.x + pw.w / 2, cy: pw.y + pw.h / 2, size: Math.min(pw.w, pw.h) * 0.8 }, banner: null, notch, nameBox: null, nameFont, box: null, gem: null, shield: null, shape: art.window };
+  }
   return { u, p, tile, frame, art, rim, studs, studR, win, emblem, banner, notch, nameBox, nameFont, box, gem, shield, shape: art.window };
 }
 
@@ -1079,23 +1186,28 @@ function paintShield(ctx, L, power) {
 /**
  * Paint one Iliac Hand card, filling (0, 0)-(w, h) of `ctx`: the frame in the tier's colour, the art window in the
  * kind's shape with the emblem in it, the name's banner, the rules and flavor (not on a tile), the cost gem (not a
- * location's) and the power shield (a unit's and a prince's only).
+ * location's) and the power shield (a unit's and a prince's only). KG-SET: the rules and the flavor are `words` - the
+ * card's own in the player's language (systems/iliac/iliacCardWords.js) unless a caller hands others (the painter's layout
+ * pins, which set long and short words on one face). KG3: a PICTURE (`picture`) is the card's picture alone, in a
+ * frame with no tier's colour - The King's Gambit's units, whose numbers and names the table says (iliacLayout).
  * @param {CanvasRenderingContext2D} ctx
- * @param {{ name?: string, kind?: string, cost?: number, power?: number|null, tier?: string, text?: string, emblem?: string, flavor?: string }} card
+ * @param {{ id?: string, name?: string, kind?: string, cost?: number, power?: number|null, tier?: string, emblem?: string }} card
  * @param {number} w
  * @param {number} h
+ * @param {{ rules: string, flavor: string }} [words]
+ * @param {{ picture?: boolean }} [o]
  */
-export function paintIliacCard(ctx, card, w, h) {
+export function paintIliacCard(ctx, card, w, h, words = cardWords(card), { picture = false } = {}) {
   const kind = KIND_ART[card?.kind] ? card.kind : 'unit';
-  const tier = RARITIES[card?.tier] ? card.tier : 'common';
-  const colour = RARITIES[tier].colour;
-  const L = iliacLayout(kind, tier, w, h);
+  const tier = !picture && RARITIES[card?.tier] ? card.tier : 'common';
+  const colour = picture ? PICTURE_RIM : RARITIES[tier].colour;
+  const L = iliacLayout(kind, tier, w, h, { picture });
   const emblem = EMBLEM_PAINTERS[card?.emblem] ? card.emblem : KIND_EMBLEM[kind];
   ctx.save();
   paintFrame(ctx, L, colour, w, h);
   paintArt(ctx, L, emblem, colour);
-  paintBanner(ctx, L, card?.name, colour);
-  if (L.box) paintText(ctx, L, card?.text ?? '', card?.flavor ?? '');
+  if (L.banner) paintBanner(ctx, L, card?.name, colour);
+  if (L.box) paintText(ctx, L, words?.rules ?? '', words?.flavor ?? '');
   if (L.gem) paintGem(ctx, L, card?.cost);
   if (L.shield) paintShield(ctx, L, card?.power);
   ctx.restore();

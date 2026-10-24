@@ -4,55 +4,55 @@
     "file": "src/scenes/world.js",
     "old": "      magic: () => liveCastEngine(_mode(), modes?.dungeonCtx ?? null, magic),",
     "new": "      magic,",
-    "tests": ["test/fb1001_castuse.test.js"]
+    "tests": ["test/scenes/fb1001_castuse.test.js"]
   },
   {
     "name": "CAST-USE-exterior-mounts-its-own-engine",
     "file": "src/scenes/exterior.js",
     "old": "      magic: () => liveCastEngine(_mode(), modes?.dungeonCtx ?? null, magic),",
     "new": "      magic,",
-    "tests": ["test/fb1001_castuse.test.js"]
+    "tests": ["test/scenes/fb1001_castuse.test.js"]
   },
   {
     "name": "CAST-USE-the-dungeon-hands-no-engine",
     "file": "src/scenes/dungeonContext.js",
     "old": "    castEngine: magic,",
     "new": "",
-    "tests": ["test/fb1001_castuse.test.js"]
+    "tests": ["test/scenes/fb1001_castuse.test.js"]
   },
   {
     "name": "CAST-USE-always-the-hosts-engine",
     "file": "src/scenes/shared.js",
     "old": "  return (mode === 'dungeon' ? dungeonCtx?.castEngine : null) ?? own;",
     "new": "  return own;",
-    "tests": ["test/fb1001_castuse.test.js"]
+    "tests": ["test/scenes/fb1001_castuse.test.js"]
   },
   {
     "name": "CAST-USE-a-descents-context-leaks-above",
     "file": "src/scenes/shared.js",
     "old": "  return (mode === 'dungeon' ? dungeonCtx?.castEngine : null) ?? own;",
     "new": "  return dungeonCtx?.castEngine ?? own;",
-    "tests": ["test/fb1001_castuse.test.js"]
+    "tests": ["test/scenes/fb1001_castuse.test.js"]
   },
   {
     "name": "CAST-USE-the-getter-taken-for-an-engine",
     "file": "src/scenes/hostEnchant.js",
     "old": "  const live = typeof engine === 'function' ? engine : () => engine;",
     "new": "  const live = () => engine;",
-    "tests": ["test/fb1001_castuse.test.js"]
+    "tests": ["test/scenes/fb1001_castuse.test.js"]
   },
   {
     "name": "CAST-USE-the-ready-on-the-mount-time-engine",
     "file": "src/scenes/hostEnchant.js",
     "old": "    readySpell: (...a) => live().readySpell(...a),",
     "new": "    readySpell: ((m) => (...a) => m.readySpell(...a))(live()),",
-    "tests": ["test/fb1001_castuse.test.js"]
+    "tests": ["test/scenes/fb1001_castuse.test.js"]
   },
   {
     "name": "CAST-USE-the-self-cast-on-the-mount-time-engine",
     "file": "src/scenes/hostEnchant.js",
     "old": "    castByItemSelf: (...a) => live().castByItemSelf(...a),",
     "new": "    castByItemSelf: ((m) => (...a) => m.castByItemSelf(...a))(live()),",
-    "tests": ["test/fb1001_castuse.test.js"]
+    "tests": ["test/scenes/fb1001_castuse.test.js"]
   }
 ]

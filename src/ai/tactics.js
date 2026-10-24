@@ -31,8 +31,8 @@
 // One registry of tokens, by target: the local player is one key, every other target its own object.
 
 import { getPref } from '../systems/uiPrefs.js';
-import { ENEMY_BASICS } from '../characters/enemyBasics.js';
-import { MOBILE_TYPES } from '../characters/mobileTypes.js';
+import { ENEMY_BASICS, isClassEnemyId } from '../characters/enemy/enemyBasics.js';
+import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
 import { throwsBlows, blowShapesOf, blowFamily, makeBlow, fitBlowToGround, inBlow, setLiveBlow, shatterBlow, windupNear, offsetBlows, BLOW, BLOW_CHANCE, BLOW_COLOR, IRON_COLOR, BLOW_VERDICT_LIFE, BLOW_STALE, setBlowTargetOf } from './foeBlows.js';   // TACT4; TELL3: iron; TELL5: the family, the shapes' lengths
 import { coverDistance } from './cover.js';   // TELL6: a charge's lane must be free of cover
 import { GRAVITY } from '../player/motor.js';   // TELL6c: a leap's hop on the motor's own gravity
@@ -122,7 +122,7 @@ export const PUPPET_HELD_UNTIL = 1e9;
  * (bible/12-Enhanced-AI/Feud-Arc.md 10.2, OPEN 9) a PEER's the foe hunts (its candidate's, refreshed each frame in this
  * frame's coordinates); and AUDIT ARENA-LADDER (the owner, 2026-10-05: "Ensure AI enemies sometimes receive telegraphed
  * attacks") on the arena's sand a BOUT-MATE's: a fighter of the same live bout on another side (the pair
- * characters/enemyTargets.js boutGate keeps, read off the two entities' own tags), so an exhibition's fighters, a Grand
+ * characters/enemy/enemyTargets.js boutGate keeps, read off the two entities' own tags), so an exhibition's fighters, a Grand
  * Melee's and a two-against-one's wind up at each other as they wind up at the player. Null for any other target
  * (street infighting, a peer's foe, a peer with no pose). Each client judges its own feet at the landing (10.3) - and a
  * bout-mate's are judged here, where both fighters run (`judgedHere`); the owner's own view of a peer's decides only its
@@ -188,7 +188,7 @@ const unseen = (s, now) => s?.seen != null && now - s.seen > BLOW_STALE;
 /** AUDIT TACT A4/D5/D6: a blow's landing state, spent - no verdict, weight or forced swing left for a later swing. */
 function clearBlowState(ai) { ai._blowVerdict = null; ai._blowMult = undefined; ai._blowSwing = false; ai._blowFor = undefined; }
 /** TELL2: a wind-up's held swing dropped (its wind-up broke, a paralysis, its place gone) - the sprite and the attack
- *  component let it go and strike nothing (characters/mobileUnit.js, characters/enemyAttack.js). */
+ *  component let it go and strike nothing (characters/mobile/mobileUnit.js, characters/enemy/enemyAttack.js). */
 function dropSwing(ai) { ai._blowHold = 'cancel'; ai._blowWind = false; }
 
 // ── TELL1: POISE AND THE STAGGER (bible/12-Enhanced-AI/Feud-Arc.md section 3; Mac: "player's can easily stun these
@@ -234,7 +234,7 @@ function handOn(ai, s, now) {
 /** TELL1 (3.2): STAGGERED for its weight's length - one law for a broken wind-up and an overreach answered (TELL4). */
 function stagger(ai, s, ent, weight, now) {
   s.state = 'staggered'; s.until = now + staggerSeconds(weight); s.staggerReady = s.until + TELL.STAGGER_IMMUNE;
-  ai.staggerUntil = s.until;   // the motor's hold (characters/enemyMotor.js _step)
+  ai.staggerUntil = s.until;   // the motor's hold (characters/enemy/enemyMotor.js _step)
   if (ent) ent.staggerUntil = s.until;   // ...and what every blow at it reads (the fold below)
   return 'stagger';
 }
@@ -292,7 +292,7 @@ function beginOverreach(ai, s, b, now, perfect, atMe = true) {
   ai.overreachUntil = s.until;
   const ent = ai.vitals?.();
   if (ent) ent.overreachUntil = s.until;
-  ai._blowHold = 'spent';   // the strike goes out; then its follow-through stands (characters/mobileUnit.js)
+  ai._blowHold = 'spent';   // the strike goes out; then its follow-through stands (characters/mobile/mobileUnit.js)
   if (perfect && atMe) ai._perfectAt = now;   // the tag's and the bright ring's (scenes/hostCombat.js tellCues) - mine alone (AUDIT TELL O5)
   if (atMe && ent) { noteFeud(ent, 'dodged'); if (perfect) noteFeud(ent, 'perfect'); }   // RVN1 (Feud-Arc.md 12): my dodge - a peer's is its own fight
   ai._tacStrike = false; ai._tacShoot = false; ai.moving = false;
@@ -727,7 +727,7 @@ export function blowPool(ai, ent, dist, near, dx, dz) {
 /** TELL6d: does this foe aim its shots - a class archer (a bow) of the whole set (section 9: an ordinary archer of the
  *  tier keeps DFU's plain shot, as TACT4 left it)? */
 export function aimsShots(ai, ent) {
-  return !!ent && wholeSet(ent) && !!ai?.hasBowAttack && ent.mobileType >= 128;
+  return !!ent && wholeSet(ent) && !!ai?.hasBowAttack && isClassEnemyId(ent.mobileType);
 }
 // TELL6d: an aimed shot that strikes weighs x BLOW.aimed.mult - the arrow says so at contact (formulas' blowInfo)
 registerBlowTakenMod('tell-aimed', (attacker, target, weapon, info) => (info?.aimed ? BLOW.aimed.mult : 1));

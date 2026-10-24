@@ -5,13 +5,13 @@
     "old": "  const bucket = (((turn | 0) % share) + share) % share;\n  for (const x of far) if (hashKey(keyOf(x)) % share === bucket) out.push(x);\n  return out;",
     "new": "  const slice = Math.ceil(far.length / share);\n  const start = ((((turn | 0) % share) + share) % share) * slice;\n  return out.concat(far.slice(start, start + slice));",
     "tests": [
-      "test/slam10.test.js",
-      "test/slam6.test.js",
-      "test/slam1.test.js",
-      "test/slam3.test.js",
-      "test/slam8.test.js",
-      "test/mwbody1.test.js",
-      "test/online.test.js"
+      "test/net/slam10.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam1.test.js",
+      "test/net/slam3.test.js",
+      "test/net/slam8.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/online.test.js"
     ]
   },
   {
@@ -20,13 +20,13 @@
     "old": "  for (const x of far) if (hashKey(keyOf(x)) % share === bucket) out.push(x);",
     "new": "  far.forEach((x, i) => { if (hashKey(i) % share === bucket) out.push(x); });",
     "tests": [
-      "test/slam10.test.js",
-      "test/slam6.test.js",
-      "test/slam1.test.js",
-      "test/slam3.test.js",
-      "test/slam8.test.js",
-      "test/mwbody1.test.js",
-      "test/online.test.js"
+      "test/net/slam10.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam1.test.js",
+      "test/net/slam3.test.js",
+      "test/net/slam8.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/online.test.js"
     ]
   },
   {
@@ -35,13 +35,13 @@
     "old": "  return h >>> 0;\n}",
     "new": "  return 0 * h;\n}",
     "tests": [
-      "test/slam10.test.js",
-      "test/slam6.test.js",
-      "test/slam1.test.js",
-      "test/slam3.test.js",
-      "test/slam8.test.js",
-      "test/mwbody1.test.js",
-      "test/online.test.js"
+      "test/net/slam10.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam1.test.js",
+      "test/net/slam3.test.js",
+      "test/net/slam8.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/online.test.js"
     ]
   },
   {
@@ -50,13 +50,13 @@
     "old": "  const bucket = (((turn | 0) % share) + share) % share;",
     "new": "  const bucket = 0;",
     "tests": [
-      "test/slam10.test.js",
-      "test/slam6.test.js",
-      "test/slam1.test.js",
-      "test/slam3.test.js",
-      "test/slam8.test.js",
-      "test/mwbody1.test.js",
-      "test/online.test.js"
+      "test/net/slam10.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam1.test.js",
+      "test/net/slam3.test.js",
+      "test/net/slam8.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/online.test.js"
     ]
   },
   {
@@ -65,28 +65,28 @@
     "old": "poseFan(heard, m.p, (e) => e[1].pose, met.turn, (e) => e[1].id)",
     "new": "poseFan(heard, m.p, (e) => e[1].pose, met.turn)",
     "tests": [
-      "test/slam10.test.js",
-      "test/slam6.test.js",
-      "test/slam1.test.js",
-      "test/slam3.test.js",
-      "test/slam8.test.js",
-      "test/mwbody1.test.js",
-      "test/online.test.js"
+      "test/net/slam10.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam1.test.js",
+      "test/net/slam3.test.js",
+      "test/net/slam8.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/online.test.js"
     ]
   },
   {
     "name": "T6-strangers-take-bodies",
-    "file": "src/net/peerBodies.js",
+    "file": "src/net/peer/peerBodies.js",
     "old": "      if (peer.told === false) continue;",
     "new": "      void peer.told;",
     "tests": [
-      "test/slam10.test.js",
-      "test/slam6.test.js",
-      "test/slam1.test.js",
-      "test/slam3.test.js",
-      "test/slam8.test.js",
-      "test/mwbody1.test.js",
-      "test/online.test.js"
+      "test/net/slam10.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam1.test.js",
+      "test/net/slam3.test.js",
+      "test/net/slam8.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/online.test.js"
     ]
   },
   {
@@ -95,13 +95,13 @@
     "old": "export const PLAY_RATE_MAX = 2;",
     "new": "export const PLAY_RATE_MAX = 4;",
     "tests": [
-      "test/slam10.test.js",
-      "test/slam6.test.js",
-      "test/slam1.test.js",
-      "test/slam3.test.js",
-      "test/slam8.test.js",
-      "test/mwbody1.test.js",
-      "test/online.test.js"
+      "test/net/slam10.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam1.test.js",
+      "test/net/slam3.test.js",
+      "test/net/slam8.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/online.test.js"
     ]
   },
   {
@@ -110,13 +110,13 @@
     "old": "export const PLAY_RATE_MAX = 2;",
     "new": "export const PLAY_RATE_MAX = 1.25;",
     "tests": [
-      "test/slam10.test.js",
-      "test/slam6.test.js",
-      "test/slam1.test.js",
-      "test/slam3.test.js",
-      "test/slam8.test.js",
-      "test/mwbody1.test.js",
-      "test/online.test.js"
+      "test/net/slam10.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam1.test.js",
+      "test/net/slam3.test.js",
+      "test/net/slam8.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/online.test.js"
     ]
   },
   {
@@ -125,13 +125,13 @@
     "old": "  return wasMoving ? Math.max(cadence, Math.min(GAP_MAX_MS, since) / 2) : cadence;",
     "new": "  return cadence;",
     "tests": [
-      "test/slam10.test.js",
-      "test/slam6.test.js",
-      "test/slam1.test.js",
-      "test/slam3.test.js",
-      "test/slam8.test.js",
-      "test/mwbody1.test.js",
-      "test/online.test.js"
+      "test/net/slam10.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam1.test.js",
+      "test/net/slam3.test.js",
+      "test/net/slam8.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/online.test.js"
     ]
   }
 ]

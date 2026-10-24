@@ -30,9 +30,9 @@ import { hash32, plateauDry } from './spawnedDungeons.js';
 import { WATER_BYTE } from './roadsProducer.js';   // TESA14: the beach line a place stands over
 import { srand, rand, getSeed, setSeed } from '../formats/dfRandom.js';
 import { firstName, surname, GENDERS, BANK_TYPES } from '../characters/nameHelper.js';
-import { TAVERNS_A, TAVERNS_B } from './buildingNames.js';
-import { BAY_W, BAY_H, tamrielFit } from './tamrielFrame.js';
-import { tamrielLandVersion } from './tamrielLand.js';   // AUDIT-TESA A7-1: the ground's reads kept a land
+import { tavernsA, tavernsB } from './buildingNames.js';   // L10N: the tavern words in the player's language
+import { BAY_W, BAY_H, tamrielFit } from './tamriel/tamrielFrame.js';
+import { tamrielLandVersion } from './tamriel/tamrielLand.js';   // AUDIT-TESA A7-1: the ground's reads kept a land
 import { CAPITAL_LANE } from './tamrielCapitals.js';   // TESA10: the capitals' lane, after the lairs'
 
 /** The pixel hash's salt. Changing it moves every place of the countryside. */
@@ -224,7 +224,7 @@ export function countryName(type, bank, seed) {
         case '%s': return stem(bank);
         case '%t': return stem(bank);
         case '%f': return firstName(bank, gender());
-        case '%v': return `${draw(TAVERNS_A)} ${draw(TAVERNS_B)} ${draw(TAVERN_KINDS)}`;
+        case '%v': return `${draw(tavernsA())} ${draw(tavernsB())} ${draw(TAVERN_KINDS)}`;
         case '%e': return draw(TEMPLE_EPITHETS);
         case '%n': return draw(TEMPLE_NOUNS);
         default: return draw(TEMPLE_GODS);

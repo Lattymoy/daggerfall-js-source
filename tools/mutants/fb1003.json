@@ -1,11 +1,11 @@
 [
   {
     "name": "RETROUI-hud-on-canvas",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  if (ui !== canvas) return onUiScreen(renderer, ui, () => drawHud(renderer, ui, art, vitals, heading01, dt, arguments[6]));",
     "new": "  if (false && ui !== canvas) return onUiScreen(renderer, ui, () => drawHud(renderer, ui, art, vitals, heading01, dt, arguments[6]));",
     "tests": [
-      "test/fb1003_retroui.test.js"
+      "test/systems/fb1003_retroui.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  renderer.setScreenOffset(ox + r.x, oy + r.y);",
     "new": "  renderer.setScreenOffset(ox, oy);",
     "tests": [
-      "test/fb1003_retroui.test.js"
+      "test/systems/fb1003_retroui.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (!r) return canvas;\n  return { width: r.w,",
     "new": "  if (true) return canvas;\n  return { width: r.w,",
     "tests": [
-      "test/fb1003_retroui.test.js"
+      "test/systems/fb1003_retroui.test.js"
     ]
   },
   {
@@ -32,70 +32,70 @@
     "old": "  return _rect ? [px - _rect.x, py - _rect.y] : [px, py];",
     "new": "  return [px, py];",
     "tests": [
-      "test/fb1003_retroui.test.js"
+      "test/systems/fb1003_retroui.test.js"
     ]
   },
   {
     "name": "RETROUI-rig-on-canvas",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "  const cv = () => uiCanvas(typeof canvas === 'function' ? canvas() : canvas);",
     "new": "  const cv = () => (typeof canvas === 'function' ? canvas() : canvas);",
     "tests": [
-      "test/fb1003_retroui.test.js"
+      "test/systems/fb1003_retroui.test.js"
     ]
   },
   {
     "name": "RETROUI-muzzle-in-layer",
-    "file": "src/combat/weaponRig.js",
-    "old": "_tlDrawn = { rect: { ...rect, x: rx, y: ry },",
-    "new": "_tlDrawn = { rect: { ...rect, x: rect.x, y: rect.y },",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "const drawn = { rect: { ...rect, x: rx, y: ry },",
+    "new": "const drawn = { rect: { ...rect, x: rect.x, y: rect.y },",
     "tests": [
-      "test/fb1003_retroui.test.js"
+      "test/systems/fb1003_retroui.test.js"
     ]
   },
   {
     "name": "RETROUI-enhanced-root",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  root.style.left = inset; root.style.right = inset;",
     "new": "  root.style.left = ''; root.style.right = '';",
     "tests": [
-      "test/fb1003_retroui.test.js"
+      "test/systems/fb1003_retroui.test.js"
     ]
   },
   {
     "name": "MOVED-no-build-sweep",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "  placeHudPieces(doc);\n  return root;",
     "new": "  return root;",
     "tests": [
-      "test/fb1003_movednotice.test.js"
+      "test/ui/enhanced/fb1003_movednotice.test.js"
     ]
   },
   {
     "name": "MOVED-always",
-    "file": "src/ui/hudLayout.js",
+    "file": "src/ui/hud/hudLayout.js",
     "old": "  if (o && (o.x || o.y)) { if (!node.hasAttribute('data-hm-moved'))",
     "new": "  if (true) { if (!node.hasAttribute('data-hm-moved'))",
     "tests": [
-      "test/fb1003_movednotice.test.js"
+      "test/ui/enhanced/fb1003_movednotice.test.js"
     ]
   },
   {
     "name": "MOVED-by-scale",
-    "file": "src/ui/hudLayout.js",
+    "file": "src/ui/hud/hudLayout.js",
     "old": "  if (o && (o.x || o.y)) { if (!node.hasAttribute('data-hm-moved'))",
     "new": "  if (o && (o.x || o.y || (o.s && o.s !== 1))) { if (!node.hasAttribute('data-hm-moved'))",
     "tests": [
-      "test/fb1003_movednotice.test.js"
+      "test/ui/enhanced/fb1003_movednotice.test.js"
     ]
   },
   {
     "name": "MOVED-out-slides",
-    "file": "src/ui/hudLayout.js",
+    "file": "src/ui/hud/hudLayout.js",
     "old": ".notice-stack[data-hm-moved] > .notice.notice-out { transform: none; }",
     "new": ".notice-stack[data-hm-moved] > .notice.notice-outX { transform: none; }",
     "tests": [
-      "test/fb1003_movednotice.test.js"
+      "test/ui/enhanced/fb1003_movednotice.test.js"
     ]
   },
   {
@@ -104,8 +104,8 @@
     "old": "export const DFU_CURSOR_HOTSPOT = Object.freeze([0, 0]);",
     "new": "export const DFU_CURSOR_HOTSPOT = Object.freeze([1, 0]);",
     "tests": [
-      "test/fb1003_classiccursor.test.js",
-      "test/fb1001_uiaudit.test.js"
+      "test/ui/fb1003_classiccursor.test.js",
+      "test/ui/fb1001_uiaudit.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "html, html *, html *::before, html *::after { cursor: ${arrow} !important; }",
     "new": "html, html *, html *::before, html *::after { cursor: ${arrow}; }",
     "tests": [
-      "test/fb1001_uiaudit.test.js"
+      "test/ui/fb1001_uiaudit.test.js"
     ]
   },
   {
@@ -123,34 +123,34 @@
     "old": "  if (!classic || !doc?.head || !doc.createElement) return false;",
     "new": "  if (!doc?.head || !doc.createElement) return false;",
     "tests": [
-      "test/fb1001_uiaudit.test.js"
+      "test/ui/fb1001_uiaudit.test.js"
     ]
   },
   {
     "name": "GLLEAK-ink-per-open",
-    "file": "src/ui/inkDungeonGL.js",
+    "file": "src/ui/ink/inkDungeonGL.js",
     "old": "  if (_shared && _shared.doc === doc && !_shared.ink.lost()) return _shared.ink;",
     "new": "  if (false) return _shared.ink;",
     "tests": [
-      "test/fb1003_glleak.test.js"
+      "test/ui/ink/fb1003_glleak.test.js"
     ]
   },
   {
     "name": "GLLEAK-dispose-keeps",
-    "file": "src/ui/inkDungeonGL.js",
+    "file": "src/ui/ink/inkDungeonGL.js",
     "old": "      for (const b of Object.values(buf)) gl.deleteBuffer(b);",
     "new": "      for (const b of []) gl.deleteBuffer(b);",
     "tests": [
-      "test/fb1003_glleak.test.js"
+      "test/ui/ink/fb1003_glleak.test.js"
     ]
   },
   {
     "name": "GLLEAK-owner-unkeyed",
-    "file": "src/ui/inkDungeonGL.js",
+    "file": "src/ui/ink/inkDungeonGL.js",
     "old": "      if (key === meshKey && owner === meshOwner) return;",
     "new": "      if (key === meshKey) return;",
     "tests": [
-      "test/fb1003_glleak.test.js"
+      "test/ui/ink/fb1003_glleak.test.js"
     ]
   },
   {
@@ -159,16 +159,16 @@
     "old": "addEventListener('pagehide', (e) => { if (!e.persisted) releaseGlContexts(); });",
     "new": "addEventListener('pagehide', () => { releaseGlContexts(); });",
     "tests": [
-      "test/fb1003_glleak.test.js"
+      "test/ui/ink/fb1003_glleak.test.js"
     ]
   },
   {
     "name": "GLLEAK-fail-keeps-context",
-    "file": "src/ui/inkDungeonGL.js",
+    "file": "src/ui/ink/inkDungeonGL.js",
     "old": "catch { loseGlContext(gl); return null; }",
     "new": "catch { return null; }",
     "tests": [
-      "test/fb1003_glleak.test.js"
+      "test/ui/ink/fb1003_glleak.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "      if (held.size) return true;\n    }\n    return false;",
     "new": "      if (held.size) return false;\n    }\n    return false;",
     "tests": [
-      "test/fb1003_bountyrock.test.js"
+      "test/systems/party/fb1003_bountyrock.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "      if (bucket.r || !(bucket.min[0] <= bucket.max[0])) continue;   // a mover's; an empty bucket's box is inverted",
     "new": "      if (!(bucket.min[0] <= bucket.max[0])) continue;",
     "tests": [
-      "test/fb1003_bountyrock.test.js"
+      "test/systems/party/fb1003_bountyrock.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "      if (anchor && _inRock(anchor.x, anchor.y, anchor.z)) anchor = null;",
     "new": "      if (false) anchor = null;",
     "tests": [
-      "test/fb1003_bountyrock.test.js"
+      "test/systems/party/fb1003_bountyrock.test.js"
     ]
   },
   {
@@ -204,16 +204,17 @@
     "old": "        if (spot && _inRock(spot.x, spot.y, spot.z)) spot = null;",
     "new": "        if (false) spot = null;",
     "tests": [
-      "test/fb1003_bountyrock.test.js"
+      "test/systems/party/fb1003_bountyrock.test.js"
     ]
   },
   {
     "name": "BODYGUARD-no-startup",
     "file": "src/systems/quest/clock.js",
-    "old": "(startersOf(q, name).length > 0 || closesStartUp(q, name))",
-    "new": "(startersOf(q, name).length > 0)",
+    "old": "      && !(ONLINE_DEADLINES[q?.questName] ?? []).includes(this.symbol?.name) && closesStartUp(q, this.symbol?.name)) return false;",
+    "new": "      && !(ONLINE_DEADLINES[q?.questName] ?? []).includes(this.symbol?.name) && false) return false;",
     "tests": [
-      "test/fb1003_bodyguard.test.js"
+      "test/systems/quest/fb1003_bodyguard.test.js",
+      "test/systems/quest/fb1021d_ravenclose.test.js"
     ]
   },
   {
@@ -222,7 +223,7 @@
     "old": "  if (startUp.some((tn) => reached(quest, tn, { conditional: false }).settles)) return false;\n",
     "new": "",
     "tests": [
-      "test/fb1003_bodyguard.test.js"
+      "test/systems/quest/fb1003_bodyguard.test.js"
     ]
   },
   {
@@ -231,7 +232,7 @@
     "old": "  return end.types.has('EndQuest') && !end.lowers && [...end.types].every((t) => QUIET_CLOSE.has(t));",
     "new": "  return end.types.has('EndQuest');",
     "tests": [
-      "test/fb1003_bodyguard.test.js"
+      "test/systems/quest/fb1003_bodyguard.test.js"
     ]
   },
   {
@@ -240,7 +241,7 @@
     "old": "  return [(look?.[0] ?? 0) * k, (look?.[1] ?? 0) * k * lookInvert()];",
     "new": "  return [(look?.[0] ?? 0), (look?.[1] ?? 0)];",
     "tests": [
-      "test/fb1003_widgetlook.test.js"
+      "test/combat/weapon/fb1003_widgetlook.test.js"
     ]
   },
   {
@@ -249,7 +250,7 @@
     "old": "(180 / Math.PI) / (LOOK_SENSITIVITY_FIELD * getFloat(",
     "new": "(180 / Math.PI) / (1 * getFloat(",
     "tests": [
-      "test/fb1003_widgetlook.test.js"
+      "test/combat/weapon/fb1003_widgetlook.test.js"
     ]
   },
   {
@@ -258,7 +259,7 @@
     "old": "(look?.[1] ?? 0) * k * lookInvert()]",
     "new": "(look?.[1] ?? 0) * k]",
     "tests": [
-      "test/fb1003_widgetlook.test.js"
+      "test/combat/weapon/fb1003_widgetlook.test.js"
     ]
   },
   {
@@ -267,7 +268,7 @@
     "old": "  onStruck?.(struckBodyPart);",
     "new": "",
     "tests": [
-      "test/fb1003_widgetlook.test.js"
+      "test/combat/weapon/fb1003_widgetlook.test.js"
     ]
   },
   {
@@ -276,7 +277,7 @@
     "old": ": r?.error === 'guild-treasury-old' ? hallOldGoldLine(guildHallPrice(price))",
     "new": ": r?.error === 'guild-treasury-old' ? hallShortLine(guildHallPrice(price))",
     "tests": [
-      "test/fb1003_hallgold.test.js"
+      "test/ui/fb1003_hallgold.test.js"
     ]
   },
   {
@@ -285,7 +286,7 @@
     "old": "    hallGold: Number(g.realm_gold ?? 0),",
     "new": "    hallGold: Number(g.treasury ?? 0),",
     "tests": [
-      "test/fb1003_hallgold.test.js"
+      "test/ui/fb1003_hallgold.test.js"
     ]
   },
   {
@@ -294,7 +295,7 @@
     "old": "    const overCap = () => goldTyped() > GUILD_MOVE_MAX;",
     "new": "    const overCap = () => false;",
     "tests": [
-      "test/fb1003_hallgold.test.js"
+      "test/ui/fb1003_hallgold.test.js"
     ]
   }
 ]

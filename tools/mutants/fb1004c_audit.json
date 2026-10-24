@@ -5,7 +5,7 @@
     "old": "{ if (!(sb.records && recordsHere)) targets.push(",
     "new": "{ if (true) targets.push(",
     "tests": [
-      "test/fb1004c_audit.test.js"
+      "test/systems/fb1004c_audit.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "records: !!(b.layout.castleBlock && isShopShelfModel(p.modelIdNum)) });",
     "new": "records: false });",
     "tests": [
-      "test/fb1004c_audit.test.js"
+      "test/systems/fb1004c_audit.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "          castleRecordsHere: () => castleRecordsHere(),",
     "new": "",
     "tests": [
-      "test/fb1004c_audit.test.js"
+      "test/systems/fb1004c_audit.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      if (firstHit.key === target.key) d = Math.max(d, firstHit.dist);\n",
     "new": "",
     "tests": [
-      "test/fb1004c_audit.test.js"
+      "test/systems/fb1004c_audit.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE);   // the one cast, DISC19-E's arm's too",
     "new": "      firstHit ??= collider.raycastHit(eye, dir, target.reach ?? RAY_DISTANCE);   // the one cast, DISC19-E's arm's too",
     "tests": [
-      "test/fb1004c_audit.test.js"
+      "test/systems/fb1004c_audit.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "eye[2] + dir[2] * firstHit.dist], PICK_PARDON_M)) continue;",
     "new": "eye[2] + dir[2] * firstHit.dist], 0)) continue;",
     "tests": [
-      "test/fb1004c_audit.test.js"
+      "test/systems/fb1004c_audit.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "itemLongName(item, { differentiatePlantIngredients: false, getQuest })",
     "new": "itemLongName(item, { differentiatePlantIngredients: false })",
     "tests": [
-      "test/fb1004c_audit.test.js"
+      "test/systems/fb1004c_audit.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "        const st = questFlats[Number(key.split(':')[1])];\n        const res = st?.behaviour?.targetResource ?? null;\n        if (!res || res.isPerson === true || res.isFoe === true) return null;\n        const t = questResourceName(questStandItem(res), { archive: st.archive ?? -1, record: st.record ?? -1, getQuest: (uid) => questBridge?.machine.getQuest(uid) ?? null });",
     "new": "        const st = questFlats[Number(key.split(':')[1])];\n        const res = st?.behaviour?.targetResource ?? null;\n        if (!res || res.isPerson === true || res.isFoe === true) return null;\n        const t = questResourceName(questStandItem(res), { archive: st.archive ?? -1, record: st.record ?? -1 });",
     "tests": [
-      "test/fb1004c_audit.test.js"
+      "test/systems/fb1004c_audit.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      if (was?.clicked && !r.hasPlayerClicked) r.setPlayerClicked();",
     "new": "      if (was?.clicked && r.isItem && !r.hasPlayerClicked) r.setPlayerClicked();",
     "tests": [
-      "test/fb1004c_audit.test.js"
+      "test/systems/fb1004c_audit.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      if (was?.clicked && !r.hasPlayerClicked) r.setPlayerClicked();",
     "new": "      if (was?.clicked) r.hasPlayerClicked = true;",
     "tests": [
-      "test/fb1004c_audit.test.js"
+      "test/systems/fb1004c_audit.test.js"
     ]
   },
   {
@@ -95,25 +95,25 @@
     "old": "      if (r.hasPlayerClicked || hidden) actsBefore.set(",
     "new": "      if (r.hasPlayerClicked) actsBefore.set(",
     "tests": [
-      "test/fb1004c_audit.test.js"
+      "test/systems/fb1004c_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-ROBES-menu-side-gate-dropped",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (from === 'remote') sendQuestItemClick(item, deps.getQuest ?? null);\n  const acts",
     "new": "  sendQuestItemClick(item, deps.getQuest ?? null);\n  const acts",
     "tests": [
-      "test/fb1004c_audit.test.js"
+      "test/systems/fb1004c_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-ROBES-menu-click-only-on-take",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (from === 'remote') sendQuestItemClick(item, deps.getQuest ?? null);\n  const acts",
     "new": "  const acts",
     "tests": [
-      "test/fb1004c_audit.test.js"
+      "test/systems/fb1004c_audit.test.js"
     ]
   }
 ]

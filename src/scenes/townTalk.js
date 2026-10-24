@@ -23,25 +23,25 @@
 //     (DaggerfallTalkWindow.cs:360-385) is called from SetTargetNPC,
 //     before the push, so it rides openTalkWindow's `portrait` option
 //     below - CommonFaces (TFAC00I0.RCI) at SetPerson's minted record
-//     for a mobile (TalkManager.cs:817, systems/townPopulation.js's
+//     for a mobile (TalkManager.cs:817, systems/town/townPopulation.js's
 //     _setFaceRecord), and GetPortraitIndexFromStaticNPCBillboard's
 //     archive/record pair for a static NPC (:849, the law in
 //     systems/npcSession.js, wired at scenes/worldModes.js).
 //   - THE PICKPOCKET BOX SWAPPED. Pickpocket (PlayerActivate.cs:
 //     1611-1660) raises a real MessageBox for both success arms and
-//     leaves only the failure on the HUD, which systems/talk.js now
+//     leaves only the failure on the HUD, which systems/talk/talk.js now
 //     reports as `modal` and the steal arm below routes on.
 
 import { FactionFile } from '../formats/factionFile.js';
-import { addCustomFactions } from '../systems/factionRep.js';   // RR3: a mod's registered factions, on this reader too
+import { addCustomFactions } from '../systems/faction/factionRep.js';   // RR3: a mod's registered factions, on this reader too
 import { racialSuppressTalk } from '../systems/lycanthropy.js';   // V4: the transformed talk refusal
 import { TextRsc } from '../formats/textRsc.js';
 import { FntFile } from '../formats/fntFile.js';
 import { makeFont } from '../ui/text.js';
-import { HudText } from '../ui/hudText.js';
+import { HudText } from '../ui/hud/hudText.js';
 import { TalkWindow } from '../ui/talkWindow.js';
-import { hudScale } from '../ui/hud.js';
-import { hudRenderEnabled } from '../ui/hudShortcuts.js';   // AUDIT 64 F37: DaggerfallHUD's Draw override covers popupText too
+import { hudScale } from '../ui/hud/hud.js';
+import { hudRenderEnabled } from '../ui/hud/hudShortcuts.js';   // AUDIT 64 F37: DaggerfallHUD's Draw override covers popupText too
 import { setMidScreenText, midScreenText } from '../ui/midScreenText.js';   // AUDIT 64 F34: the HUD's OTHER text surface, and its notebook tail
 import { overlayAction, actionsOf, isTextEntryTarget, isDomControlTarget, isDomFocusWalk } from '../ui/input.js';   // AUDIT 58: the mode keys read the registry, not e.code; CG2: a DOM field's key is the field's
 import { makeWindowStack, pauseWhileOpen, hidesHud } from '../ui/windowStack.js';   // ROAD-B B1: UserInterfaceManager's stack, under this host's one slot; ROAD-tail: and its PAUSE
@@ -49,7 +49,7 @@ import { hudFade } from '../ui/fadeLayer.js';   // D4: PushWindow's ClearFade
 import {
   getPeopleOfCurrentRegion, getReactionToPlayer, pickpocket, findFactions,
   MOBILE_NPC_ACTIVATION_DISTANCE, RAY_DISTANCE, PICKPOCKET_DISTANCE, FOUND_NOTHING_VALUABLE_TEXT_ID,
-} from '../systems/talk.js';
+} from '../systems/talk/talk.js';
 // AUDIT 58 (talk lane): the reach refusal is ONE localized key -
 // TextManager 'youAreTooFarAway' (Internal_Strings.csv:22), spoken by
 // ActivateMobileNPC at PlayerActivate.cs:780 and :790 - so it is one
@@ -57,27 +57,30 @@ import {
 // it with a full stop while systems/bulletinBoard.js spelled the same
 // key with the table's ellipsis, so one session showed the player two
 // sentences for one string.
-import { TOO_FAR_AWAY_TEXT } from '../player/activate.js';
-import { startMobileTalk, expandMacros, expandAnswerRecord, oathTextId, honorificOf, raceDisplayName } from '../systems/talkSession.js';
+import { tooFarAwayText } from '../player/activate.js';
+import { startMobileTalk, expandMacros, expandAnswerRecord, oathTextId, honorificOf, raceDisplayName } from '../systems/talk/talkSession.js';
 import { REGION_RACES } from '../formats/mapsFile.js';
+import { getLocalizedLocationName, getLocalizedRegionName } from '../systems/textManager.js'; import { shownFactionNames } from '../world/buildingNames.js';   // L10N3e: the place names shown, and the faction names a guild hall and a temple show
 import { ChoiceWindow } from '../ui/talkWindow.js';
-import { buildBuildingDirectory, questorCandidateBuildings, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012, buildingHint } from '../systems/talkTopics.js';
+import { buildBuildingDirectory, questorCandidateBuildings, TOPIC_CATEGORIES, whereIsAnswer, reactionTier012, buildingHint, toneTaste } from '../systems/talk/talkTopics.js';
 import { yardDirectoryRows } from '../systems/merchantYards.js';   // YARDS-FOUND: the town's yards in its directory
 import { portDirectoryRows, FOUND_KIND_ORDER, FOUND_TALK_GROUPS, lettersOnMap } from '../systems/portPlaces.js';   // SHIPYARDS-FOUND: and a port town's shipyard, crew hall, lighthouse and docks - the found places' one order
+import { OPENED_SHOP_TYPES, OPENED_SHOP_GROUPS } from '../world/buildingNames.js';   // PROF-FOUND: the shops the port opened, asked after
 import { LIST_ITEM_TYPE, QUESTION_TYPE } from '../systems/topicTree.js';   // TK-vi: the window's rows are the tree's ListItems; B6: the Work question type
 import { discoverBuilding } from '../systems/discovery.js';   // T4: %loc's mark side effect
 import { getNameBankOfRegion, fullName as nameHelperFullName, GENDERS } from '../characters/nameHelper.js';   // MACRO-6: %fn/%mn in the engine-less answer
-import { talkMacroSource } from '../systems/talkMacros.js';
+import { talkMacroSource } from '../systems/talk/talkMacros.js';
 import { bumpSeed } from '../formats/dfRandom.js';
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { skillValue, tallySkill, SKILLS } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';   // AUDIT 63 F4: TalkManager.cs:665 reads Stats.LivePersonality (DaggerfallStats.cs:55), not the base
 import { ActionTextBox } from '../ui/actionText.js';   // ROAD-D D10: DaggerfallUI.MessageBox, the port's parchment
 import { registerPresenter, messageBox } from '../systems/notify.js';   // ENH-NOTICE3: this slot and this PopupText, offered to the one door every message goes through - and the door itself, for this host's own box seam
-import { preloadTalkArt, setNpcPortrait, clearNpcPortrait } from '../ui/nativeTalk.js';   // U8b   // ROAD-D D10: SetNPCPortrait
+import { preloadTalkArt, setNpcPortrait, clearNpcPortrait } from '../ui/native/nativeTalk.js';   // U8b   // ROAD-D D10: SetNPCPortrait
+import { npcHeadImage } from '../characters/headPortraits.js';   // PORTRAIT3D: the face as the head the body wears
 import { createTalkWindow, talkDoorReady } from '../ui/talkDoor.js';   // ET1: the ONE door - the classic window or the enhanced panel over it
 import { requestLook } from '../player/pointerLock.js';   // ET1: the panel's Goodbye relocks inside its own gesture (MAC1)
-import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // U8b: pointer routing
+import { nativeMetrics, pointToNative } from '../ui/native/nativePanel.js';   // U8b: pointer routing
 import { preloadExteriorAutomapArt } from '../ui/exteriorAutomapWindow.js';   // ROAD-C c2/S10: the town map's native art
 
 export const TONE_NAMES = ['Polite', 'Normal', 'Blunt'];   // T3f: TalkTone -> index (DFU TalkToneToIndex)
@@ -86,9 +89,10 @@ export const TONE_NAMES = ['Polite', 'Normal', 'Blunt'];   // T3f: TalkTone -> i
 // currentMode is GLOBAL - the dungeon door ladder reads it too);
 // townTalk keeps the keydown, the HUD line and these re-exports.
 export { MODES, nextInteractionMode } from '../player/interactionMode.js';
-import { MODES, MODE_ACTIONS, getInteractionMode, setInteractionMode, nextInteractionMode, askInteractionMode } from '../player/interactionMode.js';
+import { MODES, MODE_ACTIONS, getInteractionMode, setInteractionMode, nextInteractionMode, interactionModeText, askInteractionMode } from '../player/interactionMode.js';
 import { modeWheel, MODE_WHEEL_ACTION } from '../ui/modeWheel.js';   // MODE-WHEEL: the held key's wheel
 import { getClassicQuestionIndex } from '../systems/answerPipeline.js';   // F042
+import { friendLine } from '../systems/livingWorld/friendWord.js';   // FIELD BUGS 2026-10-21d REGARD-OWN: a friend made, said
 // AUDIT 58 (talk lane): the four modes ride the keybinding registry
 // now - MODE_ACTIONS lives beside the mode it sets
 // (player/interactionMode.js), because PlayerActivate.cs:221-228 reads
@@ -140,7 +144,7 @@ export function rayPersonDistance(camPos, fwd, feet) {
   return t / fl * Math.hypot(fwd[0], fwd[1], fwd[2]);
 }
 
-export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, nameBank = null, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, otherHudCovered = null, keysLive = null, questBuildingSource = null, livingTalk = null, livingTone = null, legacyTopics = null }) {   // LW2: `livingTalk` the living world's doors - { refuses(person) -> text|null, talked(person), caught(person) } (bible/06-Systems/Living-World.md); LEGACY-HOME: `kin(person, talk)` true when one of the player's line took the activation (`talk` the conversation, should they ask for it); LW7: `livingTone(person, tone)` a question's tone   // AUDIT ENH-NOTICE3 C2: `otherHudCovered` is the mode host's previousWindow-chain answer (modes.hudCovered), for the toasts   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
+export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, regionIndex, nameBank = null, onCrime = null, topics = null, palette = null, rolls = Math.random, talkEngine = null, onBuildingList = null, otherOverlayActive = null, otherHudCovered = null, keysLive = null, questBuildingSource = null, livingTalk = null, livingTone = null, legacyTopics = null }) {   // LW2: `livingTalk` the living world's doors - { refuses(person) -> text|null, talked(person), caught(person) } (bible/06-Systems/Living-World.md); LEGACY-HOME: `kin(person, talk)` true when one of the player's line took the activation (`talk` the conversation, should they ask for it); LW7: `livingTone(person, taste)` a question's tone, as they took it (TONE-TASTE)   // AUDIT ENH-NOTICE3 C2: `otherHudCovered` is the mode host's previousWindow-chain answer (modes.hudCovered), for the toasts   // AUDIT 63 F49: PlayerGPS.DiscoverBuilding's quest name-override seam ({ currentMapID, isBuildingQuestResource }), null in a host with no topic tree
   // RP1 - THE REGION IS READ LIVE, NOT CAPTURED AT BOOT.
   //
   // This took a plain number, and the world host had no choice but to
@@ -300,26 +304,37 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // buildingNameOpts hook and the directory build cannot drift - a
   // second copy of "which bank, whose regent, what the palace is
   // called" is how %cbd and the talk directory come to disagree about
-  // the same building. Null while no topics/factions stand (the quest
+  // the same building. Null until FACTION.TXT is read (the quest
   // hook answers {} through it and generateBuildingName falls to its
-  // own defaults, DFU's own out-of-location posture).
+  // own defaults).
+  // FB1020h SITE-NAMED (FIELD BUGS 2026-10-20h): A TEMPLE'S AND A GUILD
+  // HALL'S NAME NEED NO TOWN. The bag answered null wherever no town's
+  // topics stood - on the road, at sea - and a quest that drew a remote
+  // temple or guild hall there named it '' for good: the Order of the
+  // Hour's letters read "at  in Wildertown". DFU names them from
+  // PlayerEntity.FactionData wherever the player stands
+  // (FormulaHelper.cs:3139-3162), and a shop's %ef bank and %rt regent
+  // by the player's region (FormulaHelper.cs:3225,
+  // MacroHelper.cs:644-650); only the town pair is the town's.
   function nameOpts() {
-    if (!topics || !factions) return null;
-    const region = topics.regionIndex ?? regionNow();
+    if (!factions) return null;
+    const region = topics?.regionIndex ?? regionNow();
     const province = findFactions(factions.factionDict, { type: FACTION_TYPES.Province, region })[0];
     return {
-      locationName: topics.locationName, regionName: topics.regionName,
+      locationName: topics?.locationName, regionName: topics?.regionName,   // the canonical pair: the key a palace is chosen by (none off a town)
+      // L10N3e: ...and the pair AS SHOWN, for a shop's %cn and the bank's region (TalkManager.cs:2788-2789, :2857-2858)
+      shownLocationName: shownLocationName(), shownRegionName: shownRegionName(),
       nameBank: provinceBank() ?? getNameBankOfRegion(region),   // TESA3: the province's people past the Bay
       regentRuler: province?.ruler ?? 0,
       factionName: (id) => factions.getFaction(id)?.name ?? '',
-      templeName: (id) => {
-        const f = factions.getFaction(id);
-        return (f?.children?.length ? factions.getFaction(f.children[0])?.name : f?.name) ?? '';
-      },
+      templeName: (id) => { const f = factions.getFaction(id); return (f?.children?.length ? factions.getFaction(f.children[0])?.name : f?.name) ?? ''; },
+      // L10N3e: ...and the pair AS SHOWN - GetFactionData's name in the player's language (FormulaHelper.cs:3020-3036,
+      // PersistentFactionData.cs:176): a hall by its own faction, a temple by its first child
+      ...shownFactionNames((id) => factions.getFaction(id)),
       palaceName: (locName) => {
         const id = { Daggerfall: 475, Wayrest: 476, Sentinel: 477 }[locName];
         const v = id ? textRsc?.plainText(id) : null;
-        return v?.[0] ? v[0].replace(/\.$/, '') : 'Palace';
+        return v?.[0] ? v[0].replace(/\.$/, '') : null;   // L10N3d: generateBuildingName's own localized "palace" (FormulaHelper.cs:3069)
       },
     };
   }
@@ -370,15 +385,24 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   }
 
   const textVariants = (id) => textRsc?.plainText(id) ?? [''];
-  /** MacroHelper.CityName (%cn): the current location, falling back to
-   *  the region when the player is off-location. */
+  /** The current location, falling back to the region when the player is
+   *  off-location: cityName the CANONICAL pair (the discovery key), and
+   *  L10N3e shownCityName what MacroHelper.CityName (%cn) SHOWS -
+   *  CurrentLocalizedLocationName by the map id, else
+   *  CurrentLocalizedRegionName (MacroHelper.cs:571, :573). */
   const cityName = () => topics?.locationName ?? topics?.regionName ?? '';
+  const shownCityName = () => shownLocationName() ?? shownRegionName() ?? '';
+  function shownLocationName() { return topics?.locationName == null ? topics?.locationName : getLocalizedLocationName(topics.mapId, topics.locationName); }
+  function shownRegionName() {
+    const i = topics?.regionIndex ?? regionNow();
+    return topics?.regionName == null || !Number.isInteger(i) ? topics?.regionName : getLocalizedRegionName(i, () => topics.regionName);
+  }
   /** One record through the greeting/question macro set: the oath is
    *  drawn ONLY when the record carries %oth (DFU expands lazily). */
   const expandRecord = (raw) => expandMacros(raw, {
     playerName: playerEntity.name ?? '',
     oath: raw.includes('%oth') ? randomPooledText(oathTextId(npcRaceNow()), '') : '',   // F047: GetRandomText(201 + oathId)
-    cityName: cityName(),
+    cityName: shownCityName(),
   });
   const randomVariant = (id, fallback) => {
     const v = textRsc?.plainText(id);
@@ -402,7 +426,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // AUDIT 64 F34: PlayerActivate.cs:1424 ends ChangeInteractionMode
     // with `DaggerfallUI.SetMidScreenText(interactionIsNowInMode)` - the
     // centred label, not the popup queue.
-    setMidScreenText(`Interaction is now in ${m} mode.`);
+    setMidScreenText(interactionModeText(m));
   }
 
   function keydown(e, keys = null) {   // KB1: the host's held Set, so a combo'd mode key resolves (the dungeon host's arm already reads it)
@@ -740,14 +764,14 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // street with SILENCE and let E fall through to a door behind them.
     if (!best || bestDist > RAY_DISTANCE || !(bestDist < nearerThan)) return false;   // MC-2: :412 is reached for the ray's OWN hit
     // AUDIT 64 F34: PlayerActivate.cs:780 - SetMidScreenText, not the popup queue.
-    if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }
+    if (getInteractionMode() !== 'steal' && bestDist > MOBILE_NPC_ACTIVATION_DISTANCE) { setMidScreenText(tooFarAwayText()); return true; }
     // AUDIT 26 F048: ActivateMobileNPC NESTS the steal distance test
     // inside `if (!mobileNpc.PickpocketByPlayerAttempted)`
     // (PlayerActivate.cs:785-795), so an already-attempted townsperson
     // produces NO output at any range - the port gated distance first
     // and printed a line DFU never shows.
     if (getInteractionMode() === 'steal' && !best.person?.pickpocketAttempted
-        && bestDist > PICKPOCKET_DISTANCE) { setMidScreenText(TOO_FAR_AWAY_TEXT); return true; }   // AUDIT 64 F34: :790, the same surface
+        && bestDist > PICKPOCKET_DISTANCE) { setMidScreenText(tooFarAwayText()); return true; }   // AUDIT 64 F34: :790, the same surface
     ensureLoaded().then(() => activate(best, bestDist));
     return true;
   }
@@ -758,7 +782,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
       // F048's nesting, so the already-attempted arm is SILENT here
       // too, whatever the range.
       if (target.person.pickpocketAttempted) return;
-      if (dist > PICKPOCKET_DISTANCE) { setMidScreenText(TOO_FAR_AWAY_TEXT); return; }   // AUDIT 64 F34: :790, the same surface
+      if (dist > PICKPOCKET_DISTANCE) { setMidScreenText(tooFarAwayText()); return; }   // AUDIT 64 F34: :790, the same surface
       target.person.pickpocketAttempted = true;
       const crimeWas = playerEntity.crimeCommitted;   // AUDIT LW-II-2 C15: the flag standing before the hand went in
       const r = pickpocket(playerEntity, {
@@ -806,7 +830,8 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // LW2: a resident of the living world who counts the player an enemy has no words for them - said on the HUD's
     // middle line, as the activation's other refusals are; DFU's walkers have no memory to refuse from
     const refusal = livingTalk?.refuses?.(target.person) ?? null;
-    if (refusal) { setMidScreenText(refusal); return; }
+    // AUDIT PLAIN-UI U11: the refusal says where the resident stands - an enemy's badge was the one no panel ever opened on
+    if (refusal) { const b = livingTalk?.regard?.(target.person) ?? null; setMidScreenText(b ? `${refusal} (${b.label}, ${b.value})` : refusal); return; }
     // LW6c: a household's moment before the words - the keepsake of one of theirs the deep kept, carried home (the
     // body's town's: livingTown.js moment, the room's door): their words on the parchment, the conversation another time
     const moment = target.person?.living?.town?.moment?.(target.person) ?? null;
@@ -822,7 +847,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
 
   /** LEGACY-HOME: a mobile's portrait - a resident's own (one of the line: the chargen head they were made with), else
    *  TalkManager.cs:817's: a mobile ALWAYS portraits from TFAC00I0.RCI, at the record SetPerson minted for it. */
-  const portraitOf = (person) => person?.living?.res?.portrait ?? { archive: 'CommonFaces', record: person?.personFaceRecordId ?? 0 };
+  // PORTRAIT3D: and the look the walker's body is built from (folkBodies.js folkLook, rosterBodies.js residentLook, a
+  // kin's own) - its face as that body's head where the people stand in Morrowind bodies
+  const portraitOf = (person) => ({ ...(person?.living?.res?.portrait ?? { archive: 'CommonFaces', record: person?.personFaceRecordId ?? 0 }), head: person?._mwRes?.look ?? person?._mwFolk?.look ?? person?.living?.res?.look ?? null });
 
   /** The conversation itself, once nothing stands before it (the activation's gates above). */
   function converse(target) {
@@ -862,7 +889,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // exterior.js): the reaction-threshold greeting ladder alone.
     const reaction = peopleNow() ? getReactionToPlayer(peopleNow(), playerEntity) : 0;
     const t = startMobileTalk({
-      reaction, textVariants, playerName: playerEntity.name ?? '', npcRace: npcRaceNow(), rolls, cityName: cityName(),
+      reaction, textVariants, playerName: playerEntity.name ?? '', npcRace: npcRaceNow(), rolls, cityName: shownCityName(),
     });
     if (t.refused) { hud.add(t.text || 'You get no response.'); return; }
     // AUDIT 39 (#46): through the slot's own door, like every other
@@ -921,7 +948,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // :817 for a mobile, :849 for a static NPC), so it lands here -
     // the port's one window door. A caller with no portrait clears
     // the last one rather than inheriting a stranger's face.
-    if (portrait) setNpcPortrait(portrait.archive, portrait.record);
+    if (portrait) setNpcPortrait(portrait.archive, portrait.record, { picture: portrait.head ? (renderer) => npcHeadImage(portrait.head, { renderer }) : null });   // PORTRAIT3D
     else clearNpcPortrait();
     _talkSeed = npcSeed;   // F043: whoever we are talking to now
     // V4: GetSuppressTalk (LycanthropyEffect.cs:423-437) - every
@@ -962,7 +989,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         })),
         answer: (row) => {
           _toneHeard();   // LW7: the question's tone, in a resident's regard
-          if (row.legacy) return row.legacy.answer(tone);   // LEGACY5: the host's answer
+          if (row.legacy) return row.legacy.answer(tone, _toneTaste());   // LEGACY5: the host's answer - TONE-TASTE: and how the tone was taken
           if (row.listItem) return eng.pipeline.getAnswerText(row.listItem, { npcSeed });
           const a = answerText(row); _questionsAsked++; return a;   // AUDIT 17e F13, moved to DFU's own site
         },
@@ -977,6 +1004,9 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
         tone: () => tone,
         setTone: (t2) => { tone = t2; },
         npcName,   // AUDIT 18 F5: the NPC's OWN name, not the People faction
+        // PLAIN-UI (bible/10-UI/Plain-Words.md): a living resident's regard of the player, for the enhanced panel's badge -
+        // null for anyone else (the classic face draws DFU's TALK01I0 and nothing it has no rect for)
+        regard: () => (_toneTarget ? livingTalk?.regard?.(_toneTarget) ?? null : null),
         // AUDIT 63 F5: OnPop's `PlayerEntity.Notebook.AddNote(
         // copiedEntries)` (DaggerfallTalkWindow.cs:319). townTalk holds
         // no notebook, so the sink is the host's - set beside
@@ -1046,6 +1076,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  one pipeline for the native window's rows and the keyed Where-is chain. */
   const directoryByCategory = () => [
     ...TOPIC_CATEGORIES.map((c) => ({ label: c.caption, buildings: directory.filter((b) => b.buildingType === c.type) })),
+    ...OPENED_SHOP_TYPES.map((t) => ({ label: OPENED_SHOP_GROUPS[t], buildings: directory.filter((b) => b.buildingType === t) })),   // PROF-FOUND: the Furniture Store after DFU's shops, as the tree lays it
     ...FOUND_KIND_ORDER.map((k) => ({ label: FOUND_TALK_GROUPS[k], buildings: directory.filter((b) => b.yard === k) })),   // YARDS-FOUND: the tree's own groups, after the shops - SHIPYARDS-FOUND: the port's four after the yards' two
   ].filter((c) => c.buildings.length);
   /** The pre-engine fallback: T3c's flat category directory. */
@@ -1059,7 +1090,20 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    *  every other door leaves nobody), whose regard hears each question's tone - a courteous one or a blunt one
    *  (relations.js: once a day each). */
   let _toneTarget = null, _toneNext = null;
-  const _toneHeard = () => { if (_toneTarget) livingTone?.(_toneTarget, tone); };
+  /** TONE-TASTE: how the one spoken to takes the question's tone (talkTopics.js toneTaste) - their group's, as the
+   *  reaction reads it (a mobile's is a Commoner's, npcSession.js setTargetMobileNPC; with no engine, the same). */
+  const _toneTaste = () => toneTaste(tone, engine()?.session?.npcData?.socialGroup ?? 0);
+  const _toneHeard = () => { if (_toneTarget) livingTone?.(_toneTarget, _toneTaste()); };
+  /** REGARD-OWN (FIELD BUGS 2026-10-21d): A FRIEND MADE IS SAID - a word, its tone or a deed that carries a resident's
+   *  regard into friendship (the relations' own count, regardClock.js friendsMade), with where their Courtship is when
+   *  the house can court them. AUDIT FB1021d RO-1: said once nothing covers the HUD. The talk window covers the toasts and
+   *  the classic column, and the HUD's lines run out on real seconds (`hud.tick` takes the frame's dt, a window open or
+   *  not), so a line said at the word was gone before the window closed; it waits for the window instead, and a friend
+   *  lost again inside it (a blunt question after the word) is not said at all. */
+  const sayFriends = () => {
+    if (overlay || toastsCovered()) return;
+    for (const f of livingTalk?.friendsMade?.() ?? []) hud.add(friendLine(f));
+  };
   // AUDIT 26 F043: the CURRENT partner's reaction seed. DFU seeds the
   // roll from whichever NPC is being spoken to - `DFRandom.Seed =
   // lastTargetMobileNPC.GetHashCode()` or `lastTargetStaticNPC`'s
@@ -1240,7 +1284,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     return expandAnswerRecord(raw, {
       playerName: playerEntity.name ?? '',
       oath: raw.includes('%oth') ? randomPooledText(oathTextId(npcRaceNow()), '') : '',   // F047: GetRandomText(201 + oathId)
-      cityName: cityName(),
+      cityName: shownCityName(),
       hint, key: building.name,
       honorific: honorificOf(playerEntity.gender),   // T4: the real %hnr/%ra
       race: raceDisplayName(playerEntity.race),
@@ -1262,6 +1306,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
 
   function frame(dt) {
     hud.tick(dt);
+    sayFriends();   // REGARD-OWN: a friend made, once the HUD is clear
     overlay?.tick?.(dt);   // D1: the death sequence's clock (any overlay may want one)
     // U41: a window may FINISH inside its own tick - the travel
     // popup's day countdown departs on a clock, not on a key - and
@@ -1277,7 +1322,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     // DaggerfallHUD.Update, which renderHUD does not touch.
     // FONT1: ...and the ELSE says so out loud. The enhanced skin draws
     // these rows in the DOM (toasts in the notice stack since
-    // ENH-NOTICE3, ui/enhancedNotice.js), and a DOM face stays painted
+    // ENH-NOTICE3, ui/enhanced/enhancedNotice.js), and a DOM face stays painted
     // unless it is told to hide - AUDIT 64 F37's own law - so a frame
     // the gate refuses must reach `hide()` rather than simply skip the
     // paint. On the classic skin `hide()` does nothing, which is what
@@ -1345,7 +1390,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
    * ROAD-C c2/S10: THE OTHER TWO POINTER PHASES, on this slot.
    * dungeonContext has carried `overlayPointer` since c2/S4 because the
    * automap's chrome is press-HOLD and drag driven; the town map is the
-   * same machine (ui/automapChrome.js, EXTERIOR_ACTIONS) in the
+   * same machine (ui/automap/automapChrome.js, EXTERIOR_ACTIONS) in the
    * exterior hosts' slot, and a host that delivers `down` alone latches
    * a drag that spins the map forever - with nothing to error on.
    *
@@ -1422,7 +1467,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
   // replace is showOverlay (the dispatching door); no close callback
   // rides the door (AUDIT ENH-NOTICE3 F6). No unregister: this
   // host lives as long as the page (every scene change in this port
-  // ends in location.replace - ui/enhancedHudText.js, AUDIT FONT F12).
+  // ends in location.replace - ui/enhanced/enhancedHudText.js, AUDIT FONT F12).
   registerPresenter({
     mount: (win, { push }) => { if (push) return pushOverlay(win); showOverlay(win); return true; },
     hudText: (line, delayInSeconds) => { hud.add(line, delayInSeconds); return true; },
@@ -1462,7 +1507,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  records quote it too ("the lowest prices in %cn"), so the
      *  accessor is exposed rather than a second locationName lookup
      *  being written in the host. */
-    cityName: () => cityName(),
+    cityName: () => shownCityName(),
     /** TK-i: GetRandomTokens for the rumor mill (a random variant as
      *  TOKENS - AddNonQuestRumor freezes one per add). */
     variantTokens: (id) => textRsc?.variantTokensById(id, rolls) ?? [],
@@ -1521,6 +1566,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
      *  frame after the player walked out. It drives this directly. */
     hudFrame: (dt, font_ = font) => {
       hud.tick(dt);
+      sayFriends();   // REGARD-OWN: a friend made indoors, said where it was made
       hud.observe(toastsCovered());   // AUDIT FONT F4 / ENH-NOTICE3 F3/C2: the same report as the frame above, the interior slot this arm is drawn under included
       if (font_ && hudRenderEnabled()) hud.draw(renderer, canvas, font_, hudScale(canvas.width, canvas.height)); else hud.hide();   // AUDIT 64 F37: the same Draw gate as the frame above, with FONT1's hide door on its else (the enhanced column is DOM and persists)
     },
@@ -1580,7 +1626,7 @@ export function createTownTalk({ renderer, canvas, fetchBytes, playerEntity, reg
     },
     get mode() { return getInteractionMode(); },
     get directory() { return directory; },   // E2: the hosts name shops for the browse window by buildingKey
-    get locationName() { return cityName(); },   // G2: %cn for the court boxes (MacroHelper.CityName)
+    get locationName() { return shownCityName(); },   // G2: %cn for the court boxes (MacroHelper.CityName)
     _debug: () => ({
       mode: getInteractionMode(), overlay: !!overlay, people: peopleNow()?.name ?? null,
       buildings: directory.length, tone: TONE_NAMES[tone], toneSession: [...toneSession],

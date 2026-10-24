@@ -1,0 +1,34 @@
+[
+  {
+    "name": "RAVEN-CLOSE-live-reading-dropped",
+    "file": "src/systems/quest/clock.js",
+    "old": "  const end = reached(quest, name, { alone: true, live: true });",
+    "new": "  const end = reached(quest, name, { conditional: false });",
+    "tests": [
+      "test/systems/quest/fb1021d_ravenclose.test.js"
+    ],
+    "why": "the reported law: the closing a `when` on the clock does unread, the paid quest open for its travel days played"
+  },
+  {
+    "name": "RAVEN-CLOSE-set-tasks-unread",
+    "file": "src/systems/quest/clock.js",
+    "old": "      const isSet = (sym) => seen.has(sym.name) || (live && !!quest.tasks.get(sym.name)?.getTriggerValue?.());",
+    "new": "      const isSet = (sym) => seen.has(sym.name);",
+    "tests": [
+      "test/systems/quest/fb1021d_ravenclose.test.js"
+    ],
+    "why": "read whole instead of as it stands: M0B00Y16's escort closed with its late line two minutes after the giant is paid"
+  },
+  {
+    "name": "RAVEN-CLOSE-table-closes",
+    "file": "src/systems/quest/clock.js",
+    "old": "      && !(ONLINE_DEADLINES[q?.questName] ?? []).includes(this.symbol?.name) && closesStartUp(q, this.symbol?.name)) return false;",
+    "new": "      && closesStartUp(q, this.symbol?.name)) return false;",
+    "tests": [
+      "test/systems/quest/fb1021d_ravenclose.test.js",
+      "test/systems/quest/auditrestparty_quests.test.js"
+    ],
+    "why": "kept as the table's own word (an entry is never a closing - isDeadline's `_closesOnSuccess` rule): U0C00Y00's `_escapetime_` is the one entry the start-up block starts, and its end is no quiet close (it starts `_1stparton_` and moves `_S.08_`), so closesStartUp refuses it either way and nothing can tell it (AUDIT FB1021d RC-4 corrected the reason)",
+    "equivalent": true
+  }
+]

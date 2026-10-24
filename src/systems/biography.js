@@ -25,16 +25,17 @@
 // BiogFile.cs:339 does.
 
 import { addItem, addGoldPieces, goldPiecesOf } from './inventory.js';   // E4: the GP command writes the counter
-import { itemBaseValue, templateByIndex, templateFor, mintCondition } from './itemTemplates.js';
+import { itemBaseValue, templateByIndex, templateFor, mintCondition } from './item/itemTemplates.js';
 import { createWeapon } from '../combat/enemyEquipment.js';   // DISC21-A: ItemBuilder.CreateWeapon's one home - the condition mints with it
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { SKILL_COUNT } from './skills.js';
-import { ensureReactionState } from './talk.js';
+import { ensureReactionState } from './talk/talk.js';
 import { createRandomBook } from './books.js';   // A2: ItemBuilder.CreateRandomBook, one member
-import { expandTalkMacros, MACRO_SYMBOLS } from './talkMacros.js';   // AUDIT 64 F29: MacroHelper.ExpandMacros' walk, one home
+import { expandTalkMacros, MACRO_SYMBOLS } from './talk/talkMacros.js';   // AUDIT 64 F29: MacroHelper.ExpandMacros' walk, one home
 import { getMacroValue } from './quest/questMacros.js';              // AUDIT 64 F29: MacroHelper.GetValue's ladder
 import { setSeed, rand } from '../formats/dfRandom.js';              // AUDIT 64 F29: DFRandom.Seed / rand() the four name macros ride
 import { GENDERS, getNameBank, fullName } from '../characters/nameHelper.js';
+import { localizedTable } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** ItemGroups (ItemEnums.cs:27-59) - the numbers a BIOG line carries. */
 export const ITEM_GROUP_BY_ID = Object.freeze({
@@ -223,15 +224,15 @@ export function digestRepChanges(effects, groups = 5) {
  *  verbatim over it: base for %bn and %imp, base+123 for %fn,
  *  base+9543 for %mn, each RESEEDING before its single draw, so the
  *  three names stay distinct exactly as DFU's are. */
-const HOME_PROVINCE = Object.freeze({   // HomeProvinceName (:87-115)
-  Argonian: 'Black Marsh', Breton: 'High Rock', DarkElf: 'Morrowind',
-  HighElf: 'Sumurset', Khajiit: 'Elsweyr', Nord: 'Skyrim',
-  Redguard: 'Hammerfell', WoodElf: 'Valenwood',
+const HOME_PROVINCE = localizedTable({   // HomeProvinceName (:87-115)
+  Argonian: ['blackMarsh', 'Black Marsh'], Breton: ['highRock', 'High Rock'], DarkElf: ['morrowind', 'Morrowind'],
+  HighElf: ['sumurset', 'Sumurset'], Khajiit: ['elsweyr', 'Elsweyr'], Nord: ['skyrim', 'Skyrim'],
+  Redguard: ['hammerfell', 'Hammerfell'], WoodElf: ['valenwood', 'Valenwood'],
 });
-const GEOGRAPHICAL_FEATURE = Object.freeze({   // GeographicalFeature (:117-141)
-  Argonian: 'swamps', Breton: 'rolling hills', DarkElf: 'mountains',
-  HighElf: 'shores', Khajiit: 'desertland', Nord: 'mountains',
-  Redguard: 'desertland', WoodElf: 'forests',
+const GEOGRAPHICAL_FEATURE = localizedTable({   // GeographicalFeature (:117-141)
+  Argonian: ['swamps', 'swamps'], Breton: ['rollingHills', 'rolling hills'], DarkElf: ['mountains', 'mountains'],
+  HighElf: ['shores', 'shores'], Khajiit: ['desertLand', 'desertland'], Nord: ['mountains', 'mountains'],
+  Redguard: ['desertLand', 'desertland'], WoodElf: ['forests', 'forests'],
 });
 /** ImperialName (:618-624) - the literal table, NOT SaveVars'
  *  emperorSonNames, despite %imp reading those elsewhere. */
@@ -318,7 +319,7 @@ export function generateBackstory(textRsc, backstoryId, effects, ctx = {}) {
   // (:509-512), so DFU shows "%q1b[nullMCP]" for a question with
   // fewer than three tokens where this port shows nothing. That
   // divergence is older than this fix and pinned as it stands
-  // (test/biography.test.js); it is not re-decided here. Everything
+  // (test/systems/biography.test.js); it is not re-decided here. Everything
   // ELSE rides the real ladder, sentinels and all.
   const mcp = { source: biogMacroSource(ctx.raceKey ?? null, ctx.seed ?? 0) };
   const hooks = { playerRaceName: () => ctx.raceName ?? null };   // %ra, MacroHelper.cs:942-945

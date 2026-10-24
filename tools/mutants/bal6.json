@@ -1,0 +1,236 @@
+[
+  {
+    "name": "BAL6-the-advantages-in-both-forms",
+    "file": "src/systems/lycanthropy.js",
+    "old": "  if (!entry.isTransformed) return;\n  for (const stat of LYCANTHROPE_STATS)",
+    "new": "  for (const stat of LYCANTHROPE_STATS)",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-the-change-writes-no-advantages",
+    "file": "src/systems/lycanthropy.js",
+    "old": "  lycanthropeAdvantages(entry);   // BAL6: the form's own advantages from the change's instant, not the next round's",
+    "new": "  // the change writes nothing",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-the-round-writes-no-advantages",
+    "file": "src/systems/lycanthropy.js",
+    "old": "  // maps. BAL6: the beast's alone, so after the moon's change above.\n  lycanthropeAdvantages(entry);",
+    "new": "  // maps. BAL6: the beast's alone, so after the moon's change above.",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-every-change-heals",
+    "file": "src/systems/lycanthropy.js",
+    "old": "  if (morphHeals(entry, nowMinutes)) {",
+    "new": "  if (true) {",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-the-heal-on-the-cast-stamp",
+    "file": "src/systems/lycanthropy.js",
+    "old": "export const morphHeals = (entry, nowMinutes = 0) => nowMinutes - (entry.lastMorphHeal ?? -Infinity) > MINUTES_PER_DAY;",
+    "new": "export const morphHeals = (entry, nowMinutes = 0) => nowMinutes - (entry.lastCastMorphSelf ?? -Infinity) > MINUTES_PER_DAY;",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-the-heal-a-day-exactly",
+    "file": "src/systems/lycanthropy.js",
+    "old": "export const morphHeals = (entry, nowMinutes = 0) => nowMinutes - (entry.lastMorphHeal ?? -Infinity) > MINUTES_PER_DAY;",
+    "new": "export const morphHeals = (entry, nowMinutes = 0) => nowMinutes - (entry.lastMorphHeal ?? -Infinity) >= MINUTES_PER_DAY;",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-the-heal-never-stamped",
+    "file": "src/systems/lycanthropy.js",
+    "old": "    entry.lastMorphHeal = nowMinutes;",
+    "new": "    void nowMinutes;",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-the-heal-stamp-uncapped-on-load",
+    "file": "src/systems/save/save.js",
+    "old": "'lastCastMorphSelf', 'lastMorphHeal', 'lastUrgeNotify'",
+    "new": "'lastCastMorphSelf', 'lastUrgeNotify'",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-CLAWS-the-overhaul-claws-as-silver",
+    "file": "src/combat/pcaao.js",
+    "old": "    skillID = SKILLS.HandToHand;\n",
+    "new": "    skillID = SKILLS.HandToHand;\n    if (attacker?.isInBeastForm && (target.minMetalToHit ?? -1) > 2) matReqDamMulti = F(0.4);\n",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-CLAWS-the-overhaul-hard-rule-refuses-the-claws",
+    "file": "src/combat/pcaao.js",
+    "old": "    skillID = SKILLS.HandToHand;\n",
+    "new": "    skillID = SKILLS.HandToHand;\n    if (attacker?.isInBeastForm && !modules.softMaterialRequirements && (target.minMetalToHit ?? -1) > 2) {\n      if (isPlayer(attacker)) say?.(MATERIAL_INEFFECTIVE_TEXT);\n      if (notes) notes.ineffective = true;\n      return 0;\n    }\n",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-CLAWS-dfu-claws-as-silver",
+    "file": "src/combat/formulas.js",
+    "old": "  if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {",
+    "new": "  if ((target.minMetalToHit ?? -1) > (weapon ? weapon.material : attacker?.isInBeastForm ? 2 : 99)) {",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-CLAWS-dfu-every-fist-gated",
+    "file": "src/combat/formulas.js",
+    "old": "  if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {",
+    "new": "  if ((target.minMetalToHit ?? -1) > (weapon ? weapon.material : -1)) {",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-GAUNTLETS-every-fists",
+    "file": "src/combat/clawMetal.js",
+    "old": "  if (!entity?.isInBeastForm) return 0;\n",
+    "new": "  if (!entity) return 0;\n",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-GAUNTLETS-irons-minus-one-taken",
+    "file": "src/combat/clawMetal.js",
+    "old": "Math.max(0, weaponMaterialModifier(metal))",
+    "new": "weaponMaterialModifier(metal)",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-GAUNTLETS-the-wrong-slot",
+    "file": "src/combat/clawMetal.js",
+    "old": "[EQUIP_SLOTS.Gloves]",
+    "new": "[EQUIP_SLOTS.ChestArmor]",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-GAUNTLETS-leather-and-chain-a-metal",
+    "file": "src/systems/armorMaterials.js",
+    "old": "(isPlate(m) && m <= ARMOR_MATERIAL.Daedric ? m - ARMOR_MATERIAL.Iron : null)",
+    "new": "(m <= ARMOR_MATERIAL.Daedric ? m & 0xFF : null)",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-GAUNTLETS-a-metal-past-daedric",
+    "file": "src/systems/armorMaterials.js",
+    "old": "isPlate(m) && m <= ARMOR_MATERIAL.Daedric ?",
+    "new": "isPlate(m) ?",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-GAUNTLETS-the-overhaul-without",
+    "file": "src/combat/pcaao.js",
+    "old": "    damage += clawMetalDamage(attacker);\n",
+    "new": "",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-GAUNTLETS-dfu-without",
+    "file": "src/combat/formulas.js",
+    "old": "  if (isPlayer) damage += clawMetalDamage(attacker);\n",
+    "new": "",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-GAUNTLETS-the-overhaul-metal-as-to-hit",
+    "file": "src/combat/pcaao.js",
+    "old": "    unarmedAttack = true;\n",
+    "new": "    unarmedAttack = true;\n    chanceToHitMod += clawMetalDamage(attacker) * 2;\n",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-GAUNTLETS-dfu-metal-as-to-hit",
+    "file": "src/combat/formulas.js",
+    "old": "  if (weapon) chanceToHitMod += _overrides.get('calculateWeaponToHit')?.(weapon) ?? (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0) * 10;\n",
+    "new": "  if (weapon) chanceToHitMod += _overrides.get('calculateWeaponToHit')?.(weapon) ?? (WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0) * 10;\n  else chanceToHitMod += clawMetalDamage(attacker) * 10;\n",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-GAUNTLETS-the-card-without",
+    "file": "src/combat/combatStats.js",
+    "old": "    matMod = clawMetalDamage(entity);   // BAL6-GAUNTLETS: both cores add it where a weapon's material stands\n",
+    "new": "",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-GAUNTLETS-the-plate-offset-off-by-one",
+    "file": "src/systems/item/itemTemplates.js",
+    "old": "conditionMultipliersByMaterial[plateMetal(mat)]",
+    "new": "conditionMultipliersByMaterial[plateMetal(mat) + 1]",
+    "tests": [
+      "test/systems/audit23_systems.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-the-hood-the-nights",
+    "file": "src/systems/vampirism.js",
+    "old": "(sunAverse ? -VAMPIRE_STAT_MOD : 0)",
+    "new": "(sunAverse ? -VAMPIRE_STAT_MOD : VAMPIRE_STAT_MOD)",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-the-hood-shields-nothing",
+    "file": "src/systems/vampirism.js",
+    "old": "(sunAverse ? -VAMPIRE_STAT_MOD : 0)",
+    "new": "(-VAMPIRE_STAT_MOD)",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  },
+  {
+    "name": "BAL6-a-roof-the-hoods",
+    "file": "src/systems/vampirism.js",
+    "old": "(playerInSunlight(clockMinutes) ? (sunAverse ? -VAMPIRE_STAT_MOD : 0) : VAMPIRE_STAT_MOD)",
+    "new": "(playerInSunlight(clockMinutes) ? (sunAverse ? -VAMPIRE_STAT_MOD : 0) : (sunAverse ? VAMPIRE_STAT_MOD : 0))",
+    "tests": [
+      "test/systems/bal6_curses.test.js"
+    ]
+  }
+]

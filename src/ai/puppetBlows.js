@@ -12,7 +12,7 @@
 //     mark from `wl` (part-filled by the shape's nominal length), its held arm, a feint's dashed cut, a broken one's
 //     cancel; its stagger and its overreach (the puppet's pose; its entity's `staggerUntil`/`overreachUntil`, so my roll
 //     against it takes the same x1.25 and x1.3 - systems/blowTaken.js).
-//   EACH JUDGES THEIR OWN FEET (10.3, net/gateStrike.js's law) - a puppet's wind-up AT ME lands on my feet at the
+//   EACH JUDGES THEIR OWN FEET (10.3, net/gate/gateStrike.js's law) - a puppet's wind-up AT ME lands on my feet at the
 //     landing: the verdict, the weight and the effect on the puppet's `ai` as a local landing leaves them, so its swing
 //     resolves through the host's own door (resolveFoeMeleeVsPlayer -> blowConnects, blowScaled, landBlowEffect); the
 //     late sample makes a perfect dodge mine too. The owner's view of my feet opens its foe's window (6.3) - never my
@@ -88,7 +88,7 @@ export const blowWireKey = (r) => `${r.wk ?? ''}/${r.wn ?? ''}/${r.wy ?? ''}/${r
  * the same serial again after it landed here (my clock ahead) is nothing new. A record without `wk` before the landing:
  * an overreach lands it (it follows a landing only), a feint's cut dashes its mark, anything else is a break (its held
  * arm cancelled); at or past the landing it lands on its own clock. FEUD WIRE: `sig` the host's signature numbers
- * (systems/revenantFeud.js SIG - the brain brings no revenant system): a blow its owner flags one strikes at its
+ * (systems/revenant/revenantFeud.js SIG - the brain brings no revenant system): a blow its owner flags one strikes at its
  * multiplier, in its ember, its WIND deeper. Answers the synthetic state.
  */
 export function applyBlowRecord(ai, r, { origin = null, me = false, entity = null, collider = null, now = tacticsNow(), sig = null } = {}) {

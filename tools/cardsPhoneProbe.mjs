@@ -1,7 +1,8 @@
 // THE CARD TABLE'S FRAME COST (CARDS3c, bible/11-Multiplayer/Tavern-Cards.md section 34; section 3, MEASURE: "the frame
 // cost ... the interior frame is already measured against phones; the slice reports the cost on the probe before it
 // ships"). Opens the card table lab (cards.html, src/tools/cardsLab.js `bench`) headless and times its frames with the
-// cards and without - the Hold'em evening at its busiest street and an Iliac Hand cloth at its last turn - first at the
+// cards and without - the Hold'em evening at its busiest street, an Iliac Hand cloth at its last turn and (KG4) The King's
+// Gambit's built board from the lean with its pieces moving - first at the
 // probe's desktop size, then as a PHONE: a 390 x 844 viewport (the renderer draws the world at the canvas's CSS size,
 // never its device pixels - systems/renderScale.js), touch, and the CPU throttled four times. The GL is the probe's
 // software one (SwiftShader), so every pixel is the CPU's: a phone's GPU does that part faster than this does, which
@@ -9,7 +10,7 @@
 // AUDIT CARDS-6 E15: the runs alternated REPS times and their medians kept (three runs moved the cost by more than its
 // size under a loaded machine - say the load beside a number), and from the seat each part timed alone (the lab's
 // `split`): the held hand, the cloth's cards, the chips, the cloth's cards and chips. The machine's load is printed.
-//     node tools/cardsPhoneProbe.mjs
+//     node tools/cardsPhoneProbe.mjs          (PROBE_ONLY=gambit one game's rows)
 import { createServer } from 'vite';
 import { chromium } from 'playwright';
 import { loadavg, cpus } from 'node:os';
@@ -33,7 +34,8 @@ for (const [label, viewport, throttle, mobile] of [['desktop 1100x640', { width:
   page.on('console', (m) => { if (m.type() === 'error') errors.push(m.text()); });
   const cdp = await context.newCDPSession(page);
   await cdp.send('Emulation.setCPUThrottlingRate', { rate: throttle });
-  for (const [game, q] of [['holdem', 't=14&cam=seat&nohud&patrons=5&split'], ['holdem, no chips', 't=14&cam=seat&nohud&patrons=5&chips=0'], ['holdem from above (no hand held)', 't=14&cam=over&nohud&patrons=5'], ['iliac', 't=30&cam=seat&nohud&game=iliac']]) {
+  for (const [game, q] of [['holdem', 't=14&cam=seat&nohud&patrons=5&split'], ['holdem, no chips', 't=14&cam=seat&nohud&patrons=5&chips=0'], ['holdem from above (no hand held)', 't=14&cam=over&nohud&patrons=5'], ['iliac', 't=30&cam=seat&nohud&game=iliac'], ['gambit, leaning, mid-motion', 'cam=lean&nohud&game=gambit&steps=16&dt=150']]) {   // KG4: The King's Gambit's built board (Kings-Gambit.md section 17)
+    if (process.env.PROBE_ONLY && !game.startsWith(process.env.PROBE_ONLY)) continue;   // KG4: one game's rows alone (PROBE_ONLY=gambit)
     await page.goto(`${BASE}/cards.html?${q}&bench=${FRAMES}&reps=${REPS}`, { waitUntil: 'commit', timeout: 1800000 });   // the bench runs in the page's own load
     await page.waitForFunction(() => window.__cardsReady === true, null, { timeout: 1800000, polling: 2000 });
     const b = await page.evaluate(() => window.__cardsBench);

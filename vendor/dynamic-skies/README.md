@@ -41,7 +41,7 @@ Exactly what the mod's runtime reads, as the shipped bundle carries it:
   heightScale 0.15, x in alpha) where the repository holds the
   grayscale source; `NLStarsBlack` is scaled to 1024 where the source
   is 876. The import settings (Point filter, Repeat, mipmaps, sRGB) are
-  restated in `src/systems/dynamicSkies.js` TEXTURE_IMPORTS - with ONE
+  restated in `src/systems/dynamicSkies/dynamicSkies.js` TEXTURE_IMPORTS - with ONE
   departure, recorded there and pinned: DS3 gives the three star FIELDS
   (VanillaStars, DefaultStars, NLStarsBlack) bilinear, because at night
   the sky IS the star texture and Point magnifies its authored per-texel
@@ -55,7 +55,7 @@ Exactly what the mod's runtime reads, as the shipped bundle carries it:
 ## What is deliberately NOT here
 
 - The C# (`BLBSkybox.cs`, `Scripts/*.cs`): ported to
-  `src/systems/dynamicSkies.js` and `src/systems/dynamicSkiesRuntime.js`,
+  `src/systems/dynamicSkies/dynamicSkies.js` and `src/systems/dynamicSkies/dynamicSkiesRuntime.js`,
   cited by file and line, as DFU's own C# is.
 - The eight textures in the shipped bundle that no preset names
   (CdMClouds, CdMOvercast, CdMPixelClouds, CdMPixelClouds2, DefaultMars,
@@ -94,7 +94,7 @@ resampled, greyscaled cutout of a classic frame could still produce
 those numbers, which is why the question stays open.
 
 Every texture here has a row on the doctrine allow-list in
-`test/doctrine.test.js` (the pin that fails on any tracked raster it
+`test/tooling/doctrine.test.js` (the pin that fails on any tracked raster it
 cannot explain): ten rows say "the mod's own art", the nine above say
 "PROVENANCE OPEN, Mac's ruling pending". The windmills precedent
 (`vendor/windmills-kamer/README.md`) left textures OUT when they were
@@ -103,7 +103,7 @@ provably that nor replaceable without changing what the player sees.
 
 ## How it reaches the game
 
-`src/systems/dynamicSkiesAssets.js` globs this tree at build time (the
+`src/systems/dynamicSkies/dynamicSkiesAssets.js` globs this tree at build time (the
 JSON as text, the textures as URLs). `src/scenes/shared.js`
 createSkyController builds the pass when the mod's `Enabled` switch is
 on under the enhanced environments (`?sky=dynamic` forces it,

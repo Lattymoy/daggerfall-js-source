@@ -1,0 +1,127 @@
+-- QL12 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.1): THE BURNING DOORS, step 3 of 5.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner: Ysolde's words
+-- are in the journal at once (the last step ended at her table). WITNESSED (net/questlineClaims.js, `rite`): the step
+-- waits on the act its receipt is - the faithful's rite broken at a Dagon's Breach (`ql act rite-broken 1`, said by
+-- net/gate/gateClaims.js). Then her letter, and a meeting where she pays. Two clocks, as DFU's guild quests keep one: a
+-- generous one for the act (the player may need weeks to reach a breach), a second for the meeting once it is done.
+Quest: QLBD03
+DisplayName: Breaking the Rite
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>        Ysolde Marnhel has stopped waiting for word of
+<ce>                       a broken rite.
+
+QuestComplete:  [1004]
+<ce>       "One rite broken. There will be others, and you
+<ce>         will break those too." Ysolde presses _gold_
+<ce>                   gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Ysolde Marnhel has read the rite-book. The next
+ time a breach's omen burns over the Bay, I am to
+ find the ring of Dagon's Faithful beneath it and
+ cut down their Summoner before the door opens.
+ When the rite is broken, she will send for me.
+
+Message:  1011
+%pcn,
+
+     The Guild's watchers saw the fire of a broken
+ rite cling to someone at the last breach. I knew
+ it would be you.
+
+     Come to _hall_ in __hall_. What the book
+ taught me, the rite you broke has proved, and
+ there is more to do.
+
+<ce>                              Ysolde Marnhel
+
+Message:  1012
+<ce>          A courier in the Guild's gray falls into step
+<ce>        beside you. "The Master Conjurer heard what you
+<ce>          did at the breach," the courier says, and is
+<ce>                   gone before you can answer.
+
+Message:  1013
+<ce>       "So. The ring broke, and the door opened weak, as
+<ce>        the book said it would. You felt the fire cling
+<ce>        to you after? That is the broken rite. It does
+<ce>        not forgive the faithful, and it pays the ones
+<ce>        who broke it."
+<ce>
+<ce>       "But the faithful only widen the wound. Dagon
+<ce>        presses on the door from his side, and it comes
+<ce>        whatever we do. So next we do not weaken a door.
+<ce>        Next, we close one."
+
+Message:  1014
+Ysolde Marnhel? The conjurer who wrote the book on the breaches.
+<--->
+They say the Master Conjurer reads a book no one else may touch.
+<--->
+Marnhel sends couriers out every time the sky over the Bay goes red.
+
+Message:  1015
+%qdt:
+ I broke the rite of Dagon's Faithful before the
+ breach could open. Ysolde Marnhel has sent for me:
+ she is at _hall_ in __hall_.
+
+Message:  1020
+<ce>        The Summoner falls, and the chant falls with
+<ce>        him. The braziers gutter. Whatever was coming
+<ce>          through will come through weaker now.
+
+-- Symbols used in the QRC file:
+--
+--               %pcn occurs 1 time.
+--               %qdt occurs 2 times.
+--             _gold_ occurs 1 time.
+--             _hall_ occurs 2 times.
+--            __hall_ occurs 2 times.
+
+QBN:
+Item _letter_ letter used 1011
+Item _gold_ gold range 300 to 600
+
+Person _ysolde_ faction The_Mages_Guild female anyInfo 1014
+
+Place _hall_ remote magery
+
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+Clock _courier_ 01:00 03:00
+Clock _meet_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _ysolde_ Ysolde_Marnhel
+	log 1010 step 0
+	start timer _wait_
+
+_broken_ task:
+	ql act rite-broken 1
+	say 1020
+	stop timer _wait_
+	start timer _courier_
+
+_courier_ task:
+	place npc _ysolde_ at _hall_
+	give pc _letter_ notify 1012
+	log 1015 step 1
+	start timer _meet_
+
+_met_ task:
+	clicked npc _ysolde_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest
+
+_meet_ task:
+	say 1003
+	end quest

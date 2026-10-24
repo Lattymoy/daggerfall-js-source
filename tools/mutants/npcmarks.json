@@ -1,0 +1,401 @@
+[
+  {
+    "name": "NPC-MARKS-merchant-unmarked",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  if (route?.kind === 'merchant') return 'merchant';",
+    "new": "  if (route?.kind === 'merchant') return null;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-guild-unmarked",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  if (route?.kind === 'guildService') return createGuildForGroup(route.guildGroup, route.buildingFactionId, dict) ? 'service' : null;",
+    "new": "  if (route?.kind === 'guildService') return null;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-coven-unmarked",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  if (route?.kind === 'witchesCoven') return 'service';",
+    "new": "  if (route?.kind === 'witchesCoven') return null;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-route-no-custom-service",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "    hasCustomMerchantService,   // RR3",
+    "new": "    // RR3",
+    "tests": [
+      "test/scenes/npcmarks.test.js",
+      "test/systems/quest/rr3_questline.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-route-no-building-faction",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "    buildingFaction: buildingFactionId ? (dict?.get(buildingFactionId) ?? null) : null,",
+    "new": "    buildingFaction: null,",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-route-street-is-inside",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "    insideBuilding: !!building,",
+    "new": "    insideBuilding: true,",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ],
+    "equivalent": true,
+    "why": "staticNpcRoute reads insideBuilding only beside a building faction, and with no building there is none (buildingFaction null, buildingType -1): kept as the click's own argument, spelled as openStaticNpc always passed it"
+  },
+  {
+    "name": "NPC-MARKS-shelved-marked",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  if (!q || q.questComplete || q.questBreak || isShelved(q)) return false;",
+    "new": "  if (!q || q.questComplete || q.questBreak) return false;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-ended-marked",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  if (!q || q.questComplete || q.questBreak || isShelved(q)) return false;",
+    "new": "  if (!q || q.questBreak || isShelved(q)) return false;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-broken-marked",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  if (!q || q.questComplete || q.questBreak || isShelved(q)) return false;",
+    "new": "  if (!q || q.questComplete || isShelved(q)) return false;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-destroyed-marked",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  if (!b || b.isComponentDestroyed) return false;",
+    "new": "  if (!b) return false;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-route-over-quest",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  if (questMarked(holder.questBehaviour ?? holder.behaviour)) return 'quest';\n  if (holder.factionID == null) return null;",
+    "new": "  if (holder.factionID == null) return questMarked(holder.questBehaviour ?? holder.behaviour) ? 'quest' : null;\n  if (holder._mwMarkRoute) return holder._mwMarkRoute;\n  if (questMarked(holder.questBehaviour ?? holder.behaviour)) return 'quest';",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-hidden-marked",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  if (!holder || holder.active === false || holder.dead || !clickable(holder)) return null;",
+    "new": "  if (!holder || holder.dead || !clickable(holder)) return null;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-kept-before-table",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "    if (!dict?.get(holder.factionID)) return null;   // L1: never before the faction's row is in - asked again, nothing kept",
+    "new": "    if (!dict) return null;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-sprite-marked",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "        if (!(height > 0)) continue;",
+    "new": "        if (!(height >= 0)) continue;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-reach-unbounded",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "        if (!(d <= NPC_MARKS_REACH)) continue;",
+    "new": "        if (!(d <= Infinity)) continue;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-unsorted",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "        while (at > 0 && marks[at - 1].d > d) { marks[at] = marks[at - 1]; at--; }",
+    "new": "        while (false) { marks[at] = marks[at - 1]; at--; }",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-no-fade",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "        m.alpha = d <= fadeFrom ? 1 :",
+    "new": "        m.alpha = true ? 1 :",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-not-over-head",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "feet[1] + height + MARK_OVER_HEAD_M +",
+    "new": "feet[1] + MARK_OVER_HEAD_M +",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-kept-after-draw",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "      release();\n      if (!shown) return false;",
+    "new": "      if (!shown) return false;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-switch-ignored",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "export const npcMarksOn = () => getPref('npcMarks') !== false;",
+    "new": "export const npcMarksOn = () => true;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-bob-still-moves",
+    "file": "src/render/npcMarkPass.js",
+    "old": "  if (still) return 0;\n",
+    "new": "\n",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-bob-unwrapped",
+    "file": "src/render/npcMarkPass.js",
+    "old": "Math.sin(2 * Math.PI * (MARK_BOB_HZ * duelClock(seconds) + phase))",
+    "new": "Math.sin(2 * Math.PI * (MARK_BOB_HZ * seconds * 1.001 + phase))",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-max-eight",
+    "file": "src/render/npcMarkPass.js",
+    "old": "export const NPC_MARKS_MAX = 12;",
+    "new": "export const NPC_MARKS_MAX = 8;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-row-off",
+    "file": "src/systems/features.js",
+    "old": "key: 'npcMarks', initial: true,",
+    "new": "key: 'npcMarks', initial: false,",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-quest-dot-joins",
+    "file": "src/render/npcMarkPass.js",
+    "old": "box(p - vec2(0.0, -0.62), vec2(0.21, 0.2))",
+    "new": "box(p - vec2(0.0, -0.52), vec2(0.21, 0.2))",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-coin-ring-gone",
+    "file": "src/render/npcMarkPass.js",
+    "old": "    d = r - 0.8;",
+    "new": "    d = r - 0.6;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-no-rim",
+    "file": "src/render/npcMarkPass.js",
+    "old": "  float outline = 0.22;",
+    "new": "  float outline = 0.0;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-no-min-size",
+    "file": "src/render/npcMarkPass.js",
+    "old": "  float h = max(uHalf, length(uEye - uAt) * uMinRad);",
+    "new": "  float h = uHalf;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-guild-any-group",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  if (route?.kind === 'guildService') return createGuildForGroup(route.guildGroup, route.buildingFactionId, dict) ? 'service' : null;",
+    "new": "  if (route?.kind === 'guildService') return 'service';",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-arena-unmarked",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  if (arenaOfficer(holder)) return 'service';\n",
+    "new": "\n",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-arena-gate-unread",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "ARENA_OFFICES.has(holder?.arenaRole) || (holder?.position != null && ARENA_OFFICES.has(arenaGatePersonOf(holder)?.role))",
+    "new": "ARENA_OFFICES.has(holder?.arenaRole)",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-arena-after-quest",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  if (arenaOfficer(holder)) return 'service';\n  if (questMarked(holder.questBehaviour ?? holder.behaviour)) return 'quest';",
+    "new": "  if (questMarked(holder.questBehaviour ?? holder.behaviour)) return 'quest';\n  if (arenaOfficer(holder)) return 'service';",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-widthless-marked",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  if ('width' in holder && !holder.width) return false;\n",
+    "new": "\n",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-showtext-marked",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  return flag !== ACTION_FLAGS.ShowText && flag !== ACTION_FLAGS.ShowTextWithInput;",
+    "new": "  return flag !== ACTION_FLAGS.ShowTextWithInput;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-work-unmarked",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  return ctx?.offersWork?.(holder) ? 'quest' : null;   // L2: the talk arm's first door",
+    "new": "  return null;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-work-over-route",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  if (holder._mwMarkRoute) return holder._mwMarkRoute;\n  return ctx?.offersWork?.(holder) ? 'quest' : null;",
+    "new": "  if (ctx?.offersWork?.(holder)) return 'quest';\n  return holder._mwMarkRoute;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-custom-switch-kept",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  if (holder._mwMarkRoute === undefined || holder._mwMarkCustom !== custom) {",
+    "new": "  if (holder._mwMarkRoute === undefined) {",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-binds-for-nothing",
+    "file": "src/render/npcMarkPass.js",
+    "old": "    if (!any || !this.program) return;",
+    "new": "    if (!this.program) return;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-right-unmirrored",
+    "file": "src/render/npcMarkPass.js",
+    "old": "gl.uniform3f(U.uRight, -view[0], -view[4], -view[8]);",
+    "new": "gl.uniform3f(U.uRight, view[0], view[4], view[8]);",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-centred-on-point",
+    "file": "src/render/npcMarkPass.js",
+    "old": "vec3(0.0, (aP.y + 1.0) * h, 0.0)",
+    "new": "vec3(0.0, aP.y * h, 0.0)",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-pass-per-host",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  let e = SHARED.get(gl);\n  if (!e) {",
+    "new": "  let e = null;\n  if (!e) {",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-freed-while-held",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  if (!e || --e.users > 0) return;",
+    "new": "  if (!e) return;",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-never-freed",
+    "file": "src/scenes/npcMarksHost.js",
+    "old": "  e.pass?.dispose?.();\n",
+    "new": "\n",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  },
+  {
+    "name": "NPC-MARKS-dispose-keeps-gl",
+    "file": "src/render/npcMarkPass.js",
+    "old": "    gl.deleteProgram(this.program); gl.deleteVertexArray(this.vao); gl.deleteBuffer(this.vbo);",
+    "new": "    gl.deleteProgram(this.program);",
+    "tests": [
+      "test/scenes/npcmarks.test.js"
+    ]
+  }
+]

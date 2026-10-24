@@ -23,21 +23,25 @@ import { MISSILE_SPEED, MISSILE_COLLIDER_RADIUS, MISSILE_LIFESPAN_S, playerShotO
 import { CAPSULE_HEIGHT } from '../player/motor.js';   // ROAD-H tail: the standing capsule, the contact's default height   // ROAD-H H1c: GetAimPosition's player arrow arm
 import { trs } from '../world/mat4.js';
 import { SWING_MODS, foeUnaware } from './playerWeapon.js';   // CalculateSwingModifiers, read live at the arrow's impact (SET2: and whether the shaft's foe had noticed me)
-import { bloodHit } from './bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
+import { bloodHit } from './blood/bloodDecals.js';   // BLOOD1b: the blow, in the shape the mark's ladder reads
 import { calculateAttackDamage } from './formulas.js';
+import { offHandToHit, OFF_HAND_BLOW } from './twoHands/handsLaw.js';   // AUDIT PISTOLET A1: a pair's off-hand shot, DUAL's terms as its swing's
+import { liveStat } from '../systems/statMods.js';
 import { segmentBoxEntry } from '../systems/naval/navalBallistics.js';   // SERPENT4: a shaft's step through a box - the guns' own test
 import { bowDamageArrow } from './enemyEquipment.js';   // MAC-N1: the recovered shaft is CreateWeapon's arrow, value and all
 import { backstabChanceOf, enemyPainVoice } from '../scenes/hostCombat.js';
-import { isBackFacing } from '../characters/enemyMotor.js';
+import { isBackFacing } from '../characters/enemy/enemyMotor.js';
 import { hitSoundFor, ENEMY_HIT_VOLUME } from '../systems/soundClips.js';
 import { addItem, ARROW_TEMPLATE } from '../systems/inventory.js';
 import { noteShotRecoverable, shotTallyOpen } from '../systems/shotTally.js';   // ARENA-ARROWS: a recoverable shaft is no shot the healers pay; STUCK-ARROWS: nor one stuck on the sand
-import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS } from '../systems/loot.js';   // STUCK-ARROWS: the stuck shaft's container picture (seedPile's icon)
+import { RANDOM_TREASURE_ARCHIVE, RANDOM_TREASURE_ICONS } from '../systems/loot/loot.js';   // STUCK-ARROWS: the stuck shaft's container picture (seedPile's icon)
 import { orbArchiveFor, ORB_RECORD, noteOrbColour, ORB_SCALE } from '../characters/thunderlockIds.js';   // FIELD-GUN14: what this weapon's shot LOOKS like - the leaf, so no cycle   // FIELD-GUN17: ...and what colour it is, sampled the one moment the texture is in hand   // FIELD-GUN18: ...and how big it is drawn
 import { playerWeaponHitEntity } from '../systems/worldTick.js';   // DISC10-D H1: OnWeaponHitEntity's one dispatcher (worldTick never reaches this module - no cycle)
 import { sparedByPlayer } from './friendlyFire.js';   // SHIPMATES: the player's shaft passes their own crew by
 import { coverDistance, coverStep } from '../ai/cover.js';   // TACT1: billboards are cover; AUDIT TACT B5: met by touch
-import { blowMult, scaleBlowDamage, playerBody } from './techniqueBlow.js';   // TECH1: a technique's shaft - its weight, and never a player's body
+import { blowMult, scaleBlowDamage, playerBody, tellTechniqueLanded } from './technique/techniqueBlow.js';   // TECH1: a technique's shaft - its weight, and never a player's body
+import { takeOwed } from '../systems/playerDoor.js';   // AUDIT MARTIAL L2 F5: the follow-ups a shaft owes a body the relay runs
+import { monsterVolume } from '../systems/monsterVolume.js';   // MONSTER-VOL: a monster's pain cry rides the Audio tab's Monster Volume
 
 export const ARROW_MODEL_ID = 99800;
 
@@ -153,7 +157,7 @@ export function techniquePierces(m, ref) {
   (t.struck ??= []).push(ref);
   return t.struck.length < t.pierce;
 }
-/** AUDIT TECH1: A PIERCING SHAFT IS ONE SHAFT to a referee that counts blows by their sequence (net/arenaBrain.js refBlow -
+/** AUDIT TECH1: A PIERCING SHAFT IS ONE SHAFT to a referee that counts blows by their sequence (net/arena/arenaBrain.js refBlow -
  *  ARENA4b: "each shaft its own blow", a swing through three bodies one). `q` the sequence the lane has just taken for
  *  this body (one past the last); answers the one it is struck under - the sequence its first body took, while that is
  *  still the newest (this body's own taking undone), else `q`: any blow between, and the body is a blow of its own. A
@@ -443,6 +447,19 @@ export class ArrowFlight {
  * `dealDamage` is the pool's own damage door, so death runs whole -
  * corpse, loot, crime - and this function never writes health itself.
  */
+/** AUDIT MARTIAL L2 F5: MY SHAFT INTO A BODY THE RELAY RUNS AND NO FOE RECORD HOLDS - the sea serpent's hide
+ *  (scenes/world.js serpentArrowOn): `rolled` the formula's number on its stand-in. A technique's shaft weighs it and
+ *  tells the riders, as playerArrowHitFoe does a foe's (TECH1's weight was never laid on the hide, and a path's rider
+ *  never heard it - AUDIT SCHOOLS L2 F4's spell, for the shaft), and the follow-ups the blow owes the body (a rider's, the
+ *  loot's echo) ride its one claim (systems/playerDoor.js - OPEN-HAND's law, the gate's own). Answers what to claim. */
+export function shaftOnRelayBody(m, entity, rolled) {
+  const body = { name: entity?.name ?? '', entity };
+  const dmg = m?.technique ? scaleBlowDamage(rolled, blowMult(m.technique, body)) : rolled;
+  if (m?.technique) tellTechniqueLanded(m.technique, body, dmg);
+  const owed = takeOwed(entity);
+  return dmg > 0 ? dmg + owed : dmg;
+}
+
 export function playerArrowHitFoe(m, foe, {
   playerEntity, playerWeapon = null, playerFeet = null, dealDamage = null,
   audio = null, hitEffects = null, say = null, onInflictPoison = null,
@@ -463,9 +480,14 @@ export function playerArrowHitFoe(m, foe, {
   if (foe.yielded || foe.executing || foe.sparing || foe.leaving || foe.roaring) return 0;   // RVN4: nor one roaring its last stand
   const swing = SWING_MODS[playerWeapon?.machine?.state] ?? { damage: 0, toHit: 0 };
   const back = foe.ai && playerFeet ? isBackFacing(foe.ai.yaw, foe.ai.feet, playerFeet) : false;
+  // AUDIT PISTOLET A1 (TWO-HANDS DUAL): a pair's OFF-HAND shot strikes less surely and less hard, as the off hand's swing
+  // does (playerWeapon.js resolveHit) - Agility's to-hit term and OFF_HAND_BLOW's share and weight. Read off the gun the
+  // shot left, since the strike that fired it is over by the time it lands.
+  const off = !!playerWeapon?.isOffHandItem?.(m.weapon);
   const rolled = calculateAttackDamage(playerEntity, foe.entity, {
     weapon: m.weapon ?? null,
-    damageMod: swing.damage, toHitMod: swing.toHit,
+    damageMod: swing.damage, toHitMod: swing.toHit + (off ? offHandToHit(liveStat(playerEntity, 'agility')) : 0),
+    ...(off ? OFF_HAND_BLOW : {}),
     backstabChance: backstabChanceOf(playerEntity, back, foe),
     weaponAnimTime: playerWeapon?.lastDrawMs ?? 0,   // PCO1: the draw's length, for Roleplay Realism's archery
     rolls, onInflictPoison, say,
@@ -475,6 +497,7 @@ export function playerArrowHitFoe(m, foe, {
   // number by the technique - never on a player's body (its shaft passes them by in flight; a door that hands one here
   // anyway gets the plain number)
   const dmg = m.technique && !playerBody(foe) ? scaleBlowDamage(rolled, blowMult(m.technique, foe)) : rolled;
+  if (m.technique && !playerBody(foe)) tellTechniqueLanded(m.technique, foe, dmg);   // MARTIAL3: a path's rider answers its signature's shaft
   const at = foe.ai?.feet ?? [m.pos[0], m.pos[1], m.pos[2]];
   // AUDIT 62 F20: the splash point is the struck foe's TRANSFORM
   // (DaggerfallMissile.cs:680-687 -> WeaponManager.cs:571), i.e. its
@@ -487,7 +510,7 @@ export function playerArrowHitFoe(m, foe, {
     audio?.play3d?.(hitSoundFor(m.weapon ?? null), at, ENEMY_HIT_VOLUME, { maxDistance: 16 });
     hitEffects?.showBloodSplash?.(foe.entity?.basics?.bloodIndex ?? 0, bloodAt, null, bloodHit(dmg, foe.bloodOf ?? foe.entity, { fromPlayer: true, weapon: m.weapon ?? null }));   // BLOOD1b: the player's shaft drives the ladder, and the bow it came off decides the heavy branch   // ...and NO SWING: the reference reads the LIVE weapon state when blood spawns, which for a shaft that has been in the air is whatever the player's arm happens to be doing now. A shaft's blood is thrown by the shaft.
     const pain = enemyPainVoice(foe, dmg, rolls);
-    if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [at[0], at[1] + 0.9, at[2]], 1, { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
+    if (pain && pain.clip >= 0) audio?.play3d?.(pain.clip, [at[0], at[1] + 0.9, at[2]], monsterVolume(), { maxDistance: 16, pitch: 1 + pain.pitchLift });   // AUDIT 58: EnemySounds.cs:172-175
     dealDamage?.(foe, dmg);
   }
   // :627/:630's unconditional pair, whatever the fork above did - and

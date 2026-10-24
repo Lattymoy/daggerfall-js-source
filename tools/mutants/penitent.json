@@ -5,7 +5,7 @@
     "old": "  penitent: Object.freeze([PENITENT_GOLD, PENITENT_LIGHT, PENITENT_SKY]),",
     "new": "  penitent: Object.freeze([PENITENT_SKY, PENITENT_LIGHT, PENITENT_GOLD]),",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  penitent: Object.freeze([PENITENT_GOLD, PENITENT_LIGHT, PENITENT_SKY]),",
     "new": "  penitent: Object.freeze([PENITENT_GOLD, PENITENT_SKY]),",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "const PENITENT_LIGHT = Object.freeze([1, 0.953, 0.839, 1]);",
     "new": "const PENITENT_LIGHT = Object.freeze([0.8, 0.953, 0.839, 1]);",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  penitent: 'Penitent',              // PENITENT",
     "new": "  penitent: 'Penance',              // PENITENT",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "export const TITLE_EDGE = Object.freeze({\n  penitent: Object.freeze([0, 0, 0, 1]),\n",
     "new": "export const TITLE_EDGE = Object.freeze({\n",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  penitent: Object.freeze([0, 0, 0, 1]),\n  gatebreaker:",
     "new": "  penitent: Object.freeze([0, 0, 0, 1]),\n  shadowfang: Object.freeze([0, 0, 0, 1]),\n  gatebreaker:",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    const edge = cssRgba(badge.edge ?? badge.rgba) ?? '';",
     "new": "    const edge = cssRgba(badge.rgba) ?? '';",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": ", edge: TITLE_EDGE[key] ?? null };",
     "new": " };",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "s, title.edge ?? title.rgba ?? [1, 1, 1, 1]);",
     "new": "s, title.rgba ?? [1, 1, 1, 1]);",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  penitent: TITLE_RGBA.penitent,       // PENITENT",
     "new": "  penitent: TITLE_RGBA.disciple,       // PENITENT",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "L8 14Z', rgba: PENITENT_SKY }),",
     "new": "L8 14Z', rgba: PENITENT_GOLD }),",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "path: 'M8 3.2L8.65 3.85L8 4.5L7.35 3.85ZM7.45 4.5H8.55V6.3H7.45ZM5.9 6.3H10.1V7.3H5.9ZM7.25 7.3H8.75L8 14Z'",
     "new": "path: 'M8 12.8L8.65 12.15L8 11.5L7.35 12.15ZM7.45 11.5H8.55V9.7H7.45ZM5.9 9.7H10.1V8.7H5.9ZM7.25 8.7H8.75L8 2Z'",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "ZM5.9 6.3H10.1V7.3H5.9ZM",
     "new": "ZM4.6 6.3H11.4V7.3H4.6ZM",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "ZM7.45 4.5H8.55V6.3H7.45ZM5.9 6.3H10.1V7.3H5.9ZM7.25 7.3H8.75L8 14Z'",
     "new": "ZM7.45 4.5H8.55V8.3H7.45ZM5.9 8.3H10.1V9.3H5.9ZM7.25 9.3H8.75L8 14Z'",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  penitent: 'M8 .8L13 8.2L8 15.2L3 8.2Z',",
     "new": "  penitent: 'M8 3L14 8.2L8 13L2 8.2Z',",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "shadowfang: false, penitent: true, herald: true, tower: false,",
     "new": "shadowfang: false, penitent: false, herald: true, tower: false,",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ],
     "note": "SEAT1c (PIN MOVED) and HERALD (RE-AIMED), each by content; the merge of main re-aimed it over both - herald after the penitent, the seats' after herald."
   },
@@ -150,16 +150,16 @@
     "old": "  penitent: '|',",
     "new": "  penitent: '>',",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
     "name": "PENITENT-card-label",
-    "file": "src/ui/enhancedAccount.js",
-    "old": "  penitent: 'Penitent',   // PENITENT",
-    "new": "  penitent: 'Penitence',   // PENITENT",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "  penitent: () => t('account.glyph.penitent', 'Penitent'),   // PENITENT",
+    "new": "  penitent: () => t('account.glyph.penitent', 'Penitence'),   // PENITENT",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
@@ -168,18 +168,18 @@
     "old": "  penitent: 'PENITENT_HANDLES',",
     "new": "  penitent: 'SHADOW_FANG_HANDLES',",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
     "name": "PENITENT-glyph-without-the-title",
     "file": "server-account/src/titles.js",
-    "old": "penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist' });",
-    "new": "penitent: 'shadowfang', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist' });",
+    "old": "penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });",
+    "new": "penitent: 'shadowfang', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ],
-    "note": "HERALD (RE-AIMED by content: the lists end with herald now). AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "HERALD (RE-AIMED by content: the lists end with herald now). AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "PENITENT-granted-to-another-account",
@@ -187,7 +187,7 @@
     "old": "PENITENT_HANDLES = \"Diggleborf\"",
     "new": "PENITENT_HANDLES = \"SirMcMobdon\"",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "'shadowfang', 'penitent', 'gatebreaker', 'herald', 'warden',",
     "new": "'shadowfang', 'gatebreaker', 'herald', 'warden',",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ],
     "note": "SEAT1c (PIN MOVED) and HERALD (RE-AIMED), each by content; the merge of main re-aimed it over both - herald after the penitent, the seats' after herald."
   },
@@ -206,7 +206,7 @@
     "old": "'hierophant', 'shadowfang', 'penitent', 'herald', 'tower',",
     "new": "'hierophant', 'shadowfang', 'herald', 'tower',",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ],
     "note": "SEAT1c (PIN MOVED) and HERALD (RE-AIMED), each by content; the merge of main re-aimed it over both - herald after the penitent, the seats' after herald."
   },
@@ -216,7 +216,7 @@
     "old": "export const STAFF_GLYPHS = Object.freeze(['dev', 'dm', 'shadowfang']);",
     "new": "export const STAFF_GLYPHS = Object.freeze(['dev', 'dm', 'shadowfang', 'penitent']);",
     "tests": [
-      "test/penitent.test.js"
+      "test/net/penitent.test.js"
     ]
   }
 ]

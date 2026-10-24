@@ -1,0 +1,83 @@
+[
+  {
+    "name": "TWO-HANDS-MIRROR-BIND-rest-k",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "    const W = mul(mul(P, Wm), pictureK(skeleton, plan, plane.binds, ks, ref, m));",
+    "new": "    const W = mul(mul(P, Wm), pictureK(skeleton, plan, null, ks, ref, m));",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWO-HANDS-MIRROR-BIND-one-skin-only",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "    if (b && c && mirroredBinds(b, c)) pair = [b, c];",
+    "new": "    if (false) pair = [b, c];",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWO-HANDS-MIRROR-BIND-left-node-rest",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "  else if (skeleton.nodes.get(ref).name.includes('Left') && !srcs.some((s) => s.has(ref))) K = { a: S3, t: [0, 0, 0] };   // rule 13's own test",
+    "new": "  else if (false) K = { a: S3, t: [0, 0, 0] };   // rule 13's own test",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWO-HANDS-MIRROR-BIND-left-node-over-its-bind",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "  if (pair) K = { a: mat33Mul(transposed(turnOf(pair[1])), mat33Mul(S3, turnOf(pair[0]))), t: [0, 0, 0] };",
+    "new": "  if (pair && !skeleton.nodes.get(ref).name.includes('Left')) K = { a: mat33Mul(transposed(turnOf(pair[1])), mat33Mul(S3, turnOf(pair[0]))), t: [0, 0, 0] };",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWO-HANDS-MIRROR-BIND-any-binds-a-mirror",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "  return Math.abs(b.t[1] - c.t[1]) <= span * 0.01 && Math.abs(b.t[2] - c.t[2]) <= span * 0.01;",
+    "new": "  return true;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWO-HANDS-MIRROR-BIND-no-bind-a-mirror",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "  return Math.abs(b.t[1] - c.t[1]) <= span * 0.01 && Math.abs(b.t[2] - c.t[2]) <= span * 0.01;",
+    "new": "  return false;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWO-HANDS-MIRROR-BIND-pieces-not-read",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "binds: [...(assembly.skinBinds ?? []), ...mirrorBindSources({ pieces: assembly.pieces })] };",
+    "new": "binds: [...(assembly.skinBinds ?? [])] };",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWO-HANDS-MIRROR-BIND-file-not-read",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "    skinBinds: offWeaponBone ? mirrorBindSources({ nif: skeletonFile }) : null,",
+    "new": "    skinBinds: null,",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWO-HANDS-MIRROR-BIND-turned-skin-read",
+    "file": "src/combat/twoHands/mirrorRig.js",
+    "old": "    if (!skin?.bones || !unturned(skin.transform) || !unturned(skin.shapeTransform)) continue;",
+    "new": "    if (!skin?.bones) continue;",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  }
+]

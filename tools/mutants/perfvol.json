@@ -5,7 +5,7 @@
     "old": "  if (e !== undefined && e.rad === rad && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && e.h === h) return e.ans;",
     "new": "  if (e !== undefined && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && e.h === h) return e.ans;",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (e !== undefined && e.rad === rad && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && e.h === h) return e.ans;",
     "new": "  if (e !== undefined && e.rad === rad && e.oy === o[1] && e.oz === o[2] && e.h === h) return e.ans;",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (e !== undefined && e.rad === rad && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && e.h === h) return e.ans;",
     "new": "  if (e !== undefined && e.rad === rad && e.ox === o[0] && e.oz === o[2] && e.h === h) return e.ans;",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (e !== undefined && e.rad === rad && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && e.h === h) return e.ans;",
     "new": "  if (e !== undefined && e.rad === rad && e.ox === o[0] && e.oy === o[1] && e.h === h) return e.ans;",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (e !== undefined && e.rad === rad && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && e.h === h) return e.ans;",
     "new": "  if (e !== undefined && e.rad === rad && e.ox === o[0] && e.oy === o[1] && e.oz === o[2]) return e.ans;",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (e !== undefined) { e.rad = rad; e.ox = o[0]; e.oy = o[1]; e.oz = o[2]; e.h = h; e.ans = ans; return ans; }",
     "new": "  if (e !== undefined) { e.rad = rad; e.ox = o[0]; e.oy = o[1]; e.oz = o[2]; e.h = h; return ans; }",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if (e !== undefined) { e.rad = rad; e.ox = o[0]; e.oy = o[1]; e.oz = o[2]; e.h = h; e.ans = ans; return ans; }",
     "new": "  if (e !== undefined) { e.ans = ans; return ans; }",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  let m = q.vol;\n  if (m === null || m === undefined) m = q.vol = new Map();",
     "new": "  let m = placementsInVolumeOf.memo ??= new Map();",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  if (m.size >= VOLUME_MEMO_MAX) m.clear();\n",
     "new": "",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "          const tex = f.textures.get(key);\n          if (!tex) continue;\n",
     "new": "          const tex = f.textures.get(key);\n",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue;   // EL5\n",
     "new": "          if (!emis) continue;\n",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "          const key = billboardKey(b);\n          const emis = f.emissionTextures.get(key);\n          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue;   // EL5\n",
     "new": "          if (!batchVisible(planes, b)) continue;   // EL5\n          const key = billboardKey(b);\n          const emis = f.emissionTextures.get(key);\n          if (!emis) continue;\n",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -113,16 +113,16 @@
     "old": "        if (!farFlatVisibleAt(ring, b.farH ?? b.size?.h ?? 0, b.frame != null)) continue;   // MAC1 (a far flat the rule drops casts nothing either); PERF-EXT12: positional, no object a batch a frame (flatDistance.js); PERF-ORDER (2026-10-11): asked FIRST - three compares, where the box and the reach were asked of every batch it then dropped (Knightstale by night: 655 of the 1,361 a frame); each test only skips, so the batches kept are the same\n        const off = !pixelVisible || (cullOn && aabbOutside(_planes, b._box, t[0], t[1], t[2]));   // EV3\n        if (off && !renderer.shadowReach(b._box, t[0], t[1], t[2])) continue;   // SHADOW-REACH: off screen and out of every shadow's reach\n",
     "new": "        const off = !pixelVisible || (cullOn && aabbOutside(_planes, b._box, t[0], t[1], t[2]));   // EV3\n        if (off && !renderer.shadowReach(b._box, t[0], t[1], t[2])) continue;   // SHADOW-REACH: off screen and out of every shadow's reach\n        if (!farFlatVisibleAt(ring, b.farH ?? b.size?.h ?? 0, b.frame != null)) continue;   // MAC1 (a far flat the rule drops casts nothing either); PERF-EXT12: positional, no object a batch a frame (flatDistance.js); PERF-ORDER (2026-10-11): asked FIRST - three compares, where the box and the reach were asked of every batch it then dropped (Knightstale by night: 655 of the 1,361 a frame); each test only skips, so the batches kept are the same\n",
     "tests": [
-      "test/shadowreach.test.js"
+      "test/render/shadowreach.test.js"
     ]
   },
   {
     "name": "PERFVOL-shipped-off",
     "file": "src/render/shadowPass.js",
-    "old": "facePrepass: true, sunPrepass: true, volumeMemo: true };",
-    "new": "facePrepass: true, sunPrepass: true, volumeMemo: false };",
+    "old": "facePrepass: true, sunPrepass: true, volumeMemo: true, moverDirect: true, loUnread: true };",
+    "new": "facePrepass: true, sunPrepass: true, volumeMemo: false, moverDirect: true, loUnread: true };",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "          const emis = f.emissionTextures.get(key);\n          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue;   // EL5\n          const tex = f.textures.get(key);\n",
     "new": "          const emis = f.emissionTextures.get(key);\n          const tex = f.textures.get(key);\n          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue;   // EL5\n",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  if (e !== undefined && e.rad === rad && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && e.h === h) return e.ans;",
     "new": "  if (e !== undefined && Math.abs(e.rad - rad) <= 1e-3 && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && e.h === h) return e.ans;",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "  if (e !== undefined && e.rad === rad && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && e.h === h) return e.ans;",
     "new": "  if (e !== undefined && e.rad === rad && Math.abs(e.ox - o[0]) < 1e-3 && Math.abs(e.oy - o[1]) < 1e-3 && Math.abs(e.oz - o[2]) < 1e-3 && e.h === h) return e.ans;",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "  if (e !== undefined && e.rad === rad && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && e.h === h) return e.ans;",
     "new": "  if (e !== undefined && e.rad === rad && e.ox === o[0] && e.oy === o[1] && e.oz === o[2] && Math.abs(e.h) === Math.abs(h)) return e.ans;",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    _volSeen.add(h);\n    return 0;",
     "new": "    _volSeen.add(h);\n    return _volNext++;",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "      for (let i = 0; i < 24; i++) if (e.bits[i] !== u[i]) continue find;\n",
     "new": "",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "      for (let i = 0; i < 24; i++) if (e.bits[i] !== u[i]) continue find;",
     "new": "      for (let i = 0; i < 22; i++) if (e.bits[i] !== u[i]) continue find;",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "  if (_volNamedCount >= VOLUME_TABLE_MAX) { _volNamed = new Map(); _volNamedCount = 0; }",
     "new": "  if (_volNamedCount >= VOLUME_TABLE_MAX) { _volNamed = new Map(); _volNamedCount = 0; _volNext = 1; }",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "  if (_volNamedCount >= VOLUME_TABLE_MAX) { _volNamed = new Map(); _volNamedCount = 0; }\n",
     "new": "",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    if (_volSeen.size >= VOLUME_TABLE_MAX) _volSeen.clear();",
     "new": "    if (_volSeen.size >= VOLUME_TABLE_MAX) { _volSeen.clear(); _volNamed = new Map(); _volNamedCount = 0; }",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "    if (_volSeen.size >= VOLUME_TABLE_MAX) _volSeen.clear();\n",
     "new": "",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "      for (let i = 0; i < 24; i++) if (e.bits[i] !== u[i]) continue find;\n      return e.id;",
     "new": "      for (let i = 0; i < 24; i++) if (e.bits[i] !== u[i]) continue find;\n      return (e.id = _volNext++);",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "  let u = _volBits.get(planes);\n  if (u === undefined) { u = new Uint32Array(planes.buffer, planes.byteOffset, 24); _volBits.set(planes, u); }",
     "new": "  let u = _volBits.get(planes.buffer);\n  if (u === undefined) { u = new Uint32Array(planes.buffer, planes.byteOffset, 24); _volBits.set(planes.buffer, u); }",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "export const VOLUME_TABLE_MAX = 512;",
     "new": "export const VOLUME_TABLE_MAX = 1 << 18;",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "export const VOLUME_MEMO_MAX = 128;",
     "new": "export const VOLUME_MEMO_MAX = 1024;",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "  for (let i = 0; i < 24; i++) { h = Math.imul(h ^ u[i], 16777619); h ^= h >>> 15; }",
     "new": "  for (let i = 0; i < 24; i++) h = Math.imul(h ^ u[i], 16777619);",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "            if (vname < 0) vname = lightPos && SHADOW_TUNING.volumeMemo !== false ? volumeName(planes) : 0;",
     "new": "            if (vname < 0) vname = 0;",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "            if (vname < 0) vname = lightPos && SHADOW_TUNING.volumeMemo !== false ? volumeName(planes) : 0;",
     "new": "            if (vname < 0) vname = lightPos ? volumeName(planes) : 0;",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "            if (vname < 0) vname = lightPos && SHADOW_TUNING.volumeMemo !== false ? volumeName(planes) : 0;",
     "new": "            if (vname < 0) vname = SHADOW_TUNING.volumeMemo !== false ? volumeName(planes) : 0;",
     "tests": [
-      "test/perfvol.test.js"
+      "test/render/perfvol.test.js"
     ]
   }
 ]

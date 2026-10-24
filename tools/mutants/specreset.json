@@ -1,0 +1,668 @@
+[
+  {
+    "name": "SPEC-RESET-price-moved",
+    "file": "src/systems/arcanePaths.js",
+    "old": "export const SPEC_RESET_GOLD = 200000;",
+    "new": "export const SPEC_RESET_GOLD = 199999;",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-exact-price-refused",
+    "file": "src/systems/specReset.js",
+    "old": "  if (have >= SPEC_RESET_GOLD) return null;",
+    "new": "  if (have > SPEC_RESET_GOLD) return null;",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-gold-unasked",
+    "file": "src/systems/specReset.js",
+    "old": "  if (have >= SPEC_RESET_GOLD) return null;",
+    "new": "  if (true) return null;",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-purse-alone",
+    "file": "src/systems/specReset.js",
+    "old": "  return totalGoldAmount(entity) + Math.max(0, Number(account?.accountGold) || 0);",
+    "new": "  return (Number(entity.goldPieces) || 0) + Math.max(0, Number(account?.accountGold) || 0);",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-price-unpaid",
+    "file": "src/systems/specReset.js",
+    "old": "  payUndoable(entity, SPEC_RESET_GOLD, resetAccount(entity));\n",
+    "new": "",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-wrong-family-cleared",
+    "file": "src/systems/specReset.js",
+    "old": "  entity[LAW[family].field] = null;",
+    "new": "  entity.arcanePath = null;",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-path-kept",
+    "file": "src/systems/specReset.js",
+    "old": "  entity[LAW[family].field] = null;",
+    "new": "",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-nothing-held-unrefused",
+    "file": "src/systems/specReset.js",
+    "old": "  if (!held) return t(",
+    "new": "  if (false) return t(",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-arcane-box-permanent",
+    "file": "src/systems/arcanePaths.js",
+    "old": "    ...pathPowerRows(p),\n    '',\n    t('schools.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),",
+    "new": "    ...pathPowerRows(p),\n    '',\n    t('schools.choice.final', 'This decision cannot be undone.'),",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-martial-box-permanent",
+    "file": "src/systems/martialPaths.js",
+    "old": "    ...martialPowerRows(p),\n    '',\n    t('martial.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),",
+    "new": "    ...martialPowerRows(p),\n    '',\n    t('martial.choice.final', 'This decision cannot be undone.'),",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-only-guard-dropped",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "  const refusal = (after.others ? null\n",
+    "new": "  const refusal = (true ? null\n",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-guard-reads-held",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "    others: states.some(([p, st]) => p.id !== held.id && (st === 'open' || reach(st))),",
+    "new": "    others: states.some(([p, st]) => (st === 'open' || reach(st))),",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-model-reads-held",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "  bare[resetField(id)] = null;\n",
+    "new": "",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-model-writes-entity",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "  const bare = Object.create(entity);",
+    "new": "  const bare = entity;",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-loss-lines-swapped",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "    id !== 'arcane' ? t('growth.spec.reset.loseTechnique'",
+    "new": "    id === 'arcane' ? t('growth.spec.reset.loseTechnique'",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-off-unsaid",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "    ...(!on ? [t('growth.spec.reset.off'",
+    "new": "    ...(false ? [t('growth.spec.reset.off'",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-later-unsaid",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "        ...(after.later ? [t('growth.spec.reset.later'",
+    "new": "        ...(false ? [t('growth.spec.reset.later'",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-press-on-any-path",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "  if (p.state === 'chosen' && fam.reset) {",
+    "new": "  if (fam.reset) {",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-press-never-disabled",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "    b.disabled = !!r.refusal;",
+    "new": "    b.disabled = false;",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-refused-press-asks",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "    b.onclick = () => { if (!r.refusal) askCard(",
+    "new": "    b.onclick = () => { if (true) askCard(",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-refusal-undrawn",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "      box.append(why);\n    }",
+    "new": "    }",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-press-unasked",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "askCard(r.rows(), () => { _note = r.go().text; _noteFresh = true; _open = null; rerender(); });",
+    "new": "(() => { _note = r.go().text; _noteFresh = true; _open = null; rerender(); })();",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "SPEC-RESET-note-unsaid",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "() => { _note = r.go().text; _noteFresh = true; _open = null; rerender(); }",
+    "new": "() => { r.go(); _noteFresh = true; _open = null; rerender(); }",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L1-1-account-unread",
+    "file": "src/systems/specReset.js",
+    "old": "  payUndoable(entity, SPEC_RESET_GOLD, resetAccount(entity));",
+    "new": "  payUndoable(entity, SPEC_RESET_GOLD, null);",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L1-1-account-offline",
+    "file": "src/systems/specReset.js",
+    "old": "const resetAccount = (entity) => (entity?._online === true ? accountOfSave(entity, REALM_EMPIRE_ACCOUNT) : null);",
+    "new": "const resetAccount = (entity) => accountOfSave(entity, REALM_EMPIRE_ACCOUNT);",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L1-1-loan-counted",
+    "file": "src/systems/specReset.js",
+    "old": "  return totalGoldAmount(entity) + Math.max(0, Number(account?.accountGold) || 0);",
+    "new": "  return totalGoldAmount(entity) + (Number(account?.accountGold) || 0);",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L1-1-bank-unasked",
+    "file": "src/systems/specReset.js",
+    "old": "  return totalGoldAmount(entity) + Math.max(0, Number(account?.accountGold) || 0);",
+    "new": "  return totalGoldAmount(entity);",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L1-1-offline-words-swapped",
+    "file": "src/systems/specReset.js",
+    "old": "  return entity?._online === true\n",
+    "new": "  return entity?._online !== true\n",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L1-2-ask-flag-left",
+    "file": "src/systems/specReset.js",
+    "old": "  entity[LAW[family].prompted] = true;\n",
+    "new": "",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L1-2-wrong-family-flag",
+    "file": "src/systems/specReset.js",
+    "old": "  martial: { held: martialPathOf, field: 'martialPath', prompted: 'martialPrompted' },",
+    "new": "  martial: { held: martialPathOf, field: 'martialPath', prompted: 'pathPrompted' },",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L1-3-reset-unfolded",
+    "file": "src/systems/specReset.js",
+    "old": "  computeEntityMods(entity);\n  return { ok: true",
+    "new": "  return { ok: true",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L1-3-guide-choose-unfolded",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "  if (r.ok) computeEntityMods(entity);\n  return r;",
+    "new": "  return r;",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L1-3-ask-choose-unfolded",
+    "file": "src/scenes/shared.js",
+    "old": "const r = choosePath(entity, path.id); say(r.text); if (r.ok) { computeEntityMods(entity); audio",
+    "new": "const r = choosePath(entity, path.id); say(r.text); if (r.ok) { audio",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L1-3-classic-choose-unfolded",
+    "file": "src/ui/charsheet.js",
+    "old": "const r = choosePath(e, p.id); if (r.ok) computeEntityMods(e);",
+    "new": "const r = choosePath(e, p.id);",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L1-3-classic-martial-unfolded",
+    "file": "src/ui/charsheet.js",
+    "old": "const r = chooseMartialPath(e, p.id); if (r.ok) computeEntityMods(e);",
+    "new": "const r = chooseMartialPath(e, p.id);",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L1-5-any-signature-spell",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "(entity?.spells ?? []).some((sp) => isSignatureSpell(sp) && sp.path === held.id)",
+    "new": "(entity?.spells ?? []).some((sp) => isSignatureSpell(sp))",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L1-5-spell-always-stays",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "(entity?.spells ?? []).some((sp) => isSignatureSpell(sp) && sp.path === held.id) ? t(",
+    "new": "true ? t(",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L2-1-mirror-unwritten",
+    "file": "src/systems/save/save.js",
+    "old": "    snap.career.arcaneMirror = { path: snap.arcanePath, prompted: snap.pathPrompted, of: snap.characterId };\n",
+    "new": "",
+    "tests": [
+      "test/ui/growth/specreset.test.js",
+      "test/systems/audit_schools.test.js",
+      "test/systems/schools_arcane.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L2-1-mirror-unread",
+    "file": "src/systems/save/save.js",
+    "old": "  if (arcMirrored) { entity.arcanePath = arcMirror.path;",
+    "new": "  if (false) { entity.arcanePath = arcMirror.path;",
+    "tests": [
+      "test/ui/growth/specreset.test.js",
+      "test/systems/audit_schools.test.js",
+      "test/systems/schools_arcane.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L2-1-witness-over-mirror",
+    "file": "src/systems/save/save.js",
+    "old": "  if (snap.arcanePath === undefined && !arcMirrored && !entity.arcanePath) {",
+    "new": "  if (snap.arcanePath === undefined && !entity.arcanePath) {",
+    "tests": [
+      "test/ui/growth/specreset.test.js",
+      "test/systems/audit_schools.test.js",
+      "test/systems/schools_arcane.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L2-1-id-unread",
+    "file": "src/systems/save/save.js",
+    "old": "  const arcMirrored = snap.arcanePath === undefined && arcMirror?.of === snap.characterId\n",
+    "new": "  const arcMirrored = snap.arcanePath === undefined && !!arcMirror\n",
+    "tests": [
+      "test/ui/growth/specreset.test.js",
+      "test/systems/audit_schools.test.js",
+      "test/systems/schools_arcane.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L2-1-unlawful-mirror",
+    "file": "src/systems/save/save.js",
+    "old": "(isPathId(arcMirror.path) && !pathFindings({ arcanePath: arcMirror.path, masteredSkills: snap.masteredSkills }).length)",
+    "new": "isPathId(arcMirror.path)",
+    "tests": [
+      "test/ui/growth/specreset.test.js",
+      "test/systems/audit_schools.test.js",
+      "test/systems/schools_arcane.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L2-1-live-career-keeps-mirror",
+    "file": "src/systems/save/save.js",
+    "old": "delete entity.career.martialMirror; delete entity.career.arcaneMirror; }",
+    "new": "delete entity.career.martialMirror; }",
+    "tests": [
+      "test/ui/growth/specreset.test.js",
+      "test/systems/audit_schools.test.js",
+      "test/systems/schools_arcane.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L4-5-arcane-price-row-dropped",
+    "file": "src/systems/arcanePaths.js",
+    "old": "    // a lone word onto a line of its own in six languages\n    t('schools.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),\n",
+    "new": "    // a lone word onto a line of its own in six languages\n",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L4-5-martial-price-row-dropped",
+    "file": "src/systems/martialPaths.js",
+    "old": "    t('martial.choice.reset', 'Resetting it later costs {gold, number} gold.', { gold: SPEC_RESET_GOLD }),   // AUDIT SPEC-RESET L4-5: a row of its own\n",
+    "new": "",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L5-1-martial-field-drift",
+    "file": "src/systems/specReset.js",
+    "old": "  martial: { held: martialPathOf, field: 'martialPath', prompted: 'martialPrompted' },",
+    "new": "  martial: { held: martialPathOf, field: 'arcanePath', prompted: 'martialPrompted' },",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L5-1-martial-only-guard-dropped",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "  const refusal = (after.others ? null\n",
+    "new": "  const refusal = (after.others || id === 'martial' ? null\n",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L5-1-martial-later-unsaid",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "        ...(after.later ? [",
+    "new": "        ...(after.later && id === 'arcane' ? [",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L5-2-reach-drops-ready",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "  const reach = (st) => st === 'ready' || st === 'reach';",
+    "new": "  const reach = (st) => st === 'reach';",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L5-3-reset-clears-prompted",
+    "file": "src/systems/specReset.js",
+    "old": "  entity[LAW[family].prompted] = true;",
+    "new": "  entity.pathPrompted = false; entity.martialPrompted = false;",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L5-4-lead-gold-arg-dropped",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "Resetting one costs {gold, number} gold.', { gold: SPEC_RESET_GOLD })",
+    "new": "Resetting one costs {gold, number} gold.')",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L5-5-L3-1-refusal-order-swapped",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "  const refusal = (after.others ? null\n    : t('growth.spec.reset.only', 'No other {family} path can open for you, so a reset would only let you choose {name} again.', { family: famWord(id), name: held.name }))\n    ?? specResetRefusal(entity, id);",
+    "new": "  const refusal = specResetRefusal(entity, id) ?? (after.others ? null\n    : t('growth.spec.reset.only', 'No other {family} path can open for you, so a reset would only let you choose {name} again.', { family: famWord(id), name: held.name }));",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L5-6-resetSpecGuide-keeps-note",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "_all = false; _note = null; _noteFresh = false; _swapOut = null; _swapIn = null; }",
+    "new": "_all = false; _noteFresh = false; _swapOut = null; _swapIn = null; }",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L5-7-css-rule-removed",
+    "file": "src/ui/growth/specGuide.js",
+    "old": ".px-sys .gr-reset-why { margin-top: 6px; color: #b8a27a; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L5-7-why-class-dropped",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "el('p', 'gr-fine gr-reset-why', r.refusal)",
+    "new": "el('p', 'gr-fine', r.refusal)",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L5-8-afterReset-states-on-entity",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "pathState(bare, law, p, null, open, on)",
+    "new": "pathState(entity, law, p, null, open, on)",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT SPEC-RESET L5-8: with `held` passed as null, pathState reads no path field (skillStand and masterableCount read skills, career and masteries) - the view is kept for the one reader that needs it, law.choices(bare), and so the states read the same entity the list is built on"
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L3-1-closed-for-every-path",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "  if (held) { const free = pathState(entity, law, p, null, [], on); return free === 'never' || free === 'slots' ? free : 'closed'; }",
+    "new": "  if (held) return 'closed';",
+    "tests": [
+      "test/ui/growth/specreset.test.js",
+      "test/ui/growth/growth1_tab.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L3-1-slots-read-closed",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "return free === 'never' || free === 'slots' ? free : 'closed'; }",
+    "new": "return free === 'never' ? free : 'closed'; }",
+    "tests": [
+      "test/ui/growth/specreset.test.js",
+      "test/ui/growth/growth1_tab.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L3-2-note-no-status",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "    note.setAttribute('role', 'status');\n",
+    "new": "",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L3-2-note-unfocused",
+    "file": "src/ui/growth/specGuide.js",
+    "old": " note.focus?.({ preventScroll: true }); });",
+    "new": " });",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L3-2-reset-note-stale",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "_note = r.go().text; _noteFresh = true; _open = null;",
+    "new": "_note = r.go().text; _open = null;",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L3-3-window-not-inert",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  under?.setAttribute?.('inert', '');\n",
+    "new": "",
+    "tests": [
+      "test/ui/growth/specreset.test.js",
+      "test/ui/growth/growth1_tab.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L3-3-inert-left",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "back.remove(); under?.removeAttribute?.('inert');",
+    "new": "back.remove();",
+    "tests": [
+      "test/ui/growth/specreset.test.js",
+      "test/ui/growth/growth1_tab.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L3-3-not-modal",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  card.setAttribute('aria-modal', 'true');\n",
+    "new": "",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L3-3-unnamed",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  card.setAttribute('aria-labelledby', rows.id);\n",
+    "new": "",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L3-3-focus-left-behind",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  [...(bar.querySelectorAll?.('button') ?? [])].pop()?.focus?.({ preventScroll: true });",
+    "new": "",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L3-3-focus-not-given-back",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    if (opener?.isConnected) opener.focus?.({ preventScroll: true });\n",
+    "new": "",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L3-4-repeat-answers",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    if (e.repeat) return;\n",
+    "new": "",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L3-4-answered-twice",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  const answer = (yes) => { if (answered) return; answered = true; close(); if (yes) onYes(); };",
+    "new": "  const answer = (yes) => { answered = true; close(); if (yes) onYes(); };",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L3-5-reason-unlinked",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "      b.setAttribute('aria-describedby', why.id);",
+    "new": "",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L3-6-grimoire-fade-dropped",
+    "file": "src/ui/grimoireDress.js",
+    "old": "${G} .px-sys .gr-acts .act:is(:disabled, [disabled]) { color: rgba(43,26,12,0.35) !important; }",
+    "new": "",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SPEC-RESET-L3-7-dot-breaks",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "{ gold: SPEC_RESET_GOLD }).replace(/ ·/g, '\\u00a0·')",
+    "new": "{ gold: SPEC_RESET_GOLD })",
+    "tests": [
+      "test/ui/growth/specreset.test.js"
+    ]
+  }
+]

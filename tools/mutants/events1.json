@@ -1,0 +1,922 @@
+[
+ {
+  "name": "EVENTS1-the-pixel-unscaled",
+  "file": "src/systems/eventBoard.js",
+  "old": "  const dx = (/** @type {any} */ (to).px - from.x) * PIXEL_M, dy",
+  "new": "  const dx = (/** @type {any} */ (to).px - from.x) * 800, dy",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-north-is-south",
+  "file": "src/systems/eventBoard.js",
+  "old": "Math.atan2(dx, -dy)",
+  "new": "Math.atan2(dx, dy)",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-tenths-past-ten",
+  "file": "src/systems/eventBoard.js",
+  "old": "const km = tenths < 10 ? tenths : Math.round(m / 1000);",
+  "new": "const km = tenths;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-place-not-needed",
+  "file": "src/systems/eventBoard.js",
+  "old": "const near = (r) => r.live || (!!r.where && r.at - now <= soonMs);",
+  "new": "const near = (r) => r.live || r.at - now <= soonMs;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-horizon-shut",
+  "file": "src/systems/eventBoard.js",
+  "old": "const near = (r) => r.live || (!!r.where && r.at - now <= soonMs);",
+  "new": "const near = (r) => r.live || (!!r.where && r.at - now < soonMs);",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-shut-shown",
+  "file": "src/systems/eventBoard.js",
+  "old": "r.shut || !near(r)",
+  "new": "!near(r)",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-every-raid",
+  "file": "src/systems/eventBoard.js",
+  "old": "rows.push(...raidRows.slice(0, Math.max(0, raids)));",
+  "new": "rows.push(...raidRows);",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-farthest-raids",
+  "file": "src/systems/eventBoard.js",
+  "old": ".sort((a, b) => (a.way && b.way ? a.way.m - b.way.m : a.at - b.at));",
+  "new": ".sort((a, b) => (a.way && b.way ? b.way.m - a.way.m : a.at - b.at));",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-count-past-its-target",
+  "file": "src/systems/eventBoard.js",
+  "old": "EVENT_BOARD_TEXT.raidCount(Math.min(r.n, r.tg), r.tg)",
+  "new": "EVENT_BOARD_TEXT.raidCount(r.n, r.tg)",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-every-raid-announced",
+  "file": "src/systems/eventBoard.js",
+  "old": "announce: (!!src?.region && r.region === src.region) || (!!way && way.m <= EVENT_RAID_REACH_M),",
+  "new": "announce: true,",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-raid-since-its-start",
+  "file": "src/systems/eventBoard.js",
+  "old": "since: live ? r.startMs : r.startMs - soonMs,",
+  "new": "since: r.startMs,",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-star-since-never",
+  "file": "src/systems/eventBoard.js",
+  "old": "row.since = r.live ? T.fallAt : T.fallAt - STAR_WARN_MS;",
+  "new": "row.since = NaN;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-first-read-news",
+  "file": "src/systems/eventBoard.js",
+  "old": "    if (!watching || !r.announce) continue;",
+  "new": "    if (!r.announce) continue;",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-what-stood-is-news",
+  "file": "src/systems/eventBoard.js",
+  "old": "Number.isFinite(r.since) && r.since >= /** @type {number} */ (watchFrom) - EVENT_SEED_GRACE_MS",
+  "new": "true",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-never-begun",
+  "file": "src/systems/eventBoard.js",
+  "old": "    } else if (!was && r.live) out.push({ id: r.id, kind: r.kind, phase: 'begun' });",
+  "new": "    }",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-line-on-any-of-its-kind",
+  "file": "src/systems/eventBoard.js",
+  "old": "const mine = (x) => x.notes.length < notes && (id ? x.id === id : single(kind) && x.kind === kind);",
+  "new": "const mine = (x) => x.notes.length < notes && x.kind === kind;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-omen-a-card-apart",
+  "file": "src/systems/eventBoard.js",
+  "old": "?? (single(kind) ? list.find((x) => x.kind === kind && x.id === null) : null);\n      if (c) { c.id = id;",
+  "new": "?? null;\n      if (c) { c.id = id;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-same-line-twice",
+  "file": "src/systems/eventBoard.js",
+  "old": "if (Number.isFinite(last) && nowMs - /** @type {number} */ (last) < EVENT_NOTE_SAME_MS) return null;",
+  "new": "if (false) return null;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-late-line-unread",
+  "file": "src/systems/eventBoard.js",
+  "old": "if (isShown(c)) c.age = Math.min(c.age, Math.max(0, lifeMs - EVENT_NOTE_MIN_MS));",
+  "new": "if (isShown(c)) void 0;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-waiting-age",
+  "file": "src/systems/eventBoard.js",
+  "old": "for (let i = 0; i < Math.min(shown, list.length); i++) list[i].age += d;",
+  "new": "for (let i = 0; i < list.length; i++) list[i].age += d;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-line-dropped-first",
+  "file": "src/systems/eventBoard.js",
+  "old": "list.splice(list.indexOf(bare ?? waiting[0]), 1);",
+  "new": "list.splice(list.indexOf(waiting[0]), 1);",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-horizon-of-ten",
+  "file": "src/systems/eventBoard.js",
+  "old": "export const EVENT_SOON_MS = 15 * 60_000;",
+  "new": "export const EVENT_SOON_MS = 10 * 60_000;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-four-rows-on-a-desk",
+  "file": "src/systems/eventBoard.js",
+  "old": "export const EVENT_BOARD_ROWS = 3;",
+  "new": "export const EVENT_BOARD_ROWS = 4;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-three-raids",
+  "file": "src/systems/eventBoard.js",
+  "old": "export const EVENT_BOARD_RAIDS = 2;",
+  "new": "export const EVENT_BOARD_RAIDS = 3;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-reach-of-twenty",
+  "file": "src/systems/eventBoard.js",
+  "old": "export const EVENT_RAID_REACH_M = 25_000;",
+  "new": "export const EVENT_RAID_REACH_M = 20_000;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-news-of-six",
+  "file": "src/systems/eventBoard.js",
+  "old": "export const EVENT_TOAST_MS = 9000;",
+  "new": "export const EVENT_TOAST_MS = 6000;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-two-news-at-once",
+  "file": "src/systems/eventBoard.js",
+  "old": "export const EVENT_TOASTS_SHOWN = 1;",
+  "new": "export const EVENT_TOASTS_SHOWN = 2;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-joined-line-of-two",
+  "file": "src/systems/eventBoard.js",
+  "old": "export const EVENT_NOTE_MIN_MS = 5000;",
+  "new": "export const EVENT_NOTE_MIN_MS = 2000;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-sameness-of-ten-seconds",
+  "file": "src/systems/eventBoard.js",
+  "old": "export const EVENT_NOTE_SAME_MS = 60_000;",
+  "new": "export const EVENT_NOTE_SAME_MS = 10_000;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-four-kept",
+  "file": "src/systems/eventBoard.js",
+  "old": "export const EVENT_TOASTS_KEPT = 6;",
+  "new": "export const EVENT_TOASTS_KEPT = 4;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-no-grace",
+  "file": "src/systems/eventBoard.js",
+  "old": "export const EVENT_SEED_GRACE_MS = 5000;",
+  "new": "export const EVENT_SEED_GRACE_MS = 0;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-warning-of-nine",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": "export const STAR_WARN_MS = 10 * 60_000;",
+  "new": "export const STAR_WARN_MS = 9 * 60_000;",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-every-kind-on-the-board",
+  "file": "src/systems/eventBoard.js",
+  "old": "r.kind === 'raid' || !EVENT_BOARD_KINDS.includes(r.kind) || r.shut",
+  "new": "r.kind === 'raid' || r.shut",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-serpent-nowhere",
+  "file": "src/systems/eventBoard.js",
+  "old": "row.where = EVENT_BOARD_TEXT.off(src.serpent.place); row.way = isPixel(site) ? eventWay(src?.pixel, site) : null;",
+  "new": "row.where = EVENT_BOARD_TEXT.off(src.serpent.place); row.way = null;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-hollow-unmeasured",
+  "file": "src/systems/eventBoard.js",
+  "old": "row.where = EVENT_BOARD_TEXT.near(place); row.way = isPixel(site) ? eventWay(src?.pixel, site) : null;",
+  "new": "row.where = EVENT_BOARD_TEXT.near(place); row.way = null;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-find-forgotten",
+  "file": "src/systems/eventBoard.js",
+  "old": "since: Number.isFinite(rec?.foundAt) ? rec.foundAt : NaN",
+  "new": "since: NaN",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-reach-alone",
+  "file": "src/systems/eventBoard.js",
+  "old": "announce: (!!src?.region && r.region === src.region) || (!!way && way.m <= EVENT_RAID_REACH_M),",
+  "new": "announce: (!!way && way.m <= EVENT_RAID_REACH_M),",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-raid-horizon-shut",
+  "file": "src/systems/eventBoard.js",
+  "old": "r.endMs > now && r.startMs - now <= soonMs)",
+  "new": "r.endMs > now && r.startMs - now < soonMs)",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-live-after-its-start",
+  "file": "src/systems/eventBoard.js",
+  "old": "const live = r.startMs <= now;",
+  "new": "const live = r.startMs < now;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-uncut",
+  "file": "src/systems/eventBoard.js",
+  "old": "return { rows: rows.slice(0, cut), more: all.length - Math.min(cut, rows.length), all, now };",
+  "new": "return { rows, more: all.length - Math.min(cut, rows.length), all, now };",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-no-more",
+  "file": "src/systems/eventBoard.js",
+  "old": "return { rows: rows.slice(0, cut), more: all.length - Math.min(cut, rows.length), all, now };",
+  "new": "return { rows: rows.slice(0, cut), more: 0, all, now };",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-grace-gone",
+  "file": "src/systems/eventBoard.js",
+  "old": "r.since >= /** @type {number} */ (watchFrom) - EVENT_SEED_GRACE_MS)",
+  "new": "r.since >= /** @type {number} */ (watchFrom))",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-announced-every-read",
+  "file": "src/systems/eventBoard.js",
+  "old": "    seen.set(r.id, !!r.live);\n",
+  "new": "",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-quiet-row-announced",
+  "file": "src/systems/eventBoard.js",
+  "old": "    if (!watching || !r.announce) continue;",
+  "new": "    if (!watching) continue;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-star-unnamed-early",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": "warned: T.fallAt - STAR_WARN_MS <= t,",
+  "new": "warned: T.omenAt <= t,",
+  "tests": [
+   "test/systems/starfall/star6_words.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-one-warned-star",
+  "file": "src/systems/starfall/starfallClient.js",
+  "old": "      if (T.fallAt - STAR_WARN_MS <= t) rows.push(coming(s, T.fallAt, heart, true));\n",
+  "new": "",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-no-raid-ahead",
+  "file": "src/systems/raidingParties.js",
+  "old": "if (aheadMs > 0 && Number.isFinite(next) && turn > now && relayOf(turn) - relayOf(now) <= aheadMs) {",
+  "new": "if (false) {",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-roll-before-the-regions",
+  "file": "src/systems/raidingParties.js",
+  "old": "if (regions) _ahead = { day: next, raids: raidsForDay(next, regions)",
+  "new": "_ahead = { day: next, raids: !regions ? [] : raidsForDay(next, regions)",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-named-further-ahead",
+  "file": "src/systems/raidingParties.js",
+  "old": "relayOf(turn) - relayOf(now) <= aheadMs) {",
+  "new": "relayOf(turn) - relayOf(now) <= 2 * aheadMs) {",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-raids-region-the-maps",
+  "file": "src/systems/raidingParties.js",
+  "old": "export const raidRegionNow = () => { try { return host().regionIndex?.() ?? -1; } catch { return -1; } };",
+  "new": "export const raidRegionNow = () => -1;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-switch-ignored",
+  "file": "src/systems/eventNotices.js",
+  "old": "    if (getPref(EVENT_BOARD_PREF) === false) return false;\n",
+  "new": "",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-piece-put-away-ignored",
+  "file": "src/systems/eventNotices.js",
+  "old": "return !(isEnhanced() && getPref('hudLayout')?.[EVENT_BOARD_PIECE]?.off === true);",
+  "new": "return true;",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-raid-to-the-chat-off",
+  "file": "src/systems/eventNotices.js",
+  "old": "if (_off && kind !== 'raid') _off(text); else if (filed)",
+  "new": "if (_off) _off(text); else if (filed)",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-no-journal",
+  "file": "src/systems/eventNotices.js",
+  "old": "try { if (typeof _log === 'function') _log(s); else _log?.hudMessageSink?.(s); }",
+  "new": "try { void 0; }",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-every-line-kept",
+  "file": "src/systems/eventNotices.js",
+  "old": "  if (_waiting.length > EVENT_NOTICES_KEPT) _waiting = _waiting.slice(-EVENT_NOTICES_KEPT);\n",
+  "new": "",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-no-source-seated",
+  "file": "src/systems/eventNotices.js",
+  "old": "_source = typeof source === 'function' ? source : null;",
+  "new": "_source = null;",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-filed-twice",
+  "file": "src/systems/eventNotices.js",
+  "old": "  if (sink) holder.hudMessageSink = null;\n",
+  "new": "",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-journal-lost",
+  "file": "src/systems/eventNotices.js",
+  "old": "  try { hudText(text); } finally { if (sink) holder.hudMessageSink = sink; }",
+  "new": "  try { hudText(text); } finally { void 0; }",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-filed-raid-filed-again",
+  "file": "src/systems/eventNotices.js",
+  "old": "else if (filed) eventHudLine(text); else hudText(text);",
+  "new": "else hudText(text);",
+  "tests": [
+   "test/systems/events1_board.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-id-dropped",
+  "file": "src/systems/eventNotices.js",
+  "old": "id: typeof id === 'string' && id ? id : null });",
+  "new": "id: null });",
+  "tests": [
+   "test/systems/events1_board.test.js",
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-rows-for-the-screen",
+  "file": "src/ui/eventBoard.js",
+  "old": "export const eventRowsFor = (h) => (h >= EVENT_TALL_PX ? EVENT_TALL_ROWS : EVENT_BOARD_ROWS);",
+  "new": "export const eventRowsFor = (h) => EVENT_BOARD_ROWS;",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-raid-count-on-every-row",
+  "file": "src/ui/eventBoard.js",
+  "old": "set(p.detail, r.kind === 'raid' && r.live ? r.detail : '');",
+  "new": "set(p.detail, r.detail);",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-never-hidden",
+  "file": "src/ui/eventBoard.js",
+  "old": "const want = classes('evhud', !on && 'hidden');",
+  "new": "const want = classes('evhud');",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-no-home",
+  "file": "src/ui/eventBoard.js",
+  "old": "const home = Math.min(460, Math.max(244, 0.4 * vh));",
+  "new": "const home = 0.4 * vh;",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-star-line-under-a-star",
+  "file": "src/ui/eventBoard.js",
+  "old": "  if (!EVENT_SINGLE_KINDS.includes(c.kind)) return null;\n",
+  "new": "",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-shadow-on-the-wrapper",
+  "file": "src/ui/eventBoard.js",
+  "old": "border-style: solid; color: #e9e4d9; text-shadow: ${PIXEL_TEXT_SHADOW}; }",
+  "new": "border-style: solid; }",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-any-board-selector",
+  "file": "src/ui/eventBoard.js",
+  "old": "/\\.evboard(?![\\w-])/.test(sel)",
+  "new": "/\\.evboard/.test(sel)",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-undressed",
+  "file": "src/ui/enhanced/enhancedFrame.js",
+  "old": "    'body .evboard',\n",
+  "new": "",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-piece-the-plate",
+  "file": "src/ui/hud/hudLayout.js",
+  "old": "{ id: 'events', sel: '.evhud',",
+  "new": "{ id: 'events', sel: '.evboard',",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-chat-over-it",
+  "file": "src/ui/eventBoard.js",
+  "old": "const top = Math.max(home, ...above.filter(crosses).map((r) => r.bottom + EVENT_GAP_PX));",
+  "new": "const top = home;",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-span-ignored",
+  "file": "src/ui/eventBoard.js",
+  "old": "const crosses = (r) => r && r.right > left && r.left < right && r.bottom > r.top;",
+  "new": "const crosses = (r) => r && r.bottom > r.top;",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-bar-across-its-top",
+  "file": "src/ui/eventBoard.js",
+  "old": "...below.filter((r) => crosses(r) && r.bottom > top)",
+  "new": "...below.filter((r) => crosses(r) && r.top > top)",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-bare-plate-stands",
+  "file": "src/ui/eventBoard.js",
+  "old": "return shown > 0 && !(plateHeight() > room);",
+  "new": "return !(plateHeight() > room);",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-over-the-canvas-vitals",
+  "file": "src/ui/eventBoard.js",
+  "old": "classic ? vh * (1 - EVENT_CLASSIC_FOOT) : vh - EVENT_GAP_PX",
+  "new": "vh - EVENT_GAP_PX",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-never-fitted",
+  "file": "src/ui/eventBoard.js",
+  "old": "for (let guard = 0; guard <= EVENT_TALL_ROWS && plateHeight() > room && rowsCap > 0; guard++) { rowsCap--; once(); }",
+  "new": "",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-no-room-no-word",
+  "file": "src/ui/eventBoard.js",
+  "old": "    eventHudLine(w.line || w.kind);",
+  "new": "    void 0;",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-an-empty-plate-stands",
+  "file": "src/ui/eventBoard.js",
+  "old": "  if (!model.rows.length && !toasts.cards().length) { stand(doc, false); return; }",
+  "new": "  if (!model.rows.length && !toasts.cards().length) return;",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-scale-uncopied",
+  "file": "src/ui/eventBoard.js",
+  "old": "if (scale) root.style?.setProperty?.('--hud-scale', scale); else",
+  "new": "if (!scale) ",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-watch-moves",
+  "file": "src/ui/eventBoard.js",
+  "old": "if (src && watchFrom == null && Number.isFinite(model.now)) watchFrom = model.now;",
+  "new": "if (src && Number.isFinite(model.now)) watchFrom = model.now;",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-line-under-anothers-row",
+  "file": "src/ui/eventBoard.js",
+  "old": "  if (c.id) return rows.find((x) => x.id === c.id) ?? null;\n",
+  "new": "",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-news-row-twice",
+  "file": "src/ui/eventBoard.js",
+  "old": "const rows = model.rows.filter((r) => !inNews.has(r.id)).slice(",
+  "new": "const rows = model.rows.slice(",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-news-counted-more",
+  "file": "src/ui/eventBoard.js",
+  "old": "const shownIds = new Set([...rows.map((r) => r.id), ...inNews]);",
+  "new": "const shownIds = new Set(rows.map((r) => r.id));",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-way-last",
+  "file": "src/ui/eventBoard.js",
+  "old": "const whereOf = (r) => [r?.way?.text, r?.where].filter(Boolean)",
+  "new": "const whereOf = (r) => [r?.where, r?.way?.text].filter(Boolean)",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-voice-every-frame",
+  "file": "src/ui/eventBoard.js",
+  "old": "if (live && voice !== spoken)",
+  "new": "if (live)",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-news-spent-hidden",
+  "file": "src/ui/eventBoard.js",
+  "old": "  if (on) toasts.step((Number(dt) || 0) * 1000);",
+  "new": "  toasts.step((Number(dt) || 0) * 1000);",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-line-lost-off",
+  "file": "src/ui/eventBoard.js",
+  "old": "for (const l of lines) eventNoticeElsewhere(l.kind, l.text, true);",
+  "new": "void lines;",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-unbuilt-remembers",
+  "file": "src/ui/eventBoard.js",
+  "old": "if (root || seen.size || watchFrom != null) reset();",
+  "new": "if (root) reset();",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-gate-in-the-chat",
+  "file": "src/scenes/world.js",
+  "old": "say: (text) => eventNotice('gate', text),   // EVENTS1",
+  "new": "say: (text) => chatNotice(text),   // EVENTS1",
+  "tests": [
+   "test/ui/events1_board_ui.test.js",
+   "test/ui/wb1_gate_omen.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-rite-in-the-chat",
+  "file": "src/scenes/world.js",
+  "old": "say: (text) => eventNotice('gate', text),   // AUDIT EVENTS1 C6",
+  "new": "say: (text) => chatNotice(text),   // AUDIT EVENTS1 C6",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-bells-in-the-chat",
+  "file": "src/scenes/world.js",
+  "old": "say: (text) => eventNotice('serpent', text),",
+  "new": "say: (text) => chatNotice(text),",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-hollow-in-the-chat",
+  "file": "src/scenes/world.js",
+  "old": "say: (text) => eventNotice('super', text),",
+  "new": "say: (text) => chatNotice(text),",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-serpent-slain-in-the-chat",
+  "file": "src/scenes/world.js",
+  "old": "eventNotice('serpent', slainLine({",
+  "new": "chatNotice(slainLine({",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-no-journal-seated",
+  "file": "src/scenes/world.js",
+  "old": "}, (text) => chatNotice(text), townTalk);",
+  "new": "}, (text) => chatNotice(text));",
+  "tests": [
+   "test/ui/events1_board_ui.test.js",
+   "test/ui/enhanced/timers1.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-raids-at-the-maps-region",
+  "file": "src/scenes/world.js",
+  "old": "region: REGION_NAMES[raidRegionNow()] ?? null,",
+  "new": "region: null,",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-no-raid-named-ahead",
+  "file": "src/scenes/world.js",
+  "old": "raidTimerList(relayOf, (r) => REGION_NAMES[r], EVENT_SOON_MS)",
+  "new": "raidTimerList(relayOf, (r) => REGION_NAMES[r])",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-hollow-nowhere",
+  "file": "src/scenes/world.js",
+  "old": "site: sdHost.hollow()?.site ?? null } : null,",
+  "new": "site: null } : null,",
+  "tests": [
+   "test/ui/events1_board_ui.test.js",
+   "test/ui/enhanced/sd2c_omen.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-star-line-unnamed",
+  "file": "src/scenes/starfall/starfallHost.js",
+  "old": "else say(text, `star:${S.site.n}.${S.site.k}`);",
+  "new": "else say(text);",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-a-raid-line-unnamed",
+  "file": "src/systems/raidingParties.js",
+  "old": "const id = raid ? `raid:${raidKey(raid)}` : null;",
+  "new": "const id = null;",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-board-undrawn",
+  "file": "src/ui/hud/hud.js",
+  "old": "  drawEventBoard({ hidden: cursorActive || !hudRenderEnabled(), dt });\n",
+  "new": "",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-board-unhidden",
+  "file": "src/ui/hud/hud.js",
+  "old": "  drawEventBoard({ hidden: true });",
+  "new": "  void 0;",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ },
+ {
+  "name": "EVENTS1-the-status-under-the-board",
+  "file": "src/ui/enhanced/enhancedHud.js",
+  "old": ".hudstatus, .dftouch-btn';",
+  "new": ".hudstatus, .dftouch-btn, .evboard';",
+  "tests": [
+   "test/ui/events1_board_ui.test.js"
+  ]
+ }
+]

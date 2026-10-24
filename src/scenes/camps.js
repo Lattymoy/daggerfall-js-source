@@ -7,14 +7,16 @@
 // lights archive at 12 fps - FlatAnim picks the rate off the archive)
 // as one billboard batch, base-aligned at the spot, with a point light
 // over it while it burns. A TENT is model 41606 through the host's
-// pipeline (the wagon's getGpuMesh law, player/eotbWagon.js), stood
+// pipeline (the wagon's getGpuMesh law, player/eyeOfTheBeholder/eotbWagon.js), stood
 // TENT_BEHIND behind its fire and facing it. Both are one activation
 // target at CAMP_REACH under the host's one ray; Info and Talk name it,
 // Grab and Steal open the menu (a list picker: rest, cook, stoke, pack).
 //
 // THE CLOCK is the world's minute (worldMinutes): a fire dies at its
-// minute whether the player lived through it or slept, and a kit's
-// fire that dies is swept. THE GROUND is the host's: snapshot/restore
+// minute whether the player lived through it or slept, and burnt down
+// it stands cold (REST2) - only a fire with no fuel of its own, an Ember
+// Jar's or an old save's kit fire, is swept with its embers (camp.js
+// campExpired; AUDIT C&C I10: this said every kit fire). THE GROUND is the host's: snapshot/restore
 // in the host's own frame (the save envelope and the scene cache, in
 // natives outdoors), collectPixel with the streaming host's sweep,
 // offsetAll with the floating origin, destroyAll on a transition.
@@ -31,20 +33,22 @@ import { FlatAnim } from '../render/flatAnimation.js';
 import { trs, multiply, wrapAngle } from '../world/mat4.js';
 import { intoDeck, outOfDeck } from '../systems/naval/navalDeck.js';   // DECK-CAMP: a camp on a boat's deck rides her frame
 import { localAabb, transformedAabb } from '../render/frustum.js';
-import { drawSeen } from './decorRoom.js';   // PERF-WAGON: a tent by the street's view test
+import { drawSeen } from './decor/decorRoom.js';   // PERF-WAGON: a tent by the street's view test
 import { ListPickerWindow } from '../ui/listPicker.js';
 import { survivalOn } from '../systems/survival/switch.js';   // AUDIT SURV-TIERS: Off keeps what stands and uses none of it (shown, below); SURV-OFFSIGHT: it sees another's (seen)
 import {
   TENT_MODEL, FIRE_FLAT, FIRE_LIGHT_RANGE, CAMP_REACH, CAMP_KIND, CAMP_TEXT, CAMPS_PER_OWNER,
-  placeCampItem, packCamp, stokeFire, fireLit, campExpired, tentPos, nearestFire, campInfoText, campMenu, campSpot, campDecision,
+  placeCampItem, packCamp, stokeFire, canStoke, fireLit, campExpired, tentNear as tentInReach, tentPos, nearestFire, campInfoText, campMenu, campSpot, campDecision,
   cookables, cookFood, hasSkillet, campWire, mergeOwnerCamps, BY_FIRE_REACH, FIRE_MINUTES, spendCampNight,
   strikeCamp,   // FIELD BUGS 2026-10-04d CAMP-CAP: a placing at the cap strikes the oldest
   validDeck, deckYaw, TENT_BEHIND,
 } from '../systems/survival/camp.js';
 import { isCampfireKit, CAMPFIRE_USES } from '../systems/survival/items.js';   // REST2: the Campfire is online's for everyone
-import { isBedroll, isEmberJar, isFirewood, spendCharge, REST_ITEM_TEXT, FIREWOOD_NIGHTS, BEDROLL_CHANNEL_SECONDS } from '../systems/restItems.js';   // REST6: the Bedroll, the Ember Jar, Firewood
+import { isBedroll, isEmberJar, isFirewood, spendCharge, REST_ITEM_TEXT, FIREWOOD_NIGHTS, BEDROLL_CHANNEL_SECONDS } from '../systems/rest/restItems.js';   // REST6: the Bedroll, the Ember Jar, Firewood
 import { REST_KIND } from '../systems/survival/rest.js';   // AUDIT SURV-TIERS (the third pass): a camp's rest tends its tent's fire
 import { hearthNear, hearthAabb } from '../systems/survival/hearth.js';   // HEARTH1: the world's own fires answer the same question this pool does
+import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a camp's fire named by its camp
+import { hasBag } from '../net/bagLaw.js';   // FB1020c BAG-COOK: the Materials Bag's raw food at the fire
 
 /** The light hangs this far over the flame's base. */
 export const FIRE_LIGHT_UP = 0.6;
@@ -179,7 +183,7 @@ export function createCamps({
    * with the rest of the arc.
    */
   // REST2 (bible/06-Systems/Rest-Arc.md section 3): ONLINE THE FIRES ARE EVERYONE'S. A rest online is an act at a fire
-  // or a bed (systems/restAct.js), so the Campfire, the camps it stands and the world's braziers are the rest's, not the
+  // or a bed (systems/rest/restAct.js), so the Campfire, the camps it stands and the world's braziers are the rest's, not the
   // arc's alone: online every door below opens with the arc Off too. Offline Off is SURV-OFFSIGHT's, unchanged.
   // ENDLESS PROVISIONS (2026-10-04, Mac: the Campfire Kit and Rations for everyone - "i can use and find all those without
   // climates and calories"): A CAMP IS EVERY TIER'S. It is placed, seen, named, rested at, cooked at, stoked and packed with
@@ -313,7 +317,7 @@ export function createCamps({
   function feedFire(item, list) {
     const feet = camera?.()?.feet;
     const t = now();
-    const near = feet ? camps.filter((c) => mine(c) && c.rec.kind === CAMP_KIND.Fire && !c.rec.jar && !!c.rec.fuel && within(c.rec.pos, feet, BY_FIRE_REACH)) : [];   // AUDIT REST-PARTY B5: never an old save's kit fire
+    const near = feet ? camps.filter((c) => mine(c) && visible(c) && c.rec.kind === CAMP_KIND.Fire && !c.rec.jar && !!c.rec.fuel && within(c.rec.pos, feet, BY_FIRE_REACH)) : [];   // AUDIT REST-PARTY B5: never an old save's kit fire; AUDIT C&C: nor one out of sight
     // AUDIT REST III B3: the emptiest of mine in reach WITH ROOM, as H11 has the pack's - four may stand, and the first
     // found took the stick only to refuse it ("all the fuel it can take") while a cold one beside it had none left
     const placed = near.filter((c) => (c.rec.wear | 0) < CAMPFIRE_USES).sort((a, b) => (a.rec.wear | 0) - (b.rec.wear | 0))[0] ?? null;
@@ -363,7 +367,7 @@ export function createCamps({
   const restPointAt = (pos) => (fireNear(pos) ? { kind: 'camp', where: 'fire' }
     : bedrollNear(pos) ? { kind: 'rough', where: 'bedroll', channelSeconds: BEDROLL_CHANNEL_SECONDS } : null);
 
-  /** The burn: a fire dies at its minute; a kit's camp goes with it. */
+  /** The burn: a fire dies at its minute and stands cold; one with no fuel of its own goes with its embers (campExpired). */
   function tick(dt) {
     const t = now();
     tendWhileResting(t);
@@ -379,8 +383,10 @@ export function createCamps({
   /**
    * SURV3's word, kept at last (AUDIT SURV-TIERS, the third pass): "a tent's fire can be stoked (a rest will)" - and
    * nothing did, so a tent pitched at dusk went cold under its sleeper at four and they woke Deadly cold beside it.
-   * A camp's rest at your own tent tends its fire: it burns through the night and its full span past the waking. A
-   * kit's fire cannot be stoked, as ever, and with the arc Off nothing is tended (nothing of it is used).
+   * A camp's rest at your own tent tends its fire: it burns through the night and its full span past the waking - and
+   * at your own Campfire while it has fuel (AUDIT REST-PARTY B2), in every tier (ENDLESS PROVISIONS). An Ember Jar's
+   * fire is never tended: it has no fuel to burn (AUDIT C&C I10: this said a kit's fire, and nothing tended with the arc
+   * Off).
    */
   function tendWhileResting(t) {
     if (!entity?.isResting || entity.restKind !== REST_KIND.Camp) return;   // ENDLESS PROVISIONS: a camp used in every tier is tended in every tier
@@ -388,7 +394,7 @@ export function createCamps({
     if (!feet) return;
     for (const c of camps) {
       const tended = c.rec.kind === CAMP_KIND.Tent || (c.rec.kind === CAMP_KIND.Fire && !!c.rec.fuel);   // AUDIT REST-PARTY B2: and my own Campfire - an offline night moves the world's minutes, so one lit before the rest burned out under its sleeper, who woke beside a cold fire and spent no charge (spendNightNear asks a lit one): the fuel was free offline
-      if (!mine(c) || !tended || (c.rec.wear | 0) <= 0 || !fireLit(c.rec, t) || !within(c.rec.pos, feet, BY_FIRE_REACH)) continue;
+      if (!mine(c) || !visible(c) || !tended || (c.rec.wear | 0) <= 0 || !fireLit(c.rec, t) || !within(c.rec.pos, feet, BY_FIRE_REACH)) continue;   // AUDIT C&C: never one out of sight
       if ((c.rec.litUntil ?? 0) - t > FIRE_MINUTES - 60) continue;   // tended within the hour: one word on the wire an hour, not a frame
       c.rec.litUntil = t + FIRE_MINUTES;
       onChanged?.();
@@ -412,7 +418,7 @@ export function createCamps({
     const near = feet
       ? lit.map((c) => [c, Math.hypot(c.rec.pos[0] - feet[0], c.rec.pos[1] - feet[1], c.rec.pos[2] - feet[2])]).filter(([, d]) => d <= CAMP_LIGHT_REACH).sort((a, b) => a[1] - b[1]).map(([c]) => c)
       : lit;
-    return near.slice(0, CAMP_LIGHTS_MAX).map((c) => ({ x: c.rec.pos[0], y: c.rec.pos[1] + FIRE_LIGHT_UP, z: c.rec.pos[2], range: FIRE_LIGHT_RANGE }));
+    return near.slice(0, CAMP_LIGHTS_MAX).map((c) => adoptLight({ x: c.rec.pos[0], y: c.rec.pos[1] + FIRE_LIGHT_UP, z: c.rec.pos[2], range: FIRE_LIGHT_RANGE }, c.rec));   // LIGHT-ID: the camp's fire, frame to frame
   }
   /** A tent's matrix. DECK-CAMP: on a deck, laid in her frame - she rolls and pitches it with her. */
   const tentMatrix = (c) => {
@@ -493,7 +499,7 @@ export function createCamps({
     // REST2: and the plaque's rows - the loot plaque's list of actions (systems/worldHover.js resolveHover), the camp
     // menu's own keys as the ids, so the lit row is what a press does (activate's `lit`)
     if (key.startsWith('hearth:')) {
-      const title = hearths?.()?.[Number(key.slice(7))]?.placed ? 'Campfire' : 'Fire';   // REST3: a dungeon's placed fire is a Campfire (world/dungeonFires.js)
+      const title = hearths?.()?.[Number(key.slice(7))]?.placed ? 'Campfire' : 'Fire';   // REST3: a dungeon's placed fire is a Campfire (world/dungeon/dungeonFires.js)
       return usable() ? { title, actions: HEARTH_ROWS.map((r) => ({ id: r.key, label: r.text })) } : { title };
     }
     const c = forKey(key);
@@ -515,7 +521,7 @@ export function createCamps({
     if (typeof key === 'string' && key.startsWith('hearth:')) {
       if (mode === 'info' || mode === 'dialogue') { say(CAMP_TEXT.seeHearth); return true; }
       // REST2: a world fire rests too - its rows are Rest and Cook; the plaque's lit one, or the list without a plaque
-      if (lit === 'rest') { openRest?.(null); return true; }
+      if (lit === 'rest') { restAtHearth(); return true; }
       if (lit === 'cook' || !sharedClockOn()) { openCook(null); return true; }   // offline the cooking list, as HEARTH1 opened it
       openHearthMenu();
       return true;
@@ -527,9 +533,18 @@ export function createCamps({
     openMenu(c);
     return true;
   }
+  /** AUDIT C&C (lens I): A WORLD FIRE'S REST IS THE FIRE'S, AND SO IS ITS REACH - a camp's has been since AUDIT
+   *  SURV-TIERS' third pass (act's 'rest', below). The ray meets a fire's sprite up to CAMP_REACH from the eye, and the
+   *  rest's place (each host's `restKind`) reads the feet against the flame, which a collector stands as high as the top
+   *  of its flat - so the Rest row opened a rough night at the far edge of a brazier. It asks what the place will. */
+  function restAtHearth() {
+    const feet = camera?.()?.feet;
+    if (!feet || !fireNear(feet)) { say(CAMP_TEXT.restCloser); return; }
+    openRest?.(null);
+  }
   /** REST2: a world fire's own list, where no plaque stands: rest or cook. */
   function openHearthMenu() {
-    const win = new ListPickerWindow({ items: HEARTH_ROWS.map((r) => r.text), onPick: (i) => { if (HEARTH_ROWS[i]?.key === 'rest') openRest?.(null); else openCook(null); } });
+    const win = new ListPickerWindow({ items: HEARTH_ROWS.map((r) => r.text), onPick: (i) => { if (HEARTH_ROWS[i]?.key === 'rest') restAtHearth(); else openCook(null); } });
     if (showOverlay) showOverlay(win); else openCook(null);
     return win;
   }
@@ -540,7 +555,7 @@ export function createCamps({
     if (!pos) return false;
     let best = null, bestD = BY_FIRE_REACH;
     for (const c of camps) {
-      if (!mine(c) || !fireLit(c.rec, now())) continue;
+      if (!mine(c) || !visible(c) || !fireLit(c.rec, now())) continue;   // AUDIT C&C: never one out of sight
       const d = Math.hypot(c.rec.pos[0] - pos[0], c.rec.pos[1] - pos[1], c.rec.pos[2] - pos[2]);
       if (d <= bestD) { best = c; bestD = d; }
     }
@@ -559,6 +574,9 @@ export function createCamps({
   }
   function openMenu(c) {
     const rows = campMenu(c.rec, now(), mine(c), { online: sharedClockOn() });
+    // AUDIT C&C I11: a camp with nothing to do at it - online a friend's cold one, since its one row, a Cook that only
+    // refused, went - says what it is, as Info does, rather than opening an empty list
+    if (!rows.length) { say(campInfoText(c.rec, now(), mine(c))); return null; }
     const win = new ListPickerWindow({ items: rows.map((r) => r.text), onPick: (i) => act(c, rows[i]?.key) });
     if (showOverlay) showOverlay(win); else act(c, rows[0]?.key);
     return win;
@@ -569,11 +587,12 @@ export function createCamps({
       // AUDIT SURV-TIERS (the third pass): THE REST IS THE FIRE'S, AND SO IS ITS REACH. The menu opens from a tent's
       // far side, up to seven metres from its fire, and the rest it opened was priced where the player stood - bare
       // ground: Hard's gate refused a lit camp's own sleeper ("It is too cold to sleep here"), or the night was the
-      // rough one, stiff morning and all. It is offered where it is a camp's rest, and a cold tent of your own is
-      // stoked for it (SURV3: "a rest will").
+      // rough one, stiff morning and all. It is offered where it is a camp's rest, and a cold camp of your own is
+      // stoked for it (SURV3: "a rest will") - AUDIT C&C I1: whatever its menu would stoke, a Campfire with fuel too,
+      // and said only when it lit
       const feet = camera?.()?.feet;
       if (!feet || !within(c.rec.pos, feet, BY_FIRE_REACH)) { say(CAMP_TEXT.restCloser); return; }
-      if (mine(c) && c.rec.kind === CAMP_KIND.Tent && !fireLit(c.rec, now())) { stokeFire(c.rec, now()); remount(c); say(CAMP_TEXT.stoked); onChanged?.(); }
+      if (canStoke(c.rec, now(), mine(c)) && stokeFire(c.rec, now())) { remount(c); say(c.rec.kind === CAMP_KIND.Fire ? CAMP_TEXT.relit : CAMP_TEXT.stoked); onChanged?.(); }
       openRest?.(c.rec);
       return;
     }
@@ -594,16 +613,26 @@ export function createCamps({
   }
   /** The cooking list. HEARTH1: `c` is the camp whose fire this is, or
    *  NULL for one of the world's own - a brazier burns for ever and
-   *  belongs to nobody, so there is no burn-down test to make. */
+   *  belongs to nobody, so there is no burn-down test to make.
+   *  FB1020c BAG-COOK: the pack's raw food, then the Materials Bag's -
+   *  a netted Raw Fish goes into the bag first (materialsBag.js
+   *  mintCarried), and the list read the pack alone, so a bag's owner
+   *  was told "You have nothing to cook." over a bag of fish. Read after
+   *  the pack as DFU's potion maker reads the wagon after it
+   *  (DaggerfallPotionMakerWindow.cs Refresh), and only while the pack
+   *  holds a bag (a sold bag's list is nobody's); the cooked food goes
+   *  into the pack. */
   function openCook(c) {
     const items = entity?.items ?? [];
-    const raw = cookables(items);
+    const bag = hasBag(items) ? (entity?.bagItems ?? []) : [];
+    const raw = [...cookables(items).map((it) => [it, items]), ...cookables(bag).map((it) => [it, bag])];
     if (!raw.length) { say(CAMP_TEXT.nothingToCook); return null; }
     if (c && !fireLit(c.rec, now())) { say(CAMP_TEXT.cold); return null; }
     const win = new ListPickerWindow({
-      items: raw.map((it) => ((it.stackCount ?? 1) > 1 ? `${it.name} (${it.stackCount})` : it.name)),
+      items: raw.map(([it]) => ((it.stackCount ?? 1) > 1 ? `${it.name} (${it.stackCount})` : it.name)),
       onPick: (i) => {
-        const r = cookFood(raw[i], items, { skillet: hasSkillet(items) });
+        const [it, from] = raw[i];
+        const r = cookFood(it, from, { skillet: hasSkillet(items), into: items });
         if (!r) return;
         say(r.text);
         advanceMinutes?.(r.minutes);
@@ -657,8 +686,10 @@ export function createCamps({
    * the fire. Everything this player USES reads `byFire`, which is Off's
    * to hide.
    */
-  const fireNear = (pos) => !!nearestFire(camps.map((c) => c.rec), pos, now())
+  const fireNear = (pos) => !!nearestFire(seen().map((c) => c.rec), pos, now())   // AUDIT C&C (lens I): a camp out of sight answers no reach - a deck camp hidden with her boat still found its fire at its last posed point
     || hearthNear(hearths ? hearths() : null, pos, BY_FIRE_REACH);
+  /** AUDIT C&C I2: a tent this player uses in reach - the roof a rest at it sleeps under (the hosts' `sheltered`). */
+  const tentNear = (pos) => tentInReach(shown().map((c) => c.rec), pos);
 
   /** DestroyLightSources' twin: every transition and every load. */
   function destroyAll() {
@@ -798,7 +829,7 @@ export function createCamps({
   }
 
   return {
-    placeItem, ride, tick, tend, batches, lights, draw, targets, hoverName, activate, openMenu, openCook, byFire, fireNear, spendNightNear,   // DECK-CAMP: ride
+    placeItem, ride, tick, tend, batches, lights, draw, targets, hoverName, activate, openMenu, openCook, byFire, fireNear, tentNear, spendNightNear,   // DECK-CAMP: ride; AUDIT C&C I2: tentNear
     restPointAt, bedrollNear, packOwnFires,   // REST6; AUDIT REST F1
     destroyAll, dropOwn, collectPixel, offsetAll, groundMoved, snapshot, restore, wireRecords, applyOwner, sweepOwners, sweepColdAbsent,
     get camps() { return camps; }, own,

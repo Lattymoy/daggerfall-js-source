@@ -8,7 +8,7 @@
 //
 // bible/11-Multiplayer/Seats-Arc.md 6.3-6.5. The numbers and the schedule
 // are src/net/townSeatLaw.js's; the battle itself is the relay's
-// (net/siegeRef.js, SEAT2a's relay half).
+// (net/siege/siegeRef.js, SEAT2a's relay half).
 //
 // ONE STATEMENT DECIDES, as everywhere a seat's rows move: each act's
 // first write asks every condition against the rows as they stand (the
@@ -23,7 +23,7 @@ import { guildActorOf } from './guilds.js';
 import { seatsOpenFor } from './townSeats.js';
 import { mustChange } from './realm.js';
 import { utcDay } from '../../src/net/marksLaw.js';
-import { GUILD_RANK_MASTER } from '../../src/net/guildLaw.js';
+import { GUILD_RANK_MASTER } from '../../src/net/guild/guildLaw.js';
 import {
   seatWeekOf, seatWeekStartMs, seatPhaseOf, seatKeyOk, siegeWindowOk, SEAT_LEVER_RANKS, SEAT_EDICTS_HOUR, SEAT_MEMBER_WAIT_S,
   SIEGE_SIDE_MAX, SELLSWORDS_MAX, SIGN_CLOSES_MS, SELLSWORD_COOL_WEEKS, sellswordFeeOk, sideOf,

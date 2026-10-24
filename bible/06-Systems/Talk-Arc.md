@@ -11,14 +11,14 @@ instance mutation campaign with baseline-aware confirmation -> bible
 
 ## What the port already carries (the T3 series, World lane)
 
-- `systems/talk.js` - findFactions / getPeopleOfCurrentRegion /
+- `systems/talk/talk.js` - findFactions / getPeopleOfCurrentRegion /
   GetReactionToPlayer / pickpocket (T3a).
-- `systems/talkTopics.js` - the Where-is BUILDING half: the named-
+- `systems/talk/talkTopics.js` - the Where-is BUILDING half: the named-
   building pool merge, MakeBuildingKey, the knowledge roll
   (KNOWLEDGE_MODIFIERS whole), the skip list, the compass hint, the
   30-record answersToDirections table, GetReactionToPlayer_0_1_2
   (T3c/T3e/T3f + T4's %hnt map-reveal fork).
-- `systems/talkSession.js` - the mobile greeting ladder (7206-7209,
+- `systems/talk/talkSession.js` - the mobile greeting ladder (7206-7209,
   the 7205 refusal at reaction < -20), oaths, %-macro helpers.
 - `scenes/townTalk.js` - the session host: F1-F4 modes, the tone
   cycle with the session reaction cache, the Where-is chain, the
@@ -464,6 +464,33 @@ Also RECORDED (Ledger A): SetRandomQuestor uses `new System.Random()`
 unseeded and wall-clock dependent. Unspecified, so the port's own roll
 is as faithful.
 
+**QUESTOR-HELD** (FIELD BUGS 2026-10-20h, Ledger A). While the pool
+holds questors, its selection names one of them. The build sets it on
+the last questor added (TalkManager.cs:2869), but RemoveNpcQuestor
+(TalkManager.cs:2602-2605) and RestoreConversationData
+(TalkManager.cs:2541-2542) leave it where it stood. The offer window
+spends the questor it was opened for, and a load brings in a pool
+without the selection. If that was the selected questor, DFU's next
+Work answer throws KeyNotFoundException out of GetQuestorGender
+(TalkManagerMCP.cs:34) before SetRandomQuestor (TalkManager.cs:2036)
+can move the selection, and the topic stays dead in that town. The
+port's readers answered the empty string instead: "Go to a place called
+ and talk to someone named ." Both mutators now end in
+`npcSession.js:"  _holdSelection() {"`, which takes the build's own rule,
+the last questor the pool holds. A selection still in the pool is left
+alone, and nothing is drawn. DFU's order is unchanged: the answer names
+the selection that stood before the ask, and the pick follows it.
+Pinned: `fb1020h_questor.test.js`.
+
+**QUESTOR-SHE** (FIELD BUGS 2026-10-20h). The four pronouns fork on
+`talkMacros.js:"  const female = () => ctx.questorGender?.() === GENDERS.Female;"`.
+It compared the string `'female'`, but the pool's NPCData carries the
+Genders enum staticNpcData mints, and the world host hands that on
+unchanged. So every woman with work was "him", while the pins handed
+the helper the string. DFU switches on the enum
+(TalkManagerMCP.cs:146-195), so this restores DFU's behaviour and departs
+from nothing.
+
 **THE UNCLONED QUESTOR POST** (:927 vs :3552). ExpandQuestMessage
 writes each expanded string back into the token it came from
 (QuestMacroHelper.cs:157), and GetNPCQuestGreeting hands it the array
@@ -517,7 +544,7 @@ event rebuilds and the save threading land with TK-v.
 The arc's last slice: the four engine modules live in the running
 hosts, and the one module that was still missing between them.
 
-**`systems/talkMacros.js` is TalkManagerMCP.cs whole** (207 lines, 13
+**`systems/talk/talkMacros.js` is TalkManagerMCP.cs whole** (207 lines, 13
 handlers) plus MacroHelper.ExpandMacros and
 TalkManager.ExpandRandomTextRecord (:3580-3587). This is the module
 the arc had been waiting for without knowing it: TK-iii found two
@@ -583,7 +610,7 @@ static NPC of any race), and `dfRandom` gained the Seed accessor pair
 C#'s settable property is - without which the male-name nudge is not
 portable at all.
 
-**test/talkengine.test.js** builds all four modules exactly as world.js
+**test/systems/talkengine.test.js** builds all four modules exactly as world.js
 builds them and drives a conversation through the assembly - the click,
 the greeting, the tone gate, the mill's news, the tree's knowledge
 reset, the questor door and the envelope. All six passed on the first
@@ -1081,7 +1108,7 @@ rumor and news record:
   falls to pcFactionName (recorded - C# would be off in GetGuild's
   catch-land).
 - **GetLordNameForFaction** (MacroHelper.cs:310-331), the one home in
-  systems/talk.js: a first child who is an Individual IS the ruler and
+  systems/talk/talk.js: a first child who is an Individual IS the ruler and
   answers by name; otherwise the ruler is GENERATED - gender from the
   ruler title's parity ("even entries are female"), the name bank from
   the faction's RACE byte (FACTION_RACE_KEYS is FactionFile.cs:609-622;
@@ -1094,7 +1121,7 @@ rumor and news record:
   fates (answerPipeline, TK-iii) - the strings sat shipped and
   unreachable.
 
-Pins: 6 in `test/talknews.test.js` - the lord-name law driven with
+Pins: 6 in `test/systems/talk/talknews.test.js` - the lord-name law driven with
 expectations computed by seeding the same stream by hand (which kills
 a swapped seed half, a flipped parity and a wrong bank each exactly;
 and taught its own lesson: the expectation must be computed BEFORE the
@@ -1130,7 +1157,7 @@ remained after TN1, mounted:
   The bag literal (regent, bank, palace, temple-child laws) exists
   exactly once and a pin counts it.
 
-Pins: 6 in `test/interiorseams.test.js` (the two macro flows with
+Pins: 6 in `test/systems/quest/interiorseams.test.js` (the two macro flows with
 C#'s "[invalid]" arm on the handler, the four world mounts and the
 one-bag law source-pinned). Campaign: 7 mutants, 7 killed.
 
@@ -1166,7 +1193,7 @@ TalkManager.GetBuildingList's questor half (:2807-2874):
   the spent-roll ordering, the named-building drop - all in
   npcSession, all already pinned.
 
-Pins: 5 in `test/questorpool.test.js` (the walk on fixture blocks,
+Pins: 5 in `test/systems/questorpool.test.js` (the walk on fixture blocks,
 the SetLayoutData law per person, an end-to-end walk-to-pool mint
 keyed by the walk's own seed, the two mounts). Campaign: 8 mutants,
 8 killed.
@@ -1201,7 +1228,7 @@ throws, and `world.js` turns that into the bridge's own no-faction 0.
 A host that cannot name a court shows no court rather than taking down
 the frame.
 
-Pins: 5 in `test/regioncourt.test.js`, one of them ARENA2-gated and
+Pins: 5 in `test/formats/regioncourt.test.js`, one of them ARENA2-gated and
 therefore half-blind by the known charter - it asserts on the shipped
 corpus that every region really does resolve exactly one court, which
 is what makes DFU's throw unreachable, and that a region's court is
@@ -1277,7 +1304,7 @@ parameter is legitimately named and a sweep that flags its own subject
 can never pass. PY1's precedent, kept narrow - one line, not a whole
 block named after the slice, which is the mistake EF1c had to undo.
 
-Pins: 6 in `test/regionlive.test.js`, the sixth being CQ1b's per-slice
+Pins: 6 in `test/scenes/regionlive.test.js`, the sixth being CQ1b's per-slice
 second-home check, applied at the time rather than an hour later.
 Campaign: 11 mutants, 11 killed. Open flags 167 -> 166.
 
@@ -1685,5 +1712,5 @@ sentences ("%loc is %di of here"). Daggerfall Unity reads its
 (`vendor/dfu-text/Internal_RSC.csv`) - and `TextRsc.bytesById` answers a
 table row before the file in the file's own byte shape, so the answer
 pipeline, townTalk's mobile chain and every other TEXT.RSC reader see
-one kind of record. Record: `01-Overview/Mac-Bugs-U.md`. Pinned by
-`test/macu_directions.test.js` (5), `tools/mutants/macu.json` (7 dead).
+one kind of record. Record: `01-Overview/bugs/Mac-Bugs-U.md`. Pinned by
+`test/systems/talk/macu_directions.test.js` (5), `tools/mutants/macu.json` (7 dead).

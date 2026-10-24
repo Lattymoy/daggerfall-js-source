@@ -1,29 +1,29 @@
 // @ts-check
 // COATS3D (bible/06-Systems/Horse-Coats.md, "The 3D horse"): THE 3D HORSE, ITS GL HALF - one per renderer
 // (`horseRigFor`), shared by every horse the Morrowind lane draws: the player's own under them (player/mwView.js),
-// every other rider's (net/peerBodies.js), and Horse Cart and Cargo's standing, following and pulling horses and the
+// every other rider's (net/peer/peerBodies.js), and Horse Cart and Cargo's standing, following and pulling horses and the
 // road's teams (scenes/horseCartPool.js).
 //
 //  - ONE STREAM. The bake (world/horseModel.js horseSkinStream) is uploaded once; every horse is a view of it with its
 //    OWN palette (renderer.createSkinPalette - a picture queued in a sprite batch is drawn at the flush, so each horse
 //    keeps the pose it was queued in) and its own gait.
-//  - ONE PICTURE A LOOK. The body's picture is dyed per look (systems/horseCoats.js dyeHorseTexelRows, the sprites'
+//  - ONE PICTURE A LOOK. The body's picture is dyed per look (systems/horse/horseCoats.js dyeHorseTexelRows, the sprites'
 //    law on the horse's own surface - world/horseModel.js startTexelMap, built once a slice a frame), DYE_ROWS a frame
 //    so no frame pays a look's whole 50-120 ms, and uploaded with its mips once done; a horse whose look is not up yet wears the bay's. Past
 //    HORSE3D_LOOKS_KEPT looks, the one longest undrawn is let go - never one drawn this frame or the last, so a crowd of
 //    more looks than that keeps them all rather than thrash; a look asked for and then not again for LOOK_ASK_STALE
 //    frames (its horse gone, the lane left) leaves the queue undyed. The mane and tail's picture is the art's on every look.
 //  - THE DRAWS. A horse alone is a Morrowind mesh in the world, so it draws as the Morrowind body does - a picture
-//    through the sprite pass at the arm's dial (render/characterSprite.js drawRigSpriteBox, MW_ARM_PIXEL); a horse under
+//    through the sprite pass at the viewer's Morrowind dial (render/characterSprite.js drawBodyPicture, mwModelPixel); a horse under
 //    a rider is in the RIDER's picture (`also`, fpArm.js drawThird); in first person the rider's eye is on its back, so
 //    the horse is taken with the world's own camera into a screen-sized picture and laid over the world where Daggerfall
 //    drew its riding sprite (drawFirstPerson).
 //
 // Not a DFU member: Daggerfall's horse is a sprite. Ledger A (COATS3D).
 import { HORSE_MODEL_URL, HORSE_PICTURE_URLS, horseSkinStream, horsePaletteShape, horsePoseScratch, horseGait, stepHorseGait, writeHorsePalette, startTexelMap, rgbaMips, horseHide } from './horseModel.js';
-import { dyeHorseTexelRows, horseLookCode, horseLookOfCode } from '../systems/horseCoats.js';
-import { drawRigSpriteBox } from '../render/characterSprite.js';
-import { MW_ARM_PIXEL, CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
+import { dyeHorseTexelRows, horseLookCode, horseLookOfCode } from '../systems/horse/horseCoats.js';
+import { drawBodyPicture, mwModelPixel } from '../render/characterSprite.js';
+import { CHAR_SPRITE_RT_SIZE } from '../render/renderer.js';
 import { decodePng } from '../systems/textureReplacement.js';
 import { multiply, trs, transformPoint } from './mat4.js';
 
@@ -149,7 +149,8 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
     const mesh = { vao: base.vao, count: base.count, buffers: [], vbo: base.vbo, floats: base.floats, bounds: null,
       skin: renderer.createSkinPalette({ pairs: stream.pairs, width: shape.width, height: shape.height }),
       ranges: stream.ranges.map((r) => ({ first: r.first, count: r.count, tex: r.texture === 'hair' ? hairTex : null, alphaCut: r.alpha ? 0.5 : 0, hidden: false, part: r.part })) };
-    return { seed, gait: horseGait(), scratch: horsePoseScratch(bake), pal, mesh, model: null, feet: [0, 0, 0], yaw: 0, scale: 1, look: 0 };
+    return { seed, gait: horseGait(), scratch: horsePoseScratch(bake), pal, mesh, model: null, feet: [0, 0, 0], yaw: 0, scale: 1, look: 0,
+      posed: false, stale: false };   // HORSE-VIEW: a pose sent yet; the pose sent behind the gait's clock (a step taken with `pose` false)
   }
 
   /** A horse let go: its palette (the stream is the rig's). */
@@ -159,14 +160,34 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
 
   /** One frame of a horse: its gait stepped at `speed` (m/s, its ground speed), its pose written and uploaded, and
    *  where it stands - its feet (the rig's origin on the ground) and its heading (the way it faces, the motor's yaw:
-   *  0 down +Z, as every body's). */
-  function step(h, { feet, yaw, speed = 0, dt = 0, look = 0 }) {
-    stepHorseGait(h.gait, bake, speed, dt, h.seed);
-    writeHorsePalette(bake, h.gait, h.pal, h.scratch);
-    renderer.updateSkinPalette(h.mesh, h.pal);
+   *  0 down +Z, as every body's). `gallops` false: its rider holds it to a slow ride (HORSE-WALK - horseModel.js
+   *  gaitFor); a horse no one rides gallops as its speed says.
+   *  HORSE-VIEW (bible/07-Rendering/Performance-Priority.md): `pose` false steps the gait's clock and places the horse,
+   *  and neither writes its pose nor sends it - it stands in the last pose sent (`stale`) until `pose` catches it up.
+   *  The palette is the clock's alone (horseModel.js writeHorsePalette reads the gait and nothing else), so a pose
+   *  after skipped frames is the one an every-frame horse shows on that frame. A horse never posed is posed whatever
+   *  `pose` says - none stands in the palette it was made with. */
+  function step(h, { feet, yaw, speed = 0, dt = 0, look = 0, gallops = true, pose = true }) {
+    stepHorseGait(h.gait, bake, speed, dt, h.seed, gallops);
+    if (pose || !h.posed) poseNow(h);
+    else h.stale = true;
     h.look = horseLookCode(horseLookOfCode(look | 0));
     h.mesh.ranges[0].tex = lookTex(h.look);
     return place(h, feet, yaw);
+  }
+
+  /** HORSE-VIEW: a horse's pose written and sent where its gait's clock stands - the palette, its upload. */
+  function poseNow(h) {
+    writeHorsePalette(bake, h.gait, h.pal, h.scratch);
+    renderer.updateSkinPalette(h.mesh, h.pal);
+    h.posed = true; h.stale = false;
+  }
+  /** HORSE-VIEW: a horse whose pose is behind its clock (stepped with `pose` false) posed where the clock stands; one
+   *  already there sends nothing. Answers whether it posed. */
+  function pose(h) {
+    if (!h || (h.posed && !h.stale)) return false;
+    poseNow(h);
+    return true;
   }
 
   /** Where a horse stands: its feet and heading, `scale` times its size about its feet (the travel view's grown
@@ -206,13 +227,22 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
     return { center, halfW, halfH, anchor };
   }
 
+  /** HORSE-VIEW: does a placed horse reach into a camera's view - the draw's own test (its box's ball, outOfView)? One
+   *  not placed yet is not known to be out of it. */
+  function seen(h, view, proj, bx = h?.model ? box(h) : null) {
+    return !bx || !outOfView(bx.center, Math.hypot(bx.halfW, bx.halfH), view, proj);
+  }
+
   /** A horse alone, through the sprite pass at the Morrowind body's dial - none out of the view (AUDIT COATS3D A12: a
-   *  horse behind the eye was skinned and drawn all the same, and one at the eye's plane a whole-screen tile). */
-  function draw(h, canvas, { proj, view, eye, up = null, conceal = null, hitFlash = 0 }) {
+   *  horse behind the eye was skinned and drawn all the same, and one at the eye's plane a whole-screen tile).
+   *  HORSE-VIEW: `fresh` - its caller skipped its pose out of the view - and a pose behind its clock is caught up before
+   *  it is drawn, so a horse the view swings onto is never drawn in a pose from when it was last seen. */
+  function draw(h, canvas, { proj, view, eye, up = null, conceal = null, hitFlash = 0, fresh = false }) {
     if (!h?.model || !canvas) return false;
     const bx = box(h);
-    if (outOfView(bx.center, Math.hypot(bx.halfW, bx.halfH), view, proj)) return false;
-    drawRigSpriteBox(renderer, canvas, h.mesh, h.model, { ...bx, up, conceal, hitFlash }, proj, view, eye, MW_ARM_PIXEL);
+    if (!seen(h, view, proj, bx)) return false;
+    if (fresh) pose(h);
+    drawBodyPicture(renderer, canvas, h.mesh, h.model, { ...bx, up, conceal, hitFlash }, proj, view, eye);
     return true;
   }
 
@@ -220,16 +250,18 @@ export function createHorseRig({ renderer, fetchJson = (u) => fetch(u).then((r) 
    *  the world where Daggerfall drew its riding sprite (the hosts draw the hands after it). */
   function drawFirstPerson(h, canvas, { proj, view }) {
     if (!h?.model || !canvas) return false;
-    const wantW = canvas.clientWidth / MW_ARM_PIXEL, wantH = canvas.clientHeight / MW_ARM_PIXEL;
-    const s = Math.min(1, CHAR_SPRITE_RT_SIZE / wantW, CHAR_SPRITE_RT_SIZE / wantH);
+    const pixel = mwModelPixel();   // MW-DETAIL: the viewer's dial, and the target's room for the screen's frame at it
+    const wantW = canvas.clientWidth / pixel, wantH = canvas.clientHeight / pixel;
+    const edge = renderer.charSpriteRoom?.(Math.ceil(Math.max(wantW, wantH))) ?? CHAR_SPRITE_RT_SIZE;
+    const s = Math.min(1, edge / wantW, edge / wantH);
     const pw = Math.max(2, Math.round(wantW * s)), ph = Math.max(2, Math.round(wantH * s));
     const tex = renderer.renderCharacterSprite(h.mesh, h.model, proj, view, pw, ph);
-    renderer.drawScreenOverlayQuad(tex, pw / CHAR_SPRITE_RT_SIZE, ph / CHAR_SPRITE_RT_SIZE);
+    renderer.drawScreenOverlayQuad(tex, pw / edge, ph / edge);
     return true;
   }
 
   return {
-    load, tick, horse, release, step, place, picture, seat, box, draw, drawFirstPerson, lookTex,
+    load, tick, horse, release, step, pose, place, picture, seat, box, seen, draw, drawFirstPerson, lookTex,
     /** The rig is up: the stream and the bay's pictures. */
     ready: () => !!base,
     /** Why the rig is not up, when it failed. */

@@ -1,181 +1,181 @@
 [
   {
     "name": "AUDIT-GALLEON-R1-the-head-bellied",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "const belly = sail.belly * sail.footW * arch * Math.sin(0.8 * Math.PI * v);",
     "new": "const belly = sail.belly * sail.footW * arch * Math.sin(Math.PI * (0.15 + 0.8 * v));",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the old belly: 0.454 of the most at the head - the course's head 0.77 m off its yard set full"
   },
   {
     "name": "AUDIT-GALLEON-R1-the-head-off-the-arms-taper",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "    const rh = yardRadius(sail, x0) + HEAD_OFF;",
     "new": "    const rh = YARD_R[0] + HEAD_OFF;",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the head hung off the slings' radius all along: 10 cm off the yard at its arms"
   },
   {
     "name": "AUDIT-GALLEON-R1-the-roll-hung-off-the-yard",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "      const D = yardRadius(sail, xr) + HEAD_OFF + FURL_R;",
     "new": "      const D = yardRadius(sail, xr) + HEAD_OFF + FURL_R + 0.1;",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the furled roll 10 cm off its yard, as it hung"
   },
   {
     "name": "AUDIT-GALLEON-R2-the-old-yard",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "yardY: 16.0, drop: 3.4,",
     "new": "yardY: 16.35, drop: 3.75,",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the fore topsail's yard where it stood: the jib set through it"
   },
   {
     "name": "AUDIT-GALLEON-R2-the-old-stay",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "const foreHead = 16.8, mainHead = 18.6, mainFoot = 13.2;",
     "new": "const foreHead = 16.3, mainHead = 18.6, mainFoot = 13.2;",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the forestay off the mast 0.64 m under its head: under 0.2 m over the fore topsail's yard"
   },
   {
     "name": "AUDIT-GALLEON-R2-the-old-clew",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "clew: Object.freeze([0, 7.85, 19.6])",
     "new": "clew: Object.freeze([0, 7.85, 16.6])",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the jib's clew aft at 16.6, under the fore topsail's belly"
   },
   {
     "name": "AUDIT-GALLEON-R2-the-full-belly",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "yardY: 16.0, drop: 3.4, headW: 8.0, footW: 10.0, yardSpan: 9.4, belly: 0.075",
     "new": "yardY: 16.0, drop: 3.4, headW: 8.0, footW: 10.0, yardSpan: 9.4, belly: 0.15",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the fore topsail bellied as the course: its canvas out of its box set full (R5/G9 - the jib and the stay are led clear of either)"
   },
   {
     "name": "AUDIT-GALLEON-R3-the-old-main-stay",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "mainstay: { head: [0, mainHead, RIG.mainZ + mastRadius('main', mainHead)], foot: [0, mainFoot, RIG.foreZ - 0.809 * mastRadius('fore', mainFoot)], r: 0.05 },",
     "new": "mainstay: { head: [0, RIG.nestFloorY - 0.4, RIG.mainZ + 0.5], foot: [0, RIG.deckY + 1.6, RIG.foreZ - 0.55], r: 0.05 },",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the main stay to the fore mast's foot again: through the main topsail's yard"
   },
   {
     "name": "AUDIT-GALLEON-R3-the-full-belly",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "yardY: 17.65, drop: 4.2, headW: 8.6, footW: 10.4, yardSpan: 10.0, belly: 0.075",
     "new": "yardY: 17.65, drop: 4.2, headW: 8.6, footW: 10.4, yardSpan: 10.0, belly: 0.15",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the main topsail bellied as the course: its canvas out of its box set full (R5/G9 - the main stay is led clear of either)"
   },
   {
     "name": "AUDIT-GALLEON-R4-the-shrouds-forward-again",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "feet: Object.freeze([2.75, 3.4, 4.05])",
     "new": "feet: Object.freeze([6.2, 7.0, 7.8])",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the fore shrouds where they stood: the fore course and its yard through them at 30"
   },
   {
     "name": "AUDIT-GALLEON-R4-a-yards-footropes-before-it",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "sagging([s * 0.25, -0.1, d - 0.22], [s * (half - 0.15), -0.06, d - 0.16], 0.45, 6)",
     "new": "sagging([s * 0.25, -0.1, d + 0.02], [s * (half - 0.15), -0.06, d + 0.02], 0.45, 6)",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the footropes before the yard again: through the canvas and its furled roll"
   },
   {
     "name": "AUDIT-GALLEON-R4-the-course-sheets-aft",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "courseSheet: Object.freeze([5.2, RIG.railY, 5.4]),",
     "new": "courseSheet: Object.freeze([5.25, RIG.railY, 3.0]),",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the course's sheets led aft past the fore channels: across the fore shrouds"
   },
   {
     "name": "AUDIT-GALLEON-R4-the-fore-braces-forward-of-the-gangway",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "foreBrace: Object.freeze([5.3, RIG.railY, -0.7]),",
     "new": "foreBrace: Object.freeze([5.3, RIG.railY, 1.75]),",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the fore braces made fast forward of the gangway's after end: across the fore shrouds at 30"
   },
   {
     "name": "AUDIT-GALLEON-R4-the-gaff-sail-on-the-mast",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "  const luffZ = -(mastR + 0.12);",
     "new": "  const luffZ = -(mastR - 0.12);",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the gaff sail's luff inside the main mast, as it stood on the old axis"
   },
   {
     "name": "AUDIT-GALLEON-R5-the-boom-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const q = b.boom != null ? boat.Booms?.[b.boom]?.localRotation : null;",
     "new": "    const q = null;",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "every box still: the canvas swung out of them"
   },
   {
     "name": "AUDIT-GALLEON-R5-the-pivot-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const turn = multiply(mat4FromQuatPos(q, P), mat4FromQuatPos([0, 0, 0, 1], [-P[0], -P[1], -P[2]]), new Float32Array(16));",
     "new": "    const turn = mat4FromQuatPos(q, [0, 0, 0]);",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "a box turned about her root, not its mast"
   },
   {
     "name": "AUDIT-GALLEON-R5-the-jibs-boxes-square",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (b.obb) return orientedBox(multiply(m, mat4FromQuatPos(quatAngleAxis(b.obb.pitch, [1, 0, 0]), at(b.obb.c)), new Float32Array(16)), [0, 0, 0], b.obb.h);\n",
     "new": "",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the jib's boxes stood square as their bounds: mostly air"
   },
   {
     "name": "AUDIT-GALLEON-R5-the-jibs-boxes-pitched-the-wrong-way",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "quatAngleAxis(b.obb.pitch, [1, 0, 0])",
     "new": "quatAngleAxis(-b.obb.pitch, [1, 0, 0])",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the jib's boxes askew the other way: its canvas out of them"
   },
@@ -185,7 +185,7 @@
     "old": "      onBoom(2, [0, 17.65, -0.191], [-5.2, 13.27, 0.42], [5.2, 17.82, 1.44], 2),",
     "new": "      [[-5.2, 13.27, 0.42], [5.2, 17.82, 1.44]],",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the main topsail's box on no boom: it stays home as the yard swings"
   },
@@ -195,7 +195,7 @@
     "old": "      onBoom(3, [0, 7.75, -0.191],",
     "new": "      onBoom(2, [0, 7.75, -0.191],",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the gaff sail's box turned by the main topsail's boom"
   },
@@ -205,7 +205,7 @@
     "old": "      pitched([0, 11.92, 17.932], [1.06, 1.06, 9.37], 22.79, 4),                     // the jib along its luff,\n      pitched([0, 12.375, 15.832], [1.03, 0.96, 7.35], 40.93, 4),                    // its leech\n      pitched([0, 9.286, 22.488], [1.06, 0.91, 4.54], -10.23, 4),                    // and its foot\n",
     "new": "      [[-1.1, 12.3, 9.4], [1.1, 16.5, 27.9]],\n",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the jib's one box from her roof to 27.9 again: half its canvas outside it"
   },
@@ -215,177 +215,177 @@
     "old": "  return [Math.max(lo, build.top), hi];",
     "new": "  return [lo, hi];",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the chain shot's band down to her course's foot, where a ball strikes her hull"
   },
   {
     "name": "AUDIT-GALLEON-R6-the-old-belay",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "mainSheet: Object.freeze([1.3, RIG.deckY, -9.8]),",
     "new": "mainSheet: Object.freeze([0, 11.05, -10.6]),",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the mainsheet belayed in the castle's parapet again"
   },
   {
     "name": "AUDIT-GALLEON-R6-the-belay-in-the-doorway",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "mainSheet: Object.freeze([1.3, RIG.deckY, -9.8]),",
     "new": "mainSheet: Object.freeze([0, RIG.deckY, -9.8]),",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the mainsheet across the castle's door"
   },
   {
     "name": "AUDIT-GALLEON-R6-the-belay-under-the-stair",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "mainSheet: Object.freeze([1.3, RIG.deckY, -9.8]),",
     "new": "mainSheet: Object.freeze([1.3, RIG.deckY, -10.0]),",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the mainsheet made fast 0.2 m aft: through the starboard stair with the gaff at 45"
   },
   {
     "name": "AUDIT-GALLEON-R7-a-lift-in-the-air",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "RIG.foreTopY - 0.12 : RIG.nestFloorY - 0.17",
     "new": "RIG.foreTopY + 0.5 : RIG.nestFloorY - 0.17",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "a fore yard's lifts over the fore masthead, in the air"
   },
   {
     "name": "AUDIT-GALLEON-R7-the-main-lifts-through-the-nest",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "RIG.foreTopY - 0.12 : RIG.nestFloorY - 0.17",
     "new": "RIG.foreTopY - 0.12 : RIG.nestFloorY + 0.18",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the main topsail's lifts through the crow's nest's floor"
   },
   {
     "name": "AUDIT-GALLEON-R7-the-jib-sheets-in-the-air",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "jibSheet: Object.freeze([4.7, 6.959, 13.6]),",
     "new": "jibSheet: Object.freeze([3.4, 6.95, 13.6]),",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the jib's sheets ended 0.75 m over her deck"
   },
   {
     "name": "AUDIT-GALLEON-R7-a-brace-off-the-rail",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "mainBrace: Object.freeze([5.15, 12.297, -17.0]),",
     "new": "mainBrace: Object.freeze([5.3, 11.9, -10.6]),",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the main topsail's braces outboard of the castle rail"
   },
   {
     "name": "AUDIT-GALLEON-R7-a-backstay-off-it",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "foot: [s * 5.2, RIG.railY, 2.1], r: 0.032",
     "new": "foot: [s * 5.38, 6.85, 3.2], r: 0.032",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the fore backstays outboard of her side"
   },
   {
     "name": "AUDIT-GALLEON-R9-the-old-head",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "bobstay: { head: [...RIG.bowspritUnder],",
     "new": "bobstay: { head: [...RIG.bowspritEnd],",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the bobstay from the bowsprit's end, along inside it"
   },
   {
     "name": "AUDIT-GALLEON-R9-the-old-foot",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "stem: Object.freeze([0, 2.1, 21.735]),",
     "new": "stem: Object.freeze([0, 2.1, 21.6]),",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the bobstay's foot inside her stem"
   },
   {
     "name": "AUDIT-GALLEON-R10-the-channel-off-her-side",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "fore: Object.freeze({ feet: Object.freeze([2.75, 3.4, 4.05]), headY: 16.09, inX: Object.freeze([5.325, 5.325]),",
     "new": "fore: Object.freeze({ feet: Object.freeze([2.75, 3.4, 4.05]), headY: 16.09, inX: Object.freeze([5.355, 5.355]),",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the fore channels 3 cm off her side"
   },
   {
     "name": "AUDIT-GALLEON-R10-a-chainplate-in-the-air",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "plateX: Object.freeze([5.387, 5.387])",
     "new": "plateX: Object.freeze([5.8, 5.8])",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the main chainplates' feet 0.4 m off her planking"
   },
   {
     "name": "AUDIT-GALLEON-R10-the-ratlines-off-the-rope",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "const at = (l, y) => lerp3(l.foot, l.head,",
     "new": "const at = (l, y) => lerp3(l.deadeye, l.head,",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the ratlines laid on a line under the shroud's rope"
   },
   {
     "name": "AUDIT-GALLEON-R10-the-old-axes",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "mainZ: -0.191, foreZ: 8.772,",
     "new": "mainZ: -0.1225, foreZ: 8.8375,",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the booms on the masts' boxes' middles, 6.5-6.9 cm forward of their axes"
   },
   {
     "name": "AUDIT-GALLEON-R13-the-gaffs-rows-foot-first",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "v = 1 - j / (NV - 1);   // AUDIT GN-R13: v 1 at the head (row 0), 0 at the foot\n    const foot = lerp3(tack, clew, u), head = lerp3(throat, peak, u);",
     "new": "v = j / (NV - 1);   // AUDIT GN-R13: v 1 at the head (row 0), 0 at the foot\n    const foot = lerp3(tack, clew, u), head = lerp3(throat, peak, u);",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the gaff sail's grid foot first: its picture upside down"
   },
   {
     "name": "AUDIT-GALLEON-R13-the-jibs-foot-first",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "v = 1 - j / (NV - 1);   // AUDIT GN-R13: v 1 at the head (row 0), 0 at the foot\n    const foot = lerp3(tack, clew, u);\n",
     "new": "v = j / (NV - 1);   // AUDIT GN-R13: v 1 at the head (row 0), 0 at the foot\n    const foot = lerp3(tack, clew, u);\n",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the jib's grid foot first: its picture upside down"
   },
   {
     "name": "AUDIT-GALLEON-ZERO-the-jib-to-a-point",
-    "file": "src/world/galleonRig.js",
+    "file": "src/world/ships/galleonRig.js",
     "old": "let p = lerp3(foot, head, v * top);",
     "new": "let p = lerp3(foot, head, v);",
     "tests": [
-      "test/auditgalleon_rig.test.js"
+      "test/systems/naval/auditgalleon_rig.test.js"
     ],
     "why": "the jib's grid closed to its head: fourteen triangles of no area"
   }

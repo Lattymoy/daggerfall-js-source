@@ -132,6 +132,12 @@ with the rest of the spoils.
 - **The Reforge's Sockets page** rows every socket of every socketed piece, sets in an empty one, and extracts from a
   set one.
 
+**A stone a counter sold** (AUDIT TOWN-ECON 2 PRICE-2, 2026-10-18, `06-Systems/Town-Economy-Arc.md` 7.4): online it
+keeps its counter's mark on its socket (`socketBought`, `[socket, paid]` pairs, `reforge.js` setGemPiece) - its share of
+the piece's sale held to what it cost (`tradeModes.js` tradeCost), and extracted it comes out marked as it went in; a
+shattered stone's mark goes with it. A Diamond bought, set and extracted had come out unmarked and sold +282 past the
+fee.
+
 ## 6. The wire and the save
 
 `sockets` is a declared item field (an array of `SOCKET_VALUES` - the field sets no length; `validSocket` caps it);
@@ -173,7 +179,7 @@ The three slices landed together (2026-10-09), in one pull request.
 
 ### GEM1 - the socket list, a weapon's size, law 6
 
-`src/systems/lootRarity.js`: `socketMax` (a short blade 1, a one-handed weapon 2, a two-handed one and the Thunderlock
+`src/systems/loot/lootRarity.js`: `socketMax` (a short blade 1, a one-handed weapon 2, a two-handed one and the Thunderlock
 3 - `WEAPON_SOCKETS`, off DFU's `WEAPON_HANDS`; armour and a jewel 1; nothing else) and `socketCap` (a Rare's or a
 Legendary's size, a Magic weapon's 1, none else); `socketsOf` (the list, or LOOT20's string as a list of one) and the
 one writer under it, which drops the string; `hasSocket`, `socketGem(item, at)`, `socketGems`, `emptySockets`;
@@ -184,9 +190,9 @@ rollCorpseKit) after LOOT20's; `setGem(item, gem, at)` and `unsetGem(item, at)` 
 in the sockets' order; `validSocket` reads the list or the string (never both), never past `socketCap`, the lines one a
 set socket in order; `socketLine` says one or many empty. LAW 6: `gemPieceCap` (a kind's Rare top) and `readLines` - a
 piece's lines with each gem's held to what is left of its kind's cap - read by `affixFold`, `affixWeaponDamage`,
-`lineComparison`, `resistSplit` and `systems/lootPowers.js` linesOf; `gemCapLine` says it on the card. The Exalted's own
-line is the last before the gems' (`reforgeableLines`, which assumed one gem line). `src/systems/itemFields.js` declares
-`sockets`; `src/systems/itemLaw.js` and `src/systems/gilded.js` read it as they read the string.
+`lineComparison`, `resistSplit` and `systems/loot/lootPowers.js` linesOf; `gemCapLine` says it on the card. The Exalted's own
+line is the last before the gems' (`reforgeableLines`, which assumed one gem line). `src/systems/item/itemFields.js` declares
+`sockets`; `src/systems/item/itemLaw.js` and `src/systems/gilded.js` read it as they read the string.
 
 `src/systems/reforge.js`: setting is FREE (`SET_GEM_PRICE` and its 'gold' refusal retired) and a worn piece is filled
 where it is worn - `socketWork` no longer refuses 'worn', and the press runs the wearer's folds again
@@ -200,7 +206,7 @@ a hundred and never twice; a Rare 36.6 (1.3 with three, over every size); a Lege
 
 ### GEM2 - the graded gems, the world's find, the bosses' gems
 
-`src/systems/lootRarity.js`: `GEM_GRADES`, `GEM_ROW_GRADES`, `GEM_GRADE_TEMPLATE_BASE` (1900) and
+`src/systems/loot/lootRarity.js`: `GEM_GRADES`, `GEM_ROW_GRADES`, `GEM_GRADE_TEMPLATE_BASE` (1900) and
 `GEM_GRADE_TEMPLATES`, `gemId`, `ALL_GEM_IDS` (DFU's eight, then the thirty-two), `gemKind`, `gemGrade`, `GEM_NAMES` for
 every id, `SOCKET_VALUES` over all of them, `GEM_GRADE_LINES` (the one table - LOOT20's `GEM_LINES` is its plain column,
 derived), `gemKindOf` for the graded rows, `gemTemplateOf`; and `registerGemFind`, the door's last draw. The new
@@ -209,9 +215,9 @@ price `GEM_GRADE_PRICE` and rarity, an ingredient), `mintGem`; `GEM_FIND` (30 + 
 since GEM-RARE, below - the ladder's
 `SOURCE_MULT` and `luckMult`), `GEM_GRADE_BANDS` and `GEM_BOSS_TIERS` (4), `rollGem` (two draws), `rollGemFind`
 (registered at import); `BOSS_GEMS` (the gate 1, the serpent 1 to a dealer, the Abyss 2) at `BOSS_GEM_SOURCE` (tier 21, a
-boss) through `bossGems`. Imported by `systems/worldTick.js`, `scenes/shared.js` and the headless `systems/itemLaw.js`
-(whose `CUSTOM_TEMPLATE_GROUPS` stands the rows in Gems). The three spoils rollers (`systems/gateSpoils.js`,
-`systems/serpentSpoils.js`, `systems/sdSpoils.js`) run LOOT20's and the weapons' socket passes over their pieces and
+boss) through `bossGems`. Imported by `systems/worldTick.js`, `scenes/shared.js` and the headless `systems/item/itemLaw.js`
+(whose `CUSTOM_TEMPLATE_GROUPS` stands the rows in Gems). The three spoils rollers (`systems/gate/gateSpoils.js`,
+`systems/serpent/serpentSpoils.js`, `systems/superDungeon/sdSpoils.js`) run LOOT20's and the weapons' socket passes over their pieces and
 then their gems, after their cards; their floor lists (`scenes/spoilsPool.js` spoilsList, serpentSpoilsList,
 sdSpoilsList) throw the gems after the card, each picture drawn after the card's.
 
@@ -224,7 +230,7 @@ The new `src/ui/socketWells.js`: `socketWells` (a round well a socket - an empty
 its grade's ring, `GEM_GRADE_COLOURS` - pressable when handed `onWell`, the asked one marked), `socketChooser` (a press a
 held gem, each with the line it would give this piece) and `markSocketFrame` (a socketed piece's pips in the frame's
 top edge, filled for a set gem; a graded gem's own ring), with its own sheet (`SOCKET_WELLS_CSS`, one style tag, both
-skins). `src/ui/enhancedInventory.js`: the card's wells under the picture (`socketBlock`, live on the pack's own piece's
+skins). `src/ui/enhanced/enhancedInventory.js`: the card's wells under the picture (`socketBlock`, live on the pack's own piece's
 detail card: an empty well opens the chooser, a set one asks first and its second press shatters), every frame's pips
 (`markItemFrame`), and a loose gem's "Set in..." (the pieces with an empty socket, a press each). The Test Room lays a
 Rare long bow with its three wells empty and four graded gems.
@@ -245,13 +251,13 @@ retired, the extraction's added in `gem1.json`).
 
 THE FOUR HOSTS. The rows register in every host through `scenes/shared.js` and `systems/worldTick.js`; the door's
 passes and the gem find run inside the shared rolls every host already calls (`rollLootRarity`, `rollCorpseKit`); the
-wells are the shared pack's (`ui/enhancedInventory.js`); the Reforge's extraction is `worldModes.js`'s (the Mages Guild
+wells are the shared pack's (`ui/enhanced/enhancedInventory.js`); the Reforge's extraction is `worldModes.js`'s (the Mages Guild
 stands in a building). `exterior.js`, `world.js` and `dungeonContext.js` are FLAGGED for the extraction: no guild
 counter there.
 
 ### AUDIT GEM (2026-10-10, Mac: "We need to audit this and ensure perfection")
 
-Four independent lanes read both arcs; the gem lane's findings, each fixed and pinned (`test/gem1_sockets.test.js`'s
+Four independent lanes read both arcs; the gem lane's findings, each fixed and pinned (`test/systems/gem1_sockets.test.js`'s
 AUDIT GEM pin and its tightened rates, the GEM3 pin's new steps):
 
 - **Salvage broke set gems** - a Magic weapon holds one since GEM1, and "Salvage every Magic" swept a Perfect Diamond
@@ -272,7 +278,7 @@ AUDIT GEM pin and its tightened rates, the GEM3 pin's new steps):
   the next socket's odds per tier and its stop at the first miss; a boss's find four tiers deeper; the test hooks put
   back in `finally` (gem1, loot16, loot20, loot21).
 
-Pinned: `test/gem1_sockets.test.js` (9). `tools/mutants/gem1.json`.
+Pinned: `test/systems/gem1_sockets.test.js` (9). `tools/mutants/gem1.json`.
 
 ### GEM-RARE - a third as many gems (Mac, 2026-10-11: "We need to make gems that can be slotted more rare. Currently they are too common")
 
@@ -294,6 +300,6 @@ seeds: a tier-3 corpse 16.3 in a thousand (the law's 16; GEM2's 45), a tier-10 c
 body 50.3 (the cap; 150) - Flawless 60.0 and Perfect 40.0 in a hundred, the bands' as before - and a tier-18 pile 48.6
 (the cap; 150).
 
-Pinned: `test/gem1_sockets.test.js`'s GEM2 find (the chance by tier to the new cap, by kind and by luck - PIN MOVED).
+Pinned: `test/systems/gem1_sockets.test.js`'s GEM2 find (the chance by tier to the new cap, by kind and by luck - PIN MOVED).
 `tools/mutants/gem1.json`: GEM2's base mutant re-aimed at the new table (`GEM2-the-find-twenty`, 10 to 20), and GEM2's 5 a tier and its cap of
 150 each put back alone (`GEM-RARE-five-a-tier-again`, `GEM-RARE-the-old-cap`) - 78, all dead.

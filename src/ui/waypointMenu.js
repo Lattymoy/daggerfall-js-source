@@ -5,7 +5,7 @@
 // its kind (Personal, Party, Guild) and its flag's colour. On a flag it EDITS that waypoint: rename, recolour, follow
 // or stop following, travel there (where the map can), share it again (one of mine for a party or a guild), remove.
 //
-// THE HUD'S KIND OF THING, NOT A WINDOW (ui/travelViewHud.js's law): it registers with no overlay stack - the Overworld's
+// THE HUD'S KIND OF THING, NOT A WINDOW (ui/travel/travelViewHud.js's law): it registers with no overlay stack - the Overworld's
 // world runs on under it. It takes its own presses (a press inside it is never the map's or the world's), Escape closes
 // it (the host's overlayUp asks `waypointMenuOpen` so the view's own Escape waits), Enter answers it, and a press
 // anywhere outside lets it go. One at a time: a second replaces the first.
@@ -14,7 +14,7 @@ import {
   WAYPOINT_KINDS, WAYPOINT_COLORS, WAYPOINT_TEXT, WAYPOINT_NAME_MAX, waypointById, nextWaypointName, addWaypoint,
   renameWaypoint, recolorWaypoint, removeWaypoint, setWaypointFollowed, isWaypointFollowed, shareWaypoint,
   waypointSharingLive, cleanWaypointName,
-} from '../systems/mapWaypoints.js';
+} from '../systems/map/mapWaypoints.js';
 
 export const WAYPOINT_MENU_ID = 'wp-menu';
 const STYLE_ID = 'wp-menu-style';
@@ -152,7 +152,7 @@ export function openWaypointMenu(o) {
       b.type = 'button';
       const allowed = k === 'personal' || o.canKind?.[k] !== false;
       b.disabled = !allowed;
-      b.title = k === 'personal' ? 'Only you see it' : !allowed ? `You are not in a ${k}` : !live ? 'Kept here - you are offline, share it later' : `Your ${k} sees it`;
+      b.title = k === 'personal' ? 'Only you see it' : !allowed ? `You are not in a ${k}` : !live ? 'Saved here. You are offline, so share it later' : `Your ${k} sees it`;
       b.onclick = (e) => { e.preventDefault(); kind = k; paint(); };
       kindBtns[k] = b;
       kinds.append(b);
@@ -160,7 +160,7 @@ export function openWaypointMenu(o) {
     box.append(kinds);
   }
   // the colour
-  box.append(el('label', 'wpm-label', 'Flag colour'));
+  box.append(el('label', 'wpm-label', 'Flag color'));
   const sw = el('div', 'wpm-swatches');
   const swatches = {};
   for (const c of WAYPOINT_COLORS) {
@@ -188,7 +188,7 @@ export function openWaypointMenu(o) {
   const doAdd = () => {
     const r = addWaypoint({ kind, mx: o.point.mx, my: o.point.my, name: input.value, color, by: o.by ?? '' });
     if (!r) { closeWaypointMenu(); return; }
-    if (r.shared === false) o.onNote?.(`Waypoint "${r.waypoint.name}" kept - it could not be sent to your ${kind} right now (use Share again later).`);
+    if (r.shared === false) o.onNote?.(`Waypoint "${r.waypoint.name}" saved, but it could not be sent to your ${kind} right now. Use Share again later.`);
     closeWaypointMenu();
   };
   const doRename = () => {

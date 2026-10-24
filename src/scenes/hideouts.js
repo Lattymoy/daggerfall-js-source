@@ -28,7 +28,7 @@
 import { TENT_MODEL, FIRE_FLAT } from '../systems/survival/camp.js';
 import { trs } from '../world/mat4.js';
 import { sphereAabb } from '../render/frustum.js';
-import { drawSeen } from './decorRoom.js';   // PERF-WAGON: a tent by the street's view test
+import { drawSeen } from './decor/decorRoom.js';   // PERF-WAGON: a tent by the street's view test
 import { NATIVE_PER_M, NATIVE_PIXEL } from '../systems/livingWorld/trips.js';
 import { GLOBAL_SCALE } from '../player/activate.js';
 import { lwSeed, lwRng, textSeed } from '../systems/livingWorld/seed.js';

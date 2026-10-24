@@ -5,7 +5,7 @@
     "old": "  if (r() >= RAIDER_CHANCE) return null;",
     "new": "  r();",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (!open(px, py)) return null;\n",
     "new": "\n",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "return { id: `r${cx}.${cy}.${life}`, cx, cy, life, seed, born: { x: o.x + r() * NATIVE_PIXEL, z: o.z + r() * NATIVE_PIXEL }",
     "new": "return { id: `r${cx}.${cy}.${life}`, cx, cy, life, seed, born: { x: o.x + r() * NATIVE_PIXEL, z: o.z - r() * NATIVE_PIXEL }",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "const seedOf = (cx, cy, life) => (Math.imul(cx + 1013, 73856093) ^ Math.imul(cy + 2029, 19349663) ^ Math.imul(life + 7, 83492791) ^ RAIDER_SEED) >>> 0;",
     "new": "const seedOf = () => (Math.random() * 4294967296) >>> 0;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "const t = Math.max(0, Math.min(RAIDER_LIFE_MS, ms - raider.bornMs));",
     "new": "const t = Math.max(0, ms - raider.bornMs);",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      if (!sea(x + Math.sin(hd) * f, z + Math.cos(hd) * f)) return false;",
     "new": "      if (false) return false;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    const way = clear(h) ? h : clear(h + Math.PI) ? h + Math.PI : null;",
     "new": "    const way = clear(h) ? h : null;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  sail((t - legs * RAIDER_LEG_MS) / RAIDER_LEG_MS);",
     "new": "  sail(0);",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "const c0x = Math.floor((at.x - reach) / RAIDER_CELL_PX), c1x = Math.floor((at.x + reach) / RAIDER_CELL_PX);",
     "new": "const c0x = Math.floor(at.x / RAIDER_CELL_PX), c1x = Math.floor(at.x / RAIDER_CELL_PX);",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      if (raider) out.push({ ...raider, ...raiderAt(raider, ms, sea) });",
     "new": "      if (raider) out.push({ ...raider, x: raider.born.x, z: raider.born.z });",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "export const raiderSight = (night) => (night ? RAIDER_SIGHT_NIGHT_M : RAIDER_SIGHT_M);",
     "new": "export const raiderSight = () => RAIDER_SIGHT_M;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "const move = Math.min(dist, RAIDER_CHASE_MPS * dt * Math.max(1, scale));",
     "new": "const move = Math.min(dist, RAIDER_CHASE_MPS * dt);",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  if (left <= contact) return { state: 'contact', pos: next, left, best: Math.min(best, left), bestAt: now };\n",
     "new": "\n",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  if (!sea(next.x, next.z)) return { state: 'lost', pos, left: dist, best, bestAt };\n",
     "new": "\n",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "if (left > RAIDER_LEASH_M || now - at > RAIDER_GIVE_UP_MS)",
     "new": "if (now - at > RAIDER_GIVE_UP_MS)",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "if (left > RAIDER_LEASH_M || now - at > RAIDER_GIVE_UP_MS)",
     "new": "if (left > RAIDER_LEASH_M)",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "  const gained = left < best - 1;",
     "new": "  const gained = false;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "export const pixelOfNative = (x, z) => worldCoordToMapPixel(x, z);",
     "new": "export const pixelOfNative = (x, z) => ({ x: Math.trunc(x / NATIVE_PIXEL), y: Math.trunc(z / NATIVE_PIXEL) });",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "  const armed = armRaid();\n  onPostFastTravel();\n  return armed;",
     "new": "  const armed = armRaid();\n  return armed;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "  if (hasTraveledbyShip || _boardIn !== null || raidRunning()) return 'busy';\n",
     "new": "\n",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "  if (tempShip) return 'lent';\n  return null;",
     "new": "  return null;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -194,25 +194,25 @@
     "old": "    tempShip = true;\n    h.assignShip?.(SHIP_TYPES.Large);   // \"Temporary ship assigned.\"",
     "new": "    h.assignShip?.(SHIP_TYPES.Large);   // \"Temporary ship assigned.\"",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
     "name": "OWS3-hud-raider-dressed-traveller",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "|| k === 'band' || k === 'raider' || k === 'camp' ? k : 'traveller';",
     "new": "|| k === 'band' || k === 'camp' ? k : 'traveller';",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
     "name": "OWS3-hud-raider-name-bone",
-    "file": "src/ui/travelViewHud.js",
-    "old": ": look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : C.bone;   // OWS3",
-    "new": ": look === 'stranger' ? C.stranger : C.bone;   // OWS3",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": ": look === 'raider' ? C.raider : look === 'stranger' ? C.stranger : look === 'quest' ? QUEST_MARK_CSS : C.bone;   // OWS3",
+    "new": ": look === 'stranger' ? C.stranger : look === 'quest' ? QUEST_MARK_CSS : C.bone;   // OWS3",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": " || maps.getClimateIndex(px, py) !== CLIMATES.Ocean) return false;",
     "new": ") return false;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "const raidNowMs = () => Date.now() + _sharedOffsetMs;",
     "new": "const raidNowMs = () => Date.now();",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "(modes?.mode ?? 'exterior') === 'exterior' && raidQuarry();",
     "new": "(modes?.mode ?? 'exterior') === 'exterior';",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "    if (up && tvRaid.chase.size < 1) {",
     "new": "    if (tvRaid.chase.size < 1) {",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "      if (step.state === 'contact') raidContact();",
     "new": "      if (false) raidContact();",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "    if (said !== 'raid' && said !== 'raid-lent') return;\n    travelControlUI?.closeWindow?.();",
     "new": "    if (said !== 'raid' && said !== 'raid-lent') return;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -275,16 +275,16 @@
     "old": "    tvRaid.chase.clear(); tvRaid.spent.clear(); tvRaid.list = []; tvRaid.at = -Infinity; tvRaid.peer.clear(); tvRaid.spentAt.length = 0;   // OWS3: no chase across a load; OW6: nor what the peers said, nor what I was saying\n",
     "new": "",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
     "name": "OWS3-host-chaser-lost-off-screen",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "kind: chase ? 'raider ship chase' : 'raider ship', edge: chase });",
     "new": "kind: chase ? 'raider ship chase' : 'raider ship', edge: false });",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "      tvRaid.life = life; for (const id of tvRaid.spent) if (!tvRaid.chase.has(id)) tvRaid.spent.delete(id);",
     "new": "      tvRaid.life = life;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "for (const id of tvRaid.spent) if (!tvRaid.chase.has(id)) tvRaid.spent.delete(id);",
     "new": "for (const id of tvRaid.spent) tvRaid.spent.delete(id);",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ]
   }
 ]

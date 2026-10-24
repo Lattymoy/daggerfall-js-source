@@ -1,0 +1,83 @@
+[
+ {
+  "name": "D1NEAR-smart-back",
+  "file": "server-account/wrangler.toml",
+  "old": "region = \"aws:us-west-1\"",
+  "new": "mode = \"smart\"",
+  "tests": [
+   "test/bible/d1near.test.js"
+  ]
+ },
+ {
+  "name": "D1NEAR-placed-in-sydney",
+  "file": "server-account/wrangler.toml",
+  "old": "region = \"aws:us-west-1\"",
+  "new": "region = \"aws:ap-southeast-2\"",
+  "tests": [
+   "test/bible/d1near.test.js"
+  ]
+ },
+ {
+  "name": "D1NEAR-table-dropped",
+  "file": "server-account/wrangler.toml",
+  "old": "[placement]\nregion = \"aws:us-west-1\"\n",
+  "new": "",
+  "tests": [
+   "test/bible/d1near.test.js"
+  ]
+ },
+ {
+  "name": "D1NEAR-summary-unwritten",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "            echo \"$primary - wrangler.toml [placement] should name the cloud region nearest it.\"\n          } >> \"$GITHUB_STEP_SUMMARY\"",
+  "new": "            echo \"$primary - wrangler.toml [placement] should name the cloud region nearest it.\"\n          } >> /dev/null",
+  "tests": [
+   "test/bible/d1near.test.js"
+  ]
+ },
+ {
+  "name": "D1NEAR-header-case",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "sed -n 's/^cf-placement:[[:space:]]*//Ip'",
+  "new": "sed -n 's/^cf-placement:[[:space:]]*//p'",
+  "tests": [
+   "test/bible/d1near.test.js"
+  ]
+ },
+ {
+  "name": "D1NEAR-none-unsaid",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "seen=\"$seen ${at:-none}\"",
+  "new": "seen=\"$seen ${at}\"",
+  "tests": [
+   "test/bible/d1near.test.js"
+  ]
+ },
+ {
+  "name": "D1NEAR-cost-not-less-the-health",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "~$(( s > h ? s - h : 0 )) ms",
+  "new": "~$(( s )) ms",
+  "tests": [
+   "test/bible/d1near.test.js"
+  ]
+ },
+ {
+  "name": "D1NEAR-slowest-for-the-middle",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "v[int((NR + 1) / 2)]",
+  "new": "v[NR]",
+  "tests": [
+   "test/bible/d1near.test.js"
+  ]
+ },
+ {
+  "name": "D1NEAR-claim-back",
+  "file": "bible/11-Multiplayer/Scale-Arc.md",
+  "old": "The module's header carries the query. Smart Placement was",
+  "new": "The module's header carries the query. Smart Placement runs the Worker near its database. Smart Placement was",
+  "tests": [
+   "test/bible/d1near.test.js"
+  ]
+ }
+]

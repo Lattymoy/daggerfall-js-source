@@ -5,7 +5,7 @@
     "old": "    if (!c || !(c.fall > 0) || !Number.isFinite(c.x)",
     "new": "    if (!c || !Number.isFinite(c.x)",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "Fog banks and fair-weather cloud hang rain curtains over a dry valley - weather invented."
   },
@@ -15,7 +15,7 @@
     "old": "    if (d - reachOut > far) continue;",
     "new": "    if (d > far) continue;",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "A storm whose rim is in the view but whose middle is not stands no curtain."
   },
@@ -25,7 +25,7 @@
     "old": "    const alpha = ramp(Math.hypot(c.x - eye[0], c.z - eye[2])) * Math.max(CURTAIN_OWN_ALPHA, ramp(d));",
     "new": "    const alpha = 1;",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "The eye over a storm sees the inside of a solid tube - VC7c's `near` law broken."
   },
@@ -35,7 +35,7 @@
     "old": "const foot = Number.isFinite(lo) ? lo - CURTAIN_FOOT_MARGIN_M : g - CURTAIN_BELOW_M;",
     "new": "const foot = Number.isFinite(lo) ? lo : g;",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "A curtain over a valley floor lower than the traveller hangs above the ground with daylight under it."
   },
@@ -45,7 +45,7 @@
     "old": "    if (kept.length >= CURTAINS_MAX) break;\n",
     "new": "",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "A front of twenty storm cells is twenty full-screen blended passes."
   },
@@ -55,7 +55,7 @@
     "old": "  out.sort((a, b) => a.d - b.d);\n",
     "new": "",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "The cap keeps the far curtains and drops the storm beside the traveller."
   },
@@ -65,7 +65,7 @@
     "old": "    if (clip && Math.hypot(c.x - clip.x, c.z - clip.z) - reachOut > clip.r * shapeBound(c.clip[3])) continue;   // wholly outside its front: nothing falls\n",
     "new": "",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "A storm's cell outside the disc its front paints within stands a curtain in clear sky."
   },
@@ -75,7 +75,7 @@
     "old": "  float c = len > 1e-3 ? max(0.0, dot(vNormal, toEye / len)) : 0.0;",
     "new": "  float c = len > 1e-3 ? abs(dot(vNormal, toEye / len)) : 0.0;",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "Every curtain doubled by its own far side - and no winding under the mirrored lens decides which."
   },
@@ -85,7 +85,7 @@
     "old": "  float a = (1.0 - exp(-tau)) * top * clip * uAlpha * fogFactorAt(vWorld);",
     "new": "  float a = (1.0 - exp(-tau)) * top * clip * uAlpha;",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "A curtain two leagues off through rain fog stands as sharp as one beside the road."
   },
@@ -95,7 +95,7 @@
     "old": "    if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);   // TV1's focus: the fog is the traveller's\n",
     "new": "",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "The veils fogged from 450 m up while the ground under them is fogged from the traveller."
   },
@@ -105,7 +105,7 @@
     "old": "    if (tvf && rainCurtains) {",
     "new": "    if (rainCurtains) {",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "At the eye the sky map's curtains are drawn twice over - once in the sky, once standing in it."
   },
@@ -115,7 +115,7 @@
     "old": "eye: tvf ? cam.pos : mwv.eye, distant: struckFar,",
     "new": "eye: mwv.eye, distant: struckFar,",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "Under the view every strike's channel ends 448 m above the ground it should hit."
   },
@@ -125,7 +125,7 @@
     "old": "{ light: lit, fade: Math.min(1, tvf.blend * 1.5), fog:",
     "new": "{ light: lit * Math.min(1, tvf.blend * 1.5), fog:",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "The rise darkens the curtains' colour at full opacity: black veils over the land while the camera climbs."
   },
@@ -135,7 +135,7 @@
     "old": "gl.uniform1f(U.uAlpha, Math.min(1, c.alpha) * k);",
     "new": "gl.uniform1f(U.uAlpha, Math.min(1, c.alpha));",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "The curtains pop in whole on the first frame of the rise."
   },
@@ -145,7 +145,7 @@
     "old": "    const alpha = ramp(Math.hypot(c.x - eye[0], c.z - eye[2])) * Math.max(CURTAIN_OWN_ALPHA, ramp(d));",
     "new": "    const alpha = ramp(Math.hypot(c.x - eye[0], c.z - eye[2]));",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "The traveller inside a storm with the eye outside it is seen through the whole cylinder's chord."
   },
@@ -155,7 +155,7 @@
     "old": "const foot = Number.isFinite(lo) ? lo - CURTAIN_FOOT_MARGIN_M : g - CURTAIN_BELOW_M;",
     "new": "const foot = g - CURTAIN_BELOW_M;",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "A storm over a valley deeper than 300 m under the traveller hangs its foot in the air."
   },
@@ -165,7 +165,7 @@
     "old": ", groundAt: tvGroundAt, reach:",
     "new": ", reach:",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "The host never hands the land: the lowest-ground rule is dead weight."
   },
@@ -175,27 +175,27 @@
     "old": "    at(x + ca * radius, z + sa * radius);\n",
     "new": "",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "Only the centre is asked: a valley at the veil's rim is missed."
   },
   {
     "name": "AUDIT-DEEP-R1-gate-fogs-from-the-eye",
-    "file": "src/render/gatePass.js",
+    "file": "src/render/gate/gatePass.js",
     "old": "    if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);   // AUDIT DEEP R-1: under the travel view the fog is the traveller's (fogGlsl.js FOCUS_GLSL)\n",
     "new": "",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "The gate's fire fogs from the raised eye."
   },
   {
     "name": "AUDIT-DEEP-R1-duel-fogs-from-the-eye",
     "file": "src/scenes/world.js",
-    "old": "dw: renderer._dwFog, focus: renderer._focus });",
-    "new": "dw: renderer._dwFog });",
+    "old": "dw: renderer._dwFog, haze: renderer._haze, focus: renderer._focus });",
+    "new": "dw: renderer._dwFog, haze: renderer._haze });",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "The duel wall is handed no focus."
   },
@@ -205,7 +205,7 @@
     "old": "    if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);   // AUDIT DEEP R-1: the travel view's focus",
     "new": "    // AUDIT DEEP R-1: the travel view's focus",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "A fogged sea beside a clear beach."
   },
@@ -215,7 +215,7 @@
     "old": "const foot = Number.isFinite(lo) ? lo - CURTAIN_FOOT_MARGIN_M : g - CURTAIN_BELOW_M;",
     "new": "const foot = Math.min(g - CURTAIN_BELOW_M, lo - CURTAIN_FOOT_MARGIN_M);",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "A storm off the coast hangs 300 m of veil through clear water."
   },
@@ -225,7 +225,7 @@
     "old": "    return Math.max(g, tvSeaY() + CURTAIN_FOOT_MARGIN_M);",
     "new": "    return g;",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "The host hands the carved seabed as the floor."
   },
@@ -235,7 +235,7 @@
     "old": "    at(x + ca * radius * 0.5, z + sa * radius * 0.5);\n",
     "new": "",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "A valley half way in is missed."
   },
@@ -245,7 +245,7 @@
     "old": "* Math.max(CURTAIN_OWN_ALPHA, ramp(d));",
     "new": "* ramp(d);",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "The traveller inside a storm sees none from the air."
   },
@@ -255,7 +255,7 @@
     "old": "  float clip = uClip.z > 0.0 ? 1.0 - smoothstep(uClip.z - uClip.w, uClip.z, shapedDist(vWorld.xz - uClip.xy, uClipA, uClipB)) : 1.0;",
     "new": "  float clip = 1.0;",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "A veil spills past its storm's disc (weighed in the shader since AUDIT DEEP2 D1, as the sky's veil is)."
   },
@@ -265,7 +265,7 @@
     "old": "    if (d - reachOut > far) continue;",
     "new": "    if (d - reachOut > CURTAIN_REACH_M) continue;",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "Wholly fogged veils take slots and fill."
   },
@@ -275,7 +275,7 @@
     "old": "const tvStand = tvf ? cam.pos : mwv.eye;",
     "new": "const tvStand = mwv.eye;",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "The red storms stand round a camera that orbits."
   },
@@ -285,17 +285,17 @@
     "old": "dt, eye: travelView?.eye ?? player.pos,",
     "new": "dt, eye: player.pos,",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "Each peer shows the picture the traveller would see, not the view."
   },
   {
     "name": "AUDIT-DEEP2-D4-a-coast-sinks-the-veil",
     "file": "src/scenes/world.js",
-    "old": "    if (!deepWaters) return g;\n",
-    "new": "    if (!deepWaters) return g;\n    if (!tvWater(worldCoordToMapPixel(n.x, n.z).x, worldCoordToMapPixel(n.x, n.z).y)) return g;\n",
+    "old": "    if (!deepWaters || !sea) return g;\n",
+    "new": "    if (!deepWaters || !sea) return g;\n    if (!tvWater(worldCoordToMapPixel(n.x, n.z).x, worldCoordToMapPixel(n.x, n.z).y)) return g;\n",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "A storm over a coast: a carved cell in a land pixel answers the seabed, and the veil hangs down to it through the sea."
   },
@@ -305,7 +305,7 @@
     "old": "  float r = uRadius * shapeF(uShapeA, uShapeB, n);",
     "new": "  float r = uRadius;",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "Every storm's veil a circle: rain columns stand where the sky says it is dry and are missing where it rains."
   },
@@ -315,7 +315,7 @@
     "old": "  float a = (1.0 - exp(-tau)) * top * clip * uAlpha * fogFactorAt(vWorld);",
     "new": "  float a = (1.0 - exp(-tau)) * top * uAlpha * fogFactorAt(vWorld);",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "A storm's veil spills past its front's core - rain drawn where the weather map says none falls."
   },
@@ -325,7 +325,7 @@
     "old": "const shape = packShape(c.shape);",
     "new": "const shape = packShape(null);",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "The storm's outline never reaches the shader."
   },
@@ -335,7 +335,7 @@
     "old": "    const reachOut = radius * shapeBound(c.shape);",
     "new": "    const reachOut = radius;",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "A storm stretched toward the traveller is culled as if round - its near end never stood."
   },
@@ -345,7 +345,7 @@
     "old": "    if (k.height > 0) kept.push(k);",
     "new": "    kept.push(k);",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "A veil over a massif higher than its top takes one of the eight slots and is never drawn; the ninth storm is lost."
   },
@@ -355,7 +355,7 @@
     "old": "    drawnCells: () => clouds?.cells ?? null,",
     "new": "    drawnCells: () => null,",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "Rain columns stand under cells the sky does not draw - a veil hanging from a clear sky."
   }

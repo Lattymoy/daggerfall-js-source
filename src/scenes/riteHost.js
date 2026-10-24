@@ -1,12 +1,12 @@
 // @ts-check
 // WB12d (2026-10-01, Mac: "faithful and a Summoner"; then "Btw I want to do all 4. We're going balls deep with this"):
-// THE FAITHFUL'S RITE, IN THE WORLD. Each breach's circle (net/gateRite.js riteLocalOf) stands from the omen until the
+// THE FAITHFUL'S RITE, IN THE WORLD. Each breach's circle (net/gate/gateRite.js riteLocalOf) stands from the omen until the
 // breach collapses: Dagon's sigil burned into the earth, its braziers alight, the altar and the faithful's casket
 // (world/riteModel.js), their tents and fire, and a pillar of smoke over it until the breach opens (render/riteSmoke.js).
 //
 // ITS FAITHFUL - the Summoner and six to eight of Dagon's Faithful (riteFaithfulOf) - chant at it until disturbed, and
 // one woken wakes them all (a camp's law, scenes/exteriorFoes.js). They are SHARED by the World of Daggerfall camps' law
-// (world/wodShared.js): the first player to come within reach springs them and owns them, every other sees the owner's
+// (world/worldOfDaggerfall/wodShared.js): the first player to come within reach springs them and owns them, every other sees the owner's
 // - one site, `px,py:rite.<day>`. Every screen knows the Summoner by his kind (a Sorcerer, RITE_SUMMONER_CAREER).
 //
 // AUDIT WB12d (C1, C2, C5): WHAT A CHARACTER SAW OF THEM IS THEIRS (systems/riteChest.js riteMemory, in the save) -
@@ -24,7 +24,7 @@
 //
 // BROKER-CAGE (2026-10-02, Mac: "she should be present at the site in a jailed gate, and the gate opens after all the
 // enemies are cleared"): the Sigil Broker is their prisoner, caged beside the circle (scenes/sigilBrokerPool.js). The
-// rite's word says too whether this character has seen EVERY ONE of the faithful fall (net/gateRite.js riteRosterFell -
+// rite's word says too whether this character has seen EVERY ONE of the faithful fall (net/gate/gateRite.js riteRosterFell -
 // the Summoner's fall the hub said counting as seen, AUDIT BROKER-CAGE C1); the hub's word that they all fell (`cl`) is
 // kept by circle like the broken one, and once it is said none of the faithful is stood again - for this screen, or a
 // page opened after - and copies of them standing are taken down (C13). `isCleared` is the cage's question.
@@ -33,13 +33,14 @@
 // section 19 D.
 //
 // Not a DFU member. Ledger A (WB).
-import { riteLocalOf, riteFaithfulOf, riteStands, riteWindow, riteRosterFell, RITE_REACH_M, RITE_CAREERS, RITE_FAITHFUL_MAX, RITE_SUMMONER_CAREER, RITE_SUMMONER_HEALTH, RITE_WORD_MS } from '../net/gateRite.js';
-import { gateSpotLocal } from '../net/gateLaw.js';
+import { riteLocalOf, riteFaithfulOf, riteStands, riteWindow, riteRosterFell, RITE_REACH_M, RITE_CAREERS, RITE_FAITHFUL_MAX, RITE_SUMMONER_CAREER, RITE_SUMMONER_HEALTH, RITE_WORD_MS } from '../net/gate/gateRite.js';
+import { gateSpotLocal } from '../net/gate/gateLaw.js';
 import { worldRoom, GATE_TOP_MAX } from '../net/wire.js';
-import { riteSiteId } from '../world/wodShared.js';
+import { riteSiteId } from '../world/worldOfDaggerfall/wodShared.js';
 import { buildRiteModel, riteLayout, RITE_BRAZIER_H, RITE_BRAZIER_R, RITE_SIGIL_R, RITE_ALTAR } from '../world/riteModel.js';
-import { gateArt, riteArt, GATE_ARCHIVE } from '../world/gateArt.js';
-import { RiteSmokeRenderer, SMOKE_FADE_MIN } from '../render/riteSmoke.js';
+import { gateArt, riteArt, GATE_ARCHIVE } from '../world/gate/gateArt.js';
+import { RiteSmokeRenderer, RITE_SMOKE_PROGRAMS, SMOKE_FADE_MIN } from '../render/riteSmoke.js';
+import { compiledPass } from '../render/glProgram.js';   // FIRST-USE (#1144): the smoke built once its program is done
 import { FlatAnim } from '../render/flatAnimation.js';
 import { GLOBAL_SCALE } from '../player/activate.js';
 import { FIRE_FLAT, TENT_MODEL, FIRE_LIGHT_RANGE } from '../systems/survival/camp.js';
@@ -47,7 +48,7 @@ import { riteChestItems, riteChestOpened, markRiteChest, riteMemory, riteSeen } 
 import { trs } from '../world/mat4.js';
 
 const listOf = (xs) => (xs.length > 1 ? `${xs.slice(0, -1).join(', ')} and ${xs[xs.length - 1]}` : xs[0] ?? '');
-/** Who broke it, as the Discord post names them (net/gateHerald.js ritePost): the first few, and how many more. */
+/** Who broke it, as the Discord post names them (net/gate/gateHerald.js ritePost): the first few, and how many more. */
 const byWords = (by, n) => {
   const names = (Array.isArray(by) ? by : []).filter((x) => typeof x === 'string' && x).slice(0, GATE_TOP_MAX);
   const others = Number.isSafeInteger(n) ? Math.max(0, n - names.length) : 0;
@@ -160,7 +161,10 @@ export function createRiteHost({
   let model = null, sigilModel = null, modelGen = -1, modelFailedGen = -1, mesh = null, sigilMesh = null, meshGen = -1, meshFailedGen = -1, artUp = false;
   let tent = null, tentTried = false;
   let fire = null, fireTried = false, flamesGen = -1, flamesList = NONE, anim = null;
-  let smokePass = null, smokeTried = false;
+  // FIRST-USE (#1144): the smoke is cosmetic - its door is never asked as needed, so the frame the smoke first fades in
+  // starts its compile and the smoke stands a few frames later, where its build had held the frame for the whole compile
+  let smokePass = null;
+  const smokeOf = gl ? compiledPass(gl, RITE_SMOKE_PROGRAMS, () => new RiteSmokeRenderer(gl), (e) => console.warn('[rite] the smoke would not build', e?.message ?? e)) : null;
   let colliderGen = -1;
   /** made once a heart and a ground: the stone's and the tents' matrices, the casket's target */
   let madeAt = null, mats = null, target = null;
@@ -516,10 +520,7 @@ export function createRiteHost({
       if (on && holds && d <= RITE_SAY_REACH_M) word(t);
       chest(d);
       if (C.known) { made(); ensureModel(); ensureMesh(); standCollider(); ensureTent(); ensureFire(); mountFlames(); }
-      if (!smokePass && !smokeTried && gl && smokeFade(t) > 0) {
-        smokeTried = true;
-        try { smokePass = new RiteSmokeRenderer(gl); } catch (e) { console.warn('[rite] the smoke would not build', e?.message ?? e); }
-      }
+      if (!smokePass && smokeOf && smokeFade(t) > 0) smokePass = smokeOf();
       return C;
     },
     /** The flames' clock (the host's per-frame tick): each batch a share of the cycle on from the last. */
@@ -543,7 +544,7 @@ export function createRiteHost({
       brokenWords.set(k, { by, n: Number.isSafeInteger(w.n) ? Math.max(w.n, by.length) : by.length });
       if (brokenWords.size > BROKEN_KEPT) brokenWords.delete(brokenWords.keys().next().value);
     },
-    /** Whether the hub said the rite at this circle broken (systems/gateOmen.js: its order is not said then). */
+    /** Whether the hub said the rite at this circle broken (systems/gate/gateOmen.js: its order is not said then). */
     isBroken: (day, px, py) => brokenWords.has(circleKey(day, px, py)),
     /** BROKER-CAGE: whether every one of the circle's faithful fell - the hub's word, or (`ownEyes`: a relay before the
      *  one that says it - net/wire.js relaySupportsCage) this character's own eyes, the Summoner's fall the hub's broken

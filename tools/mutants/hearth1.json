@@ -5,7 +5,7 @@
   "old": "export const HEARTH_RECORDS = Object.freeze([0, 1, 20]);",
   "new": "export const HEARTH_RECORDS = Object.freeze([0, 1, 6, 17, 20]);",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "export const HEARTH_RECORDS = Object.freeze([0, 1, 20]);",
   "new": "export const HEARTH_RECORDS = Object.freeze([0, 1]);",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "  return archive === HEARTH_ARCHIVE && HEARTH_SET.has(record);",
   "new": "  return archive === HEARTH_ARCHIVE;",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "  return archive === HEARTH_ARCHIVE && HEARTH_SET.has(record);",
   "new": "  return HEARTH_SET.has(record);",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "    if (!f) continue;",
   "new": "",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "    const d = Math.hypot(h.x - pos[0], h.y - pos[1], h.z - pos[2]);",
   "new": "    const d = Math.hypot(h.x - pos[0], h.z - pos[2]);",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "    if (d <= bestD) { best = h; bestD = d; }",
   "new": "    if (d < bestD) { best = h; bestD = d; }",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "export const HEARTH_NEAR = 16;",
   "new": "export const HEARTH_NEAR = 3;",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "  const byFire = (pos) => !!nearestFire(shown().map((c) => c.rec), pos, now())\n    || hearthNear(worldFires(), pos, BY_FIRE_REACH);   // AUDIT HEARTH1 F2: the FIRST fire in reach, not the nearest - this runs every frame",
   "new": "  const byFire = (pos) => !!nearestFire(shown().map((c) => c.rec), pos, now());",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -86,7 +86,7 @@
   "old": "    const wf = worldFires();\n    if (wf) for (let i = 0; i < wf.length; i++) {",
   "new": "    const wf = null;\n    if (wf) for (let i = 0; i < wf.length; i++) {",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -95,8 +95,8 @@
   "old": "  return { min: [x - r, foot, z - r], max: [x + r, foot + h, z + r] };",
   "new": "  return { min: [x - r, foot + h / 2, z - r], max: [x + r, foot + h, z + r] };",
   "tests": [
-   "test/hearth1_worldfires.test.js",
-   "test/fixd_hearthbox.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js",
+   "test/scenes/fixd_hearthbox.test.js"
   ]
  },
  {
@@ -105,7 +105,7 @@
   "old": "      if (mode === 'info' || mode === 'dialogue') { say(CAMP_TEXT.seeHearth); return true; }",
   "new": "      if (mode === 'info' || mode === 'dialogue') { say(CAMP_TEXT.seeFire); return true; }",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -114,43 +114,43 @@
   "old": "    if (c && !fireLit(c.rec, now())) { say(CAMP_TEXT.cold); return null; }",
   "new": "    if (!fireLit(c.rec, now())) { say(CAMP_TEXT.cold); return null; }",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
   "name": "HEARTH1-the-misc-block-flats-stop-carrying-the-record-so-half-a-towns-braziers-are-lanterns",
-  "file": "src/world/cityLights.js",
+  "file": "src/world/city/cityLights.js",
   "old": "      record: obj.textureRecord,\n      x: obj.xPos * GLOBAL_SCALE,",
   "new": "      x: obj.xPos * GLOBAL_SCALE,",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
   "name": "HEARTH1-the-subrecord-flats-stop-carrying-it-so-the-other-half-are",
-  "file": "src/world/cityLights.js",
+  "file": "src/world/city/cityLights.js",
   "old": "        record: obj.textureRecord,   // HEARTH1\n",
   "new": "",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
   "name": "HEARTH1-the-interior-collector-stops-carrying-it-so-no-tavern-has-a-hearth",
-  "file": "src/world/interiorLights.js",
+  "file": "src/world/interior/interiorLights.js",
   "old": "      record: f.record,   // HEARTH1",
   "new": "      // HEARTH1",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
   "name": "HEARTH1-the-streaming-host-stops-collecting-so-no-town-brazier-is-a-fire",
-  "file": "src/scenes/world.js",
+  "file": "src/scenes/pixelBuild.js",
   "old": "          if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) pixelHearths.push([lp[0], lp[1], lp[2], locLocal[1] + light.foot, light.w, light.h]);",
   "new": "",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -159,7 +159,7 @@
   "old": "      if (isHearthFlat(LIGHTS_ARCHIVE, light.record)) cityHearths.push({ ...l, foot: light.foot, w: light.w, h: light.h });   // FIX-D: and its sprite, for the eye's box",
   "new": "",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -168,7 +168,7 @@
   "old": "        dungeonHearths.push({ x: f.x + b.originX, y: f.y, z: f.z + b.originZ, foot: size ? f.y - size.h / 2 : undefined, w: size?.w, h: size?.h, lawFoot: lawSize ? f.y - lawSize.h / 2 : undefined, archive: f.archive, record: f.record });",
   "new": "",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ],
   "note": "AUDIT REST-PARTY C7 (PIN MOVED): the row carries the law's classic foot too. AUDIT REST III E4 (PIN MOVED): a layout hearth row names its flat; re-aimed by content."
  },
@@ -178,7 +178,7 @@
   "old": "byFire: interiorCamps.byFire(player.pos) } : null)",
   "new": "byFire: false } : null)",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -187,7 +187,7 @@
   "old": "    interiorCamps.destroyAll(); interiorHearths.length = 0;   // HEARTH1: this room's fires are this room's - one building's hearth is not the next one's",
   "new": "",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -196,7 +196,7 @@
   "old": "    place: () => ({ insideBuilding: true }),\n    camera: () => ({ feet: player.pos, yaw: cam.yaw }),",
   "new": "    place: () => ({}),\n    camera: () => ({ feet: player.pos, yaw: cam.yaw }),",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -205,7 +205,7 @@
   "old": "        const x = h[0] + t[0], y = h[1] + t[1], z = h[2] + t[2];",
   "new": "        const x = h[0], y = h[1], z = h[2];",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -214,7 +214,7 @@
   "old": "  const worldFires = () => (usable() && hearths ? hearths() : null);",
   "new": "  const worldFires = () => (hearths ? hearths() : null);",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -223,7 +223,7 @@
   "old": "    || hearthNear(worldFires(), pos, BY_FIRE_REACH);",
   "new": "    || !!nearestHearth(worldFires(), pos, BY_FIRE_REACH);",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -232,7 +232,7 @@
   "old": "    if (dx * dx + dy * dy + dz * dz <= reach * reach) return true;\n  }\n  return false;",
   "new": "  }\n  for (let i = 0; i < len; i++) {\n    const h = hearths[i];\n    const dx = h.x - pos[0], dy = h.y - pos[1], dz = h.z - pos[2];\n    if (dx * dx + dy * dy + dz * dz <= reach * reach) return true;\n  }\n  return false;",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -241,7 +241,7 @@
   "old": "    if (dx * dx + dy * dy + dz * dz <= reach * reach) return true;",
   "new": "    if (dx * dx + dy * dy + dz * dz < reach * reach) return true;",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -250,7 +250,7 @@
   "old": "export function hearthNear(hearths, pos, reach, n = -1) {\n  const len = n < 0 ? (hearths?.length ?? 0) : Math.min(n, hearths?.length ?? 0);",
   "new": "export function hearthNear(hearths, pos, reach, n = -1) {\n  const len = hearths?.length ?? 0;",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
@@ -259,17 +259,17 @@
   "old": "        const e = _hearthStore[n] ?? (_hearthStore[n] = { x: 0, y: 0, z: 0, foot: 0, w: 0, h: 0 });\n        e.x = x; e.y = y; e.z = z;\n        e.foot = h[3] + t[1]; e.w = h[4]; e.h = h[5];   // FIX-D: the sprite, for the eye's box\n        _hearthOut[n] = e;",
   "new": "        const e = { x, y, z, foot: h[3] + t[1], w: h[4], h: h[5] };\n        _hearthOut[n] = e;",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  },
  {
   "name": "FIX-D-the-exterior-foot-is-the-flame-so-the-box-floats-a-sprite-high",
-  "file": "src/world/cityLights.js",
+  "file": "src/world/city/cityLights.js",
   "old": "      foot: -obj.yPos * GLOBAL_SCALE, w: size.w, h: size.h,\n",
   "new": "      foot: -obj.yPos * GLOBAL_SCALE + size.h, w: size.w, h: size.h,\n",
   "tests": [
-   "test/hearth1_worldfires.test.js",
-   "test/fixd_hearthbox.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js",
+   "test/scenes/fixd_hearthbox.test.js"
   ]
  },
  {
@@ -278,7 +278,7 @@
   "old": "    if (bestNoSurface) return null;\n",
   "new": "\n",
   "tests": [
-   "test/fixd_hearthbox.test.js"
+   "test/scenes/fixd_hearthbox.test.js"
   ]
  },
  {
@@ -287,7 +287,7 @@
   "old": "      interiorHearths.push(...collectHearths(ctx.lights));",
   "new": "      for (const l of ctx.lights ?? []) if (l.record === 20) interiorHearths.push({ x: l.x, y: l.y, z: l.z });",
   "tests": [
-   "test/hearth1_worldfires.test.js"
+   "test/systems/survival/hearth1_worldfires.test.js"
   ]
  }
 ]

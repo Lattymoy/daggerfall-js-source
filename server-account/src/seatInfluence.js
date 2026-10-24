@@ -60,7 +60,7 @@ import { mustChange } from './realm.js';
 import { seatsOpenFor, confirmedSeats } from './townSeats.js';
 import { marksOpenFor } from './marks.js';
 import { verifyWatchReceipt } from '../../src/net/watchReceipt.js';
-import { gateTimes, gameDayAt } from '../../src/net/gateLaw.js';
+import { gateTimes, gameDayAt } from '../../src/net/gate/gateLaw.js';
 import { shrineGateInfluence, towersSee } from '../../src/net/fortLaw.js';   // SEAT2b part two (7.5): a Shrine's gates, the Watchtowers' word
 import { fortTierAt } from './seatForts.js';   // SEAT2b part two: the Shrine standing, read without a write
 import { MARKS_RID_RE, utcDay } from '../../src/net/marksLaw.js';
@@ -595,29 +595,38 @@ export async function readStandings({ db, nowS }, player, env, { key, character 
 const guildView = (id, name, tag, heraldry) => ({ id, name: name ?? '', tag: tag ?? '', heraldry: heraldryOfRow(heraldry) });
 /** EVERY CHARTER HELD, by key: `{ guild: { id, name, tag, heraldry }, since, standing, tithe }` (SEAT1d: its Tithe). */
 export async function holdsOf(db) {
-  const { results = [] } = await db.prepare(`SELECT h.key, h.guild_id, h.since_week, h.standing, h.tithe, g.name, g.tag, g.heraldry FROM town_seat_holds h
-    JOIN guilds g ON g.id = h.guild_id`).all();
-  return new Map(results.map((h) => [Number(h.key), {
-    guild: guildView(h.guild_id, h.name, h.tag, h.heraldry), since: Number(h.since_week), standing: Number(h.standing), tithe: Number(h.tithe ?? 0),
-  }]));
+  return holdsFrom((await holdsRead(db).all()).results);
 }
+/** SEAT-BATCH (2026-10-16): holdsOf's statement and its answer apart, so the seats' list sends it in one batch. */
+export const holdsRead = (/** @type {any} */ db) => db.prepare(`SELECT h.key, h.guild_id, h.since_week, h.standing, h.tithe, g.name, g.tag, g.heraldry FROM town_seat_holds h
+    JOIN guilds g ON g.id = h.guild_id`);
+export const holdsFrom = (/** @type {any[]} */ results = []) => new Map(results.map((h) => [Number(h.key), {
+  guild: guildView(h.guild_id, h.name, h.tag, h.heraldry), since: Number(h.since_week), standing: Number(h.standing), tithe: Number(h.tithe ?? 0),
+}]));
 /** THE WEEK'S BATTLES the last Turning named, by key: `{ kind, guild, against, startsAt, endsAt, moved, state }` - a
  *  Right of Siege's challenger and holder, or a Contested seat's two contenders; AUDIT-SEATS G2: and when the schedule
  *  placed it (seconds, as the standings' `fight` - null for a battle no hour could hold), whether it was moved and its
  *  state, so the arrival line can call the siege (3.3) and the client's herald say it (G1) without a standings read. */
 export async function battlesOf(db, week) {
-  const { results = [] } = await db.prepare(`SELECT r.key, r.kind, r.guild_id, r.against, a.name AS an, a.tag AS at, a.heraldry AS ah,
+  const [rights, revolts] = battlesRead(db, week);
+  return battlesFrom((await rights.all()).results, (await revolts.all()).results);
+}
+/** SEAT-BATCH: battlesOf's two statements (the week's Rights, its revolts) and their answer apart. */
+export const battlesRead = (/** @type {any} */ db, /** @type {number} */ week) => [
+  db.prepare(`SELECT r.key, r.kind, r.guild_id, r.against, a.name AS an, a.tag AS at, a.heraldry AS ah,
       b.name AS bn, b.tag AS bt, b.heraldry AS bh, x.starts_at, x.ends_at, x.moved, x.state FROM town_seat_rights r JOIN guilds a ON a.id = r.guild_id
       LEFT JOIN guilds b ON b.id = r.against LEFT JOIN town_seat_battles x ON x.week = r.week AND x.key = r.key
-    WHERE r.week = ?`).bind(week).all();
+    WHERE r.week = ?`).bind(week),
+  // SEAT2b part two (c) (7.7): a revolt is no Right - its battle row alone names it, the holder it rises against `against`
+  db.prepare(`SELECT x.key, x.defender, b.name AS bn, b.tag AS bt, b.heraldry AS bh, x.starts_at, x.ends_at, x.moved, x.state
+    FROM town_seat_battles x LEFT JOIN guilds b ON b.id = x.defender WHERE x.week = ? AND x.kind = 'revolt'`).bind(week),
+];
+export function battlesFrom(/** @type {any[]} */ results = [], /** @type {any[]} */ revolts = []) {
   const out = new Map(results.map((r) => [Number(r.key), {
     kind: r.kind, guild: guildView(r.guild_id, r.an, r.at, r.ah), against: r.against ? guildView(r.against, r.bn, r.bt, r.bh) : null,
     startsAt: r.starts_at == null ? null : Number(r.starts_at), endsAt: r.ends_at == null ? null : Number(r.ends_at),
     moved: Number(r.moved ?? 0) === 1, state: r.state ?? null,
   }]));
-  // SEAT2b part two (c) (7.7): a revolt is no Right - its battle row alone names it, the holder it rises against `against`
-  const { results: revolts = [] } = await db.prepare(`SELECT x.key, x.defender, b.name AS bn, b.tag AS bt, b.heraldry AS bh, x.starts_at, x.ends_at, x.moved, x.state
-    FROM town_seat_battles x LEFT JOIN guilds b ON b.id = x.defender WHERE x.week = ? AND x.kind = 'revolt'`).bind(week).all();
   for (const r of revolts) {
     out.set(Number(r.key), { kind: 'revolt', guild: null, against: guildView(r.defender, r.bn, r.bt, r.bh), startsAt: Number(r.starts_at), endsAt: Number(r.ends_at),
       moved: Number(r.moved ?? 0) === 1, state: r.state ?? null });

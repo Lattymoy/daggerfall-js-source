@@ -21,35 +21,44 @@
 // THE LAW: three standing at most, the newest on top; each holds LOOT_BANNER_HOLD_MS (a big one LOOT_BANNER_BIG_HOLD_MS)
 // and slides out; what arrives while three stand waits, the best tier first, at most LOOT_BANNER_PENDING_MAX. A second
 // card of a kind whose banner stands or waits adds to its count. Its clock is the frame's and takes the HUD's hide gate
-// (ui/hud.js drawHud, beside the revenant's cards and the herald): under a window - the loot window, a shop's counter,
+// (ui/hud/hud.js drawHud, beside the revenant's cards and the herald): under a window - the loot window, a shop's counter,
 // the Broker's - it stands hidden and nothing ages, so a piece bought or taken there is announced when the window goes.
 // A piece no longer held when its turn comes (a zone remains the room gave to another) never stands.
 //
+// HONOUR-BANNER (2026-10-14, Mac: "The title/aura in the abyss dungeon should also have a loot popup", and the lamp's
+// "ensure there is a loot popup for obtaining the title"): A TITLE OR AN AURA GRANTED stands as a banner too - pushed by
+// its grant's own door (`announceHonour`: net/superDungeon/sdClaims.js's Hour, systems/lampKeeper.js's lamp), not read off the pack,
+// since there is no piece to read. Its word in the title's own paint (ui/playerBadge.js titlePaint - an aura in the
+// title's family it wears, AURA_PAINT), its edge and light in the title's colour, a big banner with the fanfare; it is
+// never dropped as "no longer held". A skin with no banner answers false, and its door says its chat line alone.
+//
 // ENHANCED PLUS ONLY. The classic skin is Daggerfall's: nothing here builds a node or a sheet there (AUDIT 39's law) - the
 // watcher still reads and marks, so a skin switched later finds nothing stale. The HUD-MOVE layer moves the stack like
-// any HUD piece (ui/hudLayout.js 'loot'); left where the sheet stands it, it steps below the notice stack rather than
+// any HUD piece (ui/hud/hudLayout.js 'loot'); left where the sheet stands it, it steps below the notice stack rather than
 // over it. Reduced motion: no slide, no sweep, no glow.
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
 import { createAcquireWatch, setCodexFindPresenter, tierIsBig, tierRank, isAcquired, announces } from '../systems/acquireWatch.js';
-import { tierLabel, RARITIES } from '../systems/lootRarity.js';
-import { isIliacCard } from '../systems/iliacItems.js';
-import { cardById } from '../net/iliacCards.js';
-import { itemLongName } from '../systems/itemInfo.js';
-import { inventoryItemImage, templateByIndex } from '../systems/itemTemplates.js';
+import { tierLabel, RARITIES } from '../systems/loot/lootRarity.js';
+import { isIliacCard } from '../systems/iliac/iliacItems.js';
+import { cardById } from '../net/iliac/iliacCards.js';
+import { itemLongName } from '../systems/item/itemInfo.js';
+import { inventoryItemImage, templateByIndex } from '../systems/item/itemTemplates.js';
 import { paintIliacCard, ILIAC_CARD_ASPECT } from '../render/iliacCardFaces.js';
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';
 import { screenDpr } from './iconFit.js';
 import { PIXEL_STACK, PIXEL_FONT_CSS, PIXELIFY_FIVE_FACE, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';
-import { rarityVarsCss } from './enhancedPlusStyle.js';
-import { FRAME_TONES, PLUS_THEMES, hudVeil } from './enhancedFrame.js';
+import { rarityVarsCss } from './enhanced/enhancedPlusStyle.js';
+import { FRAME_TONES, PLUS_THEMES, hudVeil } from './enhanced/enhancedFrame.js';
 import { armDrawWatchdog, disarmDraw } from './drawWatchdog.js';
-import { sweepHudLayout } from './hudLayout.js';
+import { sweepHudLayout } from './hud/hudLayout.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { enhancedSoundsOn } from '../systems/enhancedSounds.js';
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { TITLE_TEXT, AURA_TEXT, AURA_PAINT, titleBadge, titlePaint, gradientAt } from './playerBadge.js';   // HONOUR-BANNER: a title's word and paint
+import { t } from '../systems/textManager.js';   // HONOUR-BANNER: its words in the player's language
 
 export const LOOT_BANNER_STYLE_ID = 'loot-banner-css';
 export const LOOT_BANNER_STACK_ID = 'loot-banners';
@@ -60,7 +69,7 @@ export const LOOT_BANNER_PENDING_MAX = 12;
 /** A banner's hold once it has landed, and a big one's. */
 export const LOOT_BANNER_HOLD_MS = 4500;
 export const LOOT_BANNER_BIG_HOLD_MS = 7000;
-/** The slide in and out (the notices' own, ui/enhancedNotice.js NOTICE_SLIDE_MS). */
+/** The slide in and out (the notices' own, ui/enhanced/enhancedNotice.js NOTICE_SLIDE_MS). */
 export const LOOT_BANNER_SLIDE_MS = 260;
 /** The picture's box, CSS pixels, and a big banner's. */
 export const LOOT_BANNER_ICON_BOX = 40;
@@ -110,6 +119,30 @@ export function bannerEntry(arrival, identity = undefined) {
 }
 function imageOf(item, identity) {
   try { return inventoryItemImage(item, identity) ?? null; } catch { return null; }
+}
+
+/** HONOUR-BANNER: the line under an honour's name - where it is worn - read when it is drawn. */
+export const honourSub = () => t('lootBanner.honour.wear', 'Wear it from your account card');
+/** HONOUR-BANNER: the kicker over it. */
+export const honourKicker = (kind) => (kind === 'aura' ? t('lootBanner.honour.aura', 'New Aura') : t('lootBanner.honour.title', 'New Title'));
+/**
+ * HONOUR-BANNER: A TITLE OR AN AURA AS A BANNER'S DATA - `kind` 'title' or 'aura', `key` the vocabulary's word
+ * (net/identityToken.js TITLES / AURAS). Its tier is the top one (`gilded`: it waits first, stands big, sounds the
+ * fanfare); its colour is the title's own (`honour.rgba`, the gradient's middle where it has one), laid over the tier's.
+ * Null for a word ui/playerBadge.js does not name. Pure.
+ * @param {{ kind: 'title'|'aura', key: string }} honour
+ */
+export function honourEntry({ kind, key } = /** @type {any} */ ({})) {
+  const aura = kind === 'aura';
+  if (!aura && kind !== 'title') return null;
+  const name = aura ? AURA_TEXT[key] : TITLE_TEXT[key];
+  if (typeof name !== 'string' || !name) return null;
+  const badge = titleBadge({ title: aura ? AURA_PAINT[key] : key });
+  const rgba = badge?.gradient?.length > 1 ? gradientAt(badge.gradient, 0.5) : badge?.rgba ?? null;
+  return {
+    key: `honour\u0002${kind}\u0002${key}`, item: null, card: null, honour: { kind, key, badge, rgba },
+    tier: 'gilded', name, kicker: honourKicker(kind), sub: honourSub(), exalted: false, big: true, count: 1, codex: false, image: null,
+  };
 }
 
 // ── THE LAW ─────────────────────────────────────────────────────────
@@ -251,6 +284,7 @@ ${rarityVarsCss('.lootbanner-stack ')}
 .lb-kicker::after { content: var(--rar-pips, ''); margin-left: 6px; letter-spacing: 0.05em; color: var(--rar, ${T.brass}); }
 .lb-name { font-size: 16px; line-height: 19px; color: var(--rar, #e9e4d9); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .lb-count { margin-left: 6px; font-size: 12px; color: ${T.brassHi}; }
+.lb-word { display: inline-block; max-width: 100%; overflow: hidden; text-overflow: ellipsis; vertical-align: bottom; }
 .lb-count:empty { display: none; }
 .lb-count.bump-a { animation: lb-bump-a 180ms ease-out; }
 .lb-count.bump-b { animation: lb-bump-b 180ms ease-out; }
@@ -348,13 +382,17 @@ const countText = (n) => (n > 1 ? `×${n}` : '');
 function build(d, e) {
   const node = el(d, 'div', e.big ? 'lootbanner lb-big' : 'lootbanner');
   node.dataset.rarity = e.tier;
+  if (e.honour) paintHonour(node, e.honour);   // HONOUR-BANNER: the title's colour over the tier's
   if (e.exalted) node.dataset.exalted = '';
   const icon = el(d, 'div', 'lb-icon');
   icon.setAttribute('aria-hidden', 'true');
   const text = el(d, 'div', 'lb-text');
   text.setAttribute('aria-hidden', 'true');
   const kicker = el(d, 'div', 'lb-kicker', e.kicker);
-  const name = el(d, 'div', 'lb-name', e.name);
+  const name = el(d, 'div', 'lb-name', e.honour ? null : e.name);
+  // HONOUR-BANNER (AUDIT FIVE-ASKS E3): the word in its own inline box, painted as it is worn - a gradient title's run spans
+  // the word, never the banner's width, and the count beside it keeps its own colour
+  if (e.honour) { const word = el(d, 'span', 'lb-word', e.name); const p = titlePaint(e.honour.badge); for (const k of Object.keys(p)) if (p[k]) word.style[k] = p[k]; name.append(word); }
   const num = el(d, 'span', 'lb-count', countText(e.count));
   name.append(num);
   const sub = el(d, 'div', 'lb-sub', e.sub);
@@ -371,6 +409,7 @@ function build(d, e) {
  *  by then takes nothing). A piece with no picture stands on its words in an empty well. */
 function setPicture(icon, e) {
   const box = e.big ? LOOT_BANNER_BIG_ICON_BOX : LOOT_BANNER_ICON_BOX;
+  if (e.honour) { const d = icon.ownerDocument ?? docOf(); if (d) icon.append(honourMark(d, e.honour.kind, box)); return; }   // HONOUR-BANNER: its own mark
   if (e.card) {
     try {
       const c = icon.ownerDocument?.createElement?.('canvas');
@@ -391,6 +430,43 @@ function setPicture(icon, e) {
     return true;
   };
   try { put(_icon(e.image, box, () => { if (icon.isConnected !== false) { try { put(_icon(e.image, box, null)); } catch { /* the words stand */ } } })); } catch { /* the words stand */ }
+}
+
+/** HONOUR-BANNER: the rarity's custom properties in the title's colour (enhancedPlusStyle.js RARITY_VARS' names) - its
+ *  light 45% of the way to white, its shade half as bright, a star for its pips. */
+export function honourVars(rgba) {
+  if (!Array.isArray(rgba) || rgba.length < 3) return null;
+  const c = (v, k) => Math.max(0, Math.min(255, Math.round(v * 255 * k)));
+  const hex = (k) => `#${[0, 1, 2].map((i) => c(rgba[i], k).toString(16).padStart(2, '0')).join('')}`;
+  const hi = `#${[0, 1, 2].map((i) => Math.round(c(rgba[i], 1) + (255 - c(rgba[i], 1)) * 0.45).toString(16).padStart(2, '0')).join('')}`;
+  return { '--rar': hex(1), '--rar-hi': hi, '--rar-lo': hex(0.5), '--rar-rgb': [0, 1, 2].map((i) => c(rgba[i], 1)).join(','), '--rar-pips': "'\\2605'" };
+}
+function paintHonour(node, honour) {
+  const vars = honourVars(honour.rgba);
+  if (vars) for (const [k, v] of Object.entries(vars)) node.style.setProperty?.(k, v);
+  node.dataset.honour = honour.kind;
+}
+/** HONOUR-BANNER: the well's mark - a title's laurel, an aura's ring of light - drawn in the banner's own colour, on a
+ *  16-cell grid at a whole number of pixels a cell (AUDIT FIVE-ASKS E4: 56 px drew uneven 3- and 4-pixel cells). */
+export const HONOUR_MARK_NS = 'http://www.w3.org/2000/svg';
+function honourMark(d, kind, box) {
+  const NS = HONOUR_MARK_NS;
+  box = Math.max(16, Math.floor(box / 16) * 16);
+  const svg = d.createElementNS ? d.createElementNS(NS, 'svg') : d.createElement('svg');
+  svg.setAttribute('viewBox', '0 0 16 16');
+  svg.setAttribute('width', String(box));
+  svg.setAttribute('height', String(box));
+  svg.setAttribute('shape-rendering', 'crispEdges');
+  svg.setAttribute('fill', 'var(--rar)');
+  const rects = kind === 'aura'
+    ? [[6, 1, 4, 1], [3, 2, 3, 1], [10, 2, 3, 1], [2, 3, 1, 3], [13, 3, 1, 3], [1, 6, 1, 4], [14, 6, 1, 4], [2, 10, 1, 3], [13, 10, 1, 3], [3, 13, 3, 1], [10, 13, 3, 1], [6, 14, 4, 1], [7, 6, 2, 4], [6, 7, 4, 2]]
+    : [[7, 2, 2, 2], [6, 4, 4, 1], [3, 5, 2, 2], [11, 5, 2, 2], [2, 7, 2, 2], [12, 7, 2, 2], [3, 9, 2, 2], [11, 9, 2, 2], [5, 11, 2, 1], [9, 11, 2, 1], [7, 12, 2, 2], [6, 6, 4, 4]];
+  for (const [x, y, w, h] of rects) {
+    const r = d.createElementNS ? d.createElementNS(NS, 'rect') : d.createElement('rect');
+    r.setAttribute('x', String(x)); r.setAttribute('y', String(y)); r.setAttribute('width', String(w)); r.setAttribute('height', String(h));
+    svg.append(r);
+  }
+  return svg;
 }
 
 /** Where the stack stands this frame (see bannerLayout). Reads every rect, then writes - one layout. */
@@ -421,7 +497,7 @@ function place(d) {
 }
 
 /**
- * ONE FRAME (ui/hud.js drawHud, every host): read what arrived in `entity`'s keeping (the watcher marks what it reads,
+ * ONE FRAME (ui/hud/hud.js drawHud, every host): read what arrived in `entity`'s keeping (the watcher marks what it reads,
  * on any skin), queue its banners (Enhanced Plus), and draw them - `hidden`, the HUD's hide gate, stands the stack
  * hidden with its clock still. Answers the banners standing and waiting.
  */
@@ -445,7 +521,7 @@ export function drawLootBanners({ entity = null, hidden = false, dt = 0, doc = d
     _watchdog = armDrawWatchdog(WATCHDOG_MS, () => { _watchdog = null; if (_stack) _stack.classList.add('lb-hidden'); }, _wd);
     if (hidden) return queue.size;
     const held = _entity;
-    const { entered, gone } = queue.tick(Math.max(0, Number(dt) || 0) * 1000, { canEnter: (e) => !held || bannerStillHeld(held, e) });
+    const { entered, gone } = queue.tick(Math.max(0, Number(dt) || 0) * 1000, { canEnter: (e) => !!e.honour || !held || bannerStillHeld(held, e) });   // HONOUR-BANNER: an honour is held by the account
     paint(doc, entered, gone);
     sound(entered);
     if (!queue.size) { takeDown(); return 0; }
@@ -485,7 +561,7 @@ function sound(entered) {
   if (entered.some((e) => e.codex)) _play(SOUND.LevelUp);
 }
 
-/** THE CODEX'S DOOR (systems/lootCodex.js noteFind, through systems/acquireWatch.js): a first find of a Legendary record
+/** THE CODEX'S DOOR (systems/loot/lootCodex.js noteFind, through systems/acquireWatch.js): a first find of a Legendary record
  *  is the banner's to say on Enhanced Plus - on the banner standing or waiting for it, or on the one the watcher will
  *  raise (the take told the codex before the frame read the pack). Declined - and the codex says its line - on the
  *  classic skin, for a piece already read whose banner has gone, and for one no frame will read (no host has drawn, or
@@ -501,6 +577,21 @@ export function bannerCodexFind(item) {
 }
 setCodexFindPresenter(bannerCodexFind);
 
+/**
+ * HONOUR-BANNER: A TITLE OR AN AURA GRANTED - queued as a banner (honourEntry), drawn by the next frame's
+ * drawLootBanners. Answers whether it will stand: false on the classic skin, with no page, or for a word not named - the
+ * caller says its own line then (it says it either way; the banner is the popup, the line the record).
+ * @param {'title'|'aura'} kind @param {string} key
+ */
+export function announceHonour(kind, key, { doc = docOf() } = {}) {
+  try {
+    if (!doc?.body || !isEnhanced()) return false;
+    const e = honourEntry({ kind, key });
+    if (!e) return false;
+    return queue.push([e]);
+  } catch { return false; }
+}
+
 /** Every banner down at once; the watcher keeps its baseline. */
 export function clearLootBanners() { queue.clear(); takeDown(); }
 /** Tests: what stands and waits, as the law reads it. */
@@ -510,7 +601,7 @@ export const _lootBanners = () => ({
 });
 export function _resetLootBannersForTests() { clearLootBanners(); watch.reset(); _entity = null; _faultSaid = false; }
 
-/** HUD-MOVE's preview (ui/hudLayout.js): a banner standing where the real ones will, while the UI is unlocked. */
+/** HUD-MOVE's preview (ui/hud/hudLayout.js): a banner standing where the real ones will, while the UI is unlocked. */
 export function buildLootBannerPreview(doc) {
   ensureStyle(doc);
   const stack = doc.createElement('div');

@@ -5,7 +5,7 @@
     "old": "  if (!cur || !o || o.day !== day) return null;",
     "new": "  if (!cur || !o) return null;",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  cur.other = null;\n  o.other = cur;\n  return o;",
     "new": "  o.other = cur;\n  return o;",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  cur.other = null;\n  o.other = cur;\n  return o;",
     "new": "  cur.other = null;\n  return o;",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  const o = !cur ? null : cur.day !== day ? cur : (cur.other ?? null);",
     "new": "  const o = !cur ? null : cur.day !== day ? null : (cur.other ?? null);",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  const o = !cur ? null : cur.day !== day ? cur : (cur.other ?? null);",
     "new": "  const o = !cur ? null : cur.day !== day ? cur : null;",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (o) o.other = null;\n  return o;",
     "new": "  return o;",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (e && e.day !== day) { const o = swapDay(e, day); if (o) this._plans.set(res.id, e = o); }   // LW-DAWN: the other day, kept\n",
     "new": "",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      const other = besideDay(e, day);   // LW-DAWN",
     "new": "      const other = null;   // LW-DAWN",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    const kept = swapDay(this._roads, day);",
     "new": "    const kept = null;",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      other: besideDay(this._roads, day) };   // LW-DAWN",
     "new": "      other: null };   // LW-DAWN",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "if (e.day === day && !e.roads) { if (e.other) this._plans.set(id, e.other); else this._plans.delete(id); }",
     "new": "if (e.day === day && !e.roads) this._plans.delete(id);",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      else if (e.other?.day === day && !e.other.roads) e.other = null;\n",
     "new": "",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    if (this._people && this._people.day !== day) this._people = swapDay(this._people, day) ?? this._people;   // LW-DAWN: the other day's, kept\n",
     "new": "",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    this._people = { day, roads, extra, list, other: besideDay(this._people, day) };",
     "new": "    this._people = { day, roads, extra, list, other: null };",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    if (this._departures && this._departures.day !== day) this._departures = swapDay(this._departures, day) ?? this._departures;   // LW-DAWN: the other day's, kept\n",
     "new": "",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    this._departures = { day, gen: this._planGen, from, other: besideDay(this._departures, day) };",
     "new": "    this._departures = { day, gen: this._planGen, from, other: null };",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    if (this._harbourMiss === berth) return null;\n",
     "new": "",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    if (!this._harbourDock) this._harbourMiss = berth;\n",
     "new": "",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    const berth = `${Math.floor(h.x / NAV_CELL)},${Math.floor(h.z / NAV_CELL)}`;",
     "new": "    const berth = `${h.x},${h.z}`;",
     "tests": [
-      "test/lwdawn_caches.test.js"
+      "test/systems/livingWorld/lwdawn_caches.test.js"
     ]
   }
 ]

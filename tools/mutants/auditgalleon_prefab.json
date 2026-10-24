@@ -1,202 +1,202 @@
 [
   {
     "name": "AUDIT-GALLEON-P1-helmsman-on-the-roof",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "stand: Object.freeze([0, MEASURED.castleRoofY + CAPSULE_HEIGHT / 2, -14.25])",
     "new": "stand: Object.freeze([0, MEASURED.castleRoofY, -14.25])",
     "tests": [
-      "test/auditgalleon_prefab.test.js",
-      "test/galleon_model.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js",
+      "test/world/ships/galleon_model.test.js"
     ],
     "why": "DrivePosition on her roof: Come Sail Away pins the capsule's centre there, his feet 0.9 m under it, through it into her great cabin"
   },
   {
     "name": "AUDIT-GALLEON-P1-the-old-hub",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "hub: Object.freeze([0, MEASURED.castleRoofY + 0.72, -12.9])",
     "new": "hub: Object.freeze([0, MEASURED.castleRoofY + 0.92, -12.9])",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the hub where it stood: the wheel's handles across the helmsman's lines to the bow"
   },
   {
     "name": "AUDIT-GALLEON-P1-the-old-wheel",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "wheelR: 0.4 });",
     "new": "wheelR: 0.54 });",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the wheel as big as it was: its tips over the lowest sight line and under her roof"
   },
   {
     "name": "AUDIT-GALLEON-P1-the-old-hood",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "prism(bench, TEX.gilt, [hx, y0 + 1.02, hz + 0.42], [hx, y0 + 1.3, hz + 0.42]",
     "new": "prism(bench, TEX.gilt, [hx, y0 + 1.02, hz + 0.42], [hx, y0 + 1.42, hz + 0.42]",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the binnacle's hood as tall as it was: across the lowest lines"
   },
   {
     "name": "AUDIT-GALLEON-P2-ropes-up-through-the-cover",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "const headY = MEASURED.hatchCoverUnderY - MANROPE.clear - MANROPE.r;",
     "new": "const headY = MEASURED.mainDeckY + 0.85;",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the manropes up the stair's line to 0.85 m over her deck: through the shut covers"
   },
   {
     "name": "AUDIT-GALLEON-P2-ropes-not-made-fast",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "rope(bench, TEX.rope, [foot, head, [s * holeHalfX, headY, head[2]]], MANROPE.r);",
     "new": "rope(bench, TEX.rope, [foot, head], MANROPE.r);",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "a manrope ending in the air under the deck, made fast to nothing"
   },
   {
     "name": "AUDIT-GALLEON-P2-no-clearance",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "MANROPE = Object.freeze({ r: 0.03, clear: 0.02 })",
     "new": "MANROPE = Object.freeze({ r: 0.03, clear: -0.03 })",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the ropes' heads into the shut cover's foot"
   },
   {
     "name": "AUDIT-GALLEON-P3-anchors-unturned",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "yawDeg: -31,",
     "new": "yawDeg: 0,",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the mod's anchor unturned: its arms square out of her side and into her"
   },
   {
     "name": "AUDIT-GALLEON-P3-anchors-turned-the-other-way",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "yawDeg: -31,",
     "new": "yawDeg: 31,",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "turned +31 the shank points into her"
   },
   {
     "name": "AUDIT-GALLEON-P3-weighed-anchor-in-her-side",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "weighed: Object.freeze([5.452, 5.85, 15.9])",
     "new": "weighed: Object.freeze([5.43, 5.85, 15.9])",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the weighed anchor 2.2 cm further in: its nearest corners inside her planking"
   },
   {
     "name": "AUDIT-GALLEON-P3-cable-against-her-side",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "letGo: Object.freeze([5.366, 5.85, 15.9])",
     "new": "letGo: Object.freeze([5.346, 5.85, 15.9])",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the let-go cable 2 cm further in: its nearest corner on her planking"
   },
   {
     "name": "AUDIT-GALLEON-P3-the-cable-unturned",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "fromOld('GalleonAnchorDeployed', { p: ANCHOR.letGo, r: yaw(ANCHOR.yawDeg) })",
     "new": "fromOld('GalleonAnchorDeployed', { p: ANCHOR.letGo })",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the cable's node left unturned"
   },
   {
     "name": "AUDIT-GALLEON-P4-the-old-trigger",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "export const BOARD_X = 7.4;",
     "new": "export const BOARD_X = 6.6;",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the board triggers where they stood: through her side into her gun deck"
   },
   {
     "name": "AUDIT-GALLEON-P4-a-trigger-in-her-planking",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "export const BOARD_X = 7.4;",
     "new": "export const BOARD_X = 7.3;",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "its inner face 5.80, inside her side (5.856 there)"
   },
   {
     "name": "AUDIT-GALLEON-P5-poles-on-the-roof",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "position: [s * 2.35, M.railCapY + 0.003, -18.7]",
     "new": "position: [s * 2.35, R, -18.7]",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the poles where they stood: on her roof, inside the rail"
   },
   {
     "name": "AUDIT-GALLEON-P5-poles-sunk-in-the-cap",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "position: [s * 2.35, M.railCapY + 0.003, -18.7]",
     "new": "position: [s * 2.35, M.railCapY - 0.02, -18.7]",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "their feet 2 cm into the cap"
   },
   {
     "name": "AUDIT-GALLEON-P6-port-4-foot-plumb",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "[5.758, 5.741, 5.623, 5.505, 5.387]",
     "new": "[5.758, 5.758, 5.758, 5.758, 5.758]",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "port 4's foot not following her side in toward the bow: 37 cm off it"
   },
   {
     "name": "AUDIT-GALLEON-P6-the-gap-too-wide",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "thick: 0.098, gap: 0.003, eyeR: 0.04,",
     "new": "thick: 0.098, gap: 0.025, eyeR: 0.04,",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the board 2.5 cm off her side"
   },
   {
     "name": "AUDIT-GALLEON-P6-the-hinge-off-her-side",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "const xh = Math.max(...fit[0]);",
     "new": "const xh = MEASURED.hullOuterX + 0.02;",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the hinge where it stood, 2 cm off her widest"
   },
   {
     "name": "AUDIT-GALLEON-P6-port-side-unmirrored",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "[s * (fit[r][k] + LID.gap - xh), y - LID.rows[0], dz]",
     "new": "[fit[r][k] + LID.gap - xh, y - LID.rows[0], dz]",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the port side's board the starboard's unmirrored: into her side"
   },
@@ -206,347 +206,347 @@
     "old": "Math.round(Math.max(x, port[i][r][k]) * 1000) / 1000",
     "new": "Math.round(x * 1000) / 1000",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the fit the starboard side's alone: port 0's port side 0.8 cm into it"
   },
   {
     "name": "AUDIT-GALLEON-P6-the-knuckle-row-off-the-knuckle",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "rows: Object.freeze([MEASURED.portTopY + 0.07, MEASURED.knuckleY, MEASURED.portSillY,",
     "new": "rows: Object.freeze([MEASURED.portTopY + 0.07, MEASURED.knuckleY - 0.3, MEASURED.portSillY,",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the board's bend 0.3 m under her side's"
   },
   {
     "name": "AUDIT-GALLEON-P7-wells-in-livery",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "      if (Math.abs(n[0]) > 0.9 && Math.abs(c[0]) > 3 && Math.abs(c[0]) < 5 && c[1] > 8) return tiled(TEX.hullInner);",
     "new": "      // (the wells' rule gone)",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the wells' walls and the casings' sides back in her outer livery"
   },
   {
     "name": "AUDIT-GALLEON-P8-pivot-at-the-blade",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "rudderPivotZ: -18.8472,",
     "new": "rudderPivotZ: -18.228,",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the pivot at the blade's own front, 0.62 m inside her"
   },
   {
     "name": "AUDIT-GALLEON-P8-the-blade-uncut",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "const rudderPart = rudderBlade(part('rudder'), M.rudderPivotZ - RUDDER_CLEAR);",
     "new": "const rudderPart = part('rudder');",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "Mac's blade as cut out of her hull: open in front and forward of the post"
   },
   {
     "name": "AUDIT-GALLEON-P8-the-front-open",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "  face(ends);\n  return { role: part.role, positions, polygons, triangles, triangleOf };",
     "new": "  return { role: part.role, positions, polygons, triangles, triangleOf };",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the cut left open at its front"
   },
   {
     "name": "AUDIT-GALLEON-P8-no-clearance",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "export const RUDDER_CLEAR = 0.04;",
     "new": "export const RUDDER_CLEAR = 0.025;",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the blade cut 2.5 cm abaft the post: under 1 cm clear at 35 degrees"
   },
   {
     "name": "AUDIT-GALLEON-P9-the-old-swing",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "export const HATCH_OPEN_DEG = -178;",
     "new": "export const HATCH_OPEN_DEG = -105;",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the cover standing up past upright in the boom's sweep"
   },
   {
     "name": "AUDIT-GALLEON-P9-the-hinge-at-its-top",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "const hinge = [cover.half[0], fmax[1] - drop, zc];",
     "new": "const hinge = [cover.half[0], fmax[1], zc];",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the hinge not dropped: the cover floats shut and stands off her deck open"
   },
   {
     "name": "AUDIT-GALLEON-P9-the-cover-through-her-deck",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "export function hatchHingeDrop(g, over, clear = 0.002, deg = HATCH_OPEN_DEG) {",
     "new": "export function hatchHingeDrop(g, over, clear = -0.03, deg = HATCH_OPEN_DEG) {",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the open cover 3 cm into her deck"
   },
   {
     "name": "AUDIT-GALLEON-P10-shutters-hollow",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": ", comp({ type: 'MeshCollider', m_Enabled: true, m_IsTrigger: false, m_Convex: false, m_Mesh: { mesh: `${key}:collider` } })];",
     "new": "];",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "no collider on a shutter: a crouched body out through a shut port"
   },
   {
     "name": "AUDIT-GALLEON-P10-the-foot-strip-solid",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "for (let r = 0; r < 2; r++) for (let k = 0; k < K - 1; k++) {",
     "new": "for (let r = 0; r < R - 1; r++) for (let k = 0; k < K - 1; k++) {",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the strip under the sill in the collider: port 4's, 18 degrees off level, a floor in her deck's bake"
   },
   {
     "name": "AUDIT-GALLEON-P12-bed-sunk",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "export const BED_OVER_DECK = 0.262;",
     "new": "export const BED_OVER_DECK = 0;",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the bed sunk into the cabin's floor"
   },
   {
     "name": "AUDIT-GALLEON-P12-bed-at-the-deck",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "kids.push(nodeOf('BedObject', { p: [3.55, D + BED_OVER_DECK, -16.2]",
     "new": "kids.push(nodeOf('BedObject', { p: [3.55, D, -16.2]",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the bed's node at the deck"
   },
   {
     "name": "AUDIT-GALLEON-STOVE-cowl-left-low",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "const raise = M.mainDeckUnderY - STOVE.headGap - (G + cowl.position[1] + STOVE.cowlTop);",
     "new": "const raise = 0;",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the cowl where the mod sets it: 1.92 m under her deckhead"
   },
   {
     "name": "AUDIT-GALLEON-STOVE-cowl-at-the-deckhead",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "STOVE = Object.freeze({ headGap: 0.136,",
     "new": "STOVE = Object.freeze({ headGap: 0.036,",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the cowl 3.6 cm under her deckhead, not the mod's 0.136"
   },
   {
     "name": "AUDIT-GALLEON-STOVE-flue-short",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "raise + STOVE.seat)));",
     "new": "raise - STOVE.seat)));",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the flue short of the cowl's foot: a gap under the cowl"
   },
   {
     "name": "AUDIT-GALLEON-CROWSNEST-mast-open",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "const extras = { mainMast: mastCap, crowsNest:",
     "new": "const extras = { crowsNest:",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the masthead uncapped: sky down the mast"
   },
   {
     "name": "AUDIT-GALLEON-CROWSNEST-nest-open",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "const extras = { mainMast: mastCap, crowsNest: (bench, p) => nestUnderside(bench, p, part('mainMast')) };",
     "new": "const extras = { mainMast: mastCap };",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the floor's back and the bowl's open bottom from below"
   },
   {
     "name": "AUDIT-GALLEON-CROWSNEST-bowl-unclosed",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "    bench.tri(skinD.rec, a, b, c, skinD.uv(a), skinD.uv(b), skinD.uv(c), down, [down, down, down]);",
     "new": "    void [a, b, c];",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the band between the bowl's bottom ring and the mast left out: a ring of sky"
   },
   {
     "name": "AUDIT-GALLEON-R8-throats-in-the-lid-picture",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "Math.abs(n[0]) < 0.3) return tiled(TEX.dark);",
     "new": "Math.abs(n[0]) < 0.3) return tiled(TEX.lid);",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the throats in the shutters' whole-face picture, tiled every metre"
   },
   {
     "name": "AUDIT-GALLEON-R11-dark-tile-a-metre",
-    "file": "src/world/galleonArt.js",
+    "file": "src/world/ships/galleonArt.js",
     "old": "dark: [2, 2]",
     "new": "dark: [1, 1]",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the throats' planks at 1.6 cm a texel, not her planking's 3.1"
   },
   {
     "name": "AUDIT-GALLEON-R11-dark-seamed",
-    "file": "src/world/galleonArt.js",
+    "file": "src/world/ships/galleonArt.js",
     "old": "planks(img, { ph: 8, lenMin: 20, lenMax: 44, seed: 0xd4b,",
     "new": "planks(img, { ph: 7, lenMin: 20, lenMax: 44, seed: 0xd4b,",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "planks 7 rows high: 64 is no multiple, a seam at the wrap"
   },
   {
     "name": "AUDIT-GALLEON-R12-a-texel-misstated",
-    "file": "src/world/galleonArt.js",
+    "file": "src/world/ships/galleonArt.js",
     "old": "a shutter's face 1.4 by 2.4",
     "new": "a shutter's face 1.4 by 2.5",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "a figure the comment gives that the measure does not"
   },
   {
     "name": "AUDIT-GALLEON-R14-cut-only-the-livery",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "    for (const piece of slabs([a, b, cc], offset[1], cuts)) {",
     "new": "    for (const piece of slabs([a, b, cc], offset[1], 'band' in skin ? cuts : [])) {",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "only the banded faces cut: T-junctions where a livery face meets a throat or the wells"
   },
   {
     "name": "AUDIT-GALLEON-R14-no-slice-cuts",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "const cuts = sliceCuts(faces.map((f) => f.skin));",
     "new": "const cuts = [];",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "no face cut: a slice worn past its heights"
   },
   {
     "name": "AUDIT-GALLEON-R14-bake-corners-unsplit",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "for (const [k, a, b, cc] of splitAtCorners(part, pts)) {",
     "new": "for (const [k, a, b, cc] of part.triangleOf.map((q, t) => [q, ...[0, 1, 2].map((j) => pts[part.triangles[t * 3 + j]])])) {",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the bake's own corners on another face's edge left unsplit: its T-junctions"
   },
   {
     "name": "AUDIT-GALLEON-B1-triangle-normals",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "skin.uv(add(piece[i + 1], offset)), n, [n, n, n]);",
     "new": "skin.uv(add(piece[i + 1], offset)), n);",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "each triangle lit by its own normal: a bent n-gon shades as creases"
   },
   {
     "name": "AUDIT-GALLEON-B1-band-triangle-normals",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "uv(piece[0]), uv(piece[i]), uv(piece[i + 1]), n, [n, n, n]);",
     "new": "uv(piece[0]), uv(piece[i]), uv(piece[i + 1]), n);",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "a livery's triangles lit by their own normals"
   },
   {
     "name": "AUDIT-GALLEON-NITS-gun-deck",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "gunDeckY: 1.0829,",
     "new": "gunDeckY: 1.085,",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the gun deck where it was read, 2 mm over the final bake's"
   },
   {
     "name": "AUDIT-GALLEON-NITS-castle-door",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "castleDoor: Object.freeze({ halfX: 0.7745,",
     "new": "castleDoor: Object.freeze({ halfX: 0.777,",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the castle doorway as it was read"
   },
   {
     "name": "AUDIT-GALLEON-NITS-bulkhead-door",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "y1: 3.6785,",
     "new": "y1: 3.675,",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the bulkhead doorway's head as it was read"
   },
   {
     "name": "AUDIT-GALLEON-NITS-gangway",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "z1: 1.5781,",
     "new": "z1: 1.575,",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the gangway's fore end as it was read"
   },
   {
     "name": "AUDIT-GALLEON-NITS-castle-aft",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "castleAftZ: -19.9049",
     "new": "castleAftZ: -19.908",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the castle's aftmost as it was read"
   },
   {
     "name": "AUDIT-GALLEON-NITS-castle-inner",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "castleFrontInnerZ: -10.4961",
     "new": "castleFrontInnerZ: -10.493",
     "tests": [
-      "test/auditgalleon_prefab.test.js"
+      "test/world/ships/auditgalleon_prefab.test.js"
     ],
     "why": "the front wall's inner face as it was read"
   }

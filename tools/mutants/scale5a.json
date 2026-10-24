@@ -5,7 +5,7 @@
     "old": "    this._reindex(ws, was, a);   // SOC1:",
     "new": "    void was;   // SOC1:",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "a hello's account change never reaches the kept index - a tab's account answered with the socket it no longer is"
   },
@@ -15,7 +15,7 @@
     "old": "    this._reindex(ws, was, a);   // SOC1:",
     "new": "    this._acctIdx = null; this._subIdx = null;   // SOC1:",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "the old law: every hello drops the index, and the next ask walks every socket"
   },
@@ -25,7 +25,7 @@
     "old": "if (this._idx?.delete(ws)) this._reindex(ws, a, null); }",
     "new": "this._idx?.delete(ws); }",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "a socket out of the index left in its account's set"
   },
@@ -35,7 +35,7 @@
     "old": "if (this._idx?.delete(ws)) this._reindex(ws, a, null); }",
     "new": "this._idx?.delete(ws); this._acctIdx = null; this._subIdx = null; }",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "the old law: every leave drops the index whole"
   },
@@ -45,7 +45,7 @@
     "old": "if (list.length > 1) { const seq = this._idxSeq; list.sort((x, y) => (seq.get(x) ?? 0) - (seq.get(y) ?? 0)); }",
     "new": "",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "an account's sockets in the order their hellos came, not the index's - the speaker's tie and every fan's order move"
   },
@@ -55,7 +55,7 @@
     "old": "    if (!was) this._enter(ws);   // SCALE5a",
     "new": "    // SCALE5a",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "a socket set into the index anew keeps the place it had before it was forgotten"
   },
@@ -65,7 +65,7 @@
     "old": "if (!was) this._enter(ws); this._idx.set(ws, att); this._reindex(ws, was, att); if (this._idx.size",
     "new": "this._idx.set(ws, att); this._reindex(ws, was, att); if (this._idx.size",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "a socket adopted takes no place in the order - it sorts first SCALE5b (re-aimed by content): the adopt now also reindexes. SCALE5b (re-aimed by content): the adopt also notes the peak."
   },
@@ -75,7 +75,7 @@
     "old": "    keyMove(this._subIdx, ws, was?.id && was.sub ? was.sub : null, a?.id && a.sub ? a.sub : null);   // and the subject index\n",
     "new": "",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "ONE-SEAT's other tabs read off a subject index that never moves"
   },
@@ -85,7 +85,7 @@
     "old": "    this._all();   // SCALE5a: kept, it is never staler than the socket index",
     "new": "    // SCALE5a",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "the kept account index answered past IDX_TRUST_MS - a socket the runtime let go of still an account's"
   },
@@ -95,7 +95,7 @@
     "old": "const before = chat ? null : this._hostOf();",
     "new": "const before = this._hostOf();",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "a channel's hello walks every socket for a host it never reads"
   },
@@ -105,7 +105,7 @@
     "old": "_fanBut(ws, out) { for (const [other, b] of this._all()) if (other !== ws && b.id) this._send(other, out); }",
     "new": "_fanBut(ws, out) { for (const [other, b] of this._all()) if (b.id) this._send(other, out); }",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "the joiner told its own join, the leaver its leave"
   },
@@ -115,7 +115,7 @@
     "old": "_fanBut(ws, out) { for (const [other, b] of this._all()) if (other !== ws && b.id) this._send(other, out); }",
     "new": "_fanBut(ws, out) { for (const [other, b] of this._all()) if (other !== ws) this._send(other, out); }",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "a socket that said no hello told who joined"
   },
@@ -125,7 +125,7 @@
     "old": "this._refuse(ws, 'busy', CLOSE_BUSY, BUSY_TOKEN_UNREAD); return; }   // SCALE5a",
     "new": "this._refuse(ws, 'busy', CLOSE_BUSY); return; }   // SCALE5a",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "the gate before the token closes 'busy' alone - every refusal another mint"
   },
@@ -135,7 +135,7 @@
     "old": "(await this._floorOwn(a.key, who.subject)) ? 'fighter' : 'watch', now);   // AUDIT PRE-MERGE 1003b R2\n        if (!gate.pass) { this._refuse(ws, 'busy', CLOSE_BUSY); return; }",
     "new": "(await this._floorOwn(a.key, who.subject)) ? 'fighter' : 'watch', now);   // AUDIT PRE-MERGE 1003b R2\n        if (!gate.pass) { this._refuse(ws, 'busy', CLOSE_BUSY, BUSY_TOKEN_UNREAD); return; }",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "a floor's gate, asked after the token is spent, says it unread - the retry carries a spent token and is refused"
   },
@@ -145,7 +145,7 @@
     "old": "const last = (listed.length === 0 || (listed.length === 1 && listed[0] === ws)) && !this._vsocks.size;",
     "new": "const last = listed.length === 0 && !this._vsocks.size;",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "the last one out, still listed by a runtime whose close is not complete, is not the drain - the room's leftovers never swept SCALE5c (re-aimed by content): and no ShardSocket held"
   },
@@ -155,7 +155,7 @@
     "old": "{ this._noSerpentRcpt.set(sub, 1); return; }",
     "new": "{ return; }",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "every hub hello reads the serpent receipt from storage again"
   },
@@ -165,7 +165,7 @@
     "old": "    if (fresh.length) this._noSerpentRcpt.clear();   // SCALE5a: receipts are being written - nobody's 'none' stands\n",
     "new": "",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "a receipt written while an account's 'none' is kept - never handed to its next hello"
   },
@@ -175,7 +175,7 @@
     "old": "    if (tok) this.mintToken?.unopened?.(room, tok);",
     "new": "    void tok;",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "an unread token kept spent - the retry mints"
   },
@@ -185,7 +185,7 @@
     "old": "    if (ev?.code !== CLOSE_BUSY || ev?.reason !== BUSY_TOKEN_UNREAD) return;",
     "new": "    if (ev?.code !== CLOSE_BUSY) return;",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "a token a gate after it spent handed back - its retry refused as a replay"
   },
@@ -195,7 +195,7 @@
     "old": "else if (this._rooms.get(room)?.has(m.id) || !this.peers.has(m.id)) this.roomCount",
     "new": "else if (this._rooms.get(room)?.has(m.id)) this.roomCount",
     "tests": [
-      "test/rosterg.test.js"
+      "test/net/rosterg.test.js"
     ],
     "note": "AUDIT SCALE5a (re-aimed by content): the arithmetic for a relay that says no count. a leave by one past the welcome's cut never comes off the count"
   },
@@ -205,7 +205,7 @@
     "old": "if (this.roomCount != null && m.id !== this.id) { if (Number.isSafeInteger(m.n)",
     "new": "if (this.roomCount != null) { if (Number.isSafeInteger(m.n)",
     "tests": [
-      "test/rosterg.test.js"
+      "test/net/rosterg.test.js"
     ],
     "note": "AUDIT SCALE5a (re-aimed by content): my own id's leave, its count and all, moves nothing. my own id's leave taken off the count"
   },
@@ -215,7 +215,7 @@
     "old": "      if (held && room != null && held.token === token) held.rooms.delete(room);",
     "new": "      void room;",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "a token handed back stays spent - the retry mints"
   },
@@ -225,7 +225,7 @@
     "old": "      if (held && room != null && held.token === token) held.rooms.delete(room);",
     "new": "      if (held && room != null && held.token === token) held.rooms.clear();",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "one room's word reopens every room - a room the token did open handed it again, refused as a replay"
   },
@@ -235,8 +235,8 @@
     "old": "sub: who.subject, ...(jn != null ? { n: jn } : {}) }, who));",
     "new": "sub: who.subject }, who));",
     "tests": [
-      "test/scale5a.test.js",
-      "test/rosterg.test.js"
+      "test/net/scale5a.test.js",
+      "test/net/rosterg.test.js"
     ],
     "note": "a channel's join says no count - a reconnect past the cut (C3) counted again SCALE5c (re-aimed by content): the join n reads the hub count on a shard"
   },
@@ -246,19 +246,19 @@
     "old": "...(isChatRoom(a.key) && !(isChannelShard(a.key) && this._hubTotal == null) ? { n: isChannelShard(a.key) ? this._hubN(this._namedCount()) : this._vsocks.size ? this._busCount() : this._namedCount() } : {})",
     "new": "...({})",
     "tests": [
-      "test/scale5a.test.js",
-      "test/rosterg.test.js"
+      "test/net/scale5a.test.js",
+      "test/net/rosterg.test.js"
     ],
     "note": "a channel's leave says no count - a claim's closed tab (C1) and a failed welcome's leave (C2) taken off twice SCALE5c (re-aimed by content): the leave n reads the hub count SCALE5c (re-aimed by content): a region shard too (part two)"
   },
   {
     "name": "AUDIT-SCALE5a-n-counts-the-dead",
     "file": "server/src/index.js",
-    "old": "if (b.id && !this._dead.has(ws) && !this._gone.has(ws)) n++; return n; }",
-    "new": "if (b.id && !this._gone.has(ws)) n++; return n; }",
+    "old": "if (b.id && !b.hid && !this._dead.has(ws) && !this._gone.has(ws)) n++; return n; }",
+    "new": "if (b.id && !b.hid && !this._gone.has(ws)) n++; return n; }",
     "tests": [
-      "test/scale5a.test.js",
-      "test/rosterg.test.js"
+      "test/net/scale5a.test.js",
+      "test/net/rosterg.test.js"
     ],
     "note": "a socket the object closed counted until its leave - the count says one the welcome did not"
   },
@@ -268,8 +268,8 @@
     "old": "if (Number.isSafeInteger(m.n) && m.n >= 1) this.roomCount = m.n; else if (!this.peers.has(m.id)) this.roomCount++;",
     "new": "if (!this.peers.has(m.id)) this.roomCount++;",
     "tests": [
-      "test/scale5a.test.js",
-      "test/rosterg.test.js"
+      "test/net/scale5a.test.js",
+      "test/net/rosterg.test.js"
     ],
     "note": "the join's count ignored - kept by arithmetic, it drifts"
   },
@@ -279,8 +279,8 @@
     "old": "{ if (Number.isSafeInteger(m.n) && m.n >= 1) this.roomCount = m.n; else if (this._rooms.get(room)?.has(m.id) || !this.peers.has(m.id)) this.roomCount = Math.max(0, this.roomCount - 1); }",
     "new": "{ if (this._rooms.get(room)?.has(m.id) || !this.peers.has(m.id)) this.roomCount = Math.max(0, this.roomCount - 1); }",
     "tests": [
-      "test/scale5a.test.js",
-      "test/rosterg.test.js"
+      "test/net/scale5a.test.js",
+      "test/net/rosterg.test.js"
     ],
     "note": "the leave's count ignored - kept by arithmetic, it drifts"
   },
@@ -290,7 +290,7 @@
     "old": "    if (room === this.room) this.roomCount = null;   // AUDIT SCALE5a (lens C, pre-existing)",
     "new": "    // AUDIT SCALE5a (lens C, pre-existing)",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "a superseded World tab says the room's old count over an empty list"
   },
@@ -300,7 +300,7 @@
     "old": "        this._tokenUnread(ws, room, ev);   // SCALE5a: a busy refusal before the token was read leaves it this room's to carry again",
     "new": "        // SCALE5a",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "a halo's unread token kept spent - its retry mints"
   },
@@ -310,7 +310,7 @@
     "old": "if (s) { s.delete(ws); if (!s.size) m.delete(from); }",
     "new": "if (s) { s.delete(ws); }",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "a key whose last socket left kept for the object's life"
   },
@@ -320,7 +320,7 @@
     "old": "if (list.length > ACCOUNT_TABS_MAX) { const idx = this._all();",
     "new": "if (list.length > ACCOUNT_TABS_MAX * 1000) { const idx = this._all();",
     "tests": [
-      "test/scale5a.test.js"
+      "test/net/scale5a.test.js"
     ],
     "note": "an account past ACCOUNT_TABS_MAX answered whole"
   }

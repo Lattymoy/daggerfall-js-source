@@ -51,13 +51,16 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
-import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
-import { createCharSheetWindow } from './charSheetDoor.js';   // ASCEND-ANYTIME: a level OWED is answered by the sheet key's own door
+import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door
+import { growthPageAt } from './growth/growthPages.js';   // GROWTH1: the Growth tab's pages, on either skin (a leaf: the tab is the menu chunk's)
+import { revenantStarsOver } from './firmamentOver.js';   // RVN-STARS: a sworn one's stars, over Companions
+import { levelUpScreenFor } from './charSheetDoor.js';   // GROWTH1: a level owed's rollout, drawn in the Growth tab (the view is the tab's own)
 import { playerEntity } from '../characters/playerEntity.js';   // the shared entity the Stats page already reads (enhancedMenu's sheetModel)
-import { usesVirtueLeveling } from '../systems/oblivionLeveling.js';   // ORL1: which bar the Ascension reads
-import { profPagesShown, PROF_PAGE_SECTIONS } from './profPages.js';   // CLASSIC-PAGES: the professions' two pages, on either skin
-import { FAMILY_PAGE_SECTIONS } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab, on either skin
+import { profPagesShown, PROF_PAGE_SECTIONS } from './professions/profPages.js';   // CLASSIC-PAGES: the professions' two pages, on either skin
+import { FAMILY_PAGE_SECTIONS, familyTabShown, familyProvider, noFamilyLine } from './familyPages.js';   // LEGACY3: Project Legacy's Family tab, on either skin; FAMILY-TAB: and only where the game is played with it
 import { hudText } from '../systems/notify.js';
+import { t } from '../systems/textManager.js';   // L10N4: the professions' closed line in the player's language
+import { isTextEntryTarget } from './input.js';   // AUDIT PRIVATE-REPORT UI-10: a field's held key is the field's
 import {
   openClassicPauseFlow as openClassicPauseWindow,
   pauseArtLoaded,
@@ -67,7 +70,7 @@ import {
 // The hosts warm the classic art on both skins and always have. It is
 // re-exported rather than re-decided here: a player can switch to
 // classic from inside the pause screen's own settings pane, and the
-// switch reloads (ui/enhancedMenu.js's skinRow), so the art has to be
+// switch reloads (ui/enhanced/enhancedMenu.js's skinRow), so the art has to be
 // warm on the way back in.
 export { preloadPauseFlowArt, pauseArtLoaded };
 
@@ -177,7 +180,9 @@ export function pauseMenuAct(hooks, close) {
  */
 /** CLASSIC-PAGES: what a door pressed for a professions page says when the pages are not this account's (offline, the
  *  professions' switch closed, the book not read yet). */
-export const PROF_PAGES_CLOSED_LINE = 'Your professions are kept online: your Professions and Stores open while you play online.';
+export const PROF_PAGES_CLOSED_LINE = 'Professions are online only. Your Professions and Stores pages open while you play online.';
+/** L10N4: the line in the player's language (PROF_PAGES_CLOSED_LINE stays the English the pins read). */
+export const profPagesClosedLine = () => t('pause.profPagesClosed', PROF_PAGES_CLOSED_LINE);
 /** Whether a door's landing page is one of the professions' own (the Professions key's, a station's). */
 export const profPageAt = (at) => PROF_PAGE_SECTIONS.some(([id]) => id === at);
 /** LEGACY3: whether a door's landing is the Family tab or one of its pages. */
@@ -213,15 +218,27 @@ export function openPauseFlow(show, hooks = {}) {
 
 function openPauseFlowNow(show, hooks) {
   if (profPageAt(hooks.at)) {
-    if (!profPagesShown()) { hudText(PROF_PAGES_CLOSED_LINE); return null; }
+    if (!profPagesShown()) { hudText(profPagesClosedLine()); return null; }
     if (typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
   }
   // LEGACY3: Project Legacy's Family tab (its key, the death's Succession) - the classic pause has no tabs, so the family's
   // pages open the enhanced pause on either skin, as the professions' do
-  if (familyPageAt(hooks.at) && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
-  // SERVER-POST: the mailbox (`/mail`, ui/enhancedPost.js) is the enhanced face's - the classic pause window has no envelope - so
+  if (familyPageAt(hooks.at)) {
+    // FAMILY-TAB (2026-10-06): a game played without Project Legacy has no Family tab - the key says why (the pages' own
+    // words) and opens nothing, as a professions door with no pages does
+    if (!familyTabShown()) { hudText(noFamilyLine(familyProvider())); return null; }
+    if (typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
+  }
+  // SERVER-POST: the mailbox (`/mail`, ui/enhanced/enhancedPost.js) is the enhanced face's - the classic pause window has no envelope - so
   // its door opens the enhanced pause on either skin, as the family's pages do
-  if (hooks.at === 'mailbox' && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
+  if ((hooks.at === 'mailbox' || hooks.at === 'report' || hooks.at === 'season') && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);   // PRIVATE-REPORT: `/bug`, its form; SEASON-BOOK: `/season`, the laurel's window
+  // GROWTH4: the Growth tab (the classic sheet's specialisation rows, a door to the level or the skies) - the classic pause
+  // has no tabs, so its pages open the enhanced pause on either skin, as the family's do (the owner, asked: the classic skin
+  // reaches it)
+  if (growthPageAt(hooks.at) && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
+  // AUDIT QUESTLINES UI-6 (REWARD-8): the Quests tab - a reward waiting is chosen there (ui/questlines/qlJournal.js), and the
+  // classic pause has no tabs - so a door that names it opens the enhanced pause on either skin, as the family's pages do
+  if (hooks.at === 'quests' && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);
   // `document` is the second half of the test for the reason
   // chargenSession's fork gives: a node test drives these hosts
   // headless, has no document, and must keep the canvas window rather
@@ -266,17 +283,22 @@ function enhancedPauseOverlay(show, base) {
   let fired = false;
   let view = null;
   let seams = null;   // the enhanced menu module, once it lands: its takePickedSaveKey / takePickedSaveName
-  let ascendView = null;   // ASCEND-ANYTIME: the Ascension screen, while it has this window's place
-  let ascendHost = null;
   // SLOTS1: a picked slot rides onto the host's saveAs / loadKey - pauseMenuHooks, the one home F5's page shares.
   const hooks = {
     ...pauseMenuHooks(base, () => seams),
-    // ASCEND-ANYTIME: the Stats page draws its Ascend button only when a door hands this over, and F5's door
-    // (ui/charSheetDoor.js) always did - this one never did, so the same page reached through Tab (the dial's
-    // character arm) or Escape had no way in. A function declaration below: it is hoisted, so this line may name it.
-    openAscend: () => openAscend(),
+    // GROWTH1 (was ASCEND-ANYTIME's Ascend door, and FIRM1's sky swapped in over this window): the Growth tab draws the
+    // Ascension and the Firmament in its own pane (ui/growth/growthStage.js) - this door hands it the screen to draw, a
+    // level owed or the view of the stars, off the shared entity the Stats page reads
+    ascendScreen: () => (playerEntity ? levelUpScreenFor(playerEntity) : null),
+    // RVN-STARS: the Companions page's Stars - a sworn one's sky over this window, the window back on Companions (the
+    // owner: "Keep it on the companion page")
+    get openRevenantStars() { return rvnStars.hook; },
   };
-
+  const rvnStars = revenantStarsOver({
+    alive: () => !fired,
+    below: () => { try { view?.unmount(); } catch { /* already gone */ } view = null; },
+    back: () => { if (!fired && seams) view = seams.mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: 'companions' }); },
+  });
   const host = document.createElement('div');
   host.id = 'enhanced-pause';
   host.setAttribute?.('data-dom-focus', '');   // AUDIT LEGACY II U3: Tab walks its controls (ui/input.js isDomFocusWalk)
@@ -291,12 +313,13 @@ function enhancedPauseOverlay(show, base) {
   // that clear).
   host.style.cssText = 'position:fixed;inset:0;z-index:13;background:transparent;overflow:hidden';
   document.body.append(host);
-  // AUDIT LEGACY III U1: A HELD KEY PRESSES NOTHING HERE EITHER - the Succession's own rule (ui/legacySuccession.js,
+  // AUDIT LEGACY III U1: A HELD KEY PRESSES NOTHING HERE EITHER - the Succession's own rule (ui/legacy/legacySuccession.js,
   // AUDIT LEGACY II U1). The browser presses a focused button at every repeat of Enter or Space, and the Family tab's
   // arm-then-confirm acts keep the focus on the armed button (AUDIT LEGACY II U6): "Play as" and "Pass the mantle"
   // armed and fired on one held press. Every other ask-twice act of this window is covered by the same line.
   host.addEventListener?.('keydown', (e) => {
-    if (e.repeat && (e.key === 'Enter' || e.key === ' ')) { e.preventDefault(); e.stopPropagation(); }
+    // PRIVATE-REPORT (AUDIT PRIVATE-REPORT UI-10): never in a field - a held Space or Enter types, as every other key does
+    if (e.repeat && (e.key === 'Enter' || e.key === ' ') && !isTextEntryTarget(e.target)) { e.preventDefault(); e.stopPropagation(); }
   }, true);
   // AUDIT LEGACY III U2: THE KEYBOARD COMES INTO THE WINDOW. Opened, the focus stood on the page's body, where every Tab
   // was the game's (AUDIT LEGACY II U3's walk asks the focus to be inside already): a Tab from outside lands on the
@@ -321,7 +344,7 @@ function enhancedPauseOverlay(show, base) {
 
   const close = () => {
     if (fired) return;
-    dropAscend();   // ASCEND-ANYTIME: whatever is on top of this window goes with it
+    rvnStars.drop();   // RVN-STARS: a sworn one's stars go with this window
     document.removeEventListener?.('keydown', tabIn, true);
     view?.unmount();
     view = null;
@@ -340,59 +363,6 @@ function enhancedPauseOverlay(show, base) {
     dispose() { close(); },
   };
 
-  /** ASCEND-ANYTIME: take the Ascension screen down and leave this window as it was. Safe to call with none up. */
-  function dropAscend() {
-    try { ascendView?.destroy?.(); } catch { /* already gone */ }
-    ascendView = null;
-    ascendHost?.remove();
-    ascendHost = null;
-  }
-
-  /**
-   * ASCEND-ANYTIME: the Stats page's Ascend button, from the pause window (Tab's dial, or Escape).
-   *
-   * Two answers, the same two ui/charSheetDoor.js gives F5:
-   *   - A level OWED is the real level-up, so this puts this window away (the way the Pack button does) and asks
-   *     charSheetDoor for the sheet key's own answer, which IS the rollout while points are owed.
-   *   - Nothing owed is a VIEW of the stars (levelUpView.viewOnlyScreen): the Ascension swaps in over this window
-   *     and, when it closes, this window comes back on the Stats page. Through the ONE lazy-chunk door, so a chunk
-   *     that will not load says so instead of doing nothing - and the pause window stays up behind that notice.
-   */
-  function openAscend() {
-    if (fired || ascendHost || !playerEntity) return;
-    if (playerEntity.readyToLevelUp) {
-      act('handoff');   // down first, then the level-up takes the slot it frees (the Pack button's own order - ESC-BOOK's handoff; AUDIT 27h A5: a resume relocked under the level-up, and from the classic Controls route built a throwaway pause first)
-      show(createCharSheetWindow({ entity: playerEntity }));
-      return;
-    }
-    const h = document.createElement('div');
-    h.id = 'enhanced-ascend-view';
-    // 14: above this window's 13, the level-up overlay's own depth.
-    h.style.cssText = 'position:fixed;inset:0;z-index:14;background:transparent;overflow:hidden';
-    document.body.append(h);
-    ascendHost = h;
-    const drop = () => { if (ascendHost === h) dropAscend(); else h.remove(); };
-    mountEnhancedChunk({
-      load: () => import('./enhancedLevelUp.js'),
-      alive: () => !fired && ascendHost === h,
-      host: h, onDismiss: drop, label: 'ascend',
-      mount: ({ mountEnhancedLevelUp, viewOnlyScreen }) => {
-        // This window gives the keyboard up BEFORE the Ascension takes it: two capture handlers on one window
-        // would answer Escape twice.
-        try { view?.unmount(); } catch { /* already gone */ }
-        view = null;
-        ascendView = mountEnhancedLevelUp(h, {
-          screen: viewOnlyScreen(playerEntity, usesVirtueLeveling(playerEntity)),
-          entity: playerEntity,
-          onExit: () => {
-            dropAscend();
-            if (!fired && seams) view = seams.mountEnhancedMenu(host, { mode: 'pause', hooks, onAction: act, at: 'stats' });
-          },
-        });
-      },
-    });
-  }
-
   // THE FOUR EXITS. Every one of them takes the screen down FIRST and
   // then acts, which is classic's own order (pauseWindow.js:"if (inRect(R.continue, vx, vy))".."this._closeWith();", pauseWindow.js:"window, so it relocks".."this._closeWith();",
   // :198 - `_closeWith()` then the hook) and matters more here: the
@@ -408,9 +378,9 @@ function enhancedPauseOverlay(show, base) {
   // menu, so it says so loudly and takes the empty div with it rather
   // than leaving the host holding an overlay that draws nothing and
   // never reports done - which would be a frozen game.
-  // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js).
+  // MENU1: the ONE lazy-chunk door (ui/enhanced/enhancedChunk.js).
   mountEnhancedChunk({
-    load: () => import('./enhancedMenu.js'),
+    load: () => import('./enhanced/enhancedMenu.js'),
     mount: (mod) => {
       const { mountEnhancedMenu } = mod;
       seams = mod;

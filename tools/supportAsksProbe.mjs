@@ -4,7 +4,7 @@
 // and a PRESS on one opens its page in a new one - the door's outside-tap and key handling must not swallow a link
 // (the desktop app hands that new window to the system browser, app/main.cjs setWindowOpenHandler). That the pause
 // face draws none (PX4: no foot, no corner asks over a game) is pinned in node, where it mounts without a world
-// (test/support1_asks.test.js).
+// (test/ui/enhanced/support1_asks.test.js).
 //
 // Then the door's two laws, swept across 192 viewport sizes on one page (a resize, not a reload), under the Plus skin
 // and the classic one.
@@ -30,7 +30,7 @@
 import { chromium } from 'playwright';
 import { readFileSync } from 'node:fs';
 import { PNG } from 'pngjs';
-import { OUTSET } from '../src/ui/enhancedFrame.js';
+import { OUTSET } from '../src/ui/enhanced/enhancedFrame.js';
 import { SUPPORT_ASKS } from '../src/ui/supportAsks.js';
 
 const BASE = process.env.PROBE_BASE ?? 'http://127.0.0.1:5199';

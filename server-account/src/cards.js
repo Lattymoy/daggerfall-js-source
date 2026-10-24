@@ -4,12 +4,12 @@
 // standing up moves the stack back. A stake the service does not hold is a stake nobody can enforce, so a character
 // the service does not keep plays for no gold (a friendly table)."
 //
-// FACT: the relay has no door to this service (net/siegeReceipt.js's word) - so the gold goes round by the player:
+// FACT: the relay has no door to this service (net/siege/siegeReceipt.js's word) - so the gold goes round by the player:
 //
 //   STAKE (/v1/cards/stake): the buy-in leaves the realm character's record (payFromSave, the wallet's own order) and a
 //     `card_stakes` row is written HELD, in one batch; the answer carries this service's order on it
 //     (net/identityToken.js mintStakeOrder) - the relay seats it with that many chips and spends its id, once.
-//   CASH-OUT (/v1/cards/cashout): the relay's receipt (net/cardReceipt.js) for that stake - what the seat left with,
+//   CASH-OUT (/v1/cards/cashout): the relay's receipt (net/card/cardReceipt.js) for that stake - what the seat left with,
 //     the whole stake for a sit refused or a stake voided - pays the record (creditSave) and turns the row PAID, in one
 //     batch: a stake is paid once.
 //
@@ -20,11 +20,12 @@
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 import { realmActFirst, prepareRealmRecord, mustChange, dropIfUnnamed, recordMovedOf, dropObjects } from './realm.js';
-import { payFromSave, creditSave } from '../../src/net/realmGoldLaw.js';
+import { payFromSave, creditSave } from '../../src/net/realm/realmGoldLaw.js';
 import { regionOk } from '../../src/net/nodeLaw.js';
 import { mintStakeOrder, STAKE_ROOM_RE } from '../../src/net/identityToken.js';
-import { verifyCardReceipt, CARD_RECEIPT_TTL_S } from '../../src/net/cardReceipt.js';
-import { HOLDEM_BBS, HOLDEM_STAKE_MIN_BB, HOLDEM_STAKE_MAX_BB, HOLDEM_TABLES_MAX, HOLDEM_TOPUP_MIN_BB } from '../../src/net/holdemTable.js';
+import { verifyCardReceipt, CARD_RECEIPT_TTL_S } from '../../src/net/card/cardReceipt.js';
+import { HOLDEM_BBS, HOLDEM_STAKE_MIN_BB, HOLDEM_STAKE_MAX_BB, HOLDEM_TABLES_MAX, HOLDEM_TOPUP_MIN_BB, holdemGoldTable } from '../../src/net/holdemTable.js';
+import { GAMBIT_STAKE_BB, gambitStakeOk } from '../../src/net/gambit/gambitStakes.js';   // KG6: The King's Gambit's stakes, an arm of their own (AUDIT KG C24)
 
 /** A stake request's id - one asked twice is one stake. */
 export const CARDS_RID_RE = /^[A-Za-z0-9_-]{8,40}$/;
@@ -55,9 +56,17 @@ export async function stakeCards(ctx, player, env, { character, realm = null, re
   if (!regionOk(region)) return { error: 'bad-region' };
   if (typeof room !== 'string' || !STAKE_ROOM_RE.test(room)) return { error: 'bad-room' };
   if (!Number.isInteger(table) || table < 0 || table >= HOLDEM_TABLES_MAX) return { error: 'bad-table' };
-  if (!HOLDEM_BBS.includes(bb)) return { error: 'bad-stakes' };
-  // section 24: a top-up's stake is a seat's addition - from HOLDEM_TOPUP_MIN_BB (the relay keeps the seat within the most)
-  if (!Number.isSafeInteger(amount) || amount < (topup === true ? HOLDEM_TOPUP_MIN_BB : HOLDEM_STAKE_MIN_BB) * bb || amount > HOLDEM_STAKE_MAX_BB * bb) return { error: 'bad-buy-in' };
+  if (bb === GAMBIT_STAKE_BB) {
+    // KG6 (Kings-Gambit.md sections 10.7 and 19; AUDIT KG C24: "an arm of their own"): A KING'S GAMBIT STAKE - one of the
+    // mod's online stakes, at the room's gold table, never a top-up; its big blind no Hold'em table's, so its table's
+    // sum at a cash-out counts a pot's two stakes alone
+    if (!holdemGoldTable(table)) return { error: 'bad-table' };
+    if (topup === true || !gambitStakeOk(amount)) return { error: 'bad-buy-in' };
+  } else {
+    if (!HOLDEM_BBS.includes(bb)) return { error: 'bad-stakes' };
+    // section 24: a top-up's stake is a seat's addition - from HOLDEM_TOPUP_MIN_BB (the relay keeps the seat within the most)
+    if (!Number.isSafeInteger(amount) || amount < (topup === true ? HOLDEM_TOPUP_MIN_BB : HOLDEM_STAKE_MIN_BB) * bb || amount > HOLDEM_STAKE_MAX_BB * bb) return { error: 'bad-buy-in' };
+  }
   const id = stakeIdOf(rand);
   const prep = await prepareRealmRecord(ctx, player.id, side.at, (save) => (payFromSave(save, amount, region) ? null : 'realm-gold'), { outbound: true });   // INT3: a stake can be won by another player
   if (prep.error) return prep;
@@ -110,6 +119,8 @@ export async function cashoutCards(ctx, player, env, { character, realm = null, 
   const into = await db.prepare(`SELECT COALESCE(SUM(amount), 0) AS n FROM card_stakes WHERE room = ?1 AND tbl = ?2 AND bb = ?3 AND at <= ?4 AND at >= ?5`)
     .bind(row.room, row.tbl, row.bb, c.i, c.i - CARD_RECEIPT_TTL_S).first();
   if (c.r > Number(into?.n ?? 0)) return { error: 'cards-receipt', why: 'sum' };
+  // AUDIT KG II A4: a King's Gambit pot is two like stakes - its winner leaves with no more than twice its own
+  if (Number(row.bb) === GAMBIT_STAKE_BB && c.r > 2 * Number(row.amount)) return { error: 'cards-receipt', why: 'sum' };
   // AUDIT CARDS-4 A7: home to the region it was staked from - never the one the client names
   const home = Number(row.region);
   if (!regionOk(home)) return { error: 'bad-region' };

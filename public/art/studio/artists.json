@@ -1,0 +1,20 @@
+{
+  "studio": "DFO Online's own art (public/art/studio/README.md). A picture in an artist's folder is that artist's own drawing - committing it there is their word that it is, and that no pixel of it came from Daggerfall's ARENA2 (no trace, repaint, upscale or screenshot: Port-Doctrine, A RENDER OF GAME DATA IS GAME DATA).",
+  "artists": [
+    {
+      "folder": "trashBattery",
+      "name": "trashBattery",
+      "approved": "2026-10-17, Mac: \"We need to build what trash is talking about\" (trashBattery, on the dev chat: \"a centralized location for you and I to put 2d art assets\")"
+    },
+    {
+      "folder": "Redclaw",
+      "name": "Redclaw",
+      "approved": "2026-10-17, the same word - trashBattery's \"you and I\" was said to Redclaw"
+    },
+    {
+      "folder": "maya",
+      "name": "maya",
+      "approved": "2026-10-21, the owner approved maya (weapon sprites), whom trashBattery proposed in #1108"
+    }
+  ]
+}

@@ -1,75 +1,75 @@
 [
   {
     "name": "SEA-LEVEL-off",
-    "file": "src/world/wodLocationLoader.js",
+    "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
     "old": "      if (a <= SEA_SAMPLE && avg > a && d > SEA_RAMP) continue;",
     "new": "      if (false) continue;",
     "tests": [
-      "test/fb1002b_sealevel.test.js",
-      "test/wod2_loader.test.js"
+      "test/world/terrain/fb1002b_sealevel.test.js",
+      "test/world/terrain/wod2_loader.test.js"
     ]
   },
   {
     "name": "SEA-LEVEL-no-ramp",
-    "file": "src/world/wodLocationLoader.js",
+    "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
     "old": "      if (a <= SEA_SAMPLE && avg > a && d > SEA_RAMP) continue;",
     "new": "      if (a <= SEA_SAMPLE && avg > a && d > 0) continue;",
     "tests": [
-      "test/fb1002b_sealevel.test.js"
+      "test/world/terrain/fb1002b_sealevel.test.js"
     ]
   },
   {
     "name": "SEA-LEVEL-ramp-whole-pixel",
-    "file": "src/world/wodLocationLoader.js",
+    "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
     "old": "export const SEA_RAMP = 2;",
     "new": "export const SEA_RAMP = 1000;",
     "tests": [
-      "test/fb1002b_sealevel.test.js"
+      "test/world/terrain/fb1002b_sealevel.test.js"
     ]
   },
   {
     "name": "SEA-SAMPLE-under-the-sea",
-    "file": "src/world/wodLocationLoader.js",
+    "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
     "old": "export const SEA_SAMPLE = f32(SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT);",
     "new": "export const SEA_SAMPLE = f32(0.99 * SCALED_OCEAN_ELEVATION / MAX_TERRAIN_HEIGHT);",
     "tests": [
-      "test/fb1002b_sealevel.test.js"
+      "test/world/terrain/fb1002b_sealevel.test.js"
     ]
   },
   {
     "name": "AFLOAT-off",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (ipnm && nodeReadingAt(val2.point, val2.terrain) !== 0) {",
     "new": "        if (false) {",
     "tests": [
-      "test/fb1002b_sealevel.test.js"
+      "test/world/terrain/fb1002b_sealevel.test.js"
     ]
   },
   {
     "name": "AFLOAT-no-word",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "          deps.midScreenText(PLACE_RAISED_TEXT, 3);\n          StopPlacing();\n          return;",
     "new": "          StopPlacing();\n          return;",
     "tests": [
-      "test/fb1002b_sealevel.test.js"
+      "test/world/terrain/fb1002b_sealevel.test.js"
     ]
   },
   {
     "name": "AFLOAT-placed-anyway",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "          deps.midScreenText(PLACE_RAISED_TEXT, 3);\n          StopPlacing();\n          return;",
     "new": "          deps.midScreenText(PLACE_RAISED_TEXT, 3);",
     "tests": [
-      "test/fb1002b_sealevel.test.js"
+      "test/world/terrain/fb1002b_sealevel.test.js"
     ]
   },
   {
     "name": "AFLOAT-every-water",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (ipnm && nodeReadingAt(val2.point, val2.terrain) !== 0) {",
     "new": "        if (ipnm) {",
     "tests": [
-      "test/fb1002b_sealevel.test.js"
+      "test/world/terrain/fb1002b_sealevel.test.js"
     ]
   }
 ]

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>The Firmament - passive tree lab</title>
+  <style>
+    html, body { margin: 0; height: 100%; background: #04060a; }
+    /* The lane strip is the LAB, not the window: bottom left, out of the window's way. */
+    #lanes { position: fixed; left: 6px; bottom: 44px; z-index: 40; display: flex; flex-wrap: wrap; gap: 4px; opacity: 0.8; max-width: calc(100vw - 12px); }
+    #lanes button { font: 11px/1 system-ui, sans-serif; letter-spacing: 0.1em; text-transform: uppercase;
+      color: #8b8578; background: rgba(10,12,17,0.85); border: 1px solid #2b323b; padding: 6px 9px; cursor: pointer; }
+    #lanes button:hover, #lanes button.on { color: #e9e4d9; border-color: #c08a3e; }
+  </style>
+</head>
+<body>
+  <div id="lab"></div>
+  <div id="lanes"></div>
+  <script type="module" src="/src/tools/firmamentLab.js"></script>
+</body>
+</html>

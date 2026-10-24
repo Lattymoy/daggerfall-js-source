@@ -28,7 +28,12 @@ six and both sergeants), it says "The attackers have been fought off.
 The ship continues to its destination." and runs **Leave Ship**: the
 blocks back to `_base`, and the player ashore where they boarded - a
 lent ship lent again for exactly as long as it takes to leave it. The
-quest itself ends on its one-hour clock.
+quest itself ends on its one-hour clock. RAID-ASHORE (2026-10-17, DECLARED - `03-World/Naval-Refit.md`): a raid fought
+where the player stands - a linked bank cabin's sailing ship at her quay, the land: off the sea's region Leave Ship
+sails no one anywhere - ends there instead: its crew and last raiders withdrawn, the blocks back to `_base`, the quest
+ended as its own `end quest` ends one; and a voyage made while a raid's quest runs arms no second ambush. RAID-WON
+(2026-10-19, `01-Overview/bugs/Field-Bugs-2026-10-19.md`): a raid the sea fight starts and wins ends the same way at sea -
+its `_ally_` withdrawn, never left on the deck counted as enemies near for the rest of its hour.
 
 One switch, `Enabled`, on by default (`systems/modSettings.js`
 `warm-ashes-ships`; the Features row under World, "Takes effect on your
@@ -57,7 +62,7 @@ members. The world host (`scenes/world.js`) is its GameManager:
 - **the quests** - `QuestListsManager.GetQuest` and the machine's
   immediate `StartQuest`; the `WA_Ships` list registers at the scene boot
   (as a loaded mod's does) and the four quests ride the pack loader's
-  mod glob (`scenes/questData.js`), so `GetQuest` finds them by name, as
+  mod glob (`scenes/quest/questData.js`), so `GetQuest` finds them by name, as
   DFU's `AnyModContainsQuest` does;
 - **TransportMode = Ship** - `boardOrDisembark`, UpdateMode's ship arm.
 

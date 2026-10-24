@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // AUDIT TELL (bible/12-Enhanced-AI/Feud-Arc.md section 28): THE DUEL HARNESS - the balance targets measured, not
-// guessed. The real brain (ai/tactics.js), the real foe motor and attack component (characters/enemyMotor.js,
-// characters/enemyAttack.js) on a real collider's flat floor, the real foe (characters/enemyEntity.js
+// guessed. The real brain (ai/tactics.js), the real foe motor and attack component (characters/enemy/enemyMotor.js,
+// characters/enemy/enemyAttack.js) on a real collider's flat floor, the real foe (characters/enemy/enemyEntity.js
 // makeEnemyEntity, systems/eliteFoes.js for an elite), the real damage roll (combat/formulas.js calculateAttackDamage)
 // and the real swing tempo (characters/weaponStates.js, the weapon in the hand through combat/swingLaw.js) - against a
 // scripted player who stands at the foe's front and either TRADES blows or DODGES. Every fight seeded.
@@ -29,13 +29,13 @@ import { setPref, getPref, _resetForTests } from '../src/systems/uiPrefs.js';
 import { setTacticsClock, resetTactics, noteLocalPlayer, windupStruck, LOCAL_TARGET } from '../src/ai/tactics.js';
 import { resetBlows, inBlow, BLOW_TIER_LEVEL } from '../src/ai/foeBlows.js';
 import { blowK, blowWeight, behind, poiseOf, weightClass, TELL } from '../src/ai/tells.js';
-import { EnemyAI } from '../src/characters/enemyMotor.js';
-import { EnemyAttack } from '../src/characters/enemyAttack.js';
+import { EnemyAI } from '../src/characters/enemy/enemyMotor.js';
+import { EnemyAttack } from '../src/characters/enemy/enemyAttack.js';
 import { Collider } from '../src/player/collider.js';
 import { calculateAttackDamage, enemyWeightClassicUnits, chooseEnemyWeapon, weaponKnockbackApplies, weaponKnockbackSpeed } from '../src/combat/formulas.js';
-import { makeEnemyEntity } from '../src/characters/enemyEntity.js';
-import { ENEMY_BASICS } from '../src/characters/enemyBasics.js';
-import { MOBILE_TYPES as M } from '../src/characters/mobileTypes.js';
+import { makeEnemyEntity } from '../src/characters/enemy/enemyEntity.js';
+import { ENEMY_BASICS } from '../src/characters/enemy/enemyBasics.js';
+import { MOBILE_TYPES as M } from '../src/characters/mobile/mobileTypes.js';
 import { WEAPONS } from '../src/characters/weapons.js';
 import { createWeapon } from '../src/combat/enemyEquipment.js';
 import { promoteEliteFoe } from '../src/systems/eliteFoes.js';
@@ -258,10 +258,10 @@ export function measureAll({ fights = 1000, seconds = 30 } = {}) {
 }
 
 // ── AUDIT FEUD: RVN's targets (section 28) ──────────────────────────────────────────────────────────────────────────
-// A revenant at a rank - its record stood on the real foe (systems/revenant.js applyRevenant: its rank's health and
+// A revenant at a rank - its record stood on the real foe (systems/revenant/revenant.js applyRevenant: its rank's health and
 // blows, its weakness's edge, its signature, its stamp the brain reads), its fight's ledger the real one (the strike
 // listener's weak blows, the poise door's staggers - scenes/hostCombat.js windupDoor), its down the pools' own law
-// (systems/revenantFate.js: its last stand from rank 3 - the roar no blow reaches, phase two - then its will: broken, it
+// (systems/revenant/revenantFate.js: its last stand from rank 3 - the roar no blow reaches, phase two - then its will: broken, it
 // kneels; unbroken, it tears away). The player trades blows, or dodges PERFECTLY: in the shape until the brain's late
 // sample (TELL4's TELL_LATE), out of it before the landing - then the overreach it earned, x1.3 and its first blow a
 // stagger. Both swing whenever the foe is in reach; an iron slam, ring or charge that lands and does damage knocks the
@@ -273,24 +273,25 @@ export function measureAll({ fights = 1000, seconds = 30 } = {}) {
 // each its kind's own foe at its own level in the ring out to BAND_SPACING about it, with its own motor, attack and brain
 // - the brain's tokens shared with its master's, a kin of the tier's level telegraphing, its iron landings knocking me
 // down, the dodger out of its blows too; rank 5's RALLY at its stand - its kin through a portal when none is left;
-// scattered when it runs, gone when their run is spent) and ITS FLIGHT (systems/revenant.js revenantFleeStep, the pools'
+// scattered when it runs, gone when their run is spent) and ITS FLIGHT (systems/revenant/revenant.js revenantFleeStep, the pools'
 // one law: under a fifth of its health once, its roll; escaped, the fight is over - 'fled'; run down, cornered, it fights
 // on), chased at a run (DFU's at Speed 50 and Running 50). The player strikes its master first (`order` 'band': its band
 // first). Never modelled: the player's own health (the band's plain blows - under the tier - land on nobody here), a
 // kin's spells (an Orc Shaman's), the foes' bodies against each other, the pools' placement probes (flat ground).
 globalThis.localStorage ??= (() => { const m = new Map(); return { getItem: (k) => (m.has(k) ? m.get(k) : null), setItem: (k, v) => { m.set(k, String(v)); }, removeItem: (k) => { m.delete(k); }, clear: () => m.clear(), key: (i) => [...m.keys()][i] ?? null, get length() { return m.size; } }; })();
-const RV = await import('../src/systems/revenant.js');
-const FATE = await import('../src/systems/revenantFate.js');
+const RV = await import('../src/systems/revenant/revenant.js');
+const FATE = await import('../src/systems/revenant/revenantFate.js');
 const { windupDoor } = await import('../src/scenes/hostCombat.js');
 const { beginRoar } = await import('../src/ai/tactics.js');
-const { weaponFeudClass, drawSignature, SIG_RANK, bandMembers, RALLY_KIN, BAND_SCATTER_S, BAND_SPACING } = await import('../src/systems/revenantFeud.js');
+const { weaponFeudClass, drawSignature, SIG_RANK, bandMembers, RALLY_KIN, BAND_SCATTER_S, BAND_SPACING } = await import('../src/systems/revenant/revenantFeud.js');
 const { walkSpeed, runSpeed } = await import('../src/player/motor.js');
 const { releaseTactics } = await import('../src/ai/tactics.js');
 
 /** Section 28's RVN targets: the telegraphed blows a perfect dodger takes, at most this share of a trader's, its time to
  *  the end no longer (FEUD BALANCE, OPEN 24 - it was its time, at most 0.75 of the trader's); the will's kneels; a rank-5's
- *  time over a rank-1's in this band ("about 2.5 times"). */
-export const FEUD_TARGETS = Object.freeze({ DODGE_SPARES: 0.1, KNEEL_WEAK: 0.9, KNEEL_DODGE: 0.7, KNEEL_TRADE_MAX: 0.2, RANK_RATIO: Object.freeze([2, 3]) });
+ *  time over a rank-1's in this band - about three times (UNQUIET, Revenants.md section 46 - the owner: "harder": each rank
+ *  weighs more, 3.24 trading and 3.22 dodging measured; it was about 2.5, the band 2 to 3). */
+export const FEUD_TARGETS = Object.freeze({ DODGE_SPARES: 0.1, KNEEL_WEAK: 0.9, KNEEL_DODGE: 0.7, KNEEL_TRADE_MAX: 0.2, RANK_RATIO: Object.freeze([2.5, 3.5]) });
 const WALK = walkSpeed(50);   // player/motor.js: DFU's walk at Speed 50 (4.43 m/s)
 const RUN = runSpeed(50, 50);   // FEUD HARNESS: ...and its run at Running 50 (8.10 m/s) - the chase of a fleeing one
 const CLOSE = 0.25;           // the dodger and the trader close to this inside their reach
@@ -330,7 +331,7 @@ export function revenantFight({ type = M.Orc, weapon = 'Longsword', rank = 3, mo
     const ent = foe.entity;
     ent.level = Math.max(ent.level | 0, RV.REVENANT_MIN_LEVEL);
     const player = makePlayer(weapon, { material: metalFor(type) });
-    const r = RV.revenantDeed(FEUD_ME, { mobileType: type, level: ent.level, champion: 'mighty', health: 1, maxHealth: 50, team: 'Monster', _voiceId: `duel-${seed}` }, 'fled', { mobileType: type, rolls: () => 0, now: 1 });   // AUDIT FEUD 2: its id the seed's - its draws (name, personality, signature, kin) with it
+    const r = RV.revenantDeed(FEUD_ME, { mobileType: type, level: ent.level, champion: 'mighty', unquiet: true, health: 1, maxHealth: 50, team: 'Monster', _voiceId: `duel-${seed}` }, 'fled', { mobileType: type, rolls: () => 0, now: 1 });   // AUDIT FEUD 2: its id the seed's - its draws (name, personality, signature, kin) with it
     Object.assign(r, { rank, learned: [], wrath: 0, weak: weak ? weaponFeudClass(player.item).cls : 'fire', out: false });
     if (rank >= SIG_RANK && !r.sig) r.sig = drawSignature(r.id, r.mobileType);   // AUDIT FEUD 2: its signature, as a deed that ranks it to 2 draws it
     RV.applyRevenant(ent, r, { now: 2 });

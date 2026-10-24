@@ -19,7 +19,7 @@
 // WHO STANDS IN IT: in the shipyard, the SHIPMASTER on his office's porch (his keeper's draw - systems/portPlaces.js
 // portKeeper), the CREWMASTER behind the crew hall's table, three SAILORS looking for a berth at its open side and two
 // SHIPWRIGHTS at the hull - one up on the scaffold; at the lighthouse, the LIGHTKEEPER by the tower's door. Each a person
-// of the town's own race (the walkers' law, characters/mobilePerson.js walkerRace - the host hands it) in its idle
+// of the town's own race (the walkers' law, characters/mobile/mobilePerson.js walkerRace - the host hands it) in its idle
 // record, one of the race's four outfits, the sailors' and the shipwrights' drawn off the place's key - every client
 // stands the same people - and each offered its Morrowind body (AUDIT MW-NPC II's law for the yards' keepers).
 //
@@ -61,7 +61,9 @@ import { PORT_FOOT } from '../world/portSites.js';
 import { buildShipyardModel, SHIPYARD, shipsSignBox, hullBox, noticesBox, crewSignBox } from '../world/shipyardModel.js';
 import { buildLighthouseModel, buildLighthouseFire, guardBand, LIGHTHOUSE, LIGHTHOUSE_POINTS, doorBox, hatchBox, lanternBox, GALLERY_Y, LANTERN_H } from '../world/lighthouseModel.js';
 import { PORT_PAINTERS, PORT_ARCHIVE, PORT_HOW } from '../world/portArt.js';
-import { PERSON_TEXTURES, PERSON_IDLE_RECORD, PERSON_IDLE_FPS } from '../characters/mobilePerson.js';
+import { dfLook, lookSeed } from '../world/dfLook.js';   // DF-LOOK: the port's pictures in Daggerfall's colours
+import { wearPainted } from '../systems/studioArt/studioArt.js';   // STUDIO1: the studio's pictures over the painted ones (their rows top-down, as the port's are)
+import { PERSON_TEXTURES, PERSON_IDLE_RECORD, PERSON_IDLE_FPS } from '../characters/mobile/mobilePerson.js';
 import { mobileBillboardSize } from '../world/rmbFlats.js';
 import { folkLookOf } from '../characters/folkBodies.js';
 import { personActor } from '../characters/peopleBodies.js';
@@ -72,7 +74,7 @@ import { trs } from '../world/mat4.js';
 import { yardToScene, yardBoxToScene, KEEPER_HALF, KEEPER_HEIGHT } from './merchantYardsHost.js';
 import { boxTriangles } from './horseCartPool.js';
 import { localAabb, transformedAabb } from '../render/frustum.js';
-import { DECOR_DRAW, DECOR_SHADOW, DECOR_SKIP, castOnly } from './decorRoom.js';
+import { DECOR_DRAW, DECOR_SHADOW, DECOR_SKIP, castOnly } from './decor/decorRoom.js';
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the lighthouse's page, at the first climb
 
 /** The ground under a place is read again every this many frames. */
@@ -133,15 +135,15 @@ export const PORT_TEXT = Object.freeze({
   lightSteal: 'The lightkeeper keeps the beacon\'s oil under lock.',
   shut: 'The shipmaster\'s window will not open here.',
   noSail: SHIPYARD_TEXT.noSail,
-  sailor: 'Looking for a berth - ask the crewmaster to sign hands on.',
+  sailor: 'Looking for a berth. Ask the crewmaster to sign hands on.',
   worker: 'At work on the hull on the stocks.',
-  lampLit: 'The beacon burns from dusk to dawn - it is lit.',
+  lampLit: 'The beacon burns from dusk to dawn. It is lit.',
   lampDark: 'The beacon burns from dusk to dawn.',
   hatch: 'Down the tower\'s stair.',
   stair: 'The stair up to the beacon.',
   shutStair: 'The lightkeeper keeps the stair shut just now.',
-  riding: 'No horse climbs a lighthouse stair - go up on foot.',
-  foes: 'The lightkeeper bars the door - not with enemies about.',
+  riding: 'No horse climbs a lighthouse stair. Go up on foot.',
+  foes: 'The lightkeeper bars the door while enemies are about.',
 });
 
 const NONE = Object.freeze([]);
@@ -281,8 +283,11 @@ export function createPortHost({
     const t0 = now();
     do {
       const [rec, paint] = PORT_PAINTERS[artAt++], pic = paint(), how = PORT_HOW[rec];
-      renderer.uploadTexture?.(PORT_ARCHIVE, rec, pic, how?.cutout ? CUTOUT : undefined);   // BEACON-TOWER: the flame a cutout
-      if (how?.glows) renderer.uploadEmissionTexture?.(PORT_ARCHIVE, rec, pic, OWN_LIGHT);   // ...and the fire its own light
+      wearPainted(PORT_ARCHIVE, rec, () => dfLook(pic, lookSeed(PORT_ARCHIVE, rec)), (art, { replaced, late }) => {   // STUDIO1: the studio's where an artist drew it
+        if (late) { renderer.releaseTexture?.(PORT_ARCHIVE, rec); if (how?.glows) renderer.evictEmissionTexture?.(`${PORT_ARCHIVE}_${rec}`); }
+        renderer.uploadTexture?.(PORT_ARCHIVE, rec, art, how?.cutout ? CUTOUT : undefined);   // BEACON-TOWER: the flame a cutout; DF-LOOK: in Daggerfall's colours
+        if (how?.glows) renderer.uploadEmissionTexture?.(PORT_ARCHIVE, rec, replaced ? art : pic, OWN_LIGHT);   // ...and the fire its own light (its painted glow - the studio's picture is its own)
+      }, { topDown: true });
     } while (artAt < PORT_PAINTERS.length && now() - t0 < ART_BUDGET_MS);
     return artAt >= PORT_PAINTERS.length;
   }
@@ -588,7 +593,7 @@ export function createPortHost({
       return _glows;
     },
     /** SHIPYARDS-FOUND: each place standing, as an Overworld mark - its name over it, its kind the look's (`yard
-     *  shipyard`, `yard lighthouse` - ui/travelViewHud.js yardGlyph: an anchor, a tower) and the Towns switch's. */
+     *  shipyard`, `yard lighthouse` - ui/travel/travelViewHud.js yardGlyph: an anchor, a tower) and the Towns switch's. */
     overworldMarks() {
       const out = [];
       for (const pl of places.values()) {

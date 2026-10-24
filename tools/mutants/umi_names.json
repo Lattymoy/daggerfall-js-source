@@ -5,7 +5,7 @@
     "old": "nameOf = (it) => itemLongName(it) } = {}) {",
     "new": "nameOf = (it) => it?.name ?? '' } = {}) {",
     "tests": [
-      "test/ui1_usemagicitem.test.js"
+      "test/systems/ui1_usemagicitem.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (item.group === 'UselessItems1' && item.templateIndex === GLASS_BOTTLE_TEMPLATE) return true;   // IsPotion",
     "new": "",
     "tests": [
-      "test/ui1_usemagicitem.test.js"
+      "test/systems/ui1_usemagicitem.test.js"
     ]
   }
 ]

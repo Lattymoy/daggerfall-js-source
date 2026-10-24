@@ -2,7 +2,7 @@
 
 `tools/bakeEbonyPlate.mjs` (the bake) on `tools/bakeSteelPlate.mjs`'s machinery (the bind, the rigs) +
 `tools/skinWeights.mjs` (jointWeights, the hang OVER its joints) + `tools/fbxMesh.mjs` (earClipRepeated) +
-`src/characters/ownArmorModels.js` (the ebony plate's rows) + `src/formats/mwItemMap.js` (composeWornArmor)
+`src/characters/ownModels/ownArmorModels.js` (the ebony plate's rows) + `src/formats/morrowind/mwItemMap.js` (composeWornArmor)
 (MW-EBONY1, Mac, 2026-10-09; MW-FIT1, the upper arms and the helm, from a player's report, the same day)
 
 > "This is next 1. The ebony armor set and its textures"
@@ -63,13 +63,13 @@ switch has nothing to switch here).
 
 ## How it was proven
 
-`test/mwebony1.test.js` (5): the bake byte for byte from the committed files, each DDS its painting, the export's
+`test/tooling/mwebony1.test.js` (5): the bake byte for byte from the committed files, each DDS its painting, the export's
 hash and object names; the scene placement (the helm lifted then, where Mac fitted it since MW-FIT1), the shapes named for rule 15, weights summing to one, the
 tasset law exactly, and the left boot's island dropped and nothing of it across the middle; Ebony alone, the
 composer's adds and shadows, Mithril and Adamantium keep retail; through the binder on the vendored retail skeleton -
 idle placements, and in a stride the right tassets (the same vertices at rest and posed) move with the leg, less than
 its knee, while the chest stays; and earClipRepeated's door. Rendered posed on the retail rig, idle and striding,
-before it shipped. `tools/mutants/mwebony1.json` (10, all dead); the island's door in `tools/mutants/auditmwcloak.json`. `test/mwsteel1.test.js` keeps its census to Steel and
+before it shipped. `tools/mutants/mwebony1.json` (10, all dead); the island's door in `tools/mutants/auditmwcloak.json`. `test/tooling/mwsteel1.test.js` keeps its census to Steel and
 no longer expects Ebony to keep retail's record.
 
 ## MW-FIT1: the upper arms and the helm

@@ -50,6 +50,9 @@ export const MUSTERS = Object.freeze({
 });
 /** The hands a crewed ship of the player's sends: Warm Ashes' `_ally_` (Foe _ally_ is Warrior). */
 export const HAND = MOBILE.Warrior;
+/** RAID-WON (bible/01-Overview/bugs/Field-Bugs-2026-10-19.md): the raids' own crew - their `_ally_` Foe, by the inner name
+ *  the machine keys a symbol by (quest/symbol.js getInnerSymbolName): the hands a raid stands in my crew's place. */
+export const RAID_CREW = 'ally';
 
 /** Warm Ashes' two raids, as the naval arc starts them (systems/warmAshesShips.js WA_RAID_QUEST's list). */
 export const WA_SMALLRAID = 'WAQ_SHIP_SMALLRAID';
@@ -76,7 +79,7 @@ export function raidQuestWon(quest) {
  * that would have ended it: a player slower than the hour met no leader and a quest that never ended, and the boarding
  * that waited on it held every other boarding off. The mod left it unfinished (its lines 2025-2029 unwritten, its notes
  * "Add Retreat Timer"); here it is what it names - the boarders fall back and cast off, and the raid ends
- * (scenes/navalHost.js castOff). The small raid declares the clock and never starts it.
+ * (scenes/naval/navalHost.js castOff). The small raid declares the clock and never starts it.
  */
 export const RAID_RETREAT_TASKS = Object.freeze(['retreat']);
 /** Whether a raid quest was given up: its retreat triggered and it was not won. */

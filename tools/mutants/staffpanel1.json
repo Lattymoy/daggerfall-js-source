@@ -1,0 +1,264 @@
+[
+  {
+    "name": "STAFF-PANEL1-mods-any-staff",
+    "file": "server-account/src/staff.js",
+    "old": "    if (who.role !== 'admin') return denied('staff-admin');\n",
+    "new": "",
+    "why": "a Moderator adds and removes Moderators",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-mod-flag-unread",
+    "file": "server-account/src/titles.js",
+    "old": " || player.staff_mod === 1);",
+    "new": ");",
+    "why": "an Admin's Moderator moderates nothing",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-mod-add-staff-again",
+    "file": "server-account/src/staff.js",
+    "old": "      if (staffRole(target, env)) return { error: 'staff-already' };\n",
+    "new": "",
+    "why": "an Admin or a listed Moderator flagged again",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-mod-add-banned",
+    "file": "server-account/src/staff.js",
+    "old": "      if (isBanned(target, nowS)) return { error: 'staff-banned' };\n",
+    "new": "",
+    "why": "a banned account made a Moderator",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-mod-remove-config",
+    "file": "server-account/src/staff.js",
+    "old": "    if (staffRole({ ...target, staff_mod: 0 }, env)) return { error: 'staff-config' };   // the config holds them still\n",
+    "new": "",
+    "why": "a listed Moderator's keys revoked by the panel while the config keeps them",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-mod-remove-keys-kept",
+    "file": "server-account/src/staff.js",
+    "old": "      db.prepare('UPDATE staff_keys SET revoked_at = ? WHERE player_id = ? AND revoked_at IS NULL').bind(nowS, target.id),\n      ...['staff_sessions', 'staff_invites'].map((t) => db.prepare(`DELETE FROM ${t} WHERE player_id = ?`).bind(target.id)),\n    ]);\n    // STAFF-PANEL5-HIDDEN: their hidden sockets closed",
+    "new": "    ]);\n    // STAFF-PANEL5-HIDDEN: their hidden sockets closed",
+    "why": "a removed Moderator keeps their keys and sessions",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-team-misses-panel-mods",
+    "file": "server-account/src/staff.js",
+    "old": "FROM players p WHERE p.staff_mod = 1 OR p.handle_lc IN",
+    "new": "FROM players p WHERE p.handle_lc IN",
+    "why": "the owners' team never shows an Admin's Moderators",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-owner-key-dropped",
+    "file": "server-account/wrangler.toml",
+    "old": "OWNER_KEYS = \"SirMcMobdon:1c9fniJJmmIwXevvrTVajM6SeIFagO8KEzYiAM08mYM\"",
+    "new": "OWNER_KEYS = \"\"",
+    "why": "mob's first computer is not named, so no owner can sign in after the deploy",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-owner-key-typo",
+    "file": "server-account/wrangler.toml",
+    "old": "OWNER_KEYS = \"SirMcMobdon:1c9fniJJmmIwXevvrTVajM6SeIFagO8KEzYiAM08mYM\"",
+    "new": "OWNER_KEYS = \"SirMcMobdon:1c9fniJJmmIwXevvrTVajM6SeIFagO8KEzYiAM08mY\"",
+    "why": "a key cut short in the config: refused at every sign-in",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-every-read-a-row",
+    "file": "server-account/src/staff.js",
+    "old": "export const STAFF_READ_ROW_S = 10 * 60;",
+    "new": "export const STAFF_READ_ROW_S = 0;",
+    "why": "every read of the log, the team and the moderators a row again",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-a-before-no-row",
+    "file": "server-account/src/staff.js",
+    "old": "    .bind(view.actor, view.target, view.act, before, limit), audit('audit-read', view.target, view, { onceIn: STAFF_READ_ROW_S })]);",
+    "new": "    .bind(view.actor, view.target, view.act, before, limit), ...(before ? [] : [audit('audit-read', view.target, view, { onceIn: STAFF_READ_ROW_S })])]);",
+    "why": "a read naming a `before` leaves no row, and any `before` past the newest row is the first page",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ],
+    "note": "STAFF-PANEL1 REVIEW IV (2026-10-22, PIN TURNED): was STAFF-PANEL1-a-page-a-row, which pinned that bypass as right."
+  },
+  {
+    "name": "STAFF-PANEL1-one-members-window-everyones",
+    "file": "server-account/src/staff.js",
+    "old": "WHERE actor = ? AND act = ?",
+    "new": "WHERE ? IS NOT NULL AND act = ?",
+    "why": "one member's read hides every other member's for STAFF_READ_ROW_S",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-one-views-window-every-views",
+    "file": "server-account/src/staff.js",
+    "old": "AND target IS ? AND detail IS ?",
+    "new": "AND (? IS NULL OR 1) AND (? IS NULL OR 1)",
+    "why": "a look at another player's rows, inside the window, leaves no trace",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-a-failed-act-ok",
+    "file": "server-account/src/staff.js",
+    "old": "THEN 'ok' ELSE 'failed' END",
+    "new": "THEN 'ok' ELSE 'ok' END",
+    "why": "an act that changed nothing read as done",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-a-forgotten-keys-outcome-turned",
+    "file": "server-account/src/staff.js",
+    "old": "revoked_at IS NULL)', args: [body.id, me.id]",
+    "new": "revoked_at IS NOT NULL)', args: [body.id, me.id]",
+    "why": "a key forgotten read failed, one not there read done",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-anothers-key-forgotten-done",
+    "file": "server-account/src/staff.js",
+    "old": "WHERE id = ? AND player_id = ? AND revoked_at IS NULL)', args: [body.id, me.id]",
+    "new": "WHERE id = ? AND ? IS NOT NULL AND revoked_at IS NULL)', args: [body.id, me.id]",
+    "why": "a Moderator forgetting another member's key is written done, and nothing was forgotten",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-the-outcome-unsaid",
+    "file": "server-account/src/staff.js",
+    "old": "{ outcome: 'denied' }).run(); return { error }; };",
+    "new": "{}).run(); return { error }; };",
+    "why": "a refused door read as done",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-a-refusal-unwritten",
+    "file": "server-account/src/staff.js",
+    "old": "    if (who.role !== 'admin') return denied('staff-admin');",
+    "new": "    if (who.role !== 'admin') return { error: 'staff-admin' };",
+    "why": "a Moderator trying an Admin's page leaves no trace",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-a-refused-sign-in-ok",
+    "file": "server-account/src/staff.js",
+    "old": "detail: { why }, outcome: 'denied' }",
+    "new": "detail: { why } }",
+    "why": "a refused sign-in read as done",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-the-reads-outcome-unread",
+    "file": "server-account/src/staff.js",
+    "old": "keyId: a.key_id, outcome: a.outcome };",
+    "new": "keyId: a.key_id };",
+    "why": "the panel never shows what was done",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-a-mod-added-read-failed",
+    "file": "server-account/src/staff.js",
+    "old": "EXISTS (SELECT 1 FROM players WHERE id = ? AND staff_mod = 0)",
+    "new": "EXISTS (SELECT 1 FROM players WHERE id = ? AND staff_mod = 1)",
+    "why": "a Moderator added, written failed",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-a-mod-removed-read-failed",
+    "file": "server-account/src/staff.js",
+    "old": "EXISTS (SELECT 1 FROM players WHERE id = ? AND staff_mod = 1)",
+    "new": "EXISTS (SELECT 1 FROM players WHERE id = ? AND staff_mod = 2)",
+    "why": "a Moderator removed, written failed",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-the-month-unkept",
+    "file": "server-account/src/cron.js",
+    "old": "ctx.nowS - STAFF_AUDIT_KEEP_S)",
+    "new": "0)",
+    "why": "the log grows for ever: the hourly job deletes nothing",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-the-job-deleting-the-month",
+    "file": "server-account/src/cron.js",
+    "old": "ctx.nowS - STAFF_AUDIT_KEEP_S)",
+    "new": "ctx.nowS)",
+    "why": "the hourly job asks to delete the month too: refused whole, it deletes nothing",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL1-the-triggers-month-moved",
+    "file": "server-account/migrations/0144_staff_panel.sql",
+    "old": "CAST(strftime('%s', 'now') AS INTEGER) - 2588400",
+    "new": "CAST(strftime('%s', 'now') AS INTEGER) - 3600",
+    "why": "the trigger lets anyone delete rows the month still keeps",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ],
+    "note": "STAFF-PANEL1 REVIEW IV (2026-10-22): its number was a year, which tightened the trigger; an hour loosens it, as its why says."
+  },
+  {
+    "name": "STAFF-PANEL1-the-month-a-year",
+    "file": "server-account/src/staff.js",
+    "old": "export const STAFF_AUDIT_KEEP_S = 30 * 24 * 60 * 60;",
+    "new": "export const STAFF_AUDIT_KEEP_S = 365 * 24 * 60 * 60;",
+    "why": "mob's month kept as a year",
+    "tests": [
+      "test/server/staffpanel1.test.js"
+    ]
+  }
+]

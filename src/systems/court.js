@@ -30,7 +30,7 @@
 // the field only 2 (:137) or 0 (:139), so its own `punishmentType ==
 // 1` arms at :329 and :399 are dead code, and :279 says so in DFU's
 // own words - "Seems like an execution sentence can't be given in
-// classic. It can't be given here, either." court.js:"if (court.punishmentType === 1) return 'Execution';", court.js:"export function pleaGuilty".."if (court.punishmentType === 1) return { outcome: 'executed' };" and
+// classic. It can't be given here, either." court.js:"return localizedText('Execution', 'Execution');", court.js:"export function pleaGuilty".."if (court.punishmentType === 1) return { outcome: 'executed' };" and
 // :431 carry the same unreachable arm for the same reason (an arm
 // that is absent and an arm that is wrong read alike from the call
 // site). The prison time-skip riding the host clock callback is the
@@ -52,9 +52,13 @@
 
 import { rand } from '../formats/dfRandom.js';
 import { skillValue, tallySkill, SKILLS } from './skills.js';
-import { goldPiecesOf, addGoldPieces, LETTER_OF_CREDIT_TEMPLATE } from './inventory.js';   // E4: the counter's two members; B1: letters are tender
-import { getPeopleOfCurrentRegion } from './talk.js';   // T3a shipped the lookup
-import { changeReputation } from './factionRep.js';     // S25
+import { goldPiecesOf, addGoldPieces, LETTER_OF_CREDIT_TEMPLATE, addItem } from './inventory.js';   // E4: the counter's two members; B1: letters are tender; STOLEN-GOODS AUDIT S2: a bag's honest goods into the pack
+import { hasBag } from '../net/bagLaw.js';   // STOLEN-GOODS AUDIT S2: whether a Materials Bag still rides in the pack
+import { getPeopleOfCurrentRegion } from './talk/talk.js';   // T3a shipped the lookup
+import { changeReputation } from './faction/factionRep.js';     // S25
+import { isEquipped, unequipItem } from './equip.js';   // STOLEN-GOODS: a worn stolen piece is taken off before it is taken
+import { setLightSource } from './lightSource.js';   // STOLEN-GOODS: and a stolen torch in hand goes out with it (DISC7's one door)
+import { isStolen } from './stolenGoods.js';   // STOLEN-GOODS: the theft's mark
 
 /** PlayerEntity.CrimeCommitted's SETTER (:2345-2355), the ONE home
  *  every crime write goes through (V4): a transformed lycanthrope is
@@ -75,14 +79,24 @@ import { CRIMES } from './crimes.js';   // REP2/REP3: the marked and the banisha
 export const CRIME_IDS = Object.freeze({ Pickpocketing: 12 });
 
 // The %cri crime names (MacroHelper.Crime, verbatim strings).
-export const CRIME_NAMES = Object.freeze(['None', 'Attempted Breaking and Entering', 'Trespassing', 'Breaking and Entering', 'Assault', 'Murder', 'Tax Evasion', 'Criminal Conspiracy', 'Vagrancy', 'Smuggling', 'Piracy', 'High Treason', 'Pickpocketing', 'Theft', 'Treason', 'Loan Default']);
+export const CRIME_NAMES = localizedTable({   // L10N3d: MacroHelper.Crime's GetLocalizedText (:668-701); 0 has no row - its 'None' is DFU's unlocalized default, the caller's
+  1: ['Attempted_Breaking_And_Entering', 'Attempted Breaking and Entering'], 2: ['Trespassing', 'Trespassing'],
+  3: ['Breaking_And_Entering', 'Breaking and Entering'], 4: ['Assault', 'Assault'], 5: ['Murder', 'Murder'], 6: ['Tax_Evasion', 'Tax Evasion'],
+  7: ['Criminal_Conspiracy', 'Criminal Conspiracy'], 8: ['Vagrancy', 'Vagrancy'], 9: ['Smuggling', 'Smuggling'], 10: ['Piracy', 'Piracy'],
+  11: ['High_Treason', 'High Treason'], 12: ['Pickpocketing', 'Pickpocketing'], 13: ['Theft', 'Theft'], 14: ['Treason', 'Treason'],
+  15: ['Loan_Default', 'Loan Default'],
+});
 
 /** MacroHelper.Penalty (%pen), verbatim: type 2 = the regular
  *  punishment string with %gtp/%dip; 0 = Banishment; 1 = Execution. */
 export function penaltyText(court) {
-  if (court.punishmentType === 2) return `${court.fine} gold pieces in fines and ${court.daysInPrison} days in prison`;
-  if (court.punishmentType === 1) return 'Execution';
-  return 'Banishment';
+  // L10N3d: DFU's rows (:714-720), read in the player's language - the regular string's %gtp/%dip filled after the lookup
+  if (court.punishmentType === 2) {
+    return localizedText('Regular_Punishment_String', '%gtp gold pieces in fines and %dip days in prison')
+      .replaceAll('%gtp', String(court.fine)).replaceAll('%dip', String(court.daysInPrison));
+  }
+  if (court.punishmentType === 1) return localizedText('Execution', 'Execution');
+  return localizedText('Banishment', 'Banishment');
 }
 
 // FALL.EXE (index 0 unused; Treason = half High_Treason, DFU's note)
@@ -112,6 +126,7 @@ export const TEXT_RESCUE_DB = 551;           // courtTextDB - the Dark Brotherho
 // talk.js - see the note at its pickpocket arm), so the one home for
 // them has to be a leaf.
 import { THIEVES_GUILD_FACTION_ID, DARK_BROTHERHOOD_FACTION_ID } from './crimeGuilds.js';
+import { localizedText, localizedTable } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 export { THIEVES_GUILD_FACTION_ID, DARK_BROTHERHOOD_FACTION_ID };
 
 /** CR1 - the guild rescue arms (DaggerfallCourtWindow.cs:177-221),
@@ -234,8 +249,11 @@ export function normalizeReputations(player, store, { recoveryOnly = false } = {
  *  legal reputation (2 in a Curfew town; 1, DFU's, everywhere else and offline). */
 let _crimeFactor = () => 1;
 export function setCrimeRepFactor(fn) { _crimeFactor = typeof fn === 'function' ? fn : () => 1; }
-export function lowerRepForCrime(player, regionIndex, crime) {
-  const f = Math.max(1, Math.trunc(Number(_crimeFactor()) || 1));   // SEAT1d: a Curfew's doubled cost - the legal loss alone, the People's half as DFU's
+/** AUDIT FB1021d SM-8: `curfew` - a crime the town's watch charges (arrestFlow.js chargeOnce) - takes the Curfew's
+ *  factor; a report the road carried, a loan defaulted or a sea's piracy is no crime in the town the player stands in,
+ *  and was doubled for standing there (and never given back: no court tries it). */
+export function lowerRepForCrime(player, regionIndex, crime, { curfew = false } = {}) {
+  const f = curfew ? Math.max(1, Math.trunc(Number(_crimeFactor()) || 1)) : 1;   // SEAT1d: a Curfew's doubled cost - the legal loss alone, the People's half as DFU's
   changeLegalRep(player, regionIndex, -REPUTATION_LOSS_PER_CRIME[crime] * f, { kind: 'crime', crime });
   // PlayerEntity.cs:2294-2298 - the region's People faction takes HALF
   // the legal loss, propagating out to its allies and enemies. The
@@ -244,11 +262,12 @@ export function lowerRepForCrime(player, regionIndex, crime) {
   // player's favour by one point. Silent when the store is absent
   // (a host that never ran chargen) rather than throwing on a crime.
   const store = player?.factionRep;
-  if (!store) return;
+  if (!store) return f;
   const people = getPeopleOfCurrentRegion(store.dict, regionIndex);
   if (people) {
     changeReputation(store, people.id, -Math.trunc(REPUTATION_LOSS_PER_CRIME[crime] / 2), true);
   }
+  return f;   // CURFEW-REFUND: the factor the legal loss was charged at - the court gives back what was charged
 }
 
 /** PlayerEntity.GoldPieces (:158). E4: THE COUNTER, not a bag stack -
@@ -302,6 +321,10 @@ export function deductGoldPieces(player, amount) {
  *  what is left - so a small payment never breaks a large letter, but
  *  a large one takes the letters before the coins. */
 export function deductGold(player, amount) {
+  // NO-NAN-PAY (FIELD BUGS 2026-10-18b): a price that is no number spent every letter in the pack and answered "paid" (NaN
+  // is never under a letter's value, and never over 0), and a negative one minted coin - nothing owed is nothing taken, as
+  // the service's payFromSave already refuses both (net/realm/realmGoldLaw.js)
+  if (!(amount > 0)) return 0;
   const purse = goldPiecesOf(player);
   if (amount <= purse) {
     player.goldPieces = purse - amount;
@@ -464,7 +487,7 @@ export function startCourt(player, regionIndex, crime, { rolls = Math.random, df
  * anyway. So do we: the sign is DFU's, not classic's.
  */
 export function raiseRepForSentence(player, court, { acquitted = false } = {}) {
-  const refund = sentenceRefund(court.crime, { acquitted });
+  const refund = sentenceRefund(court.crime, { acquitted, factor: court.factor });
   changeLegalRep(player, court.regionIndex, refund.legal, { kind: acquitted ? 'acquittal' : 'sentence', crime: court.crime });
 
   const store = player?.factionRep;
@@ -473,21 +496,56 @@ export function raiseRepForSentence(player, court, { acquitted = false } = {}) {
   if (people && refund.people) changeReputation(store, people.id, refund.people, true);
 }
 
+/** FIELD BUGS 2026-10-16b FINE-PEOPLE (the Discord's "Possible bug: Repeated ..." thread again: "I paid 2 x 600 gold
+ *  today, and even though it said +5 reputation, my reputation didn't go up at all"): THE PEOPLE'S HALF OF AN ANSWER SHORT
+ *  OF THE COURT. A charge costs two names (lowerRepForCrime: the law's, and half of it off the region's People, spread to
+ *  the kingdom it belongs to - the Standing page's Kingdoms row); a sentence gives back both (raiseRepForSentence), but the
+ *  watch's fine (standing.js settleChallenge, FINE-MENDS) and a temple's penance (doPenance, REP4) mended the law's alone,
+ *  so the People - who the commoners' reactions read (talk.js getReactionToPlayer) - and the kingdom kept the whole
+ *  charge however much was paid. Now `legalPts` of the law mended give the People half of them back (sentenceRefund's
+ *  own half, truncated as the charge's was), spread as the charge spread - never past 0: an answer mends a charge, it
+ *  buys no favour. Answers the points. Called once the law's own change is written (changeLegalRep), whose standing it
+ *  reads.
+ *  FINE-PEOPLE AUDIT (2026-10-16, S5): THE HALVES ADD UP TO THE CHARGE'S HALF. Each answer's half was truncated alone -
+ *  `trunc(5 / 2)` a step - so the steps never summed to the charge's: one Theft (the law -5, the People -2) answered by
+ *  one penance left the People -1 for good, the penance no longer offered (the law whole); a Breaking and Entering -1,
+ *  two Thefts -2, the reporter's Murder and Assault -3 once every fine and penance was paid - where a served sentence
+ *  gives them back whole. The step is now the People's half of what the law was owed BEFORE the answer less its half
+ *  of what it is owed AFTER (`peoplesHalfOwed`, the charge's own `trunc(loss / 2)` read off the law's standing), so the
+ *  steps telescope to the half of the whole debt - still never past what the People are owed. */
+const peoplesHalfOwed = (/** @type {number} */ rep) => Math.trunc(Math.max(0, -rep) / 2);
+export function raisePeopleForAnswer(player, regionIndex, legalPts) {
+  const store = player?.factionRep;
+  if (!store || !(legalPts > 0)) return 0;
+  const people = getPeopleOfCurrentRegion(store.dict, regionIndex);
+  if (!people) return 0;
+  const after = player.legalRep?.[regionIndex] ?? 0;
+  const pts = Math.min(peoplesHalfOwed(after - legalPts) - peoplesHalfOwed(after), -people.rep);
+  if (pts <= 0) return 0;
+  changeReputation(store, people.id, pts, true);
+  return pts;
+}
+
 /** REP2 (Mac: "The charge, with a mark" - "Lesser crimes come back in full; Murder and Assault leave half as a lasting
  *  mark"): what a sentence served, a fine paid or a guild's rescue gives back of the arrest's charge (lowerRepForCrime
  *  above: the legal loss, and half of it off the region's People). DFU gave back half the loss less one on the legal side
  *  (Conspiracy nothing, a Vagrancy one point MORE lost) and half that on the People's - so a sentence never paid its
  *  debt, and eight Conspiracy arrests served were -16 kept ("Serving time doesnt fix rep. Tried 8 times"). The charge
  *  comes back whole now; a violent or treasonous crime (MARKED_CRIMES) keeps half of it, rounded toward the player. An
- *  ACQUITTAL gives it all back, whatever the crime: the court found no crime to mark. */
+ *  ACQUITTAL gives it all back, whatever the crime: the court found no crime to mark.
+ *  FIELD BUGS 2026-10-21d CURFEW-REFUND: the charge AS IT WAS LAID - `factor`, the court's (arrestFlow's chargeOnce keeps
+ *  what lowerRepForCrime charged at). A Curfew town's crime costs double the law's loss (SEAT1d), and the sentence gave
+ *  back the single loss: every Conspiracy served there kept two points for good (-20, -22, -24 ... a sentence at a
+ *  time). A marked crime keeps half of what was charged; the People's half was never doubled and comes back as it was. */
 export const MARKED_CRIMES = Object.freeze(new Set([CRIMES.Assault, CRIMES.Murder, CRIMES.High_Treason, CRIMES.Treason]));
 /** REP3: the crimes a court may banish for - "Murder and worse". */
 export const BANISHABLE_CRIMES = Object.freeze(new Set([CRIMES.Murder, CRIMES.High_Treason, CRIMES.Treason]));
-export function sentenceRefund(crime, { acquitted = false } = {}) {
+export function sentenceRefund(crime, { acquitted = false, factor = 1 } = {}) {
   const loss = REPUTATION_LOSS_PER_CRIME[crime] ?? 0;
   const people = Math.trunc(loss / 2);   // the charge's own People half (lowerRepForCrime)
-  if (acquitted || !MARKED_CRIMES.has(crime)) return { legal: loss, people };
-  return { legal: Math.ceil(loss / 2), people: Math.ceil(people / 2) };
+  const legal = loss * Math.max(1, Math.trunc(Number(factor) || 1));   // CURFEW-REFUND: the legal loss as it was charged
+  if (acquitted || !MARKED_CRIMES.has(crime)) return { legal, people };
+  return { legal: Math.ceil(legal / 2), people: Math.ceil(people / 2) };
 }
 
 /** TEXT.RSC 8060, courtTextExecuted (DaggerfallCourtWindow.cs:37). */
@@ -558,6 +616,40 @@ export function resolveGuiltyVerdict(court, player) {
   if (court.daysInPrison > 0) return { outcome: 'prison', days: court.daysInPrison };
   raiseRepForSentence(player, court);
   return { outcome: 'released' };
+}
+
+/** STOLEN-GOODS (FIELD BUGS 2026-10-16b; the report: "when you're sent to prison, all the stolen items stay with you and
+ *  aren't taken away"): A GUILTY VERDICT TAKES THE STOLEN GOODS. Every piece the character carries with the theft's
+ *  mark (systems/stolenGoods.js) - in the pack, worn or held among it, and in the Materials Bag that rides in it - is
+ *  the court's: a worn piece is taken off first (its armour and its enchantments' stop, equip.js unequipItem), a lit
+ *  torch goes out with it, and the record leaves the list. The wagon and a home's storage are not searched: the court
+ *  takes what the prisoner carries. The arrest flow calls it at every guilty exit (scenes/arrestFlow.js finish - a
+ *  sentence served, a fine paid, banishment); an acquittal and a guild's rescue never reach it. Answers what was
+ *  taken. DFU's court takes nothing (DaggerfallCourtWindow has no item line) - the port's own, Ledger A.
+ *  STOLEN-GOODS AUDIT (2026-10-16, S2): A STOLEN BAG TAKEN LEAVES ITS HONEST GOODS. The Materials Bag is an item in the
+ *  pack, and owning one is holding one (net/bagLaw.js hasBag) - a bag taken off a shut General Store's shelf is stolen
+ *  like any piece. Taken, it left `bagItems` behind with no bag to hold them: twenty honest ores in a list nobody owns,
+ *  BAG1's own rule broken ("a loaded Materials Bag never leaves the pack" - bagMayLeave). So once the stolen goods are
+ *  out of both lists, a character left with no bag in the pack has what is left in the bag - every honest piece - put
+ *  into the pack, whatever it weighs: the court takes nothing honest. */
+export function confiscateStolen(player) {
+  const taken = [];
+  for (const list of [player?.items, player?.bagItems]) {
+    if (!Array.isArray(list)) continue;
+    for (let i = list.length - 1; i >= 0; i--) {
+      const it = list[i];
+      if (!isStolen(it)) continue;
+      if (isEquipped(it)) unequipItem(player, it);
+      if (player.lightSource === it) setLightSource(player, null);
+      list.splice(i, 1);
+      taken.unshift(it);
+    }
+  }
+  if (Array.isArray(player?.bagItems) && player.bagItems.length && !hasBag(player.items)) {
+    if (!Array.isArray(player.items)) player.items = [];
+    for (const it of player.bagItems.splice(0)) addItem(player.items, it, 'back');
+  }
+  return taken;
 }
 
 /** AUDIT 17e F6 - PlayerGPS_OnExitLocationRect

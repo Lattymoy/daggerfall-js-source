@@ -1,0 +1,434 @@
+[
+  {
+    "name": "EGZ-a-crust-that-never-breaks",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "  if (u < EG_SLAG_TELL_S + EG_SLAG_MOLTEN_S + EG_SLAG_CRUST_S) return { st: 'crust'",
+    "new": "  if (u < P) return { st: 'crust'",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-crust-a-second-short",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "export const EG_SLAG_CRUST_S = 10;",
+    "new": "export const EG_SLAG_CRUST_S = 9;",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-spouts-pouring-together",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "u = wrapT(t + (s.phase ?? 0) + (k * P) / EG_SLAG_SPOUTS, P);",
+    "new": "u = wrapT(t + (s.phase ?? 0), P);",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-spouts-on-one-side",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "export const egSlagX = (s, k) => s.x + (k === 0 ? -s.amp : s.amp);",
+    "new": "export const egSlagX = (s, k) => s.x + (k === 0 ? s.amp : s.amp);",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-piece-on-no-lane",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "out.dx = k >= 0 ? egSlagX(s, k) - s.x : 0; }",
+    "new": "out.dx = 0; }",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-crossing-s-hold-dropped",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "  if (b?.kind === 'slag' && egSlagState(",
+    "new": "  if (false && egSlagState(",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-crust-left-onto-a-rail",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "      if (meets && !EG_SLAG_AFTER.includes(next.kind)) why.push(",
+    "new": "      if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-shaft-s-bound-unasked",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "    if (c.n && c.median > EG_SHAFT_MAX_S) why.push(",
+    "new": "    if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-slag-laid-in-law-4",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "    const slag = (o.law ?? Infinity) >= EG_SLAG_LAW;",
+    "new": "    const slag = true;",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-spout-s-spill-missing",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "const slagLanes = (x, zS, zE, y, phase) => Array.from({ length: EG_SLAG_SPOUTS }",
+    "new": "const slagLanes = (x, zS, zE, y, phase) => Array.from({ length: 1 }",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-spill-out-of-step",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "phase: phase + (k * EG_SLAG_CYCLE_S * 1000) / EG_SLAG_SPOUTS, period: 0 };",
+    "new": "phase: phase, period: 0 };",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-spill-short-of-the-floor",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "sh: [lx, zS, lx, zE + EG_SLAG_LIP_CM]",
+    "new": "sh: [lx, zS, lx, zE]",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-forge-walls-too-narrow",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "    halfW = slag ? 420 : 350; height = 650;",
+    "new": "    halfW = 350; height = 650;",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-flight-past-the-envelope",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "export const EG_SHAFT_FLIGHT_CM = 90;",
+    "new": "export const EG_SHAFT_FLIGHT_CM = 120;",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-chute-without-its-slag",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "  if (kit === 'forge') {\n    // THE SLAG CHUTE's crossing",
+    "new": "  if (false) {\n    // THE SLAG CHUTE's crossing",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-shaft-with-no-drop",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "  course.push({ k: 'drop', gap: dg, x: 0, dy: -fall });",
+    "new": "  course.push({ k: 'ledge', gap: dg, x: 0, dy: -fall });",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-shaft-of-another-band-s-kit",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "Object.freeze(['mist']), Object.freeze(['gloam'])",
+    "new": "Object.freeze(['mist']), Object.freeze(['caverns'])",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-sluice-a-single-blow",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "pct: 0.4, flood: 6000 }),",
+    "new": "pct: 0.4, flood: 0 }),",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-mirror-lights-nothing",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "stun: 4000, lit: 6000 }),",
+    "new": "stun: 4000, lit: 0 }),",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-deepway-on-bare-ledges",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    else if (law >= EG_SLAG_LAW) shaft();",
+    "new": "    else if (false) shaft();",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-law-before-drawn-in-the-new",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    spec = layHall(seed >>> 0, h, geo | 0, 0, law);\n    while (spec.steps.length && !egSpanProof(spec).ok && tries < EG_RELAY_MAX)",
+    "new": "    spec = layHall(seed >>> 0, h, geo | 0, 0, EG_SPEC);\n    while (spec.steps.length && !egSpanProof(spec).ok && tries < EG_RELAY_MAX)",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-law-before-cached-as-the-new",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "  const lawKey = law === EG_SPEC ? key : `${key}:${law}`;",
+    "new": "  const lawKey = key;",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-hall-that-names-the-wrong-law",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "v: law, ...(L9 ? { law } : {}), seed, h, c, slot, kind,",
+    "new": "v: EG_SPEC, ...(L9 ? { law } : {}), seed, h, c, slot, kind,",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-shaft-unmarked",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "...(q.shaft ? { shaft: 1 } : {})",
+    "new": "...({})",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-law-before-forgotten",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
+    "new": "export const EG_LAWS = Object.freeze({ 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-breach-s-law-forgotten",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const spec = egHallOf(B.seed, B.h, egGeo(B), B.egv);",
+    "new": "const spec = egHallOf(B.seed, B.h, egGeo(B));",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-flood-gone-at-its-landing",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    F.engHits = F.engHits.filter((h) => now < h.at || now < (h.until ?? 0));",
+    "new": "    F.engHits = F.engHits.filter((h) => now < h.at);",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-an-add-struck-every-beat",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (h.got) { if (h.got.includes(a.i)) continue; h.got.push(a.i); }",
+    "new": "    if (h.got) { h.got.push(a.i); }",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-channel-never-burning",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (E.flood) zoneOut(F, 'burn', stamp,",
+    "new": "  if (false) zoneOut(F, 'burn', stamp,",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-ring-that-bites",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "p: E.flood ? 0 : EG_ENGINE_PCT,",
+    "new": "p: EG_ENGINE_PCT,",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-branch-never-lit",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  const br = E.lit ? moonNear(spec, e) : null;",
+    "new": "  const br = null;",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-mirror-past-its-reach",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  let best = null, bd = EG_MIRROR_REACH_M;",
+    "new": "  let best = null, bd = Infinity;",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-light-that-never-goes-out",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (F.lit?.length) F.lit = F.lit.filter((q) => now < q.until);",
+    "new": "  if (false) F.lit = F.lit.filter((q) => now < q.until);",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-lit-branch-at-every-hour",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    const s = t >= q.from && t < q.until ? spec.steps?.[q.i] : null;",
+    "new": "    const s = spec.steps?.[q.i];",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-lit-branch-no-support",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (!ride && litOn(B.F, spec, x, y, z, t)) ride = true;",
+    "new": "  if (false) ride = true;",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-early-arrival-ignored",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (!B.lw && inHall.some((b) => low(b) && egAtDoor(spec, b.x, b.z, b.y))) B.lw = now;",
+    "new": "  if (false) B.lw = now;",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-low-road-known-by-place-alone",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  const low = (b) => onLowRoad(spec, b) || fairOfMember(B, b.sub)?.road === 1;",
+    "new": "  const low = (b) => onLowRoad(spec, b);",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-late-low-road-left-behind",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  const away = inHall.some((b) => low(b) && !egAtDoor(spec, b.x, b.z, b.y) && B.mem[b.sub]?.downH !== B.h);",
+    "new": "  const away = false;",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-closing-never-moved",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (spec.fork && forkClosing(B, spec, inHall, now)) out.push(egStageWord(B, now));",
+    "new": "    if (false) out.push(egStageWord(B, now));",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-client-hands-no-light",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        lit: (F.zones ?? []).filter((z) => z.kind === 'haven').map((z) => ({ s: z.s, from: z.from, until: z.until })), br,",
+    "new": "        lit: [], br,",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-crust-up-while-molten",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "      const crust = S.st === 'crust', shake =",
+    "new": "      const crust = S.st !== 'gone', shake =",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-sheet-drawn-on-the-crust",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "[g.molten, S.st === 'molten', 0]",
+    "new": "[g.molten, crust, 0]",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-lit-branch-dark",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "    let solid = at.solid || lit.has(st), drop = 0;",
+    "new": "    let solid = at.solid, drop = 0;",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-light-kept-on-the-screen",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "on = (O.lit ?? []).filter((q) => ms >= q.from && ms < q.until);",
+    "new": "on = (O.lit ?? []).filter((q) => true);",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-walls-stopping-at-the-foot",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "export const egWallFoot = (q) => (q.kit === 'mist' || q.shaft ? 6 : 1.2);",
+    "new": "export const egWallFoot = (q) => (q.kit === 'mist' ? 6 : 1.2);",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-spouts-undrawn",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "      boxD(f, SD_REALM_BRASS_RECORD, x0, y0, z0, x1, y1, z1, false, 0.5);\n      quadTo(f, EG_DRESS.molten,",
+    "new": "      quadTo(f, EG_DRESS.molten,",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-crust-untold",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "          if (S.st !== 'crust' || left >= EG_SLAG_WARN_S) continue;",
+    "new": "          continue;",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-crust-told-all-along",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "          if (S.st !== 'crust' || left >= EG_SLAG_WARN_S) continue;",
+    "new": "          if (S.st !== 'crust') continue;",
+    "tests": [
+      "test/net/eliteGates/egz_frag.test.js"
+    ]
+  }
+]

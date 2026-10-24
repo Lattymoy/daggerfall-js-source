@@ -197,6 +197,48 @@ export const NAVAL_GL_TEXTURES = Object.freeze({ sheet: navalSheetTexture, line:
 /** Which picture a particle kind wears. */
 export const pictureOf = (p) => (p.kind === 'smoke' ? 'smoke' : p.kind === 'foam' ? 'ring' : p.solid ? 'disc' : 'soft');
 
+/** SHOT-KINDS: a grapeshot's balls drawn, how far they open from its line (m) over its first GRAPE_OPEN_S, and a chain
+ *  shot's half-span between its two half-balls (m). */
+export const GRAPE_PELLETS = 5;
+export const GRAPE_OPEN_M = 0.45;
+export const GRAPE_OPEN_S = 1.2;
+export const CHAIN_HALF_M = 0.45;
+/**
+ * SHOT-KINDS (bible/03-World/Naval-Refit.md): THE PICTURES OF ONE BALL IN THE AIR, by its load - `{ pos, gun, shot, spin,
+ * age, vel }` (navalShots.js balls) to the quads' particles. Round shot one iron disc, its size its gun's; GRAPESHOT a
+ * ring of GRAPE_PELLETS small balls about its line, opening to GRAPE_OPEN_M over GRAPE_OPEN_S (the bag split in flight);
+ * CHAIN SHOT two half-balls tumbling about each other across its line at CHAIN_HALF_M, three links of the chain between;
+ * HEATED SHOT a red-hot ball in a glow, three fading glows trailing it along its way (added). Pure - `axes` the view's
+ * right and up.
+ */
+export function ballPictures(b, axes) {
+  const size = b.gun === 'heavy' ? 0.34 : b.gun === 'swivel' ? 0.16 : 0.26;
+  const iron = [0.07, 0.07, 0.08, 1];
+  const ball = (pos, sz, color = iron) => ({ pos, size: sz, color, rot: 0, blend: 'alpha', solid: true, kind: 'ball' });
+  const glow = (pos, sz, color) => ({ pos, size: sz, color, rot: 0, blend: 'add', solid: false, kind: 'flash' });
+  const at = (u, k) => [b.pos[0] + u[0] * k, b.pos[1] + u[1] * k, b.pos[2] + u[2] * k];
+  const R = axes.right, U = axes.up;
+  const across = (a) => [R[0] * Math.cos(a) + U[0] * Math.sin(a), R[1] * Math.cos(a) + U[1] * Math.sin(a), R[2] * Math.cos(a) + U[2] * Math.sin(a)];
+  if (b.shot === 'grape') {
+    const open = 0.08 + (GRAPE_OPEN_M - 0.08) * Math.min(1, Math.max(0, b.age ?? 0) / GRAPE_OPEN_S);
+    const out = [];
+    for (let i = 0; i < GRAPE_PELLETS; i++) out.push(ball(at(across((b.spin ?? 0) * 0.08 + (i * 2 * Math.PI) / GRAPE_PELLETS), open * (0.7 + 0.3 * ((i * 7) % 3) / 2)), size * 0.42, [0.15, 0.15, 0.17, 1]));
+    return out;
+  }
+  if (b.shot === 'chain') {
+    const u = across(b.spin ?? 0);
+    return [ball(at(u, CHAIN_HALF_M), size * 0.8), ball(at(u, -CHAIN_HALF_M), size * 0.8),
+      ...[-0.5, 0, 0.5].map((k) => ball(at(u, CHAIN_HALF_M * k), size * 0.24, [0.13, 0.13, 0.14, 1]))];
+  }
+  if (b.shot === 'heated') {
+    const v = b.vel ?? [0, 0, 0], l = Math.hypot(v[0], v[1], v[2]) || 1;
+    const back = [-v[0] / l, -v[1] / l, -v[2] / l];
+    return [ball(b.pos, size, [0.6, 0.18, 0.05, 1]), glow(b.pos, size * 3.4, [1, 0.42, 0.12, 0.85]),
+      ...[1, 2, 3].map((k) => glow(at(back, k * 0.7), size * 2.6 * (1 - k * 0.2), [1, 0.38, 0.1, 0.5 / k]))];
+  }
+  return [ball(b.pos, size)];
+}
+
 /**
  * Lays a quad into `out` at vertex `v`: centre `c`, half-axes `ax` and `ay` (world), the colour and the lit flag - its
  * picture's u from `u0` to `u1` along `ax` (0 to 1 but for a line repeated along its length) and v from `v0` to `v1`
@@ -262,7 +304,7 @@ export function writeRibbon(out, v, points, eye, width, color, { vh = 0, period 
   return v;
 }
 
-const LIGHT_FOG = ['uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus'];
+const LIGHT_FOG = ['uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus', 'uJungleHaze'];
 
 export class NavalRenderer {
   /** @param {any} renderer - render/renderer.js's (its matrices, light and fog are this pass's too) */
@@ -324,10 +366,12 @@ export class NavalRenderer {
     gl.uniform2fv(u.uFogRange, r._fogRange);
     if (r._dwFog) gl.uniform4fv(u.uDwFog, r._dwFog);
     if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);
+    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)
   }
 
   /**
-   * One frame's drawing. `frame` = { particles (navalEffects drawList), balls ([{ pos, gun }]), floaters ([{ kind,
+   * One frame's drawing. `frame` = { particles (navalEffects drawList), balls ([{ pos, gun, shot?, spin?, age?, vel? }] -
+   * SHOT-KINDS: ballPictures), floaters ([{ kind,
    * pos }]), aim: { arcs: point[][], zone: point[], strikes?: point[], hot: boolean, ready?: boolean, posts?: boolean,
    * radius?: number } | null, time? (the host's clock, s: the arcs' dash marches on it) } - every list optional.
    */
@@ -346,7 +390,7 @@ export class NavalRenderer {
     };
     const alpha = [], add = [];
     for (const p of frame.particles ?? []) (p.blend === 'add' ? add : alpha).push(p);
-    for (const b of frame.balls ?? []) alpha.push({ pos: b.pos, size: b.gun === 'heavy' ? 0.34 : b.gun === 'swivel' ? 0.16 : 0.26, color: [0.07, 0.07, 0.08, 1], rot: 0, blend: 'alpha', solid: true, kind: 'ball' });
+    for (const b of frame.balls ?? []) for (const p of ballPictures(b, axes)) (p.blend === 'add' ? add : alpha).push(p);   // SHOT-KINDS: each load's own
     // SALVAGE: a sunk ship's wreckage (`wreck`, the host's mark) floats larger and paler than her casks - broken timber
     for (const f of frame.floaters ?? []) {
       const wreck = f.kind === 'flotsam' && !!f.wreck;
@@ -357,11 +401,19 @@ export class NavalRenderer {
     alpha.sort((a, b) => d2(b) - d2(a));
     let v = 0;
     const cap = NAVAL_MAX_QUADS * 6;
+    // AUDIT 2026-10-17: THE AIM'S ROOM KEPT FIRST - the player's own lay is never what a full frame cuts (SHOT-KINDS: a
+    // grape, chain or heated ball lays five quads; a busy fight's balls and smoke had filled the buffer before the aim's
+    // zone, posts, strikes and arcs were laid). The effects take the rest, the farthest blended ones let go first.
+    const aim = frame.aim;
+    const aimQuads = aim ? (aim.zone?.length ?? 0) * (aim.posts ? 2 : 1) + (aim.strikes?.length ?? 0) + (aim.arcs ?? []).reduce((n, a) => n + (a?.length ?? 0), 0) : 0;
+    const fxCap = cap - Math.min(cap, aimQuads * 6);
+    const over = alpha.length + add.length - fxCap / 6;
+    if (over > 0) alpha.splice(0, Math.min(alpha.length, over));
     const lay = (list, blend) => {
       // every picture a cell of the sheet: the list, in its order, is one run
       const start = v;
       for (const p of list) {
-        if (v + 6 > cap) break;
+        if (v + 6 > fxCap) break;
         const { ax, ay } = particleAxes(p, axes);
         const uv = SHEET_UV[pictureOf(p)];
         v = writeQuad(this.data, v, p.pos, ax, ay, p.color, blend === 'alpha' && p.kind !== 'flash', uv.u0, uv.u1, uv.v0, uv.v1);
@@ -370,7 +422,6 @@ export class NavalRenderer {
     };
     lay(alpha, 'alpha');
     // the aim: the zone's marks flat on the sea (blended), the posts and the strikes and the arcs' ribbons (added)
-    const aim = frame.aim;
     const tone = aimTone(aim);
     if (aim?.zone?.length) {
       const start = v, uv = SHEET_UV.ring;

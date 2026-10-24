@@ -5,7 +5,7 @@
     "old": "  while (L < RENOWN_MAX && renownXpFor(L + 1) <= x) L++;",
     "new": "  while (L < RENOWN_MAX && renownXpFor(L + 1) < x) L++;",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const L = Math.max(1, Math.min(RENOWN_MAX, Math.trunc(Number(level) || 1)));",
     "new": "  const L = Math.max(1, Math.trunc(Number(level) || 1));",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  return 10 * Math.floor((n * n * n * (n + 10) + 300 * n) / 30);",
     "new": "  return 10 * Math.floor((n * n * (n + 10) + 300 * n) / 30);",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  return Math.round((Math.max(0, Math.trunc(Number(xp) || 0)) * (100 + RENOWN_PARTY_BONUS_PCT * (n - 1))) / 100);",
     "new": "  return Math.round((Math.max(0, Math.trunc(Number(xp) || 0)) * (100 + RENOWN_PARTY_BONUS_PCT * (n - 1))) / 100 / n);",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  return { hp: RENOWN_HP_PER_LEVEL * (L - 1), mp: RENOWN_MP_PER_LEVEL * (L - 1) };",
     "new": "  return { hp: RENOWN_HP_PER_LEVEL * L, mp: RENOWN_MP_PER_LEVEL * L };",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "export const renownKillXp = (foeLevel, renown = null) => renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 1, RENOWN_KILL_LEVEL_MAX), renownCeiling(renown)));",
     "new": "export const renownKillXp = (foeLevel, renown = null) => renownRate(RENOWN_KILL_XP_PER_LEVEL * Math.min(clampInt(foeLevel, 0, 999), renownCeiling(renown)));",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "       WHERE id = ?1\n       RETURNING renown_last_credit AS credit, (${track}) AS before, ${repeat} AS repeat, ${refused} AS refused, renown_hour_xp AS hour_xp`,",
     "new": "       WHERE id = ?1 AND ?2 IS NULL\n       RETURNING renown_last_credit AS credit, (${track}) AS before, ${repeat} AS repeat, ${refused} AS refused, renown_hour_xp AS hour_xp`,",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ],
     "note": "SCALE4h (re-aimed by content): the hour's spend read back too."
   },
@@ -69,7 +69,7 @@
     "old": "  const room = 'CASE WHEN renown_hour >= ?6 THEN MAX(0, ?5 - renown_hour_xp) ELSE ?5 END';",
     "new": "  const room = 'MAX(0, ?5 - renown_hour_xp)';",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "  const credited = Math.max(0, int(d.credit));",
     "new": "  const credited = xp;",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "  const refused = `(NOT EXISTS (${track}) AND ${held} >= ?7)`;",
     "new": "  const refused = `(NOT EXISTS (${track}) AND ${held} > ?7)`;",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "  if (!Number.isSafeInteger(xp) || xp < 1 || xp > RENOWN_XP_REPORT_MAX) return { error: 'renown-xp' };",
     "new": "  if (!Number.isSafeInteger(xp) || xp < 0 || xp > RENOWN_XP_REPORT_MAX) return { error: 'renown-xp' };",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "  const want = `CASE WHEN ${repeat} OR ${refused} THEN 0 ELSE MIN(?3, MAX(0, ?4 - COALESCE((${track}), 0))) END`;",
     "new": "  const want = `CASE WHEN ${repeat} OR ${refused} THEN 0 ELSE ?3 END`;",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "rose: level > renownForXp(before),",
     "new": "rose: level >= renownForXp(before),",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "        if (r.rose || (r.repeat && r.level > 1)) {\n          const key = await signingKey(env, subtle);",
     "new": "        if (true) {\n          const key = await signingKey(env, subtle);",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "        const lv = track ? track.level : undefined;",
     "new": "        const lv = track ? (body.level ?? track.level) : undefined;",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "  if (c.lv !== undefined && !renownIssuable(c.lv)) return false;",
     "new": "  if (c.lv !== undefined && !Number.isSafeInteger(c.lv)) return false;",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "  return openSealed(token, publicKey, { subtle, nowS, skewS, valid: (c) => orderValid(c) && c.o === kind });",
     "new": "  return openSealed(token, publicKey, { subtle, nowS, skewS, valid: (c) => orderValid(c) });",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "  if (c.o === 'renown' && (!renownIssuable(c.lv) || c.mu !== undefined || !noGuild)) return false;",
     "new": "  if (c.o === 'renown' && (!renownIssuable(c.lv) || !noGuild)) return false;",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "      if (!cur?.id || !cur.sub || r.claims.s !== cur.sub) return;\n      if (!(r.claims.lv > (cur.lv ?? 0))) {",
     "new": "      if (!cur?.id) return;\n      if (!(r.claims.lv > (cur.lv ?? 0))) {",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "nowS: Math.floor(now / 1000), kind: 'mute' });",
     "new": "nowS: Math.floor(now / 1000), kind: 'renown' });",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "  if (renownIssuable(lv)) row.lv = lv;",
     "new": "  if (lv) row.lv = lv;",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "      if (!st.ok || st.lv >= o.lv) return;   // no word yet that this relay knows the frame, or the room has the level",
     "new": "      if (st.lv >= o.lv) return;   // no word yet that this relay knows the frame, or the room has the level",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "      const p = this.peers.get(m.id);\n      if (p && lv > (p.lv ?? 0)) p.lv = lv;",
     "new": "      const p = this.peers.get(m.id) ?? (this.peers.set(m.id, { id: m.id, lv }), this.peers.get(m.id));\n      if (p && lv > (p.lv ?? 0)) p.lv = lv;",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "  if (!e || e.paid || !(now - e.at <= RENOWN_ASSIST_MS) || now < e.at) return false;",
     "new": "  if (!e || e.paid || now < e.at) return false;",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "  e.paid = true;\n",
     "new": "  e.paid = false;\n",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -231,7 +231,7 @@
     "old": "    if (stopped || !earning()) return 0;",
     "new": "    if (stopped) return 0;",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -240,7 +240,7 @@
     "old": "    else refused++;   // anything else (offline, a busy service, a rate, a service without the route yet) holds the report and waits",
     "new": "    else { refused++; held = null; }",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -249,17 +249,18 @@
     "old": "    if (PERMANENT.has(r?.error)) { stopped = true; held = null; pend.clear(); try { onStop(r.error); } catch { /* the stop stands */ } }",
     "new": "    if (PERMANENT.has(r?.error)) { held = null; pend.clear(); try { onStop(r.error); } catch { /* the stop stands */ } }",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ],
     "note": "SEAT1b (PIN MOVED): re-aimed by content - the report names its region, the gate claim its region and character."
   },
   {
     "name": "RENOWN1-layer-in-the-stored-health",
+    "note": "EG-ZR (PIN MOVED): re-aimed by content - the live maximum reads the Spire's Stoneskin beside Renown's (systems/renownLayer.js spireHpOf)",
     "file": "src/systems/chargen.js",
-    "old": "      return own + renownHpOf(this);",
-    "new": "      return own;",
+    "old": "      return own + renownHpOf(this) + spireHpOf(this);",
+    "new": "      return own + spireHpOf(this);",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -268,17 +269,18 @@
     "old": "  if (Number.isFinite(entity.health)) entity.health = keepFraction(entity.health, hpFrom, entity.maxHealth);",
     "new": "",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
     "name": "RENOWN1-layered-health-saved",
-    "file": "src/systems/save.js",
-    "old": "  if (renownHpOf(entity) || renownMpOf(entity)) Object.assign(snap, offlineVitals(entity));",
+    "file": "src/systems/save/save.js",
+    "old": "  if (renownHpOf(entity) || onlineMpOf(entity)) Object.assign(snap, offlineVitals(entity));",
     "new": "",
     "tests": [
-      "test/renown1.test.js"
-    ]
+      "test/net/renown1.test.js"
+    ],
+    "note": "EG15 (PIN MOVED): the save asks for the folds' magicka too (onlineMpOf: Renown's and the Battlemage's Bearing) - re-aimed by content."
   },
   {
     "name": "RENOWN1-scale-kills",
@@ -286,7 +288,7 @@
     "old": "  return Math.min(to, Math.max(1, Math.round((v * to) / from)));",
     "new": "  return Math.min(to, Math.max(0, Math.floor((v * to) / from)));",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -295,7 +297,7 @@
     "old": "    tag.append(lv, name, guild, glyphs);",
     "new": "    tag.append(name, lv, guild, glyphs);",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -304,16 +306,16 @@
     "old": "  const lv = Number.isSafeInteger(peer?.lv) ? peer.lv : null;",
     "new": "  const lv = Number.isSafeInteger(card?.level) ? card.level : null;",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
     "name": "RENOWN1-card-shows-the-oldest-track",
-    "file": "src/ui/enhancedAccount.js",
+    "file": "src/ui/enhanced/enhancedAccount.js",
     "old": "    const lvText = renownText(tracks[0]?.level);",
     "new": "    const lvText = renownText(tracks.at(-1)?.level);",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -322,7 +324,7 @@
     "old": "  const renowned = (f) => { if (Number.isSafeInteger(named.renown) && named.renown > 0) f.renown = named.renown; return f; };",
     "new": "  const renowned = (f) => f;",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -331,7 +333,7 @@
     "old": "|${f.renown ?? ''}|${f.title}|",
     "new": "|${f.title}|",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -340,7 +342,7 @@
     "old": "      l.append(r, t);",
     "new": "      l.append(t, r);",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -349,7 +351,7 @@
     "old": "  return String(level);",
     "new": "  return `Lv ${level}`;",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -358,7 +360,7 @@
     "old": "const run = `${lead ? `[${lead}] ` : ''}",
     "new": "const run = `${lead ? `${lead} ` : ''}",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -367,7 +369,7 @@
     "old": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover']);",
     "new": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover', '/v1/renown/xp']);",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -376,7 +378,7 @@
     "old": "    if (!hasHello) return { error: 'renown before hello' };",
     "new": "    void hasHello;",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -385,7 +387,7 @@
     "old": "secret: session.secret }, named);",
     "new": "secret: session.secret }, null);",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -394,7 +396,7 @@
     "old": "level: Number.isSafeInteger(answer.data.level) ? answer.data.level : null,",
     "new": "level: null,",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -403,7 +405,7 @@
     "old": "      const run = `${lead ? `[${lead}] ` : ''}${marks ? `${named} ${marks}` : named}`;",
     "new": "      const run = `[${lead ?? ''}] ${marks ? `${named} ${marks}` : named}`;",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
@@ -412,16 +414,16 @@
     "old": "    if (v.level) { const lv = el('span', 'dfprofile-renown', v.level); if (v.levelTitle) lv.title = v.levelTitle; nm.append(lv); }   // RENOWN1: left of the name\n    nm.append(el('span', 'dfprofile-nametext', v.name));",
     "new": "    nm.append(el('span', 'dfprofile-nametext', v.name));\n    if (v.level) { const lv = el('span', 'dfprofile-renown', v.level); if (v.levelTitle) lv.title = v.levelTitle; nm.append(lv); }   // RENOWN1: left of the name",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   },
   {
     "name": "RENOWN1-heading-changed-for-everyone",
-    "file": "src/ui/enhancedAccount.js",
+    "file": "src/ui/enhanced/enhancedAccount.js",
     "old": "    } else head.append(el('h3', null, heading));",
     "new": "    } else { const plain = el('h3', null, null); plain.append(el('span', 'acctname', heading)); head.append(plain); }",
     "tests": [
-      "test/renown1.test.js"
+      "test/net/renown1.test.js"
     ]
   }
 ]

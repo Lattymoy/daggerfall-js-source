@@ -18,7 +18,7 @@ globalThis.__cdp = cdp;
 const out = await page.evaluate(async () => {
   document.getElementById('enhanced-menu')?.remove();
   const { HeldMapWindow } = await import('/src/ui/heldMap.js');
-  const am = await import('/src/systems/automap.js');
+  const am = await import('/src/systems/automap/automap.js');
   const rows = [];
   const quad = (key, y, x0, z0, x1, z1) => rows.push({ key, positions: new Float32Array([x0, y, z0, x1, y, z0, x1, y, z1, x0, y, z1]), indices: new Uint16Array([0, 1, 2, 0, 2, 3]), matrix: null });
   // three storeys of a 6x4 grid of 14 m rooms joined by 3 m corridors

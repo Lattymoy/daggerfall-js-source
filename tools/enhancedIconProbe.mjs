@@ -118,6 +118,7 @@ await page.route('**/arena2/**', async (route) => {
 
 await page.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'networkidle' });
 await page.waitForSelector('#enhanced-menu .doorbtn', { timeout: 20000 });
+if (await page.locator('#enhanced-menu .doorbtn.door-offline').count()) await page.locator('#enhanced-menu .doorbtn.door-offline').click();   // UI-CALM: the games stand behind Offline
 await page.locator('#enhanced-menu .doorbtn.door-new').first().click();
 await page.getByRole('button', { name: 'Begin', exact: true }).click();
 await page.waitForSelector('#enhanced-menu', { state: 'detached', timeout: 20000 });
@@ -179,8 +180,8 @@ check('a record past the end of the archive answers null', past === null, String
 // ── 4. THE PACK SHOWS THE REAL THING ───────────────────────────────
 const addr = await page.evaluate(async () => {
   const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
-  const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll.js');
-  const { inventoryItemImage } = await import('/src/systems/itemTemplates.js');
+  const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll/paperdoll.js');
+  const { inventoryItemImage } = await import('/src/systems/item/itemTemplates.js');
   const t = (n) => ITEM_TEMPLATES.find((x) => x.name === n);
   const mk = (n, g = 'Weapons') => {
     const tp = t(n);
@@ -206,24 +207,26 @@ check('the address came from inventoryItemImage',
   Number.isInteger(addr?.archive) && Number.isInteger(addr?.record),
   JSON.stringify(addr));
 
-// ── THE REPAINT MUST SETTLE ────────────────────────────────────────
-// Every cold icon repaints the screen when it lands, which is what
-// makes the letters give way to the picture. A cache that forgot an
-// in-flight record would ask again on that repaint, land again, and
-// repaint again - a loop running at whatever rate a decode takes,
+// ── THE LANDINGS MUST SETTLE ───────────────────────────────────────
+// A cold icon used to repaint the screen when it landed, which is what
+// made the letters give way to the picture; since VIRT the waiting tile
+// takes its picture in place and the screen is not repainted at all
+// (bible/10-UI/UI-Arc.md VIRT). AUDIT VIRT: so the count that pins it is
+// the landings' own (`__pack`'s `landings`, the passes that put pictures
+// into tiles, and `painted`, the tiles they put them into). A landing
+// that set off another - a cache that forgot an in-flight record asked
+// again, landed again - would run at whatever rate a decode takes,
 // invisible except as a hot fan. So: let it settle, then prove it HAS.
-const settled = await page.evaluate(() => JSON.parse(globalThis.__pack()).repaints);
+const at = () => page.evaluate(() => { const p = JSON.parse(globalThis.__pack()); return { landings: p.landings, painted: p.painted, repaints: p.repaints, tiles: document.querySelectorAll('#enhanced-inventory .tile').length }; });
+const settled = await at();
 await page.waitForTimeout(1200);
-const later = await page.evaluate(() => JSON.parse(globalThis.__pack()).repaints);
-check('the screen stops repainting once its icons have landed',
-  later === settled, `${settled} -> ${later}`);
-// THE COUNT IS THE PIN, not just the stability. Three items means
-// about three landings plus the mount; a cache that forgot its
-// in-flight records decodes each icon once per repaint until the
-// first lands and the count DOUBLES - which is what it measured at
-// before the marker existed, and the only way that waste is visible.
-check('...and each icon was decoded once, not once per repaint',
-  settled <= 5, `${settled} repaints for 3 items`);
+const later = await at();
+check('the landing passes stop once the icons have landed',
+  later.landings === settled.landings, `${settled.landings} -> ${later.landings}`);
+check('...each tile was given its picture once',
+  later.painted <= later.tiles, `${later.painted} painted, ${later.tiles} tiles`);
+check('...and the screen was not repainted for them',
+  later.repaints === settled.repaints && settled.repaints <= 3, `${settled.repaints} -> ${later.repaints} repaints (the mount and the doll's)`);
 
 // the detail draws it larger
 await page.locator('#enhanced-inventory .itemrow').first().click();
@@ -243,13 +246,14 @@ await ctx.close();
   await p2.route('**/arena2/**', (route) => route.fulfill({ status: 404, body: '' }));
   await p2.goto(`${BASE}/play/?skin=enhanced`, { waitUntil: 'networkidle' });
   await p2.waitForSelector('#enhanced-menu .doorbtn', { timeout: 20000 });
+  if (await p2.locator('#enhanced-menu .doorbtn.door-offline').count()) await p2.locator('#enhanced-menu .doorbtn.door-offline').click();   // UI-CALM: the games stand behind Offline
   await p2.locator('#enhanced-menu .doorbtn.door-new').first().click();
   await p2.getByRole('button', { name: 'Begin', exact: true }).click();
   await p2.waitForSelector('#enhanced-menu', { state: 'detached', timeout: 20000 });
   await bootSettled(p2);
   await p2.evaluate(async () => {
     const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
-    const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll.js');
+    const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll/paperdoll.js');
     const tp = ITEM_TEMPLATES.find((x) => x.name === 'Longsword');
     const e = { name: 'A', career: { name: 'Spellsword' }, stats: { strength: 50, endurance: 48 },
       items: [{ name: tp.name, templateIndex: tp.index, group: 'Weapons', stackCount: 1,

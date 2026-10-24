@@ -31,9 +31,10 @@
 // - the colours are DaggerfallUI's own (:68-69), and the port reads
 //   them from the four GUI/ToolTip* settings, which ship those exact
 //   values and were stored-tier with no consumer until now.
-import { drawRect, NATIVE_W, NATIVE_H } from './nativePanel.js';   // ONE home for the virtual canvas size
+import { drawRect, NATIVE_W, NATIVE_H } from './native/nativePanel.js';   // ONE home for the virtual canvas size
 import { drawText, measureText } from './text.js';
-import { getBool, getFloat, getString } from '../systems/settings.js';
+import { getBool, getFloat, getString } from '../systems/settings/settings.js';
+import { processGrammar } from '../systems/textManager.js';   // L10N3g: each row through the grammar as it is drawn (:215)
 
 /** defaultMarginSize (:30). */
 export const TOOLTIP_MARGIN = 2;
@@ -57,7 +58,7 @@ export const toolTipRows = (text) => String(text).replace(/\\r/g, '\r').split('\
  * AUDIT SET U2: THE WIDEST ROW OF THE PORT'S OWN A TOOLTIP DRAWS, in native px. DFU never wraps a tooltip row - the
  * edge shift (:166-177) is its whole answer to a wide one, and its own rows stand as DFU draws them. The port's own
  * lines under an item's name - its tier's, its sigil's, its set's ("4 pieces - Bloodfury: Your weapon blows deal +4%
- * damage, +8% below half health (1 more)", systems/sigilSets.js setLines) - ran past the 320px screen, and the shift
+ * damage, +8% below half health (1 more)", systems/sigil/sigilSets.js setLines) - ran past the 320px screen, and the shift
  * pushed their first words off its left edge. So a tooltip that carries them (the item lists' - itemScroller.js
  * makeSlotToolTip) wraps the rows from `wrapFrom` on: a row wider than this at its spaces, each continuation indented
  * two. A RECORDED departure (the Port-Ledger's Sigil Sets row); every row of DFU's own, the item's name included, is
@@ -162,7 +163,7 @@ export class ToolTip {
 /**
  * ToolTip.Draw's BODY, with the rest clock left to the caller (:158-217).
  * The ToolTip class above owns DFU's per-component clock; ROAD-C c2/S5's
- * automap window owns a DIFFERENT one - ui/automapChrome.js's, which is
+ * automap window owns a DIFFERENT one - ui/automap/automapChrome.js's, which is
  * the only clock that knows about SuppressToolTip and about the automap's
  * own ToolTipDelay of 1 second (DaggerfallAutomapWindow.cs:22, :492-502).
  * Both draw the SAME box, so the box lives here once. EnableToolTips is
@@ -192,7 +193,13 @@ export function drawToolTipBox(renderer, m, font, text, vx, vy, { ignoreEnableSe
   drawRect(renderer, m, x, y, w, h, bg);
   // NO SHADOW: DFU draws the tooltip with a bare font.DrawText
   // (:213-217), unlike every labelled button in the UI.
-  rows.forEach((r, i) => drawText(renderer, font, r,
+  // L10N3g: `font.DrawText(ProcessGrammar(textRows[i]), ...)` (:215) -
+  // each row is processed AS IT IS DRAWN, every frame (no cache: the
+  // French rules carry a gender from one text to the next), while the
+  // box above was sized off the rows as they stand, which is DFU's own
+  // order (UpdateTextRows measures them, :257-264, before Draw runs the
+  // grammar). English is the identity.
+  rows.forEach((r, i) => drawText(renderer, font, processGrammar(r),
     m.ox + (x + TOOLTIP_MARGIN) * m.s,
     m.oy + (y + TOOLTIP_MARGIN + i * glyph) * m.s, m.s, fg));
 }

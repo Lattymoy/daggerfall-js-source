@@ -1,0 +1,20 @@
+[
+  {
+    "name": "GROG-WORD-the-drunk-row-read-as-the-top",
+    "file": "src/systems/naval/navalYard.js",
+    "old": "have: morale, drunk: morale < 100 && !!grogToday });",
+    "new": "have: morale, drunk: false });",
+    "tests": [
+      "test/systems/naval/fb1014_grogword.test.js"
+    ]
+  },
+  {
+    "name": "GROG-WORD-the-word-dropped",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "      : r.drunk ? t('naval.yard.grogDrunk',",
+    "new": "      : false ? t('naval.yard.grogDrunk',",
+    "tests": [
+      "test/systems/naval/fb1014_grogword.test.js"
+    ]
+  }
+]

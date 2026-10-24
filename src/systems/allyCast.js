@@ -20,7 +20,7 @@
 // invite-only), and - SPELL-GIFT, 2026-09-27 - the stranger's list alone from anyone else, while the receiver's
 // "Spells from strangers" switch is on (STRANGER_CAST_TYPES below). A crafted frame carrying Damage Health or Paralyze
 // lands nothing from anyone. So friendly fire is off by construction, and the relay never has to judge a spell.
-import { MAX_EFFECTS_PER_SPELL, SPELL_ICON_COUNT } from './spellMaker.js';
+import { MAX_EFFECTS_PER_SPELL, SPELL_ICON_COUNT } from './spell/spellMaker.js';
 import { TOUCH_RANGE, TOUCH_SPHERE_CAST_RADIUS } from './spellcast.js';
 import { CAST_LEVEL_MAX } from '../net/wire.js';   // PEER-CAST: the frame's level bound, clamped to at the sender
 
@@ -91,7 +91,7 @@ export const COMPANION_ARMED_LINE = 'Aim at your companion to cast it on them, o
  *  armed ready's ("Press button to fire spell." and the line above it), the caster's ("You cast Heal on Hilda.") and a
  *  party mate's on the receiving end ("Bran casts Heal on you.") - are said at most once in this many seconds of real
  *  time. Each was a new toast every cast, and told apart from the line before it, so the notice stack's repeat guard
- *  (ui/hudText.js NOTICE-SPAM: the back row only) never caught them: a heal cast again and again near a companion
+ *  (ui/hud/hudText.js NOTICE-SPAM: the back row only) never caught them: a heal cast again and again near a companion
  *  stacked three plates a cast. */
 export const GIFT_LINE_QUIET_S = 10;
 /** GIFT-QUIET: the gate a gift's line is said through - `pass(key, fresh)` answers whether the line keyed `key` is said

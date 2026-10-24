@@ -88,23 +88,24 @@ import { SPECIAL_ABILITY_BITS } from '../systems/specialAdvantages.js';
 import { WEAPONS, weaponMinDamage, weaponMaxDamage, weaponSkillUsed } from '../characters/weapons.js';
 import { equipTableOf, lowerCondition, blowWear, slotForBodyPart, EQUIP_SLOTS, weaponProficiencyFlag } from '../systems/equip.js';
 import { SHIELD_PARTS, isShieldTemplate, itemArmorValue } from '../systems/armorMaterials.js';
-import { conditionPercentage, itemLongName } from '../systems/itemInfo.js';
+import { conditionPercentage, itemLongName, shownItemName } from '../systems/item/itemInfo.js';   // L10N3e: and the short name, as shown
 import { effectiveUnitWeightInKg } from '../systems/inventory.js';
-import { templateByIndex } from '../systems/itemTemplates.js';
+import { templateByIndex } from '../systems/item/itemTemplates.js';
 import { enchantChanceToHitMod, isEnchantedItem, entityImprovedAdrenalineRush } from '../systems/enchantments.js';
 import { stampedTier } from '../systems/rarityTier.js';   // RARE-BREAK1: a piece off the rarity ladder, which the fading rule leaves alone (the leaf - RF1: no formula reads the ladder)
 import { entityEnchantArmorMod, entityArmorPoints, weaponDamageMods, weaponBlowMods } from '../systems/entityMods.js';   // RF1: the enchantment channels and the port's points (AUDIT SET P-M1: read apart) (SET2: and the weapon's own and the blow's, read here too)
 import { getItemHands, ITEM_HANDS } from '../characters/equipTable.js';
 import { createWeapon } from './enemyEquipment.js';
+import { clawMetalDamage } from './clawMetal.js';   // BAL6-GAUNTLETS: the beast's claws take its gauntlets' metal
 import {
   registerFormulaOverride, handToHandMinDamage, handToHandMaxDamage,
   WEAPON_MATERIAL_MODIFIER, enemyEntityGroup, careerAttackModifier, ENEMY_GROUPS, dice100,
-  MATERIAL_INEFFECTIVE_TEXT, SUCCESSFUL_BACKSTAB_TEXT,
+  materialIneffectiveText, successfulBackstabText,
   damageEquipment,   // WEAR-VANILLA: DFU's DamageEquipment, the core's wear while the wear module is off
   silverDoubles,     // RVN2: a Silver-scarred revenant's double gone, in this core as in the stock's
 } from './formulas.js';
 import { meanerMonstersOn } from './pcaaoMeanerMonsters.js';
-import { RR_VENDOR, rrAdjustWeaponHitChanceMod, rrAdjustWeaponAttackDamage } from '../systems/rrRealism.js';   // AUDIT 68 S08-pcaao-archery-duplicate: RR's two archery members, one export
+import { RR_VENDOR, rrAdjustWeaponHitChanceMod, rrAdjustWeaponAttackDamage } from '../systems/roleplayRealism/rrRealism.js';   // AUDIT 68 S08-pcaao-archery-duplicate: RR's two archery members, one export
 
 export { MEANER_MONSTERS, meanerMonstersRow, meanerMonstersOn } from './pcaaoMeanerMonsters.js';
 
@@ -170,17 +171,25 @@ const isClassEnemy = (e) => !!e && !e.isPlayer && e.isClass === true;   // Entit
 const stat = (e, k) => liveStat(e, k);
 const skill = (e, id) => skillValue(e, id);
 const hasAbility = (career, flag) => ((career?.abilityFlagsAndSpellPointsBitfield ?? 0) & flag) === flag;
-const leftHandItem = (e) => equipTableOf(e)[EQUIP_SLOTS.LeftHand] ?? null;
 const struckSlotItem = (e, part) => {
   const slot = slotForBodyPart(part);
   return slot !== EQUIP_SLOTS.None ? (equipTableOf(e)[slot] ?? null) : null;
 };
 const isShield = (item) => item?.group === 'Armor' && isShieldTemplate(item?.templateIndex);
+/** The left hand's SHIELD, else null. THE SIXTH DEPARTURE (TWO-HANDS-SHIELD, 2026-10-17,
+ *  bible/05-Combat/Physical-Combat-Overhaul.md): the C# takes whatever the hand holds
+ *  (`ItemEquipTable.GetItem(EquipSlots.LeftHand)`) and never asks IsShield, so a weapon there - one waiting for H, or a
+ *  pair's off weapon - rolled the shield's block at its weak spot, and an iron one (GetMaterialArmorValue reads its
+ *  material 0 as leather's 3) blocked as a leather shield. A shield is DaggerfallUnityItem.GetIsShield (`isShield`). */
+const leftHandShield = (e) => { const it = equipTableOf(e)[EQUIP_SLOTS.LeftHand] ?? null; return isShield(it) ? it : null; };
 const isArmorGroup = (item) => item?.group === 'Armor';
 const nativeMaterial = (item) => item?.material ?? 0;
 const weaponSkillOf = (weapon) => weaponSkillUsed(weapon?.templateIndex) ?? SKILLS.HandToHand;
 const materialModifier = (weapon) => WEAPON_MATERIAL_MODIFIER[weapon?.material] ?? 0;   // GetWeaponMaterialModifier
-const shortName = (item) => item?.name ?? templateByIndex(item?.templateIndex)?.name ?? 'Item';
+/** The mod's `item.shortName`, which DFU mints in the player's language
+ *  (DaggerfallUnityItem.cs:551, :602). L10N3e: the port's item keeps its
+ *  canonical name, so the warnings carry it as shown (shownItemName). */
+const shortName = (item) => shownItemName(item) ?? templateByIndex(item?.templateIndex)?.name ?? 'Item';
 
 /** shieldBlockSuccess - the mod's static, written by the overhaul's
  *  CalculateAttackDamage (or by DamageEquipment itself when the
@@ -418,7 +427,7 @@ export const pcaaoStruckBodyPart = (roll01) => PCAAO_BODY_PARTS[Math.floor(roll0
  *  and the popup). */
 export function pcaaoBackstabDamage(damage, backstabbingLevel, rolls, say) {
   if (backstabbingLevel > 1 && dice100(backstabbingLevel, rolls())) {
-    say?.(SUCCESSFUL_BACKSTAB_TEXT);
+    say?.(successfulBackstabText());
     return damage * 3;
   }
   return damage;
@@ -468,19 +477,26 @@ export function pcaaoBonusOrPenaltyByEnemyType(attacker, target, rolls) {
 
 /** CalculateHandToHandAttackDamage: the player rolls DFU's own
  *  min..max, adds the modifier and the mod's STRENGTH term; a monster's
- *  `damageModifier` IS its summed attack damage. */
-export function pcaaoHandToHandAttackDamage(attacker, target, damageModifier, player, rolls) {
+ *  `damageModifier` IS its summed attack damage. BAL6-GAUNTLETS: the
+ *  beast's claws add its gauntlets' metal where a weapon's material
+ *  modifier stands (after Strength, before the floor - combat/clawMetal.js).
+ *  BAL10 (bible/05-Combat/Balance-Arc.md section 16): AND THE PORT'S BLOW MODIFIERS for a player's fists - where the
+ *  weapon arm reads them (pcaaoWeaponAttackDamage: after the enemy-type term), never the beast's claws. `info` the host's
+ *  word, the weapon arm's own. */
+export function pcaaoHandToHandAttackDamage(attacker, target, damageModifier, player, rolls, info = undefined) {
   let damage = 0;
   if (player) {
     const h2h = skill(attacker, SKILLS.HandToHand);
     damage = range(handToHandMinDamage(h2h), handToHandMaxDamage(h2h), rolls);
     damage += damageModifier;
     damage += pcaaoDamageModifier(stat(attacker, 'strength'));
+    damage += clawMetalDamage(attacker);
   } else {
     damage += damageModifier;
   }
   if (damage < 1) damage = 0;
   if (damage >= 1) damage += pcaaoBonusOrPenaltyByEnemyType(attacker, target, rolls);
+  if (player && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info);   // BAL10: the fists' blow modifiers
   return damage;
 }
 
@@ -664,7 +680,7 @@ export const pcaaoFades = (item) => isEnchantedItem(item) && !stampedTier(item);
  *  breaks; everything else breaks as DFU's does. */
 function wear(item, owner, amount, modules, say, rolls = Math.random) {
   const removeFrom = modules.fadingEnchantedItems && isPlayer(owner) && pcaaoFades(item) ? (owner.items ?? null) : null;   // RARE-BREAK1
-  lowerCondition(item, blowWear(amount, rolls), owner, say, removeFrom);   // BALANCE1: the mod's amount, on the port's wear scale
+  lowerCondition(item, blowWear(amount, rolls), owner, say, removeFrom, shownItemName);   // BALANCE1: the mod's amount, on the port's wear scale; L10N3e: the broken line names it as shown
 }
 /** ApplyConditionDamageThroughWeaponDamage: armour takes the damage
  *  (a shield as is, a piece doubled); a weapon takes `10 * damage /
@@ -763,7 +779,7 @@ export function pcaaoDamageEquipment(attacker, target, damage, weapon, struckBod
   let wepEqualize = 1, wepWeight = 1;
   let startItemCondPer = 0;
   if (!modules.armorHitFormulaRedone) {
-    const shield = leftHandItem(target);
+    const shield = leftHandShield(target);
     shieldBlockSuccess = false;
     if (shield) {
       for (const part of SHIELD_PARTS.get(shield.templateIndex) ?? []) {
@@ -806,7 +822,7 @@ export function pcaaoDamageEquipment(attacker, target, damage, weapon, struckBod
       pcaaoApplyConditionDamageThroughWeaponDamage(weapon, attacker, wepDamage, bluntWep, shtbladeWep, missileWep, wepEqualize, modules, rolls, say);
     }
     if (isPlayer(attacker)) pcaaoWarningMessagePlayerEquipmentCondition(weapon, startItemCondPer, say);
-    const struck = shieldBlockSuccess ? leftHandItem(target) : struckSlotItem(target, struckBodyPart);
+    const struck = shieldBlockSuccess ? leftHandShield(target) : struckSlotItem(target, struckBodyPart);
     if (struck) {
       let d = damage * pcaaoEqualizeMaterialConditions(struck);
       matDifference = pcaaoArmorMaterialModifierFinder(struck) - wepMatModifier;
@@ -818,7 +834,7 @@ export function pcaaoDamageEquipment(attacker, target, damage, weapon, struckBod
     return false;
   }
   if (!weapon && damage > 0) {
-    const struck = shieldBlockSuccess ? leftHandItem(target) : struckSlotItem(target, struckBodyPart);
+    const struck = shieldBlockSuccess ? leftHandShield(target) : struckSlotItem(target, struckBodyPart);
     if (struck) {
       let d = damage * pcaaoEqualizeMaterialConditions(struck);
       const armorMod = pcaaoArmorMaterialModifierFinder(struck);
@@ -888,7 +904,7 @@ export function pcaaoArmorDamageReductionWithWeapon(attacker, target, damage, we
   let bluntWep = false, wepWeight = 1;
   if (weaponSkillOf(weapon) === SKILLS.BluntWeapon) { bluntWep = true; wepWeight = Math.ceil(effectiveUnitWeightInKg(weapon)); }
   if (shieldBlockSuccess) {
-    const shield = leftHandItem(target);
+    const shield = leftHandShield(target);
     return pcaaoPercentageReductionCalculationWithWeapon(shield, pcaaoArmorMaterialIdentifier(shield), liveStrength, damage, bluntWep, wepWeight, true, naturalDamResist, modules);
   }
   const armor = struckSlotItem(target, struckBodyPart);
@@ -898,7 +914,7 @@ export function pcaaoArmorDamageReductionWithWeapon(attacker, target, damage, we
 export function pcaaoArmorDamageReductionWithUnarmed(attacker, target, damage, struckBodyPart, naturalDamResist, modules) {
   const liveStrength = stat(attacker, 'strength');
   if (shieldBlockSuccess) {
-    const shield = leftHandItem(target);
+    const shield = leftHandShield(target);
     return pcaaoPercentageReductionCalculationWithUnarmed(shield, pcaaoArmorMaterialIdentifier(shield), liveStrength, damage, true, naturalDamResist, modules);
   }
   const armor = struckSlotItem(target, struckBodyPart);
@@ -967,7 +983,8 @@ export function pcaaoArmorStruckVerification(target, struckBodyPart) {
  *  covers) blocks at the shield's base chance bent by the six stats,
  *  a weak spot at its smaller one; both `Mathf.Clamp` calls (7..95 and
  *  0..50) are computed and discarded by the C#. Buckler 30/20, Round 35/10, Kite 45/5, Tower
- *  55/-5, anything else in the hand 40/0. */
+ *  55/-5; the C#'s default, 40/0, was anything else in the hand - kept as written, and handed a shield alone since the
+ *  sixth departure (`leftHandShield`). */
 export function pcaaoShieldBlockChanceCalculation(target, shieldStrongSpot, shield, rolls) {
   let strong = 0, weak = 0;
   const d = (k) => stat(target, k) - 50;
@@ -994,7 +1011,7 @@ export function pcaaoShieldBlockChanceCalculation(target, shieldStrongSpot, shie
  *  reduction over 100 is at least as good as the piece under it
  *  (bare skin reduces by the natural resistance alone). */
 export function pcaaoCompareShieldToUnderArmor(target, struckBodyPart, naturalDamResist, modules) {
-  const shield = leftHandItem(target);
+  const shield = leftHandShield(target);
   const shieldReduced = pcaaoPercentageReductionAverage(shield, pcaaoArmorMaterialIdentifier(shield), 100, naturalDamResist, true, modules);
   const under = struckSlotItem(target, struckBodyPart);
   const underReduced = under
@@ -1030,6 +1047,7 @@ export function pcaaoAttackDamage(attacker, target, {
   weapon: weaponIn = null, damageMod = 0, toHitMod = 0, backstabChance = 0, weaponAnimTime = 0,
   rolls = Math.random, dfRand = () => Math.floor(Math.random() * 32768), onMonsterHit = null, onInflictPoison = null,
   say = null, playerReflexes = null, notes = null, modules = pcaaoModules(), unaware = false, onStruck = null,
+  blowShare = null,
 } = {}) {
   if (!attacker || !target) return 0;
   let weapon = weaponIn;
@@ -1057,7 +1075,7 @@ export function pcaaoAttackDamage(attacker, target, {
       if (skillID === SKILLS.BluntWeapon) bluntWep = true;
     } else {
       if ((target.minMetalToHit ?? -1) > weapon.material) {
-        if (isPlayer(attacker)) say?.(MATERIAL_INEFFECTIVE_TEXT);
+        if (isPlayer(attacker)) say?.(materialIneffectiveText());
         if (notes) notes.ineffective = true;
         return 0;
       }
@@ -1101,7 +1119,7 @@ export function pcaaoAttackDamage(attacker, target, {
     if (isPlayer(attacker) || isClassEnemy(AIAttacker)) {
       if (pcaaoSuccessfulHit(attacker, target, chanceToHitMod, struckBodyPart, rolls, modules, notes)) {
         if (notes) notes.hit = true;
-        damage = pcaaoHandToHandAttackDamage(attacker, target, damageModifiers, isPlayer(attacker), rolls);
+        damage = pcaaoHandToHandAttackDamage(attacker, target, damageModifiers, isPlayer(attacker), rolls, { unaware: !!unaware });   // BAL10: the host's word, for the fists' blow modifiers
         const before = damage;
         damage = pcaaoBackstabDamage(damage, backstab, rolls, say);
         backstabbed(before, damage);
@@ -1153,7 +1171,7 @@ export function pcaaoAttackDamage(attacker, target, {
     say?.('This Weapon Is Not Very Effective Against This Creature.', 1);
   }
   const naturalDamResist = pcaaoNaturalDamageResistance(target);
-  const shield = leftHandItem(target);
+  const shield = leftHandShield(target);
   let shieldStrongSpot = false;
   shieldBlockSuccess = false;
   if (shield) {
@@ -1175,7 +1193,12 @@ export function pcaaoAttackDamage(attacker, target, {
   // WEAR-VANILLA (2026-10-01, the repair triage: "Disable the modded feature that increases durability loss. Vanilla
   // values work fine"): A DEPARTURE - only while that module is on. Off (the port's default, modSettings.js), the blow
   // wears what FormulaHelper's DamageEquipment says, below the reduction.
-  if (modules.equipmentDamageEnhanced) pcaaoDamageEquipment(attacker, target, damage, weapon, struckBodyPart, { rolls, say, modules });
+  // TWO-HANDS (AUDIT 2, bible/05-Combat/Two-Hands.md): THE OFF HAND'S SHARE (formulas.js `blowShare`), laid here ahead of
+  // either wear - the formula's tail shared the blow after this core had worn the gear by the whole roll - and said
+  // (`notes.shared`), so the tail does not share it twice
+  const shared = (d) => (blowShare && d > 0 ? blowShare(d) : d);
+  if (blowShare && notes) notes.shared = true;
+  if (modules.equipmentDamageEnhanced) pcaaoDamageEquipment(attacker, target, shared(damage), weapon, struckBodyPart, { rolls, say, modules });
   if (AITarget && isMonster(AITarget)) {
     if (!pcaaoArmorStruckVerification(target, struckBodyPart)) damage = pcaaoPercentageReductionCalculationForMonsters(attacker, target, damage, bluntWep, naturalDamResist);
     else if (unarmedAttack) damage = pcaaoArmorDamageReductionWithUnarmed(attacker, target, damage, struckBodyPart, naturalDamResist, modules);
@@ -1185,6 +1208,7 @@ export function pcaaoAttackDamage(attacker, target, {
   } else if (weaponAttack) {
     damage = pcaaoArmorDamageReductionWithWeapon(attacker, target, damage, weapon, struckBodyPart, naturalDamResist, modules);
   }
+  damage = shared(damage);
   // WEAR-VANILLA, the module off: FormulaHelper's DamageEquipment (formulas.js damageEquipment, Roleplay Realism's slot
   // inside it), with the weapon the blow was struck with - a monster's stand-in is the overhaul's device, so a claw
   // wears no armour, as in DFU - and (AUDIT ECON W1) by the damage that WENT THROUGH, after the reduction above. DFU's

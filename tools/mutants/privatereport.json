@@ -1,0 +1,843 @@
+[
+  {
+    "name": "PRIVREP-a-route-open",
+    "file": "server-account/src/service.js",
+    "old": "export const OPEN_ROUTES = new Set(['/v1/health',",
+    "new": "export const OPEN_ROUTES = new Set(['/v1/report/mine', '/v1/health',",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "A stranger with no session would reach a report route."
+  },
+  {
+    "name": "PRIVREP-the-guest-let-in",
+    "file": "server-account/src/index.js",
+    "old": "        if (accountKind(who.player) !== 'linked') return no('report-needs-account', 403, origin);",
+    "new": "        if (false) return no('report-needs-account', 403, origin);",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "A guest - a device one storage clear from gone - would send reports nobody can follow up."
+  },
+  {
+    "name": "PRIVREP-a-word-with-no-sentence",
+    "file": "src/net/accountClient.js",
+    "old": "  'report-full': () => t('account.refusal.reportFull',",
+    "new": "  'report-full-gone': () => t('account.refusal.reportFull',",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "A player refused for a full queue would read the service's raw word."
+  },
+  {
+    "name": "PRIVREP-the-rid-asked-after-the-rate",
+    "file": "server-account/src/reports.js",
+    "old": "  if (prior) return { ok: true, repeat: true, id: prior.id, sentAt: prior.sent_at };",
+    "new": "  if (false) return { ok: true, repeat: true, id: prior.id, sentAt: prior.sent_at };",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "A lost answer asked again would be counted against the hour, and refused as a new report past it."
+  },
+  {
+    "name": "PRIVREP-the-context-stored-raw",
+    "file": "server-account/src/reports.js",
+    "old": "ctxOf ? JSON.stringify(ctxOf) : null",
+    "new": "context ? JSON.stringify(context) : null",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "Whatever a client put beside the words would be kept - an agent string, a location - not the three fields the form says it sends."
+  },
+  {
+    "name": "PRIVREP-the-words-uncleaned",
+    "file": "src/net/reportLaw.js",
+    "old": "const cleanBody = (/** @type {string} */ s) => s.split(LINE_BREAK).map((l) => visibleText(l.replace(/\\t/g, ' ')).trimEnd()).join('\\n').replace(/^\\n+|\\n+$/g, '').trim();",
+    "new": "const cleanBody = (/** @type {string} */ s) => s.trim();",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "Control characters and Windows line ends would be stored and drawn in the reader's window."
+  },
+  {
+    "name": "PRIVREP-the-send-read-at-4KiB",
+    "file": "server-account/src/index.js",
+    "old": "path === '/v1/report/send' ? REPORT_BODY_BYTES : ",
+    "new": "",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "A report of 3,000 characters in any script past ASCII would be refused as a malformed body."
+  },
+  {
+    "name": "PRIVREP-the-rate-unasked",
+    "file": "server-account/src/reports.js",
+    "old": "  if (await overRate({ db, nowS }, `report:${reporter.id}`, REPORT_SEND_MAX, REPORT_WINDOW_S)) return { error: 'report-rate' };\n",
+    "new": "",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "One account could send reports as fast as it could press Send."
+  },
+  {
+    "name": "PRIVREP-the-open-bound-uncounted",
+    "file": "server-account/src/reports.js",
+    "old": "state = 'open') < ?9\n    ON CONFLICT",
+    "new": "state = 'open') < ?9 + 1000\n    ON CONFLICT",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "Sends racing past the count read before the insert would land past REPORT_OPEN_MAX - the insert's own bound is what holds a race (AUDIT PRIVATE-REPORT SVC-1 SVC-3)."
+  },
+  {
+    "name": "PRIVREP-the-open-bound-counting-closed",
+    "file": "server-account/src/reports.js",
+    "old": "WHERE from_id = ?2 AND state = 'open') < ?9",
+    "new": "WHERE from_id = ?2) < ?9",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "A reporter whose reports were fixed would be refused for good - their record held against them."
+  },
+  {
+    "name": "PRIVREP-the-list-unscoped",
+    "file": "server-account/src/reports.js",
+    "old": "    WHERE from_id = ? ORDER BY sent_at DESC, id DESC LIMIT ?`)",
+    "new": "    WHERE from_id != '' OR from_id = ? ORDER BY sent_at DESC, id DESC LIMIT ?`)",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "Every player's list would show every report's title - an exploit's name in public."
+  },
+  {
+    "name": "PRIVREP-the-rows-answered-raw",
+    "file": "server-account/src/reports.js",
+    "old": "  return { reports: results.map(headOf), max: REPORT_MINE_MAX };",
+    "new": "  return { reports: results, max: REPORT_MINE_MAX };",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "The list would answer the table's columns, not the head the client reads."
+  },
+  {
+    "name": "PRIVREP-the-reader-check-gone",
+    "file": "server-account/src/reports.js",
+    "old": "  && handleList(env?.REPORT_READER_HANDLES).has(player.handle.toLowerCase());",
+    "new": "  ;",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "Every registered player would read every report."
+  },
+  {
+    "name": "PRIVREP-a-missing-list-read-as-everyones",
+    "file": "server-account/src/reports.js",
+    "old": "  && handleList(env?.REPORT_READER_HANDLES).has(player.handle.toLowerCase());",
+    "new": "  && (!env?.REPORT_READER_HANDLES || handleList(env?.REPORT_READER_HANDLES).has(player.handle.toLowerCase()));",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "An empty or unset list would open the inbox to everyone, not to nobody."
+  },
+  {
+    "name": "PRIVREP-read-never-stamped",
+    "file": "server-account/src/reports.js",
+    "old": "  if (row.read_at == null) await db.prepare('UPDATE private_reports SET read_at = ?, read_by = ? WHERE id = ? AND read_at IS NULL').bind(nowS, reader.id, id).run();\n",
+    "new": "",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "A report opened would stay unread - the reader's count and the reporter's list would never move."
+  },
+  {
+    "name": "PRIVREP-the-close-unscoped",
+    "file": "server-account/src/reports.js",
+    "old": "END WHERE id = ?6`)",
+    "new": "END WHERE id = ?6 OR 1`)",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "Closing one report would close every report."
+  },
+  {
+    "name": "PRIVREP-the-counts-for-everyone",
+    "file": "server-account/src/post.js",
+    "old": "    ...(isReportReader(reader, env) ? { reports: await reportCountsOf(db) } : {}),",
+    "new": "    reports: await reportCountsOf(db),",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "Every player's box would say how many exploits wait - and cost every heartbeat a statement."
+  },
+  {
+    "name": "PRIVREP-the-heartbeat-without-the-config",
+    "file": "server-account/src/heartbeat.js",
+    "old": "postBoxOf(ctx, player, env)",
+    "new": "postBoxOf(ctx, player)",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "A reader's envelope would never light for a report: the heartbeat is how the box is looked at in play."
+  },
+  {
+    "name": "PRIVREP-the-rid-minted-each-send",
+    "file": "src/net/privateReport.js",
+    "old": "if (this._ridKey !== key) { this._rid = this.rid(); this._ridKey = key; }",
+    "new": "{ this._rid = this.rid(); this._ridKey = key; }",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A lost answer asked again would be a second report of the same words."
+  },
+  {
+    "name": "PRIVREP-the-rid-kept-past-a-changed-draft",
+    "file": "src/net/privateReport.js",
+    "old": "    const key = JSON.stringify(words);\n",
+    "new": "    const key = JSON.stringify([words.subject, words.body]);\n",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A kind changed after a lost answer would be answered with the old kind's report - the new one never sent (AUDIT PRIVATE-REPORT TEST-6)."
+  },
+  {
+    "name": "PRIVREP-the-draft-kept-after-a-send",
+    "file": "src/net/privateReport.js",
+    "old": "if (JSON.stringify(reportWordsOf(this.draft)) === key) this.draft = emptyDraft();",
+    "new": "",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A report sent would sit in the form, one press from being sent again."
+  },
+  {
+    "name": "PRIVREP-the-envelope-blind-to-reports",
+    "file": "src/net/serverPost.js",
+    "old": " + (this.reports?.unread ?? 0); }",
+    "new": "; }",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A reader's envelope would never light for a report waiting."
+  },
+  {
+    "name": "PRIVREP-the-rise-never-said",
+    "file": "src/net/serverPost.js",
+    "old": "    if (reportsRose) this.onPost?.({ kind: 'reports', unread: reports.unread });\n",
+    "new": "",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A report would come in and nobody would be told on the world tab."
+  },
+  {
+    "name": "PRIVREP-the-form-rebuilt-on-every-draw",
+    "file": "src/ui/enhanced/enhancedPost.js",
+    "old": "    if (paned && pane && pane.key === reportPaneKey(keep, b)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "Every heartbeat while a player typed would rebuild the form under them - the caret lost, the focus thrown."
+  },
+  {
+    "name": "PRIVREP-the-doors-gone",
+    "file": "src/ui/enhanced/enhancedPost.js",
+    "old": "    else { drawList(b); reportDoors(b); }",
+    "new": "    else drawList(b);",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "No player could find the report form from the mailbox."
+  },
+  {
+    "name": "PRIVREP-the-inbox-door-for-everyone",
+    "file": "src/ui/enhanced/enhancedPost.js",
+    "old": "    if (b.reports) doors.append(",
+    "new": "    if (true) doors.append(",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A reporter's mailbox would draw a door to an inbox that is not theirs (and throw on its missing count)."
+  },
+  {
+    "name": "PRIVREP-the-close-never-asked",
+    "file": "src/net/privateReport.js",
+    "old": "    const r = await reportCloseCall(io, id, state);",
+    "new": "    const r = { ok: true };",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A reader's Fixed would close nothing: the reporter would never hear it was fixed."
+  },
+  {
+    "name": "PRIVREP-bug-read-as-the-mailbox",
+    "file": "src/net/chatCommands.js",
+    "old": "m[1].toLowerCase() === 'bug' ? 'report' : 'mailbox'",
+    "new": "'mailbox'",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "`/bug` would open the mailbox and leave the player to find the form."
+  },
+  {
+    "name": "PRIVREP-the-classic-skin-without-a-way-in",
+    "file": "src/ui/pauseDoor.js",
+    "old": "(hooks.at === 'mailbox' || hooks.at === 'report' || hooks.at === 'season')",
+    "new": "(hooks.at === 'mailbox' || hooks.at === 'season')",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "`/bug` on the classic skin would open a pause window with no mailbox in it."
+  },
+  {
+    "name": "PRIVREP-the-law-counting-utf16",
+    "file": "src/net/reportLaw.js",
+    "old": "export const charsOf = (/** @type {string} */ s) => [...s].length;",
+    "new": "export const charsOf = (/** @type {string} */ s) => s.length;",
+    "tests": [
+      "test/server/private_reports_service.test.js",
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "An emoji would count twice: a title of 41 emoji refused that the table takes, and the form's counter off by one an emoji (AUDIT PRIVATE-REPORT SVC-1)."
+  },
+  {
+    "name": "PRIVREP-the-words-cleaned-by-a-second-law",
+    "file": "src/net/reportLaw.js",
+    "old": "const cleanSubject = (/** @type {string} */ s) => visibleText(s.split(LINE_BREAK).join(' ').replace(/\\t/g, ' '))",
+    "new": "const cleanSubject = (/** @type {string} */ s) => (s.split(LINE_BREAK).join(' ').replace(/\\t/g, ' ').replace(/[\\u0000-\\u001f\\u007f]/g, ''))",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "A title of three zero-width spaces, or a direction override, would pass a private control-character strip (AUDIT PRIVATE-REPORT SVC-2)."
+  },
+  {
+    "name": "PRIVREP-a-tab-glued",
+    "file": "src/net/reportLaw.js",
+    "old": "visibleText(l.replace(/\\t/g, ' '))",
+    "new": "visibleText(l)",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "Two words a tab apart would be read as one (wire.js visibleText drops a tab as a control character) (AUDIT PRIVATE-REPORT SVC-2)."
+  },
+  {
+    "name": "PRIVREP-the-bound-moved",
+    "file": "src/net/reportLaw.js",
+    "old": "export const REPORT_OPEN_MAX = 20;",
+    "new": "export const REPORT_OPEN_MAX = 25;",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "The bound would move without the refusal's sentence and the record that say 20 (AUDIT PRIVATE-REPORT TEST-11)."
+  },
+  {
+    "name": "PRIVREP-the-rate-counted-before-the-full-queue",
+    "file": "server-account/src/reports.js",
+    "old": "  if (Number(open?.n ?? 0) >= REPORT_OPEN_MAX) return { error: 'report-full' };\n",
+    "new": "",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "A send refused for a full queue would cost one of the hour's five, and a report closed meanwhile still be refused report-rate (AUDIT PRIVATE-REPORT SVC-3)."
+  },
+  {
+    "name": "PRIVREP-the-precount-counting-closed",
+    "file": "server-account/src/reports.js",
+    "old": "WHERE from_id = ? AND state = 'open'\").bind(reporter.id).first();",
+    "new": "WHERE from_id = ?\").bind(reporter.id).first();",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "A reporter whose reports were fixed would be refused for good by the count read before the insert."
+  },
+  {
+    "name": "PRIVREP-one-rate-for-everyone",
+    "file": "server-account/src/reports.js",
+    "old": "`report:${reporter.id}`",
+    "new": "'report'",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "Five reports an hour would be the whole game's, not an account's (AUDIT PRIVATE-REPORT TEST-2)."
+  },
+  {
+    "name": "PRIVREP-the-window-a-minute",
+    "file": "server-account/src/reports.js",
+    "old": "REPORT_SEND_MAX, REPORT_WINDOW_S)",
+    "new": "REPORT_SEND_MAX, 60)",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "The hour's bound would be a minute's (AUDIT PRIVATE-REPORT TEST-2)."
+  },
+  {
+    "name": "PRIVREP-newest-first-alone",
+    "file": "server-account/src/reports.js",
+    "old": "'(r.read_at IS NULL) DESC, r.sent_at DESC'",
+    "new": "'r.sent_at DESC'",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "An unopened report would sink under newer ones a reader has already read (AUDIT PRIVATE-REPORT TEST-3)."
+  },
+  {
+    "name": "PRIVREP-the-closed-list-fixed-alone",
+    "file": "server-account/src/reports.js",
+    "old": "\"r.state != 'open'\"",
+    "new": "\"r.state = 'fixed'\"",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "A report closed as Won't fix or Duplicate would vanish from every list (AUDIT PRIVATE-REPORT TEST-7)."
+  },
+  {
+    "name": "PRIVREP-the-closed-list-oldest-first",
+    "file": "server-account/src/reports.js",
+    "old": "'r.closed_at DESC'",
+    "new": "'r.closed_at ASC'",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "The last closed would be at the end of a list a hundred long (AUDIT PRIVATE-REPORT TEST-7)."
+  },
+  {
+    "name": "PRIVREP-a-second-readers-read-over-the-first",
+    "file": "server-account/src/reports.js",
+    "old": "if (row.read_at == null) await db.prepare('UPDATE private_reports SET read_at = ?, read_by = ? WHERE id = ? AND read_at IS NULL')",
+    "new": "await db.prepare('UPDATE private_reports SET read_at = ?, read_by = ? WHERE id = ?')",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "Each opening would stamp the report read again - who read it first, and when, lost (AUDIT PRIVATE-REPORT TEST-8)."
+  },
+  {
+    "name": "PRIVREP-a-closes-read-over-the-first",
+    "file": "server-account/src/reports.js",
+    "old": "ELSE COALESCE(read_at, ?4) END",
+    "new": "ELSE ?4 END",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "A close would stamp the report read at the close, over the first reader's opening (AUDIT PRIVATE-REPORT TEST-8)."
+  },
+  {
+    "name": "PRIVREP-the-reopen-reading",
+    "file": "server-account/src/reports.js",
+    "old": "read_at = CASE WHEN ?1 = 'open' THEN read_at ELSE COALESCE(read_at, ?4) END",
+    "new": "read_at = COALESCE(read_at, ?4)",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "A report opened again unread would tell its reporter \"Read by the developers\" of words nobody read (AUDIT PRIVATE-REPORT SVC-6)."
+  },
+  {
+    "name": "PRIVREP-the-counts-counting-closed",
+    "file": "server-account/src/reports.js",
+    "old": "FROM private_reports WHERE state = 'open'`).first();",
+    "new": "FROM private_reports WHERE 1`).first();",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "The envelope would count every report ever closed, for good (AUDIT PRIVATE-REPORT TEST-9)."
+  },
+  {
+    "name": "PRIVREP-no-next-page",
+    "file": "server-account/src/reports.js",
+    "old": "more: results.length > REPORT_INBOX_MAX",
+    "new": "more: false",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "Past a hundred open reports the oldest unopened one would never be reached (AUDIT PRIVATE-REPORT SVC-4)."
+  },
+  {
+    "name": "PRIVREP-the-page-ignored",
+    "file": "server-account/src/reports.js",
+    "old": ".bind(REPORT_INBOX_MAX + 1, p * REPORT_INBOX_MAX)",
+    "new": ".bind(REPORT_INBOX_MAX + 1, 0)",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "Every page asked for would be the first (AUDIT PRIVATE-REPORT SVC-4)."
+  },
+  {
+    "name": "PRIVREP-the-mine-limit-gone",
+    "file": "server-account/src/reports.js",
+    "old": ".bind(reporter.id, REPORT_MINE_MAX)",
+    "new": ".bind(reporter.id, -1)",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "A reporter's list would carry every report they ever sent (AUDIT PRIVATE-REPORT TEST-15)."
+  },
+  {
+    "name": "PRIVREP-the-counts-asked-for-every-box",
+    "file": "server-account/src/post.js",
+    "old": "    ...(isReportReader(reader, env) ? { reports: await reportCountsOf(db) } : {}),",
+    "new": "    ...((await reportCountsOf(db)) && isReportReader(reader, env) ? { reports: await reportCountsOf(db) } : {}),",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "Every player's heartbeat would cost a statement over private_reports that only a reader's box answers with (AUDIT PRIVATE-REPORT SVC-5)."
+  },
+  {
+    "name": "PRIVREP-the-rid-keyed-to-the-raw-text",
+    "file": "src/net/privateReport.js",
+    "old": "    const key = JSON.stringify(words);\n",
+    "new": "    const key = JSON.stringify(this.draft);\n",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A space typed and deleted after a lost answer would send the same words as a second report (AUDIT PRIVATE-REPORT CLI-8)."
+  },
+  {
+    "name": "PRIVREP-the-draft-cleared-of-words-typed-mid-send",
+    "file": "src/net/privateReport.js",
+    "old": "if (JSON.stringify(reportWordsOf(this.draft)) === key) this.draft = emptyDraft();",
+    "new": "this.draft = emptyDraft();",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "Words typed while a send was out would be wiped when it landed (AUDIT PRIVATE-REPORT CLI-9)."
+  },
+  {
+    "name": "PRIVREP-the-look-folded-into-the-one-out",
+    "file": "src/net/privateReport.js",
+    "old": "if (this._mineLook) { this._mineAgain = true; return this._mineLook; }",
+    "new": "if (this._mineLook) return this._mineLook;",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A send's look at my list would be answered by a look set out before it - the report just sent missing (AUDIT PRIVATE-REPORT CLI-3, ASYNC NEVER DROPS)."
+  },
+  {
+    "name": "PRIVREP-the-desk-kept-past-a-switch-by-itself",
+    "file": "src/net/privateReport.js",
+    "old": "      if (had !== null) this.reset();\n",
+    "new": "",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A desk asked under another account would answer with the last one's draft and lists (AUDIT PRIVATE-REPORT CLI-1)."
+  },
+  {
+    "name": "PRIVREP-an-answer-for-a-session-gone-taken",
+    "file": "src/net/privateReport.js",
+    "old": "return epoch !== this._epoch || (this.ioOf?.()?.secret ?? null) !== io?.secret; }",
+    "new": "return epoch !== this._epoch; }",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A reader's inbox asked under one account and answered after another signed in would be drawn for the other (AUDIT PRIVATE-REPORT CLI-1)."
+  },
+  {
+    "name": "PRIVREP-the-newest-look-overwritten-by-an-older",
+    "file": "src/net/privateReport.js",
+    "old": "if (this._stale(io, epoch) || seq !== this._inboxSeq[w]) return",
+    "new": "if (this._stale(io, epoch)) return",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "An older inbox look answering last would put a report just closed back in the open list (AUDIT PRIVATE-REPORT CLI-4)."
+  },
+  {
+    "name": "PRIVREP-the-inbox-kept-past-not-report-reader",
+    "file": "src/net/privateReport.js",
+    "old": "if (error === 'not-report-reader') {",
+    "new": "if (false) {",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A reader taken off the list would keep the inbox and the whole reports they had opened, drawn from this copy (AUDIT PRIVATE-REPORT CLI-1)."
+  },
+  {
+    "name": "PRIVREP-the-next-page-in-place-of-the-first",
+    "file": "src/net/privateReport.js",
+    "old": "this.inbox[w] = [...held, ...list.filter((p) => !seen.has(p.id))];",
+    "new": "this.inbox[w] = list;",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "\"Show older reports\" would swap the first hundred for the next (AUDIT PRIVATE-REPORT SVC-4)."
+  },
+  {
+    "name": "PRIVREP-a-second-close-while-one-is-out",
+    "file": "src/net/privateReport.js",
+    "old": "if (this.closing.has(id)) return { ok: false, error: 'busy' };",
+    "new": "",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A second press would send a second close, and both lists' looks twice (AUDIT PRIVATE-REPORT UI-8)."
+  },
+  {
+    "name": "PRIVREP-the-desks-counts-never-the-envelopes",
+    "file": "src/net/serverPost.js",
+    "old": "onCounts: (c) => this._deskCounts(c) });",
+    "new": "onCounts: null });",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A report read would stay on the envelope until the next look, and a new one after it go unsaid (AUDIT PRIVATE-REPORT CLI-2)."
+  },
+  {
+    "name": "PRIVREP-the-desk-kept-past-a-switch-by-the-box",
+    "file": "src/net/serverPost.js",
+    "old": "this.error = null; this.at = 0; this.desk.reset(); this._changed();",
+    "new": "this.error = null; this.at = 0; this._changed();",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "Another account on the same sitting would find the last one's half-written report in the form (AUDIT PRIVATE-REPORT CLI-1)."
+  },
+  {
+    "name": "PRIVREP-the-boxs-answer-for-a-session-gone-taken",
+    "file": "src/net/serverPost.js",
+    "old": "if (secret !== (this.ioOf?.()?.secret ?? null)) { this.at = 0; return { ok: false, error: 'stale' }; }",
+    "new": "",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A reader's count asked under one account would light another's envelope (AUDIT PRIVATE-REPORT CLI-1)."
+  },
+  {
+    "name": "PRIVREP-the-first-look-silent",
+    "file": "src/net/serverPost.js",
+    "old": "(first ? true : reports.unread > (this.reports?.unread ?? 0))",
+    "new": "(first ? false : reports.unread > (this.reports?.unread ?? 0))",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A reader signing in with reports waiting would not be told (AUDIT PRIVATE-REPORT TEST-13)."
+  },
+  {
+    "name": "PRIVREP-the-counter-in-utf16-units",
+    "file": "src/ui/enhanced/enhancedReport.js",
+    "old": "count.textContent = `${charsOf(body.value)} / ${REPORT_WORDS_MAX}`;",
+    "new": "count.textContent = `${body.value.length} / ${REPORT_WORDS_MAX}`;",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "The counter would say 3,000 used of words the law counts as fewer (AUDIT PRIVATE-REPORT SVC-1)."
+  },
+  {
+    "name": "PRIVREP-the-focus-left-after-a-send",
+    "file": "src/ui/enhanced/enhancedReport.js",
+    "old": "const at = said.ok ? subject :",
+    "new": "const at = said.ok ? null :",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A send would leave the keyboard focus on the page's body, where a Tab reaches nothing (AUDIT PRIVATE-REPORT UI-3)."
+  },
+  {
+    "name": "PRIVREP-the-old-pane-saying-the-send",
+    "file": "src/ui/enhanced/enhancedReport.js",
+    "old": "if (!last || root.isConnected === false) return null;",
+    "new": "if (!last) return null;",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A face rebuilt mid-send would have the send's end said to a window no longer in the page (AUDIT PRIVATE-REPORT UI-4)."
+  },
+  {
+    "name": "PRIVREP-read-never-said-to-the-reporter",
+    "file": "src/ui/enhanced/enhancedReport.js",
+    "old": "(p.read ? t('report.state.read', 'Read by the developers') : t('report.state.sent', 'Sent'))",
+    "new": "t('report.state.sent', 'Sent')",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A reporter would never learn a developer had read their report (AUDIT PRIVATE-REPORT TEST-12)."
+  },
+  {
+    "name": "PRIVREP-the-button-never-shown",
+    "file": "src/ui/enhanced/enhancedReport.js",
+    "old": "more.hidden = !(rows && desk.inboxMore[which]);",
+    "new": "more.hidden = true;",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "The next page would be there and no way to ask for it (AUDIT PRIVATE-REPORT SVC-4)."
+  },
+  {
+    "name": "PRIVREP-a-failed-look-silent-over-a-list",
+    "file": "src/ui/enhanced/enhancedReport.js",
+    "old": "if (desk.inboxError && rows) k.tell(k.refusal(desk.inboxError));",
+    "new": "",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "\"Look again\" would fail in silence over the list held (AUDIT PRIVATE-REPORT UI-7)."
+  },
+  {
+    "name": "PRIVREP-the-closes-live-while-one-is-out",
+    "file": "src/ui/enhanced/enhancedReport.js",
+    "old": "      n.disabled = busy;\n      return n;",
+    "new": "      n.disabled = false;\n      return n;",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "The close buttons would stay pressable while a close is out (AUDIT PRIVATE-REPORT UI-8)."
+  },
+  {
+    "name": "PRIVREP-the-focus-after-a-close-left-to-fall",
+    "file": "src/ui/enhanced/enhancedReport.js",
+    "old": "        k.focus(res.ok ? (state === 'open' ? 'close-fixed' : 'close-open') : `close-${state}`);\n",
+    "new": "",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "The pressed close gone with its state, the focus would fall to the window's Close, where a reflexive Enter shuts the window (AUDIT PRIVATE-REPORT UI-6)."
+  },
+  {
+    "name": "PRIVREP-my-list-looked-at-once-a-sitting",
+    "file": "src/ui/enhanced/enhancedReport.js",
+    "old": "  desk.loadMine().catch(() => {});   // AUDIT PRIVATE-REPORT CLI-5",
+    "new": "  // AUDIT PRIVATE-REPORT CLI-5",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A report read or fixed since the form last opened would still say Sent (AUDIT PRIVATE-REPORT CLI-5)."
+  },
+  {
+    "name": "PRIVREP-the-open-tab-a-states-word",
+    "file": "src/ui/enhanced/enhancedReport.js",
+    "old": "t('report.tabOpenCount', 'Open ({n})', { n })",
+    "new": "t('report.tabOpen', 'Open')",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "The open tab would not count what is open (AUDIT PRIVATE-REPORT DOC-14)."
+  },
+  {
+    "name": "PRIVREP-the-landing-taking-the-focus-from-a-field",
+    "file": "src/ui/enhanced/enhancedPost.js",
+    "old": "      if (a && win.contains?.(a)) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A face rebuilt mid-typing would land the focus on the first kind, where the next Space changes the report's kind (AUDIT PRIVATE-REPORT UI-1)."
+  },
+  {
+    "name": "PRIVREP-the-landing-on-the-first-kind-whatever-the-draft",
+    "file": "src/ui/enhanced/enhancedPost.js",
+    "old": "focusKey(`kind-${box()?.desk?.draft?.kind ?? 'exploit'}`)",
+    "new": "focusKey('kind-exploit')",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "The form would open on An exploit with a bug checked (AUDIT PRIVATE-REPORT UI-14)."
+  },
+  {
+    "name": "PRIVREP-the-focus-to-the-windows-close",
+    "file": "src/ui/enhanced/enhancedPost.js",
+    "old": "() => go('inbox', { which: 'open', focus: 'tab-open' })",
+    "new": "() => go('inbox', { which: 'open' })",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "Opening the inbox would land the focus on the window's Close (AUDIT PRIVATE-REPORT UI-6)."
+  },
+  {
+    "name": "PRIVREP-no-key-for-the-repaint",
+    "file": "src/ui/enhanced/enhancedPost.js",
+    "old": "n.setAttribute('data-focus', `pm-${key}`); ",
+    "new": "",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A face rebuilt would lose the focus and the caret in the form (domRepaint.js finds a control by data-focus) (AUDIT PRIVATE-REPORT UI-1)."
+  },
+  {
+    "name": "PRIVREP-escape-kept-by-the-field",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": " && !(e.key === 'Escape' && t.closest?.('.px-postwin'))) return;",
+    "new": ") return;",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "Escape in the report form would do nothing at all - and `/bug` lands the focus there (AUDIT PRIVATE-REPORT UI-2)."
+  },
+  {
+    "name": "PRIVREP-the-repeat-eaten-in-a-field",
+    "file": "src/ui/pauseDoor.js",
+    "old": " && !isTextEntryTarget(e.target)) {",
+    "new": ") {",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A held Space or Enter would type once in the report's words (AUDIT PRIVATE-REPORT UI-10)."
+  },
+  {
+    "name": "PRIVREP-the-send-read-past-its-bound",
+    "file": "server-account/src/index.js",
+    "old": "path === '/v1/report/send' ? REPORT_BODY_BYTES : ",
+    "new": "path === '/v1/report/send' ? REPORT_BODY_BYTES * 1024 : ",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "A send would be read whole however long, before its bound refused it (AUDIT PRIVATE-REPORT TEST-1)."
+  },
+  {
+    "name": "PRIVREP-every-report-route-at-24KiB",
+    "file": "server-account/src/index.js",
+    "old": "path === '/v1/report/send' ? REPORT_BODY_BYTES : ",
+    "new": "path.startsWith('/v1/report/') ? REPORT_BODY_BYTES : ",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "The four routes that carry an id or nothing would read six times the service's bound (AUDIT PRIVATE-REPORT TEST-1)."
+  },
+  {
+    "name": "PRIVREP-another-reader-named",
+    "file": "server-account/wrangler.toml",
+    "old": "REPORT_READER_HANDLES = \"Lattymoy\"",
+    "new": "REPORT_READER_HANDLES = \"Lattymoy,Asynian\"",
+    "tests": [
+      "test/server/private_reports_service.test.js"
+    ],
+    "note": "One more person would read unfixed exploits with no test moving (AUDIT PRIVATE-REPORT TEST-16)."
+  },
+  {
+    "name": "PRIVREP-a-report-opened-still-counted",
+    "file": "src/net/privateReport.js",
+    "old": "    if (head && !head.read) { head.read = true; this._takeCounts({ ...this.counts, unread: Math.max(0, this.counts.unread - 1) }); }\n",
+    "new": "",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A report opened would still light the envelope until the next look (AUDIT PRIVATE-REPORT CLI-2 TEST-14)."
+  },
+  {
+    "name": "PRIVREP-the-counts-never-taken-from-the-inbox",
+    "file": "src/net/privateReport.js",
+    "old": "    if (c) this._takeCounts(c);\n",
+    "new": "",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "The open tab would count reports closed since the last look of the box (AUDIT PRIVATE-REPORT CLI-2 TEST-14)."
+  },
+  {
+    "name": "PRIVREP-the-closed-list-never-looked-at-again",
+    "file": "src/net/privateReport.js",
+    "old": "this.inbox.closed ? this.loadInbox('closed') : null",
+    "new": "null",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A report closed would be missing from the closed list until it was opened again (AUDIT PRIVATE-REPORT TEST-14)."
+  },
+  {
+    "name": "PRIVREP-a-fall-said",
+    "file": "src/net/serverPost.js",
+    "old": "reports.unread > (this.reports?.unread ?? 0))",
+    "new": "reports.unread !== (this.reports?.unread ?? 0))",
+    "tests": [
+      "test/net/private_reports_client.test.js"
+    ],
+    "note": "A report read at another sitting would be said on the world tab as if one had come (AUDIT PRIVATE-REPORT TEST-13)."
+  }
+]

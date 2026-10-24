@@ -6,7 +6,7 @@
     "new": "",
     "why": "offline read by a Renown it does not have",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
@@ -16,7 +16,7 @@
     "new": "RENOWN_LOOT_QUARTERS[Math.max(2, renownSigilStage(renown))]",
     "why": "online before the Renown is known, a richer stage",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
@@ -26,7 +26,7 @@
     "new": "RENOWN_LOOT_QUARTERS[Math.min(4, Math.max(0, renownSigilStage(renown)) + 1)]",
     "why": "every Renown a stage richer",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
@@ -36,7 +36,7 @@
     "new": "Object.freeze([2, 3, 4, 5, 8]);",
     "why": "Renown 40 twice the buff",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
@@ -46,7 +46,7 @@
     "new": "export const RENOWN_LOOT_OFFLINE_QUARTERS = 2;",
     "why": "offline at Renown 1's share",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
@@ -56,7 +56,7 @@
     "new": "before + ((after - before) * quarters) / 2",
     "why": "the share of the step doubled",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
@@ -66,7 +66,7 @@
     "new": "before + ((after - before) * quarters) / 4",
     "why": "a knob left unsettled (1.2999999999999998)",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
@@ -76,7 +76,7 @@
     "new": "export function renownLootQuarters({ online = false, renown = sigilRenown() } = {}) {",
     "why": "the page's online word never read",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
@@ -86,18 +86,18 @@
     "new": "export function renownLootQuarters({ online = sigilOnline(), renown = null } = {}) {",
     "why": "the page's Renown never read",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
     "name": "RENOWN-LOOT-spawn-at-whole",
     "file": "src/scenes/hostCombat.js",
-    "old": "  const ease = renownLootQuarters();   // RENOWN-LOOT",
+    "old": "  const ease = quarters;   // RENOWN-LOOT",
     "new": "  const ease = 4;   // RENOWN-LOOT",
     "why": "the spawn read at LOOT-EASE's whole",
     "tests": [
-      "test/renownloot.test.js",
-      "test/rf2_spawnloot.test.js"
+      "test/systems/renownloot.test.js",
+      "test/systems/rf2_spawnloot.test.js"
     ]
   },
   {
@@ -107,8 +107,8 @@
     "new": "  const keep = plainFoeLootKeep(4);",
     "why": "the keep never read at the Renown",
     "tests": [
-      "test/renownloot.test.js",
-      "test/rf2_spawnloot.test.js"
+      "test/systems/renownloot.test.js",
+      "test/systems/rf2_spawnloot.test.js"
     ]
   },
   {
@@ -118,7 +118,7 @@
     "new": "const PLAIN_FOE_LOOT_KEEP_BEFORE = 0.6;",
     "why": "the keep's step from the wrong before",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
@@ -128,18 +128,18 @@
     "new": "weights: plain?.plainLadder ? plainFoeRarityWeights(4) : null });",
     "why": "the spawn's ladder never read at the Renown",
     "tests": [
-      "test/renownloot.test.js",
-      "test/rf2_spawnloot.test.js"
+      "test/systems/renownloot.test.js",
+      "test/systems/rf2_spawnloot.test.js"
     ]
   },
   {
     "name": "RENOWN-LOOT-kit-ladder-whole",
     "file": "src/systems/foeLootCap.js",
-    "old": "weights: plainFoeRarityWeights() };   // RENOWN-LOOT",
+    "old": "weights: plainFoeRarityWeights(quarters) };   // RENOWN-LOOT",
     "new": "weights: plainFoeRarityWeights(4) };   // RENOWN-LOOT",
     "why": "the kit's ladder never read at the Renown",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "new": "  magic:     Object.freeze({ base: 45,  perTier: 4,    cap: 150 }),",
     "why": "the ladder's step from the wrong before",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "new": "  let w = _ladders.get(2);",
     "why": "one share's ladder handed to every share",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
@@ -169,27 +169,27 @@
     "new": "",
     "why": "a fresh ladder for LOOT-EASE's own (not the very table)",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
     "name": "RENOWN-LOOT-healing-before",
     "file": "src/systems/healingSupply.js",
-    "old": "export const HEALING_ENEMY_CHANCE_BEFORE = 6;",
-    "new": "export const HEALING_ENEMY_CHANCE_BEFORE = 10;",
+    "old": "export const HEALING_ENEMY_CHANCE_BEFORE = 2;",
+    "new": "export const HEALING_ENEMY_CHANCE_BEFORE = 4;",
     "why": "a foe's healing potion flat",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
     "name": "RENOWN-LOOT-pile-before",
     "file": "src/systems/healingSupply.js",
-    "old": "export const HEALING_PILE_CHANCE_BEFORE = 12;",
-    "new": "export const HEALING_PILE_CHANCE_BEFORE = 18;",
+    "old": "export const HEALING_PILE_CHANCE_BEFORE = 4;",
+    "new": "export const HEALING_PILE_CHANCE_BEFORE = 8;",
     "why": "a pile's healing potion flat",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
@@ -199,67 +199,67 @@
     "new": "magicka: lootEased(MAGICKA_ENEMY_CHANCE, MAGICKA_ENEMY_CHANCE, quarters) }",
     "why": "a foe's Restore Power flat",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
     "name": "RENOWN-LOOT-foe-hook-whole",
     "file": "src/systems/healingSupply.js",
-    "old": "{ const { enemy } = healingSupplyChances(); maybeAddHealingPotion",
+    "old": "{ const { enemy } = healingSupplyChances(quarters); maybeAddHealingPotion",
     "new": "{ const { enemy } = healingSupplyChances(4); maybeAddHealingPotion",
     "why": "the foe's hook at LOOT-EASE's whole",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
     "name": "RENOWN-LOOT-pile-hook-whole",
     "file": "src/systems/healingSupply.js",
-    "old": "{ const { pile } = healingSupplyChances(); maybeAddHealingPotion",
+    "old": "{ const { pile } = healingSupplyChances(quarters); maybeAddHealingPotion",
     "new": "{ const { pile } = healingSupplyChances(4); maybeAddHealingPotion",
     "why": "the pile's hook at LOOT-EASE's whole",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
     "name": "RENOWN-LOOT-rest-from-some",
-    "file": "src/systems/restItems.js",
+    "file": "src/systems/rest/restItems.js",
     "old": "chances.map(([t, pct]) => [t, lootEased(0, pct, quarters)]);",
     "new": "chances.map(([t, pct]) => [t, lootEased(pct, pct, quarters)]);",
     "why": "the supplies flat online",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
     "name": "RENOWN-LOOT-rest-foe-hook-whole",
-    "file": "src/systems/restItems.js",
-    "old": "rollRestLoot(items, restLootChances(REST_FOE_CHANCES), rolls); });",
+    "file": "src/systems/rest/restItems.js",
+    "old": "rollRestLoot(items, restLootChances(REST_FOE_CHANCES, quarters), rolls); });",
     "new": "rollRestLoot(items, REST_FOE_CHANCES, rolls); });",
     "why": "the foe's supplies at LOOT-EASE's whole",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
     "name": "RENOWN-LOOT-rest-pile-hook-whole",
-    "file": "src/systems/restItems.js",
-    "old": "rollRestLoot(items, restLootChances(REST_PILE_CHANCES), rolls); });",
+    "file": "src/systems/rest/restItems.js",
+    "old": "rollRestLoot(items, restLootChances(REST_PILE_CHANCES, quarters), rolls); });",
     "new": "rollRestLoot(items, REST_PILE_CHANCES, rolls); });",
     "why": "the pile's supplies at LOOT-EASE's whole",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
     "name": "RENOWN-LOOT-rest-whole-shortcut",
-    "file": "src/systems/restItems.js",
+    "file": "src/systems/rest/restItems.js",
     "old": "  quarters === 4 ? chances : chances.map(",
     "new": "  chances.map(",
     "why": "a fresh table for LOOT-EASE's own (not the very table)",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   }
 ]

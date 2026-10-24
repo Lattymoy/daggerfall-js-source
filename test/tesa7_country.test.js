@@ -18,10 +18,11 @@ import { arenaPlaceId, ARENA_INDEX_BASE, isArenaPlaceId } from '../src/world/are
 import { etherPlaceId, isEtherPlaceId } from '../src/world/etherPlaces.js';
 import { LOCATION_TYPES, mapPixelToLongitudeLatitude } from '../src/formats/mapsFile.js';
 import { BANK_TYPES } from '../src/characters/nameHelper.js';
-import { TAVERNS_A, TAVERNS_B } from '../src/world/buildingNames.js';
+import { tavernsA, tavernsB } from '../src/world/buildingNames.js';
 import { srand, rand, getSeed } from '../src/formats/dfRandom.js';
-import { BAY_W, BAY_H, tamrielFrameInBay } from '../src/world/tamrielFrame.js';
+import { BAY_W, BAY_H, tamrielFrameInBay } from '../src/world/tamriel/tamrielFrame.js';
 import { countrysideOn } from '../src/scenes/shared.js';
+import { hostText } from './hostText.mjs';   // HOST-SPLIT (at the merge of main): the world host read whole - its pixel build stands in scenes/pixelBuild.js
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const T = LOCATION_TYPES;
@@ -158,7 +159,7 @@ test('TESA7 the name: the kind\'s frame round the province\'s stems on DFRandom 
   assert.equal(countryName(T.DungeonRuin, BANK_TYPES.Breton, 1), '');
   for (let s = 0; s < 40; s++) {
     const inn = countryName(T.Tavern, BANK_TYPES.Breton, s);
-    assert.ok(TAVERNS_A.some((a) => inn.startsWith(`${a} `)) && TAVERNS_B.some((b) => inn.includes(` ${b} `)) && TAVERN_KINDS.some((k) => inn.endsWith(` ${k}`)), inn);
+    assert.ok(tavernsA().some((a) => inn.startsWith(`${a} `)) && tavernsB().some((b) => inn.includes(` ${b} `)) && TAVERN_KINDS.some((k) => inn.endsWith(` ${k}`)), inn);
     const temple = countryName(T.ReligionTemple, BANK_TYPES.Nord, s).split(' ');
     assert.equal(temple.length, 4);
     assert.ok(TEMPLE_EPITHETS.includes(temple[0]) && TEMPLE_NOUNS.includes(temple[1]) && temple[2] === 'of' && TEMPLE_GODS.includes(temple[3]), temple.join(' '));
@@ -226,7 +227,7 @@ test('TESA7 the ground: the spawns\' dry-plateau law (SPAWN-SHORE), kept per pix
 
 // ── THE HOST ────────────────────────────────────────────────────
 
-const W = read('src/scenes/world.js');
+const W = hostText('src/scenes/world.js');
 const lift = (head) => { const i = W.indexOf(head); assert.ok(i > 0, head); return W.slice(i, W.indexOf('\n  }\n', i) + 4); };
 
 test('TESA7 the host: the templates and the count off the game\'s rows before they go, the land past the Bay streamed and the door open; the rates at the first ask, the Bay\'s water law; past the Bay Arena\'s place first, else the country\'s', () => {
@@ -236,13 +237,13 @@ test('TESA7 the host: the templates and the count off the game\'s rows before th
   assert.match(W, /const _countryTemplates = tamrielLand && countrysideOn\(\) \? countryTemplates\(_classicRows \?\? _hubRows\.map\(classicRow\)\.filter\(Boolean\), isMainStoryDungeon\) : null;/);
   assert.match(W, /const _countryCounts = _countryTemplates \? countryCounts\(_countryTemplates, \(x, y\) => maps\.getClimateIndex\(x, y\)\) : null;/);
   assert.ok(W.indexOf('const _countryCounts = _countryTemplates') < W.indexOf('  _classicRows = null;   // read, let go'), 'before the rows go');
-  assert.match(W, /const bayLandNow = \(\) => \(_bayLand \?\?= bayLand\(\(x, y\) => maps\.getClimateIndex\(x, y\), \(x, y, c\) => isWaterPixel\(c, woods\.getHeightMapValue\(x, y\)\)\)\);\n\s+const countryRatesNow = \(\) => \(_countryRates \?\?= countryRates\(_countryCounts, bayLandNow\(\)\)\);/);   // PIN MOVED (TESA8): the Bay's land read once for the lairs' rates too
-  assert.match(W, /const _countryGround = _countryTemplates \? createCountryGround\(woods\) : null;/);
+  assert.match(W, /const bayLandNow = \(\) => \(_pastBay\.bayLand \?\?= bayLand\(\(x, y\) => maps\.getClimateIndex\(x, y\), \(x, y, c\) => isWaterPixel\(c, host\.woods\.getHeightMapValue\(x, y\)\)\)\);\n\s+const countryRatesNow = \(\) => \(_pastBay\.countryRates \?\?= countryRates\(_countryCounts, bayLandNow\(\)\)\);/);   // PIN MOVED (TESA8): the Bay's land read once for the lairs' rates too
+  assert.match(W, /const _countryGround = _countryTemplates \? createCountryGround\(host\.woods\) : null;/);
   assert.match(W, /if \(\(_arenaTemplates \|\| _countryTemplates \|\| _capitalBase\) && !onTheBay\(px, py\)\) return capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && arenaLocationAt\(px, py\)\) \|\| countryLocationAt\(px, py\) \|\| lairLocationAt\(px, py\);/);   // PIN MOVED (TESA8): then the lair's (tesa8_lairs); PIN MOVED (TESA10): a capital first (tesa10_capitals)
   const tp = W.slice(W.indexOf('    window.__tesaPlace = (x, y) => {'), W.indexOf('    window.__arena = () => {'));
   assert.match(tp, /country: loc\?\.country \?\? null, type: loc\?\.mapTableData\?\.locationType \?\? null \};/, 'the probe reads it');
   const M = read('src/scenes/worldModes.js');
-  assert.match(M, /if \(isCountryPlaceId\(dir\.mapId\)\) return \[\];/, 'no house sold in one');
+  assert.match(M, /\|\| isCountryPlaceId\(dir\.mapId\)\) return \[\];/, 'no house sold in one');   // PIN MOVED (at the merge of main): one guard with the Veil's and Arena's
   assert.match(M, /&& !isCountryPlaceId\(homeTownOf\(b\)\) && isHouseOwned\(/, 'nor a deed read in one');
 });
 
@@ -260,12 +261,12 @@ function host({ water = new Set(), roads = new Set(), wet = new Set(), templates
     const _countryGround = (x, y) => !wet.has(x + ',' + y);
     // TESA14: the world the roll reads, as the host hands it - no road among it
     const _pastBayAt = { climateAt: (x, y) => maps.getClimateIndex(x, y), heightAt: (x, y) => woods.getHeightMapValue(x, y), ground: (x, y) => _countryGround(x, y) };
-    let _countryRoll = null;
+    const _pastBay = { countryRoll: null };   // PIN MOVED (HOST-SPLIT, at the merge of main): the place law is scenes/tamrielPlacesHost.js's, its live names through host
     const provinceKeyBeyondBay = (x) => (x < 3000 ? 'skyrim' : null), provinceNameBank = (k) => (k === 'skyrim' ? 2 : null), getNameBankOfRegion = () => 0;
     const REGION_NAMES = { 23: 'Wrothgarian Mountains' }, getWorldClimateSettings = (c) => ({ worldClimate: c });
-    let _locIndexGen = 0;
+    const host = { _locIndexGen: 0 };
     ${src}
-    return { countryLocationAt, gen: () => _locIndexGen };`);
+    return { countryLocationAt, gen: () => host._locIndexGen };`);
   return { d, ...make(d, countryStandsAt, countryName, countryNameSeed, synthesizeCountryLocation, T5, rates, water, roads, wet, templates) };
 }
 

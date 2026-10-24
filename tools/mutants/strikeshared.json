@@ -5,7 +5,7 @@
     "old": "          ...(spell ?? {}),   // STRIKE-SHARED: a strike spell's record and level (`sp`, `lv`) - the owner lands the whole spell",
     "new": "",
     "tests": [
-      "test/strikeshared.test.js"
+      "test/scenes/strikeshared.test.js"
     ],
     "note": "The hit goes without the spell: the owner lands nothing but the connect."
   },
@@ -15,7 +15,7 @@
     "old": "    if (hs) _net?.spellOnFoe?.(f, hs.spell, hs.level, peerSpellSinks(f, from), from);",
     "new": "",
     "tests": [
-      "test/strikeshared.test.js"
+      "test/scenes/strikeshared.test.js"
     ],
     "note": "The owner reads past the spell: the paralysis never reaches the real foe."
   },
@@ -25,7 +25,7 @@
     "old": "    if (!f?.puppet || f.dead || !foes.includes(f) || f.mobileType === KNIGHT_CITYWATCH_ID) return false;",
     "new": "    if (f.dead || !foes.includes(f) || f.mobileType === KNIGHT_CITYWATCH_ID) return false;",
     "tests": [
-      "test/strikeshared.test.js"
+      "test/scenes/strikeshared.test.js"
     ],
     "note": "A strike on my own foe is sent to nobody instead of landing here."
   },
@@ -35,7 +35,7 @@
     "old": "    if (!f?.puppet || f.dead || !foes.includes(f) || f.mobileType === KNIGHT_CITYWATCH_ID) return false;",
     "new": "    if (!f?.puppet || f.dead || !foes.includes(f)) return false;",
     "tests": [
-      "test/strikeshared.test.js"
+      "test/scenes/strikeshared.test.js"
     ],
     "note": "A peer's watchman takes the spell as a zero-damage blow: its damage is lost."
   },
@@ -45,7 +45,7 @@
     "old": "      if (attacker === playerEntity && spellToOwner?.(f, record, playerEntity.level ?? 1)) return;",
     "new": "",
     "tests": [
-      "test/strikeshared.test.js"
+      "test/scenes/strikeshared.test.js"
     ],
     "note": "The strike lands on the puppet copy, as before the fix."
   },
@@ -55,7 +55,7 @@
     "old": "      if (attacker === playerEntity && spellToOwner?.(f, record, playerEntity.level ?? 1)) return;",
     "new": "      if (spellToOwner?.(f, record, playerEntity.level ?? 1)) return;",
     "tests": [
-      "test/strikeshared.test.js"
+      "test/scenes/strikeshared.test.js"
     ],
     "note": "A foe's own strike is sent as the player's."
   },
@@ -65,7 +65,7 @@
     "old": "    if (r.trapAlert && !peerCaster) say(SOUL_TRAP_TEXT[r.trapAlert]);",
     "new": "    if (r.trapAlert) say(SOUL_TRAP_TEXT[r.trapAlert]);",
     "tests": [
-      "test/strikeshared.test.js"
+      "test/scenes/strikeshared.test.js"
     ],
     "note": "The owner hears 'Trap active.' for a trap that is not theirs."
   },
@@ -75,7 +75,7 @@
     "old": "      if (trap) trap.by = peerCaster;",
     "new": "",
     "tests": [
-      "test/strikeshared.test.js"
+      "test/scenes/strikeshared.test.js"
     ],
     "note": "The peer's trap reads as the owner's: the owner's gem takes the soul."
   },
@@ -85,7 +85,7 @@
     "old": "      const trap = peer || _peerTrap ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());",
     "new": "      const trap = peer ? { allowDeath: true } : attemptSoulTrap(f.entity, f.mobileType, playerEntity.items, Math.random());",
     "tests": [
-      "test/strikeshared.test.js"
+      "test/scenes/strikeshared.test.js"
     ],
     "note": "The owner's kill fills the owner's gem with the caster's soul."
   },
@@ -95,7 +95,7 @@
     "old": "      if (!onWatch && f.dead && typeof f._trapBy === 'string') { r.j = f._trapBy; r.q = f._trapQ | 0; }",
     "new": "",
     "tests": [
-      "test/strikeshared.test.js"
+      "test/scenes/strikeshared.test.js"
     ],
     "note": "The caster is never told: the soul is lost."
   },
@@ -105,7 +105,7 @@
     "old": "    if (!f._trapSent || r.j !== (_net?.selfId?.() ?? null)) return;",
     "new": "    if (r.j !== (_net?.selfId?.() ?? null)) return;",
     "tests": [
-      "test/strikeshared.test.js"
+      "test/scenes/strikeshared.test.js"
     ],
     "note": "The owner's word alone fills a gem of mine for a foe I never trapped."
   },
@@ -115,7 +115,7 @@
     "old": "  return { sp, lv: Math.min(CAST_LEVEL_MAX, Math.max(1, Math.trunc(Number(level) || 1))) };",
     "new": "  return { sp, lv: Math.max(1, Math.trunc(Number(level) || 1)) };",
     "tests": [
-      "test/strikeshared.test.js"
+      "test/scenes/strikeshared.test.js"
     ],
     "note": "A level past the wire's ceiling rides, and the owner refuses the spell whole."
   },
@@ -125,7 +125,7 @@
     "old": "    if (typeof r.j !== 'string' || !ID_RE.test(r.j) || r.d !== 1 || !Number.isInteger(r.q) || r.q < 0 || r.q > 100) return null;",
     "new": "    if (typeof r.j !== 'string' || !ID_RE.test(r.j) || !Number.isInteger(r.q) || r.q < 0 || r.q > 100) return null;",
     "tests": [
-      "test/strikeshared.test.js"
+      "test/scenes/strikeshared.test.js"
     ],
     "note": "A live foe's record may name a trapper."
   },
@@ -135,7 +135,7 @@
     "old": "    const hs = f.dead ? null : hitSpellOf(data);",
     "new": "    const hs = null;",
     "tests": [
-      "test/strikeshared.test.js"
+      "test/scenes/strikeshared.test.js"
     ],
     "note": "The dungeon host reads past a joiner's strike spell."
   },
@@ -145,7 +145,7 @@
     "old": "      spellToOwner: (f, record, level) => enchantSpellToOwner(f, record, level),   // STRIKE-SHARED: routed by membership, below",
     "new": "",
     "tests": [
-      "test/strikeshared.test.js"
+      "test/scenes/strikeshared.test.js"
     ],
     "note": "The live host's mount passes no door: every strike lands on the puppet."
   },
@@ -155,7 +155,7 @@
     "old": "    if (host === 'exterior') return exteriorFoes.spellToOwner(f, record, level, enchantFeet());",
     "new": "",
     "tests": [
-      "test/strikeshared.test.js"
+      "test/scenes/strikeshared.test.js"
     ],
     "note": "A strike on a peer's puppet above ground lands on the copy again."
   }

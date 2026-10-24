@@ -38,8 +38,8 @@ export function hasCustomLocationPosition(dfLocation) {
  * @param {object} dfLocation - MapsFile.getLocation output.
  * @param {MapsFile} mapsFile - for block-name resolution.
  * @param {BlocksFile} blocksFile - block source.
- * @param {{enhanced?:boolean}} [opts] - the caller's skin, passed to
- *   layoutRmbBlock (the mill subrecord it attaches is enhanced-only).
+ * @param {{enhanced?:boolean, windmills?:boolean}} [opts] - the caller's skin, passed to
+ *   layoutRmbBlock (the mill subrecord it attaches is enhanced-only), and the mill pack's switch (WM3).
  * @returns {{width:number,height:number,groundArchive:number,
  *   blocks:Array<{x:number,y:number,blockName:string,dfBlock:object,
  *   layout:object,originX:number,originZ:number}>}}

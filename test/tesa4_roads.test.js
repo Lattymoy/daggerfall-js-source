@@ -13,13 +13,14 @@ import {
   arenaPathsAt, layerTouches, packArenaRoads, unpackArenaRoads,
 } from '../src/world/arenaRoads.js';
 import { arenaRoadTowns } from '../src/world/arenaLocations.js';
-import { MAP_W, MAP_H, DIR, ROAD_TYPES, TRACK_TYPES } from '../src/world/roadNetwork.js';
+import { MAP_W, MAP_H, DIR, ROAD_TYPES, TRACK_TYPES } from '../src/world/road/roadNetwork.js';
 import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
 import { MAP_WIDTH, MAP_HEIGHT } from '../src/formats/woodsFile.js';
-import { generatePixelTerrain } from '../src/world/terrainGen.js';
-import { roadRoom } from '../src/world/roadVerge.js';
-import { setTamrielFit, inBay } from '../src/world/tamrielFrame.js';
-import { setTamrielTrace } from '../src/world/tamrielLand.js';
+import { generatePixelTerrain } from '../src/world/terrain/terrainGen.js';
+import { roadRoom } from '../src/world/road/roadVerge.js';
+import { setTamrielFit, inBay } from '../src/world/tamriel/tamrielFrame.js';
+import { setTamrielTrace } from '../src/world/tamriel/tamrielLand.js';
+import { hostText } from './hostText.mjs';   // HOST-SPLIT (at the merge of main): the world host read whole - its pixel build stands in scenes/pixelBuild.js
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 afterEach(() => { setArenaRoads(null); setTamrielFit(null); setTamrielTrace(null); });
@@ -148,19 +149,19 @@ function memStore(seed = new Map()) {
 const TOWNS = [{ x: 100, y: -300, type: TownCity }, { x: 400, y: -300, type: TownCity }];
 
 test('TESA4 the host: each pixel keeps the epoch its job was posted under and whether the roads past the Bay reached it; a landing marks every built pixel posted earlier that the new layer reaches - its paint as well when the layer was reset - a pixel in flight as it publishes, and the sweep builds them again (mutant: the epoch\'s capture, the stale law, the sweep) - PIN MOVED (TESA14): the hand-over is scenes/tamrielRoadsHost.js\'s (test/tesa14_roads.test.js)', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /if \(_tamrielRoads\) _tamrielRoads\.frame\(state\.current\);[^\n]*\n\s+if \(_arenaTemplates && !building\) sweepArenaPixels\(\);/, 'on the frame, building or not: the build is the workers\'');
   assert.match(w, /const arenaRoadsAt = terrainGen\.arenaRoadsEpoch;[^\n]*\n\s+const \{ [^}]*, arenaRoads \} = await terrainGen\.generate\(\{/, 'the epoch read as the job is posted');
   assert.match(w, /arenaSlot: dfLocation\?\.arena \?\? null,\n\s+arenaRoadsEpoch: arenaRoadsAt, arenaRoadsPainted: !!arenaRoads,/);
   assert.match(w, /const arenaRoadsStale = \(p, epoch, layer, reset = true\) => p\.arenaRoadsEpoch < epoch && \(\(reset && p\.arenaRoadsPainted\) \|\| layerTouches\(layer, p\.px, p\.py\)\);/, 'PIN MOVED (TESA14): a region\'s landing repaints what it reaches; a reset what any roads painted too');
-  assert.match(w, /function arenaRoadsLanded\(epoch, layer, reset = false\) \{\n\s+for \(const \[k, p\] of built\) if \(arenaRoadsStale\(p, epoch, layer, reset\)\) _arenaRoadsStale\.add\(k\);/);
+  assert.match(w, /function arenaRoadsLanded\(epoch, layer, reset = false\) \{\n\s+for \(const \[k, p\] of host\.built\) if \(arenaRoadsStale\(p, epoch, layer, reset\)\) _arenaRoadsStale\.add\(k\);/);
   assert.match(w, /if \(built\.has\(key\) && arenaRoadsStale\(built\.get\(key\), terrainGen\.arenaRoadsLanded, arenaRoadsLayer\(\)\)\) _arenaRoadsStale\.add\(key\);/, 'a pixel in flight, as it publishes');
-  const fn = w.slice(w.indexOf('  function sweepArenaRoads() {'), w.indexOf('  // LocationLoader.cs:146-151'));
-  assert.match(fn, /if \(p\) \{ again\.push\(\{ px: p\.px, py: p\.py \}\); _arenaRoadsStale\.delete\(k\); \}\n\s+else if \(!inFlight\.has\(k\)\) _arenaRoadsStale\.delete\(k\);/);
-  assert.match(fn, /for \(const k of again\) destroyPixel\(k\.px, k\.py, \{ collectLoose: false \}\);\n\s+queue\.push\(\.\.\.again\.sort\(nearestFirstFrom\(state\.current\)\)\);/);
+  const fn = w.slice(w.indexOf('  function sweepArenaRoads() {'), w.indexOf('\n  }\n', w.indexOf('  function sweepArenaRoads() {')) + 4);   // PIN MOVED (HOST-SPLIT, at the merge of main): the sweeps are scenes/tamrielSweepsHost.js's - the function's own end, read whole
+  assert.match(fn, /if \(p\) \{ again\.push\(\{ px: p\.px, py: p\.py \}\); _arenaRoadsStale\.delete\(k\); \}\n\s+else if \(!host\.inFlight\.has\(k\)\) _arenaRoadsStale\.delete\(k\);/);
+  assert.match(fn, /for \(const k of again\) destroyPixel\(k\.px, k\.py, \{ collectLoose: false \}\);\n\s+host\.queue\.push\(\.\.\.again\.sort\(nearestFirstFrom\(host\.state\.current\)\)\);/);
   assert.match(w, /if \(_arenaRoadsStale\.size && !building\) sweepArenaRoads\(\);/);
   assert.match(w, /setArenaStanding\(arenaStands\);\n\s+setArenaRoads\(null\);/, 'a mount starts with none on this thread');
   // the kernel and the verge read it off the Bay
-  assert.match(read('src/world/terrainGen.js'), /const arena = !inBay\(px, py\);/);
-  assert.match(read('src/world/roadVerge.js'), /const bits = mx >= 0 && my >= 0 && mx < MAP_W && my < MAP_H \? pathsDataPoint\(net, mx, my\) \| arenaJoinByte\(mx, my\) : arenaPathsAt\(mx, my\);/, 'PIN MOVED (TESA5): and the join on the Bay');
+  assert.match(read('src/world/terrain/terrainGen.js'), /const arena = !inBay\(px, py\);/);
+  assert.match(read('src/world/road/roadBand.js'), /const bits = mx >= 0 && my >= 0 && mx < MAP_W && my < MAP_H \? pathsDataPoint\(net, mx, my\) \| arenaJoinByte\(mx, my\) : arenaPathsAt\(mx, my\);/, 'PIN MOVED (TESA5): and the join on the Bay - PIN MOVED (JUNGLE-ROADSIDE, at the merge of main): the band is world/road/roadBand.js\'s');
 });

@@ -1,307 +1,309 @@
 [
   {
     "name": "WB8b-the-seam-unchecked",
-    "file": "src/net/gateLaw.js",
+    "file": "src/net/gate/gateLaw.js",
     "old": "      if (last && !marksApart(last, R[f])) continue;",
     "new": "      if (false) continue;",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-wrap-unchecked",
-    "file": "src/net/gateLaw.js",
+    "file": "src/net/gate/gateLaw.js",
     "old": "    if (p === rounds.length) return marksApart(last, seq[0][0]);",
     "new": "    if (p === rounds.length) return true;",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-aspects-never-turn",
-    "file": "src/net/gateLaw.js",
+    "file": "src/net/gate/gateLaw.js",
     "old": "rounds.push(m.map((t, j) => ({ a: sig[(j + s) % nA], t })));",
     "new": "rounds.push(m.map((t, j) => ({ a: sig[j % nA], t })));",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-cycle-read-a-gate-late",
-    "file": "src/net/gateLaw.js",
+    "file": "src/net/gate/gateLaw.js",
     "old": "  return c[((g % c.length) + c.length) % c.length];",
     "new": "  return c[(((g + 1) % c.length) + c.length) % c.length];",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-marks-mistold",
-    "file": "src/net/gateLaw.js",
+    "file": "src/net/gate/gateLaw.js",
     "old": "  return `${boss} comes ${aspect.epithet} tonight${said ? `, ${said}` : ''}.`;",
     "new": "  return `${boss} comes ${aspect.epithet} tonight.`;",
     "tests": [
-      "test/wb8c_gate_detail.test.js",
-      "test/wb1_gate_omen.test.js"
+      "test/net/gate/wb8c_gate_detail.test.js",
+      "test/ui/wb1_gate_omen.test.js"
     ]
   },
   {
     "name": "WB8b-a-trial-counted-twice",
-    "file": "src/net/gateMods.js",
+    "file": "src/net/gate/gateMods.js",
     "old": "if (t && !trials.includes(t)) trials.push(t);",
     "new": "if (t) trials.push(t);",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-wire-takes-two-aspects",
-    "file": "src/net/gateMods.js",
+    "file": "src/net/gate/gateMods.js",
     "old": "  if (md.filter((x) => ASPECT_BY_ID.has(x)).length > 1) return undefined;\n",
     "new": "",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-fight-born-unmarked",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "    md: validGateMods(md) ?? null,",
     "new": "    md: null,",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-state-drops-the-marks",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "    md: f.md ?? null,   // WB8b",
     "new": "    md: null,   // WB8b",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-colossal-share-unscaled",
-    "file": "src/net/gateBrain.js",
-    "old": "  const share = BOSS_TTK_S * dpsRef(level) * profileOf(f).hpX;",
-    "new": "  const share = BOSS_TTK_S * dpsRef(level);",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  const share = BOSS_TTK_S * dpsRef(level) * profileOf(f).hpX * (f.vg ? VG_SHARE_X : 1);",
+    "new": "  const share = BOSS_TTK_S * dpsRef(level) * (f.vg ? VG_SHARE_X : 1);",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
-    ]
+      "test/net/gate/wb8b_gate_marks.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
   },
   {
     "name": "WB8b-the-gap-from-the-old-body",
-    "file": "src/net/gateBrain.js",
-    "old": "  const gap = dist(pose.x, pose.z, f.pos[0], f.pos[1]) - P.bossR;",
-    "new": "  const gap = dist(pose.x, pose.z, f.pos[0], f.pos[1]) - BOSS_R;",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  const gap = dist(pose.x, pose.z, B.pos[0], B.pos[1]) - P.bossR;",
+    "new": "  const gap = dist(pose.x, pose.z, B.pos[0], B.pos[1]) - BOSS_R;",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-unyielding-blow-whole",
-    "file": "src/net/gateBrain.js",
-    "old": "  const want = d * P.hitX * (now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1);",
-    "new": "  const want = d * (now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1);",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  const want = d * P.hitX * (!H && now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1);",
+    "new": "  const want = d * (!H && now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1);",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
-    ]
+      "test/net/gate/wb8b_gate_marks.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
   },
   {
     "name": "WB8b-the-ward-counted-as-clipped",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  p.clipped += want - got;",
     "new": "  p.clipped += d - got;",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-old-ward",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "    f.shieldUntil = now + P.shieldMs;",
     "new": "    f.shieldUntil = now + SHIELD_MS;",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-grudge-forgets",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  const keep = Math.pow(1 - P.threatDecay, dt / 1000);",
     "new": "  const keep = Math.pow(1 - THREAT_DECAY, dt / 1000);",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-grudge-picks-as-ever",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  if (rng() < profileOf(f).threatPick) {",
     "new": "  if (rng() < THREAT_PICK) {",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-fed-every-beat",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "      p.fed = true;\n",
     "new": "",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-fed-past-his-whole",
-    "file": "src/net/gateBrain.js",
-    "old": "      f.hp = Math.min(f.max, f.hp + P.feed * f.max);",
-    "new": "      f.hp = f.hp + P.feed * f.max;",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "      else f.hp = Math.min(f.max, f.hp + P.feed * f.max);",
+    "new": "      else f.hp = f.hp + P.feed * f.max;",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-feeding-unsaid",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "      out.push({ k: 'fed', ns, h: Math.round(f.hp), m: Math.round(f.max), at: now });\n",
     "new": "",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-fed-and-its-hp-both",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "      f.lastHpSent = Math.round(f.hp); f.lastHpAt = now;",
     "new": "      f.lastHpAt = f.lastHpAt;",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-no-echo",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "    if (P.echo && ATTACK_BY_ID[was.a] === ATTACKS.meteor && !was.echo)",
     "new": "    if (false && ATTACK_BY_ID[was.a] === ATTACKS.meteor && !was.echo)",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-an-echo-of-an-echo",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "    if (P.echo && ATTACK_BY_ID[was.a] === ATTACKS.meteor && !was.echo)",
     "new": "    if (P.echo && ATTACK_BY_ID[was.a] === ATTACKS.meteor)",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-echo-forgets-its-fighter",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  const who = entry.who ? bodies.find((b) => b.sub === entry.who && !b.dead && f.players[b.sub]) ?? null : null;",
     "new": "  const who = null;",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-echo-on-the-dead",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  const who = entry.who ? bodies.find((b) => b.sub === entry.who && !b.dead && f.players[b.sub]) ?? null : null;",
     "new": "  const who = entry.who ? bodies.find((b) => b.sub === entry.who && f.players[b.sub]) ?? null : null;",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ],
     "equivalent": true,
     "why": "Belt and braces since WB9b: stepBrain hands beginTurn the challengers standing ALIVE in his court (`here` - the dead filtered out once, there), so the turn's own `!b.dead` never turns a lookup; an echo on the dead is killed at `here` (WB3-a-dead-target-kept's line)."
   },
   {
     "name": "WB8b-favoured-unread",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "      phase: T('favoured') && FAVOURED_PHASE[A.key] != null ? FAVOURED_PHASE[A.key] : A.phase,",
     "new": "      phase: A.phase,",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-choice-reads-the-table-phase",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  const out = CHOSEN.filter((a) => P.atk[a.key].phase <= phase &&",
     "new": "  const out = CHOSEN.filter((a) => a.phase <= phase &&",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-wrath-turned",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "    const el = A.el === 'fire' && !isDagons(A) ? aspect.el : A.el;",
     "new": "    const el = A.el === 'fire' ? aspect.el : A.el;",
     "tests": [
-      "test/wb8b_gate_marks.test.js",
-      "test/wb8c_gate_detail.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js",
+      "test/net/gate/wb8c_gate_detail.test.js"
     ]
   },
   {
     "name": "WB8b-colossal-slam-old-reach",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "      r: A === ATTACKS.slam && colossal ? colossal.slamR : A.shape === 'cone' ? A.r + BOSS_R * (size - 1) : A.r,",
     "new": "      r: A.shape === 'cone' ? A.r + BOSS_R * (size - 1) : A.r,",
     "tests": [
-      "test/wb8b_gate_marks.test.js",
-      "test/wb8c_gate_detail.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js",
+      "test/net/gate/wb8c_gate_detail.test.js"
     ]
   },
   {
     "name": "WB8b-no-scar",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "      pool: ground(A.pool ?? (scarring ? SCAR_POOLS[A.key] : null)),",
     "new": "      pool: ground(A.pool ?? null),",
     "tests": [
-      "test/wb8b_gate_marks.test.js",
-      "test/wb8c_gate_detail.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js",
+      "test/net/gate/wb8c_gate_detail.test.js"
     ]
   },
   {
     "name": "WB8b-the-ground-span-unscaled",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "Object.freeze({ r: G.r, ms: Math.round(G.ms * groundMsX), pct: G.pct * dmgX, base: G.base * dmgX })",
     "new": "Object.freeze({ r: G.r, ms: G.ms, pct: G.pct * dmgX, base: G.base * dmgX })",
     "tests": [
-      "test/wb8b_gate_marks.test.js",
-      "test/wb8c_gate_detail.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js",
+      "test/net/gate/wb8c_gate_detail.test.js"
     ]
   },
   {
     "name": "WB8b-vengeful-unread",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "      pct: A.pct * dmgX, base: (A.base ?? 0) * dmgX,",
     "new": "      pct: A.pct, base: A.base ?? 0,",
     "tests": [
-      "test/wb8b_gate_marks.test.js",
-      "test/wb8c_gate_detail.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js",
+      "test/net/gate/wb8c_gate_detail.test.js"
     ]
   },
   {
     "name": "WB8b-the-walk-to-the-old-body",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  const stop = Math.max(0, d - (profileOf(f).bossR + 1));",
     "new": "  const stop = Math.max(0, d - (BOSS_R + 1));",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-wire-takes-any-marks",
     "file": "src/net/wire.js",
-    "old": " || md === undefined) return null;",
-    "new": ") return null;",
+    "old": " || md === undefined || pt === undefined) return null;",
+    "new": " || pt === undefined) return null;",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
@@ -310,26 +312,26 @@
     "old": "{ k: 'fed', ns: m.ns.map(sanitizeName), h: m.h, m: m.m, at: m.at }",
     "new": "{ k: 'fed', ns: m.ns, h: m.h, m: m.m, at: m.at }",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-old-law-let-in",
     "file": "src/net/wire.js",
-    "old": "export const GATE_BRAIN_MIN = 5;",
-    "new": "export const GATE_BRAIN_MIN = 4;",
+    "old": "export const GATE_BRAIN_MIN = 6;",
+    "new": "export const GATE_BRAIN_MIN = 5;",
     "tests": [
-      "test/wb8b_gate_marks.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB8b-the-relay-fights-unmarked",
     "file": "server/src/index.js",
-    "old": ", gateBossOf(day).id, gateModsOf(day));   // WB8b",
-    "new": ", gateBossOf(day).id);   // WB8b",
+    "old": "boss: gateBossOf(day).id, md: gateModsOf(day), pt: gatePortentsOf(day), ti: gateTitheOf(day) });   // WB8b",
+    "new": "boss: gateBossOf(day).id, pt: gatePortentsOf(day), ti: gateTitheOf(day) });   // WB8b",
     "tests": [
-      "test/wb8b_gate_marks.test.js",
-      "test/wb8c_gate_detail.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js",
+      "test/net/gate/wb8c_gate_detail.test.js"
     ]
   }
 ]

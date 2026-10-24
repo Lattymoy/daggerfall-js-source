@@ -1,0 +1,296 @@
+[
+  {
+    "name": "STALL-SHAPE-counter-low",
+    "file": "src/world/townStandIns.js",
+    "old": "z: Object.freeze([-1.792, 1.708]), top: 1.388 }),",
+    "new": "z: Object.freeze([-1.792, 1.708]), top: 1.0 }),",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "the counter at the stand-in's old 0.75 m - the author's goods 0.3 m over it"
+  },
+  {
+    "name": "STALL-SHAPE-counter-narrow",
+    "file": "src/world/townStandIns.js",
+    "old": "counter: Object.freeze({ x: Object.freeze([-1.07, 0.4]),",
+    "new": "counter: Object.freeze({ x: Object.freeze([-0.25, 0.4]),",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "the counter the stand-in's old 0.6 m deep at the front's foot - the goods laid behind it on nothing"
+  },
+  {
+    "name": "STALL-SHAPE-the-bench-back",
+    "file": "src/world/townStandIns.js",
+    "old": "  if (!open) block(STALL_WOOD, F.counter.x, [0, F.counter.top], F.counter.z);",
+    "new": "  if (!open) block(STALL_WOOD, F.counter.x, [0, F.counter.top], F.counter.z);\n  block(STALL_WOOD, [-2.65, -1.85], [0, 0.7], [-2.28, 2.2]);",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "the bench of goods at the back again, where the stall-keeper stands"
+  },
+  {
+    "name": "STALL-SHAPE-every-stall-a-counter",
+    "file": "src/world/townStandIns.js",
+    "old": "() => stall(cloth, Number(id) >= RMBRP_STALL_OPEN_FIRST)",
+    "new": "() => stall(cloth, false)",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "the second mesh given the first's counter and frame - over the goods its author laid on the ground"
+  },
+  {
+    "name": "STALL-SHAPE-the-open-stall-a-counter",
+    "file": "src/world/townStandIns.js",
+    "old": "  if (!open) block(STALL_WOOD, F.counter.x",
+    "new": "  if (open || !open) block(STALL_WOOD, F.counter.x",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "the second mesh in its own frame but given a counter"
+  },
+  {
+    "name": "STALL-SHAPE-the-open-frame-unshifted",
+    "file": "src/world/townStandIns.js",
+    "old": "export const RMBRP_STALL_OPEN_SHIFT = Object.freeze([-0.2, 0.206, 0.066]);",
+    "new": "export const RMBRP_STALL_OPEN_SHIFT = Object.freeze([0, 0, 0]);",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "the second mesh in the first's frame - 0.2 m forward of where its author's goods and keepers stand by it"
+  },
+  {
+    "name": "STALL-SHAPE-the-open-posts-off-the-ground",
+    "file": "src/world/townStandIns.js",
+    "old": "    block(STALL_WOOD, F.back.map(X), [0, Y(F.tops[0])], side.map(Z));",
+    "new": "    block(STALL_WOOD, F.back.map(X), [Y(0), Y(F.tops[0])], side.map(Z));",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "the second mesh's back posts shifted up with it, off the ground under its origin"
+  },
+  {
+    "name": "STALL-SHAPE-the-front-posts-low",
+    "file": "src/world/townStandIns.js",
+    "old": "tops: Object.freeze([4.4, 3.638]),",
+    "new": "tops: Object.freeze([4.4, 2.5]),",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "the front posts at the stand-in's old 1.88 m"
+  },
+  {
+    "name": "STALL-SHAPE-the-lintel-low",
+    "file": "src/world/townStandIns.js",
+    "old": "lintel: Object.freeze([3.01, 3.388]), valance: 0.5,",
+    "new": "lintel: Object.freeze([2.45, 3.388]), valance: 0.5,",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "the lintel down to the stand-in's old awning edge, 1.84 m"
+  },
+  {
+    "name": "STALL-SHAPE-the-valance-deep",
+    "file": "src/world/townStandIns.js",
+    "old": "lintel: Object.freeze([3.01, 3.388]), valance: 0.5,",
+    "new": "lintel: Object.freeze([3.01, 3.388]), valance: 1.2,",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "the cloth hung to a stall-keeper's chest"
+  },
+  {
+    "name": "STALL-SHAPE-the-awning-low",
+    "file": "src/world/townStandIns.js",
+    "old": "Y(F.beam[1]), Y(F.lintel[1])], run = Math.hypot(fx - bx, fy - by);",
+    "new": "Y(F.beam[1]), Y(F.lintel[0])], run = Math.hypot(fx - bx, fy - by);",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "the awning laid to the lintel's underside, its fringe at 1.88 m"
+  },
+  {
+    "name": "YARD-RESEAT-the-moment",
+    "file": "tools/yardReseat.mjs",
+    "old": "export const YARD_RESEAT_AT = 1792111405;",
+    "new": "export const YARD_RESEAT_AT = 1792111405 - 86400;",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "a day early: the pieces placed by WD3's stand-ins that day re-seated from TEMPLE-STEPS' boxes"
+  },
+  {
+    "name": "YARD-RESEAT-the-stall-left-small",
+    "file": "tools/yardReseat.mjs",
+    "old": "export const STALL_K = 0.75;",
+    "new": "export const STALL_K = 1;",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "a stall placed by WD3's stand-in left a quarter smaller than its owner placed it"
+  },
+  {
+    "name": "YARD-RESEAT-the-wd3-stall-box",
+    "file": "tools/yardReseat.mjs",
+    "old": "export const STALL_BOX_WD3 = Object.freeze([-0.4, 0, -2.4, 2.75, 4.4, 2.45]);",
+    "new": "export const STALL_BOX_WD3 = Object.freeze([-2.75, 0, -2.48, 0.4, 4.4, 2.4]);",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "a stall placed by WD3's stand-in read as if TEMPLE-STEPS' origin had been its - left in the wall"
+  },
+  {
+    "name": "YARD-RESEAT-the-turn-backwards",
+    "file": "tools/yardReseat.mjs",
+    "old": "return { scale: s2, d: [c * lx + s * lz, scale * was[1] - s2 * now[1], -s * lx + c * lz] };",
+    "new": "return { scale: s2, d: [c * lx - s * lz, scale * was[1] - s2 * now[1], s * lx + c * lz] };",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "the law turned the other way - a turned piece moved the wrong way round"
+  },
+  {
+    "name": "YARD-RESEAT-the-foot-forgotten",
+    "file": "tools/yardReseat.mjs",
+    "old": "return { scale: s2, d: [c * lx + s * lz, scale * was[1] - s2 * now[1], -s * lx + c * lz] };",
+    "new": "return { scale: s2, d: [c * lx + s * lz, 0, -s * lx + c * lz] };",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "a boulder's foot left where its new box's would sink it"
+  },
+  {
+    "name": "YARD-RESEAT-sql-integer-scale",
+    "file": "server-account/migrations/0121_yard_reseat.sql",
+    "old": "ROUND(CAST(s AS REAL) / k, 3)",
+    "new": "ROUND(s / k, 3)",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "SQLite's integer division: a boulder placed at 1 over its 2 at the law's least, never its half"
+  },
+  {
+    "name": "YARD-RESEAT-sql-twice",
+    "file": "server-account/migrations/0121_yard_reseat.sql",
+    "old": "WHERE yard = 1 AND json_valid(place) AND (CASE WHEN json_valid(place) THEN json_extract(place, '$.reseat') END) IS NULL",
+    "new": "WHERE yard = 1 AND json_valid(place)",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "a second run moves every piece again"
+  },
+  {
+    "name": "YARD-RESEAT-sql-rooms-asked",
+    "file": "server-account/migrations/0121_yard_reseat.sql",
+    "old": "WHERE yard = 1 AND json_valid(place) AND",
+    "new": "WHERE json_valid(place) AND",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "a room's piece of a stall's model moved as a yard's"
+  },
+  {
+    "name": "YARD-RESEAT-sql-broken-row-read",
+    "file": "server-account/migrations/0121_yard_reseat.sql",
+    "old": "WHERE yard = 1 AND json_valid(place) AND",
+    "new": "WHERE yard = 1 AND",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "a place that is not JSON read - json_extract throws and fails the deploy's migration step"
+  },
+  {
+    "name": "YARD-RESEAT-sql-sine-sign",
+    "file": "server-account/migrations/0121_yard_reseat.sql",
+    "old": "z - sn * dx + c * dz",
+    "new": "z + sn * dx + c * dz",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "a turned piece's z moved the wrong way round"
+  },
+  {
+    "name": "YARD-RESEAT-sql-cosine-short",
+    "file": "server-account/migrations/0121_yard_reseat.sql",
+    "old": "(1 - r2 / 2 * (1 - r2 / 12 * (1 - r2 / 30 * (1 - r2 / 56 * (1 - r2 / 90 * (1 - r2 / 132 * (1 - r2 / 182 * (1 - r2 / 240 * (1 - r2 / 306 * 1))))))))) AS c",
+    "new": "(1 - r2 / 2 * (1 - r2 / 12 * 1)) AS c",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "the cosine's series cut at r^4 - a half turn's off by a metre a metre"
+  },
+  {
+    "name": "YARD-RESEAT-sql-the-least-scale",
+    "file": "server-account/migrations/0121_yard_reseat.sql",
+    "old": "MIN(4, MAX(0.25, ROUND(CAST(s AS REAL) / k, 3)))",
+    "new": "MIN(4, ROUND(CAST(s AS REAL) / k, 3))",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "a rock of 8 placed at 1 written at an eighth - under the law's least, never served again"
+  },
+  {
+    "name": "YARD-RESEAT-sql-the-era",
+    "file": "server-account/migrations/0121_yard_reseat.sql",
+    "old": "FROM f WHERE f.model = home_decor.model AND f.before = (home_decor.placed_at < 1792111405)))))",
+    "new": "FROM f WHERE f.model = home_decor.model AND f.before = 1))))",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ],
+    "note": "every piece read as WD3's: TEMPLE-STEPS' own open stall moved 2.35 m"
+  },
+  {
+    "name": "YARD-RESEAT-AUDIT-sunk-past-the-bound",
+    "file": "tools/yardReseat.mjs",
+    "old": "round(clamp(place.pos[1] + d[1], -B, DECOR_YARD_HIGH), 3)",
+    "new": "round(Math.min(DECOR_YARD_HIGH, place.pos[1] + d[1]), 3)",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ]
+  },
+  {
+    "name": "YARD-RESEAT-AUDIT-sql-sunk-past-the-bound",
+    "file": "server-account/migrations/0121_yard_reseat.sql",
+    "old": "'$.pos[1]', ROUND(MIN(4, MAX(-48, y + dy)), 3),",
+    "new": "'$.pos[1]', ROUND(MIN(4, y + dy), 3),",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ]
+  },
+  {
+    "name": "YARD-RESEAT-AUDIT-restore-writes-the-snapshot",
+    "file": "tools/realmRestore.mjs",
+    "old": "          sql.push(insert('home_decor', back.row));",
+    "new": "          sql.push(insert('home_decor', p));",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ]
+  },
+  {
+    "name": "YARD-RESEAT-AUDIT-restore-marked-twice",
+    "file": "tools/yardReseat.mjs",
+    "old": "place.reseat != null || !Array.isArray(place.pos)",
+    "new": "!Array.isArray(place.pos)",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ]
+  },
+  {
+    "name": "YARD-RESEAT-AUDIT-restore-rooms-too",
+    "file": "tools/yardReseat.mjs",
+    "old": "  if (row.yard !== 1) return kept;\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ]
+  },
+  {
+    "name": "YARD-RESEAT-AUDIT-restore-since-moved",
+    "file": "tools/yardReseat.mjs",
+    "old": "  if (!before) return { row, reseated: false, unsure: true };\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1016b_stallshape.test.js"
+    ]
+  }
+]

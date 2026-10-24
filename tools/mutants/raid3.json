@@ -1,200 +1,200 @@
 [
   {
     "name": "RAID3-window-slack-early",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "return g >= w.st - RAID_SLACK_MINUTES && g <",
     "new": "return g >= w.st && g <",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-window-slack-late",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "g < w.st + RAID_WINDOW_MINUTES + RAID_SLACK_MINUTES;",
     "new": "g < w.st + RAID_WINDOW_MINUTES;",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-start-another-day",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "if (w.st < first || w.st > first + RAID_START_LAST) return false;",
     "new": "if (w.st > first + RAID_START_LAST) return false;",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-start-last-off-by-one",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "w.st > first + RAID_START_LAST) return false;",
     "new": "w.st > first + RAID_START_LAST + 1) return false;",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-cap-gone",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "Math.min(w.n - rec.n, raidCap(led, nowMs) - led.n, led.tg - led.n)",
     "new": "Math.min(w.n - rec.n, led.tg - led.n)",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-burst-off",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "export const RAID_KILLS_BURST = 3;",
     "new": "export const RAID_KILLS_BURST = 4;",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-rate-doubled",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "Math.floor(Math.max(0, nowMs - led.first) / RAID_KILL_MS)",
     "new": "Math.floor(Math.max(0, nowMs - led.first) / (RAID_KILL_MS / 2))",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-share-unremembered",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "    rec.n += credited;\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-target-overrun",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "Math.min(w.n - rec.n, raidCap(led, nowMs) - led.n, led.tg - led.n)",
     "new": "Math.min(w.n - rec.n, raidCap(led, nowMs) - led.n)",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-strike-forgotten",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "if (w.s === 1) rec.s = 1;",
     "new": "rec.s = w.s === 1 ? 1 : 0;",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-ledger-unbounded",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "    if (Object.keys(led.a).length >= RAID_ACCOUNTS_MAX) return { credited: 0, known: false };\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-counts-after-cleanse",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "  if (led.cl) return { credited: 0, known: !!led.a[acct] };\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-earned-strike-not-asked",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "r.s === 1 && atMs - r.last <= RAID_PRESENT_MS",
     "new": "atMs - r.last <= RAID_PRESENT_MS",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-earned-presence-not-asked",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "r.s === 1 && atMs - r.last <= RAID_PRESENT_MS",
     "new": "r.s === 1",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-present-window-off-by-one",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": "r.s === 1 && atMs - r.last <= RAID_PRESENT_MS",
     "new": "r.s === 1 && atMs - r.last < RAID_PRESENT_MS",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-top-order-reversed",
-    "file": "src/net/raidLaw.js",
+    "file": "src/net/raid/raidLaw.js",
     "old": ".sort(([, a], [, b]) => b.n - a.n ||",
     "new": ".sort(([, a], [, b]) => a.n - b.n ||",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-receipt-version-not-read",
-    "file": "src/net/raidReceipt.js",
+    "file": "src/net/raid/raidReceipt.js",
     "old": "  if (v !== RAID_RECEIPT_V) return { ok: false, why: 'version' };\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-receipt-foreign-claims",
-    "file": "src/net/raidReceipt.js",
+    "file": "src/net/raid/raidReceipt.js",
     "old": "  if (c.n !== undefined || c.k !== undefined || c.t !== undefined || c.o !== undefined || c.d !== undefined || c.b !== undefined) return false;\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-receipt-expiry-ignored",
-    "file": "src/net/raidReceipt.js",
+    "file": "src/net/raid/raidReceipt.js",
     "old": "  if (nowS >= claims.e) return { ok: false, why: 'expired' };\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-receipt-future-ignored",
-    "file": "src/net/raidReceipt.js",
+    "file": "src/net/raid/raidReceipt.js",
     "old": "  if (claims.i > nowS + skewS) return { ok: false, why: 'future' };\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-receipt-unsigned-verified",
-    "file": "src/net/raidReceipt.js",
+    "file": "src/net/raid/raidReceipt.js",
     "old": "  if (!sig64) return { ok: false, why: 'unsigned' };\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
     "name": "RAID3-receipt-ttl-unbounded",
-    "file": "src/net/raidReceipt.js",
+    "file": "src/net/raid/raidReceipt.js",
     "old": "if (c.e <= c.i || c.e - c.i > RAID_RECEIPT_TTL_S) return false;",
     "new": "if (c.e <= c.i) return false;",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "if (!intIn(m.tg, RAID_TARGET_MIN, RAID_TARGET_MAX) || !intIn(m.ty, 0, RAID_TYPES - 1)) return null;",
     "new": "if (!intIn(m.tg, 0, RAID_TARGET_MAX) || !intIn(m.ty, 0, RAID_TYPES - 1)) return null;",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "!intIn(m.n, 0, RAID_WORD_KILLS_MAX)) return null;",
     "new": "!intIn(m.n, 0, RAID_WORD_KILLS_MAX + 1)) return null;",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "  if (m.s !== undefined && m.s !== 0 && m.s !== 1) return null;\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "!intIn(m.tg, RAID_TARGET_MIN, RAID_TARGET_MAX) || !intIn(m.n, 0, m.tg)) return null;",
     "new": "!intIn(m.tg, RAID_TARGET_MIN, RAID_TARGET_MAX) || !intIn(m.n, 0, RAID_TARGET_MAX)) return null;",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "m.r.length <= RAID_RECEIPT_WIRE_MAX && RAID_RECEIPT_RE.test(m.r)",
     "new": "m.r.length <= RAID_RECEIPT_WIRE_MAX",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -248,8 +248,8 @@
     "old": "export const RAID_RELAY_MIN = 123;",
     "new": "export const RAID_RELAY_MIN = 124;",
     "tests": [
-      "test/raid3_raidLedger.test.js",
-      "test/relayversion.test.js"
+      "test/net/raid3_raidLedger.test.js",
+      "test/net/relayversion.test.js"
     ]
   },
   {
@@ -258,7 +258,7 @@
     "old": "        if (l.length >= RAID_CLEANS_MAX) break;\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -267,7 +267,7 @@
     "old": "    if (!hasHello) return { error: 'raid before hello' };\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -276,7 +276,7 @@
     "old": "    if (worldRoom(m.px, m.py) !== a.key) { this._junk(ws); return; }\n    if (!raidWordSane(m)) { this._junk(ws); return; }",
     "new": "    if (!raidWordSane(m)) { this._junk(ws); return; }",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -285,7 +285,7 @@
     "old": "    const here = px === m.px && py === m.py;",
     "new": "    const here = true;",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -294,7 +294,7 @@
     "old": "    if (!raidWordFits(m, sharedClassicMinutes(now))) return;   // outside its raid's time: nothing read, kept or said",
     "new": "    if (false) return;",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -303,7 +303,7 @@
     "old": "      led = newRaidLedger(m, now, acct);",
     "new": "      led = newRaidLedger({ ...m, tg: 25 }, now, acct);",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -312,7 +312,7 @@
     "old": "    if (credited > 0) this._raidFan(raidLedgerState(led));\n",
     "new": "    if (credited > 0) this._send(ws, JSON.stringify({ t: 'raid', ...raidLedgerState(led) }));\n",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -321,7 +321,7 @@
     "old": "    else this._send(ws, JSON.stringify({ t: 'raid', ...raidLedgerState(led) }));\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -330,7 +330,7 @@
     "old": "    if (fresh || credited > 0 || struck || (known && now - (this._raidSavedAt.get(id) ?? 0) >= RAID_SAVE_MS)) await this._raidSave(led, now);",
     "new": "    if (false) await this._raidSave(led, now);",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -339,7 +339,7 @@
     "old": "      led.cl = { at: now, top: raidTop(earned), n: earned.length };\n      await this._raidSave(led, now);\n",
     "new": "      led.cl = { at: now, top: raidTop(earned), n: earned.length };\n",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -348,7 +348,7 @@
     "old": "      if (!b.id || typeof b.sub !== 'string' || !led.rc[b.sub]) continue;",
     "new": "      if (!b.id || typeof b.sub !== 'string') continue;",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -357,7 +357,7 @@
     "old": "    if (r) this._send(ws, JSON.stringify({ t: 'raid', k: 'rc', r }));\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -366,7 +366,7 @@
     "old": "    for (const [sub, { ws }] of newest) this._send(ws, JSON.stringify({ t: 'raid', k: 'rc', r: led.rc[sub] }));\n    await this._raidTellHubOnce(led, now);\n",
     "new": "    for (const [sub, { ws }] of newest) this._send(ws, JSON.stringify({ t: 'raid', k: 'rc', r: led.rc[sub] }));\n",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -375,7 +375,7 @@
     "old": "    if (list.some((e) => e[0] === cl.key && e[2] === cl.g)) return json({ ok: true });   // told again: the cell missed the answer, not news\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -384,7 +384,7 @@
     "old": "    { try { const l = await this._raidCleansOf(now); if (l.length) this._send(ws, JSON.stringify({ t: 'raid', k: 'cls', l })); } catch (e) { console.warn('[hub] raid word failed', e?.message ?? e); } }\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ],
     "note": "SCALE5c (re-aimed by content): the hub hello words moved into _hubHelloWords"
   },
@@ -394,7 +394,7 @@
     "old": "(raidDayOfKey(e[0]) ?? -1) >= today - 1",
     "new": "(raidDayOfKey(e[0]) ?? -1) >= today - 3",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -403,7 +403,7 @@
     "old": "      if (led.cl && !led.told) await this._raidTellHubOnce(led, now);\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -412,7 +412,7 @@
     "old": "${RAID_INTERNAL_CLEAN}`, { method: 'POST', body: JSON.stringify(body), signal: AbortSignal.timeout(ROOM_CALL_MS) })); return !!res?.ok; }",
     "new": "${RAID_INTERNAL_CLEAN}`, { method: 'POST', body: JSON.stringify(body), signal: AbortSignal.timeout(ROOM_CALL_MS) })); return true; }",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -421,7 +421,7 @@
     "old": "!Number.isSafeInteger(led.st) || now >= this._raidEndsAt(led)) {",
     "new": "!Number.isSafeInteger(led.st)) {",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -430,7 +430,7 @@
     "old": "    if (live.length < RAID_LEDGERS_MAX) return true;",
     "new": "    if (true) return true;",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -439,7 +439,7 @@
     "old": "    const v = await this.state.storage.get(raidLedgerKey(id));\n",
     "new": "    const v = null;\n",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -448,7 +448,7 @@
     "old": "    await this._raidArm(led.cl && !led.told ? now + RAID_TELL_RETRY_MS : this._raidEndsAt(led));\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -457,7 +457,7 @@
     "old": "      if (!this._spend(ws, now, raidGate, 'raidBucket', 'raidDrops', 'too many raid frames')) return;\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -466,7 +466,7 @@
     "old": "    if (!(cell === this.room ? this.raidOk : halo?.raidOk)) return false;",
     "new": "    if (!(cell === this.room ? true : halo?.raidOk)) return false;",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -475,8 +475,8 @@
     "old": "    if (!(cell === this.room ? this.raidOk : halo?.raidOk)) return false;\n    const ws = cell === this.room ? (this.status === 'open' ? this._ws : null) : (halo?.status === 'open' ? halo.ws : null);",
     "new": "    if (!(cell === this.room ? this.raidOk : halo?.raidOk)) return false;\n    const ws = this.status === 'open' ? this._ws : null;",
     "tests": [
-      "test/raid3_raidLedger.test.js",
-      "test/auditraid.test.js"
+      "test/net/raid3_raidLedger.test.js",
+      "test/net/auditraid.test.js"
     ]
   },
   {
@@ -485,7 +485,7 @@
     "old": "      if (r && (r.k === 'cl' || r.k === 'rc' ? isCellRoom(room) || isSocialRoom(room) : r.k === 'cls' || r.k === 'tw' ? isSocialRoom(room) : isCellRoom(room))) this._deliver('raid', () => this.onRaid?.(r, room));",
     "new": "      if (r) this._deliver('raid', () => this.onRaid?.(r, room));",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -494,7 +494,7 @@
     "old": "    const gate = raidGate(this._raidBucket, this._now());\n    if (!gate.pass) return false;\n",
     "new": "    const gate = raidGate(this._raidBucket, this._now());\n",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -503,7 +503,7 @@
     "old": "      if (primary) this.raidOk = relaySupportsRaid(relayV);   // RAID3\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -512,7 +512,7 @@
     "old": "  if (relay && said) sayToRelay(said);\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -521,7 +521,7 @@
     "old": "  if (_lastWord && _lastWord.key === key && _lastWord.n === n && _lastWord.s === s && t - _lastWord.at < RAID_WORD_MS) return false;\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -530,7 +530,7 @@
     "old": "  if (!host().sendRaid?.(word, worldRoom(raid.px, raid.py))) return false;\n",
     "new": "  host().sendRaid?.(word, worldRoom(raid.px, raid.py));\n",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -539,7 +539,7 @@
     "old": "    if (!raidRelayOn() && raidKillTotal(raid) >= raid.attackAmount) cleanse(raid);",
     "new": "    if (raidKillTotal(raid) >= raid.attackAmount) cleanse(raid);",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -548,7 +548,7 @@
     "old": "  for (const r of state.raids) if (!relay && raidActive(r, now)",
     "new": "  for (const r of state.raids) if (raidActive(r, now)",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -557,7 +557,7 @@
     "old": "  const who = defendedLine(top, n);",
     "new": "  const who = '';",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -566,7 +566,7 @@
     "old": "said: (typeof room === 'string' && isCellRoom(room)) || inRegion,",
     "new": "said: true,",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -575,7 +575,7 @@
     "old": "if (r && !r.cleansed) cleanse(r, { said: false }); }",
     "new": "if (r && !r.cleansed) cleanse(r); }",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -584,7 +584,7 @@
     "old": "    if (f.c > 0 && !raid.cleansed) cleanse(raid);",
     "new": "    if (false) cleanse(raid);",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -593,7 +593,7 @@
     "old": "    if (!c || _receipts.get(c.w) === f.r) return false;",
     "new": "    if (!c) return false;",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -602,7 +602,7 @@
     "old": "    while (_receipts.size > RAID_RECEIPTS_KEPT) _receipts.delete(_receipts.keys().next().value);\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -611,7 +611,7 @@
     "old": "    if (!raid) return false;   // a raid this machine does not hold (its list is the day's roll - AUDIT RAID R1: its tuple too) is not its to keep\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -620,7 +620,7 @@
     "old": "export const raidRelayOn = () => sharedClockOn() && !!host().relayRaids?.();",
     "new": "export const raidRelayOn = () => sharedClockOn();",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -629,7 +629,7 @@
     "old": "    relayRaids: () => !!online?.raidOk,",
     "new": "    relayRaids: () => false,",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -638,7 +638,7 @@
     "old": "      if (tab.room === SOCIAL_ROOM) link.onRaid = (f, room) => (f.k === 'tw' ? offerRaidTowns(link, f.h) : raidRelayWord(f, room));   // RAID3: the hub's word of a cleanse anywhere, and the day's at my hello; RAID-ROLL: its ask for the towns table\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -647,7 +647,7 @@
     "old": "    if (this._raidCleaning.has(id)) return;   // its cleanse is being minted: said in a moment, to everyone\n",
     "new": "",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   },
   {
@@ -656,7 +656,7 @@
     "old": "    if (raidCleansed(led) && !led.cl) { await this._raidClean(led, now); return; }",
     "new": "    if (credited > 0 && raidCleansed(led) && !led.cl) { await this._raidClean(led, now); return; }",
     "tests": [
-      "test/raid3_raidLedger.test.js"
+      "test/net/raid3_raidLedger.test.js"
     ]
   }
 ]

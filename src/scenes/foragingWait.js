@@ -12,7 +12,7 @@
 //                    record - `{ seconds, label, held }` - so the
 //                    seconds left and the boxes held behind them ride
 //                    the save, and a reload reopens the page with them
-//                    (systems/save.js ENTITY_FIELDS)
+//                    (systems/save/save.js ENTITY_FIELDS)
 //   showOverlay(w) - the slot; overlayActive() - whether a window
 //                    holds it (the tool's result box, the pack)
 //   enemiesNear()  - the rest test, the host's (duel included)

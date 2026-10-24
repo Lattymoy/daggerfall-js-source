@@ -155,7 +155,7 @@
   },
   {
     "name": "TESA12-windhelm-inland",
-    "file": "src/world/tamrielGeography.js",
+    "file": "src/world/tamriel/tamrielGeography.js",
     "old": "{ name: 'Windhelm', province: 'Skyrim', at: [186, 26], port: true }",
     "new": "{ name: 'Windhelm', province: 'Skyrim', at: [186, 26] }",
     "tests": [

@@ -1,0 +1,122 @@
+[
+  {
+    "name": "DUEL-RING-never-drawn",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      if (R) duelRing(R, t);",
+    "new": "",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_duelring.test.js"
+    ],
+    "why": "the bug: the ring keeps the motor and nothing draws it"
+  },
+  {
+    "name": "DUEL-RING-band-shut",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "Math.max(0, R[2] - EG_DUEL_RING_HALF_M), R[2] + EG_DUEL_RING_HALF_M)",
+    "new": "Math.max(0, R[2] + EG_DUEL_RING_HALF_M), R[2] + EG_DUEL_RING_HALF_M)",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_duelring.test.js"
+    ],
+    "why": "a ring of no width - nothing on the floor"
+  },
+  {
+    "name": "DUEL-RING-not-on-the-plan",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    sh.since = (t % 60_000) / 1000; sh.span = 1; sh.after = -1; sh.court = 0;\n    _shapes.push(sh);\n  }\n  /** FB1018D WINCH-PLATES",
+    "new": "    sh.since = (t % 60_000) / 1000; sh.span = 1; sh.after = -1; sh.court = 0; sh.alpha = 0;\n    _shapes.push(sh);\n  }\n  /** FB1018D WINCH-PLATES",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_duelring.test.js"
+    ],
+    "why": "a shape the floor plan never draws (no alpha)"
+  },
+  {
+    "name": "DUEL-RING-open-duel-unsaid",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "...(open ? { t: EG_DUEL_OPEN } : {})",
+    "new": "...{}",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_duelring.test.js"
+    ],
+    "why": "a company of one told a ring of fire rises where none does"
+  },
+  {
+    "name": "DUEL-RING-lines-swapped",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "(w === EG_DUEL_OPEN ? t('eg.say.duelOpen',",
+    "new": "(w !== EG_DUEL_OPEN ? t('eg.say.duelOpen',",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_duelring.test.js"
+    ],
+    "why": "the ring's line said to the open duel and the open duel's to the ring"
+  },
+  {
+    "name": "DUEL-RING-open-end-unsaid",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "...(ch.r > 0 ? {} : { t: EG_DUEL_OPEN })",
+    "new": "...{}",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_duelring.test.js"
+    ],
+    "why": "a company of one told the ring falls where none stood"
+  },
+  {
+    "name": "DUEL-RING-ends-swapped",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "(w === EG_DUEL_OPEN ? t('eg.say.duelUnmet',",
+    "new": "(w !== EG_DUEL_OPEN ? t('eg.say.duelUnmet',",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_duelring.test.js"
+    ],
+    "why": "the ring's end said to the open duel and the open duel's to the ring"
+  },
+  {
+    "name": "DUEL-RING-fall-says-unmet",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  if (fell && !(ch.r > 0)) return;",
+    "new": "  if (false) return;",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_duelring.test.js"
+    ],
+    "why": "AUDIT FB1018D L3-1: a company of one that kills the Armsmaster mid-duel told its open duel went unmet"
+  },
+  {
+    "name": "DUEL-RING-end-by-braziers",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "...(ch.r > 0 ? {} : { t: EG_DUEL_OPEN })",
+    "new": "...(ch.need > 0 ? {} : { t: EG_DUEL_OPEN })",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ],
+    "why": "AUDIT FB1018D L3-M1: Garoth's ring - no braziers, a ring of 6 - told at its end as an open duel"
+  },
+  {
+    "name": "DUEL-RING-open-by-braziers",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "...(open ? { t: EG_DUEL_OPEN } : {})",
+    "new": "...(need === 0 ? { t: EG_DUEL_OPEN } : {})",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ],
+    "why": "AUDIT FB1018D L3-M1: Garoth's ring, which rises, told as the open duel no ring rises for"
+  },
+  {
+    "name": "DUEL-RING-witness-unseen",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      if (R) duelRing(R, t);",
+    "new": "      if (R && f) duelRing(R, t);",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_duelring.test.js"
+    ],
+    "why": "AUDIT FB1018D L3-M2: a member with no feet in the fight (watching, fallen) never sees the ring the others stand in"
+  },
+  {
+    "name": "DUEL-RING-band-a-metre",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "export const EG_DUEL_RING_HALF_M = 0.5;",
+    "new": "export const EG_DUEL_RING_HALF_M = 1;",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_duelring.test.js"
+    ],
+    "why": "AUDIT FB1018D L5-9a: the band doubled - read against the constant alone, any width passed"
+  }
+]

@@ -5,8 +5,8 @@
     "old": "k < steps; k++) normalizeReputations(entity, entity.factionRep ?? null, { recoveryOnly: true });",
     "new": "k < steps; k++) normalizeReputations(entity, entity.factionRep ?? null);",
     "tests": [
-      "test/auditdisc28_time.test.js",
-      "test/disc28_fatigue.test.js"
+      "test/systems/auditdisc28_time.test.js",
+      "test/systems/disc28_fatigue.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "    else if (v > 0 && !recoveryOnly) player.legalRep[key] = v - 1;",
     "new": "    else if (v > 0) player.legalRep[key] = v - 1;",
     "tests": [
-      "test/auditdisc28_time.test.js",
-      "test/disc28_fatigue.test.js"
+      "test/systems/auditdisc28_time.test.js",
+      "test/systems/disc28_fatigue.test.js"
     ]
   },
   {
@@ -25,7 +25,7 @@
     "old": "    else if (f.rep > 0 && !recoveryOnly) changeReputation(store, f.id, -1);",
     "new": "    else if (f.rep > 0) changeReputation(store, f.id, -1);",
     "tests": [
-      "test/auditdisc28_time.test.js"
+      "test/systems/auditdisc28_time.test.js"
     ]
   },
   {
@@ -34,8 +34,8 @@
     "old": "      normalizeReputations(entity, entity.factionRep ?? null);",
     "new": "      normalizeReputations(entity, entity.factionRep ?? null, { recoveryOnly: true });",
     "tests": [
-      "test/auditdisc28_time.test.js",
-      "test/audit23_hosts.test.js"
+      "test/systems/auditdisc28_time.test.js",
+      "test/systems/audit23_hosts.test.js"
     ]
   },
   {
@@ -44,7 +44,7 @@
     "old": "  entity.preventEnemySpawns = true;   // AUDIT DISC28 TM-2: every host's encounter loop reads it and lowers it - raised on every rise\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_time.test.js"
+      "test/systems/auditdisc28_time.test.js"
     ]
   },
   {
@@ -53,7 +53,7 @@
     "old": "    runDayChange({ entity, lastMinutes: s, nowMinutes: e, rolls, say, arms: DAY_ARMS.world });   // AUDIT DISC28 TM-3: the day block first, as Update orders it\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_time.test.js"
+      "test/systems/auditdisc28_time.test.js"
     ]
   },
   {
@@ -62,7 +62,7 @@
     "old": "    runDayChange({ entity, lastMinutes: s, nowMinutes: e, rolls, say, arms: DAY_ARMS.world });   // AUDIT DISC28 TM-3: the day block first, as Update orders it\n    runCalendarArms(entity, s, e, { rolls, arms: DAY_ARMS.world });   // AUDIT DISC28 TM-3: then the per-minute loop's world arms",
     "new": "    runCalendarArms(entity, s, e, { rolls, arms: DAY_ARMS.world });   // AUDIT DISC28 TM-3: then the per-minute loop's world arms\n    runDayChange({ entity, lastMinutes: s, nowMinutes: e, rolls, say, arms: DAY_ARMS.world });   // AUDIT DISC28 TM-3: the day block first, as Update orders it",
     "tests": [
-      "test/auditdisc28_time.test.js"
+      "test/systems/auditdisc28_time.test.js"
     ]
   },
   {
@@ -71,7 +71,7 @@
     "old": "  if (_sharedClock) _sharedLastTick = nowMinutes;\n  entity.preventEnemySpawns = true;",
     "new": "  if (_sharedClock) { _sharedLastTick = nowMinutes; advanceOwnMinutes(now - last); }\n  entity.preventEnemySpawns = true;",
     "tests": [
-      "test/auditdisc28_time.test.js"
+      "test/systems/auditdisc28_time.test.js"
     ]
   },
   {
@@ -80,7 +80,7 @@
     "old": "  if (_sharedClock) _sharedLastTick = nowMinutes;\n  entity.preventEnemySpawns = true;",
     "new": "  entity.preventEnemySpawns = true;",
     "tests": [
-      "test/auditdisc28_time.test.js"
+      "test/systems/auditdisc28_time.test.js"
     ]
   },
   {
@@ -89,7 +89,7 @@
     "old": "  if (_sharedClock) _sharedLastTick = nowMinutes;\n",
     "new": "",
     "tests": [
-      "test/auditdisc28_time.test.js"
+      "test/systems/auditdisc28_time.test.js"
     ]
   }
 ]

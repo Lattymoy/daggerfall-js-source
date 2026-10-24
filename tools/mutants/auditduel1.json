@@ -5,7 +5,7 @@
     "old": "WHERE EXISTS (SELECT 1 FROM players WHERE id = ?1 AND handle IS NOT NULL)",
     "new": "WHERE EXISTS (SELECT 1 FROM players WHERE id = ?1)",
     "tests": [
-      "test/duel_record.test.js"
+      "test/server/duel_record.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "       AND EXISTS (SELECT 1 FROM players WHERE id = ?2 AND handle IS NOT NULL)",
     "new": "       AND EXISTS (SELECT 1 FROM players WHERE id = ?2)",
     "tests": [
-      "test/duel_record.test.js"
+      "test/server/duel_record.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "AND at > ?3 - ?5) < ?7`,",
     "new": "AND at > ?3 - ?5) < ?7 + 1000`,",
     "tests": [
-      "test/duel_record.test.js"
+      "test/server/duel_record.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  return Math.min(d, Math.max(1, top) * DUEL_WEAR_MULT);",
     "new": "  return d;",
     "tests": [
-      "test/auditduel1.test.js"
+      "test/combat/auditduel1.test.js"
     ]
   },
   {
@@ -41,43 +41,43 @@
     "old": "  return Math.min(d, Math.max(1, top) * DUEL_WEAR_MULT);",
     "new": "  return Math.min(d, Math.max(1, top));",
     "tests": [
-      "test/auditduel1.test.js"
+      "test/combat/auditduel1.test.js"
     ]
   },
   {
     "name": "AUDIT-DUEL1-A3-every-stranger-answered",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "          if (busy) { if (!engagedElsewhere(from)) answer(",
     "new": "          if (busy) { if (true) answer(",
     "tests": [
-      "test/auditduel1.test.js"
+      "test/combat/auditduel1.test.js"
     ]
   },
   {
     "name": "AUDIT-DUEL1-A3-the-limiter-per-frame",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "    if (t - (answered.get(peer) ?? -Infinity) < DUEL_REASK_MS) return false;\n",
     "new": "",
     "tests": [
-      "test/auditduel1.test.js"
+      "test/combat/auditduel1.test.js"
     ]
   },
   {
     "name": "AUDIT-DUEL1-A5-the-cancel-without-its-quiet",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "incoming.delete(from); quiet.set(from, now()); if (d.why",
     "new": "incoming.delete(from); if (d.why",
     "tests": [
-      "test/auditduel1.test.js"
+      "test/combat/auditduel1.test.js"
     ]
   },
   {
     "name": "AUDIT-DUEL1-D5-a-gone-peers-ask-kept",
-    "file": "src/net/duelSession.js",
+    "file": "src/net/duel/duelSession.js",
     "old": "      for (const p of [...incoming.keys()]) if (!reaches(p)) mgr.peerGone(p);\n",
     "new": "",
     "tests": [
-      "test/auditduel1.test.js"
+      "test/combat/auditduel1.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      if (duelCast && amt > 0) amt = Math.min(amt, Math.max(0, liveStat(target, stat) - 1));",
     "new": "      if (!duelCast && amt > 0) amt = Math.min(amt, Math.max(0, liveStat(target, stat) - 1));",
     "tests": [
-      "test/auditduel1.test.js"
+      "test/combat/auditduel1.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "      if (duelCast && amt > 0) amt = Math.min(amt, Math.max(0, liveStat(target, stat) - 1));",
     "new": "",
     "tests": [
-      "test/auditduel1.test.js"
+      "test/combat/auditduel1.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "sinks.drainFatigue(n * FATIGUE_MULTIPLIER, a);",
     "new": "sinks.drainFatigue(n * FATIGUE_MULTIPLIER);",
     "tests": [
-      "test/auditduel1.test.js"
+      "test/combat/auditduel1.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "sinks.drainFatigue(n * FATIGUE_MULTIPLIER, duelCast ? DUEL_SOURCE : undefined);",
     "new": "sinks.drainFatigue(n * FATIGUE_MULTIPLIER);",
     "tests": [
-      "test/auditduel1.test.js"
+      "test/combat/auditduel1.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      if (a?.bundleDuel) n = Math.min(n, Math.max(0, (entity.fatigue ?? 0) - 1));",
     "new": "",
     "tests": [
-      "test/auditduel1.test.js"
+      "test/combat/auditduel1.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  if (melee) return mines.some((m) => {",
     "new": "  if (melee) return [mines.at(-1)].some((m) => {",
     "tests": [
-      "test/auditduel1.test.js"
+      "test/combat/auditduel1.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  const slack = melee ? DUEL_MELEE_POS_SLACK_M : DUEL_POS_SLACK_M;",
     "new": "  const slack = DUEL_POS_SLACK_M;",
     "tests": [
-      "test/auditduel1.test.js"
+      "test/combat/auditduel1.test.js"
     ]
   },
   {
@@ -149,8 +149,8 @@
     "old": "    const to = clampToRing(this.pos, c, a.radius, CAPSULE_RADIUS);",
     "new": "    const to = clampToRing(this.pos, c, a.radius * 2, CAPSULE_RADIUS);",
     "tests": [
-      "test/auditduel1.test.js",
-      "test/duel_wall.test.js"
+      "test/combat/auditduel1.test.js",
+      "test/player/duel_wall.test.js"
     ]
   },
   {
@@ -159,16 +159,16 @@
     "old": "    if (host.duelHolds?.()) return false;\n",
     "new": "",
     "tests": [
-      "test/auditduel1.test.js"
+      "test/combat/auditduel1.test.js"
     ]
   },
   {
     "name": "AUDIT-DUEL1-B4-the-save-keeps-the-duels",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "  snap.activeEffects = (entity.activeEffects ?? []).filter((a) => !a.heldItem && !a.bundleDuel)",
     "new": "  snap.activeEffects = (entity.activeEffects ?? []).filter((a) => !a.heldItem)",
     "tests": [
-      "test/auditduel1.test.js"
+      "test/combat/auditduel1.test.js"
     ]
   },
   {
@@ -177,8 +177,8 @@
     "old": "    if (online && isCellRoom(online.room) && (duelMgr.live?.s ?? null) !== _duelRingSaid) _foesFullAt = -Infinity;",
     "new": "    if ((duelMgr.live?.s ?? null) !== _duelRingSaid) _foesFullAt = -Infinity;",
     "tests": [
-      "test/auditduel1.test.js",
-      "test/duel_wall.test.js"
+      "test/combat/auditduel1.test.js",
+      "test/player/duel_wall.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "    try { duelLeaveNow(); } catch { /* no duel was built: nothing to end */ }\n",
     "new": "",
     "tests": [
-      "test/auditduel1.test.js"
+      "test/combat/auditduel1.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "controller: !!pad?.controller",
     "new": "controller: false",
     "tests": [
-      "test/disc21.test.js"
+      "test/systems/disc21.test.js"
     ]
   }
 ]

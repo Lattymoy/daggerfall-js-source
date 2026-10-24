@@ -3,7 +3,7 @@
 //
 // The bundle is a UnityFS archive and the assembly rides in it as a
 // TextAsset whose bytes start with the PE magic (`MZ`). The port's own
-// reader (`src/formats/unityBundle.js`) opens it; nothing else is
+// reader (`src/formats/unity/unityBundle.js`) opens it; nothing else is
 // needed. The second half of the recipe - reading the IL - is
 // `tools/ilDump.py` (dnfile + dncil; `monodis` segfaults on this one).
 //
@@ -17,7 +17,7 @@
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readUnityBundle } from '../src/formats/unityBundle.js';
+import { readUnityBundle } from '../src/formats/unity/unityBundle.js';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const [src, outDir = join(root, 'vendor/eye-of-the-beholder')] = process.argv.slice(2);

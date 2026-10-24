@@ -5,7 +5,7 @@
     "old": "for (let i = 0; i < data.length; i++) data[i] = applyDyeToIndex(bitmap.data[i], dye, target);",
     "new": "for (let i = 0; i < data.length; i++) data[i] = bitmap.data[i];",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const data = new Uint8Array(bitmap.data.length);\n  for (let i = 0; i < data.length; i++) data[i] = applyDyeToIndex",
     "new": "  const data = bitmap.data;\n  for (let i = 0; i < data.length; i++) data[i] = applyDyeToIndex",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "if (!bitmap?.data || target == null || dye == null || dye === '') return bitmap;",
     "new": "if (!bitmap?.data || target == null || dyeToken(dye) === '') return bitmap;",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
@@ -32,34 +32,34 @@
     "old": "if (!bitmap?.data || target == null || dye == null || dye === '') return bitmap;",
     "new": "if (!bitmap?.data || dye == null || dye === '') return bitmap;",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
     "name": "DYE-ICON-the-artifact-dyed",
-    "file": "src/systems/itemDye.js",
+    "file": "src/systems/item/itemDye.js",
     "old": "if ((item.group === 'Weapons' || item.group === 'Armor') && !item.artifact) return DYE_TARGETS.WeaponsAndArmor;",
     "new": "if (item.group === 'Weapons' || item.group === 'Armor') return DYE_TARGETS.WeaponsAndArmor;",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
     "name": "DYE-ICON-the-clothing-on-the-metal-table",
-    "file": "src/systems/itemDye.js",
+    "file": "src/systems/item/itemDye.js",
     "old": "if (item.group === 'MensClothing' || item.group === 'WomensClothing') return DYE_TARGETS.Clothing;",
     "new": "if (item.group === 'MensClothing' || item.group === 'WomensClothing') return DYE_TARGETS.WeaponsAndArmor;",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
     "name": "DYE-ICON-the-image-without-it",
-    "file": "src/systems/itemTemplates.js",
+    "file": "src/systems/item/itemTemplates.js",
     "old": "  if (t.kitDye && Number.isFinite(_kitDye?.(item))) return { archive, record, dye: _kitDye(item), dyeTarget: DYE_TARGETS.WeaponsAndArmor };\n  return { archive, record, dye: itemDyeColor(item), dyeTarget: itemDyeTarget(item) };",
     "new": "  if (t.kitDye && Number.isFinite(_kitDye?.(item))) return { archive, record, dye: _kitDye(item), dyeTarget: DYE_TARGETS.WeaponsAndArmor };\n  return { archive, record, dye: itemDyeColor(item) };",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "t.getColor32(dyed ? changeDyeBitmap(masked, dye, dyeTarget) : masked, opaque ? -1 : 0);",
     "new": "t.getColor32(masked, opaque ? -1 : 0);",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": ": dyed ? `#ui_dye${dye}_${dyeTarget}` : '#ui') : undefined;",
     "new": ": '#ui') : undefined;",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "const dyed = mips === false && !swap && dyeTarget != null && dye != null && dye !== '';",
     "new": "const dyed = mips === false && !swap && dyeTarget != null && token !== '';",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "(swap && token ? `#ui_${token}` : dyed ? `#ui_dye${dye}_${dyeTarget}` : '#ui')",
     "new": "((swap || dyed) && token ? `#ui_${token}` : '#ui')",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "const bmp = changeDyeBitmap(changeMask(got.file.getDFBitmap(record, 0)), dye, dyeTarget);",
     "new": "const bmp = changeMask(got.file.getDFBitmap(record, 0));",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
@@ -113,52 +113,52 @@
     "old": "_${scale}${token ? `_${token}` : ''}${dyed ? `_t${dyeTarget}d${dye}` : ''}`;",
     "new": "_${scale}${token ? `_${token}` : ''}`;",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
     "name": "DYE-ICON-the-enhanced-door-asking-undyed",
-    "file": "src/ui/enhancedArt.js",
+    "file": "src/ui/enhanced/enhancedArt.js",
     "old": "{ scale: 2, dye: img.dye, dyeTarget: img.dyeTarget }",
     "new": "{ scale: 2, dye: img.dye }",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
     "name": "DYE-ICON-the-list-warm-key-by-name-alone",
-    "file": "src/ui/itemScroller.js",
+    "file": "src/ui/item/itemScroller.js",
     "old": "${img.dyeTarget != null ? `_t${img.dyeTarget}d${img.dye}` : ''}`;",
     "new": "`;",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
     "name": "DYE-ICON-the-list-asking-undyed",
-    "file": "src/ui/nativeInventory.js",
+    "file": "src/ui/native/nativeInventory.js",
     "old": "{ mips: false, removeMask: true, dye: img.dye, dyeTarget: img.dyeTarget }",
     "new": "{ mips: false, removeMask: true, dye: img.dye }",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
     "name": "MOUNT-LAZY-the-preload-dropped",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "    await preloadTextureRecord(a, r, 0, 'Albedo', dye);\n",
     "new": "",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   },
   {
     "name": "MOUNT-LAZY-the-dye-dropped-from-the-preload",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "await preloadTextureRecord(a, r, 0, 'Albedo', dye);",
     "new": "await preloadTextureRecord(a, r, 0, 'Albedo');",
     "tests": [
-      "test/dyeicon.test.js"
+      "test/systems/item/dyeicon.test.js"
     ]
   }
 ]

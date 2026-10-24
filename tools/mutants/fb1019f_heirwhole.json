@@ -1,0 +1,117 @@
+[
+  {
+    "name": "HEIR-WHOLE-the-door-never-asks-the-remains",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "  const questHere = (site) => !site.isHold && (openerQuestOf(machine(), site) != null || remainsHere(site).length > 0);",
+    "new": "  const questHere = (site) => !site.isHold && openerQuestOf(machine(), site) != null;",
+    "tests": ["test/systems/legacy/fb1019f_heirwhole.test.js"]
+  },
+  {
+    "name": "HEIR-WHOLE-the-world-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    remains: () => legacyHost?.remainsWhere() ?? [] });",
+    "new": "    remains: () => [] });",
+    "tests": ["test/systems/legacy/fb1019f_heirwhole.test.js"]
+  },
+  {
+    "name": "HEIR-WHOLE-no-epoch",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "(questInstanceEpoch(openerQuestOf(machine(), site)) ?? await remainsInstanceEpoch(remainsHere(site)[0]))",
+    "new": "(questInstanceEpoch(openerQuestOf(machine(), site)))",
+    "tests": ["test/systems/legacy/fb1019f_heirwhole.test.js"]
+  },
+  {
+    "name": "HEIR-WHOLE-the-remains-before-the-quest",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "(questInstanceEpoch(openerQuestOf(machine(), site)) ?? await remainsInstanceEpoch(remainsHere(site)[0]))",
+    "new": "(await remainsInstanceEpoch(remainsHere(site)[0]) ?? questInstanceEpoch(openerQuestOf(machine(), site)))",
+    "tests": ["test/systems/legacy/fb1019f_heirwhole.test.js"]
+  },
+  {
+    "name": "HEIR-WHOLE-the-epoch-not-the-line's",
+    "file": "src/systems/instancePlaces.js",
+    "old": "digest(`instance:epoch:${row.line}:${row.id}:remains`",
+    "new": "digest(`instance:epoch:${row.id}:remains`",
+    "tests": ["test/systems/legacy/fb1019f_heirwhole.test.js"]
+  },
+  {
+    "name": "HEIR-WHOLE-the-epoch-not-the-row's",
+    "file": "src/systems/instancePlaces.js",
+    "old": "digest(`instance:epoch:${row.line}:${row.id}:remains`",
+    "new": "digest(`instance:epoch:${row.line}:remains`",
+    "tests": ["test/systems/legacy/fb1019f_heirwhole.test.js"]
+  },
+  {
+    "name": "HEIR-WHOLE-a-room-with-no-line",
+    "file": "src/systems/instancePlaces.js",
+    "old": "  return row?.line && row.id ? digest(",
+    "new": "  return row ? digest(",
+    "tests": ["test/systems/legacy/fb1019f_heirwhole.test.js"]
+  },
+  {
+    "name": "HEIR-WHOLE-the-line-unsaid",
+    "file": "src/scenes/legacyHost.js",
+    "old": "map((r) => ({ line: family.id, id: r.id, place: r.place }));",
+    "new": "map((r) => ({ line: family.surname, id: r.id, place: r.place }));",
+    "tests": ["test/systems/legacy/fb1019f_heirwhole.test.js"]
+  },
+  {
+    "name": "HEIR-WHOLE-a-taken-row-offered",
+    "file": "src/scenes/legacyHost.js",
+    "old": "  const remainsWhere = () => remainsLying().map(",
+    "new": "  const remainsWhere = () => (family?.remains ?? []).map(",
+    "tests": ["test/systems/legacy/fb1019f_heirwhole.test.js"]
+  },
+  {
+    "name": "HEIR-WHOLE-the-room-not-kept",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "questsAtSite(machine(), site).some((q) => q.instanceEpoch === inst.epoch) || (await remainsEpochs(site)).includes(inst.epoch);",
+    "new": "questsAtSite(machine(), site).some((q) => q.instanceEpoch === inst.epoch);",
+    "tests": ["test/systems/legacy/fb1019f_heirwhole.test.js"]
+  },
+  {
+    "name": "HEIR-WHOLE-every-size-offered",
+    "file": "src/systems/instancePlaces.js",
+    "old": "  return (rows ?? []).filter((r) => r?.place?.dungeon?.size === 'full' && r.place.mapId === site.mapId);",
+    "new": "  return (rows ?? []).filter((r) => r?.place?.dungeon?.size !== 'small' && r.place.mapId === site.mapId);",
+    "tests": ["test/systems/legacy/fb1019f_heirwhole.test.js"]
+  },
+  {
+    "name": "HEIR-WHOLE-a-whole-public-room-offered",
+    "file": "src/systems/instancePlaces.js",
+    "old": "  if (site?.relaid !== true) return [];\n  return (rows ?? [])",
+    "new": "  return (rows ?? [])",
+    "tests": ["test/systems/legacy/fb1019f_heirwhole.test.js"]
+  },
+  {
+    "name": "HEIR-WHOLE-any-dungeon-offered",
+    "file": "src/systems/instancePlaces.js",
+    "old": "  return (rows ?? []).filter((r) => r?.place?.dungeon?.size === 'full' && r.place.mapId === site.mapId);",
+    "new": "  return (rows ?? []).filter((r) => r?.place?.dungeon?.size === 'full');",
+    "tests": ["test/systems/legacy/fb1019f_heirwhole.test.js"]
+  },
+  {
+    "name": "AUDIT-FB1019f-B1-the-drawn-size",
+    "file": "src/world/smallerDungeons.js",
+    "old": "  return size !== 'full' && laidAnew(dfLocation, SIZE_THRESHOLD[size]) ? size : 'full';",
+    "new": "  return size;",
+    "tests": ["test/systems/legacy/fb1019f_heirwhole.test.js", "test/systems/quest/instances3_door.test.js"],
+    "why": "the finding: a site re-laid where the world only draws it smaller - a public room built whole offered an instance, its line false"
+  },
+  {
+    "name": "AUDIT-FB1019f-B1-the-thresholds-swapped",
+    "file": "src/world/smallerDungeons.js",
+    "old": "const SIZE_THRESHOLD = Object.freeze({ small: SMALLER_DUNGEON_THRESHOLD, medium: MEDIUM_DUNGEON_THRESHOLD });",
+    "new": "const SIZE_THRESHOLD = Object.freeze({ small: MEDIUM_DUNGEON_THRESHOLD, medium: SMALLER_DUNGEON_THRESHOLD });",
+    "tests": ["test/systems/legacy/fb1019f_heirwhole.test.js"],
+    "why": "a six-block dungeon drawn small called whole, an eight-block one drawn medium called re-laid"
+  },
+  {
+    "name": "AUDIT-FB1019f-B1-the-threshold-off-by-one",
+    "file": "src/world/smallerDungeons.js",
+    "old": "laidAnew(dfLocation, SIZE_THRESHOLD[size]) ? size",
+    "new": "laidAnew(dfLocation, SIZE_THRESHOLD[size] - 1) ? size",
+    "tests": ["test/systems/legacy/fb1019f_heirwhole.test.js"],
+    "why": "the plus and the eight-block shape, built whole, called re-laid"
+  }
+]

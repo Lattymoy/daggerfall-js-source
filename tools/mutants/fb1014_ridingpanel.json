@@ -1,0 +1,65 @@
+[
+  {
+    "name": "HUD-SADDLE-no-piece",
+    "file": "src/ui/hud/hudLayout.js",
+    "old": "  { id: 'saddle', sel: '.saddlepanel .saddlepanel-bar', get name() { return t('menu.hud.piece.saddle', 'Riding panel'); }, ghost: 'saddle' },\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/fb1014_ridingpanel.test.js"
+    ]
+  },
+  {
+    "name": "HUD-SADDLE-the-builds-placing-dropped",
+    "file": "src/ui/enhanced/enhancedSaddle.js",
+    "old": "    placeHudPieces(doc);   // HUD-SADDLE:",
+    "new": "    // HUD-SADDLE:",
+    "tests": [
+      "test/ui/enhanced/fb1014_ridingpanel.test.js"
+    ]
+  },
+  {
+    "name": "HUD-SADDLE-no-ghost",
+    "file": "src/ui/hud/hudLayout.js",
+    "old": "  } else if (kind === 'saddle') {\n    try { g = ghostDeps.buildSaddlePreview?.(doc) ?? null; }",
+    "new": "  } else if (kind === 'saddle-none') {\n    try { g = ghostDeps.buildSaddlePreview?.(doc) ?? null; }",
+    "tests": [
+      "test/ui/enhanced/fb1014_ridingpanel.test.js"
+    ]
+  },
+  {
+    "name": "HUD-SADDLE-the-stand-in-read-as-a-real-panel",
+    "file": "src/ui/hud/hudLayout.js",
+    "old": "const ghostOf = (n) => (n?.hasAttribute?.('data-hm-ghost') ? n : n?.closest?.('[data-hm-ghost]') ?? null);",
+    "new": "const ghostOf = (n) => (n?.hasAttribute?.('data-hm-ghost') ? n : null);",
+    "tests": [
+      "test/ui/enhanced/fb1014_ridingpanel.test.js"
+    ]
+  },
+  {
+    "name": "HUD-SADDLE-the-preview-mounted-as-the-live-panel",
+    "file": "src/ui/enhanced/enhancedSaddle.js",
+    "old": "  const p = build(doc);\n  paintSaddle(doc, p, {},",
+    "new": "  const p = build(doc); p.root.id = ENHANCED_SADDLE_ID;\n  paintSaddle(doc, p, {},",
+    "tests": [
+      "test/ui/enhanced/fb1014_ridingpanel.test.js"
+    ]
+  },
+  {
+    "name": "HUD-SADDLE-the-preview-never-a-fingers",
+    "file": "src/ui/enhanced/enhancedSaddle.js",
+    "old": "touch: isTouchDevice(doc.defaultView ?? globalThis.window), mouseFree: true",
+    "new": "touch: false, mouseFree: true",
+    "tests": [
+      "test/ui/enhanced/fb1014_ridingpanel.test.js"
+    ]
+  },
+  {
+    "name": "HUD-SADDLE-the-X-saving-nothing",
+    "file": "src/ui/hud/hudLayout.js",
+    "old": "if (mode === 'off') { const nx = { ...o, off: !o.off }; paint(node, nx); saveLayout(id, nx); return; }",
+    "new": "if (mode === 'off') { const nx = { ...o, off: !o.off }; paint(node, nx); return; }",
+    "tests": [
+      "test/ui/enhanced/fb1014_ridingpanel.test.js"
+    ]
+  }
+]

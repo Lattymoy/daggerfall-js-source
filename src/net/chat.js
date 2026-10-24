@@ -25,8 +25,10 @@
 // rAF's mixed in); the relay's own `at` rides each line for display.
 //
 // Not a DFU member: Daggerfall Unity has no chat. Ledger A row (ONLINE).
-import { CHAT_WORLD_ROOM } from './wire.js';
+import { CHAT_WORLD_ROOM, CHAT_TRADE_ROOM, CHAT_LFG_ROOM } from './wire.js';
 import { validRoll, rollText } from './dice.js';   // DICE1: a roll's line is the dice's own words
+import { t } from '../systems/textManager.js';   // CHAT-TRADE: the new tabs' and notices' words in the player's language, each read when it is shown
+import { REPORT_PICK_AGE_MS, REPORT_LINES_MAX } from './safety/safetyLaw.js';   // AUDIT SAFE CLIENT-5: what a report may carry, from the law's home
 
 /** The tabs, in bar order. A tab is {id, label, room, link, hint}.
  *
@@ -53,13 +55,25 @@ import { validRoll, rollText } from './dice.js';   // DICE1: a roll's line is th
 /** @type {ReadonlyArray<ChatTabRow>} */
 export const CHAT_TABS = Object.freeze([
   Object.freeze({ id: 'world', label: 'World', room: CHAT_WORLD_ROOM, link: true, hint: 'Everyone online' }),
-  Object.freeze({ id: 'region', label: 'Region', room: null, link: true, hint: 'Everyone in the region you stand in' }),
-  Object.freeze({ id: 'party', label: 'Party', room: null, link: false, hint: 'Your party alone', hidden: true, peekAll: true }),
+  Object.freeze({ id: 'region', label: 'Region', room: null, link: true, hint: 'Everyone in your region' }),
+  // CHAT-LANG (2026-10-11, the players: "More chat channels per-language"): the Region tab's shape - a room of its own
+  // (net/wire.js chatLangRoom), its channel the language the player CHOSE (`chatLang`; /lang), and on the bar only while
+  // one is chosen
+  Object.freeze({ id: 'lang', label: 'Lang', room: null, link: true, hint: 'Everyone in your language channel. /lang picks one.', hidden: true }),
+  // CHAT-TRADE (2026-10-14, Mac: "New channels: Trading, LFG" - "without introducing clutter"): the Language tab's shape
+  // twice - a room of its own each (net/wire.js CHAT_TRADE_ROOM, CHAT_LFG_ROOM), on the bar only while the player has
+  // JOINED it (`chatTrade`, `chatLfg`; /join, /leave), so a player who never joins sees no new tab and holds no new socket
+  // (each hint a getter, read when the log is made - after the player chose a language - never at the boot's import)
+  Object.freeze({ id: 'trade', label: 'Trade', room: null, link: true, get hint() { return t('net.chat.tradeHint', 'Everyone in the Trade channel: buying, selling and swapping'); }, hidden: true }),
+  Object.freeze({ id: 'lfg', label: 'LFG', room: null, link: true, get hint() { return t('net.chat.lfgHint', 'Everyone in the LFG channel: looking for a group or more players'); }, hidden: true }),
+  Object.freeze({ id: 'party', label: 'Party', room: null, link: false, hint: 'Only your party', hidden: true, peekAll: true }),
   // GUILD1c (Mac: "Do guild1c" - the guild's chat): the Party tab's shape - its lines ride the hub's link with
   // `ch: 'guild'` and reach the guild's members online alone, and the tab is on the bar while the character is in one
-  Object.freeze({ id: 'guild', label: 'Guild', room: null, link: false, hint: 'Your guild alone', hidden: true, peekAll: true }),
-  Object.freeze({ id: 'local', label: 'Local', room: null, link: false, hint: 'Those near enough to hear you - speak in character here, and put an aside out of character in (( ))' }),
+  Object.freeze({ id: 'guild', label: 'Guild', room: null, link: false, hint: 'Only your guild', hidden: true, peekAll: true }),
+  Object.freeze({ id: 'local', label: 'Local', room: null, link: false, hint: 'Players near enough to hear you. Speak in character here, and put out-of-character remarks in (( )).' }),
 ]);
+/** STAFF-PANEL5-FREEZE: the word on a line's Copy button (a line's `copy`, ChatLog._line). */
+export const copyText = () => t('net.chat.copy', 'Copy');
 /** CHAT-CHAN: how long the player must stand in another region before the Region tab moves to its channel, ms - a
  *  walk along a border is not a churn of sockets. The first region is joined at once. */
 export const CHAT_REGION_HOLD_MS = 5000;
@@ -81,13 +95,46 @@ export const CHAN_OLD_RELAY_TEXT = 'This channel needs the server\'s next update
 export const ROLL_OLD_RELAY_TEXT = 'Dice need the server\'s next update.';
 /** EMOTE1: an action said to a relay from before them (EMOTE_RELAY_MIN) - it would say the words bare. */
 export const EMOTE_OLD_RELAY_TEXT = 'Actions need the server\'s next update.';
+/** CHAT-LANG: the Language tab on a relay from before the language channels (LANG_RELAY_MIN). */
+export const LANG_OLD_RELAY_TEXT = 'Language channels need the server\'s next update.';
+/** CHAT-LANG: the Language tab's word while no language is chosen. */
+export const NO_LANG_TEXT = 'Choose a language channel: /lang de, /lang en ... (/lang lists them).';
+/** CHAT-LANG: the Language tab's line when it moves - which channel it is now. */
+export const langJoinedText = (name) => `Language channel: ${name}.`;
+/** CHAT-TRADE: the channels a player joins and leaves by choice - each its tab id, its name, the pref that keeps the
+ *  choice and its room. */
+export const OPT_CHANNELS = Object.freeze({
+  trade: Object.freeze({ name: 'Trade', pref: 'chatTrade', room: CHAT_TRADE_ROOM }),
+  lfg: Object.freeze({ name: 'LFG', pref: 'chatLfg', room: CHAT_LFG_ROOM }),
+});
+/** CHAT-TRADE: the words below, each through the text core when it is said (L10N4) - `name` the channel's, `id` its tab's. */
+const optArgs = (id) => ({ name: OPT_CHANNELS[id]?.name ?? id, id });
+/** CHAT-TRADE: the Trade and LFG tabs on a relay from before them (TRADE_CHAN_RELAY_MIN). */
+export const tradeChanOldText = () => t('net.chat.tradeOld', 'The Trade and LFG channels need the server\'s next update.');
+/** CHAT-TRADE: a tab's word while its channel is not joined - and how to join it. */
+export const notJoinedText = (id) => t('net.chat.notJoined', 'You are not in the {name} channel. /join {id} joins it.', optArgs(id));
+/** CHAT-TRADE: the lines a join and a leave leave on the log - and a join a line said to the channel made, whose line
+ *  waits in the field. */
+export const optJoinedText = (id) => t('net.chat.joined', '{name} channel joined. /leave {id} leaves it.', optArgs(id));
+export const optJoinedSayText = (id) => t('net.chat.joinedSay', '{name} channel joined. Press Enter to speak. /leave {id} leaves it.', optArgs(id));
+export const optLeftText = (id) => t('net.chat.left', '{name} channel left.', optArgs(id));
+/** CHAT-TRADE: `/join` of a channel already joined (AUDIT CHAT-TRADE A5: the join's own line read as a join just made). */
+export const alreadyJoinedText = (id) => t('net.chat.already', 'You are already in the {name} channel. /leave {id} leaves it.', optArgs(id));
+/** CHAT-TRADE: a line said to a channel joined but not open yet (the World link's welcome not heard, the socket opening). */
+export const optWaitText = (id) => t('net.chat.wait', 'The {name} channel is still opening. Try again in a moment.', optArgs(id));
+/** PING1 (2026-10-11, the players: "A unique color or alert for @name pings"): does `text` name `name` with an @ - the
+ *  whole name, any case, not run on into more of a word ("@Bran" pings Bran, "@Brandon" does not). A name of one letter
+ *  or none pings nobody. */
+export function mentions(text, name) {
+  const n = String(name ?? '').trim();
+  if (n.length < 2) return false;
+  const esc = n.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  return new RegExp(`(^|[^\\p{L}\\p{N}_])@${esc}(?![\\p{L}\\p{N}_])`, 'iu').test(String(text ?? ''));
+}
 /** GUILD1c: the Guild tab on a relay from before the guild's channel - the World link's welcome said so. */
 export const GUILD_OLD_RELAY_TEXT = 'The guild channel needs the server\'s next update.';
 /** GUILD1c: the Guild tab's word while the character is in no guild. */
 export const NO_GUILD_TEXT = 'You are not in a guild.';
-/** AUDIT FB1007b H5: the Local tab's word in a place no one shares - the tutorial dungeon, every character's own
- *  (HOLD-SOLO): the line went nowhere, silently, and the strip said nothing. */
-export const SOLO_LOCAL_TEXT = 'Nobody can hear you here: Privateer\'s Hold is yours alone.';
 /** CHAT-CHAN: how far a Local line carries, scene units - the distance a peer's NAME is drawn at (net/remotePlayers.js
  *  NAME_RANGE; a pin holds them equal): whoever you can read over a head can hear you, and nobody further. */
 export const CHAT_SAY_RANGE = 60;
@@ -95,6 +142,15 @@ export const CHAT_SAY_RANGE = 60;
 export const isOocText = (text) => /^\(\(/.test(String(text ?? '').trim());
 /** CHAT-CHAN: `/ooc text`'s line - the text in the mark. */
 export const oocText = (text) => `((${String(text ?? '').trim()}))`;
+/** CHAT-RP (2026-10-14, Mac: "/rp Italicizes and makes text color green. For roleplay purposes"): a line wrapped in
+ *  single asterisks is ROLEPLAY - OOC's kind of mark, the speaker's own, read off their text and never off a field, so
+ *  no relay has to carry it and an older client still reads the line as the tabletop writes it: `*draws her blade*`.
+ *  The whole line: an asterisk at each end, and just inside the last something that is neither one nor a space
+ *  (`**bold**` and `* *` are not roleplay). */
+export const isRpText = (text) => /^\*[\s\S]*[^*\s]\*$/.test(String(text ?? '').trim());
+/** CHAT-RP: `/rp text`'s line - the text in the mark. The whole line is the roleplay, so a mark typed inside it is
+ *  taken out first (AUDIT CHAT-TRADE A3: stripping the ends alone made `/rp *bows* deeply` read `*bows* deeply*`). */
+export const rpText = (text) => `*${String(text ?? '').replace(/\*/g, '').replace(/\s+/g, ' ').trim()}*`;
 /** CHAT-CHAN: is `speaker` within earshot of `listener` - two feet in the scene's frame, measured in the ground's
  *  plane as the name's range is (net/remotePlayers.js namePoints), between the two BODIES: the listener's is the
  *  port's one "where am I" (player.feetAt()), never the camera, which a third-person view stands behind the body. */
@@ -173,12 +229,26 @@ export function findLines(tabs, query) {
   return [...out.values()].sort((a, b) => a.seq - b.seq);
 }
 
+/** A tab as the log keeps it, from its row (CHAT_TABS's shape). */
+const tabOf = (t) => ({ id: t.id, label: t.label, room: t.room, link: t.link !== false, hint: t.hint ?? '', place: null, messages: [], unread: 0, pings: 0, shown: t.hidden !== true, peekAll: t.peekAll === true });
+
 export class ChatLog {
   constructor({ tabs = CHAT_TABS, keep = CHAT_KEEP, now = () => Date.now() } = {}) {
-    this.tabs = tabs.map((t) => ({ id: t.id, label: t.label, room: t.room, link: t.link !== false, hint: t.hint ?? '', place: null, messages: [], unread: 0, shown: t.hidden !== true, peekAll: t.peekAll === true }));
+    this.tabs = tabs.map(tabOf);
+    /** PING1: the player's own name, set by the host (a line naming it with an @ is a ping); '' pings nobody. */
+    this.self = '';
+    /** PING1: the newest pinging line's seq - the host's alert sounds when it moves (0: none yet). */
+    this.pingSeq = 0;
+    /** SAFE1: whether the player hears an account - (sub) => boolean, set by the host from the block list; null hears
+     *  everyone. A line from an account it does not hear is never kept, so no tab, peek, bubble or search shows it. */
+    this.hears = null;
     this.active = this.tabs.find((t) => t.shown)?.id ?? null;
     this.open = false;        // the panel's state, as the log counts unread by it
     this.version = 0;         // bumps on every change the panel would show; the panel repaints on a new number, never per frame
+    /** AUDIT SAFE CLIENT-4 (2026-10-17): bumps when lines are taken out of a tab's MIDDLE (forgetSpeaker) - the open panel's
+     *  repaint drops rows off the front and adds them at the back, and a block from the open panel left the blocked
+     *  account's rows drawn between the others'. A new number here is a list rebuilt (ui/chatPanel.js paintList). */
+    this.removed = 0;
     this._keep = Math.max(1, keep | 0);
     this._now = now;
     this._seq = 0;
@@ -214,10 +284,17 @@ export class ChatLog {
    *  the player opens the chat, not a badge asking them to. */
   push(tabId, fields = {}, { quiet = false } = {}) {
     const tab = this.tab(tabId);
+    if (!fields.mine && typeof fields.sub === 'string' && fields.sub && this.hears && !this.hears(fields.sub)) return null;   // SAFE1: a blocked speaker
     const line = tab ? this._line(fields, tab.id) : null;
     if (!line) return null;
     this._keepOn(tab, line);
     if (!quiet && !(this.open && tab.id === this.active)) tab.unread++;
+    // PING1: a line someone else said naming me with an @ - marked on the line, counted on its tab until it is read
+    if (!line.mine && !line.system && mentions(line.text, this.self)) {
+      Object.assign(line, { ping: true });   // a field only a ping carries - every other line's shape stands as it was
+      this.pingSeq = line.seq;
+      if (!(this.open && tab.id === this.active)) tab.pings++;
+    }
     this.version++;
     return line;
   }
@@ -239,7 +316,7 @@ export class ChatLog {
   /** The line's record, or null for nothing to say. DICE1: `roll` is a roll the RELAY made (the host hands it from the
    *  frame type, `onRoll`, never from a chat line) - kept only when the dice's law holds, and then the line's words are
    *  the dice's (rollText), its kind 'roll'. */
-  _line({ id = '', name = '', text = '', at = null, mine = false, system = false, red = false, dm = false, roll = null, me = false } = {}, tabId) {
+  _line({ id = '', name = '', text = '', at = null, mine = false, system = false, red = false, dm = false, roll = null, me = false, sub = null, sg = null, raw = null, copy = null } = {}, tabId) {
     const rolled = roll && validRoll(roll) ? { n: roll.n, m: roll.m, k: roll.k, dice: [...roll.dice], total: roll.total } : null;
     if (roll && !rolled) return null;
     if (rolled) text = rollText(rolled);
@@ -264,14 +341,74 @@ export class ChatLog {
     // TITLE-N: `dm` is the DUNGEON MASTER speaking - RED1's kind of flag for RED1's reason, set here from the relay's
     // own frame type (`t:'dm'`), which a player cannot send; a voice over the game, so a system line too.
     const sys = !!system || !!red || !!dm;
-    const kind = rolled ? 'roll' : sys ? '' : me === true ? 'me' : isOocText(text) ? 'ooc' : '';
-    return { seq: ++this._seq, id: String(id), name: String(name), text, at: Number.isFinite(at) ? at : now, t: now, mine: !!mine, system: sys, red: !!red, ...(dm ? { dm: true } : {}), kind, tab: tabId, ...(rolled ? { roll: rolled } : {}) };
+    // CHAT-RP: 'rp', a line of roleplay - the speaker's own *mark*, as OOC's is theirs
+    const kind = rolled ? 'roll' : sys ? '' : me === true ? 'me' : isOocText(text) ? 'ooc' : isRpText(text) ? 'rp' : '';
+    // SAFE1 + SAFE2: `sub` the speaker's verified account and `sg` the relay's stamp, where the relay said them - what a
+    // block names and what a report carries; absent from a line the game said, and from one nobody stamped
+    // AUDIT SAFE CLIENT-6: and `raw`, the words exactly as the relay stamped them, kept beside the drawn ones only where the
+    // two differ (net/online.js: the client's own pass of the mask is not the relay's) - what a report carries
+    const stamp = typeof sg === 'string' && sg ? { sg, ...(typeof raw === 'string' && raw && raw !== text ? { raw } : {}) } : {};
+    const said = !sys && typeof sub === 'string' && sub ? { sub, ...stamp } : {};
+    // STAFF-PANEL5-FREEZE: `copy`, words a game's line offers to copy (the Staff tab's Discord invite) - a system line's alone
+    const copied = sys && typeof copy === 'string' && copy ? { copy } : {};
+    return { seq: ++this._seq, id: String(id), name: String(name), text, at: Number.isFinite(at) ? at : now, t: now, mine: !!mine, system: sys, red: !!red, ...(dm ? { dm: true } : {}), kind, tab: tabId, ...(rolled ? { roll: rolled } : {}), ...said, ...copied };
+  }
+
+  /** SAFE1: AN ACCOUNT'S LINES TAKEN BACK - every line `sub` said, off every tab, the moment it is blocked: a block hides
+   *  what was said as well as what will be. Answers how many went. */
+  forgetSpeaker(sub) {
+    if (typeof sub !== 'string' || !sub) return 0;
+    let gone = 0;
+    for (const tab of this.tabs) {
+      const kept = tab.messages.filter((l) => l.sub !== sub || l.mine);
+      gone += tab.messages.length - kept.length;
+      tab.messages = kept;
+    }
+    if (gone) { this.version++; this.removed++; }   // AUDIT SAFE CLIENT-4: rows out of the middle - the open list is rebuilt
+    return gone;
+  }
+
+  /** SAFE3: WHAT A REPORT OF `sub` CARRIES - their stamped lines heard on any tab, newest last, and the stamped lines just
+   *  before each on its tab for context, up to `max` in all (net/safety/safetyLaw.js REPORT_LINES_MAX). `seq` narrows it
+   *  to one line and the lines before it (a line's own Report). Lines the relay did not stamp cannot be carried.
+   *
+   *  AUDIT SAFE CLIENT-5 (2026-10-17): AND NOTHING OUT OF ITS DAY. The service takes lines no older than
+   *  REPORT_LINE_AGE_MS, and a quiet tab or a page left open overnight keeps yesterday's: a line heard more than
+   *  REPORT_PICK_AGE_MS ago by this page's own clock (`t`, when it was kept - the relay's `at` is another machine's) is
+   *  not picked, as context or as theirs. AUDIT SAFE CLIENT-6: a line's words go as the relay stamped them (`raw`). */
+  reportLines(sub, { seq = null, max = REPORT_LINES_MAX, before = 3 } = {}) {
+    const picked = new Map();
+    const now = this._now();
+    const fresh = (/** @type {any} */ l) => !(now - l.t > REPORT_PICK_AGE_MS);   // AUDIT SAFE CLIENT-5
+    for (const tab of this.tabs) {
+      const lines = tab.messages;
+      for (let i = 0; i < lines.length; i++) {
+        const l = lines[i];
+        if (l.sub !== sub || !l.sg || (seq !== null && l.seq !== seq) || !fresh(l)) continue;
+        for (let j = Math.max(0, i - before); j <= i; j++) if (lines[j].sg && lines[j].sub && fresh(lines[j])) picked.set(lines[j].seq, lines[j]);
+      }
+    }
+    const out = [...picked.values()].sort((a, b) => a.seq - b.seq);
+    const own = out.filter((l) => l.sub === sub);
+    // past the bound, the reported account's own lines are kept first (the newest of them), the context after
+    const keep = new Set(own.slice(-max).map((l) => l.seq));
+    for (const l of out.slice().reverse()) { if (keep.size >= max) break; keep.add(l.seq); }
+    return out.filter((l) => keep.has(l.seq)).map((l) => ({ tab: l.tab, sub: l.sub, name: l.name, at: l.at, text: l.raw ?? l.text, sg: l.sg }));   // AUDIT SAFE CLIENT-6: the relay's own words
   }
 
   /** A line onto a tab, the oldest dropped past the cap. */
   _keepOn(tab, line) {
     tab.messages.push(line);
     if (tab.messages.length > this._keep) tab.messages.splice(0, tab.messages.length - this._keep);
+  }
+
+  /** STAFF-PANEL5-FREEZE: a tab its host adds after the bar's own rows (the Staff tab, net/staffChat.js STAFF_TAB_ROW) -
+   *  once, and before the panel is made, which draws the tabs the log holds then. */
+  addTab(row) {
+    if (this.tab(row.id)) return false;
+    this.tabs.push(tabOf(row));
+    this.version++;
+    return true;
   }
 
   /** CHAT-P: a tab on the bar or off it (the Party tab, while the player sits in a party). A tab taken off stops
@@ -284,7 +421,7 @@ export class ChatLog {
     if (!tab || tab.shown === shown) return false;
     tab.shown = shown;
     if (!shown) {
-      tab.unread = 0;
+      tab.unread = 0; tab.pings = 0;
       if (this.active === id) {
         this.active = this.tabs.find((t) => t.shown)?.id ?? null;
         if (this.open && this.active) this.markRead(this.active);
@@ -314,10 +451,12 @@ export class ChatLog {
 
   markRead(id) {
     const tab = this.tab(id);
-    if (tab && tab.unread) { tab.unread = 0; this.version++; }
+    if (tab && (tab.unread || tab.pings)) { tab.unread = 0; tab.pings = 0; this.version++; }
   }
 
   unreadTotal() { return this.tabs.reduce((n, t) => n + (t.shown ? t.unread : 0), 0); }
+  /** PING1: the pings waiting on the tabs on the bar. */
+  pingTotal() { return this.tabs.reduce((n, t) => n + (t.shown ? t.pings : 0), 0); }
 
   /** The active tab's last `count` lines, newest last. */
   recent(count = this._keep) {
@@ -346,7 +485,9 @@ export class ChatLog {
     const out = [];
     const heard = new Set();
     for (const tab of this.tabs) {
-      if (!tab.shown || (tab.id !== this.active && !tab.peekAll)) continue;
+      if (!tab.shown) continue;
+      // PING1: a line that names me stands over the world from any tab - it is said TO me, as a party's line is
+      if (tab.id !== this.active && !tab.peekAll) { for (let i = Math.max(0, tab.messages.length - count); i < tab.messages.length; i++) if (tab.messages[i].ping) heard.add(tab.messages[i]); continue; }
       for (let i = Math.max(0, tab.messages.length - count); i < tab.messages.length; i++) heard.add(tab.messages[i]);
     }
     const lines = [...heard].sort((a, b) => a.seq - b.seq);

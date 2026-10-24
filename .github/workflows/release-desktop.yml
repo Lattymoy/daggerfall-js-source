@@ -5,10 +5,16 @@
 # builds the same installers as run artifacts, for trying a build
 # without cutting a release.
 #
-# The house gate rides in front: the `gate` job runs `npm run check`
-# whole, and every OS leg `needs` it (a red suite never ships an
-# installer any more than it ships the site). AUDIT 68: it was a step
-# inside the ubuntu leg, and the windows/macos legs never waited for it.
+# The house gate rides in front: the `gate` job runs the whole check,
+# and every OS leg `needs` it (a red suite never ships an installer any
+# more than it ships the site). AUDIT 68: it was a step inside the
+# ubuntu leg, and the windows/macos legs never waited for it.
+# REL-FAST (2026-10-15, Mac: "Yes, thats insanely slow" - a release took
+# 33 minutes, 27.4 of them `npm run check` in series on one runner): the
+# gate is verify.yml, the check the PR's and the deploy's run - lint and
+# the types, every test file in four balanced shards, the build - its
+# jobs at once, on the release's own commit. `npm run check` is exactly
+# those four parts, so nothing is skipped and nothing is weaker.
 #
 # Doctrine unchanged: the installers carry the built site and the
 # shell, NO game data - the app asks for the player's own ARENA2
@@ -94,6 +100,7 @@ jobs:
       tag: ${{ steps.reltag.outputs.tag }}
       version: ${{ steps.reltag.outputs.version }}
       update: ${{ steps.reltag.outputs.update }}
+      shell: ${{ steps.reltag.outputs.shell }}
     steps:
       - uses: actions/checkout@v4
         with:
@@ -124,24 +131,25 @@ jobs:
             echo "::error::the update number must be <major>.<minor>.<patch>, digits only"
             exit 1
           fi
+          # DA13: the shell's id - its sources' git objects at this commit, so every runner reads the same one - which the
+          # bundled game's index and the release's game manifest both name: a copy built for another fetches nothing
+          SHELL_ID=$(node scripts/desktopRelease.mjs shell)
+          if ! [[ "$SHELL_ID" =~ ^[0-9a-f]{64}$ ]]; then
+            echo "::error::the shell id must be 64 hex digits"
+            exit 1
+          fi
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
           echo "update=$UPDATE" >> "$GITHUB_OUTPUT"
+          echo "shell=$SHELL_ID" >> "$GITHUB_OUTPUT"
           echo "release tag: '${TAG:-<none - artifacts only>}'"
 
+  # REL-FAST: the whole check before any leg packages - verify.yml's
+  # parallel jobs, pinned to the commit the legs build
   gate:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Install site dependencies
-        run: npm ci
-      - name: Gate (the whole suite, before any leg packages)
-        run: npm run check
+    uses: ./.github/workflows/verify.yml
+    with:
+      ref: ${{ github.sha }}
 
   build:
     needs: [version, gate]
@@ -154,6 +162,14 @@ jobs:
       # No signing identities exist; without this electron-builder
       # hunts for one on macOS and fails the build looking.
       CSC_IDENTITY_AUTO_DISCOVERY: 'false'
+      # REL9: the site build outgrew V8's default heap on the Mac leg. The
+      # default is sized off the runner's memory - macos-latest has 7GB and
+      # stopped at ~2GB, ubuntu/windows have 16GB and passed - so from
+      # app-v0.1.8020 on every Mac leg died in `vite build` (JavaScript heap
+      # out of memory), the publish job (REL4: only when the whole matrix
+      # passed) never ran, and no copy had an update to take. 4GB on every
+      # leg: what the 16GB legs already had, inside the Mac runner's 7GB.
+      NODE_OPTIONS: --max-old-space-size=4096
     steps:
       - uses: actions/checkout@v4
         with:
@@ -183,7 +199,7 @@ jobs:
       # runs in PowerShell on windows-latest, where "$VERSION" is an unset
       # PowerShell variable, not the environment - the Windows stamp failed
       # and no release was published. Any step here that reads a variable
-      # names its shell (test/audit_install.test.js holds the whole file to it).
+      # names its shell (test/tooling/audit_install.test.js holds the whole file to it).
       - name: Stamp the version
         if: needs.version.outputs.version != ''
         shell: bash
@@ -206,6 +222,17 @@ jobs:
         run: node -e "const fs=require('fs');const p=JSON.parse(fs.readFileSync('package.json','utf8'));p.build.publish=null;fs.writeFileSync('package.json',JSON.stringify(p,null,2)+'\n')"
         working-directory: app
 
+      # DA13: the index of the game this leg bundles - every file of dist/, its size and sha256 - packed into the shell
+      # (app/package.json build.files) with the version and the shell it was built for, so a copy fetches only the
+      # files a release changed. Only on a release: a build that is not one follows no channel (L3-4's law).
+      - name: Index the bundled game
+        if: needs.version.outputs.tag != ''
+        shell: bash
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          DFO_SHELL: ${{ needs.version.outputs.shell }}
+        run: node scripts/desktopRelease.mjs seed dist app/game-seed.json
+
       # DA7: `--publish never` uploads nothing (the publish job attaches
       # the files), but with a publish PROVIDER in app/package.json
       # electron-builder still writes the updater's metadata - latest.yml
@@ -217,6 +244,17 @@ jobs:
       - name: Build installers
         run: npx electron-builder --publish never
         working-directory: app
+
+      # DA13: the game a file at a time - each file of dist/ compressed on its own, laid end to end, and the manifest of
+      # where each stands - cut ONCE, by the leg whose dist/ the Linux copy bundles, beside its installer.
+      - name: Pack the game
+        if: needs.version.outputs.tag != '' && matrix.os == 'ubuntu-latest'
+        shell: bash
+        env:
+          VERSION: ${{ needs.version.outputs.version }}
+          DFO_UPDATE: ${{ needs.version.outputs.update }}
+          DFO_SHELL: ${{ needs.version.outputs.shell }}
+        run: node scripts/desktopRelease.mjs pack dist app/release
 
       # REL4: a leg hands its files on and publishes nothing. When a
       # release follows, the publish job takes them within minutes and
@@ -233,6 +271,7 @@ jobs:
             app/release/*.dmg
             app/release/latest*.yml
             app/release/*.blockmap
+            app/release/DFO-Online-game.*
           if-no-files-found: error
           retention-days: ${{ needs.version.outputs.tag != '' && 1 || 14 }}
 
@@ -277,6 +316,24 @@ jobs:
       # of any one publishes nothing.
       - name: The set is whole
         run: node scripts/desktopRelease.mjs check release
+
+      # DA13: the update a player of the release players have now takes to this one, measured - and a release whose
+      # update is no longer the files that changed (most of the game again, or the shell's id moved with no shell file
+      # changed: every update the installer's) is not published. The first release with a game has nothing before it.
+      - name: The game's update is the files that changed
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if PREV=$(gh api "repos/$GITHUB_REPOSITORY/releases/latest" --jq .tag_name 2>prev-error.txt); then :
+          elif grep -q 'HTTP 404' prev-error.txt; then PREV=''
+          else cat prev-error.txt >&2; exit 1
+          fi
+          if [ -n "$PREV" ] && gh api "repos/$GITHUB_REPOSITORY/releases/tags/$PREV" --jq '.assets[].name' | grep -qx 'DFO-Online-game.json.gz'; then
+            gh release download "$PREV" --repo "$GITHUB_REPOSITORY" --pattern 'DFO-Online-game.json.gz' --dir previous
+            node scripts/desktopRelease.mjs delta previous/DFO-Online-game.json.gz release/DFO-Online-game.json.gz "$PREV"
+          else
+            echo "no game on the release before (${PREV:-none}) - nothing to measure against"
+          fi
 
       # REL6: each merged pull request's `## Patch notes`, read with this
       # job's token. A read that fails fails the step - notes are never

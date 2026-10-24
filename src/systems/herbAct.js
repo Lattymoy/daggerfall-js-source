@@ -27,6 +27,7 @@
 // node stands, no tool wears, no harvest is asked.
 // ═══════════════════════════════════════════════════════════════════
 import { HERB_ACT, BASKET_ACT } from '../net/professionLaw.js';
+import { firmActMult } from './firmamentLive.js';   // FIRM1: the Firmament's steadier hand (act.herbalism)
 
 /** Where the Basket's glints show in the act's panel: five spots among the leaves, fractions of the panel. */
 export const BASKET_SPOTS = Object.freeze([
@@ -40,8 +41,11 @@ const turnDeg = (a, b) => { let d = (a - b) % 360; if (d > 180) d -= 360; if (d 
  *   rng?: () => number }} o `band` the attribute band's widening (professionLaw actBand)
  */
 export function createHerbAct({ kind, band = 1, botanist = false, master = false, gentle = false, rng = Math.random }) {
-  const window = HERB_ACT.steadyDeg * band * (botanist ? HERB_ACT.botanist : 1);
-  const glint = (master ? BASKET_ACT.masterGlintS : BASKET_ACT.glintS) * band;
+  // FIRM1 (bible/06-Systems/Firmament.md): the Firmament's `act.herbalism` widens (or a keystone's price narrows) both
+  // windows - the steady hand's turn and the Basket's glint - 1 with no tree in force
+  const sky = firmActMult('herbalism');
+  const window = HERB_ACT.steadyDeg * band * (botanist ? HERB_ACT.botanist : 1) * sky;
+  const glint = (master ? BASKET_ACT.masterGlintS : BASKET_ACT.glintS) * band * sky;
   const length = kind === 'hand' ? HERB_ACT.commonS : kind === 'steady' ? HERB_ACT.steadyS : BASKET_ACT.finds * (glint + BASKET_ACT.gapS) + BASKET_ACT.gapS;
   const st = {
     kind, t: 0, length, done: false, cancelled: false, bruised: false, window, gentle,   // AUDIT HERB-CURSOR C2: said, as the mine's and the trace's are

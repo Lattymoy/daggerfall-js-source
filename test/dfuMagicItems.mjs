@@ -2,8 +2,8 @@
 // - "a JSON dump of fixed MAGIC.DEF" (DFU's ItemHelper), Copyright (c) 2009-2023 Daggerfall Workshop, MIT License - its
 // 59 records, each in readMagicDef's shape: `type` 0 a regular magic item, 1 and 2 an artifact's class; `ench` its live
 // rows as [kind, param] (formats/magicDef.js ENCHANTMENT_TYPES). The tree carries no ARENA2, so the honest sweep
-// (test/honestItems.mjs) mints DFU's magic from these, and test/int1_itemlaw.test.js holds the item law's own table
-// (systems/itemLaw.js REGULAR_MAGIC_TYPES, ARTIFACT_RECORDS) to them.
+// (test/honestItems.mjs) mints DFU's magic from these, and test/systems/item/int1_itemlaw.test.js holds the item law's own table
+// (systems/item/itemLaw.js REGULAR_MAGIC_TYPES, ARTIFACT_RECORDS) to them.
 export const DFU_MAGIC_ITEMS = Object.freeze([
   { name: "The Masque of Clavicus", type: 1, group: 25, groupIndex: 2, ench: [[26, 0]], uses: 1500, value: 50000, material: 0 },
   { name: "The Mehrunes Razor", type: 1, group: 3, groupIndex: 0, ench: [[26, 1]], uses: 1500, value: 50000, material: 8 },

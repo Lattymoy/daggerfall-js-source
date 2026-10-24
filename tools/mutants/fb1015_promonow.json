@@ -1,0 +1,92 @@
+[
+  {
+    "name": "PROMO-NOW-the-wait-kept-online",
+    "file": "src/systems/guild/guilds.js",
+    "old": "  if (!waited && !ctx?.promoteWhenEarned) return null;",
+    "new": "  if (!waited) return null;",
+    "tests": [
+      "test/systems/guild/fb1015_promonow.test.js"
+    ]
+  },
+  {
+    "name": "PROMO-NOW-every-review-run-without-the-wait",
+    "file": "src/systems/guild/guilds.js",
+    "old": "  if (!waited && !(newRank > m.rank)) return null;   // PROMO-NOW: inside the 28 days, a promotion alone\n",
+    "new": "",
+    "tests": [
+      "test/systems/guild/fb1015_promonow.test.js"
+    ]
+  },
+  {
+    "name": "PROMO-NOW-the-flag-never-threaded",
+    "file": "src/systems/guild/guildServiceFlow.js",
+    "old": "updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, rankCeiling, promoteWhenEarned, owed: standingOwedOf(guild.factionId) });",
+    "new": "updateRank(memberships, guild, entity, store, now, { revealLocation, ownsHouse, rankCeiling, owed: standingOwedOf(guild.factionId) });",
+    "tests": [
+      "test/systems/guild/fb1015_promonow.test.js"
+    ]
+  },
+  {
+    "name": "PROMO-NOW-the-host-offline",
+    "file": "src/scenes/worldModes.js",
+    "old": "        promoteWhenEarned: sharedClockOn() && !!host.rollPace?.(guild.factionId),   // PROMO-NOW: online, a promotion does not wait the 28 days - ROLL-PACE: while the Roll paces it\n",
+    "new": "        promoteWhenEarned: false,\n",
+    "tests": [
+      "test/systems/guild/fb1015_promonow.test.js"
+    ]
+  },
+  {
+    "name": "PROMO-NOW-the-reputation-line-dropped",
+    "file": "src/systems/guild/guildServiceFlow.js",
+    "old": "  if (n.reputation < n.reputationNeed) lines.push(",
+    "new": "  if (false) lines.push(",
+    "tests": [
+      "test/systems/guild/fb1015_promonow.test.js"
+    ]
+  },
+  {
+    "name": "PROMO-NOW-the-high-skill-line-dropped",
+    "file": "src/systems/guild/guildServiceFlow.js",
+    "old": "  if (n.high < 1) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/guild/fb1015_promonow.test.js"
+    ]
+  },
+  {
+    "name": "PROMO-NOW-the-second-skill-line-dropped",
+    "file": "src/systems/guild/guildServiceFlow.js",
+    "old": "  if (n.high + n.low < 2) lines.push(",
+    "new": "  if (false) lines.push(",
+    "tests": [
+      "test/systems/guild/fb1015_promonow.test.js"
+    ]
+  },
+  {
+    "name": "PROMO-NOW-the-guild-skills-never-named",
+    "file": "src/systems/guild/guildServiceFlow.js",
+    "old": "  if (n.high < 1 || n.high + n.low < 2) lines.push(",
+    "new": "  if (false) lines.push(",
+    "tests": [
+      "test/systems/guild/fb1015_promonow.test.js"
+    ]
+  },
+  {
+    "name": "PROMO-NOW-the-ceiling-ignored",
+    "file": "src/systems/guild/guilds.js",
+    "old": "  const top = Number.isInteger(ctx?.rankCeiling) ? ctx.rankCeiling : RANK_REQ_REPUTATION.length - 1;",
+    "new": "  const top = RANK_REQ_REPUTATION.length - 1;",
+    "tests": [
+      "test/systems/guild/fb1015_promonow.test.js"
+    ]
+  },
+  {
+    "name": "PROMO-NOW-the-line-not-drawn",
+    "file": "src/ui/enhanced/enhancedPorts.js",
+    "old": "      blocks: [...(needs ? [{ type: 'text', rows: needs, scroll: true }] : []), { type: 'actions', ",
+    "new": "      blocks: [{ type: 'actions', ",
+    "tests": [
+      "test/systems/guild/fb1015_promonow.test.js"
+    ]
+  }
+]

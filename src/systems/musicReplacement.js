@@ -35,7 +35,7 @@
 // SongFiles enum instead, which is the same set under different
 // spelling.
 
-import { getBool } from './settings.js';
+import { getBool } from './settings/settings.js';
 
 /** Accepted replacement formats, in PREFERENCE order. First match wins
  *  when a folder carries the same song more than once, so the answer is

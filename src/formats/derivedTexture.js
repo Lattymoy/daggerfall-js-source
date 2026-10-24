@@ -70,6 +70,16 @@ export function classicRecordRgba(bitmap, palette) {
   }
   return { width, height, data };
 }
+/** A classic record of the player's own as such a picture, read through a texture source (`getTexture(archive)`, a
+ *  pipeline's or an interior builder's) and its palette - null where the player's data has none: no archive, a mod's own
+ *  (`vendor`), no such record, an empty one. The one read for every painter of a classic record (SHIP-LIVERY's paint
+ *  shop, CABIN-LOOK's stain - AUDIT 2026-10-17: two copies, the paint shop's without the record's guard). */
+export async function classicPictureOf(getTexture, palette, archive, record) {
+  const t = await getTexture(archive);
+  if (!t || t.vendor || !(record < t.recordCount)) return null;
+  const bm = t.getDFBitmap(record, 0);
+  return bm?.width ? classicRecordRgba(bm, palette) : null;
+}
 
 /**
  * The spec that rebuilds `picture` from `src` placed at `at` - every

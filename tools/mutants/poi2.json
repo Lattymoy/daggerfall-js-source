@@ -1,0 +1,245 @@
+[
+  {
+    "name": "POI2-the-depth-written",
+    "file": "src/render/renderer.js",
+    "old": "    gl.depthMask(false);\n    gl.uniform1f(this.uMeshAlpha, alpha);",
+    "new": "    gl.depthMask(true);\n    gl.uniform1f(this.uMeshAlpha, alpha);",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-blend-left-on",
+    "file": "src/render/renderer.js",
+    "old": "      gl.depthMask(true);\n      gl.disable(gl.BLEND);\n    }\n  }\n\n",
+    "new": "      gl.depthMask(true);\n    }\n  }\n\n",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-share-left",
+    "file": "src/render/renderer.js",
+    "old": "      gl.uniform1f(this.uMeshAlpha, 0);\n      gl.depthMask(true);",
+    "new": "      gl.depthMask(true);",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-shadow-cast",
+    "file": "src/render/renderer.js",
+    "old": "this._drawMeshBundle(mesh, modelMatrix, texRemap, false, true);",
+    "new": "this._drawMeshBundle(mesh, modelMatrix, texRemap, false, false);",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-sampler-unkeyed",
+    "file": "src/render/renderer.js",
+    "old": "${opts.sampler && !opts.smooth ? samplerKey(opts.sampler) : ''}`;",
+    "new": "`;",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-one-wrap-for-both-axes",
+    "file": "src/render/meshAlpha.js",
+    "old": "wrapT: wrap(s?.wrapT)",
+    "new": "wrapT: wrap(s?.wrapS)",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-alpha-always-one",
+    "file": "src/render/meshAlpha.js",
+    "old": "return uMeshAlpha > 0.0 ? a * uMeshAlpha : 1.0;",
+    "new": "return 1.0;",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-share-unread",
+    "file": "src/render/meshAlpha.js",
+    "old": "? a * uMeshAlpha : 1.0;",
+    "new": "? a : 1.0;",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-rows-unturned",
+    "file": "src/poi/poiRuntime.js",
+    "old": "to = (h - 1 - y) * w * 4;   // color32",
+    "new": "to = y * w * 4;   // color32",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-cutoff-a-half",
+    "file": "src/poi/poiRuntime.js",
+    "old": "const cut = m.alpha === 'cutout' ? Math.min(Math.max(m.cutoff ?? 0.5, 0), 1) : null;",
+    "new": "const cut = m.alpha === 'cutout' ? 0.5 : null;",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-tint-unread",
+    "file": "src/poi/poiRuntime.js",
+    "old": "out[o] = Math.round(src[i] * cr);",
+    "new": "out[o] = src[i];",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-v-unturned",
+    "file": "src/poi/poiRuntime.js",
+    "old": "uvs[at * 2 + 1] = 1 - w;",
+    "new": "uvs[at * 2 + 1] = w;",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-back-faces-unwound",
+    "file": "src/poi/poiRuntime.js",
+    "old": "if (back !== mirrored) { indices[ni]",
+    "new": "if (mirrored) { indices[ni]",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-mirror-unwound",
+    "file": "src/poi/poiRuntime.js",
+    "old": "if (back !== mirrored) { indices[ni]",
+    "new": "if (back) { indices[ni]",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-a-blend-drawn-opaque",
+    "file": "src/poi/poiRuntime.js",
+    "old": "(m?.alpha === 'blend' ? groups.translucent : groups.opaque).push(i);",
+    "new": "groups.opaque.push(i);",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-version-not-sent",
+    "file": "src/poi/poiFeed.js",
+    "old": "headers: etag ? { 'if-none-match': etag } : {}",
+    "new": "headers: {}",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-law-unread",
+    "file": "src/poi/poiFeed.js",
+    "old": "const problems = poiDocProblems(p.doc);",
+    "new": "const problems = [];",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-kept-copy-unread",
+    "file": "src/poi/poiFeed.js",
+    "old": "async start() { await readKept(); nextAsk = 0; }",
+    "new": "async start() { nextAsk = 0; }",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-hash-unchecked",
+    "file": "src/poi/poiFeed.js",
+    "old": "const check = async (bytes) => bytes && hex(await subtle.digest('SHA-256', bytes)) === sha;",
+    "new": "const check = async (bytes) => !!bytes;",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-asked-twice-at-once",
+    "file": "src/poi/poiFeed.js",
+    "old": "if (loading.has(sha)) return loading.get(sha);",
+    "new": "if (false) return loading.get(sha);",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-ground-unread",
+    "file": "src/scenes/poiHost.js",
+    "old": "s.ground = groundAt(x, z);",
+    "new": "s.ground = 0;",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-collider-unridden",
+    "file": "src/scenes/poiHost.js",
+    "old": "p.local, riding(s.px, s.py));",
+    "new": "p.local, null);",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-translucent-nearest-first",
+    "file": "src/scenes/poiHost.js",
+    "old": "while (j >= 0 && _far[j].d < e.d)",
+    "new": "while (j >= 0 && _far[j].d > e.d)",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-textures-held",
+    "file": "src/scenes/poiHost.js",
+    "old": "renderer.releaseTexture?.(POI_TEXTURE_ARCHIVE, l.record);",
+    "new": "void l;",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-body-walled-in",
+    "file": "src/scenes/poiHost.js",
+    "old": "(p.carry || !inside(p.localBox, f, t))",
+    "new": "(true)",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-a-move-reloaded",
+    "file": "src/scenes/poiHost.js",
+    "old": "if (s.status === 'ready' && sameBuild(s.doc, e.doc)) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI2-the-ride-unmarked",
+    "file": "src/scenes/world.js",
+    "old": "ride = onFloatingFrame(state, () => state.pixelTranslation(px, py, o));",
+    "new": "ride = () => state.pixelTranslation(px, py, o);",
+    "tests": [
+      "test/scenes/perfcol2.test.js"
+    ]
+  }
+]

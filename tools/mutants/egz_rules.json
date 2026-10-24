@@ -1,0 +1,554 @@
+[
+  {
+    "name": "EGZI-law-late-halls",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_LATE_HALLS = 2;",
+    "new": "export const EG_LATE_HALLS = 3;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-law-late-wait",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_LATE_ARRIVE_MS = 10_000;",
+    "new": "export const EG_LATE_ARRIVE_MS = 12_000;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-law-toll-step",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_TOLL_STEP = 0.05;",
+    "new": "export const EG_TOLL_STEP = 0.04;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-law-toll-cap",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_TOLL_QUARTERS = 4;",
+    "new": "export const EG_TOLL_QUARTERS = 5;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-law-waiver-widened",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_TOLL_WAIVE_MS = 15_000;",
+    "new": "export const EG_TOLL_WAIVE_MS = 15_001;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-law-deepway-dropped",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_TOLL_KINDS = Object.freeze(['span', 'deepway', 'brink', 'proving']);",
+    "new": "export const EG_TOLL_KINDS = Object.freeze(['span', 'brink', 'proving']);",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-law-a-fight-tolled",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_TOLL_KINDS = Object.freeze(['span', 'deepway', 'brink', 'proving']);",
+    "new": "export const EG_TOLL_KINDS = Object.freeze(['span', 'deepway', 'brink', 'proving', 'yard']);",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-fair-arrival-plate-new-ground",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "if (!g || g === 'a' || (A.seen ??= []).includes(g)) return;",
+    "new": "if (!g || (A.seen ??= []).includes(g)) return;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-fair-old-ground-new-again",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "if (!g || g === 'a' || (A.seen ??= []).includes(g)) return;",
+    "new": "if (!g || g === 'a') return;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-fair-a-piece-new-ground",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  if (hold !== EG_HOLD.island) return;\n  const g = groundAt(",
+    "new": "  const g = groundAt(",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-fair-the-air-counted",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  if (!hold || A.brk !== 0) return;",
+    "new": "  if (A.brk !== 0) return;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-fair-a-broken-stretch-counted",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  if (!hold || A.brk !== 0) return;",
+    "new": "  if (!hold) return;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-fair-the-furthest-the-last",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  if (A.far == null || at > A.far) A.far = at;",
+    "new": "  A.far = at;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-fair-first-pose-unread",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "if (hold === EG_HOLD.island) A.isl = [p.x, p.z]; } farther(A, spec, p, t, hold); return; }",
+    "new": "if (hold === EG_HOLD.island) A.isl = [p.x, p.z]; } return; }",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-fair-ground-the-plates-swapped",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  if (g) return g === 'e' ? EG_HOLD.still : EG_HOLD.island;",
+    "new": "  if (g) return g === 'a' ? EG_HOLD.still : EG_HOLD.island;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-fair-ground-arrival-plate-none",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "return d.role === 'end' ? 'e' : d.role === 'arrive' ? 'a' : `d${i}`; }",
+    "new": "return d.role === 'end' ? 'e' : d.role === 'arrive' ? '' : `d${i}`; }",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-fair-ground-one-key-for-every-disc",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "return d.role === 'end' ? 'e' : d.role === 'arrive' ? 'a' : `d${i}`; }",
+    "new": "return d.role === 'end' ? 'e' : d.role === 'arrive' ? 'a' : 'd'; }",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-fair-ground-bands-unread",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "&& on(b.y) && !bandFallen(spec, b, z, hw, tS * 1000, tm)) return `b${i}`; }",
+    "new": "&& on(b.y) && !bandFallen(spec, b, z, hw, tS * 1000, tm)) return ''; }",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-quarters-floored",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  return Math.min(EG_TOLL_QUARTERS, Math.ceil((EG_TOLL_QUARTERS * ahead) / road));",
+    "new": "  return Math.min(EG_TOLL_QUARTERS, Math.floor((EG_TOLL_QUARTERS * ahead) / road));",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-the-cap-gone",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  return Math.min(EG_TOLL_QUARTERS, Math.ceil((EG_TOLL_QUARTERS * ahead) / road));",
+    "new": "  return Math.ceil((EG_TOLL_QUARTERS * ahead) / road);",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-the-far-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "(e - (A?.far ?? a)) * 100",
+    "new": "(e - a) * 100",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-the-waiver-gone",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (A?.fnew > 0 && now - A.fnew <= EG_TOLL_WAIVE_MS) return 0;",
+    "new": "",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-the-waiver-strict",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "now - A.fnew <= EG_TOLL_WAIVE_MS) return 0;",
+    "new": "now - A.fnew < EG_TOLL_WAIVE_MS) return 0;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-the-step-through-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "|| m?.downH === h || A?.atEnd) return 0;",
+    "new": "|| A?.atEnd) return 0;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-the-end-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "|| m?.downH === h || A?.atEnd) return 0;",
+    "new": "|| m?.downH === h) return 0;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-every-hall-tolled",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (!EG_TOLL_KINDS.includes(spec?.kind) || !spec.arrive",
+    "new": "  if (!spec.arrive",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-no-toll-said",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  countPart(B);\n  tollStep(B, now, out);\n",
+    "new": "  countPart(B);\n",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-the-toll-to-everyone",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (q > 0) out.push({ k: 'toll', to: sub, q, h: B.h });",
+    "new": "    if (q > 0) out.push({ k: 'toll', q, h: B.h });",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-a-nought-toll-said",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (q > 0) out.push({ k: 'toll', to: sub, q, h: B.h });",
+    "new": "    out.push({ k: 'toll', to: sub, q, h: B.h });",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-the-trail-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    const q = egTollOf(spec, m, fairOfMember(B, sub), B.h, now);",
+    "new": "    const q = egTollOf(spec, m, null, B.h, now);",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-at-end-unfair",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": " if (egFairOk(A)) A.atEnd = 1; }",
+    "new": " A.atEnd = 1; }",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-at-end-never",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": " if (egFairOk(A)) A.atEnd = 1; }",
+    "new": " }",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-census-toll-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "      bodyStruck(m, share / W, now, line);\n      (m.cs ??= [0, 0, 0, 0])[3] += Math.round(share * 1000);",
+    "new": "      (m.cs ??= [0, 0, 0, 0])[3] += Math.round(share * 1000);",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-census-toll-thousandths",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "      (m.cs ??= [0, 0, 0, 0])[3] += Math.round(share * 1000);",
+    "new": "      m.cs ??= [0, 0, 0, 0];",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-census-toll-the-last",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "share = Math.min(f.q * EG_TOLL_STEP, Math.max(0, (m.bd?.v ?? 1) * W - 0.01));",
+    "new": "share = f.q * EG_TOLL_STEP;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-census-toll-a-witness",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "      if (!m?.in || !m.alive || m.home || !(f.q > 0)) continue;",
+    "new": "      if (!m?.in || m.home || !(f.q > 0)) continue;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-late-never-counted",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "m.late = m.hereH === B.h ? 0 : (m.late ?? 0) + 1; }",
+    "new": "}",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-late-never-begun-again",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "m.late = m.hereH === B.h ? 0 : (m.late ?? 0) + 1; }",
+    "new": "m.late = m.hereH === B.h ? (m.late ?? 0) : (m.late ?? 0) + 1; }",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-late-for-anyone-owed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "owed.every(([, m]) => (m.late ?? 0) >= EG_LATE_HALLS)",
+    "new": "owed.some(([, m]) => (m.late ?? 0) >= EG_LATE_HALLS)",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-late-the-wait-the-old",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (B.wk && !B.gatherAt && now >= B.pulledAt + wait) { wake(B, now, rng, out); return out; }",
+    "new": "    if (B.wk && !B.gatherAt && now >= B.pulledAt + EG_ARRIVE_MAX_MS) { wake(B, now, rng, out); return out; }",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-late-the-end-unsaid",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (B.wk && !B.gatherAt && B.su !== B.pulledAt + wait) { B.su = B.pulledAt + wait; out.push(egStageWord(B, now)); }",
+    "new": "",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-late-the-end-unsaid-on-the-wire",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "{ B.su = B.pulledAt + wait; out.push(egStageWord(B, now)); }",
+    "new": "{ B.su = B.pulledAt + wait; }",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-late-the-pull-the-old",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  B.su = now + arriveWait(B);\n  B.cnt = egCountHold(B.cnt, now);",
+    "new": "  B.su = now + EG_ARRIVE_MAX_MS;\n  B.cnt = egCountHold(B.cnt, now);",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-late-the-next-circle-the-old",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  B.su = now + arriveWait(B);   // EG-ZI: the late wake's wait",
+    "new": "  B.su = now + EG_ARRIVE_MAX_MS;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-the-late-here-unheard",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (m.hereH !== B.h && m.downH !== B.h && egOnArrive(spec, b.x, b.z, 1.5, b.y)) { m.hereH = B.h; heard = true; } }",
+    "new": "void m; }",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-the-late-here-anywhere",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (m.hereH !== B.h && m.downH !== B.h && egOnArrive(spec, b.x, b.z, 1.5, b.y)) { m.hereH = B.h; heard = true; } }",
+    "new": "if (m.hereH !== B.h && m.downH !== B.h) { m.hereH = B.h; heard = true; } }",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-unapplied",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  dr += ll;\n",
+    "new": "",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-summed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (t >= w[0] && t <= w[1] && w[2] > ll) ll = w[2];",
+    "new": "if (t >= w[0] && t <= w[1]) ll += w[2];",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-window-from",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (t >= w[0] && t <= w[1] && w[2] > ll) ll = w[2];",
+    "new": "if (t > w[0] && t <= w[1] && w[2] > ll) ll = w[2];",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-window-until",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (t >= w[0] && t <= w[1] && w[2] > ll) ll = w[2];",
+    "new": "if (t >= w[0] && t < w[1] && w[2] > ll) ll = w[2];",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-window-back",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "[now - EG_HEAL_WORD_MS, now + EG_LIFELINE_MS, v]",
+    "new": "[now, now + EG_LIFELINE_MS, v]",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-window-on",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "[now - EG_HEAL_WORD_MS, now + EG_LIFELINE_MS, v]",
+    "new": "[now - EG_HEAL_WORD_MS, now - EG_HEAL_WORD_MS + EG_LIFELINE_MS, v]",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-the-count-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  const under = !!m && ((m.bd?.v ?? 1) < EG_LIFELINE_UNDER || now - (m.lowAt ?? -Infinity) <= EG_LIFELINE_LOOK_MS);",
+    "new": "  const under = !!m && now - (m.lowAt ?? -Infinity) <= EG_LIFELINE_LOOK_MS;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-the-look-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  const under = !!m && ((m.bd?.v ?? 1) < EG_LIFELINE_UNDER || now - (m.lowAt ?? -Infinity) <= EG_LIFELINE_LOOK_MS);",
+    "new": "  const under = !!m && (m.bd?.v ?? 1) < EG_LIFELINE_UNDER;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-the-look-strict",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "now - (m.lowAt ?? -Infinity) <= EG_LIFELINE_LOOK_MS);",
+    "new": "now - (m.lowAt ?? -Infinity) < EG_LIFELINE_LOOK_MS);",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-always-under",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (under && got > 0) {",
+    "new": "  if (got > 0) {",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-an-unbelieved-heal",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (q && (q.ht ?? 0) - had[i] >= min && cast(by)) v = Math.max(v, egVOf(q.vs, 'lifeline'));",
+    "new": "if (q && cast(by)) v = Math.max(v, egVOf(q.vs, 'lifeline'));",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-the-first-healer",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (q && (q.ht ?? 0) - had[i] >= min && cast(by)) v = Math.max(v, egVOf(q.vs, 'lifeline'));",
+    "new": "if (q && (q.ht ?? 0) - had[i] >= min && cast(by) && !v) v = egVOf(q.vs, 'lifeline');",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-the-receiver-s-own",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "v = Math.max(v, egVOf(q.vs, 'lifeline'));",
+    "new": "v = Math.max(v, egVOf(m.vs, 'lifeline'));",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-kept-for-ever",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "(m.ll ?? []).filter((w) => w[1] >= now - EG_TRAIL_MS)",
+    "new": "(m.ll ?? [])",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-no-bound",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "now + EG_LIFELINE_MS, v]].slice(-4);",
+    "new": "now + EG_LIFELINE_MS, v]];",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-the-word-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (v < EG_LIFELINE_UNDER * 1000) m.lowAt = now;",
+    "new": "",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-any-word",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (v < EG_LIFELINE_UNDER * 1000) m.lowAt = now;",
+    "new": "  m.lowAt = now;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-the-beat-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  for (const b of live) { const m = B.mem[b.sub]; if (m.bd && m.bd.v < EG_LIFELINE_UNDER) m.lowAt = now; }",
+    "new": "",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-brain-lifeline-every-beat-low",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (m.bd && m.bd.v < EG_LIFELINE_UNDER) m.lowAt = now; }",
+    "new": "m.lowAt = now; }",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-wire-toll-unread",
+    "file": "src/net/wire.js",
+    "old": "export const EG_RUN_KINDS = Object.freeze(['offer', 'ask', 'asked', 'tally', 'egot', 'run', 'rise', 'eping', 'pz', 'eheal', 'toll', 'eland', 'efair']);",
+    "new": "export const EG_RUN_KINDS = Object.freeze(['offer', 'ask', 'asked', 'tally', 'egot', 'run', 'rise', 'eping', 'pz', 'eheal', 'eland', 'efair']);",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-wire-toll-bound-widened",
+    "file": "src/net/wire.js",
+    "old": "export const EG_TOLL_WIRE_MAX = 4;",
+    "new": "export const EG_TOLL_WIRE_MAX = 5;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-wire-toll-nought",
+    "file": "src/net/wire.js",
+    "old": "intIn(m.q, 1, EG_TOLL_WIRE_MAX)",
+    "new": "intIn(m.q, 0, EG_TOLL_WIRE_MAX)",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-wire-toll-no-hall",
+    "file": "src/net/wire.js",
+    "old": "intIn(m.q, 1, EG_TOLL_WIRE_MAX) && intIn(m.h, 1, EG_HALL_WIRE_MAX) ? { k: 'toll', q: m.q, h: m.h } : null;",
+    "new": "intIn(m.q, 1, EG_TOLL_WIRE_MAX) ? { k: 'toll', q: m.q, h: m.h } : null;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-client-toll-unpaid",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (w.k === 'toll') payToll(w.q, w.h);",
+    "new": "",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-client-toll-the-step",
+    "note": "EG-ZR (PIN MOVED): re-aimed by content - the toll's share is of the body without Stoneskin's cushion (spireBodyMax)",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "Math.round(q * EG_TOLL_STEP * spireBodyMax(entity))",
+    "new": "Math.round(q * 0.1 * spireBodyMax(entity))",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-client-toll-the-last-taken",
+    "note": "EG-ZR (PIN MOVED): re-aimed by content - the toll's share is of the body without Stoneskin's cushion (spireBodyMax)",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "EG_TOLL_STEP * spireBodyMax(entity)), entity.health - 1);",
+    "new": "EG_TOLL_STEP * spireBodyMax(entity)), entity.health);",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-client-toll-nothing-hurt",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "note": "AUDIT EG III: re-aimed by content - a toll of nothing neither hurts nor is said",
+    "old": "    if (!(cut > 0)) return;   // AUDIT EG III: nothing taken, nothing said\n",
+    "new": "",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-client-toll-paid-twice",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (witness || !(entity.health > 0) || !inSpire() || h === tollH) return;",
+    "new": "if (witness || !(entity.health > 0) || !inSpire()) return;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-client-toll-outside",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (witness || !(entity.health > 0) || !inSpire() || h === tollH) return;",
+    "new": "if (witness || !(entity.health > 0) || h === tollH) return;",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-client-toll-unsaid-on-the-screen",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "note": "AUDIT EG III: re-aimed by content - the toll says what it took",
+    "old": "    mid(EG_PRES_TEXT.toll(took));\n",
+    "new": "",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-client-toll-unsaid-in-the-chat",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "note": "AUDIT EG III: re-aimed by content - the toll says what it took",
+    "old": "    say(EG_PRES_TEXT.tollLine(took));\n",
+    "new": "",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  },
+  {
+    "name": "EGZI-beats-toll-percent",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "note": "AUDIT EG III: re-aimed by content - the toll's words take what it took",
+    "old": "toll: (share) => `-${pctOf(share)}%`,",
+    "new": "toll: (share) => `-${pctOf(share * 10)}%`,",
+    "tests": ["test/net/eliteGates/egz_rules.test.js"]
+  }
+]

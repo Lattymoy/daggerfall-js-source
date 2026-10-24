@@ -5,7 +5,7 @@
     "old": "AND origin IN (${originsSql(WRIT_ORIGINS)})), 0)`;",
     "new": "AND origin IN (${originsSql(STATION_ORIGINS)})), 0)`;",
     "tests": [
-      "test/auditbagcraft.test.js"
+      "test/net/auditbagcraft.test.js"
     ]
   },
   {
@@ -14,8 +14,8 @@
     "old": "AND origin IN (${originsSql(STATION_ORIGINS)})), 0)`;",
     "new": "AND origin IN (${originsSql(WRIT_ORIGINS)})), 0)`;",
     "tests": [
-      "test/auditbagcraft.test.js",
-      "test/fb1009d_bagcraft.test.js"
+      "test/net/auditbagcraft.test.js",
+      "test/systems/fb1009d_bagcraft.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "export const workStatements = (db, opts) => spendOrigins(db, { ...opts, order: STATION_ORIGINS });",
     "new": "export const workStatements = (db, opts) => spendOrigins(db, { ...opts, order: [...STATION_ORIGINS].reverse() });",
     "tests": [
-      "test/auditbagcraft.test.js"
+      "test/net/auditbagcraft.test.js"
     ]
   },
   {
@@ -33,8 +33,8 @@
     "old": "SELECT player, char_id, material, '${LOOSE_ORIGIN}', loose FROM prof_deposits",
     "new": "SELECT player, char_id, material, 'bought', loose FROM prof_deposits",
     "tests": [
-      "test/auditbagcraft.test.js",
-      "test/fb1009d_bagcraft.test.js"
+      "test/net/auditbagcraft.test.js",
+      "test/systems/fb1009d_bagcraft.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "      SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8, ?5 - g - l - b, b, g, l\n",
     "new": "      SELECT ?1, ?3, ?2, ?4, ?5, ?6, ?7, ?8, ?5 - g - l - b, b + l, g, 0\n",
     "tests": [
-      "test/auditbagcraft.test.js"
+      "test/net/auditbagcraft.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "      order: ['gold', LOOSE_ORIGIN, 'bought', 'own'],",
     "new": "      order: ['gold', 'bought', 'own'],",
     "tests": [
-      "test/auditbagcraft.test.js"
+      "test/net/auditbagcraft.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "${per} * (MIN(?5, ${bought}) - MIN(?5, ${loose})), ${per} * MIN(?5, ${loose}),",
     "new": "${per} * MIN(?5, ${bought}), 0,",
     "tests": [
-      "test/auditbagcraft.test.js"
+      "test/net/auditbagcraft.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "THEN 'gold' WHEN ${anySql(13, 'bought')} THEN 'marks' END`;",
     "new": "THEN 'marks' WHEN ${anySql(13, 'bought')} THEN 'marks' END`;",
     "tests": [
-      "test/auditbagcraft.test.js"
+      "test/net/auditbagcraft.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "THEN '${LOOSE_ORIGIN}' WHEN ${anySql(6, 'bought')} THEN 'bought' ELSE 'own' END",
     "new": "THEN 'bought' WHEN ${anySql(6, 'bought')} THEN 'bought' ELSE 'own' END",
     "tests": [
-      "test/auditbagcraft.test.js"
+      "test/net/auditbagcraft.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "origin = '${LOOSE_ORIGIN}'), 0) > 0 THEN 'gold' ELSE bought_with END",
     "new": "origin = '${LOOSE_ORIGIN}'), 0) > 0 THEN bought_with ELSE bought_with END",
     "tests": [
-      "test/auditbagcraft.test.js"
+      "test/net/auditbagcraft.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "export const workHeld = (st) => (st?.own ?? 0) + (st?.bought ?? 0) + (st?.[LOOSE_ORIGIN] ?? 0);",
     "new": "export const workHeld = (st) => (st?.own ?? 0) + (st?.bought ?? 0);",
     "tests": [
-      "test/auditbagcraft.test.js"
+      "test/net/auditbagcraft.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "const originOf = (o) => (o === 'bought' || o === 'gold' || o === LOOSE_ORIGIN ? o : 'own');",
     "new": "const originOf = (o) => (o === 'bought' || o === 'gold' ? o : 'own');",
     "tests": [
-      "test/auditbagcraft.test.js"
+      "test/net/auditbagcraft.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "const ownSpent = Math.max(0, Math.min(inp.n, inp.n - st.bought - (st.loose ?? 0)));",
     "new": "const ownSpent = Math.max(0, Math.min(inp.n, inp.n - st.bought));",
     "tests": [
-      "test/auditbagcraft.test.js"
+      "test/net/auditbagcraft.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "    ...inputs.flatMap((inp) => workStatements(db, {   // AUDIT BAG-CRAFT A1: its loose units before the bought",
     "new": "    ...inputs.flatMap((inp) => spendStatements(db, {   // AUDIT BAG-CRAFT A1: its loose units before the bought",
     "tests": [
-      "test/auditbagcraft.test.js"
+      "test/net/auditbagcraft.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": ", ...(loose > 0 ? { [LOOSE_ORIGIN]: loose } : {}) });",
     "new": " });",
     "tests": [
-      "test/auditbagcraft.test.js"
+      "test/net/auditbagcraft.test.js"
     ]
   },
   {
@@ -142,8 +142,8 @@
     "old": "storesWorkable(material) { const s = this.store(material); return s.own + s.bought + (s[LOOSE_ORIGIN] | 0); },",
     "new": "storesWorkable(material) { const s = this.store(material); return s.own + s.bought; },",
     "tests": [
-      "test/auditbagcraft.test.js",
-      "test/fb1009d_bagcraft.test.js"
+      "test/net/auditbagcraft.test.js",
+      "test/systems/fb1009d_bagcraft.test.js"
     ]
   },
   {
@@ -152,7 +152,7 @@
     "old": "const inStores = (k) => (work === true ? this.storesWorkable(k) : this.storesHeld(k));",
     "new": "const inStores = (k) => this.storesHeld(k);",
     "tests": [
-      "test/fb1009d_bagcraft.test.js"
+      "test/systems/fb1009d_bagcraft.test.js"
     ]
   },
   {
@@ -161,43 +161,45 @@
     "old": "const inStores = (k) => (work === true ? this.storesWorkable(k) : this.storesHeld(k));",
     "new": "const inStores = (k) => this.storesWorkable(k);",
     "tests": [
-      "test/fb1009d_bagcraft.test.js"
+      "test/systems/fb1009d_bagcraft.test.js"
     ]
   },
   {
     "name": "AUDITBAGCRAFT-A1-pages-split-silent",
-    "file": "src/ui/profPages.js",
-    "old": "loose ? `${loose} from your pack` : null]",
+    "file": "src/ui/professions/profPages.js",
+    "old": "loose ? fromPack() : null]",
     "new": "null]",
     "tests": [
-      "test/auditbagcraft.test.js"
-    ]
+      "test/net/auditbagcraft.test.js"
+    ],
+    "note": "FB1020h ESSENCE-LOOSE (RE-AIMED by content): the split's loose segment is the no-pack-form choice's (fromPack)."
   },
   {
     "name": "AUDITBAGCRAFT-A1-pages-line-undrawn",
-    "file": "src/ui/profPages.js",
-    "old": "    if ((pick.loose | 0) > 0) detail.append(el('p', 'px-note', LOOSE_GOODS_LINE));   // AUDIT BAG-CRAFT A1: a carrying book's page\n",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    if ((pick.loose | 0) > 0) detail.append(el('p', 'px-note', looseGoodsLine(pick.material)));   // AUDIT BAG-CRAFT A1: a carrying book's page\n",
     "new": "",
     "tests": [
-      "test/auditbagcraft.test.js"
-    ]
+      "test/net/auditbagcraft.test.js"
+    ],
+    "note": "FB1020h ESSENCE-LOOSE (RE-AIMED by content): the line names its material (a no-pack-form material's line its own)."
   },
   {
     "name": "AUDITBAGCRAFT-A1-pages-total-without",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "total: s.own + s.bought + (s.gold | 0) + (s.loose | 0), carried:",
     "new": "total: s.own + s.bought + (s.gold | 0), carried:",
     "tests": [
-      "test/auditbagcraft.test.js"
+      "test/net/auditbagcraft.test.js"
     ]
   },
   {
     "name": "AUDITBAGCRAFT-A1-pages-room-without",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "(row?.gold | 0) + (row?.loose | 0)));",
     "new": "(row?.gold | 0)));",
     "tests": [
-      "test/auditbagcraft.test.js"
+      "test/net/auditbagcraft.test.js"
     ]
   },
   {
@@ -206,7 +208,7 @@
     "old": " - ((s?.gold ?? 0) | 0) - ((s?.loose ?? 0) | 0));",
     "new": " - ((s?.gold ?? 0) | 0));",
     "tests": [
-      "test/auditbagcraft.test.js"
+      "test/net/auditbagcraft.test.js"
     ]
   }
 ]

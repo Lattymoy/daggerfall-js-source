@@ -18,7 +18,7 @@
 // constructor plays OpenBook, its lines are LocalizedBook's converted
 // rows, its input arm is the exit's ButtonClick. Under the enhanced
 // skin the face over it is project-raum's animated book
-// (ui/enhancedBook.js over vendor/raum-book/), which cuts the model's
+// (ui/enhanced/enhancedBook.js over vendor/raum-book/), which cuts the model's
 // laid-out labels into leaves and sets them in the skin's serif.
 //
 // ── THE HAND-OFF LAW STANDS ──────────────────────────────────────
@@ -36,16 +36,18 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { isEnhanced } from '../systems/uiSkin.js';
-import { mountEnhancedChunk } from './enhancedChunk.js';   // MENU1: the one lazy-chunk door
-import { registerOverlay } from './enhancedOverlays.js';   // PX28: Tab puts it away
+import { mountEnhancedChunk } from './enhanced/enhancedChunk.js';   // MENU1: the one lazy-chunk door
+import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28: Tab puts it away
 import { requestLook } from '../player/pointerLock.js';   // MAC1: the relock rides the closing gesture
 import { BookReaderWindow } from './bookReader.js';
 import { BookFile } from '../formats/bookFile.js';
 import { getBookFileName } from '../systems/books.js';
 import { openPortBook } from '../systems/portBooks.js';   // WB12c: the port's own books, read before any file
-import { setBookAuthor } from '../systems/itemInfo.js';   // IM1: the %ba cache
+import { setBookAuthor } from '../systems/item/itemInfo.js';   // IM1: the %ba cache
+import { openLocalizedBookFile } from '../systems/localizedBook.js';   // L10N3f: LocalizedBook.OpenBookFile's first arm
 
-/** Build the reader this skin wears over an opened BookFile. */
+/** Build the reader this skin wears over an opened BookFile - or
+ *  (L10N3f) the language's LocalizedBook. */
 export function createBookReaderWindow(bookFile) {
   const model = new BookReaderWindow(bookFile);
   // `document` for the reason every door gives: node drives the hosts
@@ -63,6 +65,19 @@ export function makeOpenBookHook({ fetchBytes, showReader }) {
     const port = openPortBook(item?.message ?? -1);
     const name = port ? null : getBookFileName(item?.message ?? -1);
     if (!port && !name) { onFail?.(); return; }
+    // L10N3f - LocalizedBook.OpenBookFile (LocalizedBook.cs:61-72): the
+    // language's -LOC book first, and the BOK file only where it has
+    // none - so a translated book never fetches the classic one. Its
+    // author feeds the %ba cache as the file's does below: a running
+    // game keeps the language it began in (L10N1b), so the cache speaks
+    // the language BookAuthor would read first (:165-169). The port's
+    // own books (WB12c) have no classic file and no -LOC one.
+    const localized = name ? openLocalizedBookFile(name) : null;
+    if (localized) {
+      setBookAuthor(item?.message, localized.author);
+      showReader(createBookReaderWindow(localized));
+      return;
+    }
     try {
       let bookFile = port;
       if (bookFile) await null;   // WB12c: after the pack's close, as a fetched file lands - never inside its hand-off (EB4)
@@ -120,9 +135,9 @@ function enhancedBookOverlay(model) {
     el.style.cssText = 'position:fixed;inset:0;width:100vw;height:100dvh;z-index:14;image-rendering:pixelated;touch-action:none';
     document.body.append(el);
     unregister = registerOverlay(exit);
-    // MENU1: the ONE lazy-chunk door (ui/enhancedChunk.js).
+    // MENU1: the ONE lazy-chunk door (ui/enhanced/enhancedChunk.js).
     mountEnhancedChunk({
-      load: () => import('./enhancedBook.js'),
+      load: () => import('./enhanced/enhancedBook.js'),
       mount: ({ mountEnhancedBook }) => { view = mountEnhancedBook(el, { model, onExit: teardown, relock }); },
       alive: () => !torn, host: el, onDismiss: exit, label: 'book',
     });

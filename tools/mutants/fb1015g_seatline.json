@@ -1,0 +1,74 @@
+[
+  {
+    "name": "SEAT-LINE-the-seat-answered-null",
+    "file": "src/systems/guild/guilds.js",
+    "old": "    return m.rank === top\n      ? { rank, seat: true, reputation: getReputation(store, guild.factionId), reputationNeed: RANK_REQ_REPUTATION[rank] }\n      : null;",
+    "new": "    return null;",
+    "tests": [
+      "test/systems/fb1015g_seatline.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-LINE-the-seat-at-any-rank",
+    "file": "src/systems/guild/guilds.js",
+    "old": "    return m.rank === top\n",
+    "new": "    return true\n",
+    "tests": [
+      "test/systems/fb1015g_seatline.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-LINE-the-seat-need-not-rank-8s",
+    "file": "src/systems/guild/guilds.js",
+    "old": "reputationNeed: RANK_REQ_REPUTATION[rank] }\n      : null;",
+    "new": "reputationNeed: RANK_REQ_REPUTATION[top] }\n      : null;",
+    "tests": [
+      "test/systems/fb1015g_seatline.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-LINE-the-seats-line-dropped",
+    "file": "src/systems/guild/guildServiceFlow.js",
+    "old": "      t('guild.rankNeeds.seat', \"Ranks {officer} and {master} are each chapter's council and Master, won only by Merit\",\n        { officer: SEAT_RANK.officer, master: SEAT_RANK.master }),\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1015g_seatline.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-LINE-the-reputation-always-said",
+    "file": "src/systems/guild/guildServiceFlow.js",
+    "old": "      ...(n.reputation < n.reputationNeed ? [reputationLine(n, owed)] : []),",
+    "new": "      ...(true ? [reputationLine(n, owed)] : []),",
+    "tests": [
+      "test/systems/fb1015g_seatline.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-LINE-the-tenure-not-the-laws",
+    "file": "src/systems/guild/guildServiceFlow.js",
+    "old": "days: SEAT_TENURE_S / 86_400,",
+    "new": "days: 7,",
+    "tests": [
+      "test/systems/fb1015g_seatline.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-LINE-the-merit-line-dropped",
+    "file": "src/systems/guild/guildServiceFlow.js",
+    "old": "      t('guild.rankNeeds.seatMerit', 'At each Sunday\\'s Turning the chairs go to the members with the most Merit over the last {weeks} weeks, with {days} real days in the guild and accounts {age} real days old',\n        { weeks: SEAT_MERIT_WEEKS, days: SEAT_TENURE_S / 86_400, age: SEAT_ACCOUNT_AGE_S / 86_400 }),\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1015g_seatline.test.js"
+    ]
+  },
+  {
+    "name": "SEAT-LINE-the-book-unseated",
+    "file": "src/scenes/worldModes.js",
+    "old": "rankNeedsLines(playerEntity, guild, seated(), store,",
+    "new": "rankNeedsLines(playerEntity, guild, memberships, store,",
+    "tests": [
+      "test/systems/fb1015g_seatline.test.js"
+    ]
+  }
+]

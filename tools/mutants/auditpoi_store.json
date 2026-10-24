@@ -1,0 +1,470 @@
+[
+  {
+    "name": "AUDITPOI-S1-the-name-unchecked",
+    "file": "server-account/src/poi.js",
+    "old": "  if (docSha !== null && docSha !== row.doc_sha) return { error: 'poi-changed' };",
+    "new": "  if (false) return { error: 'poi-changed' };",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S1-an-approval-naming-nothing",
+    "file": "server-account/src/poi.js",
+    "old": "  if (verdict === 'approve' && row.kind === 'doc' && docSha === null) return { error: 'body' };",
+    "new": "  if (false) return { error: 'body' };",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S1-the-decision-not-held-to-the-document-read",
+    "file": "server-account/src/poi.js",
+    "old": "AND state = 'submitted' AND doc_sha IS ?9`).bind(",
+    "new": "AND state = 'submitted' AND (doc_sha IS ?9 OR 1)`).bind(",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S1-one-mark-for-every-decision",
+    "file": "server-account/src/poi.js",
+    "old": "  const mark = decisionMark(ctx);\n  const decided = 'EXISTS",
+    "new": "  const mark = 'every decision';\n  const decided = 'EXISTS",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S1-the-queue-unnamed",
+    "file": "server-account/src/poi.js",
+    "old": "docSha: r.doc_sha ?? null,",
+    "new": "docSha: null,",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S1-the-route-dropping-the-name",
+    "file": "server-account/src/index.js",
+    "old": "docSha: body.docSha ?? null }));",
+    "new": "docSha: null }));",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S1-the-client-not-sending-it",
+    "file": "src/poi/poiService.js",
+    "old": "...(typeof docSha === 'string' ? { docSha } : {})",
+    "new": "...({})",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S1-a-submission-not-held-to-the-document-checked",
+    "file": "server-account/src/poi.js",
+    "old": "AND state = 'draft' AND doc_sha = ?\").bind(",
+    "new": "AND state = 'draft' AND (doc_sha = ? OR 1)\").bind(",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S2-the-place-unread",
+    "file": "src/poi/poiLaw.js",
+    "old": "    unknownProblems(p, PLACE_KEYS, 'place', say);",
+    "new": "    void 0;",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S2-a-part-unread",
+    "file": "src/poi/poiLaw.js",
+    "old": "      unknownProblems(part, PART_KEYS, at, say);",
+    "new": "      void 0;",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S2-a-light-unread",
+    "file": "src/poi/poiLaw.js",
+    "old": "      unknownProblems(l, LIGHT_KEYS, at, say);",
+    "new": "      void 0;",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S2-the-marker-unread",
+    "file": "src/poi/poiLaw.js",
+    "old": "      unknownProblems(m, MARKER_KEYS, 'marker', say);",
+    "new": "      void 0;",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S2-the-uv-unread",
+    "file": "src/poi/poiLaw.js",
+    "old": "  if (uv && typeof uv === 'object') unknownProblems(uv, UV_KEYS, `${at}.uv`, say);",
+    "new": "  void 0;",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S3-the-list-reading-the-documents",
+    "file": "server-account/src/poi.js",
+    "old": "d.live_by, n.name, n.px, n.py,",
+    "new": "d.live_by, json_extract(n.doc, '$.name') AS name, json_extract(n.doc, '$.place.px') AS px, json_extract(n.doc, '$.place.py') AS py,",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S3-the-name-not-written",
+    "file": "server-account/src/poi.js",
+    "old": "SELECT ?1, n.next, 'doc', ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, 'draft'",
+    "new": "SELECT ?1, n.next, 'doc', ?2, ?3, NULL, ?5, ?6, ?7, ?8, ?9, ?10, 'draft'",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S4-live-never-cleared",
+    "file": "server-account/src/poi.js",
+    "old": "live = EXISTS (SELECT 1 FROM poi_rev_assets ra JOIN poi_docs d ON d.id = ra.poi_id AND d.live_rev = ra.rev WHERE ra.sha = poi_assets.sha)",
+    "new": "live = MAX(live, EXISTS (SELECT 1 FROM poi_rev_assets ra JOIN poi_docs d ON d.id = ra.poi_id AND d.live_rev = ra.rev WHERE ra.sha = poi_assets.sha))",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S4-the-rollback-not-recomputing",
+    "file": "server-account/src/poi.js",
+    "old": "    ctx.db.prepare(liveRecomputed('1')).bind(id),\n",
+    "new": "",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S4-the-cache-a-year",
+    "file": "server-account/src/poi.js",
+    "old": "export const POI_LIVE_ASSET_MAX_AGE_S = 86400;",
+    "new": "export const POI_LIVE_ASSET_MAX_AGE_S = 31536000;",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S5-the-bounds-compared-as-they-differ",
+    "file": "src/poi/poiMesh.js",
+    "old": "  for (let k = 0; k < 3; k++) if (!(Math.abs(min[k] - boundsMin[k]) <= 1e-3 && Math.abs(max[k] - boundsMax[k]) <= 1e-3)) return { error: 'bounds' };",
+    "new": "  for (let k = 0; k < 3; k++) if (Math.abs(min[k] - boundsMin[k]) > 1e-3 || Math.abs(max[k] - boundsMax[k]) > 1e-3) return { error: 'bounds' };",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S6-the-triangles-unbudgeted",
+    "file": "src/poi/poiLaw.js",
+    "old": "  over('budget-triangles', triangles, POI_BUDGET.triangles);",
+    "new": "  void 0;",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S6-the-vertices-unbudgeted",
+    "file": "src/poi/poiLaw.js",
+    "old": "  over('budget-vertices', vertices, POI_BUDGET.vertices);",
+    "new": "  void 0;",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S6-the-bytes-unbudgeted",
+    "file": "src/poi/poiLaw.js",
+    "old": "  over('budget-bytes', bytes, POI_BUDGET.bytes);",
+    "new": "  void 0;",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S6-the-pixels-unbudgeted",
+    "file": "src/poi/poiLaw.js",
+    "old": "  over('budget-pixels', pixels, POI_BUDGET.pixels);",
+    "new": "  void 0;",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S6-the-reach-unbudgeted",
+    "file": "src/poi/poiLaw.js",
+    "old": "  over('budget-reach', Math.ceil(reach), POI_BUDGET.reach);",
+    "new": "  void 0;",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S6-the-place-size-unread",
+    "file": "src/poi/poiLaw.js",
+    "old": "  reach *= finite(doc?.place?.s) ? doc.place.s : 1;",
+    "new": "  void 0;",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S7-the-save-writing-over-a-submission",
+    "file": "server-account/src/poi.js",
+    "old": "WHERE poi_id = ?1 AND author = ?8 AND state = 'draft' AND kind = 'doc' RETURNING rev",
+    "new": "WHERE poi_id = ?1 AND author = ?8 AND state IN ('draft', 'submitted') AND kind = 'doc' RETURNING rev",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S7-the-withdrawal-guessing",
+    "file": "server-account/src/poi.js",
+    "old": "  if (!r) return stateNow(ctx.db, id, rev, 'poi-state');\n  return { id, rev, state: r.state };",
+    "new": "  if (!r) return { id, rev, state: 'draft' };\n  return { id, rev, state: r.state };",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S8-a-second-open-draft-stored",
+    "file": "server-account/migrations/0116_poi.sql",
+    "old": "CREATE UNIQUE INDEX IF NOT EXISTS poi_revs_one_draft",
+    "new": "CREATE INDEX IF NOT EXISTS poi_revs_one_draft",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S8-a-second-retirement-stored",
+    "file": "server-account/migrations/0116_poi.sql",
+    "old": "CREATE UNIQUE INDEX IF NOT EXISTS poi_revs_one_retire",
+    "new": "CREATE INDEX IF NOT EXISTS poi_revs_one_retire",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S8-the-shelf-loser-told-it-won",
+    "file": "server-account/src/poi.js",
+    "old": "    if (made.meta?.changes) return { id: item.id, at: ctx.nowS };",
+    "new": "    return { id: item.id, at: ctx.nowS };",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S9-the-bound-unreserved",
+    "file": "server-account/src/poi.js",
+    "old": "DO UPDATE SET bytes = bytes + excluded.bytes WHERE bytes + excluded.bytes <= ?4",
+    "new": "DO UPDATE SET bytes = bytes + excluded.bytes WHERE ?4 > 0",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S9-a-failed-store-keeping-its-bytes",
+    "file": "server-account/src/poi.js",
+    "old": "  } catch (e) {\n    await giveBack();\n    throw e;",
+    "new": "  } catch (e) {\n    throw e;",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S10-open-revisions-unbounded",
+    "file": "server-account/src/poi.js",
+    "old": "state IN ('draft', 'submitted')) < ${POI_OPEN_REVS}`;",
+    "new": "state IN ('draft', 'submitted')) < ${POI_OPEN_REVS * 2}`;",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S10-the-shelf-ever-unbounded",
+    "file": "server-account/src/poi.js",
+    "old": "(SELECT COUNT(*) FROM poi_shelf WHERE by = ?8) < ${POI_SHELF_EVER}",
+    "new": "(SELECT COUNT(*) FROM poi_shelf WHERE by = ?8) < ${POI_SHELF_EVER * 2}",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S10-the-list-every-revision",
+    "file": "server-account/src/poi.js",
+    "old": "FROM poi_revs WHERE poi_id IN (SELECT id FROM poi_docs ORDER BY created_at DESC LIMIT ${POI_LIST_MAX})) WHERE k <= ${POI_LIST_REVS}",
+    "new": "FROM poi_revs) WHERE k <= ${POI_LIST_REVS}",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S10-the-list-every-revision-of-each",
+    "file": "server-account/src/poi.js",
+    "old": "WHERE k <= ${POI_LIST_REVS} ORDER BY poi_id, rev",
+    "new": "WHERE k <= ${POI_LIST_REVS} + 1000 ORDER BY poi_id, rev",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S10-the-queue-unbounded",
+    "file": "server-account/src/poi.js",
+    "old": "    queue: rows.slice(0, POI_QUEUE_MAX).map((r) => ({",
+    "new": "    queue: rows.map((r) => ({",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S10-more-unsaid",
+    "file": "server-account/src/poi.js",
+    "old": "    more: rows.length > POI_QUEUE_MAX,",
+    "new": "    more: false,",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S11-the-held-version-unread",
+    "file": "server-account/src/poi.js",
+    "old": "  if (kept && kept.v >= atLeast && nowMs - kept.checkedMs < POI_FEED_KEEP_MS) return kept;",
+    "new": "  if (kept && nowMs - kept.checkedMs < POI_FEED_KEEP_MS) return kept;",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S11-the-route-not-passing-it",
+    "file": "server-account/src/index.js",
+    "old": "const feed = await poiLiveFeed(env.DB, Date.now(), held);",
+    "new": "const feed = await poiLiveFeed(env.DB, Date.now());",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S11-a-weak-tag-a-stranger",
+    "file": "server-account/src/poi.js",
+    "old": "(?:W\\/)?\"poi-(\\d{1,15})\"",
+    "new": "\"poi-(\\d{1,15})\"",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S11-the-304-by-the-header-string",
+    "file": "server-account/src/index.js",
+    "old": "if (held === feed.v) return new Response(null, { status: 304, headers });",
+    "new": "if (request.headers.get('if-none-match') === etag) return new Response(null, { status: 304, headers });",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S12-stale-only-while-live",
+    "file": "server-account/src/poi.js",
+    "old": "      stale: (r.base_rev ?? null) !== (r.live_rev ?? null),",
+    "new": "      stale: r.kind === 'doc' && r.live_rev != null && r.base_rev !== r.live_rev,",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S13-a-lone-surrogate-through",
+    "file": "src/poi/poiLaw.js",
+    "old": "const UNSAID_RE = /[\\p{Cc}\\p{Cs}",
+    "new": "const UNSAID_RE = /[\\p{Cc}",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S13-bidi-and-separators-through",
+    "file": "src/poi/poiLaw.js",
+    "old": "\\u{2028}\\u{2029}\\u{202a}-\\u{202e}\\u{2066}-\\u{2069}]/u;\n// the one field",
+    "new": "\\u{2028}\\u{2029}]/u;\n// the one field",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S13-c1-through",
+    "file": "src/poi/poiLaw.js",
+    "old": "const UNSAID_RE = /[\\p{Cc}",
+    "new": "const UNSAID_RE = /[\\u{0}-\\u{1f}\\u{7f}",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S13-c1-through-prose",
+    "file": "src/poi/poiLaw.js",
+    "old": "const PROSE_UNSAID_RE = /[\\u{0}-\\u{9}\\u{b}-\\u{1f}\\u{7f}-\\u{9f}\\p{Cs}",
+    "new": "const PROSE_UNSAID_RE = /[\\u{0}-\\u{9}\\u{b}-\\u{1f}\\u{7f}\\p{Cs}",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S14-the-rollback-base-unrecorded",
+    "file": "server-account/src/poi.js",
+    "old": "SELECT ?1, n.next, 'rollback', NULL, ?2, ?3",
+    "new": "SELECT ?1, n.next, 'rollback', NULL, NULL, ?3",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S14-a-withdrawn-retirement-a-rejection",
+    "file": "server-account/src/poi.js",
+    "old": "THEN 'draft' ELSE 'withdrawn' END",
+    "new": "THEN 'draft' ELSE 'rejected' END",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-U13-taken-off-not-found",
+    "file": "server-account/src/poi.js",
+    "old": "  if (r.gone_at != null) return { error: 'poi-gone' };   // AUDIT POI U13: taken off the shelf",
+    "new": "  if (r.gone_at != null) return { error: 'not-found' };   // AUDIT POI U13: taken off the shelf",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-U13-a-full-shelf-a-full-day",
+    "file": "server-account/src/poi.js",
+    "old": "? { error: 'poi-shelf-full', max: POI_SHELF_MAX }",
+    "new": "? { error: 'poi-quota', max: POI_SHELF_MAX }",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-U13-the-word-unsaid",
+    "file": "src/net/accountClient.js",
+    "old": "'poi-gone': () => t('account.refusal.poiGone'",
+    "new": "'poi-gone-unsaid': () => t('account.refusal.poiGone'",
+    "tests": [
+      "test/poi/auditpoi_store.test.js"
+    ]
+  }
+]

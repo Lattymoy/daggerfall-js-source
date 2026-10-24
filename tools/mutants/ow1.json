@@ -5,7 +5,7 @@
     "old": "        else if (code === 'KeyF') { this._top = null; this._renderBox(); this.deps.onForgetTravel?.(); }\n",
     "new": "",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ],
     "note": "The resume prompt asks at every open with no way to be rid of it."
   },
@@ -15,7 +15,7 @@
     "old": "    row.append(yes, no, forget);",
     "new": "    row.append(yes, no);",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ],
     "note": "Forget it is never offered."
   },
@@ -25,57 +25,57 @@
     "old": "      onForgetTravel: () => { travelOptions?.clearTravelDestination(); },",
     "new": "      onForgetTravel: () => {},",
     "tests": [
-      "test/heldmap.test.js"
+      "test/ui/heldmap.test.js"
     ],
     "note": "Forget it closes the box and the journey is still asked about next open."
   },
   {
     "name": "OW-THEME-bar-unthemed",
-    "file": "src/ui/enhancedFrame.js",
+    "file": "src/ui/enhanced/enhancedFrame.js",
     "old": "    '.tview-bar', '.tview-side',",
     "new": "    '.tview-side',",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The Overworld's bar keeps Slate's colours on every theme."
   },
   {
     "name": "OW-THEME-return-unthemed",
-    "file": "src/ui/enhancedFrame.js",
+    "file": "src/ui/enhanced/enhancedFrame.js",
     "old": "    '.tview-back', '.tview-mode',",
     "new": "    '.tview-mode',",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The Overworld's Return is not the theme's stone button."
   },
   {
     "name": "OW-THEME-compass-unthemed",
-    "file": "src/ui/enhancedFrame.js",
+    "file": "src/ui/enhanced/enhancedFrame.js",
     "old": "    '.tview-compass',\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The compass is not sunk in the theme's socket."
   },
   {
     "name": "OW-THEME-plates-fixed",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "    x.fillStyle = plateFill; x.fillRect(0.5, 0.5, w - 1, h - 1);",
     "new": "    x.fillStyle = C.plate; x.fillRect(0.5, 0.5, w - 1, h - 1);",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The town plates stay Slate's on every theme."
   },
   {
     "name": "OW-THEME-slate-unread",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  if (!m) return TRAVEL_VIEW_MARK_COLORS.plate;\n  const n = parseInt(m[1], 16);",
     "new": "  if (m) return TRAVEL_VIEW_MARK_COLORS.plate;\n  const n = parseInt('171b21', 16);",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The theme's stone is never read."
   },
@@ -85,47 +85,47 @@
     "old": "export const tvOwnGrow = (dist) => Math.max(1, Math.min(TV_OWN_GROW_MAX, Math.round((Number.isFinite(dist) ? dist : 0) / TV_OWN_GROW_M)));",
     "new": "export const tvOwnGrow = (dist) => 1;",
     "tests": [
-      "test/eotb_body.test.js"
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],
     "note": "The traveller is a speck from the Overworld."
   },
   {
     "name": "OW-BIG-grow-ignored",
-    "file": "src/player/eotbBody.js",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
     "old": "      const grow = face && face.grow > 1 ? face.grow : 1;",
     "new": "      const grow = 1;",
     "tests": [
-      "test/eotb_body.test.js"
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],
     "note": "The view's step reaches the sprite and is thrown away."
   },
   {
     "name": "OW-BIG-giant-shadow",
-    "file": "src/player/eotbBody.js",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
     "old": "          batch.noShadow = grow > 1;",
     "new": "          batch.noShadow = false;",
     "tests": [
-      "test/eotb_body.test.js"
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],
     "note": "The grown sprite casts a giant's shadow across the land (AUDIT OW5 R2: re-aimed from selfCard, which never kept it from casting)."
   },
   {
     "name": "OW-BIG-self-card",
-    "file": "src/player/eotbBody.js",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
     "old": "          batch.selfCard = grow === 1;",
     "new": "          batch.selfCard = true;",
     "tests": [
-      "test/eotb_body.test.js"
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],
     "note": "The grown card is taken for the player's own at the lamps."
   },
   {
     "name": "OW-BIG-lantern-adrift",
-    "file": "src/player/eotbBody.js",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
     "old": "      if (grow === 1) drawLantern();",
     "new": "      drawLantern();",
     "tests": [
-      "test/eotb_body.test.js"
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],
     "note": "The lantern hangs at a grown body's old waist."
   },
@@ -135,7 +135,7 @@
     "old": "      grow: tvOwnGrow(Math.hypot(shown.eye[0] - f[0], shown.eye[1] - f[1], shown.eye[2] - f[2])),",
     "new": "      grow: 1,",
     "tests": [
-      "test/eotb_body.test.js"
+      "test/player/eyeOfTheBeholder/eotb_body.test.js"
     ],
     "note": "The view never hands the host its step."
   },
@@ -145,7 +145,7 @@
     "old": "    const tvFace = tvf ? { yaw: tvf.yaw, up: tvf.up, grow: player.drawGrow ?? tvf.grow } : null;",
     "new": "    const tvFace = tvf ? { yaw: tvf.yaw, up: tvf.up } : null;",
     "tests": [
-      "test/tv1_travel_view.test.js"
+      "test/render/tv1_travel_view.test.js"
     ],
     "note": "The host never hands the sprite the view's step."
   }

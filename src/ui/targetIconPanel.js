@@ -23,7 +23,7 @@
 // "{0:F2} / {1}", weight, max)` - a whole number of kilograms prints
 // no decimals and anything else prints exactly two.
 
-import { drawImgCrop, shadowText } from './nativePanel.js';
+import { drawImgCrop, shadowText } from './native/nativePanel.js';
 import { DEFAULT_TOOLTIP_TEXT_FG } from './toolTip.js';
 import { CifRciFile } from '../formats/cifRciFile.js';
 import { TextureFile, texName } from '../formats/textureFile.js';   // G5: the drop icon is a WORLD FLAT's record

@@ -81,7 +81,7 @@ export function spotCircles(spotKey, present, t, roundMin) {
 
 /**
  * The DEAL: `who` paired off for a round in an order drawn from the key, the round and each one's id - two by two, the
- * odd three together, one alone none. LW-TALK: the rooms deal their tables on it (scenes/livingIndoors.js).
+ * odd three together, one alone none. LW-TALK: the rooms deal their tables on it (scenes/livingWorld/livingIndoors.js).
  * @template {Talker} T
  * @param {string} key @param {readonly T[]} who @param {number} round @param {number} start @param {number} end @param {number} beatMin - `from` after `start`
  * @returns {Circle[]}

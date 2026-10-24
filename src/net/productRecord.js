@@ -15,6 +15,9 @@
 //           dish (it never spoils) - so a dish bought at the market keeps what its cook gave it; absent for every other.
 //           PROF10: or a piece of jewellery's jeweller's hand (recipeLaw jewelHand) - 1 a Goldsmith's Silver (its points
 //           Gold's), 2 a Gemcutter's gem (+20%, not +10%)
+//         v CRAFT-PROCS (FIELD BUGS 2026-10-13e): the mint's version, stamped at the craft and kept by a temper's re-sign
+//           - the law the piece is minted under (systems/smithItems.js mintPiece): 1 its quality's roll and the ladder's
+//           last pass (MINT_V_LAST_PASS); absent on every record made before, which mints as it always did
 //
 // ONE KEY, SEVERAL THINGS, NEVER CONFUSED: the identity key signs tokens (`v1`) and orders; this is `p1`, the version
 // inside the signed bytes and read before a byte of the body is, and the claim shapes are disjoint besides - a record
@@ -32,6 +35,12 @@ import { PROVENANCE_RE, MAKER_MAX, recipeById, MASTERWORK, rollsQuality, dyeOk, 
 export const PRODUCT_RECORD_V = 'p1';
 /** The bound on a record's length. */
 export const PRODUCT_RECORD_MAX = 512;
+/** CRAFT-PROCS (FIELD BUGS 2026-10-13e, a player: "Added potency and cast speed, cast cost affixes are not rolling on
+ *  crafted jewelry"): the first mint version whose Superior and Masterwork take the ladder's last pass - a line that does
+ *  something, as a loot door's Magic and Rare take one (systems/smithItems.js mintPiece). */
+export const MINT_V_LAST_PASS = 1;
+/** The mint version a craft stamps on its record now (`v`) - the service's (server-account/src/professions.js). */
+export const MINT_VERSION = MINT_V_LAST_PASS;
 /** A character id's shape (the account service's CHAR_ID_RE). */
 const CHAR_RE = /^[A-Za-z0-9_-]{4,64}$/;
 
@@ -54,6 +63,7 @@ export function productRecordValid(c) {
   if (c.a !== undefined && (c.a !== 1 || c.m === null || !(c.q === MASTERWORK || r.family === 'furniture'))) return false;
   if (c.u !== undefined && (c.u === null || !dyeOk(r, c.u))) return false;   // PROF7: a garment's dye, of its ten
   if (c.f !== undefined && !handOk(r, c.f)) return false;   // PROF9: a dish's cook's hand; PROF10: a jeweller's
+  if (c.v !== undefined && !(Number.isSafeInteger(c.v) && c.v >= MINT_V_LAST_PASS)) return false;   // CRAFT-PROCS: the mint's version
   return true;
 }
 /** PROF9: whether `f` is a hand recipe `r`'s piece may carry - a Provisioner's on any dish, a Chef's on a feast alone.
@@ -66,13 +76,13 @@ function handOk(r, f) {
 
 /**
  * MINT - the account service's half. With no key the record goes out unsigned (`p1.<body>.`).
- * @param {{p: string, s: string, h: string, r: string, q: number, m: string|null, c: number, a?: boolean, u?: number|null, f?: number|null}} what
+ * @param {{p: string, s: string, h: string, r: string, q: number, m: string|null, c: number, a?: boolean, u?: number|null, f?: number|null, v?: number|null}} what
  * @param {CryptoKey|null} privateKey the service's Ed25519 identity key (server-account/src/signing.js), or null
  * @param {{subtle: SubtleCrypto, nowS: number}} env
  * @returns {Promise<string>}
  */
-export async function mintProductRecord({ p, s, h, r, q, m, c, a = false, u = null, f = null }, privateKey, { subtle, nowS }) {
-  const claims = { p, s, h, r, q, m, c, i: nowS, ...(a ? { a: 1 } : {}), ...(u == null ? {} : { u }), ...(f == null ? {} : { f }) };   // PROF9: a dish's hand
+export async function mintProductRecord({ p, s, h, r, q, m, c, a = false, u = null, f = null, v = null }, privateKey, { subtle, nowS }) {
+  const claims = { p, s, h, r, q, m, c, i: nowS, ...(a ? { a: 1 } : {}), ...(u == null ? {} : { u }), ...(f == null ? {} : { f }), ...(v == null ? {} : { v }) };   // PROF9: a dish's hand; CRAFT-PROCS: the mint's version
   if (!productRecordValid(claims)) throw new TypeError('mintProductRecord refused a claim set it could not verify');
   const body = _b64url.encode(enc.encode(JSON.stringify(claims)));
   if (!privateKey) return `${PRODUCT_RECORD_V}.${body}.`;
@@ -94,6 +104,9 @@ export function readProductRecord(rec) {
   try { c = JSON.parse(dec.decode(raw)); } catch { return null; }
   return productRecordValid(c) ? { ...c, signed: parts[2].length > 0 } : null;
 }
+/** CRAFT-PROCS: the mint version a record names (`v`) - 0 for one made before the stamp, or for anything not a record.
+ *  The client's craft mint and the market's piece (server-account/src/market.js pieceOf) read it here. @param {unknown} rec */
+export const mintVersionOf = (rec) => readProductRecord(rec)?.v ?? 0;
 
 /**
  * VERIFY - `{ ok: true, claims }` or `{ ok: false, why }`, never a throw: the version first, the signature before the

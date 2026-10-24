@@ -4,15 +4,15 @@
     "file": ".github/workflows/release-desktop.yml",
     "old": "    needs: [version, build]\n",
     "new": "    needs: [version]\n",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "The release would be cut beside legs still building - the partial `latest` REL4 exists to end."
   },
   {
     "name": "REL4-2-publish-runs-when-a-leg-failed",
     "file": ".github/workflows/release-desktop.yml",
-    "old": "    if: needs.version.outputs.tag != ''\n",
-    "new": "    if: always() && needs.version.outputs.tag != ''\n",
-    "tests": ["test/rel4_release.test.js"],
+    "old": "    needs: [version, build]\n    if: needs.version.outputs.tag != ''\n",
+    "new": "    needs: [version, build]\n    if: always() && needs.version.outputs.tag != ''\n",
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "always() drops the implicit success(): a dead Windows leg would publish a release with no Windows installer."
   },
   {
@@ -20,28 +20,28 @@
     "file": ".github/workflows/release-desktop.yml",
     "old": "          draft: true\n",
     "new": "          draft: false\n",
-    "tests": ["test/rel4_release.test.js"]
+    "tests": ["test/tooling/rel4_release.test.js"]
   },
   {
     "name": "REL4-4-the-set-is-never-checked",
     "file": ".github/workflows/release-desktop.yml",
     "old": "        run: node scripts/desktopRelease.mjs check release\n",
     "new": "        run: ls release\n",
-    "tests": ["test/rel4_release.test.js", "test/autoupdate.test.js"]
+    "tests": ["test/tooling/rel4_release.test.js", "test/tooling/autoupdate.test.js"]
   },
   {
     "name": "REL4-5-a-leg-publishes-again",
     "file": ".github/workflows/release-desktop.yml",
     "old": "      - name: Hand the installers on\n        uses: actions/upload-artifact@v4\n",
     "new": "      - name: Hand the installers on\n        uses: softprops/action-gh-release@v2\n",
-    "tests": ["test/rel4_release.test.js"]
+    "tests": ["test/tooling/rel4_release.test.js"]
   },
   {
     "name": "REL4-6-the-draft-is-published-without-deciding-latest",
     "file": ".github/workflows/release-desktop.yml",
     "old": " -F draft=false -f make_latest=\"$MAKE_LATEST\" --silent\n",
     "new": " -F draft=false --silent\n",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "GitHub makes a newly published release latest by default - a hand re-cut of an old build would move every download link and updater back to it."
   },
   {
@@ -49,21 +49,21 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "  return `${parts.length ? parts.join('\\n\\n') : NO_NOTES_TEXT}\\n`;\n",
     "new": "  return `${parts.length ? parts.slice(0, 1).join('\\n\\n') : NO_NOTES_TEXT}\\n`;\n",
-    "tests": ["test/rel4_release.test.js"]
+    "tests": ["test/tooling/rel4_release.test.js"]
   },
   {
     "name": "REL4-8-an-old-build-takes-latest",
     "file": "scripts/desktopRelease.mjs",
     "old": "    if (mine[i] !== cur[i]) return mine[i] > cur[i];\n",
     "new": "    if (mine[i] !== cur[i]) return true;\n",
-    "tests": ["test/rel4_release.test.js"]
+    "tests": ["test/tooling/rel4_release.test.js"]
   },
   {
     "name": "REL4-9-the-tag-being-cut-is-its-own-previous",
     "file": "scripts/desktopRelease.mjs",
     "old": "'--match', 'app-v*', '--exclude', tag, at",
     "new": "'--match', 'app-v*', at",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "On the tag door the tag already names HEAD, so the diff would be empty and the notes would say nothing came with the release."
   },
   {
@@ -71,14 +71,14 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "  return EXPECTED_RELEASE_FILES.filter((f) => !have.has(f));\n",
     "new": "  return [];\n",
-    "tests": ["test/rel4_release.test.js"]
+    "tests": ["test/tooling/rel4_release.test.js"]
   },
   {
     "name": "REL5-1-the-version-is-back-in-the-installer-name",
     "file": "app/package.json",
     "old": "      \"artifactName\": \"DFO-Online-win-${arch}-setup.${ext}\",\n",
     "new": "      \"artifactName\": \"DFO-Online-${version}-win-${arch}-setup.${ext}\",\n",
-    "tests": ["test/rel4_release.test.js", "test/relwin1.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js", "test/tooling/relwin1.test.js"],
     "note": "Every releases/latest/download link to the installer would 404 from the next release on. BR5 (re-aimed by content): the name, its file form and the legal date moved."
   },
   {
@@ -86,7 +86,7 @@
     "file": "app/lib/downloads.cjs",
     "old": "  mac: 'DFO-Online-mac-arm64.dmg',\n",
     "new": "  mac: 'DFO-Online-mac-x64.dmg',\n",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "BR5 (re-aimed by content): the name, its file form and the legal date moved."
   },
   {
@@ -94,7 +94,7 @@
     "file": "index.html",
     "old": "releases/latest/download/DFO-Online-mac-arm64.dmg\">macOS",
     "new": "releases/latest/download/DFO-Online-0.1.4684-mac-arm64.dmg\">macOS",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "A dead Download on the front page from the next release on. BR5 (re-aimed by content): the name, its file form and the legal date moved."
   },
   {
@@ -102,6 +102,6 @@
     "file": "index.html",
     "old": "<a class=\"plaque\" href=\"#desktop\">Install</a>",
     "new": "<a class=\"plaque\" href=\"https://github.com/Lattymoy/daggerfall-js-source/releases/latest\">Install</a>",
-    "tests": ["test/rel4_release.test.js", "test/landing.test.js"]
+    "tests": ["test/tooling/rel4_release.test.js", "test/ui/enhanced/landing.test.js"]
   }
 ]

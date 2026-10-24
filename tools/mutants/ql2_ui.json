@@ -1,0 +1,232 @@
+[
+  {
+    "name": "AUDIT-QL-UI-4-promise-on-the-tier-alone",
+    "file": "src/ui/questlines/qlJournal.js",
+    "old": "  } else if (ql.gear && ql.tier) {",
+    "new": "  } else if (ql.tier) {",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-5-outcome-filed-as-a-token",
+    "file": "src/systems/notebook.js",
+    "old": "    entry[0].outcome = text.trim();\n",
+    "new": "    entry.push({ formatting: 'text', text: text.trim() }, NEWLINE);\n",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js",
+      "test/systems/questlines/ql1_layer.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-5-save-drops-the-outcome",
+    "file": "src/systems/notebook.js",
+    "old": "      ...outcomeField(this.finishedQuests),\n",
+    "new": "",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-5-restore-drops-the-outcome",
+    "file": "src/systems/notebook.js",
+    "old": "    restoreOutcomes(this.finishedQuests, data.finishedQuestOutcomes);   // AUDIT QUESTLINES UI-5\n",
+    "new": "",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-5-bridge-files-no-outcome",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "      if (line) notebook.fileFinishedOutcome?.(line);\n",
+    "new": "",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js",
+      "test/systems/questlines/ql1_layer.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-5-pause-archive-drops-it",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "      if (outcome) desc.append(el('p', 'px-qoutcome',",
+    "new": "      if (false) desc.append(el('p', 'px-qoutcome',",
+    "tests": [
+      "test/ui/questlines/ql2_pause.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-5-chronicle-drops-it",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "        body: outcome ? [...q.lines, t('quest.outcome.filed'",
+    "new": "        body: false ? [...q.lines, t('quest.outcome.filed'",
+    "tests": [
+      "test/ui/questlines/ql2_pause.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-6-one-line-for-both-skins",
+    "file": "src/ui/questlines/qlJournal.js",
+    "old": "export const offerWaitingWords = (offer) => (isEnhanced()",
+    "new": "export const offerWaitingWords = (offer) => (true",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-6-bridge-the-old-line",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "        ctx.addHUDText?.(offerWaitingWords(offer));",
+    "new": "        ctx.addHUDText?.(t('ql.reward.waiting', 'A reward waits for {title}: choose it in your journal\\u2019s Quests tab.', { title: offer.title }));",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-6-quests-landing-left-to-classic",
+    "file": "src/ui/pauseDoor.js",
+    "old": "  if (hooks.at === 'quests' && typeof document !== 'undefined') return enhancedPauseOverlay(show, hooks);\n",
+    "new": "",
+    "tests": [
+      "test/ui/questlines/ql2_pause.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-8-track-on-an-entryless-row",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    if (sel.entries?.length && !isShelvedRow) {",
+    "new": "    if (sel.entries && !isShelvedRow) {",
+    "tests": [
+      "test/ui/questlines/ql2_pause.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-8-abandon-on-an-entryless-row",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "      } else if (sel.entries?.length && sel.id != null && clean.abandon",
+    "new": "      } else if (sel.entries && sel.id != null && clean.abandon",
+    "tests": [
+      "test/ui/questlines/ql2_pause.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-8-hide-on-an-entryless-row",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "      if (sel.entries?.length && sel.id != null && !isShelvedRow) {",
+    "new": "      if (sel.entries && sel.id != null && !isShelvedRow) {",
+    "tests": [
+      "test/ui/questlines/ql2_pause.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-9-take-the-first-piece",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "clean?.takeOffer?.(sel.offer.id, i);",
+    "new": "clean?.takeOffer?.(sel.offer.id, 0);",
+    "tests": [
+      "test/ui/questlines/ql2_pause.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-9-no-questlines-section",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  if (lines.length) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/ui/questlines/ql2_pause.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-9-unlogged-rows-left-out",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  const active = [...rail0.active, ...unloggedRail(log)];",
+    "new": "  const active = [...rail0.active];",
+    "tests": [
+      "test/ui/questlines/ql2_pause.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-10-one-press-takes",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "      if (journalCleanArmed !== takeKey(i)) { journalCleanArmed = takeKey(i); render(); return; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/questlines/ql2_pause.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-10-take-key-dropped",
+    "file": "src/ui/questlines/qlJournal.js",
+    "old": "    b.setAttribute('data-focus', `take:${offer.id}:${i}`);\n",
+    "new": "",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js",
+      "test/ui/questlines/ql2_pause.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-10-armed-words",
+    "file": "src/ui/questlines/qlJournal.js",
+    "old": "i === armed ? t('ql.journal.takeArmed', 'Click again to take') : t('ql.journal.take', 'Take this')",
+    "new": "t('ql.journal.take', 'Take this')",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js",
+      "test/ui/questlines/ql2_pause.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-11-stat-line-dropped",
+    "file": "src/ui/questlines/qlJournal.js",
+    "old": "    if (stat) card.append(el(doc, 'div', 'px-qpiece-stat', stat));",
+    "new": "",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-12-choice-said-nowhere",
+    "file": "src/ui/questlines/qlJournal.js",
+    "old": "  if ((ladder.rungs ?? []).some((r) => (r.quests ?? []).some((q) => q.flagship))) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js",
+      "test/systems/questlines/ql12_ladders.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-13-game-start-pops-the-page",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "      if (sheetFor(quest?.questName) && !['S0000977', '_BRISIEN'].includes(quest?.questName) && meta?.scope !== 'init') noteFirstUse('questlines');",
+    "new": "      if (sheetFor(quest?.questName)) noteFirstUse('questlines');",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-14-reveal-dropped",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "Promise.resolve().then(() => { if (detail.isConnected !== false) detail.scrollIntoView?.({ block: 'start' }); });",
+    "new": "void 0;",
+    "tests": [
+      "test/ui/questlines/ql2_pause.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-19-refusal-unkept",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "    c.refused = !a?.ok && (a?.error === 'ql-closed' || a?.error === 'ql-body') ? a.error : null;\n",
+    "new": "",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-UI-19-page-silent",
+    "file": "src/ui/questlines/qlJournal.js",
+    "old": "    if (s.refused) list.append(el(doc, 'li', 'px-qline-said failed', accountRefusalText(s.refused)));\n",
+    "new": "",
+    "tests": [
+      "test/ui/questlines/ql2_journal.test.js"
+    ]
+  }
+]

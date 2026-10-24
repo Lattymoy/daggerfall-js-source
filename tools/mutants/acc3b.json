@@ -5,7 +5,7 @@
     "old": "      const run = `${lead ? `[${lead}] ` : ''}${marks ? `${named} ${marks}` : named}`;\n      const tw = measureText(font.fnt, run) * s;",
     "new": "      const run = `${lead ? `[${lead}] ` : ''}${marks ? `${named} ${marks}` : named}`;\n      const tw = measureText(font.fnt, n.name) * s;",
     "tests": [
-      "test/acc3badge.test.js"
+      "test/net/acc3badge.test.js"
     ],
     "note": "The label is centred on the head by subtracting half the run's width, so a run measured without the badge puts every badged peer's name half a badge to the LEFT of their own skull - which is NAME1's entire complaint (\"names clip and cut off the top of the sprite head\") re-made sideways by the feature meant to decorate it."
   },
@@ -15,7 +15,7 @@
     "old": "        const tx = Math.round(n.x - tt / 2), ty = Math.round(top - font.fnt.fixedHeight * s);",
     "new": "        const tx = Math.round(n.x - tt / 2), ty = Math.round(top);",
     "tests": [
-      "test/acc3badge.test.js"
+      "test/net/acc3badge.test.js"
     ],
     "note": "Mac: \"Player titles appear ABOVE a player name.\" Drawn at the name's own top the two overlap exactly - a title printed through a name, which is unreadable rather than merely misplaced."
   },
@@ -25,7 +25,7 @@
     "old": "        } else drawText(renderer, font, title.text, tx, ty, s, title.rgba ?? [1, 1, 1, 1]);",
     "new": "        } else drawText(renderer, font, title.text, tx, ty, s, colorOf?.(n.id) ?? title.rgba ?? [1, 1, 1, 1]);",
     "tests": [
-      "test/acc3badge.test.js"
+      "test/net/acc3badge.test.js"
     ],
     "note": "SOC4 owns the NAME's colour and ACC3 does not get a second opinion on it - but the reverse holds too: gold IS the Founder title (Mac named both colours), so a party's green painted over it erases the one distinction the title exists to make. Two labels, two owners."
   },
@@ -35,7 +35,7 @@
     "old": "        title: e.peer.title ?? null, glyphs: Array.isArray(e.peer.glyphs) ? e.peer.glyphs : [],",
     "new": "        title: null, glyphs: [],",
     "tests": [
-      "test/acc3badge.test.js"
+      "test/net/acc3badge.test.js"
     ],
     "note": "The point is the ONE answer both faces read (ACC1d-MARK's own shape), so a badge that does not ride it is a badge neither face can draw - the whole feature, green everywhere else and invisible on screen."
   },
@@ -45,7 +45,7 @@
     "old": "  const title = typeof t === 'string' && TITLES.includes(t) ? t : null;",
     "new": "  const title = typeof t === 'string' ? t : null;",
     "tests": [
-      "test/acc3badge.test.js"
+      "test/net/acc3badge.test.js"
     ],
     "note": "This is a STRANGER'S WORD about themselves - the relay only ever sends what a signature carried, so anything else is a relay that is older, newer, or not ours. Unchecked, a peer's `title` is arbitrary text this client puts on a player's screen in gold."
   },
@@ -55,7 +55,7 @@
     "old": "      if (glyphs.length >= GLYPHS_MAX) break;",
     "new": "",
     "tests": [
-      "test/acc3badge.test.js"
+      "test/net/acc3badge.test.js"
     ],
     "note": "With the duplicate check above it the list cannot exceed the vocabulary today, so this looks free - which is exactly the shape of a bound that gets removed - and the campaign confirmed it is unreachable. It is the bound the TOKEN already carries (GLYPHS_MAX in claimsValid), restated at the client's own door, so the two cannot come apart when a third glyph is added.",
     "equivalent": true,
@@ -67,7 +67,7 @@
     "old": "      if (typeof g !== 'string' || !GLYPHS.includes(g) || glyphs.includes(g)) continue;",
     "new": "      if (typeof g !== 'string' || !GLYPHS.includes(g)) continue;",
     "tests": [
-      "test/acc3badge.test.js"
+      "test/net/acc3badge.test.js"
     ],
     "note": "A repeated glyph is a relay that got greedy or a body somebody edited, and it draws as a row of identical plants growing off the side of a name."
   },
@@ -77,7 +77,7 @@
     "old": "  const out = [];\n  for (const key of GLYPHS) {\n    if (!on.includes(key)) continue;",
     "new": "  const out = [];\n  for (const key of on) {\n    if (!GLYPHS.includes(key)) continue;",
     "tests": [
-      "test/acc3badge.test.js"
+      "test/net/acc3badge.test.js"
     ],
     "note": "A glyph is TRUE of a player rather than chosen by one, so two players holding the same glyphs must show them the same way round - and the wire's order is whatever the service happened to build, which is not a promise anybody made."
   },
@@ -87,7 +87,7 @@
     "old": "  sprout: '+',",
     "new": "  sprout: '\\u2618',",
     "tests": [
-      "test/acc3badge.test.js"
+      "test/net/acc3badge.test.js"
     ],
     "note": "ACC1d-MARK's own finding, one slice later and with a shamrock: `drawText` puts NOTHING on screen for a glyph the Daggerfall font has no record for, so the classic face silently drops a badge the DOM face shows - green suite, half a feature."
   },
@@ -97,17 +97,17 @@
     "old": "    ({ title: p.title, glyphs: p.glyphs, ts: p.ts = null } = readBadge(m));",
     "new": "",
     "tests": [
-      "test/acc3badge.test.js"
+      "test/net/acc3badge.test.js"
     ],
     "note": "A hello is an introduction and the NEWEST one is the true one - the same line already replaces the name and the look. Left out, a player who takes a title off and reconnects goes on wearing it in everybody else's client until they quit, which is the stored-fact trap ACC3a took out of the service reappearing in the client. SEAT1c (PIN MOVED): re-aimed by content - a seat title's claim rides beside the title."
   },
   {
     "name": "ACC3b-11-the-remembered-introduction-loses-the-badge",
     "file": "src/net/online.js",
-    "old": "    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, lv: p.lv ?? null, gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub, look: p.look });",
-    "new": "    this._known.set(id, { name: p.name, lv: p.lv ?? null, gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub, look: p.look });",
+    "old": "    this._known.set(id, { name: p.name, title: p.title, glyphs: p.glyphs, lv: p.lv ?? null, gt: p.gt ?? null, au: p.au ?? null, pi: p.pi ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub, look: p.look });",
+    "new": "    this._known.set(id, { name: p.name, lv: p.lv ?? null, gt: p.gt ?? null, au: p.au ?? null, pi: p.pi ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub, look: p.look });",
     "tests": [
-      "test/acc3badge.test.js"
+      "test/net/acc3badge.test.js"
     ],
     "note": "SLAM9's remembered introduction is what stands a peer as themselves across a socket blip - it keeps the name and the look for exactly that reason. Without the badge a blip strips every title in the room until each peer is introduced again. LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
@@ -117,8 +117,8 @@
     "old": "    if (tag.worn === key) return;\n    tag.worn = key;",
     "new": "    tag.worn = key;",
     "tests": [
-      "test/acc3badge.test.js",
-      "test/name1_bubbles.test.js"
+      "test/net/acc3badge.test.js",
+      "test/net/name1_bubbles.test.js"
     ],
     "note": "\"One element per visible peer, MOVED each frame and never rebuilt\" is this layer's founding discipline (ui/partyPanel.js: write only what changed). A glyph set changes about twice in a player's life and this runs every frame for every visible peer, so rebuilding it is two DOM elements per peer per frame, forever, for a picture that never changes."
   }

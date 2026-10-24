@@ -2,7 +2,7 @@
 // THE FLEET'S HOST HALF (HOLDINGS, 2026-10-03 - bible/03-World/Holdings.md). The Fleet page (ui/fleetPage.js) reads a
 // model and asks acts; this builds the one and carries out the other over the world host's runtimes - Come Sail Away's
 // boats (the mod's own laws: SummonBoat, LayUpBoat, StartPlacing over the Fleet's book), the sea fight's state of each
-// (scenes/navalHost.js fleetStatus, repairAway, refitBoat, the yard, the berths), and the ledger (systems/fleet.js).
+// (scenes/naval/navalHost.js fleetStatus, repairAway, refitBoat, the yard, the berths), and the ledger (systems/fleet.js).
 // Built by scenes/world.js, the one host that stands Come Sail Away; the page is taken down with it.
 //
 //   deps = {
@@ -14,19 +14,32 @@
 //     terrainAt(pos) -> the terrain a summoned boat stands on (Come Sail Away's own arm), or null
 //     veilApart(rec, boat) -> whether she lies on the other side of the Veil from the player (AUDIT CAPTAIN'S SEA P5)
 //     changed() -> the word a rename or a refit owes (the boats' record said again)
+//     openHold(uid) -> bool  CARGO-ANYWHERE: her hold's window, wherever she lies (scenes/holdDoor.js openShip)
+//     guildArms() -> the player's guild's heraldry, or null   SHIP-COLOURS: "fly my guild's arms"
+//     captain() -> the captain's ledger (systems/naval/captainLedger.js) | null   CAPTAIN-TREE / REFIT-ORES: her captain's
+//                  level (the metal tiers' gate) and stars (her refits as the sea reads them)
+//     openDeck(uid) -> bool   DECK-PROPS: the plan of her deck, her fittings set on it (scenes/deckPlanDoor.js)
 //   }
 
 import {
   fleetShip, fleetShips, fleetBook, titleOf, titleDeedsIn, knowShip, renameShip, addRefit, setShipPort, retitle, refitOf, loanOwed, settleCredit,
-  shipLabel, upgradeCost, materialCount, takeMaterials, UPGRADE_LINES, UPGRADE_TIERS, MATERIALS, BOAT_PARTS_TEMPLATE,
+  shipLabel, upgradeCost, materialCount, UPGRADE_LINES, UPGRADE_TIERS, MATERIALS, BOAT_PARTS_TEMPLATE, setShipColours,
+  REFIT_NUMERALS, meltCounts, materialsFor, takeAllMaterials, refitShare, setShipLivery, setShipCabin, setShipFittings, setShipPlaque,
 } from '../systems/fleet.js';
-import { HULL_NAMES, HULL_PRICES } from '../systems/comeSailAwayBoat.js';
-import { mintDeed } from '../systems/comeSailAwayItems.js';
-import { TERRAIN_EDGE } from '../systems/comeSailAway.js';
+import { captainRefit } from '../systems/naval/captainTree.js';   // CAPTAIN-TREE: her captain's stars over her refits
+import { flagSizeOf } from '../systems/naval/shipFlag.js';   // SHIP-COLOURS: the hulls that fly a flag
+import { liveryPartsOf, isPaint } from '../systems/naval/shipLivery.js';   // SHIP-LIVERY: the paints a hull takes
+import { cabinShipType } from '../systems/sailingCabin.js';   // CABIN-LOOK: the hulls with a cabin below
+import { SHIP_TYPES } from '../systems/banking.js';
+import { HULL_NAMES, HULL_PRICES } from '../systems/comeSailAway/comeSailAwayBoat.js';
+import { mintDeed } from '../systems/comeSailAway/comeSailAwayItems.js';
+import { TERRAIN_EDGE } from '../systems/comeSailAway/comeSailAway.js';
 import { batteriesOf } from '../systems/naval/navalShips.js';
 import { CREW_ORDERS, CREW_ROLES } from '../systems/naval/shipCrew.js';
 import { MOBILE } from '../systems/naval/navalBoarding.js';
-import { optionPath } from '../ui/settingsMap.js';   // ORG2: a switch named in a line says where it lives
+import { optionPath } from '../ui/settings/settingsMap.js';   // ORG2: a switch named in a line says where it lives
+import { holdsCargo } from './holdDoor.js';   // CARGO-ANYWHERE: the hulls that carry a hold
+import { t } from '../systems/textManager.js';   // CARGO-ANYWHERE: the hold's words in the player's language
 
 /** The hulls whose prefab carries a live `Crewed` node (Come Sail Away's Small Ship, Large Galley and Carrack - the
  *  Rowboat's is inactive): a ship with hands, who sail her to a port and mend her where she lies. */
@@ -45,8 +58,8 @@ export function createFleetHost(deps) {
   const csa = () => deps.csa?.() ?? null;
   const naval = () => deps.naval?.() ?? null;
   const pack = () => deps.pack?.() ?? [];
-  /** The boats of mine standing, by number. */
-  const placed = () => (csa()?.AllBoats ?? []).filter((b) => b?.uid);
+  /** The boats of mine standing, by number - never a booked ship's (PASSAGE: her master's, no ship of the Fleet's). */
+  const placed = () => (csa()?.AllBoats ?? []).filter((b) => b?.uid && !b.charter);
   const partsOf = (uid) => pack().find((it) => it?.templateIndex === BOAT_PARTS_TEMPLATE && it.UID === uid) ?? null;
   /** A laid-up ship's stand-in: what the sea fight's state and the yard read of a boat - her number, hull, whether she
    *  has hands, and her laid-up hold (Come Sail Away's PackedCargoes under her number, live). */
@@ -102,39 +115,39 @@ export function createFleetHost(deps) {
     const sailing = !!r?.isSailing?.();
     const apart = !!deps.veilApart?.(rec, at.boat ?? null);   // AUDIT CAPTAIN'S SEA P5: never across the Veil
     const summon = !r ? 'Come Sail Away is not running.'
-      : at.where === 'sailing' || at.where === 'here' ? 'She is already here.'
-      : at.where === 'packed' ? 'She is in your pack - launch her from her parts.'
-      : w.inside ? 'Call her from outdoors.'
+      : at.where === 'sailing' || at.where === 'here' ? 'This ship is already here.'
+      : at.where === 'packed' ? 'This ship is in your pack. Launch it from its parts.'
+      : w.inside ? 'Go outdoors to summon a ship.'
       : sailing ? 'Not while you are at a helm.'
-      : inFight ? 'Not while she is fighting.'
-      : apart ? 'She lies on the far side of the Veil - sail her across yourself.'
-      : !atPort ? 'Your ships are brought round to a port - go to one.'
+      : inFight ? 'Not while the ship is in combat.'
+      : apart ? 'This ship is on the other side of the Veil. Sail it across yourself.'
+      : !atPort ? 'Ships can only be summoned to a port. Go to one first.'
       : null;
     const away = !r ? 'Come Sail Away is not running.'
-      : at.where === 'laidup' ? 'She is laid up already.'
-      : at.where === 'packed' ? 'She is in your pack.'
-      : at.where === 'sailing' ? 'Not while you are at her helm.'
-      : inFight ? 'Not while she is fighting.'
-      : !crewed && at.where !== 'here' ? 'She has no crew to sail her to a port - go to her.'
-      : apart ? 'She lies on the far side of the Veil - no crew takes her across alone.'
-      : (deps.passengersAboard?.(at.boat) ?? 0) > 0 ? 'Another player is aboard her.'
+      : at.where === 'laidup' ? 'This ship is already laid up.'
+      : at.where === 'packed' ? 'This ship is in your pack.'
+      : at.where === 'sailing' ? 'Not while you are at the helm.'
+      : inFight ? 'Not while the ship is in combat.'
+      : !crewed && at.where !== 'here' ? 'This ship has no crew to sail it to port. Go to it yourself.'
+      : apart ? 'This ship is on the other side of the Veil. The crew won\'t take it across without you.'
+      : (deps.passengersAboard?.(at.boat) ?? 0) > 0 ? 'Another player is aboard.'
       : null;
-    const repair = !crewed ? 'She has no crew to make her repairs.'
-      : at.where === 'packed' ? 'She is in your pack.'
+    const repair = !crewed ? 'This ship has no crew to make repairs.'
+      : at.where === 'packed' ? 'This ship is in your pack.'
       : !st ? 'Not here.'
-      : st.crew <= 0 ? 'She has no hands aboard - hire them at a shipwright.'
-      : !st.wants && !st.fire ? 'She needs no repairs.'
-      : st.inFight ? 'Her hands are fighting her.'
+      : st.crew <= 0 ? 'This ship has no crew aboard. Hire crew at a shipwright.'
+      : !st.wants && !st.fire ? 'This ship doesn\'t need repairs.'
+      : st.inFight ? 'The crew is busy fighting.'
       : null;
-    const yard = !n ? `The shipwrights are not at work (Naval Combat, ${optionPath('feat:naval-combat')}).`   // ORG2
+    const yard = !n ? `Shipwrights need Naval Combat turned on (${optionPath('feat:naval-combat')}).`   // ORG2
       : !atPort ? 'A shipwright works at a port.'
-      : at.where === 'away' || at.where === 'packed' ? 'Bring her to this port first.'
-      : inFight ? 'Not while she is fighting.'
+      : at.where === 'away' || at.where === 'packed' ? 'Bring the ship to this port first.'
+      : inFight ? 'Not while the ship is in combat.'
       : null;
-    const refit = loan ? `She was bought on the bank's credit: pay ${deps.regionName?.(loan.region) ?? 'the bank'}'s ${loan.owed} gold first.`
+    const refit = loan ? `This ship was bought on credit. Pay the ${loan.owed} gold owed to ${deps.regionName?.(loan.region) ?? 'the bank'} first.`
       : !atPort ? 'Ships are refitted at a port.'
-      : at.where === 'away' || at.where === 'packed' ? 'Bring her to this port first.'
-      : inFight ? 'Not while she is fighting.'
+      : at.where === 'away' || at.where === 'packed' ? 'Bring the ship to this port first.'
+      : inFight ? 'Not while the ship is in combat.'
       : null;
     return { summon, away, repair, yard, refit, st, loan };
   }
@@ -167,11 +180,17 @@ export function createFleetHost(deps) {
         status: why.st, upgrades: { ...rec.upgrades }, loan: why.loan,
         // HOLDINGS: her named hands and their posts (a laid-up ship's signed on here), a Bard's calling his to keep
         hands: CREWED_HULLS.includes(rec.hull) && at.boat ? handsOf(at.boat) : [],
+        hold: holdsCargo(rec.hull),   // CARGO-ANYWHERE: her Hold button - every hull but the Rowboat's
+        flag: !!flagSizeOf(rec.hull), colours: rec.colours ?? null,   // SHIP-COLOURS: whether she flies a flag, and the one she flies
+        paints: liveryPartsOf(rec.hull), livery: rec.livery ?? null,   // SHIP-LIVERY: the parts her paint takes, and her paint
+        cabin: cabinShipType(rec.hull) !== SHIP_TYPES.None ? rec.cabin ?? 0 : null,   // CABIN-LOOK: her cabin's stain (null: she has no cabin)
+        fittings: rec.deck?.length ?? 0,   // DECK-PROPS: how many fittings stand on her deck
+        plaque: !!rec.plaque, named: !!rec.name,   // SHIP-PLAQUE: her name on her bows, and whether she has one to show
         can: { summon: why.summon, away: why.away, repair: why.repair, yard: why.yard, refit: why.refit },
       });
     }
     rows.sort((a, b) => order[a.where] - order[b.where] || a.label.localeCompare(b.label));
-    return { ships: rows, gold: deps.gold?.() ?? 0, atPort: !!deps.nearPort?.() };
+    return { ships: rows, gold: deps.gold?.() ?? 0, atPort: !!deps.nearPort?.(), guildArms: deps.guildArms?.() ?? null };   // SHIP-COLOURS: the arms her flag may fly
   }
 
   /** HER REFITS' OFFER: each line's tier, what the next costs and what the player holds of each (the pack and her hold
@@ -183,15 +202,24 @@ export function createFleetHost(deps) {
     const why = refusals(rec, at).refit;
     const lists = [pack(), at.boat?.Cargo?.Items ?? []];
     const gold = deps.gold?.() ?? 0;
+    const level = captainLevel();
     const rows = UPGRADE_LINES.filter((l) => !l.guns || hasGuns(rec.hull)).map((l) => {
       const tier = Math.max(0, Math.min(UPGRADE_TIERS, rec.upgrades[l.id] | 0));
       const cost = upgradeCost(rec.hull, l.id, tier);
-      const mats = cost ? cost.mats.map((m) => ({ kind: m.kind, label: MATERIALS[m.kind].label, hint: MATERIALS[m.kind].hint, n: m.n, have: materialCount(lists, m.kind) })) : [];
-      const afford = !!cost && gold >= cost.gold && mats.every((m) => m.have >= m.n);
-      return { id: l.id, label: l.label, what: l.what, per: l.per, tier, max: UPGRADE_TIERS, next: cost ? { gold: cost.gold, mats } : null, afford };
+      // REFIT-ORES: a metal's count says how much of it a piece of plate or a blade melted down would give (`melt`)
+      const melts = cost ? meltCounts(lists, cost.mats) : [];   // AUDIT 2: the stores taken together, as the act takes them
+      const mats = cost ? cost.mats.map((m, i) => ({ kind: m.kind, label: MATERIALS[m.kind].label, hint: MATERIALS[m.kind].hint, n: m.n, have: materialCount(lists, m.kind), melt: melts[i] })) : [];
+      const locked = !!cost && cost.level > level;   // REFIT-ORES: a metal tier asks her captain's level
+      const afford = !!cost && !locked && gold >= cost.gold && materialsFor(lists, cost.mats);
+      return {
+        id: l.id, label: l.label, what: l.what, per: l.per, tier, max: UPGRADE_TIERS, share: refitShare(l.id, tier),   // REFIT-ORES: what she has of it now
+        next: cost ? { gold: cost.gold, mats, level: cost.level, locked, share: refitShare(l.id, tier + 1) } : null, afford,
+      };
     });
-    return { why, rows, gold };
+    return { why, rows, gold, level };
   }
+  /** REFIT-ORES: her captain's level (captainTree.js levelOf off the log) - 1 with no ledger. */
+  const captainLevel = () => deps.captain?.()?.captain?.().level ?? 1;
 
   /** A word for her, and the act's answer. */
   const said = (ok, text, door = null) => ({ ok, text, ...(door ? { door } : {}) });
@@ -208,12 +236,47 @@ export function createFleetHost(deps) {
       const v = renameShip(uid, arg);
       if (!v.ok) return said(false, v.reason);
       deps.changed?.();
-      return said(true, v.name ? `She is the ${v.name} now.` : `She is called by her hull again: ${shipLabel(rec)}.`);
+      return said(true, v.name ? `Ship renamed to ${v.name}.` : `Name cleared. The ship is shown as ${shipLabel(rec)}.`);
+    }
+    if (verb === 'plaque') {
+      // SHIP-PLAQUE: her name shown on her bows, or taken down - wherever she lies, free; a named ship's alone
+      if (!rec.name) return said(false, t('naval.plaque.unnamed', 'Give the ship a name first.'));
+      if (!setShipPlaque(uid, arg)) return said(false, t('naval.plaque.bad', 'That\'s not a valid option.'));   // shown or not, nothing else
+      deps.changed?.();
+      return said(true, rec.plaque ? t('naval.plaque.shown', 'Ship name shown on the bow.') : t('naval.plaque.hidden', 'Ship name hidden.'));
+    }
+    if (verb === 'colours') {
+      // SHIP-COLOURS: her flag hoisted (systems/naval/shipFlag.js's), or struck for the mod's pennant (null) - wherever she lies
+      if (!flagSizeOf(rec.hull)) return said(false, t('naval.flag.noMast', 'This ship has no masthead for a flag.'));
+      if (!setShipColours(uid, arg ?? null)) return said(false, t('naval.flag.bad', 'That flag can\'t be used.'));
+      deps.changed?.();
+      return said(true, arg ? t('naval.flag.hoisted', 'New flag raised.') : t('naval.flag.struck', 'Flag removed. The ship flies the default pennant.'));
+    }
+    if (verb === 'livery') {
+      // SHIP-LIVERY: her paint (systems/naval/shipLivery.js's), or as built (null) - wherever she lies; her word said again
+      if (!liveryPartsOf(rec.hull).length) return said(false, t('naval.paint.none', 'This ship can\'t be painted.'));
+      // CABIN-LOOK: and her cabin's stain with it, where she has a cabin (made at her next visit below) - both read before
+      // either is set, so a paint refused leaves her as she was
+      const below = cabinShipType(rec.hull) !== SHIP_TYPES.None, cabin = arg?.cabin ?? 0;
+      if ((below && !isPaint(cabin)) || !setShipLivery(uid, arg ?? null)) return said(false, t('naval.paint.bad', 'Unknown paint.'));
+      if (below) setShipCabin(uid, cabin);
+      deps.changed?.();
+      return said(true, rec.livery || rec.cabin ? t('naval.paint.done', 'Ship painted. Other players will see it.') : t('naval.paint.bare', 'Paint removed. The ship is back to its original look.'));
+    }
+    if (verb === 'deck') {
+      // DECK-PROPS: her fittings set (systems/naval/deckFittings.js's door) - wherever she lies; her word said again
+      if (!setShipFittings(uid, arg ?? [])) return said(false, t('naval.deck.bad', 'Those fittings can\'t be placed on this ship.'));   // none clears her deck; a thing that is no list is refused
+      deps.changed?.();
+      return said(true, rec.deck.length ? t('naval.deck.set', 'Deck layout saved: {n, plural, one {# fitting} other {# fittings}}.', { n: rec.deck.length }) : t('naval.deck.clear', 'Deck cleared.'));
+    }
+    if (verb === 'deckPlan') {
+      if (!deps.openDeck) return said(false, t('naval.hold.noSea', 'Come Sail Away is not running.'));
+      return said(true, t('naval.deck.opened', 'Deck plan opened.'), () => !!deps.openDeck(uid));
     }
     if (verb === 'role') {
       // HOLDINGS: a hand of hers given a post (shipCrew.js assign) - wherever she lies; her First Mate answers for her
-      if (!CREWED_HULLS.includes(rec.hull) || !at.boat) return said(false, 'She has no crew.');
-      if (!arg || !(/** @type {readonly string[]} */ (CREW_ROLES).includes(arg.role) || arg.role === 'Bard')) return said(false, 'No such post aboard her.');
+      if (!CREWED_HULLS.includes(rec.hull) || !at.boat) return said(false, 'This ship has no crew.');
+      if (!arg || !(/** @type {readonly string[]} */ (CREW_ROLES).includes(arg.role) || arg.role === 'Bard')) return said(false, 'There\'s no such post on this ship.');
       const r2 = n?.assignRole?.(at.boat, arg.name, arg.role) ?? { ok: false, text: 'Not here.' };
       return said(r2.ok, r2.text);
     }
@@ -224,11 +287,11 @@ export function createFleetHost(deps) {
       const berth = n?.freeBerth?.(rec.hull) ?? null;   // QUAYS: alongside its quay for her own hull - made fast at it
       if (berth) {
         const boat = r.SummonBoat(uid, title, fleetBook(), berth.position, berth.direction, deps.terrainAt?.(berth.position) ?? null);
-        if (!boat) return said(false, 'She could not be brought round.');
-        return said(true, `${name} is brought round to ${berth.harbour ? `${berth.harbour}'s` : 'the'} quay and made fast.`);
+        if (!boat) return said(false, 'The ship couldn\'t be brought here.');
+        return said(true, `${name} is brought to ${berth.harbour ? `${berth.harbour}'s` : 'the'} quay and moored.`);
       }
       // no berth known (the sea fight off, every one taken): the deed's own placing - the water clicked
-      if (!title && at.where !== 'away') return said(false, 'She could not be brought round.');
+      if (!title && at.where !== 'away') return said(false, 'The ship couldn\'t be brought here.');
       return said(true, `Choose where ${name} lies: click the water near the quay.`, () => {
         // AUDIT HOLDINGS F2: her title placed from the book; a small boat afloat elsewhere (no title - spent on her
         // placing) from a deed of the moment in a list of its own, never minted into the book: a click on land, a fast
@@ -244,7 +307,7 @@ export function createFleetHost(deps) {
       const near = deps.nearestPort?.() ?? null;
       knowShip(uid, at.boat.hull, at.boat.variant, at.boat.itemValue);   // AUDIT HOLDINGS F3: her rig as she is sent away
       retitle(uid);   // a small boat's title, spent on her placing, made again: the book stands for her laid up
-      if (!r.LayUpBoat(at.boat)) return said(false, 'She could not be sent away.');
+      if (!r.LayUpBoat(at.boat)) return said(false, 'The ship couldn\'t be laid up.');
       setShipPort(uid, near ? { name: near.name, ether: !!near.ether } : null);
       return said(true, near ? `${name} sails for ${near.name}, and is laid up there.` : `${name} is laid up.`);
     }
@@ -252,39 +315,64 @@ export function createFleetHost(deps) {
       if (why.repair) return said(false, why.repair);
       if (at.boat && at.boat === n?.boatInPlay?.()) {
         const o = n.giveOrder(at.boat, CREW_ORDERS.repair);   // the boat underfoot: her hands at it as her captain orders
-        return said(!!o.ok, o.said ?? 'Her hands turn to.');
+        return said(!!o.ok, o.said ?? 'The crew starts repairs.');
       }
       const out = n?.repairAway?.(at.boat) ?? { ok: false, text: 'Not here.' };
       return said(out.ok, out.text);
     }
+    if (verb === 'hold') {
+      // CARGO-ANYWHERE (bible/03-World/Naval-Refit.md): her hold, wherever she lies - here, away, laid up or packed - and
+      // in a fight too; a Rowboat carries none (holdDoor.js HULL_HOLDS)
+      if (!holdsCargo(rec.hull)) return said(false, t('naval.hold.rowboat', 'Rowboats have no hold.'));
+      if (!deps.openHold) return said(false, t('naval.hold.noSea', 'Come Sail Away is not running.'));
+      return said(true, t('naval.hold.opened', 'Hold opened.'), () => !!deps.openHold(uid));
+    }
     if (verb === 'yard') {
       if (why.yard) return said(false, why.yard);
       const boat = at.boat;
-      return said(true, 'The shipwright looks her over.', () => !!n.openYard(boat));
+      return said(true, 'The shipwright inspects the ship.', () => !!n.openYard(boat));
     }
     if (verb === 'refit') {
       if (why.refit) return said(false, why.refit);
       const o = offer(uid);
       const row = o?.rows.find((x) => x.id === arg);
-      if (!row || !row.next) return said(false, 'She has every refit of that kind.');
+      if (!row || !row.next) return said(false, 'This ship has every refit of that kind.');
+      if (row.next.locked) return said(false, t('naval.refit.level', '{metal} refits need captain level {level}.', { metal: row.next.mats[0].label, level: row.next.level }));
       if ((deps.gold?.() ?? 0) < row.next.gold) return said(false, `The shipwright asks ${row.next.gold} gold.`);
       const lists = [pack(), at.boat?.Cargo?.Items ?? []];
       for (const m of row.next.mats) if (materialCount(lists, m.kind) < m.n) return said(false, `The shipwright needs ${m.n} ${m.label} (you have ${m.have}).`);
-      for (const m of row.next.mats) takeMaterials(lists, m.kind, m.n);
+      if (!materialsFor(lists, row.next.mats)) return said(false, t('naval.refit.short', 'Not enough materials. One item cannot count for two requirements.'));   // REFIT-ORES: a steel ingot counted for Steel and Iron both
+      takeAllMaterials(lists, row.next.mats);   // AUDIT 2: as materialsFor tried them
       deps.pay?.(row.next.gold);
       addRefit(uid, row.id);
       n?.refitBoat?.(at.boat);
       if (at.boat && r?.state?.CurrentBoat === at.boat) r.UpdateBoatCargoMod?.(at.boat);
       deps.changed?.();
-      return said(true, `${name}'s ${row.label.toLowerCase()} is refitted (${['', 'I', 'II', 'III'][row.tier + 1]}).`);
+      return said(true, `${name}'s ${row.label.toLowerCase()} is refitted (${REFIT_NUMERALS[row.tier + 1]}).`);
     }
     return said(false, 'Not here.');
   }
 
-  /** Her refits as Come Sail Away and the sea fight read them (systems/fleet.js refitOf), by her number. */
-  const refit = (boat) => (boat?.uid ? refitOf(fleetShip(boat.uid)) : null);
+  /** Her refits as Come Sail Away and the sea fight read them (systems/fleet.js refitOf), by her number - CAPTAIN-TREE:
+   *  and her captain's stars over them (captainTree.js captainRefit), a ship of mine's alone: a number the Fleet does not
+   *  know (a peer's boat, a stranger's) reads her build's own. */
+  const refit = (boat) => {
+    if (!boat?.uid) return null;
+    const rec = fleetShip(boat.uid);
+    return rec ? captainRefit(refitOf(rec), deps.captain?.()?.stats?.() ?? null) : refitOf(null);
+  };
+  /** CAPTAIN-TREE: every ship of mine read again on her captain's stars, once a sky is accepted - the sea fight's state
+   *  built on her new whole (her hurts the share of it they were, `refitBoat`), the helm's hold weighed again. AUDIT 2: a
+   *  laid-up or packed ship's too - her state is kept by her number from the page's first read of her (fleetStatus), and
+   *  a summons stands her on it: she sailed out on the stars given back. */
+  function restat() {
+    const n = naval(), r = csa();
+    const standing = new Map(placed().map((b) => [b.uid, b]));
+    for (const rec of fleetShips()) n?.refitBoat?.(standing.get(rec.uid) ?? { uid: rec.uid, hull: rec.hull });
+    if (r?.state?.CurrentBoat) r.UpdateBoatCargoMod?.(r.state.CurrentBoat);
+  }
   /** Her name, or '' (the boats' word, the hover's line). */
   const nameOf = (boat) => (boat?.uid ? fleetShip(boat.uid)?.name ?? '' : '');
 
-  return { model, offer, act, sweep, refit, nameOf, whereIs };
+  return { model, offer, act, sweep, refit, restat, nameOf, whereIs };
 }

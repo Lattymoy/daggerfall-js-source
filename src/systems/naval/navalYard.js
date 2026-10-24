@@ -154,7 +154,9 @@ export function provisionOffer({ stores, stock = STORES_STOCK, morale, crew, cre
   rows.push({ id: 'stores', missing: n, price: STORE_PRICE, whole: n * STORE_PRICE, afford: Math.min(n, Math.floor(purse / STORE_PRICE)), have: Math.max(0, stores | 0) });
   if (crewed && morale != null) {
     const price = grogPrice(crew), want = morale < 100 && !grogToday ? 1 : 0;
-    rows.push({ id: 'grog', missing: want, price, whole: want * price, afford: Math.min(want, Math.floor(purse / price)), have: morale });
+    // FIELD BUGS 2026-10-14 GROG-WORD: `drunk` - no round wanted because the day's is drunk, not because her spirits are
+    // at the top (the window said "as high as they go" over a crew the helm called low)
+    rows.push({ id: 'grog', missing: want, price, whole: want * price, afford: Math.min(want, Math.floor(purse / price)), have: morale, drunk: morale < 100 && !!grogToday });
   }
   for (const r of rows) r.cost = r.afford * r.price;
   return { rows, gold: purse };

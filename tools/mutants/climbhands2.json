@@ -1,0 +1,227 @@
+[
+  {
+    "name": "CLIMBHANDS2-spread-as-before",
+    "file": "src/combat/climbHands.js",
+    "old": "  GRIP_APART: 93,",
+    "new": "  GRIP_APART: 52,",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-grip-on-the-sleeve",
+    "file": "src/combat/climbHands.js",
+    "old": "  GRIP_AT: 0.35,",
+    "new": "  GRIP_AT: 0.75,",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-fists-on-the-screen",
+    "file": "src/combat/climbHands.js",
+    "old": "const pinned = this.faceYaw != null && Number.isFinite(view.yaw);",
+    "new": "const pinned = false;",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-depth-turned-the-wrong-way",
+    "file": "src/combat/climbHands.js",
+    "old": "const z = a * Math.sin(turn) + Math.cos(turn);",
+    "new": "const z = -a * Math.sin(turn) + Math.cos(turn);",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-across-the-wrong-way",
+    "file": "src/combat/climbHands.js",
+    "old": "((a * Math.cos(turn) - Math.sin(turn)) / z / lens.tanX)",
+    "new": "((a * Math.cos(turn) + Math.sin(turn)) / z / lens.tanX)",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-pitch-the-wrong-way",
+    "file": "src/combat/climbHands.js",
+    "old": "const up = Math.atan2(b, z) - pitch;",
+    "new": "const up = Math.atan2(b, z) + pitch;",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-a-look-down-slides-sideways",
+    "file": "src/combat/climbHands.js",
+    "old": "((a * Math.cos(turn) - Math.sin(turn)) / z / lens.tanX)",
+    "new": "((a * Math.cos(turn) - Math.sin(turn)) / (z * Math.cos(pitch) + b * Math.sin(pitch)) / lens.tanX)",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-behind-the-eye-drawn",
+    "file": "src/combat/climbHands.js",
+    "old": "if (!(z > 1e-3)) return null;",
+    "new": "if (!(z > -1e9)) return null;",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-gone-hands-resurface",
+    "file": "src/combat/climbHands.js",
+    "old": "Math.max(at[1] - gripY, -HANDS.BOTTOM_SLACK)",
+    "new": "(at[1] - gripY)",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-pinned-to-the-wall-not-the-body",
+    "file": "src/combat/climbHands.js",
+    "old": "this.faceYaw = Number.isFinite(c.yaw) ? c.yaw : wall ? wallYawOf(wall) : null;",
+    "new": "this.faceYaw = wall ? wallYawOf(wall) : null;",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-both-hands-let-go",
+    "file": "src/combat/climbHands.js",
+    "old": "const t = s === this.side ? this.look : 0;",
+    "new": "const t = this.look;",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-the-wrong-hand-lets-go",
+    "file": "src/combat/climbHands.js",
+    "old": "const t = s === this.side ? this.look : 0;",
+    "new": "const t = s !== this.side ? this.look : 0;",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-lens-forgets-the-bar",
+    "file": "src/combat/climbHands.js",
+    "old": "cy: (r.y - at.y + r.h / 2 + offsetHeight) / sy",
+    "new": "cy: (r.y - at.y + r.h / 2) / sy",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-lens-forgets-the-pillarbox",
+    "file": "src/combat/climbHands.js",
+    "old": "cx: (r.x - at.x + r.w / 2) / sx",
+    "new": "cx: (r.x + r.w / 2) / sx",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-lens-forgets-the-projection-aspect",
+    "file": "src/combat/climbHands.js",
+    "old": "tanX: tanY * (aspect > 0 ? aspect : r.w / r.h), tanY,",
+    "new": "tanX: tanY * (r.w / r.h), tanY,",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-rig-hands-no-lens",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "climbHands.update(dt, handsClimb, { yaw: camNow?.yaw, pitch: camNow?.pitch, lens: handsLens });",
+    "new": "climbHands.update(dt, handsClimb, { yaw: camNow?.yaw, pitch: camNow?.pitch, lens: null });",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-rig-hands-no-look",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "climbHands.update(dt, handsClimb, { yaw: camNow?.yaw, pitch: camNow?.pitch, lens: handsLens });",
+    "new": "climbHands.update(dt, handsClimb, { pitch: camNow?.pitch, lens: handsLens });",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-rig-lens-at-the-port-60",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "climbLens(cv(), { fov: fieldOfView(),",
+    "new": "climbLens(cv(), { fov: Math.PI / 3,",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-rig-lens-forgets-the-bar",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "offsetHeight: weaponOffsetHeight() }) : null;",
+    "new": "offsetHeight: 0 }) : null;",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/player/climb/climbhands.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-morrowind-climbs-only-armed",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "!gunSliding && !armCasts && !armsClimb && !runHands && !armsRun)) return;",
+    "new": "!gunSliding && !armCasts && !runHands && !armsRun)) return;",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/combat/mwcast1.test.js"
+    ]
+  },
+  {
+    "name": "CLIMBHANDS2-the-weapon-sway-on-the-stone",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "fpArm.setScreenTransform(widgetOn() && !armsClimb ? (base) => widget.armsTransform(base) : null);",
+    "new": "fpArm.setScreenTransform(widgetOn() ? (base) => widget.armsTransform(base) : null);",
+    "tests": [
+      "test/combat/climbhands2.test.js",
+      "test/combat/mwcast1.test.js"
+    ]
+  }
+]

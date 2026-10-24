@@ -5,13 +5,13 @@ import { peerMenuBind, setPeerMenuBind, resetPeerMenuBinds, PEER_MENU_DEFAULTS }
 import { buttonText } from '../systems/controlsConfig.js';
 import { hdGlyphName } from './padGlyphsHD.js';
 import { padFamily } from './padGlyphs.js';
-import { setPlusBindCapture } from './plusPad.js';
+import { setPlusBindCapture } from './plus/plusPad.js';
 
 let armed = null;          // 'key' | 'pad' | null
 let quietUntil = 0;        // a captured pad B still sends its Back a moment later - it is swallowed, not a back-out
 let listener = null, repaintFn = () => {};
 
-/** Is this card taking keys - the shell's own Escape stands down while it is (ui/enhancedMenu.js onKey). */
+/** Is this card taking keys - the shell's own Escape stands down while it is (ui/enhanced/enhancedMenu.js onKey). */
 export const peerBindBusy = () => !!armed || Date.now() < quietUntil;
 
 const el = (tag, cls, text) => { const n = document.createElement(tag); if (cls) n.className = cls; if (text != null) n.textContent = text; return n; };
@@ -52,8 +52,8 @@ export function peerMenuBindCard(render = () => {}) {
   repaintFn = render;
   const c = el('div', 'card ctl-group ctl-peermenu');
   c.append(el('h3', null, 'Player menu (online mode only)'));
-  c.append(el('p', 'meta', 'Trade, invite to party, inspect ... Aim at a player within reach and use this to open their menu; '
-    + 'the same again, or looking away, puts it away. A hold leaves the key\'s tap to its other job (E still interacts). Saved at once.'));
+  c.append(el('p', 'meta', 'Trade, invite to a party or inspect. Aim at a nearby player and use this to open their menu; '
+    + 'use it again or look away to close it. Set to Hold, a quick tap still does the key\'s usual job (E still interacts). Saves at once.'));
   for (const [kind, label] of [['key', 'Keyboard'], ['pad', 'Controller']]) {
     const b = peerMenuBind(kind);
     const row = el('div', 'row ctl-row');

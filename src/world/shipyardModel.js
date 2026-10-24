@@ -2,7 +2,7 @@
 // SHIPYARDS (2026-10-11): WHAT A PORT TOWN'S SHIPYARD IS MADE OF - the port's own geometry in the shipyard's own frame
 // (y up from its ground, its FRONT - its gate's side, the street's - along +z, its BACK - the sea's, where its slipway
 // runs out - along -z, x across), worn in the port's own art (world/portArt.js, PORT_ARCHIVE) through the yards' face kit
-// (world/merchantYardModels.js). Every face is wound outward and the collider is the same triangles; the hull on the
+// (world/merchantYards/merchantYardModels.js). Every face is wound outward and the collider is the same triangles; the hull on the
 // stocks is open framing, so its planking is laid both ways (a strake is seen from inside the frames too).
 //
 // THE YARD (world/portSites.js PORT_FOOT.shipyard, 22 m by 16): a post-and-rail fence on its sides and its front, a
@@ -29,7 +29,7 @@
 // data (`SHIPYARD`), drawn and read (the host's lantern light) from one place.
 //
 // Pure: no renderer, no GL, no clock. Not a DFU member. Ledger A (SHIPYARDS).
-import { YARD_MESH_KIT, YARD_SINK, YARD_TILE_M, SIGN_BOARD } from './merchantYardModels.js';
+import { YARD_MESH_KIT, YARD_SINK, YARD_TILE_M, SIGN_BOARD } from './merchantYards/merchantYardModels.js';
 import { PORT_ARCHIVE, PORT_REC } from './portArt.js';
 import { PORT_FOOT } from './portSites.js';
 

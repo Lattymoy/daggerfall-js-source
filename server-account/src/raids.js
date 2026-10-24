@@ -6,7 +6,7 @@
 // can also add renown and it's own atheric + armor sets". The relay
 // keeps a town raid's ledger and, at its cleanse, signs a receipt for
 // each account that struck a raider and stood in the town
-// (src/net/raidReceipt.js - `w1`, under the relay's GATE_SIGNING_KEY).
+// (src/net/raid/raidReceipt.js - `w1`, under the relay's GATE_SIGNING_KEY).
 // This file is where that receipt is honoured: counted once, and paid
 // in Renown to the character that fought it. Design:
 // bible/03-World/Raiding-Parties.md, "The rewards (RAID4)".
@@ -48,8 +48,8 @@
 // EVERY CLOCK IS AN ARGUMENT, as in accounts.js.
 // ═══════════════════════════════════════════════════════════════════
 
-import { verifyRaidReceipt } from '../../src/net/raidReceipt.js';
-import { raidDayOfKey } from '../../src/net/raidLaw.js';
+import { verifyRaidReceipt } from '../../src/net/raid/raidReceipt.js';
+import { raidDayOfKey } from '../../src/net/raid/raidLaw.js';
 import { renownForXp, renownRaidXp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, RENOWN_TRACKS_MAX } from '../../src/net/renown.js';
 import { renownCharacterOk, renownNameOf, renownTrackOf, renownHeldSql } from './renownTracks.js';
 
@@ -99,7 +99,7 @@ export async function raidRecordOf({ db }, playerId) {
  *   claim's silver, each a statement (or statements) its batch runs by its own row - null where Marks are not this
  *   account's (marks.js raidStrikeStatement, deedStatements; contracts.js contractPayStatements)
  */
-export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, character, name = null, cid = null }, publicKey, { strike = null, deeds = null, contracts = null } = {}) {
+export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, character, name = null, cid = null }, publicKey, { strike = null, deeds = null, contracts = null, econ = null } = {}) {
   if (!publicKey) return { error: 'no-gate-key' };
   const v = await verifyRaidReceipt(receipt, publicKey, { subtle, nowS });
   if (!v.ok) return { error: 'receipt', why: v.why };
@@ -119,6 +119,7 @@ export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, c
   const mint = strike?.(c.w, nonce) ?? null;
   const deed = deeds?.(c.w, nonce, character) ?? null;
   const paid = contracts ? await contracts(c.w, nonce) : null;
+  const town = econ?.(c.w, nonce) ?? null;   // TOWN-ECON TE2: the town driven clear of it (townEcon.js raidActStatements)
   const mine = 'EXISTS (SELECT 1 FROM raid_cleanses WHERE raid = ?3 AND account = ?1 AND nonce = ?4)';
   const track = 'SELECT xp FROM renown_tracks WHERE player = ?1 AND char_id = ?2';
   // AUDIT RAID R5: WHAT THE TRACK CAN TAKE and WHAT THE HOUR HAS LEFT, as a report's (renownTracks.js) - and a new
@@ -171,6 +172,7 @@ export async function claimRaid({ db, nowS, subtle, rand }, player, { receipt, c
     ...(mint ? [mint] : []),
     ...(deed ?? []),
     ...(paid?.statements ?? []),
+    ...(town ?? []),
   ]);
   const [row, decided, , , , after, count] = res;
   const spoils = thanks ? thanksAnswer(res[8], cid) : false;

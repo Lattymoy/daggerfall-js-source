@@ -65,7 +65,7 @@ no diffuse map and overrides the NIF material defaults to white.
 
 ONE HOME: the mesh viewer carried its own two-line version of the path
 (a prefix and an extension swap) which got three of the rules wrong; it
-imports formats/mwTexture.js now.
+imports formats/morrowind/mwTexture.js now.
 
 MW-D12 GAVE THE ARM SOMETHING TO DO (rules 8, 9, 10, 11). What MW-D11
 shipped was an arm holding a longsword and playing a BARE-HANDED idle for
@@ -984,7 +984,7 @@ normalise - one cross product a triangle, NEGATED on a MIRRORED piece because ru
 13's X negation reverses the winding and the left arm would light
 inside-out (rule 13's rendering consequence, which MW8 also lacked); a
 posed vertex normal was mirrored with its vertex and takes no flip. Pins
-`test/mwsmooth.test.js`, `tools/mutants/mwsmooth.json`.
+`test/formats/morrowind/mwsmooth.test.js`, `tools/mutants/mwsmooth.json`.
 
 THE PORT MAPPER IS RETIRED (MW-D10), AND RULE 54 IS THE PLACEMENT. The
 mapper solved a uniform scale from the arm's clip bounds, pushed it a
@@ -1027,7 +1027,7 @@ static plausible arm; and Unload returns the classic sprite.
 WHAT THE PROBE CANNOT SEE, stated rather than implied: it does not boot
 the game, because that needs ARENA2 and the player's own Daggerfall data.
 weaponRig's branch, the four hosts' camera dep and the card are pinned in
-node (test/fparm.test.js, test/mwattach.test.js, test/enhancedMenu.test.js)
+node (test/formats/morrowind/fparm.test.js, test/scenes/mwattach.test.js, test/systems/enhancedMenu.test.js)
 and proven by Mac in play. Three mutation campaigns back them: 12/12 on
 the wiring pins, 6/8 on the probe layers, 24/24 inherited from MW-D7.
 
@@ -1173,7 +1173,7 @@ nothing could see them.
 
 Original status line: reference only. No code in this tree implements this yet - the
 first import arc was reverted whole on 2026-08-28 (see the R7 guard in
-test/enhancedMenu.test.js). This file exists so a second attempt starts
+test/systems/enhancedMenu.test.js). This file exists so a second attempt starts
 from what the engine ACTUALLY does instead of from what seemed
 reasonable.
 
@@ -3784,7 +3784,7 @@ sound, this is the condition it must not be read past):
 
 > Most of the rule is accurate (verified against OpenMW master: components/nif/property.hpp:558-576 for both enums, components/nif/niffile.hpp:28 for VER_MW = 0x04000002, and components/nifosg/nifloader.cpp:2784-2905 for the mapping, the blackout and the specular zeroing). The specular half is if anything understated: nifloader.cpp:1118-1120 additionally skips any NiMaterialColorController whose mTargetColor is Specular when mVersion <= VER_MW, so nothing reintroduces specular for a Morrowind-era mesh and "a port should not implement Morrowind specular at all" holds. The scoping clause is where it overreaches. The rule correctly observes that `lightmode` is assigned only inside the SrcAmbDif branch (nifloader.cpp:2804; the only writes are the initialisation at :2750 and that one line), but then states as always-true something that is only conditional: "a SrcEmissive or SrcIgnore property leaves the running lightmode at its EmiAmbDif default and does not trigger the blackout." The code does not leave lightmode at its default — it simply does not touch it, so lightmode keeps whatever a previously-processed property latched. That is reachable, not hypothetical. collectDrawableProperties (nifloader.cpp:189-210) recurses through the whole ancestor chain first (`if (parent != nullptr) collectDrawableProperties(&parent->mNiNode, parent->mParent, out);`) and appends every NiVertexColorProperty it finds, root-first, before the drawable's own. So a parent NiNode carrying SrcAmbDif + LightMode_Emissive latches lightmode = Emissive, and a child NiTriShape carrying SrcIgnore or SrcEmissive then overrides only the vertex colour mode — the `if (lightmode == LightMode_Emissive)` test at :2899 still fires and the diffuse/ambient blackout still happens. The SrcEmissive case in particular yields a combination the rule denies: vertex colour mode Emission plus blacked-out diffuse and ambient, i.e. a surface lit solely by its vertex colours. A port implementing the rule as written would diverge from OpenMW on any mesh whose ancestor node carries a SrcAmbDif + Emissive vertex-colour property.
 
-> The rule cannot be confirmed because its subject does not exist in the repository under review. The codebase at /home/user/project-dagger is "project-dagger", a JavaScript port of Daggerfall (data/logic translated from Daggerfall Unity, presentation on hand-rolled WebGL2) — not OpenMW. Specifics: (1) All three cited files are missing — components/nifosg/nifloader.cpp, components/nif/property.hpp, components/nif/niffile.hpp; there is no components/ directory at all. (2) The repository contains zero C++ files (find for *.cpp/*.hpp outside node_modules returns nothing). (3) Grep across the whole tree for NiVertexColorProperty, NiMaterialProperty, nifosg, VertexColorMode, lightmode, SrcAmbDif, SrcEmissive, AmbientAndDiffuse, VER_MW, and glossiness returns no hits; grep for "openmw" returns no hits. (4) There is no NIF pipeline: the 3D model format layer is /home/user/project-dagger/src/formats/arch3dFile.js, Daggerfall's ARCH3D.BSA format, which has no NiProperty concept. The renderer (/home/user/project-dagger/src/render/) contains renderer.js, characterMesh.js, skyRenderer.js and similar; the only two files mentioning "specular" anywhere are src/characters/pieces/draped.js and src/tools/paperdollViewer.js, neither related to NIF materials or a version gate. (5) The requested special cases do exist as subject matter but are wholly unrelated to the rule: first-person body and werewolf/beast-race code lives in src/combat/fpsWeapon.js, src/characters/rewrite/limb.js, src/characters/beasts.js and src/characters/pieces/beastHead.js, and none of it touches vertex-colour modes, emissive lightmodes, or specular version gating, because that machinery is absent. I therefore found no caller, override, subclass or special case that changes the described behaviour — but only because the described behaviour is not present here. Since the task's bar was to confirm only if the rule holds where it matters for a first-person player body, and nothing in this repository can establish that, this is a refutation on premise grounds. Note this is NOT a claim that the rule is factually wrong about upstream OpenMW; that codebase is simply not available here to check.
+> The rule cannot be confirmed because its subject does not exist in the repository under review. The codebase at /home/user/project-dagger is "project-dagger", a JavaScript port of Daggerfall (data/logic translated from Daggerfall Unity, presentation on hand-rolled WebGL2) — not OpenMW. Specifics: (1) All three cited files are missing — components/nifosg/nifloader.cpp, components/nif/property.hpp, components/nif/niffile.hpp; there is no components/ directory at all. (2) The repository contains zero C++ files (find for *.cpp/*.hpp outside node_modules returns nothing). (3) Grep across the whole tree for NiVertexColorProperty, NiMaterialProperty, nifosg, VertexColorMode, lightmode, SrcAmbDif, SrcEmissive, AmbientAndDiffuse, VER_MW, and glossiness returns no hits; grep for "openmw" returns no hits. (4) There is no NIF pipeline: the 3D model format layer is /home/user/project-dagger/src/formats/arch3dFile.js, Daggerfall's ARCH3D.BSA format, which has no NiProperty concept. The renderer (/home/user/project-dagger/src/render/) contains renderer.js, characterMesh.js, skyRenderer.js and similar; the only two files mentioning "specular" anywhere are src/characters/pieces/draped.js and src/tools/paperdoll/paperdollViewer.js, neither related to NIF materials or a version gate. (5) The requested special cases do exist as subject matter but are wholly unrelated to the rule: first-person body and werewolf/beast-race code lives in src/combat/fpsWeapon.js, src/characters/rewrite/limb.js, src/characters/beasts.js and src/characters/pieces/beastHead.js, and none of it touches vertex-colour modes, emissive lightmodes, or specular version gating, because that machinery is absent. I therefore found no caller, override, subclass or special case that changes the described behaviour — but only because the described behaviour is not present here. Since the task's bar was to confirm only if the rule holds where it matters for a first-person player body, and nothing in this repository can establish that, this is a refutation on premise grounds. Note this is NOT a claim that the rule is factually wrong about upstream OpenMW; that codebase is simply not available here to check.
 
 **Corrected form offered:** NiVertexColorProperty has two enums (components/nif/property.hpp:558-576): VertexMode SrcIgnore=0 / SrcEmissive=1 / SrcAmbDif=2, and LightMode Emissive=0 / EmiAmbDif=1. The loader maps SrcIgnore -> VertexColorModes::None, SrcEmissive -> Emission, and SrcAmbDif -> AmbientAndDiffuse UNLESS its LightMode is Emissive, in which case the mode is None. Separately, after the whole property loop, if `lightmode` holds LightMode_Emissive the material's diffuse RGB is forced to (0,0,0) keeping its alpha and ambient is forced to the zero vector, so the surface is lit only by its emissive term. Scoping: `lightmode` is initialised to EmiAmbDif before the loop (nifloader.cpp:2750) and written in exactly one place, inside the SrcAmbDif branch (:2804). A SrcEmissive or SrcIgnore property therefore does not reset lightmode — it leaves it untouched at whatever the last SrcAmbDif property set, or at the EmiAmbDif default only if no SrcAmbDif property has been seen yet. This matters because collectDrawableProperties (:189-210) accumulates properties from the entire ancestor chain, parents first, so a parent node's SrcAmbDif + LightMode_Emissive latches lightmode = Emissive and the blackout still fires e
 
@@ -6337,7 +6337,7 @@ for the next draw, whose arrow then left at the click. The ceiling now
 waits while the arm is still drawing (`fpArm.shotBusy`, to a 4s cap), a
 draw clears a release it has not reached, and no shot STARTS while the
 arm cannot draw it - the machine's cycle had outrun the draw and fired
-two arrows from one (`01-Overview/Field-Bugs-2026-10-09g.md`).
+two arrows from one (`01-Overview/bugs/Field-Bugs-2026-10-09g.md`).
 
 THE NOCK. Rule 24's "shoot attach" still drives the arrow wherever the
 data carries it, but the arrow may no longer DEPEND on that key
@@ -6413,7 +6413,7 @@ backwards sweeps the blade from left to right, and the wind-up played
 backwards settles the arm from its cocked side to rest. That is a
 backhand, the stroke a right-hander actually makes to swing that way,
 with the sword where it is. `REVERSED_STRIKES`
-(`formats/mwFirstPerson.js`) names StrikeRight alone: the chops have
+(`formats/morrowind/mwFirstPerson.js`) names StrikeRight alone: the chops have
 no side a reversal would honour (a chop backwards is an uppercut) and
 share the one chop as before, the thrust has none, and a shot is one
 draw. `attackKeys(type, strength, { reversed })` hands the machine the
@@ -6438,7 +6438,7 @@ note), so nothing moves. Which strike is Morrowind's own direction is
 a one-name table if the chair says it is the other way round; no data
 here to film it.
 
-**Pinned (test/reversedSwing.test.js).** The table and its one name;
+**Pinned (test/combat/reversedSwing.test.js).** The table and its one name;
 attackKeys reversed is the sections in reverse order with each pair in
 file order and a shot never; through a real build on the weapon
 fixture a StrikeRight begins its wind-up at the follow-through's end
@@ -6468,7 +6468,7 @@ the hidden-node search (MW-D49), the shoot keys and the floor at the
 draw (rule 24, MW-D42), the hidden range in both draws, and the
 classic bow's gesture reaching attack() through fpAttack for both the
 instant shot and the held draw. No divergence found; every step is
-pinned on the fixtures (test/mwarrow.test.js). "Offset" is not it.
+pinned on the fixtures (test/formats/morrowind/mwarrow.test.js). "Offset" is not it.
 
 **What CAN empty the bow on retail data, and now does not.** The
 weapon records come from EVERY .esm attached (the load order) and the
@@ -6500,7 +6500,7 @@ arrow, says why ONCE on the console: `[mw] the bow carries no arrow -
 <the card's arrow notes>`. If Mac's bow is still empty after this,
 that line is the next report.
 
-**Pinned (test/arrowPick.test.js).** The pick prefers a present mesh,
+**Pinned (test/combat/arrowPick.test.js).** The pick prefers a present mesh,
 keeps the old pick when none is present, still answers null for a type
 with no record; the preload and the read agree through one directory;
 a real build with an expansion arrow first in the .esm and only the
@@ -6525,21 +6525,21 @@ animation to play shooting properly"). The group's state outlives its section - 
 false - so the clock holds where the last section left it. `combat/fpArm.js` notes it as each weapon-group section
 advances (`noteWeaponClock`), and answers 0 once the stance's group is another (`weaponClockValue`).
 
-**What runs on it** (`formats/mwPartClock.js`): any record's first active NiKeyframeController, its track over its
+**What runs on it** (`formats/morrowind/mwPartClock.js`): any record's first active NiKeyframeController, its track over its
 rest through the controller's own function ([B]: no rotation keys is the rest rotation); an unskinned shape's first
 active NiGeomMorpherController whose base morph has the shape's vertex count and more than one morph, positions =
 base + sum(weight_i x morph_i), each weight its own keys at the controller's time (handleMorphGeometry,
 MorphGeometry::cull, GeomMorpherController); an AutoPlay node's controllers on frame time instead (setupController).
 `flattenNif` now records each batch's record chain from the file root and its authored vertices, and
-`posePartClocks` (`formats/mwFirstPerson.js`) re-poses the weapon slot's moving pieces before every pose, in both
+`posePartClocks` (`formats/morrowind/mwFirstPerson.js`) re-poses the weapon slot's moving pieces before every pose, in both
 views, and puts the arrow under the ArrowBone where the clock has it - the arrow's `preTransform` is that node's REST,
 which is what it was drawn at before.
 
 **Not ported:** every other part's controllers (the lower body's clock, `mAnimationTimePtr[0]`), the head's
 (`mHeadAnimationTime`), and releaseArrow's launch point - the projectile leaves from DFU's GetAimPosition, not the
 ammunition node's world position. Not seen on a retail bow: pinned on `test/fixtures/mw/bowClip.mjs`, a fixture bow
-that carries both controllers (`test/mwbow1.test.js`; `tools/mutants/mwbow1.json`).
-`01-Overview/Field-Bugs-2026-10-09g.md`.
+that carries both controllers (`test/formats/morrowind/mwbow1.test.js`; `tools/mutants/mwbow1.json`).
+`01-Overview/bugs/Field-Bugs-2026-10-09g.md`.
 
 ## MW-D51 (2026-09-16): the held torch
 
@@ -6554,7 +6554,7 @@ lit torch under the Morrowind view was a light with no torch.
 **The record.** Morrowind's carriable lights are LIGH records with a
 mesh (`Torch` -> `l\light_torch.nif` and its `torch_256`... variants;
 the sconces and candles are LIGH too). `readLight`/`lightRecords`
-(`formats/mwFirstPerson.js`) read NAME, MODL, FNAM and LHDT - 24 bytes,
+(`formats/morrowind/mwFirstPerson.js`) read NAME, MODL, FNAM and LHDT - 24 bytes,
 the flags int at 20, CARRY 0x2 and FIRE 0x10 - and the one-pass
 extractor carries them as `lights` (ARM_RECORDS_VERSION 2, so a v1
 derived set re-extracts). `pickTorchRecord` chooses as MW-D38 chooses a
@@ -6630,7 +6630,7 @@ HT-WAIST-NET); a lantern or candle is the classic lane's still; the torch's own 
 and colour) is not the rig's - the player torch's light already moves
 with the hand law.
 
-**Pinned (test/mwtorch.test.js, test/mwload_records.test.js).** The
+**Pinned (test/combat/mwtorch.test.js, test/formats/morrowind/mwload_records.test.js).** The
 LIGH reader and its place in the one pass; the pick's four rules; the
 resolve's four refusals and its part; rule 25's walk on a hand-built
 skeleton; the overlay's three answers; the fast path on the fixture
@@ -6670,7 +6670,7 @@ person stands up for the length of an attack or an equip and crouches
 again after. Rule 26 whole is still the recorded gap; MW-D51's one
 mask is the first step toward it, not the last.
 
-**Pinned (test/mwtorch.test.js).** The four terms of idleBaseFor; the
+**Pinned (test/combat/mwtorch.test.js).** The four terms of idleBaseFor; the
 fixture rig's stance reaching refreshIdle (no sneak idle in the
 fixture .kf: the plain idle, as hasAnimation's miss); the refresh
 reading the state and rolling no dice for the sneak base.
@@ -6742,8 +6742,10 @@ Weapon` returns after the attach (:368-369): whole, never masked.
 parent)` under the bone, NOT SceneUtil::attach** - so no BoneOffset
 and no mirror ride a holstered mesh, unlike the weapon in the hand
 (AUDIT-WS F6: every WS1 part is `bare`). The enchantment glow (:355,
-:389-393) is not ported - the port draws no glow on any Morrowind
-mesh.
+:389-393) is not ported on a holstered mesh. WEAPON-GLOW1 (2026-10-16,
+`05-Combat/Weapon-Glow.md`) draws the port's own glow on the weapon in
+the HAND alone - its element's look, or the arcane glow for an
+enchanted weapon showing none - from no archive texture.
 
 **The quiver** (actoranimation.cpp:396-471 updateQuiver, run from
 showWeapons :993 and at attachArrow / detachArrow / releaseArrow,
@@ -6811,7 +6813,7 @@ untouched.
 
 Not seen in a browser: no Morrowind data in this container, and the cut
 needs the widget's shift over a raised blade. The lens law is pinned
-numerically (`test/macr_fixes.test.js`) and the draw by source; MW-D10
+numerically (`test/ui/enhanced/macr_fixes.test.js`) and the draw by source; MW-D10
 and MW-D23's projection pins re-aimed. Mutants in
 `tools/mutants/macr.json`.
 
@@ -6869,7 +6871,7 @@ the arm three pixels at a time where the paste slides it.
 
 Not seen in a browser: there is no Morrowind data here.
 
-- `test/disc13.test.js` pins it through the real arm on the MW fixtures:
+- `test/systems/disc13.test.js` pins it through the real arm on the MW fixtures:
   - the four screen edges under synthetic shifts, a scale, a drop
     (MAC-R1's case) and a rise;
   - the real widget walking, running, backing up and strafing, with and
@@ -6877,7 +6879,7 @@ Not seen in a browser: there is no Morrowind data here.
   - a half-pixel shift that moves the composite half a pixel and renders
     the same frame;
   - the frame's size, and 4K coverage.
-- `test/macr_fixes.test.js` pins the rows above the top and the rest case.
+- `test/ui/enhanced/macr_fixes.test.js` pins the rows above the top and the rest case.
 - Mutants are in `tools/mutants/disc13.json`. MAC-R1's three pad records
   are re-aimed by content in `tools/mutants/macr.json`.
 ## MAP3 (2026-09-18): the held sheet - the first hand-authored pose
@@ -6949,8 +6951,8 @@ re-places the sheet on the live arm (a PARTIAL spec changes only what it
 names - the pose in force is the base); `window.__heldPose()` reads it
 back. The pose Mac lands on becomes the shipped default.
 
-Pins: `test/map3_heldpose.test.js` (16) on the real fixture rig
-headless; `test/heldmap.test.js` MAP3 (4); `tools/mutants/map3.json` 39
+Pins: `test/combat/map3_heldpose.test.js` (16) on the real fixture rig
+headless; `test/ui/heldmap.test.js` MAP3 (4); `tools/mutants/map3.json` 39
 dead; a MAP3 layer in `tools/mwArmProbe.mjs`.
 
 **AUDIT-MAP2 (the same day) corrected four things above.** (1) The
@@ -6998,7 +7000,10 @@ Slot_CarriedLeft at the Shield Bone (MW-D51) - so every number is the port's own
   bone's own frame once, so it follows the hip's walk), the ANCHOR is the part's top-centre (`hangAnchor`, over all
   its shapes, after the mirror and rule 14's offset - the ring a lantern's handle ends in on any Z-up mesh, wherever
   its author put the origin), and ROT is a rig-space 3x3 the owner writes each frame - plumb times the swing
-  (`systems/lanternSwing.js lanternSwingMatrix`). The rig space is the actor's own and the body only turns in yaw, so
+  (`systems/lanternSwing.js lanternSwingMatrix`). HT-WAIST-SIZE (2026-10-20): times the hang's SIZE about the anchor -
+  `v -> rot * size * (v - anchor) + hook` - set once at the bind to hang the lantern at a belt lantern's height
+  (`combat/fpArm.js hipLanternSize`, `systems/lanternSwing.js HIP_LANTERN_HEIGHT`; `hangAnchor` measures the part's
+  height beside its anchor); 1 where unset. Handheld-Torches.md HT-WAIST-SIZE. The rig space is the actor's own and the body only turns in yaw, so
   plumb there is plumb in the world. `bindPartsInto` carries `hang` onto the part's pieces and effects;
   `effectPlacement` places a hanging part's particle systems by the same affine.
 - **The hook**: `HIP_LANTERN_HOOK` = (14, 5, 9.5) off the pelvis - the RIGHT hip, clear of the one-handed scabbard
@@ -7013,7 +7018,7 @@ Slot_CarriedLeft at the Shield Bone (MW-D51) - so every number is the port's own
   same door - `PeerBodies._arm` hands the rig `!!shown.hl` each frame - and swings it off that body's own stub camera.
   They still HOLD no light (MW-D51's "Recorded, not faked"): this one is in no hand. Handheld-Torches.md HT-WAIST.
 
-Pins: `test/htwaist_mwbody.test.js` - the pick and the resolve; the hang over the vendored retail-shaped skeleton (the
+Pins: `test/combat/htwaist_mwbody.test.js` - the pick and the resolve; the hang over the vendored retail-shaped skeleton (the
 top at the hook on the right hip, plumb under a twisted pelvis, the swing tipping it about the hook, a flame placed by
 the same hang); and a whole `createFpArm()` rig on the fixture body with a pelvis joined through the WS1 bone-addon
 door (a tiny addon NIF written by the pin): built with it, shown through a readied spell, hidden when put out, lit
@@ -7033,12 +7038,12 @@ fists. LH1 (the quickslot swap follows the hand) closed the swap's half;
 the equip window's half was still open.
 
 While the arm is built (`fpArm.ready()`), the hand in use follows the
-weapons: the rig's per-frame hand read (`combat/weaponRig.js` syncWorn)
+weapons: the rig's per-frame hand read (`combat/weapon/weaponRig.js` syncWorn)
 moves an empty hand in use to the other when it holds a weapon
 (`combat/playerWeapon.js` followHeldHand), and H moves only between two
 held weapons - to an empty hand it is refused without a line, as the
 shield's refusal is. Bare hands stay bare, and a shield is no weapon. The
-classic lane keeps ToggleHand whole. `test/mwhand.test.js`,
+classic lane keeps ToggleHand whole. `test/combat/mwhand.test.js`,
 `tools/mutants/mwhand.json`.
 
 ## DECLARED DIVERGENCE (BEAST-SELF, 2026-09-26): the arm stands aside for the beast
@@ -7066,7 +7071,7 @@ falls back to the first, as it does for any refused body.
 
 Not done: a Morrowind vampire's head (the vampire flag the body-part
 reader drops) - Daggerfall's vampire changes the face alone, which the
-classic HUD and paper doll already wear. `test/beastself.test.js`,
+classic HUD and paper doll already wear. `test/player/beastself.test.js`,
 `tools/mutants/beastself.json`.
 
 SHADOW-FANG (the merge with WEREWOLF1, 2026-09-26): the rig DOES hold one
@@ -7082,7 +7087,7 @@ person and its body in third. A change of form is so two edges (into the
 sprite lane at the change, back when the new form lands), each carried
 by the camera as above; with Eye Of The Beholder off, a third-person
 player falls to the first at the change and stays there. Pinned in
-`test/werewolf1.test.js` (the merge's test), `tools/mutants/werewolf1.json`
+`test/net/peer/werewolf1.test.js` (the merge's test), `tools/mutants/werewolf1.json`
 (the `WEREWOLF1-MERGE-*` rows).
 
 ## DECLARED DIVERGENCE (MW-PACE1, 2026-10-07): a blow paced by Daggerfall's machine
@@ -7104,7 +7109,7 @@ says, at a strike's first frame, when its hit lands and when the blow is
 done, at that frame's dt (`blowSchedule`: a step is the tick rounded up to
 whole frames, as the machine steps; the unarmed strike to the left its own
 eight ticks), handed over by `combat/playerWeapon.js` strikeSchedule and
-`combat/weaponRig.js` fpAttack. `combat/fpArm.js` fits the wind-up at the
+`combat/weapon/weaponRig.js` fpAttack. `combat/fpArm.js` fits the wind-up at the
 rate that brings the playhead from "<type> start" through the release to
 "<type> hit" by the machine's hit (`blowPace`), re-fits the release from
 where the arm stands when it begins (a frame that ran long is made up
@@ -7116,16 +7121,16 @@ record's pace stands where there is no deadline to fit: a shot (its hit
 waits for the arm's own "shoot release", MW-D42), a held wind-up, and any
 blow with no schedule. A peer's body has no Speed on the wire, but its
 swing count arrives a blow at a time: the burst's shortest gap paces its
-blows (`net/peerBodies.js` peerBlowPace - a pause only lengthens a gap; a
+blows (`net/peer/peerBodies.js` peerBlowPace - a pause only lengthens a gap; a
 gap past 2.2 s ends the burst, whose first blow keeps the record's pace),
-its hit two fifths in. `test/mwpace1.test.js`, `tools/mutants/mwpace1.json`
+its hit two fifths in. `test/combat/mwpace1.test.js`, `tools/mutants/mwpace1.json`
 (10, all dead). Ledger A (MW-PACE1).
 
 ## MW-CAST1 (2026-10-07): the cast, played
 
 Mac: *"We need to implement morrowind spell casting effects and
 animations"*. MW-D39 gave the arm a spellcast stance and a cast, and none
-of it reached the screen. Four faults, each pinned in `test/mwcast1.test.js`
+of it reached the screen. Four faults, each pinned in `test/combat/mwcast1.test.js`
 (6) on an arm whose clips carry the spellcast group
 (`test/fixtures/mw/castClip.mjs` - armfpweapon.kf written back by
 `tools/nifWrite.mjs` with the group appended):
@@ -7133,7 +7138,7 @@ of it reached the screen. Four faults, each pinned in `test/mwcast1.test.js`
 - **The draw gate hid it.** A readied spell hides the weapon (`shown()`'s
   HasReadySpell leg) and the first-person draw returned before the arm, so
   the spell stance and the cast were never on screen. The casting hands
-  are the gate's fifth exception (`combat/weaponRig.js`, `armCasts`), beside
+  are the gate's fifth exception (`combat/weapon/weaponRig.js`, `armCasts`), beside
   the torch, the held sheet, the shield and the sliding gun.
 - **The cast was dropped two tenths in.** Daggerfall clears the readied
   spell AT its release (EntityEffectManager.PlayerSpellCasting_OnReleaseFrame
@@ -7162,7 +7167,7 @@ and the deferred un-ready make unreachable today).
 The same ask's other half. With Morrowind data attached, a spell is drawn
 as Morrowind draws it - with the player's own masters' visuals:
 
-- **The runtime** (`src/formats/mwVfx.js`, pure): an effect mesh as OpenMW
+- **The runtime** (`src/formats/morrowind/mwVfx.js`, pure): an effect mesh as OpenMW
   runs one - every controller on the effect's own clock from zero
   (Animation::addEffect, EffectManager::addEffect), over when the clock
   reaches the longest ACTIVE controller's stop time
@@ -7184,12 +7189,12 @@ as Morrowind draws it - with the player's own masters' visuals:
   particle program's format - a triangle is three vertices of size 0 - so
   the renderer's particle path draws a mesh and its sparks alike
   (`src/render/vfxGpu.js`, `Renderer.drawWorldParticleEffects`).
-- **The records** (`formats/mwFirstPerson.js` readMagicEffect, readStatic;
+- **The records** (`formats/morrowind/mwFirstPerson.js` readMagicEffect, readStatic;
   ARM_RECORDS_VERSION 4): MGEF - INDX, MEDT's school, flags (the three a
   legacy file may set), colour and speed, PTEX and the four visuals' ids -
   and the STATs an effect is drawn with (the VFX_ family and any id an MGEF
   in the same file names), in the one pass every arm record rides.
-- **The plan** (`src/formats/mwSpellFx.js`): a casting visual per model
+- **The plan** (`src/formats/morrowind/mwSpellFx.js`): a casting visual per model
   (playSpellCastingEffects), a bolt for a target spell (getMagicBoltData:
   the particle texture only for one projectile effect, the light the mean
   of the effects' colours, NegativeLight inverted), each effect's hit
@@ -7225,7 +7230,7 @@ Not carried, recorded on the modules: lighting past the white ambient,
 AutoPlay's frame clock, roll/path/look-at/morph controllers, sorting, the
 bolt's light, a looping hit (ContinuousVfx), an actor's facing,
 VFX_Multiple's dummies, and the creatures' and other players' VFX_Hands.
-`test/mwspellfx1.test.js` (16), `test/mwload_records.test.js` (the
+`test/formats/morrowind/mwspellfx1.test.js` (16), `test/formats/morrowind/mwload_records.test.js` (the
 records), `tools/mutants/mwspellfx1.json` (38, all dead).
 
 ## DECLARED DIVERGENCE (CAST-SPEED, 2026-10-08): one cast clock, both lanes
@@ -7262,21 +7267,21 @@ have casting speed a new rarity affix along with scaling with speed"*.
 - **One rate for both lanes** (`src/systems/castSpeed.js`, a leaf).
   `castRate(entity)` is the live Speed's share (1 at 50, 0.75 at 0, 1.25
   at 100, the attribute clamped to its range) plus each registered
-  modifier's percent, clamped to [0.5, 2]. `combat/weaponRig.js`
+  modifier's percent, clamped to [0.5, 2]. `combat/weapon/weaponRig.js`
   castSpellAnim reads it once a cast and passes it to both lanes: the
   classic frames step at CAST_FRAME_PERIOD over it, and the Morrowind arm
   plays its spellcast group from "<type> start" to "<type> stop" at it
   (`fpArm.castSpell(rangeType, rate)`). OpenMW plays that group at 1.
-- **The castSpeed loot line** (`systems/lootRarity.js`, a proc kind after
+- **The castSpeed loot line** (`systems/loot/lootRarity.js`, a proc kind after
   every kind before it, so the numbers' pass draws as it did - the LAST
   pass moved all the same: a jewel's proc pool was empty before it, a
   weapon's one narrower, so a seeded hoard holding such a piece rolls on
   from a moved stream; CAST-SPEED-PINS re-aimed the serpent hoard pins
-  that found this, `test/serpent1_client.test.js` and
-  `test/serpentset.test.js`): "+N% casting
+  that found this, `test/systems/serpent1_client.test.js` and
+  `test/systems/serpentset.test.js`): "+N% casting
   speed" on jewellery and weapons, 3-6 / 6-10 / 10-15, worth 60 a point,
   suffix words *of Quickening*, *of Alacrity*, *of the Swift Hand*.
-  `systems/lootPowers.js` lootCastSpeed sums every worn line, the weapons
+  `systems/loot/lootPowers.js` lootCastSpeed sums every worn line, the weapons
   in hand included, up to CAST_SPEED_CAP (30%), for my entity only, and
   registers it on the rate (`registerCastSpeedMod`). Jewellery carries it,
   so a class that may not wear the armour still finds it.
@@ -7286,10 +7291,32 @@ have casting speed a new rarity affix along with scaling with speed"*.
   (interiors) shares its parent host's cast engine and its rig. The tail
   gate sits in the one cast engine every host builds and reads the one
   pair of hands, so no host file changed.
-- **What it leaves alone:** a foe's cast (`characters/enemyCasting.js` has
+- **What it leaves alone:** a foe's cast (`characters/enemy/enemyCasting.js` has
   its own clock), and a peer's view of my cast. The wire carries the cast
   and not its rate, so another player's copy of my arm plays it at 1. That
   is only how it looks.
 
-`test/castspeed.test.js` (5), `test/hostmagic.test.js` (the tail gate),
+`test/systems/castspeed.test.js` (5), `test/systems/hostmagic.test.js` (the tail gate),
 `tools/mutants/castspeed.json` (17, all dead).
+
+## DECLARED DIVERGENCE (BODY-MOTION, 2026-10-18): the third-person body's own motion over the clips
+
+Mac: *"I want to build improved animations for the morrowind rig (3rd person) ... No band aids."* The record is
+`04-Characters/Body-Motion.md`; the departures it makes from this page, said here where they are departed from:
+
+- **Rule 26's gap, closed for third person.** MW-D26's three slots (and MW-D39's and MWNPC4's after them) resolve the
+  whole body from one winner, so a blow while walking showed the swing on the legs. The ladder is unchanged - the
+  winner still poses the skeleton - and the body-motion layer (`src/characters/bodyMotion/`, through `poseAssembly`'s
+  `motion` slot) then lays the gait on the legs under the blow, as the reference's per-bone-group vector would have
+  laid the walk under the weapon's upper body. First person is untouched: the arm has no legs to walk.
+- **[C] "DO NOT IMPLEMENT smooth animation transitions", departed from in the layer only.** The clips beneath still
+  switch with no cross-fade, exactly as the reference does; the layer over them eases its own weight, its arms' and its
+  carry class's (`MOTION_EASE`, `GAIT_EASE`), so a weapon drawn or a blow begun does not snap the body.
+- **MW-D26's play rate stands, under the layer.** The movement clip still advances at the actor's speed over the
+  clip's (and PX29's picked source still divides); in third person, on a body the layer walks, its legs are covered by
+  the gait (Alexander's stride on the body's own leg, the phase by distance, the feet planted).
+- **The blow's sections are read, never re-timed.** MW-PACE1's fitted sections stay the clock; the layer's choreography
+  reads each section's own completion (`melee.js` blowU), so the blade lands on the frame the machine deals the blow.
+
+Pinned by `test/characters/bodyMotion/bodymotion_gait.test.js` (10) and `test/characters/bodyMotion/bodymotion_carry.test.js`
+(14); `tools/mutants/bodymotion.json` (55, all dead).

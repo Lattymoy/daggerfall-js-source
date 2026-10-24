@@ -1,0 +1,65 @@
+[
+  {
+    "name": "EL-word",
+    "file": "src/world/ethericSea.js",
+    "old": "export const ETHER_WORD = 'Eltheric';",
+    "new": "export const ETHER_WORD = 'Etheric';",
+    "tests": [
+      "test/world/eltheric.test.js"
+    ]
+  },
+  {
+    "name": "EL-chart-literal",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "    title: chartTitle(),",
+    "new": "    title: 'A chart of the Eltheric Ocean',",
+    "tests": [
+      "test/world/eltheric.test.js"
+    ]
+  },
+  {
+    "name": "EL-yard-literal",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "a freeport of ${ETHER_SEA_NAME}, in",
+    "new": "a freeport of the Eltheric Ocean, in",
+    "tests": [
+      "test/world/eltheric.test.js"
+    ]
+  },
+  {
+    "name": "EL-crossing-literal",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "`here the sea is no longer the sea, but the ${ETHER_WORD}.`,",
+    "new": "'here the sea is no longer the sea, but the Eltheric.',",
+    "tests": [
+      "test/world/eltheric.test.js"
+    ]
+  },
+  {
+    "name": "EL-ledger-literal",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "ether: `${ETHER_WORD} ship`, legend: 'legend' });",
+    "new": "ether: 'Eltheric ship', legend: 'legend' });",
+    "tests": [
+      "test/world/eltheric.test.js"
+    ]
+  },
+  {
+    "name": "EL-region-old",
+    "file": "src/world/etherPlaces.js",
+    "old": "export const ETHER_REGION_NAME = `the ${ETHER_WORD} Isles`;",
+    "new": "export const ETHER_REGION_NAME = 'the Etheric Isles';",
+    "tests": [
+      "test/world/eltheric.test.js"
+    ]
+  },
+  {
+    "name": "EL-title-cut",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  .dfchart-win .dfnaval-wintitle h2 { white-space: normal; text-overflow: clip; }\n",
+    "new": "",
+    "tests": [
+      "test/world/eltheric.test.js"
+    ]
+  }
+]

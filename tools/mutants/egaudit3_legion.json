@@ -1,0 +1,674 @@
+[
+  {
+    "name": "EGA3L-sweep-reach",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_SWEEP_M = 3;",
+    "new": "export const EG_SWEEP_M = 3.2;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "Sweeping Arc within 3.2 m"
+  },
+  {
+    "name": "EGA3L-mark-ms",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_MARK_MS = 8000;",
+    "new": "export const EG_MARK_MS = 7000;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "a mark of 7 s"
+  },
+  {
+    "name": "EGA3L-counter-ms",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_COUNTER_MS = 600;",
+    "new": "export const EG_COUNTER_MS = 700;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "Counterstroke within 0.7 s"
+  },
+  {
+    "name": "EGA3L-counter-x",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_COUNTER_X = 1.4;",
+    "new": "export const EG_COUNTER_X = 1.5;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "Counterstroke x1.5"
+  },
+  {
+    "name": "EGA3L-counter-m",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_COUNTER_M = 6;",
+    "new": "export const EG_COUNTER_M = 7;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "Counterstroke armed within 7 m"
+  },
+  {
+    "name": "EGA3L-spill-m",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_SPILL_M = 6;",
+    "new": "export const EG_SPILL_M = 6.2;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "Spillover reaching 6.2 m"
+  },
+  {
+    "name": "EGA3L-mastery-id",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "EG_MASTERIES.map((m) => [m.key, m.id])",
+    "new": "EG_MASTERIES.map((m) => [m.key, m.id + 1])",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "each Mastery misnumbered"
+  },
+  {
+    "name": "EGA3L-noquarter-company",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "line = dueOn && fallenDue && egAccordMates(ms, sub, 'noquarter', 'a').length ? 1 / 3 : 1 / 4;",
+    "new": "line = dueOn && fallenDue ? 1 / 3 : 1 / 4;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "No Quarter read off the company (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-noquarter-self",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "egAccordMates(ms, sub, 'noquarter', 'a').length ? 1 / 3",
+    "new": "(egAccordMates(ms, sub, 'noquarter', 'a').length || egVOf(vs, 'fallensdue')) ? 1 / 3",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "the holder of both its own mate"
+  },
+  {
+    "name": "EGA3L-standard-reach",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "<= EG_V_BY_KEY.standard.aura)",
+    "new": "<= 10.5)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "the Standard's 10 m a literal past it"
+  },
+  {
+    "name": "EGA3L-standard-extra",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "std[0] + EG_AURA_EXTRA * (std.length - 1)",
+    "new": "std[0] + 0.03 * (std.length - 1)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "each other holder +3%"
+  },
+  {
+    "name": "EGA3L-standard-max",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "Math.min(std[0] + EG_AURA_EXTRA_MAX,",
+    "new": "Math.min(std[0] + 0.01,",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "the aura capped at +1%"
+  },
+  {
+    "name": "EGA3L-counter-mastery",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "m.mast === EG_M_ID.counterstroke && r === HIT_KINDS.Melee",
+    "new": "m.mast === EG_M_ID.spotter && r === HIT_KINDS.Melee",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "Counterstroke read off Spotter's number"
+  },
+  {
+    "name": "EGA3L-counter-window",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "(m.lordLandedAt ?? -Infinity) + EG_COUNTER_MS >= now",
+    "new": "(m.lordLandedAt ?? -Infinity) + EG_COUNTER_MS > now",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "the 0.6 s's last instant refused"
+  },
+  {
+    "name": "EGA3L-counter-melee",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "m.mast === EG_M_ID.counterstroke && r === HIT_KINDS.Melee",
+    "new": "m.mast === EG_M_ID.counterstroke && r !== HIT_KINDS.Spell",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "an arrow counted"
+  },
+  {
+    "name": "EGA3L-legion-chain-old",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "const gap = egChainGapMs(first.wu, [s]);",
+    "new": "const gap = Math.max(first.wu, 1000);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "the legion's chained gap without the floor (the auditor's bug back) - re-aimed at the merge with the lords group, whose egChainGapMs (a stamps list) is the one kept; the rule's own mutants are tools/mutants/egaudit3_lords.json's"
+  },
+  {
+    "name": "EGA3L-wave-clamp",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "return out.slice(0, Math.max(0, room));",
+    "new": "return out;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "a wave past the room"
+  },
+  {
+    "name": "EGA3L-wave-room-default",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "room = egLegionRoom(F), only = null } = {}) {",
+    "new": "room = Infinity, only = null } = {}) {",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "a lord's wave unheld (fury, the summons)"
+  },
+  {
+    "name": "EGA3L-room-friend",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "b.hp > 0 && !egHas(b, EG_FL.friend) && !egHas(b, EG_FL.dormant)).length);",
+    "new": "b.hp > 0 && !egHas(b, EG_FL.dormant)).length);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "a friend counted against the cap"
+  },
+  {
+    "name": "EGA3L-room-half",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "Math.floor(egLegionCap(F.n, F.c) / (F.halfCap ? 2 : 1))",
+    "new": "Math.floor(egLegionCap(F.n, F.c) / 1)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "the chamber's half cap unread"
+  },
+  {
+    "name": "EGA3L-squad-cap",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "return EG_AFFIXES.map((af, j) => {",
+    "new": "return EG_AFFIXES.slice(0, egLegionRoom(F)).map((af, j) => {",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "a squad past the cap",
+    "note": "AUDIT EG V (h): re-aimed by content - PIN MOVED: a Kynval Squad stands whole (A2 NEW-1, section 8.7) - the mutant now holds it to the room"
+  },
+  {
+    "name": "EGA3L-fade-harriers-only",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "seen = sure ? here : seenAll;",
+    "new": "seen = here;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "Fade read by the Harriers alone (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-fade-unshaken",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "const sure = egHas(a, EG_FL.unshaken)",
+    "new": "const sure = false",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "the Unshaken fooled"
+  },
+  {
+    "name": "EGA3L-fade-caster",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "const mine = egByHeight(spec) ? seen.filter((m) => egSameStorey(spec, a, m) || overlooks(m)) : seen;",
+    "new": "const mine = egByHeight(spec) ? here.filter((m) => egSameStorey(spec, a, m) || overlooks(m)) : here;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "a Bolt at anyone, a Faded member's feet among them"
+  },
+  {
+    "name": "EGA3L-sapper-sprite",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "mob: [35, 37, 38, 35]",
+    "new": "mob: [35, 37, 38, 36]",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "the Wellhead's Sapper on the Lurker's sprite (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-wake-rise",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "  a.up = now + 600;\n  if (!F.mem.stirred)",
+    "new": "  a.up = now;\n  if (!F.mem.stirred)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "a woken Lurker risen at once"
+  },
+  {
+    "name": "EGA3L-wake-once",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "  if (!F.mem.stirred) { F.mem.stirred = 1; out.push({ k: 'esay', w: 'stirs' }); }\n  return true;",
+    "new": "  if (1) { F.mem.stirred = 1; out.push({ k: 'esay', w: 'stirs' }); }\n  return true;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "Something stirs said at every wake"
+  },
+  {
+    "name": "EGA3L-escort",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "export const egEscortOf = (n) => 1 + Math.ceil(n / 3);",
+    "new": "export const egEscortOf = (n) => Math.ceil(n / 3);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "an escort a body short"
+  },
+  {
+    "name": "EGA3L-rift-held-poured",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (room < Math.min(size + (D.swarm ?? 0), egLegionCapOf(F))) { grow[src] = 1; return []; }",
+    "new": "if (false) { grow[src] = 1; return []; }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "a held wave poured in part"
+  },
+  {
+    "name": "EGA3L-rift-growth-forgotten",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "{ grow[src] = 1; return []; }",
+    "new": "{ return []; }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "the growth forgotten"
+  },
+  {
+    "name": "EGA3L-rift-growth-kept",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "      delete grow[src];\n",
+    "new": "      void grow;\n",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "the growth kept after it poured"
+  },
+  {
+    "name": "EGA3L-rift-growth-two",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "size = k + (src != null && grow[src] ? 1 : 0)",
+    "new": "size = k + (src != null && grow[src] ? 2 : 0)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "two bodies larger"
+  },
+  {
+    "name": "EGA3L-wave-partial-unheld",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "sky: !spec.chamber, room, only });",
+    "new": "sky: !spec.chamber, room: Infinity, only });",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "a wave that is no rift's poured past the room"
+  },
+  {
+    "name": "EGA3L-court-sapper",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "!(F.sever && L0.ph === 1) && egLegionRoom(F) > 0",
+    "new": "!(F.sever && L0.ph === 1)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "the Court's Sapper past the cap"
+  },
+  {
+    "name": "EGA3L-pack-cap",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "spec.fight.r - 2, egWaveSize(F.n), rng).slice(0, egLegionRoom(F));",
+    "new": "spec.fight.r - 2, egWaveSize(F.n), rng);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "Hunting Pack uncapped (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-sparks-floor",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (D.sparks && spec.fight && now >= F.sparkAt) {",
+    "new": "if (D.sparks && now >= F.sparkAt) {",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "the fight floor unread: the Scriptorium throws (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-vigil-rank",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "k = egEscortOf(n) * (F.D.vigil >= 2 ? 2 : 1);",
+    "new": "k = egEscortOf(n) * (F.D.vigil >= 3 ? 2 : 1);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "rank II as rank I"
+  },
+  {
+    "name": "EGA3L-vigil-escort",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    egLegionRaise(F, egWaveKinds(F, rng, k), ringSpots(spec, at[0], at[1], 5, k, rng, spec.arrive.y), now, out, { wave: 1 });\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "no escort (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-vigil-scriptorium",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "Object.freeze(['proving', 'court', 'scriptorium', 'span', 'brink'])",
+    "new": "Object.freeze(['proving', 'court', 'span', 'brink'])",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "the Scriptorium stood a champion"
+  },
+  {
+    "name": "EGA3L-lurker-struck",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (r.b.role === EG_ROLE.add) egLurkerWake(F, r.b, now, out);",
+    "new": "if (false) egLurkerWake(F, r.b, now, out);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion.test.js"
+    ],
+    "why": "a struck Lurker left dormant (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-counter-struck-only",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "for (const m of here) if (B.mem[m.sub] && egBlowNear(bl, m.x, m.z) <= EG_COUNTER_M)",
+    "new": "for (const m of egStruck(bl, here)) if (B.mem[m.sub] && egBlowNear(bl, m.x, m.z) <= EG_COUNTER_M)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "Counterstroke armed only when struck (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-counter-beat",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "B.mem[m.sub].lordLandedAt = bl.at;",
+    "new": "B.mem[m.sub].lordLandedAt = now;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "armed at the beat that counted it, not the landing"
+  },
+  {
+    "name": "EGA3L-sweep-lord",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "for (const a of F.bodies.filter((q) => q !== b && q.role === EG_ROLE.add)) {",
+    "new": "for (const a of F.bodies.filter((q) => q !== b && q.role === EG_ROLE.add && b.role === EG_ROLE.add)) {",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "the splash only off an add (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-sweep-stale",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "{ const [ax, az] = egBodyAt(a, now); if (dist(ax, az, bx, bz) <= EG_SWEEP_M)",
+    "new": "{ const [ax, az] = [a.x, a.z]; if (dist(ax, az, bx, bz) <= EG_SWEEP_M)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "the stale place read"
+  },
+  {
+    "name": "EGA3L-sweep-arrow",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const sweep = r === HIT_KINDS.Melee ? egVOf(mm.vs, 'sweeping') : 0;",
+    "new": "const sweep = egVOf(mm.vs, 'sweeping');",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "an arrow splashing"
+  },
+  {
+    "name": "EGA3L-spill-off",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (r === HIT_KINDS.Spell && mm.mast === EG_M_ID.spillover && b.role === EG_ROLE.add",
+    "new": "if (false && mm.mast === EG_M_ID.spillover && b.role === EG_ROLE.add",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "Spillover unapplied (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-spill-melee",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (r === HIT_KINDS.Spell && mm.mast === EG_M_ID.spillover",
+    "new": "if (r !== HIT_KINDS.Shaft && mm.mast === EG_M_ID.spillover",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "a melee blow carried"
+  },
+  {
+    "name": "EGA3L-spill-mastery",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "mm.mast === EG_M_ID.spillover && b.role === EG_ROLE.add",
+    "new": "b.role === EG_ROLE.add",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "the Mastery unread"
+  },
+  {
+    "name": "EGA3L-spill-felled",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "b.role === EG_ROLE.add && !(b.hp > 0) && w.d > got",
+    "new": "b.role === EG_ROLE.add && w.d > got",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "a spell that fells nothing carrying its claim"
+  },
+  {
+    "name": "EGA3L-spill-nearest",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (d <= EG_SPILL_M && d < bd) { bd = d; to = a; }",
+    "new": "if (d <= EG_SPILL_M) { bd = d; to = a; }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "the nearest unread"
+  },
+  {
+    "name": "EGA3L-spill-purse",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "hostStrike(B, F, spec, to, spendPurse(mm, left, to.hp, now, w.bx ?? 1), w,",
+    "new": "hostStrike(B, F, spec, to, Math.min(left, to.hp), w,",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "the carry past the purse"
+  },
+  {
+    "name": "EGA3L-spill-cap",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "Math.min(w.d, HIT_CAP_X * dpsRef(mm.lv) * (w.bx ?? 1)) - got",
+    "new": "w.d - got",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "the carry past the blow's cap"
+  },
+  {
+    "name": "EGA3L-binder-claim",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (body.role === EG_ROLE.obj && body.t === 'heart' && egHas(body, EG_FL.ward)) mult = 0;\n",
+    "new": "  if (body.role === EG_ROLE.obj && body.t === 'heart' && egHas(body, EG_FL.ward)) mult = 0;\n  if (body.role === EG_ROLE.add && body.k === EG_KIND.binder && body.cast) body.cast.dmg += dm;\n",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "the claim counted before the hand and the purse (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-binder-dm",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "(b.cast.dmg += got) >= b.cast.max",
+    "new": "(b.cast.dmg += dm) >= b.cast.max",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "the claim past the purse counted"
+  },
+  {
+    "name": "EGA3L-farwatch-side",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "egAccordMates(ms, sub, 'farwatch', 'b')",
+    "new": "egAccordMates(ms, sub, 'farwatch', 'a')",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "Far Watch read from the Long Sight side"
+  },
+  {
+    "name": "EGA3L-farwatch-company",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "ls = ms.filter((q) => mates.includes(q.sub)).map",
+    "new": "ls = ms.filter((q) => egVOf(q.vs, 'longsight') > 0).map",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "Far Watch read off the company, its own Long Sight in it (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-soulpool-beat",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "egAddSlain(F, spec, a, sub, now, here, out, { ...(F.legionCtx ?? { decrees: F.D }), pool: poolTo(F, out) });",
+    "new": "egAddSlain(F, spec, a, sub, now, here, out, F.legionCtx ?? { decrees: F.D });",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "the pool written to the last beat's frames (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-cant-second-lord",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (B.F && egLordsOf(B.F).some((L) =>",
+    "new": "if (B.F && egLordsOf(B.F).slice(0, 1).some((L) =>",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "the second lord's shield unread (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-cant-rest",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (!mm.alive || id == null || !EG_CANTRIPS[id]) break;",
+    "new": "if (!mm.alive || id == null || !EG_CANTRIPS[id] || B.sg === 'rest') break;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "refused at the rest (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-cant-sight",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (EG_CANTRIPS[id].key === 'sight' && !B.F) break;",
+    "new": "if (false) break;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "Sight spent on nothing"
+  },
+  {
+    "name": "EGA3L-absence-rest",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (now - Math.max(m.seenAt, B.hw) > EG_ABSENT_TRIAL_MS)",
+    "new": "if (now - m.seenAt > EG_ABSENT_TRIAL_MS)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "the rest's and the stair's absence counted (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-gone-wipe",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "B.sg === 'rest' ? 'gone' : 'wipe'",
+    "new": "'wipe'",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "the way home's end a wipe (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-wipe-gone",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "B.sg === 'rest' ? 'gone' : 'wipe'",
+    "new": "'gone'",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "a company felled in a hall gone"
+  },
+  {
+    "name": "EGA3L-lifeline-min-zero",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const EG_LIFELINE_MIN = 0.05;",
+    "new": "export const EG_LIFELINE_MIN = 0;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js",
+      "test/net/eliteGates/egz_debts.test.js"
+    ],
+    "why": "a point's heal opening a window (the auditor's bug back)"
+  },
+  {
+    "name": "EGA3L-lifeline-min-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "(q.ht ?? 0) - had[i] >= min && cast(by)) v =",
+    "new": "(q.ht ?? 0) > had[i] && cast(by)) v =",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "the minimum unread by the census"
+  },
+  {
+    "name": "EGA3L-lifeline-min-clamp",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "EG_LIFELINE_MIN * healRef(clampLv(lv))",
+    "new": "EG_LIFELINE_MIN * healRef(lv)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_legion_blows.test.js"
+    ],
+    "why": "a level past 60 unclamped"
+  },
+  {
+    "name": "EGA3L-lifeline-client",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "h.filter(([, n]) => n >= min).map(([by]) => accountOf(by))",
+    "new": "h.map(([by]) => accountOf(by))",
+    "tests": [
+      "test/net/eliteGates/egz_debts.test.js"
+    ],
+    "why": "the receiver's screen opening a window the census refuses"
+  }
+]

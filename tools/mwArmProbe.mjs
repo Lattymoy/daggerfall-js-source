@@ -11,7 +11,7 @@
 //
 // What this canNOT see, stated so nobody mistakes green for finished:
 // weaponRig's branch, the four hosts' camera dep, and the enhanced-menu
-// card are pinned in node (test/fparm.test.js, test/mwattach.test.js)
+// card are pinned in node (test/formats/morrowind/fparm.test.js, test/scenes/mwattach.test.js)
 // and proven by Mac in the game. This probe proves the arm DRAWS.
 //
 // THE LESSONS IT IS BUILT AROUND:
@@ -168,7 +168,7 @@ async function boot(bsaB64, { esm = FIX.esm, weapon = null } = {}) {
     const bytes = (s) => Uint8Array.from(atob(s), (c) => c.charCodeAt(0));
     const [{ Renderer }, { MwBsaFile }, fp] = await Promise.all([
       import('/src/render/renderer.js'),
-      import('/src/formats/mwBsaFile.js'),
+      import('/src/formats/morrowind/mwBsaFile.js'),
       import('/src/combat/fpArm.js'),
     ]);
     let cv = document.getElementById('armcv');
@@ -227,7 +227,7 @@ async function shoot(t) {
     gl.bindFramebuffer(gl.FRAMEBUFFER, cs.fbo);
     // READ THE VIEWPORT, NOT THE WHOLE TARGET. renderCharacterSprite
     // draws into a pw x ph corner of a fixed 512 x 512 RT
-    // (renderer.js:"gl.viewport(0, 0, CHAR_SPRITE_RT_SIZE, CHAR_SPRITE_RT_SIZE)" then :2642), so coverage measured over the whole
+    // (renderer.js:"gl.viewport(0, 0, this._csEdge, this._csEdge)" then :2642), so coverage measured over the whole
     // texture is bounded by (pw*ph)/512^2 - about 3% here - and a
     // threshold set against the texture would be measuring the padding.
     const vp = window.__vp;
@@ -346,7 +346,7 @@ ok(by('left hand') && by('right hand'),
 // would be a statement about the pose and simply false.
 const restRows = await page.evaluate(async () => {
   const [mwfp, mwanim] = await Promise.all([
-    import('/src/formats/mwFirstPerson.js'), import('/src/formats/mwAnim.js')]);
+    import('/src/formats/morrowind/mwFirstPerson.js'), import('/src/formats/morrowind/mwAnim.js')]);
   const arm = window.__armRaw;
   mwfp.poseAssembly(arm, {});            // rest pose: no tracks, t=0
   return mwfp.armPieceRows(arm.pieces).map((r) => ({ bone: r.bone, minX: r.bounds.minX, maxX: r.bounds.maxX }));
@@ -549,7 +549,7 @@ const thirdShot = async (weapon) => {
     // lens's SHAPE is the host's law verbatim - mirrorProjectionX over
     // a standard perspective (dungeon.js:"+ climbFeel.fovRad") - only near/far/distance
     // are fitted, and a mirror does not care about metres.
-    const { MW_UNITS_PER_METER } = await import('/src/formats/mwFirstPerson.js');
+    const { MW_UNITS_PER_METER } = await import('/src/formats/morrowind/mwFirstPerson.js');
     const u = 1 / MW_UNITS_PER_METER;
     let mnZ = Infinity, mxZ = -Infinity, mnX = Infinity, mxX = -Infinity, mnY = Infinity, mxY = -Infinity;
     for (const row of arm.rows()) {

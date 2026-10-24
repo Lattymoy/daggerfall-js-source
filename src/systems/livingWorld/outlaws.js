@@ -24,7 +24,7 @@ import { NATIVE_PIXEL } from './trips.js';
 import { DAY_MIN } from './dayPlan.js';
 import { residentName } from './census.js';
 import { getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
-import { MOBILE_TYPES } from '../../characters/mobileTypes.js';
+import { MOBILE_TYPES } from '../../characters/mobile/mobileTypes.js';
 import { CARAVAN_QUALITY, purseOf } from './caravanDoor.js';
 
 /** A region keeps a band for every BAND_TOWNS_PER of its towns, and one more, to BANDS_MAX. */

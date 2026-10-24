@@ -38,10 +38,11 @@
 // heir's bequest, a market or vault record, an old build's trade) is on the pool before a point of the old pool is
 // spent. Idempotent: a moved piece is on the pool, and nothing finds it to move again.
 
-import { mintCondition, ITEM_TEMPLATES, templateByIndex } from './itemTemplates.js';
+import { mintCondition, ITEM_TEMPLATES, templateByIndex } from './item/itemTemplates.js';
+import { scaleFoundMark, markFound } from './item/foundMark.js';   // AUDIT MEND-THIRD: the mark's one home
 import { ARROW_TEMPLATE } from './inventory.js';
 import { WEAPONS, WEAPON_MATERIALS, conditionMultipliersByMaterial } from '../characters/weapons.js';
-import { RRI_TEMPLATE_PATCHES } from './rriItems.js';
+import { RRI_TEMPLATE_PATCHES } from './roleplayRealismItems/rriItems.js';
 import { QUALITY_EFFECTS } from '../net/recipeLaw.js';
 
 /** The groups an equip check reads condition for. */
@@ -67,6 +68,7 @@ export function repairUnmintedConditions(items) {
     mintCondition(it);
     if (it.group === 'Weapons' && it.templateIndex === ARROW_TEMPLATE) it.currentCondition = 0;
     else if (had === 0 && isQuestionsDagger(it)) it.currentCondition = Math.trunc(it.maxCondition * QUESTIONS_DAGGER_WEAR);
+    if (had === 0 && isQuestionsDagger(it)) markFound(it);   // AUDIT MEND-THIRD L3-6: handed over worn at character creation - marked
     n++;
   }
   return n;
@@ -112,7 +114,7 @@ export function repoolWeapon(it) {
   // is never rounded to either
   const share = (/** @type {number} */ n) => Math.round((n * pool) / max);
   it.currentCondition = share(it.currentCondition);
-  if (Number.isInteger(it.foundCondition)) it.foundCondition = share(it.foundCondition);   // P1: the online counter reads it over the maximum
+  scaleFoundMark(it, max, pool);   // P1: the online counter reads the mark (and MEND-THIRD its owner's mends) over the maximum
   it.maxCondition = pool;
   return true;
 }

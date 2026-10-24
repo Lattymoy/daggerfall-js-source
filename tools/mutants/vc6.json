@@ -5,7 +5,7 @@
     "old": "export const VARIATION_METRES = PIXEL_METRES * 80;",
     "new": "export const VARIATION_METRES = PIXEL_METRES * 16;",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp",
     "new": "  q.xz += (v.gb * 2.0 - 1.0) * 0.0;   // VC6a: the warp",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp\n  vec4 s = textureLod(uShape, (q + vec3(0.0, uEvolve.x, 0.0)) / SHAPE_M, mip);   // VC7a: the boil - read up the volume as the minutes pass",
     "new": "  vec4 s = textureLod(uShape, (q + vec3(0.0, uEvolve.x, 0.0)) / SHAPE_M, mip);   // VC7a: the boil - read up the volume as the minutes pass\n  q.xz += (v.gb * 2.0 - 1.0) * WARP_M;   // VC6a: the warp",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  float variation = clamp(v.r * 0.65 + v.a * 0.35, 0.0, 1.0);",
     "new": "  float variation = clamp(v.r, 0.0, 1.0);",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  float flatHere = clamp(fFlat + (variation - 0.5) * fVary, 0.0, 1.0);",
     "new": "  float flatHere = fFlat;",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  float ceiling = 1.0 - fVary * (1.0 - variation) * 0.8;",
     "new": "  float ceiling = 1.0;",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  fog:      Object.freeze({ base: 150,  top: 600,  density: 1.00, dark: 0.20, flat: 1.00, shear: 0.05, vary: 0.00 }),",
     "new": "  fog:      Object.freeze({ base: 150,  top: 600,  density: 1.00, dark: 0.20, flat: 1.00, shear: 0.05, vary: 0.30 }),",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    fVary = mix(fVary, uCellC[i].w, w);     // VC6a: the cell's own type variation",
     "new": "    fVary = fVary;     // VC6a: the cell's own type variation",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    gl.uniform1f(u.uDark, p.dark); gl.uniform1f(u.uVary, p.vary ?? 0);   // VC6a",
     "new": "    gl.uniform1f(u.uDark, p.dark);   // VC6a",
     "tests": [
-      "test/weather2c_cloudcells.test.js"
+      "test/render/weather2c_cloudcells.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear', 'vary'];",
     "new": "const PROFILE_KEYS = ['base', 'top', 'density', 'dark', 'flat', 'shear'];",
     "tests": [
-      "test/volumetricClouds.test.js"
+      "test/render/volumetricClouds.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  const w = Math.min(1, Math.max(0, (state.sunDir[1] + horizonDip(mid)) / 0.025));",
     "new": "  const w = Math.min(1, Math.max(0, (state.sunDir[1] + 0.02) / 0.08));",
     "tests": [
-      "test/volumetricClouds.test.js"
+      "test/render/volumetricClouds.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "export const horizonDip = (h) => Math.sqrt(2 * Math.max(0, h) / EARTH_RADIUS_M);",
     "new": "export const horizonDip = (h) => 0.027;",
     "tests": [
-      "test/volumetricClouds.test.js"
+      "test/render/volumetricClouds.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    const light = cloudLight(s, p);   // VC6b:",
     "new": "    const light = cloudLight(s);   // VC6b:",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  float low = uDusk;",
     "new": "  float low = 0.0;",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  vec3 duskTint = mix(hue(uSkyTint), hue(uLightColor), toward);",
     "new": "  vec3 duskTint = hue(uLightColor);",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -140,8 +140,8 @@
     "old": "      float sideLit = mix(h, 0.25 * h + 0.75, low);   // VC6b: top-lit by day, whole-lit at dusk",
     "new": "      float sideLit = h;   // VC6b: top-lit by day, whole-lit at dusk",
     "tests": [
-      "test/vc6_clouds.test.js",
-      "test/weather2c_cloudcells.test.js"
+      "test/render/vc6_clouds.test.js",
+      "test/render/weather2c_cloudcells.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(1.0); }",
     "new": "vec3 hue(vec3 c) { return c * 2.0; }",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "  float gain = mix(0.7, 1.05, low);",
     "new": "  float gain = 0.7;",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "      gl.uniform3fv(u.uSkyTint, s.zenith);   // VC6b:",
     "new": "      gl.uniform3fv(u.uSkyTint, s.horizon);   // VC6b:",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "  const twilight = clamp01((elevDeg + 9) / 10);   // 0 by deep dusk, 1 at and above the horizon",
     "new": "  const twilight = clamp01((elevDeg + 12) / 16);   // 0 by deep dusk, 1 at and above the horizon",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "  const lit = mix3(nightLit, mix3(cloudLitDay, pal.sun, 0.55 * lowSun), twilight);",
     "new": "  const lit = mix3(nightLit, mix3(cloudLitDay, pal.sun, 0.25 * lowSun), twilight);",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "  const shade = mix3(nightShade, mix3(cloudShadeDay, pal.glow, 0.30 * (1 - clamp01(elevDeg / 12))), twilight);",
     "new": "  const shade = mix3(nightShade, cloudShadeDay, twilight);",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "  return uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y * through * through);",
     "new": "  return uSunColor * (acc / ${AIR_SHAFT_TAPS}.0 * uShaftParams.y);",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "uShaftParams.y * through * through);",
     "new": "uShaftParams.y * through);",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "  float through = cloudShadowAt(uEye);   // VC6c: how much sun reaches the player at all",
     "new": "  float through = cloudShadowAt(vec3(0.0));   // VC6c: how much sun reaches the player at all",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -231,7 +231,7 @@
     "old": "    this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c: the FRAME's deck - the host sets it after beginFrame, so the shafts can only read it here\n",
     "new": "",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -240,7 +240,7 @@
     "old": "    this._noDeck = new Float32Array([0, 0, 0, 0]);   // VC6c: no cloud field - amount 0, full sun",
     "new": "    this._noDeck = new Float32Array([0, 0, 0, 1]);   // VC6c: no cloud field - amount 0, full sun",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -249,7 +249,7 @@
     "old": "  float hr = (p.y - fBase) / max(fTop - fBase, 1.0);\n",
     "new": "  float hr = clamp((p.y - fBase) / max(fTop - fBase, 1.0), 0.0, 1.0);\n",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -258,7 +258,7 @@
     "old": "    if (rho <= 0.0) { empty++; strode = empty > 4 && fSkip > 0.5; t += strode ? coarse : ds; continue; }",
     "new": "    if (rho <= 0.0) { empty++; strode = false; t += ds; continue; }",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -267,7 +267,7 @@
     "old": "    if (strode) { t -= coarse; strode = false; empty = 0; continue; }",
     "new": "    if (strode) { strode = false; empty = 0; }",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -276,7 +276,7 @@
     "old": "    if (i >= uSteps + ${MARCH_SLACK} || t > t1) break;",
     "new": "    if (i >= uSteps || t > t1) break;",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -285,7 +285,7 @@
     "old": "export const MARCH_SLACK = 12;",
     "new": "export const MARCH_SLACK = 40;",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -294,7 +294,7 @@
     "old": "    if (sum * EXT * sees > 6.0) break;",
     "new": "    if (sum * EXT * sees > 6000.0) break;",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -303,7 +303,7 @@
     "old": "{ this._perf.begin(); this._perf.mark('shadow'); this.stats.draws = 0; this._perfOpen = true; }",
     "new": "{ this._perf.begin(); this.stats.draws = 0; this._perfOpen = true; }",
     "tests": [
-      "test/el8_contact.test.js"
+      "test/render/el8_contact.test.js"
     ]
   },
   {
@@ -312,7 +312,7 @@
     "old": "      meter?.mark('world');\n    },",
     "new": "    },",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -321,7 +321,7 @@
     "old": "    if (!this.ext || this.active || this.zones) return;",
     "new": "    if (!this.ext || this.active) return;",
     "tests": [
-      "test/el8_contact.test.js"
+      "test/render/el8_contact.test.js"
     ]
   },
   {
@@ -330,7 +330,7 @@
     "old": "export function setMeter(gl, meter) { if (meter) METERS.set(gl, meter); return meter; }",
     "new": "export function setMeter(gl, meter) { METERS.set(gl, meter); return meter; }",
     "tests": [
-      "test/el8_contact.test.js"
+      "test/render/el8_contact.test.js"
     ]
   },
   {
@@ -339,7 +339,7 @@
     "old": "        means.set(name, list.length ? list.reduce((a, b) => a + b, 0) / PERF_EVERY : null);",
     "new": "        means.set(name, list.length ? list.reduce((a, b) => a + b, 0) / list.length : null);",
     "tests": [
-      "test/el8_contact.test.js"
+      "test/render/el8_contact.test.js"
     ]
   },
   {
@@ -348,7 +348,7 @@
     "old": "    this._air.setCloudShadow(this._cloudShadow ?? this._deckOwed);   // VC6c:",
     "new": "    this._air.setCloudShadow(this._cloudShadow ?? null);   // VC6c:",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -357,7 +357,7 @@
     "old": "    this._deckOwed = null;   // VC6c: whatever was owed is drawn; this frame's deck is its host's to set\n",
     "new": "",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -366,7 +366,7 @@
     "old": "    if (this._cloudShadow) { this._deckOwed = this._cloudShadow; this._cloudShadow = null; this._csStamp++; }",
     "new": "    if (this._cloudShadow) { this._cloudShadow = null; this._csStamp++; }",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -375,7 +375,7 @@
     "old": "  return dayWeight * t * t * (3 - 2 * t);",
     "new": "  return t * t * (3 - 2 * t);",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -384,7 +384,7 @@
     "old": "      gl.uniform1f(u.uDusk, duskWeight(s.sunDir[1], light.day));   // VC6b:",
     "new": "      gl.uniform1f(u.uDusk, duskWeight(light.dir[1], light.day));   // VC6b:",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -393,7 +393,7 @@
     "old": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(1.0); }",
     "new": "vec3 hue(vec3 c) { float l = dot(c, vec3(0.2126, 0.7152, 0.0722)); return l > 1e-3 ? c / l : vec3(0.0); }",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   },
   {
@@ -402,7 +402,7 @@
     "old": "      gl.uniform1f(u.uDusk, duskWeight(s.sunDir[1], light.day));   // VC6b: the SUN's own angle and weight - zero at night, so the whole slice is off\n",
     "new": "",
     "tests": [
-      "test/vc6_clouds.test.js"
+      "test/render/vc6_clouds.test.js"
     ]
   }
 ]

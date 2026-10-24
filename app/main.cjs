@@ -77,6 +77,20 @@ app.commandLine.appendSwitch('force_high_performance_gpu');
 // build keeps the browser's own. Before the app is ready, as every switch.
 app.commandLine.appendSwitch('js-flags', '--max-semi-space-size=32');
 
+// GPU-CACHE (2026-10-23, #tech-support: "It happens the 1st time I do anything ... it doesnt do it for that action
+// again until I close the game and restart"; "tested in browser and there has no problem"): THE COMPILED PROGRAMS
+// KEPT. Chromium keeps every WebGL program it links - in memory and in <userData>/GPUCache - so a launch links from
+// the kept binary instead of compiling. Both stores are capped at 6 MiB (gpu_preferences.h
+// kDefaultMaxProgramCacheMemoryBytes), and on Windows a binary is ANGLE's D3D11 one: each stage's translated HLSL and
+// the bytecode of every variant (ProgramExecutableD3D::save). One town's boot links 111 programs from 2.4 MB of GLSL,
+// so the cap is passed before the player leaves it: the rest are evicted, and every launch compiles again - seconds a
+// program on D3D11, the frame waiting where a pass is built at its first use. Chrome itself runs a newer cache on
+// Windows (its GpuPersistentCache field trial), which the app's Chromium does not get. The one switch sizes both
+// stores (gpu_preferences.cc GetDefaultGpuDiskCacheSize); the memory holds what was kept, not the cap. Before the app
+// is ready, as every switch.
+const GPU_CACHE_KB = 128 * 1024;
+app.commandLine.appendSwitch('gpu-disk-cache-size-kb', String(GPU_CACHE_KB));
+
 // ONE instance per userData. Two shells over the same Saves folder
 // hold two independent storage indexes that go mutually stale (the
 // tmp names are pid-scoped so nothing corrupts, but each window shows
@@ -106,6 +120,41 @@ const DIST = app.isPackaged
   ? path.join(__dirname, 'dist')
   : path.join(__dirname, '..', 'dist');
 const CONFIG_FILE = () => path.join(app.getPath('userData'), 'config.json');
+
+// DA13 (2026-10-14, Mac: "B only: per-file channel"; a player, Discord 2026-10-13: "Every update downloads around
+// 130 MB and overwrites the entire game folder"): THE GAME UPDATES ITSELF, A FILE AT A TIME. The site in one archive
+// (DA11) made every installer update re-download most of it - the archive's compression moves every block after a
+// file that changed size, and the blockmap can reuse only identical blocks. Each release now carries the game as a
+// pack of files compressed one by one, and a manifest of them (lib/gameChannel.cjs); this copy keeps what it has -
+// the bundled copy (the SEED, indexed in game-seed.json at build time) and the files it fetched before - and fetches
+// only the rest, each checked against its sha256, into a version of its own under <userData>/Game
+// (lib/gameStore.cjs), played from the game's next load and proved by its first boot. The installer runs only for a
+// release that changes the shell itself (or that the channel could not bring); macOS and the portable exe, which
+// have no installer of their own to run, get the game's updates too. Opened at ready, by the one instance only - a
+// second one's sweep would delete a version the first is writing.
+const { GAME_ENTRY, parseManifestFile, routeFor, gameAssetsOf, versionOfTag } = require('./lib/gameChannel.cjs');
+const { openGameStore, loadSeed } = require('./lib/gameStore.cjs');
+const GAME_SEED = path.join(__dirname, 'game-seed.json');
+const GAME_ROOT = () => path.join(app.getPath('userData'), 'Game');
+/** The game store, or null: an unpackaged run, a build cut without a release (it carries no seed), or a store that
+ *  cannot be opened - the install's own copy is then the game, served from dist/ as it always was, and updates are
+ *  the installer's. */
+let gameStore = null;
+function openGame() {
+  const seed = app.isPackaged ? loadSeed(GAME_SEED, app.getVersion()) : null;
+  if (!seed) return;
+  try {
+    gameStore = openGameStore({ root: GAME_ROOT(), seed, dist: DIST });
+    const did = gameStore.startup();
+    if (did.rolledBack) console.warn(`[game] v${did.rolledBack} never came up - the version before it plays again`);
+  } catch (err) {
+    gameStore = null;
+    console.warn('[game] the game store could not be opened - the install\'s own copy plays:', err.message);
+  }
+}
+/** The version of the game this copy plays - the channel's, or the install's own. What the player is told they have,
+ *  what a release is compared against, and what Play keeps as the last played. */
+const gameVersion = () => gameStore?.version() ?? app.getVersion();
 
 // ---- config.json: { arena2Path } ----------------------------------
 function loadConfig() {
@@ -309,9 +358,9 @@ const fileResponse = (p, mime) => net.fetch(pathToFileURL(p).toString(), { bypas
 // storage, and the same traversal law.
 const LAUNCHER_DIR = path.join(__dirname, 'launcher');
 const LAUNCHER_URL = 'dagger://launcher/index.html';
-// DA12: the controller loop is the game's own front door's (src/ui/menuPad.js) - ONE module, packed beside the
+// DA12: the controller loop is the game's own front door's (src/ui/menu/menuPad.js) - ONE module, packed beside the
 // launcher's page (package.json build.files) and read from the source tree when the shell runs unpacked.
-const MENU_PAD = app.isPackaged ? path.join(LAUNCHER_DIR, 'menuPad.js') : path.join(__dirname, '..', 'src', 'ui', 'menuPad.js');
+const MENU_PAD = app.isPackaged ? path.join(LAUNCHER_DIR, 'menuPad.js') : path.join(__dirname, '..', 'src', 'ui', 'menu', 'menuPad.js');
 // AUDIT BR5: the launcher's wordmark is the product's logo, and the logo is the GAME's own file
 // (src/assets/branding/dfo-online.png, BR5) - packed beside the launcher's page as the pad module is and read from
 // the source tree unpacked, so the launcher can never draw a logo the game does not.
@@ -355,7 +404,14 @@ function handleDagger(req) {
     return p ? fileResponse(p, 'application/octet-stream') : new Response('not found', { status: 404 });
   }
   // Everything else is the built site, traversal-proofed into dist/.
-  const rel = parts.length ? parts.join('/') : 'play/index.html';
+  const rel = parts.length ? parts.join('/') : GAME_ENTRY;
+  // DA13: a version the channel brought is served by its own index - its own files, or the seed's where they are the
+  // same - and a path it does not name is no file of the game's, whatever the seed holds (a file it removed). A
+  // directory serves its index.html, as below.
+  if (gameStore?.active()) {
+    const file = gameStore.resolve(rel) ?? gameStore.resolve(`${rel}/index.html`);
+    return file ? fileResponse(file) : new Response('not found', { status: 404 });
+  }
   let p = path.normalize(path.join(DIST, rel));
   if (!p.startsWith(DIST + path.sep)) return new Response('forbidden', { status: 403 });
   try {
@@ -416,7 +472,20 @@ const RELEASES_PAGE = 'https://github.com/Lattymoy/daggerfall-js-source/releases
 const { isNewerRelease } = require('./lib/updateCheck.cjs');
 const { updateTransport } = require('./lib/autoUpdate.cjs');
 const { UNLOAD_ASK, leaves, restartAsk, reinstallAsk, installFailedAsk, goesAhead } = require('./lib/shellDialogs.cjs');
-const { latestDownloadUrl, releaseAssetUrl, manualDownloadFile } = require('./lib/downloads.cjs');
+const { goneAsk, restarts, hangAsk, restartsHung, createStopCount, goneLine, logWith } = require('./lib/rendererGone.cjs');   // FIELD BUGS 2026-10-21b RENDERER-GONE
+/** RENDERER-GONE: crash.log beside the saves - a process gone, when and why (its oldest lines dropped past its most). */
+const CRASH_LOG = () => path.join(app.getPath('userData'), 'crash.log');
+function logGone(what, details) {
+  try {
+    const file = CRASH_LOG();
+    const had = fs.existsSync(file) ? fs.readFileSync(file, 'utf8') : '';
+    fs.writeFileSync(file, logWith(had, goneLine(what, details, Date.now())));
+  } catch { /* a log that cannot be written is no reason to stop */ }
+}
+// RENDERER-GONE: the GPU's process gone is logged too - Chromium starts it again, and the page says the graphics stopped
+// itself (main.js webglcontextlost: tap to reload)
+app.on('child-process-gone', (_e, details) => { if (details?.type === 'GPU') logGone('gpu', details); });
+const { RELEASES_URL, latestDownloadUrl, releaseAssetUrl, manualDownloadFile } = require('./lib/downloads.cjs');
 const {
   CHECK_TIMEOUT_MS, RECHECK_MS, INSTALL_NOTICE_MS, INSTALL_GIVEUP_MS, DOWNLOAD_STALL_MS, DETECT_DEADLINE_MS, JUDGE_DEADLINE_MS, PICK_DEADLINE_MS,
   initialState, reduce, nextStep, viewOf, newsFrom, cachedNews, notArena2Detail, installAttemptFor, directPlay,
@@ -676,6 +745,8 @@ function ownDownloadUrl() {
  *  (a parentless box could open twice, behind a fullscreen game). */
 let restartAsking = false;
 async function restartToUpdate() {
+  // DA13: a version the channel brought plays from the page's next load - no install, no restart
+  if (updateReady?.game) { reloadOntoUpdate(); return; }
   if (restartAsking || installStarted) return;
   restartAsking = true;
   try {
@@ -753,7 +824,8 @@ async function fetchLatestRelease() {
     // BR5: the file as the release itself lists it, by its name or by the way it runs - a rename of the product reaches this copy
     const listed = file ? releaseAssetUrl(json, file) : null;
     if (tag && listed) listedDownload = listed;
-    return tag ? { tag, url, download: file ? listed ?? latestDownloadUrl(file) : url } : null;
+    // DA13: and the release's game - its manifest and pack, as the release lists them (null on a release with none)
+    return tag ? { tag, url, download: file ? listed ?? latestDownloadUrl(file) : url, game: gameAssetsOf(json) } : null;
   } catch { return null; }
 }
 
@@ -814,6 +886,178 @@ async function checkForUpdates() {
   if (response === 0) shell.openExternal(latest.download);
 }
 
+// ---- DA13: the game's own update, before the installer's -----------------
+// A newer release is asked of the game's own channel first (askGame); the installer's path - DA7's updater, DA6's
+// notice, both untouched - answers only what the channel cannot carry: a release that changes the shell itself, or one
+// the channel failed on here (the network, a range, a hash, the disk - each a reason, never a guess, and remembered,
+// gameStore.fail). The channel's news reaches the launcher as the updater's does (launcherState `kind: 'game'`), or the
+// game as a HUD line; what it brought is played from the game's next load - with no install and no restart.
+
+/** DA13: the channel's two requests - a release's game manifest and ranges of its pack - made only to GitHub's own
+ *  download links for this repository's releases (lib/downloads.cjs RELEASES_URL). */
+function gameFetch(url, init) {
+  if (typeof url !== 'string' || !url.startsWith(`${RELEASES_URL}/download/`)) return Promise.reject(new Error('not one of this repository\'s release downloads'));
+  return net.fetch(url, init);
+}
+
+/** Bytes [start, end) of the release's pack, as gameStore.stage reads them: { status, contentRange, bytes } - one range
+ *  a request (the release-asset host answers several in one with 501: read 2026-10-14 off app-v0.1.8548). An answer
+ *  that is not a 206 is handed back without its body - a 200 is the whole pack - and a request that goes
+ *  DOWNLOAD_STALL_MS without a byte is let go. */
+async function fetchPackRange(url, start, end) {
+  const stop = new AbortController();
+  let timer = null;
+  const watch = () => { clearTimeout(timer); timer = setTimeout(() => stop.abort(), DOWNLOAD_STALL_MS); };
+  watch();
+  try {
+    const res = await gameFetch(url, { headers: { 'User-Agent': 'daggerfall-js-app', Range: `bytes=${start}-${end - 1}` }, signal: stop.signal });
+    const contentRange = res.headers.get('content-range');
+    if (res.status !== 206 || !res.body) { stop.abort(); return { status: res.status, contentRange, bytes: Buffer.alloc(0) }; }
+    const reader = res.body.getReader();
+    const parts = [];
+    let got = 0;
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      watch();
+      parts.push(Buffer.from(value));
+      got += value.length;
+      if (got > end - start) { stop.abort(); break; }   // more than the range asked is not that range (checkRangeAnswer)
+    }
+    return { status: res.status, contentRange, bytes: Buffer.concat(parts) };
+  } finally { clearTimeout(timer); }
+}
+
+/** The channel's download in flight - { version } - or null: one at a time, from the manifest's read to its end. */
+let gameJob = null;
+
+/**
+ * DA13: a newer release, asked of the game's own channel FIRST - by the launch check, the hourly re-check, `--play`
+ * and the menu's check alike. Resolves (never rejects) to:
+ *   'current'    nothing is newer than the game this copy plays;
+ *   'game'       the channel carries it - downloading now (told to the launcher, or to the game), or already here;
+ *   'installer'  the installer's path answers it: this copy carries no seed, the release changes the shell or is
+ *                another generation's, the channel failed on it here - or GitHub's API did not answer and this copy
+ *                plays its install's own version, which the updater compares by itself;
+ *   'offline'    GitHub's API did not answer and this copy plays a version the channel brought - newer than its
+ *                installer, which the installer's path cannot compare against: nothing is asked until the next check.
+ */
+async function askGame() {
+  if (!gameStore) return 'installer';
+  if (gameJob) return 'game';
+  let version = null;
+  try {
+    const latest = await fetchLatestRelease();
+    if (gameJob) return 'game';
+    if (!latest) return gameStore.active() ? 'offline' : 'installer';
+    if (!isNewerRelease(gameVersion(), latest.tag)) return 'current';
+    version = versionOfTag(latest.tag);
+    if (gameStore.ready() === version) { gameArrived(version); return 'game'; }
+    if (gameStore.hasFailed(version)) return 'installer';
+    gameJob = { version };
+    if (!latest.game) throw new Error('the release carries no game');
+    const res = await gameFetch(latest.game.manifest, { headers: { 'User-Agent': 'daggerfall-js-app' }, signal: AbortSignal.timeout(30000) });
+    if (!res.ok) throw new Error(`its manifest answered HTTP ${res.status}`);
+    const manifest = parseManifestFile(Buffer.from(await res.arrayBuffer()), { version });
+    if (manifest.pack.size !== latest.game.packSize) throw new Error('the release\'s pack is not the one its manifest names');
+    const { route, why } = routeFor({ seed: gameStore.seed, manifest, failed: gameStore.failed() });
+    if (route !== 'game') {
+      gameJob = null;
+      console.warn(`[game] v${version} is the installer's: ${why}`);
+      return 'installer';
+    }
+    downloadGame(manifest, latest.game.pack);
+    return 'game';
+  } catch (err) {
+    if (gameJob?.version === version) gameJob = null;
+    if (version) gameStore.fail(version);
+    console.warn(`[game] the channel cannot bring v${version ?? '?'} - the installer's path takes it:`, err?.message ?? err);
+    return 'installer';
+  }
+}
+
+/** The files `manifest` asks of this copy, fetched and staged (gameStore.stage): its progress told to the launcher, its
+ *  end gameArrived - or, on any failure, the installer's path for that release (gameFailed). */
+function downloadGame(manifest, packUrl) {
+  const { version } = manifest;
+  let told = false;
+  gameStore.stage(manifest, {
+    fetchRange: (start, end) => fetchPackRange(packUrl, start, end),
+    onProgress: ({ transferred, total }) => {
+      if (!told) { told = true; launcherDispatch({ type: 'game-available', version, total }); }
+      launcherDispatch({ type: 'progress', percent: total ? (100 * transferred) / total : 100, transferred, total });
+    },
+  }).then(
+    () => { gameJob = null; gameArrived(version); },
+    (err) => { gameJob = null; gameFailed(version, err); },
+  );
+}
+
+/** A version of the game is here, whole: played at once where no game page runs (the launcher's Play runs it, and the
+ *  launcher is told), else kept for the page's next load (File > Restart to Update reloads it now) and told to the
+ *  game - once. */
+function gameArrived(version) {
+  try {
+    if (!gameWindow || gameWindow.isDestroyed()) {
+      gameStore.activate(version);
+      launcherDispatch({ type: 'game-applied', version });
+      return;
+    }
+    if (gameStore.ready() !== version) gameStore.markReady(version);
+  } catch (err) { gameFailed(version, err); return; }
+  const again = updateReady?.version === version;
+  if (!again) updateReady = { version, told: false, game: true };
+  if (!updateReady.told) { updateReady.told = tellGame({ version, manual: false }); buildMenu(); }
+}
+
+/** The channel could not bring `version` - the network, a range, a hash, the disk: remembered, and the installer's
+ *  path asked for it now - by the launcher's own check while the launcher waits on it, else quietly, the game's to hear. */
+function gameFailed(version, err) {
+  try { gameStore.fail(version); } catch { /* the failure is told below either way */ }
+  console.warn(`[game] the channel could not bring v${version} - the installer's path takes it:`, err?.message ?? err);
+  if (launcher && !launcher.state.launch) { launcherDispatch({ type: 'game-failed' }); startLaunchCheck(); return; }
+  if (updateChecksEnabled()) askInstaller();
+}
+
+/** The installer's path, quietly: what it finds is the game's to hear (onUpdaterEvent, tellNotice). */
+function askInstaller() {
+  if (currentUpdateTransport() === 'updater') askUpdater().catch(() => {});
+  else noticeCheck().then(tellNotice, () => {});
+}
+
+/** The version readied while a game page ran becomes the one played at the page's next document load - the reload the
+ *  player chose (File > Restart to Update), or any the game makes - never under a page still running its files. */
+function playReadyGame() {
+  const r = gameStore?.ready();
+  if (!r || gameJob) return;
+  try {
+    gameStore.activate(r);
+    gameStore.bootStarting();
+  } catch (err) { console.warn(`[game] v${r} could not be played:`, err.message); return; }
+  if (updateReady?.game) { updateReady = null; buildMenu(); }
+}
+
+/** File > Restart to Update, for a version the channel brought: the game's page reloads onto it - asked by the game's
+ *  own Leave/Stay first where progress is at risk (UNLOAD-ASK), as View > Reload is. */
+function reloadOntoUpdate() {
+  if (!gameWindow || gameWindow.isDestroyed()) return;
+  markLeaving(gameWindow.webContents);
+  gameWindow.webContents.reload();
+}
+
+/** The menu's check, out loud - the game's own channel first, then the installer's path on its transport (DA7). */
+async function checkForUpdatesLoudly() {
+  const g = await askGame();
+  if (g === 'installer') return currentUpdateTransport() === 'updater' ? checkForUpdatesViaUpdater() : checkForUpdates();
+  const stays = 'your saves, settings and ARENA2 path all stay where they are.';
+  if (g === 'offline') tellBox({ type: 'warning', message: 'Could not check for updates', detail: `GitHub was unreachable. The releases page is ${RELEASES_PAGE}.` });
+  else if (g === 'current') tellBox({ type: 'info', message: `You're up to date`, detail: `DFO Online v${gameVersion()} is the latest release.` });
+  else if (gameJob) tellBox({ type: 'info', message: `Version ${gameJob.version} is downloading`, detail: `You have v${gameVersion()}. Only the files that changed come down, and it plays the next time the game starts - ${stays}` });
+  else if (updateReady?.game) tellBox({ type: 'info', message: `Version ${updateReady.version} is ready`, detail: `It plays the next time the game starts, or now from File > Restart to Update - ${stays}` });
+  else tellBox({ type: 'info', message: `Updated to v${gameVersion()}`, detail: `Only the files that changed came down; Play runs it - ${stays}` });
+  return undefined;
+}
+
 /** While the app runs, ask again every RECHECK_MS - inside the same two
  *  gates, and from the launcher's first moment (DA10: a launcher left open
  *  for an evening still updates before Play). The updater downloads what
@@ -825,6 +1069,8 @@ function startRechecks() {
   if (recheckTimer || !updateChecksEnabled()) return;
   recheckTimer = setInterval(async () => {
     if (!updateChecksEnabled()) return;
+    // DA13: the game's own channel first; the installer's path answers only what it cannot carry
+    if (await askGame() !== 'installer') return;
     if (currentUpdateTransport() === 'updater') {
       // R2-A2: never over a download still running - its token and its end are the check's that started it
       if (!updateReady && !installStarted && !downloading) askUpdater().catch(() => {});
@@ -967,7 +1213,7 @@ function buildMenu() {
         ...(manualUpdate ? [{ label: `Download v${manualUpdate.version}...`, click: () => shell.openExternal(manualUpdate.download) }] : []),
         {
           label: 'Check for Updates...',
-          click: () => (currentUpdateTransport() === 'updater' ? checkForUpdatesViaUpdater() : checkForUpdates()),   // DA7: the loud path on either transport
+          click: () => checkForUpdatesLoudly(),   // DA7: the loud path on either transport - DA13: the game's own channel first
         },
         {
           // DA10: it gates the launch check, the news and the hourly re-check alike - 'on Launch' said a third of it
@@ -1015,6 +1261,12 @@ function buildMenu() {
         process.platform === 'darwin'
           ? { role: 'togglefullscreen' }
           : { role: 'togglefullscreen', accelerator: 'Alt+Enter' },
+        // AUDIT ANTICHEAT (Mac's call, 2026-10-17: kept): the installed game keeps
+        // DevTools. Its console is how a player hands over a field report's lines
+        // (bible/01-Overview/bugs/Field-Bugs-2026-10-13b.md), and taking it away
+        // shuts no door a cheater needs - the browser build plays online with F12,
+        // and this shell honours --remote-debugging-port - so what other players
+        // meet is the servers' to judge (bible/06-Systems/Integrity-Arc.md).
         { role: 'toggleDevTools' },
       ],
     },
@@ -1102,6 +1354,41 @@ async function createWindow({ onShown = null } = {}) {
     app.quit();
     return win;
   }
+  // DA13: a version on trial counts this boot (gameStore.bootStarting); a version readied while a page ran is switched
+  // to at this page's next document load (playReadyGame), never under it; and one on trial whose page fails to load, or
+  // whose renderer dies before the game came up, is given up at once - the one before it plays again (rollback)
+  win.webContents.on('did-start-navigation', (d) => { if (d?.isMainFrame && !d.isSameDocument) playReadyGame(); });
+  const giveUp = (why) => {
+    const bad = gameStore?.rollback();
+    if (!bad) return false;
+    console.warn(`[game] v${bad} ${why} - the version before it plays again`);
+    if (!win.isDestroyed()) win.webContents.reload();
+    return true;
+  };
+  win.webContents.on('did-fail-load', (_e, code, _text, _url, isMainFrame) => { if (isMainFrame && code !== -3) giveUp('did not load'); });
+  // FIELD BUGS 2026-10-21b RENDERER-GONE (app/lib/rendererGone.cjs): a page that stopped after its trial was met by nothing -
+  // the window stood black. It is said now, kept in crash.log, and restarted at the player's word; a hung page is offered
+  // Wait or Restart (Restart crashes it on purpose, and that stop restarts without asking again)
+  const stops = createStopCount();
+  let restarting = false, hangAsked = false;
+  win.webContents.on('render-process-gone', async (_e, details) => {
+    if (details?.reason !== 'clean-exit') logGone('renderer', details);
+    if (giveUp('stopped before it came up') || win.isDestroyed() || details?.reason === 'clean-exit') return;
+    if (restarting) { restarting = false; win.webContents.reload(); return; }
+    const { response } = await dialog.showMessageBox(win, goneAsk(details?.reason, stops.stop(Date.now())));
+    if (win.isDestroyed()) return;
+    if (restarts(response)) win.webContents.reload(); else app.quit();
+  });
+  win.webContents.on('unresponsive', async () => {
+    if (hangAsked || win.isDestroyed()) return;
+    hangAsked = true;
+    const { response } = await dialog.showMessageBox(win, hangAsk());
+    hangAsked = false;
+    if (!restartsHung(response) || win.isDestroyed()) return;
+    restarting = true;
+    win.webContents.forcefullyCrashRenderer();
+  });
+  gameStore?.bootStarting();
   await win.loadURL('dagger://game/play/index.html');
   // a boot that serves a folder clears the copy a pick asked to be cleared (a game on the in-page picker keeps its own)
   if (arena2Dir && !win.isDestroyed() && await clearIngestIfPending(win.webContents) && !win.isDestroyed()) win.reload();
@@ -1337,7 +1624,7 @@ async function reinstallFromLauncher() {
  *  kept as the one last played: the next launch marks what came since. */
 function launchGame() {
   launcherDispatch({ type: 'launching' });
-  saveConfig({ ...loadConfig(), lastPlayed: app.getVersion() });
+  saveConfig({ ...loadConfig(), lastPlayed: gameVersion() });   // DA13: the game's version, the channel's or the install's
   const l = launcher;
   const lw = l?.win;
   createWindow({
@@ -1368,21 +1655,27 @@ function judgeSaved(l, dir) {
  *  an answer that comes later still lands (launcherState MAY_FIND). */
 function startLaunchCheck() {
   setTimeout(() => launcherDispatch({ type: 'check-timeout' }), CHECK_TIMEOUT_MS).unref?.();
-  if (currentUpdateTransport() === 'updater') {
-    // null is electron-updater declining to check at all (an AppImage run outside its AppImage, say): no event
-    // will come, so it is said now rather than after the timeout
-    askUpdater()
-      .then((r) => { if (!r) launcherDispatch({ type: 'check-failed' }); })
-      .catch(() => launcherDispatch({ type: 'check-failed' }));
-    return;
-  }
-  noticeCheck().then((r) => {
-    if (!r) launcherDispatch({ type: 'check-failed' });
-    else if (!r.newer) launcherDispatch({ type: 'check-none' });
-    else {
-      launcherDispatch({ type: 'check-available', version: r.version, download: r.download });
-      tellNotice(r);
+  // DA13: the game's own channel first - only the files that changed; the installer's path answers what it cannot carry
+  askGame().then((g) => {
+    if (g === 'current') launcherDispatch({ type: 'check-none' });
+    else if (g === 'offline') launcherDispatch({ type: 'check-failed' });
+    if (g !== 'installer') return;
+    if (currentUpdateTransport() === 'updater') {
+      // null is electron-updater declining to check at all (an AppImage run outside its AppImage, say): no event
+      // will come, so it is said now rather than after the timeout
+      askUpdater()
+        .then((r) => { if (!r) launcherDispatch({ type: 'check-failed' }); })
+        .catch(() => launcherDispatch({ type: 'check-failed' }));
+      return;
     }
+    noticeCheck().then((r) => {
+      if (!r) launcherDispatch({ type: 'check-failed' });
+      else if (!r.newer) launcherDispatch({ type: 'check-none' });
+      else {
+        launcherDispatch({ type: 'check-available', version: r.version, download: r.download });
+        tellNotice(r);
+      }
+    });
   });
 }
 
@@ -1411,7 +1704,7 @@ function runLauncher() {
     stop: new AbortController(),   // every probe this launcher started, let go when it closes or hands over
     search: null,                  // the first run's search, let go once the player has chosen
     state: initialState({
-      current: app.getVersion(),
+      current: gameVersion(),   // DA13: the version played - the channel's, or the install's own
       transport: currentUpdateTransport(),
       platform: process.platform,
       checkEnabled,
@@ -1449,14 +1742,14 @@ async function runDirect(dir) {
       if (!r.dir) { runLauncher(); return; }
       setArena2(r.dir);
     } else setArena2(null);
-    saveConfig({ ...loadConfig(), lastPlayed: app.getVersion() });
+    saveConfig({ ...loadConfig(), lastPlayed: gameVersion() });   // DA13: the game's version, the channel's or the install's
     // AUDIT DA12: not awaited - the window stands from createWindow's first line, and its load (and a clear's reload)
     // is no reason to hold the update check, nor its failure a reason to skip it
     createWindow().catch(() => {});
   } finally { directStarting = false; }
   if (!updateChecksEnabled()) return;
-  if (currentUpdateTransport() === 'updater') askUpdater().catch(() => {});
-  else noticeCheck().then(tellNotice, () => {});
+  // DA13: the game's own channel first; the installer's path, quietly, for what it cannot carry
+  askGame().then((g) => { if (g === 'installer') askInstaller(); });
   startRechecks();
 }
 
@@ -1540,6 +1833,13 @@ app.on('web-contents-created', (_e, contents) => {
   });
 });
 
+// DA13: the game's page came up - its boot subscribed to the shell's update news (app/preload.cjs onUpdateReady), which it
+// does once its entry, its language and two of its own lazily loaded modules have loaded and run. A version on trial has
+// proved itself: the one before it goes (gameStore.bootDone). Heard from the game's window only.
+ipcMain.on('dagger:game-up', (e) => {
+  if (gameWindow && !gameWindow.isDestroyed() && e.sender === gameWindow.webContents) gameStore?.bootDone();
+});
+
 // The preload asks for its storage root synchronously at page boot -
 // storage must exist before the first module reads a setting.
 ipcMain.on('dagger:user-data-path', (e) => { e.returnValue = app.getPath('userData'); });
@@ -1553,6 +1853,7 @@ ipcMain.on('dagger:relock', (e) => { e.sender.executeJavaScript('globalThis.__da
 
 app.whenReady().then(() => {
   if (!isSingleInstance) return;   // quitting; do not raise a window on the way out
+  openGame();   // DA13: before the first request is served - the version played is the store's
   protocol.handle('dagger', handleDagger);
   // L1-2: the launcher is granted nothing it asks for; every other page keeps Electron's default (granted).
   // AUDIT INSTALL R2-B3: nor anything it merely CHECKS. Chromium asks two questions - the request (a prompt) and the

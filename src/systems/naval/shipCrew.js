@@ -1,7 +1,7 @@
 // @ts-check
 // SHIP-CREW (2026-09-30, Mac: "Let's do #1" - named crew with morale, and deck orders the crew follow) - THE PLAYER'S
 // OWN CREW AS PEOPLE: who they are, how their spirits stand, and what they were last told to do. Pure: the host
-// (scenes/navalHost.js) keeps one per boat of the player's, steps it and tells it what happened; the save keeps it
+// (scenes/naval/navalHost.js) keeps one per boat of the player's, steps it and tells it what happened; the save keeps it
 // (`snapshot` / `restore`). DECLARED - Daggerfall has no ships, and Come Sail Away's crew is a count.
 //
 // WHO THEY ARE. The hands a crewed boat stands on her deck (crewLife.js playerCrewCount) each have a name - DFU's own
@@ -34,7 +34,7 @@
 import { srand, getSeed, setSeed } from '../../formats/dfRandom.js';
 import { fullName, getNameBankOfRegion, GENDERS } from '../../characters/nameHelper.js';
 import { REGION_NAMES } from '../../formats/mapsFile.js';
-import { mulberry32 } from '../../combat/bloodArt.js';
+import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { MOBILE } from './navalBoarding.js';
 
 /** A new crew's spirits, and the range. */
@@ -112,10 +112,10 @@ export const MORALE_LINES = Object.freeze({
   ]),
   low: Object.freeze([
     'How long since we saw port?', 'My bones ache for a tavern bench.', 'Hardtack again...', 'This voyage will be the death of us.',
-    'Captain had better know what she\'s about.', 'I miss dry land.',
+    'Hope the captain knows what they\'re doing.', 'I miss dry land.',
   ]),
   repair: Object.freeze([
-    'Pitch here!', 'Hand me that plank.', 'Mind the caulking iron!', 'She\'ll hold, give her time.', 'More oakum!', 'Patch that sail!',
+    'Pitch here!', 'Hand me that plank.', 'Mind the caulking iron!', 'It\'ll hold, give it time.', 'More oakum!', 'Patch that sail!',
   ]),
   guns: Object.freeze(['Guns manned!', 'Powder ready!', 'Shot in, rammed home!', 'Waiting on your word, Captain!']),
   rail: Object.freeze(['All hands to the rail!', 'Blades out, lads!', 'Nobody sets foot on our deck!']),
@@ -202,8 +202,8 @@ export function postWords(role, tier) {
   const w = postWorth(role, tier), pc = (x) => `${Math.round(x * 100)}%`;
   if (!w) return '';
   if (role === 'Gunner') return `the guns reload ${pc(w)} quicker`;
-  if (role === 'Carpenter') return `her hands mend ${pc(w)} faster`;
-  if (role === 'Lookout') return `her lookout sees ${pc(w)} further`;
+  if (role === 'Carpenter') return `the crew repairs ${pc(w)} faster`;
+  if (role === 'Lookout') return `the lookout sees ${pc(w)} further`;
   if (role === 'Cook') return `spirits last ${pc(w)} longer at sea`;
   if (role === 'Bosun') return `${pc(w)} more way under sail`;
   if (role === 'First Mate') return `${w} more ${w === 1 ? 'hand' : 'hands'} over the rail`;
@@ -304,14 +304,14 @@ export function createShipCrew({ seed, regionIndex = 17, record = null }) {
      */
     assign(name, role) {
       const h = hands.find((x) => x.name === name);
-      if (!h) return { ok: false, text: 'No such hand aboard her.' };
+      if (!h) return { ok: false, text: 'There\'s no crew member by that name aboard.' };
       const bard = role === 'Bard' && h.mobile === MOBILE.Bard;
-      if (!/** @type {readonly string[]} */ (CREW_ROLES).includes(role) && !bard) return { ok: false, text: 'No such post aboard her.' };
-      if (role === LOOKOUT_ROLE && h.mobile === MOBILE.Bard) return { ok: false, text: `${h.name} leads her songs - he keeps no lookout.` };   // AUDIT HOLDINGS C3: her bow is never a Bard's (crewLife.js canLook)
-      if (h.role === role) return { ok: true, text: `${h.name} is her ${role} already.` };
+      if (!/** @type {readonly string[]} */ (CREW_ROLES).includes(role) && !bard) return { ok: false, text: 'There\'s no such post on this ship.' };
+      if (role === LOOKOUT_ROLE && h.mobile === MOBILE.Bard) return { ok: false, text: `${h.name} leads the songs and doesn't keep lookout.` };   // AUDIT HOLDINGS C3: her bow is never a Bard's (crewLife.js canLook)
+      if (h.role === role) return { ok: true, text: `${h.name} is already the ${role}.` };
       if (role === FIRST_MATE) for (const o of hands) if (o !== h && o.role === FIRST_MATE) o.role = 'Deckhand';
       h.role = role;
-      return { ok: true, text: `${h.name} is her ${role} now.` };
+      return { ok: true, text: `${h.name} is now the ${role}.` };
     },
     /**
      * SHIPYARDS (systems/crewHall.js): A RECRUIT SIGNED ON BY NAME - he joins her roster's end (the last to join, the

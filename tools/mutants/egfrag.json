@@ -1,0 +1,465 @@
+[
+  {
+    "name": "EGFRAG-a-fire-fall-untold",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "  fall: Object.freeze({ tell: 1000,",
+    "new": "  fall: Object.freeze({ tell: 0,",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-cascade-all-at-once",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "      const s0 = j * L.every;",
+    "new": "      const s0 = 0;",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-an-eclipse-under-its-havens",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "part(['h', ...hv.flatMap((q) => [q[0], q[1], L.r])], c,",
+    "new": "part(['h', ...hv.flatMap((q) => [q[0], q[1], 0])], c,",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-3m-surge-lawful",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "      if (!egWidthOk(sh)) why.push(",
+    "new": "      if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-tell-under-its-floor",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "      if (L.tell < egWindupFloorMs(sh)) why.push(",
+    "new": "      if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-tide-never-ticks",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "c.st === 'live' ? `${hz.i}:${c.n}:${Math.floor((c.u - (period - L.live)) / 1000)}` : `${hz.i}:${c.n}`",
+    "new": "`${hz.i}:${c.n}`",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-tide-floods-the-balcony",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if (hz.kind !== 'eclipse' && Math.abs(y - (hz.y ?? 0)) > (hz.kind === 'fall' ? 2.5 : 1.5)) return false;",
+    "new": "if (hz.kind !== 'eclipse' && Math.abs(y - (hz.y ?? 0)) > 99) return false;",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-branch-lit-in-the-dark",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "  else if (s.kind === 'moon') out.solid = Math.abs(s.z - egMoonBeamZ(s, t)) <= EG_MOON_HALF;",
+    "new": "  else if (s.kind === 'moon') out.solid = Math.abs(s.z - egMoonBeamZ(s, t)) <= EG_MOON_HALF * 3;",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js",
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-drum-that-speeds",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "  else if (s.kind === 'drum') out.dz = egTriAt(s.amp, s.period, s.phase, t);",
+    "new": "  else if (s.kind === 'drum') out.dz = egTriAt(s.amp, s.period / 2, s.phase, t);",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js",
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-bone-that-holds",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "export const EG_CRUMBLE_KINDS = Object.freeze(['crumble', 'bone']);",
+    "new": "export const EG_CRUMBLE_KINDS = Object.freeze(['crumble']);",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js",
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-sinking-jump-taken-high",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "- (a?.kind === 'sink' ? EG_SINK_MPS * EG_SINK_ON_S : 0)",
+    "new": "- 0",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-median-unchecked",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "    if (c.n && c.fast > 0 && c.median > EG_MEDIAN_X * c.fast) why.push(",
+    "new": "    if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-ground-after-unmeasured",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "edge: s.z + s.d / 2 + (s.after ?? 0), ...(s.ya",
+    "new": "edge: s.z + s.d / 2, ...(s.ya",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-roads-jump-across",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "  const meets = (a, b) => !!a && !!b && (a.road ?? 0) === (b.road ?? 0) && (a.hd ?? 0) === (b.hd ?? 0) && Math.abs(",
+    "new": "  const meets = (a, b) => !!a && !!b && (a.hd ?? 0) === (b.hd ?? 0) && Math.abs(",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-tube-faster",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "export const EG_TUBE_MPS = 4.0;",
+    "new": "export const EG_TUBE_MPS = 5.0;",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-no-fork",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    } else if (c >= EG_FORK_FROM_C && !plain && !set) fork(two, extra);",
+    "new": "    } else if (false) fork(two, extra);",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js",
+      "test/net/eliteGates/egfrag_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-low-road-on-the-high-line",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    xRoad = EG_LOW_X_CM;\n    if (L6 && extra > 0) decreeSections();",
+    "new": "    xRoad = 0;\n    if (L6 && extra > 0) decreeSections();",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-one-dry-floor",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "balconies(kit === 'stacks' ? 2 : kit === 'deep' ? 3 : 1,",
+    "new": "balconies(kit === 'stacks' ? 2 : 1,",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-balcony-with-no-stair",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "      ramps.push({ ax: x0, az: z0, bx: x1, bz: z1, hw: 150, y0: 0, y1: up });",
+    "new": "      void x0; void z0; void x1; void z1;",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-fragment-in-the-athenaeum",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    chamberAt(zc, R, null);   // never a fragment in the Athenaeum",
+    "new": "    chamberAt(zc, R);   // never a fragment in the Athenaeum",
+    "tests": [
+      "test/net/eliteGates/egfrag_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-an-engine-worked-from-afar",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "dist(p.x, p.z, e.x, e.z) > EG_ENGINE_REACH_M + 0.5) break;",
+    "new": "dist(p.x, p.z, e.x, e.z) > 99) break;",
+    "tests": [
+      "test/net/eliteGates/egfrag_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-engine-cooldown-forgotten",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "      if (now < (F.engCd[e.i] ?? 0) || F.engUsed[e.i]) break;",
+    "new": "      if (F.engUsed[e.i]) break;",
+    "tests": [
+      "test/net/eliteGates/egfrag_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-adds-untouched",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    a.hp -= a.max * E.pct;",
+    "new": "    a.hp -= 0;",
+    "tests": [
+      "test/net/eliteGates/egfrag_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-an-alcove-open-behind-its-wall",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (a.seal !== 'seam') { F.alc[a.i] = 1; continue; }",
+    "new": "    F.alc[a.i] = 1; if (a.seal !== 'seam') continue;",
+    "tests": [
+      "test/net/eliteGates/egfrag_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-an-alcove-that-gives-twice",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "      took[`a${a.i}`] = 1;\n",
+    "new": "\n",
+    "tests": [
+      "test/net/eliteGates/egfrag_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-cache-given-twice",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (!took.hc && dist(b.x, b.z, q.x, q.z) <= EG_HCACHE_REACH_M && fairOf(B, b.sub)) { took.hc = 1;",
+    "new": "if (!took.hc && dist(b.x, b.z, q.x, q.z) <= EG_HCACHE_REACH_M && fairOf(B, b.sub)) {",
+    "tests": [
+      "test/net/eliteGates/egfrag_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-niche-heals-all",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "{ k: 'eheal', p: EG_NICHE_HEAL, why: 'niche', to: b.sub }",
+    "new": "{ k: 'eheal', p: EG_NICHE_HEAL, why: 'niche' }",
+    "tests": [
+      "test/net/eliteGates/egfrag_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-closing-that-leaves-the-low-road",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  const su = B.dn + EG_CLOSING_SPAN_MS + (B.lw || away ? Math.max(0, lowFrom - B.dn) : 0);",
+    "new": "  const su = B.dn + EG_CLOSING_SPAN_MS + 0;",
+    "tests": [
+      "test/net/eliteGates/egfrag_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-horn-never-blown",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  F.horn = spec.spots.horn?.length ? {",
+    "new": "  F.horn = false ? {",
+    "tests": [
+      "test/net/eliteGates/egfrag_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-foul-unpunished",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (!H.ash) { H.ash = 1; H.ashAt = now; }\n",
+    "new": "\n",
+    "tests": [
+      "test/net/eliteGates/egfrag_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-honour-unpaid",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (!H.foul) { for (const [s2, m2] of living(B)) { egGive(m2, 'rel', egCircleOfHall(B.h));",
+    "new": "    if (false) { for (const [s2, m2] of living(B)) { egGive(m2, 'rel', egCircleOfHall(B.h));",
+    "tests": [
+      "test/net/eliteGates/egfrag_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-page-given-twice",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (page >= 0) for (const [sub, m] of living(B)) if (!((m.pages ?? 0) & (2 ** page))) {",
+    "new": "if (page >= 0) for (const [sub, m] of living(B)) if (true) {",
+    "tests": [
+      "test/net/eliteGates/egfrag_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-low-road-empty",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (low || (!firstOf.has(q.f) &&",
+    "new": "    if (false || (!firstOf.has(q.f) &&",
+    "tests": [
+      "test/net/eliteGates/egfrag_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-branch-solid-in-the-dark-on-screen",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "    st.T[0] = x; st.T[2] = z; st.T[1] = solid ? y - sunk : EG_STEP_GONE_Y;",
+    "new": "    st.T[0] = x; st.T[2] = z; st.T[1] = y - sunk;",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-flight-that-never-sinks",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "      else sunk = EG_SINK_MPS * since;",
+    "new": "      else sunk = 0;",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-flight-never-touched",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "(EG_CRUMBLE_KINDS.includes(on.s.kind) || on.s.kind === 'sink') && on.touched == null",
+    "new": "EG_CRUMBLE_KINDS.includes(on.s.kind) && on.touched == null",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-tube-never-falling",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "      const edge = tubeEdgeOf(g.spec, t), gone = g.z1 <= edge;",
+    "new": "      const edge = tubeEdgeOf(g.spec, t), gone = false && g.z1 <= edge;",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-cast-back-into-the-tube",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "const ahead = tubes.find((g) => g.spec === ts && g.z0 >= edge); if (ahead) return",
+    "new": "const ahead = tubes.find((g) => g.spec === ts && g.z0 >= edge); if (false && ahead) return",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-cast-onto-a-fallen-island",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "      if (best) return realmToDungeon(best.spec.x0 + best.d.x, best.d.y, best.d.z);",
+    "new": "      void best;",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-islands-in-the-static-floor",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "      if (egIsleDisc(spec, d)) continue;\n      // AUDIT EG V (lane5 #15)",
+    "new": "      // AUDIT EG V (lane5 #15)",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-false-wall-never-falls",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "      const up = O.h !== g.spec.h ? O.h < g.spec.h : O.objs.some((o) => o.t === 'fwall' && o.pt === g.a.i);",
+    "new": "      const up = true;",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-wall-across-the-doorway",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "  for (const [a, b] of cuts) { if (a > z) out.push([z, a]); z = Math.max(z, b); }",
+    "new": "  for (const [a, b] of []) { if (a > z) out.push([z, a]); z = Math.max(z, b); }",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-niche-with-no-floor",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "      quad([x0, y0, z0], [x1, y0, z0], [x1, y0, z1], [x0, y0, z1]); quad([x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]);",
+    "new": "      quad([x0, y1, z0], [x1, y1, z0], [x1, y1, z1], [x0, y1, z1]);",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-colonnade-walled",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "      if (q.open) continue;\n",
+    "new": "\n",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-drop-door-shut",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "  return [[-x - t, -h, -SD_STEP_THICK], [h, x + t, -SD_STEP_THICK], [-h, h, DROP_DOOR.h]];",
+    "new": "  return [[-x - t, x + t, -SD_STEP_THICK]];",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-press-that-goes-nowhere",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "(spireAct(key), true) : false; },",
+    "new": "true : false; },",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-fall-judged-every-frame",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "        if (p.st === 'live' && standing && !hazHit.has(p.key) && egHazardBites(hz, p, f[0], fy, f[1])) {",
+    "new": "        if (p.st === 'live' && standing && egHazardBites(hz, p, f[0], fy, f[1])) {",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-wisp-that-never-lets-go",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    if (d > L.brk || t - hold.from >= L.live) { hold.from = 0;",
+    "new": "    if (d > L.brk) { hold.from = 0;",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-a-turn-for-another-hall",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        if (Number(st[1]) !== E.h || E.sg !== 'trial') {",
+    "new": "        if (E.sg !== 'trial') {",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-page-forgotten",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "{ annals.add(w.p); say(",
+    "new": "{ say(",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFRAG-the-lights-dropped",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "    for (const [x, y, z, kind] of spec.lights ?? []) {",
+    "new": "    for (const [x, y, z, kind] of []) {",
+    "tests": [
+      "test/net/eliteGates/egfrag_client.test.js"
+    ]
+  }
+]

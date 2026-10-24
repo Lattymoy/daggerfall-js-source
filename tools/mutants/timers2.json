@@ -1,0 +1,255 @@
+[
+  {
+    "name": "TIMERS2-the-groups-reordered",
+    "file": "src/systems/eventTimers.js",
+    "old": "  Object.freeze({ id: 'world', kinds: Object.freeze(['gate', 'serpent', 'super', 'star']) }),\n  Object.freeze({ id: 'spire', kinds: Object.freeze(['elite']) }),",
+    "new": "  Object.freeze({ id: 'spire', kinds: Object.freeze(['elite']) }),\n  Object.freeze({ id: 'world', kinds: Object.freeze(['gate', 'serpent', 'super', 'star']) }),",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "TIMERS2-a-kind-in-two-groups",
+    "file": "src/systems/eventTimers.js",
+    "old": "Object.freeze(['gate', 'serpent', 'super', 'star'])",
+    "new": "Object.freeze(['gate', 'serpent', 'super', 'star', 'elite'])",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "TIMERS2-an-unknown-kind-lost",
+    "file": "src/systems/eventTimers.js",
+    "old": "?.id ?? 'resets';",
+    "new": "?.id ?? 'lost';",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "TIMERS2-an-empty-group-drawn",
+    "file": "src/systems/eventTimers.js",
+    "old": "  }).filter((g) => g.rows.length);",
+    "new": "  });",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "TIMERS2-the-live-count-off",
+    "file": "src/systems/eventTimers.js",
+    "old": "live: of.filter((r) => r.live).length",
+    "new": "live: of.length",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "TIMERS2-the-badge-on-a-coming-row",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "if (r.live) clock.append(el('span', 'tm-badge'",
+    "new": "clock.append(el('span', 'tm-badge'",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "TIMERS2-the-head-count-unsaid",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "if (g.live) h.append(",
+    "new": "if (false) h.append(",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "TIMERS2-the-press-ignored",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "            showing = id; shownGroup = id; draw();",
+    "new": "            draw();",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "TIMERS2-the-choice-forgotten",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "            showing = id; shownGroup = id; draw();",
+    "new": "            showing = id; draw();",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "TIMERS2-an-emptied-group-left-showing-nothing",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "    if (showing !== 'all' && !groups.some((g) => g.id === showing)) { showing = 'all'; shownGroup = 'all'; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "TIMERS2-a-bar-with-no-clock",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "if (groups.length) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "TIMERS2-the-focus-lost-in-the-rebuild",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "      if (had) /** @type {any} */ (chips.get(had) ?? chips.get('all'))?.b?.focus?.({ preventScroll: true });\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "TIMERS2-the-pressed-state-unsaid",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "    b.setAttribute('aria-pressed', on ? 'true' : 'false');",
+    "new": "    b.setAttribute('aria-pressed', 'false');",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "TIMERS2-the-elite-uncoloured",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": " .px-timerswin .tm-elite { --tm-kind: ${EG_ARCH_RING_CSS}; }",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "TIMERS2-the-door-squeezing-a-phone-row",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .px-timerswin .tm-door { flex: 1 0 100%;",
+    "new": "  .px-timerswin .tm-door { flex: 0 0 auto;",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TIMERS2-H1-the-window-sized-to-its-rows",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".px-win.px-timerswin { height: min(680px, 86dvh); max-height:",
+    "new": ".px-win.px-timerswin { height: auto; max-height:",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TIMERS2-M6-the-body-scrolling",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".px-timerswin .tm-list { flex: 1 1 auto; min-height: 0; overflow-y: auto;",
+    "new": ".px-timerswin .tm-list { flex: 1 1 auto; min-height: 0;",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TIMERS2-H2-the-30px-buttons",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .px-timerswin .tm-chip { min-height: 44px; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TIMERS2-M3-the-counts-left-stale",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "    if (count.textContent !== String(n)) count.textContent = String(n);\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TIMERS2-M3-the-bar-rebuilt-every-change",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "    const ids = groups.length ? counts.map((c) => c.id).join(' ') : '';",
+    "new": "    const ids = groups.length ? JSON.stringify(counts) : '';",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TIMERS2-M3-the-focus-dropped",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "(chips.get(had) ?? chips.get('all'))?.b?.focus?.",
+    "new": "(chips.get(had))?.b?.focus?.",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TIMERS2-M3-the-dot-back",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".px-timerswin .tm-chip.live { box-shadow: inset 0 -3px 0 #9fe8b4; }",
+    "new": ".px-timerswin .tm-chip.live .tm-chip-name::after { content: ''; }",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TIMERS2-M4-the-fall-back-forgotten",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "{ showing = 'all'; shownGroup = 'all'; }",
+    "new": "{ showing = 'all'; }",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TIMERS2-M5-close-takes-it-every-draw",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "globalThis.requestAnimationFrame?.(() => { if (!win.contains?.(doc.activeElement)) close.focus?.({ preventScroll: true }); });",
+    "new": "globalThis.requestAnimationFrame?.(() => { close.focus?.({ preventScroll: true }); });",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ],
+    "note": "Re-aimed by content at the HERALD-CARDS merge: one line holds SEASON-BOOK U3's open-only focus and TIMERS2 M5's guard."
+  },
+  {
+    "name": "AUDIT-TIMERS2-L8-the-mark-not-in-the-name",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "${live ? `, ${t('timers.underWay', '{n} under way', { n: live })}` : ''}`);",
+    "new": "`);",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TIMERS2-L8-now-on-a-coming-door-row",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "if (r.live) clock.append(el('span', 'tm-badge'",
+    "new": "if (r.live || r.door) clock.append(el('span', 'tm-badge'",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TIMERS2-L9-the-mark-at-the-row-s-top",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".px-timerswin .tm-name::before { content:",
+    "new": ".px-timerswin .tm-row::before { content:",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-TIMERS2-L7-the-count-dimmed",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".px-timerswin .tm-chip-n { font-variant-numeric: tabular-nums; min-width: 2ch; text-align: right; }",
+    "new": ".px-timerswin .tm-chip-n { font-variant-numeric: tabular-nums; opacity: 0.75; }",
+    "tests": [
+      "test/ui/enhanced/timers2.test.js"
+    ]
+  }
+]

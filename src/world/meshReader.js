@@ -37,7 +37,7 @@ const DUNGEON_EXIT_DOORS = 95;
 /**
  * LoadVertices' door law for one submesh, alone (OW-DUNGEONS, 2026-10-08): the door type its texture archive - and for
  * the ruins' archive its record - makes it, NONE where it is no door. dfMeshToModel reads every door through it, and
- * the Overworld's dungeon models (systems/travelDungeonModels.js) ask it of a mesh's submeshes without building it.
+ * the Overworld's dungeon models (systems/travel/travelDungeonModels.js) ask it of a mesh's submeshes without building it.
  * @param {number} textureArchive @param {number} textureRecord @returns {number} a DOOR_TYPE
  */
 export function subMeshDoorType(textureArchive, textureRecord) {

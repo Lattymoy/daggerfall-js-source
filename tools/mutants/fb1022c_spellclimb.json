@@ -1,0 +1,47 @@
+[
+  {
+    "name": "FB1022C-SPELLCLIMB-readied-over-the-fists",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "if (readiedHandsOn() && !fpsSpellCasting.isPlayingAnim && !climbHands.showing()) {",
+    "new": "if (readiedHandsOn() && !fpsSpellCasting.isPlayingAnim) {",
+    "tests": [
+      "test/combat/weapon/fb1022c_spellclimb.test.js"
+    ]
+  },
+  {
+    "name": "FB1022C-SPELLCLIMB-readied-down-on-any-climb",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "if (readiedHandsOn() && !fpsSpellCasting.isPlayingAnim && !climbHands.showing()) {",
+    "new": "if (readiedHandsOn() && !fpsSpellCasting.isPlayingAnim && !_climbing) {",
+    "tests": [
+      "test/combat/weapon/fb1022c_spellclimb.test.js"
+    ]
+  },
+  {
+    "name": "FB1022C-SPELLCLIMB-fists-under-the-cast",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "if (c && !paralyzed && !spellHandsDrawn && !fpArm.active() && !eotbHidesWeapon() && !sheetWindowUp()) climbHands.draw(",
+    "new": "if (c && !paralyzed && !fpArm.active() && !eotbHidesWeapon() && !sheetWindowUp()) climbHands.draw(",
+    "tests": [
+      "test/combat/weapon/fb1022c_spellclimb.test.js"
+    ]
+  },
+  {
+    "name": "FB1022C-SPELLCLIMB-law-kept-on-the-climb-under-the-cast",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "_climbLower >= CLIMB_HANDS_AFTER && !castTakesHands ? (camNow?.climb ?? null) : null;",
+    "new": "_climbLower >= CLIMB_HANDS_AFTER ? (camNow?.climb ?? null) : null;",
+    "tests": [
+      "test/combat/weapon/fb1022c_spellclimb.test.js"
+    ]
+  },
+  {
+    "name": "FB1022C-SPELLCLIMB-a-handless-cast-takes-the-fists",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "const castTakesHands = fpsSpellCasting.isPlayingAnim && !eotbHidesSpellHands();",
+    "new": "const castTakesHands = fpsSpellCasting.isPlayingAnim;",
+    "tests": [
+      "test/combat/weapon/fb1022c_spellclimb.test.js"
+    ]
+  }
+]

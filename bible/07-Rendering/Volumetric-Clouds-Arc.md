@@ -56,7 +56,7 @@ Mapped before a line was written (the map is the design's ground):
 | **VC4** | THE SHADOWS, REAL. A world-space shadow map (transmittance along the sun ray through the SAME slab, a square around the player snapped to the 819.2 pixel grid so a recenter never jumps it) refreshed in stripes like the sky map; sampled by the terrain, the models, the characters and the flats through one shared GLSL block (`CLOUD_SHADOW_GLSL`, now the map and not a noise), replacing the terrain-only noise shadow; the global `sunFactor` dim stands down (the disc dims through the sky map's own transmittance, the ground through its map - one field, no dim on top). The moon casts none. The sky map marches from the camera's own world position, so a walk moves the bank overhead and the shadow under it together; the floating origin's recenters are handed to the clouds (`sky.offsetOrigin`) and both marches sample the field at the ABSOLUTE position (`uShift`, the shifts accumulated - the review's first finding: the periods being whole pixels does NOT make a one-pixel shift invisible, a shift is invisible only when it is a whole number of PERIODS), the shadow square moving with the world and its map kept; a pixel crossing without a recenter (the fixed city) shifts the map by whole texels with a blit and marches only the uncovered strip. The first sky sweep is striped like every other (no stall); the shadow targets start all light and the ground samples nothing before the first march; the studio's sprite borrow and an interior's frame carry no deck. The square is SIXTEEN pixels a side (13.1 km, the near edge 6144 m out, past the far fog): a pixel is a whole number of the map's texels at every tier, which the crossing's texel shift depends on (twelve, tried first, left 0.67 of a texel behind at every crossing - the review). Under a STORM the map is black: a 3.7 km deck at density 1 is 22 optical depths, no direct sun reaches the ground and the row's ambient lights it - the law, pinned by the probe. NOT reached: the grass (its shader is pinned byte for byte to the lab's), the far ring (outside the square by construction - it takes `farSunFactor`, a cover-derived dim on the slab's own coverage law, cover^1.6), the dungeon water. | SHIPPED 2026-09-07 - the probe's five shadow checks (a sunny noon mostly lit with dark patches, an overcast noon dark everywhere, a storm darker still, the morning's map another than noon's, midnight all light) |
 | **VC5** | THE CLOSE. The tiers (`?clouds=lo|hi`, `?clouds=off` the kill switch, since VC3) made visible on the lab's panel (a Clouds select and a Shadow-map box that rewrite the query and reload - a tier is a set of targets, not a live knob); the probes grown to fifteen (the sun's disc a compact white disc on the bare noon sky and a glow many times its size under the overcast lid - it dissolves, the forward scatter through the lid; every sky claim paired against a bare-dome shot so it fails with the clouds off; the storm's black map stated as the law; the sun's angle a texel-for-texel picture diff); the pins (all THREE marched programs under the two-way uniform pin, `shadowOrigin` by value, the extent and the whole-texel law per tier); the Ledger row; the adversarial review (below); this page closed. NOT done, said so: the tier choice by measurement - SwiftShader's frame times do not transfer to a real GPU, so the default tier is a judgment (1024x256, 56 steps) and the measurement is Mac's machine's to make; a front building cover over its lead is pinned (the profile eases on the row's own exponential, the front-stretched dt is WIND2's) and not pictured (the lab has no front). | SHIPPED 2026-09-07 |
 
-| **VC6** | THE SECOND PASS, on four reports in one message (Mac 2026-09-18). **(a) THE REPEAT.** "clouds repeat pretty consistently when its partly cloudy" - and it was two numbers: the shape volume tiles every 12288 m and the coverage field that is meant to break it up tiled every 13107 m, seven per cent apart, so the two grids stayed in phase and the same bank came round inside ONE visible sky (the march reaches 24 km). The variation goes to EIGHTY pixels (65536 m), which is also the truer number - how much cloud there is varies over tens of kilometres of land. Its four channels now do four jobs instead of one: R and A two frequencies of coverage, G and B a vector that WARPS the sample's position before the shape is read, so the lattice arrives bent by up to 2458 m and the straight edges the eye locks onto are not there to find. No texture read was added. And the field had only ever had ONE THING TO SAY - one flatness, one ceiling, for the whole zone - so the profile gains `vary`: where there is more cloud there is flatter, deeper cloud, where there is less there are shallow towers with room above them. A lid weather takes 0 and is untouched. CLK1's wrap still holds: every period divides the field's. **(b) THE GOLDEN HOUR.** "in the evening when the sun is setting and the sky is golden, clouds arent influenced by the sun" - the cloud's light died at a sun 2.5 degrees UP, because its window (`sunDir.y + 0.02) / 0.08`) was fitted by eye. It is geometry: a deck whose middle stands 2300 m up sees sqrt(2h/R) - a degree and a half - past the ground's horizon, so it holds the sun until the sun is that far BELOW the player's, and holds it in the ember the palette gives a sun at that elevation. Three terms in the march, every one weighted by how low the sun is and all of them dead at noon: the sky is two colours at dusk (gold toward the sun, the zenith's blue away from it, both taken through a hue() that normalises to luminance one so a tint can never be a brightness cheat); a low sun lights the cloud's SIDE, so the ambient's height ramp rolls from top-lit to whole-lit and the underside is what burns; the direct gain opens 0.7 -> 1.05. The palette joins it: the clouds were a quarter of the way to night at the horizon and only a quarter of the way to the sun's colour. **(c) THE SHAFTS.** "when the sun is covered by clouds, there shouldnt be sky rays or sky rays coming through trees/flora" - the shaft mask was SKY DEPTH ALONE, so a sun behind a bank threw full-strength rays and a canopy cut a hard silhouette out of a beam that should not have been there. A shaft is scattered DIRECT sunlight, and how much of that reaches the player is exactly what the cloud shadow map already holds at their feet: the pass reads it there, squared (a shaft needs a beam). One field, three consumers - the sky, the ground and now the rays - so they cannot disagree. The block moved to its own leaf (`render/cloudShadow.js`) because the air pass cannot import from the renderer that imports it. **(d) THE FRAME.** Free wins, no visual change: `density()` returns before its first texture read outside the band (both marches walk the UNION slab, so under a sunny zone with a thunderhead on the horizon every ray was paying two 3D reads a step over 3700 m of air to be told 0); the sky march strides three times as far after four empty steps and BACKS THE STRIDE OUT on the step that finds cloud, so an edge is never resolved coarsely; the light march stops once exp(-sum) is two parts in a thousand. And a readout, because this session cannot see Mac's GPU: `?perf=zones` breaks the frame into the passes that make it - shadow, world, sky, air - as spans that TILE it (the extension holds one timer at a time, so they cannot nest; each begins where the last ended, and their sum is the frame). | SHIPPED 2026-09-18 - 9 pins at test/vc6_clouds.test.js, `tools/mutants/vc6.json` (45 dead), `tools/vc6ShaftProbe.mjs` (6 checks on a real GPU), and the arc's own 15 picture checks still green. **THREE THINGS THE GATE COULD NOT SEE, AND A PROBE DID.** (1) `flat` is a RESERVED interpolation qualifier in GLSL ES 3.00: heightGradient's new parameter took the whole sky down at boot, and every pin passed. (2) The warp at three pixels FOLDED the lattice - its own field's features are the variation volume's ~2 km Worley cells, so an amplitude of 2458 m is larger than the gradient it rides, q -> q + A*f(q) stops being one-to-one, and the sky grew a smeared fan at the zenith that the bare field never had; one pixel, chosen against the same shot on the tree before the change. (3) The deck reached the shafts as NULL every frame of the real game: `beginFrame` clears the deck (a deck is a frame's) and `prepare` runs inside beginFrame, while both exterior hosts set the frame's deck AFTER beginFrame returns - so the gate could never have fired. It is read at the RESOLVE now, with the cleared deck held exactly long enough for an image the pass still owes. No pin could have caught any of the three: the pins drive no frame and compile no shader. **THE AUDIT (2026-09-18, after the slice) FOUND TWO MORE, BOTH MINE.** (4) `uLightDir` IS NOT ALWAYS THE SUN - once the sun is down it is the brighter visible MOON's, and VC6b's `low` was a smoothstep on it, so a moon near the horizon read as 'the sun is low': it lit the undersides at midnight, opened the direct gain and tinted half the sky, a swing that came and went as the moon crossed seventeen degrees, driven by the wrong body. The weight is a pure CPU law now (`duskWeight(sunY, dayWeight)`, the SUN's own direction and the SUN's own weight), uploaded as `uDusk`, and is exactly 0 at night - so the whole of VC6b is off and a night sky is the one it was before the slice. (5) `hue()` on a colour with no light in it answered `c / 1e-4`, a BLACK tint, which would have darkened the cloud it was asked to colour; it answers white, the tint that changes nothing. Both pinned by value. The audit also found one of its own mutants re-aimed WRONG - the replacement truncated `&& world)` and made a syntax error, so it was dying for a reason that was not its law. **MEASURED, not asserted:** VC6d's stride changes no picture - the sky read back with the skip on and with it forced off is BYTE-IDENTICAL under cloudy and thunder (a dense sky never strides) and differs by a mean of 0.06 of 255 levels under sunny, with 0.4 per cent of channels off by more than two, which is the dither's own jitter at a cloud's edge. NOT measured: the frame's win is Mac's machine's to see - that is what the zone line is for. |
+| **VC6** | THE SECOND PASS, on four reports in one message (Mac 2026-09-18). **(a) THE REPEAT.** "clouds repeat pretty consistently when its partly cloudy" - and it was two numbers: the shape volume tiles every 12288 m and the coverage field that is meant to break it up tiled every 13107 m, seven per cent apart, so the two grids stayed in phase and the same bank came round inside ONE visible sky (the march reaches 24 km). The variation goes to EIGHTY pixels (65536 m), which is also the truer number - how much cloud there is varies over tens of kilometres of land. Its four channels now do four jobs instead of one: R and A two frequencies of coverage, G and B a vector that WARPS the sample's position before the shape is read, so the lattice arrives bent by up to 2458 m and the straight edges the eye locks onto are not there to find. No texture read was added. And the field had only ever had ONE THING TO SAY - one flatness, one ceiling, for the whole zone - so the profile gains `vary`: where there is more cloud there is flatter, deeper cloud, where there is less there are shallow towers with room above them. A lid weather takes 0 and is untouched. CLK1's wrap still holds: every period divides the field's. **(b) THE GOLDEN HOUR.** "in the evening when the sun is setting and the sky is golden, clouds arent influenced by the sun" - the cloud's light died at a sun 2.5 degrees UP, because its window (`sunDir.y + 0.02) / 0.08`) was fitted by eye. It is geometry: a deck whose middle stands 2300 m up sees sqrt(2h/R) - a degree and a half - past the ground's horizon, so it holds the sun until the sun is that far BELOW the player's, and holds it in the ember the palette gives a sun at that elevation. Three terms in the march, every one weighted by how low the sun is and all of them dead at noon: the sky is two colours at dusk (gold toward the sun, the zenith's blue away from it, both taken through a hue() that normalises to luminance one so a tint can never be a brightness cheat); a low sun lights the cloud's SIDE, so the ambient's height ramp rolls from top-lit to whole-lit and the underside is what burns; the direct gain opens 0.7 -> 1.05. The palette joins it: the clouds were a quarter of the way to night at the horizon and only a quarter of the way to the sun's colour. **(c) THE SHAFTS.** "when the sun is covered by clouds, there shouldnt be sky rays or sky rays coming through trees/flora" - the shaft mask was SKY DEPTH ALONE, so a sun behind a bank threw full-strength rays and a canopy cut a hard silhouette out of a beam that should not have been there. A shaft is scattered DIRECT sunlight, and how much of that reaches the player is exactly what the cloud shadow map already holds at their feet: the pass reads it there, squared (a shaft needs a beam). One field, three consumers - the sky, the ground and now the rays - so they cannot disagree. The block moved to its own leaf (`render/cloudShadow.js`) because the air pass cannot import from the renderer that imports it. **(d) THE FRAME.** Free wins, no visual change: `density()` returns before its first texture read outside the band (both marches walk the UNION slab, so under a sunny zone with a thunderhead on the horizon every ray was paying two 3D reads a step over 3700 m of air to be told 0); the sky march strides three times as far after four empty steps and BACKS THE STRIDE OUT on the step that finds cloud, so an edge is never resolved coarsely; the light march stops once exp(-sum) is two parts in a thousand. And a readout, because this session cannot see Mac's GPU: `?perf=zones` breaks the frame into the passes that make it - shadow, world, sky, air - as spans that TILE it (the extension holds one timer at a time, so they cannot nest; each begins where the last ended, and their sum is the frame). | SHIPPED 2026-09-18 - 9 pins at test/render/vc6_clouds.test.js, `tools/mutants/vc6.json` (45 dead), `tools/vc6ShaftProbe.mjs` (6 checks on a real GPU), and the arc's own 15 picture checks still green. **THREE THINGS THE GATE COULD NOT SEE, AND A PROBE DID.** (1) `flat` is a RESERVED interpolation qualifier in GLSL ES 3.00: heightGradient's new parameter took the whole sky down at boot, and every pin passed. (2) The warp at three pixels FOLDED the lattice - its own field's features are the variation volume's ~2 km Worley cells, so an amplitude of 2458 m is larger than the gradient it rides, q -> q + A*f(q) stops being one-to-one, and the sky grew a smeared fan at the zenith that the bare field never had; one pixel, chosen against the same shot on the tree before the change. (3) The deck reached the shafts as NULL every frame of the real game: `beginFrame` clears the deck (a deck is a frame's) and `prepare` runs inside beginFrame, while both exterior hosts set the frame's deck AFTER beginFrame returns - so the gate could never have fired. It is read at the RESOLVE now, with the cleared deck held exactly long enough for an image the pass still owes. No pin could have caught any of the three: the pins drive no frame and compile no shader. **THE AUDIT (2026-09-18, after the slice) FOUND TWO MORE, BOTH MINE.** (4) `uLightDir` IS NOT ALWAYS THE SUN - once the sun is down it is the brighter visible MOON's, and VC6b's `low` was a smoothstep on it, so a moon near the horizon read as 'the sun is low': it lit the undersides at midnight, opened the direct gain and tinted half the sky, a swing that came and went as the moon crossed seventeen degrees, driven by the wrong body. The weight is a pure CPU law now (`duskWeight(sunY, dayWeight)`, the SUN's own direction and the SUN's own weight), uploaded as `uDusk`, and is exactly 0 at night - so the whole of VC6b is off and a night sky is the one it was before the slice. (5) `hue()` on a colour with no light in it answered `c / 1e-4`, a BLACK tint, which would have darkened the cloud it was asked to colour; it answers white, the tint that changes nothing. Both pinned by value. The audit also found one of its own mutants re-aimed WRONG - the replacement truncated `&& world)` and made a syntax error, so it was dying for a reason that was not its law. **MEASURED, not asserted:** VC6d's stride changes no picture - the sky read back with the skip on and with it forced off is BYTE-IDENTICAL under cloudy and thunder (a dense sky never strides) and differs by a mean of 0.06 of 255 levels under sunny, with 0.4 per cent of channels off by more than two, which is the dither's own jitter at a cloud's edge. NOT measured: the frame's win is Mac's machine's to see - that is what the zone line is for. |
 
 ## The adversarial review (Opus, four reviewers, verified per finding)
 
@@ -233,7 +233,7 @@ leaves.
 - One field still: the ground's shadow and the sun's disc read the same
   density, so a billowing bank's shadow billows with it.
 
-**VC7a shipped (2026-09-23).** Pinned by `test/vc7a_living.test.js`
+**VC7a shipped (2026-09-23).** Pinned by `test/render/vc7a_living.test.js`
 (`tools/mutants/vc7a.json` 22/22 dead).
 - The sky state carries the game's minute (`skyState` `minutes`,
   `minuteOfDay`), and `cloudClocks` reads the three clocks from it: the
@@ -268,7 +268,7 @@ leaves.
   squares and diamonds (6 to 23 screen pixels a texel, the low tier the
   worst). It reads the map through a cubic B-spline now (`mapBicubic`,
   four bilinear taps): no crease at a texel, the jitter smoothed with it.
-  `test/fb1001_cloudsquare.test.js`.
+  `test/render/fb1001_cloudsquare.test.js`.
 
 ### VC7b - light shafts
 
@@ -286,7 +286,7 @@ leaves.
   reaches the air it glows; where the bank shades it, it does not. It
   scales with the air's haze (humid weather, low sun) and is off indoors.
 
-**VC7b shipped (2026-09-23).** Pinned by `test/vc7b_shafts.test.js`
+**VC7b shipped (2026-09-23).** Pinned by `test/render/vc7b_shafts.test.js`
 (`tools/mutants/vc7b.json` 33/33 dead), and drawn on a real GPU by
 `tools/vc7bHazeProbe.mjs` (12/12), which is where the look is judged -
 the pins run on a fake GL that draws nothing.
@@ -345,7 +345,7 @@ and Beer's law alone, exp(-5) against exp(-6), made every point under a
 storm the same black. The first try (the octaves below, un-normalised)
 proved it: the whole sky brightened and no structure appeared.
 
-**VC7e shipped (2026-09-23).** Pinned by `test/vc7e_detail.test.js`
+**VC7e shipped (2026-09-23).** Pinned by `test/render/vc7e_detail.test.js`
 (`tools/mutants/vc7e.json` 19/19 dead).
 - **The deck's cells.** `columnAt` - everything density() knows before the
   shape read, now one function - takes the 32-cell Worley of the
@@ -388,7 +388,7 @@ proved it: the whole sky brightened and no structure appeared.
 - Only what falls hangs one (rain, thunder, snow; a sandstorm is already a
   wall on the ground), with its intensity from the same law as the rain.
 
-**VC7c shipped (2026-09-23).** Pinned by `test/vc7c_curtains.test.js`
+**VC7c shipped (2026-09-23).** Pinned by `test/systems/weather/vc7c_curtains.test.js`
 (`tools/mutants/vc7c.json`). Two departures from the plan, both measured:
 the curtain is ANALYTIC in the sky march alone, not a density in the field
 both marches read (a ray against a cylinder costs arithmetic, a field
@@ -463,7 +463,7 @@ The picture is the no-stride sky's, and the fair sky keeps VC6d's saving.
   behind their own cloud.
 
 **VC7d shipped (2026-09-23; Mac: "Let's do the not done yet before we
-merge").** Pinned by `test/vc7d_cirrus.test.js` (5 tests;
+merge").** Pinned by `test/render/vc7d_cirrus.test.js` (5 tests;
 `tools/mutants/vc7d.json` 34/34 dead).
 - **The shell.** One sample per sky-map texel, where the ray meets a sphere
   CIRRUS_ALT_M (9 km) up. It uses the stable root (no cancellation at the
@@ -703,7 +703,7 @@ there is no seam - the horizon's rows are at most a sweep older than the
 zenith's. Lightning never rode the map (the composite carries the flash
 and the distant bolt).
 
-**Pinned** in `test/rainfps.test.js` (3): the cost and the frames per sky
+**Pinned** in `test/render/rainfps.test.js` (3): the cost and the frames per sky
 (every weather word, the cells, the cap, nothing known is fair) and every
 pace dividing every tier's maps; the draw path on a recording GL - sunny in
 eight stripes, rain in sixteen, rain under eight cells in thirty-two, the
@@ -715,3 +715,75 @@ keeping its own sweep's pace. Mutants: `tools/mutants/rainfps.json`, 12, 12 dead
 pane's cloud quality, Low, costs a rain sky a quarter of Default's (151 ms
 against 551 in the lab); High costs five times Default in rain (2869 ms) and
 is for strong GPUs only.
+
+## SKY-ARC - the aerial perspective is the light path's (2026-10-19)
+
+**From play:** a player's screenshot on the Discord, "BY THE RING", posted by the owner with "can you fix this weird
+issue in the sky?". One hard, smooth arc ran across a dusk sky. On one side the player's own overcast deck was warm
+yellow-ochre, on the other blue-grey, and the line swept from high overhead down to the horizon.
+
+**Reproduced** in the game at Daggerfall: minute 525200 (the 5th of Morning Star 3E405, 17:20 - AUDIT PRECIP DOC-3: the
+record said the 4th; the date's day is 0-based), the map's word cloudy, facing north,
+under Dynamic Skies. It also reproduces in the sky lab with that minute's map cells. Removing one cell from the lab's
+list removes the line: the eastern system's overcast ring, its centre 84 km east, its own cloud 13 km away, and its
+SLAB-SPAN reach (85 km) putting its bounding column's wall 0.7 km west of the eye. That cell brings no cloud where the
+line is drawn.
+
+**The cause.** The march faded every sample toward the horizon's colour by where the span holding it BEGAN. SLAB-SPAN
+had moved the fade from the ray's one entry to each span's own start (above). But spans are bookkeeping: they only say
+where the walk may skip air, and they merge and split where the cells' bounding columns meet the zone's slab.
+
+- A ray that leaves the cell's column below the zone's base keeps the zone's deck in a span of its own, so the deck is
+  faded by `uBase / dir.y`.
+- A ray that leaves the column above the zone's base merges the column (from the cell's own, lower base) with the zone,
+  so the same deck is faded by the column's start.
+
+The locus between the two is the column's wall at the zone's base. That wall is a horizontal circle, so on the sky it is
+a smooth conic, and since the fade steps across it the line is hard. The warm side is the side faded LESS - the deck's
+own dusk gold (VC6b); the blue-grey side is the same deck faded more toward the horizon's colour, at that minute a dark
+blue-grey (AUDIT PRECIP DOC-2: the record said the warm side was the horizon's).
+
+**The law.** Aerial perspective belongs to the light's path from the eye to the point that scattered it. Each sample is
+now faded by its own distance (`volumetricClouds.js:"float aerial(float t)"`), and so are the back veils at theirs
+(`aerial(tBack)`). The spans decide only where the march walks, never what colour it finds. SLAB-SPAN's pale block
+cannot come back either: a sample far behind an empty cell's disc is faded
+by its own distance, as before. The deck is a little hazier through its depth than at its base, by between the fade at
+its base and the fade at its top.
+
+Rejected alternatives:
+
+- **Feathering or resizing the bounding columns** would only move the line.
+- **Fading by the ray's entry again** brings back SLAB-SPAN's pale block.
+
+**Pinned** in `test/render/skyarc_aerial.test.js` (2), on the march's own GLSL through `test/cloudSky.mjs`: the colour
+step across the merge locus is the sky's own step beside it (it was ten times that), and a cell whose cloud a ray never
+meets leaves that ray as the zone alone draws it. `weather2c_cloudcells.test.js`'s aerial law moved with it: the horizon's
+share is between the fade at the slab's base and at its top, times the cloud's opacity, and more than the entry's alone.
+`vc7d_cirrus.test.js` and `vc7c_curtains.test.js` quote the veils' `aerial(tBack)`. Mutants: `tools/mutants/skyarc.json`
+(4, 4 dead); SLAB-SPAN's and AUDIT VC7's records on the fade re-aimed onto the new law (4 dead).
+
+**Also found while reproducing it**, and fixed by AUDIT PRECIP (`01-Overview/audits/Audit-Precip.md`, SKY):
+
+- **The span law was not yet the whole sky's** (DOC-5: the record said "no merge or split of spans can draw a line
+  again", false while two things still keyed on where a span began). The curtains were cut at the first span's start with
+  a fade law either side (SKY-2), and the far early-out keyed on it too (SKY-BAND, below). Now every veil sample is faded
+  at its own distance (`volumetricClouds.js:"vec2 veilPiece(int i, vec3 cam, vec3 dir, float a, float b, float rad, float yb, float yt) {"`
+  answers its depth and its faded share; the front and back veils pre-faded), and the lane's curtains keep their envelope
+  (SKY-3: the fall set before the growth). With them, no span's start decides a colour.
+- **A stair-stepped band at the horizon under Dynamic Skies** on the weather map's lane at dusk (SKY-BAND; DOC-1: the
+  record called it the mod's fog handed ungreyed - the mod's fog is never saturated, and greying it left the band). It
+  was the mod's DOME showing through rows the walk left transparent: a cell's empty column took the walk short of the
+  zone's deck, and the far slab it never reached was left bare. The slab the walk does not reach is now the horizon's by
+  its own length (`volumetricClouds.js:"float farA(float rest)"`), and the early-out past `FAR_M` is that same law with
+  nothing walked.
+- **The far fade's colour** (SKY-HZN, the smaller fault DOC-1 found under the band): on the map's lane the clouds faded
+  into the CLEAR base's horizon, not the sky's - under the mod its fog's colour greyed by the base's row, on the port's
+  dome its ungreyed palette. Now the mod's is greyed by the player's eased row (`dynamicSkiesBridge.js`
+  `cloudsStateUnderMod`'s `skyRow`) and the port's dome hands its own horizon (`scenes/shared.js`).
+- **A sun-coloured cap at dusk** in the far haze (SKY-CAP). Upward rays' sun-path foot left the 13.1 km cloud-shadow
+  square, and the metre clamp in fp32 landed a hair outside it, where the map read full sun. The edge is now read in the
+  map's own UV (`cloudShadow.js` `cloudShadowNearest`), and a crossing's uncovered strips are MARCHED in the same update
+  (DOC-4: the record proposed extending the old map's edge - a guess at ground never marched, wrong wherever a cloud's
+  edge lies in the strip).
+
+Pinned in `test/render/audit_precip_sky.test.js` (8) with `tools/mutants/audit_precip.json`'s SKY records - all dead.

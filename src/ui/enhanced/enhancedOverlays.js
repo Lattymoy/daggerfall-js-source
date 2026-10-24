@@ -1,0 +1,146 @@
+// PX28 - WHAT IS OPEN, SO TAB CAN PUT IT AWAY.
+//
+// Mac: "when hitting tab a second time, it should minimize any UI."
+//
+// Tab already toggled the DIAL - openPixelDial closes itself on a
+// second press. What it could not do is close what the dial OPENED.
+// Press Tab, press Items, and the pack is up with Tab doing nothing,
+// because each enhanced window owns its own keyboard and knows
+// nothing about the others.
+//
+// This is the smallest thing that fixes it honestly: a stack of
+// close-arms. Each enhanced overlay registers itself on mount and
+// clears on teardown, and Tab closes the TOP one before it would open
+// the dial. A stack rather than a single slot because the windows do
+// stack - the pack can raise a tooltip, the sheet page can hand over
+// to the spellbook - and the top one is what a player means by "this".
+//
+// It holds FUNCTIONS, never DOM: a registry that reached into windows
+// would be a second owner of them, and every one of these already
+// owns its own teardown.
+import { eventMeans } from '../input.js';   // KB1: the dial's key is the registry's QuickDial
+
+const stack = [];
+
+/* PX28b (Mac: "Tab should also minimize any open UI menus, currently
+   it only applies to the radial"). PX28 taught the DIAL to put a
+   window away, and that was the wrong half: `openPixelDial` is only
+   reached through the host's key routing, and while an enhanced
+   window is up the window owns the keyboard - so Tab never got there.
+   The fix that could not miss one is here, where the registry already
+   knows what is open: ONE listener, in the capture phase, alive only
+   while the stack is. Nothing needs adding to a window, and a window
+   added later is covered by having registered at all.
+
+   NOT through overlayAction's 'back'. Escape means back a LEVEL in a
+   window with levels - the wizard steps, the pack's tooltip pops -
+   and Tab means PUT THIS AWAY. Two different words, kept apart. */
+let _listening = false;
+
+function onTab(e) {
+  // KB1: "Tab" is the QuickDial action's key - the key that raised the dial puts away what it opened, wherever
+  // the player has bound it (a literal Tab here kept answering after the dial moved, and the new key did nothing)
+  // AUDIT KB1: the event's own read, so a dial bound to a combo closes on it (the old modifier refusal made that
+  // impossible); the auto-repeat of the held key is swallowed below and closes nothing
+  if (e.metaKey || !eventMeans(e, 'QuickDial')) return;   // UXB1-S: its key, shared or not
+  // A text field owns Tab: the chronicle's note composer and the
+  // spellbook's rename are both fields, and Tab in one of them is the
+  // browser's own business.
+  const t = e.target;
+  if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
+  if (!stack.length) return;
+  e.preventDefault();
+  e.stopPropagation();
+  closeTopOverlay();
+}
+
+function listen() {
+  if (_listening || typeof window === 'undefined') return;
+  window.addEventListener('keydown', onTab, true);
+  _listening = true;
+}
+
+function unlisten() {
+  if (!_listening || typeof window === 'undefined') return;
+  window.removeEventListener('keydown', onTab, true);
+  _listening = false;
+}
+
+/** Register an open overlay. Returns an unregister for the teardown to
+ *  call - which it must, or the stack grows a dead arm. */
+export function registerOverlay(close) {
+  if (typeof close !== 'function') return () => {};
+  const entry = { close };
+  stack.push(entry);
+  listen();
+  return () => {
+    const i = stack.indexOf(entry);
+    if (i >= 0) stack.splice(i, 1);
+    if (!stack.length) unlisten();
+  };
+}
+
+/** Is anything up? */
+export const overlayOpen = () => stack.length > 0;
+
+/**
+ * Close the topmost overlay, and say whether there was one. The close
+ * arm is expected to unregister itself through the handle above; the
+ * splice here is the belt to that braces, so a close that forgets
+ * cannot wedge the stack shut.
+ */
+export function closeTopOverlay() {
+  const entry = stack.pop();
+  if (!entry) { unlisten(); return false; }
+  try { entry.close(); } catch { /* a window already gone is still closed */ }
+  if (!stack.length) unlisten();
+  return true;
+}
+
+/** For a host tearing down entirely. */
+export function clearOverlays() { stack.length = 0; unlisten(); }
+
+/**
+ * OT1 (Mac, 2026-09-12: "make it where tapping outside of any UI
+ * closes the UI"): a tap on the SHELL - the scrim around a framed
+ * window - closes the window. Wire it on the shell; `keep` is the
+ * selector of everything that counts as INSIDE (the window, the foot,
+ * a dialog standing over it), so a press on those is theirs. Only
+ * the primary button, and only a press that began on the shell
+ * itself: a drag that ends outside a list is not a tap. The close
+ * runs inside the gesture, so a host's relock rides it (MAC1).
+ */
+export function closeOnOutsideTap(shell, keep, close, { swallow = false } = {}) {
+  if (!shell?.addEventListener) return () => {};
+  const onDown = (e) => {
+    if (e.button != null && e.button !== 0) return;
+    const t = e.target;
+    if (t && t !== shell && typeof t.closest === 'function' && t.closest(keep)) return;
+    e.preventDefault?.();
+    close(e);
+    if (swallow) swallowTapClick(shell.ownerDocument ?? globalThis.document);
+  };
+  shell.addEventListener('pointerdown', onDown);
+  return () => shell.removeEventListener('pointerdown', onDown);
+}
+/** How long a closed window's tap may still click, ms - a touch's or a pad's release follows its press well inside it. */
+export const TAP_CLICK_MS = 700;
+/**
+ * AUDIT SEASON-BOOK U1: A WINDOW CLOSED BY ITS PRESS, AND THE FACE DRAWN AGAIN UNDER THE FINGER, NEVER TAKES THE RELEASE.
+ * The close runs on the press (the gesture's - MAC1), and a window over the pause face repaints the face at once, so a
+ * touch's click - or the pad's A, which clicks at its release (ui/plus/gamepadInput.js) - landed on whatever the repaint
+ * put under it: the game resumed, the hourglass or the account window opened, a tab turned. The next click of that tap
+ * is eaten; a new press, or TAP_CLICK_MS, ends the watch. A window that closes back to the game (the pause face's own
+ * scrim) does not ask for this - its click is the game's.
+ */
+export function swallowTapClick(doc) {
+  if (!doc?.addEventListener) return;
+  let timer = null, over = false;
+  const done = () => { over = true; doc.removeEventListener('click', eat, true); doc.removeEventListener('pointerdown', done, true); if (timer) clearTimeout(timer); };
+  const eat = (e) => { e.preventDefault?.(); e.stopPropagation?.(); e.stopImmediatePropagation?.(); done(); };
+  doc.addEventListener('click', eat, true);
+  // a new press is a new gesture - watched for once this press's own dispatch is over (never this press), and only
+  // while the watch still stands
+  setTimeout(() => { if (!over) doc.addEventListener('pointerdown', done, true); }, 0);
+  timer = setTimeout(done, TAP_CLICK_MS);
+}

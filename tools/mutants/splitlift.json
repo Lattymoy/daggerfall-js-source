@@ -1,0 +1,30 @@
+[
+  {
+    "name": "SPLIT-LIFT-the-half-lifted-as-the-cupboards-clean-record",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "? { ...obj, [STOLEN_MARK]: true } : obj);",
+    "new": "? obj : obj);",
+    "tests": ["test/net/containerloot_protocol.test.js"]
+  },
+  {
+    "name": "SPLIT-LIFT-the-cupboard-forgets-its-keeping",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "cup.keeping = keeping instanceof Set ? keeping : null;",
+    "new": "cup.keeping = null;",
+    "tests": ["test/net/containerloot_protocol.test.js"]
+  },
+  {
+    "name": "SPLIT-LIFT-the-arm-hands-no-keeping",
+    "file": "src/scenes/worldModes.js",
+    "old": "{ fresh, keeping: before }",
+    "new": "{ fresh }",
+    "tests": ["test/net/containerloot_protocol.test.js"]
+  },
+  {
+    "name": "GIVEN-UP-the-claim-heard-here-kept",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "_roomMine.delete(id); _roomState.get(m.canon)?.claims.delete(id); }",
+    "new": "_roomMine.delete(id); }",
+    "tests": ["test/systems/partyloot.test.js"]
+  }
+]

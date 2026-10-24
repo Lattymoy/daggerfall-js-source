@@ -30,71 +30,17 @@
 //
 // DETERMINISTIC: every noise is a seeded PRNG (each clip its own seed), so re-running writes the same bytes - the rule
 // public/README.md sets for anything of ours that ships. Provenance: public/sfx/SOURCES.md; the doctrine allow-list
-// (test/doctrine.test.js) carries a row for each.
+// (test/tooling/doctrine.test.js) carries a row for each.
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { bake, writeWav8, DF_RATE } from './sndify.mjs';
-import { RATE, rng, seconds, buf, decay, attack, biquad, sweepLowpass, noise, mix, softClip, envelope } from './sfxSynth.mjs';
+import { RATE, rng, seconds, buf, decay, attack, biquad, sweepLowpass, noise, mix, softClip, envelope, unit, knock, rough, bandSweep, rub, grit } from './sfxSynth.mjs';   // GATHER-FEEL: the climb's own pieces live in the kit now
 import { isMain } from './lib/isMain.mjs';
 
 const OUT = 'public/sfx';
 
 // ---- the pieces -------------------------------------------------------
-
-/** Scaled to a peak of 1, so a piece's gain in a mix is its peak there - a narrow band of noise comes out of its
- *  filter a tenth as loud as it went in, and a slap mixed "at 1" beside a sine knock vanished under it. */
-function unit(x) {
-  let max = 0;
-  for (const v of x) max = Math.max(max, Math.abs(v));
-  if (max > 0) for (let i = 0; i < x.length; i++) x[i] /= max;
-  return x;
-}
-
-/** A sine sweep from `from` to `to` Hz over `tau`, enveloped - a knock's body. */
-function knock(len, from, to, tau, decayTau, attackMs = 0.6) {
-  const out = buf(len);
-  let phase = 0;
-  for (let i = 0; i < out.length; i++) {
-    const f = to + (from - to) * decay(i, tau);
-    phase += (2 * Math.PI * f) / RATE;
-    out[i] = Math.sin(phase) * attack(i, attackMs) * decay(i, decayTau);
-  }
-  return out;
-}
-
-/** A slow random wobble, 0..1, `hz` new values a second, joined smoothly (cosine) - a rub's roughness: the grain of
- *  stone under skin or leather is an uneven drag, not a steady hiss. */
-function rough(len, rand, hz) {
-  const out = new Float32Array(len);
-  const step = Math.max(1, Math.round(RATE / hz));
-  let a = rand(), b = rand();
-  for (let i = 0; i < len; i++) {
-    const k = i % step;
-    if (k === 0 && i > 0) { a = b; b = rand(); }
-    const s = (1 - Math.cos((Math.PI * k) / step)) / 2;
-    out[i] = a + (b - a) * s;
-  }
-  return out;
-}
-
-/** A bandpass whose centre MOVES (`f0(t)` Hz, t in seconds) - coefficients recomputed every 32 samples. */
-function bandSweep(x, f0, q) {
-  const out = new Float32Array(x.length);
-  let x1 = 0, x2 = 0, y1 = 0, y2 = 0;
-  let b0 = 0, b2 = 0, a1 = 0, a2 = 0;
-  for (let i = 0; i < x.length; i++) {
-    if (i % 32 === 0) {
-      const w = (2 * Math.PI * Math.min(f0(i / RATE), RATE * 0.45)) / RATE, cw = Math.cos(w), sw = Math.sin(w);
-      const alpha = sw / (2 * q), a0 = 1 + alpha;
-      b0 = alpha / a0; b2 = -alpha / a0; a1 = (-2 * cw) / a0; a2 = (1 - alpha) / a0;
-    }
-    const y = b0 * x[i] + b2 * x2 - a1 * y1 - a2 * y2;
-    x2 = x1; x1 = x[i]; y2 = y1; y1 = y;
-    out[i] = y;
-  }
-  return out;
-}
 
 /** Skin meeting stone: a noise burst through the palm's band and a brighter tick of the fingertips over it. */
 function slap(rand, { f0 = 1300, q = 0.9, tau = 0.006, tip = 2800, tipGain = 0.35 } = {}) {
@@ -107,28 +53,6 @@ function slap(rand, { f0 = 1300, q = 0.9, tau = 0.006, tip = 2800, tipGain = 0.3
   envelope(tips, (i) => attack(i, 0.2) * decay(i, tau * 0.5));
   mix(out, unit(tips), 0, tipGain);
   return unit(out);
-}
-
-/** A rub of `len` s: noise through `f0`'s band, dragged unevenly (`rough`), swelling in over `inMs` and dying on `tau`. */
-function rub(rand, len, { f0 = 1800, q = 1.5, hz = 120, inMs = 10, tau = 0.04, depth = 0.85 } = {}) {
-  const n = seconds(len);
-  const x = biquad(noise(n, rand), { type: 'bandpass', f0, q });
-  const r = rough(n, rand, hz);
-  for (let i = 0; i < n; i++) x[i] *= (1 - depth + depth * r[i]) * attack(i, inMs) * decay(i, tau);
-  return unit(x);
-}
-
-/** Short bandpassed ticks at uneven times, loudest first on average - grit coming away, debris. */
-function grit(out, rand, { count, from, to, lo = 2200, hi = 4400, tauLo = 0.0015, tauHi = 0.004, gain = 0.3, q = 1.8 }) {
-  for (let k = 0; k < count; k++) {
-    const at = from + (to - from) * Math.pow(rand(), 1.5);
-    const f0 = lo + (hi - lo) * rand();
-    const tau = tauLo + (tauHi - tauLo) * rand();
-    const t = biquad(noise(seconds(tau * 8), rand), { type: 'bandpass', f0, q });
-    envelope(t, (i) => attack(i, 0.15) * decay(i, tau));
-    mix(out, unit(t), at, gain * (0.4 + 0.6 * rand()) * (1 - 0.55 * (at - from) / Math.max(1e-6, to - from)));
-  }
-  return out;
 }
 
 // ---- the clips ----------------------------------------------------------

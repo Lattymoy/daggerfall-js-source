@@ -1,0 +1,18 @@
+-- STAFF-BANNED (2026-10-23, mob: "player that are banned need to be taken out of staff panel list of players we need a tab
+-- for banned players as well", "add a ban status as well to player list", "so we can filter them"): THE BANNED READS ON AN
+-- INDEX OF THEIR OWN (server-account/src/staffCases.js /v1/staff/banned, the Banned tab; server-account/src/staffPlayers.js
+-- /v1/staff/players with `ban: 'banned'`).
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI), before the Worker that reads
+-- by it. An index only: no row is written or moved.
+--
+-- A ban is `players.banned_until` (SAFE4, 0126; BAN_FOREVER for good). Nothing indexed it, so "every account banned now"
+-- walked every account to find the few it lists - its cost grew with the realm, not with the bans. This one holds the
+-- accounts that carry a ban, lapsed or standing (an unban clears the column, sanctions.js unbanAccount), by its end and
+-- then the account's id: the Banned tab's order (the ban that lifts soonest first) and its cursor walk it forward and sort
+-- nothing, and `banned_until > now` skips the lapsed. A ban is written at a ban and an unban alone, never by a checkpoint
+-- or a play beat, and an account with no ban has no entry, so it costs every other write nothing. The condition is
+-- implied by the reads' own `banned_until > ?` (SQLite takes a comparison on a column as its IS NOT NULL).
+CREATE INDEX IF NOT EXISTS players_banned ON players (banned_until, id) WHERE banned_until IS NOT NULL;

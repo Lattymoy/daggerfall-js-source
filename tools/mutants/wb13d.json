@@ -1,66 +1,67 @@
 [
   {
     "name": "WB13d-no-flash",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "    setBatchHitFlash(batch, s.fell ? 0 : gateHitFlash(hurtAt, courtFlashAt, t));\n",
     "new": "",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-the-court-s-whole",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "GATE_FLASH_COURT * hitFlashStrength((now - courtAt) / 1000)",
     "new": "hitFlashStrength((now - courtAt) / 1000)",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-a-sliver-flashing",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "hpFlashSeen - s.hp >= s.max * GATE_FLASH_SHARE",
     "new": "hpFlashSeen - s.hp > 0",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-a-flash-on-his-falling-body",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "setBatchHitFlash(batch, s.fell ? 0 : gateHitFlash(",
     "new": "setBatchHitFlash(batch, gateHitFlash(",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-the-host-never-flashing",
-    "file": "src/scenes/gateHost.js",
+    "file": "src/scenes/gate/gateHost.js",
     "old": "    setBatchHitFlash(b.batch, gateHitFlash(b.hurtAt, b.courtAt ?? -Infinity, t));\n",
     "new": "",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-the-host-court-unseen",
-    "file": "src/scenes/gateHost.js",
+    "file": "src/scenes/gate/gateHost.js",
     "old": "        if (a.h < b.hp) b.courtAt = t;   // WB13d: the court's blow on it, seen\n",
     "new": "",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-the-number-shown",
     "file": "src/ui/hitNumbers.js",
-    "old": "  if (r.target?.warded) return { kind: 'warded', text: 'Warded', tag: null };\n",
+    "old": "  if (r.target?.warded) return { kind: 'warded', text: r.target.wardText || 'Warded', tag: null };\n",
     "new": "",
     "tests": [
-      "test/wb13d_blows.test.js"
-    ]
+      "test/ui/gate/wb13d_blows.test.js"
+    ],
+    "why": "PIN MOVED (FIELD BUGS 2026-10-18f TURNED-BLOW): the warded number's line carries the stand-in's own word now"
   },
   {
     "name": "WB13d-the-word-on-any-blow",
@@ -68,7 +69,7 @@
     "old": "if (r.target?.warded) return",
     "new": "if (r.target) return",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
@@ -77,8 +78,8 @@
     "old": "      else shakePlayerDamage(dmg);\n",
     "new": "",
     "tests": [
-      "test/wb13d_blows.test.js",
-      "test/wb4_gate_boss.test.js"
+      "test/ui/gate/wb13d_blows.test.js",
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
@@ -87,8 +88,8 @@
     "old": "      if (!el) flashPlayerDamage(dmg);\n      else shakePlayerDamage(dmg);",
     "new": "      flashPlayerDamage(dmg);",
     "tests": [
-      "test/wb13d_blows.test.js",
-      "test/wb4_gate_boss.test.js"
+      "test/ui/gate/wb13d_blows.test.js",
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
@@ -97,153 +98,153 @@
     "old": "export function shakePlayerDamage(amount = 0) { _removeHealthListener?.(amount); }",
     "new": "export function shakePlayerDamage(amount = 0) { playerDamageFlash.flash(); _removeHealthListener?.(amount); }",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-the-shake-for-every-landing",
-    "file": "src/world/gateBoss.js",
-    "old": "const landShake = (A, d) => { const w = LAND_SHAKE[A?.key]; return !w ? 0 :",
-    "new": "const landShake = (A, d) => { const w = LAND_SHAKE[A?.key]; return !w ? 1 :",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "const w = LAND_SHAKE[SHAKE_AS[A?.key] ?? A?.key]; return !w ? 0 :",
+    "new": "const w = LAND_SHAKE[SHAKE_AS[A?.key] ?? A?.key]; return !w ? 1 :",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-the-distance-ignored",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "w[0] * Math.max(0, 1 - d / w[1])",
     "new": "w[0]",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-the-landing-unfelt",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "burstsOf(atk, A, P); feltLanding(s, t, A, atk); }",
     "new": "burstsOf(atk, A, P); }",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-the-meteor-felt-at-him",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "const away = A.aim === 'players' ? atk.tg ?? NONE : A === ATTACKS.meteor ? (atk.tg?.length ? [atk.tg[0]] : NONE) : null;",
     "new": "const away = null;",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-the-flare-back-on-his-chest",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": ": lit(color, 2.4, GLOW_RANGE.landing, floor);",
     "new": ": lit(color, 2.4, GLOW_RANGE.landing);",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-the-meteor-s-light-at-him",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "away = !!fxBurstOf(A)?.light;",
     "new": "away = false;",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-a-light-that-never-fades",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "if (!L0 || !(age >= 0) || age >= FX_LIGHT_MS) continue;",
     "new": "if (!L0 || !(age >= 0)) continue;",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-no-release",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "{ setMark(released, atk); if (t < atk.at) sound(bossCue('release', A, P), s, t, atk); }",
     "new": "{ setMark(released, atk); }",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-a-release-every-frame",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "if (A && !marked(released, atk) && t >= atk.at - RELEASE_LEAD_MS) { setMark(released, atk);",
     "new": "if (A && t >= atk.at - RELEASE_LEAD_MS) { setMark(released, atk);",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-the-cleave-back-by-the-slam",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "    cleave: voice(B.barkSound, 0.96),",
     "new": "    cleave: voice(B.barkSound, 0.86),",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-his-aspect-not-loosed",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "if (kind === 'windup' || kind === 'release') return",
     "new": "if (kind === 'windup') return",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-the-cast-swung",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "frame: cast ? CAST_RAISE_FRAME : tel.t < 0.5 ? 0 : 1,",
     "new": "frame: tel.t < 0.5 ? 0 : 1,",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-the-cast-loosed-as-a-swing",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "frame: cast ? CAST_LOOSE_FRAME : 2 + played,",
     "new": "frame: 2 + played,",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-the-swing-cast",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "const cast = !!A.el;",
     "new": "const cast = true;",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   },
   {
     "name": "WB13d-the-old-63-degrees",
-    "file": "src/render/gateFx.js",
+    "file": "src/render/gate/gateFx.js",
     "old": "export const METEOR_ELEV_DEG = 35;",
     "new": "export const METEOR_ELEV_DEG = 63;",
     "tests": [
-      "test/wb13d_blows.test.js",
-      "test/wb9e_gate_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js",
+      "test/net/gate/wb9e_gate_blows.test.js"
     ]
   },
   {
     "name": "WB13d-the-old-1100-ms",
-    "file": "src/render/gateFx.js",
+    "file": "src/render/gate/gateFx.js",
     "old": "export const METEOR_FALL_MS = 1700;",
     "new": "export const METEOR_FALL_MS = 1100;",
     "tests": [
-      "test/wb13d_blows.test.js",
-      "test/wb9e_gate_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js",
+      "test/net/gate/wb9e_gate_blows.test.js"
     ]
   },
   {
@@ -252,7 +253,7 @@
     "old": "    shake: (amount) => betterAmbience.weaponKick(amount),   // WB13d: his landings near me felt, under the player's own maxShake\n",
     "new": "",
     "tests": [
-      "test/wb13d_blows.test.js"
+      "test/ui/gate/wb13d_blows.test.js"
     ]
   }
 ]

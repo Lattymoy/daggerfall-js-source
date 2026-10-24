@@ -1,0 +1,62 @@
+[
+  {
+    "name": "HUD-HEAD-replaced-kept",
+    "file": "src/ui/hud/hudLarge.js",
+    "old": "  if (was?.mwKey && was !== h) release(was.mwKey);\n",
+    "new": "",
+    "tests": [
+      "test/ui/hud/fb1018_hudhead.test.js"
+    ],
+    "why": "the leak: every helm change leaves its head on the GPU"
+  },
+  {
+    "name": "HUD-HEAD-late-put-up",
+    "file": "src/ui/hud/hudLarge.js",
+    "old": "  if (!art || want !== now) { if (h.mwKey) release(h.mwKey); return false; }",
+    "new": "  if (!art) { if (h.mwKey) release(h.mwKey); return false; }",
+    "tests": [
+      "test/ui/hud/fb1018_hudhead.test.js"
+    ],
+    "why": "a slow load puts the helm just taken off back on the bar"
+  },
+  {
+    "name": "HUD-HEAD-late-kept",
+    "file": "src/ui/hud/hudLarge.js",
+    "old": "  if (!art || want !== now) { if (h.mwKey) release(h.mwKey); return false; }",
+    "new": "  if (!art || want !== now) { return false; }",
+    "tests": [
+      "test/ui/hud/fb1018_hudhead.test.js"
+    ],
+    "why": "a late answer's picture left on the GPU"
+  },
+  {
+    "name": "HUD-HEAD-name-unreturned",
+    "file": "src/ui/hud/hudLarge.js",
+    "old": "w: mw.width, h: mw.height, mwKey }; }",
+    "new": "w: mw.width, h: mw.height }; }",
+    "tests": [
+      "test/ui/hud/fb1018_hudhead.test.js"
+    ],
+    "why": "a head that cannot be released by name"
+  },
+  {
+    "name": "HUD-HEAD-by-hand",
+    "file": "src/ui/hud/hudLarge.js",
+    "old": "loadHudLargeHead(deps, entity).then((h) => swapHudHead(_art, key, _headKey, h, (k) => deps.renderer?.releaseTexture?.('img', k)));",
+    "new": "loadHudLargeHead(deps, entity).then((h) => { if (h) _art.head = h; });",
+    "tests": [
+      "test/ui/hud/fb1018_hudhead.test.js"
+    ],
+    "why": "AUDIT FB1018 L3-4: the bar installing a head by hand - the law skipped, the old picture kept, a late answer put up"
+  },
+  {
+    "name": "HUD-HEAD-first-key-late",
+    "file": "src/ui/hud/hudLarge.js",
+    "old": "        _headKey = a ? want : null;",
+    "new": "        _headKey = a ? headKeyFor(entity) : null;",
+    "tests": [
+      "test/ui/hud/fb1018_hudhead.test.js"
+    ],
+    "why": "AUDIT FB1018 L3-3: a helm put on while the first head renders is never asked for"
+  }
+]

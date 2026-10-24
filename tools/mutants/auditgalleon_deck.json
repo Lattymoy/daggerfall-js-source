@@ -5,7 +5,7 @@
     "old": "deck.keep(local[0], local[2], was ? was[1] : local[1], piece, local);",
     "new": "if (Number.isNaN(floor)) deck.clamp(local[0], local[2], local); else local[1] = floor;",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "the floor nearest its height at any distance from any piece again: a boarder on the port flight dropped onto her great cabin's floor, a foe in her cabin lifted onto a tread or her castle's roof"
   },
@@ -15,9 +15,9 @@
     "old": "      if (p >= 0 && more.piece[n] !== p) continue;\n",
     "new": "",
     "tests": [
-      "test/auditgalleon_deck.test.js",
-      "test/auditnav2_deck.test.js",
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js",
+      "test/systems/naval/auditnav2_deck.test.js",
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "heightAt asked for a piece's floor answers any piece's - the leash sets a body on another piece's floor"
   },
@@ -27,9 +27,9 @@
     "old": "    let best = p > 0 ? NaN : y[j], d = Number.isNaN(best) ? Infinity : Math.abs(best - h);",
     "new": "    let best = y[j], d = Number.isNaN(best) ? Infinity : Math.abs(best - h);",
     "tests": [
-      "test/auditgalleon_deck.test.js",
-      "test/auditnav2_deck.test.js",
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js",
+      "test/systems/naval/auditnav2_deck.test.js",
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "her open deck's floor read as her cabin's - a foe in her cabin snapped up onto the tread or the roof over him"
   },
@@ -39,7 +39,7 @@
     "old": "const at = deck.rail(side, t[2] + (i - (k - 1) / 2) * NAVAL_RAIL_GAP, undefined, mainLevel(deck)), cell",
     "new": "const at = deck.rail(side, t[2] + (i - (k - 1) / 2) * NAVAL_RAIL_GAP), cell",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a party abeam her castle over her flights' treads and her castle's roof again"
   },
@@ -49,7 +49,7 @@
     "old": "    return navalDeckPoint(boat, deck, deck.land(local[0], local[2], local[1]));",
     "new": "    return navalDeckPoint(boat, deck, deck.clamp(local[0], local[2]));",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "the landing her deck's nearest cell at any level again - a tread, her castle's roof, the Carrack's forecastle"
   },
@@ -59,7 +59,7 @@
     "old": "if (!(Math.abs(y[c] - lv) <= DECK_FLOOR)) continue;",
     "new": "if (Number.isNaN(y[c])) continue;",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "if (j < 0) j = nearestCell(x, z, 0, lv, DECK_FLOOR);",
     "new": "if (j < 0) j = nearestCell(x, z, 0);",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a landing where his row holds no main-deck cell (abeam her castle) the nearest cell of any level - her castle's roof, a flight's tread"
   },
@@ -78,7 +78,7 @@
     "old": "if (!(Math.abs(y[c] - lv) <= DECK_FLOOR)) continue;",
     "new": "if (!(Math.abs(y[c] - lv) <= DECK_STEP)) continue;",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "her main deck's band, a step: her flights' foot tread (0.29 m up) in it - a landing aft of it set down on her second tread"
   },
@@ -88,7 +88,7 @@
     "old": "      if (Math.abs(on - h) <= DECK_STEP) { out[0] = x; out[1] = on; out[2] = z; return out; }\n",
     "new": "",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a body already on her castle's roof or a tread put down on her main deck"
   },
@@ -98,27 +98,27 @@
     "old": "    if (Number.isNaN(h) || Math.abs(h - ringLevel) > ringBand) return;",
     "new": "    if (Number.isNaN(h)) return;",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "the nearest cell at any level: the landing and the lookout's bow off her main deck"
   },
   {
     "name": "AUDIT-GALLEON-D3-feet-own-cell",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "DECK_REACH_M : CAPSULE_RADIUS);",
     "new": "DECK_REACH_M : 0);",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "under her main deck the feet's own cell alone: a man between her guns, on a gun, on her mast's step ashore"
   },
   {
     "name": "AUDIT-GALLEON-D3-twice-a-body",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "DECK_REACH_M : CAPSULE_RADIUS);",
     "new": "DECK_REACH_M : 2 * CAPSULE_RADIUS);",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a reach past the body's own reads the water and a quay round her hull aboard"
   },
@@ -128,7 +128,7 @@
     "old": "deck.nearest(0, mainExt[1] - LOOKOUT_BACK, main)",
     "new": "deck.nearest(0, deckExtentZ(deck)[1] - LOOKOUT_BACK)",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "her whole deck's stem: the Carrack's lookout on her forecastle"
   },
@@ -138,7 +138,7 @@
     "old": "deck.nearest(0, mainExt[1] - LOOKOUT_BACK, main)",
     "new": "deck.nearest(0, mainExt[1] - LOOKOUT_BACK)",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "her main deck's stem's nearest cell at any level: the Carrack's stair, 5.59 m up"
   },
@@ -148,7 +148,7 @@
     "old": "      const j = nearestCell(x, z, 0, level);",
     "new": "      const j = nearestCell(x, z, 0);",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ]
   },
   {
@@ -157,8 +157,8 @@
     "old": "        if (members.some((o) => o !== m && !o.gone && !o.below && Math.hypot(o.pos[0] - bow[0], o.pos[2] - bow[2]) < 0.6)) { m.t = within(rng, CREW_IDLE_S) * 0.25; return; }\n",
     "new": "",
     "tests": [
-      "test/auditgalleon_deck.test.js",
-      "test/auditnav2_crew.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js",
+      "test/systems/naval/auditnav2_crew.test.js"
     ],
     "why": "her lookout walks onto a hand standing at her bow, now her main deck's"
   },
@@ -168,7 +168,7 @@
     "old": "const SIDE_STEPS = Object.freeze([[0, -1], [-1, 0], [1, 0], [0, 1]].map((s) => Object.freeze(s)));",
     "new": "const SIDE_STEPS = Object.freeze([[-1, -1], [0, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [0, 1], [1, 1]].map((s) => Object.freeze(s)));",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a corner step in keepFlights' search again: a flight turning on its landing kept as nodes of no piece's"
   },
@@ -178,7 +178,7 @@
     "old": "          const b = joined(kk * nx + ii, h, all, j);",
     "new": "          const b = joined(kk * nx + ii, h, all);",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a kept way's step read without its tread: the new galleon's castle apart from her open deck"
   },
@@ -188,26 +188,26 @@
     "old": "          if (moves) { lids[k * nx + i].push(y); continue; }",
     "new": "          if (moves) lids[k * nx + i].push(y);",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a part that opens a floor again: her hatch covers 44 cells of deck over her hatchways"
   },
   {
     "name": "AUDIT-GALLEON-D7-unmarked",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "      meshes.push({ positions: out, indices: g.indices, moves: opens(node) });",
     "new": "      meshes.push({ positions: out, indices: g.indices });",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ]
   },
   {
     "name": "AUDIT-GALLEON-D7-every-door-out",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "      if (c.m_IsTrigger || c.m_Enabled === false) continue;",
     "new": "      if (c.m_IsTrigger || c.m_Enabled === false || opens(node)) continue;",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "every part that opens left out whole: her doors' leaves no wall, her great cabin and the Carrack's rooms joined to her open deck"
   },
@@ -217,7 +217,7 @@
     "old": "      if (isFlat && nY > 0 && !moves) {",
     "new": "      if (isFlat && !moves) {",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a face looking down a tread again"
   },
@@ -227,7 +227,7 @@
     "old": "      let made = kept.get(n);\n      if (made) return made;\n      if (!spotCells) {",
     "new": "      let made;\n      if (!spotCells) {",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ]
   },
   {
@@ -236,7 +236,7 @@
     "old": "      const kept = level == null ? spotsMade : spotsAt.get(level) ?? spotsAt.set(level, new Map()).get(level);",
     "new": "      const kept = spotsMade;",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a level's spots kept by the count alone: another level's answered"
   },
@@ -246,7 +246,7 @@
     "old": "    if (offMain(m)) { const s = freeSpot(); if (s && walkTo(m, s)) return; }\n",
     "new": "",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a hand on her castle works and talks up there"
   },
@@ -256,7 +256,7 @@
     "old": "if (offMain(x) || onAMan(x)) x.t = 0;",
     "new": "if (onAMan(x)) x.t = 0;",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "his talk with her officer over, a hand idles on her castle"
   },
@@ -266,7 +266,7 @@
     "old": "|| o === lookout || offMain(o) || atPost(o)) continue;   // AUDIT GN-D10: never a hand off her main deck",
     "new": "|| o === lookout || atPost(o)) continue;",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a hand on her castle sought for a talk",
     "note": "GALLEON'S MERGE of main (PIN MOVED): HOLDINGS' atPost joins the line; the mutant drops offMain alone."
@@ -277,7 +277,7 @@
     "old": "|| offMain(m) || onAMan(m) ? 0 : 1); }",
     "new": "|| onAMan(m) ? 0 : 1); }",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a walk given up on her flight leaves him idling on a tread"
   },
@@ -287,7 +287,7 @@
     "old": "|| offMain(m) || onAMan(m) ? 0 : 1); }",
     "new": "|| offMain(m) ? 0 : 1); }",
     "tests": [
-      "test/auditnav2_crew.test.js"
+      "test/systems/naval/auditnav2_crew.test.js"
     ],
     "why": "a walk ended on a man who stopped beside its end: the two stand merged (AUDIT NAV2 F41's law)"
   },
@@ -297,7 +297,7 @@
     "old": "      for (const at of deck.spots(n, mainLevel(deck))) {",
     "new": "      for (const at of deck.spots(n)) {",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a boarding's musters over her whole deck: on her castle's roof and the Carrack's forecastle"
   },
@@ -307,8 +307,8 @@
     "old": "into[k * nx + i].push(bottom, top);",
     "new": "into[k * nx + i].push(Math.min(ay, by, cy), Math.max(ay, by, cy));",
     "tests": [
-      "test/auditgalleon_deck.test.js",
-      "test/auditnav2_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js",
+      "test/systems/naval/auditnav2_deck.test.js"
     ],
     "why": "each cell a wall stands over walled with its whole triangle's height again - the same face cut two ways two decks, the galleon's castle front walling her flight's tread"
   },
@@ -318,7 +318,7 @@
     "old": "const i0 = Math.max(0, Math.floor((lo - minX) / cell)), i1 = Math.min(nx - 1, Math.floor((hi - minX) / cell));",
     "new": "const i0 = Math.max(0, Math.floor((lo - minX) / cell) - 1), i1 = Math.min(nx - 1, Math.floor((hi - minX) / cell));",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a face on the line between two cells walls the nearer one too - the grid's own rule (a point on the line the farther cell's) unread across x"
   },
@@ -328,7 +328,7 @@
     "old": "const k0 = Math.max(0, Math.floor((Math.min(az, bz, cz) - minZ) / cell)), k1 = Math.min(nz - 1, Math.floor((Math.max(az, bz, cz) - minZ) / cell));",
     "new": "const k0 = Math.max(0, Math.floor((Math.min(az, bz, cz) - minZ) / cell) - 1), k1 = Math.min(nz - 1, Math.floor((Math.max(az, bz, cz) - minZ) / cell));",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a face on the line between two rows walls the nearer row too - the grid's own rule unread across z"
   },
@@ -338,7 +338,7 @@
     "old": "const n = cutTo(R, cutTo(T, 3, R, 2, z0, 1), U, 2, z1, -1);",
     "new": "const n = cutTo(T, 3, U, 2, z0, 1);",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a row's part of a face never cut at the row's far side - a face running fore and aft walls a cell with its height a row on"
   },
@@ -348,7 +348,7 @@
     "old": "const m = cutTo(C, cutTo(U, n, C, 0, x0, 1), D, 0, x1, -1);",
     "new": "const m = cutTo(U, n, D, 0, x0, 1);",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a cell's part of a face never cut at the cell's far side - the castle front's high end walls the flight's cell over its low one"
   },
@@ -358,7 +358,7 @@
     "old": "for (const q of cand[j]) for (let n = 0; n < up.length; n++) if (Math.abs(up[n] - q) < 1e-3) { floorY.push(q); break; }",
     "new": "for (const q of cand[j]) floorY.push(q);",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a face looking down a floor to stand aboard on again - her bottom's and her flare's undersides stand the water round her aboard"
   },
@@ -368,7 +368,7 @@
     "old": "for (let j = 0; j < N; j++) if (comp[j] >= 0 && comp[j] !== big) { y[j] = NaN; top[j] = -1; }",
     "new": "",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "cells of her open deck no walk reaches kept in it - the room under the Carrack's forecastle, her lookout's bow out of every walk"
   },
@@ -378,8 +378,8 @@
     "old": "if (k >= 0 && k < nz) {",
     "new": "if (false) {",
     "tests": [
-      "test/auditgalleon_deck.test.js",
-      "test/livingcrew.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js",
+      "test/systems/naval/livingcrew.test.js"
     ],
     "why": "a landing the nearest main-deck point of all again - a man off her side drawn along it to her entry port's corner"
   },
@@ -389,7 +389,7 @@
     "old": "const j = nearestCell(x, z, piece, level);",
     "new": "const j = nearestCell(x, z, piece);",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "clamp at a level answers any level - a talk's place up the Carrack's forecastle stair beside a hand at its foot"
   },
@@ -399,7 +399,7 @@
     "old": "const p = deck?.clamp?.(tx, tz, undefined, 0, o.station || offMain(o) ? o.pos[1] : main) ?? deck?.clamp?.(tx, tz);",
     "new": "const p = deck?.clamp?.(tx, tz);",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a talk's place at any level - a hand walks two and three treads up a flight to talk with one at its foot"
   },
@@ -409,7 +409,7 @@
     "old": "o.station || offMain(o) ? o.pos[1] : main) ?? deck?.clamp?.(tx, tz);",
     "new": "o.pos[1]) ?? deck?.clamp?.(tx, tz);",
     "tests": [
-      "test/auditgalleon_deck.test.js"
+      "test/systems/naval/auditgalleon_deck.test.js"
     ],
     "why": "a talk's place within a step of the man talked to, never her main deck - one on a flight's foot tread draws the other a tread higher"
   },
@@ -419,7 +419,7 @@
     "old": "if (offMain(x) || onAMan(x)) x.t = 0;",
     "new": "if (offMain(x)) x.t = 0;",
     "tests": [
-      "test/auditnav2_crew.test.js"
+      "test/systems/naval/auditnav2_crew.test.js"
     ],
     "why": "a talk ended while one walked past his mate leaves the two standing merged (the Carrack's 5.8 s, AUDIT NAV2 F41)"
   }

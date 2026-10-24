@@ -14,13 +14,13 @@
 //   swing, exactly as GetBaseDamageMin/Max do.
 // Unity Random slots stay uniform rolls, as in DFU itself.
 
-import { mintCondition, templateByIndex, itemBaseValue, setItemFields, materialValue } from '../systems/itemTemplates.js';   // AUDIT 23 (items-5); F103: SetItem's value; MAC-N1: the one export that writes it; OH-E: the material's value line, one home
+import { mintCondition, templateByIndex, itemBaseValue, setItemFields, materialValue } from '../systems/item/itemTemplates.js';   // AUDIT 23 (items-5); F103: SetItem's value; MAC-N1: the one export that writes it; OH-E: the material's value line, one home
 import { dice100, formulaOverride } from './formulas.js';   // UL1: RandomMaterial / RandomArmorMaterial consult the registry
 import { weaponMinDamage, weaponMaxDamage } from '../characters/weapons.js';   // RRI2: CalculateWeaponMin/MaxDamage through their one home, so a registered override (weaponBalance) reaches the mint
 import { materialArmorValue, itemArmorValue, BODY_PARTS } from '../systems/armorMaterials.js';
-import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';   // AUDIT 24 (wave 41): one home
+import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';   // AUDIT 24 (wave 41): one home
 import { ARROW_TEMPLATE } from '../systems/inventory.js';   // X11b: CreateWeapon's one special case
-import { customItemClass } from '../systems/rriItems.js';   // RRI2: a custom piece's body part is its class's equip slot
+import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js';   // RRI2: a custom piece's body part is its class's equip slot
 
 export { materialArmorValue };
 
@@ -277,6 +277,8 @@ export function enemyArmorValues(entity, armorPieces) {
  *  arm run. */
 let _assigner = null;
 export function setEnemyEquipmentAssigner(fn) { _assigner = typeof fn === 'function' ? fn : null; }
+/** The assigner on the delegate now (null: ItemHelper's) - what a mod that takes the delegate over replaced (DEX6). */
+export const enemyEquipmentAssigner = () => _assigner;
 export function assignEnemyStartingEquipment(entity, variant, playerLevel, { player = null, rolls = Math.random } = {}) {
   const custom = _assigner?.(entity, variant, playerLevel, { player, rolls });
   return custom ?? assignEnemyEquipment(entity, variant, playerLevel, rolls);

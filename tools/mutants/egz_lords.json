@@ -1,0 +1,325 @@
+[
+  {
+    "name": "EGZK-a-birth-without-its-decrees",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "stood: egLordsNew(F, spec, key, now, out, { decrees, n, at })",
+    "new": "stood: egLordsNew(F, spec, key, now, out, { n, at })",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-a-birth-without-its-place",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "stood: egLordsNew(F, spec, key, now, out, { decrees, n, at })",
+    "new": "stood: egLordsNew(F, spec, key, now, out, { decrees, n })",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-a-witness-joined",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "return !!o.admits && up; }",
+    "new": "return up; }",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-joined-to-the-fallen",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "return !!o.admits && up; }",
+    "new": "return !!o.admits; }",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-a-blow-on-anything",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (!L || L.role !== EG_ROLE.lord) return { got: 0, b: null };",
+    "new": "if (!L) return { got: 0, b: null };",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-the-lords-weight-dropped",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "(o.x ?? 1) * egLordHitX(f.F, L, sub, pose, r, now), o.bx ?? 1)",
+    "new": "(o.x ?? 1), o.bx ?? 1)",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-the-vestiges-dropped",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "(o.x ?? 1) * egLordHitX(f.F, L, sub, pose, r, now), o.bx ?? 1)",
+    "new": "egLordHitX(f.F, L, sub, pose, r, now), o.bx ?? 1)",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-the-bucket-dropped",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "egLordHitX(f.F, L, sub, pose, r, now), o.bx ?? 1)",
+    "new": "egLordHitX(f.F, L, sub, pose, r, now), 1)",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-his-fall-untold",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (res.got && res.b) return { ...res, got: egLordHit(f.F,",
+    "new": "if (false) return { ...res, got: egLordHit(f.F,",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-the-threat-unweighed",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "{ threatX: o.threatX ?? 1 }) };",
+    "new": "{ threatX: 1 }) };",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-the-beats-context-lost",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "egLordsStep(f.F, f.spec, now, bodies, rng, out, f.ctx); return out;",
+    "new": "egLordsStep(f.F, f.spec, now, bodies, rng, out, {}); return out;",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-the-state-at-another-clock",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "stateOf: (f) => egFightState(f.F, f.now),",
+    "new": "stateOf: (f) => egFightState(f.F, 0),",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-the-judge-off-the-ground",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const hits = judgeShapes(f.F, bodies, now, f.spec);",
+    "new": "const hits = judgeShapes(f.F, bodies, now, {});",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-owed-while-he-stands",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (!f.F || !egLordsFell(f.F)) return false;",
+    "new": "if (!f.F) return false;",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-the-whole-share-asked",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "export const EG_EARN_SHARE = 0.5;",
+    "new": "export const EG_EARN_SHARE = 1;",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-four-halls-asked",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "m.act >= EG_EARN_HALLS);",
+    "new": "m.act > EG_EARN_HALLS);",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-earned-by-the-even-share",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "m.dc >= (total * EG_EARN_SHARE) / n",
+    "new": "m.dc >= total / n",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-the-director-never-joins",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (lf && !EG_SEAM.join(lf, sub, mm.name, mm.lv, now, null, { admits: mm.alive && mm.in && !mm.home })) return land(0);\n",
+    "new": "\n",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-a-lords-blow-past-the-seam",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const r = lf ? EG_SEAM.hit(lf,",
+    "new": "const r = false ? EG_SEAM.hit(lf,",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js",
+      "test/net/eliteGates/egfull_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-every-living-member-earns",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "earners = L.filter(([sub]) => EG_SEAM.earned(earned, sub));",
+    "new": "earners = L.filter(() => earned);",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-the-courts-beat-context-lost",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    out.push(...EG_SEAM.step(egLordsFight(F, spec, lordCtx, now), now, here, rng));   // EG-ZK",
+    "new": "    out.push(...EG_SEAM.step(egLordsFight(F, spec, {}, now), now, here, rng));   // EG-ZK",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js",
+      "test/net/eliteGates/egfull_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-a-lord-walks-straight",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  if (from === to) { egWalk(F, L, gx, gz, stop, speed, now, spec, L.r); return; }",
+    "new": "  { egWalk(F, L, gx, gz, stop, speed, now, spec, L.r); return; }",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-the-graphs-walk-kept",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "if (!wn || (b.mv && Math.abs(b.mv.tx - wn.x) <= 0.011 && Math.abs(b.mv.tz - wn.z) <= 0.011)) return;",
+    "new": "if (!wn || true) return;",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-a-reached-node-forgotten",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "  if (Math.hypot(wn.x - b.x, wn.z - b.z) <= EG_NODE_REACH_M) { b.fr = wn.rg; b.y = cm(view.fl[G.rg[wn.rg].f]?.y ?? 0); }\n",
+    "new": "\n",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-the-hunt-straight",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "} else lordWalk(F, spec, L, m.x, m.z, 0.5, 5.2, now, m.y);",
+    "new": "} else egWalk(F, L, m.x, m.z, 0.5, 5.2, now, spec, L.r);",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-the-approach-straight",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "lordWalk(F, spec, L, target.x, target.z, L.r + 1, L.speed ?? 3.4, now, target.y); continue; }\n    const kit",
+    "new": "egWalk(F, L, target.x, target.z, L.r + 1, L.speed ?? 3.4, now, spec, L.r); continue; }\n    const kit",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-the-colossus-straight",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "lordWalk(F, spec, L, L.x, (L.dir ?? 0) === 0 ? z1 : z0, 0.5, 1.6, now); }",
+    "new": "egWalk(F, L, L.x, (L.dir ?? 0) === 0 ? z1 : z0, 0.5, 1.6, now, spec, L.r); }",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js",
+      "test/net/eliteGates/egfull_relay.test.js"
+    ],
+    "equivalent": true,
+    "why": "The Bound Colossus walks its route down the Forge Gut's one lane (its fight ground is a single region), where a lord's walk IS the straight walk it always walked (lordWalk's own branch: net/eliteGates/egBodies.js egWalk kept on the floor) - the graph has nowhere else to take it. Kept so a forge laid of more than one piece is walked by the graph."
+  },
+  {
+    "name": "EGZK-the-mother-through-rock",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "walkAir(F, egFightView(spec), L, f.x + Math.sin(t) * (f.r - 4), f.z + Math.cos(t) * (f.r - 4), 0.5, 6, now); }",
+    "new": "egWalk(F, L, f.x + Math.sin(t) * (f.r - 4), f.z + Math.cos(t) * (f.r - 4), 0.5, 6, now, spec, 0, true); }",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js",
+      "test/net/eliteGates/egfull_relay.test.js"
+    ],
+    "equivalent": true,
+    "why": "The Mother of Dusk circles over the Gloam glade, open sky with no rock (no covered passage, arch or wall ring in its spec), so the air between any two points is clear and walkAir is net/eliteGates/egBodies.js egWalk's own free walk there. Kept so a flying lord over rock goes about it."
+  },
+  {
+    "name": "EGZK-a-run-through-the-wall",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const cut = egArchCut(view, L.x, L.z, to[0], to[1], L.y);",
+    "new": "const cut = null;",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-a-run-into-the-wall",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "cut[1] - Math.sign(to[1] - L.z) * (L.r + 0.4)]",
+    "new": "cut[1]]",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-a-run-up-the-ledge",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (Math.abs((view.fl[G.rg[at].f].y ?? 0) - (view.fl[G.rg[from].f].y ?? 0)) > EG_LEVEL_M) end =",
+    "new": "if (false) end =",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-a-run-at-another-height",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "\n      && (!b.run || oneLevel(view, L, target)) && (b.ch || egSameStorey(view, L, target)) && !(duel && b.duelNo));",
+    "new": "\n      && (b.ch || egSameStorey(view, L, target)) && !(duel && b.duelNo));",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-the-charge-no-run",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "{ ...CHARGE, sp: ATTACKS.charge.active, run: 1, make:",
+    "new": "{ ...CHARGE, sp: ATTACKS.charge.active, make:",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-a-run-at-every-height",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  return Math.abs((view.fl[G.rg[a].f].y ?? 0) - (view.fl[G.rg[b].f].y ?? 0)) <= EG_LEVEL_M;",
+    "new": "  return true;",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGZK-the-legions-walk-private",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "export function walkGraph(",
+    "new": "function walkGraph(",
+    "tests": [
+      "test/net/eliteGates/egz_lords.test.js"
+    ]
+  }
+]

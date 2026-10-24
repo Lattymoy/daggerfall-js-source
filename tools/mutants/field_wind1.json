@@ -1,101 +1,101 @@
 [
   {
     "name": "FIELD-WIND1-driver-on-the-riding-loop",
-    "file": "src/systems/windAudio.js",
+    "file": "src/systems/wind/windAudio.js",
     "old": "loop = engine.loop(WIND_BED_KEY, gain) ?? null;",
     "new": "loop = engine.setLoop?.('wind', WIND_BED_KEY, { volume: gain }) ?? null;",
     "tests": [
-      "test/field_wind1.test.js"
+      "test/systems/field_wind1.test.js"
     ]
   },
   {
     "name": "FIELD-WIND1-driver-restarts-every-frame",
-    "file": "src/systems/windAudio.js",
+    "file": "src/systems/wind/windAudio.js",
     "old": "      if (!loop) {\n        if (!engine.registerSamples",
     "new": "      if (true) {\n        if (!engine.registerSamples",
     "tests": [
-      "test/field_wind1.test.js"
+      "test/systems/field_wind1.test.js"
     ]
   },
   {
     "name": "FIELD-WIND1-driver-bed-never-registered",
-    "file": "src/systems/windAudio.js",
+    "file": "src/systems/wind/windAudio.js",
     "old": "if (!engine.registerSamples?.(WIND_BED_KEY, theBed(), WIND_BED_RATE)) return;   // no context yet",
     "new": "// the bed never registered",
     "tests": [
-      "test/field_wind1.test.js"
+      "test/systems/field_wind1.test.js"
     ]
   },
   {
     "name": "FIELD-WIND1-driver-pitch-not-live",
-    "file": "src/systems/windAudio.js",
+    "file": "src/systems/wind/windAudio.js",
     "old": "      loop.setPitch?.(windPitchFor(wd?.strength01 ?? 0));",
     "new": "",
     "tests": [
-      "test/field_wind1.test.js"
+      "test/systems/field_wind1.test.js"
     ]
   },
   {
     "name": "FIELD-WIND1-bed-filtered-once-from-rest",
-    "file": "src/systems/windAudio.js",
+    "file": "src/systems/wind/windAudio.js",
     "old": "for (let pass = 0; pass < 2; pass++) {",
     "new": "for (let pass = 0; pass < 1; pass++) {",
     "tests": [
-      "test/field_wind1.test.js"
+      "test/systems/field_wind1.test.js"
     ]
   },
   {
     "name": "FIELD-WIND1-bed-no-lowpass",
-    "file": "src/systems/windAudio.js",
+    "file": "src/systems/wind/windAudio.js",
     "old": "const l = l0 * b + l1 * b1 + l2 * b2 - l3 * y1 - l4 * y2;",
     "new": "const l = b;",
     "tests": [
-      "test/field_wind1.test.js"
+      "test/systems/field_wind1.test.js"
     ]
   },
   {
     "name": "FIELD-WIND1-bed-narrow-band-a-whistle",
-    "file": "src/systems/windAudio.js",
+    "file": "src/systems/wind/windAudio.js",
     "old": "export const WIND_BED_SHAPE = Object.freeze({ centreHz: 500, q: 0.6, lowpassHz: 1800 });",
     "new": "export const WIND_BED_SHAPE = Object.freeze({ centreHz: 500, q: 12, lowpassHz: 1800 });",
     "tests": [
-      "test/field_wind1.test.js"
+      "test/systems/field_wind1.test.js"
     ]
   },
   {
     "name": "FIELD-WIND1-bed-unlevelled",
-    "file": "src/systems/windAudio.js",
+    "file": "src/systems/wind/windAudio.js",
     "old": "const k = acc > 0 ? rms / Math.sqrt(acc / n) : 0;",
     "new": "const k = 1;",
     "tests": [
-      "test/field_wind1.test.js"
+      "test/systems/field_wind1.test.js"
     ]
   },
   {
     "name": "FIELD-WIND1-bed-at-the-blow's-level",
-    "file": "src/systems/windAudio.js",
+    "file": "src/systems/wind/windAudio.js",
     "old": "export const WIND_BED_RMS = 0.0349;",
     "new": "export const WIND_BED_RMS = 0.0199;",
     "tests": [
-      "test/field_wind1.test.js"
+      "test/systems/field_wind1.test.js"
     ]
   },
   {
     "name": "FIELD-WIND1-bed-unseeded",
-    "file": "src/systems/windAudio.js",
+    "file": "src/systems/wind/windAudio.js",
     "old": "const next = mulberry32(seed);",
     "new": "const next = Math.random;",
     "tests": [
-      "test/field_wind1.test.js"
+      "test/systems/field_wind1.test.js"
     ]
   },
   {
     "name": "FIELD-WIND1-bed-a-second-long",
-    "file": "src/systems/windAudio.js",
+    "file": "src/systems/wind/windAudio.js",
     "old": "export const WIND_BED_SECONDS = 8;",
     "new": "export const WIND_BED_SECONDS = 1;",
     "tests": [
-      "test/field_wind1.test.js"
+      "test/systems/field_wind1.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "brightens as the wind gets up. */\n      setPitch(p) { src.playbackRate.value = p; },",
     "new": "brightens as the wind gets up. */\n      setPitch(p) { void p; },",
     "tests": [
-      "test/field_wind1.test.js"
+      "test/systems/field_wind1.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    if (this.buffers.get(key)) return true;\n    const b = this.ctx.createBuffer(1, samples.length, sampleRate);",
     "new": "    const b = this.ctx.createBuffer(1, samples.length, sampleRate);",
     "tests": [
-      "test/field_wind1.test.js"
+      "test/systems/field_wind1.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "const b = this.ctx.createBuffer(1, samples.length, sampleRate);",
     "new": "const b = this.ctx.createBuffer(1, samples.length, SAMPLE_RATE);",
     "tests": [
-      "test/field_wind1.test.js"
+      "test/systems/field_wind1.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    const b = this.ctx.createBuffer(1, samples.length, sampleRate);\n    b.getChannelData(0).set(samples);",
     "new": "    const b = this.ctx.createBuffer(1, samples.length, sampleRate);",
     "tests": [
-      "test/field_wind1.test.js"
+      "test/systems/field_wind1.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    this._ensureCtx();\n    if (!this.ctx) return false;\n    if (this.buffers.get(key)) return true;",
     "new": "    this._ensureCtx();\n    if (!this.ctx) return true;\n    if (this.buffers.get(key)) return true;",
     "tests": [
-      "test/field_wind1.test.js"
+      "test/systems/field_wind1.test.js"
     ]
   }
 ]

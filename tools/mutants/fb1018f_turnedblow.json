@@ -1,0 +1,444 @@
+[
+  {
+    "name": "TURNED-BLOW-ground-rule-gone",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "  return !egGroundAt(view, x, y, z, EG_STRIKE_PAD_M) && !(b?.role === EG_ROLE.obj",
+    "new": "  return false && !(b?.role === EG_ROLE.obj",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "the imps: a blow from a span's platform lands on the relay's own law, and the screen offers it whole"
+  },
+  {
+    "name": "TURNED-BLOW-pad-dropped",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "  return !egGroundAt(view, x, y, z, EG_STRIKE_PAD_M) && !(b?.role === EG_ROLE.obj",
+    "new": "  return !egGroundAt(view, x, y, z, 0) && !(b?.role === EG_ROLE.obj",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "a blow from the floor's edge, within the pose's pad, refused"
+  },
+  {
+    "name": "TURNED-BLOW-ward-out-of-set",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "export const EG_TURNS_FL = EG_FL.friend | EG_FL.hidden | EG_FL.ward;",
+    "new": "export const EG_TURNS_FL = EG_FL.friend | EG_FL.hidden;",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "a Vengeful Shade's ward: the relay lands nothing, the screen heals on it"
+  },
+  {
+    "name": "TURNED-BLOW-friend-out-of-set",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "export const EG_TURNS_FL = EG_FL.friend | EG_FL.hidden | EG_FL.ward;",
+    "new": "export const EG_TURNS_FL = EG_FL.hidden | EG_FL.ward;",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "a friend of the company taken for a body a blow lands on"
+  },
+  {
+    "name": "TURNED-BLOW-vanished-out-of-set",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "export const EG_TURNS_FL = EG_FL.friend | EG_FL.hidden | EG_FL.ward;",
+    "new": "export const EG_TURNS_FL = EG_FL.friend | EG_FL.ward;",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "a vanished lord taken for a body a blow lands on"
+  },
+  {
+    "name": "TURNED-BLOW-sleeper-dropped",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "export const egLordAsleep = (b) => b?.role === EG_ROLE.lord && !egHas(b, EG_FL.mirror) && !(b.ph > 0);",
+    "new": "export const egLordAsleep = (b) => false;",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "a Court's lord asleep in its ring: the relay takes nothing, the screen heals on it"
+  },
+  {
+    "name": "TURNED-BLOW-mirror-a-sleeper",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "b?.role === EG_ROLE.lord && !egHas(b, EG_FL.mirror) && !(b.ph > 0);",
+    "new": "b?.role === EG_ROLE.lord && !(b.ph > 0);",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "a mirror is stood awake and says no phase - taken for a sleeper, it could never be struck"
+  },
+  {
+    "name": "TURNED-BLOW-screen-turn-dropped",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      turnStandIn(d.target, b);   // FIELD BUGS 2026-10-18f TURNED-BLOW: a blow from where I stand, on it as it stands, that the relay will refuse is turned here too\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "the bug as shipped: the stand-in never warded - the swing bleeds the imp, sends the blow and heals the whole claim"
+  },
+  {
+    "name": "TURNED-BLOW-object-turn-dropped",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      turnStandIn(c.target, b);   // FIELD BUGS 2026-10-18f TURNED-BLOW: an errand's object struck from traversal ground (but one standing off the floor, struck from beside it)\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "a rift struck from the arrival plate offered whole"
+  },
+  {
+    "name": "TURNED-BLOW-turn-kept-off",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    e.warded = off || egStrikeTurned(view, b, at[0], at[1], at[2], now(), spec);",
+    "new": "    e.warded = false;",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "PIN MOVED (AUDIT FB1018f L3-6): the screen's ask hands the body's instant (its storey where it stands now); the turn worked out and never laid on the stand-in the heals read"
+  },
+  {
+    "name": "TURNED-BLOW-flags-unasked",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    e.warded = off || egStrikeTurned(view, b, at[0], at[1], at[2], now(), spec);",
+    "new": "    e.warded = off;",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "PIN MOVED (AUDIT FB1018f L3-6): the screen's ask hands the body's instant (its storey where it stands now); the screen asks the ground alone - a ward and a sleeper offered whole"
+  },
+  {
+    "name": "TURNED-BLOW-strike-feet-lost",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      strikeAt = standing ? _strikeAt : null;",
+    "new": "      strikeAt = null;",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "no feet read: every blow turned, the fight ground's too"
+  },
+  {
+    "name": "TURNED-BLOW-sent-anyway",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      if (!b || (drawn.get(i)?.target ?? crystalSlots.get(i)?.target)?.entity?.warded) return false;",
+    "new": "      if (!b) return false;",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "a turned blow still sent, and still flashing the body as mine"
+  },
+  {
+    "name": "TURNED-BLOW-no-word",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    e.wardText = off && at ? egNoFooting() : null;",
+    "new": "    e.wardText = null;",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "a blow from the platform says Warded - the imp has no ward, the ground turned it"
+  },
+  {
+    "name": "TURNED-BLOW-ground-word-on-a-ward",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    e.wardText = off && at ? egNoFooting() : null;",
+    "new": "    e.wardText = egNoFooting();",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "a ward's blow on the fight ground told it had no footing"
+  },
+  {
+    "name": "TURNED-BLOW-hud-word-dropped",
+    "file": "src/ui/hitNumbers.js",
+    "old": "text: r.target.wardText || 'Warded', tag: null };",
+    "new": "text: 'Warded', tag: null };",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "the number never says the ground's word"
+  },
+  {
+    "name": "TURNED-BLOW-swing-ring-dropped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (hb.entity.warded) wardTurns(hb);   // FIELD BUGS 2026-10-18f TURNED-BLOW: a blow its referee turns whole (the Spire's - scenes/eliteGates/egFight.js turnStandIn) rings off it as his ward does: no blood, nothing sent\n    else if (damage <= 0) {",
+    "new": "    if (damage <= 0) {",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "a turned swing bleeds the body and sends its number"
+  },
+  {
+    "name": "TURNED-BLOW-shaft-ring-dropped",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "            if (hb.entity.warded) { wardTurns(hb); reportPlayerAttack({ hit: true, damage: 0, target: hb.entity }); }   // FIELD BUGS 2026-10-18f TURNED-BLOW: a shaft its referee turns whole rings off it, as his ward turns one - AUDIT FB1018f L3-7: and says its word, as a swing's formula does on the same stand-in (\"No footing\", \"Warded\")\n            else playerArrowHitFoe(m, hb,",
+    "new": "            playerArrowHitFoe(m, hb,",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "PIN MOVED (AUDIT FB1018f L3-7): the turned shaft says its word beside its ring; a turned shaft runs the arrow law - its blood, its number out"
+  },
+  {
+    "name": "TURNED-BLOW-wake-phase-unsaid",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "later: every blow the relay lands meanwhile, the screen turned\n    out.push({ k: 'eph', i: L.i, ph: L.ph });",
+    "new": "later: every blow the relay lands meanwhile, the screen turned\n",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-1: a lord woken says no phase until the whole fight's word - up to two seconds of every blow the relay lands turned on the screen"
+  },
+  {
+    "name": "TURNED-BLOW-wake-a-phase-turn",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "phases: w.ph > 1 ? keepLast(f.phases, { i: w.i, ph: w.ph, at: now }, 6) : f.phases",
+    "new": "phases: keepLast(f.phases, { i: w.i, ph: w.ph, at: now }, 6)",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-1: the wake's first phase folded as a phase turn - a growl over the wake's roar"
+  },
+  {
+    "name": "TURNED-BLOW-storey-unasked-on-screen",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "  return egStoreyApart(view, x, y, z, bx, b.mv ? egWalkY(b.mv, now) : b.y, bz, false);",
+    "new": "  return false;",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-6: a Harrier a storey over me offered, sent and leeched while the relay lands nothing"
+  },
+  {
+    "name": "TURNED-BLOW-storey-at-the-word",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "bx, b.mv ? egWalkY(b.mv, now) : b.y, bz, false);",
+    "new": "bx, b.y, bz, false);",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-6: a walking body's storey read at its word's height, not where its walk has carried it"
+  },
+  {
+    "name": "TURNED-BLOW-storey-instant-unhanded",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "egStrikeTurned(view, b, at[0], at[1], at[2], now(), spec);",
+    "new": "egStrikeTurned(view, b, at[0], at[1], at[2], undefined, spec);",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-6: the screen asks the storey at the body's word, never where it stands now"
+  },
+  {
+    "name": "TURNED-BLOW-radius-one-for-all",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "export const egRadiusWire = (b) => r2(Number.isFinite(b?.r) ? b.r : 0.6);",
+    "new": "export const egRadiusWire = (b) => 1;",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-4: one radius said for every body - the screen judges a spring or a spark off a floor's edge as the relay does not"
+  },
+  {
+    "name": "TURNED-BLOW-radius-unsaid-risen",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "r: bodies.map(egRadiusWire), at: now });",
+    "new": "at: now });",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-4: a body risen says no radius - the screen judges its object at 1 m"
+  },
+  {
+    "name": "TURNED-BLOW-radius-unsaid-whole",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "b: live.map((b) => egBodyWire(b, now)), r: live.map(egRadiusWire), bl:",
+    "new": "b: live.map((b) => egBodyWire(b, now)), bl:",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-4: the whole fight says no radius - a joiner's screen judges every object at 1 m"
+  },
+  {
+    "name": "TURNED-BLOW-radius-dropped-by-wire-risen",
+    "file": "src/net/wire.js",
+    "old": "{ k: 'ead', a, ...(r ? { r } : {}), at: m.at }",
+    "new": "{ k: 'ead', a, at: m.at }",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-4: the wire drops a risen body's radius"
+  },
+  {
+    "name": "TURNED-BLOW-radius-dropped-by-wire-whole",
+    "file": "src/net/wire.js",
+    "old": "b, ...(r ? { r } : {}), bl, tx, mk",
+    "new": "b, bl, tx, mk",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-4: the wire drops the whole fight's radii"
+  },
+  {
+    "name": "TURNED-BLOW-radius-short-list-kept",
+    "file": "src/net/wire.js",
+    "old": "Array.isArray(r) && r.length === n && r.every(",
+    "new": "Array.isArray(r) && r.every(",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-4: a radius list that does not match the rows is kept - a radius on the wrong body"
+  },
+  {
+    "name": "TURNED-BLOW-radius-negative-kept",
+    "file": "src/net/wire.js",
+    "old": "finite(v) && v >= 0 && v <= EG_XZ_MAX",
+    "new": "finite(v) && v <= EG_XZ_MAX",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-4: a negative radius kept"
+  },
+  {
+    "name": "TURNED-BLOW-radius-malformed-word-kept-risen",
+    "file": "src/net/wire.js",
+    "old": "return a && r !== null && gateMs(m.at)",
+    "new": "return a && gateMs(m.at)",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-4: a risen word with a malformed radius list kept (its list dropped)"
+  },
+  {
+    "name": "TURNED-BLOW-radius-malformed-word-kept-whole",
+    "file": "src/net/wire.js",
+    "old": "return b && r !== null && bl && tx",
+    "new": "return b && bl && tx",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-4: a whole fight with a malformed radius list kept (its list dropped)"
+  },
+  {
+    "name": "TURNED-BLOW-radius-unfolded-risen",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "[egBodyOf(t, now, null, now, w.r?.[j])]",
+    "new": "[egBodyOf(t, now, null, now)]",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-4: the link folds a risen body without its radius"
+  },
+  {
+    "name": "TURNED-BLOW-radius-unfolded-whole",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "egBodyOf(t, now, had?.get(t[0]) ?? null, 0, w.r?.[j])",
+    "new": "egBodyOf(t, now, had?.get(t[0]) ?? null, 0)",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-4: the link folds the whole fight without its radii"
+  },
+  {
+    "name": "TURNED-BLOW-L3-object-radius-half",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "if (Number.isFinite(r)) b.r = r;",
+    "new": "if (Number.isFinite(r)) b.r = r / 2;",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-4 (lane L3's kill mutant, re-aimed from egStruckOff's `b.r ?? 1` to the radius the screen now hears): the screen judges an object at half its radius"
+  },
+  {
+    "name": "TURNED-BLOW-objects-sent-anyway",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "(drawn.get(i)?.target ?? crystalSlots.get(i)?.target)?.entity?.warded",
+    "new": "drawn.get(i)?.target?.entity?.warded",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "lane L3's survivor (L3-send-guard-objects-dropped): an errand's object turned is sent anyway - the door's guard reads the lords' and the adds' stand-ins alone"
+  },
+  {
+    "name": "TURNED-BLOW-turn-plan-only-on-screen",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "const off = !at || egStruckOff(view, b, at[0], at[1], at[2]);",
+    "new": "const off = !at || egStruckOff(view, b, at[0], NaN, at[2]);",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "why": "lane L3's survivor (L3-turn-plan-only-on-screen): the screen's ground rule judged in plan - a member on an arch over the floor offered what the relay refuses"
+  },
+  {
+    "name": "TURNED-BLOW-no-feet-says-footing",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "e.wardText = off && at ? egNoFooting() : null;",
+    "new": "e.wardText = off ? egNoFooting() : null;",
+    "tests": [
+      "test/systems/loot/fb1018f_relayshare.test.js"
+    ],
+    "why": "lane L3's survivor (L3-turn-no-feet-says-footing): standing nowhere, a turned blow says the ground's word"
+  },
+  {
+    "name": "TURNED-BLOW-standing-nowhere-turns-nothing",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    const off = !at || egStruckOff(view, b, at[0], at[1], at[2]);\n    e.warded = off || egStrikeTurned(view, b, at[0], at[1], at[2], now(), spec);",
+    "new": "    const off = !!at && egStruckOff(view, b, at[0], at[1], at[2]);\n    e.warded = off || (!!at && egStrikeTurned(view, b, at[0], at[1], at[2], now()));",
+    "tests": [
+      "test/systems/loot/fb1018f_relayshare.test.js"
+    ],
+    "why": "AUDIT FB1018f L6-7 (lane L6's cross mutant X3c): a screen that holds no feet of mine offers every body whole - the Kiss's +50% and the blow sent on what the relay refuses"
+  },
+  {
+    "name": "TURNED-BLOW-shaft-says-nothing",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "{ wardTurns(hb); reportPlayerAttack({ hit: true, damage: 0, target: hb.entity }); }",
+    "new": "{ wardTurns(hb); }",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-7: a turned shaft rings silently - no \"No footing\", no \"Warded\""
+  },
+  {
+    "name": "TURNED-BLOW-warden-shaft-says-nothing",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "{ wardTurns(boss); reportPlayerAttack({ hit: true, damage: 0, target: boss.entity }); }",
+    "new": "{ wardTurns(boss); }",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js",
+      "test/net/gate/wb4b_gate_blows.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-7: a shaft into the Warden's ward rings silently"
+  },
+  {
+    "name": "TURNED-BLOW-host-spell-number-blind",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "reportPlayerAttack({ hit: true, damage: Math.round(shown), target: body.entity });",
+    "new": "reportPlayerAttack({ hit: true, damage: Math.round(shown) });",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f L3-2: a spell on a turned body pops its claim as a number",
+    "note": "FIELD BUGS 2026-10-19f STAND-IN-WHOLE (HOST-SPLIT): re-aimed by content - the three spell doors left buildDungeonContext as one (scenes/gate/standInSpell.js onBody), and this one line is all three doors' number; the crystal's and the Warden's records, aimed at the copies that are gone, were retired with them"
+  },
+  {
+    "name": "TURNED-BLOW-reach-unasked-on-screen",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "  if (spec && egOutOfReach(spec, x, y, z, b, bx, bz)) return true;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f (the merge with FB1018D): the screen offers a shaft from an island at a body past reach, which the relay refuses - a leech heals the claim"
+  },
+  {
+    "name": "TURNED-BLOW-reach-spec-unhanded",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "egStrikeTurned(view, b, at[0], at[1], at[2], now(), spec);",
+    "new": "egStrikeTurned(view, b, at[0], at[1], at[2], now());",
+    "tests": [
+      "test/net/eliteGates/fb1018f_turnedblow.test.js"
+    ],
+    "why": "AUDIT FB1018f: the screen hands its hall no spec, and the reach off the floor goes unjudged"
+  }
+]

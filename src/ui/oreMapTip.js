@@ -12,12 +12,12 @@
 import { VEIN_TABLES, dungeonVeinTable, regionSignature, UNCONFIRMED_VEIN_TIER, WITNESS, factConfirmed } from '../net/nodeLaw.js';
 import { kingdomOf, KINGDOMS } from '../net/kingdomLaw.js';
 import { minedMaterial } from '../net/professionLaw.js';
-import { materialLabel } from '../systems/profItems.js';
+import { materialLabel } from '../systems/professions/profItems.js';
 import { REGION_NAMES } from '../formats/mapsTables.js';
 
 export const ORE_TIP_TITLE = 'Ore here';
 /** The rule the state line rests on, said where the ground is not yet witnessed. */
-export const ORE_WITNESS_RULE = `Witnessed once ${WITNESS.confirm} players (accounts a week old) gather here`;
+export const ORE_WITNESS_RULE = `Witnessed once ${WITNESS.confirm} players with accounts at least a week old gather here`;
 
 /** An ore as the card names it: DFU's own name, a new ore's without its "Ore" ("Mithril", "Dwarven Scrap"). */
 export const oreWord = (key) => materialLabel(key).replace(/ Ore$/, '');
@@ -28,10 +28,11 @@ const tierOf = (key) => minedMaterial(key)?.tier ?? 0;
 /**
  * The card for one pixel, `{ title, lines }` (ui/eventMapMarks.js readTip's shape), or null where no vein stands (the
  * sea, and every climate without a table).
- * @param {{ climate: number, region?: number|null, fact?: { state: string }|null }} p `fact` the pixel's witnessed
- *   state (net/nodeLaw.js witnessedFact's `state`), null not known
+ * @param {{ climate: number, region?: number|null, fact?: { state: string }|null, surveyed?: boolean }} p `fact` the pixel's witnessed
+ *   state (net/nodeLaw.js witnessedFact's `state`), null not known; `surveyed` (MINE-PERKS) the reader a Surveyor, whose
+ *   veins on such ground are the climate's whole table and only the signature waits (net/nodeLaw.js vein)
  */
-export function oreMapTip({ climate, region = null, fact = null }) {
+export function oreMapTip({ climate, region = null, fact = null, surveyed = false }) {
   const table = VEIN_TABLES[climate];
   if (!table) return null;
   const sig = Number.isInteger(region) ? regionSignature(region) : null;
@@ -41,10 +42,11 @@ export function oreMapTip({ climate, region = null, fact = null }) {
     const owner = crown ? KINGDOMS[crown].name : REGION_NAMES[/** @type {number} */ (region)] ?? 'This land';
     lines.push(`${owner}'s own ore: ${oreWord(sig.ore)}`);
   }
-  // what the witnesses hold back: the table's veins over the unwitnessed tier, and the signature
-  const held = [...new Set([...table.filter((k) => tierOf(k) > UNCONFIRMED_VEIN_TIER), ...(sig ? [sig.ore] : [])])].map(oreWord);
-  if (factConfirmed(fact)) lines.push('Witnessed ground: all its veins can stand here');
-  else if (!held.length) lines.push('No vein here waits on witnesses');
+  // what the witnesses hold back: the table's veins over the unwitnessed tier, and the signature - MINE-PERKS: from a
+  // Surveyor the signature alone (their own word witnesses the rest), so their card says no vein waits, or only it
+  const held = [...new Set([...(surveyed ? [] : table.filter((k) => tierOf(k) > UNCONFIRMED_VEIN_TIER)), ...(sig ? [sig.ore] : [])])].map(oreWord);
+  if (factConfirmed(fact)) lines.push('Witnessed ground: every vein can appear here');
+  else if (!held.length) lines.push('No vein here needs witnesses');
   else lines.push(fact ? `Not yet witnessed: no ${orList(held)} here yet` : `${orList(held)} only on witnessed ground`, ORE_WITNESS_RULE);
   return { title: ORE_TIP_TITLE, lines };
 }

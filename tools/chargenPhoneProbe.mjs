@@ -24,7 +24,7 @@
 // same, asked once before anything is scrolled.
 //
 // Self-hosting and data-free: its own Vite dev server on a free port (ROOT, default this repository), the REAL wizard
-// (ui/enhancedChargen.js) over a REAL ChargenFlow walked through the flow's own doors - eighteen synthetic careers, a
+// (ui/enhanced/enhancedChargen.js) over a REAL ChargenFlow walked through the flow's own doors - eighteen synthetic careers, a
 // synthetic TAMRIEL2 (one rectangle per homeland, so the map is the real SVG), stand-in lines for TEXT.RSC, and heads
 // the size the real host hands the review (64px CIF records at chargenSession's scale 2: 128px canvases).
 //
@@ -83,7 +83,7 @@ const PAGE = '<!doctype html><html lang="en"><head><meta charset="utf-8">'
 // Self-contained: Playwright ships the function's source, so nothing here may close over the module.
 async function setup() {
   const { ChargenFlow } = await import('/src/ui/chargen.js');
-  const { mountEnhancedChargen } = await import('/src/ui/enhancedChargen.js');
+  const { mountEnhancedChargen } = await import('/src/ui/enhanced/enhancedChargen.js');
   const { RACE_TEMPLATES } = await import('/src/systems/races.js');
   window.__errors = [];
   addEventListener('error', (e) => window.__errors.push(String(e.message)));
@@ -218,8 +218,15 @@ function measure() {
       }
       if (slice ? (b - t < THUMB || rt - l < THUMB)
         : (t > r.top + 0.5 || b < r.bottom - 0.5 || l > r.left + 0.5 || rt < r.right - 0.5)) return false;
-      const hit = document.elementFromPoint((l + rt) / 2, (t + b) / 2);
-      return hit === el || el.contains(hit);
+      // UI-CALM II: a province's name is a plate over its land (enhancedChargen.js mapPane), and a press on it picks
+      // the province - the plate is the province's own press, not a cover over it; and a land is a region, so any
+      // thumb's point of it that shows is a way in (a neighbour's name moved off its own land may lie over the middle)
+      const mine = (hit) => hit === el || el.contains(hit) || (el.matches('path') && !!el.dataset.prov && hit?.dataset?.prov === el.dataset.prov);
+      if (!el.matches('path')) return mine(document.elementFromPoint((l + rt) / 2, (t + b) / 2));
+      for (const fy of [0.5, 0.3, 0.7, 0.15, 0.85]) for (const fx of [0.5, 0.3, 0.7, 0.15, 0.85]) {
+        if (mine(document.elementFromPoint(l + (rt - l) * fx, t + (b - t) * fy))) return true;
+      }
+      return false;
     };
     el.scrollIntoView({ block: 'center', inline: 'center' });
     if (fits()) return null;

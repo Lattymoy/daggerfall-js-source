@@ -1,0 +1,104 @@
+[
+  {
+    "name": "FINE-PEOPLE-the-fine-mends-the-law-alone",
+    "file": "src/systems/standing.js",
+    "old": "changeLegalRep(player, regionIndex, pts, { kind }); raisePeopleForAnswer(player, regionIndex, pts); }",
+    "new": "changeLegalRep(player, regionIndex, pts, { kind }); }",
+    "tests": [
+      "test/systems/fb1016b_finepeople.test.js"
+    ]
+  },
+  {
+    "name": "FINE-PEOPLE-the-penance-mends-the-law-alone",
+    "file": "src/systems/standing.js",
+    "old": "changeLegalRep(player, regionIndex, points, { kind: 'penance' }); raisePeopleForAnswer(player, regionIndex, points); }",
+    "new": "changeLegalRep(player, regionIndex, points, { kind: 'penance' }); }",
+    "tests": [
+      "test/systems/fb1016b_finepeople.test.js"
+    ]
+  },
+  {
+    "name": "FINE-PEOPLE-past-zero",
+    "file": "src/systems/court.js",
+    "old": "  const pts = Math.min(peoplesHalfOwed(after - legalPts) - peoplesHalfOwed(after), -people.rep);",
+    "new": "  const pts = peoplesHalfOwed(after - legalPts) - peoplesHalfOwed(after);",
+    "tests": [
+      "test/systems/fb1016b_finepeople.test.js"
+    ],
+    "note": "FINE-PEOPLE AUDIT S5 (re-aimed by content): the step is the People's half of what the law was owed before the answer less its half of what it is owed after."
+  },
+  {
+    "name": "FINE-PEOPLE-the-whole-not-the-half",
+    "file": "src/systems/court.js",
+    "old": "  const pts = Math.min(peoplesHalfOwed(after - legalPts) - peoplesHalfOwed(after), -people.rep);",
+    "new": "  const pts = Math.min(legalPts, -people.rep);",
+    "tests": [
+      "test/systems/fb1016b_finepeople.test.js"
+    ],
+    "note": "FINE-PEOPLE AUDIT S5 (re-aimed by content): the step is the People's half of what the law was owed before the answer less its half of what it is owed after."
+  },
+  {
+    "name": "FINE-PEOPLE-rounded-up",
+    "file": "src/systems/court.js",
+    "old": "const peoplesHalfOwed = (/** @type {number} */ rep) => Math.trunc(Math.max(0, -rep) / 2);",
+    "new": "const peoplesHalfOwed = (/** @type {number} */ rep) => Math.ceil(Math.max(0, -rep) / 2);",
+    "tests": [
+      "test/systems/fb1016b_finepeople.test.js"
+    ],
+    "note": "FINE-PEOPLE AUDIT S5 (re-aimed by content): the step is the People's half of what the law was owed before the answer less its half of what it is owed after."
+  },
+  {
+    "name": "FINE-PEOPLE-not-spread",
+    "file": "src/systems/court.js",
+    "old": "  changeReputation(store, people.id, pts, true);\n  return pts;",
+    "new": "  changeReputation(store, people.id, pts, false);\n  return pts;",
+    "tests": [
+      "test/systems/fb1016b_finepeople.test.js"
+    ]
+  },
+  {
+    "name": "FINE-PEOPLE-a-liked-name-docked",
+    "file": "src/systems/court.js",
+    "old": "  if (pts <= 0) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1016b_finepeople.test.js"
+    ]
+  },
+  {
+    "name": "FINE-PEOPLE-AUDIT-S5-each-step-truncated-alone",
+    "file": "src/systems/court.js",
+    "old": "  const pts = Math.min(peoplesHalfOwed(after - legalPts) - peoplesHalfOwed(after), -people.rep);",
+    "new": "  const pts = Math.min(Math.trunc(legalPts / 2), -people.rep);",
+    "tests": [
+      "test/systems/fb1016b_finepeople.test.js"
+    ]
+  },
+  {
+    "name": "FINE-PEOPLE-AUDIT-S5-owed-above-zero",
+    "file": "src/systems/court.js",
+    "old": "const peoplesHalfOwed = (/** @type {number} */ rep) => Math.trunc(Math.max(0, -rep) / 2);",
+    "new": "const peoplesHalfOwed = (/** @type {number} */ rep) => Math.trunc(-rep / 2);",
+    "tests": [
+      "test/systems/fb1016b_finepeople.test.js"
+    ]
+  },
+  {
+    "name": "FINE-PEOPLE-AUDIT-S5-the-law-before-misread",
+    "file": "src/systems/court.js",
+    "old": "  const pts = Math.min(peoplesHalfOwed(after - legalPts) - peoplesHalfOwed(after), -people.rep);",
+    "new": "  const pts = Math.min(peoplesHalfOwed(after + legalPts) - peoplesHalfOwed(after), -people.rep);",
+    "tests": [
+      "test/systems/fb1016b_finepeople.test.js"
+    ]
+  },
+  {
+    "name": "FINE-PEOPLE-AUDIT-S5-the-law-of-another-region",
+    "file": "src/systems/court.js",
+    "old": "  const after = player.legalRep?.[regionIndex] ?? 0;",
+    "new": "  const after = 0;",
+    "tests": [
+      "test/systems/fb1016b_finepeople.test.js"
+    ]
+  }
+]

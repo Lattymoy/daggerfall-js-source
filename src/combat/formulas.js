@@ -20,7 +20,7 @@
 // biography adjustments and per-part armor SHIPPED - the first two
 // live in this very file.)
 
-import { MELEE_DISTANCE } from '../characters/enemyMotor.js';   // single source (EnemyAttack.cs:30)
+import { MELEE_DISTANCE } from '../characters/enemy/enemyMotor.js';   // single source (EnemyAttack.cs:30)
 import { CLASSIC_TO_UNITY_RATIO } from '../player/motor.js';   // C15 knockback units
 import { rand } from '../formats/dfRandom.js';
 import { enchantChanceToHitMod, doItemEnchantmentPayloads, PAYLOAD, isEnchantedItem, entityImprovedAdrenalineRush } from '../systems/enchantments.js';   // E1: the enchantment channels + the Strikes payload; AUDIT 39: ImprovesTalents' adrenaline flag lives in the fold's bag   // the monster multi-attack reflex gate (F2)
@@ -38,10 +38,13 @@ import { SPECIAL_ABILITY_BITS, PROFICIENCY_BITS } from '../systems/specialAdvant
 import { weaponMinDamage, weaponMaxDamage, weaponSkillUsed } from '../characters/weapons.js';   // AUDIT 18: GetBaseDamageMin/Max and GetWeaponSkillIDAsShort resolve the TEMPLATE, never a baked field or a display name
 import { equipTableOf, lowerCondition, dfuBlowWear, slotForBodyPart, EQUIP_SLOTS, weaponProficiencyFlag } from '../systems/equip.js';   // C-slice: DamageEquipment; CF1: GetWeaponSkillUsed as a ProficiencyFlag, -1 quirk included
 import { SHIELD_PARTS } from '../systems/armorMaterials.js';
+import { clawMetalDamage } from './clawMetal.js';   // BAL6-GAUNTLETS: the beast's claws take its gauntlets' metal
 import { totalWeight } from '../systems/inventory.js';   // EW1: ItemCollection.GetWeight, the one home for a stack's kg
 import { liveVampirism } from '../systems/racialLive.js';   // VU1: an import-free LEAF - vampirism.js cycles back here through loot.js
 import { breakNormalPowerConcealment } from '../systems/concealment.js';   // wave 31: BreakNormalPowerConcealmentEffects, in its own leaf so this import cannot cycle
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language (an import-free leaf)
 import { blowTaken } from '../systems/blowTaken.js';   // TELL1: what the target takes - a leaf, for the brain that registers into it imports the motor that imports this file
+import { ENEMY_GROUPS, enemyEntityGroup, _resetEnemyGroups } from './enemyGroups.js';   // AUDIT DEX C3: the group switch and its mod door, a leaf
 
 // ---- Dice100.cs verbatim ----
 export const dice100 = (chance, roll01 = Math.random()) => Math.floor(roll01 * 100) < chance;   // Random.Range(0,100) < chance
@@ -57,6 +60,8 @@ export const dice100 = (chance, roll01 = Math.random()) => Math.floor(roll01 * 1
 // name per member, the mod's own install as the only writer.
 const _overrides = new Map();
 export function registerFormulaOverride(name, fn) { if (fn) _overrides.set(name, fn); else _overrides.delete(name); }
+/** The test seam: every override, group, language and skeletal word let go. */
+export function _resetFormulaDoors() { _overrides.clear(); _resetEnemyGroups(); _languages.length = 0; _skeletal.length = 0; }
 export const formulaOverride = (name) => _overrides.get(name) ?? null;
 
 // ---- FormulaHelper.AdjustWeaponHitChanceMod / AdjustWeaponAttackDamage ----
@@ -116,6 +121,8 @@ export const entityMaxEncumbrance = (entity) => {
  *  (`materialIneffective`), verbatim - GetLocalizedText hands it over
  *  with no substitution, so the words are the whole string. */
 export const MATERIAL_INEFFECTIVE_TEXT = 'The material of the weapon you are using is ineffective.';
+/** L10N3d: that line where it is said, in the player's language. */
+export const materialIneffectiveText = () => localizedText('materialIneffective', MATERIAL_INEFFECTIVE_TEXT);
 export const spellPointsFor = (intelligence, multiplier) => Math.floor(intelligence * multiplier);
 export const magicResist = (willpower) => Math.floor(willpower / 10);
 export const toHitModifier = (agility) => Math.floor(agility / 10) - 5;
@@ -166,8 +173,8 @@ export const STRUCK_BODY_PARTS = Object.freeze([0, 0, 1, 1, 1, 2, 2, 2, 3, 3, 3,
 export const calculateStruckBodyPart = (roll01 = Math.random()) => STRUCK_BODY_PARTS[Math.floor(roll01 * STRUCK_BODY_PARTS.length)];
 
 // ---- DFCareer.StructureData attack-modifier bit table ----
-export const ENEMY_GROUPS = Object.freeze({ None: -1, Undead: 0, Daedra: 1, Humanoid: 2, Animals: 3 });
-const GROUP_BITS = Object.freeze([[0x01, 0x10], [0x02, 0x20], [0x04, 0x40], [0x08, 0x80]]);   // [bonus, phobia] per group
+export { ENEMY_GROUPS, registerEnemyGroup, enemyEntityGroup } from './enemyGroups.js';   // AUDIT DEX C3: GetEnemyEntityEnemyGroup's one home
+export const GROUP_BITS = Object.freeze([[0x01, 0x10], [0x02, 0x20], [0x04, 0x40], [0x08, 0x80]]);   // [bonus, phobia] per group (DEX1: exported - a mod's career is packed into the same bits)
 /** DFCareer.GetAttackModifier (DFCareer.cs:817-848), verbatim: the two
  *  bits are decoded EXCLUSIVELY, bonus first - `if (HasFlags(0x01))
  *  result = Bonus; else if (HasFlags(0x10)) result = Phobia;`. The
@@ -188,20 +195,7 @@ export function careerAttackModifier(attackModifierFlags, group) {
   return 0;
 }
 
-/** FormulaHelper.GetEnemyEntityEnemyGroup (FormulaHelper.cs:2746-2805),
- *  verbatim: the switch is on CareerIndex, NOT on MobileEnemy.Affinity.
- *  The four atronachs, the horse and every unlisted career are None.
- *  (Careers whose classic grouping disagrees carry DFU's own comment.) */
-const ENEMY_GROUP_BY_CAREER = Object.freeze({
-  0: 3, 3: 3, 4: 3, 5: 3, 6: 3, 11: 3, 20: 3, 34: 3, 39: 3, 40: 3,          // Animals (39/40 "grouped as undead in classic")
-  1: 2, 2: 2, 7: 2, 8: 2, 9: 2, 10: 2, 12: 2, 13: 2, 14: 2, 16: 2,          // Humanoid
-  21: 2, 22: 2, 24: 2, 41: 2, 42: 2,                                        // (41/42 "grouped as undead in classic")
-  15: 0, 17: 0, 18: 0, 19: 0, 23: 0, 28: 0, 30: 0, 32: 0, 33: 0,            // Undead (17 "grouped as animal in classic")
-  25: 1, 26: 1, 27: 1, 29: 1, 31: 1,                                        // Daedra
-});
-export function enemyEntityGroup(careerIndex) {
-  return ENEMY_GROUP_BY_CAREER[careerIndex] ?? ENEMY_GROUPS.None;
-}
+// FormulaHelper.GetEnemyEntityEnemyGroup and its mod door: combat/enemyGroups.js (AUDIT DEX C3 - one home, a leaf).
 
 // ---- GetBonusOrPenaltyByEnemyType (the DFU always-on port) ----
 /** FormulaHelper.cs:993-1057, verbatim including the ladder's ORDER.
@@ -419,7 +413,10 @@ export function calculateSuccessfulHit(attacker, target, chanceToHitMod, struckB
 }
 
 // ---- CalculateHandToHandAttackDamage ----
-export function handToHandAttackDamage(attacker, target, damageMod, isPlayer, rolls = Math.random) {
+/** BAL10 (bible/05-Combat/Balance-Arc.md section 16; the owner chose "Fix fists' missing bonuses"): AND THE PORT'S BLOW
+ *  MODIFIERS, as the weapon path reads them at its tail (weaponAttackDamage, below) - a player's fists, never the beast's
+ *  claws (BAL6 balanced the curse on its own claws and their metal). `info` is the host's word, the weapon path's own. */
+export function handToHandAttackDamage(attacker, target, damageMod, isPlayer, rolls = Math.random, info = undefined) {
   const h2h = skillValue(attacker, SKILLS.HandToHand);
   const min = handToHandMinDamage(h2h);
   const max = handToHandMaxDamage(h2h);
@@ -430,11 +427,34 @@ export function handToHandAttackDamage(attacker, target, damageMod, isPlayer, ro
   // a strength drain (diseases.js writes signed statMods) moved a
   // player's weapon damage and left their fists untouched.
   if (isPlayer) damage += damageModifier(liveStat(attacker, 'strength'));   // "not applied in classic" for AI - DFU preserves that
+  // BAL6-GAUNTLETS (combat/clawMetal.js): A DEPARTURE - the beast's claws add its gauntlets' metal where the weapon
+  // path's material modifier stands, after Strength and before the enemy-type term
+  if (isPlayer) damage += clawMetalDamage(attacker);
   damage += bonusOrPenaltyByEnemyType(attacker, target);
+  if (isPlayer && !attacker.isInBeastForm) damage = weaponBlowMods(null, damage, attacker, target, info);   // BAL10: the fists' blow modifiers - the Firmament's fist stars, the sets, the loot, the paths
   return damage;
 }
 
 export const SKELETAL_WARRIOR_INDEX = 15;   // MonsterCareers.SkeletalWarrior
+
+/** DEX4b: A MOD'S SKELETAL ENEMY. Daggerfall Enemy Expansion overrides CalculateWeaponAttackDamage with DFU's own body
+ *  but for one test - the Skeletal Warrior's rule (blunt halved, silver doubled) for any enemy whose row says Skeletal
+ *  (BestiaryMod.cs:1587-1630). The port takes that test as a door, so the stock formula's own terms stand under the
+ *  mod. PCAAO's core runs its own copy (combat/pcaao.js pcaaoWeaponAttackDamage) and never asks it, as DFU's PCAAO,
+ *  replacing CalculateAttackDamage whole, never calls the overridden one. `fn(target)` -> true or false, the mod's
+ *  whole test, or null to leave DFU's. AUDIT DEX C2: the mod's test REPLACES DFU's - its override asks the enemy's ID
+ *  (`MobileEnemy.ID == SkeletalWarrior`, :1594) where DFU asks its career (`CareerIndex`, FormulaHelper.cs:740), whose
+ *  class collision makes a Barbarian (143, career 15) a skeleton; under the mod it is none. */
+const _skeletal = [];
+export function registerSkeletalTarget(fn) {
+  if (typeof fn !== 'function') throw new Error('registerSkeletalTarget: a function of (target)');
+  _skeletal.push(fn);
+}
+/** Whether the Skeletal Warrior's rule bites `target`: a mod's word where one answers, else DFU's - its career. */
+export const isSkeletalTarget = (target) => {
+  for (const fn of _skeletal) { const a = fn(target); if (a != null) return a === true; }
+  return target.careerIndex === SKELETAL_WARRIOR_INDEX;
+};
 
 /** RVN2 (bible/12-Enhanced-AI/Feud-Arc.md 13.2): NAMED VETOES on silver's double against a kind it doubles against -
  *  `fn(target) -> true` keeps silver to its plain damage on that target (a Silver-scarred revenant's: its kind's double
@@ -458,7 +478,7 @@ export function silverDoubles(target) {
 export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = Math.random, weaponAnimTime = 0, info = undefined) {
   const wMin = baseDamageMin(weapon), wMax = baseDamageMax(weapon);
   let damage = weaponDamageMods(weapon, wMin + Math.floor(rolls() * (wMax + 1 - wMin))) + damageMod;   // RF1: the weapon's own modifiers over ITS roll, before the swing's mods
-  if (!target.isPlayer && target.careerIndex === SKELETAL_WARRIOR_INDEX) {
+  if (!target.isPlayer && isSkeletalTarget(target)) {   // DEX4b: a mod's skeletal enemy too
     if ((weapon.flags & 0x10) === 0) damage = Math.trunc(damage / 2);   // edged-weapon rule
     if (weapon.material === 2 && silverDoubles(target)) damage *= 2;    // Silver (RVN2: unless a veto keeps it plain)
   }
@@ -480,9 +500,11 @@ export function weaponAttackDamage(attacker, target, damageMod, weapon, rolls = 
  *  A landed backstab speaks: Internal_Strings.csv:57
  *  (`successfulBackstab`), verbatim into PopupMessage (:987-988). */
 export const SUCCESSFUL_BACKSTAB_TEXT = 'Successful backstab!';
+/** L10N3d: that popup where it is said, in the player's language. */
+export const successfulBackstabText = () => localizedText('successfulBackstab', SUCCESSFUL_BACKSTAB_TEXT);
 export function backstabDamage(damage, backstabbingLevel, rolls = Math.random, say = null) {
   if (backstabbingLevel > 1 && dice100(backstabbingLevel, rolls())) {
-    say?.(SUCCESSFUL_BACKSTAB_TEXT);
+    say?.(successfulBackstabText());
     return damage * 3;
   }
   return damage;
@@ -544,7 +566,7 @@ export function dropWeaponIfTargetImmune(weapon, targetEntity) {
  *  slot. Breaks speak and unequip through lowerCondition. */
 export function damageEquipment(attacker, target, damage, weapon, struckBodyPart, { rolls = Math.random, say = null } = {}) {
   // WBX6 (2026-09-26, Swololo on Discord: "I broke one and a half of a weapon during the fight"): A BLOW ON THE WARDEN
-  // OF THE BURNING GATE WEARS NOTHING. His body is a stand-in the relay judges (world/gateBoss.js bossStandIn carries
+  // OF THE BURNING GATE WEARS NOTHING. His body is a stand-in the relay judges (world/gate/gateBoss.js bossStandIn carries
   // `spareGear`), a fight measured in hundreds of blows, and it broke weapons it was never meant to. A departure (Ledger
   // A, WB): every other foe wears the gear as DFU's does, and the override below is never asked for him either.
   if (target?.spareGear) return;
@@ -572,7 +594,7 @@ export function damageEquipment(attacker, target, damage, weapon, struckBodyPart
   }
 }
 
-export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, weaponAnimTime = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null, enchantCtx = null, playerReflexes = null, unaware = false, blowInfo = null } = {}) {
+export function calculateAttackDamage(attacker, target, { weapon = null, damageMod = 0, toHitMod = 0, backstabChance = 0, weaponAnimTime = 0, rolls = Math.random, dfRand = rand, onMonsterHit = null, onInflictPoison = null, say = null, enchantCtx = null, playerReflexes = null, unaware = false, blowInfo = null, blowShare = null, blowWeight = 1 } = {}) {
   if (!attacker || !target) return 0;
   // SOFTCAP1: THE FOE THIS BLOW WAS TRADED WITH, remembered on the player
   // for the tallies that follow it (hit or miss - a swing at a tough foe is
@@ -592,14 +614,14 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // at the tail is past the block the roll is made in.
   let struckPart = -1;
   const report = (damage) => {
-    // DUEL1: a duel opponent's blow is resolved on the DEFENDER's machine with a stub of the striker's sheet
-    // (combat/duelCombat.js duelStub - `isPlayer`, and `peer`): its numbers are the striker's HUD's, never the
-    // defender's, which would pop them as if the defender had struck
+    // DUEL1: a blow between players is rolled with a stub of the striker's sheet (combat/duelCombat.js duelStub -
+    // `isPlayer`, and `peer`) - since INT8 on the striker's own machine, against a neutral stand-in (AUDIT C&C H5): the
+    // stub's report stays quiet, and the host says a miss and the referee's word a hit (reportPlayerAttack, below)
     if (_playerAttackHook && attacker.isPlayer && !attacker.peer) {
       try { _playerAttackHook({ ...notes, damage, attacker, target, weapon }); } catch { /* a HUD is not the formula's problem */ }
     }
     // ARENA-FIX 9/10: every resolution, whoever swung - the arena's judges count the misses and its crowd hears the
-    // critical strikes (scenes/arenaBouts.js attackResolved)
+    // critical strikes (scenes/arena/arenaBouts.js attackResolved)
     if (_resolutionListeners.size) for (const fn of _resolutionListeners.values()) { try { fn({ ...notes, damage, attacker, target, weapon }); } catch { /* a listener is not the blow's problem */ } }
     return damage;
   };
@@ -612,17 +634,23 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // WIDGET-RECOIL (FIELD BUGS 2026-10-03, SlipperyPeasant: "I think the recoil module isnt working either"): a core
   // that rolls its own part hands it back (`onStruck`) - PCAAO's, on by default, rolled one the tail never saw, so the
   // struck hook said -1 on every blow and the Shield Widget's "Attack On Shield" Recoil (its default) never fired
-  const overridden = core ? core(attacker, target, { weapon, damageMod, toHitMod, backstabChance, weaponAnimTime, rolls, dfRand, onMonsterHit, onInflictPoison, say, playerReflexes, notes, onStruck: (part) => (struckPart = part), unaware }) : undefined;
+  const overridden = core ? core(attacker, target, { weapon, damageMod, toHitMod, backstabChance, weaponAnimTime, rolls, dfRand, onMonsterHit, onInflictPoison, say, playerReflexes, notes, onStruck: (part) => (struckPart = part), unaware, blowShare }) : undefined;
   let damage = 0;
+  // TWO-HANDS (AUDIT, bible/05-Combat/Two-Hands.md): THE BLOW'S SHARE - the off hand's (handsLaw.js offHandDamage), a
+  // function of the rolled damage - laid where the blow is rolled, before anything reads it: in the stock core ahead of
+  // the equipment's wear, after a mod's core; so the HUD, the strike listeners (a leech, an echo), the Strikes payloads
+  // and the report all see the blow that landed, never the whole roll. Null for every other blow. (AUDIT 2: a core that
+  // takes the share itself - PCAAO's, ahead of its own wear - says so, `notes.shared`, and is not shared twice.)
+  const shared = (d) => (blowShare && d > 0 ? blowShare(d) : d);
   if (overridden !== undefined) {
-    damage = overridden;
+    damage = notes.shared ? overridden : shared(overridden);
   } else {
   if (weapon && (target.minMetalToHit ?? -1) > weapon.material) {
     // L-slice (AUDIT 23 combat-16): FormulaHelper.cs:576-583 - a
     // too-low weapon material returns 0, and when the attacker is
     // the PLAYER the HUD says so (`materialIneffective`,
     // Internal_Strings.csv:56). Enemies fail silently.
-    if (attacker.isPlayer) say?.(MATERIAL_INEFFECTIVE_TEXT);
+    if (attacker.isPlayer) say?.(materialIneffectiveText());
     notes.ineffective = true;
     return report(0);
   }
@@ -695,7 +723,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
       }
     } else if (calculateSuccessfulHit(attacker, target, chanceToHitMod, struck, rolls, notes)) {
       notes.hit = true;
-      damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls);
+      damage = handToHandAttackDamage(attacker, target, damageModifiers, !!attacker.isPlayer, rolls, { unaware: !!unaware });   // BAL10: the host's word for the fists' blow modifiers too
       // INSIDE the hit, exactly as :627 - see the note below
       const before = damage;
       damage = backstabDamage(damage, backstabChance, rolls, say);
@@ -728,7 +756,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
     if (onInflictPoison) onInflictPoison(attacker, target, weapon.poisonType);
     weapon.poisonType = -1;
   }
-  damage = Math.max(0, damage);
+  damage = shared(Math.max(0, damage));
   // FormulaHelper.cs:699-701: the equipment damages at the TAIL with
   // the clamped value, whatever the hit rolled.
   damageEquipment(attacker, target, damage, weapon, struck, { rolls, say });
@@ -788,7 +816,12 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // admits at zero is HealthLeech's use-stamp. The payloads can
   // modulate the damage (PotentVs +5, LowDamageVs -5) and the total
   // clamps at 0 inside the dispatcher.
-  if (weapon && isEnchantedItem(weapon) && (attacker.isPlayer || damage > 0)) {
+  // TWO-HANDS (AUDIT 2, bible/05-Combat/Two-Hands.md): THE BLOW'S WEIGHT - an off-hand blow is DUAL.OFF_DAMAGE of a blow
+  // (handsLaw.js OFF_HAND_BLOW) for what a blow sets off at its own rate rather than its damage's: on one roll it counts
+  // whole that share of the time, and otherwise sets off neither the weapon's Strikes payloads below (Cast When Strikes'
+  // spell, Potent Vs' five) nor a power's per-blow charge (the strike listeners' `blow`). Every other blow is whole.
+  const whole = !(blowWeight < 1) || rolls() < blowWeight;
+  if (weapon && isEnchantedItem(weapon) && (attacker.isPlayer || damage > 0) && whole) {
     damage = doItemEnchantmentPayloads(PAYLOAD.Strikes, weapon, {
       entity: attacker, target, damage,
       // AUDIT 39: null, not 0 - no caller passes an enchantCtx here, and
@@ -832,7 +865,7 @@ export function calculateAttackDamage(attacker, target, { weapon = null, damageM
   // core's crits, materials and armour, which PCAAO's apply after the blow modifiers), so a power that shares the blow
   // (Ruhn's Cleave) shares what landed, never the number before the struck foe's own armour took its part
   if (attacker.isPlayer && !attacker.peer && !target.isPlayer && damage > 0) {
-    const info = { backstab: notes.backstab };   // RVN1: and whether it was a backstab (the fight's ledger, systems/feudLedger.js)
+    const info = { backstab: notes.backstab, blow: whole };   // RVN1: and whether it was a backstab (the fight's ledger, systems/feudLedger.js); AUDIT 2: whether it counts whole for a per-blow charge
     for (const fn of _playerStrikeListeners.values()) { try { fn(attacker, target, damage, weapon, info); } catch { /* a set is not the blow's problem */ } }
   }
   return report(damage);
@@ -849,9 +882,10 @@ export function registerAttackResolutionListener(name, fn) { if (typeof fn === '
  *  backstab). Reporting only - registered by the enhanced HUD, never by
  *  the classic skin, and no formula reads it. */
 export function setPlayerAttackHook(fn) { _playerAttackHook = fn ?? null; }
-/** DUEL1: a duel blow's resolution, reported through the same seam on the STRIKER's machine. The formula ran on the
- *  DEFENDER's (net/duelSession.js - the defender resolves every blow), whose report stays quiet there (`peer`); the
- *  answer it sent back ({ hit, damage }) is this one's to show. */
+/** DUEL1: a blow between players, reported through the same seam on the STRIKER's machine. Since INT8 the formula runs
+ *  there, on the striker's stub (`peer`, whose own report stays quiet) against a neutral stand-in (AUDIT C&C H5), and the
+ *  host shows a miss at once and a hit at the referee's word ({ hit, damage } - scenes/world.js); the dungeon's court
+ *  boss shows a spell's number through it too (HN1). [DUEL1's defender resolved every blow and sent this answer back.] */
 export function reportPlayerAttack(r) {
   if (!_playerAttackHook || !r) return;
   try { _playerAttackHook({ critical: false, backstab: false, ineffective: false, ...r }); } catch { /* a HUD is not the duel's problem */ }
@@ -896,7 +930,18 @@ const MONSTER_LANGUAGE = new Map([
   [1, SKILLS.Impish], [41, SKILLS.Impish],
   [28, SKILLS.Etiquette], [30, SKILLS.Etiquette], [32, SKILLS.Etiquette], [33, SKILLS.Etiquette],
 ]);
+/** DEX4b: a mod's language (TryGetOverride("GetEnemyEntityLanguageSkill"), :2810-2812) - `fn(entity)` -> a skill, or
+ *  null for DFU's. */
+const _languages = [];
+export function registerEnemyLanguage(fn) {
+  if (typeof fn !== 'function') throw new Error('registerEnemyLanguage: a function of (entity)');
+  _languages.push(fn);
+}
 export function enemyLanguageSkill(entity) {
+  for (const fn of _languages) {
+    const s = fn(entity);
+    if (s != null) return s;
+  }
   if (entity?.isClass) return CLASS_STREETWISE.has(entity.careerIndex) ? SKILLS.Streetwise : SKILLS.Etiquette;
   return MONSTER_LANGUAGE.get(entity?.careerIndex) ?? -1;
 }

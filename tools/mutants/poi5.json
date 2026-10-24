@@ -1,0 +1,173 @@
+[
+  {
+    "name": "POI5-the-weld-unread",
+    "file": "src/poi/uv/uvMesh.js",
+    "old": "          if (list) for (const w of list) {",
+    "new": "          if (false) for (const w of list) {",
+    "tests": [
+      "test/poi/poi5_uv.test.js"
+    ]
+  },
+  {
+    "name": "POI5-a-seam-where-the-uvs-agree",
+    "file": "src/poi/uv/uvMesh.js",
+    "old": "if (triSub[fs[0]] !== triSub[fs[i]] || !sameUvAt(s, fs[0], fs[i], a) || !sameUvAt(s, fs[0], fs[i], b)) { s.seams.add(k); break; }",
+    "new": "if (true) { s.seams.add(k); break; }",
+    "tests": [
+      "test/poi/poi5_uv.test.js"
+    ]
+  },
+  {
+    "name": "POI5-the-turn-sense",
+    "file": "src/poi/uv/uvMesh.js",
+    "old": "    const ru = u * cs + v * sn, rv = -u * sn + v * cs;\n    s.cornerUv[c * 2] = p[0] + ru + move[0];",
+    "new": "    const ru = u * cs - v * sn, rv = u * sn + v * cs;\n    s.cornerUv[c * 2] = p[0] + ru + move[0];",
+    "tests": [
+      "test/poi/poi5_uv.test.js"
+    ]
+  },
+  {
+    "name": "POI5-u-mirrored",
+    "file": "src/poi/uv/uvMesh.js",
+    "old": "  const u = norm3(cross3(n, up));",
+    "new": "  const u = norm3(cross3(up, n));",
+    "tests": [
+      "test/poi/poi5_uv.test.js"
+    ]
+  },
+  {
+    "name": "POI5-the-pins-at-one-point",
+    "file": "src/poi/uv/uvMesh.js",
+    "old": "const pinned = new Map([[p0, [0, 0]], [p1, [dist || 1, 0]]]);",
+    "new": "const pinned = new Map([[p0, [0, 0]], [p1, [0, 0]]]);",
+    "tests": [
+      "test/poi/poi5_uv.test.js"
+    ]
+  },
+  {
+    "name": "POI5-the-cylinder-mirrored",
+    "file": "src/poi/uv/uvMesh.js",
+    "old": "    for (let k = 0; k < 3; k++) { const c = f * 3 + k; s.cornerUv[c * 2] = ang[k] * r; s.cornerUv[c * 2 + 1] = -dot3(d3[k], a); }\n  }\n  keepHandedness(s, faces);",
+    "new": "    for (let k = 0; k < 3; k++) { const c = f * 3 + k; s.cornerUv[c * 2] = ang[k] * r; s.cornerUv[c * 2 + 1] = -dot3(d3[k], a); }\n  }",
+    "tests": [
+      "test/poi/poi5_uv.test.js"
+    ]
+  },
+  {
+    "name": "POI5-the-margin-unkept",
+    "file": "src/poi/uv/uvMesh.js",
+    "old": "    let x = margin, y = margin, rowH = 0;",
+    "new": "    let x = 0, y = 0, rowH = 0;",
+    "tests": [
+      "test/poi/poi5_uv.test.js"
+    ]
+  },
+  {
+    "name": "POI5-the-boxes-unturned",
+    "file": "src/poi/uv/uvMesh.js",
+    "old": "    const turn = rotate ? minAreaTurn(",
+    "new": "    const turn = false ? minAreaTurn(",
+    "tests": [
+      "test/poi/poi5_uv.test.js"
+    ]
+  },
+  {
+    "name": "POI5-the-separator-first",
+    "file": "src/poi/sparseCholesky.js",
+    "old": "    recurse(Int32Array.from(low)); recurse(high);\n    for (const v of sep) out[at++] = v;",
+    "new": "    for (const v of sep) out[at++] = v;\n    recurse(Int32Array.from(low)); recurse(high);",
+    "tests": [
+      "test/poi/poi5_uv.test.js"
+    ]
+  },
+  {
+    "name": "POI5-a-diagonal-summed-twice",
+    "file": "src/poi/sparseCholesky.js",
+    "old": "      if (w > first && ri[w - 1] === ri[p]) { rr[w - 1] += rr[p]; rz[w - 1] += rz[p]; }",
+    "new": "      if (w > first && ri[w - 1] === ri[p]) { rr[w - 1] += 2 * rr[p]; rz[w - 1] += rz[p]; }",
+    "tests": [
+      "test/poi/poi5_uv.test.js"
+    ]
+  },
+  {
+    "name": "POI5-the-direct-solve-unread",
+    "file": "src/poi/uv/uvMesh.js",
+    "old": "  const L = cholesky(F, Ap, Ai, Ar, Az);",
+    "new": "  const L = null;",
+    "tests": [
+      "test/poi/poi5_uv.test.js"
+    ]
+  },
+  {
+    "name": "POI5-shift-never-takes-away",
+    "file": "src/poi/uv/uvEdit.js",
+    "old": "      for (const x of items) { if (add && all) sel.delete(x); else sel.add(x); }",
+    "new": "      for (const x of items) sel.add(x);",
+    "tests": [
+      "test/poi/poi5_uv.test.js"
+    ]
+  },
+  {
+    "name": "POI5-the-drag-gathered",
+    "file": "src/poi/uv/uvEdit.js",
+    "old": "      for (const c of dragStart.corners) { s.cornerUv[c * 2] = kept[c * 2]; s.cornerUv[c * 2 + 1] = kept[c * 2 + 1]; }\n      transformCorners",
+    "new": "      transformCorners",
+    "tests": [
+      "test/poi/poi5_uv.test.js"
+    ]
+  },
+  {
+    "name": "POI5-the-seam-on-the-wrong-edge",
+    "file": "src/poi/uv/uvEdit.js",
+    "old": "        const a = s.weld[s.tris[f * 3 + i]], b = s.weld[s.tris[f * 3 + (i + 1) % 3]];\n        const had",
+    "new": "        const a = s.weld[s.tris[f * 3 + i]], b = s.weld[s.tris[f * 3 + (i + 2) % 3]];\n        const had",
+    "tests": [
+      "test/poi/poi5_uv.test.js"
+    ]
+  },
+  {
+    "name": "POI5-the-header-unread",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "    if ('error' in meta) { say(imageErrorText(meta.error), 'bad'); return false; }\n    const r = await act((i) => poiPutAsset(i, bytes, 'texture'));",
+    "new": "    const r = await act((i) => poiPutAsset(i, bytes, 'texture'));",
+    "tests": [
+      "test/ui/poi5_panel.test.js"
+    ]
+  },
+  {
+    "name": "POI5-the-strength-unread",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "numberInput(strength, (k2) => change('material', mat((x) => { x.emissiveColor = glowAs(glow.value, k2); })),",
+    "new": "numberInput(strength, (k2) => change('material', mat((x) => { x.emissiveColor = glowAs(glow.value, 1); })),",
+    "tests": [
+      "test/ui/poi5_panel.test.js"
+    ]
+  },
+  {
+    "name": "POI5-the-zoom-drifts",
+    "file": "src/ui/poi/poiUvPanel.js",
+    "old": "      v.cu = before[0] - (x - v.w / 2) / k(); v.cv = before[1] - (y - v.h / 2) / k();",
+    "new": "",
+    "tests": [
+      "test/ui/poi5_panel.test.js"
+    ]
+  },
+  {
+    "name": "POI5-the-part-never-wears-it",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "        edit.edit(id, 'uv', (x) => { const p = x.parts.find((q) => q.key === key); if (p) p.mesh = r.data.sha; });",
+    "new": "        void id;",
+    "tests": [
+      "test/ui/poi5_panel.test.js"
+    ]
+  },
+  {
+    "name": "POI5-the-first-act-frees-the-save",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "    try { return await fn(i); } finally { busy--; schedule(); }",
+    "new": "    try { return await fn(i); } finally { busy = 0; schedule(); }",
+    "tests": [
+      "test/ui/poi5_panel.test.js"
+    ]
+  }
+]

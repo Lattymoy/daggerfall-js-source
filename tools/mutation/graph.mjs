@@ -43,7 +43,7 @@ function closure(file) {
 
 const map = {};
 const rev = {};
-for (const t of fs.readdirSync(TEST).filter(f => f.endsWith('.test.js')).sort()) {
+for (const t of fs.readdirSync(TEST, { recursive: true }).map(String).filter(f => f.endsWith('.test.js')).sort()) {   // TIDY5: the tests in their folders
   const abs = path.join(TEST, t);
   const cl = [...closure(abs)].map(f => path.relative(ROOT, f)).filter(f => f.startsWith('src/')).sort();
   map[t] = cl;

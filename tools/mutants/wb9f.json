@@ -1,65 +1,65 @@
 [
   {
     "name": "WB9f-the-slots-unshuffled",
-    "file": "src/world/gateSpew.js",
+    "file": "src/world/gate/gateSpew.js",
     "old": "  for (let i = n - 1; i > 0; i--) { const j = Math.floor(rolls() * (i + 1)); const t = slots[i]; slots[i] = slots[j]; slots[j] = t; }",
     "new": "  for (let i = n - 1; i > 0; i--) { rolls(); }",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
     "name": "WB9f-the-slot-margin-gone",
-    "file": "src/world/gateSpew.js",
+    "file": "src/world/gate/gateSpew.js",
     "old": "(slots[i] + SPEW_SLOT_MARGIN + rolls() * (1 - 2 * SPEW_SLOT_MARGIN)) / n",
     "new": "(slots[i] + rolls()) / n",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
     "name": "WB9f-the-old-spread",
-    "file": "src/world/gateSpew.js",
+    "file": "src/world/gate/gateSpew.js",
     "old": "export const SPEW_SPREAD = 1.6;",
     "new": "export const SPEW_SPREAD = 0.9;",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
     "name": "WB9f-every-piece-on-its-own-roll",
-    "file": "src/world/gateSpew.js",
+    "file": "src/world/gate/gateSpew.js",
     "old": "    const u = n > 1 ? (slots[i] + SPEW_SLOT_MARGIN + rolls() * (1 - 2 * SPEW_SLOT_MARGIN)) / n : rolls();",
     "new": "    const u = rolls();",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
     "name": "WB9f-the-keep-ignored",
-    "file": "src/world/gateSpew.js",
+    "file": "src/world/gate/gateSpew.js",
     "old": "  if (inside(launch)) return launch;",
     "new": "  return launch;",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
     "name": "WB9f-the-ease-never-applied",
-    "file": "src/world/gateSpew.js",
+    "file": "src/world/gate/gateSpew.js",
     "old": "    speed *= SPEW_KEEP_EASE;",
     "new": "    speed *= 1;",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
     "name": "WB9f-the-fallback-left-off-the-edge",
-    "file": "src/world/gateSpew.js",
+    "file": "src/world/gate/gateSpew.js",
     "old": "  return { at: launch.at, dir: [(dx / h) * run, launch.dir[1], (dz / h) * run], speed };",
     "new": "  return { at: launch.at, dir: launch.dir, speed };",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      if (keep) launches = launches.map((l) => keepLaunch(from, l, keep));",
     "new": "      if (false) launches = launches.map((l) => keepLaunch(from, l, keep));",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "        if (f.taken || !f.left || !f.fly.rest) return;",
     "new": "        if (f.taken || !f.left) return;",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "key: `${f.piece.kind === 'gold' ? SPOIL_GOLD_KEY : SPOIL_KEY}${i}`",
     "new": "key: `${SPOIL_KEY}${i}`",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    if (!f || f.taken || !f.fly.rest || (f.piece.kind === 'gold') !== gold) return null;",
     "new": "    if (!f || !f.fly.rest || (f.piece.kind === 'gold') !== gold) return null;",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      return { title: itemName(f.piece.item), subs: label ? [label] : [] };",
     "new": "      return { title: itemName(f.piece.item), subs: [] };",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    pick(key) { const f = pieceAt(key); if (!f) return false; takeOne(f); return true; },",
     "new": "    pick(key) { const f = pieceAt(key); if (!f) return false; return true; },",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
@@ -122,62 +122,62 @@
     "old": "            try { onRest?.(f.fly.pos, f.piece.tier, f.piece.kind); } catch { /* a spark is not the spoils' problem */ }   // WB9f",
     "new": "",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
     "name": "WB9f-the-court-keeps-nothing",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "at, bearing, acct: claims.s, keep, claims })) {",
     "new": "at, bearing, acct: claims.s, claims })) {",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
     "name": "WB9f-the-gold-burst-gone",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "      addBurst(at, t, FX_KINDS.spoils, SPOILS_BURST_COLOR, keep.floorY);   // WB9f: his chest bursts in gold as they leave it",
     "new": "",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
     "name": "WB9f-the-landing-sparks-gone",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "      spoils?.frame(onSpoilRest);   // WB9f: each piece's landing sparks",
     "new": "      spoils?.frame();",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
     "name": "WB9f-every-landing-the-same",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "    addBurst(pos, now(), rare ? FX_KINDS.spoilRestRare : FX_KINDS.spoilRest, tierColour(tier));",
     "new": "    addBurst(pos, now(), FX_KINDS.spoilRest, tierColour(tier));",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
     "name": "WB9f-the-sparks-hang-at-his-chest",
-    "file": "src/render/gateFx.js",
+    "file": "src/render/gate/gateFx.js",
     "old": "const g = 0.5 * FX_GRAVITY, rest = floorRel + 0.05;",
     "new": "const g = 0.5 * FX_GRAVITY, rest = 0.05;",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
     "name": "WB9f-the-court-stands-no-spoils",
-    "file": "src/scenes/worldModes.js",
+    "file": "src/scenes/gate/gateStand.js",
     "old": "    ctx.addActivationTargets(() => host.spoilTargets?.() ?? NO_TARGETS);",
     "new": "",
     "tests": [
-      "test/wb9f_gate_spoils.test.js",
-      "test/worldhover.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js",
+      "test/systems/worldhover.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "    if (key.startsWith('spoil')) { quickLootSpend(); host.takeSpoil?.(key); return true; }",
     "new": "",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "      if (kind === 'spoil') return opts.spoilContents?.(key) ?? null;   // WB9f: a piece of the Burning Court's spoils (the outer host's pool)",
     "new": "",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "    takeSpoil: (key) => !!floorPool()?.pick(key),",
     "new": "    takeSpoil: () => false,",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ],
     "note": "SD9e (PIN MOVED): the floor of the place I stand in - re-aimed by content."
   },
@@ -214,7 +214,7 @@
     "old": "'guardCorpse:', 'dwFish:', 'spoil:']);",
     "new": "'guardCorpse:', 'dwFish:']);",
     "tests": [
-      "test/wb9f_gate_spoils.test.js"
+      "test/scenes/wb9f_gate_spoils.test.js"
     ]
   }
 ]

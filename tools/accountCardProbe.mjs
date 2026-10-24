@@ -39,13 +39,20 @@ const check = (name, ok, detail = '') => {
 // enumeration of it. Every file under src/ is served at its own path
 // instead, and the browser resolves the relative imports itself - the
 // same thing the bundler does, with nothing to keep in step.
-const SRC = new URL('../src/', import.meta.url);
+// NAME-AS (2026-10-12): AND vendor/ BESIDE IT. The card's graph left src/ -
+// accountClient.js -> marketLaw.js -> ... -> player/classSkins.js imports
+// vendor/class-skins/skins.json - and the probe aborted that one request,
+// so the card's first import failed and the probe had stopped running at
+// all, again, the same way. The repository's own vendor/ is served as
+// src/ is: still local, still no network.
+const ROOTS = { '/src/': new URL('../src/', import.meta.url), '/vendor/': new URL('../vendor/', import.meta.url) };
 const TYPES = { '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json' };
 const served = (path) => {
-  if (!path.startsWith('/src/') || path.includes('..')) return null;
+  const root = Object.keys(ROOTS).find((r) => path.startsWith(r));
+  if (!root || path.includes('..')) return null;
   const type = TYPES[path.slice(path.lastIndexOf('.'))];
   if (!type) return null;
-  try { return { contentType: type, body: readFileSync(new URL(path.slice('/src/'.length), SRC)) }; } catch { return null; }
+  try { return { contentType: type, body: readFileSync(new URL(path.slice(root.length), ROOTS[root])) }; } catch { return null; }
 };
 
 const browser = await chromium.launch();
@@ -84,7 +91,7 @@ await page.goto('http://probe.invalid/', { waitUntil: 'domcontentloaded' });
 // the page needs no network and the probe stays hermetic. A modern
 // User-Agent is sent because Google serves ttf to anything it does not
 // recognise and woff2 to a browser.
-const { ENHANCED_CSS, ENHANCED_FONTS_URL } = await import('../src/ui/enhancedStyle.js');
+const { ENHANCED_CSS, ENHANCED_FONTS_URL } = await import('../src/ui/enhanced/enhancedStyle.js');
 const UA = 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36';
 let fontCss = await (await fetch(ENHANCED_FONTS_URL, { headers: { 'user-agent': UA } })).text();
 const urls = [...new Set([...fontCss.matchAll(/url\((https:\/\/fonts\.gstatic\.com\/[^)]+)\)/g)].map((m) => m[1]))];
@@ -101,27 +108,29 @@ const STAGES = [
   { stage: 'register', label: 'creating an account' },
   { stage: 'login', label: 'signing in' },
   { stage: 'recover', label: 'spending the recovery code' },
-  { stage: 'code', label: 'the recovery code', code: '7GEPQ-47BS9-AYK70-QMWYW' },
-  { stage: 'in', label: 'signed in', account: { name: 'Nystul', handle: 'Nystul', kind: 'linked' } },
-  { stage: 'in', label: 'a guest', account: { name: 'Mithriil Stormaire', guestName: 'Mithriil Stormaire', handle: null, kind: 'guest' } },
+  // RECOVERY-SET: the code stage shows a SET of eight, numbered, each its own <code>
+  { stage: 'code', label: 'the recovery codes', codes: ['7GEPQ-47BS9-AYK70-QMWYW', 'TJY8S-KEWD8-R12W3-TZTAX', 'A2B3C-D4E5F-G6H7J-K8M9N', 'P0Q1R-S2T3V-W4X5Y-Z6A7B', 'C8D9E-F0G1H-J2K3M-N4P5Q', 'R6S7T-V8W9X-Y0Z1A-B2C3D', 'E4F5G-H6J7K-M8N9P-Q0R1S', 'T2V3W-X4Y5Z-A6B7C-D8E9F'] },
+  { stage: 'in', label: 'signed in', account: { name: 'Nystul', handle: 'Nystul', kind: 'linked', nameAs: 'account', recoveryLeft: 8 } },   // NAME-AS: the account's name chosen; RECOVERY-SET: and the codes left
+  { stage: 'in', label: 'a guest', account: { name: 'Mithriil Stormaire', guestName: 'Mithriil Stormaire', handle: null, kind: 'guest', nameAs: 'character' } },   // NAME-AS: and the character's
   { stage: 'password', label: 'changing the password' },
+  { stage: 'codes', label: 'new recovery codes' },   // RECOVERY-SET: the password before a new set
 ];
 
 const measured = await page.evaluate(async (stages) => {
   const { AccountFlow } = await import('/src/ui/accountFlow.js');
-  const { accountCard } = await import('/src/ui/enhancedAccount.js');
+  const { accountCard } = await import('/src/ui/enhanced/enhancedAccount.js');
   const app = document.getElementById('app');
   app.style.cssText = 'padding:24px;max-width:640px;margin:0 auto;';
   const out = [];
   for (const s of stages) {
     const flow = AccountFlow({ io: { fetch: () => { throw new Error('the probe makes no requests'); } }, storage: null });
     flow.stage = s.stage;
-    if (s.code) flow.recoveryCode = s.code;
+    if (s.codes) flow.recoveryCodes = s.codes;   // RECOVERY-SET: a set
     if (s.account) flow.account = s.account;
     const card = accountCard(document, flow);
     app.append(card.root);
     const cs = (el) => (el ? getComputedStyle(el) : null);
-    const label = card.root.querySelector('.fieldlabel');
+    const label = card.root.querySelector('label.field .fieldlabel');   // ACC1e F1's subject, a FORM field's label - NAME-AS: a signed-in card's section labels (the wardrobe's Title, Aura, Glyphs, Patreon and the name-in-game toggle's) wear the card's own bone, never measured as one
     const code = card.root.querySelector('.acctcode code');
     const primary = card.root.querySelector('.act.primary');
     out.push({
@@ -167,6 +176,21 @@ const measured = await page.evaluate(async (stages) => {
           href: link?.href ?? null, target: link?.target ?? null, rel: link?.rel ?? null,
         };
       }),
+      // NAME-AS: the name-in-game toggle as drawn - each button's words, its pressed state and the paint it wears, and
+      // the line under them, how far below its buttons it sits
+      nameAs: (() => {
+        const box = card.root.querySelector('.acctnameas');
+        if (!box) return null;
+        const btns = [...box.querySelectorAll('button')];
+        const note = box.querySelector('p.meta');
+        const row = box.querySelector('.acctwearrow');
+        return {
+          buttons: btns.map((b) => ({ text: b.textContent, pressed: b.getAttribute('aria-pressed'), color: cs(b).color, border: cs(b).borderTopColor,
+            borderW: cs(b).borderTopWidth, opacity: cs(b).opacity, h: b.getBoundingClientRect().height })),
+          note: note?.textContent ?? null, noteColor: note ? cs(note).color : null,
+          noteGap: note && row ? Math.round(note.getBoundingClientRect().top - row.getBoundingClientRect().bottom) : null,
+        };
+      })(),
       // nothing may overflow the card it is drawn in
       overflow: [...card.root.querySelectorAll('*')].some(
         (n) => n.getBoundingClientRect().right > card.root.getBoundingClientRect().right + 1,
@@ -178,7 +202,7 @@ const measured = await page.evaluate(async (stages) => {
 
 // THE SKIN'S OWN TOKENS, so the probe compares against the source of
 // truth rather than against hexes typed here.
-const { ENHANCED_TOKENS } = await import('../src/ui/enhancedStyle.js');
+const { ENHANCED_TOKENS } = await import('../src/ui/enhanced/enhancedStyle.js');
 const token = (name) => ENHANCED_TOKENS.match(new RegExp(`--${name}:\\s*([^;]+);`))?.[1]?.trim();
 const rgb = (hex) => {
   const h = hex.replace('#', '');
@@ -205,7 +229,7 @@ check('the recovery code is brass and large', codeRow?.codeColor === BRASS && pa
 check('the leading button wears brass', measured.filter((m) => m.primaryColor).every((m) => m.primaryColor === BRASS));
 
 // ═══ TERMS1: THE BOXES, MEASURED ══════════════════════════════════
-// test/terms1.test.js proves what the card BUILDS; this proves what a
+// test/ui/enhanced/terms1.test.js proves what the card BUILDS; this proves what a
 // player SEES - the rules applied, the rows tall enough for a thumb.
 const reg = measured.find((m) => m.stage === 'register');
 check('TERMS1: creating an account draws two boxes, both UNTICKED', reg?.agree.length === 2 && reg.agree.every((a) => a.type === 'checkbox' && a.checked === false),
@@ -216,6 +240,21 @@ check('TERMS1: the box and its document wear the skin\'s brass', reg?.agree.ever
 check('TERMS1: each document opens outside the game, at the site', reg?.agree.every((a) => a.target === '_blank' && a.rel === 'noopener' && /^https:\/\/daggerfalljs\.dev\/(terms|privacy)\/$/.test(a.href)),
   reg?.agree.map((a) => a.href).join(' '));
 check('TERMS1: no other stage draws a box', measured.filter((m) => m.stage !== 'register').every((m) => m.agree.length === 0));
+
+// ═══ NAME-AS: THE NAME IN GAME, MEASURED ═══════════════════════════
+// test/net/nameas_client.test.js proves what the card BUILDS; this proves the toggle is PAINTED - in the card's own colour
+// (a button with no title class inherits it: never the user agent's black on the card's dark), the chosen one at full
+// strength behind the doubled edge and the other dimmed, the line under them quiet and close to its buttons.
+const toggles = measured.filter((m) => m.nameAs);
+check('NAME-AS: every signed-in card draws the name-in-game toggle, two buttons', toggles.length === 2 && toggles.every((m) => m.nameAs.buttons.length === 2 && m.nameAs.buttons[0].text === 'Account name' && m.nameAs.buttons[1].text === 'Character name'),
+  JSON.stringify(toggles.map((m) => m.nameAs.buttons.map((b) => b.text))));
+check('NAME-AS: the buttons wear the card\'s bone, edge and words', toggles.every((m) => m.nameAs.buttons.every((b) => b.color === BONE && b.border === BONE)),
+  [...new Set(toggles.flatMap((m) => m.nameAs.buttons.map((b) => `${b.color}/${b.border}`)))].join(' '));
+check('NAME-AS: the chosen one pressed at full strength behind a doubled edge, the other dimmed', toggles.every((m) => m.nameAs.buttons.every((b) => (b.pressed === 'true') === (b.opacity === '1' && b.borderW === '2px'))) && toggles.every((m) => m.nameAs.buttons.filter((b) => b.pressed === 'true').length === 1),
+  toggles.map((m) => m.nameAs.buttons.map((b) => `${b.pressed}:${b.opacity}:${b.borderW}`).join(',')).join(' | '));
+check('NAME-AS: the line under them is DIM, names what others see, and sits close under its buttons', toggles.every((m) => m.nameAs.noteColor === DIM && /^Others see /.test(m.nameAs.note) && m.nameAs.noteGap >= 0 && m.nameAs.noteGap <= 8),
+  toggles.map((m) => `${m.nameAs.noteColor} ${m.nameAs.noteGap}px "${m.nameAs.note}"`).join(' | '));
+check('NAME-AS: a thumb can press each', toggles.every((m) => m.nameAs.buttons.every((b) => b.h >= 28)), toggles.map((m) => m.nameAs.buttons.map((b) => Math.round(b.h)).join('/')).join(' '));
 
 // ═══ THE FACES ════════════════════════════════════════════════════
 // Mac asked whether the card uses the enhanced font. It declares the
@@ -254,6 +293,20 @@ const phoneOverflow = await page.evaluate(() => [...document.querySelectorAll('.
 ));
 check('nothing overflows at phone width either', !phoneOverflow);
 await page.screenshot({ path: `${shots}/acc1e-card-phone.png`, fullPage: true });
+
+// AUDIT RECOVERY-SET B2: EVERY CODE OF THE SET ON ONE LINE, at a phone, the 421-480px band where the single code's
+// tracking broke a code before its last letter, and the desktop window - in the fallback face as well as the skin's
+// (the probe's fonts are inlined, so the fallback is forced by naming a face nobody has).
+const wrapped = () => page.evaluate(() => [...document.querySelectorAll('.acctcode li code')].filter((c) => c.getClientRects().length > 1).length);
+const bands = [];
+for (const width of [320, 390, 421, 430, 480, 600, 1280]) {
+  await page.setViewportSize({ width, height: 1400 });
+  bands.push(`${width}:${await wrapped()}`);
+  await page.addStyleTag({ content: '.acctcode li code { font-family: nobody-has-this !important; }' });
+  bands.push(`${width}f:${await wrapped()}`);
+  await page.evaluate(() => { for (const t of document.querySelectorAll('style')) if (t.textContent.includes('nobody-has-this')) t.remove(); });
+}
+check('AUDIT RECOVERY-SET B2: no code of the set breaks across lines, at any width, in either face', bands.every((b) => b.endsWith(':0')), bands.join(' '));
 
 await browser.close();
 

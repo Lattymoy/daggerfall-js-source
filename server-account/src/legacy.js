@@ -20,6 +20,15 @@
 // THE BIRTH OF A MEMBER (realm.js createRealm's `lineage`, `person`): a realm character is born as a person of one of
 // the caller's own lines - a living one (never dead, never retired) no realm character has played yet. So a line is
 // played online one character a person, and a fallen member's place is never taken by a new character of theirs.
+//
+// A FALL HELD FOR A PARTY'S RESURRECT (FIELD BUGS 2026-10-16b REZ-BLOODLINE, AUDIT R1): the playing tab's death door
+// stamps the tombstone at once, `hold` - `dead_at`, so no door joins, checkpoints or trades the character from there, and
+// its lease kept aside (`rez_lease`, migration 0122) - and for REZ_HOLD_S that lease alone may take the death back, once
+// (realmRaise: the tombstone cleared, the lease handed back, the line's copy stamped with the death taken back - the
+// REVIVE law, src/systems/legacy/revived.js). What a tombstone takes with it (afterTomb) waits on the window's close: the
+// tab's own word that it went on (realmDie without `hold`), or the minute's clock for a tab that never said (settleHolds).
+// The realm holds the death, never the page: a tab killed under its death screen, or another device's join, escapes
+// nothing (it was the page's memory alone, and both did).
 // ═══════════════════════════════════════════════════════════════════
 
 import { houseOfRecord } from '../../src/net/houseLaw.js';   // LEGACY7 part two: the house a member wears online
@@ -27,6 +36,8 @@ import { checkName } from '../../src/net/nameFilter.js';   // ...through the nam
 import { ID_RE, REALM_CHARACTER_RE } from '../../src/net/identityToken.js';   // LEGACY7 part three: the other's account, by the token's own shape; AUDIT LEGACY III O1: and its realm character
 import { releaseSteps } from './ledger.js';   // INT4: a tombstone's pieces let go - an heir, a looter takes them up
 import { guildMemberDead } from './guilds.js';   // AUDIT LEGACY III O5: a tombstone's guild seat handed on
+import { lineageLawFindings } from '../../src/systems/legacy/legacyLaw.js';   // INT18: a line's copy held to the family's own law
+import { takeRevived, revivedOf, stampRevived, dropRevived, REZ_HOLD_S } from '../../src/systems/legacy/revived.js';   // REVIVE: a death taken back - the client's law; REZ-BLOODLINE AUDIT R1: and a Resurrect's, inside its window
 
 /** A family's id, as the client mints it (src/systems/legacy/family.js mintFamilyId). */
 export const LINEAGE_ID_RE = /^fam-[0-9a-z]{1,12}-[0-9a-z]{6}$/;
@@ -93,15 +104,25 @@ export async function listLineages({ db }, /** @type {string} */ playerId) {
  * line tombstones that member's realm character (W2, entombLineDead).
  * @param {any} ctx @param {string} playerId @param {{ id: unknown, record: unknown, base?: unknown }} at
  */
-export async function putLineage({ db, nowS }, playerId, { id, record, base = null }) {
+export async function putLineage({ db, nowS }, playerId, { id, record: sent, base = null }) {
   if (!playerId || typeof id !== 'string' || !LINEAGE_ID_RE.test(id)) return { error: 'body' };
+  if (!recordShapeOf(sent, id)) return { error: 'body' };
+  if (base !== null && !(Number.isSafeInteger(base) && /** @type {number} */ (base) >= 0)) return { error: 'body' };
+  const had = await db.prepare('SELECT rev, model, record FROM lineages WHERE player = ? AND id = ?').bind(playerId, id).first();
+  const record = had ? withoutRevived(sent, had.record) : sent;   // REVIVE: a death the stored copy says was taken back
   const rec = recordShapeOf(record, id);
   if (!rec) return { error: 'body' };
   if (rec.bytes > LINEAGE_MAX_BYTES) return { error: 'lineage-too-large' };
-  if (base !== null && !(Number.isSafeInteger(base) && /** @type {number} */ (base) >= 0)) return { error: 'body' };
-  const had = await db.prepare('SELECT rev, model, record FROM lineages WHERE player = ? AND id = ?').bind(playerId, id).first();
   if (had) {
     if (had.model !== rec.model) return { error: 'lineage-model' };
+    // INT18 (bible/06-Systems/Integrity-Arc.md section 7): THE FAMILY'S OWN LAW (src/systems/legacy/legacyLaw.js) - a
+    // member's blood and hearth and the waiting estate on every copy, and the facts store.js mergeFacts only ever adds
+    // (a member, a death, a retirement, a fallen's remains) beside the stored copy WHEN THIS WRITE WAS MADE FROM IT: a copy
+    // made from an older one is answered stale with the stored copy to merge into, as ever - refused here it would never
+    // take another device's new member in. A copy that breaks the law is refused whole and the stored one stands: an
+    // honest device makes its copy by the law's own functions, and merges before it writes.
+    const broke = lineageLawFindings(record, base === had.rev ? parsed(had.record) : null);
+    if (broke.length) return lineageLaw(broke);
     const moved = await db.prepare('UPDATE lineages SET record = ?, rev = ?, surname = ?, updated_at = ? WHERE player = ? AND id = ? AND rev = ? AND rev < ?')
       .bind(rec.text, rec.rev, rec.surname, nowS, playerId, id, base ?? -1, rec.rev).run();
     if (moved.meta.changes) {
@@ -110,6 +131,8 @@ export async function putLineage({ db, nowS }, playerId, { id, record, base = nu
     }
     return staleLine(db, playerId, id, rec.model);
   }
+  const founding = lineageLawFindings(record, null);   // INT18: a founding's copy, alone
+  if (founding.length) return lineageLaw(founding);
   const wrote = await db.prepare(
     'INSERT OR IGNORE INTO lineages (player, id, surname, model, record, rev, created_at, updated_at)'
     + ' SELECT ?, ?, ?, ?, ?, ?, ?, ? WHERE (SELECT COUNT(*) FROM lineages WHERE player = ?) < ?',
@@ -121,6 +144,27 @@ export async function putLineage({ db, nowS }, playerId, { id, record, base = nu
   // a race founded it between the read and the write - the founding is another device's: stale, to merge and write again
   return (await staleLine(db, playerId, id, rec.model)) ?? { error: 'too-many-lineages' };
 }
+
+/**
+ * REVIVE: THE DEATHS THE STORED COPY SAYS WERE TAKEN BACK (src/systems/legacy/revived.js - an operator's revival,
+ * tools/reviveRealmCharacter.mjs, stamps the stored copy). A copy from a device that never heard of the revival carries
+ * the death again, and stored, it would kill the member again (entombLineDead) - so the stored copy's stamps are taken
+ * into the copy sent, and every death they take back is dropped with the remains row and the Succession it laid, before
+ * anything is stored or entombed. The stamp so goes home in every copy stored after it, and each device's next merge
+ * drops the death on its own. No second read: the stored copy is the one the write already reads. A line whose stored
+ * copy carries no stamp is the record as sent.
+ * @param {any} sent @param {string} storedText
+ */
+function withoutRevived(sent, storedText) {
+  const stored = parsed(storedText);
+  if (!(stored?.people ?? []).some((/** @type {any} */ p) => revivedOf(p).length)) return sent;
+  const out = JSON.parse(JSON.stringify(sent));
+  takeRevived(out, stored);
+  return out;
+}
+
+/** INT18: a copy the family's own law refuses - the first of its findings named, and every one. */
+const lineageLaw = (/** @type {string[]} */ findings) => ({ error: 'lineage-law', why: findings[0], findings });
 
 /** The stored line, answered to a write that was not made from it - or null when there is none. */
 async function staleLine(/** @type {any} */ db, /** @type {string} */ playerId, /** @type {string} */ id, /** @type {string} */ model) {
@@ -135,7 +179,8 @@ async function staleLine(/** @type {any} */ db, /** @type {string} */ playerId, 
  * lease to say it - is the realm's too: the write that first carries it tombstones their character (entomb: the union
  * ended, the guild seat handed on), as a retirement in an Enduring line retires theirs. The character is the one the
  * realm bound to that person at its birth (`lineage_id`, `person_id` - never the record's own word on who played them),
- * this account's own, once (`dead_at IS NULL`); a death is never taken back (mergeFacts).
+ * this account's own, once (`dead_at IS NULL`) - and HELD, as its own death door's tombstone is, while a tab plays it
+ * (REZ-BLOODLINE AUDIT R1: a death is taken back only by its revived stamp, never by a copy that lacks it - mergeFacts).
  * @param {any} ctx @param {string} playerId @param {string} lineageId @param {string|null} oldText @param {any} record
  */
 async function entombLineDead({ db, nowS }, playerId, lineageId, oldText, record) {
@@ -148,7 +193,9 @@ async function entombLineDead({ db, nowS }, playerId, lineageId, oldText, record
     const row = await db.prepare('SELECT id, dead_at, dead_why FROM realm_characters WHERE player = ? AND lineage_id = ? AND person_id = ?')
       .bind(playerId, lineageId, p.id).first();
     if (!row) continue;
-    if (row.dead_at == null) await entomb(db, playerId, row.id, nowS, why);
+    // REZ-BLOODLINE AUDIT R1: a fall of a character a tab still plays is HELD as the tab's own tombstone is - this write
+    // may be its death door's (the line written beside the tombstone, landing first), and a Resurrect may yet take it back
+    if (row.dead_at == null) await entomb(db, playerId, row.id, nowS, why, null, { hold: true });
     else if (why === 'fell' && row.dead_why === 'retired') await fellRetired(db, playerId, row.id, nowS);
   }
 }
@@ -179,8 +226,11 @@ export async function lineageBirthRefusal(db, playerId, lineage, person) {
  * @param {any} db @param {string} playerId @param {string} character
  */
 export async function isTombstone(db, playerId, character) {
-  return !!(await db.prepare('SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND dead_at IS NOT NULL').bind(character, playerId).first());
+  return !!(await db.prepare(`SELECT 1 FROM realm_characters WHERE ${TOMB_WHERE}`).bind(playerId, character).first());
 }
+/** AUDIT PLAN-1000 C2: THE TOMBSTONE'S ONE WHERE (?1 the account, ?2 the character) - isTombstone's and the door's
+ *  (door.js DOOR_SQL), never two literals. */
+export const TOMB_WHERE = 'id = ?2 AND player = ?1 AND dead_at IS NOT NULL';
 
 /**
  * THE TOMBSTONE: the playing tab's character is dead for good - stamped under its lease, which goes with it. A second
@@ -191,15 +241,24 @@ export async function isTombstone(db, playerId, character) {
  * was widowed, who could never wed again. LEGACY7 part three: a death ends the character's union with another player's
  * (ended 'died'); a retirement keeps it - the elder lives on, wed. Answers `{ ok, deadAt }` or `{ error }`: 'body',
  * 'no-realm-character', 'lease'.
- * @param {any} ctx @param {string} playerId @param {{ id: unknown, lease: unknown, why?: unknown }} at
+ * REZ-BLOODLINE AUDIT R1: `hold` - THE DEATH DOOR'S FALL, held for a party's Resurrect (the header): stamped dead now,
+ * the lease kept aside for realmRaise, and what a tombstone takes with it left to the window's close. The same fall
+ * asked again with `hold` (a retry whose answer was lost) holds still; asked without it, the window is closed now - the
+ * tab went on (settleHeld).
+ * @param {any} ctx @param {string} playerId @param {{ id: unknown, lease: unknown, why?: unknown, hold?: unknown }} at
  */
-export async function realmDie({ db, nowS }, playerId, { id, lease, why = 'fell' }) {
+export async function realmDie({ db, nowS }, playerId, { id, lease, why = 'fell', hold = false }) {
   if (typeof id !== 'string' || !REALM_CHARACTER_RE.test(id) || typeof lease !== 'string' || !/^[0-9a-f]{32}$/.test(lease)) return { error: 'body' };
-  if (why !== 'fell' && why !== 'retired') return { error: 'body' };
-  const row = await db.prepare('SELECT r.dead_at AS dead_at, r.dead_why AS dead_why, l.model AS model FROM realm_characters r'
+  if ((why !== 'fell' && why !== 'retired') || typeof hold !== 'boolean') return { error: 'body' };
+  const row = await db.prepare('SELECT r.dead_at AS dead_at, r.dead_why AS dead_why, r.rez_lease AS rez_lease, l.model AS model FROM realm_characters r'
     + ' LEFT JOIN lineages l ON l.player = r.player AND l.id = r.lineage_id WHERE r.id = ? AND r.player = ?').bind(id, playerId).first();
   if (!row) return { error: 'no-realm-character' };
   if (why === 'retired' && row.model !== 'enduring') return { error: 'body' };
+  if (row.dead_at != null && row.rez_lease != null) {
+    // REZ-BLOODLINE AUDIT R1: a fall held for a Resurrect - held still, or its window closed by the tab that went on
+    if (!hold) await settleHeld(db, playerId, id, row.dead_at);
+    return { ok: true, deadAt: row.dead_at };
+  }
   if (row.dead_at != null) {
     // a death after a retirement is a death (the one way the word moves - fellRetired); anything else, the first word's
     if (!(why === 'fell' && row.dead_why === 'retired' && (await fellRetired(db, playerId, id, nowS)))) {
@@ -207,7 +266,7 @@ export async function realmDie({ db, nowS }, playerId, { id, lease, why = 'fell'
     }
     return { ok: true, deadAt: row.dead_at };
   }
-  if (!(await entomb(db, playerId, id, nowS, why, lease))) return { error: 'lease' };
+  if (!(await entomb(db, playerId, id, nowS, why, lease, { hold }))) return { error: 'lease' };
   return { ok: true, deadAt: nowS };
 }
 
@@ -216,10 +275,20 @@ export async function realmDie({ db, nowS }, playerId, { id, lease, why = 'fell'
  * and the line's own word on its dead (entombLineDead, a member nobody was playing). The row takes its death, why
  * (O6: the first stamp's word, which a retry keeps) and loses its lease; then afterTomb. Answers whether this call
  * stamped it.
+ * REZ-BLOODLINE AUDIT R1: `hold` - a FALL OF A CHARACTER IN PLAY (a lease on it) is HELD: stamped dead all the same, its
+ * lease kept aside for a Resurrect (`rez_lease`), and afterTomb left to the window's close (settleHeld, settleHolds). A
+ * row nobody plays (the line's word on a kinsman struck down) is stamped as ever.
  * @param {any} db @param {string} playerId @param {string} id @param {number} nowS @param {'fell'|'retired'} why
  * @param {string|null} [lease] the playing tab's - none for the line's word
+ * @param {{ hold?: boolean }} [o]
  */
-async function entomb(db, playerId, id, nowS, why, lease = null) {
+async function entomb(db, playerId, id, nowS, why, lease = null, { hold = false } = {}) {
+  if (hold && why === 'fell') {
+    // SQLite reads every right-hand side off the row as it stood: the lease is kept aside as it goes
+    const held = await db.prepare(`UPDATE realm_characters SET dead_at = ?, dead_why = 'fell', rez_lease = lease, lease = NULL, updated_at = ? WHERE id = ? AND player = ? AND dead_at IS NULL AND lease IS NOT NULL${lease == null ? '' : ' AND lease = ?'}`)
+      .bind(nowS, nowS, id, playerId, ...(lease == null ? [] : [lease])).run();
+    if (held.meta.changes) return true;
+  }
   const took = await db.prepare(`UPDATE realm_characters SET dead_at = ?, dead_why = ?, lease = NULL, updated_at = ? WHERE id = ? AND player = ? AND dead_at IS NULL${lease == null ? '' : ' AND lease = ?'}`)
     .bind(nowS, why, nowS, id, playerId, ...(lease == null ? [] : [lease])).run();
   if (!took.meta.changes) return false;
@@ -249,6 +318,110 @@ async function afterTomb(db, playerId, id, atS, why) {
   await db.batch(releaseSteps(db, id, atS));   // INT4: its claims withdrawn, what it held no record's now
   await guildMemberDead(db, playerId, id);
   await db.prepare('DELETE FROM realm_wed_halves WHERE player = ? AND char_id = ?').bind(playerId, id).run();
+}
+
+// ═══ REZ-BLOODLINE AUDIT R1: A FALL HELD FOR A PARTY'S RESURRECT ══════════════════════════════════════════════════════
+
+/** The held falls one minute's clock closes at most (cron.js `rez-holds`) - a page, asked again while it took a whole one. */
+export const REZ_SETTLE_MAX = 25;
+
+/**
+ * A HELD FALL'S WINDOW CLOSED BY THE TAB THAT WENT ON (realmDie without `hold`): what the tombstone takes with it, now.
+ * Claimed first - the lease kept for a Resurrect goes in the same statement that finds it - so a raise behind it finds
+ * nothing to raise, and a second close nothing to claim; afterTomb is idempotent, and a retry of the death (realmDie on
+ * a row no longer held) runs it again, finishing what a lost answer left undone. Answers whether this call closed it.
+ * @param {any} db @param {string} playerId @param {string} id @param {number} deadAt
+ */
+async function settleHeld(db, playerId, id, deadAt) {
+  const took = await db.prepare('UPDATE realm_characters SET rez_lease = NULL WHERE id = ? AND player = ? AND rez_lease IS NOT NULL AND dead_at IS NOT NULL').bind(id, playerId).run();
+  if (!took.meta.changes) return false;
+  await afterTomb(db, playerId, id, deadAt, 'fell');
+  return true;
+}
+
+/**
+ * THE MINUTE'S CLOCK OVER THE HELD FALLS (cron.js `rez-holds`): every fall whose window closed with no tab to close it -
+ * a page killed under its death screen, a phone that discarded it - takes what a tombstone takes with it. Here afterTomb
+ * goes FIRST and the claim after: a raise is refused past the window this reads (realmRaise asks the same bound), so
+ * nothing stands between them, and a firing cut short leaves the row held for the next minute to finish. A page at a
+ * time (REZ_SETTLE_MAX), stopping between rows once the firing's share is spent (`budget`). Answers how many it closed.
+ * @param {{ db: any, nowS: number, budget?: () => boolean }} ctx
+ */
+export async function settleHolds({ db, nowS, budget = () => true }) {
+  const r = await db.prepare('SELECT id, player, dead_at FROM realm_characters WHERE rez_lease IS NOT NULL AND dead_at <= ? LIMIT ?')
+    .bind(nowS - REZ_HOLD_S, REZ_SETTLE_MAX).all();
+  let n = 0;
+  for (const row of r?.results ?? []) {
+    if (n && !budget()) break;
+    await afterTomb(db, row.player, row.id, row.dead_at, 'fell');
+    const took = await db.prepare('UPDATE realm_characters SET rez_lease = NULL WHERE id = ? AND player = ? AND rez_lease IS NOT NULL AND dead_at = ?').bind(row.id, row.player, row.dead_at).run();
+    if (took.meta.changes) n++;
+  }
+  return n;
+}
+
+/**
+ * A PARTY'S RESURRECT, ASKED OF THE REALM by the fallen's own tab (src/systems/realmSaves.js session.raise, its page's
+ * scenes/legacyHost.js raise): the death at `diedAt` (the line's word for it, the record's `died.at`) taken back. Taken
+ * only:
+ *   - of a character of one of the account's own lines (Project Legacy's death; 'raise-no-line' else);
+ *   - held by THIS lease - the tab that fell, which the death door's tombstone kept aside ('lease' else) - and no other
+ *     character of the account in play since (ONE-SEAT: a raise hands the lease back, and two would be in play);
+ *   - inside REZ_HOLD_S of the tombstone, its window not closed ('raise-late': past it, or the tab went on);
+ *   - once: the tombstone is cleared by the first, and the death's stamp stands on the line.
+ * Then the character is the tab's again - no tombstone, its lease handed back, nothing a tombstone takes taken (it waited
+ * on the window) - and the line's stored copy says the death was taken back (reviveOnLine). A character whose tombstone
+ * the realm never stamped (the door's word unheard, its line's not yet landed) is the tab's own still: its death is
+ * stamped taken back on the line all the same - so the line's copy that carries it, landing late, drops it and entombs no
+ * one (putLineage) - once a death, and only under the lease that plays it ('not-dead' else, and for a second asking).
+ * Answers `{ ok, held }` (`held`: a tombstone was taken back) or `{ error }`.
+ * @param {any} ctx @param {string} playerId @param {{ id: unknown, lease: unknown, diedAt: unknown }} at
+ */
+export async function realmRaise({ db, nowS }, playerId, { id, lease, diedAt }) {
+  if (typeof id !== 'string' || !REALM_CHARACTER_RE.test(id) || typeof lease !== 'string' || !/^[0-9a-f]{32}$/.test(lease)) return { error: 'body' };
+  if (!Number.isSafeInteger(diedAt) || /** @type {number} */ (diedAt) < 0) return { error: 'body' };
+  const at = /** @type {number} */ (diedAt);
+  const row = await db.prepare('SELECT dead_at, lease, rez_lease, lineage_id, person_id FROM realm_characters WHERE id = ? AND player = ?').bind(id, playerId).first();
+  if (!row) return { error: 'no-realm-character' };
+  if (!row.lineage_id || !Number.isSafeInteger(row.person_id)) return { error: 'raise-no-line' };
+  if (row.dead_at == null) {
+    if (row.lease !== lease) return { error: 'not-dead' };
+    return (await reviveOnLine(db, playerId, row.lineage_id, row.person_id, at, nowS)) === 'stamped' ? { ok: true, held: false } : { error: 'not-dead' };
+  }
+  // every law asked IN the write - held by this lease (`rez_lease`: a fall the death door held), inside the window, no
+  // other of the account's characters in play - so a close or a join between the read and here wins
+  const took = await db.prepare('UPDATE realm_characters SET dead_at = NULL, dead_why = NULL, lease = rez_lease, rez_lease = NULL, lease_at = ?1, updated_at = ?1'
+    + ' WHERE id = ?2 AND player = ?3 AND rez_lease = ?4 AND dead_at > ?5'
+    + ' AND NOT EXISTS (SELECT 1 FROM realm_characters o WHERE o.player = ?3 AND o.id != ?2 AND o.lease IS NOT NULL)')
+    .bind(nowS, id, playerId, lease, nowS - REZ_HOLD_S).run();
+  // refused: said by the row as it was read - its window closed (the tab went on, the minute's clock) or over; else
+  // another lease, or another character in play
+  if (!took.meta.changes) return { error: row.rez_lease == null || row.dead_at <= nowS - REZ_HOLD_S ? 'raise-late' : 'lease' };
+  await reviveOnLine(db, playerId, row.lineage_id, row.person_id, at, nowS);
+  return { ok: true, held: true };
+}
+
+/**
+ * THE LINE'S WORD THAT A DEATH WAS TAKEN BACK (src/systems/legacy/revived.js, the operator's REVIVE law): the stored
+ * copy's person stamped with the death's minute, and the death, its remains and its Succession dropped from it - past
+ * its rev, so a device's write made from the copy before is stale, and takes the stamp in at its merge (store.js
+ * mergeFacts). Written only over the copy it read (its rev): a write that moved the line between was a device's, and the
+ * tab that asked writes the same stamp on its own copy. Answers 'stamped', 'had' (the stamp stood already - a second
+ * asking), or null (no such line or person, or the line moved under it).
+ * @param {any} db @param {string} playerId @param {string} lineageId @param {number} personId @param {number} diedAt @param {number} nowS
+ */
+async function reviveOnLine(db, playerId, lineageId, personId, diedAt, nowS) {
+  const line = await db.prepare('SELECT rev, record FROM lineages WHERE player = ? AND id = ?').bind(playerId, lineageId).first();
+  const rec = line ? parsed(line.record) : null;
+  const p = (rec?.people ?? []).find((/** @type {any} */ x) => x?.id === personId);
+  if (!p) return null;
+  if (revivedOf(p).includes(diedAt)) return 'had';
+  stampRevived(p, diedAt);
+  dropRevived(rec);
+  rec.rev = (Number(line.rev) || 0) + 1;
+  const moved = await db.prepare('UPDATE lineages SET record = ?, rev = ?, updated_at = ? WHERE player = ? AND id = ? AND rev = ?')
+    .bind(JSON.stringify(rec), rec.rev, nowS, playerId, lineageId, line.rev).run();
+  return moved.meta.changes ? 'stamped' : null;
 }
 
 // ═══ LEGACY7 part three: TWO PLAYERS WED ═══════════════════════════════════════════════════════════════════════════════

@@ -4,7 +4,7 @@
     "file": "src/world/flatFields.js",
     "old": "const hx = Math.trunc(spec.rangeX / 2), hz = Math.trunc(spec.rangeZ / 2);",
     "new": "const hx = spec.rangeX / 2, hz = Math.trunc(spec.rangeZ / 2);",
-    "tests": ["test/fb1004d_crops.test.js"],
+    "tests": ["test/world/fb1004d_crops.test.js"],
     "note": "The 85 m field from -42.5 again: half a metre off the component's grid along x."
   },
   {
@@ -12,7 +12,7 @@
     "file": "src/world/flatFields.js",
     "old": "const hx = Math.trunc(spec.rangeX / 2), hz = Math.trunc(spec.rangeZ / 2);",
     "new": "const hx = Math.trunc(spec.rangeX / 2), hz = spec.rangeZ / 2;",
-    "tests": ["test/fb1004d_crops.test.js"],
+    "tests": ["test/world/fb1004d_crops.test.js"],
     "note": "The same along z."
   },
   {
@@ -20,7 +20,7 @@
     "file": "src/world/flatFields.js",
     "old": "if (solid && solid(px, y, pz, CROP_OVERLAP_RADIUS)) continue;",
     "new": "if (solid && solid(px, y, pz, CROP_OVERLAP_RADIUS)) { /* sown all the same */ }",
-    "tests": ["test/fb1004d_crops.test.js"],
+    "tests": ["test/world/fb1004d_crops.test.js"],
     "note": "Plants grow through every wall, tower and stand-in again."
   },
   {
@@ -28,7 +28,7 @@
     "file": "src/world/flatFields.js",
     "old": "export const CROP_OVERLAP_RADIUS = 1;",
     "new": "export const CROP_OVERLAP_RADIUS = 0.5;",
-    "tests": ["test/fb1004d_crops.test.js"],
+    "tests": ["test/world/fb1004d_crops.test.js"],
     "note": "Half the prefabs' overlapCheckRadius."
   },
   {
@@ -36,7 +36,7 @@
     "file": "src/world/flatFields.js",
     "old": "if (solid && solid(px, y, pz, CROP_OVERLAP_RADIUS)) continue;",
     "new": "if (solid && solid(px, y + 1, pz, CROP_OVERLAP_RADIUS)) continue;",
-    "tests": ["test/fb1004d_crops.test.js"],
+    "tests": ["test/world/fb1004d_crops.test.js"],
     "note": "The sphere asked a metre over the plant's foot, not at it."
   },
   {
@@ -44,7 +44,7 @@
     "file": "src/world/flatFields.js",
     "old": "out.push({ archive, record: records[Math.floor(rnd() * records.length)], x: px, y, z: pz });",
     "new": "out.push({ archive, record: records[out.length % records.length], x: px, y, z: pz });",
-    "tests": ["test/fb1004d_crops.test.js"],
+    "tests": ["test/world/fb1004d_crops.test.js"],
     "note": "The two records in turn again, not GetRandomRecord's pick."
   },
   {
@@ -52,7 +52,7 @@
     "file": "src/world/flatFields.js",
     "old": "if (climateIndex === CLIMATES.Desert2) return [CROP_ARCHIVE, [20]];",
     "new": "if (climateIndex === CLIMATES.Desert2) return [CROP_ARCHIVE, [2]];",
-    "tests": ["test/fb1004d_crops.test.js"],
+    "tests": ["test/world/fb1004d_crops.test.js"],
     "note": "The second desert sows the first's plant."
   },
   {
@@ -60,7 +60,7 @@
     "file": "src/world/flatFields.js",
     "old": "tris[t + 6], tris[t + 7], tris[t + 8]) <= r2) return true;",
     "new": "tris[t + 6], tris[t + 7], tris[t + 8]) < 0) return true;",
-    "tests": ["test/fb1004d_crops.test.js"],
+    "tests": ["test/world/fb1004d_crops.test.js"],
     "note": "No face is ever within reach: the block's solids refuse nothing."
   },
   {
@@ -68,7 +68,7 @@
     "file": "src/world/flatFields.js",
     "old": "if (x < box[0] - r || x > box[3] + r ||",
     "new": "if (x < box[0] + r || x > box[3] + r ||",
-    "tests": ["test/fb1004d_crops.test.js"],
+    "tests": ["test/world/fb1004d_crops.test.js"],
     "note": "A model's box culled a metre too far in on its low x side: the metre outside its west face is never asked."
   },
   {
@@ -76,7 +76,7 @@
     "file": "src/world/flatFields.js",
     "old": "if (d1 <= 0 && d2 <= 0) return at(ax, ay, az);",
     "new": "if (d1 <= 0 && d2 <= 0) return at(bx, by, bz);",
-    "tests": ["test/fb1004d_crops.test.js"],
+    "tests": ["test/world/fb1004d_crops.test.js"],
     "note": "A point off a triangle's first corner measured to its second."
   },
   {
@@ -84,7 +84,7 @@
     "file": "src/world/flatFields.js",
     "old": "if (vc <= 0 && d1 >= 0 && d3 <= 0) { const v = d1 / (d1 - d3); return at(ax + v * abx, ay + v * aby, az + v * abz); }",
     "new": "if (vc <= 0 && d1 >= 0 && d3 <= 0) { const v = d1 / (d1 - d3); return at(ax, ay, az); }",
-    "tests": ["test/fb1004d_crops.test.js"],
+    "tests": ["test/world/fb1004d_crops.test.js"],
     "note": "A point off an edge measured to the edge's end."
   },
   {
@@ -92,7 +92,7 @@
     "file": "src/world/rmbFlats.js",
     "old": "(obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE, { climateIndex, solid }));",
     "new": "(obj.zPos + RMB_DIMENSION + (obj.yRotation ?? 0)) * GLOBAL_SCALE, { climateIndex, solid }));",
-    "tests": ["test/fb1004d_crops.test.js"],
+    "tests": ["test/world/fb1004d_crops.test.js"],
     "note": "The batch's record turn moves its field: the turn read where the component never reads it."
   },
   {
@@ -100,7 +100,7 @@
     "file": "src/world/rmbFlats.js",
     "old": "(-obj.yPos + PROPS_OFFSET_Y) * GLOBAL_SCALE, (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE, { climateIndex, solid }));",
     "new": "-obj.yPos * GLOBAL_SCALE, (obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE, { climateIndex, solid }));",
-    "tests": ["test/fb1004d_crops.test.js"],
+    "tests": ["test/world/fb1004d_crops.test.js"],
     "note": "The plants a tenth of a metre over the batch again."
   },
   {
@@ -108,15 +108,15 @@
     "file": "src/world/rmbFlats.js",
     "old": "(obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE, { climateIndex, solid }));",
     "new": "(obj.zPos + RMB_DIMENSION) * GLOBAL_SCALE, {}));",
-    "tests": ["test/fb1004d_crops.test.js"],
+    "tests": ["test/world/fb1004d_crops.test.js"],
     "note": "The collector hands the field neither the climate nor the solids."
   },
   {
     "name": "CROPS-15-world-host-no-solids",
-    "file": "src/scenes/world.js",
-    "old": "const blockFlats = collectBlockFlats(b.dfBlock, natureArchive, { climateIndex: maps.getClimateIndex(px, py), solid: blockSolids(b.layout.models, (m) => (m.enhancedOnly && !isEnhanced() ? null : cpuModels.get(m.modelIdNum))) });",
-    "new": "const blockFlats = collectBlockFlats(b.dfBlock, natureArchive, { climateIndex: maps.getClimateIndex(px, py), solid: null });",
-    "tests": ["test/fb1004d_crops.test.js"],
+    "file": "src/scenes/pixelBuild.js",
+    "old": "const flatOpts = { climateIndex: maps.getClimateIndex(px, py), solid: blockSolids(b.layout.models, (m) => (m.enhancedOnly && !isEnhanced() ? null : cpuModels.get(m.modelIdNum))) };",
+    "new": "const flatOpts = { climateIndex: maps.getClimateIndex(px, py), solid: null };",
+    "tests": ["test/world/fb1004d_crops.test.js"],
     "note": "The streamed world's fields grow through the block again."
   },
   {
@@ -124,7 +124,7 @@
     "file": "src/scenes/exterior.js",
     "old": "const blockFlats = collectBlockFlats(b.dfBlock, natureArchive, { climateIndex: locClimateIndex, solid: fieldSolids })",
     "new": "const blockFlats = collectBlockFlats(b.dfBlock, natureArchive, { climateIndex: null, solid: fieldSolids })",
-    "tests": ["test/fb1004d_crops.test.js"],
+    "tests": ["test/world/fb1004d_crops.test.js"],
     "note": "The one-location exterior's fields cannot tell the second desert."
   }
 ]

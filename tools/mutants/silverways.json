@@ -5,28 +5,28 @@
     "old": "raid: Object.freeze({ amount: 30 }),",
     "new": "raid: Object.freeze({ amount: 31 }),",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
     "name": "SILVER-WAYS-law-cap-151",
     "file": "src/net/marksLaw.js",
-    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent']), perDay: 150 }",
-    "new": "kinds: Object.freeze(['gate', 'raid', 'serpent']), perDay: 151 }",
+    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']), perDay: 150 }",
+    "new": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']), perDay: 151 }",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ],
-    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): the serpents strike under the cap too - re-aimed by content."
+    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): the serpents strike under the cap too - re-aimed by content. EG-E1 (PIN MOVED): and the Spire's Redoubts - re-aimed by content."
   },
   {
     "name": "SILVER-WAYS-law-cap-gate-alone",
     "file": "src/net/marksLaw.js",
-    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent']), perDay: 150 }",
+    "old": "kinds: Object.freeze(['gate', 'raid', 'serpent', 'eg', 'star']), perDay: 150 }",
     "new": "kinds: Object.freeze(['gate']), perDay: 150 }",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ],
-    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): the serpents strike under the cap too - re-aimed by content."
+    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): the serpents strike under the cap too - re-aimed by content. EG-E1 (PIN MOVED): and the Spire's Redoubts - re-aimed by content."
   },
   {
     "name": "SILVER-WAYS-law-strike-no-remainder",
@@ -34,7 +34,7 @@
     "old": "Math.max(0, Math.min(amount, MARKS_COMBAT.perDay - Math.max(0, earned)))",
     "new": "Math.max(0, amount)",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "deed: Object.freeze({ amount: 25,",
     "new": "deed: Object.freeze({ amount: 26,",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "amount: 25, perDay: 4, members: 3,",
     "new": "amount: 25, perDay: 5, members: 3,",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "perDay: 4, members: 3, tenureS",
     "new": "perDay: 4, members: 2, tenureS",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "tenureS: 7 * 86_400 }",
     "new": "tenureS: 6 * 86_400 }",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "  const pay = `MIN(?2, ?6 - ${combatEarnedSql('?1', '?3')})`;",
     "new": "  const pay = '?2';",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "    WHERE ${combatEarnedSql('?1', '?3')} < ?6\n",
     "new": "    WHERE 1\n",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "m.joined_at <= ?4 - ?5 AND",
     "new": "1 AND",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "x.event = ?7) >= ?8",
     "new": "x.event = ?7) >= ?8 - 1",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "l.kind = 'guild-deed' AND l.day = ?3) < ?9",
     "new": "l.kind = 'guild-deed' AND l.day = ?3) < ?9 + 1",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "    ...(mint ? [mint] : []),\n",
     "new": "",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "  const deed = c.x === 'rite' ? null : deeds?.(c.d) ?? null;",
     "new": "  const deed = null;",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "WHERE region = ?1 AND kind = 'raid' AND state = 'open'",
     "new": "WHERE ?1 = ?1 AND kind = 'raid' AND state = 'open'",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -151,7 +151,7 @@
     "old": "const POSTERS_SQL = WRIT_POWERS.postWrit.join(', ');",
     "new": "const POSTERS_SQL = '0';",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "old": "SET left_deeds = left_deeds - 1, escrow = escrow - pay,",
     "new": "SET left_deeds = left_deeds - 1, escrow = escrow,",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "const deedTaxSql = `(((c.deeds - c.left_deeds + 1) * c.pay * ${TAX_PCT}) / 100 - ((c.deeds - c.left_deeds) * c.pay * ${TAX_PCT}) / 100)`;",
     "new": "const deedTaxSql = `(((0 + 1) * c.pay * ${TAX_PCT}) / 100 - (0 * c.pay * ${TAX_PCT}) / 100)`;",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ],
     "note": "AUDIT SILVER-WAYS (PIN MOVED): re-aimed by content to the code the audit's fix left (the Watch both ways, the receipt asked at the act's end and this account's alone, the tax reckoned in the batch)."
   },
@@ -179,7 +179,7 @@
     "old": "\n  + COALESCE((SELECT SUM(deeds * pay) FROM guild_contracts WHERE guild_id = ${g} AND week = ${week} AND officer = 1), 0))`;",
     "new": "\n  + 0)`;",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -188,8 +188,8 @@
     "old": "`EXISTS (SELECT 1 FROM guild_contracts WHERE guild_id = ${p} AND state = 'open')`",
     "new": "`0`",
     "tests": [
-      "test/silverways_service.test.js",
-      "test/silverways_client.test.js"
+      "test/net/silverways_service.test.js",
+      "test/net/silverways_client.test.js"
     ]
   },
   {
@@ -198,8 +198,8 @@
     "old": "export const CONTRACT_PAY_MAX = 50;",
     "new": "export const CONTRACT_PAY_MAX = 51;",
     "tests": [
-      "test/silverways_service.test.js",
-      "test/silverways_client.test.js"
+      "test/net/silverways_service.test.js",
+      "test/net/silverways_client.test.js"
     ]
   },
   {
@@ -208,7 +208,7 @@
     "old": "return Number(key.slice(0, key.indexOf(':')));",
     "new": "return Number(key.slice(key.indexOf(':') + 1, key.lastIndexOf(':')));",
     "tests": [
-      "test/silverways_service.test.js"
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -217,8 +217,8 @@
     "old": "export const contractPaidMay = (rank) => rank == null || !writMay(rank, 'postWrit');",
     "new": "export const contractPaidMay = (rank) => rank == null || rank >= 0;",
     "tests": [
-      "test/silverways_service.test.js",
-      "test/silverways_client.test.js"
+      "test/net/silverways_service.test.js",
+      "test/net/silverways_client.test.js"
     ]
   },
   {
@@ -227,7 +227,7 @@
     "old": "      if (data.deed && Number.isSafeInteger(data.deed.struck) && data.deed.struck > 0) out.push(MARKS_TEXT.deed(data.deed.struck, data.deed.guild));\n",
     "new": "",
     "tests": [
-      "test/silverways_client.test.js"
+      "test/net/silverways_client.test.js"
     ]
   },
   {
@@ -236,35 +236,35 @@
     "old": "        if (c && Number.isSafeInteger(c.pay) && c.pay > 0) out.push(MARKS_TEXT.contract(c.pay, c.guild));",
     "new": "        if (c && Number.isSafeInteger(c.pay) && c.pay > 0) void c;",
     "tests": [
-      "test/silverways_client.test.js"
+      "test/net/silverways_client.test.js"
     ]
   },
   {
     "name": "SILVER-WAYS-cli-raid-capped-the-breach",
     "file": "src/net/marksBook.js",
-    "old": "(kind === 'raid' ? MARKS_TEXT.cappedRaid : kind === 'serpent' ? MARKS_TEXT.cappedSerpent : MARKS_TEXT.capped)",
-    "new": "(kind === 'serpent' ? MARKS_TEXT.cappedSerpent : MARKS_TEXT.capped)",
+    "old": "(kind === 'raid' ? MARKS_TEXT.cappedRaid : kind === 'serpent' ? MARKS_TEXT.cappedSerpent : kind === 'eg' ? MARKS_TEXT.cappedEg : kind === 'star' ? MARKS_TEXT.cappedStar() : MARKS_TEXT.capped)",
+    "new": "(kind === 'serpent' ? MARKS_TEXT.cappedSerpent : kind === 'eg' ? MARKS_TEXT.cappedEg : kind === 'star' ? MARKS_TEXT.cappedStar() : MARKS_TEXT.capped)",
     "tests": [
-      "test/silverways_client.test.js"
+      "test/net/silverways_client.test.js"
     ],
-    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): a serpent's capped line beside the raid's - re-aimed by content."
+    "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): a serpent's capped line beside the raid's - re-aimed by content. EG-E1 (PIN MOVED): and a Redoubt's beside them - re-aimed by content."
   },
   {
     "name": "SILVER-WAYS-cli-raid-lines-unsaid",
-    "file": "src/net/raidClaims.js",
+    "file": "src/net/raid/raidClaims.js",
     "old": "          for (const line of Array.isArray(lines) ? lines : [lines]) if (typeof line === 'string' && line) say(line);\n",
     "new": "",
     "tests": [
-      "test/silverways_client.test.js"
+      "test/net/silverways_client.test.js"
     ]
   },
   {
     "name": "SILVER-WAYS-cli-gate-lines-one",
-    "file": "src/net/gateClaims.js",
+    "file": "src/net/gate/gateClaims.js",
     "old": "for (const line of Array.isArray(marksLine) ? marksLine : [marksLine]) if (typeof line === 'string' && line) say(line);",
     "new": "if (typeof marksLine === 'string' && marksLine) say(marksLine);",
     "tests": [
-      "test/silverways_client.test.js"
+      "test/net/silverways_client.test.js"
     ]
   },
   {
@@ -273,7 +273,7 @@
     "old": "const own = data?.guild?.id === x.guild?.id && !contractPaidMay(data.guild.rank);",
     "new": "const own = false;",
     "tests": [
-      "test/silverways_client.test.js"
+      "test/net/silverways_client.test.js"
     ]
   },
   {
@@ -282,7 +282,7 @@
     "old": "return site ? { region: site.region, character } : character ? { character } : null;",
     "new": "return site ? { region: site.region, character } : null;",
     "tests": [
-      "test/silverways_client.test.js"
+      "test/net/silverways_client.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "  if (station !== null && (!DECOR_STATIONS.includes(station) || storage)) return null;",
     "new": "  if (station !== null && storage) return null;",
     "tests": [
-      "test/homestations.test.js"
+      "test/ui/homestations.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (station !== null && (!DECOR_STATIONS.includes(station) || storage)) return null;",
     "new": "  if (station !== null && !DECOR_STATIONS.includes(station)) return null;",
     "tests": [
-      "test/homestations.test.js"
+      "test/ui/homestations.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "storage, paid, ...(station ? { station } : {}) };",
     "new": "storage, paid, station };",
     "tests": [
-      "test/homestations.test.js"
+      "test/ui/homestations.test.js"
     ]
   },
   {
@@ -32,44 +32,44 @@
     "old": "(place.paid !== 0 || place.storage || place.station))) return null;",
     "new": "(place.paid !== 0 || place.storage))) return null;",
     "tests": [
-      "test/homestations.test.js"
+      "test/ui/homestations.test.js"
     ]
   },
   {
     "name": "HOME-STATIONS-licence-unpaid",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    if (!act && fee > 0) deps.wallet().pay(fee);\n",
     "new": "",
     "tests": [
-      "test/homestations.test.js"
+      "test/ui/homestations.test.js"
     ],
     "note": "AUDIT YARD-HEIGHT (PIN MOVED, re-aimed by content: one write of a piece at a time)."
   },
   {
     "name": "HOME-STATIONS-paid-short",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    if (fee > (deps.wallet?.().gold ?? 0)) { deps.say?.(decorStationGoldLine(want)); return false; }\n",
     "new": "",
     "tests": [
-      "test/homestations.test.js"
+      "test/ui/homestations.test.js"
     ]
   },
   {
     "name": "HOME-STATIONS-paid-for-a-dropped-craft",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    if ((stood.station ?? null) !== want) { deps.say?.(DECOR_STATION_UNKEPT); return false; }",
     "new": "    if (false) { deps.say?.(DECOR_STATION_UNKEPT); return false; }",
     "tests": [
-      "test/homestations.test.js"
+      "test/ui/homestations.test.js"
     ]
   },
   {
     "name": "HOME-STATIONS-refund-on-unmaking",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    if (!act && fee > 0) deps.wallet().pay(fee);",
     "new": "    if (!act && fee > 0) deps.wallet().pay(fee); else deps.wallet().credit?.(DECOR_STATION_FEES[piece.station] / 2);",
     "tests": [
-      "test/homestations.test.js"
+      "test/ui/homestations.test.js"
     ],
     "note": "AUDIT YARD-HEIGHT (PIN MOVED, re-aimed by content: one write of a piece at a time)."
   },
@@ -79,7 +79,7 @@
     "old": "(it.piece.storage && it.holds) || !!it.piece.station || door;",
     "new": "(it.piece.storage && it.holds) || door;",
     "tests": [
-      "test/homestations.test.js"
+      "test/ui/homestations.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "    stationPick.disabled = !it || !!it.piece.item || it.piece.storage || door;",
     "new": "    stationPick.disabled = !it || door;",
     "tests": [
-      "test/homestations.test.js"
+      "test/ui/homestations.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "const o = stationsOffered(view?.trader !== false); stationOffer = o[(o.indexOf(stationOffer) + 1) % o.length];",
     "new": "const o = stationsOffered(view?.trader !== false); stationOffer = o[0];",
     "tests": [
-      "test/homestations.test.js"
+      "test/ui/homestations.test.js"
     ],
     "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content."
   },
@@ -107,16 +107,16 @@
     "old": "    if (piece?.station) { useDecorStation(piece); return; }   // HOME-STATIONS\n",
     "new": "",
     "tests": [
-      "test/homestations.test.js"
+      "test/ui/homestations.test.js"
     ]
   },
   {
     "name": "HOME-STATIONS-any-visitor-served",
     "file": "src/scenes/worldModes.js",
-    "old": "  function useDecorStation(piece) {\n    if (!decorOwnerHere()) {",
+    "old": "  function useDecorStation(piece) {\n    if (!stationOwnerHere()) {",
     "new": "  function useDecorStation(piece) {\n    if (false) {",
     "tests": [
-      "test/homestations.test.js"
+      "test/ui/homestations.test.js"
     ]
   },
   {
@@ -125,7 +125,7 @@
     "old": "JSON.stringify({ pos, rot, scale, light, storage, paid, ...(station ? { station } : {}) });",
     "new": "JSON.stringify({ pos, rot, scale, light, storage, paid });",
     "tests": [
-      "test/homestations.test.js"
+      "test/ui/homestations.test.js"
     ]
   }
 ]

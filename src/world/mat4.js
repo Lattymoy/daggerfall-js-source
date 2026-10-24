@@ -34,7 +34,7 @@ export const UP_Y = new Float32Array([0, 1, 0]);
  *  one for a large: at 1e300, `d - 2 * Math.PI === d` in IEEE doubles,
  *  so the condition never falls and the tab hangs until the browser
  *  kills it. Two of those four sites are fed an angle STRAIGHT OFF THE
- *  WIRE - net/online.js eases a peer's yaw, net/peerBodies.js turns its
+ *  WIRE - net/online.js eases a peer's yaw, net/peer/peerBodies.js turns its
  *  rig by it - so one player's yaw was enough to freeze every other
  *  player in the room. `%` is exact on doubles, so this answers in one
  *  step for any finite input. NaN in, NaN out: the callers that take

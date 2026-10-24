@@ -27,7 +27,7 @@
 // bar is always drawn when they say so (DaggerfallHUD.cs:213-216). Here
 // it is not - the enhanced skin never draws the classic bar, and the
 // classic skin draws none while its art loads - and the world RECT
-// already reads the drawn bar (ui/hudLarge.js dockedLargeHudHeight). So
+// already reads the drawn bar (ui/hud/hudLarge.js dockedLargeHudHeight). So
 // the twin is chosen by that same bar: the lens (largeHudWorldAspect)
 // asks it directly, the renderer by the rect the host set (a docked
 // strip starts above y = 0), and the texture, the lens and the rect can
@@ -41,7 +41,7 @@
 // DFU, and the two aspect corrections exist to undo that - 16:10 shows
 // the texture at its own shape, 4:3 at the shape a 1994 monitor gave
 // Mode 13h ("display output signal was stretched 20% higher in vertical
-// dimension", :103-105). `largeHudWorldAspect` (ui/hudLarge.js) reads
+// dimension", :103-105). `largeHudWorldAspect` (ui/hud/hudLarge.js) reads
 // retroWorldAspect for every host's projection, so there is one
 // denominator, as there was before.
 //
@@ -68,7 +68,7 @@
 //     Still the whole canvas: the classic native windows (their own
 //     320x200 letterbox, integer-scaled, not DFU's free scale), the video
 //     and the Morrowind arm's lane (C2).
-import { getInt, getBool } from './settings.js';
+import { getInt, getBool } from './settings/settings.js';
 
 /** RetroTarget320x200 / RetroTarget640x400 (.renderTexture sizes). */
 export const RETRO_TARGETS = Object.freeze({ 1: Object.freeze([320, 200]), 2: Object.freeze([640, 400]) });
@@ -102,7 +102,7 @@ export function retroWorldAspect(mode, docked) {
 
 /**
  * SetRetroAspectViewport (:96-149), in Unity's normalized BOTTOM-LEFT
- * rect space - gl.viewport's own, as ui/hudLarge.js's world rect is.
+ * rect space - gl.viewport's own, as ui/hud/hudLarge.js's world rect is.
  * The arithmetic is DFU's to the cast: a 6x-classic height ratio, a
  * 5x (4:3) or 6x (16:10) classic width truncated to whole pixels, an
  * integer pillar either side, the docked bar's share off the bottom.

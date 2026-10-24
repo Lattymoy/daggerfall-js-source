@@ -21,30 +21,31 @@
 import { ClassFile } from '../formats/classFile.js';
 import { TextRsc } from '../formats/textRsc.js';   // U18: the class questions ride TEXT.RSC 9000
 import { parseQuestionLibrary } from './classQuestions.js';   // U18
-import { ChargenFlow } from '../ui/chargen.js';
+import { ChargenFlow, handHeroGenderToGrammar } from '../ui/chargen.js';   // L10N3g: the live hero's gender, handed to the grammar at the start
 import { applyCharacter, createCharacter, assignStartingSpells, CLASS_CAREERS } from './chargen.js';   // RRI2: AssignStartingSpells, the delegate
 import { levelUpSkillSum } from './advancement.js';   // AUDIT 18: SetCurrentLevelUpSkillSum, one home
 import { overlayAction } from '../ui/input.js';
 import { isEnhanced } from './uiSkin.js';   // THE SKIN: which wizard
 import { assignStartingEquipment } from './startingGear.js';   // S3d; RRI2: AssignStartingEquipment, the delegate
-import { giveBinderAtChargen } from './iliacItems.js';   // CARDS8: the Card Binder and the starter deck, the kit's own tail
+import { giveBinderAtChargen } from './iliac/iliacItems.js';   // CARDS8: the Card Binder and the starter deck, the kit's own tail
 import { NUMBER_BODY_PARTS } from './armorMaterials.js';   // wave 28: CharacterDocument's 7-part table
-import { readSpellsStd, spellsByIndexMap } from '../formats/spellsStd.js';
+import { standardSpellsByIndex } from './spell/standardSpells.js';   // DEX4a: the one RebuildClassicSpellsDict
 import { parseBiog, biogFileName } from '../formats/biogFile.js';   // S3e
 import { applyBiographyEffects } from './biography.js';   // S3e
 import { customSpellSetIndex } from './customClass.js';   // U20a
+import { reviseStockCareer } from './stockClasses.js';   // CLASS-USE: the stock careers' revised skill lists
 import { SOCIAL_GROUP_COUNT, FactionFile } from '../formats/factionFile.js';   // U20a + S25
-import { attachFactionRep } from './factionRep.js';   // S25
-import { createRegionConditions } from './regionConditions.js';
+import { attachFactionRep } from './faction/factionRep.js';   // S25
+import { createRegionConditions } from './region/regionConditions.js';
 import { clearWorldDataVariants } from './worldDataVariants.js';   // AUDIT-RR F39: PlayerEntity.Reset (:818) clears the world variants at every new game
-import { bootstrapRegionPower } from './regionPower.js';   // AUDIT 26 F107   // PlayerEntity.InitializeRegionData (:2189-2218), at every new game
+import { bootstrapRegionPower } from './region/regionPower.js';   // AUDIT 26 F107   // PlayerEntity.InitializeRegionData (:2189-2218), at every new game
 // ORL1: the leveling choice - its screen, and the two names the
 // answer is spelled with.
 import { LevelingChoiceScreen } from '../ui/levelingChoice.js';
 import { oblivionLevelingEnabled, initVirtueLeveling, LEVELING_CLASSIC, newCharacterLevelingSystem } from './oblivionLeveling.js';
-import { isOnlinePage } from './onlineLane.js';   // LEVEL-ONLINE-2: Oblivion's leveling is offline-only for a new character
+import { isOnlinePage } from './online/onlineLane.js';   // LEVEL-ONLINE-2: Oblivion's leveling is offline-only for a new character
 import { legacyOn } from './legacy/settings.js';   // LEGACY2: Project Legacy's question - the family's model
-import { legacyModelScreen } from '../ui/legacyModelChoice.js';
+import { legacyModelScreen } from '../ui/legacy/legacyModelChoice.js';
 import { isLegacyChoice } from './legacy/family.js';   // LEGACY-CHOICE: the answer kept on the character
 
 /** SPELLS.STD as an index -> spell map. AUDIT 17f: the exterior
@@ -56,7 +57,7 @@ import { isLegacyChoice } from './legacy/family.js';   // LEGACY-CHOICE: the ans
  *  unavailable, which is the pre-existing no-magic fallback. */
 export async function loadSpellIndex(fetchBytes) {
   try {
-    return spellsByIndexMap(readSpellsStd(await fetchBytes('SPELLS.STD')));   // AUDIT 23 (FTD-2): FIRST record wins a duplicate index (RebuildClassicSpellsDict)
+    return standardSpellsByIndex(await fetchBytes('SPELLS.STD'));   // AUDIT 23 (FTD-2): FIRST record wins a duplicate index (RebuildClassicSpellsDict); DEX4a: the mods' records merged first
   } catch (e) {
     console.warn('[chargen] SPELLS.STD unavailable; the starting spellbook stays empty', e);
     return null;
@@ -102,13 +103,13 @@ export async function loadClassQuestionData(fetchBytes) {
   return { questionLibrary, classesData };
 }
 
-/** The 18 classic careers (CLASS00..17.CFG). */
+/** The 18 classic careers (CLASS00..17.CFG), each through CLASS-USE's revision (stockClasses.js). */
 export async function loadCareers(fetchBytes) {
   const careers = [];
   for (let i = 0; i < CLASS_CAREERS.length; i++) {
     const cf = new ClassFile();
     cf.load(await fetchBytes(`CLASS${String(i).padStart(2, '0')}.CFG`));
-    careers.push({ name: cf.career.name || CLASS_CAREERS[i], career: cf.career });
+    careers.push({ name: cf.career.name || CLASS_CAREERS[i], career: reviseStockCareer(i, cf.career) });
   }
   return careers;
 }
@@ -123,8 +124,9 @@ export async function loadCareers(fetchBytes) {
 export async function applyHeadlessChargen(playerEntity, classIndex, { fetchBytes, spellsByIndex = null } = {}) {
   const cf = new ClassFile();
   cf.load(await fetchBytes(`CLASS${String(classIndex).padStart(2, '0')}.CFG`));
-  createCharacter(playerEntity, cf.career, classIndex);
-  playerEntity.spells = assignStartingSpells(classIndex, spellsByIndex, cf.career);
+  const career = reviseStockCareer(classIndex, cf.career);   // CLASS-USE: the career loadCareers hands the wizard
+  createCharacter(playerEntity, career, classIndex);
+  playerEntity.spells = assignStartingSpells(classIndex, spellsByIndex, career);
   // S3d: the same kit every other creation path gets
   playerEntity.items = [];
   playerEntity.equip = null;
@@ -257,7 +259,7 @@ export function applyCreationExtras(playerEntity, result, spellsByIndex = null, 
 /** Apply a finished flow result onto the entity: the career/stat/
  *  skill derivations (applyCharacter), the starting spellbook, and
  *  the IDENTITY the paperdoll reads. */
-export function finishChargen(playerEntity, result, spellsByIndex = null, { rolls = Math.random } = {}) {
+export function finishChargen(playerEntity, result, spellsByIndex = null, { rolls = Math.random } = {}) { handHeroGenderToGrammar(playerEntity);   // L10N3g: StartGameBehaviour.cs:147, the NewCharacter start - the wizard's pick (CreateCharGenderSelect.cs:63/:70) gives way to the live hero
   applyCharacter(playerEntity, result.career, result.careerIndex, result);
   // U13: the reflex pick. Both consumers were already live - the
   // EnemyAttack melee timer (450ms per step from Average) and the
@@ -358,7 +360,7 @@ export async function createChargenFlow(fetchBytes, { rolls = Math.random } = {}
  *  CONSTRUCTION SEAM (AUDIT 17i split it out because three separate
  *  bugs came from hosts wiring chargen by hand), so the enhanced
  *  wizard mounts through the same door rather than teaching each host
- *  a second one. A host that reached for ui/enhancedChargen.js itself
+ *  a second one. A host that reached for ui/enhanced/enhancedChargen.js itself
  *  would be the 17i shape again, and a sweep fails the suite if one
  *  does.
  *
@@ -391,7 +393,7 @@ export function createChargenWindow(flow, { onDone, onCancel, hudScale = 2 } = {
   // level-up arms were wired for this slice.
   //
   // (The reserved word for an unwired host is deliberately not used
-  // here: this file's own pin, test/enhancedChargen.test.js's "the FOUR
+  // here: this file's own pin, test/ui/enhanced/enhancedChargen.test.js's "the FOUR
   // HOSTS are each named at the seam", holds that the SKIN fork has no
   // host outside it, and that guard must keep meaning what it says.)
   return withLevelingChoice(flow, { onDone, onCancel, hudScale });
@@ -620,7 +622,7 @@ function enhancedChargenOverlay(flow, { onDone, onCancel, hudScale = 2 } = {}) {
   host.id = 'enhanced-chargen';
   host.style.cssText = 'position:fixed;inset:0;z-index:14;background:#0e1013;overflow:hidden';
   document.body.append(host);
-  import('../ui/enhancedChargen.js').then(async ({ mountEnhancedChargen, attachChargenText }) => {
+  import('../ui/enhanced/enhancedChargen.js').then(async ({ mountEnhancedChargen, attachChargenText }) => {
     const deps = await chargenViewDeps();
     attachChargenText(flow, deps.textRsc);
     view = mountEnhancedChargen(host, { flow, ...deps, onExit: finish });
@@ -705,3 +707,6 @@ function codeToKey(code) {
     Equal: '=', Minus: '-', NumpadAdd: '+', NumpadSubtract: '-',
   })[code] ?? '';
 }
+
+// L10N3g: the hosts hand the grammar the live hero at their own start (a load) through the same door.
+export { handHeroGenderToGrammar };

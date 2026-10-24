@@ -5,7 +5,7 @@
     "old": "  return readsAsDeadline(quest, name) && !closes(quest, name);",
     "new": "  return readsAsDeadline(quest, name);",
     "tests": [
-      "test/rest8_audit_timefree.test.js"
+      "test/systems/quest/rest8_audit_timefree.test.js"
     ],
     "note": "AUDIT-TIMEFREE-T1-the-closing-rule-dropped (tools/mutants/audit_timefree.json, DELETED by QCLOCK-WORLD), restored."
   },
@@ -15,7 +15,7 @@
     "old": "  for (const tn of startersOf(quest, name)) {\n    if (reached(quest, tn, { conditional: false }).settles) return true;",
     "new": "  for (const tn of startersOf(quest, name)) {\n    if (reached(quest, tn).settles) return true;",
     "tests": [
-      "test/rest8_audit_timefree.test.js"
+      "test/systems/quest/rest8_audit_timefree.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "    if (/^\\d+$/.test(tn)) continue;",
     "new": "    if (false) continue;",
     "tests": [
-      "test/rest8_audit_timefree.test.js"
+      "test/systems/quest/rest8_audit_timefree.test.js"
     ]
   },
   {
@@ -33,8 +33,8 @@
     "old": "        || (!atOnce && clockIsDeadline(q, this));",
     "new": "        || (!(q?.questName === 'R0C11Y03' && name === '2ndparton') && !atOnce && clockIsDeadline(q, this));",
     "tests": [
-      "test/rest8_audit_timefree.test.js",
-      "test/auditrest2_quests.test.js"
+      "test/systems/quest/rest8_audit_timefree.test.js",
+      "test/systems/quest/auditrest2_quests.test.js"
     ],
     "note": "AUDIT REST II (PIN MOVED): ONLINE_CLOSINGS is retired with its one entry (AUDIT REST II Q1), so the record that emptied it (REST8-AUDIT-TIMEFREE-T1-the-closings-table-emptied) is re-aimed - R0C11Y03's `_2ndparton_` back as a closing by hand is the mutant now: online the quest fails two minutes after the heart is delivered."
   },
@@ -44,7 +44,7 @@
     "old": "    return this._deadline && !(this._closesOnSuccess && q?.questSuccess && !this.startedAfterSuccess);",
     "new": "    return this._deadline;",
     "tests": [
-      "test/rest8_audit_timefree.test.js"
+      "test/systems/quest/rest8_audit_timefree.test.js"
     ]
   },
   {
@@ -53,7 +53,7 @@
     "old": "    return this._deadline && !(this._closesOnSuccess && q?.questSuccess && !this.startedAfterSuccess);",
     "new": "    return this._deadline && !(this._closesOnSuccess && q?.questSuccess);",
     "tests": [
-      "test/rest8_audit_timefree.test.js"
+      "test/systems/quest/rest8_audit_timefree.test.js"
     ]
   },
   {
@@ -62,7 +62,7 @@
     "old": "      startedAfterSuccess: this.startedAfterSuccess,",
     "new": "",
     "tests": [
-      "test/rest8_audit_timefree.test.js"
+      "test/systems/quest/rest8_audit_timefree.test.js"
     ]
   },
   {
@@ -71,7 +71,7 @@
     "old": "  if (reached(quest, name, { conditional: false }).lowers) return true;",
     "new": "  if (reached(quest, name).lowers) return true;",
     "tests": [
-      "test/rest8_audit_timefree.test.js"
+      "test/systems/quest/rest8_audit_timefree.test.js"
     ]
   },
   {
@@ -80,7 +80,7 @@
     "old": "is still the loss of that pay\n    if (reached(quest, tn, { conditional: false }).settles) return true;",
     "new": "is still the loss of that pay\n    if (reached(quest, tn).settles || [...PROGRESS].some((x) => reached(quest, tn).types.has(x))) return true;",
     "tests": [
-      "test/rest8_audit_timefree.test.js"
+      "test/systems/quest/rest8_audit_timefree.test.js"
     ]
   },
   {
@@ -89,7 +89,7 @@
     "old": "      if (alone && !reader._checkEvals?.call(",
     "new": "      if (false && !reader._checkEvals?.call(",
     "tests": [
-      "test/rest8_audit_timefree.test.js"
+      "test/systems/quest/rest8_audit_timefree.test.js"
     ]
   },
   {
@@ -98,7 +98,7 @@
     "old": "      const atOnce = this.declaredAtOnce && !/^_2.*_$/.test(this.symbol?.original ?? '');",
     "new": "      const atOnce = false;",
     "tests": [
-      "test/rest8_audit_timefree.test.js"
+      "test/systems/quest/rest8_audit_timefree.test.js"
     ]
   },
   {
@@ -107,7 +107,7 @@
     "old": "const PROGRESS = new Set(['GivePc', 'TrainPc', 'StartQuest', 'GetItem']);",
     "new": "const PROGRESS = new Set(['GivePc', 'TrainPc', 'StartQuest']);",
     "tests": [
-      "test/rest8_audit_timefree.test.js"
+      "test/systems/quest/rest8_audit_timefree.test.js"
     ]
   },
   {
@@ -116,8 +116,8 @@
     "old": "  _BRISIEN: Object.freeze(['remindpc']),",
     "new": "",
     "tests": [
-      "test/rest8_audit_timefree.test.js",
-      "test/rest8_questwaits.test.js"
+      "test/systems/quest/rest8_audit_timefree.test.js",
+      "test/systems/quest/rest8_questwaits.test.js"
     ]
   },
   {
@@ -126,7 +126,7 @@
     "old": "    if (this.remainingTimeInSeconds <= 0) {",
     "new": "    if (this.remainingTimeInSeconds <= 0 && !(questWaitsShort(this.parentQuest) && this.isDeadline)) {",
     "tests": [
-      "test/rest8_audit_timefree.test.js"
+      "test/systems/quest/rest8_audit_timefree.test.js"
     ],
     "note": "AUDIT-TIMEFREE-T7-the-frozen-guard-dropped inverted: the guard went with the freeze, so TIMEFREE's frozen deadline back (never firing online) is the mutant now."
   }

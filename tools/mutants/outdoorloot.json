@@ -1,0 +1,455 @@
+[
+  {
+    "name": "OUTDOOR-LOOT-digest-merge-forgets-the-places-gone",
+    "file": "src/net/bodyLoot.js",
+    "old": "const x = into.x | d.x;",
+    "new": "const x = d.x;",
+    "tests": [
+      "test/net/outdoorloot_pins.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-unborn-body-reads-as-born",
+    "file": "src/net/bodyLoot.js",
+    "old": "return missing ? 'unborn' : 'born';",
+    "new": "return 'born';",
+    "tests": [
+      "test/net/bodyloot.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-claim-in-another-peers-name",
+    "file": "src/net/bodyLoot.js",
+    "old": "if (!c || typeof c !== 'object' || !validRoomId(c.id) || !claimOf(c.id, from)) continue;",
+    "new": "if (!c || typeof c !== 'object' || !validRoomId(c.id)) continue;",
+    "tests": [
+      "test/net/bodyloot.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-letter-of-credit-is-a-place",
+    "file": "src/net/bodyLoot.js",
+    "old": "if (!piece || neverPeerHanded(piece)) return null;",
+    "new": "if (!piece) return null;",
+    "tests": [
+      "test/net/bodyloot.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-new-claim-judged-against-any-generation",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "const named = !!st && data.g === st.bg;",
+    "new": "const named = !!st;",
+    "tests": [
+      "test/net/bodyloot.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-re-ask-gated-by-the-pose-list",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "const rejudged = claims.some((c) => verdicts.get(c.id, now)?.to === from);",
+    "new": "const rejudged = false;",
+    "tests": [
+      "test/net/bodyloot.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-re-ask-of-the-unseen-claimer-unmetered",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "    if (!asker && !rejudged) return true;   // A1/C7: a NEW claim from a peer I do not see is not heard, and costs me nothing\n    if (!askBudget(from)) return true;",
+    "new": "    if (!asker && !rejudged) return true;   // A1/C7: a NEW claim from a peer I do not see is not heard, and costs me nothing\n    if (!asker || !askBudget(from)) return true;",
+    "tests": [
+      "test/net/bodyloot.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-claim-judged-out-of-reach",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "const reach = !!(st && at && asker && dist(asker.feet, at) <= h.takeRange);",
+    "new": "const reach = !!(st && at && asker);",
+    "tests": [
+      "test/net/bodyloot.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-owner-judges-before-reading-his-own-take",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "if (st) ownTick(st);   // my own doors first: a take my window already made came first in wall time and wins (AC7)",
+    "new": "if (st) void 0;",
+    "tests": [
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-verdict-voided-when-it-never-left",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "hit(verdictFrame(to, k, i, st ? digestOf(st) : null, out), { sent: done, dropped: done });",
+    "new": "hit(verdictFrame(to, k, i, st ? digestOf(st) : null, out), { sent: done, dropped: () => { done(); if (st) restoreHeld(st, out.filter(([, g]) => g > 0).map(([id]) => ({ ...st.base[verdicts.get(id, now).p] }))); } });",
+    "tests": [
+      "test/net/bodyloot.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-peek-answered-from-across-the-cell",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "if (!places || !asker || !at || dist(asker.feet, at) > BODY_PEEK_REACH + 2 * h.leapSlack) return true;",
+    "new": "if (!places || !asker || !at) return true;",
+    "tests": [
+      "test/net/outdoorloot_pins.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-unborn-body-is-a-target",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "if (s === 'unborn') return false;\n    if (s !== 'born') return true;",
+    "new": "if (s !== 'born') return true;",
+    "tests": [
+      "test/net/bodyloot.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-older-owners-body-says-empty",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "return s === 'legacy' || s === 'unreadable' ? { ...word, unlisted: true } : word;",
+    "new": "return s === 'unreadable' ? { ...word, unlisted: true } : word;",
+    "tests": [
+      "test/net/bodyloot.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-late-legacy-grant-refused",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "if (!ledger.landAsk(key, _now(), LEGACY_ASK_KEEP_MS)) return false;   // an unasked grant, or a second for one ask, is refused whole",
+    "new": "if (!ledger.landAsk(key, _now(), TAKE_WINDOW_MS)) return false;   // an unasked grant, or a second for one ask, is refused whole",
+    "tests": [
+      "test/net/bodyloot.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-reader-merges-a-new-body-into-the-old",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "if (rb && rb.digest.g !== v.digest.g) { dropReader(rb); rb = undefined; }",
+    "new": "void 0;",
+    "tests": [
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-teardown-drops-the-claim-in-flight",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "    ledger.keep(() => true, _now());\n    ledger.clear();",
+    "new": "    ledger.clear();",
+    "tests": [
+      "test/net/bodyloot.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-cell-change-keeps-nothing",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "ledger.keep((c) => !held(c.meta.k), _now());",
+    "new": "void 0;",
+    "tests": [
+      "test/net/bodyloot.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-lapsed-claim-kept-at-teardown",
+    "file": "src/systems/loot/claimLedger.js",
+    "old": "if (c.done || c.lapsed || (now !== null && now - c.at >= lapseMs) || !which(c)) continue;",
+    "new": "if (c.done || !which(c)) continue;",
+    "tests": [
+      "test/net/bodyloot.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-duplicate-verdict-lands-twice",
+    "file": "src/systems/loot/claimLedger.js",
+    "old": "if (!c || c.done) return null;\n    if (from !== undefined",
+    "new": "if (!c) return null;\n    if (from !== undefined",
+    "tests": [
+      "test/net/bodyloot.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-claim-never-asked-again",
+    "file": "src/systems/loot/claimLedger.js",
+    "old": "if (now >= c.nextAt) { c.wait",
+    "new": "if (false) { c.wait",
+    "tests": [
+      "test/net/bodyloot.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-one-ask-lands-two-grants",
+    "file": "src/systems/loot/claimLedger.js",
+    "old": "    const had = list.length > 0;\n    if (had) list.shift();",
+    "new": "    const had = list.length > 0;",
+    "tests": [
+      "test/net/world6biiic.test.js",
+      "test/scenes/auditworld6biiic.test.js",
+      "test/net/bodyloot.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-cupboard-take-all-said-in-one-word",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "    for (let i = 0; i < Math.max(q.length, a.length); i += ROOM_CLAIMS_MAX) {\n      out.push(dayOf(claimWord(",
+    "new": "    for (let i = 0; i < Math.max(q.length, a.length); i += ROOM_CLAIMS_MAX * 100) {\n      out.push(dayOf(claimWord(",
+    "tests": [
+      "test/net/containerloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-cupboard-verdicts-pushed-out-of-a-word",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "for (let i = 0; i < verdicts.length; i += ROOM_ANSWERS_KEPT) out.push(word(verdicts.slice(i, i + ROOM_ANSWERS_KEPT)));",
+    "new": "out.push(word(verdicts.slice(-ROOM_ANSWERS_KEPT)));",
+    "tests": [
+      "test/net/containerloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-seat-says-its-verdicts-on-the-frame",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "if (mine && (verdicts.length || birth)) say(cup, { verdicts, base: birth });",
+    "new": "if (mine && birth) say(cup, { verdicts, base: birth });",
+    "tests": [
+      "test/net/containerloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-no-seat-known-is-another-seat",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "const isSeat = () => { const s = net.seat(); return s == null || s === net.selfId(); };",
+    "new": "const isSeat = () => { const s = net.seat(); return s === net.selfId(); };",
+    "tests": [
+      "test/net/containerloot.test.js",
+      "test/net/containerloot_protocol.test.js",
+      "test/net/containerloot_edges.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-first-open-tie-broken-by-the-local-clock",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "const wall = () => net.wallNow() ?? 0;",
+    "new": "const wall = () => Date.now();",
+    "tests": [
+      "test/net/containerloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-cupboard-claim-dropped-at-the-door",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "      ledger.keep(() => true, now);\n",
+    "new": "",
+    "tests": [
+      "test/net/containerloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-take-from-a-lost-roll-keeps-the-piece",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "if (cup.composed.base !== st.base) { liftPiece(entity, obj, k); net.say(ROOM_TAKEN_TEXT); return; }",
+    "new": "if (cup.composed.base !== st.base) { net.say(ROOM_TAKEN_TEXT); return; }",
+    "tests": [
+      "test/net/containerloot.test.js",
+      "test/net/containerloot_protocol.test.js",
+      "test/net/containerloot_edges.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-older-build-second-word-resurrects",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "if (from == null || !prev || !isSeat()) return 1;",
+    "new": "if (from == null || !isSeat()) return 1;",
+    "tests": [
+      "test/net/outdoorloot_pins.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-yesterdays-word-beats-todays",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "if (cup.st && cup.st.terms.g > Math.floor(rec.d)) return 1;",
+    "new": "void 0;",
+    "tests": [
+      "test/net/outdoorloot_pins.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-stored-piece-handed-uncopied",
+    "file": "src/systems/roomLoot.js",
+    "old": "const piece = { ...it, stackCount: left };   // OUTDOOR-LOOT (DESIGN 6.2)",
+    "new": "const piece = left === pieceCount(it) ? it : { ...it, stackCount: left };   // OUTDOOR-LOOT (DESIGN 6.2)",
+    "tests": [
+      "test/net/containerloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-equal-mints-break-on-the-higher-signature",
+    "file": "src/systems/roomLoot.js",
+    "old": "return typeof a.h === 'string' && typeof b.h === 'string' && a.h < b.h;",
+    "new": "return typeof a.h === 'string' && typeof b.h === 'string' && a.h > b.h;",
+    "tests": [
+      "test/systems/roomloot_carried.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-carried-find-is-not-a-room-kind",
+    "file": "src/systems/roomLoot.js",
+    "old": "export const ROOM_BASE_KINDS = Object.freeze(['loot', 'corpse', 'enc', 'srch']);",
+    "new": "export const ROOM_BASE_KINDS = Object.freeze(['loot', 'corpse', 'enc']);",
+    "tests": [
+      "test/systems/searchfindloot.test.js",
+      "test/systems/partyloot.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-grant-gives-a-piece-the-taker-carries",
+    "file": "src/systems/roomLoot.js",
+    "old": "if (!notCarried([item])?.length) return;",
+    "new": "void 0;",
+    "tests": [
+      "test/net/bodyloot_protocol.test.js",
+      "test/net/containerloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-find-minted-on-the-local-clock",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "tm: host._wallNow() ?? 0, h: baseSignature(records)",
+    "new": "tm: Date.now(), h: baseSignature(records)",
+    "tests": [
+      "test/systems/searchfindloot.test.js",
+      "test/systems/partyloot.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-find-shown-to-the-host-that-judges-it",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "if (h.search && !_roomSees.has(canon)) return false;",
+    "new": "void 0;",
+    "tests": [
+      "test/systems/searchfindloot.test.js",
+      "test/systems/partyloot.test.js"
+    ],
+    "equivalent": true,
+    "why": "Belt-and-braces since AUDIT OUTDOOR-LOOT D1: a find this player does not see never enters the room's state here - landRoomWord returns before it, and the seat judges a stranger's find in a state of its own (judgeStrangerFind) - so no composed state can name a find unseen."
+  },
+  {
+    "name": "OUTDOOR-LOOT-strangers-find-landed-on-the-party",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "const sees = !h.search || !!who || (same && _roomSees.has(canon));",
+    "new": "const sees = true;",
+    "tests": [
+      "test/systems/searchfindloot.test.js",
+      "test/systems/partyloot.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-find-reask-judged-twice",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "const reask = host._authority && same ?",
+    "new": "const reask = false && host._authority && same ?",
+    "tests": [
+      "test/systems/searchfindloot.test.js",
+      "test/systems/partyloot.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-find-claims-said-once",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "if (host._authority || m.refused || nowMs - m.saidAt < ROOM_PUT_RESAY_MS) continue;",
+    "new": "if (host._authority || m.refused || m.claim || nowMs - m.saidAt < ROOM_PUT_RESAY_MS) continue;",
+    "tests": [
+      "test/systems/searchfindloot.test.js",
+      "test/systems/partyloot.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-unlisted-pile-says-empty",
+    "file": "src/systems/worldHover.js",
+    "old": "if (named?.title && named.unlisted) {",
+    "new": "if (false && named?.title && named.unlisted) {",
+    "tests": [
+      "test/systems/graveparty_unlisted.test.js",
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-stale-row-copies-the-piece",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "if (Array.isArray(from) && !from.includes(item)) return null;",
+    "new": "void 0;",
+    "tests": [
+      "test/net/bodyloot_protocol.test.js",
+      "test/systems/itemTransfer.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-window-never-told-it-opened",
+    "file": "src/ui/inventoryDoor.js",
+    "old": "deps.loot?.opened?.();",
+    "new": "void 0;",
+    "tests": [
+      "test/net/outdoorloot_pins.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-window-never-told-it-closed",
+    "file": "src/systems/inventorySession.js",
+    "old": "try { loot?.closed?.(); }",
+    "new": "try { void 0; }",
+    "tests": [
+      "test/net/outdoorloot_pins.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-unreadable-pile-plaque-says-empty",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "lootPileName(api.lootContents(key)), ...(_lootUnreadable.has(roomLootKey(key)) ? { unlisted: true } : {}) };",
+    "new": "lootPileName(api.lootContents(key)) };",
+    "tests": [
+      "test/systems/graveparty_unlisted.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-unlisted-cupboard-peek-paints-a-roll",
+    "file": "src/systems/containerPreview.js",
+    "old": "if (shut || hall || unborn) return null;",
+    "new": "if (shut || hall) return null;",
+    "tests": [
+      "test/systems/containerpreview.test.js",
+      "test/net/containerloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-cupboard-unborn-flag-is-belt-and-braces",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "unborn(canon) { return !cups.get(canon)?.st; },",
+    "new": "unborn(canon) { return false; },",
+    "tests": [
+      "test/net/containerloot.test.js",
+      "test/net/containerloot_protocol.test.js",
+      "test/net/containerloot_edges.test.js"
+    ],
+    "equivalent": true,
+    "why": "interiorLootUnborn's second clause - `unborn(canon) && !Array.isArray(items)` - is true only where the cupboard's `items` is no array, and containerPreviewItems answers null for a non-array already (`!Array.isArray(c.items)`): the flag is belt-and-braces over the mount's aside (interiorLootAside), which leaves a stranger's unborn cupboard's items null. Kept so an unborn cupboard stays a name even if a path ever leaves an array there."
+  }
+]

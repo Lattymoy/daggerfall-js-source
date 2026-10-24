@@ -20,7 +20,7 @@ Read with the real ARENA2 through the dev server's mount (a scratch probe drew t
 
 **The pictures.** Every enhanced item picture is an `<img>` holding a PNG data URL, made on a canvas at a fixed
 whole-number scale - 2 for a tile, 4 for the card (`requestIcon`, `ui/textureCanvas.js`) - and then CAPPED by CSS:
-`.tile img { max-width: 30px; max-height: 30px }` (`ui/enhancedStyle.js`). The pack's grid slot is 56px; its picture is
+`.tile img { max-width: 30px; max-height: 30px }` (`ui/enhanced/enhancedStyle.js`). The pack's grid slot is 56px; its picture is
 at most 30. The real records, measured over the 282 templates the game mints (their longest side):
 
 | group | median | range |
@@ -37,13 +37,13 @@ which at a ratio like that DROPS pixels unevenly - and a gem's 2x canvas stood a
 computed a scale that fits the slot. The grid also never showed a stack's count (`itemRow` never made the element its
 sheet has a rule for).
 
-**The hotbar** (`ui/enhancedHotbar.js`, the model `systems/quickslots.js` HB1): ten slots (sixteen on the pad's
+**The hotbar** (`ui/enhanced/enhancedHotbar.js`, the model `systems/quickslots.js` HB1): ten slots (sixteen on the pad's
 crossbar). A spell's slot shows the spell's INITIALS - "A spell has no ARENA2 icon this skin reads" - though the art is
-there: ICON00I0.IMG, 69 spell icons of 16px (`ui/spellIcons.js`), and a DOM door already cuts them
-(`ui/enhancedArt.js spellIconUrl`). Items: four KINDS alone - a consumable, a light, a shield, a weapon
+there: ICON00I0.IMG, 69 spell icons of 16px (`ui/spell/spellIcons.js`), and a DOM door already cuts them
+(`ui/enhanced/enhancedArt.js spellIconUrl`). Items: four KINDS alone - a consumable, a light, a shield, a weapon
 (`hotbarKindOf`, and again in the save's restore) - and a press of any other kind would fall to the light's arm.
 
-**The status row** (`ui/enhancedHud.js`): the HUD's effects are TEXT chips - "Wrath 10s" - in one row at the foot of the
+**The status row** (`ui/enhanced/enhancedHud.js`): the HUD's effects are TEXT chips - "Wrath 10s" - in one row at the foot of the
 centred column, under the vitals and the Renown row: spells (`effectRows` - their ICON00I0 index dropped on the
 way), the sets' powers, and the survival needs ("Hungry", "Freezing" - `survivalHudChips`). A poison, a disease and an
 infection never show there at all (they carry no bundle). The Renown bar is an 8px track with no words: the numbers
@@ -109,7 +109,7 @@ panel's box is smaller below a desktop) takes its picture the moment it lands - 
 ## UI2 - the hotbar: every spell's icon, every item (2026-09-27)
 
 **A SPELL'S SLOT SHOWS ITS ICON** - the ICON00I0 tile its record names (SPELLS.STD's `icon` byte, a made spell's
-SetIcon), cut from the real sheet (`ui/enhancedArt.js spellIconPicture`) and fitted to the slot by UI1's law, whole and
+SetIcon), cut from the real sheet (`ui/enhanced/enhancedArt.js spellIconPicture`) and fitted to the slot by UI1's law, whole and
 untrimmed (a spell icon is a square tile, its dark border part of it), to the spell face's own 34px box inside its
 ring: whole pixels at every ratio - 32px at 1x, 1.5x, 2x and 3x, and where 32 is not whole the whole size under it
 that keeps three quarters of the box (25.6px at 1.25x, 27.4 at 1.75x, 30.5 at a phone's 2.625x; AUDIT UI B2). The
@@ -142,7 +142,7 @@ every picture fitted and unresampled, the counts, the diamond's cells and its sp
 
 ## UI3 - the status widget, and the XP in the bar (2026-09-27)
 
-**THE EFFECTS LEAVE THE FOOT** (`ui/hudStatus.js`, drawn by `ui/enhancedHud.js`). The row of text chips under the
+**THE EFFECTS LEAVE THE FOOT** (`ui/hud/hudStatus.js`, drawn by `ui/enhanced/enhancedHud.js`). The row of text chips under the
 vitals and the Renown row is gone from the HUD's bottom column; what it said is a column of SQUARE tiles at the left
 edge, standing on the quickslot block's caption - the block's first child, so it rides the block's corner and scale,
 grows UP from the caption and can never meet the diamond. One tile an effect, in the foot row's old order:
@@ -157,12 +157,19 @@ grows UP from the caption and can never meet the diamond. One tile an effect, in
   while it is felt and red while it costs (the chips' own two levels: red means it costs); how bad at its foot, its
   stage of its own ladder - "2/3" for Hungry of Peckish, Hungry, Starving (NEED-TIER 2026-10-02, Mac: "the debuffs you
   get from Climates and Calories no longer show the severity": the glyph is one picture for every stage and the name
-  goes where there is no room, so the foot says it there; Stiff, one stage, has none);
+  goes where there is no room, so the foot says it there; Stiff, one stage, has none); in the Boons tier (SURV-BOONS,
+  2026-10-12) no need is red - nothing there costs - but the drink, which stands before the boons;
+- a BOON (Climates & Calories on Boons, `survivalHudChips`' level 'boon'): a green buff tile on the need's own glyph for
+  the need it rewards (Well fed the drumstick, Quenched the drop, Well rested the moon - its bank's whole hours at its
+  foot), a gold sparkle for Thriving and a flame for the Hearth (not REST1's campfire, which may stand beside it);
+- and, off the widget, THE TEMPERATURE PLATE (TEMP-UI, 2026-10-12): at the compass's right end, the felt temperature
+  live, its word and a scale, in the temperature chip's own level (`06-Systems/Climates-Calories.md` TEMP-UI);
 - a POISON and a DISEASE, shown at last (a skull, a spore), on the Status box's own law (`systems/healthStatus.js`):
   ONE tile, "Poisoned", once any poison has left its waiting and until its damage has healed (the game names no poison:
   "You have been poisoned."); a tile a disease once its incubation is over, by the name its own contracted message
-  gives it (`diseases.js DISEASE_NAMES`, TEXT.RSC 100-116); nothing for a poison still waiting, a disease still
-  incubating, or an infection (DFU says nothing of one until the dream).
+  gives it (`diseases.js DISEASE_NAMES`, TEXT.RSC 100-116); while a disease still incubates, ONE tile of no name,
+  "Unwell", on the same spore (DISEASE-UNWELL, below - the owner's departure from DFU, which says nothing then);
+  nothing for a poison still waiting, or an infection (DFU says nothing of one until the dream).
 
 The ten glyphs are drawn on the classic spell icons' 16px grid, each pixel a letter in the module, every lit pixel
 outlined in the kit's black so it reads over any ground (made from shapes, outlined by a machine, then looked at). The
@@ -217,8 +224,9 @@ and its mutant.
   now stands at `:root` weight, after the theme's.
 - A3: a pack left open over a resize, a phone turned or a zoom kept its old boxes. It listens for a resize and
   repaints when its boxes or the screen's ratio change, and not otherwise.
-- A4: the fitted pictures were kept without end (every zoom and HUD scale is a new set). Now 600 at the most, the
-  oldest asked going first.
+- A4: the fitted pictures were kept without end (every zoom and HUD scale is a new set). Bounded: since VIRT (`UI-Arc.md`)
+  at 2000 and 12 MB, the one asked for least recently going first, and dropped whole when the attached texture mods
+  change.
 - A6: the ratio was clamped to 4, and a 3x phone at HUD scale 1.5 draws at 4.5. Now clamped to 0.5..8.
 
 **THE HOTBAR (B).**
@@ -300,7 +308,7 @@ dead.
 > just two tooltips side-by-side or a straight up + or - stat next to the items stats in green and red so we can quickly
 > see what is better or worse."
 
-The enhanced pack alone (`ui/armourCard.js`, composed by `ui/enhancedInventory.js`); the classic window keeps DFU's doll
+The enhanced pack alone (`ui/armourCard.js`, composed by `ui/enhanced/enhancedInventory.js`); the classic window keeps DFU's doll
 and its seven labels. NOTHING IN IT IS A NEW LAW: every number is one the port already computed, read through the member
 that computes it.
 
@@ -347,7 +355,7 @@ over two weapons, a shield over a two-hander and clothing boots over iron ones, 
 - A weapon's rarity damage affix stays its own line on both cards: the Damage delta compares the Damage rows.
 - The shop's and a player trade's detail strips draw no comparison.
 
-Pinned: `test/fb0929d_accompare.test.js` (5), `tools/mutants/fb0929d_accompare.json` (35 mutants, 35 dead). Seen in
+Pinned: `test/systems/fb0929d_accompare.test.js` (5), `tools/mutants/fb0929d_accompare.json` (35 mutants, 35 dead). Seen in
 Chromium with the real ARENA2's icons at 1366x768 and on a phone (a scratch probe, not committed).
 
 ## HB-LYCFREE - the curse's spell free from the bar, and the hotbar by default (2026-09-30)
@@ -368,5 +376,110 @@ have stored the old 'quickbar' (PREF1 writes no default), so a player who had tu
 `quickslots: false` alone. That shelf keeps the diamond's style and stays Off, and is written as rev 2 at its next
 save. A player who had chosen Diamond left no trace and moves to the hotbar with everyone else.
 
-Pinned: `test/hb_lycfree.test.js` (8). The diamond's own suites choose the diamond now that it is not the default
+Pinned: `test/systems/hb_lycfree.test.js` (8). The diamond's own suites choose the diamond now that it is not the default
 (Testing.md's row names them).
+
+## DUNGEON-DIGITS - a dungeon window gets its digits (FIELD BUGS 2026-10-18f)
+
+> "Usable items hotkeys do not function in dungeons. 1-9 works outside, but not in dungeons for some reason." -
+> Aspidichelon, #bug-reports, over the use-magic-item list (each row numbered on the right)
+
+**The bar took them.** The hotbar listens on the window's capture phase, ahead of every host's ladder, and takes a key
+whose action is one of its ten slots (Digit1-Digit0 by default) - stopped, so nothing after it hears the key
+(`enhancedHotbar.js:"function onKey(e) {"`). It stands down while the HUD's last frame said the game is paused: drawHud
+hands it `paused: !!cursorActive` (AUDIT CONTRIB H1), and nothing else writes that word. The street, the fixed city and
+a building draw the HUD on every frame, a window up or not. Both dungeon hosts return above `drawFoes` while a window
+pauses the game, and `drawFoes` is their only drawHud, so underground the bar heard the last frame of play for the whole
+life of a window: it took every digit, and pressed its own slot behind the window through the doors that frame had
+handed it (the dungeon's quick use - a potion on slot 1 drunk). The list's own digits (`ui/listPicker.js` input) were
+never it. With the diamond the digits go through the host's key route, which a window owns.
+
+**The fix.** The HUD's hide door both dungeon branches already call (`ui/hud/hud.js` hideHudTextSurfaces, the context's
+`hideHudText`) says to the enhanced HUD what drawHud says under a window: `hideEnhancedHud` (`ui/enhanced/enhancedHud.js`)
+runs its frame with `hidden` and `paused`, so the HUD and its bar hide and the keys are the window's - the pad's
+crossbar too (its `inForce` reads the same word). The window gone, the next frame of play gives them back. A HUD never
+built answers nothing. No host gained a line.
+
+Left, said so: between a key that opens a window and the next frame the bar still holds the last frame's word, in every
+host. And the dungeon context's own drawHud reads its own slot alone (`cursorActive: !!activeOverlay`), so a street-slot
+window standing over ?world's dungeon arm (Recall's prompt) leaves the bar its keys - not proven to meet a window that
+reads digits.
+
+Pinned: `test/ui/hud/fb1018f_dungeondigits.test.js` (3). Mutants: `tools/mutants/fb1018f_dungeondigits.json` (11, all
+dead).
+
+## DIAMOND-HB - the diamond as part of the hotbar, Diamonds, hover + key (2026-10-18)
+
+> "fix the 4 style hotbar. And to make it so clicking an item and pressing a hotbar key adds it to that hotbar" -
+> LostMyLeg, Discord. RookieG asked for diamond-shaped slots on the ten-slot bar; LostMyLeg: "i prefer the squares tbh
+> but i can make it an option".
+
+**Diamond.** The Quick slots tile's Diamond now writes `quickbarStyle: 'diamond'`. That style is the hotbar
+(`systems/uiSkin.js` HOTBAR_STYLES, so `hotbarInForce` is true), showing only slots 1-4. They are laid out in d-pad
+order (1 top, 2 bottom, 3 left, 4 right) where the old diamond was, inside `.hud-quick`, at its size (`--qs-cell`,
+`--qs-box`). Filling, dragging, clearing, the keys and the press are the ten-slot bar's code
+(`src/ui/enhanced/enhancedHotbar.js`), so the two behave the same. The diamond is never a crossbar. Keys 5-0 are not
+taken while it is shown. Under a window it keeps its diamond shape at the phone size (the bar only shows there while
+something is dragged, PADPLUS5). The layout follows the tile and nothing else. The old QS diamond (hands from the equip table, two consumables, the cycling
+hold) is still there for Off, which keeps `quickbarStyle: 'quickbar'` and `quickslots: false`.
+
+An old save with `quickbarStyle: 'quickbar'` and the switch on had chosen Diamond. `systems/uiPrefs.js` loadPrefs
+moves it to `'diamond'`. Off saves are not touched, and neither is the HB-LYCFREE rev-1 migration.
+
+**Diamonds.** A fourth state on the tile: the ten-slot bar with diamond-shaped slots (`hotbarShape: 'diamond'`, declared
+on the Quick slots row). Hotbar sets it back to `'square'`, which is the default. As with the old diamond, slots are not
+rotated: the slot is clipped to a diamond with clip-path, which also limits the click area, and the frame is a clipped
+ring coloured through its background. The key sits at the top point and the count at the bottom point.
+
+**Dresses.** The rim colours are variables a dress sets on `.hb` (`--gem-rim`, `--gem-rim-empty`, `--gem-rim-active`,
+`--gem-rim-strike`), copied from how each dress coloured the old diamond's rim: the Plus kit's stone bevel with brass in
+hand (`src/ui/enhanced/enhancedFrame.js`), DFO Grimoire's gilded rim with yellow gold in hand
+(`src/ui/grimoireDress.js`). Under Grimoire a diamond slot drops the shelf box's border-image, which a diamond clip would
+cut at the corners, and takes the old diamond's wood ground. The Plus themes colour the slot ground as they colour the
+square slots (chip colour, Stone's marble). A rarity tier is the old diamond's tier gradient. Checked by rendering the
+square bar, Diamond and Diamonds with the real sheets under Slate, Stone, Ember and Grimoire.
+
+**Hover + key.** With the pack or the spellbook open, pressing a slot key puts the item or spell under the mouse on that
+slot. Pack rows (local only, not loot), worn panels and worn sockets carry `_hotbarItem`; spellbook rows carry
+`_hotbarSpell`. If nothing is under the mouse, the window's selection is used (`setHotbarPick`: the pack's selected item,
+the spellbook's selected spell). If there is neither, the key goes to the window as before. Text fields keep their keys.
+
+`hotbarShownSlotOf` replaces `hotbarSlotOf` in the pack's row chip, the item card button and the spellbook button, so
+something on slot 7 counts as not on the bar while the diamond shows four slots. "Add to hotbar" fills the first free
+shown slot.
+
+Pins moved: `test/systems/ft18_features.test.js` (four tiers), `test/systems/hb_lycfree.test.js` (Diamond stores
+`'diamond'`), `test/systems/qs2_tooltip.test.js` (the pack's import), `test/ui/enhanced/qs3_hud.test.js` (the row's
+covered prefs), `test/ui/enhanced/ui3_status.test.js` (the quickslot block's children include the diamond dock). New: `test/ui/enhanced/diamondhb_hotbar.test.js` (6).
+
+## DISEASE-UNWELL - a disease incubating shows an unnamed tile (FIELD BUGS 2026-10-19f)
+
+A player's private report: after catching a disease, the rest's and the journey's warnings said they were diseased, and
+no disease's tile or name appeared until the character had died of it.
+
+**Both laws were DFU's, and they disagreed.** The warnings count every live disease, one still incubating too - the
+rest's (restWarning.js:"const plainDiseases") and the travel popup's (travelPopUp.js:"DiseaseCount > 0", DFU's
+own). The widget's tile (hudStatus.js:"=== 'disease' &&") and the Status box (healthStatus.js:"=== 'disease' &&")
+name a disease only once its incubation is over, which is DFU's `CreateHealthStatusBox` reading
+`DiseaseEffect.IncubationOver` - the first round past the day's turn on the character's own clock (`updateDiseases`,
+LIVED1's own minutes online). A rest or a journey catches those days up under a hidden HUD, so a disease could be
+caught, take hold and run its course with nothing on the screen but the warning. The classic skin shows a disease
+never: DFU's every classic disease sets `ShowSpellIcon = false` (`Plague.cs` SetProperties), so `HUDActiveSpells`
+leaves it out, and the port's row reads bundles alone (mysticism.js:"export function liveBundles") - a disease
+carries none.
+
+**The owner's decision (Mac, 2026-10-19): "Unnamed 'Unwell' tile"** - a departure from DFU, in Ledger A. While a plain
+disease incubates (diseases.js:"export const diseaseIncubating" - caught, live, a classic type, its incubation not
+over, never a vampirism or lycanthropy infection), the widget shows ONE tile of no name, "Unwell", on the disease
+tile's own spore, where the first of them stands (hudStatus.js:"} else if (!unwell && diseaseIncubating(a))"); the
+Status box both skins open says "You feel unwell." once in its place, in the shape of the host's own rows
+(healthStatus.js:"if (!unwell && diseaseIncubating(a))"). Once incubation is over, the named tile and the
+contracted message, as DFU; cured (the temple's or a spell's cure), nothing. A named disease and one still incubating
+show both. The word and the line are the catalog's (`hud.status.unwell`, `status.health.unwell` -
+hudStatus.js:"export const unwellTileText", healthStatus.js:"export const UNWELL_LINE_TEXT"), drafted for every
+whole language. The classic skin keeps DFU's: no disease icon, named or not; its Status box says unwell as the
+enhanced skin's does. The warnings are unchanged - they were right.
+
+Pinned: `test/ui/fb1019f_unwell.test.js` (5: on the real producer, the character's own clock and the rest's magic
+rounds); PIN MOVED: `test/ui/enhanced/ui3_status.test.js` (the afflictions' law), `test/systems/bookshelf.test.js`
+(F198's incubating arm). Mutants: `tools/mutants/disease_unwell.json`.

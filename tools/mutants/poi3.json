@@ -1,0 +1,308 @@
+[
+  {
+    "name": "POI3-the-order-x-y-z",
+    "file": "src/poi/poiEdit.js",
+    "old": "return tidyQuat(quatMultiply(qy, quatMultiply(qx, qz)));",
+    "new": "return tidyQuat(quatMultiply(qz, quatMultiply(qy, qx)));",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-pitch-sign",
+    "file": "src/poi/poiEdit.js",
+    "old": "const sx = 2 * (w * x - y * z), m02",
+    "new": "const sx = 2 * (w * x + y * z), m02",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-north-the-wrong-way",
+    "file": "src/poi/poiEdit.js",
+    "old": "let px = Math.floor(cx / S), py = -Math.floor(cz / S);",
+    "new": "let px = Math.floor(cx / S), py = Math.floor(cz / S);",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-edge-not-renormalised",
+    "file": "src/poi/poiEdit.js",
+    "old": "let px = Math.floor(cx / S), py = -Math.floor(cz / S);",
+    "new": "let px = place.px, py = place.py;",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-place-turn-unread",
+    "file": "src/poi/poiEdit.js",
+    "old": "export const worldToPlace = (place, d) => quatRotate(conj(place.r), d).map((c) => c / place.s);",
+    "new": "export const worldToPlace = (place, d) => d.map((c) => c / place.s);",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-place-size-unread",
+    "file": "src/poi/poiEdit.js",
+    "old": "export const worldToPlace = (place, d) => quatRotate(conj(place.r), d).map((c) => c / place.s);",
+    "new": "export const worldToPlace = (place, d) => quatRotate(conj(place.r), d);",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-a-taken-key-given-again",
+    "file": "src/poi/poiEdit.js",
+    "old": "if (!taken.has(base) && POI_PART_KEY_RE.test(base)) return base;",
+    "new": "if (POI_PART_KEY_RE.test(base)) return base;",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-default-material-short",
+    "file": "src/poi/poiEdit.js",
+    "old": "({ ...structuredClone(DEFAULT_MATERIAL), ...structuredClone(over) })",
+    "new": "({ ...structuredClone(over) })",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-a-no-op-pushed",
+    "file": "src/poi/poiEdit.js",
+    "old": "if (after === before) { if (select !== undefined) api.select(select); return false; }",
+    "new": "if (false) { if (select !== undefined) api.select(select); return false; }",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-selection-not-restored",
+    "file": "src/poi/poiEdit.js",
+    "old": "      setDoc(s.id, s.before, s.entryBefore);\n      sel = validSel(s.selBefore);",
+    "new": "      setDoc(s.id, s.before, s.entryBefore);\n      sel = validSel(sel);",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-redo-kept",
+    "file": "src/poi/poiEdit.js",
+    "old": "    if (undo.length > depth) undo.splice(0, undo.length - depth);\n    redo = [];",
+    "new": "    if (undo.length > depth) undo.splice(0, undo.length - depth);",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-previews-accumulated",
+    "file": "src/poi/poiEdit.js",
+    "old": "      const doc = JSON.parse(drag.start);\n      fn(doc);",
+    "new": "      const doc = JSON.parse(text(e.doc));\n      fn(doc);",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-cancel-kept-the-drag",
+    "file": "src/poi/poiEdit.js",
+    "old": "      const d = drag; drag = null;\n      setDoc(d.id, d.start);",
+    "new": "      const d = drag; drag = null;\n      void d;",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-plane-seen-edge-on",
+    "file": "src/poi/poiGizmo.js",
+    "old": "const n = cross(axis, cross(viewDir, axis));",
+    "new": "const n = cross(axis, Math.abs(axis[1]) < 0.99 ? [0, 1, 0] : [1, 0, 0]);",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-sweep-sign",
+    "file": "src/poi/poiGizmo.js",
+    "old": "let deg = Math.atan2(dot(s.axis, cross(a, b)), dot(a, b)) * 180 / Math.PI;",
+    "new": "let deg = Math.atan2(dot(s.axis, cross(b, a)), dot(a, b)) * 180 / Math.PI;",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-factor-inverted",
+    "file": "src/poi/poiGizmo.js",
+    "old": "let f = Math.abs(s0) > 1e-9 ? s1 / s0 : 1;",
+    "new": "let f = Math.abs(s1) > 1e-9 ? s0 / s1 : 1;",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-end-on-arrow-offered",
+    "file": "src/poi/poiGizmo.js",
+    "old": "    if (s.hidden) continue;\n",
+    "new": "\n",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-a-code-unsaid",
+    "file": "src/poi/poiText.js",
+    "old": "  'key-twice': (a) =>",
+    "new": "  'key-twice-gone': (a) =>",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-part-by-its-index",
+    "file": "src/poi/poiText.js",
+    "old": "const name = (p?.name || p?.key) ?? null;",
+    "new": "const name = null;",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-bearer-left-off",
+    "file": "src/poi/poiService.js",
+    "old": "if (io.secret) headers.authorization = `Bearer ${io.secret}`;",
+    "new": "if (false) headers.authorization = `Bearer ${io.secret}`;",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-asset-under-another-name",
+    "file": "src/poi/poiService.js",
+    "old": "`/v1/poi/asset/${sha}?kind=${kind}`",
+    "new": "`/v1/poi/asset/${sha.slice(1)}0?kind=${kind}`",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-nearest-not-kept",
+    "file": "src/scenes/poiHost.js",
+    "old": "const t = rayTriangles(lo, ld, p.positions, p.indices, best ? best.dist : max);",
+    "new": "const t = rayTriangles(lo, ld, p.positions, p.indices, max);",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-matrix-uninverted",
+    "file": "src/scenes/poiHost.js",
+    "old": "const lo = xformPoint(inv, o), ld = xformDir(inv, d);",
+    "new": "const lo = o, ld = d;",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-drag-hold-unread",
+    "file": "src/scenes/poiHost.js",
+    "old": " && (!s.draft || collideDrafts())) {",
+    "new": ") {",
+    "tests": [
+      "test/poi/poi2_runtime.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-depth-test-left-off",
+    "file": "src/render/poiGizmoPass.js",
+    "old": "    gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);",
+    "new": "    gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-depth-mask-left-off",
+    "file": "src/render/poiGizmoPass.js",
+    "old": "    gl.enable(gl.DEPTH_TEST); gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);",
+    "new": "    gl.enable(gl.DEPTH_TEST); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-drag-not-one-step",
+    "file": "src/scenes/poiEditorHost.js",
+    "old": "if (r) { const sel = { id: drag.id, part: drag.part, light: drag.light }; edit.preview((doc) => apply(doc, r, sel)); }",
+    "new": "if (r) { const sel = { id: drag.id, part: drag.part, light: drag.light }; edit.commit(); edit.edit(drag.id, 'move', (doc) => apply(doc, r, sel)); }",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-snap-unread",
+    "file": "src/scenes/poiEditorHost.js",
+    "old": "const snapNow = () => (snapOn !== ctrlHeld ? snap : null);",
+    "new": "const snapNow = () => null;",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-overlay-every-frame",
+    "file": "src/scenes/poiEditorHost.js",
+    "old": "if (g !== overlayGen) { overlayGen = g; feed.setOverlay(edit.overlay()); }",
+    "new": "{ overlayGen = g; feed.setOverlay(edit.overlay()); }",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-the-part-taken-first",
+    "file": "src/scenes/poiEditorHost.js",
+    "old": "edit.select(sel?.id === hit.id ? { id: hit.id, part: hit.key } : { id: hit.id, part: null });",
+    "new": "edit.select({ id: hit.id, part: hit.key });",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-keys-heard-while-flying",
+    "file": "src/scenes/poiEditorHost.js",
+    "old": "      if (eye.look) { const a = actionOf(e); if (a && POI_EYE_ACTIONS.includes(a)) { eye.keys.add(a); return true; } return false; }",
+    "new": "      if (eye.look) { const a = actionOf(e); if (a && POI_EYE_ACTIONS.includes(a)) eye.keys.add(a); }",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-a-light-drag-moves-the-poi",
+    "file": "src/scenes/poiEditorHost.js",
+    "old": "    if (sel.light != null) { const l = doc.lights?.[sel.light]; if (l && r.move) movePart(doc.place, l, r.move); return; }",
+    "new": "    if (false) { return; }",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-a-turn-offered-a-light",
+    "file": "src/scenes/poiEditorHost.js",
+    "old": "if (!tg || !v || (tg.light && mode !== 'move')) return null;",
+    "new": "if (!tg || !v) return null;",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  },
+  {
+    "name": "POI3-flight-by-the-raw-key",
+    "file": "src/scenes/poiEditorHost.js",
+    "old": "      if (eye.look) { const a = actionOf(e); if (a && POI_EYE_ACTIONS.includes(a)) { eye.keys.add(a); return true; } return false; }",
+    "new": "      if (eye.look) { eye.keys.add(e.code === 'KeyW' ? 'MoveForwards' : e.code); return true; }",
+    "tests": [
+      "test/poi/poi3_edit.test.js"
+    ]
+  }
+]

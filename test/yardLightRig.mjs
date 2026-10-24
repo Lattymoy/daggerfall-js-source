@@ -1,14 +1,15 @@
 // YARD-LIGHT's rig: the world host's own night light composition, run out of its source over a real Renderer on a fake
-// GL (audit0928_render.test.js's R2 harness, with the yards in its scope) - test/yardlight.test.js and
-// test/audityardlight.test.js share it.
+// GL (audit0928_render.test.js's R2 harness, with the yards in its scope) - test/scenes/yardlight.test.js and
+// test/world/audityardlight.test.js share it.
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { Renderer } from '../src/render/renderer.js';
 import { EL_LANE, lanternColor } from '../src/render/enhancedLighting.js';
-import { CITY_LIGHT_COLOR, fillLanternPool, nearestLights, rangesFor, capFadeColors, capFadePairs } from '../src/world/cityLights.js';
+import { CITY_LIGHT_COLOR, fillLanternPool, nearestLights, rangesFor, capFadeColors, capFadePairs } from '../src/world/city/cityLights.js';
 import { withPlayerLights } from '../src/scenes/magicCandle.js';
-import { wodLightColors } from '../src/world/worldOfDaggerfall.js';
+import { wodLightColors } from '../src/world/worldOfDaggerfall/worldOfDaggerfall.js';
 import { yardLampRows } from '../src/scenes/homeYards.js';
+import { adoptLight } from '../src/render/lightId.js';
 
 const W = readFileSync(new URL('../src/scenes/world.js', import.meta.url), 'utf8');
 /** The pool and its helpers (from the lantern pool's declaration to _wodSetLights' end) and the frame's composition
@@ -65,11 +66,14 @@ export function exteriorFrame({ lane, night, town, lamps, eye, ranges, tick = ()
     magic: null, _dwFogP: null, playerTorchLight: () => null, thunderlockMuzzleLight: () => null, playerEntity: {}, player: { feetAt: () => [0, 0, 0] },
     peerTorchLights: () => [], gatePool: null, riteHost: null, camps: { lights: () => [] }, droppedTorches: { lights: () => [] },
     naval: null, festivalStage: null, quays: null,
+    poiHost: null,   // PIN MOVED (POI-2): a POI's own lights join the scene's - no POI in this rig
+    starfall: null,   // PIN MOVED (STAR4): a fallen star's beacon and its camp's braziers join the scene's - no star in this rig
     portHost: ports ? { lights: () => ports } : null,   // SHIPYARDS: the lighthouses' lamps and the shipyards' lanterns, beside the quays'
     yards: { lamps: () => lamps }, yardLampRows,
     CITY_LIGHT_COLOR_F32: lanternColor(lane, new Float32Array(CITY_LIGHT_COLOR)),
     fillLanternPool, nearestLights, rangesFor, capFadeColors, capFadePairs, withPlayerLights, wodLightColors,
     meterFor: () => null,   // PIN MOVED (PERF-SIM3): the frame's CPU meter marks its spans inside this source - no meter in this rig
+    adoptLight,   // PIN MOVED (LIGHT-ID): the pools name each entry by its light, and a quay's lantern its own (render/lightId.js)
   };
   exteriorLightsSource()(scope);
   const L = renderer._pointLights, n = Math.min(L.length / 4, renderer.maxPointLights);

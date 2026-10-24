@@ -1,7 +1,7 @@
 // @ts-check
 // TESA4 (2026-10-12, the owner: "Continue"; bible/03-World/Arena-Provinces.md TESA4) - THE ROADS PAST THE BAY'S LAYER.
 // TESA14 (2026-10-24, "Full Daggerfall network") moved the network itself to world/tamrielRoads.js: the port's own road
-// law (world/roadNetwork.js buildRoadNetwork, ROADS 1-21) at the Bay's own scale over every place past the Bay, a region
+// law (world/road/roadNetwork.js buildRoadNetwork, ROADS 1-21) at the Bay's own scale over every place past the Bay, a region
 // at a time on the roads' own worker. TESA4's window - a cell of five Bay pixels, its ground read at its centre, the
 // network drawn back centre to centre - is retired with it; this module keeps what the kernels and the verge read.
 //
@@ -16,8 +16,8 @@
 //
 // Nothing of Arena ships or crosses the wire (bible/01-Overview/Port-Doctrine.md): each player's roads are laid from
 // their own Daggerfall files, the same for every player.
-import { DIR_DELTA, MAP_W, MAP_H } from './roadNetwork.js';
-import { inBay } from './tamrielFrame.js';
+import { DIR_DELTA, MAP_W, MAP_H } from './road/roadNetwork.js';
+import { inBay } from './tamriel/tamrielFrame.js';
 
 /** TESA5: how deep inside its edge a Bay road may lie and still be joined, Bay pixels. */
 export const JOIN_DEPTH = 8;
@@ -176,7 +176,7 @@ export function arenaRoadTilePixels(tx, ty) {
 export const layerByte = (layer, kind, x, y) => layer?.[kind]?.get(beyondKey(x, y)) ?? 0;
 /** The installed layer's byte at a Bay pixel. */
 export const arenaRoadByte = (kind, x, y) => layerByte(_layer, kind, x, y);
-/** Its corner byte at a Bay pixel, as the mod's (world/roadPainter.js pathCorners): the east neighbour's SW|NW bits and
+/** Its corner byte at a Bay pixel, as the mod's (world/road/roadPainter.js pathCorners): the east neighbour's SW|NW bits and
  *  the west neighbour's NE|SE. */
 export const arenaRoadCorners = (kind, x, y) => (arenaRoadByte(kind, x + 1, y) & 0x5) | (arenaRoadByte(kind, x - 1, y) & 0x50);
 /** Roads and tracks together at a Bay pixel - travelPaths.js pathsDataPoint's question. */

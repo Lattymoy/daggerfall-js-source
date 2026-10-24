@@ -5,214 +5,215 @@
     "old": "    if (modes?.dungeonLocation?.superTier) { sdSay(SD_NO_MARK); return; }",
     "new": "",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F3-the-quarter-second-gap",
-    "file": "src/scenes/sdEnd.js",
+    "file": "src/scenes/superDungeon/sdEnd.js",
     "old": "export const SD_STEP_GAP_MS = 2000;",
     "new": "export const SD_STEP_GAP_MS = 250;",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F33-the-sweeps-cube",
-    "file": "src/scenes/sdEnd.js",
-    "old": "    if (rift) out.push(riftPress(rift));",
+    "file": "src/scenes/superDungeon/sdEnd.js",
+    "old": "    if (rift) out.push(riftPress(rift, riftKey, riftYields));",
     "new": "    if (rift) out.push({ key: SD_RIFT_KEY, aabb: boxOf(rift.at, rift.size / 2, rift.size), distance: RAY_DISTANCE, reach: DEFAULT_ACTIVATION_DISTANCE });",
     "tests": [
-      "test/sd26_dungeon.test.js"
-    ]
+      "test/world/sd26_dungeon.test.js"
+    ],
+    "note": "AUDIT SD-THROUGH (re-aimed by content): the press carries the ring's yield (B3). SD-THROUGH (re-aimed by content): the press takes the ring's own key (the Way Through's is sdrift:1)."
   },
   {
     "name": "SD26-F33-the-box-unturned",
-    "file": "src/scenes/sdEnd.js",
+    "file": "src/scenes/superDungeon/sdEnd.js",
     "old": "obb: { m: Float64Array.from(b), box:",
     "new": "obb: { m: Float64Array.from([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, b[12], b[13], b[14], 1]), box:",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F33-the-world-box-unturned",
-    "file": "src/scenes/sdEnd.js",
+    "file": "src/scenes/superDungeon/sdEnd.js",
     "old": "const hx = Math.abs(b[0]) * R + Math.abs(b[8]) * D, hz = Math.abs(b[2]) * R + Math.abs(b[10]) * D;",
     "new": "const hx = R, hz = D;",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F33-a-surface-it-has-not",
-    "file": "src/scenes/sdEnd.js",
+    "file": "src/scenes/superDungeon/sdEnd.js",
     "old": " noSurface: true, distance: RAY_DISTANCE,",
     "new": " distance: RAY_DISTANCE,",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F34-never-lower",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "  for (const lower of [false, true]) {",
     "new": "  for (const lower of [false]) {",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F34-lower-first",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "  for (const lower of [false, true]) {",
     "new": "  for (const lower of [true, false]) {",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F34-a-higher-floor-taken",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "(lower ? y - from[1] : Math.abs(y - from[1]))",
     "new": "(lower ? -1 : Math.abs(y - from[1]))",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F35-the-foot-kept",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "  const riftClear = Math.min(SD_RIFT_REACH_M, rift.size / 4) + SD_LANDING_CLEAR_M;",
     "new": "  const riftClear = Infinity;",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F35-inside-the-rifts-reach",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "  const riftClear = Math.min(SD_RIFT_REACH_M, rift.size / 4) + SD_LANDING_CLEAR_M;",
     "new": "  const riftClear = 0;",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F35-no-margin",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "export const SD_LANDING_CLEAR_M = 0.4;",
     "new": "export const SD_LANDING_CLEAR_M = 0;",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F35-the-near-ring-unasked",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "  for (const r of [SD_LANDING_PAST_M, SD_RETURN_REACH_M + SD_LANDING_CLEAR_M]) {",
     "new": "  for (const r of [SD_LANDING_PAST_M]) {",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F36-unswept",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "  return { at, size: sdRiftSweep(at, fit, face, probe), face };",
     "new": "  return { at, size: fit, face };",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F36-the-hover-unasked",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "export const SD_RIFT_TOP = riftCentreY(1) + 0.5;",
     "new": "export const SD_RIFT_TOP = 1;",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F36-only-across",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "[0, 1, 2, 3, 5, 6, 7, 8].map((k) => (k * Math.PI) / 8)",
     "new": "[0, 8].map((k) => (k * Math.PI) / 8)",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F36-the-lower-half-asked",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "[0, 1, 2, 3, 5, 6, 7, 8].map((k) => (k * Math.PI) / 8)",
     "new": "[-3, -2, -1, 0, 1, 2, 3, 5, 6, 7, 8, 9, 10, 11].map((k) => (k * Math.PI) / 8)",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F36-along-its-face",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "dir = [-face[2] * across, Math.sin(a), face[0] * across];",
     "new": "dir = [face[0] * across, Math.sin(a), face[2] * across];",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F36-never-halved",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "export const SD_SWEEP_HALVINGS = 8;",
     "new": "export const SD_SWEEP_HALVINGS = 0;",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F36-the-centre-on-the-floor",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "const R = size / 2, c = [at[0], at[1] + riftCentreY(size), at[2]];",
     "new": "const R = size / 2, c = [at[0], at[1] + R, at[2]];",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F37-the-ground-unasked",
-    "file": "src/systems/sdSite.js",
+    "file": "src/systems/superDungeon/sdSite.js",
     "old": "      if (!ground(id % W, Math.floor(id / W))) continue;\n",
     "new": "",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F37-the-first-dry-pixel",
-    "file": "src/systems/sdSite.js",
+    "file": "src/systems/superDungeon/sdSite.js",
     "old": "      const id = pixels[(roll + j) % pixels.length];",
     "new": "      const id = pixels[j];",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F37-a-wet-city-ends-it",
-    "file": "src/systems/sdSite.js",
+    "file": "src/systems/superDungeon/sdSite.js",
     "old": "cityRegion: city.regionIndex, region: rec.r };\n    }\n  }",
     "new": "cityRegion: city.regionIndex, region: rec.r };\n    }\n    return null;\n  }",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F37-the-hosts-ground-unhanded",
-    "file": "src/scenes/sdHost.js",
-    "old": "findSdSite(r, sc, cities(r.r), ground)",
-    "new": "findSdSite(r, sc, cities(r.r))",
+    "file": "src/scenes/superDungeon/sdHost.js",
+    "old": "findSdSite(at, sc, near, ground)",
+    "new": "findSdSite(at, sc, near)",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
@@ -221,43 +222,43 @@
     "old": "    ground: (px, py) => _spawnGround(px, py),",
     "new": "",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F38-the-water-unasked",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "  if (inner.length) return dryFirst(inner);",
     "new": "  if (inner.length) return inner;",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F38-the-markers-own-height",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "(floorOf ? floorOf(m) : m.y) < -level * GLOBAL_SCALE",
     "new": "m.y < -level * GLOBAL_SCALE",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F38-every-wet-one-dropped",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "return dry.length ? dry : list; };",
     "new": "return dry; };",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
     "name": "SD26-F38-the-surface-upside-down",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "(floorOf ? floorOf(m) : m.y) < -level * GLOBAL_SCALE",
     "new": "(floorOf ? floorOf(m) : m.y) < level * GLOBAL_SCALE",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
@@ -266,7 +267,7 @@
     "old": "sdEndMarks(_layoutEnemies, dungeon.blocks, (m) => floorLanding(collider, [m.x, m.y + 0.2, m.z])[1])",
     "new": "sdEndMarks(_layoutEnemies, dungeon.blocks)",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
@@ -275,7 +276,7 @@
     "old": "    scan: () => gateScanOf(_sdScanRow),",
     "new": "    scan: () => gateScanOf(),",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
@@ -284,7 +285,7 @@
     "old": "  const _sdScanRow = () => false;",
     "new": "  const _sdScanRow = () => true;",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
@@ -293,7 +294,7 @@
     "old": "      standBeforeHollowDoor(hollow.key);   // AUDIT SD IV (F40): before its door, never its pixel's middle\n",
     "new": "",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
@@ -302,7 +303,7 @@
     "old": "if (!(await modes?.startInDungeon?.())) { standBeforeHollowDoor(back.key); return true; }",
     "new": "if (!(await modes?.startInDungeon?.())) return true;",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
@@ -311,7 +312,7 @@
     "old": "DOOR_TYPE.DUNGEON_ENTRANCE).map(shiftedDoor);",
     "new": "DOOR_TYPE.DUNGEON_ENTRANCE).map((d) => d.door);",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   },
   {
@@ -320,7 +321,7 @@
     "old": "player.spawn(at.pos[0], repositionFeetY(collider.heightAt(at.pos[0], at.pos[2]), at.pos[1]), at.pos[2]);",
     "new": "player.spawn(at.pos[0], at.pos[1], at.pos[2]);",
     "tests": [
-      "test/sd26_dungeon.test.js"
+      "test/world/sd26_dungeon.test.js"
     ]
   }
 ]

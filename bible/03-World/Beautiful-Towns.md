@@ -1,5 +1,7 @@
 # Beautiful Villages and Beautiful Cities (WD3, 2026-10-01)
 
+> DF-LOOK (2026-10-15, `01-Overview/DF-Art.md`): the town's hangings and rugs (archive 38202), drawn here in WD3, wear their own drawn charges again (DF-ART's swap to Daggerfall's tapestries reverted), laid on in Daggerfall's colours as they go up - grained and snapped to the player's own ART_PAL.COL (`world/dfLook.js`).
+
 carademono's two town mods, ported 1:1: **Beautiful Villages of Daggerfall
 1.4.2** (7,317 villages, hamlets, farms, manors and temples, and every
 roadside tavern through its blocks) and **Beautiful Cities of Daggerfall
@@ -14,7 +16,7 @@ Provenance and what is carried: `vendor/beautiful-villages/README.md`,
 format they ship in - one pack of the authors' edits over the player's own
 `MAPS.BSA` and `BLOCKS.BSA` - is WD3, `02-Formats/World-Data-Patches.md`.
 The audit (AUDIT WD3, 2026-10-02 - the IDs the code and the tests cite) is
-`01-Overview/Audit-WD3.md`.
+`01-Overview/audits/Audit-WD3.md`.
 
 ## What the player sees
 
@@ -37,7 +39,7 @@ a house bought behind it is stamped with the Daggerfall town it stands in.
 
 Both mods ship `FIGHBM00.RMB` and the two differ: Daggerfall Unity serves the
 file of the mod loaded later, Beautiful Cities, and so does the port
-(`WORLD_DATA_PRIORITY`, the door's per-name list - `formats/worldDataReplacement.js`
+(`WORLD_DATA_PRIORITY`, the door's per-name list - `formats/worldData/worldDataReplacement.js`
 keeps every mod's entry of a name, highest load priority first, and the first
 whose switch is on answers; a mod switched off never hides the one under it).
 
@@ -77,7 +79,7 @@ DFU itself lets them wake in the wrong building. The port does not
    alone). Everything else in the world follows the switches as they stand.
 3. **The world-data door serves a pinned town its layout**: its location and
    the blocks laid out in it come with exactly the mods its pin names
-   (`formats/worldDataReplacement.js`, the door asks the pin oracle; the
+   (`formats/worldData/worldDataReplacement.js`, the door asks the pin oracle; the
    block reads ask for the town whose grid named them - `MapsFile.getRmbBlockName`
    notes it, `systems/worldDataVariants.js` `readingLocationKeyOf`).
 4. **A pinned town is read again and built again** when a load changes its
@@ -114,7 +116,7 @@ Two stores that are not records get the same law:
 
 ## Online
 
-The two switches are the ROOM's (`systems/onlineLane.js`
+The two switches are the ROOM's (`systems/online/onlineLane.js`
 `ONLINE_ROOM_MOD_KEYS`, forced on): two players who disagreed would walk two
 towns, one through the other's houses, and a building key - an online home's,
 a shared quest's - would name two buildings.
@@ -129,7 +131,10 @@ is REFUSED (409 `home-layout`, naming the town's layout; `net/homeLaw.js`
 `homeLayoutsMatch`) - its building key names a building of the town that client
 sees, and storing it under the other layout would hand the buyer a stranger's
 house. The client hears the layouts again and builds the town as the room's. Every client reads
-`/v1/homes/layouts` - each town holding a home and its layout - at its online
+`/v1/homes/layouts` - each town holding a home and its layout (and, FIELD BUGS
+2026-10-14 QUEST-HOME, acct133, each town's homes by building, `homes`: the quest
+machine picks no player's home as a residence in a town never asked -
+`06-Systems/Online-Arc.md` HOME1) - at its online
 boot, before the first town is built, and pins those towns; online, a save's
 own records pin nothing (one player's save would stand one town apart from the
 room's). Until the service has answered AND its pins stand (the packs they let
@@ -183,7 +188,7 @@ once the towns' layouts are known and their pins stand. A town with no such
 building keeps the record as it was, and the questor's hall is unseated
 (QUEST-AUDIT II HOUSE-HALL).
 
-QUEST-AUDIT II (`01-Overview/Quest-Audit-II.md`, with its AUDIT QA2) closed
+QUEST-AUDIT II (`01-Overview/audits/Quest-Audit-II.md`, with its AUDIT QA2) closed
 four holes of this and reworked one law. A GUILD's questor - a guild-service
 faction, the Thieves Guild's and the Dark Brotherhood's contacts in their House2
 halls among them - is seated by that service in any building of the quest's own
@@ -212,7 +217,7 @@ names none is a build from before the town mods, and is refused (426
 for the town's layout counts against no hour's claims, and the client asks the
 layouts again at most once in `HOME_LAYOUTS_WAIT_MS`. A building's online ROOM
 is its layout's: the layout mods serving its town ride in the room key's high
-bits (`world/interiorShared.js` `layoutRoomKey` - Daggerfall's own town keeps
+bits (`world/interior/interiorShared.js` `layoutRoomKey` - Daggerfall's own town keeps
 the rooms it always had), so two players whose towns stand in two layouts never
 share a room, and a relay memory from before the mods lands on no other
 building.
@@ -229,7 +234,7 @@ elsewhere.
   room, its door facing out as every exterior door does. Where that door is the interior door nearest the enter
   marker, TransitionInterior's landing (the door, 0.75 along its normal) stood the player outside the room's
   one-sided shell over nothing, falling for good in the black: 146 of the packs' 10,309 entries (Warvale's `GENRAS00`
-  #1, #2 and #7), and 16 of Daggerfall's own 11,452 (18 until TOWER-FLOORS, `01-Overview/Field-Bugs-2026-10-07b.md`). Each of DFU's two landing arms takes only a spot with a floor
+  #1, #2 and #7), and 16 of Daggerfall's own 11,452 (18 until TOWER-FLOORS, `01-Overview/bugs/Field-Bugs-2026-10-07b.md`). Each of DFU's two landing arms takes only a spot with a floor
   under it now, in DFU's own order, so no landing DFU makes on a floor moves (`player/enterExit.js` `interiorLanding`'s
   `standsAt`); a room with nowhere to stand is refused in DFU's own words, "This house has nothing of value."; and a
   body ten metres under a room's lowest triangle is stood back at its door (FIELD BUGS 2026-10-04d VOID-ENTRY).
@@ -256,6 +261,19 @@ elsewhere.
   stair the author shut with a floor tile and marked with the editor's 199.14 and 199.13, which no game reads - eleven
   cellars, three lofts; each stands by the shut stair, off the room's entrance (FIELD BUGS 2026-10-05 SEALED-CELLAR,
   The Possessed Child in Tigonus). The list: 20 designs, 179 interiors, 22 markers - 13,084 buildings in 4,073 towns.
+- **The port's departure: a quest Person never stands in a standing person's pick box.** Daggerfall's own Mages Guild
+  hall of `MAGEAA11` #0 and `MAGEAA12` #18 (Beautiful Cities lays the same hall) holds two quest spawn markers, one
+  0.20 m from the guild's questor (182.15, faction 63). DFU draws a Person's marker at random (Place.cs GetSiteMarker)
+  and stands the Person on it (GameObjectHelper.AddQuestNPC) whoever stands there (DaggerfallInterior.AddPeople), so in
+  half the halls of that design the Person stood inside him - Ysolde Marnhel, the Burning Doors' giver, among them. A
+  Person whose spot shares a standing person's pick box (each its billboard's width, square on the floor) stands at the
+  site's nearest other spawn marker with a floor that shares none; none clear, DFU's own marker, never an item's marker
+  nor the room's door. An item is no one and stays; the Person's layout data (its name, its click) is still its drawn
+  marker's (`sceneMount.js:"export function buildingStandSpot(own, spots, collider, lift, w = null, people = null) {"`, the
+  building stands' `worldModes.js:"isItem ? null : size.w, ctx.people);"`). Over every interior of BLOCKS.BSA and both
+  packs it moves a Person of Ysolde's width in that hall alone; 89 buildings whose only spawn marker shares a resident's
+  box (24 of Daggerfall's, 18 of Beautiful Villages', 47 of Beautiful Cities') keep DFU's stand (FIELD BUGS 2026-10-20c
+  CROWD-CLEAR; `test/systems/quest/fb1020c_crowdclear.test.js`, `tools/mutants/fb1020c_crowdclear.json`).
 - **The port's curation: a tavern with no tavern.** Beautiful Villages rebuilds
   `TVRNAS00` and `TVRNAS06` as houses (the classic blocks hold three taverns
   each) and leaves the 274 roadside taverns standing on them (their location
@@ -291,7 +309,7 @@ elsewhere.
   Wayrest, whose castles are dungeons. A location served from JSON keeps its
   dungeon's `RecordElement` (DFU's `LocationDungeon.RecordElement`), whose
   `LocationId` every dungeon reader asks - the castles are entered, and saved
-  in, as in Daggerfall (`formats/worldDataReplacement.js` `dungeonFromJson`).
+  in, as in Daggerfall (`formats/worldData/worldDataReplacement.js` `dungeonFromJson`).
 
 - **Windmills.** Kamer's mill is DFU's replacement of model `41600` wherever it
   stands. Six of Beautiful Villages' farms (FARMAA04/05/07, FARMBA05/08/09) and
@@ -302,7 +320,7 @@ elsewhere.
   Windmills of Daggerfall; its farms are the ones read) - `world/rmbLayout.js`. [FIELD BUGS 2026-10-05c: a
   player's "windmill has disappeared" is this law - five of Kamer's seven farms (FARMAA00/01/02/06/09) stand no mill
   in either mod's own, so online, where both mods are everyone's (WD3), those mills went on 2026-10-03. Kept as DFU
-  reads it (`01-Overview/Field-Bugs-2026-10-05c.md`).]
+  reads it (`01-Overview/bugs/Field-Bugs-2026-10-05c.md`).]
 - **The Order of the Raven.** A block served from JSON keeps its
   `FldHeader.OtherNames`, so RMBLayout's `KRAVE01.HS2` guild hall fires in a
   knightly block of Beautiful Cities as it does in DFU.
@@ -310,7 +328,7 @@ elsewhere.
   cell in the three classic towns; Beautiful Villages moves `ARMRAM03` in two
   of them (Penmore's to (2,2), Pjiga's to (0,1)), and in DFU the two mods
   together name a neighbour's house "Dharjen Custom Armor". The key is read off
-  the town's grid (`systems/rrQuestLine.js` `rrMasterArmBuildingKeyIn`) - a
+  the town's grid (`systems/roleplayRealism/rrQuestLine.js` `rrMasterArmBuildingKeyIn`) - a
   recorded departure.
 - **The decor catalogue** reads `BLOCKS.BSA` past the door (`decorScan.js`),
   so 1,400 redecorated interiors never renumber it. DECOR-MODS (FIELD BUGS
@@ -319,7 +337,7 @@ elsewhere.
   Daggerfall's - every one whatever is on, so none renumbers it, and offered
   while the port stands it (asked as the offer is made, AUDIT 05b A3) -
   measured over both packs and Detailed Ships' ships, never the town's own
-  structure (`systems/decorMods.js`; `01-Overview/Field-Bugs-2026-10-05b.md`).
+  structure (`systems/decor/decorMods.js`; `01-Overview/bugs/Field-Bugs-2026-10-05b.md`).
 - **Houses for sale.** Every building the bank or a door can sell in either
   mod stands on a classic model (measured: 1,658 village houses and 3,358 city
   houses), so every price reads the ARCH3D record: the bank's DFU's own `GetHousePrice` over its radius, a door's
@@ -367,16 +385,16 @@ one stand-in, on while either mod that places it is loaded.
 | DET pieces shared with Detailed Ships | `45082` (ensign staff), `45121` (dog vane), `45190` (sea chest), `45191` (weapon rack) | 1,364 | Detailed Ships' own stand-ins (`world/detStandIns.js`), which the towns share |
 | the table clutter | archive `56790` (22 records) | 4,827 | no peer's catalogue names it; each record a piece of Daggerfall's own clutter of the kind its height says - tableware and books on the tables, jars, potions and books on shelves and ledges |
 | the temple gardens | archive `10035` (7 records) | 151 | no catalogue names it either; rows of one record each on three temples' grounds - each a garden plant of Daggerfall's own (`TEXTURE.301`): cabbages, greens, lavender, flowers, a berry bush |
-| the RMB Resource Pack's rocks | 23 ids | 245 | a boulder of the climate's rock (`302_3`), each the size of the pack's own mesh, measured |
-| its hills | 23 ids | 47 | a hill of the climate's grass or rock at the pack's own shape (FIELD BUGS 2026-10-05 HILL-SHAPES, "Houses in Ipsham are floating"): a polar profile measured off each published mesh by `tools/rmbrpHills.mjs --shapes` (`world/rmbrpHillShapes.js`: the raised footprint's centre, 16 bearings each with its reach and ten rings' heights, each cell's median - the shape, not the sculpt; 0.03-0.32 m from the pack's surface at the median), so what the author stood on a hill stands on it - Ipsham's TEMPASH3 houses, TVRNAS03's gazebo. They were mounds of the catalogue's size, 1.7-4.5x too narrow and 2-7x too low, and those houses hung 4.1-4.2 m. TREES-SEATED's seat (`world/townStandIns.js` `blockHillSeat`) reads the hills drawn, so the six blocks' 130 trees stand on them (1 more than 1.5 m off, where 121 were). A measurement of the peer's mesh, as the docks' and domes' - Mac's to confirm |
-| its market stalls | 17 ids | 32 | a stall the pack's size (3.2 m across the counter, 4.9 m along it), its awning the cloth each prefab names (`TEXTURE.049` or `449`) |
-| its docks | `53140`-`53144` | 16 | measured off the pack's meshes: a plank deck whose top is the origin, five-sided piles 5 m below it and 1 m above, a ramp or five steps - which land where the author's do (GENRAS00's ramps at the long dock's two ends; TEMPASH3's three flights across the T-dock's wing) |
-| its platform, foundation and domes | `53160`, `53170`, `53182`, `53187`, `53194` | 22 | stone blocks, classic textures, and the three domes at the pack's own profile (FIELD BUGS 2026-10-04d DOMES, measured off its HF Dome 03/04 meshes at the prefabs' 4.6875: an octagonal drum 4.8 m across on the ground to 3.63 m, the dome to 8.43 m, 03's spire to 10.75 m - they had been a 3.6 m cap over a drum sunk in the roofs they stand on) - the foundation the pack's 16 x 8 x 16 m block, its top the floor of the two temples it stands under (centred, as the pack's mesh is, it walled up their front doors; no stand-in covers any door of either pack's towns) |
+| the RMB Resource Pack's rocks | 23 ids | 245 | a boulder of the climate's rock (`302_3`) over the pack's own mesh's box, never past it, at its prefab's scale of 2 to 8 (FIELD BUGS 2026-10-15f TEMPLE-STEPS: they had been the mesh alone, and 143 of the 245 stood wholly under the ground they were laid on). ROCK-SMEAR (FIELD BUGS 2026-10-18f, "Rock missing textures and clipping with the pole. In Ipsmoth."): every face looks out of the boulder - 40 of its 48 (its sides and its underside) had taken the normal their corners' order gave, looking in, and under the world's back-face culling each rock drew as the inside of its far half, a hollow grey shell with whatever stood in it seen through it - and its picture is box-mapped (`boulderUv`, a repeat a metre along the axis a face leans on most; it had been the side view (x, -y) on every face, one smeared row on the underside and a sliver on every side facing x) |
+| its hills | 23 ids | 47 | a hill of the climate's grass or rock at the pack's own shape (FIELD BUGS 2026-10-05 HILL-SHAPES, "Houses in Ipsham are floating"): a polar profile measured off each published mesh by `tools/rmbrpHills.mjs --shapes` (`world/rmbrpHillShapes.js`: the raised footprint's centre, 16 bearings each with its reach and ten rings' heights, each cell's median - the shape, not the sculpt; 0.03-0.32 m from the pack's surface at the median), so what the author stood on a hill stands on it - Ipsham's TEMPASH3 houses, TVRNAS03's gazebo - and is held under its whole footprint by a pad (HILL-SEAT, below). They were mounds of the catalogue's size, 1.7-4.5x too narrow and 2-7x too low, and those houses hung 4.1-4.2 m. TREES-SEATED's seat (`world/townStandIns.js` `blockHillSeat`) reads the hills drawn, so the six blocks' 130 trees stand on them (1 more than 1.5 m off, where 121 were). A measurement of the peer's mesh, as the docks' and domes' - Mac's to confirm |
+| its market stalls | 17 ids | 32 | the pack's own stall - its mesh as Unity imports it (x mirrored: its high back on -x, its counter at the origin) at the prefab's 0.75, 2.4 m across the counter, 3.7 m along it (TEMPLE-STEPS: it had been the mesh at 1, built 2.4 m off its origin) - its awning the cloth each prefab names (`TEXTURE.049` or `449`). FIELD BUGS 2026-10-16b STALL-SHAPE ("market stalls all shifted into the ground/walls"): the shape inside that box measured off the pack's FBX (`world/townStandIns.js` `RMBRP_STALL_FRAME`, within 2.3 cm of `ext_city_stall001` and 1 cm of `ext_city_stall014`) - four posts 0.375 m square, a beam and a lintel, the awning from the beam's top to the lintel's, the prefab's own valance cloth (`49_9`) under its sides and over the lintel's face (the front's headroom 2.17 m), and a counter whose top is 1.04 m over the origin, where the author lays the goods; no bench. It had been posts 0.12 m thick, a counter 0.75 m high and 0.45 m deep (the author's goods, laid for a top at 1.04 m, 0.3 m over it or off its back over nothing), the awning's edge at 1.84 m and a bench 0.53 m high where 20 of the stall-keepers stood. The second mesh (`53113` on, `ext_city_stall014`-`025`) is its own: the frame 0.2 m back, 0.206 up and 0.066 across and no counter - its author lays the goods on the ground under it, where the counter had buried them. DEPARTURES, named: the outer faces stand on TEMPLE-STEPS' box, never 3 cm off the pack's (the back -2.75 for -2.757, the counter's front 0.4 for 0.43, the back posts' tops 4.4 for 4.388, the far side 2.4 for 2.395 - the box a yard's saved stall stands by); every post stands on the origin (the pack's run 0.112 under it, the second mesh's 0.094 over - the author's stalls stand under the street either way); and the wood is `67_1`, where the prefab names `366_0` and `366_1` - a climate set's (Interior_VillageInt), which the port would swap by region and the prefab asks no swap. A yard's saved stalls and boulders were re-seated with their stand-ins (`06-Systems/Online-Arc.md`, STALL-SHAPE's re-seat) |
+| its docks | `53140`-`53144` | 16 | measured off the pack's meshes: a plank deck whose top is the origin, five-sided piles 5 m below it and 1 m above, a ramp or five steps - which land where the author's do (GENRAS00's ramps at the long dock's two ends; TEMPASH3's three flights across the T-dock's wing). ROCK-SMEAR, found beside the rocks: the ramp's slab and the steps' two stringers are prisms (`prismZ`), which took their corners as counter-clockwise on trust while both callers hand them clockwise (the ramp's list reversed, the steps' mirrored by the Unity x), so they looked into themselves; a prism now winds its sides by its corners' own area |
+| its platform, foundation and domes | `53160`, `53170`, `53182`, `53187`, `53194` | 22 | stone blocks, classic textures, and the three domes at the pack's own profile (FIELD BUGS 2026-10-04d DOMES, measured off its HF Dome 03/04 meshes at the prefabs' 4.6875: an octagonal drum 4.8 m across on the ground to 3.63 m, the dome to 8.43 m, 03's spire to 10.75 m - they had been a 3.6 m cap over a drum sunk in the roofs they stand on) - the landing and the foundation the pack's own box (`Platform-Temple.fbx`, `Foundation 1.fbx`: +-160 x +-80 x +-160 cm) at each prefab's scale, centred: the landing 3.2 x 1.6 x 3.2 m, the foundation 6.4 x 3.2 x 6.4 m, its top the floor of the two temples it stands under (FIELD BUGS 2026-10-15f TEMPLE-STEPS: a prefab's MeshFilter names the mesh itself, so the FBX node's Lcl Scaling of 125 and 250 is never instanced; read with it, the foundation had been 16 x 8 x 16 m, sunk under the floor, and it buried the stairs and landings the author built up to the doors of 123 temples - `tools/townSolidsSweep.mjs` holds every structure and door of both packs to it) |
 | its crop fields | `53211`-`53214` | 252 | RMBCropBillboardBatch's own law (FIELD BUGS 2026-10-04d CROPS, read again off the component's source): a grid over C#'s integer halves (an 85 m field from -42 to 42, a 35 m one from -17 to 15) in the world's axes - the batch's turn is never read - a plant every 4 m nudged up to half a metre, at the field's own height, none within a metre of the block's models (IsOverlapping, `blockSolids`), each a random pick of the climate's crop billboard (`TEXTURE.301`: wheat in the woodlands, corn in the mountains, sunflowers in the south, vines in swamp and rainforest, the second desert's own record 20; `511_22` stubble in winter), seeded by the spot so a field stands the same every visit (`world/flatFields.js`, sown by `world/rmbFlats.js`) |
 | its city-wall piece | `53210` | 224 | the middle 128 units of Daggerfall's own wall segment (`445`) out of the player's ARCH3D - its stone, its climate - cut and moved onto the piece's line (FIELD BUGS 2026-10-03c, below) |
 
 **The city walls' corners** (FIELD BUGS 2026-10-03c,
-`01-Overview/Field-Bugs-2026-10-03c.md`; Discord: "missing holes in the out
+`01-Overview/bugs/Field-Bugs-2026-10-03c.md`; Discord: "missing holes in the out
 walls of Alik'ra", "Saw the same thing in Chesterwark"). Beautiful Cities turns
 its walls round corners of its own - `WALLAA12` to `WALLAA15`, the 112
 composites built on them. Each stands its corner tower (`444`) where
@@ -406,11 +424,32 @@ loader: all 410 rings shut, none open at either end of any line; every one of th
 author's farms stand inside the ring by design and reach at most 50 units into a wall piece (house `215` in
 `WALLAA06/12/13.FARMAA01`), as Daggerfall Unity places them too: recorded, unchanged.
 
+**What a hill holds** (FIELD BUGS 2026-10-13e HILL-SEAT, 2026-10-13; SylviaBun: "Temple of Kynareth has floating
+houses due to terrain modifications"). A hill's stand-in is each cell's median, which seats a model at its origin but
+falls away towards a plateau's edge: TEMPASH3 (about a fifth of Beautiful Villages' Kynareth temples) stands houses
+`127`, `129`, `201` and temple `402` on hill `52758`'s plateau, and a house's far wall hung over the drawn slope - at
+7 m from an origin 0.74-1.24 m, and under a 14 m house's corners up to 2.2 m. A hill holds what the author stood on
+it: every model whose lowest vertex stands over the block's plane (0.5 m), over a drawn hill and within a metre of
+its top (not hung there), and which hangs more than 0.05 m over what is drawn anywhere under the hull of its own
+vertices, gets a PAD (`world/townStandIns.js` `blockHillPatch`): a flat top 0.05 m under its base over that whole
+footprint and 0.25 m past it, and a 45-degree bank down until it is under the hill or the plane - the hill's own
+picture, laid in the hill's own frame, so the grass runs on where they meet. No model moves and nothing is raised
+over a base. A pad buries nothing the author left in the open (FIELD BUGS 2026-10-15f TEMPLE-STEPS, "The Akatosh
+Chantry in Merdale also has some small issues": the pads had banked over Merdale's temple flight by up to 1.25 m, and
+over TEMPASF1's and TEMPASH4's stairs): no pad where its top would cover another model's vertex standing over the
+drawn ground, and its bank falls steeper where it must to pass 0.05 m under every such vertex and every door's step and
+the 4 m before it (HILL-HOUSE's rule), read off the same meshes. The streamed world merges the pads with the pixel's
+statics and its collider bucket, both freed with the pixel; the fixed city (`?exterior`) draws and collides them for
+its life; TREES-SEATED's seat reads them. Every point of every such footprint stands within 0.15 m of what is drawn -
+the hills, the pads, or the author's own models under it (a temple on its foundations, a stair on its landing) - but
+two, named: Merdale's third stair, whose pad would bury the second, and TEMPASH4's temple's back edge, 2.27 m over the
+pack's own hill too (`test/world/fb1013e_hillseat.test.js`; the whole packs swept with the player's ARCH3D on `ARENA2_PATH`).
+
 ### Not stood in
 
 What follows draws nothing, as in DFU without the peers - each because no
 stand-in could be MADE for it from what is known, not because it was missed
-(`test/wd3_standins.test.js` pins this list against every placement of both
+(`test/world/wd3_standins.test.js` pins this list against every placement of both
 packs):
 
 | ids | placed | why |
@@ -468,23 +507,23 @@ layout pins above, and by four more things the stand-ins needed:
 
 ## Proved
 
-- `test/wd3_pack.test.js` - the pack's rows, reader, refusals and bytes; the
+- `test/formats/worldData/wd3_pack.test.js` - the pack's rows, reader, refusals and bytes; the
   vendored packs' form; with ARENA2 every one of the 8,547 files rebuilt
   sha256-exact.
-- `test/wd3_door.test.js` - load priority, the packs on the door, the online
+- `test/systems/wd3_door.test.js` - load priority, the packs on the door, the online
   gate, pinned towns and the reading town, OtherNames, the windmills, the
   Master Armorer, the decor catalogue, the loader.
-- `test/wd3_layoutPins.test.js` - the stamps, the pins, every record stamped
+- `test/systems/wd3_layoutPins.test.js` - the stamps, the pins, every record stamped
   where it is made, the cached scenes and the discoveries, the load.
-- `test/wd3_online.test.js` - the service's layouts on the real service over
+- `test/net/wd3_online.test.js` - the service's layouts on the real service over
   SQLite, the client's ask and the room's switches.
-- `test/fb1003c_citywall.test.js` - the city walls' corners: the law off the
+- `test/world/fb1003c_citywall.test.js` - the city walls' corners: the law off the
   pack (all 224 pieces filling 448-576 units off the crossing of their two
   lines, the tower 64 units in from it; the 210 on lines of the author's own
   segments, the segments beginning where it ends), the stand-in cut from a
   445 and its faces on the cuts, its install, and the real pipeline building
   it from ARCH3D for the renderer and the collider.
-- `test/wd3_standins.test.js` - every stand-in above, its install and gates;
+- `test/world/wd3_standins.test.js` - every stand-in above, its install and gates;
   with ARENA2 the coverage of both packs' every placement, the housing names,
   and the alias beds built from the player's own ARCH3D.
 - Renders (the headless probe over the player's data): the beds in their six

@@ -22,7 +22,7 @@ ported as `src/systems/handheldTorches.js` (the component) and
 burning foes), with `src/systems/keyCodes.js` for its key names. On by
 default (MO1); the four presentation modules (Sprite, Bob, Inertia,
 Step) ship OFF as the mod ships them. Pins: 19 in
-`test/ht1_handheldtorches.test.js`.
+`test/systems/ht1_handheldtorches.test.js`.
 
 ## The source the port reads
 
@@ -44,7 +44,7 @@ CalculateSuccessfulHit`, `EntityEffectBroker.CreateSpellBundle` with
 ## The shape here
 
 `createHandheldTorches()` is the component; the weapon rig
-(`combat/weaponRig.js`) owns one per host beside the Weapon Widget
+(`combat/weapon/weaponRig.js`) owns one per host beside the Weapon Widget
 clone and feeds it the frame: `update()` is `Update`, `lateUpdate()` is
 `LateUpdate` (the mod runs both; the rig calls them in that order, after
 the machine's own step), `draw()` is `OnGUI`'s repaint, called in the
@@ -151,7 +151,7 @@ port carries as `playerTorch.setPlayerTorchOffsetOverride` (the
 transform keeps what was last written; `dispose` clears it). Bob,
 Inertia and Step are Weapon Widget's laws restated where the IL
 restates them, over the same modsettings tables (`BOB_SHAPE`,
-`STEP_CONDITION` - one home, `combat/weaponWidget.js`); the bob's
+`STEP_CONDITION` - one home, `combat/weapon/weaponWidget.js`); the bob's
 sideways term is signed by the hand. Drawn white: `FPSWeapon.Tint` is
 First-Person Lighting's channel and the port has no such mod.
 
@@ -315,7 +315,7 @@ port's `Enabled` and that one (HT-WAIST below).
 
 ## Hosts and seams
 
-- `combat/weaponRig.js`: `createHandheldTorches({ audio, say,
+- `combat/weapon/weaponRig.js`: `createHandheldTorches({ audio, say,
   torches })` beside the widget; `handheldOn()`; the pool bound to the
   component once (`setOnPickedUp`); the frame `tctx` (the machine, the
   sheathe, the hand, the cast, the third person, the climb, the swim,
@@ -354,15 +354,15 @@ port's `Enabled` and that one (HT-WAIST below).
 - `systems/playerTorch.js`: `setPlayerTorchOffsetOverride`;
   `systems/lycanthropy.js`: `isTransformedLycanthrope`;
   `systems/features.js`: the Mod Authored row; `ui/credits.js`: the
-  credit; `ui/enhancedMenu.js`: the key capture and the pair steppers.
+  credit; `ui/enhanced/enhancedMenu.js`: the key capture and the pair steppers.
 
 ## Does Morrowind have its own torch model?
 
 Yes. Morrowind's carriable lights are LIGH records with a mesh -
 `Light_Torch_01`, the candles and the lanterns under `meshes\l\` - held
 in the left hand by the `torch` animation group in `base_anim.nif`
-(the group the port's `formats/mwAnim.js` lists). The port's Morrowind
-arms lane (`formats/mwFirstPerson.js`) answers None for a torch today:
+(the group the port's `formats/morrowind/mwAnim.js` lists). The port's Morrowind
+arms lane (`formats/morrowind/mwFirstPerson.js`) answers None for a torch today:
 it draws no held light, and this port draws no classic hand under the
 modelled arms either (the rig's draw seam returns at the arms - a
 pixel hand beside a modelled arm is neither the mod nor the lane). So
@@ -405,7 +405,7 @@ table beside the other two. Inertia and Step stay off, as the widget
 ships them; the player may still turn any of the three either way.
 The mod's own file is untouched.
 
-Pin: `test/ht1_handheldtorches.test.js` HT5 - every motion module
+Pin: `test/systems/ht1_handheldtorches.test.js` HT5 - every motion module
 the two mods share ships with the SAME default, Bob's is on, the mod's
 file still says off, and the bench walks with Bob on and the hand
 moves off its rest; the three HT1 pins that encoded "the other three
@@ -449,7 +449,7 @@ come - and now guards its upload loop, recording an empty record that
 **The class, closed.** Four doors had walked into the same trap (see the
 Ledger's TEX1 row). Every texture door in the tree converts with
 `toColor32` at the door now, no module under `src/` imports
-`toColor32Order` at all, and `test/tex1_texturedoors.test.js` pins that -
+`toColor32Order` at all, and `test/systems/tex1_texturedoors.test.js` pins that -
 so a fifth door cannot be written wrong. The pin also EXECUTES this
 crash: the real component, the real `Renderer.uploadTexture` on a gl
 stub, the old shape proved unable to reject.
@@ -581,7 +581,7 @@ class properly. Which way up the rows go is a different question, and
 the only door where it was visible had never drawn a frame, because
 `Modules.Sprite` shipped off until MODS-ON turned it on.
 
-Pinned: `test/ht3_sprite_upright.test.js` (3) - the two orders executed
+Pinned: `test/formats/ht3_sprite_upright.test.js` (3) - the two orders executed
 against a five-row raster, which door takes which, and the screen-quad
 convention read at its own source.
 
@@ -599,7 +599,7 @@ already spent, and one press both opened the dial and dropped the light.
 The default is **G** now: unbound in DFU's own `DEFAULT_BINDINGS`, and
 not one of the mod's other two keys (F to ignite, X to throw). It stays
 the player's to rebind, and the departure is declared in
-`test/ht1_handheldtorches.test.js`'s own `PORT_DEFAULT` table beside
+`test/systems/ht1_handheldtorches.test.js`'s own `PORT_DEFAULT` table beside
 MODS-ON's, so every other key of the bundle is still held to the shipped
 value and a third departure that arrives without a decision behind it
 fails right there.
@@ -702,10 +702,10 @@ closed for Eye Of The Beholder's `Camera.SwitchShoulder` / `AutoTogglePerspectiv
 half of the report that was not a bug, "if you scroll up after rebinding, there should be a Continue" - is in
 UI-Arc.md's DISCORD5 record.
 
-Pins: `test/ht1_handheldtorches.test.js` (the hand table under the mod's law - strict, relaxed at rest, relaxed in a
+Pins: `test/systems/ht1_handheldtorches.test.js` (the hand table under the mod's law - strict, relaxed at rest, relaxed in a
 swing, the punching left hand, both-free-only-sheathed; the fourth departure in the defaults table),
-`test/audit66_handheldtorches.test.js` (the punching hand), `test/ww1_weaponwidget.test.js` (a claymore mirrors
-under its switch), `test/discord5.test.js` (both compares by source, the relaxed default, every read TextKey in its
+`test/systems/audit66_handheldtorches.test.js` (the punching hand), `test/combat/weapon/ww1_weaponwidget.test.js` (a claymore mirrors
+under its switch), `test/systems/discord5.test.js` (both compares by source, the relaxed default, every read TextKey in its
 tile). `tools/mutants/discord5.json`: 20 records, 20 dead. Not verified in a browser.
 
 ## DISC7 - THE LOOP FOLLOWS THE LIGHT (2026-09-23, Mac: "fix the known gaps")
@@ -713,7 +713,7 @@ tile). `tools/mutants/discord5.json`: 20 records, 20 dead. Not verified in a bro
 A torch stowed from inside an open inventory kept crackling until the window closed: the component starts and stops
 its loop in its update, and a host holds the rig's frame under a window. The light in hand has one door now
 (`systems/lightSource.js setLightSource`, every writer through it) and the component listens: a light that stops being
-a torch stops the loop on the change. Record: `01-Overview/Field-Bugs-2026-09-23.md` (DISC7).
+a torch stops the loop on the change. Record: `01-Overview/bugs/Field-Bugs-2026-09-23.md` (DISC7).
 
 ## HT-WAIST - THE LANTERN AT THE WAIST (2026-09-24, Mac: "Let the lantern item be able to be hung at the waist instead of having to be held")
 
@@ -772,14 +772,14 @@ the lantern to its stop every step), a share of that drives the lantern, a strid
 twice fore-aft, in proportion to the speed up to a walk), a turn on the spot pulls it outward, it settles plumb at
 rest and never passes 35 degrees. Fixed sub-steps, so 30 and 144 frames a second swing alike; allocation-free.
 
-**The Morrowind body** (`combat/fpArm.js`, `formats/mwFirstPerson.js`). A carriable LIGH record named lantern
+**The Morrowind body** (`combat/fpArm.js`, `formats/morrowind/mwFirstPerson.js`). A carriable LIGH record named lantern
 (`pickLanternRecord`, the torch picker's own shape; no retail id is assumed) bound as a rigid part - slot
 `hiplight` - at `Bip01 Pelvis` on the THIRD-PERSON rig alone (the first-person arms have no hip), resolved against
 the skeleton with its bone addons joined. It HANGS rather than rides: `hangAffine` places it by its top-centre
 (`hangAnchor`, measured once) at a hook fixed to the pelvis (`HIP_LANTERN_HOOK` = (14, 5, 9.5) off the pelvis in the
 actor's own Z-up, +Y-forward axes, measured on Weapon Sheathing's vendored copy of the retail Bip01 chain: the right
 hip at the scabbard's belt height, clear of the thigh), plumb whatever the pelvis does, times the swing matrix the
-rig steps each frame off the motor's bag, the heading's turn and the walk clip's phase. Its flame, if the record has
+rig steps each frame off the motor's bag, the heading's turn and the walk's phase (the body motion's gait while it walks the legs - BODY-MOTION, `systems/lanternSwing.js` createHipLantern - else the walk clip's). Its flame, if the record has
 one, hangs with it (`effectPlacement`). Hidden ONLY when not lit - never by the carried-left rule, since it is in no
 hand; the portrait shows it lit. `setHipLight` is `setTorch`'s shape with its audit's fixes: the fast path one
 compare, the slow path binding once on the body, a failed bind remembered (`hipLightTried`), the light in
@@ -787,7 +787,20 @@ compare, the slow path binding once on the body, a failed bind remembered (`hipL
 body's one mesh, so it needs no owner of its own (`releaseThirdMesh` frees it with the rest). Morrowind-Rules.md
 HT-WAIST.
 
-**Eye Of The Beholder's sprite** (`player/eotbBody.js`; the lantern's law `player/eotbLantern.js` since HT-WAIST-BACK).
+**HT-WAIST-SIZE (2026-10-20, Mac: "the lantern attached to the waist in absolutely gigantic on the morrowind model").**
+Morrowind hangs no lantern on a belt: its carriable lanterns are lights made to hang in a street or be held up in a hand,
+and the hang placed the picked record's mesh at the size its author made it for that - nothing said how big a lantern at
+the waist is. The sprite's picture always had a height (`HIP_LANTERN_SPRITE.height`, 0.3 m); the mesh had none. Now
+one height serves both bodies - `systems/lanternSwing.js` `HIP_LANTERN_HEIGHT`, 0.3 m from the ring to the foot, which
+the sprite's picture reads - and the Morrowind body's hang is scaled to it about its top: `hangAnchor` measures the
+part's own height beside its anchor, `combat/fpArm.js` `hipLanternSize` turns it into a scale once at the bind
+(`hangHipLight`, both the build's and a lantern lit later), and `hangAffine` lays `rot * size` about the anchor - so the
+ring stays on the hook, it swings as before, its flame (a particle system placed by the same affine) is sized with it,
+and its normals are renormalised on both skin paths. A peer's body takes the same bind. Not verified here: no Morrowind
+data is in this container, so how big the retail lantern was is not measured - the pin hangs the fixture's 2-unit mesh
+at 21 units (0.3 m), whatever its size (`test/combat/htwaist_mwbody.test.js` HT-WAIST-SIZE; `tools/mutants/held_steady.json`).
+
+**Eye Of The Beholder's sprite** (`player/eyeOfTheBeholder/eotbBody.js`; the lantern's law `player/eyeOfTheBeholder/eotbLantern.js` since HT-WAIST-BACK).
 A second billboard, apart from the IL's machine: the Lantern template's own world texture (TEXTURE.200 record 10, read
 off the template, loaded from the player's ARENA2 - never vendored; the mod's hand-and-lantern frames are the author's
 art of a hand), hung by its top from the sprite's right hip in the sprite's facing frame, swung by the same law off the
@@ -804,17 +817,17 @@ Beholder sprites get this change"; then, of the back diagonals it first let in:
 "It still shows on the back side angle").** The lantern's picture is drawn only from straight behind: the one view of Eye Of The Beholder's eight
 that shows the sprite's back square on, orientation 4 (the camera straight behind, record +4) - never from the back
 diagonals 3 and 5 (record +3, the back three-quarter), the front, the front diagonals or the sides (0, 1, 2, 6, 7).
-The rule is `isRearView` (`player/eotbLantern.js`), read against the view the sprite is PAINTED from, so the lantern
+The rule is `isRearView` (`player/eyeOfTheBeholder/eotbLantern.js`), read against the view the sprite is PAINTED from, so the lantern
 and the picture under it always agree; the numbering is `orientationFor`'s (0 the camera in front) through the wheel,
 and which record is a back was checked against the vendored art (Eye-Of-The-Beholder.md HT-WAIST has how). Unseen, it
 still hangs: the swing runs on (turning round shows a lantern already swinging), the batch is kept, and your light
 stays at the hip rather than jumping to the yaw frame's default each time the sprite turns. And EVERY sprite: your own,
 in every on-foot set, and every other player drawn online as the set they chose (DISC23-B's walkers,
-`net/peerRiders.js createPeerWalkers`) whose pose says `hl` (HT-WAIST-NET, below) - the same picture through the same loader (the peers' art
+`net/peer/peerRiders.js createPeerWalkers`) whose pose says `hl` (HT-WAIST-NET, below) - the same picture through the same loader (the peers' art
 store, `createEotbArt`, holds its own `createLanternArt`; the renderer caches the texture once under the key), hung by
 the same law, swung off that walker's own motion (its pace off the drawn feet - MWBODY1's law, lifted to
-`net/peerPace.js` so the bodies and the walkers read one -, its yaw's turn, its walk clip's phase), drawn from
-straight behind them alone. One home for all of it: `player/eotbLantern.js` (the rule, the art, the hang, the swing's drive, the batch);
+`net/peer/peerPace.js` so the bodies and the walkers read one -, its yaw's turn, its walk clip's phase), drawn from
+straight behind them alone. One home for all of it: `player/eyeOfTheBeholder/eotbLantern.js` (the rule, the art, the hang, the swing's drive, the batch);
 `eotbBody.js` keeps what is the local body's alone (whether it hangs, and the light), a walker keeps its `hl`. A peer's
 lantern is drawn by `drawLanterns`, called from world.js's `drawPeerBodies` - the hook world.js's exterior pass and
 worldModes' dungeon and interior passes all call right after your own body (the tilt is the lantern's own right and
@@ -822,7 +835,7 @@ up, which the flats' shared pass cannot carry); `exterior.js` holds no online se
 no body. Its batch goes when the lantern is put out, when the walker goes or stops being one, and when the layer is
 destroyed; the recentre carries it; its draw builds nothing. It lights nothing - no peer's light does. The rider and
 the beast still hang none, on your screen or theirs; the Morrowind body is not a sprite and is unchanged. Pins:
-`test/htwaistback.test.js` (8, every one failing on the base); `test/htwaist_eotb.test.js`'s bodies stand with their
+`test/player/eyeOfTheBeholder/htwaistback.test.js` (8, every one failing on the base); `test/systems/htwaist_eotb.test.js`'s bodies stand with their
 backs to the camera now, and its sideways walk is a back diagonal and the side view, both its negative cases (the tilt
 is read walking straight away).
 
@@ -840,17 +853,17 @@ boolean weaponRig hands your own body every frame - the first lit binds the LIGH
 slow path, once, from the WATCHER's archives; no lantern record there is a note on the body's card, as for your own),
 put out it hides, lit again it shows on the fast path, one arriving mid-build is queued (ASYNC NEVER DROPS). It swings
 off that body's own stub camera (`peerCamera`: `mv` as the forward move, the pace measured off the drawn pose, the
-eased yaw, the walk clip's phase) exactly as yours swings off the motor's bag; the pose carries no direction of
+eased yaw, the walk's phase - its gait's, under BODY-MOTION) exactly as yours swings off the motor's bag; the pose carries no direction of
 travel, so a peer backing away swings as its legs walk, forward. It is the body's own mesh, released with the body
 (EVERY ALLOCATION HAS AN OWNER). The HELD torch still rides nothing (Morrowind-Rules.md MW-D51 "Recorded, not faked";
-`test/mwtorch.test.js` still pins that `peerBodies.js` passes no torch) - this light is in no hand. RELAY_VERSION
+`test/combat/mwtorch.test.js` still pins that `peerBodies.js` passes no torch) - this light is in no hand. RELAY_VERSION
 world108 (world106 on its branch; main's DISC23-B took world106 and DUEL1 world107 first), its LAW row recorded (the `net/wire.js` RELAY_VERSION chain is the record). No RELAY_MIN gate: a pose field
 has never had one (DISC12's `lh`/`wb`, PCORPSE1's `dd`) - an older relay's `validPose` drops `hl`, the others see no
 lantern, and nothing closes. Not carried: the lantern's LIGHT (a peer casts none - the light is the player torch's own),
 and the lantern on a peer drawn as the paperdoll, the class sprite, or Eye Of The Beholder's rider and lycanthrope
 (your own sprite draws none on the beast or the rider either); on a peer drawn as their chosen Eye Of The Beholder set
 it hangs since HT-WAIST-BACK, above. Online-Arc.md HT-WAIST-NET. Pins:
-`test/htwaistnet_peers.test.js` (6, every one failing on the base).
+`test/net/htwaistnet_peers.test.js` (6, every one failing on the base).
 
 **Decisions taken, for Mac's eye.** The RIGHT hip, not mirrored by Handedness (the left is the scabbard's). The beast
 form keeps the lantern lit (it takes both hands, and a lantern at the waist needs none - Relaxed does the same) but
@@ -862,8 +875,8 @@ capsule centre) is unchanged and recorded here for a later look.
 **Not verified in a browser** - there is no Morrowind data or ARENA2 in this container. The hook, the sprite's hip
 and the swing's constants are port-own tuning, set against the vendored skeleton and the law's own numbers.
 
-Pins: `test/htwaist_setting.test.js`, `test/htwaist_handlaw.test.js`, `test/htwaist_swing.test.js`,
-`test/htwaist_mwbody.test.js`, `test/htwaist_eotb.test.js` (34 tests, every one failing on the base); HT1's pane pin
+Pins: `test/systems/htwaist_setting.test.js`, `test/systems/htwaist_handlaw.test.js`, `test/systems/htwaist_swing.test.js`,
+`test/combat/htwaist_mwbody.test.js`, `test/systems/htwaist_eotb.test.js` (34 tests, every one failing on the base); HT1's pane pin
 names the key. `tools/mutants/htwaist.json`: 68 records, 68 dead - HT-WAIST-BACK's 19 among them, and two of
 HT-WAIST's (the sprite's tilt, its re-mint) re-aimed by content at the lantern's one home; the 50 this line said
 before was one over the 49 the file held (and `torchvis.json`'s two gate records re-aimed by content at the gate's new

@@ -28,7 +28,7 @@
 // WHAT IT TAKES BACK (`saleRefusal`): a ship of the player's that is HERE - made fast or lying at this port, laid up (her
 // title in the book), or packed (her parts in the pack) - with nothing in her hold, nobody of hers ashore at the
 // player's side, never one at her helm or fighting. Sold, her title leaves the book and her record the ledger (fleet.js
-// forgetShip), her hurts and crew the sea fight's state (scenes/navalHost.js forgetBoat), and a boat standing in the
+// forgetShip), her hurts and crew the sea fight's state (scenes/naval/navalHost.js forgetBoat), and a boat standing in the
 // world is laid up first, by the mod's own law (LayUpBoat), so she leaves the water as a ship sent away does.
 //
 // THE SHELVES. The General Store and the Pawn Shop no longer shelve Come Sail Away's two items, and no shop buys them
@@ -36,8 +36,8 @@
 // and the cart off DFU's General Store.
 //
 // Pure: no DOM, no renderer, no clock. Not a DFU member. Ledger A (SHIPYARDS).
-import { HULL_NAMES, HULL_PRICES } from './comeSailAwayHulls.js';
-import { mintDeed, mintParts, BOAT_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE } from './comeSailAwayItems.js';
+import { HULL_NAMES, HULL_PRICES } from './comeSailAway/comeSailAwayHulls.js';
+import { mintDeed, mintParts, BOAT_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE } from './comeSailAway/comeSailAwayItems.js';
 import { YARD_QUALITY, YARD_PRICE_INDEX } from './merchantYards.js';
 import { calculateCost } from './shopStock.js';
 import { getTradePrice } from './tradeModes.js';
@@ -60,11 +60,11 @@ export const SALE_FLOOR = 0.6;
 /** What the shipmaster says of each hull, by Come Sail Away's hull (the port's own ships where they stand in: Mac's
  *  Tiny Ship, galleon and carrack - Come-Sail-Away.md GALLEON, SHIPS-2). */
 export const HULL_LINES = Object.freeze([
-  'A rowboat - a pair of oars and room for two. Sold as her parts: launch her from your pack wherever there is water.',
-  'A single-masted boat with a little cabin - quick, handy, and no crew to feed. Her deed waits in your Fleet ledger.',
-  'A galleon - two decks, her guns run out through ten ports, a crew to work her and a cabin for her captain.',
-  'A great war galley - sixty oars, a ram at her bow and a crew to fill a village. No quay takes her.',
-  'A three-masted carrack - high castles fore and aft, a deep hold and guns on her waist.',
+  'A rowboat with a pair of oars and room for two. Sold as parts: launch it from your pack anywhere there is water.',
+  'A single-masted boat with a small cabin. Quick and easy to handle, with no crew to feed. The deed goes to your Fleet ledger.',
+  'A galleon with two decks, ten gunports, a full crew and a captain\'s cabin.',
+  'A great war galley with sixty oars, a ram on the bow and a huge crew. Too big for any quay.',
+  'A three-masted carrack with high castles fore and aft, a deep hold and guns along its sides.',
 ]);
 
 /** A ship's figures as the shipmaster gives them: her length and beam (m, her build as it stands), her crew whole and
@@ -130,13 +130,13 @@ export function shipSalePrice(worth, skills) {
 export function saleRefusal({ where, hold = 0, ashore = 0, fighting = false, aboard = 0, atPort = true, crossed = false }) {
   if (!atPort) return SHIPYARD_TEXT.notPort;
   if (crossed) return SHIPYARD_TEXT.crossed;
-  if (where === 'sailing') return 'Step off her helm first.';
-  if (where === 'away') return 'Bring her to this port first - the shipmaster buys what he can see.';
+  if (where === 'sailing') return 'Step away from the helm first.';
+  if (where === 'away') return 'Bring the ship to this port first. The shipmaster buys only what he can see.';
   if (where !== 'here' && where !== 'laidup' && where !== 'packed') return 'No such ship of yours here.';
-  if (fighting) return 'Not while she is fighting.';
-  if (aboard > 0) return 'Another player is aboard her.';
-  if (ashore > 0) return 'Her hands are ashore with you - send them back aboard first.';
-  if (hold > 0) return 'Empty her hold first - the shipmaster buys the ship, not her cargo.';
+  if (fighting) return 'Not while the ship is in combat.';
+  if (aboard > 0) return 'Another player is aboard.';
+  if (ashore > 0) return 'Some of the crew are ashore with you. Send them back aboard first.';
+  if (hold > 0) return 'Empty the hold first. The shipmaster does not buy cargo.';
   return null;
 }
 
@@ -144,14 +144,14 @@ export function saleRefusal({ where, hold = 0, ashore = 0, fighting = false, abo
 export const SHIPYARD_TEXT = Object.freeze({
   // AUDIT SHIPYARDS L7-4: a deed's ship is laid up at the yard until she is brought round - said, and the window turns
   // to Your fleet with her chosen; AUDIT SHIPYARDS L7-10: her parts are plural
-  bought: (name, port) => `${name} is yours, laid up at ${port || 'this port'}. Press Bring her here to have her brought round to the quay.`,
-  boughtParts: (name) => `${name} are in your pack. Use them by the water to launch her.`,
-  heavy: (name) => `${name} weigh more than you can carry - lighten your pack first.`,
-  crossed: 'She came into the realm through customs - the shipmaster does not buy her. She stays yours.',
+  bought: (name, port) => `${name} is yours, laid up at ${port || 'this port'}. Press Bring here to have it brought to the quay.`,
+  boughtParts: (name) => `${name} are in your pack. Use them by the water to launch the ship.`,
+  heavy: (name) => `${name} weigh more than you can carry. Lighten your pack first.`,
+  crossed: 'This ship came in through customs, so the shipmaster won\'t buy it. It stays yours.',
   sold: (name, gold) => `The shipmaster buys ${name} for ${Math.round(gold).toLocaleString('en-US')} gold.`,
-  short: (gold) => `The shipmaster asks ${Math.round(gold).toLocaleString('en-US')} gold - your purse falls short.`,
+  short: (gold) => `The shipmaster asks ${Math.round(gold).toLocaleString('en-US')} gold. You don't have enough.`,
   notPort: 'The shipmaster deals in ships at his own yard.',
-  noSail: 'The shipyard builds for Come Sail Away\'s ships - turn it on in the mods\' settings and reload to buy one.',   // AUDIT SHIPYARDS L7-11: the switch is read at a load
+  noSail: 'Turn on Come Sail Away in the mod settings and reload to buy a ship here.',   // AUDIT SHIPYARDS L7-11: the switch is read at a load
   steal: 'The shipmaster never takes an eye off his yard.',
 });
 

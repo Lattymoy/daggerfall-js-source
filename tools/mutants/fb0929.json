@@ -4,118 +4,118 @@
     "file": "src/systems/tradeModes.js",
     "old": "      return Math.max(pieces * MIN_PRICE_PER_PIECE, calculateTradePrice(cost, quality, skills, false));",
     "new": "      return calculateTradePrice(cost, quality, skills, false);",
-    "tests": ["test/fb0929_min_price.test.js"]
+    "tests": ["test/systems/fb0929_min_price.test.js"]
   },
   {
     "name": "FB0929-a-piece-asks-nothing",
     "file": "src/systems/tradeModes.js",
     "old": "export const MIN_PRICE_PER_PIECE = 1;",
     "new": "export const MIN_PRICE_PER_PIECE = 0;",
-    "tests": ["test/fb0929_min_price.test.js"]
+    "tests": ["test/systems/fb0929_min_price.test.js"]
   },
   {
     "name": "FB0929-the-basket-counts-no-pieces",
     "file": "src/systems/tradeModes.js",
     "old": "        cost += buyItemPrice(item, { quality, priceAdjustment, holidayId, guildFactionId });\n        pieces += stack;",
     "new": "        cost += buyItemPrice(item, { quality, priceAdjustment, holidayId, guildFactionId });",
-    "tests": ["test/fb0929_min_price.test.js"]
+    "tests": ["test/systems/fb0929_min_price.test.js"]
   },
   {
     "name": "FB0929-a-stack-counts-as-one",
     "file": "src/systems/tradeModes.js",
     "old": "        cost += buyItemPrice(item, { quality, priceAdjustment, holidayId, guildFactionId });\n        pieces += stack;",
     "new": "        cost += buyItemPrice(item, { quality, priceAdjustment, holidayId, guildFactionId });\n        pieces += 1;",
-    "tests": ["test/fb0929_min_price.test.js"]
+    "tests": ["test/systems/fb0929_min_price.test.js"]
   },
   {
     "name": "FB0929-a-repair-counts-no-pieces",
     "file": "src/systems/tradeModes.js",
     "old": "          { reducedRepairCost, priceAdjustment }) * stack;\n        pieces += stack;",
     "new": "          { reducedRepairCost, priceAdjustment }) * stack;",
-    "tests": ["test/fb0929_min_price.test.js"]
+    "tests": ["test/systems/fb0929_min_price.test.js"]
   },
   {
     "name": "FB0929-a-booked-job-is-counted",
     "file": "src/systems/tradeModes.js",
     "old": "      case 'Repair':\n        if (isBeingRepaired(item)) break;",
     "new": "      case 'Repair':\n        pieces += stack;\n        if (isBeingRepaired(item)) break;",
-    "tests": ["test/fb0929_min_price.test.js", "test/trademodes.test.js"]
+    "tests": ["test/systems/fb0929_min_price.test.js", "test/systems/trademodes.test.js"]
   },
   {
     "name": "FB0929-the-sale-is-floored",
     "file": "src/systems/tradeModes.js",
-    "old": "    case 'Sell':\n    case 'SellMagic':\n      return calculateTradePrice(cost, quality, skills, true);",
-    "new": "    case 'Sell':\n    case 'SellMagic':\n      return Math.max(cost > 0 ? 1 : 0, calculateTradePrice(cost, quality, skills, true));",
-    "tests": ["test/fb0929_min_price.test.js"]
+    "old": "    case 'Sell':\n    case 'SellMagic': {\n      const whole = calculateTradePrice(cost, quality, skills, true);",
+    "new": "    case 'Sell':\n    case 'SellMagic': {\n      const whole = Math.max(cost > 0 ? 1 : 0, calculateTradePrice(cost, quality, skills, true));",
+    "tests": ["test/systems/fb0929_min_price.test.js"]
   },
   {
     "name": "FB0929-the-sale-counts-pieces",
     "file": "src/systems/tradeModes.js",
-    "old": "        cost += calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;   // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth",
-    "new": "        cost += calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;   // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth\n        pieces += stack;",
-    "tests": ["test/fb0929_min_price.test.js"]
+    "old": "        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;   // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth",
+    "new": "        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;   // JAN1: an item with no finite value is priced at its base, never NaN; CRAFT-WORTH: a crafted piece at its plain worth\n        pieces += stack;",
+    "tests": ["test/systems/fb0929_min_price.test.js"]
   },
   {
     "name": "FB0929-identify-is-floored",
     "file": "src/systems/tradeModes.js",
     "old": "    case 'Identify':\n      return cost;",
     "new": "    case 'Identify':\n      return Math.max(pieces, cost);",
-    "tests": ["test/fb0929_min_price.test.js"]
+    "tests": ["test/systems/fb0929_min_price.test.js"]
   },
   {
     "name": "FB0929-no-walk-asks-nothing",
     "file": "src/systems/tradeModes.js",
-    "old": "export function getTradePrice(mode, cost, quality, skills, pieces = cost > 0 ? 1 : 0) {",
-    "new": "export function getTradePrice(mode, cost, quality, skills, pieces = 0) {",
-    "tests": ["test/fb0929_min_price.test.js"]
+    "old": "export function getTradePrice(mode, cost, quality, skills, pieces = cost > 0 ? 1 : 0, resale = null) {",
+    "new": "export function getTradePrice(mode, cost, quality, skills, pieces = 0, resale = null) {",
+    "tests": ["test/systems/fb0929_min_price.test.js"]
   },
   {
     "name": "FB0929-nothing-asks-a-gold",
     "file": "src/systems/tradeModes.js",
-    "old": "export function getTradePrice(mode, cost, quality, skills, pieces = cost > 0 ? 1 : 0) {",
-    "new": "export function getTradePrice(mode, cost, quality, skills, pieces = 1) {",
-    "tests": ["test/fb0929_min_price.test.js"]
+    "old": "export function getTradePrice(mode, cost, quality, skills, pieces = cost > 0 ? 1 : 0, resale = null) {",
+    "new": "export function getTradePrice(mode, cost, quality, skills, pieces = 1, resale = null) {",
+    "tests": ["test/systems/fb0929_min_price.test.js"]
   },
   {
     "name": "FB0929-the-classic-offer-drops-the-pieces",
-    "file": "src/ui/nativeTrade.js",
-    "old": "    const price = getTradePrice(this.mode, cost, ctx.quality ?? 0, ctx.skills ?? {}, pieces);",
-    "new": "    const price = getTradePrice(this.mode, cost, ctx.quality ?? 0, ctx.skills ?? {});",
-    "tests": ["test/fb0929_min_price.test.js"]
+    "file": "src/ui/native/nativeTrade.js",
+    "old": "    const price = getTradePrice(this.mode, cost, ctx.quality ?? 0, ctx.skills ?? {}, pieces, resale);",
+    "new": "    const price = getTradePrice(this.mode, cost, ctx.quality ?? 0, ctx.skills ?? {}, undefined, resale);",
+    "tests": ["test/systems/fb0929_min_price.test.js"]
   },
   {
     "name": "FB0929-the-enhanced-quote-drops-the-pieces",
-    "file": "src/ui/enhancedTrade.js",
-    "old": "return getTradePrice(m, lot.cost, quality, skills, lot.pieces); };",
-    "new": "return getTradePrice(m, lot.cost, quality, skills); };",
-    "tests": ["test/fb0929_min_price.test.js"]
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "return getTradePrice(m, lot.cost, quality, skills, lot.pieces, lot.resale); };",
+    "new": "return getTradePrice(m, lot.cost, quality, skills, undefined, lot.resale); };",
+    "tests": ["test/systems/fb0929_min_price.test.js"]
   },
   {
     "name": "FB0929-the-enhanced-offer-drops-the-pieces",
-    "file": "src/ui/enhancedTrade.js",
-    "old": "  const price = getTradePrice(mode, c, ctx.quality ?? 0, ctx.skills ?? {}, pieces);",
-    "new": "  const price = getTradePrice(mode, c, ctx.quality ?? 0, ctx.skills ?? {});",
-    "tests": ["test/fb0929_min_price.test.js"]
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "  const price = getTradePrice(mode, c, ctx.quality ?? 0, ctx.skills ?? {}, pieces, resale);",
+    "new": "  const price = getTradePrice(mode, c, ctx.quality ?? 0, ctx.skills ?? {}, undefined, resale);",
+    "tests": ["test/systems/fb0929_min_price.test.js"]
   },
   {
     "name": "FB0929-the-quick-sale-drops-the-pieces",
-    "file": "src/ui/enhancedTrade.js",
-    "old": "  const price = getTradePrice('Sell', c, ctx.quality ?? 0, ctx.skills ?? {}, pieces);",
-    "new": "  const price = getTradePrice('Sell', c, ctx.quality ?? 0, ctx.skills ?? {});",
-    "tests": ["test/fb0929_min_price.test.js"]
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "  const price = getTradePrice('Sell', c, ctx.quality ?? 0, ctx.skills ?? {}, pieces, resale);",
+    "new": "  const price = getTradePrice('Sell', c, ctx.quality ?? 0, ctx.skills ?? {}, undefined, resale);",
+    "tests": ["test/systems/fb0929_min_price.test.js"]
   },
   {
     "name": "FB0929-the-keyed-shelf-haggles-its-own-copy",
     "file": "src/scenes/worldModes.js",
     "old": "    return getTradePrice('Buy', lot.cost, b.quality, {",
     "new": "    return calculateTradePrice(lot.cost, b.quality, {",
-    "tests": ["test/fb0929_min_price.test.js"]
+    "tests": ["test/systems/fb0929_min_price.test.js"]
   },
   {
     "name": "FB0929-the-keyed-repair-haggles-its-own-copy",
     "file": "src/scenes/worldModes.js",
     "old": "    return getTradePrice('Repair', lot.cost, b?.quality ?? 0,",
     "new": "    return calculateTradePrice(lot.cost, b?.quality ?? 0,",
-    "tests": ["test/fb0929_min_price.test.js"]
+    "tests": ["test/systems/fb0929_min_price.test.js"]
   }
 ]

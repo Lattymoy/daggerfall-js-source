@@ -1,0 +1,565 @@
+[
+  {
+    "name": "EGA3P-completes-miscounted",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "  if (had !== 2) return '';",
+    "new": "  if (had !== 1) return '';",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "the third miscounted"
+  },
+  {
+    "name": "EGA3P-completes-a-rank",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "  if (!V || egRankOf(vs, V.key) > 0) return '';",
+    "new": "  if (!V) return '';",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "a rank of one held said to complete"
+  },
+  {
+    "name": "EGA3P-completes-undrawn",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "      if (c.completes) b.append(",
+    "new": "      if (false) b.append(",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "the card's line undrawn"
+  },
+  {
+    "name": "EGA3P-completes-words",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "completes: (fam, cap, line) => `Completes ${fam}: ${cap}. ${line}`,",
+    "new": "completes: (fam, cap, line) => `Completes ${fam}: ${cap}.`,",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "what the capstone does unsaid"
+  },
+  {
+    "name": "EGA3P-resonance-unsaid",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "  if (me) for (const f of egResonance(egRunOfMember(E, me).vs)) if (fresh(keyOf('res', E.b, f))) beats.push({ k: 'resonance', t: f });",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js",
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "resonance never said"
+  },
+  {
+    "name": "EGA3P-resonance-every-look",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "if (fresh(keyOf('res', E.b, f))) beats.push({ k: 'resonance', t: f });",
+    "new": "{ fresh(keyOf('res', E.b, f)); if (memo.primed) beats.push({ k: 'resonance', t: f }); }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js",
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "said again every look"
+  },
+  {
+    "name": "EGA3P-recap-capstones-blind",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "capstones: egResonance(run?.vs ?? []).map((f) => EG_CAPSTONES[f].name),",
+    "new": "capstones: [],",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "the recap blind to capstones"
+  },
+  {
+    "name": "EGA3P-recap-capstones-undrawn",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "recap.capstones?.length ? `${words.recapCapstones}",
+    "new": "false ? `${words.recapCapstones}",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "the recap's capstones undrawn"
+  },
+  {
+    "name": "EGA3P-accord-does-unsaid",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "export const egAccordDoes = (key) => { const A = EG_ACCORDS.find((x) => x.key === key); return A ? EG_PRES_TEXT.accordDoes(A.name, A.line) : ''; };",
+    "new": "export const egAccordDoes = () => '';",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "what an Accord does unsaid"
+  },
+  {
+    "name": "EGA3P-accord-does-every-companion",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "const first = !told.has(a.key);",
+    "new": "const first = true;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "said once for every companion"
+  },
+  {
+    "name": "EGA3P-board-no-enhanced-id",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "  root.id = EG_BOARD_PANEL_ID;   // AUDIT EG III: an enhanced door, for the pad\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "no enhanced id"
+  },
+  {
+    "name": "EGA3P-board-id-not-enhanced",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "export const EG_BOARD_PANEL_ID = 'enhanced-egboard';",
+    "new": "export const EG_BOARD_PANEL_ID = 'dfegboard';",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "an id the pad's window test skips"
+  },
+  {
+    "name": "EGA3P-board-off-the-stack",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "  const unregister = registerOverlay(() => onClose());",
+    "new": "  const unregister = () => {};",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "never on the doors' stack"
+  },
+  {
+    "name": "EGA3P-board-left-on-the-stack",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "alive = false; unregister(); win.removeEventListener",
+    "new": "alive = false; win.removeEventListener",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "left on the stack"
+  },
+  {
+    "name": "EGA3P-board-back-unheard",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "overlayAction(e) !== 'back') return;",
+    "new": "overlayAction(e) !== 'confirm') return;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "Back unheard"
+  },
+  {
+    "name": "EGA3P-board-back-shared",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": " e.preventDefault?.(); e.stopPropagation?.(); onClose(); };",
+    "new": " e.preventDefault?.(); onClose(); };",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "Back passed on to the host"
+  },
+  {
+    "name": "EGA3P-board-listener-left",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": " win.removeEventListener?.('keydown', onBack, { capture: true });",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "the page's keys kept"
+  },
+  {
+    "name": "EGA3P-shaft-still-whole",
+    "file": "src/player/mwView.js",
+    "old": "  if (still) return 0;\n",
+    "new": "  if (still) return want;\n",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js",
+      "test/net/eliteGates/egz_camera_shaft.test.js"
+    ],
+    "why": "reduced motion laid whole at once (the snap)"
+  },
+  {
+    "name": "EGA3P-back-fall-kept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "stillNow(), !(R.op > 0));   // EG-ZE (merged)",
+    "new": "stillNow());   // EG-ZE (merged)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "Hall 1's fall for a hall unknown"
+  },
+  {
+    "name": "EGA3P-back-label-hall1",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (!(R.op > 0)) step.opts.label = EG_BACK_TEXT.spire;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "labelled Hall 1"
+  },
+  {
+    "name": "EGA3P-back-silent-type",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "  silent: 'The Spire does not answer. Try the return again.',",
+    "new": "  silent: 'The Spire does not answer. Type /breach to try again.',",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "the silence tells a touch player to type"
+  },
+  {
+    "name": "EGA3P-toll-plain-body",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    const took = cut / (entity.maxHealth || 1);",
+    "new": "    const took = cut / spireBodyMax(entity);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "the plain body read as the bar"
+  },
+  {
+    "name": "EGA3P-toll-the-law",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    const took = cut / (entity.maxHealth || 1);",
+    "new": "    const took = q * EG_TOLL_STEP;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "the law's share said"
+  },
+  {
+    "name": "EGA3P-castback-the-law",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "castBackBeat(cut > 0, Math.round(cut) / (entity.maxHealth || 1));",
+    "new": "castBackBeat(cut > 0, share);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "the cast-back's law said, the floor unread"
+  },
+  {
+    "name": "EGA3P-pct-zero",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "const pctOf = (share) => Math.max(share > 0 ? 1 : 0, Math.round(share * 100));",
+    "new": "const pctOf = (share) => Math.max(0, Math.round(share * 100));",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "\"-0%\" for a share that took something"
+  },
+  {
+    "name": "EGA3P-season-line",
+    "file": "src/systems/eventTimers.js",
+    "old": "top ten hold the title Spire Champion through the next season');",
+    "new": "top ten hold Spire Champion through the next');",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "the old line"
+  },
+  {
+    "name": "EGA3P-shelf-thirty",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "E.once ? 'Work it' : 'Work it once every 30 seconds'",
+    "new": "'Work it once every 30 seconds'",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres.test.js"
+    ],
+    "why": "the Shelf promises thirty seconds"
+  },
+  {
+    "name": "EGA3P-wind-silent",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "secondWind: Object.freeze({ sight: \"the health bar's rise\", sound: 'chime',",
+    "new": "secondWind: Object.freeze({ sight: \"the health bar's rise\", sound: null,",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "Second Wind unheard"
+  },
+  {
+    "name": "EGA3P-wind-to-chat",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "words: (n, t) => EG_PRES_TEXT.secondWind(t), by: null, chat: false }),",
+    "new": "words: (n, t) => EG_PRES_TEXT.secondWind(t), by: null, chat: true }),",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "Second Wind to the chat"
+  },
+  {
+    "name": "EGA3P-sweep-record",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "  sweep: Object.freeze({ rec: 105, vol: 1, pitch: 0.7 }),",
+    "new": "  sweep: Object.freeze({ rec: 106, vol: 1, pitch: 0.7 }),",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "the wrong record"
+  },
+  {
+    "name": "EGA3P-news-wind-unsaid",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "  _news.push({ k: 'secondWind', t: healed > 0 ? healed : 0 });",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "Second Wind unsaid"
+  },
+  {
+    "name": "EGA3P-news-weave-early",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "  if (_woven % EG_WEAVE_N === EG_WEAVE_N - 1) _news.push({ k: 'spellweave' });",
+    "new": "  if (_woven % EG_WEAVE_N === EG_WEAVE_N - 2) _news.push({ k: 'spellweave' });",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "the free spell said a cast early"
+  },
+  {
+    "name": "EGA3P-news-cry-unspent",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "    if (_wind === `${_held.b}:${_held.h}`) _news.push({ k: 'rallyingCry' });",
+    "new": "    _news.push({ k: 'rallyingCry' });",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "the Cry said for an unspent wind"
+  },
+  {
+    "name": "EGA3P-news-kept",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "  if (!_held) _news.length = 0;   // AUDIT EG III: nothing held, nothing to say\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "kept past the holder"
+  },
+  {
+    "name": "EGA3P-news-undrained",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "export const spireVestigeNews = () => _news.splice(0);",
+    "new": "export const spireVestigeNews = () => _news.slice(0);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "never drained"
+  },
+  {
+    "name": "EGA3P-weave-chip",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "export const spireWeaveReady = () => !!_held && weaveFree(_held.entity, DAMAGE_SPELL);",
+    "new": "export const spireWeaveReady = () => false;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "Spellweave's chip never stands"
+  },
+  {
+    "name": "EGA3P-chip-seconds",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "  const secs = (until) => Math.max(1, Math.ceil((until - now) / 1000));",
+    "new": "  const secs = (until) => Math.max(1, Math.floor((until - now) / 1000));",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "a window's seconds"
+  },
+  {
+    "name": "EGA3P-chip-closed-shown",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": ".filter((w) => w[0] <= now && now < w[1]).at(-1);",
+    "new": ".filter((w) => w[0] <= now && now <= w[1]).at(-1);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "a window shown at its end"
+  },
+  {
+    "name": "EGA3P-hymn-my-own",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "hymn: hy && hy[2].some((s) => s !== me) ? hy : null,",
+    "new": "hymn: hy,",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "my own Bastion's hymn shown as a guard of mine"
+  },
+  {
+    "name": "EGA3P-lifeline-twice",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": " beats.push({ k: 'lifeline', t: newest[2] }); memo.llU = newest[1]; }",
+    "new": " beats.push({ k: 'lifeline', t: newest[2] }); }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "a window said twice"
+  },
+  {
+    "name": "EGA3P-hymn-unsaid",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "if (memo.primed && H.hymn[1] > now) beats.push({ k: 'shieldHymn' });",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "the hymn unsaid"
+  },
+  {
+    "name": "EGA3P-accord-every-reform",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "if (!memo.up.has(A.key) && memo.primed && !memo.said.has(`${A.key}+`))",
+    "new": "if (!memo.up.has(A.key) && memo.primed)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "an Accord said every time it re-forms"
+  },
+  {
+    "name": "EGA3P-accord-first-look",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "if (!memo.up.has(A.key) && memo.primed && !memo.said",
+    "new": "if (!memo.up.has(A.key) && !memo.said",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "the first look said"
+  },
+  {
+    "name": "EGA3P-accord-lapse-unsaid",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "for (const key of memo.up) if (!up.has(key) && memo.primed && !memo.said.has(`${key}-`))",
+    "new": "for (const key of []) if (true)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "a lapse unsaid"
+  },
+  {
+    "name": "EGA3P-held-witness",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "    held: watching ? [] : held,   // AUDIT EG III: the holder's chips",
+    "new": "    held,",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "a witness shown the holder's chips"
+  },
+  {
+    "name": "EGA3P-held-undrawn",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "    for (const c of model.held ?? []) { const n = doc.createElement('div');",
+    "new": "    for (const c of []) { const n = doc.createElement('div');",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "the chips undrawn"
+  },
+  {
+    "name": "EGA3P-relay-storm-unsaid",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (n) out.push({ k: 'esay', w: 'storm', n: mm.name, s: [sub] });",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "the storm never said"
+  },
+  {
+    "name": "EGA3P-relay-storm-nobody",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (n) out.push({ k: 'esay', w: 'storm'",
+    "new": "    if (true) out.push({ k: 'esay', w: 'storm'",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "said for a storm that struck nobody"
+  },
+  {
+    "name": "EGA3P-relay-storm-company",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "w: 'storm', n: mm.name, s: [sub] });",
+    "new": "w: 'storm', n: mm.name });",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "said to the company"
+  },
+  {
+    "name": "EGA3P-relay-deadeye-unsaid",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (a && hostStrike(B, F, spec, a, got, w, sub, mm, p, now, here, out) > 0) out.push({ k: 'esay', w: 'deadeye', n: mm.name, s: [sub] });",
+    "new": "    if (a) hostStrike(B, F, spec, a, got, w, sub, mm, p, now, here, out);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "Deadeye never said"
+  },
+  {
+    "name": "EGA3P-wire-storm",
+    "file": "src/net/wire.js",
+    "old": "  'storm', 'deadeye',",
+    "new": "  'deadeye',",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "the wire drops the storm"
+  },
+  {
+    "name": "EGA3P-watch-blind",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "    if (SAY_MINE.has(s.w) && !(me && s.s?.includes(me))) continue;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "the watch blind to its striker"
+  },
+  {
+    "name": "EGA3P-client-rally-unsaid",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "&& !witness && entity.health > 0 && inSpire()) beatNow('rally', { t: w.p });",
+    "new": "&& !witness && entity.health > 0 && inSpire()) void 0;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "Rally unsaid"
+  },
+  {
+    "name": "EGA3P-client-news-undrained",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    for (const n of spireVestigeNews()) beatNow(n.k, n);\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "the holder's news unsaid"
+  },
+  {
+    "name": "EGA3P-client-holder-beats",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    for (const b of held.beats) beatNow(b.k, b);\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "the window and the Accord unsaid"
+  },
+  {
+    "name": "EGA3P-client-holder-blind",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "egHolderNow(witness ? null : fight, E, me(), spireWeaveReady())",
+    "new": "egHolderNow(null, E, me(), spireWeaveReady())",
+    "tests": [
+      "test/net/eliteGates/egaudit3_pres_beats.test.js"
+    ],
+    "why": "the fight unread"
+  }
+]

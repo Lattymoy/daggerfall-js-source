@@ -9,12 +9,13 @@
 // dawn. Five kinds, each ending in something the sea already does:
 //
 //   bounty    a named pirate preying on the crown's shipping, last seen SITE_PX map pixels off the port: she is stood
-//             when the captain sails within SITE_REACH_PX of her waters (scenes/navalHost.js THE SITES); sunk or
+//             when the captain sails within SITE_REACH_PX of her waters (scenes/naval/navalHost.js THE SITES); sunk or
 //             taken by the captain's hand, the bounty is paid
 //   hunt      CONTRACT_NEED.hunt pirate ships ended - sunk or taken - in the crown's waters
 //   delivery  a cargo carried to another port's harbourmaster by her term (a day for every DELIVERY_PX_DAY map pixels
 //             and DELIVERY_DAYS_BASE more), in the hold of the boat that took it on: she lies to that port's quay and
-//             it is delivered; she is wrecked and it is lost
+//             it is delivered; she is wrecked and it is lost. A port the sea bears on (`deliveryPort` - FIELD BUGS
+//             2026-10-13c PORT-TOWNS: a cargo went to a capital in the mountains; FB1020c BERTH-RING: within SEA_RING)
 //   salvage   a merchantman gone down off the port: CONTRACT_NEED.salvage casks of her cargo hauled out of the sea where she
 //             went down (her casks float there once the captain is near)
 //   survey    the Admiralty's measure of the shipping in the crown's waters: CONTRACT_NEED.survey ships studied through the
@@ -31,11 +32,12 @@
 // clock, to a captain of its Privateer rank (`perks.marque`); THE ADMIRALTY'S CARRACK - the one Carrack the Bay sells
 // (Come Sail Away's shelves never carry one) - at ADMIRALTY_OFF off her price, to a Commodore (`perks.admiralty`).
 
-import { mulberry32 } from '../../combat/bloodArt.js';
+import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { classById, shipNames, SHIP_CLASSES } from './navalShips.js';
-import { HULL_PRICES } from '../comeSailAwayHulls.js';
+import { HULL_PRICES } from '../comeSailAway/comeSailAwayHulls.js';
 import { MINUTES_PER_DAY } from '../gameDate.js';   // a day of the captain's clock (minutes)
 import { hashKey } from '../../net/wire.js';   // FNV-1a over a string: a port's key on the board's stream (SLAM10's one home)
+import { seaBears } from '../../net/fortLaw.js';   // FB1020c BERTH-RING: the sea within the port law's ring (SEA_RING) - where the berth names a port; the coast law's home, never the world's placement code (the account Worker bundles this file)
 export { hashKey };
 
 export const HARBOUR_CONTRACT_KINDS = Object.freeze(['bounty', 'hunt', 'delivery', 'salvage', 'survey']);
@@ -130,6 +132,19 @@ export function siteFor(port, r, seaAt, band = SITE_PX) {
   return null;
 }
 
+/**
+ * A PORT A CARGO GOES TO (FIELD BUGS 2026-10-13c PORT-TOWNS): one of the board's ports the sea bears on (`seaAt`), where
+ * a ship lies within the berth's reach (scenes/world.js navalPortHere). Travel Options lists the region capitals among
+ * its harbours (MAPS.BSA's 0x10 mark - the coast's own bits, the low four, name sides of a place the sea lies on, every
+ * one of the 304 that carry one, and no capital carries one), and 31 of them stand with no sea within six pixels.
+ * FB1020c BERTH-RING: the reach is the port law's own ring, SEA_RING (net/fortLaw.js seaBears, which world/portSites.js re-exports) - it was a map pixel
+ * (net/fortLaw.js coastalAt), the berth's then, and Daggerfall, Sentinel and Wayrest, two pixels off the sea, took no
+ * cargo; the berth names a port within SEA_RING now, and every board port has water a hull floats in within it.
+ * No sea law, no port. Pure.
+ * @param {{ px: number, py: number } | null | undefined} p @param {((px: number, py: number) => boolean) | null | undefined} seaAt
+ */
+export const deliveryPort = (p, seaAt) => !!p && seaBears(p.px, p.py, seaAt);
+
 /** A bounty's quarry: the strongest pirate within two levels of the captain's (never the flagship before level 12). */
 export function bountyClass(level, r) {
   const pool = SHIP_CLASSES.filter((c) => c.faction === 'pirate' && c.minLevel <= Math.max(1, level | 0) + 2 && (!c.flagship || level >= 12));
@@ -140,7 +155,7 @@ export function bountyClass(level, r) {
 
 /**
  * THE BOARD a port posts on a day: BOARD_OFFERS and its rank's more, each kind in turn off the board's stream (a kind
- * the port cannot post - a site with no open water, a delivery with no port far enough - is passed over). Each offer
+ * the port cannot post - a site with no open water, a delivery with no port far enough on the sea - is passed over). Each offer
  * `{ id, kind, crown, port, title, words, pay, standing, days, need?, target?, to?, cargo? }`; `taken` the ids already
  * taken off it.
  * @param {{ port: { key: string, name: string, px: number, py: number }, crown: string, day: number, level?: number,
@@ -180,24 +195,24 @@ function offerOf(kind, { id, port, crown, level, pay, ports, seaAt, regionIndex,
     const where = `${leaguesWords(site.d)} ${compassWords(site.px - port.px, site.py - port.py)} of ${port.name}`;
     return {
       ...base, title: `Wanted: ${names.captain ? `Captain ${names.captain} of ` : ''}${names.name}`,
-      words: `A ${cls.title.toLowerCase()} preying on ${crown}'s shipping, last seen ${where}. Sink her or take her.`,
+      words: `A ${cls.title.toLowerCase()} preying on ${crown}'s shipping, last seen ${where}. Sink it or capture it.`,
       pay: payOf('bounty', { level, size: cls.cargo, px: site.d, pay }), standing: STANDING_DONE.bounty * Math.max(1, cls.cargo), days: TERM_DAYS.bounty,
       target: { px: site.px, py: site.py, seed, classId: cls.id, name: names.name, captain: names.captain ?? null, region: regionIndex }, where,
     };
   }
   if (kind === 'hunt') {
     const need = between(CONTRACT_NEED.hunt, r);
-    return { ...base, title: `Clear ${crown}'s waters`, words: `End ${need} pirate ships in ${crown}'s waters - sunk or taken - within ${TERM_DAYS.hunt} days.`,
+    return { ...base, title: `Clear ${crown}'s waters`, words: `Sink or capture ${need} pirate ships in ${crown}'s waters within ${TERM_DAYS.hunt} days.`,
       pay: payOf('hunt', { level, need, pay }), standing: STANDING_DONE.hunt * need, days: TERM_DAYS.hunt, need };
   }
   if (kind === 'delivery') {
-    const far = (ports ?? []).filter((p) => p && p.key !== port.key && cheb(p, port) >= DELIVERY_PX_MIN).sort((a, b) => cheb(a, port) - cheb(b, port) || (a.key < b.key ? -1 : 1));
+    const far = (ports ?? []).filter((p) => p && p.key !== port.key && cheb(p, port) >= DELIVERY_PX_MIN && deliveryPort(p, seaAt)).sort((a, b) => cheb(a, port) - cheb(b, port) || (a.key < b.key ? -1 : 1));
     if (!far.length) return null;
     const to = far[Math.floor(r() * Math.min(far.length, 6)) % far.length];
     const d = cheb(to, port);
     const days = DELIVERY_DAYS_BASE + Math.ceil(d / DELIVERY_PX_DAY);
     const cargo = CARGOES[Math.floor(r() * CARGOES.length) % CARGOES.length];
-    return { ...base, title: `Cargo for ${to.name}`, words: `${cargo.charAt(0).toUpperCase()}${cargo.slice(1)}, to ${to.name}'s harbourmaster within ${days} days. It goes in your hold - lose your ship and it is lost.`,
+    return { ...base, title: `Cargo for ${to.name}`, words: `${cargo.charAt(0).toUpperCase()}${cargo.slice(1)}, to ${to.name}'s harbormaster within ${days} days. It goes in your hold. If you lose your ship, you lose the cargo.`,
       pay: payOf('delivery', { level, px: d, pay }), standing: STANDING_DONE.delivery, days, to: { key: to.key, name: to.name, px: to.px, py: to.py }, cargo };
   }
   if (kind === 'salvage') {
@@ -206,12 +221,12 @@ function offerOf(kind, { id, port, crown, level, pay, ports, seaAt, regionIndex,
     const need = between(CONTRACT_NEED.salvage, r);
     const wreck = shipNames(classById('merchantGalleon'), seed, { regionIndex }).name;
     const where = `${leaguesWords(site.d)} ${compassWords(site.px - port.px, site.py - port.py)} of ${port.name}`;
-    return { ...base, title: `Salvage: ${wreck}`, words: `${wreck} went down ${where}. Raise ${need} casks of her cargo before the sea takes them.`,
+    return { ...base, title: `Salvage: ${wreck}`, words: `${wreck} went down ${where}. Raise ${need} casks of its cargo before the sea takes them.`,
       pay: payOf('salvage', { level, need, px: site.d, pay }), standing: STANDING_DONE.salvage, days: TERM_DAYS.salvage, need, target: { px: site.px, py: site.py, seed, name: wreck }, where };
   }
   if (kind === 'survey') {
     const need = between(CONTRACT_NEED.survey, r);
-    return { ...base, title: 'The Admiralty\'s survey', words: `Take the measure of ${need} ships in ${crown}'s waters through your glass - their guns, hands and holds - within ${TERM_DAYS.survey} days.`,
+    return { ...base, title: 'The Admiralty\'s survey', words: `Study ${need} ships in ${crown}'s waters through your spyglass (their guns, crew and holds) within ${TERM_DAYS.survey} days.`,
       pay: payOf('survey', { level, need, pay }), standing: STANDING_DONE.survey * need, days: TERM_DAYS.survey, need };
   }
   return null;
@@ -234,8 +249,10 @@ export function takeContract(offer, { now, boat = null }) {
  *   { type: 'berth', port, boat }                                a boat lying to a port's quay
  *   { type: 'wrecked', boat }                                    a boat of the captain's wrecked
  *   { type: 'lost', bounty }                                     a bounty's quarry gone down by another hand
- * Answers 'done', 'failed', 'void' (AUDIT CAPTAIN'S SEA B4: a bounty whose quarry no hand of the captain's can end now) or
- * null (her progress moved or not, in `c.done`).
+ *   { type: 'unported', port }                                   a port's key that is no port a cargo goes to (`deliveryPort`)
+ * Answers 'done', 'failed', 'void' (AUDIT CAPTAIN'S SEA B4: a bounty whose quarry no hand of the captain's can end now;
+ * FIELD BUGS 2026-10-13c PORT-TOWNS: a cargo held for a place that is no port - taken off a board that read a tomb or an
+ * inland capital as one) or null (her progress moved or not, in `c.done`).
  * @param {any} c @param {any} ev
  */
 export function advance(c, ev) {
@@ -251,6 +268,7 @@ export function advance(c, ev) {
   }
   if (c.kind === 'salvage') return ev.type === 'haul' && ev.site === c.id ? count() : null;
   if (c.kind === 'delivery') {
+    if (ev.type === 'unported') return ev.port === c.to?.key ? 'void' : null;   // FIELD BUGS 2026-10-13c PORT-TOWNS
     if (c.boat == null || ev.boat !== c.boat) return null;
     if (ev.type === 'wrecked') return 'failed';
     return ev.type === 'berth' && ev.port === c.to?.key ? 'done' : null;
@@ -268,11 +286,11 @@ export function contractLine(c, now) {
   const left = Math.max(0, c.until - now);
   const days = Math.floor(left / MINUTES_PER_DAY), hours = Math.floor((left % MINUTES_PER_DAY) / 60);
   const last = Math.max(1, hours);   // AUDIT CAPTAIN'S SEA B13: under an hour is "1 hour", never "1 hours"
-  const term = left <= 0 ? 'Her term is out' : days > 0 ? `${days} ${days === 1 ? 'day' : 'days'}${hours ? `, ${hours} ${hours === 1 ? 'hour' : 'hours'}` : ''} left` : `${last} ${last === 1 ? 'hour' : 'hours'} left`;
+  const term = left <= 0 ? 'Time is up' : days > 0 ? `${days} ${days === 1 ? 'day' : 'days'}${hours ? `, ${hours} ${hours === 1 ? 'hour' : 'hours'}` : ''} left` : `${last} ${last === 1 ? 'hour' : 'hours'} left`;
   const progress = c.kind === 'hunt' ? `${c.done | 0} of ${c.need} ended`
     : c.kind === 'survey' ? `${c.done | 0} of ${c.need} studied`
       : c.kind === 'salvage' ? `${c.done | 0} of ${c.need} casks raised`
-        : c.kind === 'delivery' ? `In your hold, for ${c.to?.name ?? 'her port'}`
+        : c.kind === 'delivery' ? `In your hold, for ${c.to?.name ?? 'delivery'}`
           : c.kind === 'bounty' ? `Last seen ${c.where ?? 'off the coast'}` : '';
   return { title: c.title, words: c.words, progress, left: term, pay: gold(c.pay) };
 }
@@ -313,7 +331,7 @@ export function restoreContract(c) {
  */
 export function marqueOffer({ crown, perks, gold: purse, held = null }) {
   const price = MARQUE_PRICE;
-  if (held) return { can: false, price, days: MARQUE_DAYS, why: held.crown === crown ? `You hold ${crown}'s letter already.` : `You hold ${held.crown}'s letter - one crown's at a time.` };
+  if (held) return { can: false, price, days: MARQUE_DAYS, why: held.crown === crown ? `You hold ${crown}'s letter already.` : `You already hold ${held.crown}'s letter. You can only hold one at a time.` };
   if (!perks?.marque) return { can: false, price, days: MARQUE_DAYS, why: `${crown} grants letters of marque to its Privateers.` };
   if ((Number(purse) || 0) < price) return { can: false, price, days: MARQUE_DAYS, why: `A letter costs ${gold(price)}.` };
   return { can: true, price, days: MARQUE_DAYS, why: '' };

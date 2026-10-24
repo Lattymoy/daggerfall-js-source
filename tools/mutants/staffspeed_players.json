@@ -1,0 +1,162 @@
+[
+  {
+    "name": "STAFF-SPEED-PLAYERS-search-row-after",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "const [found] = await db.batch([db.prepare(sql).bind(...args), audit('players-search', null, { q, online, ban }, { onceIn: READ_ONCE_S })]);",
+    "new": "const [found] = await db.batch([db.prepare(sql).bind(...args)]); await audit('players-search', null, { q, online, ban }, { onceIn: READ_ONCE_S }).run();",
+    "why": "the search's audit row a trip after its page",
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-PLAYERS-profile-chars-after",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "const byId = path === '/v1/staff/player' && typeof body.target",
+    "new": "const byId = false && path === '/v1/staff/player' && typeof body.target",
+    "why": "a profile asked by id reads its characters a trip after the account, as a name's does",
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-PLAYERS-overview-strikes-after",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "const [[guilds, renown, devices, open], strikes] = await Promise.all([db.batch([",
+    "new": "const [[guilds, renown, devices, open], strikes] = await Promise.all([await db.batch([",
+    "why": "the Overview's strikes read a trip after its batch",
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-PLAYERS-overview-row-after",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "      row,\n    ]), strikesOf(db, p.id, nowS)]);",
+    "new": "    ]), strikesOf(db, p.id, nowS)]); await row.run();",
+    "why": "the Overview's audit row a trip after its reads",
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-PLAYERS-no-character-unaudited",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "if (!c) { await row.run(); return { character: null }; }",
+    "new": "if (!c) return { character: null };",
+    "why": "a Skills, Equipment or Inventories tab of an account with no character answered without its audit row (the tab's row is no longer one site after tabOf)",
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-PLAYERS-law-before-batch",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "const [view, law, got] = await Promise.all([viewOf(bucket, c), lawOf(db, c),",
+    "new": "const [view, law, got] = await Promise.all([viewOf(bucket, c), await lawOf(db, c),",
+    "why": "Skills, Equipment and Inventories read the law finding a trip before the rest",
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-PLAYERS-inventories-held-after",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "...service, row])]);",
+    "new": "row])]);\n    if (service.length) got.splice(1, 0, ...await db.batch(service));",
+    "why": "Inventories read what the service holds a trip after the save's batch, as before the fold",
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-PLAYERS-sections-row-after",
+    "file": "server-account/src/staffPlayers.js",
+    "old": ".bind(...defs[k][1])), row]);",
+    "new": ".bind(...defs[k][1]))]); await row.run();",
+    "why": "Market and History's audit row a trip after their sections",
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-PLAYERS-trades-row-after",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "OFFSET ${from}`).bind(p.id), row]);",
+    "new": "OFFSET ${from}`).bind(p.id)]); await row.run();",
+    "why": "the Trades tab's audit row a trip after its read",
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-PLAYERS-economy-row-after",
+    "file": "server-account/src/staffPlayers.js",
+    "old": ".bind(...ids, since),\n      row,\n    ]);",
+    "new": ".bind(...ids, since),\n    ]); await row.run();",
+    "why": "the Economy tab's audit row a trip after its batch",
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-PLAYERS-devices-row-after",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "const [devices] = await Promise.all([devicesOf(ctx, p.id), audit(",
+    "new": "const [devices] = await Promise.all([await devicesOf(ctx, p.id), audit(",
+    "why": "the devices' audit row a trip after their read",
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-DESK-notes-row-after",
+    "file": "server-account/src/staffDesk.js",
+    "old": ".bind(row.id, before, STAFF_NOTES_PAGE + 1), audit('notes-read', row.id, { name: displayName(row) }, { onceIn: READ_ROW_S })]);",
+    "new": ".bind(row.id, before, STAFF_NOTES_PAGE + 1)]); await audit('notes-read', row.id, { name: displayName(row) }, { onceIn: READ_ROW_S }).run();",
+    "why": "the notes' audit row a trip after their page",
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-DESK-watch-row-after",
+    "file": "server-account/src/staffDesk.js",
+    "old": ".bind(me.id, STAFF_WATCH_MAX), audit('watch-read', null, null, { onceIn: READ_ROW_S })]);",
+    "new": ".bind(me.id, STAFF_WATCH_MAX)]); await audit('watch-read', null, null, { onceIn: READ_ROW_S }).run();",
+    "why": "the watchlist's audit row a trip after its read",
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-DESK-events-row-after",
+    "file": "server-account/src/staffDesk.js",
+    "old": "const got = (await db.batch(row ? [...reads, row] : reads))",
+    "new": "if (row) await row.run();\n  const got = (await db.batch(reads))",
+    "why": "the watch events' audit row a trip of its own",
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-DESK-score-row-after",
+    "file": "server-account/src/staffDesk.js",
+    "old": ".bind(nowS - days * 86400, mode, FLAG_SEVERITY), audit('ai-score-read', null, { days, mode }, { onceIn: READ_ROW_S })]);",
+    "new": ".bind(nowS - days * 86400, mode, FLAG_SEVERITY)]); await audit('ai-score-read', null, { days, mode }, { onceIn: READ_ROW_S }).run();",
+    "why": "the scorecard's audit row a trip after its read",
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SPEED-DESK-reported-row-after",
+    "file": "server-account/src/staffDesk.js",
+    "old": ".bind(REPORTED_PAGE + 1, from), audit('reported-read', null, { kind: board ? 'board' : 'market' }, { onceIn: READ_ROW_S })]);",
+    "new": ".bind(REPORTED_PAGE + 1, from)]); await audit('reported-read', null, { kind: board ? 'board' : 'market' }, { onceIn: READ_ROW_S }).run();",
+    "why": "the reported notes' and listings' audit row a trip after their page",
+    "tests": [
+      "test/server/staffspeed_players.test.js"
+    ]
+  }
+]

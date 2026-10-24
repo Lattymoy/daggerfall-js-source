@@ -1,100 +1,72 @@
 [
   {
     "name": "PROFRETICLE-rebuilt-each-frame",
-    "file": "src/ui/profHud.js",
+    "file": "src/ui/professions/profHud.js",
     "old": "if (!panel || panel.act !== act || panel.which !== which) {",
     "new": "if (true) {",
     "tests": [
-      "test/profreticle.test.js",
-      "test/prof7_client.test.js",
-      "test/prof8_client.test.js",
-      "test/audit32_pages.test.js",
-      "test/fb1001_touchhold.test.js",
-      "test/fb1001_nodes.test.js"
-    ]
-  },
-  {
-    "name": "PROFRETICLE-cues-unsaid",
-    "file": "src/ui/profHud.js",
-    "old": "for (const c of actCues(panel.prev, st)) profCue(c);",
-    "new": "for (const c of actCues(panel.prev, st)) void c;",
-    "tests": [
-      "test/profreticle.test.js",
-      "test/prof7_client.test.js",
-      "test/prof8_client.test.js",
-      "test/audit32_pages.test.js",
-      "test/fb1001_touchhold.test.js",
-      "test/fb1001_nodes.test.js"
-    ]
-  },
-  {
-    "name": "PROFRETICLE-cue-door-dead",
-    "file": "src/ui/profHud.js",
-    "old": "    cue(name) { profCue(name); },",
-    "new": "    cue(name) { void name; },",
-    "tests": [
-      "test/profreticle.test.js",
-      "test/prof7_client.test.js",
-      "test/prof8_client.test.js",
-      "test/audit32_pages.test.js",
-      "test/fb1001_touchhold.test.js",
-      "test/fb1001_nodes.test.js"
+      "test/systems/profreticle.test.js",
+      "test/systems/prof7_client.test.js",
+      "test/world/terrain/prof8_client.test.js",
+      "test/ui/audit32_pages.test.js",
+      "test/systems/fb1001_touchhold.test.js",
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-anchor-unread",
-    "file": "src/ui/profHud.js",
+    "file": "src/ui/professions/profHud.js",
     "old": "const a = anchor?.();",
     "new": "const a = null;",
     "tests": [
-      "test/profreticle.test.js",
-      "test/prof7_client.test.js",
-      "test/prof8_client.test.js",
-      "test/audit32_pages.test.js",
-      "test/fb1001_touchhold.test.js",
-      "test/fb1001_nodes.test.js"
+      "test/systems/profreticle.test.js",
+      "test/systems/prof7_client.test.js",
+      "test/world/terrain/prof8_client.test.js",
+      "test/ui/audit32_pages.test.js",
+      "test/systems/fb1001_touchhold.test.js",
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-tug-unflashed",
-    "file": "src/ui/profHud.js",
+    "file": "src/ui/professions/profHud.js",
     "old": "if (st.kind === 'fish' && st.phase === 'tug') flags.push('fish-tug');",
     "new": "",
     "tests": [
-      "test/profreticle.test.js",
-      "test/prof7_client.test.js",
-      "test/prof8_client.test.js",
-      "test/audit32_pages.test.js",
-      "test/fb1001_touchhold.test.js",
-      "test/fb1001_nodes.test.js"
+      "test/systems/profreticle.test.js",
+      "test/systems/prof7_client.test.js",
+      "test/world/terrain/prof8_client.test.js",
+      "test/ui/audit32_pages.test.js",
+      "test/systems/fb1001_touchhold.test.js",
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-host-clean-cue",
     "file": "src/scenes/gatherHost.js",
-    "old": "    if (a.clean) hud.cue?.('clean');   // PROF-SCENES: a clean finish rings\n",
+    "old": "    if (a.clean) ear.say('clean', null, { of: a.act });   // PROF-SCENES: a clean finish rings - as its last blow lands\n",
     "new": "",
     "tests": [
-      "test/profreticle.test.js",
-      "test/prof7_client.test.js",
-      "test/prof8_client.test.js",
-      "test/audit32_pages.test.js",
-      "test/fb1001_touchhold.test.js",
-      "test/fb1001_nodes.test.js"
+      "test/systems/profreticle.test.js",
+      "test/systems/prof7_client.test.js",
+      "test/world/terrain/prof8_client.test.js",
+      "test/ui/audit32_pages.test.js",
+      "test/systems/fb1001_touchhold.test.js",
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-hits-one",
-    "file": "src/systems/profSounds.js",
+    "file": "src/systems/professions/profSounds.js",
     "old": "const HITS = Object.freeze([0, 1, 2, 3, 4].map((i) => SOUND.Hit1 + i));",
     "new": "const HITS = Object.freeze([0].map((i) => SOUND.Hit1 + i));",
     "tests": [
-      "test/profreticle.test.js",
-      "test/prof7_client.test.js",
-      "test/prof8_client.test.js",
-      "test/audit32_pages.test.js",
-      "test/fb1001_touchhold.test.js",
-      "test/fb1001_nodes.test.js"
+      "test/systems/profreticle.test.js",
+      "test/systems/prof7_client.test.js",
+      "test/world/terrain/prof8_client.test.js",
+      "test/ui/audit32_pages.test.js",
+      "test/systems/fb1001_touchhold.test.js",
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
@@ -103,7 +75,7 @@
     "old": "else if (act.act.state.done) { hud.setMeter(act.act, act.label ?? '', { byUse: act.heldByUse === true }); finish(act); }",
     "new": "else if (act.act.state.done) { finish(act); }",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
@@ -112,34 +84,34 @@
     "old": "anchor: () => reticleAnchor(canvas, fieldOfView()) }",
     "new": "anchor: () => reticleAnchor(canvas, 1.13) }",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-focal-unread",
-    "file": "src/ui/profHud.js",
+    "file": "src/ui/professions/profHud.js",
     "old": "if (Number(a.focal) > 0) focal = a.focal;",
     "new": "",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-seat-y",
-    "file": "src/ui/profHud.js",
+    "file": "src/ui/professions/profHud.js",
     "old": "meter.style.setProperty?.('--ry', `${a.y.toFixed(1)}px`);",
     "new": "meter.style.setProperty?.('--ry', `${(a.y + 28).toFixed(1)}px`);",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-focal-passed",
-    "file": "src/ui/profHud.js",
+    "file": "src/ui/professions/profHud.js",
     "old": "panel.ui.update(act, { label, byUse, reduced: reduced(), focal });",
     "new": "panel.ui.update(act, { label, byUse, reduced: reduced() });",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
@@ -148,7 +120,7 @@
     "old": "const viewH = Math.max(1, canvas.height - largeHudHeight) / dpr;",
     "new": "const viewH = Math.max(1, canvas.height) / dpr;",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
@@ -157,7 +129,7 @@
     "old": "focal: viewH / 2 / Math.tan(Math.max(0.1, Number(fovRad) || 1.13) / 2),",
     "new": "focal: viewH / 2 / Math.tan(Math.max(0.1, Number(fovRad) || 1.13)),",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
@@ -166,415 +138,415 @@
     "old": "    y: crosshairCentreY(canvas.height, largeHudHeight) / dpr,\n    focal",
     "new": "    y: (canvas.height / 2) / dpr,\n    focal",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-yaw-sign",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "const dy = (p[0] - (aim?.yaw ?? 0)) * rad,",
     "new": "const dy = ((aim?.yaw ?? 0) - p[0]) * rad,",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-pitch-up",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "-focal * Math.tan(Math.max(-lim, Math.min(lim, dp)))]",
     "new": "focal * Math.tan(Math.max(-lim, Math.min(lim, dp)))]",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-axes-crossed",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "dp = (p[1] - (aim?.pitch ?? 0)) * rad;",
     "new": "dp = (p[1] - (aim?.yaw ?? 0)) * rad;",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-reach-floor",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "Math.max(0, Number(deg) || 0)",
     "new": "(Number(deg) || 0)",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-mine-unmoved",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "        place(n, offsetOf(MINE_POINTS[i], st.aim, ctx.focal));\n",
     "new": "        place(n, offsetOf(MINE_POINTS[i], null, ctx.focal));\n",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-mine-zone-unsized",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "const d = `${r1(2 * reachPx(MINE_ACT.radiusDeg, ctx.focal))}px`;",
     "new": "const d = `${r1(reachPx(MINE_ACT.radiusDeg, ctx.focal))}px`;",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-mine-pips-frozen",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "      setPips(Math.min(st.points, st.need));\n      if (st.strikes > seen)",
     "new": "      setPips(0);\n      if (st.strikes > seen)",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-mine-not-gold",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "flash.fire([0, 0], st.last === 'glint' ? 'gold' : '');",
     "new": "flash.fire([0, 0], '');",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-mine-glint-unlit",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "setClass(n, i === st.glint ? `prof-glint${ctx.reduced ? ' still' : ''}` : 'prof-point');",
     "new": "setClass(n, 'prof-point');",
     "tests": [
-      "test/profreticle.test.js",
-      "test/prof7_client.test.js",
-      "test/prof8_client.test.js",
-      "test/audit32_pages.test.js",
-      "test/fb1001_touchhold.test.js",
-      "test/fb1001_nodes.test.js"
+      "test/systems/profreticle.test.js",
+      "test/systems/prof7_client.test.js",
+      "test/world/terrain/prof8_client.test.js",
+      "test/ui/audit32_pages.test.js",
+      "test/systems/fb1001_touchhold.test.js",
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-ring-unmoved",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "ring.setAttribute('r', String(Math.round(r * R * 100) / 100));",
     "new": "",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-band-unwidened",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "band.setAttribute('stroke-width', String(Math.round(Math.max(0, 2 * st.band * R) * 100) / 100));",
     "new": "band.setAttribute('stroke-width', String(Math.round(Math.max(0, st.band * R) * 100) / 100));",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-ring-unlit",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "setSvgClass(ring, a.inBand ? 'ring-line in-band' : 'ring-line');",
     "new": "",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-still-lost",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "show(art, !ctx.reduced); show(bar, !!ctx.reduced);",
     "new": "show(art, true); show(bar, false);",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-chop-not-gold",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "flash.fire([0, 0], st.last === 'clean' ? 'gold' : '');",
     "new": "flash.fire([0, 0], '');",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-hold-unfilled",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "      hold.set(a.progress);\n",
     "new": "",
     "tests": [
-      "test/profreticle.test.js",
-      "test/prof7_client.test.js",
-      "test/prof8_client.test.js",
-      "test/audit32_pages.test.js",
-      "test/fb1001_touchhold.test.js",
-      "test/fb1001_nodes.test.js"
+      "test/systems/profreticle.test.js",
+      "test/systems/prof7_client.test.js",
+      "test/world/terrain/prof8_client.test.js",
+      "test/ui/audit32_pages.test.js",
+      "test/systems/fb1001_touchhold.test.js",
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-bruise-unshown",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "setSvgClass(hold.el, st.bruised ? 'prof-arc prof-hold bruised' : 'prof-arc prof-hold');",
     "new": "",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-gentle-plant",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "  if (st.kind === 'trace' && st.gentle) return 'hold';\n",
     "new": "",
     "tests": [
-      "test/profreticle.test.js",
-      "test/prof7_client.test.js",
-      "test/prof8_client.test.js",
-      "test/audit32_pages.test.js",
-      "test/fb1001_touchhold.test.js",
-      "test/fb1001_nodes.test.js"
+      "test/systems/profreticle.test.js",
+      "test/systems/prof7_client.test.js",
+      "test/world/terrain/prof8_client.test.js",
+      "test/ui/audit32_pages.test.js",
+      "test/systems/fb1001_touchhold.test.js",
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-basket-unplaced",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "        placeScaled(glint, x, y);\n",
     "new": "",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-basket-clock-frozen",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "clock.set(1 - clamp01(st.showing / Math.max(0.01, st.glint)));",
     "new": "clock.set(1);",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-basket-finds-uncounted",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "slots.forEach((s, i) => setClass(s, i < st.hits.length ? (st.hits[i] ? 'prof-slot found' : 'prof-slot missed')",
     "new": "slots.forEach((s, i) => setClass(s, i < 0 ? (st.hits[i] ? 'prof-slot found' : 'prof-slot missed')",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-basket-no-flash",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "if (st.hits[seen - 1]) { const [x, y] = spot(lastSpot); placeScaled(flash.el, x, y); flash.fire(null, 'gold'); }",
     "new": "",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-trace-unlaid",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "      guide.setAttribute('points', line);\n",
     "new": "",
     "tests": [
-      "test/profreticle.test.js",
-      "test/prof7_client.test.js",
-      "test/prof8_client.test.js",
-      "test/audit32_pages.test.js",
-      "test/fb1001_touchhold.test.js",
-      "test/fb1001_nodes.test.js"
+      "test/systems/profreticle.test.js",
+      "test/systems/prof7_client.test.js",
+      "test/world/terrain/prof8_client.test.js",
+      "test/ui/audit32_pages.test.js",
+      "test/systems/fb1001_touchhold.test.js",
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-trace-tube-unsized",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "tube.setAttribute('stroke-width', String(r1(2 * reachPx(st.tol, ctx.focal))));",
     "new": "tube.setAttribute('stroke-width', String(r1(2 * reachPx(TRACE_ACT.tolDeg, ctx.focal))));",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-trace-zone-stays",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "      show(zone, !st.tracing);\n",
     "new": "",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-trace-undrawn",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "drawn.setAttribute('points', st.tracing ? (st.path ?? [])",
     "new": "drawn.setAttribute('points', false ? (st.path ?? [])",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-trace-unlit",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "setClass(n, st.tracing && i <= st.reached ? `prof-glint",
     "new": "setClass(n, st.tracing && i < st.reached ? `prof-glint",
     "tests": [
-      "test/profreticle.test.js",
-      "test/prof7_client.test.js",
-      "test/prof8_client.test.js",
-      "test/audit32_pages.test.js",
-      "test/fb1001_touchhold.test.js",
-      "test/fb1001_nodes.test.js"
+      "test/systems/profreticle.test.js",
+      "test/systems/prof7_client.test.js",
+      "test/world/terrain/prof8_client.test.js",
+      "test/ui/audit32_pages.test.js",
+      "test/systems/fb1001_touchhold.test.js",
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-trace-slips-unsaid",
-    "file": "src/ui/profReticle.js",
-    "old": "const s = st.slips > 0 ? `slips ${st.slips}` : '';",
+    "file": "src/ui/professions/profReticle.js",
+    "old": "const s = st.slips > 0 ? t('prof.reticle.trace.slips', 'slips {n}', { n: st.slips }) : '';",
     "new": "const s = '';",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-fish-gauge-frozen",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "wind.set((m - FISH_ACT.throwMinM) / span);",
     "new": "wind.set(0);",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-fish-metres-unsaid",
-    "file": "src/ui/profReticle.js",
-    "old": "        if (metres.textContent !== t) metres.textContent = t;\n",
+    "file": "src/ui/professions/profReticle.js",
+    "old": "        if (metres.textContent !== said) metres.textContent = said;\n",
     "new": "",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-fish-dip-lost",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "setClass(float, `prof-float${phase === 'tug' ? ' dip' : ''}${st.school !== null ? ' school' : ''}`);",
     "new": "setClass(float, `prof-float${st.school !== null ? ' school' : ''}`);",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-fish-school-lost",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "setClass(float, `prof-float${phase === 'tug' ? ' dip' : ''}${st.school !== null ? ' school' : ''}`);",
     "new": "setClass(float, `prof-float${phase === 'tug' ? ' dip' : ''}`);",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-fish-haul-unshown",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "      show(haul, phase === 'haul');\n",
     "new": "",
     "tests": [
-      "test/profreticle.test.js",
-      "test/prof7_client.test.js",
-      "test/prof8_client.test.js",
-      "test/audit32_pages.test.js",
-      "test/fb1001_touchhold.test.js",
-      "test/fb1001_nodes.test.js"
+      "test/systems/profreticle.test.js",
+      "test/systems/prof7_client.test.js",
+      "test/world/terrain/prof8_client.test.js",
+      "test/ui/audit32_pages.test.js",
+      "test/systems/fb1001_touchhold.test.js",
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-fish-band-unplaced",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "band.style.bottom = pc(st.bandAt);",
     "new": "band.style.bottom = pc(0);",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-fish-slip-unmarked",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "setClass(haul, inside ? 'prof-haulbar' : 'prof-haulbar slipping');",
     "new": "",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-fish-fill-frozen",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "        fill.set(st.fill);\n",
     "new": "",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-fish-tugring-lost",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "      show(flashRing, phase === 'tug');\n",
     "new": "",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-hint-never-fades",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "setClass(hint, now - saidAt > HINT_MS ? 'prof-hint faded' : 'prof-hint');",
     "new": "",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-hint-number-restarts",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "const key = h.replace(/[\\d.]+/g, '#');",
     "new": "const key = h;",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-hint-new-line-stays-faded",
-    "file": "src/ui/profReticle.js",
+    "file": "src/ui/professions/profReticle.js",
     "old": "if (key !== said) { said = key; saidAt = now; }",
     "new": "if (said === null) { said = key; saidAt = now; }",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-css-plate",
-    "file": "src/ui/profActStyle.js",
+    "file": "src/ui/professions/profActStyle.js",
     "old": "padding: 0; margin: 0; background: none; border: 0; box-shadow: none;",
     "new": "padding: 0; margin: 0; background: rgba(10,12,17,0.9); border: 0; box-shadow: none;",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-css-off-the-reticle",
-    "file": "src/ui/profActStyle.js",
+    "file": "src/ui/professions/profActStyle.js",
     "old": "left: var(--rx, 50%); top: var(--ry, 50%); transform: translate(-50%, -50%); z-index: 12;",
     "new": "left: var(--rx, 50%); top: var(--ry, 50%); transform: translateX(-50%); z-index: 12;",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   },
   {
     "name": "PROFRETICLE-css-fade-lost",
-    "file": "src/ui/profActStyle.js",
+    "file": "src/ui/professions/profActStyle.js",
     "old": "${R} .prof-hint.faded { opacity: 0; }",
     "new": "${R} .prof-hint.faded { opacity: 1; }",
     "tests": [
-      "test/profreticle.test.js"
+      "test/systems/profreticle.test.js"
     ]
   }
 ]

@@ -5,16 +5,16 @@
     "old": "      xpTier = herbXpTier(rank);   // HERB-XP",
     "new": "      xpTier = null;   // HERB-XP",
     "tests": [
-      "test/fb1001_herbxp.test.js"
+      "test/net/fb1001_herbxp.test.js"
     ]
   },
   {
     "name": "HERB-XP-the-xp-at-the-node",
     "file": "server-account/src/professions.js",
-    "old": "const xp = harvestXp(xpTier ?? tier, rank, clean);",
-    "new": "const xp = harvestXp(tier, rank, clean);",
+    "old": "const xp = scaleXp(harvestXp(xpTier ?? tier, rank, clean),",
+    "new": "const xp = scaleXp(harvestXp(tier, rank, clean),",
     "tests": [
-      "test/fb1001_herbxp.test.js"
+      "test/net/fb1001_herbxp.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      xpTier = herbXpTier(rank);   // HERB-XP",
     "new": "      xpTier = tier = herbXpTier(rank);   // HERB-XP",
     "tests": [
-      "test/fb1001_herbxp.test.js"
+      "test/net/fb1001_herbxp.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "const food = basketFood(climate, day, dice(rand));",
     "new": "const food = basketFood(climate, day, dice(rand)); xpTier = herbXpTier(rank);",
     "tests": [
-      "test/fb1001_herbxp.test.js"
+      "test/net/fb1001_herbxp.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "export const herbXpTier = (rank) => topTierOf(rank);",
     "new": "export const herbXpTier = (rank) => Math.min(3, topTierOf(rank));",
     "tests": [
-      "test/fb1001_herbxp.test.js"
+      "test/net/fb1001_herbxp.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "export const herbXpTier = (rank) => topTierOf(rank);",
     "new": "export const herbXpTier = (rank) => Math.max(1, topTierOf(rank) - 1);",
     "tests": [
-      "test/fb1001_herbxp.test.js"
+      "test/net/fb1001_herbxp.test.js"
     ]
   }
 ]

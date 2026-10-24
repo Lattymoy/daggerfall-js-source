@@ -41,15 +41,15 @@ import { ImgFile } from '../formats/imgFile.js';
 import { packImgTexture } from './packArt.js';   // OVH2: a worn UI pack's backdrop
 import { racialPaperDollBackground, racialOverrideHeadArt, racialSuppressPaperDollBodyAndItems } from '../systems/vampirism.js';   // V5: the curse art laws, both curses' one switch
 import { CifRciFile } from '../formats/cifRciFile.js';
-import { getBool } from '../systems/settings.js';   // UI3: EnableGeographicBackgrounds; ChildGuard/PlayerNudity gates the welds
+import { getBool } from '../systems/settings/settings.js';   // UI3: EnableGeographicBackgrounds; ChildGuard/PlayerNudity gates the welds
 import { EQUIP_SLOTS, equipTableOf, getItemHands, ITEM_HANDS } from '../systems/equip.js';
-import { getTemplate, paperdollOrder } from '../characters/paperdoll.js';
+import { getTemplate, paperdollOrder } from '../characters/paperdoll/paperdoll.js';
 import { applyDyeToIndex, DYE_TARGETS, DYE_COLORS, CLOTHING_DYES } from '../characters/dyes.js';
 import { decodedTextureTopDown, preloadTextureRecord, textureReplacementRect } from '../systems/textureReplacement.js';
 import { dfmodImgImage, dfmodCifRciImage, dfmodCifRciRect, dfmodGeneration, resampleRgba, dfmodCarriesDollArt } from '../systems/dfmodTextures.js';   // DFMOD1: an attached mod's backdrop, body, head and hi-res items   // DW3: GetItemImage's import arm, by the item's dye; AUDIT-DW F1: decoded when the doll asks
-import { itemDyeColor } from '../systems/itemDye.js';   // DW3: DaggerfallUnityItem.dyeColor, as the port's items carry it
-import { customItemClass } from '../systems/rriItems.js';   // RRI1: a custom class's own archive and record on the doll
-import { ownItemImage } from '../systems/itemTemplates.js';   // THUNDERLOCK-ART: a weapon of the port's own wears its own doll layer
+import { itemDyeColor } from '../systems/item/itemDye.js';   // DW3: DaggerfallUnityItem.dyeColor, as the port's items carry it
+import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js';   // RRI1: a custom class's own archive and record on the doll
+import { ownItemImage } from '../systems/item/itemTemplates.js';   // THUNDERLOCK-ART: a weapon of the port's own wears its own doll layer
 import { clampArmorVariant, armorArchive, HUMAN_MORPHOLOGY, ARMOR_MATERIAL } from '../systems/armorMaterials.js';
 import { raceArt, FACES_PER_RACE, raceByKey } from '../systems/races.js';   // S3c/U9: all eight races
 
@@ -164,7 +164,7 @@ export function paperdollItemImage(item, { gender = 'male', race = 'Breton' } = 
     return { archive, record, dye, target: DYE_TARGETS.WeaponsAndArmor };
   }
   if (item.group === 'Weapons') {
-    // THUNDERLOCK-ART (systems/itemTemplates.js ownItemImage): a weapon of the port's own wears its own doll layer - a Gilded piece's gold one
+    // THUNDERLOCK-ART (systems/item/itemTemplates.js ownItemImage): a weapon of the port's own wears its own doll layer - a Gilded piece's gold one
     const own = ownItemImage(item, { forPaperDoll: true });
     if (own) return { archive: own.archive, record: own.record, dye: MATERIAL_DYES[item.material ?? 0] ?? DYE_COLORS.Unchanged, target: DYE_TARGETS.WeaponsAndArmor };
     let record = t.playerTextureRecord;
@@ -231,7 +231,7 @@ export const paperDollIdentityKey = ({ race = 'Breton', gender = 'male', faceInd
  *  invalidates is a cache that lies: `preloadPaperDollArt` was called
  *  only from the four hosts' boots (with the PRE-CHARGEN Breton/male/0
  *  stand-in) and from the three chargen completions, so a character
- *  who arrived by RESTORE - `systems/save.js` restorePlayer, which is
+ *  who arrived by RESTORE - `systems/save/save.js` restorePlayer, which is
  *  every `?load` boot, and main.js:"if (choice === 'continue' || choice === 'load' || choice === 'online')" makes Continue, Load Game AND
  *  Online all `?load` - wore the stand-in's body, face and morphology
  *  for the rest of the session.
@@ -693,7 +693,7 @@ async function loadRecord(archive, record, getTexture, dye = null, S = 1) {
       let pic = { width: swap.width, height: swap.height, data: swap.rgba };
       let place = off;
       const rect = textureReplacementRect(archive, record, 0, 'Albedo', dye);
-      const classic = tex.vendor ? null : tex.getSize(record);
+      const classic = tex.vendor ? (tex.getBox?.(record) ?? null) : tex.getSize(record);   // STUDIO1: a studio picture over a stand-in fits the stand-in's box
       // DFMOD4: fitted at S texels per doll pixel - the composite's own density - and marked so
       let scale = 1;
       if (rect) { pic = resampleRgba(pic, rect.width * S, rect.height * S); place = { x: rect.x, y: rect.y, paperdoll: true }; scale = S; }

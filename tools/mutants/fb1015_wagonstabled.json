@@ -1,0 +1,245 @@
+[
+  {
+    "name": "WAGON-STABLED-the-wagon-parked-at-the-door-again",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if (wagonState.Mode === WAGON_MODE.WithPlayer && tm().hasCart() && !wagonState.WagonStabled) {",
+    "new": "    if (wagonState.Mode === WAGON_MODE.WithPlayer && tm().hasCart()) {",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-the-horse-left-at-the-door-again",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if (!wagonState.HorseStabled && shouldDeployIndependentHorseForInterior(",
+    "new": "    if (shouldDeployIndependentHorseForInterior(",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-a-door-gone-through-mounted-no-mount",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    leaveStable(pendingInteriorTransportMode);\n",
+    "new": "",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-send-away-stables-no-wagon",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    wagonState.WagonStabled = hasCart; wagonState.HorseStabled = hasHorse;",
+    "new": "    wagonState.WagonStabled = false; wagonState.HorseStabled = hasHorse;",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-send-away-stables-no-horse",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    wagonState.WagonStabled = hasCart; wagonState.HorseStabled = hasHorse;",
+    "new": "    wagonState.WagonStabled = hasCart; wagonState.HorseStabled = false;",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-a-summon-keeps-the-wagons-word",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    wagonState.WagonStabled = false;   // WAGON-STABLED: parked in the world",
+    "new": "    // WAGON-STABLED: parked in the world",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-a-summon-keeps-the-hitched-horses-word",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if (deployedHorseMode !== HORSE_MODE.WithPlayer) wagonState.HorseStabled = false;",
+    "new": "    if (false) wagonState.HorseStabled = false;",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-a-park-lets-go-a-horse-at-the-stable",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if (deployedHorseMode !== HORSE_MODE.WithPlayer) wagonState.HorseStabled = false;",
+    "new": "    wagonState.HorseStabled = false;",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-a-lone-horse-summoned-keeps-its-word",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "wagonState.HorseStabled = false; changed(); }",
+    "new": "changed(); }",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-a-wagon-laid-afresh-keeps-the-word",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "wagonState.InteriorAccessId = 0; wagonState.WagonStabled = false; changed(); }",
+    "new": "wagonState.InteriorAccessId = 0; changed(); }",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-a-horse-laid-afresh-keeps-the-word",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "wagonState.HorseHeadingZ = 1; wagonState.HorseStabled = false; };",
+    "new": "wagonState.HorseHeadingZ = 1; };",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-a-drive-keeps-the-words",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if (mode === TRANSPORT.Cart) { wagonState.WagonStabled = false; wagonState.HorseStabled = false; }",
+    "new": "    if (mode === TRANSPORT.Cart) { }",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-a-ride-keeps-the-horses-word",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    else if (mode === TRANSPORT.Horse) wagonState.HorseStabled = false;",
+    "new": "    else if (mode === TRANSPORT.Horse) { }",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-a-mount-set-keeps-the-words",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    rememberLastMount(mode);\n    leaveStable(mode);\n",
+    "new": "    rememberLastMount(mode);\n",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-a-mount-observed-keeps-the-words",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    leaveStable(mode);\n    if (mode === TRANSPORT.Horse && prev !== TRANSPORT.Cart) deployWagonBeforeHorseTravel();",
+    "new": "    if (mode === TRANSPORT.Horse && prev !== TRANSPORT.Cart) deployWagonBeforeHorseTravel();",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-a-mount-first-seen-keeps-the-words",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "      leaveStable(mode);\n      if (mode === TRANSPORT.Horse) deployWagonBeforeHorseTravel();",
+    "new": "      if (mode === TRANSPORT.Horse) deployWagonBeforeHorseTravel();",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-a-horse-mounted-lays-the-stabled-wagon-behind",
+    "file": "src/systems/horse/horseCart.js",
+    "old": " && !hasPendingInteriorDeployment && !wagonState.WagonStabled) deployFromBestAvailablePose(HORSE_MODE.WithPlayer); }",
+    "new": " && !hasPendingInteriorDeployment) deployFromBestAvailablePose(HORSE_MODE.WithPlayer); }",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-the-stabled-wagon-goes-on-the-journey",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    if (wagonState.Mode === WAGON_MODE.WithPlayer) return !wagonState.WagonStabled;",
+    "new": "    if (wagonState.Mode === WAGON_MODE.WithPlayer) return true;",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-a-pair-never-sent-has-nothing-to-send",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    || (tm().get() === TRANSPORT.Foot && ((tm().hasCart() && wagonState.Mode === WAGON_MODE.WithPlayer && !wagonState.WagonStabled)\n      || (tm().hasHorse() && wagonState.HorseMode === HORSE_MODE.WithPlayer && !wagonState.HorseStabled)));",
+    "new": ";",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-a-ridden-horse-offered-to-send",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "    || (tm().get() === TRANSPORT.Foot && ((tm().hasCart()",
+    "new": "    || (((tm().hasCart()",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-the-view-never-says",
+    "file": "src/systems/horse/horseCart.js",
+    "old": "wagonStabled: !!st.WagonStabled, horseStabled: !!st.HorseStabled,",
+    "new": "wagonStabled: false, horseStabled: false,",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-the-words-not-in-the-record",
+    "file": "src/systems/horse/horseCartLaw.js",
+    "old": "    WagonStabled: false, HorseStabled: false,\n",
+    "new": "",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-the-words-not-read-back",
+    "file": "src/systems/horse/horseCartLaw.js",
+    "old": "  d.WagonStabled = d.WagonStabled === true; d.HorseStabled = d.HorseStabled === true;",
+    "new": "  d.WagonStabled = false; d.HorseStabled = false;",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-a-foreign-word-read-as-stabled",
+    "file": "src/systems/horse/horseCartLaw.js",
+    "old": "  d.WagonStabled = d.WagonStabled === true; d.HorseStabled = d.HorseStabled === true;",
+    "new": "  d.WagonStabled = !!d.WagonStabled; d.HorseStabled = !!d.HorseStabled;",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-the-card-calls-a-horse-beside-you-stabled",
+    "file": "src/ui/holdingsPages.js",
+    "old": "    else if (!v.horseStabled) horse = beside;\n",
+    "new": "",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-the-card-calls-a-wagon-beside-you-stabled",
+    "file": "src/ui/holdingsPages.js",
+    "old": "    else if (!v.wagonStabled) wagon = beside;\n",
+    "new": "",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  },
+  {
+    "name": "WAGON-STABLED-the-keep-feeds-a-horse-beside-you-at-the-stable",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "  return view.horseStabled ? 'stabled' : 'with';",
+    "new": "  return 'stabled';",
+    "tests": [
+      "test/systems/horse/fb1015_wagonstabled.test.js"
+    ]
+  }
+]

@@ -4,7 +4,7 @@
 // DF era"; bible/03-World/Arena-Provinces.md TESA11) - THE IMPERIAL CITY OVER NINE PIXELS. Daggerfall's engine stands one
 // location on a pixel, eight blocks a side at most; the city stands on nine (`IMPERIAL_SPAN` a side, 2.46 km across), each
 // pixel's eight-by-eight slice of one plan its own location, named for its district (`IMPERIAL_SLICE_NAMES`), and every
-// slice flattened to the centre's ground (world/terrainGen.js flattenAt) so they meet level.
+// slice flattened to the centre's ground (world/terrain/terrainGen.js flattenAt) so they meet level.
 //
 // THE LAYOUT IS THE CITY'S CANON - the wheel the later games mapped, in Daggerfall's day (3E 405, the reign of Uriel
 // Septim VII) and of Daggerfall's own city blocks: City Isle in Lake Rumare; at its heart the Imperial Palace in the

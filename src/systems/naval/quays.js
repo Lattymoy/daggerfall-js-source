@@ -42,8 +42,8 @@
 import { alongside, berthSize, BERTH_HULL } from './shipLife.js';
 import { hullBuild, MOD_BUILDS } from './navalShips.js';   // GALLEON-HOLDINGS: hull 2's gangway follows the build that stands (SHIPS-2: hull 4's too)
 import { hash32 } from '../../world/spawnedDungeons.js';
-import { mulberry32 } from '../../combat/bloodArt.js';
-import { SHORE_TERRAIN_FIT_METERS } from '../../world/deepWaterFloor.js';   // HARBOUR-BOOK: the shelf a pier crosses
+import { mulberry32 } from '../../combat/blood/bloodArt.js';
+import { SHORE_TERRAIN_FIT_METERS } from '../../world/deepWater/deepWaterFloor.js';   // HARBOUR-BOOK: the shelf a pier crosses
 
 /** The water between her widest and the quay's face (m) - the fenders' room. */
 export const QUAY_GAP = 0.8;
@@ -201,9 +201,9 @@ export function sceneToQuay(frame, x, z) {
  * bollards, the lanterns and the cargo - or null while the ground it is laid on is not built
  * (`groundAt` not finite), to be laid again once it is.
  * @param {{ berth: { pos: number[], yaw: number, normal: number[] }, hull?: number, key?: string, index?: number,
- *   seaY: number, groundAt: (x: number, z: number) => number }} a
+ *   seaY: number, groundAt: (x: number, z: number) => number, others?: Array<{ plan: any, origin?: number[] }> }} a
  */
-export function planQuay({ berth, hull = BERTH_HULL, key = '', index = 0, seaY, groundAt }) {
+export function planQuay({ berth, hull = BERTH_HULL, key = '', index = 0, seaY, groundAt, others = [] }) {
   const frame = quayFrame(berth, hull);
   const deck = QUAY_DECK_UP;
   const x0 = frame.halfWidth + QUAY_GAP, x1 = x0 + QUAY_WIDTH;
@@ -235,7 +235,18 @@ export function planQuay({ berth, hull = BERTH_HULL, key = '', index = 0, seaY, 
   // the shore, walked from the quay's back along +x at her waist
   const zJ = (frame.z0 + frame.z1) / 2;
   let jetty = null, ramp = null;
+  // QUAY-CROSSING: the harbour's earlier berths' piers (`others`, their plans), in this frame - a jetty that meets one
+  // ends on it, its deck at this one's height, never runs on across it (two shores round a point of land walked
+  // landward converge, and Deep Waters' shelf gave each jetty up to JETTY_MAX of water to cross before the land)
+  const piers = others.flatMap((o) => (o?.plan ? pierOutline(o.plan, o.origin) : [])).map((box) => box.map(([x, z]) => sceneToQuay(frame, x, z)));
+  const onPier = (lx) => piers.some((box) => [-0.5, 0, 0.5].some((k) => inBox(box, lx, zJ + k * JETTY_WIDTH)));
   for (let t = 0; t <= JETTY_MAX && !jetty; t += JETTY_STEP) {
+    if (onPier(x1 + t)) {
+      let a = Math.max(0, t - JETTY_STEP), b = t;   // where it first meets it, to a hand's breadth: its end on the pier's edge
+      for (let k = 0; k < 6; k++) { const m = (a + b) / 2; if (onPier(x1 + m)) b = m; else a = m; }
+      jetty = { x0: x1, x1: x1 + b, z0: zJ - JETTY_WIDTH / 2, z1: zJ + JETTY_WIDTH / 2 };
+      break;
+    }
     const g = ground(x1 + t, zJ);
     if (!Number.isFinite(g)) break;
     // a bank meets the deck - AUDIT HOLDINGS Q9: one standing over it by more than two steps (a wall, a cliff) is met at
@@ -366,6 +377,25 @@ export function pierDress({ frame, deck, quay, zJ, jetty, rows, bollards, cargo,
     }
   }
   return { braces, fenders, ladders, cleats, coils, crane, jettyLanterns };
+}
+/** QUAY-CROSSING: a plan's pier in the scene - its deck, its jetty and its ramp, each its rectangle's four corners
+ *  ([x, z], in order round it) - `origin` its berth's live place (a recentre moves the berth, never the plan). */
+export function pierOutline(plan, origin = plan.frame.origin) {
+  const at = { ...plan.frame, origin };
+  return [plan.quay, plan.jetty, plan.ramp].filter((r) => r && r.x1 - r.x0 > 0)
+    .map((r) => [[r.x0, r.z0], [r.x1, r.z0], [r.x1, r.z1], [r.x0, r.z1]].map(([x, z]) => quayToScene(at, x, z)));
+}
+/** Whether `(x, z)` lies within the convex quad `box` (its corners in order round it, either way). */
+function inBox(box, x, z) {
+  let sign = 0;
+  for (let i = 0; i < 4; i++) {
+    const [ax, az] = box[i], [bx, bz] = box[(i + 1) % 4];
+    const c = (bx - ax) * (z - az) - (bz - az) * (x - ax);
+    if (c === 0) continue;
+    if (sign && Math.sign(c) !== sign) return false;
+    sign = Math.sign(c);
+  }
+  return true;
 }
 /** A harbour's key as a number for the cargo's stream (FNV-1a). */
 export function keyHash(key) {

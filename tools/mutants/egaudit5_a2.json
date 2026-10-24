@@ -1,0 +1,436 @@
+[
+  {
+    "name": "EGA5A2-orrery-unbounded",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const k = Math.max(0, Math.min(Math.floor((c - 1) / 5), (EG_ORRERY_REACH - 28) / 2));",
+    "new": "const k = Math.max(0, Math.floor((c - 1) / 5));",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-1: the range past the reach (drawn for ever)"
+  },
+  {
+    "name": "EGA5A2-orrery-cap-higher",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const k = Math.max(0, Math.min(Math.floor((c - 1) / 5), (EG_ORRERY_REACH - 28) / 2));",
+    "new": "const k = Math.max(0, Math.min(Math.floor((c - 1) / 5), (EG_ORRERY_REACH - 26) / 2));",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-1: the cap a step higher"
+  },
+  {
+    "name": "EGA5A2-orrery-reach",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const EG_ORRERY_REACH = SD_STONES.length * (SD_HOURS / 2);",
+    "new": "export const EG_ORRERY_REACH = SD_STONES.length * SD_HOURS;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-1: the reach not the gearing's"
+  },
+  {
+    "name": "EGA5A2-orrery-wake-range",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "F.orrery = orreryOf(s, { ...egOrreryTurns(spec.c),",
+    "new": "F.orrery = orreryOf(s, { ...egOrreryTurns(1),",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-1: the wake drawing on the first circle's range"
+  },
+  {
+    "name": "EGA5A2-winch-wake-n",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "need = Math.min(2, living(B).length);",
+    "new": "need = Math.min(2, F.n);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-2: the wake's company read"
+  },
+  {
+    "name": "EGA5A2-winch-one",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "need = Math.min(2, living(B).length);",
+    "new": "need = Math.min(1, living(B).length);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-2: one plate enough for a living pair"
+  },
+  {
+    "name": "EGA5A2-earner-living-only",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "for (const m of Object.values(B.mem)) { m.dc = 0; m.act = 0; }",
+    "new": "for (const [, m] of L) { m.dc = 0; m.act = 0; }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-3/L8-3: the living alone begun again"
+  },
+  {
+    "name": "EGA5A2-squad-yard-unstood",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (spec.twist === 'squad') squadTwist(F, ringSpots(spec, spec.fight.x, spec.fight.z, EG_SQUAD_RING_M, 4, () => 0), now, still, out);",
+    "new": "if (spec.twist === 'squad') F.waveAt = now + EG_SQUAD_HOLD_MS + still;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-4: the yard's squad unstood",
+    "note": "AUDIT EG V (h): re-aimed by content - the Rift-Yard's squad stood through squadTwist"
+  },
+  {
+    "name": "EGA5A2-squad-yard-wave",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (spec.twist === 'squad') squadTwist(F, ringSpots(spec, spec.fight.x, spec.fight.z, EG_SQUAD_RING_M, 4, () => 0), now, still, out);",
+    "new": "if (spec.twist === 'squad') egSquad(F, ringSpots(spec, spec.fight.x, spec.fight.z, EG_SQUAD_RING_M, 4, () => 0), now, out);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-4: the yard's first wave unheld",
+    "note": "AUDIT EG V (h): re-aimed by content - the Rift-Yard's squad stood through squadTwist"
+  },
+  {
+    "name": "EGA5A2-squad-yard-off-floor",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "squadTwist(F, ringSpots(spec, spec.fight.x, spec.fight.z, EG_SQUAD_RING_M, 4, () => 0), now, still, out);",
+    "new": "squadTwist(F, [[spec.fight.x, spec.fight.z + spec.fight.r + 8]], now, still, out);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-4: the yard's squad off its floor",
+    "note": "AUDIT EG V (h): re-aimed by content - the Rift-Yard's squad stood through squadTwist"
+  },
+  {
+    "name": "EGA5A2-fair-no-here",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const fairOf = (B, sub) => B.mem[sub]?.hereH === B.h && egFairOk(fairOfMember(B, sub));",
+    "new": "const fairOf = (B, sub) => egFairOk(fairOfMember(B, sub));",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-6: a credit with no `here`"
+  },
+  {
+    "name": "EGA5A2-door-woken-no-here",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const at = inHall.filter((b) => egAtDoor(spec, b.x, b.z, b.y) && B.mem[b.sub]?.hereH === B.h);",
+    "new": "const at = inHall.filter((b) => egAtDoor(spec, b.x, b.z, b.y));",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-6: the woken room's first arrival unasked"
+  },
+  {
+    "name": "EGA5A2-recall-no-here",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "m.roseH = B.h; m.hereH = B.h;",
+    "new": "m.roseH = B.h;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-6: a recall's `here` unsaid"
+  },
+  {
+    "name": "EGA5A2-first-gather-cut",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (!B.wk && !B.gatherAt && now >= T.admitUntil) {",
+    "new": "if (!B.wk && now >= T.admitUntil) {",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-13: the window's end cutting the gather"
+  },
+  {
+    "name": "EGA5A2-rehearsal-no-page",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (page >= 0) for (const [sub, m] of living(B)) if (",
+    "new": "if (page >= 0 && !B.rh) for (const [sub, m] of living(B)) if (",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-14: a Rehearsal's page withheld"
+  },
+  {
+    "name": "EGA5A2-last-fall-first",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "fin: final || last ? 1 : 0 }",
+    "new": "fin: final ? 1 : 0 }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-15: the last living member's fall said first"
+  },
+  {
+    "name": "EGA5A2-last-memento",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "else if (where && !last) B.mementos.push(",
+    "new": "else if (where) B.mementos.push(",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-15: a Memento nobody can carry"
+  },
+  {
+    "name": "EGA5A2-rehearsal-recall",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "falls: 0, recall: B.rh ? 0 : 1, wit: 0,",
+    "new": "falls: 0, recall: 1, wit: 0,",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js",
+      "test/net/eliteGates/egaudit5_a2_client.test.js"
+    ],
+    "why": "L7-6: a Rehearsal's member with a recall"
+  },
+  {
+    "name": "EGA5A2-rehearsal-row-recall",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "m?.falls ?? 0, m ? m.recall : B.rh ? 0 : 1, m && B.h > 0",
+    "new": "m?.falls ?? 0, m ? m.recall : 1, m && B.h > 0",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L7-6: a Rehearsal's unentered member shown a recall"
+  },
+  {
+    "name": "EGA5A2-memento-no-place",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const where = at ?? (m.pose && m.pose.h === B.h ? m.pose : null);",
+    "new": "const where = at;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-22: no place, no Memento"
+  },
+  {
+    "name": "EGA5A2-blow-pose-no-hall",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "mm.pose = { x: p.x, z: p.z, h: B.h };",
+    "new": "mm.pose = p;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-22: a blow's pose kept without its hall"
+  },
+  {
+    "name": "EGA5A2-span-ghost-unstood",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (spec.twist === 'ghost' && spec.arrive) egLegionRaise(F, [EG_KIND.ghost], [[spec.arrive.x + 2, spec.arrive.z + 2]], now, out);",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-19: a span's ghost unstood"
+  },
+  {
+    "name": "EGA5A2-span-captive-unstood",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (spec.twist === 'captive') captiveStand(F, spec, now, out);\n  F.pg.obj = 'cross';",
+    "new": "  F.pg.obj = 'cross';",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-19: a span's chains unstood"
+  },
+  {
+    "name": "EGA5A2-span-captive-unpaid",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    captiveStep(B, F, rng, out);   // AUDIT EG V (L3-19): a span's Captive freed",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-19: a span's freeing unpaid"
+  },
+  {
+    "name": "EGA5A2-captive-lane-one",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (lane) return [0.25, 0.5, 0.75].map((t) => [lane.ax + (lane.bx - lane.ax) * t, lane.az + (lane.bz - lane.az) * t]);",
+    "new": "if (lane) return law.map((q) => [q.x, q.z]);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-19: the lane's three laid as one"
+  },
+  {
+    "name": "EGA5A2-captive-chamber-one",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (disc) return about(disc);",
+    "new": "  if (disc) return law.map((q) => [q.x, q.z]);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-19: a Deepway's chamber one chain"
+  },
+  {
+    "name": "EGA5A2-captive-span-air",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (spec.kind === 'span' || spec.kind === 'brink') {\n    const fl = egFightView(spec).fl",
+    "new": "  if (false) {\n    const fl = egFightView(spec).fl",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-19: a span's chains off its islands"
+  },
+  {
+    "name": "EGA5A2-captive-law-ignored",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (law.length >= EG_CHAINS && three.every((q) => egOnFight(spec, q.x, q.z, 0, spotY(spec, q)))) return three.map((q) => [q.x, q.z]);",
+    "new": "if (law.length > EG_CHAINS) return law;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-19: the law's three ignored"
+  },
+  {
+    "name": "EGA5A2-ghost-ground",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "if (ctx.span) walkAir(F, spec, a, best.x, best.z, 1.5, K.speed, now, best);",
+    "new": "if (false) walkAir(F, spec, a, best.x, best.z, 1.5, K.speed, now, best);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L3-19: the ghost held to the ground"
+  },
+  {
+    "name": "EGA5A2-herald-news-no-start",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "t: secs(now - B.wk), ew: B.ew ?? 0, ...heraldCompany(B)",
+    "new": "t: secs(now - B.wk), ...heraldCompany(B)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L8-7: the start left off the news"
+  },
+  {
+    "name": "EGA5A2-herald-read-drops",
+    "file": "src/net/eliteGates/egHerald.js",
+    "old": "ew: nat(e.ew, 0, 19_999) ? e.ew : 0, o: str(e.o), by });",
+    "new": "o: str(e.o), by });",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L8-7: dropped by the hub's read"
+  },
+  {
+    "name": "EGA5A2-herald-fold-drops-first",
+    "file": "src/net/eliteGates/egHerald.js",
+    "old": "t: e.t, ew: e.ew ?? 0 }); }",
+    "new": "t: e.t }); }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L8-7: dropped by the fold (First of the Spire)"
+  },
+  {
+    "name": "EGA5A2-herald-fold-drops-rd",
+    "file": "src/net/eliteGates/egHerald.js",
+    "old": "else owe({ kind: 'rd', o: e.o, n: e.n ?? 0, w: e.w, h: e.h, t: e.t, ew: e.ew ?? 0 });",
+    "new": "else owe({ kind: 'rd', o: e.o, n: e.n ?? 0, w: e.w, h: e.h, t: e.t });",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L8-7: dropped by the fold (the Redoubt's post)"
+  },
+  {
+    "name": "EGA5A2-herald-post-unsaid",
+    "file": "src/net/eliteGates/egHerald.js",
+    "old": "const fromOf = (ew) => (Number.isSafeInteger(ew) && ew > 0 ? `Redoubt ${ew}` : null);",
+    "new": "const fromOf = () => null;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L8-7: unsaid by the posts"
+  },
+  {
+    "name": "EGA5A2-herald-post-always",
+    "file": "src/net/eliteGates/egHerald.js",
+    "old": "const fromOf = (ew) => (Number.isSafeInteger(ew) && ew > 0 ? `Redoubt ${ew}` : null);",
+    "new": "const fromOf = (ew) => `Redoubt ${ew}`;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2.test.js"
+    ],
+    "why": "L8-7: a Hall 1 breach told a start"
+  },
+  {
+    "name": "EGA5A2-look-circle-key",
+    "file": "src/scenes/eliteGates/egLookDraw.js",
+    "old": "if (k === key && specs.every((s, j) => s === made[j])) return false;",
+    "new": "if (k === key) return false;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2_client.test.js"
+    ],
+    "why": "L3-7: the look keyed on the circle alone"
+  },
+  {
+    "name": "EGA5A2-look-made-unkept",
+    "file": "src/scenes/eliteGates/egLookDraw.js",
+    "old": "key = k; band = egBandOfCircle(c); made = specs;",
+    "new": "key = k; band = egBandOfCircle(c);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2_client.test.js"
+    ],
+    "why": "L3-7: the look's halls never kept (made again every call)"
+  },
+  {
+    "name": "EGA5A2-fight-given-unread",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      else if (egHallOf(E.seed, E.h, E.geo ?? 0) !== spec) respec(E);",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2_client.test.js"
+    ],
+    "why": "L3-7: the fight's given hall never read"
+  },
+  {
+    "name": "EGA5A2-digest-never-kept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (!lawForeign(E) && digestOff(E)) lawOff.add(E.b);\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2_client.test.js"
+    ],
+    "why": "L3-12: the digest never compared"
+  },
+  {
+    "name": "EGA5A2-digest-never-differs",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "digestSeen.off = mine !== E.dg;",
+    "new": "digestSeen.off = false;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2_client.test.js"
+    ],
+    "why": "L3-12: a mismatch never seen"
+  },
+  {
+    "name": "EGA5A2-digest-not-foreign",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "function lawForeign(E) { return (E.egv > 0 && E.egv !== EG_SPEC) || lawOff.has(E.b); }",
+    "new": "function lawForeign(E) { return E.egv > 0 && E.egv !== EG_SPEC; }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2_client.test.js"
+    ],
+    "why": "L3-12: a mismatch never kept for the breach"
+  },
+  {
+    "name": "EGA5A2-digest-law-said",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (lawSaid !== E.b) { lawSaid = E.b; if (!lawOff.has(E.b)) say(EG_LAW_TEXT); }",
+    "new": "if (lawSaid !== E.b) { lawSaid = E.b; say(EG_LAW_TEXT); }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2_client.test.js"
+    ],
+    "why": "L3-12: another law's word said of one law"
+  },
+  {
+    "name": "EGA5A2-link-digest-kept",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "...(w.h !== s.h ? { dg: 0 } : {}), ",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_a2_client.test.js"
+    ],
+    "why": "L3-12: the link keeping the last hall's digest"
+  }
+]

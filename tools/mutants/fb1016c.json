@@ -1,0 +1,275 @@
+[
+  {
+    "name": "SKIN-PLAQUE-act-yields",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (act) return ACT_OWNS_LOOK;   // SKIN-PLAQUE: the act's look, no plaque over it",
+    "new": "      if (act) return null;   // SKIN-PLAQUE: the act's look, no plaque over it",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ],
+    "why": "the report: mid-skin the hosts' `?? ray` hands the body under the knife to the plaque"
+  },
+  {
+    "name": "SKIN-PLAQUE-never-returns",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (act) return ACT_OWNS_LOOK;   // SKIN-PLAQUE: the act's look, no plaque over it",
+    "new": "      if (true) return ACT_OWNS_LOOK;   // SKIN-PLAQUE: the act's look, no plaque over it",
+    "tests": [
+      "test/systems/prof7_client.test.js"
+    ],
+    "why": "the plaque never back after the act"
+  },
+  {
+    "name": "OWED-PACE-owed-ignored",
+    "file": "src/systems/guild/guilds.js",
+    "old": "  if (newRank < 0 && (!m.probation || getReputation(store, guild.factionId) + owed >= GUILD_EXPEL_BELOW)) {",
+    "new": "  if (newRank < 0 && (!m.probation || getReputation(store, guild.factionId) >= GUILD_EXPEL_BELOW)) {",
+    "tests": [
+      "test/systems/guild/fb1016c_owedpace.test.js"
+    ],
+    "why": "expelled over reputation the Roll still owes"
+  },
+  {
+    "name": "OWED-PACE-owed-twice",
+    "file": "src/systems/guild/guilds.js",
+    "old": "  const owed = Math.max(0, Number(ctx?.owed) || 0);",
+    "new": "  const owed = 2 * Math.max(0, Number(ctx?.owed) || 0);",
+    "tests": [
+      "test/systems/guild/fb1016c_owedpace.test.js"
+    ],
+    "why": "the -10 line moved by the owed counted twice"
+  },
+  {
+    "name": "OWED-PACE-ends-probation",
+    "file": "src/systems/guild/guilds.js",
+    "old": "    m.probation = true;\n    m.lastRankChange = today;   // the next review is 28 days on",
+    "new": "    m.probation = owed === 0;\n    m.lastRankChange = today;   // the next review is 28 days on",
+    "tests": [
+      "test/systems/guild/fb1016c_owedpace.test.js"
+    ],
+    "why": "the owed ending a probation (it renews one, never ends it)"
+  },
+  {
+    "name": "OWED-PACE-not-passed",
+    "file": "src/systems/guild/guildServiceFlow.js",
+    "old": "promoteWhenEarned, owed: standingOwedOf(guild.factionId) });",
+    "new": "promoteWhenEarned, owed: 0 });",
+    "tests": [
+      "test/systems/guild/fb1016c_owedpace.test.js"
+    ],
+    "why": "the hall's review never told the owed"
+  },
+  {
+    "name": "OWED-PACE-old-words",
+    "file": "src/systems/guild/guildServiceFlow.js",
+    "old": "'Reputation {have} of {need} ({owed} more already earned, arriving at most {max} a real day)'",
+    "new": "'Reputation {have} of {need} ({owed} more to come)'",
+    "tests": [
+      "test/systems/guild/fb1016c_owedpace.test.js",
+      "test/systems/fb1015g_guildwords.test.js"
+    ],
+    "why": "the report's words: the owed read as owed by the player"
+  },
+  {
+    "name": "MAKER-KEPT-rows-refused",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "  if (TIER_MARKS.some((k) => has(item, k)) || (rows.length && !kept)) return ['aetheric'];",
+    "new": "  if (TIER_MARKS.some((k) => has(item, k)) || rows.length) return ['aetheric'];",
+    "tests": [
+      "test/systems/item/fb1016c_makerkept.test.js",
+      "test/server/fb1016c_makerkept_lift.test.js"
+    ],
+    "why": "law 5: the maker's era's rows a finding - the report's hold"
+  },
+  {
+    "name": "MAKER-KEPT-every-record",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "  const kept = MAKER_ERA_AETHERIC.has(item.aetheric) && rows.every(isMakerRow);",
+    "new": "  const kept = rows.every(isMakerRow);",
+    "tests": [
+      "test/systems/item/fb1016c_makerkept.test.js"
+    ],
+    "why": "a set from after the refusal kept too"
+  },
+  {
+    "name": "MAKER-KEPT-a-found-row",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "  const kept = MAKER_ERA_AETHERIC.has(item.aetheric) && rows.every(isMakerRow);",
+    "new": "  const kept = MAKER_ERA_AETHERIC.has(item.aetheric) && rows.some(isMakerRow);",
+    "tests": [
+      "test/systems/item/fb1016c_makerkept.test.js"
+    ],
+    "why": "a row no maker laid kept beside the maker's"
+  },
+  {
+    "name": "MAKER-KEPT-maker-law-refuses-era",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "  if (item.rarity === 'gilded' || (item.rarity === 'aetheric' && !MAKER_ERA_AETHERIC.has(item.aetheric))) return ['enchantments'];",
+    "new": "  if (item.rarity === 'gilded' || item.rarity === 'aetheric') return ['enchantments'];",
+    "tests": [
+      "test/systems/item/fb1016c_makerkept.test.js"
+    ],
+    "why": "law 5's maker arm: the era's rows refused by the maker's law"
+  },
+  {
+    "name": "MAKER-KEPT-later-sets-pass-maker-law",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "  if (item.rarity === 'gilded' || (item.rarity === 'aetheric' && !MAKER_ERA_AETHERIC.has(item.aetheric))) return ['enchantments'];",
+    "new": "  if (item.rarity === 'gilded') return ['enchantments'];",
+    "tests": [
+      "test/systems/item/fb1016c_makerkept.test.js"
+    ],
+    "why": "a later set's maker rows judged as lawful maker rows"
+  },
+  {
+    "name": "MAKER-KEPT-lift-template-dropped",
+    "file": "server-account/migrations/0123_maker_kept.sql",
+    "old": "    AND NOT EXISTS (SELECT 1 FROM realm_findings f WHERE f.char_id = realm_characters.id AND f.kind = 'law' AND (\n      json_type(f.detail, '$.findings') IS NOT 'array' OR json_array_length(f.detail, '$.findings') = 0\n      OR COALESCE(json_extract(f.detail, '$.count'), 0) > json_array_length(f.detail, '$.findings')\n      OR EXISTS (SELECT 1 FROM json_each(f.detail, '$.findings') j WHERE NOT (\n        json_extract(j.value, '$.code') IN ('aetheric', 'enchantments')\n        AND json_extract(j.value, '$.t') IN (102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 119, 120, 124, 127)))));\nUPDATE",
+    "new": "    AND NOT EXISTS (SELECT 1 FROM realm_findings f WHERE f.char_id = realm_characters.id AND f.kind = 'law' AND (\n      json_type(f.detail, '$.findings') IS NOT 'array' OR json_array_length(f.detail, '$.findings') = 0\n      OR COALESCE(json_extract(f.detail, '$.count'), 0) > json_array_length(f.detail, '$.findings')\n      OR EXISTS (SELECT 1 FROM json_each(f.detail, '$.findings') j WHERE NOT (\n        json_extract(j.value, '$.code') IN ('aetheric', 'enchantments')\n        AND json_extract(j.value, '$.t') IN (102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 119, 120, 124)))));\nUPDATE",
+    "tests": [
+      "test/systems/item/fb1016c_makerkept.test.js",
+      "test/server/fb1016c_makerkept_lift.test.js"
+    ],
+    "why": "the Gatecleaver's template dropped from the lift"
+  },
+  {
+    "name": "MAKER-KEPT-lift-count-guard",
+    "file": "server-account/migrations/0123_maker_kept.sql",
+    "old": "  FROM realm_characters\n  WHERE (held IS NULL OR held <> 'staff') AND (held = 'law' OR strikes > 0 OR law_holds > 0 OR held_until IS NOT NULL)\n    AND EXISTS (SELECT 1 FROM realm_findings f WHERE f.char_id = realm_characters.id AND f.kind = 'law')\n    AND NOT EXISTS (SELECT 1 FROM realm_findings f WHERE f.char_id = realm_characters.id AND f.kind = 'law' AND (\n      json_type(f.detail, '$.findings') IS NOT 'array' OR json_array_length(f.detail, '$.findings') = 0\n      OR COALESCE(json_extract(f.detail, '$.count'), 0) > json_array_length(f.detail, '$.findings')",
+    "new": "  FROM realm_characters\n  WHERE (held IS NULL OR held <> 'staff') AND (held = 'law' OR strikes > 0 OR law_holds > 0 OR held_until IS NOT NULL)\n    AND EXISTS (SELECT 1 FROM realm_findings f WHERE f.char_id = realm_characters.id AND f.kind = 'law')\n    AND NOT EXISTS (SELECT 1 FROM realm_findings f WHERE f.char_id = realm_characters.id AND f.kind = 'law' AND (\n      json_type(f.detail, '$.findings') IS NOT 'array' OR json_array_length(f.detail, '$.findings') = 0",
+    "tests": [
+      "test/server/fb1016c_makerkept_lift.test.js"
+    ],
+    "why": "a finding past its kept list read as only the era's codes"
+  },
+  {
+    "name": "MAKER-KEPT-lift-staff",
+    "file": "server-account/migrations/0123_maker_kept.sql",
+    "old": "  held_until = NULL, strikes = 0, law_holds = 0, law_at = NULL, judge_rev = judge_rev + 1\n  WHERE (held IS NULL OR held <> 'staff') AND",
+    "new": "  held_until = NULL, strikes = 0, law_holds = 0, law_at = NULL, judge_rev = judge_rev + 1\n  WHERE 1 AND",
+    "tests": [
+      "test/server/fb1016c_makerkept_lift.test.js"
+    ],
+    "why": "staff's own hold's strikes reset by the lift"
+  },
+  {
+    "name": "LAYOUT-KEEP-no-keep",
+    "file": "src/systems/automap/automap.js",
+    "old": "    keepLayout(rec);\n    if (back) {",
+    "new": "    if (back) {",
+    "tests": [
+      "test/systems/automap/fb1016c_layoutkeep.test.js"
+    ],
+    "why": "the report: the layout left is wiped"
+  },
+  {
+    "name": "LAYOUT-KEEP-no-take-back",
+    "file": "src/systems/automap/automap.js",
+    "old": "    const back = rec.layouts?.get(layoutSig(model.blockNames)) ?? null;",
+    "new": "    const back = null;",
+    "tests": [
+      "test/systems/automap/fb1016c_layoutkeep.test.js"
+    ],
+    "why": "kept and never taken back"
+  },
+  {
+    "name": "LAYOUT-KEEP-visits-kept",
+    "file": "src/systems/automap/automap.js",
+    "old": "      Object.assign(rec, back, { visitedThisRun: new Set() });",
+    "new": "      Object.assign(rec, back);",
+    "tests": [
+      "test/systems/automap/fb1016c_layoutkeep.test.js"
+    ],
+    "why": "a load's run of the other layout carried into this one"
+  },
+  {
+    "name": "LAYOUT-KEEP-not-saved",
+    "file": "src/systems/automap/automap.js",
+    "old": "      ...(rec.layouts?.size ? { layouts: [...rec.layouts.values()].map(savedLayout) } : {}),",
+    "new": "      ...({}),",
+    "tests": [
+      "test/systems/automap/fb1016c_layoutkeep.test.js"
+    ],
+    "why": "the kept layouts lost at a save"
+  },
+  {
+    "name": "LAYOUT-KEEP-not-loaded",
+    "file": "src/systems/automap/automap.js",
+    "old": "      ...(Array.isArray(rec.layouts) ? { layouts:",
+    "new": "      ...(false ? { layouts:",
+    "tests": [
+      "test/systems/automap/fb1016c_layoutkeep.test.js"
+    ],
+    "why": "the kept layouts lost at a load"
+  },
+  {
+    "name": "LAYOUT-KEEP-unbounded",
+    "file": "src/systems/automap/automap.js",
+    "old": "  while (kept.size > AUTOMAP_LAYOUTS_KEPT) kept.delete(kept.keys().next().value);",
+    "new": "",
+    "tests": [
+      "test/systems/automap/fb1016c_layoutkeep.test.js"
+    ],
+    "why": "a record's keep grows without bound"
+  },
+  {
+    "name": "QUEST-ELSEWHERE-no-line",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "      const quest = !site.isHold && site.relaid === true && questHere(site);",
+    "new": "      const quest = false;",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "why": "the report: the popup asks without saying"
+  },
+  {
+    "name": "QUEST-ELSEWHERE-every-dungeon",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "      const quest = !site.isHold && site.relaid === true && questHere(site);",
+    "new": "      const quest = !site.isHold && questHere(site);",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "why": "the line where the public room is laid whole, and holds the quest's things"
+  },
+  {
+    "name": "QUEST-ELSEWHERE-relaid-never",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "relaid: builtSizeFor(dfLocation, { online: true }) !== 'full' };",
+    "new": "relaid: false };",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "why": "the site never knows"
+  },
+  {
+    "name": "QUEST-ELSEWHERE-repair-deaf",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    try { if (env.mountCurrentSite?.() === 'elsewhere') report.elsewhere = true; } catch { report.failed++; }",
+    "new": "    try { env.mountCurrentSite?.(); } catch { report.failed++; }",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "why": "the report: \"Nothing was missing\" in the room that holds none of it"
+  },
+  {
+    "name": "QUEST-ELSEWHERE-repair-mute",
+    "file": "src/systems/quest/questRepair.js",
+    "old": "    : r.elsewhere ? questElsewhereLine() : `Nothing was missing",
+    "new": "    : false ? questElsewhereLine() : `Nothing was missing",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "why": "heard, and not said"
+  },
+  {
+    "name": "QUEST-ELSEWHERE-gate-silent",
+    "file": "src/scenes/worldModes.js",
+    "old": "host.instanceDoor?.questElsewhere?.(dungeonLoc); return 'elsewhere'; }   // QUEST-ELSEWHERE: a repair says so",
+    "new": "host.instanceDoor?.questElsewhere?.(dungeonLoc); return; }   // QUEST-ELSEWHERE: a repair says so",
+    "tests": [
+      "test/systems/quest/instances3_door.test.js"
+    ],
+    "why": "the mount's gate answers nothing for a repair to say"
+  }
+]

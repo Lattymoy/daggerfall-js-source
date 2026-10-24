@@ -1,56 +1,56 @@
 [
   {
     "name": "GUILD-LETTER-the-record-paid-in-coin",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "  else if (letter === true) {",
     "new": "  else if (false) {",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
     "name": "GUILD-LETTER-any-word-a-letter",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "  else if (letter === true) {",
     "new": "  else if (letter) {",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
     "name": "GUILD-LETTER-the-letter-at-the-back",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": ".unshift(realmLetterOfCredit(amount));",
     "new": ".push(realmLetterOfCredit(amount));",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
     "name": "GUILD-LETTER-the-light-left-behind",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "    if (Number.isSafeInteger(save.lightSourceIndex) && save.lightSourceIndex >= 0) save.lightSourceIndex += 1;\n",
     "new": "",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
     "name": "GUILD-LETTER-a-light-lit-on-the-letter",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "Number.isSafeInteger(save.lightSourceIndex) && save.lightSourceIndex >= 0)",
     "new": "Number.isSafeInteger(save.lightSourceIndex))",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
     "name": "GUILD-LETTER-the-letter-misnamed",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "name: 'Letter of Credit', value, stackCount: 1 });",
     "new": "name: 'Letter of credit', value, stackCount: 1 });",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "'withdraw', gold, null, letter);",
     "new": "'withdraw', gold, null);",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "creditSave(save, gold, { letter })",
     "new": "creditSave(save, gold)",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
@@ -77,70 +77,70 @@
     "old": "...(realm ? { realm, letter: letter === true } : {})",
     "new": "...(realm ? { realm } : {})",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
     "name": "GUILD-LETTER-the-old-words",
     "file": "src/net/accountClient.js",
-    "old": "'guild-treasury-old': 'A realm character takes out only the gold realm characters put in, and not that much of theirs is left. The rest came in before the realm or from a character outside it - it stays in the treasury.',",
-    "new": "'guild-treasury-old': 'That much of the treasury came in before the realm - it stays in the treasury.',",
+    "old": "'guild-treasury-old': () => t('account.refusal.guildTreasuryOld', 'Realm characters can only take out gold that realm characters put in, and there is not that much left. The rest came in before the realm or from a character outside it, so it stays in the treasury.'),",
+    "new": "'guild-treasury-old': () => t('account.refusal.guildTreasuryOld', 'That much of the treasury came in before the realm - it stays in the treasury.'),",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
     "name": "GUILD-LETTER-decided-never",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "    const letter = this.wallet().paper?.(gold) === true;",
     "new": "    const letter = false;",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
     "name": "GUILD-LETTER-the-letter-unasked",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "this.door.withdraw(character, gold, at, letter)",
     "new": "this.door.withdraw(character, gold, at)",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
     "name": "GUILD-LETTER-the-apply-pays-coins",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "        apply: () => this.wallet().credit(gold, { letter }),",
     "new": "        apply: () => this.wallet().credit(gold),",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
     "name": "GUILD-LETTER-the-old-lane-pays-coins",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "      if (r?.ok) this.wallet().credit(gold, { letter });",
     "new": "      if (r?.ok) this.wallet().credit(gold);",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
     "name": "GUILD-LETTER-the-answer-unsaid",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "const said = (/** @type {any} */ r) => (r.ok && letter ? { ...r, letter } : r);",
     "new": "const said = (/** @type {any} */ r) => r;",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
     "name": "GUILD-LETTER-a-refusal-says-a-letter",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "(r.ok && letter ? { ...r, letter } : r)",
     "new": "(letter ? { ...r, letter } : r)",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "guildUi.word = r?.ok ? guildDoneText(typeof okWord === 'function' ? okWord(r) : okWord, r) : guildWordText(r?.error, r, Math.floor(social.now() / 1000));",
     "new": "guildUi.word = r?.ok ? (typeof okWord === 'function' ? okWord(r) : okWord) : guildWordText(r?.error, r, Math.floor(social.now() / 1000));",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "(r?.letter === true ? `${okWord} ${LETTER_OF_CREDIT_TEXT}` : okWord)",
     "new": "(r?.letter === true ? okWord : okWord)",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "(r?.letter === true ?",
     "new": "(r?.letter ?",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "paper: (n) => sellProceeds(n, { carriedWeightKg: carriedWeight(playerEntity),",
     "new": "paper: (n) => sellProceeds(n, { carriedWeightKg: 0,",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "maxEncumbranceKg: entityMaxEncumbrance(playerEntity) }).kind === 'letterOfCredit',",
     "new": "maxEncumbranceKg: Infinity }).kind === 'letterOfCredit',",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "if (letter) (playerEntity.items ??= []).unshift(realmLetterOfCredit(n)); else addGold(playerEntity, n);",
     "new": "addGold(playerEntity, n);",
     "tests": [
-      "test/fb0930_guildletter.test.js"
+      "test/systems/fb0930_guildletter.test.js"
     ]
   }
 ]

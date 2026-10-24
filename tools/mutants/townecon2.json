@@ -1,0 +1,382 @@
+[
+  {
+    "name": "TOWNECON2-weights",
+    "file": "src/net/townEconLaw.js",
+    "old": "export const TOWN_ECON_WEIGHTS = Object.freeze({ watch: 1, trade: 4, raid: 20, sea: 2 });",
+    "new": "export const TOWN_ECON_WEIGHTS = Object.freeze({ watch: 1, trade: 5, raid: 20, sea: 2 });",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a sale weighs more"
+  },
+  {
+    "name": "TOWNECON2-decay",
+    "file": "src/net/townEconLaw.js",
+    "old": "export const TOWN_ECON_DECAY = 0.8;",
+    "new": "export const TOWN_ECON_DECAY = 0.9;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the days fade slower"
+  },
+  {
+    "name": "TOWNECON2-days",
+    "file": "src/net/townEconLaw.js",
+    "old": "if (!(age >= 0 && age < TOWN_ECON_DAYS) || !w || !(n > 0)) continue;",
+    "new": "if (!(age >= 0 && age <= TOWN_ECON_DAYS) || !w || !(n > 0)) continue;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a day past the days kept weighed"
+  },
+  {
+    "name": "TOWNECON2-half",
+    "file": "src/net/townEconLaw.js",
+    "old": "export const TOWN_ECON_HALF = 150;",
+    "new": "export const TOWN_ECON_HALF = 100;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the share saturates sooner"
+  },
+  {
+    "name": "TOWNECON2-share-most",
+    "file": "src/net/townEconLaw.js",
+    "old": ": a === Infinity ? TOWN_PLAYERS_MAX : 0);",
+    "new": ": 0);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "an infinite activity counts nothing"
+  },
+  {
+    "name": "TOWNECON2-report-range",
+    "file": "src/net/townEconLaw.js",
+    "old": "!ok(px, 999)",
+    "new": "!ok(px, 1000)",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a pixel off the map reported"
+  },
+  {
+    "name": "TOWNECON2-report-strict",
+    "file": "src/net/townEconLaw.js",
+    "old": "  return t && townReportText(t) === s ? t : null;",
+    "new": "  return t;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a report read back however it was written"
+  },
+  {
+    "name": "TOWNECON2-reading-by-key",
+    "file": "src/systems/town/townEcon.js",
+    "old": "    const players = host.players?.(id) ?? 0;",
+    "new": "    const players = host.players?.(key) ?? 0;",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "the share asked by the town's pixel, which the service never keys"
+  },
+  {
+    "name": "TOWNECON2-witness-young",
+    "file": "server-account/src/townEcon.js",
+    "old": "  if (!witnessOf(player, nowS)) return { ok: true, counted: false, why: 'young' };\n",
+    "new": "",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a young account's report counted"
+  },
+  {
+    "name": "TOWNECON2-witness-known",
+    "file": "server-account/src/townEcon.js",
+    "old": "  if (known?.known) return { ok: true, counted: false, why: 'known' };\n",
+    "new": "",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a confirmed town takes reports for ever"
+  },
+  {
+    "name": "TOWNECON2-confirm-early",
+    "file": "server-account/src/townEcon.js",
+    "old": "  if (!factConfirmed(fact)) return { ok: true, counted: true, confirmed: false };",
+    "new": "  if (fact.state === 'none') return { ok: true, counted: true, confirmed: false };",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "one report confirms a town"
+  },
+  {
+    "name": "TOWNECON2-watch-cap",
+    "file": "server-account/src/townEcon.js",
+    "old": "ON CONFLICT (account, map, day, src) DO UPDATE SET n = town_econ_acts.n + 1 WHERE town_econ_acts.n < ?5`)",
+    "new": "ON CONFLICT (account, map, day, src) DO UPDATE SET n = town_econ_acts.n + 1 WHERE true`)",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "no cap a town a day"
+  },
+  {
+    "name": "TOWNECON2-watch-seen",
+    "file": "server-account/src/townEcon.js",
+    "old": "    ticks.push({ at, c, day, ref: `${c.s}:${c.c}:${c.i}` });",
+    "new": "    ticks.push({ at, c, day, ref: `${c.s}:${c.c}:${c.i}:${Math.random()}` });",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a tick counted twice"
+  },
+  {
+    "name": "TOWNECON2-watch-yours",
+    "file": "server-account/src/townEcon.js",
+    "old": "    if (c.s !== player.id) { tally('not-yours'); continue; }\n",
+    "new": "",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "another account's tick counted"
+  },
+  {
+    "name": "TOWNECON2-watch-young",
+    "file": "server-account/src/townEcon.js",
+    "old": "  if (!witnessOf(player, nowS)) return { ok: true, counted: 0, sea: 0, why: { young: receipts.length }, full: [] };\n",
+    "new": "",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a young account's ticks counted"
+  },
+  {
+    "name": "TOWNECON2-days-uncounted",
+    "file": "server-account/src/townEcon.js",
+    "old": "INSERT INTO town_econ_days (map, day, src, n) SELECT ?1, ?2, ?3, 1 WHERE changes() > 0",
+    "new": "INSERT INTO town_econ_days (map, day, src, n) SELECT ?1, ?2, ?3, 1 WHERE true",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a capped act still moves the town's day"
+  },
+  {
+    "name": "TOWNECON2-read-unkept",
+    "file": "server-account/src/townEcon.js",
+    "old": "  if (_kept && nowS - _kept.at < TOWN_ECON_ISOLATE_S) return { ok: true, towns: _kept.towns };\n",
+    "new": "",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "every read asks the database"
+  },
+  {
+    "name": "TOWNECON2-read-least",
+    "file": "server-account/src/townEcon.js",
+    "old": "    if (share >= TOWN_ECON_SHARE_LEAST) towns.push([m, share]);",
+    "new": "    if (share > 0) towns.push([m, share]);",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "every town answered"
+  },
+  {
+    "name": "TOWNECON2-trade-young",
+    "file": "server-account/src/townEcon.js",
+    "old": "  if (!Number.isSafeInteger(map) || /** @type {number} */ (map) <= 0 || !witnessOf(player, nowS)) return [];",
+    "new": "  if (!Number.isSafeInteger(map) || /** @type {number} */ (map) <= 0) return [];",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a young buyer's sale counted"
+  },
+  {
+    "name": "TOWNECON2-raid-young",
+    "file": "server-account/src/townEcon.js",
+    "old": "  if (typeof key !== 'string' || !RAID_KEY_RE.test(key) || !witnessOf(player, nowS)) return [];",
+    "new": "  if (typeof key !== 'string' || !RAID_KEY_RE.test(key)) return [];",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a young account's raid counted"
+  },
+  {
+    "name": "TOWNECON2-raid-cap",
+    "file": "server-account/src/townEcon.js",
+    "old": "WHERE town_econ_acts.n < ?7`)",
+    "new": "WHERE true`)",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "raids uncapped a town a day"
+  },
+  {
+    "name": "TOWNECON2-sweep-days",
+    "file": "server-account/src/townEcon.js",
+    "old": "export const townEconKeptFrom = (nowS) => utcDay(nowS) - TOWN_ECON_DAYS + 1;",
+    "new": "export const townEconKeptFrom = (nowS) => utcDay(nowS) - TOWN_ECON_DAYS;",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a day past the share kept"
+  },
+  {
+    "name": "TOWNECON2-trade-gold",
+    "file": "server-account/src/market.js",
+    "old": "      ...tradeActStatements(db, player, nowS, vend?.map ?? null, 'EXISTS (SELECT 1 FROM market_sales WHERE buyer = ?6 AND rid = ?7 AND n = ?8)', [me, rid, nonce]),   // TOWN-ECON TE2\n",
+    "new": "",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a gold sale at a trader counts nothing"
+  },
+  {
+    "name": "TOWNECON2-patron",
+    "file": "server-account/src/market.js",
+    "old": "                ...patronActStatements(db, l.seller, map, day),   // TOWN-ECON TE2: the patron's purchase counted at its town, the seller's act\n",
+    "new": "",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a patron's purchase counts nothing"
+  },
+  {
+    "name": "TOWNECON2-raid",
+    "file": "server-account/src/raids.js",
+    "old": "    ...(town ?? []),\n",
+    "new": "",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a raid driven off counts nothing"
+  },
+  {
+    "name": "TOWNECON2-book-unkept",
+    "file": "src/net/townEconBook.js",
+    "old": "    if (stopped || busy || nowMs() - readAt < TOWN_ECON_KEPT_S * 1000) return false;",
+    "new": "    if (stopped || busy) return false;",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "the shares read at every ask"
+  },
+  {
+    "name": "TOWNECON2-book-unstopped",
+    "file": "src/net/townEconBook.js",
+    "old": "      } else if (TOWN_ECON_STOPS.includes(r?.error)) { stopped = true; heard = true; shares = new Map(); }",
+    "new": "      }",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "a refusal asked again for ever"
+  },
+  {
+    "name": "TOWNECON2-book-keep-anywhere",
+    "file": "src/net/townEconBook.js",
+    "old": "      if (!isTownPixel(c.x, c.y)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "a tick kept off a town"
+  },
+  {
+    "name": "TOWNECON2-book-claim-early",
+    "file": "src/net/townEconBook.js",
+    "old": "    return held.length >= TOWN_WATCH_CLAIM_MAX || (t == null ? nowMs() : t * 1000) - oldest >= TOWN_ECON_CLAIM_EVERY_MS;",
+    "new": "    return true;",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "every tick claimed alone"
+  },
+  {
+    "name": "TOWNECON2-book-kept-on-fail",
+    "file": "src/net/townEconBook.js",
+    "old": "      if (r?.ok || WATCH_SETTLED.includes(r?.error)) {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "a failed claim's ticks let go"
+  },
+  {
+    "name": "TOWNECON2-book-witness-daily",
+    "file": "src/net/townEconBook.js",
+    "old": "      if (at === dayNow() || at >= TOWN_ECON_DONE) return false;",
+    "new": "      if (at >= TOWN_ECON_DONE) return false;",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "a town reported at every entry"
+  },
+  {
+    "name": "TOWNECON2-book-witness-done",
+    "file": "src/net/townEconBook.js",
+    "old": "    const done = r?.ok && (r.data?.confirmed === true || r.data?.why === 'known' || r.data?.why === 'struck' || (r.data?.counted === true && r.data?.why !== 'taken'));",
+    "new": "    const done = r?.ok && r.data?.why === 'never';",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "a counted town reported every day for ever"
+  },
+  {
+    "name": "TOWNECON2-host-unshared",
+    "file": "src/scenes/townEconHost.js",
+    "old": "players: (mapId) => book?.shareOf(mapId) ?? 0",
+    "new": "players: () => 0",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "the share read and never used"
+  },
+  {
+    "name": "TOWNECON2-host-witness-any",
+    "file": "src/scenes/townEconHost.js",
+    "old": "      if (!t || !isEconTown(t.type)) return false;",
+    "new": "      if (!t) return false;",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "a dungeon witnessed as a town"
+  },
+  {
+    "name": "TOWNECON2-door-path",
+    "file": "src/net/accountClient.js",
+    "old": "    econ: () => post('/v1/towns/econ', {}),",
+    "new": "    econ: () => post('/v1/towns/list', {}),",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "the shares asked of a route there is not"
+  },
+  {
+    "name": "TOWNECON2-world-unwatched",
+    "file": "src/scenes/world.js",
+    "old": "motherlodeBook?.watch(r); townEcon.keepWatch(r); };",
+    "new": "motherlodeBook?.watch(r); };",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "the Watch's tick never reaches the towns' book"
+  },
+  {
+    "name": "TOWNECON2-world-unwitnessed",
+    "file": "src/scenes/world.js",
+    "old": "        townEcon.witness(_musicLoc?.mapTableData?.mapId);   // TOWN-ECON TE2: and the town itself, for the registry (online alone - the host builds no book offline)\n",
+    "new": "",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "no town ever witnessed"
+  },
+  {
+    "name": "TOWNECON2-location-lost",
+    "file": "src/scenes/world.js",
+    "old": "type: loc.mapTableData.locationType, location: l });",
+    "new": "type: loc.mapTableData.locationType });",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "a town's row has no location - no raid ever counted"
+  }
+]

@@ -5,7 +5,7 @@
     "old": "  const inCourt = () => awaitingSurrenderAnswer || !!playerEntity.arrested;",
     "new": "  const inCourt = () => sharedClockOn() && (awaitingSurrenderAnswer || !!playerEntity.arrested);",
     "tests": [
-      "test/jailhit.test.js"
+      "test/systems/jailhit.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const inCourt = () => awaitingSurrenderAnswer || !!playerEntity.arrested;",
     "new": "  const inCourt = () => awaitingSurrenderAnswer && !!playerEntity.arrested;",
     "tests": [
-      "test/jailhit.test.js"
+      "test/systems/jailhit.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (playerEntity.arrested) return;\n",
     "new": "",
     "tests": [
-      "test/jailhit.test.js"
+      "test/systems/jailhit.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      box.dispose = () => { if (!box.done) awaitingSurrenderAnswer = false; if (surrenderBox === box) surrenderBox = null; };",
     "new": "      box.dispose = () => { if (surrenderBox === box) surrenderBox = null; };",
     "tests": [
-      "test/jailhit.test.js"
+      "test/systems/jailhit.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      box.dispose = () => { if (!box.done) awaitingSurrenderAnswer = false; if (surrenderBox === box) surrenderBox = null; };",
     "new": "      box.dispose = () => { awaitingSurrenderAnswer = !box.done; if (surrenderBox === box) surrenderBox = null; };",
     "tests": [
-      "test/jailhit.test.js"
+      "test/systems/jailhit.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if ((!playerEntity.crimeCommitted || playerEntity.arrested) && !isTransformedLycanthrope(playerEntity)) {",
     "new": "    if ((!playerEntity.crimeCommitted) && !isTransformedLycanthrope(playerEntity)) {",
     "tests": [
-      "test/jailhit.test.js"
+      "test/systems/jailhit.test.js"
     ]
   }
 ]

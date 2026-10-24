@@ -43,7 +43,15 @@ From the memo, kept as the arc's law:
    specialist does it cheaper, faster or anywhere. A mage teleports anywhere;
    anyone else pays the Mages Guild's teleport.
 5. **Shops are the floor, crafting the ceiling.** NPC prices are fixed, which
-   is what shields a newcomer from inflation among players; the world keeps
+   is what shields a newcomer from inflation among players (the
+   exceptions, each bounded where it is recorded: SEAT1d's members' discount
+   and Market Day at a seat town, `11-Multiplayer/Seats-Arc.md` 7.2 and 7.6;
+   LW11's friend's discount at a caravan's counter, `Living-World-II.md` 4;
+   and TOWN-ECON, 2026-10-16, Mac: "Wider swings, ±25%+" - online, a town's
+   Prosperity moves what its counters ask by up to a quarter and what they
+   pay only down, never more than they ask, never below the seats' own
+   deepest - `06-Systems/Town-Economy-Arc.md` decision 4 - AUDIT TOWN-ECON
+   DOC-4); the world keeps
    its exclusives (Legendaries, signature drops, artifacts, the NPC-only
    services). What an NPC pays for a crafted piece is capped, or smithing
    prints gold.
@@ -81,7 +89,7 @@ current design "does not work in an enjoyable manner"):
 ## Where the economy stands (2026-10-01)
 
 - **Authority.** Every source - loot, quests, shop sales, gate spoils
-  (`src/systems/gateSpoils.js`) - is computed by the client. Until INT2
+  (`src/systems/gate/gateSpoils.js`) - is computed by the client. Until INT2
   (2026-10-09, `06-Systems/Integrity-Arc.md`) a realm character's gold was
   checked once, at its first save, and "Assume infinite wealth" was literally
   true; since, every checkpoint is judged - the item law over every piece, the
@@ -117,12 +125,13 @@ current design "does not work in an enjoyable manner"):
   KIT-CEILING and SELL-AS-FOUND (below), POTION-COMMON (a Potion of Healing
   on a looting foe 6 times in 100 and in a J-O pile 12 - 10 and 18 since
   LOOT-EASE, 2026-10-05, with a Potion of Restore Power beside it at 6 and 10,
-  `06-Systems/Loot-Arc.md` section 19 - and a few at every
+  `06-Systems/Loot-Arc.md` section 19; 4 and 8, and 2 and 4, since POT-THIN,
+  2026-10-21, `06-Systems/Professions-Arc.md` section 48 - and a few at every
   alchemist's and general store's counter each day -
   `src/systems/healingSupply.js`) and COMPANION-WEIGHT (a crew companion's
   pack carries what a person of his strength can, DFU's MaxEncumbrance -
   `03-World/Naval-Combat.md`). Audited the same day (AUDIT ECON,
-  `01-Overview/Audit-Econ.md`).
+  `01-Overview/audits/Audit-Econ.md`).
 - **Phase 1 - see failure.** The server-side gold ledger: each checkpoint's
   gold and item deltas read against budgets, every faucet counted. Nothing
   later is tuned blind.
@@ -130,7 +139,7 @@ current design "does not work in an enjoyable manner"):
   (BUILT - CRAFT-WORTH, 2026-10-11, the exploit audit: a counter, the keyed shelf and a patron pay a crafted piece what
   they pay the plain piece its recipe makes - its quality's Magic or Rare roll is power, never price; a Masterwork staff
   of three planks had sold for ~1,280 gold, ~79k-320k gold an hour; `systems/tradeModes.js` counterValueOf,
-  `systems/lootRarity.js` craftedRarityWorth, `net/patronLaw.js` patronWorth, `test/craftworth.test.js`);
+  `systems/loot/lootRarity.js` craftedRarityWorth, `net/patronLaw.js` patronWorth, `test/systems/craftworth.test.js`);
   customs reads the server's level, not the client's; a defaulted loan stops
   being free gold.
 - **Phase 3 - make the friction fair.** The Vault, Loadouts and secure
@@ -183,23 +192,89 @@ current design "does not work in an enjoyable manner"):
   nothing to a mace's blow until 92%.) A kit is not spent on less than a
   hundredth of a piece's condition, asks when the ceiling holds back a piece
   the player may have meant, and is kept, said, on every refusal.
-- **Selling, online** (SELL-AS-FOUND, AUDIT ECON O1, `src/systems/tradeModes.js`):
-  a counter pays for a piece no more than the condition the world handed it
-  over at. Roleplay & Realism: Items hands loot over worn and prices a sale
-  by condition, so at a third a repair cost less than the sale it added, and
-  mending loot to sell it paid every player - a printer opened by this arc's
-  own price, closed with it. A repair is for using a piece, never for
-  selling it; a piece handed over whole is untouched.
+- **Selling, online** (SELL-AS-FOUND, AUDIT ECON O1, and MEND-THIRD, below;
+  `src/systems/item/foundMark.js`, `src/systems/tradeModes.js`): a counter
+  pays for a found piece at the condition the world handed it over at, and a
+  third of what its owner's own mends - a kit, Repairs Objects, the Varla
+  Stone - put past it. Roleplay & Realism: Items hands loot over worn and
+  prices a sale by condition, so at a third a repair cost less than the sale
+  it added, and mending loot to sell it paid every player - a printer opened
+  by this arc's own price. SELL-AS-FOUND closed it by crediting a mend
+  nothing; MEND-THIRD credits its owner's own mends and never a smith's paid
+  one, which keeps it closed at every counter. A piece handed over whole is
+  untouched.
 - **Next** (Phase 3): the Vault and Loadouts make "the right tool for the
   job" a choice rather than a chore, and secure services let a smith or a
   mage sell repairs without either side being robbed.
+
+## A mend sells for a third (MEND-THIRD, 2026-10-19)
+
+The ask: the Discord's #feature-feedback, "Bring back loot price based on the
+condition!" (Laurah): "It is pointless change, goofy and actively discourage
+players to repair an item in order to maximalize the sell price - like with
+repair kits at early levels, and enchants at higher (which the latter is not
+that powerful while having entire bag full of items)". It came the day
+ASF-DEATH (`01-Overview/bugs/Field-Bugs-2026-10-19b.md`) gave Unleveled Loot's
+death drops SELL-AS-FOUND's mark, so online nearly every weapon and piece of
+armour a player loots sold as found, and a kit or Repairs Objects added nothing
+to its sale. Mac asked for a middle ground; offered a third of every mend,
+Mac: "Do it". Audited the same day (`01-Overview/audits/Audit-Mend-Third.md`),
+the third of a SMITH'S mend paid again - repaired at a cheap smith and sold at
+a dear counter (+10,433 on a Daedric cuirass found at 20%, Mercantile and
+Personality 100, a quality-1 smith and a quality-20 counter), or at the
+Fighters Guild's rank discount (+9,383 at rank 9, one counter) - and the first
+build's "a smith's repair is a loss on the sale" had held at one counter alone.
+Asked again, Mac: "Only your own mends", "Keep a third".
+
+**The rule** (`src/systems/item/foundMark.js`, the found mark's one home;
+`src/systems/tradeModes.js` `saleConditionPercentage`). A piece the world
+hands over worn carries `foundCondition`. Its owner's OWN mends - a Repair Kit
+(`smithItems.js` useRepairKit), a tick of Repairs Objects (`enchantments.js`),
+the Varla Stone (`ayleidStones.js`) - count the part of each mend above the
+mark to `selfMended` (`creditOwnMend`), never past the room above the mark; a
+smith's paid repair counts none. Online a counter reads a marked piece at its
+mark and `MEND_SALE_SHARE` (a third) of `selfMended`, no more than the piece
+holds above the mark, rounded down (`foundSalePercentage`). Wear after the
+find eats the credit first, and below the mark the piece reads its own
+condition; a piece with no mark, and every piece offline, sell at their own
+condition. The Mages Guild's Sell Magic Items reads the same, online, for a
+marked piece (AUDIT L3-1), and so does a patron's worth (L1-4).
+
+**What it does.** A smith's whole repair of a found piece adds nothing to its
+sale, at any counter, in any region, at any guild's discount - so mending to
+sell at a smith is the repair's price lost, as under SELL-AS-FOUND. An
+owner's mend sells for a third of what it put past the mark. On a Daedric
+cuirass found at 47% (Mercantile 30, Personality 40, a quality-10 counter): a
+field kit lifts its sale from 22,350 to 24,727 (+7,133 before SELL-AS-FOUND,
+nothing under it); a smith-made Daedric kit (one Daedric Ingot, base value
+800, and a Cured Leather) adds 3,804 (11,888 before SELL-AS-FOUND). A kit pays
+on the metals worth more than its ingot: at that counter from Moonstone and
+Dwarven up, about even at Silver, a loss at Iron and Steel - and on Daedric
+plate the ingot is worth more forged into a Standard cuirass (7,926 an ingot)
+than spent as a kit. A piece takes three smith's kits or four field kits to
+its ceiling (three quarters; nine tenths for a Superior kit).
+
+**The ring, the deliberate faucet** (AUDIT L2-3; Mac: "Keep a third"). A ring
+of Repairs Objects is free, mends one carried piece a fiftieth of its
+condition every four rounds, and runs through every rest: one 8-hour rest
+over six Daedric cuirasses found at 47% adds 37,092 to their sale (134,100 to
+171,192), about 309 gold for each of the rest's 120 ticks; and a found piece
+the ring mends whole sells about 37% above its as-found price, over the
+roll's whole range. It is bounded by the loot itself: no piece's credit passes a third of
+its room above the mark, and wear and re-mending cannot stack it. Before
+SELL-AS-FOUND the same rest added 114,126; under it, nothing. The Varla Stone
+mends a worn enchanted piece whole once, a rare find (an enchanted Daedric
+cuirass found at 20%: 9,510 to 21,874).
+
+`test/systems/mend_third.test.js`, `test/systems/auditmendthird.test.js`,
+`tools/mutants/mend_third.json`, `tools/mutants/auditmendthird.json`.
 
 ## Homes, priced by what you get (HOME-PRICE, 2026-10-04)
 
 The ask: "We need to make house pricing make sense online". Offered three ways,
 the choice was a new online price "by what you get (its footprint, scaled by
 town size) inside a fixed range the server enforces", with the coherence fixes
-beside it. Audited the same day (`01-Overview/Audit-HomePrice.md`); what the
+beside it. Audited the same day (`01-Overview/audits/Audit-HomePrice.md`); what the
 audit changed is folded in below.
 
 **What did not make sense.**
@@ -227,7 +302,7 @@ audit changed is folded in below.
 
 **The law** (`src/net/homeLaw.js`, read by both ends): an online home costs
 the GROUND its model stands on - the ARCH3D box's width by depth, in square
-metres (`systems/onlineHomes.js` `homeFootprintM2`, the renderer's 0.025 m a
+metres (`systems/online/onlineHomes.js` `homeFootprintM2`, the renderer's 0.025 m a
 unit; Daggerfall's meshes are centred on x and z, RMBLayout.cs:874, so the
 box's origin is no inflation) - at **300 gold a square metre**, raised by its
 town's size (`homeTownFactor`: 1 in a one-block hamlet, farm or manor, rising
@@ -241,7 +316,7 @@ house may well sit at the cap (unmeasured here), and past it price no longer
 follows size (AUDIT HOME-PRICE E3). A guild's hall is still the home's price and half again
 (`guildHallPrice`), so at most 375,000. Offline nothing changes: the bank's
 market and its buy-back read Daggerfall's own price; customs counts every deed
-at its own constant (`net/realmGoldLaw.js` `CUSTOMS_HOUSE_PRICE`, 100,000),
+at its own constant (`net/realm/realmGoldLaw.js` `CUSTOMS_HOUSE_PRICE`, 100,000),
 never either price (D10).
 
 **The bank's deed, online** (AUDIT HOME-PRICE C1, chosen: "Online price"). The
@@ -303,7 +378,7 @@ Update (AUDIT HOME-PRICE E2).
 **The four hosts.** `scenes/world.js` and `scenes/exterior.js` put the town's
 blocks on every door's building record and on the bank's directory
 (`townBlocks`, `homeTownBlocks`); `scenes/worldModes.js` prices the door, the
-deed and the sale; the dungeon host prices no door. `test/homeprice.test.js`
+deed and the sale; the dungeon host prices no door. `test/systems/homeprice.test.js`
 (8), `tools/mutants/homeprice.json` (56, all dead). **Not verified here:** this
 tree has no ARENA2, so the spread over Daggerfall's real house models was not
 measured - the rate, the factor and the range are set from the field's prices

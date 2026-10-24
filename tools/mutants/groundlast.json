@@ -5,7 +5,7 @@
   "old": "        groundQueue.push(p);\n        if (p.staticBatch)",
   "new": "        renderer.drawTerrain(p.terrain, pixelMatrix, renderer.tileArrays.get(p.groundArchive), p.tilemapTex, 6.4);\n        if (p.staticBatch)",
   "tests": [
-   "test/perf2.test.js"
+   "test/render/perf2.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "    for (const p of groundQueue) {\n      if (p.deepWaters?.hide) continue;",
   "new": "    for (const p of []) {\n      if (p.deepWaters?.hide) continue;",
   "tests": [
-   "test/perf2.test.js"
+   "test/render/perf2.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "    arrows.draw(renderer, texRemap);\n    // GROUND-LAST: THE GROUND, after every opaque mesh of the town, so a",
   "new": "    renderer.drawTerrain(groundSurface, identityMatrix, renderer.tileArrays.get(groundArchive), tilemapTex, 6.4);\n    arrows.draw(renderer, texRemap);\n    // GROUND-LAST: THE GROUND, after every opaque mesh of the town, so a",
   "tests": [
-   "test/perf2.test.js"
+   "test/render/perf2.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "    _pixelOrder.sort((a, b) => a._dist2 - b._dist2);\n    const framePixelWalk = () => {   // PERF-V8\n    for (const p of _pixelOrder) {",
   "new": "    const framePixelWalk = () => {   // PERF-V8\n    for (const p of built.values()) {",
   "tests": [
-   "test/perf2.test.js"
+   "test/render/perf2.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "    _pixelOrder.sort((a, b) => a._dist2 - b._dist2);",
   "new": "    _pixelOrder.sort((a, b) => b._dist2 - a._dist2);",
   "tests": [
-   "test/perf2.test.js"
+   "test/render/perf2.test.js"
   ]
  }
 ]

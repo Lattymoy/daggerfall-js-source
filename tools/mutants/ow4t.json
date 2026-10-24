@@ -1,11 +1,11 @@
 [
   {
     "name": "OW4-B1-mirror-back",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "export const bandPixelOf = (mapPixel) => ({ x: mapPixel.x, y: 499 - mapPixel.y });",
     "new": "export const bandPixelOf = (mapPixel) => ({ x: mapPixel.x, y: mapPixel.y });",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "The map's y handed in as the bands' row: every band at the mirror of its latitude."
   },
@@ -15,7 +15,7 @@
     "old": "    const at = bandPixelOf(playerTravelPixel()), ms = bandNowMs(), life = Math.floor(ms / BAND_LIFE_MS);",
     "new": "    const at = playerTravelPixel(), ms = bandNowMs(), life = Math.floor(ms / BAND_LIFE_MS);",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "The host asks for the bands about the map's own y."
   },
@@ -25,19 +25,19 @@
     "old": "    const now = performance.now(), at = bandPixelOf(playerTravelPixel()), life = Math.floor(bandNowMs() / BAND_LIFE_MS);",
     "new": "    const now = performance.now(), at = playerTravelPixel(), life = Math.floor(bandNowMs() / BAND_LIFE_MS);",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A peer's word is judged against the map's own y - every word dropped."
   },
   {
     "name": "OW4-B2-live-index",
     "file": "src/scenes/world.js",
-    "old": "!tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`);",
-    "new": "!tvWater(px, py) && !locationIndex.has(`${px},${py}`);",
+    "old": "!tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);",
+    "new": "!tvWater(px, py) && !locationIndex.has(`${px},${py}`) && !etherPlaceIsle(px, py);",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
-    "note": "The land test reads the live index: a spawn built on one client moves its bands."
+    "note": "The land test reads the live index: a spawn built on one client moves its bands. RE-AIMED (ETHER-OW): the line names an isle's place beside the map's."
   },
   {
     "name": "OW4-B3-anchor-is-stood",
@@ -45,7 +45,7 @@
     "old": "    if (!placed) return null;   // AUDIT OW4 B3",
     "new": "    if (false) return null;   // AUDIT OW4 B3",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "An anchor with no member placed counts as stood."
   },
@@ -55,7 +55,7 @@
     "old": "        c.yaw ??= bandYaw(c.pos);   // AUDIT OW4 B4",
     "new": "        c.yaw = bandYaw(c.pos);   // AUDIT OW4 B4",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "The bearing re-read at every retry - off the feet, float noise."
   },
@@ -65,17 +65,17 @@
     "old": "      if (_bandChase.size) bandDrop();   // AUDIT OW4 B5",
     "new": "      // AUDIT OW4 B5",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A chase freezes indoors and takes up again outside."
   },
   {
     "name": "OW4-B6-drawn-when-off",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "    const shown = getPref('wildernessCamps') === false || playerEntity.preventEnemySpawns ? [] : [...travelViewBands()];",
     "new": "    const shown = [...travelViewBands()];",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "Bands drawn though none can come."
   },
@@ -85,7 +85,7 @@
     "old": "    for (let i = _bandSpentAt.length - 1; i >= 0; i--) if (bandLifeOf(_bandSpentAt[i]) < life - 1) _bandSpentAt.splice(i, 1);",
     "new": "",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "The spent list rides every frame for ever."
   },
@@ -95,7 +95,7 @@
     "old": "    const listed = travelViewBands(), sight = bandSight(tvBandSeen.night);",
     "new": "    const listed = travelViewBands(), sight = bandSight(bandNight(ms));",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "The sight reads the moment's night, the bands their life's."
   },
@@ -105,7 +105,7 @@
     "old": "    if (playerEntity.health <= 0 || modes?.deathUp?.() || gamePaused()) return;\n",
     "new": "",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A chase runs on under the death screen and a quest box."
   },
@@ -115,7 +115,7 @@
     "old": "      || playerEntity.preventEnemySpawns || player.isPlayerSwimming || aboard\n",
     "new": "      || playerEntity.preventEnemySpawns || player.isPlayerSwimming\n",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A band walks the sea after a boat."
   },
@@ -125,7 +125,7 @@
     "old": "    for (const turn of [0, Math.PI / 2, -Math.PI / 2, Math.PI]) {",
     "new": "    for (const turn of [0, 0, 0, 0]) {",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "The fallback bearings are the band's own again."
   },
@@ -135,7 +135,7 @@
     "old": "    if (!bandRoom(mk)) return false;\n    const fx = player.feetAt();",
     "new": "    const fx = player.feetAt();",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A full foe pool is stood into."
   }

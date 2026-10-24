@@ -52,13 +52,13 @@ angles.
   windmills-kamer README refused whole blocks for the same reason). So
   `tools/worldDataPatch.mjs` took each shipped file against the classic
   block out of `BLOCKS.BSA`, serialised exactly as the editor serialises
-  it (`src/formats/worldDataJson.js`), and kept the difference: 68, 93 and
+  it (`src/formats/worldData/worldDataJson.js`), and kept the difference: 68, 93 and
   74 ops, 21-31 KB against the shipped 190-330 KB. Each patch records the
   sha256 of the author's file in canonical form.
 - **Not here: the three shipped `.RDB.json` files.** At load the port
   reads the three classic blocks out of the player's own `BLOCKS.BSA`,
   lays the patches on and hands the result to the world-data door under
-  the files' own names (`src/formats/worldDataPatch.js`,
+  the files' own names (`src/formats/worldData/worldDataPatch.js`,
   `src/scenes/modWorldData.js`) - from there it is the mod's file, served
   as DFU's `WorldDataReplacement.GetDFBlockReplacementData` serves it
   (which is also why the port now reads RDB blocks out of JSON at all:

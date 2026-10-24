@@ -5,7 +5,7 @@
   "old": "    out[i + 3] = 255;\n  };",
   "new": "    out[i + 3] = 200;\n  };",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "  if (isTip && height >= highlightMin) return 4;",
   "new": "  if (isTip) return 4;",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "export const toneByte = (tone) => tone >= PX_TONES ? 255 : tone * 64;",
   "new": "export const toneByte = (tone) => tone >= PX_TONES ? 255 : tone * 50;",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "    lean = Math.max(1 - x0, Math.min(w - 2 - x0, lean));",
   "new": "    lean = lean;",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "          if (g > bg || (g === bg && t < bt)) { bg = g; bt = t; bi = i; }",
   "new": "          if (bi < 0) { bg = g; bt = t; bi = i; }",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ],
   "why": "GRASS AUDIT 1 re-aimed: the chain is coverage-preserving and tip-toned now."
  },
@@ -51,7 +51,7 @@
   "old": "  while (levels[levels.length - 1].width > 1 || levels[levels.length - 1].height > 1) {",
   "new": "  while (levels[levels.length - 1].width > 2) {",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -60,7 +60,7 @@
   "old": "  const keep = Math.min(covered.length, Math.max(1, Math.round(targetFrac * w2 * h2)));",
   "new": "  const keep = covered.length;",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ],
   "why": "GRASS AUDIT 1 re-aimed: the max chain was 88% covered by level 3 and 100% from level 4."
  },
@@ -70,7 +70,7 @@
   "old": "      + '  vVar = min(floor(hash(aPA.xy * 64.0) * uPxVariants), uPxVariants - 1.0);   // GRASS AUDIT 1: the prelude\\'s hash, its float32 fract honest; AUDIT MEADOW1: of the cell\\'s lane, not the scene\\'s root - every tuft re-rolled at each map pixel crossed',",
   "new": "      + '  vVar = floor(hash(aPA.xy * 64.0) * uPxVariants);   // GRASS AUDIT 1: the prelude\\'s hash, its float32 fract honest; AUDIT MEADOW1: of the cell\\'s lane, not the scene\\'s root - every tuft re-rolled at each map pixel crossed',",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ],
   "why": "AUDIT MEADOW1 re-aimed by content: the seed is the cell's lane now"
  },
@@ -80,7 +80,7 @@
   "old": "      + '    if (px.a < 0.5 || vFade < bayer4(gl_FragCoord.xy)) discard;\\n'",
   "new": "      + '    if (vFade < bayer4(gl_FragCoord.xy)) discard;\\n'",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -89,7 +89,7 @@
   "old": "      + '    vec4 px = texture(uPxSheet, vec2((vVar + vUV.x) / uPxVariants, vUV.y));\\n'",
   "new": "      + '    vec4 px = texture(uPxSheet, vec2((vVar + vUV.x) / uPxVariants, 1.0 - vUV.y));\\n'",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -98,7 +98,7 @@
   "old": "      + '  int m = ((x & 1) << 3) | ((q.y & 1) << 2) | (x & 2) | ((q.y & 2) >> 1);\\n'",
   "new": "      + '  int m = ((x & 1) << 3) | ((q.y & 1) << 2) | ((x & 2) << 1) | ((q.y & 2) >> 1);\\n'",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -107,7 +107,7 @@
   "old": "    to: '  c *= (uAmb * 1.25 * (0.42 + 0.58*t) + uSunCol',",
   "new": "    to: '  c *= (uAmb * 1.25 * (0.42 + 0.58*vT) + uSunCol',",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -116,7 +116,7 @@
   "old": "    if (out.indexOf(e.from, at + 1) >= 0) throw new Error(`grass edit lands twice: ${e.why}`);",
   "new": "",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -125,7 +125,7 @@
   "old": "    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);",
   "new": "    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -134,7 +134,7 @@
   "old": "    for (let i = 0; i < mips.length; i++) gl.texImage2D(",
   "new": "    for (let i = 0; i < 1; i++) gl.texImage2D(",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -143,7 +143,7 @@
   "old": "export const pixelGrass = (style) => style !== 'smooth';",
   "new": "export const pixelGrass = (style) => style === 'pixel';",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -152,7 +152,7 @@
   "old": "      gl.activeTexture(gl.TEXTURE4); gl.bindTexture(gl.TEXTURE_2D, meadow ? this.meadowSheet : this.pxSheet);\n      gl.uniform1i(u.uPxSheet, 4);",
   "new": "      gl.activeTexture(gl.TEXTURE3); gl.bindTexture(gl.TEXTURE_2D, meadow ? this.meadowSheet : this.pxSheet);\n      gl.uniform1i(u.uPxSheet, 3);",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ],
   "why": "MEADOW1 re-aimed by content: unit 4 carries the meadow's atlas or the pixel sheet."
  },
@@ -162,7 +162,7 @@
   "old": "        LAB_GRASS.range, getPref('grassStyle'));   // GRASS-PX",
   "new": "        LAB_GRASS.range);   // GRASS-PX",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -171,17 +171,17 @@
   "old": "key: 'grassStyle', initial: 'meadow',",
   "new": "key: 'grassStyle', initial: 'smooth',",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ],
   "why": "MEADOW1 re-aimed by content: the row's default is the meadow now."
  },
  {
   "name": "GRASSPX-the-renderer-compiles-the-labs-text-so-the-pixel-uniforms-do-not-exist",
   "file": "src/render/labGrass.js",
-  "old": "  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS }, tuft = null, provoke = true } = {}) {",
-  "new": "  constructor(gl, { stages = { vs: GAME_GRASS_VS, fs: LAB_GRASS_FS }, tuft = null, provoke = true } = {}) {",
+  "old": "(art === MEADOW_ART ? { vs: GAME_GRASS_VS, fs: GAME_GRASS_FS }",
+  "new": "(art === MEADOW_ART ? { vs: GAME_GRASS_VS, fs: LAB_GRASS_FS }",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -190,7 +190,7 @@
   "old": "      const far = this._oneQuad || dn > range * GRASS_FAR_AT;",
   "new": "      const far = dn > range * GRASS_FAR_AT;",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -199,7 +199,7 @@
   "old": "    this._oneQuad = pixel;",
   "new": "    this._oneQuad = this._oneQuad || pixel;",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -208,7 +208,7 @@
   "old": "float g = max(1.0, floor(pow(l, 1.0 / 2.2) * uPxSteps + 0.5)) / uPxSteps;",
   "new": "float g = floor(pow(l, 1.0 / 2.2) * uPxSteps + 0.5) / uPxSteps;",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -217,7 +217,7 @@
   "old": "float g = max(1.0, floor(pow(l, 1.0 / 2.2) * uPxSteps + 0.5)) / uPxSteps; c *= pow(g, 2.2) / l;",
   "new": "float g = max(1.0, floor(l * uPxSteps + 0.5)) / uPxSteps; c *= g / l;",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -226,7 +226,7 @@
   "old": "floor(vTint * (uPxTintBands - 1.0) + 0.5) / (uPxTintBands - 1.0)",
   "new": "floor(vTint * uPxTintBands) / uPxTintBands",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -235,7 +235,7 @@
   "old": "mix(aInst2.w * (1.0 - vT*0.75), h * 0.5, uPixel)",
   "new": "mix(aInst2.w * (1.0 - vT*0.75), aInst2.w * 3.0, uPixel)",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -244,7 +244,7 @@
   "old": "vVar = min(floor(hash(aPA.xy * 64.0) * uPxVariants), uPxVariants - 1.0);",
   "new": "vVar = min(floor(aPC.a * uPxVariants), uPxVariants - 1.0);",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ],
   "why": "AUDIT MEADOW1 re-aimed by content: the seed is the cell's lane now"
  },
@@ -254,7 +254,7 @@
   "old": "    gl.uniform1f(u.uPxVariants, meadow ? MEADOW_SLOTS : this.pxVariants);\n    gl.uniform1f(u.uPxSteps, PX_RAMP_STEPS);\n    gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);\n    if (pixel) {",
   "new": "    if (pixel) {\n    gl.uniform1f(u.uPxVariants, meadow ? MEADOW_SLOTS : this.pxVariants);\n    gl.uniform1f(u.uPxSteps, PX_RAMP_STEPS);\n    gl.uniform1f(u.uPxTintBands, PX_TINT_BANDS);",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ],
   "why": "MEADOW1 re-aimed by content: the counts are the meadow's or the pixel style's; AUDIT MEADOW1: the step count is the pixel style's alone again (the meadow skips the ramp in its fragment stage)"
  },
@@ -264,7 +264,7 @@
   "old": "    if (pixel) {\n      gl.activeTexture(gl.TEXTURE4);",
   "new": "    if (pixel || true) {\n      gl.activeTexture(gl.TEXTURE4);",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -273,7 +273,7 @@
   "old": "      const m = this._oneQuad ? Math.ceil(n / (this._meadow ? MEADOW_BLADES_PER_TUFT : PX_BLADES_PER_TUFT)) : n;",
   "new": "      const m = n;",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ],
   "why": "MEADOW1 re-aimed by content: the divisor is the meadow's or the pixel style's."
  },
@@ -283,7 +283,7 @@
   "old": "      gl.uniform1f(this.u.uSlotN, m);",
   "new": "      gl.uniform1f(this.u.uSlotN, n);",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -292,7 +292,7 @@
   "old": "export const isHighlightRow = (r, top, height, highlightMin = PX_HIGHLIGHT_MIN) => height >= highlightMin && r >= top - 1;",
   "new": "export const isHighlightRow = (r, top, height, highlightMin = PX_HIGHLIGHT_MIN) => height >= highlightMin && r >= top;",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -301,7 +301,7 @@
   "old": "    if (bl.head) {\n      // a seed head",
   "new": "    if (false) {\n      // a seed head",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -310,16 +310,16 @@
   "old": "    if (mine.length && !mine.some((b) => out[b.o + 3])) out[mine[0].o + 3] = 255;",
   "new": "",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
   "name": "AUDIT-GRASSPX-the-row-does-not-say-what-it-is-inert-without",
   "file": "src/systems/features.js",
-  "old": "    note: 'How much grass grows in the enhanced outdoors. Grass is the heaviest thing outdoors, so try Half '",
-  "new": "    note: 'How much grass grows. Grass is the heaviest thing outdoors, so try Half '",
+  "old": "    get note() { return t('features.grass.note', 'How much grass grows in the enhanced outdoors. Grass is the heaviest thing outdoors, so try Half '",
+  "new": "    get note() { return t('features.grass.note', 'How much grass grows. Grass is the heaviest thing outdoors, so try Half '",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -328,7 +328,7 @@
   "old": "vertsPerBlade: labGrass._meadow ? labGrass.vertsCards : labGrass._oneQuad ? labGrass.vertsFar : labGrass.verts,",
   "new": "vertsPerBlade: labGrass.verts,",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ],
   "why": "MEADOW1 re-aimed by content: the meadow's cards ride the same line."
  },
@@ -338,7 +338,7 @@
   "old": ", LAB_GRASS_HEAD + stages.fs);   // GRASS-PX: the lab's text under the declared edits",
   "new": ", LAB_GRASS_HEAD + GAME_GRASS_FS);   // GRASS-PX: the lab's text under the declared edits",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -347,7 +347,7 @@
   "old": "  Object.freeze({\n    why: 'the pixel quad is not tapered",
   "new": "  Object.freeze({\n    why: 'GRASS-PX3 mutant: the clock stepped',\n    from: '  float gust = sin(uTime*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',\n    to: '  float gust = sin((floor(uTime * 8.0) / 8.0)*1.7 - along*0.35 + aInst.w*0.6) * 0.5 + 0.5;',\n  }),\n  Object.freeze({\n    why: 'the pixel quad is not tapered",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -356,7 +356,7 @@
   "old": "export const highlightMinFor = (h) => Math.round(h * 20 / 32);",
   "new": "export const highlightMinFor = (h) => Math.round(h * 21 / 32);",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -365,7 +365,7 @@
   "old": "export const highlightMinFor = (h) => Math.round(h * 20 / 32);",
   "new": "export const highlightMinFor = (h) => Math.round(h * 19 / 32);",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -374,7 +374,7 @@
   "old": "  const highlightMin = highlightMinFor(h);",
   "new": "  const highlightMin = Math.round(h * 21 / 32);",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -383,7 +383,7 @@
   "old": "    if (head) lean = Math.min(w - 3 - x0, lean);\n",
   "new": "",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -392,7 +392,7 @@
   "old": "export const tuftMarginFor = (w) => Math.max(1, Math.round(w * 3 / 16));",
   "new": "export const tuftMarginFor = (w) => Math.max(1, Math.round(w * 2 / 16));",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -401,7 +401,7 @@
   "old": "  const margin = tuftMarginFor(w);",
   "new": "  const margin = Math.max(1, Math.round(w * 2 / 16));",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -410,7 +410,7 @@
   "old": "export const bladeMinFor = (h) => Math.floor(h * 0.45);",
   "new": "export const bladeMinFor = (h) => Math.floor(h * 0.4);",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  },
  {
@@ -419,7 +419,7 @@
   "old": "    const height = Math.floor(h * (0.45 + rnd() * 0.55));",
   "new": "    const height = Math.floor(h * (0.4 + rnd() * 0.6));",
   "tests": [
-   "test/grasspx.test.js"
+   "test/render/grasspx.test.js"
   ]
  }
 ]

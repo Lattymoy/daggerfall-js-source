@@ -31,7 +31,7 @@
 // the host's injectable roll (Port-Ledger A, the engine-PRNG rule).
 // ═══════════════════════════════════════════════════════════════════
 
-import { WATER_BIOME, climateToBiome } from './underwaterDecorations.js';
+import { WATER_BIOME, climateToBiome } from './underwater/underwaterDecorations.js';
 import { rangeInt, rangeFloat } from '../systems/unleveledLoot.js';   // Random.Range(int, int) and (float, float)
 import { insideUnitSphere } from '../scenes/magicCandle.js';          // Random.insideUnitSphere
 import { roundToInt } from '../systems/mathf.js';                   // Mathf.RoundToInt

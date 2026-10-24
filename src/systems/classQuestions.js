@@ -75,6 +75,17 @@ export const ANSWER_TABLE = Object.freeze([
  *  Returns null when the record is missing (the caller logs loudly
  *  where DFU throws - the crash-class doctrine). */
 export function parseQuestionLibrary(textRsc) {
+  // L10N3a: a translation's table keys the forty apart, `9000.1`..`9000.40`, and DFU reads them so - GetQuestions'
+  // own loop over GetRSCTokens(string key) (CreateCharClassQuestions.cs:222-235), the same split per token's text,
+  // one line a token (AppendLine). The classic record is one run, split at '{' below.
+  if (textRsc?.localeTokensByKey?.(`${CLASS_QUESTIONS_TEXT_ID}.1`)) {
+    const library = [];
+    for (let q = 1; q <= QUESTION_LIBRARY_SIZE; q++) {
+      const tokens = textRsc.localeTokensByKey(`${CLASS_QUESTIONS_TEXT_ID}.${q}`) ?? [];
+      library.push(tokens.map((t) => { const split = t.text.split(/\d+[.]/); return split.length > 1 ? split[1] : split[0]; }).join('\n'));
+    }
+    return library;
+  }
   if (!textRsc?.hasRecord?.(CLASS_QUESTIONS_TEXT_ID)) return null;
   const parts = textRsc.plainText(CLASS_QUESTIONS_TEXT_ID)[0].split('{');
   const library = [];

@@ -32,10 +32,11 @@
 // looks like the player misremembered picking something up.
 // ═══════════════════════════════════════════════════════════════════
 
-import { DROP_ICON_IDXS, DROP_ICON_ARCHIVES, RANDOM_TREASURE_ARCHIVE } from './lootDataTables.js';
-import { STORAGE_CONTEXT } from './horseCartLaw.js';   // HCC: the storage contexts the runtime's CanAccessWagonStorage takes
+import { DROP_ICON_IDXS, DROP_ICON_ARCHIVES, RANDOM_TREASURE_ARCHIVE } from './loot/lootDataTables.js';
+import { STORAGE_CONTEXT } from './horse/horseCartLaw.js';   // HCC: the storage contexts the runtime's CanAccessWagonStorage takes
+import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { BAG_CAPACITY, BAG_WORDS, hasBag } from '../net/bagLaw.js';   // BAG1: the Materials Bag, a second list as the wagon is
-import { activeWagonItem } from './wagonKinds.js';   // CART-SLOT: the Cart cell shows the wagon driven
+import { activeWagonItem } from './wagon/wagonKinds.js';   // CART-SLOT: the Cart cell shows the wagon driven
 
 /** ItemGroups.Transportation.Small_cart's template index. */
 export const SMALL_CART_TEMPLATE = 93;
@@ -49,10 +50,11 @@ export const EXIT_TOO_FAR_TEXT = 'The exit is too far away for you to access you
 /** Why the wagon did not open. Same shape as itemTransfer's REFUSAL
  *  so one renderer answers both, and separate from it because these
  *  are a BUTTON's refusals rather than a transfer's - DFU has them in
- *  different members and they refuse different things. */
+ *  different members and they refuse different things. L10N3d: each
+ *  `text` is read in the player's language when the box asks for it. */
 export const WAGON_REFUSAL = Object.freeze({
-  noWagon: { reason: 'noWagon', text: NO_WAGON_TEXT },
-  exitTooFar: { reason: 'exitTooFar', text: EXIT_TOO_FAR_TEXT },
+  noWagon: { reason: 'noWagon', get text() { return localizedText('noWagon', NO_WAGON_TEXT); } },
+  exitTooFar: { reason: 'exitTooFar', get text() { return localizedText('exitTooFar', EXIT_TOO_FAR_TEXT); } },
 });
 
 /** Items.Contains(Transportation, Small_cart) (:1236). The CART IS IN
@@ -212,6 +214,17 @@ export function remoteTargetType(deps = {}, state = {}) {
   return deps.loot ? REMOTE_TARGET_TYPES.Loot : REMOTE_TARGET_TYPES.Dropped;
 }
 
+/** STOLEN-GOODS (FIELD BUGS 2026-10-16b): THE OWNER'S KEEPING while the remote list showing is someone else's goods - the
+ *  host's `loot.stolenFrom`, the Set of the records the target held as its window opened (a shut shop's shelf, a
+ *  stranger's cupboard: scenes/worldModes.js; a robbed caravan's goods: scenes/world.js) - asked only while that list IS
+ *  the loot target, never the wagon, the bag or a reward tray; else null. A take of the owner's piece from it is a theft
+ *  (itemTransfer.js applyTransfer's `stolenFrom`), the owner's piece put back is theirs again (`returnTo`) - AUDIT S1: the
+ *  player's own piece through it is neither (systems/stolenGoods.js takenFromKeeping). */
+export function theftTarget(deps = {}, state = {}) {
+  const keeping = deps.loot?.stolenFrom;
+  return remoteTargetType(deps, state) === REMOTE_TARGET_TYPES.Loot && keeping instanceof Set ? keeping : null;
+}
+
 /** dropIconIdxs[archive][texture] - the RECORD a cycling index names.
  *  Null for an archive with no list and for the -1 "no chosen icon"
  *  index, which is what OnPush leaves when nothing was picked. */
@@ -357,5 +370,8 @@ export function closeSession(deps = {}, state = {}) {
       record == null ? null : { archive: icon.archive, record },
       loot?.pos ?? null);
   }
+  // OUTDOOR-LOOT (DESIGN 3.6): and a container that shares its list is told its window is gone - once, on a hand-off as on a
+  // close, both skins (ui/inventoryDoor.js tells it the window stood). It reads what the window moved and composes again.
+  try { loot?.closed?.(); } catch (e) { console.warn(`[loot] a container's close threw: ${e?.message ?? e}`); }   // the window is gone whatever it says: onClose below always runs
   deps.onClose?.();
 }

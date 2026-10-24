@@ -1,10 +1,10 @@
 # The Cloak - the port's own cloak, and what hangs around it
 
-`tools/bakeCloak.mjs` (the bake) on `tools/bakeSteelPlate.mjs`'s machinery + `tools/meshSubdivide.mjs` (Loop
-subdivision, MW-CLOAK2) + `tools/skinWeights.mjs` (the hang OVER its joints) + `src/characters/ownClothingModels.js` (the garments that wear it, the dye's painting) +
-`src/formats/mwItemMap.js` (composeWornArmor) + `src/formats/mwCloakFit.js` (the three fits) + `src/combat/fpArm.js`
+`tools/bakeCloak.mjs` (the bake, its one bone CHEST_BONE) on `tools/bakeSteelPlate.mjs`'s machinery + `tools/meshSubdivide.mjs` (Loop
+subdivision, MW-CLOAK2) + `src/characters/ownModels/ownClothingModels.js` (the garments that wear it, the dye's painting) +
+`src/formats/morrowind/mwItemMap.js` (composeWornArmor) + `src/formats/morrowind/mwCloakFit.js` (the three fits) + `src/combat/fpArm.js`
 (fitThirdPersonCloak, where the third-person body takes them) (MW-CLOAK1, Mac, 2026-10-09; MW-CLOAK2, smoothed round
-the shoulders, the same day; AUDIT MW-CLOAK, held in motion, the same day)
+the shoulders, the same day; AUDIT MW-CLOAK, held in motion, the same day; MW-CAPE-RIGID, on the chest alone, 2026-10-14)
 
 > "2. The new cloak and its textures. Note: The new cloak will need bones to animate with the character movement.
 > Ensure theres no clipping with weapons that are stowed"
@@ -19,16 +19,14 @@ every recommendation: **both cloaks** - Daggerfall's Casual Cloak and Formal Clo
 One object (`Cube.020 Remeshed.001`), 232 triangles as exported: a single open sheet hung from the shoulders down the
 back to the calves, two straps over the shoulders, its normals facing out (the writer makes every shape two-sided,
 rule 65, so its inside draws too). It ships smoothed, 3,712 triangles (MW-CLOAK2, below). It came out
-of the steel plate's scene, so it stands on retail's bind as the plate does. It is **skinned at bake time** on the steel
-breastplate's rig - the pelvis, the spine to the neck, the clavicles at its shoulders - and from the waist down it
-**hangs over** that (`jointWeights` mode 'over', MW-EBONY1): each thigh takes a growing share of its own side, from
-nothing at z 86 to 0.85 at the hem, split across the middle's 20 units (10 either side), so the cloak walks with the legs - the side over
-the leg stepping back goes back with it - without riding a leg outright and tearing at the middle. **Half at the hem
-was tried first and lost**: posed on retail's rig in a stride (the back thigh 30 degrees, its knee 45) the trailing
-calf came through the hem; at 0.85 it stays behind it in a walk, and in that full stride the trailing boot reaches no
-more than 2.2 units into the middle of the hem as baked, where the two thighs split the cloak (1.3 against the export's
-coarse hem, before MW-CLOAK2 smoothed it) - and none once fit 1 holds the cloak over the stride (AUDIT MW-CLOAK, below).
-No cloth law: the cloak follows the bones.
+of the steel plate's scene, so it stands on retail's bind as the plate does. It is **skinned at bake time to ONE bone,
+the chest** (`Bip01 Spine2`, where the clavicles join - MW-CAPE-RIGID, below): every vertex wholly its own, no other
+bone in the mesh, so the whole sheet moves rigidly with the chest and with nothing else. No cloth law.
+
+Until MW-CAPE-RIGID it was skinned on the steel breastplate's rig - the pelvis, the spine to the neck, the clavicles -
+and from the waist down **hung over** that (`jointWeights` mode 'over', MW-EBONY1), each thigh taking a growing share of
+its own side to 0.85 at the hem, so the hem walked with the legs (half at the hem had been tried first and lost: the
+trailing calf came through it). The ebony plate and the townsfolk still hang by that law; the cloak no longer does.
 
 **Eight paintings, a mesh each.** `cloak_<painting>.nif` names `cloak_<painting>.dds`, for blue, grey, red, dark brown,
 purple, light brown, white and green - Daggerfall's dye order less the two Mac did not paint. Aquamarine wears the blue
@@ -55,17 +53,20 @@ worn adds). Each pose below is a turn of named bones over the skeleton's REST - 
 cloak was authored in: skinned into the rest the cloak sits up to 7 units from its bind at the hem (the rest has the
 right leg forward) and 6 above the waist, so every fit measures the cloak as the skin places it, never its bind.
 
-1. **The cloak over what it covers** (`fitCloakOver`), held over `CLOAK_FIT_POSES`: the rest, and a stride each way
-   (the leading thigh 35 degrees, the trailing -30 with its knee bent 45) with both arms swung back 25. Every point of
+1. **The cloak over what it covers** (`fitCloakOver`), held over `CLOAK_FIT_POSES`: the rest, a stride each way
+   (the leading thigh 35 degrees, the trailing -30 with its knee bent 45) with both arms swung back 25, and the chest
+   leant back 10 (MW-CAPE-RIGID: on the chest alone the lean swings the whole hem forward about the chest, into the
+   legs and the tassets - 2.5 units through the ebony plate's, fitted without it). Every point of
    the body and its clothes (vertices, and each edge's interior every unit) that stands behind the cloak's sheet in
    any of them - its front layer where it folds - eases the sheet back past it by `CLOAK_CLEARANCE` (1): the triangle
    over it moves its whole way and the cloak round it less, (1 - (d / 8)^2)^2 of it to nothing at `CLOAK_EASE_RADIUS`
    (8, MW-CLOAK2), a welded seam as one; its normals are then its new shape's. Each pose's push is straight back in
    that pose, carried into the bind the cloak is skinned from through each vertex's own skin blend in that pose
    (measured by skinning unit steps - skinning is affine in the bind, so each pose is measured once), so it rides the
-   bones. The ebony pauldrons stand 2.6 through the shoulders as baked, the steel ones 1.3; held over the poses the
-   furthest push is 5.2 over the ebony plate and 4.9 over the steel (a stride's boot at the hem's middle, an arm swung
-   back at the shoulders), where the rest alone asked 3.6 and 2.3. A point more than `CLOAK_PUSH_LIMIT` (10) through
+   bones. On the chest alone the ebony pauldrons stand 1.3 through the shoulders at rest, the steel plate 0.7; held over
+   the poses the furthest push is 4.6 over the ebony plate and 3.8 over the steel, where the rest alone asks 2.3 and
+   1.7 (hung over the spine and the thighs it was 2.6 and 1.3 through, 5.2 and 4.9 held, 3.6 and 2.3 at rest). A
+   stride's legs reach at most 1.1 into the cloak as baked, and the fit clears them. A point more than `CLOAK_PUSH_LIMIT` (10) through
    it, past what the cloak has left to give, is no body's: it is left through and the card says so ("cloak: something
    under it stands more than 10 units through it"), never chased. A beast's tail and a carried shield are no part of
    what it covers - they pass through it as through a Morrowind robe.
@@ -84,29 +85,31 @@ right leg forward) and 6 above the waist, so every fit measures the cloak as the
      19 degrees nearer plumb (1 to 38 across the addon's blades; a dagger not at all, a crossbow 44 to 52). Pushed back
      over the cloak instead, it would hang some thirty units off the hip. A hip group no pitch within 60 degrees clears
      is left as it hangs, and the card says so.
-3. **And it goes with the cloak, every pose** (`followCloak`, AUDIT MW-CLOAK). The hem swings with the thighs and gear
-   rides its own bone, so the rest fit alone let the hem sweep through a hip-hung blade on every step its leg went
-   forward, a greatsword's tip through the hem in a stride, and a bow's limb through it as the spine leant back. Each
+3. **And it goes with the cloak, every pose** (`followCloak`, AUDIT MW-CLOAK). The cloak rides the chest and gear
+   rides its own bone, so the rest fit alone lets the hem sweep through hip-hung gear as the chest leans back over the
+   hips (while the hem hung over the thighs it swept through a hip-hung blade on every step its leg went forward too).
+   Retail's slung holsters hang from `Bip01 Spine2`, the cloak's own bone, so slung gear and the cloak are one rigid
+   body and the follow never moves it (MW-CAPE-RIGID). Each
    holster is tied to the cloak at rest - one contact a 2-unit cell of the gear, the cloak's triangle under or over it
    and where in that triangle, the gear's point in its bone's frame - and every pose after (the assembly's `afterPose`,
    run by `poseAssembly` once every piece is posed) it is turned about its bone, and slung gear also slid straight off
    the back, the least that keeps each contact as far from the cloak as it stood at rest, up to `CLOAK_CLEARANCE`: the
    hem kicks a scabbard's tip aside as cloth would, and a pose the cloak keeps clear moves nothing. A linear law solved
    by cyclic projection, re-taken where the last round left the gear six times, each round's step capped (25 degrees
-   and 8 units a pose in all), on arrays made once. Three of the addon's longbows need the slide leaning back (two over
-   the ebony plate); turned alone, a limb comes through. Leaning back 10 degrees, the steel longbow slides 1.8 units and
-   turns 8.9 degrees.
+   and 8 units a pose in all), on arrays made once. Leaning back 10 degrees, the iron longsword turns 12.5 degrees and
+   the crossbow 20.5. The slide is kept for a skeleton that hangs a slung holster below the chest; on retail's none
+   needs it (while the cloak hung over the spine, three of the addon's longbows did).
 
    A moved piece's source, and the cloak's batch, are replaced, never written into (a rigid piece's source can be its
    parsed batch's own array), and the live pose is re-placed at once. A weapon swap ties the new holster in its place.
 
-**Seated** (a card table's chair, `player/seatPose.js`), the cloak swaps to a batch whose thighs keep
-`CLOAK_SEATED_SHARE` (0.3) of their weight, the rest given to the pelvis (`seatCloak`): with the whole its hem wrapped
-forward under the thighs past the knees; with none it hung from the dropped hips through the floor; at three tenths it
-hangs behind the seated body, its hem above the floor. The seated batch is made once and shares the standing one's
-positions; the fits always measure the standing cloak.
+**Seated** (a card table's chair, `player/seatPose.js`, or a saddle) the cloak is the standing cloak: one batch, the
+sitting thighs moving none of it, its hem hanging from the chest behind the body. With the hips dropped onto the chair
+(SEAT_HIP_DROP) it stands 3.5 units into the floor - see what it does not do. (AUDIT MW-CLOAK had swapped in a seated
+batch whose thighs kept 0.3 of their share, `seatCloak`; MW-CAPE-RIGID removed it with the thighs.)
 
-**Measured on the addon's own scabbards** (all 71 under `vendor/weapon-sheathing/`, over the steel and the ebony plate):
+**Measured on the addon's own scabbards** (MW-CLOAK2's cloak, hung over the spine and the thighs - MW-CAPE-RIGID
+re-measured the four the pins hold, not all 71) (all 71 under `vendor/weapon-sheathing/`, over the steel and the ebony plate):
 as hung, 57 cross the cloak at rest - all but the daggers, the tantos, Keening, the goblin club, the crescent blade and
 the fork. After the three fits, none crosses it in any of ten poses - the rest, each arm swung back 20, the spine leant
 back 5 and 10 and forward 8, a walk and a stride with each leg back - and no piece of the body or its armour does either
@@ -171,33 +174,53 @@ the seated cloak. With them:
 - The eight meshes differ only in the painting they name (110 KB each, fetched per painting worn).
 - Armour more than 10 units through the cloak (a retail robe's flare could be) stays through it, named on the card.
 - The follow moves the gear, never the cloak; gear turns at most 25 degrees and slides at most 8 units a pose.
-- The seated share is set on the card table's chair; another seat's height is not measured.
+- Seated, the hem stands 3.5 units into the floor (the hips drop onto the chair and the cloak rides the chest down
+  with them; nothing lifts it off the seat or the floor) - the owner's chest-alone rig, kept as asked.
+- Leaning back past 10 degrees the chest swings the hem further forward than the follow's cap turns hip gear: at 15 the
+  crossbow reaches its 25 degrees and 28 of its edges cross the cloak. The sweep's furthest lean is 10.
 - The addon's hip positions cross the bulky plate sets themselves - the steel tassets and the left gauntlet - with or
   without a cloak: that is the sheathing's fit to the vanilla body, not the cloak's, and the pitch leaves its total
   about where it was (a crossbow's 514 crossings to 534, some moved onto the thighs).
 - The hip lantern (HT-WAIST) is in neither fit. Stowed shields are not in the port yet.
 
+## MW-CAPE-RIGID: the chest alone
+
+The owner, 2026-10-14: "Remove all waypaiting from capes, attach cape mesh to chestbone. So it exclusively moves with
+the chest bone and no other bone with effect the vertices of the cape". `tools/bakeCloak.mjs` skins every vertex to
+`CHEST_BONE` (`Bip01 Spine2`) at weight one - the hang, the spine, the clavicles and the thighs gone from it - and the
+eight NIFs are re-baked (their textures byte for byte what they were). It stays a skinned NIF of one bone rather than a
+rigid part on the `Chest` node: retail's bind carries Spine2's frame and not that node's (`Own-Heads.md`), and the fits
+edit a skinned cloak's batch. A stride, an arm swung back, a clavicle raised and a seat move none of it; the chest
+leant back carries every vertex with it. `seatCloak` and `CLOAK_SEATED_SHARE` are gone (with nothing on the thighs
+there is nothing to seat), and fit 1 holds one more pose, the chest leant back 10. What it costs is two residues above:
+the seated hem in the floor, and hip gear past its cap leaning back further than the sweep.
+
 ## How it was proven
 
-`test/mwcloak1.test.js` (7): the bake byte for byte, each DDS its painting, the export's hash, one object, no
-Morrowind painting; the scene placement, `Tri Cloak 0`, the bones, the thighs' share exactly, and a leg never a child
-or a parent blend (a synthetic rig, the thigh's weight the hang's alone); the four garments, the dye map, no slot, no
-shadow, never in the first person, the weld under it, two cloaks, the census and the report; through the binder the
-cloak behind the spine, the shoulders still in a stride, the hem back with the leg, the trailing boot under 2.5 into
-the hem as baked and through it in neither stride once fitted; fit 1 on the ebony plate (the live cloak re-skinned at
+`test/tooling/mwcloak1.test.js` (7): the bake byte for byte, each DDS its painting, the export's hash, one object, no
+Morrowind painting; the scene placement, `Tri Cloak 0`, ONE bone - the chest - in every painting, every vertex wholly
+its own, and (the hang the ebony plate and the townsfolk keep) a leg never a child or a parent blend (a synthetic rig,
+the thigh's weight the hang's alone); the four garments, the dye map, no slot, no shadow, never in the first person,
+the weld under it, two cloaks, the census and the report; through the binder the cloak behind the spine, unmoved by
+either stride, either arm or a clavicle, carried rigidly by the chest leant back, and through in no stride nor the
+lean once fitted; fit 1 on the ebony plate (the live cloak re-skinned at
 once, a walk and each arm swung back keeping the pauldrons clear, a second fit moving nothing, a folded cloak); fit 2 on
 the vendored daedric greatsword, longbow, iron longsword and iron dagger (the pitched sword's normals turned with it);
-and the build's wiring by source, the icon among it. `test/mwcloak2.test.js` (3): one level's arithmetic on a small
+and the build's wiring by source, the icon among it, and no seat swap left in it. `test/tooling/mwcloak2.test.js` (3): one level's arithmetic on a small
 net (its counts, a flat net staying flat, an edge's 3/8-1/8 rule on an uneven quad, an old vertex's rules on the rim
 and off it, Loop's beta on a bump, the normals and the UVs, its own bounds; a seam, an edge three faces share and a bow
 tie refused); the cloak's shoulders measured before and after; and the fit's push - its slope eased and not, straight
-back, its mean - and its normals, whatever the winding. `test/auditmwcloak.test.js` (5), on the shared fixture
+back, its mean - and its normals, whatever the winding. `test/formats/morrowind/auditmwcloak.test.js` (5), on the shared fixture
 `test/fixtures/mw/cloakRig.mjs` and its ten-pose sweep: fit 1 held over the poses (at rest alone an arm swung back
-brought a pauldron through); the greatsword, the steel longbow, the longsword and the crossbow through the cloak in a
-walk, the strides and leaning back as fitted at rest, tied to it through none, the rest unmoved, the bow's slide needed,
-the frame's arrays reused; `fitThirdPersonCloak` whole on the ebony plate and then a weapon swap; seated and standing;
+brought a pauldron through, and without the lean, leaning back brought the tassets through); the greatsword, the steel
+longbow, the longsword and the crossbow through the cloak leaning back and only then as fitted at rest, tied to it
+through none, the rest unmoved, the slung holsters on the cloak's own bone and moved in no pose, every hip turn within
+the cap, a slab tied nearer than the clearance unmoved at rest, the frame's arrays reused; `fitThirdPersonCloak` whole
+on the ebony plate and then a weapon swap; seated, one batch and the thighs moving none of it;
 and what the fits will not chase (a rod far through it, a tail, a shield, a slab across the chest, a hip blade past
 its limit, a rod across the back whose edges alone reach the cloak). Rendered posed on the retail rig before MW-CLOAK1
 shipped - idle and striding, over the steel and the ebony plate, with each kind of stowed gear.
-`tools/mutants/mwcloak1.json` (17), `tools/mutants/mwcloak2.json` (11) and `tools/mutants/auditmwcloak.json` (38, one
-recorded equivalent: the fit's second pass, which moves nothing on these bodies), all dead.
+`tools/mutants/mwcloak1.json` (16), `tools/mutants/mwcloak2.json` (11), `tools/mutants/auditmwcloak.json` (33, two
+recorded equivalent: the fit's second pass, which moves nothing on these bodies, and the slide's price, which slung gear
+on the cloak's own bone never pays) and `tools/mutants/mwcaperigid.json` (4: the spine below the chest, half the chest's
+weight, a thigh painted back into the hem, fit 1 without the lean), all dead.

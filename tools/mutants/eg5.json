@@ -1,0 +1,362 @@
+[
+  {
+    "name": "EG5-colossal-size-copied",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "sizeX: milli(trial('colossal').size)",
+    "new": "sizeX: 1250",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-colossal-hp-copied",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "hpX: milli(trial('colossal').hp)",
+    "new": "hpX: 1250",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-unyielding-hit-copied",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "hitX: milli(trial('unyielding').hit)",
+    "new": "hitX: 850",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-vengeful-copied",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "dmgX: milli(trial('vengeful').dmg)",
+    "new": "dmgX: 1250",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-grudge-pick-copied",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "threatPick: milli(trial('grudge').threatPick)",
+    "new": "threatPick: 850",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-grudge-decay-copied",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "threatDecay: milli(trial('grudge').threatDecay)",
+    "new": "threatDecay: 0",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-colossal-radius-the-gates",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "radiusX: 1200 }",
+    "new": "radiusX: 1214 }",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-colossal-II",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "{ sizeX: 1400, hpX: 1400, radiusX: 1300 }",
+    "new": "{ sizeX: 1400, hpX: 1400, radiusX: 1200 }",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-unyielding-ward",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "law: lawRanks({ shieldX: 2000,",
+    "new": "law: lawRanks({ shieldX: 1500,",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-unyielding-II",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "{ shieldX: 3000, hitX: 750 }",
+    "new": "{ shieldX: 3000, hitX: 850 }",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-vengeful-II",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "{ dmgX: 1400 }",
+    "new": "{ dmgX: 1250 }",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-grudge-II",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "{ threatPick: 950, threatDecay: 0 }",
+    "new": "{ threatPick: 850, threatDecay: 0 }",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-a-law-on-the-legion",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "name: 'Hunting Pack', line: 'Harriers hunt every hall.' }",
+    "new": "name: 'Hunting Pack', line: 'Harriers hunt every hall.', law: lawRanks({ dmgX: 1100 }, { dmgX: 1200 }) }",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-x-keys-unfiltered",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": ".flatMap((L) => Object.keys(L))).filter((k) => k.endsWith('X')))]);",
+    "new": ".flatMap((L) => Object.keys(L))))]);",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-ten-decrees",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_DECREES_MAX = 9;",
+    "new": "export const EG_DECREES_MAX = 10;",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-the-length-unchecked",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (!Array.isArray(dc) || dc.length > EG_DECREES_MAX) return null;",
+    "new": "if (!Array.isArray(dc)) return null;",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-an-unknown-decree",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "!EG_DECREES[p[0]] || (p[1]",
+    "new": "(p[1]",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-a-rank-three",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "(p[1] !== 1 && p[1] !== 2)",
+    "new": "(p[1] !== 1 && p[1] !== 2 && p[1] !== 3)",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-a-decree-twice",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "|| seen.has(p[0])) return null;",
+    "new": ") return null;",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-a-word-for-a-number",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "!Number.isInteger(p[0]) || !EG_DECREES",
+    "new": "!EG_DECREES",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-the-copy-shared",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "out.push([p[0], p[1]]);",
+    "new": "out.push(p);",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-the-key-unsorted",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "  ok.sort((a, b) => a[0] - b[0]);\n",
+    "new": "\n",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-first-in-first-out",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (had) { _profiles.delete(key); _profiles.set(key, had); return had; }",
+    "new": "if (had) return had;",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-the-cache-unbounded",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (_profiles.size >= EG_PROFILE_CACHE_MAX) _profiles.delete(",
+    "new": "if (false) _profiles.delete(",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-a-cache-of-255",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_PROFILE_CACHE_MAX = 256;",
+    "new": "export const EG_PROFILE_CACHE_MAX = 255;",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-an-x-key-overridden",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "acc[k] = k.endsWith('X') ? Math.round(((acc[k] ?? EG_LAW_UNIT) * v) / EG_LAW_UNIT) : v;",
+    "new": "acc[k] = v;",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-the-thousandth-floored",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "Math.round(((acc[k] ?? EG_LAW_UNIT) * v) / EG_LAW_UNIT)",
+    "new": "Math.floor(((acc[k] ?? EG_LAW_UNIT) * v) / EG_LAW_UNIT)",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-the-first-naming-kept",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "/ EG_LAW_UNIT) : v;",
+    "new": "/ EG_LAW_UNIT) : (acc[k] ?? v);",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-an-invalid-list-folded",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "const ok = validEgDecrees(dc) ?? [];",
+    "new": "const ok = validEgDecrees(dc) ?? [[15, 1]];",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-none-an-empty-list",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "const P = Object.freeze({ dc: ok.length ? Object.freeze(ok.map((p) => Object.freeze(p))) : null,",
+    "new": "const P = Object.freeze({ dc: Object.freeze(ok.map((p) => Object.freeze(p))),",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-the-law-in-hundredths",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "law[k] = v / EG_LAW_UNIT;",
+    "new": "law[k] = v / 100;",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-rank-two-read-as-one",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "dc.push([d.id, rank >= 2 ? 2 : 1]);",
+    "new": "dc.push([d.id, 1]);",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-rank-nought-folded",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (d && rank > 0) dc.push(",
+    "new": "if (d) dc.push(",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-the-gates-threat-lost",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "threatPick: L.threatPick ?? THREAT_PICK,",
+    "new": "threatPick: L.threatPick ?? 0.5,",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-the-gates-decay-lost",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "threatDecay: L.threatDecay ?? THREAT_DECAY };",
+    "new": "threatDecay: L.threatDecay ?? 0 };",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-colossal-health-off",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "* F.team * (champ ? F.X : 1) * law.hpX;",
+    "new": "* F.team * (champ ? F.X : 1);",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-colossal-radii-off",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "(law.radiusX === 1 || ch ? s :",
+    "new": "(true || ch ? s :",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-the-ward-unlengthened",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "L.ward = Math.max(L.ward, now + ms * law.shieldX);",
+    "new": "L.ward = Math.max(L.ward, now + ms);",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-the-cap-taken-apart",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "B.p * egShareX(F.c, (L.champ ? 1 : F.mem.furyX ?? 1) * law.dmgX * (L.shareX ?? 1));",
+    "new": "B.p * egShareX(F.c, (L.champ ? 1 : F.mem.furyX ?? 1) * (L.shareX ?? 1)) * law.dmgX;",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  },
+  {
+    "name": "EG5-grudge-forgets",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (law.threatDecay > 0) { const k = Math.max(0, 1 - law.threatDecay *",
+    "new": "if (THREAT_DECAY > 0) { const k = Math.max(0, 1 - THREAT_DECAY *",
+    "tests": [
+      "test/net/eliteGates/eg5_profile.test.js"
+    ]
+  }
+]

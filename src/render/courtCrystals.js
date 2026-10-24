@@ -22,15 +22,15 @@
 import { FOG_FACTOR_GLSL } from './labGrass.js';
 import { buildProgram } from './glProgram.js';
 import { duelClock } from './duelWall.js';
-import { seededRng } from '../systems/wind.js';
-import { CRYSTAL_R, CRYSTAL_H } from '../net/gateBrain.js';
+import { seededRng } from '../systems/wind/wind.js';
+import { CRYSTAL_R, CRYSTAL_H } from '../net/gate/gateBrain.js';
 
 /** How long a crystal takes to grow out of the floor from the Reckoning's word, and how long its shards fly (ms). */
 export const CRYSTAL_GROW_MS = 1400;
 export const CRYSTAL_SHATTER_MS = 900;
 /** A struck crystal flashes this long (ms). */
 export const CRYSTAL_FLASH_MS = 220;
-/** The most crystals one draw takes (net/gateBrain.js RECKON_CRYSTALS' most). */
+/** The most crystals one draw takes (net/gate/gateBrain.js RECKON_CRYSTALS' most). */
 export const CRYSTALS_DRAW_MAX = 8;
 /** The floor's glow under a crystal - its radius (m); the beam's width (m) and its flow (cycles a second, whole over
  *  duelWall.js DUEL_CLOCK_PERIOD). */
@@ -133,7 +133,7 @@ export const CRYSTAL_FS = HEAD + `in vec3 vNrm;
 in vec3 vLocal;
 in vec3 vWorld;
 uniform vec3 uEye;
-uniform vec3 uColor;    // his aspect's colour (world/gateBoss.js crystalColor)
+uniform vec3 uColor;    // his aspect's colour (world/gate/gateBoss.js crystalColor)
 uniform float uHp;      // its health's share, 0..1
 uniform float uFlash;   // struck: 1 at the blow, falling
 uniform float uSeed;
@@ -230,11 +230,16 @@ function mat4Multiply(out, a, b) {
   return out;
 }
 
+/** SHADER-STALL: the pass's two programs, the crystal's and its glow's, as its constructor builds them - what a host
+ *  starts ahead of the build (render/glProgram.js compiledPass). */
+export const CRYSTAL_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[CRYSTAL_VS, CRYSTAL_FS], [CRYSTAL_GLOW_VS, CRYSTAL_GLOW_FS]]));
+
 export class CourtCrystalRenderer {
   constructor(gl) {
     this.gl = gl;
-    this.program = buildProgram(gl, CRYSTAL_VS, CRYSTAL_FS, 'crystal');
-    this.glowProgram = buildProgram(gl, CRYSTAL_GLOW_VS, CRYSTAL_GLOW_FS, 'crystal glow');
+    const [crystal, glow] = CRYSTAL_PROGRAMS;
+    this.program = buildProgram(gl, crystal[0], crystal[1], 'crystal');
+    this.glowProgram = buildProgram(gl, glow[0], glow[1], 'crystal glow');
     this.u = {}; this.g = {};
     for (const n of ['uVP', 'uAt', 'uYaw', 'uGrow', 'uBroke', 'uEye', 'uColor', 'uHp', 'uFlash', 'uSeed', 'uTime', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.u[n] = gl.getUniformLocation(this.program, n);
     for (const n of ['uVP', 'uKind', 'uA', 'uB', 'uW', 'uEye', 'uColor', 'uAlpha', 'uTime', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']) this.g[n] = gl.getUniformLocation(this.glowProgram, n);
@@ -269,6 +274,7 @@ export class CourtCrystalRenderer {
    */
   draw(list, proj, view, eye, seconds, fog = null) {
     this.drawn = 0; this.glowed = 0;
+    if (!this.gl) return;   // AUDIT EG V (L6-5): a destroyed pass draws nothing
     // AUDIT WB D10's law: the frame's crystals picked into a list kept, never a new one each frame
     const items = this._items;
     items.length = 0;
@@ -327,5 +333,18 @@ export class CourtCrystalRenderer {
     }
     gl.bindVertexArray(null);
     gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);
+  }
+
+  /** AUDIT EG V (L6-5; Elite-Gates.md section 29, EVERY ALLOCATION HAS AN OWNER): its two programs, two vertex arrays and four
+   *  buffers let go - once; a destroyed pass draws nothing. The breach's fight frees its own at every way out of the Spire
+   *  (scenes/eliteGates/egFight.js leave); the Burning Court's is a screen's, kept. */
+  destroy() {
+    const gl = this.gl;
+    if (!gl) return;
+    this.gl = null;
+    for (const v of [this.vao, this.glowVao]) if (v) gl.deleteVertexArray(v);
+    for (const b of [...(this.bufs ?? []), this.glowBuf]) if (b) gl.deleteBuffer(b);
+    for (const p of [this.program, this.glowProgram]) if (p) gl.deleteProgram(p);
+    this.vao = null; this.glowVao = null; this.bufs = []; this.glowBuf = null; this.program = null; this.glowProgram = null;
   }
 }

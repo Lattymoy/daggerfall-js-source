@@ -1,0 +1,34 @@
+[
+  {
+    "name": "MWCAPERIGID-the-spine-below",
+    "file": "tools/bakeCloak.mjs",
+    "old": "export const CHEST_BONE = 'Bip01 Spine2';",
+    "new": "export const CHEST_BONE = 'Bip01 Spine1';",
+    "tests": ["test/tooling/mwcloak1.test.js"],
+    "note": "The cloak hung from the spine below the chest: the shipped NIFs are not the bake's, and the rig is not the chest's."
+  },
+  {
+    "name": "MWCAPERIGID-half-the-chest",
+    "file": "tools/bakeCloak.mjs",
+    "old": "  const weights = Array.from({ length: mesh.positions.length / 3 }, () => [[CHEST_BONE, 1]]);",
+    "new": "  const weights = Array.from({ length: mesh.positions.length / 3 }, () => [[CHEST_BONE, 0.5]]);",
+    "tests": ["test/tooling/mwcloak1.test.js"],
+    "note": "Each vertex half the chest's: the shipped NIFs are not the bake's, and no vertex is wholly the chest's."
+  },
+  {
+    "name": "MWCAPERIGID-the-thighs-back",
+    "file": "tools/bakeCloak.mjs",
+    "old": "  const weights = Array.from({ length: mesh.positions.length / 3 }, () => [[CHEST_BONE, 1]]);",
+    "new": "  const weights = Array.from({ length: mesh.positions.length / 3 }, (_, v) => (mesh.positions[v * 3 + 2] < 50 ? [[CHEST_BONE, 0.5], [mesh.positions[v * 3] < 0 ? 'Bip01 L Thigh' : 'Bip01 R Thigh', 0.5]] : [[CHEST_BONE, 1]]));",
+    "tests": ["test/tooling/mwcloak1.test.js"],
+    "note": "A thigh painted back into the hem: a second bone in the mesh, and the shipped NIFs are not the bake's."
+  },
+  {
+    "name": "MWCAPERIGID-no-lean-fitted",
+    "file": "src/formats/morrowind/mwCloakFit.js",
+    "old": "  Object.freeze({ 'bip01 spine2': ['z', -10] }),\n",
+    "new": "",
+    "tests": ["test/formats/morrowind/auditmwcloak.test.js", "test/tooling/mwcloak1.test.js"],
+    "note": "Fit 1 without the chest leant back: leaning back swings the hem through the ebony plate's tassets."
+  }
+]

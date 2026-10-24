@@ -5,7 +5,7 @@
     "old": "  [SFX.fire]: 'fire-dry.wav',",
     "new": "  [SFX.fire]: 'fire-shotgun.wav',",
     "tests": [
-      "test/thunderlock.test.js"
+      "test/systems/thunderlock.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  [SFX.open]: 'open-gunrack.wav',",
     "new": "  [SFX.open]: 'open-winchester.wav',",
     "tests": [
-      "test/thunderlock.test.js"
+      "test/systems/thunderlock.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  [SFX.close]: 'close-shell.wav',",
     "new": "  [SFX.close]: 'close-ready.wav',",
     "tests": [
-      "test/thunderlock.test.js"
+      "test/systems/thunderlock.test.js"
     ]
   },
   {
@@ -32,25 +32,25 @@
     "old": "    ['fire-dry', 'dry (no room)'],\n    ['fire-shotgun', 'shotgun (clean crack)'],",
     "new": "    ['fire-shotgun', 'shotgun (clean crack)'],\n    ['fire-dry', 'dry (no room)'],",
     "tests": [
-      "test/thunderlock.test.js"
+      "test/systems/thunderlock.test.js"
     ]
   },
   {
     "name": "FIELD-GUN15-5-the-gain-goes-back-down",
-    "file": "src/combat/gunFeel.js",
-    "old": "  sfxVolume: 1, sfxVary: 0.19,",
-    "new": "  sfxVolume: 0.7, sfxVary: 0.19,",
+    "file": "src/combat/gun/gunFeel.js",
+    "old": "  sfxVolume: 1, sfxVary: 0.19,\n  // how far the weapon drops",
+    "new": "  sfxVolume: 0.7, sfxVary: 0.19,\n  // how far the weapon drops",
     "tests": [
-      "test/thunderlock.test.js"
+      "test/systems/thunderlock.test.js"
     ]
   },
   {
     "name": "FIELD-GUN15-6-the-pitch-jitter-goes-back-down",
-    "file": "src/combat/gunFeel.js",
-    "old": "  sfxVolume: 1, sfxVary: 0.19,",
-    "new": "  sfxVolume: 1, sfxVary: 0.06,",
+    "file": "src/combat/gun/gunFeel.js",
+    "old": "  sfxVolume: 1, sfxVary: 0.19,\n  // how far the weapon drops",
+    "new": "  sfxVolume: 1, sfxVary: 0.06,\n  // how far the weapon drops",
     "tests": [
-      "test/thunderlock.test.js"
+      "test/systems/thunderlock.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  sfxVol: 1, sfxVary: 0.19, sfxOn: true,",
     "new": "  sfxVol: 0.7, sfxVary: 0.06, sfxOn: true,",
     "tests": [
-      "test/thunderlock.test.js"
+      "test/systems/thunderlock.test.js"
     ]
   }
 ]

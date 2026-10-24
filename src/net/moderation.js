@@ -27,6 +27,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { sanitizeName } from './wire.js';
+import { t } from '../systems/textManager.js';   // L10N4: the command's words in the moderator's language (the account Worker bundles the text core already)
 
 /** The longest one mute may run, in minutes: a week. Longer is a ban,
  *  which is a different decision and not one Mac has asked for. The
@@ -35,10 +36,13 @@ export const MUTE_MAX_MIN = 7 * 24 * 60;
 /** A mute with no minutes given. Half an hour: long enough to end an
  *  argument, short enough that forgetting to lift it costs little. */
 export const MUTE_DEFAULT_MIN = 30;
-/** The command's refusal and the service's (net/accountClient.js REFUSALS 'bad-minutes') in one sentence, from the bound. */
-export const MUTE_RANGE_TEXT = `A mute is 1 to ${MUTE_MAX_MIN} minutes (one week).`;
+/** The command's refusal and the service's (net/accountClient.js REFUSALS 'bad-minutes') in one sentence, from the bound.
+ *  L10N4: a reader now (it was MUTE_RANGE_TEXT, read at module load) - in the player's language, read when it is said. */
+export const muteRangeText = () => t('net.mod.muteRange', 'A mute is 1 to {max} minutes (one week).', { max: MUTE_MAX_MIN });
 
 export const MUTE_USAGE = 'Usage: /mute <name> [minutes], or /unmute <name>.';
+/** L10N4: MUTE_USAGE as the player reads it. */
+export const muteUsageText = () => t('net.mod.usage', MUTE_USAGE);
 
 /**
  * Read a line as a moderation command, or null if it is not one.
@@ -55,13 +59,13 @@ export function parseModCommand(text) {
   if (!m) return null;
   const op = m[1].toLowerCase();
   const rest = (m[2] ?? '').trim();
-  if (op === 'unmute') return rest ? { op, name: rest } : { error: MUTE_USAGE };
+  if (op === 'unmute') return rest ? { op, name: rest } : { error: muteUsageText() };
   const tail = /^(.*\S)\s+(\d+)$/.exec(rest);
   const name = tail ? tail[1] : rest;
-  if (!name) return { error: MUTE_USAGE };
+  if (!name) return { error: muteUsageText() };
   const minutes = tail ? Number(tail[2]) : MUTE_DEFAULT_MIN;
   if (!Number.isSafeInteger(minutes) || minutes < 1 || minutes > MUTE_MAX_MIN) {
-    return { error: MUTE_RANGE_TEXT };
+    return { error: muteRangeText() };
   }
   return { op, name, minutes };
 }
@@ -85,9 +89,9 @@ export function resolveTarget(session, name) {
     else unaccounted = true;
   }
   if (found.size === 1) { const [[sub, shown]] = [...found]; return { sub, name: shown }; }
-  if (found.size > 1) return { error: `${found.size} players are called ${name}. Nobody was muted.` };
-  if (unaccounted) return { error: `${name} cannot be muted from here yet. Try again in a moment.` };
-  return { error: `Nobody called ${name} is online.` };
+  if (found.size > 1) return { error: t('net.mod.ambiguous', '{count} players are called {name}. Nobody was muted.', { count: found.size, name }) };
+  if (unaccounted) return { error: t('net.mod.unaccounted', '{name} cannot be muted from here yet. Try again in a moment.', { name }) };
+  return { error: t('net.mod.nobody', 'Nobody called {name} is online.', { name }) };
 }
 
 /**
@@ -102,7 +106,17 @@ export function resolveTarget(session, name) {
 export async function runModCommand(cmd, { session, links, mute, refusal }) {
   const who = resolveTarget(session, cmd.name);
   if ('error' in who) return who.error;
-  const minutes = cmd.op === 'unmute' ? 0 : (cmd.minutes ?? MUTE_DEFAULT_MIN);
+  return muteNamed(who, cmd.op === 'unmute' ? 0 : (cmd.minutes ?? MUTE_DEFAULT_MIN), { links, mute, refusal });
+}
+
+/**
+ * THE MUTE ITSELF, for an account already named - the command's after it has found one, and STAFF-PANEL2-CHATMENU's
+ * (scenes/chatSafetyHost.js): a chat line's menu names the speaker by the account the relay stamped on the line, so
+ * there is no name to resolve. The same answer and the same refusal as /mute.
+ * @param {{ sub: string, name: string }} who @param {number} minutes  0 lifts it
+ * @param {{ links: Iterable<any>, mute: (sub: string, minutes: number) => Promise<any>, refusal: (e: string) => string }} io
+ */
+export async function muteNamed(who, minutes, { links, mute, refusal }) {
   const r = await mute(who.sub, minutes);
   if (!r?.ok) return refusal(r?.error ?? 'server');
   // THE ROW IS ALREADY WRITTEN, so a missing order (a service with no
@@ -112,9 +126,9 @@ export async function runModCommand(cmd, { session, links, mute, refusal }) {
   let carried = 0;
   if (typeof order === 'string' && order) for (const link of links) if (link?.sendMuteOrder?.(order)) carried++;
   const shown = r.data?.name ?? who.name;
-  if (!minutes) return `${shown} can chat again.`;
-  const when = `${shown} is muted for ${minutes} minute${minutes === 1 ? '' : 's'}.`;
-  return carried ? when : `${when} It takes effect when they next connect.`;
+  if (!minutes) return t('net.mod.unmuted', '{name} can chat again.', { name: shown });
+  return carried ? t('net.mod.muted', '{name} is muted for {minutes, plural, one {# minute} other {# minutes}}.', { name: shown, minutes })
+    : t('net.mod.mutedLater', '{name} is muted for {minutes, plural, one {# minute} other {# minutes}}. It takes effect when they next connect.', { name: shown, minutes });
 }
 
 /**
@@ -124,9 +138,9 @@ export async function runModCommand(cmd, { session, links, mute, refusal }) {
  * @param {number} until @param {number} nowS
  */
 export function mutedText(until, nowS) {
-  if (!until || until <= nowS) return 'You can chat again.';
+  if (!until || until <= nowS) return t('net.mod.chatAgain', 'You can chat again.');
   const left = Math.ceil((until - nowS) / 60);
-  return `You are muted for ${left} more minute${left === 1 ? '' : 's'}.`;
+  return t('net.mod.mutedFor', 'You are muted for {left, plural, one {# more minute} other {# more minutes}}.', { left });
 }
 
 /**

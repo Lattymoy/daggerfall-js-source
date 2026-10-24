@@ -5,7 +5,7 @@
     "old": "export function sheetHouse(prov = _provider) {\n  if (!prov?.on?.()) return null;\n",
     "new": "export function sheetHouse(prov = _provider) {\n",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export function sheetHouse(prov = _provider) {",
     "new": "export function sheetHouse(prov = null) {",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (!p || p.died) return null;\n  const lived = prov.lived?.() ?? 0;",
     "new": "  if (!p) return null;\n  const lived = prov.lived?.() ?? 0;",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  const lived = prov.lived?.() ?? 0;\n  /** @type {[string, string][]} */",
     "new": "  const lived = 0;\n  /** @type {[string, string][]} */",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "['Generation', String((p.gen | 0) + 1)]",
     "new": "['Generation', String(p.gen | 0)]",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (age) rows.push(['Age', age]);\n",
     "new": "",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  return family.model === MODELS.enduring ? `${ageOf(p, lived)} of ${spanOf(p.race)}` : null;",
     "new": "  return `${ageOf(p, lived)} of ${spanOf(p.race)}`;",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (p.died) return `${ageOf(p, lived)} at death`;\n  return family.model",
     "new": "  return family.model",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    if ((p.toll | 0) > 0) rows.push(['Arkay’s toll', `${p.toll} years`]);\n",
     "new": "",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    if ((p.toll | 0) > 0) rows.push(['Arkay’s toll', `${p.toll} years`]);",
     "new": "    rows.push(['Arkay’s toll', `${p.toll} years`]);",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  let word = null;\n  if (family.model === MODELS.enduring) {",
     "new": "  let word = null;\n  if (family.model) {",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "word = isSpent(p, lived) ? SHEET_HOUSE_TEXT.spent : isElder(p, lived) ? SHEET_HOUSE_TEXT.elder : null;",
     "new": "word = isElder(p, lived) ? SHEET_HOUSE_TEXT.elder : isSpent(p, lived) ? SHEET_HOUSE_TEXT.spent : null;",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "isElder(p, lived) ? SHEET_HOUSE_TEXT.elder : null;",
     "new": "null;",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  return { title: houseTitle(family.surname), rows, word };",
     "new": "  return { title: 'The House', rows, word };",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  const age = ageWord(family, p, lived);\n  if (age) fact('Age', age);",
     "new": "  const age = ageWord(family, p, lived);",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
@@ -140,34 +140,34 @@
     "old": "  const age = ageWord(family, p, lived);\n  if (age) fact('Age', age);",
     "new": "  const age = ageWord(family, p, p.lived);\n  if (age) fact('Age', age);",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
     "name": "LEGACYSHEET-stats-never-asks",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "  const house = sheetHouse();",
     "new": "  const house = null;",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
     "name": "LEGACYSHEET-stats-no-word",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "    if (house.word) detail.append(el('p', 'px-note', house.word));\n",
     "new": "",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   },
   {
     "name": "LEGACYSHEET-stats-rows-unwritten",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "    for (const [label, v] of house.rows) { const r = el('div', 'px-stat'); r.append(el('span', 'k', label), el('span', 'v', v)); h.append(r); }\n",
     "new": "",
     "tests": [
-      "test/legacysheet.test.js"
+      "test/systems/legacy/legacysheet.test.js"
     ]
   }
 ]

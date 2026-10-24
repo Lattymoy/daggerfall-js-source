@@ -1,0 +1,20 @@
+[
+  {
+    "name": "FINE-MENDS-the-fine-mends-nothing",
+    "file": "src/scenes/standingHost.js",
+    "old": "        settleChallenge(playerEntity, region);",
+    "new": "",
+    "tests": [
+      "test/systems/fb1014_finemends.test.js"
+    ]
+  },
+  {
+    "name": "FINE-MENDS-past-the-line",
+    "file": "src/systems/standing.js",
+    "old": "Math.min(PENANCE_POINTS, KNOWN_CRIMINAL_BELOW - rep, most)",
+    "new": "Math.min(PENANCE_POINTS, most)",
+    "tests": [
+      "test/systems/fb1014_finemends.test.js"
+    ]
+  }
+]

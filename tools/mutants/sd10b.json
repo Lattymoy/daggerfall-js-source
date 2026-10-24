@@ -5,7 +5,7 @@
     "old": "if (tab.room === SOCIAL_ROOM) link.onSdReceipt = (r, room) => { sdClaims?.add(r); sdSpoilsReceipt(r, room); };",
     "new": "void 0;",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (!inRealm && _sdReceipts.size) sdReceiptsLeft();",
     "new": "    if (false && _sdReceipts.size) sdReceiptsLeft();",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -23,43 +23,43 @@
     "old": "if (c) grantSdSpoils(c); }\n    _sdReceipts.clear();",
     "new": "if (c) grantSdSpoils(c); }",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C2-the-marks-kept",
-    "file": "src/scenes/sdRemnantBlows.js",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
     "old": "{ marksFi = s.fi; marks.clear(); pools = []; inFire = false; }",
     "new": "{ marksFi = s.fi; pools = []; inFire = false; }",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C2-the-brass-kept",
-    "file": "src/scenes/sdRemnantBlows.js",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
     "old": "{ marksFi = s.fi; marks.clear(); pools = []; inFire = false; }",
     "new": "{ marksFi = s.fi; marks.clear(); inFire = false; }",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C3-the-falls-number-kept",
-    "file": "src/scenes/sdRemnantBlows.js",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
     "old": "      marksFi = 0; fellFi = 0; endSaid = 0;",
     "new": "      marksFi = 0; endSaid = 0;",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C3-the-ends-number-kept",
-    "file": "src/scenes/sdRemnantBlows.js",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
     "old": "      marksFi = 0; fellFi = 0; endSaid = 0;",
     "new": "      marksFi = 0; fellFi = 0;",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "if (_sdHome?.fell !== s.fell.at) {\n      const [x, z] = clearOfPillars(s.rem.x, s.rem.z);\n      _sdHome = { fell: s.fell.at,",
     "new": "if (_sdHome?.fell !== s.fi) {\n      const [x, z] = clearOfPillars(s.rem.x, s.rem.z);\n      _sdHome = { fell: s.fi,",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "const [x, z] = clearOfPillars(s.rem.x, s.rem.z);",
     "new": "const [x, z] = [s.rem.x, s.rem.z];",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "const seen = { entered: _sdEntered.has(s), fallen",
     "new": "const seen = { fallen",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "if (await modes?.enterSdRealm?.({ s, hollow, site })) { _sdEntered.add(s); return true; }",
     "new": "if (await modes?.enterSdRealm?.({ s, hollow, site })) { return true; }",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -104,205 +104,205 @@
     "old": "if (await modes?.enterSdRealm?.({ s, hollow, site })) { _sdEntered.add(s); return true; }",
     "new": "_sdEntered.add(s); if (await modes?.enterSdRealm?.({ s, hollow, site })) { return true; }",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C5-the-long-way-out",
-    "file": "src/scenes/sdSpoils.js",
+    "file": "src/scenes/superDungeon/sdSpoils.js",
     "old": "    if (half - Math.abs(dx) < half - Math.abs(dz)) x = px",
     "new": "    if (half - Math.abs(dx) > half - Math.abs(dz)) x = px",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C5-the-margin-lost",
-    "file": "src/scenes/sdSpoils.js",
+    "file": "src/scenes/superDungeon/sdSpoils.js",
     "old": "  const half = SD_PILLAR_W / 2 + margin;",
     "new": "  const half = SD_PILLAR_W / 2;",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C5-the-spew-from-inside",
-    "file": "src/scenes/sdSpoils.js",
+    "file": "src/scenes/superDungeon/sdSpoils.js",
     "old": "const [px, pz] = clearOfPillars(pose.x, pose.z, 0.3);",
     "new": "const [px, pz] = [pose.x, pose.z];",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C5-a-body-s-width",
-    "file": "src/scenes/sdSpoils.js",
+    "file": "src/scenes/superDungeon/sdSpoils.js",
     "old": "export const SD_PILLAR_CLEAR_M = 1.2;",
     "new": "export const SD_PILLAR_CLEAR_M = 0.4;",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C6-a-portal-stood-unlisted",
-    "file": "src/scenes/sdEnd.js",
+    "file": "src/scenes/superDungeon/sdEnd.js",
     "old": "    mine.push(d);\n    draws?.push(d);",
     "new": "    mine.push(d);",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C6-the-way-home-unlisted",
-    "file": "src/scenes/sdEnd.js",
+    "file": "src/scenes/superDungeon/sdEnd.js",
     "old": "      draws = dynamicDraws ?? draws ?? [];\n      const ago",
     "new": "      const ago",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C6-a-gone-one-listed",
-    "file": "src/scenes/sdEnd.js",
+    "file": "src/scenes/superDungeon/sdEnd.js",
     "old": "dropMesh(ret.arch); dropMesh(ret.hand); dropMesh(ret.plate); for (const d of ret.parts ?? NONE) dropMesh(d); ret = null;",
     "new": "ret = null;",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C6-the-list-past-the-clear",
-    "file": "src/scenes/sdEnd.js",
+    "file": "src/scenes/superDungeon/sdEnd.js",
     "old": "      for (const d of [...mine]) dropMesh(d);\n",
     "new": "",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C6-a-hand-drawn-at-its-start",
-    "file": "src/scenes/sdHall.js",
+    "file": "src/scenes/superDungeon/sdHall.js",
     "old": "{ shown[i] = want[i]; if (hands[i]) handMatrix(i, shown[i], hands[i].object.matrix); }",
     "new": "{ shown[i] = want[i]; }",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C6-a-matrix-every-frame",
-    "file": "src/scenes/sdHall.js",
+    "file": "src/scenes/superDungeon/sdHall.js",
     "old": "        if (d === 0) continue;",
     "new": "",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C6-a-steps-place-every-frame",
-    "file": "src/scenes/sdSteps.js",
+    "file": "src/scenes/superDungeon/sdSteps.js",
     "old": "    stepAt(s, t, _at);",
     "new": "    const _at = stepAt(s, t);",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C6-the-scratch-unused",
-    "file": "src/world/sdSteps.js",
+    "file": "src/net/eliteGates/egSpanLaw.js",
     "old": "export function stepAt(s, t, out = [0, 0, 0]) {",
     "new": "export function stepAt(s, t, out) {\n  out = [0, 0, 0];",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C7-the-boss-unanswered",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "const gear = d > 0 && (_pending || _pendingBoss) ? tierOf",
     "new": "const gear = d > 0 && _pending ? tierOf",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C7-the-mark-unmade",
-    "file": "src/scenes/sdRemnantBlows.js",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
     "old": "    if (blow) setBossStruck();\n",
     "new": "",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C7-the-mark-lying",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "  _pendingBoss = _now() - _bossBlowAt <= BLOW_WINDOW_S;\n  _bossBlowAt = -Infinity;",
     "new": "  _pendingBoss = _now() - _bossBlowAt <= BLOW_WINDOW_S;",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C7-the-window-unread",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "  _pendingBoss = _now() - _bossBlowAt <= BLOW_WINDOW_S;",
     "new": "  _pendingBoss = _bossBlowAt > -Infinity;",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C7-a-reach-power-hears-the-boss",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "  _pending = landedBlow();\n  _pendingBoss",
     "new": "  _pending = landedBlow() ?? (_now() - _bossBlowAt <= BLOW_WINDOW_S ? { attacker: null } : null);\n  _pendingBoss",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C7-the-hours-magic-marked",
-    "file": "src/scenes/sdRemnantBlows.js",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
     "old": "export const bodysBlow = (A) => !!A && A.shape !== 'all';",
     "new": "export const bodysBlow = (A) => !!A;",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C7-the-reset-marked-as-the-bodys",
-    "file": "src/scenes/sdRemnantBlows.js",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
     "old": "land(A.name, h.pct, h.base, bodysBlow(A), h.el ?? null);",
     "new": "land(A.name, h.pct, h.base, b !== SD_BODY.hour, h.el ?? null);",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C7-the-brass-marked",
-    "file": "src/scenes/sdRemnantBlows.js",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
     "old": "    land(p.el ? SD_ELEMENT_GROUND[p.el] : SD_BLOWS_TEXT.burning, p.pct, p.base, false, p.el ?? null);",
     "new": "    land(p.el ? SD_ELEMENT_GROUND[p.el] : SD_BLOWS_TEXT.burning, p.pct, p.base, true, p.el ?? null);",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C7-an-echos-unmarked",
-    "file": "src/scenes/sdRemnantBlows.js",
+    "file": "src/scenes/superDungeon/sdRemnantBlows.js",
     "old": "land(A.name, h.pct, h.base, bodysBlow(A), h.el ?? null);",
     "new": "land(A.name, h.pct, h.base, bodysBlow(A) && b === SD_BODY.remnant, h.el ?? null);",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-C8-nothing-spends-the-gear",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "      if (cut > 0) {",
     "new": "      if (cut >= 0) {",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "  if (dungeonTier(dfLocation) === 'super') return 'full';\n",
     "new": "",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -320,25 +320,25 @@
     "old": "  if (dungeonTier(dfLocation) === 'super') return 'full';",
     "new": "  if (dfLocation.superTier) return 'full';",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-R1-an-ended-fight-never-lost",
-    "file": "src/net/sdRemnant.js",
+    "file": "src/net/superDungeon/sdRemnant.js",
     "old": "if ((f.emptySince != null && now - f.emptySince >= SD_LOST_MS) || (f.ended && now - f.ended.at >= SD_LOST_MS)) {",
     "new": "if (f.emptySince != null && now - f.emptySince >= SD_LOST_MS) {",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-SD-R1-lost-a-beat-late",
-    "file": "src/net/sdRemnant.js",
+    "file": "src/net/superDungeon/sdRemnant.js",
     "old": "(f.ended && now - f.ended.at >= SD_LOST_MS)",
     "new": "(f.ended && now - f.ended.at > SD_LOST_MS)",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "    if (realm.in.length >= SD_FIGHTERS_MAX && !free(() => true)) return SD_NO_FULL;",
     "new": "    if (realm.in.length >= SD_FIGHTERS_MAX) return SD_NO_FULL;",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "      const i = realm.in.findIndex((x) => pick(x) && !present.has(x) && !living?.players?.[x]);",
     "new": "      const i = realm.in.findIndex((x) => pick(x) && !living?.players?.[x]);",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "      const i = realm.in.findIndex((x) => pick(x) && !present.has(x) && !living?.players?.[x]);",
     "new": "      const i = realm.in.findIndex((x) => pick(x) && !present.has(x));",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "    if (!res?.ok) return undefined;",
     "new": "    if (!res?.ok) return null;",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "    if (rec === undefined) return SD_NO_BUSY;",
     "new": "    if (rec === undefined) return SD_NO_CLOSED;",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "if (no === SD_NO_BUSY) { this._refuse(ws, 'busy', CLOSE_BUSY); return; }",
     "new": "if (no === SD_NO_BUSY) { this._refuse(ws, 'busy'); return; }",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": "now - had.missAt < SD_LIVE_MISS_MS) return kept;",
     "new": "now - had.missAt < SD_LIVE_FRESH_MS) return kept;",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "      if (rec === undefined) return;   // AUDIT SD: the hub did not answer",
     "new": "      // AUDIT SD: the hub did not answer",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "    if (live !== undefined && !(live && live.s === s && sdHolds(live, now))) return;",
     "new": "    if (!(live && live.s === s && sdHolds(live, now))) return;",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -428,7 +428,7 @@
     "old": "const fell = sdFell(was, Math.min(c.at, Date.now()), { top: c.top, n: c.n });",
     "new": "const fell = sdFell(was, Date.now(), { top: c.top, n: c.n });",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -437,7 +437,7 @@
     "old": "const fell = sdFell(was, Math.min(c.at, Date.now()), { top: c.top, n: c.n });",
     "new": "const fell = sdFell(was, c.at, { top: c.top, n: c.n });",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -446,7 +446,7 @@
     "old": "if (fell) { await this._sdSave(fell); this._sdFan(fell); await this._sdArm(Date.now()); }",
     "new": "if (fell) { await this._sdSave(fell); this._sdFan(fell); }",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -455,7 +455,7 @@
     "old": "    if (live !== undefined && !(live && live.s === s && sdHolds(live, now))) return;\n",
     "new": "",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -464,7 +464,7 @@
     "old": "await this._sdFightSave(f, now, fresh || !known);",
     "new": "await this._sdFightSave(f, now, true);",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -473,7 +473,7 @@
     "old": "await this._sdFightSave(f, now, fresh || !known);",
     "new": "await this._sdFightSave(f, now, fresh);",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   },
   {
@@ -482,7 +482,7 @@
     "old": "      if (!(await this._sdHallOf(s)).ok) return;",
     "new": "",
     "tests": [
-      "test/sd10b_audit.test.js"
+      "test/net/superDungeon/sd10b_audit.test.js"
     ]
   }
 ]

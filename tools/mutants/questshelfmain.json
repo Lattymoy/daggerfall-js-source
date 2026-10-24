@@ -1,0 +1,128 @@
+[
+  {
+    "name": "QSMAIN-chronicle-gate-open",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "          ? deps.shelfDoor?.() : null;",
+    "new": "          ? deps.shelfDoor?.() : deps.shelfDoor?.();",
+    "tests": [
+      "test/systems/quest/questshelfmain.test.js"
+    ]
+  },
+  {
+    "name": "QSMAIN-chronicle-door-unasked",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "        if (clean?.abandon && clean.canAbandon?.(e.uid)) {",
+    "new": "        if (clean?.abandon) {",
+    "tests": [
+      "test/systems/quest/questshelfmain.test.js"
+    ]
+  },
+  {
+    "name": "QSMAIN-chronicle-unarmed",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "            if (bountyArmed !== `q:${e.uid}`) { bountyArmed = `q:${e.uid}`; render(); return; }",
+    "new": "            void 0;",
+    "tests": [
+      "test/systems/quest/questshelfmain.test.js"
+    ]
+  },
+  {
+    "name": "QSMAIN-chronicle-silent",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "            shelfWord = clean.abandon(e.uid)?.text ?? '';",
+    "new": "            clean.abandon(e.uid);",
+    "tests": [
+      "test/systems/quest/questshelfmain.test.js"
+    ]
+  },
+  {
+    "name": "QSMAIN-chronicle-label-english",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "t('chronicle.quests.abandon', 'Abandon')",
+    "new": "'Abandon'",
+    "tests": [
+      "test/systems/quest/questshelfmain.test.js"
+    ]
+  },
+  {
+    "name": "QSMAIN-chronicle-armed-english",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "t('chronicle.quests.abandonArmed', 'Click again')",
+    "new": "'Click again'",
+    "tests": [
+      "test/systems/quest/questshelfmain.test.js"
+    ]
+  },
+  {
+    "name": "QSMAIN-chronicle-title-english",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "t('chronicle.quests.abandonTitle', 'Give up this quest for now. You can reclaim it from the pause menu\\'s Quests tab')",
+    "new": "'Give up this quest for now. You can reclaim it from the pause menu\\'s Quests tab'",
+    "tests": [
+      "test/systems/quest/questshelfmain.test.js"
+    ]
+  },
+  {
+    "name": "QSMAIN-chronicle-aria-english",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "t('chronicle.quests.abandonLabel', 'Abandon this quest')",
+    "new": "'Abandon this quest'",
+    "tests": [
+      "test/systems/quest/questshelfmain.test.js"
+    ]
+  },
+  {
+    "name": "QSMAIN-chronicle-armed-aria-english",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "t('chronicle.quests.abandonArmedLabel', 'Click again to abandon this quest')",
+    "new": "'Click again to abandon this quest'",
+    "tests": [
+      "test/systems/quest/questshelfmain.test.js"
+    ]
+  },
+  {
+    "name": "QSMAIN-world-host-left-out",
+    "file": "src/scenes/world.js",
+    "old": "      shelfDoor: () => questBridge?.journalClean ?? null,   // QUEST-SHELF-MAIN",
+    "new": "      // QUEST-SHELF-MAIN",
+    "tests": [
+      "test/systems/quest/questshelfmain.test.js"
+    ]
+  },
+  {
+    "name": "QSMAIN-town-host-left-out",
+    "file": "src/scenes/exterior.js",
+    "old": "    shelfDoor: () => questBridge?.journalClean ?? null,   // QUEST-SHELF-MAIN",
+    "new": "    // QUEST-SHELF-MAIN",
+    "tests": [
+      "test/systems/quest/questshelfmain.test.js"
+    ]
+  },
+  {
+    "name": "QSMAIN-dungeon-host-left-out",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    shelfDoor: () => opts.questBridge?.journalClean ?? null,   // QUEST-SHELF-MAIN",
+    "new": "    // QUEST-SHELF-MAIN",
+    "tests": [
+      "test/systems/quest/questshelfmain.test.js"
+    ]
+  },
+  {
+    "name": "QSMAIN-world-interiors-route-gone",
+    "file": "src/scenes/world.js",
+    "old": "    makeJournal: (mode) => makeJournalWindow(mode),",
+    "new": "    makeJournal: () => null,",
+    "tests": [
+      "test/systems/quest/questshelfmain.test.js"
+    ]
+  },
+  {
+    "name": "QSMAIN-town-interiors-route-gone",
+    "file": "src/scenes/exterior.js",
+    "old": "    makeJournal: (mode) => makeJournalWindow(mode),",
+    "new": "    makeJournal: () => null,",
+    "tests": [
+      "test/systems/quest/questshelfmain.test.js"
+    ]
+  }
+]

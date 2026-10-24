@@ -1,11 +1,11 @@
 [
   {
     "name": "WB8a-the-warden-says-nothing",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "  e.pacifyImmune = true;\n  return e;",
     "new": "  return e;",
     "tests": [
-      "test/wb8a_never_swayed.test.js"
+      "test/systems/wb8a_never_swayed.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      if (target.pacifyImmune) { out.swayRefused = (out.swayRefused ?? 0) + 1; continue; }\n",
     "new": "",
     "tests": [
-      "test/wb8a_never_swayed.test.js"
+      "test/systems/wb8a_never_swayed.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (target.pacifyImmune) { out.swayRefused = (out.swayRefused ?? 0) + 1; continue; }",
     "new": "      if (target.pacifyImmune) { continue; }",
     "tests": [
-      "test/wb8a_never_swayed.test.js"
+      "test/systems/wb8a_never_swayed.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "export const spellSways = (sp) => (sp?.effects ?? []).some((e) => e && (isPacifyEffect(e) || isCharmEffect(e)));",
     "new": "export const spellSways = (sp) => (sp?.effects ?? []).some((e) => e && isPacifyEffect(e));",
     "tests": [
-      "test/wb8a_never_swayed.test.js"
+      "test/systems/wb8a_never_swayed.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (entity?.pacifyImmune) return null;   // WB8a",
     "new": "  // WB8a",
     "tests": [
-      "test/wb8a_never_swayed.test.js"
+      "test/systems/wb8a_never_swayed.test.js"
     ]
   },
   {
@@ -50,8 +50,8 @@
     "old": "    if (r.pacify && foe.ai && !foe.entity?.pacifyImmune) foe.ai.isHostile = false;",
     "new": "    if (r.pacify && foe.ai) foe.ai.isHostile = false;",
     "tests": [
-      "test/wb8a_never_swayed.test.js",
-      "test/pacify.test.js"
+      "test/systems/wb8a_never_swayed.test.js",
+      "test/systems/pacify.test.js"
     ]
   },
   {
@@ -60,8 +60,8 @@
     "old": "isSoulTrapEffect(e)) || spellSways(sp))) return [];",
     "new": "isSoulTrapEffect(e)))) return [];",
     "tests": [
-      "test/wb8a_never_swayed.test.js",
-      "test/wb4b_gate_blows.test.js"
+      "test/systems/wb8a_never_swayed.test.js",
+      "test/net/gate/wb4b_gate_blows.test.js"
     ]
   },
   {
@@ -70,43 +70,43 @@
     "old": "isSoulTrapEffect(e)) || spellSways(sp) });",
     "new": "isSoulTrapEffect(e)) });",
     "tests": [
-      "test/wb8a_never_swayed.test.js"
+      "test/systems/wb8a_never_swayed.test.js"
     ]
   },
   {
     "name": "WB8a-his-refusal-unsaid",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "{ swayToldAt = Date.now(); hudText.add(BOSS_SWAY_TEXT(boss.entity.name)); }",
-    "new": "{ swayToldAt = Date.now(); }",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "{ swayToldAt = now(); say(BOSS_SWAY_TEXT(boss.entity.name)); }",
+    "new": "{ swayToldAt = now(); }",
     "tests": [
-      "test/wb8a_never_swayed.test.js"
+      "test/systems/wb8a_never_swayed.test.js"
     ]
   },
   {
     "name": "WB8a-his-refusal-every-blow",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "    if (sways && Date.now() - swayToldAt >= BOSS_SWAY_TELL_MS) {",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "    if (sways && now() - swayToldAt >= BOSS_SWAY_TELL_MS) {",
     "new": "    if (sways) {",
     "tests": [
-      "test/wb8a_never_swayed.test.js"
+      "test/systems/wb8a_never_swayed.test.js"
     ]
   },
   {
     "name": "WB8a-a-sway-alone-is-not-spent-at-him",
-    "file": "src/scenes/dungeonContext.js",
+    "file": "src/scenes/gate/standInSpell.js",
     "old": "    if (!harm) return laid || sways;",
     "new": "    if (!harm) return laid;",
     "tests": [
-      "test/wb8a_never_swayed.test.js"
+      "test/systems/wb8a_never_swayed.test.js"
     ]
   },
   {
     "name": "WB8a-the-refusal-said-constantly",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "export const BOSS_SWAY_TELL_MS = 4000;",
     "new": "export const BOSS_SWAY_TELL_MS = 0;",
     "tests": [
-      "test/wb8a_never_swayed.test.js"
+      "test/systems/wb8a_never_swayed.test.js"
     ]
   }
 ]

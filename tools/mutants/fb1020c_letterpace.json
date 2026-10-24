@@ -1,0 +1,102 @@
+[
+  {
+    "name": "LETTER-PACE-the-wait-unread",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "    && !(r.step === 0 && !r.done && letterOnItsWay(runningStep(lineById(id)?.steps[0]?.quest ?? ''))));",
+    "new": "    );",
+    "tests": [
+      "test/systems/questlines/fb1020c_letterpace.test.js"
+    ],
+    "note": "a line begins while another's first letter is still held - the burst at the next town by day"
+  },
+  {
+    "name": "LETTER-PACE-the-hour-from-the-start-only",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": " && !(r.lettered > s - STEP_GAP_S)",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/fb1020c_letterpace.test.js"
+    ],
+    "note": "the next line begins at once when a held letter lands - two letters in one breath"
+  },
+  {
+    "name": "LETTER-PACE-the-layer-arm-silent",
+    "file": "src/systems/questlines/qlLayer.js",
+    "old": "{ runner.lettered(quest); return; }",
+    "new": "return;",
+    "tests": [
+      "test/systems/questlines/fb1020c_letterpace.test.js"
+    ],
+    "note": "GivePc's letter never stamps the runner: the hour counts from the start alone"
+  },
+  {
+    "name": "LETTER-PACE-the-arm-step-guard",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "if (rec && !rec.done && rec.step === at.index) rec.lettered",
+    "new": "if (rec && !rec.done && rec.step !== at.index) rec.lettered",
+    "tests": [
+      "test/systems/questlines/fb1020c_letterpace.test.js"
+    ],
+    "note": "the step's own letter stamps nothing"
+  },
+  {
+    "name": "LETTER-PACE-the-first-step",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "!(r.step === 0 && !r.done && letterOnItsWay",
+    "new": "!(r.step === 1 && !r.done && letterOnItsWay",
+    "tests": [
+      "test/systems/questlines/fb1020c_letterpace.test.js"
+    ],
+    "note": "the first step's letter is never waited on"
+  },
+  {
+    "name": "LETTER-PACE-textId",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "a.typeName === 'GivePc' && a.textId && !a.isComplete",
+    "new": "a.typeName === 'GivePc' && !a.textId && !a.isComplete",
+    "tests": [
+      "test/systems/questlines/fb1020c_letterpace.test.js"
+    ],
+    "note": "a `give pc` with no notify box read as the letter"
+  },
+  {
+    "name": "LETTER-PACE-isComplete",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "&& a.textId && !a.isComplete &&",
+    "new": "&& a.textId && a.isComplete &&",
+    "tests": [
+      "test/systems/questlines/fb1020c_letterpace.test.js"
+    ],
+    "note": "a letter given read as still on its way, one held as given"
+  },
+  {
+    "name": "LETTER-PACE-any-item",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "quest.getItem?.(a.itemSymbol)?.itemName === 'letter') return true;",
+    "new": "quest.getItem?.(a.itemSymbol)?.itemName !== 'letter') return true;",
+    "tests": [
+      "test/systems/questlines/fb1020c_letterpace.test.js"
+    ],
+    "note": "the letter's kind unread"
+  },
+  {
+    "name": "LETTER-PACE-the-shelf-held",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "  if (!quest || quest.questComplete || quest.shelvedAt != null) return false;",
+    "new": "  if (!quest || quest.questComplete) return false;",
+    "tests": [
+      "test/systems/questlines/fb1020c_letterpace.test.js"
+    ],
+    "note": "a first step set aside in the journal holds every other line for ever"
+  },
+  {
+    "name": "LETTER-PACE-restore-drops-the-letter",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "lettered: Number.isFinite(r.lettered) ? r.lettered : 0, ",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/fb1020c_letterpace.test.js"
+    ],
+    "note": "a load forgets when the last letter came"
+  }
+]

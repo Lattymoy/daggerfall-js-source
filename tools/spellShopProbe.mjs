@@ -18,8 +18,8 @@ await page.goto('http://127.0.0.1:5246/menu.html?skin=enhanced', { waitUntil: 'n
 const out = await page.evaluate(async () => {
   document.getElementById('enhanced-menu')?.remove();
   document.body.style.background = '#3a3226';
-  const { SpellbookWindow, SPELLBOOK_TEMPLATE_INDEX } = await import('/src/ui/spellbookWindow.js').then(async (m) => ({ ...m, ...(await import('/src/systems/spellMaker.js')) }));
-  const { enhancedWindow } = await import('/src/ui/enhancedPorts.js');
+  const { SpellbookWindow, SPELLBOOK_TEMPLATE_INDEX } = await import('/src/ui/spellbookWindow.js').then(async (m) => ({ ...m, ...(await import('/src/systems/spell/spellMaker.js')) }));
+  const { enhancedWindow } = await import('/src/ui/enhanced/enhancedPorts.js');
   // a handful of SPELLS.STD-shaped records (the fields the book reads)
   const fx = (type, subType, o = {}) => ({ type, subType, magnitudeBaseLow: 0, magnitudeBaseHigh: 0, durationBase: 0, chanceBase: 0, ...o });
   const spells = [

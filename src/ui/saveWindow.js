@@ -1,6 +1,6 @@
 // SAV4: THE SAVE/LOAD WINDOW - DaggerfallUnitySaveGameWindow.cs
 // verbatim geometry and behaviors (MIT, Daggerfall Workshop) over the
-// slot store (systems/saveSlots.js). This is a DFU-STYLE window - its
+// slot store (systems/save/saveSlots.js). This is a DFU-STYLE window - its
 // look is colored panels, not classic art - so every rect and color
 // below is the C#'s own literal (:34-270).
 //
@@ -144,7 +144,7 @@
 //                             pushed - there is nothing left under it.
 // } - absent hooks dim their doors, the pause window's own posture.
 
-import { nativeMetrics, drawRect, shadowText, pointToNative } from './nativePanel.js';
+import { nativeMetrics, drawRect, shadowText, pointToNative } from './native/nativePanel.js';
 import { measureText } from './text.js';
 // DaggerfallUI.cs:62's DaggerfallDefaultSelectedTextColor, which
 // ListBox hands every selected row (ListBox.cs:43) - one home for the
@@ -157,10 +157,11 @@ import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { dateFromClassicMinutes, midDateTimeString } from '../systems/gameDate.js';
 import { packColourTexture } from './packArt.js';   // OVH2: a worn UI pack's panel and button textures
+import { localizedStrings } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import {
   enumerateSaves, findSave, findMostRecentSave, saveInfoOf, screenshotOf,
   deleteSave, renameSave, characterNames,
-} from '../systems/saveSlots.js';
+} from '../systems/save/saveSlots.js';
 
 /** The window rects, panel-relative [x, y, w, h] (:34-270). The main
  *  panel centers in the 320x200 native space. */
@@ -199,7 +200,7 @@ export const SW_COLORS = Object.freeze({
  *  StreamingAssets/Text/Master Localization CSV Files/
  *  Internal_Strings.csv - the keys TextManager is asked for, with the
  *  English values verbatim (the port has one language). */
-export const SW_TEXT = Object.freeze({
+export const SW_TEXT = localizedStrings({
   savePrompt: 'Save Game',                                     // :924
   loadPrompt: 'Load Game',                                     // :925
   saveLoadPromptFormat: "{0} for '{1}'",                       // :1580

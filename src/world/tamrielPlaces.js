@@ -4,10 +4,10 @@
 // generated" and "Remove it"; bible/03-World/Arena-Provinces.md TESA12) - THE PLACES PAST THE BAY, THE PORT'S OWN.
 //
 // Arena's CITYDATA.65 stood the towns past the Bay from the player's own copy of Arena; nothing of Arena is read now. The
-// places are made here, on the trace (world/tamrielLand.js - Daggerfall's own picture of Tamriel, the player's files), the
+// places are made here, on the trace (world/tamriel/tamrielLand.js - Daggerfall's own picture of Tamriel, the player's files), the
 // same on every client, online and off:
 //
-//   THE CITIES are TAMRIEL1's (world/tamrielGeography.js CITIES) - the lore's own, placed by the port's reading of the
+//   THE CITIES are TAMRIEL1's (world/tamriel/tamrielGeography.js CITIES) - the lore's own, placed by the port's reading of the
 //   lore map: Windhelm and Whiterun, Anvil and Kvatch, Vivec and Necrom, Senchal, Woodhearth, Lilmoth. Each stands on its
 //   point, or on its province's land nearest it within SNAP_REACH; one TAMRIEL1 calls a port (`port`) stands on its
 //   shore (world/arenaPlaces.js standArenaPixels). A capital's is pinned on the capital the port built.
@@ -20,9 +20,9 @@
 // its own): the cities 0 on in TAMRIEL1's order, the towns from TOWN_SLOT, the villages from VILLAGE_SLOT. Pure over the
 // trace and the fit (the Bay's rectangle on the picture is the fit's).
 // ═══════════════════════════════════════════════════════════════════
-import { CITIES } from './tamrielGeography.js';
-import { PROVINCE_OF_ID } from './tamrielLand.js';
-import { PICTURE_W, PICTURE_H, bayPictureRect } from './tamrielFrame.js';
+import { CITIES } from './tamriel/tamrielGeography.js';
+import { PROVINCE_OF_ID } from './tamriel/tamrielLand.js';
+import { PICTURE_W, PICTURE_H, bayPictureRect } from './tamriel/tamrielFrame.js';
 import { hash32 } from './spawnedDungeons.js';
 import { countryName } from './tamrielCountry.js';
 import { provinceNameBank } from './tamrielPeople.js';
@@ -55,7 +55,7 @@ const MADE = Object.freeze([Object.freeze(/** @type {const} */ (['town', LOCATIO
 
 /** The land of one province on a trace, as a predicate over picture points - provinceKeyAt's own reading (the pixel under
  *  the point, nothing off the grid), over one mask made once a province.
- *  @param {import('./tamrielLand.js').TamrielTrace} trace @param {string} key */
+ *  @param {import('./tamriel/tamrielLand.js').TamrielTrace} trace @param {string} key */
 export function provinceLand(trace, key) {
   const { w, h, land, province } = trace;
   const mask = new Uint8Array(w * h);
@@ -130,7 +130,7 @@ export function madeName(type, bank, p, slot, used) {
  * THE PLACES ON A TRACE: { provinces, places, lost } - each province { index, key, cells } (the cells its made places
  * may stand on), each place { province, provinceIndex, id, kind, name, px, py, snapped, port? } on the picture grid
  * (`snapped` the picture pixels a city was moved), `lost` the cities no land took. Null trace, none.
- * @param {import('./tamrielLand.js').TamrielTrace | null} trace
+ * @param {import('./tamriel/tamrielLand.js').TamrielTrace | null} trace
  */
 export function makeTamrielPlaces(trace, bay = bayPictureRect()) {
   const provinces = [], places = [], lost = [];

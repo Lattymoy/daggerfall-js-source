@@ -1,5 +1,5 @@
 // @ts-check
-// ETHER-PLACES (2026-10-11, the owner: "procedural islands with towns, dungeons"; bible/03-World/Etheric-Sea.md
+// ETHER-PLACES (2026-10-11, the owner: "procedural islands with towns, dungeons"; bible/03-World/Eltheric-Ocean.md
 // ETHER-PLACES) - THE ISLES' PLACES: a port isle's town and a ruin isle's dungeon, each a NON-MUTATING CLONE of one of the
 // game's own places (spawnedDungeons.js's law - the locations are cached objects the exterior layout shares) standing on
 // its isle's centre pixel under its own id, name and index. Pure: the world host (scenes/world.js `_locationToBuild`)
@@ -8,7 +8,7 @@
 // THE ID keeps DFU's law - MapId & 0xfffff is the place's own number, the high 12 bits its lane (ETHER_PLACE_SALT, apart
 // from the spawns' 1, the zone halls' 7, the Ocean Holes' 0x600 and the Abyss Dungeons' 2049-4095) - and its low 20
 // bits are ETHER_PLACE_BASE and more: the isle's cell's own number past every pixel id the Bay has (getMapPixelID's
-// ceiling is 500000), so no place of the Etheric Sea can share an id - a discovery, a room, a save's key - with any
+// ceiling is 500000), so no place of the Eltheric Ocean can share an id - a discovery, a room, a save's key - with any
 // place of the Bay. Its LOCATION INDEX is its own negative (the questors' pool and the layout pins key on it; a
 // spawn's -1 is shared), never a row of MAPS.BSA.
 //
@@ -18,19 +18,19 @@
 // its hamlets alone), never a main-story place nor one with a dungeon under it; a RUIN a dungeon whose exterior is one
 // block where any is. Picked off the isle's own hash, in the rows' map-id order: the same place on every client.
 import { mapPixelToLongitudeLatitude, LOCATION_TYPES } from '../formats/mapsFile.js';
-import { CELLS_W, etherHash, etherBandOf, etherDepthAt } from './ethericSea.js';
+import { CELLS_W, etherHash, etherBandOf, etherDepthAt, ETHER_WORD, isleAt, islesNear } from './ethericSea.js';
 
 /** The places' lane in the id's high 12 bits, and the first low number an isle's place takes. */
 export const ETHER_PLACE_SALT = 0xe7;
 export const ETHER_PLACE_BASE = 500000;
-/** The region the Etheric Sea answers for (world/ethericSea.js etherPoliticIndex: its people's name bank, its prices, its
+/** The region the Eltheric Ocean answers for (world/ethericSea.js etherPoliticIndex: its people's name bank, its prices, its
  *  law, the far places its quests send a captain to): Betony, the Bay's westernmost isle and the nearest of its regions
  *  with places of its own to the Veil's way (the Bay's 'Islands in the Western Iliac Bay' hold none). */
 export const ETHER_REGION = 19;
 /** What the isles' places are called as a region, where a place's words name one. A place's own `regionName` is its
- *  region's (AUDIT CAPTAIN'S SEA P8: the quests resolve and gate a site by it - "the Etheric Isles" named no region, and
+ *  region's (AUDIT CAPTAIN'S SEA P8: the quests resolve and gate a site by it - "the Eltheric Isles" named no region, and
  *  a guild's local job threw on its first tick). */
-export const ETHER_REGION_NAME = 'the Etheric Isles';
+export const ETHER_REGION_NAME = `the ${ETHER_WORD} Isles`;
 /** A town's blocks (its exterior's width x height): a port isle's few, Veilhaven's more - each a town that stands whole on
  *  its small isle (world/ethericSea.js: up to twelve blocks, 410 m by 307, measured dry). */
 export const TOWN_BLOCKS = Object.freeze({ port: Object.freeze([2, 6]), haven: Object.freeze([6, 12]) });
@@ -43,6 +43,22 @@ export const etherPlaceId = (isle) => (((ETHER_PLACE_SALT << 20) | (ETHER_PLACE_
 export const etherLocationIndex = (isle) => -(1000 + isle.cy * CELLS_W + isle.cx);
 /** Is a map id an isle's place's? */
 export const isEtherPlaceId = (id) => ((Number(id) >>> 20) & 0xfff) === ETHER_PLACE_SALT && ((Number(id) >>> 0) & 0xfffff) >= ETHER_PLACE_BASE;
+/** The isle kinds that stand a place (etherTemplateOf: a port's town, a ruin's dungeon) - a wild isle and a rock none. */
+export const PLACE_KINDS = Object.freeze(['port', 'ruin']);
+/** ETHER-OW (2026-10-13): the isle whose place stands on this pixel - its centre, a port's or a ruin's - or null. Where
+ *  the Overworld's bands are never born (the Bay's places' own law, world.js `_bandPlacePixels`) and its plates stand. */
+export function etherPlaceIsle(x, y) {
+  const isle = isleAt(x, y);
+  return isle && isle.px === x && isle.py === y && PLACE_KINDS.includes(isle.kind) ? isle : null;
+}
+/** ETHER-OW: the isles of a kind whose places stand within `reach` map pixels of `at` (a circle, as the Overworld's far
+ *  lists read the Bay's - systems/travel/travelFarPlaces.js farPlaces, systems/travel/travelDungeons.js nearDungeons), nearest first:
+ *  `{ x, y, isle, row: { mapID, regionIndex } }` - a row in MAPS.BSA's own shape (travelDungeons.js dungeonRows), its
+ *  map id the place's own. @param {{x:number, y:number}} at @param {number} reach @param {'port'|'ruin'} kind */
+export function etherPlaceRows(at, reach, kind) {
+  return islesNear(at.x, at.y, Math.ceil(reach)).filter((i) => i.kind === kind && Math.hypot(i.px - at.x, i.py - at.y) <= reach)
+    .map((isle) => ({ x: isle.px, y: isle.py, isle, row: { mapID: etherPlaceId(isle), regionIndex: ETHER_REGION } }));
+}
 
 const blocksOf = (l) => (l?.exterior?.exteriorData?.width | 0) * (l?.exterior?.exteriorData?.height | 0);
 const idOf = (l) => (l?.mapTableData?.mapId ?? 0) >>> 0;

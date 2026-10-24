@@ -65,6 +65,8 @@
 
 /** PlayerGPS.NearbyObjectFlags (:112-123), verbatim. */
 import { LOCATION_TYPES } from '../formats/mapsFile.js';   // V5: IsPlayerInTown's seven town types
+import { enemyCareerIndex } from '../characters/enemy/enemyBasics.js';   // DEX1: SetEnemyCareer's careerIndex - a class's ID - 128, a mod's id its own
+import { ENEMY_GROUPS, enemyEntityGroup } from '../combat/enemyGroups.js';   // AUDIT DEX C3: GetEnemyGroup's one home, a mod's door with it
 
 export const NEARBY = Object.freeze({
   None: 0,
@@ -89,64 +91,22 @@ export const NEARBY_DEFAULT_MAX_RANGE = 14;
 // Golem/Water/None) serving PotentVs and the item affinity arms.
 // Reaching for `affinity` here would misgroup half the bestiary -
 // every Darkness/Daylight/Golem/Water enemy would silently take no
-// group bit, and the four careers DFU deliberately regroups below
-// would take the wrong one. Monster mobileType IS MonsterCareers
-// (EntityEnums.cs:120-166), so these are the indexes verbatim.
-//
-// The trailing comments are DFU's own, marking the five careers
-// where DFU DEPARTS from classic's grouping - kept because they are
-// the reason the table cannot be derived from anything else.
-const ENEMY_GROUP_BIT = Object.freeze({
-  // Animals
-  0: NEARBY.Animal,    // Rat
-  3: NEARBY.Animal,    // GiantBat
-  4: NEARBY.Animal,    // GrizzlyBear
-  5: NEARBY.Animal,    // SabertoothTiger
-  6: NEARBY.Animal,    // Spider
-  11: NEARBY.Animal,   // Slaughterfish
-  20: NEARBY.Animal,   // GiantScorpion
-  34: NEARBY.Animal,   // Dragonling
-  39: NEARBY.Animal,   // Horse_Invalid          (grouped as UNDEAD in classic)
-  40: NEARBY.Animal,   // Dragonling_Alternate   (grouped as UNDEAD in classic)
-  // Humanoid
-  1: NEARBY.Humanoid,  // Imp
-  2: NEARBY.Humanoid,  // Spriggan
-  7: NEARBY.Humanoid,  // Orc
-  8: NEARBY.Humanoid,  // Centaur
-  9: NEARBY.Humanoid,  // Werewolf
-  10: NEARBY.Humanoid, // Nymph
-  12: NEARBY.Humanoid, // OrcSergeant
-  13: NEARBY.Humanoid, // Harpy
-  14: NEARBY.Humanoid, // Wereboar
-  16: NEARBY.Humanoid, // Giant
-  21: NEARBY.Humanoid, // OrcShaman
-  22: NEARBY.Humanoid, // Gargoyle
-  24: NEARBY.Humanoid, // OrcWarlord
-  41: NEARBY.Humanoid, // Dreugh                 (grouped as UNDEAD in classic)
-  42: NEARBY.Humanoid, // Lamia                  (grouped as UNDEAD in classic)
-  // Undead
-  15: NEARBY.Undead,   // SkeletalWarrior
-  17: NEARBY.Undead,   // Zombie                 (grouped as ANIMAL in classic)
-  18: NEARBY.Undead,   // Ghost
-  19: NEARBY.Undead,   // Mummy
-  23: NEARBY.Undead,   // Wraith
-  28: NEARBY.Undead,   // Vampire
-  30: NEARBY.Undead,   // VampireAncient
-  32: NEARBY.Undead,   // Lich
-  33: NEARBY.Undead,   // AncientLich
-  // Daedra
-  25: NEARBY.Daedra,   // FrostDaedra
-  26: NEARBY.Daedra,   // FireDaedra
-  27: NEARBY.Daedra,   // Daedroth
-  29: NEARBY.Daedra,   // DaedraSeducer
-  31: NEARBY.Daedra,   // DaedraLord
-  // The four ATRONACHS return EnemyGroups.None EXPLICITLY (:2797-2801)
-  // rather than falling to the default - DFU spells them out, so they
-  // are spelled out here. 35 FireAtronach, 36 IronAtronach,
-  // 37 FleshAtronach, 38 IceAtronach: no group bit.
+// group bit, and the four careers DFU deliberately regroups would
+// take the wrong one.
+// AUDIT DEX C3: the switch is read through its one home and the door a
+// mod's override answers through (combat/enemyGroups.js), as
+// GetEntityFlags and IsGroupMatch read EnemyEntity.GetEnemyGroup
+// (PlayerGPS.cs:788, PacifyEffect.cs:132). A copy of the switch stood
+// here, and a mod's enemies took no group bit from it.
+/** GetEntityFlags' group switch (PlayerGPS.cs:789-802): a group's flag, None's nothing. */
+const GROUP_FLAG = Object.freeze({
+  [ENEMY_GROUPS.Undead]: NEARBY.Undead,
+  [ENEMY_GROUPS.Daedra]: NEARBY.Daedra,
+  [ENEMY_GROUPS.Humanoid]: NEARBY.Humanoid,
+  [ENEMY_GROUPS.Animals]: NEARBY.Animal,
 });
 
-/** FormulaHelper.GetEnemyEntityEnemyGroup as a plain lookup. AUDIT 26
+/** FormulaHelper.GetEnemyEntityEnemyGroup's flag. AUDIT 26
  *  F080: the switch runs on e.CareerIndex (:2752), and for an
  *  EnemyClass careerIndex is ID - 128 (EnemyEntity.cs:293) - so the
  *  class enemies COLLIDE into the monster careers: a Mage (0 = Rat)
@@ -159,7 +119,7 @@ const ENEMY_GROUP_BIT = Object.freeze({
  *  Animal never calmed a Mage and Dispel Undead could not destroy a
  *  Knight. X8's Pacify family reads this rather than re-transcribing
  *  the career switch, so the two cannot drift apart. */
-const careerIndexOf = (mobileType) => (mobileType >= 128 ? mobileType - 128 : mobileType);
+const careerIndexOf = (mobileType) => enemyCareerIndex(mobileType);   // DEX1: SetEnemyCareer's careerIndex - a mod's id its own
 /**
  * V5 - PlayerGPS.IsPlayerInTown (:504-527), verbatim including its
  * two optional gates, because getting them backwards inverts the
@@ -191,7 +151,7 @@ export function isPlayerInTown(locationType, {
   return true;
 }
 
-export const enemyGroupOf = (mobileType) => ENEMY_GROUP_BIT[careerIndexOf(mobileType)] ?? NEARBY.None;
+export const enemyGroupOf = (mobileType) => GROUP_FLAG[enemyEntityGroup(careerIndexOf(mobileType))] ?? NEARBY.None;
 
 /** GetEntityFlags (:779-819).
  *  rec = { mobileType, civilian?, effectCount? }.
@@ -210,7 +170,7 @@ export function entityFlags(rec) {
     result |= NEARBY.Humanoid;
   } else {
     result |= NEARBY.Enemy;
-    result |= ENEMY_GROUP_BIT[careerIndexOf(rec.mobileType)] ?? 0;
+    result |= enemyGroupOf(rec.mobileType);
   }
   // The Magic bit: DFU's acknowledged approximation - ANY live effect.
   if ((rec.effectCount ?? 0) > 0) result |= NEARBY.Magic;

@@ -2,6 +2,7 @@ node_modules/
 dist/
 # the gun lab's own build (vite.config.gun.js)
 dist-gun/
+dist-pistol/
 .DS_Store
 
 # Original game data - freeware but not redistributable. NEVER commit.
@@ -27,6 +28,8 @@ node_modules
 
 # The desktop shell's packaged installers (electron-builder output).
 app/release/
+# DA13: the bundled game's index, written by the release workflow before electron-builder packs it.
+app/game-seed.json
 
 # tools/parity: reproducible from prepare.sh / run.sh. cs/api holds DFU's
 # own sources (kept EXTERNAL per Port-Doctrine); out/ reaches ~2.4GB.
@@ -105,3 +108,12 @@ tools/shots/
 *.mutbak
 # TAMRIEL1: the fit probe's render of the player's own picture (tools/tamrielFitProbe.mjs default --out).
 tamriel-shots/
+# WEAPON-GLOW1 (AUDIT DOC-16): the glow probe's pictures (tools/weaponGlowProbe.mjs default outDir) - no game data, never committed.
+weapon-glow-probe/
+# STUDIO1: tools/studioArt.mjs templates' default dir - the painted pictures an artist starts from (the port's own; regenerated on demand).
+# Anchored (AUDIT STUDIO1 C4): unanchored, it ignored a folder of that name inside an artist's, and nothing they put there was committed.
+/studio-templates/
+# AUDIT STUDIO1 C7: what an artist's computer leaves beside their pictures (macOS's AppleDouble files, Windows' thumbnails and folder settings).
+._*
+Thumbs.db
+desktop.ini

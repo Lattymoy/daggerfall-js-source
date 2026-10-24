@@ -1,0 +1,72 @@
+[
+  {
+    "name": "OW-BUILD-the-host-never-says-the-view-is-up",
+    "file": "src/scenes/world.js",
+    "old": "awaited: _awaitedBuilds > 0, overworld: !!travelView?.active }),",
+    "new": "awaited: _awaitedBuilds > 0, overworld: false }),",
+    "tests": [
+      "test/systems/travel/ow_buildpace.test.js"
+    ],
+    "note": "The Overworld's ground comes at the 60-a-second frame's pace: the report's x1 on every machine that cannot keep up."
+  },
+  {
+    "name": "OW-BUILD-the-arm-never-taken",
+    "file": "src/systems/buildBreather.js",
+    "old": "  if (overworld) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/travel/ow_buildpace.test.js"
+    ],
+    "note": "frameFitBudget ignores the view."
+  },
+  {
+    "name": "OW-BUILD-sized-against-the-display",
+    "file": "src/systems/buildBreather.js",
+    "old": "    const left = BUILD_OVERWORLD_FRAME_MS - busyMs - BUILD_SLICE_MARGIN_MS;",
+    "new": "    const left = intervalMs - busyMs - BUILD_SLICE_MARGIN_MS;",
+    "tests": [
+      "test/systems/travel/ow_buildpace.test.js"
+    ],
+    "note": "The display's frame, not the Overworld's: a 60 Hz screen leaves the stream its ordinary slice and a 144 Hz one the same, the view changing nothing."
+  },
+  {
+    "name": "OW-BUILD-sixty-a-second",
+    "file": "src/systems/buildBreather.js",
+    "old": "export const BUILD_OVERWORLD_FRAME_MS = 1000 / 30;",
+    "new": "export const BUILD_OVERWORLD_FRAME_MS = 1000 / 60;",
+    "tests": [
+      "test/systems/travel/ow_buildpace.test.js"
+    ],
+    "note": "The Overworld's frame at 60 a second: the slice no bigger than the ordinary one on a light frame."
+  },
+  {
+    "name": "OW-BUILD-no-cap",
+    "file": "src/systems/buildBreather.js",
+    "old": "    return Number.isNaN(left) ? BUILD_SLICE_MS : Math.max(BUILD_SLICE_MS, Math.min(BUILD_SLICE_OVERWORLD_MS, left));",
+    "new": "    return Number.isNaN(left) ? BUILD_SLICE_MS : Math.max(BUILD_SLICE_MS, left);",
+    "tests": [
+      "test/systems/travel/ow_buildpace.test.js"
+    ],
+    "note": "A light frame lends the stream 30 ms and the view drops under 30 a second."
+  },
+  {
+    "name": "OW-BUILD-the-prover-floor-under-the-view",
+    "file": "src/systems/buildBreather.js",
+    "old": "    return Number.isNaN(left) ? BUILD_SLICE_MS : Math.max(BUILD_SLICE_MS, Math.min(BUILD_SLICE_OVERWORLD_MS, left));",
+    "new": "    return Number.isNaN(left) ? BUILD_SLICE_MS : Math.max(BUILD_SLICE_FLOOR_MS, Math.min(BUILD_SLICE_OVERWORLD_MS, left));",
+    "tests": [
+      "test/systems/travel/ow_buildpace.test.js"
+    ],
+    "note": "A heavy frame under the view gets 3 ms where an old stream had 6: the Overworld builds slower than the ground it replaced."
+  },
+  {
+    "name": "OW-BUILD-a-NaN-stalls",
+    "file": "src/systems/buildBreather.js",
+    "old": "    return Number.isNaN(left) ? BUILD_SLICE_MS : Math.max(BUILD_SLICE_MS, Math.min(BUILD_SLICE_OVERWORLD_MS, left));",
+    "new": "    return Math.max(BUILD_SLICE_MS, Math.min(BUILD_SLICE_OVERWORLD_MS, left));",
+    "tests": [
+      "test/systems/travel/ow_buildpace.test.js"
+    ],
+    "note": "A NaN busy reading answers NaN, and the breather yields every breath."
+  }
+]

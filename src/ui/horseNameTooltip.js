@@ -11,9 +11,9 @@
 // pool's pick), and the face is the skin's: DFU's bitmap line on the classic skin, the mid-screen label's DOM face
 // on the enhanced one. Where the enhanced plaque is up it already names the horse, and the host says nothing here.
 import { drawText, measureText } from './text.js';
-import { nativeMetrics, NATIVE_W, DEFAULT_TEXT_COLOR } from './nativePanel.js';
+import { nativeMetrics, NATIVE_W, DEFAULT_TEXT_COLOR } from './native/nativePanel.js';
 import { isEnhanced } from '../systems/uiSkin.js';
-import { drawEnhancedHudLabel, midTextTopPx } from './enhancedHudText.js';
+import { drawEnhancedHudLabel, midTextTopPx } from './enhanced/enhancedHudText.js';
 
 /** HorseNameTooltipController.TooltipPosition's y [IL_30c6] - native rows on the 320x200 panel. */
 export const HORSE_TOOLTIP_Y = 112;

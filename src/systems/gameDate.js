@@ -27,6 +27,8 @@
 // this module is pure functions over an absolute minute count, so
 // there is no mutable clock object to carry.
 
+import { localizedText, localizedTextList, formatText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+
 export const SECONDS_PER_MINUTE = 60;
 export const MINUTES_PER_HOUR = 60;
 export const MINUTES_PER_DAY = 1440;
@@ -58,13 +60,17 @@ export const DEFAULT_DATE = Object.freeze({ year: 405, month: 5, day: 0, hour: 1
 /** The four enums (:223-279), in DFU's declaration order - the value
  *  IS the index, which is what DayValue/MonthValue/BirthSignValue
  *  cast to. Names come from DFU's Internal_Strings lists
- *  ("dayNames", "monthNames", "birthSignNames", "seasonNames"). */
-export const DAY_NAMES = Object.freeze(['Sundas', 'Morndas', 'Tirdas', 'Middas', 'Turdas', 'Fredas', 'Loredas']);
-export const MONTH_NAMES = Object.freeze(["Morning Star", "Sun's Dawn", 'First Seed', "Rain's Hand",
+ *  ("dayNames", "monthNames", "birthSignNames", "seasonNames"), read
+ *  where GetDayName/GetMonthName/GetBirthSignName/GetSeasonName read
+ *  them (:550-615). SEASON_NAMES stays the English list as well: the
+ *  quest Season trigger compares a season's word against it. */
+export const dayNames = () => localizedTextList('dayNames', ['Sundas', 'Morndas', 'Tirdas', 'Middas', 'Turdas', 'Fredas', 'Loredas']);
+export const monthNames = () => localizedTextList('monthNames', ["Morning Star", "Sun's Dawn", 'First Seed', "Rain's Hand",
   'Second Seed', 'Midyear', "Sun's Height", 'Last Seed', 'Hearthfire', 'Frostfall', "Sun's Dusk", 'Evening Star']);
-export const BIRTH_SIGN_NAMES = Object.freeze(['The Ritual', 'The Lover', 'The Lord', 'The Mage',
+export const birthSignNames = () => localizedTextList('birthSignNames', ['The Ritual', 'The Lover', 'The Lord', 'The Mage',
   'The Shadow', 'The Steed', 'The Apprentice', 'The Warrior', 'The Lady', 'The Tower', 'The Atronach', 'The Thief']);
 export const SEASON_NAMES = Object.freeze(['Fall', 'Spring', 'Summer', 'Winter']);
+const seasonNames = () => localizedTextList('seasonNames', ['Fall', 'Spring', 'Summer', 'Winter']);
 export const SEASONS = Object.freeze({ Fall: 0, Spring: 1, Summer: 2, Winter: 3 });
 
 /** ToSeconds (:430-441). Year/month/day are counted from ZERO, and
@@ -234,9 +240,9 @@ export const minuteOfDay = (date) => (date.hour * MINUTES_PER_HOUR) + date.minut
 /** GetDayName (:550-559). The week is the day's position WITHIN its
  *  week, and since 30 divides evenly by neither 7 nor anything useful,
  *  DFU simply takes day mod 7 - written there as day - week*7. */
-export const dayName = (date) => DAY_NAMES[date.day - Math.floor(date.day / DAYS_PER_WEEK) * DAYS_PER_WEEK];
-export const monthName = (date) => MONTH_NAMES[date.month];
-export const birthSignName = (date) => BIRTH_SIGN_NAMES[date.month];
+export const dayName = (date) => dayNames()[date.day - Math.floor(date.day / DAYS_PER_WEEK) * DAYS_PER_WEEK];
+export const monthName = (date) => monthNames()[date.month];
+export const birthSignName = (date) => birthSignNames()[date.month];
 
 /** GetSeasonValue (:577-607). DFU's own comment admits the boundary is
  *  approximate: "Daggerfall seems to roll over seasons part way
@@ -251,7 +257,7 @@ export function seasonValue(date) {
   if (m === 8 || m === 9 || m === 10) return SEASONS.Fall;
   return SEASONS.Summer;   // DFU's `default:`
 }
-export const seasonName = (date) => SEASON_NAMES[seasonValue(date)];
+export const seasonName = (date) => seasonNames()[seasonValue(date)];
 
 /** DateString (DaggerfallDateTime.cs:417-422) over the en table's
  *  dateFormatString '{0} the {1}{2} of {3:00}' - DayName, the day, its
@@ -261,8 +267,8 @@ export const seasonName = (date) => SEASON_NAMES[seasonValue(date)];
  *  AUDIT 24 systems: the port had invented "Loredas, 4 Morning Star,
  *  3E 405" where DFU renders "Loredas the 4th of Morning Star" - and
  *  every %dat, %qdt and %qdat macro reads this. */
-export const dateString = (date) =>
-  `${dayName(date)} the ${dayOfMonth(date)}${daySuffix(dayOfMonth(date))} of ${monthName(date)}`;
+export const dateString = (date) => formatText(localizedText('dateFormatString', '{0} the {1}{2} of {3:00}'),
+  dayName(date), dayOfMonth(date), daySuffix(dayOfMonth(date)), monthName(date));
 
 /** GetSuffix (:641-652): st on 1/21, nd on 2/22, rd on 3/23, else th
  *  (a 30-day month never reaches 31, so DFU never wrote that arm). */
@@ -272,27 +278,28 @@ export function daySuffix(dayOfMonth1) {
   if (dayOfMonth1 === 3 || dayOfMonth1 === 23) return 'rd';
   return 'th';
 }
-/** AUDIT 24 (wave 22): the `{0:00}` in every one of these format
- *  strings. .NET's custom numeric format ROUNDS (away from zero) - it
- *  does not truncate - and DaggerfallDateTime.Second is a `float`
- *  (:63), not an int. So at 59.5 seconds DFU really does print
- *  `13:29:60`, and the port's Math.floor quietly corrected it to
- *  `:59`. Hour, Minute and the day are ints on both sides, where
- *  rounding and flooring are the same thing. Math.round is half-UP
- *  where .NET's is half-AWAY-FROM-ZERO; a clock component is never
- *  negative, so the two agree everywhere this is reachable. */
-const pad2 = (n) => String(Math.round(n)).padStart(2, '0');
+// AUDIT 24 (wave 22): the `{0:00}` in every one of these format
+// strings. .NET's custom numeric format ROUNDS (away from zero) - it
+// does not truncate - and DaggerfallDateTime.Second is a `float`
+// (:63), not an int. So at 59.5 seconds DFU really does print
+// `13:29:60`, and the port's Math.floor quietly corrected it to
+// `:59`. Hour, Minute and the day are ints on both sides, where
+// rounding and flooring are the same thing. L10N3d: the patterns are
+// read through the text core now, and formatText's `{n:00}` is that
+// Math.round and pad - half-UP where .NET's is half-AWAY-FROM-ZERO; a
+// clock component is never negative, so the two agree everywhere this
+// is reachable.
 /** DateTimeString (:409-414) over the en table's dateTimeFormatString
  *  '{0:00}:{1:00}:{2:00} on {3}{4} of {5:00}, 3E{6}'. QUIRK KEPT: the
  *  {5:00} spec lands on the STRING MonthName - System.String is not
  *  IFormattable, string.Format drops the spec and the name prints
  *  plainly - and the day ({3}) is UNPADDED here. The notebook's D:
  *  note headers read this shape (Q4-v). */
-export const dateTimeString = (d) =>
-  `${pad2(d.hour)}:${pad2(d.minute)}:${pad2(d.second)} on ${d.day + 1}${daySuffix(d.day + 1)} of ${monthName(d)}, 3E${d.year}`;
+export const dateTimeString = (d) => formatText(localizedText('dateTimeFormatString', '{0:00}:{1:00}:{2:00} on {3}{4} of {5:00}, 3E{6}'),
+  d.hour, d.minute, d.second, d.day + 1, daySuffix(d.day + 1), monthName(d), d.year);
 /** MidDateTimeString (:390-394) over midDateTimeFormatString
  *  '{0:00}:{1:00}:{2:00} {3:00} {4:00} 3E{5}' - HERE the day IS padded
  *  ({3:00} lands on the int) and the month-name spec drops again. The
  *  notebook's finished-quest headers read this shape (Q4-v). */
-export const midDateTimeString = (d) =>
-  `${pad2(d.hour)}:${pad2(d.minute)}:${pad2(d.second)} ${pad2(d.day + 1)} ${monthName(d)} 3E${d.year}`;
+export const midDateTimeString = (d) => formatText(localizedText('midDateTimeFormatString', '{0:00}:{1:00}:{2:00} {3:00} {4:00} 3E{5}'),
+  d.hour, d.minute, d.second, d.day + 1, monthName(d), d.year);

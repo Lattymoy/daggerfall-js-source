@@ -1,0 +1,247 @@
+[
+  {
+    "name": "MOVER-BODY-a-looser-press",
+    "file": "src/player/moverBody.js",
+    "old": "export const MOVER_PRESS = 1e-3;",
+    "new": "export const MOVER_PRESS = 0.05;",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-a-resting-body-pressed",
+    "file": "src/player/moverBody.js",
+    "old": "  return collider.capsuleContact(body.pos, body.height, -MOVER_PRESS, { only: [key] }) !== null;",
+    "new": "  return collider.capsuleContact(body.pos, body.height, MOVER_PRESS, { only: [key] }) !== null;",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-the-steps-a-whole-radius",
+    "file": "src/player/moverBody.js",
+    "old": "export const MOVER_STEP = CAPSULE_RADIUS / 2;",
+    "new": "export const MOVER_STEP = CAPSULE_RADIUS;",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-one-step-at-most",
+    "file": "src/player/moverBody.js",
+    "old": "export const MOVER_STEPS_MAX = 16;",
+    "new": "export const MOVER_STEPS_MAX = 1;",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-no-adhesion",
+    "file": "src/player/moverBody.js",
+    "old": "  const q = transformPoint(m1, l[0], l[1], l[2]);",
+    "new": "  const q = transformPoint(m0, l[0], l[1], l[2]);",
+    "tests": ["test/world/fb1019f_moverbody.test.js", "test/scenes/audit18_hosts_outer.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-the-frame-met-whole",
+    "file": "src/player/moverBody.js",
+    "old": "  return Math.min(MOVER_STEPS_MAX, Math.max(1, Math.ceil(travel / MOVER_STEP)));",
+    "new": "  return 1;",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-a-far-body-met-in-steps",
+    "file": "src/player/moverBody.js",
+    "old": "  if (body.groundKey !== key && collider.capsuleContact(body.pos, body.height, travel, { only: [key] }) === null) return 0;\n",
+    "new": "",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-a-rider-in-the-skin-out-of-reach",
+    "file": "src/player/moverBody.js",
+    "old": "  if (body.groundKey !== key && collider.capsuleContact(body.pos, body.height, travel, { only: [key] }) === null) return 0;",
+    "new": "  if (collider.capsuleContact(body.pos, body.height, travel, { only: [key] }) === null) return 0;",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-the-rider-not-carried",
+    "file": "src/player/moverBody.js",
+    "old": "  if (body.groundKey !== key && !moverPresses(collider, key, body)) return true;",
+    "new": "  if (!moverPresses(collider, key, body)) return true;",
+    "tests": ["test/world/fb1019f_moverbody.test.js", "test/scenes/audit18_hosts_outer.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-the-press-before-read-at-the-new-pose",
+    "file": "src/player/moverBody.js",
+    "old": "  place(m0);\n  const before = moverPresses(collider, key, body);",
+    "new": "  const before = moverPresses(collider, key, body);",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-the-carry-through-the-mover",
+    "file": "src/player/moverBody.js",
+    "old": "  place(null);\n  collider.move(",
+    "new": "  collider.move(",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-the-carry-snapped",
+    "file": "src/player/moverBody.js",
+    "old": "  collider.move(to, want[0], want[1], want[2], body.height, false);",
+    "new": "  collider.move(to, want[0], want[1], want[2], body.height, true);",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-the-carry-a-standing-body",
+    "file": "src/player/moverBody.js",
+    "old": "  collider.move(to, want[0], want[1], want[2], body.height, false);",
+    "new": "  collider.move(to, want[0], want[1], want[2], 1.8, false);",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-the-body-never-moved",
+    "file": "src/player/moverBody.js",
+    "old": "  body.carryBy(to[0] - body.pos[0], to[1] - body.pos[1], to[2] - body.pos[2]);\n",
+    "new": "",
+    "tests": ["test/world/fb1019f_moverbody.test.js", "test/scenes/audit18_hosts_outer.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-a-held-body-holds-it",
+    "file": "src/player/moverBody.js",
+    "old": "  return before || !moverPresses(collider, key, body);",
+    "new": "  return !moverPresses(collider, key, body);",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-never-held",
+    "file": "src/player/moverBody.js",
+    "old": "  return before || !moverPresses(collider, key, body);",
+    "new": "  return true;",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-the-movers-never-meet-it",
+    "file": "src/world/actionSystem.js",
+    "old": "      if (o.kind === 'action') this._standMover(o, t0, m0, body);",
+    "new": "      if (o.kind === 'action') this._standMover(o, t0, m0, null);",
+    "tests": ["test/world/fb1019f_moverbody.test.js", "test/scenes/audit18_hosts_outer.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-the-hold-closes-anyway",
+    "file": "src/world/actionSystem.js",
+    "old": "{ o.t = t; o.matrix = m; place(m); return; }",
+    "new": "{ return; }",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-the-held-tween-runs-on",
+    "file": "src/world/actionSystem.js",
+    "old": "{ o.t = t; o.matrix = m; place(m); return; }",
+    "new": "{ o.matrix = m; place(m); return; }",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-the-held-bucket-left-closing",
+    "file": "src/world/actionSystem.js",
+    "old": "{ o.t = t; o.matrix = m; place(m); return; }",
+    "new": "{ o.t = t; o.matrix = m; return; }",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-the-steps-all-at-the-end",
+    "file": "src/world/actionSystem.js",
+    "old": "      o.t = k === n ? t1 : t0 + ((t1 - t0) * k) / n;",
+    "new": "      o.t = t1;",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-a-step-never-stood",
+    "file": "src/world/actionSystem.js",
+    "old": "      if (k < n) { this._applyMatrix(o); place(o.matrix); } else if (n > 1) { o.matrix = m1; place(m1); }",
+    "new": "      if (k < n) { this._applyMatrix(o); } else if (n > 1) { o.matrix = m1; place(m1); }",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-the-last-step-left-short",
+    "file": "src/world/actionSystem.js",
+    "old": "      if (k < n) { this._applyMatrix(o); place(o.matrix); } else if (n > 1) { o.matrix = m1; place(m1); }",
+    "new": "      if (k < n) { this._applyMatrix(o); place(o.matrix); }",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-the-dungeon-host-keeps-the-body",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (!overlayHeld) dungeonCtx.actions.update(dt, player);",
+    "new": "      if (!overlayHeld) dungeonCtx.actions.update(dt);",
+    "tests": ["test/world/fb1019f_moverbody.test.js", "test/scenes/audit18_hosts_outer.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-the-building-host-keeps-the-body",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!overlayHeld) interiorCtx.actions.update(dt, player);",
+    "new": "    if (!overlayHeld) interiorCtx.actions.update(dt);",
+    "tests": ["test/world/fb1019f_moverbody.test.js", "test/scenes/audit18_hosts_outer.test.js"]
+  },
+  {
+    "name": "MOVER-BODY-the-standalone-dungeon-keeps-the-body",
+    "file": "src/scenes/dungeon.js",
+    "old": "    if (!overlayHeld) ctx.actions.update(dt, walkMode ? player : null);",
+    "new": "    if (!overlayHeld) ctx.actions.update(dt);",
+    "tests": ["test/world/fb1019f_moverbody.test.js", "test/scenes/audit18_hosts_outer.test.js"]
+  },
+  {
+    "name": "VOID-DUNGEON-a-realm-keeps-a-record",
+    "file": "src/player/enterExit.js",
+    "old": "const spot = ownsVoid ? null : at();",
+    "new": "const spot = at();",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "VOID-DUNGEON-a-record-with-no-spot",
+    "file": "src/player/enterExit.js",
+    "old": "rescue = spot ? interiorVoidRescue(collider, spot) : null;",
+    "new": "rescue = interiorVoidRescue(collider, spot);",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "VOID-DUNGEON-made-at-every-ask",
+    "file": "src/player/enterExit.js",
+    "old": "    if (rescue === undefined) { const spot",
+    "new": "    if (true) { const spot",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "VOID-DUNGEON-the-line-unrouted",
+    "file": "src/player/enterExit.js",
+    "old": "export const dungeonVoidText = () => t('player.dungeonVoid', DUNGEON_VOID_TEXT);",
+    "new": "export const dungeonVoidText = () => DUNGEON_VOID_TEXT;",
+    "tests": ["test/world/fb1019f_moverbody.test.js", "test/systems/l10n1b.test.js"]
+  },
+  {
+    "name": "VOID-DUNGEON-the-enter-marker-first",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "dungeonVoidRescue(collider, () => api.startSpawn({ preferEnterMarker: false }) ?? api.startSpawn(), _sdRealm || _egHall)",
+    "new": "dungeonVoidRescue(collider, () => api.startSpawn(), _sdRealm || _egHall)",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "VOID-DUNGEON-the-breach-rescued",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "api.startSpawn(), _sdRealm || _egHall)",
+    "new": "api.startSpawn(), _sdRealm)",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "VOID-DUNGEON-the-world-host-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": " else if (standFromVoid(dungeonCtx.voidRescue(), player)) dungeonCtx.hudSay(dungeonVoidText());",
+    "new": "",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "VOID-DUNGEON-the-world-host-silent",
+    "file": "src/scenes/worldModes.js",
+    "old": " else if (standFromVoid(dungeonCtx.voidRescue(), player)) dungeonCtx.hudSay(dungeonVoidText());",
+    "new": " else standFromVoid(dungeonCtx.voidRescue(), player);",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  },
+  {
+    "name": "VOID-DUNGEON-the-standalone-dungeon-unwired",
+    "file": "src/scenes/dungeon.js",
+    "old": "      if (standFromVoid(ctx.voidRescue(), player)) ctx.hudSay?.(dungeonVoidText());\n",
+    "new": "",
+    "tests": ["test/world/fb1019f_moverbody.test.js"]
+  }
+]

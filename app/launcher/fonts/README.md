@@ -25,4 +25,4 @@ they are not sold on their own and keep their names.
 The digit five is Silkscreen's, as everywhere else in the brand (FIX-D,
 `vendor/silkscreen-five/`): the launcher's stylesheet carries the same
 520-byte data URI the landing page does, and
-`test/da8_launcher.test.js` holds the two equal.
+`test/tooling/da8_launcher.test.js` holds the two equal.

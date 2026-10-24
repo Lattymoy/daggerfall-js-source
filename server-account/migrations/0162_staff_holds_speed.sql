@@ -1,0 +1,18 @@
+-- STAFF-PANEL-SPEED (2026-10-23, mob: "slow when moving in menus", "it need to not hurt server performance"): THE TRADE
+-- HOLDS' READ ON AN INDEX OF ITS OWN (server-account/src/staffRealm.js, /v1/staff/trade-holds).
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI), before the Worker that reads
+-- by it. An index only: no row is written or moved.
+--
+-- The list is every held or flagged character (`held IS NOT NULL OR review IS NOT NULL`), newest hold first. Neither of
+-- 0096's two partial indexes answers an OR, so the read walked every realm character to find the few it lists - its
+-- cost grew with the realm, not with the holds. This one holds exactly the listed characters, by the hold's time: the
+-- read walks the holds alone. Its condition is the statement's own, spelled the same, or the planner never uses it. A
+-- checkpoint's verdict sets the hold and the review on every save (verdict.js verdictWrite), but only a character this
+-- index holds - a held or flagged one, a few - has an entry to write; every other character's save writes it nothing.
+-- Newest first (`held_at DESC`), as the list reads it: walked forward, two holds of one second come in the table's own
+-- order, as the old scan's sort gave them, so every statement that lists the holds this way answers as it did and sorts
+-- nothing (an ascending index walked backwards gives a tie the other way round).
+CREATE INDEX IF NOT EXISTS realm_characters_holds ON realm_characters (held_at DESC) WHERE held IS NOT NULL OR review IS NOT NULL;

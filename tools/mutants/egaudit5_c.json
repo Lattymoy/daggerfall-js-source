@@ -1,0 +1,993 @@
+[
+  {
+    "name": "AUDIT-EG-V-c-L7-1-door-one-word",
+    "file": "src/net/chatCommands.js",
+    "old": "const m = /^\\/breach(?:\\s+([\\s\\S]*))?$/i.exec(String(text ?? '').trim());",
+    "new": "const m = /^\\/breach(?:\\s+(\\w+))?$/i.exec(String(text ?? '').trim());",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-1-door-tail-cut",
+    "file": "src/net/chatCommands.js",
+    "old": "  return m ? (m[1] ?? '').trim() : null;",
+    "new": "  return m ? (m[1] ?? '').trim().split(/\\s+/)[0] : null;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-1-host-unknown",
+    "file": "src/net/chatCommands.js",
+    "old": "'seasons', 'breach', 'block',",
+    "new": "'seasons', 'block',",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-21-help-without-breach",
+    "file": "src/net/chatCommands.js",
+    "old": "export const helpLines = () => [...HELP_LINES.slice(0, -1), breachHelpLine(), HELP_LINES[HELP_LINES.length - 1]];",
+    "new": "export const helpLines = () => [...HELP_LINES.slice(0, -1), HELP_LINES[HELP_LINES.length - 1], breachHelpLine()];",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-21-unknown-answers",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      say(egBreachUsageOut());\n    },",
+    "new": "      answer();\n    },",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-21-usage-word-dropped",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "respite [no], cant N, tonic,",
+    "new": "cant N, tonic,",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-14-bare-answers",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (a === '') { if (callMine(E) || returnable()) answer(); else startOpen(); return; }",
+    "new": "      if (a === '') { answer(); return; }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-14-window-over-call",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (a === '') { if (callMine(E) || returnable()) answer(); else startOpen(); return; }",
+    "new": "      if (a === '') { startOpen(); return; }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-2-yes-newest-again",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        ? open.find((q) => q[0] === 'ready') ?? [...open].reverse().find((q) => !dec(q) && !resp(q)) ?? (open.some(resp) ? null : open[open.length - 1])",
+    "new": "        ? [...open].reverse().find((q) => !dec(q)) ?? open[open.length - 1]",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-2-yes-reaches-respite-alone",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": " ?? (open.some(resp) ? null : open[open.length - 1])",
+    "new": " ?? open[open.length - 1]",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-2-number-on-respite",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": ": open.find((q) => dec(q) && voted[q[0]] == null) ?? [...open].reverse().find((q) => !resp(q)) ?? open[open.length - 1];",
+    "new": ": open.find((q) => dec(q) && voted[q[0]] == null) ?? open[open.length - 1];",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-2-R-deaf",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (code === 'KeyR' && open.some((q) => q[0] === 'respite')) return respiteVote('yes');",
+    "new": "      if (false) return respiteVote('yes');",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-2-respite-no-yes",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    const y = word === 'no' || word === 'n' ? 0 : 1;",
+    "new": "    const y = 1;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-2-vote-respite-word",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (b === 'respite') respiteVote(parts[2] ?? 'yes'); else this.vote(b);",
+    "new": "this.vote(b);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-3-focus-newest-ask",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    for (const a of (E.as ?? []).filter((q) => q[2] > now())) egAskText(a[0], a[1]).opts.forEach((_, y) => items.push({ k: 'opt', q: a[0], y }));",
+    "new": "    if (!cards) for (const a of (E.as ?? []).filter((q) => q[2] > now()).slice(-1)) egAskText(a[0], a[1]).opts.forEach((_, y) => items.push({ k: 'opt', q: a[0], y }));",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-3-down-on-ready",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (act.k === 'no' && it?.k === 'opt' && YES_NO_ASKS.includes(it.q))",
+    "new": "    if (false)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-3-panel-mark-newest",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "if (base + y === focus) b.className += ' eg-focus';",
+    "new": "if (a === model.asks.at(-1) && y === focus) b.className += ' eg-focus';",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L6-1-witness-kept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (witness) { witness = null; entity.health = Math.max(1, entity.health); }\n    dropDoor();",
+    "new": "    dropDoor();",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L6-6-window-after-away",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (startWin !== ask) { if (a?.ok) restack(a.data?.keys, seq); return; }",
+    "new": "    if (false) { if (a?.ok) restack(a.data?.keys, seq); return; }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L6-6-window-over-refusal",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    const no = openRefusal();   // AUDIT EG V (c, L6-6)",
+    "new": "    const no = null;   // AUDIT EG V (c, L6-6)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L6-6-slot-after-close",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "const sw = startWin; startWin = null; sw?.close?.();",
+    "new": "const sw = startWin; sw?.close?.(); startWin = null;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-5-account-unread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (a?.ok && Number.isSafeInteger(a.data?.annals) && a.data.annals >= 0) annalsKept = a.data.annals;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-5-bits-ignored",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "(p < 31 && (annalsKept & (1 << p)) !== 0)",
+    "new": "false",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-5-spire-only",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (a === 'annals') { annalsSay(b); return; }   // AUDIT EG V (c, L7-5)",
+    "new": "      if (a === 'annals' && inSpire()) { annalsSay(b); return; }   // AUDIT EG V (c, L7-5)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-11-catalog-as-shut",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "REFUSED[error] ?? (typeof error === 'string' && Object.hasOwn(REFUSALS, error) ? accountRefusalText(error) : EG_TEXT.shut)",
+    "new": "REFUSED[error] ?? EG_TEXT.shut",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-11-unknown-as-server",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "Object.hasOwn(REFUSALS, error) ? accountRefusalText(error) : EG_TEXT.shut)",
+    "new": "true ? accountRefusalText(error) : EG_TEXT.shut)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L2-9-magicka-left",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "  if (entity.maxMagicka > 0) entity.magicka = Math.min(entity.maxMagicka, (entity.magicka ?? 0) + Math.round(p * entity.maxMagicka));\n  const fm",
+    "new": "  const fm",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L2-9-fatigue-left",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "  if (fm > 0) entity.fatigue = Math.min(fm, (entity.fatigue ?? 0) + Math.round(p * fm));",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L2-9-past-whole",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "entity.fatigue = Math.min(fm, (entity.fatigue ?? 0) + Math.round(p * fm));",
+    "new": "entity.fatigue = (entity.fatigue ?? 0) + Math.round(p * fm);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L2-9-unasked",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (why === 'rest' && p > 0) egRestVitals(entity, p);",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L2-9-card-unread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (w.k === 'eheal' && w.why === 'rest') { const S = link.state(); pres.restP = { b: S.b ?? '', h: S.h | 0, p: Number(w.p) || 1 }; }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L2-14-count-in-memory",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "  try { const v = JSON.parse(store?.getItem?.(EG_POTIONS_KEY) ?? 'null'); if (v",
+    "new": "  try { const v = null; if (v",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L2-14-used-unkept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "potions = Math.max(0, potions - 1); potionsKeep(); }",
+    "new": "potions = Math.max(0, potions - 1); }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L2-14-other-breach-carried",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (!potionHall.startsWith(`${E.b}:`)) { potionHall = `${E.b}:0:t`; potions = EG_POTIONS_PER_HALL; potionsKeep(); }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-23-device-dropped",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "((Number.isSafeInteger(account) && account >= 0 ? account : 0) | (device | 0) | (shown | 0))",
+    "new": "((Number.isSafeInteger(account) && account >= 0 ? account : device | 0) | (shown | 0))",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-23-one-key",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "export const egFirstKey = (sub) => (typeof sub === 'string' && sub ? `${EG_FIRST_KEY}:${sub}` : EG_FIRST_KEY);",
+    "new": "export const egFirstKey = (sub) => EG_FIRST_KEY;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-23-account-key-unread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "  const firstDevice = () => egFirstRead(store, egFirstKey(me())) | egFirstRead(store);",
+    "new": "  const firstDevice = () => egFirstRead(store);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-23-lost-bit-untold",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if ((pres.shown | firstDevice()) & ~pres.acct) tellFirst();",
+    "new": "if (pres.shown & ~pres.acct) tellFirst();",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-ping-uncooled",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (left > 0) { say(egPingWait(Math.ceil(left / 1000))); return false; }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-ping-time-unkept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    pingAt = now();\n    return true;",
+    "new": "    return true;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-pad-up-deaf",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (act.k === 'ping') { pingSay(0); return true; }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-touch-ping-deaf",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (id === 'ping') { pingSay(0); return true; }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-shoulders-deaf",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (witness && EG_PAD_SHOULDERS[code]) { watchStep(EG_PAD_SHOULDERS[code]); return true; }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js",
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-ping-cooldown",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const EG_PING_MS = 3000;",
+    "new": "export const EG_PING_MS = 2000;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-pad-act-ping",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "    if (kind === 'tap' && dir === 'up') return { k: 'ping' };",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-prompt-ping",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "[[PAD_OF_DIR.up], egPingLabel()], ",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_c.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-row-tap-deaf",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      witness.idx = i; witness.watched = sub;",
+    "new": "      witness.idx = i;",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-row-tap-unmarked",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      return egPartyDeco(egPartyRows(E, t, { absent: pres.absent, roads }), { tap });",
+    "new": "      return egPartyDeco(egPartyRows(E, t, { absent: pres.absent, roads }), { tap: null });",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-tap-class",
+    "file": "src/ui/eliteGates/egParty.js",
+    "old": "tap?.has?.(sub) ? 'eg-tap' : ''",
+    "new": "''",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-watch-nameless",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "  const witLine = watching ? [egWatchLine(watch),",
+    "new": "  const witLine = watching ? ['',",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-watch-healthless",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "pct: p && p.hm > 0 && Number.isFinite(p.h) ? Math.max(0, Math.min(100, (p.h / p.hm) * 100)) : null };",
+    "new": "pct: null };",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-watch-unhanded",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      watch: witness ? watchedOf(E) : null, ping:",
+    "new": "      watch: null, ping:",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-touch-ping-gone",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "{ id: 'ping', label: egPingLabel(ping) }, ",
+    "new": "",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-touch-ping-secondless",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "(left > 0 ? t('eg.touch.pingCool', 'Ping {s}s', { s: Math.ceil(left / 1000) }) : t('eg.touch.ping', 'Ping'))",
+    "new": "t('eg.touch.ping', 'Ping')",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-stage-ping-unsaid",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "ping > 0 ? egPingWait(Math.ceil(ping / 1000)) : ''",
+    "new": "''",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-7-touch-label-unredrawn",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "  const tk = model.touch.map((b) => `${b.id}=${b.label}`).join(',');",
+    "new": "  const tk = model.touch.map((b) => b.id).join(',');",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-4-ring-from-silence",
+    "file": "src/ui/eliteGates/egParty.js",
+    "old": "    const since = since0 != null ? Math.max(since0, E.hw > 0 ? E.hw : since0) : undefined;",
+    "new": "    const since = since0;",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-4-ring-from-wake",
+    "file": "src/ui/eliteGates/egParty.js",
+    "old": "Math.max(since0, E.hw > 0 ? E.hw : since0)",
+    "new": "(E.hw > 0 ? E.hw : since0)",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-8-falls-unmarked",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (n > was && log.length) { const cur = log[log.length - 1]; cur.falls += n - was;",
+    "new": "      if (false) { const cur = log[log.length - 1]; cur.falls += n - was;",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-8-log-unread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (kept?.b === E.b && Array.isArray(kept.l)) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-8-log-unkept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (moved) logKeep();",
+    "new": "",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-8-gap-unfilled",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      const first = logH > 0 ? (logH < E.h ? logH + 1 : E.h) : E.call?.b === E.b ? egStartHall(E.call.ew ?? 0) : egFirstHallOf(egCircleOfHall(E.h));",
+    "new": "      const first = E.h;",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-8-strip-halls-counted",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "falls: hs.reduce((n, h) => n + (Number.isSafeInteger(h.falls) ? h.falls : h.fall ? 1 : 0), 0) }",
+    "new": "falls: hs.filter((h) => h.fall).length }",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-9-no-close",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "  if (recap) { const dock = egEl(doc, 'div', 'eg-k-dock');",
+    "new": "  if (false) { const dock = egEl(doc, 'div', 'eg-k-dock');",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-9-close-deaf",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "b.addEventListener?.('click', () => onClose()); dock.append(b); panel.append(dock); }",
+    "new": "dock.append(b); panel.append(dock); }",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-9-enter-on-touch",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "recap ? (touch ? '' : EG_PANEL_TEXT.noteRecap)",
+    "new": "recap ? EG_PANEL_TEXT.noteRecap",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-20-touch-note",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": ": touch ? t('eg.panel.noteTouch', 'Tap a card or a choice.') :",
+    "new": ": false ? t('eg.panel.noteTouch', 'Tap a card or a choice.') :",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-12-swell-from-hall",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      const sinceWake = spec.kind === 'court' ? (wakeSay ? t - wakeSay.at : Infinity) : E.hw > 0 ? t - E.hw : Infinity;",
+    "new": "      const sinceWake = E.hw > 0 ? t - E.hw : Infinity;",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-12-never-asleep",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      const asleep = spec.kind === 'court' && !wakeSay && !(F?.bodies ?? []).some((b) => b.role === EG_ROLE.lord && b.ph > 0);",
+    "new": "      const asleep = false;",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-12-lord-over-sleep",
+    "file": "src/systems/eliteGates/egScore.js",
+    "old": "    lord: fight && p.kind === 'court' && !sleeping,",
+    "new": "    lord: fight && p.kind === 'court',",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-12-hall-over-sleep",
+    "file": "src/systems/eliteGates/egScore.js",
+    "old": "    hall: fight && !sleeping,",
+    "new": "    hall: fight,",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-13-no-end-for-fall",
+    "file": "src/systems/eliteGates/egScore.js",
+    "old": "    end: !!p.end || (Number.isFinite(p.sinceFall) && p.sinceFall >= 0 && p.sinceFall < SPIRE_END_MS),",
+    "new": "    end: !!p.end,",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-13-fall-unhanded",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "          sinceFall: witness ? t - witness.fell : Infinity },",
+    "new": "          sinceFall: Infinity },",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-13-seen-fall-again",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "fell: seen ? -Infinity : t,",
+    "new": "fell: t,",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-16-falls-off-rows",
+    "file": "src/ui/eliteGates/egParty.js",
+    "old": "      falls: Number.isSafeInteger(falls) && falls > 0 ? falls : 0,",
+    "new": "      falls: 0,",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-16-falls-unsaid",
+    "file": "src/ui/eliteGates/egParty.js",
+    "old": "row.falls ? egFallsText(row.falls) : '',",
+    "new": "'',",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-16-falls-unmarked",
+    "file": "src/ui/eliteGates/egParty.js",
+    "old": "EG_ROW_MARKS.fall.repeat(r.falls ?? 0), ",
+    "new": "",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-16-wake-unheard",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "    if (s.w === 'wake') { const n = egWokeName(E); if (n) beats.push({ k: 'wake', n }); }",
+    "new": "",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-16-wake-on-screen",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "{ n }), by: 'card', chat: true }),",
+    "new": "{ n }), by: null, chat: true }),",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-16-toll-silent",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    playSound(EG_BEAT_SOUNDS.toll);   // AUDIT EG V",
+    "new": "    // AUDIT EG V",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-17-card-default-moving",
+    "file": "src/ui/gate/gateTitleCard.js",
+    "old": "still = egReducedMotion() } = {}) {",
+    "new": "still = false } = {}) {",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-17-card-flies",
+    "file": "src/ui/gate/gateTitleCard.js",
+    "old": "  const cls = `wb-title-card on${model.fresh && !still ? ' in' : ''}${still ? ' still' : ''}`;",
+    "new": "  const cls = `wb-title-card on${model.fresh ? ' in' : ''}${still ? ' still' : ''}`;",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-17-rule-sweeps",
+    "file": "src/ui/gate/gateTitleCard.js",
+    "old": "  const cls = `wb-title-card on${model.fresh && !still ? ' in' : ''}${still ? ' still' : ''}`;",
+    "new": "  const cls = `wb-title-card on${model.fresh && !still ? ' in' : ''}`;",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-17-arrival-sweeps",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "  const cls = `wb-title-card eg-card on${m.fresh && !still ? ' in' : ''}${still ? ' still' : ''}`;",
+    "new": "  const cls = `wb-title-card eg-card on${m.fresh && !still ? ' in' : ''}`;",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-17-fall-sweeps",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "${C.still ? ' still' : ''}`;",
+    "new": "`;",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-18-lordH-undrawn",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "  if (lh !== shown.lordH) { shown.lordH = lh; P.lord.style.setProperty?.('--eg-lord-h', lh); }",
+    "new": "",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-22-sideways-card",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "  sideways: Object.freeze({ dec: 'fold',",
+    "new": "  sideways: Object.freeze({ dec: 'card',",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-19-runs-unread",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "  if (tab === 'runs') return egRunsLines(runs);",
+    "new": "",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-19-oldest-first",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": ".slice().reverse();\n  if (!list.length)",
+    "new": ".slice();\n  if (!list.length)",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-19-panel-runs-unasked",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "      const view = egBoardView(board, k, { runs: k === 'runs' ? runs() : [] });",
+    "new": "      const view = egBoardView(board, k, { runs: [] });",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-19-opener-runs-dropped",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "onClose: close, runs });",
+    "new": "onClose: close });",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L3-10-here-unsaid",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (heard) out.push({ k: 'co', co: egCompanyOf(B) });",
+    "new": "",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L3-10-here-off-row",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "m && B.h > 0 && m.hereH === B.h ? 1 : 0]; });",
+    "new": "0]; });",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L3-10-wire-any-here",
+    "file": "src/net/wire.js",
+    "old": "(t.length === 10 || t[10] === 0 || t[10] === 1)",
+    "new": "true",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L3-10-wire-drops-eleven",
+    "file": "src/net/wire.js",
+    "old": "full ? t.length === 10 || t.length === 11 : t.length === 3",
+    "new": "full ? t.length === 10 : t.length === 3",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L3-10-member-here-unread",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "here: t[10] === 1 }",
+    "new": "here: false }",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L3-10-gather-count",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "  return { here: waits.filter((c) => c[10] === 1).length, n: waits.length };",
+    "new": "  return { here: waits.length, n: waits.length };",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L3-10-gather-company",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "  const waits = s.wk > 0 ? s.co.filter((c) => c[3] === 1 && c[4] === 0 && c[5] === 1) : s.co.filter((c) => c[3] === 1 && c[4] === 0);",
+    "new": "  const waits = s.co.filter((c) => c[3] === 1 && c[4] === 0 && c[5] === 1);",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L3-10-stage-count",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "g = G.n > 1 ? ` ${egHereText(G.here, G.n)}` : ''",
+    "new": "g = ''",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L3-10-ring-fill",
+    "file": "src/world/eliteGates/egLights.js",
+    "old": "spec.arrive.r, gold, 1, G.here / G.n)); }",
+    "new": "spec.arrive.r, gold, 1, 1)); }",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L3-10-ring-for-one",
+    "file": "src/world/eliteGates/egLights.js",
+    "old": "    if (G.n > 1) { const p = egToDungeon(spec, spec.arrive.x",
+    "new": "    if (G.n > 0) { const p = egToDungeon(spec, spec.arrive.x",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L3-10-arrive-unlit",
+    "file": "src/world/eliteGates/egLights.js",
+    "old": "E.sg !== 'rest' && E.sg !== 'arrive' && !witness",
+    "new": "E.sg !== 'rest' && !witness",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-NEW-1-rest-line-undrawn",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "E.sg === 'rest' ? egRestLine(E, run, restP) : ''",
+    "new": "''",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-NEW-1-stake-undrawn",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "  return [stake ? `${stake}.` : '', less].filter(Boolean).join(' ');",
+    "new": "  return [less].filter(Boolean).join(' ');",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L2-9-share-unsaid",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "  if (restP > 0 && restP < 1) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L2-9-rank-unsaid",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "`${D.name}${ash >= 2 ? ' II' : ''}`",
+    "new": "`${D.name}`",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L2-9-hungering-unsaid",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "E?.td === 'hungering' ? EG_TIDE_NAMES.hungering : ''",
+    "new": "''",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L8-6-line-unshown",
+    "file": "src/systems/item/itemInfo.js",
+    "old": "  else if (isWeirKey(item)) out.push({ text: EG_TEXT.keyLine, center: true });",
+    "new": "",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L8-6-card-unbuilt",
+    "file": "src/systems/item/itemInfo.js",
+    "old": " || isWeirKey(item) || isSoulCake(item) || isHearthOffering(item) || isStarglass(item)) record = survivalInfoTokens(item);",
+    "new": ") record = survivalInfoTokens(item);",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-V-c-L7-10-palette-english",
+    "file": "src/ui/eliteGates/egAccess.js",
+    "old": "get name() { return t('menu.spire.palette.contrast', 'High contrast'); }",
+    "new": "name: 'High contrast'",
+    "tests": [
+      "test/ui/eliteGates/egaudit5_c_hud.test.js"
+    ]
+  }
+]

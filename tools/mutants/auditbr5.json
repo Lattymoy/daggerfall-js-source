@@ -5,7 +5,7 @@
     "old": "      - name: Copies under the names older copies ask for\n        run: node scripts/desktopRelease.mjs alias release\n",
     "new": "      - name: Copies under the names older copies ask for\n        run: echo skipped\n",
     "tests": [
-      "test/rel4_release.test.js"
+      "test/tooling/rel4_release.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): a release published without the old names: every pre-BR5 Mac and portable copy meets a 404"
   },
@@ -15,7 +15,7 @@
     "old": "  ...ALIAS_COPIES.map(([, to]) => to),\n",
     "new": "",
     "tests": [
-      "test/rel4_release.test.js"
+      "test/tooling/rel4_release.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): the check passes a set with no old-name copies"
   },
@@ -25,7 +25,7 @@
     "old": "Object.freeze([DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES[k]])",
     "new": "Object.freeze([DOWNLOAD_FILES[k], LEGACY_DOWNLOAD_FILES.winSetup])",
     "tests": [
-      "test/rel4_release.test.js"
+      "test/tooling/rel4_release.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): every old name serves the Windows installer"
   },
@@ -35,7 +35,7 @@
     "old": "    for (const [from, to] of ALIAS_COPIES) copyFileSync(join(a, from), join(a, to));\n",
     "new": "",
     "tests": [
-      "test/rel4_release.test.js"
+      "test/tooling/rel4_release.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): the step reports copies it never made"
   },
@@ -45,8 +45,8 @@
     "old": "  mac: 'DaggerfallOnline-mac-arm64.dmg',\n",
     "new": "  mac: 'DaggerfallOnline-mac-x64.dmg',\n",
     "tests": [
-      "test/brand.test.js",
-      "test/rel4_release.test.js"
+      "test/ui/brand.test.js",
+      "test/tooling/rel4_release.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): a name no pre-BR5 copy asks for"
   },
@@ -56,7 +56,7 @@
     "old": "  winPortable: 'DFO-Online-win-x64-portable.exe',\n",
     "new": "  winPortable: 'DaggerfallOnline-win-x64-portable.exe',\n",
     "tests": [
-      "test/brand.test.js"
+      "test/ui/brand.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): the old name published as a download in its own right - the sweep's exemption is four lines and no more"
   },
@@ -66,7 +66,7 @@
     "old": "a.browser_download_url.startsWith(`${RELEASES_URL}/download/`)",
     "new": "a.browser_download_url.startsWith('https://')",
     "tests": [
-      "test/rel4_release.test.js"
+      "test/tooling/rel4_release.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): a link read off the network sends the player anywhere"
   },
@@ -76,7 +76,7 @@
     "old": "  if (exact) return link(exact);\n",
     "new": "",
     "tests": [
-      "test/rel4_release.test.js"
+      "test/tooling/rel4_release.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): the platform match takes whichever copy is listed first - the alias over the real name"
   },
@@ -86,7 +86,7 @@
     "old": "a.name.endsWith(tail)",
     "new": "a.name.includes(tail)",
     "tests": [
-      "test/rel4_release.test.js"
+      "test/tooling/rel4_release.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): a renamed release's blockmap is downloaded as the installer"
   },
@@ -96,7 +96,7 @@
     "old": "download: file ? listed ?? latestDownloadUrl(file) : url",
     "new": "download: file ? latestDownloadUrl(file) : url",
     "tests": [
-      "test/da8_launcher.test.js"
+      "test/tooling/da8_launcher.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): a later rename strands a BR5 copy again"
   },
@@ -106,7 +106,7 @@
     "old": "  if (listedDownload) return listedDownload;\n",
     "new": "",
     "tests": [
-      "test/rel4_release.test.js"
+      "test/tooling/rel4_release.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): Reinstall asks for the name the copy was built with"
   },
@@ -116,8 +116,8 @@
     "old": "<h1 class=\"wordmark\"><img src=\"./src/assets/branding/dfo-online.png\" alt=\"DFO Online\" width=\"526\" height=\"322\" /></h1>",
     "new": "<h1 class=\"wordmark\">DFO<small>Online</small></h1>",
     "tests": [
-      "test/landing.test.js",
-      "test/brand.test.js"
+      "test/ui/enhanced/landing.test.js",
+      "test/ui/brand.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): Mac's call: the logo, not the type"
   },
@@ -127,7 +127,7 @@
     "old": ".wordmark img { display: block; width: min(321px, 64vw);",
     "new": ".wordmark img { display: block; width: min(420px, 64vw);",
     "tests": [
-      "test/landing.test.js"
+      "test/ui/enhanced/landing.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): the site's logo drawn at a width the door does not use"
   },
@@ -137,7 +137,7 @@
     "old": "alt=\"DFO Online\" width=\"526\" height=\"322\" />",
     "new": "alt=\"DFO Online\" width=\"526\" height=\"300\" />",
     "tests": [
-      "test/brand.test.js"
+      "test/ui/brand.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): the page reserves a box the file does not fill, and moves as it loads"
   },
@@ -147,7 +147,7 @@
     "old": "<h1 class=\"wordmark\"><img src=\"dfo-online.png\" alt=\"DFO Online\" width=\"526\" height=\"322\"></h1>",
     "new": "<h1 class=\"wordmark\">DFO<small>Online</small></h1>",
     "tests": [
-      "test/brand.test.js"
+      "test/ui/brand.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): Mac's call: the logo, not the type"
   },
@@ -157,7 +157,7 @@
     "old": "font-src 'self' data:; img-src 'self'\">",
     "new": "font-src 'self' data:\">",
     "tests": [
-      "test/da8_launcher.test.js"
+      "test/tooling/da8_launcher.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): the launcher's own policy blocks its logo"
   },
@@ -167,7 +167,7 @@
     "old": "if (p !== MENU_PAD && p !== LAUNCHER_LOGO && !p.startsWith(LAUNCHER_DIR + path.sep))",
     "new": "if (p !== MENU_PAD && !p.startsWith(LAUNCHER_DIR + path.sep))",
     "tests": [
-      "test/da8_launcher.test.js"
+      "test/tooling/da8_launcher.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): unpacked, the logo is outside the launcher's folder and answers 403"
   },
@@ -177,17 +177,17 @@
     "old": "        \"from\": \"../src/assets/branding\",\n        \"to\": \"launcher\",\n",
     "new": "        \"from\": \"../src/assets/branding\",\n        \"to\": \"branding\",\n",
     "tests": [
-      "test/da8_launcher.test.js"
+      "test/tooling/da8_launcher.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): packaged, the logo is not where the launcher serves it from"
   },
   {
     "name": "AUDITBR5-the-potion-maker-named",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "The classic potion maker still works",
     "new": "Daggerfall\\'s own potion maker still works",
     "tests": [
-      "test/brand.test.js"
+      "test/ui/brand.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): A-2 back"
   },
@@ -197,17 +197,17 @@
     "old": "'Rules: the original game\\u2019s combat formulas.",
     "new": "'Rules: Daggerfall\\u2019s combat formulas.",
     "tests": [
-      "test/brand.test.js"
+      "test/ui/brand.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): a drawn line the producer walk never read"
   },
   {
     "name": "AUDITBR5-the-decor-line-named",
     "file": "src/ui/decorPanel.js",
-    "old": "each can wear another of the original game\\'s own looks.",
-    "new": "each can wear another of Daggerfall\\'s own looks.",
+    "old": "can each take another look from the original game.",
+    "new": "can each take another look from Daggerfall.",
     "tests": [
-      "test/brand.test.js"
+      "test/ui/brand.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): a drawn line the producer walk never read"
   },
@@ -217,7 +217,7 @@
     "old": "Pick the ARENA2 folder inside your Daggerfall install",
     "new": "Pick the ARENA2 folder inside your game install",
     "tests": [
-      "test/brand.test.js"
+      "test/ui/brand.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): the walk can no longer prove it sees the files it reads"
   },
@@ -227,7 +227,7 @@
     "old": "joined to the Bay’s own coast.",
     "new": "joined to the classic coast.",
     "tests": [
-      "test/brand.test.js"
+      "test/ui/brand.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): A-4 back"
   },
@@ -237,7 +237,7 @@
     "old": "The sounds are in the original game but '",
     "new": "The sounds ship with the game but '",
     "tests": [
-      "test/brand.test.js"
+      "test/ui/brand.test.js"
     ],
     "note": "AUDIT BR5 (2026-10-11): A-5 back: \"the game\" reads as this one"
   }

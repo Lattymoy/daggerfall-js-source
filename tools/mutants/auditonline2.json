@@ -1,128 +1,128 @@
 [
   {
     "name": "F2-raid-unheard-read-expired",
-    "file": "src/net/raidClaims.js",
+    "file": "src/net/raid/raidClaims.js",
     "old": "return c && c.signed && (t == null || c.e > t) ? c : null;",
     "new": "return c && c.signed && (t != null && c.e > t) ? c : null;",
-    "tests": ["test/auditonline2.test.js"]
+    "tests": ["test/net/auditonline2.test.js"]
   },
   {
     "name": "F2-gate-unheard-read-expired",
-    "file": "src/net/gateClaims.js",
+    "file": "src/net/gate/gateClaims.js",
     "old": "c && c.signed && (t == null || c.e > t)",
     "new": "c && c.signed && (t != null && c.e > t)",
-    "tests": ["test/auditonline2.test.js"]
+    "tests": ["test/net/auditonline2.test.js"]
   },
   {
     "name": "F2-gate-host-clock-unwired",
     "file": "src/scenes/world.js",
     "old": "    me: _accountGates.me,\n    nowS: relayNowS,\n",
     "new": "    me: _accountGates.me,\n",
-    "tests": ["test/auditonline2.test.js"]
+    "tests": ["test/net/auditonline2.test.js"]
   },
   {
     "name": "F2-raid-host-clock-unwired",
     "file": "src/scenes/world.js",
     "old": "    me: _accountRaids.me,\n    nowS: relayNowS,\n",
     "new": "    me: _accountRaids.me,\n",
-    "tests": ["test/auditonline2.test.js"]
+    "tests": ["test/net/auditonline2.test.js"]
   },
   {
     "name": "F2-clock-never-heard",
     "file": "src/scenes/world.js",
     "old": "_sharedOffsetMs = offsetMs; _sharedClockHeard = true;",
     "new": "_sharedOffsetMs = offsetMs;",
-    "tests": ["test/auditonline2.test.js"]
+    "tests": ["test/net/auditonline2.test.js"]
   },
   {
     "name": "F3-pool-never-lets-go",
     "file": "src/scenes/spoilsPool.js",
     "old": "if (h.who === whoLoaded) { held.delete(id); n++; }",
     "new": "if (h.who === whoLoaded) { n++; }",
-    "tests": ["test/auditonline2.test.js"]
+    "tests": ["test/net/auditonline2.test.js"]
   },
   {
     "name": "F3-door-never-reasked",
     "file": "src/scenes/world.js",
     "old": "serpentSpoils.loaded(characterId); _spoilsAskedFor = null; });",
     "new": "serpentSpoils.loaded(characterId); });",
-    "tests": ["test/auditonline2.test.js"]
+    "tests": ["test/net/auditonline2.test.js"]
   },
   {
     "name": "F3-world-load-unsaid",
     "file": "src/scenes/world.js",
     "old": "      slotLoaded(playerEntity.characterId ?? null);   // AUDIT ONLINE2 F3: the pack is the save's - the spoils' crash door asks again\n",
     "new": "",
-    "tests": ["test/auditonline2.test.js"]
+    "tests": ["test/net/auditonline2.test.js"]
   },
   {
     "name": "F3-dungeon-load-unsaid",
     "file": "src/scenes/dungeonContext.js",
     "old": "      slotLoaded(playerEntity.characterId ?? null);   // AUDIT ONLINE2 F3: the pack is the save's - the spoils' crash door asks again\n",
     "new": "",
-    "tests": ["test/auditonline2.test.js"]
+    "tests": ["test/net/auditonline2.test.js"]
   },
   {
     "name": "F3-listener-throw-spreads",
-    "file": "src/systems/saveSlots.js",
+    "file": "src/systems/save/saveSlots.js",
     "old": "for (const fn of _slotLoaded) { try { fn(characterId ?? null); } catch (e) { console.warn('[saveSlots] a load listener failed', e?.message ?? e); } }",
     "new": "for (const fn of _slotLoaded) fn(characterId ?? null);",
-    "tests": ["test/auditonline2.test.js"]
+    "tests": ["test/net/auditonline2.test.js"]
   },
   {
     "name": "F4-no-answer",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "_net?.onPeerHit?.({ to: from, k: data.k ?? _net?.room?.() ?? null, i: data.i | 0, back: 1 }); ",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "hit({ to: from, k: data.k ?? net()?.room?.() ?? null, i: data.i | 0, back: 1 }); ",
     "new": "",
-    "tests": ["test/world6biiic.test.js"]
+    "tests": ["test/net/world6biiic.test.js"]
   },
   {
     "name": "F4-pieces-never-back",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "      if (Array.isArray(f.entity?.items)) f.entity.items.unshift(...g.held);\n",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "    restoreHeld(st, g.held);\n",
     "new": "",
-    "tests": ["test/world6biiic.test.js"]
+    "tests": ["test/net/world6biiic.test.js"]
   },
   {
     "name": "F4-any-back-believed",
-    "file": "src/scenes/exteriorFoes.js",
+    "file": "src/scenes/bodyLootHost.js",
     "old": "if (!g || g.to !== from || _now() - g.at > GRANT_BACK_MS) return false;",
     "new": "if (!g) return false;",
-    "tests": ["test/world6biiic.test.js"]
+    "tests": ["test/net/world6biiic.test.js"]
   },
   {
     "name": "F4-window-unbounded",
-    "file": "src/scenes/exteriorFoes.js",
+    "file": "src/scenes/bodyLootHost.js",
     "old": "if (!g || g.to !== from || _now() - g.at > GRANT_BACK_MS) return false;",
     "new": "if (!g || g.to !== from) return false;",
-    "tests": ["test/world6biiic.test.js"]
+    "tests": ["test/net/world6biiic.test.js"]
   },
   {
     "name": "F4-back-twice",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "      f._granted = null;\n      if (Array.isArray(f.entity?.items))",
-    "new": "      if (Array.isArray(f.entity?.items))",
-    "tests": ["test/world6biiic.test.js"]
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "    st.granted = null;\n    restoreHeld(st, g.held);",
+    "new": "    restoreHeld(st, g.held);",
+    "tests": ["test/net/world6biiic.test.js"]
   },
   {
     "name": "F4-unasked-answered",
-    "file": "src/scenes/exteriorFoes.js",
-    "old": "        if (asked) { f._takeAsked = null; _net?.onPeerHit",
-    "new": "        if (f) { f._takeAsked = null; _net?.onPeerHit",
-    "tests": ["test/world6biiic.test.js"]
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "if (ledger.landAsk(key, _now(), LEGACY_ASK_KEEP_MS)) { hit({ to: from, k: data.k ?? net()?.room?.() ?? null, i: data.i | 0, back: 1 });",
+    "new": "if (f) { hit({ to: from, k: data.k ?? net()?.room?.() ?? null, i: data.i | 0, back: 1 });",
+    "tests": ["test/net/world6biiic.test.js"]
   },
   {
     "name": "F5-reader-old-words",
     "file": "src/net/tradeSession.js",
     "old": "this._end('refused', true, tradeUnreadableText(this.peerName));",
     "new": "this._end('refused');",
-    "tests": ["test/auditonline2.test.js"]
+    "tests": ["test/net/auditonline2.test.js"]
   },
   {
     "name": "F5-maker-old-words",
     "file": "src/net/tradeSession.js",
     "old": "d.why === 'refused' ? tradeRefusedText(this.peerName) : tradeWhyText(d.why ?? 'cancelled', this.peerName)",
     "new": "tradeWhyText(d.why ?? 'cancelled', this.peerName)",
-    "tests": ["test/auditonline2.test.js"]
+    "tests": ["test/net/auditonline2.test.js"]
   }
 ]

@@ -5,16 +5,16 @@
     "old": "        mountRig.frame(dt);\n",
     "new": "        weaponRig.draw({ paralyzed }); mountRig.frame(dt);\n",
     "tests": [
-      "test/disc14.test.js"
+      "test/combat/weapon/disc14.test.js"
     ]
   },
   {
     "name": "DISC14-A-world-draws-no-weapon",
     "file": "src/scenes/world.js",
-    "old": "      if (walkMode && playerSpawned && !tvf) weaponRig.draw({ paralyzed });   // TV1: no hand on a camera 450 m up\n",
-    "new": "",
+    "old": "{ if (walkMode && playerSpawned && !tvf) weaponRig.draw({ paralyzed }); }",
+    "new": "{ }",
     "tests": [
-      "test/disc14.test.js"
+      "test/combat/weapon/disc14.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (hudArt) mountRig.frame(dt);\n      if (walkMode && !tpMode) weaponRig.draw({ paralyzed });",
     "new": "      if (walkMode && !tpMode) weaponRig.draw({ paralyzed });\n      if (hudArt) mountRig.frame(dt);",
     "tests": [
-      "test/disc14.test.js"
+      "test/combat/weapon/disc14.test.js"
     ]
   },
   {
@@ -32,51 +32,51 @@
     "old": "      if (walkMode && !tpMode) weaponRig.draw({ paralyzed });",
     "new": "      weaponRig.draw({ paralyzed });",
     "tests": [
-      "test/disc14.test.js"
+      "test/combat/weapon/disc14.test.js"
     ]
   },
   {
     "name": "DISC14-C-the-arms-back-on-the-sprite-position",
-    "file": "src/combat/weaponWidget.js",
+    "file": "src/combat/weapon/weaponWidget.js",
     "old": "withOffset: false, position: w.armsPosition });",
     "new": "withOffset: false });",
     "tests": [
-      "test/disc14.test.js",
-      "test/auditdw.test.js",
-      "test/ww1_weaponwidget.test.js"
+      "test/combat/weapon/disc14.test.js",
+      "test/combat/weapon/auditdw.test.js",
+      "test/combat/weapon/ww1_weaponwidget.test.js"
     ]
   },
   {
     "name": "DISC14-C-the-arms-bob-takes-the-doubled-shape",
-    "file": "src/combat/weaponWidget.js",
+    "file": "src/combat/weapon/weaponWidget.js",
     "old": "time: w.time, screenRect: w.screenRect, doubleScaleIdle: false,",
     "new": "time: w.time, screenRect: w.screenRect, doubleScaleIdle: w.s.doubleScale && w.weaponState === S.Idle,",
     "tests": [
-      "test/disc14.test.js",
-      "test/auditdw.test.js",
-      "test/ww1_weaponwidget.test.js"
+      "test/combat/weapon/disc14.test.js",
+      "test/combat/weapon/auditdw.test.js",
+      "test/combat/weapon/ww1_weaponwidget.test.js"
     ]
   },
   {
     "name": "DISC14-C-the-bob-gate-back-to-the-module-alone",
-    "file": "src/combat/weaponWidget.js",
+    "file": "src/combat/weapon/weaponWidget.js",
     "old": "doubleScaleIdle: w.weaponState === S.Idle && doubledIdleNow(),",
     "new": "doubleScaleIdle: w.s.doubleScale && w.weaponState === S.Idle,",
     "tests": [
-      "test/disc14.test.js",
-      "test/auditdw.test.js",
-      "test/ww1_weaponwidget.test.js"
+      "test/combat/weapon/disc14.test.js",
+      "test/combat/weapon/auditdw.test.js",
+      "test/combat/weapon/ww1_weaponwidget.test.js"
     ]
   },
   {
     "name": "DISC14-C-the-arms-miss-the-inertia",
-    "file": "src/combat/weaponWidget.js",
+    "file": "src/combat/weapon/weaponWidget.js",
     "old": "      w.armsPosition = [w.armsPosition[0] + i.delta[0], w.armsPosition[1] + i.delta[1]];   // DISC14-C: the arms lag the look as the sprite does\n",
     "new": "",
     "tests": [
-      "test/disc14.test.js",
-      "test/auditdw.test.js",
-      "test/ww1_weaponwidget.test.js"
+      "test/combat/weapon/disc14.test.js",
+      "test/combat/weapon/auditdw.test.js",
+      "test/combat/weapon/ww1_weaponwidget.test.js"
     ]
   }
 ]

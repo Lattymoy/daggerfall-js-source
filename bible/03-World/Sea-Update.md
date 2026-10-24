@@ -44,7 +44,7 @@ way in.
 
 Every landed mod is on by default, registered (settings, Features,
 credits, `01-Overview/Mod-Registry.md`) and placed in the online lane
-(`systems/onlineLane.js`).
+(`systems/online/onlineLane.js`).
 
 ## Left
 
@@ -125,7 +125,7 @@ the Unity asset decoders (mesh, animation, animator, prefab, bundle, and
 FSB5 to Ogg) was written in a scratch worktree during this branch and
 NOT kept - the container was ephemeral - so it is redone from the mod's
 archive. What is already waiting for it in the port: Deep Waters' swim
-check knows its boat (`world/deepWaterSwim.js` `isBoatEffectBundle`,
+check knows its boat (`world/deepWater/deepWaterSwim.js` `isBoatEffectBundle`,
 the effect bundle "ImOnABoat" / "I'm On A Boat" suppresses the swim),
 and item template indices 1320/1321 are free. Online: a boat syncs most
 cheaply as sidecar keys on the foes frame (`scenes/world.js`'s foes

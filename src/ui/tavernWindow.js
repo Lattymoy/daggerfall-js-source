@@ -54,23 +54,23 @@
 //   its "-- Taverns menu" block (:175-179) puts EXIT on G, not on the
 //   E the port had assumed.
 
-import { loadImg, nativeMetrics, drawImg } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg } from './native/nativePanel.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { ServiceFlowWindow, macroRows } from './guildServiceWindows.js';
 import { goldAmount, totalGoldAmount, deductGold } from '../systems/court.js';
 import { dayOfYearFromMinutes } from '../systems/gameDate.js';
-import { raceDisplayName, honorificOf } from '../systems/talkSession.js';
+import { raceDisplayName, honorificOf } from '../systems/talk/talkSession.js';
 import { audio } from '../systems/audio.js';   // F145: the ButtonClick roster
 import { SOUND } from '../systems/soundClips.js';
 import { firstHotkey } from '../systems/dialogShortcuts.js';   // A8: the DaggerfallShortcut table
 import { survivalOn, survivalRules } from '../systems/survival/switch.js';   // SURV5: the mod's menu stands in for DFU's while the arc is on; SURV-TIERS: the tier prices the drink
-import { tavernMenu, tavernEat, tavernDrink, tavernOrder, tavernWater, blackout, TAVERN_MENU_TEXT } from '../systems/survival/tavernMenu.js';   // INN-WATER: tavernWater, the fountain's law at the bar
+import { tavernMenu, tavernEat, tavernDrink, tavernOrder, tavernWater, tavernRefresh, blackout, blackoutWaking, TAVERN_MENU_TEXT } from '../systems/survival/tavernMenu.js';   // INN-WATER: tavernWater, the fountain's law at the bar; AUDIT C&C I6: tavernRefresh, the drink's fatigue and magicka; I4: blackoutWaking, the line under the sky
 import { survivalOf } from '../systems/survival/needs.js';
 import { stiffen, REST_KIND } from '../systems/survival/rest.js';
 import {
   TOO_MANY_DAYS_ID, OFFER_PRICE_ID, NOT_ENOUGH_GOLD_ID,
   HOW_MANY_DAYS_ID, HOW_MANY_ADDITIONAL_DAYS_ID,
-  ROOM_FREE_FOR_KNIGHT, ROOM_FREE_HEARTS_DAY, YOU_ARE_NOT_HUNGRY,
+  roomFreeForKnightText, roomFreeHeartsDayText, youAreNotHungryText,   // L10N3d: the lines in the player's language
   tavernMenuLabels, removeExpiredRooms, findRentedRoom, roomRemainingHours,
   rentalDecision, rentRoom, canEat, eatOrDrink,
 } from '../systems/tavern.js';
@@ -120,7 +120,7 @@ const line = (text) => [{ text, center: true }];
  *  AUDIT LIVED1b U8: "logging off" - a tab left hidden still runs the character's clock (Audit-Lived1's For Mac 5),
  *  so "time away" promised what only a logout keeps; the note measures what the old one did on the parchment. */
 export const OWN_TIME_ROOM = 'The room is yours for';
-export const OWN_TIME_ROOM_NOTE = ' - a rest spends it, logging off does not.';
+export const OWN_TIME_ROOM_NOTE = '. Resting uses it; logging off does not.';
 
 /**
  * hooks:
@@ -143,7 +143,13 @@ export const OWN_TIME_ROOM_NOTE = ' - a rest spends it, logging off does not.';
  *   worldNow()        -> LIVED1: the WORLD's clock, for the calendar
  *                        (Heart's Day, a meal's holiday) and the
  *                        kitchen's hours; defaults to now(), the one
- *                        clock offline
+ *                        clock offline. AUDIT C&C: and the survival
+ *                        menu's free drinks (I8) and the blackout's
+ *                        dawn (I4), read where the sky stands
+ *   regionIndex()     -> AUDIT C&C I8: PlayerGPS.CurrentRegionIndex,
+ *                        the survival menu's first key (regionMenuDay)
+ *                        - handed as climateIndex() is; none (-1) is
+ *                        the climate's to key
  */
 export class TavernWindow {
   constructor(hooks) {
@@ -221,7 +227,7 @@ export class TavernWindow {
     if (d.kind === 'tooMany') return [{ rows: this._rows(TOO_MANY_DAYS_ID, { room, now }) }];
     if (d.kind === 'free') {
       this._rent(room, d.days);
-      return [{ rows: line(ROOM_FREE_FOR_KNIGHT) }];
+      return [{ rows: line(roomFreeForKnightText()) }];
     }
     // The Heart's Day free room is a box DFU pops from INSIDE
     // CalculateRoomCost (:1871), i.e. BEFORE the price offer - so the
@@ -232,7 +238,7 @@ export class TavernWindow {
       onYes: () => this._confirm(room, d),
       onNo: () => null,      // the chain empties, which closes the tavern (:212)
     };
-    return d.heartsDay ? [{ rows: line(ROOM_FREE_HEARTS_DAY) }, offer] : [offer];
+    return d.heartsDay ? [{ rows: line(roomFreeHeartsDayText()) }, offer] : [offer];
   }
 
   /** OL3's row under the offer: RentRoom's own expiry (a renewal EXTENDS
@@ -285,7 +291,8 @@ export class TavernWindow {
   _survivalFood() {
     const h = this.hooks;
     const now = h.now();
-    const menu = tavernMenu({ climateIndex: h.climateIndex(), quality: h.quality?.() ?? 5, hour: Math.trunc((((h.worldNow?.() ?? now) % 1440) + 1440) % 1440 / 60) });   // LIVED1: the kitchen keeps the sky's hours
+    // AUDIT C&C I8: the region keys the menu first (regionMenuDay), and the world's calendar pours the holidays' drinks
+    const menu = tavernMenu({ climateIndex: h.climateIndex(), regionIndex: h.regionIndex?.() ?? -1, quality: h.quality?.() ?? 5, minutes: h.worldNow?.() ?? now, hour: Math.trunc((((h.worldNow?.() ?? now) % 1440) + 1440) % 1440 / 60) });   // LIVED1: the kitchen keeps the sky's hours
     // AUDIT SURV C/D: before six the kitchen refuses in the mod's two words and the drinks still pour (the picker
     // follows the refusal); the Drinks divider is not a door out - a header pick keeps the picker up
     const box = {
@@ -306,11 +313,16 @@ export class TavernWindow {
         const r = row.kind === 'food' ? tavernEat(s, now, row.worth) : row.kind === 'water' ? tavernWater(h.entity, now) : tavernDrink(s, row.strength, { endurance, rules });
         h.advanceMinutes?.(r.minutes);
         h.entity.lastTimePlayerAteOrDrankAtTavern = now;
+        tavernRefresh(h.entity, r);   // AUDIT C&C I6: the drink's fatigue and magicka, after its quarter hour
         let b = null;
         if (r.blackout) {
-          b = blackout(s, now + r.minutes, { endurance });
+          // AUDIT C&C I4: the night runs to the SKY's six from where it stands after the drink - offline the one clock,
+          // online the world's, which the character's own minutes never move (LIVED1) - and the waking says dawn only
+          // under a dawn sky
+          b = blackout(s, h.worldNow?.() ?? now + r.minutes, { endurance });
           stiffen(h.entity, now + r.minutes + b.minutes, REST_KIND.Rough, rules);   // the night on the boards is a rough one (SURV4), at the tier's price
           h.advanceMinutes?.(b.minutes);
+          b.text = blackoutWaking(h.worldNow?.() ?? now + r.minutes + b.minutes);
         }
         return [{ rows: b ? [...line(r.text), ...line(b.text)] : line(r.text) }];   // AUDIT SURV-TIERS (the third pass): and the waking
       },
@@ -324,11 +336,11 @@ export class TavernWindow {
     if (survivalOn() && typeof h.climateIndex === 'function') { this._survivalFood(); return; }   // SURV5
     const now = h.now();
     if (!canEat(h.entity.lastTimePlayerAteOrDrankAtTavern, now)) {
-      this._chain([{ rows: line(YOU_ARE_NOT_HUNGRY) }], { closesTavern: true });   // F143: food closes (:286)
+      this._chain([{ rows: line(youAreNotHungryText()) }], { closesTavern: true });   // F143: food closes (:286)
       return;
     }
     this._chain([{
-      picker: tavernMenuLabels(),   // ESSENTIALS-HALF: online, the row's gold is the half it costs
+      picker: tavernMenuLabels(),   // ESSENTIALS-HALF: online, the row's gold is the half it costs; L10N3d: the language's lines
       onPick: (i) => {
         audio.playOneShot(SOUND.ButtonClick, 1);   // F145: FoodAndDrink_OnItemPicked (:307)
         const r = eatOrDrink(i, { gold: totalGoldAmount(h.entity), gameMinutes: h.worldNow?.() ?? now });   // F103: GetGoldAmount (:324); LIVED1: the meal's holiday is the world's calendar

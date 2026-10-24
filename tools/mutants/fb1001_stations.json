@@ -1,29 +1,29 @@
 [
   {
     "name": "CHARCOAL-BUY-the-forge-offers-none",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "    if (sale && forge.kind === 'shop') counterBuy(line, { el, p, state: _forge,",
     "new": "    if (false) counterBuy(line, { el, p, state: _forge,",
     "tests": [
-      "test/fb1001_stations.test.js"
+      "test/systems/fb1001_stations.test.js"
     ]
   },
   {
     "name": "COUNTER-GATES-offered-with-marks-shut",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  if (!p.stock || p.marksOpen?.() === false) return;",
     "new": "  if (!p.stock) return;",
     "tests": [
-      "test/fb1001_stations.test.js"
+      "test/systems/fb1001_stations.test.js"
     ]
   },
   {
     "name": "COUNTER-GATES-pressable-short",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  buy.disabled = state.busy || shortOf;",
     "new": "  buy.disabled = state.busy;",
     "tests": [
-      "test/fb1001_stations.test.js"
+      "test/systems/fb1001_stations.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "Forge, the Anvil and Withdraw and A pressed nothing\n    {",
     "new": "Forge, the Anvil and Withdraw and A pressed nothing\n    if (plusPadActive()) {",
     "tests": [
-      "test/fb1001_stations.test.js"
+      "test/systems/fb1001_stations.test.js"
     ]
   }
 ]

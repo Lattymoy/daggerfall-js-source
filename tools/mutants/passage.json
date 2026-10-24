@@ -1,0 +1,844 @@
+[
+  {
+    "name": "PASSAGE-the-Rowboat-carried",
+    "file": "src/systems/naval/passage.js",
+    "old": "Object.freeze([HULL.LargeBoat, HULL.SmallShip, HULL.Carrack])",
+    "new": "Object.freeze([HULL.Rowboat, HULL.LargeBoat, HULL.SmallShip, HULL.Carrack])",
+    "tests": [
+      "test/systems/naval/passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-the-galley-carried",
+    "file": "src/systems/naval/passage.js",
+    "old": "Object.freeze([HULL.LargeBoat, HULL.SmallShip, HULL.Carrack])",
+    "new": "Object.freeze([HULL.LargeBoat, HULL.SmallShip, HULL.LargeGalley, HULL.Carrack])",
+    "tests": [
+      "test/systems/naval/passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-the-fare-no-floor",
+    "file": "src/systems/naval/passage.js",
+    "old": "Math.max(1, passagePixels(from, to))",
+    "new": "passagePixels(from, to)",
+    "tests": [
+      "test/systems/naval/passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-the-shorter-axis",
+    "file": "src/systems/naval/passage.js",
+    "old": "=> Math.max(Math.abs((to.x | 0) - (from.x | 0)), Math.abs((to.y | 0) - (from.y | 0)));",
+    "new": "=> Math.min(Math.abs((to.x | 0) - (from.x | 0)), Math.abs((to.y | 0) - (from.y | 0)));",
+    "tests": [
+      "test/systems/naval/passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-the-ocean-share-alone",
+    "file": "src/systems/naval/passage.js",
+    "old": "calculateTripCost(0, Math.max(1, passagePixels(from, to)), { travelShip: true })",
+    "new": "calculateTripCost(0, Math.max(1, passagePixels(from, to)) >> 1, { travelShip: true })",
+    "tests": [
+      "test/systems/naval/passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-y-read-north",
+    "file": "src/systems/naval/passage.js",
+    "old": "dn = (from.y | 0) - (to.y | 0);",
+    "new": "dn = (to.y | 0) - (from.y | 0);",
+    "tests": [
+      "test/systems/naval/passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-the-port-I-stand-at-listed",
+    "file": "src/systems/naval/passage.js",
+    "old": "if (!port?.name || port.key === hereKey || !known(port)) continue;",
+    "new": "if (!port?.name || !known(port)) continue;",
+    "tests": [
+      "test/systems/naval/passage.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT PASSAGE A1: the port I stand at (navalPortHere: within a pixel of me) is always within VOYAGE_LANDFALL_PX, so the near-port rule leaves it out too - the key's own test is kept as belt-and-braces"
+  },
+  {
+    "name": "PASSAGE-an-unknown-port-listed",
+    "file": "src/systems/naval/passage.js",
+    "old": "if (!port?.name || port.key === hereKey || !known(port)) continue;",
+    "new": "if (!port?.name || port.key === hereKey) continue;",
+    "tests": [
+      "test/systems/naval/passage.test.js",
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-the-far-first",
+    "file": "src/systems/naval/passage.js",
+    "old": "a.pixels - b.pixels ||",
+    "new": "b.pixels - a.pixels ||",
+    "tests": [
+      "test/systems/naval/passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-a-nameless-port-kept",
+    "file": "src/systems/naval/passage.js",
+    "old": "typeof to.name !== 'string' || !to.name ||",
+    "new": "typeof to.name !== 'string' ||",
+    "tests": [
+      "test/systems/naval/passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-the-pixel-unread",
+    "file": "src/systems/naval/passage.js",
+    "old": "!Number.isFinite(to.px) || !Number.isFinite(to.py)",
+    "new": "!Number.isFinite(to.px)",
+    "tests": [
+      "test/systems/naval/passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-host-paid-before-the-voyage-began",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "    const stood = [...feet()], ride = deps.player.transportMode ?? null;",
+    "new": "    pay(d.fare); const stood = [...feet()], ride = deps.player.transportMode ?? null;",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-host-her-ship-never-let-go",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "    n.charterSailed(ship.id);   // under way",
+    "new": "    // n.charterSailed(ship.id);   // under way",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-host-the-refusal-leaves-her-boat",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "      remove(boat);\n      if (!helm)",
+    "new": "      if (!helm)",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-host-the-player-left-at-her-helm",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "      deps.player.spawn(stood[0], stood[1], stood[2]);\n",
+    "new": "\n",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-host-a-list-with-the-mod-off",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "  function offer(ship) {\n    if (!csa()) { say(PASSAGE_TEXT.noSail); return false; }",
+    "new": "  function offer(ship) {",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-host-never-resumed",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "    if (!summary || !deps.canGo()) return;   // AUDIT PASSAGE A3",
+    "new": "    return;   // AUDIT PASSAGE A3",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-host-given-up-for-good",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "    if (deps.route(summary, { voyage: true, noWay: () => {} })) { fails = 0; said = null; return; }",
+    "new": "    if (deps.route(summary, { voyage: true, noWay: () => {} })) { said = null; return; }",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-host-resumed-off-the-helm",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "    if (!r.isSailing() || r.state?.CurrentBoat !== boat) { if (said !== 'helm')",
+    "new": "    if (false) { if (said !== 'helm')",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-host-never-ended",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "      if (off >= PASSAGE_OFF_S) end(boat);",
+    "new": "      if (false) end(boat);",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-host-ended-on-the-quay-beside-her",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "Math.hypot(p[0] - f[0], p[2] - f[2]) > PASSAGE_LEAVE_M",
+    "new": "Math.hypot(p[0] - f[0], p[2] - f[2]) > 0",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-host-her-hold-lost",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "if (goods) { const into = pack(); for (const it of held.splice(0)) addItem(into, it); }",
+    "new": "if (goods) { held.splice(0); }",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-sea-the-look-unread",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "      const t = box ? segmentBoxEntry(a, b, box)?.t : null;",
+    "new": "      const t = box ? 0 : null;",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-sea-the-reach-unread",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "b = [a[0] + d[0] * PASSAGE_RAY_M, a[1] + d[1] * PASSAGE_RAY_M, a[2] + d[2] * PASSAGE_RAY_M];",
+    "new": "b = [a[0] + d[0] * 1e4, a[1] + d[1] * 1e4, a[2] + d[2] * 1e4];",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-sea-no-door-asked",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (p) { deps.passage({ id: p.id,",
+    "new": "if (p) { ({ id: p.id,",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-sea-the-hint-never-said",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "if (e && e.id !== passageSaid) deps.say?.(passageHintText(",
+    "new": "if (false) deps.say?.(passageHintText(",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-sea-the-hint-every-frame",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "    passageSaid = e?.id ?? null;",
+    "new": "    passageSaid = null;",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-sea-the-harbour-mark-unread",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "    if (r?.kind === 'moored') return e.fromHarbour ? { key: r.harbour, i: r.berth } : null;",
+    "new": "    if (r?.kind === 'moored') return { key: r.harbour, i: r.berth };",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-sea-the-stance-unread",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "!PASSAGE_HULLS.includes(s.hull) || !host.stanceOf(s).friendly || !mooredAt(e)) continue;",
+    "new": "!PASSAGE_HULLS.includes(s.hull) || !mooredAt(e)) continue;",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-sea-the-mooring-unread",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "    if (!e.owner || r || (e.ship.speed ?? 0) >= BERTH_WAY) return null;",
+    "new": "    if (!e.owner || (e.ship.speed ?? 0) >= BERTH_WAY) return null;",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT PASSAGE B5: another player's copy carries no errand on the wire (applyWord launches it with none) and liners() draws none for a ship another stands, so a copy with an errand never reaches this line; the check is kept so one that ever does - a departure under way - is never booked by her berth"
+  },
+  {
+    "name": "PASSAGE-sea-the-record-unwritten",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "    boat.charter = record;\n    boat.packable = false;",
+    "new": "    boat.packable = false;",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-sea-she-dropped-at-the-placing",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "    boat.charter = record;\n    boat.packable = false;",
+    "new": "    boat.charter = record;\n    host.drop(host.sea.get(id));\n    boat.packable = false;",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-sea-never-let-go",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "    host.departedOf(e.fromHarbour ?? m?.key, host.day()).add(e.ship.seed);\n    host.drop(e);",
+    "new": "    host.departedOf(e.fromHarbour ?? m?.key, host.day()).add(e.ship.seed);",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-sea-stood-again-after-a-door",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "    host.departedOf(e.fromHarbour ?? m?.key, host.day()).add(e.ship.seed);\n    host.drop(e);",
+    "new": "    host.drop(e);",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-csa-saved-live-not-a-copy",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "          ...(b.charter ? { Charter: JSON.parse(JSON.stringify(b.charter)) } : {}),",
+    "new": "          ...(b.charter ? { Charter: b.charter } : {}),",
+    "tests": [
+      "test/systems/comeSailAway/passage_csa.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-csa-unread-at-the-load",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "if (placedBoat.Charter && typeof placedBoat.Charter === 'object') boat.charter = placedBoat.Charter;",
+    "new": "if (placedBoat.Charter && typeof placedBoat.Charter === 'string') boat.charter = placedBoat.Charter;",
+    "tests": [
+      "test/systems/comeSailAway/passage_csa.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-csa-the-guard-dropped",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (item && boat?.charter) return false;",
+    "new": "    if (item && boat?.charter && lost) return false;",
+    "tests": [
+      "test/systems/comeSailAway/passage_csa.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-wiring-boarded-as-mine-moored",
+    "file": "src/scenes/world.js",
+    "old": "b.inside || b.charter || !tvSeaCrosses",
+    "new": "b.inside || !tvSeaCrosses",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-wiring-said-left-moored",
+    "file": "src/scenes/world.js",
+    "old": "if (!boat.charter) tvSay(TRAVEL_VIEW_TEXT.leftMoored);",
+    "new": "tvSay(TRAVEL_VIEW_TEXT.leftMoored);",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-wiring-the-frame-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    passage.frame(dt, gamePaused() || _loading);",
+    "new": "    // passage.frame(dt, gamePaused() || _loading);",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-wiring-the-sea-door-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    passage: (ship) => passage?.offer(ship),",
+    "new": "    passage: null,",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-wiring-the-Fleet-s",
+    "file": "src/scenes/fleetHost.js",
+    "old": "filter((b) => b?.uid && !b.charter)",
+    "new": "filter((b) => b?.uid)",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-sea-she-packs",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "    boat.packable = false;   // never parts in my pack",
+    "new": "    // never parts in my pack",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-host-she-packs-after-a-load",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "    boat.packable = false;   // never packed (a load",
+    "new": "    // never packed (a load",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-A1-the-voyage-unread",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "          if (sea.voyage && Math.max(Math.abs(nx - to.x), Math.abs(ny - to.y)) > VOYAGE_LANDFALL_PX) continue;",
+    "new": "          if (false) continue;",
+    "tests": [
+      "test/systems/naval/passage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-A1-the-landfall-reach-unread",
+    "file": "src/systems/travel/travelRoute.js",
+    "old": "Math.max(Math.abs(nx - to.x), Math.abs(ny - to.y)) > VOYAGE_LANDFALL_PX) continue;",
+    "new": "Math.max(Math.abs(nx - to.x), Math.abs(ny - to.y)) > VOYAGE_LANDFALL_PX * 20) continue;",
+    "tests": [
+      "test/systems/naval/passage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-A1-a-near-port-listed",
+    "file": "src/systems/naval/passage.js",
+    "old": "    if (passagePixels(here, to) <= VOYAGE_LANDFALL_PX) continue;",
+    "new": "",
+    "tests": [
+      "test/systems/naval/passage.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-A1-the-voyage-unasked-by-the-world",
+    "file": "src/scenes/world.js",
+    "old": "how: 'helm', voyage: !!b.charter }",
+    "new": "how: 'helm' }",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-A1-a-walk-not-refused",
+    "file": "src/scenes/world.js",
+    "old": "    if (voyage && !voyageSails(from, summary.pixel, plan)) { noWay?.(); return false; }",
+    "new": "",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-A2-the-root-s-measure",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": " > PASSAGE_LEAVE_M + hullReach(boat.hull);",
+    "new": " > PASSAGE_LEAVE_M;",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-A2-no-grace",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "      off = far ? off + Math.max(0, dt) : 0;",
+    "new": "      off = far ? PASSAGE_OFF_S : 0;",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-A3-a-try-spent-on-a-refusal",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "    if (!summary || !deps.canGo()) return;   // AUDIT PASSAGE A3",
+    "new": "    if (!summary || !deps.canGo()) { fails++; return; }   // AUDIT PASSAGE A3",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-A3-the-gate-dropped",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "    if (!summary || !deps.canGo()) return;   // AUDIT PASSAGE A3",
+    "new": "    if (!summary) return;   // AUDIT PASSAGE A3",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-A4-the-clock-the-host-s",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "    if (boat !== clockOf) resetClock(boat, true);",
+    "new": "    if (!clockOf) resetClock(boat, true);",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-A5-the-hold-moved-before-the-laying-up",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "    if (!r.LayUpBoat(boat)) return false;\n    const held = r.laidUpHold?.(boat.uid) ?? [];\n    const goods = held.length > 0;\n    if (goods) { const into = pack(); for (const it of held.splice(0)) addItem(into, it); }",
+    "new": "    const held = boat.Cargo?.Items ?? [];\n    const goods = held.length > 0;\n    if (goods) { const into = pack(); for (const it of held.splice(0)) addItem(into, it); }\n    if (!r.LayUpBoat(boat)) return false;",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-A6-a-bad-record-laid-up-under-me",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "    if (!rec) return;   // AUDIT PASSAGE A6",
+    "new": "    if (!rec) { end(boat); return; }   // AUDIT PASSAGE A6",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-A7-the-rider-left-on-foot",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "      if (ride != null) deps.remount?.(ride);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-A7-the-thrown-route-s-journey-left",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "console.warn('[passage] her voyage would not begin', err); stopJourney(); }",
+    "new": "console.warn('[passage] her voyage would not begin', err); }",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-A7-no-way-unsaid",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "sails = helm && deps.route(summary, { voyage: true, noWay: () => say(PASSAGE_TEXT.noWay) });",
+    "new": "sails = helm && deps.route(summary, { voyage: true, noWay: () => {} });",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B1-the-bank-cabin-linked-to-her",
+    "file": "src/systems/boatCabinOwnership.js",
+    "old": "if (!b.inside && !b.charter) add(b.uid, b.hull);",
+    "new": "if (!b.inside) add(b.uid, b.hull);",
+    "tests": [
+      "test/scenes/naval/passageaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B4-her-cabin-mine",
+    "file": "src/systems/sailingCabin.js",
+    "old": "=> !!boat && !boat.charter && cabinUid(boat.uid)",
+    "new": "=> !!boat && cabinUid(boat.uid)",
+    "tests": [
+      "test/scenes/naval/passageaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B2-boarding-from-her-off-her",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": " || deps.naval?.()?.boatInPlay?.() === b;",
+    "new": ";",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B2-a-world-s-move-not-held",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "    if (!boat || paused || deps.busy?.()) return;",
+    "new": "    if (!boat || paused) return;",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B3-a-journey-elsewhere-kept",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "      if (to && (to === 'spot' || to.x !== rec.to.px || to.y !== rec.to.py)) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B3-the-stuck-word-every-try",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "    if (++fails === PASSAGE_RESUMES) { said = 'stuck';",
+    "new": "    if (++fails >= PASSAGE_RESUMES) { said = 'stuck';",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B5-a-peer-s-copy-unbookable",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "    if (!e.owner || r || (e.ship.speed ?? 0) >= BERTH_WAY) return null;",
+    "new": "    return null;",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B5-not-taken-over",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "    if (e.owner) host.adopt(e);\n    host.departedOf(",
+    "new": "    host.departedOf(",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B7-the-crossing-unasked",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "      if (deps.passageCrosses && !deps.passageCrosses(s.hull)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B7-the-crossing-unwired",
+    "file": "src/scenes/world.js",
+    "old": "passage: (ship) => passage?.offer(ship), passageCrosses: (h) => tvSeaCrosses(csa.hullRig?.(h)),",
+    "new": "passage: (ship) => passage?.offer(ship),",
+    "tests": [
+      "test/scenes/naval/passageaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-D-the-helm-word-every-try",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "{ if (said !== 'helm') { said = 'helm'; say(PASSAGE_TEXT.helm(rec.to.name)); } return; }",
+    "new": "{ said = 'helm'; say(PASSAGE_TEXT.helm(rec.to.name)); return; }",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-D-book-twice",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "    if (charterBoat()) { say(PASSAGE_TEXT.booking); return false; }\n    if (gold() < d.fare)",
+    "new": "    if (gold() < d.fare)",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-D-the-packet-carries",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "      if (e.liner || e.prize || e.retiring ||",
+    "new": "      if (e.prize || e.retiring ||",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-D-the-prize-carries",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "      if (e.liner || e.prize || e.retiring ||",
+    "new": "      if (e.liner || e.retiring ||",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-D-any-hull-carries",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "e.retiring || !PASSAGE_HULLS.includes(s.hull) ||",
+    "new": "e.retiring ||",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-D-at-a-helm",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "    if (!host.enabled() || host.boarding() || host.myBoat() || !deps.passage) return null;",
+    "new": "    if (!host.enabled() || host.boarding() || !deps.passage) return null;",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-the-winds-turned",
+    "file": "src/systems/naval/passage.js",
+    "old": "  return dx || dn ? sceneCompassWord(dx, dn) : '';",
+    "new": "  return dx || dn ? sceneCompassWord(dn, dx) : '';",
+    "tests": [
+      "test/systems/naval/passage.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-host-the-fare-taken-on-a-refusal",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "      if (ride != null) deps.remount?.(ride);",
+    "new": "      if (ride != null) deps.remount?.(ride);\n      deps.pay(d.fare);",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-A5-the-goods-unsaid",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "    if (goods) say(PASSAGE_TEXT.goods);\n",
+    "new": "\n",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B3-the-course-word-unsaid",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "stopJourney(); say(PASSAGE_TEXT.holds(rec.to.name)); idle = 0;",
+    "new": "stopJourney(); idle = 0;",
+    "tests": [
+      "test/scenes/naval/passagehost.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B5-her-berth-not-found",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "<= BERTH_SNAP_M) return { key: h.key, i };",
+    "new": "<= BERTH_SNAP_M) return null;",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "PASSAGE-csa-the-voyage-unsaved",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "          ...(b.charter ? { Charter: JSON.parse(JSON.stringify(b.charter)) } : {}),",
+    "new": "          ...({}),",
+    "tests": [
+      "test/systems/comeSailAway/passage_csa.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-D-the-gangway-not-first",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const p = e || boatTrigger || gangwayInReach() ? null : passageShip();",
+    "new": "    const p = e || boatTrigger ? null : passageShip();",
+    "tests": [
+      "test/scenes/naval/passageaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-D-the-fare-never-deducted",
+    "file": "src/scenes/naval/passageHost.js",
+    "old": "else { deductGold(playerEntity, n); surfacePlayer(); } };",
+    "new": "else { surfacePlayer(); } };",
+    "tests": [
+      "test/scenes/naval/passageaudit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-D-the-press-over-her-helm-ray",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (!boatTrigger && passageShip()) return true;",
+    "new": "if (passageShip()) return true;",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B5-q-unsaid",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "  if (q.length) out.q = q;",
+    "new": "",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B5-q-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    hearGone(rec.gone);   // AUDIT PASSAGE B5",
+    "new": "    // AUDIT PASSAGE B5",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B5-q-not-said-on",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "    said = [...said, seed].slice(-NAVAL_WIRE_GONE);\n    for",
+    "new": "    for",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B5-the-roll-unasked",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "departed.has(seed) || goneSeed(seed) ||",
+    "new": "departed.has(seed) ||",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B5-her-copy-kept",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "    for (const e of host.sea.values()) if (e.ship.seed === seed) host.retire(e);",
+    "new": "",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B5-her-copy-read-again",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (goneSeed(w.seed)) continue;   // AUDIT PASSAGE B5",
+    "new": "      // AUDIT PASSAGE B5",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B5-taken-over-again",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "own.has(e.ship.seed) && !goneSeed(e.ship.seed) &&",
+    "new": "own.has(e.ship.seed) &&",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B5-the-door-unbounded",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "!Array.isArray(gone) || gone.length > NAVAL_WIRE_GONE ||",
+    "new": "!Array.isArray(gone) ||",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PASSAGE-B5-the-booker-unsaid",
+    "file": "src/scenes/naval/passageBerths.js",
+    "old": "    noteGone(e.ship.seed);   // AUDIT PASSAGE B5",
+    "new": "    // AUDIT PASSAGE B5",
+    "tests": [
+      "test/scenes/naval/passagesea.test.js"
+    ]
+  }
+]

@@ -4,7 +4,7 @@
 //
 //   (The keyed INVENTORY window that lived here is DELETED at U26.
 //   It was the dungeon host's until that slice swapped in the classic
-//   ui/nativeInventory.js window, after which nothing imported it.
+//   ui/native/nativeInventory.js window, after which nothing imported it.
 //   Its one law - EquipItem excludes exactly Weapons/Arrow and hands
 //   everything else to the equip table - was never the window's: it
 //   lives in systems/equip.js, where every host now reaches it.)
@@ -31,13 +31,25 @@ import { PlayerDeathSequence, DEATH_TIME_BEFORE_RESET } from '../systems/playerD
 import { playerEntity } from '../characters/playerEntity.js';   // D1: the death clip's race/gender
 import { audio } from '../systems/audio.js';
 import { isEnhanced } from '../systems/uiSkin.js';   // DEATH2: the enhanced skin paints its own
-import { drawEnhancedDeath, removeEnhancedDeath } from './enhancedDeath.js';
+import { drawEnhancedDeath, removeEnhancedDeath } from './enhanced/enhancedDeath.js';
 import { EYE_HEIGHT } from '../player/motor.js';   // DEATH3: the standing eye the fall starts from
-import { isOnlinePage } from '../systems/onlineLane.js';   // DEATH4: the online screen counts down, the offline one waits
+import { isOnlinePage } from '../systems/online/onlineLane.js';   // DEATH4: the online screen counts down, the offline one waits
 import { stateDeathLoss, deathGoldLoss, deathPenaltyLine } from '../systems/deathPenalty.js';   // DEATH-PENALTY: the screen says what the respawn is about to take
 import { goldPiecesOf } from '../systems/inventory.js';   // DEATH-PENALTY: the purse the loss is read off
-import { wildDeath, wildDeathLines, WILD_DEATH_HOLD_S } from '../systems/wildZone.js';   // WILD1: a death in the open zone holds two minutes, Enter or not
+import { wildDeath, wildDeathLines, WILD_DEATH_HOLD_S } from '../systems/wild/wildZone.js';   // WILD1: a death in the open zone holds two minutes, Enter or not
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { t } from '../systems/textManager.js';   // L10N4: the classic face's words in the player's language
+
+/** L10N4: what a host's hint SAYS. The hosts hand the English hint - FIX-E's law is in it (no F11 where there is no
+ *  quickload) and the enhanced face reads its keys off it - so the screen keeps it as given and shows its words; a
+ *  Legacy rise's hint (BAL4 riseHint) is the same hint with Enter raising. */
+const HINT_TEXT = Object.freeze({
+  'ENTER end   F11 load': () => t('death.hint.endLoad', 'ENTER end   F11 load'),
+  'ENTER end': () => t('death.hint.end', 'ENTER end'),
+  'ENTER rise   F11 load': () => t('death.hint.riseLoad', 'ENTER rise   F11 load'),
+  'ENTER rise': () => t('death.hint.rise', 'ENTER rise'),
+});
+const hintText = (hint) => HINT_TEXT[hint]?.() ?? hint;
 
 /** DEATH4 (Discord, 2026-09-23: "don't let it fade away automatically in
  *  offline mode, only in online mode - and give it 10 seconds"). On the
@@ -94,7 +106,7 @@ export const riseHint = (hint) => String(hint ?? '').replace(/ENTER end/, 'ENTER
  *  and the reason the hint is drawn. `drop` is read by each host's
  *  frame to sink its camera - one player, one death, one law. */
 export class DeathScreen {
-  constructor({ eyeHeight, capsuleHeight, onReset = null, entity = playerEntity, hint = 'ENTER end   F11 load', online = undefined, rises = null } = {}) {
+  constructor({ eyeHeight, capsuleHeight, onReset = null, entity = playerEntity, hint = 'ENTER end   F11 load', online = undefined, rises = null, penalty = true, wall = () => Date.now() } = {}) {
     noteFirstUse('death');   // TUT1: the page waits beneath this screen (it keeps the top) and is read after it
     this.done = false;
     // RISE-STUCK: the screen keeps the top of its host's stack until it
@@ -127,10 +139,15 @@ export class DeathScreen {
     // at the purse, whatever the purse did while the player lay dead (AUDIT 28 B5: a mate's bounty clear pays the
     // dead too, and the respawn took its share of the bigger purse). A death with no respawn (the run ends) takes none.
     const respawns = this.online || this.rises;
-    this.goldLoss = respawns ? deathGoldLoss(goldPiecesOf(entity)) : 0;
+    // EG-H2 (bible/11-Multiplayer/Elite-Gates.md section 24): a made level whose law exempts DEATH-PENALTY (the Spire's -
+    // systems/madeLevel.js) hands `penalty: false`: the respawn takes nothing, so the screen states nothing
+    this.goldLoss = respawns && penalty !== false ? deathGoldLoss(goldPiecesOf(entity)) : 0;
     if (respawns) stateDeathLoss(this.goldLoss);
     this.goldLossLine = deathPenaltyLine(this.goldLoss);   // drawn ONCE: the enhanced face redraws every frame and the words must not change under the player
     this.clock = 0;   // DEATH4: the enhanced screen's own clock (the sequence's stops short of its reset)
+    // REZ-BLOODLINE AUDIT R2: and online, the wall clock it never runs behind (tick) - from the death
+    this._wall = wall;
+    this._fellAt = wall();
     this.eyeHeight = Number.isFinite(eyeHeight) ? eyeHeight : EYE_HEIGHT;
     this._view = null;   // { cam, pitch } - the pitch to hand back if the run goes on (an online respawn)
     this.sequence = new PlayerDeathSequence({
@@ -168,6 +185,12 @@ export class DeathScreen {
     // HELD a hair short of its own reset - the reset is this screen's to
     // call: the online countdown, or the player's Enter (input below).
     this.clock += Math.max(0, Number(dt) || 0);
+    // REZ-BLOODLINE AUDIT R2 (FIELD BUGS 2026-10-16b): ONLINE THE WAIT IS THE WALL CLOCK'S. The hosts hand a clamped dt (a
+    // frame counts a tenth of a second however long it took), and the hold a party's Resurrect raises through is the wall
+    // clock's on the page and at the realm (scenes/legacyHost.js REZ_HOLD_MS, server-account/src/legacy.js realmRaise):
+    // below ten frames a second the open zone's two minutes outlasted it, the screen saying "RISING IN 15" while a
+    // Resurrect was refused "fallen for good". Never behind the frames' own count either (a dt longer than the wall's).
+    if (this.online) this.clock = Math.max(this.clock, (Number(this._wall()) - this._fellAt) / 1000 || 0);
     if (this.online && this.clock >= this.holdSeconds) { this.sequence.tick(DEATH_TIME_BEFORE_RESET + 1); return; }
     const room = DEATH_TIME_BEFORE_RESET - 1e-3 - this.sequence.elapsed;
     this.sequence.tick(Math.max(0, Math.min(Number(dt) || 0, room)));
@@ -177,7 +200,7 @@ export class DeathScreen {
     if (this._view) { this._view.cam.pitch = this._view.pitch; this._view = null; }
     removeEnhancedDeath();   // AUDIT CONTRIB A4: the veil goes with the screen, not STALE_MS after it - the risen see at once
   }
-  /** WILD1 (systems/wildZone.js): a death in the open zone - read live, since the world host says so the frame after the
+  /** WILD1 (systems/wild/wildZone.js): a death in the open zone - read live, since the world host says so the frame after the
    *  screen goes up. The owner: "When a player dies by mobs he has to wait 2mins till respawn" - and at a player's hand
    *  "the body ... disappears in 2 minutes and with it the player can only then respawn". */
   get wild() { return this.online ? wildDeath() : null; }
@@ -202,9 +225,9 @@ export class DeathScreen {
     // skin draws the words as a DOM layer over the same fade; the classic
     // skin keeps the canvas text below, untouched.
     if (isEnhanced() && typeof document !== 'undefined') { drawEnhancedDeath(this, fade); return; }
-    const t = 'YOU HAVE DIED';
-    drawText(renderer, font, t, (canvas.width - measureText(font.fnt, t) * s) / 2, canvas.height / 2 - 10 * s, s, [0.9, 0.2, 0.15, 1]);
-    const hint = this.online ? (this.wild ? `RISING IN ${this.respawnIn}` : `RISING IN ${this.respawnIn}   ENTER now`) : this.rises ? riseHint(this.hint) : this.hint;   // WILD1: no Enter in the zone   // AUDIT CONTRIB A5: the hold said out loud, as the enhanced face's "Rising in"   // BAL4: a Legacy rise's Enter raises
+    const died = t('death.title', 'YOU HAVE DIED');
+    drawText(renderer, font, died, (canvas.width - measureText(font.fnt, died) * s) / 2, canvas.height / 2 - 10 * s, s, [0.9, 0.2, 0.15, 1]);
+    const hint = this.online ? (this.wild ? t('death.risingInWild', 'RISING IN {n}', { n: this.respawnIn }) : t('death.risingIn', 'RISING IN {n}   ENTER now', { n: this.respawnIn })) : hintText(this.rises ? riseHint(this.hint) : this.hint);   // WILD1: no Enter in the zone   // AUDIT CONTRIB A5: the hold said out loud, as the enhanced face's "Rising in"   // BAL4: a Legacy rise's Enter raises
     drawText(renderer, font, hint, (canvas.width - measureText(font.fnt, hint) * s) / 2, canvas.height / 2 + 6 * s, s, DIM);
     // WILD1: the zone's lines on the classic face, under the hold (the enhanced face draws its own)
     let wy = canvas.height / 2 + (this.goldLoss > 0 ? 38 : 22) * s;
@@ -214,7 +237,7 @@ export class DeathScreen {
       wy += 12 * s;
     }
     if (this.goldLoss > 0) {   // DEATH-PENALTY: the classic face says it too, one line under the hold
-      const loss = `DEATH CLAIMS ${this.goldLoss} GOLD`;
+      const loss = t('death.goldLoss', 'DEATH CLAIMS {gold} GOLD', { gold: this.goldLoss });
       drawText(renderer, font, loss, (canvas.width - measureText(font.fnt, loss) * s) / 2, canvas.height / 2 + 22 * s, s, [0.9, 0.2, 0.15, 1]);
     }
   }

@@ -7,7 +7,8 @@ name: Account recovery
 #   1. node tools/reissueRecoveryCode.mjs <handle>   mints the code and its hash
 #   2. this workflow, with that handle and the HASH  sets it on that account
 #   3. the player spends the code in "Forgot password", picks a password, and
-#      is shown a new code - which kills the one the operator saw.
+#      is shown new recovery codes (eight on a build with RECOVERY-SET) -
+#      which kills the one the operator saw.
 #
 # It writes `recovery_hash` on one registered account and nothing else: not
 # the password, not the sessions, not the saves. The CODE is never an input -
@@ -64,7 +65,7 @@ jobs:
 
       # The tool checks the username's shape and the hash's form, and folds
       # the username as the service does - the statement is the tested one
-      # (test/recoverop.test.js), not one written again here.
+      # (test/server/recoverop.test.js), not one written again here.
       - name: Write the statement
         run: |
           set -euo pipefail

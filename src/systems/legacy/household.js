@@ -22,7 +22,7 @@
 //    the family lives in it meanwhile, and it is the taker's with the save that holds it (`syncHouses`' `taken`).
 import { CLASS_CAREERS } from '../chargen.js';
 import { isAlive, personOf, fullNameOf, isCustomCareer } from './family.js';
-import { PERSON_TEXTURES, PERSON_FACE_RECORDS } from '../../characters/mobilePerson.js';
+import { PERSON_TEXTURES, PERSON_FACE_RECORDS } from '../../characters/mobile/mobilePerson.js';
 import { GENDERS } from '../../characters/nameHelper.js';
 import { raceArt, FACES_PER_RACE } from '../races.js';
 
@@ -61,10 +61,13 @@ export const heldByDead = (family, h) => !!personOf(family, h?.by)?.died;
  * the dead's they took and hold is theirs from here (`from` the dead, so a rewind can hand it back); one they took and
  * no longer hold (sold before the save) goes. A row they were LEFT (`from`) that they no longer hold, by a save that
  * never took it (an older save loaded), goes back to the dead - and is theirs to take up again.
+ * ACCOUNT-HOMES: `whole` - what is held is the line's every house (online, the account's homes), and nothing another
+ * member learned is kept past it.
  * @param {any} family @param {number} personId @param {{ regionIndex:number, mapId:number, buildingKey:number, location?:string, layout?:string }[]} held
  * @param {string[]} [taken]
+ * @param {{ whole?: boolean }} [opts]
  */
-export function syncHouses(family, personId, held, taken = []) {
+export function syncHouses(family, personId, held, taken = [], { whole = false } = {}) {
   const mine = (held ?? []).filter((h) => (h?.buildingKey | 0) > 0 && (h?.mapId | 0) !== 0)
     .map((h) => ({
       regionIndex: h.regionIndex | 0, mapId: h.mapId | 0, buildingKey: h.buildingKey | 0, location: String(h.location ?? ''),
@@ -76,13 +79,15 @@ export function syncHouses(family, personId, held, taken = []) {
   // AUDIT LEGACY II A5: the rows keep their places - one sold leaves its place, one bought joins at the end. Rebuilt
   // with the one played's rows last, "the first house" (the family home with none marked and none in the seat) was
   // always another member's, and the line moved house at every switch
+  // ACCOUNT-HOMES (2026-10-06): `whole` - the held are every house of the line (online: the account's homes, each every
+  // member's), so a row any member learned goes once it is not among them (another character of the account sold it)
   const was = family.houses ?? [];
   const next = [];
   for (const h of was) {
     if (h.by === personId) {
       if (holds(h)) next.push(h);
       else if (Number.isInteger(h.from) && !taken.includes(houseKeyOf(h))) { const { from, ...row } = h; next.push({ ...row, by: from }); }
-    } else if (!took(h)) next.push(h);
+    } else if (!took(h)) { if (!whole || holds(h)) next.push(h); }
     else if (holds(h)) next.push({ ...h, by: personId, from: h.by });
   }
   for (const m of mine) if (!next.some((h) => sameHouse(h, m))) next.push(m);
@@ -168,7 +173,8 @@ export function residentOf(family, p, home) {
   const set = PERSON_TEXTURES[outfitRace][sex];
   const variant = pick % set.length;
   const faces = PERSON_FACE_RECORDS[outfitRace][sex];
-  const stock = Number.isInteger(p.careerIndex) && p.careerIndex >= 0 && p.careerIndex < CLASS_CAREERS.length && !isCustomCareer(p);
+  // AUDIT SUGGESTIONS-1019 L5-4: a stock class with a class skill changed still wears its class (isCustomCareer counts it, for the heir's copy)
+  const stock = Number.isInteger(p.careerIndex) && p.careerIndex >= 0 && p.careerIndex < CLASS_CAREERS.length && (!isCustomCareer(p) || (p.career?.swapped === true && String(p.career.name ?? '') === CLASS_CAREERS[p.careerIndex]));
   return {
     id: familyResId(family.id, p.id), town: home.mapId >>> 0, slot: FAMILY_SLOT_BASE + p.id, roll: FAMILY_ROLL,
     name: fullNameOf(p.given, p.surname), gender: sex === 'female' ? GENDERS.Female : GENDERS.Male, sex, race: p.race,
@@ -177,7 +183,7 @@ export function residentOf(family, p, home) {
     cls: stock ? CLASS_MOBILE_BASE + p.careerIndex : null, level: Math.max(1, p.level | 0), faction: 0,
     legacy: { familyId: family.id, personId: p.id },
     household: `F${family.id}`,   // AUDIT LEGACY II B2: their own household, never the census house they may be lent (livingTown.js householdKeyOf)
-    portrait: { archive: raceArt(p.race, sex).heads, record: Math.max(0, Math.min(FACES_PER_RACE - 1, p.face | 0)) },   // their own chargen head in the talk window (ui/nativeTalk.js setNpcPortrait)
+    portrait: { archive: raceArt(p.race, sex).heads, record: Math.max(0, Math.min(FACES_PER_RACE - 1, p.face | 0)) },   // their own chargen head in the talk window (ui/native/nativeTalk.js setNpcPortrait)
     look: p.look ?? null,   // LEGACY7 part four: what they wore at their newest save - drawn in it, as an online peer is (world/familyBodies.js); none, the town's outfit
   };
 }

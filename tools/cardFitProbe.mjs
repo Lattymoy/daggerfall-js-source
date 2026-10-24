@@ -41,18 +41,18 @@ const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewp
 .card-compact .card-body:not(:has(> .bigicon))::before,.inv-tip.tip-compact .card:not(:has(> .bigicon))::before{width:56px;height:56px}
 .card-tight .card-body:not(:has(> .bigicon))::before,.inv-tip.tip-tight .card:not(:has(> .bigicon))::before{display:none}</style></head><body>
 <script type="module">
-import { setSigilOnline, setSigilRenown } from '/src/systems/sigil.js';
-import { setSetsWearer } from '/src/systems/sigilSets.js';
+import { setSigilOnline, setSigilRenown } from '/src/systems/sigil/sigil.js';
+import { setSetsWearer } from '/src/systems/sigil/sigilSets.js';
 import { REGALIA, RAID_SET_PIECES, mintAetheric } from '/src/systems/aetheric.js';
-import { LEGENDARIES, applyRarity } from '/src/systems/lootRarity.js';
+import { LEGENDARIES, applyRarity } from '/src/systems/loot/lootRarity.js';
 import { equipItem, unequipItem } from '/src/systems/equip.js';
-import { setItemFields, mintCondition } from '/src/systems/itemTemplates.js';
+import { setItemFields, mintCondition } from '/src/systems/item/itemTemplates.js';
 import { createWeapon } from '/src/combat/enemyEquipment.js';
 import { ARMOR_MATERIAL } from '/src/systems/armorMaterials.js';
-import { setLocked } from '/src/systems/itemLock.js';
+import { setLocked } from '/src/systems/item/itemLock.js';
 import { setPref } from '/src/systems/uiPrefs.js';
 import { createInventoryWindow } from '/src/ui/inventoryDoor.js';
-import { mountEnhancedPlayerTrade } from '/src/ui/enhancedPlayerTrade.js';
+import { mountEnhancedPlayerTrade } from '/src/ui/enhanced/enhancedPlayerTrade.js';
 
 setPref('lootRarity', true);
 const armour = (templateIndex, set, xp, rarity = 'rare') => {

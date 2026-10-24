@@ -61,7 +61,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { RENOWN_REPORT_MS, RENOWN_COALESCE_MS, RENOWN_XP_REPORT_MAX, renownProgress } from './renown.js';
-import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
+import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
 
 /** How recent a blow of yours must be when a foe dies for it to pay you - half a minute of the fight. */
 export const RENOWN_ASSIST_MS = 30_000;
@@ -138,7 +138,7 @@ export function _resetRenownKillsForTests() { _struck = new WeakMap(); _onKill =
  *              was SAID, never against the page's level, for the same reason;
  *   `capped`   whether the hour's bound cut this report short: never at the cap's total (`max`), where there is no
  *              hour to speak of, and never for a repeat (a report already credited, answered again);
- *   `xp`       RENOWN4: the track's total as the service now holds it, for the page's own bar (ui/hudRenown.js) -
+ *   `xp`       RENOWN4: the track's total as the service now holds it, for the page's own bar (ui/hud/hudRenown.js) -
  *              null for an answer without one;
  *   `room`     SCALE4h: what the hour's bound still takes, as the service now holds it (renownReportSoon reads it) -
  *              null for an answer without one.
@@ -156,7 +156,7 @@ export function renownAnswer(data, sent, said = null) {
 /**
  * SCALE4h (2026-10-11, the plan's "10k writes"; bible/11-Multiplayer/Scale-Arc.md SCALE4h): IS THE NEXT REPORT'S
  * ANSWER ONE THE PAGE NEEDS SOON? Then it goes at the minute's pace (RENOWN_REPORT_MS), as every report did; else what
- * is earned waits RENOWN_COALESCE_MS, drawn meanwhile as the bar's ghost (ui/hudRenown.js). Soon, when:
+ * is earned waits RENOWN_COALESCE_MS, drawn meanwhile as the bar's ghost (ui/hud/hudRenown.js). Soon, when:
  *   - the hour's bound is spent (`capped`): what is earned in it is said within it, credited nothing, as before;
  *   - the track's total (`xp`) or the hour's room (`room`) is not known - the next answer says them;
  *   - what is earned (`pending`) reaches the room: the bound's word, and the sigils' stop, come at the minute's pace;
@@ -181,7 +181,7 @@ export function renownReportSoon({ xp, pending, room, capped, hourLeftMs = null 
 }
 
 /** The service's refusals that will not change by trying again: this character (or this build) cannot report. */
-const PERMANENT = new Set(['renown-character', 'renown-xp', 'renown-full']);
+const PERMANENT = new Set(['renown-character', 'renown-xp', 'renown-full', 'progress-seat', 'trade-held']);   // INT16: not the account's seat here, or a character whose trade is held
 
 /** AUDIT RENOWN1 GAME-2: the longest a refused report waits before it goes again - the wait doubles from
  *  RENOWN_REPORT_MS with each refusal in a row, up to this. */

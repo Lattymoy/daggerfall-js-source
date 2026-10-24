@@ -1,0 +1,588 @@
+[
+  {
+    "name": "EGZL-batch-turn-ignored",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "k.pos[o + q] = a0 * x + b0 * y + c0 * z + tx;",
+    "new": "k.pos[o + q] = x + tx;",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-batch-normals-unturned",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "k.nrm[o + q] = a0 * nx + b0 * ny + c0 * nz;",
+    "new": "k.nrm[o + q] = nx;",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-batch-turn-alone-never-relaid",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "for (let j = 0; j < A; j++) if (k.at[o12 + j] !== M[TURN_AT[j]]) { same = false; break; }",
+    "new": "for (let j = 9; j < A; j++) if (k.at[o12 + j] !== M[TURN_AT[j]]) { same = false; break; }",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-batch-centre-unturned",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "M[0] * c[0] + M[4] * c[1] + M[8] * c[2] + M[12],",
+    "new": "c[0] + M[12],",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-batch-turns-dropped",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "turns: !!turns, remap: null",
+    "new": "turns: false, remap: null",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-batch-map-lost-after-build",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "if (k.draw) k.draw.texRemap = k.remap;",
+    "new": "void 0;",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-batch-map-lost-at-build",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "k.draw.texRemap = k.remap; draws?.push?.(k.draw);",
+    "new": "draws?.push?.(k.draw);",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-batch-hidden-turning-copy-drawn",
+    "file": "src/scenes/eliteGates/egPieceBatch.js",
+    "old": "let show = !s.hidden && M != null && M[15] !== 0;",
+    "new": "let show = M != null;",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-pass-no-slab-laid",
+    "file": "src/render/superDungeon/sdStepsPass.js",
+    "old": "    if (!slab) return;\n",
+    "new": "    return;\n",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-pass-slab-lit-at-nothing",
+    "file": "src/render/superDungeon/sdStepsPass.js",
+    "old": "    if (st.w <= 0.0) { gl_Position = vec4(2.0, 2.0, 2.0, 1.0); return; }\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-pass-slab-share-ignored",
+    "file": "src/render/superDungeon/sdStepsPass.js",
+    "old": "    vK = st.x * st.z * st.w;",
+    "new": "    vK = st.x * st.z;",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-pass-floor-dropped",
+    "file": "src/render/superDungeon/sdStepsPass.js",
+    "old": "* max(fogFactorAt(vWorld), kept), 1.0);",
+    "new": "* fogFactorAt(vWorld), 1.0);",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-pass-count-clipped",
+    "file": "src/render/superDungeon/sdStepsPass.js",
+    "old": "  const list = ghosts.slice(0, max);",
+    "new": "  const list = ghosts.slice(0, SD_GHOSTS_MAX);",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-pass-loop-on-the-hours",
+    "file": "src/render/superDungeon/sdStepsPass.js",
+    "old": "for (let i = 0; i < this.n; i++) if (state[i * 4] > 0)",
+    "new": "for (let i = 0; i < SD_GHOSTS_MAX; i++) if (state[i * 4] > 0)",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-pass-floor-never-sent",
+    "file": "src/render/superDungeon/sdStepsPass.js",
+    "old": "if (this.fogFloor) gl.uniform3f(U.uFogFloor",
+    "new": "if (false) gl.uniform3f(U.uFogFloor",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-beat-one-kind",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "const beatKind = (s) => `beat@${Math.round(s.beat * 1000)}`;",
+    "new": "const beatKind = (s) => 'beat';",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-beat-warning-frozen",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "W.warn[Math.min(SD_BEAT_DISSOLVE.keep.length - 1, Math.floor(warned / SD_BEAT_OUT_STAGE_S))]",
+    "new": "W.warn[0]",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-beat-return-frozen",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "W.back[2 - Math.floor((u / SD_BEAT_IN_S) * 3)]",
+    "new": "W.back[0]",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-beat-no-warning",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "if (W && warned >= 0) map =",
+    "new": "if (W && warned > 9) map =",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-beat-frame-off-the-clock",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "frame = Math.min(11, Math.floor(u / SD_BEAT_FRAME_S));",
+    "new": "frame = Math.min(11, Math.floor(u));",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-beat-palette-ignored",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "const key = access.palette?.key ?? 'standard';",
+    "new": "const key = 'standard';",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-beat-ghost-on-a-solid-plate",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "ghostState[o] = solid ? 0 : 1; ghostState[o + 1] = solid ? 0 : left",
+    "new": "ghostState[o] = 1; ghostState[o + 1] = solid ? 0 : left",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-beat-pictures-not-cut",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "renderer.uploadTexture(egTellArchive(band), rec, art.albedo, { cutout: true });",
+    "new": "renderer.uploadTexture(egTellArchive(band), rec, art.albedo, {});",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-art-dissolve-keeps-all",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "(Math.floor(x / C) & 3)] < keep) continue;",
+    "new": "(Math.floor(x / C) & 3)] < 16) continue;",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-art-falter-a-stage-late",
+    "file": "src/world/eliteGates/egBandArt.js",
+    "old": "egDissolveArt(k < SD_BEAT_DISSOLVE.keep.length / 2 ? frame : falter, keep)",
+    "new": "egDissolveArt(k < 3 ? frame : falter, keep)",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-art-the-hours-ember",
+    "file": "src/world/superDungeon/sdStepsArt.js",
+    "old": "col = ember ? warn : GOLD",
+    "new": "col = ember ? EMBER : GOLD",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-art-dash-never-drawn",
+    "file": "src/world/superDungeon/sdStepsArt.js",
+    "old": "if (dash && ember) fill(emission, A.line,",
+    "new": "if (false) fill(emission, A.line,",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-crumble-stage-frozen",
+    "note": "EG-ZR (PIN MOVED): re-aimed by content - the cracks' stages spread across the wait the foot set (Featherstep's - st.wait)",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "const n = shaking ? 1 + Math.min(2, Math.floor((since / st.wait) * 3)) : 0;",
+    "new": "const n = shaking ? 1 : 0;",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-crumble-shakes-under-reduced-motion",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "if (shaking && !still) { sx = SD_CRUMBLE_SHAKE",
+    "new": "if (shaking) { sx = SD_CRUMBLE_SHAKE",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-crumble-rewind-skipped",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "show = f >= back || (f >= 0 && drop < SD_CRUMBLE_SEEN);",
+    "new": "show = f >= 0 && f < back && drop < SD_CRUMBLE_SEEN;",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-crumble-chunks-at-the-falls-time",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "sdChunkMatrix(d.object.matrix, chunkWays[j], tau, x, y, z)",
+    "new": "sdChunkMatrix(d.object.matrix, chunkWays[j], f, x, y, z)",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-crumble-plate-shown-fallen",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "if (st.draw && (solid || chunked)) {",
+    "new": "if (st.draw && solid) {",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-crumble-no-click-home",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "play3(SD_STEPS_SOUNDS.clack, [x, y, z], 0.7, 2.6); }   // EG-ZL: back",
+    "new": "void 0; }   // EG-ZL: back",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-crumble-no-grind",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "if (on.s.kind !== 'sink') play3(SD_STEPS_SOUNDS.grind,",
+    "new": "if (false) play3(SD_STEPS_SOUNDS.grind,",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-crumble-no-grit",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "if (g) { if (shaking) { translate(g.object.matrix",
+    "new": "if (g) { if (false) { translate(g.object.matrix",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-crumble-no-shudder-home",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "t - st.back < SD_CHUNK.shudder && !still) {",
+    "new": "t - st.back < 0 && !still) {",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-crumble-no-ghost",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "ghostState[o] = f >= 0 ? 1 : 0;",
+    "new": "ghostState[o] = 0;",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-crumble-bone-bare",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "    } else if (EG_CRUMBLE_KINDS.includes(s.kind)) {\n      st.stages =",
+    "new": "    } else if (s.kind === 'crumble') {\n      st.stages =",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-crumble-phones-two-ignored",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "egCrumbleModels(band, lite ? 2 : 4)",
+    "new": "egCrumbleModels(band, 4)",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-hang-pivot-on-the-deck",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "st.pivot = realmToDungeon(st.spec.x0 + s.x, s.y + R.len, s.z);",
+    "new": "st.pivot = realmToDungeon(st.spec.x0 + s.x, s.y, s.z);",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-hang-lean-dropped",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": ": pendulumAngle(dx), cs = Math.cos(a)",
+    "new": ": pendulumAngle(0), cs = Math.cos(a)",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-hang-only-moves",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "() => egHangModel(band, R.len, R.over), { turns: true });",
+    "new": "() => egHangModel(band, R.len, R.over));",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-hang-one-kind",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "st.hang = place(`hang:${st.spec.h}`,",
+    "new": "st.hang = place('hang',",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-hang-one-anchor",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "  if (band === 1) {   // the ribcage",
+    "new": "  if (band === 1 && false) {   // the ribcage",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-stone-none-lit",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "const mine = g === litStone;",
+    "new": "const mine = false;",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-stone-lit-never-moved",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "safeY = body.pos[1]; litStone = stoneOf(safe); }",
+    "new": "safeY = body.pos[1]; }",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-stone-lit-only-at-its-heart",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "<= g.isl.r + 0.5 && Math.abs(ry - g.isl.y) < 1.5",
+    "new": "<= 0.5 && Math.abs(ry - g.isl.y) < 1.5",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-banner-unswung",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "yawAbout(v.draw.object.matrix, _vane[1],",
+    "new": "yawAbout(v.draw.object.matrix, 0,",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-banner-none",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "if (isl.z + isl.r >= g.z0 && isl.z - isl.r <= g.z1 && Math.abs(isl.x - g.x) <= EG_GUST_REACH_M) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-wind-every-frame",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "gustAt(t, _gust).warn && lastWarned !== Math.floor(t / SD_GUST_EVERY)",
+    "new": "gustAt(t, _gust).warn",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-wind-everywhere",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "if (heard && gustAt(t, _gust).warn",
+    "new": "if (gustAt(t, _gust).warn",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-wind-the-hours-blow",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "play(SD_STEPS_SOUNDS.moan, 0.9);",
+    "new": "play(SD_STEPS_SOUNDS.wind, 0.9);",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-slab-on-a-whole-crumble",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "if (!EG_CRUMBLE_KINDS.includes(st.s.kind) || st.solid || st.touched == null) continue;",
+    "new": "if (!EG_CRUMBLE_KINDS.includes(st.s.kind)) continue;",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-slab-held-for-ever",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "t >= st.peerAt && t - st.peerAt <= EG_GHOST_SLAB.hold ? EG_GHOST_SLAB.fill : 0",
+    "new": "t >= st.peerAt ? EG_GHOST_SLAB.fill : 0",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-slab-height-band-dropped",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "dy >= -EG_RIDE_DOWN_M && dy <= EG_RIDE_UP_M) { st.peerAt = lastT;",
+    "new": "true) { st.peerAt = lastT;",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-online-no-word-for-a-peer-on-no-ride",
+    "file": "src/net/online.js",
+    "old": "      else if (this.rideAt) this.rideAt(s);",
+    "new": "      else if (false) this.rideAt(s);",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-client-deaf-to-a-peer-on-no-ride",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (!Array.isArray(q.pl)) { modes()?.dungeonCtx?.egSpanPeer?.(q.x, q.y ?? 0, q.z); return; }",
+    "new": "if (!Array.isArray(q.pl)) return;",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-pass-never-freed",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "      try { pass?.destroy(); } catch { /* gone */ }\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-client-no-ghosts",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "const ghosts = !!modes()?.dungeonCtx?.egSpanDraw?.(proj, view, fog);",
+    "new": "const ghosts = false;",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-pass-without-its-floor",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "{ max: EG_GHOSTS_MAX, slab: true, fogFloor: EG_FOG_FLOOR }",
+    "new": "{ max: EG_GHOSTS_MAX, slab: true, fogFloor: null }",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-track-no-ticks",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "seg(track, egToDungeon(spec, x - EG_TRACK.dash / 2, y, z), egToDungeon(spec, x + EG_TRACK.dash / 2, y, z));",
+    "new": "void x;",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-track-ticked-at-one-end",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "for (const side of [-1, 1]) for (const z of [z0, z1]) {",
+    "new": "for (const side of [-1, 1]) for (const z of [z0]) {",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-track-tick-past-a-dash",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "egToDungeon(spec, x - EG_TRACK.dash / 2, y, z)",
+    "new": "egToDungeon(spec, x - EG_TRACK.dash, y, z)",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-drop-wall-dark",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "for (const s of spec.steps) if (s.kind === 'drop') lamp(",
+    "new": "for (const s of spec.steps) if (false) lamp(",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  },
+  {
+    "name": "EGZL-drop-lamp-behind-the-wall",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "s.z + s.d / 2 - EG_DROP_LAMP.off",
+    "new": "s.z + s.d / 2 + EG_DROP_LAMP.off",
+    "tests": [
+      "test/world/eliteGates/egz_tells.test.js"
+    ]
+  }
+]

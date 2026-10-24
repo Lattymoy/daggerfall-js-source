@@ -5,7 +5,7 @@
     "old": "  resetDefaults(store, true);   // step 2: the standard's defaults, on every code still free\n",
     "new": "",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      if (spoken(code)) { report.kept.push({ action: row.action, code, holder: actionForCode(store, code) }); continue; }",
     "new": "",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
@@ -23,8 +23,8 @@
     "old": "    report.lost.push({ action, code, holder: actionForCode(store, code) });",
     "new": "",
     "tests": [
-      "test/kb1_audit.test.js",
-      "test/kb1_keybinds.test.js"
+      "test/ui/kb1_audit.test.js",
+      "test/ui/kb1_keybinds.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "      if (had != null) { clearBinding(store, hidden, primary); report.moved.push(`${hidden} off ${had}`); }",
     "new": "",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "  if (waiting.length || !speak(text, delay)) waiting.push([String(text ?? ''), delay]);   // in order, behind any still waiting",
     "new": "  speak(text, delay);",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "  _bindings.carried = null;\n",
     "new": "",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "      const cur = before.get(`${primary}:${action}`);",
     "new": "      const cur = getBinding(store, action, primary);",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
@@ -69,9 +69,9 @@
     "old": "const clashes = (a, b) => a != null && b != null && getDuplicates([a, b]).size > 0;",
     "new": "const clashes = (a, b) => a != null && a === b;",
     "tests": [
-      "test/kb1_audit.test.js",
-      "test/enhancedControls.test.js",
-      "test/mousecontrols.test.js"
+      "test/ui/kb1_audit.test.js",
+      "test/ui/enhanced/enhancedControls.test.js",
+      "test/ui/mousecontrols.test.js"
     ]
   },
   {
@@ -80,7 +80,7 @@
     "old": "  if (holders.length === 1 && holders[0].action === action) {",
     "new": "  if (false) {",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
@@ -89,7 +89,7 @@
     "old": "    this.buttons = gridButtons().filter((b) => !HIDDEN_ACTIONS.includes(b.action));",
     "new": "    this.buttons = gridButtons();",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
@@ -98,17 +98,17 @@
     "old": "  for (const c of _cursorKeyClaims) if (c.takes(e)) return true;",
     "new": "  for (const c of _cursorKeyClaims) if (c) return true;",
     "tests": [
-      "test/kb1_audit.test.js",
-      "test/kb1_keybinds.test.js"
+      "test/ui/kb1_audit.test.js",
+      "test/ui/kb1_keybinds.test.js"
     ]
   },
   {
     "name": "AUDIT-KB1-UI2-the-books-repeat-closes-it",
-    "file": "src/ui/enhancedSpellbook.js",
+    "file": "src/ui/enhanced/enhancedSpellbook.js",
     "old": "  if (!e.repeat) onExit();",
     "new": "  onExit();",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
@@ -117,34 +117,34 @@
     "old": "    const as = actionsForCode(b, comboCode(mod, e.code));\n    if (as.length) return as.filter(actionLive);",
     "new": "    const as = [];\n    if (as.length) return as.filter(actionLive);",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-KB1-UI4-the-prompt-is-not-reported-open",
-    "file": "src/ui/enhancedControls.js",
+    "file": "src/ui/enhanced/enhancedControls.js",
     "old": "export const controlsPromptOpen = () => prompt != null;",
     "new": "export const controlsPromptOpen = () => false;",
     "tests": [
-      "test/enhancedControls.test.js"
+      "test/ui/enhanced/enhancedControls.test.js"
     ]
   },
   {
     "name": "AUDIT-KB1-UI5-a-freed-cursors-click-presses-a-slot",
-    "file": "src/ui/enhancedHotbar.js",
+    "file": "src/ui/enhanced/enhancedHotbar.js",
     "old": "  if (typeof document === 'undefined' || !document.pointerLockElement) return;",
     "new": "  if (typeof document === 'undefined') return;",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-KB1-UI5-no-mouse-listener",
-    "file": "src/ui/enhancedHotbar.js",
+    "file": "src/ui/enhanced/enhancedHotbar.js",
     "old": "  window.addEventListener('mousedown', onMouse, true);   // AUDIT KB1: a slot bound to a mouse button",
     "new": "",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
@@ -153,16 +153,16 @@
     "old": "    this.toggleClosedSecondary = getBinding(bindings(), 'Escape', false);",
     "new": "    this.toggleClosedSecondary = null;",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-KB1-UI6-the-pad-cannot-close-the-pack",
-    "file": "src/ui/nativeInventory.js",
+    "file": "src/ui/native/nativeInventory.js",
     "old": "    this.toggleClosedSecondary = getBinding(bindings(), 'Inventory', false);",
     "new": "    this.toggleClosedSecondary = null;",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
@@ -171,7 +171,7 @@
     "old": "    if (this.top && e?.repeat) return;\n",
     "new": "",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
@@ -180,7 +180,7 @@
     "old": "        else if (e.repeat) { e.preventDefault(); return true; }   // AUDIT KB1: the press edge alone - routeKey's law (ui/input.js), so a held F8/F9 is one shot, one save\n",
     "new": "",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
@@ -189,7 +189,7 @@
     "old": "    if (!ctx.uiOverlayActive) {\n      keys.add(e.code);",
     "new": "    if (true) {\n      keys.add(e.code);",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
@@ -198,7 +198,7 @@
     "old": "    if (!modes?.overlayHeld) {\n      keys.add(e.code);",
     "new": "    if (true) {\n      keys.add(e.code);",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
@@ -207,7 +207,7 @@
     "old": "        later(() => URL.revokeObjectURL(url), REVOKE_AFTER_MS);",
     "new": "        later(() => URL.revokeObjectURL(url), 0);",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   },
   {
@@ -216,7 +216,7 @@
     "old": "export function eventActions(e) {\n  if (!e?.code) return [];",
     "new": "export function eventActions(e) {\n  if (e?.code) return actionsOf(e, new Set([e.shiftKey && 'ShiftLeft', e.ctrlKey && 'ControlLeft', e.altKey && 'AltLeft'].filter(Boolean)));\n  if (!e?.code) return [];",
     "tests": [
-      "test/kb1_audit.test.js"
+      "test/ui/kb1_audit.test.js"
     ]
   }
 ]

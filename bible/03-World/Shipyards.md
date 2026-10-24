@@ -1,5 +1,7 @@
 # The Shipyards, the Crew Halls and the Lighthouses (SHIPYARDS)
 
+> DF-LOOK (2026-10-15, `01-Overview/DF-Art.md`): the port's pictures - the SHIPS and CREW boards and the beacon's flame among them - are painted here again (DF-ART's swap to Daggerfall's records reverted), laid on in Daggerfall's colours as they go up - grained and snapped to the player's own ART_PAL.COL (`world/dfLook.js`); the flame's own light stays as painted.
+
 THE PORT'S OWN (2026-10-11). Mac: *"I want to give ports the same treatment we did wagons and horses. A new highly
 detailed shipmaster vendor and crew recruitment station within it. All detailed functions including ship upgrading
 should be present here, along with ship buying, etc. This should also come with a detailed overhaul to piers and
@@ -22,11 +24,24 @@ whole of it is a departure, Ledger A (SHIPYARDS, SHIPYARDS-FOUND, THE PIER'S DRE
 ## Where they stand
 
 **Which towns** (`systems/portPlaces.js` `isPortTown`). A city, a town or a village (`PORT_TOWN_TYPES`) that is a port
-by its own data: Travel Options' hand-written harbours (`systems/travelPorts.js` `hasPort`) or Daggerfall's
-PortTownAndUnknown byte - the host's `portByData`. A seat's members' harbour (`hasPortFor`) is one guild's word, so it
-stands no shipyard: every client stands the same one.
+by its own data - Travel Options' hand-written harbours (`systems/travel/travelPorts.js` `hasPort`) or Daggerfall's
+PortTownAndUnknown byte (`portTownByData`) - AND that the open sea bears on (INLAND-PORTS,
+`01-Overview/bugs/Field-Bugs-2026-10-14-inland-ports.md`; `portSites.js:"export function portTownOnSea(loc, hasPort, isSea) {"`,
+the host's `portOnSea`): a pixel of the open sea within `SEA_RING` (2) of the town's, the ring the bearing below is read
+off, so every port town has a seaward edge. THE OPEN SEA is the map's water that reaches the map's border
+(`portSites.js:"export function openSeaOf(isWater, width, height) {"` - the one water law's pixels flooded eight-way from
+the map's edge, Deep Waters' own flood of the sea; past the Veil, the Eltheric Ocean's water round its isles). The data
+alone is no coast: the byte's 0x10 is the region capitals' mark and Travel Options' table copied the byte's list, so 36
+capitals in the hills and the deserts stood a shipyard and a lighthouse at their middle (Ilessan Hills beside its own
+ponds - the report); and the byte's low bits name a lake's side as the sea's. On the real map 106 of the 155 towns that
+are ports by their data stand them, and the harbour board's ports are the same 106 (`03-World/Captains-Sea.md` THE
+PORTS). A seat's members' harbour (`hasPortFor`) is one guild's word, so it stands no shipyard: every client stands the
+same one. Its harbour - the quays and the DOCKS below - is sounded out to that same ring when the town's own shore
+gives no berth within HARBOUR_REACH (FB1020c HARBOUR-REACH, `03-World/Holdings.md` section 7): 37 of the 106 stood a
+shipyard and a lighthouse and no quay until then (Daggerfall, Sentinel and Wayrest among them); 105 stand one now,
+Aldbrugh none (open).
 
-**The ground** is the yards' (`world/merchantYardSites.js` `townGroundOf`): the town's navgrid on the enhanced lane's
+**The ground** is the yards' (`world/merchantYards/merchantYardSites.js` `townGroundOf`): the town's navgrid on the enhanced lane's
 water table, its buildings `BUILDING_CLEAR_M` off, its props, flats, palace blocks and the monument - with the Stable and
 the Wagon Yard already closed on it, `YARD_GAP_M` round each. The yards are placed by their own two steps, as they
 always were (`townGroundOf`, then `yardSitesOn`), and the port's places go on what they left (`scenes/world.js`
@@ -36,10 +51,11 @@ always were (`townGroundOf`, then `yardSitesOn`), and the port's places go on wh
 ground tile of the water family on the enhanced table) in a body that reaches the block grid's edge with
 `SEA_CELLS_MIN` (48) cells at least, never a pond or a fountain (`townSeaOf`) - each cell's distance to it is walked
 four-way (`seaField`, kind `water`). Where they hold none, the sea's bearing off the map pixels round the town's
-(`seaBearing`: every pixel of sea within `SEA_RING` (2) - the port's one water law, `isWaterPixel` over CLIMATE.PAK and
-WOODS.WLD - two near, one far; the map's y runs south, the frame's z north), and a cell's distance is how far it stands
-in from the town's seaward edge, and `LATERAL_K` of its distance off that edge's middle (kind `bearing`). No sea either
-way: the town's middle, as the yards' (kind `middle`). A body of the town's own water whose middle lies against the map's
+(`seaBearing`: every pixel of the open sea within `SEA_RING` (2) - the port's one water law, `isWaterPixel` over
+CLIMATE.PAK and WOODS.WLD, flooded from the map's border (INLAND-PORTS: a lake behind the town never turns its yard) - two
+near, one far; the map's y runs south, the frame's z north), and a cell's distance is how far it stands in from the town's
+seaward edge, and `LATERAL_K` of its distance off that edge's middle (kind `bearing`). The bearing's sum nought - the sea
+all round evenly; a port town always has the sea within the ring - the town's middle, as the yards' (kind `middle`). A body of the town's own water whose middle lies against the map's
 bearing - on the far side of the town's middle from the sea the map shows - is a lake or a river's reach inland and no
 sea (`townSeaOf`'s `bearing`, AUDIT SHIPYARDS U2): the shipyard turned its back on the sea to face it.
 
@@ -116,7 +132,7 @@ docks for the town ("The Sentinel Light", "Sentinel Docks" - `portPlaceName`).
 
 On the shipmaster, the SHIPS board or the hull on the stocks: the plaque names the shipyard, its shipmaster and its
 trade, with four rows - **Ships for sale**, **Your fleet**, **Shipwright**, **Refits** - each opening the shipmaster's
-window (`ui/shipyardWindow.js`, through the sea fight's door: `ui/navalPlunderDoor.js`'s third slot) on that page; a
+window (`ui/shipyardWindow.js`, through the sea fight's door: `ui/naval/navalPlunderDoor.js`'s third slot) on that page; a
 press with no row lit opens Ships for sale. On the crewmaster, the CREW board, the notice board or a sailor: **Sign on
 hands** - the window's Crew Hall. Info names who they are; Steal takes nothing ("The shipmaster never takes an eye off
 his yard"); a shipwright says his work. Too far speaks the street's refusal; the reach is a static NPC's (6.4 m). Its
@@ -157,16 +173,16 @@ too: a sale let them go with her room, L6-2), or one that came into the realm th
 the placed boats and the deeds and parts in its lists, in the Fleet's own save slot (`crossed`), as Daggerfall's deeds
 cross kept and unsold). Sold while Come Sail Away's placing is armed with her, the placing is let go (L1-1: the click
 placed her again from the item and she sold twice, unbounded - and the placing click itself now places nothing whose
-item has left its collection, `systems/comeSailAway.js` `holdsItem`); a summons lets an armed placing go (L1-9). Sold, a
+item has left its collection, `systems/comeSailAway/comeSailAway.js` `holdsItem`); a summons lets an armed placing go (L1-9). Sold, a
 boat standing in the world
 is laid up first by the mod's own law (`LayUpBoat`) - she leaves the water as a ship sent away does; her parts leave the
 pack; her cabin is let go as a sold house's room is (`scenes/worldModes.js` `cabinSold`); her title and record leave the
-ledger (`forgetShip`), her hurts and crew the sea fight's state (`scenes/navalHost.js` `forgetBoat`), her empty hold's
+ledger (`forgetShip`), her hurts and crew the sea fight's state (`scenes/naval/navalHost.js` `forgetBoat`), her empty hold's
 entry Come Sail Away's (`forgetHold`); the offer is credited - past the purse's carrying, as a letter of credit, as the
 counters pay (`sellProceeds`, L1-3: a galley's price was 160 kg of coin).
 
 **Shipwright** and **Refits.** The shipwright's own work on a ship at hand - at this port, at the helm here, or laid up
-(`AT_HAND`) - his model the sea fight's (`scenes/navalHost.js` `yardModelOf`: her hull, her canvas, her hands by the
+(`AT_HAND`) - his model the sea fight's (`scenes/naval/navalHost.js` `yardModelOf`: her hull, her canvas, her hands by the
 head, her powder and provisions), and her four refit lines (`scenes/fleetHost.js` `offer`, `systems/fleet.js`). A ship
 chosen on one page is chosen on the others.
 
@@ -183,7 +199,7 @@ fill her. A sailor already serving a ship of the player's is not on the roster -
 hand (`hall`), never by his name (AUDIT SHIPYARDS L2-9: a name hid another man); a ship already carrying a hand of his
 name refuses him in its own words.
 
-**Signing on** (`enlistPlan`, `scenes/navalHost.js` `enlistHand`). A crewed ship at hand is chosen; a recruit takes a
+**Signing on** (`enlistPlan`, `scenes/naval/navalHost.js` `enlistHand`). A crewed ship at hand is chosen; a recruit takes a
 place on her deck - her crew raised to the share that stands one more named hand (`playerCrewCount`), never past her
 whole, mustered without a state (`navalDamage.js` `muster`: a wreck stays a wreck - AUDIT SHIPYARDS L2-5). His CHARGE is
 his fee, or the men his place raises her by at the shipwright's price if that is more (`hireCharge`, L2-2: a hire raised
@@ -272,10 +288,10 @@ oil under lock (`PORT_TEXT`).
 night) from the town, from the sea, from under the corbels and from the gallery into the lantern, by day and by night -
 never yet in a port town of the player's.
 
-**Tests.** `test/beacontower.test.js` (8): the tower is stone, the battlements, the walk is clear, the lantern is open, the
+**Tests.** `test/world/beacontower.test.js` (8): the tower is stone, the battlements, the walk is clear, the lantern is open, the
 roof's point is the lantern's top, the fire, the art and the words - on the producer's own model and the real collider's
-rays. PIN MOVED: `test/shipyards1_place.test.js` (the gallery's spot between the lantern and the parapet; the art's list;
-the third mesh the flames), `test/shipyards1_audit_port.test.js` (the gallery holds inside the parapet; the guard's line;
+rays. PIN MOVED: `test/world/shipyards1_place.test.js` (the gallery's spot between the lantern and the parapet; the art's list;
+the third mesh the flames), `test/systems/shipyards1_audit_port.test.js` (the gallery holds inside the parapet; the guard's line;
 the hollow tower to the roof's point; L5-2's pin the flames' - drawn with noShadow in the lanterns' hours, never by day,
 never in the collider). Mutants: `tools/mutants/beacontower.json` (21), every one dead - BEACON-the-tower-whitewashed
 survived the first cut of its pin, which read only faces wholly over the cottage's chimney while the shaft is one face
@@ -305,18 +321,19 @@ piece's body out of the gangway's lane, the lanterns' light where the berth lies
   the frame hands the town's places again then, once (`townTalk.setPorts`), waiting on the harbour book's own test -
   `csaIsPortTown` (L3-2: the shipyard's test kept a seat's docks to a second visit and waited for ever on a harbour the
   book never sounds). The rows are `world/portSites.js` `portPlaceRows`'s, the berth's point `sceneToLocationXZ`'s, a port
-  by its data `systems/portPlaces.js` `portTownByData`'s - each executed by the tests, never read off world.js (L6-10).
-- **The town maps** (`world/merchantYardMap.js` `yardTownBlocks`, `ui/townMapDoor.js`): the shipyard's ground in a
+  by its data `systems/portPlaces.js` `portTownByData`'s and on the open sea `world/portSites.js` `portTownOnSea`'s
+  (INLAND-PORTS) - each executed by the tests, never read off world.js (L6-10).
+- **The town maps** (`world/merchantYards/merchantYardMap.js` `yardTownBlocks`, `ui/town/townMapDoor.js`): the shipyard's ground in a
   shop's byte, the lighthouse's in a house's (`PORT_MAP_TYPE`), each lettered by its own name. The docks lie out on the
   water past the town's blocks, which is all a town map draws.
-- **The Overworld** (`scenes/portHost.js` and `scenes/quayPool.js` `overworldMarks`, `ui/travelViewHud.js`
+- **The Overworld** (`scenes/portHost.js` and `scenes/quayPool.js` `overworldMarks`, `ui/travel/travelViewHud.js`
   `portGlyph`): the shipyard (an anchor), the lighthouse (a tower under its light) and the docks (a bollard on its quay),
   each named, with the Towns switch and never counted a town.
 
 ## The shelves
 
 The General Store and the Pawn Shop no longer shelve Come Sail Away's two items, and no counter buys them
-(`systems/comeSailAwayItems.js`, `systems/shopStock.js` `shopBuysItem`) - as MERCHANT-YARDS took the horse and the cart
+(`systems/comeSailAway/comeSailAwayItems.js`, `systems/shopStock.js` `shopBuysItem`) - as MERCHANT-YARDS took the horse and the cart
 off the General Store. AssignVariantsToShopItems stands, ported: a shelf a save stocked before is still rewritten
 (`03-World/Come-Sail-Away.md`, the shelves).
 
@@ -328,7 +345,7 @@ any other laid up where she was bought, brought round from the shipyard's Your f
 the port" - she lies in the book until summoned). **Shipwrights** became **Shipyards** (`shipyard`, "Port towns have a
 shipyard by the water" - L7-6: not every port has room): the shipmaster's
 trade, the crew hall, and the shipwright reached from the helm as before - and the shipmaster's window pops it as the
-shipwright's does (`ui/navalPlunderDoor.js` openNavalWindow: only a prize's hold pops the sea fight's page).
+shipwright's does (`ui/naval/navalPlunderDoor.js` openNavalWindow: only a prize's hold pops the sea fight's page).
 **Lighthouses** (`lighthouse`) is new, popped by a climb up the host made (`scenes/portHost.js` - never the way down,
 never a refused stair).
 
@@ -342,7 +359,7 @@ never a refused stair).
   Fleet's host) and the stair (`climbLighthouse`); the town map, the talk directory and the Overworld's marks are
   handed its sites, and the docks' mark is the quay pool's. Its per-frame work is the host's own functions (`portFrame`,
   `portLightsInto`, `portBodies`, `portBatchesInto`, `portGlows`), never inline in `frame`: PERF-V8's budget
-  (`test/perfv8.test.js` - an inline loop, try or spread put the frame's registers past r123, where every operand goes
+  (`test/scenes/perfv8.test.js` - an inline loop, try or spread put the frame's registers past r123, where every operand goes
   wide; the frame stands at main's register count).
 - `scenes/worldModes.js` - WIRED: the street's one ray reaches them (`portTargets`), the `port:` arm (the too-far
   refusal, the plaque's lit row); a sold ship's cabin (`cabinHolds`, `cabinSold`). Its interiors stand no port.
@@ -357,23 +374,24 @@ ships realm customs crossed (`crossed`).
 ## Not seen
 
 This container holds no ARENA2, so no real port was laid out here: the places are proven on synthetic grounds and
-seas (`test/shipyards1_place.test.js`) and the models in a software render of their own geometry - the shipyard, the
+seas (`test/world/shipyards1_place.test.js`) and the models in a software render of their own geometry - the shipyard, the
 lighthouse and the overhauled quay - never in a Daggerfall town. Where a port's places fall is for the owner's eyes; a
 port that finds no room logs it.
 
 ## Tests
 
-`test/shipyards1.test.js` - the places, the towns, the keys, the keepers and names, the rows, the stock, the price, no
+`test/systems/shipyards1.test.js` - the places, the towns, the keys, the keepers and names, the rows, the stock, the price, no
 loop online, what the shipyard takes back, the shelves, the hall's roster, the fees, signing on and paying off.
-`test/shipyards1_host.test.js` - the host's pages, buying, the fleet page and selling, the Fleet's acts, the crew hall,
-the window's words, the window mounted, the door. `test/shipyards1_place.test.js` - the footprints, backing onto the
+`test/systems/shipyards1_host.test.js` - the host's pages, buying, the fleet page and selling, the Fleet's acts, the crew hall,
+the window's words, the window mounted, the door. `test/world/shipyards1_place.test.js` - the footprints, backing onto the
 sea, the bearing, the town's own sea, no room, the models, the art, the pool, the hold-back, the press, the stair and its
-page, the plaques, the lamp, the Overworld's marks. `test/shipyards1_found.test.js` - the Where-is page, the answer, the town map,
+page, the plaques, the lamp, the Overworld's marks. `test/systems/shipyards1_found.test.js` - the Where-is page, the answer, the town map,
 the docks on the Overworld, the glyphs, the four hosts, the lamp reaching the renderer (`test/yardLightRig.mjs`, the host's
-own light composition), the tutorial's pages. `test/piers1.test.js` - the pier's dress. `test/shipyards1_audit.test.js` and
-`test/shipyards1_audit_port.test.js` - AUDIT SHIPYARDS's pins (below). `test/beacontower.test.js` - BEACON-TOWER's (above).
-Mutants: `tools/mutants/shipyards1.json` (76), `tools/mutants/shipyards1_audit.json` (72) and
-`tools/mutants/beacontower.json` (21), every one dead.
+own light composition), the tutorial's pages. `test/systems/naval/piers1.test.js` - the pier's dress. `test/systems/shipyards1_audit.test.js` and
+`test/systems/shipyards1_audit_port.test.js` - AUDIT SHIPYARDS's pins (below). `test/world/beacontower.test.js` - BEACON-TOWER's (above).
+`test/systems/naval/fb1014_inlandports.test.js` - INLAND-PORTS's: the open sea, the ring, the towns, the host's (and on the real map,
+the 106 and the 49). Mutants: `tools/mutants/shipyards1.json` (76), `tools/mutants/shipyards1_audit.json` (72),
+`tools/mutants/beacontower.json` (21) and `tools/mutants/fb1014_inlandports.json` (14), every one dead.
 
 ## AUDIT SHIPYARDS (2026-10-11, Mac: "Audit everything")
 
@@ -454,3 +472,7 @@ player's ship and two players may sign one named sailor - the wire carries no ha
 record. Quays and the port's places (U1): a harbour's quay might be laid across a shipyard's ground - unseen without
 ARENA2; a fix closes the berths' plans on the port's sites. Adjacent ports' harbours (U3): the harbour book sounds the
 port near the player's pixel and its neighbours' (`navalHarbourNear`) - as it was, noted only.
+
+FIELD BUGS 2026-10-16b YARD-ROWS: the fleet page's rows stood a ship's words a word a line - the presses' track was `auto`;
+it is `fit-content(40%)` now, and a fleet row carries her presses on a line of their own under her words, as the
+Holdings card does. The record: `01-Overview/bugs/Field-Bugs-2026-10-16b.md`.

@@ -1,290 +1,290 @@
 [
   {
     "name": "WB4-the-body-out-of-the-cone",
-    "file": "src/net/gateStrike.js",
+    "file": "src/net/gate/gateStrike.js",
     "old": "(d <= P.bossR || Math.abs(wrap(Math.atan2(dx, dz) - atk.yw))",
     "new": "(false || Math.abs(wrap(Math.atan2(dx, dz) - atk.yw))",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-arc-doubled",
-    "file": "src/net/gateStrike.js",
+    "file": "src/net/gate/gateStrike.js",
     "old": "<= (A.arc / 2) * DEG);",
     "new": "<= A.arc * DEG);",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-targets-discs-about-him",
-    "file": "src/net/gateStrike.js",
+    "file": "src/net/gate/gateStrike.js",
     "old": "case 'disc': return A.aim === 'self' ? d <= r :",
     "new": "case 'disc': return true ? d <= r :",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-rings-inner-edge-dropped",
-    "file": "src/net/gateStrike.js",
+    "file": "src/net/gate/gateStrike.js",
     "old": "case 'ring': return d >= A.r0 && d <= A.r1;",
     "new": "case 'ring': return d <= A.r1;",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-judged-before-the-landing",
-    "file": "src/net/gateStrike.js",
+    "file": "src/net/gate/gateStrike.js",
     "old": "  if (now < atk.at) return 'wait';",
     "new": "  if (now < atk.at - 100) return 'wait';",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-a-late-frame-struck",
-    "file": "src/net/gateStrike.js",
+    "file": "src/net/gate/gateStrike.js",
     "old": "  if (now > atk.at + Math.max(A.active, 1) + STRIKE_LATE_MS) return 'miss';",
     "new": "  if (false) return 'miss';",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-charge-a-ray-from-where-he-stood",
-    "file": "src/net/gateStrike.js",
+    "file": "src/net/gate/gateStrike.js",
     "old": "const a = chargeHead(atk, Math.max(prev, atk.at))",
     "new": "const a = chargeHead(atk, atk.at)",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-wrath-saved",
-    "file": "src/net/gateStrike.js",
+    "file": "src/net/gate/gateStrike.js",
     "old": "saved: L.el != null && !isDagons(A)",
     "new": "saved: L.el != null",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-damage-off-a-fixed-health",
-    "file": "src/net/gateStrike.js",
+    "file": "src/net/gate/gateStrike.js",
     "old": "Math.round(pct * Math.max(1, maxHealth) + Math.max(0, base))",
     "new": "Math.round(pct * 100 + Math.max(0, base))",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-phase-three-the-full-windup",
-    "file": "src/net/gateStrike.js",
+    "file": "src/net/gate/gateStrike.js",
     "old": "  const w = windupOf(A, phase), span = Math.max(A.active, 1);",
     "new": "  const w = A.windup, span = Math.max(A.active, 1);",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-raise-held-from-the-word",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "frame: cast ? CAST_RAISE_FRAME : tel.t < 0.5 ? 0 : 1,",
     "new": "frame: cast ? CAST_RAISE_FRAME : 1,",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-charge-left-at-its-start",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "  if (atk && ATTACK_BY_ID[atk.a] === ATTACKS.charge && now >= atk.at) {",
     "new": "  if (false) {",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-flinch-over-a-windup",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "  if (A) {\n    const tel = telegraphAt(atk, s.phase, now);\n    // WBX5: the leap in the air",
     "new": "  if (A && !(now - hurtAt >= 0 && now - hurtAt < FLINCH_MS)) {\n    const tel = telegraphAt(atk, s.phase, now);\n    // WBX5: the leap in the air",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-loop-not-wrapped",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "const frame = act.loop ? ((act.frame % n) + n) % n :",
     "new": "const frame = act.loop ? act.frame :",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-held-frame-past-the-record",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "Math.max(0, Math.min(n - 1, act.frame))",
     "new": "Math.max(0, act.frame)",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-glow-flat-through-the-windup",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "return lit(color, 0.35 + 1.25 * tel.t * tel.t, GLOW_RANGE.windup);",
     "new": "return lit(color, 1, GLOW_RANGE.windup);",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-wards-gold-never-shown",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "  if (now < s.shieldUntil) return lit(WARD_COLOR,",
     "new": "  if (false) return lit(WARD_COLOR,",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-a-cue-off-his-own-voice",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "    cleave: voice(B.barkSound, 0.96),",
     "new": "    cleave: voice(B.moveSound, 0.96),",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-readings-cone-without-his-body",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "const inside = d <= sh.r && (d <= sh.body || ang <= sh.halfArc);",
     "new": "const inside = d <= sh.r && ang <= sh.halfArc;",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-discs-drawn-about-him",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "(A.aim === 'self' ? TELEGRAPH_KIND.disc : TELEGRAPH_KIND.discs)",
     "new": "(true ? TELEGRAPH_KIND.disc : TELEGRAPH_KIND.discs)",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-flash-kept",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "  if (tel.since >= span + TELEGRAPH_FLASH_MS) return null;",
     "new": "  if (false) return null;",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-shaders-cone-without-his-body",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "    inside = d <= uR && (d <= uBody || ang <= uHalfArc);",
     "new": "    inside = d <= uR && ang <= uHalfArc;",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-depth-written",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "    gl.depthMask(false);\n",
     "new": "    gl.depthMask(true);\n",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-offset-left-on",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "    gl.disable(gl.POLYGON_OFFSET_FILL); gl.polygonOffset(0, 0);",
     "new": "    gl.polygonOffset(0, 0);",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-callout-after-the-landing",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "let callout = !s.fell && A && tel && !tel.over ?",
     "new": "let callout = !s.fell && A && tel ?",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-countdown-always",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "toWrath <= WRATH_WARN_MS ?",
     "new": "toWrath <= Infinity ?",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-an-attack-judged-twice",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "    if (atk && !marked(judged, atk) && standing) {",
     "new": "    if (atk && standing) {",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-throw-skipped",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "    if (so.saved) dmg = savedShare(dmg, save(e, so.el));",
     "new": "    if (false) dmg = savedShare(dmg, save(e, so.el));",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-wraths-word-ignored",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "    if (s.wrath != null && !wrathLanded) {",
     "new": "    if (false) {",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-landing-cued-twice",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "    if (A && !marked(landed, atk) && t >= atk.at) {",
     "new": "    if (A && t >= atk.at) {",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-roar-on-first-sight",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "if (phaseHeard > 0) { roarAt = t + ROAR_AFTER_MS;",
     "new": "{ roarAt = t + ROAR_AFTER_MS;",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-body-at-the-sprites-own-size",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "    const w = sz.w * body.scale * P.size, h = sz.h * body.scale * P.size;",
     "new": "    const w = sz.w * P.size, h = sz.h * P.size;",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "    strike: (dmg, how) => modes?.dungeonCtx?.strikePlayer?.(dmg, how),",
     "new": "    strike: () => {},",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "\n    try { gateCourt?.frame(); } catch",
     "new": "\n    try { void gateCourt; } catch",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": ", ...(gateCourt?.batches() ?? []), ...(sdSpoilsPool?.batches() ?? []),",
     "new": ", ...(sdSpoilsPool?.batches() ?? []),",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ],
     "note": "SD9e (PIN MOVED): the Brass Remnant's spoils pool joins the line - re-aimed by content."
   },
@@ -321,7 +321,7 @@
     "old": "    gateCourtLights: () => gateCourt?.lights() ?? [],",
     "new": "    gateCourtLights: () => [],",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
@@ -330,16 +330,16 @@
     "old": "    save: (e, el = 'fire') => { const w = GATE_SAVES[el] ?? GATE_SAVES.fire; return savingThrow(w[0], w[1], e); },",
     "new": "    save: () => 100,",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
     "name": "WB4-the-glow-not-lit",
     "file": "src/scenes/worldModes.js",
-    "old": "withCourtLights(_dgLit, [...(host.gateCourtLights?.() ?? []), ...courtLightsNear(cam.pos)])",
-    "new": "withCourtLights(_dgLit, courtLightsNear(cam.pos))",
+    "old": "withCourtLights(_dgLit, [...(host.gateCourtLights?.() ?? []), ...courtLightsNear(cam.pos, planOfDay(dungeonLoc.gate))])",
+    "new": "withCourtLights(_dgLit, courtLightsNear(cam.pos, planOfDay(dungeonLoc.gate)))",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
@@ -348,7 +348,7 @@
     "old": "      if (isGateArena(dungeonLoc)) host.drawGateCourt?.({ proj, view, eye: mwv.eye });",
     "new": "      if (false) host.drawGateCourt?.({ proj, view, eye: mwv.eye });",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   },
   {
@@ -357,7 +357,7 @@
     "old": "      if (!el) flashPlayerDamage(dmg);",
     "new": "      if (false) flashPlayerDamage(dmg);",
     "tests": [
-      "test/wb4_gate_boss.test.js"
+      "test/net/gate/wb4_gate_boss.test.js"
     ]
   }
 ]

@@ -32,20 +32,50 @@
 // block). The ids are DFU's own model numbers; no art ships.
 // ═══════════════════════════════════════════════════════════════════
 
-import { DOOR_ACTIVATION_DISTANCE } from '../player/activate.js';
+import { DOOR_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';   // GRAVE-PARTY: and the ray's own, a searchable's reach once the body is near it
 import { isShopShelfModel } from './shopStock.js';
 import { registerModSaveData } from './modSaveData.js';
-import { eliteHash, eliteRng, elitesAllowed } from './eliteFoes.js';   // AUDIT BAL: and where elites stand at all
+import { eliteHash, eliteRng, elitesAllowed, eliteRenownOpen } from './eliteFoes.js';   // AUDIT BAL: and where elites stand at all; RENOWN-GATE: and the searcher's Renown
 import { goldStack } from './inventory.js';
-import { createRandomWeapon, createRandomArmor, createRandomJewellery, createRandomReligiousItem, createRandomGem, createRandomClothing, createRandomPotion } from './loot.js';
+import { createRandomWeapon, createRandomArmor, createRandomJewellery, createRandomReligiousItem, createRandomGem, createRandomClothing, createRandomPotion } from './loot/loot.js';
 import { createRandomBook } from './books.js';
-import { setItemFields, mintCondition, isAmmunition } from './itemTemplates.js';
-import { rollLootRarity, pileSource } from './lootRarity.js';
+import { setItemFields, mintCondition, isAmmunition } from './item/itemTemplates.js';
+import { rollLootRarity, pileSource } from './loot/lootRarity.js';
 import { noteFirstUse } from './tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
+import { WATER_SPECIES } from '../characters/dungeonEnemies.js';   // SLAUGHTER-BOX: a search's foe stands on the floor, never a swimmer
+import { t } from './textManager.js';   // GRAVE-PARTY: who searched it, in the player's language
 
 // ── reach and time ──────────────────────────────────────────────────
-/** Half a door's reach (DoorActivationDistance, 128 classic units): 64 units, 1.6 m. */
+/** Half a door's reach (DoorActivationDistance, 128 classic units): 64 units, 1.6 m. GRAVE-PARTY (FIELD BUGS 2026-10-16b):
+ *  measured from the BODY to the nearest point of the object's box (searchReachFor), no longer from the eye. */
 export const SEARCH_REACH = DOOR_ACTIVATION_DISTANCE / 2;
+/**
+ * GRAVE-PARTY (FIELD BUGS 2026-10-16b, "objects in tombs are un lootable"): HOW FAR THE BODY IS FROM A SEARCHABLE - the
+ * distance from the upright segment the player stands as (the feet to `top`, the head) to the nearest point of the
+ * object's box, metres. A coffin lies on the floor: the eye's ray met its lid a metre and more below the eye, so
+ * SEARCH_REACH from the eye left it "too far away" a pace from the player's boots (under ~0.9 m across, standing
+ * beside it). The body reaches what it stands beside, at any height.
+ * @param {{min: number[], max: number[]}} aabb @param {number[]} feet @param {number} top
+ */
+export function searchBodyDistance(aabb, feet, top) {
+  const gap = (v, lo, hi) => (v < lo ? lo - v : v > hi ? v - hi : 0);
+  const dx = gap(feet[0], aabb.min[0], aabb.max[0]), dz = gap(feet[2], aabb.min[2], aabb.max[2]);
+  const lo = Math.min(feet[1], top), hi = Math.max(feet[1], top);
+  const dy = hi < aabb.min[1] ? aabb.min[1] - hi : lo > aabb.max[1] ? lo - aabb.max[1] : 0;
+  return Math.hypot(dx, dy, dz);
+}
+/**
+ * GRAVE-PARTY: A SEARCHABLE TARGET'S `reach` - the hit distance its handler gates on (MC-2's law, player/activate.js
+ * answersPress and every host's "too far" arm). Its box within SEARCH_REACH of the body (searchBodyDistance): the ray's
+ * own, so whatever the ray meets of it answers. Further: SEARCH_REACH, which the ray already exceeds - no point of the
+ * eye's ray to the box is nearer it than the body's nearest point - so it says the refusal, as it did. No feet known:
+ * the eye's law, as it was. A departure from SEARCH1's "half of the interact range as doors" measured as a door's is: the
+ * bound is the same 1.6 m, from the body.
+ */
+export function searchReachFor(aabb, feet, top) {
+  if (!aabb || !Array.isArray(feet) || !feet.every(Number.isFinite)) return SEARCH_REACH;
+  return searchBodyDistance(aabb, feet, Number.isFinite(top) ? top : feet[1]) <= SEARCH_REACH ? RAY_DISTANCE : SEARCH_REACH;
+}
 /** Five game hours between two searches of one object, in game minutes. */
 export const SEARCH_COOLDOWN_MINUTES = 5 * 60;
 
@@ -118,9 +148,10 @@ export function pickSearchUndead(level = 1, rolls = Math.random) {
   return pool[Math.min(pool.length - 1, Math.floor(rolls() * pool.length))].type;
 }
 /** A chest's or a crate's foe: one of the kinds this dungeon already stands (its own roster, the layout's), else an
- *  undead. */
+ *  undead. SLAUGHTER-BOX (FIELD BUGS 2026-10-15c): never one of the roster's water species - it stands on the dry floor
+ *  beside the box, and a Slaughterfish, a Dreugh or a Lamia stands in the roster only for a marker under water. */
 export function pickRosterFoe(roster, level = 1, rolls = Math.random) {
-  const pool = [...new Set((roster ?? []).filter((t) => Number.isInteger(t) && t >= 0))];
+  const pool = [...new Set((roster ?? []).filter((t) => Number.isInteger(t) && t >= 0 && !WATER_SPECIES.has(t)))];
   if (!pool.length) return pickSearchUndead(level, rolls);
   return pool[Math.min(pool.length - 1, Math.floor(rolls() * pool.length))];
 }
@@ -136,8 +167,10 @@ export const SEARCH_FOE_SPACING = 0.9;
 export const SEARCH_DOOR_REACH_M = 30;
 /** AUDIT BAL (bible/05-Combat/Balance-Arc.md section 10): only where elites stand (eliteFoes.js elitesAllowed - online,
  *  or offline under the loot ladder; an elite's drop is the ladder's) - the roll drawn first, so a search's dice are
- *  the same either way. With the ladder off a search woke an elite and its ladder-tier drop, the one door that did. */
-export const rollSearchElite = (rolls = Math.random) => rolls() < SEARCH_ELITE_CHANCE && elitesAllowed();
+ *  the same either way. With the ladder off a search woke an elite and its ladder-tier drop, the one door that did.
+ *  RENOWN-GATE (bible/06-Systems/Revenants.md section 39): and online only from the searcher's Renown 5
+ *  (eliteFoes.js eliteRenownOpen) - the foes a search wakes are the searcher's own stands. */
+export const rollSearchElite = (rolls = Math.random) => rolls() < SEARCH_ELITE_CHANCE && elitesAllowed() && eliteRenownOpen();
 
 // ── the loot ────────────────────────────────────────────────────────
 export const SEARCH_LOOT_MIN = 1;
@@ -185,7 +218,7 @@ export function searchLockValue(kind, locationKey, objectKey) {
 }
 
 // ── the ledger: the cooldown and the picked locks ───────────────────
-const _ledger = new Map();   // `${location}|${object}` -> { t: game minute searched (or -Infinity), u: picked }
+const _ledger = new Map();   // `${location}|${object}` -> { t: game minute searched (or -Infinity), u: picked, w: who searched it - a partymate's name, null for me }
 export const searchKey = (locationKey, objectKey) => `${locationKey}|${objectKey}`;
 /** Minutes until it may be searched again (0: now). */
 export function searchCooldownLeft(key, nowMinutes) {
@@ -193,11 +226,25 @@ export function searchCooldownLeft(key, nowMinutes) {
   if (!e || !Number.isFinite(e.t)) return 0;
   return Math.max(0, SEARCH_COOLDOWN_MINUTES - (nowMinutes - e.t));
 }
-export const markSearched = (key, nowMinutes) => { _ledger.set(key, { ...(_ledger.get(key) ?? { u: false }), t: nowMinutes }); };
+/** The longest name a search is told by. */
+export const SEARCH_WHO_MAX = 32;
+/** A search at `nowMinutes` - mine (`who` null), or a partymate's by their name (GRAVE-PARTY: landed from the room's word
+ *  underground, the cell's above). The LATER search holds the five hours: a word about an earlier one (a memory, a
+ *  welcome) never shortens a search already marked. */
+export function markSearched(key, nowMinutes, who = null) {
+  const e = _ledger.get(key);
+  if (e && Number.isFinite(e.t) && e.t > nowMinutes) return;
+  _ledger.set(key, { ...(e ?? { u: false }), t: nowMinutes, w: typeof who === 'string' && who ? who.slice(0, SEARCH_WHO_MAX) : null });
+}
 export const isPicked = (key) => !!_ledger.get(key)?.u;
-export const markPicked = (key) => { _ledger.set(key, { t: -Infinity, ...(_ledger.get(key) ?? {}), u: true }); };
+export const markPicked = (key) => { _ledger.set(key, { t: -Infinity, w: null, ...(_ledger.get(key) ?? {}), u: true }); };
 /** The text a searched object answers inside its five hours. */
 export const SEARCHED_TEXT = 'You have already searched here.';
+/** GRAVE-PARTY (FIELD BUGS 2026-10-16b): who searched it, when another of the party did - their name, else null (mine). */
+export const searchedBy = (key) => _ledger.get(key)?.w ?? null;
+/** GRAVE-PARTY: what a searched object answers inside its hours - SEARCHED_TEXT for my own search, and the searcher by
+ *  name for a partymate's ("Already searched by Ann."), so a stone a partymate searched is not a mystery. */
+export const searchedText = (key) => { const w = searchedBy(key); return w ? t('search.searchedBy', 'Already searched by {name}.', { name: w }) : SEARCHED_TEXT; };
 
 /** THE SAVE: every picked lock and every cooldown still running; at most SEARCH_LEDGER_MAX rows, newest kept. */
 export const SEARCH_LEDGER_MAX = 4000;
@@ -206,7 +253,7 @@ export function searchLedgerRecord(nowMinutes = Infinity) {
   const rows = [];
   for (const [k, e] of _ledger) {
     const live = Number.isFinite(e.t) && (!Number.isFinite(nowMinutes) || nowMinutes - e.t < SEARCH_COOLDOWN_MINUTES);
-    if (live || e.u) rows.push([k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0]);
+    if (live || e.u) rows.push(e.w ? [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0, e.w] : [k, Number.isFinite(e.t) ? e.t : null, e.u ? 1 : 0]);   // GRAVE-PARTY: a partymate's search keeps their name
   }
   rows.sort((a, b) => (b[1] ?? -Infinity) - (a[1] ?? -Infinity));
   return { rows: rows.slice(0, SEARCH_LEDGER_MAX) };
@@ -216,7 +263,7 @@ export function restoreSearchLedger(record) {
   for (const r of Array.isArray(record?.rows) ? record.rows.slice(0, SEARCH_LEDGER_MAX) : []) {
     if (!Array.isArray(r) || typeof r[0] !== 'string' || r[0].length > 200) continue;
     const t = Number.isFinite(r[1]) ? r[1] : -Infinity;
-    _ledger.set(r[0], { t, u: r[2] === 1 });
+    _ledger.set(r[0], { t, u: r[2] === 1, w: typeof r[3] === 'string' && r[3] ? r[3].slice(0, SEARCH_WHO_MAX) : null });
   }
 }
 let _clock = () => Infinity;
@@ -230,6 +277,58 @@ registerModSaveData(SEARCH_SAVE_VENDOR, {
 /** Tests only. */
 export const _resetSearchLedgerForTests = () => _ledger.clear();
 
+// ── GRAVE-PARTY: whose search it was ────────────────────────────────
+// (FIELD BUGS 2026-10-16b, "graveyard loot on headstones are able to be looted by others, objects in tombs are un
+// lootable"; Mac, SEARCH1-PARTY: "When one player in the party interacted with it no one else can again for 5 hours".)
+// A search's five hours are its searcher's PARTY's - underground (the room's `srch:<i>` word, scenes/searchRoom.js) and
+// above (the cell's grave stamps, net/overworldLaw.js) alike - and never a stranger's: a stranger's search locks nothing
+// of mine, mine nothing of theirs. Who a searcher is to me is the streaming host's party lens, registered here.
+/** The longest account a search names. */
+export const SEARCH_ACCT_MAX = 128;
+const acctOk = (a) => typeof a === 'string' && a.length > 0 && a.length <= SEARCH_ACCT_MAX;
+/** The party lens: `{ self() -> my account, selfName() -> my character's name, inParty(acct), nameOf(acct) -> a member's
+ *  name, acctOfPeer(peerId) }` (the hub's picture and the session's issued name - scenes/searchPartyHost.js registers the
+ *  streaming host's). None (the bench, offline): every other searcher is nobody of mine. */
+let _party = null;
+export const setSearchParty = (lens) => { _party = lens && typeof lens === 'object' ? lens : null; };
+/** The lens registered now (a harness standing several players in one process swaps them by it). */
+export const searchPartyLens = () => _party;
+/** My own account, or null. */
+export const searchSelfAcct = () => { const a = _party?.self?.(); return acctOk(a) ? a : null; };
+/** Who a searcher's account is to me: 'me', 'party', or null (a stranger, or nobody the lens knows). */
+export function searchKinOf(acct) {
+  if (!acctOk(acct) || !_party) return null;
+  if (acct === searchSelfAcct()) return 'me';
+  return _party.inParty?.(acct) ? 'party' : null;
+}
+/** The account behind a peer id (my own tab, a partymate's), or null - a live word's speaker. */
+export const searchAcctOfPeer = (id) => { const a = typeof id === 'string' && id ? _party?.acctOfPeer?.(id) : null; return acctOk(a) ? a : null; };
+/** The name a search by `acct` is told by: null for mine; a partymate's seat name (the hub's) - or `fallback` (the
+ *  relay's stamp), else "your party". */
+export function searchWhoOf(acct, fallback = null) {
+  if (searchKinOf(acct) !== 'party') return null;
+  const n = _party?.nameOf?.(acct);
+  const name = typeof n === 'string' && n ? n : (typeof fallback === 'string' && fallback ? fallback : t('search.yourParty', 'your party'));
+  return name.slice(0, SEARCH_WHO_MAX);
+}
+/** My own character's name (the lens's - the session's issued name, the one the relay stamps), or null. */
+export const searchSelfName = () => { const n = _party?.selfName?.(); return typeof n === 'string' && n ? n.slice(0, SEARCH_WHO_MAX) : null; };
+/**
+ * AUDIT GRAVE-PARTY G5: THE NAME A SEARCH IS TOLD BY, its searcher's account `acct` and the searching character's `name`
+ * (the relay's stamp above ground, the word's `bn` below). A partymate's: their seat name (searchWhoOf, `name` the
+ * fallback). MY ACCOUNT'S on ANOTHER of its characters: that character's name - the five hours are the account's (one
+ * player, whichever character: an alt searching the stone again is the same player's second find), but the character
+ * pressing now never searched it, and "You have already searched here." told it it had. Mine, this character's - or a
+ * name nobody said, or mine unknown - null: the old words. A stranger's: null (it lands nowhere).
+ */
+export function searchToldBy(acct, name = null) {
+  const kin = searchKinOf(acct);
+  if (kin === 'party') return searchWhoOf(acct, name);
+  if (kin !== 'me' || typeof name !== 'string' || !name) return null;
+  const n = name.slice(0, SEARCH_WHO_MAX), mine = searchSelfName();
+  return mine && n !== mine ? n : null;
+}
+
 // ── the words ───────────────────────────────────────────────────────
 // Daggerfall's own register: second person, past the event, the parchment's short rows. `%s` is the foe's name.
 const FOE_GRAVE = Object.freeze({
@@ -242,7 +341,7 @@ const FOE_GRAVE = Object.freeze({
     ['Old wards crumble beneath your hands.', 'Whatever they kept in has been', 'waiting a long time for this.', '', 'A %s claws its way out!'],
   ],
   shelf: [
-    ['Behind the mouldering tomes your hand', 'finds a skull - and the skull turns', 'to look at you.', '', 'A %s answers the disturbance!'],
+    ['Behind the moldering tomes your hand', 'finds a skull - and the skull turns', 'to look at you.', '', 'A %s answers the disturbance!'],
     ['A brittle scroll crumbles at your touch.', 'The words upon it were a binding,', 'and you have just broken it.', '', 'A %s is loosed upon you!'],
   ],
   tombstone: [
@@ -300,7 +399,7 @@ export function searchMessage(kind, outcome, { foeName = 'creature', elite = fal
 
 // ── THE ONE CONSTRUCTION SEAM for a find (both hosts call it) ───────
 const finish = (raw) => (raw ? mintCondition(setItemFields(raw)) : null);
-/** The goods' minters, DFU's ItemBuilder doors (systems/loot.js, systems/books.js). Never ammunition. */
+/** The goods' minters, DFU's ItemBuilder doors (systems/loot/loot.js, systems/books.js). Never ammunition. */
 export function searchMinters(gender = 'male') {
   return {
     weapon: (lv, r) => { const w = createRandomWeapon(lv, r); return w && !isAmmunition(w) ? finish(w) : null; },

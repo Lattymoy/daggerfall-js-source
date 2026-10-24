@@ -1,0 +1,196 @@
+[
+  {
+    "name": "FB1015C-line-shop-never",
+    "file": "src/ui/craftXpWords.js",
+    "old": "  const more = firstCraftPays(r) ? FIRST_CRAFT_XP : 0;\n",
+    "new": "  const more = true ? FIRST_CRAFT_XP : 0;\n",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): re-aimed by content - the line takes the station's pay (profPages craftPayOf), the craft's XP the Firmament's percent, the 500 whole."
+  },
+  {
+    "name": "FB1015C-line-shop-always",
+    "file": "src/ui/craftXpWords.js",
+    "old": "  const more = firstCraftPays(r) ? FIRST_CRAFT_XP : 0;\n",
+    "new": "  const more = false ? FIRST_CRAFT_XP : 0;\n",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): re-aimed by content - the line takes the station's pay (profPages craftPayOf), the craft's XP the Firmament's percent, the 500 whole."
+  },
+  {
+    "name": "FB1015C-line-no-quarter",
+    "file": "src/ui/craftXpWords.js",
+    "old": "  const xp = scaleXp(craftXp(r.tier, rank, false), pay.pct ?? 0);\n",
+    "new": "  const xp = scaleXp(craftXp(r.tier, 0, false), pay.pct ?? 0);\n",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): re-aimed by content - the line takes the station's pay (profPages craftPayOf), the craft's XP the Firmament's percent, the 500 whole."
+  },
+  {
+    "name": "FB1015C-line-more-whole",
+    "file": "src/ui/craftXpWords.js",
+    "old": "{ xp, profession, more })\n    : t('prof.page.craft.xpShop'",
+    "new": "{ xp, profession, more: xp + more })\n    : t('prof.page.craft.xpShop'",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): re-aimed by content - the line takes the station's pay (profPages craftPayOf), the craft's XP the Firmament's percent, the 500 whole."
+  },
+  {
+    "name": "FB1015C-dish-never",
+    "file": "src/ui/craftXpWords.js",
+    "old": "(firstCraftPays(r) ? t('prof.page.fire.first'",
+    "new": "(false ? t('prof.page.fire.first'",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ]
+  },
+  {
+    "name": "FB1015C-mason-works-more-whole",
+    "file": "src/ui/craftXpWords.js",
+    "old": "{ more: masonXp(1, rank, { first: true }) - masonXp(1, rank), profession }",
+    "new": "{ more: masonXp(1, rank, { first: true }), profession }",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ]
+  },
+  {
+    "name": "FB1015C-word-first-unread",
+    "file": "src/ui/craftXpWords.js",
+    "old": "  if (!r || data?.first !== true) return t('prof.craft.xp'",
+    "new": "  if (!r) return t('prof.craft.xp'",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ]
+  },
+  {
+    "name": "FB1015C-word-shop-never",
+    "file": "src/ui/craftXpWords.js",
+    "old": "  return firstCraftPays(r)\n    ? t('prof.craft.xpFirst'",
+    "new": "  return true\n    ? t('prof.craft.xpFirst'",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ]
+  },
+  {
+    "name": "FB1015C-word-shop-always",
+    "file": "src/ui/craftXpWords.js",
+    "old": "  return firstCraftPays(r)\n    ? t('prof.craft.xpFirst'",
+    "new": "  return false\n    ? t('prof.craft.xpFirst'",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ]
+  },
+  {
+    "name": "FB1015C-host-old-word",
+    "file": "src/scenes/world.js",
+    "old": "${made} ${craftXpText(rec, r.data, st.xp, profBook.limit(rec?.profession))}${paid",
+    "new": "${made} (+${r.data.xp} ${st.xp} XP)${paid",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js",
+      "test/net/craft1_chain.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): re-aimed by content - the line takes the station's pay (profPages craftPayOf), the craft's XP the Firmament's percent, the 500 whole."
+  },
+  {
+    "name": "FB1015C-anvil-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    if (recipeOpen(r, rank)) box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('smithing'), craftPayOf(book, 'smithing'))));   // CRAFT-FIRST-SHOWN; CRAFT-LIMIT-SAID: as the service credits it\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): re-aimed by content - the line takes the station's pay (profPages craftPayOf), the craft's XP the Firmament's percent, the 500 whole."
+  },
+  {
+    "name": "FB1015C-anvil-past-rank",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    if (recipeOpen(r, rank)) box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('smithing'), craftPayOf(book, 'smithing'))));",
+    "new": "    box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('smithing'), craftPayOf(book, 'smithing'))));",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): re-aimed by content - the line takes the station's pay (profPages craftPayOf), the craft's XP the Firmament's percent, the 500 whole."
+  },
+  {
+    "name": "FB1015C-bench-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    if (!r.later && recipeOpen(r, rank)) box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('carpentry'), craftPayOf(book, 'carpentry'))));   // CRAFT-FIRST-SHOWN: Building's; CRAFT-LIMIT-SAID\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): re-aimed by content - the line takes the station's pay (profPages craftPayOf), the craft's XP the Firmament's percent, the 500 whole."
+  },
+  {
+    "name": "FB1015C-loom-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    if (recipeOpen(r, rank)) box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('outfitting'), craftPayOf(book, 'outfitting'))));   // CRAFT-LIMIT-SAID\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): re-aimed by content - the line takes the station's pay (profPages craftPayOf), the craft's XP the Firmament's percent, the 500 whole."
+  },
+  {
+    "name": "FB1015C-loom-named-smithing",
+    "file": "src/ui/professions/profPages.js",
+    "old": "craftXpLine(r, rank, professionName('outfitting'), craftPayOf(book, 'outfitting'))",
+    "new": "craftXpLine(r, rank, professionName('smithing'), craftPayOf(book, 'outfitting'))",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): re-aimed by content - the line takes the station's pay (profPages craftPayOf), the craft's XP the Firmament's percent, the 500 whole."
+  },
+  {
+    "name": "FB1015C-mason-works-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  detail.append(el('p', 'px-note', masonWorksFirstLine(rank, professionName('masonry'), craftPayOf(book, 'masonry'))));   // CRAFT-FIRST-SHOWN: a work's first, the service's (smeltAtForge); CRAFT-LIMIT-SAID\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): re-aimed by content - the line takes the station's pay (profPages craftPayOf), the craft's XP the Firmament's percent, the 500 whole."
+  },
+  {
+    "name": "FB1015C-mason-carving-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('masonry'), craftPayOf(book, 'masonry'))));   // CRAFT-FIRST-SHOWN; CRAFT-LIMIT-SAID\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): re-aimed by content - the line takes the station's pay (profPages craftPayOf), the craft's XP the Firmament's percent, the 500 whole."
+  },
+  {
+    "name": "FB1015C-fire-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    if (first) box.append(el('p', 'px-note', first));\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ]
+  },
+  {
+    "name": "FB1015C-jewel-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      box.append(el('p', 'px-note', craftXpLine(r, rank, professionName('jewelcrafting'), craftPayOf(book, 'jewelcrafting'))));   // CRAFT-FIRST-SHOWN: its XP moved here, beside its first's; CRAFT-LIMIT-SAID\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f CRAFT-LIMIT-SAID): re-aimed by content - the line takes the station's pay (profPages craftPayOf), the craft's XP the Firmament's percent, the 500 whole."
+  },
+  {
+    "name": "FB1015C-alchemy-shop-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "brewFirstPays(potion) ? t('prof.page.alchemy.xpFirst'",
+    "new": "true ? t('prof.page.alchemy.xpFirst'",
+    "tests": [
+      "test/net/fb1015f_firstcraft.test.js"
+    ]
+  }
+]

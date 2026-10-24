@@ -5,7 +5,7 @@
     "old": "  dark: 0.3,",
     "new": "  dark: 0.9,",
     "tests": [
-      "test/shadowfangskin.test.js"
+      "test/net/shadowfangskin.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    const wgt = Math.min(1, Math.max(strand, tip, fringe));",
     "new": "    const wgt = 0;",
     "tests": [
-      "test/shadowfangskin.test.js"
+      "test/net/shadowfangskin.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    const strand = smooth(k.strand[0], k.strand[1], l - mean[i]) * k.strand[2];",
     "new": "    const strand = 0;",
     "tests": [
-      "test/shadowfangskin.test.js"
+      "test/net/shadowfangskin.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    const fringe = near && a >= 128 && near[i] ? k.fringe : 0;",
     "new": "    const fringe = 0;",
     "tests": [
-      "test/shadowfangskin.test.js"
+      "test/net/shadowfangskin.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (allEye || (eye && eye[i])) {",
     "new": "    if (allEye) {",
     "tests": [
-      "test/shadowfangskin.test.js"
+      "test/net/shadowfangskin.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  eye: Object.freeze([255, 34, 46]),",
     "new": "  eye: Object.freeze([255, 0, 0]),",
     "tests": [
-      "test/shadowfangskin.test.js"
+      "test/net/shadowfangskin.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  const out = new Uint8Array(n * 4);",
     "new": "  const out = rgba;",
     "tests": [
-      "test/shadowfangskin.test.js"
+      "test/net/shadowfangskin.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    out.push({ ...m, rgba });",
     "new": "    out.push(m);",
     "tests": [
-      "test/shadowfangskin.test.js"
+      "test/net/shadowfangskin.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  for (const s of WEREWOLF_SKINS) if (glyphs.includes(SKIN_GLYPH[s])) return s;",
     "new": "  for (const s of WEREWOLF_SKINS) if (glyphs.length) return s;",
     "tests": [
-      "test/shadowfangskin.test.js"
+      "test/net/shadowfangskin.test.js"
     ]
   },
   {
@@ -86,43 +86,45 @@
     "old": "  const bodySkin = () => (built && built.werewolf && lastBuildOpts && lastBuildOpts.skin) || null;",
     "new": "  const bodySkin = () => (lastBuildOpts && lastBuildOpts.skin) || null;",
     "tests": [
-      "test/shadowfangskin.test.js"
+      "test/net/shadowfangskin.test.js"
     ]
   },
   {
     "name": "SFSKIN-glyphs-not-kept",
     "file": "src/net/accountClient.js",
-    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura })",
-    "new": "JSON.stringify({ id, name, kind, sessionId, secret, aura })",
+    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, nameAsAt })",
+    "new": "JSON.stringify({ id, name, kind, sessionId, secret, aura, icon, nameAsAt })",
     "tests": [
-      "test/shadowfangskin.test.js"
-    ]
+      "test/net/shadowfangskin.test.js"
+    ],
+    "note": "NAME-AS (PIN MOVED): re-aimed by content - the session keeps the choice's stamp beside them."
   },
   {
     "name": "SFSKIN-list-rewritten-unchanged",
     "file": "src/net/accountClient.js",
-    "old": "  if (next.name === was.name && next.kind === was.kind && sameGlyphs && sameAura) return false;",
-    "new": "  if (next.name === was.name && next.kind === was.kind && sameAura) return false;",
+    "old": "  if (next.name === was.name && next.kind === was.kind && sameGlyphs && sameAura && next.nameAsAt === was.nameAsAt) return false;",
+    "new": "  if (next.name === was.name && next.kind === was.kind && sameAura && next.nameAsAt === was.nameAsAt) return false;",
     "tests": [
-      "test/shadowfangskin.test.js"
-    ]
+      "test/net/shadowfangskin.test.js"
+    ],
+    "note": "NAME-AS (PIN MOVED): re-aimed by content - the guard reads the choice's stamp too."
   },
   {
     "name": "SFSKIN-wardrobe-glyphs-not-adopted",
     "file": "src/ui/accountFlow.js",
-    "old": "kind: r.data.account?.kind, glyphs: r.data.wardrobe?.glyphs, glyphsOff: r.data.wardrobe?.glyphsOff, aura: auraStated(r.data.wardrobe), secret: asked });",
-    "new": "kind: r.data.account?.kind, aura: auraStated(r.data.wardrobe), secret: asked });",
+    "old": "kind: r.data.account?.kind, glyphs: r.data.wardrobe?.glyphs, glyphsOff: r.data.wardrobe?.glyphsOff, aura: auraStated(r.data.wardrobe), icon: iconStated(r.data.wardrobe), secret: asked });",
+    "new": "kind: r.data.account?.kind, aura: auraStated(r.data.wardrobe), icon: iconStated(r.data.wardrobe), secret: asked });",
     "tests": [
-      "test/shadowfangskin.test.js"
+      "test/net/shadowfangskin.test.js"
     ]
   },
   {
     "name": "SFSKIN-peer-skin-off-the-key",
-    "file": "src/net/peerBodies.js",
+    "file": "src/net/peer/peerBodies.js",
     "old": "`wolf|${wolfLookKey(look)}|${werewolfSkinOf(glyphs) ?? ''}`",
     "new": "`wolf|${wolfLookKey(look)}|`",
     "tests": [
-      "test/shadowfangskin.test.js"
+      "test/net/shadowfangskin.test.js"
     ]
   }
 ]

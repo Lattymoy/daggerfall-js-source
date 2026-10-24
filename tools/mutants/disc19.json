@@ -5,7 +5,7 @@
     "old": "    permanent: true,   // CURSE-PERSIST1: lifelong - ended by its cure, never by the magic-round clock (diseases' and poisons' own flag)\n    racial: 'lycanthropy',",
     "new": "    racial: 'lycanthropy',",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    permanent: true,   // CURSE-PERSIST1: lifelong - ended by its cure, never by the magic-round clock (diseases' and poisons' own flag)\n    racial: 'vampirism',",
     "new": "    racial: 'vampirism',",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -23,16 +23,16 @@
     "old": "    permanent: true,   // CURSE-PERSIST1: lifelong until it turns or is cured - never the magic-round clock's (a plain disease's own flag, diseases.js)\n",
     "new": "",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
     "name": "DISC19-A-old-saves-not-repaired",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "if ((a.kind === 'racialOverride' || a.infection) && !a.permanent) a.permanent = true;",
     "new": "if ((a.kind === 'racialOverride' && a.infection) && !a.permanent) a.permanent = true;",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (a.permanent) return !a.ended;",
     "new": "    if (a.permanent) return true;",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -50,43 +50,43 @@
     "old": "        abyssCandle(dungeonCtx.candleLight(), _abyss), _abyss?.torchOff",
     "new": "        abyssCandle(magic?.candleLight(), _abyss), _abyss?.torchOff",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
     "name": "DISC19-C-revival-before-the-effects",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "  const loadDeadOnline = isOnlinePage() && !((entity.health ?? 0) > 0);\n",
     "new": "  const loadDeadOnline = false; if (isOnlinePage() && !((entity.health ?? 0) > 0)) reviveForPlay(entity);\n",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
     "name": "DISC19-C-no-revival",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "  if (loadDeadOnline) reviveForPlay(entity);\n",
     "new": "\n",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
     "name": "DISC19-C-exit-save-writes-the-dead",
-    "file": "src/systems/saveSlots.js",
+    "file": "src/systems/save/saveSlots.js",
     "old": "  if (deathUp || !(entity?.health > 0)) return [];",
     "new": "  if (deathUp) return [];",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
     "name": "DISC19-C-exit-save-ignores-the-death-screen",
-    "file": "src/systems/saveSlots.js",
+    "file": "src/systems/save/saveSlots.js",
     "old": "  if (deathUp || !(entity?.health > 0)) return [];",
     "new": "  if (!(entity?.health > 0)) return [];",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -95,80 +95,80 @@
     "old": "for (const saveName of exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || !!modes?.deathUp?.() || successionOpen() })) save(saveName);",
     "new": "for (const saveName of exitAutosaveNames(playerEntity, { deathUp: townTalk.overlay instanceof DeathScreen || successionOpen() })) save(saveName);",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ],
     "note": "AUDIT LEGACY (PIN MOVED): its line changed with the audit's fixes (the death at the door, the Succession the death's screen, Privateer's Hold's Legacy arm); re-aimed by content. "
   },
   {
     "name": "DISC19-F-watch-comes-for-the-wanted",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "      if (crime) { countdown = 0; calm = 0; return null; }",
     "new": "      if (false) { countdown = 0; calm = 0; return null; }",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
     "name": "DISC19-F-watch-follows-a-player-who-left",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "          if (locationKey !== countdownKey) return null;\n",
     "new": "",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
     "name": "DISC19-F-watch-arrives-at-once",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "        countdown = TOWN_WATCH_ARRIVAL_MIN_SECONDS + Math.floor(rand() * TOWN_WATCH_ARRIVAL_SPAN);",
     "new": "        countdown = 0.001;",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
     "name": "DISC19-F-watch-leaves-while-fighting",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "      if (calm < TOWN_WATCH_STAND_DOWN_SECONDS) return null;",
     "new": "      if (calm < 0) return null;",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
     "name": "DISC19-F-watch-stays-when-switched-off",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "        return defenders > 0 ? 'dismiss' : null;",
     "new": "        return null;",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
     "name": "DISC19-F-threat-need-not-hunt",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead) && !(t?.companion != null && !t.dead)   // AUDIT CC-B6: a monster fighting a companion is still the fight\n    && !(t?.civilian === true && (t.entity?.health ?? 0) > 0)) return false;   // WATCH-PROTECTS: and one hunting a townsperson of the living world\n",
     "new": "",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
     "name": "DISC19-F-threat-puppets-count",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "  if (!f || f.dead || f.puppet || !f.ai || !f.entity) return false;",
     "new": "  if (!f || f.dead || !f.ai || !f.entity) return false;",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
     "name": "DISC19-F-threat-allies-count",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "  if (f.entity.team === 'PlayerAlly') return false;\n",
     "new": "",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "        entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly';",
     "new": "        entity.team = 'PlayerAlly';",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "        if (threat?.ai) ai.makeEnemyHostileToAttacker(threat, threat.ai.feet, 600);",
     "new": "",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "      for (const g of guards) if (!g.dead && !g.defender) { g.dead = true; releaseGuardBatch(g); }",
     "new": "      for (const g of guards) if (!g.dead) { g.dead = true; releaseGuardBatch(g); }",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "    if (playerEntity.crimeCommitted) for (const g of guards) if (!g.dead && g.defender) enlistDefender(g, playerFeet);",
     "new": "",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "    g.entity.team = g.entity.mobileTeam = staticTeamOf(GUARD_MOBILE_TYPE);",
     "new": "    g.entity.team = staticTeamOf(GUARD_MOBILE_TYPE);",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -222,16 +222,16 @@
     "old": "    return guards.filter((g) => !g.dead && !g.defender && !g.fleeing).map((g) => {",
     "new": "    return guards.filter((g) => !g.dead && !g.fleeing).map((g) => {",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
     "name": "DISC19-F-dismiss-leaves-a-body",
     "file": "src/scenes/cityGuards.js",
-    "old": "    for (const g of guards) if (!g.dead && g.defender) { g.dead = true; releaseGuardBatch(g); n++; }",
-    "new": "    for (const g of guards) if (!g.dead && g.defender) { g.dead = true; g.corpse = true; releaseGuardBatch(g); n++; }",
+    "old": "if (Number.isFinite(yaw) ? popAllowChange(dx, dz, yaw, dist) : dist > POP_VISIBLE_RANGE) { g.dead = true; releaseGuardBatch(g); continue; }",
+    "new": "if (Number.isFinite(yaw) ? popAllowChange(dx, dz, yaw, dist) : dist > POP_VISIBLE_RANGE) { g.dead = true; g.corpse = true; releaseGuardBatch(g); continue; }",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -240,7 +240,7 @@
     "old": "const live = guards.filter((g) => !g.dead && !playerSpares(g));",
     "new": "const live = guards.filter((g) => !g.dead);",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -249,7 +249,7 @@
     "old": "      if (!p.guard || room() <= 0) continue;\n      if (Math.hypot(p.pos[0] - playerFeet[0]",
     "new": "      if (true) continue;\n      if (Math.hypot(p.pos[0] - playerFeet[0]",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -258,7 +258,7 @@
     "old": "      if (playerSpawned) _townWatchFrame(foeDt);",
     "new": "",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -267,7 +267,7 @@
     "old": "          } else\n          cityGuards.resolveCivilianHit(weaponRig.playerWeapon, cam.pos, lookFwd",
     "new": "          } else if (!cityGuards.resolvePlayerHit(weaponRig.playerWeapon, cam.pos, lookFwd, player.pos, makeInView(proj, view, multiply), guardHitSound, { swing }))\n          cityGuards.resolveCivilianHit(weaponRig.playerWeapon, cam.pos, lookFwd",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -276,7 +276,7 @@
     "old": "inside: false, inLocationRect: _inAnyLocationRect(walkMode ? player.pos : cam.pos),",
     "new": "inside: false, inLocationRect: _musicInLocationRect(),",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -285,7 +285,7 @@
     "old": "      if (anchor && _inAnyLocationRect([anchor.x, anchor.y, anchor.z])) anchor = null;",
     "new": "",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -294,7 +294,7 @@
     "old": "    } else if (target.meshCollider === true && collider.raycastHit) {",
     "new": "    } else if (false) {",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -303,16 +303,16 @@
     "old": "export const hasMeshCollider = (o) => !!o && (o.kind === 'action'",
     "new": "export const hasMeshCollider = (o) => false && (o.kind === 'action'",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
     "name": "DISC19-E-swing-takes-the-nearest-box",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "      if (first.key != null && first.key !== o.key && actions.objects.has(first.key)) continue;",
     "new": "",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -321,7 +321,7 @@
     "old": "      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE);\n",
     "new": "      firstHit ??= collider.raycastHit(eye, dir, RAY_DISTANCE); continue;\n",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -330,7 +330,7 @@
     "old": "import { EnhancedEnemyAI, makeNavWorld } from '../ai/enhancedMotor.js';\n",
     "new": "",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -339,16 +339,16 @@
     "old": "     if (isStaleChunk(err)) _staleChunkNotice = true;",
     "new": "     if (isStaleChunk(err)) void 0;",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
     "name": "DISC19-D-in-play-text-says-nothing-to-do",
     "file": "src/systems/staleChunk.js",
-    "old": "export const STALE_CHUNK_IN_PLAY_TEXT = 'Game updated - reload the page for enemies.';",
+    "old": "export const STALE_CHUNK_IN_PLAY_TEXT = 'The game was updated. Reload to see the enemies.';",
     "new": "export const STALE_CHUNK_IN_PLAY_TEXT = 'Game updated.';",
     "tests": [
-      "test/disc19.test.js"
+      "test/systems/disc19.test.js"
     ]
   },
   {
@@ -357,7 +357,7 @@
     "old": "  return dice100(Math.max(PCAAO_HIT_CHANCE_MIN, Math.min(PCAAO_HIT_CHANCE_MAX, chance)), rolls());",
     "new": "  return dice100(chance, rolls());",
     "tests": [
-      "test/pcaao.test.js"
+      "test/systems/pcaao.test.js"
     ]
   },
   {
@@ -366,7 +366,7 @@
     "old": "  return dice100(Math.max(PCAAO_HIT_CHANCE_MIN, Math.min(PCAAO_HIT_CHANCE_MAX, chance)), rolls());",
     "new": "  return dice100(Math.min(PCAAO_HIT_CHANCE_MAX, chance), rolls());",
     "tests": [
-      "test/pcaao.test.js"
+      "test/systems/pcaao.test.js"
     ]
   },
   {
@@ -375,7 +375,7 @@
     "old": "  return dice100(Math.max(PCAAO_HIT_CHANCE_MIN, Math.min(PCAAO_HIT_CHANCE_MAX, chance)), rolls());",
     "new": "  return dice100(Math.max(PCAAO_HIT_CHANCE_MIN, chance), rolls());",
     "tests": [
-      "test/pcaao.test.js"
+      "test/systems/pcaao.test.js"
     ]
   },
   {
@@ -384,7 +384,7 @@
     "old": "export const PCAAO_HIT_CHANCE_MIN = 3;",
     "new": "export const PCAAO_HIT_CHANCE_MIN = 2;",
     "tests": [
-      "test/pcaao.test.js"
+      "test/systems/pcaao.test.js"
     ]
   },
   {
@@ -393,7 +393,7 @@
     "old": "export const PCAAO_HIT_CHANCE_MAX = 97;",
     "new": "export const PCAAO_HIT_CHANCE_MAX = 98;",
     "tests": [
-      "test/pcaao.test.js"
+      "test/systems/pcaao.test.js"
     ]
   }
 ]

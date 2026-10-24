@@ -27,21 +27,22 @@
 // (player/exteriorSurface.js: DFU has none outdoors) - it is a draw.
 //
 // WHICH TEXEL IS WATER. The tile byte says, through the 256-entry
-// table of WATER CORNERS in world/waterCorners.js (MAC2 lifted it out of
+// table of WATER CORNERS in world/water/waterCorners.js (MAC2 lifted it out of
 // this file: the player's feet read the same table now, so where this
 // pass draws water the player swims). The coverage inside a tile is
 // the bilinear blend of its corners - the diagonal the shore tile's own
 // art follows - feathered by SHORE_SOFTNESS.
-import { WATER_DRAW_MASK_TABLE } from '../world/waterCorners.js';
+import { WATER_DRAW_MASK_TABLE } from '../world/water/waterCorners.js';
+import { snowCoreGlsl } from './snowCoverGlsl.js';   // AUDIT PRECIP GROUND-5: the ground's snow, for a puddle's mask under it
 import { PUDDLE_RECORDS } from '../world/puddleMask.js';   // WATER-PUDDLE: the records whose water is their art's   // MAC2: the corner table is a leaf the player's feet share; WATER-DRAW1: the DRAW's half of it - the feet's is the law's own table, and the two are not the same question
-import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind.js';
+import { WIND_ROW_CALM, WIND_ROW_SPAN } from '../systems/wind/wind.js';
 import { getPref } from '../systems/uiPrefs.js';   // FT6: the switch, read here alone
 import { isEnhanced } from '../systems/uiSkin.js';
 import { FOG_GLSL } from './fogGlsl.js';   // AUDIT 68 S17-fog-glsl-dup: the fog every world pass takes, one home
 import { SEA_LOOK_GLSL, SEA_HAZE_BAND } from './horizonHaze.js';   // FAR-SEA1: the sea takes the far ring's haze; AUDIT FAR-SEA1 C12: and the open sea's light is one text with the ring's sea
 import { pageParam } from '../systems/pageQuery.js';
-import { RIPPLE_CELLS, RIPPLE_SCALE } from '../world/waterRipples.js';
-import { NO_BED_DEPTH } from '../world/waterCorners.js';   // AUDIT WATER-NEXT H2: its one home, the water's leaf (the kernel's worker writes it)   // WATER-NEXT 4: the ripple field the shader reads   // PERF-URL: the page's query, parsed once a search
+import { RIPPLE_CELLS, RIPPLE_SCALE } from '../world/water/waterRipples.js';
+import { NO_BED_DEPTH, SHELF_SHEET_DEPTH } from '../world/water/waterCorners.js';   // AUDIT WATER-NEXT H2: its one home, the water's leaf (the kernel's worker writes it)   // WATER-NEXT 4: the ripple field the shader reads   // PERF-URL: the page's query, parsed once a search
 
 /** FT6 (2026-09-14, the Features arc): THE SWITCH, ONE HOME. Both
  *  exterior hosts composed "the enhanced skin, the pref, the kill door"
@@ -157,7 +158,7 @@ export function buildWaterIndices(bytes, stride = 1, table = WATER_DRAW_MASK_TAB
 
 
 /** 0..1: the eased wind row's strength on the sky's own scale
- *  (systems/wind.js: a row's vector runs WIND_ROW_CALM to
+ *  (systems/wind/wind.js: a row's vector runs WIND_ROW_CALM to
  *  WIND_ROW_CALM + WIND_ROW_SPAN). null = no wind is known = calm. */
 export function windStrength01(wind) {
   if (!wind) return 0;
@@ -269,7 +270,7 @@ ${SWELL_TRAINS.map(([ang, len, share]) => {
 export const WATER_ABSORB = Object.freeze([0.55, 0.30, 0.22]);
 /** How far the refracted look is pushed by the waves' slope, in screen fractions at a unit of depth. */
 export const REFRACT_STRENGTH = 0.035;
-/** The depth a sheet without a bed stands for - world/waterCorners.js NO_BED_DEPTH, its one home, re-exported for the renderer. */
+/** The depth a sheet without a bed stands for - world/water/waterCorners.js NO_BED_DEPTH, its one home, re-exported for the renderer. */
 export { NO_BED_DEPTH };
 /** The path, in units, past which the water is taken as deep everywhere it cannot measure itself (the open sea
  *  without a depth copy). */
@@ -296,7 +297,7 @@ export const WATER_SCENE_UNIT = 7;
 export const WATER_RIPPLE_UNIT = 1;
 export const WATER_SCENE_DEPTH_UNIT = 6;
 
-/** WATER-NEXT 2: the sheet - the grid AS IT STOOD before the bed was carved under it (world/waterBed.js), its bed's
+/** WATER-NEXT 2: the sheet - the grid AS IT STOOD before the bed was carved under it (world/water/waterBed.js), its bed's
  *  depth on attribute 1, lifted WATER_LIFT and heaved by the swell. The open sea's sheet (Deep Waters' top, `uOpen`)
  *  has no bed attribute - a constant - and swells everywhere. */
 export const WATER_SURFACE_VS = `#version 300 es
@@ -318,10 +319,12 @@ out float vGrow;
 ${SWELL_GLSL}
 void main() {
   vec4 world = uModel * vec4(aPos.x, aPos.y + uLift, aPos.z, 1.0);
-  // AUDIT WATER-NEXT H2: a negative depth is water on ground never carved (world/waterCorners.js SHEET_NO_BED) - its
+  // AUDIT WATER-NEXT H2: a negative depth is water on ground never carved (world/water/waterCorners.js SHEET_NO_BED) - its
   // magnitude the tint's depth, and no swell: lifted only uLift over its ground, a heave of a fifth of a unit took its
   // troughs under the ground in any fair wind
-  float grow = uOpen == 1 ? 1.0 : (aDepth < 0.0 ? 0.0 : smoothstep(0.0, ${SWELL_DEPTH.toFixed(2)}, aDepth));
+  // BANK-FLUSH: the ground under the sheet is carved only past the shelf (world/water/waterBed.js SHELF_CHAMFER), so the swell
+  // grows past it too - a trough over the shelf's uncarved ground went under it in a fair wind
+  float grow = uOpen == 1 ? 1.0 : (aDepth < 0.0 ? 0.0 : smoothstep(${SHELF_SHEET_DEPTH.toFixed(3)}, ${(SHELF_SHEET_DEPTH + SWELL_DEPTH).toFixed(3)}, aDepth));
   vec3 sw = swellAt(world.xz, uTime, uWindDir, uSwell * grow);
   // AUDIT WATER-NEXT G8: the heave fades out before the far rings' strided grids, whose cells are as long as the
   // shortest train (a vertex a wave: the distant sheet heaved in an aliased lattice); the slope stays the fragment's
@@ -360,6 +363,8 @@ in float vDepth;
 in float vGrow;
 uniform sampler2DArray uTileArr;
 uniform usampler2D uTilemap;
+uniform highp ivec3 uEcoOrigin;   // AUDIT PRECIP GROUND-5: the pixel's first world tile on the snow lane (render/snowCoverGlsl.js)
+${snowCoreGlsl()}
 uniform float uTileSize;
 uniform int uTileDim;          // WATER-AUDIT: the tilemap's side (128 in the world, the town's own in the fixed city)
 uniform uvec4 uWaterMask[8];   // WATER1: 256 nibbles - converted tile byte -> water corners
@@ -393,7 +398,7 @@ uniform sampler2D uScene;
 uniform sampler2D uSceneDepth;
 uniform vec2 uSceneSize;
 uniform mat4 uProj;
-uniform int uRippleOn;         // WATER-NEXT 4: the ripple field round the camera (world/waterRipples.js)
+uniform int uRippleOn;         // WATER-NEXT 4: the ripple field round the camera (world/water/waterRipples.js)
 uniform sampler2D uRipple;
 uniform vec3 uRippleRect;      // its corner's world x, z and its side
 ${cloudShadowGlsl}
@@ -484,7 +489,12 @@ void main() {
     if (isPuddleRecord(rec)) {
       int turn = int(data & 3u);
       vec2 puv = PUDDLE_ROT[turn] * f + PUDDLE_TRANS[turn];
-      edge *= smoothstep(0.3, 0.7, textureGrad(uTileArr, vec3(puv, float(rec)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a);
+      float pa = textureGrad(uTileArr, vec3(puv, float(rec)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a;
+      // AUDIT PRECIP GROUND-5: under the snow the water is the texel's the ground wears there - its winter record's mask
+      // in the cover's share (a puddle frozen under snow is the winter art's, a thaw's the summer's)
+      float pc = snowCover(vLocalXZ, vWorldPos.y, wgx, wgy);
+      if (pc > 0.0) pa = mix(pa, textureGrad(uTileArr, vec3(puv, float(rec) + float(uSnowArr.x)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a, pc);
+      edge *= smoothstep(0.3, 0.7, pa);
     }
     if (edge <= 0.002) discard;
     // the water's own colour: the climate's water texel (record 0), averaged to one colour by its mip chain
@@ -592,7 +602,7 @@ void main() {
   // the fogs over the water's own light at its share - the air's, then DW-C's sea fog - as a premultiplied colour takes
   // them (an affine fog of x is x * m + c; at a share s, x * m + c * s): the copy's share is left as it was drawn
   vec3 ownShare = uSceneOn == 1 ? vec3(1.0) - trans : vec3(cover);
-  float fw = fogFactorAt(vWorldPos);
+  float fw = weatherFogAt(vWorldPos);   // BANTHA1: the weather's half - the sea's haze below is its law; the jungle's haze multiplies after
   // FAR-SEA1: THE SEA REACHES THE HORIZON. On a frame the far ring is drawn (the host sets uSeaHaze), the water at the
   // sea's own level takes the ring's haze - the world's linear ramp capped at the hold - so it no longer closes into a
   // band of solid fog in front of the ring's sea: the two meet at one haze at the streamed grid's edge. Nearer than the
@@ -604,6 +614,7 @@ void main() {
     float seaW = 1.0 - smoothstep(${(SEA_HAZE_BAND * 0.5).toFixed(2)}, ${SEA_HAZE_BAND.toFixed(2)}, abs(vWorldPos.y - uSeaHaze.y));
     fw = mix(fw, max(fw, 1.0 - uSeaHaze.x), seaW);
   }
+  fw *= hazeAt(vWorldPos, focusOrigin());   // BANTHA1: the jungle's haze closes over the sea's floor too - no sea shows through it
   vec3 fogged = own * fw + uFogColor * (1.0 - fw) * ownShare;
   fogged = dwWaterFogAdd(fogged, vWorldPos) + dwWaterFog(vec3(0.0), vWorldPos) * ownShare;
   outColor = uSceneOn == 1 ? vec4(under * trans + fogged, edge) : vec4(fogged / max(cover, 1e-3), edge * cover);

@@ -1,0 +1,128 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): THE BAY'S TROUBLES, step 1 of 2.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
+-- by a questor: the watch's order is the offer. The giver is unnamed (a captain of the watch): of the region's own
+-- ruling faction (factiontype Province - the crown the watch answers to), keeping a table at a tavern of the player's
+-- own town. The act is the raids' (qlActs.js raid-repelled - systems/raidingParties.js: a raid the player fought in,
+-- the town cleansed; raiders strike towns of the Bay every day - bandits, orcs or knights).
+-- AUDIT QUESTLINES LINES-26: the letter signs off on one line, its sender's name and calling - DFU's pack names a
+-- quest letter by its last line (ItemHelper.cs:335-348, itemInfo.js questLetterName).
+Quest: QLIW01
+DisplayName: Raiders at the Gate
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>        _captain_ has stopped waiting for your report.
+
+QuestComplete:  [1004]
+<ce>            "The watch pays for swords. Here."
+<ce>         _captain_ pushes a purse of _gold_ gold across.
+
+QuestLogEntry:  [1010]
+%qdt:
+ A watchman brought me an order from _captain_,
+ a captain of the watch who keeps a table at _inn_
+ in __inn_. Raiders strike a town of the Bay every
+ day, and the watch has more trouble than soldiers.
+ I am to help drive off a raid - any raid, in any
+ town - then report to _inn_.
+
+Message:  1011
+%pcn,
+
+     Every day the raiders come - bandits, orcs,
+ knights who have forgotten what the word means -
+ and every day some town of the Bay burns a while
+ before the watch can get there. I have more trouble
+ than I have soldiers.
+
+     When you hear a town is under attack, go, and
+ fight until the raiders are driven off. Then come
+ and find me at _inn_ in __inn_.
+
+<ce>                    _captain_, Captain of the Watch
+
+Message:  1012
+<ce>          A watchman in a dented helm falls into step
+<ce>           beside you and hands you a sealed order.
+<ce>          "From the captain, at _inn_," he says. "Read
+<ce>                  it. The captain means it."
+
+Message:  1013
+<ce>        _captain_ hears you out, nodding at the
+<ce>          worst of it.
+<ce>
+<ce>       "Driven off, and the town still standing. That
+<ce>        is more than the watch managed." The captain
+<ce>        looks at you a long moment. "The raids will
+<ce>        come again tomorrow. So will worse things. I
+<ce>        may need you again."
+
+Message:  1014
+_captain_ of the watch? Drinks at _inn_ when the raids allow, which is never.
+<--->
+The captain at _inn_ is hiring anyone who can hold a sword. Even you.
+<--->
+Looking for _captain_? Try _inn_. Look for the one with the map and no sleep.
+
+Message:  1015
+%qdt:
+ I have helped drive off a raid. _captain_ is
+ waiting for my report at _inn_ in __inn_.
+
+Message:  1016
+<ce>        "Have you fought off a raid? No? Then listen
+<ce>         for the next one, and go. I will be here."
+
+-- Symbols used in the QRC file:
+--
+--              %qdt occurs 2 times.
+--              %pcn occurs 1 time.
+--         _captain_ occurs 8 times.
+--            _gold_ occurs 1 time.
+--             _inn_ occurs 8 times.
+--            __inn_ occurs 3 times.
+
+QBN:
+Item _order_ letter used 1011
+Item _gold_ gold range 200 to 400
+
+Person _captain_ factiontype Province local anyInfo 1014
+Place _inn_ local tavern
+
+Clock _courier_ 00:30 01:30
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	place npc _captain_ at _inn_
+	start timer _courier_
+
+_courier_ task:
+	give pc _order_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_raid_ task:
+	ql act raid-repelled 1
+
+_told_ task:
+	when _courier_ and _raid_
+	log 1015 step 1
+
+_clicked_ task:
+	clicked npc _captain_
+
+_early_ task:
+	when _clicked_ and not _raid_
+	say 1016
+	clear _clicked_ _early_
+
+_paid_ task:
+	when _clicked_ and _raid_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

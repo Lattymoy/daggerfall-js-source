@@ -19,7 +19,7 @@
 // WHAT THIS FILE OWNS: the view's four states, the input it captures
 // while up, the camera it hands the frame, and every way out. What it
 // does NOT own: the camera's numbers (player/travelCamera.js, pure), the
-// readout (ui/travelViewHud.js), the body (player/mwView.js holds it in
+// readout (ui/travel/travelViewHud.js), the body (player/mwView.js holds it in
 // third person), the cursor (player/pointerLock.js) - each reached
 // through the deps the host hands in, so the pins drive this whole
 // machine against a fake host.
@@ -88,9 +88,12 @@ export const TV_HEARTBEAT_MS = 600;
 /** The movement actions whose press turns the traveller toward the view's heading. */
 export const TV_MOVE_ACTIONS = Object.freeze(['MoveForwards', 'MoveBackwards', 'MoveLeft', 'MoveRight']);
 
+/** TV1: THE DOOR UP - its words on the held map's foot row (ui/heldMap.js) and, ETHER-OW (2026-10-13), on the Eltheric
+ *  Ocean's chart (ui/etherChartWindow.js), the map's answer past the Veil - and its key on either: O. */
+export const TRAVEL_VIEW_BUTTON = 'Overworld (O)';
 /** The view's own lines - the refusals the door says, and the readout's place line. */
 export const TRAVEL_VIEW_TEXT = Object.freeze({
-  enhancedOnly: 'The overworld is part of the enhanced interface.',
+  enhancedOnly: 'Turn on the enhanced interface to use the overworld.',
   indoors: 'You can only survey the land from the open air.',
   underwater: 'You cannot survey the land from under the water.',
   enemies: 'You cannot survey the land with enemies nearby.',
@@ -100,7 +103,7 @@ export const TRAVEL_VIEW_TEXT = Object.freeze({
   far: 'That lies beyond what you can see from here.',
   noWay: 'There is no way there by land.',
   mountains: 'The mountains cannot be crossed on foot.',   // OW-MOUNTAINS: a spot among the peaks
-  placesOnly: 'Travel Options only travels to places - click a town.',   // AUDIT DEEP T2-8: coordinate targeting off
+  placesOnly: 'Travel Options travels only to places. Click a town.',   // AUDIT DEEP T2-8: coordinate targeting off
   spot: 'The marked spot',
   theSpot: 'the marked spot',   // AUDIT OW5 P5: inside a sentence ("L leads the party to the marked spot.")
   partyHalted: 'The party has stopped.',
@@ -111,10 +114,10 @@ export const TRAVEL_VIEW_TEXT = Object.freeze({
   // OWS2: the crossing's words - the trip's line when it puts to sea, and why one cannot
   bySea: (name) => `To ${name}, by sea`,
   toSpotBySea: 'To the marked spot, by sea',
-  needBoat: 'There is no way there by land - a boat would carry you across the water.',
-  passenger: 'You are aboard another\'s boat - its helmsman sets the course.',
-  rider: 'You ride in another\'s wagon - its driver sets the course.',   // WAGONS2: seated in the back of another's wagon (scenes/wagonRiders.js)
-  climbing: 'You cannot set out on a journey from a wall - climb down first.',   // AUDIT FB1007b C2
+  needBoat: 'There is no way there by land. You need a boat to cross the water.',
+  passenger: 'You are aboard another\'s boat. Its helmsman sets the course.',
+  rider: 'You ride in another\'s wagon. Its driver sets the course.',   // WAGONS2: seated in the back of another's wagon (scenes/wagon/wagonRiders.js)
+  climbing: 'You cannot set out from a wall. Climb down first.',   // AUDIT FB1007b C2
   noLaunch: 'There is no water here for your boat to float in.',
   noWayAtSea: 'Your boat can make no way toward its mark.',
   noShore: 'There is no safe landing here. Your boat stays in the water.',
@@ -122,9 +125,9 @@ export const TRAVEL_VIEW_TEXT = Object.freeze({
   noBoat: 'Your boat is not with you to cross the water.',
   aground: 'Your boat has run aground.',
   raidersAlongside: 'Pirates come alongside!',   // OWS3
-  enemiesSlow: 'Enemies near - you slow your pace.',   // OW6: the journey held for an enemy near (systems/travelThreat.js), said once as it begins
+  enemiesSlow: 'Enemies are near. You slow your pace.',   // OW6: the journey held for an enemy near (systems/travel/travelThreat.js), said once as it begins
   // TV-WASD: the bar's line while the movement keys travel - the speed, and the governor's hold beside it (the land's; OW6: or an enemy's)
-  travelling: (rate, held = null) => (held != null && held < rate ? `Travelling at ×${held} of ×${rate}` : `Travelling at ×${rate}`),   // the travel strip's own sign
+  travelling: (rate, held = null) => (held != null && held < rate ? `Traveling at ×${held} of ×${rate}` : `Traveling at ×${rate}`),   // the travel strip's own sign
   inPlace: (place, region) => (region ? `${place}, ${region}` : place),
   nearPlace: (place, region) => (region ? `Near ${place}, ${region}` : `Near ${place}`),
   wilderness: (region) => (region ? `The wilds of ${region}` : 'The wilds'),
@@ -201,13 +204,14 @@ export function travelViewLine({ place = null, near = null, region = '' } = {}) 
  * @param {(key:string, e?:any) => void} [deps.onMark] - TV2: a click on a mark that takes one (a place's plate); OW-ATTACK: with the press
  * @param {(x:number, y:number, key:string|null, e?:any) => void} [deps.onContext] - WAYPOINTS: a right click (viewport
  *   pixels, and the pickable mark under it or null)
+ * @param {(x:number, y:number) => void} [deps.onPing] - PARTY-PING: the middle button, a point for the party
  * @param {() => Array<{key:string, at:number[], label?:string, sub?:string, kind?:string, pick?:boolean, edge?:boolean, badge?:any, color?:string, kin?:string|null, lv?:number|null, dist?:number, hub?:boolean, tip?:(() => any)|null, wpKind?:string, followed?:boolean}>} [deps.marks] - TV2/TV3/TV5: the
  *   keyed marks the readout draws, at WORLD points (projected here, through the frame's own matrices)
  * @param {() => number[][]} [deps.route] - TV2: the journey's way, world points from the feet on
  * @param {() => string} [deps.trip] - TV2: the journey in words
  * @param {() => {move?:string, out?:string}} [deps.hintKeys] - AUDIT DEEP T1-12: the keys the hint names, read on the way up
  * @param {{show:Function, hide:Function, update:Function, pickAt?:(x:number, y:number) => string|null}} [deps.hud] -
- *   ui/travelViewHud.js (PERF-TV: `pickAt`, the pickable mark drawn under a click)
+ *   ui/travel/travelViewHud.js (PERF-TV: `pickAt`, the pickable mark drawn under a click)
  * @param {() => void} [deps.openMap] - OW-BLOCK: the block's Map button
  * @param {(id:string) => void} [deps.onWaypointGo] - WAYPOINTS: a followed waypoint's Go
  * @param {() => Record<string,string>|null} [deps.followDist] - WAYPOINTS: each followed waypoint's distance, in words
@@ -218,6 +222,116 @@ export function travelViewLine({ place = null, near = null, region = '' } = {}) 
  * @param {(fn:Function, ms:number) => any} [deps.schedule] - the heartbeat's timer (setTimeout)
  * @param {(h:any) => void} [deps.cancel] - and its cancel (clearTimeout)
  */
+/** OW-DOTS-GROUND / OW-DOTS-EVEN: how far apart the route's dots stand on the screen at the traveller's feet (px). */
+export const ROUTE_DOT_PX = 12;
+/** OW-DOTS-EVEN: the closest two dots may stand on the screen toward the horizon before every other one is let go (px) -
+ *  by then each is drawn at its smallest (ROUTE_DOT_SIZES' last), so the line keeps its rhythm: a dot, a gap. */
+export const ROUTE_DOT_MIN_PX = 4;
+/** OW-DOTS-EVEN: the dots' sizes, a share of the dot at the feet - each dot drawn at the one nearest its own perspective
+ *  (the ground's scale where it lies over the scale at the feet), so a dot and the gap after it shrink together toward
+ *  the horizon, as a row of posts does. */
+export const ROUTE_DOT_SIZES = Object.freeze([1, 0.85, 0.72, 0.6, 0.5, 0.42]);
+/** The size class of a dot whose ground stands `r` times the feet's scale: the nearest of ROUTE_DOT_SIZES. */
+export function routeDotClass(r) {
+  let best = 0;
+  for (let i = 1; i < ROUTE_DOT_SIZES.length; i++) if (Math.abs(ROUTE_DOT_SIZES[i] - r) < Math.abs(ROUTE_DOT_SIZES[best] - r)) best = i;
+  return best;
+}
+/** OW-DOTS-GROUND: the finest spacing on the ground (m) - every spacing is it doubled, so a coarser set is a subset. */
+export const ROUTE_DOT_M = 0.25;
+/** OW-DOTS-GROUND: the most dots a frame lays (a far journey's line toward the horizon is bounded by it). */
+export const ROUTE_DOTS_MAX = 1500;
+/** OW-DOTS-EVEN: the spacing picked at the feet is kept until the dots there stand outside this share of ROUTE_DOT_PX
+ *  (a zoom, a slope) - a spacing on its edge never flickers between two. */
+export const ROUTE_DOT_KEEP = Object.freeze([0.8, 2.2]);
+/** The finest doubling of ROUTE_DOT_M that stands `px` apart where the ground is `perM` px a metre. */
+const dotStep = (perM, px) => ROUTE_DOT_M * 2 ** Math.max(0, Math.ceil(Math.log2(px / (perM * ROUTE_DOT_M))));
+/**
+ * OW-DOTS-GROUND (2026-10-12, Mac with a video: "the dotted lines dont look still"): THE ROUTE'S DOTS ARE POINTS ON THE
+ * LAND. A dash pattern lives on the screen: laid along the projected path, it slid whenever the picture's lengths
+ * changed - the camera's perspective stretches every piece as it follows the traveller, so no offset could hold it. Here
+ * each dot is a place on the route in the world, at a whole multiple of a spacing measured back along the route from the
+ * journey's end (ground metres, x and z), and projected like any mark: it stays where it lies while the traveller walks
+ * over it.
+ * OW-DOTS-EVEN (Mac: "the dot spacing is still a bit weird make it more consistent"): ONE SPACING ON THE GROUND for the
+ * whole line - the doubling of ROUTE_DOT_M that stands ROUTE_DOT_PX apart at the traveller's feet, kept (`keep`, the
+ * caller's memo) while it stays within ROUTE_DOT_KEEP of it - so the dots are evenly spaced on the land and close in
+ * toward the horizon only as the land itself does, as a road's posts would. (A spacing picked piece by piece doubled at
+ * every threshold the line crossed: runs of dots, then gaps.) Only where they would crowd closer than ROUTE_DOT_MIN_PX
+ * on the screen does every other one drop out. Each dot carries its size class (`c`, routeDotClass): drawn smaller as the
+ * land recedes, so the dot keeps its share of the gap after it. A piece is halved until it is short on the screen (a straight world piece
+ * is not straight on it), and one behind the eye or off the screen (`w` x `h`, grown by `m`) lays nothing.
+ * @param {number[][]} points the route's world points, the traveller's feet first, the journey's end last
+ * @param {(p:number[]) => ({x:number, y:number, front:boolean}|null)} proj
+ * @returns {{x:number, y:number, c:number}[]}
+ */
+export function routeGroundDots(points, proj, { px = ROUTE_DOT_PX, min = ROUTE_DOT_MIN_PX, max = ROUTE_DOTS_MAX, w = Infinity, h = Infinity, m = 16, keep = null } = {}) {
+  const out = [];
+  if (!points || points.length < 2 || typeof proj !== 'function') return out;
+  const off = (q) => !q?.front || !Number.isFinite(q.x) || !Number.isFinite(q.y);
+  const lerp = (a, b, t) => [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  // THE LINE'S ONE SPACING: the ground's scale at the feet - a metre (or the first piece, if shorter) along the way
+  let base = 0, feetPerM = 0;
+  {
+    const f = points[0];
+    let n = 1;
+    while (n < points.length - 1 && Math.hypot(points[n][0] - f[0], points[n][2] - f[2]) < 1e-6) n++;
+    const L = Math.hypot(points[n][0] - f[0], points[n][2] - f[2]);
+    const t = L > 0 ? Math.min(1, 1 / L) : 0;
+    const q0 = proj(f), q1 = t > 0 ? proj(lerp(f, points[n], t)) : null;
+    const perM = !off(q0) && !off(q1) ? Math.hypot(q1.x - q0.x, q1.y - q0.y) / (L * t) : 0;
+    feetPerM = perM;
+    if (perM > 0) {
+      const kept = keep?.k > 0 ? keep.k * perM : 0;
+      base = kept >= px * ROUTE_DOT_KEEP[0] && kept <= px * ROUTE_DOT_KEEP[1] ? keep.k : dotStep(perM, px);
+      if (keep) keep.k = base;
+    } else if (keep?.k > 0) base = keep.k;   // the feet off the picture: the spacing they last had
+  }
+  // a: the far end (dA from the journey's end), b: the near end (dB < dA)
+  const piece = (a, b, dA, dB, qa, qb, depth) => {
+    if (out.length >= max || !(dA > dB)) return;
+    if (off(qa) && off(qb)) return;
+    if (!off(qa) && !off(qb)) {
+      if ((qa.x < -m && qb.x < -m) || (qa.x > w + m && qb.x > w + m) || (qa.y < -m && qb.y < -m) || (qa.y > h + m && qb.y > h + m)) return;
+    }
+    const len = off(qa) || off(qb) ? Infinity : Math.hypot(qb.x - qa.x, qb.y - qa.y);
+    if (len > 80 && depth < 16) {   // short on the screen: its scale near even along it (OW-DOTS-EVEN)
+      const mid = lerp(a, b, 0.5), dm = (dA + dB) / 2, qm = proj(mid);
+      piece(a, mid, dA, dm, qa, qm, depth + 1);
+      piece(mid, b, dm, dB, qm, qb, depth + 1);
+      return;
+    }
+    if (!Number.isFinite(len)) return;   // still across the eye's plane at the depth's end: no dots there
+    const perM = len / (dA - dB);
+    if (!(perM > 0)) return;
+    const k = Math.max(base || dotStep(perM, px), dotStep(perM, min));   // the line's spacing; thinned only where it would crowd
+    // each dot's size by the ground's scale where IT lies: the steps to its neighbours on the screen over the step on the
+    // ground (the piece's own scale for a lone dot) - a piece's mean would size its near and far dots alike
+    const qs = [];
+    for (let t = Math.floor(dA / k) * k; t > dB && qs.length + out.length < max; t -= k) {
+      if (t > dA || t <= 0) continue;   // the end's own dot is the cross
+      qs.push(proj(lerp(b, a, (t - dB) / (dA - dB))));
+    }
+    for (let i = 0; i < qs.length; i++) {
+      const q = qs[i];
+      if (off(q) || q.x < -m || q.x > w + m || q.y < -m || q.y > h + m) continue;
+      const nb = [qs[i - 1], qs[i + 1]].filter((o) => o && !off(o));
+      const here = nb.length ? nb.reduce((sum, o) => sum + Math.hypot(q.x - o.x, q.y - o.y), 0) / nb.length / k : perM;
+      out.push({ x: q.x, y: q.y, c: routeDotClass(feetPerM > 0 ? here / feetPerM : 1) });
+    }
+  };
+  let d = 0;
+  let qb = proj(points[points.length - 1]);
+  for (let i = points.length - 1; i > 0 && out.length < max; i--) {
+    const b = points[i], a = points[i - 1];
+    const seg = Math.hypot(b[0] - a[0], b[2] - a[2]);
+    const qa = proj(a);
+    if (seg > 0) piece(a, b, d + seg, d, qa, qb, 0);
+    d += seg; qb = qa;
+  }
+  return out;
+}
+
 export function createTravelView(deps) {
   const win = deps.win ?? globalThis;
   let state = 'off';           // 'off' | 'rising' | 'up' | 'falling'
@@ -298,6 +412,10 @@ export function createTravelView(deps) {
       const key = deps.hud?.pickAt?.(e.clientX, e.clientY) ?? null;
       deps.onContext?.(e.clientX, e.clientY, key, e);
     }
+    // PARTY-PING: the middle button names a point for the party. A drag still orbits.
+    if (p && p.id === e.pointerId && !p.moved && p.button === 1 && state === 'up' && e.type !== 'pointercancel') {
+      deps.onPing?.(e.clientX, e.clientY);
+    }
   }
   function onMouse(e) {   // the host's window mousedown/mouseup (the swing, Mouse0) - the canvas's are the view's
     if (state === 'off' || gone() || !isCanvasEvent(e)) return;
@@ -308,7 +426,7 @@ export function createTravelView(deps) {
     swallow(e);
   }
   /** AUDIT TV B3: a finger on the canvas is the view's (its pointer events orbit, pinch and pick) - the touch layer
-   *  (ui/touch.js) never starts a stick, a look or a tap under it. Only the START is taken: a finger down before the view
+   *  (ui/touch/touch.js) never starts a stick, a look or a tap under it. Only the START is taken: a finger down before the view
    *  rose ends as the touch layer's own, so its stick lets go. */
   function onTouchStart(e) {
     if (state === 'off' || gone() || !isCanvasEvent(e)) return;
@@ -494,6 +612,7 @@ export function createTravelView(deps) {
   }
 
   /** The readout, after the frame's matrices exist (the host's projection). */
+  const dotSpacing = { k: 0 };   // OW-DOTS-EVEN: the route's ground spacing, kept between frames (routeGroundDots `keep`)
   function drawHud() {
     if (state === 'off' || !deps.hud) return;
     const feet = deps.feet();
@@ -503,6 +622,7 @@ export function createTravelView(deps) {
     const h = f && a && f.front && a.front ? (Math.atan2(a.x - f.x, -(a.y - f.y)) * 180) / Math.PI : null;
     if (h != null) lastHeading = h;
     const proj = (p) => (deps.project && p ? deps.project(p) : null);
+    const routeWorld = deps.route?.() ?? [];
     const marks = [];
     for (const m of deps.marks?.() ?? []) {
       const at = proj(m.at);
@@ -513,7 +633,9 @@ export function createTravelView(deps) {
     deps.hud.update({
       feet: f, heading: lastHeading, yaw: camera?.yaw ?? 0, where: deps.where?.() ?? '',
       touch: !!deps.touch, fade: t, marks, keys: hintKeys,
-      route: (deps.route?.() ?? []).map(proj), trip: deps.trip?.() ?? '',
+      route: routeWorld.map(proj), trip: deps.trip?.() ?? '', sky: deps.sky?.() ?? '',   // OW-FORECAST: the weather ahead
+      routeDots: routeGroundDots(routeWorld, proj, { w: deps.canvas?.clientWidth || Infinity, h: deps.canvas?.clientHeight || Infinity, keep: dotSpacing }),   // OW-DOTS-GROUND; OW-DOTS-EVEN: the line's spacing kept frame to frame
+      routeDotSizes: ROUTE_DOT_SIZES,   // OW-DOTS-EVEN: the readout's path pair a size
       followDist: deps.followDist?.() ?? null,   // WAYPOINTS: the followed list's distances
     });
   }
@@ -528,6 +650,8 @@ export function createTravelView(deps) {
     get blend() { return t; },
     /** TV2's ray and TV3's marks read the frame's own eye. */
     get eye() { return shown?.eye ?? null; },
+    /** PARTY-PING: a key while the view is up looks along this, not the body's. */
+    get fwd() { return shown?.fwd ?? null; },
     /** AUDIT DEEP2 D2: THE FLOATING ORIGIN MOVED by `offset` - every scene point the view holds moves with it. Unmoved,
      *  the feet's 819 m re-anchor read as a jump: the focus snapped to them and the eye lurched forward by its eased lag at
      *  every map pixel crossed (37 m at 400 m/s), and the frame's eye (the peers' and the sprite's 8-way view) stood a

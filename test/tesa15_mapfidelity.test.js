@@ -21,11 +21,12 @@ import { createTamrielTiles, levelOf, TILE_PX, LEVEL_STEPS, TILES_KEPT, TILE_BUD
 import { buildTamrielRegion, regionLattice, regionOf } from '../src/world/tamrielRoads.js';
 import { createRoadsWorkerState } from '../src/world/tamrielRoadsWorker.js';
 import { createTamrielRoadsHost } from '../src/scenes/tamrielRoadsHost.js';
-import { TerrainGenClient } from '../src/world/terrainGenClient.js';
-import { DIR } from '../src/world/roadNetwork.js';
-import { toPaper, FAR_TRACK_PEN } from '../src/ui/inkMap.js';
+import { TerrainGenClient } from '../src/world/terrain/terrainGenClient.js';
+import { DIR } from '../src/world/road/roadNetwork.js';
+import { toPaper, FAR_TRACK_PEN } from '../src/ui/ink/inkMap.js';
 import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
 import { rollSpec } from '../src/world/tamrielRoads.js';
+import { hostText } from './hostText.mjs';   // HOST-SPLIT (at the merge of main): the world host read whole - its pixel build stands in scenes/pixelBuild.js
 
 const T = LOCATION_TYPES;
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -373,7 +374,7 @@ test('TESA15 the painter: at far each pixel\'s steps, in to the Bay\'s scale the
 // ── THE WIRING ──────────────────────────────────────────────────
 
 test('TESA15 the window and the world: the kept tiles over paintPastBay and the word, at the sheet\'s dpr, painted again while owed, let go on close; the static key moves with the places; the hover\'s name off the one roll; the build handed the held pixels (mutant: each seam)', () => {
-  const H = read('src/ui/heldMap.js'), W = read('src/scenes/world.js'), I = read('src/ui/tamrielInk.js');
+  const H = read('src/ui/heldMap.js'), W = hostText('src/scenes/world.js'), I = read('src/ui/tamrielInk.js');
   assert.match(H, /tiles: \(this\._pastBayTiles \?\?= createTamrielTiles\(\{ paint: \(c, v, w, h, o\) => paintPastBay\(c, v, \{ \.\.\.o, paperW: w, paperH: h \}\), stamp: pastBayStamp \}\)\), dpr: env\.dpr \}\);/);
   assert.match(H, /if \(this\._pastBayTiles\?\.takePending\(\)\) \{ this\._staticKey = ''; this\._dirty = true; \}/);
   assert.match(H, /this\._pastBayTiles\?\.clear\(\);/);

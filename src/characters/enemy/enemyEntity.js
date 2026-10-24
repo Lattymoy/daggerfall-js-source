@@ -1,0 +1,256 @@
+// Enemy entity (E3a). Verbatim port of the SetEnemyCareer core
+// (EnemyEntity.cs) + RollEnemyClassMaxHealth (FormulaHelper.cs)
+// (MIT, Daggerfall Workshop):
+//   MONSTERS (ID 0-42): predefined level, health Range(min, max+1),
+//     ArmorValues all = ArmorValue * 5.
+//   CLASS ENEMIES (ID 128+): careerIndex = ID - 128, career from
+//     CLASS{careerIndex:00}.CFG; level = player level (city watch,
+//     Knight_CityWatch ID 146, +Range(3,7)); maxHealth =
+//     RollEnemyClassMaxHealth: base 10 + level rolls of
+//     Range(1, hitPointsPerLevel + 1).
+//   BOTH: every skill = min(100, level * 5 + 30); LiveSpeed = the
+//     career's Speed attribute. E4a SHIPPED: monster careers load
+//     from ENEMY{nnn}.CFG via loadMonsterCareer; the 50s stat block
+//     is only the no-career fallback when a caller skips the load.
+// Unity Random.Range slots are uniform rolls, as in DFU itself.
+// Equipment (SetEnemyEquipment) and loot generation: E3b/E4.
+
+import { effectiveSkill, rawSkillForEffective } from '../../systems/skillSoftcap.js';   // SOFTCAP2: a leaf
+import { KNIGHT_CITY_WATCH as KNIGHT_CITYWATCH_ID } from '../mobile/mobileTypes.js';
+import { meanerMonstersRow as pcaaoMeanerMonstersRow } from '../../combat/pcaaoMeanerMonsters.js';   // PCO1: Kirk.O's Meaner Monsters edit, when both mods are on
+import { applyMeanerMonsters } from '../meanerMonsters.js';   // MM1: Ralzar's Meaner Monsters, when its switch is on
+import { enemyEntityType, enemyCareerIndex } from './enemyBasics.js';   // DEX1: SetupDemoEnemy's entity type and SetEnemyCareer's careerIndex, one home
+import { customCareerTemplate } from './customEnemies.js';   // DEX1: DaggerfallEntity.CustomCareerTemplates
+
+export { KNIGHT_CITY_WATCH as KNIGHT_CITYWATCH_ID } from '../mobile/mobileTypes.js';   // AUDIT 24 (wave 41): one home
+
+/** Monster careers (E4a): ENEMY{nnn}.CFG records inside MONSTER.BSA,
+ *  the SAME 74-byte ClassFile format (verbatim
+ *  DaggerfallEntity.GetMonsterCareerTemplate -> MonsterFile.LoadMonster:
+ *  name = ENEMY{monster:000}.CFG, record parsed by ClassFile). One BSA
+ *  parse per session, careers cached by index. */
+let _monsterBsa = null;
+const _monsterCareers = new Map();
+export async function loadMonsterCareer(careerIndex, fetchBytes) {
+  const hit = _monsterCareers.get(careerIndex);
+  if (hit) return hit;
+  if (!_monsterBsa) {
+    const { BsaFile } = await import('../../formats/bsaFile.js');
+    _monsterBsa = new BsaFile(await fetchBytes('MONSTER.BSA'));
+  }
+  const name = `ENEMY${String(careerIndex).padStart(3, '0')}.CFG`;
+  const idx = _monsterBsa.getRecordIndex(name);
+  if (idx === -1) return null;
+  const { ClassFile } = await import('../../formats/classFile.js');
+  const cf = new ClassFile();
+  cf.load(_monsterBsa.getRecordBytes(idx));
+  _monsterCareers.set(careerIndex, cf.career);
+  return cf.career;
+}
+
+/** DEX1: DaggerfallEntity.GetClassCareerTemplate (:907-915) - CLASS{nn}.CFG, null when the file is not there. Cached by
+ *  index as monster careers are (DFU reads the file each time; nothing writes a career it hands out). */
+const _classCareers = new Map();
+export async function loadClassCareer(careerIndex, fetchBytes) {
+  if (_classCareers.has(careerIndex)) return _classCareers.get(careerIndex);
+  const { ClassFile } = await import('../../formats/classFile.js');
+  const cf = new ClassFile();
+  let bytes;
+  try { bytes = await fetchBytes(`CLASS${String(careerIndex).padStart(2, '0')}.CFG`); } catch { bytes = null; }
+  const career = bytes && cf.load(bytes) !== false ? cf.career : null;
+  _classCareers.set(careerIndex, career);
+  return career;
+}
+
+/** DEX1: EnemyEntity.SetEnemyCareer's career, in its order (:251-296) - a mod's registered template first, then a
+ *  monster's ENEMY{nnn}.CFG, then a class's CLASS{id-128}.CFG; null for an id that is no enemy. THE ONE DOOR every
+ *  spawn arm asks (AUDIT 17i, THE ONE CONSTRUCTION SEAM): the dungeon's two arms and the pool's each read the file for
+ *  themselves before, and none of them could have read a mod's. */
+export async function loadEnemyCareer(mobileType, fetchBytes) {
+  const custom = customCareerTemplate(mobileType);
+  if (custom) return custom.load(fetchBytes);
+  const kind = enemyEntityType(mobileType);
+  if (kind === 'monster') return loadMonsterCareer(mobileType, fetchBytes);
+  if (kind === 'class') return loadClassCareer(mobileType - 128, fetchBytes);
+  return null;
+}
+
+/** DEX1: A MOD'S EDIT OF A ROW, AT THE MINT. DFU runs every mod's Init before any MonoBehaviour's Start, so a mod that
+ *  edits EnemyBasics.Enemies in its Start (Daggerfall Enemy Expansion's BestiaryMod.Start) edits the rows the Inits left -
+ *  Meaner Monsters' and the overhaul's among them, which the port lays over a row here, at the mint. So a Start-time
+ *  editor registers here and runs after them: `fn(mobileType, row)` answers the row as it leaves it (a copy, never the
+ *  table's own), or the row unchanged. */
+const _mintRowEditors = [];
+export function registerMintRowEditor(fn) {
+  if (typeof fn !== 'function') throw new Error('registerMintRowEditor: a function of (mobileType, row)');
+  _mintRowEditors.push(fn);
+}
+/** The test seam. */
+export function _resetMintRowEditors() { _mintRowEditors.length = 0; }
+const editAtMint = (mobileType, row) => { let r = row; for (const fn of _mintRowEditors) r = fn(mobileType, r) ?? r; return r; };
+
+export function rollEnemyClassMaxHealth(level, hitPointsPerLevel, rollFn = Math.random) {
+  const baseHealth = 10;
+  let maxHealth = baseHealth;
+  for (let i = 0; i < level; i++) {
+    maxHealth += 1 + Math.floor(rollFn() * hitPointsPerLevel);   // Range(1, hpPerLevel + 1)
+  }
+  return maxHealth;
+}
+
+export function skillsLevel(level) {
+  const s = level * 5 + 30;
+  return s > 100 ? 100 : s;
+}
+
+/**
+ * SOFTCAP2 - TOUGHER ENEMIES, applied to a built foe (after makeEnemyEntity
+ * and the elite pass, so the DFU build is the one underneath). `scaling`
+ * is skillSoftcap.js progressionScaling's answer; null changes nothing.
+ * Four channels, each once:
+ *   skills       + scaling.skillGain effective points - the raw flat number
+ *                  is set so effectiveSkill reads the target (it may pass 100)
+ *   health       x scaling.healthMult (max and current)
+ *   damageScale  x scaling.damageMult - blows AND spells (the elite channel)
+ *   challengeLevel = level + scaling.challengeLevels - what the foe TEACHES
+ *                  (the real-use law); `level` itself is left alone, so the
+ *                  foe's spell magnitudes, loot and gear are not scaled a
+ *                  second time through it.
+ * `skillOverrides` (a caster's pinned magic skills) are left alone.
+ * BAL11 (bible/05-Combat/Balance-Arc.md section 17): the hero's threat rides the same two channels (its share is in
+ * healthMult and damageMult), and its health is stood on `healthMult` too - what ai/tells.js kindHealth divides out, so
+ * a high level's foe staggers as its kind does.
+ */
+export function applyProgressionScaling(entity, scaling) {
+  if (!entity || !scaling) return entity;
+  if (typeof entity.skills === 'number') {
+    entity.skills = rawSkillForEffective(effectiveSkill(entity.skills) + scaling.skillGain);
+  }
+  entity.maxHealth = Math.max(1, Math.round(entity.maxHealth * scaling.healthMult));
+  entity.health = entity.maxHealth;
+  if (scaling.heroHealth > 1) entity.healthMult = (entity.healthMult ?? 1) * scaling.heroHealth;   // BAL11: TELL1's poise reads the kind's own health
+  entity.damageScale = (Number.isFinite(entity.damageScale) ? entity.damageScale : 1) * scaling.damageMult;
+  entity.challengeLevel = (entity.level ?? 1) + scaling.challengeLevels;
+  entity.progression = { share: scaling.share, veteran: scaling.veteran, place: scaling.place ?? 0, edge: scaling.edge, hero: { damage: scaling.heroDamage ?? 1, health: scaling.heroHealth ?? 1 } };   // for a HUD or a debugger; nothing reads it as law (BAL3: the place's veteran beside the player's; BAL11: the hero's threat)
+  return entity;
+}
+
+/**
+ * @param mobileType numeric ID (monsters 0-42, classes 128+)
+ * @param basics the ENEMY_BASICS entry
+ * @param career parsed CLASS*.CFG career (class enemies) or null
+ * @param playerLevel
+ */
+export function makeEnemyEntity(mobileType, basicsIn, career, playerLevel, rollFn = Math.random, { exactLevel = false } = {}) {
+  // DEX1: SetupDemoEnemy's entity type, not `>= 128` - a mod's monster (Enemy Expansion's 256-290) has the 128 bit clear
+  // and is levelled by its row, a mod's class (384-398) by the player; a custom one of either takes DFU's same arm
+  // (EnemyEntity.cs:251-274: "Default like a monster" / "like a class enemy" - and no watchman's bonus, its id not 146)
+  const isClass = enemyEntityType(mobileType) === 'class';
+  // MM1 + PCO1: EnemyBasics.Enemies[i] as the two Awakes left it -
+  // Ralzar's Meaner Monsters row over the base row when that mod is on,
+  // then Kirk.O's edit over THAT when the overhaul is on too (PCAAO
+  // lists Meaner Monsters as a dependency, so it Awakes after it and
+  // its values win where both write); the base row when neither.
+  // DEX1: and a mod's Start-time edit over both (registerMintRowEditor) - Enemy Expansion's classic lines, DFU's order
+  const basics = editAtMint(mobileType, pcaaoMeanerMonstersRow(mobileType, applyMeanerMonsters(mobileType, basicsIn)));
+  const stats = career
+    ? {
+        strength: career.strength, intelligence: career.intelligence,
+        willpower: career.willpower, agility: career.agility,
+        endurance: career.endurance, personality: career.personality,
+        speed: career.speed, luck: career.luck,
+      }
+    : { strength: 50, intelligence: 50, willpower: 50, agility: 50, endurance: 50, personality: 50, speed: 50, luck: 50 };
+  let level, maxHealth, liveSpeed, armor;
+  if (isClass) {
+    level = playerLevel;
+    // AUDIT WATCH1 A5: a PUPPET is built at its owner's foe's level (AUDIT WORLD6b-ii B2), and the owner's watchman
+    // already carries this bonus - the reader hands the streamed level in with `exactLevel` so it is not rolled twice
+    // (a 146 puppet stood three to six levels above the watchman it copies, the one species where builtLevel and
+    // entity.level disagreed, and the one term a crafted `t: 146` record could ride).
+    if (mobileType === KNIGHT_CITYWATCH_ID && !exactLevel) level += 3 + Math.floor(rollFn() * 4);   // Range(3, 7)
+    maxHealth = rollEnemyClassMaxHealth(level, career.hitPointsPerLevel, rollFn);
+    liveSpeed = career.speed;
+    armor = 0;   // class armor comes from equipment (E3b: SetEnemyEquipment)
+  } else {
+    level = basics.level;
+    maxHealth = basics.minHealth + Math.floor(rollFn() * (basics.maxHealth + 1 - basics.minHealth));   // Range(min, max+1)
+    liveSpeed = career ? career.speed : 50;   // the ENEMY{nnn}.CFG career's Speed (E4a); 50 only when a caller skips the load
+    armor = (basics.armorValue ?? 0) * 5;
+    // AUDIT 24 (wave 28): EnemyEntity.cs:264-267 / :286-291 fills the
+    // seven-part ArmorValues with exactly this, so the scalar is an
+    // alias for a uniform array, not a different representation. It is
+    // emitted below so CalculateArmorToHit never needs a fallback -
+    // equipEnemy overwrites it for anything that carries equipment.
+  }
+  return {
+    mobileType,
+    isClass,
+    isPlayer: false,
+    careerIndex: enemyCareerIndex(mobileType),   // DEX1: a custom enemy's is its own id (EnemyEntity.cs:256)
+    level,
+    maxHealth,
+    health: maxHealth,
+    liveSpeed,
+    armor,
+    armorValues: new Array(7).fill(isClass ? 100 : armor),   // EnemyEntity.cs:264-267 (monster), :409-413 (class starts at 100 "no armor")
+    skills: skillsLevel(level),           // every skill, per SetEnemyCareer
+    basics,                               // MobileEnemy reference (multi-attack damage spans - audit F2)
+    // stats.SetPermanentFromCareer: ALL EIGHT attributes ride the
+    // career (audit F14 - savingThrow needs willpower, level-up needs
+    // endurance). 50s only when a caller skips the career load.
+    stats,
+    // SetEntityDefaults: currentFatigue = MaxFatigue = (Str+End) x 64 (S15)
+    fatigue: (stats.strength + stats.endurance) * 64,
+    // AUDIT 21 F1: THE CAREER ITSELF. EnemyEntity.SetEnemyCareer keeps it -
+    //     career = GetMonsterCareerTemplate((MonsterCareers)careerIndex);
+    // and DaggerfallEntity.Career is what SavingThrow reads for all SEVEN
+    // tolerance channels (FormulaHelper.cs:1478-1526) and what InflictPoison
+    // checks for immunity (:1392-1395). This builder took `career` as an
+    // argument, flattened exactly ONE field out of it, and dropped the rest,
+    // so `target.career ?? {}` in spellcast.js and poisons.js resolved to an
+    // empty object and EVERY enemy in the game read Normal tolerance to Fire,
+    // Frost, Shock, Magic, Poison, Disease and Paralysis.
+    //
+    // Twenty of the 43 ENEMY*.CFG records in the shipping MONSTER.BSA carry
+    // non-zero tolerance bytes. Measured on the real archive: a Fire Daedra
+    // (immunityFlags 0x08) took full fire damage in 434 of 1000 rolls where
+    // DFU returns zero in 1000 of 1000.
+    career,
+    attackModifierFlags: career ? career.attackModifierFlags : null,
+    minMetalToHit: basics.minMetalToHit,
+    // AUDIT 24 characters-0: EnemyEntity.cs:316 is a bare
+    // `team = mobileEnemy.Team;` over a STRUCT - an omitted Team is
+    // MobileTeams' zero member, PlayerEnemy, never a "None" that the
+    // enum does not even have.
+    team: basics.team ?? 'PlayerEnemy',
+    // MT-i: and the MobileEnemy STRUCT COPY's own Team, which is a
+    // second field in DFU and not an alias for the row's. C# takes
+    // MobileEnemy by VALUE out of the enemy dictionary
+    // (SetupDemoEnemy.cs:82), and an allied summon overwrites THAT
+    // COPY (`if (AlliedToPlayer) mobileEnemy.Team =
+    // MobileTeams.PlayerAlly`, :85-86) before SetEnemy hands it to
+    // the mobile - leaving the STATIC EnemyBasics.Enemies row
+    // untouched. The port's `basics` is that static row itself,
+    // frozen and shared by every foe of the type, so the per-instance
+    // copy has to be its own field. GetTargets' :776 and :801 arms
+    // read this one; MakeEnemyHostileToAttacker's revert (:211) reads
+    // the static table, and the two disagree for exactly one foe in
+    // the game: a Sanguine Rose / Skull of Corruption summon.
+    mobileTeam: basics.team ?? 'PlayerEnemy',
+    affinity: basics.affinity,
+    name: isClass ? career.name : undefined,
+  };
+}
+
+/**
+ * OH-E: EnemyEntity.OnLootSpawned (EnemyEntity.cs:399) - SetEnemyCareer raises it once the enemy's loot is in its Items
+ * (the table, the equipment, the map/potion/recipe trio): `{mobileType, lootTableKey, items, worn}` - `worn` the kit
+ * the port keeps off the droppable `items` (DFU's Items holds both). The port's one subscriber list; scenes/hostCombat.js's
+ * spawnEnemyLoot raises it.
+ */
+export const enemyLootSpawned = Object.freeze({
+  _fns: [],
+  add(fn) { this._fns.push(fn); return () => { const i = this._fns.indexOf(fn); if (i >= 0) this._fns.splice(i, 1); }; },
+  raise(args) { for (const fn of [...this._fns]) fn(args); },
+});

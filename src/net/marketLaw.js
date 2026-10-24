@@ -22,10 +22,10 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { STORES_MAX, MATERIAL_FAMILIES, MINED_KEYS, FOOD_KEYS, PLANT_GROUP_TEMPLATES } from './professionLaw.js';   // MARKET-ANY: and the Stores' forms
-import { PROVENANCE_RE, recipeById, takesQuality, MASTERWORK } from './recipeLaw.js';
+import { PROVENANCE_RE, recipeById, takesQuality, MASTERWORK, RECIPES } from './recipeLaw.js';   // BOARD-SIFT: a search's recipes
 import { MARKS_MAX } from './marksLaw.js';
 import { witnessedFact, factConfirmed, material } from './nodeLaw.js';
-import { tradeableRecord, boundRecord, BOAT_TEMPLATES, GOLD_PIECES_TEMPLATE, VALUE_IS_IDENTITY_TEMPLATES } from './realmTradeLaw.js';   // MARKET-ANY: the trade's own law of what may leave a record
+import { tradeableRecord, boundRecord, BOAT_TEMPLATES, GOLD_PIECES_TEMPLATE, VALUE_IS_IDENTITY_TEMPLATES } from './realm/realmTradeLaw.js';   // MARKET-ANY: the trade's own law of what may leave a record
 
 /** A listing stands this long (10.2: 72 hours). */
 export const MARKET_LISTING_S = 72 * 3600;
@@ -76,7 +76,7 @@ export const CRAFTED_FAMILIES = Object.freeze([
   Object.freeze(['bows', 'Bows']), Object.freeze(['tools', 'Tools']), Object.freeze(['kits', 'Repair Kits']),
   Object.freeze(['furniture', 'Furniture']),
   // PROF7: the loom's - the leather armour, the clothing (its dye carried with the piece), the rugs, tapestries and skins
-  Object.freeze(['leather', 'Leather Armour']), Object.freeze(['clothing', 'Clothing']), Object.freeze(['furnishings', 'Furnishings']),
+  Object.freeze(['leather', 'Leather Armor']), Object.freeze(['clothing', 'Clothing']), Object.freeze(['furnishings', 'Furnishings']),
   // PROF11: the mason's bench's - the Sculptor's column, bench, font and plinth (recipeLaw STONE_DECOR)
   Object.freeze(['stonework', 'Stonework']),
   // PROF9: the fire's - the four dishes (recipeLaw DISHES), a cook's hand carried with each
@@ -86,6 +86,66 @@ export const CRAFTED_FAMILIES = Object.freeze([
 ]);
 /** The material families the Materials view filters by - the Stores' own (section 8). */
 export const MARKET_FAMILIES = MATERIAL_FAMILIES;
+
+// ─── BOARD-SIFT: PAGES, ORDERS, A SEARCH OF THE PIECES ───────────────
+// (2026-10-21, feature-feedback: "The notice board market also doesnt show everything if there are too many
+// weapons/armor/etc listed it stops after a certain number") - a view showed its first MARKET_SHOWN rows and nothing
+// past them. The views of pieces and of buy orders turn pages of MARKET_SHOWN now, every filter read in the query
+// itself so a page is a page (bible/06-Systems/Professions-Arc.md 10.13).
+
+/** The views read a page at a time. Materials is not: its first look is the Bay's cheapest hundred of every material,
+ *  and its search, family and tier reach any material - each to its own cheapest hundred, its market's front. */
+export const MARKET_PAGED_VIEWS = Object.freeze(['crafted', 'goods', 'auctions', 'orders']);
+/** The pages a view turns through, at most - MARKET_SHOWN x this many rows (AUDIT BOARD-SIFT: 50 pages were 5,000 rows,
+ *  a market's busy week; 50,000 is past what the Bay holds - thirty listings an account). */
+export const MARKET_PAGES_MAX = 500;
+/** A page as the service reads it: its first (0) for anything but a whole number in range. */
+export const marketPageOf = (n) => (Number.isSafeInteger(n) && n >= 0 && n < MARKET_PAGES_MAX ? n : 0);
+/** The orders a view of pieces is read in - the first its own, as before (the cheapest; an auction the soonest to end). */
+export const MARKET_SORTS = Object.freeze({
+  crafted: Object.freeze(['cheap', 'dear', 'new', 'quality']),
+  goods: Object.freeze(['cheap', 'dear', 'new']),
+  auctions: Object.freeze(['ending', 'cheap', 'dear', 'new']),
+});
+/** A view's order as the service reads it - its first for anything it does not offer; null for a view with none. */
+export const marketSortOf = (view, sort) => {
+  const sorts = Object.hasOwn(MARKET_SORTS, view) ? /** @type {Record<string, ReadonlyArray<string>>} */ (MARKET_SORTS)[view] : null;
+  return sorts ? (sorts.includes(sort) ? sort : sorts[0]) : null;
+};
+/** A search of the pieces, at most this long: trimmed, lower-cased; '' for none. */
+export const MARKET_QUERY_MAX = 40;
+export const marketQueryOf = (q) => (typeof q === 'string' ? q.trim().toLowerCase().slice(0, MARKET_QUERY_MAX) : '');
+/** A search's words. */
+export const searchWords = (q) => marketQueryOf(q).split(/\s+/).filter(Boolean);
+const tight = (/** @type {string} */ s) => s.replace(/[\s\-'’]+/g, '');
+/** AUDIT BOARD-SIFT: whether every word stands somewhere in `text` - or in it read without its spaces, hyphens and
+ *  apostrophes ("shortbow" in "Short Bow", "daikatana" in "Dai-katana"). Pure; the Work tab's bar reads it too. */
+export function wordsIn(/** @type {ReadonlyArray<string>} */ words, /** @type {string} */ text) {
+  const hay = String(text ?? '').toLowerCase(), close = tight(hay);
+  return words.every((w) => hay.includes(w) || close.includes(tight(w)));
+}
+/** The least quality a Crafted read asks (recipeLaw QUALITY_NAMES' index), 0 - any - for anything else. */
+export const marketQualityOf = (n) => (Number.isSafeInteger(n) && n > 0 && n <= MASTERWORK ? n : 0);
+/**
+ * THE RECIPES A SEARCH OF THE PIECES NAMES - each word of it in the recipe's name or in the name its piece wears on the
+ * board's rows (`shown`, the client's: AUDIT BOARD-SIFT - a row names its piece as its record mints it, and 52 recipes'
+ * pieces wear another name than the recipe's: a Pine Staff is an "Iron Staff", a Warforged Dagger an "Ebony Dagger",
+ * every Wakizashi DFU's "Wakazashi"), of `families` (null: every family). The client reads a search as these, as it reads
+ * a materials search as the catalogue's materials (AUDIT 30 U2), and the service reads them. Pure.
+ * @param {string} query @param {ReadonlyArray<string>|null} [families]
+ * @param {((r: any) => string|null)|null} [shown]
+ * @returns {string[]} recipe ids
+ */
+export function recipesNamed(query, families = null, shown = null) {
+  const words = searchWords(query);
+  return RECIPES.filter((r) => (!families || families.includes(r.family)) && wordsIn(words, shown ? `${r.name} ${shown(r) ?? ''}` : r.name)).map((r) => r.id);
+}
+/** AUDIT BOARD-SIFT: a search's recipes as the service reads them - known recipe ids, each once; null for no search (an
+ *  empty list is a search that named none). */
+export function marketRecipesOf(list) {
+  if (!Array.isArray(list)) return null;
+  return [...new Set(list.slice(0, 2 * RECIPES.length).filter((id) => typeof id === 'string' && !!recipeById(id)))];
+}
 /** A request id, as every account act's: 8-40 of [A-Za-z0-9_-]. A listing's or an order's id is the service's own
  *  (SOC1's id shape, minted by `mintId`). */
 export const MARKET_RID_RE = /^[A-Za-z0-9_-]{8,40}$/;
@@ -277,7 +337,7 @@ export const auctionable = (recipeId, quality) => quality === MASTERWORK && piec
 // nothing else (10.2: "Loot does not list: it has no provenance. TRADE1 stays how loot changes hands") - so to a player
 // nothing they carried from the world could be sold there, and the List form offered only what a crafter had made.
 // A realm character's pack is its record on the service now (REALM P1), and a realm trade already moves a piece out of
-// one record and into another in one write (REALM P2.1, net/realmTradeLaw.js). A piece from the pack lists the same way:
+// one record and into another in one write (REALM P2.1, net/realm/realmTradeLaw.js). A piece from the pack lists the same way:
 // the very record the seller's checkpoint holds, taken out of it in the listing's own batch (server-account/src/
 // market.js), and put into the buyer's record - or back into the seller's, cancelled, expired or removed - by the
 // collect's own batch. Nothing is copied: the piece is in one record, or on the listing, or on the road.
@@ -297,7 +357,7 @@ export const GOOD_ARROW_TEMPLATE = 131;
 /** The Goods view's families, by DFU's item groups (goodFamily). */
 export const GOODS_FAMILIES = Object.freeze([
   Object.freeze(['weapons', 'Weapons']), Object.freeze(['armour', 'Armour']), Object.freeze(['clothing', 'Clothing']),
-  Object.freeze(['jewellery', 'Jewellery and gems']), Object.freeze(['other', 'Everything else']),
+  Object.freeze(['jewellery', 'Jewelry and gems']), Object.freeze(['other', 'Everything else']),
 ]);
 /** One group-to-family table for both the client classifier and the service's pre-limit SQL filter. */
 export const GOOD_GROUP_FAMILIES = Object.freeze([
@@ -311,7 +371,7 @@ export function goodFamily(rec) {
 }
 let _storesForms = /** @type {Set<string>|null} */ (null);
 /** THE STORES' OWN MATERIALS AS THE PACK HOLDS THEM - every mined, smelted, cut, felled, skinned and gathered material
- *  with a template (systems/profItems.js mintMaterialItem mints these; the custom 600-699 rows by their index alone,
+ *  with a template (systems/professions/profItems.js mintMaterialItem mints these; the custom 600-699 rows by their index alone,
  *  DFU's own by their group and index), as `group:index` or `*:index`. The four foods are left out: their templates are
  *  Climates & Calories' or Foraging's as the client is set, and a Drake's worth of them is none. */
 export function storesForm(rec) {
@@ -325,7 +385,7 @@ export function storesForm(rec) {
 /**
  * WHY A PIECE OF THE PACK MAY NOT LIST - its record as the save holds it (plain data; both ends read it) - as a word, or
  * null. The trade's refusals first (realmTradeLaw tradeableRecord: worn, a quest's, summoned, bound, gold, a boat's),
- * then the market's own: LOCK1's lock (the player's own word closes selling - systems/itemLock.js), a letter of credit
+ * then the market's own: LOCK1's lock (the player's own word closes selling - systems/item/itemLock.js), a letter of credit
  * (it IS gold, and its value is its identity), arrows (a quiver's stack), a Stores material (storesForm - THE WALL of
  * 10.8, kept: a material bought with Drakes and withdrawn to the pack would otherwise list for gold, "a way round the
  * Bank's daily cap and spread"; the Stores list it, in its own currency) and a record past GOOD_RECORD_MAX. A crafted
@@ -352,7 +412,7 @@ export function goodRefusal(rec) {
 }
 /** Each refusal in the List form's words (the piece's name before it). */
 export const GOOD_REFUSAL_WORDS = Object.freeze({
-  shape: 'not a piece the market knows',
+  shape: 'not an item the market knows',
   worn: 'worn - take it off first',
   locked: 'locked - unlock it first',
   quest: 'a quest\'s',
@@ -362,6 +422,6 @@ export const GOOD_REFUSAL_WORDS = Object.freeze({
   letter: 'a letter of credit is gold',
   boat: 'a boat\'s',
   arrows: 'arrows go in a quiver',
-  stores: 'a Stores material - the market sells it from the Stores alone',
+  stores: 'a Stores material, sold only from your Stores',
   large: 'too much to write on a board',
 });

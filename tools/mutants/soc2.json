@@ -5,7 +5,7 @@
     "old": "export const accountId = (storage = appStorage()) =>",
     "new": "export const accountId = (storage = null) =>",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "if (this.acct && this.asecret) { frame.acct = this.acct; frame.asecret = this.asecret; frame.ps = 1; }",
     "new": "if (this.acct) { frame.acct = this.acct; frame.asecret = this.asecret; frame.ps = 1; }",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ],
     "note": "AUDIT 2026-10-01 part five (re-aimed by content): FRIENDS-SYNC F5 put a line between them / a field on the line."
   },
@@ -24,7 +24,7 @@
     "old": "this.acct = acct && asecret ? acct : null;",
     "new": "this.acct = acct ?? null;",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "const gate = socialGate(this._sbucket, this._now());\n    if (!gate.pass) return false;",
     "new": "const gate = socialGate(this._sbucket, this._now());",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "    const shaped = validSocialAct(act);\n    if (!shaped) return false;",
     "new": "    const shaped = act;",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -51,16 +51,16 @@
     "old": "  sendSocial(act) {\n    if (!this.acct) return false;",
     "new": "  sendSocial(act) {",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
     "name": "C7-unchanged-pose-resent",
     "file": "src/net/online.js",
-    "old": "if (!force && this._lastParty === s) return false;",
+    "old": "else if (!urgent && !force && this._lastParty === s) return false;",
     "new": "",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "const pose = validPartyPose(p);\n    if (!pose) return false;",
     "new": "const pose = p;\n    if (!pose) return false;",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "this._lastParty = null; this._lastPartyAt = -Infinity;   // SOC2",
     "new": "// SOC2",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "      if (f) this._deliver('social', () => this.onSocial?.(f));",
     "new": "      this._deliver('social', () => this.onSocial?.(m));",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "if (f && f.acct !== this.acct) this._deliver('party', () => this.onParty?.(f.acct, f.p));",
     "new": "if (f) this._deliver('party', () => this.onParty?.(f.acct, f.p));",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "if (!this.friends.has(row.acct)) return null;",
     "new": "",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "        const spent = !!f.party && this.invites.delete(f.party.id);   // seated: that invite is spent",
     "new": "        const spent = !!f.party;",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "if (!this.friends.has(row.acct)) return null;\n        this.friends.set(row.acct, row);",
     "new": "if (!this.friends.has(row.acct)) { this._changed('presence'); return null; }\n        this.friends.set(row.acct, row);",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "for (const m of f.party.members) { const was = this.party.members.find((x) => x.acct === m.acct); if (was?.p && !m.p && m.online !== false) m.p = was.p; }",
     "new": "",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "isPartyPeer(id) { for (const m of this.others()) if (m.peers.includes(id)) return true; return false; }",
     "new": "isPartyPeer(id) { if (this.party) for (const m of this.party.members) if (m.peers.includes(id)) return true; return false; }",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "else if (relation === 'friend') whyNotFriend = 'already friends';",
     "new": "",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "else if (this.party && this.seatsFree() === 0) whyNotInvite = 'the party is full';",
     "new": "",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "case 'party.leader': return mine ? 'You lead the party now' : `${who} leads the party now`;",
     "new": "case 'party.leader': return `${who} leads the party now`;",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "if (tab.room === SOCIAL_ROOM) { link.acct = accountId(); link.asecret = accountSecret(); }",
     "new": "link.acct = accountId(); link.asecret = accountSecret();",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "const ago = Math.max(0, ms);",
     "new": "const ago = ms;",
     "tests": [
-      "test/soc2_session.test.js"
+      "test/net/soc2_session.test.js"
     ],
     "equivalent": true,
     "why": "a stamp ahead of this clock reads as a negative age, and every branch below the minute says \"just now\" for it; the clamp is for the arithmetic, not the words"

@@ -5,7 +5,7 @@
   "old": "material: ARMOR_MATERIAL.Steel });   // steel - MWNPC12",
   "new": "material: 1 });   // steel - MWNPC12",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "    let material = one ?? metalOf(metals, wmix(seed ^ (0xa2e0 + k)));",
   "new": "    let material = 1;",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "material: ARMOR_MATERIAL.Steel });   // steel (MWNPC12",
   "new": "material: 1 });   // steel (MWNPC12",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
@@ -32,25 +32,25 @@
   "old": "equipSlot: EQUIP_SLOTS.Head, material: ARMOR_MATERIAL.Steel });",
   "new": "equipSlot: EQUIP_SLOTS.Head, material: 1 });",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
   "name": "MWNPC12-orcs-not-people",
   "file": "src/characters/foeBodies.js",
-  "old": "export const isPersonFoe = (f) => isClassFoe(f) || ORC_MOBILES.has(f?.mobileType) ||",
-  "new": "export const isPersonFoe = (f) => isClassFoe(f) ||",
+  "old": "  return isClassFoe(f) || ORC_MOBILES.has(f?.mobileType) ||",
+  "new": "  return isClassFoe(f) ||",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
   "name": "MWNPC12-orc-a-breton",
   "file": "src/characters/foeBodies.js",
-  "old": "  const race = ORC_MOBILES.has(f.mobileType) ? 'Orc' : bay.race;",
-  "new": "  const race = bay.race;",
+  "old": "  const race = ORC_MOBILES.has(f.mobileType) ? 'Orc' : modRace(f.mobileType) ?? bay.race;",
+  "new": "  const race = modRace(f.mobileType) ?? bay.race;",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "MOBILE_TYPES.OrcShaman, MOBILE_TYPES.OrcWarlord]);",
   "new": "MOBILE_TYPES.OrcShaman]);",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "  const orc = ORC_MOBILES.has(mobileType);   // MWNPC12",
   "new": "  const orc = false;   // MWNPC12",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
@@ -77,16 +77,16 @@
   "old": "(orc ? orcKit(mobileType, h) : vampire",
   "new": "(false ? orcKit(mobileType, h) : vampire",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
   "name": "MWNPC12-roster-orc-bay",
   "file": "src/characters/foeBodies.js",
-  "old": "race: orc ? 'Orc' : race ?? bay.race,",
-  "new": "race: race ?? bay.race,",
+  "old": "race: orc ? 'Orc' : mod?.race ?? race ?? bay.race,",
+  "new": "race: mod?.race ?? race ?? bay.race,",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
@@ -95,7 +95,7 @@
   "old": "  const items = /** @type {any[]} */ ([rosterBlade(h, variant > 0 ? 1 : 0)]);",
   "new": "  const items = /** @type {any[]} */ ([rosterBlade(h)]);",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
@@ -104,7 +104,7 @@
   "old": "  const chance = variant === 0 ? 50 : variant === 1 ? 75 : 90;",
   "new": "  const chance = 50;",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
@@ -113,7 +113,7 @@
   "old": "variant === 1 ? 75 : 90;",
   "new": "variant === 1 ? 75 : 75;",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
@@ -122,7 +122,7 @@
   "old": "  if (variant === 0 && mix(h ^ 0x5d) % 100 < 50) items.push(",
   "new": "  if (variant === 0) items.push(",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
@@ -131,7 +131,7 @@
   "old": "  if (variant === 0 && mix(h ^ 0x5d) % 100 < 50) items.push(",
   "new": "  if (mix(h ^ 0x5d) % 100 < 50) items.push(",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
@@ -140,7 +140,7 @@
   "old": "ARMOR_ENUM.Buckler + (mix(h ^ 0x5e) % (ARMOR_ENUM.Round_Shield + 1 - ARMOR_ENUM.Buckler))",
   "new": "ARMOR_ENUM.Tower_Shield",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
@@ -149,7 +149,7 @@
   "old": "  ORC_PIECES.forEach(([slot, piece], k) => { if (mix(h ^ (0xa0 + k)) % 100 < chance)",
   "new": "  ORC_PIECES.forEach(([slot, piece], k) => { if (false)",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
@@ -158,7 +158,7 @@
   "old": "  const roll = 1 + (mix(h) % 100);",
   "new": "  const roll = 1;",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
@@ -167,7 +167,7 @@
   "old": ": roll >= 70 ? ARMOR_MATERIAL.Chain : ARMOR_MATERIAL.Leather;",
   "new": ": ARMOR_MATERIAL.Leather;",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
@@ -176,7 +176,7 @@
   "old": "(mix(h ^ 0x1e) & 1 ? ARMOR_MATERIAL.Steel : ARMOR_MATERIAL.Iron)",
   "new": "ARMOR_MATERIAL.Steel",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  },
  {
@@ -185,7 +185,7 @@
   "old": "  return roll >= 90 ?",
   "new": "  return roll >= 50 ?",
   "tests": [
-   "test/mwnpc12_steelorcs.test.js"
+   "test/characters/mwnpc12_steelorcs.test.js"
   ]
  }
 ]

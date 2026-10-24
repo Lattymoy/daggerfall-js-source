@@ -1,0 +1,1265 @@
+[
+  {
+    "name": "STUDIO1-a-later-stand-in-takes-the-key",
+    "file": "src/systems/textureReplacement.js",
+    "old": "    if (prev?.studio && !entry.studio) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-the-stand-in-mark-not-taken",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  if (under.standIn) studio.standIn = true;\n",
+    "new": "",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-the-offset-not-taken",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  studio.offset ??= under.offset ?? null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js",
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-displaced-stand-in-forgotten",
+    "file": "src/systems/textureReplacement.js",
+    "old": "    if (entry.studio && prev) coverWith(entry, prev.studio ? prev.under : prev);",
+    "new": "    if (false) coverWith(entry, prev.studio ? prev.under : prev);",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js",
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-late-cover-kept-undecoded",
+    "file": "src/systems/textureReplacement.js",
+    "old": "      dropDecoded(key);   // decoded again with what it covers\n",
+    "new": "",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-name-with-no-folder",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "  if (parts.length < 2 || parts.some",
+    "new": "  if (parts.length < 1 || parts.some",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-the-label-swallowed",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "const STUDIO_FILE = new RegExp(`^(.+?)(?:${STUDIO_LABEL}",
+    "new": "const STUDIO_FILE = new RegExp(`^(.+)(?:${STUDIO_LABEL}",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-the-last-path-keeps-a-key",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "    if (e && !byKey.has(e.key)) byKey.set(e.key, e);",
+    "new": "    if (e) byKey.set(e.key, e);",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-own-archives-left-undecoded",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "  const own = _worn.filter((e) => e.archive > LAST_CLASSIC_TEXTURE_ARCHIVE);",
+    "new": "  const own = _worn.filter((e) => e.archive > Infinity);",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-daggerfall-decoded-at-install",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "  const own = _worn.filter((e) => e.archive > LAST_CLASSIC_TEXTURE_ARCHIVE);",
+    "new": "  const own = _worn.filter((e) => e.archive >= 0);",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-the-studio-never-late",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "      if (!got || _slots.get(slot) !== wear) return;",
+    "new": "      return;",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js",
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-the-rows-swapped",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "  if (!topDown) return decodedTexture(archive, record);",
+    "new": "  if (topDown) return decodedTexture(archive, record);",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-stranger-worn",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "    if (!folders.has(artist)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/studioArt/studio1_folder.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-any-file-worn",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "    if (!/\\.png$/i.test(path)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/studioArt/studio1_folder.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-slot-painted-twice",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "    if (keys.has(e.key)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/studioArt/studio1_folder.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-no-side-limit",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "size.width > STUDIO_MAX_SIDE ||",
+    "new": "size.width > STUDIO_MAX_SIDE * 2 ||",
+    "tests": [
+      "test/systems/studioArt/studio1_folder.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-no-byte-limit",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "    if (bytes > STUDIO_MAX_BYTES) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/studioArt/studio1_folder.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-stray-file-unsaid",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "      if (path !== STUDIO_ROSTER && path !== STUDIO_README) problems.push(",
+    "new": "      if (false) problems.push(",
+    "tests": [
+      "test/systems/studioArt/studio1_folder.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-the-listing-not-built",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "      this.emitFile({ type: 'asset', fileName: `${STUDIO_DIR}/${STUDIO_INDEX}`, source: studioIndexJson(listing) });",
+    "new": "",
+    "tests": [
+      "test/systems/studioArt/studio1_folder.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-the-dev-listing-cached",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "        res.setHeader('Cache-Control', 'no-store');",
+    "new": "",
+    "tests": [
+      "test/systems/studioArt/studio1_folder.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-an-artist-twice-by-case",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "x.folder.toLowerCase() === a.folder.toLowerCase()",
+    "new": "x.folder === a.folder",
+    "tests": [
+      "test/systems/studioArt/studio1_folder.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-the-check-decodes-nothing",
+    "file": "tools/studioArt.mjs",
+    "old": "    try { png = PNG.sync.read(readFileSync(join(at, STUDIO_TREE, e.path))); } catch (err) {",
+    "new": "    try { png = { width: 1, height: 1 }; void PNG; void readFileSync; } catch (err) {",
+    "tests": [
+      "test/systems/studioArt/studio1_folder.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-stretched-picture-unsaid",
+    "file": "tools/studioArt.mjs",
+    "old": "Math.abs(png.width / png.height - p.width / p.height) > 0.01",
+    "new": "false",
+    "tests": [
+      "test/systems/studioArt/studio1_folder.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-paint-not-a-slot",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "    for (let i = 1; i < choices.length; i++) {",
+    "new": "    for (let i = 1; i < choices.length - 1; i++) {",
+    "tests": [
+      "test/systems/studioArt/studio1_folder.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-label-unreadable",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": ".replace(/[^a-z0-9]+/g, '-')",
+    "new": ".replace(/[^a-z0-9]+/g, '--')",
+    "tests": [
+      "test/systems/studioArt/studio1_folder.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-the-wagon-held-painted",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "      if (late) renderer.releaseTexture?.(WAGON_ARCHIVE, rec);\n",
+    "new": "",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-the-yards-rows-flipped",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "renderer.uploadTexture?.(YARD_ARCHIVE, rec, pic); }, { topDown: true });",
+    "new": "renderer.uploadTexture?.(YARD_ARCHIVE, rec, pic); });",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-the-monument-rows-flipped",
+    "file": "src/scenes/lefayMonumentHost.js",
+    "old": "renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, pic); }, { topDown: true });",
+    "new": "renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, pic); });",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-the-port-rows-flipped",
+    "file": "src/scenes/portHost.js",
+    "old": "      }, { topDown: true });",
+    "new": "      });",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-the-beacon-glows-painted",
+    "file": "src/scenes/portHost.js",
+    "old": "replaced ? art : pic, OWN_LIGHT",
+    "new": "pic, OWN_LIGHT",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-the-room-wears-its-built-record",
+    "file": "src/scenes/caravanRoom.js",
+    "old": "painted?.has(rec) ? lookRecord(rec, i) : rec]);",
+    "new": "rec]);",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-the-icon-painted",
+    "file": "src/world/wagonModels.js",
+    "old": "paintedReplacement(WAGON_ARCHIVE, rec) ?? toColor32",
+    "new": "toColor32",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-never-installed",
+    "file": "src/scenes/shared.js",
+    "old": "  const studio = installStudioArt().catch(() => 0);",
+    "new": "  const studio = 0; void installStudioArt;",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-any-over-any-absorbed",
+    "file": "src/systems/textureReplacement.js",
+    "old": "    if (prev?.studio && !entry.studio) {",
+    "new": "    if (prev && !entry.studio) {",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-any-cover-marks-stand-in",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  if (under.standIn) studio.standIn = true;",
+    "new": "  studio.standIn = true;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-lazy-not-inherited",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  if (under.lazy) studio.lazy = true;\n",
+    "new": "",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-offset-overwritten",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  studio.offset ??= under.offset ?? null;",
+    "new": "  studio.offset = under.offset ?? null;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-absorbed-uncounted",
+    "file": "src/systems/textureReplacement.js",
+    "old": "      dropDecoded(key);   // decoded again with what it covers\n      n++;\n      continue;",
+    "new": "      dropDecoded(key);   // decoded again with what it covers\n      continue;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-studio-records-any",
+    "file": "src/systems/textureReplacement.js",
+    "old": "if (e.studio && e.archive === a && e.frame === 0 && e.map === 'Albedo' && e.dye == null) out.push(e.record);",
+    "new": "if (e.archive === a && e.frame === 0 && e.map === 'Albedo' && e.dye == null) out.push(e.record);",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-hold-never-let-go",
+    "file": "src/systems/textureReplacement.js",
+    "old": "    .then(() => { clearTimeout(timer); _holds.delete(held); });",
+    "new": "    .then(() => { clearTimeout(timer); });",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-hold-never-read",
+    "file": "src/systems/textureReplacement.js",
+    "old": "export const textureTiersSettled = () => (_holds.size ? Promise.all([..._holds]) : null);",
+    "new": "export const textureTiersSettled = () => null;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-hold-unbounded",
+    "file": "src/systems/textureReplacement.js",
+    "old": "new Promise((r) => { timer = setTimeout(r, atMost); })",
+    "new": "new Promise((r) => { timer = setTimeout(r, atMost * 1000); })",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-hole-for-a-failed-picture",
+    "file": "src/systems/textureReplacement.js",
+    "old": "    if (!own) return base;",
+    "new": "    if (!own) return null;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-no-box-no-scale",
+    "file": "src/systems/textureReplacement.js",
+    "old": "    if (base) { own.box = { width: base.width, height: base.height }; if (base.recordScale && !own.recordScale) own.recordScale = base.recordScale; }",
+    "new": "    void base;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-no-scale",
+    "file": "src/systems/textureReplacement.js",
+    "old": "if (base.recordScale && !own.recordScale) own.recordScale = base.recordScale; }",
+    "new": "}",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-size-not-the-box",
+    "file": "src/systems/textureReplacement.js",
+    "old": "return d ? (d.box ?? { width: d.width, height: d.height }) : { width: 1, height: 1 }; };",
+    "new": "return d ? { width: d.width, height: d.height } : { width: 1, height: 1 }; };",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-bitmap-at-the-box",
+    "file": "src/systems/textureReplacement.js",
+    "old": "return { ...(m ? { width: m.width, height: m.height } : size(record)), data: null, rgba: topDownRgba(d), record, frame }; },",
+    "new": "return { ...size(record), data: null, rgba: topDownRgba(d), record, frame }; },",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-no-box-to-fit",
+    "file": "src/systems/textureReplacement.js",
+    "old": "    getBox: (record) => measuredOf(archive, record)?.box ?? null,",
+    "new": "    getBox: () => null,",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-dyed-studio-makes-a-set",
+    "file": "src/systems/textureReplacement.js",
+    "old": "e.map === bare.map && e.dye != null && !e.studio) return dye;",
+    "new": "e.map === bare.map && e.dye != null) return dye;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-first-load-not-held",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "    if (held) await held;\n",
+    "new": "",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-any-dye-asked",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "export const askedDye = (token) => Object.hasOwn(DYE_COLORS, token) && dyeToken(DYE_COLORS[token]) === token;",
+    "new": "export const askedDye = () => true;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-dye-unread",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "  if (!e || (e.dye != null && !askedDye(e.dye))) return null;",
+    "new": "  if (!e) return null;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-url-unencoded",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "String(path).split('/').map(encodeURIComponent).join('/')",
+    "new": "String(path)",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-url-off-the-document",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "root = APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/'",
+    "new": "root = globalThis.document?.baseURI ?? 'http://localhost/'",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-url-absolute",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "  new URL(`${STUDIO_DIR}/${",
+    "new": "  new URL(`/${STUDIO_DIR}/${",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-failed-read-remembered",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "    if (_install === asked) _install = null;   // a read that failed is no answer: the next boot asks again\n",
+    "new": "",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-failed-read-an-answer",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "  } catch { return null; }",
+    "new": "  } catch { return 0; }",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-listing-not-held",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "  holdTextureTiers(asked, STUDIO_HOLD_MS);\n",
+    "new": "",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-index-root-lost",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "    const r = await fetch(studioUrl(STUDIO_INDEX, root));",
+    "new": "    const r = await fetch(studioUrl(STUDIO_INDEX));",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-bytes-root-lost",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "const r = await fetch(studioUrl(path, root)); return r?.ok",
+    "new": "const r = await fetch(studioUrl(path)); return r?.ok",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-404-read",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "    if (!r?.ok) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-install-frame-dropped",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "    archive: e.archive, record: e.record, frame: e.frame, map: e.map, dye: e.dye,\n    studio: true,",
+    "new": "    archive: e.archive, record: e.record, map: e.map, dye: e.dye,\n    studio: true,",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-install-map-dropped",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "    archive: e.archive, record: e.record, frame: e.frame, map: e.map, dye: e.dye,\n    studio: true,",
+    "new": "    archive: e.archive, record: e.record, frame: e.frame, dye: e.dye,\n    studio: true,",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-install-dye-dropped",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "    archive: e.archive, record: e.record, frame: e.frame, map: e.map, dye: e.dye,\n    studio: true,",
+    "new": "    archive: e.archive, record: e.record, frame: e.frame, map: e.map,\n    studio: true,",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-install-not-studio",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "    studio: true, fileName: `studio:${e.path}`, load: () => bytes(e.path),",
+    "new": "    fileName: `studio:${e.path}`, load: () => bytes(e.path),",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-install-filename-dropped",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "    studio: true, fileName: `studio:${e.path}`, load: () => bytes(e.path),",
+    "new": "    studio: true, load: () => bytes(e.path),",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-generation-still",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "  if (n) _generation++;\n",
+    "new": "",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-classic-decoded-too",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "  const own = _worn.filter((e) => e.archive > LAST_CLASSIC_TEXTURE_ARCHIVE);",
+    "new": "  const own = _worn.filter((e) => e.archive >= LAST_CLASSIC_TEXTURE_ARCHIVE);",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-decodes-uncapped",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "Math.min(PRELOAD_CONCURRENCY, own.length)",
+    "new": "own.length",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-landed-before-decoded",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "  const n = await installStudioArt();\n  await _decoded;\n",
+    "new": "  const n = await installStudioArt();\n",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-landed-asks-nothing",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "  const n = await installStudioArt();\n  await _decoded;\n",
+    "new": "  const n = await (_install ?? 0);\n  await _decoded;\n",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-topdown-unguarded",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "  return d ? { width: d.width, height: d.height, colors: d.rgba } : null;",
+    "new": "  return { width: d.width, height: d.height, colors: d.rgba };",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-one-slot-a-record",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "  const slot = how.slot ?? `${archive}_${record}`;",
+    "new": "  const slot = `${archive}_${record}`;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-superseded-wear-late",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "      if (!got || _slots.get(slot) !== wear) return;",
+    "new": "      if (!got) return;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-late-rows-lost",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "      const late = paintedReplacement(archive, record, how);",
+    "new": "      const late = paintedReplacement(archive, record);",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-miss-never-decoded",
+    "file": "src/systems/studioArt/studioArt.js",
+    "old": "    .then(() => (hasTextureReplacement(archive, record) ? preloadTextureRecord(archive, record, 0, 'Albedo', null, { decode: _decode }) : null))",
+    "new": "    .then(() => decodedTexture(archive, record))",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-ground-ignores-the-studio",
+    "file": "src/systems/dfmodTextures.js",
+    "old": "  const studio = n ? studioRecordsOf(archive).filter((r) => r < n) : [];",
+    "new": "  const studio = [];",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-ground-gate-shuts-the-studio",
+    "file": "src/systems/dfmodTextures.js",
+    "old": "  if (!n || (!textureReplacementEnabled() && !studio.length)) return Promise.resolve(null);",
+    "new": "  if (!n || !textureReplacementEnabled()) return Promise.resolve(null);",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-ground-at-its-own-size",
+    "file": "src/systems/dfmodTextures.js",
+    "old": "  for (const p of pics) if (p && p.width * p.height > width * height) ({ width, height } = p);\n",
+    "new": "",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-ground-records-unlaid",
+    "file": "src/systems/dfmodTextures.js",
+    "old": "  records.forEach((r, k) => { if (pics[k]) out[r] = classicAt(pics[k], width, height); });\n",
+    "new": "",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-night-lit-by-the-paint",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    const lit = decodedTexture(archive, night, 0, 'Emission');",
+    "new": "    const lit = null; void decodedTexture;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-icons-blind-to-the-studio",
+    "file": "src/ui/textureCanvas.js",
+    "old": "const iconsGeneration = () => `${dfmodGeneration()}:${studioGeneration()}`;",
+    "new": "const iconsGeneration = () => `${dfmodGeneration()}`; void studioGeneration;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-doll-box-unread",
+    "file": "src/ui/paperDoll.js",
+    "old": "      const classic = tex.vendor ? (tex.getBox?.(record) ?? null) : tex.getSize(record);",
+    "new": "      const classic = tex.vendor ? null : tex.getSize(record);",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-room-slot-by-source",
+    "file": "src/scenes/caravanRoom.js",
+    "old": "    }, { slot: key });",
+    "new": "    });",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-icon-before-the-studio",
+    "file": "src/world/wagonModels.js",
+    "old": "  await studioLanded();   // STUDIO1: the icon is drawn once - in the studio's pictures where an artist drew them\n",
+    "new": "  void studioLanded;\n",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-any-name",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "export const STUDIO_NAME = /^[A-Za-z0-9](?:[A-Za-z0-9_.-]*[A-Za-z0-9])?$/;",
+    "new": "export const STUDIO_NAME = /^.*$/;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-name-ending-in-a-dot",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "export const STUDIO_NAME = /^[A-Za-z0-9](?:[A-Za-z0-9_.-]*[A-Za-z0-9])?$/;",
+    "new": "export const STUDIO_NAME = /^[A-Za-z0-9][A-Za-z0-9_.-]*$/;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-windows-names-kept",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "export const STUDIO_RESERVED = /^(con|prn|aux|nul|com\\d|lpt\\d)(\\.|$)/i;",
+    "new": "export const STUDIO_RESERVED = /^$/;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-litter-said",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "export const STUDIO_LITTER = /^(\\.DS_Store|Thumbs\\.db|desktop\\.ini|\\._.*)$/;",
+    "new": "export const STUDIO_LITTER = /^$/;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-segments-unread",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "    if (path.split('/').some((n) => !STUDIO_NAME.test(n) || STUDIO_RESERVED.test(n))) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-a-link-worn",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "    if (link) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-walk-unsorted",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "  return out.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0));",
+    "new": "  return out;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-roster-name-unread",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": " || typeof a.name !== 'string' || !a.name || typeof a.approved",
+    "new": " || typeof a.approved",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-roster-approved-empty",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "typeof a.approved !== 'string' || !a.approved) {",
+    "new": "typeof a.approved !== 'string') {",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-roster-reserved-kept",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "    if (!STUDIO_NAME.test(a?.folder ?? '') || STUDIO_RESERVED.test(a.folder) || typeof",
+    "new": "    if (!STUDIO_NAME.test(a?.folder ?? '') || typeof",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-roster-not-a-list",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "  for (const a of Array.isArray(doc?.artists) ? doc.artists : []) {",
+    "new": "  for (const a of doc?.artists ?? []) {",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-max-side-4096",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "export const STUDIO_MAX_SIDE = 2048;",
+    "new": "export const STUDIO_MAX_SIDE = 4096;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-max-bytes-ge",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "    if (bytes > STUDIO_MAX_BYTES) {",
+    "new": "    if (bytes >= STUDIO_MAX_BYTES) {",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-png-ext-case",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "    if (!/\\.png$/i.test(path)) {",
+    "new": "    if (!/\\.png$/.test(path)) {",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-height-zero-ok",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "    if (!size.width || !size.height || size.width",
+    "new": "    if (!size.width || size.width",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-height-unbounded",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": " || size.height > STUDIO_MAX_SIDE) {",
+    "new": ") {",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-png-short-21",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "  if (b.length < 24 || sig.some",
+    "new": "  if (b.length < 21 || sig.some",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-png-ihdr-unread",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": " || b.toString('latin1', 12, 16) !== 'IHDR') return null;",
+    "new": ") return null;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-png-sig-short",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "  const sig = [0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a];",
+    "new": "  const sig = [0x89, 0x50, 0x4e, 0x47];",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-plugin-renamed",
+    "file": "scripts/studioArtIndex.mjs",
+    "old": "    name: 'studio-art-index',",
+    "new": "    name: 'studio-art',",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-plugin-unwired",
+    "file": "vite.config.js",
+    "old": "  plugins: [arena2DevServer(), buildTagMeta(), landingHtml(), studioArtIndex()],",
+    "new": "  plugins: [arena2DevServer(), buildTagMeta(), landingHtml()].concat(studioArtIndex ? [] : []),",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-git-never-asked",
+    "file": "tools/studioArt.mjs",
+    "old": "  if (r.status !== 0 || !r.stdout) return [];",
+    "new": "  return [];",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-check-drops-the-listing",
+    "file": "tools/studioArt.mjs",
+    "old": "  const problems = [...listing.problems], notes = [];",
+    "new": "  const problems = [], notes = [];",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-stretch-by-half",
+    "file": "tools/studioArt.mjs",
+    "old": "p.width / p.height) > 0.01)",
+    "new": "p.width / p.height) > 0.5)",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-stretch-one-way",
+    "file": "tools/studioArt.mjs",
+    "old": "Math.abs(png.width / png.height - p.width / p.height) > 0.01",
+    "new": "(png.width / png.height - p.width / p.height) > 0.01",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-clear-texels-unsaid",
+    "file": "tools/studioArt.mjs",
+    "old": "      if (!slot.cutout && png.data.some((v, i) => (i & 3) === 3 && v < 128))",
+    "new": "      if (false && png.data.some((v, i) => (i & 3) === 3 && v < 128))",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-no-slot-only-a-note",
+    "file": "tools/studioArt.mjs",
+    "old": "      problems.push(`${e.path}: ${sets.get(e.archive).title} has no picture",
+    "new": "      notes.push(`${e.path}: ${sets.get(e.archive).title} has no picture",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-past-511-unsaid",
+    "file": "tools/studioArt.mjs",
+    "old": "    } else if (e.map === 'Albedo' && e.archive > LAST_CLASSIC_TEXTURE_ARCHIVE) {",
+    "new": "    } else if (false) {",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-check-exits-0",
+    "file": "tools/studioArt.mjs",
+    "old": "  return problems.length ? 1 : 0;",
+    "new": "  return 0;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-list-studio-unsaid",
+    "file": "tools/studioArt.mjs",
+    "old": "${by ? `   <- studio: ${by.path}` : ''}",
+    "new": "${''}",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-templates-in-the-checkout",
+    "file": "tools/studioArt.mjs",
+    "old": "  const out = dir ? resolve(dir) : join(at, 'studio-templates');",
+    "new": "  const out = join(at, 'studio-templates'); void dir; void resolve;",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-wagon-glass-solid",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": ", cutout: isGlassRecord(rec), picture: () => pic });",
+    "new": ", cutout: false, picture: () => pic });",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-ship-windows-solid",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "    cutout: Object.hasOwn(night, e.record),",
+    "new": "    cutout: false,",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-flame-solid",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "cutout: PORT_HOW[record]?.cutout === true, picture: paint",
+    "new": "cutout: false, picture: paint",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-label-untrimmed",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": ".replace(/^-+|-+$/g, '');",
+    "new": ";",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-words-unsplit",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "const words = (k) => k.replace(/([a-z])([A-Z0-9])/g, '$1 $2').toLowerCase();",
+    "new": "const words = (k) => k.toLowerCase();",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-words-not-lowered",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "const words = (k) => k.replace(/([a-z])([A-Z0-9])/g, '$1 $2').toLowerCase();",
+    "new": "const words = (k) => k.replace(/([a-z])([A-Z0-9])/g, '$1 $2');",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-wagon-name-dropped",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "  roomFloor: 'caravan room floor', harness: 'harness straps',",
+    "new": "  roomFloor: 'caravan room floor',",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-wagons-unsorted",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "  return out.sort((a, b) => a.record - b.record);\n}",
+    "new": "  return out;\n}",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-ships-no-night",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "records: Object.values(tex), art: (r) => made.get(r) ?? null, night, glow });",
+    "new": "records: Object.values(tex), art: (r) => made.get(r) ?? null, night: {}, glow });",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-night-unnamed",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "`${words(nameOf(tex, dayOf.get(e.record)))} - at night`",
+    "new": "`${words(nameOf(tex, dayOf.get(e.record)))}`",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-ships-unsorted",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "  })).sort((a, b) => a.record - b.record);\n}",
+    "new": "  }));\n}",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-carrack-glow-galleon",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "CARRACK_TEX, carrackArt, CARRACK_NIGHT, carrackGlow)",
+    "new": "CARRACK_TEX, carrackArt, CARRACK_NIGHT, galleonGlow)",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-lefay-name",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "[LEFAY_GILT]: 'gilt point',",
+    "new": "[LEFAY_GILT]: 'gilt',",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-hangings-record-off",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "TOWN_PICTURES.map((p, record) => ({ record, name: p.name, picture: () => p.draw() }))",
+    "new": "TOWN_PICTURES.map((p, record) => ({ record: record + 1, name: p.name, picture: () => p.draw() }))",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-port-picture-first",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "picture: paint })) },",
+    "new": "picture: PORT_PAINTERS[0][1] })) },",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-yards-archive",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "archive: YARD_ARCHIVE, door: 'painted'",
+    "new": "archive: YARD_ARCHIVE + 1, door: 'painted'",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-galleon-archive",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "archive: GALLEON_ARCHIVE, door: 'vendor', slots: () => shipSlots(GALLEON_ARCHIVE",
+    "new": "archive: GALLEON_ARCHIVE + 1, door: 'vendor', slots: () => shipSlots(GALLEON_ARCHIVE",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-hangings-archive",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "archive: TOWN_PICTURE_ARCHIVE, door: 'vendor'",
+    "new": "archive: TOWN_PICTURE_ARCHIVE + 1, door: 'vendor'",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-lefay-archive",
+    "file": "src/systems/studioArt/studioSlots.js",
+    "old": "archive: LEFAY_ARCHIVE, door: 'painted'",
+    "new": "archive: LEFAY_ARCHIVE + 1, door: 'painted'",
+    "tests": [
+      "test/systems/studioArt/auditstudio1.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-doctrine-every-studio-file",
+    "file": "test/tooling/doctrine.test.js",
+    "old": "const studioArt = (f) => STUDIO_WORN.has(f);",
+    "new": "const studioArt = (f) => f.startsWith(`${STUDIO_TREE}/`);",
+    "tests": [
+      "test/tooling/doctrine.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-doctrine-anything",
+    "file": "test/tooling/doctrine.test.js",
+    "old": "const studioArt = (f) => STUDIO_WORN.has(f);",
+    "new": "const studioArt = (f) => true || STUDIO_WORN.has(f);",
+    "tests": [
+      "test/tooling/doctrine.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-doctrine-members-unprefixed",
+    "file": "test/tooling/doctrine.test.js",
+    "old": "const studioMembers = (at) => new Set(studioListing(at).files.map((f) => `${STUDIO_TREE}/${f}`));",
+    "new": "const studioMembers = (at) => new Set(studioListing(at).files);",
+    "tests": [
+      "test/tooling/doctrine.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-doctrine-quoted-paths",
+    "file": "test/tooling/doctrine.test.js",
+    "old": "execFileSync('git', ['ls-files', '-z', dir],",
+    "new": "execFileSync('git', ['ls-files', dir],",
+    "tests": [
+      "test/tooling/doctrine.test.js"
+    ]
+  },
+  {
+    "name": "STUDIO1-an-attached-mod-over-the-studio",
+    "file": "src/systems/textureReplacement.js",
+    "old": "  return (on && _load ? _index.get(key) : null) ?? vendorOf(key) ?? (on ? _bundle.get(key) : null) ?? null;",
+    "new": "  return (on && _load ? _index.get(key) : null) ?? (on ? _bundle.get(key) : null) ?? vendorOf(key) ?? null;",
+    "tests": [
+      "test/systems/studioArt/studio1_door.test.js"
+    ]
+  }
+]

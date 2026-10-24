@@ -5,17 +5,17 @@
     "old": "    if (fresh) owSayRow(key);\n",
     "new": "",
     "tests": [
-      "test/ow6_ledger.test.js"
+      "test/net/ow6_ledger.test.js"
     ],
     "note": "A spawn's first sight never reaches the cell: every client keeps its own clock."
   },
   {
     "name": "OW6H-sight-always-said",
     "file": "src/scenes/world.js",
-    "old": "    const fresh = !_spawnLedger.wireRow(key);",
+    "old": "    const fresh = !_spawnLedger.has(key, now);",
     "new": "    const fresh = true;",
     "tests": [
-      "test/ow6_ledger.test.js"
+      "test/net/ow6_ledger.test.js"
     ],
     "note": "A sight already known said again at every build."
   },
@@ -25,7 +25,7 @@
     "old": "    owSayRow(key);   // OW6L: and the cell hears the short clock start\n",
     "new": "",
     "tests": [
-      "test/ow6_ledger.test.js"
+      "test/net/ow6_ledger.test.js"
     ],
     "note": "A spawn's clear never reaches the cell."
   },
@@ -35,7 +35,7 @@
     "old": "    owSaySpent(id);   // OW6L: and the cell keeps it, for everyone there and whoever comes\n",
     "new": "",
     "tests": [
-      "test/ow6_ledger.test.js"
+      "test/net/ow6_ledger.test.js"
     ],
     "note": "A band fought is gone only for those whose frames heard it, that minute."
   },
@@ -45,7 +45,7 @@
     "old": "    owSaySpent(id);   // OW6L: and the cell keeps it\n",
     "new": "",
     "tests": [
-      "test/ow6_ledger.test.js"
+      "test/net/ow6_ledger.test.js"
     ],
     "note": "A raider that boarded one crew stands again for the next."
   },
@@ -55,7 +55,7 @@
     "old": "    if (_owSay.sp.size) for (const id of online.sendOverworld('sp', [..._owSay.sp.keys()])) _owSay.sp.delete(id);",
     "new": "    if (_owSay.sp.size) { online.sendOverworld('sp', [..._owSay.sp.keys()]); _owSay.sp.clear(); }",
     "tests": [
-      "test/ow6_ledger.test.js"
+      "test/net/ow6_ledger.test.js"
     ],
     "note": "What the cell did not take is never said again."
   },
@@ -65,7 +65,7 @@
     "old": "    if (!online?.owOk || now - _owSaidAt < OW_SAY_MS || (!_owSay.sp.size && !_owSay.dg.size)) return;",
     "new": "    if (now - _owSaidAt < OW_SAY_MS || (!_owSay.sp.size && !_owSay.dg.size)) return;",
     "tests": [
-      "test/ow6_ledger.test.js"
+      "test/net/ow6_ledger.test.js"
     ],
     "note": "A relay that keeps no ledger is asked to (and would close the socket)."
   },
@@ -75,7 +75,7 @@
     "old": "        if (id[0] === 'b') { _bandSpent.add(id); _bandChase.delete(id); _bandPeer.delete(id); }",
     "new": "        if (id[0] !== 'x') { _bandSpent.add(id); _bandChase.delete(id); _bandPeer.delete(id); }",
     "tests": [
-      "test/ow6_ledger.test.js"
+      "test/net/ow6_ledger.test.js"
     ],
     "note": "A spent raider taken for a band: the raider sails on."
   },
@@ -85,29 +85,29 @@
     "old": "    if (moved) tvDng.at = null;   // the Overworld's dungeons read again: a spawn now gone leaves its list\n",
     "new": "",
     "tests": [
-      "test/ow6_ledger.test.js"
+      "test/net/ow6_ledger.test.js"
     ],
     "note": "A spawn gone on someone else's clock stays on the Overworld's list."
   },
   {
     "name": "OW6H-unheard",
     "file": "src/scenes/world.js",
-    "old": "    online.onOverworld = (msg) => overworldLedgerHeard(msg);   // OW6L: my cell's (and a halo's) overworld ledger - its welcome, and each change\n",
+    "old": "    online.onOverworld = (msg) => (msg?.k === 'gr' ? searchPartyHeard(msg) : overworldLedgerHeard(msg));   // OW6L: my cell's (and a halo's) overworld ledger - its welcome, and each change; GRAVE-PARTY: its graves searched, to the search party's own door (scenes/searchPartyHost.js)\n",
     "new": "",
     "tests": [
-      "test/ow6_ledger.test.js"
+      "test/net/ow6_ledger.test.js"
     ],
-    "note": "The cell's word never heard."
+    "note": "The cell's word never heard. PIN MOVED (FIELD BUGS 2026-10-16b GRAVE-PARTY): the line routes the graves' rows to the search party first - re-aimed by content."
   },
   {
     "name": "OW6H-never-said",
     "file": "src/scenes/world.js",
-    "old": "    overworldLedgerFrame(now);   // OW6L: what I spent and my spawns' clocks, to the cell that keeps them\n",
+    "old": "    overworldLedgerFrame(now); searchPartyFrame(now);   // OW6L: what I spent and my spawns' clocks, to the cell that keeps them; GRAVE-PARTY: and the stones I searched\n",
     "new": "",
     "tests": [
-      "test/ow6_ledger.test.js"
+      "test/net/ow6_ledger.test.js"
     ],
-    "note": "What is owed is never said."
+    "note": "What is owed is never said. PIN MOVED (FIELD BUGS 2026-10-16b GRAVE-PARTY): the line says the stones searched beside it - re-aimed by content."
   },
   {
     "name": "OW6H-load-keeps-owed",
@@ -115,7 +115,7 @@
     "old": "    _owSay.sp.clear(); _owSay.dg.clear();   // OW6L: nor what the abandoned run still owed its cell (the loaded ledger is the save's)\n",
     "new": "",
     "tests": [
-      "test/ow6_ledger.test.js"
+      "test/net/ow6_ledger.test.js"
     ],
     "note": "A load says the abandoned run's rows for the loaded character."
   }

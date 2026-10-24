@@ -3,9 +3,9 @@
 The port's own (DFU's guilds are its factions; a player's guild is GUILD1's, `06-Systems/Online-Arc.md` GUILD1 to
 GUILD1e). Four parts: **GUILD2a** a new name for a price, **GUILD2b** the guild's vault and who may use it, **GUILD2c**
 arms worth choosing that every banner draws, and **GUILD2d** the Guild tab in pages. The laws are
-`src/net/guildLaw.js`, `src/net/guildVaultLaw.js` and `src/net/heraldryLaw.js`; the service is
+`src/net/guild/guildLaw.js`, `src/net/guild/guildVaultLaw.js` and `src/net/heraldryLaw.js`; the service is
 `server-account/src/guilds.js` and `server-account/src/guildVault.js` (migration `0077_guild_overhaul.sql`); the client
-`src/net/guildBook.js`, `src/ui/socialPanel.js` and `src/ui/heraldryArt.js`.
+`src/net/guild/guildBook.js`, `src/ui/socialPanel.js` and `src/ui/heraldryArt.js`.
 
 ## Asked
 
@@ -161,7 +161,7 @@ page says it the way a friend's row does (SOC3): a dot, lit while the member is 
   the roster's own statement, the players row found by its key; no write, no migration (acct113).
 - **Online is the service's sitting.** A member is online while no wider gap than PLAY_GRACE_S (ten minutes) has
   passed since their beat - the gap `creditPlay` counts as one sitting - and the reader's own row always: they are
-  playing it (`net/guildBook.js` guildMemberOnline, guildSeenText). The service's seconds are read against this
+  playing it (`net/guild/guildBook.js` guildMemberOnline, guildSeenText). The service's seconds are read against this
   machine's clock, as the letterbox reads its stamps. A row the service said no stamp for (a Worker before acct113)
   says nothing of presence.
 - **Read on the live pass, painted never.** "Last online 5 min ago" moves on the clock alone, and a sitting that
@@ -175,13 +175,99 @@ page says it the way a friend's row does (SOC3): a dot, lit while the member is 
   names each member by the account's handle, and a member playing another character of theirs is at play. A guild's
   members are each other's by an invitation accepted, which is what a friendship grants presence on (AUDIT ONLINE A6).
 
-Pins: `test/guildseen.test.js` (the service through the real Worker, the law, the book, the page);
+Pins: `test/net/guildseen.test.js` (the service through the real Worker, the law, the book, the page);
 `tools/mutants/guildseen.json`, 14 of 14 dead.
 
 | Host | GUILD-SEEN |
 |---|---|
 | `scenes/world.js` | the Guild tab's book and panel, unchanged: the rows read what the book holds |
 | `scenes/worldModes.js` | nothing to wire: an interior opens the same panel (the hall's chest, the Vault page) |
+| `scenes/exterior.js` | FLAGGED, nothing to wire: the single-location dev host has no online guild |
+| `scenes/dungeonContext.js` | nothing to wire: the Guild tab is world.js's on every face |
+
+## GUILD-WINDOW - the Guild tab a window of its own (2026-10-23)
+
+The owner: "I want to overhaul the guild tab to be more of a full fledged detailed window with easy navigation and
+readabity instead of being stuffed as a small window in the social tab". GUILD2d's seven pages sat in the friends
+panel's 360 by 460 pixels, their strip wrapping over two rows, every line at 11 or 12 pixels and most of them amber.
+
+- **The Guild tab is the window.** While it is up the panel is in its guild mode (`data-mode="guild"` on its root,
+  `ui/socialPanel.js` repaint): named Guild (its Close named so), up to 1,060 by 740 pixels, and the social tabs put
+  away behind a Social button in its head that goes back to the tab last up (Friends, Party or Letters), the focus
+  with it, their badges summed on it. The ways in are the Social panel's Guild tab and `openGuild(page)` (the hall's
+  chest: the Vault); the social door - the chat's Social button, the interact key with no one in front - opens the
+  social panel, never the window (AUDIT W5). Escape and the close button close it, as they close the panel. The social
+  mode is untouched: its places beside and below the chat are its own, and the window's rules outweigh them (`:root`
+  and the open mark), so a chat dragged to any size never moves the window. It stands centred, or beside the chat
+  where the screen holds the chat and a window 760 wide (AUDIT W7, from 1,240 pixels across). Under 760 pixels wide
+  or 520 high (`GUILD_SMALL_QUERY`) it takes the screen, its pages a row that scrolls across; under 520 high it
+  scrolls as one, the row of pages and the foot kept in sight (W6); under 600 wide it starts below a toast standing
+  at the top (W1). Its heights read `100dvh` where the browser has it.
+- **The header is tiles.** The banner (32 by 96 now) beside the name and tag, and under them each number under its
+  own name: Rank, Gold, Silver (where silver is this account's - the Treasury page's own switch), Members (and how
+  many are online, `guildOnlineText`, by the roster rows' own reading, read again on the live pass), Vault and Hall.
+  GUILD1b's two sentences ("You are Guildmaster - the treasury holds 30,000 gold", "1/75 members - the vault 1/50")
+  are those tiles; their pin moved with them (`guild2_client.test.js`, PIN MOVED: GUILD-WINDOW).
+- **The pages are a column.** GUILD2's strip, one page a row: its name and what it holds in the player's language
+  (`guildPageNames`, `guildPageWords`), and its count where it has one (the members, the vault). It is a tablist of
+  one tab in the Tab order (the one up), its page a tabpanel. The arrow keys walk it, both ways round, the focus with
+  them (AUDIT2 GUILD2 U9's law), a held key one page (W4); an arrow anywhere else in the window is kept from the world
+  and left to the browser (W3); any other key goes on to the world. The focus comes into the window with it and back
+  to the page's tab when a press draws the page again (W10).
+- **A page is cards, and the window has a foot.** Each section heading opens a card, and what stands before the
+  first is a card of its own (`guildCards`); the nodes are moved, never rebuilt, so every hold a page kept on its own
+  (the vault's filter, a grant drawn again in place, the arms' box) still holds. The last act's words stand in the
+  window's foot, which is always drawn (W13). The page's column scrolls under the header and the column of pages, and
+  a repaint on the same page (every act, every look) puts it, the body and the row of pages back where they were;
+  another page starts at its top.
+- **A reading size.** Inside the page: 13 pixels for a sentence (line height 1.5), 15 for a row's name and 12 for the
+  line under it and a button's reason; labels and the column's words under the names 11. The notes a softer amber,
+  the forms at most 460 wide, the vault's filter one row, a grant's choice at most 300 wide. Under the touch skin the
+  finger's sizes outrank these (W2). No page lost a control or a sentence, and a refused button still says why beside
+  its label.
+- **Not a DFU window.** A player's guild is the port's own (GUILD1), so THE NATIVE-WINDOW RULE has no layout to cite:
+  this section is the window's design record (Port-Doctrine, Scope).
+
+### AUDIT GUILD-WINDOW (2026-10-23, the owner: "Audit thus")
+
+Two cold lanes read the commit (the JS's behaviour; the sheet, the stacking, the words and the pins), each with its
+own probes, and the window was measured in Chromium at phone, landscape, short and wide sizes. Sixteen findings, each
+reproduced before it was fixed:
+
+| # | Finding | Fixed |
+|---|---|---|
+| W1 | HIGH. On a phone an invitation's toast (z 7) or a duel's (z 8) stood over the window's head: a press on Close landed on Decline | Under 600 wide the window starts below the toast - 76px, below where this panel's toast was measured to end (`--dfsocial-toast-b`, measured only when it comes up or its words change), or below a second toast |
+| W2 | HIGH. The reading sizes outweighed AUDIT SOC C8's touch rules: the Arms' swatches 24px under a finger, a field's 14px zoomed a phone | Touch rules for the window, after its own |
+| W3 | MEDIUM. The arrows were heard on a focused page tab alone; anywhere else they were the world's - ArrowDown its Professions door, which covered the HUD and shut the window | One listener on the window: on the column it turns the page, elsewhere it keeps the arrow from the world (a field's and a list's their own) |
+| W4 | MEDIUM. A held arrow turned a page a repeat; the Vault and Settings each read the service on a turn - two seconds held spent 37 of the account's 240 asks a minute | A repeat turns nothing |
+| W5 | MEDIUM. The Social button and the interact key opened the Guild window when it was last left | The social door opens the social panel |
+| W6 | MEDIUM. On a phone on its side the page had 99 to 169px; `100vh` put the foot under a phone's toolbar | A short screen scrolls as one, the row and the foot sticky; `100dvh` |
+| W7 | MEDIUM. The window covered the chat on any screen under about 1,970px | Beside the chat where the screen holds both |
+| W8 | MEDIUM. Laws with no pin: the sheet's rules, the arrows' stop, the live count | Each pinned (`guildwindow.test.js`) |
+| W9 | MEDIUM. The pages' names in English beside translated words under them; drafts off the languages' own terms (writ, hall, rank, vault) and a Bulgarian plural | `guildPageNames`; the drafts corrected to each glossary and catalog |
+| W10 | LOW. The focus fell to the page's body on the way in, on the way back, and at every press | Into the window on the page's tab, back on the social tab, and back to the page's tab after a press |
+| W11 | LOW. No tabpanel, every tab in the Tab order, the orientation fixed, the Social button's name without its word, Close named "Close social" | Each mended |
+| W12 | LOW. The row of pages on a phone went back to its start at every repaint | Kept |
+| W13 | LOW. The last act's words stood at the column's top - out of sight under a press on the fortieth row - and pushed every row down as they came | The window's foot |
+| W14 | LOW. The status widget folded under the window, which never stood over it (`enhancedHud.js` STAT_ABOVE) | The panel read in its social mode alone |
+| W15 | LOW. The record's sizes, "760 by 520", and a test's "equals in weight" | Said as they are |
+| W16 | LOW (this audit's own probe). The social tabs' badges hid with their tabs | Summed on the Social button |
+
+Stands, by choice: the window does not shut when its player is struck - the panel never did, the world is shared and
+does not pause, and Escape shuts it; the social panel's own tabs (Friends, Party, Letters, Guild) and the guild's rank
+names stay as they were (the panel's words were never routed, and a rank's name is its guild's); the F-menu draws over
+the window by its later place in the document at the same z, as it did over the panel.
+
+Pins: `test/net/guild/guildwindow.test.js` (the mode and the ways in and back, the social door, the badge, the column
+of pages and its keys, the focus, the cards and the foot, the scrolls kept, the toast's foot, the online count, the
+sheet, the status widget's read) and the header's tiles in `test/net/guild/guild2_client.test.js`;
+`tools/mutants/guildwindow.json`, 39 of 39 dead (one, the body's place, survived the first run: the fake document
+never clamps a scroll, so the pin's body does now).
+
+| Host | GUILD-WINDOW |
+|---|---|
+| `scenes/world.js` | nothing new to wire: the panel it makes (`createSocialPanel`) is the window while its Guild tab is up |
+| `scenes/worldModes.js` | nothing to wire: the hall's chest opens the window at its Vault page, through the same `openGuild` |
 | `scenes/exterior.js` | FLAGGED, nothing to wire: the single-location dev host has no online guild |
 | `scenes/dungeonContext.js` | nothing to wire: the Guild tab is world.js's on every face |
 
@@ -200,14 +286,14 @@ Pins: `test/guildseen.test.js` (the service through the real Worker, the law, th
 may do (the four power tables in words); the Treasury page says which of its gold buys a hall or a new name, and its
 silver lines say which way they went (a Tribute, an upkeep, a patron's bid never "put in"); the Settings page lists
 everything that holds a guild that would go before the press, the guildmaster's view carrying it (one read); the Overview says where the
-rest is run; a character in no guild is told what a guild is for. AUDIT GUILD3 (`01-Overview/Audit-Guild3.md`) made each
+rest is run; a character in no guild is told what a guild is for. AUDIT GUILD3 (`01-Overview/audits/Audit-Guild3.md`) made each
 truer: the rank list says what a rank may not do and every act the service gates by rank; a silver line the service made
 is the guild's; the list of holds is the gate's own (one list), an open writ no "treasury full", the silver's room said
 before the press, and a refusal's word the page cannot read again never a lock.
 
 ## Pins
 
-`test/guild2_service.test.js` (the service, through the real Worker) and `test/guild2_client.test.js` (the laws, the
+`test/net/guild2_service.test.js` (the service, through the real Worker) and `test/net/guild/guild2_client.test.js` (the laws, the
 art, the book, the door, the pages); `tools/mutants/guild2.json`.
 
 ## The audit (2026-10-03, Mac: "Audit this")

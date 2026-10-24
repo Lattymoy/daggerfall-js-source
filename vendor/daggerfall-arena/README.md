@@ -49,11 +49,11 @@ finds each in the player's ARCH3D and compares every triangle - the same three c
 written as **18 placements** (the search meets 310 placements of 33 models whose corners all stand in the mesh - the
 three texture sets of one shape, and shapes that overlap; each triangle is claimed once, the placement that copies the
 most with its own pictures first, so 18 carry all 365): the model id, the turn (a mirror in x, then quarter turns about +Y -
-`src/world/arenaModel.js` `pieceTransform`), where it stands, which of its triangles stand (Kamer trimmed some), and
+`src/world/arena/arenaModel.js` `pieceTransform`), where it stands, which of its triangles stand (Kamer trimmed some), and
 where he gave a copied triangle another of Daggerfall's pictures (39 of them), which picture. The runtime rebuilds
 each from the player's own ARCH3D. Rebuilt and merged, the model is the bundle's mesh again: every one of the 5,138
 triangles, its corners, its uvs, its winding and its picture (verified 2026-10-02 against ARENA2; the test that
-re-runs it is `test/arena1_extract.test.js`). Four triangles at a copy's corners whose uvs Kamer moved are his, and
+re-runs it is `test/tooling/arena1_extract.test.js`). Four triangles at a copy's corners whose uvs Kamer moved are his, and
 stay in the mesh.
 
 ## What is NOT here, and why

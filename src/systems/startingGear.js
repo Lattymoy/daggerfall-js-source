@@ -30,10 +30,10 @@
 import { addItem, addGoldPieces } from './inventory.js';   // E4: gold is the counter, not a bag stack
 import { giveWallet, isWalletItem } from './walletItem.js';   // WALLET1: the wallet rides the port's own tail
 import { equipItem } from './equip.js';
-import { templateByIndex, mintCondition, setItemFields } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
+import { templateByIndex, mintCondition, setItemFields } from './item/itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { createWeapon } from '../combat/enemyEquipment.js';   // ItemBuilder.CreateWeapon's one home (the arrow arm)
-import { getBool } from './settings.js';   // SETT: PlayerTorchFromItems
+import { getBool } from './settings/settings.js';   // SETT: PlayerTorchFromItems
 import { survivalOn } from './survival/switch.js';   // AUDIT SURV E: the survival kit reaches the character chargen makes
 import { startingProvisions, startingCampfire } from './survival/items.js';
 import { sharedClockOn } from './worldTick.js';   // REST2: online the Campfire is the rest's
@@ -138,10 +138,13 @@ export function assignStartingGear(entity, { classIndex = 0, isCustom = false, r
     for (let i = 0; i < 2; i++) add({ group: 'UselessItems2', templateIndex: CANDLE });
   }
 
-  // AUDIT SURV E: the mod's OnStartGame kit, plus the port's fire kit (survival/items.js startingProvisions),
-  // AFTER DFU's own bag (the spellbook first, the clothes, the class kit, the torches - 17f's order holds). It
-  // rode equip.js's seedStartingEquipment alone - the retired PRE-CHARGEN fallback - so a character who came
-  // through chargen set out with no water, no food, no gear and no fire while the needs drained. Casual and Hard alone, by decision (Mac, 2026-09-23: "No, not off.. theres no reason to have it in off" - SURV-KIT, withdrawn).
+  // AUDIT SURV E: the mod's own start (OnStartGame and NewCharEffects), plus the port's Campfire (survival/items.js
+  // startingProvisions), AFTER DFU's own bag (the spellbook first, the clothes, the class kit, the torches - 17f's
+  // order holds). It rode equip.js's seedStartingEquipment alone - the retired PRE-CHARGEN fallback - so a character
+  // who came through chargen set out with no water, no food, no gear and no fire while the needs drained. Every tier
+  // with the arc on - Boons, Casual and Hard - and never Off, by decision (Mac, 2026-09-23: "No, not off.. theres no
+  // reason to have it in off" - SURV-KIT, withdrawn). AUDIT C&C I7: this said "Casual and Hard alone" - Boons, the
+  // fourth tier, is the arc on and sets out with the kit too.
   addSurvivalProvisions(entity, added);
   addStartingGold(entity, STARTING_GOLD);
   return added;
@@ -150,7 +153,7 @@ export function assignStartingGear(entity, { classIndex = 0, isCustom = false, r
 /** The port's own tail (AUDIT SURV E), one home: rides DFU's kit above and
  *  a mod's kit alike (RRI2's assignSkillEquipment), after the bag. */
 export function addSurvivalProvisions(entity, added = []) {
-  if (survivalOn()) for (const it of startingProvisions()) { addItem(entity.items, it); added.push(it); }
+  if (survivalOn()) for (const it of startingProvisions(entity)) { addItem(entity.items, it); added.push(it); }   // AUDIT C&C I7: the character's own wardrobe for the start's shoes and cloak
   // REST2: online the Campfire is the rest's - a character set out with the arc Off still carries one
   else if (sharedClockOn()) { const it = startingCampfire(); if (it) { addItem(entity.items, it); added.push(it); } }
   // WALLET1: and the wallet, whatever the switches (systems/walletItem.js) - the kit a new character sets out with holds

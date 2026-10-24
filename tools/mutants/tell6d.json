@@ -5,7 +5,7 @@
     "old": "aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.4, speed: 1.3 }),",
     "new": "aimed: Object.freeze({ windup: 0.6, halfW: 0.5, mult: 1.4, speed: 1.3 }),",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.4, speed: 1.3 }),",
     "new": "aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.25, speed: 1.3 }),",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.4, speed: 1.3 }),",
     "new": "aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.4, speed: 1 }),",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "aimed: Object.freeze({ windup: 0.6, halfW: 0.25, mult: 1.4, speed: 1.3 }),",
     "new": "aimed: Object.freeze({ windup: 0.8, halfW: 0.25, mult: 1.4, speed: 1.3 }),",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -41,8 +41,8 @@
     "old": "  AIMED_SHARE: 1 / 3,",
     "new": "  AIMED_SHARE: 1,",
     "tests": [
-      "test/tell6d_aimed.test.js",
-      "test/tell1_poise.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js",
+      "test/systems/tell1_poise.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "along <= (b.ahead ?? 0) && Math.abs(across) <= BLOW.aimed.halfW;",
     "new": "along <= 99 && Math.abs(across) <= BLOW.aimed.halfW;",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ],
     "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): inBlow lives in the leaf ai/blowShapes.js since AUDIT ARENA-LADDER - the same line, its new file."
   },
@@ -61,7 +61,7 @@
     "old": "const W = BLOW.aimed.halfW, inside = along >= -0.3 && along <= ahead && Math.abs(across) <= W;",
     "new": "const W = BLOW.aimed.halfW, inside = along >= -0.3 && along <= 99 && Math.abs(across) <= W;",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "      else if (b.kind === 'aimed') gl.uniform4f(U.uP, b.ahead ?? 0, P.halfW, 0, 0);\n",
     "new": "",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "(Number.isFinite(ahead) && (kind === 'leap' || kind === 'aimed' || kind === 'pyre') ?",
     "new": "(Number.isFinite(ahead) && (kind === 'leap' || kind === 'pyre') ?",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "'arrow' : 'melee', ...(blowInfo ?? {}) });",
     "new": "'arrow' : 'melee' });",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "      const step = MISSILE_SPEED * (m.speedScale ?? 1) * dt;",
     "new": "      const step = MISSILE_SPEED * dt;",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "      const step = MISSILE_SPEED * (m.speedScale ?? 1) * dt;",
     "new": "      const step = MISSILE_SPEED * dt;",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "  if (!shot?.fired) return null;\n  ai._blowShot = null;",
     "new": "  if (!shot?.fired) return null;",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "  if (!shot?.fired) return null;\n  ai._blowShot = null;",
     "new": "  if (!shot) return null;\n  ai._blowShot = null;",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "  return [Math.sin(shot.yaw) * h, dir[1], Math.cos(shot.yaw) * h];",
     "new": "  return dir;",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "  return shot ? { aimed: true, speedScale: BLOW.aimed.speed } : null;",
     "new": "  return shot ? { aimed: true } : null;",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -151,7 +151,7 @@
     "old": "export function aimedBlowInfo(m) { return m?.aimed ? AIMED_INFO : null; }",
     "new": "export function aimedBlowInfo(m) { return null; }",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "old": "c.land = (landed && c.blow.kind !== 'aimed' &&",
     "new": "c.land = (landed &&",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -169,16 +169,16 @@
     "old": "registerBlowTakenMod('tell-aimed', (attacker, target, weapon, info) => (info?.aimed ? BLOW.aimed.mult : 1));",
     "new": "",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
     "name": "TELL6d-every-archer",
     "file": "src/ai/tactics.js",
-    "old": "  return !!ent && wholeSet(ent) && !!ai?.hasBowAttack && ent.mobileType >= 128;",
-    "new": "  return !!ent && !!ai?.hasBowAttack && ent.mobileType >= 128;",
+    "old": "  return !!ent && wholeSet(ent) && !!ai?.hasBowAttack && isClassEnemyId(ent.mobileType);",
+    "new": "  return !!ent && !!ai?.hasBowAttack && isClassEnemyId(ent.mobileType);",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "    ai._aimReady = has && key === LOCAL &&",
     "new": "    ai._aimReady = false && key === LOCAL &&",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "      if (ai._aimReady) { beginWindup(ai, s, ent, 'aimed', dx, dz, now); return windupTurn(ai, s, now, skipped); }",
     "new": "",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "  if (shape === 'aimed') b.ahead = Math.hypot(dx, dz);   // TELL6d: its line to me, locked",
     "new": "  if (shape === 'aimed') b.ahead = 3;   // TELL6d: its line to me, locked",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "  const swings = shape !== 'aimed' && shape !== 'pyre';",
     "new": "  const swings = shape !== 'pyre';",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "  if (chain === 0 && !sig && shape !== 'aimed' && shape !== 'pyre' && !GAP_CLOSERS.includes(shape) && feints(",
     "new": "  if (chain === 0 && !sig && shape !== 'pyre' && !GAP_CLOSERS.includes(shape) && feints(",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "    if (atMe) ai._blowShot = { yaw: b0.yaw, at: now, fired: false };",
     "new": "",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -241,25 +241,25 @@
     "old": "    s.blowReady = cooled; s.state = 'wait'; s.blow = null;\n    return false;\n  }",
     "new": "    s.blowReady = cooled; s.state = 'overreach'; s.until = now + 1; s.blow = null;\n    return false;\n  }",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
     "name": "TELL6d-never-drawn",
-    "file": "src/characters/enemyAttack.js",
+    "file": "src/characters/enemy/enemyAttack.js",
     "old": "      if (ai._blowShot && !ai._blowShot.fired) {",
     "new": "      if (false) {",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
     "name": "TELL6d-never-asked",
-    "file": "src/characters/enemyAttack.js",
+    "file": "src/characters/enemy/enemyAttack.js",
     "old": "          if (ai._aimReady === true && this.rolls() < TELL.AIMED_SHARE) { ai._wantAimed = true; continue; }",
     "new": "",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "blowInfo: m.aimed ? aimedBlowInfo(m) : null,",
     "new": "blowInfo: null,",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "blowInfo: m.aimed ? aimedBlowInfo(m) : null,",
     "new": "blowInfo: null,",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -286,7 +286,7 @@
     "old": "blowInfo: m.aimed ? aimedBlowInfo(m) : null,",
     "new": "blowInfo: null,",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": "blowInfo: m.aimed ? aimedBlowInfo(m) : null,",
     "new": "blowInfo: null,",
     "tests": [
-      "test/tell6d_aimed.test.js"
+      "test/characters/enemy/tell6d_aimed.test.js"
     ]
   }
 ]

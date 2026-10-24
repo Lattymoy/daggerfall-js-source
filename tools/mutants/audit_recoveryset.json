@@ -1,0 +1,431 @@
+[
+  {
+    "name": "A1-the-code-not-asked",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (recoveryLeft(player.recovery_hash) !== null) {\n    // a guess at a code",
+    "new": "  if (false) {\n    // a guess at a code",
+    "tests": [
+      "test/server/recoveryset.test.js",
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "A1-a-wrong-code-answers-a-set",
+    "file": "server-account/src/accounts.js",
+    "old": "    if (!canon || !ok) return { error: 'bad-code' };\n    await clearRate({ db }, `recover:",
+    "new": "    await clearRate({ db }, `recover:",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "A1-the-row-shape-ignored",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (recoveryLeft(player.recovery_hash) !== null) {\n    // a guess at a code",
+    "new": "  if (true) {\n    // a guess at a code",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "A1-the-code-unthrottled",
+    "file": "server-account/src/accounts.js",
+    "old": "    if (await overRate({ db, nowS }, `recover:${player.handle_lc}`)) return { error: 'rate' };\n",
+    "new": "",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "A1-a-right-code-never-forgives",
+    "file": "server-account/src/accounts.js",
+    "old": "    await clearRate({ db }, `recover:${player.handle_lc}`);\n  }\n  const codes = mintRecoverySet(rand);",
+    "new": "  }\n  const codes = mintRecoverySet(rand);",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "C3-a-bucket-of-its-own",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (!player.password) return { error: 'not-registered' };\n  if (await overRate({ db, nowS }, `login:${player.handle_lc}`)) return { error: 'rate' };\n  if (!await verifyPassword(password, player.password, { subtle })) return { error: 'bad-login' };\n  await clearRate({ db }, `login:${player.handle_lc}`);\n  if (recoveryLeft(",
+    "new": "  if (!player.password) return { error: 'not-registered' };\n  if (await overRate({ db, nowS }, `codes:${player.handle_lc}`)) return { error: 'rate' };\n  if (!await verifyPassword(password, player.password, { subtle })) return { error: 'bad-login' };\n  await clearRate({ db }, `login:${player.handle_lc}`);\n  if (recoveryLeft(",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "C4-a-right-password-never-forgives",
+    "file": "server-account/src/accounts.js",
+    "old": "  await clearRate({ db }, `login:${player.handle_lc}`);\n  if (recoveryLeft(",
+    "new": "  if (recoveryLeft(",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "C4-rate-as-400",
+    "file": "server-account/src/index.js",
+    "old": "r.error === 'rate' ? 429 : r.error === 'bad-login' || r.error === 'bad-code' ? 401 : r.error === 'codes-moved' ? 409 : 400",
+    "new": "r.error === 'bad-login' || r.error === 'bad-code' ? 401 : r.error === 'codes-moved' ? 409 : 400",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "C4-codes-moved-as-400",
+    "file": "server-account/src/index.js",
+    "old": "r.error === 'rate' ? 429 : r.error === 'bad-login' || r.error === 'bad-code' ? 401 : r.error === 'codes-moved' ? 409 : 400",
+    "new": "r.error === 'rate' ? 429 : r.error === 'bad-login' || r.error === 'bad-code' ? 401 : 400",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "A4-the-race-loser-told-bad-code",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (!spent.meta.changes) return { error: 'codes-moved' };",
+    "new": "  if (!spent.meta.changes) return { error: 'bad-code' };",
+    "tests": [
+      "test/server/audit_recoveryset.test.js",
+      "test/server/audit68_backend.test.js"
+    ]
+  },
+  {
+    "name": "A4-the-recover-route-409",
+    "file": "server-account/src/index.js",
+    "old": "r.error === 'rate' ? 429 : r.error === 'codes-moved' ? 409 : 401, origin)",
+    "new": "r.error === 'rate' ? 429 : 401, origin)",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "A2-a-legacy-row-hashed-as-a-set",
+    "file": "server-account/src/accounts.js",
+    "old": "    set ? hashRecoverySet(codes, { subtle, rand }) : hashPassword(codeForHashing(codes[0]), { subtle, rand }),",
+    "new": "    hashRecoverySet(codes, { subtle, rand }),",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "A2-the-old-build-answered-the-set",
+    "file": "server-account/src/accounts.js",
+    "old": "  return set ? { recoveryCodes: codes, handle } : { recoveryCode: codes[0], handle };",
+    "new": "  return { recoveryCodes: codes, recoveryCode: codes[0], handle };",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "A2-the-old-build-recovers-into-a-set",
+    "file": "server-account/src/accounts.js",
+    "old": "  const one = set ? null : mintRecoveryCode(rand);",
+    "new": "  const one = null;",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "A2-the-route-drops-the-ask-at-register",
+    "file": "server-account/src/index.js",
+    "old": "legal: { terms: body.terms, privacy: body.privacy }, set: body.set === true });",
+    "new": "legal: { terms: body.terms, privacy: body.privacy }, set: false });",
+    "tests": [
+      "test/server/recoveryset.test.js",
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "A2-the-route-drops-the-ask-at-recover",
+    "file": "server-account/src/index.js",
+    "old": "code: body.code, password: body.password, set: body.set === true });",
+    "new": "code: body.code, password: body.password, set: false });",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "A2-this-build-never-asks-at-register",
+    "file": "src/net/accountClient.js",
+    "old": "{ handle, password, ...legalFields(accepted), set: true });",
+    "new": "{ handle, password, ...legalFields(accepted) });",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "A2-this-build-never-asks-at-recover",
+    "file": "src/net/accountClient.js",
+    "old": "{ handle, code, password, set: true });",
+    "new": "{ handle, code, password });",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "A5-the-floor",
+    "file": "server-account/src/password.js",
+    "old": "export const RECOVERY_CODE_ITERS = 10_000;",
+    "new": "export const RECOVERY_CODE_ITERS = 1000;",
+    "tests": [
+      "test/server/recoveryset.test.js",
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "B6-the-row-unnamed",
+    "file": "server-account/src/accounts.js",
+    "old": ": fresh ? { recoveryCodes: fresh, codesLeft: fresh.length, handle: player.handle }",
+    "new": ": fresh ? { recoveryCodes: fresh, codesLeft: fresh.length }",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "B6-the-typing-named",
+    "file": "src/ui/accountFlow.js",
+    "old": "    self.codesFor = typeof r.data.handle === 'string' ? r.data.handle : v('handle');   // AUDIT RECOVERY-SET B6",
+    "new": "    self.codesFor = v('handle');   // AUDIT RECOVERY-SET B6",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "C1-the-register-shown-one",
+    "file": "src/ui/accountFlow.js",
+    "old": "    self.recoveryCodes = codesOf(r.data);\n    self.codesFor",
+    "new": "    self.recoveryCodes = codesOf({ recoveryCode: r.data.recoveryCodes?.[0] });\n    self.codesFor",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "B1-close-on-the-code-stage",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "    if (onClose && stage !== 'code') acts.append(",
+    "new": "    if (onClose) acts.append(",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "B1-close-live-while-busy",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "{ key: 'close', disabled: busy }",
+    "new": "{ key: 'close' }",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "B1-the-window-closes-over-codes",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "const accountMayClose = () => !acctFlow || (acctFlow.stage !== 'code' && !acctFlow.busy);",
+    "new": "const accountMayClose = () => true;",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "B1-a-flow-per-render",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  const fresh = !acctFlow;",
+    "new": "  const fresh = true;",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "B1-escape-around-the-guard",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  const back = accountOpen ? () => closeAccount()",
+    "new": "  const back = accountOpen ? () => { accountOpen = false; render(); }",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "B3-the-row-gone-from-the-section",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "      recoveryRow();   // RECOVERY-SET\n",
+    "new": "",
+    "tests": [
+      "test/server/recoveryset.test.js",
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "B4-say-off-the-stage",
+    "file": "src/ui/accountFlow.js",
+    "old": "    if (self.stage !== 'code') return;\n    self.error = bad ? sentence : '';",
+    "new": "    self.error = bad ? sentence : '';",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "B4-the-note-outlives-the-codes",
+    "file": "src/ui/accountFlow.js",
+    "old": "    self.note = ''; self.error = '';   // AUDIT RECOVERY-SET B4",
+    "new": "    // AUDIT RECOVERY-SET B4",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "C2-go-keeps-the-codes",
+    "file": "src/ui/accountFlow.js",
+    "old": "    if (stage !== 'code') { self.recoveryCodes = null; self.codesFor = ''; }",
+    "new": "    if (stage !== 'code') { self.codesFor = ''; }",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "B2-nowrap-above-a-phone",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".card .acctcode li code { white-space: nowrap; letter-spacing: 0.06em;",
+    "new": ".card .acctcode li code { letter-spacing: 0.06em;",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "B2-nowrap-on-a-phone",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "letter-spacing: 0.04em; white-space: nowrap; }",
+    "new": "letter-spacing: 0.04em; }",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "B2-two-columns-promised",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".card .acctcode ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }",
+    "new": ".card .acctcode ol { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(17em, 1fr)); gap: 8px; }",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "B5-the-acknowledgement-singular",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "'account.card.act.wroteIt', 'I have written them down'",
+    "new": "'account.card.act.wroteIt', 'I have written it down'",
+    "tests": [
+      "test/server/audit_recoveryset.test.js",
+      "test/ui/enhanced/enhancedaccount.test.js"
+    ]
+  },
+  {
+    "name": "B7-saved-before-it-is",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "'account.codes.saved', 'Saving as {name}.'",
+    "new": "'account.codes.saved', 'Saved as {name}.'",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "C9-unnumbered",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "el('span', 'acctcodeno', `${i + 1}.`)",
+    "new": "el('span', 'acctcodeno', `${i}.`)",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "C9-a-refused-copy-unsaid",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "'The browser blocked copying to the clipboard. Save them as a file instead.'), true);",
+    "new": "'The browser blocked copying to the clipboard. Save them as a file instead.'));",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "C9-a-refused-save-unsaid",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "'The file could not be saved. Copy them instead.'), true);",
+    "new": "'The file could not be saved. Copy them instead.'));",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "C9-the-url-kept",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "      setTimeout(() => URL.revokeObjectURL(url), 1000);\n",
+    "new": "",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "C9-the-link-left",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "      doc.body.append(link); link.click(); link.remove();",
+    "new": "      doc.body.append(link); link.click();",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "C9-untyped",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "], { type: 'text/plain' }));",
+    "new": "]));",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "C9-an-empty-answer-shown",
+    "file": "src/ui/accountFlow.js",
+    "old": "    if (!codes.length) return refuse(accountRefusalText('server'));\n",
+    "new": "",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "C9-the-count-over-a-refusal",
+    "file": "src/ui/accountFlow.js",
+    "old": "      if (self.stage === 'in' && !self.error && Number.isSafeInteger(r.data.codesLeft)) {",
+    "new": "      if (self.stage === 'in' && Number.isSafeInteger(r.data.codesLeft)) {",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "C9-the-press-live-while-busy",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "{ disabled: !!flow.busy, key: 'codes' }",
+    "new": "{ key: 'codes' }",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "C11-a-guest-read-as-zero",
+    "file": "server-account/src/accounts.js",
+    "old": "    recoveryLeft: recoveryLeft(player.recovery_hash),",
+    "new": "    recoveryLeft: recoveryLeft(player.recovery_hash) ?? 0,",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "C5-recover-skips-the-work-for-nobody",
+    "file": "server-account/src/accounts.js",
+    "old": "  const { ok, rest } = await matchRecoveryCode(canon, player?.recovery_hash ?? null, { subtle });",
+    "new": "  const { ok, rest } = player ? await matchRecoveryCode(canon, player.recovery_hash, { subtle }) : { ok: false, rest: null };",
+    "tests": [
+      "test/server/audit_recoveryset.test.js"
+    ]
+  }
+]

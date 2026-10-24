@@ -5,7 +5,7 @@
     "old": "    const px = ohReturn?.pixel ?? playerTravelPixel();\n    const courtGate = modes?.gateArenaGate?.() ?? null;",
     "new": "    const courtGate = modes?.gateArenaGate?.() ?? null;",
     "tests": [
-      "test/fb0930_respawnground.test.js"
+      "test/player/fb0930_respawnground.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (!(eye[0] >= 0 && eye[0] < TERRAIN_SIZE && eye[2] >= 0 && eye[2] < TERRAIN_SIZE)) {",
     "new": "    if (false) {",
     "tests": [
-      "test/fb0930_respawnground.test.js"
+      "test/player/fb0930_respawnground.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (!(eye[0] >= 0 && eye[0] < TERRAIN_SIZE && eye[2] >= 0 && eye[2] < TERRAIN_SIZE)) {",
     "new": "    if (true) {",
     "tests": [
-      "test/fb0930_respawnground.test.js"
+      "test/player/fb0930_respawnground.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      if (walkMode) player.spawn(TERRAIN_SIZE / 2, player.pos[1], TERRAIN_SIZE / 2);\n      cam.pos = walkMode ? player.eyeAt()",
     "new": "      cam.pos = walkMode ? player.eyeAt()",
     "tests": [
-      "test/fb0930_respawnground.test.js"
+      "test/player/fb0930_respawnground.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "eye[0] < TERRAIN_SIZE && eye[2] >= 0 && eye[2] < TERRAIN_SIZE)) {",
     "new": "eye[0] < TERRAIN_SIZE && eye[2] < TERRAIN_SIZE)) {",
     "tests": [
-      "test/fb0930_respawnground.test.js"
+      "test/player/fb0930_respawnground.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "eye[2] >= 0 && eye[2] < TERRAIN_SIZE)) {",
     "new": "eye[2] >= 0)) {",
     "tests": [
-      "test/fb0930_respawnground.test.js"
+      "test/player/fb0930_respawnground.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "eye[0] >= 0 && eye[0] < TERRAIN_SIZE && eye[2] >= 0",
     "new": "eye[0] >= 0 && eye[2] >= 0",
     "tests": [
-      "test/fb0930_respawnground.test.js"
+      "test/player/fb0930_respawnground.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "eye[0] >= 0 && eye[0] < TERRAIN_SIZE && eye[2] >= 0",
     "new": "eye[0] > 0 && eye[0] < TERRAIN_SIZE && eye[2] >= 0",
     "tests": [
-      "test/fb0930_respawnground.test.js"
+      "test/player/fb0930_respawnground.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      cam.pos = walkMode ? player.eyeAt() : [TERRAIN_SIZE / 2, cam.pos[1], TERRAIN_SIZE / 2];",
     "new": "      cam.pos = walkMode ? player.eyeAt() : [TERRAIN_SIZE / 2, 0, TERRAIN_SIZE / 2];",
     "tests": [
-      "test/fb0930_respawnground.test.js"
+      "test/player/fb0930_respawnground.test.js"
     ]
   }
 ]

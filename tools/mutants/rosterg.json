@@ -5,18 +5,18 @@
     "old": "        const named = others.slice(0, CHAT_ROSTER_MAX).map((b) => badged({ id: b.id, name: b.name, sub: b.sub }, b));",
     "new": "        const named = [];",
     "tests": [
-      "test/rosterg.test.js",
-      "test/chat1.test.js"
+      "test/net/rosterg.test.js",
+      "test/net/chat1.test.js"
     ]
   },
   {
     "name": "G2-channel-join-not-said",
     "file": "server/src/index.js",
-    "old": "        this._fanRoster(ws, said);   // SCALE5a: the index walked in place, by a method of its own; SCALE5b: the second wire's batched\n",
+    "old": "if (!who.hid) this._fanRoster(ws, said);",
     "new": "",
     "tests": [
-      "test/rosterg.test.js",
-      "test/chat1.test.js"
+      "test/net/rosterg.test.js",
+      "test/net/chat1.test.js"
     ],
     "note": "SCALE5a (re-aimed by content): the fans walk the index in place (`_fanBut`, `_sayLine`). SCALE5b (re-aimed by content): the channel's join by `_fanRoster`."
   },
@@ -26,8 +26,8 @@
     "old": "    // ROSTER-G: a channel says its leaves now, as it says its joins - the roster beside the chat is everyone online\n",
     "new": "    if (isChatRoom(a.key)) return;\n",
     "tests": [
-      "test/rosterg.test.js",
-      "test/chat1.test.js"
+      "test/net/rosterg.test.js",
+      "test/net/chat1.test.js"
     ]
   },
   {
@@ -36,8 +36,8 @@
     "old": "name: who.name, sub: who.subject, ...(jn != null ? { n: jn } : {}) }, who));",
     "new": "name: who.name, sub: who.subject, look: m.look, ...(jn != null ? { n: jn } : {}) }, who));",
     "tests": [
-      "test/rosterg.test.js",
-      "test/chat1.test.js"
+      "test/net/rosterg.test.js",
+      "test/net/chat1.test.js"
     ],
     "note": "AUDIT SCALE5a (re-aimed by content): the join says the room's count beside it. SCALE5a (re-aimed by content): the join says `re` for a reconnect beside it. SCALE5c (re-aimed by content): the join n reads the hub count on a shard"
   },
@@ -47,7 +47,7 @@
     "old": "others.slice(0, CHAT_ROSTER_MAX).map(",
     "new": "others.map(",
     "tests": [
-      "test/rosterg.test.js"
+      "test/net/rosterg.test.js"
     ]
   },
   {
@@ -56,18 +56,18 @@
     "old": ": others.length + 1, v: RELAY_VERSION",
     "new": ": named.length + 1, v: RELAY_VERSION",
     "tests": [
-      "test/rosterg.test.js"
+      "test/net/rosterg.test.js"
     ],
     "note": "SCALE5c (re-aimed by content): the welcome n reads the hub count on a shard"
   },
   {
     "name": "G7-channel-says-host-on-leave",
     "file": "server/src/index.js",
-    "old": "if (!isChatRoom(a.key) && this._leads(a, ws)) this._sayHost",
-    "new": "if (this._leads(a, ws)) this._sayHost",
+    "old": "if (!isChatRoom(a.key) && this._leaveMovesSeat(a, ws)) this._sayHost",
+    "new": "if (this._leaveMovesSeat(a, ws)) this._sayHost",
     "tests": [
-      "test/rosterg.test.js",
-      "test/chat1.test.js"
+      "test/net/rosterg.test.js",
+      "test/net/chat1.test.js"
     ]
   },
   {
@@ -76,7 +76,7 @@
     "old": "  const total = Number.isFinite(n) && n > rows.length ? n : rows.length;",
     "new": "  const total = rows.length;",
     "tests": [
-      "test/rosterg.test.js"
+      "test/net/rosterg.test.js"
     ]
   },
   {
@@ -85,7 +85,7 @@
     "old": "  const total = Number.isFinite(n) && n > rows.length ? n : rows.length;",
     "new": "  const total = Number.isFinite(n) ? n : rows.length;",
     "tests": [
-      "test/rosterg.test.js"
+      "test/net/rosterg.test.js"
     ]
   },
   {
@@ -94,7 +94,7 @@
     "old": "      this.roomCount = Number.isFinite(m.n) && m.n > keep.size + 1 ? m.n : null;\n",
     "new": "",
     "tests": [
-      "test/rosterg.test.js"
+      "test/net/rosterg.test.js"
     ]
   },
   {
@@ -103,8 +103,8 @@
     "old": "      if (dup.has(r.name.toLowerCase())) line.append(el('span', 'dfchat-who-tag', '#' + r.tag));",
     "new": "      line.append(el('span', 'dfchat-who-tag', '#' + r.tag));",
     "tests": [
-      "test/rosterg.test.js",
-      "test/chatroster_namefilter.test.js"
+      "test/net/rosterg.test.js",
+      "test/net/chatroster_namefilter.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "this.roomCount = Number.isFinite(m.n) && m.n > keep.size + 1 ? m.n : null;",
     "new": "this.roomCount = Number.isFinite(m.n) ? m.n : null;",
     "tests": [
-      "test/rosterg.test.js"
+      "test/net/rosterg.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "if (this.roomCount != null && m.id !== this.id) { if (Number.isSafeInteger(m.n) && m.n >= 1) this.roomCount = m.n; else if (this._rooms.get(room)?.has(m.id) || !this.peers.has(m.id)) this.roomCount = Math.max(0, this.roomCount - 1); } ",
     "new": "",
     "tests": [
-      "test/rosterg.test.js"
+      "test/net/rosterg.test.js"
     ],
     "note": "AUDIT SCALE5a (re-aimed by content): the leave takes the room's count when it says one. SCALE5a (re-aimed by content): a leave past the cut counts too."
   },
@@ -132,7 +132,7 @@
     "old": "else if (!this.peers.has(m.id)) this.roomCount++;",
     "new": "else this.roomCount++;",
     "tests": [
-      "test/rosterg.test.js"
+      "test/net/rosterg.test.js"
     ],
     "note": "AUDIT SCALE5a (re-aimed by content): the arithmetic stands for a relay that says no count. SCALE5a (re-aimed by content): a reconnect's join (`re`) counts nothing."
   }

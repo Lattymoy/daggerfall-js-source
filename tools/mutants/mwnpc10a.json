@@ -5,7 +5,7 @@
   "old": "{ if (sk !== null) a.swings = (a.swings + 1) & 0xffff; rec._mwSwingKey = sk; }",
   "new": "{ a.swings = (a.swings + 1) & 0xffff; rec._mwSwingKey = sk; }",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "{ if (hk !== null) a.hits = (a.hits + 1) & 0xffff; rec._mwHitKey = hk; }",
   "new": "{ rec._mwHitKey = hk; }",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "const keyOf = (k) => (typeof k === 'string' || Number.isFinite(k) ? k : null);",
   "new": "const keyOf = (k) => (k ?? null);",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "a.running = !!moving && !!running;",
   "new": "a.running = !!running;",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  },
  {
@@ -41,97 +41,97 @@
   "old": "  a.scale = scale > 0 ? scale : 1;\n",
   "new": "  a.scale = 1;\n",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  },
  {
   "name": "MWNPC10a-host-unmatched-bodied",
-  "file": "src/scenes/gateHost.js",
+  "file": "src/scenes/gate/gateHost.js",
   "old": "const look = b.shown && b.batch ? creatureLook({ mobileType: b.look.mobile }) : null;",
   "new": "const look = b.shown && b.batch ? { creature: ['any'] } : null;",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  },
  {
   "name": "MWNPC10a-host-falling-unoffered",
-  "file": "src/scenes/gateHost.js",
+  "file": "src/scenes/gate/gateHost.js",
   "old": "      for (const b of falling.values()) one(b, true);\n",
   "new": "",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  },
  {
   "name": "MWNPC10a-host-fallen-alive",
-  "file": "src/scenes/gateHost.js",
+  "file": "src/scenes/gate/gateHost.js",
   "old": "dead: dead ? 1 + ((b.i | 0) % 3) : 0 }), b.batch,",
   "new": "dead: 0 }), b.batch,",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  },
  {
   "name": "MWNPC10a-host-hit-unseen",
-  "file": "src/scenes/gateHost.js",
+  "file": "src/scenes/gate/gateHost.js",
   "old": "hitKey: dead ? null : Math.max(b.hurtAt ?? -Infinity, b.courtAt ?? -Infinity),",
   "new": "hitKey: null,",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  },
  {
   "name": "MWNPC10a-host-never-swings",
-  "file": "src/scenes/gateHost.js",
+  "file": "src/scenes/gate/gateHost.js",
   "old": "swingKey: dead ? null : b.wound,",
   "new": "swingKey: null,",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  },
  {
   "name": "MWNPC10a-boss-life-size",
-  "file": "src/scenes/gateCourt.js",
+  "file": "src/scenes/gate/gateCourt.js",
   "old": "scale: (body.scale ?? 1) * (profileOf(s).size ?? 1) }), shown,",
   "new": "scale: 1 }), shown,",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  },
  {
   "name": "MWNPC10a-boss-unoffered",
-  "file": "src/scenes/gateCourt.js",
+  "file": "src/scenes/gate/gateCourt.js",
   "old": "          bodiesLane.offer(rosterActor(bossRec, { id: 'boss',",
   "new": "          void (rosterActor(bossRec, { id: 'boss',",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  },
  {
   "name": "MWNPC10a-host-unasked",
-  "file": "src/scenes/gateCourt.js",
+  "file": "src/scenes/gate/gateCourt.js",
   "old": "        host.offerBodies(bodiesLane);\n",
   "new": "",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  },
  {
   "name": "MWNPC10a-bodies-undrawn",
-  "file": "src/scenes/gateCourt.js",
+  "file": "src/scenes/gate/gateCourt.js",
   "old": "      bodiesLane.draw(canvas, proj, view, eye, dt);\n    },",
   "new": "    },",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  },
  {
   "name": "MWNPC10a-lane-kept",
-  "file": "src/scenes/gateCourt.js",
+  "file": "src/scenes/gate/gateCourt.js",
   "old": "      bodiesLane.destroy();   // MWNPC10: and the bodies\n",
   "new": "",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  },
  {
@@ -140,16 +140,16 @@
   "old": "      r.scale = actor.scale > 0 ? actor.scale : 1;   // MWNPC10\n",
   "new": "",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  },
  {
   "name": "MWNPC10a-draw-unscaled",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "      const g = ow * this._scaleOf(b);",
   "new": "      const g = ow;",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  },
  {
@@ -158,7 +158,7 @@
   "old": "      if (isGateArena(dungeonLoc)) host.drawGateBodies?.(canvas, proj, view, mwv.eye, dt);   // MWNPC10:",
   "new": "      void 0;   // MWNPC10:",
   "tests": [
-   "test/mwnpc10_gate.test.js"
+   "test/net/gate/mwnpc10_gate.test.js"
   ]
  }
 ]

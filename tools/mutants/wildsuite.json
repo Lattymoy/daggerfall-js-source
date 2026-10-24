@@ -5,7 +5,7 @@
     "old": "return wildHallStandOf(_wm, px, py); }",
     "new": "return wildHallStand(px, py); }",
     "tests": [
-      "test/bootorder.test.js"
+      "test/scenes/bootorder.test.js"
     ],
     "why": "the pixel builder asking the session's wrapper, declared far below the first build: the dead zone the boot walk names"
   },
@@ -15,7 +15,7 @@
     "old": "    return gatedTransition(async (live) => {   // AUDIT 68 X3-transition-build-race\n",
     "new": "    if (host.wildDungeonGate && !(await host.wildDungeonGate(hit, fromLoad))) return false;\n    return gatedTransition(async (live) => {   // AUDIT 68 X3-transition-build-race\n",
     "tests": [
-      "test/audit68_worldmodes.test.js"
+      "test/scenes/audit68_worldmodes.test.js"
     ],
     "why": "the hub's wait awaited before the gate, as the zone first landed"
   },
@@ -25,7 +25,7 @@
     "old": "      if (!live()) return false;   // the world moved during the hub's word: no build at all\n",
     "new": "",
     "tests": [
-      "test/audit68_worldmodes.test.js"
+      "test/scenes/audit68_worldmodes.test.js"
     ]
   },
   {
@@ -34,7 +34,7 @@
     "old": "    const healKey = !!this.hooks.healCurse && code === HEAL_CURSE_KEY;",
     "new": "    if (this.hooks.healCurse && code === HEAL_CURSE_KEY) { audio.playOneShot(SOUND.ButtonClick, 1); this._healCurse(); return; }\n    const healKey = false;",
     "tests": [
-      "test/audit26_uiwindows.test.js"
+      "test/ui/audit26_uiwindows.test.js"
     ],
     "why": "the zone's first form: a second sound ahead of the hotkey arm's one"
   },
@@ -44,7 +44,7 @@
     "old": "if (this.hooks.healCurse && inRect(healCurseRect(!!this.hooks.reforge || !!this.hooks.lift), vx, vy)) { audio.playOneShot(SOUND.ButtonClick, 1); this._healCurse(); return true; }",
     "new": "if (this.hooks.healCurse && inRect(healCurseRect(!!this.hooks.reforge || !!this.hooks.lift), vx, vy)) { this._healCurse(); return true; }",
     "tests": [
-      "test/audit26_uiwindows.test.js"
+      "test/ui/audit26_uiwindows.test.js"
     ]
   },
   {
@@ -53,7 +53,7 @@
     "old": "export const bearsCurse = (entity) =>",
     "new": "export const isCursed = (entity) =>",
     "tests": [
-      "test/audit24_onehome.test.js"
+      "test/systems/talk/audit24_onehome.test.js"
     ]
   },
   {
@@ -62,7 +62,7 @@
     "old": "transform:translateX(-50%);z-index:30;min-width:260px",
     "new": "transform:translateX(-50%);z-index:9999;min-width:260px",
     "tests": [
-      "test/mwattach.test.js"
+      "test/scenes/mwattach.test.js"
     ],
     "why": "the zone's first number"
   }

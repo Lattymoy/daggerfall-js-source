@@ -1,92 +1,92 @@
 [
   {
     "name": "SD11f-the-way-home-walked-into",
-    "file": "src/scenes/sdEnd.js",
+    "file": "src/scenes/superDungeon/sdEnd.js",
     "old": "const inRet = !!ret && !ret.pressed && inSdPortal(",
     "new": "const inRet = !!ret && inSdPortal(",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
     "name": "SD11f-every-return-pressed-alone",
-    "file": "src/scenes/sdEnd.js",
+    "file": "src/scenes/superDungeon/sdEnd.js",
     "old": "if (retAt) ret = { ...standRet(retAt, yaw), risesAt: -Infinity, pressed: false, up: true };",
     "new": "if (retAt) ret = { ...standRet(retAt, yaw), risesAt: -Infinity, pressed: true, up: true };",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
     "name": "SD11f-never-risen",
-    "file": "src/scenes/sdEnd.js",
+    "file": "src/scenes/superDungeon/sdEnd.js",
     "old": "    ret.lift = done ? 0 : -SD_RETURN_SIZE.h * 0.7 * (1 - stage(k, A.jambs));",
     "new": "    ret.lift = 0;",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
     "name": "SD11f-risen-at-once",
-    "file": "src/scenes/sdEnd.js",
+    "file": "src/scenes/superDungeon/sdEnd.js",
     "old": "    const k0 = ret.pressed ? (t - ret.risesAt) / SD_HOME_RISE_MS : 1,",
     "new": "    const k0 = 1,",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
     "name": "SD11f-the-rise-left-halfway",
-    "file": "src/scenes/sdEnd.js",
+    "file": "src/scenes/superDungeon/sdEnd.js",
     "old": "k = k0 < 0 ? 0 : k0 > 1 ? 1 : k0, n = ret.n;",
     "new": "k = k0 < 0 ? 0 : k0, n = ret.n;",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
     "name": "SD11f-no-toll",
-    "file": "src/scenes/sdEnd.js",
+    "file": "src/scenes/superDungeon/sdEnd.js",
     "old": "      if (ago < SD_HOME_SAY_MS) tollRiftBell(audio, [at[0], at[1] + SD_RETURN_SIZE.h / 2, at[2]]);\n",
     "new": "",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
     "name": "SD11f-tolled-to-a-late-page",
-    "file": "src/scenes/sdEnd.js",
+    "file": "src/scenes/superDungeon/sdEnd.js",
     "old": "      if (ago < SD_HOME_SAY_MS) tollRiftBell(",
     "new": "      if (true) tollRiftBell(",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
     "name": "SD11f-the-toll-at-the-rifts-pitch",
-    "file": "src/systems/sdRiftSound.js",
+    "file": "src/systems/superDungeon/sdRiftSound.js",
     "old": "distanceModel: 'linear', pitch: T.pitch })",
     "new": "distanceModel: 'linear', pitch: 1 })",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
     "name": "SD11f-the-toll-a-fifth",
-    "file": "src/systems/sdRiftSound.js",
+    "file": "src/systems/superDungeon/sdRiftSound.js",
     "old": "export const SD_HOME_TOLL = Object.freeze({ pitch: 4 / 3,",
     "new": "export const SD_HOME_TOLL = Object.freeze({ pitch: 3 / 2,",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
     "name": "SD11f-a-toll-that-throws",
-    "file": "src/systems/sdRiftSound.js",
+    "file": "src/systems/superDungeon/sdRiftSound.js",
     "old": "  } catch { return false; }   // a toll that cannot sound never costs the way home",
     "new": "  } finally { /* a toll that cannot sound never costs the way home */ }",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "      if (sdHomeAge() < SD_HOME_SAY_MS) sdSay(SD_HOME_TEXT.rises);",
     "new": "      void SD_HOME_SAY_MS;",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      if (sdHomeAge() < SD_HOME_SAY_MS) sdSay(",
     "new": "      if (true) sdSay(",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    return s?.fell ? sdFightLink.now() - (s.fell.at + SD_REM_SINK_MS) : null;",
     "new": "    return s?.fell ? sdFightLink.now() - s.fell.at : null;",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "sdEnd.standReturn(home, opts.sdHomeAge?.() ?? Infinity, { dynamicDraws });",
     "new": "sdEnd.standReturn(home, Infinity, { dynamicDraws });",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
@@ -131,62 +131,64 @@
     "old": "          sdHomeAge: () => host.sdHomeAge?.() ?? null,   // AUDIT SD II (L6 F16): how long ago it began to rise\n",
     "new": "",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
     "name": "SD11f-no-count-on-the-plaque",
-    "file": "src/scenes/sdEnd.js",
-    "old": "subs: n ? [riftTo, n] : [riftTo] }; }",
-    "new": "subs: [riftTo] }; }",
+    "file": "src/scenes/superDungeon/sdEnd.js",
+    "old": "subs: n ? [to, n] : [to] }; }",
+    "new": "subs: [to] }; }",
     "tests": [
-      "test/sd11f_scenes.test.js"
-    ]
+      "test/scenes/sd11f_scenes.test.js"
+    ],
+    "note": "AUDIT SD-THROUGH (re-aimed by content): the plaque's row read as it is read (B10)."
   },
   {
     "name": "SD11f-the-hours-by-the-second",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "return SD_COUNT_TEXT.fades(timerText(rec.until - now));",
     "new": "return SD_COUNT_TEXT.fades(`${Math.ceil((rec.until - now) / 3_600_000)}h`);",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
     "name": "SD11f-the-minutes-rounded-down",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "return SD_COUNT_TEXT.fades(timerText(rec.until - now));",
     "new": "return SD_COUNT_TEXT.fades(timerText(rec.until - now - 999));",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
     "name": "SD11f-the-collapse-uncounted",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "  if (ph === 'fell') return SD_COUNT_TEXT.collapses(timerText(rec.fellAt + SD_COLLAPSE_MS - now));\n",
     "new": "",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
     "name": "SD11f-another-slot-counted",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "  if (!rec || rec.s !== s) return null;\n  const ph = sdPhase(rec, now);\n  if (ph === 'fell') return SD_COUNT_TEXT",
     "new": "  if (!rec) return null;\n  const ph = sdPhase(rec, now);\n  if (ph === 'fell') return SD_COUNT_TEXT",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
     "name": "SD11f-the-count-unhanded",
     "file": "src/scenes/world.js",
-    "old": "returns: sdReturnStands(rec, s, now), count: sdRiftCount(rec, s, now), look:",
-    "new": "returns: sdReturnStands(rec, s, now), look:",
+    "old": "returns: sdReturnStands(rec, s, now), through: sdThroughStands(rec, s, now), count: sdRiftCount(rec, s, now), look:",
+    "new": "returns: sdReturnStands(rec, s, now), through: sdThroughStands(rec, s, now), look:",
     "tests": [
-      "test/sd11f_scenes.test.js"
-    ]
+      "test/scenes/sd11f_scenes.test.js"
+    ],
+    "note": "SD-THROUGH (re-aimed by content): the word carries `through` between."
   },
   {
     "name": "SD11f-the-count-unasked",
@@ -194,7 +196,7 @@
     "old": "riftCount: () => sdEndWord()?.count ?? null, look:",
     "new": "look:",
     "tests": [
-      "test/sd11f_scenes.test.js"
+      "test/scenes/sd11f_scenes.test.js"
     ]
   },
   {
@@ -203,7 +205,7 @@
     "old": "  return -Math.PI * 2 * TURNING_HZ.wheel * (s + e * e * (3 - 2 * e));",
     "new": "  return Math.PI * 2 * TURNING_HZ.wheel * (s + e * e * (3 - 2 * e));",
     "tests": [
-      "test/sd9c_turning.test.js"
+      "test/server/sd9c_turning.test.js"
     ]
   },
   {
@@ -212,7 +214,7 @@
     "old": "return -TAU * (s + e * e * (3.0 - 2.0 * e))",
     "new": "return TAU * (s + e * e * (3.0 - 2.0 * e))",
     "tests": [
-      "test/sd9c_turning.test.js"
+      "test/server/sd9c_turning.test.js"
     ]
   }
 ]

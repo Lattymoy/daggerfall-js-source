@@ -5,7 +5,7 @@
     "old": "    UNION SELECT player_id, character_id FROM saves WHERE created_at < 1790638734\n",
     "new": "",
     "tests": [
-      "test/fb0929_customs.test.js"
+      "test/server/fb0929_customs.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    SELECT player, char_id FROM homes WHERE bought_at < 1790638734\n    UNION SELECT player, char_id FROM guild_members",
     "new": "    SELECT player, char_id FROM guild_members",
     "tests": [
-      "test/fb0929_customs.test.js"
+      "test/server/fb0929_customs.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    UNION SELECT account, char_id FROM raid_cleanses WHERE at < 1790638734\n",
     "new": "",
     "tests": [
-      "test/fb0929_customs.test.js"
+      "test/server/fb0929_customs.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "FROM saves WHERE created_at < 1790638734",
     "new": "FROM saves WHERE created_at <= 1790638734",
     "tests": [
-      "test/fb0929_customs.test.js"
+      "test/server/fb0929_customs.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "         THEN 1 ELSE 0 END",
     "new": "         THEN 0 ELSE 0 END",
     "tests": [
-      "test/fb0929_customs.test.js"
+      "test/server/fb0929_customs.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  WHERE length(t.char_id) BETWEEN 4 AND 64 AND t.char_id NOT GLOB '*[^A-Za-z0-9_-]*'\n",
     "new": "  WHERE 1\n",
     "tests": [
-      "test/fb0929_customs.test.js"
+      "test/server/fb0929_customs.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    AND NOT (length(t.char_id) = 21 AND substr(t.char_id, 1, 1) = 'r' AND substr(t.char_id, 2) NOT GLOB '*[^0-9a-f]*');",
     "new": "    AND 1;",
     "tests": [
-      "test/fb0929_customs.test.js"
+      "test/server/fb0929_customs.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  WHERE EXISTS (SELECT 1 FROM realm_characters r WHERE r.player = homes.player AND r.origin_id = homes.char_id);",
     "new": "  WHERE 0;",
     "tests": [
-      "test/fb0929_customs.test.js"
+      "test/server/fb0929_customs.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "UPDATE OR IGNORE guild_members SET char_id = (",
     "new": "UPDATE guild_members SET char_id = (",
     "tests": [
-      "test/fb0929_customs.test.js"
+      "test/server/fb0929_customs.test.js"
     ]
   },
   {
@@ -86,16 +86,16 @@
     "old": "export const CHARACTER_TABLES = Object.freeze(['renown_tracks', 'homes', 'guild_members']);",
     "new": "export const CHARACTER_TABLES = Object.freeze(['renown_tracks', 'guild_members']);",
     "tests": [
-      "test/fb0929_customs.test.js"
+      "test/server/fb0929_customs.test.js"
     ]
   },
   {
     "name": "FB0929-door-never-asks",
-    "file": "src/ui/enhancedMenu.js",
-    "old": "  return ask(`Bring ${save.name} online?`, preview.join(' '), 'Bring online', () => { customsNow(save); });",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  return ask(t('menu.online.bringAsk', 'Bring {name} online?', { name: save.name }), preview.join(' '), t('menu.online.bring', 'Bring online'), () => { customsNow(save); });",
     "new": "  return customsNow(save);",
     "tests": [
-      "test/fb0929_customs.test.js"
+      "test/server/fb0929_customs.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  return before ? [...lines, ...CUSTOMS_PROMISE] : lines;",
     "new": "  return lines;",
     "tests": [
-      "test/fb0929_customs.test.js"
+      "test/server/fb0929_customs.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  if (called > 0) {\n    lines.push(before",
     "new": "  if (called > 0 && !before) {\n    lines.push(before",
     "tests": [
-      "test/fb0929_customs.test.js"
+      "test/server/fb0929_customs.test.js"
     ]
   }
 ]

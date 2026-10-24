@@ -1,29 +1,29 @@
 [
   {
     "name": "AUDIT-GN-G1-port-shutters-on-the-starboard-clip",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "animator(s > 0 ? 'galleon2/Gunport' : 'galleon2/GunportPort')",
     "new": "animator('galleon2/Gunport')",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN-G1-port-shutters-unmirrored",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "lidComps(s > 0 ? `galleon:gunportLid${i}` : `galleon:gunportLidPort${i}`)",
     "new": "lidComps(`galleon:gunportLid${i}`)",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN-G1-port-clip-swung-inboard",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "pair('galleon2/GunportPort', [0, 0, 0], [0, 0, -LID_OPEN_DEG]);",
     "new": "pair('galleon2/GunportPort', [0, 0, 0], [0, 0, LID_OPEN_DEG]);",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      if (s.x[index] < s.outX[index]) s.x[index] = s.outX[index];\n",
     "new": "",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "if (a) { a.SetBool('Opened', true); a.Play(OPENED_STATE); a.update(0); }",
     "new": "if (a) a.SetBool('Opened', true);",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "a.pending = { state: s, duration: 0, play: true, time: normalizedTime };",
     "new": "a.pending = { state: s, duration: 0 };",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if (laid) out.g = laid;\n",
     "new": "",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "const laid = SIDE_CODES.filter((_, i) => ((raw.g ?? 0) & (1 << i)) !== 0);",
     "new": "const laid = [];",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
@@ -77,43 +77,43 @@
     "old": "  if (raw.g !== undefined && !int(raw.g, 0, 15)) return null;\n",
     "new": "",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN-G3-peer-never-laid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (self?.laid?.length && realClock - self.real <= PEER_LAY_S) for (const side of self.laid)",
     "new": "if (false) for (const side of self.laid)",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN-G3-peer-laid-for-ever",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (self?.laid?.length && realClock - self.real <= PEER_LAY_S) for (const side of self.laid)",
     "new": "if (self?.laid?.length) for (const side of self.laid)",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN-G3-word-without-my-lay",
-    "file": "src/scenes/navalHost.js",
-    "old": "casks, spent: spentSaid, laid }, toWire);",
-    "new": "casks, spent: spentSaid }, toWire);",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "casks, spent: spentSaid, gone: goneSaid(), laid }, toWire);",
+    "new": "casks, spent: spentSaid, gone: goneSaid() }, toWire);",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN-G3-her-lay-not-kept",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "boat: rec.boat, laid: rec.laid });",
     "new": "boat: rec.boat });",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
@@ -122,54 +122,54 @@
     "old": "(MOD_BUILDS[hull] && !standing[hull] ? MOD_BUILDS[hull] : HULL_BUILDS[hull] ?? HULL_BUILDS[0])",
     "new": "(HULL_BUILDS[hull] ?? HULL_BUILDS[0])",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN-G4-the-pool-never-says",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "setGalleonStanding(m.galleon); ",
     "new": "",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN-G5-muzzles-upright",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!mo || !root || !up || !solution?.muzzles?.length) return solution;",
     "new": "    return solution;",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN-G5-heel-through-her-hull-as-drawn",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const o = quatRotate(pose.rotation, root.inverseTransformPoint(up.transformPoint([h[0] + lp[0], h[1] + lp[1], h[2] + lp[2]])));\n      return [pose.position[0] + o[0], pose.position[1] + o[1], pose.position[2] + o[2]];",
     "new": "      return up.transformPoint([h[0] + lp[0], h[1] + lp[1], h[2] + lp[2]]);",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN-G5-heel-skipping-the-node-between",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const p = up.inverseTransformPoint(root.transformPoint(r));",
     "new": "      const p = r;",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ],
     "equivalent": true,
     "why": "every hull's DaggerfallMesh node, between her root and her MeshObject, stands at identity (probe: lp 0, lr identity, ls 1 on hulls 1-4) - the mapping through it is kept so a prefab that offsets it heels right"
   },
   {
     "name": "AUDIT-GN-G5-peer-volley-upright",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const launches = volleyLaunches(heeled(solution, pose, boat), v.seed,",
     "new": "const launches = volleyLaunches(solution, v.seed,",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "  return h === 2 ? DRAFT_SPARE - hullBuild(2).keel : /** @type {number} */ (HULL_DRAFT[h]);",
     "new": "  return h === 2 ? 2.2 : /** @type {number} */ (HULL_DRAFT[h]);",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
@@ -187,16 +187,16 @@
     "old": "const dt = Math.max(0, now - lastNow);",
     "new": "const dt = Math.min(0.25, Math.max(0, now - lastNow));",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   },
   {
     "name": "AUDIT-GN-G8-reloading-laid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if ((side === 'starboard' || side === 'port') && myBoatState(boat).guns.ready(side)) galleonGuns.lay(boat, side, clock);",
     "new": "if (side === 'starboard' || side === 'port') galleonGuns.lay(boat, side, clock);",
     "tests": [
-      "test/auditgalleon_guns.test.js"
+      "test/systems/naval/auditgalleon_guns.test.js"
     ]
   }
 ]

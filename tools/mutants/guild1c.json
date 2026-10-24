@@ -5,7 +5,7 @@
     "old": "  if (c?.gi === undefined && c?.gt === undefined && c?.gm === undefined) return true;",
     "new": "  if (c?.gi === undefined || c?.gt === undefined || c?.gm === undefined) return true;",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    && typeof c.gt === 'string' && GUILD_TAG_RE.test(c.gt)",
     "new": "    && GUILD_TAG_RE.test(c.gt)",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (!guildClaimsValid(c)) return false;   // GUILD1c\n",
     "new": "",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "c.lv !== undefined || !noGuild)) return false;\n  if (c.o === 'renown'",
     "new": "c.lv !== undefined)) return false;\n  if (c.o === 'renown'",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "GUILD_ID_RE.test(c.gi) || c.gt !== undefined\n",
     "new": "GUILD_ID_RE.test(c.gi)\n",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -50,16 +50,16 @@
     "old": "  if (c.o === 'guild' && (!guildClaimsValid(c) || c.mu !== undefined",
     "new": "  if (c.o === 'guild' && (c.mu !== undefined",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
     "name": "GUILD1c-no-guildout-kind",
     "file": "src/net/identityToken.js",
-    "old": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains']);",
-    "new": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'siege', 'stake', 'deck', 'remains']);",
+    "old": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'guildout', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline']);",
+    "new": "export const ORDER_KINDS = Object.freeze(['mute', 'renown', 'guild', 'siege', 'stake', 'deck', 'remains', 'home', 'egopen', 'egadmit', 'ban', 'smsg', 'staffcut', 'hide', 'freeze', 'staffline']);",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "const guild = renownCharacterOk(body.character) && body.guild === true ? await guildBadgeOf(ctx, who.player.id, body.character, member) : null;",
     "new": "const guild = typeof body.gi === 'string' ? { gi: body.gi, gt: body.gt, gm: body.gm } : renownCharacterOk(body.character) && body.guild === true ? await guildBadgeOf(ctx, who.player.id, body.character, member) : null;",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ],
     "note": "SCALE4f part two (2026-10-10) re-aimed it by content: the mint reads the membership once (guilds.js mintMemberOf)."
   },
@@ -78,7 +78,7 @@
     "old": "          guild: guild ? guild.gt : null,",
     "new": "          guild: null,",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "  if (out !== undefined) answer.outOrder = key ? await mintGuildOutOrder(out, key, { subtle, nowS }) : null;\n",
     "new": "",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "WHERE m.player = ? AND m.char_id = ?').bind(playerId, character).first()) ?? null;",
     "new": "WHERE m.player = ?').bind(playerId).first()) ?? null;",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ],
     "note": "SCALE4f part two (2026-10-10) re-aimed it by content: the mint reads the membership once (guilds.js mintMemberOf)."
   },
@@ -106,7 +106,7 @@
     "old": "out: { s: t.player, gi: a.me.guild_id, gm: `m${t.rid}` }",
     "new": "out: { s: player.id, gi: a.me.guild_id, gm: `m${a.me.rid}` }",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "return r?.meta?.changes ? { ok: true, badge: {}, out: { s: player.id, gi: a.me.guild_id } }",
     "new": "return r?.meta?.changes ? { ok: true, badge: {}, out: { s: player.id, gi: a.me.guild_id, gm: `m${a.me.rid}` } }",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "  return { ok: true, guild: view, badge: view ? badgeOfRow(me, view.tag) : {} };",
     "new": "  return { ok: true, guild: view };",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "  return { ok: true, badge: {}, out: { s: player.id, gi: a.me.guild_id, gm: `m${a.me.rid}` } };",
     "new": "  return { ok: true, out: { s: player.id, gi: a.me.guild_id, gm: `m${a.me.rid}` } };",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "  return { ok: true, guild, badge: guild ? badgeOfRow(a.me, guild.tag) : {} };",
     "new": "  return { ok: true, guild };",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -151,7 +151,7 @@
     "old": "      if (!cur?.id || !cur.sub || r.claims.s !== cur.sub) return;\n      const c = r.claims;",
     "new": "      if (!cur?.id) return;\n      const c = r.claims;",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "old": "      if (!(c.i > (cur.gio ?? 0)) || (c.gi && this._guildOutAfter(c.gi, c.gm, c.i)))",
     "new": "      if (c.gi && this._guildOutAfter(c.gi, c.gm, c.i))",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "const budget = place && (cur.gt ?? null) !== (c.gt ?? null) ? guildRoomGate(this._roomGuild, now) : null;",
     "new": "const budget = place ? guildRoomGate(this._roomGuild, now) : null;",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "      const place = !isChatRoom(this._attach(ws)?.key) && !isSocialRoom(this._attach(ws)?.key);",
     "new": "      const place = true;",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "      this._holdGuildOut(gi, gm, i);\n",
     "new": "",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "const guild = c.gi && !this._guildOutAfter(c.gi, c.gm, c.i) ? { gi: c.gi, gt: c.gt, gm: c.gm } : {};",
     "new": "const guild = c.gi ? { gi: c.gi, gt: c.gt, gm: c.gm } : {};",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "if (!b.id || b.gi !== gi || (gm !== undefined && b.gm !== gm) || !(i > (b.gio ?? 0))) continue;",
     "new": "if (!b.id || b.gi !== gi || b.gm !== gm || !(i > (b.gio ?? 0))) continue;",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "for (const other of [...(this._byGuild().get(a.gi) ?? [])]) this._send(other, line);",
     "new": "for (const [other, b] of this._all()) if (b.id) this._send(other, line);",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ],
     "note": "SCALE5a (re-aimed by content): the fans walk the index in place (`_fanBut`, `_sayLine`). SCALE5c (re-aimed by content): the guild line off the guild index"
   },
@@ -224,7 +224,7 @@
     "old": "      if (!a.gi) return;\n      const budget = tokenGate(this._guildChat",
     "new": "      const budget = tokenGate(this._guildChat",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -233,7 +233,7 @@
     "old": "      if (!isSocialRoom(a.key)) { this._junk(ws); return; }\n      if (!a.gi) return;",
     "new": "      if (!a.gi) return;",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -242,7 +242,7 @@
     "old": "    if (held !== undefined && held >= i) return;\n    this._guildOuts.delete(k);",
     "new": "    if (held !== undefined) return;\n    this._guildOuts.delete(k);",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -251,7 +251,7 @@
     "old": "  if (typeof gt === 'string' && GUILD_TAG_RE.test(gt)) row.gt = gt;",
     "new": "",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -260,7 +260,7 @@
     "old": "  if (typeof gt === 'string' && GUILD_TAG_RE.test(gt)) row.gt = gt;",
     "new": "  if (typeof gt === 'string' && GUILD_TAG_RE.test(gt)) { row.gt = gt; row.gi = from.gi; }",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -269,16 +269,16 @@
     "old": "export const GUILD_RELAY_MIN = 115;",
     "new": "export const GUILD_RELAY_MIN = 114;",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
     "name": "GUILD1c-guild-line-refused-by-the-law",
     "file": "src/net/wire.js",
-    "old": "export const CHAT_LINE_CHANNELS = Object.freeze(['party', 'guild']);",
-    "new": "export const CHAT_LINE_CHANNELS = Object.freeze(['party']);",
+    "old": "export const CHAT_LINE_CHANNELS = Object.freeze(['party', 'guild', 'staff']);",
+    "new": "export const CHAT_LINE_CHANNELS = Object.freeze(['party', 'staff']);",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -287,7 +287,7 @@
     "old": "if (_rnWs) { this._gdOf(_rnWs).ok = relaySupportsGuild(relayV); this._flushGuild(now); }",
     "new": "if (_rnWs) { this._gdOf(_rnWs).ok = true; this._flushGuild(now); }",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -296,7 +296,7 @@
     "old": "      if (now - st.at < GUILD_SEND_MS) return;\n",
     "new": "",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -305,7 +305,7 @@
     "old": "export const GUILD_SEND_MS = 1_500;",
     "new": "export const GUILD_SEND_MS = 1_000;",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -314,7 +314,7 @@
     "old": "\n        ?? this._gdHeld.find((x) => x.sent.get(ws).n === 1 && now - x.sent.get(ws).at >= GUILD_RESEND_MS);",
     "new": ";",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -323,7 +323,7 @@
     "old": "x.sent.get(ws).n === 1 && now - x.sent.get(ws).at >= GUILD_RESEND_MS",
     "new": "now - x.sent.get(ws).at >= GUILD_RESEND_MS",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -332,7 +332,7 @@
     "old": "this._gdHeld = t === 'guild' ? [...this._gdHeld.filter((h) => h.t !== 'guild'), held] : [held, ...this._gdHeld];",
     "new": "this._gdHeld = [...this._gdHeld, held];",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -341,7 +341,7 @@
     "old": "        if (was && !gt) this._deliver('guild', () => this.onGuildGone?.());\n",
     "new": "",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -350,7 +350,7 @@
     "old": "if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !(ch === 'guild' ? this.guildOk : this.chanOk))) return false;   // GUILD1c: a guild's line",
     "new": "if (ch != null && (!CHAT_LINE_CHANNELS.includes(ch) || !this.chanOk)) return false;   // GUILD1c: a guild's line",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -359,7 +359,7 @@
     "old": ": ch === 'guild' ? guildChatInGate(this._inGuildChat, now) : chatInGate",
     "new": ": ch === 'guild' ? chatInGate(this._inChat.get(room), now) : chatInGate",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -368,7 +368,7 @@
     "old": "lv: readRenown(p), gt: readGuildTag(p), house: readHouse(p), sub: subOf(p)",
     "new": "lv: readRenown(p), house: readHouse(p), sub: subOf(p)",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ],
     "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
@@ -378,7 +378,7 @@
     "old": "      const p = this.peers.get(m.id);\n      if (p) { if ((p.gt ?? null) !== gt) p.rb = null; p.gt = gt; }",
     "new": "      const p = this.peers.get(m.id);\n      if (p && gt) { if ((p.gt ?? null) !== gt) p.rb = null; p.gt = gt; }",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -387,7 +387,7 @@
     "old": "if (guild !== undefined) { const gt = readGuildTag({ gt: guild });",
     "new": "if (guild) { const gt = readGuildTag({ gt: guild });",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -396,53 +396,53 @@
     "old": "return p ? { title: p.title ?? null, glyphs: Array.isArray(p.glyphs) ? p.glyphs : [], gt: p.gt ?? null, ...(p.house ? { house: p.house } : {}) } : null;",
     "new": "return p ? { title: p.title ?? null, glyphs: Array.isArray(p.glyphs) ? p.glyphs : [], ...(p.house ? { house: p.house } : {}) } : null;",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ],
     "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
   {
     "name": "GUILD1c-every-look-hands-an-order",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "if (key !== this._carried && typeof mine.data?.order === 'string')",
     "new": "if (typeof mine.data?.order === 'string')",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
     "name": "GUILD1c-the-first-look-hands-none",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "    this._carried = undefined;",
     "new": "    this._carried = '';",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
     "name": "GUILD1c-the-acts-out-order-dropped",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "      if (r?.ok && typeof r.data?.outOrder === 'string') this._hand({ outOrder: r.data.outOrder });\n",
     "new": "",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
     "name": "GUILD1c-the-unpaid-foundings-out-order-dropped",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "        if (gone?.ok && typeof gone.data?.outOrder === 'string') this._hand({ outOrder: gone.data.outOrder });",
     "new": "",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
     "name": "GUILD1c-the-tab-shown-to-everyone",
     "file": "src/net/chat.js",
-    "old": "hint: 'Your guild alone', hidden: true, peekAll: true }),",
-    "new": "hint: 'Your guild alone', peekAll: true }),",
+    "old": "hint: 'Only your guild', hidden: true, peekAll: true }),",
+    "new": "hint: 'Only your guild', peekAll: true }),",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -451,7 +451,7 @@
     "old": "names: Object.freeze(['guild', 'gu'])",
     "new": "names: Object.freeze(['guild', 'g'])",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -460,7 +460,7 @@
     "old": "if (tag) for (const [id, p] of hub?.peers ?? []) if (p?.gt === tag) peers.set(id, p);",
     "new": "if (tag) for (const [id, p] of hub?.peers ?? []) if (p?.gt) peers.set(id, p);",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -469,7 +469,7 @@
     "old": "...readBadge(from), gt: readGuildTag(from) };",
     "new": "...readBadge(from) };",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ],
     "note": "PERF-ON3 (re-aimed by content): the roster row is built once into its memo (`const row = {...}`) rather than pushed whole; the mutant still leaves the guild's tag off it."
   },
@@ -479,7 +479,7 @@
     "old": "glyphs: hub?.glyphs ?? null, gt: hub?.gt ?? null, peers, label: 'Guild' };",
     "new": "glyphs: hub?.glyphs ?? null, peers, label: 'Guild' };",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -488,7 +488,7 @@
     "old": "    tag.append(lv, name, guild, glyphs);",
     "new": "    tag.append(lv, guild, name, glyphs);",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -497,7 +497,7 @@
     "old": "        if (tag.gtOf !== p.gt) { tag.gtOf = p.gt; setText(tag.guild, guildTagText(p.gt) ?? ''); }   // GUILD1c: \"<HND>\", or nothing\n",
     "new": "",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -506,7 +506,7 @@
     "old": "const named = guildTagText(n.gt) ? `${n.name} ${guildTagText(n.gt)}` : n.name;",
     "new": "const named = n.name;",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -515,7 +515,7 @@
     "old": "lv: e.peer.lv ?? null, gt: e.peer.gt ?? null,",
     "new": "lv: e.peer.lv ?? null,",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -524,7 +524,7 @@
     "old": "join('+')}|${b.gt ?? ''}` : '');",
     "new": "join('+')}` : '');",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -533,7 +533,7 @@
     "old": "    guild: guildTagText(peer?.gt),",
     "new": "    guild: null,",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -542,7 +542,7 @@
     "old": "|| chatLog.push(tab.room === SOCIAL_ROOM && (line.ch === 'party' || line.ch === 'guild') ? line.ch : tab.id, line);",
     "new": "|| chatLog.push(tab.room === SOCIAL_ROOM && line.ch === 'party' ? 'party' : tab.id, line);",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -551,7 +551,7 @@
     "old": "        if (outOrder) socialLink()?.sendGuildOut(outOrder);",
     "new": "        if (outOrder) online?.sendGuildOut(outOrder);",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -560,7 +560,7 @@
     "old": "    chatLog.setShown('guild', !!myGuildTag());",
     "new": "    chatLog.setShown('guild', true);",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -569,7 +569,7 @@
     "old": "      link.onGuildGone = guildGone;",
     "new": "      link.onGuildGone = null;",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   },
   {
@@ -578,7 +578,7 @@
     "old": "          ...('guild' in answer.data ? { guild: typeof answer.data.guild === 'string' ? answer.data.guild : null } : {}),\n",
     "new": "",
     "tests": [
-      "test/guild1c.test.js"
+      "test/net/guild1c.test.js"
     ]
   }
 ]

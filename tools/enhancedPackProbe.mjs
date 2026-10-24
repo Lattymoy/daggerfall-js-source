@@ -1,7 +1,7 @@
 // U53 - THE ENHANCED PACK AND ITS SLOT MAP, in a real browser.
 //
 // Most of this screen's law runs headless and is pinned there
-// (test/enhancedInventory.test.js actually wears things and reads the
+// (test/ui/enhanced/enhancedInventory.test.js actually wears things and reads the
 // map). What only a browser can answer is whether the SCHEMATIC works
 // as an interface: are twenty-five nodes laid out without collisions
 // at a real size, does a filled node read differently from an empty
@@ -50,6 +50,7 @@ async function toGamePage(page, skin = 'enhanced') {
   await page.goto(`${BASE}/play/?skin=${skin}`, { waitUntil: 'networkidle' });
   if (skin !== 'enhanced') return;
   await page.waitForSelector('#enhanced-menu .doorbtn', { timeout: 20000 });
+  if (await page.locator('#enhanced-menu .doorbtn.door-offline').count()) await page.locator('#enhanced-menu .doorbtn.door-offline').click();   // UI-CALM: the games stand behind Offline
   await page.locator('#enhanced-menu .doorbtn.door-new').first().click();
   await page.getByRole('button', { name: 'Begin', exact: true }).click();
   await page.waitForSelector('#enhanced-menu', { state: 'detached', timeout: 20000 });
@@ -59,7 +60,7 @@ async function toGamePage(page, skin = 'enhanced') {
 async function openPack(page, extra = {}) {
   await page.evaluate(async (ex) => {
     const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
-    const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll.js');
+    const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll/paperdoll.js');
     const t = (n) => ITEM_TEMPLATES.find((x) => x.name === n);
     const mk = (n, group = 'Weapons') => {
       const tp = t(n);
@@ -221,7 +222,7 @@ async function run(label, opts) {
   await page.evaluate(() => globalThis.__slot.dispose());
   const openUsePack = (kind) => page.evaluate(async (k) => {
     const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
-    const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll.js');
+    const { ITEM_TEMPLATES } = await import('/src/characters/paperdoll/paperdoll.js');
     const { TEMPLATES } = await import('/src/systems/useItem.js');
     const t = (n) => ITEM_TEMPLATES.find((x) => x.name === n);
     const book = t('Book') ?? ITEM_TEMPLATES.find((x) => x.name?.includes('Book'));

@@ -1,164 +1,164 @@
 [
   {
     "name": "SERPENT2-gate-role-over-own",
-    "file": "src/net/serpentHerald.js",
+    "file": "src/net/serpent/serpentHerald.js",
     "old": "heraldRole(own) ?? heraldRole(gate)",
     "new": "heraldRole(gate) ?? heraldRole(own)",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-bells-ping-nobody",
-    "file": "src/net/serpentHerald.js",
-    "old": "const ping = role ? `<@&${role}> ` : '';",
-    "new": "const ping = '';",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "family: 'serpent', moment: 'Bells', role,",
+    "new": "family: 'serpent', moment: 'Bells',",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-bells-every-mention",
-    "file": "src/net/serpentHerald.js",
-    "old": "allowed_mentions: role ? { roles: [role] } : { parse: [] },",
-    "new": "allowed_mentions: { parse: ['everyone', 'roles', 'users'] },",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "allowed_mentions: r ? { roles: [r] } : { parse: [] }",
+    "new": "allowed_mentions: { parse: ['everyone', 'roles', 'users'] }",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-dive-said-as-rising",
-    "file": "src/net/serpentHerald.js",
-    "old": "dives at ${heraldStamp(t.soundAt, 't')}",
-    "new": "dives at ${heraldStamp(t.riseAt, 't')}",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "['Dives', heraldStamp(t.soundAt, 't')]",
+    "new": "['Dives', heraldStamp(t.riseAt, 't')]",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-kill-pings",
-    "file": "src/net/serpentHerald.js",
-    "old": "    allowed_mentions: { parse: [] },\n  };\n}\n\n/**\n * The bells the herald owes next",
-    "new": "    allowed_mentions: { parse: ['everyone'] },\n  };\n}\n\n/**\n * The bells the herald owes next",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "family: 'serpent', moment: 'Slain',",
+    "new": "family: 'serpent', moment: 'Slain', role: '1555589839825670258',",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-others-miscounted",
-    "file": "src/net/serpentHerald.js",
-    "old": "Math.max(0, n - names.length)",
-    "new": "Math.max(0, n)",
+    "file": "src/net/serpent/serpentHerald.js",
+    "old": "heraldWho((Array.isArray(top) ? top : []).slice(0, SERPENT_TOP_MAX), n)",
+    "new": "heraldWho((Array.isArray(top) ? top : []).slice(0, SERPENT_TOP_MAX), n + 1)",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-name-taken-raw",
-    "file": "src/net/serpentHerald.js",
+    "file": "src/net/herald/heraldCard.js",
     "old": ".map(heraldName).filter(Boolean)",
     "new": ".map(String).filter(Boolean)",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-names-unbounded",
-    "file": "src/net/serpentHerald.js",
+    "file": "src/net/serpent/serpentHerald.js",
     "old": ".slice(0, SERPENT_TOP_MAX)",
     "new": ".slice(0, 8)",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-bells-after-rising",
-    "file": "src/net/serpentHerald.js",
+    "file": "src/net/serpent/serpentHerald.js",
     "old": "if (t.riseAt <= nowMs) continue;",
     "new": "if (false) continue;",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-bells-twice",
-    "file": "src/net/serpentHerald.js",
+    "file": "src/net/serpent/serpentHerald.js",
     "old": "if (!isSerpentDay(d) || d <= posted) continue;",
     "new": "if (!isSerpentDay(d)) continue;",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-bells-instant-ignored",
-    "file": "src/net/serpentHerald.js",
+    "file": "src/net/serpent/serpentHerald.js",
     "old": "at: Math.max(nowMs, t.omenAt)",
     "new": "at: nowMs",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-quiet-day-owed",
-    "file": "src/net/serpentHerald.js",
+    "file": "src/net/serpent/serpentHerald.js",
     "old": "if (!isSerpentDay(d) || d <= posted) continue;",
     "new": "if (d <= posted) continue;",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-future-day-posted",
-    "file": "src/net/serpentHerald.js",
+    "file": "src/net/serpent/serpentHerald.js",
     "old": "Number.isSafeInteger(postedDay) && postedDay <= today ? postedDay : -1",
     "new": "Number.isSafeInteger(postedDay) ? postedDay : -1",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-kill-news-for-ever",
-    "file": "src/net/serpentHerald.js",
+    "file": "src/net/serpent/serpentHerald.js",
     "old": "nowMs < serpentTimes(day).soundAt + SERPENT_DIVE_MS + HERALD_FELL_KEEP_MS",
     "new": "nowMs < Infinity",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-no-skew",
-    "file": "src/net/serpentHerald.js",
+    "file": "src/net/serpent/serpentHerald.js",
     "old": " || day === serpentAt(nowMs + GATE_SITE_SKEW_MS).day",
     "new": "",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-any-site-kill",
-    "file": "src/net/serpentHerald.js",
+    "file": "src/net/serpent/serpentHerald.js",
     "old": ".find((g) => sameSerpentSite(g, site))",
     "new": ".find(() => true)",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-kill-posted-twice",
-    "file": "src/net/serpentHerald.js",
+    "file": "src/net/serpent/serpentHerald.js",
     "old": "fells.d <= postedDay || ",
     "new": "",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-stale-kill",
-    "file": "src/net/serpentHerald.js",
+    "file": "src/net/serpent/serpentHerald.js",
     "old": " || !serpentHeraldFellLive(fells.d, nowMs)) return null;",
     "new": ") return null;",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "return /^[A-Za-z]/.test(m.pl) && gatePlaceWire(m.pl) === m.pl ? { k: 'site', d: m.d, sx:",
     "new": "return m.pl ? { k: 'site', d: m.d, sx:",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "!Number.isSafeInteger(m.sx) || !Number.isSafeInteger(m.sz) || Math.abs(m.sx) > POSE_BOUND",
     "new": "!Number.isFinite(m.sx) || !Number.isFinite(m.sz) || Math.abs(m.sx) > POSE_BOUND",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "Math.abs(m.sx) > POSE_BOUND || Math.abs(m.sz) > POSE_BOUND || typeof m.pl !== 'string') return null;",
     "new": "typeof m.pl !== 'string') return null;",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "return !!m && Number(m[1]) >= SERPENT_SITE_RELAY_MIN; };",
     "new": "return !!m; };",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "    await this._serpentHeraldArm(now);\n",
     "new": "",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "await this._serpentHeraldBeat(Date.now()); await this._sdBeat(Date.now()); await this._sdHeraldBeat(Date.now()); return; }",
     "new": "await this._sdBeat(Date.now()); await this._sdHeraldBeat(Date.now()); return; }",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -221,26 +221,26 @@
     "old": "serpentRole: serpentHeraldRole(role('serpentRole'), role('gateRole'))",
     "new": "serpentRole: heraldRole(role('gateRole'))",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ],
     "note": "SCALE5b (re-aimed by content): the roles through relayCfgValue."
   },
   {
     "name": "SERPENT2-bells-ping-gate-role",
     "file": "server/src/index.js",
-    "old": "role: h.serpentRole }))) st.omen = due.day;",
-    "new": "role: h.role }))) st.omen = due.day;",
+    "old": "role: h.serpentRole }), 'serpent')) st.omen = due.day;",
+    "new": "role: h.role }), 'serpent')) st.omen = due.day;",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-bells-refusal-posted",
     "file": "server/src/index.js",
-    "old": "if (await this._heraldSend(serpentOmenPost({ day: due.day, place: site?.place ?? null, role: h.serpentRole }))) st.omen = due.day;",
-    "new": "if ((await this._heraldSend(serpentOmenPost({ day: due.day, place: site?.place ?? null, role: h.serpentRole })), true)) st.omen = due.day;",
+    "old": "if (await this._heraldSend(serpentOmenPost({ day: due.day, place: site?.place ?? null, role: h.serpentRole }), 'serpent')) st.omen = due.day;",
+    "new": "if ((await this._heraldSend(serpentOmenPost({ day: due.day, place: site?.place ?? null, role: h.serpentRole }), 'serpent'), true)) st.omen = due.day;",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -249,16 +249,16 @@
     "old": "serpentOmenPost({ day: due.day, place: site?.place ?? null,",
     "new": "serpentOmenPost({ day: due.day, place: null,",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-kill-refusal-posted",
     "file": "server/src/index.js",
-    "old": "if (await this._heraldSend(serpentFellPost(kill))) st.fell = kill.day;",
-    "new": "if ((await this._heraldSend(serpentFellPost(kill)), true)) st.fell = kill.day;",
+    "old": "if (await this._heraldSend(serpentFellPost(kill), 'serpent')) st.fell = kill.day;",
+    "new": "if ((await this._heraldSend(serpentFellPost(kill), 'serpent'), true)) st.fell = kill.day;",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -267,7 +267,7 @@
     "old": "if (kill?.wait) retry = now + HERALD_RETRY_MS;",
     "new": "if (kill?.wait) retry = null;",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -276,7 +276,7 @@
     "old": "    if (!serpentSiteDayOk(m.d, now)) return;\n",
     "new": "",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -285,7 +285,7 @@
     "old": "foldGateSite(had, m.d, sub, m.sx, m.sz, m.pl)",
     "new": "foldGateSite(had, m.d, sub, m.sz, m.sx, m.pl)",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -294,7 +294,7 @@
     "old": "if (!isSocialRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }\n        try { await this._serpentSite(",
     "new": "if (typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }\n        try { await this._serpentSite(",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -303,7 +303,7 @@
     "old": "      if (this._heraldOf()) await this._hubArm(now);   // SERPENT2",
     "new": "      // SERPENT2",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -312,7 +312,7 @@
     "old": "if (this._serpentSiteSaid && this._serpentSiteSaid.ws === this._ws && this._serpentSiteSaid.d === day) return true;",
     "new": "if (false) return true;",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -321,7 +321,7 @@
     "old": "if (!this.acct || !this.serpentSiteOk || ",
     "new": "if (!this.acct || ",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -330,7 +330,7 @@
     "old": "if (primary) this.serpentSiteOk = relaySupportsSerpentSite(relayV);",
     "new": "if (primary) this.serpentSiteOk = true;",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -339,7 +339,7 @@
     "old": "sz: Math.round(sz), pl: gatePlaceWire(place) }",
     "new": "sz: Math.round(sz), pl: place }",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -348,16 +348,16 @@
     "old": "sx: Math.round(sx), sz: Math.round(sz),",
     "new": "sx, sz,",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-ahead-before-settled",
-    "file": "src/systems/serpentOmen.js",
+    "file": "src/systems/serpent/serpentOmen.js",
     "old": "if (!settled) return null;",
     "new": "if (false) return null;",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -366,7 +366,7 @@
     "old": "if (a) socialLink()?.sendSerpentSite?.(a.day, a.site.sx, a.site.sz, a.site.near);",
     "new": "void a;",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -375,16 +375,16 @@
     "old": "serpent: { place: serpentOmen?.current?.()?.site?.near ?? null",
     "new": "serpent: { place: serpentOmen?.current?.()?.site?.place ?? null",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-timers-place-before-bells",
     "file": "src/systems/eventTimers.js",
-    "old": "`${sName} rises`, s.riseAt, null, 'The harbour bells ring",
-    "new": "`${sName} rises`, s.riseAt, off, 'The harbour bells ring",
+    "old": "`${sName} rises`, s.riseAt, null, 'The harbor bells ring",
+    "new": "`${sName} rises`, s.riseAt, off, 'The harbor bells ring",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -393,7 +393,7 @@
     "old": "`${sName} hunts`, s.soundAt,",
     "new": "`${sName} hunts`, s.sealAt,",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -402,7 +402,7 @@
     "old": "sPhase === 'hunt' || sPhase === 'late') live(",
     "new": "sPhase === 'hunt') live(",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -411,7 +411,7 @@
     "old": "if (sPhase !== 'quiet') {",
     "new": "if (false) {",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
@@ -420,26 +420,26 @@
     "old": "serpentPhase(s, now, src?.serpent?.fellAt?.(s.day) ?? null)",
     "new": "serpentPhase(s, now, null)",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   },
   {
     "name": "SERPENT2-timers-kind-missing",
-    "file": "src/ui/enhancedTimers.js",
-    "old": "['gate', 'serpent', 'super', 'raid', 'battle', 'seat', 'reset']",
-    "new": "['gate', 'super', 'raid', 'battle', 'seat', 'reset']",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "['gate', 'serpent', 'super', 'star', 'elite', 'raid', 'battle', 'seat', 'reset']",
+    "new": "['gate', 'super', 'star', 'elite', 'raid', 'battle', 'seat', 'reset']",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ],
     "note": "SD2c (re-aimed by content): the Super dungeon's kind stands after the serpent's."
   },
   {
     "name": "SERPENT2-timers-colour-missing",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".px-timerswin .tm-serpent { --tm-kind: ${SERPENT_RING_MAP_CSS}; } ",
     "new": "",
     "tests": [
-      "test/serpent2_herald.test.js"
+      "test/net/serpent/serpent2_herald.test.js"
     ]
   }
 ]

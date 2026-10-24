@@ -23,8 +23,8 @@ Three probe-only edits beside the frame probe's two, the tree untouched: the acc
 (`accountClient.js serviceBase` answers https alone); `?shot` survives the online boot (REALM P0.1 refuses it there,
 `onlineLane.js ONLINE_REFUSED_FLAGS`, because it installs the probe seams - which are the instrument here); and the
 composer's hook. Every edit is a table now (`FRAME_PROBE_EDITS`, `ONLINE_PROBE_EDITS`), each needle asserted where it is
-made and held to the tree by `test/perfon4_probes.test.js`, so a needle a change moves fails the suite and not the next
-probe run - and, since AUDIT PERF-ON4 (`01-Overview/Audit-Perf-On4.md`), each edit's effect with it. The online probe
+made and held to the tree by `test/tooling/perfon4_probes.test.js`, so a needle a change moves fails the suite and not the next
+probe run - and, since AUDIT PERF-ON4 (`01-Overview/audits/Audit-Perf-On4.md`), each edit's effect with it. The online probe
 now settles its page before the first crowd (the grass, then the Living World's way book standing still), measures a
 crowd only when the session is open and draws exactly it (or fails the run, saying so), and runs its crowds in the
 order given, 0, 20, 60 and 0 again by default; this page's first figures came before that (below).
@@ -92,9 +92,9 @@ By the after arm's first window the ways were known and the town's trips with th
 fifteen minutes. What is left of the Living World's frame is its street (`livingTown.update`) and its roads' layer, as
 offline.
 
-Pins: `test/perfways1.test.js` (3), `tools/mutants/perfways1.json` (13, all dead; AUDIT PERF-ON4 added every call past
+Pins: `test/systems/livingWorld/perfways1.test.js` (3), `tools/mutants/perfways1.json` (13, all dead; AUDIT PERF-ON4 added every call past
 the floor held to the floor's direction, network and ground, and the shipped clock); LW3's budget pin moved onto a clock
-(`test/lw3_roads.test.js`, `lw3.json` LW3-ways-budget-unspent re-aimed). The record is `06-Systems/Living-World.md`
+(`test/systems/livingWorld/lw3_roads.test.js`, `lw3.json` LW3-ways-budget-unspent re-aimed). The record is `06-Systems/Living-World.md`
 PERF-WAYS1. Left: a frame that waits still plans every trip near again - shorter, not gone (below).
 
 ## PERF-SUN3 — the sun's cascades share one walk
@@ -115,12 +115,12 @@ the lists with the lanterns'. SHADOW_TUNING.sunPrepass false is the oracle and t
 **Measured** (Knightstale by day, `INSTR=shadow`, one arm after the other, `tools/frameAb.mjs`): the sun's three
 replays 2.48 -> 1.42 ms a frame by the pass's own timer (2.20 -> 1.48 by sample count), the same 201 draws a frame, and
 their allocations 79 -> 18 KB a frame. Those are the replays' own: the walk they now read their lists from was not
-timed. AUDIT PERF-ON4 (S4, `01-Overview/Audit-Perf-On4.md`) timed it beside them, in one tree with the switch for the
+timed. AUDIT PERF-ON4 (S4, `01-Overview/audits/Audit-Perf-On4.md`) timed it beside them, in one tree with the switch for the
 off arm: the replays 2.28 -> 1.02 ms and the walk 0.63, the shadow pass 4.70 -> 4.23 by its timer (3.28 -> 2.95 by sample
 count), the replays' and the walk's allocations 78 -> 21 + 11 KB, the same 201 draws - about 0.6 ms a frame saved. The
 frame's total moves within the probe's noise (13.62 -> 13.57).
 
-Pins: `test/perfsun3.test.js` (4) - every draw of every frame against the walk off over random towns (two of three
+Pins: `test/render/perfsun3.test.js` (4) - every draw of every frame against the walk off over random towns (two of three
 crowded past the 64 a list starts with), four suns, steady and cadenced, the camera's scale and the travel view's; the
 nesting at every side to 120 km; the saving by count, on the default that ships; each list exactly what its own
 cascade's sphere test takes - `tools/mutants/perfsun3.json` (17: 16 dead, 1 equivalent as recorded); WEEDS1's and F5's
@@ -128,19 +128,19 @@ records on the moved line re-aimed by content. AUDIT PERF-ON4 added the crowds, 
 
 ## PERF-HUD1 — the movable HUD on one clock
 
-PERF-NEXT item 5. `ui/hudLayout.js` swept (34 querySelectorAll over the page) on its 250 ms interval AND from the HUD's
+PERF-NEXT item 5. `ui/hud/hudLayout.js` swept (34 querySelectorAll over the page) on its 250 ms interval AND from the HUD's
 frame tick, each on its own clock: about eight sweeps a second at 60 fps where four were meant. The interval is the
 clock; the tick sweeps once at the start, and on its own clock only on a page the start set no interval for (a page
 without events: a test's stub - every real page sets one). Five sweeps in a second, where there were nine. (At
 SwiftShader's half a frame a second the tick's share was one sweep in nine, so the probe's figure barely moves; the
-saving is a desktop's.) `test/perfhud1.test.js` (2: the sweeps' times, not only their count, since AUDIT PERF-ON4),
+saving is a desktop's.) `test/systems/perfhud1.test.js` (2: the sweeps' times, not only their count, since AUDIT PERF-ON4),
 `tools/mutants/perfhud1.json` (4, all dead).
 
 ## PERF-VAO1 — one bindVao
 
 PERF-NEXT item 6. `renderer._renderPasses` minted a `bindVao` closure every frame for the shadow and air passes, a new
 call target at their `f.bindVao(vao)` each frame (in node, once, V8 deoptimized the shadow replay on it - PERF-NEXT 6).
-It is made once, for the life of the renderer: the same call. No gain measured. `test/perfvao1.test.js` (1),
+It is made once, for the life of the renderer: the same call. No gain measured. `test/render/perfvao1.test.js` (1),
 `tools/mutants/perfvao1.json` (2, all dead).
 
 ## Measured, and left

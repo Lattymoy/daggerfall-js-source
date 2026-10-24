@@ -5,8 +5,8 @@
     "old": "(rec.dead || !rec.ai || (s.has && !s.has(rec)))",
     "new": "(rec.dead || !rec.ai)",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "rec.entity.maxHealth = c.maxHealth; rec.entity.health = Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth));",
     "new": "rec.entity.health = Math.max(1, Math.min(rec.entity.maxHealth, c.health ?? c.maxHealth));",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "(L.grounded !== false && Math.abs(f[1] - L.feet[1]) > CATCH_UP_DY)",
     "new": "(Math.abs(f[1] - L.feet[1]) > CATCH_UP_DY)",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -35,18 +35,18 @@
     "old": "        rec.entity.team = 'PlayerAlly'; rec.entity.mobileTeam = 'PlayerAlly';\n",
     "new": "",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-A5-sailing-ashore",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "companions.party.length && !sailing() ? companions.awayOf(boat.uid) : NO_HANDS_AWAY);",
     "new": "companions.party.length ? companions.awayOf(boat.uid) : NO_HANDS_AWAY);",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -55,18 +55,18 @@
     "old": "away: naval?.awayOf?.(boat) ?? NO_HANDS_AWAY });",
     "new": "away: naval?.awayOf?.(boat) ?? null });",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-A5-home-unseen",
-    "file": "src/scenes/navalCrew.js",
+    "file": "src/scenes/naval/navalCrew.js",
     "old": "      if (w.away) for (const m of ship.life.members) { if (!m.gone && !ship.sprites.get(m)) ship.sprites.set(m, sprite(m)); }\n",
     "new": "",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -75,8 +75,8 @@
     "old": "host.drawPeerNames?.({ proj, view, eye: mwv.eye }); host.drawCompanionBars?.({ proj, view, eye: mwv.eye }); dungeonCtx.drawOverlay(canvas);",
     "new": "host.drawPeerNames?.({ proj, view, eye: mwv.eye }); dungeonCtx.drawOverlay(canvas);",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -85,8 +85,8 @@
     "old": "!f.dead && !f.puppet && !f.placed && f.companion == null).length;",
     "new": "!f.dead && !f.puppet && !f.placed).length;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -95,18 +95,18 @@
     "old": "    crewAshore.clear();   // AUDIT CC-A8",
     "new": "    // AUDIT CC-A8",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-A9-no-uid-row",
-    "file": "src/systems/csaBoatMenu.js",
+    "file": "src/systems/comeSailAway/csaBoatMenu.js",
     "old": "if (s.crewed && s.companions !== false) rows.push",
     "new": "if (s.crewed) rows.push",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -115,8 +115,8 @@
     "old": "    if (gamePaused()) return;   // AUDIT CC-A10",
     "new": "    // AUDIT CC-A10",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -125,8 +125,8 @@
     "old": "if (!f?.ai || f.companion != null) return;   // AUDIT CC-B1",
     "new": "if (!f?.ai) return;   // AUDIT CC-B1",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -135,8 +135,8 @@
     "old": "if (!foe?.ai || foe.companion != null) return;   // AUDIT CC-B1",
     "new": "if (!foe?.ai) return;   // AUDIT CC-B1",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -145,58 +145,58 @@
     "old": "if (f.dead || f.companion != null) continue;   // AUDIT CC-B1",
     "new": "if (f.dead) continue;   // AUDIT CC-B1",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-B2-companion-takes-player",
-    "file": "src/characters/enemyTargets.js",
+    "file": "src/characters/enemy/enemyTargets.js",
     "old": "|| selfMobileTeam === 'PlayerAlly' || self.companion != null) && isPlayer) continue;",
     "new": "|| selfMobileTeam === 'PlayerAlly') && isPlayer) continue;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-B3-secondary-kept",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "  _dropTargets() {\n    this.target = null; this.secondaryTarget = null; this.targetSenses = null;",
     "new": "  _dropTargets() {\n    this.target = null; this.targetSenses = null;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-B3-never-returning",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "      this._returning = home > leash;",
     "new": "      this._returning = false;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-B4-runs-out",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    if (home > leash || (tf && Math.hypot(tf[0] - leader[0], tf[2] - leader[2]) > leash)) {",
     "new": "    if (home > leash) {",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-B4-idle-hold",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    return this.predictedTargetPos == null || this.giveUpTimer <= 0;",
     "new": "    return false;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -205,8 +205,8 @@
     "old": "this._wasFollowing = this._following; this.path = null; this.repathT = 0; }",
     "new": "this._wasFollowing = this._following; }",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -215,8 +215,8 @@
     "old": "foes: () => interiorFoePool().filter((f) => !sparedByPlayer(f)), foeSinks",
     "new": "foes: () => interiorFoePool(), foeSinks",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -225,38 +225,38 @@
     "old": "foes: () => foes.filter((f) => !sparedByPlayer(f)), foeSinks",
     "new": "foes: () => foes, foeSinks",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-B6-watch-leaves",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": " && !(t?.companion != null && !t.dead)   // AUDIT CC-B6",
     "new": "   // AUDIT CC-B6",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-B7-quest-foe-spares",
-    "file": "src/characters/enemyTargets.js",
+    "file": "src/characters/enemy/enemyTargets.js",
     "old": "!self.questAttackable && !isPlayer && c.companion == null) continue;",
     "new": "!self.questAttackable && !isPlayer) continue;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-B7-companion-spares-quest",
-    "file": "src/characters/enemyTargets.js",
+    "file": "src/characters/enemy/enemyTargets.js",
     "old": "&& !c.questAttackable && self.companion == null) continue;",
     "new": "&& !c.questAttackable) continue;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -265,42 +265,42 @@
     "old": "export const STORE_YARD_SHARE = 0.7;",
     "new": "export const STORE_YARD_SHARE = 0.07;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js",
-      "test/shipcrew.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js",
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-D1-port-repairs",
-    "file": "src/scenes/navalHost.js",
-    "old": "    if (where().nearPort) return;   // AUDIT CC-D1",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (inPortWaters()) return;   // AUDIT CC-D1",
     "new": "    // AUDIT CC-D1",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js",
-      "test/shipcrew.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js",
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-D1-port-order",
-    "file": "src/scenes/navalHost.js",
-    "old": "      else if (where().nearPort) said =",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      else if (inPortWaters()) said =",
     "new": "      else if (false) said =",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js",
-      "test/shipcrew.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js",
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-D1-stock-flat",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "stock: Math.max(STORES_STOCK, storesToWhole({",
     "new": "stock: Math.min(STORES_STOCK, storesToWhole({",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js",
-      "test/shipcrew.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js",
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -309,9 +309,9 @@
     "old": "const share = crewed && crewShare > 0 ? Math.min(1, crewShare) : SEA_REPAIR_ALONE;",
     "new": "const share = crewed ? Math.min(1, crewShare) : SEA_REPAIR_ALONE;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js",
-      "test/shipcrew.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js",
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -320,9 +320,9 @@
     "old": "includes(record.order)) order = record.order;",
     "new": "includes(record.order)) order = CREW_ORDERS.stand;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js",
-      "test/shipcrew.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js",
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -331,9 +331,9 @@
     "old": "        if (lossT > LOSSES_WINDOW_S) losses = 0;\n",
     "new": "",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js",
-      "test/shipcrew.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js",
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -342,9 +342,9 @@
     "old": "        if (!Number.isFinite(n)) return;",
     "new": "        if (false) return;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js",
-      "test/shipcrew.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js",
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -353,9 +353,9 @@
     "old": "if (k > 0) { seaT -= k * SEA_DECAY_S; bump(-k); }",
     "new": "if (k > 0) { seaT -= SEA_DECAY_S; bump(-1); }",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js",
-      "test/shipcrew.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js",
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -364,20 +364,20 @@
     "old": "want = morale < 100 && !grogToday ? 1 : 0;",
     "new": "want = morale < 100 ? 1 : 0;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js",
-      "test/shipcrew.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js",
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-D5-plunder-loop",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (all.length > left.length && !_plundered.has(hold)) {",
     "new": "if (all.length > left.length) {",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js",
-      "test/shipcrew.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js",
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -386,20 +386,20 @@
     "old": "(hands[i] ? { mobile: hands[i].mobile, gender: hands[i].gender === 'female' ? 'female' : 'male' } : r)",
     "new": "(r)",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js",
-      "test/shipcrew.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js",
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-D7-pending-knock-lost",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (rec?.mates) { const crew = createShipCrew({ seed: c.boat >>> 0, record: rec.mates }); crew.event('knocked'); rec.mates = crew.snapshot(); }",
     "new": "",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js",
-      "test/shipcrew.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js",
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -408,20 +408,20 @@
     "old": "${ashore?.has(h.name) ? ' - ashore with you' : ''}",
     "new": "",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js",
-      "test/shipcrew.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js",
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-D8-hint-unsaid",
-    "file": "src/ui/navalHud.js",
-    "old": "ship.repairOrdered ? 'Crippled - her crew stands to the repairs' : ",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "ship.repairOrdered ? 'Crippled, repairs ordered' : ",
     "new": "",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js",
-      "test/shipcrew.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js",
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -430,8 +430,8 @@
     "old": "        if (f.companion != null) _net?.onPeerHit?.({ ...hit, fb: 1,",
     "new": "        if (false) _net?.onPeerHit?.({ ...hit, fb: 1,",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -440,8 +440,8 @@
     "old": "        else if (striker.companion != null) _net?.onPeerHit?.({ ...hit, al: 1,",
     "new": "        else if (false) _net?.onPeerHit?.({ ...hit, al: 1,",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -450,8 +450,8 @@
     "old": "    if (data.fb === 1) {\n      if (f.companion == null || !foes.includes(f)) return false;",
     "new": "    if (false) {\n      if (f.companion == null || !foes.includes(f)) return false;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -460,8 +460,8 @@
     "old": "if (by && !by.dead && by.companion != null) f.ai.target = by; }",
     "new": "}",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -470,8 +470,8 @@
     "old": "...(cp.length ? { cp, cn } : {}), ",
     "new": "",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -480,8 +480,8 @@
     "old": "if (comp.has(r.i)) { nf.companion = `peer:${from}:${r.i}`; nf.companionName = compNames.get(r.i) ?? null; }",
     "new": "// unread",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -490,8 +490,8 @@
     "old": "      if (by && !by.dead && f.ai && !f.dead) f.ai.target = by;\n      return true;\n    }\n    // AUDIT FINAL F12",
     "new": "      return true;\n    }\n    // AUDIT FINAL F12",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -500,8 +500,8 @@
     "old": "      if (f.companion != null) _fullNext = true;",
     "new": "      // lingers",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -510,8 +510,8 @@
     "old": "Math.max(1, Math.ceil(((r?.until ?? now) - now) / 60))",
     "new": "Math.max(1, Math.floor(((r?.until ?? now) - now) / 60))",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -520,8 +520,8 @@
     "old": "${hours === 1 ? 'hour' : 'hours'}",
     "new": "hours",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -530,8 +530,8 @@
     "old": "      resting = resting.filter((r) => !same(r, boat, hand.name));\n      /** @type {Companion} */",
     "new": "      /** @type {Companion} */",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -540,8 +540,8 @@
     "old": "role: isName(c.role) ? c.role : 'Deckhand'",
     "new": "role: c.role",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -550,108 +550,108 @@
     "old": "    const why = companions.why(boat, h, now, crewed);",
     "new": "    const why = companions.why(boat, h, now, true);",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-F-host-back-never",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (companions.isAshore(boat.uid, name)) {",
     "new": "    if (false) {",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-F-host-uncrewed-takes",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const why = companions.why(boat.uid, hand, now, !!boat.crewed);",
     "new": "    const why = companions.why(boat.uid, hand, now, true);",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-F-host-prune-live-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (st) return st.crew.hands;\n",
     "new": "",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-F-host-away-all",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "hands.forEach((h, i) => { if (names.has(h.name)) out.add(i); });",
     "new": "hands.forEach((h, i) => { out.add(i); });",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-F-host-knock-unsaid",
-    "file": "src/scenes/navalHost.js",
-    "old": "      deps.say?.(`${c.name} is knocked senseless - your crew carries ${c.gender === 'female' ? 'her' : 'him'} back aboard to rest.`, 4);",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      deps.say?.(`${c.name} is knocked out. Your crew carries ${c.gender === 'female' ? 'her' : 'him'} back aboard to rest.`, 4);",
     "new": "",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-F-motor-paralyzed",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "!!this.follow && !paralyzed && !paused && !knocked",
     "new": "!!this.follow && !paused && !knocked",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-F-motor-paused",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "!!this.follow && !paralyzed && !paused && !knocked",
     "new": "!!this.follow && !paralyzed && !knocked",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-F-motor-knocked",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "!!this.follow && !paralyzed && !paused && !knocked",
     "new": "!!this.follow && !paralyzed && !paused",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-F-motor-no-leader-walks",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "if (!leader) { this.moving = false; return; }\n    const d = Math.hypot",
     "new": "if (!leader) { return; }\n    const d = Math.hypot",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-F-motor-detour-ignored",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    const aim = this.avoidObstaclesTimer > 0 ? this.detourDestination : this.destination;\n    const dx = aim[0] - this.feet[0];\n    const dz = aim[2] - this.feet[2];\n    for (let i = 0; i < classicTicks; i++) {\n      if (!withinYaw",
     "new": "    const aim = this.destination;\n    const dx = aim[0] - this.feet[0];\n    const dz = aim[2] - this.feet[2];\n    for (let i = 0; i < classicTicks; i++) {\n      if (!withinYaw",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -660,8 +660,8 @@
     "old": "return place.spot ? place.spot(L.feet, dx, dz) :",
     "new": "return false ? place.spot(L.feet, dx, dz) :",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -670,8 +670,8 @@
     "old": "Math.max(1, Math.min(c.maxHealth, c.health ?? c.maxHealth))",
     "new": "Math.max(1, c.health ?? c.maxHealth)",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -680,8 +680,8 @@
     "old": "if (was !== epoch || !party.isAshore(c.boat, c.name) || deps.party() !== party)",
     "new": "if (was !== epoch || deps.party() !== party)",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -690,8 +690,8 @@
     "old": "clear() { liftAll(); placeKey = undefined; epoch++; trail.length = 0; leaderWas = null; },",
     "new": "clear() { placeKey = undefined; epoch++; trail.length = 0; leaderWas = null; },",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -700,8 +700,8 @@
     "old": "if (!s || rng() >= 1 / 3) return null;",
     "new": "if (!s) return null;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -710,8 +710,8 @@
     "old": "${h.fights === 1 ? 'fight' : 'fights'}",
     "new": "fights",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -720,8 +720,8 @@
     "old": "  if (!crew.hands.length) lines.push('No hands aboard.');\n",
     "new": "",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -730,8 +730,8 @@
     "old": "morale = Number.isFinite(m) ? clamp(m, 0, MORALE_MAX) : MORALE_START;",
     "new": "morale = Number.isFinite(m) ? m : MORALE_START;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -740,8 +740,8 @@
     "old": "    hires = Math.max(hires, hands.length);\n",
     "new": "",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -750,8 +750,8 @@
     "old": "        seaT = 0;\n",
     "new": "",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -760,8 +760,8 @@
     "old": "if (!/** @type {string[]} */ (Object.values(CREW_ORDERS)).includes(o)) return false;",
     "new": "",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -770,8 +770,8 @@
     "old": "export const GROG_PER_HAND = 1;",
     "new": "export const GROG_PER_HAND = 3;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -780,8 +780,8 @@
     "old": "export const grogPrice = (crew) => Math.max(GROG_MIN, Math.round(",
     "new": "export const grogPrice = (crew) => Math.max(0, Math.round(",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -790,8 +790,8 @@
     "old": "  for (const r of rows) r.cost = r.afford * r.price;",
     "new": "  for (const r of rows) r.cost = r.whole;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -800,8 +800,8 @@
     "old": "damage.hull < damage.maxHull - 1e-6 || (damage.maxSail > 0 && damage.sail < damage.maxSail - 1e-6);",
     "new": "damage.hull < damage.maxHull - 1e-6;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -810,8 +810,8 @@
     "old": "if (!m.gone) { if (m.mate) endTalk(m); dropLeader(m); m.gone = true; m.line = null; }",
     "new": "if (!m.gone) { m.gone = true; m.line = null; }",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -820,8 +820,8 @@
     "old": "          if (!m.taken) {\n            const at = m.station ? m.post : freeSpot() ?? m.post;",
     "new": "          {\n            const at = m.station ? m.post : freeSpot() ?? m.post;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -830,8 +830,8 @@
     "old": "if (!navalOn()) { crewAshore.clear(); return; }",
     "new": "if (!navalOn()) { return; }",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -840,18 +840,18 @@
     "old": "_companionPruneN = 0; naval?.pruneCompanions?.(); }",
     "new": "_companionPruneN = 0; }",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-F-world-helm-stands",
     "file": "src/scenes/world.js",
-    "old": " || csaRuntime?.isSailing?.()) return null;\n    if (modes?.gateArenaDay?.() != null) return null;",
-    "new": ") return null;\n    if (modes?.gateArenaDay?.() != null) return null;",
+    "old": " || csaRuntime?.isSailing?.()) return null;\n    if (madeRuleHere('companions') === 'out') return null;",
+    "new": ") return null;\n    if (madeRuleHere('companions') === 'out') return null;",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -860,8 +860,8 @@
     "old": "try { col?.move(p, dx, 0, dz, 1.8); }",
     "new": "try { p[0] += dx; p[2] += dz; }",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
@@ -870,18 +870,18 @@
     "old": "csaOpenListPicker(rows.map((r) => (r.disabled ? `${r.label} (${r.why})` : r.label)), (i) => {\n      if (_csaPicker) { modes?.closeWindow?.(_csaPicker); _csaPicker = null; }\n      if (rows[i]) naval.companionPress",
     "new": "csaOpenListPicker(rows.map((r) => r.label), (i) => {\n      if (_csaPicker) { modes?.closeWindow?.(_csaPicker); _csaPicker = null; }\n      if (rows[i]) naval.companionPress",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   },
   {
     "name": "AUDIT-CC-F-targets-peaceful-fights",
-    "file": "src/characters/enemyTargets.js",
+    "file": "src/characters/enemy/enemyTargets.js",
     "old": "!(c.companion != null && ai.isHostile)",
     "new": "!(c.companion != null)",
     "tests": [
-      "test/auditcrew.test.js",
-      "test/crewcompanions.test.js"
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/crewcompanions.test.js"
     ]
   }
 ]

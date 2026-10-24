@@ -28,14 +28,15 @@ import { installCapitals } from '../src/world/capitalModels.js';
 import { customModelFor } from '../src/world/customModels.js';
 import { isCountryPlaceId } from '../src/world/tamrielCountry.js';
 import { standArenaPixels } from '../src/world/arenaPlaces.js';
-import { setTamrielFit } from '../src/world/tamrielFrame.js';
-import { setTamrielTrace } from '../src/world/tamrielLand.js';
-import { blockFromJson } from '../src/formats/worldDataReplacement.js';
+import { setTamrielFit } from '../src/world/tamriel/tamrielFrame.js';
+import { setTamrielTrace } from '../src/world/tamriel/tamrielLand.js';
+import { blockFromJson } from '../src/formats/worldData/worldDataReplacement.js';
 import { layoutRmbBlock } from '../src/world/rmbLayout.js';
 import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
 import { WoodsFile } from '../src/formats/woodsFile.js';
-import { generatePixelTerrain } from '../src/world/terrainGen.js';
+import { generatePixelTerrain } from '../src/world/terrain/terrainGen.js';
 import { syntheticWoodsBytes } from './landformWorld.mjs';
+import { hostText } from './hostText.mjs';   // HOST-SPLIT (at the merge of main): the world host read whole - its pixel build stands in scenes/pixelBuild.js
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 afterEach(() => { setTamrielFit(null); setTamrielTrace(null); });
@@ -367,11 +368,11 @@ test('TESA11 one ground: every slice of a city over several pixels flattened to 
   const own2 = tall(x);
   assert.notEqual(own2, own);
   assert.equal(tall(x + 1, centre), own2);
-  assert.match(read('src/scenes/world.js'), /flattenAt: dfLocation\?\.capital\?\.flattenAt \?\? null,/);
+  assert.match(hostText('src/scenes/world.js'), /flattenAt: dfLocation\?\.capital\?\.flattenAt \?\? null,/);
 });
 
 test('TESA11 the host: a slice stood once on its pixel - a slice moved is stood again; the plan\'s Arena slot the centre\'s', () => {
-  const W = read('src/scenes/world.js');
+  const W = hostText('src/scenes/world.js');
   assert.match(W, /if \(at && had\.capital\.k === at\.k && had\.capital\.s === at\.s && \(had\.arena\?\.id \?\? null\) === \(slot\?\.id \?\? null\)/);
   assert.match(read('src/world/arenaPlaces.js'), /standArenaPixels\(model, \/\*\* @type \{any\} \*\/ \(tamrielTrace\(\)\), capitalPin, \(bx, by\) => !!capitalOnPixel\(bx, by\)\);/);
   assert.match(read('src/world/arenaPlaces.js'), /const free = \(bx, by\) => !inBay\(bx, by\) && !byPixel\.has\(`\$\{bx\},\$\{by\}`\) && !reserved\?\.\(bx, by\) && own\(/);

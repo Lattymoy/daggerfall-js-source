@@ -12,13 +12,13 @@
 // milestones because a sign was DERIVED instead of measured. Nothing
 // here derives one. The ray is the numerical inverse of the SAME
 // proj*view the frame drew with, the dot is the same product forward,
-// and test/touchinput.test.js pins both against the real
+// and test/player/touchinput.test.js pins both against the real
 // perspective/mirrorProjectionX/lookAt with an ABSOLUTE anchor (at
 // yaw 0, +x lands screen-right and +y screen-up) as well as the
 // round-trip - a round-trip alone would bless two matching mistakes.
 //
 // THE RECT. ROAD-E E5: the world pass draws into the strip ABOVE a
-// docked large HUD (ui/hudLarge.js largeHudViewportRect - a normalized
+// docked large HUD (ui/hud/hudLarge.js largeHudViewportRect - a normalized
 // GL rect, y from the bottom), so screen<->NDC maps through that rect,
 // not the canvas. A finger in the bar's strip is no world tap at all:
 // the ray answers null and the host leaves the tap alone.
@@ -28,7 +28,7 @@ import { multiply } from '../world/mat4.js';
 /** Column-major 4x4 inverse (gl-matrix's layout - mat4.js's own), or
  *  null for a singular matrix; the automap's pick reads it too (AUDIT 68
  *  S15-invert4-duplicate). It lives here, not in mat4.js, because mat4.js
- *  is in the relay's bundle (test/relayversion.test.js). */
+ *  is in the relay's bundle (test/net/relayversion.test.js). */
 export function invert4(m, out = new Float32Array(16)) {
   const a00 = m[0], a01 = m[1], a02 = m[2], a03 = m[3];
   const a10 = m[4], a11 = m[5], a12 = m[6], a13 = m[7];
@@ -125,4 +125,36 @@ export function projectToScreen(p, w, h, proj, view, rect = null, behind = false
   // with the thing it labels needs this number and nothing else. Purely
   // additive - every existing caller reads x, y and front.
   return { x: r.x + ((nx + 1) / 2) * r.w, y: r.y + ((1 - ny) / 2) * r.h, depth: cw, front };
+}
+
+/**
+ * PERF-TV-PROJ (2026-10-23): ONE FRAME'S PROJECTION, TAKEN ONCE. The travel
+ * view projects every mark, every route dot and the pieces between them
+ * each frame - thousands of points. Asked per point, the canvas's
+ * clientWidth/clientHeight (four Blink reads a point) and proj x view (a
+ * new matrix a point) left ~27 MB/s of Blink garbage and ~25 MB/s of V8
+ * garbage behind a journey, and Blink's heap grew to that peak (1-1.7 GB)
+ * and kept it for the session. The size, the world's rect and the product
+ * are taken once when the frame's matrices change - every frame builds
+ * new ones (perspective, lookAt), the precedent world.js yardCull keys on -
+ * and every point of that frame reuses them.
+ *
+ * `frame(take)` hands the host's current matrices to `take(proj, view)`;
+ * `front` and `behind` project a point through them (`behind`: the
+ * mirror, AUDIT DEEP T1-1), null before a frame.
+ */
+export function createFrameProjector(canvas, rectOf, frame) {
+  const pv = new Float32Array(16);
+  let proj = null, view = null, w = 0, h = 0, rect = null;
+  const take = (p, v) => {
+    if (!p || !v) return false;
+    if (p !== proj || v !== view) {
+      proj = p; view = v;
+      w = canvas.clientWidth; h = canvas.clientHeight; rect = rectOf(w, h);
+      multiply(p, v, pv);
+    }
+    return true;
+  };
+  const at = (pt, behind) => (frame(take) ? projectToScreen(pt, w, h, proj, view, rect, behind, pv) : null);
+  return { front: (pt) => at(pt, false), behind: (pt) => at(pt, true) };
 }

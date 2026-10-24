@@ -20,10 +20,10 @@
 // THE PORT'S CURATION, as layoutPins.js CURATED_CLASSIC curates the TVRNAS blocks: each such marker, keyed by the pack
 // that lays it out, the block, the building's record and the marker's own position, STANDS AT ITS MEASURED FLOOR SPOT -
 // the nearest floor a person walks to from the room's entrance, with half a metre of floor round it
-// (tools/townQuestMarkers.mjs measured it off the player's own ARCH3D, and test/fb1004d_questmarkers.test.js measures it
+// (tools/townQuestMarkers.mjs measured it off the player's own ARCH3D, and test/systems/quest/fb1004d_questmarkers.test.js measures it
 // again). A MOVE, not a drop: the building keeps every marker DFU's quest law counts and indexes - `marker N`,
 // anymarker's two lists, the spawn-to-item fallback, every draw over the lists - and only where one stands changes.
-import { worldDataVendorCarries, blockReplacementFilename } from '../../formats/worldDataReplacement.js';
+import { worldDataVendorCarries, blockReplacementFilename } from '../../formats/worldData/worldDataReplacement.js';
 
 /** The list tools/townQuestMarkers.mjs prints: per interior design, where it stands ([pack, block, record]) and each
  *  marker no player reaches - its record (11 a person or foe, 18 an item), its position `at` and the floor spot `to`,

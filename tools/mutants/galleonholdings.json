@@ -5,7 +5,7 @@
     "old": "  Object.freeze([5.45, 6.7]),    // 2 Small Ship",
     "new": "  Object.freeze([7.65, 4.14]),    // 2 Small Ship",
     "tests": [
-      "test/galleonholdings.test.js"
+      "test/systems/naval/galleonholdings.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  Object.freeze([5.45, 6.7]),    // 2 Small Ship",
     "new": "  Object.freeze([5.45, 4.14]),    // 2 Small Ship",
     "tests": [
-      "test/galleonholdings.test.js"
+      "test/systems/naval/galleonholdings.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  Object.freeze([5.45, 6.7]),    // 2 Small Ship",
     "new": "  Object.freeze([5.65, 6.7]),    // 2 Small Ship",
     "tests": [
-      "test/galleonholdings.test.js"
+      "test/systems/naval/galleonholdings.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  Object.freeze([5.45, 6.7]),    // 2 Small Ship",
     "new": "  Object.freeze([5.3, 6.7]),    // 2 Small Ship",
     "tests": [
-      "test/galleonholdings.test.js"
+      "test/systems/naval/galleonholdings.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "export const gangwaySide = (hull) => (MOD_GANGWAYS[hull] && hullBuild(hull) === MOD_BUILDS[hull] ? MOD_GANGWAYS[hull] : GANGWAY_SIDE[hull] ?? GANGWAY_SIDE[0]);",
     "new": "export const gangwaySide = (hull) => (GANGWAY_SIDE[hull] ?? GANGWAY_SIDE[0]);",
     "tests": [
-      "test/galleonholdings.test.js"
+      "test/systems/naval/galleonholdings.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "export const gangwaySide = (hull) => (MOD_GANGWAYS[hull] && hullBuild(hull) === MOD_BUILDS[hull] ? MOD_GANGWAYS[hull] : GANGWAY_SIDE[hull] ?? GANGWAY_SIDE[0]);",
     "new": "export const gangwaySide = (hull) => (MOD_GANGWAYS[hull] ? MOD_GANGWAYS[hull] : GANGWAY_SIDE[hull] ?? GANGWAY_SIDE[0]);",
     "tests": [
-      "test/galleonholdings.test.js"
+      "test/systems/naval/galleonholdings.test.js"
     ]
   },
   {
@@ -59,17 +59,17 @@
     "old": "export const MOD_SMALL_SHIP_GANGWAY = Object.freeze([7.65, 4.14]);",
     "new": "export const MOD_SMALL_SHIP_GANGWAY = Object.freeze([7.65, 3.64]);",
     "tests": [
-      "test/galleonholdings.test.js"
+      "test/systems/naval/galleonholdings.test.js"
     ]
   },
   {
     "name": "GH-the-host-reads-the-table",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const [sx, sy] = gangwaySide(boat.hull);",
     "new": "    const [sx, sy] = gangwaySide(4);",
     "tests": [
-      "test/galleonholdings.test.js",
-      "test/auditholdings.test.js"
+      "test/systems/naval/galleonholdings.test.js",
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "  return { x: Math.min(x1 - GANGWAY_BACK, Math.max(x0 + GANGWAY_CLEAR, headX + run)), y: QUAY_DECK_UP };",
     "new": "  return { x: Math.max(x0 + GANGWAY_CLEAR, headX + run), y: QUAY_DECK_UP };",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -87,8 +87,8 @@
     "old": "    const cx = hatch && !deck.walkable?.(hatch[0] + 1.1, hatch[2]) && deck.walkable?.(hatch[0] - 1.1, hatch[2]) ? -1.1 : 1.1;",
     "new": "    const cx = hatch && !deck.walkable?.(hatch[0] + 1.1, hatch[2]) && deck.walkable?.(hatch[0] - 1.1, hatch[2]) ? 1.1 : 1.1;",
     "tests": [
-      "test/galleonholdings.test.js",
-      "test/crewroles.test.js"
+      "test/systems/naval/galleonholdings.test.js",
+      "test/systems/naval/crewroles.test.js"
     ]
   },
   {
@@ -97,8 +97,8 @@
     "old": "    const cx = hatch && !deck.walkable?.(hatch[0] + 1.1, hatch[2]) && deck.walkable?.(hatch[0] - 1.1, hatch[2]) ? -1.1 : 1.1;",
     "new": "    const cx = hatch && deck.walkable?.(hatch[0] - 1.1, hatch[2]) ? -1.1 : 1.1;",
     "tests": [
-      "test/galleonholdings.test.js",
-      "test/crewroles.test.js"
+      "test/systems/naval/galleonholdings.test.js",
+      "test/systems/naval/crewroles.test.js"
     ]
   },
   {
@@ -107,8 +107,8 @@
     "old": "    const cx = hatch && !deck.walkable?.(hatch[0] + 1.1, hatch[2]) && deck.walkable?.(hatch[0] - 1.1, hatch[2]) ? -1.1 : 1.1;",
     "new": "    const cx = hatch && !deck.walkable?.(hatch[0] + 1.1, hatch[2]) ? -1.1 : 1.1;",
     "tests": [
-      "test/galleonholdings.test.js",
-      "test/crewroles.test.js"
+      "test/systems/naval/galleonholdings.test.js",
+      "test/systems/naval/crewroles.test.js"
     ]
   },
   {
@@ -117,8 +117,8 @@
     "old": "face: cx > 0 ? -Math.PI / 2 : Math.PI / 2 } : null;",
     "new": "face: -Math.PI / 2 } : null;",
     "tests": [
-      "test/galleonholdings.test.js",
-      "test/crewroles.test.js"
+      "test/systems/naval/galleonholdings.test.js",
+      "test/systems/naval/crewroles.test.js"
     ]
   }
 ]

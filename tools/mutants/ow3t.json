@@ -1,81 +1,81 @@
 [
   {
     "name": "OW3-T7-3-closing-never-counted",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "  const closer = gained ? left : best, at = gained ? now : gainAt;",
     "new": "  const closer = gained ? left : best, at = gainAt;",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A band gaining on its quarry still gives up two minutes in - the clock never moved on a gain."
   },
   {
     "name": "OW3-T7-3-a-frame-is-a-gain",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "  const gained = left < best - 1;",
     "new": "  const gained = left < best;",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "Any frame's centimetre counts as closing (the metre's threshold gone)."
   },
   {
     "name": "OW3-T7-4-make-shares-the-birth",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "export const bandMakeSeed = (band) => (band.seed ^ 0x4d414b45) >>> 0;",
     "new": "export const bandMakeSeed = (band) => band.seed >>> 0;",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "The make re-reads the birth's stream: Daggerfall's roll over 80 never comes."
   },
   {
     "name": "OW3-T7-8-night-unkept",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "  return { id: `b${cx}.${cy}.${life}`, cx, cy, life, seed, night, born:",
     "new": "  return { id: `b${cx}.${cy}.${life}`, cx, cy, life, seed, born:",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A band forgets its life's night - the make reads the clock of the moment."
   },
   {
     "name": "OW3-T7-6-part-leg-decides",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "    let go = ok(x + Math.sin(heading) * full, z + Math.cos(heading) * full);",
     "new": "    let go = ok(x + Math.sin(heading) * d, z + Math.cos(heading) * d);",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A leg part-walked decides its way by its partial end - the band jumps when the end crosses the water."
   },
   {
     "name": "OW3-T7-9-any-life",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "  if (l !== life && l !== life - 1) return false;",
     "new": "",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A peer's word for any life is kept."
   },
   {
     "name": "OW3-T7-9-any-cell",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "  return Math.abs(Number(m[1]) * BAND_CELL_PX - at.x) <= reach && Math.abs(Number(m[2]) * BAND_CELL_PX - at.y) <= reach;",
     "new": "  return true;",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A peer's word for any cell is kept."
   },
   {
     "name": "OW3-T7-2-chaser-unshown",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "    for (const c of _bandChase.values()) if (!shown.some((o) => o.id === c.band.id)) shown.push(c.band);",
     "new": "",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A chase whose band left the list is not drawn."
   },
@@ -85,7 +85,7 @@
     "old": "    for (const turn of [0, Math.PI / 2, -Math.PI / 2, Math.PI]) {",
     "new": "    for (const turn of [0]) {",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A contact tries only the band's own bearing - the road refuses it and nothing stands."
   },
@@ -95,7 +95,7 @@
     "old": "    if (!anchor) return null;   // AUDIT OW3 T7-1",
     "new": "    if (!anchor) return { foes: Promise.resolve([]), anchorFeet: feet };   // AUDIT OW3 T7-1",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "The camps' stand reports a refusal as standing - the band is spent unstood."
   },
@@ -105,7 +105,7 @@
     "old": "        else c.retryAt = now + BAND_STAND_RETRY_MS;",
     "new": "        else c.retryAt = 0;",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A refused contact retries every frame (a dozen placements a frame)."
   },
@@ -115,7 +115,7 @@
     "old": "  function bandDrop() { for (const id of _bandChase.keys()) bandSpend(id); _bandChase.clear(); }",
     "new": "  function bandDrop() { _bandChase.clear(); }",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A chase ended by the water or a door is forgotten, not spent - a dip is a fresh chase."
   },
@@ -125,7 +125,7 @@
     "old": "      || _inAnyLocationRect(player.feetAt())) { bandDrop(); return; }",
     "new": "      ) { bandDrop(); return; }",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A band follows the traveller into a town."
   },
@@ -135,7 +135,7 @@
     "old": "    for (const [id, c] of _bandChase) {",
     "new": "    for (const [id, c] of [..._bandChase].filter(([id]) => travelViewBands().some((b) => b.id === id))) {",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "Only chases whose band is still in the list are stepped - a life's turn strands them."
   },
@@ -145,7 +145,7 @@
     "old": "      if (!bandNearMe(id, at, life)) continue;   // AUDIT OW3 T7-9",
     "new": "      // AUDIT OW3 T7-9",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "Any valid band id a peer names is kept."
   },
@@ -155,7 +155,7 @@
     "old": "      if (tvBandSeen.life !== life) bandPrune(life);",
     "new": "",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "The bands' tables are never pruned."
   },
@@ -165,7 +165,7 @@
     "old": "      const night = tvBandSeen.life === life ? tvBandSeen.night : bandNight(life * BAND_LIFE_MS + BAND_LIFE_MS / 2);",
     "new": "      const night = bandNight(life * BAND_LIFE_MS + BAND_LIFE_MS / 2);",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "Offline, a dusk crossed mid-life turns the bands over at the next pixel."
   },
@@ -175,8 +175,8 @@
     "old": "      if (!wildBands.step(b.id, { distM: d, reachM: sight,",
     "new": "      if (!wildBands.step(b.id, { distM: d, reachM: Infinity,",
     "tests": [
-      "test/tv7_bands.test.js",
-      "test/wildalert.test.js"
+      "test/systems/travel/tv7_bands.test.js",
+      "test/scenes/wildalert.test.js"
     ],
     "note": "Every band in the list chases, however far."
   }

@@ -1,0 +1,107 @@
+[
+  {
+    "name": "HOLD-ONCE-DOOR-OPEN",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!fromLoad && !holdOpen && !place?.instance && host.dungeonOnline?.() && isPrivateersHold(hit?.dfLocation)) { say(HOLD_ONCE_TEXT); return false; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/holdonce.test.js"
+    ],
+    "why": "the ask itself: online, a player outside walks back into the Hold"
+  },
+  {
+    "name": "HOLD-ONCE-LOAD-REFUSED",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!fromLoad && !holdOpen && !place?.instance && host.dungeonOnline?.()",
+    "new": "    if (!holdOpen && !place?.instance && host.dungeonOnline?.()",
+    "tests": [
+      "test/systems/holdonce.test.js"
+    ],
+    "why": "a save made inside the Hold loads outside it"
+  },
+  {
+    "name": "HOLD-ONCE-NEW-GAME-REFUSED",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!fromLoad && !holdOpen && !place?.instance && host.dungeonOnline?.()",
+    "new": "    if (!fromLoad && !place?.instance && host.dungeonOnline?.()",
+    "tests": [
+      "test/systems/holdonce.test.js"
+    ],
+    "why": "a new character never enters the Hold"
+  },
+  {
+    "name": "HOLD-ONCE-OFFLINE-TOO",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (!fromLoad && !holdOpen && !place?.instance && host.dungeonOnline?.() && isPrivateersHold(",
+    "new": "    if (!fromLoad && !holdOpen && !place?.instance && isPrivateersHold(",
+    "tests": [
+      "test/systems/holdonce.test.js"
+    ],
+    "why": "offline the Hold's door is DFU's"
+  },
+  {
+    "name": "HOLD-ONCE-EVERY-DUNGEON",
+    "file": "src/systems/startDungeon.js",
+    "old": "export const isPrivateersHold = (loc) => ((loc?.mapTableData?.mapId ?? 0) >>> 0) === PRIVATEERS_HOLD_MAP_ID;",
+    "new": "export const isPrivateersHold = (loc) => !!loc?.mapTableData;",
+    "tests": [
+      "test/systems/holdonce.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-ONCE-BY-THE-SETTING",
+    "file": "src/systems/startDungeon.js",
+    "old": "export const isPrivateersHold = (loc) => ((loc?.mapTableData?.mapId ?? 0) >>> 0) === PRIVATEERS_HOLD_MAP_ID;",
+    "new": "export const isPrivateersHold = (loc) => isStartDungeon(loc);",
+    "tests": [
+      "test/systems/holdonce.test.js"
+    ],
+    "why": "a custom start cell would open the real Hold"
+  },
+  {
+    "name": "HOLD-ONCE-ID-WRONG",
+    "file": "src/world/dungeon/dungeonTextures.js",
+    "old": "export const PRIVATEERS_HOLD_MAP_ID = 187853213;",
+    "new": "export const PRIVATEERS_HOLD_MAP_ID = 187853214;",
+    "tests": [
+      "test/systems/holdonce.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-ONCE-START-DROPS-THE-WORD",
+    "file": "src/scenes/worldModes.js",
+    "old": "    return tryEnterDungeon(hit, entries, { preferEnterMarker: true, fromLoad, holdOpen, recorded });",
+    "new": "    return tryEnterDungeon(hit, entries, { preferEnterMarker: true, fromLoad, recorded });",
+    "tests": [
+      "test/systems/holdonce.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-ONCE-NEW-GAME-UNMARKED",
+    "file": "src/scenes/world.js",
+    "old": "    const entered = await modes.startInDungeon({ holdOpen: true });",
+    "new": "    const entered = await modes.startInDungeon();",
+    "tests": [
+      "test/systems/holdonce.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-ONCE-STAFF-UNMARKED",
+    "file": "src/scenes/world.js",
+    "old": "entered = await modes?.startInDungeon?.({ locationKey: d.locationKey ?? null, holdOpen: true, recorded:",
+    "new": "entered = await modes?.startInDungeon?.({ locationKey: d.locationKey ?? null, recorded:",
+    "tests": [
+      "test/systems/holdonce.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-ONCE-RECALL-OPENS",
+    "file": "src/scenes/world.js",
+    "old": "        landed = !!(await modes?.startInDungeon?.({ recorded: a.dungeon ?? {} }));",
+    "new": "        landed = !!(await modes?.startInDungeon?.({ recorded: a.dungeon ?? {}, holdOpen: true }));",
+    "tests": [
+      "test/systems/holdonce.test.js"
+    ],
+    "why": "a Recall to an anchor set inside walks back in"
+  }
+]

@@ -5,7 +5,7 @@
     "old": "if ((locationType === T.HomePoor || locationType === T.HomeWealthy || locationType === T.HomeYourShips) && a.dungeons) return true;",
     "new": "if ((locationType === T.HomePoor || locationType === T.HomeWealthy || locationType === T.HomeYourShips) && a.homes) return true;",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "The mod's own bug: the homes read Dungeons (IL_0adb), and Homes admits nothing."
   },
@@ -15,7 +15,7 @@
     "old": "    if (r === 31) continue;\n",
     "new": "",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "BorderingRegionIndex passes 31 over."
   },
@@ -25,7 +25,7 @@
     "old": "    if (r > 0) return r;",
     "new": "    if (r >= 0) return r;",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "Region 0 is never an answer (the `> 0` test)."
   },
@@ -35,7 +35,7 @@
     "old": "[[x, y + 1], [x, y + 1], [x + 1, y]",
     "new": "[[x, y + 1], [x + 1, y]",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "The mod asks (x, y+1) twice - carried, and the order pinned."
   },
@@ -45,7 +45,7 @@
     "old": "CAPITAL_MAP_IDS.some((c) => (c & PIXEL_MASK) === ((mapId | 0) & PIXEL_MASK))",
     "new": "CAPITAL_MAP_IDS.some((c) => c === (mapId | 0))",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "isCapital compares masked."
   },
@@ -55,8 +55,8 @@
     "old": "  if (fromCapital && isCapital(dest.mapId)) return null;   // IL_093f-095e: capital to capital, anywhere\n",
     "new": "",
     "tests": [
-      "test/it1_immersivetravel.test.js",
-      "test/it1_heldmap.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/travel/it1_heldmap.test.js"
     ],
     "note": "Capital to capital is allowed region-locked."
   },
@@ -66,8 +66,8 @@
     "old": "return fromCapital ? 'capitalOnly' : 'regionLocked';",
     "new": "return fromCapital ? 'regionLocked' : 'capitalOnly';",
     "tests": [
-      "test/it1_immersivetravel.test.js",
-      "test/it1_heldmap.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/travel/it1_heldmap.test.js"
     ],
     "note": "The two refusals by where the player stands."
   },
@@ -77,7 +77,7 @@
     "old": "let totalCost = piecesCost + fee * Math.trunc((hours - ocean) / 24) + fee;",
     "new": "let totalCost = piecesCost + fee * Math.trunc((hours - ocean) / 24);",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "The fee's plus one (IL_1df4)."
   },
@@ -87,7 +87,7 @@
     "old": "    if (!hasShip) totalCost += (settings?.dailyShipCost | 0) * seaDays;",
     "new": "    totalCost += (settings?.dailyShipCost | 0) * seaDays;",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "An owned ship pays no rent."
   },
@@ -97,7 +97,7 @@
     "old": "export const hasDock = (mapId) => DOCKS.has((mapId | 0) & PIXEL_MASK);",
     "new": "export const hasDock = (mapId) => DOCKS.has(mapId | 0);",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "HasDock masks the id it is asked."
   },
@@ -107,7 +107,7 @@
     "old": "hasDock(id) || hasDock(id - 1000) ||",
     "new": "hasDock(id) ||",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "NearDock asks the row above."
   },
@@ -117,7 +117,7 @@
     "old": "  return gps.regionIndex === 31;",
     "new": "  return gps.regionIndex === 30;",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "IsPlayerInTown's region 31."
   },
@@ -127,7 +127,7 @@
     "old": "if (border === dest.regionIndex || border === -1) return null;",
     "new": "if (border === dest.regionIndex) return null;",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "No region answering sails anywhere (IL_16d0)."
   },
@@ -137,8 +137,8 @@
     "old": "  let minutes = 51 * steps;",
     "new": "  let minutes = 50 * steps;",
     "tests": [
-      "test/it1_immersivetravel.test.js",
-      "test/it1_heldmap.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/travel/it1_heldmap.test.js"
     ],
     "note": "51 minutes a pixel."
   },
@@ -148,7 +148,7 @@
     "old": "  if (!speedCautious) minutes >>= 1;\n  return { minutes, oceanPixels: 0 };",
     "new": "  return { minutes, oceanPixels: 0 };",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "The reckless halving."
   },
@@ -158,7 +158,7 @@
     "old": "  totalCost += (settings?.dailyCaptainFee | 0) * days;",
     "new": "  if (!hasShip) totalCost += (settings?.dailyCaptainFee | 0) * days;",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "The captain is paid on your own ship."
   },
@@ -168,8 +168,8 @@
     "old": "if (kind === IT_POPUP.seafarer) return { speedCautious: true, travelShip: true, sleepModeInn: false };",
     "new": "if (kind === IT_POPUP.seafarer) return { speedCautious: true, travelShip: true, sleepModeInn: true };",
     "tests": [
-      "test/it1_immersivetravel.test.js",
-      "test/it1_heldmap.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/travel/it1_heldmap.test.js"
     ],
     "note": "SeafarersPopUp.OnPush camps out."
   },
@@ -179,7 +179,7 @@
     "old": "    st.travelShip = false;   // IL_1b46-1b5d, IL_1b67-1b7e - the camp-out button alone\n",
     "new": "",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "The carriage's camp-out drops the ship."
   },
@@ -189,8 +189,8 @@
     "old": "    if (transport && st.travelShip) { st.travelShip = true; return 'cannotDisableShip'; }   // IL_1f33-1f41, IL_1f4c-1f5a\n",
     "new": "",
     "tests": [
-      "test/it1_immersivetravel.test.js",
-      "test/it1_heldmap.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/travel/it1_heldmap.test.js"
     ],
     "note": "The captain refuses land."
   },
@@ -200,8 +200,8 @@
     "old": "  if (!settings?.enabled || !settings.disableNormalTravel) return null;",
     "new": "  if (!settings?.enabled) return null;",
     "tests": [
-      "test/it1_immersivetravel.test.js",
-      "test/it1_heldmap.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/travel/it1_heldmap.test.js"
     ],
     "note": "Disable Normal Travel off leaves the map alone."
   },
@@ -211,7 +211,7 @@
     "old": "type: 15, name: 'Carriage Drivers', summon: -1, region: -1, power: 100, face: -1, race: -1, sgroup: 1,",
     "new": "type: 15, name: 'Carriage Drivers', summon: -1, region: -1, power: 100, face: -1, race: -1, sgroup: 0,",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "sgroup 1 (Merchants) is what routes a driver to the merchant popup."
   },
@@ -221,40 +221,40 @@
     "old": "export const DOCK_PIXEL_IDS = Object.freeze([\n  5222,",
     "new": "export const DOCK_PIXEL_IDS = Object.freeze([\n  5223,",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "The tables are the DLL's bytes."
   },
   {
     "name": "IT1-23-online-mod-the-players",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "  'immersive-travel': Object.freeze({\n    Enabled: true,\n",
     "new": "  'immersive-travel': Object.freeze({\n",
     "tests": [
-      "test/it1_immersivetravel.test.js",
-      "test/modsonline.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/modsonline.test.js"
     ],
     "note": "The carriages are the room's ground."
   },
   {
     "name": "IT1-24-online-map-refuses",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "    'General.DisableNormalTravel': false,\n  }),",
     "new": "  }),",
     "tests": [
-      "test/it1_immersivetravel.test.js",
-      "test/modsonline.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/modsonline.test.js"
     ],
     "note": "Online the map's trips stay walked."
   },
   {
     "name": "IT1-25-online-fares-the-players",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "  'immersive-travel': Object.freeze(['General.ClearerMapDots',",
     "new": "  'immersive-travel-x': Object.freeze(['General.ClearerMapDots',",
     "tests": [
-      "test/it1_immersivetravel.test.js",
-      "test/realm0.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js",
+      "test/systems/realm0.test.js"
     ],
     "note": "A fee of 0 online would be a free teleport."
   },
@@ -264,27 +264,27 @@
     "old": "      'General.DisableNormalTravel': Object.freeze({ default: false,",
     "new": "      'General.DisableNormalTravel': Object.freeze({ default: true,",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "The port ships Disable Normal Travel off."
   },
   {
     "name": "IT1-28-laid-twice",
-    "file": "src/formats/worldDataReplacement.js",
+    "file": "src/formats/worldData/worldDataReplacement.js",
     "old": "    if (!l.match(fileName) || !(l.isOn?.() ?? true) || l.owns?.(json)) continue;",
     "new": "    if (!l.match(fileName) || !(l.isOn?.() ?? true)) continue;",
     "tests": [
-      "test/it1_worlddata.test.js"
+      "test/formats/worldData/it1_worlddata.test.js"
     ],
     "note": "The mod's own file is never laid twice."
   },
   {
     "name": "IT1-29-layer-ignores-switch",
-    "file": "src/formats/worldDataReplacement.js",
+    "file": "src/formats/worldData/worldDataReplacement.js",
     "old": "    if (!l.match(fileName) || !(l.isOn?.() ?? true) || l.owns?.(json)) continue;",
     "new": "    if (!l.match(fileName) || l.owns?.(json)) continue;",
     "tests": [
-      "test/it1_worlddata.test.js"
+      "test/formats/worldData/it1_worlddata.test.js"
     ],
     "note": "The mod off lays nothing."
   },
@@ -294,7 +294,7 @@
     "old": "export const IT_GATE_FILE = /^(WALLAA(?:08|09|10|11))(?:\\.[A-Z0-9]+)?\\.RMB\\.json$/;",
     "new": "export const IT_GATE_FILE = /^(WALLAA(?:08|09|10|11))\\.RMB\\.json$/;",
     "tests": [
-      "test/it1_worlddata.test.js"
+      "test/formats/worldData/it1_worlddata.test.js"
     ],
     "note": "Beautiful Cities' composites carry the carriages too."
   },
@@ -304,7 +304,7 @@
     "old": "    if (o && !this._panelState.it && !this._zoneMap) setTravelMapPopUpState(o);",
     "new": "    if (o && !this._zoneMap) setTravelMapPopUpState(o);",
     "tests": [
-      "test/it1_heldmap.test.js"
+      "test/systems/travel/it1_heldmap.test.js"
     ],
     "note": "The mod's popups are new each time."
   },
@@ -314,37 +314,37 @@
     "old": "      if (refusal) { this._itRefusal = IT_TEXT[refusal]; this._renderCard(); return; }",
     "new": "",
     "tests": [
-      "test/it1_heldmap.test.js"
+      "test/systems/travel/it1_heldmap.test.js"
     ],
     "note": "A refused place opens no panel."
   },
   {
     "name": "IT1-33-classic-fare-dfus",
-    "file": "src/ui/travelPopUp.js",
+    "file": "src/ui/travel/travelPopUp.js",
     "old": "    if (this.itKind) {\n      const t = itTrip(",
     "new": "    if (false) {\n      const t = itTrip(",
     "tests": [
-      "test/it1_immersivetravel.test.js"
+      "test/systems/guild/it1_immersivetravel.test.js"
     ],
     "note": "The mod's popup bills its own calculator."
   },
   {
     "name": "IT1-34-classic-carriage-map-with-to",
-    "file": "src/ui/travelMapWindow.js",
+    "file": "src/ui/travel/travelMapWindow.js",
     "old": "    this._carriageMap = !!this._it || (!!this._itSettings && !this._to);",
     "new": "    this._carriageMap = !!this._it || !!this._itSettings;",
     "tests": [
-      "test/it1_classicmap.test.js"
+      "test/systems/it1_classicmap.test.js"
     ],
     "note": "The player's own map is a CarriageMap only with Travel Options off."
   },
   {
     "name": "IT1-35-classic-escape-closes",
-    "file": "src/ui/travelMapWindow.js",
+    "file": "src/ui/travel/travelMapWindow.js",
     "old": "      if (code === 'Enter' || code === 'NumpadEnter' || code === 'KeyO') { this._click(); this.top = null; this._itRefusal = null; }",
     "new": "      this._click(); this.top = null; this._itRefusal = null;",
     "tests": [
-      "test/it1_classicmap.test.js"
+      "test/systems/it1_classicmap.test.js"
     ],
     "note": "An OK box answers Return and O alone."
   },
@@ -354,7 +354,7 @@
     "old": "    if (this._it) return this._it.kind === IT_POPUP.seafarer ?",
     "new": "    if (this._it && !this.portsFilter) return this._it.kind === IT_POPUP.seafarer ?",
     "tests": [
-      "test/it1_heldmap.test.js"
+      "test/systems/travel/it1_heldmap.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "{ yaw, feetGiven: true, loose: true, transient: true, allied:",
     "new": "{ yaw, feetGiven: true, placed: true, transient: true, allied:",
     "tests": [
-      "test/auditnav2_boarding.test.js"
+      "test/scenes/auditnav2_boarding.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "{ yaw, feetGiven: true, loose: true, transient: true, allied:",
     "new": "{ yaw, feetGiven: true, loose: true, allied:",
     "tests": [
-      "test/auditnav2_boarding.test.js"
+      "test/scenes/auditnav2_boarding.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "if (f.entity?.team === 'PlayerAlly' || f.managed || f.deckBoat != null) return null;",
     "new": "if (f.entity?.team === 'PlayerAlly' || f.managed) return null;",
     "tests": [
-      "test/auditnav2_boarding.test.js"
+      "test/scenes/auditnav2_boarding.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "f.placed || f.managed || f.deckBoat != null || f.entity?.team",
     "new": "f.placed || f.managed || f.entity?.team",
     "tests": [
-      "test/auditnav2_boarding.test.js"
+      "test/scenes/auditnav2_boarding.test.js"
     ]
   },
   {
@@ -41,88 +41,88 @@
     "old": "if (f.entity?.team === 'PlayerAlly' || f.deckBoat != null) return null;",
     "new": "if (f.entity?.team === 'PlayerAlly') return null;",
     "tests": [
-      "test/auditnav2_boarding.test.js"
+      "test/scenes/auditnav2_boarding.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F44-muster-class",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "deps.board?.spawnFoe?.(c ? c.mobile : all[i], spot[0]",
     "new": "deps.board?.spawnFoe?.(all[i], spot[0]",
     "tests": [
-      "test/auditnav2_boarding.test.js"
+      "test/scenes/auditnav2_boarding.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F44-her-man-unchecked",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const spot = c && free(c.feet) ? claim([c.feet, c.yaw]) : pick(deal);",
     "new": "const spot = c ? claim([c.feet, c.yaw]) : pick(deal);",
     "tests": [
-      "test/auditnav2_boarding.test.js"
+      "test/scenes/auditnav2_boarding.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F44-hands-rail-blind",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        const spot = pick(rail, deal);\n        if (!spot) break;\n        const handle = deps.board?.spawnFoe?.(mine[i]?.mobile ?? HAND, spot[0], spot[1], 'ally', { boat: entry.boat,",
     "new": "        const spot = rail() ?? deal();\n        if (!spot) break;\n        const handle = deps.board?.spawnFoe?.(mine[i]?.mobile ?? HAND, spot[0], spot[1], 'ally', { boat: entry.boat,",
     "tests": [
-      "test/auditnav2_boarding.test.js"
+      "test/scenes/auditnav2_boarding.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F32-pick-unchecked",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const spot = d(); if (spot && free(spot[0])) return claim(spot); }",
     "new": "const spot = d(); if (spot) return claim(spot); }",
     "tests": [
-      "test/auditnav2_boarding.test.js"
+      "test/scenes/auditnav2_boarding.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F32-landing-unheld",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      claim(landing ?? first);\n",
     "new": "",
     "tests": [
-      "test/auditnav2_boarding.test.js"
+      "test/scenes/auditnav2_boarding.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F32-repel-feet-unheld",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    taken.push(deps.feet());   // AUDIT NAV2 F32: never on me\n",
     "new": "",
     "tests": [
-      "test/auditnav2_boarding.test.js"
+      "test/scenes/auditnav2_boarding.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F19-crew-line-first",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (entry.ship.damage.state === SHIP_STATES.afloat) entry.ship.damage.apply({ hull: Math.max(0, entry.ship.damage.hull - entry.ship.damage.maxHull * 0.24), sail: 0, crew: 0 }, clock);\n      entry.ship.damage.apply({ hull: 0, sail: 0, crew: entry.ship.damage.crew }, clock);",
     "new": "      entry.ship.damage.apply({ hull: 0, sail: 0, crew: entry.ship.damage.crew }, clock);\n      if (entry.ship.damage.state === SHIP_STATES.afloat) entry.ship.damage.apply({ hull: Math.max(0, entry.ship.damage.hull - entry.ship.damage.maxHull * 0.24), sail: 0, crew: 0 }, clock);",
     "tests": [
-      "test/auditnav2_boarding.test.js"
+      "test/scenes/auditnav2_boarding.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F37-one-shuffle",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "b.deal ??= [dealer(deps.board?.railSpots?.(b.boat, sea.get(b.shipId)?.ship.pos ?? deps.feet(), DECK_SPOTS / 2) ?? []), dealer(deps.board?.deckSpots?.(b.boat, DECK_SPOTS) ?? [])];",
     "new": "b.deal ??= [dealer([...(deps.board?.railSpots?.(b.boat, sea.get(b.shipId)?.ship.pos ?? deps.feet(), DECK_SPOTS / 2) ?? []), ...(deps.board?.deckSpots?.(b.boat, DECK_SPOTS) ?? [])])];",
     "tests": [
-      "test/auditnav2_boarding.test.js"
+      "test/scenes/auditnav2_boarding.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F49-fallen-uncounted",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (fell && boarding.boat) myBoatState(boarding.boat)?.damage.apply({ hull: 0, sail: 0, crew: fell * CREW_PER_HAND }, clock);\n",
     "new": "",
     "tests": [
-      "test/auditnav2_boarding.test.js"
+      "test/scenes/auditnav2_boarding.test.js"
     ]
   }
 ]

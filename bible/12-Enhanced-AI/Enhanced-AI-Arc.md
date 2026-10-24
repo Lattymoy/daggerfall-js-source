@@ -7,7 +7,7 @@ the enhanced tab."
 
 ## The decisions, locked
 
-1. **The classic motor is untouched.** `characters/enemyMotor.js` is a
+1. **The classic motor is untouched.** `characters/enemy/enemyMotor.js` is a
    verbatim port of DFU's classic path and stays byte-for-byte. Enhanced
    AI never edits it; it replaces one step - how an enemy MOVES toward
    its target - behind a switch, and falls back to the classic step
@@ -21,15 +21,17 @@ the enhanced tab."
    the one it plays; the classic motor is one press away and All off's.
    An unstamped shelf's materialised Off adopts it once (`uiPrefs.js`
    PREF1_ADOPT_NEW_DEFAULT).
-3. **The navmesh is project-final's, ported whole.** `src/ai/navmesh.js`
+3. **The navmesh is project-final's, ported whole.** `src/ai/nav/navmesh.js`
    is Mac's file from `// Agent params` to the end; the header differs
    only by the four-line `surfaceY` inlined verbatim from project-final's
    terrain.js and a linter global. A change is made in both repos and
-   said in both - the body is pinned by DIGEST (`test/enhancedAI.test.js`,
+   said in both - the body is pinned by DIGEST (`test/ai/nav/enhancedAI.test.js`,
    AUDIT 62 F4: the old pin read only the two head lines), re-recorded
    deliberately with the commit the change was made in. AUDIT 62 F1
    (2026-09-07) is the first body change, made here first and owed to
-   project-final: the stacked-floor weld and the heights that ride it. The ground needs no seam: buildNav's own
+   project-final: the stacked-floor weld and the heights that ride it. AUDIT 68 (the
+   collider index under surfH) and INDOOR-WATCH's AUDIT W2 (2026-10-16: a landed bake's
+   boxes indexed packed, never unpacked on the main thread) are owed the same way. The ground needs no seam: buildNav's own
    `ground` = { at(x, z), min } is what Daggerfall's Collider.heightAt is.
 4. **Triangles become his colliders, not his code.** Daggerfall's level
    is a triangle soup; his voxelizer stamps boxes and ramps.
@@ -77,7 +79,7 @@ the reason in its own idiom.
 
 ## ENHANCED AI 3 - a level bakes from its own collider (2026-09-02)
 
-`src/ai/navBake.js`, pure: the Collider's buckets hold every triangle
+`src/ai/nav/navBake.js`, pure: the Collider's buckets hold every triangle
 in world space - the ones the player collides with - and the bake
 reads them back, so the nav's ground and the game's ground are one
 source. An anchor is required, always. THE PHANTOM FLOOR: his buildNav
@@ -117,7 +119,9 @@ motor through a thunk, `nav: () => enhancedNav.chf` (AUDIT 68 retired
 - **ENHANCED AI 4b - doors and the crowd.** Action doors as obstacles;
   other foes via syncNavObstacles and his RVO avoidHeading.
 - **ENHANCED AI 5 - exteriors and interiors.** The streamed world's
-  pixel-local buckets and the terrain floor; RMB interiors.
+  pixel-local buckets and the terrain floor. (RMB interiors SHIPPED -
+  `## ENHANCED AI 5 (interiors)` below; the streamed world's half is
+  what stays open: the street's watch and foes walk the classic motor.)
 - **ENHANCED AI 6 - the debug faces.** His navDebugFaces/pathDebugFaces
   through the port's renderer, behind the test room, so a bake can be
   LOOKED at.
@@ -132,7 +136,7 @@ without asking - which is how three lanes each filed an Audit 49 on
 2026-09-02 and two of them silently overwrote a predecessor. Both are
 recovered from history (52 the roads calibration, 53 the road-to-1:1
 campaign; 49 stays with the grass audit that holds the file now). The
-law: before filing an audit, `ls bible/01-Overview/Audit-*.md` and take
+law: before filing an audit, `ls bible/01-Overview/audits/Audit-*.md` and take
 the next free number; never write an audit file that already exists.
 
 ## ENHANCED AI 4 - the motor reads the switch (2026-09-02)
@@ -188,7 +192,7 @@ the foe was still turning in place; the fault pin used a mesh-less chf,
 which `findPath` answers with null - that is never-traps working - and
 needed a Proxy that throws.
 
-Pins: 14 in `test/enhancedAI4.test.js`. Campaign: 20 mutants, 20
+Pins: 14 in `test/ai/nav/enhancedAI4.test.js`. Campaign: 20 mutants, 20
 killed against a green baseline; two survived the first pass (a stale
 route steering one tick after the bake vanished; a route surviving
 non-pursuit) and are pinned.
@@ -275,7 +279,7 @@ first playtest is Mac's, with the switch on and then off.
 
 ### AUDIT 59 - before the merge (2026-09-04)
 
-`01-Overview/Audit-59.md`. The arc read against the production build
+`01-Overview/audits/Audit-59.md`. The arc read against the production build
 and the host's lifecycle for the first time. THE WORKER NEVER SHIPPED
 (F1): Vite bundles a module worker only from the literal `new
 Worker(new URL(...), { type: 'module' })`, and 3b spelled it through a
@@ -353,12 +357,12 @@ floor, and the layout's foes on the mesh. It skips without the archives.
 
 A player's console carried `navmesh bake looks degenerate (11 polys from
 17592 triangles)` in the dungeon of map id 1204685
-(`01-Overview/Field-Bugs-2026-09-27-field-console.md`). It reproduced
+(`01-Overview/bugs/Field-Bugs-2026-09-27-field-console.md`). It reproduced
 exactly in node, and it was every classic dungeon's: Privateer's Hold
 baked 130 polys from 9,079 triangles, and 11 of 12 sampled dungeons
 tripped the guard. Four faults in the soup bake compounded, and the
-one-anchor cull finished the job (`src/ai/navBake.js`,
-`src/ai/triRaster.js`, `src/ai/navClient.js`):
+one-anchor cull finished the job (`src/ai/nav/navBake.js`,
+`src/ai/triRaster.js`, `src/ai/nav/navClient.js`):
 
 - The cell was coarsened. His budget rule (`coarsenAgent`) is for open
   terrain and sizes by the soup's box; every classic dungeon's box is
@@ -391,12 +395,12 @@ F1's freeze several times over - and the classic motor stands, as it
 did behind a degenerate bake. NAV_BAKE_VERSION is 4: main's
 DUNGEON-SEAMS took 3 for the corners it moved under the same key, this
 bake took 3 on its branch, and the merge renumbered it so each
-invalidates the other's caches. Pinned in `test/enhancedAI.test.js`
+invalidates the other's caches. Pinned in `test/ai/nav/enhancedAI.test.js`
 (DEGENERATE-BAKE ROOT) and `tools/mutants/navbake.json`.
 
 ### AUDIT PRE-MERGE 0928 - the bake read again before the merge (2026-09-28)
 
-Lens N's findings, each pinned red first in `test/audit0928_nav.test.js`
+Lens N's findings, each pinned red first in `test/ai/nav/audit0928_nav.test.js`
 and mutation-proven (`tools/mutants/navbake.json`,
 `tools/mutants/audit0928_nav.json`):
 
@@ -419,3 +423,110 @@ and mutation-proven (`tools/mutants/navbake.json`,
 - N6: the ARENA2 bake built its models from the raw archive while the
   host builds them through DUNGEON-SEAMS' `patchSeams`; it builds them
   as the host does.
+
+## ENHANCED AI 5 (interiors) - a building's mesh, and the watch that always comes (FIELD BUGS 2026-10-16b INDOOR-WATCH)
+
+The Discord: "If you just sit near the wall between the shelves, when you
+fail to steal something, the guard will come running, but they simply
+can't reach you because they run into the wall instead of going through
+the door. And you can sit like that for as long as you like"
+(`01-Overview/bugs/Field-Bugs-2026-10-16b.md`, INDOOR-WATCH).
+
+The watch called into a building (`cityGuards.js`'s indoor arm,
+PlayerEntity.SpawnCityGuards) and the building's own foes (`worldModes.js`
+makeInteriorFoes) walked the classic motor: it steers straight at the
+player and slides along the first wall it meets, so a partition between
+the street door and the player held them for the whole crime. The navmesh
+was the dungeon's alone.
+
+`src/scenes/interiorNav.js` is the interior's, wired by the mode machine
+and nothing else: one module (`worldModes.js:"const interiorNav = createInteriorNav();"`),
+mounted with each building at the player's arrival
+(`worldModes.js:"interiorNav.mount(ctx, spot);"`), released at both of its
+teardowns, its frame run before either pool steps, and handed to both
+pools as `nav` - the bake as a thunk and the routes' world, the dungeon's
+own two. `createCityGuards` and `createExteriorFoes` build the enhanced
+motor with the switch on where a host hands them a mesh, as the dungeon's
+construction sites do; the street's pools hand none.
+
+**The bake is the dungeon's** - the same `NavClient`, the room's collider,
+the unlocked action doors out of the soup (`doorsOutOfSoup`, the dungeon's
+own test), anchored on every place an agent lives: the player's arrival,
+the room's ways in, the spot each static door stands the watch at
+(`indoorWatchSpot`), and the player's feet with the rings round them, out
+to GOAL_REACH (4 m), the knee's line reaches (a body between two shelves
+stands where the bake's erosion keeps no floor, and an anchor that does
+not land is dropped with its room). Two departures from the dungeon's call,
+both the room's size: it is ASKED ON NEED, the first frame after a motor in
+the room has read it (a building nobody fights in bakes nothing), and it is
+NOT CACHED (the bake is the worker's, 0.2-0.7 s for the audit's
+936-7,776-triangle halls, and the main thread's share is the soup read at
+the ask and the landing - 15 / 40 / 46 ms CPU for a 12 x 10, a 30 x 20
+two-storey and a 40 x 30 m hall since AUDIT W2, from 26 / 59 / 250;
+thousands of buildings would each leave an IndexedDB entry nothing evicts). It is asked again - one at a time, a request in flight coalesced
+and baked the moment the one in flight lands - when a door's lock changes
+the soup, and when the hunted player stands off every island the mesh kept
+(at most four times a room).
+
+**NO ROUTE - a departure from DFU, named.** A locked inner door or a ladder
+leaves the player's room an island the routes cannot reach. A watchman of
+the crime's pursuit (`huntsThePlayer`: the enhanced motor, hostile, able to
+act, his give-up timer running, after the player or nobody yet; never one
+walking off, running, defending or talked down) whose feet stand on
+another island than the player's for `CUT_OFF_S` (2 s) is stood on the
+player's island (a player on none: the island whose edge they are walked
+in from) at the spot nearest where he stood - the far side of what
+stopped him, drawn a body's width into the floor, never within a metre of
+the player, never within 0.8 m of another watchman, never in or on
+anything set down since the bake - and walks the rest (`EnhancedEnemyAI.standAt`:
+the pursuit kept, the old route, fall anchor and detour dropped).
+EnemyMotor has no such arm; its watch is stopped by the same wall. The
+building's own foes route on the mesh but are never stood: a monster a
+locked door holds is a door that held; the watch is the law's answer. The
+classic lane (the switch off) bakes nothing and stands nobody.
+
+Measured on the reporter's shop (a real Collider, the real pool, the real
+NavClient; `test/ai/nav/fb1016b_indoorwatch.test.js`): the classic watch - five
+watchmen at the street door - spent thirty seconds against the partition,
+nearest 1.41 m through it, never a sight of the player, never a swing; with
+the mesh the room baked 0.53 s after the crime, the first watchman stood in
+melee reach with the player in sight at 4.2 s, and the five swung 37 times
+in the thirty seconds. With a locked door in the doorway all five were
+stood past the partition at 2.7 s and swung 26 times.
+
+THE FOUR HOSTS: `worldModes.js` - WIRED (its two interior pools, the
+building of both `world.js` and `exterior.js`, which mount the mode
+machine); `dungeonContext.js` - its own bake since 3b, unchanged; `world.js`
+and `exterior.js` - their street pools hand no mesh and walk the classic
+motor: the streamed world's half of AI 5, still ahead. Pins:
+`test/ai/nav/fb1016b_indoorwatch.test.js` (13); `tools/mutants/fb1016b_indoorwatch.json`
+(103, all dead). AUDIT 55's reach pin (`test/ai/nav/enhancedAI4.test.js`) now
+counts the module and the two pools among the switch's readers, each pool
+reading it once and only behind a handed mesh, and still holds the street
+and the townspeople out of it.
+
+**AUDIT (2026-10-16) - off the mesh, and the stop that faced a corner.**
+The report survived deep shelves: from 0.8 m the tucked player stood on
+the aisle's island (so NO ROUTE never fired) but past findPath's
+half-metre goal snap, every route failed and the motor walked the classic
+line into the partition; a closet the bake keeps no floor of left the
+player on no island at all. Now a route that cannot place its goal asks
+the host (`navGoal`; the room's `nav.goal`, `meshPointNear` - the poly the
+player stands on, else the nearest the knee's line reaches within
+GOAL_REACH) for the point it ends at, and its last leg is the straight
+walk in (`EnhancedEnemyAI._routeOffMesh`, a departure from his
+repathToward, which answered null); the feet's rings reach GOAL_REACH at
+bearings a body's width apart, and NO ROUTE reads the same two-tier
+island for the player and the watch. And ADAPTATION 1's other half: in
+sight the classic stop is measured to the target, but a stopped foe turns
+to its destination - with a route's corner still ahead it faced the
+corner and the swing's 22.5 degree gate never opened; a foe stopped on its
+target now faces the target, every enhanced foe's, the dungeon's too. The
+landing's hitch went with it: a bake's boxes are indexed packed as the
+worker ships them (`navmesh.js` buildPackedIndex, owed to project-final),
+and the soup is written straight into its arrays. `standAt` is
+`EnemyAI._standAfresh` plus the route - resumeLive's own list; a stand's
+floor may lie 5 cm over its poly, never a stool's top. The dungeon's
+construction sites hand no `navGoal` yet (FLAGGED).
+(`01-Overview/bugs/Field-Bugs-2026-10-16b.md`, INDOOR-WATCH, AUDIT.)
+

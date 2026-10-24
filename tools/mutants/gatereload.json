@@ -1,29 +1,29 @@
 [
   {
     "name": "GATE-RELOAD-the-closed-gate-said-as-closed",
-    "file": "src/net/gateLink.js",
+    "file": "src/net/gate/gateLink.js",
     "old": "export const gateRefusalText = (word) => (word === 'the gate is closed' ? GATE_OUTDATED_TEXT : GATE_NO_TEXT[word] ?? word);",
     "new": "export const gateRefusalText = (word) => (GATE_NO_TEXT[word] ?? word);",
     "tests": [
-      "test/gatereload.test.js"
+      "test/net/gate/gatereload.test.js"
     ]
   },
   {
     "name": "GATE-RELOAD-the-reload-never-said",
-    "file": "src/net/gateLink.js",
-    "old": "export const GATE_OUTDATED_TEXT = 'Your game is older than this gate - save, then reload (or update the app) to enter.';",
+    "file": "src/net/gate/gateLink.js",
+    "old": "export const GATE_OUTDATED_TEXT = 'Your game is older than this gate. Save, then reload or update the app to enter.';",
     "new": "export const GATE_OUTDATED_TEXT = 'The gate is closed.';",
     "tests": [
-      "test/gatereload.test.js"
+      "test/net/gate/gatereload.test.js"
     ]
   },
   {
     "name": "GATE-RELOAD-the-link-in-the-old-words",
-    "file": "src/net/gateLink.js",
+    "file": "src/net/gate/gateLink.js",
     "old": "      if (g.k === 'no') { say(gateRefusalText(g.m)); onRefused(g.m); return; }",
     "new": "      if (g.k === 'no') { say(GATE_NO_TEXT[g.m] ?? g.m); onRefused(g.m); return; }",
     "tests": [
-      "test/gatereload.test.js"
+      "test/net/gate/gatereload.test.js"
     ]
   },
   {
@@ -32,8 +32,8 @@
     "old": "ejectFromCourt(gateRefusalText(why)); },",
     "new": "ejectFromCourt(GATE_NO_TEXT[why] ?? why); },",
     "tests": [
-      "test/gatereload.test.js",
-      "test/auditwb_court.test.js"
+      "test/net/gate/gatereload.test.js",
+      "test/net/gate/auditwb_court.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "'the court is full' : 'the gate is sealed';",
     "new": "'the court is full' : 'the gate is closed';",
     "tests": [
-      "test/gatereload.test.js"
+      "test/net/gate/gatereload.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "if (isGateRoom(a.key)) { const no = a.ly ? (gateHolds(gateDayOfRoom(a.key), now) ? null : 'the gate is closed') : await this._gateAdmit(a.key, who.subject, now); if (no) { this._refuse(ws, no); return; } }",
     "new": "if (isGateRoom(a.key)) { const no = a.ly ? (gateHolds(gateDayOfRoom(a.key), now) ? null : 'the gate is closed') : await this._gateAdmit(a.key, who.subject, now); if (no) { this._send(ws, JSON.stringify({ t: 'gate', k: 'no', m: no })); return; } }",
     "tests": [
-      "test/gatereload.test.js"
+      "test/net/gate/gatereload.test.js"
     ],
     "note": "SCALE5d part two (re-aimed by content): the court's copies beside it."
   }

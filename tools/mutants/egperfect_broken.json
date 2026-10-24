@@ -1,0 +1,272 @@
+[
+  {
+    "name": "EGBROKEN-law-unbumped",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_SPEC = 10;",
+    "new": "export const EG_SPEC = 9;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-never-broken",
+    "file": "src/net/eliteGates/egAscent.js",
+    "old": "  if (!(H.law >= EG_BROKEN_LAW) || leg.kind !== 'bridge' || leg.br || leg.len < EG_BROKEN_MIN_CM) return null;",
+    "new": "  if (!(H.law >= EG_BROKEN_LAW) || leg.kind !== 'bridge' || leg.br || leg.len < EG_BROKEN_MIN_CM || true) return null;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-turned-onto-a-drift",
+    "file": "src/net/eliteGates/egAscent.js",
+    "old": "kinds = hd ? band.filter((q) => EG_BROKEN_TURNED.includes(q)) : band;",
+    "new": "kinds = band;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-turned-never",
+    "file": "src/net/eliteGates/egAscent.js",
+    "old": "  const hd = leg.start.h, band =",
+    "new": "  if (leg.start.h) return null;\n  const hd = leg.start.h, band =",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-gap-off-the-envelope",
+    "file": "src/net/eliteGates/egAscent.js",
+    "old": "    const g = between(rp, H.gapMin, H.gapMax);\n    if (used + g + D + H.gapMin > room) break;",
+    "new": "    const g = between(rp, H.gapMin, H.gapMax) - 120;\n    if (used + g + D + H.gapMin > room) break;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-low-road-all-bridges",
+    "file": "src/net/eliteGates/egAscent.js",
+    "old": "L10 && n > 0 ? 'span' : 'bridge', 1);",
+    "new": "'bridge', 1);",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-fork-second",
+    "file": "src/net/eliteGates/egAscent.js",
+    "old": "return H.law >= EG_BROKEN_LAW && !H.lean ? [() => { H.fork(two, extra); H.meet(); }, first] : [first, () => { H.fork(two, extra); H.meet(); }];",
+    "new": "return [first, () => { H.fork(two, extra); H.meet(); }];",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-trunk-under-two-ranks",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "extra <= (law >= EG_BROKEN_LAW ? 1 : 2)",
+    "new": "extra <= 2",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-no-own-tries",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "  const plain = attempt > EG_RELAY_MAX + (law >= EG_BROKEN_LAW ? EG_BROKEN_TRIES : 0);",
+    "new": "  const plain = attempt > EG_RELAY_MAX;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-rooms-after-the-trial",
+    "file": "src/net/eliteGates/egAscent.js",
+    "old": "share[kind === 'rampart' ? stretches - 1 : front ? 0 : between(rp, 0, stretches - 1)]++;",
+    "new": "share[kind === 'rampart' ? stretches - 1 : between(rp, 0, stretches - 1)]++;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-door-never-direct",
+    "file": "src/net/eliteGates/egAscent.js",
+    "old": "(k === 0 || front) && share[k] === 0);",
+    "new": "k === 0 && share[k] === 0);",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-clocks-never-held",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (B.F && egTrialAwaits(spec)) B.F.await = now;",
+    "new": "  if (B.F && egTrialAwaits(spec) && false) B.F.await = now;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-clocks-held-forever",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if ((spec.kind === 'scriptorium' ? inHall.filter((b) => egOnTrialGround(spec, b)) : here).length) delete F.await;",
+    "new": "    if (false) delete F.await;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-approach-one-kind",
+    "file": "src/net/eliteGates/egAscent.js",
+    "old": "  const a = c <= 1 ? 'drift' : pool[bt(r, 0, pool.length - 1)], rest = pool.filter((k) => k !== a), b = c <= 1 ? 'beat' : rest[bt(r, 0, rest.length - 1)];",
+    "new": "  const a = c <= 1 ? 'drift' : pool[bt(r, 0, pool.length - 1)], b = a;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-first-circle-still",
+    "file": "src/net/eliteGates/egAscent.js",
+    "old": "  const a = c <= 1 ? 'drift' : pool[bt(r, 0, pool.length - 1)], rest",
+    "new": "  const a = c <= 1 ? 'still' : pool[bt(r, 0, pool.length - 1)], rest",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-chasm-spread-as-before",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "  const env = (n, d, lo = EG_GAP_MIN_CM, hi = EG_GAP_MAX_CM) => { if ((o.law ?? 0) >= EG_FRAG_BROKEN_LAW) chasm",
+    "new": "  const env = (n, d, lo = EG_GAP_MIN_CM, hi = EG_GAP_MAX_CM) => { if ((o.law ?? 0) >= EG_FRAG_BROKEN_LAW && false) chasm",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-mist-wide",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "    env(4, 200, EG_GAP_MIN_CM, EG_GAP_MIN_CM);",
+    "new": "    env(4, 200);",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-drop-stilled",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "      else if (kind === 'drop' && L.y - L.base < 200 && !broken) for",
+    "new": "      else if (kind === 'drop' && L.y - L.base < 200) for",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-rails-own-periods",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "        for (let q = 0; q < count; q++) step('rail', g, { x, kit, amp: Math.min(top, egDieBetween(r, 150, 200)), period: P, phase: (q % 2) * Math.round(Math.PI * 1000) });",
+    "new": "        for (let q = 0; q < count; q++) step('rail', g, { x, kit, amp: Math.min(top, egDieBetween(r, 150, 200)), period: egDieBetween(r, 60, 90) * 100, phase: q * 1500 });",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-rail-travel-whole-gap",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "top = Math.floor((g - EG_RAIL_CLEAR * 100) / 2);",
+    "new": "top = g - EG_RAIL_CLEAR * 100;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-neighbour-held-still",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "      const moving = law10 && meets && (next.kind === 'rail' || next.kind === 'drum');",
+    "new": "      const moving = false;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-forge-two-belts",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "if ((o.law ?? 0) >= EG_FRAG_BROKEN_LAW) { const P = between(r, 60, 80) * 100, ph = between(r, 0, 9) * 100; for (let q = 0; q < 2; q++) course.push({ k: 'rail', gap: g, x: 0, dy: 0, amp: 200, period: P, phase: ph }); }",
+    "new": "if ((o.law ?? 0) >= EG_FRAG_BROKEN_LAW) { const P = between(r, 60, 80) * 100, ph = between(r, 0, 9) * 100; for (let q = 0; q < 2; q++) course.push({ k: 'rail', gap: g, x: 0, dy: 0, amp: 200, period: P + q * 700, phase: ph }); }",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-pendulum-at-its-middle",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "    if (B.flight) { const v = B.run + EG_JUMP_MPS * EG_JUMP_FWD;",
+    "new": "    if (B.flight && false) { const v = B.run + EG_JUMP_MPS * EG_JUMP_FWD;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-alcove-past-the-rim",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "x: side * (L10 ? isqrt(R * R - z * z) + 120 : R + 280)",
+    "new": "x: side * (R + 280)",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-ring-shut-at-alcove",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "  if (!((spec?.law ?? spec?.v ?? 0) >= RING_ALCOVE_LAW)) return walls;",
+    "new": "  return walls;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-balcony-low",
+    "file": "src/net/eliteGates/egFragLaw.js",
+    "old": "between(r, L10 ? 40 : 30, L10 ? 45 : 40) * 10);",
+    "new": "between(r, 30, 40) * 10);",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-pillar-over-bastion",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "      const s = L10 && held(s0, z) && !held(-s0, z) ? -s0 : s0;",
+    "new": "      const s = s0;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-plate-on-the-stair",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "{ plate: L10 ? [X + s * (out - 150), z] : [X + s * (half + 300), z] }",
+    "new": "{ plate: [X + s * (half + 300), z] }",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-winch-adrift",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "(law >= EG_BROKEN_LAW ? 250 : 400)",
+    "new": "400",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGBROKEN-closing-from-a-broken-bridge",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "g = spec?.route?.courses?.find((q) => !q.b), P = R.paths[0], pad = 0.5;",
+    "new": "g = spec?.route?.courses?.[0], P = R.paths[0], pad = 0.5;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  }
+]

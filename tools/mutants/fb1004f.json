@@ -1,51 +1,51 @@
 [
   {
     "name": "QUEST-FOE-LINE-any-resource",
-    "file": "src/systems/questFoeLine.js",
+    "file": "src/systems/quest/questFoeLine.js",
     "old": "  if (!quest?.getResource?.(behaviour.targetSymbol)?.isFoe) return null;",
     "new": "  if (!quest) return null;",
     "tests": [
-      "test/fb1004f_questfoe.test.js"
+      "test/systems/quest/fb1004f_questfoe.test.js"
     ],
     "note": "A quest person's or item's behaviour answers a foe's line."
   },
   {
     "name": "QUEST-FOE-LINE-before-the-journal",
-    "file": "src/systems/questFoeLine.js",
+    "file": "src/systems/quest/questFoeLine.js",
     "old": "  if (!quest.getLogMessages?.()?.length) return null;   // Quest.GetLogMessages: none once the quest has ended, too\n",
     "new": "",
     "tests": [
-      "test/fb1004f_questfoe.test.js"
+      "test/systems/quest/fb1004f_questfoe.test.js"
     ],
     "note": "A quest that has written nothing in the journal, or has ended, is named on the plaque - the Quest Guide's second law broken."
   },
   {
     "name": "QUEST-FOE-LINE-nameless-quest",
-    "file": "src/systems/questFoeLine.js",
+    "file": "src/systems/quest/questFoeLine.js",
     "old": "  return title ? `${QUEST_FOE_PREFIX}${title}` : null;",
     "new": "  return `${QUEST_FOE_PREFIX}${title}`;",
     "tests": [
-      "test/fb1004f_questfoe.test.js"
+      "test/systems/quest/fb1004f_questfoe.test.js"
     ],
     "note": "A quest with no display name hangs a bare \"Quest: \" under its foe."
   },
   {
     "name": "QUEST-FOE-LINE-the-kind-label",
-    "file": "src/systems/questFoeLine.js",
+    "file": "src/systems/quest/questFoeLine.js",
     "old": "  const title = questTitleOf(quest.displayName);",
     "new": "  const title = quest.displayName;",
     "tests": [
-      "test/fb1004f_questfoe.test.js"
+      "test/systems/quest/fb1004f_questfoe.test.js"
     ],
     "note": "The line keeps a \"Main Quest:\" label the journal's faces all cut."
   },
   {
     "name": "QUEST-FOE-LINE-no-line",
-    "file": "src/systems/questFoeLine.js",
+    "file": "src/systems/quest/questFoeLine.js",
     "old": "  return line ? [line] : [];",
     "new": "  return [];",
     "tests": [
-      "test/fb1004f_questfoe.test.js"
+      "test/systems/quest/fb1004f_questfoe.test.js"
     ],
     "note": "The plaque names the Rogue and nothing ties it to The Assassin - the report."
   },
@@ -55,7 +55,7 @@
     "old": "    return t ? { title: f.yielded || f._pupYield ? `${t} - beaten` : t, subs: questFoeSubs(f) } : null;",
     "new": "    return t ? { title: f.yielded || f._pupYield ? `${t} - beaten` : t } : null;",
     "tests": [
-      "test/fb1004f_questfoe.test.js"
+      "test/systems/quest/fb1004f_questfoe.test.js"
     ],
     "note": "The foe pool's own hover - the street's, and the pool every building's foes stand in - drops the line."
   },
@@ -65,7 +65,7 @@
     "old": "        return t ? { title: t, subs: questFoeSubs(f) } : null;",
     "new": "        return t ? { title: t } : null;",
     "tests": [
-      "test/fb1004f_questfoe.test.js"
+      "test/systems/quest/fb1004f_questfoe.test.js"
     ],
     "note": "The interior host's live-foe arm - the report's own room - drops the line."
   },
@@ -75,7 +75,7 @@
     "old": "      return t ? { title: f.yielded ? `${t} - beaten` : t, subs: questFoeSubs(f) } : null;",
     "new": "      return t ? { title: f.yielded ? `${t} - beaten` : t } : null;",
     "tests": [
-      "test/fb1004f_questfoe.test.js"
+      "test/systems/quest/fb1004f_questfoe.test.js"
     ],
     "note": "The dungeon's live-foe arm drops the line - most restrained quest foes stand underground."
   }

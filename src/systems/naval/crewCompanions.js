@@ -2,7 +2,7 @@
 // CREW-COMPANIONS (2026-09-30, Mac: "introduce the ability to take them along as companions in the world that travel
 // with you and can fight by your side" - "Up to 2", "Knocked out", and through every door: "maybe this is a time for a
 // refactor?") - THE PARTY ASHORE, pure. Which of the player's named hands (shipCrew.js) walk with the player, which
-// rest aboard after a knock, and what each carries between places (his health). The host (scenes/navalHost.js) keeps
+// rest aboard after a knock, and what each carries between places (his health). The host (scenes/naval/navalHost.js) keeps
 // one and saves it beside the crews; the world's companion layer (scenes/crewAshore.js) stands the party in whatever
 // place the player is - the street, a building, a dungeon - and hands every change back here. DECLARED - Daggerfall
 // has no followers, and Come Sail Away's crew never leaves the boat.
@@ -18,9 +18,16 @@
 //  - COMPANION-KIT (2026-10-01, Mac: "act as storage"): HIS PACK - the things the player hands him (`pack`, the live
 //    list the storage window takes from and stows into), saved with the party through the host's item codec; sent back
 //    aboard, knocked out or fallen, he gives it up (`takePack`) and the host stows it in her hold.
+//  - COMPANION-DROP (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "Bag drops; no send-off in zone"): IN THE OPEN ZONE
+//    HE STAYS AT MY SIDE. A death there drops his pack with mine (systems/wild/wildDropLaw.js wildPacks - he is ashore, so he
+//    is where I fall), so he is never sent back aboard from inside it (`heldAtSide` - the zone's teleport refusal, said of
+//    him), and a pack he gives up there - knocked out, fallen from her roster - stays with me, in my pack, never her hold
+//    (`packStaysAshore`, the host's stowPack): nothing he carries leaves the zone but at my side.
 
 import { entityMaxEncumbrance, maxEncumbrance } from '../../combat/formulas.js';   // COMPANION-WEIGHT: DFU's MaxEncumbrance
 import { companionsWithYou, COMPANION_SLOTS } from '../companionSlots.js';   // COMPANION-SLOTS: the crew and the sworn revenants share the player's side
+import { wildHere, wildZoneKind, WILD_TEXT } from '../wild/wildZone.js';   // COMPANION-DROP: the open zone keeps him at my side
+import { ETHER_KIND } from '../wild/etherWild.js';   // ETHER-WILD: but not at sea, where her hold is the shelter
 
 /** How many hands walk ashore with the player at once (Mac: "Up to 2"). */
 export const COMPANION_MAX = 2;
@@ -39,6 +46,17 @@ export const REST_MIN = 8 * 60;
 export const COMPANION_WHY = Object.freeze({ full: 'two ashore already', resting: 'resting aboard', uncrewed: 'no crew', slots: 'no room at your side' });
 /** The picker's words. */
 export const COMPANION_TEXT = Object.freeze({ take: 'Take ashore', back: 'Send back aboard', ashore: 'ashore', resting: 'resting' });
+
+/** COMPANION-DROP: is a companion ashore held at my side - sent back from inside the open zone - said in the zone's words
+ *  (`say(text, seconds)`, the host's)? Answers true when he stays. @param {string} name @param {((text: string, s?: number) => void) | null | undefined} say */
+export function heldAtSide(name, say) {
+  if (!wildHere() || wildZoneKind() === ETHER_KIND) return false;   // ETHER-WILD: at sea her hold is the shelter, open from anywhere already (Eltheric-Ocean.md ETHER-WILD)
+  say?.(WILD_TEXT.companionStays(name), 3);
+  return true;
+}
+/** COMPANION-DROP: does a pack a companion gives up now (knocked out, fallen from her roster - the host's stowPack) stay
+ *  with me, in my own pack, rather than go to his boat's hold - inside the open zone, where it drops with mine. */
+export const packStaysAshore = () => wildHere() && wildZoneKind() !== ETHER_KIND;   // ETHER-WILD: at sea it goes to her hold, as a hand sent aboard does
 
 /** @typedef {{ boat: number, name: string, role: string, mobile: number, gender: 'male'|'female', health: number|null, maxHealth: number|null, items: any[] }} Companion */
 /** @typedef {{ boat: number, name: string, until: number }} Resting */

@@ -1,0 +1,200 @@
+[
+ {
+  "name": "AUDIT-D1NEAR-T3-the-gate-back",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "        continue-on-error: true\n",
+  "new": "",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-T3-the-minutes-unbounded",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "        timeout-minutes: 4\n",
+  "new": "",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-T4-another-shell",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "        run: |\n          set -uo pipefail\n          worker=",
+  "new": "        shell: sh\n        run: |\n          set -uo pipefail\n          worker=",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-T3-the-readout-unbounded",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "d1=$(timeout 60 $WRANGLER d1 execute",
+  "new": "d1=$($WRANGLER d1 execute",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-T3-the-health-unbounded",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "curl -fsS --max-time 10 -o /dev/null -D -",
+  "new": "curl -fsS -o /dev/null -D -",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-T3-the-read-unbounded",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "curl -fsS --max-time 10 -o /dev/null -w '%{time_total}'",
+  "new": "curl -fsS -o /dev/null -w '%{time_total}'",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-T5-the-health-body-kept",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "--max-time 10 -o /dev/null -D - -w",
+  "new": "--max-time 10 -D - -w",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-T5-the-read-body-kept",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "--max-time 10 -o /dev/null -w '%{time_total}'",
+  "new": "--max-time 10 -w '%{time_total}'",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-T2-a-read-error-timed",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "one=$(curl -fsS",
+  "new": "one=$(curl -sS",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-T2-a-health-error-timed",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "got=$(curl -fsS --max-time 10 -o /dev/null -D -",
+  "new": "got=$(curl -sS --max-time 10 -o /dev/null -D -",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-T1-a-failed-health-kept",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "\"$worker/v1/health\" 2>/dev/null) || got=\"\"",
+  "new": "\"$worker/v1/health\" 2>/dev/null) || true",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-T1-a-failed-read-kept",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "\"$worker/v1/seats/sieges/live\" 2>/dev/null) || one=\"\"",
+  "new": "\"$worker/v1/seats/sieges/live\" 2>/dev/null) || true",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-T7-the-health-guard-gone",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "\"$worker/v1/health\" 2>/dev/null) || got=\"\"",
+  "new": "\"$worker/v1/health\" 2>/dev/null)",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-T7-the-read-guard-gone",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "\"$worker/v1/seats/sieges/live\" 2>/dev/null) || one=\"\"",
+  "new": "\"$worker/v1/seats/sieges/live\" 2>/dev/null)",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-T7-the-health-middle-guard-gone",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "h=$(mid \"${health[@]}\") || h=\"\"",
+  "new": "h=$(mid \"${health[@]}\")",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-T7-the-read-middle-guard-gone",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "s=$(mid \"${read1[@]}\") || s=\"\"",
+  "new": "s=$(mid \"${read1[@]}\")",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-T10-the-counts-crossed",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "sn=$(came \"${read1[@]}\") || sn=0",
+  "new": "sn=$(came \"${health[@]}\") || sn=0",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-P1-a-replica-taken-for-the-primary",
+  "file": ".github/workflows/account-deploy.yml",
+  "old": "[ -n \"$colo\" ] && [ \"$onprimary\" = true ]",
+  "new": "[ -n \"$colo\" ] && [ -n \"$onprimary\" ]",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-M1-probe-B-newark-dropped",
+  "file": "bible/11-Multiplayer/Scale-Arc.md",
+  "old": "; B: p50 337, min 281 (n=5) |",
+  "new": " |",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-M2-the-toml-puts-it-in-california",
+  "file": "server-account/wrangler.toml",
+  "old": "# in western North America (the record has the bounds), and a guild look",
+  "new": "# in California (the record has the bounds), and a guild look",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-M2-the-index-puts-it-in-california",
+  "file": "bible/01-Overview/Active-Arcs.md",
+  "old": "while one statement on the primary cost it ~150-180 ms - bounds that put the primary in western North America -",
+  "new": "while the D1 primary stands in California -",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-D1NEAR-M6-fifteen-back",
+  "file": "bible/11-Multiplayer/Scale-Arc.md",
+  "old": "thirteen statements for a member, fourteen for an officer or the guildmaster",
+  "new": "fifteen statements",
+  "tests": [
+   "test/bible/audit_d1near.test.js"
+  ]
+ }
+]

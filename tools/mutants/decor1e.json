@@ -5,7 +5,7 @@
     "old": "    removeBtn.disabled = !it || it.holds;",
     "new": "    removeBtn.disabled = !it;",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    storeBtn.disabled = !it || !!it.piece.item || (it.piece.storage && it.holds) || !!it.piece.station || door;",
     "new": "    storeBtn.disabled = !it || !!it.piece.item || !!it.piece.station || door;",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "if (it && !moveBtn.disabled) { hide(); onMove(it.piece); }",
     "new": "if (it && !moveBtn.disabled) { onMove(it.piece); }",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": ":${it.piece.light ? 1 : 0}:${it.piece.storage",
     "new": ":${it.piece.storage",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "export const decorRefundText = (paid) => `${decorRefund(paid)} gold`;",
     "new": "export const decorRefundText = (paid) => `${paid} gold`;",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "chip(`In this room (${n})`, ",
     "new": "chip(`In this room`, ",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "} else if (mode === 'room') {\n      const placed = roomed(view.placed ?? []);",
     "new": "} else if (false) {\n      const placed = roomed(view.placed ?? []);",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    showRoom(id = null) { placedId = id ?? placedId;",
     "new": "    showRoom(id = null) {",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -77,16 +77,16 @@
     "old": "const placedShape = (it) => it.entry ?? {",
     "new": "const placedShape = (it) => it.entry ?? null ?? void {",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-tabs-idle",
     "file": "src/ui/decorPanel.js",
-    "old": "chip('Catalogue', mode === 'catalogue', () => setMode('catalogue')), chip(`In this room",
-    "new": "chip('Catalogue', mode === 'catalogue', () => {}), chip(`In this room",
+    "old": "chip('Catalog', mode === 'catalogue', () => setMode('catalogue'), 'all'), chip(`In this room",
+    "new": "chip('Catalog', mode === 'catalogue', () => {}, 'all'), chip(`In this room",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "for (const t of ['pointerup', 'pointercancel', 'lostpointercapture'])",
     "new": "for (const t of ['pointerup'])",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    hide() { flyTo(0); if (alive",
     "new": "    hide() { if (alive",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -113,289 +113,289 @@
     "old": "  if (touch) btns.append(hold('Fly up', 1), hold('Fly down', -1));",
     "new": "  btns.append(hold('Fly up', 1), hold('Fly down', -1));",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-stick-unread",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    const stick = stickMove(deps.stick?.() ?? null);",
     "new": "    const stick = null;",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-forward-and-sideways-crossed",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "  return a ? { forward: unit(a.y), strafe: unit(a.x) } : null;",
     "new": "  return a ? { forward: unit(a.x), strafe: unit(a.y) } : null;",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-throw-unbounded",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "  const unit = (v) => (Number.isFinite(v) ? Math.max(-1, Math.min(1, v)) : 0);",
     "new": "  const unit = (v) => (Number.isFinite(v) ? v : 0);",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-bar-hold-unread",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "(held('Crouch') ? 1 : 0) + p.rise))",
     "new": "(held('Crouch') ? 1 : 0)))",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-move-from-the-default-turn",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "      if (m) p.placer = createDecorPlacer(p.entry, { radius: p.radius, box: m.box, from: p.editing, free: p.free });",
     "new": "      if (m) p.placer = createDecorPlacer(p.entry, { radius: p.radius, box: m.box, from: null, free: p.free });",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-placer-from-nothing",
-    "file": "src/systems/decorPlacer.js",
+    "file": "src/systems/decor/decorPlacer.js",
     "old": "  const s = { yaw: from ? wrapTurn((mount ? from.rot?.[2] : from.rot?.[0]) ?? 0) : 0, raise: 0, scale: from?.scale ?? 1, snap: false };",
     "new": "  const s = { yaw: 0, raise: 0, scale: 1, snap: false };",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-a-move-a-new-piece",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "id: editing ? editing.id : mintDecorId()",
     "new": "id: mintDecorId()",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-a-move-paid-in-full",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    if (p.editing) return commitMove(p, r);",
     "new": "    if (false) return commitMove(p, r);",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-resize-unpaid",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "      if (price.pay > 0) deps.wallet().pay(price.pay);",
     "new": "      if (false) deps.wallet().pay(price.pay);",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-shrink-not-given-back",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "      if (price.refund > 0 && !r.hall) deps.wallet().credit?.(price.refund);",
     "new": "      if (false) deps.wallet().credit?.(price.refund);",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-eye-stopped-by-the-piece",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    const skips = [...(p.editing ? [decorKeyOf(p.editing.id)] : []), ...p.inside.map((c) => c.key)];",
     "new": "    const skips = [...p.inside.map((c) => c.key)];",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-eye-filter-dropped",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "collider.raycastHit(eye, dir, DECOR_EYE_REACH, skip ? { skip } : null)",
     "new": "collider.raycastHit(eye, dir, DECOR_EYE_REACH, null)",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-bar-whole-price",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "priceText: edit ? decorEditText(edit) : p.free ? 'free' : null,",
     "new": "priceText: p.free ? 'free' : null,",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-shrink-said-as-a-cost",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "refund > 0 ? `${refund} gold back`",
     "new": "refund > 0 ? `${refund} gold`",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-move-unnamed",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "name: p.editing ? `Moving ${p.entry.name}` : p.entry.name",
     "new": "name: p.entry.name",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-an-unread-piece-unmovable",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "?? (editing ? editing.paid / (DECOR_PRICE_PER_METRE * editing.scale) : null)",
     "new": "?? null",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-lamp-for-every-piece",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "(own ?? DECOR_DEFAULT_LIGHT)",
     "new": "(DECOR_DEFAULT_LIGHT)",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-removing-a-full-piece",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    if (!r || pool.holdsAny?.(piece.id)) return false;",
     "new": "    if (!r) return false;",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-unholding-a-full-piece",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "        if (cur.storage && pool.holdsAny?.(cur.id)) return false;",
     "new": "        if (false) return false;",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ],
     "note": "AUDIT YARD-HEIGHT (PIN MOVED, re-aimed by content: one write of a piece at a time)."
   },
   {
     "name": "DECOR1e-the-removal-refund-whole",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "      back = r.hall ? 0 : decorRefund(paid);   // AUDIT GUILD1d A4: a hall's half is the treasury's, never the purse's\n      if (back > 0) deps.wallet?.().credit?.(back);\n    }",
     "new": "      back = r.hall ? 0 : paid;   // AUDIT GUILD1d A4: a hall's half is the treasury's, never the purse's\n      if (back > 0) deps.wallet?.().credit?.(back);\n    }",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-removal-unstood",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    if (deps.visit?.() === visit) pool.remove(piece.id);",
     "new": "    if (false) pool.remove(piece.id);",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-write-skipped",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    if (r.kind !== 'home') return piece;",
     "new": "    if (r) return piece;",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-old-place-never-written-back",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "            await writeChange(r, was);\n            return false;",
     "new": "            return false;",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ],
     "note": "AUDIT YARD-HEIGHT (PIN MOVED, re-aimed by content: one write of a piece at a time)."
   },
   {
     "name": "DECOR1e-the-local-cost-refunded",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "      paid = decorPieceOf(res.data?.piece)?.paid ?? paid;",
     "new": "      paid = paid ?? decorPieceOf(res.data?.piece)?.paid;",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-a-refused-removal-taken",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "'The piece could not be removed.'); return false; }\n        paid = decorPieceOf(res.data?.piece)?.paid ?? paid;",
     "new": "'The piece could not be removed.'); }\n        paid = decorPieceOf(res.data?.piece)?.paid ?? paid;",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-short-before-the-write-asked",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    if (price.pay > (deps.wallet?.().gold ?? 0)) return false;   // the bar says why\n    p.busy = true;\n    const next",
     "new": "    if (false) return false;   // the bar says why\n    p.busy = true;\n    const next",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-a-late-move-standing",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "          if (price.refund > 0 && !r.hall) deps.wallet().credit?.(price.refund);   // AUDIT GUILD1d A4: a hall's half is the treasury's, the service's\n        }\n        turnsOwed.delete(was.id);\n        if (deps.visit?.() === visit) pool.put(stood);",
     "new": "          if (price.refund > 0 && !r.hall) deps.wallet().credit?.(price.refund);   // AUDIT GUILD1d A4: a hall's half is the treasury's, the service's\n        }\n        turnsOwed.delete(was.id);\n        pool.put(stood);",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ],
     "note": "AUDIT YARD-HEIGHT (PIN MOVED, re-aimed by content: one write of a piece at a time)."
   },
   {
     "name": "DECOR1e-the-pieces-half-never-credited",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "  credit(refund + decorBack);",
     "new": "  credit(refund);",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-a-bad-word-believed",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "      const n = (v) => (Number.isSafeInteger(v) && v > 0 ? v : 0);",
     "new": "      const n = (v) => v;",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-pieces-half-dropped",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "decorBack: n(r.data?.decorBack), ...(r.data?.refund != null",
     "new": "decorBack: 0, ...(r.data?.refund != null",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
     "name": "DECOR1e-the-sale-line-the-home-alone",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "`You sold your home. ${gold(refund + piecesBack + rent)} gold",
     "new": "`You sold your home. ${gold(refund + rent)} gold",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ],
     "note": "HOME-PRICE (PIN MOVED, re-aimed by content): the line now says every sum with its thousands (gold())."
   },
@@ -405,7 +405,7 @@
     "old": "  d.decor = [];\n  return pieces;",
     "new": "  return pieces;",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -414,8 +414,8 @@
     "old": ".reduce((n, p) => n + decorRefund(p?.paid), 0);",
     "new": ".reduce((n, p) => n + (p?.paid ?? 0), 0);",
     "tests": [
-      "test/decor1e.test.js",
-      "test/decor1.test.js"
+      "test/systems/online/decor1e.test.js",
+      "test/server/decor1.test.js"
     ]
   },
   {
@@ -424,7 +424,7 @@
     "old": "THEN CAST(json_extract(place, '$.paid') AS INTEGER) / 2 ELSE 0 END), 0) AS back",
     "new": "THEN CAST(json_extract(place, '$.paid') AS INTEGER) ELSE 0 END), 0) / 2 AS back",
     "tests": [
-      "test/decor1.test.js"
+      "test/server/decor1.test.js"
     ]
   },
   {
@@ -433,7 +433,7 @@
     "old": "const decorBackStatement = (db, mapId, buildingKey) => db.prepare(`SELECT COALESCE(SUM(CASE WHEN json_valid(place) THEN 1 ELSE 0 END), 0) AS n,",
     "new": "const decorBackStatement = (db, mapId, buildingKey) => db.prepare(`SELECT COUNT(*) AS n,",
     "tests": [
-      "test/decor1.test.js"
+      "test/server/decor1.test.js"
     ]
   },
   {
@@ -442,7 +442,7 @@
     "old": "  const d = pieces?.results?.[0];",
     "new": "  const d = (await db.prepare('SELECT 0 AS n, 0 AS back').first()) ?? pieces?.results?.[0];",
     "tests": [
-      "test/decor1.test.js"
+      "test/server/decor1.test.js"
     ]
   },
   {
@@ -451,7 +451,7 @@
     "old": "decorCount: Number(d?.n) || 0,",
     "new": "decorCount: 0,",
     "tests": [
-      "test/decor1.test.js"
+      "test/server/decor1.test.js"
     ]
   },
   {
@@ -460,7 +460,7 @@
     "old": "    if (decorTool.flying()) mv.analog = null;   // DECOR1e:",
     "new": "    // DECOR1e:",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -469,7 +469,7 @@
     "old": "attackInput(dx, dy, held) { if (held && decorTool.flying()) return; modalAttackSink",
     "new": "attackInput(dx, dy, held) { modalAttackSink",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -478,7 +478,7 @@
     "old": "    decorFlying: () => decorTool.flying(),",
     "new": "    decorFlying: () => false,",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -487,7 +487,7 @@
     "old": "    stick: () => host.stickAxes?.() ?? null,",
     "new": "    stick: () => null,",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -496,7 +496,7 @@
     "old": "      if (modes?.decorFlying?.() || yards?.flying()) return;   // DECOR1e:",
     "new": "      if (yards?.flying()) return;   // DECOR1e:",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -505,7 +505,7 @@
     "old": "{ decorSold(interiorSceneName(mapId, k), region); removePermanentScene(",
     "new": "{ removePermanentScene(",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -514,7 +514,7 @@
     "old": "          decorSold(interiorSceneName(SHIP_INTERIOR_MAP_IDS[ship], BUILDING_KEY_0), bankRegion());",
     "new": "          void bankRegion;",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -523,7 +523,7 @@
     "old": "homeSoldLine(r.refund, r.decorBack, r.rent ?? 0)",
     "new": "homeSoldLine(r.refund, 0, r.rent ?? 0)",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -532,7 +532,7 @@
     "old": "      credit: (n) => { purse.addGold(n); },",
     "new": "      credit: () => {},",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   },
   {
@@ -541,7 +541,7 @@
     "old": "    if (account && back > 0) account.accountGold += back;",
     "new": "    if (account && back > 0) account.accountGold += 0;",
     "tests": [
-      "test/decor1e.test.js"
+      "test/systems/online/decor1e.test.js"
     ]
   }
 ]

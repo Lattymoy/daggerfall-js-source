@@ -1,0 +1,112 @@
+[
+  {
+    "name": "WALLET-WEIGHT-no-total",
+    "file": "src/systems/walletItem.js",
+    "old": "    weight: held.reduce((w, it) => w + itemWeight(it), 0),",
+    "new": "    weight: 0,",
+    "tests": [
+      "test/systems/wallet_weight.test.js"
+    ]
+  },
+  {
+    "name": "WALLET-WEIGHT-every-holding-weighing-all-of-them",
+    "file": "src/systems/walletItem.js",
+    "old": "w + (it.templateIndex === t ? itemWeight(it) : 0), 0);",
+    "new": "w + itemWeight(it), 0);",
+    "tests": [
+      "test/systems/wallet_weight.test.js"
+    ]
+  },
+  {
+    "name": "WALLET-WEIGHT-no-row-weight",
+    "file": "src/systems/walletItem.js",
+    "old": "weight: n ? walletKg(kg) : null });",
+    "new": "weight: null });",
+    "tests": [
+      "test/systems/wallet_weight.test.js"
+    ]
+  },
+  {
+    "name": "WALLET-WEIGHT-an-empty-holding-weighed",
+    "file": "src/systems/walletItem.js",
+    "old": "weight: n ? walletKg(kg) : null });",
+    "new": "weight: walletKg(kg) });",
+    "tests": [
+      "test/systems/wallet_weight.test.js"
+    ]
+  },
+  {
+    "name": "WALLET-WEIGHT-the-figure-places",
+    "file": "src/systems/walletItem.js",
+    "old": "`${(Number(kg) || 0).toFixed(2)} kg`",
+    "new": "`${(Number(kg) || 0).toFixed(1)} kg`",
+    "tests": [
+      "test/systems/wallet_weight.test.js"
+    ]
+  },
+  {
+    "name": "WALLET-WEIGHT-the-card-own-weight",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  pair('Weight', walletKg(own ? shownKg(picked, line) : line.weight));",
+    "new": "  pair('Weight', walletKg(line.weight));",
+    "tests": [
+      "test/systems/wallet_weight.test.js"
+    ]
+  },
+  {
+    "name": "WALLET-WEIGHT-the-row-own-weight",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  row.append(el('span', 'itemwt', walletKg(shownKg(item, line))));",
+    "new": "  row.append(el('span', 'itemwt', walletKg(line.weight)));",
+    "tests": [
+      "test/systems/wallet_weight.test.js"
+    ]
+  },
+  {
+    "name": "WALLET-WEIGHT-every-piece-the-wallet-weight",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "const shownKg = (item, line) => line.weight + (model?.wallet && item === model.wallet.item ? model.wallet.weight : 0);",
+    "new": "const shownKg = (item, line) => line.weight + (model?.wallet ? model.wallet.weight : 0);",
+    "tests": [
+      "test/systems/wallet_weight.test.js"
+    ]
+  },
+  {
+    "name": "WALLET-WEIGHT-the-sheet-weights-undrawn",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "      if (r.weight) k.append(el('small', 'wallet-kg', ` ${r.weight}`));   // WALLET-WEIGHT",
+    "new": "      // WALLET-WEIGHT",
+    "tests": [
+      "test/systems/wallet_weight.test.js"
+    ]
+  },
+  {
+    "name": "WALLET-WEIGHT-the-model-kept-past-its-mount",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "      model = null;   // AUDIT FB1019 A1",
+    "new": "      // AUDIT FB1019 A1",
+    "tests": [
+      "test/systems/wallet_weight.test.js"
+    ],
+    "equivalent": true,
+    "why": "With another window's card never adding the wallet's pieces (`own: false`, WALLET-WEIGHT-another-windows-card-adding's law), no reader outside the pack touches the module's model; nulling it at the unmount lets go of a closed pack's item graph - memory, which no pin observes. Recorded rather than dropped: the line is the audit's half of the fix (AUDIT FB1019 A1), and the next reader should know what it is for."
+  },
+  {
+    "name": "WALLET-WEIGHT-another-windows-card-adding",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (tipEl && tipFor === item) showItemHover(item, ctx, row, side); }, { own: false }); }",
+    "new": "if (tipEl && tipFor === item) showItemHover(item, ctx, row, side); }); }",
+    "tests": [
+      "test/systems/wallet_weight.test.js"
+    ]
+  },
+  {
+    "name": "WALLET-WEIGHT-the-name-and-weight-run-together",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "k.append(el('small', 'wallet-kg', ` ${r.weight}`));",
+    "new": "k.append(el('small', 'wallet-kg', r.weight));",
+    "tests": [
+      "test/systems/wallet_weight.test.js"
+    ]
+  }
+]

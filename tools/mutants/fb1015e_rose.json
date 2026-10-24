@@ -1,0 +1,101 @@
+[
+  {
+    "name": "ROSE-SEEN-no-number",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  if (!f?.dead) showFollowUp(n, word, target);",
+    "new": "  if (false) showFollowUp(n, word, target);",
+    "tests": [
+      "test/systems/fb1015e_rose.test.js"
+    ]
+  },
+  {
+    "name": "ROSE-SEEN-the-whole-blow",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  if (!f?.dead) showFollowUp(n, word, target);",
+    "new": "  if (!f?.dead) showFollowUp(n * 2, word, target);",
+    "tests": [
+      "test/systems/fb1015e_rose.test.js"
+    ]
+  },
+  {
+    "name": "ROSE-SEEN-untagged",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  if (!f?.dead) showFollowUp(n, word, target);",
+    "new": "  if (!f?.dead) showFollowUp(n, null, target);",
+    "tests": [
+      "test/systems/fb1015e_rose.test.js"
+    ]
+  },
+  {
+    "name": "ROSE-SEEN-a-dead-foe-numbered",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  if (!f?.dead) showFollowUp(n, word, target);",
+    "new": "  showFollowUp(n, word, target);",
+    "tests": [
+      "test/systems/fb1015e_rose.test.js"
+    ]
+  },
+  {
+    "name": "ROSE-SEEN-fists-unnamed",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "again(target, (damage * p.share) / 100, p.name); break;",
+    "new": "again(target, (damage * p.share) / 100); break;",
+    "tests": [
+      "test/systems/fb1015e_rose.test.js"
+    ]
+  },
+  {
+    "name": "ROSE-SEEN-echo-unnamed",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "again(target, damage, p.name); break;",
+    "new": "again(target, damage); break;",
+    "tests": [
+      "test/systems/fb1015e_rose.test.js"
+    ]
+  },
+  {
+    "name": "ROSE-SEEN-drawn-unmounted",
+    "file": "src/ui/hitNumbers.js",
+    "old": "  if (!registered || !(n > 0) || target?.landsByWord) return null;",
+    "new": "  if (!(n > 0) || target?.landsByWord) return null;",
+    "tests": [
+      "test/systems/fb1015e_rose.test.js"
+    ]
+  },
+  {
+    "name": "ROSE-SEEN-a-zero-drawn",
+    "file": "src/ui/hitNumbers.js",
+    "old": "  if (!registered || !(n > 0) || target?.landsByWord) return null;",
+    "new": "  if (!registered || target?.landsByWord) return null;",
+    "tests": [
+      "test/systems/fb1015e_rose.test.js"
+    ]
+  },
+  {
+    "name": "ROSE-SEEN-a-weapon-numbered",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "case 'fists': if (!weapon) again(",
+    "new": "case 'fists': if (true) again(",
+    "tests": [
+      "test/systems/fb1015e_rose.test.js"
+    ]
+  },
+  {
+    "name": "SHIELD-FIST-the-whole-blow-again",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "again(target, (damage * p.share) / 100, p.name); break;",
+    "new": "again(target, damage, p.name); break;",
+    "tests": [
+      "test/systems/fb1015e_rose.test.js"
+    ]
+  },
+  {
+    "name": "SHIELD-FIST-the-shield-strikes",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    if (left && isShieldTemplate(left.templateIndex)) {\n      this.usingRightHand = true;\n      this.holdingShield = true;\n      left = null;\n    }\n",
+    "new": "    if (left && isShieldTemplate(left.templateIndex)) {\n      this.holdingShield = true;\n    }\n",
+    "tests": [
+      "test/systems/fb1015e_rose.test.js"
+    ]
+  }
+]

@@ -34,7 +34,7 @@ material, the first-person billboard - and the cart. The sixteen with
 no twin are Unity lifecycle, mesh and material handling the port's
 billboard batch replaces, two other mods' hooks (Come Sail Away, Free
 Rein), the mod bus, and one getter the assembly itself never calls.
-`test/eotb_scope.test.js` holds all 61 rows with a verdict each and
+`test/player/eyeOfTheBeholder/eotb_scope.test.js` holds all 61 rows with a verdict each and
 checks them against the IL dump; `bible/06-Systems/Eye-Of-The-Beholder.md`
 carries the findings. An earlier count of 62 (AUDIT-EOTB, written
 without the assembly) listed a method that does not exist.

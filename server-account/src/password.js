@@ -20,6 +20,8 @@
 // credential and it is treated as one. Using it sets a new password AND
 // MINTS A NEW CODE, because a player who spends their only way back in
 // and is left with none has simply moved the same cliff one step away.
+// (RECOVERY-SET, below: a build that has the set is given EIGHT, each
+// spent alone, and the last spent mints eight more.)
 //
 // ═══ WHAT THE HASHING IS AND WHY ═══════════════════════════════════
 //
@@ -66,7 +68,7 @@
  *
  * ═══ WHY NO GATE CAUGHT IT, WHICH IS THE REAL FINDING ═════════════
  *
- * `test/accountworker.test.js` drives the whole thing in node, and
+ * `test/server/accountworker.test.js` drives the whole thing in node, and
  * node has no such cap. `tools/accountProbe.mjs` exists precisely
  * because IMPORTABILITY IS NOT DEPLOYABILITY (AUDIT-ACC F2 stood the
  * Worker up in a real workerd after the suite was green over a Worker
@@ -228,10 +230,10 @@ export function parseStored(stored) {
  * still costs a derivation against a throwaway salt, so "this account
  * has no password" and "this password is wrong" take the same time.
  */
-export async function verifyPassword(pw, stored, { subtle }) {
+export async function verifyPassword(pw, stored, { subtle }, throwawayIters = PBKDF2_ITERS) {
   const parsed = parseStored(stored);
   const salt = parsed?.salt ?? new Uint8Array(SALT_BYTES);
-  const iters = parsed?.iters ?? PBKDF2_ITERS;
+  const iters = parsed?.iters ?? throwawayIters;   // RECOVERY-SET: a throwaway costs what the row it stands for would
   const got = await derive(pw, salt, iters, subtle);
   if (!parsed) return false;
   return timingSafeEqual(got, parsed.hash);
@@ -306,3 +308,93 @@ export function canonicalCode(input) {
 /** The form that is hashed and compared - never the pretty one, so a
  *  player who types it without the dashes still gets in. */
 export const codeForHashing = (code) => canonicalCode(code);
+
+// ═══ RECOVERY-SET (2026-10-14) - EIGHT CODES, EACH SPENT ALONE ══════
+//
+// The request: "I want players to be able to click and see their
+// account recovery code in their profile instead of it being a one off
+// thing" - and, of the three ways offered, "Lets just do #1": a set of
+// codes the profile can replace, behind the password.
+//
+// THE CODE STAYS UNREADABLE HERE. The hash is the whole of ACC1c's
+// promise, so the profile cannot show a code again; what it offers is a
+// NEW SET (accounts.js newRecoveryCodes), shown once, as registering
+// shows one. Eight, each spent ALONE: a player who used one still holds
+// seven, and spending the last mints a fresh eight - never none, ACC1c's
+// own cliff.
+//
+// THE SAME COLUMN. `recovery_hash` holds `codes,<hash>,<hash>,...`, each
+// `<hash>` this file's own self-describing form (base64 and `$` - never
+// a comma). A row from before keeps its one PBKDF2 string, as ACC1c and
+// RECOVER-OP (tools/reissueRecoveryCode.mjs) write it, and that string
+// still opens the account as the one code it is.
+//
+// AT THE CODE'S COST, NOT THE PASSWORD'S. The iterations are there to
+// slow a guess at something a person CHOSE; a minted code is 100 random
+// bits (twenty characters of a 32-letter alphabet), and nobody guesses
+// 2^100 at any speed. So each is salted and derived as a password is -
+// NIST SP 800-63B's rule for a look-up secret under 112 bits, at the
+// "typically at least 10,000" its KDF section names (AUDIT RECOVERY-SET
+// A5: the first cut took parseStored's floor of 1000) - and eight cost
+// less than one password.
+
+/** How many codes a set holds. */
+export const RECOVERY_SET_SIZE = 8;
+/** What one code of a set costs to derive - NIST SP 800-63B's "typically at least 10,000". */
+export const RECOVERY_CODE_ITERS = 10_000;
+const SET_TAG = 'codes';
+
+/** A fresh set, as it is shown - the pretty form, dashes and all. */
+export function mintRecoverySet(rand, n = RECOVERY_SET_SIZE) {
+  return Array.from({ length: n }, () => mintRecoveryCode(rand));
+}
+
+/** Stored hashes, as the column holds them. */
+export const joinRecoverySet = (hashes) => [SET_TAG, ...hashes].join(',');
+
+/** A minted set, hashed for the column. AUDIT-PW P1 holds: a code that
+ *  does not canonicalise is refused by `hashPassword`, never stored as
+ *  the empty string's hash. */
+export async function hashRecoverySet(codes, { subtle, rand }) {
+  return joinRecoverySet(await Promise.all(codes.map((c) => hashPassword(codeForHashing(c), { subtle, rand }, RECOVERY_CODE_ITERS))));
+}
+
+/** The set's hashes, or null for anything that is not one (a single
+ *  code's row, a guest's NULL). */
+export function parseRecoverySet(stored) {
+  if (typeof stored !== 'string' || !stored.startsWith(`${SET_TAG},`)) return null;
+  const hashes = stored.split(',').slice(1);   // never empty: 'codes,' splits to one '' that parseStored refuses
+  return hashes.every((h) => parseStored(h)) ? hashes : null;
+}
+
+/** How many codes this row still opens: the set's count, 1 for a single
+ *  code, null for none (a guest). The profile's number - never a code. */
+export function recoveryLeft(stored) {
+  const set = parseRecoverySet(stored);
+  if (set) return set.length;
+  return parseStored(stored) ? 1 : null;
+}
+
+/**
+ * WHICH CODE WAS TYPED. Answers `{ ok, rest }`: `rest` the set's OTHER
+ * hashes when a code of a set matched, null for a single code.
+ *
+ * THE SAME WORK FOR EVERY ROW: one derivation at the password's cost
+ * (the single code, or a throwaway) and RECOVERY_SET_SIZE at the code's
+ * (the set's, or throwaways), whatever the row holds and whether there
+ * is a row at all - so the clock says nothing a refusal does not (ACC1c:
+ * a handle nobody holds costs what a wrong code costs).
+ */
+export async function matchRecoveryCode(canon, stored, { subtle }) {
+  const set = parseRecoverySet(stored);
+  const guess = canon ?? '';
+  const slots = Array.from({ length: Math.max(RECOVERY_SET_SIZE, set?.length ?? 0) }, (_, i) => set?.[i] ?? null);
+  const [one, ...each] = await Promise.all([
+    verifyPassword(guess, set ? null : stored, { subtle }),
+    ...slots.map((h) => verifyPassword(guess, h, { subtle }, RECOVERY_CODE_ITERS)),
+  ]);
+  if (!canon) return { ok: false, rest: null };
+  if (!set) return { ok: one, rest: null };
+  const i = each.findIndex(Boolean);   // a throwaway slot never matches: verifyPassword answers false for a row it cannot parse
+  return i < 0 ? { ok: false, rest: null } : { ok: true, rest: set.filter((_, j) => j !== i) };
+}

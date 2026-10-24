@@ -43,7 +43,7 @@ import { heraldryOfRow } from './halls.js';
 import { MARKS_MAX, utcDay } from '../../src/net/marksLaw.js';
 import { regionOk } from '../../src/net/nodeLaw.js';
 import { MARKET_TAX_PCT } from '../../src/net/marketLaw.js';   // AUDIT SILVER-WAYS B1: a deed's tax reckoned in the batch (deedTaxSql - saleTaxOn's law)
-import { GUILD_RANK_MASTER } from '../../src/net/guildLaw.js';
+import { GUILD_RANK_MASTER } from '../../src/net/guild/guildLaw.js';
 import {
   CONTRACT_S, GUILD_CONTRACTS_MAX, CONTRACTS_PAID_MAX, WRIT_POSTS_MAX, WRIT_OPS_MAX, WRIT_WINDOW_S, WRIT_SETTLE_MAX, WRIT_SHOWN,
   WRIT_RID_RE, WRIT_ID_RE, WRIT_POWERS, contractKindOk, contractPayOk, contractDeedsOk, contractRegionOfRaid, writMay, seatWeek,

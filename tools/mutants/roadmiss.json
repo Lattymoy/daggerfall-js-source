@@ -1,0 +1,20 @@
+[
+  {
+    "name": "ROADS-MISS-the-miss-never-kept",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    if (this._roadsMiss === day) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/roadmiss.test.js"
+    ]
+  },
+  {
+    "name": "ROADS-MISS-the-miss-kept-past-its-tick",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    try { this._tickNow(playerPos, viewYaw); } finally { this._ticking = false; this._roadsMiss = null; }",
+    "new": "    try { this._tickNow(playerPos, viewYaw); } finally { this._ticking = false; }",
+    "tests": [
+      "test/systems/livingWorld/roadmiss.test.js"
+    ]
+  }
+]

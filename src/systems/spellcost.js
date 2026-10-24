@@ -5,7 +5,8 @@
 //   magnitude uses the AVERAGED settings: base = (baseMin+baseMax)/2,
 //     plus = (plusMin+plusMax)/2 (integer division)
 //   per-effect spellpoints = gold * (110 - skill) / 400, where skill
-//     is the caster's value in the effect's MAGIC SKILL
+//     is the caster's value in the effect's MAGIC SKILL (online, past
+//     100: SPELL-COST-PAST below - the port's, not DFU's)
 //   zero-component effects fudge MakeEffectCosts(60, 100, 160)
 //   target multipliers on the SUMS: CasterOnly/ByTouch x1.0,
 //     SingleTargetAtRange x1.5, AreaAroundCaster x2.0,
@@ -28,8 +29,28 @@
 // keys the shipping SPELLS.STD uses has a class here.
 
 import { skillValue, SKILLS } from './skills.js';
+import { isOnlinePage } from './online/onlineLane.js';   // SPELL-COST-PAST: online, a skill past 100 never prices a spell under nothing
+import { pathCastSchool } from './arcanePaths.js';   // SCHOOLS3: a signature spell is cast in its path's two schools (a leaf)
 
 export const CAST_COST_FLOOR = 5;
+
+// SPELL-COST-PAST (FIELD BUGS 2026-10-12c, bible/01-Overview/bugs/Field-Bugs-2026-10-12c.md; from the field: "AoE buffing
+// infinitely still - creating negative spell costs which makes things only cost 5"). Both of DFU's cost formulas scale by
+// (110 - skill), which is 10 at DFU's 100 and nothing at 110. A mastered school reads up to 140 in a formula (SOFTCAP1),
+// and worn gear adds on top without bound (Enhances Skill +15 a piece, the rarity affixes, Mora's Forbidden Lore), so
+// past 110 an effect priced under nothing: it took its cost off the spell's other effects, and the whole cast fell to
+// the floor of 5. Online, past 100 a spell costs what it costs at 100 times 100 / skill - every point past 100 still
+// cheaper, never nothing (half at 200). Offline and to 100, DFU's term stands.
+export const SPELL_COST_SKILL_REFERENCE = 100;
+/** DFU's skill term, `trunc(value * (110 - skill) / divisor)` - CalculateEffectCosts' /400 and CalculateCastingCost's
+ *  /100. SPELL-COST-PAST: online, a skill past SPELL_COST_SKILL_REFERENCE prices as that reference, scaled by
+ *  reference / skill (one division, so an exact quotient stays exact). */
+export function skillScaledCost(value, skill, divisor, { online = isOnlinePage() } = {}) {
+  const R = SPELL_COST_SKILL_REFERENCE;
+  if (online && skill > R) return Math.trunc((value * (110 - R) * R) / (skill * divisor));
+  return Math.trunc(value * (110 - skill) / divisor);
+}
+
 const FUDGE = { A: 60, B: 100, offset: 160 };
 
 const costs = (A, B, offset = 0) => ({ A, B, offset });
@@ -129,8 +150,13 @@ const component = (c, starting, increase, per) =>
 export function effectSchool(e) {
   return EFFECT_COST_TABLE[`${e.type},${e.subType & 0xff}`]?.skill ?? 22;
 }
+/** SCHOOLS3 (bible/06-Systems/Arcane-Specialisations.md section 6): THE SCHOOL AN EFFECT OF `spell` IS CAST IN by
+ *  `entity` - its own (effectSchool), except in the caster's signature spell of their awake path, which is cast in that
+ *  path's two schools (arcanePaths.js pathCastSchool). The price below, the cast engine's tally (scenes/hostMagic.js
+ *  tallyCastSkills) and the school past 100 (systems/effects.js) all read it, so the three never disagree. */
+export const castSchool = (entity, spell, e) => pathCastSchool(entity, spell, effectSchool(e));
 
-export function effectCost(e, casterSkillOf) {
+export function effectCost(e, casterSkillOf, { online = isOnlinePage() } = {}) {
   // subType normalized to BYTE (DFU MakeClassicKey casts the sbyte;
   // real records read 0xFF as -1 - parity fix 2026-08-16d)
   const entry = EFFECT_COST_TABLE[`${e.type},${e.subType & 0xff}`];
@@ -156,7 +182,7 @@ export function effectCost(e, casterSkillOf) {
   }
   // "If there are no active components (e.g. Teleport) then fudge some costs"
   if (!activeComponents) gold += component(FUDGE, 1, 1, 1);
-  return { gold, sp: Math.trunc(gold * (110 - skill) / 400) };
+  return { gold, sp: skillScaledCost(gold, skill, 400, { online }) };   // SPELL-COST-PAST
 }
 
 // SET2 (Mora's Mantle's Waters of Oblivion, bible/11-Multiplayer/Sigil-Sets.md): THE PORT'S SAY OVER A PLAYER'S COST.
@@ -167,15 +193,20 @@ export function effectCost(e, casterSkillOf) {
 // never takes a cost under 1.
 const _costMods = new Map();
 export function registerSpellCostMod(name, fn) { if (typeof fn === 'function') _costMods.set(name, fn); else _costMods.delete(name); }
+// EG-ZS (bible/11-Multiplayer/Elite-Gates.md section 15, Spellweave: "every fourth damage spell costs nothing"): A FREE CAST -
+// named doors, `fn(entity, spell) -> boolean`, asked after the modifiers above under the same law (a player's own cast,
+// never a foe's): one that answers true prices the cast at nothing, the one cost under the modifiers' floor of 1.
+const _freeCasts = new Map();
+export function registerSpellFreeCast(name, fn) { if (typeof fn === 'function') _freeCasts.set(name, fn); else _freeCasts.delete(name); }
 
 /** The full casting cost of a classic spell record for a caster:
  *  per-effect sums, target multiplier, the floor. SET2: and the port's cost modifiers, for a player's own cast. */
-export function calculateCastCost(spell, casterEntity, { portMods = true } = {}) {
-  const skillOf = (id) => skillValue(casterEntity, id);
+export function calculateCastCost(spell, casterEntity, { portMods = true, online = isOnlinePage() } = {}) {
+  const skillOf = (id) => skillValue(casterEntity, pathCastSchool(casterEntity, spell, id));   // SCHOOLS3: the school it is cast in
   let gold = 0, sp = 0;
   for (const e of spell.effects) {
     if (e.type <= -1) continue;
-    const c = effectCost(e, skillOf);
+    const c = effectCost(e, skillOf, { online });
     gold += c.gold;
     sp += c.sp;
   }
@@ -196,6 +227,7 @@ export function calculateCastCost(spell, casterEntity, { portMods = true } = {})
       try { const n = fn(casterEntity, sp, spell); if (Number.isFinite(n)) sp = Math.max(1, Math.round(n)); } catch { /* a set is not the cast's problem */ }   // LOOT15: and the spell, for a power that reads its school
     }
   }
+  if (portMods && casterEntity?.isPlayer) for (const fn of _freeCasts.values()) { try { if (fn(casterEntity, spell) === true) { sp = 0; break; } } catch { /* a door is not the cast's problem */ } }   // EG-ZS
   return { gold, sp };
 }
 
@@ -374,7 +406,7 @@ function classicCostFromSettings(settingsType, e, c) {
  * Only the record's FIRST THREE effects price (the classic layout has
  * no more); `cost * rangeModifier >> 1` and the floor of 5 close it.
  */
-export function classicCastingCost(spell, skillOf = null) {
+export function classicCastingCost(spell, skillOf = null, { online = isOnlinePage() } = {}) {
   let cost = 0;
   for (let i = 0; i < 3; i++) {
     const e = spell.effects?.[i];
@@ -382,7 +414,7 @@ export function classicCastingCost(spell, skillOf = null) {
     const sub = e.subType === -1 || e.subType == null ? 0 : e.subType;
     const coef = CLASSIC_COEFFICIENTS[CLASSIC_EFFECT_INDICES[e.type]?.[sub] ?? 0] ?? CLASSIC_COEFFICIENTS[0];
     const skill = skillOf ? skillOf(CLASSIC_MAGIC_SKILLS[CLASSIC_MAGIC_SCHOOLS[e.type] ?? 0]) : 50;
-    cost += Math.trunc(classicCostFromSettings(CLASSIC_SETTINGS_TYPES[e.type] ?? 0, e, coef) * (110 - skill) / 100);
+    cost += skillScaledCost(classicCostFromSettings(CLASSIC_SETTINGS_TYPES[e.type] ?? 0, e, coef), skill, 100, { online });   // SPELL-COST-PAST
   }
   cost = (cost * (CLASSIC_RANGE_MODIFIERS[spell.rangeType] ?? 2)) >> 1;
   return cost < 5 ? 5 : cost;

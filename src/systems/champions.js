@@ -9,7 +9,7 @@
 // a CHAMPION with one TRAIT: twice its health and its blows a quarter
 // harder, its trait on top, its name the trait's and its own. Its loot is
 // its own roll (CHAMP-LOOT: no Rare is forced onto its body - Magic and Rare
-// at half a plain foe's, its Legendary as LOOT7 left it: systems/lootRarity.js
+// at half a plain foe's, its Legendary as LOOT7 left it: systems/loot/lootRarity.js
 // championSource).
 //
 // WHO DECIDES. A dungeon's foes are its LAYOUT's, built on every client
@@ -25,13 +25,14 @@
 // OFF IS DFU EXACTLY: with the loot-rarity row off, no champion stands.
 // ═══════════════════════════════════════════════════════════════════
 
-import { lootRarityOn } from './lootRarity.js';
+import { lootRarityOn } from './loot/lootRarity.js';
 import { foeTitle } from './foeTitle.js';   // FOE-TITLE: the names' one home
 import { registerPlayerStruckListener, registerPlayerStrikeListener } from '../combat/formulas.js';
 import { hurtPlayer } from '../characters/playerEntity.js';
-import { KNIGHT_CITY_WATCH } from '../characters/mobileTypes.js';
-import { enemyDisplayName } from '../characters/enemyBasics.js';   // LOOT7-CHECK CHAMP-SAID: the name the death line says
+import { KNIGHT_CITY_WATCH } from '../characters/mobile/mobileTypes.js';
+import { enemyDisplayName } from '../characters/enemy/enemyBasics.js';   // LOOT7-CHECK CHAMP-SAID: the name the death line says
 import { popupMessage } from './notify.js';   // LOOT7-CHECK CHAMP-SAID: DaggerfallUI.PopupMessage, the live host's line
+import { markUnquiet } from './revenant/unquietMark.js';   // UNQUIET (Revenants.md section 46): one champion in four carries the mark - its own, never a puppet's
 
 /** Per mille of the foes that may be one that stand as a champion (CHAMP-RATE, 2026-10-03, Mac: "buff champion rates
  *  slightly": 70, was 50 - about one in fourteen, was one in twenty). */
@@ -44,11 +45,11 @@ export const CHAMPION_DAMAGE = 1.25;
 /** @typedef {{ id: string, name: string, text: string, damage?: number, health?: number, speed?: number, drink?: number, thorns?: number }} ChampionTrait */
 /** The traits, in the wire's order (`cp` is the index). @type {ReadonlyArray<Readonly<ChampionTrait>>} */
 export const CHAMPION_TRAITS = Object.freeze([
-  Object.freeze({ id: 'mighty', name: 'Mighty', text: 'Its blows land half again as hard', damage: 1.5 }),
-  Object.freeze({ id: 'stalwart', name: 'Stalwart', text: 'Half again its health, on top of a champion\'s double', health: 1.5 }),
-  Object.freeze({ id: 'swift', name: 'Swift', text: 'Thirty more Speed: it closes, and it swings, sooner', speed: 30 }),
-  Object.freeze({ id: 'vampiric', name: 'Vampiric', text: 'Half of what its blows take from you heals it', drink: 50 }),
-  Object.freeze({ id: 'thorned', name: 'Thorned', text: 'Your blows that land on it hurt you back, a seventh of them', thorns: 7 }),
+  Object.freeze({ id: 'mighty', name: 'Mighty', text: 'Its blows hit 50% harder', damage: 1.5 }),
+  Object.freeze({ id: 'stalwart', name: 'Stalwart', text: 'It has 50% more health, on top of a champion\'s double', health: 1.5 }),
+  Object.freeze({ id: 'swift', name: 'Swift', text: 'It has 30 more Speed, so it closes in and attacks sooner', speed: 30 }),
+  Object.freeze({ id: 'vampiric', name: 'Vampiric', text: 'It heals for half the damage it deals you', drink: 50 }),
+  Object.freeze({ id: 'thorned', name: 'Thorned', text: 'Your hits on it hurt you for a seventh of their damage', thorns: 7 }),
 ]);
 export const championTrait = (id) => CHAMPION_TRAITS.find((t) => t.id === id) ?? null;
 export const championIndex = (id) => CHAMPION_TRAITS.findIndex((t) => t.id === id);
@@ -107,9 +108,10 @@ export function _resetStreetChampionsForTests() { _streetN = 0; }
  * reads the mark): its trait, twice its health (the Stalwart's half again more), its blows a quarter harder (the
  * Mighty's half again more) multiplied onto whatever `damageScale` it has (an elite's double stands under it), the
  * Swift's Speed. Nothing for no trait, a foe under CHAMPION_MIN_LEVEL, the city watch, an ally, or with the switch off.
- * Answers whether it stood as one.
+ * Answers whether it stood as one. UNQUIET: `own` - one of this pool's own (never a puppet, its owner's word): its mark
+ * drawn (systems/revenant/unquietMark.js).
  */
-export function applyChampion(entity, traitIndex) {
+export function applyChampion(entity, traitIndex, { own = true } = {}) {
   if (!entity || !Number.isInteger(traitIndex) || !lootRarityOn()) return false;
   const t = CHAMPION_TRAITS[traitIndex];
   if (!t || (entity.level | 0) < CHAMPION_MIN_LEVEL) return false;
@@ -121,6 +123,7 @@ export function applyChampion(entity, traitIndex) {
   entity.healthMult = (entity.healthMult ?? 1) * hp;   // TELL1: what was stood on the kind's own health (ai/tells.js kindHealth - its poise)
   entity.damageScale = (Number.isFinite(entity.damageScale) ? entity.damageScale : 1) * CHAMPION_DAMAGE * (t.damage ?? 1);
   if (t.speed && entity.stats) entity.stats.speed = Math.min(100, (entity.stats.speed ?? 50) + t.speed);
+  if (own) markUnquiet(entity);   // UNQUIET: the mark that lets it rise
   return true;
 }
 
@@ -144,7 +147,7 @@ registerPlayerStrikeListener(CHAMPIONS, championStrike);
 
 // ── LOOT7-CHECK CHAMP-SAID: a champion said, on either skin ─────────
 // Mac asked for "single named foes with visible traits", and a LIVING champion was named only on the enhanced skin's
-// target frame (ui/hudFoeTarget.js) and its plaque (the World Tooltips plaque is the enhanced skin's - ui/worldPlaque.js
+// target frame (ui/hud/hudFoeTarget.js) and its plaque (the World Tooltips plaque is the enhanced skin's - ui/worldPlaque.js
 // worldPlaqueOn): on the classic skin nothing said one stood until it died, and no screen anywhere said what its trait
 // does (CHAMPION_TRAITS' `text` was read by nothing). So the first blow that lands EITHER WAY - its on me, or mine on
 // it - says it on the line every skin draws (notify.js popupMessage: DaggerfallUI.PopupMessage, the line "%s just

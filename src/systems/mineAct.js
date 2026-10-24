@@ -27,8 +27,17 @@
 //
 // Esc (the host's `cancel`) ends it, nothing lost: the node stands, no
 // tool wears, no harvest is asked.
+//
+// GATHER-FEEL (2026-10-13): A STRIKE LANDS ON ITS HIT FRAME, as a chop
+// does (systems/chopAct.js): `landsIn`, and the swing run out past the
+// end so the last strike is drawn and heard landing. AUDIT GATHER-FEEL
+// LANDING: and counts its blows landed (`landed`), as a chop does.
 // ═══════════════════════════════════════════════════════════════════
 import { MINE_ACT, strikesFor } from '../net/professionLaw.js';
+import { MELEE_HIT_SHARE } from '../characters/weaponStates.js';
+
+/** AUDIT GATHER-FEEL LANDING: the swing still to run once its blow has landed (s) - the hit frame, MELEE_HIT_SHARE in. */
+const MINE_REST_S = MINE_ACT.swingS * (1 - MELEE_HIT_SHARE);
 
 /** The five points on a node's face, degrees from its centre ([yaw, pitch]) - inside MINE_ACT's box. */
 export const MINE_POINTS = Object.freeze([
@@ -47,8 +56,8 @@ export function createMineAct({ tier, band = 1, master = false, gentle = false, 
   const need = strikesFor(tier);
   const st = {
     kind: 'mine', need, points: 0, strikes: 0, glints: 0, done: false, cancelled: false, gentle,
-    /** the glinting point, how long it has left, and the swing under way */
-    glint: -1, glintLeft: 0, glintS, swing: 0,
+    /** the glinting point, how long it has left, and the swing under way; the blows landed */
+    glint: -1, glintLeft: 0, glintS, swing: 0, landed: 0,
     /** the last strike: whether it was on the glint (the meter flashes it) */
     last: /** @type {null|'glint'|'plain'} */ (null),
     /** where the crosshair was on the face this frame - the meter's cursor */
@@ -69,15 +78,19 @@ export function createMineAct({ tier, band = 1, master = false, gentle = false, 
     get progress() { return Math.min(1, st.points / st.need); },
     /** The swing's phase, 0 (none) to 1 (just struck) - the hand draws the strike's frames by it. */
     get swing() { return st.swing > 0 ? st.swing / MINE_ACT.swingS : 0; },
+    /** GATHER-FEEL: seconds until the swing under way lands its blow - 0 once it has, or with none under way. */
+    get landsIn() { return Math.max(0, st.swing - MINE_REST_S); },
     /**
      * One frame. `attack` - attack pressed this frame (an edge); `aim` - the crosshair's bearing from the node's centre,
      * degrees `{ yaw, pitch }` (yaw to the right, pitch up).
      * @param {number} dt @param {{ attack?: boolean, aim?: { yaw: number, pitch: number }|null }} input
      */
     tick(dt, { attack = false, aim = null } = {}) {
+      const aloft = st.swing > MINE_REST_S;
+      st.swing = Math.max(0, st.swing - dt);   // GATHER-FEEL: past the end too - the last swing runs out, its blow lands
+      if (aloft && !(st.swing > MINE_REST_S)) st.landed++;   // AUDIT GATHER-FEEL LANDING: counted before a press can begin the next swing
       if (st.done || st.cancelled) return;
       st.aim = aim;
-      st.swing = Math.max(0, st.swing - dt);
       if (!gentle) { st.glintLeft -= dt; if (st.glintLeft <= 0) moveGlint(); }
       if (!attack || st.swing > 0) return;
       st.swing = MINE_ACT.swingS;

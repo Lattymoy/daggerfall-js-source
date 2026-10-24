@@ -25,10 +25,11 @@
 // (systems/worldTick.js imports this, the Thunderlock's wire).
 // ═══════════════════════════════════════════════════════════════════
 
-import { registerCustomTemplates, mintCondition, setItemFields, registerItemUseHandler } from './itemTemplates.js';
-import { registerUniqueFind } from './lootRarity.js';
+import { registerCustomTemplates, mintCondition, setItemFields, registerItemUseHandler } from './item/itemTemplates.js';
+import { registerUniqueFind } from './loot/lootRarity.js';
 import { isEnchanted } from './inventory.js';
 import { equipTableOf } from './equip.js';
+import { creditOwnMend } from './item/foundMark.js';
 
 export const WELKYND_STONE_TEMPLATE = 573;
 export const VARLA_STONE_TEMPLATE = 574;
@@ -54,9 +55,9 @@ registerUniqueFind({ id: 'varla-stone', minTier: VARLA_STONE_TIER, weight: 1, la
 /** The stones' words. */
 export const STONE_TEXT = Object.freeze({
   welkynd: 'The Welkynd Stone flares blue and is spent. Your magicka is full.',
-  welkyndFull: 'Your magicka is already full - the stone would be wasted.',
+  welkyndFull: 'Your magicka is already full. The stone would be wasted.',
   varla: (n) => `The Varla Stone flares and is spent. ${n === 1 ? 'An enchanted piece you wear is' : `${n} enchanted pieces you wear are`} whole again.`,
-  varlaWhole: 'Every enchanted piece you wear is already whole - the stone would be wasted.',
+  varlaWhole: 'Every enchanted piece you wear is already whole. The stone would be wasted.',
   nobody: 'Nothing happens.',
 });
 /** One off a stack, or the stone off the list. */
@@ -81,7 +82,9 @@ export function useVarlaStone(item, list, entity) {
   if (!entity) return { kind: 'text', text: STONE_TEXT.nobody };
   const pieces = varlaMends(entity);
   if (!pieces.length) return { kind: 'text', text: STONE_TEXT.varlaWhole };
+  const was = pieces.map((it) => it.currentCondition);
   for (const it of pieces) it.currentCondition = it.maxCondition;
+  pieces.forEach((it, i) => creditOwnMend(it, was[i]));   // AUDIT MEND-THIRD L2-7: the stone is its user's own mend - a third of it past a found piece's mark sells
   spend(item, list);
   return { kind: 'text', text: STONE_TEXT.varla(pieces.length) };
 }

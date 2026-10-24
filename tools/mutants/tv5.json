@@ -1,81 +1,81 @@
 [
   {
     "name": "TV5-the-grid's-own-places-marked-twice",
-    "file": "src/systems/travelFarPlaces.js",
+    "file": "src/systems/travel/travelFarPlaces.js",
     "old": "    if (cheb <= near || Math.hypot(dx, dy) > range) continue;   // beyond the grid's square; within the range's circle",
     "new": "    if (Math.hypot(dx, dy) > range) continue;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A town inside the streamed grid wears its plate on the land AND an edge marker - two plates for one place."
   },
   {
     "name": "TV5-no-reach",
-    "file": "src/systems/travelFarPlaces.js",
+    "file": "src/systems/travel/travelFarPlaces.js",
     "old": "    if (cheb <= near || Math.hypot(dx, dy) > range) continue;   // beyond the grid's square; within the range's circle",
     "new": "    if (cheb <= near) continue;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The edge speaks for every town in the Iliac Bay - a gazetteer, not a compass."
   },
   {
     "name": "TV5-undiscovered-named",
-    "file": "src/systems/travelFarPlaces.js",
+    "file": "src/systems/travel/travelFarPlaces.js",
     "old": "    const summary = summaryOf(s.x, s.y);",
     "new": "    const summary = summaryOf(s.x, s.y) ?? { mapId: s.x * 1000 + s.y, name: s.loc.name };",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A town the traveller never found is named at the edge - DFU's discovery law broken."
   },
   {
     "name": "TV5-farthest-first",
-    "file": "src/systems/travelFarPlaces.js",
+    "file": "src/systems/travel/travelFarPlaces.js",
     "old": "  found.sort((a, b) => a.d - b.d || a.key.localeCompare(b.key));",
     "new": "  found.sort((a, b) => b.d - a.d || a.key.localeCompare(b.key));",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The cap keeps the ten FARTHEST towns - the next village down the road is dropped."
   },
   {
     "name": "TV5-no-cap",
-    "file": "src/systems/travelFarPlaces.js",
+    "file": "src/systems/travel/travelFarPlaces.js",
     "old": "  return found.slice(0, max);",
     "new": "  return found;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Every town within 20 km crowds the edge."
   },
   {
     "name": "TV5-dungeons-are-destinations",
-    "file": "src/systems/travelFarPlaces.js",
+    "file": "src/systems/travel/travelFarPlaces.js",
     "old": "    if (!loc?.name || !TV_FAR_TYPES.has(loc.mapTableData?.locationType)) continue;",
     "new": "    if (!loc?.name) continue;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Every crypt, farm and temple marked at the edge - not the settlements the edge speaks for."
   },
   {
     "name": "TV5-tenths-flicker",
-    "file": "src/systems/travelFarPlaces.js",
+    "file": "src/systems/travel/travelFarPlaces.js",
     "old": "  return km < 10 ?",
     "new": "  return km < 100 ?",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Twelve kilometres read 12.4, 12.3, 12.2... as the traveller walks."
   },
   {
     "name": "TV5-journey-end-marked-twice",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "      if (f.key === farEnd) continue;",
     "new": "      if (f.key === '') continue;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The far town being travelled to wears its edge plate AND the destination flag."
   },
@@ -85,88 +85,88 @@
     "old": "      if (key) deps.onMark?.(key, e); else deps.onPick?.(e.clientX, e.clientY, e);",
     "new": "      deps.onPick?.(e.clientX, e.clientY, e);",
     "tests": [
-      "test/tv5_far_places.test.js",
-      "test/tv2_click_to_move.test.js"
+      "test/ui/travel/tv5_far_places.test.js",
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "A click on a plate walks to the ground under it instead of journeying to the town - the canvas takes no clicks of its own."
   },
   {
     "name": "PERF-TV-screen-read-per-mark",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "    const held = m.edge ? (edgeHold(m, vw, vh,",
     "new": "    const held = m.edge ? (edgeHold(m, win?.innerWidth ?? 0, win?.innerHeight ?? 0,",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The screen's size read again for every held mark - the per-mark window reads the readout was built to avoid; once a frame is the law."
   },
   {
     "name": "PERF-TV-drawn-every-frame",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  if (sig.length === canvasSig.length && sig.every((v, i) => v === canvasSig[i])) return;",
     "new": "  if (false) return;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A camera at rest redraws the same picture sixty times a second."
   },
   {
     "name": "PERF-TV-a-move-not-drawn",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  if (sig.length === canvasSig.length && sig.every((v, i) => v === canvasSig[i])) return;",
     "new": "  if (sig.length === canvasSig.length) return;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Marks that moved stay where they were drawn - the picture frozen while the camera orbits."
   },
   {
     "name": "PERF-TV-plate-off-the-screen",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "const inScreen = (x0, w, vw) => (vw > w + 8 ? Math.min(Math.max(4, x0), vw - 4 - w) : x0);",
     "new": "const inScreen = (x0) => x0;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A far town held at the right edge hangs half its plate off the screen, its click box with it."
   },
   {
     "name": "PERF-TV-every-mark-takes-a-click",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  for (const q of placed) if (q.m.pick) nextHits.push({ key: q.m.key, ...pickBox(q, vw) });",
     "new": "  for (const q of placed) nextHits.push({ key: q.m.key, ...pickBox(q, vw) });",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A click on a rider's label is eaten - no journey (no place owns the key) and no ground pick under it."
   },
   {
     "name": "PERF-TV-hidden-still-clicked",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  hits = []; setHover(null);",
     "new": "  setHover(null);",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The module's word broken: a hidden readout still answers a pick with a plate it no longer draws (the view asks only while up, so the host is safe - the pin holds the module to its contract)."
   },
   {
     "name": "PERF-TV-the-bottom-plate-takes-it",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  for (let i = hits.length - 1; i >= 0; i--) {",
     "new": "  for (let i = 0; i < hits.length; i++) {",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Two plates overlapping: the one drawn under takes the click the eye gave the one on top."
   },
   {
     "name": "PERF-TV-fonts-never-redrawn",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  doc.fonts?.addEventListener?.('loadingdone', () => { dropSprites(); canvasSig = []; });\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Labels drawn before the display face arrived stay in Georgia for the whole session."
   },
@@ -176,7 +176,7 @@
     "old": "    if (holder._tvGen !== gen || holder._tvNx !== nx || holder._tvNz !== nz || holder._tvSea !== onSea) {",
     "new": "    if (holder._tvAt === undefined) {",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A plate read before its pixel was built keeps the fallback height forever - hung in the air or buried."
   },
@@ -186,7 +186,7 @@
     "old": "    if (k[0] !== built.size || k[1] !== state.mapOrigin.x || k[2] !== state.mapOrigin.y || k[3] !== c[0] || k[4] !== c[1] || k[5] !== c[2] || t - k[6] > 500) {",
     "new": "    if (k[0] !== built.size || t - k[6] > 500) {",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The floating origin re-anchors and every kept mark stands a kilometre off for up to half a second."
   },
@@ -196,7 +196,7 @@
     "old": "    let tail = kept && kept.gen === gen && kept.start === start && kept.n === n ? kept.pts : null;",
     "new": "    let tail = kept && kept.n === n ? kept.pts : null;",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "The route line keeps legs already walked, and floats when the ground rebuilds under it."
   },
@@ -206,7 +206,7 @@
     "old": "    if (uc.gen !== gen || uc.x !== px.x || uc.y !== px.y || uc.r !== radius) {",
     "new": "    if (uc.gen < 0) {",
     "tests": [
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "The cap counts the unbuilt ground once and holds a journey to that count for the whole trip."
   },
@@ -216,7 +216,7 @@
     "old": "  const kept = [];\n",
     "new": "  const kept = [];\n  for (const k of out) lowestGround(groundAt, k.centre[0], k.centre[2], k.radius);\n",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Seventeen terrain reads for every raining cell in reach, most of them never drawn."
   },
@@ -226,7 +226,7 @@
     "old": "    let lo = key !== null ? memo.get(key) : undefined;",
     "new": "    let lo = undefined;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The host's memo is written and never read - every veil asks the land every frame."
   },
@@ -236,337 +236,337 @@
     "old": "      if (_tvFootMemo.gen !== tvGroundGenNow()) { _tvFootMemo.gen = tvGroundGen; _tvFootMemo.map.clear(); }",
     "new": "      if (_tvFootMemo.gen !== tvGroundGenNow()) { _tvFootMemo.gen = tvGroundGen; }",
     "tests": [
-      "test/tv4_weather_above.test.js"
+      "test/render/tv4_weather_above.test.js"
     ],
     "note": "A veil's foot measured over unbuilt ground stays there after the land rises - a curtain floating over a hill."
   },
   {
     "name": "EDGE-DECLUTTER-never-spread",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  spreadHeld(placed, vw, vh);\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Two towns in one direction held on one spot - one plate hides the other and takes its click."
   },
   {
     "name": "EDGE-DECLUTTER-no-push",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "        if (p.at + shift <= r.at) break;",
     "new": "        if (true) break;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The marks are sorted and never parted - the pile-up stays."
   },
   {
     "name": "EDGE-DECLUTTER-out-of-order",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "    items.sort((u, v) => u.pos - v.pos || (u.q.m.key < v.q.m.key ? -1 : u.q.m.key > v.q.m.key ? 1 : 0));",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Marks parted in the order they were handed, not where they lie - the town to the north drawn under the one to the south."
   },
   {
     "name": "EDGE-DECLUTTER-top-parted-downward",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "    if (side < 2) {\n      const b = markBox(q, vw);",
     "new": "    if (true) {\n      const b = markBox(q, vw);",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Along the top, the plates slide down into the picture instead of apart - still over each other."
   },
   {
     "name": "EDGE-DECLUTTER-crowd-off-the-screen",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "      const even = r.span > z - a;   // more than the edge holds: spaced evenly along it",
     "new": "      const even = false;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Twenty towns in one direction push the first ones off the top of the screen, beyond a click."
   },
   {
     "name": "EDGE-DECLUTTER-pushed-one-way",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "        p.at = p.sum / p.n; p.at = fit(p);",
     "new": "        p.at = fit(p);",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A stack grows only downward from its first mark - the last plate hangs far from where its town lies."
   },
   {
     "name": "EDGE-FURNITURE-held-under-the-bar",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  const sx = (cx - margin) / Math.max(1e-6, Math.abs(dx)), sy = (dy < 0 ? cy - top : cy - foot) / Math.max(1e-6, Math.abs(dy));",
     "new": "  const sx = (cx - margin) / Math.max(1e-6, Math.abs(dx)), sy = (cy - margin) / Math.max(1e-6, Math.abs(dy));",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A town behind the camera is held at the screen's foot - under the view's bar and the hotbar, its name off the bottom."
   },
   {
     "name": "EDGE-FURNITURE-drawn-under-the-bar",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  if (p.front && p.x >= margin && p.x <= w - margin && p.y >= top && p.y <= h - foot) return null;",
     "new": "  if (p.front && p.x >= margin && p.x <= w - margin && p.y >= margin && p.y <= h - margin) return null;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A mark in the picture but behind the bar is drawn there, unseen, instead of held above it."
   },
   {
     "name": "EDGE-FURNITURE-name-under-its-arrow",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "    let ly = q.side === 3 ? y - 10 - sp.h - (sb ? sb.h : 0) :",
     "new": "    let ly = false ? y - 10 - sp.h - (sb ? sb.h : 0) :",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Held at the foot, the name hangs below its arrow - into the bar."
   },
   {
     "name": "EDGE-FURNITURE-click-box-in-the-bar",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  if (q.side === 3) return { x0: x0 - 4, x1: x0 + w + 4, y0: q.y - 14 - h - extraLines(q), y1: q.y + 10 };   // its label above it\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The plate is drawn above its arrow but its click box hangs below - a click on the name finds nothing."
   },
   {
     "name": "EDGE-FURNITURE-measured-every-frame",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  if (now - furniture.at < FURNITURE_EVERY_MS && furniture.vw === vw && furniture.vh === vh) return;",
     "new": "  if (false) return;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A layout read every frame for the edges' furniture - PERF-TV's forced layout back."
   },
   {
     "name": "EDGE-FURNITURE-stale-on-show",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  furniture.at = -Infinity;   // EDGE-FURNITURE: what stands at the edges now (a journey's panel may have come or gone)\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Reopened on a journey, the marks stand under the travel panel for half a second."
   },
   {
     "name": "EDGE-FURNITURE-foot-unmeasured",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "      if (band) f.footNotch.push({ x0: r.left - G, x1: r.right + G, d: Math.max(M, vh - r.top + G) });",
     "new": "      if (band) f.footNotch = f.footNotch;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The bar and the hotbar measured and ignored - everything behind you under them again."
   },
   {
     "name": "EDGE-FURNITURE-side-label-in-the-bar",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  const bounds = [[F.lTop, vh - F.lFoot], [F.rTop, vh - F.rFoot], [F.topLo, F.topHi], [F.footLo, F.footHi]];",
     "new": "  const bounds = [[F.top, vh - F.foot], [F.top, vh - F.foot], [F.topLo, F.topHi], [F.footLo, F.footHi]];",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A side's marks kept only by the bands across the middle: a town off the left, low, is drawn over the quick-slot block."
   },
   {
     "name": "EDGE-FURNITURE-a-renamed-piece",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "const FURNITURE = '.hud-top, .hud-bottom, .hud-quick, .travelpanel-bar, .travelpanel-junction, .dftouch-btn, .qtrack';",
     "new": "const FURNITURE = '.hud-top, .hud-bottom, .hud-quick, .travel-panel-bar, .travelpanel-junction, .dftouch-btn, .qtrack';",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A class that no longer exists is measured - the travel panel stands over the marks unseen."
   },
   {
     "name": "AUDIT-DEEP2-E1-the-bar-on-the-vitals",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "    for (const r of rects) if (r.top >= vh / 2 && r.right > br.left && r.left < br.right && (band(r) || underBack(r))) barFoot = Math.max(barFoot, vh - r.top + BAR_AIR);\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The Overworld bar sits on the HUD's health, magicka and fatigue at every screen size."
   },
   {
     "name": "AUDIT-DEEP2-E1-the-bar-never-moved",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "    if (furniture.bar !== barFoot) { furniture.bar = barFoot; if (bar.style) bar.style.bottom = `${Math.round(barFoot)}px`; }",
     "new": "    if (furniture.bar !== barFoot) { furniture.bar = barFoot; }",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The bar's lift is worked out and never written - it stays on the vitals while the marks stand over where it would be."
   },
   {
     "name": "AUDIT-DEEP2-E3-lone-mark-unclamped",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "      r.at = fit(r);   // AUDIT DEEP2 E3: a lone mark kept inside its stretch BEFORE it is weighed against the run above it\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Two towns low on a side: the lower is clamped up INTO the upper after the merge was decided - one plate over the other's distance."
   },
   {
     "name": "AUDIT-DEEP2-E4-corners-apart",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  if (q.x + half > vw - m) { q.x = Math.round(vw - m); return 1; }\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A town just before the top-right corner and one just round it are held on two edges that never see each other - one plate over the other."
   },
   {
     "name": "AUDIT-DEEP2-E5-the-arrow-a-triangle",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "      g.beginPath(); g.moveTo(0, -10); g.lineTo(7, 7); g.lineTo(0, 2); g.lineTo(-7, 7); g.closePath(); g.fill(); g.stroke();",
     "new": "      g.beginPath(); g.moveTo(0, -8); g.lineTo(7, 5); g.lineTo(-7, 5); g.closePath(); g.fill(); g.stroke();",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A near-equilateral head reads the same turned a third either way - a town behind and left drawn pointing right."
   },
   {
     "name": "AUDIT-DEEP2-E6-bands-unshared",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  [f.top, f.foot] = clearBands(f.top, f.foot, vh);\n",
     "new": "  [f.top, f.foot] = [Math.min(f.top, vh * 0.3), Math.min(f.foot, vh * 0.3)];\n",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Each band capped at 30% of the screen on its own: on a landscape phone on a journey the marks ahead stand inside the travel panel."
   },
   {
     "name": "AUDIT-DEEP2-E7-corner-piece-ignored",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "      else if (mid <= vw * 0.3) f.footLo = Math.max(f.footLo, r.right + G);\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Plates behind and left are drawn over the quick-slot block, and on a phone a tap on one uses a quick slot."
   },
   {
     "name": "AUDIT-DEEP2-E7-side-over-the-block",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "      if (r.left < SIDE_REACH) f.lFoot = Math.max(f.lFoot, vh - r.top + G);\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A town off the left, low, is drawn over the quick-slot block."
   },
   {
     "name": "AUDIT-DEEP2-E8-foot-ends-overlap",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "    const fit = (r) => Math.min(Math.max(r.at, lo + items[r.i0].a), hi - r.span - items[r.i1].b);",
     "new": "    const fit = (r) => Math.min(Math.max(r.at, lo + (s < 2 ? items[r.i0].a : 0)), hi - r.span - (s < 2 ? items[r.i1].b : 0));",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Along the foot, the end mark's box is pushed back onto its neighbour by the screen's edge - two clicks in one place."
   },
   {
     "name": "AUDIT-DEEP2-E9-distance-over-the-dot",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "plate && !held ? y - 24 - sp.h / 2 - (sb ? sb.h : 0) :",
     "new": "plate && !held ? y - 24 - sp.h / 2 :",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A far town in the picture wears its distance across its own dot."
   },
   {
     "name": "AUDIT-DEEP2-E11-a-bare-sans",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "    : plate ? `${size}px ${TRAVEL_VIEW_PLATE_FONT}` : `${size}px ${TRAVEL_VIEW_LABEL_FONT}`;",
     "new": "    : plate ? `${size}px ${TRAVEL_VIEW_PLATE_FONT}` : `${size}px sans-serif`;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Riders' names and distances in the canvas's default face, not the enhanced one."
   },
   {
     "name": "AUDIT-DEEP2-E15-nothing-said",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  sayPlaces(placed);\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The places drawn on the canvas are said to no screen reader."
   },
   {
     "name": "AUDIT-DEEP2-NaN-poisons-an-edge",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "    if (!Number.isFinite(m.x) || !Number.isFinite(m.y)) continue;   // AUDIT DEEP2 E: one NaN poisoned its whole edge's run\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "One mark with a NaN point makes every mark on its edge NaN, and the picture is drawn again every frame at rest."
   },
   {
     "name": "AUDIT-DEEP2-F11-screen-read-twice",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  drawMarks(all.filter((m) => markShown(m, fl)), vw, vh, dpr, f.feet?.front ? f.feet : null);",
     "new": "  drawMarks(all.filter((m) => markShown(m, fl)), win?.innerWidth ?? 0, win?.innerHeight ?? 0, dpr, f.feet?.front ? f.feet : null);",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The screen's size read again after the frame's writes - a forced style recalculation every frame."
   },
   {
     "name": "AUDIT-DEEP2-E13-bar-click-through",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".tview-bar { position: absolute; right: 18px; bottom: 18px; pointer-events: auto; box-sizing: border-box;",
     "new": ".tview-bar { position: absolute; right: 18px; bottom: 18px; box-sizing: border-box;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A press on the bar missing Return by a hair walks the traveller to ground hidden under it."
   },
   {
     "name": "AUDIT-DEEP2-E2-lifted-over-a-corner-block",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": " && (band(r) || underBack(r))) barFoot",
     "new": ") barFoot",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "On a narrow phone the bar is lifted over the quick-slot block to the middle of the screen."
   },
   {
     "name": "AUDIT-DEEP2-E2-a-taller-bar-unmeasured",
-    "file": "src/ui/travelViewHud.js",
-    "old": "  if (`${last.where}|${last.hint}|${last.trip}` !== words) furniture.at = -Infinity;",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "  if (`${last.where}|${last.hint}|${last.trip}|${last.sky}` !== words) furniture.at = -Infinity;",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A journey's line (or a wrapped hint) makes the bar taller, and for half a second the marks behind stand under it."
   },
   {
     "name": "AUDIT-DEEP2-B1-the-end-unseen",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "label: e.label, kind: e.kind, edge: true, ...(place ? { pick: true, sub: farDistanceText(km) } : {}) });",
     "new": "label: e.label, kind: e.kind });",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A journey to a far town: its plate gives way to a flag drawn above the picture - the destination gone for the whole trip."
   },
@@ -576,7 +576,7 @@
     "old": "    if (key === 'dest') { const summary = tvTripLive() ? tvTrip.plan?.summary : null; if (summary && travelViewCanGo()) travelViewRouteTo(summary); return; }\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "After a stop, the flag takes no click and there is no ground out there to click - the journey cannot be taken up from the view."
   },
@@ -586,7 +586,7 @@
     "old": "tvPlates.dg === dg) return tvPlates.list;",
     "new": "true) return tvPlates.list;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The town just entered gets no plate until the traveller leaves its pixel."
   },
@@ -596,257 +596,257 @@
     "old": "  _locations.set(key, { regionName: info.regionName ?? '', locationName: info.locationName ?? '' });\n  _locationsGen += 1;",
     "new": "  _locations.set(key, { regionName: info.regionName ?? '', locationName: info.locationName ?? '' });",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A place found by a quest stays unmarked at the edge until a pixel is crossed."
   },
   {
     "name": "AUDIT-DEEP2-F8-a-square-range",
-    "file": "src/systems/travelFarPlaces.js",
+    "file": "src/systems/travel/travelFarPlaces.js",
     "old": "    if (cheb <= near || Math.hypot(dx, dy) > range) continue;   // beyond the grid's square; within the range's circle",
     "new": "    if (cheb <= near || cheb > range) continue;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The range is a square: a town on its diagonal is marked 28 km off - 'about 20 km' is false."
   },
   {
     "name": "OVERWORLD-NAMES-a-bare-label",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "    if (q.m.badge) { q.bk = badgeKey(q.m.badge); q.sp = badgeSprite(",
     "new": "    if (false) { q.bk = badgeKey(q.m.badge); q.sp = badgeSprite(",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A player's marker is a bare name - no title, Renown, guild tag or glyph, and no party green."
   },
   {
     "name": "OVERWORLD-NAMES-title-in-party-green",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "      x.fillStyle = P.title.rgba ? cssRgba(P.title.rgba) : N.name;",
     "new": "      x.fillStyle = party ? N.party : N.name;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A party member's Founder title is painted the party's green - the gold that IS the title erased (ACC3)."
   },
   {
     "name": "OVERWORLD-NAMES-party-not-green",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  x.font = rowFont; x.fillStyle = party ? N.party : (TV_KIN_COLORS[m.kin] ?? N.name);",
     "new": "  x.font = rowFont; x.fillStyle = (TV_KIN_COLORS[m.kin] ?? N.name);",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "My party's names in the Overworld are a stranger's bone."
   },
   {
     "name": "OVERWORLD-NAMES-renown-dropped",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  if (P.lv) {   // the Renown, boxed, left of the name",
     "new": "  if (false) {   // the Renown, boxed, left of the name",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The Renown box left of the name is missing."
   },
   {
     "name": "OVERWORLD-NAMES-guild-dropped",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  } else if (P.gt) { x.font = smallFont;",
     "new": "  } else if (false) { x.font = smallFont;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The guild's tag right of the name is missing."
   },
   {
     "name": "OVERWORLD-NAMES-badge-unsigned",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": ", q.m.kind ?? '', q.bk, q.fade ? 1 : 0, q.m.kin",
     "new": ", q.m.kind ?? '', q.fade ? 1 : 0, q.m.kin",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A title won while the camera rests is not drawn until something else moves."
   },
   {
     "name": "AUDIT-NAMES-N1-1-every-badge-at-once",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  if (badgeBuilds <= 0) return null;   // N1-1",
     "new": "  if (false) return null;   // N1-1",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A busy region's first frame (or a font arriving) makes every badge at once - a 70-175 ms stall."
   },
   {
     "name": "AUDIT-NAMES-N1-1-waiting-badges-never-made",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  if (unmade) canvasSig = [];\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Past the first frame's budget, a camera at rest leaves the rest of the players their bare names for good."
   },
   {
     "name": "AUDIT-NAMES-N1-5-the-estimate",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  if (q.sp) return q.sp.w;\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A held player's box is the estimate, 30-75% wide: a titled player ahead on a phone is sent to a side, two that fit are spread evenly across each other."
   },
   {
     "name": "AUDIT-NAMES-N1-6-corners-ignored",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "    if (s < 2) cornersOf(bounds[s], s, items, sides, vw);\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A titled label held at the top near a corner lies across the first name held on that side."
   },
   {
     "name": "AUDIT-NAMES-N1-2-title-blurred",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "      x.shadowBlur = 0; x.shadowOffsetY = 0;\n      const edge",
     "new": "      const edge",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Shadow Fang's black half drowns in a blurred shadow on dark ground."
   },
   {
     "name": "AUDIT-NAMES-N1-2-no-edge",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "      x.fillStyle = '#000'; x.fillText(P.title.text, tx, 3);\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A gradient title has no black edge under it."
   },
   {
     "name": "AUDIT-NAMES-N1-9-title-flat",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "      x.fillStyle = gr;\n      x.fillText(P.title.text, tx, 1);",
     "new": "      x.fillStyle = edge;\n      x.fillText(P.title.text, tx, 1);",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A gradient title is painted flat in its edge colour."
   },
   {
     "name": "AUDIT-NAMES-N1-3-no-eye",
-    "file": "src/ui/travelViewHud.js",
-    "old": "      if (g.detail?.path) { x.fillStyle",
-    "new": "      if (false) { x.fillStyle",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "      for (const d of glyphDetails(g.detail)) { x.fillStyle",
+    "new": "      for (const d of []) { x.fillStyle",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
-    "note": "The wolf glyph has no red eye in the Overworld."
+    "note": "The wolf glyph has no red eye in the Overworld. WIKIMAID (re-aimed by content): the detail is a list walked now - none walked, no eye drawn."
   },
   {
     "name": "AUDIT-NAMES-N1-3-stroke-width",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "x.lineWidth = GLYPH_NAME_W;",
     "new": "x.lineWidth = 1.8;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The stroked glyphs are heavier than over a head in play."
   },
   {
     "name": "AUDIT-NAMES-N1-3-renown-unshadowed",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "    x.shadowBlur = 3; x.shadowOffsetY = 1;   // N1-3",
     "new": "    x.shadowBlur = 0; x.shadowOffsetY = 0;   // N1-3",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The Renown number has no shadow."
   },
   {
     "name": "AUDIT-NAMES-N1-9-glyphs-bone",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "      const col = g.rgba ? cssRgba(g.rgba) : N.name;",
     "new": "      const col = N.name;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "Every glyph is painted the bone of a stranger's name."
   },
   {
     "name": "AUDIT-NAMES-N1-9-no-glyphs",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  if (glyphW && typeof globalThis.Path2D === 'function') {",
     "new": "  if (false) {",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "No glyph is drawn."
   },
   {
     "name": "AUDIT-NAMES-N1-9-key-without-party",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "`badge|${size}|${party ? 1 : 0}|",
     "new": "`badge|${size}|",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A stranger who joins my party keeps the stranger's name colour (the image kept without the party)."
   },
   {
     "name": "AUDIT-NAMES-N1-9-key-without-dpr",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "|${journey ? 1 : 0}|${dpr}|${m.label}|${bk}`",
     "new": "|${journey ? 1 : 0}|${m.label}|${bk}`",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A badge made at one dpr is drawn blurred at another."
   },
   {
     "name": "AUDIT-NAMES-N1-4-not-the-name-face",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "const rowFont = `${size}px ${PIXEL_STACK}`, smallFont = `${small}px ${PIXEL_STACK}`;",
     "new": "const rowFont = `${size}px ${TRAVEL_VIEW_LABEL_FONT}`, smallFont = `${small}px ${TRAVEL_VIEW_LABEL_FONT}`;",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The players' names are not in the face they wear in play."
   },
   {
     "name": "AUDIT-NAMES-N1-7-under-the-head",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "m.badge && !held ? y - (isShipKind(m) ? SHIP_MARK_RISE + 2 : NAME_ABOVE) - sp.h : ",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A player's name hangs under their head, across the body it names."
   },
   {
     "name": "AUDIT-NAMES-N2-4-names-cross",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "    if (m.badge && !held) ly = clearOfNames(",
     "new": "    if (false) ly = clearOfNames(",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "A party side by side wear their names one over another, unreadable."
   },
   {
     "name": "AUDIT-NAMES-N1-8-pixels-unbounded",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "sprites.size >= SPRITES_MAX || spritePixels + px > SPRITE_PIXELS_MAX",
     "new": "sprites.size >= SPRITES_MAX",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "512 badges kept at a phone's dpr 3 come to ~95 MB."
   }

@@ -64,7 +64,7 @@
   },
   {
     "name": "TESA4-the-bay-reads-the-layer",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "    const arena = !inBay(px, py);",
     "new": "    const arena = true;",
     "tests": [
@@ -73,7 +73,7 @@
   },
   {
     "name": "TESA4-the-track-unread",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "track = at(roads.tracks) | (arena ? arenaRoadByte('tracks', px, py) : 0);",
     "new": "track = at(roads.tracks);",
     "tests": [
@@ -82,7 +82,7 @@
   },
   {
     "name": "TESA4-the-corner-unread",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "corners: { road: c(roads.roads) | arenaCorners('roads'),",
     "new": "corners: { road: c(roads.roads),",
     "tests": [
@@ -91,7 +91,7 @@
   },
   {
     "name": "TESA4-the-flag-blind-to-corners",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "(arena && (road || track || arenaCorners('roads') || arenaCorners('tracks')))",
     "new": "(arena && (road || track))",
     "tests": [
@@ -100,7 +100,7 @@
   },
   {
     "name": "TESA4-the-flag-dark",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "    arenaRoads: arenaPainted,",
     "new": "    arenaRoads: false,",
     "tests": [
@@ -109,7 +109,7 @@
   },
   {
     "name": "TESA4-the-verge-unasked",
-    "file": "src/world/roadVerge.js",
+    "file": "src/world/road/roadBand.js",
     "old": ": arenaPathsAt(mx, my);   // TESA5",
     "new": ": 0;   // TESA5",
     "tests": [
@@ -118,7 +118,7 @@
   },
   {
     "name": "TESA4-the-verge-asks-the-bay-of-the-layer",
-    "file": "src/world/roadVerge.js",
+    "file": "src/world/road/roadBand.js",
     "old": "      const bits = mx >= 0 && my >= 0 && mx < MAP_W && my < MAP_H ? pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my) : arenaPathsAt(mx, my);",
     "new": "      const bits = pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my) | arenaPathsAt(mx, my);",
     "tests": [
@@ -127,7 +127,7 @@
   },
   {
     "name": "TESA4-the-epoch-read-late",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    const arenaRoadsAt = terrainGen.arenaRoadsEpoch;   // TESA4: the Arena roads' layer this job is built with\n",
     "new": "",
     "tests": [
@@ -136,7 +136,7 @@
   },
   {
     "name": "TESA4-the-stale-law-its-own-epoch",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielSweepsHost.js",
     "old": "p.arenaRoadsEpoch < epoch && ((reset",
     "new": "p.arenaRoadsEpoch <= epoch && ((reset",
     "tests": [
@@ -145,7 +145,7 @@
   },
   {
     "name": "TESA4-the-old-paint-forgotten",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielSweepsHost.js",
     "old": "((reset && p.arenaRoadsPainted) || layerTouches",
     "new": "((false) || layerTouches",
     "tests": [
@@ -154,7 +154,7 @@
   },
   {
     "name": "TESA4-in-flight-unasked",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    if (built.has(key) && arenaRoadsStale(built.get(key), terrainGen.arenaRoadsLanded, arenaRoadsLayer())) _arenaRoadsStale.add(key);   // TESA4: posted before a layer that landed while it built\n",
     "new": "",
     "tests": [

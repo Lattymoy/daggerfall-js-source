@@ -1,5 +1,5 @@
 // @ts-check
-// NAV-E (2026-09-28) - THE SEA FIGHT'S SOUNDS, at run time: the nine clips tools/navalSfx.mjs synthesises (public/sfx/
+// NAV-E (2026-09-28) - THE SEA FIGHT'S SOUNDS, at run time: the ten clips tools/navalSfx.mjs synthesises (public/sfx/
 // naval-*.wav, provenance in public/sfx/SOURCES.md) registered on the audio bus under string keys - the door a mod's
 // WAV already uses (audio.registerSound, MW-D40; the Thunderlock's own loader in systems/thunderlock.js) - and the
 // distances every sound the naval host plays is heard over. DAGGER.SND's own (the splashes, the ship's bell that
@@ -22,6 +22,7 @@ export const NAVAL_SFX = Object.freeze({
   runout: 'naval:runout',
   ready: 'naval:ready',
   sinking: 'naval:sinking',
+  whistle: 'naval:whistle',   // COMBAT-FEEL NEAR-MISS: a ball going by close
 });
 /** Each key's file under public/sfx. */
 export const NAVAL_SFX_FILES = Object.freeze({
@@ -34,6 +35,7 @@ export const NAVAL_SFX_FILES = Object.freeze({
   [NAVAL_SFX.runout]: 'naval-runout.wav',
   [NAVAL_SFX.ready]: 'naval-ready.wav',
   [NAVAL_SFX.sinking]: 'naval-sinking.wav',
+  [NAVAL_SFX.whistle]: 'naval-whistle.wav',
 });
 /** DAGGER.SND's own, by index (SoundClips): the splashes, the bell, the bubbles, the fire. */
 export const NAVAL_CLASSIC = Object.freeze({ splashLarge: 342, splashSmall: 346, bell: 107, bubbles: 114, burning: 420 });
@@ -50,6 +52,8 @@ export const NAVAL_SOUND_RANGE = Object.freeze({
   [NAVAL_SFX.runout]: Object.freeze({ refDistance: 24, maxDistance: 900 }),
   // AUDIT NAV1 (the presentation): a battery of mine ready - heard at my own helm, a word for the player alone
   [NAVAL_SFX.ready]: Object.freeze({ refDistance: 10, maxDistance: 80 }),
+  // COMBAT-FEEL NEAR-MISS: a ball going by - heard where it passed her, at her rail and at her helm, and nowhere else
+  [NAVAL_SFX.whistle]: Object.freeze({ refDistance: 8, maxDistance: 90 }),
   [NAVAL_CLASSIC.splashLarge]: Object.freeze({ refDistance: 12, maxDistance: 600 }),
   [NAVAL_CLASSIC.splashSmall]: Object.freeze({ refDistance: 6, maxDistance: 300 }),
   [NAVAL_CLASSIC.bell]: Object.freeze({ refDistance: 20, maxDistance: 900 }),
@@ -66,7 +70,7 @@ export const navalSoundRange = (key) => NAVAL_SOUND_RANGE[/** @type {any} */ (ke
 export const navalSfxUrl = (file) => new URL(`sfx/${file}`, APP_ROOT ?? globalThis.document?.baseURI ?? 'http://localhost/').href;
 
 let _sounds = null;
-/** Register the nine clips, once (the first ship seen). Answers how many took; a clip that will not load is silence,
+/** Register the ten clips, once (the first ship seen). Answers how many took; a clip that will not load is silence,
  *  never a stopped fight. */
 export function installNavalSounds(audio, { fetchBytes = null } = {}) {
   if (!audio?.registerSound) return Promise.resolve(0);

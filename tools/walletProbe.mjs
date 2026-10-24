@@ -1,6 +1,6 @@
 // WALLET-UI (2026-10-07, Mac: "Polish and organize the ingame wallet item for ease of readability"), MEASURED: the real
 // enhanced pack (ui/inventoryDoor.js - the door the game opens) over the real sheet in Chromium, a character carrying the
-// wallet and everything it holds (test/wallet1.test.js's own pack: the purse's gold, two letters of credit, a stack of
+// wallet and everything it holds (test/systems/wallet1.test.js's own pack: the purse's gold, two letters of credit, a stack of
 // Deadlands Embers, the Welkynd Shards), its Valuables page opened and the Wallet picked - at a desktop's width and a
 // phone's, with the account's silver counted and with it kept online. The sheet must stand inside the viewport with
 // nothing spilling sideways, its figures in one column. Photographs to tools/shots/ (or SHOT_DIR).
@@ -29,7 +29,7 @@ for (const [W, H, width] of [[1280, 800, 'desktop'], [390, 760, 'phone']]) for (
     const { createInventoryWindow } = await import('/src/ui/inventoryDoor.js');
     const { mintWallet, setWalletSilver } = await import('/src/systems/walletItem.js');
     const { letterOfCredit } = await import('/src/systems/inventory.js');
-    const { sigilStone, welkyndShards, portalStones } = await import('/src/systems/gateSpoils.js');
+    const { sigilStone, welkyndShards, portalStones } = await import('/src/systems/gate/gateSpoils.js');
     document.getElementById('intro')?.remove();
     document.getElementById('enhanced-menu')?.remove();
     document.body.style.cssText = 'margin:0;background:#0b0d10;height:100vh';

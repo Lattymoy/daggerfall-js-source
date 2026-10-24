@@ -1,0 +1,110 @@
+[
+  {
+    "name": "POI3B-the-undo-always-on",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "    undo.disabled = !edit.canUndo();",
+    "new": "    undo.disabled = false;",
+    "tests": [
+      "test/poi/poi3b_panel.test.js"
+    ]
+  },
+  {
+    "name": "POI3B-the-tool-unpressed",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "b.setAttribute('aria-pressed', String(editor.mode() === m));",
+    "new": "b.setAttribute('aria-pressed', 'false');",
+    "tests": [
+      "test/poi/poi3b_panel.test.js"
+    ]
+  },
+  {
+    "name": "POI3B-a-field-with-no-step",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "    const change = (label, fn) => edit.edit(sel.id, label, fn);",
+    "new": "    const change = (label, fn) => { fn(edit.docOf(sel.id)); };",
+    "tests": [
+      "test/poi/poi3b_panel.test.js"
+    ]
+  },
+  {
+    "name": "POI3B-the-problems-unsaid",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "for (const p of ps.slice(0, 40)) {",
+    "new": "for (const p of ps.slice(0, 0)) {",
+    "tests": [
+      "test/poi/poi3b_panel.test.js"
+    ]
+  },
+  {
+    "name": "POI3B-saved-with-assets-unknown",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "    save.disabled = busy > 0 || !dirty || ps.length > 0 || checking;",
+    "new": "    save.disabled = busy > 0 || !dirty || ps.length > 0;",
+    "tests": [
+      "test/poi/poi3b_panel.test.js"
+    ]
+  },
+  {
+    "name": "POI3B-the-revision-not-kept",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "edit.markSaved(id, { rev: r.data.rev, state: 'draft', doc: sent });",
+    "new": "edit.markSaved(id, { rev: null, state: 'draft', doc: sent });",
+    "tests": [
+      "test/poi/poi3b_panel.test.js"
+    ]
+  },
+  {
+    "name": "POI3B-another-draft-as-mine",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "me.handle && String(x.author).toLowerCase() === me.handle.toLowerCase());",
+    "new": "!!me.handle);",
+    "tests": [
+      "test/poi/poi3b_panel.test.js"
+    ]
+  },
+  {
+    "name": "POI3B-the-base-lost",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": ": sentBack ? (pick.base ?? null) : (h.liveRev ?? null), rev:",
+    "new": ": sentBack ? (pick.base ?? null) : null, rev:",
+    "tests": [
+      "test/poi/poi3b_panel.test.js"
+    ]
+  },
+  {
+    "name": "POI3B-a-picture-twice",
+    "file": "src/poi/poiImport.js",
+    "old": "  for (const i of worn) {",
+    "new": "  for (const i of [...worn, ...worn]) {",
+    "tests": [
+      "test/poi/poi3b_panel.test.js"
+    ]
+  },
+  {
+    "name": "POI3B-a-refused-part-uploaded",
+    "file": "src/poi/poiImport.js",
+    "old": "if (code) { refused.push({ name: p.name, code }); continue; }",
+    "new": "if (code) { refused.push({ name: p.name, code }); }",
+    "tests": [
+      "test/poi/poi3b_panel.test.js"
+    ]
+  },
+  {
+    "name": "POI3B-refused-online-no-more",
+    "file": "src/systems/online/onlineLane.js",
+    "old": "'wseed', 'season', 'editor']);",
+    "new": "'wseed', 'season']);",
+    "tests": [
+      "test/poi/poi3b_panel.test.js"
+    ]
+  },
+  {
+    "name": "POI3B-the-motor-stepped",
+    "file": "src/scenes/world.js",
+    "old": "    if (poiEditor?.active()) poiEditor.cameraFrame(dt, cam);   // POI-3: the editor open - its eye flies, the body stands held (the closure's one statement still: the walk and the fly-cam its else)\n    else if (walkMode) {",
+    "new": "    if (poiEditor?.active()) poiEditor.cameraFrame(dt, cam);\n    if (walkMode) {",
+    "tests": [
+      "test/poi/poi3b_panel.test.js"
+    ]
+  }
+]

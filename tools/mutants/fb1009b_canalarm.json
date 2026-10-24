@@ -5,7 +5,7 @@
     "old": "    return waterOffPaths({ ...out, source: 'basic-roads', stats: { source: 'basic-roads', roadPixels: n } });",
     "new": "    return ({ ...out, source: 'basic-roads', stats: { source: 'basic-roads', roadPixels: n } });",
     "tests": [
-      "test/fb1009b_canalarm.test.js"
+      "test/world/road/fb1009b_canalarm.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (net.rivers) net.rivers[i] &= ~path;\n",
     "new": "",
     "tests": [
-      "test/fb1009b_canalarm.test.js"
+      "test/world/road/fb1009b_canalarm.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (net.streams) net.streams[i] &= ~path;\n",
     "new": "",
     "tests": [
-      "test/fb1009b_canalarm.test.js"
+      "test/world/road/fb1009b_canalarm.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    const path = net.roads[i] | net.tracks[i];\n    if (!path) continue;",
     "new": "    const path = net.roads[i] | net.tracks[i] | net.rivers[i] | net.streams[i];\n    if (!path) continue;",
     "tests": [
-      "test/fb1009b_canalarm.test.js"
+      "test/world/road/fb1009b_canalarm.test.js"
     ]
   }
 ]

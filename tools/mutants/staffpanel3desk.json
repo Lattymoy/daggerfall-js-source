@@ -1,0 +1,462 @@
+[
+  {
+    "name": "STAFF-PANEL3-DESK-role-check",
+    "file": "server-account/src/staffDesk.js",
+    "old": "if (ADMIN_ONLY.includes(path) && who.role !== 'admin') {",
+    "new": "if (false && ADMIN_ONLY.includes(path) && who.role !== 'admin') {",
+    "why": "a Moderator opens the Admins' doors",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-mod-share",
+    "file": "server-account/src/staffDesk.js",
+    "old": "  const admin = who.role === 'admin';\n  const W =",
+    "new": "  const admin = true;\n  const W =",
+    "why": "a Moderator's events carry trades, sales and findings",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-note-bound",
+    "file": "server-account/src/staffDesk.js",
+    "old": "return s && s.length <= STAFF_NOTE_MAX ? s : null;",
+    "new": "return s && s.length <= STAFF_NOTE_MAX + 1 ? s : null;",
+    "why": "a note past its bound kept",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-note-trim-oldest",
+    "file": "server-account/src/staffDesk.js",
+    "old": "SELECT id FROM staff_notes WHERE target = ?1 ORDER BY id DESC LIMIT ?2)",
+    "new": "SELECT id FROM staff_notes WHERE target = ?1 ORDER BY id ASC LIMIT ?2)",
+    "why": "the trim takes the newest notes",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-note-trim-gone",
+    "file": "server-account/src/staffDesk.js",
+    "old": "db.prepare('DELETE FROM staff_notes WHERE target = ?1 AND id NOT IN",
+    "new": "db.prepare('DELETE FROM staff_notes WHERE 0 AND target = ?1 AND id NOT IN",
+    "why": "no retention",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-notes-order",
+    "file": "server-account/src/staffDesk.js",
+    "old": "ORDER BY id DESC LIMIT ?3')",
+    "new": "ORDER BY id ASC LIMIT ?3')",
+    "why": "notes oldest first",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-note-add-unwritten",
+    "file": "server-account/src/staffDesk.js",
+    "old": "        audit('note-add', row.id, { name: displayName(row) }),",
+    "new": "",
+    "why": "a note added leaves no trace",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-notes-read-every",
+    "file": "server-account/src/staffDesk.js",
+    "old": "audit('notes-read', row.id, { name: displayName(row) }, { onceIn: READ_ROW_S })]);",
+    "new": "audit('notes-read', row.id, { name: displayName(row) })]);",
+    "why": "every read of the notes a row",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-watch-bound",
+    "file": "server-account/src/staffDesk.js",
+    "old": "WHERE (SELECT COUNT(*) FROM staff_watch WHERE staff = ?1) < ?4",
+    "new": "WHERE (SELECT COUNT(*) FROM staff_watch WHERE staff = ?1) <= ?4",
+    "why": "a watchlist past its bound",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-watch-whose",
+    "file": "server-account/src/staffDesk.js",
+    "old": "JOIN players p ON p.id = w.target WHERE w.staff = ?1",
+    "new": "JOIN players p ON p.id = w.target WHERE ?1 IS NOT NULL",
+    "why": "every member's watches in one list",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-watch-failed-unwritten",
+    "file": "server-account/src/staffDesk.js",
+    "old": "      await audit(act, row.id, { name: displayName(row), error }, { outcome: 'failed' }).run();\n",
+    "new": "",
+    "why": "a refused watch leaves no trace",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-online-stale",
+    "file": "server-account/src/staffDesk.js",
+    "old": "AND r.lease_at > ?2 GROUP BY r.player`).bind(me, nowS - REALM_PLAYING_S)",
+    "new": "AND r.lease_at > ?2 GROUP BY r.player`).bind(me, 0)",
+    "why": "a seat long gone still online",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-trade-threshold",
+    "file": "server-account/src/staffDesk.js",
+    "old": ".bind(me, since, until, WATCH_SOURCE_MAX, WATCH_BIG_GOLD),",
+    "new": ".bind(me, since, until, WATCH_SOURCE_MAX, WATCH_BIG_GOLD - 1),",
+    "why": "a small trade an event",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-trade-edge",
+    "file": "server-account/src/staffDesk.js",
+    "old": "+ COALESCE(json_extract(t.result, '$.b.gold'), 0) >= ?5",
+    "new": "+ COALESCE(json_extract(t.result, '$.b.gold'), 0) > ?5",
+    "why": "a trade at the line not an event",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-trade-unwatched-side",
+    "file": "server-account/src/staffDesk.js",
+    "old": ".filter(([s]) => watched.has(t[`${s}_player`]))",
+    "new": ".filter(() => true)",
+    "why": "the unwatched side of a trade an event",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-sale-gold-edge",
+    "file": "server-account/src/staffDesk.js",
+    "old": "WHERE s.seller IN ${W} AND s.at > ?2 AND s.at <= ?3 AND s.total >= CASE",
+    "new": "WHERE s.seller IN ${W} AND s.at > ?2 AND s.at <= ?3 AND s.total > CASE",
+    "why": "a gold sale at the line not an event",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-sale-marks-edge",
+    "file": "server-account/src/staffDesk.js",
+    "old": "WHERE s.buyer IN ${W} AND s.at > ?2 AND s.at <= ?3 AND s.total >= CASE",
+    "new": "WHERE s.buyer IN ${W} AND s.at > ?2 AND s.at <= ?3 AND s.total > CASE",
+    "why": "a Marks purchase at the line not an event",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-sale-small",
+    "file": "server-account/src/staffDesk.js",
+    "old": ".bind(me, since, until, WATCH_SOURCE_MAX, WATCH_BIG_GOLD, WATCH_BIG_MARKS),",
+    "new": ".bind(me, since, until, WATCH_SOURCE_MAX, WATCH_BIG_GOLD - 1, WATCH_BIG_MARKS - 1),",
+    "why": "small sales events",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-window",
+    "file": "server-account/src/staffDesk.js",
+    "old": "const since = Math.max(Number.isSafeInteger(body.since) ? body.since : 0, nowS - WATCH_WINDOW_S);",
+    "new": "const since = Number.isSafeInteger(body.since) ? body.since : nowS - WATCH_WINDOW_S;",
+    "why": "events past the day",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-events-paged",
+    "file": "server-account/src/staffDesk.js",
+    "old": "next: from + WATCH_PAGE < events.length ? from + WATCH_PAGE : null",
+    "new": "next: null",
+    "why": "the events never page",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-settings-unknown-key",
+    "file": "server-account/src/staffDesk.js",
+    "old": "if (!Object.hasOwn(SETTINGS_KEYS, k) || !SETTINGS_KEYS[k](v))",
+    "new": "if (Object.hasOwn(SETTINGS_KEYS, k) && !SETTINGS_KEYS[k](v))",
+    "why": "a key the list does not name kept",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-settings-look",
+    "file": "server-account/src/staffDesk.js",
+    "old": "  look: (v) => LOOKS.includes(v),",
+    "new": "  look: (v) => typeof v === 'string',",
+    "why": "a look nobody drew",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-settings-order-value",
+    "file": "server-account/src/staffDesk.js",
+    "old": "['menu', 'tabs', 'lists'].includes(k) && ORDERS.includes(x)",
+    "new": "['menu', 'tabs', 'lists'].includes(k)",
+    "why": "an order nobody named",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-settings-order-key",
+    "file": "server-account/src/staffDesk.js",
+    "old": "['menu', 'tabs', 'lists'].includes(k) && ORDERS.includes(x)",
+    "new": "ORDERS.includes(x)",
+    "why": "an order for a place with none",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-settings-top",
+    "file": "server-account/src/staffDesk.js",
+    "old": "(w.top === undefined || TOPS.includes(w.top))",
+    "new": "(true)",
+    "why": "a Home watch's top past 3, 5 or 10",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-settings-bound",
+    "file": "server-account/src/staffDesk.js",
+    "old": "byteLength > STAFF_SETTINGS_BYTES ?",
+    "new": "byteLength > STAFF_SETTINGS_BYTES + 1 ?",
+    "why": "a document past its bound",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-settings-audit-every",
+    "file": "server-account/src/staffDesk.js",
+    "old": "      audit('settings-save', null, null, { onceIn: READ_ROW_S }),",
+    "new": "      audit('settings-save', null, null),",
+    "why": "every save a row",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-notice-failed-unwritten",
+    "file": "server-account/src/staffDesk.js",
+    "old": "      await audit('notice', null, { ...detail, error: r.error }, { outcome: 'failed' }).run();\n",
+    "new": "",
+    "why": "a refused notice leaves no trace",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-notice-repeat-written",
+    "file": "server-account/src/staffDesk.js",
+    "old": "    if (!r.repeat) await audit('notice', null, { ...detail, id: r.id }).run();",
+    "new": "    await audit('notice', null, { ...detail, id: r.id }).run();",
+    "why": "a notice asked again written twice",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-score-severity",
+    "file": "server-account/src/staffDesk.js",
+    "old": "(ai_category IS NOT NULL AND ai_severity >= ?3) AS said",
+    "new": "(ai_category IS NOT NULL AND ai_severity > ?3) AS said",
+    "why": "a clear breach read as nothing said",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-score-clock",
+    "file": "server-account/src/staffDesk.js",
+    "old": "AND resolved_by IS NOT 'the clock' AND",
+    "new": "AND",
+    "why": "the clock's expiries counted as decisions",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-score-mode",
+    "file": "server-account/src/staffDesk.js",
+    "old": "AND ai_mode = ?2",
+    "new": "AND ?2 IS NOT NULL",
+    "why": "every mode counted together",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-score-agreed",
+    "file": "server-account/src/staffDesk.js",
+    "old": "if (key === 'saidActed' || key === 'clearDismissed') c.agreed += n;",
+    "new": "if (key === 'saidActed') c.agreed += n;",
+    "why": "a dismissal of nothing found not agreement",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-score-window",
+    "file": "server-account/src/staffDesk.js",
+    "old": ".bind(nowS - days * 86400, mode, FLAG_SEVERITY)",
+    "new": ".bind(nowS - days * 86400 * 2, mode, FLAG_SEVERITY)",
+    "why": "the window twice as long",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-score-days-bound",
+    "file": "server-account/src/staffDesk.js",
+    "old": "days < 1 || days > AI_SCORE_DAYS_MAX)",
+    "new": "days < 1 || days > AI_SCORE_DAYS_MAX + 1)",
+    "why": "a window past its bound",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-board-order",
+    "file": "server-account/src/staffDesk.js",
+    "old": "ORDER BY (n.hidden = 1) DESC, reports DESC",
+    "new": "ORDER BY reports DESC",
+    "why": "a hidden note not first",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-board-target",
+    "file": "server-account/src/staffDesk.js",
+    "old": "const target = note?.author ?? null;",
+    "new": "const target = null;",
+    "why": "a note's act names no player",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-market-open-only",
+    "file": "server-account/src/staffDesk.js",
+    "old": "WHERE l.state = 'open' GROUP BY l.id",
+    "new": "WHERE 1 GROUP BY l.id",
+    "why": "a closed listing listed",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-home-rank",
+    "file": "server-account/src/staffDesk.js",
+    "old": "({ flag: 2, case: 2, report: 1, trade: 1, sale: 1 })",
+    "new": "({ flag: 1, case: 2, report: 1, trade: 1, sale: 1 })",
+    "why": "a finding not high",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-home-online-low",
+    "file": "server-account/src/staffDesk.js",
+    "old": "for (const o of online) { const e = of(o.sub, o.name);",
+    "new": "for (const o of online.slice(1)) { const e = of(o.sub, o.name);",
+    "why": "a watched player online left off Home",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-unwired",
+    "file": "server-account/src/staff.js",
+    "old": "  if (DESK_ROUTES.includes(path)) return staffDesk(ctx, env, path, body, who, audit);",
+    "new": "  if (false) return staffDesk(ctx, env, path, body, who, audit);",
+    "why": "the desk's doors fall through to the owners' audit read",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-status",
+    "file": "server-account/src/staff.js",
+    "old": "'watch-full': 409, 'not-watched': 404, 'no-note': 404,",
+    "new": "'not-watched': 404, 'no-note': 404,",
+    "why": "a full watchlist answered 400",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-FIX-note-text-unaudited",
+    "file": "server-account/src/staffDesk.js",
+    "old": "        await audit('note-add', row.id, { name: displayName(row), error: 'note-text' }, { outcome: 'failed' }).run();\n",
+    "new": "",
+    "why": "a refused note add leaves no row",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-FIX-settings-bad-unaudited",
+    "file": "server-account/src/staffDesk.js",
+    "old": "      await audit('settings-save', null, { error: s.error }, { outcome: 'failed', onceIn: READ_ROW_S }).run();\n",
+    "new": "",
+    "why": "a refused settings save leaves no row",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-FIX-settings-bad-every",
+    "file": "server-account/src/staffDesk.js",
+    "old": "{ error: s.error }, { outcome: 'failed', onceIn: READ_ROW_S }",
+    "new": "{ error: s.error }, { outcome: 'failed' }",
+    "why": "a refused save a second is a row a second",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-DESK-FIX-bad-act-unaudited",
+    "file": "server-account/src/staffDesk.js",
+    "old": "      await audit('board-moderate', null, { ...detail, error: 'bad-act' }, { outcome: 'failed' }).run();\n",
+    "new": "",
+    "why": "a refused board act leaves no row",
+    "tests": [
+      "test/server/staffpanel3desk.test.js"
+    ]
+  }
+]

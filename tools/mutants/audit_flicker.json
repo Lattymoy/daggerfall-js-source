@@ -5,7 +5,7 @@
     "old": "  if (soft && h > 0.0) {",
     "new": "  if (false) {",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "min(${SUN_FLAT_REACH_TEXELS} * texel * sinE / max(length(toSun.xz), 1e-3), max(h - 0.5, 0.0) * sinE)",
     "new": "${SUN_FLAT_REACH_TEXELS} * texel * sinE / max(length(toSun.xz), 1e-3)",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "max(h - 0.5, 0.0) * sinE)",
     "new": "max(h - 0.5, 0.0))",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "mix(sunCascadeTap(2, wp, n, soft, h), 1.0, t)",
     "new": "mix(sunCascadeTap(2, wp, n, soft, 0.0), 1.0, t)",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -41,8 +41,8 @@
     "old": "mix(lit, sunCascadeTap(c + 1, wp, n, soft, h), t)",
     "new": "mix(lit, sunCascadeTap(c + 1, wp, n, soft, 0.0), t)",
     "tests": [
-      "test/audit_flicker.test.js",
-      "test/perfsun_fragment.test.js"
+      "test/render/audit_flicker.test.js",
+      "test/render/perfsun_fragment.test.js"
     ]
   },
   {
@@ -51,9 +51,9 @@
     "old": "vec3(0.0, 1.0, 0.0), uSize.y)) : 1.0;",
     "new": "vec3(0.0, 1.0, 0.0), 0.0)) : 1.0;",
     "tests": [
-      "test/audit_flicker.test.js",
-      "test/perfsun_fragment.test.js",
-      "test/la_cost.test.js"
+      "test/render/audit_flicker.test.js",
+      "test/render/perfsun_fragment.test.js",
+      "test/render/la_cost.test.js"
     ]
   },
   {
@@ -62,7 +62,7 @@
     "old": "  if (lightDir && texel > 0 && Number.isFinite(dx)",
     "new": "  if (false && lightDir && texel > 0 && Number.isFinite(dx)",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -71,7 +71,7 @@
     "old": "const ax = Math.round((dx * x0 + dy * x1 + dz * x2) / texel) * texel",
     "new": "const ax = (dx * x0 + dy * x1 + dz * x2)",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -80,7 +80,7 @@
     "old": "az = dx * z0 + dy * z1 + dz * z2;",
     "new": "az = 0;",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -89,8 +89,8 @@
     "old": "sunAnchorFor(f.eye, this._sunAnchor, f.lightDir, sunTexelWorld(SHADOW_CASCADES.length - 1, k));",
     "new": "sunAnchorFor(f.eye, this._sunAnchor, f.lightDir, sunTexelWorld(0, k));",
     "tests": [
-      "test/audit_flicker.test.js",
-      "test/la_shadow.test.js"
+      "test/render/audit_flicker.test.js",
+      "test/render/la_shadow.test.js"
     ]
   },
   {
@@ -99,7 +99,7 @@
     "old": "vec3 at = base + toL * (min(${glslFloat(EL_FLAT_LAMP_LIFT)}, tl * 0.5) / max(tl, 1e-4));",
     "new": "vec3 at = base;",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -108,7 +108,7 @@
     "old": "vec3 at = base + toL * (min(",
     "new": "vec3 at = base - toL * (min(",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -117,7 +117,7 @@
     "old": "(min(${glslFloat(EL_FLAT_LAMP_LIFT)}, tl * 0.5) / max(tl, 1e-4))",
     "new": "(${glslFloat(EL_FLAT_LAMP_LIFT)} / max(tl, 1e-4))",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -126,7 +126,7 @@
     "old": "nearestRank(casters, L, selfAt, rank, this._selfHeld, this._selfHeldN)",
     "new": "nearestRank(casters, L, selfAt, rank)",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -135,7 +135,7 @@
     "old": "    this._selfHeld.set(this._selfNext); this._selfHeldN = selfN;   // AUDIT FLICKER P2\n",
     "new": "",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -144,7 +144,7 @@
     "old": "return held && heldAt(held, heldN, lights, i) ? d * keep : d;",
     "new": "return d;",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -153,7 +153,7 @@
     "old": "if (samePlace(held, k * 4, lights, i * 4)) return true;",
     "new": "if (held[k * 4] === lights[i * 4] && held[k * 4 + 1] === lights[i * 4 + 1] && held[k * 4 + 2] === lights[i * 4 + 2]) return true;",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -162,7 +162,7 @@
     "old": "if (!taken[k] && samePlace(sl, k * 4, L, i * 4)) { slotOf[rank] = k; taken[k] = 1; break; }   // AUDIT FLICKER P3: within the still epsilon",
     "new": "if (!taken[k] && sl[k * 4] === L[i * 4] && sl[k * 4 + 1] === L[i * 4 + 1] && sl[k * 4 + 2] === L[i * 4 + 2]) { slotOf[rank] = k; taken[k] = 1; break; }",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -171,7 +171,7 @@
     "old": "const changed = !(samePlace(sl, o, pos, 0) && sl[o + 3] === far);",
     "new": "const changed = !(sl[o] === pos[0] && sl[o + 1] === pos[1] && sl[o + 2] === pos[2] && sl[o + 3] === far);",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -180,7 +180,7 @@
     "old": "    move(this._heldCasters, this._heldCasterN);\n",
     "new": "",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -189,7 +189,7 @@
     "old": "    move(this._slotLight, this._slotLight.length >> 2);\n",
     "new": "",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -198,16 +198,16 @@
     "old": "Math.abs(a[ai] - b[bi]) <= SHADOW_STILL_EPS && Math.abs(a[ai + 1] - b[bi + 1]) <= SHADOW_STILL_EPS && Math.abs(a[ai + 2] - b[bi + 2]) <= SHADOW_STILL_EPS",
     "new": "a[ai] === b[bi] && a[ai + 1] === b[bi + 1] && a[ai + 2] === b[bi + 2]",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
     "name": "AUDIT-FLICKER-R1-a-new-batch-each-frame",
-    "file": "src/net/peerRiders.js",
+    "file": "src/net/peer/peerRiders.js",
     "old": "        r.batch.archive = s.archive; r.batch.record = s.rec; r.batch.size = size;\n",
     "new": "        renderer?.destroyBillboardBatch?.(r.batch); r.batch = renderer.createBillboardBatch(s.archive, s.rec, size, [[0, 0, 0]]); r.batch.origin = [0, 0, 0]; r.batch.conceal = r.veil ?? null;\n",
     "tests": [
-      "test/invislook.test.js"
+      "test/net/invislook.test.js"
     ]
   },
   {
@@ -216,7 +216,7 @@
     "old": "        if (p._t) state.pixelTranslation(p.px, p.py, p._t);\n",
     "new": "",
     "tests": [
-      "test/audit_flicker.test.js"
+      "test/render/audit_flicker.test.js"
     ]
   },
   {
@@ -225,8 +225,8 @@
     "old": "    if (peerRiders) for (const b of peerRiders.batches()) { if (cullOn && billboardOutside(b)) { if (renderer.shadowReachBatch(b)) castBatches.push(b); continue; } allBatches.push(b); }",
     "new": "    if (peerRiders) for (const b of peerRiders.batches()) { if (cullOn && billboardOutside(b)) continue; allBatches.push(b); }",
     "tests": [
-      "test/audit_flicker.test.js",
-      "test/disc23b_eotb_sprites.test.js"
+      "test/render/audit_flicker.test.js",
+      "test/net/disc23b_eotb_sprites.test.js"
     ]
   },
   {
@@ -235,8 +235,8 @@
     "old": "    const cut = this._everyLightNow !== this._everyLightPrev;",
     "new": "    const cut = this._everyLightNow && !this._everyLightPrev;",
     "tests": [
-      "test/audit_flicker.test.js",
-      "test/la_post.test.js"
+      "test/render/audit_flicker.test.js",
+      "test/render/la_post.test.js"
     ]
   },
   {
@@ -245,7 +245,7 @@
     "old": "  vec3 pdx = dFdx(p), pdy = dFdy(p);\n  if (d0 >= 0.99999) { outColor = vec4(1.0); return; }\n",
     "new": "  if (d0 >= 0.99999) { outColor = vec4(1.0); return; }\n  vec3 pdx = dFdx(p), pdy = dFdy(p);\n",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -254,7 +254,7 @@
     "old": "  highp int at = int(cell.x) + j;",
     "new": "  int at = int(cell.x) + j;",
     "tests": [
-      "test/lc1_clusters.test.js"
+      "test/render/lc1_clusters.test.js"
     ]
   }
 ]

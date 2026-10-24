@@ -1,0 +1,22 @@
+-- NAME-AS (2026-10-12, Mac: "I want to add an option to the profile menu where players can toggle to use their
+-- account name or character name for ingame use").
+--
+--   npx wrangler d1 migrations apply daggerfall-accounts --remote
+--
+-- Applied exactly once through the `d1_migrations` ledger, which the deploy runs (ACC1-CI). SQLite has no ADD COLUMN
+-- IF NOT EXISTS, so a second run errors harmlessly and the ledger is what stops it.
+--
+-- THE NAME THE ROOM READS IS STILL THE SERVICE'S WORD. The relay draws the token's `n` (ACC1g: no client writes it),
+-- and the mint signs it. What is stored is the one thing that is a choice - which of two names this service already
+-- holds it signs: `name_as`, 'character' for the realm character the token is minted for (realm_characters.name, read
+-- by the mint's one read of that row, realm.js realmMintFacts), null - every row - for the account's own (accounts.js
+-- displayName), so every player reads as they did. A character's name is signed only where the wire carries it as it
+-- stands (identityToken.js nameIsIssuable: the name filter's law, NAME_MAX, plain text) and it is not another account's
+-- username (accounts.js wornNameOf); otherwise the account's, and the mint's answer says why (`nameWhy`).
+--
+-- THIS RETIRES A SENTENCE THREE MIGRATIONS WROTE AS LAW: 0009 ("a name over a head is the account's, signed into the
+-- token"), 0010 and 0013 ("a character's name is never shown to another player - the handle is the name the relay
+-- signs"). Since NAME-AS it is a choice, the account's by default. What those tables keep by value - a home's owner,
+-- a guild roster's member, a board note's author, a letter's sender - is still the account's name: an account's
+-- records, which a letter, an invitation and a commission address by username.
+ALTER TABLE players ADD COLUMN name_as TEXT;

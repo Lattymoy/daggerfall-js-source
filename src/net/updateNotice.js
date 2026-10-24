@@ -64,15 +64,20 @@
 // Not a DFU member: Daggerfall Unity is not deployed to anybody.
 // Ledger A row (ONLINE).
 import { relayVersionOf } from './wire.js';
+import { t } from '../systems/textManager.js';   // L10N4: the two notices in the player's language
 
 /** What a relay restart says. Deliberately about the RELAY and not the
  *  game: nothing the player has is lost, and a notice that sounds like
  *  it might be is worse than no notice. */
 export const RELAY_RESTART_TEXT = 'The server was updated and restarted. Players nearby and chat will come back on their own in a moment.';
+/** L10N4: RELAY_RESTART_TEXT as the player reads it, read when it is said. */
+export const relayRestartText = () => t('net.update.relayRestart', RELAY_RESTART_TEXT);
 /** What a new client build says. It does NOT reload for them - a reload
  *  mid-dungeon costs whatever is not saved, and that is the player's
  *  call to make, not ours. It says what to do first. */
 export const BUILD_UPDATE_TEXT = 'A new version of the game has been released. Save your game, then reload the page to pick it up.';
+/** L10N4: BUILD_UPDATE_TEXT as the player reads it. */
+export const buildUpdateText = () => t('net.update.build', BUILD_UPDATE_TEXT);
 
 /** The most deploy names the page remembers, and the least time between
  *  two restart notices (AUDIT-SRVN F2/F3).

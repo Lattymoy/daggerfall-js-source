@@ -5,16 +5,16 @@
     "old": "  && !goodOfTemplate(item.templateIndex)\n",
     "new": "",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B16-words",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "r.sells > 0 ? `buy at ${g(r.sell)} a ${r.unit} (${r.sells} left today)` : r.exotic ? 'not sold here' : 'none to buy today'",
     "new": "r.sells > 0 ? `buy at ${g(r.sell)} a ${r.unit} (${r.sells} left today)` : 'none to buy today'",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -23,8 +23,8 @@
     "old": "text: r?.exotic ? `${r.name} is not sold here.` : `The exchange sells",
     "new": "text: `The exchange sells",
     "tests": [
-      "test/auditcaptsea.test.js",
-      "test/capttrade.test.js"
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": ".filter((r) => others || !r.exotic || r.have > 0);",
     "new": ";",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": ".filter((r) => others || !r.exotic || r.have > 0);",
     "new": ".filter((r) => others || !r.exotic);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -51,34 +51,34 @@
     "old": "    etherGoods: () => etherOut,",
     "new": "    etherGoods: () => true,",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B16-exotic",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "sell: p.sell, buy: p.buy, exotic,",
-    "new": "sell: p.sell, buy: p.buy, exotic: false,",
+    "old": "buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k) * pay))), exotic,",
+    "new": "buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k) * pay))), exotic: false,",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B3-quay-flag",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "  function openYard(boat, { quay = false } = {}) { const m = yardModel(boat); m.atQuay = !!quay;",
     "new": "  function openYard(boat, { quay = false } = {}) { const m = yardModel(boat); m.atQuay = true;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B3-quay-door",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "return yardHere(boat) && openYard(boat, { quay: true });",
     "new": "return yardHere(boat) && openYard(boat);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "    if (model.atQuay) model.office = () => {",
     "new": "    model.office = () => {",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -96,34 +96,34 @@
     "old": "    if (model.atQuay) model.exchange = () => harbourOffice.exchange(",
     "new": "    model.exchange = () => harbourOffice.exchange(",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B4-mark",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    siteStood.set(e.bounty, 'ended');\n",
     "new": "",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B4-event",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    deps.captain?.event?.({ type: 'lost', bounty: e.bounty });",
     "new": "    void 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B4-restood",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (was === 'ended' || (was && sea.has(was))) continue;",
     "new": "        if (was && sea.has(was)) continue;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "ev.type === 'end' ? 'done' : ev.type === 'lost' ? 'void' : null;",
     "new": "ev.type === 'end' ? 'done' : null;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -141,17 +141,17 @@
     "old": "else if (r === 'void') { contracts = contracts.filter((x) => x !== c); voided.push(c); }",
     "new": "else if (r === 'void') { voided.push(c); }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B4-mine-not",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (e.owner || !e.bounty || e.charged?.has('sink') || e.charged?.has('board')) return;",
     "new": "    if (e.owner || !e.bounty) return;",
     "tests": [
-      "test/auditcaptsea.test.js",
-      "test/captboard.test.js"
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/captboard.test.js"
     ],
     "equivalent": true,
     "why": "a quarry of mine is charged her end as she strikes (chargePlayer's sink or board, the bounty done and off the list then) - long before she is sunk and dropped; a 'lost' word after it finds no contract to void. The arm keeps the word honest, the ledger needs it not"
@@ -159,11 +159,11 @@
   {
     "name": "ACS-B4-said",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    for (const c of r.voided ?? []) deps.mid?.(`Bounty void - ${c.title}. She went down by another hand.`, 5);",
+    "old": "    for (const c of r.voided ?? []) deps.mid?.(c.kind === 'delivery' ? cargoVoidWords(c) : `Bounty void - ${c.title}. Someone else sank it.`, 5);",
     "new": "    void r;",
     "tests": [
-      "test/auditcaptsea.test.js",
-      "test/captboard.test.js"
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -172,7 +172,7 @@
     "old": "export const CHART_PORT_TRIES = 32;",
     "new": "export const CHART_PORT_TRIES = 1;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -181,7 +181,7 @@
     "old": "    if (!site) continue;\n",
     "new": "    if (!site) return null;\n",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -190,16 +190,16 @@
     "old": "const d = want - i >= band.near ? want - i : want + (i - (want - band.near));",
     "new": "const d = want - i;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B8-raised",
     "file": "src/scenes/harbourOffice.js",
-    "old": "if (L.wasRaised?.(site.id)) return { ok: true, text: `This cache was raised long since",
-    "new": "if (false) return { ok: true, text: `This cache was raised long since",
+    "old": "if (L.wasRaised?.(site.id)) return { ok: true, text: `This cache was raised long ago",
+    "new": "if (false) return { ok: true, text: `This cache was raised long ago",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -208,34 +208,35 @@
     "old": "      raised = [...raised.filter((x) => x !== id), id].slice(-CHARTS_RAISED_KEEP);",
     "new": "      void raised;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B10-sea-at",
     "file": "src/scenes/world.js",
-    "old": "    seaAt: (x, y) => (tamrielLand || (x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT)) && seaPixel(x, y),",
-    "new": "    seaAt: (x, y) => seaPixel(x, y),",
+    "old": "    if (!(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT)) return tamrielLand && seaPixel(x, y);",
+    "new": "    if (!(x >= 0 && y >= 0 && x < MAP_WIDTH && y < MAP_HEIGHT)) return seaPixel(x, y);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/fb1014_inlandports.test.js"
     ]
   },
   {
     "name": "ACS-B9-cache-force",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "deps.board?.giveItems?.(items, boat ?? null, { force: true })",
     "new": "deps.board?.giveItems?.(items, boat ?? null)",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B9-chart-force",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "deps.board?.giveItems?.([chart], boatInPlay() ?? null, { force: true });",
     "new": "deps.board?.giveItems?.([chart], boatInPlay() ?? null);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -244,16 +245,16 @@
     "old": "    const k = Math.min(asked(n), r.sells, Math.floor((deps.gold?.() ?? 0) / r.sell), fit);",
     "new": "    const k = Math.min(asked(n), r.sells, Math.floor((deps.gold?.() ?? 0) / r.sell));",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B11-room-refusal",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    if (fit <= 0) return { ok: false, text: 'She can carry no more - laden deeper, she would lie dead in the water.' };",
+    "old": "    if (fit <= 0) return { ok: false, text: 'The ship can\\'t carry any more.' };",
     "new": "    void fit;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -262,7 +263,7 @@
     "old": "Math.max(0, Math.floor((room.stops - room.load - 1e-6) / Math.max(1e-6, kg)))",
     "new": "Math.max(0, Math.ceil((room.stops - room.load) / Math.max(1e-6, kg)))",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -271,44 +272,45 @@
     "old": "room: rm && Number.isFinite(rm.stops) && Number.isFinite(rm.load) ? Math.max(0, Math.floor(rm.stops - rm.load)) : null,",
     "new": "room: null,",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B11-lede",
-    "file": "src/ui/navalYardWindow.js",
-    "old": "const room = x.room == null ? '' : x.room > 0 ? ` - room for ${x.room} kg more before she lies dead in the water` : ' - she can carry no more';",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "const room = x.room == null ? '' : x.room > 0 ? ` (room for ${x.room} kg more)` : ' (the ship can\\'t carry any more)';",
     "new": "const room = '';",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B11-csa-room",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      return { load, slows: threshold, stops: 2 * threshold };",
     "new": "      return { load, slows: threshold, stops: threshold };",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B11-world-room",
     "file": "src/scenes/world.js",
-    "old": "cargo: model.cargo?.() ?? null, room: () => model.room?.() ?? null });",
-    "new": "cargo: model.cargo?.() ?? null });",
+    "old": "    if (model.atQuay) model.exchange = () => harbourOffice.exchange(model);",
+    "new": "    if (model.atQuay) model.exchange = () => harbourOffice.exchange({ uid: model.uid ?? null, cargo: model.cargo?.() ?? null });",
+    "note": "Re-aimed by content (CREW-TRADE): the exchange's tab is handed the yard's model itself, her room read off it - the mutant hands it a hold without her room, as before.",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B11-yard-room",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "room: () => csa()?.cargoRoom?.(boat) ?? null",
     "new": "room: () => null",
     "tests": [
-      "test/auditcaptsea.test.js",
-      "test/capttrade.test.js"
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -317,7 +319,7 @@
     "old": "  const last = Math.max(1, hours);",
     "new": "  const last = hours;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -326,43 +328,43 @@
     "old": "`${last} ${last === 1 ? 'hour' : 'hours'} left`",
     "new": "`${last} hours left`",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B9-cache-plunder",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (items.length) notePlunder(items);",
     "new": "void items;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-C1-one-set",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const names = ashoreNames(boat);   // AUDIT CAPTAIN'S SEA C1: the one set",
     "new": "      const names = boat?.uid ? companions.awayOf(boat.uid) : NO_HANDS_AWAY;   // AUDIT CAPTAIN'S SEA C1: the one set",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-C1-worth-set",
-    "file": "src/scenes/navalHost.js",
-    "old": "s.worth = b.crewed ? crewWorth(c.hands, ashoreNames(b)) : NO_WORTH;",
-    "new": "s.worth = b.crewed ? crewWorth(c.hands, b.uid ? companions.awayOf(b.uid) : null) : NO_WORTH;",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "s.worth = captainWorth(b.crewed ? crewWorth(c.hands, ashoreNames(b)) : NO_WORTH, deps.captain?.stats?.());",
+    "new": "s.worth = captainWorth(b.crewed ? crewWorth(c.hands, b.uid ? companions.awayOf(b.uid) : null) : NO_WORTH, deps.captain?.stats?.());",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-C1-sailing-gate",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "companions.party.length && !sailing() ? companions.awayOf(boat.uid) : NO_HANDS_AWAY);",
     "new": "companions.party.length ? companions.awayOf(boat.uid) : NO_HANDS_AWAY);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -371,7 +373,7 @@
     "old": "prior: h.prior | 0, ashore: !!away?.has(i) }));",
     "new": "prior: h.prior | 0, ashore: false }));",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -380,7 +382,7 @@
     "old": "const posts = postsOf(s.hands, new Set(s.hands.filter((h) => h.ashore).map((h) => h.name)));",
     "new": "const posts = postsOf(s.hands, new Set());",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -389,16 +391,16 @@
     "old": "${h.ashore ? ' - ashore with you' : ''}",
     "new": "",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-C3-muster-service",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const service = deps.captain?.seasonedHires?.() ? SEASONED_HIRE : 0;",
     "new": "    const service = 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -407,25 +409,25 @@
     "old": "seasonedHires: () => { const port = navalPortHere(); return !!port && harbourOffice.perksAt(port.crown).seasoned; },",
     "new": "seasonedHires: () => harbourOffice.perksHere().seasoned,",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-C5-mens-cap",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": ", base + handsBonusOf(st.crew.morale, st.crew.order) + mate, Math.max(base + 1, men)));",
     "new": ", base + handsBonusOf(st.crew.morale, st.crew.order) + mate));",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-C5-men",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const men = Math.floor((st.damage.crew ?? 0) / CREW_PER_HAND);",
     "new": "    const men = Infinity;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -434,7 +436,7 @@
     "old": "for (const x of hands) held.set(x.role, (held.get(x.role) ?? 0) + 1);",
     "new": "void hands;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -443,7 +445,7 @@
     "old": "((held.get(r) ?? 0) < (held.get(best) ?? 0) ? r : best)",
     "new": "((held.get(r) ?? 0) <= (held.get(best) ?? 0) ? r : best)",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -452,7 +454,7 @@
     "old": "fights: 0, boardings: 0, prior: start };",
     "new": "fights: start, boardings: 0, prior: 0 };",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -461,9 +463,9 @@
     "old": "        prior: clamp(h.prior | 0, 0, VETERANCY[VETERANCY.length - 1].at),",
     "new": "        prior: 0,",
     "tests": [
-      "test/auditcaptsea.test.js",
-      "test/captcrew.test.js",
-      "test/shipcrew.test.js"
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/captcrew.test.js",
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -472,53 +474,53 @@
     "old": "seaT += dt / (Number(wear) > 1 ? Number(wear) : 1);",
     "new": "seaT += dt / Math.max(1, wear);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-C11-gunner",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "reloadScaleOf(st.crew.morale, st.crew.order) * st.worth.reload : 1) });",
     "new": "reloadScaleOf(st.crew.morale, st.crew.order) : 1) });",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-C11-carpenter",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "scale: b.crewed ? mendScaleOf(s.crew.morale) * (s.worth?.mend ?? 1) : 1 });",
     "new": "scale: b.crewed ? mendScaleOf(s.crew.morale) : 1 });",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-C11-carpenter-sea",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const scale = (b.crewed ? mendScaleOf(s.crew.morale) * (s.worth?.mend ?? 1) : 1)",
     "new": "const scale = (b.crewed ? mendScaleOf(s.crew.morale) : 1)",
     "tests": [
-      "test/auditcaptsea.test.js",
-      "test/captcrew.test.js"
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
     "name": "ACS-C11-cook",
-    "file": "src/scenes/navalHost.js",
-    "old": "atSea: !where().nearPort, wear: s.worth.wear });",
-    "new": "atSea: !where().nearPort, wear: 1 });",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "atSea: !inPortWaters(), wear: s.worth.wear });",
+    "new": "atSea: !inPortWaters(), wear: 1 });",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D1-floating",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (shots.floaters().some((x) => x.lot === SITE_LOT + site.id)) continue;",
     "new": "        void 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -527,62 +529,62 @@
     "old": "    if (!bare(isle.key)) L.gathered(isle.key, day());",
     "new": "    L.gathered(isle.key, day());",
     "tests": [
-      "test/auditcaptsea.test.js",
-      "test/ethercross.test.js"
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
     "name": "ACS-D2-alongside",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const c = site.kind === 'strand' ? alongsidePos(site) : sitePos(site, 0);",
     "new": "    const c = sitePos(site, 0);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D2-alongside-water",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (deps.isWater(q[0], q[2], 0)) return q;",
     "new": "      return q;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D2-casks-wet",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "pos: wet ? [x, deps.seaY(), z] : [c[0], deps.seaY(), c[2]], lot: SITE_LOT + site.id,",
     "new": "pos: [x, deps.seaY(), z], lot: SITE_LOT + site.id,",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D2-swim-words",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const how = swim ? 'You break open a cask in the water' : 'You haul a cask aboard';",
     "new": "    const how = 'You haul a cask aboard';",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D3-papers-crown",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const crownName = entry.ether ? null : crownOfShip(s);",
     "new": "    const crownName = crownOfShip(s);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D4-no-navy",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const faction = navy && !where().ether ? 'navy' : 'merchant';",
     "new": "const faction = navy ? 'navy' : 'merchant';",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -591,16 +593,16 @@
     "old": "    if (!l || !legendSails(L.legendDay(l.id), day())) return 0;",
     "new": "    if (!l) return 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D7-host-list",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "legends: [...sea.values()].filter((e) => e.legend && e.ship.damage.state !== SHIP_STATES.sunk).map((e) => e.legend),",
     "new": "legends: [],",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -609,7 +611,7 @@
     "old": " || (ctx.legends ?? []).length || (ctx.ships ?? []).some(",
     "new": " || (ctx.ships ?? []).some(",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -618,25 +620,25 @@
     "old": "    if (!want?.classId || ctx.nearPort || (ctx.legends",
     "new": "    if (!want?.classId || (ctx.legends",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D22-claim",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (rival) { if (!claimBeats(w.gen, owner, rival.gen, myId())) continue; retire(rival); }",
     "new": "if (rival) { retire(rival); }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D22-yield",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (rival) { if (!claimBeats(w.gen, owner, rival.gen, myId())) continue; retire(rival); }",
     "new": "if (rival) { if (!claimBeats(w.gen, owner, rival.gen, myId())) continue; }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -645,7 +647,7 @@
     "old": "    if (sh.deep) d.push(sh.n | 0);",
     "new": "    void sh;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -654,7 +656,7 @@
     "old": " if (c.deep) e.push(c.id >>> 0); }",
     "new": " }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -663,7 +665,7 @@
     "old": "  for (const sh of ships) if (deepShips.includes(sh.n)) sh.deep = true;",
     "new": "  void deepShips;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -672,7 +674,7 @@
     "old": "  for (const c of casks) if (c.lot !== SALVAGE_LOT && deepCasks.includes(c.id)) c.deep = true;",
     "new": "  void deepCasks;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -681,61 +683,61 @@
     "old": "  if (!Array.isArray(deepShips) || deepShips.length > NAVAL_WIRE_SHIPS || !deepShips.every((x) => int(x, 0, 0xffff))) return null;",
     "new": "  if (!Array.isArray(deepShips)) return null;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D8-host-word",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      deep: e.deep,   // AUDIT CAPTAIN'S SEA D8",
     "new": "      deep: false,   // AUDIT CAPTAIN'S SEA D8",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D8-host-casks",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "lot: f.lot, deep: !!f.deep }));",
     "new": "lot: f.lot }));",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D8-copy",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      e.deep = !!w.deep;   // AUDIT CAPTAIN'S SEA D8",
     "new": "      e.deep = false;   // AUDIT CAPTAIN'S SEA D8",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D8-cask-copy",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "else shots.dropFlotsam({ id, pos, lot: c.lot, from: c.from, owner, deep: !!c.deep });",
     "new": "else shots.dropFlotsam({ id, pos, lot: c.lot, from: c.from, owner });",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D8-claim",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "claims.set(e.id, { owner: e.owner, raw, lot: e.lot, from: e.from, deep: !!e.deep,",
     "new": "claims.set(e.id, { owner: e.owner, raw, lot: e.lot, from: e.from,",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D8-answer",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "pickFlotsam({ lot: c.lot, from: c.from, deep: c.deep, collector: c.collector, point: c.point });",
     "new": "pickFlotsam({ lot: c.lot, from: c.from, collector: c.collector, point: c.point });",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -744,7 +746,7 @@
     "old": "    const deep = !ctx.ether && !ctx.nearPort && !!ctx.deep;",
     "new": "    const deep = false;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -753,7 +755,7 @@
     "old": "(ctx.level ?? 1) + (deep ? DEEP_LEVEL : 0) + (ctx.ether?.band?.level ?? 0), r);",
     "new": "(ctx.level ?? 1) + (ctx.ether?.band?.level ?? 0), r);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -762,34 +764,34 @@
     "old": "const etherOf = ctx.ether ? { ether: ctx.ether.band.id } : deep ? { deep: true } : {};",
     "new": "const etherOf = ctx.ether ? { ether: ctx.ether.band.id } : {};",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D10-second-wave",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (again && legendOfClass(entry.ship.cls.id)?.trait === 'boarders' && !entry.boardedAgain",
     "new": "if (again && false && !entry.boardedAgain",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D10-once",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "?.trait === 'boarders' && !entry.boardedAgain && entry.ship.damage.state",
     "new": "?.trait === 'boarders' && entry.ship.damage.state",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D10-half",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        entry.ship.damage.apply({ hull: 0, sail: 0, crew: entry.ship.damage.crew / 2 }, clock);\n        endBoarding();",
     "new": "        endBoarding();",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -798,34 +800,34 @@
     "old": "reloadScale: () => (legendOfClass(cls.id)?.trait === 'gunnery' ? LEGEND_RELOAD_K : 1) })",
     "new": "reloadScale: () => 1 })",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D12-stander",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (legend && !heard) deps.mid?.(",
     "new": "    if (legend && !heard && !owner) deps.mid?.(",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D12-once",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (legend && !heard) deps.mid?.(",
     "new": "    if (legend) deps.mid?.(",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D13-veil",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "lit: showsLight(e) }) * veilOf(e)) continue;",
     "new": "lit: showsLight(e) })) continue;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -834,7 +836,7 @@
     "old": "export const LEGEND_STRONGBOXES = 2;",
     "new": "export const LEGEND_STRONGBOXES = 1;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -843,7 +845,7 @@
     "old": "export const strongboxesOf = (shipClass) => (shipClass?.legend ? LEGEND_STRONGBOXES : shipClass?.flagship ? 1 : 0);",
     "new": "export const strongboxesOf = (shipClass) => (shipClass?.flagship ? 1 : 0);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -852,7 +854,7 @@
     "old": "    const strongbox = i >= keys.length - boxes;",
     "new": "    const strongbox = i >= keys.length - 1;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -861,54 +863,54 @@
     "old": "  for (let i = Math.max(0, lots - strongboxesOf(shipClass)); i < lots; i++) out[i] = STRONGBOX_KEY;",
     "new": "  for (let i = Math.max(0, lots - 1); i < lots; i++) out[i] = STRONGBOX_KEY;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D17-dawn",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (e.legend && !night && !e.retiring && s.damage.state === SHIP_STATES.afloat",
     "new": "      if (false && !e.retiring && s.damage.state === SHIP_STATES.afloat",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D17-fight",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": " && s.mode !== 'engage' && s.mode !== 'board' && legendOfClass(s.cls.id)?.trait === 'night') retire(e);",
     "new": " && legendOfClass(s.cls.id)?.trait === 'night') retire(e);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ],
     "equivalent": true,
     "why": "a ship in a fight is never let fade (fadeStep: 'fired on as she faded' clears `retiring` while she engages or boards, the next frame), so the night legend's fight is held either way; the arm says her law in its own words"
   },
   {
     "name": "ACS-D17-night-alone",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "s.mode !== 'board' && legendOfClass(s.cls.id)?.trait === 'night') retire(e);",
     "new": "s.mode !== 'board') retire(e);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D19-word",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "export const etherWatersWords = (e) => (e.veil ? 'The Veil' :",
     "new": "export const etherWatersWords = (e) => (false ? 'The Veil' :",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D19-host",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "depth: w.ether.depth, veil: !!w.ether.veil } : null,",
     "new": "depth: w.ether.depth, veil: false } : null,",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -917,8 +919,8 @@
     "old": "    return { band: band.id, bandName: band.name, depth, veil: inVeil(px, py) };",
     "new": "    return { band: band.id, bandName: band.name, depth, veil: false };",
     "tests": [
-      "test/auditcaptsea.test.js",
-      "test/ethercross.test.js"
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/ethercross.test.js"
     ]
   },
   {
@@ -927,7 +929,7 @@
     "old": "const twoWords = (firsts, lasts) => Object.freeze(firsts.flatMap((a) => lasts.map((b) => `${a} ${b}`)));",
     "new": "const twoWords = (firsts, lasts) => Object.freeze(firsts.map((a, i) => `${a} ${lasts[i]}`));",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -936,7 +938,7 @@
     "old": "export const ETHER_MARGIN = 64;",
     "new": "export const ETHER_MARGIN = 63;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -945,7 +947,7 @@
     "old": "  return pageParam('ether', search) !== 'off';",
     "new": "  return true;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -954,7 +956,7 @@
     "old": "  return etherSeaOn(search) && (isOnlinePage(search) || isEnhanced(search));",
     "new": "  return etherSeaOn(search);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -963,7 +965,7 @@
     "old": "const etherOut = etherCrossOutOn();",
     "new": "const etherOut = etherSea;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -972,7 +974,7 @@
     "old": "    if (StreamingWorldState.streams(px, py)) return null;",
     "new": "    if (true) return null;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -981,7 +983,7 @@
     "old": "    _unstreamedLanding = inEther(px, py) ? 'ether' : 'edge';",
     "new": "    _unstreamedLanding = 'edge';",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -990,7 +992,7 @@
     "old": "if (unstreamed) { px = unstreamed.px; py = unstreamed.py; localPos = null; resolveArrival = null; }",
     "new": "if (unstreamed) { px = unstreamed.px; py = unstreamed.py; }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -999,7 +1001,7 @@
     "old": " && Number.isFinite(from.py) && !inEtherLaw(from.px, from.py) ?",
     "new": " && Number.isFinite(from.py) ?",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1008,7 +1010,7 @@
     "old": "  if (inEtherLaw(ix, iy) || inEtherLaw(ix + 1, iy + 1)) {",
     "new": "  if (false) {",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1017,7 +1019,7 @@
     "old": "    l = LAND_OF_CLIMATE[etherClimateAt(x, y)] ?? 0;",
     "new": "    l = 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1026,7 +1028,7 @@
     "old": "climatePast: tamrielLand ? (x, y) => maps.getClimateIndex(x, y)",
     "new": "climatePast: false ? (x, y) => maps.getClimateIndex(x, y)",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1035,7 +1037,7 @@
     "old": "...(inEtherLaw(x, y) ? [x, y] : [Math.max(0, Math.min(MAP_WIDTH - 1, x)), Math.max(0, Math.min(MAP_HEIGHT - 1, y))])",
     "new": "...[x, y]",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1044,7 +1046,7 @@
     "old": "!woods.isTamrielGround && !woods.etherLaw?.(px, py) && (px < 0",
     "new": "!woods.isTamrielGround && (px < 0",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1053,7 +1055,7 @@
     "old": " || !!woods.isTamrielGround || !!woods.etherLaw?.(px.x, px.y);",
     "new": " || !!woods.isTamrielGround;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1062,7 +1064,7 @@
     "old": "  ground.etherLaw = inEtherLaw;",
     "new": "  ground.etherLaw = null;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1071,7 +1073,7 @@
     "old": "pastOwn: tamrielLand ? null : inEtherLaw,",
     "new": "pastOwn: null,",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1080,7 +1082,7 @@
     "old": "  if (relief && byteAtPast) {",
     "new": "  if (false) {",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1089,7 +1091,7 @@
     "old": "own(x, y) ? cliffFadeAt(gridByte, x, y) : cliffFadeAt(byteAt, clampX(x), clampY(y))",
     "new": "false ? cliffFadeAt(gridByte, x, y) : cliffFadeAt(byteAt, clampX(x), clampY(y))",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1098,16 +1100,16 @@
     "old": "return !(etherSea && inEther(px.x, px.y)) && politicClaimed(",
     "new": "return politicClaimed(",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-G8-wod-pick",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "if (wod && onTheBay(px, py) && await wodOpened) {",
     "new": "if (wod && await wodOpened) {",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1116,7 +1118,7 @@
     "old": "of fifty places charted, two share a name about one time in twenty",
     "new": "of fifty places charted, no two share a name",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1125,7 +1127,7 @@
     "old": "Past the margin the law answers nothing: the sea is the box's, and past it nothing streams.",
     "new": "Past the margin the law answers the Bay.",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1134,7 +1136,7 @@
     "old": "  if (!dx && !dy) return null;\n",
     "new": "",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1143,7 +1145,7 @@
     "old": "  if (far < 0.5) return",
     "new": "  if (false) return",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1152,7 +1154,7 @@
     "old": "${leagues === 1 ? 'league' : 'leagues'}",
     "new": "leagues",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1161,7 +1163,7 @@
     "old": "renderer.setMoonlight(moonNow && etherAirW ? { scale: moonNow.scale, dir: moonNow.dir, color: etherLight(moonNow.color, etherAirW, ETHER_KEY_TINT) } : moonNow);",
     "new": "renderer.setMoonlight(moonNow);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1170,7 +1172,7 @@
     "old": "  port: Object.freeze({ r: Object.freeze([0.9, 1.1]),",
     "new": "  port: Object.freeze({ r: Object.freeze([1.6, 2.4]),",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1179,7 +1181,7 @@
     "old": "export const landCentre = (kind, px, py) => (kind === 'port' ? [px - 0.5, py - 0.5] : [px, py]);",
     "new": "export const landCentre = (kind, px, py) => [px, py];",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1188,7 +1190,7 @@
     "old": "  const radius = haven ? 1 : lerp(",
     "new": "  const radius = haven ? 2.4 : lerp(",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1197,7 +1199,7 @@
     "old": "export const ETHER_HARBOUR_REACH = 900;",
     "new": "export const ETHER_HARBOUR_REACH = 420;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1206,7 +1208,7 @@
     "old": "      if (Math.hypot(dx, dz) > reach) continue;",
     "new": "      if (Math.hypot(dx, dz) > HARBOUR_REACH) continue;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1215,7 +1217,7 @@
     "old": "name: isle.name, reach: ETHER_HARBOUR_REACH };",
     "new": "name: isle.name };",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1224,16 +1226,16 @@
     "old": "    const reach = t.reach ?? HARBOUR_REACH;",
     "new": "    const reach = HARBOUR_REACH;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-H1-book",
     "file": "src/systems/naval/harbourBook.js",
-    "old": "...(near.reach ? { reach: near.reach } : {})",
-    "new": "...{}",
+    "old": "const own = near.reach ?? HARBOUR_REACH;",
+    "new": "const own = HARBOUR_REACH;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1242,7 +1244,7 @@
     "old": "(type(l) === LOCATION_TYPES.TownHamlet || type(l) === LOCATION_TYPES.TownVillage) && within(l, TOWN_BLOCKS.haven)",
     "new": "(type(l) === LOCATION_TYPES.TownCity || type(l) === LOCATION_TYPES.TownVillage) && within(l, TOWN_BLOCKS.haven)",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ],
     "why": "killed by the P1 pin against the player's own data (ARENA2_PATH): MAPS.BSA's own rows"
   },
@@ -1252,7 +1254,7 @@
     "old": "haven: Object.freeze([6, 12])",
     "new": "haven: Object.freeze([6, 16])",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1261,7 +1263,7 @@
     "old": "haven: Object.freeze([6, 12])",
     "new": "haven: Object.freeze([4, 12])",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1270,7 +1272,7 @@
     "old": "&& !l.spawned && !l.ether && !l.arena   // AUDIT CAPTAIN'S SEA P3",
     "new": "&& !l.spawned && !l.arena   // AUDIT CAPTAIN'S SEA P3",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1279,7 +1281,7 @@
     "old": "...(template.exterior?.recordElement ? { recordElement: { ...template.exterior.recordElement, header: { ...template.exterior.recordElement.header, locationId: mapId } } } : {}),",
     "new": "",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1288,7 +1290,7 @@
     "old": "locationId: mapId, mapId, portTownAndUnknown",
     "new": "locationId: mapId, portTownAndUnknown",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1297,8 +1299,8 @@
     "old": "portTownAndUnknown: port ? 1 : 0 },",
     "new": "...(port ? { portTownAndUnknown: 1 } : {}) },",
     "tests": [
-      "test/etherplaces.test.js",
-      "test/auditcaptsea.test.js"
+      "test/world/etherplaces.test.js",
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1307,7 +1309,7 @@
     "old": "portTown: (loc.ether ? loc.etherKind === 'port' :",
     "new": "portTown: (false ? loc.etherKind === 'port' :",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1316,16 +1318,17 @@
     "old": "      else if (etherSea && inEther(px.x, px.y)) {\n        // AUDIT CAPTAIN'S SEA P4",
     "new": "      else if (false) {\n        // AUDIT CAPTAIN'S SEA P4",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-P4-rise-port",
-    "file": "src/scenes/world.js",
-    "old": "const etherRisePort = (x, y) => islesNear(x, y, ETHER_RISE_PX).find((i) => i.kind === 'port') ?? veilhaven();",
-    "new": "const etherRisePort = (x, y) => veilhaven();",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "    const port = islesNear(x, y, Math.min(r, far + 1)).find((i) => i.kind === 'port' && Math.hypot(i.px - x, i.py - y) <= r);\n    if (port) return port;",
+    "new": "    const port = null;\n    if (port) return port;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/sea/auditsea.test.js"
     ]
   },
   {
@@ -1334,7 +1337,7 @@
     "old": "if (etherSea && inEther(p.x, p.y)) { console.warn('[infection] past the Veil",
     "new": "if (false) { console.warn('[infection] past the Veil",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1343,7 +1346,7 @@
     "old": "    if (to ? here === inEther(to.x, to.y) : !here) return false;",
     "new": "    if (to ? true : !here) return false;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1352,7 +1355,7 @@
     "old": "    if (to ? here === inEther(to.x, to.y) : !here) return false;",
     "new": "    if (to ? here === inEther(to.x, to.y) : true) return false;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1361,7 +1364,7 @@
     "old": "wildTeleportRefused(plan.anchor?.pixel ?? null) || veilRefused(plan.anchor?.pixel ?? null)",
     "new": "wildTeleportRefused(plan.anchor?.pixel ?? null)",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1370,7 +1373,7 @@
     "old": "wildTeleportRefused(pick.pixel) || veilRefused(pick.pixel)",
     "new": "wildTeleportRefused(pick.pixel)",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1379,7 +1382,7 @@
     "old": "wildTeleportRefused(pick.pixel ?? null) || veilRefused(pick.pixel ?? null)",
     "new": "wildTeleportRefused(pick.pixel ?? null)",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1388,7 +1391,7 @@
     "old": "    if (veilRefused()) return null;",
     "new": "    void 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1397,7 +1400,7 @@
     "old": "    if (veilRefused()) return false;",
     "new": "    void 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1406,7 +1409,7 @@
     "old": "    if (veilRefused(pick.pixel)) return;",
     "new": "    void 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1415,7 +1418,7 @@
     "old": "    ?? [...locationIndex.values()].find((l) => (l?.ether || l?.arena || l?.country || l?.capital) && l.name === locationName && l.regionName === regionName) ?? null;",
     "new": "    ?? null;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1424,7 +1427,7 @@
     "old": "regionName: REGION_NAMES[ETHER_REGION] ?? ETHER_REGION_NAME,",
     "new": "regionName: ETHER_REGION_NAME,",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1433,16 +1436,16 @@
     "old": "const houseOwnedAt = (b, key) => !isEtherPlaceId(homeTownOf(b)) && !isArenaPlaceId(",
     "new": "const houseOwnedAt = (b, key) => !isArenaPlaceId(",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-P9-sale",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (isEtherPlaceId(dir.mapId)) return [];",
-    "new": "    void 0;",
+    "old": "if (isEtherPlaceId(dir.mapId) || isArenaPlaceId(dir.mapId)",
+    "new": "if (false || isArenaPlaceId(dir.mapId)",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1451,25 +1454,25 @@
     "old": "const apart = !!deps.veilApart?.(rec, at.boat ?? null);",
     "new": "const apart = false;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-P5-summon",
     "file": "src/scenes/fleetHost.js",
-    "old": "      : apart ? 'She lies on the far side of the Veil - sail her across yourself.'\n",
+    "old": "      : apart ? 'This ship is on the other side of the Veil. Sail it across yourself.'\n",
     "new": "",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-P5-away",
     "file": "src/scenes/fleetHost.js",
-    "old": "      : apart ? 'She lies on the far side of the Veil - no crew takes her across alone.'\n",
+    "old": "      : apart ? 'This ship is on the other side of the Veil. The crew won\\'t take it across without you.'\n",
     "new": "",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1478,7 +1481,7 @@
     "old": "setShipPort(uid, near ? { name: near.name, ether: !!near.ether } : null);",
     "new": "setShipPort(uid, near ? { name: near.name } : null);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1487,7 +1490,7 @@
     "old": "r.port = port ? { name: String(port.name ?? ''), ...(port.ether ? { ether: true } : {}) } : null; }",
     "new": "r.port = port ? { name: String(port.name ?? '') } : null; }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1496,7 +1499,7 @@
     "old": "...(s.port.ether === true ? { ether: true } : {})",
     "new": "...{}",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1505,7 +1508,7 @@
     "old": "return etherSea && inEther(p.x, p.y) !== hers; },",
     "new": "return false; },",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1514,7 +1517,7 @@
     "old": "    if (etherSea && inEther(here.x, here.y)) {\n      const isle = etherRisePort(here.x, here.y);",
     "new": "    if (false) {\n      const isle = etherRisePort(here.x, here.y);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1523,25 +1526,25 @@
     "old": "way: COMPASS_WAYS[((Math.round(turn) % 8) + 8) % 8], ether: true };",
     "new": "way: COMPASS_WAYS[((Math.round(turn) % 8) + 8) % 8] };",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-H9-cask-plunder",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "crewEvent(boat, 'plunder'); notePlunder(items); }   // SHIP-CREW: a hold filled; CAPT-LOG: the plunder hauled",
     "new": "crewEvent(boat, 'plunder'); }   // SHIP-CREW: a hold filled; CAPT-LOG: the plunder hauled",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-H9-richest",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    deps.captain?.prize?.(entry.ship.names?.name ?? classLine(entry.ship.cls, entry.ship.names?.crown), deps.worth?.(entry.prize.hold) ?? 0);",
     "new": "    void 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1550,7 +1553,7 @@
     "old": "    ledger: captainLedger,\n    now: () => Math.floor(playerTicker.ownMinutes),",
     "new": "    ledger: captainLedger,\n    now: () => Math.floor(worldMinutes()),",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1559,7 +1562,7 @@
     "old": "    yardDiscount: () => harbourOffice.perksHere().yard,",
     "new": "    yardDiscount: () => 0,",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1568,7 +1571,7 @@
     "old": "    reliefSure: (crown) => harbourOffice.perksAt(crown).relief,",
     "new": "    reliefSure: () => false,",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1577,7 +1580,7 @@
     "old": "    sitePoint: (px, py, seed) => navalSitePoint(px, py, seed),",
     "new": "    sitePoint: () => null,",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1586,34 +1589,34 @@
     "old": "if (inEther(p.x, p.y)) { etherHost.sight(p.x, p.y); captainSay(); }",
     "new": "if (false) { etherHost.sight(p.x, p.y); captainSay(); }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-L1-repel-mark",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const paid = (act === 'sink' || act === 'board') && entry.charged.has('repel');",
     "new": "    const paid = false;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-L1-law-skip",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "for (const r of questPays || paid ? [] : law.rewards) {",
     "new": "for (const r of questPays ? [] : law.rewards) {",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-L1-deed-crown",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "cap.deed?.(act, s.cls, paid ? { crown: null } : { crown, marque: under });",
     "new": "cap.deed?.(act, s.cls, { crown, marque: under });",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1622,7 +1625,7 @@
     "old": "      if (!Object.hasOwn(dealt.at, port)) {\n        const ports = Object.keys(dealt.at);",
     "new": "      if (!Object.hasOwn(dealt.at, port)) {\n        for (const k of Object.keys(dealt.at)) delete dealt.at[k];\n        const ports = Object.keys(dealt.at);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1631,7 +1634,7 @@
     "old": "      if (!(dealt && dealt.day === day)) dealt = { day, at: Object.create(null) };",
     "new": "      if (!dealt) dealt = { day, at: Object.create(null) };",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1640,7 +1643,7 @@
     "old": "        if (ports.length >= DEALT_PORTS_MAX) delete dealt.at[ports[0]];",
     "new": "        void ports;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1649,7 +1652,7 @@
     "old": "} else if (d && typeof d.port === 'string' && Number.isFinite(d.day)) dealt =",
     "new": "} else if (false) dealt =",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1658,7 +1661,7 @@
     "old": "      const once = (list) => list.filter((c, i) => list.findIndex((x) => x.id === c.id) === i);",
     "new": "      const once = (list) => list;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1667,7 +1670,7 @@
     "old": "pay: Math.max(0, Math.min(BOARD_PAY_MAX, Math.round(c.pay)))",
     "new": "pay: Math.round(c.pay)",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1676,7 +1679,7 @@
     "old": "  if (range && !(Number.isInteger(c.need) && c.need >= range[0] && c.need <= range[1])) return null;",
     "new": "  void range;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1685,7 +1688,7 @@
     "old": "log.sailed = Number.isFinite(l.sailed) && l.sailed > 0 ? Math.min(SAILED_MAX_M, l.sailed) : 0;",
     "new": "log.sailed = Number.isFinite(l.sailed) && l.sailed > 0 ? l.sailed : 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1694,7 +1697,7 @@
     "old": "until: Math.floor(Math.min(MARQUE_UNTIL_MAX, r.marque.until)) };",
     "new": "until: Math.floor(r.marque.until) };",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1703,7 +1706,7 @@
     "old": "    if (typeof crown !== 'string' || !Object.hasOwn(standing, crown) || !Number.isFinite(n) || n === 0) return null;",
     "new": "    if (typeof crown !== 'string' || !(crown in standing) || !Number.isFinite(n) || n === 0) return null;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1712,7 +1715,7 @@
     "old": "const standingOf = (crown) => (typeof crown === 'string' && Object.hasOwn(standing, crown) ? standing[crown] : 0);",
     "new": "const standingOf = (crown) => (typeof crown === 'string' && crown in standing ? standing[crown] : 0);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1721,7 +1724,7 @@
     "old": "${(o[k] === 1 ? TRADE_WORD : TRADE_WORDS)[k]}",
     "new": "${TRADE_WORDS[k]}",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1730,7 +1733,7 @@
     "old": "${(log.contracts[k] === 1 ? CONTRACT_WORD : CONTRACT_WORDS)[k]}",
     "new": "${k}",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1739,7 +1742,7 @@
     "old": "      if (map && typeof map === 'object') for (const k of Object.keys(map)) if (Number.isFinite(map[k])) map[k] += days;",
     "new": "      void map;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1748,7 +1751,7 @@
     "old": "    if (cap?.dealt && typeof cap.dealt === 'object' && Number.isFinite(cap.dealt.day)) cap.dealt.day += days;",
     "new": "    void cap;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1757,7 +1760,7 @@
     "old": "export const CAPTAIN_RECORD_VENDOR = 'Captain';",
     "new": "export const CAPTAIN_RECORD_VENDOR = 'captain';",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1766,7 +1769,7 @@
     "old": "const floor = Number.isFinite(rank.at) ? rank.at : Math.min(0, standing);",
     "new": "const floor = Number.isFinite(rank.at) ? rank.at : 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1775,34 +1778,34 @@
     "old": "label: `${nextRankOf(standing)?.wanting ?? 0} to ${next.title}` }",
     "new": "label: `${next.at - floor} to ${next.title}` }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-L10-office-words",
-    "file": "src/ui/navalYardWindow.js",
-    "old": "harbourmaster grants you no favours while your notoriety in its waters stands so high.`",
-    "new": "navy hunts you: its harbourmaster grants no favours until your notoriety falls.`",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "harbormaster. Your notoriety in these waters is too high for any favors.`",
+    "new": "navy hunts you: its harbormaster grants no favors until your notoriety falls.`",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-L10-page-words",
     "file": "src/ui/captainPage.js",
-    "old": "'Its harbours keep no favours for you while your notoriety in its waters stands so high.'",
+    "old": "'Your notoriety in these waters is too high for any favors in its harbors.'",
     "new": "'Its navy hunts you - its harbours keep no favours for you.'",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B14-an",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "`${/^[aeiou]/i.test(o.rank) ? 'an' : 'a'} ${o.rank}`",
     "new": "`a ${o.rank}`",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1811,16 +1814,16 @@
     "old": "if (p.yard) out.push(`the shipwright's repairs and powder ${pc(p.yard)} off`);",
     "new": "if (p.yard) out.push(`the shipwright ${pc(p.yard)} off`);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-B15-whole-gold",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "const c = Math.ceil(n * r.price - 1e-9); paid += c; purse -= c; }",
     "new": "const c = n * r.price; paid += c; purse -= c; }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1829,7 +1832,7 @@
     "old": "if (Number.isFinite(ev.seed)) { const seed = ev.seed >>> 0; if ((c.seen ??= []).includes(seed)) return null; c.seen.push(seed); }",
     "new": "void 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1838,17 +1841,17 @@
     "old": "  if (c.kind === 'survey') out.seen = [...new Set(",
     "new": "  if (false) out.seen = [...new Set(",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-L6-seed-said",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "deps.captain?.event?.({ type: 'study', crown: watersCrown(), seed: e.ship.seed });",
     "new": "deps.captain?.event?.({ type: 'study', crown: watersCrown() });",
     "tests": [
-      "test/auditcaptsea.test.js",
-      "test/captboard.test.js"
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/captboard.test.js"
     ]
   },
   {
@@ -1857,7 +1860,7 @@
     "old": "        if (one && (r || (c.done | 0) !== was)) break;",
     "new": "        void was;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1866,7 +1869,7 @@
     "old": "const order = one ? [...contracts].sort((a, b) => own(b) - own(a) || a.until - b.until) : [...contracts];",
     "new": "const order = [...contracts];",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1875,7 +1878,7 @@
     "old": "[...contracts].sort((a, b) => own(b) - own(a) || a.until - b.until)",
     "new": "[...contracts].sort((a, b) => a.until - b.until)",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1884,7 +1887,7 @@
     "old": "  const captainSayFlush = () => { if (_rankLines.length && _wildMidText.timer === -1) setMidScreenText(_rankLines.shift(), 4); };",
     "new": "  const captainSayFlush = () => { if (_rankLines.length) setMidScreenText(_rankLines.shift(), 4); };",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1893,7 +1896,7 @@
     "old": "    if (!gamePaused() && !_loading) captainSayFlush();   // AUDIT CAPTAIN'S SEA L9",
     "new": "    void 0;   // AUDIT CAPTAIN'S SEA L9",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1902,36 +1905,36 @@
     "old": "restoreSaveData: (r) => { _rankLines.length = 0; captainLedger.restoreSaveData(r); } });",
     "new": "restoreSaveData: (r) => { captainLedger.restoreSaveData(r); } });",
     "tests": [
-      "test/auditcaptsea.test.js",
-      "test/captlog.test.js"
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
     "name": "ACS-L12-drawn-set",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "function tallyPlunder(items) { notePlunder((items ?? []).filter((it) => it && typeof it === 'object' && _drawn.delete(it))); }",
     "new": "function tallyPlunder(items) { notePlunder((items ?? []).filter((it) => it && typeof it === 'object')); }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-L12-drawn-marked",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "function drawnPlunder(items) { for (const it of items) if (it && typeof it === 'object') _drawn.add(it); return [...items]; }",
     "new": "function drawnPlunder(items) { return [...items]; }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-L15-page",
     "file": "src/scenes/world.js",
-    "old": "captain: fleetHost ? { model: () => captainModel() } : null,",
-    "new": "captain: fleetHost && csaOn() ? { model: () => captainModel() } : null,",
+    "old": "captain: fleetHost ? { model: () => captainPage.model(),",
+    "new": "captain: fleetHost && csaOn() ? { model: () => captainPage.model(),",
     "tests": [
-      "test/auditcaptsea.test.js",
-      "test/captlog.test.js"
+      "test/systems/naval/auditcaptsea.test.js",
+      "test/systems/naval/captlog.test.js"
     ]
   },
   {
@@ -1940,7 +1943,7 @@
     "old": "\n    && !modes?.transitioning && !worldMoveBusy();",
     "new": "\n    && !worldMoveBusy();",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1949,7 +1952,7 @@
     "old": "\n    && !modes?.transitioning && !worldMoveBusy();",
     "new": "\n    && !modes?.transitioning;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1958,7 +1961,7 @@
     "old": "drawCrewLines([]); lowerGlass(); };   // AUDIT CAPTAIN'S SEA S1",
     "new": "drawCrewLines([]); };   // AUDIT CAPTAIN'S SEA S1",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1967,7 +1970,7 @@
     "old": "    glassDoorPress = false;\n    mwViewHoldFirst(false);\n",
     "new": "    glassDoorPress = false;\n",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1976,7 +1979,7 @@
     "old": "    naval?.glass?.(0, { up: false, zoom: spyglass.zoom });\n    drawSpyglass(null);\n",
     "new": "    naval?.glass?.(0, { up: false, zoom: spyglass.zoom });\n",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -1985,16 +1988,16 @@
     "old": "travelView?.exit('video', true); if (spyglass.up) lowerGlass(); return; }",
     "new": "travelView?.exit('video', true); return; }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S2-corner-share",
-    "file": "src/ui/touch.js",
+    "file": "src/ui/touch/touch.js",
     "old": "const shared = DEFAULT_SHARES.some(([, a]) => a === action.id);",
     "new": "const shared = false;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2003,7 +2006,7 @@
     "old": "if (SHARE_ACTIONS.has(name)) { try { if (hooks.padAction?.(name)) return; }",
     "new": "if (false) { try { if (hooks.padAction?.(name)) return; }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2012,7 +2015,7 @@
     "old": "if (act === 'Spyglass') { glassDoorPress = true; return true; }",
     "new": "if (act === 'Spyglass') { return true; }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2021,7 +2024,7 @@
     "old": "const glassTap = dpad[code]?.tap === 'Spyglass', glassHold",
     "new": "const glassTap = false, glassHold",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2030,7 +2033,7 @@
     "old": "if (glassUp && zoomFresh) { P.glassZoom = true; try { hooks.glass.zoom?.(); }",
     "new": "if (glassUp && zoomFresh) { P.glassZoom = true; try { void 0; }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2039,7 +2042,7 @@
     "old": "if (P.glassZoom) wanted.delete(GLASS_PAD_ZOOM);",
     "new": "if (false) wanted.delete(GLASS_PAD_ZOOM);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2048,25 +2051,25 @@
     "old": "export const nextGlassZoom = (zoom) => (zoom >= 8 ? 2 : zoom >= 4 ? 8 : 4);",
     "new": "export const nextGlassZoom = (zoom) => (zoom >= 8 ? 8 : zoom >= 4 ? 8 : 4);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S3-prompts",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "  for (const { dir, kind } of glass) if (own[dir]) own[dir][kind] = 'spyglass';",
     "new": "  void glass;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S3-pad-words",
-    "file": "src/scenes/world.js",
-    "old": "      if (m.tap === 'Spyglass') return hdGlyphName(padHand, DPAD_CODES[dir]);",
-    "new": "      if (m.tap === 'Spyglass') return null;",
+    "file": "src/scenes/glassPad.js",
+    "old": "    if (m.tap === 'Spyglass') return hdGlyphName(padHand, DPAD_CODES[dir]);",
+    "new": "    if (m.tap === 'Spyglass') return null;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2075,7 +2078,7 @@
     "old": "glass: { up: () => spyglass.up, zoom: () => { if (spyglass.up) spyglass.zoom = nextGlassZoom(spyglass.zoom); } },",
     "new": "glass: { up: () => spyglass.up, zoom: () => {} },",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2084,7 +2087,7 @@
     "old": "  if (touch) return `x${Math.round(zoom)}`;",
     "new": "  if (false) return `x${Math.round(zoom)}`;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2093,7 +2096,7 @@
     "old": "    if (taps.zoom && spyglass.up) spyglass.zoom = nextGlassZoom(spyglass.zoom);",
     "new": "    if (false) spyglass.zoom = nextGlassZoom(spyglass.zoom);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2102,7 +2105,7 @@
     "old": "|| glassDoorPress || (taps.lower && spyglass.up);",
     "new": "|| glassDoorPress;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2111,7 +2114,7 @@
     "old": "root.className = `dfglass${c ? ' held' : ''}${touch ? ' touch' : ''}`;",
     "new": "root.className = `dfglass${c ? ' held' : ''}`;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2120,7 +2123,7 @@
     "old": "const t = { zoom: taps.zoom > 0, lower: taps.lower > 0 }; taps.zoom = 0; taps.lower = 0; return t; }",
     "new": "const t = { zoom: taps.zoom > 0, lower: taps.lower > 0 }; return t; }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2129,7 +2132,7 @@
     "old": "  if (!on) { taps.zoom = 0; taps.lower = 0; return; }",
     "new": "  if (!on) { return; }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2138,97 +2141,97 @@
     "old": "e?.stopPropagation?.(); taps[k]++; };",
     "new": "e?.stopPropagation?.(); void k; };",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S4-knowledge-gate",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": ": knownOf(e) >= KNOW.colours && !disguisedOf(e) && hostile(e.ship, me, { notoriety: (c) => notoriety.get(c), now: clock }) ? 'hostile' : 'ship';",
     "new": ": !disguisedOf(e) && hostile(e.ship, me, { notoriety: (c) => notoriety.get(c), now: clock }) ? 'hostile' : 'ship';",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S4-disguise-gate",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": ": knownOf(e) >= KNOW.colours && !disguisedOf(e) && hostile(e.ship, me, { notoriety: (c) => notoriety.get(c), now: clock }) ? 'hostile' : 'ship';",
     "new": ": knownOf(e) >= KNOW.colours && hostile(e.ship, me, { notoriety: (c) => notoriety.get(c), now: clock }) ? 'hostile' : 'ship';",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S5-trader-class",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const cls = crown ? merchantOfHull(e.ship.cls.hull) : null;",
     "new": "const cls = crown ? e.ship.cls : null;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S5-name",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "name: (e.ether ? etherShipNames(cls, e.ship.seed) : shipNames(cls, e.ship.seed, { regionIndex: region })).name, line",
     "new": "name: `A merchantman of ${crown}`, line",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S5-line",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "line: classLine(cls) } : null;",
     "new": "line: 'Merchantman' } : null;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D5-veil-flag",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "flag: e.ether ? ISLES_FLAG : crown,",
     "new": "flag: crown,",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-D5-veil-names",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "(e.ether ? etherShipNames(cls, e.ship.seed) : shipNames(",
     "new": "(false ? etherShipNames(cls, e.ship.seed) : shipNames(",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S6-night-gate",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (night && dist > reachOf(e, glassReach({ night, lit: showsLight(e), sight: Infinity })).far) continue;",
     "new": "if (false) continue;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S6-sight-test",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (a < bestA && !deps.sightBlocked?.(e.id, [p[0], p[1] + GLASS_AIM_LIFT, p[2]])) { bestA = a; best = e; }",
     "new": "if (a < bestA) { bestA = a; best = e; }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S6-fade-gate",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (!e.boat || e.ship.damage.state === SHIP_STATES.sunk || (e.retiring && (e.fade ?? 1) < FADE_FLATS)) continue;",
     "new": "if (!e.boat || e.ship.damage.state === SHIP_STATES.sunk) continue;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2237,16 +2240,16 @@
     "old": "sightBlocked: (id, point) => glassSight.blocked(player.collider,",
     "new": "sightBlocked: (id, point) => false && glassSight.blocked(player.collider,",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S7-target-gate",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const revealed = (engaged && onMe && gunsOut && hostile(s, me, law)) || !!e.relief;",
     "new": "const revealed = (engaged && gunsOut && hostile(s, me, law)) || !!e.relief;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2255,7 +2258,7 @@
     "old": "    if (heldFirst) mwViewHoldFirst(false);\n",
     "new": "",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2264,7 +2267,7 @@
     "old": "  if (heldFirst) heldFirst.changed = false;   // AUDIT CAPTAIN'S SEA S8",
     "new": "  void 0;   // AUDIT CAPTAIN'S SEA S8",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2273,7 +2276,7 @@
     "old": "  if (heldFirst?.changed && heldFirst.lane === 'mw') return { ...s, firstPerson: false };",
     "new": "  void 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2282,7 +2285,7 @@
     "old": "    const lane = eotbLane() ? 'eotb' : 'mw';",
     "new": "    const lane = 'eotb';",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2291,7 +2294,7 @@
     "old": "  heldFirst = null;   // AUDIT CAPTAIN'S SEA S8: a load decides the view",
     "new": "  void 0;   // AUDIT CAPTAIN'S SEA S8: a load decides the view",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2300,7 +2303,7 @@
     "old": "  heldFirst = null;   // AUDIT CAPTAIN'S SEA S8: a new game's view its own",
     "new": "  void 0;   // AUDIT CAPTAIN'S SEA S8: a new game's view its own",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2309,7 +2312,7 @@
     "old": "if (heldFirst?.lane === 'eotb' && eotbCamera.transitionDecides(kind)) heldFirst.changed = false;",
     "new": "void 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2318,7 +2321,7 @@
     "old": "const box = rect && rect.w > 0 && rect.h > 0 ? ",
     "new": "const box = false ? ",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2327,7 +2330,7 @@
     "old": "root.style.setProperty?.('--g-m', v ? `${Math.min(w, h) / 100}px` : '');",
     "new": "root.style.setProperty?.('--g-m', v ? `${Math.max(w, h) / 100}px` : '');",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2336,25 +2339,25 @@
     "old": "pointer-events: none; z-index: 4;",
     "new": "pointer-events: none; z-index: 2;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S17-order-tags",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": ".dfnaval-tags { position: fixed; inset: 0; pointer-events: none; z-index: 3;",
     "new": ".dfnaval-tags { position: fixed; inset: 0; pointer-events: none; z-index: 5;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S17-order-marks",
-    "file": "src/ui/wildMarks.js",
+    "file": "src/ui/wild/wildMarks.js",
     "old": ".dfwild-marks { position: fixed; inset: 0; pointer-events: none; z-index: 3;",
     "new": ".dfwild-marks { position: fixed; inset: 0; pointer-events: none; z-index: 5;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2363,7 +2366,7 @@
     "old": "rect: w > 0 && h > 0 ? worldRectPx(worldViewportRect(w, h), w, h) : null,",
     "new": "rect: null,",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2372,7 +2375,7 @@
     "old": "rows, tone: 'unknown', study, hint };   // AUDIT CAPTAIN'S SEA S11",
     "new": "rows, tone: f.hostile ? 'hostile' : 'unknown', study, hint };   // AUDIT CAPTAIN'S SEA S11",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2381,7 +2384,7 @@
     "old": "crew < 1.5 ? 'a hand' : crew < 2.5",
     "new": "crew < 2.5",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2390,7 +2393,7 @@
     "old": "crew < 2.5 ? 'a hand or two' : ",
     "new": "",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2399,34 +2402,34 @@
     "old": "[HULL.SmallShip]: 'two-master'",
     "new": "[HULL.SmallShip]: 'galleon'",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S20-tiers",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "e.ship.cls.cargo + (e.deep ? DEEP_TIER : 0) + etherTier(e));",
     "new": "e.ship.cls.cargo);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S20-emptied",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const holdShownOf = (e) => (e.prize?.hold && !e.prize.hold.length ? 0 : ",
     "new": "const holdShownOf = (e) => (",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S20-words-emptied",
     "file": "src/systems/naval/shipKnowledge.js",
-    "old": "  if (!(cargo > 0)) return 'riding high - her hold emptied';",
-    "new": "  if (!(cargo > 0)) return 'riding high - a light hold';",
+    "old": "  if (!(cargo > 0)) return 'riding high - hold empty';",
+    "new": "  if (!(cargo > 0)) return 'riding high, a light hold';",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2435,7 +2438,7 @@
     "old": "lookFilter.add(kb.x * keyboardLookRate() * dt * glassLookScale(spyglass.lens), ",
     "new": "lookFilter.add(kb.x * keyboardLookRate() * dt, ",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2444,7 +2447,7 @@
     "old": "kb.y * keyboardLookRate() * dt * lookInvert() * glassLookScale(spyglass.lens));",
     "new": "kb.y * keyboardLookRate() * dt * lookInvert());",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2453,7 +2456,7 @@
     "old": "    else if (autofill && owner == null) testSetBinding(store, code, action, true);",
     "new": "    else if (false) testSetBinding(store, code, action, true);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2462,16 +2465,16 @@
     "old": " || getBinding(store, action, false) != null || store.removedPrimary.has(action))) continue;",
     "new": " || getBinding(store, action, false) != null)) continue;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S19-aspect",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const half = ((b.bowZ - b.aftZ) / 2) * Math.abs(Math.sin(off)) + b.halfWidth * Math.abs(Math.cos(off));",
     "new": "const half = (b.bowZ - b.aftZ) / 2;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2480,72 +2483,72 @@
     "old": "angle <= Math.min(field, Math.max(",
     "new": "angle <= Math.min(Math.PI, Math.max(",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S19-host-field",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (!glassHolds(a, dist, half, glassZoom, field)) continue;",
     "new": "if (!glassHolds(a, dist, half, glassZoom)) continue;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S21-colours-arm",
-    "file": "src/scenes/navalHost.js",
-    "old": "deps.say?.(was === KNOW.colours ? `False colours! ${disguiseOf(e)?.name ?? 'The merchantman'} runs up the black flag!` :",
-    "new": "deps.say?.(false ? `False colours! ${disguiseOf(e)?.name ?? 'The merchantman'} runs up the black flag!` :",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "deps.say?.(was === KNOW.colours ? `False colors! ${disguiseOf(e)?.name ?? 'The merchantman'} runs up the black flag!` :",
+    "new": "deps.say?.(false ? `False colors! ${disguiseOf(e)?.name ?? 'The merchantman'} runs up the black flag!` :",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S21-studied-arm",
-    "file": "src/scenes/navalHost.js",
-    "old": ": was >= KNOW.studied ? `${s.names?.name ?? 'She'} runs up the black flag!`",
-    "new": ": false ? `${s.names?.name ?? 'She'} runs up the black flag!`",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": ": was >= KNOW.studied ? `${s.names?.name ?? 'It'} runs up the black flag!`",
+    "new": ": false ? `${s.names?.name ?? 'It'} runs up the black flag!`",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S21-sight-gate",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (held > 0 || dist <= Math.max(reach.eye, reach.lookout)) deps.mid?.(",
     "new": "if (true) deps.mid?.(",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S24-card-gate",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "hull: made ? s.damage.hullShare() : null,",
     "new": "hull: s.damage.hullShare(),",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ],
     "equivalent": true,
-    "why": "GLASS-SPOT (2026-10-11): no card is drawn for a hull not made out - the look's and the laid guns' cards are gated before targetCardOf (navalHost.js targetCard), and its one other caller, the board card on foot, names only a ship struck or a prize, which knowStep makes out to the full (shipKnowledge.js knowledgeOf's `struck`) the frame she strikes. Her unknown rows are kept as the knowledge law's belt-and-braces; test/glassclear.test.js pins both gates."
+    "why": "GLASS-SPOT (2026-10-11): no card is drawn for a hull not made out - the look's and the laid guns' cards are gated before targetCardOf (navalHost.js targetCard), and its one other caller, the board card on foot, names only a ship struck or a prize, which knowStep makes out to the full (shipKnowledge.js knowledgeOf's `struck`) the frame she strikes. Her unknown rows are kept as the knowledge law's belt-and-braces; test/systems/naval/glassclear.test.js pins both gates."
   },
   {
     "name": "ACS-S24-hud-bars",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    show('cardhull', parts.cardHull, bars);",
     "new": "    show('cardhull', parts.cardHull, true);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-S24-hud-gate",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "const bars = t.card?.hull != null;",
     "new": "const bars = !!t.card;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2554,7 +2557,7 @@
     "old": "    if (why) { if (_crossSaid !== way) { _crossSaid = way; townTalk.say(CROSS_REFUSED[why], 4); } return; }",
     "new": "    if (why) { crossGate.asked(way); if (_crossSaid !== way) { _crossSaid = way; townTalk.say(CROSS_REFUSED[why], 4); } return; }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2563,7 +2566,7 @@
     "old": "if (_crossSaid !== way) { _crossSaid = way; townTalk.say(CROSS_REFUSED[why], 4); }",
     "new": "if (true) { _crossSaid = way; townTalk.say(CROSS_REFUSED[why], 4); }",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2572,7 +2575,7 @@
     "old": "    if (way !== _crossSaid) _crossSaid = null;\n",
     "new": "",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2581,7 +2584,7 @@
     "old": "modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior') return;",
     "new": "modes?.transitioning || _partyArrivalPending || _mode() !== 'exterior') return;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2590,7 +2593,7 @@
     "old": "modes?.transitioning || worldMoveBusy() || _partyArrivalPending || _mode() !== 'exterior') return;",
     "new": "modes?.transitioning || worldMoveBusy() || _mode() !== 'exterior') return;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2599,7 +2602,7 @@
     "old": " || csaRuntime.state.CurrentBoat !== boat || crossWayHere() !== way) {",
     "new": " || csaRuntime.state.CurrentBoat !== boat) {",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2608,7 +2611,7 @@
     "old": " || csaRuntime.state.CurrentBoat !== boat || crossWayHere() !== way) {",
     "new": " || crossWayHere() !== way) {",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2617,7 +2620,7 @@
     "old": "_partyArrivalPending || !csaRuntime?.isSailing?.() || csaRuntime.state.CurrentBoat !== boat",
     "new": "_partyArrivalPending || csaRuntime.state.CurrentBoat !== boat",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ],
     "equivalent": true,
     "why": "a helm let go is a helm CurrentBoat no longer names (comeSailAway.js StopSailing clears it), so `CurrentBoat !== boat` says it too; the arm stands as the null runtime's guard and the no-helm case's own word"
@@ -2628,7 +2631,7 @@
     "old": "if (_etherCrossing || worldMoveBusy() || _partyArrivalPending || !csaRuntime?.isSailing?.()",
     "new": "if (_etherCrossing || _partyArrivalPending || !csaRuntime?.isSailing?.()",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2637,7 +2640,7 @@
     "old": "if (_etherCrossing || worldMoveBusy() || _partyArrivalPending || !csaRuntime?.isSailing?.()",
     "new": "if (_etherCrossing || worldMoveBusy() || !csaRuntime?.isSailing?.()",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2646,7 +2649,7 @@
     "old": "    if (why) { crossGate.asked(null); _crossSaid = way; townTalk.say(CROSS_REFUSED[why], 4); return; }",
     "new": "    void why;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2655,7 +2658,7 @@
     "old": "      crossGate.asked(null);   // asked afresh in its own waters\n",
     "new": "",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2664,7 +2667,7 @@
     "old": "    if (_crossBox && !_crossBox.done) _crossBox.withdraw();",
     "new": "    void 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2673,7 +2676,7 @@
     "old": "const navalTransition = () => { harbourBook.clear(); navalClear(); withdrawCrossing(); };",
     "new": "const navalTransition = () => { harbourBook.clear(); navalClear(); };",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2682,7 +2685,7 @@
     "old": " && !inEtherLaw(at.px, at.py)\n  ? { px: Math.floor(at.px), py: Math.floor(at.py) } : null);",
     "new": "\n  ? { px: Math.floor(at.px), py: Math.floor(at.py) } : null);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2691,7 +2694,7 @@
     "old": "        captainLedger.setCrossedFrom(departure.was);\n",
     "new": "",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2700,7 +2703,7 @@
     "old": "          csaCall(() => csaRuntime.StartSailing(boat));\n        } catch (e) { console.warn('[ether] the way back:'",
     "new": "        } catch (e) { console.warn('[ether] the way back:'",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2709,7 +2712,7 @@
     "old": "              csaCall(() => csaRuntime.RepositionBoat(boat, [x, tvSeaY(), z], departure.dir, csaTerrainOf(csaPixelAt(x, z))));\n",
     "new": "",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2718,7 +2721,7 @@
     "old": "crossingWayAt(p.x, p.y, etherOut && p.x < CROSS_X && !inEther(p.x, p.y) ? crossLandPx(p.x, p.y) : 0)",
     "new": "crossingWayAt(p.x, p.y, p.x < CROSS_X && !inEther(p.x, p.y) ? crossLandPx(p.x, p.y) : 0)",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2727,7 +2730,7 @@
     "old": "crossingWayAt(p.x, p.y, etherOut && p.x < CROSS_X && !inEther(p.x, p.y) ? crossLandPx(p.x, p.y) : 0)",
     "new": "crossingWayAt(p.x, p.y, etherOut && !inEther(p.x, p.y) ? crossLandPx(p.x, p.y) : 0)",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ],
     "equivalent": true,
     "why": "the law asks the mouth again (ethericSea.js crossingWaters: x < CROSS_X - killed as X4-mouth); the host's arm spares the land's scan east of it, a cost and no verdict"
@@ -2738,7 +2741,7 @@
     "old": "export const CROSS_X = 230;",
     "new": "export const CROSS_X = 300;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2747,7 +2750,7 @@
     "old": "    const fresh = Math.min(isles.length, room);",
     "new": "    const fresh = isles.length;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2756,25 +2759,25 @@
     "old": " : !room ? 'Your charts can hold no more isles.' :",
     "new": " :",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-X10-join",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "b.can ? b.terms : [b.terms, b.why].filter(Boolean).join(' - ')",
     "new": "b.can ? b.terms : `${b.terms} - ${b.why}`",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-X11-heard-shown",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "    o.hear?.();   // AUDIT CAPTAIN'S SEA X11",
     "new": "    void o;   // AUDIT CAPTAIN'S SEA X11",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2783,7 +2786,7 @@
     "old": "      hear: () => { for (const l of LEGENDS) L.hearLegend?.(l.id); },",
     "new": "      hear: () => {},",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2792,16 +2795,16 @@
     "old": "export const capFirst = (t) => String(t ?? '').replace(/^./, (c) => c.toUpperCase());",
     "new": "export const capFirst = (t) => String(t ?? '');",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-X17-isle-words",
     "file": "src/ui/etherChartWindow.js",
-    "old": "export const isleWords = (isle, ship) => `${capFirst(isle.name)} -",
-    "new": "export const isleWords = (isle, ship) => `${isle.name} -",
+    "old": "t('sea.chart.isleLine', '{name} - {kind} - {way}', { name: capFirst(isle.name),",
+    "new": "t('sea.chart.isleLine', '{name} - {kind} - {way}', { name: isle.name,",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2810,25 +2813,25 @@
     "old": "Land ho! ${i.name.replace(/^./, (c) => c.toUpperCase())}",
     "new": "Land ho! ${i.name}",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-X14-overlap",
     "file": "src/ui/etherChartWindow.js",
-    "old": "if (placed.some((p) => box[0] < p[2] && p[0] < box[2] && box[1] < p[3] && p[1] < box[3])) { i.label = false; continue; }",
-    "new": "if (false) { i.label = false; continue; }",
+    "old": "const free = sides.filter((box) => !placed.some((p) => overlaps(box, p)));",
+    "new": "const free = sides;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-X14-ports-first",
     "file": "src/ui/etherChartWindow.js",
-    "old": "for (const i of [...isles].sort((a, b) => (b.kind === 'port' ? 1 : 0) - (a.kind === 'port' ? 1 : 0))) {",
-    "new": "for (const i of [...isles]) {",
+    "old": "const ports = isles.filter((i) => i.kind === 'port'), lesser = isles.filter((i) => i.kind !== 'port');",
+    "new": "const ports = isles, lesser = [];",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2837,16 +2840,16 @@
     "old": "name: b.name, line: b.from > 0 });",
     "new": "name: b.name, line: true });",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-X12-band-side",
     "file": "src/ui/etherChartWindow.js",
-    "old": "Math.min(w - 4, b.x - 6), 16);",
-    "new": "Math.min(w - 4, b.x + 6), 16);",
+    "old": "x1 = Math.min(w, boundX(n));",
+    "new": "x1 = Math.min(w, boundX(n) + 60);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2855,7 +2858,7 @@
     "old": "g.strokeRect(t.x - t.r, t.y - t.r, 2 * t.r, 2 * t.r);",
     "new": "g.beginPath(); g.arc(t.x, t.y, t.r, 0, Math.PI * 2); g.stroke();",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2864,7 +2867,7 @@
     "old": "if (e.pointerType === 'mouse' && e.button !== 0) return;",
     "new": "void 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2873,7 +2876,7 @@
     "old": "if (drag && e.pointerType === 'mouse' && !(e.buttons & 1)) endDrag(e);",
     "new": "void 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2882,7 +2885,7 @@
     "old": "canvas.addEventListener('lostpointercapture', endDrag);",
     "new": "void endDrag;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2891,7 +2894,7 @@
     "old": "canvas.addEventListener('contextmenu', (e) => e.preventDefault());",
     "new": "void 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2900,7 +2903,7 @@
     "old": "const step = d / pinch.d >= CHART_PINCH_STEP ? 1 : pinch.d / d >= CHART_PINCH_STEP ? -1 : 0;",
     "new": "const step = 0;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2909,16 +2912,16 @@
     "old": "if (drag && !drag.moved && downs.size === 1) note(...local(e)); endDrag(e); });",
     "new": "endDrag(e); });",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-X6-tools",
     "file": "src/ui/etherChartWindow.js",
-    "old": "tool('-', () => zoomMid(-1)); tool('+', () => zoomMid(1)); tool('Ship', toShip);",
+    "old": "tool('-', () => zoomMid(-1)); tool('+', () => zoomMid(1)); tool(t('sea.chart.ship', 'Ship'), toShip);",
     "new": "void tool;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2927,7 +2930,7 @@
     "old": "|| acts.includes('TravelMap') || acts.includes('AutoMap')",
     "new": "|| acts.includes('TravelMap')",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2936,7 +2939,7 @@
     "old": "if (Math.abs(wheelAcc) < CHART_WHEEL_STEP) return;",
     "new": "if (false) return;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2945,7 +2948,7 @@
     "old": "export const CHART_WHEEL_STEP = 100;",
     "new": "export const CHART_WHEEL_STEP = 10;",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2954,16 +2957,16 @@
     "old": "closeNavalYard(); closeEtherChart(); drawNavalHud(null);",
     "new": "closeNavalYard(); drawNavalHud(null);",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
     "name": "ACS-X16-heading",
     "file": "src/scenes/world.js",
-    "old": "if (!boat) return cam.yaw; const f = boatForward(boat); return Math.atan2(f[0], f[2]); };",
+    "old": "if (!boat) return cam.yaw; const f = boatForward(boat, cam.yaw); return Math.atan2(f[0], f[2]); };",
     "new": "return cam.yaw; };",
     "tests": [
-      "test/auditcaptsea.test.js"
+      "test/systems/naval/auditcaptsea.test.js"
     ]
   },
   {
@@ -2972,16 +2975,16 @@
     "old": "glassUp: spyglass.up,   // SPYGLASS: the plate's Glass brass while the glass is up",
     "new": "glassUp: false,   // SPYGLASS: the plate's Glass brass while the glass is up",
     "tests": [
-      "test/fb1011c_seatown.test.js"
+      "test/systems/comeSailAway/fb1011c_seatown.test.js"
     ]
   },
   {
     "name": "ACS-V1-word-in-the-arrival",
     "file": "src/scenes/world.js",
-    "old": "    // Q4-v: StreamingWorld.OnInitWorld - the world re-initialised at a\n    // new origin (fast travel, quickload); CreateFoe's pending waves\n    // invalidate across live AND scheduled quests.\n    questBridge?.onInitWorld();\n    // AUDIT CAPTAIN'S SEA G2/P7: a landing made for a pixel this game does not stream, said where the player now stands\n    // (below the arrival's statements, which the party's boat pins run over stand-ins: partyBoatTeleportFix)\n    if (_unstreamedLanding) {\n      townTalk.say(_unstreamedLanding === 'ether' ? 'The Etheric Sea is closed in this game - you wake in the Bay\\'s waters.' : 'That ground does not stand in this game - you wake at the edge of the Iliac Bay.', 7);\n      _unstreamedLanding = null;\n    }\n",
-    "new": "    // AUDIT CAPTAIN'S SEA G2/P7: a landing made for a pixel this game does not stream, said where the player now stands\n    // (below the arrival's statements, which the party's boat pins run over stand-ins: partyBoatTeleportFix)\n    if (_unstreamedLanding) {\n      townTalk.say(_unstreamedLanding === 'ether' ? 'The Etheric Sea is closed in this game - you wake in the Bay\\'s waters.' : 'That ground does not stand in this game - you wake at the edge of the Iliac Bay.', 7);\n      _unstreamedLanding = null;\n    }\n    // Q4-v: StreamingWorld.OnInitWorld - the world re-initialised at a\n    // new origin (fast travel, quickload); CreateFoe's pending waves\n    // invalidate across live AND scheduled quests.\n    questBridge?.onInitWorld();\n",
+    "old": "    // Q4-v: StreamingWorld.OnInitWorld - the world re-initialised at a\n    // new origin (fast travel, quickload); CreateFoe's pending waves\n    // invalidate across live AND scheduled quests.\n    questBridge?.onInitWorld();\n    // AUDIT CAPTAIN'S SEA G2/P7: a landing made for a pixel this game does not stream, said where the player now stands\n    // (below the arrival's statements, which the party's boat pins run over stand-ins: partyBoatTeleportFix)\n    if (_unstreamedLanding) {\n      townTalk.say(_unstreamedLanding === 'ether' ? `${ETHER_SEA_TITLE} is closed. You wake in the Bay's waters.` : 'That land is not part of this game. You wake at the edge of the Iliac Bay.', 7);\n      _unstreamedLanding = null;\n    }\n",
+    "new": "    // AUDIT CAPTAIN'S SEA G2/P7: a landing made for a pixel this game does not stream, said where the player now stands\n    // (below the arrival's statements, which the party's boat pins run over stand-ins: partyBoatTeleportFix)\n    if (_unstreamedLanding) {\n      townTalk.say(_unstreamedLanding === 'ether' ? `${ETHER_SEA_TITLE} is closed. You wake in the Bay's waters.` : 'That land is not part of this game. You wake at the edge of the Iliac Bay.', 7);\n      _unstreamedLanding = null;\n    }\n    // Q4-v: StreamingWorld.OnInitWorld - the world re-initialised at a\n    // new origin (fast travel, quickload); CreateFoe's pending waves\n    // invalidate across live AND scheduled quests.\n    questBridge?.onInitWorld();\n",
     "tests": [
-      "test/partyBoatTeleportFix.test.js"
+      "test/systems/party/partyBoatTeleportFix.test.js"
     ]
   },
   {
@@ -2990,17 +2993,17 @@
     "old": "    if (etherSea && inEther(x, y)) return !!etherPortAt(x, y);   // ETHER-PORTS",
     "new": "    if (etherSea) return !!etherPortAt(x, y);   // ETHER-PORTS",
     "tests": [
-      "test/field_csa2.test.js",
-      "test/fb0929h_deedport.test.js"
+      "test/systems/comeSailAway/field_csa2.test.js",
+      "test/systems/comeSailAway/fb0929h_deedport.test.js"
     ]
   },
   {
     "name": "ACS-V8-the-chart-pops-a-page",
-    "file": "src/ui/navalPlunderDoor.js",
-    "old": "  if (slot !== ETHER_CHART) noteFirstUse(slot === PLUNDER",
+    "file": "src/ui/naval/navalPlunderDoor.js",
+    "old": "  if (slot !== ETHER_CHART && slot !== CAPTAIN_STARS && slot !== DECK_PLAN) noteFirstUse(slot === PLUNDER",
     "new": "  noteFirstUse(slot === PLUNDER",
     "tests": [
-      "test/shipyards1_found.test.js"
+      "test/systems/shipyards1_found.test.js"
     ]
   }
 ]

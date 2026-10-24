@@ -1,0 +1,411 @@
+[
+  {
+    "name": "AUDITPOI-G1-the-runs-spread-again",
+    "file": "src/poi/gltfImport.js",
+    "old": "positions.set(run.positions, v0 * 3); normals.set(run.normals, v0 * 3);",
+    "new": "positions.set(Float32Array.of(...run.positions), v0 * 3); normals.set(run.normals, v0 * 3);",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G2-every-vertex-of-the-accessor",
+    "file": "src/poi/gltfImport.js",
+    "old": "for (let k = 0; k < prim.idx.length; k++) slot[prim.idx[k]] = -2;",
+    "new": "for (let k = 0; k < prim.pos.n; k++) slot[k] = -2;",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G2-the-index-unchecked",
+    "file": "src/poi/gltfImport.js",
+    "old": "      for (let k = 0; k < idx.length; k++) if (!(Number.isInteger(idx[k]) && idx[k] < pos.n)) fail('missing', { what: 'vertex', index: idx[k] });",
+    "new": "",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G3-the-accessor-uncapped",
+    "file": "src/poi/gltfImport.js",
+    "old": "    if (n * size > GLTF_READ_LIMITS.accessor) fail('too-large', { what: 'accessor', index: ai });",
+    "new": "",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G3-the-total-uncapped",
+    "file": "src/poi/gltfImport.js",
+    "old": "    if ((held += n * size) > GLTF_READ_LIMITS.total) fail('too-large', { what: 'model' });",
+    "new": "    held += n * size;",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G3-the-count-unheld",
+    "file": "src/poi/gltfImport.js",
+    "old": "    if (!whole(n)) fail('malformed', { what: 'accessor', index: ai });",
+    "new": "",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G3-the-offset-unheld",
+    "file": "src/poi/gltfImport.js",
+    "old": "      if (!whole(base)) fail('malformed', { what: 'accessor', index: ai });",
+    "new": "",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G3-the-stride-unheld",
+    "file": "src/poi/gltfImport.js",
+    "old": "      if (stride && stride < elem) fail('accessor-type', { index: ai });",
+    "new": "",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G3-the-sparse-run-unheld",
+    "file": "src/poi/gltfImport.js",
+    "old": "      if ((idx.byteOffset ?? 0) + sp.count * iComp.size > iv.bytes.byteLength || (val.byteOffset ?? 0) + sp.count * size * comp.size > vv.bytes.byteLength) fail('past-end', { what: 'accessor', index: ai });",
+    "new": "",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G3-a-picture-copied",
+    "file": "src/poi/gltfImport.js",
+    "old": "    if (im.bufferView !== undefined) bytes = viewBytes(im.bufferView).bytes;",
+    "new": "    if (im.bufferView !== undefined) bytes = viewBytes(im.bufferView).bytes.slice();",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G3-a-second-parent-walked",
+    "file": "src/poi/gltfImport.js",
+    "old": "    if (reached.has(ni)) fail('node-parents', { index: ni });",
+    "new": "",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G3-a-cycle-said-as-a-second-parent",
+    "file": "src/poi/gltfImport.js",
+    "old": "    if (onPath.has(ni)) fail('node-cycle', { index: ni });",
+    "new": "",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js",
+      "test/poi/poi4_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G3-a-node-index-as-text",
+    "file": "src/poi/gltfImport.js",
+    "old": "    if (!Number.isInteger(ni)) fail('missing', { what: 'node', index: ni });",
+    "new": "",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G3-the-roots-searched",
+    "file": "src/poi/gltfImport.js",
+    "old": "const roots = g.scenes?.[sceneIndex]?.nodes ?? nodes.map((_, i) => i).filter((i) => !parentOf.has(i));",
+    "new": "const roots = g.scenes?.[sceneIndex]?.nodes ?? nodes.map((_, i) => i).filter((i) => !nodes.some((n) => (n.children ?? []).includes(i)));",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G3-an-error-passed-through",
+    "file": "src/poi/gltfImport.js",
+    "old": "const gltfErrorOf = (e) => (e instanceof GltfError ? e : new GltfError('malformed', {}, e));",
+    "new": "const gltfErrorOf = (e) => e;",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G3-the-glb-json-unheld",
+    "file": "src/poi/gltfImport.js",
+    "old": "        try { json = JSON.parse(new TextDecoder().decode(body)); } catch { fail('glb-chunk'); }",
+    "new": "        json = JSON.parse(new TextDecoder().decode(body));",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G3-the-data-uri-unheld",
+    "file": "src/poi/gltfImport.js",
+    "old": "  try { text = decodeURIComponent(m[3]); } catch { fail('data-uri'); }",
+    "new": "  text = decodeURIComponent(m[3]);",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G3-the-warnings-searched",
+    "file": "src/poi/gltfImport.js",
+    "old": "const warn = (code, args = {}) => { const w = { code, ...args }, key = JSON.stringify(w); if (!said.has(key)) { said.add(key); warnings.push(w); } };",
+    "new": "const warn = (code, args = {}) => { const w = { code, ...args }; if (!warnings.some((x) => JSON.stringify(x) === JSON.stringify(w))) warnings.push(w); };",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G3-a-part-built-past-the-law",
+    "file": "src/poi/gltfImport.js",
+    "old": "        if ((vertices += list.length) > POI_MESH_LIMITS.vertices) { refused = 'too-many-vertices'; break; }",
+    "new": "        vertices += list.length;",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G3-a-refused-part-unread",
+    "file": "src/poi/poiImport.js",
+    "old": "    const code = p.refused ?? poiMeshError(p.mesh);",
+    "new": "    const code = poiMeshError(p.mesh);",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G4-a-factor-under-every-glow",
+    "file": "src/poi/gltfExport.js",
+    "old": "      if (ti !== null) out.emissiveTexture = textureRef(ti, m);",
+    "new": "      if (ti !== null) { out.emissiveTexture = textureRef(ti, m); out.emissiveFactor ??= [1, 1, 1]; }",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G5-the-base-placement-alone",
+    "file": "src/poi/gltfImport.js",
+    "old": "        const tt = (mat?.base ?? mat?.emissive)?.transform ?? null;",
+    "new": "        const tt = mat?.base?.transform ?? null;",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G5-the-base-uv-set-alone",
+    "file": "src/poi/gltfImport.js",
+    "old": "      const tex = mat ? mat.base ?? mat.emissive : null;",
+    "new": "      const tex = mat ? mat.base : null;",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G5-the-base-sampler-alone",
+    "file": "src/poi/gltfImport.js",
+    "old": "  const tex = m?.base ?? m?.emissive ?? null;",
+    "new": "  const tex = m?.base ?? null;",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G5-a-glow-placed-apart-unsaid",
+    "file": "src/poi/gltfImport.js",
+    "old": "    if (base && emissive && !samePlacement(base, emissive)) warn('emission-transform', { material: name });",
+    "new": "",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G6-the-skin-unread",
+    "file": "src/poi/gltfImport.js",
+    "old": "          if (skinned) { Mv = skinMatrix(joints, skinned, vi); Nv = normalMatrix(Mv); if (det3(Mv) < 0) turned[e] = 1; }",
+    "new": "",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G6-the-joints-world-unread",
+    "file": "src/poi/gltfImport.js",
+    "old": "    skins[inst.skin] = joints.map((j, k) => mul(globalOf(j), ibm ? ibm.data.subarray(k * 16, k * 16 + 16) : identity()));",
+    "new": "    skins[inst.skin] = joints.map((j, k) => (ibm ? ibm.data.subarray(k * 16, k * 16 + 16) : identity()));",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G6-the-weights-not-made-one",
+    "file": "src/poi/gltfImport.js",
+    "old": "  if (sum !== 1) for (let i = 0; i < 16; i++) m[i] /= sum;",
+    "new": "",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G6-a-mirroring-joint-unwound",
+    "file": "src/poi/gltfImport.js",
+    "old": "          const f = turned ? !turned[a] : flip;",
+    "new": "          const f = flip;",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G7-the-intensity-written-raw",
+    "file": "src/poi/gltfExport.js",
+    "old": "      type: 'point', color: l.color.map(srgbToLinear), intensity: l.intensity * Math.PI, range: l.radius,",
+    "new": "      type: 'point', color: l.color.map(srgbToLinear), intensity: l.intensity, range: l.radius,",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G7-the-light-colour-written-raw",
+    "file": "src/poi/gltfExport.js",
+    "old": "      type: 'point', color: l.color.map(srgbToLinear), intensity: l.intensity * Math.PI, range: l.radius,",
+    "new": "      type: 'point', color: [...l.color], intensity: l.intensity * Math.PI, range: l.radius,",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G7-the-extras-unread",
+    "file": "src/poi/gltfImport.js",
+    "old": "intensity: near(own?.intensity, intensity) ? own.intensity : intensity, flicker };",
+    "new": "intensity, flicker };",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G7-the-extras-over-the-lights-word",
+    "file": "src/poi/gltfImport.js",
+    "old": "intensity: near(own?.intensity, intensity) ? own.intensity : intensity, flicker };",
+    "new": "intensity: own?.intensity ?? intensity, flicker };",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G7-the-flicker-unread",
+    "file": "src/poi/gltfImport.js",
+    "old": "  const flicker = typeof own?.flicker === 'boolean' ? own.flicker : fresh.flicker;",
+    "new": "  const flicker = fresh.flicker;",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G7-a-point-light-set-aside",
+    "file": "src/poi/gltfImport.js",
+    "old": "      if (def?.type === 'point') lights.push(",
+    "new": "      if (false) lights.push(",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G7-the-lights-left-out",
+    "file": "src/poi/poiImport.js",
+    "old": "  const lights = (model.lights ?? []).map((l) => poiLightOf(l, newLight()));",
+    "new": "  const lights = [];",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G7-the-asset-without-lights",
+    "file": "src/poi/poiImport.js",
+    "old": "  return { ok: true, asset: { name: prep.name, parts, lights: structuredClone(prep.lights ?? []) }, metas };",
+    "new": "  return { ok: true, asset: { name: prep.name, parts }, metas };",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G8-extensions-used-unread",
+    "file": "src/poi/gltfImport.js",
+    "old": "  for (const ext of g.extensionsUsed ?? []) {",
+    "new": "  for (const ext of []) {",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G8-instancing-said-by-name-alone",
+    "file": "src/poi/gltfImport.js",
+    "old": "    if (ext === 'EXT_mesh_gpu_instancing') warn('instancing');",
+    "new": "    if (false) warn('instancing');",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-G8-the-quiet-ones-said",
+    "file": "src/poi/gltfImport.js",
+    "old": "    if (GLTF_SUPPORTED_EXTENSIONS.includes(ext) || GLTF_QUIET_EXTENSIONS.includes(ext)) continue;",
+    "new": "    if (GLTF_SUPPORTED_EXTENSIONS.includes(ext)) continue;",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R10-the-base-colour-written-raw",
+    "file": "src/poi/gltfExport.js",
+    "old": "baseColorFactor: [srgbToLinear(m.color[0]), srgbToLinear(m.color[1]), srgbToLinear(m.color[2]), m.color[3]]",
+    "new": "baseColorFactor: [...m.color]",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R10-the-base-colour-read-raw",
+    "file": "src/poi/gltfImport.js",
+    "old": "    color: [0, 1, 2].map((k) => round6(linearToSrgb(clamp01(color[k])))).concat(clamp01(color[3] ?? 1)),",
+    "new": "    color: [0, 1, 2].map((k) => round6(clamp01(color[k]))).concat(clamp01(color[3] ?? 1)),",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js",
+      "test/poi/poi4_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R10-the-alpha-turned-too",
+    "file": "src/poi/gltfImport.js",
+    "old": "    color: [0, 1, 2].map((k) => round6(linearToSrgb(clamp01(color[k])))).concat(clamp01(color[3] ?? 1)),",
+    "new": "    color: [0, 1, 2, 3].map((k) => round6(linearToSrgb(clamp01(color[k] ?? 1)))),",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R10-the-glow-written-raw",
+    "file": "src/poi/gltfExport.js",
+    "old": "      out.emissiveFactor = m.emissiveColor.map((c) => srgbToLinear(c / k));",
+    "new": "      out.emissiveFactor = m.emissiveColor.map((c) => c / k);",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js",
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R10-the-glow-read-raw",
+    "file": "src/poi/gltfImport.js",
+    "old": "    emissiveColor: (m?.emissiveFactor ?? [0, 0, 0]).map((c) => Math.min(Math.max(round6(linearToSrgb(clamp01(c)) * strength), 0), 16)),",
+    "new": "    emissiveColor: (m?.emissiveFactor ?? [0, 0, 0]).map((c) => Math.min(Math.max(round6(clamp01(c) * strength), 0), 16)),",
+    "tests": [
+      "test/poi/auditpoi_gltf.test.js",
+      "test/poi/poi4_gltf.test.js"
+    ]
+  }
+]

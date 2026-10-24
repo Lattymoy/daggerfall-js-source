@@ -1,0 +1,66 @@
+[
+  {
+    "name": "TOWNGALLOP-town-walks-as-shipped",
+    "file": "src/systems/modSettings.js",
+    "old": "'EnhancedRiding.GallopingInTowns': Object.freeze({ default: true,",
+    "new": "'EnhancedRiding.GallopingInTowns': Object.freeze({ default: false,",
+    "tests": [
+      "test/systems/horsewalk.test.js",
+      "test/systems/rr1_realism.test.js"
+    ]
+  },
+  {
+    "name": "TOWNGALLOP-room-walks-in-town",
+    "file": "src/systems/online/onlineLane.js",
+    "old": "'RefinedTraining.intensiveTraining': false,",
+    "new": "'RefinedTraining.intensiveTraining': false, 'EnhancedRiding.GallopingInTowns': false,",
+    "tests": [
+      "test/systems/horsewalk.test.js"
+    ]
+  },
+  {
+    "name": "TOWNGALLOP-room-leaves-it-to-the-player",
+    "file": "src/systems/online/onlineLane.js",
+    "old": "'roleplay-realism': Object.freeze(['variantNpcs', 'variantResidents']),",
+    "new": "'roleplay-realism': Object.freeze(['variantNpcs', 'variantResidents', 'EnhancedRiding.GallopingInTowns']),",
+    "tests": [
+      "test/systems/horsewalk.test.js"
+    ]
+  },
+  {
+    "name": "TOWNGALLOP-setting-unread",
+    "file": "src/systems/roleplayRealism/rrInstall.js",
+    "old": "gallopingInTowns: rrRidingSetting('GallopingInTowns') === true",
+    "new": "gallopingInTowns: false",
+    "tests": [
+      "test/systems/horsewalk.test.js"
+    ]
+  },
+  {
+    "name": "TOWNGALLOP-tutorial-towns-back",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "Your horse walks; hold {Run} to gallop. Do not",
+    "new": "Your horse walks; hold {Run} to gallop outside towns. Do not",
+    "tests": [
+      "test/systems/horsewalk.test.js"
+    ]
+  },
+  {
+    "name": "TOWNGALLOP-tutorial-trample-dropped",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": " Do not gallop into people in town: trampling them is a crime.",
+    "new": "",
+    "tests": [
+      "test/systems/horsewalk.test.js"
+    ]
+  },
+  {
+    "name": "TOWNGALLOP-trample-ships-off",
+    "file": "src/systems/modSettings.js",
+    "old": "'EnhancedRiding.TrampleCivilians': Object.freeze({ default: true,",
+    "new": "'EnhancedRiding.TrampleCivilians': Object.freeze({ default: false,",
+    "tests": [
+      "test/systems/horsewalk.test.js"
+    ]
+  }
+]

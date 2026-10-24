@@ -5,7 +5,7 @@
     "old": "    if (csaRuntime?.isSailing()) csaCall(() => csaRuntime.StopSailing());\n    tvSeaRelease();\n    const said = warmAshesRaidAtSea();",
     "new": "    tvSeaRelease();\n    const said = warmAshesRaidAtSea();",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "The raid boards a traveller still at the helm: the next frame's sail stands them back at their boat's helm, on no deck."
   },
@@ -15,7 +15,7 @@
     "old": "    if (warmAshesRaidRefusal()) return;   // the mod's own refusals",
     "new": "    // the mod's own refusals",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "A raid the mod refuses still lets go of the helm: the traveller stops sailing for a raider that sheers off."
   },
@@ -25,8 +25,8 @@
     "old": "    if (playerEntity.health <= 0 || modes?.deathUp?.() || gamePaused() || worldMoveBusy()) return;\n    const at = warmAshesOn()",
     "new": "    if (playerEntity.health <= 0 || modes?.deathUp?.() || worldMoveBusy()) return;\n    const at = !gamePaused() && warmAshesOn()",
     "tests": [
-      "test/ows3_raiders.test.js",
-      "test/ow5_audit.test.js"
+      "test/systems/ows3_raiders.test.js",
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "A window reads as ashore: every chase given up, the raider spent for its life."
   },
@@ -36,7 +36,7 @@
     "old": "    if (playerEntity.health <= 0 || modes?.deathUp?.() || gamePaused() || worldMoveBusy()) return;\n    const at = warmAshesOn()",
     "new": "    if (playerEntity.health <= 0 || modes?.deathUp?.() || gamePaused()) return;\n    const at = warmAshesOn()",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "A chase steps against the feet read mid-move, a kilometre from where they land."
   },
@@ -46,7 +46,7 @@
     "old": "  const raidQuarry = () => !!csaRuntime?.isSailing() || (playerEntity.activeEffects ?? []).some((e) => isBoatEffectBundle(e?.bundleName));",
     "new": "  const raidQuarry = () => !!csaRuntime?.isSailing();",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "Off the helm on one's own deck at sea reads as ashore: a raider closing is spent."
   },
@@ -56,49 +56,49 @@
     "old": "(modes?.mode ?? 'exterior') === 'exterior' && raidQuarry();",
     "new": "(modes?.mode ?? 'exterior') === 'exterior' && (raidQuarry() || true);",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "A passenger aboard another's boat is chased and raided - and set back in the water the boat sailed on from."
   },
   {
     "name": "OW5b-S3-chaser-unseen",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "        if (listed.some((r) => r.id === id)) continue;",
     "new": "        continue;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "A chase whose raider's life turned over is out of the list: unseen, it comes alongside all the same."
   },
   {
     "name": "OW5b-S8-drawn-without-boats",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "    if (warmAshesOn() && csaOn()) {",
     "new": "    if (warmAshesOn()) {",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "Pirates are drawn on the map of a traveller with no boat to be at sea in."
   },
   {
     "name": "OW5b-S5-born-off-the-map",
     "file": "src/scenes/world.js",
-    "old": "    if (px < 0 || py < 0 || px >= 1000 || py >= 500 || maps.getClimateIndex(px, py) !== CLIMATES.Ocean) return false;",
+    "old": "    if (!onBayOrEther(px, py) || maps.getClimateIndex(px, py) !== CLIMATES.Ocean) return false;",
     "new": "    if (maps.getClimateIndex(px, py) !== CLIMATES.Ocean) return false;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
-    "note": "A raider born a pixel past the map's edge."
+    "note": "A raider born a pixel past the map's edge. RE-AIMED (ETHER-OW): the ground is the Bay's map or the Eltheric Ocean's box (onBayOrEther)."
   },
   {
     "name": "OW5b-S5-sails-off-the-map",
     "file": "src/scenes/world.js",
-    "old": "    if (!(x >= 0 && z >= 0 && x < 1000 * RAID_NATIVE_PIXEL && z < 500 * RAID_NATIVE_PIXEL)) return false;\n",
-    "new": "",
+    "old": "    return onBayOrEther(px, py) && tvWater(px, py);",
+    "new": "    return tvWater(px, py);",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
-    "note": "Past the map's edge is the sea: a raider sails off the world."
+    "note": "Past the map's edge is the sea: a raider sails off the world. RE-AIMED (ETHER-OW): the ground's own law, onBayOrEther, at the floored pixel."
   },
   {
     "name": "OW5b-S4-leg-by-its-end",
@@ -106,7 +106,7 @@
     "old": "export const RAIDER_LEG_PROBES = 16;",
     "new": "export const RAIDER_LEG_PROBES = 1;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "A leg asks its end alone: it sails across a cape to the water beyond."
   },
@@ -116,7 +116,7 @@
     "old": "    const way = clear(h) ? h : clear(h + Math.PI) ? h + Math.PI : null;",
     "new": "    const way = sea(x + Math.sin(h) * step * frac, z + Math.cos(h) * step * frac) ? h : h + Math.PI;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "A part-sailed leg asks its own moving end: the moment it touches land the raider jumps the other way."
   }

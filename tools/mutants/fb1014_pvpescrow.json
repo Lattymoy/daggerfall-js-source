@@ -1,0 +1,165 @@
+[
+  {
+    "name": "GUILD-KIN-the-guild-unread-at-the-referee",
+    "file": "server/src/index.js",
+    "old": "const kin = wildKin({ duel: duelKin, guilds: [a.gi, tb.gi] }) || wildKin({ party: await this._wdunKinOf(a.sub, tb.sub, now) });",
+    "new": "const kin = wildKin({ duel: duelKin }) || wildKin({ party: await this._wdunKinOf(a.sub, tb.sub, now) });",
+    "tests": [
+      "test/systems/fb1014_pvpescrow.test.js"
+    ]
+  },
+  {
+    "name": "GUILD-KIN-the-guild-unread-by-the-law",
+    "file": "src/net/wild/wildRef.js",
+    "old": "  return !!party || !!duel || (Array.isArray(guilds) && sameGuild(guilds[0], guilds[1]));",
+    "new": "  return !!party || !!duel || (Array.isArray(guilds) && false && sameGuild(guilds[0], guilds[1]));",
+    "tests": [
+      "test/systems/fb1014_pvpescrow.test.js"
+    ]
+  },
+  {
+    "name": "ESCROW-the-piece-into-the-remains-at-the-fall",
+    "file": "server-account/src/wild.js",
+    "old": "  const collect = body?.collect === 1;",
+    "new": "  const collect = false;",
+    "tests": [
+      "test/systems/fb1014_pvpescrow.test.js"
+    ]
+  },
+  {
+    "name": "ESCROW-the-room-hands-the-record",
+    "file": "server/src/index.js",
+    "old": "    const ask = rec ? collectAsk(rec, d.i, a.sub ?? null) : null;",
+    "new": "    const ask = null;",
+    "tests": [
+      "test/systems/fb1014_pvpescrow.test.js"
+    ]
+  },
+  {
+    "name": "ESCROW-the-collect-never-commits",
+    "file": "server-account/src/wild.js",
+    "old": "  return endEscrow(ctx, player.id, side.at, row, 'collected');",
+    "new": "  return { r: row.r, item: parse(row.rec) };",
+    "tests": [
+      "test/systems/fb1014_pvpescrow.test.js"
+    ]
+  },
+  {
+    "name": "ESCROW-the-return-before-a-collect-signed-in-time-is-spent",
+    "file": "server-account/src/wild.js",
+    "old": "export const escrowBackAt = (/** @type {number} */ until) => until + WILD_COLLECT_TTL_S;",
+    "new": "export const escrowBackAt = (/** @type {number} */ until) => until;",
+    "tests": [
+      "test/systems/fb1014_pvpescrow.test.js"
+    ]
+  },
+  {
+    "name": "ESCROW-a-second-collect-signed",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "  if (typeof rec.wc === 'string' && rec.wc) return 'again';",
+    "new": "  if (false) return 'again';",
+    "tests": [
+      "test/systems/fb1014_pvpescrow.test.js"
+    ]
+  },
+  {
+    "name": "ESCROW-the-second-collect-committed-again",
+    "file": "server-account/src/wild.js",
+    "old": "  if (row.state === 'collected') return row.to_char === side.at.id ? { r: row.r, item: parse(row.rec), again: true } : { error: 'escrow-collected' };",
+    "new": "  if (row.state === 'collected' && row.to_char !== side.at.id) return { error: 'escrow-collected' };",
+    "tests": [
+      "test/systems/fb1014_pvpescrow.test.js"
+    ]
+  },
+  {
+    "name": "ESCROW-the-second-return-committed-again",
+    "file": "server-account/src/wild.js",
+    "old": "  if (row.state === 'returned') return { r, item: parse(row.rec), again: true };",
+    "new": "  if (false) return { r, item: parse(row.rec), again: true };",
+    "tests": [
+      "test/systems/fb1014_pvpescrow.test.js"
+    ]
+  },
+  {
+    "name": "ESCROW-the-escrows-word-lost-in-a-wake",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "    we: v.we === true, wc: typeof v.wc === 'string' && v.wc ? v.wc : null };",
+    "new": "    we: false, wc: typeof v.wc === 'string' && v.wc ? v.wc : null };",
+    "tests": [
+      "test/systems/fb1014_pvpescrow.test.js"
+    ]
+  },
+  {
+    "name": "ESCROW-the-collect-lost-in-a-wake",
+    "file": "src/net/wild/wildLaw.js",
+    "old": "    we: v.we === true, wc: typeof v.wc === 'string' && v.wc ? v.wc : null };",
+    "new": "    we: v.we === true, wc: null };",
+    "tests": [
+      "test/systems/fb1014_pvpescrow.test.js"
+    ]
+  },
+  {
+    "name": "ESCROW-a-failed-batch-read-as-landed",
+    "file": "server-account/src/wild.js",
+    "old": "    if (await dropIfUnnamed(ctx.db, ctx.bucket, playerId, at.id, prep.key)) return { r: row.r, item, realm: { seq: prep.seq } };   // landed, its answer lost",
+    "new": "    if ((await dropIfUnnamed(ctx.db, ctx.bucket, playerId, at.id, prep.key)) || true) return { r: row.r, item, realm: { seq: prep.seq } };   // landed, its answer lost",
+    "tests": [
+      "test/systems/fb1014_pvpescrow.test.js"
+    ]
+  },
+  {
+    "name": "ESCROW-the-escrows-never-listed",
+    "file": "server-account/src/wild.js",
+    "old": "  return { escrows: results.map(escrowView) };",
+    "new": "  return { escrows: [] };",
+    "tests": [
+      "test/systems/fb1014_pvpescrow.test.js"
+    ]
+  },
+  {
+    "name": "ESCROW-the-escrow-asked-of-any-room",
+    "file": "src/scenes/world.js",
+    "old": "realm: at, room: lay, ...(online?.wildCollectAt?.(lay) ? { collect: 1 } : {}), ...wildFallWords(",
+    "new": "realm: at, room: lay, collect: 1, ...wildFallWords(",
+    "tests": [
+      "test/systems/fb1014_pvpescrow.test.js"
+    ],
+    "note": "AUDIT FB1019f B2 (re-aimed): the fallen's own ask says its words through wildFallWords (systems/wild/wildDeath.js), the wagon's among them."
+  },
+  {
+    "name": "ESCROW-the-held-records-piece-taken",
+    "file": "server-account/src/wild.js",
+    "old": "  if (burnt) { w = -1; wt = null; }",
+    "new": "  if (false) { w = -1; wt = null; }",
+    "tests": [
+      "test/net/int9_wild_ref.test.js"
+    ]
+  },
+  {
+    "name": "ESCROW-the-collect-asked-of-main's-world201",
+    "file": "src/net/wire.js",
+    "old": "export const WILD_COLLECT_RELAY_MIN = 205;",
+    "new": "export const WILD_COLLECT_RELAY_MIN = 201;",
+    "tests": [
+      "test/systems/fb1014_pvpescrow.test.js"
+    ]
+  },
+  {
+    "name": "ESCROW-the-collect-asked-of-main's-world204",
+    "file": "src/net/wire.js",
+    "old": "export const WILD_COLLECT_RELAY_MIN = 205;",
+    "new": "export const WILD_COLLECT_RELAY_MIN = 204;",
+    "tests": [
+      "test/systems/fb1014_pvpescrow.test.js"
+    ]
+  },
+  {
+    "name": "ESCROW-the-death-screen-says-taken",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "(d.held ? WILD_TEXT.deathHeld : WILD_TEXT.deathClaim)",
+    "new": "WILD_TEXT.deathClaim",
+    "tests": [
+      "test/systems/fb1014_pvpescrow.test.js"
+    ]
+  }
+]

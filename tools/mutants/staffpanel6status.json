@@ -1,0 +1,512 @@
+[
+  {
+    "name": "STAFF-PANEL6-STATUS-red-line-exclusive",
+    "file": "server-account/src/staffStatus.js",
+    "old": "if (limit.red != null && value >= limit.red) return 'red';",
+    "new": "if (limit.red != null && value > limit.red) return 'red';",
+    "why": "a value at the red line read amber",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-amber-line-exclusive",
+    "file": "server-account/src/staffStatus.js",
+    "old": "if (limit.amber != null && value >= limit.amber) return 'amber';",
+    "new": "if (limit.amber != null && value > limit.amber) return 'amber';",
+    "why": "a value at the amber line read grey",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-red-never",
+    "file": "server-account/src/staffStatus.js",
+    "old": "if (limit.red != null && value >= limit.red) return 'red';",
+    "new": "if (false) return 'red';",
+    "why": "no tile ever red",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-no-number-coloured",
+    "file": "server-account/src/staffStatus.js",
+    "old": "if (!limit || typeof value !== 'number' || !Number.isFinite(value)) return 'grey';",
+    "new": "if (!limit) return 'grey';",
+    "why": "a missing number coloured as a value",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-amber-lowers-red",
+    "file": "server-account/src/staffStatus.js",
+    "old": "if (l === 'red' || level === 'grey') level = l;",
+    "new": "level = l;",
+    "why": "a later amber metric lowered a red tile",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-status-not-admins",
+    "file": "server-account/src/staffStatus.js",
+    "old": "  if (who.role !== 'admin') {\n    await audit('refused'",
+    "new": "  if (false) {\n    await audit('refused'",
+    "why": "a Moderator reads server status and sets limits",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-refusal-unwritten",
+    "file": "server-account/src/staffStatus.js",
+    "old": "    await audit('refused', null, { path, need: 'admin' }, { outcome: 'denied' }).run();\n",
+    "new": "",
+    "why": "a refused Moderator leaves no trace",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-home-role-open",
+    "file": "server-account/src/staffStatus.js",
+    "old": "const mine = watches.filter((w) => w.role === 'moderator' || who.role === 'admin');",
+    "new": "const mine = watches;",
+    "why": "an Admin's watch shown to a Moderator",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-home-best-first",
+    "file": "server-account/src/staffStatus.js",
+    "old": "out.sort((a, b) => b.worst - a.worst || b.high - a.high || a.i - b.i);",
+    "new": "out.sort((a, b) => a.worst - b.worst || b.high - a.high || a.i - b.i);",
+    "why": "Home ordered best first",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-home-high-ignored",
+    "file": "server-account/src/staffStatus.js",
+    "old": "out.sort((a, b) => b.worst - a.worst || b.high - a.high || a.i - b.i);",
+    "new": "out.sort((a, b) => b.worst - a.worst || a.i - b.i);",
+    "why": "a tie on the worst item not broken by the high count",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-home-failed-quiet",
+    "file": "server-account/src/staffStatus.js",
+    "old": "failed: true, worst: LEVELS.indexOf('medium'), i };",
+    "new": "failed: true, worst: -1, i };",
+    "why": "a failed watch sorted as a quiet one",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-home-no-cut",
+    "file": "server-account/src/staffStatus.js",
+    "old": "      const items = (r.items ?? []).slice(0, n).map(",
+    "new": "      const items = (r.items ?? []).map(",
+    "why": "a watch's whole list on Home",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-home-more-wrong",
+    "file": "server-account/src/staffStatus.js",
+    "old": "more: Math.max(0, num(r.total) - items.length),",
+    "new": "more: num(r.total),",
+    "why": "how many wait behind miscounted",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-home-any-n",
+    "file": "server-account/src/staffStatus.js",
+    "old": "    if (!HOME_TOPS.includes(n)) return { error: 'body' };",
+    "new": "",
+    "why": "Home answers any n",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-home-read-every-time",
+    "file": "server-account/src/staffStatus.js",
+    "old": "audit('home-read', null, { n }, { onceIn: HOME_READ_ROW_S }).run()",
+    "new": "audit('home-read', null, { n }).run()",
+    "why": "every Home read a row",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-home-read-unwritten",
+    "file": "server-account/src/staffStatus.js",
+    "old": "homeOf(ctx, env, who, n), audit('home-read', null, { n }, { onceIn: HOME_READ_ROW_S }).run()]",
+    "new": "homeOf(ctx, env, who, n)]",
+    "why": "Home's read of the reports unaudited",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-limit-order-unchecked",
+    "file": "server-account/src/staffStatus.js",
+    "old": "|| (amber != null && red != null && amber > red)) {",
+    "new": ") {",
+    "why": "amber above red taken (the table's CHECK throws instead of a 400)",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-limit-negative",
+    "file": "server-account/src/staffStatus.js",
+    "old": "typeof v === 'number' && Number.isFinite(v) && v >= 0 ? v : NaN",
+    "new": "typeof v === 'number' && Number.isFinite(v) ? v : NaN",
+    "why": "a negative line taken",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-limit-any-metric",
+    "file": "server-account/src/staffStatus.js",
+    "old": "Object.hasOwn(STATUS_METRICS, body.metric)",
+    "new": "body.metric in STATUS_METRICS",
+    "why": "an inherited name taken for a metric",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-limit-refusal-unwritten",
+    "file": "server-account/src/staffStatus.js",
+    "old": "      await audit('limit-set', null, { metric: typeof body.metric === 'string' ? body.metric.slice(0, 40) : null, error: 'body' }, { outcome: 'failed' }).run();\n",
+    "new": "",
+    "why": "a refused limit set leaves no trace",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-limit-was-dropped",
+    "file": "server-account/src/staffStatus.js",
+    "old": "was: was ? { amber: was.amber, red: was.red } : null",
+    "new": "was: null",
+    "why": "the audit row forgets what the limit was",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-limit-set-unaudited",
+    "file": "server-account/src/staffStatus.js",
+    "old": "      audit('limit-set', null, { metric, amber, red, was: was ? { amber: was.amber, red: was.red } : null }),\n",
+    "new": "",
+    "why": "a limit set with no audit row",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-limit-clear-kept",
+    "file": "server-account/src/staffStatus.js",
+    "old": "      amber == null && red == null\n        ? db.prepare('DELETE FROM staff_limits WHERE metric = ?1').bind(metric)",
+    "new": "      false\n        ? db.prepare('DELETE FROM staff_limits WHERE metric = ?1').bind(metric)",
+    "why": "both lines none leaves a row (the table's CHECK throws)",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-limit-set-slow-to-show",
+    "file": "server-account/src/staffStatus.js",
+    "old": "    kept.delete('fast');",
+    "new": "    void 0;",
+    "why": "a limit set waits out the fast window",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-cache-window-inclusive",
+    "file": "server-account/src/staffStatus.js",
+    "old": "if (k && nowS >= k.at && nowS - k.at < s) return k.value;",
+    "new": "if (k && nowS >= k.at && nowS - k.at <= s) return k.value;",
+    "why": "a part kept a second past its window",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-cache-never",
+    "file": "server-account/src/staffStatus.js",
+    "old": "if (k && nowS >= k.at && nowS - k.at < s) return k.value;",
+    "new": "if (false) return k.value;",
+    "why": "every poll asks the relay and Analytics Engine again",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-cron-every-job-failed",
+    "file": "server-account/src/staffStatus.js",
+    "old": "slow.cron.rows.filter((r) => num(r.failed) > 0)",
+    "new": "slow.cron.rows.filter((r) => num(r.failed) >= 0)",
+    "why": "a job that did not fail named as failed",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-cron-not-red",
+    "file": "server-account/src/staffStatus.js",
+    "old": "{ id: 'cron', ok: failedJobs ? !failedJobs.length : null,",
+    "new": "{ id: 'cron', ok: failedJobs ? true : null,",
+    "why": "a failed cron job leaves health grey",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-relay-not-ok-fine",
+    "file": "server-account/src/staffStatus.js",
+    "old": "ok: ok(fast.relay) ? fast.relay.body.ok === true : fast.relay.state === 'missing' ? false : null,",
+    "new": "ok: ok(fast.relay) ? true : fast.relay.state === 'missing' ? false : null,",
+    "why": "a relay saying not ok read as well",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-relay-silent-fine",
+    "file": "server-account/src/staffStatus.js",
+    "old": "ok: ok(fast.relay) ? fast.relay.body.ok === true : fast.relay.state === 'missing' ? false : null,",
+    "new": "ok: ok(fast.relay) ? fast.relay.body.ok === true : null,",
+    "why": "a relay that does not answer read as no verdict",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-service-always-ok",
+    "file": "server-account/src/staffStatus.js",
+    "old": "{ id: 'service', ok: fast.db === 'ok',",
+    "new": "{ id: 'service', ok: true,",
+    "why": "the database failing leaves health grey",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-ai-failed-ignored",
+    "file": "server-account/src/staffStatus.js",
+    "old": "!(num(h.ai_failed) > 0) && !(waited != null && waited >= AI_WAIT_S)",
+    "new": "!(waited != null && waited >= AI_WAIT_S)",
+    "why": "an open case the reviewer failed to read leaves health grey",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-ai-wait-ignored",
+    "file": "server-account/src/staffStatus.js",
+    "old": "!(num(h.ai_failed) > 0) && !(waited != null && waited >= AI_WAIT_S)",
+    "new": "!(num(h.ai_failed) > 0)",
+    "why": "a read waiting past AI_WAIT_S leaves health grey",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-ai-off-judged",
+    "file": "server-account/src/staffStatus.js",
+    "old": "{ id: 'ai', ok: !aiOn ? null : h ?",
+    "new": "{ id: 'ai', ok: false ? null : h ?",
+    "why": "a reviewer switched off judged as failing",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-ai-closed-cases-wait",
+    "file": "server-account/src/staffStatus.js",
+    "old": "WHERE ai_state IN ('due', 'reading') AND status = 'open') AS case_wait",
+    "new": "WHERE ai_state IN ('due', 'reading')) AS case_wait",
+    "why": "a closed case left due reads as a late read",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-ai-feed-ignored",
+    "file": "server-account/src/staffStatus.js",
+    "old": "[h.case_wait, h.feed_wait]",
+    "new": "[h.case_wait]",
+    "why": "a feed batch waiting past AI_WAIT_S leaves health grey",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-health-never-red",
+    "file": "server-account/src/staffStatus.js",
+    "old": "level: /** @type {TileLevel} */ (sick.length ? 'red' : 'grey')",
+    "new": "level: /** @type {TileLevel} */ ('grey')",
+    "why": "health never red",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-status-level-first-tile",
+    "file": "server-account/src/staffStatus.js",
+    "old": "level: tiles.reduce((w, t) => (rank(t.level) > rank(w) ? t.level : w), /** @type {TileLevel} */ ('grey'))",
+    "new": "level: tiles[0].level",
+    "why": "the status's level not its worst tile's",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-registered-all-time",
+    "file": "server-account/src/staffStatus.js",
+    "old": "WHERE handle IS NOT NULL AND played_at > ?1) AS registered",
+    "new": "WHERE handle IS NOT NULL AND played_at > 0) AS registered",
+    "why": "a player long gone counted at play",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-trades-unfinished",
+    "file": "server-account/src/staffStatus.js",
+    "old": "WHERE created_at >= ?1 AND state = 'done') AS trades",
+    "new": "WHERE created_at >= ?1) AS trades",
+    "why": "a trade never done counted",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-minted-past-hour",
+    "file": "server-account/src/staffStatus.js",
+    "old": "WHERE day IN (?2, ?3) AND at >= ?1 AND src_kind = 'mint') AS minted",
+    "new": "WHERE day IN (?2, ?3) AND at >= 0 AND src_kind = 'mint') AS minted",
+    "why": "Marks minted before the hour counted",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-vault-past-hour",
+    "file": "server-account/src/staffStatus.js",
+    "old": "(SELECT COUNT(*) FROM guild_vault_log WHERE at >= ?1) AS vault",
+    "new": "(SELECT COUNT(*) FROM guild_vault_log) AS vault",
+    "why": "vault moves before the hour counted",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-errors-503-twice",
+    "file": "server-account/src/staffStatus.js",
+    "old": "errors: L ? per(num(L.r5xx) - num(L.r503), mins) : null,",
+    "new": "errors: L ? per(num(L.r5xx), mins) : null,",
+    "why": "a 503 counted as refused and as an error",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-refused-no-429",
+    "file": "server-account/src/staffStatus.js",
+    "old": "refused: L ? per(num(L.r429) + num(L.r503), mins) : null,",
+    "new": "refused: L ? per(num(L.r503), mins) : null,",
+    "why": "a 429 not counted refused",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-dbwait-total",
+    "file": "server-account/src/staffStatus.js",
+    "old": "dbWait: L && requests ? per(num(L.d1_wait_ms), requests) : L ? 0 : null,",
+    "new": "dbWait: L && requests ? num(L.d1_wait_ms) : L ? 0 : null,",
+    "why": "the database wait not a request's",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-ae-any-account",
+    "file": "server-account/src/staffStatus.js",
+    "old": "if (typeof token !== 'string' || !token || typeof acct !== 'string' || !ACCOUNT_ID.test(acct)) return { state: 'not-configured' };",
+    "new": "if (typeof token !== 'string' || !token || typeof acct !== 'string') return { state: 'not-configured' };",
+    "why": "an account id that is not one reaches the API's address",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-ae-no-token",
+    "file": "server-account/src/staffStatus.js",
+    "old": "if (typeof token !== 'string' || !token || typeof acct !== 'string' || !ACCOUNT_ID.test(acct)) return { state: 'not-configured' };",
+    "new": "if (typeof acct !== 'string' || !ACCOUNT_ID.test(acct)) return { state: 'not-configured' };",
+    "why": "the API asked with no token",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-breaches-missing-zero",
+    "file": "server-account/src/staffStatus.js",
+    "old": "breaches: ok(slow.breaches) && Number.isSafeInteger(slow.breaches.body.live) ? slow.breaches.body.live : null,",
+    "new": "breaches: ok(slow.breaches) && Number.isSafeInteger(slow.breaches.body.live) ? slow.breaches.body.live : 0,",
+    "why": "a relay that did not answer read as no breaches",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-reports-high-medium",
+    "file": "server-account/src/staffCases.js",
+    "old": "high: ranked.filter((c) => c.level === 'high').length",
+    "new": "high: ranked.filter((c) => c.level === 'medium').length",
+    "why": "the Reports' N high miscounted",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-reports-watch-admins",
+    "file": "server-account/src/staffCases.js",
+    "old": "  id: 'reports', label: 'Reports', role: 'moderator',",
+    "new": "  id: 'reports', label: 'Reports', role: 'admin',",
+    "why": "Moderators lose their Reports on Home",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL6-STATUS-reports-why-unjoined",
+    "file": "server-account/src/staffCases.js",
+    "old": "why: c.why.join(' · ')",
+    "new": "why: c.why.join(', ')",
+    "why": "the why not one line as the design draws it",
+    "tests": [
+      "test/server/staffpanel6status.test.js"
+    ]
+  }
+]

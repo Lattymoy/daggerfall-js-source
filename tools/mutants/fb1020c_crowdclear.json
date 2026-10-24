@@ -1,0 +1,132 @@
+[
+  {
+    "name": "CROWD-CLEAR-the-people-unread",
+    "file": "src/scenes/worldModes.js",
+    "old": "isItem ? null : size.w, ctx.people);",
+    "new": "isItem ? null : size.w, null);",
+    "tests": [
+      "test/systems/quest/fb1020c_crowdclear.test.js"
+    ],
+    "note": "the room's people never handed to the law"
+  },
+  {
+    "name": "CROWD-CLEAR-items-moved",
+    "file": "src/scenes/worldModes.js",
+    "old": "isItem ? null : size.w, ctx.people);",
+    "new": "size.w, ctx.people);",
+    "tests": [
+      "test/systems/quest/fb1020c_crowdclear.test.js"
+    ],
+    "note": "a quest item is moved off a person as a Person is"
+  },
+  {
+    "name": "CROWD-CLEAR-no-spawn-spots",
+    "file": "src/scenes/worldModes.js",
+    "old": "      spawns: siteMarkerSpots(quest?.getPlace?.(marker.placeSymbol)?.siteDetails, marker, false).map((p) => ctx.parentPt(p.x, p.y, p.z)),",
+    "new": "      spawns: [],",
+    "tests": [
+      "test/systems/quest/fb1020c_crowdclear.test.js"
+    ],
+    "note": "the host hands the law no other marker"
+  },
+  {
+    "name": "CROWD-CLEAR-item-markers-taken",
+    "file": "src/scenes/worldModes.js",
+    "old": "marker, false).map((p) => ctx.parentPt",
+    "new": "marker, true).map((p) => ctx.parentPt",
+    "tests": [
+      "test/systems/quest/fb1020c_crowdclear.test.js"
+    ],
+    "note": "a Person stood on an item's marker (a shelf, a table)"
+  },
+  {
+    "name": "CROWD-CLEAR-kind-unread",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "...(items ? siteDetails?.questItemMarkers ?? [] : [])",
+    "new": "...(siteDetails?.questItemMarkers ?? [])",
+    "tests": [
+      "test/systems/quest/fb1020c_crowdclear.test.js"
+    ],
+    "note": "siteMarkerSpots' spawn-only arm reads the item markers too"
+  },
+  {
+    "name": "CROWD-CLEAR-always-moved",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "  if (w == null || !crowdingPerson(at, w, people)) return at;",
+    "new": "  if (w == null) return at;",
+    "tests": [
+      "test/systems/quest/fb1020c_crowdclear.test.js"
+    ],
+    "note": "a Person clear of everyone is moved all the same"
+  },
+  {
+    "name": "CROWD-CLEAR-floor-unasked",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "if (hasFloor(p) && !crowdingPerson(p, w, people)) return p;",
+    "new": "if (!crowdingPerson(p, w, people)) return p;",
+    "tests": [
+      "test/systems/quest/fb1020c_crowdclear.test.js"
+    ],
+    "note": "a clear marker with no floor under it taken"
+  },
+  {
+    "name": "CROWD-CLEAR-hidden-counted",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "    if (!pn?.stood || pn.active === false) continue;",
+    "new": "    if (!pn?.stood) continue;",
+    "tests": [
+      "test/systems/quest/fb1020c_crowdclear.test.js"
+    ],
+    "note": "a person the room hides crowds a Person"
+  },
+  {
+    "name": "CROWD-CLEAR-unstood-counted",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "    if (!pn?.stood || pn.active === false) continue;",
+    "new": "    if (pn.active === false) continue;",
+    "tests": [
+      "test/systems/quest/fb1020c_crowdclear.test.js"
+    ],
+    "note": "a person taken back out crowds a Person"
+  },
+  {
+    "name": "CROWD-CLEAR-the-reach",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "const reach = (w + (pn.width || w)) / 2;",
+    "new": "const reach = (w + (pn.width || w)) / 3;",
+    "tests": [
+      "test/systems/quest/fb1020c_crowdclear.test.js"
+    ],
+    "note": "the two pick boxes' half-widths, not a third"
+  },
+  {
+    "name": "CROWD-CLEAR-the-storey",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "export const CROWD_STOREY_M = 2;",
+    "new": "export const CROWD_STOREY_M = 20;",
+    "tests": [
+      "test/systems/quest/fb1020c_crowdclear.test.js"
+    ],
+    "note": "a person upstairs crowds a Person"
+  },
+  {
+    "name": "CROWD-CLEAR-x-dropped",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "Math.abs(pn.x - p[0]) < reach && ",
+    "new": "",
+    "tests": [
+      "test/systems/quest/fb1020c_crowdclear.test.js"
+    ],
+    "note": "a person 2 m east crowds a Person"
+  },
+  {
+    "name": "CROWD-CLEAR-z-dropped",
+    "file": "src/systems/quest/sceneMount.js",
+    "old": "Math.abs(pn.z - p[2]) < reach && ",
+    "new": "",
+    "tests": [
+      "test/systems/quest/fb1020c_crowdclear.test.js"
+    ],
+    "note": "a person 2 m north crowds a Person"
+  }
+]

@@ -1,0 +1,83 @@
+[
+  {
+    "name": "KICK-AIR-the-mark-dropped-from-the-kick",
+    "file": "src/combat/technique/techniqueRoster.js",
+    "old": "toHit: 20, airborne: true }),",
+    "new": "toHit: 20 }),",
+    "tests": [
+      "test/systems/fb1015_kickair.test.js"
+    ]
+  },
+  {
+    "name": "KICK-AIR-the-gate-blind-to-the-mark-every-leap-grounded",
+    "file": "src/combat/techniques.js",
+    "old": "|| (!m.grounded && !t.airborne)) return CANNOT_LEAP_TEXT;",
+    "new": "|| !m.grounded) return CANNOT_LEAP_TEXT;",
+    "tests": [
+      "test/systems/fb1015_kickair.test.js"
+    ]
+  },
+  {
+    "name": "KICK-AIR-the-gate-blind-to-the-mark-every-leap-airborne",
+    "file": "src/combat/techniques.js",
+    "old": "(!m.grounded && !t.airborne)",
+    "new": "(!m.grounded && t.mech !== 'leap')",
+    "tests": [
+      "test/systems/fb1015_kickair.test.js"
+    ]
+  },
+  {
+    "name": "KICK-AIR-the-grounded-term-dropped",
+    "file": "src/combat/techniques.js",
+    "old": " || m.isDown?.() || (!m.grounded && !t.airborne)) return CANNOT_LEAP_TEXT;",
+    "new": " || m.isDown?.()) return CANNOT_LEAP_TEXT;",
+    "tests": [
+      "test/systems/fb1015_kickair.test.js"
+    ]
+  },
+  {
+    "name": "KICK-AIR-the-saddle-unread",
+    "file": "src/combat/techniques.js",
+    "old": "&& !m.grounded) || m.riding || m.isDown?.()",
+    "new": "&& !m.grounded) || m.isDown?.()",
+    "tests": [
+      "test/systems/fb1015_kickair.test.js"
+    ]
+  },
+  {
+    "name": "KICK-AIR-the-slow-fall-unread",
+    "file": "src/combat/techniques.js",
+    "old": "m.levitating || (m.slowFalling && !m.grounded) || m.riding",
+    "new": "m.levitating || m.riding",
+    "tests": [
+      "test/systems/fb1015_kickair.test.js"
+    ]
+  },
+  {
+    "name": "KICK-AIR-the-levitation-unread",
+    "file": "src/combat/techniques.js",
+    "old": "m.isPlayerSwimming || m.levitating || (m.slowFalling",
+    "new": "m.isPlayerSwimming || (m.slowFalling",
+    "tests": [
+      "test/systems/fb1015_kickair.test.js"
+    ]
+  },
+  {
+    "name": "KICK-AIR-the-swim-unread",
+    "file": "src/combat/techniques.js",
+    "old": "m._pkMove || m.swimming || m.onExteriorWater",
+    "new": "m._pkMove || m.onExteriorWater",
+    "tests": [
+      "test/systems/fb1015_kickair.test.js"
+    ]
+  },
+  {
+    "name": "KICK-AIR-the-feather-fall",
+    "file": "src/player/motor.js",
+    "old": "    if (!(this.falling && this.fallStart > this.pos[1])) { this.falling = false; this.fallStart = this.pos[1]; }",
+    "new": "    this.falling = false; this.fallStart = this.pos[1];",
+    "tests": [
+      "test/systems/fb1015_kickair.test.js"
+    ]
+  }
+]

@@ -1,0 +1,113 @@
+[
+  {
+    "name": "BUILD-RETRY-texture-failure-kept",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "      asked.catch(() => { if (texturePromises.get(archive) === asked) texturePromises.delete(archive); });",
+    "new": "      asked.catch(() => {});",
+    "tests": [
+      "test/scenes/ow_buildretry.test.js"
+    ],
+    "note": "One failed read of an archive is its answer for the page: every later pixel that wears it throws."
+  },
+  {
+    "name": "BUILD-RETRY-people-failure-kept",
+    "file": "src/scenes/world.js",
+    "old": "      .catch((e) => { _personTexLoad = null; throw e; }));",
+    "new": "      .catch((e) => { throw e; }));",
+    "tests": [
+      "test/scenes/ow_buildretry.test.js"
+    ],
+    "note": "One failed person picture fails every populated pixel's build for the session."
+  },
+  {
+    "name": "BUILD-RETRY-store-close-unheard",
+    "file": "src/scenes/dataSource.js",
+    "old": "    d.onclose = () => { if (db === d) db = null; };",
+    "new": "    d.onclose = null;",
+    "tests": [
+      "test/scenes/ow_buildretry.test.js"
+    ],
+    "note": "A connection the browser closed is handed out again: every door of the store but the game data's guarded read fails on it."
+  },
+  {
+    "name": "BUILD-RETRY-store-closing-read-not-asked-again",
+    "file": "src/scenes/dataSource.js",
+    "old": "    if (e?.name !== 'InvalidStateError') throw e;",
+    "new": "    throw e;",
+    "tests": [
+      "test/scenes/ow_buildretry.test.js"
+    ],
+    "note": "A read that meets a closing connection falls through to the server, which on the deployed site has no game data."
+  },
+  {
+    "name": "BUILD-RETRY-stream-never-asks",
+    "file": "src/world/streamingWorld.js",
+    "old": "      if (f.at > now || this.loaded.has(key)) continue;",
+    "new": "      continue;",
+    "tests": [
+      "test/scenes/ow_buildretry.test.js"
+    ],
+    "note": "A failed pixel waits for the next crossing that lists it - a hole in the grid until then."
+  },
+  {
+    "name": "BUILD-RETRY-stream-asks-at-once",
+    "file": "src/world/streamingWorld.js",
+    "old": "    this.failed.set(key, { px, py, tries, at: tries <= BUILD_RETRY_MS.length ? now + BUILD_RETRY_MS[tries - 1] : Infinity });",
+    "new": "    this.failed.set(key, { px, py, tries, at: tries <= BUILD_RETRY_MS.length ? now : Infinity });",
+    "tests": [
+      "test/scenes/ow_buildretry.test.js"
+    ],
+    "note": "No wait: a failing pixel is rebuilt back to back, five times in as many frames."
+  },
+  {
+    "name": "BUILD-RETRY-stream-unbounded",
+    "file": "src/world/streamingWorld.js",
+    "old": "    this.failed.set(key, { px, py, tries, at: tries <= BUILD_RETRY_MS.length ? now + BUILD_RETRY_MS[tries - 1] : Infinity });",
+    "new": "    this.failed.set(key, { px, py, tries, at: now + BUILD_RETRY_MS[0] });",
+    "tests": [
+      "test/scenes/ow_buildretry.test.js"
+    ],
+    "note": "A pixel that cannot be built is asked for every two seconds for as long as it stands in the grid."
+  },
+  {
+    "name": "BUILD-RETRY-stream-out-of-grid",
+    "file": "src/world/streamingWorld.js",
+    "old": "      if (!this.inRange(f.px, f.py)) { this.failed.delete(key); continue; }",
+    "new": "      if (false) { this.failed.delete(key); continue; }",
+    "tests": [
+      "test/scenes/ow_buildretry.test.js"
+    ],
+    "note": "A pixel the traveller left behind is built again where nobody stands, and never let go."
+  },
+  {
+    "name": "BUILD-RETRY-host-pump-releases",
+    "file": "src/scenes/world.js",
+    "old": "      state.fail(next.px, next.py, performance.now());",
+    "new": "      state.release(next.px, next.py);",
+    "tests": [
+      "test/scenes/ow_buildretry.test.js",
+      "test/world/worldOfDaggerfall/audit_wod_branch.test.js"
+    ],
+    "note": "The pump lets a failed pixel go as it did: nothing but a crossing asks for it again."
+  },
+  {
+    "name": "BUILD-RETRY-host-frame-unasked",
+    "file": "src/scenes/world.js",
+    "old": "    if (state.failed.size) queue.push(...state.retryDue(performance.now()));",
+    "new": "    if (false) queue.push(...state.retryDue(performance.now()));",
+    "tests": [
+      "test/scenes/ow_buildretry.test.js"
+    ],
+    "note": "The stream's wait runs out and nothing asks the queue for the pixel."
+  },
+  {
+    "name": "BUILD-RETRY-host-stood-unheard",
+    "file": "src/scenes/world.js",
+    "old": "      else state.stood(next.px, next.py);",
+    "new": "      else void 0;",
+    "tests": [
+      "test/scenes/ow_buildretry.test.js"
+    ],
+    "note": "A pixel that stood keeps its failures: its next failure waits as if it had failed every time."
+  }
+]

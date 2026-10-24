@@ -1,0 +1,103 @@
+[
+  {
+    "name": "SHAM-TRAIL-no-entry",
+    "file": "src/systems/quest/questPatches.js",
+    "old": "\\tclear _talkguardian_\\n\\tlog ${SHAM_TRAIL_MESSAGE} step ${SHAM_TRAIL_STEP}\\n`, count: 1 },",
+    "new": "\\tclear _talkguardian_\\n`, count: 1 },",
+    "tests": [
+      "test/systems/quest/fb1017b_shamtrail.test.js"
+    ],
+    "why": "the report: the sham reveal files nothing, and the journal still sends the player to the priest"
+  },
+  {
+    "name": "SHAM-TRAIL-step-taken",
+    "file": "src/systems/quest/questPatches.js",
+    "old": "export const SHAM_TRAIL_STEP = 4;",
+    "new": "export const SHAM_TRAIL_STEP = 6;",
+    "tests": [
+      "test/systems/quest/fb1017b_shamtrail.test.js"
+    ],
+    "why": "the entry on the script's own step 6, which 1026 overwrites"
+  },
+  {
+    "name": "SHAM-TRAIL-race-not-name",
+    "file": "src/systems/quest/questPatches.js",
+    "old": "_child_ just thanked me and ran off with it.",
+    "new": "=child_ just thanked me and ran off with it.",
+    "tests": [
+      "test/systems/quest/fb1017b_shamtrail.test.js"
+    ],
+    "why": "a Person's details macro is its race: \"The Nord just thanked me\""
+  },
+  {
+    "name": "SHAM-TRAIL-no-tavern",
+    "file": "src/systems/quest/questPatches.js",
+    "old": "_guardian_ was staying at _tavern_, and someone",
+    "new": "_guardian_ was staying nearby, and someone",
+    "tests": [
+      "test/systems/quest/fb1017b_shamtrail.test.js"
+    ],
+    "why": "the entry names no place, so the guidance points nowhere"
+  },
+  {
+    "name": "SHAM-TRAIL-english-only",
+    "file": "src/systems/quest/questPatches.js",
+    "old": "...entryLines(t('quest.possessedChild.shamTrail', SHAM_TRAIL_EN))]",
+    "new": "...entryLines(SHAM_TRAIL_EN)]",
+    "tests": [
+      "test/systems/quest/fb1017b_shamtrail.test.js"
+    ],
+    "why": "the port's own words in English whatever language the player chose"
+  },
+  {
+    "name": "SHAM-TRAIL-empty-line",
+    "file": "src/systems/quest/questPatches.js",
+    "old": "  if (line) lines.push(` ${line}`);",
+    "new": "  lines.push(` ${line}`);",
+    "tests": [
+      "test/systems/quest/fb1017b_shamtrail.test.js"
+    ],
+    "why": "an empty line ends a message: the entry cut short"
+  },
+  {
+    "name": "SHAM-TRAIL-wrap-wide",
+    "file": "src/systems/quest/questPatches.js",
+    "old": "if (line && line.length + 1 + word.length > width) {",
+    "new": "if (line && line.length + 1 + word.length > width * 2) {",
+    "tests": [
+      "test/systems/quest/fb1017b_shamtrail.test.js"
+    ],
+    "why": "the entry laid past the journal's width"
+  },
+  {
+    "name": "SHAM-TRAIL-count-loose",
+    "file": "src/systems/quest/questPatches.js",
+    "old": "    if (found !== p.count) throw new Error(`${label}: ${name} holds",
+    "new": "    if (found < p.count) throw new Error(`${label}: ${name} holds",
+    "tests": [
+      "test/systems/quest/fb1017b_shamtrail.test.js"
+    ],
+    "why": "a text found more often than the patch says is patched silently wrong"
+  },
+  {
+    "name": "SHAM-TRAIL-not-read",
+    "file": "src/scenes/quest/questData.js",
+    "old": "questlineLines(name, (patchable.has(name) ? patchedLines(name, patchable.get(name)) : null) ?? quests.get(name) ?? null, questlines)",
+    "new": "questlineLines(name, quests.get(name) ?? null, questlines)",
+    "tests": [
+      "test/systems/quest/fb1017b_shamtrail.test.js"
+    ],
+    "why": "the browser's pack never applies the patch"
+  },
+  {
+    "name": "SHAM-TRAIL-forage-unshared",
+    "file": "src/systems/foraging/foragingLaw.js",
+    "old": "  return patches ? applyTextPatches('FORAGE-FIX', questName, patches, text) : text;",
+    "new": "  return text;",
+    "tests": [
+      "test/systems/quest/foragefix.test.js",
+      "test/systems/foraging/forage1_law.test.js"
+    ],
+    "why": "FORAGE-FIX's patches lost with the law moved to its one home"
+  }
+]

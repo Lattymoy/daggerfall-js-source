@@ -9,7 +9,7 @@
 // 32 cites). This is the one home.
 //
 // WHAT A CITE IS HERE. A line number is a claim like any other
-// (test/citedrift.test.js's law): `src/scenes/world.js:1269`, the
+// (test/scenes/citedrift.test.js's law): `src/scenes/world.js:1269`, the
 // basename form `world.js:1269`, a range `:1234-1240`, the tests' own
 // regex spelling `world\.js:1269`, and - THE LEDGER ARM - the four
 // spellings a Port-Ledger row is cited by: `Port-Ledger.md:N`,
@@ -44,7 +44,7 @@
 //     and every slice paid for the difference. One law now, exported
 //     from here (ANY_CITE, CONTINUATION) and imported there.
 //   - A TEST'S ESCAPED LITERAL FOLLOWS THE ROW IT PINS. `world\\.js:3808`
-//     inside test/citedrift.test.js is a quote of a Ledger row's text.
+//     inside test/scenes/citedrift.test.js is a quote of a Ledger row's text.
 //     When that row is STRUCK the row's number is held (below) - and
 //     the literal used to move anyway, so the pin and its row parted
 //     at every shift. The escaped spelling is held whenever the target
@@ -87,7 +87,7 @@ const LEDGER = 'bible/01-Overview/Port-Ledger.md';
 /** RF3: the cite tools and their pin files carry SYNTHETIC cites - never docs. */
 /** CITE-BUF: the most bytes one git call may answer with - citeMerge's own figure (1 << 28, 256 MiB). */
 export const GIT_MAX_BUFFER = 1 << 28;
-export const SELF_DOCS = Object.freeze(['tools/citeShift.mjs', 'tools/citeMerge.mjs', 'test/citeshift.test.js', 'test/citemerge.test.js']);
+export const SELF_DOCS = Object.freeze(['tools/citeShift.mjs', 'tools/citeMerge.mjs', 'test/tooling/citeshift.test.js', 'test/tooling/citemerge.test.js']);
 
 /** A cite of any file on a line - where the continuations after one cite
  *  stop belonging to it. A C# cite stops them too (RF3: the `.cs` arm),
@@ -148,7 +148,7 @@ export function* continuationsIn(l, from, to) {
   }
 }
 
-// ---- the pure half (pinned in test/citeshift.test.js) ---------------------
+// ---- the pure half (pinned in test/tooling/citeshift.test.js) ---------------------
 
 /** Parse a unified diff's hunk headers into {oldStart, oldLen, newStart, newLen}. */
 export function hunksFromDiff(diffText) {
@@ -307,7 +307,7 @@ function main(argv) {
   const targets = (only.length ? only : changed).filter((f) => /\.(js|mjs|md)$/.test(f));
   const docs = git('ls-files', 'bible', 'test', 'src', 'tools').split('\n').filter((f) => /\.(js|mjs|md|sh)$/.test(f) && !SELF_DOCS.includes(f));   // RF3: the tools' own fixtures are not docs
   let moved = 0, applied = 0, held = 0;
-  // AUDIT 68: two targets with one basename (src/systems/loot.js and
+  // AUDIT 68: two targets with one basename (src/systems/loot/loot.js and
   // survival/loot.js) - a bare `loot.js:N` is neither's to move, where it was
   // moved once by each, the second time off the first one's rewrite.
   const sharedBase = new Set(targets.map((t) => basename(t)).filter((b, i, all) => all.indexOf(b) !== i));

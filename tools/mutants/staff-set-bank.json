@@ -1,0 +1,364 @@
+[
+  {
+    "name": "STAFF-SET-BANK-the-ticket-unread",
+    "file": "src/net/repairLaw.js",
+    "old": "  const { ticket, was, gold } = v;\n  if (typeof ticket !== 'string' || !REPAIR_TICKET_RE.test(ticket)) return null;\n  if (typeof was !== 'number'",
+    "new": "  const { ticket, was, gold } = v;\n  if (typeof was !== 'number'",
+    "why": "a set's ticket is the ticket's shape, or no set: the once-a-ticket key would take any text",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-total-unread",
+    "file": "src/net/repairLaw.js",
+    "old": "  if (typeof was !== 'number' || !Number.isFinite(was)) return null;\n",
+    "new": "",
+    "why": "a set names the total staff read, or it is no set: a set unchecked against the record would move a bank played since",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-total-read-loosely",
+    "file": "src/net/repairLaw.js",
+    "old": "  if (typeof was !== 'number' || !Number.isFinite(was)) return null;",
+    "new": "  if (typeof was !== 'number') return null;",
+    "why": "a total past every number (1e999 in JSON) is no total the profile can say",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-gold-not-whole",
+    "file": "src/net/repairLaw.js",
+    "old": "  if (!(Number.isSafeInteger(gold) && gold >= 0 && gold <= GOLD_INT_MAX)) return null;",
+    "new": "  if (!(typeof gold === 'number' && gold >= 0 && gold <= GOLD_INT_MAX)) return null;",
+    "why": "a bank is whole gold: half a coin is a law finding (judge.js goldWord)",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-gold-below-nothing",
+    "file": "src/net/repairLaw.js",
+    "old": "Number.isSafeInteger(gold) && gold >= 0 && gold <= GOLD_INT_MAX",
+    "new": "Number.isSafeInteger(gold) && gold <= GOLD_INT_MAX",
+    "why": "a bank set below nothing is a bank the judge holds on",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-no-bound",
+    "file": "src/net/repairLaw.js",
+    "old": "Number.isSafeInteger(gold) && gold >= 0 && gold <= GOLD_INT_MAX",
+    "new": "Number.isSafeInteger(gold) && gold >= 0",
+    "why": "one int's worth at most: DFU's int accountGold",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-empire-account-unchecked",
+    "file": "src/net/repairLaw.js",
+    "old": "  if (!empire || typeof empire !== 'object') return 'bank-none';\n",
+    "new": "",
+    "why": "a record with no Empire account is refused, never a table invented (or a set that throws)",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-total-unchecked",
+    "file": "src/net/repairLaw.js",
+    "old": "  if (total !== was) return 'bank-moved';\n",
+    "new": "",
+    "why": "the bank set is the one staff read: played since, or the wrong character, is refused",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-branches-kept",
+    "file": "src/net/repairLaw.js",
+    "old": "a.accountGold != null && a.accountGold !== 0) a.accountGold = 0;",
+    "new": "a.accountGold != null && a.accountGold !== 0) a.accountGold = a.accountGold;",
+    "why": "every other branch folded in: a branch left holding gold makes the bank more than the gold set",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-a-count-of-no-number-kept",
+    "file": "src/net/repairLaw.js",
+    "old": "a.accountGold != null && a.accountGold !== 0) a.accountGold = 0;",
+    "new": "Number.isFinite(a.accountGold) && a.accountGold !== 0) a.accountGold = 0;",
+    "why": "the fold's own rule alone leaves a count of no number beside the bank set, a law finding the set was to clear",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-a-branch-loan-touched",
+    "file": "src/net/repairLaw.js",
+    "old": "a.accountGold != null && a.accountGold !== 0) a.accountGold = 0;",
+    "new": "a.accountGold != null && a.accountGold !== 0) { a.accountGold = 0; a.loanTotal = 0; }",
+    "why": "a loan stays in the branch it was taken at, as the fold leaves it",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-empire-loan-touched",
+    "file": "src/net/repairLaw.js",
+    "old": "  empire.accountGold = gold;\n  return { was: total };",
+    "new": "  Object.assign(empire, { accountGold: gold, loanTotal: 0 });\n  return { was: total };",
+    "why": "a loan stays where it stands",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-a-count-of-no-number-summed",
+    "file": "src/net/repairLaw.js",
+    "old": "s + (typeof a?.accountGold === 'number' && Number.isFinite(a.accountGold) ? a.accountGold : 0)",
+    "new": "s + (Number(a?.accountGold) || 0)",
+    "why": "the total is the profile's: a count of no number counts none",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-act-unwired",
+    "file": "server-account/src/review.js",
+    "old": "  if (act === 'bank') return bankAct(ctx, row, by, note, body);   // STAFF-SET-BANK\n",
+    "new": "",
+    "why": "the review's bank act is reached",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-body-unchecked",
+    "file": "server-account/src/review.js",
+    "old": "  if (!set) return { error: 'body' };\n",
+    "new": "",
+    "why": "a set the law refuses is the body's word (400), never a throw",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-a-bank-row-read-as-a-repair",
+    "file": "server-account/src/review.js",
+    "old": "r.faction === BANK_SET_FACTION ? 'bank' : 'repair'",
+    "new": "'repair'",
+    "why": "a bank set's row is a bank set's: its ticket asked again answers it",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-a-ticket-of-any-kind",
+    "file": "server-account/src/review.js",
+    "old": "(rowKindOf(r) === kind ? answer(r, repeat) : { error: 'repair-ticket' })",
+    "new": "((rowKindOf(r) === 'mend') === (kind === 'mend') ? answer(r, repeat) : { error: 'repair-ticket' })",
+    "why": "a ticket names one act: a repair's is no bank set's, nor a bank set's a repair's",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-row-naming-a-mend",
+    "file": "server-account/src/review.js",
+    "old": ".bind(row.id, set.ticket, row.player, by, nowS, BANK_SET_FACTION, set.was",
+    "new": ".bind(row.id, set.ticket, row.player, by, nowS, 0, set.was",
+    "why": "the row names the bank set's faction, below every faction a repair or a mend names",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-row-unwritten",
+    "file": "server-account/src/review.js",
+    "old": "db.prepare('INSERT INTO realm_repairs (char_id, ticket, player, by_handle, at, faction, flag, was, gold, seq, note) VALUES (?, ?, ?, ?, ?, ?, 0, ?, ?, ?, ?)')\n      .bind(row.id, set.ticket",
+    "new": "db.prepare('SELECT ?, ?, ?, ?, ?, ?, ?, ?, ?, ?')\n      .bind(row.id, set.ticket",
+    "why": "the set's row is in the record's batch: once a ticket",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-no-finding",
+    "file": "server-account/src/review.js",
+    "old": "    staffFinding(db, row, nowS, { act: 'bank', by, note, ticket: set.ticket, was: set.was, gold: set.gold, from: row.seq, to: seq }),\n",
+    "new": "",
+    "why": "the act is written among the character's findings",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-no-faucet",
+    "file": "server-account/src/review.js",
+    "old": "    ...(up > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), up)] : []),\n",
+    "new": "",
+    "why": "what the set raised the bank by is the service's own faucet",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-a-faucet-of-a-removal",
+    "file": "server-account/src/review.js",
+    "old": "    ...(up > 0 ? [faucetStatement",
+    "new": "    ...(up !== 0 ? [faucetStatement",
+    "why": "a set down pays no faucet row: the service keeps no sink for staff's removals",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-total-below-nothing-counted",
+    "file": "server-account/src/review.js",
+    "old": "g + goldOf(a?.accountGold), 0);",
+    "new": "g + (Number.isFinite(a?.accountGold) ? a.accountGold : 0), 0);",
+    "why": "a bank's gold before the set is the judge's count: a branch below nothing held no gold, so the faucet is the gold the set witnessed, none for the hole",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-faucet-from-the-total",
+    "file": "server-account/src/review.js",
+    "old": "    up = set.gold - (Array.isArray(save.bankAccounts) ? save.bankAccounts : []).reduce((/** @type {number} */ g, /** @type {any} */ a) => g + goldOf(a?.accountGold), 0);",
+    "new": "    up = set.gold - Math.max(0, set.was);",
+    "why": "REVIEW: the faucet is the gold the set witnessed - from the total named, a hacked bank set to honest gold booked none for the gold it made, and a branch below nothing beside gold one for gold that never came in",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-total-unbounded",
+    "file": "src/net/repairLaw.js",
+    "old": "export const bankTotalOf = (save) => Math.min(Number.MAX_SAFE_INTEGER, Math.max(-Number.MAX_SAFE_INTEGER, (Array.isArray(save?.bankAccounts) ? save.bankAccounts : [])\n  .reduce((/** @type {number} */ s, /** @type {any} */ a) => s + (typeof a?.accountGold === 'number' && Number.isFinite(a.accountGold) ? a.accountGold : 0), 0)));",
+    "new": "export const bankTotalOf = (save) => (Array.isArray(save?.bankAccounts) ? save.bankAccounts : [])\n  .reduce((/** @type {number} */ s, /** @type {any} */ a) => s + (typeof a?.accountGold === 'number' && Number.isFinite(a.accountGold) ? a.accountGold : 0), 0);",
+    "why": "REVIEW: a bank past every safe integer is said at the bound - unbounded, the act's row held an int64 that reads back as no number (the set landed, answered 500 and wrote no audit row), and banks summed past every number were Infinity, null in JSON, a bank no body could set",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-total-unbounded-below",
+    "file": "src/net/repairLaw.js",
+    "old": "Math.max(-Number.MAX_SAFE_INTEGER, (Array.isArray(save?.bankAccounts)",
+    "new": "((Array.isArray(save?.bankAccounts)",
+    "why": "REVIEW: the bound holds below nothing too - branches summed below every number are a bank no body could name",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-audit-as-the-body",
+    "file": "server-account/src/staffRealm.js",
+    "old": "    return said(`fix-${act}`, row.player, { ...detail, ...landed }, r.error",
+    "new": "    return said(`fix-${act}`, row.player, detail, r.error",
+    "why": "REVIEW: a ticket asked again with other values is written as the set its row holds, never the body's values as done",
+    "tests": [
+      "test/server/staffsetbank.test.js",
+      "test/server/staffpanel3realm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-audit-no-repeat",
+    "file": "server-account/src/staffRealm.js",
+    "old": " : { was: r.was }), repeat: r.repeat };",
+    "new": " : { was: r.was }) };",
+    "why": "REVIEW: the audit row says whether the fix was a repeat that moved nothing",
+    "tests": [
+      "test/server/staffsetbank.test.js",
+      "test/server/staffpanel3realm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-route-unlisted",
+    "file": "server-account/src/staffRealm.js",
+    "old": "'/v1/staff/fix/mend', '/v1/staff/fix/bank', '/v1/staff/gains',",
+    "new": "'/v1/staff/fix/mend', '/v1/staff/gains',",
+    "why": "the panel's bank door is the realm doors'",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-route-unmatched",
+    "file": "server-account/src/staffRealm.js",
+    "old": " || path === '/v1/staff/fix/bank') {",
+    "new": ") {",
+    "why": "the bank door reaches the fix",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-route-as-a-mend",
+    "file": "server-account/src/staffRealm.js",
+    "old": "path === '/v1/staff/fix/mend' ? 'mend' : 'bank';",
+    "new": "'mend';",
+    "why": "the bank door runs the bank act, never the mend",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-note-unasked",
+    "file": "server-account/src/staffRealm.js",
+    "old": "    if (!note) return said(`fix-${act}`, row.player, ch, { error: 'staff-note' });\n",
+    "new": "",
+    "why": "Fix account asks a note",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-service-route-unlisted",
+    "file": "server-account/src/service.js",
+    "old": "'/v1/staff/fix/mend', '/v1/staff/fix/bank', '/v1/staff/gains',",
+    "new": "'/v1/staff/fix/mend', '/v1/staff/gains',",
+    "why": "the service routes the bank door",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-moved-said-as-a-body",
+    "file": "server-account/src/staff.js",
+    "old": "  'bank-none': 409, 'bank-moved': 409,\n",
+    "new": "  'bank-none': 409,\n",
+    "why": "a bank not the one read is a conflict (409), never a bad body",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-none-said-as-a-body",
+    "file": "server-account/src/staff.js",
+    "old": "  'bank-none': 409, 'bank-moved': 409,\n",
+    "new": "  'bank-moved': 409,\n",
+    "why": "a record with no Empire account is a conflict (409), never a bad body",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-SET-BANK-the-profile-sum",
+    "file": "server-account/src/staffPlayers.js",
+    "old": "    banks: bankTotalOf(save),",
+    "new": "    banks: arrayOf(save.bankAccounts).reduce((s, a) => s + Math.max(0, num(a?.accountGold) ?? 0), 0),",
+    "why": "the profile says the total a set is checked against: one sum",
+    "tests": [
+      "test/server/staffsetbank.test.js"
+    ]
+  }
+]

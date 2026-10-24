@@ -103,7 +103,8 @@ S1. So in the port:
   the family outlives any one save - and as a copy in every member's save (`modData.ProjectLegacy`). THE STORE answers
   the world's facts: who lived, who died, Arkay's toll, who is played, which remains exist - a death is decided at the
   death door (`characters/playerEntity.js setDeathListener`) and no reload undoes it; a fall's Succession waits on the
-  record (`pending`). A SAVE answers what its character was given: the estate and the bequest paid, the remains opened,
+  record (`pending`). REZ-BLOODLINE (below): online the realm HOLDS the fall the door wrote while a party's Resurrect can
+  still raise the fallen, and its yes takes the death back on every copy (the REVIVE stamp). A SAVE answers what its character was given: the estate and the bequest paid, the remains opened,
   taken or laid to rest (`legacyHost.js mergeFamily`) - a reload rewinds those with the bag they went into. A save of a
   dead or retired member is THE PAST: refused for as long as it stands, the line's waiting Succession offered, else the
   one who carries the line now (AUDIT LEGACY III F12 corrected this line: never "its living").
@@ -134,10 +135,14 @@ page's address becomes that save's load. A birth that cannot be made goes back t
 AUDIT LEGACY II: the birth STANDS ONLY WITH ITS SAVE - its character id, the fall it answers (settled as the heir
 lands, never at the Succession's choice - B1) and the estate are undone if that first save is refused, and the reload
 bears them again (A2); a member whose character id no save holds (their saves deleted) is born again from their
-person rather than loaded (A2/B1). Until the heir lands, the page that chose acts for no one (A1). The
-heir is born in a TOWN: the family's seat - the first town its founder stands in, or the town the player moved it to
-(FAMILY-SEAT, section 11) - else the nearest town to where the parent fell (B11's root, a coordinate pair that is no
-place, gone).
+person rather than loaded (A2/B1). Until the heir lands, the page that chose acts for no one (A1) - and the page BEARING
+them offers the Succession to nobody: it is the fall's answer, and a save writes only the person who is the character in
+the world (FB1012d HEIR-CLONE, `01-Overview/bugs/Field-Bugs-2026-10-12d.md`: online the birth waits on the realm with the
+world running, the waiting fall's window rose over the newborn, and a press wrote the newborn over their sibling). The
+heir is born in a PLACE: the family's seat - the first town its founder stands in, or the town or the home of the
+house's own (a farm, a manor - FB1012d SEAT-HOME) the player moved it to (FAMILY-SEAT, section 11) - else the nearest
+town to where the parent fell (B11's root, a coordinate pair that is no place, gone). A birth answered from the Online
+page starts there too, never at the classic start (FB1012d BIRTH-START).
 
 ## 5. INHERITANCE - the blood and the hearth
 
@@ -214,8 +219,8 @@ line's own law now, Bloodline open at the founder's chargen.
 **LEGACY-CHOICE - the popup online, and who is founded** (2026-10-06, Mac: "I want to add a enhanced plus UI popup for
 online when creating a character. Perma Death, the regular option, or the option that skips the liniage system
 entirely. Current characters already created start without this system and requires a new game"; built:
-`ui/legacyModelChoice.js`, `ui/levelingChoice.js`, `scenes/legacyHost.js found`, `systems/chargenSession.js
-finishChargen`, `test/legacychoice.test.js`, `tools/mutants/legacychoice.json`):
+`ui/legacy/legacyModelChoice.js`, `ui/levelingChoice.js`, `scenes/legacyHost.js found`, `systems/chargenSession.js
+finishChargen`, `test/systems/legacychoice.test.js`, `tools/mutants/legacychoice.json`):
 - ONLINE THE QUESTION HAS THREE ANSWERS - Enduring (the regular one, first: Enter without reading never costs a
   character), Bloodline (permadeath), and NO LINEAGE (`family.js NO_LINEAGE`): no house and no heirs, the realm's own
   death. On Enhanced Plus it is the popup - the Plus window, the three side by side as stone tiles tagged Not
@@ -237,8 +242,17 @@ finishChargen`, `test/legacychoice.test.js`, `tools/mutants/legacychoice.json`):
   online - a character loaded with no house plays without one, for good. A character whose house the store or the
   realm knows is found, as ever; a birth no question was put to (the headless door) founds online's safe Enduring.
   Offline an older character is founded at its first load into its own answer, else its Features tile's (D9).
-- The Family tab says why there is no house: the character chose none, or (online) a house is founded only when a
-  character is made - make a new character to found one.
+- FAMILY-TAB (2026-10-06, asked: "When a player is playing without project legacy, the family tab shouldn't show
+  (pause menu)"): A CHARACTER WITH NO HOUSE HAS NO FAMILY TAB. The tab is drawn while the game is played with Project
+  Legacy - the mod on AND a house for the game played, its family or the past played back (`ui/familyPages.js`
+  familyTabShown) - so one who chose no lineage, one made online before the question was put there or copied in, and
+  a scene that keeps no family see Quests, Stats, Growth, Holdings, Tutorials and System; a landing on the tab lands
+  on System. The tab's
+  key (KB1 `LegacyFamily`) says why on the HUD instead and opens nothing (`ui/pauseDoor.js` openPauseFlow, the
+  professions door's way): the character chose none, or (online) a house is founded only when a character is made -
+  make a new character to found one (`noFamilyLine`, the words the tab's pages said before). The mod's switch off took
+  the tab away already (LEGACY3); the Stats page's house section stood on a house before (`sheetHouse`). Pinned in
+  `test/systems/legacy3_familytab.test.js`; `tools/mutants/familytab.json` (5), LEGACY3's record re-aimed.
 
 ## 7. HEIRLOOMS AND THE DEATH QUEST
 
@@ -254,10 +268,29 @@ finishChargen`, `test/legacychoice.test.js`, `tools/mutants/legacychoice.json`):
   open, within sixty metres of where they fell; a death in a building, anywhere on its town's pixel in the street. With
   them: their bones ("The remains of Ysolde Hlaalu", the port's own item, template 1810), the heirloom and a tenth of
   their purse (at most 2,500 gold). They are a LIST THE RECORD OWNS, opened as a container where they lie - the
-  inventory window over it, in any mode (`openLootList`) - once a visit, never in a fight: what the heir leaves stays
-  with them, and nothing is ever laid in the world twice (AUDIT LEGACY H1). The bones are always somewhere - in the list
-  or in the heir's keeping (the pack, the wagon or the Materials Bag); gone from both (sold, dropped), they lie again
-  where the fallen fell.
+  inventory window over it, in any mode (`openLootList`), by itself once a visit and never in a fight (the body below is
+  pressed as any body, a fight included - DFU's loot window pauses the world): what the heir leaves stays
+  with them, and nothing is ever laid in the world twice (AUDIT LEGACY H1). AND THEY ARE SEEN THERE (FB1013d
+  REMAINS-STAND, `01-Overview/bugs/Field-Bugs-2026-10-13d.md`: H1 had taken the pile's picture with the pile, and in Castle
+  Wayrest's halls an heir walked past a six-pace spot nothing marked): a body - their own picture, a line of light over
+  it - stands where they lie, on the floor under the fallen's last position underground (in their own dungeon: its row,
+  its pixel, its own key and the size it was built at - a made dungeon is no table row, the Undercroft wears its city's,
+  and another size is another layout: AUDIT FB1013d O1 and B1, `01-Overview/audits/Audit-FB1013d.md`) and at the spot outdoors
+  (at the height they stood), in the pool of the host the heir stands in; its list is the record's own
+  (`scenes/legacyRemainsStand.js`), so it is pressed as any body and no save carries it. A death in a dungeon built
+  whole - an instance (`11-Multiplayer/Instances.md`), or a quest's dungeon entered whole - lies in the dungeon whole,
+  which the public room of a dungeon the world lays smaller never is, and another player's instance admits only its
+  owner's party: so where the line's remains lie whole and the public room is laid smaller, the death quest's place is
+  "a dungeon with your quest", and its door offers the heir an instance of their own - the dungeon whole, Daggerfall's
+  own blocks in every build, which stands them where they fell (HEIR-WHOLE, FIELD BUGS 2026-10-19f,
+  `01-Overview/bugs/Field-Bugs-2026-10-19f.md`; `systems/instancePlaces.js` remainsWholeAt). A death in the public room
+  lies in the public room, laid smaller or whole, as it always did. A death in a building keeps the street's law and
+  stands none. "Never in a fight" is the place the heir stands in (LIVE-FIGHT: the street's pools,
+  frozen underground, kept it shut on the spot), and a duel or a hostile ship in reach is a fight there too (AUDIT
+  FB1013d B3, the rest refusal's own reads). The bones are always somewhere - in the list or in the heir's keeping (the
+  pack, the wagon or the Materials Bag); gone from both (sold, dropped, or carried off by a claimant now dead or retired),
+  they lie again where the fallen fell; put back into the list, they lie there again, the claim kept (AUDIT FB1013d A1,
+  A3).
 - **The death quest**, "The Bones of <name>", is the heir's from their first day: the journal names where and the
   killer, the Quest Guide's tracker follows it (GUIDE4) and the marks point at it (GUIDE5). THE KILLER REMEMBERED - the
   revenant that slew the fallen (Revenants' own record, "Slew") hunts the heir, and the journal names it by its own name
@@ -279,7 +312,7 @@ finishChargen`, `test/legacychoice.test.js`, `tools/mutants/legacychoice.json`):
   wagon, the bag - and into no chest, pile or ground (H4).
 - **The load's repairs reach what the line hands down (ITEM-WALK B, 2026-10-07).** A bequest reaches its heir at birth
   with no load, and the remains open where they lie, from the line's record, which may be the device's copy rather than
-  a save's (`mergeFamily`). The load's one-time item repairs (`systems/save.js` repairItemLists: DISC21-A, WEAPON-POOL,
+  a save's (`mergeFamily`). The load's one-time item repairs (`systems/save/save.js` repairItemLists: DISC21-A, WEAPON-POOL,
   DISC29-B, WB12a, RARITY-WEAR) run on each bequest piece as it is paid (`payEstateOf`), and on a remains list as it
   opens, before its claim's mark is taken, so opening it still claims nothing. A save's copy of the record is walked
   at every load besides (`heldItemLists`). `05-Combat/Physical-Combat-Overhaul.md` ITEM-WALK.
@@ -288,7 +321,7 @@ finishChargen`, `test/legacychoice.test.js`, `tools/mutants/legacychoice.json`):
 
 *Built: LEGACY5. The law is `systems/legacy/marriage.js`; the host's half `scenes/legacyHost.js` (`topicRows`,
 `weddingStep`, `childrenStep`, `residentDied`, `holdsResident`, the spouses in `residentsOf`); the talk's rows
-`scenes/townTalk.js` (`legacyTopics`); the wiring `scenes/world.js`; pinned in `test/legacy5_marriage.test.js`,
+`scenes/townTalk.js` (`legacyTopics`); the wiring `scenes/world.js`; pinned in `test/systems/legacy/legacy5_marriage.test.js`,
 mutation-proven in `tools/mutants/legacy5.json`. Two players' characters wed online: LEGACY7 part three (section 9).*
 
 - **Courting** a Living World townsperson of a household (the census's `h` roll - never one of the watch, a traveller
@@ -296,7 +329,8 @@ mutation-proven in `tools/mutants/legacy5.json`. Two players' characters wed onl
   FRIEND (`FRIEND_AT`, 40), or one already courted. Their talk's Tell me about page opens with Project Legacy's own
   rows, on both skins (`townTalk.js legacyTopics`, answered by the host - never the engine's pipeline): "Courtship"
   once a day of the one played's own clock - affection by Personality and Etiquette and the question's tone, on a roll
-  (`courtGain`) - then, at 100, "Marriage": a proposal, taken. The courtship keeps the resident as they are (name,
+  (`courtGain`; TONE-TASTE, 2026-10-15: the tone as the resident took it - kindly +3, ill a loss of 3, never below
+  nothing, `06-Systems/Living-World.md` TONE-TASTE) - then, at 100, "Marriage": a proposal, taken. The courtship keeps the resident as they are (name,
   sex, race, face, town) - their identity is for life, so the wedding needs no town loaded (AUDIT LEGACY III A4/P2: the
   record's reader kept only the name and the town, and every wedding after a load made a male Breton with no face).
   Nobody of the house is courted, nor one another member is betrothed to (A1: two members wed one townsperson - one
@@ -335,15 +369,15 @@ mutation-proven in `tools/mutants/legacy5.json`. Two players' characters wed onl
   `firstNameOf`, since LW4), so its "{who} {house}" read "Tlist Sentinel" for a house named for its seat, and says
   "{who}" now. **AUDIT LEGACY III A16/F2 corrected this line:** it said the news doubled a surname ("Ysolde Hlaalu
   Hlaalu, gone."), which no town ever said.
-  Pinned in `test/legacyname.test.js`, mutation-proven in `tools/mutants/legacyname.json`.
+  Pinned in `test/systems/legacy/legacyname.test.js`, mutation-proven in `tools/mutants/legacyname.json`.
 
 ## 9. ONLINE
 
 *LEGACY7 - built: the line, the tombstone, the member's birth and the house name (`server-account/src/legacy.js`,
-migration `0084_legacy.sql`, acct87; `systems/legacy/realmLine.js`; `test/legacy7_service.test.js`,
-`test/legacy7_online.test.js`, `tools/mutants/legacy7.json`), and two players wed (part three: `net/wedSession.js`, the
+migration `0084_legacy.sql`, acct87; `systems/legacy/realmLine.js`; `test/server/legacy7_service.test.js`,
+`test/systems/legacy/legacy7_online.test.js`, `tools/mutants/legacy7.json`), and two players wed (part three: `net/wedSession.js`, the
 `wed` frame of world174 (world172 on its branch, renumbered past main's WATCH-FIX and SERPENT3 at the merge),
-`server-account/src/legacy.js` realmWed; `test/legacy7_wed.test.js`, `tools/mutants/legacy7wed.json`).*
+`server-account/src/legacy.js` realmWed; `test/systems/legacy/legacy7_wed.test.js`, `tools/mutants/legacy7wed.json`).*
 
 - **The model is the family's**, chosen at the founder's online chargen - Bloodline open online (AUDIT LEGACY B4 shut it
   while a permadeath had no authority there; the tombstone is that authority), said on its card: "Online, the realm
@@ -353,7 +387,8 @@ migration `0084_legacy.sql`, acct87; `systems/legacy/realmLine.js`; `test/legacy
   rev alone, a device that touched its copy three times wrote over a death another device had written); a stale one is
   answered with the stored record, which the client merges its facts into (`store.js mergeFacts`: a death only ever added) and writes again, one past both. Every
   online boot reads the account's lines into the device's store before any save is restored (a death another device
-  wrote stands there), and each write of the device's is followed by the realm's (`realmLine.js push`); a switch, a
+  wrote stands there) - asked at the join beside the account's roster and read behind the boot, waited for where
+  Project Legacy's host is made (BOOT-OVERLAP in `07-Rendering/Performance-Priority.md`) - and each write of the device's is followed by the realm's (`realmLine.js push`); a switch, a
   succession and a birth wait for it (`flush`) before the page goes.
 - **A Bloodline death is a tombstone** (`POST /v1/realm/die`, under the playing session's lease - `realmSaves.js` session
   `die`): the service stamps `dead_at` and drops the lease, and from then refuses the character's join (`dead`, 410),
@@ -365,7 +400,8 @@ migration `0084_legacy.sql`, acct87; `systems/legacy/realmLine.js`; `test/legacy
   token's mint alone is no act, and mints it no realm character (`rc` 0). The tombstone frees the roster slot
   (`REALM_CHARACTERS_MAX` counts the living) and leaves the roster; the family's record keeps them (the Hall). The page stays for the Succession; the
   heir's boot waits on the realm's word (a tombstone refused is said - "The realm did not hear of this death yet" -
-  and asked again before anyone carries on).
+  and asked again before anyone carries on). REZ-BLOODLINE (below): the door's tombstone carries a HOLD - dead at once,
+  the lease that fell kept aside - so a party's Resurrect inside its window can take the death back (`/v1/realm/raise`).
 - **A member's birth** is `realmCreate` with `{ lineage, person }`: the service checks the person is a living member of
   the caller's own line (never dead, retired, wed in or a minor) that no realm character has played (`lineage-played`;
   a unique index behind it), and names them on the row for good. A birth whose first save never landed is taken up
@@ -377,7 +413,7 @@ migration `0084_legacy.sql`, acct87; `systems/legacy/realmLine.js`; `test/legacy
   LEGACY7 an online founder kept the client's id in the record while the realm named the character anew, so its saves
   were refused into the record and its next load founded a second house.
 - **Enduring online** is the offline law: the toll, the rise, the elder's mantle.
-- **A house name online** (LEGACY7 part two, `net/houseLaw.js`; world174, acct87; `test/legacy7_house.test.js`,
+- **A house name online** (LEGACY7 part two, `net/houseLaw.js`; world174, acct87; `test/net/legacy7_house.test.js`,
   `tools/mutants/legacy7house.json`): the account service reads a realm character's house off its line and signs it
   into the identity token beside the guild's tag - `hn` the surname, `hc` the member's given name, `hb` a Bloodline,
   `hg` the generation's numeral from the second of a name ("Ysolde II") - through the name filter (the house is shown
@@ -414,11 +450,13 @@ migration `0084_legacy.sql`, acct87; `systems/legacy/realmLine.js`; `test/legacy
   A wedding is a fact as a death is when two copies of the line merge (`store.js mergeFacts`).
   **Departures (recorded):** the design's "both asking the priest" is the Inspect card's proposal and the other's
   prompt, inside a temple - the priest is DFU's static NPC, as section 8 says; and each house raises its own children
-  of the union (two records, two clocks - the realm keeps no shared child).
+  of the union (two records, two clocks - the realm keeps no shared child). A player read it as a bug ("Only one of us
+  could actually see the heirs" - FIELD BUGS 2026-10-12b): the children on both trees, seen through the marriage, is
+  planned there (UNION-CHILDREN), the owner's call.
 
 ## 10. WORLD INFLUENCE
 
-*LEGACY6's - built (`systems/legacy/influence.js`; `test/legacy6_influence.test.js`, `tools/mutants/legacy6.json`).*
+*LEGACY6's - built (`systems/legacy/influence.js`; `test/systems/livingWorld/legacy6_influence.test.js`, `tools/mutants/legacy6.json`).*
 
 - **What a member leaves.** At every save (and at their death) the one played's STANDING is written on their person
   (`memberStanding`): their legal reputation in every region, their faction standings (the forty furthest from nothing)
@@ -455,7 +493,7 @@ save from the family's dates. The years are the family's fiction, the world's cl
 
 *Built: LEGACY-HOME. The law is `systems/legacy/household.js`; the host's half `scenes/legacyHost.js` (`residentsOf`,
 `kinOfResident`, `kinSlain`, `kinKilled`, `isFamilyHouse`, `markHome`); the wiring `scenes/world.js`; pinned in
-`test/legacyhome.test.js`, mutation-proven in `tools/mutants/legacyhome.json`.*
+`test/systems/legacyhome.test.js`, mutation-proven in `tools/mutants/legacyhome.json`.*
 
 Mac (2026-10-05): "I think your bloodline should be visible when not playing, and if a house is owned should live in the
 house ... With the ability to switch by interacting with them or by using the ui. Really trying to flesh this out since
@@ -487,26 +525,27 @@ than standing still.
   and the town by day), found in the street and in the house (LW8's rooms). A HOUSE OF THE FAMILY'S holds the line and
   no one else (the census's people of that building are not shown inside it, the one played's own house included); every
   other room of the player's own stays empty, as AUDIT-E1 has it.
-- **How they are drawn.** IN THEIR OWN BODY (LEGACY7 part four, `world/familyBodies.js`; `test/legacy7_body.test.js`,
+- **How they are drawn.** IN THEIR OWN BODY (LEGACY7 part four, `world/familyBodies.js`; `test/systems/legacy/legacy7_body.test.js`,
   `tools/mutants/legacy7body.json`), as the design asked: a member whose newest save wrote down their LOOK - what they
   wore, the hello's own recipe (`family.js memberLook`: race, sex, face, class, the worn kit's doll fields; written at
   every write of the one played, dropped at a death) - is drawn in the street and in a room as an online peer is drawn
   on this screen: a Morrowind body where this client stands those (the enhanced lane with the data), else their class's
   sprite or their paperdoll as the 'Other players' card says - by layers of the line's own (`net/remotePlayers.js`,
-  `net/peerBodies.js`), with no sound: a townsperson's steps are the town's. The street's walker and the room's seat
+  `net/peer/peerBodies.js`), with no sound: a townsperson's steps are the town's. The street's walker and the room's seat
   stay their talk target; only the picture moves. A member never played has no look and wears the town's outfit - DFU's
   walkers have three tables (Breton, Nord, Redguard), and the member's race picks the nearer (the elves and the Bretons
   the Breton, the beast folk the Redguard), the same one every day. **Departure (recorded):** the look keeps no Eye Of
   The Beholder set (`eo`) - that is how a player chose to be seen online, not how the house remembers its own. In the
   talk window they wear THEIR OWN FACE: the chargen head they were made with (`raceArt(race, sex).heads`, record
-  `face`; `ui/nativeTalk.js` takes a FACE*.CIF as the portrait's archive).
+  `face`; `ui/native/nativeTalk.js` takes a FACE*.CIF as the portrait's archive).
 - **Talking to them.** The talk door meets them first (`townTalk.js` `livingTalk.kin`, after the refusals and the
-  household's moment): the Succession's window with one card (`ui/legacyDoor.js` `createKinOverlay`) - what they are to
+  household's moment): the Succession's window with one card (`ui/legacy/legacyDoor.js` `createKinOverlay`) - what they are to
   the one played ("Your sister.", `kinLine`), their greeting by kinship ("Mother! You're home.", `kinGreeting`) and how
   the house fares, then **Play as <name>**, **Talk** (the town's own conversation, their head in the window) and
   **Goodbye** (Escape). Play as is the Family tab's switch - saved where they stand first (in a house of the line, the
   one played is parked there and stays standing in it); a member never played is BORN in the town they were met in, one
-  played loads their own save. It is refused on the card, with its reason, mid-fight, while the Succession waits
+  played loads their own save (met at a home of the house's own off a town's map - a farm - born there: FB1012d
+  SEAT-HOME). It is refused on the card, with its reason, mid-fight, while the Succession waits
   (AUDIT LEGACY III F13/W7: "online" was dropped from this list - the Online bullet below has it open), and for a retired elder ("has passed the mantle on, and keeps the house now").
 - **Struck down.** One of the line killed by the one played (the town's one-hit civilian, LW7) dies IN THE RECORD -
   `died` with cause `slain` and by whose hand, a world fact, the store's (AUDIT LEGACY's first authority) - said on the
@@ -517,11 +556,15 @@ than standing still.
   census's turn (`livingKilled` passes them to the host first: a turn of the lives' named a census place not theirs,
   and the record, alive still, stood them again with the next day's people). A townsperson killed so ends their
   courtship, as one struck down does. Neither death lays remains or a quest: those are the one played's (section 4).
-- **Online** (LEGACY7 part five, `test/legacy7_homes.test.js`, `tools/mutants/legacy7homes.json`): the realm keeps the
-  line, so a realm character's ONLINE HOMES (HOME1, `systems/onlineHomes.js` - a home is a realm character's) are its
+- **Online** (LEGACY7 part five, `test/systems/legacy/legacy7_homes.test.js`, `tools/mutants/legacy7homes.json`): the realm keeps the
+  line, so a realm character's ONLINE HOMES (HOME1, `systems/online/onlineHomes.js` - a home is a realm character's) are its
   houses, learned with the save as a deed is offline: the world reads this realm character's rows of the account's
   homes (`/v1/homes/mine`, each named by its town) at the boot and after each home of mine is bought, sold or changed
-  (the registry's `onWrote`), and hands them to the house; a list not read yet learns nothing and drops nothing. So the
+  (the registry's `onWrote`), and hands them to the house; a list not read yet learns nothing and drops nothing.
+  ACCOUNT-HOMES (2026-10-06, `06-Systems/Online-Arc.md`): a home is its ACCOUNT's now, every member's - so the world
+  hands the account's rows (`heldHousesWhole`) and the house learns them WHOLE (`household.js` syncHouses `whole`): a
+  home another character of the account sold leaves the line at the next save, where only the played member's own rows
+  moved before (`test/systems/legacy/legacy7_homes.test.js`, `tools/mutants/account_homes.json`). So the
   line lives in its online homes as offline in its deeds - parked there, the family home among them - seen by this
   player alone (the Living World is each client's own). **AUDIT LEGACY II F2/B4 moved by its own slice:** that audit
   found the realm's homes learned against the arc's word that they were the account service's, and shut them out; the
@@ -544,7 +587,7 @@ than standing still.
 *Built: PERMADEATH-HOUSES (2026-10-09). The law is `systems/legacy/household.js` (`deedsDue`, `syncHouses`' `taken`,
 `heldByDead`); the host's half `scenes/legacyHost.js` (`takeDeeds`); the world's `scenes/world.js` (`legacyInheritHouse`);
 the scene handed on `systems/sceneCache.js` (`graftPermanentScene`); online `server-account/src/homes.js` (`inheritHome`,
-`/v1/homes/inherit`, acct98 - acct97 on its branch, renumbered past SERVER-POST and HOURS-FIRST at the merge). Pinned in `test/permadeath_houses.test.js`, mutation-proven in
+`/v1/homes/inherit`, acct98 - acct97 on its branch, renumbered past SERVER-POST and HOURS-FIRST at the merge). Pinned in `test/systems/legacy/permadeath_houses.test.js`, mutation-proven in
 `tools/mutants/permadeathhouses.json` (30, all dead).*
 
 The owner (2026-10-09): "now all that needs to be looked at is what happens to houses owned by dead permadeath
@@ -600,8 +643,10 @@ world, locked to its own family.
 ## 11. THE UI (Enhanced Plus)
 
 - **The Family tab** of the pause window (Mac: "implement it into the pause menu as a new tab"; KB1 action
-  `LegacyFamily`, the keypad's slash), drawn while Project Legacy is on, on either skin (the pause window is the
-  enhanced one; Ledger A row (9)) - `ui/familyPages.js`, three pages on the rail:
+  `LegacyFamily`, the keypad's slash), drawn while the game is played with Project Legacy - the mod on and a house for
+  the game played (FAMILY-TAB, section 6) - on either skin (the pause window is the enhanced one; Ledger A row (9)) -
+  `ui/familyPages.js`, four pages on the rail (the fourth, **How it works** - the family's whole law in words -
+  PLAIN-UI's, 2026-10-12, at this page's foot):
   - **The tree**: generations as rows, couples joined - every spouse a member has had beside them, the earlier on the
     left, each marriage's children hung beneath it (AUDIT LEGACY III A14/U4) - and stacked under its card by the pane's
     width, never the window's (U3); the dead and the one played marked on
@@ -614,21 +659,23 @@ world, locked to its own family.
   - **The house**: its model, its seat, its generations, the living and the fallen of the blood (how, where and by whom
     each fell; a spouse among the house's dead said wed in - AUDIT LEGACY III A15/U9/F6), and
     (LEGACY-HOME) its homes, the family home among them, the player's to choose (section 10b). FAMILY-SEAT (FIELD BUGS
-    2026-10-07b, `01-Overview/Field-Bugs-2026-10-07b.md`; afjiz: "the option in the enhanced ui to reset your family
+    2026-10-07b, `01-Overview/bugs/Field-Bugs-2026-10-07b.md`; afjiz: "the option in the enhanced ui to reset your family
     seat to a town your currently in"): the seat noted at the first town - a road crossed, a journey's way - moves, two
     presses as a switch is, to the town the one played stands in (its streets or a building of it, never a dungeon
     under it; never while a Succession waits): `Make <town> the family seat` (`scenes/legacyHost.js` familySeatHere,
-    moveFamilySeat). The heirs are born there, the fallen laid to rest there, the house's news told there, and a house
+    moveFamilySeat). FB1012d SEAT-HOME (`01-Overview/bugs/Field-Bugs-2026-10-12d.md`; "the house (admittedly a tiny hovel on
+    a farm) purchased and made the seat of the house ... was not where the heir ended up spawning"): or to a place where
+    the house holds a home of its own - a farm, a manor (`placeHere`, by the place's map id against the line's houses). The heirs are born there, the fallen laid to rest there, the house's news told there, and a house
     with no home lives there; the house keeps its name. A moved seat carries when (`seat.at`, the wall clock - after the
     stamp of the seat it moves), and the later move stands in every merge, whichever copy is the newer
     (`systems/legacy/store.js` mergeFacts, `scenes/legacyHost.js` mergeFamily) - the newer copy by rev kept its own seat,
     so a stale tab's write carried the old one back over the move. The name stays the house's in every merge: a copy
     that never learned it takes it from the copy that holds it (`systems/legacy/family.js` nameHouse) - never names
     itself for a moved seat. Where the move is not offered, the page says where it is. (AUDIT FB1007b S1-S5, T3:
-    `01-Overview/Audit-FB1007b.md`.)
+    `01-Overview/audits/Audit-FB1007b.md`.)
   - **The Hall of Ancestors**: every house founded on this machine, living and ended, with its generations and counts.
 - **The Succession** (at a final death, a passing of the mantle, or a save of the past loaded): its own window
-  (`ui/legacySuccession.js`, `ui/legacyDoor.js`), the death's own screen while it stands - the fallen's line, then the
+  (`ui/legacy/legacySuccession.js`, `ui/legacy/legacyDoor.js`), the death's own screen while it stands - the fallen's line, then the
   living who may carry it, then "A child of <name>" - one press; the keyboard and the pad walk it; Escape answers
   nothing (a death must be answered).
 - **The model's question** at the founder's chargen, after the leveling system's, on its screen (both skins): Enduring
@@ -638,11 +685,11 @@ world, locked to its own family.
   remains found, carried and laid to rest.
 - **The character sheet** (LEGACY-SHEET - the arc's first plan, "the age and the elder's word on the character sheet",
   which AUDIT LEGACY F2 found never built): the pause window's Stats page, its Character section, draws the one played's
-  house off their own card (`ui/familyPages.js sheetHouse`, `ui/enhancedMenu.js statsCharacter`) - the model and the
+  house off their own card (`ui/familyPages.js sheetHouse`, `ui/enhanced/enhancedMenu.js statsCharacter`) - the model and the
   generation, and in an Enduring house the age against the span, Arkay's toll and the elder's word ("An elder of the
   house: the mantle may pass from you on the Family tab."; "Your span is spent: your next death is your last."). One line
   of age (`ageWord`) is the card's and the sheet's, so they never disagree. The classic skin's F5 sheet is DFU's own art
-  with no slot for it; the pause window carries it in either skin. Pinned in `test/legacysheet.test.js`, mutation-proven
+  with no slot for it; the pause window carries it in either skin. Pinned in `test/systems/legacy/legacysheet.test.js`, mutation-proven
   in `tools/mutants/legacysheet.json`.
 - **Not built** (recorded): the mod's classic 1:1 window in its own art (its pictures are the classic UI's own cuts,
   section 1; Ledger row (9): every skin draws the Enhanced Plus tab), a house's standing by region apart from its
@@ -656,18 +703,25 @@ world, locked to its own family.
 | LEGACY2 | Enduring: the span, the toll, the offline respawn, the elder, passing the mantle; the model's chargen question | built |
 | LEGACY3 | the Family tab (Enhanced Plus); the Succession; the Hall | built |
 | LEGACY4 | heirlooms, the remains, the death quest, the rest and the blessing | built |
-| AUDIT LEGACY | the five-lens audit of LEGACY1-4 (`01-Overview/Audit-Legacy.md`) - the two authorities, the death at the door | built |
+| AUDIT LEGACY | the five-lens audit of LEGACY1-4 (`01-Overview/audits/Audit-Legacy.md`) - the two authorities, the death at the door | built |
 | LEGACY5 | courting, marriage, children, surnames' cadet branches | built |
 | LEGACY6 | world influence: the inherited standing and regard, the towns' talk, the killer remembered | built |
 | LEGACY7 | online: the service's lineage, the tombstone, the heir's realm birth, the house name; two players wed (part three); the line in its own body (part four) and in its online homes (part five) | built |
 | LEGACY-SHEET | the house on the character sheet: the model, the generation, an Enduring house's age, toll and elder's word (section 11) | built |
 | LEGACY-NAME | a house founded nameless named at its seat; a seat's house said once; the news's doubled surname (section 8) | built |
-| FAMILY-SEAT | the seat moved from the House page to the town the one played stands in; the later move stands in every merge, and the house's name with it (section 11; `01-Overview/Field-Bugs-2026-10-07b.md`, `01-Overview/Audit-FB1007b.md`) | built, audited |
+| FAMILY-SEAT | the seat moved from the House page to the town the one played stands in; the later move stands in every merge, and the house's name with it (section 11; `01-Overview/bugs/Field-Bugs-2026-10-07b.md`, `01-Overview/audits/Audit-FB1007b.md`) | built, audited |
+| FB1012d | HEIR-CLONE (the page bearing an heir offers no Succession; a save writes only the one in the world), SEAT-HOME (the seat moved to a home of the house's own - a farm), BIRTH-START (the Online page's birth in its seat); UNION-CHILDREN planned (sections 4, 9, 10b, 11; `01-Overview/bugs/Field-Bugs-2026-10-12d.md`) | built |
 | LEGACY-CHOICE | the popup online: Enduring, Bloodline or no lineage at chargen, kept on the character; online a house founded at a birth alone - a character loaded with no house plays without one (section 6) | built |
+| FAMILY-TAB | no house, no Family tab: the tab drawn while the game is played with Project Legacy (the mod on and a house for the game played); the key says why without one (section 6) | built |
 | AGELESS-CURSE | the cursed pay no toll: a vampire, a werewolf or a wereboar in an Enduring house rises from every death with no years taken, the span spent or not; cured, the toll again (section 6) | built |
 | LEGACY-HOME | the bloodline in the world: the family home, the seat's townsfolk, their day, Play as by talking (section 10b) | built |
-| AUDIT LEGACY II | the six-lens audit of LEGACY1-4 and LEGACY-HOME (`01-Overview/Audit-Legacy-II.md`) | built |
-| AUDIT LEGACY III | the six-lens audit of the whole arc, server side too (`01-Overview/Audit-Legacy-III.md`) - character-bound weddings, the line's own route bound, the write made from what it read, two copies' persons kept apart, the news on the reader's clock | built |
+| AUDIT LEGACY II | the six-lens audit of LEGACY1-4 and LEGACY-HOME (`01-Overview/audits/Audit-Legacy-II.md`) | built |
+| AUDIT LEGACY III | the six-lens audit of the whole arc, server side too (`01-Overview/audits/Audit-Legacy-III.md`) - character-bound weddings, the line's own route bound, the write made from what it read, two copies' persons kept apart, the news on the reader's clock | built |
+| FB1013d | REMAINS-STAND (the remains seen where they lie: a body over the record's own list), LIVE-FIGHT (the remains' fight is the place the heir stands in); ESTATE-WIDER planned - the wagon and the bank's balance, the owner's call (section 7; `01-Overview/bugs/Field-Bugs-2026-10-13d.md`) | built |
+| AUDIT FB1013d | the three-lane audit of REMAINS-STAND and LIVE-FIGHT (`01-Overview/audits/Audit-FB1013d.md`) - the fallen's dungeon by its row, its pixel, its own key and the size it was built at; the height the death's to ask; a duel and a hostile ship a fight; a claim lapsed at the stand lays its bones at once; a load lets the bodies go and the tick waits out a world moved; the bones put back lie again | built |
+| REVIVE | a death taken back by the operator, and it holds: the `revived` stamp every copy and the realm's write honour; the "Realm revive" run (Time Travel read, guarded writes) - for TheHalfinStream, Mac: "Full revive" (section REVIVE) | built |
+| REZ-BLOODLINE | a friend's Resurrect saves a Bloodline character: online the door writes the death and the realm holds it (its tombstone's hold) while a Resurrect can raise it - the realm's yes takes it back on every copy; the window closes at the reset, its end, a load or the page going (a killed tab: the realm's minute); closed, the body stays down and the caster is told; AUDIT R1-R3 (section REZ-BLOODLINE; `01-Overview/bugs/Field-Bugs-2026-10-16b.md`) | built |
+| HEIR-WHOLE | the remains of a death in an instance reached: they lie in the dungeon whole, and where the world lays its public room smaller the death quest's place is "a dungeon with your quest" - its door offers the heir an instance of their own, one room a death while they lie, which stands them where they fell; public-room remains as they were (section 7; `11-Multiplayer/Instances.md` section 4; `01-Overview/bugs/Field-Bugs-2026-10-19f.md`) | built |
 
 ## WED-GATE - a character who may wed, weds (FIELD BUGS 2026-10-08)
 
@@ -680,7 +734,170 @@ answered every one received `no` and refused every Yes (net/wedSession.js). Sinc
 LEGACY III's prefix (never lying dead) kept it. Now `legacyHost ? legacyHost.wedRefusal() : 'house'` - 'house' only
 with no house host. The model (Enduring or Bloodlines) was never read by either gate, the realm's included. THE FOUR
 HOSTS: the wedding is the world host's alone (`scenes/exterior.js`, `scenes/worldModes.js` and
-`scenes/dungeonContext.js` carry no realm session). `test/legacy7_wed.test.js` runs `wedCan` out of its own text (the
+`scenes/dungeonContext.js` carry no realm session). `test/systems/legacy/legacy7_wed.test.js` runs `wedCan` out of its own text (the
 null is null, each refusal the house's own, the dead, a death, a relay that cannot carry it, offline);
 `tools/mutants/legacy7wed.json` FB1008-wed-the-null-read-as-no-house, dead. Its standing survivor
 LEGACY7W-partner-dead-or-lineless survives on main as well - not this change's, recorded for its arc.
+
+## PLAIN-UI - How it works (2026-10-12)
+
+The Family tab's fourth page, HOW IT WORKS (`src/ui/familyPages.js` `familyGuide`, `drawGuidePage`): the house, death in the house's own model and its toll, who carries on, what carries on (the estate to whoever takes the line; the blood and the hearth a newborn's, at birth), heirlooms and remains, marriage and children, playing another, and the tree's marks - every number the law's own - and the tab's type a step larger. AUDIT PLAIN-UI (`01-Overview/audits/Audit-Plain-UI.md`) set its words against `family.js`, `heirloom.js`, `marriage.js` and `scenes/legacyHost.js`. A player: "Same issues with the project legacy system." The record: `10-UI/Plain-Words.md`.
+
+## REVIVE - a death taken back, and it holds (2026-10-14, acct132)
+
+Mac, of TheHalfinStream's Enduring elder - who died of her years in Castle Wayrest on 2026-10-13 while the remains bug
+(`01-Overview/bugs/Field-Bugs-2026-10-13d.md` REMAINS-STAND) hid what she lay with: *"I want to roll back this specific
+account"*; of three ways offered, *"Undo the death"*; told a plain undo would not stick, *"Full revive"*.
+
+WHY A PLAIN UNDO DOES NOT STICK. A death is a fact every copy of a line keeps (`store.js` mergeFacts: "a death is only
+ever added"), and every device that played the line holds a copy - its store, every member's save. Clear the death from
+the realm's copy alone and the first stale copy to meet it adds it back; the realm's write (`legacy.js` putLineage) then
+entombs her again (entombLineDead). So a death taken back is a fact of its own, carried the same way.
+
+THE LAW (`src/systems/legacy/revived.js`, pure, the client's and the service's): the person is stamped `revived:
+[diedAt]` - the `died.at` of each death taken back - and every copy that meets the stamp drops THAT death and what it
+laid: her `died`, the remains row (`of` her, `at` it) and the Succession it left waiting (`pending`, `fallenId` her,
+`at` it). A later death is another `at`, and stands. Three doors hear it: `store.js` mergeFacts (whichever copy carries
+the stamp), `legacyHost.js` mergeFamily (the save against the store, when the store is the base) and
+`server-account/src/legacy.js` putLineage, which takes the STORED copy's stamps into every copy sent before it is shaped,
+compared or entombed - so a device that never heard of the revival writes no death and entombs nobody. `family.js`
+readFamily keeps the stamp. No migration: the stamp rides the record, and putLineage already read it.
+
+THE OPERATOR'S RUN (`tools/reviveRealmCharacter.mjs`, `.github/workflows/realm-revive.yml` "Realm revive"), by hand,
+a dry run by default, its inputs as environment, RESTORE C's Time Travel pattern (`realm-restore.yml`): the fallen
+found first (her death in the window 2026-10-12T12Z-2026-10-14T12Z, or the `character` named), nothing held until
+then; the account service held for maintenance (~1 minute); the present bookmarked and counted; D1 rewound to two
+minutes before the death and read (her seat, her homes, the pieces she held, her unions); the present ALWAYS put back,
+proven by its counts; what stands now read and planned; the plan written only with `apply` on; the hold lifted, never
+over a rewound database. What it writes, each statement guarded on the row as the plan read it (a second run writes
+nothing twice; a run cut short is planned again):
+
+- the tombstone (`realm_characters.dead_at`, `dead_why`) cleared, only over the death the plan read and only while the
+  roster has room - her save, the last checkpoint before the death, is hers again with everything she carried;
+- the line's record stamped and her death dropped, the house rows her heir took up hers again (`from` back to `by`),
+  its rev moved `REV_MARGIN` (100) past every copy's, written only at the rev it read;
+- the homes her heir inherited (`homes.char_id`) hers again, where her heir still holds them (`keep_homes` leaves them);
+- her guild seat put back as she held it - HELD when she was the master and another was made master at her death, or
+  the guild is gone or full (`keep_guild` leaves it);
+- the ledger: the pieces she held that her heir holds now hers again, the heir's copies known copies (`item_dupes`) -
+  else her first checkpoint claims them and the heir's proves them copies charged to her; what nobody holds her
+  checkpoints register again; what another account holds is HELD;
+- her union with another player's character REPORTED, never reopened - their house heard she died.
+
+Her heir stays, a living member, theirs to keep or delete from the Online door. Her years stay spent: an Enduring
+elder's next death is final, as it was. `test/systems/legacy/revive.test.js` (9) runs it over a real death on the real Worker's
+service - the plan applied and run again, a stale device's write after it, the held cases, the tombstone guard, the
+workflow's shape; `tools/mutants/revive.json` (30) all dead.
+
+UNVERIFIED until the dry run reads production: whether she played online at all (offline, nothing here applies - her
+device's own store holds the death), whether she held a guild seat or a union, and that Time Travel still reaches
+2026-10-13 (thirty days on the Paid plan, seven on the Free one).
+
+REVIVE-MODE (2026-10-14, the first run). Mac ran "Realm revive" for TheHalfinStream with `keep_homes` and `apply` on.
+It found her (`r72ba7934a8847d28597a`, read two minutes before her death, 2026-10-13T03:21:42Z), held the service,
+rewound, read, put the present back (proven by its counts) and failed at the plan: the tool chose its mode by asking
+whether `--find` was ANYWHERE in its words, before asking `--plan` - and the plan's own line carries `--find
+<found.json>`, so it ran as a find and read a facts file the line never named ("The "path" argument must be ... Received
+null"). Nothing was written; the hold lifted; acct132 answered. The mode is now the first word alone, and
+`test/systems/legacy/revive.test.js` runs the tool's `--find` and `--plan` as the workflow's own lines write them (mutant
+REV-the-mode-any-word, dead). The run is to be made again.
+
+REVIVE-SIZE (2026-10-14, Mac: "are you sure it works"). Read against what the first run found - her line at rev 307, a
+guild seat, three homes, 101 ledger pieces, a union - the plan wrote the line's WHOLE record into one statement, and a
+record may be 128 KiB (LINEAGE_MAX_BYTES) where D1 refuses a statement past 100 KB. The record is now an EDIT IN PLACE
+(`recordEdit`: SQLite's json_set/json_remove over the stored text - the people changed, set whole by index; the remains
+rows dropped, by index, the last first; the Succession; the house rows changed; the rev), proven before it is answered
+(the same edit made in the tool must give the law's record exactly, else the line is held). The line is written BEFORE
+the tombstone, so a write cut between them leaves her dead under a stamped line - run again - never alive under a line
+whose next write entombs her. And a plan with any statement past STATEMENT_MAX_BYTES writes NOTHING. Checked with it:
+nothing deletes a fallen character's saves (no cron touches realm_characters or the bucket; a tombstone only refuses
+writes) and the game never checkpoints a dead character, so the save the revival hands back is her last before the death.
+
+## REZ-BLOODLINE - a friend's Resurrect saves a Bloodline character (FIELD BUGS 2026-10-16b)
+
+THE REPORT ("Bloodline Resurrection."): *"I was testing with a friend, he dies and I cast resurrection. It works for a
+moment then he disappears and remains dead."* The screenshot: "...of Gothway Garden has Fallen - You died without a
+descendant. There is no one left of the house of Gothway Garden. The line ends here, and its tree is kept in the Hall of
+Ancestors."
+
+FOUND. AUDIT LEGACY A1/B3 (`01-Overview/audits/Audit-Legacy.md`) decided a death AT THE DOOR so an F11 or a closed tab could not
+undo it - and online, since LEGACY7, the door wrote everything a Bloodline fall writes: the death on the record, the
+remains, the Succession waiting (`family.pending`), and the realm's tombstone (`POST /v1/realm/die`: `dead_at` stamped,
+the lease dropped). RESURRECT1's rise (`world.js` resurrectInPlace: the heal, the death screen closed in place) touched
+none of it - "it works for a moment". Within a second the slow step (`legacyHost.js` tick) let its latch go and answered
+the Succession still waiting on the record; the world host opened it over the living body - no member, no heir: the
+line ended. Only the operator's REVIVE (above) could take it back.
+
+THE DECISION (2026-10-16): a resurrection from an ally SAVES a Bloodline character. THE LAW (`scenes/legacyHost.js`
+onDeath, `writeDeath`, `decideDeath`, `raise`, `takeBack`, `raisable`, `pageGone`; `server-account/src/legacy.js`
+realmDie's `hold`, `realmRaise`, `settleHolds`) - as the slice's audit left it (AUDIT, below):
+
+- **The door WRITES the death, online as offline** (`legacyHost.js:"writeDeath(h, { hold: online });"`): the death on the
+  record, the remains, the Succession waiting, the device's store and the realm's copy of the line behind it, and the
+  realm's tombstone asked with its HOLD (`legacyHost.js:"entomb({ hold });"`). THE REALM HOLDS THE DEATH, never the page:
+  `realmDie` with `hold` stamps `dead_at` at once - from there no door joins, checkpoints or trades the character - and
+  keeps the lease that fell aside (`realm_characters.rez_lease`, migration 0122) for a Resurrect, what a tombstone takes
+  with it (the union ended, the guild seat handed on, the pieces let go - afterTomb) waiting on the window's close. A
+  line's write that first carries the fall of a character in play holds it the same way (entombLineDead: the line can
+  land before the tombstone). A page killed under its death screen, or a join from another device, escapes nothing.
+- **The window** is `REZ_HOLD_S` (`systems/legacy/revived.js`, 150 s: the longest an online death screen stands - the
+  body's minute, the open zone's two - and half a minute; one number at both doors, `REZ_HOLD_MS` on the page). It
+  CLOSES at the first of: the player going on (the death screen's reset - Enter or its count - `deathOutcome`); its end
+  (the slow step); the page going (pagehide - `pageGone`, by keepalive, AHEAD of the realm's leave; the session is the
+  dead's so the leave sends nothing); a load or a new game over it (`adopt`, `newGame`: F11, the pause's Load, a
+  same-dungeon load); a body up that no Resurrect raised. Closing tells the realm (`realmDie` without `hold` - what a
+  tombstone takes goes now) and the house's towns (the death's news, told once it stands). A window no page closes - a
+  killed tab - the realm's minute closes (`cron.js` `rez-holds`, `legacy.js:"export async function settleHolds({ db, nowS, budget = () => true }) {"`).
+- **A party's Resurrect inside the window asks the realm** (`legacyHost.js:"function raise(rez = null) {"`, asked by the
+  fallen's own frame before it rises - `world.js:"if (rez && legacyHost?.raise(rez) !== false)"`), and the body stays
+  down until it answers: `POST /v1/realm/raise` (`legacy.js:"export async function realmRaise({ db, nowS }, playerId, { id, lease, diedAt }) {"`)
+  takes the death back only of a character of the account's own line, under the lease that fell, inside the window,
+  with no other of the account's characters in play since (ONE-SEAT), once. Its yes clears the tombstone, hands the lease
+  back (the session plays on at its own sequence: nothing was checkpointed over the dead) and stamps the line's copy
+  with the death taken back - the REVIVE law (`revived.js`, section REVIVE): the person stamped `revived: [diedAt]`, and
+  every copy that meets the stamp drops the death with its remains and its Succession. The page takes it back the same
+  way (`legacyHost.js:"function takeBack(h) {"`), gives back what recordDeath took off them (their look, the news they
+  heard), and rises on the next frame - on the call the realm let go (`raised`) though the caster's pose has stopped
+  carrying it. A call the realm never heard (offline) is said ("The realm did not hear the call that would raise you")
+  and the next call asks again; a refusal is said ("The realm will not let you rise. Your death stands.") and closes the
+  window. The player going on while the realm answers rises by the host's own respawn, and the answer is the death's: a
+  yes leaves the line as it was, a no offers the Succession. A death after one taken back is a death of its own, its
+  minute past the stamped one (the stamp knows a death by its minute). An Enduring member's toll is taken at the door
+  too, and a Resurrect gives the door's years back at once - the page's own (no tombstone stands for a rise); a copy that
+  took another's toll in since keeps it (mergeFacts holds the greater).
+- **Closed, the body stays down.** The fallen's frame refuses the call (no living body, then the line's end), and their
+  party pose says so (`fg`, net/wire.js validPartyPose - relay world212), so the caster is refused BEFORE a point is
+  spent, in the fallen's name: "Ysolde has fallen for good. No spell will raise them now."
+  (`hostMagic.js:"if (fallen?.gone) { say(RESURRECT_TEXT.forGood(fallen.name)); return false; }"`; the release and a
+  caster-only Resurrect's readying say it too). A relay before world212 drops the field (world208, world209, world210 and world212
+  are other branches' relays): the caster spends, and the fallen's client refuses the call as ever.
+- **Offline nothing changes**: no party can raise them - the door decides, A1/B3 as recorded. **The Hour** keeps its
+  one life (SD-ONELIFE: no Resurrect there), so a death in it is closed at its screen's reset.
+
+DEPARTURE (named in `01-Overview/audits/Audit-Legacy.md` at A1/B3's law): online a fall is the realm's at the door and stays
+raisable for its window; offline the door decides, as recorded.
+
+AUDIT (2026-10-16, the slice's own audit - `01-Overview/bugs/Field-Bugs-2026-10-16b.md` REZ-BLOODLINE AUDIT):
+- R1 (BLOCKER) - the slice HELD the online death in the dying page's memory, unwritten, until the window closed: a tab
+  killed with no pagehide (a crash, the task manager, a phone discarding a background tab - and a hidden tab runs no
+  frames, so the slow step never closed it) or a join from another device during the hold (the join took the lease, and
+  the dying tab's keepalive tombstone was refused under it) escaped a Bloodline permadeath and an Enduring toll -
+  reopening AUDIT LEGACY A1/B3. FIXED as above: the door writes it and the realm holds it; the Resurrect is the realm's
+  to take back.
+- R2 - below ten frames a second the open zone's death screen counted the frames' clamped time while the hold ran on the
+  wall clock: the window closed (a Resurrect refused "fallen for good") with the screen still saying "RISING IN 15".
+  FIXED: an online death screen counts the wall clock (`deathScreen.js:"if (this.online) this.clock = Math.max(this.clock, (Number(this._wall()) - this._fellAt) / 1000 || 0);"`),
+  never behind the frames' own count.
+- R3 - this section said "relay world208": the relay that carries `fg` is world212 (world208, world209 and world210
+  went to other branches) - corrected above.
+
+THE FOUR HOSTS: `scenes/world.js` WIRED, on lines it had (bootWorld stands at its ceiling): the death screen's frame asks
+the rise (and rises on the call the realm let go), the party pose carries `fg`, the caster's pick reads it, the tombstone
+carries `keepalive` and `hold` and the raise rides beside it, the page's going asks Project Legacy first.
+`scenes/worldModes.js` and `scenes/dungeonContext.js` hold their death screens in the mode's slot - the same world.js
+frame hears the Resurrect under them (`modes?.deathUp?.()`), their resets ask `legacyDeathReset` through
+`onlineRespawn`, and their screens are the same `DeathScreen` (the wall clock's): wired through world.js.
+`scenes/exterior.js`, the fixed city, has no Project Legacy (section 3's FLAG) - unchanged. Pinned by
+`test/systems/legacy/fb1016b_rezbloodline.test.js` (5, over the real death door, host, realm session and the line's realm copy on the
+real account Worker and its minute's clock, party wire, caster's cast, death screen and world.js's own statements);
+`tools/mutants/fb1016b_rezbloodline.json` (all dead - the record's count in the Field Bugs section).

@@ -5,7 +5,7 @@
     "old": "    if (Object.hasOwn(STORES_ACT_STATIONS, piece.station) && forgeOffered()) { offerStationActs(piece); return; }",
     "new": "    if (false) { offerStationActs(piece); return; }",
     "tests": [
-      "test/fb1011f_stationdoor.test.js"
+      "test/net/fb1011f_stationdoor.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (Object.hasOwn(STORES_ACT_STATIONS, piece.station) && forgeOffered()) { offerStationActs(piece); return; }",
     "new": "    if (Object.hasOwn(STORES_ACT_STATIONS, piece.station)) { offerStationActs(piece); return; }",
     "tests": [
-      "test/fb1011f_stationdoor.test.js"
+      "test/net/fb1011f_stationdoor.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (Object.hasOwn(STORES_ACT_STATIONS, piece.station) && forgeOffered()) { offerStationActs(piece); return; }",
     "new": "    if (forgeOffered()) { offerStationActs(piece); return; }",
     "tests": [
-      "test/fb1011f_stationdoor.test.js"
+      "test/net/fb1011f_stationdoor.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    const leave = () => { if (interiorOverlay === chooser) interiorOverlay = null; };",
     "new": "    const leave = () => {};",
     "tests": [
-      "test/fb1011f_stationdoor.test.js"
+      "test/net/fb1011f_stationdoor.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "action: () => { leave(); focusStoresStation(kind); interiorKeyCtx.togglePause({ at: 'stores' }); } },",
     "new": "action: () => { leave(); interiorKeyCtx.togglePause({ at: 'stores' }); } },",
     "tests": [
-      "test/fb1011f_stationdoor.test.js"
+      "test/net/fb1011f_stationdoor.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "action: () => { leave(); focusStoresStation(kind); interiorKeyCtx.togglePause({ at: 'stores' }); } },",
     "new": "action: () => { leave(); focusStoresStation(kind); interiorKeyCtx.togglePause({ at: 'professions' }); } },",
     "tests": [
-      "test/fb1011f_stationdoor.test.js"
+      "test/net/fb1011f_stationdoor.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "action: () => { leave(); openStationMaker(piece); } },",
     "new": "action: () => { leave(); } },",
     "tests": [
-      "test/fb1011f_stationdoor.test.js"
+      "test/net/fb1011f_stationdoor.test.js"
     ]
   },
   {
@@ -68,61 +68,61 @@
     "old": "SERVICE_DESTINATION[s] === DECOR_STATION_SERVICES[kind]);",
     "new": "SERVICE_DESTINATION[s] === DECOR_STATION_SERVICES.enchant);",
     "tests": [
-      "test/fb1011f_stationdoor.test.js"
+      "test/net/fb1011f_stationdoor.test.js"
     ]
   },
   {
     "name": "STATION-DOOR-table-narrowed",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "export const STORES_ACT_STATIONS = Object.freeze({ alchemy: 'Brew', enchant: 'Disenchant' });",
     "new": "export const STORES_ACT_STATIONS = Object.freeze({ enchant: 'Disenchant' });",
     "tests": [
-      "test/fb1011f_stationdoor.test.js"
+      "test/net/fb1011f_stationdoor.test.js"
     ]
   },
   {
     "name": "STATION-DOOR-table-widened",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "export const STORES_ACT_STATIONS = Object.freeze({ alchemy: 'Brew', enchant: 'Disenchant' });",
     "new": "export const STORES_ACT_STATIONS = Object.freeze({ alchemy: 'Brew', enchant: 'Disenchant', spells: 'Spell' });",
     "tests": [
-      "test/fb1011f_stationdoor.test.js"
+      "test/net/fb1011f_stationdoor.test.js"
     ]
   },
   {
     "name": "STATION-DOOR-never-scrolled",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "    globalThis.requestAnimationFrame?.(() => globalThis.document?.getElementById(head.id)?.scrollIntoView?.({ block: 'start' }));",
     "new": "    void head;",
     "tests": [
-      "test/fb1011f_stationdoor.test.js"
+      "test/net/fb1011f_stationdoor.test.js"
     ]
   },
   {
     "name": "STATION-DOOR-scrolled-every-draw",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "    _storesFocus = null;\n    globalThis.requestAnimationFrame",
     "new": "    globalThis.requestAnimationFrame",
     "tests": [
-      "test/fb1011f_stationdoor.test.js"
+      "test/net/fb1011f_stationdoor.test.js"
     ]
   },
   {
     "name": "STATION-DOOR-the-wrong-section",
-    "file": "src/ui/profPages.js",
-    "old": "  detail.append(stationHead(divider, 'The Enchanting Station', 'enchant'));   // STATION-DOOR",
-    "new": "  detail.append(stationHead(divider, 'The Enchanting Station', 'alchemy'));   // STATION-DOOR",
+    "file": "src/ui/professions/profPages.js",
+    "old": "  detail.append(stationHead(divider, t('prof.page.enchant', 'The Enchanting Station'), 'enchant'));   // STATION-DOOR",
+    "new": "  detail.append(stationHead(divider, t('prof.page.enchant', 'The Enchanting Station'), 'alchemy'));   // STATION-DOOR",
     "tests": [
-      "test/fb1011f_stationdoor.test.js"
+      "test/net/fb1011f_stationdoor.test.js"
     ]
   },
   {
     "name": "STATION-DOOR-how-says-nowhere",
-    "file": "src/ui/profPages.js",
-    "old": "(a Mages Guild hall or your own home) from the Stores page. ",
-    "new": "(a Mages Guild hall or your own home). ",
+    "file": "src/ui/professions/profPages.js",
+    "old": "in a Mages Guild hall or your own home, from the Stores page. ",
+    "new": "in a Mages Guild hall or your own home. ",
     "tests": [
-      "test/fb1011f_stationdoor.test.js"
+      "test/net/fb1011f_stationdoor.test.js"
     ]
   }
 ]

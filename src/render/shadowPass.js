@@ -66,6 +66,7 @@ import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's q
 import { BAYER_GLSL, DISSOLVE_GLSL } from './orderedDither.js';   // AUDIT BAY A12: a fading ship's shadow dissolves with her
 import { windfallLawOn, swayShare, windfallLeanMax, windfallAnchorAfterShift } from './windfallSway.js';   // WINDFALL1: the flora's lean while Windfall's law stands
 import { SKIN_PALETTE_UNIT } from './skinPalette.js';   // MWNPC16: a skinned body's palette, read where the lit draw reads it
+import { NO_LIGHT_ID } from './lightId.js';   // LIGHT-ID: a light's identity, its producer's (renderer.js lifts it off the frame's list)
 
 /** The sun map: two cascades of this size, as a depth texture array. */
 export const SHADOW_SUN_SIZE = 2048;
@@ -274,7 +275,7 @@ export const SHADOW_POINT_BIAS = 0.04;
 /** The reserved texture units (CLOUD_SHADOW_UNIT is 15). */
 export const SHADOW_SUN_UNIT = 13;
 export const SHADOW_POINT_UNIT = 14;
-/** EL6: Daggerfall's lights archive (world/cityLights.js LIGHTS_ARCHIVE) - the
+/** EL6: Daggerfall's lights archive (world/city/cityLights.js LIGHTS_ARCHIVE) - the
  *  torch, campfire, candle and lantern flats. THEY ARE THE LANTERNS: a flame
  *  flat drawn from its own light's position is the nearest occluder in every
  *  direction and shadowed a wedge of the room ("some shadows, like the
@@ -348,7 +349,11 @@ export const SHADOW_SWAY_EVERY = 4;
  *  shadow map (with dynamic shadows) for the lo map (static only) from one frame to the next, and (b) lifts the lo
  *  tier's rebuild budget. Costs GPU time; turn off Settings > Features > Steady shadows (or from the console,
  *  window.__DF_SHADOW_TUNING.override = false; null hands it back to the row) to get EL8's schedule back. */
-export const SHADOW_TUNING = { steady: true, override: null, debug: false, debugForce: null, selfLamps: null, calmForce: null, facePrepass: true, sunPrepass: true, volumeMemo: true };
+export const SHADOW_TUNING = { steady: true, override: null, debug: false, debugForce: null, selfLamps: null, calmForce: null, facePrepass: true, sunPrepass: true, volumeMemo: true, moverDirect: true, loUnread: true };
+// LIGHT-ID: `moverDirect` false draws a light that moved through its static cache, as before (every slot the cached
+// path), and `loUnread` false draws the lo map of a light that holds a 512 slot, as DISC15 first did - the pins' oracles
+// and an A/B's off arms (window.__DF_SHADOW_TUNING.moverDirect = false). Neither changes a map: the same casters reach the
+// same layers either way.
 // PERF-SHADOW1: `facePrepass` false walks every lantern face and dynamic scan over every record, as before the pre-pass
 // (_casterCandidates) - the pins' oracle and an A/B's off arm (console: window.__DF_SHADOW_TUNING.facePrepass = false).
 // PERF-SUN3: `sunPrepass` false walks every sun cascade over every record, as before its own pre-pass (_sunCandidates) -
@@ -397,14 +402,17 @@ export const SHADOW_STILL_EPS = 1e-3;
  * through a frame-old depth), gone with `?contact=off`.
  *
  * THE LO TIER: in a room its host draws WHOLE (renderer.everyLightCasts - a building's interior, where nothing is
- * view-culled, so every static caster is in the records), EVERY light the caster table can name keeps its own
- * cube map of the room's STATIC casters at SHADOW_LO_SIZE: six layers of a second depth array, sticky by position
- * like SC1's slots, drawn once when the light arrives and again only when its static set changes (SC1's signature,
- * SHADOW_LO_REBUILDS a frame - the old map stands meanwhile, the same light's). The eight nearest keep their 512
- * maps with the movers on top, as before; every other light reads its lo map, so a lamp is never unshadowed and a
- * change of the eight changes a shadow's resolution, never whether the ceiling is there. The contact march has no
- * light left to run for indoors. `uCasterOf[i]` carries the lo slot as SHADOW_POINT_CASTERS + j; the lo map's light
- * and far are the light's own (uPointLights[i], shadowFarFor of its range, the same float arithmetic in JS and GLSL).
+ * view-culled, so every static caster is in the records), EVERY light the caster table can name has a map: the
+ * twelve nearest their 512 maps with the movers on top, and every other its own cube map of the room's STATIC
+ * casters at SHADOW_LO_SIZE - six layers of a second depth array, sticky by position like SC1's slots, drawn when
+ * its light first reads it and again only when its static set changes (SC1's signature, SHADOW_LO_REBUILDS a frame -
+ * the old map stands meanwhile, the same light's). A lamp is never unshadowed, and a change of the twelve changes a
+ * shadow's resolution, never whether the ceiling is there. LIGHT-ID (2026-10-14, Mac: "Engine fix (Recommended)"): a
+ * light holding a 512 slot draws no lo map, since no shader reads one while it holds the slot; a map it already has
+ * is kept as it stands, and the frame it loses the slot it reads one drawn then, or its kept one asked its static
+ * signature then (_renderLo). The contact march has no light left to run for indoors. `uCasterOf[i]` carries the lo
+ * slot as SHADOW_POINT_CASTERS + j; the lo map's light and far are the light's own (uPointLights[i], shadowFarFor of
+ * its range, the same float arithmetic in JS and GLSL).
  */
 export const SHADOW_LO_SIZE = 256;
 /** DISC15: the lo array's texture unit - below the grid's (9, 10); nothing else binds 8. */
@@ -563,8 +571,8 @@ export function pointFaceMatrices(pos, far, out) {
 const _faceProj = new Float32Array(16), _faceView = new Float32Array(16);
 /** PERF-ALLOC1: world/mat4.js lookAt written into `out` (a Float32Array(16)), the centre as three numbers - its
  *  arithmetic in its order, so its floats; nothing allocated. HERE and not in mat4.js: mat4.js is in the relay's bundle
- *  (test/relayversion.test.js RELAY_GRAPH), and a byte of it changed is a relay deploy - the client's own scratch twin
- *  costs the relay nothing. test/perfalloc1.test.js holds it to mat4.js's lookAt to the bit. */
+ *  (test/net/relayversion.test.js RELAY_GRAPH), and a byte of it changed is a relay deploy - the client's own scratch twin
+ *  costs the relay nothing. test/render/perfalloc1.test.js holds it to mat4.js's lookAt to the bit. */
 export function lookAtInto(out, eye, cx, cy, cz, up) {
   const zx = eye[0] - cx, zy = eye[1] - cy, zz = eye[2] - cz;
   const zl = Math.hypot(zx, zy, zz);
@@ -805,7 +813,7 @@ float sunCascadeTap(int c, vec3 wp, vec3 n, bool soft, float h) {
   // sub-texel fraction (8 bits on the players' D3D11-class cards), and the
   // four taps quantise other fractions than the nine did - under a 255th
   // of the sun's light, in a penumbra only (0.93 of one at worst over the
-  // provers' random maps; test/perfexta.test.js's twin holds it under
+  // provers' random maps; test/render/perfexta.test.js's twin holds it under
   // one), 2 of 518,400 pixels by one step on SwiftShader.
   // Five fetches a fragment gone: every flat by day, and every lit
   // fragment of the near cascades.
@@ -1110,6 +1118,7 @@ export class ShadowPass {
     this._loSlotLight = new Float32Array(0);   // per lo slot, the light (x, y, z, far) its map was drawn from
     this._loSlotSig = new Int32Array(0);       // ...and the static signature's (hash, count) it was drawn with
     this._loBuilt = new Uint8Array(0);
+    this._loUnminded = new Uint8Array(0);      // LIGHT-ID: per lo slot, 1 while its map is kept unminded for a light holding a 512 slot
     this._loSlotOf = new Int32Array(SHADOW_CASTER_TABLE);
     this._loTaken = new Uint8Array(0);
     gl.bindFramebuffer(gl.FRAMEBUFFER, null);
@@ -1130,13 +1139,14 @@ export class ShadowPass {
     this.casters = 0;
     this.frameNo = 0;   // EL8: the cadence's clock
     this._slotLight = new Float32Array(4 * SHADOW_POINT_CASTERS).fill(NaN);   // EL8: the light each slot's layers were last drawn from
+    this._slotId = new Float64Array(SHADOW_POINT_CASTERS);   // LIGHT-ID: ...and its identity (render/lightId.js; NO_LIGHT_ID: none, or an anonymous light)
     this._sunVPNew = SHADOW_CASCADES.map(() => new Float32Array(16));
     this._sunDrawn = new Uint8Array(SHADOW_CASCADES.length);
     this._sunAnchor = new Float64Array([NaN, NaN, NaN]);   // LA-SHADOW1: the texel grid's snapped point (none yet)
     this._sunScaleK = 1;   // AUDIT DEEP R-3: the cascades' scale the maps were last drawn at
     this.kind = null;
     /** per-frame counts, for a probe */
-    this.stats = { records: 0, sunDraws: 0, pointDraws: 0, culled: 0, cascadesDrawn: 0, facesDrawn: 0, staticFaces: 0, dynFaces: 0, blits: 0, cachedSlots: 0, loSlots: 0, loFaces: 0, selfLamps: 0 };   // SC1: the faces split, the blits, the slots served from the cache; DISC15: the lo tier's slots and faces
+    this.stats = { records: 0, sunDraws: 0, pointDraws: 0, culled: 0, cascadesDrawn: 0, facesDrawn: 0, staticFaces: 0, dynFaces: 0, moverFaces: 0, blits: 0, cachedSlots: 0, loSlots: 0, loFaces: 0, selfLamps: 0 };   // SC1: the faces split, the blits, the slots served from the cache; DISC15: the lo tier's slots and faces; LIGHT-ID: the faces of lights that moved, drawn whole
     // AUDIT 637 B7: `culled` counts what a replay's own tests culled. A lantern face walks its candidates alone (PERF-SHADOW1),
     // so what it cannot reach it never asks - and never counts: the perf meter's `culled` is the sun's, the air's and the
     // faces' own culls of what the cube kept, smaller than it read before the pre-pass for the same frame.
@@ -1146,6 +1156,7 @@ export class ShadowPass {
     this._selfAt = new Float64Array(3);    // DISC29-E: where the player's own card stands this frame (_selfCardAt)
     this._selfCard = null;                 // AUDIT PRE-MERGE 0929 E2: the card, noted as recordBillboards meets it (cleared by discard)
     this._slotOfScratch = new Int32Array(SHADOW_POINT_CASTERS);   // SC1: rank -> slot
+    this._slotOwnScratch = new Uint8Array(SHADOW_POINT_CASTERS);  // LIGHT-ID: rank -> 1 when its slot is its own by identity
     this._heldCasters = new Float64Array(4 * SHADOW_POINT_CASTERS);   // DISC6: last frame's casters, by position (Float64: an exact copy of whatever the host sent, so the match by position holds)
     this._heldCasterN = 0;
     /** AUDIT FLICKER P2: the card's lamps last frame (x, y, z, _), by place, and this frame's as they are found */
@@ -1230,6 +1241,7 @@ export class ShadowPass {
     this._loSlotSig = new Int32Array(2 * want);
     this._loBuilt = new Uint8Array(want);
     this._loTaken = new Uint8Array(want);
+    this._loUnminded = new Uint8Array(want);   // LIGHT-ID: a kept map its light did not read - asked again the frame it is
   }
   /** DISC15: may light i of `L` take a map at all - F11's range cap and MAC-T1's hand, the pick's own two laws. */
   static _castsAt(L, carried, i) {
@@ -1237,10 +1249,13 @@ export class ShadowPass {
     return !(carried && carried[i]) && w > 0 && w <= SHADOW_CASTER_MAX_RANGE;
   }
   /**
-   * DISC15: THE LO TIER'S FRAME - every light that may cast keeps a lo slot (sticky by position, as SC1's slots), its
-   * map of the room's static casters drawn when the light arrives or moves and redrawn for a changed static set
-   * SHADOW_LO_REBUILDS a frame; a light with no 512 map this frame reads its lo map (uCasterOf = SHADOW_POINT_CASTERS + j).
-   * The eight keep their lo maps too, so a light that leaves the eight has its map already.
+   * DISC15: THE LO TIER'S FRAME - every light that may cast and has no 512 map this frame keeps a lo slot (sticky by
+   * position, as SC1's slots) and reads its map of the room's static casters (uCasterOf = SHADOW_POINT_CASTERS + j), drawn
+   * when the light arrives or moves and redrawn for a changed static set SHADOW_LO_REBUILDS a frame.
+   * LIGHT-ID (2026-10-14, Mac: "Engine fix (Recommended)"): A LIGHT HOLDING A 512 SLOT DRAWS NO LO MAP - no shader reads one
+   * while it holds the slot (uCasterOf names the 512 slot). A lo map it has already keeps its slot as it stands, unminded;
+   * the frame the light loses its 512 slot it reads its lo map, drawn then - a new one at once, a kept one asked its static
+   * signature at once and redrawn if the room changed under it - so no lo map is read stale.
    */
   _renderLo(f, L) {
     const gl = this.gl, n = Math.min(L.length >> 2, SHADOW_CASTER_TABLE);
@@ -1248,8 +1263,10 @@ export class ShadowPass {
     for (let i = 0; i < n; i++) if (ShadowPass._castsAt(L, f.carried, i)) want++;
     if (want === 0) return;
     this._ensureLo(want);
-    const cap = this._loCap, sl = this._loSlotLight, slotOf = this._loSlotOf, taken = this._loTaken;
+    const cap = this._loCap, sl = this._loSlotLight, slotOf = this._loSlotOf, taken = this._loTaken, unminded = this._loUnminded;
     slotOf.fill(-1); taken.fill(0);
+    // LIGHT-ID: whether light i reads a 512 map this frame (its caster slot, set by render before this) - no lo map for it
+    const hi = (i) => SHADOW_TUNING.loUnread !== false && this.casterOf[i] >= 0 && this.casterOf[i] < SHADOW_POINT_CASTERS;
     for (let i = 0; i < n; i++) {
       if (!ShadowPass._castsAt(L, f.carried, i)) continue;
       for (let j = 0; j < cap; j++) {
@@ -1257,10 +1274,10 @@ export class ShadowPass {
       }
     }
     for (let i = 0; i < n; i++) {
-      if (slotOf[i] >= 0 || !ShadowPass._castsAt(L, f.carried, i)) continue;
+      if (slotOf[i] >= 0 || !ShadowPass._castsAt(L, f.carried, i) || hi(i)) continue;   // LIGHT-ID: a light reading its 512 map takes no new slot
       for (let j = 0; j < cap; j++) if (!taken[j]) { slotOf[i] = j; taken[j] = 1; break; }
     }
-    for (let j = 0; j < cap; j++) if (!taken[j]) { sl[j * 4] = NaN; this._loBuilt[j] = 0; }   // a light gone: its slot is drawn afresh for the next
+    for (let j = 0; j < cap; j++) if (!taken[j]) { sl[j * 4] = NaN; this._loBuilt[j] = 0; unminded[j] = 0; }   // a light gone: its slot is drawn afresh for the next
     let rebuilds = SHADOW_TUNING.steady ? SHADOW_LO_REBUILDS_STEADY : SHADOW_LO_REBUILDS;   // FLICKER-FIX: more per frame, never all at once (a door in a twenty-lamp room is a hitch)
     for (let i = 0; i < n; i++) {
       const j = slotOf[i];
@@ -1270,10 +1287,17 @@ export class ShadowPass {
       const same = this._loBuilt[j] && sl[o] === pos[0] && sl[o + 1] === pos[1] && sl[o + 2] === pos[2];
       const far = same ? heldShadowFar(sl[o + 3], L[i * 4 + 3]) : shadowFarFor(L[i * 4 + 3]);   // LA-SHADOW4: held across the flicker
       const fresh = !same || sl[o + 3] !== far;
+      if (hi(i)) {   // LIGHT-ID: kept as it stands while its light reads its 512 map - or let go, when it is not this light's now
+        if (fresh) { sl[o] = NaN; this._loBuilt[j] = 0; unminded[j] = 0; } else unminded[j] = 1;
+        continue;
+      }
+      // a kept map its light did not read (it held a 512 slot) is asked at once, outside the budget: it is read this frame
+      const minded = unminded[j] === 0;
+      unminded[j] = 0;
       let sig = null, draw = fresh;
-      if (!fresh && rebuilds > 0) {
+      if (!fresh && (!minded || rebuilds > 0)) {
         sig = this._staticSignature(pos, far);
-        if (this._loSlotSig[j * 2] !== sig[0] || this._loSlotSig[j * 2 + 1] !== sig[1]) { draw = true; rebuilds--; }
+        if (this._loSlotSig[j * 2] !== sig[0] || this._loSlotSig[j * 2 + 1] !== sig[1]) { draw = true; if (minded) rebuilds--; }
       }
       if (draw) {
         if (!sig) sig = this._staticSignature(pos, far);
@@ -1448,7 +1472,7 @@ export class ShadowPass {
     }
     let s = exact ?? best;
     // AUDIT PERF-INST: a full memory is the filed path's - this scan runs at SHADOW_INSTANCE_LINEAR placements or fewer,
-    // under the cap (test/perfinst.test.js holds the two apart), so a draw it finds nothing for is a new placement
+    // under the cap (test/render/perfinst.test.js holds the two apart), so a draw it finds nothing for is a new placement
     if (!s) {
       inst.push({ m: new Float32Array(matrix), at: null, seen: this.frameNo, ord: inst.length, key: NaN, filed: false });
       if (inst.length > SHADOW_INSTANCE_LINEAR) _fileAll(o, this._shiftNow);   // PERF-INST: past the scan's count - filed from here on
@@ -1737,7 +1761,7 @@ export class ShadowPass {
     const heldKind = this.kind;   // EMPTY-HOLD: the kind the held maps were drawn for
     this.kind = shadowKind(f.sunScale, f.lightDir);
     this.frameNo++;
-    this.stats.cascadesDrawn = 0; this.stats.facesDrawn = 0; this.stats.staticFaces = 0; this.stats.dynFaces = 0; this.stats.blits = 0; this.stats.cachedSlots = 0;   // SC1
+    this.stats.cascadesDrawn = 0; this.stats.facesDrawn = 0; this.stats.staticFaces = 0; this.stats.dynFaces = 0; this.stats.moverFaces = 0; this.stats.blits = 0; this.stats.cachedSlots = 0;   // SC1; LIGHT-ID
     this.stats.loSlots = 0; this.stats.loFaces = 0;   // DISC15
     // EMPTY-HOLD (2026-10-06, the player: "everything blinked at once ... it only happens with enhanced lighting on", on
     // every card): a frame that recorded NO caster (a hitch, a room's memory restored, a chunk swapped mid-frame) cleared
@@ -1753,7 +1777,7 @@ export class ShadowPass {
         return;
       }
       this.sunParams[3] = 0; this.pointParams.fill(0); this.shadowIndex.fill(-1); this.casterOf.fill(-1); this.casters = 0;
-      this.kind = null; this._hadMaps = false; this._slotLight.fill(NaN); this._sunDrawn.fill(0); return;   // AUDIT 68 S17-far-cascade-shift: no sun map is held past a run that drew none
+      this.kind = null; this._hadMaps = false; this._slotLight.fill(NaN); this._slotId.fill(NO_LIGHT_ID); this._sunDrawn.fill(0); return;   // AUDIT 68 S17-far-cascade-shift: no sun map is held past a run that drew none
     }
     this._emptyRun = 0; this._hadMaps = true;
     if (this._bodyWanted) this._ensureBodyPrograms();   // MWNPC16: before the first replay binds its own
@@ -1800,12 +1824,26 @@ export class ShadowPass {
     // MAC-T1: the hand's light is -2 in the caster table - no slot, and no contact march either (enhancedLighting reads
     // the same table): F3's "never for the light in the hand", said by name rather than by distance from the camera
     if (f.carried) for (let i = 0, m = Math.min(L.length >> 2, SHADOW_CASTER_TABLE); i < m; i++) if (f.carried[i]) this.casterOf[i] = -2;
-    // SC1: STICKY SLOTS - a picked light keeps the slot whose cache is its own (matched by POSITION: the hosts re-sort
-    // their lights by distance every frame, so an index is no name), and the rest take the free slots nearest-first
+    // SC1: STICKY SLOTS - a picked light keeps the slot whose cache is its own, and the rest take the free slots
+    // nearest-first. LIGHT-ID (2026-10-14, Mac: "Engine fix (Recommended)"): its own slot is found by its IDENTITY first -
+    // the light the slot was drawn for last frame, wherever that light stands now (render/lightId.js: the hosts re-sort
+    // their lights by distance every frame, so an index is no name) - and then by PLACE, as SC1 found every slot: a map
+    // drawn from a place is the map of any light standing there, and a place is all an anonymous light is called.
+    const ids = f.ids ?? null;
     const slotOf = this._slotOfScratch; slotOf.fill(-1);
     const taken = this._slotTakenScratch; taken.fill(0);
-    const sl = this._slotLight;
+    const own = this._slotOwnScratch; own.fill(0);
+    const sl = this._slotLight, sid = this._slotId;
+    const idOf = (i) => (ids && i < ids.length ? ids[i] : NO_LIGHT_ID);
     for (let rank = 0; rank < casters.length; rank++) {
+      const id = idOf(casters[rank]);
+      if (id === NO_LIGHT_ID) continue;
+      for (let k = 0; k < SHADOW_POINT_CASTERS; k++) {
+        if (!taken[k] && sid[k] === id) { slotOf[rank] = k; taken[k] = 1; own[rank] = 1; break; }
+      }
+    }
+    for (let rank = 0; rank < casters.length; rank++) {
+      if (slotOf[rank] >= 0) continue;
       const i = casters[rank];
       for (let k = 0; k < SHADOW_POINT_CASTERS; k++) {
         if (!taken[k] && samePlace(sl, k * 4, L, i * 4)) { slotOf[rank] = k; taken[k] = 1; break; }   // AUDIT FLICKER P3: within the still epsilon
@@ -1871,7 +1909,14 @@ export class ShadowPass {
       const selfWant = selfNear ? 1 : 0;
       const selfMoved = this._slotSelf[k] !== selfWant;
       const due = SHADOW_TUNING.steady || near || selfNear || (this.frameNo + k) % SHADOW_FAR_CASTER_EVERY === 0;
-      if (!this.cacheOn) {
+      // LIGHT-ID: A LIGHT THAT MOVED - its own slot by its identity, its place another than the one the slot's maps were
+      // drawn from. Its cube is drawn whole, straight into the layers it is read from: a static cache would be drawn for
+      // it, copied in and thrown away by its next move, every frame it walks (the gate boss's glow at his chest - half the
+      // court's shadow work in a fight about him, tools/courtShadowProbe.mjs). The same casters into the same layers, so
+      // the same map. Still again, it takes the cached path, which finds no cache of its own and builds one, once.
+      // (SHADOW_TUNING.moverDirect false: every slot the cached path, as before - the pins' oracle.)
+      const mover = own[rank] === 1 && !samePlace(sl, o, pos, 0) && SHADOW_TUNING.moverDirect !== false;
+      if (!this.cacheOn || mover) {
         // the old path whole: every caster in range, static or not, into the live layers at the cadence
         if (changed || due || selfMoved) {
           const cand = this._candFor(rank, L, casters, farOf);   // PERF-SHADOW1: this lantern's candidates (null: its faces walk everything)
@@ -1884,9 +1929,11 @@ export class ShadowPass {
             this.stats.pointDraws += this.replay(f, this.faceVP[face], pos, false, 0, 0, REPLAY_ALL, selfNear, cand);
           }
           this.stats.facesDrawn += 6;
+          if (mover) this.stats.moverFaces += 6;   // LIGHT-ID
           this._slotSelf[k] = selfWant;
         }
         this._slotCached[k] = 0; this._slotLiveDyn[k] = 0; this._faceDyn.fill(1, k * 6, k * 6 + 6);   // PERF-FACE: no cache to be equal to
+        this._slotBodySig[k * 2 + 1] = -1;   // LIGHT-ID: the live layers hold everything in reach, never the bodies alone
       } else {
         // SC1: the static cache, drawn only when the light or the static set in its reach changed
         const sigHash = this._sigOut[rank * 2], sigCount = this._sigOut[rank * 2 + 1];   // PERF-EXT3: folded above
@@ -1933,11 +1980,12 @@ export class ShadowPass {
         }
       }
       sl[o] = pos[0]; sl[o + 1] = pos[1]; sl[o + 2] = pos[2]; sl[o + 3] = far;
+      sid[k] = idOf(i);   // LIGHT-ID: whose maps these are
       this.pointParams[k * 4] = pos[0]; this.pointParams[k * 4 + 1] = pos[1]; this.pointParams[k * 4 + 2] = pos[2]; this.pointParams[k * 4 + 3] = far;
       this.shadowIndex[k] = i;
       if (i < SHADOW_CASTER_TABLE) this.casterOf[i] = k;
     }
-    for (let k = 0; k < SHADOW_POINT_CASTERS; k++) if (!taken[k]) { this._slotLight[k * 4] = NaN; this._slotCached[k] = 0; this._slotLiveDyn[k] = 0; this._slotSelf[k] = 0; this._faceDyn.fill(1, k * 6, k * 6 + 6); }   // an emptied slot is drawn afresh when it is filled
+    for (let k = 0; k < SHADOW_POINT_CASTERS; k++) if (!taken[k]) { this._slotLight[k * 4] = NaN; this._slotId[k] = NO_LIGHT_ID; this._slotCached[k] = 0; this._slotLiveDyn[k] = 0; this._slotSelf[k] = 0; this._faceDyn.fill(1, k * 6, k * 6 + 6); }   // an emptied slot is drawn afresh when it is filled
     this._selfHeld.set(this._selfNext); this._selfHeldN = selfN;   // AUDIT FLICKER P2
     this.stats.selfLamps = selfN;   // STEADY-BALANCE: how many lamps the card cast into, for the debug log
     if (f.everyLight) this._renderLo(f, L);   // DISC15: a room drawn whole - every other light reads its lo map
@@ -2215,7 +2263,7 @@ export class ShadowPass {
         for (const b of (cand ? cand.bb[j] : r.batches)) {
           if (!b?._shDyn || !b.vao || b._dead || b.noShadow || b.castOnly || b.conceal) continue;   // MWNPC16: its body is the mover, its own record
           if (b.selfCard && !self) continue;   // DISC24-C: the player's own card is no reason to redraw a map it will not be drawn into
-          if (b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < SHADOW_FLAT_MIN_HEIGHT) || isSpectral(b.archive)) continue;
+          if (b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < SHADOW_FLAT_MIN_HEIGHT) || isSpectral(b.archive) || b.ghost) continue;
           if (b._shSway && near === DYN_SWAY) continue;
           const c = batchSphere(b, this._bSphere);   // AUDIT 68 S16-batch-sphere-dup
           if (c && !spheresTouch(c[0], c[1], c[2], c[3], pos[0], pos[1], pos[2], far)) continue;
@@ -2361,7 +2409,7 @@ export class ShadowPass {
   /**
    * DISC24-C (icebreyker on Discord, 2026-09-24, "Lights/shadows are still bugged": "i am still getting this problem
    * with Enhanced Lighting" - the flicker of DISC13-A, in a lit interior, the player's whole silhouette thrown on the
-   * wall): THE SELF CARD. The player's own sprite body (player/eotbBody.js - "Shadows Only" in first person, the body
+   * wall): THE SELF CARD. The player's own sprite body (player/eyeOfTheBeholder/eotbBody.js - "Shadows Only" in first person, the body
    * itself in third) is the one caster that moves WITH the view, and three of the lamps' laws were wrong for it:
    *  - it was judged still whenever the player stopped (the origin test above), so a pause baked it into the static
    *    cache of every lamp in reach and the next step or turn threw it out again - every cache rebuilt at once and its
@@ -2524,7 +2572,7 @@ export class ShadowPass {
         let lastW = NaN, lastH = NaN, lastOx = NaN, lastOy = NaN, lastOz = NaN;
         const wl = Math.hypot(r.flatWind[0], r.flatWind[1]), law = windfallLawOn(r.windfall);   // PERF-EXT1: the record's wind, for its quads' lean; WINDFALL1: and whose law
         for (const b of (cand ? cand.bb[j] : r.batches)) {
-          if (!b?.vao || b._dead || b.conceal || f.isSpectral(b.archive)) continue;   // a concealed foe and a ghost cast nothing
+          if (!b?.vao || b._dead || b.conceal || f.isSpectral(b.archive) || b.ghost) continue;   // a concealed foe and a ghost cast nothing (DEX2: a Spectral row's, foeLook.js)
           if (filter === REPLAY_LO ? (b._shDyn && !b._shAnim) : (filter !== REPLAY_ALL && (filter === REPLAY_STATIC) === !!b._shDyn)) continue;   // SC1: by the batch's own word; DISC29-E: the lo tier takes a flat that animates in place
           if (lightPos && b.archive === SHADOW_LIGHT_FLATS) continue;   // EL6: a flame is the lantern, not its occluder
           if (lightPos && b.selfCard && !self) continue;   // DISC24-C: the player's own card, only where it is redrawn every frame

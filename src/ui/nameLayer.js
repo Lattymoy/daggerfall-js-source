@@ -4,9 +4,9 @@
 // BUBBLE1 (2026-09-16, Mac: "I want to introduce chat bubbles above the player when they chat"):
 // THE NAMES OVER THE OTHERS, AND WHAT THEY SAY - the enhanced skin's own DOM layer.
 //
-// WHY DOM AND NOT THE BITMAP PASS. Online forces the enhanced lane (OL1, systems/onlineLane.js), so a name over a
+// WHY DOM AND NOT THE BITMAP PASS. Online forces the enhanced lane (OL1, systems/online/onlineLane.js), so a name over a
 // head is an ENHANCED-SKIN surface, and every other enhanced surface wears Pixelify Sans unsmoothed on bone
-// (ui/enhancedStyle.js, ui/pixelifyFive.js PIXEL_STACK). A name drawn through the CLASSIC FNT atlas was the one
+// (ui/enhanced/enhancedStyle.js, ui/pixelifyFive.js PIXEL_STACK). A name drawn through the CLASSIC FNT atlas was the one
 // thing on that screen still speaking the other skin's face - and the bubbles Mac asked for want a box that wraps
 // text, which is a paragraph, which is a thing the 2D pass has no idea how to do. One element per visible peer,
 // MOVED each frame and never rebuilt, is the party HUD's own discipline (ui/partyPanel.js: "write only what
@@ -48,7 +48,7 @@ import { NAME_GAP_PX, namePixelSize, nameViewportScale } from '../net/remotePlay
 import { titleBadge, glyphBadges, glyphSvgNode, cssRgba, titlePaint, TITLE_PAINT_KEYS } from './playerBadge.js';   // ACC3: the same table the classic pass reads - one law, two faces   // the anchor's gap, and the size law's own two doors (AUDIT NAME1 F3)
 import { graphemesOf } from '../systems/graphemes.js';   // EMOTE1's characters, which JOURNAL1's notebook break reads too
 import { renownText } from '../net/renown.js';   // RENOWN1: Renown, left of the name
-import { guildTagText } from '../net/guildLaw.js';   // GUILD1c: the guild's tag, right of the name
+import { guildTagText } from '../net/guild/guildLaw.js';   // GUILD1c: the guild's tag, right of the name
 import { houseLine } from '../net/houseLaw.js';   // LEGACY7: the house, under the name
 import { ribbonColours, heraldryOf, heraldryColourOf, heraldryKey } from '../net/heraldryLaw.js';   // SEASON1 part two: a Season's banner ribbon, under the name; HERALDRY-SHOWN: the tag's frame
 import { heraldrySwatchSrc } from './heraldrySwatch.js';   // HERALDRY-SHOWN (Seats-Arc 8.1): the guild's shield, in its tag's frame
@@ -140,11 +140,11 @@ export function nameLayerWanted(doc = globalThis.document) {
   return !!doc;
 }
 
-/** The layer's sheet. The enhanced face, unsmoothed, on bone - ui/enhancedStyle.js' own tokens where the skin's
+/** The layer's sheet. The enhanced face, unsmoothed, on bone - ui/enhanced/enhancedStyle.js' own tokens where the skin's
  *  sheet is loaded and the same literals where it is not (ui/partyPanel.js' shape). */
 export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
 /* AUDIT NAME1 F4: z-index 3, which is UNDER THE HUD - not level with it. At 4 this layer TIED with .hud (and with
-   every readout the enhanced skin adds beside it at that level, ui/enhancedStyle.js), and a tie is decided by
+   every readout the enhanced skin adds beside it at that level, ui/enhanced/enhancedStyle.js), and a tie is decided by
    document order: this layer is appended after them, so it won. A bubble stood over the mid-screen line and a low
    name over the vitals bars. Everything the player ACTS on is higher still (the chat and the party HUD at 5, the
    friends panel at 6, its confirm bar at 7, the FPS read-out at 9), because a label over somebody's head must
@@ -165,7 +165,7 @@ export const NAME_CSS = `${PIXELIFY_FIVE_FACE}
    the same lift - so a frame that only moves names lays out nothing; and \`contain\` keeps a label whose size or
    words changed from dirtying the rest. No \`will-change\`: a label on a layer of its own rasters its text and its
    shadow apart from the page, and the pixels differ (measured: 324 of 400,000, by up to 26) - the picture is kept. */
-/* AUDIT NAME1 F12: the fallback is --bone's OWN value (ui/enhancedStyle.js :root, #e9e4d9), the one the friends
+/* AUDIT NAME1 F12: the fallback is --bone's OWN value (ui/enhanced/enhancedStyle.js :root, #e9e4d9), the one the friends
    and party panels fall back to. It read #d8cfae, which is a real colour but a different one - .hud's text - so a
    page that reached this layer before the enhanced sheet loaded drew the names in the HUD's ivory and the panels
    beside them in bone. One token, one fallback. */
@@ -395,7 +395,7 @@ export function createNameLayer({ doc = document, now = () => Date.now(), armsOf
     /** Drive a line in directly (the host pulls from the log; this is the same door without one). */
     say,
     /** AUDIT NAME1 F3: `viewport` is the world viewport's HEIGHT in CSS px and `hudScale` the player's own HUD
-     *  scale (ui/enhancedHud.js enhancedHudScale). Both are taken by VALUE rather than through
+     *  scale (ui/enhanced/enhancedHud.js enhancedHudScale). Both are taken by VALUE rather than through
      *  `scale(var(--hud-scale))`, because that variable is set on #enhanced-hud and this layer is a body sibling
      *  of it - the damage numbers' own layer has the same problem and enhancedHud.js:"document.getElementById" solves it the same way,
      *  by writing the number where it is needed. Neither is passed on a probe host, and there the law is exactly

@@ -1,0 +1,974 @@
+[
+  {
+    "name": "EGHL-law-seven-not-the-law",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_SPEC = 10;",
+    "new": "export const EG_SPEC = 6;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-hero-law-later",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_HERO_LAW = 7;",
+    "new": "export const EG_HERO_LAW = 8;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-hang-short",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_HANG_CM = 2200;",
+    "new": "export const EG_HANG_CM = 2000;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-said-max-short",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_SPEC_SAID_MAX = 32_768;",
+    "new": "export const EG_SPEC_SAID_MAX = 32_000;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-coin-unfair",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    if (u >= 0.5) { log?.push(",
+    "new": "    if (u >= 0.6) { log?.push(",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-set-pieces-slots",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (!EG_SET_PIECES.includes(f.play)) {",
+    "new": "if (EG_SET_PIECES.length) {",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-pick-first",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "rec = c[Math.min(c.length - 1, Math.floor(u * 2 * c.length))]",
+    "new": "rec = c[0]",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-refused-kept",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (!why) { if (out) out.at = t;",
+    "new": "if (fit.ok) { if (out) out.at = t;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-exit-line-edge-refused",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "Math.abs(o.x) * 2 > o.w) return;",
+    "new": "Math.abs(o.x) * 2 >= o.w) return;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-exit-highest",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (k < 0 || o.y < b.y || (o.y === b.y",
+    "new": "if (k < 0 || o.y > b.y || (o.y === b.y",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-exit-tie-farthest",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "Math.abs(o.x) < Math.abs(b.x))) k = i;",
+    "new": "Math.abs(o.x) > Math.abs(b.x))) k = i;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-exit-narrow",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (!(o.w >= EG_HERO_WAY_CM) ||",
+    "new": "if (!(o.w >= EG_HERO_WAY_CM - 1) ||",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-box-behind-mouth",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (!(B[5] > 0) || B[2] < -EG_FRAG_SOCKET_TOL_CM)",
+    "new": "if (!(B[5] > 0) || B[2] < -EG_FRAG_SOCKET_TOL_CM - 1)",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-mouth-exact-refused",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (!(S.in.w >= EG_HERO_WAY_CM) ||",
+    "new": "if (!(S.in.w > EG_HERO_WAY_CM) ||",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-mouth-floor-anywhere",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "rec.floors.some((f) => f.y === 0 && egFragInPoly(f.poly, 0, 0))",
+    "new": "rec.floors.some((f) => f.y === 0)",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-shaft-deeper",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "[-EG_HERO_SHAFT_CM, -1]",
+    "new": "[-EG_HERO_SHAFT_CM - 1, -1]",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-shaft-level",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "[-EG_HERO_SHAFT_CM, -1]",
+    "new": "[-EG_HERO_SHAFT_CM, 0]",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-low-road-down",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "rec.class === 'chamber' || low ? [0, 0]",
+    "new": "rec.class === 'chamber' ? [0, 0]",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-kit-descent-none",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "const kitDescent = (kit) => Math.min(0, egFragPassage(kit, () => 0).yB);",
+    "new": "const kitDescent = (kit) => 0;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-exit-floor-anywhere",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "rec.floors.some((f) => f.y === o.y && egFragInPoly(f.poly, o.x, o.z))",
+    "new": "rec.floors.some((f) => f.y === o.y)",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-chamber-middle-unasked",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (rec.class === 'chamber' && !egHeroCourtOf(rec))",
+    "new": "if (false && !egHeroCourtOf(rec))",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-court-inset-kept",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "return R > 300 ? { cz, R } : null;",
+    "new": "return R >= 300 ? { cz, R } : null;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-court-middle-off",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "const cz = Math.floor(rec.box[5] / 2), main",
+    "new": "const cz = Math.floor(rec.box[5] / 2) + 1, main",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-court-reach-to-corner",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "return Math.max(0, Math.floor(ax * ax + az * az - (t * t) / L2));",
+    "new": "return ax * ax + az * az;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-joined-never",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "Math.min(a[5], b[5]) - Math.max(a[2], b[2]) <= EG_FRAG_SOCKET_TOL_CM &&",
+    "new": "Math.min(a[5], b[5]) - Math.max(a[2], b[2]) <= -1 &&",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-hall-too-long",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (!l9 && edge > EG_HALL_LEN_MAX * 100)",
+    "new": "if (!l9 && edge > EG_HALL_LEN_MAX * 1000)",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-steps-apart-unasked",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (!apartOrJoined(hb, sb)) return no(",
+    "new": "if (false) return no(",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-trial-off-floors",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (inBox(q.x, q.z) && !on(q.x, q.z)) return no(",
+    "new": "if (false) return no(",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-anchor-rifts-held",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "...P.rifts.filter((q) => !q.a)",
+    "new": "...P.rifts",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-fight-floors-all",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "for (const g of rec.floors) if (g.fight) P.fl.push(",
+    "new": "for (const g of rec.floors) if (true) P.fl.push(",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-fight-floor-unlifted",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "P.fl.push({ t: 'p', poly: g.poly.map(at), y: y0 + g.y });",
+    "new": "P.fl.push({ t: 'p', poly: g.poly.map(at), y: g.y });",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-stair-twice-wide",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "hw: Math.floor(lawIsqrt(w2) / 2), y0: y0 + q.y0",
+    "new": "hw: lawIsqrt(w2), y0: y0 + q.y0",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-hazard-unmoved",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "x: x0 + hz.x, z: z0 + hz.z, y: y0 + hz.y",
+    "new": "x: hz.x, z: hz.z, y: y0 + hz.y",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-engine-lost",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (kk === 'engine') { if (engine) P.engines.push(",
+    "new": "if (kk === 'engine') { if (false) P.engines.push(",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-place-unlifted",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "spot(kk, x0 + q[0], z0 + q[2], { y: y0 + q[1], road, f });",
+    "new": "spot(kk, x0 + q[0], z0 + q[2], { y: q[1], road, f });",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-alcove-unlifted",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "y: y0 + a.y, seal: a.seal, side: a.side, holds: a.holds });\n    for (const l of rec.lights) P.lights.push([x0 + l[0], y0 + l[1], z0 + l[2], l[3]]);\n    kitNow = rec.kit;",
+    "new": "y: a.y, seal: a.seal, side: a.side, holds: a.holds });\n    for (const l of rec.lights) P.lights.push([x0 + l[0], y0 + l[1], z0 + l[2], l[3]]);\n    kitNow = rec.kit;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-light-unlifted",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "for (const l of rec.lights) P.lights.push([x0 + l[0], y0 + l[1], z0 + l[2], l[3]]);\n    kitNow = rec.kit;",
+    "new": "for (const l of rec.lights) P.lights.push([x0 + l[0], l[1], z0 + l[2], l[3]]);\n    kitNow = rec.kit;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-course-unlifted",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "edge = z0 + q.z - q.d / 2 - q.gap; y = y0 + q.y;",
+    "new": "edge = z0 + q.z - q.d / 2 - q.gap; y = q.y;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-piece-size-the-steps",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "beat: q.kind === 'moon' ? z0 + q.beat : q.beat, size: { w: q.w, d: q.d } });",
+    "new": "beat: q.kind === 'moon' ? z0 + q.beat : q.beat });",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-exit-height-unread",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "edge = heroEnd = z0 + L; y = y0 + o.y;",
+    "new": "edge = heroEnd = z0 + L; y = y0;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-rifts-past-five",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "return H && list.length >= n ? list.slice(0, n)",
+    "new": "return H && list.length > n ? list.slice(0, n)",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-bridge-laps-the-hero",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "const back = () => (edge === heroEnd ? 0 : 50);",
+    "new": "const back = () => 50;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-chamber-code-built",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (hc && !hc.laid) { hc.laid = 1; heroLay(",
+    "new": "if (false) { hc.laid = 1; heroLay(",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-horn-lost",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (egFragChamber(kit, () => 0, R).horn) spot('horn', X, zc, { r: 600 }); return; }",
+    "new": "return; }",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-shaft-as-passage",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "const H = heroAt('shaft', false, kit);",
+    "new": "const H = heroAt('passage', false, kit);",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-slot-any-earlier",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "P.frags.filter((f) => !f.room).length !== hero.n",
+    "new": "P.frags.filter((f) => !f.room).length > hero.n",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-vault-kept",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (kind === 'proving' && twist === 'vault') return refuse(",
+    "new": "if (false) return refuse(",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-yard-court-code-size",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "R = H ? H.R : R0;",
+    "new": "R = R0;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-proving-disc-kept",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    if (!H) { disc(X, zc, R, 'court', y); flD(X, zc, R, y); }\n    if (c >= 2 && r() * 3 < 1) chamberAt(zc, R);   // one proving",
+    "new": "    { disc(X, zc, R, 'court', y); flD(X, zc, R, y); }\n    if (c >= 2 && r() * 3 < 1) chamberAt(zc, R);   // one proving",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-proving-second-span-off",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    edge = H ? H.z0 + H.L : zc + R;\n    if (twist === 'vault')",
+    "new": "    edge = zc + R;\n    if (twist === 'vault')",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-deep-bridge-into-it",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "band(edge - back(), H ? H.z0 : edge + 450, BRIDGE_HALF, 'bridge', y);",
+    "new": "band(edge - back(), H ? H.z0 + 50 : edge + 450, BRIDGE_HALF, 'bridge', y);",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-deep-rifts-the-law",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "const ra = obj === 0 ? heroRifts(3) : null;",
+    "new": "const ra = null;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-chains-off-the-court",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "const f0 = hc?.laid ? { t: 'd', x: law >= EG_BROKEN_LAW ? P.heroes.find((q) => !q.rec.room).x : X, z: hc.zc, r: hc.R } : P.fl[0];",
+    "new": "const f0 = P.fl[0];",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-after-hero-unread",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (Math.min(...xs) - s.w <= s.x && s.x <= Math.max(...xs) + s.w && z0 >= far - 1 && !q.rec.room) take(",
+    "new": "if (false) take(",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-fight-disc-polygon-unread",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "else if (f.t === 'p') for (const [px, pz] of f.poly) {",
+    "new": "else if (f.t === 'P') for (const [px, pz] of f.poly) {",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-fl-polygon-unsaid",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "f.t === 'p' ? { t: 'p', poly: f.poly.map((p) => [m(p[0]), m(p[1])]), y: m(f.y) } :",
+    "new": "f.t === 'P' ? { t: 'p', poly: f.poly.map((p) => [m(p[0]), m(p[1])]), y: m(f.y) } :",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-said-all-fight",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "fight: g.fight ? 1 : 0",
+    "new": "fight: 1",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-said-box-unmoved",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "box: egFragBoxAt(rec, x, y, z).map(m),",
+    "new": "box: rec.box.map(m),",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-on-fight-polygon-unread",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "const onPiece = (f, x, z, pad) => (f.t === 'p' ? egPieceIn(f, x, z, pad) :",
+    "new": "const onPiece = (f, x, z, pad) => (f.t === 'p' ? false :",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-keep-on-fight-no-inset",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (f.t === 'p') { [px, pz] = egPolyKeep(f.poly, x, z, inset);",
+    "new": "if (f.t === 'p') { [px, pz] = egPolyKeep(f.poly, x, z, 0);",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-on-floor-no-stair",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "for (const g of [...q.floors, ...q.ramps])",
+    "new": "for (const g of [...q.floors])",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-piece-at-polygon-unread",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (!Number.isFinite(H)) return (spec.fl ?? []).find((f) => onPiece(f, x, z, pad)) ?? null;",
+    "new": "if (!Number.isFinite(H)) return (spec.fl ?? []).find((f) => f.t !== 'p' && onPiece(f, x, z, pad)) ?? null;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-poly-edges-not-its-own",
+    "file": "src/net/eliteGates/egShape.js",
+    "old": "return inside || egPolyEdgeDist(poly, x, z) <= Math.max(0, pad) + 1e-9;",
+    "new": "return inside;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-poly-dist-unsigned",
+    "file": "src/net/eliteGates/egShape.js",
+    "old": "export const egPolyDist = (poly, x, z) => (egPolyIn(poly, x, z) ? -egPolyEdgeDist(poly, x, z) : egPolyEdgeDist(poly, x, z));",
+    "new": "export const egPolyDist = (poly, x, z) => egPolyEdgeDist(poly, x, z);",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-poly-keep-outward",
+    "file": "src/net/eliteGates/egShape.js",
+    "old": "const q = [best[0] + best[2] * inset, best[1] + best[3] * inset];",
+    "new": "const q = [best[0] - best[2] * inset, best[1] - best[3] * inset];",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-piece-inset-unread",
+    "file": "src/net/eliteGates/egShape.js",
+    "old": "&& (pad >= 0 || egPolyEdgeDist(f.poly, x, z) >= -pad)",
+    "new": "&& true",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-graph-record-nodes-lost",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "return k < 0 ? -1 : node(x, z, k); });",
+    "new": "return -1; });",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-graph-socket-nodes-lost",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "if (k >= 0) node(so.x, so.z, k); }",
+    "new": "if (false) node(so.x, so.z, k); }",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-walk-through-the-notch",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "if (to === from && sees(from, b.x, b.z, goal[0], goal[1])) return",
+    "new": "if (to === from) return",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-air-no-hero-walls",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "{ if (!open.has(`${fi}:${e}`)) { const n = f.poly[(e + 1) % f.poly.length]; wall(",
+    "new": "{ if (false) { const n = f.poly[(e + 1) % f.poly.length]; wall(",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-ground-polygon-unread",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "const holds = (f, x, z, pad = 0) => (f.t === 'p' ? egPolyIn(f.poly, x, z, pad) :",
+    "new": "const holds = (f, x, z, pad = 0) => (f.t === 'p' ? false :",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-fair-fight-polygon-unread",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "if (!(f.t === 'p' ? egPolyIn(f.poly, x, z) :",
+    "new": "if (!(f.t === 'p' ? false :",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-fair-hero-floors-unread",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "if (on(f.y) && egPolyIn(f.poly, x, z, P)) return byHero ? `h${k}:${i}` : `h${i}`;",
+    "new": "if (false) return byHero ? `h${k}:${i}` : `h${i}`;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-telegraph-polygon-unread",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "const holds = (f, x, z, pad = 0) => (f.t === 'p' ? egPieceIn(f, x, z, pad) :",
+    "new": "const holds = (f, x, z, pad = 0) => (f.t === 'p' ? false :",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-ear-uncut",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "tri(a[0], a[1], b[0], b[1], c[0], c[1]); v.splice(i, 1); cut = true; break;",
+    "new": "v.splice(i, 1); cut = true; break;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-telegraph-polygon-a-lane",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "    if (f.t === 'p') {\n      // EG-HERO-LAY",
+    "new": "    if (f.t === 'P') {\n      // EG-HERO-LAY",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-hero-ground-undrawn",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "    heroTrisInto(f, S.ground, at);",
+    "new": "    void S.ground;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-hero-rock-not-dithered",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "    for (const tris of S.rock.values()) occ(() => heroTrisInto(f, tris, at));",
+    "new": "    for (const tris of S.rock.values()) heroTrisInto(f, tris, at);",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-hero-mesh-off-origin",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "g.p.push(src.positions[v * 3] + at[0], src.positions[v * 3 + 1] + at[1], src.positions[v * 3 + 2] + at[2]);",
+    "new": "g.p.push(src.positions[v * 3], src.positions[v * 3 + 1], src.positions[v * 3 + 2]);",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-hero-proxy-off-origin",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "for (const v of egHeroFragCollider(q.id, egToDungeon(spec, q.x, q.y, q.z), M)) out.push(v);",
+    "new": "for (const v of egHeroFragCollider(q.id, [0, 0, 0], M)) out.push(v);",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-stair-drawn-twice",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "    for (const q of spec.ramps ?? []) { if (egInHeroBox(spec, (q.ax + q.bx) / 2, (q.az + q.bz) / 2, (q.y0 + q.y1) / 2)) continue; const [a, b, c, e] = rampCorners(spec, q); quadTo(",
+    "new": "    for (const q of spec.ramps ?? []) { const [a, b, c, e] = rampCorners(spec, q); quadTo(",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-stair-collided-twice",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "    for (const q of spec.ramps ?? []) { if (egInHeroBox(spec, (q.ax + q.bx) / 2, (q.az + q.bz) / 2, (q.y0 + q.y1) / 2)) continue; const [a, b, c, e] = rampCorners(spec, q); quad(a, b, c, e); }",
+    "new": "    for (const q of spec.ramps ?? []) { const [a, b, c, e] = rampCorners(spec, q); quad(a, b, c, e); }",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-niche-drawn-twice",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "    if (egInHeroBox(spec, a.x, a.z)) continue;   // EG-HERO-LAY: a hero's alcove is its own mesh's",
+    "new": "    void a;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-niche-collided-twice",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "      if (egInHeroBox(spec, a.x, a.z)) continue;   // EG-HERO-LAY: a hero's alcove is its proxy's",
+    "new": "      void a;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-spouts-over-the-hero",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "if (s.kind !== 'slag' || egInHeroBox(spec, s.x, s.z)) continue;",
+    "new": "if (s.kind !== 'slag') continue;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-hero-zone-lost",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "for (const h of spec.heroes ?? []) { const o = h.sockets.out[h.exit]; out.push({ t: 'hero'",
+    "new": "for (const h of []) { const o = h.sockets.out[h.exit]; out.push({ t: 'hero'",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-stair-clamped",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "if (egPolyIn(rp.poly.map((p) => [p[0], p[2]]), x, z, 0.05) && (!Number.isFinite(y)",
+    "new": "if (false && (!Number.isFinite(y)",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-wall-unread",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "if (segDist(px, pz, a[0], a[1], b[0], b[1]) < r - 1e-6) { [px, pz] = inside(f, e, px, pz); moved = true; }",
+    "new": "if (false) { [px, pz] = inside(f, e, px, pz); moved = true; }",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-open-edge-a-wall-inside",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "    for (let pass = 0; pass < 2; pass++) for (let e = 0; e < f.poly.length; e++) {\n      if (open.has(`${fi}:${e}`)) continue;",
+    "new": "    for (let pass = 0; pass < 2; pass++) for (let e = 0; e < f.poly.length; e++) {",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-open-edge-a-wall-outside",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "if (!best || open.has(`${best[0]}:${best[1]}`)) return null;",
+    "new": "if (!best) return null;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-sky-a-ceiling",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "ceilAbove: top === null ? Infinity : Math.max(0.5, top - fy - CLAMP_BODY_M)",
+    "new": "ceilAbove: top === null ? 0.5 : Math.max(0.5, top - fy - CLAMP_BODY_M)",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-ceiling-everywhere",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "if (c.y > y && (best === null || c.y < best) && egPolyIn(c.poly, x, z)) best = c.y;",
+    "new": "if (c.y > y && (best === null || c.y < best)) best = c.y;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-hero-shaft-unmarked",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "shaft: h.cls === 'shaft' ? 1 : 0, zB: o.z, yB: o.y",
+    "new": "shaft: 0, zB: o.z, yB: o.y",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-reverb-hero-half-unread",
+    "file": "src/systems/eliteGates/egReverb.js",
+    "old": "const half = hero ? Math.max(f.x - hero.box[0], hero.box[3] - f.x) : cave",
+    "new": "const half = hero ? 6 : cave",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-piece-size-unread",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "const S = o.size ?? sizes[kind], z = L.edge + g + S.d / 2;",
+    "new": "const S = sizes[kind], z = L.edge + g + S.d / 2;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-mesh-registry-unread",
+    "file": "src/world/eliteGates/egHeroFragModel.js",
+    "old": "  const mesh = meshes[id];",
+    "new": "  const mesh = EG_HERO_FRAG_MESHES[id];",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-proxy-registry-unread",
+    "file": "src/world/eliteGates/egHeroFragModel.js",
+    "old": "  const c = meshes[id].collider, out = new Float32Array(c.length);",
+    "new": "  const c = EG_HERO_FRAG_MESHES[id].collider, out = new Float32Array(c.length);",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-sweep-hero-ground-unread",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "    for (const q of spec.heroes ?? []) for (const g of q.floors) {",
+    "new": "    for (const q of []) for (const g of q.floors) {",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-hero-ground-by-record",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "        if (ys.some((y) => Math.abs(top - y) <= EG_HERO_GROUND_HAND_M)) { ground.push([rec, src, k]); continue; }",
+    "new": "        if ([EG_DRESS.floor, EG_DRESS.arena, EG_DRESS.cobble, EG_DRESS.edge, EG_DRESS.molten].includes(rec)) { ground.push([rec, src, k]); continue; }",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-hero-rock-one-piece-a-record",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "        const key = `${rec}:${Math.floor(",
+    "new": "        const key = `${rec}`; void `${Math.floor(",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-hero-rock-cell-records-mixed",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "        const key = `${rec}:${Math.floor(",
+    "new": "        const key = `${Math.floor(",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-landing-room-unread",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "  return egHeroLanding(rec, law);\n}",
+    "new": "  return '';\n}",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-landing-room-short",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_HERO_LAND_ROOM_CM = 40;",
+    "new": "export const EG_HERO_LAND_ROOM_CM = 30;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-landing-no-run-off",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    if (off >= q.gap + 40 && off <= q.gap + q.d - 50) continue;   // run off it, as a stair is",
+    "new": "    void off;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-landing-run-off-short-taken",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    if (off >= q.gap + 40 && off <= q.gap + q.d - 50) continue;",
+    "new": "    if (off >= 0 && off <= q.gap + q.d - 50) continue;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-landing-mover-judged",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    if (q.amp > 0 && (law >= EG_WAYS_LAW ? EG_HERO_ALONG : ['drift', 'rail', 'drum', 'pend']).includes(q.kind)) continue;",
+    "new": "    void q.amp;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-landing-first-from-its-own-height",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    const ay = prev ? prev.y : Math.max(0, ...rec.floors.filter((f) => egFragInPoly(f.poly, q.x, lz - 1)).map((f) => f.y)), dy = q.y - ay;",
+    "new": "    const ay = prev ? prev.y : q.y, dy = q.y - ay;",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  },
+  {
+    "name": "EGHL-landing-flight-no-push",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "land = lz + Math.floor(100 * (EG_SPAN_RUN_MPS + EG_JUMP_MPS * EG_JUMP_FWD) * air);",
+    "new": "land = lz + Math.floor(100 * EG_SPAN_RUN_MPS * air);",
+    "tests": [
+      "test/net/eliteGates/eghero_lay.test.js"
+    ]
+  }
+]

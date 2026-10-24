@@ -1,38 +1,38 @@
 [
   {
     "name": "SLOPE-ALL-a-the-old-bound",
-    "file": "src/ui/inkDungeonGL.js",
+    "file": "src/ui/ink/inkDungeonGL.js",
     "old": "export const CLIMB_NY = 0.999;",
     "new": "export const CLIMB_NY = 0.97;",
     "tests": [
-      "test/fb1011g_slopeall.test.js"
+      "test/ui/ink/fb1011g_slopeall.test.js"
     ]
   },
   {
     "name": "SLOPE-ALL-b-the-bound-past-a-level-floor",
-    "file": "src/ui/inkDungeonGL.js",
+    "file": "src/ui/ink/inkDungeonGL.js",
     "old": "export const CLIMB_NY = 0.999;",
     "new": "export const CLIMB_NY = 0.99995;",
     "tests": [
-      "test/fb1011g_slopeall.test.js"
+      "test/ui/ink/fb1011g_slopeall.test.js"
     ]
   },
   {
     "name": "SLOPE-ALL-c-the-shaders-own-literal",
-    "file": "src/ui/inkDungeonGL.js",
+    "file": "src/ui/ink/inkDungeonGL.js",
     "old": "    bool climbs = (n.y > ${FNY} && n.y < ${CNY}) ||",
     "new": "    bool climbs = (n.y > ${FNY} && n.y < 0.97) ||",
     "tests": [
-      "test/fb1011g_slopeall.test.js"
+      "test/ui/ink/fb1011g_slopeall.test.js"
     ]
   },
   {
     "name": "SLOPE-ALL-d-the-tread-unspared",
-    "file": "src/ui/inkDungeonGL.js",
+    "file": "src/ui/ink/inkDungeonGL.js",
     "old": "    bool climbs = (n.y > ${FNY} && n.y < ${CNY}) || (vN.w > 1.2 && vN.w < 1.5);",
     "new": "    bool climbs = (n.y > ${FNY} && n.y < ${CNY});",
     "tests": [
-      "test/fb1011g_slopeall.test.js"
+      "test/ui/ink/fb1011g_slopeall.test.js"
     ]
   }
 ]

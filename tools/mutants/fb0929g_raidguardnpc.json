@@ -5,7 +5,7 @@
     "old": "    if (playerSparesPerson(best)) return SWING_SPARED;",
     "new": "",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ],
     "note": "The swing's civilian arm struck a raid's walking guard: Assault, a watchman minted, the squad turned."
   },
@@ -15,7 +15,7 @@
     "old": "    return !!person && (!!raidHere() || (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') && !!fightHere()));",
     "new": "    return !!person;",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ],
     "note": "Every walker spared, raid or not: DFU's Assault and Murder gone. PROTECT-FIGHT (FIELD BUGS 2026-09-30, PIN MOVED): re-aimed by content to the rule's new line."
   },
@@ -25,7 +25,7 @@
     "old": "    return !!person && (!!raidHere() || (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') && !!fightHere()));",
     "new": "    return !!person && (!!person.guard && !!raidHere() || (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') && !!fightHere()));",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ],
     "note": "Only the walking guard spared: a townsperson struck in a raid is still Murder (Mac: \"Spare townspeople in raid\"). PROTECT-FIGHT (FIELD BUGS 2026-09-30, PIN MOVED): re-aimed by content to the rule's new line."
   },
@@ -35,7 +35,7 @@
     "old": "    livePersons: () => _livePersons.filter((seat) => !cityGuards.playerSparesPerson(seat.person)),",
     "new": "    livePersons: () => _livePersons,",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ],
     "note": "The riding trample still made Assault of a raid's walking guard."
   },
@@ -45,7 +45,7 @@
     "old": "    if (playerSparesPerson(best)) return SWING_SPARED;",
     "new": "    if (playerSparesPerson(best)) return false;",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ],
     "note": "A spared walker's stop read as a swing that met nobody: the door behind him bashed."
   },
@@ -55,7 +55,7 @@
     "old": "rayPersonDistance(eye, lookDir, g.ai.feet) < bestD)) return SWING_SPARED;",
     "new": "rayPersonDistance(eye, lookDir, g.ai.feet) < bestD)) return false;",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ],
     "note": "FB0929's defender on the ray: the door behind him bashed."
   },
@@ -65,7 +65,7 @@
     "old": "            else if (r?.spared || !modes?.attemptExteriorDoorBash?.(cam.pos, lookFwd)) audio.playOneShot(",
     "new": "            else if (!modes?.attemptExteriorDoorBash?.(cam.pos, lookFwd)) audio.playOneShot(",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ],
     "note": "The world host hands a stopped swing to the door."
   },
@@ -75,7 +75,7 @@
     "old": "            else if (r?.spared || !modes?.attemptExteriorDoorBash?.(eye, fwd)) audio.playOneShot(",
     "new": "            else if (!modes?.attemptExteriorDoorBash?.(eye, fwd)) audio.playOneShot(",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ],
     "note": "The ?town host hands a stopped swing to the door."
   },
@@ -85,7 +85,7 @@
     "old": "            if (r?.crime) surfacePlayer();",
     "new": "            if (r) surfacePlayer();",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ],
     "note": "A stopped swing surfaces the HUD and skips the whoosh."
   }

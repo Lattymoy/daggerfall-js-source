@@ -40,7 +40,7 @@ handful of crossed cards, some true low-poly shells), 32 materials, 30 textures,
   record copies are FILLS: the record they were made from and a coarse map of where they lie (8-texel cells, never
   their picture), painted by the game as a crown folded out of the record, a tiled crop of it or the record stretched
   over the region, whichever the tool found nearer the author's own - near his, not his
-  (`bible/01-Overview/Audit-Low-Poly-Trees.md` measures how near).
+  (`bible/01-Overview/audits/Audit-Low-Poly-Trees.md` measures how near).
 
 `tools/lowPolyTreesExtract.mjs` rebuilds every file here but this README from the archive and the player's ARENA2. The
 design and the record: `bible/07-Rendering/Low-Poly-Trees.md`.

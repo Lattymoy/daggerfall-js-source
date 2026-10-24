@@ -5,7 +5,7 @@
     "old": "  p.set('world', '1');   // REALM-BIRTH: the world host's scene door (main.js) - the host the Online door boots\n",
     "new": "",
     "tests": [
-      "test/fb0930_realmbirth.test.js"
+      "test/systems/fb0930_realmbirth.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  p.set('world', '1');",
     "new": "  p.set('dungeon', '1');",
     "tests": [
-      "test/fb0930_realmbirth.test.js"
+      "test/systems/fb0930_realmbirth.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  p.set('classic', '1');   // REALM-BIRTH: the Online door's classic start - the start cell the load lands over\n",
     "new": "",
     "tests": [
-      "test/fb0930_realmbirth.test.js"
+      "test/systems/fb0930_realmbirth.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  for (const k of doorKeys) p.delete(k);\n  p.set('online', '1');",
     "new": "  for (const k of doorKeys) if (k !== 'realmnew') p.delete(k);\n  p.set('online', '1');",
     "tests": [
-      "test/fb0930_realmbirth.test.js"
+      "test/systems/fb0930_realmbirth.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "realmBootSearch(location.search, made.data.id, BOOT_DOOR_KEYS)}`);\n  }\n  /** LEGACY7: THE REALM'S CHARACTER MADE",
     "new": "realmBootSearch(location.search, made.data.id, [])}`);\n  }\n  /** LEGACY7: THE REALM'S CHARACTER MADE",
     "tests": [
-      "test/fb0930_realmbirth.test.js"
+      "test/systems/fb0930_realmbirth.test.js"
     ],
     "note": "LEGACY7 (PIN MOVED): re-aimed by content - the birth's boot has a twin in legacyRealmBirth; this one is realmBirth's."
   },
@@ -51,7 +51,7 @@
     "old": "    else params.set('classic', '1');",
     "new": "    else params.delete('classic');",
     "tests": [
-      "test/fb0930_realmbirth.test.js"
+      "test/systems/fb0930_realmbirth.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "  } else if (params.has('load')) {\n    _loadedGame = true;",
     "new": "  } else if (params.has('load') && !params.has('classic')) {\n    _loadedGame = true;",
     "tests": [
-      "test/fb0930_realmbirth.test.js"
+      "test/systems/fb0930_realmbirth.test.js"
     ]
   }
 ]

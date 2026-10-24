@@ -5,7 +5,7 @@
     "old": "  let size = byRecord[record];\n  if (!size) { size = scaledBillboardSize(t.getSize(record), t.getScale(record)); byRecord[record] = size; }",
     "new": "  const size = scaledBillboardSize(t.getSize(record), t.getScale(record));",
     "tests": [
-      "test/perftown1.test.js"
+      "test/world/perftown1.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  let byRecord = _mobileSize.get(t);\n  if (!byRecord) { byRecord = []; _mobileSize.set(t, byRecord); }",
     "new": "  let byRecord = _mobileSize.get(t?.archive);\n  if (!byRecord) { byRecord = []; _mobileSize.set(t?.archive, byRecord); }",
     "tests": [
-      "test/perftown1.test.js"
+      "test/world/perftown1.test.js"
     ]
   },
   {
@@ -23,54 +23,54 @@
     "old": "  let size = byRecord[record];",
     "new": "  let size = byRecord[0];",
     "tests": [
-      "test/perftown1.test.js"
+      "test/world/perftown1.test.js"
     ]
   },
   {
     "name": "PERF-TOWN1-4-the-xml-scale-is-cached-too-so-a-toggled-mod-is-not-seen",
     "file": "src/world/rmbFlats.js",
-    "old": "  return textureReplacementEnabled() ? applyBillboardXml(t?.archive, record, size) : size;\n}",
-    "new": "  return size;\n}",
+    "old": "  if (!(textureReplacementEnabled() || t?.vendor === true)) return size;\n  const s = billboardXmlScaleOf(t?.archive, record);",
+    "new": "  return size;\n  const s = billboardXmlScaleOf(t?.archive, record);",
     "tests": [
-      "test/perftown1.test.js",
-      "test/meanerMonsters.test.js"
+      "test/world/perftown1.test.js",
+      "test/characters/enemy/meanerMonsters.test.js"
     ]
   },
   {
     "name": "PERF-TOWN1-5-a-person-shares-one-frame-row-with-every-other-person",
-    "file": "src/characters/mobilePerson.js",
+    "file": "src/characters/mobile/mobilePerson.js",
     "old": "    const o = this._out ??= { record: 0, frame: 0, flip: false };",
     "new": "    const o = MobilePerson._shared ??= { record: 0, frame: 0, flip: false };",
     "tests": [
-      "test/perftown1.test.js"
+      "test/world/perftown1.test.js"
     ]
   },
   {
     "name": "PERF-TOWN1-6-the-frame-row-goes-back-to-a-fresh-object",
-    "file": "src/characters/mobilePerson.js",
+    "file": "src/characters/mobile/mobilePerson.js",
     "old": "    o.record = record; o.frame = frame; o.flip = flip;\n    return o;",
     "new": "    return { record, frame, flip };",
     "tests": [
-      "test/perftown1.test.js"
+      "test/world/perftown1.test.js"
     ]
   },
   {
     "name": "PERF-TOWN1-7-the-pools-list-is-rebuilt-every-frame-again",
-    "file": "src/systems/townPopulation.js",
+    "file": "src/systems/town/townPopulation.js",
     "old": "    const out = this._live ??= [];\n    out.length = 0;",
     "new": "    const out = [];",
     "tests": [
-      "test/perftown1.test.js"
+      "test/world/perftown1.test.js"
     ]
   },
   {
     "name": "PERF-TOWN1-8-the-pools-list-is-never-emptied-so-it-grows-for-ever",
-    "file": "src/systems/townPopulation.js",
+    "file": "src/systems/town/townPopulation.js",
     "old": "    const out = this._live ??= [];\n    out.length = 0;",
     "new": "    const out = this._live ??= [];",
     "tests": [
-      "test/townpopulation.test.js",
-      "test/perftown1.test.js"
+      "test/systems/townpopulation.test.js",
+      "test/world/perftown1.test.js"
     ]
   },
   {
@@ -79,8 +79,8 @@
     "old": "      return personWantsToStop(opts);",
     "new": "      return personWantsToStop({ ...opts });",
     "tests": [
-      "test/perftown1.test.js",
-      "test/townpopulation.test.js"
+      "test/world/perftown1.test.js",
+      "test/systems/townpopulation.test.js"
     ]
   },
   {
@@ -89,9 +89,9 @@
     "old": "      opts.inBeastForm = inBeastForm;",
     "new": "      opts.inBeastForm = false;",
     "tests": [
-      "test/perftown1.test.js",
-      "test/audit63_quests_talk.test.js",
-      "test/townpopulation.test.js"
+      "test/world/perftown1.test.js",
+      "test/systems/audit63_quests_talk.test.js",
+      "test/systems/townpopulation.test.js"
     ]
   },
   {
@@ -100,8 +100,8 @@
     "old": "      opts.sheathed = sheathed;",
     "new": "      opts.sheathed ||= sheathed;",
     "tests": [
-      "test/townpopulation.test.js",
-      "test/perftown1.test.js"
+      "test/systems/townpopulation.test.js",
+      "test/world/perftown1.test.js"
     ]
   },
   {
@@ -110,7 +110,7 @@
     "old": "    if (v === undefined) { v = `${archive}_${record}#${frame}`; keys.set(k, v); }",
     "new": "    if (v === undefined) { v = `${archive}_${record}_${frame}`; keys.set(k, v); }",
     "tests": [
-      "test/perftown1.test.js"
+      "test/world/perftown1.test.js"
     ]
   },
   {
@@ -119,7 +119,7 @@
     "old": "    const k = (archive * 4096 + record) * 1024 + frame;",
     "new": "    const k = archive * 4096 + record;",
     "tests": [
-      "test/perftown1.test.js"
+      "test/world/perftown1.test.js"
     ]
   },
   {
@@ -128,7 +128,7 @@
     "old": "    seat(i) { return seats[i] ??= { person: null, pos: null }; },",
     "new": "    seat() { return seats[0] ??= { person: null, pos: null }; },",
     "tests": [
-      "test/perftown1.test.js"
+      "test/world/perftown1.test.js"
     ]
   },
   {
@@ -137,7 +137,7 @@
     "old": "      _livePersons.length = 0;   // T3b: the activation ray's targets   // PERF-TOWN1: the same rows, refilled",
     "new": "      // PERF-TOWN1: the same rows, refilled",
     "tests": [
-      "test/perftown1.test.js"
+      "test/world/perftown1.test.js"
     ]
   },
   {
@@ -146,8 +146,8 @@
     "old": "  const town = createTownScratch({ areEnemiesNearby, foes: () => enchantFoes() });   // the pool is read at the CALL, not here: `enchantFoes` is declared below this line",
     "new": "  const town = createTownScratch({ areEnemiesNearby, foes: enchantFoes });",
     "tests": [
-      "test/tdz.test.js",
-      "test/townpopulation.test.js"
+      "test/tree/tdz.test.js",
+      "test/systems/townpopulation.test.js"
     ]
   }
 ]

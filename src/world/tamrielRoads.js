@@ -4,7 +4,7 @@
 // SCALE.
 //
 // The owner, of the land past the Bay: "there's no pathways like daggerfall has" - asked, "Full Daggerfall network".
-// TESA4 ran the port's road builder (world/roadNetwork.js buildRoadNetwork, ROADS 1-21) once over Arena's 283 places on
+// TESA4 ran the port's road builder (world/road/roadNetwork.js buildRoadNetwork, ROADS 1-21) once over Arena's 283 places on
 // a window five Bay pixels a cell: a road read the ground once a cell, so it crossed what lay between two cells' centres
 // (a lake's edge, a river), and it ran on to a cell's centre past a town that stood off it (a stub into the sea). And the
 // countryside TESA7 stands, 226,068 places on the freeware's continent, had no way to it at all.
@@ -25,8 +25,8 @@
 // Pure: the worker (world/tamrielRoadsWorker.js) and node build a region the same way, so every client lays the same
 // roads.
 // ═══════════════════════════════════════════════════════════════════
-import { buildRoadNetwork, MAP_W, MAP_H, DIR_DELTA, ROAD_DIALS, ROAD_TYPES } from './roadNetwork.js';
-import { inBay } from './tamrielFrame.js';
+import { buildRoadNetwork, MAP_W, MAP_H, DIR_DELTA, ROAD_DIALS, ROAD_TYPES } from './road/roadNetwork.js';
+import { inBay } from './tamriel/tamrielFrame.js';
 import { beyondKey } from './arenaRoads.js';
 import { WATER_BYTE } from './roadsProducer.js';
 import { GENERATOR_VERSION } from './roadsCache.js';
@@ -43,7 +43,7 @@ export const REGION_CORE_W = MAP_W - 2 * REGION_APRON;
 export const REGION_CORE_H = MAP_H - 2 * REGION_APRON;
 
 /**
- * THE LATTICE of regions over the continent's frame (world/tamrielFrame.js tamrielFrameInBay): its north-west Bay pixel
+ * THE LATTICE of regions over the continent's frame (world/tamriel/tamrielFrame.js tamrielFrameInBay): its north-west Bay pixel
  * and how many cores across and down.
  * @param {{ x0: number, y0: number, w: number, h: number }} frame
  */
@@ -87,7 +87,7 @@ const BIT_OF = new Map(DIR_DELTA.map(([bit, dx, dy]) => [`${dx},${dy}`, bit]));
  * ONE REGION'S ROADS AND TRACKS, as a layer of Bay pixels (world/arenaRoads.js: `beyondKey` to the byte, its compass bits).
  * `places` the rolled places on the grid's pixels; `nodes` Arena's places, the capitals' gates and the crossings' gates;
  * `obstacles` the capitals' own pixels; `gates` each gate's step into its city; `heightAt` the ground's byte
- * (world/tamrielGround.js) - every one in Bay pixels. TESA15: `held` the pixels Arena's places stand (a town's its node
+ * (world/tamriel/tamrielGround.js) - every one in Bay pixels. TESA15: `held` the pixels Arena's places stand (a town's its node
  * too): one that is no node is a place a route goes round (a dungeon's - ROADS 1), and no rolled place stands on it or on
  * a capital's - the world host's own order (scenes/world.js _locationToBuild: a capital, an Arena place, then the
  * countryside and the lairs). Answers too the region's PLACES: the rolled ones its core holds that stand, for the map

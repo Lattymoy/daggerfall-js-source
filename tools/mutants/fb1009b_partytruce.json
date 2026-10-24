@@ -1,39 +1,40 @@
 [
   {
     "name": "PARTY-TRUCE-the-leaver-never-held",
-    "file": "src/systems/wildZone.js",
+    "file": "src/systems/wild/wildZone.js",
     "old": "      for (const id of was) if (!peers.has(id)) { until.set(id, now + ms); gone.push(id); }",
     "new": "      for (const id of was) if (!peers.has(id)) { gone.push(id); }",
     "tests": [
-      "test/fb1009b_partytruce.test.js"
+      "test/systems/wild/fb1009b_partytruce.test.js"
     ]
   },
   {
     "name": "PARTY-TRUCE-the-truce-never-ends",
-    "file": "src/systems/wildZone.js",
+    "file": "src/systems/wild/wildZone.js",
     "old": "    holds: (id, now) => (until.get(id) ?? 0) > now,",
     "new": "    holds: (id, now) => until.has(id),",
     "tests": [
-      "test/fb1009b_partytruce.test.js"
+      "test/systems/wild/fb1009b_partytruce.test.js"
     ]
   },
   {
     "name": "PARTY-TRUCE-a-rejoin-keeps-the-old-clock",
-    "file": "src/systems/wildZone.js",
+    "file": "src/systems/wild/wildZone.js",
     "old": "      for (const id of peers) until.delete(id);   // a mate again: the party's own protection",
     "new": "      // a mate again: the party's own protection",
     "tests": [
-      "test/fb1009b_partytruce.test.js"
+      "test/systems/wild/fb1009b_partytruce.test.js"
     ]
   },
   {
     "name": "PARTY-TRUCE-wildFair-unasked",
     "file": "src/scenes/world.js",
-    "old": "    if (_wildTruce.holds(peerId, Date.now())) return false;   // PARTY-TRUCE",
-    "new": "    if (false) return false;   // PARTY-TRUCE",
+    "old": "party: !!social?.isPartyPeer(peerId) || _wildTruce.holds(peerId, Date.now()),",
+    "new": "party: !!social?.isPartyPeer(peerId),",
     "tests": [
-      "test/fb1009b_partytruce.test.js"
-    ]
+      "test/systems/wild/fb1009b_partytruce.test.js"
+    ],
+    "note": "MAC (2026-10-14, re-aimed by content): wildFair asks the truce inside its one kin law, net/wild/wildRef.js wildKin"
   },
   {
     "name": "PARTY-TRUCE-the-walk-never-names-the-zone",
@@ -41,7 +42,7 @@
     "old": "...[wildWalkRow(tw.x, tw.y)].filter(Boolean), 'Travel with them?'],",
     "new": "'Travel with them?'],",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ]
   }
 ]

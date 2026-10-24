@@ -27,7 +27,7 @@
 // is a BODY because its producer says so (`body: true` - scenes/corpseMarker.js corpseLootTargets
 // for the two surface pools, the dungeon context's own mint), so a list with no body in it is untouched.
 //
-// The tabs are drawn by the windows (ui/enhancedInventory.js remoteCol, ui/nativeInventory.js's target icon), so a
+// The tabs are drawn by the windows (ui/enhanced/enhancedInventory.js remoteCol, ui/native/nativeInventory.js's target icon), so a
 // phone, which never had a key to turn with, has the pile as well.
 
 /** @typedef {{ key: string, distance: number, reach: number }} RayPick */

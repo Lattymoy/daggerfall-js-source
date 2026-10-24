@@ -2,10 +2,10 @@
   {
     "name": "REP2-DFU's-half-less-one",
     "file": "src/systems/court.js",
-    "old": "  if (acquitted || !MARKED_CRIMES.has(crime)) return { legal: loss, people };",
+    "old": "  if (acquitted || !MARKED_CRIMES.has(crime)) return { legal, people };",
     "new": "  if (acquitted || !MARKED_CRIMES.has(crime)) return { legal: Math.trunc(loss / 2) - 1, people: Math.trunc((Math.trunc(loss / 2) - 1) / 2) };",
     "tests": [
-      "test/rep2_sentences.test.js"
+      "test/scenes/rep2_sentences.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (acquitted || !MARKED_CRIMES.has(crime)) return",
     "new": "  if (acquitted) return",
     "tests": [
-      "test/rep2_sentences.test.js"
+      "test/scenes/rep2_sentences.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (acquitted || !MARKED_CRIMES.has(crime)) return",
     "new": "  if (!MARKED_CRIMES.has(crime)) return",
     "tests": [
-      "test/rep2_sentences.test.js"
+      "test/scenes/rep2_sentences.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  changeLegalRep(player, court.regionIndex, refund.legal,",
     "new": "  changeLegalRep(player, court.regionIndex, 0,",
     "tests": [
-      "test/rep2_sentences.test.js"
+      "test/scenes/rep2_sentences.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (!voluntary && player.watchSlain) return false;",
     "new": "  if (!voluntary && (player.watchSlain || legalRepOf(player, regionIndex) < -20)) return false;",
     "tests": [
-      "test/rep2_sentences.test.js"
+      "test/scenes/rep2_sentences.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (!voluntary && player.watchSlain) return false;\n",
     "new": "",
     "tests": [
-      "test/rep2_sentences.test.js"
+      "test/scenes/rep2_sentences.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (playerEntity.chargedCrime === crimeId()) return;\n",
     "new": "",
     "tests": [
-      "test/rep2_sentences.test.js"
+      "test/scenes/rep2_sentences.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (playerEntity.chargedCrime === crimeId()) return;",
     "new": "    if (playerEntity.chargedCrime) return;",
     "tests": [
-      "test/rep2_sentences.test.js"
+      "test/scenes/rep2_sentences.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    playerEntity.haveShownSurrenderDialogue = true;\n    chargeOnce();\n    if (!surrenderToCityGuards",
     "new": "    playerEntity.haveShownSurrenderDialogue = true;\n    if (!surrenderToCityGuards",
     "tests": [
-      "test/rep2_sentences.test.js"
+      "test/scenes/rep2_sentences.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "raiseRepForSentence(playerEntity, court, { acquitted: true });",
     "new": "raiseRepForSentence(playerEntity, court);",
     "tests": [
-      "test/rep2_sentences.test.js"
+      "test/scenes/rep2_sentences.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  let penaltyAmount = legalRep >= 0\n    ? BASE_PENALTY[crimeType]",
     "new": "  let penaltyAmount = legalRep >= 0\n    ? PENALTY_PER_LEGAL_REP_POINT[crimeType] * legalRep + BASE_PENALTY[crimeType]",
     "tests": [
-      "test/rep2_sentences.test.js"
+      "test/scenes/rep2_sentences.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    if (!playerEntity.crimeCommitted) { playerEntity.chargedCrime = 0; playerEntity.watchSlain = false; }\n",
     "new": "",
     "tests": [
-      "test/rep2_sentences.test.js"
+      "test/scenes/rep2_sentences.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "        playerEntity.watchSlain = true;\n",
     "new": "",
     "tests": [
-      "test/rep2_sentences.test.js"
+      "test/scenes/rep2_sentences.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    // REP2: and the chase it was part of - the loaded save's own crime is a chase of its own, charged at its first box\n    playerEntity.chargedCrime = 0;\n",
     "new": "    // REP2: and the chase it was part of - the loaded save's own crime is a chase of its own, charged at its first box\n",
     "tests": [
-      "test/rep2_sentences.test.js"
+      "test/scenes/rep2_sentences.test.js"
     ]
   }
 ]

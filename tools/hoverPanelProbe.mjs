@@ -26,7 +26,7 @@ const waitFrames = async (n) => {
 /** Move the real mouse to a VIRTUAL (320x200) point. */
 const moveTo = async (vx, vy) => {
   const at = await page.evaluate(async ([x, y]) => {
-    const { nativeMetrics } = await import('/src/ui/nativePanel.js');
+    const { nativeMetrics } = await import('/src/ui/native/nativePanel.js');
     const c = document.querySelector('canvas');
     const m = nativeMetrics(c);
     const r = c.getBoundingClientRect();
@@ -63,7 +63,7 @@ const gold = JSON.parse(await page.evaluate(() => window.__invInfo()));
 console.log('over gold:', JSON.stringify(gold));
 if (!gold.gold) fail('the gold button did not take the panel');
 await page.mouse.click(...(await page.evaluate(async () => {
-  const { nativeMetrics } = await import('/src/ui/nativePanel.js');
+  const { nativeMetrics } = await import('/src/ui/native/nativePanel.js');
   const c = document.querySelector('canvas');
   const m = nativeMetrics(c);
   const r = c.getBoundingClientRect();

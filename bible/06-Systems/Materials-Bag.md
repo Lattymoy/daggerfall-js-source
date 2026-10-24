@@ -32,9 +32,9 @@ crafting materials in the inventory itself." And: "This is something I really wa
   back to its material is BUILT BY MINTING every material once (both of a food's skins, Climates & Calories on and
   off), so the bag's rule and the mint can never disagree about what an Oak Log is. A quest's piece, a summoned one, a
   worn one or an enchanted one is never a material.
-- **Its own list**, `entity.bagItems`, beside `wagonItems` - in the save (`systems/save.js`: snapshotted, restored,
+- **Its own list**, `entity.bagItems`, beside `wagonItems` - in the save (`systems/save/save.js`: snapshotted, restored,
   repaired and swept for orphans with the rest), counted by the realm with the pack and the wagon
-  (`net/realmGoldLaw.js` carriedItemLists, `systems/realmCustoms.js`). Its food rots as the pack's does
+  (`net/realm/realmGoldLaw.js` carriedItemLists, `systems/realmCustoms.js`). Its food rots as the pack's does
   (`survival/needs.js`), and a food on its way to putrid is no longer the material the mint makes.
 - **The cart's own rule**: a bag that holds anything never leaves the pack - not dropped, stored, sold or given
   (`itemTransfer.js` planStore, `tradeModes.js` localClickDecision: "Empty your Materials Bag first."). And the bag
@@ -43,7 +43,7 @@ crafting materials in the inventory itself." And: "This is something I really wa
 
 ## 2. The window
 
-The enhanced inventory's remote pane shows the bag as it shows the wagon (`ui/enhancedInventory.js`,
+The enhanced inventory's remote pane shows the bag as it shows the wagon (`ui/enhanced/enhancedInventory.js`,
 `systems/inventorySession.js`): a **Materials Bag** button in the pane's header (no bag: "You have no Materials Bag.
 Every General Store sells one."), the bag's list as the remote list while it shows, its 300 kg on the weight line,
 **Put in bag** on a material's menu (never on what the bag refuses), a move refused past the weight in the companion's
@@ -87,11 +87,15 @@ ground - `scenes/world.js` `_storesReached`). Away from one the page reads, and 
 to any town to put materials in or take them out." **The town is the client's convention, not the service's law**: the
 service checks no place, and a station's shortfall is put in wherever the station stands (section 6).
 
-The Stores page (`ui/profPages.js`; the pause menu's Holdings tab since HOLDINGS, `03-World/Holdings.md`) shows each
+The Stores page (`ui/professions/profPages.js`; the pause menu's Holdings tab since HOLDINGS, `03-World/Holdings.md`) shows each
 material's Stores count and, beside it, what is carried; for a
 material, **Take out** (into the bag, then the pack) and **Put in** (from the bag, then the pack), and **Put everything
 in** - every counted unit the bag and the pack hold, in one press, whatever the page's filter shows: it says how many
 went in and names each material refused (its Stores full) and goes on past it; the counting-house's silence ends it.
+A piece an NPC counter sold online (`counterBought`) is no unit of the service's (AUDIT TOWN-ECON 2 PRICE-2, 2026-10-18,
+`06-Systems/Town-Economy-Arc.md` 7.4): a Put in of it came back out of a Take out minted fresh, LAW-3's price and the
+counter's mark gone, so the bag's hands count the service's units without it (`materialsBag.js` heldOf `counter`), and
+only a station's own shortfall puts it in - spent there and then; Put in, a writ and the market leave it in the pack.
 Put in and Put everything in stop at the Stores' own room (5,000 a material, every origin), and a full material is said,
 never asked; why Take out or Put in is shut is drawn under the bar, not only on a title (the second audit's U1, U14).
 **What is held and never counted is named** (UNCOUNTED, FIELD BUGS 2026-10-09c, "Some ingredients won't let you store
@@ -103,8 +107,32 @@ given by another player, a material stays an item in the pack; only what was gat
 back in; a Mages Guild's potion maker uses it as it is. Law 3 is unchanged (section 5): Put in and Put everything in
 move only the count. A realm trade moves save records and no count - so the receiver's units are held and never
 counted, by the same law; letting the count travel with a trade is the owner's call. Pinned by
-`test/fb1009c_uncounted.test.js`; `tools/mutants/fb1009c_uncounted.json` (7, all dead; `bag1.json`'s B6 and
+`test/systems/professions/fb1009c_uncounted.test.js`; `tools/mutants/fb1009c_uncounted.json` (7, all dead; `bag1.json`'s B6 and
 `goldmarket.json`'s stores-total records re-aimed by content).
+**LOOT-LOOSE (FIELD BUGS 2026-10-15c, "a lot of alchemy and some other ingredients when looted from a dungeon are
+unstorable", a second player confirming; Mac, asked: "Store as loose").** The page's Put in and Put everything in take
+the units past the count now, as **loose** - BAG-CRAFT's origin (section 15), by its `work` order: what the service counts
+goes first by `all`, every origin as it was, then the rest held by `work` (`src/ui/professions/profPages.js`; the host hands the
+order through, `world.js` deposit). Loose units serve every crafting station and never a writ, the guild Stores or a
+Drakes listing (`WRIT_ORIGINS`), so law 3's wall stands: nothing past the count reaches the economy. The card says
+"N loose" and the picked bar says what loose means. No service change - a `work` put-in was already a request any
+client may send (AUDIT BAG-CRAFT A1). `bagLaw.js`'s note that the Stores page's Put in moves only what the service
+handed out is superseded by this paragraph (left as written: an edit there redeploys the account service). Pinned in
+`test/systems/professions/fb1009c_uncounted.test.js` (PIN MOVED: Put in had been shut); `fb1009c_uncounted.json` 11, all dead.
+**And a writ's card names them too** (WRIT-WALL, FIELD BUGS 2026-10-13e, 2026-10-13, "Cant turn in writs": 100 Iron
+in the pack, a chapter writ for 40 of it reading "0 held", Take shut, and a hover that said "Not enough - your Stores,
+Materials Bag and pack together"). UNCOUNTED fixed the silence on the Stores page alone; a writ counts what law 3 and
+GOLD-MARKET's wall let it spend (the book's `held`: the Stores' own and bought, and what is carried and still counted,
+never gold's), so Iron off an Alchemist's shelf, looted, traded or bought with gold - in the bag or in the Stores, and
+withdrawn, since a gold unit keeps its origin - reads 0, by design and still. The book reads `held`'s other side now
+(`net/profBook.js` walled: the Stores' gold and loose units, and every unit held past what `held` counts), and where it
+is why a writ cannot be filled the card says it under Take and on Take's title - "100 Iron you hold cannot fill a writ:
+only what you gathered, or bought with silver, counts - not what was looted, bought at a shop or with gold, or given by
+another player." (`ui/workTab.js` writWalledText, the one sentence; a guild writ's card the same, never "You have none"
+beside it). The service's gold refusal (`stores-gold`) no longer says "Withdraw it to your pack": withdrawn, gold's
+units fill no writ, station or guild Stores either. NOT DONE, and the owner's: counting looted or bought units toward a
+writ (it changes law 3). Pinned by `test/systems/professions/fb1013e_writwall.test.js`; `tools/mutants/fb1013e_writwall.json` (13, all
+dead).
 **Empty your bag into your pack** stands on the page, in a town or out of one, whenever the bag's list holds anything:
 every piece, as much of each as the pack's weight takes, what no Put in takes first (a full pack never leaves the jam
 behind).
@@ -123,8 +151,8 @@ reopens exactly that door - unless the service knows what it handed out. So it c
   the goods walled from every Marks act go first and a character's own (which raise a seat's influence) last. **It is
   never raised**: a pack holding more than the count adds nothing.
 - So a save-edited Red Rose, a looted one and a gathered one are one item in the pack - and **only the gathered one is
-  counted**. A deposit by the Stores page, a writ or the market never moves more than the count, and never gold's to a
-  station. What enters the Stores from the bag by those doors is exactly what the service handed out: law 3's
+  counted**. A deposit by a writ or the market never moves more than the count, and never gold's to a station; the
+  Stores page's moves the rest as loose (LOOT-LOOSE, section 4). What enters the Stores from the bag by those doors is exactly what the service handed out: law 3's
   guarantee, kept with the door open one way more. A station's own put-in is the exception, by the owner's word
   (BAG-CRAFT, section 14): it moves what the pack holds past the count too, as **loose** - a station's alone (section 15).
 - A lie about `held` can only cut the count, never raise it. **What it bounds and what it does not**: a client may say
@@ -159,9 +187,9 @@ went and why any stayed ("Into your bag - 2 stay in your Stores: no room in your
 was still being counted"; "4 on their way from your Stores: the counting-house has not answered yet"; a refusal's own
 words). Every unit the service hands over is minted - into the bag, the pack, then the pack past its weight
 (`giveCarried`), as a withdrawal always came: the service counted them carried. A station's refusal after some inputs
-went in says so ("1 of the materials went into your Stores first - the next try spends them there."); a press while a
+went in says so ("1 of the materials went into your Stores first. Your next try uses them from there."); a press while a
 put-in of an input is unanswered says `deposit-kept` at once, and no craft is kept (the second audit's K4-K10). DFU's own potion maker reads and spends the bag
-after the cart (`scenes/worldModes.js`). The guild Stores and Disenchanting read the Stores alone, as they did: a
+after the cart (`scenes/worldModes.js`), and the fire's Cook food reads it after the pack (BAG-COOK, section 16). The guild Stores and Disenchanting read the Stores alone, as they did: a
 material is given to the guild or sold back from the Stores, so it is put in first. The market's silver listing and its
 buy-order fill count what is carried and put the shortfall in first, as a station does (MARKET-BAG, 2026-10-04 -
 Professions-Arc 10.10: reading the Stores alone, a gatherer's List form offered nothing and every order said "0 in your
@@ -173,6 +201,7 @@ Stores"); a gold listing takes its Stores' own and gold's units alone.
   settle. The deposit is KEPT with the other acts (the audit's B17: it was memory alone), so a page closed before the
   answer still hears it. **Its take is STAMPED in the save** (the second audit's K3/K7/H2: `entity.bagTakes`, its id,
   material, units and order), and that save is the realm's - a checkpoint that LANDED - **before the deposit is asked**.
+  One save serves a whole batch (ONE-SAVE, section 16): every take of it stamped, then the one checkpoint, then the asks.
   So the save a later page boots says what happened: holding the stamp, it saw the items go, and a refusal gives back
   every unit (into the bag, the pack, past the pack's weight); without it, the deposit was never sent (its checkpoint
   never landed) and is let go, the save keeping its items. A checkpoint refused on a first ask undoes the take whole
@@ -203,9 +232,9 @@ Stores"); a gold listing takes its Stores' own and gold's units alone.
 
 ## 9. Pins
 
-`test/bag1_service.test.js` (the service, through the real Worker) and `test/bag1_client.test.js` (the law, the
+`test/net/bag1_service.test.js` (the service, through the real Worker) and `test/systems/bag1_client.test.js` (the law, the
 save's hands, the window, the shop, the save, the book, a done-when through the real Worker); `tools/mutants/bag1.json`.
-PACK-OVER's: `test/fb1004_packover.test.js`, `tools/mutants/fb1004_packover.json`.
+PACK-OVER's: `test/net/fb1004_packover.test.js`, `tools/mutants/fb1004_packover.json`.
 
 ## 10. The audit (2026-10-03, Mac: "Audit this")
 
@@ -277,7 +306,7 @@ and never made, while every other door (a withdrawal, a smelt's carry-out, a ref
 pack's weight (6, the audit's B5). A DFU pack is carried to its limit, so a character with no bag gathered goods it never
 saw. The book mints a harvest through the hands' `give` now (`net/profBook.js` mintHarvest: bag, pack, then the pack past
 its weight, `put.over`), as the Foraging mod's own AddItem does; the node still refuses an act with no room for one unit
-before it starts. The record: `01-Overview/Field-Bugs-2026-10-04.md`.
+before it starts. The record: `01-Overview/bugs/Field-Bugs-2026-10-04.md`.
 
 **BAG-SHELF** (the same day, Mac: "Also nobody can find material bags in store"). The bag stood on a General Store's
 first shelf alone (the second audit's H8) and was left off a shelf stocked by a character who carried one. The first
@@ -291,13 +320,13 @@ building, online. A Materials Bag or a Campfire bought is put back on its shelf 
 (`systems/shopStock.js` restockEndless, called by the two purchases in `scenes/worldModes.js` - commitTrade's Buy arm
 and the keyed list's doBuy - and nothing else: one stolen from a closed shop's shelf stays gone). Online alone; and online
 no shop buys a bag or a Campfire back (`shopBuysItem`) - bought cheap and sold dear they were gold for nothing, and one
-sold made any shelf endless. Pinned by `test/fb1004_endless.test.js`; `tools/mutants/fb1004_endless.json`.
+sold made any shelf endless. Pinned by `test/systems/fb1004_endless.test.js`; `tools/mutants/fb1004_endless.json`.
 
 **ONE-BAG** (the same day, Mac: "Right, you shouldnt be able to hold multiple gathering bags"). A second Materials Bag is
-refused by the take ladder (`systems/itemTransfer.js` planTake: a pickup, quick loot, a container, the wagon, both trade
+refused by the take ladder (`systems/item/itemTransfer.js` planTake: a pickup, quick loot, a container, the wagon, both trade
 windows' Buy basket) and the keyed shelf (`scenes/worldModes.js` doBuy) while another is held in the pack, a trade's
 basket or the wagon: "You already have a Materials Bag." One out of the character's own wagon is never refused, and the
-bag is no decor piece. Pinned by `test/fb1004_onebag.test.js`; the audit's findings in the field-bug record.
+bag is no decor piece. Pinned by `test/systems/professions/fb1004_onebag.test.js`; the audit's findings in the field-bug record.
 
 ## 14. From play - BAG-CRAFT (FIELD BUGS 2026-10-09d)
 
@@ -312,7 +341,7 @@ With the count's goods the path was whole (a Steel Longsword from a bag of count
 
 - **A station works what is carried, counted or not** (`profBook.workable`, `bagLaw.js` carriedWorkable): the Stores
   and every unit the bag, the pack and the wagon hold, but the gold-bought units the count still names (GOLD-MARKET's
-  wall). Every station's read is that (`ui/profPages.js` workOf - the anvil, the forge, the workbench, the loom, the
+  wall). Every station's read is that (`ui/professions/profPages.js` workOf - the anvil, the forge, the workbench, the loom, the
   mason's bench, the cook fire, the jeweller's bench, the alchemy and enchanting stations, the temper), and a craft's
   chain plans from it (CRAFT1).
 - **Its put-in is the deposit's `work` order** (`DEPOSIT_ORDERS.work`, `looseOrder`) - a craft, a brew, a smelt and a
@@ -334,10 +363,10 @@ station makes of them, reaches a writ, the guild Stores, a Drakes listing or fil
 them lists for gold alone, as any pack's piece does (MARKET-ANY). Law 3's guarantee stands for the economy, and
 `Professions-Arc.md` law 3 says where the door is.
 
-Pinned by `test/fb1009d_bagcraft.test.js` (the done-when: a Steel Longsword from raw goods the service never counted,
+Pinned by `test/systems/fb1009d_bagcraft.test.js` (the done-when: a Steel Longsword from raw goods the service never counted,
 in one press through the real Worker; the law; the service's `work`, `spend` and `all` and a full Store; the book's
 doors; the anvil and the forge over a real carrying book); `tools/mutants/fb1009d_bagcraft.json`. The record:
-`01-Overview/Field-Bugs-2026-10-09d.md`. ACCOUNT_VERSION `acct101`.
+`01-Overview/bugs/Field-Bugs-2026-10-09d.md`. ACCOUNT_VERSION `acct101`.
 
 ## 15. The audit - AUDIT BAG-CRAFT (2026-10-09, Mac: "Audit this")
 
@@ -353,6 +382,39 @@ the real Worker or the real modules before it was fixed, pinned and mutated (`to
 | B1 (LOW, kept) | A craft refused by the service after its put-in (a rank, a fee) leaves the moved goods in the Stores | Not changed: they are loose there, the next station's, and Take out gives them back to the pack uncounted |
 
 What the wall costs an honest player: a piece made of looted goods lists for gold alone, as the looted goods
-themselves would from the pack; and a Ram Kit of them stays a station's. Pinned by `test/auditbagcraft.test.js` (the
+themselves would from the pack; and a Ram Kit of them stays a station's. Pinned by `test/net/auditbagcraft.test.js` (the
 wall at every door, through the real Worker - the gold wall's own test the pattern; the stations' spends and products;
-the brew's unbruised count; the Stores page over a real carrying book) and `test/fb1009d_bagcraft.test.js`.
+the brew's unbruised count; the Stores page over a real carrying book) and `test/systems/fb1009d_bagcraft.test.js`.
+
+## 16. From play - BAG-COOK and ONE-SAVE (FIELD BUGS 2026-10-20c)
+
+Two reports from the Discord, read to their roots in `01-Overview/bugs/Field-Bugs-2026-10-20c.md`.
+
+**BAG-COOK** ("raw fish cant be cooked over fires"). A haul's Raw Fish is minted as C&C's own (template 535,
+`UselessItems2` - `profItems.js:"  if (key === 'food:fish') return fishTemplate(cc);"`), the food the fire cooks, and it
+goes into the bag first (section 3). The fire's Cook food read the pack alone, so a bag's owner was told "You have
+nothing to cook." with the fish in the bag; on the classic skin, which draws no bag, only Empty your bag into your pack
+reached them. Now the list is the pack's raw food, then the bag's, while the pack holds a bag
+(`camps.js:"    const bag = hasBag(items) ? (entity?.bagItems ?? []) : [];"`) - as DFU's own potion maker reads the
+wagon after the pack (`DaggerfallPotionMakerWindow.cs` Refresh, and section 6's port of it) - and the cooked food goes
+into the pack (`camp.js:"    (Array.isArray(into) ? into : list).push(cooked);   // FB1020c BAG-COOK: into the pack, never the bag"`):
+a cooked food is no material, and the bag holds materials alone. A fish cooked out of the bag leaves it as one cooked
+out of the pack always did: the next carried request cuts the count to what is held (section 5). The fire's words on the
+Stores page say where gathered goods go and that a Raw Fish from the pack or the bag cooks there. Pinned by
+`test/systems/fb1020c_bagcook.test.js`; `tools/mutants/fb1020c_bagcook.json`.
+
+**ONE-SAVE** ("storing your goods makes the buttons get stuck for a long time"). Section 7's law - the take saved before
+the ask - was paid once a put-in: Put everything in asked a deposit a material in series, each waiting on a realm
+checkpoint of the whole game (the composed save packed and PUT, opened, judged and stored by the service), and each take
+and each answer asked another checkpoint of its own behind it, about 1.75 a material on the press's path; every button
+on the page read "Sending..." for all of it. A station's shortfalls did the same, one an input. The take and its save
+live once now: `profBook.js:"    async depositMany(list) {"` takes and stamps every put-in of a batch, lands ONE
+checkpoint, then asks each in turn; a refused checkpoint gives every take back whole (`deposit-unsaved`), and the first
+unanswered put-in leaves the rest unasked and kept for the next settle (`deposit-kept`) - their takes are in the save
+that landed. `deposit` is a batch of one, with every guard and word it answered before; `ensureInStores` puts a craft's
+shortfalls in as one batch; the Stores page's Put in (the counted units, then the loose) and Put everything in hand the
+host one plan (`world.js:"        deposit: async (plan) => (await profBook.depositMany(plan)).map((r, i) =>"`).
+A press now waits on one checkpoint and its asks, however many materials it moves. The words a slow counting-house says
+have one home, the page's `BAG_PAGE_WORDS.kept`. Pinned by `test/systems/professions/fb1020c_onesave.test.js`;
+`tools/mutants/fb1020c_onesave.json`. Pins moved: `bag1_client.test.js` (D3, the refusal's source line, the providers),
+`fb1009c_uncounted.test.js` (Put in and Put everything in, the host's wiring).

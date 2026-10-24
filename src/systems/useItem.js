@@ -29,7 +29,7 @@
 // and recorded in the Ledger; the port's startPoison refuses an
 // unregistered type the same way rather than indexing past its
 // tables.
-import { templateByIndex, itemUseHandler } from './itemTemplates.js';   // RRI2: ItemHelper's registered use handlers
+import { templateByIndex, itemUseHandler } from './item/itemTemplates.js';   // RRI2: ItemHelper's registered use handlers
 import './fletching.js';   // FLETCH: the pack's arrow craft - its wood's handlers, registered before the ladder asks
 import { doItemEnchantmentPayloads, PAYLOAD } from './enchantments.js';   // E2: the Used payload arm
 import { inflictPoison } from './poisons.js';
@@ -39,8 +39,10 @@ import { isSurvivalItem, useSurvivalItem } from './survival/items.js';   // SURV
 import { survivalRules } from './survival/switch.js';   // SURV-TIERS: a meal's sickness is the tier's
 import { SURVIVAL_RULES } from './survival/difficulty.js';   // AUDIT SURV-TIERS: and with the arc off, Casual's - none
 import { setLightSource } from './lightSource.js';   // DISC7: the light in hand's one door
+import { localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 import { hoodCapable, hoodUp } from './survival/temperature.js';   // HOOD-SAID: the one hood law, for toggleHood
-import { sandPotionRefusal } from './arenaKit.js';   // AUDIT ARENA-LADDER: no potion on the sand
+import { sandPotionRefusal } from './arena/arenaKit.js';   // AUDIT ARENA-LADDER: no potion on the sand
+import { spirePotionRefusal, spirePotionDrunk } from './eliteGates/spireKit.js';   // EG-FULL: THE POTION LAW
 
 /** THE ARMS WHOSE DESTINATION WINDOW THE PORT HAS NOT BUILT, named so a use
  *  SAYS something rather than eating itself. Keyed by this module's own result
@@ -60,10 +62,10 @@ export const USE_PENDING = Object.freeze({
   openPortal: 'A portal can only be opened under the open sky.',   // PORTAL1: a host with no open world (systems/portalStone.js PORTAL_TEXT.notHere)
 });
 
-/** The template indices the predicates name (ItemEnums.cs) - INT9: their home is systems/itemKinds.js (a leaf the account
+/** The template indices the predicates name (ItemEnums.cs) - INT9: their home is systems/item/itemKinds.js (a leaf the account
  *  Worker bundles: a death in the zone's drop is the service's to take), re-exported here. */
-export { TEMPLATES } from './itemKinds.js';
-import { TEMPLATES, isLightSource, isPotion } from './itemKinds.js';
+export { TEMPLATES } from './item/itemKinds.js';
+import { TEMPLATES, isLightSource, isPotion } from './item/itemKinds.js';
 
 /** The first drug template, and DFU's own (wrong) offset. */
 export const FIRST_DRUG_TEMPLATE = 78;
@@ -71,8 +73,8 @@ export const DRUG_POISON_OFFSET = 66;   // verbatim; see the header
 
 // ── the predicates (DaggerfallUnityItem.cs :316-371) ──────────────
 
-// IsLightSource (:316-323) and IsPotion (:352-355) - INT9: in systems/itemKinds.js, re-exported here
-export { isLightSource, isPotion } from './itemKinds.js';
+// IsLightSource (:316-323) and IsPotion (:352-355) - INT9: in systems/item/itemKinds.js, re-exported here
+export { isLightSource, isPotion } from './item/itemKinds.js';
 /** IsPotionRecipe (:344-347). */
 export const isPotionRecipe = (it) => it?.group === 'MiscItems' && it.templateIndex === TEMPLATES.Potion_recipe;
 /** IsParchment (:360-363). */
@@ -197,7 +199,7 @@ export const DRAPE_TEXT = 'You rearrange your cloak.';
 
 // ── the strings UseItem shows (DFU's Internal_Strings) ────────────
 
-export const USE_TEXT = Object.freeze({
+export const USE_TEXT = localizedStrings({
   lightDouse: 'You douse the %it.',
   lightLight: 'You light the %it.',
   lightEmpty: 'Your %it has no fuel left.',
@@ -216,7 +218,7 @@ export const NO_SPELLS_TEXT_ID = 12;
 /** TEXT.RSC 499 - RecordLocationFromMap's reveal message (:1820). */
 export const MAP_TEXT_ID = 499;
 
-/** MacroHelper's %it - the item's own name. */
+/** MacroHelper's %it - the item's own name (L10N3e: `name`, the caller's name as shown, when one is handed in). */
 export const expandItemMacro = (text, item, name) =>
   (text ?? '').replaceAll('%it', name ?? item?.name ?? templateByIndex(item?.templateIndex)?.name ?? 'item');
 
@@ -254,14 +256,14 @@ export function useItem(item, collection, {
   // QuestMachine.Instance.GetQuest (:1673) - the quest half of the
   // use-click block below. A host with no quest machine leaves it
   // null and DFU's own fall-through arm stands.
-  getQuest = null,
+  getQuest = null, nameOf = null,   // L10N3e: nameOf(item), the name AS SHOWN - shownItemName, handed in (itemInfo.js imports this module)
   // MEND-AIM: a use AIMED at another item (a repair kit at the piece it mends), and whether the host can ask which -
   // a handler that wants an aim answers `chooseTarget` with the choices, and the host uses the item again with the
   // one chosen. The quick keys cannot ask, and take the handler's own first choice.
   target = null, chooseTarget = false,
 } = {}) {
   if (!item) return { kind: 'none' };
-  const named = (t) => expandItemMacro(USE_TEXT[t], item);
+  const named = (t) => expandItemMacro(USE_TEXT[t], item, nameOf?.(item));   // L10N3e: the light lines' %it, as the item MCP names it (DaggerfallInventoryWindow.cs:1777-1800)
   // AUDIT 22 F4: the oil arm searches the LOCAL pack (:1791
   // `localItems.GetItem(...)`), not the list the click came from - so
   // using oil off a loot pile still refuels the lantern in your bag.
@@ -340,8 +342,10 @@ export function useItem(item, collection, {
   // hook's failure callback, not immediately).
   else if (isBook(item)) out = { kind: 'book', item, failText: named('bookUnavailable') };
 
-  // AUDIT ARENA-LADDER: the sand's kit law - no potion in a bout of one's own, and the bottle is kept (systems/arenaKit.js)
+  // AUDIT ARENA-LADDER: the sand's kit law - no potion in a bout of one's own, and the bottle is kept (systems/arena/arenaKit.js)
   else if (isPotion(item) && sandPotionRefusal()) out = { kind: 'refused', refused: true, text: sandPotionRefusal() };
+  // EG-FULL: THE POTION LAW - two restoring potions a hall in an Elite Breach, and the bottle is kept (systems/eliteGates/spireKit.js)
+  else if (isPotion(item) && spirePotionRefusal(item)) out = { kind: 'refused', refused: true, text: spirePotionRefusal(item) };
 
   else if (isPotion(item)) {
     // DrinkPotion + RemoveOne. AUDIT 22 F5: RemoveOne takes THIS
@@ -358,6 +362,7 @@ export function useItem(item, collection, {
     // bottle naming no recipe is drunk and does nothing, exactly as
     // here.
     const drank = drinkPotion ? drinkPotion(item.potionRecipeKey ?? 0, Number.isInteger(item.potent) ? item.potent : 0) : null;   // PROF12: a Potent potion's share
+    spirePotionDrunk(item);   // EG-FULL: a restoring one counted against the hall's two
     out = drank ? { kind: 'potion', potion: drank } : { kind: 'potion', pending: true };
   }
 
@@ -434,8 +439,8 @@ export function useItem(item, collection, {
       // A STACK splits one off; a single leaves entirely.
       if ((item.stackCount ?? 1) > 1) item.stackCount--;
       else { const i = collection.indexOf(item); if (i >= 0) collection.splice(i, 1); }
-      out = { kind: 'refuelled', text: expandItemMacro(USE_TEXT.lightRefuel, lantern) };
-    } else out = { kind: 'full', text: expandItemMacro(USE_TEXT.lightFull, lantern ?? item) };
+      out = { kind: 'refuelled', text: expandItemMacro(USE_TEXT.lightRefuel, lantern, nameOf?.(lantern)) };
+    } else out = { kind: 'full', text: expandItemMacro(USE_TEXT.lightFull, lantern ?? item, nameOf?.(lantern ?? item)) };
   }
 
   else {

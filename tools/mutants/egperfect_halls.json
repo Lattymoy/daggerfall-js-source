@@ -1,0 +1,203 @@
+[
+  {
+    "name": "EGP-closing-walk-dropped",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  return EG_CLOSING_FIGHT_MS + Math.ceil(egClosingWalk(spec) * EG_CLOSING_WALK_X) * 1000;",
+    "new": "  return EG_CLOSING_FIGHT_MS;",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_closing.test.js"
+    ],
+    "why": "a way's fight door closes in 20 s again"
+  },
+  {
+    "name": "EGP-closing-spare-one",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const EG_CLOSING_WALK_X = 1.25;",
+    "new": "export const EG_CLOSING_WALK_X = 1;",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_closing.test.js"
+    ],
+    "why": "the closing's walk at THE SPAN BUILD with nothing to spare"
+  },
+  {
+    "name": "EGP-closing-trial-end-first",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "p[1] >= g.y0 - pad && p[1] <= g.y1 + pad) k0 = k; });",
+    "new": "p[1] >= g.y0 - pad && p[1] <= g.y1 + pad && !k0) k0 = k; });",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_closing.test.js"
+    ],
+    "why": "the trial's end at the first node on its course"
+  },
+  {
+    "name": "EGP-closing-pair-wait",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    t += L.span + L.pairs.length * EG_WAIT_MAX;",
+    "new": "    t += L.span;",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_closing.test.js"
+    ],
+    "why": "a span leg's timed pairs waited nothing"
+  },
+  {
+    "name": "EGP-closing-grip-unwaited",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (L.g.kind === 'climb' && owed - (t - since) > 0) t += owed - (t - since);",
+    "new": "    if (false) t += owed - (t - since);",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_closing.test.js"
+    ],
+    "equivalent": true,
+    "why": "EQUIVALENT, KEPT: before a climb the closing's walk waits back the grip the last climb spent, as the law's own crossing does (net/eliteGates/egSpanLaw.js routeCrossAt) - no LAW 9 hall's closing walk climbs again inside its grip's recovery (seeds 1-12: twelve walks of two climbs, every one waits nothing), so no pin can fail it; kept so the walk is the law's crossing of its tail"
+  },
+  {
+    "name": "EGP-closing-door-twenty",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  B.su = now + egClosingMs(spec);",
+    "new": "  B.su = now + EG_CLOSING_FIGHT_MS;",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_closing.test.js"
+    ],
+    "why": "the door's closing the fight's 20 s again"
+  },
+  {
+    "name": "EGP-deserter-disc",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "[egKeepOnFight(spec, spec.fight.x, spec.fight.z - spec.fight.r + 3, 1)]",
+    "new": "[[spec.fight.x, spec.fight.z - spec.fight.r + 3]]",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_floor.test.js"
+    ],
+    "why": "the Deserter at the bounding disc's spot again"
+  },
+  {
+    "name": "EGP-deserter-inset",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "spec.fight.z - spec.fight.r + 3, 1)]",
+    "new": "spec.fight.z - spec.fight.r + 3, 0)]",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_floor.test.js"
+    ],
+    "why": "the Deserter on the court's very rim"
+  },
+  {
+    "name": "EGP-ash-disc",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "c = pit ? pieceDisc(pit) : spec.fight ?? at;",
+    "new": "c = spec.fight ?? at;",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_floor.test.js"
+    ],
+    "why": "the Ashfall about the bounding disc, kept"
+  },
+  {
+    "name": "EGP-ash-unkept",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "[x, z] = pit ? egKeepOnFight({ fl: [pit] }, c.x + Math.sin(a) * r, c.z + Math.cos(a) * r, 1) :",
+    "new": "[x, z] = pit ? [c.x + Math.sin(a) * r, c.z + Math.cos(a) * r] :",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_floor.test.js"
+    ],
+    "why": "a pool never kept on the Pit"
+  },
+  {
+    "name": "EGP-chains-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (law.length >= EG_CHAINS && three.every((q) => egOnFight(spec, q.x, q.z, 0, spotY(spec, q)))) return three.map((q) => [q.x, q.z]);",
+    "new": "  if (law.length >= EG_CHAINS) return three.map((q) => [q.x, q.z]);",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_chains.test.js"
+    ],
+    "why": "the law's three taken unread"
+  },
+  {
+    "name": "EGP-chains-refused",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (law.length >= EG_CHAINS && three.every((q) => egOnFight(spec, q.x, q.z, 0, spotY(spec, q)))) return three.map((q) => [q.x, q.z]);",
+    "new": "  if (false) return three.map((q) => [q.x, q.z]);",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_chains.test.js"
+    ],
+    "why": "the law's three refused everywhere"
+  },
+  {
+    "name": "EGP-chains-first-poly",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "polys.reduce((a, f) => (!a || boxArea(f) > boxArea(a) ? f : a), null)",
+    "new": "polys[0]",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_chains.test.js"
+    ],
+    "why": "the hall's first fight polygon, not its widest"
+  },
+  {
+    "name": "EGP-chains-half",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (poly) return about(pieceDisc(poly)).map(",
+    "new": "if (poly) return about({ ...pieceDisc(poly), r: pieceDisc(poly).r * 2 }).map(",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_chains.test.js"
+    ],
+    "why": "half the court's narrower side out, not a quarter"
+  },
+  {
+    "name": "EGP-stand-anywhere",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "    if (!q || x < q[0] || x > q[3] || z < q[2] || z > q[5] || (Number.isFinite(y) && (y < q[1] || y > q[4]))) continue;",
+    "new": "    if (!q) continue;",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_casters.test.js"
+    ],
+    "why": "a stand taken by a Caster risen outside its chamber"
+  },
+  {
+    "name": "EGP-stand-unpinned",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "y: S[2], pinned: 1, stand",
+    "new": "y: S[2], stand",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_casters.test.js"
+    ],
+    "why": "a stand's Caster walks off its balcony"
+  },
+  {
+    "name": "EGP-stand-bolt-height",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "atFeet: true, y: a.stand > 0 && Number.isFinite(tgt.y) ? egStoreyY(spec, tgt.x, tgt.y, tgt.z) : NaN });",
+    "new": "atFeet: true });",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_casters.test.js"
+    ],
+    "why": "a stand's Bolt at its Caster's height"
+  },
+  {
+    "name": "EGP-stand-overlook",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "egSameStorey(spec, a, m) || overlooks(m)",
+    "new": "egSameStorey(spec, a, m)",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_casters.test.js"
+    ],
+    "why": "a 4 m stand bolts only its own storey"
+  },
+  {
+    "name": "EGP-stand-spot-height",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "y = egFeetAt(view, q.x, q.z, ov)",
+    "new": "y = Number.isFinite(ov) ? ov : egFeetAt(view, q.x, q.z, ov)",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_casters.test.js"
+    ],
+    "why": "a stand at its spot's own height, never its balcony's"
+  },
+  {
+    "name": "EGP-stand-passage",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if (f?.cls !== 'chamber') continue;",
+    "new": "    if (!f) continue;",
+    "tests": [
+      "test/net/eliteGates/egperfect_halls_casters.test.js"
+    ],
+    "why": "a passage's anchor stood"
+  }
+]

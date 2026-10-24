@@ -1,192 +1,192 @@
 [
   {
     "name": "SHPK-ship-unpackable",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "if (name === 'Crewed') boat.crewed = boat.packable = true;",
     "new": "if (name === 'Crewed') boat.crewed = true;",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-cap-lifted",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayHulls.js",
     "old": "export const packedHullWeight = (hull) => Math.min(HULL_WEIGHTS[hull], PACKED_WEIGHT_MAX);",
     "new": "export const packedHullWeight = (hull) => HULL_WEIGHTS[hull];",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-cap-a-ships",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayHulls.js",
     "old": "export const PACKED_WEIGHT_MAX = HULL_WEIGHTS[1];",
     "new": "export const PACKED_WEIGHT_MAX = HULL_WEIGHTS[2];",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-deed-unasked",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (boat.crewed && boat.uid && deed == null) return false;\n",
     "new": "",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-deed-kept",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (deed) removeExact(inBook(deed) ? deps.items.titles() : deps.items.player(), deed);",
     "new": "",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   },
   {
     "name": "SHPK-new-number",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (boat.uid) val.UID = boat.uid;   // SHIP-PACK: her number\n",
     "new": "",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-shelf-price",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "val.value = Number.isFinite(boat.itemValue) ? boat.itemValue : HULL_PRICES[boat.hull];",
     "new": "val.value = HULL_PRICES[boat.hull];",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-spent-entry-refused",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "if (state.PackedCargoes.has(key) && !(boat.uid && state.PackedCargoes.get(key).length === 0)) throw",
     "new": "if (state.PackedCargoes.has(key)) throw",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-held-entry-overwritten",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "state.PackedCargoes.get(key).length === 0)) throw",
     "new": "state.PackedCargoes.get(key).length >= 0)) throw",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-refusal-unsaid",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        else if (deedMissing(boat)) deps.midScreenText(DEED_NOT_HELD_TEXT, 1.5);   // SHIP-PACK: a deed ship goes with her deed\n",
     "new": "",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-small-boat-asked",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "const deedMissing = (boat) => !!boat?.crewed && !!boat.uid && deedInPack(boat.uid) == null;",
     "new": "const deedMissing = (boat) => !!boat.uid && deedInPack(boat.uid) == null;",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-number-0-asked",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "const deedMissing = (boat) => !!boat?.crewed && !!boat.uid && deedInPack(boat.uid) == null;",
     "new": "const deedMissing = (boat) => !!boat?.crewed && deedInPack(boat.uid) == null;",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-worth-unkept",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (Number.isFinite(state.placeItem.value)) boat.itemValue = state.placeItem.value;   // SHIP-PACK: her worth\n",
     "new": "",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-parts-kept",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      else if (state.placeItem.templateIndex === BOAT_PARTS_TEMPLATE) {",
     "new": "      else if (state.placeItem.templateIndex === -1) {",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-deed-at-back",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  if (i >= 0) l.splice(i, 1, by);\n}",
     "new": "  if (i >= 0) { l.splice(i, 1); l.push(by); }\n}",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-deed-another-number",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "mintDeed(boat.hull, boat.variant, state.placeItem.UID, state.placeItem.value)",
     "new": "mintDeed(boat.hull, boat.variant, state.placeItem.UID + 1, state.placeItem.value)",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-deed-shelf-price",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "mintDeed(boat.hull, boat.variant, state.placeItem.UID, state.placeItem.value)",
     "new": "mintDeed(boat.hull, boat.variant, state.placeItem.UID, HULL_PRICES[boat.hull])",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-save-unkept",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "          ...(Number.isFinite(b.itemValue) ? { Value: b.itemValue } : {}),   // SHIP-PACK (the port's own): her worth, kept\n",
     "new": "",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-load-unread",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (Number.isFinite(placedBoat.Value)) boat.itemValue = placedBoat.Value;   // SHIP-PACK: her worth\n",
     "new": "",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
     "name": "SHPK-menu-deed-ignored",
-    "file": "src/systems/csaBoatMenu.js",
+    "file": "src/systems/comeSailAway/csaBoatMenu.js",
     "old": "      : s.noDeed ? BOAT_MENU_WHY.noDeed",
     "new": "      : false ? BOAT_MENU_WHY.noDeed",
     "tests": [
-      "test/boatmenu.test.js"
+      "test/systems/comeSailAway/boatmenu.test.js"
     ]
   },
   {
     "name": "SHPK-menu-refusal-words",
-    "file": "src/systems/csaBoatMenu.js",
-    "old": "        : why === BOAT_MENU_WHY.noDeed ? 'Her deed must be in your pack to pick her up.'",
+    "file": "src/systems/comeSailAway/csaBoatMenu.js",
+    "old": "        : why === BOAT_MENU_WHY.noDeed ? 'You need the ship\\'s deed in your pack to pick it up.'",
     "new": "        : why === BOAT_MENU_WHY.noDeed ? null",
     "tests": [
-      "test/boatmenu.test.js"
+      "test/systems/comeSailAway/boatmenu.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": ", player: () => (playerEntity.items ??= []),   // ItemBuilder",
     "new": ",   // ItemBuilder",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "noDeed: !!csaRuntime?.deedMissing?.(boat),",
     "new": "noDeed: false,",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": " && !csaRuntime.deedMissing(boat) && !csaRuntime.partsTooHeavy(boat)) csaCall(",
     "new": " && !csaRuntime.partsTooHeavy(boat)) csaCall(",
     "tests": [
-      "test/shippack.test.js"
+      "test/systems/comeSailAway/shippack.test.js"
     ]
   }
 ]

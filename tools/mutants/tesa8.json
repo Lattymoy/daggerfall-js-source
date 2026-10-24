@@ -487,7 +487,7 @@
   },
   {
     "name": "TESA8-automap-shared",
-    "file": "src/systems/automap.js",
+    "file": "src/systems/automap/automap.js",
     "old": "${loc?.country ? `#${(loc.mapTableData?.mapId ?? 0) >>> 0}` : ''}",
     "new": "${''}",
     "tests": [
@@ -496,7 +496,7 @@
   },
   {
     "name": "TESA8-automap-every-place",
-    "file": "src/systems/automap.js",
+    "file": "src/systems/automap/automap.js",
     "old": "${loc?.country ? `#${(loc.mapTableData?.mapId ?? 0) >>> 0}` : ''}",
     "new": "${`#${(loc?.mapTableData?.mapId ?? 0) >>> 0}`}",
     "tests": [
@@ -523,7 +523,7 @@
   },
   {
     "name": "TESA8-host-country-takes-lairs",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPlacesHost.js",
     "old": "    if (had?.country && !had.country.dungeon) {   // TESA8: a lair is lairLocationAt's",
     "new": "    if (had?.country) {   // TESA8: a lair is lairLocationAt's",
     "tests": [
@@ -532,7 +532,7 @@
   },
   {
     "name": "TESA8-host-rates-types",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPlacesHost.js",
     "old": "countryRates(_lairCounts, bayLandNow(), LAIR_TYPES)",
     "new": "countryRates(_lairCounts, bayLandNow())",
     "tests": [
@@ -559,7 +559,7 @@
   },
   {
     "name": "TESA8-host-bank-clamp",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPlacesHost.js",
     "old": "lairName(pick.type, dungeonType, provinceNameBank(provinceKeyBeyondBay(px, py)) ?? getNameBankOfRegion(regionIndex), lairNameSeed(c))",
     "new": "lairName(pick.type, dungeonType, getNameBankOfRegion(regionIndex), lairNameSeed(c))",
     "tests": [
@@ -568,7 +568,7 @@
   },
   {
     "name": "TESA8-host-stale",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPlacesHost.js",
     "old": "    const same = !!had?.country?.dungeon && !!at && had.country.cell === at.c && had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name;",
     "new": "    const same = !!had?.country?.dungeon && (!at || had.country.cell === at.c && had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name);",
     "tests": [
@@ -577,9 +577,9 @@
   },
   {
     "name": "TESA8-host-not-deleted",
-    "file": "src/scenes/world.js",
-    "old": "    if (had?.country?.dungeon) { _locIndexGen += 1; locationIndex.delete(key); }",
-    "new": "    if (had?.country?.dungeon) { _locIndexGen += 1; }",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    if (had?.country?.dungeon) { host._locIndexGen += 1; locationIndex.delete(key); }",
+    "new": "    if (had?.country?.dungeon) { host._locIndexGen += 1; }",
     "tests": [
       "test/tesa8_lairs.test.js"
     ]
@@ -595,7 +595,7 @@
   },
   {
     "name": "TESA8-host-not-indexed",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPlacesHost.js",
     "old": "    locationIndex.set(key, loc);\n    return loc;\n  }\n  /** TESA14 (scenes/tamrielRoadsHost.js)",
     "new": "    return loc;\n  }\n  /** TESA14 (scenes/tamrielRoadsHost.js)",
     "tests": [

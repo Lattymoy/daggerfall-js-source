@@ -1,220 +1,220 @@
 [
   {
     "name": "NAV-F-the-singular",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "`${b.guns} ${b.guns === 1 ? GUN_WORDS[b.gun].replace(/s$/, '') : GUN_WORDS[b.gun]}`",
     "new": "`${b.guns} ${GUN_WORDS[b.gun]}`",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-a-reload-shown-full",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    fill: pct((b.loaded ?? b.ready) ? 1 : b.progress),",
     "new": "    fill: pct(1),",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-the-board-hint-shadowed",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "      : model.board ? (model.board.kind === 'heave'",
     "new": "      : false ? (model.board.kind === 'heave'",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-another-ships-key",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const mine = board != null && board.name === t.name;",
     "new": "  const mine = !!board;",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-the-prize-missed",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  if (t.state === 'prize') return",
     "new": "  if (false) return",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-covered-still-drawn",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const want = !covered && !!model;",
     "new": "  const want = !!model;",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-a-rebuild-a-frame",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  if (!root) {\n    if (!want || !doc?.createElement) return;",
     "new": "  if (want || !root) {\n    if (!want || !doc?.createElement) return;",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-the-whole-kit",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "export const navalKitCss = () => scopeRules(frameCss(), (sel) => sel.includes('dfnaval'));",
     "new": "export const navalKitCss = () => frameCss();",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-the-kit-twice-on-plus",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  if (!doc?.createElement || isEnhancedPlus()) return false;",
     "new": "  if (!doc?.createElement) return false;",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-two-choices",
-    "file": "src/ui/navalPlunderWindow.js",
+    "file": "src/ui/naval/navalPlunderWindow.js",
     "old": "      if (chosen || !o.useful) tile.setAttribute('disabled', '');",
     "new": "      if (!o.useful) tile.setAttribute('disabled', '');",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-the-fate-not-told",
-    "file": "src/ui/navalPlunderWindow.js",
-    "old": "      button('Scuttle her', 'dfnaval-btn dfnaval-scuttle', () => settle('scuttle')),",
-    "new": "      button('Scuttle her', 'dfnaval-btn dfnaval-scuttle', () => exit('fate')),",
+    "file": "src/ui/naval/navalPlunderWindow.js",
+    "old": "      button('Scuttle', 'dfnaval-btn dfnaval-scuttle', () => settle('scuttle')),",
+    "new": "      button('Scuttle', 'dfnaval-btn dfnaval-scuttle', () => exit('fate')),",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ],
     "note": "Repatch 8761: re-aimed at the same fate/return behavior after guarded passenger return; behavioral assertions retained."
   },
   {
     "name": "NAV-F-a-listener-left-behind",
-    "file": "src/ui/navalPlunderWindow.js",
+    "file": "src/ui/naval/navalPlunderWindow.js",
     "old": "      globalThis.removeEventListener('keydown', onKey, { capture: true });",
     "new": "",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-a-raid-offered-the-choice",
-    "file": "src/ui/navalPlunderWindow.js",
+    "file": "src/ui/naval/navalPlunderWindow.js",
     "old": "    choiceSec.style.display = !m.raid && offers.length ? '' : 'none';",
     "new": "    choiceSec.style.display = offers.length ? '' : 'none';",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-the-scrim-inert",
-    "file": "src/ui/navalPlunderWindow.js",
+    "file": "src/ui/naval/navalPlunderWindow.js",
     "old": "  const offOutside = closeOnOutsideTap(shell, '.dfnaval-win', () => exit('close'));",
     "new": "  const offOutside = () => {};",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-two-windows",
-    "file": "src/ui/navalPlunderDoor.js",
+    "file": "src/ui/naval/navalPlunderDoor.js",
     "old": "  if (typeof document === 'undefined') return null;\n  slot.open?.dispose();",
     "new": "  if (typeof document === 'undefined') return null;",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-the-reason-lost",
-    "file": "src/ui/navalPlunderDoor.js",
+    "file": "src/ui/naval/navalPlunderDoor.js",
     "old": "    if (typeof reason === 'string') why = reason;",
     "new": "",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-a-second-onclose",
-    "file": "src/ui/navalPlunderDoor.js",
+    "file": "src/ui/naval/navalPlunderDoor.js",
     "old": "    if (fired) return;\n    if (typeof reason",
     "new": "    if (typeof reason",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-the-scuttle-undressed",
-    "file": "src/ui/enhancedFrame.js",
+    "file": "src/ui/enhanced/enhancedFrame.js",
     "old": "  warn: ['body .dfsocial-btn.warn', 'body .dfprofile-duel',\n    'body .dfnaval-scuttle',",
     "new": "  warn: ['body .dfsocial-btn.warn', 'body .dfprofile-duel',",
     "tests": [
-      "test/nav_f_ui.test.js",
-      "test/plusdress1.test.js"
+      "test/ui/naval/nav_f_ui.test.js",
+      "test/ui/plusdress1.test.js"
     ]
   },
   {
     "name": "NAV-F-the-card-over-the-helm-panel",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    const top = !aside && foot > 0 ? `${colTop}px` : '';",
     "new": "    const top = '';",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-the-foot-read-with-no-card",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const read = !under || !!c || due;",
     "new": "  const read = true;",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-the-scale-on-the-plate-alone",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "root.style.setProperty?.('--hud-scale', String(scale));",
     "new": "parts.plate.style.setProperty?.('--hud-scale', String(scale));",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-the-compass-foot-unscaled",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "export const NAVAL_CARD_TOP = 'calc(18px + 28px * var(--hud-scale, 1) + 12px)';",
     "new": "export const NAVAL_CARD_TOP = '58px';",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-the-foe-bar-over-the-card",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "body:has(.hud-foe.on) .dfnaval-hud { --nc-top: ${NAVAL_CARD_TOP_FOE}; }\n",
     "new": "",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-the-helm-bar-under-a-window",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "export const enhancedHelmBar = () => (host && last?.covered !== true ? parts.bar : null);",
     "new": "export const enhancedHelmBar = () => (host ? parts.bar : null);",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -223,43 +223,43 @@
     "old": "      under: enhancedHelmBar(),",
     "new": "      under: null,",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-the-keys-named-to-a-finger",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "boardKey = touch ? 'Tap' : (keys.board ?? 'Activate')",
     "new": "boardKey = keys.board ?? 'Activate'",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-the-finger-told-to-hold-a-key",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "`${touch ? 'Hold and drag' : `Hold ${aimKey}`} to aim - ${bracePress}`",
     "new": "`Hold ${aimKey} to aim - ${bracePress}`",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-the-plate-on-the-presses",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": ".dfnaval-hud.touch .dfnaval-plate { right: calc(18px + env(safe-area-inset-right, 0px)); bottom: calc(var(--nc-foot, ${NAVAL_PLATE_TOUCH_BOTTOM}px) + env(safe-area-inset-bottom, 0px)); }\n",
     "new": "",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "NAV-F-the-finger-root-never-marked",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  cls('rootc', root, `dfnaval-hud${touch ? ' touch' : ''}${compass ? ' classic' : ''}${short ? ' short' : ''}${aside ? ' aside' : ''}`);\n",
     "new": "",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "      touch: !!touch,   // a finger's screen: the plate over the touch corner's presses, the hints a finger's",
     "new": "      touch: false,",
     "tests": [
-      "test/nav_f_ui.test.js"
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   }
 ]

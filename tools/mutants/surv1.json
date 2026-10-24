@@ -5,16 +5,16 @@
     "old": "  return cold ? Math.min(temp + r, 0) : Math.max(temp - r, 0);",
     "new": "  return cold ? temp + r : temp - r;",
     "tests": [
-      "test/surv1_model.test.js"
+      "test/systems/survival/surv1_model.test.js"
     ]
   },
   {
     "name": "SURV1-wet-clothes-keep-their-warmth",
     "file": "src/systems/survival/temperature.js",
-    "old": "  warmth = Math.max(0, warmth - Math.min(wet, WET_MAX));",
-    "new": "  warmth = Math.max(0, warmth);",
+    "old": "  warmth = Math.max(0, pure - Math.min(wet, WET_MAX));",
+    "new": "  warmth = Math.max(0, pure);",
     "tests": [
-      "test/surv1_model.test.js"
+      "test/systems/survival/surv1_model.test.js"
     ]
   },
   {
@@ -23,25 +23,25 @@
     "old": "  if (metalTemp > 0 && inSunlight && !covered) heat = metalTemp;",
     "new": "  if (metalTemp > 0 && inSunlight) heat = metalTemp;",
     "tests": [
-      "test/surv1_model.test.js"
+      "test/systems/survival/surv1_model.test.js"
     ]
   },
   {
     "name": "SURV1-a-dungeon-is-the-sky",
     "file": "src/systems/survival/temperature.js",
-    "old": "  if (env.insideDungeon) natTemp = dungeonTemperature(natTemp);",
-    "new": "",
+    "old": "  const air = env.insideDungeon ? dungeonTemperature(natural) : natural;",
+    "new": "  const air = natural;",
     "tests": [
-      "test/surv1_model.test.js"
+      "test/systems/survival/surv1_model.test.js"
     ]
   },
   {
     "name": "SURV1-the-drink-cools-a-vampire",
     "file": "src/systems/survival/temperature.js",
-    "old": "  if (felt > 9 && ctx.hasWater && !ctx.vampire) felt = Math.max(felt - WATER_COOLS, 0);",
-    "new": "  if (felt > 9 && ctx.hasWater) felt = Math.max(felt - WATER_COOLS, 0);",
+    "old": "  if (felt > 9 && ctx.hasWater && !ctx.vampire) felt = Math.max(felt - WATER_COOLS, 9);",
+    "new": "  if (felt > 9 && ctx.hasWater) felt = Math.max(felt - WATER_COOLS, 9);",
     "tests": [
-      "test/surv1_model.test.js"
+      "test/systems/survival/surv1_model.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "export const foodSatiety = (item) => Math.trunc((foodOf(item)?.satiety ?? 0) / (foodStage(item) + 1));",
     "new": "export const foodSatiety = (item) => foodOf(item)?.satiety ?? 0;",
     "tests": [
-      "test/surv1_model.test.js"
+      "test/systems/survival/surv1_model.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if (hunger > satiety + FULL_AHEAD_MINUTES) base = now - FULL_AHEAD_MINUTES;",
     "new": "",
     "tests": [
-      "test/surv1_model.test.js"
+      "test/systems/survival/surv1_model.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if ((f.raw || stage > 0) && (rules ?? HARD_RULES).sickness) {",
     "new": "  if ((true) && (rules ?? HARD_RULES).sickness) {",
     "tests": [
-      "test/surv1_model.test.js"
+      "test/systems/survival/surv1_model.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  const roll = 1 + Math.floor(rolls() * 100) + Math.trunc(daysKept / 2);",
     "new": "  const roll = 1 + Math.floor(rolls() * 100);",
     "tests": [
-      "test/surv1_model.test.js"
+      "test/systems/survival/surv1_model.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    capped[k] = m < 0 ? -Math.min(-m, Math.max(0, floorAt - 5)) : m;",
     "new": "    capped[k] = m;",
     "tests": [
-      "test/surv1_model.test.js"
+      "test/systems/survival/surv1_model.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  const floor = sleeping === 'rough' ? SLEEP_FLOOR_AT[rules.roughSleepFloor] ?? 0 : 0;",
     "new": "  const floor = 0;",
     "tests": [
-      "test/surv1_model.test.js"
+      "test/systems/survival/surv1_model.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  const start = Math.max(Math.floor(from), last, end - MAX_CATCHUP_MINUTES);",
     "new": "  const start = Math.max(Math.floor(from), last);",
     "tests": [
-      "test/surv1_model.test.js"
+      "test/systems/survival/surv1_model.test.js"
     ]
   },
   {
@@ -113,16 +113,16 @@
     "old": "  if (gap > ALIGN_GRACE_MINUTES || (s.lastAte ?? now) > now || (s.awakeSince ?? now) > now) {",
     "new": "  if (true) {",
     "tests": [
-      "test/surv1_model.test.js"
+      "test/systems/survival/surv1_model.test.js"
     ]
   },
   {
     "name": "SURV1-the-stage-line-repeats-every-minute",
     "file": "src/systems/survival/needs.js",
-    "old": "  if (stage === was) return;\n  const sev = STAGE_SEVERITY[family], now = sev[stage] ?? 0, before = was ? sev[was] ?? 0 : 0;\n  if (Math.sign(now) !== Math.sign(before) || Math.abs(now) > Math.abs(before)) say?.(text);",
+    "old": "  if (stage === was) return;\n  const sev = STAGE_SEVERITY[family], at = sev[stage] ?? 0, before = was ? sev[was] ?? 0 : 0;\n  // AUDIT C&C N6: and not again while the stage's line was heard lately (STAGE_REPEAT_MINUTES)\n  const heard = `${family}@${stage}`;\n  if ((Math.sign(at) !== Math.sign(before) || Math.abs(at) > Math.abs(before)) && !heardLately(s, heard, now)) { s.notes[heard] = now; say?.(text); }",
     "new": "  say?.(text);",
     "tests": [
-      "test/surv1_model.test.js"
+      "test/systems/survival/surv1_model.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "      if (a.kind === 'survival') { survival += a.statMods?.[statName] ?? 0; continue; }",
     "new": "      if (a.kind === 'survival') { continue; }",
     "tests": [
-      "test/surv1_model.test.js"
+      "test/systems/survival/surv1_model.test.js"
     ]
   }
 ]

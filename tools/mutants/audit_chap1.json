@@ -5,8 +5,8 @@
     "old": "  const tag = mintTag(rand);\n  const lines = changed.filter",
     "new": "  const tag = 'one-tag-for-all';\n  const lines = changed.filter",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "    if (now?.last_rid === rid) return { roll: await rollViewOf(db, who.character), repeat: true };",
     "new": "    if (false) return { roll: await rollViewOf(db, who.character), repeat: true };",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "const HELD_SQL = 'EXISTS (SELECT 1 FROM realm_characters WHERE id = ? AND player = ? AND lease = ? AND dead_at IS NULL)';",
     "new": "const HELD_SQL = '(1 OR ? OR ? OR ?)';",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -35,8 +35,8 @@
     "old": "if (!(Number(row.bytes) > 0)) return { error: 'no-data' };",
     "new": "if (false) return { error: 'no-data' };",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -45,8 +45,8 @@
     "old": "as deleteRealm's batch takes the three tables for a character that played\n      db.prepare('DELETE FROM npc_roll WHERE",
     "new": "as deleteRealm's batch takes the three tables for a character that played\n      db.prepare('DELETE FROM npc_rolx WHERE",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -55,9 +55,9 @@
     "old": "const need = ranks.has(f) ? rollRankKeepOf(ranks.get(f)) : MIN_REPUTATION;",
     "new": "const need = false ? rollRankKeepOf(ranks.get(f)) : MIN_REPUTATION;",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js"
     ],
     "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
@@ -67,8 +67,8 @@
     "old": "rank: member ? rollBookRankOf(ranks.get(f), line.rep) : null,",
     "new": "rank: member ? Math.min(/** @type {number} */ (ranks.get(f)), 7) : null,",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -77,8 +77,8 @@
     "old": "rank: member ? rollBookRankOf(reported.get(f), values[f]) : null,",
     "new": "rank: member ? Math.min(/** @type {number} */ (reported.get(f)), 7) : null,",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -87,29 +87,30 @@
     "old": "if (r >= RANK_REQ_REPUTATION[i]) rank = i;",
     "new": "if (r > RANK_REQ_REPUTATION[i]) rank = i;",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
     "name": "ACHAP-S6-EVENTS-REPEAT",
     "file": "server-account/src/npcRoll.js",
-    "old": "|| !!(await db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1')",
-    "new": "|| false && !!(await db.prepare('SELECT 1 FROM npc_rep_events WHERE char_id = ? AND rid = ? LIMIT 1')",
+    "old": "  const taken = head.last_rid === rid || !!takenQ?.results?.[0];",
+    "new": "  const taken = head.last_rid === rid;",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
-    ]
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
+    ],
+    "note": "PIN MOVED (PRIMARY-FOLD part three): re-aimed by content - the record read in the claim's one batch of reads."
   },
   {
     "name": "ACHAP-S7-NOOP",
     "file": "server-account/src/npcRoll.js",
-    "old": "if (!changed.length) return { roll: viewOf(kseq, rows), credited };",
-    "new": "if (false) return { roll: viewOf(kseq, rows), credited };",
+    "old": "if (!changed.length) return { roll: viewOf(kseq, rows), credited, paid: drained };",
+    "new": "if (false) return { roll: viewOf(kseq, rows), credited, paid: drained };",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js",
-      "test/audit_chap2.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js",
+      "test/net/audit_chap2.test.js"
     ],
     "note": "AUDIT CHAP2: re-aimed by content at the code the audit's fixes moved."
   },
@@ -119,8 +120,8 @@
     "old": ".bind(who.character, nowS - ROLL_EVENTS_KEEP_S, who.character, tag)",
     "new": ".bind(who.character, nowS - ROLL_EVENTS_KEEP_S * 2, who.character, tag)",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -129,8 +130,8 @@
     "old": "const ranks = members === null ? null : new Map(members.map(",
     "new": "const ranks = new Map((members ?? []).map(",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -139,8 +140,8 @@
     "old": "if (after.tag === tag) return { roll: viewOf(0, rows), from: 0, seeded: true };",
     "new": "if (after) return { roll: viewOf(0, rows), from: 0, seeded: true };",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -149,8 +150,8 @@
     "old": "owed: owedUnder(rep, owed + (delta - take))",
     "new": "owed: owedUnder(rep, owed)",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -159,8 +160,8 @@
     "old": "      if (!(row.owed > 0)) continue;",
     "new": "      if (true) continue;",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -169,8 +170,8 @@
     "old": "    if (row.owed > 0) {\n      const d = rollDrain(line, day);",
     "new": "    if (false) {\n      const d = rollDrain(line, day);",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -179,8 +180,8 @@
     "old": "const fromOwed = Math.min(owed, -delta);",
     "new": "const fromOwed = 0;",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -189,8 +190,8 @@
     "old": "Math.max(0, Math.min(MAX_REPUTATION - rep, owed)));",
     "new": "Math.max(0, owed));",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -199,8 +200,8 @@
     "old": "return { rep, gainedDay: day, gained: today + (rep - before), owed: owedUnder(rep, owed - fromOwed), credited: rep - before };",
     "new": "return { rep, gainedDay: day, gained: today, owed: owedUnder(rep, owed - fromOwed), credited: rep - before };",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -209,8 +210,8 @@
     "old": "k && k.seq === r.data.from ? k.factions :",
     "new": "false ? k.factions :",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -219,8 +220,8 @@
     "old": "k && k.seq === r.data.from ? k.factions :",
     "new": "k ? k.factions :",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -229,8 +230,8 @@
     "old": "    keep({ seq: roll.seq, factions: a.base });\n",
     "new": "\n",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -239,8 +240,8 @@
     "old": "values0 ??= values;",
     "new": "values0 = values;",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -249,8 +250,8 @@
     "old": "if (!Object.hasOwn(current, f) || !Object.hasOwn(base, f)) continue;",
     "new": "if (false) continue;",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -259,8 +260,8 @@
     "old": "if (!current || !Object.hasOwn(current, f)) continue;",
     "new": "if (!current) continue;",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -269,8 +270,8 @@
     "old": "      busy = true;\n",
     "new": "      busy = false;\n",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -279,8 +280,8 @@
     "old": "if (!id || !ls) return;",
     "new": "if (!id) return;",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -289,8 +290,8 @@
     "old": "list.map((m) => `${m.f}:${m.rank}${m.d === 1 ? 'd' : ''}`)",
     "new": "list.map((m) => `${m.f}${m.d === 1 ? 'd' : ''}`)",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -299,8 +300,8 @@
     "old": "(credited[f] ?? c.deltas[f]) < c.deltas[f]",
     "new": "(credited[f] ?? c.deltas[f]) <= c.deltas[f]",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -309,8 +310,8 @@
     "old": "wait = Math.min(ROLL_RETRY_MAX_MS, wait * 2);",
     "new": "wait = Math.min(ROLL_RETRY_MAX_MS, wait * 1);",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -319,8 +320,8 @@
     "old": "export const ROLL_RETRY_MAX_MS = 15 * 60_000;",
     "new": "export const ROLL_RETRY_MAX_MS = 16 * 60_000;",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -329,8 +330,8 @@
     "old": "    wait = ROLL_RETRY_MS;\n    nextAt = now();",
     "new": "    nextAt = now();",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -339,8 +340,8 @@
     "old": "if (error === 'roll-unseeded') { base = null; pending = null; }",
     "new": "if (false) { base = null; pending = null; }",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -349,8 +350,8 @@
     "old": "if (!roll) return fail('roll-seed');",
     "new": "if (!roll) return fail('server');",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -359,18 +360,18 @@
     "old": "read: () => rollValuesOf(entityOf()?.factionRep),",
     "new": "read: () => rollValuesOf(entityOf()?.factionReps),",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
     "name": "ACHAP-T5-MEMBERS",
     "file": "src/net/npcRollTracker.js",
-    "old": "members: () => rollMembersOf(entityOf()?.guildMemberships, rollVampireOf(entityOf())),",
-    "new": "members: () => rollMembersOf(entityOf()?.guildMembership, rollVampireOf(entityOf())),",
+    "old": "      return rollMembersOf(entity?.guildMemberships, rollVampireOf(entity));",
+    "new": "      return rollMembersOf(entity?.guildMembership, rollVampireOf(entity));",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -379,8 +380,8 @@
     "old": "setReputation(store, Number(f), rep);",
     "new": "{ const row = store.dict.get(Number(f)); if (row) row.rep = rep; }",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -389,8 +390,8 @@
     "old": "(x) => x >= MIN_REPUTATION && x <= MAX_REPUTATION",
     "new": "(x) => x >= MIN_REPUTATION && x < MAX_REPUTATION",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -399,8 +400,8 @@
     "old": "for (const x of b) out += x.toString(16).padStart(2, '0');",
     "new": "for (const x of b) out += x.toString(16).padStart(1, '0');",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -409,8 +410,8 @@
     "old": "        if (request.method !== 'POST') return no('method', 405, origin);\n        if (!chaptersOpenFor(who.player, env))",
     "new": "        if (!chaptersOpenFor(who.player, env))",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -419,8 +420,8 @@
     "old": "'roll-busy': 409, dead: 410,",
     "new": "'roll-busy': 400, dead: 410,",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -429,8 +430,8 @@
     "old": "  if (row.dead_at != null) return { error: 'dead' };\n  if (row.lease !== lease) return { error: 'lease' };",
     "new": "  if (row.lease !== lease) return { error: 'lease' };\n  if (row.dead_at != null) return { error: 'dead' };",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -439,8 +440,8 @@
     "old": "get lease() { return lost ? null : lease; },",
     "new": "get lease() { return lease; },",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -449,8 +450,8 @@
     "old": "post('/v1/chapters/roll', { character, lease,",
     "new": "post('/v1/chapters/rol', { character, lease,",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -459,8 +460,8 @@
     "old": "...(seed ? { seed } : {})",
     "new": "...({})",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
@@ -469,18 +470,19 @@
     "old": "post('/v1/chapters/claim', { character, lease, rid,",
     "new": "post('/v1/chapters/clain', { character, lease, rid,",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   },
   {
     "name": "ACHAP-CEILING-LINE",
-    "file": "src/net/npcChapterLaw.js",
-    "old": "rises no further today. The rest will follow in the days to come.",
-    "new": "can rise no further today.",
+    "file": "src/scenes/rollNoticeHost.js",
+    "old": "quests cannot raise your standing any further today. {owed} more is owed and arrives over the coming days.",
+    "new": "quests cannot raise your standing any further today.",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js",
+      "test/systems/fb1015g_guildwords.test.js"
     ]
   },
   {
@@ -489,8 +491,8 @@
     "old": "if (!Number.isSafeInteger(seq) || seq < 0 || !rollSeedOk(factions)) return null;",
     "new": "if (!Number.isSafeInteger(seq)) return null;",
     "tests": [
-      "test/chap1_roll.test.js",
-      "test/audit_chap1.test.js"
+      "test/systems/guild/chap1_roll.test.js",
+      "test/net/audit_chap1.test.js"
     ]
   }
 ]

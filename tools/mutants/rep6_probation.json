@@ -1,56 +1,56 @@
 [
   {
     "name": "REP6-DFU's-expulsion-at-the-first-review",
-    "file": "src/systems/guilds.js",
-    "old": "  if (newRank < 0 && (!m.probation || getReputation(store, guild.factionId) >= GUILD_EXPEL_BELOW)) {",
+    "file": "src/systems/guild/guilds.js",
+    "old": "  if (newRank < 0 && (!m.probation || getReputation(store, guild.factionId) + owed >= GUILD_EXPEL_BELOW)) {",
     "new": "  if (false) {",
     "tests": [
-      "test/rep6_probation.test.js"
+      "test/systems/guild/rep6_probation.test.js"
     ]
   },
   {
     "name": "REP6-the-probation-never-ending",
-    "file": "src/systems/guilds.js",
+    "file": "src/systems/guild/guilds.js",
     "old": "  if (newRank >= 0) m.probation = false;\n",
     "new": "",
     "tests": [
-      "test/rep6_probation.test.js"
+      "test/systems/guild/rep6_probation.test.js"
     ]
   },
   {
     "name": "REP6-the-warning-skipped",
-    "file": "src/systems/guilds.js",
-    "old": "(!m.probation || getReputation(store, guild.factionId) >= GUILD_EXPEL_BELOW)",
-    "new": "(getReputation(store, guild.factionId) >= GUILD_EXPEL_BELOW)",
+    "file": "src/systems/guild/guilds.js",
+    "old": "(!m.probation || getReputation(store, guild.factionId) + owed >= GUILD_EXPEL_BELOW)",
+    "new": "(getReputation(store, guild.factionId) + owed >= GUILD_EXPEL_BELOW)",
     "tests": [
-      "test/rep6_probation.test.js"
+      "test/systems/guild/rep6_probation.test.js"
     ]
   },
   {
     "name": "REP6-the-minus-10-line-ignored",
-    "file": "src/systems/guilds.js",
-    "old": "(!m.probation || getReputation(store, guild.factionId) >= GUILD_EXPEL_BELOW)",
+    "file": "src/systems/guild/guilds.js",
+    "old": "(!m.probation || getReputation(store, guild.factionId) + owed >= GUILD_EXPEL_BELOW)",
     "new": "(!m.probation)",
     "tests": [
-      "test/rep6_probation.test.js"
+      "test/systems/guild/rep6_probation.test.js"
     ]
   },
   {
     "name": "REP6-the-box-never-shown",
-    "file": "src/systems/guilds.js",
+    "file": "src/systems/guild/guilds.js",
     "old": "    return { outcome: 'probation', rank: m.rank, textId: null, lines: PROBATION_LINES };",
     "new": "    return null;",
     "tests": [
-      "test/rep6_probation.test.js"
+      "test/systems/guild/rep6_probation.test.js"
     ]
   },
   {
     "name": "REP6-the-review-not-deferred",
-    "file": "src/systems/guilds.js",
+    "file": "src/systems/guild/guilds.js",
     "old": "    m.lastRankChange = today;   // the next review is 28 days on\n",
     "new": "",
     "tests": [
-      "test/rep6_probation.test.js"
+      "test/systems/guild/rep6_probation.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      probation: !!membership.probation,",
     "new": "      probation: false,",
     "tests": [
-      "test/rep6_probation.test.js"
+      "test/systems/guild/rep6_probation.test.js"
     ]
   }
 ]

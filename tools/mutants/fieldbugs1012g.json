@@ -1,0 +1,447 @@
+[
+  {
+    "name": "KEEP-CLICK-the-repair-steals-again",
+    "file": "src/systems/inputActions.js",
+    "old": "    if (actionsForCode(store, def[0]).length) continue;",
+    "new": "",
+    "tests": [
+      "test/systems/fb1012g_keepclick.test.js"
+    ]
+  },
+  {
+    "name": "KEEP-CLICK-the-free-test-inverted",
+    "file": "src/systems/inputActions.js",
+    "old": "    if (actionsForCode(store, def[0]).length) continue;",
+    "new": "    if (!actionsForCode(store, def[0]).length) continue;",
+    "tests": [
+      "test/systems/fb1012g_keepclick.test.js",
+      "test/systems/inputactions.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-SHUT-flushed-only-when-a-horse-drew",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "    } finally { if (open) renderer.flushCharacterSpriteBatch(); }",
+    "new": "    } finally { if (open && n) renderer.flushCharacterSpriteBatch(); }",
+    "tests": [
+      "test/render/fb1012g_batchshut.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-SHUT-an-open-for-every-horse",
+    "file": "src/scenes/horseCartPool.js",
+    "old": "        if (own && !open) { renderer.beginCharacterSpriteBatch(); open = true; }",
+    "new": "        if (own && !n) { renderer.beginCharacterSpriteBatch(); open = true; }",
+    "tests": [
+      "test/render/fb1012g_batchshut.test.js"
+    ]
+  },
+  {
+    "name": "BATCH-SHUT-the-frame-keeps-a-left-batch",
+    "file": "src/render/renderer.js",
+    "old": "      sb.open = false; sb.depth = 0; sb.items.length = 0;",
+    "new": "      sb.depth = 0; sb.items.length = 0;",
+    "tests": [
+      "test/render/fb1012g_batchshut.test.js"
+    ]
+  },
+  {
+    "name": "PANE-CLIP-the-compare-turned",
+    "file": "src/render/realWindows.js",
+    "old": "gl_FragCoord.z <= texelFetch(uPaneDepth, ivec2(gl_FragCoord.xy), 0).r) discard;",
+    "new": "gl_FragCoord.z >= texelFetch(uPaneDepth, ivec2(gl_FragCoord.xy), 0).r) discard;",
+    "tests": [
+      "test/render/fb1012g_paneclip.test.js"
+    ]
+  },
+  {
+    "name": "PANE-CLIP-the-panes-never-kept",
+    "file": "src/render/renderer.js",
+    "old": "    if (a.n > n0 && mesh?.vao && a.np < VIEW_PANES_MAX) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/render/fb1012g_paneclip.test.js"
+    ]
+  },
+  {
+    "name": "PANE-CLIP-the-panes-never-handed-on",
+    "file": "src/render/renderer.js",
+    "old": "this._rwPaneN = a.n ? a.np : 0;",
+    "new": "this._rwPaneN = 0;",
+    "tests": [
+      "test/render/fb1012g_paneclip.test.js"
+    ]
+  },
+  {
+    "name": "PANE-CLIP-the-matrix-lost",
+    "file": "src/render/renderer.js",
+    "old": "p.count = sm.primitiveCount * 3; p.m.set(m);",
+    "new": "p.count = sm.primitiveCount * 3;",
+    "tests": [
+      "test/render/fb1012g_paneclip.test.js"
+    ]
+  },
+  {
+    "name": "PANE-CLIP-the-depth-not-cleared",
+    "file": "src/render/renderer.js",
+    "old": "    gl.clearDepth(1); gl.clear(gl.DEPTH_BUFFER_BIT);\n    this._use(P.p);",
+    "new": "    this._use(P.p);",
+    "tests": [
+      "test/render/fb1012g_paneclip.test.js"
+    ]
+  },
+  {
+    "name": "PANE-CLIP-a-let-go-room-drawn",
+    "file": "src/render/renderer.js",
+    "old": "      if (!gl.isVertexArray(p.vao)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/render/fb1012g_paneclip.test.js"
+    ]
+  },
+  {
+    "name": "PANE-CLIP-never-on",
+    "file": "src/render/renderer.js",
+    "old": "        gl.uniform1f(this.rwLocs.paneOn, 1);",
+    "new": "        gl.uniform1f(this.rwLocs.paneOn, 0);",
+    "tests": [
+      "test/render/fb1012g_paneclip.test.js"
+    ]
+  },
+  {
+    "name": "PANE-CLIP-the-wrong-unit",
+    "file": "src/render/renderer.js",
+    "old": "        gl.uniform1i(this.rwLocs.pane, VIEW_PANE_UNIT);",
+    "new": "        gl.uniform1i(this.rwLocs.pane, 0);",
+    "tests": [
+      "test/render/fb1012g_paneclip.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-RATS-misses-never-counted",
+    "file": "src/scenes/quest/questFoeHost.js",
+    "old": "  handle.ringMisses = (handle.ringMisses ?? 0) + 1;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/quest/fb1012g_shoprats.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-RATS-the-fallback-at-once",
+    "file": "src/scenes/quest/questFoeHost.js",
+    "old": "  if (handle.ringMisses < ROOM_RING_MISSES) return null;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/quest/fb1012g_shoprats.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-RATS-the-fallback-first",
+    "file": "src/scenes/quest/questFoeHost.js",
+    "old": "  const ring = placeFoeFreely(env);\n  if (ring) return ring;",
+    "new": "  const ring = placeFoeFreely(env, ROOM_NEAR_RING) ?? roomMarkerSpot(env, spots);\n  if (ring) return ring;",
+    "tests": [
+      "test/scenes/quest/fb1012g_shoprats.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-RATS-no-fallback",
+    "file": "src/scenes/quest/questFoeHost.js",
+    "old": "  return placeFoeFreely(env, ROOM_NEAR_RING) ?? roomMarkerSpot(env, spots);",
+    "new": "  return null;",
+    "tests": [
+      "test/scenes/quest/fb1012g_shoprats.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-RATS-the-nearest-first",
+    "file": "src/scenes/quest/questFoeHost.js",
+    "old": ".sort((a, b) => d2(b) - d2(a));",
+    "new": ".sort((a, b) => d2(a) - d2(b));",
+    "tests": [
+      "test/scenes/quest/fb1012g_shoprats.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-RATS-the-floor-unchecked",
+    "file": "src/scenes/quest/questFoeHost.js",
+    "old": "    if (!floor) continue;\n    const t = { x: floor.point.x,",
+    "new": "    if (!floor) return { x: p[0], y: p[1] + C.separationDistance, z: p[2] };\n    const t = { x: floor.point.x,",
+    "tests": [
+      "test/scenes/quest/fb1012g_shoprats.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-RATS-the-overlap-unchecked",
+    "file": "src/scenes/quest/questFoeHost.js",
+    "old": "    if (env.overlapSphere?.(t, C.overlapSphereRadius)) continue;\n    return t;",
+    "new": "    return t;",
+    "tests": [
+      "test/scenes/quest/fb1012g_shoprats.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-RATS-the-reach-unchecked",
+    "file": "src/scenes/quest/questFoeHost.js",
+    "old": "(spots ?? []).filter((p) => d2(p) <= C.maxDistance ** 2)",
+    "new": "(spots ?? []).filter(() => true)",
+    "tests": [
+      "test/scenes/quest/fb1012g_shoprats.test.js"
+    ]
+  },
+  {
+    "name": "SHOP-RATS-the-host-on-the-ring-alone",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const spot = placeRoomQuestFoe(env, handle, interiorCtx.markers?.map((m) => [m.x, m.y, m.z]));",
+    "new": "    const spot = placeFoeFreely(env);",
+    "tests": [
+      "test/scenes/quest/fb1012g_shoprats.test.js",
+      "test/scenes/interiorfoes.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-KEPT-the-index-for-a-named-record",
+    "file": "src/scenes/chestRecords.js",
+    "old": "  const named = (c) => c.model != null && Array.isArray(c.at);",
+    "new": "  const named = () => false;",
+    "tests": [
+      "test/scenes/fb1012g_holdkept.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-KEPT-the-model-not-compared",
+    "file": "src/scenes/chestRecords.js",
+    "old": "if (taken.has(t) || t.modelIdNum !== c.model || !t.matrix) continue;",
+    "new": "if (taken.has(t) || !t.matrix) continue;",
+    "tests": [
+      "test/scenes/fb1012g_holdkept.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-KEPT-the-reach-unchecked",
+    "file": "src/scenes/chestRecords.js",
+    "old": "let best = null, bd = CHEST_MATCH_REACH ** 2;",
+    "new": "let best = null, bd = Infinity;",
+    "tests": [
+      "test/scenes/fb1012g_holdkept.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-KEPT-a-chest-taken-twice",
+    "file": "src/scenes/chestRecords.js",
+    "old": "    if (best) { out.set(c, best); taken.add(best); }",
+    "new": "    if (best) { out.set(c, best); }",
+    "tests": [
+      "test/scenes/fb1012g_holdkept.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-KEPT-the-legacy-pass-gone",
+    "file": "src/scenes/chestRecords.js",
+    "old": "    if (t && !taken.has(t)) { out.set(c, t); taken.add(t); }",
+    "new": "",
+    "tests": [
+      "test/scenes/fb1012g_holdkept.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-KEPT-a-named-chest-taken-again",
+    "file": "src/scenes/chestRecords.js",
+    "old": "    if (t && !taken.has(t)) { out.set(c, t); taken.add(t); }",
+    "new": "    if (t) { out.set(c, t); taken.add(t); }",
+    "tests": [
+      "test/scenes/fb1012g_holdkept.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-KEPT-a-served-piece-taken",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "      if (standing.has(id) || !list.length) continue;",
+    "new": "      if (!list.length) continue;",
+    "tests": [
+      "test/scenes/fb1012g_holdkept.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-KEPT-an-unserved-piece-kept",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "      held.delete(id);\n      out.push(...list);",
+    "new": "      out.push(...list);",
+    "tests": [
+      "test/scenes/fb1012g_holdkept.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-KEPT-the-index-restore-back",
+    "file": "src/scenes/worldModes.js",
+    "old": "const target = kind === 'shelf' ? interiorCtx.shelves?.[+i] : chestOf.get(c);",
+    "new": "const target = kind === 'shelf' ? interiorCtx.shelves?.[+i] : interiorCtx.containers?.[+i];",
+    "tests": [
+      "test/scenes/fb1012g_holdkept.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-KEPT-the-layout-guard-lost",
+    "file": "src/scenes/worldModes.js",
+    "old": "        if (interiorHome?.own && !_sceneHeldForLayout) decorSetDownHeld(r.data.pieces);",
+    "new": "        if (interiorHome?.own) decorSetDownHeld(r.data.pieces);",
+    "tests": [
+      "test/scenes/fb1012g_holdkept.test.js"
+    ]
+  },
+  {
+    "name": "LODE-MARK-the-warned-lode-unmarked",
+    "file": "src/net/motherlodeBook.js",
+    "old": "        if (standing(l, t) || (said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS)) out.push(l);",
+    "new": "        if (standing(l, t)) out.push(l);",
+    "tests": [
+      "test/net/fb1012g_lodemark.test.js"
+    ]
+  },
+  {
+    "name": "LODE-MARK-marked-before-its-warning",
+    "file": "src/net/motherlodeBook.js",
+    "old": "(said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS)",
+    "new": "(t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS)",
+    "tests": [
+      "test/net/fb1012g_lodemark.test.js"
+    ]
+  },
+  {
+    "name": "LODE-MARK-marked-once-spent",
+    "file": "src/net/motherlodeBook.js",
+    "old": "(said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS)",
+    "new": "(said.has(`warn|${l.key}`) && t < l.opensAt)",
+    "tests": [
+      "test/net/fb1012g_lodemark.test.js"
+    ]
+  },
+  {
+    "name": "LODE-MARK-a-finder-told",
+    "file": "src/net/motherlodeBook.js",
+    "old": "        if (state.found) break;\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1012g_lodemark.test.js"
+    ]
+  },
+  {
+    "name": "LODE-MARK-a-finder-marked",
+    "file": "src/net/motherlodeBook.js",
+    "old": "      if (state.day !== Math.floor(t / 86400) || state.found) return out;",
+    "new": "      if (state.day !== Math.floor(t / 86400)) return out;",
+    "tests": [
+      "test/net/fb1012g_lodemark.test.js"
+    ]
+  },
+  {
+    "name": "LODE-MARK-minings-copper",
+    "file": "src/ui/nodeMarks.js",
+    "old": "profession === 'motherlode' ? MOTHERLODE_MARK_CSS : NODE_MARK_CSS[profession]",
+    "new": "profession === 'motherlode' ? NODE_MARK_CSS.mining : NODE_MARK_CSS[profession]",
+    "tests": [
+      "test/net/fb1012g_lodemark.test.js"
+    ]
+  },
+  {
+    "name": "LODE-MARK-the-floats-off-the-hex",
+    "file": "src/ui/nodeMarks.js",
+    "old": "const LODE_RGB = Object.freeze([0, 0xe5 / 255, 0xc8 / 255]);",
+    "new": "const LODE_RGB = Object.freeze([0, 0xc8 / 255, 0xe5 / 255]);",
+    "tests": [
+      "test/net/fb1012g_lodemark.test.js"
+    ]
+  },
+  {
+    "name": "LODE-MARK-under-the-rest",
+    "file": "src/scenes/world.js",
+    "old": "return nodeCompassPoints(far.length ? [...far, ...(near ?? [])] : near, trackerAnimals());",
+    "new": "return nodeCompassPoints(far.length ? [...(near ?? []), ...far] : near, trackerAnimals());",
+    "tests": [
+      "test/net/fb1012g_lodemark.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-TOWN-the-mark-never-written",
+    "file": "src/systems/quest/place.js",
+    "old": "        this.siteDetails = { ...near.found[this._range(near.found.length)], nearSite: true };",
+    "new": "        this.siteDetails = { ...near.found[this._range(near.found.length)] };",
+    "tests": [
+      "test/systems/quest/qa2_nearsite.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-TOWN-the-reveal-never-made",
+    "file": "src/systems/quest/machine.js",
+    "old": "    revealNearSites(quest);   // FIELD BUGS 2026-10-12g QUEST-TOWN: its town on the map, once the quest is the machine's",
+    "new": "",
+    "tests": [
+      "test/systems/quest/qa2_nearsite.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-TOWN-the-lens-not-following",
+    "file": "src/ui/quest/questLens.js",
+    "old": "  const moved = place ? null : movedSiteOf(message);",
+    "new": "  const moved = null;",
+    "tests": [
+      "test/systems/quest/qa2_nearsite.test.js"
+    ]
+  },
+  {
+    "name": "QUEST-TOWN-the-town-not-named",
+    "file": "src/ui/quest/questLens.js",
+    "old": "  const named = onMap === true || here || !!moved || said.has(",
+    "new": "  const named = onMap === true || here || said.has(",
+    "tests": [
+      "test/systems/quest/qa2_nearsite.test.js"
+    ]
+  },
+  {
+    "name": "OPEN-HAND-the-follow-up-dropped",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  oweFoe(target, n);   // FIELD BUGS 2026-10-12g OPEN-HAND",
+    "new": "  // dropped",
+    "tests": [
+      "test/systems/fb1012g_openhand.test.js"
+    ]
+  },
+  {
+    "name": "OPEN-HAND-taken-and-kept",
+    "file": "src/systems/playerDoor.js",
+    "old": "  _owed.delete(entity);\n  return n;",
+    "new": "  return n;",
+    "tests": [
+      "test/systems/fb1012g_openhand.test.js"
+    ]
+  },
+  {
+    "name": "OPEN-HAND-owed-twice-over",
+    "file": "src/systems/playerDoor.js",
+    "old": "_owed.set(entity, (_owed.get(entity) ?? 0) + n);",
+    "new": "_owed.set(entity, (_owed.get(entity) ?? 0) + 2 * n);",
+    "tests": [
+      "test/systems/fb1012g_openhand.test.js"
+    ]
+  },
+  {
+    "name": "OPEN-HAND-the-warden-claim-without-it",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    damage += takeOwed(boss.entity);   // FIELD BUGS 2026-10-12g OPEN-HAND",
+    "new": "    // FIELD BUGS 2026-10-12g OPEN-HAND",
+    "tests": [
+      "test/systems/fb1012g_openhand.test.js",
+      "test/net/gate/wb4b_gate_blows.test.js"
+    ]
+  },
+  {
+    "name": "OPEN-HAND-the-rival-carrying-it",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const landOnRival = (rb, damage, kind) => (takeOwed(rb.entity), !!opts.onArenaHit?.({ i: rb.rival, d: damage, kind,",
+    "new": "const landOnRival = (rb, damage, kind) => (damage += takeOwed(rb.entity), !!opts.onArenaHit?.({ i: rb.rival, d: damage, kind,",
+    "tests": [
+      "test/systems/fb1012g_openhand.test.js",
+      "test/net/arena/arena4b_blows.test.js"
+    ]
+  }
+]

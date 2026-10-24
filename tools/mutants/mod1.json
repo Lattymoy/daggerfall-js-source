@@ -4,7 +4,7 @@
     "file": "server-account/src/accounts.js",
     "old": "  if (!canModerate(actor, env)) return { error: 'not-moderator' };\n",
     "new": "",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "The hole the whole slice exists to not have: a player who asks is a moderator."
   },
   {
@@ -12,15 +12,15 @@
     "file": "server-account/src/accounts.js",
     "old": "  if (canModerate(row, env)) return { error: 'protected' };",
     "new": "",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "A mod-on-mod fight settled by whoever types first."
   },
   {
     "name": "MOD1-3-no-record-of-who",
     "file": "server-account/src/accounts.js",
-    "old": "    .bind(until, until ? actor.id : null, target).run();",
-    "new": "    .bind(until, null, target).run();",
-    "tests": ["test/mod1.test.js"],
+    "old": "    .bind(until, until ? actor.id : null, until ? (admin || adminHeld ? 1 : 0) : null, target);",
+    "new": "    .bind(until, null, until ? (admin || adminHeld ? 1 : 0) : null, target);",
+    "tests": ["test/net/mod1.test.js"],
     "note": "A moderator's power with no record of its use."
   },
   {
@@ -28,7 +28,7 @@
     "file": "server-account/src/accounts.js",
     "old": "minutes > MUTE_MAX_MIN) return { error: 'bad-minutes' };",
     "new": "minutes > MUTE_MAX_MIN + 1) return { error: 'bad-minutes' };",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "The bound drifts - past a week is a ban, which nobody asked for."
   },
   {
@@ -36,7 +36,7 @@
     "file": "server-account/src/index.js",
     "old": "        const mu = isMuted(who.player, nowS) ? mutedUntil(who.player) : undefined;",
     "new": "        const mu = undefined;",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "A reconnect sheds the mute - the relay-memory design this slice refused."
   },
   {
@@ -44,7 +44,7 @@
     "file": "server-account/src/titles.js",
     "old": "  if (isModerator(player, env)) on.push('mod');",
     "new": "  if (canModerate(player, env)) on.push('mod');",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "A developer wears two marks for one grant."
   },
   {
@@ -52,7 +52,7 @@
     "file": "src/net/identityToken.js",
     "old": "  if (c.n !== undefined || c.k !== undefined) return false;   // an identity's fields: never on an order",
     "new": "",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "One key signs both; without the split a hello could be presented as a mute order."
   },
   {
@@ -60,7 +60,7 @@
     "file": "src/net/identityToken.js",
     "old": "  if (c.e <= c.i || c.e - c.i > ORDER_TTL_S) return false;",
     "new": "  if (c.e <= c.i) return false;",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "A leaked order stays usable for as long as its minter chose."
   },
   {
@@ -68,7 +68,7 @@
     "file": "src/net/identityToken.js",
     "old": "!Number.isSafeInteger(c.mu) || c.mu <= c.i)) return false;",
     "new": "!Number.isSafeInteger(c.mu))) return false;",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "The minter may say a finished mute is a mute."
   },
   {
@@ -76,7 +76,7 @@
     "file": "server/src/index.js",
     "old": "      if (a.mu && a.mu > Math.floor(now / 1000)) { this._send(ws, JSON.stringify({ t: 'muted', until: a.mu })); return; }\n      await this._sayLine(ws, a, m.ch, { t: 'chat'",
     "new": "      await this._sayLine(ws, a, m.ch, { t: 'chat'",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "The mute is signed and carried and never enforced."
   },
   {
@@ -84,7 +84,7 @@
     "file": "server/src/index.js",
     "old": "      if (!r.ok) return;   // silently, as `say` refuses: a forger learns nothing from being ignored",
     "new": "      if (!r.ok) return this._orders.set(String(m.order), { i: 0, mu: 0, sig: '' }) && void [...this._all()].forEach(([o, b]) => { if (b.id && b.id !== a.id) { this._setAttach(o, { ...b, mu: Math.floor(now / 1000) + 600 }); } });",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "An order that does not verify mutes anyway - the carrier believed instead of the signature."
   },
   {
@@ -92,7 +92,7 @@
     "file": "server/src/index.js",
     "old": "      if (held && (i < held.i || held.sig === sig)) return;",
     "new": "      if (held && held.sig === sig) return;",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "The old mute, replayed inside its minute, re-mutes a player a moderator just freed."
   },
   {
@@ -100,7 +100,7 @@
     "file": "server/src/index.js",
     "old": "    const mu = order && order.i > r.claims.i ? order.mu : (r.claims.mu ?? 0);",
     "new": "    const mu = r.claims.mu ?? 0;",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "A token minted a moment before the mute carries its holder past it until it expires."
   },
   {
@@ -108,15 +108,15 @@
     "file": "server/src/index.js",
     "old": "text: m.text, at: now, sub: a.sub, ...(m.me === true ? { me: true } : {}) }, now);",
     "new": "text: m.text, at: now, ...(m.me === true ? { me: true } : {}) }, now);",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "A moderator cannot name who said it."
   },
   {
     "name": "MOD1-15-two-names-one-guess",
     "file": "src/net/moderation.js",
-    "old": "  if (found.size > 1) return { error: `${found.size} players are called ${name}. Nobody was muted.` };",
+    "old": "  if (found.size > 1) return { error: t('net.mod.ambiguous', '{count} players are called {name}. Nobody was muted.', { count: found.size, name }) };",
     "new": "  if (found.size > 1) { const [[sub, shown]] = [...found]; return { sub, name: shown }; }",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "Two guests with one generated name: the wrong one is muted."
   },
   {
@@ -124,7 +124,7 @@
     "file": "src/net/moderation.js",
     "old": "  if (typeof order === 'string' && order) for (const link of links) if (link?.sendMuteOrder?.(order)) carried++;",
     "new": "",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "The row is muted and the live rooms never hear - the troll keeps talking until they reconnect."
   },
   {
@@ -132,7 +132,7 @@
     "file": "src/net/moderation.js",
     "old": "  const tail = /^(.*\\S)\\s+(\\d+)$/.exec(rest);",
     "new": "  const tail = /^(\\S+)\\s+(\\d+)$/.exec(rest);",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "Every guest has a space in their name; the command could not mute one for a set time."
   },
   {
@@ -140,7 +140,7 @@
     "file": "src/net/moderation.js",
     "old": "    if (last && last.until === until && nowMs - last.at < windowMs) return false;",
     "new": "",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "One order on three rooms is three identical lines."
   },
   {
@@ -148,7 +148,7 @@
     "file": "src/scenes/world.js",
     "old": "        const mod = parseModCommand(text);\n        if (mod) {",
     "new": "        const mod = null;\n        if (mod) {",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "`/mute Bob` goes out to the whole world as a line of chat."
   },
   {
@@ -156,7 +156,7 @@
     "file": "src/net/online.js",
     "old": "      const until = mutedUntilOf(m);\n      if (until === null) return;",
     "new": "      const until = m.until;",
-    "tests": ["test/mod1.test.js"],
+    "tests": ["test/net/mod1.test.js"],
     "note": "A malformed frame from a relay the player chose becomes a line in their log."
   }
 ]

@@ -19,7 +19,7 @@
 // day sees one), rising within its third's first six hours, standing two
 // hours or until its strikers are spent. THE WARNING is every client's own,
 // from the shared clock and the day's list - 10 minutes ahead, a Motherlode
-// Sense's 30 - as the gate's omen is (systems/gateOmen.js): no hub push.
+// Sense's 30 - as the gate's omen is (systems/gate/gateOmen.js): no hub push.
 //
 // WHO: a strike counts only from an account the relay saw on the
 // Motherlode's pixel - its Watch receipt (net/watchReceipt.js, `k1`: the
@@ -27,10 +27,11 @@
 // in the MOTHERLODE_WATCH_S before the act's end. A pose is the client's
 // claim, so this is a bound, not a proof (PROF0 6) - the cap is the rest.
 // ═══════════════════════════════════════════════════════════════════
-import { gateHash } from './gateLaw.js';   // the one mix every clock-law rolls with
+import { gateHash } from './gate/gateLaw.js';   // the one mix every clock-law rolls with
 import { VEIN_TABLES, regionSignature } from './nodeLaw.js';
 import { CLIMATES } from '../formats/mapsTables.js';
 import { MARKS_FAUCETS } from './marksLaw.js';
+import { watchPixelOk } from './watchReceipt.js';   // AUDIT ETHER-OW C2-1: a site the Watch can vouch for
 
 export const MOTHERLODE_SALT = 0x6d1d;
 /** The Motherlodes a UTC day, server-wide. */
@@ -103,7 +104,7 @@ export const motherlodeGround = (climate) => !!VEIN_TABLES[climate];
  * @param {number} day @param {Array<{ x: number, y: number, climate: number, region: number }>} candidates
  */
 export function motherlodeSites(day, candidates) {
-  const all = (candidates ?? []).filter((c) => c && Number.isSafeInteger(c.x) && Number.isSafeInteger(c.y) && motherlodeGround(c.climate))
+  const all = (candidates ?? []).filter((c) => c && watchPixelOk(c.x, c.y) && motherlodeGround(c.climate))   // AUDIT ETHER-OW C2-1: never past the Veil - a strike asks a Watch receipt of the site's pixel
     .sort((a, b) => a.y - b.y || a.x - b.x);
   const rich = all.filter((c) => MOTHERLODE_CLIMATES.includes(c.climate));
   const pool = (rich.length >= MOTHERLODES_A_DAY ? rich : all).slice();

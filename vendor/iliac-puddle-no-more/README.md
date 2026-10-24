@@ -54,8 +54,8 @@ writes both from the shipped bundle.
   MAPS.BSA and BLOCKS.BSA, so each is a derivative of Daggerfall's own
   data, which never enters this tree. The port builds the same planes on
   the player's machine from the player's own files, by the rules the
-  file proves (`src/world/deepWatersBake.js`, DW-A), and caches them; with
-  the mod's own bake at hand `test/dwa_bake.test.js` checks the two agree.
+  file proves (`src/world/deepWater/deepWatersBake.js`, DW-A), and caches them; with
+  the mod's own bake at hand `test/world/deepWater/dwa_bake.test.js` checks the two agree.
 - **The shaders** - seven programs in the bundle (the seafloor, the
   surface's top and underside, the clipped terrain, the decorations, the
   distance fog). Read back to GLSL and restated in the port's own

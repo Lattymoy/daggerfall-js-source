@@ -1,5 +1,5 @@
 // TESA3 (2026-10-12, the owner: "Continue"; bible/03-World/Arena-Provinces.md TESA3) - THE PROVINCE'S NAME AND ITS
-// PEOPLE, pinned. Past the Bay a pixel answers the province it stands on (world/tamrielLand.js provinceKeyBeyondBay) for
+// PEOPLE, pinned. Past the Bay a pixel answers the province it stands on (world/tamriel/tamrielLand.js provinceKeyBeyondBay) for
 // what the player READS - the loading screen, the Overworld's line, the new region's word and its edge - and for whose
 // NAMES its people carry (world/tamrielPeople.js: a Nord's in Skyrim, the Imperial bank in Black Marsh by DFU's own
 // Argonian law). Never a region index: every system keyed by region keeps the 62 regions' law (no chat room, bank, price
@@ -9,12 +9,13 @@ import assert from 'node:assert/strict';
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 
-import { provinceKeyBeyondBay, setTamrielTrace, provinceKeyAt } from '../src/world/tamrielLand.js';
-import { setTamrielFit, bayToPicture } from '../src/world/tamrielFrame.js';
+import { provinceKeyBeyondBay, setTamrielTrace, provinceKeyAt } from '../src/world/tamriel/tamrielLand.js';
+import { setTamrielFit, bayToPicture } from '../src/world/tamriel/tamrielFrame.js';
 import { provinceNameBank } from '../src/world/tamrielPeople.js';
-import { PROVINCES } from '../src/world/tamrielGeography.js';
+import { PROVINCES } from '../src/world/tamriel/tamrielGeography.js';
 import { BANK_TYPES, getNameBank, getRandomFullName, getRandomFullNameOfBank, getNameBankOfRegion } from '../src/characters/nameHelper.js';
 import { srand } from '../src/formats/dfRandom.js';
+import { hostText } from './hostText.mjs';   // HOST-SPLIT (at the merge of main): the world host read whole - its pixel build stands in scenes/pixelBuild.js
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 afterEach(() => { setTamrielTrace(null); setTamrielFit(null); });
@@ -67,7 +68,7 @@ test('TESA3 the stranger\'s name: getRandomFullNameOfBank is getRandomFullName\'
 });
 
 test('TESA3 the host: the province where the player stands (never on the Bay, at sea or past the Veil, and only where the land beyond the Bay streams) names the loading screen, the Overworld\'s line, the new region\'s word and its edge; the people\'s names - talk, strangers, quest people, the oath\'s race and the town talk\'s - come from its bank, a raid\'s pinned region naming by its region; no region index moves (mutant: a gate, a site, the pin\'s exception)', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   const fn = w.slice(w.indexOf('  function provinceAt(x, y) {'), w.indexOf('  const provinceHere = '));
   assert.match(fn, /if \(!tamrielLand \|\| onTheBay\(x, y\) \|\| \(etherSea && inEther\(x, y\)\)\) return null;\n\s+return provinceByKey\(provinceKeyBeyondBay\(x, y\)\);/);
   assert.match(w, /const provinceHere = \(\) => \{ const px = playerTravelPixel\(\); return provinceAt\(px\.x, px\.y\); \};/);
@@ -90,7 +91,7 @@ test('TESA3 the host: the province where the player stands (never on the Bay, at
   const regionFn = w.slice(w.indexOf('  function _questRegionIndex() {'), w.indexOf('\n  }\n', w.indexOf('  function _questRegionIndex() {')));
   assert.match(regionFn, /return maps\.getRegionIndexAt\(px\.x, px\.y\);$/, 'the player\'s region index is the 62 regions\' law');
   assert.doesNotMatch(regionFn, /province/i, 'untouched by the province');
-  assert.doesNotMatch(read('src/world/tamrielLand.js'), /characters\//, 'the land module stays the worker\'s - the people live in tamrielPeople.js');
+  assert.doesNotMatch(read('src/world/tamriel/tamrielLand.js'), /characters\//, 'the land module stays the worker\'s - the people live in tamrielPeople.js');
 });
 
 const ARENA2 = process.env.ARENA2_PATH;

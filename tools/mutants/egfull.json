@@ -1,0 +1,282 @@
+[
+  {
+    "name": "EGFULL-a-witness-strikes",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (!mm || !mm.in || !mm.alive || mm.home || B.sg !== 'trial' || !F || !pose || m.k !== 'hit') return out;",
+    "new": "  if (!mm || !mm.in || mm.home || B.sg !== 'trial' || !F || !pose || m.k !== 'hit') return out;",
+    "tests": [
+      "test/net/eliteGates/egfull_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-the-recall-forgotten",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (!S.recalled && now >= B.rdAt + EG_RD_RECALL_MS) {",
+    "new": "  if (!S.recalled && false) {",
+    "tests": [
+      "test/net/eliteGates/egfull_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-the-first-fall-final",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  const final = !(m.recall > 0) || m.falls >= 2;",
+    "new": "  const final = true;",
+    "tests": [
+      "test/net/eliteGates/egfull_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-a-living-member-forsakes",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (!m || m.alive || m.forsaken || B.end) return false;\n  m.forsaken = 1;",
+    "new": "  if (!m || m.forsaken || B.end) return false;\n  m.forsaken = 1;",
+    "tests": [
+      "test/net/eliteGates/egfull_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-the-ready-ignored",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    } else if (a.q === 'ready' && yes && B.sg === 'rest') {",
+    "new": "    } else if (a.q === 'readied' && yes && B.sg === 'rest') {",
+    "tests": [
+      "test/net/eliteGates/egfull_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-an-offer-to-everyone",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "    out.push({ k: 'offer', to: sub, v: cards, n: m.picks });",
+    "new": "    out.push({ k: 'offer', s: sub, v: cards, n: m.picks });",
+    "tests": [
+      "test/net/eliteGates/egfull_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-a-pick-not-offered",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "  if (!m || !m.alive || !Array.isArray(m.offer) || !m.offer.includes(card) || !(m.picks > 0)) return false;",
+    "new": "  if (!m || !m.alive || !Array.isArray(m.offer) || !(m.picks > 0)) return false;",
+    "tests": [
+      "test/net/eliteGates/egfull_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-the-wind-up-shortened",
+    "file": "src/net/eliteGates/egShape.js",
+    "old": "  return Math.max(wu, f);",
+    "new": "  return wu;",
+    "tests": [
+      "test/net/eliteGates/egfull_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-a-check-floored",
+    "file": "src/net/eliteGates/egShape.js",
+    "old": "  if (check) return wu;",
+    "new": "  if (false) return wu;",
+    "tests": [
+      "test/net/eliteGates/egfull_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-the-union-never-holds",
+    "file": "src/net/eliteGates/egFloor.js",
+    "old": "    if (!any) return true;",
+    "new": "    if (false) return true;",
+    "tests": [
+      "test/net/eliteGates/egfull_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-the-budget-far-blows-first",
+    "file": "src/net/eliteGates/egShape.js",
+    "old": "me && (egInBlow(b, me[0], me[1]) || aimedAt(b)) ? 0 : 1",
+    "new": "me && (egInBlow(b, me[0], me[1]) || aimedAt(b)) ? 1 : 0",
+    "tests": [
+      "test/net/eliteGates/egfull_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-a-stamp-unbounded",
+    "file": "src/net/eliteGates/egShape.js",
+    "old": "    case 'd': return s.length === 4 && n(1) && n(2) && n(3, 0.1, 80);",
+    "new": "    case 'd': return s.length === 4;",
+    "tests": [
+      "test/net/eliteGates/egfull_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-a-brink-every-fifth",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "  const brink = c === 6 || c === 11 || c === 16;",
+    "new": "  const brink = c % 5 === 1;",
+    "tests": [
+      "test/net/eliteGates/egfull_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-the-variants-forgotten",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    const recent = (last[kind] ?? []).slice(-mem);",
+    "new": "    const recent = [];",
+    "tests": [
+      "test/net/eliteGates/egfull_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-two-twists-running",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    if (prev || sl.kind === 'brink' || (law >= EG_WAYS_LAW ? roll * 3 >= 1 : roll >= 0.25)) { prev = false; continue; }",
+    "new": "    if (sl.kind === 'brink' || (law >= EG_WAYS_LAW ? roll * 3 >= 1 : roll >= 0.25)) { prev = false; continue; }",
+    "tests": [
+      "test/net/eliteGates/egfull_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-a-lord-twice-running",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    const open = pool.filter(([l]) => !recent.includes(l));",
+    "new": "    const open = pool;",
+    "tests": [
+      "test/net/eliteGates/egfull_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-the-fold-swapped",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "  return g + 3 * cr;",
+    "new": "  return cr + 3 * g;",
+    "tests": [
+      "test/net/eliteGates/egfull_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-a-gale-with-no-gust",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    for (let k = 0; k < gale; k++) { if (edge !== isleEdge) island(gap(), X + xRoad); run('gust', sectionOf(gale)); }",
+    "new": "    for (let k = 0; k < 0; k++) { if (edge !== isleEdge) island(gap(), X + xRoad); run('gust', sectionOf(gale)); }",
+    "tests": [
+      "test/net/eliteGates/egfull_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-a-root-off-by-one",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "  while (r < q) { q = r; r = Math.trunc((q + Math.trunc(m / q)) / 2); }",
+    "new": "  while (r < q - 1) { q = r; r = Math.trunc((q + Math.trunc(m / q)) / 2); }",
+    "tests": [
+      "test/net/eliteGates/egfull_law.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-a-fall-said-twice",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    fallSave() { if (!inSpire() || witness) return false;",
+    "new": "    fallSave() { if (!inSpire()) return false;",
+    "tests": [
+      "test/net/eliteGates/egfull_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-a-witness-struck",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    witnessing: () => !!witness,",
+    "new": "    witnessing: () => false,",
+    "tests": [
+      "test/net/eliteGates/egfull_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-the-eye-on-nobody",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      const p = peers().find((q) => q.sub === witness.watched);",
+    "new": "      const p = peers().find((q) => q.sub === me());",
+    "tests": [
+      "test/net/eliteGates/egfull_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-the-recall-never-stands",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    modes()?.egPlace?.(at, 0);\n    entity.health = Math.max(1, Math.round((entity.maxHealth ?? 1) * w.p));",
+    "new": "    entity.health = Math.max(1, Math.round((entity.maxHealth ?? 1) * w.p));",
+    "tests": [
+      "test/net/eliteGates/egfull_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-the-lash-kills",
+    "note": "EG-ZR (PIN MOVED): re-aimed by content - the lash's share is of the body without Stoneskin's cushion (spireBodyMax)",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (p < 0) { const cut = Math.min(Math.round(-p * spireBodyMax(entity)), entity.health - 1); if (cut > 0) hurt(cut); return; }",
+    "new": "    if (p < 0) { const cut = Math.round(-p * spireBodyMax(entity)); if (cut > 0) hurt(cut); return; }",
+    "tests": [
+      "test/net/eliteGates/egfull_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-iron-footing-ignored",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    const take = Math.max(0, 1 - footing());",
+    "new": "    const take = 1;",
+    "tests": [
+      "test/net/eliteGates/egfull_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-the-push-teleports",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    const step = Math.min(pushLeft, EG_PUSH_MPS * dt);",
+    "new": "    const step = pushLeft;",
+    "tests": [
+      "test/net/eliteGates/egfull_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-the-ring-keeps-nobody",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (inside ? d <= rim : d >= rim) return;",
+    "new": "    return;",
+    "tests": [
+      "test/net/eliteGates/egfull_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-the-potions-never-refilled",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "potionHall !== pk) { potionHall = pk; potions = EG_POTIONS_PER_HALL; potionsKeep(); }",
+    "new": "potionHall !== pk) { potionHall = pk; potionsKeep(); }",
+    "tests": [
+      "test/net/eliteGates/egfull_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-a-card-key-ignored",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (m && E.offer?.v?.length) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/net/eliteGates/egfull_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-a-stamina-potion-counted",
+    "file": "src/systems/eliteGates/spireKit.js",
+    "old": "r.effect === SPIRE_RESTORING_EFFECT ||",
+    "new": "true ||",
+    "tests": [
+      "test/net/eliteGates/egfull_client.test.js"
+    ]
+  },
+  {
+    "name": "EGFULL-the-bottle-drunk-anyway",
+    "file": "src/systems/useItem.js",
+    "old": "  else if (isPotion(item) && spirePotionRefusal(item)) out = { kind: 'refused', refused: true, text: spirePotionRefusal(item) };\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egfull_client.test.js"
+    ]
+  }
+]

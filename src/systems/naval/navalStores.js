@@ -3,7 +3,7 @@
 // bought at the shipwright's yard (navalYard.js STORE_PRICE) and spent by her crew's repairs at sea (navalYard.js
 // seaRepair, the host's MAKE REPAIRS). An item of the port's own (DECLARED): a custom template registered at import as
 // the port's others are (profTemplates.js), so a save carries it whether or not the naval arc is on. It stacks.
-import { registerCustomTemplates, setItemFields, mintCondition } from '../itemTemplates.js';
+import { registerCustomTemplates, setItemFields, mintCondition } from '../item/itemTemplates.js';
 
 /** The stores' template index - the next free after Come Sail Away's two (1320, 1321). */
 export const STORES_TEMPLATE = 1330;

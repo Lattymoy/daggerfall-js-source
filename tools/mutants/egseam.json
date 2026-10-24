@@ -1,0 +1,596 @@
+[
+  {
+    "name": "EGSEAM-a-member-unchecked",
+    "file": "src/net/bossSeam.js",
+    "old": "    if (typeof members?.[k] !== 'function') throw new TypeError(`the ${name} boss keeps no ${k}`);",
+    "new": "    void 0;",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-more-than-the-contract",
+    "file": "src/net/bossSeam.js",
+    "old": "  return Object.freeze(out);\n}",
+    "new": "  return Object.freeze({ ...members, ...out });\n}",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-gate-admits-all",
+    "file": "src/net/bossSeam.js",
+    "old": "joinFight(f, sub, name, lv, now, o.admits, present)",
+    "new": "joinFight(f, sub, name, lv, now, true, present)",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-gate-unmarked",
+    "file": "src/net/bossSeam.js",
+    "old": "newFight(day, now, wrathAt, boss, md, pt, ti)",
+    "new": "newFight(day, now, wrathAt, boss, null, pt, ti)",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-remnant-unmarked",
+    "file": "src/net/bossSeam.js",
+    "old": "newRemnantFight(s, fi, now, mk)",
+    "new": "newRemnantFight(s, fi, now, null)",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-serpent-turned",
+    "file": "src/net/bossSeam.js",
+    "old": "yaw = 0 }) => newSerpentFight",
+    "new": "yaw = 0.4 }) => newSerpentFight",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-serpent-far",
+    "file": "src/net/bossSeam.js",
+    "old": "o.near ?? true",
+    "new": "o.near ?? false",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-serpent-hull-lost",
+    "file": "src/net/bossSeam.js",
+    "old": "o.hl, now, o.admits",
+    "new": "4, now, o.admits",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-a-hand-on-the-ship-purse",
+    "file": "src/net/bossSeam.js",
+    "old": "pose, now, r === 1),",
+    "new": "pose, now, false),",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-height-dropped",
+    "file": "server/src/index.js",
+    "old": "return [t, c.x, c.z, c.y ?? y]; });",
+    "new": "return [t, c.x, c.z]; });",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-no-trail-no-height",
+    "file": "src/net/bossRef.js",
+    "old": "  if (!b.tr) return Number.isFinite(b.y) ? b.y : null;",
+    "new": "  if (!b.tr) return null;",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-height-misread",
+    "file": "src/net/bossRef.js",
+    "old": "  return q && Number.isFinite(q[3]) ? q[3] : null;",
+    "new": "  return q ? q[2] : null;",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-a-gap-dropped",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "    const z = edge + gap + size.d / 2;",
+    "new": "    const z = edge + size.d / 2;",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-rise-lost",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "      if (p.rise) y += p.rise;",
+    "new": "      if (p.rise) y += 0;",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-descent-uneven",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "    const drop = sec.descend ? y / sec.pieces.length : 0;",
+    "new": "    const drop = sec.descend ? y / (sec.pieces.length + 1) : 0;",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-checkpoint-low",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "checkpoints.push({ x: x0, y, z, r: spec.checkR });",
+    "new": "checkpoints.push({ x: x0, y: 0, z, r: spec.checkR });",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-end-short",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "  return { steps, checkpoints, end: edge + spec.toEnd };",
+    "new": "  return { steps, checkpoints, end: edge };",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-line-lost",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "  const x0 = spec.x ?? 0, spire = spec.road != null;",
+    "new": "  const x0 = 0, spire = spec.road != null;",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-start-flat",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "let edge = spec.start.z + spec.start.r, y = spec.start.y ?? 0;",
+    "new": "let edge = spec.start.z + spec.start.r, y = 0;",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-swing-off-its-law",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "export const egDriftDx = (s, t) => s.amp * Math.sin((TAU * t) / s.period + s.phase);",
+    "new": "export const egDriftDx = (s, t) => s.amp * Math.sin((TAU * t) / s.period + s.phase * 2);",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-beat-off-its-half",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "export const egBeatAt = (s, t) => wrapT(t - s.beat, EG_BEAT_CYCLE_S);",
+    "new": "export const egBeatAt = (s, t) => wrapT(t, EG_BEAT_CYCLE_S);",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-ghosts-the-hours",
+    "file": "src/render/superDungeon/sdStepsPass.js",
+    "old": "export const sdGhostStepsOf = (course) => course.steps.filter(",
+    "new": "export const sdGhostStepsOf = (course) => SD_COURSE.steps.filter(",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-ghosts-past-the-most",
+    "file": "src/render/superDungeon/sdStepsPass.js",
+    "old": "  const list = ghosts.slice(0, max);",
+    "new": "  const list = ghosts;",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-waystones-the-hours",
+    "file": "src/world/superDungeon/sdStepsModel.js",
+    "old": "export const sdWaystonesOf = (course) => Object.freeze(course.checkpoints.map(",
+    "new": "export const sdWaystonesOf = (course) => Object.freeze(SD_COURSE.checkpoints.map(",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-vane-the-hours",
+    "file": "src/world/superDungeon/sdStepsModel.js",
+    "old": "export const sdVaneAt = (course) => { const C = course.checkpoints[2];",
+    "new": "export const sdVaneAt = (course) => { const C = SD_COURSE.checkpoints[2];",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-floors-the-hours",
+    "file": "src/world/superDungeon/sdStepsModel.js",
+    "old": "of course.checkpoints.entries()) {\n",
+    "new": "of SD_COURSE.checkpoints.entries()) {\n",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-islands-the-hours",
+    "file": "src/world/superDungeon/sdStepsModel.js",
+    "old": "  for (const [k, c] of course.checkpoints.entries()) if (k > 0)",
+    "new": "  for (const [k, c] of SD_COURSE.checkpoints.entries()) if (k > 0)",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-breath-the-hours",
+    "file": "src/world/superDungeon/sdStepsModel.js",
+    "old": "z0 = C.z + C.r, z1 = course.end;",
+    "new": "z0 = C.z + C.r, z1 = SD_COURSE.end;",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-rewind-the-hours",
+    "file": "src/scenes/superDungeon/sdFx.js",
+    "old": "export const sdRewindEdgesOf = (course) => Object.freeze(course.checkpoints.map(",
+    "new": "export const sdRewindEdgesOf = (course) => Object.freeze(SD_COURSE.checkpoints.map(",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-eye-the-hours",
+    "file": "src/scenes/superDungeon/sdFx.js",
+    "old": "  const C = course.checkpoints;\n  for (let k = 0; k < C.length; k++)",
+    "new": "  const C = SD_COURSE.checkpoints;\n  for (let k = 0; k < C.length; k++)",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-hang-the-hours",
+    "file": "src/world/superDungeon/sdIslandModel.js",
+    "old": "  ...course.checkpoints.map((c, k) => ({ stage: 'steps',",
+    "new": "  ...SD_COURSE.checkpoints.map((c, k) => ({ stage: 'steps',",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-hang-model-the-hours",
+    "file": "src/world/superDungeon/sdIslandModel.js",
+    "old": "  for (const isl of islands) if (isl.stage === stage)",
+    "new": "  for (const isl of SD_HANG_ISLANDS) if (isl.stage === stage)",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-span-the-hours",
+    "file": "src/world/superDungeon/sdSteps.js",
+    "old": "  const C = course.checkpoints;\n  for (let k = C.length - 1;",
+    "new": "  const C = SD_COURSE.checkpoints;\n  for (let k = C.length - 1;",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-breath-end-the-hours",
+    "file": "src/world/superDungeon/sdSteps.js",
+    "old": "&& z < course.end;",
+    "new": "&& z < SD_COURSE.end;",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-cast-back-the-hours",
+    "file": "src/world/superDungeon/sdSteps.js",
+    "old": "const C = course.checkpoints, c = C[Math.max(",
+    "new": "const C = SD_COURSE.checkpoints, c = C[Math.max(",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-riders-the-hours",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "  const steps = course.steps.map((s) => ({ s, key: sdStepKey(s.i),",
+    "new": "  const steps = SD_COURSE.steps.map((s) => ({ s, key: sdStepKey(s.i),",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-riders-cast-to-the-hours",
+    "file": "src/scenes/superDungeon/sdSteps.js",
+    "old": "castBackTo(lastSpan, course)",
+    "new": "castBackTo(lastSpan)",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-Concord-turned-for-rights",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  if (lock.ok || now - (last[i] ?? 0) < SD_STONE_SETTLE_MS) return null;",
+    "new": "  if (now - (last[i] ?? 0) < SD_STONE_SETTLE_MS) return null;",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-a-turn-uncounted",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "  if (R) orreryTurned(R, who, id, road, orreryShortest(o, orreryTurn(o, lock.st, i, a)), now);",
+    "new": "  void road;",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSEAM-the-road-after-unmoved",
+    "file": "src/net/superDungeon/sdBrain.js",
+    "old": "orreryTurned(R, who, id, road, orreryShortest(o, orreryTurn(o, lock.st, i, a)), now);",
+    "new": "orreryTurned(R, who, id, road, orreryShortest(o, lock.st), now);",
+    "tests": [
+      "test/net/eliteGates/egseam_law.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-a-stale-answer-taken",
+    "file": "src/scenes/eliteGates/egSwap.js",
+    "old": "      if (!job || m.id !== job.id) return;",
+    "new": "      if (!job) return;",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-handed-twice",
+    "file": "src/scenes/eliteGates/egSwap.js",
+    "old": "      job = null;\n      return parts;",
+    "new": "      return parts;",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-a-failed-build-kept",
+    "file": "src/scenes/eliteGates/egSwap.js",
+    "old": "  const fail = () => { dead = true; job = null;",
+    "new": "  const fail = () => { dead = true;",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-asked-again-built-again",
+    "file": "src/scenes/eliteGates/egSwap.js",
+    "old": "      if (job?.key === key && job.g === g) return stateOf(key);\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-the-worker-kept",
+    "file": "src/scenes/eliteGates/egSwap.js",
+    "old": "    drop() { job = null; try { worker?.terminate?.(); } catch { /* gone */ } worker = null; dead = !factory; },",
+    "new": "    drop() { job = null; worker = null; dead = !factory; },",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-another-circle-taken",
+    "file": "src/scenes/eliteGates/egSwap.js",
+    "old": "if (m.t === 'built' && m.parts?.key === job.key) job.parts = m.parts;",
+    "new": "if (m.t === 'built') job.parts = m.parts;",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-the-key-groundless",
+    "file": "src/world/eliteGates/egCircleParts.js",
+    "old": "`${seed >>> 0}:${c}:${geo || 0}`",
+    "new": "`${seed >>> 0}:${c}`",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-the-gates-copied",
+    "file": "src/world/eliteGates/egCircleParts.js",
+    "old": "  for (const g of parts?.gates ?? []) { model(g.model); take(g.tris); }\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-the-old-circle-kept",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    for (const m of gone) { try { renderer?.destroyMesh?.(m); } catch { /* gone */ } }\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-the-old-floors-kept",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    ctx.collider.removeBucket(EG_BUCKET);\n    for (const g of gates)",
+    "new": "    for (const g of gates)",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-the-old-gates-kept",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    for (const g of gates) ctx.collider.removeBucket(`eg:gate:${g.h}`);\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-the-level-unrenamed",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    wm.dungeonLoc.egCircle = r.c; wm.dungeonLoc.egGeo",
+    "new": "    wm.dungeonLoc.egGeo",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-the-old-spans-kept",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    ctx.egRecircle?.({ seed: r.seed >>> 0, c: r.c, geo: r.geo ?? 0 });",
+    "new": "    void 0;",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-a-freed-mesh-drawn",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    for (let i = ctx.dynamicDraws.length - 1; i >= 0; i--) if (gone.has(ctx.dynamicDraws[i]?.gpu)) ctx.dynamicDraws.splice(i, 1);\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-the-old-lamps",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    _egMeshKey = parts.key; _egLamps = parts.lamps;",
+    "new": "    _egMeshKey = parts.key;",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-another-breach-swapped",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    if (wm.mode !== 'dungeon' || !isEgHall(wm.dungeonLoc) || !wm.dungeonCtx || !r || r.b !== wm.dungeonLoc.egBreach || !Number.isSafeInteger(r.c)) return false;",
+    "new": "    if (wm.mode !== 'dungeon' || !isEgHall(wm.dungeonLoc) || !wm.dungeonCtx || !r || !Number.isSafeInteger(r.c)) return false;",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-a-build-asked-outside",
+    "file": "src/scenes/eliteGates/egCircleHost.js",
+    "old": "    if (wm.mode !== 'dungeon' || !isEgHall(wm.dungeonLoc) || !r || r.b !== wm.dungeonLoc.egBreach || !Number.isSafeInteger(r.c)) return null;",
+    "new": "    if (!isEgHall(wm.dungeonLoc) || !r || r.b !== wm.dungeonLoc.egBreach || !Number.isSafeInteger(r.c)) return null;",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-the-spans-buckets-kept",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    for (const k of keys) collider.removeBucket(k);\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-the-spans-draws-kept",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (draws) for (let i = dynamicDraws.length - 1; i >= 0; i--) if (draws.has(dynamicDraws[i])) dynamicDraws.splice(i, 1);\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-the-spans-unfreed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    was?.clear();\n    egSpan = createEgSpan(",
+    "new": "    egSpan = createEgSpan(",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-the-new-spans-never-stood",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "egSpan = null; _egSpanDraws = null; _egSpanKeys = []; _egSpanStood = false;",
+    "new": "egSpan = null; _egSpanDraws = null; _egSpanKeys = [];",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-the-build-never-asked",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (E.sg === 'rest' && c === M.egHallCircle?.()) prebuild(E, c + 1);",
+    "new": "    if (false) prebuild(E, c + 1);",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-the-old-step-with-a-level-built",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        if (built === 'ready' && modes()?.egSwapCircle?.(r)) {",
+    "new": "        if (false && modes()?.egSwapCircle?.(r)) {",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-my-feet-left-in-the-Court",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "{ if (!witness && placeOn(E.h, E, false)) placedH = E.h; return true; }",
+    "new": "{ return true; }",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-the-wait-unbounded",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (now() - swapWaitAt < EG_SWAP_WAIT_MS) return false; }",
+    "new": "return false; }",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  },
+  {
+    "name": "EGSWAP-the-build-kept-past-the-breach",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    swapWaitAt = 0; modes()?.egSwapDrop?.();",
+    "new": "    swapWaitAt = 0;",
+    "tests": [
+      "test/world/eliteGates/egswap_client.test.js"
+    ]
+  }
+]

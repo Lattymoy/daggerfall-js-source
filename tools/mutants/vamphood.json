@@ -5,7 +5,7 @@
     "old": "  return !cloakState(entity.equip?.slots ?? null).hood;",
     "new": "  return true;",
     "tests": [
-      "test/fb0929_vampirehood.test.js"
+      "test/systems/fb0929_vampirehood.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  return !cloakState(entity.equip?.slots ?? null).hood;",
     "new": "  return cloakState(entity.equip?.slots ?? null).hood;",
     "tests": [
-      "test/fb0929_vampirehood.test.js"
+      "test/systems/fb0929_vampirehood.test.js"
     ]
   },
   {
@@ -23,26 +23,26 @@
     "old": "  if (!racialSunAverse(entity)) return null;",
     "new": "  if (!entity?.racialOverride?.sunDamage) return null;",
     "tests": [
-      "test/fb0929_vampirehood.test.js"
+      "test/systems/fb0929_vampirehood.test.js"
     ]
   },
   {
     "name": "VAMPHOOD-the-refusal-says-no-more",
     "file": "src/systems/vampirism.js",
-    "old": "  return { text: SUNLIGHT_TRAVEL_TEXT, hint: isEnhanced() ? VAMPIRE_HOOD_TEXT : VAMPIRE_HOOD_TEXT_CLASSIC };",
-    "new": "  return { text: SUNLIGHT_TRAVEL_TEXT };",
+    "old": "  return { text: sunlightTravelText(), hint: isEnhanced() ? VAMPIRE_HOOD_TEXT : VAMPIRE_HOOD_TEXT_CLASSIC };",
+    "new": "  return { text: sunlightTravelText() };",
     "tests": [
-      "test/fb0929_vampirehood.test.js"
+      "test/systems/fb0929_vampirehood.test.js"
     ],
-    "note": "HOOD-SAID (FIELD BUGS 2026-09-30, PIN MOVED): the hint is the skin's own now (the pack card's Raise hood, or the classic doll's Use); the mutant still drops it whole."
+    "note": "HOOD-SAID (FIELD BUGS 2026-09-30, PIN MOVED): the hint is the skin's own now (the pack card's Raise hood, or the classic doll's Use); the mutant still drops it whole. THE MERGE OF MAIN (#408-#541) INTO L10N (PIN MOVED): re-aimed by content to the merged line."
   },
   {
     "name": "VAMPHOOD-the-line-forgets-the-robe",
     "file": "src/systems/vampirism.js",
-    "old": "export const VAMPIRE_HOOD_TEXT = 'Raise the hood of a cloak or robe to travel by day - Raise hood, on its card in the pack.';",
-    "new": "export const VAMPIRE_HOOD_TEXT = 'Raise the hood of a cloak to travel by day - Raise hood, on its card in the pack.';",
+    "old": "export const VAMPIRE_HOOD_TEXT = 'Raise the hood of a cloak or robe to travel by day. Use Raise hood on its card in your pack.';",
+    "new": "export const VAMPIRE_HOOD_TEXT = 'Raise the hood of a cloak to travel by day. Use Raise hood on its card in your pack.';",
     "tests": [
-      "test/fb0929_vampirehood.test.js"
+      "test/systems/fb0929_vampirehood.test.js"
     ],
     "note": "HOOD-SAID (FIELD BUGS 2026-09-30, PIN MOVED): the line names the pack card's Raise hood now; the robe is still what the mutant drops."
   },
@@ -52,7 +52,7 @@
     "old": "        sunAverse: racialSunAverse(playerEntity) || careerSunAverse(playerEntity),",
     "new": "        sunAverse: !!playerEntity.racialOverride?.sunDamage || careerSunAverse(playerEntity),",
     "tests": [
-      "test/fb0929_vampirehood.test.js"
+      "test/systems/fb0929_vampirehood.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "    if (ftb) { sayWithNightfall(ftb.text); if (ftb.hint) townTalk.say(ftb.hint); return false; }",
     "new": "    if (ftb) { sayWithNightfall(ftb.text); return false; }",
     "tests": [
-      "test/fb0929_vampirehood.test.js"
+      "test/systems/fb0929_vampirehood.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "    const sun = (careerFastTravelBlock(playerEntity, nowMin) ?? racialFastTravelBlock(playerEntity, nowMin))?.text ?? null;",
     "new": "    const sun = careerFastTravelBlock(playerEntity, nowMin)?.text ?? null;",
     "tests": [
-      "test/fb0929_vampirehood.test.js"
+      "test/systems/fb0929_vampirehood.test.js"
     ],
     "note": "HOOD-CAREER (2026-10-07, PIN MOVED): the party's refusal asks the career's rung first now; the mutant still drops the racial one."
   },
@@ -80,7 +80,7 @@
     "old": "export const HOODED_CLOAK_VARIANTS = Object.freeze(new Set([1, 2, 5]));",
     "new": "export const HOODED_CLOAK_VARIANTS = Object.freeze(new Set([1, 2]));",
     "tests": [
-      "test/fb0929_vampirehood.test.js"
+      "test/systems/fb0929_vampirehood.test.js"
     ]
   },
   {
@@ -89,7 +89,7 @@
     "old": "HOODED_ROBES.has(chest.templateIndex) && (chest.variant ?? 0) === 1) hood = true;",
     "new": "HOODED_ROBES.has(chest.templateIndex) && (chest.variant ?? 0) === 0) hood = true;",
     "tests": [
-      "test/fb0929_vampirehood.test.js"
+      "test/systems/fb0929_vampirehood.test.js"
     ]
   },
   {
@@ -98,16 +98,16 @@
     "old": "  const mod = vampireStatMod(skyMinutes, racialSunAverse(entity));",
     "new": "  const mod = vampireStatMod(skyMinutes);",
     "tests": [
-      "test/fb0929_vampirehood.test.js"
+      "test/systems/fb0929_vampirehood.test.js"
     ]
   },
   {
     "name": "HOODSUN-the-arm-ignored",
     "file": "src/systems/vampirism.js",
-    "old": "(sunAverse && playerInSunlight(clockMinutes) ?",
-    "new": "(playerInSunlight(clockMinutes) ?",
+    "old": "(sunAverse ? -VAMPIRE_STAT_MOD : 0)",
+    "new": "(-VAMPIRE_STAT_MOD)",
     "tests": [
-      "test/fb0929_vampirehood.test.js"
+      "test/systems/fb0929_vampirehood.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "old": "  const mod = vampireStatMod(skyMinutes, racialSunAverse(entity));",
     "new": "  const mod = vampireStatMod(skyMinutes, !racialSunAverse(entity));",
     "tests": [
-      "test/fb0929_vampirehood.test.js"
+      "test/systems/fb0929_vampirehood.test.js"
     ]
   }
 ]

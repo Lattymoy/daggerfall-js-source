@@ -1,6 +1,6 @@
 // @ts-check
 // SERPENT1 (2026-10-04, Mac: "a large scale sea serpent in the ocean"): SETHRAKUL'S BAR - the gate's boss bar
-// (ui/gateBossBar.js drawGateBossBar: one readout, one node, updated never rebuilt) in the sea's colours, its model made
+// (ui/gate/gateBossBar.js drawGateBossBar: one readout, one node, updated never rebuilt) in the sea's colours, its model made
 // here from the serpent host's (scenes/serpentHost.js bar). Its name over its epithet, its health with the two phase
 // marks cut in it, the ward while it turns a phase, the attack it winds up named in its colour with a line filling to
 // its landing (and MOVE when it is laid on my ship), its stun, the coil's health while one holds a ship, the ships in
@@ -9,8 +9,8 @@
 //
 // `serpentBarModel` is pure - the host's bar and the clock in, the gate bar's model out. Not a DFU member. Ledger A
 // (SERPENT1).
-import { SERPENT_PHASE_AT } from '../net/serpentBrain.js';
-import { serpentClock } from '../net/serpentLaw.js';
+import { SERPENT_PHASE_AT } from '../net/serpent/serpentBrain.js';
+import { serpentClock } from '../net/serpent/serpentLaw.js';
 
 /** The attacks' colours on the bar (css) - the warning's, the coil's, the venom's, the turns' own. */
 export const SERPENT_CALL_CSS = Object.freeze({
@@ -22,7 +22,7 @@ export const STUN_CSS = '#fff2a6';
 export const SERPENT_BAR_TEXT = Object.freeze({
   ships: (n) => (n === 1 ? '1 ship fighting it' : `${n} ships fighting it`),   // AUDIT 2 XC8: the count is the ships fighting it (AUDIT SHIPS C1), not every hull in its waters
   sounds: (left) => `It dives in ${left}`,
-  stunned: (s) => `Stunned - strike its head! ${s}s`,
+  stunned: (s) => `Stunned. Strike its head! ${s}s`,
   coil: (h, m, mine) => (mine ? `Its coils hold YOUR ship - ${h} / ${m}` : `Break the coil - ${h} / ${m}`),
   phase: (n, name) => `${['I', 'II', 'III'][n - 1] ?? n} - ${name}`,
 });

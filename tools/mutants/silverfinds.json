@@ -6,7 +6,7 @@
     "new": "gather: Object.freeze({ chance: 0.2,",
     "why": "a harvest finds twice as often",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -16,7 +16,7 @@
     "new": "amount: Object.freeze([2, 6]), perDay: 30 }),",
     "why": "a harvest finds up to 6",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -26,8 +26,8 @@
     "new": "amount: Object.freeze([2, 5]), perDay: 40 }),",
     "why": "forty a day of gathering",
     "tests": [
-      "test/silverfinds_service.test.js",
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_service.test.js",
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -37,8 +37,8 @@
     "new": "chance: Object.freeze({ corpse: 0.1,",
     "why": "a body holds silver one in ten",
     "tests": [
-      "test/silverfinds_service.test.js",
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_service.test.js",
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -48,8 +48,8 @@
     "new": "pile: 0.15, search: 0.15 })",
     "why": "a treasure pile as a search's find",
     "tests": [
-      "test/silverfinds_service.test.js",
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_service.test.js",
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -59,8 +59,8 @@
     "new": "pile: 0.12, search: 0.2 })",
     "why": "a search's find one in five",
     "tests": [
-      "test/silverfinds_service.test.js",
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_service.test.js",
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "new": "amount: Object.freeze([1, 5]), perDay: 20 }),",
     "why": "a loot find up to 5",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -80,8 +80,8 @@
     "new": "amount: Object.freeze([1, 4]), perDay: 25 }),",
     "why": "twenty-five a day of loot",
     "tests": [
-      "test/silverfinds_service.test.js",
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_service.test.js",
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -91,7 +91,7 @@
     "new": "  gather: 'move',             // SILVER-FINDS",
     "why": "a harvest's find read as a move between accounts",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -101,7 +101,7 @@
     "new": "  find: 'move',               // SILVER-FINDS",
     "why": "a loot find read as a move between accounts",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -111,7 +111,7 @@
     "new": "Math.floor(roll * (hi - lo))",
     "why": "the range's top never reached",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -121,7 +121,7 @@
     "new": "(chanceRoll <= MARKS_FAUCETS.gather.chance ?",
     "why": "the chance itself a find",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -131,8 +131,8 @@
     "new": "export const FIND_KINDS = Object.freeze(['corpse', 'pile']);",
     "why": "a search's find no find",
     "tests": [
-      "test/silverfinds_service.test.js",
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_service.test.js",
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "new": "AND kind IN ('gather', 'find') AND day = ${d})`;",
     "why": "a harvest's and a loot's day one count",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -152,7 +152,7 @@
     "new": "const pay = '?2';",
     "why": "the day's last find struck whole past the cap",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -162,7 +162,7 @@
     "new": "    WHERE 1\n      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ${pay} <= ?7",
     "why": "the day met, struck all the same",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -172,7 +172,7 @@
     "new": "      AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?5)\n      AND ${guard}`)",
     "why": "a purse at its most struck past it",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -182,7 +182,7 @@
     "new": "  if (!findsOpenFor(player, ctx.nowS) || !(amount > 0)",
     "why": "a harvest finds silver with the switch shut",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ],
     "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
@@ -193,7 +193,7 @@
     "new": "  if (!strikesFor(player, env)) return [];",
     "why": "a find made, answered \"none\" after the switch shut (AUDIT 28 M2)",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ],
     "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
   },
@@ -204,7 +204,7 @@
     "new": "today: { found: Number((line.kind === 'gather' ? f?.found : f?.gathered) ?? 0),",
     "why": "a harvest's answer says the loot's day",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ],
     "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
   },
@@ -215,7 +215,7 @@
     "new": "max: MARKS_FAUCETS.find.perDay } };",
     "why": "a harvest's day said against 20",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -225,7 +225,7 @@
     "new": "if (prior) return answer({ repeat: true });",
     "why": "an id another act took answered as a find",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -235,7 +235,7 @@
     "new": "  if (!FIND_KINDS.includes(kind)) return { error: 'bad-find' };",
     "why": "a loot find struck with the switch shut",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -245,7 +245,7 @@
     "new": "",
     "why": "a find of any kind struck",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -255,7 +255,7 @@
     "new": "  await decide(findStrikeStatement(",
     "why": "finds past the hour's acts",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -265,7 +265,7 @@
     "new": "lootFindOf(0)",
     "why": "every loot find 1",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "new": "why: 'cap' };",
     "why": "a full purse said as the day met",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -285,7 +285,7 @@
     "new": "gathered: Number(f?.found ?? 0), found: Number(f?.gathered ?? 0) };",
     "why": "the card's finds crossed",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "new": "gathered: today.gathered, gatherMax: MARKS_FAUCETS.find.perDay, found: today.found, findMax: MARKS_FAUCETS.find.perDay,",
     "why": "the gathering's day said against 20",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -305,7 +305,7 @@
     "new": "const silver = gatherFindOf(dice(rand), 0);",
     "why": "every harvest's find 2",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -315,7 +315,7 @@
     "new": "const find = null;",
     "why": "no harvest finds",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -325,7 +325,7 @@
     "new": "    ...[],   // SILVER-FINDS: the find, last",
     "why": "the find never struck",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -335,7 +335,7 @@
     "new": "ok: true, ...extra,",
     "why": "a harvest's find never said",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ],
     "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
   },
@@ -346,7 +346,7 @@
     "new": "  const q = answerReads(db, player, env, specOf(row), row.rid, nowS).filter(([n]) => !n.startsWith('marks'));",
     "why": "a harvest asked again says no find",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ],
     "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
   },
@@ -357,7 +357,7 @@
     "new": "material: key2, gem, extra, carry }, rid, nowS, { marks: false });",
     "why": "a harvest's first answer says no find",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ],
     "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched. AUDIT GATHER-SPEED (PIN MOVED): re-aimed by content."
   },
@@ -368,7 +368,7 @@
     "new": "",
     "why": "the route unlisted",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -378,7 +378,7 @@
     "new": "",
     "why": "no door to find through",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -388,7 +388,7 @@
     "new": "if (!_finder) return false;",
     "why": "a harvest's kind rolled on a loot door",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -398,7 +398,7 @@
     "new": "",
     "why": "a container rolled at every open",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -408,7 +408,7 @@
     "new": "",
     "why": "a container never remembered",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -418,7 +418,7 @@
     "new": "if (!(roll() <= findChanceOf(kind))) return false;",
     "why": "the chance itself a find",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -428,7 +428,7 @@
     "new": "if (_rolledKeys.size >= SILVER_FINDS_KEPT)",
     "why": "one key short of the bound",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -438,7 +438,7 @@
     "new": "export const SILVER_FINDS_KEPT = 4095;",
     "why": "the bound",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -448,7 +448,7 @@
     "new": "  _finder(kind);",
     "why": "a host's throw out through the loot door",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -458,7 +458,7 @@
     "new": ") return false;",
     "why": "an empty key a container",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -468,7 +468,7 @@
     "new": "find: (kind, rid, account = null) => post('/v1/marks/found', { kind, rid }, account),",
     "why": "the wrong door",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ],
     "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
@@ -479,18 +479,18 @@
     "new": "find: (kind, rid, account = null) => post('/v1/marks/find', { kind }, account),",
     "why": "no request id sent",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ],
     "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
   {
     "name": "SILVER-FINDS-door-words",
     "file": "src/net/accountClient.js",
-    "old": "  'bad-find': 'That find could not be read.',",
+    "old": "  'bad-find': () => t('account.refusal.badFind', 'That find could not be read.'),",
     "new": "",
     "why": "a word without its sentence",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -500,7 +500,7 @@
     "new": "if (!me || !FIND_KINDS.includes(kind)) return [];",
     "why": "a closed account asked every find",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -510,7 +510,7 @@
     "new": "if (!me || state.open === false) return [];",
     "why": "a kind of none asked",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -520,7 +520,7 @@
     "new": "",
     "why": "the day met, asked every find",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -530,7 +530,7 @@
     "new": "      if (findsMet && findsMet.day === day) return [];",
     "why": "one account's day met, every account's",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -540,7 +540,7 @@
     "new": "found.today.found > found.today.max) findsMet = { account: me, day };",
     "why": "the find that met the day not read as meeting it",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -550,17 +550,17 @@
     "new": "asks.unshift(...owed.splice(i, 1));",
     "why": "another account's owed asked under this one",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
     "name": "SILVER-FINDS-book-asked-while-down",
     "file": "src/net/marksBook.js",
-    "old": "        if (held) { if (held !== 'marks-young') owe(f); continue; }\n",
+    "old": "        if (held) { if (!FIND_DROPS.includes(held)) owe(f); continue; }\n",
     "new": "",
     "why": "every owed find asked its tries while the network is down",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ],
     "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
@@ -571,7 +571,7 @@
     "new": "if (owed.length <= FINDS_OWED_MAX) owed.push(f);",
     "why": "one past the bound",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -581,7 +581,7 @@
     "new": "          held = error;   // never answered: owed",
     "why": "a find the network lost, lost",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ],
     "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
@@ -592,7 +592,7 @@
     "new": "        } else { owe(f); held = error; }   // an id the service cannot read, a kind of none, a word this build does not know: this find let go",
     "why": "a refused find owed and asked for ever",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ],
     "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
@@ -603,7 +603,7 @@
     "new": "        } else if (error === 'marks-need-account') {",
     "why": "the switch shut asked again",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ],
     "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
@@ -614,7 +614,7 @@
     "new": "const r = await ask(() => door.find(f.kind, rid(), f.account));",
     "why": "every try a new id - a lost answer a second line",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ],
     "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
@@ -625,7 +625,7 @@
     "new": "...(kind === 'gather' ? { found: day.found, findMax: day.max } : { gathered: day.found, gatherMax: day.max })",
     "why": "a harvest's find counted as the loot's",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -635,7 +635,7 @@
     "new": "      const day = found.today;",
     "why": "the balance a find answered unkept",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -645,7 +645,7 @@
     "new": "`You find ${marksText(n)} ${FIND_WORDS.pile}.",
     "why": "every find among the treasure",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -655,7 +655,7 @@
     "new": "export const FINDS_OWED_MAX = 21;",
     "why": "the bound",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -665,7 +665,7 @@
     "new": "source: FIND_SOURCE.pile,",
     "why": "every find found in the treasure",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -675,7 +675,7 @@
     "new": "const faucet = 'find';",
     "why": "a harvest's find on the loot's bar",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -685,7 +685,7 @@
     "new": "max: Number.isSafeInteger(t.max) ? t.max : 20,",
     "why": "a harvest's day said against 20",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -695,8 +695,8 @@
     "new": "  { const f = findHaul(d.marks, 'gather'); if (f) out.push(f); }",
     "why": "a Motherlode's silver found twice",
     "tests": [
-      "test/silverfinds_client.test.js",
-      "test/haulcards.test.js"
+      "test/net/silverfinds_client.test.js",
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -706,8 +706,8 @@
     "new": "",
     "why": "a harvest's find no card",
     "tests": [
-      "test/silverfinds_client.test.js",
-      "test/haulcards.test.js"
+      "test/net/silverfinds_client.test.js",
+      "test/systems/foraging/haulcards.test.js"
     ]
   },
   {
@@ -717,7 +717,7 @@
     "new": "text: COMBAT_BAR_TEXT,",
     "why": "every bar the combat's",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -727,8 +727,8 @@
     "new": "const found = d.marks ?",
     "why": "a Motherlode's strike told as a find",
     "tests": [
-      "test/haulcards.test.js",
-      "test/silverfinds_client.test.js"
+      "test/systems/foraging/haulcards.test.js",
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -738,8 +738,8 @@
     "new": "if (found) hud.toast(found);",
     "why": "the line said beside its card",
     "tests": [
-      "test/haulcards.test.js",
-      "test/silverfinds_client.test.js"
+      "test/systems/foraging/haulcards.test.js",
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -749,8 +749,8 @@
     "new": "if (found && hauled) hud.toast(found);",
     "why": "no card and no line",
     "tests": [
-      "test/haulcards.test.js",
-      "test/silverfinds_client.test.js"
+      "test/systems/foraging/haulcards.test.js",
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -760,7 +760,7 @@
     "new": "  openWindow(corpseLootHooks(entry));\n",
     "why": "a body never holds silver",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ],
     "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
@@ -771,7 +771,7 @@
     "new": "export function openCorpseLoot(entry, { playerEntity, say = () => {}, openWindow = null } = {}) {\n  silverFindAt('corpse', entry);\n  const answered = corpsePrelude(entry, playerEntity, say);",
     "why": "an empty body rolled",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -781,7 +781,7 @@
     "new": "      const _find = source.length && kind === 'loot' ? { kind: 'pile', key: silverFindKey(key, kind, i) } : null;",
     "why": "a dungeon's body never holds silver",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ],
     "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
@@ -792,7 +792,7 @@
     "new": "      const _find = source.length && kind === 'corpse' ? { kind: 'corpse', key: silverFindKey(key, kind, i) } : null;",
     "why": "a treasure pile never holds silver",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ],
     "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
@@ -803,28 +803,28 @@
     "new": "{ api.takeLoot(`srch:${i}`); }",
     "why": "a search's find never holds silver",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
     "name": "SILVER-FINDS-peer-body-unasked",
-    "file": "src/scenes/exteriorFoes.js",
+    "file": "src/scenes/bodyLootHost.js",
     "old": "      if (n > 0 && !arrows) silverFindAt('corpse', f);",
     "new": "",
     "why": "a peer's body never holds silver",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ],
     "note": "AUDIT 625 (re-aimed by content): the same law at its line as the audit left it."
   },
   {
     "name": "SILVER-FINDS-grave-unasked",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/searchPartyHost.js",
     "old": "        silverFindAt('search', items);",
     "new": "",
     "why": "a headstone's find never holds silver",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -834,7 +834,7 @@
     "new": "showHaul([findHaul(f.found, f.kind)]); chatNotice(f.line);",
     "why": "the line said beside the card",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -844,7 +844,7 @@
     "new": "  {\n    setSilverFinder((kind) => {",
     "why": "a finder with no book",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -854,7 +854,7 @@
     "new": "",
     "why": "the gathering host never told",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
@@ -864,27 +864,28 @@
     "new": "      })   // SILVER-FINDS: the day's finds counted by the shared clock",
     "why": "the device's own clock for the day",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
     "name": "SILVER-FINDS-bank-rows",
-    "file": "src/ui/enhancedPorts.js",
+    "file": "src/ui/enhanced/enhancedPorts.js",
     "old": "            ['Found in loot today', `${(w.hooks.marks.today()?.found ?? 0)} of ${w.hooks.marks.today()?.findMax ?? MARKS_FAUCETS.find.perDay}`],   // SILVER-FINDS\n",
     "new": "",
     "why": "the Bank never says the day's finds",
     "tests": [
-      "test/silverfinds_client.test.js"
+      "test/net/silverfinds_client.test.js"
     ]
   },
   {
     "name": "SILVER-FINDS-bank-serpents",
-    "file": "src/ui/enhancedPorts.js",
-    "old": "['From gates, raids and serpents today',",
+    "file": "src/ui/enhanced/enhancedPorts.js",
+    "old": "['From gates, raids, serpents and the Spire today',",
     "new": "['From gates and raids today',",
     "why": "the serpents unnamed under the cap they share",
+    "note": "EG-E1 (PIN MOVED): the Bank's card names the Spire's Redoubts beside them - re-aimed by content.",
     "tests": [
-      "test/silverways_client.test.js"
+      "test/net/silverways_client.test.js"
     ]
   }
 ]

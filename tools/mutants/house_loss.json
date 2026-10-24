@@ -5,7 +5,7 @@
     "old": "  if (row.origin_id && !(row.bytes > 0)) return undoCustoms({ db, bucket }, playerId, id, row.origin_id);\n",
     "new": "",
     "tests": [
-      "test/house_loss.test.js"
+      "test/systems/house_loss.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      ...customsCarry(db, playerId, id, originId),   // the carry, run back: from the realm's id to the offline one\n",
     "new": "",
     "tests": [
-      "test/house_loss.test.js"
+      "test/systems/house_loss.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      db.prepare('UPDATE realm_census SET spent = 0 WHERE char_id = ? AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE origin_id = ?)').bind(originId, originId),\n",
     "new": "",
     "tests": [
-      "test/house_loss.test.js"
+      "test/systems/house_loss.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "'DELETE FROM realm_characters WHERE id = ? AND player = ? AND bytes = 0'",
     "new": "'DELETE FROM realm_characters WHERE id = ? AND player = ?'",
     "tests": [
-      "test/house_loss.test.js"
+      "test/systems/house_loss.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      db.prepare('UPDATE realm_passes SET origin_id = NULL, spent_at = NULL WHERE player = ? AND origin_id = ?'\n        + ' AND NOT EXISTS (SELECT 1 FROM realm_passes WHERE player = ? AND spent_at IS NULL)').bind(playerId, originId, playerId),\n",
     "new": "",
     "tests": [
-      "test/house_loss.test.js"
+      "test/systems/house_loss.test.js"
     ],
     "note": "CUSTOMS-PASS (at the merge with main, which retired CUSTOMS-GRANT's grant for the pass): the undone customs' pass stays spent - the account's one character through customs lost to a customs that never stood."
   },
@@ -51,7 +51,7 @@
     "old": "' AND NOT EXISTS (SELECT 1 FROM realm_passes WHERE player = ? AND spent_at IS NULL)').bind(playerId, originId, playerId),",
     "new": "'').bind(playerId, originId),",
     "tests": [
-      "test/house_loss.test.js"
+      "test/systems/house_loss.test.js"
     ],
     "note": "CUSTOMS-PASS: reopened beside the open pass a developer granted since - the partial unique index refuses it and the whole undo with it."
   },
@@ -61,7 +61,7 @@
     "old": "      db.prepare('DELETE FROM realm_passes WHERE player = ? AND origin_id = ?').bind(playerId, originId),\n",
     "new": "",
     "tests": [
-      "test/house_loss.test.js"
+      "test/systems/house_loss.test.js"
     ],
     "note": "CUSTOMS-PASS: beside a newer open pass, the undone customs' spent row stays - a record of a character let in that is not in."
   },
@@ -71,7 +71,7 @@
     "old": "      db.prepare('DELETE FROM realm_census WHERE player = ? AND char_id = ? AND EXISTS (SELECT 1 FROM realm_passes WHERE player = ? AND origin_id = ?)')\n        .bind(playerId, originId, playerId, originId),\n",
     "new": "",
     "tests": [
-      "test/house_loss.test.js"
+      "test/systems/house_loss.test.js"
     ],
     "note": "CUSTOMS-PASS: the census row the pass wrote stays, unspent after the undo - the character would come in on the census and the pass again."
   },
@@ -81,7 +81,7 @@
     "old": " AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE origin_id = ?)').bind(originId, originId),",
     "new": "').bind(originId),",
     "tests": [
-      "test/house_loss.test.js"
+      "test/systems/house_loss.test.js"
     ],
     "equivalent": true,
     "why": "Belt and braces: customs lets at most one realm character stand on an origin (the census's once), and the undo's own DELETE of that one runs first in the same batch - no reachable state puts a second there. Kept so a future path that broke the once could never have an undo reopen a character for a second customs."
@@ -92,7 +92,7 @@
     "old": "  if (!row.origin_id) return { error: 'body' };\n",
     "new": "",
     "tests": [
-      "test/house_loss.test.js"
+      "test/systems/house_loss.test.js"
     ]
   },
   {
@@ -101,7 +101,7 @@
     "old": "  await dropCharacterObjects(bucket, playerId, id, []);\n",
     "new": "",
     "tests": [
-      "test/house_loss.test.js"
+      "test/systems/house_loss.test.js"
     ]
   },
   {
@@ -110,7 +110,7 @@
     "old": "if (path === '/v1/realm/undo') return answer(await undoRealm(rctx, me, body.id));",
     "new": "if (path === '/v1/realm/undo') return answer(await deleteRealm(rctx, me, body.id));",
     "tests": [
-      "test/house_loss.test.js"
+      "test/systems/house_loss.test.js"
     ]
   },
   {
@@ -119,25 +119,25 @@
     "old": "  '/v1/realm/undo',\n",
     "new": "",
     "tests": [
-      "test/house_loss.test.js"
+      "test/systems/house_loss.test.js"
     ]
   },
   {
     "name": "HOUSE-LOSS-the-door-deletes",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "realmAct(() => realmUndo(realmIoNow(), row.id)",
     "new": "realmAct(() => realmDelete(realmIoNow(), row.id)",
     "tests": [
-      "test/house_loss.test.js"
+      "test/systems/house_loss.test.js"
     ]
   },
   {
     "name": "HOUSE-LOSS-the-door-never-undoes",
-    "file": "src/ui/enhancedMenu.js",
-    "old": "row.customs && save.unfinished ? { label: 'Undo bringing in'",
-    "new": "false ? { label: 'Undo bringing in'",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "row.customs && save.unfinished ? { label: t('menu.realm.undo', 'Undo bringing in')",
+    "new": "false ? { label: t('menu.realm.undo', 'Undo bringing in')",
     "tests": [
-      "test/house_loss.test.js"
+      "test/systems/house_loss.test.js"
     ]
   },
   {
@@ -146,16 +146,16 @@
     "old": "realmAsk(io, '/v1/realm/undo', { method: 'POST', json: { id } });",
     "new": "realmAsk(io, '/v1/realm/delete', { method: 'POST', json: { id } });",
     "tests": [
-      "test/house_loss.test.js"
+      "test/systems/house_loss.test.js"
     ]
   },
   {
     "name": "HOUSE-LOSS-never-saved-says-delete",
     "file": "src/systems/realmSaves.js",
-    "old": "  if (error === 'no-data') return 'That online character was never saved. One you brought in: press Bring online on it again, or undo it. One made online: delete it and make it again.';",
+    "old": "  if (error === 'no-data') return 'That online character was never saved. If you brought it in, press Bring online on it again or undo it. If you made it online, delete it and make it again.';",
     "new": "  if (error === 'no-data') return 'That online character was never saved. Delete it and make it again.';",
     "tests": [
-      "test/house_loss.test.js"
+      "test/systems/house_loss.test.js"
     ]
   }
 ]

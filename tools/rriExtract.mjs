@@ -7,24 +7,24 @@
 // back against its texel. The bundle's XML beside each texture - the
 // `<rect>` TextureReplacement.OverridePaperdollItemRect reads for the
 // paper doll (TextureReplacement.cs:919-926) - is written into the
-// generated index (src/systems/rriIndex.js) as the sprite's offset.
+// generated index (src/systems/roleplayRealismItems/rriIndex.js) as the sprite's offset.
 //
 //   node tools/rriExtract.mjs "<path to roleplayrealism-items.dfmod>"
 //
 // What the folder may hold is the mod's own manifest (vendor/roleplay-
-// realism-items/roleplay-realism-items.dfmod.json; test/doctrine.test.js
+// realism-items/roleplay-realism-items.dfmod.json; test/tooling/doctrine.test.js
 // derives the folder's membership from it).
 import { readFileSync, writeFileSync, mkdirSync, readdirSync, unlinkSync } from 'node:fs';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { readUnityBundle } from '../src/formats/unityBundle.js';
+import { readUnityBundle } from '../src/formats/unity/unityBundle.js';
 import { readPng } from './pngIO.mjs';
 import { encodeSprite, sameOnScreen } from './diverseWeaponsExtract.mjs';
 import { isMain } from './lib/isMain.mjs';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const OUT_DIR = 'public/art/roleplay-realism-items';
-export const INDEX_FILE = 'src/systems/rriIndex.js';
+export const INDEX_FILE = 'src/systems/roleplayRealismItems/rriIndex.js';
 export const MANIFEST = 'vendor/roleplay-realism-items/roleplay-realism-items.dfmod.json';
 
 /** The `<rect>` of one XML text asset, or null. XMLManager.GetRect

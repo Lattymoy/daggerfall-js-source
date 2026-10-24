@@ -5,7 +5,7 @@
     "old": "      return other ? (other.spent ? 'customs-already' : 'customs-other-account') : 'customs-never-online';",
     "new": "      return 'customs-never-online';",
     "tests": [
-      "test/fb0930_customselsewhere.test.js"
+      "test/net/fb0930_customselsewhere.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      return other ? (other.spent ? 'customs-already' : 'customs-other-account') : 'customs-never-online';",
     "new": "      return other ? 'customs-other-account' : 'customs-never-online';",
     "tests": [
-      "test/fb0930_customselsewhere.test.js"
+      "test/net/fb0930_customselsewhere.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "'SELECT spent FROM realm_census WHERE char_id = ? LIMIT 1').bind(originId)",
     "new": "'SELECT spent FROM realm_census WHERE char_id <> ? LIMIT 1').bind(originId)",
     "tests": [
-      "test/fb0930_customselsewhere.test.js"
+      "test/net/fb0930_customselsewhere.test.js"
     ]
   },
   {
@@ -32,16 +32,16 @@
     "old": " 'customs-other-account': 403,",
     "new": "",
     "tests": [
-      "test/fb0930_customselsewhere.test.js"
+      "test/net/fb0930_customselsewhere.test.js"
     ]
   },
   {
     "name": "CUSTOMS-ELSEWHERE-the-refusal-unsaid",
     "file": "src/net/accountClient.js",
-    "old": "  'customs-other-account': 'The realm knows this character from another account - the one you played it online with. Sign in with that account to bring it in.',\n",
+    "old": "  'customs-other-account': () => t('account.refusal.customsOtherAccount', 'This character belongs to another account, the one you played it online with. Sign in with that account to bring it in.'),\n",
     "new": "",
     "tests": [
-      "test/fb0930_customselsewhere.test.js"
+      "test/net/fb0930_customselsewhere.test.js"
     ]
   }
 ]

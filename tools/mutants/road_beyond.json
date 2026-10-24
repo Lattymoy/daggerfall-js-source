@@ -1,7 +1,7 @@
 [
   {
     "name": "ROAD-BEYOND-the-grid-unread",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "    const at = (m) => (m && onGrid ? m[i] : 0);",
     "new": "    const at = (m) => (m ? m[i] : 0);",
     "tests": [
@@ -10,7 +10,7 @@
   },
   {
     "name": "ROAD-BEYOND-the-west-edge-open",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "    const onGrid = px >= 0 && px < MAP_W;",
     "new": "    const onGrid = px < MAP_W;",
     "tests": [
@@ -19,7 +19,7 @@
   },
   {
     "name": "ROAD-BEYOND-the-east-edge-open",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "    const onGrid = px >= 0 && px < MAP_W;",
     "new": "    const onGrid = px >= 0;",
     "tests": [
@@ -28,7 +28,7 @@
   },
   {
     "name": "ROAD-BEYOND-the-corner-east-wraps",
-    "file": "src/world/roadPainter.js",
+    "file": "src/world/road/roadPainter.js",
     "old": "  const east = x + 1 >= 0 && x + 1 < w ? mask[y * w + x + 1] : 0;",
     "new": "  const east = x + 1 < w ? mask[y * w + x + 1] : 0;",
     "tests": [
@@ -37,7 +37,7 @@
   },
   {
     "name": "ROAD-BEYOND-the-corner-west-wraps",
-    "file": "src/world/roadPainter.js",
+    "file": "src/world/road/roadPainter.js",
     "old": "  const west = x > 0 && x <= w ? mask[y * w + x - 1] : 0;",
     "new": "  const west = x > 0 ? mask[y * w + x - 1] : 0;",
     "tests": [
@@ -46,7 +46,7 @@
   },
   {
     "name": "ROAD-BEYOND-the-edge-pixel-shut",
-    "file": "src/world/roadPainter.js",
+    "file": "src/world/road/roadPainter.js",
     "old": "  const west = x > 0 && x <= w ? mask[y * w + x - 1] : 0;",
     "new": "  const west = x > 0 && x < w ? mask[y * w + x - 1] : 0;",
     "tests": [

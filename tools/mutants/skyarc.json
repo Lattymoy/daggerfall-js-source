@@ -1,0 +1,41 @@
+[
+  {
+    "name": "SKY-ARC-the-fade-by-the-span-again",
+    "file": "src/render/volumetricClouds.js",
+    "old": "      col += T * mix(S, uHorizonColor, aerial(t)) * (1.0 - Ti);",
+    "new": "      col += T * mix(S, uHorizonColor, aerial(spanA[min(span, spanN - 1)])) * (1.0 - Ti);",
+    "tests": [
+      "test/render/skyarc_aerial.test.js",
+      "test/render/weather2c_cloudcells.test.js"
+    ]
+  },
+  {
+    "name": "SKY-ARC-the-fade-by-the-entry",
+    "file": "src/render/volumetricClouds.js",
+    "old": "      col += T * mix(S, uHorizonColor, aerial(t)) * (1.0 - Ti);",
+    "new": "      col += T * mix(S, uHorizonColor, aerial(t0)) * (1.0 - Ti);",
+    "tests": [
+      "test/render/skyarc_aerial.test.js",
+      "test/render/weather2c_cloudcells.test.js"
+    ]
+  },
+  {
+    "name": "SKY-ARC-the-veil-by-the-entry",
+    "file": "src/render/volumetricClouds.js",
+    "old": "sum += d * vec2(1.0, veilFade(t));",
+    "new": "sum += d * vec2(1.0, veilFade(a));",
+    "tests": [
+      "test/render/vc7d_cirrus.test.js",
+      "test/systems/weather/vc7c_curtains.test.js"
+    , "test/render/audit_precip_sky.test.js"]
+  },
+  {
+    "name": "SKY-ARC-the-aerial-scale",
+    "file": "src/render/volumetricClouds.js",
+    "old": "float aerial(float t) { return 1.0 - exp(-min(t, 1e6) / 14000.0); }",
+    "new": "float aerial(float t) { return 1.0 - exp(-min(t, 1e6) / 7000.0); }",
+    "tests": [
+      "test/render/weather2c_cloudcells.test.js"
+    ]
+  }
+]

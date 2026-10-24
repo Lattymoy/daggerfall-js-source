@@ -18,7 +18,7 @@
 // stands at Slate underneath (the bare kit), so a Stone or Ember a player chose for Enhanced Plus is kept for when
 // they wear it again and never bleeds into this. Three sheets, all keyed on that attribute and all after every other:
 //   1. THE FACE        the pack's Alagard (FONT0003-SDF.ttf), over every family the enhanced sheets name
-//   2. THE KIT         every role of ui/enhancedFrame.js FRAME_ROLES repainted in the pack's materials, the HUD's
+//   2. THE KIT         every role of ui/enhanced/enhancedFrame.js FRAME_ROLES repainted in the pack's materials, the HUD's
 //                      vitals as the pack's three vials, the hotbar as its shelf boxes, the front door on its desk
 //   3. THE INK         Plus writes light words on dark stone; a page wants dark ink. Every rule of every enhanced sheet
 //                      on the page is read once (and every sheet injected later, as it lands) and re-said for the
@@ -28,7 +28,9 @@
 //                      inside a wooden one (a press, a shelf box, a band, a socket), where Plus's light words stand on
 //                      the dark wood as the pack's own gold-on-wood labels do.
 // The pictures are the pack's, cut at run time (ui/grimoireArt.js) - nothing new is committed.
-import { FRAME_ROLES, FRAME_CSS } from './enhancedFrame.js';
+import { FRAME_ROLES, FRAME_CSS } from './enhanced/enhancedFrame.js';
+import { CHANNEL_COLOURS, NAME_COLOURS, PING_COLOURS, RP_COLOURS, channelRules, pipRules } from './chatColours.js';   // CHAT-COLOURS, NAME-INK, PING1: the chat's colours on the page
+import { tierMarkCss } from './lootTierMarks.js';   // LOOT-MARKS: the quick loot's tier gem and wash, on the page
 import { buildGrimoireArt, grimoireFontUrl, grimoireImg, artVar, FRAME_ART, nativeSize, BOOK_SLICE, PLATE_SLICE,
   VIAL_CUT, DIAL_ICONS, dialIconSize, dialArtName, grimoireDeskUrl } from './grimoireArt.js';
 import { getPref, setPref } from '../systems/uiPrefs.js';
@@ -37,6 +39,8 @@ import { pageParam } from '../systems/pageQuery.js';
 export const GRIMOIRE_DRESS = 'grimoire';
 /** The scope every rule of the dress sits under. */
 export const G = ':root[data-plus-dress="grimoire"]';
+/** DIAL-PACK: the Tab dial's doors in Daggerfall's own art unless the card's row keeps the pack's paintings. */
+const DIAL_CLASSIC = `${G}:not([data-grim-dial="pack"])`;
 export const GRIMOIRE_FAMILY = 'DFO Alagard';
 export const GRIMOIRE_STACK = `'${GRIMOIRE_FAMILY}', 'Alagard', Georgia, serif`;
 
@@ -57,6 +61,11 @@ export const GRIMOIRE_VITALS = Object.freeze({ upright: 'Upright vials', row: 'V
  *  GrimoireUI spellbook?"): the spellbook as the dress's book (the desk's painted book, like every other) or as
  *  GrimoireUI's own spellbook picture (SPBK00I0), every press of the enhanced book written on it. */
 export const GRIMOIRE_SPELLBOOKS = Object.freeze({ book: 'DFO book', pack: 'GrimoireUI\'s own' });
+/** DIAL-PACK (2026-10-12, Mac: "add the old Tab selector as optional to the overhaul option"): the Tab dial's doors in
+ *  Daggerfall's own art (the face and the HUD bar's icons - ui/dialClassicArt.js, the default) or the pack's paintings
+ *  (GRIM4's helm, book, chest and map). */
+export const GRIMOIRE_DIALS = Object.freeze({ classic: 'Daggerfall icons', pack: 'Grimoire paintings' });
+export const grimoireDial = () => (Object.hasOwn(GRIMOIRE_DIALS, getPref('grimoireDial')) ? getPref('grimoireDial') : 'classic');
 export const grimoireSpellbook = () => (Object.hasOwn(GRIMOIRE_SPELLBOOKS, getPref('grimoireSpellbook')) ? getPref('grimoireSpellbook') : 'book');
 export const grimoireVitals = () => (Object.hasOwn(GRIMOIRE_VITALS, getPref('grimoireVitals')) ? getPref('grimoireVitals') : 'upright');
 export const grimoirePages = () => (Object.hasOwn(GRIMOIRE_PAGES, getPref('grimoirePages')) ? getPref('grimoirePages') : 'cream');
@@ -64,8 +73,12 @@ export const grimoireBackdrop = () => (Object.hasOwn(GRIMOIRE_BACKDROPS, getPref
 
 /** INK-TONES: a rarity's tone deepened to read on the page (the loot plaque's own), and a set's and the sigil's own
  *  colour mixed down with the ink - 40% (the sigil's lighter teal 35%) keeps its hue and reads at 4.5:1 or better on the cream page. */
-export const RARITY_INK = Object.freeze({ magic: '#1f4f9e', rare: '#5c4600', legendary: '#9a4210', aetheric: '#1d6a86', artifact: '#5e2a96', gilded: '#7a4a00' });
+export const RARITY_INK = Object.freeze({ magic: '#1f4f9e', rare: '#5c4600', legendary: '#9a4210', aetheric: '#1d6a86', artifact: '#5e2a96', gilded: '#a3122e' });
 export const SET_INK = 'color-mix(in srgb, var(--set, #4fb8a8) 40%, #120a04)';
+/** AUDIT C&C S4: the felt temperature's colours deepened to read on the page - the Plus plaque's ice and amber as inks
+ *  (4.9:1 and 4.6:1 on the cream, the magic tone's own and the gilded's old amber), and its felt frame in the Plus warn's dark edge
+ *  (4.2:1); a comfortable reading is written in the ink and a costing one framed in the pack's red. */
+export const TEMP_INK = Object.freeze({ cold: '#1f4f9e', hot: '#7a4a00', warn: '#7a5424' });
 export const SIGIL_INK = 'color-mix(in srgb, var(--sigil, #72f0d8) 35%, #120a04)';
 /** The pack's tones, sampled off its own pictures. */
 export const GRIM_TONES = Object.freeze({
@@ -79,7 +92,7 @@ export const GRIM_TONES = Object.freeze({
 const T = GRIM_TONES;
 
 // ── THE INK: colour, read and re-said ────────────────────────────────────────────────────────────────────────────────
-/** The enhanced sheet's own :root colours (ui/enhancedStyle.js), resolved before a value is re-said, so a `var(--bone)`
+/** The enhanced sheet's own :root colours (ui/enhanced/enhancedStyle.js), resolved before a value is re-said, so a `var(--bone)`
  *  word is inked as #e9e4d9 would be. */
 export const ENHANCED_VARS = Object.freeze({
   '--ink': '#0e1013', '--slate': '#171b21', '--iron': '#2b323b', '--bone': '#e9e4d9', '--dim': '#9a9486',
@@ -145,8 +158,23 @@ export function inkColour(c) {
   if (chroma(v) < 0.16) return hsla(26, 0.6, 0.21 - 0.13 * t, a);                       // bone and parchment: the pack's brown ink, dark enough to read on any of its pages
   if (h >= 50 && h <= 72 && chroma(v) > 0.5) return a >= 1 ? GRIM_YELLOW : `rgba(244, 224, 76, ${r3(a)})`;   // Daggerfall's yellow stays its yellow, as the pack writes a value on its page
   if (h >= 38 && h <= 72) return hsla(5, 0.8, 0.29, a);                        // gold and brass: the pack's red
-  if (h >= 18 && h < 38) return hsla(h, 0.72, 0.24, a);                         // brass and amber: a dark amber
-  return hsla(h, Math.max(0.55, Math.min(0.85, s)), 0.25, a);                  // a hue (a rarity, a gain, a loss): its ink
+  if (h >= 18 && h < 38) return hsla(h, 0.72, readableL(h, 0.72, 0.24), a);    // brass and amber: a dark amber
+  const sat = Math.max(0.55, Math.min(0.85, s));
+  return hsla(h, sat, readableL(h, sat, 0.25), a);                              // a hue (a rarity, a gain, a loss): its ink
+}
+/** INK-READ (2026-10-12, Mac: "make sure the fonts are readable the grey ones arent"): the lightness a hue's ink may have
+ *  and still read at 4.5:1 on the pages' darkest tan (relative luminance 0.43): `want` or darker, a hundredth at a time
+ *  - an amber at 24% stood at 3.96:1 (the credits' "by ...", the settings' heads), a teal at 25% at 3.3:1. */
+const INK_LUMA_MAX = 0.055;
+function readableL(h, s, want) {
+  let l = want;
+  for (; l > 0.08; l -= 0.01) {
+    const c = (1 - Math.abs(2 * l - 1)) * s, x = c * (1 - Math.abs(((h / 60) % 2) - 1)), m = l - c / 2;
+    const [r1, g1, b1] = h < 60 ? [c, x, 0] : h < 120 ? [x, c, 0] : h < 180 ? [0, c, x] : h < 240 ? [0, x, c] : h < 300 ? [x, 0, c] : [c, 0, x];
+    const lin = (v) => { const u = v + m; return u <= 0.03928 ? u / 12.92 : ((u + 0.055) / 1.055) ** 2.4; };
+    if (0.2126 * lin(r1) + 0.7152 * lin(g1) + 0.0722 * lin(b1) <= INK_LUMA_MAX) break;
+  }
+  return Math.round(l * 100) / 100;
 }
 /** A WORD's colour on the wood: Plus's grey words (its bone, its dim) warmed to the pack's tan and cream - the way it
  *  letters "Amulets" or "Rings" on its shelves - and never left darker than the tan. A hue (gold, a rarity) stands. */
@@ -679,7 +707,9 @@ const longUp = (kind, empty = false, u = 'gq') => { const e = empty ? 'Empty' : 
 /** THE PACK'S RULE under a heading (GRIM3, Dudey: "what are those pointed lines under the journy the realm"): the
  *  spellbook's own hand-drawn ink stroke (ui/grimoireArt.js rule), its dotted ends kept at the pack's pixels and its
  *  stroke run along between them. */
-const RULE_UNDER = `border-bottom: ${px(7, 'gk')} solid transparent !important; border-image: ${v('rule')} 0 22 7 20 / 0 ${px(22, 'gk')} ${px(7, 'gk')} ${px(20, 'gk')} stretch !important;`;
+// UI-CALM (2026-10-14, a player: "dotted line everywhere"): the stroke's dotted ends went with every dotted rule - a
+// heading is ruled by one plain line of the page's brown ink, and every rule that was dotted is drawn whole
+const RULE_UNDER = 'border-bottom: 2px solid rgba(92,56,24,0.5) !important; border-image: none !important;';
 /** One of the pack's own pixels (a third of the game's), for a picture laid at the pack's own size. */
 const pk = (n) => `calc(${n} * var(--gp, 3px) / 3)`;
 /** The spellbook window, when the card says GrimoireUI's own. */
@@ -702,6 +732,12 @@ ${q('.px-fill.blood')} { background: ${tube('Health')}, #8a1c18 !important; }
 ${q('.px-fill.verdigris')} { background: ${tube('Magicka')}, #2f5fb4 !important; }
 ${q('.px-meter:has(> .px-fill.thin)')} { height: ${px(3, 'gq')} !important; background: rgba(40,22,8,0.55) !important; box-shadow: 0 0 0 ${px(1, 'gq')} ${T.outline} !important; }
 ${q('.px-fill.thin')} { background: linear-gradient(180deg, #fff0a0 0 ${px(1, 'gq')}, ${T.goldLeaf} ${px(1, 'gq')} ${px(2, 'gq')}, #9a7420 ${px(2, 'gq')}) !important; }
+/* MASTERY-INK (2026-10-20, Dudey: "dont use those thick green bars for mastery make them red and the same thickness as
+   the yellow ones"): a mastered skill's climb past 100 is the thin bar's groove in red, not a Fatigue vial */
+${q('.px-meter.px-over')} { height: ${px(3, 'gq')} !important; background: rgba(40,22,8,0.55) !important; box-shadow: 0 0 0 ${px(1, 'gq')} ${T.outline} !important; }
+${q('.px-fill.px-overfill')} { background: linear-gradient(180deg, #e8705c 0 ${px(1, 'gq')}, ${T.redHi} ${px(1, 'gq')} ${px(2, 'gq')}, ${T.redDeep} ${px(2, 'gq')}) !important; }
+${q('.px-meter.px-over .px-tick')} { display: none; }
+${q('.px-skillmeter')} { gap: ${px(2, 'gq')} !important; }
 /* GRIM4 (Dudey: "the bars in the ascend and status screen also do not look like the player health/stam/mana bars"): a
    vital's row is the HUD's own vial; GRIM5 ("the vial bars are toooshort in the stat screen"): drawn out to the row's
    length - the vial's own head (cork and lit shoulder), its glass, and its own foot at the far end, each at the HUD's
@@ -784,7 +820,8 @@ ${G} :is([data-grim="ink"], .px-journal) :is(.opt-tools, .poolbar, .reviewhead, 
   box-shadow: 0 ${px(1)} 0 rgba(74,44,18,0.12) !important; }`;
 /** The windows too small or too thin for the board's frame. */
 export const SMALL_WINDOWS = Object.freeze(['.px-about', '.px-profile', '.px-support', '.travelpanel-bar', '.tview-bar', '.tview-side',
-  '.tview-confirm', '#wp-menu', '#travel-pace-box', '.helmpanel-bar', '.saddlepanel-bar', '.hmroot .hmtools', 'body .dfdecor-bar']);
+  '.tview-confirm', '#wp-menu', '#travel-pace-box', '.helmpanel-bar', '.saddlepanel-bar', '.hmroot .hmtools', 'body .dfdecor-bar',
+  'body .dfcards', 'body .dfiliac', 'body .dfgambit']);   // AUDIT CARDS-PLUS B4: the card tables' panels - the torn page's frame ran off the screen's edges; KG3: the third's
 
 export function kitCss() {
   const fb = FRAME_ART.band;
@@ -834,7 +871,7 @@ ${G} [data-grim-on="page"] { background: none !important; border-color: transpar
   color: ${T.ink} !important; text-shadow: 0 1px 0 rgba(255,240,205,0.4) !important; text-decoration: none; }
 ${G} [data-grim-on="page"].primary { color: ${T.red} !important; }
 /* HUD-CLASS: a chosen press (\`.on\` - a word the HUD writes too) is named by its own press root, so no rule of the dress
-   can reach the HUD's \`.on\` (test/hudclass_sheets.test.js); at rest only, so the hover after it still wins as it did */
+   can reach the HUD's \`.on\` (test/ui/naval/hudclass_sheets.test.js); at rest only, so the hover after it still wins as it did */
 ${at(PRESS_ROOTS, '[data-grim-on="page"].on:not(:hover):not(:focus-visible)')} { color: ${T.red} !important; }
 ${G} [data-grim-on="page"]:hover, ${G} [data-grim-on="page"]:focus-visible { color: ${T.redHi} !important; background: none !important;
   text-decoration: underline solid ${T.red}; text-underline-offset: 0.2em; outline: none; }
@@ -851,7 +888,7 @@ ${at(PRESS_ROOTS, '[data-grim-on="wood"].on:not(:hover):not(:focus-visible)')} {
 ${at(PRESS_ROOTS, '[data-grim-on="wood"].on:not(:hover):not(:focus-visible):not(:disabled):not([disabled])')} {
   text-decoration: underline solid rgba(255,242,122,0.6); text-underline-offset: 0.22em; }
 ${G} [data-grim-on="wood"]:hover, ${G} [data-grim-on="wood"]:focus-visible { color: #fff8b0 !important; background: rgba(255,214,120,0.08) !important;
-  text-decoration: underline dotted rgba(255,242,122,0.7); text-underline-offset: 0.22em; outline: none; }
+  outline: none; }   /* UI-CALM: no dotted rule under a word the pointer is on - the light and the ground say it */
 ${G} [data-grim-on]:active:not(:disabled) { translate: 1px 1px; }
 ${G} [data-grim-on]:disabled, ${G} [data-grim-on][disabled] { opacity: 0.45; text-decoration: none; background: none !important; translate: none; }
 /* INK-DISABLED (2026-10-11): a press on a PAGE that cannot be pressed is written in the softer ink, solid - at 45% the
@@ -861,6 +898,9 @@ ${G} [data-grim-on="page"]:is(:disabled, [disabled]) { opacity: 1 !important; co
 /* ...and the reason itself (a press's \`*-why\`, written inside it): the press is a wooden surface to the ink, so its
    reason was re-said for the wood - cream on the scroll. On a page it is the soft ink, as its word is. */
 ${G} [data-grim-on="page"] [class$="-why"] { color: ${T.inkSoft} !important; text-shadow: none !important; }
+/* ...and its key (a press's \`*-key\`, the saddle's and the helm's): re-said for the wood it was cream on the parchment, at
+   1.1:1 (AUDIT UICALM-FIRM1 L4 L5) */
+${G} [data-grim-on="page"] [class$="-key"] { color: ${T.inkSoft} !important; text-shadow: none !important; }
 /* EXIT - the way out of a window (its Close) and the one press a screen is for, in the pack's own red Exit frame: cut
    from its inventory's Exit press (ui/grimoireArt.js), the pack's yellow lettering set in it */
 ${G} [data-grim-exit], ${at([...R.primary, '.px-winclose', '.lv-ok'])} {
@@ -873,19 +913,71 @@ ${G} [data-grim-exit]:hover, ${G} [data-grim-exit]:focus-visible, ${at([...R.pri
 /* WARN - a press that costs something: written in the pack's red, struck under with a hard line */
 ${at(R.warn)} { color: ${T.red} !important; text-decoration: underline solid rgba(142,26,16,0.6) !important; text-underline-offset: 0.22em; }
 ${G} [data-grim-on="wood"]:is(${list(R.warn)}) { color: #ff8a6a !important; }
+/* AUDIT CARDS-PLUS (lane B): ...and it answers the pointer and the keyboard as every press does - its own red outweighed
+   the hover's, so a Concede, a Leave or a Disband never changed under either */
+${at(R.warn, ':hover:not(:disabled)')}, ${at(R.warn, ':focus-visible')} { color: ${T.redHi} !important; text-decoration: underline double ${T.redHi} !important; }
+${G} [data-grim-on="wood"]:is(${list(R.warn)}):is(:hover, :focus-visible) { color: #ffb08f !important; }
+/* UI-CALM II (a player: "the close button is not yellow highlighted when hovering over it ... and it has this damn
+   dotted line"): a way out that is ALSO a warn press (the Firmament's Close) is the Exit plate first - its yellow word,
+   no line under it, the brighter yellow and the lit plate under the pointer, as every other Close */
+${G} [data-grim-exit]:is(${list(R.warn)}), ${G} [data-grim-on="wood"][data-grim-exit]:is(${list(R.warn)}) { color: ${T.yellow} !important; text-decoration: none !important; }
+${G} [data-grim-exit]:is(${list(R.warn)}):is(:hover, :focus-visible), ${G} [data-grim-on="wood"][data-grim-exit]:is(${list(R.warn)}):is(:hover, :focus-visible) {
+  color: #fff27a !important; text-decoration: none !important; background: linear-gradient(180deg, #8a0806, #5a0302) !important; filter: brightness(1.12); }
 
 /* TILE - the inventory's wooden shelf box: what you pick sits IN it. Chosen, it is framed in the pack's yellow. */
 ${at(R.tile)} { background: rgba(14,8,3,0.92); color: ${T.cream}; text-shadow: ${WORD_ON_WOOD};
   border-color: #5a3a1e #2a170a #1c0f05 #4a2e16; border-radius: 0;
   border-image: ${v('cubby')} 5 5 7 6 fill / ${px(5, 'gq')} ${px(5, 'gq')} ${px(7, 'gq')} ${px(6, 'gq')} stretch; box-shadow: 0 0 0 1px ${T.outline}; transition: none; }
-${at(R.tile, ':hover')}, ${at(R.tile, ':focus-visible')} { box-shadow: 0 0 0 1px ${T.outline}, inset 0 0 0 2px rgba(216,176,74,0.55); }
+/* AUDIT CARDS-PLUS C2: its marks drawn OVER the box - the cubby's fill is painted above every inset shadow, so a chosen
+   tile, a pointed-at one and the keyboard's looked as every other (a binder's chosen filter, the Codex | Cards part);
+   an outline is drawn above the fill */
+${at(R.tile, ':hover')}, ${at(R.tile, ':focus-visible')} { box-shadow: 0 0 0 1px ${T.outline}; outline: 2px solid rgba(216,176,74,0.55); outline-offset: -4px; }
 ${at(R.tile, '.on')}, ${at(R.tile, '.sel')}, ${at(R.tile, '[aria-pressed="true"]')} {
-  box-shadow: 0 0 0 1px ${T.outline}, inset 0 0 0 2px ${T.goldLeaf}, inset 0 0 16px rgba(216,176,74,0.28); }
-${at(R.tile, ':active')} { box-shadow: 0 0 0 1px ${T.outline}, inset 2px 3px 0 rgba(0,0,0,0.6); }
+  box-shadow: 0 0 0 1px ${T.outline}, 0 0 10px rgba(216,176,74,0.35); outline: 2px solid ${T.goldLeaf}; outline-offset: -4px; }
+${at(R.tile, ':active')} { box-shadow: 0 0 0 1px ${T.outline}; outline: 2px solid rgba(0,0,0,0.6); outline-offset: -4px; }
 
 /* CHIP - a small plaque of the desk's wood, never pressed */
 ${at(R.chip)} { background: ${WOOD(0.12)}; color: ${T.cream}; text-shadow: ${WORD_ON_WOOD};
   border-color: ${T.woodLit} #2a180a ${T.outline} ${T.woodMid}; box-shadow: 0 0 0 1px ${T.outline}, 2px 2px 0 rgba(0,0,0,0.35); }
+/* AUDIT C&C S4: ...and the HUD's temperature plate, a chip of this wood, keeps its levels on it - the status tiles' own
+   amber and red (ui/enhanced/enhancedStyle.js .hst-cell.warn / .danger, which this dress leaves as they are). The wood's frame
+   above outweighed the plate's level rules (three classes to two), and the plate wore the same wood felt, costing or
+   comfortable */
+${G} .hud-temp[data-level="warn"] { border-color: #f3cf86 #7a5424 #7a5424 #f3cf86; }
+${G} .hud-temp[data-level="danger"] { border-color: #ff9a7a #b53a2e #b53a2e #ff9a7a; }
+/* AUDIT CARDS-PLUS B1: THE CARD TABLES' MARKS, re-said in the dress's own colours, as the plate's levels are just above.
+   The dress repaints a seat, a holding, a power and a chip by their roles and re-says the panels' own sheets in its ink,
+   and every state the panels mark went with them - a target looked as every holding, the winner as every seat, the
+   power ahead as the one behind. What is yours or for you is the chosen role's deep green, what is the other's the
+   pack's red (each 3:1 or better on the page and the scroll), a lead a bar inside the plate's top so a target's ring
+   outside it never hides it, the power ahead gold leaf on its wood, a card's own power badge as its card prints it, an
+   empty place a hollow in the page, the keyboard's place a red ring, and a word on the page in the ink. */
+${G} body .dfcards .seat.you { border-color: #1d5530 !important; box-shadow: 0 0 0 2px #1d5530, 1px 2px 0 rgba(48,26,10,0.28) !important; }
+${G} body .dfcards .seat.to-act { box-shadow: inset 0 0 0 2px ${T.red}, 0 0 10px rgba(142,26,16,0.35) !important; }
+${G} body .dfcards .seat.won { border-color: #1d5530 !important; box-shadow: inset 0 0 0 100vmax rgba(29,85,48,0.16), 0 0 0 2px #1d5530 !important; }
+${G} body .dfiliac .hold.lead-mine { border-top-color: #1d5530 !important; box-shadow: inset 0 3px 0 #1d5530, inset 0 0 14px rgba(96,54,16,0.32) !important; }
+${G} body .dfiliac .hold.lead-theirs { border-top-color: ${T.red} !important; box-shadow: inset 0 3px 0 ${T.red}, inset 0 0 14px rgba(96,54,16,0.32) !important; }
+${G} body .dfiliac .hold.target { outline: 3px solid #1d5530 !important; outline-offset: 2px; cursor: pointer; }
+${G} body .dfiliac .holdname, ${G} body .dfiliac .duel { color: ${T.ink} !important; text-shadow: none !important; }
+${G} body .dfiliac .pw.ahead { border-color: ${T.goldLeaf} !important; color: ${T.yellow} !important; }
+${G} body .dfiliac .ic .p { background: #8e2a1c !important; color: #fff6ee !important; text-shadow: none !important; }
+${G} body .dfiliac .ic .p.up { background: #2f7a43 !important; }
+${G} body .dfiliac .ic .p.down { background: #4a1a12 !important; color: #ffb4a6 !important; }
+${G} body .dfiliac .slot { background: rgba(43,26,12,0.12) !important; box-shadow: inset 0 0 0 1px rgba(43,26,12,0.5) !important; }
+${G} body .dfcards [tabindex="0"]:focus-visible, ${G} body .dfiliac [tabindex="0"]:focus-visible { outline: 2px solid ${T.red} !important; outline-offset: 2px; }
+/* KG3: The King's Gambit's marks that are no role's. Its chosen tiles and rows are the kit's (a tile's gold leaf, a list
+   row's wash - NO-BAR); a press armed for its second press in the pack's red; the keyboard's place the red ring, as the
+   other two panels'; a name, a term and the result's head in the ink on the page (a unit's name in its picture's well
+   is on wood, and keeps the wood's words), the result's win the green that is yours and its loss the pack's red; an
+   action left and a tier's step lit in gold leaf on their wooden chip (the painter's own word for lit, dfgambit-lit) */
+${G} body .dfgambit button[data-armed="true"] { outline: 2px solid ${T.red} !important; outline-offset: 1px; }
+${G} body .dfgambit [tabindex="0"]:focus-visible { outline: 2px solid ${T.red} !important; outline-offset: 2px; }
+${G} body .dfgambit :is(.dfgambit-regname, .dfgambit-term, .dfgambit-head)${IN_INK}${NOT_WOOD} { color: ${T.ink} !important; text-shadow: none !important; }
+${G} body .dfgambit .dfgambit-head.dfgambit-won${IN_INK}${NOT_WOOD} { color: #1d5530 !important; }
+${G} body .dfgambit .dfgambit-head.dfgambit-lost${IN_INK}${NOT_WOOD} { color: ${T.red} !important; }
+${G} body .dfgambit .dfgambit-pip.dfgambit-lit, ${G} body .dfgambit .dfgambit-step i.dfgambit-lit { background: ${T.goldLeaf} !important; }
+${G} .px-sys .binder-chip.short { color: #ff8a6a !important; outline: 2px solid #ff8a6a; outline-offset: -3px; }
+${G} .px-sys .gr-acts .act:is(:disabled, [disabled]) { color: rgba(43,26,12,0.35) !important; }   /* AUDIT SPEC-RESET L3-6: the guide's refused press faded, as the pack's are - the page press's soft ink read as enabled */
 
 /* WELL - sunk into the board: a dark hollow with the light caught on its far lip */
 ${at(R.well)} { background-color: rgba(22,13,6,0.9); color: ${T.cream};
@@ -911,8 +1003,8 @@ ${G} .remotehead { padding: ${px(2)} ${px(4)} !important; display: flex; align-i
 ${G} .remotehead .remotewho h3, ${G} .remotehead .remotewho .meta { margin: 0; line-height: 16px; }
 ${at([...R.header, ...R.footer])} { background: ${PLANK} !important; color: ${T.cream}; text-shadow: ${WORD_ON_WOOD};
   border-color: transparent; border-image: none; box-shadow: 0 ${px(1)} 0 rgba(0,0,0,0.35); }
-${at(R.headerRule)} { border-bottom-color: rgba(60,34,14,0.7); border-bottom-style: dotted; box-shadow: none; }
-${at(R.footerRule)} { border-top-color: rgba(60,34,14,0.7); border-top-style: dotted; box-shadow: none; }
+${at(R.headerRule)} { border-bottom-color: rgba(60,34,14,0.7); border-bottom-style: solid; box-shadow: none; }
+${at(R.footerRule)} { border-top-color: rgba(60,34,14,0.7); border-top-style: solid; box-shadow: none; }
 
 /* TABS - GRIM3: the pack's own tab plates (its inventory's), at its own pixels; the open one lit, its name red */
 ${at(R.tabs)} { ${TAB_CSS} }
@@ -922,10 +1014,12 @@ ${at(R.tabs, ':hover:not(.on)')}, ${at(R.tabs, ':focus-visible:not(.on)')} { ${T
 /* RULES - ruled in brown ink, the pack's dotted line under a heading */
 ${at(R.rule)} { border-bottom-color: rgba(92,56,24,0.4); box-shadow: none; }
 ${at(R.ruleTop)} { border-top-color: rgba(92,56,24,0.4); box-shadow: none; }
-${at(R.listRow)} { border-bottom-color: rgba(92,56,24,0.35); border-bottom-style: dotted; background-image: none; box-shadow: none; }
-${at(R.listRow, ':hover')}, ${at(R.listRow, ':focus-visible')} { box-shadow: inset 3px 0 0 rgba(142,26,16,0.55); background-color: rgba(142,26,16,0.06); }
-${at(R.listRow, '.on')} { box-shadow: inset 3px 0 0 ${T.red}; background-color: rgba(142,26,16,0.1); }
-${at(R.qrow, '.on')} { box-shadow: inset 3px 0 0 ${T.red}; background: rgba(142,26,16,0.1); }
+${at(R.listRow)} { border-bottom-color: rgba(92,56,24,0.35); border-bottom-style: solid; background-image: none; box-shadow: none; }
+/* NO-BAR (2026-10-12, Mac: the Reforge's rows "have those lines"): a row under the pointer or chosen is not marked with a
+   red bar down its edge - the page is washed under it, a shade deeper when it is the chosen one, as a finger on a page */
+${at(R.listRow, ':hover')}, ${at(R.listRow, ':focus-visible')} { box-shadow: none; background-color: rgba(142,26,16,0.07); }
+${at(R.listRow, '.on')} { box-shadow: none; background-color: rgba(142,26,16,0.13); }
+${at(R.qrow, '.on')} { box-shadow: none; background: rgba(142,26,16,0.13); }
 ${at(R.wing)} { background: linear-gradient(180deg, rgba(60,34,14,0.75) 0 1px, transparent 1px); }
 ${G} .px-divider::before, ${G} .px-divider::after { background: rgba(60,34,14,0.6); }
 ${G} .px-sigil, ${G} .px-divider i { color: ${T.red}; }
@@ -936,6 +1030,7 @@ ${at([...R.rule, ...R.listRow, ...R.headerRule])} { border-bottom-color: transpa
 ${at([...R.ruleTop, ...R.footerRule])} { border-top-color: transparent !important; box-shadow: none; }
 ${at(R.wing)} { background: none !important; }
 ${G} .px-divider::before, ${G} .px-divider::after { content: none !important; }
+${G} .empty { border-color: transparent !important; background: rgba(120,70,20,0.08); }   /* an empty state: a wash of the page, no dashed box */
 ${G} .px-divider > span, ${G} .px-divider { color: ${T.red}; letter-spacing: 0.08em; }
 /* the talk window: its two pages part by the scroll's own shading at the gutter, not a dotted line */
 ${G} .talk-topics { box-shadow: inset -10px 0 12px -10px rgba(60,34,14,0.55); }
@@ -945,7 +1040,8 @@ ${G} .talk-list > *, ${G} .talk-row { border-color: transparent !important; }
    darker, its name underlined in the pack's red */
 ${G} .prof-row { background: none !important; border-color: transparent !important; color: ${T.ink} !important; }
 ${G} .prof-row:hover { background: rgba(142,26,16,0.06) !important; }
-${G} .prof-row.on { box-shadow: inset 3px 0 0 ${T.red} !important; background: rgba(142,26,16,0.1) !important; }
+${G} .prof-row.on { box-shadow: none !important; background: rgba(142,26,16,0.13) !important; }
+${G} .prof-row.on .prof-name { color: ${T.red} !important; }
 ${G} .prof-row .prof-rank { color: ${T.inkSoft} !important; }
 ${G} .prof-spec { background: rgba(120,70,20,0.1) !important; border-color: transparent !important; box-shadow: none !important; color: ${T.ink} !important; }
 ${G} .prof-spec b { color: ${T.red} !important; text-shadow: none !important; }
@@ -960,6 +1056,17 @@ ${G} .px-mhead { border-bottom: 0; padding-bottom: 8px !important; margin-bottom
 ${G} .px-mname { color: ${T.red} !important; text-shadow: none !important; }
 ${G} .px-mcount { color: ${T.inkSoft} !important; }
 ${G} .px-pips, ${G} .px-pip.on { color: ${T.goldLeaf} !important; text-shadow: 0 1px 0 ${T.outline} !important; }
+/* THE REFORGE ON THE PAGE (2026-10-12, Mac: "make sure the fonts are readable the grey ones arent. plus make it look
+   better"): a row reads as the pack's own price lists do - what it is in the book's red when it is a family to scry
+   (an item keeps its rarity's ink), what it is for in ink beneath, its price in ink beside, and the press written in
+   red when it can be pressed; a press that cannot says why in the softer ink, leaning, never faded. */
+${G} .reforge-shell .broker-offer .broker-price { color: ${T.ink} !important; text-shadow: none !important; opacity: 1 !important; }
+${G} .reforge-shell .broker-offer.scry-row .broker-name { color: #7a170c !important; text-shadow: none !important; }   /* the page's red, a shade deep: 4.7:1 on its darkest */
+${G} .reforge-shell .broker-offer .broker-set { color: ${T.ink} !important; text-shadow: none !important; }
+${G} .reforge-shell .broker-buy[data-grim-on="page"]:not(:disabled):not([disabled]):not(:hover) { color: #7a170c !important; }
+${G} .reforge-shell .broker-buy[data-grim-on="page"]:is(:disabled, [disabled]) { color: #4f3218 !important; font-style: italic; }   /* 5:1 */
+${G} .reforge-shell .broker-offer { padding-top: 8px !important; padding-bottom: 8px !important; }
+${G} body .reforge-shell .reforge-tabs .act.reforge-tab.on[data-grim-on]:not(:hover):not(:focus-visible) { color: #7a170c !important; text-decoration: underline solid #7a170c !important; text-underline-offset: 0.22em; }   /* the open page's word, 4.7:1 and underlined */
 
 /* THE NOTICE - GRIM3 (Dudey: "the notification box is unreadable"): a note on the tan scroll is written in the pack's
    brown ink and nothing else - Plus's hard dark shadow under each word, re-said in ink, doubled every letter - at the
@@ -969,7 +1076,7 @@ ${G} .notice:not(.notice-toast) { border: ${px(1)} solid rgba(48,26,10,0.85) !im
 ${G} .notice:not(.notice-toast), ${G} .notice:not(.notice-toast) * { text-shadow: none !important; }
 ${G} .notice:not(.notice-toast) .notice-row { color: ${T.ink} !important; font-size: 16px; line-height: 20px; }
 ${G} .notice:not(.notice-toast) .notice-row.highlight { color: ${T.red} !important; }
-${G} .notice:not(.notice-toast) .notice-hint { color: ${T.inkSoft} !important; border-top: 2px dotted rgba(92,56,24,0.55); font-size: 16px; letter-spacing: 0; text-transform: none; }
+${G} .notice:not(.notice-toast) .notice-hint { color: ${T.inkSoft} !important; border-top: 2px solid rgba(92,56,24,0.55); font-size: 16px; letter-spacing: 0; text-transform: none; }
 
 /* THE UI OVERHAUL CARD's own little rows, legible on their page */
 ${G} .look-colours-label { color: ${T.ink} !important; text-shadow: none !important; font-size: 12px; }
@@ -1090,6 +1197,26 @@ ${G} .hud-compass[data-hm-turn] .hud-strip { top: var(--gcm); bottom: calc(2 * v
   background-position-y: calc(0.5 * var(--gcm)); }
 ${G} .hud-compass .hud-point { visibility: hidden; }
 ${G} .hud-needle { display: none; }
+/* GRIM-MARKS (2026-10-13, field video: "what are those colored edges, the blue and greenish ones"): the strip's marks
+   (ui/enhanced/enhancedHud.js - Detect, the party, the professions' nodes, a ship, a boat, the gate, the quest) are laid by
+   left: 0..100% OF THE COMPASS BOX and stood on its foot. Here the box is the wooden frame, the parchment two --gcm in
+   from each side and one up from the foot, and the frame (::after, z 3) sits over all of it - so every mark ON the strip
+   was buried under the wood, and a mark clamped to an end (a node or a mate BEHIND you: compassMarkerLerp's clamp) hung
+   half out past the frame's corner as a stray coloured wedge - the Motherlode's teal, Logging's sap green. The box is
+   now the parchment's open span (less --gcm-mark each side: clear of the rim's corners, and the widest mark's half - the
+   boat's 7px - so an end mark stands whole) and the frame and the strip reach back out to where they always stood:
+   nothing on screen moves, and the marks' 0..100% is the strip's. The foot is the dome's curve ("you can't run the
+   markers on the bottom"), so the triangles hang from the box's FLAT side - its top, where the needle hangs, pointing
+   down at the bearing as the needle does - and turned over (dome up) they stand on its flat foot. A ship's bow rides
+   the row just under them. All over the frame's rim. */
+${G} .hud-compass { --gcm-mark: calc(3 * var(--gcm) + 7px); width: calc(69 * var(--gcm) - 2 * var(--gcm-mark)); margin-left: var(--gcm-mark); margin-right: var(--gcm-mark); }
+${G} .hud-compass::after { left: calc(-1 * var(--gcm-mark)); right: calc(-1 * var(--gcm-mark)); }
+${G} .hud-compass .hud-strip { left: calc(2 * var(--gcm) - var(--gcm-mark)); right: calc(2 * var(--gcm) - var(--gcm-mark)); }
+${G} .hud-compass .hud-detect, ${G} .hud-compass .hud-party, ${G} .hud-compass .hud-node { top: calc(2 * var(--gcm)) !important; bottom: auto !important; z-index: 4; }
+${G} .hud-compass .hud-ship { top: calc(2 * var(--gcm) + 6px) !important; z-index: 4; }
+${G} .hud-compass .hud-boat, ${G} .hud-compass .hud-gate, ${G} .hud-compass .hud-serpent, ${G} .hud-compass .hud-sd, ${G} .hud-compass .hud-quest { z-index: 4; }
+${G} .hud-compass[data-hm-turn] .hud-detect, ${G} .hud-compass[data-hm-turn] .hud-party, ${G} .hud-compass[data-hm-turn] .hud-node { top: auto !important; bottom: calc(2 * var(--gcm)) !important; }
+${G} .hud-compass[data-hm-turn] .hud-ship { top: auto !important; bottom: calc(2 * var(--gcm) + 6px) !important; }
 
 /* THE HOTBAR - a row of the inventory's shelf boxes; the key in yellow on the lip, what is in hand framed in gold */
 ${G} .hb .hb-slot { background: rgba(14,8,3,0.82); border-image: ${v('cubby')} 5 5 7 6 fill / ${px(5, 'gq')} ${px(5, 'gq')} ${px(7, 'gq')} ${px(6, 'gq')} stretch;
@@ -1106,6 +1233,14 @@ ${G} .hud-qdiamond .hud-qframe { background: linear-gradient(135deg, #f0d276 0%,
 ${G} .hud-qdiamond .hud-qground { background: linear-gradient(135deg, rgba(58,36,20,0.95) 0%, rgba(30,18,8,0.92) 60%, rgba(18,10,4,0.9) 100%); }
 ${G} .hud-qdiamond .hud-qcell.socket .hud-qframe { background: linear-gradient(135deg, rgba(122,82,48,0.7), rgba(42,24,10,0.7)); }
 ${G} .hud-qdiamond .hud-qcell.cycling .hud-qframe { background: linear-gradient(135deg, #fff39a, ${T.yellow} 50%, #9a8a14); }
+/* DIAMOND-HB: the hotbar's diamond slots (Diamond, Diamonds) - the old diamond's wood and gilded rim. The shelf box's
+   border-image is for square slots; clipped to a diamond it would be cut at the corners */
+${G} .hb { --gem-rim: linear-gradient(135deg, #f0d276 0%, ${T.goldLeaf} 30%, #8a6418 70%, #4a3208 100%);
+  --gem-rim-empty: linear-gradient(135deg, rgba(122,82,48,0.7), rgba(42,24,10,0.7));
+  --gem-rim-active: linear-gradient(135deg, #fff39a, ${T.yellow} 50%, #9a8a14);
+  --gem-rim-strike: linear-gradient(135deg, #fff27a, ${T.goldLeaf} 50%, ${T.yellowDeep}); }
+${G} .hb.hb-gem .hb-slot { border-image: none; box-shadow: none;
+  background: linear-gradient(135deg, rgba(58,36,20,0.95) 0%, rgba(30,18,8,0.92) 60%, rgba(18,10,4,0.9) 100%); }
 
 /* THE DIAL - GRIM4 (Dudey: "instead of words give this fitting symbols, all in the style of grimoire"): each door of the
    Tab dial is a piece of the pack's own painting (ui/grimoireArt.js DIAL_ICONS) - the Empire's helm for Skills, the
@@ -1124,6 +1259,15 @@ ${G} .px-dial .px-arm[data-grim-icon]:is(.on, :hover, :focus-visible) .px-c {
   filter: drop-shadow(0 0 1px ${T.yellow}) drop-shadow(0 0 5px rgba(244,224,76,0.5)) drop-shadow(2px 3px 0 rgba(0,0,0,0.55)); }
 ${Object.keys(DIAL_ICONS).map((k) => { const [w, h] = dialIconSize(k); return `${G} .px-dial .px-arm[data-grim-icon="${k}"] .px-c { width: calc(${w}px * var(--dial-k)); height: calc(${h}px * var(--dial-k));
   background-image: var(${artVar(dialArtName(k))}, none);${DIAL_ICONS[k].cells ? ' image-rendering: pixelated;' : ''} }`; }).join('\n')}
+/* DIAL-CLASSIC (ui/dialClassicArt.js; Mac: "the arena2 files look for those symbols ... make the icons fit to each other
+   sizewise"): in game the doors wear Daggerfall's own - the player's face, the HUD bar's star, sack and scroll, each at
+   a whole number of screen pixels to its own, the four the same height; the pack's paintings (above) are each door's
+   until its own is read. DIAL-PACK (Mac: "add the old Tab selector as optional"): the card's 'Tab dial' row keeps the
+   pack's paintings instead (GRIMOIRE_DIALS 'pack'). */
+${Object.keys(DIAL_ICONS).map((k) => { const [w, h] = dialIconSize(k); return `${DIAL_CLASSIC} .px-dial .px-arm[data-grim-icon="${k}"] .px-c { width: calc(var(--dial-classic-w-${k}, ${w}px) * var(--dial-k)); height: calc(var(--dial-classic-h-${k}, ${h}px) * var(--dial-k));
+  background-image: var(--dial-classic-${k}, var(${artVar(dialArtName(k))}, none)); }`; }).join('\n')}
+${DIAL_CLASSIC}[data-grim-dial-art="classic"] .px-dial .px-arm[data-grim-icon] .px-c { image-rendering: pixelated; }
+${DIAL_CLASSIC}[data-grim-dial-art="classic"][data-grim-dial-face="head"] .px-dial .px-arm[data-grim-icon="skills"] .px-c { image-rendering: auto; }   /* PORTRAIT3D: the Morrowind head, smooth (ui/dialClassicArt.js readHeadDial) */
 ${G} .px-dial .px-arm[data-grim-icon]::after { content: none; }
 ${G} .px-dial .px-arm[data-grim-icon]::before { background: rgba(216,176,74,0.4); }
 ${G} .px-dial .px-arm[data-grim-icon]:is(.on, :hover)::before { background: ${T.goldLeaf}; }
@@ -1164,6 +1308,7 @@ ${G} .wb-boss-bar.sea .wb-boss-track { background: ${v('vialMagickaEmpty')} 0 0 
 ${G} .wb-boss-bar.sea .wb-boss-fill { background: ${v('vialMagicka')} 0 0 / ${px(86)} 100% no-repeat, #2f5fb4 !important; }
 ${G} .wb-boss-bar.sea .wb-boss-ghost { background: ${v('vialMagicka')} 0 0 / ${px(86)} 100% no-repeat, #142a5a !important; }
 ${G} .wb-boss-bar.brass .wb-boss-fill { filter: sepia(1) saturate(1.8) hue-rotate(-6deg) brightness(1.08); }
+${G} .wb-boss-bar.star .wb-boss-fill, ${G} .wb-boss-bar.star .wb-boss-ghost { filter: hue-rotate(255deg) saturate(0.85) brightness(1.12); }
 ${G} .wb-boss-mark { top: 0; bottom: 0; width: ${px(1, 'gq')}; background: rgba(20,11,4,0.8) !important; }
 ${G} .wb-boss-name { color: ${T.yellow}; letter-spacing: 0.02em; text-transform: none;
   text-shadow: -1px 0 0 #120804, 1px 0 0 #120804, 0 -1px 0 #120804, 0 1px 0 #120804, 1px 2px 0 rgba(0,0,0,0.6); }
@@ -1175,7 +1320,7 @@ ${G} .wb-boss-name { color: ${T.yellow}; letter-spacing: 0.02em; text-transform:
    says in ink; the two chips stay lettered on their wood. */
 ${G} .rvncard, ${G} .rvncard :not(.rvncard-rank, .rvncard-mood) { text-shadow: none !important; }
 ${G} .rvncard .rvncard-kicker { line-height: 20px; }
-${G} .rvncard .rvncard-name { color: ${T.ink} !important; line-height: 20px; padding-bottom: 2px; margin-bottom: 4px; border-bottom: 2px dotted rgba(92,56,24,0.55) !important; }
+${G} .rvncard .rvncard-name { color: ${T.ink} !important; line-height: 20px; padding-bottom: 2px; margin-bottom: 4px; border-bottom: 2px solid rgba(92,56,24,0.55) !important; }
 ${G} .rvncard .rvncard-sub { color: ${T.inkSoft} !important; line-height: 20px; }
 ${G} .rvncard .rvncard-say { color: ${T.ink} !important; line-height: 20px; }
 ${G} .rvncard .rvncard-body { color: ${T.inkSoft} !important; line-height: 20px; }
@@ -1218,22 +1363,60 @@ ${G} .pack-shell .equipped .wornpair > .wornrow :is(.wornslot, .wornname) { text
 ${G} body .dfchat-input { color: ${T.ink} !important; -webkit-text-fill-color: ${T.ink} !important; caret-color: ${T.red}; text-shadow: none !important; }
 ${G} body .dfchat-input::placeholder { color: ${T.inkFaint} !important; -webkit-text-fill-color: ${T.inkFaint} !important; }
 ${G} .dfchat-box :is(.dfchat-name, .dfchat-who-name) { text-shadow: none !important; }
-${G} .dfchat-box :is(.dfchat-name, .dfchat-who-name)[style*="color"] { filter: brightness(0.3) saturate(1.6); }
+/* NAME-INK (2026-10-11, Mac: "the color was the problem not the font"): a name deepened to three tenths was the ink its
+   words are written in, and a speaker read as part of the line. A name is in a colour of its own on the page (ui/
+   chatColours.js NAME_COLOURS, each 4.5:1 or better on the page): a stranger's the page's red, my own a brown gold, a
+   party member's green and a friend's blue - social's two colours (set on the element) each deepened by hand, not by a
+   filter, so they keep their hue. */
+${G} .dfchat-box :is(.dfchat-name, .dfchat-who-name) { color: ${NAME_COLOURS.other.dark} !important; filter: none !important; }
+${G} .dfchat-box .dfchat-line.mine .dfchat-name, ${G} .dfchat-box .dfchat-who-row.me .dfchat-who-name { color: ${NAME_COLOURS.mine.dark} !important; }
+${G} :is(.dfchat-box, .dfsocial) :is(.dfchat-name, .dfchat-who-name, .dfsocial-name)[style*="115, 255, 115"] { color: ${NAME_COLOURS.party.dark} !important; filter: none !important; }
+${G} :is(.dfchat-box, .dfsocial) :is(.dfchat-name, .dfchat-who-name, .dfsocial-name)[style*="143, 208, 255"] { color: ${NAME_COLOURS.friend.dark} !important; filter: none !important; }
+/* CHAT-COLOURS on the page: the chat is written on the CREAM page (the lighter of the pack's two), so a channel's
+   colour - ink-dark, each 4.5:1 or better - reads as a colour and not as the ink; a pip of it on each tab's plate */
+${G} body .dfchat-box { background: ${PAGE} !important; }
+${channelRules(`${G} body .dfchat[data-colours="on"] .dfchat-box`, 'dark', true)}
+${pipRules(`${G} body .dfchat[data-colours="on"] .dfchat-box`, 'dark', true)}
+${G} body .dfchat[data-colours="on"] .dfchat-box :is(.dfchat-tab, .dfchat-chan)[data-tab]::before { box-shadow: 0 0 0 1px rgba(255,240,205,0.7) !important; }
+${Object.entries(CHANNEL_COLOURS).map(([ch, c]) => `${G} body .dfchat[data-colours="on"] .dfchat-box .dfchat-chan[data-tab="${ch}"] { color: ${c.dark} !important; }`).join('\n')}
+/* ...and the lines standing over the world keep the light colours, under the HUD's outline (the box's ink is the box's) */
+${channelRules(`${G} body .dfchat[data-colours="on"] .dfchat-peek`, 'light', true)}
+${pipRules(`${G} body .dfchat[data-colours="on"] .dfchat-peek`, 'light', true)}
+/* PING1 on the page: the line on a gold wash with a bar at its edge, my @name the deep brown-gold, underlined */
+${G} .dfchat-box .dfchat-line.ping { background: ${PING_COLOURS.wash.dark} !important; box-shadow: inset 3px 0 0 ${PING_COLOURS.bar.dark} !important; }
+${G} .dfchat-box .dfchat-mention { color: ${PING_COLOURS.mention.dark} !important; text-decoration: underline solid ${PING_COLOURS.bar.dark}; text-underline-offset: 0.18em; }
+${G} .dfchat-peek .dfchat-mention { color: ${PING_COLOURS.mention.light} !important; }
+/* THE UNREAD COUNT ON A TAB'S PLATE (2026-10-11, Mac: "make the 5 shown in the channel not cover whatever it is the 5
+   is also not really well placed"): Plus's dot is a 7px disc with its number drawn at no size, and on the plate the
+   face's own size came back - the number stood over the dot, above the word's line and against the plate's edge. On the
+   page it is a wax seal: the book's red disc, the number in cream at the middle of it, beside the word on its line and
+   clear of it; a tab holding a line that names me, the mention's gold with the number in ink. */
+${G} body .dfchat-box .dfchat-tab .dfchat-badge:not(:empty) { display: inline-flex !important; align-items: center; justify-content: center;
+  box-sizing: border-box; min-width: 17px; height: 17px; padding: 0 4px !important; margin: 0 0 0 7px !important; border-radius: 9px !important;
+  font-size: 12px !important; line-height: 1 !important; letter-spacing: 0 !important; text-indent: 0 !important; vertical-align: middle;
+  position: relative; top: -1px; color: #fff0c8 !important; -webkit-text-fill-color: #fff0c8 !important; text-shadow: none !important;
+  text-decoration: none !important; background: ${T.red} !important; box-shadow: 0 0 0 1px rgba(40,14,4,0.65), inset 0 1px 0 rgba(255,190,150,0.35) !important; }
+${G} body .dfchat-box .dfchat-tab.pinged .dfchat-badge:not(:empty) { background: #e2ad42 !important; color: ${T.ink} !important; -webkit-text-fill-color: ${T.ink} !important;
+  box-shadow: 0 0 0 1px rgba(60,30,4,0.7), inset 0 1px 0 rgba(255,240,190,0.6) !important; }
+${G} .dfchat-badge.ping { background: ${PING_COLOURS.bar.dark} !important; }
 /* THE SOCIAL PANEL, on its scroll (2026-10-11: "those fonts need to be made readable"): a name keeps the colour its
    standing earns (a friend's blue, a party's green - set on the element, which no sheet's ink can re-say) deepened to
    read on the tan as the chat's names are - half as bright stood at 2.3:1 on the scroll, three tenths stands near 4:1 -
    and a plain name, a subject, a letter's own words are ink. INK-VARS reads the rest (its greys, its bone) as ink. */
-${G} .dfsocial :is(.dfsocial-name, .dfsocial-subject)[style*="color"] { filter: brightness(0.3) saturate(1.6); text-shadow: none !important; }
+${G} .dfsocial :is(.dfsocial-name, .dfsocial-subject)[style*="color"] { filter: brightness(0.3) saturate(1.6); text-shadow: none !important; }   /* (a party's and a friend's names: their own deepened colour, NAME-INK above) */
 ${G} .dfsocial :is(.dfsocial-name, .dfsocial-subject, .dfsocial-lettertext):not([style*="color"]) { color: ${T.ink} !important; text-shadow: none !important; }
 ${G} .dfsocial .dfsocial-letter.read .dfsocial-name { color: ${T.inkSoft} !important; }
-${G} .dfchat-box :is(.dfchat-name, .dfchat-who-name):not([style*="color"]) { color: ${T.ink} !important; }
 ${G} .dfchat-box :is(.dfchat-time, .dfchat-tag, .dfchat-whohead, .dfchat-who-more, .dfchat-who-tag) { color: ${T.inkSoft} !important; text-shadow: none !important; }
-${G} .dfchat-box .dfchat-line.system .dfchat-text { color: #1f4f8e !important; text-shadow: none !important; }
+${G} .dfchat-box .dfchat-line.system .dfchat-text { color: #163a6a !important; text-shadow: none !important; }   /* CHAT-COLOURS: 5:1 on the cream page's darkest (the herald's #1f4f8e stood at 3.6) */
+${G} .dfchat-box :is(.dfchat-time, .dfchat-tag) { color: #4f3218 !important; }   /* ...and a line's time and tag 5:1 too, on the mention's wash as well */
 /* ...and with the box shut (Dudey: "make sure the blue event text is readable when the chat box is not open"), the lines
    that stand over the world wear the HUD's hard outline, every one - a herald's blue among them */
 ${G} .dfchat-peek, ${G} .dfchat-peek * {
   text-shadow: -1px 0 0 #120804, 1px 0 0 #120804, 0 -1px 0 #120804, 0 1px 0 #120804, 1px 2px 0 rgba(0,0,0,0.6) !important; }
 ${G} .dfchat-peek .dfchat-line.system .dfchat-text { color: #9cc8ff !important; }
+/* CHAT-RP: a line of roleplay on the page - the deep green, leaning (ui/chatColours.js RP_COLOURS); over the world the light */
+${G} .dfchat-box .dfchat-line.rp .dfchat-text { color: ${RP_COLOURS.dark} !important; text-shadow: none !important; font-style: italic; }
+${G} .dfchat-peek .dfchat-line.rp .dfchat-text { color: ${RP_COLOURS.light} !important; }
 
 /* THE OVERWORLD'S FILTERS - GRIM4 (Dudey: "the numbers next to the filters are hardly readable"): a count is written in
    ink at the face's own size, as its word is, on the same line; the block is wide enough that no word is cut, and the
@@ -1259,6 +1442,15 @@ ${G} :is(.tview-pace-num, .travelpanel-pace-num, .pbox-pace-num) + :is(.tview-pa
    way its death screen writes "Welcome Adventurer" */
 ${G} .notice.notice-toast, ${G} .lv-note.lv-note-skill .lv-note-title, ${G} .lv-note.lv-note-skill .lv-note-sub, ${G} .hud-modeword {
   color: ${T.yellow}; text-shadow: -1px 0 0 ${T.outline}, 1px 0 0 ${T.outline}, 0 -1px 0 ${T.outline}, 0 1px 0 ${T.outline}, 2px 2px 0 rgba(0,0,0,0.6); }
+/* LEVEL-INK (2026-10-20, Dudey: "when leveling up the black fonts are hard to read"): the level strip's plates (a level
+   risen or awaited, a Renown risen, a quest's word) are scraps of the page, so they are written in the page's full ink -
+   the title in the pack's red, the line under it in the darkest ink (the key keeps its wooden box and its light word) -
+   never the gold, the faint ink or a shadow the stone skins give them; and a hand big enough to read over a fight */
+${G} .lv-note:not(.lv-note-skill) .lv-note-title, ${G} .lv-note:not(.lv-note-skill) .lv-note-gem { color: ${T.red} !important; text-shadow: none !important; opacity: 1 !important; }
+${G} .lv-note:not(.lv-note-skill) .lv-note-title { font-size: 16px !important; letter-spacing: 0.08em !important; text-indent: 0.08em !important; }
+${G} .lv-note:not(.lv-note-skill) .lv-note-sub { color: ${T.ink} !important; text-shadow: none !important; opacity: 1 !important; font-size: 18px !important; }
+${G} .lv-note.lv-standing:not(.lv-note-skill) .lv-note-title { font-size: 14px !important; }
+${G} .lv-note.lv-standing:not(.lv-note-skill) .lv-note-sub { font-size: 15px !important; }
 ${G} .hud-cross { filter: sepia(0.6) saturate(1.4); }
 /* the crosshair's world plaque - a scrap of page held over the world, never a slab */
 ${G} .wplaque, ${G} .wplaque-stats { background: ${v('page')} 0 0 / 355px auto repeat, rgba(227,201,149,0.92); color: ${T.ink};
@@ -1270,7 +1462,7 @@ ${G} .wplaque, ${G} .wplaque-stats { background: ${v('page')} 0 0 / 355px auto r
 ${G} .sf-head h3 { color: ${T.red} !important; text-shadow: none !important; }
 ${G} .sf-head p, ${G} .sf-chips-k, ${G} .sf-err { color: ${T.ink} !important; text-shadow: none !important; opacity: 1 !important; }
 ${G} .sf-foot { color: ${T.inkSoft} !important; text-shadow: none !important; opacity: 1 !important; }
-${G} .statflip-btn, ${G} .wornac-total { background: ${v('page')} 0 0 / 355px auto repeat, rgba(227,201,149,0.96) !important; color: ${T.ink} !important;
+${G} .statflip-btn, ${G} .wornac-total, ${G} .worntemp-total { background: ${v('page')} 0 0 / 355px auto repeat, rgba(227,201,149,0.96) !important; color: ${T.ink} !important;
   text-shadow: none !important; opacity: 1 !important; border: 2px solid ${T.outline} !important; border-radius: 0 !important;
   box-shadow: inset 0 0 0 1px rgba(255,240,205,0.35), 2px 2px 0 rgba(0,0,0,0.45) !important; }
 ${G} .statflip-btn { padding: 2px 10px !important; }
@@ -1286,8 +1478,17 @@ ${G} .pack-shell .statflip .sf-page { max-width: 100% !important; min-width: 0 !
 ${G} .pack-shell .statflip .sf-tiles { grid-template-columns: repeat(auto-fit, minmax(min(100%, 84px), 1fr)) !important; }
 ${G} .pack-shell .statflip .sf-tile { min-width: 0 !important; overflow-wrap: break-word; }
 ${G} .statflip-btn:hover, ${G} .statflip-btn:focus-visible { color: ${T.red} !important; }
-${G} .wornac-total .k { color: ${T.inkSoft} !important; text-shadow: none !important; opacity: 1 !important; }
+${G} .wornac-total .k, ${G} .worntemp-total .k { color: ${T.inkSoft} !important; text-shadow: none !important; opacity: 1 !important; }
 ${G} .wornac-total .v { color: ${T.red} !important; text-shadow: none !important; opacity: 1 !important; }
+/* AUDIT C&C S4: the Felt plaque's number in the way its reading runs and its frame in its level, as the Plus plaque wears
+   them, in inks deepened for the page (TEMP_INK) - the Armour plaque's red ink painted every reading the colour of a
+   cost; and its costing mark (AUDIT C&C S14) inked on a scrap of the page */
+${G} .worntemp-total .v { color: ${T.ink} !important; text-shadow: none !important; opacity: 1 !important; }
+${G} .worntemp-total[data-side="cold"] .v { color: ${TEMP_INK.cold} !important; }
+${G} .worntemp-total[data-side="hot"] .v { color: ${TEMP_INK.hot} !important; }
+${G} .worntemp-total[data-level="warn"] { border-color: ${TEMP_INK.warn} !important; }
+${G} .worntemp-total[data-level="danger"] { border-color: ${T.red} !important; }
+${G} .worntemp-total[data-level="danger"]::after { color: ${T.red}; background: ${T.cream}; border-color: ${T.red}; text-shadow: none; }
 /* ...and written on it in ink (Dudey, of the quick loot: "no one can read that" - the HUD's pale outlined letters were
    left on the paper): every word dark and flat, the lit row in red, a tier's colour deepened to read on paper */
 ${G} :is(.wplaque, .wplaque-stats), ${G} :is(.wplaque, .wplaque-stats) * { color: ${T.ink} !important; text-shadow: none !important; -webkit-text-stroke: 0 !important; }
@@ -1301,7 +1502,11 @@ ${G} .wplaque-row[data-rarity="rare"] > span:first-child { color: #5c4600 !impor
 ${G} .wplaque-row[data-rarity="legendary"] > span:first-child { color: #9a4210 !important; }
 ${G} .wplaque-row[data-rarity="aetheric"] > span:first-child { color: #1d6a86 !important; }
 ${G} .wplaque-row[data-rarity="artifact"] > span:first-child { color: #5e2a96 !important; }
-${G} .wplaque-row[data-rarity="gilded"] > span:first-child { color: #7a4a00 !important; }
+${G} .wplaque-row[data-rarity="gilded"] > span:first-child { color: #a3122e !important; }
+/* LOOT-MARKS (2026-10-12, a player's video: "seeing rarity in the quickloot is quite hard"): on the page the Rare, the
+   Legendary and the Gilded were three browns - each rolled row now carries its tier's own bright gem, edged in ink, and
+   a wash of its ink tone under it (ui/lootTierMarks.js); the lit row keeps its red bar beside the wash. */
+${tierMarkCss({ scope: G, wash: (k) => RARITY_INK[k], washAlpha: 0.3, edge: T.outline, bang: true })}
 
 /* INK-TONES (2026-10-10, a player: "make the fonts better visible ... the blue and Mora's Mantle ones ... don't make them
    totally different"): a rarity's, a set's and the sigil's words are drawn in their OWN colour - a CSS variable
@@ -1414,11 +1619,11 @@ ${meterCss(['.lv-sky', '.lv-foot'])}
     ${G} .lv-ribbon:has(.lv-sk:nth-child(15)):not(:has(.lv-sk:nth-child(20))) .lv-sk .v { font-size: 32px !important; }
   }
   ${G} .lv-sk { display: grid !important; grid-template-columns: 1fr auto 14px; align-items: baseline; gap: 0 8px; width: auto !important; min-height: 0 !important;
-    padding: 6px 8px !important; border-bottom: 1px dotted rgba(92,56,24,0.45) !important; text-align: left; }
+    padding: 6px 8px !important; border-bottom: 1px solid rgba(92,56,24,0.45) !important; text-align: left; }
   ${G} .lv-sk .n { font-size: 32px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
   ${G} .lv-sk .v { font-size: 32px !important; }
   ${G} .lv-ribbon:has(.lv-sk:nth-child(15)) .lv-sk .n, ${G} .lv-ribbon:has(.lv-sk:nth-child(15)) .lv-sk .v { font-size: 16px !important; }
-  ${G} .lv-sk.on { background: rgba(142,26,16,0.1) !important; box-shadow: inset 3px 0 0 ${T.red} !important; }
+  ${G} .lv-sk.on { background: rgba(142,26,16,0.13) !important; box-shadow: none !important; }
   ${G} .lv-skrole { margin: 8px 0 0; text-align: center; font-size: 16px; }
   ${G} .lv-foot { grid-column: 1 / -1; grid-row: 7; }
 }
@@ -1483,7 +1688,10 @@ ${G} .lv-skrole, ${G} .lv-skrole .g { color: ${T.inkSoft} !important; text-shado
  *  foot on the screen's foot - which keeps the picture's own "Biography" off the top on a 16:9 screen and under the
  *  wordmark on a 16:10 one - and writes its doors on those pages. */
 export const DESK_BOOK = Object.freeze({ x: 75 / 960, y: 208 / 600, w: 755 / 960, h: 372 / 600, spine: 13 / 755 });
-const BOOK_MQ = '(min-width: 900px) and (min-aspect-ratio: 5/4)';
+/** AUDIT UICALM-FIRM1 L3 M1: and tall enough for the two questions' leaves - under PX8's short line the book's fixed type ran
+ *  "Thine Own Tale" into "Offline", its rule through the word and the lines off the page (932x430, 1280x480); there the
+ *  one page held up stands instead, as on a phone */
+const BOOK_MQ = '(min-width: 900px) and (min-aspect-ratio: 5/4) and (min-height: 561px)';
 /** The painted book's spine stands at 388 of its 786 pixels: each half drawn across its own column. */
 export const BOOK_SPINE = 388 / 786;
 export function rosterCss() {
@@ -1515,20 +1723,34 @@ ${G} .px-home:not(.px-over):not(.lv-sky) .px-rule { display: none; }
   ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) > .px-stage:not(.px-acctstage) { display: block; padding: 0; }
   ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-wordmark { position: absolute; left: 50%; top: max(4px, calc(var(--gby) + var(--gbh) * 0.005));
     translate: -50% 0; width: min(calc(var(--gbw) * 0.3), 470px); z-index: 1; filter: drop-shadow(0 6px 10px rgba(0,0,0,0.6)); }
+  /* UI-CALM (ui/enhanced/enhancedMenu.js drawDoors): THE BOOK'S TWO LEAVES ARE THE DOOR'S TWO PAGES - the two questions, The
+     Realm (Online) on the left and Thine Own Tale (Offline) on the right, each its own head, its word and a line in a
+     smaller hand under it; the offline level its games on the left and the way back on the right; Settings and
+     Overhauls two small plaques across the foot of the book */
   ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu {
     position: absolute; box-sizing: border-box;
     left: calc(var(--gbx) + var(--gbw) * ${B.x.toFixed(4)}); top: calc(var(--gby) + var(--gbh) * ${B.y.toFixed(4)});
     width: calc(var(--gbw) * ${B.w.toFixed(4)}); height: calc(var(--gbh) * ${B.h.toFixed(4)});
     padding: calc(var(--gbh) * 0.05) calc(var(--gbw) * 0.045) calc(var(--gbh) * 0.04);
-    display: grid; grid-template-columns: 1fr 1fr; column-gap: calc(var(--gbw) * 0.09); grid-template-rows: auto repeat(4, minmax(0, auto));
-    grid-auto-flow: column; align-content: start; row-gap: calc(var(--gbh) * 0.012); }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu::before,
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu::after {
-    grid-row: 1; justify-self: center; padding-bottom: calc(var(--gbh) * 0.012); margin-bottom: calc(var(--gbh) * 0.012);
-    font-family: ${GRIMOIRE_STACK}; font-size: 32px; color: ${ink3};
-    ${RULE_UNDER} width: 80%; text-align: center; }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu::before { content: 'Thy Journey'; grid-column: 1; }
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu::after { content: 'The Realm'; grid-column: 2; }
+    display: grid; grid-template-columns: 1fr 1fr; column-gap: calc(var(--gbw) * 0.09); grid-template-rows: minmax(0, 1fr) auto;
+    align-content: stretch; row-gap: calc(var(--gbh) * 0.012); }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .px-page { display: flex; flex-direction: column; align-items: center; justify-content: flex-start; gap: calc(var(--gbh) * 0.012);
+    grid-row: 1; min-height: 0; min-width: 0; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .px-page:first-of-type { grid-column: 1; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .px-page + .px-page { grid-column: 2; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .px-pagehead { display: block; margin: 0 0 calc(var(--gbh) * 0.012); padding-bottom: calc(var(--gbh) * 0.012);
+    font-family: ${GRIMOIRE_STACK}; font-weight: normal; font-size: 32px; letter-spacing: 0; text-transform: none; color: ${ink3};
+    ${RULE_UNDER} width: 80%; text-align: center; text-shadow: none; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .px-pagenote { display: block; margin: 0; font-family: ${GRIMOIRE_STACK}; font-size: 22px; line-height: 1.2; color: ${T.ink};
+    opacity: 0.8; text-align: center; text-shadow: none; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu[data-level="top"] .px-page { justify-content: center; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu[data-level="top"] .px-pagehead { margin-bottom: calc(var(--gbh) * 0.03); }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu[data-level="top"] .doorbtn { font-size: 48px; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .door-word { gap: calc(var(--gbh) * 0.006); }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .door-sub { font-family: ${GRIMOIRE_STACK}; font-size: 22px; line-height: 1.2; letter-spacing: 0; text-transform: none;
+    color: ${T.ink}; opacity: 0.78; text-shadow: none; max-width: 15em; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn:hover .door-sub, ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn:focus-visible .door-sub { color: ${T.red}; text-shadow: none; opacity: 1; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn.door-back { margin-top: auto; font-size: 26px; }
   ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn {
     width: auto; min-height: 0; margin: 0; padding: calc(var(--gbh) * 0.006) 0.4em; justify-content: center;
     background: none; border: 0; border-radius: 0; box-shadow: none; translate: none; filter: none;
@@ -1536,14 +1758,13 @@ ${G} .px-home:not(.px-over):not(.lv-sky) .px-rule { display: none; }
   ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn .px-c { display: none; }
   ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn:hover,
   ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn:focus-visible {
-    background: none; color: ${T.red}; text-decoration: underline dotted rgba(142,26,16,0.7); text-underline-offset: 0.18em; outline: none; }
+    background: none; color: ${T.red}; text-decoration: none; outline: none; }   /* UI-CALM: the red ink alone, no dotted rule */
   ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn:disabled { background: none; filter: none; color: rgba(43,26,12,0.38); text-shadow: none; }
   ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-foot { position: absolute; left: 0; right: 0; bottom: 0; }
 }
 @media ${BOOK_MQ} and (min-height: 1250px) {
   ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn,
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu::before,
-  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu::after { font-size: 48px; }
+  ${G}:not([data-grim-backdrop="map"]) .px-home:not(.px-over):not(.lv-sky) .px-menu .px-pagehead { font-size: 48px; }
 }
 /* the map, or a screen too narrow for the book: the doors on one page, held up over it */
 @media not all and ${BOOK_MQ} {
@@ -1553,6 +1774,107 @@ ${G} .px-home:not(.px-over):not(.lv-sky) .px-rule { display: none; }
 ${G}[data-grim-backdrop="map"] .px-home:not(.px-over):not(.lv-sky) .px-menu { background: ${PAGE}; padding: 22px 26px; gap: 4px;
   border: 2px solid; border-image: ${v('frame')} ${FRAME_ART.band} / ${FRAME_ART.band}px / ${FRAME_ART.band - 14}px round; box-shadow: 6px 10px 26px rgba(0,0,0,0.65); }
 ${G} .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn .px-c { display: none; }
+/* AUDIT UICALM-FIRM1 L3 M8: a phone's rail is the page it is written on - the shell's phone rule laid it on the dark,
+   under the page's ink ("Main menu" read at 1.29:1) */
+@media (max-width: 860px), (pointer: coarse) { ${G} .shell:not(.wizard) .rail { background: ${PAGE} !important; } }
+/* UI-CALM: the shell's rail - Offline's word a small head in the page's red over its four, never read as a door */
+${G} .rail .railgroup { margin: 18px 24px 2px; font-family: ${GRIMOIRE_STACK}; font-size: 16px; letter-spacing: 0.04em; text-transform: none;
+  color: ${T.redDeep}; border-bottom: 1px solid rgba(43,26,12,0.25); padding-bottom: 2px; }   /* AUDIT UICALM-FIRM1 L3 M8: the deep red, whole - its 0.85 of the red read at 3.4:1 */
+/* UI-CALM II (2026-10-14, a player: "cheap letters, overlapping, dotted lines everywhere, the highlighting of words is
+   bad, the summary board looks cut off"): THE WALK IN THE PACK'S OWN HAND. A question's answers are leaves of the
+   pack's parchment in its frame, the word in ink and the chosen one in its red with a red line inside the frame -
+   never a yellow word on the bare desk with a rule under it; a press in the bar is a plate, its word cream, the way on
+   in the yellow; the map's names are parchment tags, the chosen one red; no word on the walk wears a rule under it or a
+   doubled shadow. */
+${G} .wizard .choose h2 { color: ${T.cream} !important; font-size: 32px !important; letter-spacing: 0 !important; text-shadow: 0 2px 0 rgba(0,0,0,0.65) !important; }
+${G} .wizard .choose h2::before, ${G} .wizard .choose h2::after { display: none; }
+${G} .wizard .bigchoice .bigbtn, ${G} .wizard .bigchoice .bigbtn[data-grim-on] { background: ${PAGE} !important; border: 2px solid !important;
+  border-image: ${v('frame')} ${FRAME_ART.band} / ${FRAME_ART.band}px / 0 round !important; border-radius: 0 !important;
+  color: ${T.ink} !important; text-shadow: none !important; text-decoration: none !important; font-size: 32px !important;
+  box-shadow: 4px 6px 14px rgba(0,0,0,0.55) !important; filter: none !important; translate: none !important; }
+${G} .wizard .bigchoice .bigbtn .bigk { color: ${T.ink} !important; font-size: 32px !important; text-shadow: none !important; }
+${G} .wizard .bigchoice .bigbtn .bign { color: ${T.inkSoft} !important; font-size: 16px !important; text-shadow: none !important; }
+${G} .wizard .bigchoice .bigbtn:hover, ${G} .wizard .bigchoice .bigbtn:focus-visible,
+${G} .wizard .bigchoice .bigbtn:hover .bigk, ${G} .wizard .bigchoice .bigbtn:focus-visible .bigk { color: ${T.red} !important; outline: none !important; }
+${G} .wizard .bigchoice .bigbtn.on, ${G} body .wizard .stagebody .bigchoice .bigbtn.bigbtn.on.on[data-grim-on]:not(:hover):not(:focus-visible) { color: ${T.red} !important; box-shadow: inset 0 0 0 3px rgba(142,26,16,0.7), 4px 6px 14px rgba(0,0,0,0.55) !important; }
+${G} .wizard .bigchoice .bigbtn.on .bigk, ${G} body .wizard .stagebody .bigchoice .bigbtn.on .bigk.bigk { color: ${T.red} !important; }
+/* the presses on the walk - the bar's, a card's, a stage's own - are plates on the desk; on a card, the card's ink */
+${G} .wizard :is(.actionbar, .choose .acts, .skillpane .acts) .act, ${G} .wizard :is(.actionbar, .choose .acts, .skillpane .acts) .act[data-grim-on] {
+  background: rgba(28,17,8,0.72) !important; border: 2px solid rgba(239,220,174,0.32) !important; border-image: none !important; border-radius: 0 !important;
+  color: ${T.cream} !important; text-decoration: none !important; text-shadow: none !important; font-size: 16px !important; line-height: 20px !important;
+  padding: 8px 22px !important; min-height: 40px !important; box-shadow: none !important; filter: none !important; translate: none !important; }
+${G} .wizard :is(.actionbar, .choose .acts, .skillpane .acts) .act.primary { border-color: ${T.yellowDeep} !important; color: ${T.yellow} !important; }
+${G} .wizard :is(.actionbar, .choose .acts, .skillpane .acts) .act:hover:not(:disabled), ${G} .wizard :is(.actionbar, .choose .acts, .skillpane .acts) .act:focus-visible {
+  background: rgba(70,42,18,0.85) !important; border-color: ${T.cream} !important; color: #fff6dc !important; outline: none !important; }
+${G} .wizard :is(.actionbar, .choose .acts, .skillpane .acts) .act:disabled { opacity: 0.45 !important; }
+${G} .wizard :is(.actionbar, .choose .acts, .skillpane .acts) .act.primary:disabled { opacity: 0.85 !important; }   /* AUDIT UICALM-FIRM1 L3 M5: a way on that waits reads ("18 left to spend") */
+${G} .wizard .actionbar { background: rgba(20,12,5,0.72) !important; border-top: 2px solid rgba(239,220,174,0.16) !important; }
+${G} .wizard .dcard .acts .act, ${G} .wizard .dcard .acts .act[data-grim-on] { background: none !important; border: 2px solid rgba(92,56,24,0.55) !important;
+  border-image: none !important; color: ${T.ink} !important; text-decoration: none !important; text-shadow: none !important;
+  font-size: 16px !important; padding: 6px 14px !important; min-height: 0 !important; box-shadow: none !important; filter: none !important; translate: none !important; }
+${G} .wizard .dcard .acts .act.primary { border-color: ${T.red} !important; color: ${T.red} !important; }
+${G} .wizard .dcard .acts .act:hover, ${G} .wizard .dcard .acts .act:focus-visible { background: rgba(142,26,16,0.1) !important; color: ${T.redHi} !important; outline: none !important; }
+${G} .wizard .dcard p { text-shadow: none !important; }
+/* the name: a line of the page to write on, and Suggest one a plate under it */
+${G} .wizard .choose .namebox { background: ${PAGE} !important; color: ${T.ink} !important; font-size: 32px !important; text-shadow: none !important;
+  border: 2px solid ${T.outline} !important; box-shadow: inset 0 0 0 2px rgba(92,56,24,0.35), 4px 6px 14px rgba(0,0,0,0.5) !important; caret-color: ${T.red}; }
+${G} .wizard .choose .namebox:focus { box-shadow: inset 0 0 0 2px ${T.red}, 4px 6px 14px rgba(0,0,0,0.5) !important; }
+/* the faces: frames on the desk, the chosen one ringed in the yellow */
+${G} .wizard .facegrid button.on { outline: 3px solid ${T.yellowDeep} !important; outline-offset: 2px; }
+/* the walk's lists (classes, attributes, skills) on the desk's wood, a row's word cream and its line the tan */
+${G} .wizard .stagebody > .list, ${G} .wizard .stagebody.solo > .skillpane { border: 2px solid transparent !important;
+  border-image: ${v('frame')} ${FRAME_ART.band} / ${FRAME_ART.band}px / 0 round !important; box-shadow: 6px 10px 26px rgba(0,0,0,0.55) !important;
+  padding: 14px 16px !important; box-sizing: border-box; }
+/* the chosen row on the wood: the pack's yellow at its edge and a lighter grain - not a box round the row and its presses */
+${G} .wizard .list .row.on, ${G} .wizard .skillpane .row.on { outline: none !important; border-color: transparent !important;
+  background: linear-gradient(90deg, rgba(244,224,76,0.16), rgba(244,224,76,0.03) 70%) !important; box-shadow: inset 3px 0 0 ${T.yellow} !important; }
+${G} .wizard .list .row.on .row-name, ${G} .wizard .skillpane .row.on .row-name { color: ${T.yellow} !important; }
+/* CURSOR-EDGE: the walk's scrollers in the dress's own ::-webkit-scrollbar (the wood's lit grain; the card's ink on its
+   parchment) - the standard pair only where that is not, or Chromium draws the native one */
+${G} .wizard::-webkit-scrollbar-thumb, ${G} .wizard ::-webkit-scrollbar-thumb { background: ${T.woodLit}; }
+${G} .wizard .dcard::-webkit-scrollbar-thumb, ${G} .wizard .dcard ::-webkit-scrollbar-thumb { background: rgba(92,56,24,0.6); }
+@supports not selector(::-webkit-scrollbar) {
+${G} .wizard, ${G} .wizard * { scrollbar-width: thin; scrollbar-color: ${T.woodLit} transparent; }
+${G} .wizard .dcard, ${G} .wizard .dcard * { scrollbar-color: rgba(92,56,24,0.6) transparent; } }
+${G} .wizard .stagebody.solo > .skillpane { background: ${WOOD(0.32)}; }
+${G} .wizard .row-name { color: ${T.cream} !important; text-shadow: 0 1px 0 rgba(0,0,0,0.6) !important; }
+${G} .wizard .row-sub { color: #d6b98a !important; text-shadow: none !important; }
+${G} .wizard .classlist .classway { color: ${T.yellow} !important; border-bottom: 2px solid rgba(200,165,42,0.4) !important; text-shadow: none !important; }
+/* the class's bars in the page's own ink and red (AUDIT UICALM-FIRM1 L5 L3: the calm sheet's dark bar and its amber
+   stood on the page) */
+${G} .wizard .cprof-bar { border-color: rgba(43,26,12,0.55); background: rgba(43,26,12,0.12); }
+${G} .wizard .cprof-fill { background: ${T.redDeep}; }
+/* the map of Tamriel: its lands parchment-pale on the desk, the chosen one in the red; the names parchment tags */
+${G} .wizard .prov { fill: rgba(227,201,149,0.2); stroke: rgba(239,220,174,0.5); stroke-width: 0.7; }
+${G} .wizard .prov.hot:not(.inert), ${G} .wizard .prov:not(.inert):hover { fill: rgba(227,201,149,0.38); stroke: ${T.cream}; }
+${G} .wizard .prov.on { fill: rgba(142,26,16,0.5); stroke: ${T.goldLeaf}; stroke-width: 1; }
+${G} .wizard .prov.inert { fill: rgba(0,0,0,0.28); stroke: rgba(239,220,174,0.2); }
+${G} .wizard .maplabel { background: ${PAGE} !important; color: ${T.ink} !important; font-size: 16px !important; line-height: 18px !important;
+  border: 1px solid ${T.outline} !important; text-shadow: none !important; text-decoration: none !important; box-shadow: 0 2px 0 rgba(0,0,0,0.5) !important; }
+${G} .wizard .maplabel.hot, ${G} .wizard .maplabel:hover, ${G} .wizard .maplabel:focus-visible { color: ${T.red} !important; outline: none !important; }
+${G} .wizard .maplabel.on { background: ${T.red} !important; color: ${T.cream} !important; }
+${G} .wizard .maplabel.inert { background: none !important; border: 0 !important; box-shadow: none !important; color: rgba(239,220,174,0.55) !important; font-style: normal; }
+/* UI-CALM II: THE SETTINGS LIST ON THE DESK - every option one line of the wood, a Features row no longer a plate of
+   its own among bare rows; the tags under a name in the tan, no boxes; the card beside the list clear of the top */
+${G} .panes.opt .opt-body .ft-tile { background: none !important; border: 0 !important; border-image: none !important; box-shadow: none !important;
+  border-bottom: 1px solid rgba(239,220,174,0.12) !important; margin: 0 !important; filter: none !important; }
+${G} .panes.opt .opt-body .ft-tile:hover, ${G} .panes.opt .opt-body .ft-tile.sel { background: rgba(0,0,0,0.22) !important; }
+${G} .panes.opt .opt-body > .row { border-bottom: 1px solid rgba(239,220,174,0.12) !important; }
+${G} .panes.opt .kind { background: none !important; border: 0 !important; box-shadow: none !important; padding: 0 !important; color: #d6b98a !important; text-shadow: none !important; }
+${G} .panes.opt .sec-head { border-bottom: 2px solid rgba(200,165,42,0.35) !important; }
+${G} .panes.opt .sec-head .count { color: #c9a66b !important; text-shadow: none !important; }
+@media (min-width: 861px) { ${G} .panes.opt > .detail { padding-top: 18px !important; box-sizing: border-box; } }
+/* UI-CALM: on the one page held up (the map, a narrow screen) the level's head, its line and each door's line are the
+   page's own ink - the heads in its red, the lines in its brown; the book's leaves say the same at their own size */
+${G} .px-home:not(.px-over):not(.lv-sky) .px-menu .px-pagehead { font-family: ${GRIMOIRE_STACK}; font-weight: normal; font-size: 26px;
+  letter-spacing: 0; text-indent: 0; text-transform: none; color: ${ink3}; text-shadow: none; }
+${G} .px-home:not(.px-over):not(.lv-sky) .px-menu .px-pagenote, ${G} .px-home:not(.px-over):not(.lv-sky) .px-menu .door-sub {
+  font-family: ${GRIMOIRE_STACK}; font-size: 18px; letter-spacing: 0; text-transform: none; color: ${T.ink}; opacity: 0.8; text-shadow: none; }
+${G} .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn.door-back { font-size: 22px; letter-spacing: 0; text-indent: 0; }
+${G} .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn { justify-content: center; background: none; border: 0; border-radius: 0; box-shadow: none;
+  translate: none; filter: none; letter-spacing: 0; text-indent: 0; color: ${T.ink}; text-shadow: 0 1px 0 rgba(255,240,205,0.45); }
+${G} .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn:hover, ${G} .px-home:not(.px-over):not(.lv-sky) .px-menu .doorbtn:focus-visible {
+  background: none; color: ${T.red}; text-decoration: none; outline: none; }   /* UI-CALM: the red ink alone, no dotted rule */
 ${G} .px-home:not(.px-over):not(.lv-sky) .px-wordmark { background: radial-gradient(ellipse 60% 55% at 50% 45%, rgba(28,17,8,0.92) 35%, rgba(28,17,8,0) 72%); }
 
 /* THE INVENTORY - the pack's own: its wooden tab plates in one row across the top, the jewellery down the left as
@@ -1575,9 +1897,24 @@ ${G} .px-home:not(.px-over):not(.lv-sky) .px-wordmark { background: radial-gradi
   ${G} .pack-shell .wornshelf { grid-area: shelf; flex-direction: column; justify-content: space-between; gap: 6px; margin: 0; padding: 4px 0; }
   ${G} .pack-shell .shelfgrp { flex: 0 0 auto; gap: 2px; }
   ${G} .pack-shell .shelflabel { font-size: 14px; color: #e3c27a; text-shadow: 1px 1px 0 ${T.outline}, 2px 2px 0 rgba(0,0,0,0.5); }
+  /* BELT-LANTERN: the column holds seven groups now (the Lantern's under the Crystals) - each socket is the column's height
+     shared out (--shelf-n, the groups drawn: the shelf's own count) less the names, never past the 56px box it was, so
+     the column never runs under the band at any window's height */
+  ${G} .pack-shell .wornshelf { container-type: size; gap: 2px; padding: 2px 0; }
+  ${G} .pack-shell .wornshelf { --sock: min(56px, calc((100cqh - var(--shelf-n, 6) * 19px - (var(--shelf-n, 6) - 1) * 2px) / var(--shelf-n, 6))); }
+  ${G} .pack-shell .shelfpair { width: auto; max-width: none; grid-template-columns: repeat(2, var(--sock)); justify-content: center; }
+  ${G} .pack-shell .shelfpair.shelfone { grid-template-columns: var(--sock); }
+  ${G} .pack-shell .wornsock { width: var(--sock); height: var(--sock); max-height: none; aspect-ratio: auto; }
+  ${G} .pack-shell .shelflabel { line-height: 17px; }
   ${G} .pack-shell .packlists { grid-area: list; min-height: 0; padding: 8px; background: rgba(14,8,3,0.55);
     border: 2px solid; border-color: ${T.outline} ${T.woodLit} ${T.woodLit} ${T.woodMid}; box-shadow: inset 2px 3px 8px rgba(0,0,0,0.55); }
   ${G} .pack-shell .charcol > :not(.equipped):not(.wornshelf), ${G} .pack-shell .pack-dock > :not(.packcats):not(.packlists) { grid-column: 2 / 4; }
+  /* SET-ROW (2026-10-11, Mac: "this shouldnt happen the inventory box next to the paperdoll shouldnt get smaller aswell"):
+     the worn sets' lines stood in a row of their own across the doll AND the goods, and the goods' box gave up their
+     height. They are the doll's: a row under the doll alone, the goods' box running down beside them to the band */
+  ${G} .pack-shell .pack:has(> .pack-main .setstrip, .setstrip) { grid-template-rows: auto minmax(0, 1fr) auto;
+    grid-template-areas: "tabs tabs tabs" "shelf doll list" "shelf sets list"; }
+  ${G} .pack-shell .charcol > .setstrip { grid-area: sets !important; margin: 0 !important; min-width: 0; }
 }
 /* THE BOOKS - a window that is a list beside a page (the character and system window, the spellbook, the chronicle)
    is the pack's open book laid on its desk: the list on the left-hand page, the page it opens on the right, the spine
@@ -1600,7 +1937,12 @@ ${G} .px-journal { gap: 0; position: relative; flex: 1 1 auto; min-height: 0 !im
 ${G} .px-journal > .px-qrail { ${bookPage('left')} flex: 0 0 auto; width: 31%; min-width: min(${px(84)}, 44%); max-width: 44%; min-height: 0; overflow-y: auto; overflow-x: hidden; box-shadow: none;
   padding: ${px(1)} 0 ${px(1)} ${px(1)}; border-right-width: ${px(BG - 7)}; }
 ${G} .px-journal > .px-qdetail { ${bookPage('right')} flex: 1 1 0; min-width: 0; min-height: 0; overflow-y: auto; overflow-x: hidden; box-shadow: none;
-  padding: ${px(2)} ${px(2)} ${px(1)} ${px(2)}; }
+  padding: ${px(2)} calc(${px(2)} + ${px(BG - BO)}) ${px(1)} ${px(2)}; }
+/* PAGE-CENTRE (2026-10-12, a player: "on the pause menu, the elements on the right-hand menu seem to be skewed very far to
+   the right instead of centered on the page"): the right-hand page's 9-slice gives its gutter edge BG of the pack's
+   pixels and its outer edge BO, so what was written on it stood the gutter's width in from the spine and a hair from the
+   page's edge. The outer side takes the difference as padding: the writing stands as far from the edge as from the
+   spine, in the middle of the page. */
 ${G} .px-journal .px-qrow { color: ${T.ink}; min-width: 0; }
 /* a page scrolls down, never across (Dudey: "the spellbook has 2 scrollbars"): a long name wraps, its cost keeps its place */
 ${G} .px-journal .px-qrail .px-qrow { overflow-wrap: anywhere; } ${G} .px-journal .px-qrail .sb-cost { flex: 0 0 auto; padding-left: ${px(2)}; }
@@ -1619,7 +1961,7 @@ ${G} .px-win:has(> .px-body > .px-journal) > .px-tabs button.on { ${TAB_ON_CSS} 
 ${meterCss(['.px-journal'])}
 
 /* a question's answers are written on its scroll, not stood on a plank across it */
-${G} .dlg-win .dlg-acts { background: none !important; border-color: rgba(92,56,24,0.55) !important; border-top-style: dotted !important; box-shadow: none !important; }
+${G} .dlg-win .dlg-acts { background: none !important; border-color: rgba(92,56,24,0.55) !important; border-top-style: solid !important; box-shadow: none !important; }
 ${G} .dlg-win .dlg-btn { background: none !important; border-color: transparent !important; box-shadow: none !important; border-radius: 0;
   color: #f4e04c !important; text-shadow: ${YELLOW_EDGE} !important; font-size: 16px !important; line-height: 24px !important; }
 ${G} .dlg-win .dlg-btn:hover, ${G} .dlg-win .dlg-btn:focus-visible { color: #fff27a !important; background: none !important; }
@@ -1640,7 +1982,7 @@ ${at(['.pack-shell .packtip > .card', '.inv-tip > .card', '.inv-menu', '.inv-inf
 /* what you can do with the item is the pack's own parchment strip - Wagon, Info, Equip, Remove, Use, Gold - big words
    written down the scroll, one under the other, the one it is for in red; no boxes, no plates, no frames */
 ${G} .pack-shell .packtip > .card .acts, ${G} .inv-info > .card .acts { display: flex !important; flex-flow: row wrap !important;
-  justify-content: center !important; align-items: center !important; gap: 0 10px !important; border-top: 2px dotted rgba(92,56,24,0.55) !important; padding-top: 6px !important; margin-top: 6px !important; }
+  justify-content: center !important; align-items: center !important; gap: 0 10px !important; border-top: 2px solid rgba(92,56,24,0.55) !important; padding-top: 6px !important; margin-top: 6px !important; }
 ${G} .pack-shell .packtip > .card .acts .act, ${G} .inv-menu button, ${G} .inv-menu .act, ${G} .inv-info > .card .acts .act {
   background: none !important; border: 0 !important; box-shadow: none !important; border-radius: 0 !important; outline: none;
   flex: 0 0 auto !important; width: auto !important; min-width: 0 !important; max-width: none !important; min-height: 0 !important; height: auto !important; margin: 0 !important; padding: 0 6px !important;
@@ -1652,6 +1994,12 @@ ${G} .pack-shell .packtip > .card .acts .act:hover, ${G} .pack-shell .packtip > 
 ${G} .inv-menu button:hover, ${G} .inv-menu button:focus-visible, ${G} .inv-info > .card .acts .act:hover { color: ${T.redHi} !important; background: none !important; }
 ${G} .pack-shell .packtip > .card .acts .act:disabled, ${G} .inv-menu button:disabled { color: rgba(43,26,12,0.35) !important; }
 ${G} .pack-shell .packtip > .card h3, ${G} .inv-tip > .card h3 { font-size: 32px !important; color: ${T.red} !important; text-shadow: none !important; }
+/* HUD-TIP / STATUS-TIPS: the HUD's hover card is the pack's scroll - its name in red, a smaller hand than an item's; what
+   it does in ink, the time left in the softer ink under a rule */
+${G} .inv-tip.hud-tip > .card h3 { font-size: 22px !important; }
+${G} .inv-tip.hud-tip .meta { color: ${T.inkSoft} !important; text-shadow: none !important; }
+${G} .inv-tip.hud-tip .hud-tip-line { color: ${T.ink} !important; text-shadow: none !important; font-size: 15px; }
+${G} .inv-tip.hud-tip .hud-tip-foot { color: ${T.inkSoft} !important; text-shadow: none !important; border-top-color: rgba(92,56,24,0.55) !important; box-shadow: none !important; }
 
 /* THE SCROLLS - a question or a short choice (the rest window, a yes or no) is the pack's list-picker scroll, its two
    rods top and foot; the rest's three ways to rest are written across it in a row, as the pack's Rest scroll writes
@@ -1928,7 +2276,7 @@ ${G} .px-setwrap .detail.open h3 { color: ${T.red} !important; font-size: 32px !
 ${G} .px-setwrap .detail.open :is(p, li) { color: ${T.ink} !important; text-shadow: none !important; line-height: 20px; }
 ${G} .px-setwrap .detail.open .status { color: ${T.inkSoft} !important; }
 ${G} .px-setwrap .detail.open code { display: inline-block; background: none !important; color: ${T.inkSoft} !important; border: 0 !important; padding: 0 !important; outline: none !important; box-shadow: none !important;
-  border-top: 2px dotted rgba(92,56,24,0.45) !important; padding-top: ${px(1)} !important; text-shadow: none !important; }
+  border-top: 2px solid rgba(92,56,24,0.45) !important; padding-top: ${px(1)} !important; text-shadow: none !important; }
 ${G} .px-setwrap .detail.open > .sheet-close { order: 2; align-self: center; width: auto !important; min-height: 0 !important; margin: ${px(3, 'gq')} 0 0 !important;
   padding: 0 ${px(3, 'gq')} !important; background: none !important; border: 0 !important; box-shadow: none !important; border-image: none !important;
   color: ${T.red} !important; letter-spacing: 0 !important; text-transform: none !important; text-shadow: none !important; font-size: 16px !important; line-height: 24px; }
@@ -1949,7 +2297,7 @@ ${G} .shell .detail > :is(.dcard, .card) h3 { color: ${T.red} !important; font-s
 ${G} .shell .detail > :is(.dcard, .card) :is(p, li) { color: ${T.ink} !important; text-shadow: none !important; line-height: 20px; }
 ${G} .shell .detail > :is(.dcard, .card) .status { color: ${T.inkSoft} !important; }
 ${G} .shell .detail > :is(.dcard, .card) code { display: inline-block; background: none !important; color: ${T.inkSoft} !important; border: 0 !important; outline: none !important;
-  box-shadow: none !important; padding: ${px(1)} 0 0 !important; border-top: 2px dotted rgba(92,56,24,0.45) !important; text-shadow: none !important; }
+  box-shadow: none !important; padding: ${px(1)} 0 0 !important; border-top: 2px solid rgba(92,56,24,0.45) !important; text-shadow: none !important; }
 
 /* SETTINGS-SCROLL (2026-10-11, a video of the book's Settings: "when scrolling up and down the text is overlapped and
    hidden except for a small section"): THE KEYS' HEAD STICKS AS ONE LINE. In the book the settings scroll is a short
@@ -1991,7 +2339,7 @@ export const grimoireKitCss = () => snapCss(`${faceCss()}\n${kitCss()}\n${roster
 /** Every whole-pixel font size in a sheet moved to the face's grid (the kit's own, so it obeys its own law). */
 export const snapCss = (css) => css.replace(/font-size:\s*([\d.]+)px/g, (m, n) => `font-size: ${snapSize(+n)}px`);
 /** HUD-CLASS: the sheet evaluated once, as the dress lays it - the text the audit of the game's sheets reads
- *  (test/hudclass_sheets.test.js: a sheet whose selectors are built where it is laid is read only as an export). Pure:
+ *  (test/ui/naval/hudclass_sheets.test.js: a sheet whose selectors are built where it is laid is read only as an export). Pure:
  *  the card's choices are the root's attributes, never a rebuild. */
 export const GRIMOIRE_KIT_CSS = grimoireKitCss();
 
@@ -2018,6 +2366,7 @@ export function mountGrimoireDress(doc = globalThis.document) {
   root.dataset.grimBackdrop = grimoireBackdrop();
   root.dataset.grimVitals = grimoireVitals();
   root.dataset.grimSpellbook = grimoireSpellbook();
+  root.dataset.grimDial = grimoireDial();   // DIAL-PACK
   let kit = doc.getElementById(GRIM_KIT_ID);
   if (!kit) { kit = doc.createElement('style'); kit.id = GRIM_KIT_ID; kit.textContent = GRIMOIRE_KIT_CSS; }
   let ink = doc.getElementById(GRIM_INK_ID);
@@ -2106,6 +2455,12 @@ export function setGrimoireVitals(id, doc = globalThis.document) {
   if (!Object.hasOwn(GRIMOIRE_VITALS, id)) return false;
   setPref('grimoireVitals', id);
   if (doc?.documentElement?.dataset) doc.documentElement.dataset.grimVitals = id;
+  return true;
+}
+export function setGrimoireDial(id, doc = globalThis.document) {
+  if (!Object.hasOwn(GRIMOIRE_DIALS, id)) return false;
+  setPref('grimoireDial', id);
+  if (doc?.documentElement?.dataset) doc.documentElement.dataset.grimDial = id;
   return true;
 }
 export function setGrimoireSpellbook(id, doc = globalThis.document) {

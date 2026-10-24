@@ -1,47 +1,47 @@
 [
   {
     "name": "NAVBAKE-coarsened-again",
-    "file": "src/ai/navBake.js",
+    "file": "src/ai/nav/navBake.js",
     "old": "  const ag = agent;\n  const cols = trianglesToColliders(",
     "new": "  const ag = { ...agent, cs: agent.cs * 2.5 };\n  const cols = trianglesToColliders(",
     "tests": [
-      "test/enhancedAI.test.js"
+      "test/ai/nav/enhancedAI.test.js"
     ]
   },
   {
     "name": "NAVBAKE-two-rings-of-erosion",
-    "file": "src/ai/navBake.js",
+    "file": "src/ai/nav/navBake.js",
     "old": "export const SOUP_AGENT = Object.freeze({ ...AGENT, radius: AGENT.cs });",
     "new": "export const SOUP_AGENT = Object.freeze({ ...AGENT });",
     "tests": [
-      "test/enhancedAI.test.js"
+      "test/ai/nav/enhancedAI.test.js"
     ]
   },
   {
     "name": "NAVBAKE-doors-kept-in-the-soup",
-    "file": "src/ai/navBake.js",
+    "file": "src/ai/nav/navBake.js",
     "old": "    if (exclude && exclude.has(key)) continue;\n",
     "new": "",
     "tests": [
-      "test/enhancedAI.test.js"
+      "test/ai/nav/enhancedAI.test.js"
     ]
   },
   {
     "name": "NAVBAKE-player-anchor-only",
-    "file": "src/ai/navBake.js",
+    "file": "src/ai/nav/navBake.js",
     "old": ", ...landAnchors(chf, anchors ?? [])];",
     "new": "];",
     "tests": [
-      "test/enhancedAI.test.js"
+      "test/ai/nav/enhancedAI.test.js"
     ]
   },
   {
     "name": "NAVBAKE-anchors-unlanded-tolerance",
-    "file": "src/ai/navBake.js",
+    "file": "src/ai/nav/navBake.js",
     "old": "        if (dy <= tol && (!best || dy < best.dy))",
     "new": "        if ((!best || dy < best.dy))",
     "tests": [
-      "test/enhancedAI.test.js"
+      "test/ai/nav/enhancedAI.test.js"
     ]
   },
   {
@@ -50,16 +50,16 @@
     "old": "export const FLAT_EPS = 1e-4;",
     "new": "export const FLAT_EPS = 0;",
     "tests": [
-      "test/enhancedAI.test.js"
+      "test/ai/nav/enhancedAI.test.js"
     ]
   },
   {
     "name": "NAVBAKE-phantom-plane-back",
-    "file": "src/ai/navBake.js",
+    "file": "src/ai/nav/navBake.js",
     "old": "  let nav = buildNav(cols, ag, [], { at: () => -Infinity, min: floor });",
     "new": "  let nav = buildNav(cols, ag, [], { at: () => floor, min: floor });",
     "tests": [
-      "test/enhancedAI.test.js"
+      "test/ai/nav/enhancedAI.test.js"
     ]
   },
   {
@@ -68,95 +68,95 @@
     "old": "exclude: new Set([...actions.objects.values()].filter((o) => isActionDoorObject(o) && !(o.currentLockValue > 0)).map((o) => o.key)), key: _locationKey })",
     "new": "exclude: null, key: _locationKey })",
     "tests": [
-      "test/enhancedAI.test.js"
+      "test/ai/nav/enhancedAI.test.js"
     ]
   },
   {
     "name": "NAVBAKE-worker-death-bakes-here",
-    "file": "src/ai/navClient.js",
+    "file": "src/ai/nav/navClient.js",
     "old": "    if (!result && this._hadWorker && input.tris >= DEGENERATE_MIN_TRIS) {",
     "new": "    if (false) {",
     "tests": [
-      "test/enhancedAI.test.js"
+      "test/ai/nav/enhancedAI.test.js"
     ]
   },
   {
     "name": "NAVBAKE-cache-version-unbumped",
-    "file": "src/ai/navClient.js",
+    "file": "src/ai/nav/navClient.js",
     "old": "export const NAV_BAKE_VERSION = 4;",
     "new": "export const NAV_BAKE_VERSION = 3;",
     "tests": [
-      "test/audit62_enhancedai.test.js"
+      "test/ai/nav/audit62_enhancedai.test.js"
     ]
   },
   {
     "name": "NAVBAKE-the-worker-drops-the-union",
-    "file": "src/ai/navWorker.js",
+    "file": "src/ai/nav/navWorker.js",
     "old": "anchors: m.anchors ?? null,",
     "new": "anchors: null,",
     "tests": [
-      "test/enhancedAI.test.js",
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/enhancedAI.test.js",
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
     "name": "NAVBAKE-the-client-sends-the-worker-no-union",
-    "file": "src/ai/navClient.js",
+    "file": "src/ai/nav/navClient.js",
     "old": "this._ask({ t: 'bake', floor: input.minY - 10, anchor, anchors, agent }, input)",
     "new": "this._ask({ t: 'bake', floor: input.minY - 10, anchor, agent }, input)",
     "tests": [
-      "test/enhancedAI.test.js",
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/enhancedAI.test.js",
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
     "name": "NAVBAKE-the-key-forgets-the-union",
-    "file": "src/ai/navClient.js",
+    "file": "src/ai/nav/navClient.js",
     "old": "const u = anchors?.length ? `:u${anchors.length}.${(h >>> 0).toString(36)}` : '';",
     "new": "const u = '';",
     "tests": [
-      "test/enhancedAI.test.js",
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/enhancedAI.test.js",
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
     "name": "NAVBAKE-an-anchor-lands-in-its-own-column-only",
-    "file": "src/ai/navBake.js",
+    "file": "src/ai/nav/navBake.js",
     "old": "for (let r = 0; r <= 1 && !best; r++)",
     "new": "for (let r = 0; r <= 0 && !best; r++)",
     "tests": [
-      "test/enhancedAI.test.js",
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/enhancedAI.test.js",
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
     "name": "NAVBAKE-an-anchor-lands-on-an-eroded-span",
-    "file": "src/ai/navBake.js",
+    "file": "src/ai/nav/navBake.js",
     "old": "        if (!s.walkable) continue;\n        const y = chf.ymin",
     "new": "        const y = chf.ymin",
     "tests": [
-      "test/enhancedAI.test.js",
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/enhancedAI.test.js",
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
     "name": "NAVBAKE-the-anchor-tolerance-ten-times-over",
-    "file": "src/ai/navBake.js",
+    "file": "src/ai/nav/navBake.js",
     "old": "export const ANCHOR_Y_TOLERANCE = 0.6;",
     "new": "export const ANCHOR_Y_TOLERANCE = 6;",
     "tests": [
-      "test/enhancedAI.test.js",
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/enhancedAI.test.js",
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   },
   {
     "name": "NAVBAKE-no-ring-of-erosion",
-    "file": "src/ai/navBake.js",
+    "file": "src/ai/nav/navBake.js",
     "old": "export const SOUP_AGENT = Object.freeze({ ...AGENT, radius: AGENT.cs });",
     "new": "export const SOUP_AGENT = Object.freeze({ ...AGENT, radius: 0 });",
     "tests": [
-      "test/enhancedAI.test.js",
-      "test/audit0928_nav.test.js"
+      "test/ai/nav/enhancedAI.test.js",
+      "test/ai/nav/audit0928_nav.test.js"
     ]
   }
 ]

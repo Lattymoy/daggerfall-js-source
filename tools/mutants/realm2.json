@@ -5,7 +5,7 @@
     "old": "      if (!r.ok && r.error === 'seq' && r.seq === current + 1 && unsure) {",
     "new": "      if (false) {",
     "tests": [
-      "test/realm2.test.js"
+      "test/server/realm2.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      if (!pending) pending = job;\n",
     "new": "",
     "tests": [
-      "test/realm2.test.js"
+      "test/server/realm2.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (lost) return Promise.resolve({ ok: false, error: lost });\n",
     "new": "",
     "tests": [
-      "test/realm2.test.js"
+      "test/server/realm2.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      if (!keepalive) { if (running) await running; if (pending) await session.checkpoint(pending.text, pending.summary); }\n",
     "new": "",
     "tests": [
-      "test/realm2.test.js"
+      "test/server/realm2.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      lost = 'left';\n",
     "new": "",
     "tests": [
-      "test/realm2.test.js"
+      "test/server/realm2.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (error === 'auth') forgetSession(io.storage);",
     "new": "    void forgetSession;",
     "tests": [
-      "test/realm2.test.js"
+      "test/server/realm2.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "...(summary ? { 'x-realm-summary': headerJson(summary) } : {})",
     "new": "...({})",
     "tests": [
-      "test/realm2.test.js"
+      "test/server/realm2.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "export const REALM_LOST = Object.freeze(['lease', 'no-realm-character', 'auth', 'signed-out']);",
     "new": "export const REALM_LOST = Object.freeze(['no-realm-character', 'auth', 'signed-out']);",
     "tests": [
-      "test/realm2.test.js"
+      "test/server/realm2.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "        pending = { text, summary, waiters: [...(pending?.waiters ?? []), settle] };\n        if (!running)",
     "new": "        pending = pending ? { ...pending, waiters: [...pending.waiters, settle] } : { text, summary, waiters: [settle] };\n        if (!running)",
     "tests": [
-      "test/realm2.test.js"
+      "test/server/realm2.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "method, headers, body: json ? JSON.stringify(json) : (raw ?? undefined), ...(keepalive ? { keepalive: true } : {}),",
     "new": "method, headers, body: json ? JSON.stringify(json) : (raw ?? undefined),",
     "tests": [
-      "test/realm2.test.js"
+      "test/server/realm2.test.js"
     ]
   }
 ]

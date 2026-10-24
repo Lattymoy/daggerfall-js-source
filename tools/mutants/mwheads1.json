@@ -1,0 +1,263 @@
+[
+  {
+    "name": "MWHEADS1-the-data-pools-again",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "  if (own && (!has || [...own.heads, ...own.hairs].every((r) => has(`meshes/${r.model}`)))) return { heads: own.heads, hairs: own.hairs };\n",
+    "new": "",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "facePools forgets the port's own: a Breton man walks and is curated over Morrowind's own Breton heads again, the three heads never worn."
+  },
+  {
+    "name": "MWHEADS1-women-wear-them",
+    "file": "src/characters/ownModels/ownHeadModels.js",
+    "old": "  return byRace?.[female ? 'female' : 'male'] ?? null;",
+    "new": "  return byRace?.male ?? null;",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "A Breton woman wears a man's head and hair - the batch is the men's."
+  },
+  {
+    "name": "MWHEADS1-the-pools-out-of-order",
+    "file": "src/characters/ownModels/ownHeadModels.js",
+    "old": "['breton_m_head_h04', 'breton_m_head_h0411', 'breton_m_head_h0423']",
+    "new": "['breton_m_head_h0411', 'breton_m_head_h04', 'breton_m_head_h0423']",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "The heads out of id order: the walk lands each seed on another face than facePools' law gives every other race's."
+  },
+  {
+    "name": "MWHEADS1-a-hair-is-a-head",
+    "file": "src/characters/ownModels/ownHeadModels.js",
+    "old": "id, model: `${id}.nif`, race, part: PART[slot], female,",
+    "new": "id, model: `${id}.nif`, race, part: 0, female,",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "Every record names MW_BODY_PARTS' head, the hairs too."
+  },
+  {
+    "name": "MWHEADS1-the-scene-placement-kept",
+    "file": "tools/bakeHeads.mjs",
+    "old": "  const off = (v, k) => +(v - t[k]).toFixed(6);",
+    "new": "  const off = (v, k) => +(v - (k === 2 ? 0 : t[k])).toFixed(6);",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "The owner's scene height kept: every part 125 over the Head node, floating over the body."
+  },
+  {
+    "name": "MWHEADS1-the-face-read-as-the-hair",
+    "file": "tools/bakeHeads.mjs",
+    "old": "part('breton_m_head_h04', 'breton', 'head', 'b_n_breton_m_hair_widow', 1,",
+    "new": "part('breton_m_head_h04', 'breton', 'head', 'b_n_breton_m_hair_widow', 0,",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "The h04 face read off the widow object's hair material: the export names that material the hair's picture, and the bake refuses it."
+  },
+  {
+    "name": "MWHEADS1-every-polygon-baked",
+    "file": "tools/fbxMesh.mjs",
+    "old": "    if (wears && wears(pi) !== material) continue;   // MW-HEADS1: another picture's polygon",
+    "new": "    if (wears && wears(pi) === -1) continue;   // MW-HEADS1: another picture's polygon",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "A material's bake takes the object's other picture's polygons too: a head wearing its hair's geometry in the face's painting."
+  },
+  {
+    "name": "MWHEADS1-the-eyepatch-on-another-portrait",
+    "file": "src/formats/mwFaceTable.json",
+    "old": "      \"6\": {\n        \"head\": \"breton_m_head_h0411\",",
+    "new": "      \"6\": {\n        \"head\": \"breton_m_head_h04\",",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "Daggerfall's eyepatched Breton, portrait 6, wears a face with two eyes."
+  },
+  {
+    "name": "MWHEADS1-the-viewer-sheets-the-data",
+    "file": "src/tools/mwViewer.js",
+    "old": "      if (ownFacePools(race.id, female)) { own.push(`${race.id} ${female ? 'female' : 'male'}`); continue; }\n",
+    "new": "",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "The face sheet the table is authored against draws Morrowind's Breton men's heads, which no Breton man wears."
+  },
+  {
+    "name": "MWHEADS1-two-eyepatches",
+    "file": "tools/bakeHeads.mjs",
+    "old": "  breton_m_head_h04: 'src/assets/mw/source/Breton_Head_H04.png',",
+    "new": "  breton_m_head_h04: 'src/assets/mw/source/Breton_Head_H0411.png',",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "The eyepatch painted onto h04, whose layout reads both sides of the face from one half of the painting: a face with two eyepatches."
+  },
+  {
+    "name": "MWHEADS1-AUDIT-own-pools-without-their-meshes",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "  if (own && (!has || [...own.heads, ...own.hairs].every((r) => has(`meshes/${r.model}`)))) return",
+    "new": "  if (own) return",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "AUDIT MW-HEADS1 L2-F5: the port's own pools stand whatever the archives carry - a page whose own archive did not load draws a Breton man with no head and no hair."
+  },
+  {
+    "name": "MWHEADS1-AUDIT-one-mesh-is-enough",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "[...own.heads, ...own.hairs].every((r) => has(",
+    "new": "[...own.heads, ...own.hairs].some((r) => has(",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "One own mesh present stands the whole pool: a face walks onto a part no archive carries."
+  },
+  {
+    "name": "MWHEADS1-AUDIT-rows-ignore-the-archives",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "  const pools = facePools(parts, race, female, { has, own: ownHeads });\n",
+    "new": "  const pools = facePools(parts, race, female, { own: ownHeads });\n",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "The rows choose among the own pools whatever the archives carry, while the match was told otherwise."
+  },
+  {
+    "name": "MWHEADS1-AUDIT-third-body-ignores-the-archives",
+    "file": "src/combat/fpArm.js",
+    "old": "{ beast, faceIndex, faceMatch, vampire, walk, has: exists, ownHeads });",
+    "new": "{ beast, faceIndex, faceMatch, vampire, walk, ownHeads });",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "The third-person body walks the own pools with no archive under them: no head and no hair."
+  },
+  {
+    "name": "MWHEADS1-AUDIT-match-pools-ignore-the-archives",
+    "file": "src/combat/fpArm.js",
+    "old": "const pools = werewolf || npcFace ? null : facePools(parts, race, female, { has: archiveHas(archives), own: ownHeads });",
+    "new": "const pools = werewolf || npcFace ? null : facePools(parts, race, female, { own: ownHeads });",
+    "tests": [
+      "test/tooling/mwheads1.test.js",
+      "test/formats/morrowind/fparm.test.js"
+    ],
+    "note": "The match, its skip and its key read the own pools where the rows read the data's."
+  },
+  {
+    "name": "MWHEADS1-AUDIT-the-match-measured-anyway",
+    "file": "src/combat/fpArm.js",
+    "old": "} else if (curatedAnswersFace(pools, race, female, faceIndex)) {",
+    "new": "} else if (false) {",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "AUDIT MW-HEADS1 L2-F6: every Breton man's build reads his portrait and measures all six own parts for a verdict the curated table overrides."
+  },
+  {
+    "name": "MWHEADS1-AUDIT-one-curated-half-is-enough",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "  return !!c && !!poolRecord(pools.heads, c.head) && !!poolRecord(pools.hairs, c.hair);",
+    "new": "  return !!c && !!poolRecord(pools.heads, c.head);",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "A table naming the head alone stands the match down, and the hair falls to the walk."
+  },
+  {
+    "name": "MWHEADS1-AUDIT-counts-the-data",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "      counts: { all: sorted.length },",
+    "new": "      counts: { all: 0 },",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "AUDIT MW-HEADS1 L2-F7: the head and hair rows count something other than the pool they chose among."
+  },
+  {
+    "name": "MWHEADS1-AUDIT-key-without-the-pools",
+    "file": "src/combat/fpArm.js",
+    "old": ":${fnv(print)}:${fnv(measured)}` : null;",
+    "new": ":${fnv(print)}` : null;",
+    "tests": [
+      "test/formats/morrowind/mwload_records.test.js"
+    ],
+    "note": "AUDIT MW-HEADS1 L2-F6: a verdict kept over one pool is read back over another - the data's heads' verdict over the port's own."
+  },
+  {
+    "name": "MWHEADS1-AUDIT-hairs-named-heads",
+    "file": "src/characters/ownModels/ownHeadModels.js",
+    "old": "  hairs: Object.freeze(hairs.map((id) => record(race, female, 'hair', id))),",
+    "new": "  hairs: Object.freeze(hairs.map((id) => record(race, female, 'head', id))),",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "AUDIT MW-HEADS1 L3-F4: every hair record a head's - slot and part both, so a pin relating the two passed it."
+  },
+  {
+    "name": "MWHEADS1-AUDIT-box-minimum-only",
+    "file": "tools/bakeHeads.mjs",
+    "old": "Math.abs(mesh.bounds.max[k] - p.box[1][k])]);",
+    "new": "0]);",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "AUDIT MW-HEADS1 L3-F6: a re-export whose crown moved is baked as read."
+  },
+  {
+    "name": "MWHEADS1-AUDIT-paths-heads-only",
+    "file": "src/characters/ownModels/ownHeadModels.js",
+    "old": "  .flatMap((p) => [...p.heads, ...p.hairs])",
+    "new": "  .flatMap((p) => [...p.heads])",
+    "tests": [
+      "test/tooling/mwheads1.test.js"
+    ],
+    "note": "AUDIT MW-HEADS1 L3-F10: the coverage walk forgets the hairs - and the ships pin, which walked the helper's own list, passed it."
+  },
+  {
+    "name": "MWHEADS1-AUDIT-a-material-reads-its-first-texture",
+    "file": "tools/fbxMesh.mjs",
+    "old": "node(texs.find((c) => c.props[3] === 'DiffuseColor') ?? texs[0])",
+    "new": "node(texs[0])",
+    "tests": [
+      "test/tooling/fbxmesh.test.js"
+    ],
+    "note": "AUDIT MW-HEADS1 L3-F9: a material whose first texture is not its diffuse one bakes that one's picture."
+  },
+  {
+    "name": "MWHEADS1-AUDIT-any-mapping-read-as-one",
+    "file": "tools/fbxMesh.mjs",
+    "old": "throw new Error(`LayerElementMaterial: MappingInformationType ${map} is not ByPolygon or AllSame`);",
+    "new": "return () => ids[0];",
+    "tests": [
+      "test/tooling/fbxmesh.test.js"
+    ],
+    "note": "AUDIT MW-HEADS1 L3-F9: a material layer mapped some other way read as one material for every polygon."
+  },
+  {
+    "name": "MWHEADS1-AUDIT-no-layer-read-as-material-0",
+    "file": "tools/fbxMesh.mjs",
+    "old": "if (!layer) throw new Error('the Geometry carries no LayerElementMaterial - there is no material to bake alone');",
+    "new": "if (!layer) return () => 0;",
+    "tests": [
+      "test/tooling/fbxmesh.test.js"
+    ],
+    "note": "AUDIT MW-HEADS1 L3-F9: a Geometry with no material layer baked as material 0's."
+  },
+  {
+    "name": "MWHEADS1-AUDIT-a-short-material-list-read",
+    "file": "tools/fbxMesh.mjs",
+    "old": "    if (ids.length !== polygons) throw",
+    "new": "    if (false) throw",
+    "tests": [
+      "test/tooling/fbxmesh.test.js"
+    ],
+    "note": "AUDIT MW-HEADS1 L1-F9: a material list shorter than the polygons read as it stands - the polygons past it dropped from every bake."
+  }
+]

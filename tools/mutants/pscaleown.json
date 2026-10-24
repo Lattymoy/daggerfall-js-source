@@ -5,7 +5,7 @@
     "old": "    return isRoomFoe(f) || f._ownFrom != null || ownRides(f);   // REST-SYNC",
     "new": "    return isRoomFoe(f) || f._ownFrom != null;   // REST-SYNC",
     "tests": [
-      "test/pscaleown.test.js"
+      "test/scenes/quest/pscaleown.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    return isRoomFoe(f) || f._ownFrom != null || ownRides(f);   // REST-SYNC",
     "new": "    return isRoomFoe(f) || ownRides(f);   // REST-SYNC",
     "tests": [
-      "test/pscaleown.test.js"
+      "test/scenes/quest/pscaleown.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  function _runsFoe(f) { return f._ownFrom == null && (_authority || ownRides(f)); }",
     "new": "  function _runsFoe(f) { return _authority || ownRides(f); }",
     "tests": [
-      "test/pscaleown.test.js"
+      "test/scenes/quest/pscaleown.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  function _runsFoe(f) { return f._ownFrom == null && (_authority || ownRides(f)); }",
     "new": "  function _runsFoe(f) { return f._ownFrom == null && _authority; }",
     "tests": [
-      "test/pscaleown.test.js"
+      "test/scenes/quest/pscaleown.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  function fightN(f) { return _runsFoe(f) ?",
     "new": "  function fightN(f) { return _authority ?",
     "tests": [
-      "test/pscaleown.test.js"
+      "test/scenes/quest/pscaleown.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    const h = _runsFoe(f) && _sharedFoe(f) ? partyFoeHeals(f, n, fightN(f)) : n;",
     "new": "    const h = _authority && _sharedFoe(f) ? partyFoeHeals(f, n, fightN(f)) : n;",
     "tests": [
-      "test/pscaleown.test.js"
+      "test/scenes/quest/pscaleown.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    const h = _runsFoe(f) && _sharedFoe(f) ? partyFoeHeals(f, n, fightN(f)) : n;",
     "new": "    const h = _sharedFoe(f) ? partyFoeHeals(f, n, fightN(f)) : n;",
     "tests": [
-      "test/pscaleown.test.js"
+      "test/scenes/quest/pscaleown.test.js"
     ]
   }
 ]

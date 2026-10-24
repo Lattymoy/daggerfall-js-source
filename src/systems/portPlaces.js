@@ -7,13 +7,14 @@
 //
 // THE PLACES. A port town (a city, a town or a village that is a port by its own data - `portTownByData`: Travel Options'
 // hand-written harbours or Daggerfall's PortTownAndUnknown byte, never a seat's members' harbour, which is one guild's
-// word, so every client stands the same shipyard) stands two of its own, on
+// word, so every client stands the same shipyard - and that the open sea bears on: world/portSites.js portTownOnSea,
+// FIELD BUGS 2026-10-14 INLAND-PORTS) stands two of its own, on
 // its seaward ground (world/portSites.js - Mac chose "the town's seaward edge", placed off the town's layout like the
 // Stables): a SHIPYARD, the shipmaster's - with its CREW HALL inside its fence, where the crewmaster signs hands on -
 // and a LIGHTHOUSE, the lightkeeper's. Its DOCKS are the harbour's quays, found off the terrain (systems/naval/quays.js).
 // Like the yards they are not buildings: no building record, no deed, no quest place; each is found by a row of the
 // town's directory under a key no Daggerfall building can hold (`foundBuildingKey`), its ground and its name on the town
-// maps (world/merchantYardMap.js), and a mark on the Overworld (scenes/portHost.js).
+// maps (world/merchantYards/merchantYardMap.js), and a mark on the Overworld (scenes/portHost.js).
 //
 // WHO KEEPS THEM: a person of the town's own people, named on the region's bank off a seed of the town's map id and the
 // place's own salt (systems/merchantYards.js townKeeper - the yards' one draw), so every client meets the same
@@ -24,7 +25,7 @@
 // systems/shipyards.js; the recruits systems/crewHall.js. Pure: no DOM, no renderer, no clock. Not a DFU member. Ledger A
 // (SHIPYARDS).
 import { LOCATION_TYPES } from '../formats/mapsFile.js';
-import { YARD_KIND_ORDER, YARD_TALK_GROUPS, YARD_KEY_BASE, YARD_QUALITY, townSeed, townKeeper, namedAfter } from './merchantYards.js';
+import { YARD_KIND_ORDER, CRAFT_YARD_ORDER, YARD_TALK_GROUPS, YARD_KEY_BASE, YARD_QUALITY, townSeed, townKeeper, namedAfter } from './merchantYards.js';
 
 /** The two places a port town's layout stands, in the order they are placed (world/portSites.js). */
 export const PORT_SITE_ORDER = Object.freeze(['shipyard', 'lighthouse']);
@@ -39,7 +40,7 @@ export const PORT_PLACE_ORDER = Object.freeze(['shipyard', 'crewhall', 'lighthou
 export const PORT_PLACES = Object.freeze({
   shipyard: Object.freeze({ key: 'shipyard', title: 'Shipyard', keeper: 'Shipmaster', trade: 'Ships sold, bought back, mended and refitted', sign: 'SHIPS', seed: 0x5419a7, group: 'Shipyards' }),
   crewhall: Object.freeze({ key: 'crewhall', title: 'Crew Hall', keeper: 'Crewmaster', trade: 'Hands signed on for any ship', sign: 'CREW', seed: 0x0c4e11, group: 'Crew halls' }),
-  lighthouse: Object.freeze({ key: 'lighthouse', title: 'Lighthouse', keeper: 'Lightkeeper', trade: 'The harbour\'s light', sign: '', seed: 0x011947, group: 'Lighthouses' }),
+  lighthouse: Object.freeze({ key: 'lighthouse', title: 'Lighthouse', keeper: 'Lightkeeper', trade: 'The harbor\'s light', sign: '', seed: 0x011947, group: 'Lighthouses' }),
   docks: Object.freeze({ key: 'docks', title: 'Docks', keeper: '', trade: 'Ships made fast and cargo landed', sign: '', seed: 0x00d0c5, group: 'Docks' }),
 });
 /** A place the law knows, or null. */
@@ -50,19 +51,26 @@ export const validPortSite = (k) => (PORT_SITE_ORDER.includes(/** @type {any} */
 /** The towns that stand the port's places: the cities, towns and villages the port's harbour law calls ports (the
  *  host's `isPort` - its map pixel's port). No farm, manor, temple or dungeon stands a shipyard. */
 export const PORT_TOWN_TYPES = Object.freeze([LOCATION_TYPES.TownCity, LOCATION_TYPES.TownHamlet, LOCATION_TYPES.TownVillage]);
-/** Whether a location stands the port's places: a town of PORT_TOWN_TYPES that `isPort` says is a port. */
-export const isPortTown = (loc, isPort) => PORT_TOWN_TYPES.includes(loc?.mapTableData?.locationType) && !!isPort;
+/** Whether a map table's location type is a town's (PORT_TOWN_TYPES) - the half of `isPortTown` a map summary answers
+ *  alone (FIELD BUGS 2026-10-13c PORT-TOWNS: the harbour board's ports, scenes/world.js navalPortList). Pure.
+ *  @param {number} type */
+export const isPortTownType = (type) => PORT_TOWN_TYPES.includes(/** @type {any} */ (type));
+/** Whether a location stands the port's places: a town of PORT_TOWN_TYPES that `isPort` says is a port (the host's
+ *  portOnSea - world/portSites.js portTownOnSea: a port by its data that the open sea bears on). */
+export const isPortTown = (loc, isPort) => isPortTownType(loc?.mapTableData?.locationType) && !!isPort;
 /** Whether a location is a port by its own data - `hasPort(mapId)` (Travel Options' hand-written harbours, travelPorts.js)
- *  or Daggerfall's PortTownAndUnknown byte (scenes/world.js portByData; AUDIT SHIPYARDS L6-10: executed here, not read
- *  off world.js's text). Pure. */
+ *  or Daggerfall's PortTownAndUnknown byte (AUDIT SHIPYARDS L6-10: executed here, not read off world.js's text) - the
+ *  data's half of world/portSites.js portTownOnSea. The data alone is no coast (FIELD BUGS 2026-10-14 INLAND-PORTS): the
+ *  byte's 0x10 is the region capitals' mark, and the table copied the byte's list. Pure. */
 export const portTownByData = (loc, hasPort) => !!hasPort?.(loc?.mapTableData?.mapId) || (loc?.exterior?.exteriorData?.portTownAndUnknown ?? 0) !== 0;
 
 /**
  * THE FOUND PLACES' ONE ORDER (YARDS-FOUND's law, widened): the town's yards (systems/merchantYards.js), then the port's
  * places - the Where-is page's groups after the shops, and each one's key in the town's directory: YARD_KEY_BASE and its
  * place here, so the Stable and the Wagon Yard keep the keys they had (YARD_KEY_BASE + 0, + 1) and the port's follow.
+ * CARP-YARD: the professions' yards last (the joinery's YARD_KEY_SLOT is its place here), so every key before it stays.
  */
-export const FOUND_KIND_ORDER = Object.freeze([...YARD_KIND_ORDER, ...PORT_PLACE_ORDER]);
+export const FOUND_KIND_ORDER = Object.freeze([...YARD_KIND_ORDER, ...PORT_PLACE_ORDER, ...CRAFT_YARD_ORDER]);
 /** The Where-is page's group of each found place. */
 export const FOUND_TALK_GROUPS = Object.freeze({
   ...YARD_TALK_GROUPS,
@@ -100,7 +108,7 @@ export function portPlaceName(place, { keeperName = '', townName = '' } = {}) {
 }
 
 /**
- * A PORT TOWN'S PLACES AS ROWS OF ITS TALK DIRECTORY - YARDS-FOUND's shape (systems/talkTopics.js
+ * A PORT TOWN'S PLACES AS ROWS OF ITS TALK DIRECTORY - YARDS-FOUND's shape (systems/talk/talkTopics.js
  * buildBuildingDirectory's: `name`, `buildingType`, `factionId`, `quality`, `position` in the location frame,
  * `buildingKey`), `yard` its place (the Where-is page groups by it, as it does the yards). `places` the host's -
  * `{ kind, x, z, name }` in the location frame (scenes/world.js portPlacesFor: the shipyard, its crew hall, the

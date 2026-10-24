@@ -6,7 +6,7 @@
     "new": "    if (!it || it.untaken === true || !rarityEligible(it) || !(entity.equip?.slots ?? []).includes(it)) return;",
     "why": "the kit found by the table's objects again - no foe restored from a save rolls it",
     "tests": [
-      "test/audit625_loot.test.js"
+      "test/systems/audit625_loot.test.js"
     ]
   },
   {
@@ -16,17 +16,17 @@
     "new": "    const piece = Object.assign(it, { untaken: true });",
     "why": "the table's own piece laddered - a foe revived in place swings it",
     "tests": [
-      "test/audit625_loot.test.js"
+      "test/systems/audit625_loot.test.js"
     ]
   },
   {
     "name": "AUDIT625-L3-the-boss-ladder",
     "file": "src/systems/foeLootCap.js",
-    "old": "entity.level, entity.mobileType), boss: false, weights: plainFoeRarityWeights() };",
-    "new": "entity.level, entity.mobileType), weights: plainFoeRarityWeights() };",
+    "old": "entity.level, entity.mobileType), boss: false, weights: plainFoeRarityWeights(quarters) };",
+    "new": "entity.level, entity.mobileType), weights: plainFoeRarityWeights(quarters) };",
     "why": "a boss's kit on its multiplied ladder",
     "tests": [
-      "test/audit625_loot.test.js"
+      "test/systems/audit625_loot.test.js"
     ]
   },
   {
@@ -36,7 +36,7 @@
     "new": "  if (!lootRarityOn() || !entity || !Array.isArray(entity.items)) return [];",
     "why": "a revenant's list - a player's own pieces - laddered at its death",
     "tests": [
-      "test/audit625_loot.test.js"
+      "test/systems/audit625_loot.test.js"
     ]
   },
   {
@@ -46,7 +46,7 @@
     "new": "    const tier = rollRarity({ ...source, find }, rolls);",
     "why": "the player's luck unread",
     "tests": [
-      "test/audit625_loot.test.js"
+      "test/systems/audit625_loot.test.js"
     ]
   },
   {
@@ -56,7 +56,7 @@
     "new": "    const tier = rollRarity({ ...source, luck }, rolls);",
     "why": "the finders unread",
     "tests": [
-      "test/audit625_loot.test.js"
+      "test/systems/audit625_loot.test.js"
     ]
   },
   {
@@ -66,7 +66,7 @@
     "new": "  return minted;",
     "why": "the door's last pass skipped",
     "tests": [
-      "test/audit625_loot.test.js"
+      "test/systems/audit625_loot.test.js"
     ]
   },
   {
@@ -76,7 +76,7 @@
     "new": "applyRarity(piece, tier, rolls, null, { family: null })",
     "why": "the foe's family unread at a Legendary's pick",
     "tests": [
-      "test/audit625_loot.test.js"
+      "test/systems/audit625_loot.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "new": "stampWonWeapons(f.entity.items, f._fightN ?? 1); dropFoeCard(f.entity); }",
     "why": "a joiner's copy of a body past its cap",
     "tests": [
-      "test/audit625_loot.test.js"
+      "test/systems/audit625_loot.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "new": "addCorpseFood(f.entity, { luck: liveStat(playerEntity, 'luck') }); stampWonWeapons(f.entity.items, 1); dropFoeCard(f.entity); }",
     "why": "an arrival's copy of a body past its cap",
     "tests": [
-      "test/audit625_loot.test.js"
+      "test/systems/audit625_loot.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "new": "",
     "why": "an Ember Jar's fire sent as a campfire",
     "tests": [
-      "test/audit625_loot.test.js"
+      "test/systems/audit625_loot.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "new": "",
     "why": "a peer's copy of a jar a plain campfire",
     "tests": [
-      "test/audit625_loot.test.js"
+      "test/systems/audit625_loot.test.js"
     ]
   },
   {
@@ -126,7 +126,7 @@
     "new": " };",
     "why": "the jar dropped by the record's projection",
     "tests": [
-      "test/audit625_loot.test.js"
+      "test/systems/audit625_loot.test.js"
     ]
   },
   {
@@ -136,67 +136,67 @@
     "new": "",
     "why": "a jar's field outside its law taken",
     "tests": [
-      "test/audit625_loot.test.js"
+      "test/systems/audit625_loot.test.js"
     ]
   },
   {
     "name": "AUDIT625-L6-the-keep-edge",
     "file": "src/scenes/hostCombat.js",
-    "old": "isGoldPieces(it) || rolls() < keep);",
-    "new": "isGoldPieces(it) || rolls() <= keep);",
+    "old": "if (isGoldPieces(it) || rolls() < keep) return true;",
+    "new": "if (isGoldPieces(it) || rolls() <= keep) return true;",
     "why": "a roll on the keep's own threshold kept",
     "tests": [
-      "test/renownloot.test.js"
+      "test/systems/renownloot.test.js"
     ]
   },
   {
     "name": "AUDIT625-W1-the-wallet-stands",
-    "file": "src/systems/decorItems.js",
+    "file": "src/systems/decor/decorItems.js",
     "old": "  if (isBagItem(item) || isPackOnly(item)) return null;",
     "new": "  if (isBagItem(item)) return null;",
     "why": "the decorate panel sets the wallet out of the pack",
     "tests": [
-      "test/audit625_wallet.test.js"
+      "test/systems/audit625_wallet.test.js"
     ]
   },
   {
     "name": "AUDIT625-W2-the-wallet-taken",
-    "file": "src/systems/revenant.js",
+    "file": "src/systems/revenant/revenant.js",
     "old": "!isPackOnly(item) && !isLocked(item);",
     "new": "!isLocked(item);",
     "why": "a revenant takes the wallet",
     "tests": [
-      "test/audit625_wallet.test.js"
+      "test/systems/audit625_wallet.test.js"
     ]
   },
   {
     "name": "AUDIT625-W3-the-sheet-buttons-again",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    for (const it of w.held) rows.append(itemRow(it));",
     "new": "    for (const it of w.held) { const b = el('button', 'act walletpiece', itemLine(it, deps.entity).name); b.onclick = () => { picked = it; side = 'local'; notice = null; render(); }; rows.append(b); }",
     "why": "a held piece a button that only opens its card",
     "tests": [
-      "test/audit625_wallet.test.js"
+      "test/systems/audit625_wallet.test.js"
     ]
   },
   {
     "name": "AUDIT625-W3-the-tiles-unframed",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": ".pack-shell .walletpieces .itemrow[data-rarity], .pack-shell .pack-dock .itemrow[data-rarity] {",
     "new": ".pack-shell .pack-dock .itemrow[data-rarity] {",
     "why": "the sheet's tiles without the tier's frame",
     "tests": [
-      "test/audit625_wallet.test.js"
+      "test/systems/audit625_wallet.test.js"
     ]
   },
   {
     "name": "AUDIT625-W3-the-tiles-unlaid",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".pack-shell .walletsheet .walletpieces { display: flex; flex-wrap: wrap; gap: 6px; padding: 6px 0 2px; }",
     "new": "",
     "why": "the sheet's tiles unlaid",
     "tests": [
-      "test/audit625_wallet.test.js"
+      "test/systems/audit625_wallet.test.js"
     ]
   },
   {
@@ -206,7 +206,7 @@
     "new": "silverWhy: Number.isSafeInteger(silver) ? null : 'offline',",
     "why": "online and not known yet, the offline words",
     "tests": [
-      "test/audit625_wallet.test.js"
+      "test/systems/audit625_wallet.test.js"
     ]
   },
   {
@@ -216,7 +216,7 @@
     "new": "silverWhy: Number.isSafeInteger(silver) ? null : !here ? 'offline' : 'asking',",
     "why": "an account that holds none said to be asking",
     "tests": [
-      "test/audit625_wallet.test.js"
+      "test/systems/audit625_wallet.test.js"
     ]
   },
   {
@@ -226,7 +226,7 @@
     "new": "",
     "why": "the host's none read as not known yet",
     "tests": [
-      "test/audit625_wallet.test.js"
+      "test/systems/audit625_wallet.test.js"
     ]
   },
   {
@@ -236,7 +236,7 @@
     "new": "",
     "why": "a look while an ask is out asks again beside it",
     "tests": [
-      "test/audit625_wallet.test.js"
+      "test/systems/audit625_wallet.test.js"
     ]
   },
   {
@@ -246,7 +246,7 @@
     "new": "    return { kind: 'used', name: r.name, result: res };",
     "why": "the hotbar never asks the silver",
     "tests": [
-      "test/audit625_wallet.test.js"
+      "test/systems/audit625_wallet.test.js"
     ]
   },
   {
@@ -256,7 +256,7 @@
     "new": "",
     "why": "a day-old account's loot find struck",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "new": "!strikesFor(player, env) || ",
     "why": "a day-old account's harvest finds silver",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -276,7 +276,7 @@
     "new": "player.registered_at <= nowS - WITNESS.ageS + 86_400;",
     "why": "six days registered taken for a week",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -286,17 +286,17 @@
     "new": "          void 0;   // AUDIT 625 S1",
     "why": "a young account asked again the same day",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
     "name": "AUDIT625-S1-young-owed",
     "file": "src/net/marksBook.js",
-    "old": "          held = error;\n        } else if (error === 'marks-need-account'",
-    "new": "          owe(f); held = error;\n        } else if (error === 'marks-need-account'",
+    "old": "          held = error;   // INT16: nor a character not seated here, nor one whose trade is held - none of these finds is owed\n        } else if (error === 'marks-need-account'",
+    "new": "          owe(f); held = error;   // INT16: nor a character not seated here, nor one whose trade is held - none of these finds is owed\n        } else if (error === 'marks-need-account'",
     "why": "a young account's find owed",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -306,7 +306,7 @@
     "new": "          keepOwed(); return out;   // AUDIT 625 S3",
     "why": "the switch shut drops the find and every owed behind it",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -316,7 +316,7 @@
     "new": "const FIND_KEPT = Object.freeze(['offline', 'server']);",
     "why": "no session, or a session refused, drops the find",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -326,7 +326,7 @@
     "new": "      return out;",
     "why": "the owed never kept - a reload loses them",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -336,7 +336,7 @@
     "new": "v.map(",
     "why": "the store's list believed whole",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -346,7 +346,7 @@
     "new": "          void 0;   // its hour spent",
     "why": "the rest asked behind a spent hour",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "new": "return s ? call(",
     "why": "a find posted under the account signed in since",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -366,7 +366,7 @@
     "new": "post('/v1/marks/find', { kind, rid }),",
     "why": "the door forgets the find's account",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -376,7 +376,7 @@
     "new": "door.find(f.kind, f.rid)",
     "why": "the book hands no account",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -386,7 +386,7 @@
     "new": "            void w;   // a refused pack (null) opened nothing",
     "why": "an interior's treasure never rolls",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -396,7 +396,7 @@
     "new": "`int:${pile.containerKey}`",
     "why": "every tavern's treasure:0 one container",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -406,7 +406,7 @@
     "new": "const _find = pile.items.length\n",
     "why": "a pile the player dropped rolls",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -416,7 +416,7 @@
     "new": "",
     "why": "World of Daggerfall's and Deep Waters' containers never roll",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -426,7 +426,7 @@
     "new": "    return kind === 'corpse' ? foes[i] : lootPiles[i];",
     "why": "a re-entry rolls every container again",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -436,7 +436,7 @@
     "new": "`${place}:${canon}` : `${place}:${canon}`;",
     "why": "a foe raised and slain again a body already rolled",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -446,7 +446,7 @@
     "new": "      if (_find) silverFindAt(_find.kind, _find.key);",
     "why": "a refused pack rolls the dungeon's find",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -456,7 +456,7 @@
     "new": "  openWindow(corpseLootHooks(entry)); silverFindAt('corpse', entry);",
     "why": "a refused pack rolls a body's find",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -466,7 +466,7 @@
     "new": "        void w;   // AUDIT 625 D6",
     "why": "the street's door answers no open",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -476,7 +476,7 @@
     "new": "  const findCapped = null;",
     "why": "the loot find's capped accounts uncounted",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
@@ -486,27 +486,27 @@
     "new": "GROUP BY dst_id, day HAVING SUM(amount) >= ?3)`).bind(kind, from, MARKS_FAUCETS.find.perDay)",
     "why": "the gathering's cap read as the loot's",
     "tests": [
-      "test/silverfinds_service.test.js"
+      "test/net/silverfinds_service.test.js"
     ]
   },
   {
     "name": "AUDIT625-S7-the-peer-arrows-rolled",
-    "file": "src/scenes/exteriorFoes.js",
+    "file": "src/scenes/bodyLootHost.js",
     "old": "if (n > 0 && !arrows) silverFindAt('corpse', f);",
     "new": "if (n > 0) silverFindAt('corpse', f);",
     "why": "a peer's arrows alone roll silver",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
     "name": "AUDIT625-S1-the-sentence-unsaid",
     "file": "src/net/accountClient.js",
-    "old": "  'marks-young': 'Silver turns up in finds and gathering once your account is a week old.',",
+    "old": "  'marks-young': () => t('account.refusal.marksYoung', 'Silver turns up in finds and gathering once your account is a week old.'),",
     "new": "",
     "why": "the young refusal said as a server's fault",
     "tests": [
-      "test/audit625_silver.test.js"
+      "test/net/audit625_silver.test.js"
     ]
   },
   {
@@ -516,18 +516,19 @@
     "new": "    tellHurt(entity, was - 1, was, 1);",
     "why": "a death turned aside told as a plain blow to 1",
     "tests": [
-      "test/audit625_serpent.test.js"
+      "test/systems/audit625_serpent.test.js"
     ]
   },
   {
     "name": "AUDIT625-P1-shed-deaf",
-    "file": "src/systems/sigilSetPowers.js",
-    "old": "  if (!v || !(max > 0) || !(after > 0) || saved) return;",
-    "new": "  if (!v || !(max > 0) || !(after > 0)) return;",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  const v = tierOf(entity, 'coilscale', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0) || saved) return;",
+    "new": "  const v = tierOf(entity, 'coilscale', 2);\n  const max = entity?.maxHealth;\n  if (!v || !(max > 0) || !(after > 0)) return;",
     "why": "Shed Skin heals on top of a death save",
     "tests": [
-      "test/audit625_serpent.test.js"
-    ]
+      "test/systems/audit625_serpent.test.js"
+    ],
+    "note": "EG15 (PIN MOVED): the Battlemage's Reprieve carries the same guard - anchored on Shed Skin's own tier, re-aimed by content."
   },
   {
     "name": "AUDIT625-P2-the-bout-unread",
@@ -536,7 +537,7 @@
     "new": "setSetsDueling(!!duelMgr.live);",
     "why": "the sets awake in a bout between players",
     "tests": [
-      "test/audit625_serpent.test.js"
+      "test/systems/audit625_serpent.test.js"
     ]
   },
   {
@@ -546,57 +547,57 @@
     "new": "return !!b && !!r?.me;",
     "why": "every relay bout a duel - a bout against the house's fighters too",
     "tests": [
-      "test/audit625_serpent.test.js"
+      "test/systems/audit625_serpent.test.js"
     ]
   },
   {
     "name": "AUDIT625-P2-the-sigil-deaf",
-    "file": "src/systems/sigil.js",
+    "file": "src/systems/sigil/sigil.js",
     "old": "|| target.isPlayer || _dueling) return damage;",
     "new": "|| target.isPlayer) return damage;",
     "why": "the weapon's sigil bites a player's stand-in",
     "tests": [
-      "test/audit625_serpent.test.js"
+      "test/systems/audit625_serpent.test.js"
     ]
   },
   {
     "name": "AUDIT625-P2-the-word-twice",
-    "file": "src/systems/sigilSets.js",
+    "file": "src/systems/sigil/sigilSets.js",
     "old": "export function setSetsDueling(on) { setSigilDueling(on); }",
     "new": "export function setSetsDueling(on) { void on; }",
     "why": "the sets' word kept apart from the sigil's",
     "tests": [
-      "test/audit625_serpent.test.js"
+      "test/systems/audit625_serpent.test.js"
     ]
   },
   {
     "name": "AUDIT625-P3-one-coil-again",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "  _s.coils.set(target, { n: Math.min(COIL_STACKS, coilStacksAt(target, now) + 1), until: now + COIL_SECONDS });",
     "new": "  _s.coils = new WeakMap(); _s.coils.set(target, { n: Math.min(COIL_STACKS, coilStacksAt(target, now) + 1), until: now + COIL_SECONDS });",
     "why": "one coil, moved to the foe struck last",
     "tests": [
-      "test/audit625_serpent.test.js"
+      "test/systems/audit625_serpent.test.js"
     ]
   },
   {
     "name": "AUDIT625-P3-a-death-ends-every-coil",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "  if (entity) _s.coils.delete(entity);",
     "new": "  if (entity) _s.coils = new WeakMap();",
     "why": "a foe's death unwinds every coil",
     "tests": [
-      "test/audit625_serpent.test.js"
+      "test/systems/audit625_serpent.test.js"
     ]
   },
   {
     "name": "AUDIT625-P3-a-body-coiled",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "  const c = foe && !(foe.health <= 0) ? _s.coils.get(foe) : null;",
     "new": "  const c = foe ? _s.coils.get(foe) : null;",
     "why": "a body a peer killed keeps its coil",
     "tests": [
-      "test/audit625_serpent.test.js"
+      "test/systems/audit625_serpent.test.js"
     ]
   },
   {
@@ -606,7 +607,7 @@
     "new": "  const embers = SERPENT_EMBERS;",
     "why": "an old build's claim counted an ember its pack never had",
     "tests": [
-      "test/serpentset_service.test.js"
+      "test/net/serpent/serpentset_service.test.js"
     ]
   },
   {
@@ -616,7 +617,7 @@
     "new": "? stones : 0;",
     "why": "a claim's embers past the law",
     "tests": [
-      "test/serpentset_service.test.js"
+      "test/net/serpent/serpentset_service.test.js"
     ]
   },
   {
@@ -626,7 +627,7 @@
     "new": "    recorded: true, slain, spoils, day: c.d,",
     "why": "the answer silent on the row's embers",
     "tests": [
-      "test/serpentset_service.test.js"
+      "test/net/serpent/serpentset_service.test.js"
     ]
   },
   {
@@ -636,7 +637,7 @@
     "new": "    return { recorded: false, why: 'claimed', slain, spoils };",
     "why": "a repeat silent on the row's embers",
     "tests": [
-      "test/serpentset_service.test.js"
+      "test/net/serpent/serpentset_service.test.js"
     ]
   },
   {
@@ -646,7 +647,7 @@
     "new": " }, await gatePublicKey(env, subtle), {",
     "why": "the route drops the claim's embers",
     "tests": [
-      "test/serpentset_service.test.js"
+      "test/net/serpent/serpentset_service.test.js"
     ]
   },
   {
@@ -656,7 +657,7 @@
     "new": "...(cid ? { cid } : {}) });",
     "why": "the client never says its hoard's embers",
     "tests": [
-      "test/audit625_serpent.test.js"
+      "test/systems/audit625_serpent.test.js"
     ]
   },
   {
@@ -666,7 +667,7 @@
     "new": "  const spoils = hoard ? hoardAnswer(res[7], cid) : false;",
     "why": "the hoard's answer read off the insert",
     "tests": [
-      "test/serpentset_service.test.js"
+      "test/net/serpent/serpentset_service.test.js"
     ]
   },
   {
@@ -676,37 +677,38 @@
     "new": "Number(res[res.length - 2]?.meta?.changes ?? 0) > 0;",
     "why": "the silver read off the hoard's statement",
     "tests": [
-      "test/serpentset_service.test.js"
+      "test/net/serpent/serpentset_service.test.js"
     ]
   },
   {
     "name": "AUDIT625-D2-the-source-a-breach",
     "file": "src/ui/haulCards.js",
-    "old": "serpent: 'Serpent slain' });",
-    "new": "serpent: 'Breach closed' });",
+    "old": "serpent: 'Serpent slain', eg:",
+    "new": "serpent: 'Breach closed', eg:",
     "why": "a serpent's silver carded as a breach's",
+    "note": "EG-E1 (PIN MOVED): a Redoubt's source beside the serpent's - re-aimed by content.",
     "tests": [
-      "test/audit625_serpent.test.js"
+      "test/systems/audit625_serpent.test.js"
     ]
   },
   {
     "name": "AUDIT625-D2-the-embers-another-tier",
-    "file": "src/systems/serpentSpoils.js",
+    "file": "src/systems/serpent/serpentSpoils.js",
     "old": "{ kind: 'item', item: s.embers, tier: 'artifact' }",
     "new": "{ kind: 'item', item: s.embers, tier: 'legendary' }",
     "why": "the serpent's embers another glow than the gate's",
     "tests": [
-      "test/audit625_serpent.test.js"
+      "test/systems/audit625_serpent.test.js"
     ]
   },
   {
     "name": "AUDIT625-D3-a-range-the-tools-cannot-read",
     "file": "bible/10-UI/Settings-Screen-Spec.md",
-    "old": "pinned `test/settings.test.js:\"Object.keys(DEFAULTS).length, 13\"`",
-    "new": "pinned `test/settings.test.js:\"Object.keys(DEFAULTS).length, 13”`",
+    "old": "pinned `test/systems/settings.test.js:\"Object.keys(DEFAULTS).length, 13\"`",
+    "new": "pinned `test/systems/settings.test.js:\"Object.keys(DEFAULTS).length, 13”`",
     "why": "a range set with a typographic dash: the cite tools read its head alone",
     "tests": [
-      "test/citedrift.test.js"
+      "test/scenes/citedrift.test.js"
     ],
     "note": "CITE-ANCHOR: the cite is an anchor now, and the same damage is a quote the tools cannot read - a curly close quote where the range had a non-breaking hyphen."
   }

@@ -5,7 +5,7 @@
     "old": "  return pageParam('air', search) !== 'off';",
     "new": "  return true;",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const AIR_AO_SCALE = 0.5;",
     "new": "export const AIR_AO_SCALE = 1;",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const AIR_BLOOM_SCALE = 0.25;",
     "new": "export const AIR_BLOOM_SCALE = 0.5;",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  out[0] = proj[0]; out[1] = proj[5]; out[2] = proj[10]; out[3] = proj[14];",
     "new": "  out[0] = proj[5]; out[1] = proj[0]; out[2] = proj[10]; out[3] = proj[14];",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  return -p14 / (zNdc + p10);",
     "new": "  return p14 / (zNdc + p10);",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (!(cw > 1e-6)) return null;",
     "new": "  if (cw === 0) return null;",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  const vx = view[0] * lightDir[0] + view[4] * lightDir[1] + view[8] * lightDir[2];",
     "new": "  const vx = lightDir[0];",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    h1 = gamma + max(-h1 - gamma, -1.5707963);\n    h2 = gamma + min(h2 - gamma, 1.5707963);\n",
     "new": "    h1 = gamma - h1;\n    h2 = gamma + h2;\n",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    float w = clamp((uAOParams.x - d) / (uAOParams.x * ${AIR_AO_FALLOFF}), 0.0, 1.0);",
     "new": "    float w = 1.0;",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  for (int k = 0; k < ${AIR_AO_DIRECTIONS}; k++) {\n    float a = ang + float(k) * ${(Math.PI / 2).toFixed(7)};",
     "new": "  for (int k = 0; k < 1; k++) {\n    float a = ang + float(k) * ${(Math.PI / 2).toFixed(7)};",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  return AIR_GLARE_SIZE * Math.sqrt(Math.max(range, 0));",
     "new": "  return AIR_GLARE_SIZE * Math.max(range, 0);",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    gl.uniform1f(PR.uAOMix, prepared ? AIR_AO_RESOLVE : 0);",
     "new": "    gl.uniform1f(PR.uAOMix, prepared ? 1 : 0);",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    : 1.0 - smoothstep(${glslFloat(AIR_GLARE_SLACK / 2)}, ${glslFloat(AIR_GLARE_SLACK)}, abs(d - lantern));",
     "new": "    : 1.0;",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  float sky = depthAt(uv) >= 0.99999 ? 1.0 : 0.0;",
     "new": "  float sky = 1.0;",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  if (dot(n, -p) < 0.0) n = -n;   // a normal faces the eye whatever the projection's handedness did to the derivatives\n",
     "new": "",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    this.pending = true;   // AUDIT-EL F5: a bound frame is a resolve owed, whether or not the passes ran for it\n",
     "new": "",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    gl.clearColor(f.clearColor[0], f.clearColor[1], f.clearColor[2], f.clearColor[3]);\n  }\n\n  /** AUDIT VOL1: the images a frame",
     "new": "  }\n\n  /** AUDIT VOL1: the images a frame",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    const sun = up ? sunScreenUV(f.proj, f.view, f.lightDir) : null;",
     "new": "    const sun = f.lightDir ? (sunScreenUV(f.proj, f.view, f.lightDir) ?? [0.5, 0.5]) : null;",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "      for (let pass = 0; pass < 2; pass++) {\n        quad(P.gauss, T.bloomB);",
     "new": "      for (let pass = 0; pass < 1; pass++) {\n        quad(P.gauss, T.bloomB);",
     "tests": [
-      "test/el4_frame.test.js"
+      "test/render/el4_frame.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "    gl.clearColor(0, 0, 0, 1);\n    gl.clear(gl.COLOR_BUFFER_BIT);\n    gl.enable(gl.BLEND);   // the emitters and the glares add",
     "new": "    gl.enable(gl.BLEND);   // the emitters and the glares add",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    if (this.targets && this.width === w && this.height === h) return;\n",
     "new": "",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "          if (!emis) continue;\n          if (!batchVisible(planes, b)) continue;   // EL5\n",
     "new": "          if (!batchVisible(planes, b)) continue;   // EL5\n",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "      if (!(range > 0) || range > AIR_GLARE_MAX_RANGE) continue;   // AUDIT-EL F11: the lightning flash (range 500..1000 over the player) is no lantern\n",
     "new": "      if (range > AIR_GLARE_MAX_RANGE) continue;\n",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    if (!this.pending || !this.targets || !this.frame) return;\n    this.pending = false;",
     "new": "    if (!this.pending || !this.targets || !this.frame) return;",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "    this.grade = new Float32Array([AIR_BLOOM_STRENGTH, 1, AIR_VIGNETTE, AIR_CONTRAST]);",
     "new": "    this.grade = new Float32Array([1, 1, AIR_VIGNETTE, AIR_CONTRAST]);",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ],
     "equivalent": true,
     "why": "AUDIT PERF-ARENA O8 (2026-10-11): the constructor's bloom gain is never uploaded - every prepare writes grade[0] first (`this.grade[0] = g?.bloom ?? AIR_BLOOM_STRENGTH`), and the upload's value is pinned there (el3's 'the bloom gain and the shafts''). Recorded so the dead initial value is known, not mistaken for a hole."
@@ -232,7 +232,7 @@
     "old": "      quad(PB, T.bloom);\n      gl.enable(gl.BLEND);\n      gl.blendFunc(gl.ONE, gl.ONE);",
     "new": "      quad(PB, T.bloom);\n      gl.enable(gl.BLEND);\n      gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "    const want = this._airWanted && !!this._lane?.air && !!this._shadows;   // the air pass replays the shadow pass's records",
     "new": "    const want = this._airWanted;",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "      this._air = this._airPass ??= new AirPass(",
     "new": "      this._air = this._airPass = new AirPass(",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "    else { if (this._air) { this._air.release(); this._frameFbo = null; } this._air = null; }",
     "new": "    else { this._air = null; }",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "    this._uploadAdapt(this._el[key].ao);   // EL6: the AO is the resolve's now (AUDIT-EL F2/F12's foreign-rect and unit-0 cases went with it)\n",
     "new": "",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "    if (this._worldViewportPx) this.endWorldPass();\n    this._compositeAir();   // EL3: a no-op unless a render is owed\n    this._ensureScreenQuadProgram();",
     "new": "    if (this._worldViewportPx) this.endWorldPass();\n    this._ensureScreenQuadProgram();",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -286,7 +286,7 @@
     "old": "    this._frameFbo = null;\n    this._lastProgram = null; this._lastVao = null;\n    this.gl.viewport(0, 0, this.canvas.width, this.canvas.height);",
     "new": "    this._frameFbo = null;\n    this._lastProgram = null; this._lastVao = null;",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": "    sp.discard();\n    this._restoreWorldViewport();\n    this.markForeignPass();",
     "new": "    this._restoreWorldViewport();\n    this.markForeignPass();",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -304,16 +304,16 @@
     "old": "    sp.discard();\n    this._restoreWorldViewport();\n    this.markForeignPass();",
     "new": "    sp.discard();\n    this.markForeignPass();",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
     "name": "renderer-air-before-shadows",
     "file": "src/render/renderer.js",
-    "old": "    sp.render({\n      eye: this._shadowEye(), lightDir, sunScale: this._sunScale, pointLights: this._pointLights, carried: this._pointCarried,   // MAC-T1; TV1: the cascades about the focus\n      cascadeScale: this._focus[3] > 0.5 && this._focusWide ? SHADOW_VIEW_SCALE : 1,   // AUDIT DEEP R-3: and grown to the travel view's picture - AUDIT DEEP2 D7: once it is half risen (at the head the near cascade went from 1.2 cm texels to 4.7 in one frame, and back at the fall's end)\n      textures: this.textures, isSpectral: isSpectralArchive, bindVao, everyLight, cut,\n      holdSkin: this._holdSkinFn,   // MWNPC16: a body's palette for its replay (the unit's word kept - releaseCharacterSkin puts the identity back over one let go)\n    });\n    if (this._air) {",
+    "old": "    sp.render({\n      eye: this._shadowEye(), lightDir, sunScale: this._sunScale, pointLights: this._pointLights, carried: this._pointCarried,   // MAC-T1; TV1: the cascades about the focus\n      ids: this._pointIds,   // LIGHT-ID: each light's identity - the pass knows a light that moved by it\n      cascadeScale: this._focus[3] > 0.5 && this._focusWide ? SHADOW_VIEW_SCALE : 1,   // AUDIT DEEP R-3: and grown to the travel view's picture - AUDIT DEEP2 D7: once it is half risen (at the head the near cascade went from 1.2 cm texels to 4.7 in one frame, and back at the fall's end)\n      textures: this.textures, isSpectral: isSpectralArchive, bindVao, everyLight, cut,\n      holdSkin: this._holdSkinFn,   // MWNPC16: a body's palette for its replay (the unit's word kept - releaseCharacterSkin puts the identity back over one let go)\n    });\n    if (this._air) {",
     "new": "    if (this._air) {",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -322,7 +322,7 @@
     "old": "  air: true,       // EL3: and its AirPass, behind `?air=off` (syncLightingLane reads the door)\n",
     "new": "",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -331,7 +331,7 @@
     "old": "    c *= mix(1.0, texture(uAO, wuv).r, uAOMix);   // EL6: the crevice loses its light here, once, whole",
     "new": "    c *= texture(uAO, wuv).r;",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -340,7 +340,7 @@
     "old": "renderer.setAir(airOn(search));",
     "new": "renderer.setAir(true);",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "export const HAZARD = Object.freeze({ merchant: 0.006,",
     "new": "export const HAZARD = Object.freeze({ merchant: 0.012,",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const VACANT_CYCLES = 3;",
     "new": "export const VACANT_CYCLES = 2;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  for (let j = k - VACANT_CYCLES; j < k; j++) if (fateHits(res, j, turns)) return false;",
     "new": "  void VACANT_CYCLES;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (last != null && k - last <= VACANT_CYCLES) return { vacant: true, holder: null, dies: false, diced: false, since: last, hand: null };",
     "new": "  if (false) return { vacant: true, holder: null, dies: false, diced: false, since: last, hand: null };",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  return { vacant: false, holder: last, dies, diced, since: last, hand: handDeath(res, k, turns) };",
     "new": "  return { vacant: false, holder: null, dies, diced, since: last, hand: handDeath(res, k, turns) };",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  for (let j = k - 1; j >= 0; j--) if (deathCounted(res, j, turns)) { last = j; break; }",
     "new": "  for (let j = k - 1; j >= Math.max(0, k - 40); j--) if (deathCounted(res, j, turns)) { last = j; break; }",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if (turns?.spared?.has(key)) return false;",
     "new": "  if (false) return false;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (turns?.fallen?.has(key)) return true;",
     "new": "  if (false) return true;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "export const turnKey = (res, k) => `${placeKeyOf(res)}@${k}`;",
     "new": "export const turnKey = (res, k) => `${res.id}@${k}`;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "lwSeed(town.mapId >>> 0, roll.charCodeAt(0), slot, 0x67656e, gen);   // 'gen'",
     "new": "lwSeed(town.mapId >>> 0, roll.charCodeAt(0), slot);   // 'gen'",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "${gen == null ? '' : `~${gen}`}`,",
     "new": "${''}`,",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  const ground = kinds.length ? kinds.reduce((a, k) => a + (GROUND_RISK[/** @type {keyof typeof GROUND_RISK} */ (k)] ?? 1), 0) / kinds.length : 1;",
     "new": "  const ground = 1;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  if (!fated.length && !dead.length && u >= risk) return null;",
     "new": "  if (u >= risk) return null;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  if (fated.length) shape = fated.includes(trip.leader.id) ? 'fell' : 'won';",
     "new": "  if (fated.length) shape = 'fell';",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    const pWin = sP / (sP + sF);",
     "new": "    const pWin = 0.5;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "{ wm = firstDay; t0 = dayEnd + 4 * 60; camp = true; }",
     "new": "{ wm = firstDay; t0 = dayEnd + 3 * 60; camp = true; }",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "  if (rng() < CAMP_SHARE && firstDay > 0 && firstDay < walkMin)",
     "new": "  if (rng() < 0 && firstDay > 0 && firstDay < walkMin)",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "  if (turn === 'won' && kind !== 'fell') kind = 'won';",
     "new": "  if (false) kind = 'won';",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "  else if (turn === 'lost' && (kind === 'driven' || kind === 'won')) kind = 'fled';",
     "new": "  else if (false) kind = 'fled';",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "  return { id: `${trip.id}:e`, leg, camp, t0, t1: t0 + HALT_MIN[shape],",
     "new": "  return { id: `${trip.id}:e`, leg, camp, t0, t1: t0 + FIGHT_MIN[shape],",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "  const turned = enc.leg === 'out' && (enc.kind === 'fled' || enc.kind === 'fell');",
     "new": "  const turned = false;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "  const home = Math.max(0, enc.s - trip.trim0) / trip.pace;",
     "new": "  const home = 0;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "  const fallAt = enc.t0 + FIGHT_MIN[shape] * 0.6;",
     "new": "  const fallAt = enc.t0;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "  const goes = rng() < chance || !!world.fated?.(res, k) ||",
     "new": "  const goes = rng() < chance || false ||",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "return h && (i < want || !!fated?.(h, k)) ? h : null; }",
     "new": "return h && (i < want) ? h : null; }",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "export const HALT_CATCH_UP = 0.5;",
     "new": "export const HALT_CATCH_UP = 1;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "  if (h && t >= h.t0 && t < h.t1) return placed(h.leg, h.s, { halt: true, fight: t < h.fightEnd });",
     "new": "  if (false) return placed(h.leg, h.s, { halt: true, fight: t < h.fightEnd });",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "return placed(h.leg, h.s, { halt: true, fight: t < h.fightEnd });",
     "new": "return placed(h.leg, h.s, { halt: true, fight: true });",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "  if (trip.turned && h && t >= h.t1) return walked('back',",
     "new": "  if (false && trip.turned && h && t >= h.t1) return walked('back',",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "    return Math.max(0, pace * walkedMinutes(h.t0, h.t1) - HALT_CATCH_UP * pace * walkedMinutes(h.t1, m));",
     "new": "    return 0;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "export const membersAt = (trip, t) => (trip.fallen?.length ? trip.party.filter((m) => !trip.fallen?.some((f) => f.res.id === m.id && f.t <= t)) : trip.party);",
     "new": "export const membersAt = (trip, t) => trip.party;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "    out.push({ t0, t1: fell ? Infinity : tr.backT1, yaw: leavingYaw(tr), armed: res.cls != null, dock: !!tr.sea });",
     "new": "    out.push({ t0, t1: tr.backT1, yaw: leavingYaw(tr), armed: res.cls != null, dock: !!tr.sea });",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "      if (tr.to.mapId !== town.mapId || tr.turned || !(tr.outT1 < D1 && tr.backT0 > D0)) continue;",
     "new": "      if (tr.to.mapId !== town.mapId || !(tr.outT1 < D1 && tr.backT0 > D0)) continue;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "      for (const res of membersAt(tr, tr.outT1)) out.push(",
     "new": "      for (const res of tr.party) out.push(",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "    if (!(known <= t && t - known < NEWS_DAYS * DAY_MIN)) continue;",
     "new": "    if (false) continue;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "export const NEWS_DAYS = 3;",
     "new": "export const NEWS_DAYS = 4;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "    const who = fell[0]?.res ?? tr.leader;",
     "new": "    const who = tr.leader;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "      if (f.inside || f.atSea || !(f.t <= t && t < f.t + REMAINS_MIN)) return;",
     "new": "      if (f.inside || f.atSea || !(f.t <= t)) return;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "  const m = leaderOf(res, roster);   // LW9: a patrol's and a retainer's too",
     "new": "  const m = null;   // LW9: a patrol's and a retainer's too",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "  if (res.job === 'mercenary' || leaderOf(res, world.rosterOf(town))) {   // LW9: a patrol's and a retainer's ride with their leader",
     "new": "  if (false) {   // LW9: a patrol's and a retainer's ride with their leader",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "export const NEWS_SHARE = 0.4;",
     "new": "export const NEWS_SHARE = 0.5;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "    const told = ctx.road ? null : newsScript(seed, ctx.news);",
     "new": "    const told = newsScript(seed, ctx.news);",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ],
     "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
@@ -384,7 +384,7 @@
     "old": "    who: told ? (told.item.kind === 'routed' ? told.item.who : firstNameOf(told.item.who)) : null,",
     "new": "    who: null,",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ],
     "note": "AUDIT LW-II (re-aimed by content): a band named whole beside it."
   },
@@ -394,7 +394,7 @@
     "old": "  if (/[^aeiou]y$/i.test(w)) return `${w.slice(0, -1)}ies`;",
     "new": "  if (false) return `${w.slice(0, -1)}ies`;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -403,7 +403,7 @@
     "old": "      if (set.size > TURNS_MAX) set.delete(/** @type {string} */ (set.values().next().value));",
     "new": "      void TURNS_MAX;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -412,7 +412,7 @@
     "old": "      return { v: 1, people, ...t, ...(Object.keys(roadOut).length ? { road: roadOut } : {}) };",
     "new": "      return { v: 1, people, ...(Object.keys(roadOut).length ? { road: roadOut } : {}) };",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -421,7 +421,7 @@
     "old": "      if (!set || !turnOk(key) || set.has(key)) return false;",
     "new": "      if (!set || !turnOk(key)) return false;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -430,7 +430,7 @@
     "old": "    const h = roads?.holders;",
     "new": "    const h = null;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -439,7 +439,7 @@
     "old": "return !x ? [] : [x.id === r.id ? r : { ...x, home: r.home }];",
     "new": "return !x ? [] : [x];",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -448,53 +448,53 @@
     "old": "hour, news: this._roads?.news ?? null, places:",
     "new": "hour, news: null, places:",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ],
     "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW4-ring-facing-in",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "    out.push({ res: members[i], x, z, yaw: Math.atan2(x - /** @type {number} */ (at.x), z - /** @type {number} */ (at.z)), moving: false });",
     "new": "    out.push({ res: members[i], x, z, yaw: Math.atan2(/** @type {number} */ (at.x) - x, /** @type {number} */ (at.z) - z), moving: false });",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
     "name": "LW4-unarmed-on-the-ring",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "    const r = members[i].cls != null ? FIGHT_RING_N : FIGHT_RING_N * 0.4;   // the unarmed in the middle",
     "new": "    const r = FIGHT_RING_N;   // the unarmed in the middle",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
     "name": "LW4-foes-talkable",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "striking: strikesNow(f.key), talk: false });",
     "new": "striking: strikesNow(f.key) });",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
     "name": "LW4-strike-every-frame",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "    if (realNow < next) return false;",
     "new": "    if (false) return false;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
     "name": "LW4-mark-unbeset",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "kind: `${p.trip.kind === 'merchant' ? 'wayfarer caravan' : 'wayfarer'}${beset ? ' fight' : ''}`",
     "new": "kind: `${p.trip.kind === 'merchant' ? 'wayfarer caravan' : 'wayfarer'}`",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -503,7 +503,7 @@
     "old": "        out = b.unit.update(dt, { moving: !!m.moving, striking: !!m.striking }, m.yaw, f, eye && eye.length === 3 ? eye : f);",
     "new": "        out = b.unit.update(dt, { moving: !!m.moving }, m.yaw, f, eye && eye.length === 3 ? eye : f);",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -512,16 +512,25 @@
     "old": "      if (ground && b.person && m.talk !== false) seats.push({ person: b.person, pos: f });",
     "new": "      if (ground && b.person) seats.push({ person: b.person, pos: f });",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
+    ]
+  },
+  {
+    "name": "LW4-host-foe-level-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    foeLevel: enemyLevelOf,",
+    "new": "    foeLevel: (type, level) => level,",
+    "tests": [
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
     "name": "LW4-host-foe-level-flat",
-    "file": "src/scenes/world.js",
-    "old": "    foeLevel: (type, level) => (type >= 128 ? level : ENEMY_BASICS[type]?.level ?? level),",
-    "new": "    foeLevel: (type, level) => level,",
+    "file": "src/characters/enemy/enemyBasics.js",
+    "old": "export const enemyLevelOf = (type, level) => (isClassEnemyId(type) ? level : ENEMY_BASICS[type]?.level ?? level);",
+    "new": "export const enemyLevelOf = (type, level) => level;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -530,7 +539,7 @@
     "old": "    _livingPlaces.clear(); _livingFates.clear(); _livingTripMemo.clear();",
     "new": "    void _livingFates;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -539,7 +548,7 @@
     "old": "      const h = pl.holder && pl.dies && setsOut(pl.holder, town, k, livingTripWorld, o) === false ? null : pl.holder;",
     "new": "      const h = pl.holder;",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -548,7 +557,7 @@
     "old": "      if (w.length) away.set(h.id, w);",
     "new": "      if (w.length) away.set(res.id, w);",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
@@ -557,16 +566,16 @@
     "old": "    foeName: livingFoeWord,   // LW4: what besets a party, on its mark",
     "new": "    // LW4: what besets a party, on its mark",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   },
   {
     "name": "LW4-hud-fight-unred",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "look === 'wayfarer' ? (/\\b(fight|hideout)\\b/.test(m.kind ?? '') ? C.band : C.wayfarer)",
     "new": "look === 'wayfarer' ? C.wayfarer",
     "tests": [
-      "test/lw4_trouble.test.js"
+      "test/systems/livingWorld/lw4_trouble.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "export const BAND_TOWNS_PER = 40;",
     "new": "export const BAND_TOWNS_PER = 30;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const BANDS_MAX = 4;",
     "new": "export const BANDS_MAX = 3;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "(n > 1 ? Math.min(BANDS_MAX,",
     "new": "(n > 0 ? Math.min(BANDS_MAX,",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "export const BAND_LEG_PX = Object.freeze([3, 14]);",
     "new": "export const BAND_LEG_PX = Object.freeze([2, 14]);",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "export const BAND_LEG_PX = Object.freeze([3, 14]);",
     "new": "export const BAND_LEG_PX = Object.freeze([3, 16]);",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "const big = towns.filter((t) => (t.blocks | 0) >= BAND_TOWN_BLOCKS);",
     "new": "const big = towns;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (plan === undefined) return undefined;   // not planned yet: asked again\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    while (taken.has(k)) k = (k + 1) % legs.length;\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "        if (world.townsNear(px, py, 0).length) continue;\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "        if (world.dryAt && !world.dryAt(c.x, c.z)) continue;\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "export const HIDEOUT_OFF_PX = Object.freeze([1, 2]);",
     "new": "export const HIDEOUT_OFF_PX = Object.freeze([0, 2]);",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  const patrolled = top >= COURT_BLOCKS;",
     "new": "  const patrolled = top > 24;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "export const ROUT_CHANCE = Object.freeze({ patrolled: 0.45, wild: 0.15 });",
     "new": "export const ROUT_CHANCE = Object.freeze({ patrolled: 0.15, wild: 0.45 });",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "export const BAND_VACANT_DAYS = 20;",
     "new": "export const BAND_VACANT_DAYS = 10;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "export const BAND_ERA_DAYS = 60;",
     "new": "export const BAND_ERA_DAYS = 90;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    if (t < r + vac) { vacant = true; continue; }\n    gen++; formedT = r + vac;",
     "new": "    if (t < r + vac) { vacant = true; continue; }\n    formedT = r + vac;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    if (t < r + vac) { vacant = true; continue; }",
     "new": "    if (t < r + vac) { continue; }",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    if (t < r.t + vac) return null;\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    if (r.t > t) break;   // a rout to come is no rout yet (a load past it reads it from its minute)\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "export const BAND_SIZE = Object.freeze([4, 8]);",
     "new": "export const BAND_SIZE = Object.freeze([3, 8]);",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "const level = Math.max(1, base + (i === 0 ? 3 : rollInt(rng, -1, 2)));",
     "new": "const level = Math.max(1, base + rollInt(rng, -1, 2));",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "const base = Math.max(2, Math.min(14, 2 + Math.floor((h.top | 0) / 6)));",
     "new": "const base = Math.max(2, Math.min(14, 2 + Math.floor((h.top | 0) / 8)));",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "return rng() < 1 / 3 && first ?",
     "new": "return false && first ?",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "export const OUTLAW_REACH_PX = 2;",
     "new": "export const OUTLAW_REACH_PX = 3;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "export const BAND_SHARE = 0.6;",
     "new": "export const BAND_SHARE = 0.5;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "    if (!band) continue;\n",
     "new": "    if (!band) return null;\n",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "export const TAKE_DAYS = 14;",
     "new": "export const TAKE_DAYS = 7;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "export const TAKE_PURSE_SHARE = 0.25;",
     "new": "export const TAKE_PURSE_SHARE = 0.5;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "export const TAKE_GOODS_MAX = 16;",
     "new": "export const TAKE_GOODS_MAX = 20;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "if (!e || e.kind !== 'robbed' || e.band !== band.key ||",
     "new": "if (!e || e.kind !== 'robbed' ||",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "  const from = Math.max(band.formedT, t - TAKE_DAYS * DAY_MIN);",
     "new": "  const from = t - TAKE_DAYS * DAY_MIN;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "e.t0 > t || seen.has(tr.id)) return false;",
     "new": "e.t0 > t) return false;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "export const ROB_RATIO = 0.6;",
     "new": "export const ROB_RATIO = 0.4;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "    if (outlaws && sP < ROB_RATIO * sF) shape = 'robbed';   // LW12: it yields\n    else {",
     "new": "    {",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "const foes = outlaws ? outlaws.foes : world.foesOf(",
     "new": "const foes = world.foesOf(",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "  const foeLv = outlaws ? outlaws.level : level;",
     "new": "  const foeLv = level;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "...(outlaws ? { band: outlaws.band.key, bandName: outlaws.band.name } : {})",
     "new": "...{}",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "  const robbed = enc.kind === 'robbed' ? { robbed: { t: enc.t0, by: enc.band } } : {};\n",
     "new": "  const robbed = {};\n",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "fled: 15, fell: 45, robbed: 30 });",
     "new": "fled: 15, fell: 45, robbed: 45 });",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "...(enc.bandName ? { band: enc.bandName } : {}), place:",
     "new": "place:",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "      if (!key.startsWith(region) || known > t",
     "new": "      if (known > t",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "  : item.kind === 'routed' ? ROUTED_NEWS   // LW12: a band the player routed\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "export const BAND_LIVE_M = 200;",
     "new": "export const BAND_LIVE_M = 300;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "        if (d > BAND_KEEP_M && !stood.foes.some(",
     "new": "        if (d > BAND_KEEP_M * 10 && !stood.foes.some(",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": "stand(near.h, t, deps.owner(deps.sceneOf(near.h.x, near.h.z)));",
     "new": "stand(near.h, t, true);",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "  return night ? band.people.slice(0, Math.ceil(band.people.length / 2)) : band.people;",
     "new": "  return band.people;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "        if (rec.entity) rec.entity.name = p.name;\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -428,7 +428,7 @@
     "old": "if (!rel()?.turns?.()?.looted?.has(s.band.key) && c.items.length) {",
     "new": "if (c.items.length) {",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -437,7 +437,7 @@
     "old": "    if (!s.pile || s.looted || asMinted(s.pile, s.minted)) return;",
     "new": "    if (!s.pile || s.looted) return;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -446,7 +446,7 @@
     "old": "    for (const rec of s.foes) if (!rec.dead) takeOut(rec);\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -455,7 +455,7 @@
     "old": "if (stood.foes.every((/** @type {any} */ rec) => stood.killed.has(rec))) rout(stood, t);",
     "new": "if (stood.foes.some((/** @type {any} */ rec) => stood.killed.has(rec))) rout(stood, t);",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -464,7 +464,7 @@
     "old": "if (stood.band && stood.owned && !stood.routed && !stood.spawning",
     "new": "if (stood.band && stood.owned && !stood.spawning",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -473,7 +473,7 @@
     "old": "r?.turn?.('routed', `${s.h.key}@${s.band.gen}.${s.band.heir}`, { t, who: s.band.name });",
     "new": "r?.turn?.('routed', `${s.h.key}@${s.band.gen}.0`, { t, who: s.band.name });",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -482,7 +482,7 @@
     "old": "if (!thanked.has(m.id)) { thanked.add(m.id); r?.note?.(m.id, 'helped', day); }",
     "new": "if (!thanked.has(m.id)) { thanked.add(m.id); }",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -491,7 +491,7 @@
     "old": "        if (Math.max(Math.abs(h.x - x), Math.abs(h.z - z)) > HEARD_PX * NATIVE_PIXEL) continue;\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -500,7 +500,7 @@
     "old": "        if (band && !heard?.has(band.key)) return band;",
     "new": "        if (band) return band;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -509,7 +509,7 @@
     "old": "        if (!band || !heard.has(band.key)) continue;",
     "new": "        if (!band) continue;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -518,7 +518,7 @@
     "old": "export const RUMOUR_OFF_N = 16384;",
     "new": "export const RUMOUR_OFF_N = 32768;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -527,7 +527,7 @@
     "old": "export const tentsFor = (n) => Math.max(2, Math.ceil(n / 3));",
     "new": "export const tentsFor = (n) => Math.max(1, Math.ceil(n / 3));",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -536,7 +536,7 @@
     "old": "        if ((mode === 'Sell' || mode === 'SellMagic') && bandTook(trip, deps.clock())) { deps.say(CARAVAN_LINES.bandTook(name)); return false; }   // LW12: its purse the band's\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -545,7 +545,7 @@
     "old": "const lost = new Set(bandTook(trip, t) ? all.filter((it) => it[WARE_KEY] % 2 === 1).map((it) => it[WARE_KEY]) : []);",
     "new": "const lost = new Set();",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -554,7 +554,7 @@
     "old": "const goneOf = (s) => s.all.filter((/** @type {any} */ it) => !s.items.includes(it) && !s.lost.has(it[WARE_KEY]))",
     "new": "const goneOf = (s) => s.all.filter((/** @type {any} */ it) => !s.items.includes(it))",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -563,52 +563,52 @@
     "old": "export const bandTook = (trip, t) => trip?.robbed?.by != null && t >= trip.robbed.t;",
     "new": "export const bandTook = (trip, t) => trip?.robbed != null && t >= trip.robbed.t;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
     "name": "LW12-roads-warn",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "      const band = standing === 'enemy' || standing === 'hostile' ? null : deps.unheard?.(t) ?? null;",
     "new": "      const band = deps.unheard?.(t) ?? null;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
     "name": "LW12-roads-heard",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "{ band: band.name })}`; deps.heard?.(band); }",
     "new": "{ band: band.name })}`; }",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
     "name": "LW12-roads-pass",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "const foe = pair.warned ? (pair.warned.trip.enc.bandName ?? deps.foeName",
     "new": "const foe = pair.warned ? (deps.foeName",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
     "name": "LW12-roads-beset",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "const beset = foes.length ? (p.trip.enc?.bandName ?? deps.foeName",
     "new": "const beset = foes.length ? (deps.foeName",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
     "name": "LW12-hud-ring",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "    } else if (look === 'wayfarer' && /\\bhideout\\b/.test(m.kind ?? '')) {",
     "new": "    } else if (false) {",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -617,7 +617,7 @@
     "old": "    bandAt: (trip, px, py, t) => bandTrouble(trip, px, py, t,",
     "new": "    bandAt: (trip, px, py, t) => null && bandTrouble(trip, px, py, t,",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -626,7 +626,7 @@
     "old": "...(trip.to?.region != null && trip.to.region !== trip.from?.region ? livingHideoutsOf(trip.to.region) : [])]",
     "new": "]",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -635,7 +635,7 @@
     "old": "    if (deps.generation() !== gen) { kept.clear(); waiting.clear(); gen = deps.generation(); }",
     "new": "    if (deps.generation() !== gen) { gen = deps.generation(); }",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -644,7 +644,7 @@
     "old": "{ livingHideoutsHostOf().frame(dt); livePersonBatches.push(...livingHideoutsHostOf().batches()); }",
     "new": "{ livePersonBatches.push(...livingHideoutsHostOf().batches()); }",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -653,7 +653,7 @@
     "old": "    else _livingHideoutsHost?.clear();\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -662,7 +662,7 @@
     "old": "foe: n.band ?? (n.foe != null ? livingFoeWord(n.foe, 2) : '')",
     "new": "foe: (n.foe != null ? livingFoeWord(n.foe, 2) : '')",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -671,7 +671,7 @@
     "old": "    _livingHideoutsHost?.draw(renderer, null, yardCull);   // LW12: a band's tents; PERF-WAGON: by the street's view test\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -680,7 +680,7 @@
     "old": "      if (stood) lootedYet(stood);\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -689,7 +689,7 @@
     "old": "minted.every(([it, n]) => items.includes(it) && it?.stackCount === n)",
     "new": "minted.every(() => true)",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -698,7 +698,7 @@
     "old": "items.includes(it) && it?.stackCount === n",
     "new": "items.includes(it)",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -707,7 +707,7 @@
     "old": "    if (rel() === s.rel) rel()?.turn?.('looted', s.band.key);",
     "new": "    rel()?.turn?.('looted', s.band.key);",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -716,7 +716,7 @@
     "old": "      if (stood && rel() !== stood.rel) letGo();\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -725,7 +725,7 @@
     "old": "export const killed = (rec) => !!rec?.dead && (!!rec.corpse || !!rec.executed);",
     "new": "export const killed = (rec) => !!rec?.dead;",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -734,7 +734,7 @@
     "old": "if (stood.foes.every((/** @type {any} */ rec) => stood.killed.has(rec))) rout(stood, t);",
     "new": "if (stood.foes.every((/** @type {any} */ rec) => killed(rec))) rout(stood, t);",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -743,7 +743,7 @@
     "old": "level: o.level, allied: false, loose: true, transient: true, managed: true }),",
     "new": "level: o.level, allied: false, loose: true, transient: true }),",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -752,7 +752,7 @@
     "old": "s.robbed = c.robbed;   // its robbed parties, looted or not",
     "new": "s.robbed = rel()?.turns?.()?.looted?.has(s.band.key) ? [] : c.robbed;   // its robbed parties, looted or not",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -761,7 +761,7 @@
     "old": "    if (at != null && ms - at < HIDEOUTS_ASK_MS) return [];\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -770,7 +770,7 @@
     "old": "    if (waiting.delete(region) && h.length) deps.resolved?.(region);\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -779,7 +779,7 @@
     "old": "if (waiting.delete(region) && h.length) deps.resolved?.(region);",
     "new": "if (h.length) deps.resolved?.(region);",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -788,7 +788,7 @@
     "old": "    resolved: () => { _livingFates.clear(); _livingTripMemo.clear(); _livingToldKept.clear(); _livingVisitorsKept.clear(); for (const x of _livingCarried.values()) if (x.visits) _livingCarriedLast.set(x.map, x.visits); _livingCarried.clear(); },\n",
     "new": "",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -797,7 +797,7 @@
     "old": "outT1: Math.min(enc.t1, trip.backT0), ...robbed };",
     "new": "outT1: Math.min(enc.t1, trip.backT0) };",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -806,7 +806,7 @@
     "old": "backT1: enc.t1, ...robbed };",
     "new": "backT1: enc.t1 };",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -815,7 +815,7 @@
     "old": "      if (!near) return;\n",
     "new": "      if (!near || !deps.owner(deps.sceneOf(near.h.x, near.h.z))) return;\n",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -824,7 +824,7 @@
     "old": "          if (mine && !stood.owned) standPeople(stood, t);\n",
     "new": "          if (mine && !stood.owned) void t;\n",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   },
   {
@@ -833,7 +833,7 @@
     "old": "if (mine && !stood.owned) standPeople(stood, t);",
     "new": "if (mine) standPeople(stood, t);",
     "tests": [
-      "test/lw12_outlaws.test.js"
+      "test/systems/livingWorld/lw12_outlaws.test.js"
     ]
   }
 ]

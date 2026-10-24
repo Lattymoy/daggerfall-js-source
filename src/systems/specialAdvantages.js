@@ -16,6 +16,7 @@
 // it "stores text that was hard-coded in FALL.EXE" - so the display
 // text below IS classic's, by way of DFU's recovery of it, and the
 // keys are DFU's HardStrings members one for one.
+import { localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 // ---- the two primary lists (:64-90), in DFU's order ----
 export const ADVANTAGE_KEYS = Object.freeze([
@@ -75,7 +76,7 @@ export const MAX_ITEMS = 7;
 
 // ---- the display text (Internal_Strings.csv; hard-coded in
 // FALL.EXE originally, which is why it is not in TEXT.RSC) ----
-export const LABELS = Object.freeze({
+export const LABELS = localizedStrings({
   acuteHearing: 'Acute Hearing', adrenalineRush: 'Adrenaline Rush', athleticism: 'Athleticism',
   bonusToHit: 'Bonus to hit', expertiseIn: 'Expertise in', immunity: 'Immunity',
   increasedMagery: 'Increased Magery', rapidHealing: 'Rapid Healing',
@@ -196,6 +197,8 @@ export const PROFICIENCY_BITS = Object.freeze({
 });
 /** DFCareer.ArmorFlags (:302-308) and ShieldFlags (:290-296). */
 export const ARMOR_BITS = Object.freeze({ leather: 1, chain: 2, plate: 4 });
+/** Where ARMOR_BITS sit in weaponArmorShieldsBitfield: bits 6-8. One home for the writers and the readers. */
+export const ARMOR_BITS_SHIFT = 6;
 export const SHIELD_BITS = Object.freeze({ buckler: 1, roundShield: 2, kiteShield: 4, towerShield: 8 });
 /** DFCareer.MaterialFlags (:272-284). */
 export const MATERIAL_BITS = Object.freeze({
@@ -280,7 +283,7 @@ export function parseCareerData(career, list) {
         break;
       }
       case 'forbiddenArmorType':
-        career.weaponArmorShieldsBitfield |= (ARMOR_BITS[secondary] ?? 0) << 6; break;
+        career.weaponArmorShieldsBitfield |= (ARMOR_BITS[secondary] ?? 0) << ARMOR_BITS_SHIFT; break;
       case 'forbiddenShieldTypes':
         career.weaponArmorShieldsBitfield |= (SHIELD_BITS[secondary] ?? 0) << 9; break;
       case 'forbiddenMaterial':
@@ -415,7 +418,7 @@ export function classSpecials(career, race = null) {
   // The three forbidden sets, each MULTIPLE (:556-613)
   for (const material of bitsOf(MATERIAL_BITS, c.forbiddenMaterialsFlags ?? 0)) add('forbiddenMaterial', material);
   for (const shield of bitsOf(SHIELD_BITS, (wasb >>> 9) & 0xf)) add('forbiddenShieldTypes', shield);
-  for (const armor of bitsOf(ARMOR_BITS, (wasb >>> 6) & 0x7)) add('forbiddenArmorType', armor);
+  for (const armor of bitsOf(ARMOR_BITS, (wasb >>> ARMOR_BITS_SHIFT) & 0x7)) add('forbiddenArmorType', armor);
   // Increased magery (:616-628) - anything but the Times_0_50 default.
   // The band is only read when the career CARRIES the field: a half
   // built career object would otherwise read 0 there, and 0 is

@@ -1,7 +1,7 @@
 // LOOT-BANNER, SEEN (2026-10-09, Mac: "something akin to a destiny loot popup notification") - the banners drawn in a real
 // browser over the real enhanced HUD, beside a real notice toast at the right edge, and photographed.
 //
-// The suite holds the banners' LAW (what arrives, what stands, how long) and their DOM's shape (test/lootbanner.test.js);
+// The suite holds the banners' LAW (what arrives, what stands, how long) and their DOM's shape (test/systems/lootbanner.test.js);
 // what it cannot hold is whether a banner reads at the edge of a screen, whether each tier's colour reads over the veil,
 // whether a big one stands out from the rest, and whether the stack steps under the notices and stays on a phone's screen.
 // Those are things about pixels, so the page builds every surface through its real entry - `drawLootBanners` with a
@@ -33,16 +33,16 @@ const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewp
 </style></head><body>
 <div class="world"></div>
 <script type="module">
-import { drawEnhancedHud } from '/src/ui/enhancedHud.js';
-import { drawEnhancedToasts } from '/src/ui/enhancedNotice.js';
+import { drawEnhancedHud } from '/src/ui/enhanced/enhancedHud.js';
+import { drawEnhancedToasts } from '/src/ui/enhanced/enhancedNotice.js';
 import { drawLootBanners, clearLootBanners, _setLootBannerForTests } from '/src/ui/lootBanner.js';
 import { setPref } from '/src/systems/uiPrefs.js';
-import * as LR from '/src/systems/lootRarity.js';
+import * as LR from '/src/systems/loot/lootRarity.js';
 import { createWeapon } from '/src/combat/enemyEquipment.js';
 import { mintAetheric, AETHERIC_RECORDS } from '/src/systems/aetheric.js';
 import { mintHourlock } from '/src/systems/gilded.js';
-import { mintIliacCard } from '/src/systems/iliacItems.js';
-import { ILIAC_CARDS } from '/src/net/iliacCards.js';
+import { mintIliacCard } from '/src/systems/iliac/iliacItems.js';
+import { ILIAC_CARDS } from '/src/net/iliac/iliacCards.js';
 import { addItem } from '/src/systems/inventory.js';
 
 setPref('lootRarity', true);

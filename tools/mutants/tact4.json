@@ -5,7 +5,7 @@
     "old": "  return (entity.level ?? 0) >= BLOW_TIER_LEVEL || isElite(entity) || !!entity.champion || !!entity.revenant;",
     "new": "  return (entity.level ?? 0) >= 0 || isElite(entity) || !!entity.champion || !!entity.revenant;",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -14,16 +14,16 @@
     "old": "  return (entity.level ?? 0) >= BLOW_TIER_LEVEL || isElite(entity) || !!entity.champion || !!entity.revenant;",
     "new": "  return (entity.level ?? 0) >= BLOW_TIER_LEVEL || entity.eliteFoe === true || !!entity.champion || !!entity.revenant;",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
     "name": "TACT4-casters-blade",
     "file": "src/ai/blowShapes.js",
-    "old": "  if (mobileType >= 128 && mobileType !== NONE) return BLOW_CASTERS.has(mobileType) ? [] : BLADE;",
-    "new": "  if (mobileType >= 128 && mobileType !== NONE) return BLADE;",
+    "old": "  if ((mobileType & 128) !== 0 && mobileType !== NONE) return BLOW_CASTERS.has(mobileType) ? [] : BLADE;",
+    "new": "  if ((mobileType & 128) !== 0 && mobileType !== NONE) return BLADE;",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "return along >= -0.3 && along <= P.len && Math.abs(across) <= P.halfW; }",
     "new": "return along >= -0.3 && Math.abs(across) <= P.halfW; }",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "return along >= -0.3 && along <= P.len && Math.abs(across) <= P.halfW; }",
     "new": "return along >= -0.3 && along <= P.len; }",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    return Math.acos(Math.max(-1, Math.min(1, along / d))) <= P.halfArc;",
     "new": "    return true;",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if (b.kind === 'slam') { const P = BLOW.slam; return Math.hypot(along - P.ahead, across) <= P.r; }",
     "new": "  if (b.kind === 'slam') { const P = BLOW.slam; return Math.hypot(along, across) <= P.r; }",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  const along = rx * fx + rz * fz, across = -rx * fz + rz * fx;",
     "new": "  const along = rx * fx + rz * fz, across = rx * fz + rz * fx;",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  if (after > BLOW_FLASH) return null;",
     "new": "  if (after > 0) return null;",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    if (!phase || (now < b.land && gone(ai, now))) { _live.delete(ai); continue; }",
     "new": "    if (!phase || (now < b.land && gone(ai, now))) continue;",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    if (near && d > (b.sand ? Math.max(range, SAND_DRAW_RANGE) : range)) continue;\n    out.push({ blow: b, phase, nearFloor",
     "new": "    void range;\n    out.push({ blow: b, phase, nearFloor",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ],
     "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): re-aimed by content - the range is the sand's for a blow wound up on the sand."
   },
@@ -105,7 +105,7 @@
     "old": "  ai._blowVerdict = null;\n  if (!fresh || turned)",
     "new": "  if (!fresh || turned)",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "  const fresh = now == null || ai._blowAt == null || now - ai._blowAt <= BLOW_VERDICT_LIFE;",
     "new": "  const fresh = true;",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "  if (!v) { ai._blowMult = undefined; tellDodged(ai); }",
     "new": "  if (!v) { tellDodged(ai); }",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "  ai._blowMult = undefined;\n  return dmg > 0",
     "new": "  return dmg > 0",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "  return dmg > 0 ? Math.max(1, Math.round(dmg * m)) : dmg;",
     "new": "  return Math.max(1, Math.round(dmg * m));",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "    if (ai === except || b.cut != null || gone(ai, now)) continue;",
     "new": "    continue;",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "ai.canAct !== false && now >= (s.blowReady ?? 0)) {   // AUDIT TACT: a token holder",
     "new": "ai.canAct !== false) {   // AUDIT TACT: a token holder",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "  const all = throwsBlows(ent) ? blowShapesOf(ent.mobileType, ent) : [];",
     "new": "  const all = blowShapesOf(ent.mobileType, ent);",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "  if (skipped || ai.canAct === false || ai.hurtKnock || ai.knockbackSpeed > 0) {",
     "new": "  if (false) {",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "  ai._tacStrike = false; ai._tacShoot = false; ai.moving = false;   // AUDIT TACT A4: no shot, no spell, mid-wind-up",
     "new": "  ai._tacStrike = false; ai._tacShoot = false; ai.moving = false; ai.yaw += 0.05;   // AUDIT TACT A4: no shot, no spell, mid-wind-up",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "  ai._tacStrike = false; ai._tacShoot = false; ai.moving = false;   // AUDIT TACT A4: no shot, no spell, mid-wind-up\n  return true;",
     "new": "  ai._tacStrike = false; ai._tacShoot = false;   // AUDIT TACT A4: no shot, no spell, mid-wind-up\n  return false;",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "    if (tf) return resolveLanding(ai, s, s.blow, arrived && inBlow(s.blow, tf[0], tf[2]), now, cooled, atMe, judgedHere(ai, key));",
     "new": "    if (tf) return resolveLanding(ai, s, s.blow, true, now, cooled, atMe, judgedHere(ai, key));",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ],
     "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): re-aimed by content - the landing passes judgedHere beside atMe. TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
   },
@@ -214,7 +214,7 @@
     "old": "  ai._blowMult = judged ? b.mult : undefined; ai._blowAt = now; ai._blowSwing = true;",
     "new": "  ai._blowMult = judged ? b.mult : undefined; ai._blowAt = now;",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ],
     "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): the weight is a judged landing's (mine or a bout-mate's - judgedHere), the swing forced as before. TELL8 (PIN MOVED): re-aimed by content - the owner winds up at a peer it hunts (`tf` its target's feet, `atMe` the damage's gate), a peer's blow carries its class, the relay moved to world162."
   },
@@ -224,16 +224,16 @@
     "old": "  if (s.state === 'windup' && s.blow) return windupTurn(ai, s, now, skipped);\n  if (s.key !== key)",
     "new": "  if (s.key !== key)",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
     "name": "TACT4-attack-ignores",
-    "file": "src/characters/enemyAttack.js",
+    "file": "src/characters/enemy/enemyAttack.js",
     "old": "      if (ai._blowSwing) {",
     "new": "      if (false) {",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -242,7 +242,7 @@
     "old": "    inside = along >= -0.3 && along <= uP.x && abs(across) <= uP.y;",
     "new": "    inside = along >= -0.3 && along <= uP.x;",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -251,7 +251,7 @@
     "old": "    const inside = d <= P.r && (d < 0.5 || ang <= P.halfArc);",
     "new": "    const inside = d <= P.r;",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -260,7 +260,7 @@
     "old": "    if (blowConnects(f.ai, meleeHitConnects(f.ai._dist, f.ai.inSight, withinYaw(f.ai.yaw, hdx, hdz, MELEE_HIT_YAW_DEG)))) {",
     "new": "    if (meleeHitConnects(f.ai._dist, f.ai.inSight, withinYaw(f.ai.yaw, hdx, hdz, MELEE_HIT_YAW_DEG))) {",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   },
   {
@@ -269,7 +269,7 @@
     "old": "    const dmg = blowScaled(f.ai, _weighHit(f, foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {",
     "new": "    const dmg = ((_a, x) => x)(f.ai, _weighHit(f, foeDeps.calculateAttackDamage(f.entity, foeDeps.playerEntity, {",
     "tests": [
-      "test/tact4.test.js"
+      "test/characters/enemy/tact4.test.js"
     ]
   }
 ]

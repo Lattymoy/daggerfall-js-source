@@ -1,7 +1,7 @@
 // TESA6 (2026-10-12, the owner: "Do it" - the ports; bible/03-World/Arena-Provinces.md TESA6) - THE PORTS PAST THE BAY,
 // pinned. A port stands on its own province's shore (world/arenaPlaces.js standArenaPixels) and its clone answers a harbour
 // (world/arenaLocations.js); the host's ports past the Bay answer as the Etheric Sea's do. TESA12: a port is a lore city
-// TAMRIEL1 sets on the sea (world/tamrielGeography.js CITIES' `port`) - A.EXE's coastal list, its unpacker, its print and
+// TAMRIEL1 sets on the sea (world/tamriel/tamrielGeography.js CITIES' `port`) - A.EXE's coastal list, its unpacker, its print and
 // its card went with Arena.
 import { test, afterEach } from 'node:test';
 import assert from 'node:assert/strict';
@@ -9,9 +9,10 @@ import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { SHORE_REACH, PIXEL_REACH, pictureSea, standArenaPixels, arenaPixels } from '../src/world/arenaPlaces.js';
 import { synthesizeArenaLocation } from '../src/world/arenaLocations.js';
-import { setTamrielTrace, tamrielTrace } from '../src/world/tamrielLand.js';
-import { setTamrielFit, inBay, pictureToBay } from '../src/world/tamrielFrame.js';
+import { setTamrielTrace, tamrielTrace } from '../src/world/tamriel/tamrielLand.js';
+import { setTamrielFit, inBay, pictureToBay } from '../src/world/tamriel/tamrielFrame.js';
 import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
+import { hostText } from './hostText.mjs';   // HOST-SPLIT (at the merge of main): the world host read whole - its pixel build stands in scenes/pixelBuild.js
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 afterEach(() => { setTamrielTrace(null); setTamrielFit(null); });
@@ -78,7 +79,7 @@ test('TESA6 the clone: a port answers a harbour (portTownAndUnknown 1) and says 
 });
 
 test('TESA6 the host: an Arena port past the Bay answers where the Bay\'s ports are asked - Come Sail Away\'s port town, the naval host\'s port (no crown, the pixel\'s region), the harbour book\'s town, the nearest port\'s name and way, the waters\' port distance - and a city made a port is cloned again and built again (mutant: an arm, the crown, the clone\'s check, the sweep)', () => {
-  const w = read('src/scenes/world.js');
+  const w = hostText('src/scenes/world.js');
   assert.match(w, /const arenaPorts = \(\) => \(_arenaTemplates \? arenaPixels\(\)\?\.stood\.filter\(\(q\) => q\.port\) \?\? \[\] : \[\]\);/);
   assert.match(w, /const arenaPortAt = \(x, y\) => \{ if \(!_arenaTemplates \|\| onTheBay\(x, y\)\) return null; const q = arenaPlaceOnPixel\(x, y\); return q\?\.port \? q : null; \};/);
   assert.match(w, /const arenaPortOf = \(q\) => \(\{ key: `\$\{q\.bx\},\$\{q\.by\}`, name: q\.name, px: q\.bx, py: q\.by, region: maps\.getRegionIndexAt\(q\.bx, q\.by\), crown: null \}\);/);
@@ -97,7 +98,7 @@ test('TESA6 with ARENA2: on the player\'s own trace 28 of the lore\'s 30 ports s
   const { DFPalette } = await import('../src/formats/dfPalette.js');
   const { preloadTamrielTrace } = await import('../src/ui/tamrielTrace.js');
   const { WoodsFile } = await import('../src/formats/woodsFile.js');
-  const { groundWoods } = await import('../src/world/tamrielGround.js');
+  const { groundWoods } = await import('../src/world/tamriel/tamrielGround.js');
   const { WATER_BYTE } = await import('../src/world/roadsProducer.js');
   const bytes = (n) => new Uint8Array(readFileSync(join(ARENA2, n)));
   const pal = new DFPalette(); pal.load(bytes('ART_PAL.COL'), 'ART_PAL.COL');

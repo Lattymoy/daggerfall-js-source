@@ -5,7 +5,7 @@
     "old": "    if (!companionBodies || !sp || free || !companionCastable(sp)) return [];\n",
     "new": "    if (true) return [];\n",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (!companionBodies || !sp || free || !companionCastable(sp)) return [];\n",
     "new": "    if (!companionBodies || !sp || free) return [];\n",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "if (!rec || rec.dead || rec._knockedOut || !rec.entity || rec.puppet ||",
     "new": "if (!rec || rec.dead || rec._knockedOut || !rec.entity ||",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "{ allyCast: true }, foeSinks(rec, false));",
     "new": "{ allyCast: true }, foeSinks(rec, true));",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "{ allyCast: true }, foeSinks(rec, false));",
     "new": "undefined, foeSinks(rec, false));",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "applySpellToFoe(gift, effectiveLevel(playerEntity), rec,",
     "new": "applySpellToFoe(sp, effectiveLevel(playerEntity), rec,",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (!quiet) sayGift(allyCastCasterLine(sp.name, mark.name));   // GIFT-QUIET\n    return true;",
     "new": "    return true;",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      if (Number.isFinite(hit) && hit < along - 1e-3) continue;\n",
     "new": "",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -77,16 +77,16 @@
     "old": "    const mine = !readiedFree && allyReach !== null && allyCastable(sp) ? companionInReach(eye, dir, allyReach) : null;",
     "new": "    const mine = null;",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
     "name": "CK-near-unarmed",
     "file": "src/scenes/hostMagic.js",
-    "old": "      if (companionNear(lastAim?.eye ?? null, sp)) { sayArm('mine-near', prevArm, PRESS_BUTTON_TO_FIRE_SPELL, COMPANION_ARMED_LINE); return true; }",
-    "new": "      if (false) { sayArm('mine-near', prevArm, PRESS_BUTTON_TO_FIRE_SPELL, COMPANION_ARMED_LINE); return true; }",
+    "old": "      if (companionNear(lastAim?.eye ?? null, sp)) { sayArm('mine-near', prevArm, pressButtonToFireSpellText(), COMPANION_ARMED_LINE); return true; }",
+    "new": "      if (false) { sayArm('mine-near', prevArm, pressButtonToFireSpellText(), COMPANION_ARMED_LINE); return true; }",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "      if (off <= ALLY_ARM_RADIUS) return true;",
     "new": "      if (off <= 0.5) return true;",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -104,8 +104,8 @@
     "old": "    marks.push(...companionMarksFor(sp));   // COMPANION-KIT: or on my companion\n",
     "new": "",
     "tests": [
-      "test/companionkit.test.js",
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/companionkit.test.js",
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -114,8 +114,8 @@
     "old": "      else if (t?.companion) giveToCompanion(t, sp);   // COMPANION-KIT: the touch met my companion\n",
     "new": "",
     "tests": [
-      "test/companionkit.test.js",
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/companionkit.test.js",
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "      giveToCompanions(sweepFoes(eye, EXPLOSION_RADIUS, companionMarksFor(sp)), sp);   // COMPANION-KIT: and my companions\n",
     "new": "",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -133,8 +133,8 @@
     "old": "[...allyMarksFor(m.spell, false), ...companionMarksFor(m.spell, false)]",
     "new": "[...allyMarksFor(m.spell, false)]",
     "tests": [
-      "test/companionkit.test.js",
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/companionkit.test.js",
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -143,8 +143,8 @@
     "old": "          else if (hitMate.companion) giveToCompanion(hitMate, m.spell);   // COMPANION-KIT\n",
     "new": "",
     "tests": [
-      "test/companionkit.test.js",
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/companionkit.test.js",
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -153,8 +153,8 @@
     "old": "    if (allies && caster?.entity === playerEntity) giveToCompanions(sweepFoes(pos, EXPLOSION_RADIUS, companionMarksFor(spell, false)), spell);",
     "new": "    void giveToCompanions;",
     "tests": [
-      "test/companionkit.test.js",
-      "test/auditwatchkit_magic.test.js"
+      "test/systems/companionkit.test.js",
+      "test/systems/auditwatchkit_magic.test.js"
     ]
   },
   {
@@ -163,7 +163,7 @@
     "old": "health: null, maxHealth: null, items: [] };",
     "new": "health: null, maxHealth: null };",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -172,7 +172,7 @@
     "old": "    packOf: (boat, name) => find(boat, name)?.items ?? null,",
     "new": "    packOf: (boat, name) => find(boat, name)?.items?.slice() ?? null,",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -181,7 +181,7 @@
     "old": "party: party.map((p) => ({ ...p, items: packOut(p.items) }))",
     "new": "party: party.map((p) => ({ ...p, items: [] }))",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -190,7 +190,7 @@
     "old": "return codec ? codec.serialize(items) : items.slice();",
     "new": "return items.slice();",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -199,7 +199,7 @@
     "old": "const out = codec ? codec.deserialize(data) : data.slice();",
     "new": "const out = data.slice();",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -208,7 +208,7 @@
     "old": "      c.items.length = 0;\n",
     "new": "",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -217,7 +217,7 @@
     "old": "    if (openCompanion(foe)) return true;",
     "new": "    void openCompanion;",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -226,7 +226,7 @@
     "old": "  if (mode !== 'steal' && openCompanion && foe.companion != null",
     "new": "  if (openCompanion && foe.companion != null",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -235,79 +235,79 @@
     "old": " && !String(foe.companion).startsWith('peer:')) {",
     "new": ") {",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
     "name": "CK-sendback-pack-left",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      stowPack(boat.uid, pack, name);\n      return 'back';",
     "new": "      return 'back';",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
     "name": "CK-knock-pack-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (c.items?.length) stowPack(c.boat, c.items.splice(0), c.name);   // COMPANION-KIT: and his pack with him\n",
     "new": "",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
     "name": "CK-stow-no-hold",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const rest = boat ? deps.board?.giveItems?.(items, boat)?.left ?? [] : items;",
     "new": "const rest = boat ? deps.board?.giveItems?.(items, null)?.left ?? [] : items;",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
     "name": "CK-bar-no-name",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    set('name', mate ? p.name : '', (v) => { slot.word.textContent = v; });",
     "new": "    set('name', '', (v) => { slot.word.textContent = v; });",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
     "name": "CK-bar-no-digits",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "? `${Math.max(0, Math.round(p.hp))}/${Math.round(p.hpMax)}` : ''",
     "new": "? '' : ''",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
     "name": "CK-bar-no-fx",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    const fx = mate && Array.isArray(p.fx) ? p.fx.slice(0, MATE_FX_MAX) : [];",
     "new": "    const fx = [];",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
     "name": "CK-bar-fx-uncapped",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "p.fx.slice(0, MATE_FX_MAX) : [];",
     "new": "p.fx.slice() : [];",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
     "name": "CK-bar-every-mate",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    const mate = typeof p.name === 'string' && p.name.length > 0;",
     "new": "    const mate = true;",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -316,7 +316,7 @@
     "old": "      if (!social) { if (ck !== compPainted) paint(); return; }",
     "new": "      if (!social) return;",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -325,7 +325,7 @@
     "old": "    setText(card.where, String(c.role ?? ''));",
     "new": "    setText(card.where, '');",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -334,7 +334,7 @@
     "old": "    compPainted = mates.map(companionKey).join('#');",
     "new": "    compPainted = null;",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -343,7 +343,7 @@
     "old": "    showing = rows.length > 0 || mates.length > 0;",
     "new": "    showing = true;",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -352,7 +352,7 @@
     "old": "    const mates = comps();   // COMPANION-KIT",
     "new": "    const mates = [];",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -361,7 +361,7 @@
     "old": "    setCompanions(fn) { companions = typeof fn === 'function' ? fn : null; compPainted = null; },",
     "new": "    setCompanions(fn) { void fn; },",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -370,7 +370,7 @@
     "old": "    if (card.facemark && card.facemark.textContent !== mark) card.facemark.textContent = mark;\n",
     "new": "",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -379,7 +379,7 @@
     "old": "[...exteriorFoes.foes, ...cityGuards.guards].filter((f) => f.companion == null), collider, LOCK_PICK_DISTANCE)",
     "new": "[...exteriorFoes.foes, ...cityGuards.guards], collider, LOCK_PICK_DISTANCE)",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   },
   {
@@ -388,7 +388,7 @@
     "old": "    partyPanel.setCompanions(partyCompanions);   // COMPANION-KIT\n",
     "new": "",
     "tests": [
-      "test/companionkit.test.js"
+      "test/systems/companionkit.test.js"
     ]
   }
 ]

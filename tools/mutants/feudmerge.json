@@ -5,7 +5,7 @@
     "old": "    if (near && d > (b.sand ? Math.max(range, SAND_DRAW_RANGE) : range)) continue;\n    const t = Math.max(0, Math.min(1, (at - b.start) / (b.land - b.start)));",
     "new": "    if (near && d > range) continue;\n    const t = Math.max(0, Math.min(1, (at - b.start) / (b.land - b.start)));",
     "tests": [
-      "test/feudmerge.test.js"
+      "test/characters/feudmerge.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "const judgedHere = (ai, key) => (key === LOCAL ? !!_me : !ai?.target?.isPeer);",
     "new": "const judgedHere = (ai, key) => (key === LOCAL ? !!_me : true);",
     "tests": [
-      "test/feudmerge.test.js"
+      "test/characters/feudmerge.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (b.key !== LOCAL && !ai.target?.isPeer) b.sand = true;",
     "new": "  if (b.key !== LOCAL) b.sand = true;",
     "tests": [
-      "test/feudmerge.test.js"
+      "test/characters/feudmerge.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  ai._blowFx = atMe && verdict ? {",
     "new": "  ai._blowFx = judged && verdict ? {",
     "tests": [
-      "test/feudmerge.test.js"
+      "test/characters/feudmerge.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  ai._blowFor = judged ? (b.key ?? targetKey(ai)) : undefined;",
     "new": "  ai._blowFor = undefined;",
     "tests": [
-      "test/feudmerge.test.js"
+      "test/characters/feudmerge.test.js"
     ]
   }
 ]

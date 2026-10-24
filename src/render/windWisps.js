@@ -9,7 +9,7 @@
 // the eye and WRAPS (the lab's law from the rain: `p = mod(p - uEye +
 // uBox*0.5, uBox) + uEye - uBox*0.5`, so moving reveals other wisps and
 // never drags the ones in view), and they travel by the ONE integrated
-// wind (systems/windDrive.js `step`, PROTO-19's law: a distance already
+// wind (systems/wind/windDrive.js `step`, PROTO-19's law: a distance already
 // travelled, never wind x time). The count and the alpha follow the
 // wind's STRENGTH - a few faint ones in a breeze, the air full of them
 // in a gale - with a floor, because the point of them is to be read: a
@@ -140,7 +140,7 @@ export const WISP_FLOOR = 0.08;
 /** WEATHER2d: A LOOK - the program in a dress. The wisps' own, and the
  *  sandstorm's: tan, dense, short streaks in a lower box, no floor (no
  *  sand without a storm), the front's intensity its strength. */
-export const WISP_LOOK = Object.freeze({ color: Object.freeze([0.86, 0.89, 0.94]), alpha: Object.freeze([0.20, 0.24]), len: Object.freeze([1.6, 2.4]), count: WISP_MAX, floor: WISP_FLOOR, box: WISP_BOX });   // WISPS-RETURN: WIND3's streak length (WIND5's 2.6, 2.0 held a curl); DISC17-A's alpha kept (WIND3's 0.10, 0.12 doubled) - a gale's streak peaks at 0.44, a calm's at 0.20
+export const WISP_LOOK = Object.freeze({ color: Object.freeze([0.86, 0.89, 0.94]), alpha: Object.freeze([0.09, 0.11]), len: Object.freeze([1.2, 1.8]), count: WISP_MAX, floor: WISP_FLOOR, box: WISP_BOX });   // SWAY-SOFT (2026-10-21, Mac: "the wind effect more subtle and transparent"): the alpha under half DISC17-A's 0.20, 0.24 (a gale's streak peaks at 0.20 where it was 0.44, a calm's at 0.09 where it was 0.20) and the streak three quarters of WIND3's 1.6, 2.4
 export const SAND_LOOK = Object.freeze({ color: Object.freeze([0.80, 0.64, 0.40]), alpha: Object.freeze([0.28, 0.30]), len: Object.freeze([0.8, 1.2]), count: 7000, floor: 0, box: 70 });
 
 /** How many wisps a wind of `strength01` draws: the floor plus the rest
@@ -215,7 +215,7 @@ export class WindWispsRenderer {
     }
   }
 
-  /** Draw the frame's wisps for `wd` (systems/windDrive.js's answer):
+  /** Draw the frame's wisps for `wd` (systems/wind/windDrive.js's answer):
    *  nothing when the deck is unknown. Advances the travel first. */
   draw(wd, proj, view, eye, timeSeconds) {
     this.drawn = 0;

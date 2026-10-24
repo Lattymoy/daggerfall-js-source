@@ -4,7 +4,7 @@
 // (bible/06-Systems/Professions-Arc.md 5.2, 30). A pure machine, as
 // herbAct.js and traceAct.js are: the gathering host ticks it with the
 // Interact key's level and the attack's edge, and reads its state for the
-// meter (ui/profHud.js) and its report for the harvest.
+// meter (ui/professions/profHud.js) and its report for the harvest.
 //
 //   WIND   hold E: the net winds 0.3-1.5 s; let go and it flies 3-12 m.
 //   WAIT   5-30 s - halved in the first and last daylight hours, doubled
@@ -21,6 +21,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { FISH_ACT, fishBand, tugWindow, waitMult, throwM } from '../net/professionLaw.js';
+import { firmActMult } from './firmamentLive.js';   // FIRM1: the Firmament's patient line (act.fishing)
 
 /** How long the net is in the air, seconds. */
 export const FLY_S = 0.6;
@@ -42,7 +43,7 @@ export function createFishAct({ rank = 0, band = 1, angler = false, hour = 12, s
     /** the wind held, 0 to 1 of its range, and the throw it made (m) */
     wind: 0, windS: 0, throwM: 0,
     /** the wait's length and what is left of it; the tug's window and what is left of it */
-    waitS: 0, waitLeft: 0, tugS: tugWindow(angler), tugLeft: 0, tugged: false,
+    waitS: 0, waitLeft: 0, tugS: tugWindow(angler) * firmActMult('fishing'), tugLeft: 0, tugged: false,   // FIRM1: the tug's window, the Firmament's longer
     /** the haul: the weight's place and speed, the band's centre and width, the meter's fill and the slip, 0 to 1 */
     weight: 0.5, speed: 0, bandAt: 0.2, bandW: width, fill: 0, slip: 0, haulS: 0, slipped: false,
     /** the school the cast landed in, or null */

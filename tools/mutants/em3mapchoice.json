@@ -1,29 +1,29 @@
 [
  {
   "name": "EM3-MAPCHOICE-the-switch-ignored",
-  "file": "src/ui/mapSkin.js",
+  "file": "src/ui/map/mapSkin.js",
   "old": "export const dungeonMap3dOn = () => getPref('dungeonMap3d') !== false && !dungeonMapUrlFlat();",
   "new": "export const dungeonMap3dOn = () => !dungeonMapUrlFlat();",
   "tests": [
-   "test/em3_mapchoice.test.js"
+   "test/ui/map/em3_mapchoice.test.js"
   ]
  },
  {
   "name": "EM3-MAPCHOICE-the-kill-door-ignored",
-  "file": "src/ui/mapSkin.js",
+  "file": "src/ui/map/mapSkin.js",
   "old": "export const dungeonMap3dOn = () => getPref('dungeonMap3d') !== false && !dungeonMapUrlFlat();",
   "new": "export const dungeonMap3dOn = () => getPref('dungeonMap3d') !== false;",
   "tests": [
-   "test/em3_mapchoice.test.js"
+   "test/ui/map/em3_mapchoice.test.js"
   ]
  },
  {
   "name": "EM3-MAPCHOICE-the-kill-door-inverted",
-  "file": "src/ui/mapSkin.js",
+  "file": "src/ui/map/mapSkin.js",
   "old": "return pageParam('dungeonmap') === 'flat';",
   "new": "return pageParam('dungeonmap') !== 'flat';",
   "tests": [
-   "test/em3_mapchoice.test.js"
+   "test/ui/map/em3_mapchoice.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "control: Object.freeze({ store: 'prefs', key: 'dungeonMap3d', initial: true, online: 'player' }),",
   "new": "control: Object.freeze({ store: 'prefs', key: 'dungeonMap3d', initial: false, online: 'player' }),",
   "tests": [
-   "test/em3_mapchoice.test.js"
+   "test/ui/map/em3_mapchoice.test.js"
   ]
  },
  {
@@ -41,70 +41,70 @@
   "old": "createAutomapSheet({ solid: dungeonMap3dOn(), ",
   "new": "createAutomapSheet({ solid: true, ",
   "tests": [
-   "test/em3_mapchoice.test.js"
+   "test/ui/map/em3_mapchoice.test.js"
   ]
  },
  {
   "name": "EM3-TRAIL-not-saved",
-  "file": "src/systems/automap.js",
+  "file": "src/systems/automap/automap.js",
   "old": "      ...(rec.trail?.size ? { trail: [...rec.trail] } : {}),\n",
   "new": "",
   "tests": [
-   "test/em3_3d_dungeon.test.js",
-   "test/automapsheet.test.js",
-   "test/em3_trail.test.js"
+   "test/ui/ink/em3_3d_dungeon.test.js",
+   "test/ui/automap/automapsheet.test.js",
+   "test/systems/automap/em3_trail.test.js"
   ]
  },
  {
   "name": "EM3-TRAIL-not-restored",
-  "file": "src/systems/automap.js",
+  "file": "src/systems/automap/automap.js",
   "old": "      ...(Array.isArray(rec.trail) ? { trail: new Set(rec.trail) } : {}),\n",
   "new": "",
   "tests": [
-   "test/em3_3d_dungeon.test.js",
-   "test/automapsheet.test.js",
-   "test/em3_trail.test.js"
+   "test/ui/ink/em3_3d_dungeon.test.js",
+   "test/ui/automap/automapsheet.test.js",
+   "test/systems/automap/em3_trail.test.js"
   ]
  },
  {
   "name": "EM3-TRAIL-kept-across-a-new-layout",
-  "file": "src/systems/automap.js",
+  "file": "src/systems/automap/automap.js",
   "old": "    delete rec.trail; delete rec.trailAll; delete rec.drops;   // EM3-3D: the walked trail is of a layout that is gone (AUDIT SD III, D1: and its drops)\n",
   "new": "",
   "tests": [
-   "test/em3_3d_dungeon.test.js",
-   "test/automapsheet.test.js",
-   "test/em3_trail.test.js"
+   "test/ui/ink/em3_3d_dungeon.test.js",
+   "test/ui/automap/automapsheet.test.js",
+   "test/systems/automap/em3_trail.test.js"
   ]
  },
  {
   "name": "EM3-TRAIL-RevealAll-not-all",
-  "file": "src/systems/automap.js",
+  "file": "src/systems/automap/automap.js",
   "old": "  rec.trailAll = true;   // EM3-3D: everything is known now, walked or not - the solid sheet draws the reveal\n",
   "new": "",
   "tests": [
-   "test/em3_3d_dungeon.test.js",
-   "test/automapsheet.test.js"
+   "test/ui/ink/em3_3d_dungeon.test.js",
+   "test/ui/automap/automapsheet.test.js"
   ]
  },
  {
   "name": "EM3-TRAIL-HideAll-keeps-the-trail",
-  "file": "src/systems/automap.js",
+  "file": "src/systems/automap/automap.js",
   "old": "  rec.trail = new Set(); delete rec.trailAll; delete rec.drops;   // EM3-3D: nothing is known, so nothing was walked (AUDIT SD III, D1: nor dropped)\n",
   "new": "",
   "tests": [
-   "test/em3_3d_dungeon.test.js",
-   "test/automapsheet.test.js"
+   "test/ui/ink/em3_3d_dungeon.test.js",
+   "test/ui/automap/automapsheet.test.js"
   ]
  },
  {
   "name": "EM3-TRAIL-a-new-step-every-scan",
-  "file": "src/systems/automap.js",
+  "file": "src/systems/automap/automap.js",
   "old": "  if (rec.trail.has(key)) return false;\n",
   "new": "",
   "tests": [
-   "test/em3_3d_dungeon.test.js",
-   "test/automapsheet.test.js"
+   "test/ui/ink/em3_3d_dungeon.test.js",
+   "test/ui/automap/automapsheet.test.js"
   ]
  },
  {
@@ -113,7 +113,7 @@
   "old": "    else if (acts.includes('Run') && _on) _on = false;\n",
   "new": "",
   "tests": [
-   "test/padwalk.test.js"
+   "test/systems/padwalk.test.js"
   ]
  },
  {
@@ -122,7 +122,7 @@
   "old": "    if (acts.includes(WALK_MODE_ACTION)) toggleWalkMode();",
   "new": "    if (acts.includes(WALK_MODE_ACTION)) setWalkMode(true);",
   "tests": [
-   "test/padwalk.test.js"
+   "test/systems/padwalk.test.js"
   ]
  },
  {
@@ -131,7 +131,7 @@
   "old": "    if (e.repeat || isWindowUp()) return;",
   "new": "    if (e.repeat) return;",
   "tests": [
-   "test/padwalk.test.js"
+   "test/systems/padwalk.test.js"
   ]
  }
 ]

@@ -1,0 +1,155 @@
+[
+  {
+    "name": "SS-the-started-program-never-taken",
+    "file": "src/render/glProgram.js",
+    "old": "  if (took) started.delete(key);\n  const { prog, vs, fs } = took ?? link(gl, vsSrc, fsSrc);",
+    "new": "  const { prog, vs, fs } = link(gl, vsSrc, fsSrc);",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "SS-a-read-at-the-start",
+    "file": "src/render/glProgram.js",
+    "old": "    if (!s) started.set(k, (s = link(gl, vs, fs)));\n    return s.prog;",
+    "new": "    if (!s) started.set(k, (s = link(gl, vs, fs)));\n    gl.getProgramParameter(s.prog, gl.LINK_STATUS);\n    return s.prog;",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "SS-done-before-the-driver-says",
+    "file": "src/render/glProgram.js",
+    "old": "    return (done = startAll().every((p) => gl.getProgramParameter(p, ext.COMPLETION_STATUS_KHR) === true));",
+    "new": "    return (done = startAll().length > 0);",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "SS-no-extension-never-done",
+    "file": "src/render/glProgram.js",
+    "old": "    if (done || !ext || gl.isContextLost?.()) return (done = true);",
+    "new": "    if (done || gl.isContextLost?.()) return (done = true);\n    if (!ext) return false;",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "SS-taken-handed-to-the-waiting",
+    "file": "src/render/glProgram.js",
+    "old": "    let s = started.get(k);\n    if (!s) started.set(k, (s = link(gl, vs, fs)));\n    return s.prog;",
+    "new": "    let s = started.get(k);\n    if (!s) return { taken: true };\n    return s.prog;",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "SS-compiledPass-built-while-compiling",
+    "file": "src/render/glProgram.js",
+    "old": "    if (!(ready ??= startPrograms(gl, programs))() && !need) return null;",
+    "new": "    ready ??= startPrograms(gl, programs);",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "SS-compiledPass-built-twice",
+    "file": "src/render/glProgram.js",
+    "old": "    if (pass || tried || !gl) return pass;\n    if (!(ready ??= startPrograms(gl, programs))() && !need) return null;\n    tried = true;",
+    "new": "    if (!gl) return pass;\n    if (!(ready ??= startPrograms(gl, programs))() && !need) return null;",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "SS-a-list-misses-a-program",
+    "file": "src/render/gate/gateFx.js",
+    "old": "export const GATE_FX_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[FX_SPARK_VS, FX_SPARK_FS], [FX_METEOR_VS, FX_METEOR_FS]]));",
+    "new": "export const GATE_FX_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[FX_SPARK_VS, FX_SPARK_FS]]));",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "SS-the-gate-fire-at-its-first-stand",
+    "file": "src/scenes/gate/gatePool.js",
+    "old": "  function ensurePass() { pass ??= firePass(); }",
+    "new": "  function ensurePass() { if (!pass && gl) pass = new GatePassRenderer(gl, profile); }",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "SS-the-telegraph-built-with-the-court",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "  telegraphPass();   // started with the court, as it was built with it",
+    "new": "  const _built = gl ? new GateTelegraphRenderer(gl) : null;",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "SS-the-outline-idle-while-compiling",
+    "file": "src/render/nodeGlint.js",
+    "old": "      if (!asked && pictured.length && (ready ??= start(renderer.gl))()) { asked = true; idle(make); }",
+    "new": "      if (!asked && pictured.length) { ready ??= start(renderer.gl); asked = true; idle(make); }",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "SS-the-named-step-at-its-first-idle",
+    "file": "src/render/warmPrograms.js",
+    "old": "        while (!ready()) {",
+    "new": "        while (false) {",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "SS-the-veil-warm-builds-it-whole",
+    "file": "src/ui/gate/gateVeil.js",
+    "old": "      if (!begin()) return false;\n      void warmPrograms(",
+    "new": "      if (!build()) return false;\n      void warmPrograms(",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "SS-the-spells-warmed-bare",
+    "file": "src/scenes/hostMagic.js",
+    "old": "void warmPrograms([{ start: () => startPrograms(renderer.gl, SPELL_IMPACT_PROGRAMS), run: () => { if (!fxPass && !fxBroken) fxPass = new SpellImpactPass(renderer.gl); }, need: () => !fxPass && !fxBroken }],",
+    "new": "void warmPrograms([() => { if (!fxPass && !fxBroken) fxPass = new SpellImpactPass(renderer.gl); }],",
+    "tests": [
+      "test/render/shaderstall.test.js"
+    ]
+  },
+  {
+    "name": "SS-the-snow-surface-made-while-it-compiles",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "          if (snowReady()) makeSurface();",
+    "new": "          makeSurface();",
+    "tests": [
+      "test/systems/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "SS-the-snow-surface-never-made-after",
+    "file": "src/scenes/snowfallHost.js",
+    "old": "      if (snowReady?.()) makeSurface();   // SHADER-STALL: the surface the frame its program is compiled",
+    "new": "",
+    "tests": [
+      "test/systems/audit_environs.test.js"
+    ]
+  },
+  {
+    "name": "SS-the-court-warms-one-a-frame-beside-a-parallel-driver",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    if (!parallelCompile(gl)) { warmDoors[warmed++](); return; }",
+    "new": "    if (true) { warmDoors[warmed++](); return; }",
+    "tests": [
+      "test/net/gate/gatemix_targets.test.js"
+    ]
+  }
+]

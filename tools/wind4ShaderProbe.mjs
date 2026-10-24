@@ -3,7 +3,7 @@
 // Mac's three (too many wisps, a sky that drifted the wrong way, grass
 // that never went dark) are a constant, a sign and two missing uniform
 // terms. The constant and the sign are pinned in node
-// (test/wind4_windweather.test.js); what node cannot answer is whether
+// (test/render/wind4_windweather.test.js); what node cannot answer is whether
 // the GLSL still COMPILES and whether the grass's new uniforms survive
 // the link - a uniform the optimiser drops reads as null, and a shader
 // that fails to compile is a silent black pass in play.

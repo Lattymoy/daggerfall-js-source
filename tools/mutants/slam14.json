@@ -5,9 +5,9 @@
     "old": "for (const id of [...(this._rooms.get(room) ?? [])]) if (!keep.has(id)) { const p = this.peers.get(id); if (p) (p.unconfirmed ??= {})[room] = now; }",
     "new": "for (const id of [...(this._rooms.get(room) ?? [])]) if (!keep.has(id)) this._unmember(room, id);",
     "tests": [
-      "test/slam14.test.js",
-      "test/online.test.js",
-      "test/world6biiib.test.js"
+      "test/net/slam14.test.js",
+      "test/net/online.test.js",
+      "test/net/world6biiib.test.js"
     ]
   },
   {
@@ -16,9 +16,9 @@
     "old": "      if (p.unconfirmed && now - p.seenAt > PEER_TIMEOUT_MS) for (const room of Object.keys(p.unconfirmed)) this._unmember(room, p.id);\n",
     "new": "",
     "tests": [
-      "test/slam14.test.js",
-      "test/online.test.js",
-      "test/world6biiib.test.js"
+      "test/net/slam14.test.js",
+      "test/net/online.test.js",
+      "test/net/world6biiib.test.js"
     ]
   },
   {
@@ -27,7 +27,7 @@
     "old": "if (p.unconfirmed && now - p.seenAt > PEER_TIMEOUT_MS)",
     "new": "if (p.unconfirmed && now - p.seenAt >= PEER_TIMEOUT_MS)",
     "tests": [
-      "test/slam14.test.js"
+      "test/net/slam14.test.js"
     ]
   },
   {
@@ -36,7 +36,7 @@
     "old": "        if (p.unconfirmed) this._confirm(p, room);   // SLAM14 B2: a pose is proof it is still here\n",
     "new": "",
     "tests": [
-      "test/slam14.test.js"
+      "test/net/slam14.test.js"
     ]
   },
   {
@@ -45,16 +45,16 @@
     "old": "    delete p.unconfirmed[room];\n    if (!Object.keys(p.unconfirmed).length) p.unconfirmed = null;",
     "new": "    p.unconfirmed = null;",
     "tests": [
-      "test/slam14.test.js"
+      "test/net/slam14.test.js"
     ]
   },
   {
     "name": "Y6-member-does-not-confirm",
     "file": "src/net/online.js",
-    "old": "if (have) { if (have.unconfirmed) this._confirm(have, room); if (told) this._refresh(have, p, now, room); return; }",
-    "new": "if (have) { if (told) this._refresh(have, p, now, room); return; }",
+    "old": "if (have) { if (have.unconfirmed) this._confirm(have, room); if (told) this._refresh(have, p, now, room); if (dead?.dd) this._fell(id, this.peers.get(id), dead, room, now, true); return; }",
+    "new": "if (have) { if (told) this._refresh(have, p, now, room); if (dead?.dd) this._fell(id, this.peers.get(id), dead, room, now, true); return; }",
     "tests": [
-      "test/slam14.test.js"
+      "test/net/slam14.test.js"
     ]
   },
   {
@@ -63,8 +63,8 @@
     "old": "    made.recall = !told && !!knew;\n",
     "new": "",
     "tests": [
-      "test/slam14.test.js",
-      "test/slam9.test.js"
+      "test/net/slam14.test.js",
+      "test/net/slam9.test.js"
     ]
   },
   {
@@ -73,8 +73,8 @@
     "old": "(held?.told && !held.recall)) return false;",
     "new": "held?.told) return false;",
     "tests": [
-      "test/slam14.test.js",
-      "test/slam9.test.js"
+      "test/net/slam14.test.js",
+      "test/net/slam9.test.js"
     ]
   },
   {
@@ -83,8 +83,8 @@
     "old": "for (const [id, p] of this.peers) if (!p.told || p.recall) ids.push(id);",
     "new": "for (const [id, p] of this.peers) if (!p.told) ids.push(id);",
     "tests": [
-      "test/slam14.test.js",
-      "test/slam9.test.js"
+      "test/net/slam14.test.js",
+      "test/net/slam9.test.js"
     ]
   },
   {
@@ -93,8 +93,8 @@
     "old": "p.told = true; p.recall = false;   // SLAM6",
     "new": "p.told = true;   // SLAM6",
     "tests": [
-      "test/slam14.test.js",
-      "test/slam9.test.js"
+      "test/net/slam14.test.js",
+      "test/net/slam9.test.js"
     ]
   },
   {
@@ -103,7 +103,7 @@
     "old": "        if (!p.told || p.recall) p.heardIn = room;\n",
     "new": "",
     "tests": [
-      "test/slam14.test.js"
+      "test/net/slam14.test.js"
     ]
   },
   {
@@ -112,8 +112,8 @@
     "old": "if (primary) this._backoff = BACKOFF_MIN_MS; else { const h = this._halo.get(room); if (h) h.backoff = BACKOFF_MIN_MS; }",
     "new": "if (primary) this._backoff = BACKOFF_MIN_MS;",
     "tests": [
-      "test/slam14.test.js",
-      "test/slam12.test.js"
+      "test/net/slam14.test.js",
+      "test/net/slam12.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  if (!look || typeof look !== 'object') return NULL_LOOK_KEY;",
     "new": "  if (!look || typeof look !== 'object') return _computeLookKey(look);",
     "tests": [
-      "test/slam14.test.js"
+      "test/net/slam14.test.js"
     ],
     "equivalent": true,
     "why": "the constant and the recomputation are the same string - the saving is one JSON.stringify per look-less peer per frame, which no pin can observe from outside; the source pin holds the constant's presence"
@@ -133,8 +133,8 @@
     "old": "this.renderer.releaseTexture?.(PEER_ARCHIVE, doll.rec); return; }",
     "new": "this.renderer.releaseTexture?.(); return; }",
     "tests": [
-      "test/slam14.test.js",
-      "test/slam12.test.js"
+      "test/net/slam14.test.js",
+      "test/net/slam12.test.js"
     ]
   },
   {
@@ -143,8 +143,8 @@
     "old": "if (doll && typeof doll.rec === 'string') this.renderer.releaseTexture?.(PEER_ARCHIVE, doll.rec); return; }",
     "new": "return; }",
     "tests": [
-      "test/slam14.test.js",
-      "test/slam12.test.js"
+      "test/net/slam14.test.js",
+      "test/net/slam12.test.js"
     ]
   }
 ]

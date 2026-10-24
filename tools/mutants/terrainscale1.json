@@ -1,38 +1,38 @@
 [
   {
     "name": "TS1-constant-is-the-prefab",
-    "file": "src/world/terrainSampler.js",
+    "file": "src/world/terrain/terrainSampler.js",
     "old": "export const STREAMING_TERRAIN_SCALE = 1.25;",
     "new": "export const STREAMING_TERRAIN_SCALE = 1.5;",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
     "name": "TS1-placed-on-the-prefab",
-    "file": "src/world/terrainSurface.js",
+    "file": "src/world/terrain/terrainSurface.js",
     "old": "export function surfaceHeightAt(heightmapData, lx, lz, stride = 1) {\n  const hDim = HEIGHTMAP_DIMENSION;\n  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;",
     "new": "export function surfaceHeightAt(heightmapData, lx, lz, stride = 1) {\n  const hDim = HEIGHTMAP_DIMENSION;\n  const worldHeight = MAX_TERRAIN_HEIGHT * 1.5;",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
     "name": "TS1-drawn-on-the-prefab",
-    "file": "src/world/terrainSurface.js",
+    "file": "src/world/terrain/terrainSurface.js",
     "old": "  const cell = TERRAIN_SIZE / (hDim - 1);\n  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;",
     "new": "  const cell = TERRAIN_SIZE / (hDim - 1);\n  const worldHeight = MAX_TERRAIN_HEIGHT * 1.5;",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
     "name": "TS1-nature-on-the-prefab",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;   // TerrainNature.LayoutNature's terrainScale - the game scene's (TERRAIN-SCALE1)",
     "new": "  const worldHeight = MAX_TERRAIN_HEIGHT * 1.5;   // TerrainNature.LayoutNature's terrainScale - the game scene's (TERRAIN-SCALE1)",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION)) * STREAMING_TERRAIN_SCALE;",
     "new": "Math.max(byte * BASE_HEIGHT_SCALE, SCALED_OCEAN_ELEVATION)) * 1.5;",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -50,16 +50,16 @@
     "old": "const TRUE_VERTICAL = STREAMING_TERRAIN_SCALE;",
     "new": "const TRUE_VERTICAL = 1.5;",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
     "name": "TS1-wod-sites-on-the-prefab",
-    "file": "src/world/wodLocationLoader.js",
+    "file": "src/world/worldOfDaggerfall/wodLocationLoader.js",
     "old": "Math.fround(MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE)",
     "new": "Math.fround(MAX_TERRAIN_HEIGHT * 1.5)",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  const worldHeight = MAX_TERRAIN_HEIGHT * STREAMING_TERRAIN_SCALE;   // TERRAIN-SCALE1",
     "new": "  const worldHeight = MAX_TERRAIN_HEIGHT * DEFAULT_TERRAIN_SCALE;   // TERRAIN-SCALE1",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "const r = was > 0 ? was / STREAMING_TERRAIN_SCALE : 1;",
     "new": "const r = was > 0 ? STREAMING_TERRAIN_SCALE / was : 1;",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "return y - (h - state.compensation[1] - now) * (r - 1)",
     "new": "return y - (h - now) * (r - 1)",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    return y * (was > 0 ? STREAMING_TERRAIN_SCALE / was : 1) + now;",
     "new": "    return y + now;",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "const scaleOf = (stamp) => (stamp > 0 ? stamp : DEFAULT_TERRAIN_SCALE);",
     "new": "const scaleOf = (stamp) => (stamp > 0 ? stamp : STREAMING_TERRAIN_SCALE);",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "        const was = scaleOf(extras.terrainScale);",
     "new": "        const was = STREAMING_TERRAIN_SCALE;",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "const restandNative = (nx, nz, y) => { const [x, z] = state.localFromWorld(nx, nz); return restandHeight(y, x, z, was); };",
     "new": "const restandNative = (nx, nz, y) => restandHeight(y, nx, nz, was);",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "rows.map((r) => (r ? { ...r, y: restandNative(r.nativeX, r.nativeZ, r.y) } : r))",
     "new": "rows",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "[key]: [p[0], restandNative(p[0], p[2], p[1]), p[2]]",
     "new": "[key]: [p[0], restandNative(p[0], p[1], p[2]), p[2]]",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "const ly = restandHeight(w.y ?? 2, lx, lz, was) + state.compensation[1];",
     "new": "const ly = (w.y ?? 2) + state.compensation[1];",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "        if (extras.interior) { extras.interior.foes = restandRows(extras.interior.foes); extras.interior.guards = restandRows(extras.interior.guards); }\n",
     "new": "",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "camps.restore(restandAt('pos')(w.camps),",
     "new": "camps.restore(w.camps,",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground these heights stand on\n",
     "new": "",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    const was = scaleOf(arrived.terrainScale);",
     "new": "    const was = STREAMING_TERRAIN_SCALE;",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "arrived.droppedTorches.map((t) => { const p = t.position; return { ...t, position: [p[0], restand(p[0], p[2], p[1]), p[2]] }; })",
     "new": "arrived.droppedTorches",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: the ground that height stands on\n",
     "new": "",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "return [lx, restandHeight(a.y ?? 2, lx, lz, scaleOf(a.terrainScale)) + state.compensation[1], lz];",
     "new": "return [lx, (a.y ?? 2) + state.compensation[1], lz];",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -221,25 +221,25 @@
     "old": "restandSceneHeight: (y, x, z, was) => restandHeight(y - state.compensation[1], x, z, was) + state.compensation[1],",
     "new": "restandSceneHeight: (y, x, z, was) => restandHeight(y, x, z, was),",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
     "name": "TS1-save-unstamped",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "modData, terrainScale: STREAMING_TERRAIN_SCALE };",
     "new": "modData };",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
     "name": "TS1-restore-drops-stamp",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "terrainScale: snap.terrainScale ?? null };",
     "new": "terrainScale: null };",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "  cache.scenes.set(sceneName, copySceneEntry(entry));",
     "new": "  cache.scenes.set(sceneName, { ...copySceneEntry(entry), frame: undefined, terrainScale: undefined });",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d) })),",
     "new": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d), droppedTorches: undefined })),",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d) })),",
     "new": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d), camps: undefined })),",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d) })),",
     "new": "    scenes: [...cache.scenes.entries()].map(([sceneName, d]) => ({ sceneName, ...copySceneEntry(d), frame: undefined, terrainScale: undefined })),",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, copySceneEntry(e)]));",
     "new": "  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, { ...copySceneEntry(e), frame: undefined, terrainScale: undefined }]));",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, copySceneEntry(e)]));",
     "new": "  cache.scenes = new Map((snap?.scenes ?? []).map((e) => [e.sceneName, { ...copySceneEntry(e), droppedTorches: undefined }]));",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "    terrainScale: terrainScale > 0 ? terrainScale : null,",
     "new": "    terrainScale: null,",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "      terrainScale: STREAMING_TERRAIN_SCALE,   // TERRAIN-SCALE1: stamped current",
     "new": "      // unstamped",
     "tests": [
-      "test/qx1_exterior_host.test.js"
+      "test/systems/qx1_exterior_host.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "pos: [p.pos[0] - o[0], p.pos[1] - o[1], p.pos[2] - o[2]]",
     "new": "pos: [p.pos[0], p.pos[1], p.pos[2]]",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "interiorTorches.snapshot((p) => [p[0] - o[0], p[1] - o[1], p[2] - o[2]])",
     "new": "interiorTorches.snapshot()",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "decorItems, decorOwn, hiddenBase, frame: 'building', terrainScale: STREAMING_TERRAIN_SCALE, guildShelves };",
     "new": "decorItems, decorOwn, hiddenBase, guildShelves };",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "    return m ? [m[12], m[13], m[14]] : [0, 0, 0];",
     "new": "    return [0, 0, 0];",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "const was = data.terrainScale > 0 ? data.terrainScale : DEFAULT_TERRAIN_SCALE;",
     "new": "const was = STREAMING_TERRAIN_SCALE;",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "      ? (p) => [p[0] + o[0], p[1] + o[1], p[2] + o[2]]",
     "new": "      ? (p) => [p[0], p[1], p[2]]",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "      .catch((e) => { releaseFailedBuild(key); throw e; })   // BUILD-FAIL1\n",
     "new": "",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "    if (built.has(key)) return;\n    if (m) {",
     "new": "    if (m) {",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "for (let i = 0; i <= (m.cityGates?.length ?? 0); i++)",
     "new": "for (let i = 0; i < (m.cityGates?.length ?? 0); i++)",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": "    collider.removeBucket(key);\n    for (let i = buildingDoors.length - 1; i >= 0; i--) {\n      if (buildingDoors[i].pixelKey === key) { buildingDoors.splice(i, 1); doorGeneration += 1; }\n    }\n  }\n\n  // PERF-EXT24 (2026-09-25, the players",
     "new": "    for (let i = buildingDoors.length - 1; i >= 0; i--) {\n      if (buildingDoors[i].pixelKey === key) { buildingDoors.splice(i, 1); doorGeneration += 1; }\n    }\n  }\n\n  // PERF-EXT24 (2026-09-25, the players",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "      if (buildingDoors[i].pixelKey === key) { buildingDoors.splice(i, 1); doorGeneration += 1; }\n    }\n  }\n\n  // PERF-EXT24 (2026-09-25, the players",
     "new": "    }\n  }\n\n  // PERF-EXT24 (2026-09-25, the players",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "      if (m.water) renderer.destroyWaterSurface(m.water);\n",
     "new": "",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -428,7 +428,7 @@
     "old": "      if (m.terrain) renderer.destroyMesh(m.terrain);\n",
     "new": "",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -437,7 +437,7 @@
     "old": "      if (m.staticBatch) renderer.destroyMesh(m.staticBatch);\n",
     "new": "",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -446,7 +446,7 @@
     "old": "      if (m.tilemapTex) renderer.gl.deleteTexture(m.tilemapTex);\n",
     "new": "",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -455,7 +455,7 @@
     "old": "      for (const b of m.batches ?? []) renderer.destroyBatch(b);\n",
     "new": "",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -464,7 +464,7 @@
     "old": "      for (const w of m.windmills ?? []) { w.hum?.stop(); w.hum = null; }\n",
     "new": "",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -473,43 +473,43 @@
     "old": "      if (m.personBatches) for (const b of m.personBatches.values()) renderer.destroyBatch(b);\n",
     "new": "",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
     "name": "BF1-ledger-never-opened",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    const made = {};   // BUILD-FAIL1: this build's ledger, until publish hands it to the entry\n    _building.set(key, made);\n",
     "new": "    const made = {};   // BUILD-FAIL1: this build's ledger, until publish hands it to the entry\n",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
     "name": "BF1-ledger-never-closed",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    if (_building.get(key) === made) _building.delete(key);   // BUILD-FAIL1: the entry owns them from here\n",
     "new": "",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
     "name": "BF1-terrain-unledgered",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    made.terrain = terrain; made.water = water;   // BUILD-FAIL1\n",
     "new": "",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
     "name": "BF1-batches-unledgered",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    made.batches = batches;   // BUILD-FAIL1\n",
     "new": "",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -518,7 +518,7 @@
     "old": "yaw: cam.yaw, terrainScale: STREAMING_TERRAIN_SCALE },",
     "new": "yaw: cam.yaw },",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -527,7 +527,7 @@
     "old": "      if (walkMode) player.spawn(localPos[0], y, localPos[2]);",
     "new": "      if (walkMode) player.spawn(localPos[0], localPos[1], localPos[2]);",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -536,7 +536,7 @@
     "old": "      destroyPixel(next.px, next.py, { collectLoose: false });\n      _wodArrival",
     "new": "      _wodArrival",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   },
   {
@@ -545,7 +545,7 @@
     "old": "      if (built.get(`${entry.px},${entry.py}`) !== entry) return;",
     "new": "",
     "tests": [
-      "test/terrainscale1.test.js"
+      "test/world/terrain/terrainscale1.test.js"
     ]
   }
 ]

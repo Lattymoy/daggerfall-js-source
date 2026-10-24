@@ -31,18 +31,19 @@ import { LoadClassicWindow, LOAD_CLASSIC_IMG } from '../ui/loadClassicWindow.js'
 import { fetchBytes } from './shared.js';
 import { readZipEntries, droppedEntries, walkDroppedEntries } from './dataSource.js';   // OT1: the saves picker's phone path rides the ARENA2 door's zip walk (AUDIT 68: and its drop walk)
 import { music } from '../systems/music.js';
-import { mostRecentRestorable } from '../systems/saveSlots.js';   // SAV4: the F2 question, now over the slot store
-import { SaveGames, SAVENAME_TXT, MAPSAVE_FILENAME, RUMOR_FILENAME, BIO_FILENAME } from '../formats/saveGames.js';
-import { SAVETREE_FILENAME } from '../formats/saveTreeFile.js';
-import { SAVE_IMAGE_FILENAME } from '../formats/saveImageFile.js';
-import { SAVEVARS_FILENAME } from '../formats/saveVarsFile.js';
+import { mostRecentRestorable } from '../systems/save/saveSlots.js';   // SAV4: the F2 question, now over the slot store
+import { SaveGames, SAVENAME_TXT, MAPSAVE_FILENAME, RUMOR_FILENAME, BIO_FILENAME } from '../formats/save/saveGames.js';
+import { SAVETREE_FILENAME } from '../formats/save/saveTreeFile.js';
+import { SAVE_IMAGE_FILENAME } from '../formats/save/saveImageFile.js';
+import { SAVEVARS_FILENAME } from '../formats/save/saveVarsFile.js';
 import { setPendingClassicSave } from '../systems/classicSave.js';
 import { DFPalette } from '../formats/dfPalette.js';
 import { FntFile } from '../formats/fntFile.js';
-import { loadImg, nativeMetrics, pointToNative } from '../ui/nativePanel.js';
+import { loadImg, nativeMetrics, pointToNative } from '../ui/native/nativePanel.js';
 import { makeFont } from '../ui/text.js';
 import { bitmapToColor32 } from '../formats/color32Order.js';
 import { SaveWindow } from '../ui/saveWindow.js';   // SAV4: the start menu's Load door
+import { t, localizedText } from '../systems/textManager.js';   // L10N4: the window title's step and the classic picker's words in the player's language
 
 const TITLE_SONGS = ['5STRONG.HMI', '03.HMI'];   // DFU start scene song, then the stand-in
 
@@ -63,7 +64,7 @@ async function startTitleMusic() {
 export async function runMenu(canvas, renderer, status) {
   startTitleMusic();   // fire-and-forget: the menu never waits on MIDI.BSA
   await runTitle(canvas, renderer, status);
-  status('main menu');
+  status(t('menu.classic.status.mainMenu', 'main menu'));
   let art = null;
   try {
     art = await loadStartArt({ renderer, fetchBytes });
@@ -101,7 +102,7 @@ export async function runMenu(canvas, renderer, status) {
           resolved = 'load';
         }
         suspended = false;
-        if (!resolved) { status('main menu'); return; }
+        if (!resolved) { status(t('menu.classic.status.mainMenu', 'main menu')); return; }
         done = true;
         canvas.removeEventListener('pointerdown', onPointerDown);
         resolve(resolved);
@@ -113,7 +114,7 @@ export async function runMenu(canvas, renderer, status) {
         // the button stays drawn - it is painted into PICK03I0 - and
         // says so instead of pretending. Ledger A, the MAIN-MENU EXIT
         // BUTTON row, by name.
-        status('exit is not available in a browser');
+        status(t('menu.classic.status.noExit', 'exit is not available in a browser'));
         console.log('[menu] Exit: no application to quit in a browser (Ledger A)');
         return;
       }
@@ -165,7 +166,7 @@ export async function runTitle(canvas, renderer, status) {
     uploadLogo: (pixels) => renderer.uploadTexture('ui', 'logo', pixels, { smooth: true }),
   });
   if (!art) return false;                          // no art, no title screen
-  status('title');
+  status(t('menu.classic.status.title', 'title'));
   const title = new TitleScreen(art);
 
   const IDENTITY = new Float32Array([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1]);
@@ -249,15 +250,12 @@ function pickClassicSaveFiles() {
     ui.style.cssText = 'position:fixed;inset:0;background:#111;color:#ddd;font:14px monospace;display:flex;align-items:center;justify-content:center;z-index:10';
     ui.innerHTML = `
       <div style="max-width:460px;text-align:center;border:1px solid #444;padding:24px">
-        <h2 style="margin-top:0">Load Classic Save</h2>
-        <p>Select your classic <b>Daggerfall</b> folder (the one holding
-        SAVE0-SAVE5 beside ARENA2), or drop it here. Saves are read for
-        this load only - nothing is stored.</p>
+        <h2 style="margin-top:0">${t('menu.classicLoad.title', 'Load Classic Save')}</h2>
+        <p>${t('menu.classicLoad.pick', 'Select your classic {game} folder (the one with SAVE0-SAVE5 next to ARENA2), or drop it here. Your saves are read for this load only and are not stored.', { game: '<b>Daggerfall</b>' })}</p>
         <input type="file" id="picksaves" webkitdirectory multiple style="margin:8px">
-        <p style="margin:4px 0">on a phone: pick a <b>.zip</b> instead
-        (your Daggerfall folder, or a SAVE# folder, zipped)</p>
+        <p style="margin:4px 0">${t('menu.classicLoad.phone', 'on a phone: pick a {zip} of your Daggerfall folder or a SAVE# folder instead', { zip: '<b>.zip</b>' })}</p>
         <input type="file" id="picksaveszip" accept=".zip,application/zip" style="margin:8px">
-        <p><button id="cancelsaves" style="font:inherit;padding:4px 12px">Cancel</button></p>
+        <p><button id="cancelsaves" style="font:inherit;padding:4px 12px">${localizedText('cancel', 'Cancel')}</button></p>
         <p id="savemsg" style="color:#8a8"></p>
       </div>`;
     document.body.appendChild(ui);
@@ -267,8 +265,8 @@ function pickClassicSaveFiles() {
     const ingest = async (files) => {
       const saves = collectClassicSaveFiles(files);
       const indexes = Object.keys(saves);
-      if (!indexes.length) { msg.textContent = 'no SAVE0-SAVE5 folders in that selection'; return; }
-      msg.textContent = `reading ${indexes.length} save slot(s)...`;
+      if (!indexes.length) { msg.textContent = t('menu.classicLoad.noFolders', 'no SAVE0-SAVE5 folders in that selection'); return; }
+      msg.textContent = t('menu.classicLoad.reading', 'reading {n} save slot(s)...', { n: indexes.length });
       for (const files2 of Object.values(saves)) {
         for (const [name, file] of Object.entries(files2)) {
           files2[name] = new Uint8Array(await file.arrayBuffer());
@@ -281,9 +279,9 @@ function pickClassicSaveFiles() {
     ui.querySelector('#picksaveszip').addEventListener('change', async (e) => {   // OT1: the phone path
       const f = e.target.files[0];
       if (!f) return;
-      msg.textContent = `unpacking ${f.name}...`;
+      msg.textContent = t('menu.classicLoad.unpacking', 'unpacking {file}...', { file: f.name });
       try { await ingest(await classicSaveFilesFromZip(f)); }
-      catch (err) { msg.textContent = `zip failed: ${err.message}`; }
+      catch (err) { msg.textContent = t('menu.classicLoad.zipFailed', 'zip failed: {error}', { error: err.message }); }
     });
     ui.querySelector('#cancelsaves').addEventListener('click', () => finish(null));
     ui.addEventListener('dragover', (e) => e.preventDefault());
@@ -300,7 +298,7 @@ function pickClassicSaveFiles() {
           files.push({ webkitRelativePath: path, arrayBuffer: () => f.arrayBuffer() });
         });
       } catch (err) {
-        msg.textContent = `drop failed: ${err?.message ?? err}`;
+        msg.textContent = t('menu.classicLoad.dropFailed', 'drop failed: {error}', { error: err?.message ?? err });
         return;
       }
       ingest(files);
@@ -316,13 +314,13 @@ function pickClassicSaveFiles() {
  * false and the caller stays on the menu.
  */
 export async function runClassicLoad(canvas, renderer, status) {
-  status('classic saves');
+  status(t('menu.classic.status.classicSaves', 'classic saves'));
   const saves = await pickClassicSaveFiles();
   if (!saves) return false;
 
   const saveGames = new SaveGames();
   if (!saveGames.openSavesPath(saves)) {
-    status('no classic saves in that selection');
+    status(t('menu.classic.status.noSaves', 'no classic saves in that selection'));
     return false;
   }
 
@@ -361,11 +359,11 @@ export async function runClassicLoad(canvas, renderer, status) {
     }
   }
   if (!slots.some(Boolean)) {
-    status('no readable classic saves');
+    status(t('menu.classic.status.noReadable', 'no readable classic saves'));
     return false;
   }
 
-  status('load classic game');
+  status(t('menu.classic.status.loadClassic', 'load classic game'));
   const win = new LoadClassicWindow(art, slots);
   const picked = await new Promise((resolve) => {
     const onPointerDown = (e) => {
@@ -400,7 +398,7 @@ export async function runClassicLoad(canvas, renderer, status) {
     saveGames.openSave(picked, artPalBytes);
   } catch (e) {
     console.warn(`[menu] could not open classic save index ${picked}.`, e?.message ?? e);
-    status('could not open that classic save');
+    status(t('menu.classic.status.openFailed', 'could not open that classic save'));
     return false;
   }
   setPendingClassicSave(saveGames);
@@ -425,7 +423,7 @@ export function takePickedLoadKey() {
  * cancel.
  */
 export async function runSaveLoadWindow(canvas, renderer, status) {
-  status('load game');
+  status(t('menu.classic.status.loadGame', 'load game'));
   let font = null;
   try { font = makeFont(renderer, new FntFile().load(await fetchBytes('FONT0003.FNT')), 'FONT0003'); }
   catch (e) { console.warn('[menu] FONT0003.FNT unavailable - the save list draws bare:', e?.message ?? e); }

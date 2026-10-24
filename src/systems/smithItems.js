@@ -57,7 +57,7 @@
 // column, bench, font and plinth (696-699, recipeLaw STONE_DECOR) are
 // furniture - DFU's Furniture group, among the home's things, their
 // quality their worth and their mark a Masterwork's - and stand in a
-// room as their one DFU model (systems/decorFurnish.js).
+// room as their one DFU model (systems/decor/decorFurnish.js).
 //
 // PROF9 (Professions-Arc.md 9.3, 35): AND THE COOK'S. A dish (685-688)
 // is minted by systems/cookItems.js mintDish - a C&C food under its own
@@ -85,18 +85,19 @@ import {
 import { enchantmentRowCost } from './enchanting.js';   // AUDIT PROF-541 J4: a Rare roll the piece's points hold
 import { minedMaterial } from '../net/professionLaw.js';
 import { weaponOfMaterial, armorOfMaterial, createWeapon } from '../combat/enemyEquipment.js';
-import { setItemFields, mintCondition, templateByIndex, registerItemUseHandler, conditionPercentage, conditionShare, mendOrder } from './itemTemplates.js';   // AUDIT ECON R2: the card's own percentage; MEND-WORN: the mend order's one home
-import { registerTabledLootHandler, registerEnemyLootExtra } from './loot.js';   // REPAIR-EASE: the field kit's two loot doors
-import { itemLongName } from './itemInfo.js';
-import './profTemplates.js';   // the Repair Kit's row (692), registered with the ores and ingots
-import { applyRarity, rarityEligible, RARE_FLAVOURS, reforgeAffix, reforgeableLines } from './lootRarity.js';   // CRAFT4: and the Reforge with Essence's roll
+import { setItemFields, mintCondition, templateByIndex, registerItemUseHandler, conditionPercentage, conditionShare, mendOrder } from './item/itemTemplates.js';
+import { creditOwnMend, scaleFoundMark } from './item/foundMark.js';   // MEND-THIRD: a kit's mend credited; AUDIT MEND-THIRD L1-6: a temper moves the mark   // AUDIT ECON R2: the card's own percentage; MEND-WORN: the mend order's one home
+import { registerTabledLootHandler, registerEnemyLootExtra } from './loot/loot.js';   // REPAIR-EASE: the field kit's two loot doors
+import { itemLongName } from './item/itemInfo.js';
+import './professions/profTemplates.js';   // the Repair Kit's row (692), registered with the ores and ingots
+import { applyRarity, rarityEligible, RARE_FLAVOURS, reforgeAffix, reforgeableLines, lastPass } from './loot/lootRarity.js';   // CRAFT4: and the Reforge with Essence's roll; CRAFT-PROCS: the last pass
 import { pieceQuality, temperRefusal, temperStep, reforgeEssence } from '../net/temperLaw.js';   // CRAFT4: the temper
-import { readProductRecord } from '../net/productRecord.js';   // CRAFT4: a tempered piece's record, re-signed
+import { readProductRecord, mintVersionOf, MINT_V_LAST_PASS } from '../net/productRecord.js';   // CRAFT4: a tempered piece's record, re-signed; CRAFT-PROCS: the mint's version
 import { itemIsIdentified } from './tradeModes.js';   // CRAFT4: a line the Reforge sees, known
 import { isEquipped } from './equip.js';   // CRAFT4: and never on a worn piece
 import { unitWeightInKg, ARROW_TEMPLATE } from './inventory.js';   // MEND-AIM: the arrow, never mended
-import { seededRng } from './wind.js';
-import { createForagingItem } from './foragingInstall.js';
+import { seededRng } from './wind/wind.js';
+import { createForagingItem } from './foraging/foragingInstall.js';
 import { mintDish, isDish } from './cookItems.js';   // PROF9: the fire's dishes
 
 /** DFU's metal names by material (itemInfo.js MATERIAL_NAMES' first ten) - a kit's word and its dye. */
@@ -147,11 +148,12 @@ function setJewel(item, r, hand) {
 
 /**
  * One piece of a craft's answer - `{ recipe, quality, seed, maker, marked, dye }` and the piece's `provenance` - as the
- * pack (or, furniture, the home's things) holds it, or null for a recipe this client does not know.
- * @param {{ recipe: string, quality: number, seed: number, maker?: string|null, marked?: boolean, dye?: number|null, hand?: number|null }} made
+ * pack (or, furniture, the home's things) holds it, or null for a recipe this client does not know. CRAFT-PROCS:
+ * `version` the mint's version its record names (net/productRecord.js `v`, mintVersionOf) - 0 for a record made before.
+ * @param {{ recipe: string, quality: number, seed: number, maker?: string|null, marked?: boolean, dye?: number|null, hand?: number|null, version?: number }} made
  * @param {string} provenance
  */
-export function mintPiece({ recipe, quality, seed, maker = null, marked = false, dye = null, hand = null }, provenance) {
+export function mintPiece({ recipe, quality, seed, maker = null, marked = false, dye = null, hand = null, version = 0 }, provenance) {
   const r = recipeById(recipe);
   if (!r || typeof provenance !== 'string' || !PROVENANCE_RE.test(provenance)) return null;
   const mark = makerMark(maker);   // TEXT-F1
@@ -203,7 +205,18 @@ export function mintPiece({ recipe, quality, seed, maker = null, marked = false,
     const eff = QUALITY_EFFECTS[q];
     // AUDIT PROF-541 J4: a jewel's Rare roll one its points hold (a Cloth Amulet's 660 never carries Tongues' 1,590)
     const fits = r.kind === 'jewel' ? ((f) => (enchantmentRowCost(f) ?? Infinity) <= jewelPoints(r, templateByIndex(r.templateIndex)?.enchantmentPoints ?? 0, hand)) : null;
-    if (eff.rarity && rarityEligible(item)) { applyRarity(item, eff.rarity, seededRng(seed >>> 0), null, { fits }); item.isIdentified = true; }
+    if (eff.rarity && rarityEligible(item)) {
+      const rolls = seededRng(seed >>> 0);
+      applyRarity(item, eff.rarity, rolls, null, { fits });
+      // CRAFT-PROCS (FIELD BUGS 2026-10-13e): AND THE LADDER'S LAST PASS, on the same stream after the roll - a Superior's
+      // (a Magic's) and a Masterwork's (a Rare's) chance at ONE line that does something, as every loot door's piece of its
+      // tier takes it (lootRarity.js lastPass): a jewel's of four kinds (focus, castSpeed, potency, wellspring), a
+      // weapon's of five, armour's thorns. On whatever the switch - the piece is its record's on every client, and the
+      // line's reader asks the switch. A record stamped before it (no `v`) mints as it always did, so no piece made
+      // before changes when the market or a temper mints it again.
+      if (Number.isSafeInteger(version) && version >= MINT_V_LAST_PASS) lastPass([item], rolls, { on: true });
+      item.isIdentified = true;
+    }
     item.maxCondition = item.currentCondition = Math.max(1, Math.round(item.maxCondition * eff.condition));
     if (eff.weight !== 1) item.weightInKg = Math.round(unitWeightInKg({ ...item, weightInKg: undefined }) * eff.weight * 100) / 100;
     if (q === MASTERWORK && mark) item.name = templateByIndex(r.templateIndex)?.name ?? item.name;   // the mark is its name (itemNameParts)
@@ -233,8 +246,9 @@ export function asMinted(item) {
   return e.length === 1 && roll.some((f) => f.type === e[0]?.type && f.param === e[0]?.param);
 }
 
-/** Every piece of a craft's answer, minted - two of a Quartermaster's kit. @param {any} data */
-export const mintPieces = (data) => (data?.pieces ?? []).map((p) => mintPiece(data, p.provenance)).filter(Boolean);
+/** Every piece of a craft's answer, minted - two of a Quartermaster's kit. CRAFT-PROCS: each at the mint version its
+ *  own record names. @param {any} data */
+export const mintPieces = (data) => (data?.pieces ?? []).map((p) => mintPiece({ ...data, version: mintVersionOf(p.record) }, p.provenance)).filter(Boolean);
 
 /** PROF6 (Professions-Arc 28): whether a crafted piece is of a recipe - DFU's group, template and material (a kit's
  *  metal) as the recipe mints them - so the Work tab offers a commission only the pieces that answer it (the service
@@ -265,10 +279,10 @@ const TEMPER_MINTED = Object.freeze(['maxCondition', 'weightInKg', 'quality', 'r
 export function temperItem(item, { quality, record = null } = {}) {
   const from = pieceQuality(item);
   if (!item || temperRefusal(item) || quality !== from + 1) return false;
-  const share = item.maxCondition > 0 ? conditionShare(item) : 1;
+  const share = item.maxCondition > 0 ? conditionShare(item) : 1, oldMax = item.maxCondition;
   const c = typeof item.provenance === 'string' && asMinted(item) ? readProductRecord(record) : null;
   const fresh = c && c.p === item.provenance && c.r === item.recipe && c.q === quality
-    ? mintPiece({ recipe: c.r, quality: c.q, seed: c.c, maker: c.m, marked: c.a === 1, dye: c.u ?? null, hand: c.f ?? null }, c.p) : null;
+    ? mintPiece({ recipe: c.r, quality: c.q, seed: c.c, maker: c.m, marked: c.a === 1, dye: c.u ?? null, hand: c.f ?? null, version: c.v ?? 0 }, c.p) : null;   // CRAFT-PROCS: at its record's mint version
   if (fresh) {
     for (const k of TEMPER_MINTED) { if (fresh[k] === undefined) delete item[k]; else item[k] = fresh[k]; }
   } else {
@@ -278,6 +292,10 @@ export function temperItem(item, { quality, record = null } = {}) {
     item.quality = quality;
   }
   item.currentCondition = Math.max(0, Math.min(item.maxCondition, Math.round(item.maxCondition * share)));
+  // AUDIT MEND-THIRD L1-6 (L2-6, L3-5): a found piece's mark, and its owner's mends past it, the same share of the new
+  // maximum - left where they stood, the mark fell as a share and the temper's kept share read as a mend, so a Daedric
+  // cuirass found at 47% sold at 43% for the gold its temper cost
+  scaleFoundMark(item, oldMax, item.maxCondition);
   return true;
 }
 /** Why a piece's line may not be reforged with Essence, or null: 'not' (no Magic or Rare line the Reforge may roll -
@@ -292,9 +310,9 @@ export function essenceReforgeRefusal(item, index) {
 }
 /** CRAFT4: the stations' words - a piece changed under the press (taken off, moved, raised elsewhere), and a temper or a
  *  reforge the service made that the piece left the pack before it took. */
-export const TEMPER_MOVED_TEXT = 'That piece is not as it was - look again.';
-export const TEMPER_LOST_TEXT = 'The temper was paid for, but the piece left your pack or changed before it took the step.';
-export const REFORGE_LOST_TEXT = 'The Essence was spent, but the piece left your pack or changed before its line was rolled.';
+export const TEMPER_MOVED_TEXT = 'That piece has changed. Look again.';
+export const TEMPER_LOST_TEXT = 'The temper was paid for, but the piece left your pack or changed before it could be tempered.';
+export const REFORGE_LOST_TEXT = 'The Essence was spent, but the piece left your pack or changed before it could be reforged.';
 /** A REFORGE WITH ESSENCE, ON THE PIECE: the line rolled again off the service's `seed` (lootRarity.js reforgeAffix - the
  *  Loot arc's own Reforge, its name and price following, the line marked). Answers the new line, or null. */
 export const reforgeItem = (item, index, seed) => (essenceReforgeRefusal(item, index) || !Number.isSafeInteger(seed) ? null : reforgeAffix(item, index, seededRng(seed >>> 0)));
@@ -349,8 +367,9 @@ export function useRepairKit(kit, items, { target = null, pack = items } = {}) {
   const want = repairKitTargets(kit, pack);
   const it = target == null ? want[0] : want.includes(target) ? target : null;
   if (!it) return null;
-  const before = conditionShare(it), from = conditionPercentage(it);
+  const before = conditionShare(it), from = conditionPercentage(it), was = it.currentCondition;
   it.currentCondition = Math.min(kitCeiling(it, kit), it.currentCondition + Math.ceil(it.maxCondition * (kit.fieldKit === true ? FIELD_KIT_REPAIR : KIT_REPAIR)));   // KIT-CEILING: never past three quarters - CRAFT5: nine tenths, a Superior or Masterwork kit's
+  creditOwnMend(it, was);   // MEND-THIRD: a kit is its owner's own mend - a third of it past a found piece's mark sells
   const i = items.indexOf(kit);
   if (i >= 0) items.splice(i, 1);
   return { item: it, before, after: conditionShare(it), from, to: conditionPercentage(it) };
@@ -449,22 +468,22 @@ export function craftedText(pieces) {
   const marked = typeof it.maker === 'string' && it.maker && (it.quality === MASTERWORK || it.marked === true);
   const word = !marked && Number.isInteger(it.quality) ? `${QUALITY_NAMES[it.quality]} ` : '';   // CRAFT5: a kit's quality too - its reach
   const one = marked ? name : `${/^[AEIOU]/.test(word || name) ? 'an' : 'a'} ${word}${name}`;
-  if (isCraftedFurniture(it)) return `You made ${one} - it waits among your things for a room to stand in`;
+  if (isCraftedFurniture(it)) return `You made ${one}. It waits in your things until you place it in a room`;
   return pieces.length > 1 ? `You made ${pieces.length} ${name}s` : `You made ${one}`;
 }
 /** SEAT2b part two (PROF0 4.8: "690 | Ram Kit | Stores (a siege work)"): what a siege work's craft says - its kits go to
  *  the Stores, never the pack (the service answers no piece - professions.js craftAtAnvil): "You made a Ram Kit - it waits
  *  in your Stores". */
-export const storedText = (name, count = 1) => (count > 1 ? `You made ${count} ${name}s - they wait in your Stores` : `You made a ${name} - it waits in your Stores`);
+export const storedText = (name, count = 1) => (count > 1 ? `You made ${count} ${name}s. They wait in your Stores` : `You made a ${name}. It waits in your Stores`);
 /** What a craft whose answer did not come says: kept, and made when it does. */
-export const CRAFT_KEPT_TEXT = 'The anvil rang, but no word came back - the work is kept, and made when the word comes.';
+export const CRAFT_KEPT_TEXT = 'The anvil rang, but the realm has not answered yet. Your work is kept and will be made when it does.';
 /** AUDIT 30 A4: the workbench's own (Carpentry's work is planed, not struck). */
-export const BENCH_KEPT_TEXT = 'The shavings fell, but no word came back - the work is kept, and made when the word comes.';
+export const BENCH_KEPT_TEXT = 'The shavings fell, but the realm has not answered yet. Your work is kept and will be made when it does.';
 /** PROF7: the loom's own. */
-export const LOOM_KEPT_TEXT = 'The last stitch was pulled, but no word came back - the work is kept, and made when the word comes.';
+export const LOOM_KEPT_TEXT = 'The last stitch was pulled, but the realm has not answered yet. Your work is kept and will be made when it does.';
 /** PROF11: the mason's bench's own. */
-export const MASON_KEPT_TEXT = 'The last chip fell, but no word came back - the work is kept, and made when the word comes.';
+export const MASON_KEPT_TEXT = 'The last chip fell, but the realm has not answered yet. Your work is kept and will be made when it does.';
 /** PROF9: the fire's own. */
-export const COOK_KEPT_TEXT = 'The last pan came off the fire, but no word came back - the dish is kept, and made when the word comes.';
+export const COOK_KEPT_TEXT = 'The last pan came off the fire, but the realm has not answered yet. Your dish is kept and will be made when it does.';
 /** PROF10: the jeweller's bench's own. */
-export const JEWEL_KEPT_TEXT = 'The last facet caught the light, but no word came back - the piece is kept, and made when the word comes.';
+export const JEWEL_KEPT_TEXT = 'The last facet caught the light, but the realm has not answered yet. Your piece is kept and will be made when it does.';

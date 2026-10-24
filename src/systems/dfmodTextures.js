@@ -24,7 +24,7 @@
 // seconds of LZ4 (DREAM's textures are 383 MB), so at attach time the
 // bundle is opened once, its names written beside it as a small JSON
 // (`dfmod-index/<file>`), and closed. A boot registers from the JSON
-// alone; a bundle is opened - in a worker, formats/unityBundleClient.js
+// alone; a bundle is opened - in a worker, formats/unity/unityBundleClient.js
 // - the first time one of its pictures is asked for. The paperdoll's
 // 330 MB is never opened by a player who never looks at the doll.
 //
@@ -38,16 +38,16 @@
 // and read no dependency at all, so the add-ons lost to their own base.
 //
 // VE4 - MODS THAT SHIP WITH THE PORT. Vanilla Enhanced's Base, Masked Roads and Snowless Swamps and Jungles ship with
-// the port (systems/vanillaEnhancedPack.js, Mac 2026-10-05) and register HERE, beside the attached mods - one load
+// the port (systems/vanillaEnhanced/vanillaEnhancedPack.js, Mac 2026-10-05) and register HERE, beside the attached mods - one load
 // order, one walk, one set of doors; only where a picture comes from differs. An attached .dfmod under the same key
 // shadows the shipped one (the player's copy - a newer version - is the one read).
 //
 // Nothing here touches the DOM: the store and the opener are handed in.
 
-import { openUnityBundle } from '../formats/unityBundleClient.js';
-import { createBundlePool } from '../formats/unityBundlePool.js';   // DFMOD3: a few shared workers, not one per mod
+import { openUnityBundle } from '../formats/unity/unityBundleClient.js';
+import { createBundlePool } from '../formats/unity/unityBundlePool.js';   // DFMOD3: a few shared workers, not one per mod
 import { resampleRgba } from '../formats/resample.js';
-import { textureEntry, textureKey, setBundleTextures, textureReplacementEnabled, looseTextureExists, looseTextureBytes, looseTextureGeneration, decodePng, PRELOAD_CONCURRENCY } from './textureReplacement.js';
+import { textureEntry, textureKey, setBundleTextures, textureReplacementEnabled, looseTextureExists, looseTextureBytes, looseTextureGeneration, decodePng, PRELOAD_CONCURRENCY, studioRecordsOf, preloadTextureRecord, textureTierEpoch } from './textureReplacement.js';
 import { toColor32 } from '../formats/color32Order.js';   // GROUND1: the terrain's layers are world texels, bottom row first
 import { registerBillboardXml, unregisterBillboardXml } from '../world/billboardXml.js';
 import { getPref, setPref } from './uiPrefs.js';   // VE3: which attached mods are switched off - the port's prefs shelf
@@ -347,8 +347,8 @@ async function readIndex(key, load) {
 }
 /** Why a stored bundle would not open or index, in the packs card's words. */
 const openWords = (e) => (e?.name === 'NotReadableError' || /could not be read/i.test(e?.message ?? '')
-  ? 'the browser could not read the stored file - remove it and add it again'
-  : /allocation failed|out of memory/i.test(e?.message ?? '') ? 'ran out of memory - lower Texture detail, or attach fewer mods'
+  ? 'the browser could not read the stored file; remove it and add it again'
+  : /allocation failed|out of memory/i.test(e?.message ?? '') ? 'ran out of memory; lower Texture detail or attach fewer mods'
     : String(e?.message ?? e));
 
 /**
@@ -739,15 +739,16 @@ const classicLayer = (tex, r) => tex.getColor32(tex.getDFBitmap(r, 0), 0);
  */
 export function dfmodGroundLayers(archive, tex, { decode = decodePng } = {}) {
   const n = tex?.recordCount ?? 0;
-  if (!n || !textureReplacementEnabled()) return Promise.resolve(null);
-  const id = `${Number(archive)}:${n}:${looseTextureGeneration()}`;
+  const studio = n ? studioRecordsOf(archive).filter((r) => r < n) : [];   // STUDIO1: the studio's records, worn with the gate shut too
+  if (!n || (!textureReplacementEnabled() && !studio.length)) return Promise.resolve(null);
+  const id = `${Number(archive)}:${n}:${looseTextureGeneration()}${studio.length ? `:${textureTierEpoch()}` : ''}`;
   const hit = _groundCache.get(id);
   _groundCache.delete(id);   // AUDIT VE P2: re-entered last - the Map's order is the cache's recency
   if (hit) { _groundCache.set(id, hit); return hit; }
   for (const k of _groundCache.keys()) if (k.startsWith(`${Number(archive)}:`)) _groundCache.delete(k);   // a set built off an older loose pick
   // AUDIT VE R12: a set that lost a picture to a failure (a dropped fetch, a decode that threw) is answered, not kept -
   // the next ask builds it again rather than the failure standing for the page
-  const answer = groundLayers(Number(archive), tex, decode).then(({ layers, whole }) => {
+  const answer = groundLayers(Number(archive), tex, decode).then((set) => (studio.length ? studioGround(Number(archive), tex, set, studio, decode) : set)).then(({ layers, whole }) => {
     if (!whole && _groundCache.get(id) === answer) _groundCache.delete(id);
     return layers;
   });
@@ -792,6 +793,26 @@ async function groundLayers(archive, tex, decode) {
   if (!pics.some(Boolean)) return { layers: null, whole };
   const size = pics[0] ?? classicLayer(tex, 0);
   return { layers: pics.map((p, r) => (p && p.width === size.width && p.height === size.height ? p : classicAt(classicLayer(tex, r), size.width, size.height))), whole };
+}
+
+/**
+ * STUDIO1 (bible/07-Rendering/Studio-Art.md): THE STUDIO'S RECORDS LAID IN A GROUND SET. The ground is drawn from a tile
+ * set built here, never through the texture door's uploads, so the studio's pictures of a ground archive's records
+ * (textureReplacement.js studioRecordsOf) are laid over the set this door built - a mod's array, a pack's records, or
+ * Daggerfall's own when nothing dresses it - each where its record is. A set is one size, so the set takes the size of
+ * its largest picture (an artist's 256 x 256 grass keeps its detail; the rest are each texel a block of it) and every
+ * layer is laid at it. A studio picture that will not load leaves its record as the set had it, and the set is answered
+ * but not kept (AUDIT VE R12's law: the next ask builds it again).
+ */
+async function studioGround(archive, tex, { layers, whole }, records, decode) {
+  const pics = await Promise.all(records.map((r) => preloadTextureRecord(archive, r, 0, 'Albedo', null, { decode })));
+  if (!pics.some(Boolean)) return { layers, whole: false };
+  const base = layers ?? Array.from({ length: tex.recordCount }, (_, r) => classicLayer(tex, r));
+  let { width, height } = base[0];
+  for (const p of pics) if (p && p.width * p.height > width * height) ({ width, height } = p);
+  const out = base.map((l) => classicAt(l, width, height));
+  records.forEach((r, k) => { if (pics[k]) out[r] = classicAt(pics[k], width, height); });
+  return { layers: out, whole: whole && pics.every(Boolean) };
 }
 
 export { resampleRgba };   // DFMOD2: its home is formats/resample.js (the worker downscales with it too)

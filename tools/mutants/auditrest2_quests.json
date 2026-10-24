@@ -5,8 +5,8 @@
     "old": "  for (const tn of startersOf(quest, name)) {\n    if (reached(quest, tn, { conditional: false }).settles) return true;",
     "new": "  for (const tn of startersOf(quest, name)) {\n    if (reached(quest, tn, { conditional: false }).settles || reached(quest, tn, { conditional: false }).lowers) return true;",
     "tests": [
-      "test/auditrest2_quests.test.js",
-      "test/rest8_audit_timefree.test.js"
+      "test/systems/quest/auditrest2_quests.test.js",
+      "test/systems/quest/rest8_audit_timefree.test.js"
     ],
     "note": "The closings table's reading as a RULE (the one T1 declined): a clock whose starter costs any standing is a closing - R0C11Y03's delivery costs the daedra -20, so its return reads as a delay and the quest fails two minutes after a correct delivery."
   },
@@ -16,10 +16,10 @@
     "old": "  S0000011: Object.freeze(['S.01']),   // AUDIT REST II Q2: Barenziah's chapter, before the Necromancers steal it\n",
     "new": "",
     "tests": [
-      "test/auditrest2_quests.test.js",
-      "test/rest8_questwaits.test.js",
-      "test/rest8_audit_timefree.test.js",
-      "test/auditrestparty_quests.test.js"
+      "test/systems/quest/auditrest2_quests.test.js",
+      "test/systems/quest/rest8_questwaits.test.js",
+      "test/systems/quest/rest8_audit_timefree.test.js",
+      "test/systems/quest/auditrestparty_quests.test.js"
     ],
     "note": "S0000011's `_S.01_` a delay again: online the Necromancers steal Chapter 6 two minutes after `yes`."
   },
@@ -29,57 +29,57 @@
     "old": "  O0B00Y12: Object.freeze(['S.01']),   // AUDIT REST II Q2: the drop, \"as soon as possible\"\n",
     "new": "",
     "tests": [
-      "test/auditrest2_quests.test.js",
-      "test/rest8_questwaits.test.js",
-      "test/auditrestparty_quests.test.js"
+      "test/systems/quest/auditrest2_quests.test.js",
+      "test/systems/quest/rest8_questwaits.test.js",
+      "test/systems/quest/auditrestparty_quests.test.js"
     ],
     "note": "O0B00Y12's `_S.01_` a delay again: online the contact leaves and the assassins come two minutes after the quest is taken."
   },
   {
     "name": "AUDITREST2-Q-Q3-the-mark-not-read",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "  out.v = Number.isSafeInteger(rec.v) && rec.v >= 1 ? rec.v : 1;",
     "new": "  out.v = BOUNTY_LEDGER_VERSION;",
     "tests": [
-      "test/auditrest2_quests.test.js"
+      "test/systems/quest/auditrest2_quests.test.js"
     ],
     "note": "Every loaded ledger reads as this build's: TIMEFREE's held rows lapse on the first tick."
   },
   {
     "name": "AUDITREST2-Q-Q3-a-new-ledger-unmarked",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "droppedKilled: /** @type {Record<string, number>} */ ({}), v: BOUNTY_LEDGER_VERSION });",
     "new": "droppedKilled: /** @type {Record<string, number>} */ ({}), v: 1 });",
     "tests": [
-      "test/auditrest2_quests.test.js"
+      "test/systems/quest/auditrest2_quests.test.js"
     ]
   },
   {
     "name": "AUDITREST2-Q-Q3-the-restamp-skipped",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "  for (const h of ledger.held) h.takenAt = nowMinutes;\n  ledger.v = BOUNTY_LEDGER_VERSION;",
     "new": "  ledger.v = BOUNTY_LEDGER_VERSION;",
     "tests": [
-      "test/auditrest2_quests.test.js"
+      "test/systems/quest/auditrest2_quests.test.js"
     ]
   },
   {
     "name": "AUDITREST2-Q-Q3-restamped-every-time",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "  if ((ledger.v ?? 1) >= BOUNTY_LEDGER_VERSION) return [];",
     "new": "  if (false) return [];",
     "tests": [
-      "test/auditrest2_quests.test.js"
+      "test/systems/quest/auditrest2_quests.test.js"
     ],
     "note": "Every online tick runs every held bounty from now: nothing ever lapses online."
   },
   {
     "name": "AUDITREST2-Q-Q3-the-mark-never-set",
-    "file": "src/systems/bountyBoard.js",
+    "file": "src/systems/bounty/bountyBoard.js",
     "old": "  ledger.v = BOUNTY_LEDGER_VERSION;\n  return ledger.held.slice();",
     "new": "  return ledger.held.slice();",
     "tests": [
-      "test/auditrest2_quests.test.js"
+      "test/systems/quest/auditrest2_quests.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "    if (sharedClockOn()) restampNeverLapsed(ledger, now);",
     "new": "    restampNeverLapsed(ledger, now);",
     "tests": [
-      "test/auditrest2_quests.test.js"
+      "test/systems/quest/auditrest2_quests.test.js"
     ]
   },
   {
@@ -97,25 +97,25 @@
     "old": "    if (sharedClockOn()) restampNeverLapsed(ledger, now);\n",
     "new": "",
     "tests": [
-      "test/auditrest2_quests.test.js"
+      "test/systems/quest/auditrest2_quests.test.js"
     ]
   },
   {
     "name": "AUDITREST2-Q-Q4-frozen-again-in-the-doc",
     "file": "src/systems/quest/clock.js",
-    "old": "and stays a deadline, on played time (it was frozen under TIMEFREE). */",
-    "new": "and stays frozen. */",
+    "old": "and stays a deadline, on played time (it was frozen under TIMEFREE).",
+    "new": "and stays frozen.",
     "tests": [
-      "test/auditrest2_quests.test.js"
+      "test/systems/quest/auditrest2_quests.test.js"
     ]
   },
   {
     "name": "AUDITREST2-Q-Q4-frozen-again-in-the-title",
-    "file": "test/fb1003_bodyguard.test.js",
+    "file": "test/systems/quest/fb1003_bodyguard.test.js",
     "old": "and stays a deadline, on played time - frozen under TIMEFREE (mutants:",
     "new": "and stays frozen (mutants:",
     "tests": [
-      "test/auditrest2_quests.test.js"
+      "test/systems/quest/auditrest2_quests.test.js"
     ]
   },
   {
@@ -125,37 +125,37 @@
     "new": "(`actions.js:\"action.spellID =\"`/`actions.js:\"CastSpellDo could not find\"`)",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e, its audit pass): the cites moved with the lines they name (citeShift), the rot one line back as before",
     "tests": [
-      "test/auditrest2_quests.test.js"
+      "test/systems/quest/auditrest2_quests.test.js"
     ]
   },
   {
     "name": "AUDITREST2-Q-Q5-questguards-pair-back",
-    "file": "test/questguards.test.js",
+    "file": "test/systems/quest/questguards.test.js",
     "old": "(actions.js:\"= parentQuest?.hooks?.world?.getClassicSpellEffects?.(action.spellID)\"/actions.js:\"CastSpellDo could not find\"..\"this.setComplete();   // C#: the TEMPLATE completes - kept\") and the task",
     "new": "(actions.js:\"action.spellID =\"/actions.js:\"CastSpellDo could not find\") and the task",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e, its audit pass): the cites moved with the lines they name (citeShift), the rot one line back as before",
     "tests": [
-      "test/auditrest2_quests.test.js"
+      "test/systems/quest/auditrest2_quests.test.js"
     ]
   },
   {
     "name": "AUDITREST2-Q-Q5-qx1-pair-back",
-    "file": "test/qx1_exterior_host.test.js",
+    "file": "test/systems/qx1_exterior_host.test.js",
     "old": "(actions.js:\"= parentQuest?.hooks?.world?.getClassicSpellEffects?.(action.spellID)\"/actions.js:\"CastSpellDo could not find\"..\"this.setComplete();   // C#: the TEMPLATE completes - kept\" - no effects",
     "new": "(actions.js:\"action.spellID =\"/actions.js:\"CastSpellDo could not find\" - no effects",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e, its audit pass): the cites moved with the lines they name (citeShift), the rot one line back as before",
     "tests": [
-      "test/auditrest2_quests.test.js"
+      "test/systems/quest/auditrest2_quests.test.js"
     ]
   },
   {
     "name": "AUDITREST2-Q-Q5-qx1-doors-back",
-    "file": "test/qx1_exterior_host.test.js",
+    "file": "test/systems/qx1_exterior_host.test.js",
     "old": "(actions.js:\"machine's notifyNewReadySpell/notifyCastReadySpell\" - C# subscribes",
     "new": "(actions.js:\"So the latch is ported\" - C# subscribes",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e, its audit pass): the cites moved with the lines they name (citeShift), the rot one line back as before",
     "tests": [
-      "test/auditrest2_quests.test.js"
+      "test/systems/quest/auditrest2_quests.test.js"
     ]
   },
   {
@@ -165,7 +165,7 @@
     "new": "// actions.js:\"So the latch is ported\"). This host",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e, its audit pass): the cites moved with the lines they name (citeShift), the rot one line back as before",
     "tests": [
-      "test/auditrest2_quests.test.js"
+      "test/systems/quest/auditrest2_quests.test.js"
     ]
   },
   {
@@ -175,7 +175,7 @@
     "new": "systems/quest/actions.js:\"CreatePendingFoeSpawn\" here.",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e, its audit pass): the cites moved with the lines they name (citeShift), the rot one line back as before",
     "tests": [
-      "test/auditrest2_quests.test.js"
+      "test/systems/quest/auditrest2_quests.test.js"
     ]
   }
 ]

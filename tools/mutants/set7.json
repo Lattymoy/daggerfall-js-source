@@ -1,200 +1,200 @@
 [
   {
     "name": "SET7-the-day-off-the-local-hours",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "export const brokerDay = (nowMs) => Math.floor(Number(nowMs) / BROKER_DAY_MS);",
     "new": "export const brokerDay = (nowMs) => Math.floor((Number(nowMs) - new Date(Number(nowMs)).getTimezoneOffset() * 60000 + 3600000) / BROKER_DAY_MS);",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-the-turn-off-by-one",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "export const brokerTurnsIn = (nowMs) => BROKER_DAY_MS - (((Number(nowMs) % BROKER_DAY_MS) + BROKER_DAY_MS) % BROKER_DAY_MS);",
     "new": "export const brokerTurnsIn = (nowMs) => BROKER_DAY_MS - (((Number(nowMs) % BROKER_DAY_MS) + BROKER_DAY_MS) % BROKER_DAY_MS) - 1;",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-a-days-stock-unlike-itself",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  const rolls = seededRng(gateHash(d >>> 0, BROKER_SALT));",
     "new": "  const rolls = Math.random;",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-a-set-left-out",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  for (const set of WORLD_SET_IDS) {\n    const item = setArmour(set, rolls);",
     "new": "  for (const set of WORLD_SET_IDS.slice(1)) {\n    const item = setArmour(set, rolls);",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-a-price-off",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "export const BROKER_PRICES = Object.freeze({ rare: 4, legendary: 6, weapon: 6, regalia: 12 });",
     "new": "export const BROKER_PRICES = Object.freeze({ rare: 3, legendary: 6, weapon: 6, regalia: 12 });",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-an-unknown-piece",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  applyRarity(item, legendary ? 'legendary' : 'rare', rolls, legendary ? baseLegendaries(item) : null);\n  item.isIdentified = true;\n",
     "new": "  applyRarity(item, legendary ? 'legendary' : 'rare', rolls, legendary ? baseLegendaries(item) : null);\n",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-the-regalia-at-a-world-price",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  offer('regalia', 'ruhn', BROKER_PRICES.regalia, mintAetheric(pick(REGALIA, rolls)));",
     "new": "  offer('regalia', 'ruhn', BROKER_PRICES.rare, mintAetheric(pick(REGALIA, rolls)));",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-shields-by-template",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  const place = pick(BROKER_ARMOR_PLACES, rolls);\n  const templateIndex = place === 'shield' ? pick(BROKER_SHIELDS, rolls) : place;",
     "new": "  const templateIndex = pick([102, 103, 104, 105, 106, 107, 108, ...BROKER_SHIELDS], rolls);",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-a-legendary-off-a-registered-record",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "applyRarity(item, legendary ? 'legendary' : 'rare', rolls, legendary ? baseLegendaries(item) : null);",
     "new": "applyRarity(item, legendary ? 'legendary' : 'rare', rolls, null);",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-the-weapons-blow-off-its-band",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  const [lo, hi] = SIGIL_BANDS.rare;",
     "new": "  const [lo, hi] = SIGIL_BANDS.legendary;",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-a-bought-offer-sold-again",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  if (new Set(bought).has(offer.id)) return { ok: false, reason: 'bought', price, have };\n",
     "new": "",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-a-short-purse-served",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  if (have < price) return { ok: false, reason: 'stones', price, have };",
     "new": "  if (have < price - 1) return { ok: false, reason: 'stones', price, have };",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-the-record-never-saved",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  getSaveData: () => ({ day: _bought.day, ids: [..._bought.ids] }),",
     "new": "  getSaveData: () => ({ day: -1, ids: [] }),",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-yesterdays-marks-kept",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  if (_bought.day !== offer.day) _bought = { day: offer.day, ids: [] };",
     "new": "  if (_bought.day !== offer.day) _bought = { day: offer.day, ids: [..._bought.ids] };",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-a-forged-record-trusted",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  if (!r.ids.every((x) => typeof x === 'string' && /^-?\\d+:\\d+$/.test(x))) return NO_RECORD();\n",
     "new": "",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-the-sale-taking-one-stone-too-many",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  return { ok: true, take: stonesToTake(state.items, offer.price), give };",
     "new": "  return { ok: true, take: stonesToTake(state.items, offer.price + 1), give };",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-the-sale-handing-over-the-shown-piece",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  const give = real.item;",
     "new": "  const give = offer.item;",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-a-locked-stone-spent",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "export const spendableStonesIn = (items) => stonesIn(items).filter((it) => !isLocked(it));",
     "new": "export const spendableStonesIn = (items) => stonesIn(items);",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-a-heavy-sale-half-made",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  if (!canCarry(sale.give, rest)) return { ok: false, reason: 'heavy' };\n  takeFromPack(items, sale.take);",
     "new": "  takeFromPack(items, sale.take);\n  if (!canCarry(sale.give, rest)) return { ok: false, reason: 'heavy' };",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-a-sale-left-unmarked",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  addItem(items, sale.give);\n  markBrokerBought(offer);",
     "new": "  addItem(items, sale.give);",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-the-carry-gate-asked-with-the-stones-in",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  if (!canCarry(sale.give, rest))",
     "new": "  if (!canCarry(sale.give, items))",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-a-refused-offers-buy-pressable",
     "file": "src/ui/brokerWindow.js",
-    "old": "      if (!s.ok) { buy.setAttribute('disabled', ''); buy.setAttribute('title', BROKER_REFUSALS[s.reason] ?? ''); }\n",
-    "new": "      if (!s.ok) { buy.setAttribute('title', BROKER_REFUSALS[s.reason] ?? ''); }\n",
+    "old": "      if (!s.ok) refusePress(buy, BROKER_REFUSALS[s.reason] ?? '', refused);   // MENU-ORDER: pressed, it says why\n",
+    "new": "",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "purseText(brokerOfferState(null, state).have, deps.locked?.() ?? 0)",
     "new": "purseText(brokerOfferState(null, state).have + (deps.locked?.() ?? 0), deps.locked?.() ?? 0)",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    const o = offers.find((x) => x.slot === pickedSlot) ?? offers[0];",
     "new": "    const o = offers[0];",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "{ ok: false, text: done?.text ?? BROKER_REFUSALS[done?.reason] ?? 'The Broker will not sell that.' }",
     "new": "{ ok: false, text: BROKER_REFUSALS[done?.reason] ?? 'The Broker will not sell that.' }",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "      globalThis.removeEventListener('keydown', onKey, { capture: true });\n",
     "new": "",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "    unregister();\n    view?.unmount();",
     "new": "    view?.unmount();",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "    deps.onClose?.();\n  };",
     "new": "  };",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "    get done() { return fired; },",
     "new": "    get done() { return fired || !!view; },",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "  if (typeof document === 'undefined') return null;\n  _open?.dispose();",
     "new": "  if (typeof document === 'undefined') return null;",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "const facing = Math.atan2(gx - e, gz - n), a = facing + CAGE_TURN;",
     "new": "const facing = Math.atan2(gx - e, gz - n), a = facing - CAGE_TURN;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ],
     "note": "BROKER-CAGE (re-aimed by content): her spot is the cage's at the faithful's circle - turned the wrong way off its bearing to the gate."
   },
@@ -285,7 +285,7 @@
     "old": "const x = t[0] + sp.x, z = t[2] + sp.z, h = heightAt(x, z);",
     "new": "const x = t[0] + sp.x, z = t[2] + sp.z, h = t[1];",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ],
     "note": "BROKER-CAGE (re-aimed by content): the pixel's translation taken for the ground under her cage."
   },
@@ -295,7 +295,7 @@
     "old": "  if (!site || !Number.isSafeInteger(site.day) || !cageStands(site.day, nowMs)) return null;",
     "new": "  if (!site || !Number.isSafeInteger(site.day)) return null;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ],
     "note": "BROKER-CAGE (re-aimed by content): she stands from the omen to midnight, not with the gate - her hours unasked."
   },
@@ -305,7 +305,7 @@
     "old": "  return Number.isFinite(h) ? { day: site.day, px: site.px, py: site.py, feet: [x, h, z], rest: sp.facing } : null;",
     "new": "  return { day: site.day, px: site.px, py: site.py, feet: [x, h, z], rest: sp.facing };",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ],
     "note": "BROKER-CAGE (re-aimed by content): a pixel not built - a cage in the air."
   },
@@ -315,7 +315,7 @@
     "old": "  return Math.abs(d) <= step ? want : yaw + Math.sign(d) * step;",
     "new": "  return want;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -324,7 +324,7 @@
     "old": "  if (d > Math.PI) d -= Math.PI * 2;\n  if (d < -Math.PI) d += Math.PI * 2;\n",
     "new": "",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -333,7 +333,7 @@
     "old": "  return d > 1e-6 && d <= BROKER_NOTICE_M ? Math.atan2(dx, dz) : rest;",
     "new": "  return d > 1e-6 ? Math.atan2(dx, dz) : rest;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -342,7 +342,7 @@
     "old": "export const BROKER_MOBILE = 29;",
     "new": "export const BROKER_MOBILE = 30;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -351,7 +351,7 @@
     "old": "    if (!renderer.textures?.has?.(texKey)) uploadRecordFrame(body.archive, fr.record, fr.frame);",
     "new": "    uploadRecordFrame(body.archive, fr.record, fr.frame);",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -360,7 +360,7 @@
     "old": "batch.origin[1] = at.feet[1];",
     "new": "batch.origin[1] = at.feet[1] + BROKER_H / 2;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -369,7 +369,7 @@
     "old": "export const BROKER_REACH = STATIC_NPC_ACTIVATION_DISTANCE;",
     "new": "export const BROKER_REACH = 3.2;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -378,7 +378,7 @@
     "old": "  hoverName(key) { return ours(key) ? { title: BROKER_TEXT.name, subs: [doorOpen ? BROKER_TEXT.trade : BROKER_TEXT.caged] } : null; },",
     "new": "  hoverName(key) { return ours(key) ? BROKER_TEXT.name : null; },",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -387,7 +387,7 @@
     "old": "      else if (mode === 'steal') say(BROKER_TEXT.steal);\n",
     "new": "",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -396,7 +396,7 @@
     "old": "const ours = (key) => typeof key === 'string' && key.startsWith('broker:') && key === keyOf();",
     "new": "const ours = (key) => typeof key === 'string' && key.startsWith('broker:') && !!at;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -405,7 +405,7 @@
     "old": "    if (postAt) { col.removeBucket?.(BROKER_BUCKET); postAt = null; }",
     "new": "    if (postAt) { postAt = null; }",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -414,7 +414,7 @@
     "old": "    if (postAt && f && postAt[0] === f[0] && postAt[1] === f[1] && postAt[2] === f[2]) return;   // standing where she stands\n",
     "new": "",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -423,7 +423,7 @@
     "old": "    col.addMesh(BROKER_BUCKET, BROKER_POST.positions, BROKER_POST.indices, trs(f[0], f[1], f[2], 0, 0, 0));\n",
     "new": "",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -432,7 +432,7 @@
     "old": "export const BROKER_BODY_R = 0.3;",
     "new": "export const BROKER_BODY_R = 0.6;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -441,7 +441,7 @@
     "old": "      if (was && (!due || s.day !== was.day) && gone()) say(BROKER_TEXT.gone);",
     "new": "      if (was && false) say(BROKER_TEXT.gone);",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ],
     "note": "BROKER-CAGE (re-aimed by content): midnight, not the gate's fall, takes her."
   },
@@ -451,7 +451,7 @@
     "old": "      if (was && (!due || s.day !== was.day) && gone()) say(BROKER_TEXT.gone);",
     "new": "      if (was && (!due || s.day !== was.day)) { gone(); say(BROKER_TEXT.gone); }",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -460,7 +460,7 @@
     "old": "campD, waterD, gateD, brokerD, boatD, doorDistance);",
     "new": "campD, waterD, gateD, boatD, doorDistance);",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -469,7 +469,7 @@
     "old": "firmFirst([gate, broker, camp, water,",
     "new": "firmFirst([gate, camp, broker, water,",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -478,7 +478,7 @@
     "old": "    if (!sigilBroker?.stands() || _mode() !== 'exterior') return { ok: false, reason: 'gone' };",
     "new": "    if (_mode() !== 'exterior') return { ok: false, reason: 'gone' };",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -487,7 +487,7 @@
     "old": "    audio.playOneShot(SOUND.GoldPieces, 1);\n    surfacePlayer();\n    return sale;",
     "new": "    surfacePlayer();\n    return sale;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -496,16 +496,16 @@
     "old": "            broker: sigilBroker ? pickActivatableHit(cam.pos, _hd, sigilBroker.targets(), collider) : null,   // SET7\n",
     "new": "",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
     "name": "SET7-the-gate-plaque-a-bare-string",
-    "file": "src/scenes/gatePool.js",
+    "file": "src/scenes/gate/gatePool.js",
     "old": "      return { title: GATE_TEXT.name, subs: words ? [...(cd.to === 'collapse' ? ['Sealed'] : []), words[0].toUpperCase() + words.slice(1)] : [] };",
     "new": "      return words ? `${GATE_TEXT.name} (${words})` : GATE_TEXT.name;",
     "tests": [
-      "test/wb2_gate.test.js"
+      "test/world/gate/wb2_gate.test.js"
     ]
   },
   {
@@ -514,7 +514,7 @@
     "old": "    if (!f || postTraps(f, feet())) return;",
     "new": "    if (!f) return;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -523,7 +523,7 @@
     "old": "  const reach = BROKER_BODY_R + CAPSULE_RADIUS;",
     "new": "  const reach = BROKER_BODY_R;",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -532,7 +532,7 @@
     "old": "if (was && (!due || s.day !== was.day) && gone())",
     "new": "if (was && gone())",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ],
     "note": "BROKER-CAGE (re-aimed by content): her pixel answering no ground for a frame shuts nothing."
   },
@@ -542,7 +542,7 @@
     "old": "if (_torchesMode === 'exterior') { closeBrokerDoor(); sigilBroker?.destroyAll(); }",
     "new": "",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -551,7 +551,7 @@
     "old": "    say: (text) => townTalk.say(text),   // AUDIT SET W4",
     "new": "    say: (text) => setMidScreenText(text),   // AUDIT SET W4",
     "tests": [
-      "test/set7_broker_world.test.js"
+      "test/player/set7_broker_world.test.js"
     ]
   },
   {
@@ -560,7 +560,7 @@
     "old": "  injectBrokerSkinStyle();\n",
     "new": "",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -569,7 +569,7 @@
     "old": "    scopeRules(frameCss(), (sel) => sel.includes('broker')),",
     "new": "    frameCss(),",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -578,7 +578,7 @@
     "old": "  if (isEnhancedPlus() || doc.getElementById?.(BROKER_SKIN_STYLE_ID)",
     "new": "  if (doc.getElementById?.(BROKER_SKIN_STYLE_ID)",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -587,16 +587,16 @@
     "old": " || [...(doc.head?.children ?? [])].some((c) => c.id === BROKER_SKIN_STYLE_ID)",
     "new": "",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
     "name": "SET7-AUDIT-U1-a-comma-inside-parentheses-split",
-    "file": "src/ui/enhancedFrame.js",
+    "file": "src/ui/enhanced/enhancedFrame.js",
     "old": "    if (c === '(') depth++; else if (c === ')') depth--;\n    else if (c === ',' && depth === 0)",
     "new": "    if (c === ',')",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -605,7 +605,7 @@
     "old": "    for (const c of [...list.children]) c.remove();",
     "new": "    for (const c of [...list.children]) c.remove(); body.scrollTop = 0;",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -614,7 +614,7 @@
     "old": "    row.setAttribute('tabindex', '0');\n",
     "new": "",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -623,7 +623,7 @@
     "old": "if (e.target === row && (e.key === 'Enter' || e.key === ' '))",
     "new": "if (e.key === 'Enter' || e.key === ' ')",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -632,7 +632,7 @@
     "old": "`Bought: ${name}, for ${stonesText(price)}.`",
     "new": "`You buy the ${name} for ${stonesText(price)}.`",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   },
   {
@@ -641,7 +641,7 @@
     "old": "  noteLine.setAttribute('aria-live', 'polite');\n",
     "new": "",
     "tests": [
-      "test/set7_broker.test.js"
+      "test/systems/item/set7_broker.test.js"
     ]
   }
 ]

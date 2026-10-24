@@ -1,0 +1,450 @@
+[
+  {
+    "name": "A2-restat-standing-alone",
+    "file": "src/scenes/fleetHost.js",
+    "old": "for (const rec of fleetShips()) n?.refitBoat?.(standing.get(rec.uid) ?? { uid: rec.uid, hull: rec.hull });",
+    "new": "for (const b of standing.values()) n?.refitBoat?.(b);",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-restat-hull-lost",
+    "file": "src/scenes/fleetHost.js",
+    "old": "?? { uid: rec.uid, hull: rec.hull });",
+    "new": "?? { uid: rec.uid });",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-melt-conjured",
+    "file": "src/systems/fleet.js",
+    "old": " && !isSummoned(item) && !item.questItem",
+    "new": " && !item.questItem",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-price-hull-ignored",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "return Number.isFinite(k) && k > 0 && k !== 1 ? { ...b, hullHp",
+    "new": "return Number.isFinite(k) && k > 1 ? { ...b, hullHp",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-price-guns-ignored",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "const k = (Number.isFinite(refit) && refit > 0 ? refit : 1) * captainsDue().guns;",
+    "new": "const k = (Number.isFinite(refit) && refit > 1 ? refit : 1) * captainsDue().guns;",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-ingots-lent-first",
+    "file": "src/systems/fleet.js",
+    "old": "const ingots = [own, lent].filter",
+    "new": "const ingots = [lent, own].filter",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-stores-ore-first",
+    "file": "src/systems/fleet.js",
+    "old": "Number(MATERIALS[a.kind]?.metal != null) - Number(MATERIALS[b.kind]?.metal != null)",
+    "new": "Number(MATERIALS[b.kind]?.metal != null) - Number(MATERIALS[a.kind]?.metal != null)",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-take-unordered",
+    "file": "src/systems/fleet.js",
+    "old": "  for (const m of takeOrder(mats)) takeMaterials(lists, m.kind, m.n);",
+    "new": "  for (const m of mats) takeMaterials(lists, m.kind, m.n);",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-melt-unordered",
+    "file": "src/systems/fleet.js",
+    "old": "  for (const m of takeOrder(mats)) { melt.set(m, meltCount(copy, m.kind, m.n));",
+    "new": "  for (const m of mats) { melt.set(m, meltCount(copy, m.kind, m.n));",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-act-separate",
+    "file": "src/scenes/fleetHost.js",
+    "old": "      takeAllMaterials(lists, row.next.mats);",
+    "new": "      for (const m of row.next.mats) takeMaterials(lists, m.kind, m.n);",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-dial-unasked",
+    "file": "src/ui/naval/navalPlunderDoor.js",
+    "old": "    if (view.tryClose() === false && !firedOf()) again(closer);",
+    "new": "    view.tryClose();",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-dial-unmounted",
+    "file": "src/ui/naval/navalPlunderDoor.js",
+    "old": "    if (typeof view?.tryClose !== 'function') { close('close'); return; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-exchange-buys-back",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "buy: Math.max(1, Math.min(sell - 1, Math.round(p.mid * (1 - k) * pay))), exotic,",
+    "new": "buy: Math.max(1, Math.round(p.mid * (1 - k) * pay)), exotic,",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-word-men-cut",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "crew: Math.floor(shotMen(gun, zone) + random()),",
+    "new": "crew: Math.floor(shotMen(gun, zone)),",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-tally-gun-men",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "tallies.men(e, shotMen(gun, zone) / SHIP_TOUGHNESS);",
+    "new": "tallies.men(e, shotMen(gun, zone));",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-tally-rounded-each",
+    "file": "src/scenes/naval/navalTally.js",
+    "old": "      if (t) t.men += n;",
+    "new": "      if (t) t.men += Math.round(n);",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-tally-unrounded",
+    "file": "src/scenes/naval/navalTally.js",
+    "old": "rig: last.rig, men: Math.round(last.men) } : null;",
+    "new": "rig: last.rig, men: last.men } : null;",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-wheel-throttled",
+    "file": "src/scenes/naval/navalLoads.js",
+    "old": "      wheelAt = now;\n      if (quiet) cycle(deltaY > 0 ? 1 : -1);",
+    "new": "      if (quiet) { wheelAt = now; cycle(deltaY > 0 ? 1 : -1); }",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-wheel-sea-clock",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "now: () => realClock });",
+    "new": "now: () => clock });",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-pass-at-entry",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "      if (near.u < upTo - 1e-3 || firstT !== Infinity) passTold(b, t.id);",
+    "new": "      passTold(b, t.id);",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-pass-first-kept",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "if (near.gap <= NEAR_MISS_M && (!was || near.gap < was.gap))",
+    "new": "if (near.gap <= NEAR_MISS_M && !was)",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-pass-gone-untold",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "for (const id of [...(b.near?.keys() ?? [])]) passTold(b, id); ",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-blow-any-boat",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (boat === myBoat()) feel.struck(",
+    "new": "feel.struck(",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-jar-any-boat",
+    "file": "src/scenes/naval/navalFeel.js",
+    "old": "    if (feet && boxGap(best.h.box, feet) <= DRENCH_FEET_M) deps.shake?.",
+    "new": "    deps.shake?.",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-fresh-copy-heard",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (!fresh && was !== SHIP_STATES.sinking",
+    "new": "if (was !== SHIP_STATES.sinking",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-foul-before-blow",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (!e.owner) strike(e, { hull: dealt, sail: 0, crew: ramMen(dealt, random()) }, myId());   // AUDIT 2: her blow first - a ram that sends her down (or strikes her colours) fouls nothing, nor says so\n      if (e.ship.damage.state === SHIP_STATES.afloat && !e.ship.boarded) { foul(e.ship, myId(), clock, deps.captain?.stats?.().foul); deps.say?.(t('naval.foul.rammed', 'The ships are locked together. Board before they break free!'), 3); }\n",
+    "new": "      if (e.ship.damage.state === SHIP_STATES.afloat && !e.ship.boarded) { foul(e.ship, myId(), clock, deps.captain?.stats?.().foul); deps.say?.(t('naval.foul.rammed', 'The ships are locked together. Board before they break free!'), 3); }\n      if (!e.owner) strike(e, { hull: dealt, sail: 0, crew: ramMen(dealt, random()) }, myId());\n",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-flags-uncapped",
+    "file": "src/scenes/shipFlagHost.js",
+    "old": "if (!boat || !flag || list.length >= FLAGS_MAX) return;",
+    "new": "if (!boat || !flag) return;",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-flag-fade-lost",
+    "file": "src/scenes/shipFlagHost.js",
+    "old": "fade: boat.fade ?? 1 });",
+    "new": "fade: 1 });",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-cloth-undissolved",
+    "file": "src/render/shipFlagPass.js",
+    "old": "  dissolveCut();   // AUDIT 2",
+    "new": "  // AUDIT 2",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-paint-every-mesh",
+    "file": "src/scenes/comeSailAway/shipLiveryPaint.js",
+    "old": "    return v ? remap : base;",
+    "new": "    return remap;",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-pool-paint-every-mesh",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "      if (texRemap !== drawRemap) texRemap = paints.remapFor(gpu, texRemap, drawRemap);",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-key-board-blind",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "rec.d ?? null, rec.p ?? null] : rec.m",
+    "new": "rec.d ?? null] : rec.m",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-key-board-unkeyed",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "|| rec.d || rec.p ? [",
+    "new": "|| rec.d ? [",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-cabin-guest-stained",
+    "file": "src/scenes/sailingCabin.js",
+    "old": "cabinRestyle(guest ? 0 : fleetShip(cabin.uid)?.cabin ?? 0)",
+    "new": "cabinRestyle(fleetShip(cabin.uid)?.cabin ?? 0)",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-cabin-visit-unsaid",
+    "file": "src/scenes/worldModes.js",
+    "old": "host.sailingCabin.fromNative, typeof visit?.cabinOwner === 'string');",
+    "new": "host.sailingCabin.fromNative, false);",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-plaque-hidden-shown",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "const shown = boat.GameObject?.activeSelf && boat.MeshObject?.activeSelf ? plaqueNameOf(boat) : null;",
+    "new": "const shown = boat.MeshObject ? plaqueNameOf(boat) : null;",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js",
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "A2-fit-over-rail",
+    "file": "src/ui/deckPlanWindow.js",
+    "old": "  if (!box.every(([x, z]) => deck.walkable(x, z))) return",
+    "new": "  if (false) return",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-fit-into-another",
+    "file": "src/ui/deckPlanWindow.js",
+    "old": "  if (others.some((f) => { const o = footprint(f.m); return !!o && boxesMeet(",
+    "new": "  if (false && others.some((f) => { const o = footprint(f.m); return !!o && boxesMeet(",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-fit-turn-free",
+    "file": "src/ui/deckPlanWindow.js",
+    "old": "    if (why) { tell(why, true); return; }\n    list[picked] = { ...f, yaw };",
+    "new": "    list[picked] = { ...f, yaw };",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-fit-loaded-unpinned",
+    "file": "src/scenes/comeSailAway/deckFittingsHost.js",
+    "old": "    for (const f of list) { load(f.m); if (ctx.modelBounds?.(f.m)) loaded++; }",
+    "new": "    for (const f of list) { if (ctx.modelBounds?.(f.m)) loaded++; else load(f.m); }",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-hold-parts-lost",
+    "file": "src/scenes/holdDoor.js",
+    "old": "      if (at >= 0) { items.splice(at, 1); deps.toPack?.(parts); }\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-rowboat-sealed",
+    "file": "src/scenes/holdDoor.js",
+    "old": "const opens = (hull, items) => holdsCargo(hull) || (Array.isArray(items) && items.length > 0);",
+    "new": "const opens = (hull, items) => holdsCargo(hull);",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-rowboat-stops-key",
+    "file": "src/scenes/holdDoor.js",
+    "old": "      if (here && (!here.Cargo || opens(here.hull, here.Cargo.Items))) return openBoat(here);",
+    "new": "      if (here) return openBoat(here);",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-key-doorless",
+    "file": "src/scenes/holdDoor.js",
+    "old": " && (afloat(s.uid) || deps.partsOf?.(s.uid) || titleDeedOf(s.uid)));",
+    "new": ");",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-peace-chase-unread",
+    "file": "src/scenes/world.js",
+    "old": "enemies: !!this.enemiesNearby() || !!naval?.threats?.().some((t) => t.chasing),",
+    "new": "enemies: !!this.enemiesNearby(),",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-pad-hold-row",
+    "file": "src/ui/plus/plusPadBinds.js",
+    "old": "  { id: 'hold', label: 'Ship\\'s hold', sec: 'ShipHold' },\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  },
+  {
+    "name": "A2-plaque-grid-off",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "  const along = d[1] === 0 && d[2] === 0;",
+    "new": "  const along = false;",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js",
+      "test/systems/naval/auditrefit2.test.js"
+    ],
+    "equivalent": true,
+    "why": "the grid only spares tests a ray along x cannot pass: every triangle a ray at (y, z) meets has its box about (y, z) and so stands in that cell - the same hits either way, slower without it"
+  },
+  {
+    "name": "A2-plaque-unprimed",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "      for (let hull = 0; hull < HULL_NAMES.length; hull++) plaques.prime(hull);\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js",
+      "test/systems/naval/auditrefit2.test.js"
+    ],
+    "equivalent": true,
+    "why": "priming moves the hull's planking read from the pool's first draw of a named ship into its preload - the same planking and stations, read later; only when the cost lands changes"
+  },
+  {
+    "name": "A2-ball-jar-any-boat",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (boat === boatInPlay()) deps.shake?.(e.type === 'blast'",
+    "new": "      deps.shake?.(e.type === 'blast'",
+    "tests": [
+      "test/systems/naval/auditrefit2.test.js"
+    ]
+  }
+]

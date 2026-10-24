@@ -1,0 +1,832 @@
+[
+  {
+    "name": "CRAFT-WRITS-share",
+    "file": "src/net/craftWritLaw.js",
+    "old": "export const CRAFT_PAY_PCT = 150;",
+    "new": "export const CRAFT_PAY_PCT = 120;",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-floor",
+    "file": "src/net/craftWritLaw.js",
+    "old": "export const CRAFT_PAY_FLOOR = 20;",
+    "new": "export const CRAFT_PAY_FLOOR = 15;",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-cap",
+    "file": "src/net/craftWritLaw.js",
+    "old": "export const CRAFT_WRIT_PAY_MAX = 200;",
+    "new": "export const CRAFT_WRIT_PAY_MAX = 250;",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-yield",
+    "file": "src/net/craftWritLaw.js",
+    "old": "export const NOVICE_YIELD = Object.freeze({ potion: 2, dish: 1, kit: 1 });",
+    "new": "export const NOVICE_YIELD = Object.freeze({ potion: 1, dish: 1, kit: 1 });",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-counter-potions-let-in",
+    "file": "src/net/craftWritLaw.js",
+    "old": "export const WRIT_POTIONS = Object.freeze(POTIONS.filter((p) => brewFirstPays(p)));",
+    "new": "export const WRIT_POTIONS = Object.freeze(POTIONS.filter((p) => !!p));",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-remedy-to-mages",
+    "file": "src/net/craftWritLaw.js",
+    "old": "    healing: DIVINES.Stendarr, healTrue",
+    "new": "    healing: GUILD_FACTION_IDS.MagesGuild, healTrue",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-feast-to-fighters",
+    "file": "src/net/craftWritLaw.js",
+    "old": "tart: DIVINES.Mara, feast: DIVINES.Mara",
+    "new": "tart: DIVINES.Mara, feast: GUILD_FACTION_IDS.FightersGuild",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-potion-count",
+    "file": "src/net/craftWritLaw.js",
+    "old": "  if (p.kind === 'potion') return p.tier <= 2 ? 4 : p.tier <= 4 ? 3 : 2;",
+    "new": "  if (p.kind === 'potion') return p.tier <= 2 ? 5 : p.tier <= 4 ? 3 : 2;",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-kit-count",
+    "file": "src/net/craftWritLaw.js",
+    "old": "  return p.tier <= 3 ? 3 : p.tier <= 5 ? 2 : 1;",
+    "new": "  return p.tier <= 3 ? 3 : p.tier <= 5 ? 2 : 2;",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-fit-never",
+    "file": "src/net/craftWritLaw.js",
+    "old": "  while (n > 1 && craftWorth(/** @type {any} */ (p), n) > CRAFT_WRIT_PAY_MAX) n--;",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-two-tiers",
+    "file": "src/net/craftWritLaw.js",
+    "old": "  return open.filter((p) => /** @type {any} */ (p).tier >= best - 2)",
+    "new": "  return open.filter((p) => /** @type {any} */ (p).tier >= best - 3)",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-reach",
+    "file": "src/net/craftWritLaw.js",
+    "old": "  const open = all.map(craftProductOf).filter((p) => !!p && p.tier <= top);",
+    "new": "  const open = all.map(craftProductOf).filter((p) => !!p && p.tier <= top + 1);",
+    "tests": [
+      "test/net/craftwrits_law.test.js",
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-second-potion-same",
+    "file": "src/net/craftWritLaw.js",
+    "old": "  const third = smithed ? pick(craftWritChoices('kit', smithing), 2) : pick(potions.length > 1 ? potions.filter((k) => k !== first) : potions, 2);",
+    "new": "  const third = smithed ? pick(craftWritChoices('kit', smithing), 2) : pick(potions, 2);",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-never-a-kit",
+    "file": "src/net/craftWritLaw.js",
+    "old": "  const third = smithed ? pick(",
+    "new": "  const third = false ? pick(",
+    "tests": [
+      "test/net/craftwrits_law.test.js",
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-salt",
+    "file": "src/net/craftWritLaw.js",
+    "old": "export const CRAFT_WRIT_SALT = 0x6c3a;",
+    "new": "export const CRAFT_WRIT_SALT = 0x6c3b;",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-potent-first",
+    "file": "src/net/craftWritLaw.js",
+    "old": "      .sort((a, b) => (a.rec.potent ? 1 : 0) - (b.rec.potent ? 1 : 0) || a.at - b.at);",
+    "new": "      .sort((a, b) => a.at - b.at);",
+    "tests": [
+      "test/net/craftwrits_law.test.js",
+      "test/net/craftwrits_service.test.js",
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-worn-bottle",
+    "file": "src/net/craftWritLaw.js",
+    "old": "const mayGo = (/** @type {any} */ rec) => tradeableRecord(rec) && !isLocked(rec);",
+    "new": "const mayGo = (/** @type {any} */ rec) => !isLocked(rec);",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-pieces-count",
+    "file": "src/net/craftWritLaw.js",
+    "old": "  if (!Array.isArray(pieces) || pieces.length !== w.qty ||",
+    "new": "  if (!Array.isArray(pieces) ||",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-xp",
+    "file": "src/net/craftWritLaw.js",
+    "old": "export const craftWritXp = (/** @type {number} */ pay) => 2 * pay;",
+    "new": "export const craftWritXp = (/** @type {number} */ pay) => 3 * pay;",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-renown",
+    "file": "src/net/craftWritLaw.js",
+    "old": "export const craftWritRenown = (/** @type {number} */ pay) => renownRate(2 * pay);",
+    "new": "export const craftWritRenown = (/** @type {number} */ pay) => renownRate(pay);",
+    "tests": [
+      "test/net/craftwrits_law.test.js",
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-svc-loose-brews-count",
+    "file": "server-account/src/craftWrits.js",
+    "old": " AND potion = ${potion} AND witnessed = 1), 0)",
+    "new": " AND potion = ${potion}), 0)",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-svc-taken-uncounted",
+    "file": "server-account/src/craftWrits.js",
+    "old": "  - COALESCE((SELECT SUM(qty) FROM craft_writs WHERE player = ${p} AND filled_char = ${c} AND product = ${product} AND filled_at IS NOT NULL), 0))`;",
+    "new": "  - 0)`;",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-svc-any-maker",
+    "file": "server-account/src/craftWrits.js",
+    "old": "WHERE pk.provenance = ${pv} AND pk.owner = ${p} AND pk.char_id = ${c}",
+    "new": "WHERE pk.provenance = ${pv} AND pk.owner = ${p}",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-svc-listed-ok",
+    "file": "server-account/src/craftWrits.js",
+    "old": "    AND pk.listed = 0 AND pk.bought_with IS NOT 'gold'",
+    "new": "    AND pk.bought_with IS NOT 'gold'",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-svc-cap",
+    "file": "server-account/src/craftWrits.js",
+    "old": "        AND (SELECT COUNT(*) FROM craft_writs WHERE player = ?1 AND day = ?7 AND filled_at IS NOT NULL) < ?8",
+    "new": "        AND (SELECT COUNT(*) FROM craft_writs WHERE player = ?1 AND day = ?7 AND filled_at IS NOT NULL) <= ?8",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT CRAFT-WRITS E1: the writs are the account's, three slots a day, UNIQUE (day, player, slot) - a fourth fill of a day has no row to fill, so the decision's own count is the faucet's word kept beside the schema's (as the marks CHECK beside svc-room), and the cap test's craft-writ-cap is unreachable"
+  },
+  {
+    "name": "CRAFT-WRITS-svc-room",
+    "file": "server-account/src/craftWrits.js",
+    "old": "        AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + craft_writs.pay <= ?9",
+    "new": "        AND 1",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "the marks table's own CHECK (migration 0025, balance within MARKS_MAX) refuses the ledger trigger's overfilling write, and the batch rolls back with it - the decision's clause keeps the refusal ahead of the record's write and names it marks-full, as the Court writ's own decision does (AUDIT CRAFT-WRITS T5: the CHECK, not the trigger)"
+  },
+  {
+    "name": "CRAFT-WRITS-svc-ledger-kind",
+    "file": "server-account/src/craftWrits.js",
+    "old": "SELECT 'mint', NULL, 'account', ?1, 'craft-writ', pay,",
+    "new": "SELECT 'mint', NULL, 'account', ?1, 'writ', pay,",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-svc-rows-stay",
+    "file": "server-account/src/craftWrits.js",
+    "old": "    db.prepare(`DELETE FROM products WHERE provenance IN (SELECT value FROM json_each((SELECT goods FROM craft_writs WHERE id = ?1 AND n = ?2)))`).bind(id, nonce),\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-svc-xp-provisioning",
+    "file": "server-account/src/craftWrits.js",
+    "old": "      SELECT ?1, ?2, track, MIN(${cap}, xp_given), ?3 FROM craft_writs",
+    "new": "      SELECT ?1, ?2, 'provisioning', MIN(${cap}, xp_given), ?3 FROM craft_writs",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-svc-roll-none",
+    "file": "server-account/src/craftWrits.js",
+    "old": "      db.prepare(`UPDATE npc_roll SET rep = MIN(?4, rep + ?3), owed",
+    "new": "      db.prepare(`UPDATE npc_roll SET rep = MIN(?4, rep + 0 * ?3), owed",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-svc-anyone-posts",
+    "file": "server-account/src/craftWrits.js",
+    "old": "  if (!(await db.prepare('SELECT 1 FROM realm_characters WHERE id = ?1 AND player = ?2 AND dead_at IS NULL').bind(character, player.id).first())) return none;\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-svc-never-smithed",
+    "file": "server-account/src/craftWrits.js",
+    "old": "smithed: (xp.smithing ?? 0) > 0 };",
+    "new": "smithed: false };",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-svc-no-record",
+    "file": "server-account/src/craftWrits.js",
+    "old": "  if (!side.at) return { error: 'realm-needed' };   // a crafting writ is a realm character's - its goods are its record's\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-brew-always-witnessed",
+    "file": "server-account/src/alchemy.js",
+    "old": "        f, ?12, ?13, CASE WHEN ${loose} THEN 0 ELSE 1 END",
+    "new": "        f, ?12, ?13, 1",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-host-no-putback",
+    "file": "src/scenes/craftWritHost.js",
+    "old": "          if (t.whole) { if (!pack.includes(t.rec)) pack.splice(Math.min(t.at, pack.length), 0, t.rec); } else t.rec.stackCount = recordCount(t.rec) + t.n;\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-host-any-piece",
+    "file": "src/scenes/craftWritHost.js",
+    "old": "    const ok = new Set(Array.isArray(w?.pieces) ? w.pieces : []);\n    return (player()?.items ?? []).filter((it) => ok.has(it?.provenance) && pieceOf(it, w.product))",
+    "new": "    return (player()?.items ?? []).filter((it) => pieceOf(it, w.product))",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-host-brews-unread",
+    "file": "src/scenes/craftWritHost.js",
+    "old": "        const made = Math.max(0, Number(w.brewed) || 0);",
+    "new": "        const made = Infinity;",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-board-not-taken",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    if (r?.ok && r.data) work.onTaken?.(r);",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-board-waits-not",
+    "file": "src/ui/noticeWindow.js",
+    "old": "      b.disabled = busy || workBusy || !h.ready || full;\n",
+    "new": "      b.disabled = busy || workBusy || full;\n",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-board-head",
+    "file": "src/ui/noticeWindow.js",
+    "old": "      body.append(sectionHead(t('notice.craftWrit.head', 'Crafting writs - {filled, number} of {max, number} today', { filled: writs.crafts.today.filled, max: writs.crafts.today.max })));",
+    "new": "      body.append(sectionHead(t('notice.craftWrit.head', 'Crafting writs - {filled, number} of {max, number} today', { filled: 0, max: writs.crafts.today.max })));",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-WRITS-world-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      crafts: craftWrits,   // CRAFT-WRITS\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-S1-product-unbound",
+    "file": "server-account/src/craftWrits.js",
+    "old": "    ? `${brewedLeftSql('?1', '?2', '?10', '?11')} >= craft_writs.qty`",
+    "new": "    ? `${brewedLeftSql('?1', '?2', '?10', 'craft_writs.product')} >= craft_writs.qty`",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-S2-alias-shared",
+    "file": "server-account/src/craftWrits.js",
+    "old": "const pieceOkSql = (p, c, pv, recipes) => `EXISTS (SELECT 1 FROM products pk WHERE pk.provenance = ${pv} AND pk.owner = ${p} AND pk.char_id = ${c}\n    AND pk.listed = 0 AND pk.bought_with IS NOT 'gold' AND pk.recipe IN (SELECT value FROM json_each(${recipes}))\n    AND EXISTS (SELECT 1 FROM prof_crafts cr WHERE cr.player = ${p} AND (cr.provenance = pk.provenance OR cr.provenance2 = pk.provenance))\n    AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = pk.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = pk.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pk.provenance AND collected = 0)\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE player = ${p} AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = pk.provenance)\n    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = pk.provenance))`;",
+    "new": "const pieceOkSql = (p, c, pv, recipes) => `EXISTS (SELECT 1 FROM products pr WHERE pr.provenance = ${pv} AND pr.owner = ${p} AND pr.char_id = ${c}\n    AND pr.listed = 0 AND pr.bought_with IS NOT 'gold' AND pr.recipe IN (SELECT value FROM json_each(${recipes}))\n    AND EXISTS (SELECT 1 FROM prof_crafts cr WHERE cr.player = ${p} AND (cr.provenance = pr.provenance OR cr.provenance2 = pr.provenance))\n    AND NOT EXISTS (SELECT 1 FROM market_listings WHERE provenance = pr.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = pr.provenance AND state = 'open')\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pr.provenance AND collected = 0)\n    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE player = ${p} AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = pr.provenance)\n    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = pr.provenance))`;",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-S3-oldest-first",
+    "file": "server-account/src/craftWrits.js",
+    "old": "ORDER BY pr.made_at DESC, pr.rowid DESC LIMIT ?4",
+    "new": "ORDER BY pr.made_at LIMIT ?4",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-S3-twenty",
+    "file": "server-account/src/craftWrits.js",
+    "old": "export const CRAFT_PIECES_SHOWN = 60;",
+    "new": "export const CRAFT_PIECES_SHOWN = 1;",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-S4-old-repeat",
+    "file": "server-account/src/craftWrits.js",
+    "old": "  if (w.filled_at != null) return { error: 'craft-writ-filled' };\n",
+    "new": "  if (w.filled_at != null) return craftAnswer(db, player, w, nowS, { repeat: true });\n",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-S5-rid-unread",
+    "file": "server-account/src/craftWrits.js",
+    "old": "  if (byRid) return craftAnswer(db, player, byRid, nowS, { repeat: true });\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-S6-index-dropped",
+    "file": "server-account/migrations/0145_craft_writs.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_craft_writs_open ON craft_writs (expires_at) WHERE filled_at IS NULL;\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T2-bought-refused",
+    "file": "server-account/src/craftWrits.js",
+    "old": "AND pk.bought_with IS NOT 'gold' AND",
+    "new": "AND pk.bought_with IS NULL AND",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T2-gold-let-in",
+    "file": "server-account/src/craftWrits.js",
+    "old": "AND pk.bought_with IS NOT 'gold' AND",
+    "new": "AND 1 AND",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T3-brews-any-character",
+    "file": "server-account/src/craftWrits.js",
+    "old": "FROM prof_brews WHERE player = ${p} AND char_id = ${c} AND potion",
+    "new": "FROM prof_brews WHERE player = ${p} AND potion",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T3-auction",
+    "file": "server-account/src/craftWrits.js",
+    "old": "    AND NOT EXISTS (SELECT 1 FROM market_auctions WHERE provenance = pk.provenance AND state = 'open')\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T3-road",
+    "file": "server-account/src/craftWrits.js",
+    "old": "    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE provenance = pk.provenance AND collected = 0)\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T3-road-item",
+    "file": "server-account/src/craftWrits.js",
+    "old": "    AND NOT EXISTS (SELECT 1 FROM market_deliveries WHERE player = ${p} AND collected = 0 AND item IS NOT NULL AND json_extract(item, '$.provenance') = pk.provenance)\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T3-home",
+    "file": "server-account/src/craftWrits.js",
+    "old": "    AND NOT EXISTS (SELECT 1 FROM home_decor WHERE json_extract(item, '$.pv') = pk.provenance))`;",
+    "new": "    AND 1)`;",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T3-no-craft-row",
+    "file": "server-account/src/craftWrits.js",
+    "old": "    AND EXISTS (SELECT 1 FROM prof_crafts cr WHERE cr.player = ${p} AND (cr.provenance = pk.provenance OR cr.provenance2 = pk.provenance))\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T3-sweep-filled",
+    "file": "server-account/src/craftWrits.js",
+    "old": "WHERE filled_at IS NULL AND expires_at < ?1 LIMIT ?2",
+    "new": "WHERE expires_at < ?1 LIMIT ?2",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T3-sweep-grace",
+    "file": "server-account/src/craftWrits.js",
+    "old": "    .bind(nowS - DAY_S, limit).run();",
+    "new": "    .bind(nowS, limit).run();",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T3-outbound",
+    "file": "server-account/src/craftWrits.js",
+    "old": "goods) ? null : 'craft-goods-gone'), { outbound: true });",
+    "new": "goods) ? null : 'craft-goods-gone'), { outbound: false });",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T3-renown-update",
+    "file": "server-account/src/craftWrits.js",
+    "old": "    db.prepare(`UPDATE renown_tracks SET xp = MIN(?7, xp + (SELECT renown FROM",
+    "new": "    db.prepare(`UPDATE renown_tracks SET xp = MIN(?7, xp + 0 * (SELECT renown FROM",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T3-limit",
+    "file": "server-account/src/craftWrits.js",
+    "old": "        xp_given = MAX(0, MIN(xp, ${cap} - COALESCE(",
+    "new": "        xp_given = MAX(0, MIN(xp, 100000 - COALESCE(",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T3-chapters-gate",
+    "file": "server-account/src/craftWrits.js",
+    "old": "    ...(chaptersOpenFor(player, env) ? [",
+    "new": "    ...(true ? [",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T3-marks-board",
+    "file": "server-account/src/craftWrits.js",
+    "old": " || shut(player, env) || !marksOpenFor(player, env)) return none;",
+    "new": " || shut(player, env)) return none;",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T3-marks-route",
+    "file": "server-account/src/craftWrits.js",
+    "old": "  if (!marksOpenFor(player, env)) return { error: 'marks-closed' };\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T3-progress",
+    "file": "server-account/src/progress.js",
+    "old": "    case '/v1/writs/craft': if (a.ok) { add('prof', n(a.xp)); add('renown', n(a.renown?.credited)); } break;",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T3-early-count",
+    "file": "server-account/src/craftWrits.js",
+    "old": "  if (Number(had?.n ?? 0) >= CRAFT_WRIT_SLOTS) return;\n",
+    "new": "",
+    "tests": [
+      "test/server/scale4b.test.js",
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-E1-character-seed",
+    "file": "server-account/src/craftWrits.js",
+    "old": "  const writs = craftWritsFor(day, player, await ranksOf(db, player));",
+    "new": "  const writs = craftWritsFor(day, character, await ranksOf(db, player));",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-E1-worst-crafter",
+    "file": "server-account/src/craftWrits.js",
+    "old": "SELECT t.profession, MAX(t.xp) AS xp FROM prof_tracks t",
+    "new": "SELECT t.profession, MIN(t.xp) AS xp FROM prof_tracks t",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-E1-owner-only",
+    "file": "server-account/src/craftWrits.js",
+    "old": "  if (!w || w.player !== player.id) return { error: 'no-writ' };",
+    "new": "  if (!w || w.player !== player.id || w.owner !== character) return { error: 'no-writ' };",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-E1-filler-unrecorded",
+    "file": "server-account/src/craftWrits.js",
+    "old": "SET filled_at = ?3, filled_char = ?2, rid",
+    "new": "SET filled_at = ?3, rid",
+    "tests": [
+      "test/net/craftwrits_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-E1-seed-law",
+    "file": "src/net/craftWritLaw.js",
+    "old": "  const id = [...account].map((ch) => ch.charCodeAt(0));",
+    "new": "  const id = [...account].slice(0, 2).map((ch) => ch.charCodeAt(0));",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-E2-counter-marked-up",
+    "file": "src/net/craftWritLaw.js",
+    "old": "(p.bought ?? 0) * 100)) / (100 * NOVICE_YIELD[p.kind])));",
+    "new": "(p.bought ?? 0) * CRAFT_PAY_PCT)) / (100 * NOVICE_YIELD[p.kind])));",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-E3-sheet-a-bottle",
+    "file": "src/net/craftWritLaw.js",
+    "old": "rec?.group === 'UselessItems1' && rec.templateIndex === POTION_BOTTLE\n  && ",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-E4-daedric-asked",
+    "file": "src/net/craftWritLaw.js",
+    "old": " && !r.inputs.some((i) => UNYIELDED.includes(i.key))",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-E6-count-unbounded",
+    "file": "src/net/craftWritLaw.js",
+    "old": "Math.min(CRAFT_WRIT_QTY_MAX, /** @type {number} */ (qty))",
+    "new": "/** @type {number} */ (qty)",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-E6-null-ranks",
+    "file": "src/net/craftWritLaw.js",
+    "old": "= ranks ?? {};",
+    "new": "= ranks;",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-C1-repeat-kept-out",
+    "file": "src/scenes/craftWritHost.js",
+    "old": "          apply: (/** @type {any} */ a) => { if (a.data?.repeat && a.data?.realm == null) putBack(); },   // C1\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-C1-generation",
+    "file": "src/net/profBook.js",
+    "old": "          writGen++;   // AUDIT CRAFT-WRITS C1: a list read while this was asked shows the writ open - read again\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-C1-card-waits",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    if ((r?.ok || r?.error === 'craft-writ-filled') && writs?.crafts) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-C3-lock-unread",
+    "file": "src/net/craftWritLaw.js",
+    "old": "tradeableRecord(rec) && !isLocked(rec);",
+    "new": "tradeableRecord(rec);",
+    "tests": [
+      "test/net/craftwrits_law.test.js",
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-C4-no-reread",
+    "file": "src/net/profBook.js",
+    "old": "          if (r?.error === 'seq') { state.reread = true; writGen++; }\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-C5-a-adamantium",
+    "file": "src/net/craftWritLaw.js",
+    "old": "'{n, plural, one {one {name}} other {# {name}s}}'",
+    "new": "'{n, plural, one {a {name}} other {# {name}s}}'",
+    "tests": [
+      "test/net/craftwrits_law.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-C6-silence",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    if (r?.unknown) return t('notice.craftWrit.unknown',",
+    "new": "    if (false) return t('notice.craftWrit.unknown',",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-C6-elsewhere",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    if (r?.elsewhere || r?.error === 'elsewhere') return t('notice.craftWrit.elsewhere',",
+    "new": "    if (false) return t('notice.craftWrit.elsewhere',",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-C7-list-kept",
+    "file": "src/net/profBook.js",
+    "old": "      if (w.brew === true || made?.kind === 'dish' || made?.product === 'kit') { writCache.clear(); writGen++; }\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-C8-title-only",
+    "file": "src/ui/noticeWindow.js",
+    "old": "      if (why) li.append(el('p', 'writ-walled', `${why}.`));",
+    "new": "      if (!h.ready) li.append(el('p', 'writ-walled', `${why}.`));",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-C9-throw-kept-out",
+    "file": "src/scenes/craftWritHost.js",
+    "old": "        putBack();   // C9: a throw before the service was asked (the book gone) - the goods were never the record's\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-C9-foot-of-pack",
+    "file": "src/scenes/craftWritHost.js",
+    "old": "pack.splice(Math.min(t.at, pack.length), 0, t.rec)",
+    "new": "pack.push(t.rec)",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-C4-landed-unread",
+    "file": "src/scenes/craftWritHost.js",
+    "old": "      if (r?.ok && !r.data) Promise.resolve(book()?.refresh?.({ force: true })).catch(() => {});\n",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-C9-board-held",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    try { r = await work.crafts.deliver(w); } catch (e) { console.warn('[work] a crafting writ would not deliver', e); r = { ok: false, error: 'server' }; }   // C9: never a board held busy\n",
+    "new": "    r = await work.crafts.deliver(w);\n",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-CRAFT-WRITS-T5-tab-uncounted",
+    "file": "src/ui/noticeWindow.js",
+    "old": " + (work?.crafts ? (writs.crafts?.writs ?? []).filter((w) => w.state === 'open').length : 0)",
+    "new": "",
+    "tests": [
+      "test/net/craftwrits_client.test.js"
+    ]
+  }
+]

@@ -5,7 +5,7 @@
   "old": "Number.isFinite(now) ? now - was : null;",
   "new": "Number.isFinite(now) ? was - now : null;",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "${trend > 0 ? `up ${trend}`",
   "new": "${trend >= 0 ? `up ${trend}`",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "Standing ${holder.standing}${standingTrendWords(standingTrend(holder))}.",
   "new": "Standing ${holder.standing}.",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "  for (const w of plan.standings) stmts.push(history(w.key, 'standing',",
   "new": "  for (const w of []) stmts.push(history(w.key, 'standing',",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "was: Number(holds.get(Number(w.key))?.standing ?? w.standing)",
   "new": "was: w.standing",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "WHERE key = ? AND kind <> 'standing' ORDER BY seq DESC LIMIT ?",
   "new": "WHERE key = ? ORDER BY seq DESC LIMIT ?",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "d && d.guild === holder.guild.id && Number.isFinite(d.was)",
   "new": "d && Number.isFinite(d.was)",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "standingWas(db, key, week - 1, holder)",
   "new": "standingWas(db, key, week, holder)",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "seat?.holder?.edict === 'festival'",
   "new": "seat?.holder?.edict != null",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -86,7 +86,7 @@
   "old": "bounty.has(i) ? boardPennantAnchor(b) : null",
   "new": "!bounty.has(i) ? boardPennantAnchor(b) : null",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -95,7 +95,7 @@
   "old": "if (a && out.length < FESTIVAL_BANNERS_MAX) out.push(a);",
   "new": "if (a) out.push(a);",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -104,7 +104,7 @@
   "old": "if (two && out.length + 2 <= FESTIVAL_BANNERS_MAX) out.push(...two);",
   "new": "if (two) out.push(...two);",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -113,7 +113,7 @@
   "old": "a.top[1] - FESTIVAL_LANTERN_DROP_M",
   "new": "a.top[1] + FESTIVAL_LANTERN_DROP_M",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -122,7 +122,7 @@
   "old": "festival === true && environment === MUSIC_ENV.City ? MUSIC_ENV.Tavern",
   "new": "festival === true ? MUSIC_ENV.Tavern",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -131,7 +131,7 @@
   "old": "(festival === true && environment === MUSIC_ENV.City ?",
   "new": "(environment === MUSIC_ENV.City ?",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -140,7 +140,7 @@
   "old": "const environment = festivalEnvironment(held, merged.festival === true);",
   "new": "const environment = held;",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -149,7 +149,7 @@
   "old": "if (v !== seen || t - at >= BANNER_REFRESH_MS)",
   "new": "if (t - at >= BANNER_REFRESH_MS)",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -158,7 +158,7 @@
   "old": "p?.festivalLanterns?.length && festive(p.homeTown) ?",
   "new": "p?.festivalLanterns?.length ?",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -167,25 +167,25 @@
   "old": "      if (festivalRules(seat)) (p.festivalAnchors ?? [])",
   "new": "      if (false) (p.festivalAnchors ?? [])",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
   "name": "FESTIVAL-STAGE-fill-without",
-  "file": "src/world/cityLights.js",
+  "file": "src/world/city/cityLights.js",
   "old": "    const more = extra ? extra(p) : null;",
   "new": "    const more = null;",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
   "name": "FESTIVAL-STAGE-host-temples",
-  "file": "src/scenes/world.js",
+  "file": "src/scenes/pixelBuild.js",
   "old": "tavernKeys: buildingKeysOfType(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES.Tavern)",
   "new": "tavernKeys: buildingKeysOfType(locBlocks, makeBuildingKey, TALK_BUILDING_TYPES.Temple)",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -194,7 +194,7 @@
   "old": "worldLightAnimator.ranges, festivalStage ? festivalStage.lanterns : null);",
   "new": "worldLightAnimator.ranges);",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -203,7 +203,7 @@
   "old": "festival: festivalStage?.festive(_musicLoc?.mapTableData?.mapId) === true,",
   "new": "festival: false,",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -212,7 +212,7 @@
   "old": " && seatWeekOf(at) === seatWeekOf(nowMs())) return",
   "new": ") return",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ],
   "note": "A list read before the Turning kept after it, inside its minutes."
  },
@@ -222,7 +222,7 @@
   "old": "      else if (!pending && open === true && seatWeekOf(at) !== seatWeekOf(nowMs() - turnSpreadMs)) read({ force: true });\n",
   "new": "",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ],
   "note": "The Turning passes unread while the player stays."
  },
@@ -232,7 +232,7 @@
   "old": "seatWeekOf(at) !== seatWeekOf(nowMs() - turnSpreadMs)) read({ force: true });",
   "new": "seatWeekOf(at) <= seatWeekOf(nowMs() - turnSpreadMs)) read({ force: true });",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ],
   "note": "The list read again every frame, not once a week."
  },
@@ -242,7 +242,7 @@
   "old": "else if (!pending && open === true && seatWeekOf",
   "new": "else if (!pending && seatWeekOf",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ],
   "note": "Seats shut to the account asked again at the Turning."
  }

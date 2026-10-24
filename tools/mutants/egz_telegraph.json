@@ -1,0 +1,678 @@
+[
+  {
+    "name": "EGZ-floor-disc-half",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "fan(f.x, f.z, f.r, 0, Math.PI * 2, SD_ISLAND_SIDES);",
+    "new": "fan(f.x, f.z, f.r, 0, Math.PI, SD_ISLAND_SIDES);",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-floor-lane-cap-thin",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "fan(f.bx, f.bz, f.hw, head - Math.PI / 2, head + Math.PI / 2, EG_FLOOR_CAP_SIDES);",
+    "new": "fan(f.bx, f.bz, f.hw, head - Math.PI / 2, head + Math.PI / 2, 2);",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-clip-entering-dropped",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "    if (ina !== inb) {",
+    "new": "    if (ina && !inb) {",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-clip-inside-test-loose",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": ": x0 >= box[0] && x1 <= box[2] && z0 >= box[1] && z1 <= box[3];",
+    "new": ": x0 >= box[0] || x1 <= box[2];",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-clip-far-side-wrong",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "n = cutPoly(_pb, n, _pa, 1, box, 3, -1);",
+    "new": "n = cutPoly(_pb, n, _pa, 1, box, 1, -1);",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-ys-any-floor",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "  return !any;\n}",
+    "new": "  return true;\n}",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-ys-always-ground",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "if (floors[k].y === y) return true;",
+    "new": "if (0 === y) return true;",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-budget-33",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "export const EG_FLOOR_DRAWS_MAX = 32;",
+    "new": "export const EG_FLOOR_DRAWS_MAX = 33;",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-budget-feet-tier-lost",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "r.k0 = sh.mine || (feet && telegraphField(sh, feet[0], feet[1]).inside) ? 0 : 1;",
+    "new": "r.k0 = sh.mine ? 0 : 1;",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-budget-rank-ignored",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "r.k1 = Number.isFinite(sh.order) ? sh.order : Infinity;",
+    "new": "r.k1 = 0;",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-budget-mine-first",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "const mineLast = (a, b) => (a.sh.mine ? 1 : 0) - (b.sh.mine ? 1 : 0) || a.i - b.i;",
+    "new": "const mineLast = (a, b) => (b.sh.mine ? 1 : 0) - (a.sh.mine ? 1 : 0) || a.i - b.i;",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-budget-own-surface-on-floors",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "if (Number.isFinite(sh.y) || !floors.length) {",
+    "new": "if (!floors.length) {",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-peril-crosses-edge",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "if (!egOnFloorAt(spec, x, z, y0, P.rim)) break;",
+    "new": "if (!egOnFloorAt(spec, x, z, y0, -1e9)) break;",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-peril-clear-ignored",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "if (out && !inStamps(best, x, z) && !others.some((b) => inStamps(b, x, z))) {",
+    "new": "if (out && !inStamps(best, x, z)) {",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-peril-check-never",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "check: !!best.ch || best.s.some((s) => s[0] === 'h'),",
+    "new": "check: false,",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-peril-landed-fled",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "if (!(now < b.at) || now < b.at - b.wu || !inStamps(b, f[0], f[1]) ||",
+    "new": "if (now < b.at - b.wu || !inStamps(b, f[0], f[1]) ||",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-peril-whole-floor",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "const inStamps = (b, x, z) => b.s.some((s) => s[0] !== 'a' && egInShape(s, x, z));",
+    "new": "const inStamps = (b, x, z) => b.s.some((s) => egInShape(s, x, z));",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-tether-drain-break",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "export const egTetherBreak = (tx) => (tx?.[2] === 0 ? tx[3] % 100 : (tx?.[3] ?? 0) / 100);",
+    "new": "export const egTetherBreak = (tx) => (tx?.[2] === 0 ? tx[3] / 100 : (tx?.[3] ?? 0) / 100);",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-tether-kind",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "export const egTetherKind = (tx) => (tx?.[2] === 2 ? 'close' : 'pull');",
+    "new": "export const egTetherKind = (tx) => (tx?.[2] === 1 ? 'close' : 'pull');",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-pull-thickens",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "clamp01(1 - d / Math.max(brk, 1e-3))",
+    "new": "clamp01(d / Math.max(brk, 1e-3))",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-pull-lane-short",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "half = Math.max(d / 2, brk / 2 + EG_TETHER.past);",
+    "new": "half = d / 2;",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-chain-taut-scale",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "clamp01((d - EG_TETHER.slack) / (EG_TETHER.taut - EG_TETHER.slack))",
+    "new": "clamp01((d - EG_TETHER.slack) / EG_TETHER.taut)",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-pool-undarkened",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "return [(c[0] / 255) * EG_POOL_DARK, (c[1] / 255) * EG_POOL_DARK, (c[2] / 255) * EG_POOL_DARK];",
+    "new": "return [c[0] / 255, c[1] / 255, c[2] / 255];",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-eclipse-dark-early",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "clamp01(1 - e.secs / EG_ECLIPSE_LOOK.dark)",
+    "new": "clamp01(1 - e.secs / 6)",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-eclipse-chip-striking",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "(e && !e.live ? `The Eclipse",
+    "new": "(e ? `The Eclipse",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-sigil-spent-kept",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "if (m[0] === sub && m[2] > now && EG_SIGILS[m[1]])",
+    "new": "if (m[0] === sub && EG_SIGILS[m[1]])",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-sigil-shapes-swapped",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "export const EG_SIGILS = Object.freeze(['tooth', 'gem', 'flame', 'flake',",
+    "new": "export const EG_SIGILS = Object.freeze(['tooth', 'gem', 'flake', 'flame',",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-screen-behind",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "  if (!(w > 1e-3)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-view-yaw-turned",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "export const egViewYaw = (view) => Math.atan2(-view[2], -view[10]);",
+    "new": "export const egViewYaw = (view) => Math.atan2(view[2], view[10]);",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-aura-holders-inverted",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": ".filter((r) => (r[6] ?? []).some((v) => AURA_IDS.has(v[0])))",
+    "new": ".filter((r) => (r[6] ?? []).some((v) => !AURA_IDS.has(v[0])))",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-rim-dormant-lit",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "(fl & (EG_FL.dormant | EG_FL.friend)) === 0",
+    "new": "(fl & EG_FL.friend) === 0",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-rim-every-band",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": ": band === EG_SHADE_BAND && (fl & (EG_FL.dormant",
+    "new": ": band >= 0 && (fl & (EG_FL.dormant",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-shake-reach-doubled",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "return w[0] * Math.max(0, 1 - d / w[1]) * Math.min(1, motion);",
+    "new": "return w[0] * Math.max(0, 1 - d / (w[1] * 2)) * Math.min(1, motion);",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-shake-lane-by-start",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "const stampDist = (s, x, z) => (s[0] === 'l' ? segDist(x, z, s[1], s[2], s[3], s[4]) :",
+    "new": "const stampDist = (s, x, z) => (s[0] === 'l' ? Math.hypot(x - s[1], z - s[2]) :",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-shake-reduced-ignored",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "export const egShakeMotion = (still, technique) => { if (still) return 0;",
+    "new": "export const egShakeMotion = (still, technique) => {",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-flash-echo-ally",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "hurt >= mine && hurt - mine <= EG_MINE_ECHO_MS ? -Infinity : hurt",
+    "new": "hurt",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-flash-fallen",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "  if (!b || b.fellAt) return 0;",
+    "new": "  if (!b) return 0;",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-drop-over-unbounded",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "y >= s.y - 0.3 && y - s.y <= EG_DROP_THUD.over) return s;",
+    "new": "y >= s.y - 0.3) return s;",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-drop-hop-counts",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "return !!s && y - s.y >= EG_DROP_THUD.min; };",
+    "new": "return !!s && y - s.y >= 0; };",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-vs-floor-height-dropped",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "'vWorld = uCentre + vec3(vCourt.x, uFloorY + uLift, vCourt.y);'",
+    "new": "'vWorld = uCentre + vec3(vCourt.x, uLift, vCourt.y);'",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-vs-floor-read-as-quad",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "'  vCourt = uOnFloor == 1 ? aCourt : uOnWalk == 1 ?'",
+    "new": "'  vCourt = uOnFloor == 2 ? aCourt : uOnWalk == 1 ?'",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fs-pool-rim-solid",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "    float pdash = step(0.5, fract(run * 14.0));",
+    "new": "    float pdash = 1.0;",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fs-pull-chevrons-in",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "float chev = step(0.5, fract((u + 1.6 * ld) / 1.2 - uSince * 1.2));",
+    "new": "float chev = step(0.5, fract((u - 1.6 * ld) / 1.2 - uSince * 1.2));",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fs-pull-flows-in",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "fract((u + 1.6 * ld) / 1.2 - uSince * 1.2)",
+    "new": "fract((u + 1.6 * ld) / 1.2 + uSince * 1.2)",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fs-pull-tick-at-pair",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "float tick = (1.0 - smoothstep(0.06, 0.12, abs(u - uR1)))",
+    "new": "float tick = (1.0 - smoothstep(0.06, 0.12, abs(u - uR)))",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fs-pull-line-to-break",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "float onLine = (u <= uR ? 1.0 : 0.0) * fin;",
+    "new": "float onLine = (u <= uR1 ? 1.0 : 0.0) * fin;",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fs-chain-never-taut",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "link * (0.35 + 0.65 * uT) * throb",
+    "new": "link * 0.35 * throb",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fs-chain-throb-fast",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "(1.5 + 1.5 * uT) * uSince",
+    "new": "(1.5 + 4.5 * uT) * uSince",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fs-ring-filled",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "    o = vec4(uColor * core * (edge <= ${TELEGRAPH_RING_REACH.toFixed(2)} ? 1.0 : 0.0) * f, 0.0);\n    return;\n  }\n  if (uPool == 8) {",
+    "new": "    o = vec4(uColor * max(core, fin) * (edge <= ${TELEGRAPH_RING_REACH.toFixed(2)} ? 1.0 : 0.0) * f, 0.0);\n    return;\n  }\n  if (uPool == 8) {",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fs-dark-havens-darkened",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "uT * smoothstep(-0.3, 0.3, m) * f",
+    "new": "uT * f",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-pass-floor-height-unset",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "gl.uniform1i(U.uOnFloor, 1); gl.uniform1f(U.uFloorY, d.f.y);",
+    "new": "gl.uniform1i(U.uOnFloor, 1); gl.uniform1f(U.uFloorY, 0);",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-pass-quad-not-given-back",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "    } finally {\n      this.vao = vao; this.count = count;\n",
+    "new": "    } finally {\n",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fight-burn-orange-kept",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (z.kind === 'burn') { sh.color = egPoolRgb(band); sh.pool = TELEGRAPH_POOL_SPIRE.pool; }",
+    "new": "if (z.kind === 'none') { sh.color = egPoolRgb(band); sh.pool = TELEGRAPH_POOL_SPIRE.pool; }",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fight-chain-as-pull",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (egTetherKind(tx) === 'pull') pullTether(",
+    "new": "if (egTetherKind(tx)) pullTether(",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fight-chain-words-never",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (mineTx && (!chained || d > chained.d)) chained =",
+    "new": "if (false && mineTx && (!chained || d > chained.d)) chained =",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fight-feint-shakes",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (!bl.cut && standing) { const k = egHeavyShake(",
+    "new": "if (standing) { const k = egHeavyShake(",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fight-motion-ignored",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "const motion = egShakeMotion(egReducedMotion(), getPref('techniqueMotion'));",
+    "new": "const motion = egShakeMotion(false, getPref('techniqueMotion'));",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fight-fallen-aura",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (!m || !m.alive || m.home || !m.in || m.wit) continue;",
+    "new": "if (!m) continue;",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fight-aura-on-floors",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      sh.y = p[1] - up - centre[1];\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fight-drop-hop",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "} else if (s && y - s.y >= EG_DROP_THUD.min && dropOn !== s) dropFrom = s;",
+    "new": "} else if (s && y - s.y >= EG_DROP_THUD.min) dropFrom = s;",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fight-wind-every-frame",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (!e.live && e.secs <= EG_ECLIPSE_LOOK.wind && !eclipseHeard.has(wind)) {",
+    "new": "if (!e.live && e.secs <= EG_ECLIPSE_LOOK.wind) {",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fight-dark-early",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    if (dark > 0) {\n",
+    "new": "    if (dark >= 0) {\n",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fight-check-order-never",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (g && peril.check && !peril.dir) g = { ...g, warn: EG_CHECK_ORDER };",
+    "new": "if (false) g = { ...g, warn: EG_CHECK_ORDER };",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fight-sigils-on-head",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "egScreenAt(vp, [p[0], p[1] + EG_SIGIL_UP_M, p[2]])",
+    "new": "egScreenAt(vp, [p[0], p[1], p[2]])",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fight-mine-not-marked",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "b.hurtAt = b.mineAt = now();",
+    "new": "b.hurtAt = now();",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-hud-marks-none",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "const marks = me ? egSigilsOf(E.fight?.mk ?? [], me, now) : [];",
+    "new": "const marks = [];",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-hud-eclipse-chip-none",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "? egEclipseChip(egEclipseAt(spec, now / 1000) ?? egEclipseOfBlows(E.fight?.blows, now)) : '',",
+    "new": "? '' : '',",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-hud-sigil-row-kept",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "  for (const [k, row] of sigRows) if (!seen.has(k)) { row.remove?.(); sigRows.delete(k); }\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-hud-gem-no-seconds",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "${s.sigil === 'gem' ? `<b>${s.secs | 0}</b>` : ''}",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-ally-look-always",
+    "file": "src/ui/eliteGates/egAccess.js",
+    "old": "  return q && (q.alpha < 1 || q.glow < 1) ? q : null;",
+    "new": "  return q;",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-vfx-fade-wrong-channel",
+    "file": "src/render/vfxGpu.js",
+    "old": "    if (srcBlend === 0) { out[o] *= alpha;",
+    "new": "    if (srcBlend === 6) { out[o] *= alpha;",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-flash-opaque",
+    "file": "src/scenes/hitEffects.js",
+    "old": "      if (entry.conceal) entry.batch.conceal = entry.conceal;   // EG-ZG",
+    "new": "      if (false) entry.batch.conceal = entry.conceal;   // EG-ZG",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-span-over-any-step",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "overDrop = !!hs && egOverDrop(hs, rx - hs.x0, ry, rz);",
+    "new": "overDrop = !!hs;",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-magic-candles-lit",
+    "file": "src/scenes/hostMagic.js",
+    "old": "if (egAllyLook()?.glow === 0) list = null;",
+    "new": "if (egAllyLook()?.glow === 1) list = null;",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-floor-no-strip",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "const strip = this.floorVao && this.vao === this.floorVao ? null : telegraphStrip(shape);",
+    "new": "const strip = telegraphStrip(shape);",
+    "why": "AOE-PERF's strip laid over a fight floor's own triangles (the merge of main)",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  }
+]

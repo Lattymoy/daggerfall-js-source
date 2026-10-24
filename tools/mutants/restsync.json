@@ -5,7 +5,7 @@
     "old": "  const onlineRoom = () => opts.selfId?.() != null;",
     "new": "  const onlineRoom = () => true;",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (_authority) return _spawnEncounter(hit, { shared: true });",
     "new": "    if (_authority) return _spawnEncounter(hit);",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (opts.onActions?.({ k: _locationKey, rs: {",
     "new": "    if (_spawnEncounter(hit) && opts.onActions?.({ k: _locationKey, rs: {",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": " s: [q2(spot.x), q2(spot.y), q2(spot.z)] } })) {",
     "new": " s: [q2(spot.x), q2(spot.y), q2(spot.z)] } }) || true) {",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ],
     "note": "AUDIT REST II (PIN MOVED): F1 made the sent ask's arm a block (a night running hears it at once - ambushNight - and only a paced window latches the hour); re-aimed by content at the ask's own test, the refused ask still let through. AUDIT REST III E1 (PIN MOVED): re-aimed by content - the ask names the spot its placement found, the host stands it there."
   },
@@ -42,7 +42,7 @@
     "old": "    if (_restAskAt == null || Date.now() - _restAskAt > REST_ASK_WAIT_MS) return false;\n    _restAskAt = null;\n",
     "new": "    if (_restAskAt == null || Date.now() - _restAskAt > REST_ASK_WAIT_MS) return false;\n",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "    enemiesNearby: () => roomEncounterComing() || areEnemiesNearby(foes, { resting: true }),",
     "new": "    enemiesNearby: () => areEnemiesNearby(foes, { resting: true }),",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "    if (hit) { restEncounter(hit); break; }",
     "new": "    if (hit) { _spawnEncounter(hit); break; }",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "    if (now - (_askAt.get(id) ?? -Infinity) < REST_ASK_GAP_MS) return false;",
     "new": "    if (now - (_askAt.get(id) ?? -Infinity) < 0) return false;",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": " && hi >= lo && hi <= REST_ASK_BAND_MAX)) return false;",
     "new": " && hi >= lo)) return false;",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "{ feet: f, yaw: Number.isFinite(rs.y) ? rs.y : 0, shared: true, asked: s })",
     "new": "{ yaw: Number.isFinite(rs.y) ? rs.y : 0, shared: true, asked: s })",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ],
     "note": "AUDIT REST III E1 (PIN MOVED): re-aimed by content - the ask names the spot its placement found, the host stands it there."
   },
@@ -97,7 +97,7 @@
     "old": "    const asked = data.rs != null && roomEncounterAsked(id, data.rs);",
     "new": "    const asked = false;",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "      if (n) frame.x = shared.slice(0, n);",
     "new": "",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "    if (full && n === shared.length) frame.xf = 1;",
     "new": "",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "    if (full && n === shared.length) frame.xf = 1;",
     "new": "    if (full) frame.xf = 1;",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "      let room = FOES_FRAME_MAX - FOES_FRAME_SLACK - JSON.stringify(frame).length;",
     "new": "      let room = Infinity;",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "      for (const r of shared.slice(n)) { const f = _sharedById.get(r.i); if (f) { f._sentKey = null; f._maxSent = undefined; f._lsSent = undefined; } }   // AUDIT SETS M1: and its maximum, if it carried one, is owed\n",
     "new": "",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -151,16 +151,16 @@
     "old": ".sort((a, b) => (a.dead ? 1 : 0) - (b.dead ? 1 : 0))) {",
     "new": ") {",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
     "name": "RESTSYNC-the-destroyed-kept",
     "file": "src/scenes/dungeonContext.js",
-    "old": "    for (const [id, f] of _sharedById) if ((f.dead && !f.corpse) || !foes.includes(f)) _sharedById.delete(id);",
+    "old": "    for (const [id, f] of _sharedById) if ((f.dead && !f.corpse && !f.corpseDestroyed) || !foes.includes(f)) _sharedById.delete(id);",
     "new": "    for (const [id, f] of _sharedById) if (!foes.includes(f)) _sharedById.delete(id);",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "    applySharedRecords(Array.isArray(data.x) ? data.x : [], data.xf === 1);   // REST-SYNC\n",
     "new": "",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "    if (full) for (const [id, f] of [..._sharedById]) if (!seen.has(id)",
     "new": "    if (true) for (const [id, f] of [..._sharedById]) if (!seen.has(id)",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "      if (r.d === 1 || r.t == null || !r.f || !canStandFoe(r.t)) continue;",
     "new": "      if (r.t == null || !r.f || !canStandFoe(r.t)) continue;",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "      if (r.i > _sharedSeq) _sharedSeq = r.i;\n",
     "new": "",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "    f._mwWire = 'seed'; applyWireLook(f, newest);   // AUDIT MW-NPC II K3: the host's man - its seed, not the feet it was first streamed at (its `marker` here)\n    _sharedById.set(r.i, f);\n",
     "new": "    f._mwWire = 'seed'; applyWireLook(f, newest);   // AUDIT MW-NPC II K3: the host's man - its seed, not the feet it was first streamed at (its `marker` here)\n",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "    f.dead = true;\n    dropCandidate(f);\n    const at = foes.indexOf(f);\n    if (at >= _layoutFoes) foes.splice(at, 1);\n",
     "new": "    f.dead = true;\n    dropCandidate(f);\n    const at = foes.indexOf(f);\n",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "opts.onFoeHit?.({ ...(foe._encId != null ? { i: foe._encId, xs: 1 } : { i: foe._surI ?? pi }), dmg: damage, kind,",
     "new": "opts.onFoeHit?.({ i: pi, dmg: damage, kind,",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "      if (isRoomFoe(foe, pi)) {   // REST-SYNC: the layout's run, or a shared encounter's puppet",
     "new": "      if (pi < _layoutFoes) {   // REST-SYNC: the layout's run, or a shared encounter's puppet",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "    const f = xs ? (_sharedById.get(i) ?? null) : foes[i];",
     "new": "    const f = foes[i];",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "    if (!f || (!xs && i >= _layoutFoes) || f.dead",
     "new": "    if (!f || f.dead",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "    if ((!_authority && isRoomFoe(f, pi)) || f._ownFrom != null) { f._divertPt = pt; return null; }",
     "new": "    if ((!_authority && pi >= 0 && pi < _layoutFoes) || f._ownFrom != null) { f._divertPt = pt; return null; }",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "    if ((!_authority && isRoomFoe(foe, pi)) || foe._ownFrom != null) { if (!(landed > 0))",
     "new": "    if ((!_authority && pi >= 0 && pi < _layoutFoes) || foe._ownFrom != null) { if (!(landed > 0))",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "    return isRoomFoe(f) || f._ownFrom != null || ownRides(f);   // REST-SYNC: and a rest's encounter, which the room now shares; PSCALE-OWN: and a shared quest's, on the own lane; SUMMON-SYNC: and a loose stand",
     "new": "    const i = foes.indexOf(f);\n    return (i >= 0 && i < _layoutFoes) || f._ownFrom != null || ownRides(f);",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -286,7 +286,7 @@
     "old": "    for (const f of [...foes.slice(0, _layoutFoes), ..._sharedById.values()]) {   // REST-SYNC: the room's encounters hand over too",
     "new": "    for (const f of foes.slice(0, _layoutFoes)) {",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": "f != null && ((!_authority && isRoomFoe(f, i)) || f._ownFrom != null);",
     "new": "f != null && ((!_authority && i < _layoutFoes) || f._ownFrom != null);",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -304,7 +304,7 @@
     "old": "    if (kind === 'enc') { const f = _sharedById.get(i); return lootableBody(f) && Array.isArray(f.entity?.items) ? f.entity.items : null; }\n",
     "new": "",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -313,7 +313,7 @@
     "old": "if (f?._encId != null) canon = `enc:${f._encId}`; }",
     "new": "}",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -322,7 +322,7 @@
     "old": "  const LOOT_KEY_RE = /^(loot|corpse|enc|srch):(0|[1-9][0-9]{0,4})$/;",
     "new": "  const LOOT_KEY_RE = /^(loot|corpse|srch):(0|[1-9][0-9]{0,4})$/;",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -331,7 +331,7 @@
     "old": "    if (data?.rs && !(data?.a?.length) && !(data?.l?.length)) return actFrameFits(data) ? online.sendAct(data) : false;\n",
     "new": "",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -340,7 +340,7 @@
     "old": "    if (full) fitMaxima(frame, [...out.map((r) => [r, foes[r.i]]), ...(frame.x ?? []).map((r) => [r, _sharedById.get(r.i)])]);\n",
     "new": "",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -349,7 +349,7 @@
     "old": "      if (max == null || 5 + String(max).length > room) continue;",
     "new": "      if (max == null) continue;",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -358,7 +358,7 @@
     "old": "    const owesMax = max != null && f._maxSent !== max && _maxLeft > 0;",
     "new": "    const owesMax = max != null && f._maxSent !== max;",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -367,7 +367,7 @@
     "old": "    if (full) f._maxSent = undefined;\n    const max = foeMaxOf(f);",
     "new": "    const max = foeMaxOf(f);",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -376,7 +376,7 @@
     "old": "    const owesMax = max != null && f._maxSent !== max && _maxLeft > 0;",
     "new": "    const owesMax = max != null && f._maxSent === undefined && _maxLeft > 0;",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -385,7 +385,7 @@
     "old": "  const foeMaxOf = (f) => (!f.dead && Number.isFinite(f.entity.maxHealth)",
     "new": "  const foeMaxOf = (f) => (Number.isFinite(f.entity.maxHealth)",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   },
   {
@@ -394,7 +394,7 @@
     "old": "if (f) { f._sentKey = null; f._maxSent = undefined; f._lsSent = undefined; } }",
     "new": "if (f) { f._sentKey = null; f._lsSent = undefined; } }",
     "tests": [
-      "test/restsync.test.js"
+      "test/net/restsync.test.js"
     ]
   }
 ]

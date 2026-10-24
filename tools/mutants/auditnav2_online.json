@@ -1,111 +1,111 @@
 [
   {
     "name": "AUDIT-NAV2-F1-temper-unsaid",
-    "file": "src/scenes/navalHost.js",
-    "old": "temper: e.ship.temper, mode: e.ship.mode, struckTo:",
-    "new": "temper: null, mode: e.ship.mode, struckTo:",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "temper: e.ship.temper, mode: e.ship.boarded ? 'boarded' : e.ship.mode, struckTo:",
+    "new": "temper: null, mode: e.ship.boarded ? 'boarded' : e.ship.mode, struckTo:",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F1-temper-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (cap) { e.ship.temper = cap.temper; e.ship.mode = cap.mode;",
     "new": "if (cap) { e.ship.mode = cap.mode;",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F3-mode-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "e.ship.temper = cap.temper; e.ship.mode = cap.mode; e.struckTo",
     "new": "e.ship.temper = cap.temper; e.struckTo",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F5-victor-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "struckTo: e.struck && !sea.get(e.struck.by)?.owner ? sea.get(e.struck.by)?.n ?? -1 : -1,",
     "new": "struckTo: -1,",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F5-victor-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "e.ship.mode = cap.mode; e.struckTo = cap.struckTo; }",
     "new": "e.ship.mode = cap.mode; }",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F5-prize-unlinked",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (!e.struck && victor && !victor.owner && sea.has(victor.id) && e.ship.damage.state === SHIP_STATES.struck) e.struck = { by: victor.id, at: clock };",
     "new": "if (!e.struck && victor && !victor.owner && sea.has(victor.id) && e.ship.damage.state === SHIP_STATES.struck) void 0;",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F7-adopt-keeps-boarded",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    // my own grapple), and she is anyone's to board again\n    e.ship.boarded = false;",
     "new": "    // my own grapple), and she is anyone's to board again",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F2-uncrewed-sized-crewed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "crew, crewed: !(p.boat && !p.boat.crewed), player: true });",
     "new": "crew, crewed: true, player: true });",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ],
     "note": "CREW-HOLD/GALLEON-WEIGHT (2026-10-06): re-aimed by content - the line gained the crew's toughness or the weight."
   },
   {
     "name": "AUDIT-NAV2-F2-crew-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const crew = said && said.hull === p.hull ? Math.max(0, Math.min(b.crew, said.crew)) : b.crew;",
     "new": "const crew = b.crew;",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F2-contacts-full-crew",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        power: peerPowerOf(p, self),\n        lit: !!p.boat?.LightOn && carriesLanterns(p.boat, p.hull),   // SHIP-WATCH: as their word lights her\n      });",
     "new": "        power: p.hull == null ? null : fightingPower({ hull: p.hull, hullHp: hullBuild(p.hull).hullHp, hullShare: share }),\n        lit: !!p.boat?.LightOn && carriesLanterns(p.boat, p.hull),   // SHIP-WATCH: as their word lights her\n      });",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F3-boat-battle-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "crew: st.damage.crew, battle: aiming || crewAlarm(), boatHull: b.hull }",
     "new": "crew: st.damage.crew, battle: false, boatHull: b.hull }",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F3-peerBoat-null",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const self = peerSelf.get(owner), said = self?.boat;\n      return said ? {",
     "new": "      const self = peerSelf.get(owner), said = null;\n      return said ? {",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "  if (k.length) out.k = k;\n",
     "new": "",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "out.m = [me.crew, me.battle ? 1 : 0, me.boatHull];",
     "new": "void 0;",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "!int(w[2], 0, MODE_CODES.length - 1)",
     "new": "!int(w[2], 0, 99)",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "!int(w[1], 0, TEMPER_CODES.length - 1)",
     "new": "!int(w[1], 0, 99)",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "!int(raw.m[2], 0, HULL_NAMES.length - 1)",
     "new": "!int(raw.m[2], 0, 99)",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "  const captains = validCaptains(raw.k);\n  if (!captains) return null;",
     "new": "  const captains = validCaptains(raw.k) ?? new Map();",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "      || !!naval?.hostileNear?.() || !!naval?.boarding,",
     "new": "      || !!naval?.boarding,",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "      || !!naval?.hostileNear?.() || !!naval?.boarding,",
     "new": "      || !!naval?.hostileNear?.(),",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "if (!Array.isArray(raw.m) || !int(raw.m[0], 0, 0xffff)",
     "new": "if (!Array.isArray(raw.m) || raw.m.length !== 3 || !int(raw.m[0], 0, 0xffff)",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
@@ -195,16 +195,16 @@
     "old": "if (!Array.isArray(w) || !int(w[0], 0, 0xffff) || !int(w[1], 0, TEMPER_CODES.length - 1)",
     "new": "if (!Array.isArray(w) || w.length !== 4 || !int(w[0], 0, 0xffff) || !int(w[1], 0, TEMPER_CODES.length - 1)",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   },
   {
     "name": "AUDIT-NAV2-F4-rider-unsized",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (p && p.hull != null) {\n        const self = peerSelf.get(p.id);",
     "new": "      if (false) {\n        const self = peerSelf.get(p.id);",
     "tests": [
-      "test/auditnav2_online.test.js"
+      "test/systems/naval/auditnav2_online.test.js"
     ]
   }
 ]

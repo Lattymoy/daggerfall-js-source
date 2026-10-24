@@ -10,10 +10,11 @@
 // empty; CLIMB6 gave the Morrowind arms a pose on the stone. This is the sprite lane's: Mac's two paintings,
 // public/art/climb-grip.png (a fist, the back of the hand to the eye, its thumb on the painting's right - a left hand:
 // drawn as it is on the left and mirrored on the right, so both thumbs are inside) and public/art/climb-reach.png (an arm
-// reaching out to the right as painted, mirrored to the left).
+// up from the bottom-left reaching to the right, the back of its open hand to the eye and its thumb under the fingers - a
+// left arm: drawn as it is from the left, mirrored from the right).
 //
 // THE LAW (`ClimbHands`, pure: no renderer, no clock but the `dt` it is handed) reads the climb's snapshot
-// (player/climbPose.js climbRigInput) and the view, and answers each sprite's rect on DFU's 320x200 design surface. The
+// (player/climb/climbPose.js climbRigInput) and the view, and answers each sprite's rect on DFU's 320x200 design surface. The
 // hands do what the climbing body does (AUDIT CLIMB-HANDS: ClimbPose is the one choreography - its gaits, its moves'
 // windows - drawn here as a hand's way on the wall relative to the body, GAIT_PX to the metre):
 //   - THE HOLD: both fists up, the arms running off the bottom of the screen; a still hang sways on the arms, the two
@@ -29,25 +30,36 @@
 //     the top, let go on the pose's clock; a vault planted by 0.12, gone by 0.8; a lower onto the edge by 0.26, then up
 //     to the hang as the body drops; a corner the leading hand first; a wall run's arms pumping with its steps, then up.
 //   - THE GRIP FAILING: the hands tremble on the stone, harder the lower the grip (the feel's noise, the pose's rate).
-//   - LOOKING AWAY: turned off the wall's face, both fists drop out of the view and the reaching arm alone comes up from
-//     the other side of the screen, open toward the way the eye looks (Mac, 2026-10-02: "For look right/left dont use
-//     the hand aiming straight up. Only use the angled arm").
+//   - LOOKING AWAY: turned off the wall's face, the hand on the side looked to lets go of the stone and becomes the
+//     reaching arm, up from that side of the screen and open toward the middle of the view, the way the eye looks - the
+//     right arm looked right, the left looked left (Mac, 2026-10-13: "The single arm out is also inverted for both
+//     directions"); the other hand stays on the stone (Mac, 2026-10-02: "For look right/left dont use the hand aiming
+//     straight up. Only use the angled arm" - turned that far, the wall it holds is out of the view).
+// THE HANDS ON THE WALL, NOT ON THE SCREEN (Mac, 2026-10-13: "the hands should stay on whatever your climbing and not
+// rotate with the screen. The only one that should rotate with the screen is the single arm out"): every place above is
+// the picture with the view square to the body's facing on the climb and level; the fists are pinned there through the
+// world's own lens (`climbLens`, `pinToView`), so turning the view carries them across the screen with the stone they
+// hold, and looking up takes them down it. Up the view they go only as far as the sleeve's slack (the paintings' arms end
+// there): looked down, they rise with the wall to the slack and wait, and steeply down they go out of the view. The
+// reaching arm alone is the screen's.
 // No pop: a change of state (a new hold, the hang to the free climb, the climb turned, a move's end) carries the hands
 // from where they were onto the new place over POSE.LIMB_TAU, as ClimbPose eases its limbs; off the wall they leave from
 // where they were. Every sprite's arm runs off the bottom edge with BOTTOM_SLACK to spare, so no lift shows its sleeve.
 //
 // The enhanced climb only (the motor's hold, a move in flight): DFU's own climb keeps WeaponManager's empty screen.
 
-import { FEEL, tremble } from '../player/climbFeel.js';
+import { FEEL, tremble } from '../player/climb/climbFeel.js';
 import { PARKOUR_GRIP_LOW, PARKOUR_HANG_DROP, PARKOUR_LIP_FOLLOW } from '../player/parkour.js';
-import { POSE, gait, shimmyGait, wallFrame } from '../player/climbPose.js';
+import { POSE, gait, shimmyGait, wallFrame } from '../player/climb/climbPose.js';
 import { decodePng } from '../systems/textureReplacement.js';
 import { toScreenOrder } from '../formats/color32Order.js';
 import { APP_ROOT } from '../systems/appRoot.js';
 import { wrapAngle } from '../world/mat4.js';   // the one home for an angle into (-PI, PI] (audit24's ratchet)
-import { weaponOffsetHeight } from '../ui/hudLarge.js';   // AUDIT CLIMB-HANDS: the large HUD's bar, the classic sprite's own lift
+import { weaponOffsetHeight } from '../ui/hud/hudLarge.js';   // AUDIT CLIMB-HANDS: the large HUD's bar, the classic sprite's own lift
+import { worldRectPx } from '../player/tapRay.js';   // CLIMB-HANDS II: the world's strip in canvas pixels (ROAD-E E5's one home)
+import { SETTINGS_DEFAULTS } from '../systems/settings/settingsDefaults.js';   // CLIMB-HANDS II: DFU's own FieldOfView, the lens a bare law sees through
 
-/** DFU's design surface (FPSWeapon's 320x200) - module-local: ui/nativePanel.js exports the names (audit24's ratchet). */
+/** DFU's design surface (FPSWeapon's 320x200) - module-local: ui/native/nativePanel.js exports the names (audit24's ratchet). */
 const NATIVE_W = 320;
 const NATIVE_H = 200;
 const DEG = Math.PI / 180;
@@ -59,7 +71,10 @@ export const REACH_ART = Object.freeze({ file: 'art/climb-reach.png', w: 183, h:
 /** The layout and the motion, in design pixels, seconds and degrees. */
 export const HANDS = Object.freeze({
   GRIP_H: 150,             // a fist's drawn height
-  GRIP_APART: 52,          // each fist's centre from the screen's middle
+  GRIP_APART: 93,          // each fist's centre from the screen's middle - the 3D body's wrists on the lip (POSE.HANDS_APART,
+                           // FACE_BACK less WRIST_OUT ahead) through DFU's own lens on this surface (Mac, 2026-10-13: "The
+                           // sprite hands should be spread out more" - at 52 the two fists' boxes met in the middle)
+  GRIP_AT: 0.35,           // the grip: the point of a fist held on the wall, its share of the drawn height down from the top
   BOTTOM_SLACK: 34,        // the sleeve under the screen's bottom edge at rest: no lift may exceed it
   REACH_W: 190,            // the reaching arm's drawn width, anchored at its own side of the screen (Mac: "it needs to sit on the
                            // left/right side of the screen respectively"; then "they need to be the originasl size" - 150 shrank it)
@@ -150,6 +165,58 @@ export function moveSide(m, normal) {
 }
 
 /**
+ * CLIMB-HANDS II: A LENS on the design surface - `{ tanX, tanY, cx, cy, hx, hy }`: the design point (x, y) is the eye's
+ * ray ((x - cx) / hx * tanX, (cy - y) / hy * tanY, 1) in the view's own frame (right, up, forward). DESIGN_LENS is DFU's
+ * own (defaults.ini's Video/FieldOfView, vertical) over the whole surface: what a law handed no lens pins through.
+ */
+const DFU_FOV = Number(SETTINGS_DEFAULTS.Video.FieldOfView) * DEG;
+export const DESIGN_LENS = Object.freeze({
+  tanX: Math.tan(DFU_FOV / 2) * (NATIVE_W / NATIVE_H), tanY: Math.tan(DFU_FOV / 2),
+  cx: NATIVE_W / 2, cy: NATIVE_H / 2, hx: NATIVE_W / 2, hy: NATIVE_H / 2,
+});
+
+/**
+ * The frame's world lens on the design surface, where the hands are laid out: the strip the world was drawn into (a
+ * docked large HUD's shorter one, read where the arrow's muzzle reads it - FIELD-GUN19) brought back through the draw's
+ * own scale and lift (`offsetHeight`, the bar the hands stand on) and, under retro mode's pillarbox, the layer's place
+ * (`uiRect`); and its tangents - `fov` vertical (radians), the strip's own aspect unless the projection says another
+ * (RETRO1's lens, muzzleRay's law). Null for a canvas or a strip with no size. Pure.
+ * @param {any} canvas
+ * @param {{ fov?: number, viewport?: any, aspect?: number | null, offsetHeight?: number }} [opts]
+ */
+export function climbLens(canvas, { fov, viewport = null, aspect = null, offsetHeight = 0 } = {}) {
+  const W = canvas?.width, H = canvas?.height;
+  if (!(W > 0) || !(H > 0) || !(fov > 0)) return null;
+  const real = canvas.canvas ?? canvas, at = canvas.uiRect ?? { x: 0, y: 0 };
+  const r = worldRectPx(viewport, real.width, real.height);
+  if (!(r.w > 0) || !(r.h > 0)) return null;
+  const sx = W / NATIVE_W, sy = H / NATIVE_H, tanY = Math.tan(fov / 2);
+  return {
+    tanX: tanY * (aspect > 0 ? aspect : r.w / r.h), tanY,
+    cx: (r.x - at.x + r.w / 2) / sx, cy: (r.y - at.y + r.h / 2 + offsetHeight) / sy,
+    hx: r.w / 2 / sx, hy: r.h / 2 / sy,
+  };
+}
+
+/**
+ * Where the eye finds a point of the picture - (`x`, `y`) in design pixels as seen with the view square to the climb's
+ * frame and level - once the view has turned `turn` off that frame (radians, + to the right) and pitched `pitch` (+ up):
+ * the eye's own turn, which moves a point the same whatever its distance. The turn is exact, and so is the pitch up and
+ * down the screen; across, the pitch leaves the point on the column the level view has it on - the true picture spreads
+ * a point toward the sides as it nears the top or the bottom of the view, where the paintings' arms cannot follow it,
+ * and a hand slid sideways by a look down would be one more thing the screen did to it. Null for a point the turn puts
+ * behind the eye (it has no column to keep) or the pitch takes past straight up or down. Pure.
+ */
+export function pinToView(x, y, lens, turn, pitch) {
+  const a = ((x - lens.cx) / lens.hx) * lens.tanX, b = ((lens.cy - y) / lens.hy) * lens.tanY;
+  const z = a * Math.sin(turn) + Math.cos(turn);   // its depth along the turned view
+  if (!(z > 1e-3)) return null;
+  const up = Math.atan2(b, z) - pitch;   // its height off the view's own level
+  if (!(Math.abs(up) < Math.PI / 2 - 1e-3)) return null;
+  return [lens.cx + ((a * Math.cos(turn) - Math.sin(turn)) / z / lens.tanX) * lens.hx, lens.cy - (Math.tan(up) / lens.tanY) * lens.hy];
+}
+
+/**
  * The law. `update(dt, climb, view)` with the frame's climb snapshot (or null) and the view ({ yaw, pitch }); `out`
  * then holds the frame's sprites: `grips` (each { side, x, y, w, h, flip }) and `reach` (the same, or null), in design
  * pixels, and `present` (0..1, the hands on the screen at all).
@@ -176,9 +243,11 @@ export class ClimbHands {
     this.ringArmed = false;
     this.swayW = 0;            // the still hang's sway, eased in and out
     this.drawn = pair();       // the frame's offsets, everything in them: off the wall the hands leave from here
-    this.look = 0;             // how far the view is turned off the wall (0..1, eased): the fists drop out with it...
+    this.faceYaw = null;       // CLIMB-HANDS II: the frame the hands are pinned in - the body's facing on the climb, else its wall's
+    this.look = 0;             // how far the view is turned off the wall (0..1, eased)...
     this.side = 'R';           // ...the side the reaching arm is on...
-    this.arm = 0;              // ...and how far it is up (0..1, eased): it changes sides down off one and up the other
+    this.arm = 0;              // ...and how far it is up (0..1, eased): it changes sides down off one and up the other...
+    this.letGo = { L: 0, R: 0 };   // ...each hand's let-go of the stone for it (0..1, eased): the arm's own side's, with the look
     this.out = { present: 0, grips: [], reach: null };
   }
 
@@ -260,6 +329,10 @@ export class ClimbHands {
       off.R[0] += HANDS.TREMBLE * fail * tremble(ft + 3.1); off.R[1] += HANDS.TREMBLE * fail * tremble(ft * 1.3 + 11);
     }
     this.drawn = off;
+    // CLIMB-HANDS II: the frame the hands are pinned in - the body's facing on the climb (the snapshot's yaw: into the wall
+    // held, the wall a move ends on, eased - motor.js bodyYawFor), else the wall's own; none known, the screen's
+    const wall = c.normal ?? m?.hang?.normal ?? m?.wall?.normal ?? null;
+    this.faceYaw = Number.isFinite(c.yaw) ? c.yaw : wall ? wallYawOf(wall) : null;
     // looking away from the wall: how far, eased (a move in flight keeps the hold's hands) - and the reaching arm's side.
     // AUDIT CLIMB-HANDS (second round): the arm changes sides by going down off the one and up on the other, the fists
     // staying down; turned past LOOK_BACK_DEG (straight back) it keeps its side, where the look's sign flipped at 180
@@ -274,39 +347,59 @@ export class ClimbHands {
     const armT = toSide === this.side ? this.look : 0;
     this.arm += (armT - this.arm) * kl;
     if (Math.abs(this.arm - armT) < 0.002) this.arm = armT;
+    // CLIMB-HANDS II: the hand on the arm's side lets go of the stone as the look goes (it is the arm now); the other holds
+    // on - each eased, so a hand comes back onto the wall from where it went when the arm goes over to the other side
+    for (const s of SIDES) {
+      const t = s === this.side ? this.look : 0;
+      this.letGo[s] += (t - this.letGo[s]) * kl;
+      if (Math.abs(this.letGo[s] - t) < 0.002) this.letGo[s] = t;
+    }
   }
 
-  /** The sprites from the offsets, the presence, the look and the view's pitch. */
+  /** The sprites from the offsets, the presence, the look and the view: its turn off the climb's frame, its pitch and
+   *  the world's lens (`view.lens`, DESIGN_LENS when none). */
   _layout(view) {
     const out = this.out;
     out.present = this.present;
     out.grips = [];
     out.reach = null;
-    const a = this.look, side = this.side;
+    const side = this.side;
     // looking straight down off the wall: the hands are over the head, out of the view
     const pitch = Number.isFinite(view.pitch) ? view.pitch : 0;
     const gone = smooth((-pitch / DEG - HANDS.DOWN_FROM_DEG) / (HANDS.DOWN_FULL_DEG - HANDS.DOWN_FROM_DEG)) * OUT;
     const gh = HANDS.GRIP_H, gw = gh * GRIP_ART.w / GRIP_ART.h;
     const enter = (1 - smooth(this.present)) * OUT;
+    // CLIMB-HANDS II: THE FISTS ARE ON THE WALL. Each one's place is the picture square to the climb's frame and level;
+    // its grip is pinned through the view's turn off that frame and its pitch (pinToView). Up the view it goes no further
+    // than the sleeve's slack - so a hand gone under the edge (a let-go, a press over the top) stays under it whatever the
+    // look - and the hands' own comings and goings (onto the wall, steeply down, let go for the reach) are the screen's.
+    const pinned = this.faceYaw != null && Number.isFinite(view.yaw);
+    const turn = pinned ? wrapAngle(view.yaw - this.faceYaw) : 0, tilt = pinned ? pitch : 0;
+    const lens = view.lens ?? DESIGN_LENS;
+    const gripY = NATIVE_H - gh + HANDS.BOTTOM_SLACK + HANDS.GRIP_AT * gh;   // the grip's height at rest, square and level
     for (const s of SIDES) {
       const lat = s === 'R' ? 1 : -1;
-      const x = NATIVE_W / 2 + lat * HANDS.GRIP_APART - gw / 2 + this.drawn[s][0];
-      let y = NATIVE_H - gh + HANDS.BOTTOM_SLACK + this.drawn[s][1] + enter + gone;
-      y += smooth(a) * OUT;   // looked away: the fists drop out, the angled arm alone
+      const gripX = NATIVE_W / 2 + lat * HANDS.GRIP_APART + this.drawn[s][0];   // ...and where along the wall it is now
+      const at = turn || tilt ? pinToView(gripX, gripY, lens, turn, tilt) : [gripX, gripY];
+      if (!at) continue;   // behind the eye
+      const x = at[0] - gw / 2;
+      let y = NATIVE_H - gh + HANDS.BOTTOM_SLACK + this.drawn[s][1] + Math.max(at[1] - gripY, -HANDS.BOTTOM_SLACK);
       y = Math.max(y, NATIVE_H - gh);   // never lifted past the sleeve's slack
-      if (y >= NATIVE_H) continue;
+      y += enter + gone + smooth(this.letGo[s]) * OUT;   // looked away: the hand on the arm's side has let go of the stone
+      if (y >= NATIVE_H || x >= NATIVE_W || x + gw <= 0) continue;
       out.grips.push({ side: s, x, y, w: gw, h: gh, flip: s === 'R' });   // the painting is the left hand: the right is its mirror
     }
     if (this.arm > 0.001) {
       const rw = HANDS.REACH_W, rh = rw * REACH_ART.h / REACH_ART.w;
       const sx = HANDS.SEARCH_X * Math.sin(2 * Math.PI * HANDS.SEARCH_HZ * this.t);
       const sy = HANDS.SEARCH_Y * Math.sin(2 * Math.PI * HANDS.SEARCH_HZ * 1.6 * this.t + 0.7);
-      // looked right, the arm sits in the LEFT half as painted, reaching across to the right; looked left, its mirror in
-      // the right half (Mac, 2026-10-02: "look left and right are on the wrong side of the screen")
+      // the arm on the side looked to, up from that side and reaching in across the view: looked right, the right arm (the
+      // painting mirrored) from the right edge; looked left, the left arm as painted from the left edge (Mac, 2026-10-13:
+      // "The single arm out is also inverted for both directions" - it was the other hand's arm, from the other side)
       const xl = HANDS.REACH_X_IN + sx;
-      const x = side === 'R' ? xl : NATIVE_W - xl - rw;
+      const x = side === 'R' ? NATIVE_W - xl - rw : xl;
       const y = Math.max(NATIVE_H - rh, NATIVE_H - rh + HANDS.REACH_SLACK + sy + (1 - smooth(this.arm)) * (rh + HANDS.REACH_SLACK) + enter + gone);
-      if (y < NATIVE_H) out.reach = { side, x, y, w: rw, h: rh, flip: side === 'L' };
+      if (y < NATIVE_H) out.reach = { side, x, y, w: rw, h: rh, flip: side === 'R' };
     }
     return out;
   }

@@ -4,7 +4,7 @@
 //
 // A region's network is seconds of work - its places rolled (the countryside's plateau is a terrain kernel's mean) and
 // a thousand-odd A* runs - so it is built here, off the terrain worker whose jobs stream the ground under the player,
-// on a ground of its own composed as every host composes it (world/tamrielGround.js groundWoods over the host's own
+// on a ground of its own composed as every host composes it (world/tamriel/tamrielGround.js groundWoods over the host's own
 // height bytes, the trace and the fit). The host's client (world/tamrielRoadsClient.js) keeps several of these busy,
 // the nearest regions first.
 //
@@ -13,15 +13,15 @@
 //                            or { id, i, j, error }
 // ═══════════════════════════════════════════════════════════════════
 import { WoodsFile } from '../formats/woodsFile.js';
-import { groundWoods, dropGroundCache } from './tamrielGround.js';
-import { groundClimateIndex } from './tamrielGround.js';
-import { setTamrielTrace } from './tamrielLand.js';
-import { setTamrielFit } from './tamrielFrame.js';
+import { groundWoods, dropGroundCache } from './tamriel/tamrielGround.js';
+import { groundClimateIndex } from './tamriel/tamrielGround.js';
+import { setTamrielTrace } from './tamriel/tamrielLand.js';
+import { setTamrielFit } from './tamriel/tamrielFrame.js';
 import { createCountryGround } from './tamrielCountry.js';
 import { createTamrielAtlas } from './tamrielAtlas.js';
 import { packArenaRoads } from './arenaRoads.js';
 import { packPastBayPlaces } from './pastBayPlaces.js';
-import { MAP_W, MAP_H } from './roadNetwork.js';
+import { MAP_W, MAP_H } from './road/roadNetwork.js';
 import { regionOf, buildTamrielRegion, rollTypeAt } from './tamrielRoads.js';
 
 /** The worker's state over its messages - a function, so node drives it without a worker. */

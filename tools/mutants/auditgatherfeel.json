@@ -1,0 +1,824 @@
+[
+  {
+    "name": "AUDITGF-F1-the-swing-dropped-at-a-new-act",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    follow = null;   // GATHER-FEEL: the new act's tool is the hand's now (AUDIT GATHER-FEEL LANDING: a last swing still running lands all the same - `swings`)",
+    "new": "    follow = null; swings = [];",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A new act drops the last swing: its blow never lands - no kick, no breaking burst."
+  },
+  {
+    "name": "AUDITGF-F1-the-landing-vein-stood-down",
+    "file": "src/scenes/gatherHost.js",
+    "old": "  const shownGone = (k, n) => k.gone(n) && !landingOn(n.key);",
+    "new": "  const shownGone = (k, n) => k.gone(n);",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A vein begun on the pixel stands it again and the old vein goes before its last blow lands."
+  },
+  {
+    "name": "AUDITGF-F1-the-tree-sunk-under-its-chop",
+    "file": "src/scenes/treeHost.js",
+    "old": "goneIn(book, n.key, 'logs') && !landing(n.key)",
+    "new": "goneIn(book, n.key, 'logs')",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A tree felled is sunk by any re-stand while its felling chop is still in the air."
+  },
+  {
+    "name": "AUDITGF-F3-the-landing-off-landsIn",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    const was = a.act.state?.landed | 0;\n    a.act.tick(dt, input);\n    if (!((a.act.state?.landed | 0) > was)) return false;",
+    "new": "    const was = Number(a.act.landsIn) || 0;\n    a.act.tick(dt, input);\n    if (!(was > 0) || Number(a.act.landsIn) > 0) return false;",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js",
+      "test/systems/gf2_blowshake.test.js"
+    ],
+    "note": "The old landing test: a frame that lands one blow and begins the next swing loses the first blow's kick and chunks (R11)."
+  },
+  {
+    "name": "AUDITGF-F3-the-ear-on-its-own-clock",
+    "file": "src/systems/gatherSounds.js",
+    "old": "    const wait = aloft ? Infinity : rides ? b.after : b.delay;",
+    "new": "    const wait = b.delay;",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js",
+      "test/systems/gatherfeel.test.js"
+    ],
+    "note": "The ear times a blow on a clock of its own: at some frame lengths its clack and its kick are different frames."
+  },
+  {
+    "name": "AUDITGF-F3-the-chop-landing-uncounted",
+    "file": "src/systems/chopAct.js",
+    "old": "      if (aloft && !(st.swing > CHOP_REST_S)) st.landed++;",
+    "new": "      if (aloft && !(st.swing > CHOP_REST_S)) st.landed += 0;",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js",
+      "test/systems/gatherfeel.test.js",
+      "test/systems/gf2_blowshake.test.js"
+    ],
+    "note": "A chop's blow never counted landed: never felt, never heard."
+  },
+  {
+    "name": "AUDITGF-F3-the-strike-landing-uncounted",
+    "file": "src/systems/mineAct.js",
+    "old": "      if (aloft && !(st.swing > MINE_REST_S)) st.landed++;",
+    "new": "      if (aloft && !(st.swing > MINE_REST_S)) st.landed += 0;",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js",
+      "test/systems/gatherfeel.test.js",
+      "test/systems/gf2_blowshake.test.js"
+    ],
+    "note": "A strike's blow never counted landed."
+  },
+  {
+    "name": "AUDITGF-F3-the-fall-off-the-landing",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (a.landing) { a.landing = false; fallNow(a); }",
+    "new": "    if (a.landing) { a.landing = false; }",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js",
+      "test/systems/gatherfeel.test.js"
+    ],
+    "note": "The vein is left standing under its last blow."
+  },
+  {
+    "name": "AUDITGF-F2-the-swing-let-go-without-its-ear",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (Number(a.act.landsIn) > 0) pose.stop();\n    ear.stop(a.act);",
+    "new": "    if (Number(a.act.landsIn) > 0) pose.stop();",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js",
+      "test/systems/gatherfeel.test.js"
+    ],
+    "note": "A blow let go is still held in the ear (and lands if its machine is ever stepped again)."
+  },
+  {
+    "name": "AUDITGF-F2-the-dungeon-swing-kept",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      for (const sw of swings) if (sw.dungeon) letGo(sw);   // ...and a vein's last blow lands in no other place - AUDIT GATHER-FEEL LANDING: nor is heard there\n      swings = swings.filter((sw) => !sw.dungeon);\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "Leaving the dungeon keeps the vein's last swing: its pick is heard at the dungeon's places in the street."
+  },
+  {
+    "name": "AUDITGF-F2-the-dungeon-swing-unheard-kept",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      for (const sw of swings) if (sw.dungeon) letGo(sw);   // ...and a vein's last blow lands in no other place - AUDIT GATHER-FEEL LANDING: nor is heard there\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "Leaving the dungeon: the swing dropped, its blow left held in the ear for ever."
+  },
+  {
+    "name": "AUDITGF-F2-the-shut-swing-unheard-kept",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        for (const sw of swings) letGo(sw);   // GATHER-FEEL: ...and a finished one's last swing is put away, nothing left to land (AUDIT GATHER-FEEL LANDING: nor heard)\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The professions shut: the last swing dropped, its blow left held in the ear."
+  },
+  {
+    "name": "AUDITGF-R4-walked-off-keeps-the-blow",
+    "file": "src/scenes/gatherHost.js",
+    "old": "          letGo(act);   // GATHER-FEEL: its blows in the air go with it; VEIN-CRACKS: and its cracks close over\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "Walked off with a strike in the air: its blow stays held, its cracks open."
+  },
+  {
+    "name": "AUDITGF-R4-dungeon-left-keeps-the-blow",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (act?.dungeon) { letGo(act); act.act.cancel();",
+    "new": "if (act?.dungeon) { act.act.cancel();",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The dungeon left under the act's own strike: its blow stays held."
+  },
+  {
+    "name": "AUDITGF-W2-the-stop-uncounted",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (Number(a.act.landsIn) > 0) pose.stop();\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A blow taken back is never put on the wire: every peer hears it land."
+  },
+  {
+    "name": "AUDITGF-W2-the-stop-unheard",
+    "file": "src/net/peer/peerGather.js",
+    "old": "    if (fresh && gatherBeatOf(gb) === 'stop' && s.held.length) { const was = (((gb >> 4) + 253) % 255) + 1; s.held = s.held.filter((h) => h.n !== was); }\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The peer's ear ignores the stop: the blow lands for them."
+  },
+  {
+    "name": "AUDITGF-W2-the-wrong-blow-dropped",
+    "file": "src/net/peer/peerGather.js",
+    "old": "const was = (((gb >> 4) + 253) % 255) + 1;",
+    "new": "const was = gb >> 4;",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The stop names its own count, not the blow's before it: nothing dropped."
+  },
+  {
+    "name": "AUDITGF-W2-the-stop-a-cue",
+    "file": "src/net/peer/peerGather.js",
+    "old": "    if (fresh && gatherBeatOf(gb) === 'stop' && s.held.length) {",
+    "new": "    if (fresh && gatherBeatOf(gb) === 'stop' && s.held.length && t - s.cueAt >= PEER_GATHER_CUE_MS) {",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The stop under the cue floor: a blow taken back within 100 ms of its swing lands."
+  },
+  {
+    "name": "AUDITGF-R12-the-whiff-unread",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (a.whiff) return;   // AUDIT GATHER-FEEL R12: its node gone from under it - a swing through the air\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A blow whose vein another took sheds chunks and kicks out of the empty air."
+  },
+  {
+    "name": "AUDITGF-R12-the-whiff-heard",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (r?.error === 'node-taken') { a.whiff = true; ear.stop(a.act); }",
+    "new": "if (r?.error === 'node-taken') { a.whiff = true; }",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A blow whose vein another took still clacks."
+  },
+  {
+    "name": "AUDITGF-R3-the-burst-boxless",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      b._box = chunkBox(bu.at, bu.floor, size.h, size.w);   // EV3: every place a chunk of it can be\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A street burst with no box: the street frame's cull reads undefined and throws."
+  },
+  {
+    "name": "AUDITGF-R3-the-let-go-keeps-cracks",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    ear.stop(a.act);\n    unwork(a);\n",
+    "new": "    ear.stop(a.act);\n",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "An act let go - walked off, a window, the shut, the dungeon left - leaves its vein cracked."
+  },
+  {
+    "name": "AUDITGF-R3-the-glint-unread-by-the-host",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    shed(a, k, chunksFor(done && a.fell === true, b.clean));\n",
+    "new": "    shed(a, k, chunksFor(done && a.fell === true, false));\n",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A strike on the glint sheds a plain blow's three."
+  },
+  {
+    "name": "AUDITGF-R3-the-chunks-never-sink",
+    "file": "src/scenes/gatherHost.js",
+    "old": "o[0] = c.p[0]; o[1] = c.p[1] - chunkSink(c, h); o[2] = c.p[2];",
+    "new": "o[0] = c.p[0]; o[1] = c.p[1]; o[2] = c.p[2];",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The chunks pop out of sight instead of sinking."
+  },
+  {
+    "name": "AUDITGF-R3-the-cracked-vein-unisolated",
+    "file": "src/scenes/gatherHost.js",
+    "old": "!shownGone(k, n) && (worked === n.key || cracks.has(n.key));",
+    "new": "!shownGone(k, n) && (worked === n.key);",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A cracked vein no longer worked goes back into its twin's batch, whole, under its last blow."
+  },
+  {
+    "name": "AUDITGF-W1-the-net-a-cue-alone",
+    "file": "src/net/peer/peerGather.js",
+    "old": "    else if (!s.net) s.net = peerNetAt(shown, feet, yaw);",
+    "new": "    else if (!s.net) s.net = null;",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A net whose landing was not heard: its water at the body."
+  },
+  {
+    "name": "AUDITGF-W1-the-net-dropped-at-the-recentre",
+    "file": "src/net/peer/peerGather.js",
+    "old": "    for (const s of this.peers.values()) for (const p of [s.net, ...s.held.map((h) => h.at)]) if (p) { p[0] += offset[0]; p[1] += offset[1]; p[2] += offset[2]; }",
+    "new": "    for (const s of this.peers.values()) { s.net = null; s.held.length = 0; }",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js",
+      "test/systems/gf2_peeracts.test.js"
+    ],
+    "note": "The recentre drops the net's place and the blows in the air."
+  },
+  {
+    "name": "AUDITGF-W3-the-gather-record-left-behind",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "        if (b.gather) peerGatherSwing(b.gather, peer.shown);   // AUDIT GATHER-FEEL W3: and the act's beats (PEER-ACTS) - C7's law: a tool's blow out of sight is no strike on waking\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A body asleep wakes and swings a blow struck out of its sight."
+  },
+  {
+    "name": "AUDITGF-W4-the-early-out-reads-an-absent-beat",
+    "file": "src/net/peer/peerGather.js",
+    "old": "    if (!ga && !s.ga && !fresh && !s.held.length) return;",
+    "new": "    if (!ga && !s.ga && gb === s.gb && !s.held.length) return;",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A peer reloaded: every frame past the early-out for the rest of its life."
+  },
+  {
+    "name": "AUDITGF-RECENTRE-the-ear-places-left",
+    "file": "src/systems/gatherSounds.js",
+    "old": "      for (const p of [node, net, ...pending.map((q) => q.place)]) if (p) { p[0] += offset[0]; p[1] += offset[1]; p[2] += offset[2]; }",
+    "new": "      void pending;",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The gatherer's own net and blows in the air left in the old frame."
+  },
+  {
+    "name": "AUDITGF-RECENTRE-the-host-door-dead",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    rebase(offset) { ear.rebase?.(offset); },",
+    "new": "    rebase(offset) { void offset; },",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The gathering host's recentre door does nothing."
+  },
+  {
+    "name": "AUDITGF-RECENTRE-the-door-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      gatherHost?.rebase(r.offset);   // AUDIT GATHER-FEEL: and the gathering's ear - a net's place, a blow in the air - with the land\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The world's recentre never reaches the gathering's ear."
+  },
+  {
+    "name": "AUDITGF-RECENTRE-the-peers-unshifted",
+    "file": "src/net/remotePlayers.js",
+    "old": "    this._gatherSounds.rebase(offset);   // PEER-ACTS (AUDIT GATHER-FEEL W1): a net's place and a blow in the air move with the land\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js",
+      "test/systems/gf2_peeracts.test.js"
+    ],
+    "note": "The peers' gathering never recentred."
+  },
+  {
+    "name": "AUDITGF-RECENTRE-the-held-place-shared",
+    "file": "src/systems/gatherSounds.js",
+    "old": "    pending.push({ due: clock + wait, b, place: at ? [at[0], at[1], at[2]] : null, of, blow: aloft ? (of.state?.landed | 0) + 1 : 0, voice });",
+    "new": "    pending.push({ due: clock + wait, b, place: at, of, blow: aloft ? (of.state?.landed | 0) + 1 : 0, voice });",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A held beat shares the node's place: the recentre moves it twice."
+  },
+  {
+    "name": "AUDITGF-R2-the-default-skin-unread",
+    "file": "src/systems/gatherBlow.js",
+    "old": "enhanced = () => isEnhanced(),",
+    "new": "enhanced = () => true,",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The classic skin's blow moves the view."
+  },
+  {
+    "name": "AUDITGF-R2-the-default-reduced-unread",
+    "file": "src/systems/gatherBlow.js",
+    "old": "reduced = () => prefersReducedMotion(),",
+    "new": "reduced = () => false,",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "Reduced motion ignored."
+  },
+  {
+    "name": "AUDITGF-R2-the-default-motion-unread",
+    "file": "src/systems/gatherBlow.js",
+    "old": "motion = techniqueMotion,",
+    "new": "motion = () => 1,",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The player's technique motion ignored."
+  },
+  {
+    "name": "AUDITGF-R16-the-kick-written-into-the-camera",
+    "file": "src/scenes/world.js",
+    "old": "        view: () => ({ yaw: (cam.yaw * 180) / Math.PI, pitch: (cam.pitch * 180) / Math.PI }),",
+    "new": "        view: () => ({ yaw: (cam.yaw * 180) / Math.PI, pitch: ((cam.pitch + techniqueView().pitch) * 180) / Math.PI }),",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The glint aimed with the view the springs dip."
+  },
+  {
+    "name": "AUDITGF-F5-the-look-past-cleave",
+    "file": "src/systems/gatherBlow.js",
+    "old": "clean: f({ cam: f({ pitch: -0.7, eye: -0.02 }), hands: f({ y: 0.034 }) }),",
+    "new": "clean: f({ cam: f({ pitch: -1.1, eye: -0.02 }), hands: f({ y: 0.034 }) }),",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ],
+    "note": "The pick's glint dips the look further than cleave's hit."
+  },
+  {
+    "name": "AUDITGF-R5-the-table-a-tenth",
+    "file": "src/systems/gatherBlow.js",
+    "old": "plain: f({ cam: f({ pitch: -0.45, eye: -0.012 }), hands: f({ y: 0.022 }) }),",
+    "new": "plain: f({ cam: f({ pitch: -0.045, eye: -0.0012 }), hands: f({ y: 0.0022 }) }),",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ],
+    "note": "The axe's blow at a tenth: nothing a player sees."
+  },
+  {
+    "name": "AUDITGF-R5-the-seams-faint",
+    "file": "src/systems/veinCrack.js",
+    "old": "export const VEIN_CRACK_SHADE = 0.3;",
+    "new": "export const VEIN_CRACK_SHADE = 0.9;",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The seams nearly invisible."
+  },
+  {
+    "name": "AUDITGF-R5-the-heart-later",
+    "file": "src/systems/veinCrack.js",
+    "old": "export const VEIN_CRACK_ORDER = Object.freeze({ own: 0.35, heart: 0.75 });",
+    "new": "export const VEIN_CRACK_ORDER = Object.freeze({ own: 0.35, heart: 0.6 });",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The heart's weight moved."
+  },
+  {
+    "name": "AUDITGF-R5-the-own-order",
+    "file": "src/systems/veinCrack.js",
+    "old": "export const VEIN_CRACK_ORDER = Object.freeze({ own: 0.35, heart: 0.75 });",
+    "new": "export const VEIN_CRACK_ORDER = Object.freeze({ own: 0.15, heart: 0.75 });",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The pattern's own weight moved."
+  },
+  {
+    "name": "AUDITGF-R5-the-chunks-big",
+    "file": "src/systems/gatherBlow.js",
+    "old": "  scale: 0.32,\n",
+    "new": "  scale: 0.6,\n",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "Chunks twice their size."
+  },
+  {
+    "name": "AUDITGF-R5-the-chunks-from-the-middle",
+    "file": "src/systems/gatherBlow.js",
+    "old": "  face: 0.35, spread: 0.12,\n",
+    "new": "  face: 0.05, spread: 0.12,\n",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "Chunks out of the vein's middle, not its face."
+  },
+  {
+    "name": "AUDITGF-R5-the-chunks-slow",
+    "file": "src/systems/gatherBlow.js",
+    "old": "  out: f([1.1, 2.4]), up: f([1.4, 3]), side: 1.1,\n",
+    "new": "  out: f([0.3, 0.6]), up: f([1.4, 3]), side: 1.1,\n",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "Chunks that barely leave."
+  },
+  {
+    "name": "AUDITGF-R5-the-slip-quieter",
+    "file": "src/systems/gatherSounds.js",
+    "old": "  THRASH_SLIP_GAIN: 1.35,",
+    "new": "  THRASH_SLIP_GAIN: 0.7,",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A slipping catch quieter, where the record says louder."
+  },
+  {
+    "name": "AUDITGF-R5-the-plip-quick",
+    "file": "src/systems/gatherSounds.js",
+    "old": "  PLIP_MIN_S: 2.2,",
+    "new": "  PLIP_MIN_S: 0.6,",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A plip every 0.6 s."
+  },
+  {
+    "name": "AUDITGF-R5-the-pitch-wide",
+    "file": "src/systems/gatherSounds.js",
+    "old": "  PITCH_JITTER: 0.05,",
+    "new": "  PITCH_JITTER: 0.3,",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A clip's pitch moved 30%."
+  },
+  {
+    "name": "AUDITGF-R7-the-climb-floor",
+    "file": "src/net/peer/peerGather.js",
+    "old": "export const PEER_GATHER_CUE_MS = 100;",
+    "new": "export const PEER_GATHER_CUE_MS = 150;",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The floor the climb's cue floor, not one pose: an honest stroke at the pose's rate dropped."
+  },
+  {
+    "name": "AUDITGF-F8-the-note-overclaims",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "'How much a weapon technique shakes and tilts the view and dips your hands. On the Enhanced skin, it also sets how far your hands dip when you gather.',",
+    "new": "'How much a weapon technique, or a tool\\'s blow as you gather, shakes and tilts the view and dips your hands.',",
+    "tests": [
+      "test/systems/gf2_blowshake.test.js"
+    ],
+    "note": "The note says a blow shakes and tilts, on any skin."
+  },
+  {
+    "name": "AUDITGF-V1-the-flats-down-before-the-pictures",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    const textures = new Map();\n    for (const archive of groups.keys()) textures.set(archive, await deps.getTexture(archive));\n    if (deps.built().get(key) !== entry || standGen.get(key) !== gen) return;   // torn down, or stood again, during the await\n    unstand(entry);\n",
+    "new": "    unstand(entry);\n    const textures = new Map();\n    for (const archive of groups.keys()) textures.set(archive, await deps.getTexture(archive));\n    if (deps.built().get(key) !== entry || standGen.get(key) !== gen) return;   // torn down, or stood again, during the await\n",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "Every stand blanks its pixel's flats for a frame - every mining act's start."
+  },
+  {
+    "name": "AUDITGF-V1-the-older-stand-over-the-newer",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (deps.built().get(key) !== entry || standGen.get(key) !== gen) return;",
+    "new": "if (deps.built().get(key) !== entry) return;",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A stand answered late stands its stale flats over the newer."
+  },
+  {
+    "name": "AUDITGF-V2-the-chunks-hung-at-the-shut",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (bursts.length) stepBursts(dt);   // VEIN-CRACKS: the chunks fly",
+    "new": "      if (bursts.length && book.state.open === true) stepBursts(dt);   // VEIN-CRACKS: the chunks fly",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The professions shut: the chunks hang in the air, drawn."
+  },
+  {
+    "name": "AUDITGF-V3-the-ground-unread",
+    "file": "src/systems/gatherBlow.js",
+    "old": "    const down = chunkLandingOf(p, v, floor, ground);",
+    "new": "    const down = chunkLandingOf(p, v, floor, null);",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "Every chunk lies on the node's foot's height: over a downhill, inside an uphill."
+  },
+  {
+    "name": "AUDITGF-V3-the-kind-hands-no-ground",
+    "file": "src/scenes/mineHost.js",
+    "old": "ground: n.what !== 'dvein' && entry?.samples ? (x, z) => groundAt(entry.samples, x, z) : null,",
+    "new": "ground: null,",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The mine kind hands no ground: every street chunk lies on its vein's foot's height again."
+  },
+  {
+    "name": "AUDITGF-V3-a-dungeon-vein-on-a-pixels-ground",
+    "file": "src/scenes/mineHost.js",
+    "old": "ground: n.what !== 'dvein' && entry?.samples ?",
+    "new": "ground: entry?.samples ?",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A dungeon vein handed an entry falls to a pixel's heightmap, not its one floor."
+  },
+  {
+    "name": "AUDITGF-V3-the-landing-the-flat-floor",
+    "file": "src/systems/gatherBlow.js",
+    "old": "  const over = (t) => arcY(p, v, t) - ground(p[0] + v[0] * t, p[2] + v[2] * t);",
+    "new": "  const over = (t) => arcY(p, v, t) - floor;",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The landing found against the foot's height, not the ground under it."
+  },
+  {
+    "name": "AUDITGF-V3-the-picture-out-of-its-box",
+    "file": "src/systems/gatherBlow.js",
+    "old": "  const r = C.face + C.spread + Math.hypot(C.out[1], C.side) * flight + w / 2;",
+    "new": "  const r = C.face + C.spread + Math.hypot(C.out[1], C.side) * flight;",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A chunk's picture past its burst's box: culled while its edge shows."
+  },
+  {
+    "name": "AUDITGF-V3-the-chunk-off-the-ground",
+    "file": "src/systems/gatherBlow.js",
+    "old": "      return { t: b, y: ground(p[0] + v[0] * b, p[2] + v[2] * b) };   // lying on the ground where it came down, exactly",
+    "new": "      return { t: b, y: arcY(p, v, b) };",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js",
+      "test/systems/gf2_veincracks.test.js"
+    ],
+    "note": "A chunk lies at the arc's height at the found moment, a hair off the ground."
+  },
+  {
+    "name": "AUDITGF-V4-the-shade-on-the-linear-albedo",
+    "file": "src/render/enhancedLighting.js",
+    "old": "  vec3 albedo = max(elDecode(tex.rgb * veinCrackShade(uv)) - emission, vec3(0.0));",
+    "new": "  vec3 albedo = max(elDecode(tex.rgb) - emission, vec3(0.0)) * veinCrackShade(uv);",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js",
+      "test/systems/gf2_veincracks.test.js"
+    ],
+    "note": "A seam on the lighting lane half the classic's dark."
+  },
+  {
+    "name": "AUDITGF-V6-the-trees-take-the-seams",
+    "file": "src/render/renderer.js",
+    "old": "      if (this._bbCrackOn) { gl.uniform2f(this.bbUCrack, 0, 0); this._bbCrackOn = false; }   // VEIN-CRACKS: the trees take no vein's seams\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The low-poly trees drawn after a cracked vein crack too."
+  },
+  {
+    "name": "AUDITGF-V6-the-crack-unheld-at-a-stand",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    const c = cracks.get(key);\n    if (c) setBatchCrack(batch, c.share, c.seed);\n",
+    "new": "    const c = cracks.get(key);\n",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A vein stood again mid-act stands whole until its next blow."
+  },
+  {
+    "name": "AUDITGF-V6-the-dungeon-mint-kept",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (bu.gone || dungeon !== bu.dungeon) { bu.dungeon.drop(b); return; }",
+    "new": "if (bu.gone && dungeon !== bu.dungeon) { bu.dungeon.drop(b); return; }",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A burst made as its dungeon was left is kept, never dropped through its door."
+  },
+  {
+    "name": "AUDITGF-V6-the-street-mint-kept",
+    "file": "src/scenes/gatherHost.js",
+    "old": "if (bu.gone || !t || look.record >= t.recordCount) return;",
+    "new": "if (!t || look.record >= t.recordCount) return;",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A burst whose pixel went while its picture came is pushed onto the dead pixel's list."
+  },
+  {
+    "name": "AUDITGF-V6-the-nowhere-unchecked",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (!entry && !d) return;   // its pixel torn down, its dungeon left: nowhere to fall\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A blow landing after its pixel went: its burst made with no list to stand on."
+  },
+  {
+    "name": "AUDITGF-V6-the-unstand-holds-freed",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      deps.renderer.destroyBatch(b);\n    }\n    forgetCrackBatches(s.batches);   // VEIN-CRACKS\n",
+    "new": "      deps.renderer.destroyBatch(b);\n    }\n",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A pixel stood again: its freed batches still held to crack."
+  },
+  {
+    "name": "AUDITGF-V6-the-torn-pixel-holds",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      forgetCrackBatches(stood.get(`${entry.px},${entry.py}`)?.batches);   // VEIN-CRACKS: its batches go with its teardown...\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A pixel torn down: its batches still held."
+  },
+  {
+    "name": "AUDITGF-V6-the-dungeon-stand-holds-freed",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    const gen = d.gen = (d.gen | 0) + 1;   // AUDIT 29 C7: the newest stand alone keeps its flats (two in flight drew twice)\n    forgetCrackBatches(d.batches);   // VEIN-CRACKS\n",
+    "new": "    const gen = d.gen = (d.gen | 0) + 1;   // AUDIT 29 C7: the newest stand alone keeps its flats (two in flight drew twice)\n",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A dungeon stood again: its dropped batches still held."
+  },
+  {
+    "name": "AUDITGF-V6-the-left-dungeon-holds",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (!d) return;\n      forgetCrackBatches(d.batches);   // VEIN-CRACKS\n",
+    "new": "      if (!d) return;\n",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A dungeon left: its batches still held."
+  },
+  {
+    "name": "AUDITGF-V6-the-fallen-crack-kept",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    cracks.delete(a.node.key);\n    restandOf(a);",
+    "new": "    restandOf(a);",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A vein fallen: its crack held for the session."
+  },
+  {
+    "name": "AUDITGF-V6-the-fallen-still-worked",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (worked === a.node.key) worked = null;   // VEIN-CRACKS: worked out - its cracks go with it\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A vein fallen: still the one worked."
+  },
+  {
+    "name": "AUDITGF-V7-the-taken-crack-kept",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (a && !a.loose) unwork(a);   // VEIN-CRACKS: refused",
+    "new": "    if (a && !a.loose && r?.error !== 'node-taken') unwork(a);   // VEIN-CRACKS: refused",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A vein another took, answered under its last blow: its crack held."
+  },
+  {
+    "name": "AUDITGF-F7-the-voice-unkept",
+    "file": "src/systems/gatherSounds.js",
+    "old": "        if (voice != null && audio.play3dVoice) {   // AUDIT GATHER-FEEL F7: kept, to be taken back",
+    "new": "        if (false) {   // AUDIT GATHER-FEEL F7: kept, to be taken back",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A node's going said fire-and-forget: nothing to take back."
+  },
+  {
+    "name": "AUDITGF-F7-the-fall-unkeyed",
+    "file": "src/scenes/gatherHost.js",
+    "old": "ear.say(k.goneSound, actWorld(a) ?? a.world, { voice: a.node.key });",
+    "new": "ear.say(k.goneSound, actWorld(a) ?? a.world);",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A tree's fall said with no key: a refusal cannot find it."
+  },
+  {
+    "name": "AUDITGF-F7-the-hush-unasked-at-a-refusal",
+    "file": "src/scenes/gatherHost.js",
+    "old": "    if (typeof key === 'string') ear.hush?.(key);   // AUDIT GATHER-FEEL F7",
+    "new": "    // AUDIT GATHER-FEEL F7",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A refused harvest's tree stood again, heard falling on."
+  },
+  {
+    "name": "AUDITGF-F7-the-hush-unasked-at-a-lapse",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        ear.hush?.(nodeKeyOf);   // AUDIT GATHER-FEEL F7: ...and its sound with it\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A lapsed harvest's tree stood again, heard falling on."
+  },
+  {
+    "name": "AUDITGF-F7-the-hush-stops-nothing",
+    "file": "src/systems/gatherSounds.js",
+    "old": "      try { h?.stop(); } catch { /* a sound never stops an act */ }",
+    "new": "      void h;",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "The hush forgets the voice and leaves it sounding."
+  },
+  {
+    "name": "AUDITGF-F7-the-stop-at-its-level",
+    "file": "src/systems/audio.js",
+    "old": "          gain.gain.linearRampToValueAtTime(0, t + seconds);\n          src.stop(t + seconds + 0.02);",
+    "new": "          src.stop(t);",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A voice taken back is cut at its level: a pop."
+  },
+  {
+    "name": "AUDITGF-F7-the-chain-kept",
+    "file": "src/systems/audio.js",
+    "old": "src.onended = () => { if (ended) return; ended = true; releaseNodes(src, gain, pan); onEnd?.(); };",
+    "new": "src.onended = () => { if (ended) return; ended = true; onEnd?.(); };",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A voice's nodes kept connected after it ends."
+  },
+  {
+    "name": "AUDITGF-F7-the-end-untold",
+    "file": "src/systems/audio.js",
+    "old": "src.onended = () => { if (ended) return; ended = true; releaseNodes(src, gain, pan); onEnd?.(); };",
+    "new": "src.onended = () => { if (ended) return; ended = true; releaseNodes(src, gain, pan); };",
+    "tests": [
+      "test/systems/audit_gatherfeel.test.js"
+    ],
+    "note": "A voice's end untold: the ear holds it for ever."
+  }
+]

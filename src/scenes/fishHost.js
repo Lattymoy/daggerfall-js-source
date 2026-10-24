@@ -31,18 +31,19 @@ import { haulKey, parseNodeKey, schoolSpots, SCHOOLS_PER_PIXEL, SCHOOL_R, pixelK
 import { FISH_KEY, actBand, PEARL, storesFullIn, goneIn, fullWordsIn } from '../net/professionLaw.js';
 import { goodsWhere } from '../net/bagLaw.js';   // BAG1: where the haul went
 import { createFishAct } from '../systems/fishAct.js';
-import { FT, attributeAverage } from '../systems/foragingLaw.js';
-import { foragingActRefusal, actChecksRefusal, foragingToolIn, foragingHost } from '../systems/foragingInstall.js';
-import { materialCountLabel } from '../systems/profItems.js';
+import { FT, attributeAverage } from '../systems/foraging/foragingLaw.js';
+import { foragingActRefusal, actChecksRefusal, foragingToolIn, foragingHost } from '../systems/foraging/foragingInstall.js';
+import { materialCountLabel } from '../systems/professions/profItems.js';
 import { liveStat, maxFatigue } from '../systems/statMods.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { PASSIVE_FISH_SPECIES, pickSpecies } from '../world/passiveFish.js';
-import { templateByIndex } from '../systems/itemTemplates.js';
-import { groundAt } from '../world/terrainNature.js';
-import { isOutdoorWaterTile } from '../world/terrainSurface.js';
-import { WORLD_MAP_TILE_DIM } from '../world/terrainTiles.js';
-import { TERRAIN_SIZE } from '../world/terrainSampler.js';
+import { templateByIndex } from '../systems/item/itemTemplates.js';
+import { groundAt } from '../world/terrain/terrainNature.js';
+import { isOutdoorWaterTile } from '../world/terrain/terrainSurface.js';
+import { WORLD_MAP_TILE_DIM } from '../world/terrain/terrainTiles.js';
+import { TERRAIN_SIZE } from '../world/terrain/terrainSampler.js';
 import { sceneCompassWord } from '../systems/compassWords.js';   // AUDIT DELVE C8: the eight ways, one home
+import { noteAct } from '../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** The cast stands this far ahead of the look (m), and is reached from this far. */
 export const CAST_AHEAD_M = 3;
@@ -56,7 +57,7 @@ export const CAST_RISE_M = 4.5;
  *  high ground under Daggerfall; and "I couldn't get it off my screen when on my ship"): SHORE-CAST asked whether the
  *  cast's point is over water in the ground's plane alone, so a cliff over the sea, or a deck, stood "Open Water" at any
  *  height and at any look. The cast's point stands no higher than this over the water's surface under it: the
- *  carrack's main deck is the highest a ship carries (world/carrackModel.js MEASURED.mainDeckY, 7.81 m over her
+ *  carrack's main deck is the highest a ship carries (world/ships/carrackModel.js MEASURED.mainDeckY, 7.81 m over her
  *  waterline), and from it, the eye 1.7 m up (player/motor.js EYE_HEIGHT), a look straight down stands the cast
  *  CAST_RISE_M under the eye - 5.01 m over the sea; half a metre more rides her swell. So every deck fishes looking down
  *  over the side, and a level look from a ship's high deck, or any look from a cliff, does not; at the water's edge a
@@ -85,11 +86,11 @@ export const NET_WHERE_WORDS = Object.freeze({ inside: 'not in here', town: 'not
 /** FISH-TIRED (FIELD BUGS 2026-09-30b: "you can get instakilled when fishing"). The minute's band charges an angler
  *  treading water the swim's price, 8 or 33 fatigue every five real seconds (systems/worldTick.js; FATIGUE-IDLE spares
  *  dry ground only), and in the water a collapse was DFU's death whatever the health - now a tenth of the health a game
- *  minute (SWIM-SPENT, systems/rest.js exhaustionOutcome). Either way no net is cast in the water on the last quarter of
+ *  minute (SWIM-SPENT, systems/rest/rest.js exhaustionOutcome). Either way no net is cast in the water on the last quarter of
  *  the fatigue bar, and an act there ends when the bar falls into it: the prompt says why, with minutes left to swim out
  *  and rest. */
 export const NET_TIRED_SHARE = 0.25;
-export const NET_TIRED_WORDS = 'too tired to fish in the water - get out and rest';
+export const NET_TIRED_WORDS = 'too tired to fish in the water: get out and rest';
 /** Whether the angler swims (the collapse's own test, PlayerEnterExit.IsPlayerSwimming, as Foraging's world answers it)
  *  on the last quarter of the fatigue pool. */
 export function tooTiredForTheWater(entity) {
@@ -261,6 +262,11 @@ export function fishKind({ book, host }) {
     /** The day's schools: the fish's own flats, never a target (gone to the look, stood by goneFlatsOf). */
     nodesOf: ({ entry, px, py, day }) => standSchools({ px, py, day, samples: entry.samples, tilemap: entry.tilemap }),
     stood(entry, nodes) { schools.set(pixelKey(entry.px, entry.py), { entry, nodes }); },
+    /** MEM-AUDIT (2026-10-23): A PIXEL TORN DOWN, ITS SCHOOLS FORGOTTEN. Nothing let them go, and each held its pixel's
+     *  whole entry - the ground's samples and normals, its tilemaps, flats and townsfolk, ~2 MB of heap a pixel - so online
+     *  (the professions' book stands every built pixel, a bare one too) every pixel a journey streamed stood for the session:
+     *  ~26 MB a map pixel travelled. schoolPlaces already passed one the gather host no longer stands. */
+    dropped(entry) { const k = pixelKey(entry.px, entry.py); if (schools.get(k)?.entry === entry) schools.delete(k); },
     flatsOf: () => [],
     goneFlatsOf: (n) => (n.school ? [{
       archive: schoolPicture()[0], record: schoolPicture()[1], scale: SCHOOL_SCALE,
@@ -338,20 +344,22 @@ export function fishKind({ book, host }) {
     actNote: (rep) => {
       if (!rep) return '';
       if (rep.clean) return ' (a full net)';
-      if (rep.why === 'missed') return ' (the tug missed - a plain haul)';
-      if (rep.why === 'slipped') return ' (the net slipped - a plain haul)';
-      if (rep.why === 'slow') return ' (hauled in slowly - a plain haul)';
+      if (rep.why === 'missed') return ' (the tug missed: a plain haul)';
+      if (rep.why === 'slipped') return ' (the net slipped: a plain haul)';
+      if (rep.why === 'slow') return ' (hauled in slowly: a plain haul)';
       return '';
     },
     /** The goods, the species named. */
     storesLine: (d) => haulLine(d, speciesOfHaul(d.node, climateOf(d.node))),
     haulName: (d) => speciesOfHaul(d.node, climateOf(d.node))?.itemName ?? null,   // HAUL-CARDS: the catch's species on its card, the Raw Fish its sub
-    /** A trophy: the species' own item, into the pack once (every answer to the haul says it). */
+    /** A trophy: the species' own item, into the pack once (every answer to the haul says it). QL11: and every haul the
+     *  service answered is a catch. */
     answered(d, toast) {
+      noteAct('fish-caught');   // QL11: a fish caught - the net's haul, in the Stores or the bag
       if (!d?.trophy || trophied.has(d.node)) return;
       trophied.add(d.node);
       const species = speciesOfHaul(d.node, climateOf(d.node));
-      if (species && host.trophy(species)) toast(`A trophy ${species.itemName} - it is in your pack.`);
+      if (species && host.trophy(species)) toast(`A trophy ${species.itemName}. It is in your pack.`);
     },
     title: () => 'Angler',
   };

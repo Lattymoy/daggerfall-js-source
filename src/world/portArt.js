@@ -1,12 +1,12 @@
 // @ts-check
 // SHIPYARDS (2026-10-11): THE PORT'S OWN ART, MADE AT BOOT - every picture the shipyard and the lighthouse wear
 // (world/shipyardModel.js, world/lighthouseModel.js) is the port's, made here from noise and drawn shapes the moment a
-// host asks, under the pseudo-archive PORT_ARCHIVE (world/merchantYardArt.js's law and its own tools: pixels and numbers,
+// host asks, under the pseudo-archive PORT_ARCHIVE (world/merchantYards/merchantYardArt.js's law and its own tools: pixels and numbers,
 // no renderer, no GL). Nothing of Daggerfall's is read.
 //
 // THE YARDS' MATERIALS AT THE YARDS' RECORDS: records 0-7 are the Stable's and the Wagon Yard's timber, boards,
 // shingles, straw, earth, gravel, water and iron, painted by the same painters on the same seeds - so the face kit the
-// port's models share with the yards (world/merchantYardModels.js) dresses a post or a sign's edge alike under either
+// port's models share with the yards (world/merchantYards/merchantYardModels.js) dresses a post or a sign's edge alike under either
 // archive. Then the port's own:
 //
 //   stone     - the lighthouse's tower, its parapet and its lantern, and the yards' walls: grey ashlar, its courses
@@ -35,12 +35,12 @@
 import {
   YARD_ART_KIT, SIGN_EMBLEM, SIGN_ART_H,
   yardWoodArt, yardPlankArt, yardShingleArt, yardHayArt, yardDirtArt, yardGravelArt, yardWaterArt, yardIronArt, YARD_REC, YARD_ART_SIZE,
-} from './merchantYardArt.js';
+} from './merchantYards/merchantYardArt.js';
 import { PORT_PLACES } from '../systems/portPlaces.js';
 
 const { rng, noiseField, image, put, get, mix, IRON_DARK, IRON_LIGHT, board, paintWord } = YARD_ART_KIT;   // the yards' painting tools
 
-/** The pseudo-archive the port's pictures stand under (the yards' neighbour, world/merchantYardArt.js YARD_ARCHIVE). */
+/** The pseudo-archive the port's pictures stand under (the yards' neighbour, world/merchantYards/merchantYardArt.js YARD_ARCHIVE). */
 export const PORT_ARCHIVE = 38231;
 /** Its records: the yards' materials at the yards' own records, then the port's. */
 export const PORT_REC = Object.freeze({

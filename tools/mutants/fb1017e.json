@@ -1,0 +1,82 @@
+[
+  {
+    "name": "ORRERY-SIGHT-salt",
+    "file": "src/systems/eliteGates/spireOrrery.js",
+    "old": "export const EG_ORRERY_SALT = 0x0a7e;",
+    "new": "export const EG_ORRERY_SALT = 0x0a7f;",
+    "tests": [
+      "test/systems/eliteGates/fb1017e_orrerysight.test.js"
+    ],
+    "why": "the slot's salt not the relay's: another Orrery's riddles beside this one's stones"
+  },
+  {
+    "name": "ORRERY-SIGHT-turns-range",
+    "file": "src/systems/eliteGates/spireOrrery.js",
+    "old": "+ 1, egOrreryTurns(spec.c));",
+    "new": "+ 1);",
+    "tests": [
+      "test/systems/eliteGates/fb1017e_orrerysight.test.js"
+    ],
+    "why": "the Hour's own range, not the Spire's: the riddles in another order, the start another"
+  },
+  {
+    "name": "ORRERY-SIGHT-reach-longer",
+    "file": "src/systems/eliteGates/spireOrrery.js",
+    "old": "export const EG_STONE_REACH_M = 3.5;",
+    "new": "export const EG_STONE_REACH_M = 4.5;",
+    "tests": [
+      "test/systems/eliteGates/fb1017e_orrerysight.test.js"
+    ],
+    "why": "the client's reach past the room's: a turn sent from where the room drops it, without a word - the report's silence"
+  },
+  {
+    "name": "ORRERY-SIGHT-reach-shorter",
+    "file": "src/systems/eliteGates/spireOrrery.js",
+    "old": "export const EG_STONE_REACH_M = 3.5;",
+    "new": "export const EG_STONE_REACH_M = 2.5;",
+    "tests": [
+      "test/systems/eliteGates/fb1017e_orrerysight.test.js"
+    ],
+    "why": "the client's reach short of the room's: a member the room would hear told to stand closer"
+  },
+  {
+    "name": "ORRERY-SIGHT-no-closer",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "> EG_STONE_REACH_M) { say(SD_HALL_TEXT.closer); return true; }",
+    "new": "> Infinity) { say(SD_HALL_TEXT.closer); return true; }",
+    "tests": [
+      "test/systems/eliteGates/fb1017e_orrerysight.test.js"
+    ],
+    "why": "as shipped: the press from past the reach sent and dropped, the member told nothing"
+  },
+  {
+    "name": "ORRERY-SIGHT-riddles-unread",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "spireRiddleLines(spireOrreryOf(E.seed, spec)).join('\\n')",
+    "new": "''",
+    "tests": [
+      "test/systems/eliteGates/fb1017e_orrerysight.test.js"
+    ],
+    "why": "as shipped: no riddle on the screen, the true hours unknowable"
+  },
+  {
+    "name": "ORRERY-SIGHT-one-hour",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "spireStoneWords(b.pt, orr[b.pt])",
+    "new": "spireStoneWords(b.pt, orr[0])",
+    "tests": [
+      "test/systems/eliteGates/fb1017e_orrerysight.test.js"
+    ],
+    "why": "every stone's words one stone's hour"
+  },
+  {
+    "name": "ORRERY-SIGHT-plaque-no-hour",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "h = spireObjs().orr?.[j];",
+    "new": "h = NaN;",
+    "tests": [
+      "test/systems/eliteGates/fb1017e_orrerysight.test.js"
+    ],
+    "why": "the handle's plaque without the hour the room said"
+  }
+]

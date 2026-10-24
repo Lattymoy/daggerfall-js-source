@@ -1,0 +1,607 @@
+[
+  {
+    "name": "TOWNECON-AUDIT2-SVC1-pixel-unread",
+    "file": "src/net/townEconLaw.js",
+    "old": "  if (townPixelIdOf(map) !== py * 1000 + px) return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a map id at a pixel not its own"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC1-hour",
+    "file": "src/net/townEconLaw.js",
+    "old": "export const TOWN_WITNESS_HOUR = 12;",
+    "new": "export const TOWN_WITNESS_HOUR = 48;",
+    "tests": [
+      "test/systems/townecon.test.js",
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a list typed in's rate"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE3-pay-unbound",
+    "file": "src/net/townEconLaw.js",
+    "old": "pay = pctOf(townShopFactor(p, 'Sell', seatFactor));",
+    "new": "pay = pctOf(townSaleFactor(p));",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the card's pay without SEAT-LOOP's bound"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-LIV3-no-room",
+    "file": "src/net/townEconLaw.js",
+    "old": "if (backers && lines.length <= TOWN_TIP_PATRONS_ROOM) lines.push(backers);",
+    "new": "if (backers) lines.push(backers);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the patrons on a full card"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC6-taken-confirmed",
+    "file": "server-account/src/townEcon.js",
+    "old": "  return { ok: true, counted: true, confirmed: false, why: 'taken' };",
+    "new": "  return { ok: true, counted: true, confirmed: true };",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a town the table did not take told confirmed"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-REC9-pixel-not-unique",
+    "file": "server-account/migrations/0132_town_econ.sql",
+    "old": "CREATE UNIQUE INDEX IF NOT EXISTS idx_town_econ_towns_pixel ON town_econ_towns (px, py);",
+    "new": "CREATE INDEX IF NOT EXISTS idx_town_econ_towns_pixel ON town_econ_towns (px, py);",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "two towns at one pixel"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-REC9-place-not-unique",
+    "file": "server-account/migrations/0132_town_econ.sql",
+    "old": "CREATE UNIQUE INDEX IF NOT EXISTS idx_town_econ_towns_place ON town_econ_towns (region, location);",
+    "new": "CREATE INDEX IF NOT EXISTS idx_town_econ_towns_place ON town_econ_towns (region, location);",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "two towns at one place"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC4-limit",
+    "file": "server-account/src/townEcon.js",
+    "old": "WHERE kind = ?1 AND key = ?2 ORDER BY at, account')\n    .bind(TOWN_WITNESS_KIND, key).all();",
+    "new": "WHERE kind = ?1 AND key = ?2 ORDER BY at, account LIMIT 2')\n    .bind(TOWN_WITNESS_KIND, key).all();",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "the oldest reports alone read"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC2-unseated",
+    "file": "server-account/src/progress.js",
+    "old": "  '/v1/towns/watch': Object.freeze(['watch', false]),\n",
+    "new": "",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "the town Watch asked of no seat"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC5-capped-written",
+    "file": "server-account/src/townEcon.js",
+    "old": "    if ((counts.get(k) ?? 0) >= TOWN_ECON_CAPS[src]) {",
+    "new": "    if ((counts.get(k) ?? 0) >= 999) {",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a tick past the cap written"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC5-full-unsaid",
+    "file": "server-account/src/townEcon.js",
+    "old": "    if (src === 'watch' && day === today && counts.get(k) === TOWN_ECON_CAPS.watch) full.add(`${c.x},${c.y}`);\n",
+    "new": "",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "the full pixel unsaid when the cap fills"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC9-skew",
+    "file": "server-account/src/townEcon.js",
+    "old": "    const day = Math.min(utcDay(c.i), today);\n    if (today - day >= TOWN_ECON_DAYS) { tally('old'); continue; }",
+    "new": "    const day = utcDay(c.i);\n    if (day > today || today - day >= TOWN_ECON_DAYS) { tally('old'); continue; }",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a tick a moment past midnight old"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-REC10-today",
+    "file": "server-account/src/townEcon.js",
+    "old": "    const day = Math.min(utcDay(c.i), today);",
+    "new": "    const day = today;",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a tick counted on the claim's day"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC5-seen-kept",
+    "file": "server-account/src/townEcon.js",
+    "old": "export const townEconSeenFrom = (nowS) => utcDay(nowS) - Math.ceil(WATCH_RECEIPT_TTL_S / 86_400) - 1;",
+    "new": "export const townEconSeenFrom = (nowS) => utcDay(nowS) - TOWN_ECON_DAYS + 1;",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "the seen kept fourteen days"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC3-days-read",
+    "file": "server-account/src/townEcon.js",
+    "old": "  let towns = null;\n  try { towns = row ? JSON.parse(String(row.towns)) : null; } catch { towns = null; }",
+    "new": "  let towns = null;",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "the kept row unread"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC3-counted-fresh",
+    "file": "server-account/src/townEcon.js",
+    "old": "  if (row && nowS - Number(row.at) < TOWN_ECON_KEPT_S) { _keptAt = Number(row.at); return 0; }\n",
+    "new": "",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "the clock counting a fresh row again"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-REC10-least-exclusive",
+    "file": "server-account/src/townEcon.js",
+    "old": "    if (share >= TOWN_ECON_SHARE_LEAST) towns.push([m, share]);",
+    "new": "    if (share > TOWN_ECON_SHARE_LEAST) towns.push([m, share]);",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "the least share left out"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC1-unwalked",
+    "file": "server-account/src/townEcon.js",
+    "old": "  if (!v.ok || v.claims.s !== player.id || v.claims.x !== t.px || v.claims.y !== t.py) return { error: 'town-unwalked' };",
+    "new": "  if (receipt == null) return { error: 'town-unwalked' };",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "any receipt a walk"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC1-another-pixel",
+    "file": "server-account/src/townEcon.js",
+    "old": "v.claims.s !== player.id || v.claims.x !== t.px || v.claims.y !== t.py) return",
+    "new": "v.claims.s !== player.id) return",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a tick at another pixel a walk"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC1-strike-kept",
+    "file": "server-account/src/townEcon.js",
+    "old": "    db.prepare('DELETE FROM town_econ_towns WHERE map = ?1').bind(map),\n",
+    "new": "",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a struck town's row kept"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC1-struck-again",
+    "file": "server-account/src/townEcon.js",
+    "old": "  if (known?.struck) return { ok: true, counted: false, why: 'struck' };\n",
+    "new": "",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "a struck map id witnessed again"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC1-strike-anyone",
+    "file": "server-account/src/townEcon.js",
+    "old": "export async function strikeTown({ db, nowS }, dev, env, { map } = {}) {\n  if (!isDeveloper(dev, env)) return { error: 'not-developer' };",
+    "new": "export async function strikeTown({ db, nowS }, dev, env, { map } = {}) {",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "anyone strikes"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC7-switch",
+    "file": "server-account/src/townEcon.js",
+    "old": "export const townsOpen = (env) => String(env?.TOWNS_OPEN ?? 'on').trim().toLowerCase() !== 'off';",
+    "new": "export const townsOpen = (env) => !!env || true;",
+    "tests": [
+      "test/server/townecon_service.test.js"
+    ],
+    "note": "no switch"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC1-book-unwalked",
+    "file": "src/net/townEconBook.js",
+    "old": "      if (!receipt) { waiting.set(t.map, t); if (waiting.size > 8) waiting.delete(waiting.keys().next().value); return false; }",
+    "new": "      if (!receipt) return sendWitness(t, 'k1.none');",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "a report with no tick"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC1-book-waiting",
+    "file": "src/net/townEconBook.js",
+    "old": "      for (const [map, t] of waiting) if (t.px === c.x && t.py === c.y) { waiting.delete(map); if (!witnessStopped) sendWitness(t, /** @type {string} */ (r)); }\n",
+    "new": "",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "a town walked into before its tick never reported"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-CLI3-taken-done",
+    "file": "src/net/townEconBook.js",
+    "old": "(r.data?.counted === true && r.data?.why !== 'taken'));",
+    "new": "r.data?.counted === true);",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "a taken town done for good"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-CLI3-stale-table",
+    "file": "src/net/townEconBook.js",
+    "old": "sort((a, b) => (b[1] % TOWN_ECON_DONE) - (a[1] % TOWN_ECON_DONE))",
+    "new": "sort((a, b) => b[1] - a[1])",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "the table by its raw number"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC5-book-full-kept",
+    "file": "src/net/townEconBook.js",
+    "old": "      if (fullAt.get(`${c.x},${c.y}`) === dayNow()) return false;   // AUDIT TOWN-ECON 2 SVC-5: its footsteps full today\n",
+    "new": "",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "ticks kept at a full pixel"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-CLI4-no-clock",
+    "file": "src/net/townEconBook.js",
+    "old": "      if (nowMs() - dueLookAt >= TOWN_ECON_DUE_LOOK_MS) { dueLookAt = nowMs(); if (due()) book.claim(); }\n",
+    "new": "",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "a claim waits on a new tick"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-CLI6-device-clock",
+    "file": "src/scenes/townEconHost.js",
+    "old": "relayNowS: () => (clockHeard() ? Math.floor(reading.nowMs() / 1000) : null), turnMs: dayTurnMs() }) : null;",
+    "new": "relayNowS: () => Math.floor(reading.nowMs() / 1000), turnMs: dayTurnMs() }) : null;",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "a tick judged on this device's clock"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-CLI1-frozen-early",
+    "file": "src/scenes/townEconHost.js",
+    "old": "      if (!ready()) return econ.bandOf(town?.mapId);\n",
+    "new": "",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "the band kept before the reads"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-CLI1-plans-kept",
+    "file": "src/scenes/townEconHost.js",
+    "old": "    setTimeout(() => { try { onBandsReady(); } catch { /* the trips' memo not yet stood: nothing planned on it */ } }, 0);\n",
+    "new": "",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "the trips planned before kept"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-LIV8-wiped",
+    "file": "src/scenes/townEconHost.js",
+    "old": "        if (marketBands.size >= MARKET_BANDS_MAX) marketBands.delete(/** @type {string} */ (marketBands.keys().next().value));",
+    "new": "        if (marketBands.size >= MARKET_BANDS_MAX) marketBands.clear();",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "the bands wiped whole"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC1-world-unwired",
+    "file": "src/scenes/world.js",
+    "old": "        const hallCmd = parseHallCommand(text); if (townEcon.command(text, (line) => chatLog.push(tabId, { text: line, system: true }))) return true;",
+    "new": "        const hallCmd = parseHallCommand(text);",
+    "tests": [
+      "test/net/townecon_client.test.js"
+    ],
+    "note": "the /town word unwired"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-LIV2-band-ignored",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "if (marketDay(to, d, world.marketBandOf?.(to, d) ?? null))",
+    "new": "if (marketDay(to, d, world.marketBandOf?.(to, d) && null))",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "the band asked and ignored"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-LIV2-band-wrong-day",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "if (marketDay(to, d, world.marketBandOf?.(to, d) ?? null))",
+    "new": "if (marketDay(to, d, world.marketBandOf?.(to, d + 3) ?? null))",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "another day's band"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-LIV11-by-name",
+    "file": "src/net/chapterSheet.js",
+    "old": ".sort((a, b) => b.n - a.n || (a.p.name < b.p.name ? -1 : a.p.name > b.p.name ? 1 : 0))",
+    "new": ".sort((a, b) => (a.p.name < b.p.name ? -1 : a.p.name > b.p.name ? 1 : 0))",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "the patrons by name alone"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-CLI2-every-ask",
+    "file": "src/net/chapterSheet.js",
+    "old": "      return (patronIndex.by.get(/** @type {number} */ (region)) ?? []).map((p) => ({ ...p }));",
+    "new": "      return (patronIndex.by.get(/** @type {number} */ (region)) ?? []);",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "one list shared by every reader"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-LIV12-every-ask",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  if (_econNews && textRevision() === _econRev) return _econNews;\n  _econRev = textRevision();",
+    "new": "  if (_econNews && textRevision() === _econRev && false) return _econNews;\n  _econRev = textRevision();",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "the pool's words said every ask",
+    "equivalent": true,
+    "why": "The memo is a cost, never an answer: with it off the pool's eight words are said and joined every ask, and the same pool object comes back while the words are the same (the signature's own check) - nothing a reader sees tells them apart. Recorded so the next reader knows the line is the per-frame cost the audit measured (LIV-12: 3.9 us an ask), not a law."
+  },
+  {
+    "name": "TOWNECON-AUDIT2-REC4-pixelbuild-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "    townEcon, townPlacesFor, townSeats, verges,",
+    "new": "    townPlacesFor, townSeats, verges,",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "the pixel builder handed no town economy"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE1-asks-plain",
+    "file": "src/systems/tradeModes.js",
+    "old": "buyItemPrice(it, { quality: 10, online, holidayId, guildFactionId })",
+    "new": "buyItemPrice(it, { quality: 10, online })",
+    "tests": [
+      "test/systems/townecon_audit2.test.js"
+    ],
+    "note": "the split by the no-holiday asks"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE1-commit-unpassed",
+    "file": "src/scenes/worldModes.js",
+    "old": "      markCounterBought(staged, { price, ...asked });",
+    "new": "      markCounterBought(staged, { price });",
+    "tests": [
+      "test/systems/townecon_audit2.test.js",
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the commit's holiday unread"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE5-floor-zero",
+    "file": "src/systems/tradeModes.js",
+    "old": "  const base = paid && /** @type {number} */ (price) >= pieces ? 1 : 0;",
+    "new": "  const base = 0;",
+    "tests": [
+      "test/systems/townecon_audit2.test.js",
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a cheap stack floored to 0"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE6-value-unmarked",
+    "file": "src/systems/tradeModes.js",
+    "old": "    if (Number.isFinite(v) && v >= 0) it[COUNTER_VALUE_MARK] = Math.round(v);   // PRICE-6\n",
+    "new": "",
+    "tests": [
+      "test/systems/townecon_audit2.test.js"
+    ],
+    "note": "no value bought at"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE6-improvement-capped",
+    "file": "src/systems/tradeModes.js",
+    "old": "    resale.cost += Number.isInteger(was) && was < now && now > 0 ? Math.round((c * was) / now) : c;",
+    "new": "    resale.cost += c;",
+    "tests": [
+      "test/systems/townecon_audit2.test.js"
+    ],
+    "note": "an improvement capped"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE6-merge-lost",
+    "file": "src/systems/inventory.js",
+    "old": "      if (Number.isInteger(item[COUNTER_VALUE_MARK])) held[COUNTER_VALUE_MARK] = Number.isInteger(held[COUNTER_VALUE_MARK]) ? Math.min(held[COUNTER_VALUE_MARK], item[COUNTER_VALUE_MARK]) : item[COUNTER_VALUE_MARK];",
+    "new": "      if (Number.isInteger(item[COUNTER_VALUE_MARK]) && !Number.isInteger(held[COUNTER_VALUE_MARK])) held[COUNTER_VALUE_MARK] = item[COUNTER_VALUE_MARK];",
+    "tests": [
+      "test/systems/townecon_audit2.test.js"
+    ],
+    "note": "a merge keeps the first"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE6-split-lost",
+    "file": "src/systems/inventory.js",
+    "old": "  if (Number.isInteger(stack[COUNTER_VALUE_MARK])) picked[COUNTER_VALUE_MARK] = stack[COUNTER_VALUE_MARK];   // AUDIT TOWN-ECON 2 PRICE-6: and the value it was bought at\n",
+    "new": "",
+    "tests": [
+      "test/systems/townecon_audit2.test.js"
+    ],
+    "note": "a split loses it"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE2-held-counted",
+    "file": "src/systems/materialsBag.js",
+    "old": "&& (counter || !counterPiece(it))) n += it.stackCount ?? 1;",
+    "new": ") n += it.stackCount ?? 1;",
+    "tests": [
+      "test/systems/townecon_audit2.test.js"
+    ],
+    "note": "the counter's pieces counted the service's"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE2-taken-first",
+    "file": "src/systems/materialsBag.js",
+    "old": "  for (const marked of counter ? [false, true] : [false]) for",
+    "new": "  for (const marked of counter ? [true, false] : [false]) for",
+    "tests": [
+      "test/systems/townecon_audit2.test.js"
+    ],
+    "note": "the counter's taken first"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE2-page-takes",
+    "file": "src/systems/materialsBag.js",
+    "old": "  for (const marked of counter ? [false, true] : [false]) for",
+    "new": "  for (const marked of [false, true]) for",
+    "tests": [
+      "test/systems/townecon_audit2.test.js"
+    ],
+    "note": "a page's put-in takes them"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE2-station-refused",
+    "file": "src/net/profBook.js",
+    "old": "    carriedWorkable(material) { return carry ? carriedWorkable(this.carried(material), heldAll(material)) : 0; },",
+    "new": "    carriedWorkable(material) { return carry ? carriedWorkable(this.carried(material), carry.held(material)) : 0; },",
+    "tests": [
+      "test/systems/townecon_audit2.test.js"
+    ],
+    "note": "a station blind to them"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE2-world-unwired",
+    "file": "src/scenes/world.js",
+    "old": "        carriedHeld: (k) => bagHeldOf(playerEntity, k, { counter: false }),",
+    "new": "        carriedHeld: (k) => bagHeldOf(playerEntity, k),",
+    "tests": [
+      "test/systems/townecon_audit2.test.js"
+    ],
+    "note": "the page shown them"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE2-socket-unmarked",
+    "file": "src/systems/reforge.js",
+    "old": "  if (stone?.[PATRON_COUNTER_MARK] === true) item.socketBought",
+    "new": "  if (stone?.[PATRON_COUNTER_MARK] === 'never') item.socketBought",
+    "tests": [
+      "test/systems/townecon_audit2.test.js"
+    ],
+    "note": "a bought stone set unmarked"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE2-extract-unmarked",
+    "file": "src/systems/reforge.js",
+    "old": "  if (bought) { stone[PATRON_COUNTER_MARK] = true;",
+    "new": "  if (bought && false) { stone[PATRON_COUNTER_MARK] = true;",
+    "tests": [
+      "test/systems/townecon_audit2.test.js"
+    ],
+    "note": "the stone out unmarked"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE2-socket-sale-uncapped",
+    "file": "src/systems/tradeModes.js",
+    "old": "      if (paid == null || !(w > 0) || !(now > 0)) continue;",
+    "new": "      if (paid != null || !(w > 0) || !(now > 0)) continue;",
+    "tests": [
+      "test/systems/townecon_audit2.test.js"
+    ],
+    "note": "a bought stone's share uncapped"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE2-unset-kept",
+    "file": "src/systems/reforge.js",
+    "old": "  unbought(item, i);   // AUDIT TOWN-ECON 2 PRICE-2: the stone shattered, its mark with it\n",
+    "new": "",
+    "tests": [
+      "test/systems/townecon_audit2.test.js"
+    ],
+    "note": "a shattered stone's mark kept"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE4-fallback-sale",
+    "file": "src/scenes/worldModes.js",
+    "old": "mode === 'Sell' || mode === 'SellMagic' ? Math.min(1, host.seatShopFactor?.(b) ?? 1) : 1);",
+    "new": "1);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "no town law: the sale above the ask"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-PRICE4-road-sale",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (b?.roadDiscount && (mode === 'Buy' || mode === 'Sell' || mode === 'SellMagic')) return",
+    "new": "    if (b?.roadDiscount && mode === 'Buy') return",
+    "tests": [
+      "test/systems/livingWorld/lw11_caravan.test.js"
+    ],
+    "note": "a friend's counter paying above its ask"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-REC10-news-unseeded",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    const w = lwSeed(this.o.town.mapId, 0x65636f6e) % 7;   // 'econ'",
+    "new": "    const w = 0;",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "every town the same talk days"
+  },
+  {
+    "name": "TOWNECON-AUDIT2-SVC3-kept-read-each-minute",
+    "file": "server-account/src/townEcon.js",
+    "old": "  if (nowS - _keptAt < TOWN_ECON_KEPT_S) return 0;   // kept here a moment ago: the quiet world's minute asks nothing (AUDIT SCALE D7)\n",
+    "new": "",
+    "tests": [
+      "test/net/auditscale.test.js"
+    ],
+    "note": "the clock reads the kept row every minute"
+  }
+]

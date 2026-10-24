@@ -1,0 +1,317 @@
+[
+  {
+    "name": "ETHER-WILD-no-peace-radius",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "export const ETHER_PEACE_PX = 12;",
+    "new": "export const ETHER_PEACE_PX = 13;",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-peace-a-square",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "  if (Math.hypot(x - h.px, y - h.py) <= ETHER_PEACE_PX) return true;",
+    "new": "  if (Math.max(Math.abs(x - h.px), Math.abs(y - h.py)) <= ETHER_PEACE_PX) return true;",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-veil-contested",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "  if (inVeil(x, y)) return true;",
+    "new": "  if (false) return true;",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-no-peace",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "!inEther(x, y) || etherInPeace(x, y)) return 0;",
+    "new": "!inEther(x, y)) return 0;",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-anywhere",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "!Number.isFinite(y) || !inEther(x, y) ||",
+    "new": "!Number.isFinite(y) ||",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-rings-off-by-one",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "BANDS.indexOf(etherBandAt(x)) + 1));",
+    "new": "BANDS.indexOf(etherBandAt(x)) + 2));",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-place-by-mask",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "  return loc?.ether ? etherWildRingAt(px, py) : wildRingAt(px, py);",
+    "new": "  return wildRingAt(px, py);",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-place-latitude-unflipped",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "py = 499 - Math.trunc(at.latitude / 128);",
+    "new": "py = Math.trunc(at.latitude / 128);",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-name-with-article",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "  name: `${ETHER_WORD} Ocean`,",
+    "new": "  name: `the ${ETHER_WORD} Ocean`,",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-band-names-swapped",
+    "file": "src/systems/wild/etherWild.js",
+    "old": "  deep: () => t('sea.wild.band.deep', 'The Deep Aether'),",
+    "new": "  deep: () => t('sea.wild.band.deep', 'The Abyss'),",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-kind-dropped",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "_kind = _here ? (kind || WILD_KIND) : null;",
+    "new": "_kind = _here ? WILD_KIND : null;",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-kind-outside",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "_kind = _here ? (kind || WILD_KIND) : null;",
+    "new": "_kind = kind || WILD_KIND;",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-words-always-mountains",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "export const zoneWord = (key, kind = _kind) => (kind ? _kindWords.get(kind)?.[key] : undefined) ?? WILD_TEXT[key];",
+    "new": "export const zoneWord = (key, kind = _kind) => WILD_TEXT[key];",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-companion-says-mountains",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "until you leave the {zone}.', { zone: zoneName(),",
+    "new": "until you leave the {zone}.', { zone: WILD_NAME,",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-death-forgets-ground",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "kind: d.kind ?? _death?.kind ?? _kind ?? WILD_KIND } : null;",
+    "new": "kind: d.kind ?? _kind ?? WILD_KIND } : null;",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-death-hold-mountains",
+    "file": "src/systems/wild/wildZone.js",
+    "old": "zoneWord('deathHold', d.kind ?? WILD_KIND)].filter(Boolean);",
+    "new": "WILD_TEXT.deathHold].filter(Boolean);",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-frame-no-sea",
+    "file": "src/scenes/world.js",
+    "old": "    const here = seaRing > 0 || (",
+    "new": "    const here = (",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-pace-capped-at-sea",
+    "file": "src/scenes/world.js",
+    "old": "setPaceZoneCap(wildHere() && wildZoneKind() !== ETHER_KIND ? WILD_PACE_CAP : null);",
+    "new": "setPaceZoneCap(wildHere() ? WILD_PACE_CAP : null);",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-rise-searches-the-bay",
+    "file": "src/scenes/world.js",
+    "old": "    if (etherSea && inEther(px.x, px.y)) return etherRiseSite(px.x, px.y);",
+    "new": "",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-ruin-not-the-zone",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "(isWildRegion(dfLocation?.regionIndex ?? -1) || !!dfLocation?.ether) ? wildRingAtPlace(dfLocation) : 0;",
+    "new": "isWildRegion(dfLocation?.regionIndex ?? -1) ? wildRingAtPlace(dfLocation) : 0;",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-crossing-never-warns",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "...(pvp ? ['', ...questionRows(t('sea.wild.crossWarn'",
+    "new": "...(false ? ['', ...questionRows(t('sea.wild.crossWarn'",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-crossing-warns-offline",
+    "file": "src/scenes/world.js",
+    "old": "rows: crossingRows(way, { pvp: _onlineWorldSession() && !!online?.wildOk }),",
+    "new": "rows: crossingRows(way, { pvp: true }),",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-hand-held-at-sea",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "  if (!wildHere() || wildZoneKind() === ETHER_KIND) return false;",
+    "new": "  if (!wildHere()) return false;",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-pack-ashore-at-sea",
+    "file": "src/systems/naval/crewCompanions.js",
+    "old": "export const packStaysAshore = () => wildHere() && wildZoneKind() !== ETHER_KIND;",
+    "new": "export const packStaysAshore = () => wildHere();",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-bounds-mountains-only",
+    "file": "src/scenes/grantHost.js",
+    "old": "    if (inEther(px, py)) return true;",
+    "new": "",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-unstuck-to-the-bay",
+    "file": "src/scenes/world.js",
+    "old": "const town = etherSea && inEther(px.x, px.y) ? wildRiseSite(px) : nearestSafeLocationAnywhere(",
+    "new": "const town = nearestSafeLocationAnywhere(",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-wrap-off-by-one",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "if (row && row.length + 1 + word.length > width)",
+    "new": "if (row && row.length + 1 + word.length >= width)",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-wrap-narrow",
+    "file": "src/systems/naval/etherCrossing.js",
+    "old": "export const ROW_CHARS = 56;",
+    "new": "export const ROW_CHARS = 40;",
+    "tests": [
+      "test/systems/wild/etherwild.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-chart-peace-offline",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "const peace = word.pvp && on((hx + px1) / 2",
+    "new": "const peace = on((hx + px1) / 2",
+    "tests": [
+      "test/ui/etherchart_peace.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-chart-peace-unscaled",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "{ x: hx, y: hy, r: ETHER_PEACE_PX * k,",
+    "new": "{ x: hx, y: hy, r: ETHER_PEACE_PX,",
+    "tests": [
+      "test/ui/etherchart_peace.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-chart-peace-never-named",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "named: ETHER_PEACE_PX * k >= PEACE_NAME_R }",
+    "new": "named: false }",
+    "tests": [
+      "test/ui/etherchart_peace.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-chart-peace-unpainted",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  if (m.peace) paintPeace(g, m.peace);",
+    "new": "",
+    "tests": [
+      "test/ui/etherchart_peace.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-chart-peace-over-isles",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  g.fillStyle = PEACE_FILL; g.fill();",
+    "new": "  g.fillStyle = PEACE_LINE; g.fill();",
+    "tests": [
+      "test/ui/etherchart_peace.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-chart-peace-key-always",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "    peaceItem.hidden = !word.pvp;   // ETHER-WILD",
+    "new": "    peaceItem.hidden = false;   // ETHER-WILD",
+    "tests": [
+      "test/ui/etherchart_peace.test.js"
+    ]
+  },
+  {
+    "name": "ETHER-WILD-chart-word-no-pvp",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "      pvp: live(),",
+    "new": "      pvp: true,",
+    "tests": [
+      "test/ui/etherchart_peace.test.js"
+    ]
+  }
+]

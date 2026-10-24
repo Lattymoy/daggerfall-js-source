@@ -1,0 +1,683 @@
+[
+  {
+    "name": "EGA4L-summon-past-room",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "const take = [...kinds.slice(0, need), ...kinds.slice(need, need + Math.max(0, room - need))];",
+    "new": "const take = kinds;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "a summons past the room under the cap"
+  },
+  {
+    "name": "EGA4L-summon-need-held",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "const need = Math.max(0, Math.min(kinds.length, o.need ?? 0)), room = egLegionRoom(F);",
+    "new": "const need = 0, room = egLegionRoom(F);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "a mechanic's body held to the room"
+  },
+  {
+    "name": "EGA4L-summon-room-cap",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "const need = Math.max(0, Math.min(kinds.length, o.need ?? 0)), room = egLegionRoom(F);",
+    "new": "const need = Math.max(0, Math.min(kinds.length, o.need ?? 0)), room = egLegionCapOf(F);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "the room read as the whole cap"
+  },
+  {
+    "name": "EGA4L-binder-unclaimed",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "if (g) { fallen.splice(fallen.indexOf(g), 1); egStop(F, a, now);",
+    "new": "if (g) { egStop(F, a, now);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "the fallen left for a second Binder"
+  },
+  {
+    "name": "EGA4L-binder-at-cap",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "g = !a.raised && egLegionRoom(F) > 0 ? fallen",
+    "new": "g = !a.raised ? fallen",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "a cast begun at the cap"
+  },
+  {
+    "name": "EGA4L-binder-broken-unspent",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "  if (!a?.cast) return false;\n  a.cast = null; a.raised = 1;",
+    "new": "  if (!a?.cast) return false;\n  a.cast = null;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "a broken cast begun again"
+  },
+  {
+    "name": "EGA4L-binder-bar-left",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "            a.cast = null; a.raised = 1;\n            if (F.pg.raise?.[0] === a.i) F.pg.raise = null;",
+    "new": "            a.cast = null; a.raised = 1;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "the raise's bar left up at its end"
+  },
+  {
+    "name": "EGA4L-mingled-dlord-six",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "export const EG_MINGLED_DLORD_EVERY = 3;",
+    "new": "export const EG_MINGLED_DLORD_EVERY = 6;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "the Mingled Legion's Daedra Lord one wave in six"
+  },
+  {
+    "name": "EGA4L-mingled-half",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "while (out.length < size) out.push(mix[Math.floor(rng() * mix.length)] ?? lead); }",
+    "new": "while (out.length < size) out.push(out.length < half ? lead : EG_KIND.harrier); }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "a mingled wave the lead's half and Harriers"
+  },
+  {
+    "name": "EGA4L-caster-pool-copy",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "POOLS.hellfire.ms, POOLS.hellfire.pct, POOLS.hellfire.base, F.el, 'burn', bl.y);",
+    "new": "POOLS.hellfire.ms, 0.06, 2, F.el, 'burn', bl.y);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "the Caster's pool at the old 6% + 2"
+  },
+  {
+    "name": "EGA4L-dlord-reach",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "reach: ATTACKS.cleave.range }) }),",
+    "new": "reach: ATTACKS.cleave.range + 1 }) }),",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "the Daedra Lord's reach drifted from the Cleave's"
+  },
+  {
+    "name": "EGA4L-spotted-uncut",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "for (const b of F.blows.filter((x) => x.o === a.i && x.at > now)) { egCut(F, b.i, out); broke = true; }",
+    "new": "for (const b of F.blows.filter((x) => x.o === a.i && x.at > now)) { broke = !!b; }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "a spotted add's wind-up left"
+  },
+  {
+    "name": "EGA4L-spotted-binder",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "  return egBinderBroken(F, a, out) || broke;",
+    "new": "  return broke;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "a spotted Binder's raise left"
+  },
+  {
+    "name": "EGA4L-roles-ghost",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "hpS: 999, mob: [130, 130, 130, 130],",
+    "new": "hpS: 999, mob: [18, 18, 18, 18],",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "the Ghost on the Vengeful Shade's sprite"
+  },
+  {
+    "name": "EGA4L-roles-standard",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "team: 1, mob: [29, 29, 29, 29], scale: 1.2,",
+    "new": "team: 1, mob: [31, 31, 31, 31], scale: 1.2,",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "the standard on the Dremora"
+  },
+  {
+    "name": "EGA4L-roles-thrall",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "hpS: 6, mob: [28, 28, 28, 28],",
+    "new": "hpS: 6, mob: [3, 3, 3, 3],",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "the thrall on the Giant Bat"
+  },
+  {
+    "name": "EGA4L-harrier-anchor",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "else mark = ctx.anchor ? far(ctx.anchor[0], ctx.anchor[1], pool) : near(a, pool)?.m ?? null;",
+    "new": "else mark = near(a, pool)?.m ?? null;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "a Court's anchor unread"
+  },
+  {
+    "name": "EGA4L-lowroad-raise",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (foes.length) egLegionSummon(F, foes.map(() => EG_KIND.harrier)",
+    "new": "if (foes.length) egLegionRaise(F, foes.map(() => EG_KIND.harrier)",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "the Low Road's foes past the cap"
+  },
+  {
+    "name": "EGA4L-sapper-feeds-uncapped",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "feeds = !!L && L.hp > 0 && (F.mem.fed ?? 0) < SAP_FEEDS_MAX;",
+    "new": "feeds = !!L && L.hp > 0;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "a lord's feedings uncapped"
+  },
+  {
+    "name": "EGA4L-sapper-heal-literal",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "L.hp = Math.min(L.max, L.hp + L.max * SAP_HEAL);",
+    "new": "L.hp = Math.min(L.max, L.hp + L.max * 0.03);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "a feeding's heal off the gate's"
+  },
+  {
+    "name": "EGA4L-sapper-first-closed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (s) s.goal = nearestClosed(F, s); }",
+    "new": "if (s) s.goal = F.closedSpots[0]; }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "the first closed rift, not the nearest"
+  },
+  {
+    "name": "EGA4L-sapper-fifth",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "Math.round((a.goal[2] ?? egHpTeam(F, EG_RIFT_TEAM_S, 5)) / 3)",
+    "new": "Math.round(egHpTeam(F, EG_RIFT_TEAM_S, 5) / 3)",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "a five-rift rift's third"
+  },
+  {
+    "name": "EGA4L-sapper-goal-kept",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (a.goal) { if (!(F.closedSpots ?? []).includes(a.goal)) a.goal = nearestClosed(F, a); return",
+    "new": "if (a.goal) { return",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "a reopened goal walked to still"
+  },
+  {
+    "name": "EGA4L-host-uncounted",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (got > 0) { mm.dh += got; mm.dc += got; egTallyBlow(mm, F, sub, got, a.role === EG_ROLE.lord); }",
+    "new": "  if (got > 1e12) { mm.dh += got; mm.dc += got; egTallyBlow(mm, F, sub, got, a.role === EG_ROLE.lord); }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "a host hit uncounted"
+  },
+  {
+    "name": "EGA4L-host-past-health",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (a.role === EG_ROLE.add) { got = Math.min(n, a.hp); a.hp -= n; egShieldSoak(F, a, got, out); }",
+    "new": "if (a.role === EG_ROLE.add) { got = n; a.hp -= n; egShieldSoak(F, a, got, out); }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "a host hit counted past its add's health"
+  },
+  {
+    "name": "EGA4L-twin-same-band",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "open = EG_TWIN_COURT_LORDS.filter((k) => k !== key && EG_LORDS[k]?.band !== band);",
+    "new": "open = EG_TWIN_COURT_LORDS.filter((k) => k !== key);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "the Twin Court's second of the lord's own band"
+  },
+  {
+    "name": "EGA4L-pair-champion-scaled",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (b) { for (const a of egLordsOf(F)) if (!a.champ) {",
+    "new": "if (b) { for (const a of egLordsOf(F)) if (a) {",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "a Kyn champion at 0.6"
+  },
+  {
+    "name": "EGA4L-masters-one-turn",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "key === 'armsmaster' ? 'spellmaster' : c % 2 ? 'spellmaster' : 'armsmaster';",
+    "new": "key === 'armsmaster' ? 'spellmaster' : 'spellmaster';",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "the masters by one turn"
+  },
+  {
+    "name": "EGA4L-masters-lesson-unset",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "{ F.mem.lessonMin = EG_MASTERS_LESSON_R; F.mem.runeR = EG_MASTERS_RUNE_R; }",
+    "new": "{ F.mem.runeR = EG_MASTERS_RUNE_R; }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "the masters' ground's Lesson unset"
+  },
+  {
+    "name": "EGA4L-masters-runes-unset",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "{ F.mem.lessonMin = EG_MASTERS_LESSON_R; F.mem.runeR = EG_MASTERS_RUNE_R; }",
+    "new": "{ F.mem.lessonMin = EG_MASTERS_LESSON_R; }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "the masters' ground's runes unset"
+  },
+  {
+    "name": "EGA4L-masters-lesson-r",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const EG_MASTERS_LESSON_R = 17;",
+    "new": "export const EG_MASTERS_LESSON_R = 16;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "the Last Lesson stopped at r 16"
+  },
+  {
+    "name": "EGA4L-mingled-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if ((B.strata ?? []).includes('mingled')) F.mingled = 1;   // AUDIT EG IV (section 18): THE MINGLED LEGION's waves (net/eliteGates/egLegion.js egWaveKinds)\n  const n = F.n, P = F.pg;",
+    "new": "  const n = F.n, P = F.pg;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "a fight's Mingled Legion unread"
+  },
+  {
+    "name": "EGA4L-deeper-start-shed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "B.h = egStartHall(B.ew); egStrataTo(B, B.ew);",
+    "new": "B.h = egStartHall(B.ew);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "a deeper start's strata shed"
+  },
+  {
+    "name": "EGA4L-cry-unsounded",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    rallyingCry(B, F, out, said0, now);",
+    "new": "    void rallyingCry;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "Rallying Cry never at a phase turn"
+  },
+  {
+    "name": "EGA4L-cry-every-lord",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (!(ph > (F.mem.cried ?? 1))) return;",
+    "new": "  if (!(ph > 1)) return;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "a cry for each lord's turn of a phase"
+  },
+  {
+    "name": "EGA4L-cry-resonance-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (!living(B).some(([, m]) => egResonance(m.vs).includes('fellowship'))) return;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "the cry without Fellowship's resonance"
+  },
+  {
+    "name": "EGA4L-cry-hungering-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "out.push({ k: 'eheal', p: B.tide === 'hungering' ? rally / 3 : rally, why: 'cry' });",
+    "new": "out.push({ k: 'eheal', p: rally, why: 'cry' });",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "Hungering Dark unread by the cry"
+  },
+  {
+    "name": "EGA4L-spotter-unwired",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (egMarkFoe(mm, body, m.r, now, sub, far)) egSpotted(F, body, now, out);",
+    "new": "egMarkFoe(mm, body, m.r, now, sub, far);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "a Spotter's spotting breaks nothing"
+  },
+  {
+    "name": "EGA4L-binder-break-unspent",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "(b.cast.dmg += got) >= b.cast.max) egBinderBroken(F, b, out);",
+    "new": "(b.cast.dmg += got) >= b.cast.max) { b.cast = null; F.pg.raise = null; out.push({ k: 'esay', w: 'raisebroken' }); }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "a Binder's broken raise left unspent"
+  },
+  {
+    "name": "EGA4L-strata-by-dice",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "const s = egSeasonStrata(arenaSeasonOf((B.op ?? 0) / 1000))[(w - 20) / 5];",
+    "new": "const s = egSeasonStrata(arenaSeasonOf((B.op ?? 0) / 1000) + (B.seed & 1))[(w - 20) / 5];",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "a stratum by a die, not the season"
+  },
+  {
+    "name": "EGA4L-strata-salt",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "const STRATA_SALT = 0x57a7a;",
+    "new": "const STRATA_SALT = 0x57a7b;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "the season's order another shuffle"
+  },
+  {
+    "name": "EGA4L-strata-to-short",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "for (let r = 20; r <= w; r += 5) egStratumAt(B, r);",
+    "new": "for (let r = 20; r < w; r += 5) egStratumAt(B, r);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "a deeper start's last stratum shed"
+  },
+  {
+    "name": "EGA4L-surplus-seventh",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "const more = m.offer.length < EG_OFFER_MAX ? egOfferOf(",
+    "new": "const more = true ? egOfferOf(",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "a seventh card"
+  },
+  {
+    "name": "EGA4L-surplus-spent-anyway",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "    if (more == null) return null;\n    m.offer = [...m.offer, more];",
+    "new": "    if (more == null) { B.sur--; return null; }\n    m.offer = [...m.offer, more];",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "the Surplus spent on nothing"
+  },
+  {
+    "name": "EGA4L-reroll-lawless",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "const o = { w, valk, ...(m.offerO ?? {}), vs: m.vs, mast: m.mast, kinds: m.kinds };",
+    "new": "const o = { w, valk, vs: m.vs, mast: m.mast };",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "the reroll's own law forgotten"
+  },
+  {
+    "name": "EGA4L-offers-company-unread",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "hollow: (B.strata ?? []).includes('hollow'), n };",
+    "new": "hollow: (B.strata ?? []).includes('hollow'), n: 0 };",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "the living company unread"
+  },
+  {
+    "name": "EGA4L-offers-kinds-unread",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "const cards = egOfferOf(rng, { ...m.offerO, vs: m.vs, mast: m.mast, kinds: m.kinds });",
+    "new": "const cards = egOfferOf(rng, { ...m.offerO, vs: m.vs, mast: m.mast, kinds: null });",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "a member's landed kinds unread"
+  },
+  {
+    "name": "EGA4L-shards-no-rank",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "rank: shardPicks > 0 ? 1 : 0,",
+    "new": "rank: 0, extra: shardPicks > 0 ? 1 : 0,",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "the shards' card left to chance"
+  },
+  {
+    "name": "EGA4L-mark-hunter-never-joins",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "const hm = cur?.hm ? 0 : egVOf(m?.vs, 'huntersmark')",
+    "new": "const hm = cur ? 0 : egVOf(m?.vs, 'huntersmark')",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "a Hunter's Mark never joining a spotted foe"
+  },
+  {
+    "name": "EGA4L-mark-spotter-never-joins",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "sp = !cur?.sp && m?.mast === EG_M_ID.spotter;",
+    "new": "sp = !cur && m?.mast === EG_M_ID.spotter;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "a Spotter never joining a Hunter's Mark"
+  },
+  {
+    "name": "EGA4L-mark-spotted-always",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "sp = !cur?.sp && m?.mast === EG_M_ID.spotter;",
+    "new": "sp = m?.mast === EG_M_ID.spotter;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "spotted at every arrow"
+  },
+  {
+    "name": "EGA4L-steadfast-three",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "steadfast: Object.freeze({ ally: 4 }),",
+    "new": "steadfast: Object.freeze({ ally: 3 }),",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "Steadfast Line offered to three"
+  },
+  {
+    "name": "EGA4L-acts-ally-unread",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "  if (N.ally && n > 0 && n < N.ally) return false;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "a card's ally unread"
+  },
+  {
+    "name": "EGA4L-acts-hit-unread",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "  if (N.hit && Array.isArray(kinds) && !N.hit.some((k) => (kinds[k] ?? 0) > 0)) return false;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "a card's blow kind unread"
+  },
+  {
+    "name": "EGA4L-acts-mastery-unread",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "EG_MASTERIES.filter((M) => M.id !== mast && egCardActs(M.key, n, kinds));",
+    "new": "EG_MASTERIES.filter((M) => M.id !== mast);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "a Mastery's blow kind unread"
+  },
+  {
+    "name": "EGA4L-shards-rank-dropped",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "  if (mine >= 0) cards.push(mine);",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "the shards' rank card dropped"
+  },
+  {
+    "name": "EGA4L-spot-x",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_SPOT_X = 0.1;",
+    "new": "export const EG_SPOT_X = 0.12;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "Spotter's 12%"
+  },
+  {
+    "name": "EGA4L-dusk-divers-raised",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (L.ph >= 3) egLegionSummon(F, [EG_KIND.diver, EG_KIND.diver], [Number.isFinite(y) ? [ax, az, y] : [ax, az]], now, out); }",
+    "new": "if (L.ph >= 3) egLegionRaise(F, [EG_KIND.diver, EG_KIND.diver], [Number.isFinite(y) ? [ax, az, y] : [ax, az]], now, out); }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "Moonfall's Divers past the cap"
+  },
+  {
+    "name": "EGA4L-cairn-wraiths-raised",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "egLegionSummon(F, L.ph >= 3 ? [EG_KIND.wraith, EG_KIND.wraith] : [EG_KIND.wraith], [[m.x + 2, m.z]], now, out); }",
+    "new": "egLegionRaise(F, L.ph >= 3 ? [EG_KIND.wraith, EG_KIND.wraith] : [EG_KIND.wraith], [[m.x + 2, m.z]], now, out); }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "the Cairn-Keeper's bursts past the cap"
+  },
+  {
+    "name": "EGA4L-rites-raised",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "F.mem.ritesAt = now + 20_000; egLegionSummon(F,",
+    "new": "F.mem.ritesAt = now + 20_000; egLegionRaise(F,",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "the Last Rites past the cap"
+  },
+  {
+    "name": "EGA4L-morvayn-odd-held",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "[[odd.x + 3, odd.z]], now, out, { need: 1 });",
+    "new": "[[odd.x + 3, odd.z]], now, out, {});",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "the odd member's Wraith held at the cap"
+  },
+  {
+    "name": "EGA4L-thrall-held",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "[[here[0].x + 4, here[0].z]], now, out, { need: 1 });",
+    "new": "[[here[0].x + 4, here[0].z]], now, out, {});",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "the lone member's thrall held at the cap"
+  },
+  {
+    "name": "EGA4L-pool-first-mark",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "for (const st of bl.s) zoneOut(F, 'burn',",
+    "new": "for (const st of bl.s.slice(0, 1)) zoneOut(F, 'burn',",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "the Hellfire's pool under its first mark alone"
+  },
+  {
+    "name": "EGA4L-hellfire-poolless",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "      { ...HELLFIRE, el: ATTACKS.hellfire.el, range: 99,",
+    "new": "      { ...HELLFIRE, pool: undefined, el: ATTACKS.hellfire.el, range: 99,",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion.test.js"
+    ],
+    "why": "the Mother of Dusk's Hellfire leaves no ground"
+  },
+  {
+    "name": "EGA4L-lesson-to-twelve",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const last = F.mem.lessonMin ?? EG_LESSON_LAST_R;",
+    "new": "const last = EG_LESSON_LAST_R;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "the masters' Last Lesson to r 12",
+    "note": "AUDIT EG V (h): re-aimed by content - the Lesson's last ring named EG_LESSON_LAST_R"
+  },
+  {
+    "name": "EGA4L-runes-ground-spots",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "Math.min(F.mem.runeR ?? Infinity, f.r - 1.5), !F.mem.runeR)",
+    "new": "Math.min(F.mem.runeR ?? Infinity, f.r - 1.5), true)",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "the masters' runes on the ground's own spots"
+  },
+  {
+    "name": "EGA4L-client-cry-unheard",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (w.k === 'eheal' && w.why === 'cry' && !witness && entity.health > 0 && inSpire()) spireRallyingCry();",
+    "new": "if (w.k === 'eheal' && w.why === 'cry' && !witness && entity.health > 0 && inSpire()) void spireRallyingCry;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "the cry unheard on the screen"
+  },
+  {
+    "name": "EGA4L-client-cry-wind-kept",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "  if (spent) _news.push({ k: 'rallyingCry' });\n  _wind = '';",
+    "new": "  if (spent) _news.push({ k: 'rallyingCry' });",
+    "tests": [
+      "test/net/eliteGates/egaudit4_legion_run.test.js"
+    ],
+    "why": "the Second Wind kept spent"
+  }
+]

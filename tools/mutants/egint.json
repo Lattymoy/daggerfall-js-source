@@ -1,0 +1,580 @@
+[
+  {
+    "name": "EGINT-the-delay-ignored",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  C.t = Math.min(arrival, Math.max(C.u + off - h, C.t, arrival - EG_TS_LAG_MAX_MS));",
+    "new": "  C.t = Math.min(arrival, Math.max(C.u + off, C.t, arrival - EG_TS_LAG_MAX_MS));",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-lag-clamp-gone",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  C.t = Math.min(arrival, Math.max(C.u + off - h, C.t, arrival - EG_TS_LAG_MAX_MS));",
+    "new": "  C.t = Math.min(arrival, Math.max(C.u + off - h, C.t));",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-last-pose-clamp-gone",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  C.t = Math.min(arrival, Math.max(C.u + off - h, C.t, arrival - EG_TS_LAG_MAX_MS));",
+    "new": "  C.t = Math.min(arrival, Math.max(C.u + off - h, arrival - EG_TS_LAG_MAX_MS));",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-a-backwards-stamp-trusted",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  if (C.ts != null) { const d = poseTsDiff(T, C.ts); if (d < 0) return null; C.u += d; }",
+    "new": "  if (C.ts != null) { const d = poseTsDiff(T, C.ts); C.u += d; }",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-speed-law-off",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "      if (w[0] > (EG_FAST_RUN_MPS * EG_FAIR_RUN_X + EG_FAIR_CARRY_MPS) * (Math.max(w[1], EG_FAIR_WIN_MS) / 1000) + EG_FAIR_SNAP_M) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-speed-a-window-late",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "(Math.max(w[1], EG_FAIR_WIN_MS) / 1000)",
+    "new": "(Math.max(w[1], 60_000) / 1000)",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-air-law-off",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "      if (!falling && !A.airBrk && (t - A.airAt) / 1000 > EG_AIR_MAX_S) {",
+    "new": "      if (!falling && !A.airBrk && (t - A.airAt) / 1000 > 999) {",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-island-never-ends-the-window",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  if (hold === EG_HOLD.island && fair && !(A.vd != null",
+    "new": "  if (false && !(A.vd != null",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-end-plate-an-island",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  if (g) return g === 'e' ? EG_HOLD.still : EG_HOLD.island;",
+    "new": "  if (g) return EG_HOLD.island;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-blind-share-unread",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "export const egFairOk = (A) => !A || (A.brk === 0 && !egFairBlind(A));",
+    "new": "export const egFairOk = (A) => !A || A.brk === 0;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-repeats-never-refused",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  if (A.brks >= 2) A.refuse = t + EG_FAIR_REPEAT_MS;",
+    "new": "  if (A.brks >= 3) A.refuse = t + EG_FAIR_REPEAT_MS;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-a-cast-back-a-step",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "    if (fell || (d > EG_FAIR_SNAP_M && hold && (back || home(A.isl) || (A.sup && home([A.sup[1], A.sup[3]]))))) A.win = null;",
+    "new": "    if (fell) A.win = null;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-any-offset-rides",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  if (!s || !(Math.abs(pl[1]) <= s.w / 2 + EG_BODY_R && Math.abs(pl[3]) <= s.d / 2 + EG_BODY_R && pl[2] >= -EG_RIDE_DOWN_M && pl[2] <= EG_RIDE_UP_M)) return false;",
+    "new": "  if (!s) return false;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-a-still-slab-ridden",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "export const EG_RIDE_KINDS = Object.freeze(['drift', 'rail', 'drum']);",
+    "new": "export const EG_RIDE_KINDS = Object.freeze(['drift', 'rail', 'drum', 'ledge']);",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-ride-judged-raw",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (Array.isArray(p.pl) && egRideHolds(spec, p.pl, x, y, z, t / 1000)) { const q = egRideAt(spec, p.pl, t / 1000); if (q) { [x, y, z] = q; ride = true; } }",
+    "new": "  if (false) { const q = egRideAt(spec, p.pl, t / 1000); if (q) { [x, y, z] = q; ride = true; } }",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-a-trail-begun-anywhere",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (!egOnArrive(spec, x, z, 2, y) && m.roseH !== B.h) { m.fair.brk = 1;",
+    "new": "if (false) { m.fair.brk = 1;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-door-on-any-arrival",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  const fair = at.find((b) => fairOf(B, b.sub));",
+    "new": "  const fair = at[0];",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-wake-deadlocks",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (!(B.fwake > 0 && B.hw > 0 && B.hw < B.fwake)) return null;",
+    "new": "  return null;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-down-on-any-trail",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (!p || !egAtDoor(spec, p.x, p.z, p.y) || !fairOf(B, sub)) return false;",
+    "new": "  if (!p || !egAtDoor(spec, p.x, p.z, p.y)) return false;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-repeat-hits-land",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (egFairRefuses(fairOfMember(B, sub), now)) return land(0);",
+    "new": "  if (false) return land(0);",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-watchfire-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    const v = egVOf(m.vs, 'watchfire');",
+    "new": "    const v = 0;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-enforcement-off",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const EG_BODY_ENFORCE = true;",
+    "new": "export const EG_BODY_ENFORCE = false;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-fall-told-to-all",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    out.push({ k: 'bd', to: h.sub });",
+    "new": "    out.push({ k: 'bd' });",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-word-disbelieved",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  return bodySaid(m, v / 1000, now, line, { enforce });",
+    "new": "  return false;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-a-heal-ignored",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "      else if (f.p > 0) bodyHealed(m, f.p * (egWallOf(B, sub) ? 1 + EG_WALL_X : 1), now, line, { enforce });",
+    "new": "      else if (f.p > 0) void 0;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-cast-back-uncapped",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "hits.push({ sub: b.sub, share: Math.min(egCastBackCost(m.vs), Math.max(0, (m.bd?.v ?? 1) * egCountWhole(m.vs) - EG_CAST_BACK_FLOOR)), i: 0, k: 2 });",
+    "new": "hits.push({ sub: b.sub, share: egCastBackCost(m.vs), i: 0, k: 2 });",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-a-disc-at-the-anchor",
+    "file": "src/net/bossRef.js",
+    "old": "test = (x, z) => egInBlow(a, x, z);",
+    "new": "test = (x, z) => Math.hypot(x - a.s[0][1], z - a.s[0][2]) <= 4;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-margin-dropped",
+    "file": "src/net/bossRef.js",
+    "old": "  return deepIn(test, p0[1], p0[3]) && deepIn(test, p1[1], p1[3]);",
+    "new": "  return test(p0[1], p0[3]) && test(p1[1], p1[3]);",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-an-element-counted",
+    "file": "src/net/bossRef.js",
+    "old": "    const by = egFeetY(spec, a.y), share = a.el == null ? Math.min(1, Math.max(0, a.p)) : 0, ys = floorsUnder(spec, a.s?.[0], by),",
+    "new": "    const by = egFeetY(spec, a.y), share = Math.min(1, Math.max(0, a.p)), ys = floorsUnder(spec, a.s?.[0], by),",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-wait-skipped",
+    "file": "src/net/bossRef.js",
+    "old": "      if (!egTrailReady(b.tr, a.at, now)) continue;\n      a.bh.push(b.sub);\n      if (deepShared(test, b.tr, a.at, F.h, spec, ys, free, by)) out.push(hit);",
+    "new": "      a.bh.push(b.sub);\n      if (deepShared(test, b.tr, a.at, F.h, spec, ys, free, by)) out.push(hit);",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-silent-counted",
+    "file": "src/net/bossRef.js",
+    "old": "  if (!egTrailNear(tr, at)) return false;",
+    "new": "  if (false) return false;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-off-the-fight-floor",
+    "file": "src/net/bossRef.js",
+    "old": "  if (!free) for (const p of [p0, p1]) { const f = egFightFloorAt(spec, p[1], p[2], p[3]); if (!f || (ys && !ys.includes(f.y ?? 0))) return false; }",
+    "new": "  void ys; void free;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-a-hazards-element-counted",
+    "file": "src/net/bossRef.js",
+    "old": "    const share = q.el == null ? Math.min(1, q.p) : 0, test = (x, z) => egInShape(q.s, x, z);",
+    "new": "    const share = Math.min(1, q.p), test = (x, z) => egInShape(q.s, x, z);",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-vents-out-of-the-set",
+    "file": "src/net/eliteGates/egFloor.js",
+    "old": "        if (at > now && at >= wokeAt && egVentAt(v, wokeAt, at).st === 'fire') out.push(",
+    "new": "        if (false) out.push(",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-hazards-out-of-the-set",
+    "file": "src/net/eliteGates/egFloor.js",
+    "old": "    if (!L || L.aim !== 'fight' || hz.kind === 'wisp') continue;",
+    "new": "    continue;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-place-left-out-of-the-hold",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "const pending = [...live, ...egPlaceLandings(spec, F.wokeAt, now, until), ...egZoneLandings(F.zones, now, until)];",
+    "new": "const pending = [...live, ...egZoneLandings(F.zones, now, until)];",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-wind-up-shortened",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "  blow.at = Math.max(blow.at, now + blow.wu + (blow.ol ?? 0));",
+    "new": "  void 0;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-tell-to-everyone",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "  for (const m of here) if (egBlowNear(blow, m.x, m.z) <= EG_TELL_NEAR_M) subs.add(m.sub);",
+    "new": "  for (const m of here) subs.add(m.sub);",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-tell-early",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "  if (!(lead > 0) || now < say - lead) return [];",
+    "new": "  if (!(lead > 0)) return [];",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-untell-never-said",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "if (egUnionHeld(F, spec, blow, here, now)) {\n    for (const sub of told) out.push({ k: 'untell', to: sub, i: blow.i });",
+    "new": "if (egUnionHeld(F, spec, blow, here, now)) {\n    void told;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-far-watch-off",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "((w.ls ?? []).some((p) => egInBlow(blow, p[0], p[1])) ? EG_FARWATCH_MS : 0)",
+    "new": "0",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-feint-at-half",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "export const EG_FEINT_AT = 0.55;",
+    "new": "export const EG_FEINT_AT = 0.5;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-a-lords-blow-unled",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "flat ? [] : here, now, out, flat ? 0 : EG_TELL_LEAD_MS);",
+    "new": "flat ? [] : here, now, out, 0);",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-cut-on-the-commits-clock",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "cutAt = b ? egBlowFrom(b) + Math.round(b.wu * EG_FEINT_AT) : 0;",
+    "new": "cutAt = b ? egBlowFrom(b) - EG_TELL_LEAD_MS + Math.round(b.wu * EG_FEINT_AT) : 0;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-round-trip-not-halved",
+    "file": "src/net/eliteGates/egClock.js",
+    "old": "  C.samples.push(now - (at + wall) / 2);",
+    "new": "  C.samples.push(now - wall);",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js",
+      "test/net/eliteGates/egint_client.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-mean-not-the-median",
+    "file": "src/net/eliteGates/egClock.js",
+    "old": "export const egClockOffset = (C) => (C.samples.length ? median(C.samples) : null);",
+    "new": "export const egClockOffset = (C) => (C.samples.length ? C.samples.reduce((a, b) => a + b, 0) / C.samples.length : null);",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js",
+      "test/net/eliteGates/egint_client.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-no-delay-said",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        if (c != null && !o?.sendEg?.('clk', { c, h: egClockHalfRtt(clock) })) clock.sent.delete(c);",
+    "new": "        if (c != null && !o?.sendEg?.('clk', { c })) clock.sent.delete(c);",
+    "tests": [
+      "test/net/eliteGates/egint_client.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-link-on-the-hosts-clock",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "  const link = createEgLink({ now, say, onReceipt: (r) => claimAdd(r), onRefused: (w) => refused(w) });",
+    "new": "  const link = createEgLink({ now: hostNow, say, onReceipt: (r) => claimAdd(r), onRefused: (w) => refused(w) });",
+    "tests": [
+      "test/net/eliteGates/egint_client.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-counts-fall-a-death-said-back",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    mid(EG_COUNT_FELL_TEXT);\n    enterWitness(now(), true);",
+    "new": "    mid(EG_COUNT_FELL_TEXT);\n    enterWitness(now(), false);",
+    "tests": [
+      "test/net/eliteGates/egint_client.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-ride-never-said",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    return egRideOf(spec, egLocalX(spec, at.sx), y, at.z, now() / 1000);",
+    "new": "    return null;",
+    "tests": [
+      "test/net/eliteGates/egint_client.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-hooks-left-on",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (o) { o.poseRide = inSpire() ? ridePl : null; o.rideAt = inSpire() ? rideDraw : null; }",
+    "new": "      if (o) { o.poseRide = ridePl; o.rideAt = rideDraw; }",
+    "tests": [
+      "test/net/eliteGates/egint_client.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-a-peer-drawn-raw",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    q.x = x; q.y = y; q.z = z;",
+    "new": "    void x; void y; void z;",
+    "tests": [
+      "test/net/eliteGates/egint_client.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-body-never-said",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (!witness && entity.health > 0 && entity.maxHealth > 0 && egMemberOf(E, me())?.in) sayBody(",
+    "new": "if (false) sayBody(",
+    "tests": [
+      "test/net/eliteGates/egint_client.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-wind-at-the-start",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "t < blow.at && t >= blow.at - blow.wu + blow.wu * EG_FEINT_AT + egWindGraceMs(b.fl | 0)) {",
+    "new": "t < blow.at) {",
+    "tests": [
+      "test/net/eliteGates/egint_client.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-a-cut-blows-wind",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    if (blow && !cued.has(blow.i) && !blow.cut && t < blow.at",
+    "new": "    if (blow && !cued.has(blow.i) && t < blow.at",
+    "tests": [
+      "test/net/eliteGates/egint_client.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-told-never-drawn",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "        drawTold(bl, t);   // EG-H1: Watchfire's early outlines",
+    "new": "      void drawTold;",
+    "tests": [
+      "test/net/eliteGates/egint_client.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-untell-ignored",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "    case 'untell': return { ...f, told: (f.told ?? []).filter((b) => b.i !== w.i) };",
+    "new": "    case 'untell': return f;",
+    "tests": [
+      "test/net/eliteGates/egint_client.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-tell-never-folded",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "    case 'tell': return { ...f, told: [...(f.told ?? []).filter((b) => b.i !== w.i && now <= b.at + 1500), { ...w, heard: now }].slice(-16) };",
+    "new": "    case 'tell': return f;",
+    "tests": [
+      "test/net/eliteGates/egint_client.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-a-body-past-the-whole",
+    "file": "src/net/wire.js",
+    "old": "    case 'vt': return intIn(m.v, 0, BODY_WORD_MAX) ? { k: 'vt', v: m.v } : null;   // EG-H1",
+    "new": "    case 'vt': return intIn(m.v, 0, 1e9) ? { k: 'vt', v: m.v } : null;   // EG-H1",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-a-ride-offset-unbounded",
+    "file": "src/net/wire.js",
+    "old": "pl.slice(1).every((v) => finite(v) && Math.abs(v) <= POSE_RIDE_OFF_MAX)",
+    "new": "pl.slice(1).every((v) => finite(v))",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-a-tell-with-no-lead",
+    "file": "src/net/wire.js",
+    "old": "    case 'tell': { const b = egBlowW(m); return b && intIn(m.sh, 1, 400) ?",
+    "new": "    case 'tell': { const b = egBlowW(m); return b ?",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-room-judges-no-pose",
+    "file": "server/src/index.js",
+    "old": "    if (posed && isEgRoom(a.key) && typeof a.sub === 'string' && a.sub) this._egPoseIn(ws, a, m.p, now);",
+    "new": "    void 0;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-delay-never-kept",
+    "file": "server/src/index.js",
+    "old": "if (Number.isInteger(m.h)) { const all = (this._egClocks ??= new Map()); let c = all.get(ws); if (!c) all.set(ws, c = egPoseClock()); c.h = m.h; }",
+    "new": "void 0;",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGINT-the-count-never-run",
+    "file": "server/src/index.js",
+    "old": "      const out = [...egCount(B, now, this._egTrails(B), this._egLine(), EG_BODY_ENFORCE), ...egStep(B, now, this._egBodies(B, now), rand01)];",
+    "new": "      const out = egStep(B, now, this._egBodies(B, now), rand01);",
+    "tests": [
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  }
+]

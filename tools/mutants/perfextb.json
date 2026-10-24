@@ -5,16 +5,16 @@
     "old": "      _box: undefined, sway: undefined, windfall: undefined, tip: undefined, conceal: undefined,",
     "new": "      tip: undefined, conceal: undefined,",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
     "name": "PERF-EXT10-2-conceal-noShadow-and-selfCard-are-gained-a-walker-a-pile-and-the-card-split",
     "file": "src/render/renderer.js",
-    "old": " conceal: undefined, hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, tint: undefined, noShadow: undefined, selfCard: undefined, _dead: undefined,",
-    "new": " hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, tint: undefined, _dead: undefined,",
+    "old": " conceal: undefined, hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, crack: undefined, tint: undefined, dye: undefined, noShadow: undefined, ghost: undefined, selfCard: undefined, _dead: undefined,",
+    "new": " hitFlash: undefined, eliteGlow: undefined, eliteTime: undefined, elitePad: undefined, glint: undefined, dissolve: undefined, crack: undefined, tint: undefined, dye: undefined, ghost: undefined, _dead: undefined,",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": " _dead: undefined, _moveScratch: undefined, dwColumn: undefined,\n",
     "new": " dwColumn: undefined,\n",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      _bbKey: undefined, _bbKeyId: undefined, _bbKeyRecord: undefined, _bbKeyFrame: undefined, _bbKeyArchive: undefined,\n",
     "new": "",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      _shGen: undefined, _shAx: NaN, _shAy: NaN, _shAz: NaN, _shSeen: undefined, _shOx: NaN, _shOy: NaN, _shOz: NaN, _shFrame: undefined,\n",
     "new": "",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": " _shSway: undefined, _shMovedAt: undefined, _shId: undefined,",
     "new": " _shSway: undefined, _shId: undefined,",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -59,16 +59,16 @@
     "old": " _shMovedAt: undefined, _shId: undefined,\n",
     "new": " _shMovedAt: undefined,\n",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
     "name": "PERF-EXT10-8-a-host-writes-a-field-the-factory-never-minted",
-    "file": "src/scenes/world.js",
-    "old": "      batch.sway = floraSwayOf(archive, natureSet, size.h);",
-    "new": "      batch.sway = floraSwayOf(archive, natureSet, size.h); batch._flora = true;",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      batch.sway = floraSwayOf(archive, g.natureSet, size.h);",
+    "new": "      batch.sway = floraSwayOf(archive, g.natureSet, size.h); batch._flora = true;",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      if (b._shGen !== this._shiftGen) this._shiftSeen(b);\n",
     "new": "      if (b._shGen !== this._shiftGen) this._shiftSeen(b); b._shLast = this.frameNo;\n",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      if (w !== lastW || h !== lastH) { gl.uniform2f(this.bbUSize, w, h);",
     "new": "      if (w !== lastW) { gl.uniform2f(this.bbUSize, w, h);",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "      if (o[0] !== lastOx || o[1] !== lastOy || o[2] !== lastOz) { gl.uniform3f(this.bbUOrigin,",
     "new": "      if (o[0] !== lastOx || o[1] !== lastOy) { gl.uniform3f(this.bbUOrigin,",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      if (o[0] !== lastOx || o[1] !== lastOy || o[2] !== lastOz) { gl.uniform3f(this.bbUOrigin,",
     "new": "      if (o[0] !== lastOx || o[2] !== lastOz) { gl.uniform3f(this.bbUOrigin,",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "gl.uniform2f(this.bbUSize, w, h); lastW = w; lastH = h; }",
     "new": "gl.uniform2f(this.bbUSize, w, h); }",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    let lastW = NaN, lastH = NaN, lastOx = NaN, lastOy = NaN, lastOz = NaN;\n    const drawOne = (b) => {\n      const key = billboardKey(b);   // FA1/MAC4: the key follows every field it is made of (billboardKey.js)\n      const tex = this.textures.get(key) ?? this._textureMissed(key);   // FIELD BUGS 2026-10-04d PLACE-LRU: a picture let go is made again\n      if (!tex) return;\n      // CSA-B: `emissionOff` - a flat whose material's _EmissionColor is black (Come Sail Away's SetLights on an\n      // unlit lantern) binds no emission map; a change of it forgets the last key, so a lit and an unlit lantern of\n      // one record never share a bind (and a pass with no such flat never rebinds for it)\n      if (!!b.emissionOff !== lastDark) { lastDark = !!b.emissionOff; lastKey = null; }\n      if (key !== lastKey) {\n        this._activeTexture(gl.TEXTURE0);\n        gl.bindTexture(gl.TEXTURE_2D, tex);\n        this._activeTexture(gl.TEXTURE1);\n        gl.bindTexture(gl.TEXTURE_2D, (!b.emissionOff && this.emissionTextures.get(key)) || this._blackTex);\n        this._tex0Bound = null;   // PERF-TEX3: and unit 0 with it - this path binds its own and keeps its own `lastKey` skip\n        this._tex1Bound = null;   // PERF-TEX: this path has skipped on `lastKey` since it was written, so it needs no shadow of its own - but it OWNS unit 1 while it runs, and the mesh loop's shadow cannot speak for it afterwards\n        this.stats.texBinds += 2;\n        lastKey = key;\n      }\n      const w = b.size.w, h = b.size.h;\n      if (w !== lastW || h !== lastH) { gl.uniform2f(this.bbUSize, w, h); lastW = w; lastH = h; }",
     "new": "    const carried = (this._bbCarried ??= { w: NaN, h: NaN });\n    let lastW = carried.w, lastH = carried.h, lastOx = NaN, lastOy = NaN, lastOz = NaN;\n    const drawOne = (b) => {\n      const key = billboardKey(b);   // FA1/MAC4: the key follows every field it is made of (billboardKey.js)\n      const tex = this.textures.get(key) ?? this._textureMissed(key);   // FIELD BUGS 2026-10-04d PLACE-LRU: a picture let go is made again\n      if (!tex) return;\n      // CSA-B: `emissionOff` - a flat whose material's _EmissionColor is black (Come Sail Away's SetLights on an\n      // unlit lantern) binds no emission map; a change of it forgets the last key, so a lit and an unlit lantern of\n      // one record never share a bind (and a pass with no such flat never rebinds for it)\n      if (!!b.emissionOff !== lastDark) { lastDark = !!b.emissionOff; lastKey = null; }\n      if (key !== lastKey) {\n        this._activeTexture(gl.TEXTURE0);\n        gl.bindTexture(gl.TEXTURE_2D, tex);\n        this._activeTexture(gl.TEXTURE1);\n        gl.bindTexture(gl.TEXTURE_2D, (!b.emissionOff && this.emissionTextures.get(key)) || this._blackTex);\n        this._tex0Bound = null;   // PERF-TEX3: and unit 0 with it - this path binds its own and keeps its own `lastKey` skip\n        this._tex1Bound = null;   // PERF-TEX: this path has skipped on `lastKey` since it was written, so it needs no shadow of its own - but it OWNS unit 1 while it runs, and the mesh loop's shadow cannot speak for it afterwards\n        this.stats.texBinds += 2;\n        lastKey = key;\n      }\n      const w = b.size.w, h = b.size.h;\n      if (w !== lastW || h !== lastH) { gl.uniform2f(this.bbUSize, w, h); lastW = carried.w = w; lastH = carried.h = h; }",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "if (o[0] !== lastOx || o[1] !== lastOy || o[2] !== lastOz) { gl.uniform3f(P.bb.origin,",
     "new": "if (o[0] !== lastOx || o[1] !== lastOy) { gl.uniform3f(P.bb.origin,",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "if (w !== lastW || h !== lastH) { gl.uniform2f(P.bb.size, w, h);",
     "new": "if (w !== lastW) { gl.uniform2f(P.bb.size, w, h);",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "gl.uniform3f(P.bb.origin, o[0], o[1], o[2]); lastOx = o[0]; lastOy = o[1]; lastOz = o[2]; }",
     "new": "gl.uniform3f(P.bb.origin, o[0], o[1], o[2]); }",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    const use = (prog) => { if (bound !== prog) { gl.useProgram(prog.p); gl.uniformMatrix4fv(prog.proj, false, vp); gl.uniformMatrix4fv(prog.view, false, this._identityView); bound = prog; } };\n    // PERF-SHADOW1: a lantern's face walks its candidates (_casterCandidates) - every record, and every flat of a list,\n    // that this face could take, in their own order - and asks each the questions below exactly as before\n    const nRec = cand ? cand.n : this.count;\n    for (let j = 0; j < nRec; j++) {\n      const r = this.records[cand ? cand.rec[j] : j];\n      if (filter !== REPLAY_ALL && r.kind !== REC_BB && (filter === REPLAY_STATIC || filter === REPLAY_LO) === r.dynamic && !(filter === REPLAY_LO && r.kind === REC_CHAR && r.anchored)) continue;   // SC1: the static replay skips the movers, the dynamic one the still (DISC29-E: the lo tier's is a static one; AUDIT MWNPC16-18 A3: and a body that never walks, as a flat animating in place)\n      if (r.kind !== REC_BB && !recordVisible(planes, r)) { this.stats.culled++; continue; }\n      if (minRadius > 0 && r.kind !== REC_BB && r.kind !== REC_CHAR && r.bounded && r.sphere && r.sphere[3] < minRadius) { this.stats.culled++; continue; }   // F5: a small solid or terrain piece; a rig is a person\n      if (r.kind === REC_MESH) {\n        const mesh = r.mesh;\n        if (!mesh?.vao || mesh._dead || !mesh.subMeshes?.length) continue;\n        let vaoBound = false;\n        // LA-AUDIT A1: a static batch with shadow cells replays its cells, not its sub-meshes - the same triangles in\n        // the cells' own buffer (staticBatch.js shadowCells), each culled by its own sphere\n        const cells = r.bounded && !mesh._evAnyCut ? mesh.shadowCells : null;   // RW1: a mesh with a cutout picture replays its sub-meshes - a cell mixes pictures\n        const subs = cells ?? mesh.subMeshes;\n        const vao = cells ? mesh.shadowVao : mesh.vao;\n        // PERF-EXT2 (2026-09-25, the players' \"fps issues in the exterior\n        // but fine in the interior\"): A RUN OF SUB-MESHES IS ONE DEPTH DRAW.\n        // PERF4's static batch is one sub-mesh per texture, laid end to end\n        // from index 0 (StaticBatchBuilder.finish), each spanning the whole\n        // pixel - so nearly all of them pass every cascade and face, and a\n        // replay drew a 40-texture city pixel as 40 draws. One draw per\n        // texture is the LIT pass's minimum; a depth replay binds nothing\n        // between two sub-meshes (DEPTH_FS reads nothing, the model and the\n        // VAO are the record's), so a run of visible sub-meshes whose ranges\n        // meet is the same triangles in one drawElements, and depth is a\n        // per-texel minimum that no draw order can change. A culled one\n        // breaks the run by itself: the next visible starts past runEnd.\n        let runAt = -1, runEnd = -1;\n        for (let k = 0; k < subs.length; k++) {\n          if (cells ? !sphereInPlanes(planes, r.cellSpheres[k * 4], r.cellSpheres[k * 4 + 1], r.cellSpheres[k * 4 + 2], r.cellSpheres[k * 4 + 3]) : !subMeshVisible(planes, r, k)) { this.stats.culled++; continue; }\n          const sm = subs[k], n = sm.primitiveCount * 3;\n          if (!cells && sm._evCut && sm._evTex) {   // RW1: a cutout picture (renderer.js _markCutout) - its holes cast nothing: its own draw, its picture's half-alpha cut\n            if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt * 4); draws++; runAt = -1; runEnd = -1; }\n            use(P.meshCutout); gl.uniformMatrix4fv(P.meshCutout.model, false, r.matrix);\n            gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, sm._evTex); gl.uniform1i(P.meshCutout.tex, 0);\n            f.bindVao(vao);\n            gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_INT, sm.startIndex * 4); draws++;\n            vaoBound = false;   // the record's own program again for the next run\n            continue;\n          }\n          if (!vaoBound) {\n            const prog = r.cut > 0 ? P.meshCut : P.mesh;   // AUDIT BAY A12: a fading ship's share of her depth\n            use(prog); gl.uniformMatrix4fv(prog.model, false, r.matrix);\n            if (r.cut > 0) gl.uniform1f(prog.cut, r.cut);\n            f.bindVao(vao); vaoBound = true;\n          }\n          if (sm.startIndex === runEnd) { runEnd += n; continue; }\n          if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt * 4); draws++; }\n          runAt = sm.startIndex; runEnd = runAt + n;\n        }\n        if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt * 4); draws++; }\n      } else if (r.kind === REC_CHAR) {\n        const mesh = r.mesh;\n        if (!mesh?.vao || mesh._dead) continue;\n        // MWNPC16: a GPU-skinned body through its skinned depth program, its palette on the lit draw's unit (handed to\n        // the renderer, which keeps the unit's word - f.holdSkin); one let go since its record (its palette deleted)\n        // casts nothing\n        const skin = mesh.skin || null;\n        if (skin && !skin.tex) continue;\n        const prog = skin ? P.body : P.char;\n        if (!prog) continue;\n        use(prog);\n        gl.uniformMatrix4fv(prog.model, false, r.matrix);\n        if (skin) { gl.uniform1f(prog.skin, skin.pairs); f.holdSkin?.(skin.tex); }\n        f.bindVao(mesh.vao);\n        if (mesh.ranges && mesh.ranges.length) {\n          // MWNPC16: A RUN OF RANGES IS ONE DEPTH DRAW (PERF-EXT2's law for a rig): a body is a range a piece - a head,\n          // hair, a cuirass, two gauntlets, boots - laid end to end, and a depth draw binds nothing between two of them.\n          // A hidden range (a sheathed blade, an unlit torch - rule 57) breaks the run; a range with a cut-out picture\n          // (hair, a fringe) is its own draw through its picture's half-alpha cut, as a flat casts.\n          const cutP = skin ? P.bodyCut : P.charCut;\n          let runAt = -1, runEnd = -1;\n          for (const rg of mesh.ranges) {\n            if (rg.hidden || !(rg.count > 0)) continue;\n            if (rg.alphaCut > 0 && rg.tex && cutP) {\n              if (runAt >= 0) { gl.drawArrays(gl.TRIANGLES, runAt, runEnd - runAt); draws++; runAt = -1; runEnd = -1; }\n              use(cutP);\n              gl.uniformMatrix4fv(cutP.model, false, r.matrix);\n              if (skin) gl.uniform1f(cutP.skin, skin.pairs);\n              gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, rg.tex);\n              gl.drawArrays(gl.TRIANGLES, rg.first, rg.count); draws++;\n              use(prog);   // the record's own program again for the next run (its model and skin are the program's)\n              continue;\n            }\n            if (rg.first === runEnd) { runEnd += rg.count; continue; }\n            if (runAt >= 0) { gl.drawArrays(gl.TRIANGLES, runAt, runEnd - runAt); draws++; }\n            runAt = rg.first; runEnd = rg.first + rg.count;\n          }\n          if (runAt >= 0) { gl.drawArrays(gl.TRIANGLES, runAt, runEnd - runAt); draws++; }\n        } else { gl.drawArrays(gl.TRIANGLES, 0, mesh.count); draws++; }\n      } else if (r.kind === REC_TERRAIN) {\n        const s = r.surface;\n        if (!s?.vao || s._dead) continue;\n        use(P.terrain);\n        gl.uniformMatrix4fv(P.terrain.model, false, r.matrix);\n        f.bindVao(s.vao);\n        gl.drawElements(gl.TRIANGLES, s.indexCount, gl.UNSIGNED_INT, 0);\n        draws++;\n      } else {\n        use(P.bb);\n        gl.uniform1i(P.bb.tex, 0);\n        gl.uniform4fv(P.bb.flatWind, r.flatWind);\n        if (P.bb.wfAxis) { gl.uniform4fv(P.bb.wfSway, r.wfSway); gl.uniform4fv(P.bb.wfAxis, r.wfAxis); }   // WINDFALL1: the mod's law, as the flats were drawn\n        gl.activeTexture(gl.TEXTURE0);\n        let lastSway = null;\n        // PERF-BASIS (2026-09-19): THE BASIS IS UPLOADED ONCE, NOT ONCE A\n        // FLAT. Both vectors went up twice per batch per replay, and only\n        // ONE of the four cases varies: `up` is the constant [0,1,0] (or\n        // the record's, fixed for the record), and `right` is the frame's\n        // sun basis - set once in frame() before the cascade loop - unless\n        // this is a LANTERN's replay, where each flat turns to face it\n        // (below). So a sun cascade was paying two uniform uploads a flat\n        // for two numbers that could not change, three cascades deep,\n        // every frame. On a frame that is script-bound, a GL call that\n        // cannot change anything is the purest kind of waste there is.\n        const perBatchRight = !recordBasis && !!lightPos;\n        gl.uniform3fv(P.bb.up, recordBasis ? r.up : this._up);\n        if (!perBatchRight) gl.uniform3fv(P.bb.right, recordBasis ? r.right : this._right);\n        // PERF-BASIS: and the texture bind skips its repeats, as the main\n        // pass's has since PERF3 - a run of flats sharing a record bound\n        // the same texture once apiece.\n        let lastTex = null;\n        let faced = null;   // DISC29-E: the face uniform's state for this record (set at its first flat)\n        // PERF-EXT11 (2026-09-25, the players' \"fps issues in the exterior\n        // but fine in the interior\"): and the origin and the size skip\n        // theirs. A record is one host call's list in pixel order, and a\n        // pixel's batches share ONE origin array (world.js: `b.origin = t`),\n        // so the origin changed about one flat in five on the harness town\n        // (234 uploads a sun replay, 44 after). Exact for the reason the\n        // sway's skip is: P.bb is bound once for the record and nothing in\n        // this loop binds another, and only this loop writes these two.\n        // Reset per record, beside the sway's and the texture's.\n        let lastW = NaN, lastH = NaN, lastOx = NaN, lastOy = NaN, lastOz = NaN;\n        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]), law = windfallLawOn(r.windfall);   // PERF-EXT1: the record's wind, for its quads' lean; WINDFALL1: and whose law\n        for (const b of (cand ? cand.bb[j] : r.batches)) {",
     "new": "    const use = (prog) => { if (bound !== prog) { gl.useProgram(prog.p); gl.uniformMatrix4fv(prog.proj, false, vp); gl.uniformMatrix4fv(prog.view, false, this._identityView); bound = prog; } };\n    let lastW = NaN, lastH = NaN, lastOx = NaN, lastOy = NaN, lastOz = NaN;\n    // PERF-SHADOW1: a lantern's face walks its candidates (_casterCandidates) - every record, and every flat of a list,\n    // that this face could take, in their own order - and asks each the questions below exactly as before\n    const nRec = cand ? cand.n : this.count;\n    for (let j = 0; j < nRec; j++) {\n      const r = this.records[cand ? cand.rec[j] : j];\n      if (filter !== REPLAY_ALL && r.kind !== REC_BB && (filter === REPLAY_STATIC || filter === REPLAY_LO) === r.dynamic && !(filter === REPLAY_LO && r.kind === REC_CHAR && r.anchored)) continue;   // SC1: the static replay skips the movers, the dynamic one the still (DISC29-E: the lo tier's is a static one; AUDIT MWNPC16-18 A3: and a body that never walks, as a flat animating in place)\n      if (r.kind !== REC_BB && !recordVisible(planes, r)) { this.stats.culled++; continue; }\n      if (minRadius > 0 && r.kind !== REC_BB && r.kind !== REC_CHAR && r.bounded && r.sphere && r.sphere[3] < minRadius) { this.stats.culled++; continue; }   // F5: a small solid or terrain piece; a rig is a person\n      if (r.kind === REC_MESH) {\n        const mesh = r.mesh;\n        if (!mesh?.vao || mesh._dead || !mesh.subMeshes?.length) continue;\n        let vaoBound = false;\n        // LA-AUDIT A1: a static batch with shadow cells replays its cells, not its sub-meshes - the same triangles in\n        // the cells' own buffer (staticBatch.js shadowCells), each culled by its own sphere\n        const cells = r.bounded && !mesh._evAnyCut ? mesh.shadowCells : null;   // RW1: a mesh with a cutout picture replays its sub-meshes - a cell mixes pictures\n        const subs = cells ?? mesh.subMeshes;\n        const vao = cells ? mesh.shadowVao : mesh.vao;\n        // PERF-EXT2 (2026-09-25, the players' \"fps issues in the exterior\n        // but fine in the interior\"): A RUN OF SUB-MESHES IS ONE DEPTH DRAW.\n        // PERF4's static batch is one sub-mesh per texture, laid end to end\n        // from index 0 (StaticBatchBuilder.finish), each spanning the whole\n        // pixel - so nearly all of them pass every cascade and face, and a\n        // replay drew a 40-texture city pixel as 40 draws. One draw per\n        // texture is the LIT pass's minimum; a depth replay binds nothing\n        // between two sub-meshes (DEPTH_FS reads nothing, the model and the\n        // VAO are the record's), so a run of visible sub-meshes whose ranges\n        // meet is the same triangles in one drawElements, and depth is a\n        // per-texel minimum that no draw order can change. A culled one\n        // breaks the run by itself: the next visible starts past runEnd.\n        let runAt = -1, runEnd = -1;\n        for (let k = 0; k < subs.length; k++) {\n          if (cells ? !sphereInPlanes(planes, r.cellSpheres[k * 4], r.cellSpheres[k * 4 + 1], r.cellSpheres[k * 4 + 2], r.cellSpheres[k * 4 + 3]) : !subMeshVisible(planes, r, k)) { this.stats.culled++; continue; }\n          const sm = subs[k], n = sm.primitiveCount * 3;\n          if (!cells && sm._evCut && sm._evTex) {   // RW1: a cutout picture (renderer.js _markCutout) - its holes cast nothing: its own draw, its picture's half-alpha cut\n            if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt * 4); draws++; runAt = -1; runEnd = -1; }\n            use(P.meshCutout); gl.uniformMatrix4fv(P.meshCutout.model, false, r.matrix);\n            gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, sm._evTex); gl.uniform1i(P.meshCutout.tex, 0);\n            f.bindVao(vao);\n            gl.drawElements(gl.TRIANGLES, n, gl.UNSIGNED_INT, sm.startIndex * 4); draws++;\n            vaoBound = false;   // the record's own program again for the next run\n            continue;\n          }\n          if (!vaoBound) {\n            const prog = r.cut > 0 ? P.meshCut : P.mesh;   // AUDIT BAY A12: a fading ship's share of her depth\n            use(prog); gl.uniformMatrix4fv(prog.model, false, r.matrix);\n            if (r.cut > 0) gl.uniform1f(prog.cut, r.cut);\n            f.bindVao(vao); vaoBound = true;\n          }\n          if (sm.startIndex === runEnd) { runEnd += n; continue; }\n          if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt * 4); draws++; }\n          runAt = sm.startIndex; runEnd = runAt + n;\n        }\n        if (runAt >= 0) { gl.drawElements(gl.TRIANGLES, runEnd - runAt, gl.UNSIGNED_INT, runAt * 4); draws++; }\n      } else if (r.kind === REC_CHAR) {\n        const mesh = r.mesh;\n        if (!mesh?.vao || mesh._dead) continue;\n        // MWNPC16: a GPU-skinned body through its skinned depth program, its palette on the lit draw's unit (handed to\n        // the renderer, which keeps the unit's word - f.holdSkin); one let go since its record (its palette deleted)\n        // casts nothing\n        const skin = mesh.skin || null;\n        if (skin && !skin.tex) continue;\n        const prog = skin ? P.body : P.char;\n        if (!prog) continue;\n        use(prog);\n        gl.uniformMatrix4fv(prog.model, false, r.matrix);\n        if (skin) { gl.uniform1f(prog.skin, skin.pairs); f.holdSkin?.(skin.tex); }\n        f.bindVao(mesh.vao);\n        if (mesh.ranges && mesh.ranges.length) {\n          // MWNPC16: A RUN OF RANGES IS ONE DEPTH DRAW (PERF-EXT2's law for a rig): a body is a range a piece - a head,\n          // hair, a cuirass, two gauntlets, boots - laid end to end, and a depth draw binds nothing between two of them.\n          // A hidden range (a sheathed blade, an unlit torch - rule 57) breaks the run; a range with a cut-out picture\n          // (hair, a fringe) is its own draw through its picture's half-alpha cut, as a flat casts.\n          const cutP = skin ? P.bodyCut : P.charCut;\n          let runAt = -1, runEnd = -1;\n          for (const rg of mesh.ranges) {\n            if (rg.hidden || !(rg.count > 0)) continue;\n            if (rg.alphaCut > 0 && rg.tex && cutP) {\n              if (runAt >= 0) { gl.drawArrays(gl.TRIANGLES, runAt, runEnd - runAt); draws++; runAt = -1; runEnd = -1; }\n              use(cutP);\n              gl.uniformMatrix4fv(cutP.model, false, r.matrix);\n              if (skin) gl.uniform1f(cutP.skin, skin.pairs);\n              gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, rg.tex);\n              gl.drawArrays(gl.TRIANGLES, rg.first, rg.count); draws++;\n              use(prog);   // the record's own program again for the next run (its model and skin are the program's)\n              continue;\n            }\n            if (rg.first === runEnd) { runEnd += rg.count; continue; }\n            if (runAt >= 0) { gl.drawArrays(gl.TRIANGLES, runAt, runEnd - runAt); draws++; }\n            runAt = rg.first; runEnd = rg.first + rg.count;\n          }\n          if (runAt >= 0) { gl.drawArrays(gl.TRIANGLES, runAt, runEnd - runAt); draws++; }\n        } else { gl.drawArrays(gl.TRIANGLES, 0, mesh.count); draws++; }\n      } else if (r.kind === REC_TERRAIN) {\n        const s = r.surface;\n        if (!s?.vao || s._dead) continue;\n        use(P.terrain);\n        gl.uniformMatrix4fv(P.terrain.model, false, r.matrix);\n        f.bindVao(s.vao);\n        gl.drawElements(gl.TRIANGLES, s.indexCount, gl.UNSIGNED_INT, 0);\n        draws++;\n      } else {\n        use(P.bb);\n        gl.uniform1i(P.bb.tex, 0);\n        gl.uniform4fv(P.bb.flatWind, r.flatWind);\n        if (P.bb.wfAxis) { gl.uniform4fv(P.bb.wfSway, r.wfSway); gl.uniform4fv(P.bb.wfAxis, r.wfAxis); }   // WINDFALL1: the mod's law, as the flats were drawn\n        gl.activeTexture(gl.TEXTURE0);\n        let lastSway = null;\n        // PERF-BASIS (2026-09-19): THE BASIS IS UPLOADED ONCE, NOT ONCE A\n        // FLAT. Both vectors went up twice per batch per replay, and only\n        // ONE of the four cases varies: `up` is the constant [0,1,0] (or\n        // the record's, fixed for the record), and `right` is the frame's\n        // sun basis - set once in frame() before the cascade loop - unless\n        // this is a LANTERN's replay, where each flat turns to face it\n        // (below). So a sun cascade was paying two uniform uploads a flat\n        // for two numbers that could not change, three cascades deep,\n        // every frame. On a frame that is script-bound, a GL call that\n        // cannot change anything is the purest kind of waste there is.\n        const perBatchRight = !recordBasis && !!lightPos;\n        gl.uniform3fv(P.bb.up, recordBasis ? r.up : this._up);\n        if (!perBatchRight) gl.uniform3fv(P.bb.right, recordBasis ? r.right : this._right);\n        // PERF-BASIS: and the texture bind skips its repeats, as the main\n        // pass's has since PERF3 - a run of flats sharing a record bound\n        // the same texture once apiece.\n        let lastTex = null;\n        let faced = null;   // DISC29-E: the face uniform's state for this record (set at its first flat)\n        // PERF-EXT11 (2026-09-25, the players' \"fps issues in the exterior\n        // but fine in the interior\"): and the origin and the size skip\n        // theirs. A record is one host call's list in pixel order, and a\n        // pixel's batches share ONE origin array (world.js: `b.origin = t`),\n        // so the origin changed about one flat in five on the harness town\n        // (234 uploads a sun replay, 44 after). Exact for the reason the\n        // sway's skip is: P.bb is bound once for the record and nothing in\n        // this loop binds another, and only this loop writes these two.\n        // Reset per record, beside the sway's and the texture's.\n        const wl = Math.hypot(r.flatWind[0], r.flatWind[1]), law = windfallLawOn(r.windfall);   // PERF-EXT1: the record's wind, for its quads' lean; WINDFALL1: and whose law\n        for (const b of (cand ? cand.bb[j] : r.batches)) {",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ],
     "equivalent": true,
     "why": "belt and braces, left alive on purpose: P.bb's uOrigin and uSize are written by this loop alone and a uniform is the program's until the next upload, so one reset a replay is exact too - the reset a record keeps the lasts beside the sway's and the texture's, where a future program switch inside a record would need them PERF-SHADOW1 (re-aimed by content): the replay's record loop walks a lantern's candidates now, and the lasts are reset where that loop opens."
@@ -169,7 +169,7 @@
     "old": "        if (!farFlatVisibleAt(ring, b.farH ?? b.size?.h ?? 0, b.frame != null)) continue;",
     "new": "        if (!(({ ring: r0, height: h0, animated: a0 }) => farFlatVisibleAt(r0, h0, a0))({ ring, height: b.farH ?? b.size?.h ?? 0, animated: b.frame != null })) continue;",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "        if (!farFlatVisibleAt(ring, b.farH ?? b.size?.h ?? 0, b.frame != null)) continue;",
     "new": "        if (!farFlatVisibleAt(b.farH ?? b.size?.h ?? 0, ring, b.frame != null)) continue;",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "  return farFlatVisibleAt(ring, height, animated);",
     "new": "  return farFlatVisibleAt(ring, height);",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "export function farFlatVisibleAt(ring, height, animated = false) {",
     "new": "export function farFlatVisibleAt(ring, height, animated = true) {",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "  return farFlatVisibleAt(ring, height, animated);",
     "new": "  if (ring < FAR_FLAT_RING) return true;\n  if (animated) return true;\n  return height > TALL_FLAT_HEIGHT;",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "  return height >= TALL_FLAT_HEIGHT;\n}\n\n/**\n * The same rule",
     "new": "  return height > TALL_FLAT_HEIGHT;\n}\n\n/**\n * The same rule",
     "tests": [
-      "test/mac1_playreport.test.js"
+      "test/scenes/mac1_playreport.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "      gl.uniformMatrix4fv(L.model, false, row[1]);\n",
     "new": "      if (i === 0) gl.uniformMatrix4fv(L.model, false, row[1]);\n",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "      if (i === 0 || arrayTex !== bound) {\n",
     "new": "      if (arrayTex !== bound) {\n",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "      if (i === 0 || arrayTex !== bound) {\n",
     "new": "      if (i === 0) {\n",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "        bound = arrayTex;\n        this.stats.texBinds++;\n",
     "new": "        this.stats.texBinds++;\n",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "    if (!n) return;   // no water in sight: not a GL call, as when no pixel called\n",
     "new": "",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "      this.stats.draws++;\n    }\n    this._activeTexture(gl.TEXTURE0);\n    this._bindVao(null);\n    gl.depthFunc(gl.LESS);\n",
     "new": "      this.stats.draws++;\n    }\n    this._bindVao(null);\n    gl.depthFunc(gl.LESS);\n",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "    this._activeTexture(gl.TEXTURE0);\n    this._bindVao(null);\n    gl.depthFunc(gl.LESS);\n    gl.disable(gl.POLYGON_OFFSET_FILL);\n",
     "new": "    this._activeTexture(gl.TEXTURE0);\n    gl.depthFunc(gl.LESS);\n    gl.disable(gl.POLYGON_OFFSET_FILL);\n",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -286,17 +286,17 @@
     "old": "    row[0] = row[1] = row[2] = row[3] = null;   // a scratch keeps nothing alive past the call\n",
     "new": "",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
     "name": "PERF-EXT13-9-the-host-draws-each-pixel-through-its-own-call-again",
     "file": "src/scenes/world.js",
-    "old": "        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = renderer.tileArrays.get(p.groundArchive); row[3] = p.tilemapTex;\n      }\n      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu);\n",
-    "new": "        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = renderer.tileArrays.get(p.groundArchive); row[3] = p.tilemapTex;\n        renderer.drawWaterSurface(p.water, p._pixelMatrix, row[2], p.tilemapTex, 6.4, wu);\n      }\n",
+    "old": "        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = snowCover.arrayOf(p.groundArchive); row[3] = p.tilemapTex; row[4] = snowCover.drawOf(p);\n      }\n      renderer.drawWaterSurfaces(_waterRows, n, 6.4, wu);\n",
+    "new": "        row[0] = p.water; row[1] = p._pixelMatrix; row[2] = snowCover.arrayOf(p.groundArchive); row[3] = p.tilemapTex; row[4] = snowCover.drawOf(p);\n        renderer.drawWaterSurface(p.water, p._pixelMatrix, row[2], p.tilemapTex, 6.4, wu);\n      }\n",
     "tests": [
-      "test/perfextb.test.js",
-      "test/water.test.js"
+      "test/render/perfextb.test.js",
+      "test/world/terrain/water.test.js"
     ]
   },
   {
@@ -305,7 +305,7 @@
     "old": " _shOx: NaN, _shOy: NaN, _shOz: NaN,",
     "new": " _shOx: undefined, _shOy: undefined, _shOz: undefined,",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -314,7 +314,7 @@
     "old": " _shOz: NaN, _shFrame: undefined,",
     "new": " _shOz: undefined, _shFrame: undefined,",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   },
   {
@@ -323,7 +323,7 @@
     "old": " _shOx: NaN, _shOy: NaN,",
     "new": " _shOx: null, _shOy: NaN,",
     "tests": [
-      "test/perfextb.test.js"
+      "test/render/perfextb.test.js"
     ]
   }
 ]

@@ -5,11 +5,11 @@
 // to know where your ships are located at?", then "I want to build a
 // compass icon that tracks your boat"): YOUR BOATS ON THE COMPASS. A
 // Large Boat's deed and a Rowboat's parts are spent on placing
-// (systems/comeSailAway.js takePlaceItem), the boat is kept where she
+// (systems/comeSailAway/comeSailAway.js takePlaceItem), the boat is kept where she
 // was left, and nothing in the game said where that was - the compass
-// marked the sea's ships (scenes/navalHost.js compassShips), never the
+// marked the sea's ships (scenes/naval/navalHost.js compassShips), never the
 // player's own. Now every boat Come Sail Away keeps for me stands on
-// both compasses (ui/hud.js drawBoatCompassMarks, ui/enhancedHud.js) as
+// both compasses (ui/hud/hud.js drawBoatCompassMarks, ui/enhanced/enhancedHud.js) as
 // a little boat in one sea-glass teal, from anywhere on the street,
 // however far off she lies:
 //   - a boat in sight (her pixel within one of mine - UpdateBoatVisibility's
@@ -23,7 +23,7 @@
 //     (BOAT_MARK_NEAR_M), whose bearing would swing with every step.
 // The colour keeps clear of every other mark on the strip (the party's
 // green, the Detect markers' red, the gate's ember, the quest's gold, the
-// ships' red, bone and grey, the professions' five - test/boatmark.test.js
+// ships' red, bone and grey, the professions' five - test/ui/boatmark.test.js
 // holds the distances), and the shape is its own: a sail over a hull.
 // A leaf - it imports nothing, so the HUD takes it without taking the
 // sailing runtime.

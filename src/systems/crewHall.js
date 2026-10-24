@@ -32,7 +32,7 @@
 //
 // Pure: no DOM, no clock (the host hands the day). Its seeds its own (mulberry32 on hash32), the global stream put back.
 import { hash32 } from '../world/spawnedDungeons.js';
-import { mulberry32 } from '../combat/bloodArt.js';
+import { mulberry32 } from '../combat/blood/bloodArt.js';
 import { residentName } from './livingWorld/census.js';
 import { getNameBankOfRegion, GENDERS } from '../characters/nameHelper.js';
 import { PLAYER_CREW, playerCrewCount, CREW_SHOWN } from './naval/crewLife.js';
@@ -80,7 +80,7 @@ export const CLASS_WORDS = Object.freeze({
 export const RECRUIT_LINES = Object.freeze({
   green: Object.freeze(['Never been to sea, but I learn quick.', 'I can haul a line as well as any man.', 'My da fished the bay. I want more than nets.', 'Give me a chance, Captain.']),
   able: Object.freeze(['A few voyages behind me, and no complaints.', 'I know my knots and I keep my watch.', 'Served on a coaster out of Wayrest.', 'Steady hands, steady stomach.']),
-  seasoned: Object.freeze(['Twelve years before the mast.', 'I\'ve stood off pirates more than once.', 'Name the port, I\'ve weathered it.', 'I know what a ship needs before she does.']),
+  seasoned: Object.freeze(['Twelve years before the mast.', 'I\'ve stood off pirates more than once.', 'Name the port, I\'ve weathered it.', 'I know what a ship needs before the captain does.']),
   veteran: Object.freeze(['I sailed with the Sentinel fleet in the war.', 'Boarded more decks than you\'ve walked, Captain.', 'Old salt, but there\'s a fight in me yet.', 'Every storm on the Iliac Bay knows my name.']),
 });
 
@@ -174,20 +174,20 @@ export const isRecruitTrade = (t) => /** @type {readonly string[]} */ (CREW_ROLE
 
 /** The hall's words: a hire, a refusal, a pay-off. */
 export const CREW_HALL_TEXT = Object.freeze({
-  signed: (who, trade, ship) => `${who} signs on to ${ship} as her ${trade}.`,
-  swapped: (who, trade, ship, out) => `${who} signs on to ${ship} as her ${trade}, in ${out}'s place - ${out} is paid off.`,
-  short: (fee) => `The hire comes to ${fee.toLocaleString('en-US')} gold - your purse falls short.`,
+  signed: (who, trade, ship) => `${who} signs on to ${ship} as ${trade}.`,
+  swapped: (who, trade, ship, out) => `${who} signs on to ${ship} as ${trade}, replacing ${out}. ${out} is paid off.`,
+  short: (fee) => `Hiring costs ${fee.toLocaleString('en-US')} gold. You don't have enough.`,
   gone: 'That sailor has signed on elsewhere.',
   newDay: 'The crewmaster has a new day\'s roster.',
   paidOff: (who, ship) => `${who} is paid off and leaves ${ship}.`,
-  steppedUp: (who, ship, next) => `${who} is paid off and leaves ${ship}. ${next} steps up into the place on her deck.`,
-  lastMan: 'That is the last of her crew - she would have nobody aboard.',
-  full: 'Her deck is full - sign a recruit on in place of one of her hands.',
-  noPlace: 'Her deck has no place for another named hand.',
-  noCrew: 'She carries no crew to sign anyone on to.',
-  sameName: (who) => `She already has a hand named ${who}.`,
-  fighting: 'Not while she is fighting.',
-  ashore: (who) => `${who} is ashore with you - send them back aboard first.`,
-  noShip: 'You have no crewed ship at hand to sign anyone on to - bring her to this port, or lay her up.',
-  noSea: 'The crew halls sign hands on to the sea fight\'s crews - turn on Naval Combat.',
+  steppedUp: (who, ship, next) => `${who} is paid off and leaves ${ship}. ${next} takes the open place on deck.`,
+  lastMan: 'That\'s your last crew member. The ship would have nobody aboard.',
+  full: 'The crew is full. Sign a recruit on in place of someone already aboard.',
+  noPlace: 'There\'s no room on deck for another named crew member.',
+  noCrew: 'This ship has no crew to sign anyone on to.',
+  sameName: (who) => `The crew already has someone named ${who}.`,
+  fighting: 'Not while the ship is in combat.',
+  ashore: (who) => `${who} is ashore with you. Send them back aboard first.`,
+  noShip: 'You have no crewed ship here. Bring it to this port, or lay it up.',
+  noSea: 'Turn on Naval Combat to hire crew at the crew halls.',
 });

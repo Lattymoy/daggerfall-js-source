@@ -5,7 +5,7 @@
     "old": "const beast = isTransformedLycanthrope(playerEntity);",
     "new": "const beast = false;",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "frightenChance(playerEntity.level, guardLevel ?? playerEntity.level)",
     "new": "frightenChance(playerEntity.level, playerEntity.level)",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      setCrimeCommitted(playerEntity, 0);\n      watchFlees();",
     "new": "      watchFlees();",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      setCrimeCommitted(playerEntity, 0);\n      watchFlees();",
     "new": "      setCrimeCommitted(playerEntity, 0);",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "            if (isTransformedLycanthrope(playerEntity)) { applyDamage(); return; }\n",
     "new": "",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -50,16 +50,16 @@
     "old": "if (!beast && playerEntity.health <= dmg)",
     "new": "if (playerEntity.health <= dmg)",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
     "name": "WERE-FRIGHT-fleers-still-target",
     "file": "src/scenes/cityGuards.js",
-    "old": "const _tgt = g.fleeing ? null : _targetFeet(g, playerFeet);",
-    "new": "const _tgt = _targetFeet(g, playerFeet);",
+    "old": "const _tgt = g.fleeing || (g.leaving && !g.beset) ? null : _targetFeet(g, playerFeet);",
+    "new": "const _tgt = (g.leaving && !g.beset) ? null : _targetFeet(g, playerFeet);",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "!g.dead && !g.defender && !g.fleeing && g.ai?.isHostile",
     "new": "!g.dead && !g.defender && g.ai?.isHostile",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "guards.filter((g) => !g.dead && !g.defender && !g.fleeing).map",
     "new": "guards.filter((g) => !g.dead && !g.defender).map",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      if (g.fleeing && !(g.ai.fleeLeft > 0)) { g.dead = true; releaseGuardBatch(g); continue; }\n",
     "new": "",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "if (g.dead || g.defender || g.fleeing) continue;",
     "new": "if (g.dead || g.fleeing) continue;",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -104,43 +104,43 @@
     "old": "  function frighten(playerFeet, seconds = FRIGHTENED_RUN_SECONDS) {\n    countdown = 0;\n",
     "new": "  function frighten(playerFeet, seconds = FRIGHTENED_RUN_SECONDS) {\n",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
     "name": "WERE-FRIGHT-motor-never-flees",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    if (this.fleeLeft > 0) { this._fleeStep(dt, paralyzed); return; }",
     "new": "",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
     "name": "WERE-FRIGHT-no-turn-in-place",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "      else { this.yaw = turnTowards(this.yaw, dx, dz); this.moving = false; }   // classic turns in place",
     "new": "      else { this.yaw = turnTowards(this.yaw, dx, dz); this.moving = true; }",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
     "name": "WERE-FRIGHT-no-knockback-while-fleeing",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    if (knocked) { this._knockbackStep(dt, classicTicks); return; }   // a blow shoves it first; the run resumes after\n",
     "new": "    this.knockbackSpeed = 0;\n",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
     "name": "WERE-FRIGHT-origin-not-carried",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": ", this._predictedTargetPosWithoutLead, this.fleeFrom]",
     "new": ", this._predictedTargetPosWithoutLead]",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "entry.infectionType === LYCANTHROPY_TYPES.Wereboar ? SOUND.EnemyWereboarBark : SOUND.EnemyWerewolfBark",
     "new": "SOUND.EnemyWerewolfBark",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "return Math.min(FRIGHTEN_MAX_CHANCE, Math.max(FRIGHTEN_MIN_CHANCE, FRIGHTEN_BASE_CHANCE + FRIGHTEN_CHANCE_PER_LEVEL * (p - g)));",
     "new": "return FRIGHTEN_BASE_CHANCE + FRIGHTEN_CHANCE_PER_LEVEL * (p - g);",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "onPlayerHurt?.(dmg, wpn, { guardLevel: g.entity.level })",
     "new": "onPlayerHurt?.(dmg, wpn)",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": " + (modes?.frightenWatch?.() ?? 0)",
     "new": "",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -185,25 +185,25 @@
     "old": "tickEnemySound(g.sounds, g.ai.feet, g.fleeing ? null : playerFeet, dt,",
     "new": "tickEnemySound(g.sounds, g.ai.feet, playerFeet, dt,",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
     "name": "WERE-FRIGHT-fright-leaves-the-encounter-edge",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    this.justEncountered = false;\n  }",
     "new": "  }",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
     "name": "WERE-FRIGHT-fright-leaves-the-eye",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "    this.inSight = false;   // raises no alert",
     "new": "    // raises no alert",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "watchFlees: () => cityGuards.frighten(walkMode ? player.pos : cam.pos)",
     "new": "watchFlees: () => 0",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "F - frighten', action: () => { if (surrenderBox !== boxOf()) return; ",
     "new": "F - frighten', action: () => { ",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "if (crimeId() !== 0) roarAtTheWatch(applyDamage, guardLevel);",
     "new": "roarAtTheWatch(applyDamage, guardLevel);",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "N - fight on', action: () => { if (surrenderBox !== boxOf()) return; ",
     "new": "N - fight on', action: () => { ",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "if (surrenderBox !== boxOf()) return; awaitingSurrenderAnswer = false; if (crimeId() !== 0) applyDamage();",
     "new": "if (surrenderBox !== boxOf()) return; awaitingSurrenderAnswer = false; applyDamage();",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "if (surrenderBox !== boxOf()) return; awaitingSurrenderAnswer = false; if (crimeId() !== 0) roarAtTheWatch(",
     "new": "if (surrenderBox !== boxOf()) return; if (crimeId() !== 0) roarAtTheWatch(",
     "tests": [
-      "test/werefright.test.js"
+      "test/systems/werefright.test.js"
     ]
   }
 ]

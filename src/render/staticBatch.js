@@ -256,7 +256,20 @@ export class StaticBatchBuilder {
       const c = shadowCells(positions, indices, this.shadowCell);
       merged.shadowIndices = c.indices; merged.shadowCells = c.cells;
     }
+    this._spend();
     return merged;
+  }
+
+  /** MEM-AUDIT (2026-10-23): THE MERGE SPENDS ITS INPUTS. `merged` holds copies, so the per-model arrays are let go once
+   *  it is made: a builder outlives its merge in its host's build scope (a closure made beside it keeps the scope - a
+   *  streamed pixel's colliders, a room's or a dungeon's frame), and every model's transformed copy stood with it, ~18 MB
+   *  on a synthetic city pixel. A second finish() answers null, as an empty builder's does. */
+  _spend() {
+    this.chunks = [];
+    this.groups = new Map();
+    this.vertexCount = 0;
+    this.triangles = 0;
+    this.models = 0;
   }
 }
 

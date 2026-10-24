@@ -1,0 +1,183 @@
+[
+  {
+    "name": "PLEA-LOOP-the-press-ignores-the-stack",
+    "file": "src/ui/enhanced/enhancedDialog.js",
+    "old": "          if (windowCovered(owner)) return;   // PLEA-LOOP: asked at the press - a covered window answers nothing\n",
+    "new": "",
+    "tests": [
+      "test/ui/fb1013b_plealoop.test.js"
+    ]
+  },
+  {
+    "name": "PLEA-LOOP-the-dialog-never-wears-the-cover",
+    "file": "src/ui/enhanced/enhancedDialog.js",
+    "old": "  const covered = windowCovered(owner);",
+    "new": "  const covered = false;",
+    "tests": [
+      "test/ui/fb1013b_plealoop.test.js"
+    ]
+  },
+  {
+    "name": "PLEA-LOOP-the-cover-takes-the-pointer",
+    "file": "src/ui/enhanced/enhancedDialogStyle.js",
+    "old": ".dlg-shell.dlg-covered { pointer-events: none; }",
+    "new": ".dlg-shell.dlg-covered { }",
+    "tests": [
+      "test/ui/fb1013b_plealoop.test.js"
+    ]
+  },
+  {
+    "name": "PLEA-LOOP-a-push-holds-nothing",
+    "file": "src/ui/windowStack.js",
+    "old": "    windows.splice(at, 0, win);\n    hold(win);",
+    "new": "    windows.splice(at, 0, win);",
+    "tests": [
+      "test/ui/fb1013b_plealoop.test.js"
+    ]
+  },
+  {
+    "name": "PLEA-LOOP-a-pop-keeps-its-window",
+    "file": "src/ui/windowStack.js",
+    "old": "      windows.pop();\n      unhold(oldWindow);",
+    "new": "      windows.pop();",
+    "tests": [
+      "test/ui/fb1013b_plealoop.test.js"
+    ]
+  },
+  {
+    "name": "PLEA-LOOP-keepOnly-keeps-its-drained",
+    "file": "src/ui/windowStack.js",
+    "old": "        windows.splice(i, 1);\n        unhold(w);",
+    "new": "        windows.splice(i, 1);",
+    "tests": [
+      "test/ui/fb1013b_plealoop.test.js"
+    ]
+  },
+  {
+    "name": "PLEA-LOOP-a-replacement-keeps-the-outgoing",
+    "file": "src/ui/windowStack.js",
+    "old": "      unhold(t);\n      hold(live);",
+    "new": "      hold(live);",
+    "tests": [
+      "test/ui/fb1013b_plealoop.test.js"
+    ]
+  },
+  {
+    "name": "PLEA-LOOP-a-replacement-holds-nothing",
+    "file": "src/ui/windowStack.js",
+    "old": "      unhold(t);\n      hold(live);",
+    "new": "      unhold(t);",
+    "tests": [
+      "test/ui/fb1013b_plealoop.test.js"
+    ]
+  },
+  {
+    "name": "PLEA-LOOP-covered-reads-the-wrong-way",
+    "file": "src/ui/windowStack.js",
+    "old": "  return !!stack && stack.topWindow() !== win;",
+    "new": "  return !!stack && stack.topWindow() === win;",
+    "tests": [
+      "test/ui/fb1013b_plealoop.test.js"
+    ]
+  },
+  {
+    "name": "PLEA-LOOP-the-box-answers-twice",
+    "file": "src/ui/talkWindow.js",
+    "old": "    if (this.done) return;\n    if (!this.options.length && (code === 'back'",
+    "new": "    if (!this.options.length && (code === 'back'",
+    "tests": [
+      "test/ui/fb1013b_plealoop.test.js"
+    ]
+  },
+  {
+    "name": "PLEA-LOOP-the-release-leaves-the-trial-standing",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    if (trial) trial.released = true;   // PLEA-LOOP: the court's last act - no step of this trial acts after it\n",
+    "new": "",
+    "tests": [
+      "test/ui/fb1013b_plealoop.test.js"
+    ]
+  },
+  {
+    "name": "PLEA-LOOP-the-step-ignores-the-release",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "(t && trial === t && !t.released ? fn(...args) : undefined)",
+    "new": "(t && trial === t ? fn(...args) : undefined)",
+    "tests": [
+      "test/ui/fb1013b_plealoop.test.js"
+    ]
+  },
+  {
+    "name": "ONE-BAD-BODY-the-door-takes-it",
+    "file": "src/render/renderer.js",
+    "old": "    if (!Number.isFinite(item?.pw) || !Number.isFinite(item?.ph)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/net/peer/fb1013b_onebadbody.test.js"
+    ]
+  },
+  {
+    "name": "ONE-BAD-BODY-the-door-asks-one-side",
+    "file": "src/render/renderer.js",
+    "old": "    if (!Number.isFinite(item?.pw) || !Number.isFinite(item?.ph)) {",
+    "new": "    if (!Number.isFinite(item?.pw)) {",
+    "tests": [
+      "test/net/peer/fb1013b_onebadbody.test.js"
+    ]
+  },
+  {
+    "name": "ONE-BAD-BODY-the-place-taken-as-it-came",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "    if (!(Number.isFinite(f?.[0]) && Number.isFinite(f[1]) && Number.isFinite(f[2]))) { this._notFinite('place', peer.shown); return; }\n",
+    "new": "",
+    "tests": [
+      "test/net/peer/fb1013b_onebadbody.test.js"
+    ]
+  },
+  {
+    "name": "ONE-BAD-BODY-the-yaw-taken-as-it-came",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "    if (!Number.isFinite(want)) this._notFinite('yaw', peer.shown);   // ONE-BAD-BODY: the yaw it had stands\n    else b.yaw",
+    "new": "    b.yaw",
+    "tests": [
+      "test/net/peer/fb1013b_onebadbody.test.js"
+    ]
+  },
+  {
+    "name": "ONE-BAD-BODY-the-bad-yaw-kept",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "else b.yaw = Number.isFinite(b.yaw) ? b.yaw + wrapAngle(want - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1) : want;",
+    "new": "else b.yaw = b.yaw + wrapAngle(want - b.yaw) * (dt > 0 ? Math.min(1, dt * YAW_EASE) : 1);",
+    "tests": [
+      "test/net/peer/fb1013b_onebadbody.test.js"
+    ]
+  },
+  {
+    "name": "ONE-BAD-BODY-said-every-frame",
+    "file": "src/net/peer/peerBodies.js",
+    "old": "    if (this._notFiniteSaid) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/peer/fb1013b_onebadbody.test.js"
+    ]
+  },
+  {
+    "name": "ONE-BAD-BODY-NaN-read-as-a-stride",
+    "file": "src/net/peer/peerPace.js",
+    "old": "  if (!(d <= JUMP_UNITS) || !Number.isFinite(speed)) return 0;",
+    "new": "  if (d > JUMP_UNITS || !Number.isFinite(speed)) return 0;",
+    "tests": [
+      "test/net/peer/fb1013b_onebadbody.test.js",
+      "test/player/eyeOfTheBeholder/htwaistback.test.js"
+    ]
+  },
+  {
+    "name": "ONE-BAD-BODY-the-bad-pace-kept",
+    "file": "src/net/peer/peerPace.js",
+    "old": "  if (!(d <= JUMP_UNITS) || !Number.isFinite(speed)) return 0;",
+    "new": "  if (!(d <= JUMP_UNITS)) return 0;",
+    "tests": [
+      "test/net/peer/fb1013b_onebadbody.test.js"
+    ]
+  }
+]

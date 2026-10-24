@@ -17,7 +17,7 @@ author's own art and carry no licence line of their own.]**
 - `grimoire-ui.files.json` - the archive's own listing, every file in the order
   the zip stores it, with the zip's name and sha256. A loose-file pack ships no
   `.dfmod` and so no manifest of its own; this listing was generated from the
-  zip, not written by hand, and it is the authority test/doctrine.test.js and
+  zip, not written by hand, and it is the authority test/tooling/doctrine.test.js and
   src/systems/uiPack.js both read.
 - The files themselves stand under `public/art/grimoire-ui/`, byte for byte:
   `Img/*.IMG.png` (93 whole screens at 3x), `CifRci/BUTTONS.RCI_<r>-0.png`

@@ -1,0 +1,684 @@
+[
+  {
+    "name": "EG5D-L4-1-open-socket-unheld",
+    "file": "server/src/index.js",
+    "old": "      out.push({ sub, tr: egTrailHeld(k, open ? now - EG_TS_LAG_MAX_MS : now) });",
+    "new": "      out.push({ sub, tr: open ? k.tr : egTrailHeld(k, now) });",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-1-held-to-now-over-a-pose-on-its-way",
+    "file": "server/src/index.js",
+    "old": "egTrailHeld(k, open ? now - EG_TS_LAG_MAX_MS : now)",
+    "new": "egTrailHeld(k, now)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-1-drain-a-standin-read-stale",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "now - e[0] <= EG_POSE_NEAR_MS + (e[5] === 1 ? EG_TS_LAG_MAX_MS : 0) && e[4] === F.h",
+    "new": "now - e[0] <= EG_POSE_NEAR_MS && e[4] === F.h",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-1-the-field-read-to-now",
+    "file": "src/net/bossRef.js",
+    "old": "upto = Math.max(from, Math.min(now - EG_TS_LAG_MAX_MS, a.at + sp));",
+    "new": "upto = Math.max(from, Math.min(now, a.at + sp));",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-2-the-feet-unasked",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "    if (Math.abs(x - (s.x + q.dx)) <= s.w / 2 + EG_BODY_R && Math.abs(z - (s.z + q.dz)) <= s.d / 2 + EG_BODY_R) return true;",
+    "new": "    return true;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js",
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-2-the-lag-unasked",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  for (const t of [tS - EG_SUPPORT_LAG_S, tS, tS + EG_SUPPORT_LAG_S]) {\n    const q = egPieceAt(s, t);\n    if (Math.abs(x - (s.x + q.dx)) <= s.w / 2 + EG_BODY_R",
+    "new": "  for (const t of [tS]) {\n    const q = egPieceAt(s, t);\n    if (Math.abs(x - (s.x + q.dx)) <= s.w / 2 + EG_BODY_R",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-2-the-height-unasked",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  if (!(y - s.y >= -EG_RIDE_DOWN_M && y - s.y <= EG_RIDE_UP_M)) return false;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-2-the-relay-passes-no-feet",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "egRideHolds(spec, p.pl, x, y, z, t / 1000)",
+    "new": "egRideHolds(spec, p.pl, NaN, NaN, NaN, t / 1000)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js",
+      "test/net/eliteGates/egint_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-7-the-mend-by-the-word",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (backed > 0) bodyHealed(B.mem[sub], backed / healRef(B.mem[sub].lv)",
+    "new": "if (got > 0) bodyHealed(B.mem[sub], got / healRef(B.mem[sub].lv)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-7-a-healer-counted-twice",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (seen.has(by) || !(d > 0) || !cast(by)) return a;",
+    "new": "if (!(d > 0) || !cast(by)) return a;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-7-lifeline-by-the-word",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "(q.ht ?? 0) - had[i] >= min && cast(by)) v =",
+    "new": "(q.ht ?? 0) - had[i] >= min) v =",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-8-the-branchs-old-relay",
+    "file": "src/net/wire.js",
+    "old": "export const EG_RELAY_MIN = 213;",
+    "new": "export const EG_RELAY_MIN = 197;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-9-the-finding-taken-again",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "  if (B.hold) return 'hold';",
+    "new": "  if (B.hold) { B.hold.f = holdFind(B, B.hold.at, now); return 'hold'; }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-9-the-finding-not-kept",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "ran, f: holdFind(B, at, now) };",
+    "new": "ran, f: null };",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-9-before-the-sleep-left",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "(_o, _k, v) => v <= h.at || found.has(v)",
+    "new": "(_o, _k, v) => found.has(v)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-9-the-found-deadline-left",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "(_o, _k, v) => v <= h.at || found.has(v)",
+    "new": "(_o, _k, v) => v <= h.at",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-9-everything-found",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "  instantsOf(B, now, (_o, _k, v) => { if (v > at) f.add(v); });",
+    "new": "  instantsOf(B, now, (_o, _k, v) => { f.add(v); });",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ],
+    "equivalent": true,
+    "why": "the finding keeps the values past the last beat to keep the record small: an instant at or before it moves by the release's first clause (v <= h.at) found or not, so finding every instant moves the same instants - a larger record, the same law"
+  },
+  {
+    "name": "EG5D-L4-10-the-pose-not-kept",
+    "file": "server/src/index.js",
+    "old": "if (B.mem?.[sub] && Array.isArray(k?.last)) B.mem[sub].lp = k.last.slice(0, 5);",
+    "new": "void k;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-10-the-kept-pose-not-read",
+    "file": "server/src/index.js",
+    "old": "      if (!k && Array.isArray(m?.lp) && m.lp.length === 5) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-UNV-rc-one-bound-over-both",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "  return all.filter((x) => held.includes(x) || spent.includes(x));",
+    "new": "  return all.slice(-EG_RC_KEEP);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js",
+      "test/net/eliteGates/egz_keys.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-UNV-blows-past-the-wire",
+    "file": "src/net/eliteGates/egShape.js",
+    "old": "export const EG_BLOWS_MAX = 32;",
+    "new": "export const EG_BLOWS_MAX = 48;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-3-the-order-kept-past-its-half-life",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "admit?.b === b && !!admit.z && Date.now() - admit.at < EG_ADMIT_FRESH_MS;",
+    "new": "admit?.b === b && !!admit.z;",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-3-the-answer-asks-by-breach-alone",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (!admitFresh(c.b)) {",
+    "new": "      if (admit?.b !== c.b) {",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-3-the-dead-order-said",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (admitFresh(b)) { if (o?.welcomes !== inFor",
+    "new": "    if (admit?.b === b && admit.z) { if (o?.welcomes !== inFor",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-3-asks-unbounded",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (admitAsking || admitAsked(b) >= EG_ADMIT_ASKS) return;",
+    "new": "    if (admitAsking) return;",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-3-no-ask-in-the-hall",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (mine && !mine.in) admitIn(E.b, o);",
+    "new": "    if (mine && !mine.in && admitFresh(E.b)) admitIn(E.b, o);",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-3-the-refusal-said-while-asked-again",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      return inSpire() && !!b && admitAsked(b) < EG_ADMIT_ASKS;",
+    "new": "      return false;",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-NEW4-the-count-carried",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    admitAsks.n = admitAsked(b) + 1; admitAsks.b = b;",
+    "new": "    admitAsks.n = admitAsks.n + 1; admitAsks.b = b;",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-4-the-call-wipes-the-breach",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "    case 'call': return s.b === w.b || egLiveHeld(s) ?",
+    "new": "    case 'call': return s.b === w.b ?",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-4-an-ended-breach-held",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "export const egLiveHeld = (s) => !!s?.b && (s.co?.length ?? 0) > 0 && !s.end;",
+    "new": "export const egLiveHeld = (s) => !!s?.b && (s.co?.length ?? 0) > 0;",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-4-a-call-state-held-live",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "export const egLiveHeld = (s) => !!s?.b && (s.co?.length ?? 0) > 0 && !s.end;",
+    "new": "export const egLiveHeld = (s) => !!s?.b && !s.end;",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-6-every-arch-a-stone",
+    "file": "src/scenes/eliteGates/egArch.js",
+    "old": "    const want = a.mine && a.place?.risen && !a.place.coarse ? egArchMatrix(a.place) : null;",
+    "new": "    const want = a.place?.risen && !a.place.coarse ? egArchMatrix(a.place) : null;",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js",
+      "test/net/eliteGates/egarch_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-1-the-blow-unmarked",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    if (dmg > 0 && foe) setSpireStruck();",
+    "new": "",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-1-every-share-a-foes",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    if (dmg > 0 && foe) setSpireStruck();",
+    "new": "    if (dmg > 0) setSpireStruck();",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-1-my-blow-no-foes",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "spared(E, F, bl), part * egTouchedX(F, bl, me(), t), true);",
+    "new": "spared(E, F, bl), part * egTouchedX(F, bl, me(), t));",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-1-a-chained-mates-no-foes",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part, true); }",
+    "new": "landShare(bl.p, bl.b, bl.el, bl.nm, spared(E, F, bl), part); }",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-1-the-mark-read-by-no-save",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  if (!blow && spire) { shed(entity, before, after, saved); reprieve(entity, before, after, saved); return; }",
+    "new": "",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js",
+      "test/systems/eliteGates/eg15_panoply.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-1-the-reprieve-unread",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "if (!blow && spire) { shed(entity, before, after, saved); reprieve(entity, before, after, saved); return; }",
+    "new": "if (!blow && spire) { shed(entity, before, after, saved); return; }",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-1-shed-skin-unread",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "if (!blow && spire) { shed(entity, before, after, saved); reprieve(entity, before, after, saved); return; }",
+    "new": "if (!blow && spire) { reprieve(entity, before, after, saved); return; }",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-1-the-mark-lying",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "  _pendingSpire = _now() - _spireBlowAt <= BLOW_WINDOW_S;",
+    "new": "  _pendingSpire = _spireBlowAt > -Infinity;",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L4-5-re-signed-as-of-now",
+    "file": "server-account/src/eg.js",
+    "old": "ewg: wagerOfRow(had.wg) }, key, { subtle, nowS: int(had.at) });\n    return { order, b: had.b, ez: had.ez, keys: int(row?.eg_keys), until: int(had.until), rh: int(had.rh) };",
+    "new": "ewg: wagerOfRow(had.wg) }, key, { subtle, nowS });\n    return { order, b: had.b, ez: had.ez, keys: int(row?.eg_keys), until: int(had.until), rh: int(had.rh) };",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-2-no-embers-thrown",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "  if (embers) out.push({ kind: 'item', item: embers, tier: 'artifact', record: flat() });",
+    "new": "",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js",
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-2-embers-on-gold-alone",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "o.goldOnly ? null : egEmberStack(o.embers)",
+    "new": "egEmberStack(o.embers)",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js",
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-2-the-stack-one",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "Object.assign(sigilStone(), { stackCount: Math.min(n, EG_EMBERS_MAX) })",
+    "new": "sigilStone()",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js",
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-2-the-host-pays-none",
+    "file": "src/scenes/world.js",
+    "old": "embers: Number.isSafeInteger(d?.embers) ? d.embers : 0 };",
+    "new": "embers: 0 };",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-5-the-seed-the-receipts",
+    "file": "src/net/eliteGates/egPay.js",
+    "old": "  return mix((mix(((c >>> 0) ^ parseInt(n.slice(0, 8), 16)) >>> 0) ^ parseInt(n.slice(8), 16)) >>> 0);",
+    "new": "  return c >>> 0;",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js",
+      "test/net/eliteGates/egaudit5_d_service.test.js",
+      "test/net/eliteGates/egplay_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-5-the-answer-the-receipts",
+    "file": "server-account/src/egEconomy.js",
+    "old": "seed: egSpoilsSeed(c.c, r?.nonce),",
+    "new": "seed: c.c,",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_service.test.js",
+      "test/net/eliteGates/egplay_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-5-the-pity-on-the-receipts",
+    "file": "server-account/src/egEconomy.js",
+    "old": "egPanoplyHit(egSpoilsSeed(c.c, nonce), w, p)",
+    "new": "egPanoplyHit(c.c, w, p)",
+    "tests": [
+      "test/net/eliteGates/egeco_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-5-an-ends-seed-the-receipts",
+    "file": "server-account/src/eg.js",
+    "old": "return r ? { seed: egSpoilsSeed(c.c, r.nonce) } : {};",
+    "new": "return r ? { seed: c.c } : {};",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-5-an-ends-draw-one-for-all",
+    "file": "server-account/src/eg.js",
+    "old": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)').bind(c.b, player.id, c.h, c.why, c.t, nowS, hex(rand(new Uint8Array(8)))),",
+    "new": "VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)').bind(c.b, player.id, c.h, c.why, c.t, nowS, '0123456789abcdef'),",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-5-the-client-rolls-the-receipts",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "Number.isSafeInteger(d?.seed) && d.seed >= 0 ? d.seed >>> 0 : (c?.c ?? 0) >>> 0",
+    "new": "(c?.c ?? 0) >>> 0",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js",
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-5-the-reliquaries-the-receipts",
+    "file": "src/systems/eliteGates/egSpoils.js",
+    "old": "  const seed = egSpoilsSeedOf(c, d);   // AUDIT EG V (lane8 L8-5): the claim's seed, never the receipt's own",
+    "new": "  const seed = c.c;",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-5-the-host-rolls-the-receipts",
+    "file": "src/scenes/world.js",
+    "old": "const seed = egSpoilsSeedOf(c, d), day = egSpoilsDay(c.b, c.w)",
+    "new": "const seed = c.c, day = egSpoilsDay(c.b, c.w)",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-4-every-end-writes-it",
+    "file": "server-account/src/egEconomy.js",
+    "old": "'INSERT OR IGNORE INTO eg_reliqs (account, wk, w, b) VALUES (?1, ?2, ?3, ?4)'",
+    "new": "'INSERT OR REPLACE INTO eg_reliqs (account, wk, w, b) VALUES (?1, ?2, ?3, ?4)'",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-4-the-record-never-read",
+    "file": "server-account/src/egEconomy.js",
+    "old": "  return { rl: named.filter((w) => mineOpen.has(w)) };",
+    "new": "  return { rl: named.filter((w) => mineOpen.has(w) || !mineOpen.size) };",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-4-no-week",
+    "file": "server-account/src/egEconomy.js",
+    "old": "    const wk = arenaWeekOf(nowS);\n    const week = await db.prepare",
+    "new": "    const wk = 0;\n    const week = await db.prepare",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-4-the-table-keyed-by-the-end",
+    "file": "server-account/migrations/0124_elite_breach.sql",
+    "old": "  PRIMARY KEY (account, wk, w),\n  FOREIGN KEY (account) REFERENCES players(id) ON DELETE CASCADE\n);\nCREATE INDEX IF NOT EXISTS idx_eg_reliqs_b",
+    "new": "  PRIMARY KEY (account, wk, w, b),\n  FOREIGN KEY (account) REFERENCES players(id) ON DELETE CASCADE\n);\nCREATE INDEX IF NOT EXISTS idx_eg_reliqs_b",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-9-the-decrees-unkept",
+    "file": "server-account/src/egHonours.js",
+    "old": "arenaSeasonOf(c.i), wagerText(c)),",
+    "new": "arenaSeasonOf(c.i), ''),",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-9-the-row-unread",
+    "file": "server-account/src/egHonours.js",
+    "old": "wagered: int(r.wg) === 1, wg: wagerOfText(r.wgs) }));",
+    "new": "wagered: int(r.wg) === 1, wg: [] }));",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L8-9-the-decrees-unnamed",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "return names.length ? ` - ${EG_TEXT.wager(names.join(', '))}` : r.wagered ? ` - ${EG_BOARD_TEXT.wagered}` : '';",
+    "new": "return r.wagered ? ` - ${EG_BOARD_TEXT.wagered}` : '';",
+    "tests": [
+      "test/systems/eliteGates/egaudit5_d_client.test.js",
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L9-6-a-kills-odds",
+    "file": "server-account/src/eg.js",
+    "old": "export const EG_KEY_ODDS = 1 / 6;",
+    "new": "export const EG_KEY_ODDS = 1 / 5;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L9-6-the-rites-odds",
+    "file": "server-account/src/eg.js",
+    "old": "export const EG_KEY_ODDS_RITE = 1 / 4;",
+    "new": "export const EG_KEY_ODDS_RITE = 1 / 3;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L9-6-an-hours-odds",
+    "file": "server-account/src/eg.js",
+    "old": "export const EG_KEY_ODDS_SD = 1 / 3;",
+    "new": "export const EG_KEY_ODDS_SD = 1 / 2;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L9-6-the-rite-the-kills",
+    "file": "server-account/src/eg.js",
+    "old": "drawUnder(rand, c.r === 1 ? EG_KEY_ODDS_RITE : c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS)",
+    "new": "drawUnder(rand, c.p > 0 ? EG_KEY_ODDS_PORTENT : EG_KEY_ODDS)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L9-6-the-dies-edge-inclusive",
+    "file": "server-account/src/eg.js",
+    "old": "  return (((d[0] << 24) | (d[1] << 16) | (d[2] << 8) | d[3]) >>> 0) / 4294967296 < p;",
+    "new": "  return (((d[0] << 24) | (d[1] << 16) | (d[2] << 8) | d[3]) >>> 0) / 4294967296 <= p;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L9-5-a-week-a-day-short",
+    "file": "src/net/arena/arenaLaw.js",
+    "old": "export const ARENA_WEEK_S = 7 * 24 * 3600;",
+    "new": "export const ARENA_WEEK_S = 6 * 24 * 3600;",
+    "tests": [
+      "test/net/eliteGates/egeco_pay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L9-5-a-week-off-by-one",
+    "file": "src/net/arena/arenaLaw.js",
+    "old": "export const arenaWeekOf = (nowS) => Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_WEEK_S));",
+    "new": "export const arenaWeekOf = (nowS) => Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_WEEK_S) + 1);",
+    "tests": [
+      "test/net/eliteGates/egeco_pay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L9-5-the-old-epoch-of-1970-weeks",
+    "file": "src/net/arena/arenaLaw.js",
+    "old": "export const arenaWeekOf = (nowS) => Math.max(0, Math.floor((Math.floor(Number(nowS) || 0) - ARENA_SEASON_EPOCH_S) / ARENA_WEEK_S));",
+    "new": "export const arenaWeekOf = (nowS) => Math.max(0, Math.floor(Math.floor(Number(nowS) || 0) / ARENA_WEEK_S));",
+    "tests": [
+      "test/net/eliteGates/egeco_pay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L9-5-the-valkynaz-odds-the-floors",
+    "file": "src/net/eliteGates/egPay.js",
+    "old": "export const egPanoplyIn = (w) => (egValkRedoubt(w) ? EG_PANOPLY_VALK_IN : Math.max(4,",
+    "new": "export const egPanoplyIn = (w) => (egValkRedoubt(w) && false ? EG_PANOPLY_VALK_IN : Math.max(4,",
+    "tests": [
+      "test/net/eliteGates/egeco_pay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L9-5-the-panoply-on-the-spoils-own-stream",
+    "file": "src/net/eliteGates/egPay.js",
+    "old": "export const egPanoplyDraw = (seed, pass) => mix((egPassSeed(seed, pass) ^ 0x7a40b1e5) >>> 0) / 4294967296;",
+    "new": "export const egPanoplyDraw = (seed, pass) => { const a = (egPassSeed(seed, pass) + 0x6D2B79F5) >>> 0; let t = Math.imul(a ^ (a >>> 15), a | 1); t ^= t + Math.imul(t ^ (t >>> 7), t | 61); return ((t ^ (t >>> 14)) >>> 0) / 4294967296; };",
+    "tests": [
+      "test/net/eliteGates/egeco_pay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L9-5-the-first-this-season-ember-dropped",
+    "file": "src/net/eliteGates/egPay.js",
+    "old": " + (firstThisSeason ? 1 : 0);",
+    "new": " + 0;",
+    "tests": [
+      "test/net/eliteGates/egeco_pay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L9-5-a-valkynaz-every-tenth",
+    "file": "src/net/eliteGates/egPay.js",
+    "old": "export const egValkRedoubt = (w) => Number.isSafeInteger(w) && w >= 5 && w % 5 === 0;",
+    "new": "export const egValkRedoubt = (w) => Number.isSafeInteger(w) && w >= 5 && w % 10 === 0;",
+    "tests": [
+      "test/net/eliteGates/egeco_pay.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L9-5-the-legendary-share-steeper",
+    "file": "src/net/eliteGates/egPay.js",
+    "old": "Math.min(0.65, 0.2 + 0.03 *",
+    "new": "Math.min(0.65, 0.2 + 0.04 *",
+    "tests": [
+      "test/net/eliteGates/egeco_pay.test.js",
+      "test/net/eliteGates/egaudit5_d_service.test.js"
+    ]
+  },
+  {
+    "name": "EG5D-L9-5-one-pass-at-a-valkynaz",
+    "file": "src/net/eliteGates/egPay.js",
+    "old": "export const egSpoilsPasses = (w) => (egValkRedoubt(w) ? 2 : 1);",
+    "new": "export const egSpoilsPasses = (w) => 1;",
+    "tests": [
+      "test/net/eliteGates/egeco_pay.test.js"
+    ]
+  }
+]

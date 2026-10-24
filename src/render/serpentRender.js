@@ -4,7 +4,7 @@
 // light and fog, and `markForeignPass` after. Design: bible/11-Multiplayer/Sea-Serpent.md section 9.
 //
 // NO ASSET. Daggerfall has no sea serpent and the port ships none: the body is MADE here each frame from the relay's
-// own law (net/serpentBody.js bodyAt, through scenes/serpentHost.js drawFrame) - its spine's points smoothed (a
+// own law (net/serpent/serpentBody.js bodyAt, through scenes/serpentHost.js drawFrame) - its spine's points smoothed (a
 // Catmull-Rom through them, BODY_SUB rings to a segment), a ring of RING_SIDES about each, laid by parallel transport so
 // no ring twists where the neck rears straight up, the section an ellipse a little wider than it is deep. Its hide is
 // coloured per vertex: a sea-dark back, a bone-pale belly, the scales' bands down its length; a ragged dorsal sail of
@@ -370,7 +370,7 @@ void main() {
   outColor = vec4(dwWaterFog(vColor.rgb * f, vWorldPos), vColor.a * f);
 }`;
 
-const LIGHT_FOG = ['uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus', 'uSeaY'];
+const LIGHT_FOG = ['uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus', 'uJungleHaze', 'uSeaY'];
 /** The most vertices a frame lays: the tube, its cap, the sail, the horns, the eyes, the glob - and the marks. */
 export const MESH_MAX_VERTS = 24 * BODY_SUB * RING_SIDES * 6 + RING_SIDES * 3 + 24 * BODY_SUB * 6 + 64;
 export const FLAT_MAX_VERTS = 24_000;
@@ -414,6 +414,7 @@ export class SerpentRenderer {
     gl.uniform2fv(u.uFogRange, r._fogRange);
     if (u.uDwFog && r._dwFog) gl.uniform4fv(u.uDwFog, r._dwFog);
     if (u.uFocus && r._focus) gl.uniform4fv(u.uFocus, r._focus);
+    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)
     if (u.uSeaY) gl.uniform1f(u.uSeaY, seaY);
   }
   _upload(prog, data, n, stride) {

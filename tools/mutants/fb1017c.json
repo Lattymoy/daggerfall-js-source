@@ -1,0 +1,35 @@
+[
+  {
+    "name": "ORRERY-HEIGHT-handles-over-zero",
+    "file": "src/scenes/eliteGates/egOrrery.js",
+    "old": "Number.isFinite(q.y) ? q.y / 100 : 0, q.z - SD_STONE_POS[j].z];",
+    "new": "0, q.z - SD_STONE_POS[j].z];",
+    "tests": [
+      "test/scenes/eliteGates/fb1017c_orreryheight.test.js",
+      "test/scenes/eliteGates/fb1020f_orrerystones.test.js"
+    ],
+    "why": "the report: every Orrery stone's handles a metre over 0 under a court 15-24 m off it - no stone in any reach, the lock never opened (re-aimed by content at ORRERY-STONES' shift: the stone and its levers stand on the spot's floor)"
+  },
+  {
+    "name": "ORRERY-HEIGHT-centimetres-as-metres",
+    "file": "src/scenes/eliteGates/egOrrery.js",
+    "old": "? q.y / 100 : 0, q.z - SD_STONE_POS",
+    "new": "? q.y : 0, q.z - SD_STONE_POS",
+    "tests": [
+      "test/scenes/eliteGates/fb1017c_orreryheight.test.js",
+      "test/scenes/eliteGates/fb1020f_orrerystones.test.js"
+    ],
+    "why": "a spot's height is the law's centimetres: read as metres, the handles stand a hundred times too high (re-aimed at ORRERY-STONES' shift)"
+  },
+  {
+    "name": "ORRERY-HEIGHT-no-height-not-zero",
+    "file": "src/scenes/eliteGates/egOrrery.js",
+    "old": "q.y / 100 : 0, q.z - SD_STONE_POS",
+    "new": "q.y / 100 : NaN, q.z - SD_STONE_POS",
+    "tests": [
+      "test/scenes/eliteGates/fb1017c_orreryheight.test.js",
+      "test/scenes/eliteGates/fb1020f_orrerystones.test.js"
+    ],
+    "why": "the laws before THE ASCENT lay no spot height: their handles lost, where they stood a metre over the 0 court (re-aimed at ORRERY-STONES' shift)"
+  }
+]

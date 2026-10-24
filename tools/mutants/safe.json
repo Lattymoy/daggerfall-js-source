@@ -1,0 +1,308 @@
+[
+  {
+    "name": "SAFE2-stamp-verify-says-yes",
+    "file": "src/net/safety/chatStamp.js",
+    "old": "  try { return await subtle.verify({ name: 'Ed25519' }, publicKey, sig, stampBytes(line)); } catch { return false; }",
+    "new": "  return true;",
+    "tests": [
+      "test/net/safety/safe_law.test.js",
+      "test/server/safe_service.test.js"
+    ],
+    "note": "A stamp that verifies anything makes every report evidence of nothing."
+  },
+  {
+    "name": "SAFE2-the-words-unsigned",
+    "file": "src/net/safety/chatStamp.js",
+    "old": "${JSON.stringify([tab, sub, name, at, text])}",
+    "new": "${JSON.stringify([tab, sub, name, at])}",
+    "tests": [
+      "test/net/safety/safe_law.test.js",
+      "test/server/safe_service.test.js"
+    ],
+    "note": "A stamp that leaves the words out lets a report carry words nobody said."
+  },
+  {
+    "name": "SAFE2-a-shard-read-as-a-place",
+    "file": "src/net/safety/chatStamp.js",
+    "old": "  const k = channelOf(String(key ?? ''));",
+    "new": "  const k = String(key ?? '');",
+    "tests": [
+      "test/net/safety/safe_law.test.js"
+    ],
+    "note": "The hub's shards are World, not Local - the hearer and the bus would sign different tabs."
+  },
+  {
+    "name": "SAFE5-the-feed-unsigned",
+    "file": "src/net/safety/chatFeed.js",
+    "old": "  if (!good) return { error: 'feed-signature' };\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_law.test.js",
+      "test/server/safe_review.test.js"
+    ],
+    "note": "A feed anyone can post to is a reviewer anyone can steer."
+  },
+  {
+    "name": "SAFE5-a-private-tab-fed",
+    "file": "src/net/safety/chatFeed.js",
+    "old": "b.lines.every((l) => stampableLine(l) && PUBLIC_TABS.includes(l.tab))",
+    "new": "b.lines.every((l) => stampableLine(l))",
+    "tests": [
+      "test/net/safety/safe_law.test.js"
+    ],
+    "note": "Party, guild and a place's talk reach the reviewer only in a report."
+  },
+  {
+    "name": "SAFE5-an-old-batch-taken",
+    "file": "src/net/safety/chatFeed.js",
+    "old": "  if (Math.abs(nowMs - batch.at) > FEED_AGE_MAX_MS) return { error: 'feed-stale' };\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_law.test.js"
+    ],
+    "note": "A replayed batch is read again and paid for again."
+  },
+  {
+    "name": "SAFE3-a-report-with-none-of-their-lines",
+    "file": "src/net/safety/safetyLaw.js",
+    "old": "  if (!out.some((l) => l.sub === target)) return { error: 'report-no-line' };\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_law.test.js",
+      "test/server/safe_service.test.js"
+    ],
+    "note": "A report must carry something the reported account said."
+  },
+  {
+    "name": "SAFE4-the-ladder-off-by-one",
+    "file": "src/net/safety/safetyLaw.js",
+    "old": "export const LADDER_MIN = Object.freeze([30, 24 * 60, 7 * 24 * 60]);",
+    "new": "export const LADDER_MIN = Object.freeze([24 * 60, 7 * 24 * 60]);",
+    "tests": [
+      "test/net/safety/safe_law.test.js",
+      "test/server/safe_service.test.js"
+    ],
+    "note": "The first strike is half an hour."
+  },
+  {
+    "name": "SAFE4-a-mute-carrying-a-ban-field",
+    "file": "src/net/identityToken.js",
+    "old": "  if (c.o !== 'ban' && c.bn !== undefined) return false;\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_law.test.js"
+    ],
+    "note": "Each kind carries its own fields alone."
+  },
+  {
+    "name": "SAFE4-the-order-not-handed-on",
+    "file": "server/src/index.js",
+    "old": "      if (law) this._send(other, law);\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_relay.test.js"
+    ],
+    "note": "The target's own client carries a pushed order to the rooms the hub cannot reach."
+  },
+  {
+    "name": "SAFE3-a-fresh-account-counted",
+    "file": "server-account/src/safety.js",
+    "old": " && Number(player?.created_at) <= nowS - SPROUT_S",
+    "new": "",
+    "tests": [
+      "test/server/safe_service.test.js"
+    ],
+    "note": "An account made a minute ago does not count toward a mute."
+  },
+  {
+    "name": "SAFE3-two-reports-mute",
+    "file": "server-account/src/safety.js",
+    "old": "export const REPORT_AUTO_MUTE = 3;",
+    "new": "export const REPORT_AUTO_MUTE = 2;",
+    "tests": [
+      "test/server/safe_service.test.js"
+    ],
+    "note": "Three credible reporters, not two."
+  },
+  {
+    "name": "SAFE3-a-stamp-unchecked",
+    "file": "server-account/src/safety.js",
+    "old": "    if (await verifyStamp(l, l.sg, key, { subtle })) lines.push(l);\n    else if (l.sub === shape.target) return { error: 'report-unwitnessed' };",
+    "new": "    lines.push(l);",
+    "tests": [
+      "test/server/safe_service.test.js"
+    ],
+    "note": "A forged line among good ones kept."
+  },
+  {
+    "name": "SAFE4-a-moderator-auto-muted",
+    "file": "server-account/src/sanctions.js",
+    "old": "export const autoMutable = (row, env, nowS) => !!row && !canModerate(row, env) && !isMuted(row, nowS) && !isBanned(row, nowS);",
+    "new": "export const autoMutable = (row, env, nowS) => !!row && !isMuted(row, nowS) && !isBanned(row, nowS);",
+    "tests": [
+      "test/server/safe_service.test.js"
+    ],
+    "note": "Reports and the reviewer never mute a moderator."
+  },
+  {
+    "name": "SAFE4-anyone-may-ban",
+    "file": "server-account/src/sanctions.js",
+    "old": "  if (!canModerate(actor, env)) return { error: 'not-moderator' };\n  if (!Number.isSafeInteger(days)",
+    "new": "  if (!Number.isSafeInteger(days)",
+    "tests": [
+      "test/server/safe_service.test.js",
+      "test/server/staffpanel2fix.test.js"
+    ],
+    "note": "The hole the ban must not have: a player who asks is a moderator."
+  },
+  {
+    "name": "SAFE4-the-ambiguity-guessed",
+    "file": "server-account/src/sanctions.js",
+    "old": "  if (guests.length > 1) return { error: 'ambiguous' };\n",
+    "new": "",
+    "tests": [
+      "test/server/safe_service.test.js"
+    ],
+    "note": "Banning the wrong person is worse than banning nobody."
+  },
+  {
+    "name": "SAFE4-the-ban-never-checked-at-the-door",
+    "file": "server-account/src/index.js",
+    "old": "      if (isBanned(who.player, nowS) && path !== '/v1/auth/logout') return json(bannedAnswer(who.player), 403, origin);\n",
+    "new": "",
+    "tests": [
+      "test/server/safe_service.test.js"
+    ],
+    "note": "A banned account that mints a token is not banned."
+  },
+  {
+    "name": "SAFE8-discord-unsigned",
+    "file": "server-account/src/index.js",
+    "old": "        if (!(await discordSigned(env, new Uint8Array(bytes), request.headers.get('x-signature-ed25519'), request.headers.get('x-signature-timestamp'), { subtle, nowS }))) return no('signature', 401, origin);\n",
+    "new": "",
+    "tests": [
+      "test/server/safe_review.test.js"
+    ],
+    "note": "Anyone could press a card's buttons."
+  },
+  {
+    "name": "SAFE8-a-discord-user-not-a-moderator-acting",
+    "file": "server-account/src/discord.js",
+    "old": "  return row && canModerate(row, env) && !isBanned(row, nowS) ? row : null;",
+    "new": "  return row ?? null;",
+    "tests": [
+      "test/server/safe_review.test.js"
+    ],
+    "note": "Who may act is the game's question."
+  },
+  {
+    "name": "SAFE5-an-account-named-to-the-reviewer",
+    "file": "server-account/src/modAi.js",
+    "old": "const out = lines.map((l, i) => ({ i, speaker: speaker(l.sub), tab: l.tab, text: l.text }));",
+    "new": "const out = lines.map((l, i) => ({ i, speaker: l.sub, tab: l.tab, text: l.text }));",
+    "tests": [
+      "test/server/safe_review.test.js"
+    ],
+    "note": "The reviewer is told as little as it needs."
+  },
+  {
+    "name": "SAFE5-the-schema-dropped",
+    "file": "server-account/src/modAi.js",
+    "old": "    output_config: { effort: 'low', format: { type: 'json_schema', schema: VERDICT_SCHEMA } },",
+    "new": "    output_config: { effort: 'low' },",
+    "tests": [
+      "test/server/safe_review.test.js"
+    ],
+    "note": "An answer held to no shape."
+  },
+  {
+    "name": "SAFE5-the-budget-unchecked",
+    "file": "server-account/src/modAi.js",
+    "old": "  if (!(await spendAiCall(db, env, nowS, { feed }))) return { error: AI_ERRORS.budget };\n",
+    "new": "",
+    "tests": [
+      "test/server/safe_review.test.js"
+    ],
+    "note": "The day's calls are a budget."
+  },
+  {
+    "name": "SAFE5-spam-mutes-on-its-own",
+    "file": "server-account/src/modAi.js",
+    "old": "export const AUTO_CATEGORIES = Object.freeze(['harassment', 'hate', 'sexual', 'threat']);",
+    "new": "export const AUTO_CATEGORIES = Object.freeze(['harassment', 'hate', 'sexual', 'threat', 'spam']);",
+    "tests": [
+      "test/server/safe_review.test.js"
+    ],
+    "note": "Spam is a moderator's to weigh."
+  },
+  {
+    "name": "SAFE5-shadow-acting",
+    "file": "server-account/src/safetyClock.js",
+    "old": "  if (modAiModeOf(env) !== 'on' || !flagActs(flag)) return 0;",
+    "new": "  if (!flagActs(flag)) return 0;",
+    "tests": [
+      "test/server/safe_review.test.js"
+    ],
+    "note": "Shadow mode acts on nothing."
+  },
+  {
+    "name": "SAFE5-a-mild-flag-opening-a-case",
+    "file": "server-account/src/modAi.js",
+    "old": "export const FLAG_SEVERITY = 2;",
+    "new": "export const FLAG_SEVERITY = 1;",
+    "tests": [
+      "test/server/safe_review.test.js"
+    ],
+    "note": "A rude line about the game is said nowhere."
+  },
+  {
+    "name": "SAFE1-a-blocked-line-kept",
+    "file": "src/net/chat.js",
+    "old": "    if (!fields.mine && typeof fields.sub === 'string' && fields.sub && this.hears && !this.hears(fields.sub)) return null;   // SAFE1: a blocked speaker\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A block that still shows the lines."
+  },
+  {
+    "name": "SAFE1-a-blocked-invite-landing",
+    "file": "src/net/social.js",
+    "old": "        if (!this._hears(invite.from?.acct)) return null;   // SAFE1: nor one from an account I blocked - its sender is never told\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "A blocked account's party invite still lands."
+  },
+  {
+    "name": "SAFE7-a-line-sent-before-agreeing",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "      if (agreed !== false) return null;\n",
+    "new": "      return null;\n",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "The code of conduct agreed before the first line."
+  },
+  {
+    "name": "SAFE3-a-menu-on-my-own-line",
+    "file": "src/ui/chatPanel.js",
+    "old": "    if (lineActions && !line.mine) armLineMenu(n, nameEl, line);   // SAFE1 + SAFE3\n",
+    "new": "    if (lineActions) armLineMenu(n, nameEl, line);   // SAFE1 + SAFE3\n",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ],
+    "note": "Nobody reports or blocks themselves."
+  },
+  {
+    "name": "SAFE7-the-joke-unsaid",
+    "file": "src/net/safety/conduct.js",
+    "old": "disability or age, not even as a joke.'",
+    "new": "disability or age.'",
+    "tests": [
+      "test/net/safety/safe_law.test.js"
+    ],
+    "note": "The rule names the joke because the joke is the form hate takes in a game's chat."
+  }
+]

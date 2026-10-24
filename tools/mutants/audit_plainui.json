@@ -1,0 +1,281 @@
+[
+  {
+    "name": "AUDIT-PLAINUI-W1-short-week-typed",
+    "file": "src/ui/noticeWindow.js",
+    "old": "moves a chapter above ${STRENGTH_START} back ${STRENGTH_SHORT} toward it.",
+    "new": "moves a chapter above ${STRENGTH_START} back 2 toward it.",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-W1-swing-dropped",
+    "file": "src/ui/noticeWindow.js",
+    "old": "A Rivalry's winner takes ${CHAPTER_EVENT_EFFECTS.rivalrySwing} from the loser, and a Season's end",
+    "new": "A Season's end",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-W2-toll-setting-unread",
+    "file": "src/ui/familyPages.js",
+    "old": "  try { toll = legacySettings().tollShare; } catch { /* the settings unread: the Standard toll */ }\n",
+    "new": "",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-W2-remains-cap-typed",
+    "file": "src/ui/familyPages.js",
+    "old": "of their purse (at most ${REMAINS_GOLD_MAX.toLocaleString('en-US')})",
+    "new": "of their purse (at most 2,000)",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-W5-full-offered",
+    "file": "src/ui/seatTab.js",
+    "old": "    if ((mine.pledges ?? []).length >= SEAT_PLEDGE_REGIONS_MAX) return",
+    "new": "    if ((mine.pledges ?? []).length > SEAT_PLEDGE_REGIONS_MAX) return",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-T4-unbound-sent-elsewhere",
+    "file": "src/ui/seatTab.js",
+    "old": "  if (mine.bound && mine.bound !== mine.guild) return",
+    "new": "  if (mine.bound !== mine.guild) return",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-W6-rounded",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "  const r = Math.trunc(card.regard) || 0;",
+    "new": "  const r = Math.round(card.regard) || 0;",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-C1-words-fold-forgotten",
+    "file": "src/ui/seatTab.js",
+    "old": "SEAT_PANELS.words, wordsOpen, (o) => { wordsOpen = o; });",
+    "new": "SEAT_PANELS.words, false, (o) => { wordsOpen = o; });",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-C1-chapters-fold-forgotten",
+    "file": "src/ui/noticeWindow.js",
+    "old": "        chapterGuideOpen ?? !(writs?.merit",
+    "new": "        !(writs?.merit",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-C1-dd-the-word",
+    "file": "src/ui/seatTab.js",
+    "old": "dl.append(el('dt', null, word), el('dd', null, meaning));",
+    "new": "dl.append(el('dt', null, word), el('dd', null, word));",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-C4-explained-after-the-answer",
+    "file": "src/ui/seatTab.js",
+    "old": "        body.append(p);\n        explain();\n        return body;",
+    "new": "        body.append(p);\n        return body;",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-C6-no-house-unsaid",
+    "file": "src/ui/familyPages.js",
+    "old": "  if (!family) detail.append(el('p', 'px-note', noFamilyLine(prov)));",
+    "new": "  if (!prov?.on?.()) detail.append(el('p', 'px-note', noFamilyLine(prov)));",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-C2-indoor-door-no-card",
+    "file": "src/scenes/world.js",
+    "old": "    regardCard: (p) => livingIndoors?.town()?.regardCard?.(p) ?? null,   // AUDIT PLAIN-UI C2: the talk panel's regard, indoors too\n",
+    "new": "",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-C2-roads-card-off-the-head",
+    "file": "src/scenes/livingWorld/livingRoads.js",
+    "old": "      return { regard: rel.regard(whom, day), standing: rel.standing(whom, day) };",
+    "new": "      return null;",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-U-press-dead",
+    "file": "src/ui/enhanced/enhancedTalk.js",
+    "old": "    r.onclick = () => { regardOpen = !regardOpen; render(); };",
+    "new": "    r.onclick = () => {};",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-U-mark-fixed",
+    "file": "src/ui/enhanced/enhancedTalk.js",
+    "old": "    mark.style.left = `${(m.regard.share * 100).toFixed(1)}%`;",
+    "new": "    mark.style.left = '50.0%';",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-U-open-kept-across-mounts",
+    "file": "src/ui/enhanced/enhancedTalk.js",
+    "old": "  lastLogCount = -1; lastTopicsKey = null; regardOpen = false;",
+    "new": "  lastLogCount = -1; lastTopicsKey = null;",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-T5-charter-back",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".seat-head .seat-charter { margin: 0; font-size: 17px;",
+    "new": ".seat-head .seat-charter { margin: 0; font-size: 15px;",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-T5-battle-back",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".notice-seat-battle { margin: 0 0 6px; font-size: 15px;",
+    "new": ".notice-seat-battle { margin: 0 0 6px; font-size: 14px;",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-T5-writ-count-back",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".notice-worktoday { margin: 0 4px 12px; padding: 6px 10px; font-size: 15px;",
+    "new": ".notice-worktoday { margin: 0 4px 12px; padding: 6px 10px; font-size: 13px;",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-T5-chip-back",
+    "file": "src/ui/familyPages.js",
+    "old": "border-width: 1px; border-style: solid; font-size: 12px; line-height: 1.5;",
+    "new": "border-width: 1px; border-style: solid; font-size: 10px; line-height: 1.5;",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-T5-card-back",
+    "file": "src/ui/familyPages.js",
+    "old": ".px-sys .fam-card { flex: 0 0 268px; max-width: 268px;",
+    "new": ".px-sys .fam-card { flex: 0 0 300px; max-width: 300px;",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-C2-roads-door-no-card",
+    "file": "src/scenes/world.js",
+    "old": "  _livingRoadsDoor.regardCard = (p) => livingRoads?.regardCard(p) ?? null;   // AUDIT PLAIN-UI C2: the talk panel's regard on the road and below (a diver's door)\n",
+    "new": "",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-U2-lever-past-the-most",
+    "file": "src/ui/seatTab.js",
+    "old": "    && pledges.length < SEAT_PLEDGE_REGIONS_MAX;",
+    "new": "    && pledges.length <= SEAT_PLEDGE_REGIONS_MAX;",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-U2-lever-undrawn",
+    "file": "src/ui/seatTab.js",
+    "old": "          if (seatMayPledgeHere(seat, data)) {",
+    "new": "          if (false) {",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-U2-seat-unnamed",
+    "file": "src/ui/seatTab.js",
+    "old": "return `Your guild fights for ${nameOf(here.key) ?? 'another seat of this region'} this week",
+    "new": "return `Your guild fights for ${'another seat of this region'} this week",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-U2-clock-dropped",
+    "file": "src/ui/seatTab.js",
+    "old": "before Friday 18:00 UTC${left(data?.reckoningAt)}.`\n      : `Ask",
+    "new": "before Friday 18:00 UTC.`\n      : `Ask",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-U3-target-back",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".notice-panel > summary { margin: -11px 0; padding: 11px 0; cursor: pointer; }",
+    "new": ".notice-panel > summary { margin: 0; cursor: pointer; }",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-U6-one-line-back",
+    "file": "src/ui/familyPages.js",
+    "old": "  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }",
+    "new": "  white-space: nowrap; }",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-U8-way-undrawn",
+    "file": "src/ui/familyPages.js",
+    "old": "    how.onclick = () => goto('guide');",
+    "new": "    how.onclick = () => goto('tree');",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-PLAINUI-U11-refusal-bare",
+    "file": "src/scenes/townTalk.js",
+    "old": "setMidScreenText(b ? `${refusal} (${b.label}, ${b.value})` : refusal); return; }",
+    "new": "setMidScreenText(refusal); return; }",
+    "tests": [
+      "test/ui/audit_plainui.test.js"
+    ]
+  }
+]

@@ -1,0 +1,30 @@
+[
+  {
+    "name": "PR-new-ends-every-step",
+    "file": "src/systems/wagon/wagonRopes.js",
+    "old": "  keep3(rope.a, a); keep3(rope.b, b);\n  return rope;\n}",
+    "new": "  rope.a = [a[0], a[1], a[2]]; rope.b = [b[0], b[1], b[2]];\n  return rope;\n}",
+    "tests": ["test/systems/wagon/perfrope.test.js"]
+  },
+  {
+    "name": "PR-new-ends-when-still",
+    "file": "src/systems/wagon/wagonRopes.js",
+    "old": "else { pinEnds(rope, a, b); keep3(rope.a, a); keep3(rope.b, b); }",
+    "new": "else { pinEnds(rope, a, b); rope.a = [...a]; rope.b = [...b]; }",
+    "tests": ["test/systems/wagon/perfrope.test.js"]
+  },
+  {
+    "name": "PR-length-flat",
+    "file": "src/systems/wagon/wagonRopes.js",
+    "old": "const len3 = (x, y, z) => Math.sqrt(x * x + y * y + z * z);",
+    "new": "const len3 = (x, y, z) => Math.sqrt(x * x + y * y);",
+    "tests": ["test/systems/wagon/perfrope.test.js"]
+  },
+  {
+    "name": "PR-sub-steps-ends-at-the-last",
+    "file": "src/systems/wagon/wagonRopes.js",
+    "old": "ea[k] = a0[k] + (a[k] - a0[k]) * t; eb[k] = b0[k] + (b[k] - b0[k]) * t;",
+    "new": "ea[k] = a[k]; eb[k] = b[k];",
+    "tests": ["test/systems/wagon/perfrope.test.js"]
+  }
+]

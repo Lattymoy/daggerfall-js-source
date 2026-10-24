@@ -1,6 +1,6 @@
 // WB9g - DAGON'S FIRE, COMPILED, LINKED AND DRAWN IN A REAL BROWSER.
 //
-// node holds the aura's law (test/wb9g_insignia.test.js: who is drawn, the clock's wrap, the pass over a fake GL); what
+// node holds the aura's law (test/net/wb9g_insignia.test.js: who is drawn, the clock's wrap, the pass over a fake GL); what
 // node cannot answer is whether the GLSL COMPILES and LINKS in a real WebGL2 context, and whether what it draws is the
 // fire it says: the ring burning at its radius and dim inside it, nothing past its edge, flames standing up out of it,
 // no seam where the angle's noise closes behind the wearer, no jump where the clock wraps, and nothing at all before it
@@ -32,7 +32,10 @@
 //     node tools/auraProbe.mjs [--shots <dir>]     (writes aura.png / aura_side.png / ward.png / ward_side.png /
 //                                                   radiance.png / radiance_side.png / cloak_back.png /
 //                                                   cloak_front.png / cloak_top.png / cloak_torn.png /
-//                                                   wings_back.png / resonance.png / resonance_top.png there)
+//                                                   wings_back.png / resonance.png / resonance_top.png /
+//                                                   maelstrom_top.png / maelstrom_side.png / warren.png /
+//                                                   warren_top.png / firstlight.png / firstlight_top.png /
+//                                                   firstlight_side.png there)
 //
 // CRYSTAL-FIST (2026-10-05): and THE CRYSTAL RESONANCE, the sixth - from the side, every square node's law
 // (resonanceLit, on the wearer's own clock) stands lit is lit in the reference's purple itself, and every square over a
@@ -40,8 +43,23 @@
 // moment, other squares); its feet on the ring from above, read inside it where no square of the wall can stand over
 // them; the purple not summed to a paler one where a square lies over its foot; no jump at the wrap; nothing before it
 // kindles.
+//
+// SERPENT5 (2026-10-15; AUDIT WORLD-REWARDS D3 - the interpreter had been its only reader): and THE MAELSTROM, the ninth -
+// from above, foam where node's law (maelstromArmAngle, on the aura's own clock) stands its arms and the water darker
+// between them; its eye open water; no jump at the wrap; nothing before it kindles; from the side, its curl at the lip.
 import { chromium } from 'playwright';
-import { glyphEdges, CLOAK_GLYPH, RESONANCE_R, RESONANCE_COLUMNS, RESONANCE_CELLS, RESONANCE_PITCH_M, AURA_LIFT_M, resonanceLit, resonanceClock } from '../src/render/auraRing.js';   // SHADOW-CLOAK: where the wearer's glyph is, to read it back; CRYSTAL-FIST: which squares stand lit, by node's own law
+//
+// WIKIMAID (2026-10-17): and THE LILAC WARREN, the twelfth - from the side, every rabbit drawn where node's law has it (warrenBunny,
+// on the wearer's own clock), its coat the lilac and never washed past it over a bright floor; from above, the ring of light
+// whole in the lilac inside the rabbits' lane, the amethyst light within it, dark past the ground, and their tracks where they
+// landed; no jump at the wrap; nothing before it kindles.
+//
+// SPIRE-FIRST (2026-10-20): and FIRSTLIGHT, rebuilt as Serveride's own - from above its ring whole in the dawn's white, the
+// climb's lane lit behind the climb and dark ahead of it (node's law, dawnClimb); from X's side its spire standing whole once
+// taken and a third before, and the shaft of first light past the head as it is taken; no seam where the ring closes, no
+// jump at the wrap, nothing before it kindles.
+import { DAWN_R, DAWN_INNER_M, DAWN_HZ, DAWN_CLIMB, DAWN_START, DAWN_SPIRE_H, dawnMarkAngle } from '../src/render/auraRing.js';   // SPIRE-FIRST: where Firstlight's Redoubts, spires and climb are, by node's own law
+import { glyphEdges, CLOAK_GLYPH, RESONANCE_R, RESONANCE_COLUMNS, RESONANCE_CELLS, RESONANCE_PITCH_M, AURA_LIFT_M, resonanceLit, resonanceClock, MAELSTROM_R, MAELSTROM_ARMS, maelstromArmAngle, auraClock, WARREN_R, WARREN_RING_IN, WARREN_BUNNIES, WARREN_BUNNY_M, WARREN_BUNNY, WARREN_LEAN, WARREN_PRINTS, warrenBunny, warrenClock, warrenPrintsInto } from '../src/render/auraRing.js';   // WIKIMAID: where the rabbits and their tracks are, by node's own law   // SHADOW-CLOAK; SERPENT5 (AUDIT WORLD-REWARDS D3): the Maelstrom: where the wearer's glyph is, to read it back; CRYSTAL-FIST: which squares stand lit, by node's own law
 import http from 'node:http';
 import { readFileSync, existsSync } from 'node:fs';
 import { join, extname, dirname } from 'node:path';
@@ -52,7 +70,7 @@ const shotsAt = process.argv.includes('--shots') ? process.argv[process.argv.ind
 const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${ok ? 'ok  ' : 'FAIL'} ${n}${d ? ` - ${d}` : ''}`); };
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=640 height=480></canvas><script type=module>
-import { AuraRingRenderer, AURA_RING_R, AURA_CLOCK_PERIOD, WARD_RING_R, WARD_RUNE_R, RADIANCE_R, RADIANCE_H, RADIANCE_POOL_R, CLOAK_POOL_R, CLOAK_SIGIL_Y, CLOAK_SIGIL_R, CLOAK_H, CLOAK_CLASP_Y, CLOAK_RIP_S } from '/src/render/auraRing.js';
+import { AuraRingRenderer, AURA_KINDS, AURA_RING_R, AURA_CLOCK_PERIOD, WARD_RING_R, WARD_RUNE_R, RADIANCE_R, RADIANCE_H, RADIANCE_POOL_R, CLOAK_POOL_R, CLOAK_SIGIL_Y, CLOAK_SIGIL_R, CLOAK_H, CLOAK_CLASP_Y, CLOAK_RIP_S } from '/src/render/auraRing.js';
 const gl = document.getElementById('c').getContext('webgl2', { alpha: false, preserveDrawingBuffer: true });
 const vs = \`#version 300 es
 layout(location=0) in vec2 p; uniform mat4 vp; void main(){ gl_Position = vp * vec4(p.x, 0.0, p.y, 1.0); }\`;
@@ -69,7 +87,7 @@ try { pass = new AuraRingRenderer(gl); } catch (e) { err = String(e.message ?? e
 const persp = (f, a, n, fa) => { const t = 1 / Math.tan(f / 2); return new Float32Array([t / a, 0, 0, 0, 0, t, 0, 0, 0, 0, (fa + n) / (n - fa), -1, 0, 0, 2 * fa * n / (n - fa), 0]); };
 const look = (e, c) => { const u = [0, 1, 0]; const z = [e[0] - c[0], e[1] - c[1], e[2] - c[2]]; let l = Math.hypot(...z); z.forEach((v, i) => { z[i] = v / l; }); const x = [u[1] * z[2] - u[2] * z[1], u[2] * z[0] - u[0] * z[2], u[0] * z[1] - u[1] * z[0]]; l = Math.hypot(...x); x.forEach((v, i) => { x[i] = v / l; }); const y = [z[1] * x[2] - z[2] * x[1], z[2] * x[0] - z[0] * x[2], z[0] * x[1] - z[1] * x[0]]; return new Float32Array([x[0], y[0], z[0], 0, x[1], y[1], z[1], 0, x[2], y[2], z[2], 0, -(x[0] * e[0] + x[1] * e[1] + x[2] * e[2]), -(y[0] * e[0] + y[1] * e[1] + y[2] * e[2]), -(z[0] * e[0] + z[1] * e[1] + z[2] * e[2]), 1]); };
 const mul = (a, b) => { const o = new Float32Array(16); for (let c = 0; c < 4; c++) for (let r = 0; r < 4; r++) for (let k = 0; k < 4; k++) o[c * 4 + r] += a[k * 4 + r] * b[c * 4 + k]; return o; };
-window.probe = { err, linked: pass ? gl.getProgramParameter(pass.program, gl.LINK_STATUS) : false, ringR: AURA_RING_R, period: AURA_CLOCK_PERIOD, wardR: WARD_RING_R, runeR: WARD_RUNE_R, radR: RADIANCE_R, radH: RADIANCE_H, poolR: RADIANCE_POOL_R, cloakPoolR: CLOAK_POOL_R, cloakSigilY: CLOAK_SIGIL_Y, cloakSigilR: CLOAK_SIGIL_R, cloakH: CLOAK_H, cloakClaspY: CLOAK_CLASP_Y, cloakRipS: CLOAK_RIP_S };
+window.probe = { err, linked: pass ? AURA_KINDS.every((k) => { const P = pass.programOf(k, true); return !!P && gl.getProgramParameter(P.prog, gl.LINK_STATUS); }) : false,   // AURA-SPLIT (#1143): every look a program of its own, built here whatever the driver says ringR: AURA_RING_R, period: AURA_CLOCK_PERIOD, wardR: WARD_RING_R, runeR: WARD_RUNE_R, radR: RADIANCE_R, radH: RADIANCE_H, poolR: RADIANCE_POOL_R, cloakPoolR: CLOAK_POOL_R, cloakSigilY: CLOAK_SIGIL_Y, cloakSigilR: CLOAK_SIGIL_R, cloakH: CLOAK_H, cloakClaspY: CLOAK_CLASP_Y, cloakRipS: CLOAK_RIP_S };
 /** Draw the floor and the aura at the origin from \`eye\` at \`t\` seconds, kindled \`kindle\`; read back \`pts\` (world). */
 window.draw = (eye, t, kindle, pts, aura, at = [0, 0.2, 0], yaw = 0, lit = 1, torn = -1, extra = null, opts = {}) => {   // SHADOW-CLOAK (AUDIT): \`opts\` - strict (a point off the canvas throws, never reads black), mirror (the game's own projection and CW front face), none (the same frame with no aura at all)   // PRIMARCH: \`at\` - where the eye looks (the first person looks level); SHADOW-CLOAK: the wearer's facing, and the floor lit brighter so a shadow shows
   const proj = persp(0.9, 640 / 480, 0.05, 100), view = look(eye, at);
@@ -392,6 +410,105 @@ try {
   check('no jump where the clock wraps', rsJump <= 45, `${rsJump}`);
   const rsCold = await rs(resEye, rsT, 0, resPts, resAt);
   check('unkindled, nothing stands', rsCold.px.every((c) => lum(c) < 70), `${Math.max(...rsCold.px.map(lum))}`);
+  // ── SERPENT5: THE MAELSTROM (AUDIT WORLD-REWARDS D3: the real GL's own word, beside the interpreter's) ──
+  const ms = (eye, t, k, pts, at) => page.evaluate(([e, tt, kk, ps, a]) => window.draw(e, tt, kk, ps, 'maelstrom', a, 0, 1, -1, null, { strict: true }), [eye, t, k, pts, at]);
+  const msEye = [0, 3.4, 0.001], msAt = [0, 0, 0], msT = 21.7;
+  const msG = (r, a) => [Math.cos(a) * r, AURA_LIFT_M, Math.sin(a) * r];
+  const armPts = [], gapPts = [];
+  for (const r of [0.35, 0.55, 0.7]) for (let k = 0; k < MAELSTROM_ARMS; k++) { const a = maelstromArmAngle(r, auraClock(msT), k); armPts.push(msG(r, a)); gapPts.push(msG(r, a + Math.PI / MAELSTROM_ARMS)); }
+  const msPts = [...armPts, ...gapPts, msG(0.06, 0.4), msG(0.06, 2.5)];
+  const msBare = await page.evaluate(([e, tt, ps, a]) => window.draw(e, tt, 1, ps, 'maelstrom', a, 0, 1, -1, null, { strict: true, none: true }), [msEye, msT, msPts, msAt]);
+  const msWhole = await ms(msEye, msT, 1, msPts, msAt);
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'maelstrom_top.png') });
+  check('the maelstrom draws without a GL error', msWhole.error === 0 && msWhole.drawn === 1, `error ${msWhole.error}, drawn ${msWhole.drawn}`);
+  const lift = (i) => lum(msWhole.px[i]) - lum(msBare.px[i]), nA = armPts.length;
+  check('foam where its arms stand at the clock\'s own turn, the water between them darker', armPts.every((_, i) => lift(i) > lift(nA + i) + 40), armPts.map((_, i) => `${lift(i)}/${lift(nA + i)}`).join(' '));
+  check('its eye open water', lift(2 * nA) < 20 && lift(2 * nA + 1) < 20, `${lift(2 * nA)} ${lift(2 * nA + 1)}`);
+  const msB = await ms(msEye, p.period - 1 / 240, 1, msPts, msAt), msA = await ms(msEye, 1 / 240, 1, msPts, msAt);
+  const msJump = Math.max(...msB.px.map((c, i) => Math.abs(lum(c) - lum(msA.px[i]))));
+  check('no jump where the clock wraps', msJump <= 45, `${msJump}`);
+  const msCold = await ms(msEye, msT, 0, msPts, msAt);
+  check('unkindled, nothing stands', msCold.px.every((c, i) => lum(c) - lum(msBare.px[i]) < 10), `${Math.max(...msCold.px.map((c, i) => lum(c) - lum(msBare.px[i])))}`);
+  const msSide = await ms([0, 0.6, 3.2], msT, 1, [[0, AURA_LIFT_M + 0.09, MAELSTROM_R]], [0, 0.2, 0]);
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'maelstrom_side.png') });
+  check('from the side, its curl stands at the lip', msSide.error === 0 && lum(msSide.px[0]) > 60, `${lum(msSide.px[0])}`);
+  // ── WIKIMAID: THE LILAC WARREN ──
+  const wr = (eye, t, k, pts, at, lit = 1, none = false) => page.evaluate(([e, tt, kk, ps, a, l, n]) => window.draw(e, tt, kk, ps, 'lilacwarren', a, 0, l, -1, null, { strict: true, none: n }), [eye, t, k, pts, at, lit, none]);
+  const wrEye = [0, 1.0, 2.6], wrAt = [0, 0.25, 0], wrT = 13.3;
+  /** Rabbit k's middle at `t` - its box's (8, 10), inside it whichever way it faces - leaned as the vertex half leans it. */
+  const bunMid = (k, t, eye) => {
+    const b = warrenBunny(k, warrenClock(t, 0.37)), c = [Math.cos(b.a) * WARREN_R, AURA_LIFT_M + b.y, Math.sin(b.a) * WARREN_R];
+    const h = ((WARREN_BUNNY.ground - 10) / 16) * WARREN_BUNNY_M * b.sq, dx = eye[0] - c[0], dz = eye[2] - c[2], d = Math.hypot(dx, dz);
+    const lean = WARREN_LEAN * Math.atan2(Math.max(eye[1] - c[1], 0), Math.max(d, 1e-4));
+    return [c[0] + (dx / d) * Math.sin(lean) * h, c[1] + Math.cos(lean) * h, c[2] + (dz / d) * Math.sin(lean) * h];
+  };
+  const lilacish = (c) => c[2] > c[1] + 60 && c[0] > c[1] + 25 && lum(c) > 250;
+  const mids = Array.from({ length: WARREN_BUNNIES }, (_, k) => bunMid(k, wrT, wrEye));
+  const wrWhole = await wr(wrEye, wrT, 1, mids, wrAt);
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'warren.png') });
+  check('the warren draws without a GL error', wrWhole.error === 0 && wrWhole.drawn === 1, `error ${wrWhole.error}, drawn ${wrWhole.drawn}`);
+  check('every rabbit where the law has it, in its lilac', wrWhole.px.every(lilacish), JSON.stringify(wrWhole.px));
+  const wrLit = await wr(wrEye, wrT, 1, mids, wrAt, 9);
+  check('over a bright floor still lilac, never washed past it', wrLit.px.every((c) => lilacish(c) && c[1] < 200), JSON.stringify(wrLit.px));
+  const wrLater = await wr(wrEye, wrT + 0.8, 1, Array.from({ length: WARREN_BUNNIES }, (_, k) => bunMid(k, wrT + 0.8, wrEye)), wrAt);
+  check('another moment, the rabbits moved on and still drawn where the law has them', wrLater.px.every(lilacish), JSON.stringify(wrLater.px));
+  // from above: the ring of light inside their lane, the light within, nothing past the ground; their tracks where they landed
+  const wrTop = [0, 3.4, 0.001], RL = WARREN_R - WARREN_RING_IN;
+  const wrRing = Array.from({ length: 24 }, (_, i) => { const a = (i / 24) * Math.PI * 2; return [Math.cos(a) * RL, 0.05, Math.sin(a) * RL]; });
+  const pr = warrenPrintsInto(new Float32Array(WARREN_BUNNIES * WARREN_PRINTS * 2), warrenClock(wrT, 0.37)), trackPts = [];
+  for (let i = 0; i < WARREN_BUNNIES * WARREN_PRINTS; i++) if (pr[i * 2 + 1] > 0.8 && pr[i * 2 + 1] < 2.0) { const a = pr[i * 2] + 0.03 / WARREN_R, r = WARREN_R + 0.022; trackPts.push([Math.cos(a) * r, 0.05, Math.sin(a) * r]); }
+  const topPts = [...wrRing, [0.25, 0.05, 0.1], [1.4, 0.05, 0.3], ...trackPts];
+  const wrBareTop = await wr(wrTop, wrT, 1, topPts, [0, 0, 0], 1, true), wrTopped = await wr(wrTop, wrT, 1, topPts, [0, 0, 0]);
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'warren_top.png') });
+  check('from above, the ring of light whole in the lilac inside their lane', wrTopped.px.slice(0, 24).filter(lilacish).length >= 22, wrTopped.px.slice(0, 24).map(lum).join(' '));
+  const inner = wrTopped.px[24], past = wrTopped.px[25];
+  check('the amethyst light within it, and nothing past the ground', inner[2] > wrBareTop.px[24][2] + 8 && inner[2] > inner[1] && lum(past) - lum(wrBareTop.px[25]) < 6, `${inner} / ${past}`);
+  check('their tracks where they landed, a hind foot in the lilac', trackPts.length >= 4 && wrTopped.px.slice(26).every((c, i) => c[2] - wrBareTop.px[26 + i][2] > 40), `${trackPts.length} prints: ${wrTopped.px.slice(26).map((c, i) => c[2] - wrBareTop.px[26 + i][2]).join(' ')}`);
+  // the wrap: the rabbits' own middles there, and the ground round the ring - each rabbit on either side of it where the
+  // other has it, never a jump (the fixed points of a moment before would sit on a moving rabbit's edge)
+  const wrWrap = [...Array.from({ length: WARREN_BUNNIES }, (_, k) => bunMid(k, 0, wrEye)), ...wrRing.filter((_, i) => i % 3 === 0)];
+  const wrB = await wr(wrEye, p.period - 1 / 240, 1, wrWrap, wrAt), wrA = await wr(wrEye, 1 / 240, 1, wrWrap, wrAt);
+  const wrJump = Math.max(...wrB.px.map((c, i) => Math.abs(lum(c) - lum(wrA.px[i]))));
+  check('no jump where the clock wraps', wrJump <= 45 && wrA.px.slice(0, WARREN_BUNNIES).every(lilacish), `${wrJump}`);
+  const wrCold = await wr(wrEye, wrT, 0, mids, wrAt), wrBare = await wr(wrEye, wrT, 0, mids, wrAt, 1, true);
+  check('unkindled, nothing stands', wrCold.px.every((c, i) => Math.abs(lum(c) - lum(wrBare.px[i])) < 6), `${Math.max(...wrCold.px.map((c, i) => Math.abs(lum(c) - lum(wrBare.px[i]))))}`);
+  // ── SPIRE-FIRST: FIRSTLIGHT ──
+  const fl = (eye, t, k, pts, at, none = false) => page.evaluate(([e, tt, kk, ps, a, n]) => window.draw(e, tt, kk, ps, 'firstlight', a, 0, 1, -1, null, { strict: true, none: n }), [eye, t, k, pts, at, none]);
+  const climbT = (c) => c / DAWN_HZ.climb, ang = (s) => (s - DAWN_START) * Math.PI * 2, onGround = (r, a) => [Math.cos(a) * r, 0.05, Math.sin(a) * r];
+  const flTop = [0, 3.4, 0.001], flHeld = climbT(0.7), xAt = DAWN_CLIMB.at + 9 * DAWN_CLIMB.step;
+  const flRingPts = Array.from({ length: 24 }, (_, i) => onGround(DAWN_R, (i / 24) * Math.PI * 2));
+  const flRing = await fl(flTop, flHeld, 1, flRingPts, [0, 0, 0]);
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'firstlight_top.png') });
+  check('Firstlight draws without a GL error', flRing.error === 0 && flRing.drawn === 1, `error ${flRing.error}, drawn ${flRing.drawn}`);
+  check('from above, its ring whole round the feet in the dawn\'s white - warm, never blue', flRing.px.every((c) => lum(c) > 450 && c[0] >= c[2]), flRing.px.map(lum).join(' '));
+  // mid-climb: the lane between the dial's lines lit behind the climb's head and dark ahead of it, as node's law has it
+  const lane = DAWN_R - DAWN_INNER_M / 2, reach = 0.05 + (0.28 - DAWN_CLIMB.at) / (DAWN_CLIMB.step * 10);
+  const flMid = await fl(flTop, climbT(0.28), 1, [onGround(lane, ang(reach - 0.12)), onGround(lane, ang(reach + 0.12))], [0, 0, 0]);
+  check('mid-climb, the lane lit behind the climb and dark ahead of it', lum(flMid.px[0]) > lum(flMid.px[1]) + 40, `${lum(flMid.px[0])} / ${lum(flMid.px[1])}`);
+  // from X's side: its spire whole once taken, a third before; the shaft of first light past the head as it is taken
+  const ax = dawnMarkAngle(9), flEye = [Math.cos(ax) * 3.4, 0.9, Math.sin(ax) * 3.4], flAt = [0, 0.6, 0], xH = DAWN_SPIRE_H[1];
+  const spireAt = (y) => [Math.cos(ax) * DAWN_R, 0.05 + y, Math.sin(ax) * DAWN_R];
+  const flSide = await fl(flEye, flHeld, 1, [spireAt(xH * 0.6)], flAt);
+  if (shotsAt) await page.locator('#c').screenshot({ path: join(shotsAt, 'firstlight_side.png') });
+  const flBefore = await fl(flEye, climbT(0.02), 1, [spireAt(xH * 0.6)], flAt);
+  check('X\'s spire whole once taken, a third before', lum(flSide.px[0]) > 300 && lum(flBefore.px[0]) < 60, `${lum(flSide.px[0])} / ${lum(flBefore.px[0])}`);
+  const flShot = await fl(flEye, climbT(xAt + 0.06), 1, [spireAt(1.6)], flAt), flEarly = await fl(flEye, climbT(xAt - 0.01), 1, [spireAt(1.6)], flAt);
+  check('the shaft of first light past the head as X is taken, none before', lum(flShot.px[0]) > 120 && lum(flEarly.px[0]) < 40, `${lum(flShot.px[0])} / ${lum(flEarly.px[0])}`);
+  // no seam where the ring closes (-x), through the climb's lane and the dial within, at three moments - a pixel either
+  // side; the sunburst's rays and the lozenges are crisp at a pixel's scale, so their continuity there is the
+  // interpreter's exact pin (egeco_honours.test.js, a hair either side of the wrap), not this one's. No jump at the wrap
+  let flSeam = 0, flNear = 0;
+  for (const t of [2.5, 7.25, 31.75]) for (const r of [DAWN_R - 0.1, 0.5]) {
+    const got = await fl(flTop, t, 1, [[-r, 0.05, -0.006], [-r, 0.05, 0.006], [Math.cos(2.2) * r, 0.05, Math.sin(2.2) * r], [Math.cos(2.2 + 0.012 / r) * r, 0.05, Math.sin(2.2 + 0.012 / r) * r]], [0, 0, 0]);
+    flSeam += Math.abs(lum(got.px[0]) - lum(got.px[1])); flNear += Math.abs(lum(got.px[2]) - lum(got.px[3]));
+  }
+  check('no seam behind the wearer where the ring closes', flSeam <= Math.max(120, flNear * 2), `across the seam ${flSeam}, beside it ${flNear}`);
+  const flB = await fl(flTop, p.period - 1 / 240, 1, flRingPts, [0, 0, 0]), flA = await fl(flTop, 1 / 240, 1, flRingPts, [0, 0, 0]);
+  const flJump = Math.max(...flB.px.map((c, i) => Math.abs(lum(c) - lum(flA.px[i]))));
+  check('no jump where the clock wraps', flJump <= 45, `${flJump}`);
+  const flCold = await fl(flTop, flHeld, 0, flRingPts, [0, 0, 0]), flBare = await fl(flTop, flHeld, 0, flRingPts, [0, 0, 0], true);
+  check('unkindled, nothing stands', flCold.px.every((c, i) => Math.abs(lum(c) - lum(flBare.px[i])) < 6), `${Math.max(...flCold.px.map((c, i) => Math.abs(lum(c) - lum(flBare.px[i]))))}`);
+  if (shotsAt) { await fl([0.4, 2.3, 3.6], flHeld, 1, [], [0, 0.7, 0]); await page.locator('#c').screenshot({ path: join(shotsAt, 'firstlight.png') }); }
   check('no page error', errs.length === 0, errs.join('; '));
 } finally {
   await browser.close();

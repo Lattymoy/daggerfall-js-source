@@ -1,0 +1,162 @@
+[
+  {
+    "name": "LANDED-no-word",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  land(got);   // LANDED-WORD: told first",
+    "new": "  void got;   // LANDED-WORD: told first",
+    "tests": [
+      "test/net/eliteGates/fb1020f_landedword.test.js"
+    ],
+    "why": "the report: the screen never told what a blow landed"
+  },
+  {
+    "name": "LANDED-the-claim",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  land(got);   // LANDED-WORD: told first",
+    "new": "  land(dm);   // LANDED-WORD: told first",
+    "tests": [
+      "test/net/eliteGates/fb1020f_landedword.test.js"
+    ],
+    "why": "the word the claim: a million said, a lord at 31k"
+  },
+  {
+    "name": "LANDED-to-everyone",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "d: Math.max(0, Math.round(d)), to: sub }); return out; };",
+    "new": "d: Math.max(0, Math.round(d)) }); return out; };",
+    "tests": [
+      "test/net/eliteGates/fb1020f_landedword.test.js"
+    ],
+    "why": "one member's numbers on every screen"
+  },
+  {
+    "name": "LANDED-refusal-silent",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (egFairRefuses(fairOfMember(B, sub), now)) return land(0);",
+    "new": "if (egFairRefuses(fairOfMember(B, sub), now)) return out;",
+    "tests": [
+      "test/net/eliteGates/fb1020f_landedword.test.js"
+    ],
+    "why": "a refused blow showed nothing: the claim gone and no word in its place"
+  },
+  {
+    "name": "LANDED-held-line-whole",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (res.got && res.b) return { ...res, got: egLordHit(",
+    "new": "if (res.got && res.b) return { ...res, lost: egLordHit(",
+    "tests": [
+      "test/net/eliteGates/fb1020f_landedword.test.js"
+    ],
+    "why": "the seam answering the purse's whole while an errand held the lord: blows it never felt counted"
+  },
+  {
+    "name": "LANDED-screen-claim",
+    "file": "src/ui/hitNumbers.js",
+    "old": "if (r.target?.landsByWord) return null;",
+    "new": "if (false) return null;",
+    "tests": [
+      "test/net/eliteGates/fb1020f_landedword.test.js"
+    ],
+    "why": "the claim shown beside the room's word: two numbers a blow, the first a lie"
+  },
+  {
+    "name": "LANDED-standins-unmarked",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "e.landsByWord = landWord;",
+    "new": "e.landsByWord = false;",
+    "tests": [
+      "test/net/eliteGates/fb1020f_landedword.test.js"
+    ],
+    "why": "the stand-ins never marked: the claim shown"
+  },
+  {
+    "name": "LANDED-word-dropped",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      reportPlayerAttack({ hit: true, damage: d });",
+    "new": "      void d;",
+    "tests": [
+      "test/net/eliteGates/fb1020f_landedword.test.js"
+    ],
+    "why": "the room's word heard and never shown: no number at all"
+  },
+  {
+    "name": "LANDED-client-never-asks",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "fight?.landsWord?.(!!online()?.egLandOk);",
+    "new": "fight?.landsWord?.(false);",
+    "tests": [
+      "test/net/eliteGates/fb1020f_landedword.test.js"
+    ],
+    "why": "the fight never told its relay says the word: claims shown beside the words"
+  },
+  {
+    "name": "LANDED-client-word-dropped",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (w.k === 'eland') fight?.landed?.(w.i, w.d);",
+    "new": "if (false) fight?.landed?.(w.i, w.d);",
+    "tests": [
+      "test/net/eliteGates/fb1020f_landedword.test.js"
+    ],
+    "why": "the word never handed to the fight"
+  },
+  {
+    "name": "LANDED-wire-fraction",
+    "file": "src/net/wire.js",
+    "old": "case 'eland': return intIn(m.i, 1, 1e9) && intIn(m.d, 0, EG_HP_MAX) ?",
+    "new": "case 'eland': return intIn(m.i, 1, 1e9) && Number.isFinite(m.d) && m.d >= 0 && m.d <= EG_HP_MAX ?",
+    "tests": [
+      "test/net/eliteGates/fb1020f_landedword.test.js"
+    ],
+    "why": "a fraction carried: the room says whole points"
+  },
+  {
+    "name": "LANDED-old-relay-trusted",
+    "file": "src/net/wire.js",
+    "old": "export const EG_LAND_RELAY_MIN = 237;",
+    "new": "export const EG_LAND_RELAY_MIN = 213;",
+    "tests": [
+      "test/net/eliteGates/fb1020f_landedword.test.js"
+    ],
+    "why": "a page facing a relay that never says the word hides its claims and shows nothing"
+  },
+  {
+    "name": "LANDED-welcome-unread",
+    "file": "src/net/online.js",
+    "old": "if (primary) this.egLandOk = relaySupportsEgLand(relayV);",
+    "new": "if (primary) this.egLandOk = true;",
+    "tests": [
+      "test/net/eliteGates/fb1020f_landedword.test.js"
+    ],
+    "why": "every relay trusted to say the word"
+  },
+  {
+    "name": "LANDED-followup-claim",
+    "file": "src/ui/hitNumbers.js",
+    "old": "if (!registered || !(n > 0) || target?.landsByWord) return null;",
+    "new": "if (!registered || !(n > 0)) return null;",
+    "tests": [
+      "test/net/eliteGates/fb1020f_landedword.test.js"
+    ],
+    "why": "a follow-up's claim risen on a breach body beside the room's word for its blow: two numbers, the first a claim"
+  },
+  {
+    "name": "LANDED-followup-loot-target",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  if (!f?.dead) showFollowUp(n, word, target);",
+    "new": "  if (!f?.dead) showFollowUp(n, word);",
+    "tests": [
+      "test/net/eliteGates/fb1020f_landedword.test.js"
+    ],
+    "why": "the loot's follow-up never told whose body it struck: its claim risen on a breach body"
+  },
+  {
+    "name": "LANDED-followup-martial-target",
+    "file": "src/systems/martialPowers.js",
+    "old": "showFollowUp(n, word, entity);",
+    "new": "showFollowUp(n, word);",
+    "tests": [
+      "test/net/eliteGates/fb1020f_landedword.test.js"
+    ],
+    "why": "the martial path's follow-up never told whose body it struck"
+  }
+]

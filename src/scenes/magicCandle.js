@@ -45,7 +45,8 @@
 // the rounds live; this module is only ever asked about the player.
 
 import { billboardSize } from '../world/rmbFlats.js';
-import { LIGHTS_ARCHIVE } from '../world/cityLights.js';
+import { LIGHTS_ARCHIVE } from '../world/city/cityLights.js';
+import { lightList, packLight, copyLights } from '../render/lightId.js';   // LIGHT-ID: the player's lights into the list through the one seam
 
 /** MagicCandleBehaviour + the prefab's Light, as numbers. */
 export const CANDLE = Object.freeze({
@@ -163,17 +164,17 @@ export function withPlayerLights(base, ...lights) {
   // sit first, what it drops is the base's farthest - which is exactly
   // what the old arithmetic dropped on the classic set, light for light.
   const keep = (base.length / 4) * 4;
-  const out = new Float32Array(keep + live.length * 4);
+  const out = lightList(keep / 4 + live.length);   // LIGHT-ID: each light's identity beside it, the base's carried over
   // MAC-T1: THE CARRIED MASK - one byte per light, in the array's own order, 1 for a record that says `carried`
   // (the player's torch and candle; playerTorch.js says why). Per LIGHT, not "the first N": this same list carries the
   // dropped and thrown torches and the burning foes (droppedTorches.lights()), which sit over real billboards and
   // keep their glare. It rides the array as a property; the renderer lifts it off before it cuts the array to its cap.
   const carried = new Uint8Array(keep / 4 + live.length);
   live.forEach((l, i) => {
-    out[i * 4] = l.x; out[i * 4 + 1] = l.y; out[i * 4 + 2] = l.z; out[i * 4 + 3] = l.range;
+    packLight(out, i, l);
     if (l.carried) carried[i] = 1;
   });
-  out.set(base.subarray(0, keep), live.length * 4);
+  copyLights(out, live.length, base, 0, keep / 4);
   if (base.carried) carried.set(base.carried.subarray(0, keep / 4), live.length);
   out.carried = carried;
   return out;

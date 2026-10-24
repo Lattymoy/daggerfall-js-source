@@ -5,7 +5,7 @@
 //   node tools/mintIdentityKeys.mjs --pipe   both halves, bare, one per line
 //
 // Prints and keeps nothing. NOTHING IS EVER WRITTEN TO DISK, and
-// test/accountworker.test.js reads this file to keep it that way.
+// test/server/accountworker.test.js reads this file to keep it that way.
 //
 //   IDENTITY_PRIVATE_KEY  the account service's secret, base64 PKCS8.
 //                         Goes in with `wrangler secret put`. NEVER

@@ -26,15 +26,15 @@ What they found, with the gap each surface leaves:
 
 | Surface | What it shows | The gap |
 |---|---|---|
-| Pause window, Quests tab (`src/ui/enhancedMenu.js` pauseQuests; PX4, PX22, QT-LIVE1) | Main / Side / Archived rail; the LATEST entry as the description; the trail newest-first; the live "Time remains", gold under a day | No "where"; no way to the map; and "latest" was the last entry of the machine's first-logged order - a step logged again showed a superseded entry (GUIDE1 fixed) |
-| Chronicle (`src/ui/enhancedChronicle.js`, the L key; MAC-K2) | A card per quest, entries newest first, fold, Share to the party | No timer, no Main/Side split, no "where" |
-| Classic logbook (`src/ui/questJournal.js`, U32) | DaggerfallQuestJournalWindow verbatim, with HandleQuestClicks' "Travel to location?" | None - it is DFU's |
+| Pause window, Quests tab (`src/ui/enhanced/enhancedMenu.js` pauseQuests; PX4, PX22, QT-LIVE1) | Main / Side / Archived rail; the LATEST entry as the description; the trail newest-first; the live "Time remains", gold under a day | No "where"; no way to the map; and "latest" was the last entry of the machine's first-logged order - a step logged again showed a superseded entry (GUIDE1 fixed) |
+| Chronicle (`src/ui/enhanced/enhancedChronicle.js`, the L key; MAC-K2) | A card per quest, entries newest first, fold, Share to the party | No timer, no Main/Side split, no "where" |
+| Classic logbook (`src/ui/quest/questJournal.js`, U32) | DaggerfallQuestJournalWindow verbatim, with HandleQuestClicks' "Travel to location?" | None - it is DFU's |
 | Quest popups (`say`, `prompt`) | The enhanced notice panel (ENH-NOTICE1) or DFU's parchment | None by themselves |
 | News | Nothing. `log` is a bare addLogStep; no "journal updated", no "quest complete" (DISC6's player: "Theres no quest notification when you killed all monsters and no quest update in the log") | Everything |
 | Marks | One: a residence an NPC marked, named on the town map (`stampResidenceQuestNames`, the town sheet's ring) | Nothing on the travel map, the held map, the compass or the dungeon map |
 | The way there on the ENHANCED skin | Nothing: only the classic logbook ever calls `gotoPlace`, so the held map's consumer (`heldMap._consumeGotoPlace`) is never reached | DFU's own feature, missing on the default skin |
 | DFU's quest debugger | `GUI/EnableQuestDebugger` is stored and read by nothing (no HUDQuestDebugger port) | DFU's, unported |
-| Accessibility | The Settings Accessibility category: 19 DFU keys, no port rows; `textScale` dead since the old settings window (`01-Overview/Audit-54.md`); `play/index.html` sets `user-scalable=no`; no contrast or screen-reader audit (`01-Overview/Audit-UI.md`, `01-Overview/Audit-UI-2.md`); the notice stack is `aria-live="polite"` | A lane, empty |
+| Accessibility | The Settings Accessibility category: 19 DFU keys, no port rows; `textScale` dead since the old settings window (`01-Overview/audits/Audit-54.md`); `play/index.html` sets `user-scalable=no`; no contrast or screen-reader audit (`01-Overview/audits/Audit-UI.md`, `01-Overview/audits/Audit-UI-2.md`); the notice stack is `aria-live="polite"` | A lane, empty |
 
 ## THE LAWS (every slice of this arc)
 
@@ -50,7 +50,7 @@ What they found, with the gap each surface leaves:
    find-place box would say. A face that wants more - a marker inside a
    dungeon - is an opt-in tier with its own row (GUIDE8), never a default.
 3. **ONE WALK.** `questBridge.questLog()` (MAC-K2) walks the machine;
-   `ui/questRail.js` decides which entries and in what order; the lens
+   `ui/quest/questRail.js` decides which entries and in what order; the lens
    adds the rest. A face never walks the machine, and never builds a lens:
    the bridge makes the one (THE ONE CONSTRUCTION SEAM), so every host
    that has quests has it.
@@ -66,8 +66,8 @@ What they found, with the gap each surface leaves:
 
 ## GUIDE1 - THE QUEST LENS (SHIPPED 2026-09-29)
 
-`src/ui/questLens.js`, made once by `createQuestBridge`
-(`src/scenes/questBridge.js`, `bridge.lens`) and reset by its `restore` -
+`src/ui/quest/questLens.js`, made once by `createQuestBridge`
+(`src/scenes/quest/questBridge.js`, `bridge.lens`) and reset by its `restore` -
 a loaded game's quests are the lens's baseline, not news. No face draws
 from it yet; it is the floor every face of this arc stands on.
 
@@ -89,7 +89,7 @@ are what changed since the previous look: `started`, `updated` (naming
 the new entries - a step and message not written before: the same words
 logged again at a new time are no news, AUDIT GUIDE H4), `urgent` (the
 named deadline crossing under
-`QUEST_URGENT_SECONDS`, one home in `ui/questRail.js`, shared with the
+`QUEST_URGENT_SECONDS`, one home in `ui/quest/questRail.js`, shared with the
 pause window's gold line), and `completed` / `ended` - the notebook's
 own two verdicts, off the walk's new `ended` list (a quest the machine
 has completed and still holds as a tombstone, with `questSuccess`). The
@@ -110,21 +110,16 @@ player chose, and a talk topic would open because a HUD line was drawn.
 argument, whose default is C#'s literal `true`, so every DFU caller is
 unchanged - and puts the three latches, the seed and the rolls back,
 including when the expansion throws. Measured over all 3,817 messages
-of the corpus, from the same states, the journal's read moves 1,895
-reveals, 1,761 resource latches, 846 place latches, 15 log ids, 7 seeds
-and 94 roll draws; the quiet read moves none of them and prints the same
-words. Two recorded differences:
+of the corpus, from the same states, the journal's read moves 1,896
+reveals, 1,762 resource latches, 847 place latches, 7 seeds and 94 roll
+draws; the quiet read moves none of them and prints the same words
+(QUEST-AUDIT III DI-UNREF: %di with nothing referenced reads, so every
+message reads). One recorded difference:
 
 - **%god's random arm** (a region with no temple of its own) answers the
   FIRST divine, because the quiet roll draws nothing. DFU's logbook
   re-rolls that word on every open, so no one value of it is the
   journal's.
-- **Fifteen corpus messages** throw on DFU's own %di NRE when nothing has
-  referenced a Place yet (LastPlaceReferenced.Scope before the null
-  check; the corpus gate meets three because its reads latch in
-  sequence). None of the fifteen is ever logged, so no journal entry is
-  one; the quiet read answers null for each, puts the latch back and
-  says so once.
 
 Lines are read once per entry and kept; a macro that reads the world as
 it is (%di's direction, a countdown's days) goes stale in a kept line, so
@@ -172,13 +167,13 @@ logbook's, because a loud read latches the last-referenced resource and
 place for the next entry's pronouns. The classic logbook keeps DFU's
 order.
 
-**Pins.** `test/guide1_questLens.test.js` (7): the feed over the real
+**Pins.** `test/ui/quest/guide1_questLens.test.js` (7): the feed over the real
 bridge and machine; the order; the quiet read over every message of the
 corpus; a whole game played twice, the lens re-reading and looking at
 every tick and not - the same save, popups, topics, seed and roll draws,
 and no draw from Math.random inside a look; the target and the said law
-over producer-minted Places; the one homes. `test/questbridge.test.js`'s
-MAC-K2 walk pin and `test/enhancedPause.test.js`'s PX22 timer pin grew
+over producer-minted Places; the one homes. `test/systems/quest/questbridge.test.js`'s
+MAC-K2 walk pin and `test/ui/enhanced/enhancedPause.test.js`'s PX22 timer pin grew
 with the walk's `steps` and `ended` and the one urgent number.
 `tools/mutants/guide1.json`: 38 mutants - 37 dead, and `GUIDE1-quiet-read-reveals`
 equivalent as recorded since AUDIT GUIDE L3 gave the quiet read its own
@@ -203,7 +198,7 @@ enhanced journal faces the way there, and says the place beside it.
 
 **What the player sees.**
 
-- **The pause window's Quests tab** (`ui/enhancedMenu.js` `questWhere`):
+- **The pause window's Quests tab** (`ui/enhanced/enhancedMenu.js` `questWhere`):
   under the quest's name and deadline, the WHERE LINE - the latest
   entry's target in the find-place box's own phrase ("Llugwych in
   Wayrest province", "The Feather and Dog, Bigtown in ... province",
@@ -220,7 +215,7 @@ enhanced journal faces the way there, and says the place beside it.
   2.5.3). The line and the button are the enhanced skin's alone: the
   classic skin's pause page reaches this tab too and draws neither (AUDIT
   GUIDE W3).
-- **The chronicle** (the window the L key opens, `ui/enhancedChronicle.js`
+- **The chronicle** (the window the L key opens, `ui/enhanced/enhancedChronicle.js`
   `questState`): the same line and the same way there on every live
   quest's card, under its head and standing when the card is folded -
   and the DEADLINE the pause tab has carried since PX5, which this
@@ -262,14 +257,14 @@ says, and offers no note and no way there.
 **ONE HOMES.** DFU's `locationInRegionProvince` phrase moved from the
 classic logbook into the lens (`locationInRegionText`; FIND_PLACE_TEXT
 reads it); `remainWords` moved from the pause window into
-`ui/questRail.js`, so the chronicle's deadline reads exactly as the tab's.
+`ui/quest/questRail.js`, so the chronicle's deadline reads exactly as the tab's.
 
 **Found on the way.** `test/chargenDom.mjs` had no `childNodes`, which
 the Quests tab's PX22 meta line reads - so the tab had never been mounted
 headless with a live quest in it; the minimal DOM carries it now. The
 refusals' new `false` re-aimed four suites' door pins
-(`test/audit64_travel.test.js`, `test/audit58_magic.test.js`,
-`test/partytravel.test.js`, `test/fb0929_vampirehood.test.js` - AUDIT
+(`test/systems/audit64_travel.test.js`, `test/systems/audit58_magic.test.js`,
+`test/systems/party/partytravel.test.js`, `test/systems/fb0929_vampirehood.test.js` - AUDIT
 GUIDE D2) and five other slices' mutant records by
 content (`auditpartyui`, `auditpartyui2`, `party-travel`, `vamphood`,
 `qtlive1`).
@@ -284,7 +279,7 @@ now RECORDS every interval instead of arming it - a pin fires one by
 hand, and every mount asserts none is left standing - so a leak fails a
 pin instead of holding the run open.
 
-**Pins.** `test/guide2_wayThere.test.js` (6): the words over producer-
+**Pins.** `test/ui/enhanced/guide2_wayThere.test.js` (6): the words over producer-
 minted Places; the pause tab mounted and pressed (the handoff before the
 door, the resume on a refusal, no door no button, the note, the unasked
 map); the trail's older places (offered once); the chronicle mounted and
@@ -304,14 +299,14 @@ unlooked at on a real screen.
 DFU says nothing when the journal changes. A quest's `log` is a bare
 addLogStep, `end quest` files the notebook in silence, and a clock inside
 its last day is a number the logbook shows only when opened. DISC6's
-player named what that costs (`01-Overview/Field-Bugs-2026-09-23.md`):
+player named what that costs (`01-Overview/bugs/Field-Bugs-2026-09-23.md`):
 "Theres no quest notification when you killed all monsters and no quest
 update in the log". GUIDE3 says the journal's news where the enhanced
 skin says news - and nothing the quest itself says moves: its `say`
 popups are the quest's, and stay the box they are.
 
 **What the player sees.** A notice in the enhanced stack
-(`ui/enhancedNotice.js`, ENH-NOTICE1/3 - the right edge; spoken through
+(`ui/enhanced/enhancedNotice.js`, ENH-NOTICE1/3 - the right edge; spoken through
 the herald's own live region, below), one per quest, three rows in three
 weights: the KIND ("New
 quest", "Journal updated", "Under a day left", "Quest completed", "Quest
@@ -342,7 +337,7 @@ word, a new quest stays new while its first entries land, and a deadline
 outranks a routine entry while it is still under a day (AUDIT GUIDE H7:
 a deadline that moved out of its last day is no longer the news).
 
-**THE OPENING** (`entryOpening`, `ui/questRail.js` - one home, which
+**THE OPENING** (`entryOpening`, `ui/quest/questRail.js` - one home, which
 GUIDE4's tracker will read, beside `journalLines` and not in the lens: see
 THE HUD STAYS LIGHT below). A logged entry is its author's 1996 text:
 hard-wrapped for the logbook under a `%qdt:` date header. The opening
@@ -353,7 +348,7 @@ sentence (a stop before a capital: "Hmm... he said." is one), and past
 408 logged entries, 395 open on the header, every one opens with words,
 and 56 first sentences run past the cap (at 100 it was 159).
 
-**WHO FEEDS IT.** The quest bridge (`scenes/questBridge.js`), after each
+**WHO FEEDS IT.** The quest bridge (`scenes/quest/questBridge.js`), after each
 machine tick: one lens look, handed to the herald - only while it
 listens (`heraldOn`: the enhanced skin, the `quest-herald` switch, and a
 page to say it on - node drives the hosts headless and pays nothing).
@@ -374,7 +369,7 @@ talk topics, seed, quest rolls and engine draws. It costs about 40
 microseconds a look over three quests, at the machine's ten ticks a
 second.
 
-**ITS CLOCK IS THE HUD'S.** `ui/hud.js` `drawHud` - the one call all four
+**ITS CLOCK IS THE HUD'S.** `ui/hud/hud.js` `drawHud` - the one call all four
 hosts make - draws it, OUTSIDE the skin's gate so that off (the classic
 skin, the switch) it still reaches its hide door (AUDIT 64 F37): the
 queue empties and the toasts slide out. It ticks on the frame's REAL
@@ -390,7 +385,7 @@ H8: the stack's 90vh clip had cut it).
 
 **THE HUD STAYS LIGHT - learned on the slice's first full run.** The
 opening first lived in the lens, and the herald imported it from there.
-But `ui/hud.js` imports the herald, and `save.js` reaches `hud.js`
+But `ui/hud/hud.js` imports the herald, and `save.js` reaches `hud.js`
 (through the escort faces) from inside the quest layer: `place.js ->
 talkTopics -> interiorPeople -> shopStock -> guilds -> factionRep ->
 save.js -> hudEscortFaces -> hud.js -> questHerald -> questLens ->
@@ -412,7 +407,7 @@ A sound can be a row of its own when someone asks for one.
 slots, the HUD's other row), Enhanced, on by default (DECISIONS 2), the
 player's own online (news is no one else's).
 
-**Pins.** `test/guide3_herald.test.js` (8): the words; one notice per
+**Pins.** `test/ui/quest/guide3_herald.test.js` (8): the words; one notice per
 quest (rank, cap, clock); the bridge's feed over the real bridge and
 machine (one look after each tick and none between, the baseline, new,
 updated, completed, ended); only while listening (the switch, the
@@ -421,7 +416,7 @@ never knows (a whole game through the bridge's tick, heard and unheard);
 the HUD's clock and the stack's face (the rows' classes, hidden and
 stopped, run out, off at its hide door); one call, every host (by
 source, and the herald's import graph kept off the quest machine); the
-opening over the corpus. `test/enhancedNotice.test.js`'s
+opening over the corpus. `test/ui/enhancedNotice.test.js`'s
 roster knows the herald as the stack's newest importer.
 `tools/mutants/guide3.json`: 45 mutants (GUIDE4 added
 `GUIDE3-small-word-kept`; AUDIT GUIDE D2). Ledger A: A QUEST'S NEWS IS A
@@ -442,7 +437,7 @@ when is a window away - and the enhanced journal (GUIDE2) is still a
 window. GUIDE4 puts the quest the player follows on the HUD, quietly.
 
 **What the player sees.** A card at the HUD's right-upper edge
-(`ui/questTracker.js`, `#enhanced-questtracker`): the quest's TITLE (a
+(`ui/quest/questTracker.js`, `#enhanced-questtracker`): the quest's TITLE (a
 main quest's in brass, and its time row says "Main Quest" - AUDIT GUIDE
 H10) behind a mark - the filled diamond for a quest
 the player tracks, the hollow one for a quest the card is following -
@@ -538,7 +533,7 @@ keys (DECISIONS 6).
 **The switch.** Features row `quest-tracker` - Interface, beside
 `quest-herald`, Enhanced, on by default, the player's own online.
 
-**Pins.** `test/guide4_tracker.test.js` (9): which quest; the words;
+**Pins.** `test/ui/quest/guide4_tracker.test.js` (9): which quest; the words;
 the choice kept (the save slot); the bridge's feed over the real bridge
 and machine (the baseline heard, the news followed, a tracked quest
 through its ending, the host's questions and "(you are here)", no face
@@ -549,7 +544,7 @@ with nothing to say, the classes, hidden under the gate, the height
 published and taken back, off at its hide door, the choice kept); the
 journal's toggle in the Quests tab (and the tab opening on the card's
 quest) and in the chronicle; one call, every host (by source, and the
-import graph). `test/soc4_partyhud.test.js`'s position pins grew the
+import graph). `test/net/soc4_partyhud.test.js`'s position pins grew the
 card's variable; GUIDE3's suite hears the herald alone (the tracker off)
 and six of its feed mutants were re-aimed at the two-face gate and one
 added, with `font1.json`'s GUIDE3 and `auditsoc.json`'s GUIDE4 re-aims
@@ -566,7 +561,7 @@ screen's title and time.
 ## GUIDE5 - THE MARKS (SHIPPED 2026-09-29)
 
 Where a quest points, drawn where a player looks: the held map and the
-enhanced compass (`ui/questMarks.js`).
+enhanced compass (`ui/quest/questMarks.js`).
 
 **ONLY WHAT THE PLAYER'S MAP ALREADY HOLDS.** A mark stands exactly
 where DFU's own logbook would offer the travel map - a target with
@@ -580,7 +575,7 @@ person who knows marks it). Nothing here is the quest debugger's
 knowledge; GUIDE8's Exact tier is that, off by default.
 
 **THE HELD MAP** (the enhanced map's world sheet, `ui/heldMap.js` over
-`ui/inkMap.js` `paintQuestMark`): every active quest's place - a
+`ui/ink/inkMap.js` `paintQuestMark`): every active quest's place - a
 diamond in the journal's gold (`QUEST_MARK_CSS`) standing above the
 place's own mark (`QUEST_MARK_LIFT`; over a raided town `QUEST_RAID_LIFT`,
 clear of the raid's blades, so neither overprints the other - AUDIT
@@ -606,7 +601,7 @@ card, which names them (AUDIT GUIDE K8/U15). The classic travel map is
 DFU's and draws none: a player who chose DFU's own maps (the
 `enhanced-map` switch) chose DFU's look.
 
-**THE COMPASS** (`ui/enhancedHud.js` `drawQuestMark`): one mark - the
+**THE COMPASS** (`ui/enhanced/enhancedHud.js` `drawQuestMark`): one mark - the
 tracker's quest's place - a HOLLOW gold diamond edged dark, so it never
 reads as the gate's burning one, at the gate's bearing law
 (`compassMarkerLerp`, clamped: a place behind the player stands at the
@@ -615,7 +610,7 @@ and dungeons steer by their own frames. Hidden, never removed.
 
 **THE HOST** (`scenes/world.js`): `questPixel` resolves a place with the
 held map's own goto law - CanFindPlace's first half, `placePixelOf`
-(`ui/travelMapWindow.js`: the region by name, the place by its map name,
+(`ui/travel/travelMapWindow.js`: the region by name, the place by its map name,
 the row's longitude and latitude) - through the host's one memo of it,
 `placePixelMemo`, which the look's `canFindPlace` shares (AUDIT GUIDE
 O3: MapsFile keeps one region, and a look asking about places in two
@@ -644,7 +639,7 @@ stays). GUIDE4's card no longer forgets on its own switch; it only
 leaves the page.
 
 **ONE PHRASE.** The herald, the card and a mark's card all say the time
-left; `timeLeftWords` (`ui/questRail.js`) is its one home now.
+left; `timeLeftWords` (`ui/quest/questRail.js`) is its one home now.
 
 **THE HUD STAYS LIGHT.** The marks module imports the skin, the prefs
 and the rail alone - the enhanced HUD reads its gold and the bridge its
@@ -655,7 +650,7 @@ the map readers or the raids.
 `quest-tracker`, Enhanced, on by default (DECISIONS 7), the player's own
 online.
 
-**Pins.** `test/guide5_marks.test.js` (8): only what the map holds (the
+**Pins.** `test/ui/quest/guide5_marks.test.js` (8): only what the map holds (the
 marks, the merge, the cards, the resolver; the host's marks read and
 checked; the card's note and no mark, the classic skin); one model, two
 faces (the marks alone feed it, neither forgets it, the herald never
@@ -677,9 +672,9 @@ note.
 ## THE AUDIT (2026-09-29, Mac: "Lets do an audit on this before we merge")
 
 GUIDE1-GUIDE5 read by eight lenses over a frozen tree, main merged in
-first - `01-Overview/Audit-Guide.md` is the record. Every finding was
+first - `01-Overview/audits/Audit-Guide.md` is the record. Every finding was
 reproduced, fixed, pinned by a test that failed on the unfixed tree
-(`test/audit_guide.test.js`, 38) and mutation-proven
+(`test/ui/quest/audit_guide.test.js`, 38) and mutation-proven
 (`tools/mutants/audit_guide.json`, 73); what it changed in a slice is
 written into that slice's section above under its `AUDIT GUIDE <ID>`.
 One call it made is Mac's to reverse (DECISIONS 8).
@@ -696,7 +691,7 @@ In order. Every one reads the lens and nothing else. SHIPPED: GUIDE2 to GUIDE5 (
 | **GUIDE5 THE MARKS** (SHIPPED) | Every active quest's place on the held map (the followed one filled) and the tracker's quest's place on the enhanced compass - only a target with `find` (DFU's own discovered gate). A place off the map gets the talk arc's hint on the card instead: ask about it, which is what Daggerfall's directions are for (`06-Systems/Talk-Arc.md`, THE COMPASS MARK). The classic travel map stays DFU's. | Departure | `quest-marks` |
 | **GUIDE6 THE ACCESSIBLE JOURNAL** | The pause tab: filter by kind (Main, Guild - the quest list's own group, `findQuestMeta` - Other), sort by updated or deadline, search, each entry's date, the deadline as words AND a date, keyboard and pad navigation with visible focus, a text size that works, and an entry read aloud (speechSynthesis). | Enhanced face | per choice |
 | **GUIDE7 THE ACCESSIBILITY SHELF** | Port rows in the Accessibility category: quest text size, high-contrast panels, reduce motion (the OS's, overridable), quest popups read aloud, notices held until dismissed - and the contrast and screen-reader audit Audit-UI named and nobody ran. | Port's own | per row |
-| **GUIDE8 GUIDANCE TIERS** (SHIPPED 2026-10-05 - `03-World/Delve-Arc.md` GUIDE8; the *Town* tier and *Exact* indoors at AUDIT DELVE, `01-Overview/Audit-Delve.md`) | Journal by default: *Journal* (GUIDE5's law) / *Town* (the building the entry names, ringed on the town map and on the compass while the player is in its town) / *Exact* (the Town tier, and the marker a quest resource stands on, DFU's quest-debugger knowledge, on the dungeon's and the building's map and the compass). Exact is the one tier that can spoil; its own row. | Departure | `quest-guidance` |
+| **GUIDE8 GUIDANCE TIERS** (SHIPPED 2026-10-05 - `03-World/Delve-Arc.md` GUIDE8; the *Town* tier and *Exact* indoors at AUDIT DELVE, `01-Overview/audits/Audit-Delve.md`) | Journal by default: *Journal* (GUIDE5's law) / *Town* (the building the entry names, ringed on the town map and on the compass while the player is in its town) / *Exact* (the Town tier, and the marker a quest resource stands on, DFU's quest-debugger knowledge, on the dungeon's and the building's map and the compass). Exact is the one tier that can spoil; its own row. | Departure | `quest-guidance` |
 | **GUIDE9 DFU'S QUEST DEBUGGER** | HUDQuestDebugger behind the inert `GUI/EnableQuestDebugger`: tasks, timers and globals per quest - for quest authors and bug reports. | 1:1 - DFU's | DFU's own key |
 
 ## DECISIONS (2026-09-29, Mac: "This is your baby. Take your time")
@@ -744,7 +739,10 @@ Mac - can see what was decided and reverse it where it stands.
    quest's end a false alarm. Of the corpus's 234 clocked quests that
    log, 179 name a clock in a logged entry, 10 only in text never logged,
    45 none. A deadline once told stays told. The pause tab's and the
-   chronicle's "Time remains" keep main's tightest counting clock
-   (DEAD-CLOCK, PX5), unchanged - **Mac's call**: whether a clock no
-   entry names should leave them too (45 quests would then show no time,
-   and the main quest's S0000008 counts its letters' clocks).
+   chronicle's "Time remains" show the deadline the entries name where
+   they name one (QUEST-AUDIT III NAMED-TIMER: the tightest showed a
+   letter's six hours beside "I have 236 days"), and the tightest
+   counting clock where they name none (DEAD-CLOCK, PX5) - **Mac's
+   call**: whether a clock no entry names should leave them too (45
+   quests would then show no time, and the main quest's S0000008 counts
+   its letters' clocks).

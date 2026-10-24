@@ -1,0 +1,266 @@
+-- QL14 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.2): THE HOUR THAT WAS NOT, step 2 of 2 - the line's
+-- last, its branch the line's outcome. Witnessed (net/questlineClaims.js: `hour`, the h1 receipt): it waits on the
+-- Brass Remnant broken (`ql act hour-broken 1`). Six powers are two asks: the first's fourth choice opens the second.
+-- It says nothing of which ending comes, and ends no main quest. Lore: canon - the Numidium, Kagrenac, the Mantella, a
+-- Dragon Break, the Order of the Hour Akatosh's. The port's own: the Hour, its Orrery and Remnant, and (decision 5,
+-- the owner's) the Hour read as the echo of a Break still to come - said in the Prior's words, and no year named.
+-- AUDIT QUESTLINES LINES-26: the letter signs off on one line, its sender's name and calling - DFU's pack names a
+-- quest letter by its last line (ItemHelper.cs:335-348, itemInfo.js questLetterName), and it was
+-- "Letter: of the Order of the Hour".
+Quest: QLHR02
+DisplayName: The Orrery of Endings
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>          Prior Anselm Vey has left _temple_. The Order
+<ce>             will send another down to the Hour.
+
+QuestComplete:  [1004]
+<ce>        "The Hour is broken. It will mend, and break
+<ce>          again, as time does." The Prior counts
+<ce>              _gold_ gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Prior Anselm Vey has written again. He waits for
+ me at _temple_ in __temple_, to tell me what the
+ six stones of the Orrery of Endings are, and to
+ ask me a question he says he cannot answer.
+
+Message:  1011
+%pcn,
+
+     I have gone on to _temple_ in __temple_,
+ where the candles are worst. Come when you have
+ rested. I would tell you what the six stones are
+ before you stand among them, and ask you a
+ question the Order cannot answer for you.
+
+<ce>                  Prior Anselm Vey of the Order of the Hour
+
+Message:  1012
+<ce>          A novice wearing Akatosh's hourglass finds you
+<ce>           and presses a letter into your hand. "From
+<ce>          the Prior," the novice says. "He says you are
+<ce>                late, and also early."
+
+Message:  1013
+<ce>         "Six stones stand in the Orrery's hall, and
+<ce>          each is carved with a power of the Bay:
+<ce>          Daggerfall's lion, Sentinel's sun, Wayrest's
+<ce>          ship, the tusk of Orsinium, the Underking's
+<ce>          crown of bone, the dragon of the Blades. Each
+<ce>          is an ending. Each is a way the Bay may be
+<ce>          claimed."
+
+Message:  1014
+<ce>         "You know of the Numidium - the Brass God that
+<ce>          Kagrenac raised for the Dwemer, that Tiber
+<ce>          Septim woke with the Mantella for its heart.
+<ce>          When such a thing walks, time does not bend.
+<ce>          It breaks. The old books call it a Dragon
+<ce>          Break, and say nothing of before or after,
+<ce>          because there is none."
+<ce>
+<ce>         "So the Hour is no wound from the past. It is
+<ce>          the echo of a Break still to come. The Bay
+<ce>          will break, and the Hour is that moment,
+<ce>          reached too soon. What walks in it is the
+<ce>          Brass God's echo: the Brass Remnant."
+
+Message:  1015
+<ce>         "Every power in the Bay will want to know what
+<ce>          stands in that hall. The Order will not choose
+<ce>          for you. Which of them will you tell what you
+<ce>          find there?"
+
+Message:  1016
+Prior Anselm Vey is at _temple_. He has not slept since the bells went wrong.
+<--->
+The Prior? He asks travelers which crown they serve, and does not say why.
+<--->
+A priest of Akatosh waits at _temple_ for someone to go down into the brass.
+
+Message:  1020
+%qdt:
+ I have told Prior Anselm Vey which power will hear
+ what I find. Now I must reach the Hour: go down
+ through an Abyss Dungeon, where the air goes brass
+ at dusk, pass the Orrery of Endings, and break the
+ Brass Remnant. Then I return to the Prior at
+ _temple_ in __temple_.
+
+Message:  1021
+%qdt:
+ I have broken an Hour. The Brass Remnant fell, and
+ the Hour mended behind it. Prior Anselm Vey waits
+ at _temple_ in __temple_ to hear what I saw.
+
+Message:  1022
+<ce>         "The Hour still stands. I can feel it from
+<ce>          here, like a step missed in the dark. Come
+<ce>          back to me when it is broken."
+
+Message:  1030
+Daggerfall's court
+
+Message:  1031
+Sentinel's court
+
+Message:  1032
+Wayrest's court
+
+Message:  1033
+Another power
+
+Message:  1035
+<ce>              "Another? Then name it."
+
+Message:  1036
+Orsinium's court
+
+Message:  1037
+The Underking
+
+Message:  1038
+The Blades
+
+Message:  1040
+<ce>         "Daggerfall's court sent a herald with the lion
+<ce>          on his coat. He read your account twice, and
+<ce>          asked me whether the lion's stone turns. I
+<ce>          told him every stone turns. He paid anyway."
+
+Message:  1041
+<ce>         "Queen Akorithi's envoy came in silk and left
+<ce>          in a hurry. Sentinel will tell your account as
+<ce>          a prophecy of the sun. Let it. A prophecy is
+<ce>          only a story that has not happened yet."
+
+Message:  1042
+<ce>         "King Eadwyre's steward wrote down every word
+<ce>          of your account and sealed it for the archive.
+<ce>          Wayrest keeps what it learns. There are worse
+<ce>          places for the truth to be kept."
+
+Message:  1043
+<ce>         "Gortwog's emissary laughed at the stone with
+<ce>          the tusk on it, and then he stopped laughing.
+<ce>          The orcs have been told for an age that they
+<ce>          have no future. You showed them one of six."
+
+Message:  1044
+<ce>         "A man with no shadow came for your account.
+<ce>          He paid in old coin, and asked one question:
+<ce>          whether the heart in the brass still burns. I
+<ce>          did not answer him. The Order will remember
+<ce>          that you did."
+
+Message:  1045
+<ce>         "A woman who did not give her name took your
+<ce>          account. The Emperor will read it before the
+<ce>          month is out. The Blades pay poorly and
+<ce>          remember well. So does the Order of the Hour."
+
+QBN:
+Item _letter_ letter used 1011
+Item _gold_ gold range 500 to 900
+
+Person _prior_ faction The_Order_of_the_Hour male anyInfo 1016
+Place _temple_ remote temple
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _prior_ Prior_Anselm_Vey
+	place npc _prior_ at _temple_
+	start timer _courier_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_met_ task:
+	clicked npc _prior_
+	say 1013
+	say 1014
+	ask 1015 choices 1030 _toDaggerfall_ 1031 _toSentinel_ 1032 _toWayrest_ 1033 _another_
+
+_another_ task:
+	ask 1035 choices 1036 _toOrsinium_ 1037 _toUnderking_ 1038 _toBlades_
+
+variable _toDaggerfall_
+variable _toSentinel_
+variable _toWayrest_
+variable _toOrsinium_
+variable _toUnderking_
+variable _toBlades_
+
+_chosen_ task:
+	when _toDaggerfall_ or _toSentinel_ or _toWayrest_ or _toOrsinium_ or _toUnderking_ or _toBlades_
+	log 1020 step 1
+
+_broken_ task:
+	ql act hour-broken 1
+	log 1021 step 2
+
+_qgclicked_ task:
+	clicked npc _prior_
+
+_clearclick_ task:
+	when _qgclicked_ and not _chosen_
+	clear _qgclicked_ _clearclick_
+
+_notyet_ task:
+	when _qgclicked_ and _chosen_ and not _broken_
+	say 1022
+	clear _qgclicked_ _notyet_
+
+_toldDaggerfall_ task:
+	when _toDaggerfall_ and _broken_ and _qgclicked_
+	say 1040
+	outcome _daggerfall_
+	give pc _gold_
+	end quest
+
+_toldSentinel_ task:
+	when _toSentinel_ and _broken_ and _qgclicked_
+	say 1041
+	outcome _sentinel_
+	give pc _gold_
+	end quest
+
+_toldWayrest_ task:
+	when _toWayrest_ and _broken_ and _qgclicked_
+	say 1042
+	outcome _wayrest_
+	give pc _gold_
+	end quest
+
+_toldOrsinium_ task:
+	when _toOrsinium_ and _broken_ and _qgclicked_
+	say 1043
+	outcome _orsinium_
+	give pc _gold_
+	end quest
+
+_toldUnderking_ task:
+	when _toUnderking_ and _broken_ and _qgclicked_
+	say 1044
+	outcome _underking_
+	give pc _gold_
+	end quest
+
+_toldBlades_ task:
+	when _toBlades_ and _broken_ and _qgclicked_
+	say 1045
+	outcome _blades_
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

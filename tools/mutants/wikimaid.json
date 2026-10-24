@@ -1,0 +1,595 @@
+[
+  {
+    "name": "WIKIMAID-amethyst-drifted",
+    "file": "src/ui/playerBadge.js",
+    "old": "export const WARREN_AMETHYST = Object.freeze([0.616, 0.361, 1, 1]);",
+    "new": "export const WARREN_AMETHYST = Object.freeze([0.439, 0.188, 0.878, 1]);",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The Aegis's void, not the warren's amethyst: the gradient's first stop is another title's."
+  },
+  {
+    "name": "WIKIMAID-gradient-turned",
+    "file": "src/ui/playerBadge.js",
+    "old": "  wikimaid: Object.freeze([WARREN_AMETHYST, WARREN_LILAC, WARREN_BLUSH]),",
+    "new": "  wikimaid: Object.freeze([WARREN_BLUSH, WARREN_LILAC, WARREN_AMETHYST]),",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The word drawn blush into amethyst - 'Wiki' pink, 'Maid' purple."
+  },
+  {
+    "name": "WIKIMAID-edge-dropped",
+    "file": "src/ui/playerBadge.js",
+    "old": "  wikimaid: Object.freeze([0, 0, 0, 1]),   // WIKIMAID",
+    "new": "  zz_wikimaid: Object.freeze([0, 0, 0, 1]),   // WIKIMAID",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "No black edge: the blush end lost over snow."
+  },
+  {
+    "name": "WIKIMAID-one-colour-amethyst",
+    "file": "src/ui/playerBadge.js",
+    "old": "  wikimaid: WARREN_LILAC,   // WIKIMAID",
+    "new": "  wikimaid: WARREN_AMETHYST,   // WIKIMAID",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The button's and the glyph's colour the amethyst - 26 from the Aegis's violet."
+  },
+  {
+    "name": "WIKIMAID-glyph-in-aegis-violet",
+    "file": "src/ui/playerBadge.js",
+    "old": "  wikimaid: TITLE_RGBA.wikimaid,       // WIKIMAID",
+    "new": "  wikimaid: TITLE_RGBA.aegis,       // WIKIMAID",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The rabbit in another title's colour: one grant's two halves drift."
+  },
+  {
+    "name": "WIKIMAID-mark-taken",
+    "file": "src/ui/playerBadge.js",
+    "old": "  wikimaid: 'V',      // WIKIMAID",
+    "new": "  wikimaid: '^',      // WIKIMAID",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The Apostle's mark: two glyphs one stand-in on the classic face."
+  },
+  {
+    "name": "WIKIMAID-stroked",
+    "file": "src/ui/playerBadge.js",
+    "old": "crystalfist: false, wikimaid: false });",
+    "new": "crystalfist: false, wikimaid: true });",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The rabbit drawn as an outline of strokes, not filled."
+  },
+  {
+    "name": "WIKIMAID-button-paint",
+    "file": "src/ui/playerBadge.js",
+    "old": "lilacwarren: 'wikimaid', witchfire: 'witchwarden' });",
+    "new": "lilacwarren: 'aegis', witchfire: 'witchwarden' });",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The warren's button in the Aegis's violets."
+  },
+  {
+    "name": "WIKIMAID-title-word",
+    "file": "src/ui/playerBadge.js",
+    "old": "  wikimaid: 'WikiMaid',           // WIKIMAID",
+    "new": "  wikimaid: 'Wiki Maid',           // WIKIMAID",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "Not as SylviaBun spelled it."
+  },
+  {
+    "name": "WIKIMAID-aura-word",
+    "file": "src/ui/playerBadge.js",
+    "old": "  lilacwarren: 'Lilac Warren',",
+    "new": "  lilacwarren: 'Bunny Warren',",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "Another name for the aura."
+  },
+  {
+    "name": "WIKIMAID-ear-lowered",
+    "file": "src/ui/playerBadge.js",
+    "old": "Q3.6 3 4.6 0.7Q5.3 0.1 6 0.8Q7.3 3.4 7.1 6.2",
+    "new": "Q3.6 3 4.6 3.7Q5.3 3.1 6 3.8Q7.3 3.4 7.1 6.2",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The left ear's tip three units lower: a lop-eared, lopsided head."
+  },
+  {
+    "name": "WIKIMAID-lopsided-cheek",
+    "file": "src/ui/playerBadge.js",
+    "old": "Q13.4 10.6 12.6 12.8",
+    "new": "Q14.4 10.6 12.6 12.8",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The right cheek fuller than the left."
+  },
+  {
+    "name": "WIKIMAID-lace-dropped",
+    "file": "src/ui/playerBadge.js",
+    "old": "    Object.freeze({ path: 'M4.3 8.6L4.6 7.4Q5 6.4 5.9 6.9Q6.5 6 7.3 6.5Q8 5.7 8.7 6.5Q9.5 6 10.1 6.9Q11 6.4 11.4 7.4L11.7 8.6Q8 7.4 4.3 8.6Z', rgba: WARREN_FRILL }),\n",
+    "new": "",
+    "tests": [
+      "test/net/wikimaid.test.js",
+      "test/ui/travel/tv5_far_places.test.js"
+    ],
+    "note": "No maid's lace: a rabbit and nothing more."
+  },
+  {
+    "name": "WIKIMAID-lace-in-lilac",
+    "file": "src/ui/playerBadge.js",
+    "old": "11.4 7.4L11.7 8.6Q8 7.4 4.3 8.6Z', rgba: WARREN_FRILL }),",
+    "new": "11.4 7.4L11.7 8.6Q8 7.4 4.3 8.6Z', rgba: WARREN_LILAC }),",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The lace the rabbit's own lilac - lost on its head."
+  },
+  {
+    "name": "WIKIMAID-ears-over-lace",
+    "file": "src/ui/playerBadge.js",
+    "old": "Q9.4 4 10 1.9Q10.3 1.5 10.6 1.9Z', rgba: WARREN_BLUSH }),",
+    "new": "Q9.4 4 10 1.9Q10.3 1.5 10.6 1.9Z', rgba: WARREN_PLUM }),",
+    "tests": [
+      "test/net/wikimaid.test.js",
+      "test/ui/travel/tv5_far_places.test.js"
+    ],
+    "note": "The ears' insides in the plum, not the blush."
+  },
+  {
+    "name": "WIKIMAID-details-one",
+    "file": "src/ui/playerBadge.js",
+    "old": "export const glyphDetails = (detail) => (Array.isArray(detail) ? detail : detail?.path ? [detail] : []);",
+    "new": "export const glyphDetails = (detail) => (Array.isArray(detail) ? detail.slice(0, 1) : detail?.path ? [detail] : []);",
+    "tests": [
+      "test/net/wikimaid.test.js",
+      "test/ui/travel/tv5_far_places.test.js"
+    ],
+    "note": "A list of details walked to its first alone: the lace and the face never drawn."
+  },
+  {
+    "name": "WIKIMAID-details-single-dropped",
+    "file": "src/ui/playerBadge.js",
+    "old": "export const glyphDetails = (detail) => (Array.isArray(detail) ? detail : detail?.path ? [detail] : []);",
+    "new": "export const glyphDetails = (detail) => (Array.isArray(detail) ? detail : []);",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "One detail no longer a list of one: the wolf's eye, the penitent's sword and the aegis's tendrils gone."
+  },
+  {
+    "name": "WIKIMAID-svg-first-detail",
+    "file": "src/ui/playerBadge.js",
+    "old": "  for (const det of glyphDetails(g.detail)) {   // WIKIMAID",
+    "new": "  for (const det of glyphDetails(g.detail).slice(0, 1)) {   // WIKIMAID",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The DOM faces draw the ears alone."
+  },
+  {
+    "name": "WIKIMAID-travel-first-detail",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "for (const d of glyphDetails(g.detail)) {",
+    "new": "for (const d of glyphDetails(g.detail).slice(0, 1)) {",
+    "tests": [
+      "test/ui/travel/tv5_far_places.test.js"
+    ],
+    "note": "The travel view's name draws the ears alone."
+  },
+  {
+    "name": "WIKIMAID-handle",
+    "file": "server-account/wrangler.toml",
+    "old": "WIKIMAID_HANDLES = \"SylviaBun\"",
+    "new": "WIKIMAID_HANDLES = \"SylviaB\"",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "Another account named."
+  },
+  {
+    "name": "WIKIMAID-list-key",
+    "file": "server-account/src/titles.js",
+    "old": "  wikimaid: 'WIKIMAID_HANDLES',",
+    "new": "  wikimaid: 'WIKIMAID_HANDLE',",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The list read from a key the config does not have: nobody holds it."
+  },
+  {
+    "name": "WIKIMAID-glyph-word",
+    "file": "server-account/src/titles.js",
+    "old": "crystalfist: 'crystalfist', wikimaid: 'wikimaid' });",
+    "new": "crystalfist: 'crystalfist', wikimaid: 'crystalfist' });",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The list grants Flylighter's slashes."
+  },
+  {
+    "name": "WIKIMAID-aura-not-granted",
+    "file": "server-account/src/titles.js",
+    "old": "crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
+    "new": "crystalfist: 'resonance' });",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The title and glyph without the warren."
+  },
+  {
+    "name": "WIKIMAID-title-not-in-vocabulary",
+    "file": "src/net/identityToken.js",
+    "old": "'spirechampion', 'spirefirst', 'wikimaid', 'doorwarden',",
+    "new": "'spirechampion', 'spirefirst', 'doorwarden',",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "QL12 (re-aimed by content: the questlines' five after it). The relay and the client refuse the word."
+  },
+  {
+    "name": "WIKIMAID-aura-not-in-vocabulary",
+    "file": "src/net/identityToken.js",
+    "old": "'burningstair', 'firstlight', 'lilacwarren', 'witchfire']);   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;",
+    "new": "'burningstair', 'firstlight', 'witchfire']);   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "A token signing the warren refused whole."
+  },
+  {
+    "name": "WIKIMAID-kind",
+    "file": "src/render/auraRing.js",
+    "old": "  lilacwarren: Object.freeze({ kind: 12,",
+    "new": "  lilacwarren: Object.freeze({ kind: 11,",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "Drawn as Firstlight."
+  },
+  {
+    "name": "WIKIMAID-added-not-covered",
+    "file": "src/render/auraRing.js",
+    "old": "glyphs: WARREN_BUNNIES, shade: true }),",
+    "new": "glyphs: WARREN_BUNNIES }),",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "Added whole: a rabbit over a lit floor washes past its lilac."
+  },
+  {
+    "name": "WIKIMAID-ring-outside-fire",
+    "file": "src/render/auraRing.js",
+    "old": "export const WARREN_R = 0.8;",
+    "new": "export const WARREN_R = 0.9;",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The lane outside the fire's ring."
+  },
+  {
+    "name": "WIKIMAID-rate-off-whole",
+    "file": "src/render/auraRing.js",
+    "old": "export const WARREN_HZ = Object.freeze({ breath: 1 / 4, sparkle: 1 / 5, twinkle: 1 / 2 });",
+    "new": "export const WARREN_HZ = Object.freeze({ breath: 1 / 7, sparkle: 1 / 5, twinkle: 1 / 2 });",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "A breath that is not whole over the clock: a jump at the wrap."
+  },
+  {
+    "name": "WIKIMAID-colour-drifted",
+    "file": "src/render/auraRing.js",
+    "old": "lilac: Object.freeze(WARREN_LILAC.slice(0, 3)),",
+    "new": "lilac: Object.freeze(WARREN_AMETHYST.slice(0, 3)),",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The rabbits in the amethyst, not the title's lilac."
+  },
+  {
+    "name": "WIKIMAID-hop-retimed",
+    "file": "src/render/auraRing.js",
+    "old": "export const WARREN_HOP_S = 0.45;",
+    "new": "export const WARREN_HOP_S = 0.5;",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "A slower hop: the recorded gait moves."
+  },
+  {
+    "name": "WIKIMAID-landing-not-taken",
+    "file": "src/render/auraRing.js",
+    "old": "    if (since < 0.12) sq = 1 - 0.1 * (1 - since / 0.12);   // the landing, taken",
+    "new": "    if (since < 0.12) sq = 1;   // the landing, taken",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "No squash on landing."
+  },
+  {
+    "name": "WIKIMAID-stretch-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "y = WARREN_HOP_H * 4 * u * (1 - u); sq = 1 + 0.1 * Math.sin(Math.PI * u); }",
+    "new": "y = WARREN_HOP_H * 4 * u * (1 - u); sq = 1; }",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "No stretch in the air."
+  },
+  {
+    "name": "WIKIMAID-no-binky",
+    "file": "src/render/auraRing.js",
+    "old": "% WARREN_BINKY_EVERY === 0 && b >= 0 && b < 1) {",
+    "new": "% WARREN_BINKY_EVERY === 5 && b >= 0 && b < 1) {",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "No rabbit ever binkies."
+  },
+  {
+    "name": "WIKIMAID-binky-not-turned",
+    "file": "src/render/auraRing.js",
+    "old": "      if (b > WARREN_BINKY_TURN[0] && b < WARREN_BINKY_TURN[1]) face = -1;",
+    "new": "      if (b > WARREN_BINKY_TURN[0] && b < WARREN_BINKY_TURN[1]) face = 1;",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "A binky that never turns about."
+  },
+  {
+    "name": "WIKIMAID-all-up-at-once",
+    "file": "src/render/auraRing.js",
+    "old": "(kindle - k * WARREN_EMERGE_STEP) / WARREN_EMERGE",
+    "new": "(kindle - 0 * WARREN_EMERGE_STEP) / WARREN_EMERGE",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "Every rabbit comes up at once."
+  },
+  {
+    "name": "WIKIMAID-depth-nearest-first",
+    "file": "src/render/auraRing.js",
+    "old": "  rows.sort((p, q) => q[0] - p[0]);",
+    "new": "  rows.sort((p, q) => p[0] - q[0]);",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "Nearest first: a far rabbit laid over a near one."
+  },
+  {
+    "name": "WIKIMAID-print-age-turned",
+    "file": "src/render/auraRing.js",
+    "old": "    out[(k * WARREN_PRINTS + n) * 2 + 1] = tau - land;",
+    "new": "    out[(k * WARREN_PRINTS + n) * 2 + 1] = land - tau;",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "Ages negative: the tracks never fade."
+  },
+  {
+    "name": "WIKIMAID-print-place",
+    "file": "src/render/auraRing.js",
+    "old": "warrenBunny(k, land - k * WARREN_OFFSET_S).a;",
+    "new": "warrenBunny(k, land).a;",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "A print where another moment's rabbit stood."
+  },
+  {
+    "name": "WIKIMAID-tail-lilac",
+    "file": "src/render/auraRing.js",
+    "old": "  col = mix(col, WR_FRILL, tail);",
+    "new": "  col = mix(col, WR_LILAC, tail);",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "No cotton tail."
+  },
+  {
+    "name": "WIKIMAID-eye-lilac",
+    "file": "src/render/auraRing.js",
+    "old": "  col = mix(col, WR_PLUM, warrenDisc(g, ${v3(WARREN_BUNNY.eye)}, px));",
+    "new": "  col = mix(col, WR_LILAC, warrenDisc(g, ${v3(WARREN_BUNNY.eye)}, px));",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "No eye."
+  },
+  {
+    "name": "WIKIMAID-lace-lilac-shader",
+    "file": "src/render/auraRing.js",
+    "old": "  col = mix(col, WR_FRILL, lace);",
+    "new": "  col = mix(col, WR_LILAC, lace);",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The aura's rabbits without their maid's lace."
+  },
+  {
+    "name": "WIKIMAID-not-mirrored",
+    "file": "src/render/auraRing.js",
+    "old": "  vec2 g = vec2(s.x > 0.0 ? uv.x : 1.0 - uv.x, 1.0 - uv.y) * 16.0;",
+    "new": "  vec2 g = vec2(uv.x, 1.0 - uv.y) * 16.0;",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "A rabbit hopping backwards when it goes the other way."
+  },
+  {
+    "name": "WIKIMAID-rabbit-added",
+    "file": "src/render/auraRing.js",
+    "old": "  col = mix(col, WR_FRILL, tail);\n  return vec4(col * cover, cover);",
+    "new": "  col = mix(col, WR_FRILL, tail);\n  return vec4(col * cover, 0.0);",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "A rabbit added, never covering."
+  },
+  {
+    "name": "WIKIMAID-ring-added",
+    "file": "src/render/auraRing.js",
+    "old": "    c = warrenOver(vec4(WR_LILAC * ring, ring), c);",
+    "new": "    c = warrenOver(vec4(WR_LILAC * ring, 0.0), c);",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The ring added, not covering."
+  },
+  {
+    "name": "WIKIMAID-tracks-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "        prints = max(prints, max(hind, fore) * fade);",
+    "new": "        prints = max(prints, 0.0);",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "No tracks."
+  },
+  {
+    "name": "WIKIMAID-tracks-never-fade",
+    "file": "src/render/auraRing.js",
+    "old": "        float fade = 1.0 - clamp(pr.y / ${g3(WARREN_PRINT_S)}, 0.0, 1.0);",
+    "new": "        float fade = 1.0;",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "Tracks that never fade."
+  },
+  {
+    "name": "WIKIMAID-shadows-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "  c = warrenOver(vec4(0.0, 0.0, 0.0, 0.35 * shadow), c);\n",
+    "new": "",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "No shadows under the rabbits."
+  },
+  {
+    "name": "WIKIMAID-ring-on-the-lane",
+    "file": "src/render/auraRing.js",
+    "old": "export const WARREN_RING_IN = 0.1;",
+    "new": "export const WARREN_RING_IN = 0.0;",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The ring under the rabbits' feet: its line covers their fore feet's prints."
+  },
+  {
+    "name": "WIKIMAID-sparkles-cover",
+    "file": "src/render/auraRing.js",
+    "old": "  return vec4(col * clamp((uKindle * 1.25 - v) / 0.15, 0.0, 1.0), 0.0);",
+    "new": "  return vec4(col * clamp((uKindle * 1.25 - v) / 0.15, 0.0, 1.0), 1.0);",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The wall covering the world behind it."
+  },
+  {
+    "name": "WIKIMAID-wall-kindle-ignored",
+    "file": "src/render/auraRing.js",
+    "old": "  return vec4(col * clamp((uKindle * 1.25 - v) / 0.15, 0.0, 1.0), 0.0);",
+    "new": "  return vec4(col, 0.0);",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The sparkles at full before it has kindled."
+  },
+  {
+    "name": "WIKIMAID-facing-fixed",
+    "file": "src/render/auraRing.js",
+    "old": "(dot(vec2(-sin(b.x), cos(b.x)), right) >= 0.0 ? 1.0 : -1.0), k, 0.0);",
+    "new": "(dot(vec2(-sin(b.x), cos(b.x)), right) >= 0.0 ? 1.0 : 1.0), k, 0.0);",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "Every rabbit faces one way on the screen, half of them hopping backwards."
+  },
+  {
+    "name": "WIKIMAID-lean-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "    float lean = ${g3(WARREN_LEAN)} * atan(",
+    "new": "    float lean = 0.0 * atan(",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "Upright cards: from above, slivers."
+  },
+  {
+    "name": "WIKIMAID-card-not-stretched",
+    "file": "src/render/auraRing.js",
+    "old": "vec2(inversesqrt(max(b.z, 0.05)), b.z);",
+    "new": "vec2(1.0);",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The stretch the law says never reaches the card."
+  },
+  {
+    "name": "WIKIMAID-feet-off-ground",
+    "file": "src/render/auraRing.js",
+    "old": "vec2 o = (vP - vec2(0.5, ${WARREN_FOOT.toFixed(4)}))",
+    "new": "vec2 o = (vP - vec2(0.5, 0.0))",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The card's foot on the ground, the rabbit's feet floating over it."
+  },
+  {
+    "name": "WIKIMAID-rabbits-not-handed",
+    "file": "src/render/auraRing.js",
+    "old": "          gl.uniform4fv(U.uWarren, warrenDepthOrder(warrenBunniesInto(this._warren, t, Math.max(0, Math.min(1, Number.isFinite(w.kindle) ? w.kindle : 1))), w.at, camAt));\n",
+    "new": "",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "The shader reads stale rabbits."
+  },
+  {
+    "name": "WIKIMAID-draw-depth-order-dropped",
+    "file": "src/render/auraRing.js",
+    "old": "warrenDepthOrder(warrenBunniesInto(this._warren, t, Math.max(0, Math.min(1, Number.isFinite(w.kindle) ? w.kindle : 1))), w.at, camAt)",
+    "new": "warrenBunniesInto(this._warren, t, Math.max(0, Math.min(1, Number.isFinite(w.kindle) ? w.kindle : 1)))",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "Drawn in the law's order: a far rabbit laid over a near one."
+  },
+  {
+    "name": "WIKIMAID-seed-ignored",
+    "file": "src/render/auraRing.js",
+    "old": "          const t = warrenClock(seconds, w.seed);",
+    "new": "          const t = warrenClock(seconds, 0);",
+    "tests": [
+      "test/net/wikimaid.test.js"
+    ],
+    "note": "Every wearer's rabbits in step."
+  },
+  {
+    "name": "WIKIMAID-body-bound-unraised",
+    "file": "src/net/identityToken.js",
+    "old": "export const TOKEN_BODY_MAX = 864;",
+    "new": "export const TOKEN_BODY_MAX = 800;",
+    "tests": [
+      "test/systems/legacy/auditlegacy3.test.js"
+    ],
+    "note": "The hello's body bound left at 800: every claim at once with the WikiMaid's glyph is 808, a token the service signs and the relay refuses whole."
+  }
+]

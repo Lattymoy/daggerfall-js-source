@@ -9,7 +9,7 @@
 //
 // ── WHY IT IS NOT A SETTINGS KEY ─────────────────────────────────
 //
-// systems/settings.js is DFU's SettingsManager and holds exactly 171
+// systems/settings/settings.js is DFU's SettingsManager and holds exactly 171
 // keys, pinned (settings.test.js asserts ALL_KEYS.length === 171).
 // DFU has no such setting because DFU has no such screens, so a 172nd
 // key would break the parity pin AND put a port-invented preference
@@ -49,7 +49,7 @@ export function skinOverride(search = globalThis.location?.search ?? '') {
 /** The skin in effect: the URL override, else the stored choice, else
  *  enhanced. OVH3: online too - the online lane forced 'enhanced' here
  *  (OL1) until the online panels mounted on both skins; the skin is the
- *  player's UI Overhaul now (systems/onlineLane.js ONLINE_FORCED_PREFS). */
+ *  player's UI Overhaul now (systems/online/onlineLane.js ONLINE_FORCED_PREFS). */
 export function uiSkin(search) {
   return skinOverride(search) ?? clean(getPref('skin')) ?? DEFAULT_SKIN;
 }
@@ -73,7 +73,10 @@ export const isEnhancedPlus = (search) => isEnhanced(search);
  *  and its hold machine stand down, so nothing reaches slots the player cannot see. On the classic skin the pref is
  *  inert and the diamond is the quickbar, as ever. Here, beside the skin, so the input ladder can read it without
  *  the quickslot model's import ring. */
-export const hotbarInForce = () => isEnhanced() && getPref('quickbarStyle') === 'hotbar';
+export const hotbarInForce = () => isEnhanced() && HOTBAR_STYLES.includes(getPref('quickbarStyle'));
+/** DIAMOND-HB (2026-10-18): the styles that use the hotbar - 'hotbar' (ten slots in a row) and 'diamond' (slots 1-4
+ *  drawn as a diamond, ui/enhanced/enhancedHotbar.js). 'quickbar' is the old QS diamond, now only used by Off. */
+export const HOTBAR_STYLES = Object.freeze(['hotbar', 'diamond']);
 
 /** Store a choice. Ignores anything not a skin, for the same reason
  *  the override does: a bad value is a typo. Returns what is now

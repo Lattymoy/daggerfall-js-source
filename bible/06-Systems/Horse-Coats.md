@@ -20,7 +20,7 @@ Every horse the port drew was the one bay horse. There are three sets of it:
 
 Not a DFU member: Daggerfall has one horse. Ledger A (COATS1).
 
-## The law (`src/systems/horseCoats.js`)
+## The law (`src/systems/horse/horseCoats.js`)
 
 A horse's LOOK is four things, and it is its own, so it rides the horse ITEM
 (DFU's Transportation Horse, template 94):
@@ -38,7 +38,7 @@ of its coat a touch off any other's (`shadeOf`: up to `SHADE_HUE`, 4 degrees,
 and `SHADE_VALUE`, 7.5 % of its light, either way). Two horses of one coat,
 pattern and legs are still two horses.
 
-`systems/itemFields.js` declares the four; `systems/itemLaw.js` finds `horse`
+`systems/item/itemFields.js` declares the four; `systems/item/itemLaw.js` finds `horse`
 on any other item that carries one. The look worn is the RIDDEN horse's, the
 first horse in the pack (`riddenHorseLook`), as `inventorySession.js`
 hasHorse finds it; a team of two wears it too. A save carries the fields as it
@@ -131,6 +131,17 @@ one body's - each view is its own, and a walk frame carries its marks with the
 body (the frame is the hide's, not the picture's). A mirrored view is the
 other flank.
 
+PERF-HIDE (2026-10-12): rules 1-3 and the hide's frame are the PICTURE's -
+its pixels and `tack` - never the look's, so they are found once a picture
+(`hideOf`, kept weakly by the picture's pixels' array, one hide a `tack`) and
+every look after is the dye's own pass over the hide's pixels. The kept art is
+read and never written (the pool's, the riders'; a riding frame is a new array
+each time it is decoded), so a kept hide never goes stale. The helpers answer
+into scratch rather than a new array, and the lattice's nine points are kept
+for the last cell asked - the same arithmetic, so every picture, the 3D
+horse's too, is byte for byte what it was (`test/systems/horse/perfhide.test.js` pins the
+digests). `07-Rendering/Performance-Priority.md` PERF-HIDE has the measure.
+
 ## Where it is worn
 
 - **The riding sprite** (`systems/riding.js` loadRidingArt, `player/mountRig.js`):
@@ -146,22 +157,24 @@ other flank.
 - **The pool's horses** (`scenes/horseCartPool.js`): the bay's decoded views
   and walk frames are kept, and each look's are dyed off them once
   (`horseArt.ensureLook`) under `h<view>~<code>` and `w<view>#<frame>~<code>`,
-  one set a frame (`_dyeBudget` - the walk set is some 20 ms of CPU, and a road
-  can show six looks at once); an owner's team is posed in its owner's look
+  `HORSE_DYE_PICTURES` (5) pictures a frame among every look (`_dyeBudget` -
+  PERF-DYE: the walk set is forty pictures, some 45 ms of CPU, and a set a frame
+  was a hitch for every look met on a road; `07-Rendering/Performance-Priority.md`);
+  an owner's team is posed in its owner's look
   (`lookOfOwner`) - the bay's until the look's are up. Past `HORSE_LOOKS_KEPT`
   (16) looks, the one longest undrawn is let go (`trimLooks`). Both hosts hand
   the pool the look through the one seam, `world/wagonModels.js` wagonPoolDeps.
-- **Eye Of The Beholder's rider** (`player/eotbSprite.js` spriteFor,
+- **Eye Of The Beholder's rider** (`player/eyeOfTheBeholder/eotbSprite.js` spriteFor,
   `lookedPixels`): a mounted table's sprite in a look is its own record
   (`<record>-<frame>~<code>`), dyed before the mirror. The body reads the look
-  off the weapon rig's record (`combat/weaponRig.js` eotbState `horseLook`,
+  off the weapon rig's record (`combat/weapon/weaponRig.js` eotbState `horseLook`,
   shared by all four hosts), fetches its mounted tables whole when it
   changes, as a set chosen is, and lets the last look's pictures go. Another
-  player's rider is dyed by their pose's `rc` (`net/peerRiders.js`); past
+  player's rider is dyed by their pose's `rc` (`net/peer/peerRiders.js`); past
   `RIDER_LOOKS_KEPT` (12) riders' looks, the one longest undrawn is let go.
-- **The town watch's throw** (`scenes/wagonWardenShow.js`): the carried team
+- **The town watch's throw** (`scenes/wagon/wagonWardenShow.js`): the carried team
   in its owner's look, off the pool's `teamSnapshot`.
-- **The road's strangers** (`world/roadTeams.js`): a horse nobody owns wears
+- **The road's strangers** (`world/road/roadTeams.js`): a horse nobody owns wears
   `strangerHorseLook(key)` - born by `BIRTH_WEIGHTS` on its trip's key, on one of
   `STRANGER_SEEDS` (16) seeds, so the road shares a few dyed sets between many
   horses and every client sees the same horse in the same look.
@@ -175,7 +188,7 @@ not.
 A look is one number, `horseLookCode` - `coat + 7 (pattern + 5 (legs + 3
 seed))`, at most `HORSE_LOOK_CODE_MAX` (6,881,279); 0 the bay as drawn.
 
-- **The pool's word** (`systems/horseCartWire.js`, the foes frame's `hv`): `hc`,
+- **The pool's word** (`systems/horse/horseCartWire.js`, the foes frame's `hv`): `hc`,
   the look, at the record's top beside `n`, for the standing horse and the
   team in the shafts alike; absent for the bay. A look past the law's is a bay,
   never a dropped word. The relay forwards it unread.
@@ -226,19 +239,28 @@ midline edge (u 0.419 and 0.620). The bay draws as it did.
 
 ### The horse (`world/horseModel.js`, `world/horseRig.js`)
 
-One stream a renderer, uploaded once as the character pass's GPU skin reads it (`formats/mwGpuSkin.js`'s corner, one
+One stream a renderer, uploaded once as the character pass's GPU skin reads it (`formats/morrowind/mwGpuSkin.js`'s corner, one
 influence pair, the post the identity), and every horse a view of it with its own palette (`renderer.js`
 createSkinPalette - a picture in a sprite batch is drawn at the flush, so each horse keeps the pose it was queued
 in). Each frame a horse's GAIT is stepped (`stepHorseGait`): idle, walk from 0.2 m/s, trot from 1.3, gallop from 5,
 a gait held 15 % past its edge; it plays at the rate its stride covers the ground (`gaitRate`, clamped - past it the
 hooves slide rather than the legs blur), a new gait comes in at the old one's phase and fades in over a quarter
 second. The rig has no canter, so between a quick trot and Daggerfall's ride the gallop plays slow.
+HORSE-WALK (2026-10-12, `06-Systems/Horse-Care.md` THE WALK): a horse its rider holds to a slow ride - walked, or under
+half its base (`player/motor.js` slowRide, the host's `horse.slow`; a peer's pose's `hs`) - never plays the gallop
+(`gaitFor`'s `gallops`), and a gallop playing ends at once. Horse care's walk, about 5 m/s, stands on the gallop's own
+edge, inside its hold either way: a horse left galloping at it galloped on in slow motion. Held under, it trots. A horse
+no one rides keeps the speed's gait.
 
 A horse alone is drawn as the Morrowind body is - a picture through the sprite pass at the arm's dial
 (`characterSprite.js` drawRigSpriteBox, MW_ARM_PIXEL). A horse under a rider is in the RIDER's picture: `also`, more
 meshes in the one picture under one depth (`renderer.js` _renderCharacterSprite and the batch's tiles; each its own
 quad would cut the horse's neck by the rider's plane), the window the union of the two boxes (`fpArm.js` spriteBoxUnion),
-the anchor the horse's middle.
+the anchor the horse's middle. BODY-LEAN (2026-10-12, the owner: "depending on your camera position other sprites can
+shrink or grow, same goes for the horse"): the picture's quad leans by the picture's own up, so a horse no longer draws
+cos(pitch) of its height from a camera above it (`04-Characters/Morrowind-NPCs.md` section 7). BODY-CARD (2026-10-14):
+the Billboard Look switch stands it upright again, the flats' way, for a player who asks for it (the same section) -
+since BODY-FLAT (2026-10-23, `04-Characters/Morrowind-NPCs.md` section 32) with its picture taken level, its true height.
 
 ### The look on the 3D horse
 
@@ -292,10 +314,14 @@ the player's horse is let go, so a remount never gallops in place on the gait it
   a 3D horse (the cart's seat, a rig not up yet): astride one, the wheel and the toggle take the view out as on foot,
   and the third-person camera turns about the rider's head. In first person the horse is drawn where Daggerfall's
   riding sprite was (`player/mountRig.js` - after the world, under the hands), taken with the world's own camera
-  from the eye on its back; the sprite stands down.
-- **Other riders** (`net/peerBodies.js`): a peer on a horse whose Morrowind body stands here sits a 3D horse of its
+  from the eye on its back; the sprite stands down. HORSE-POV (2026-10-12, the owner: "the 2d sprite is still painted
+  on the screen, especially in third person"): in third person the riding sprite is not drawn at all -
+  `player/mwView.js` mwViewHides hides the first-person horse whenever the Morrowind body is in third person (its horse
+  is in the world); before, mwViewDrawSaddle's false out of first person let the sprite paint over the 3D rider.
+  Pinned: `test/player/horsepov.test.js`; mutants `tools/mutants/horsepov.json`.
+- **Other riders** (`net/peer/peerBodies.js`): a peer on a horse whose Morrowind body stands here sits a 3D horse of its
   own, in the look their pose names (`rc`), stepped at the body's pace; the rider layer yields them
-  (`net/peerRiders.js` sync's `yields`, `scenes/world.js` peerRidesIn3d) - a beast stays the layer's. A yielded rider
+  (`net/peer/peerRiders.js` sync's `yields`, `scenes/world.js` peerRidesIn3d) - a beast stays the layer's. A yielded rider
   is held for the layer's `settle`, after the bodies have stood: one whose body did not stand this frame (past the
   bodies' 120 m, the eight bodies full, a stranger, a body still building) is drawn as Eye Of The Beholder's mounted
   sprite after all, and the bodies are handed the rider either way, so its body can build.
@@ -304,21 +330,27 @@ the player's horse is let go, so a remount never gallops in place on the gait it
   pulling - is a 3D horse in its owner's look, drawn in the body pass (draw3d) in place of its billboard. A concealed
   owner's horses are drawn translucent after the opaque world (drawVeiled3d, beside the concealed peers' bodies): a
   veiled picture blends with no depth of its own, and the world drawn after it would paint it out.
-- **The road's teams** (`world/roadTeams.js`): likewise, each stranger's horse in its own look.
+- **The road's teams** (`world/road/roadTeams.js`): likewise, each stranger's horse in its own look.
+- **The horses that stand** (STAND-HORSE, 2026-10-12, the owner: "Some models arent affected when morrowind is
+  attached, like static NPCs, static horses, etc" - `04-Characters/Morrowind-NPCs.md` section 28): Daggerfall's own
+  town horses (TEXTURE.201 records 0 and 1, a block's or a World of Daggerfall site's flats - `scenes/world.js`,
+  `scenes/exterior.js`) in a stranger's look off their place, and the Stable's three in the bay their sprite is drawn
+  in (`scenes/merchantYardsHost.js` offerHorses) - each idling at its billboard's base, its billboard drawing nothing,
+  the nearest eight within 60 m (`world/standingHorses.js`).
 
 Every horse alone is drawn only when it is in the view (`horseRig.js` outOfView - not behind the eye, not wholly past a
 side of the lens), and a horse is let go through the rig that made it: the gate (`mwViewHorseRig`) answers null under a
 beast's stand-in while the rig itself lives on, and a palette released through the gate was never given back.
 
-FLAGGED: the town watch's carried team (`scenes/wagonWardenShow.js`) is still the billboards' - a throw of a few
+FLAGGED: the town watch's carried team (`scenes/wagon/wagonWardenShow.js`) is still the billboards' - a throw of a few
 seconds, its own batches.
 
 `tools/horse3dProbe.mjs` draws the horse through the real renderer in a page - its looks, both flanks, every gait.
 
 ### The audit (AUDIT COATS3D, 2026-10-11)
 
-Thirteen findings on the branch, each fixed and pinned (`test/coats3d_horse3d.test.js` "COATS3D AUDIT", and the
-billboard's in `test/coats1_horsecoats.test.js`): the billboards turned to the drawing eye in the bay's every frame
+Thirteen findings on the branch, each fixed and pinned (`test/formats/morrowind/coats3d_horse3d.test.js` "COATS3D AUDIT", and the
+billboard's in `test/systems/horse/coats1_horsecoats.test.js`): the billboards turned to the drawing eye in the bay's every frame
 (`horseCartPool.js` faceTeams lost the look - A1); the 3D dye ran only while the player rode (A2); a yielded rider with
 no standing body was drawn by nobody (A3); the look cache deleted looks on screen past twelve (A4); a concealed owner's
 3D horses drew in the opaque pass (A5); a look chosen on the sprite lane dyed all 136 mounted sprites in one task -
@@ -337,4 +369,4 @@ a choice, the one worn pressed (`choiceRow`, the paint row's own, shared).
 Pressing one restyles the ridden horse in the pack and tells the host, as a
 paint does - Horse Cart and Cargo on or off.
 
-Pinned: `test/coats1_horsecoats.test.js`; COATS3D, `test/coats3d_horse3d.test.js`.
+Pinned: `test/systems/horse/coats1_horsecoats.test.js`; COATS3D, `test/formats/morrowind/coats3d_horse3d.test.js`.

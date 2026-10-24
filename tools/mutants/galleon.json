@@ -5,7 +5,7 @@
     "old": "  if (fault) throw new Error(`${object.name} polygon #${k} (${poly.length} corners): Blender's cut does not tile it",
     "new": "  if (false) throw new Error(`${object.name} polygon #${k} (${poly.length} corners): Blender's cut does not tile it",
     "tests": [
-      "test/auditgalleon_bake.test.js"
+      "test/tooling/auditgalleon_bake.test.js"
     ],
     "why": "AUDIT GN-B1 (re-aimed: slabFill, the fill this record once broke, is gone): a polygon Blender's cut does not tile baked as cut, never refused - a bow-tied quad through fillFace and through the whole bake"
   },
@@ -15,7 +15,7 @@
     "old": "  return RECOIL * (1 - u * u * (3 - 2 * u));",
     "new": "  return 0;",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "      if (s) { s.laidUntil = Math.max(s.laidUntil, now + HOLD_S); settling.add(boat); }",
     "new": "      if (s) { s.laidUntil = Math.max(s.laidUntil, now); settling.add(boat); }",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "      const laid = now < s.laidUntil;",
     "new": "      const laid = now < Math.max(r.sides.starboard.laidUntil, r.sides.port.laidUntil);",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
@@ -42,62 +42,62 @@
     "old": "        const want = laid ? s.outX[i] : s.inX[i];",
     "new": "        const want = s.outX[i];",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
     "name": "GALLEON-lay-unwired",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if ((side === 'starboard' || side === 'port') && myBoatState(boat).guns.ready(side)) galleonGuns.lay(boat, side, clock);\n",
     "new": "",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
     "name": "GALLEON-fired-unwired",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (gb) galleonGuns.fired(gb, e.side, e.index ?? 0, clock);",
     "new": "if (gb) galleonGuns.lay(gb, e.side, clock);",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
     "name": "GALLEON-ramp-collider",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "  const castleSolid = bakedPartGeometry(part('castle'), { keep: (n) => !(n[1] > WELL_RAMP_NY[0] && n[1] < WELL_RAMP_NY[1]) });",
     "new": "  const castleSolid = meshes['galleon:castle'];",
     "tests": [
-      "test/auditnav2_deck.test.js"
+      "test/systems/naval/auditnav2_deck.test.js"
     ],
     "why": "the well's ramp rose 4 cm through her top tread: no floor at a flight's head, her castle apart from her deck"
   },
   {
     "name": "GALLEON-loader-no-fallback",
-    "file": "src/systems/comeSailAwayModels.js",
+    "file": "src/systems/comeSailAway/comeSailAwayModels.js",
     "old": "      if (!answer.ok) { log?.warn?.(",
     "new": "      if (!answer.ok) { throw answer.error; log?.warn?.(",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
     "name": "GALLEON-art-registered-twice",
-    "file": "src/world/galleonArt.js",
+    "file": "src/world/ships/galleonArt.js",
     "old": "  if (_registered) return 0;\n",
     "new": "",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
     "name": "GALLEON-glow-everywhere",
-    "file": "src/world/galleonArt.js",
-    "old": "  const k = BANDS.sternWindows.recs.indexOf(record);\n",
-    "new": "  const k = Math.max(0, BANDS.sternWindows.recs.indexOf(record));\n",
+    "file": "src/world/ships/galleonArt.js",
+    "old": "  const k = BANDS.sternWindows.recs.indexOf(record >= NIGHT_RECORD_OFFSET ? record - NIGHT_RECORD_OFFSET : record);\n",
+    "new": "  const k = Math.max(0, BANDS.sternWindows.recs.indexOf(record >= NIGHT_RECORD_OFFSET ? record - NIGHT_RECORD_OFFSET : record));\n",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
@@ -106,25 +106,25 @@
     "old": "broadside: Object.freeze([[5.949, 2.2435, -7.595]",
     "new": "broadside: Object.freeze([[5.749, 2.2435, -7.595]",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
     "name": "GALLEON-hatch-clip-unread",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "  pair('galleon2/Hatch', [0, 0, 0], [0, 0, HATCH_OPEN_DEG]);",
     "new": "  pair('galleon2/Hatch', [0, 0, 0], [0, 0, 0]);",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
     "name": "GALLEON-wheel-still",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "eulerCurve('HelmWheel', [0, 0, -t * WHEEL_TURNS * 360])",
     "new": "eulerCurve('HelmWheel', [0, 0, 0])",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "  return [(frame.centreline - y) * frame.scale, (z - frame.waterline) * frame.scale, (x - frame.midship) * frame.scale];\n",
     "new": "  return [-y * frame.scale, (z - frame.waterline) * frame.scale, (x - frame.midship) * frame.scale];\n",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ],
     "why": "Mac's second export stands her 36.25 m along the scene's Y - her centreline unread, every part 25 m to port"
   },
@@ -143,82 +143,82 @@
     "old": "    if (skip) {\n      const fault = skipFault(o, skip, byName, spec);\n",
     "new": "    if (skip && !skip.twin) {\n      const fault = skipFault(o, skip, byName, spec);\n",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ],
     "why": "a part's twin standing in its place baked as a part of its own"
   },
   {
     "name": "GALLEON2-beams-undrawn",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "  kids.push(meshNode('DeckBeams', 'galleon:deckBeams', bakedPartGeometry(beamParts), { collider: true }));\n",
     "new": "",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
     "name": "GALLEON2-beams-unsolid",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "  kids.push(meshNode('DeckBeams', 'galleon:deckBeams', bakedPartGeometry(beamParts), { collider: true }));\n",
     "new": "  kids.push(meshNode('DeckBeams', 'galleon:deckBeams', bakedPartGeometry(beamParts), { collider: false }));\n",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
     "name": "GALLEON2-lantern-off-beam",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "{ p: [0, M.beams.underY - 0.01, M.beams.z[k]], kids: [lanternFlat()] }",
     "new": "{ p: [0, M.beams.underY - 0.01, M.beams.z[k] + 0.5], kids: [lanternFlat()] }",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
     "name": "GALLEON2-cut-unmade",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "  const S = band.recs.length, h = (band.y1 - band.y0) / S;\n",
     "new": "  const S = 1, h = (band.y1 - band.y0) / S;\n",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ],
     "why": "a livery face drawn whole on its top slice, v over the whole band"
   },
   {
     "name": "GALLEON2-slice-v-off",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "return [u(w), Math.min(1, Math.max(0, (w[1] - y0) / h))];",
     "new": "return [u(w), Math.min(1, Math.max(0, (w[1] - band.y0) / (band.y1 - band.y0)))];",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
     "name": "GALLEON2-slices-out-of-order",
-    "file": "src/world/galleonArt.js",
+    "file": "src/world/ships/galleonArt.js",
     "old": "band.recs.map((rec, k) => [rec, sliceOf(livery, k)])",
     "new": "band.recs.map((rec, k) => [rec, sliceOf(livery, band.recs.length - 1 - k)])",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
     "name": "GALLEON2-picture-off-64",
-    "file": "src/world/galleonArt.js",
+    "file": "src/world/ships/galleonArt.js",
     "old": "  const S = GALLEON_TEX_SIZE, img = picture(S, S);\n  const n = noise(0xca9, S, S, 8, 8);\n",
     "new": "  const S = 128, img = picture(S, S);\n  const n = noise(0xca9, S, S, 8, 8);\n",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ],
     "why": "Mac: \"textures should be 64x64\" - the canvas back at 128"
   },
   {
     "name": "GALLEON2-underdeck-painted-beams",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "tiled(up ? TEX.deck : down ? TEX.underDeck : TEX.trim)",
     "new": "tiled(up ? TEX.deck : down ? TEX.beams : TEX.trim)",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ]
   },
   {
@@ -227,7 +227,7 @@
     "old": "halfWidth: 5.86, keel: -4.64, top: 12.3,",
     "new": "halfWidth: 5.86, keel: -3.89, top: 12.3,",
     "tests": [
-      "test/galleon_model.test.js"
+      "test/world/ships/galleon_model.test.js"
     ],
     "why": "her keel 3.89 down as Mac's first export had it"
   }

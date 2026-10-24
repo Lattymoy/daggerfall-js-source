@@ -37,7 +37,7 @@
 // (`shellRelock` below, app/main.cjs).
 
 import { isTextEntryTarget } from '../ui/input.js';   // PL2: a typed field's Enter is the field's (CG2)
-import { overlayOpen } from '../ui/enhancedOverlays.js';   // PL3: an enhanced overlay up (the dial, the pack) owns Enter too
+import { overlayOpen } from '../ui/enhanced/enhancedOverlays.js';   // PL3: an enhanced overlay up (the dial, the pack) owns Enter too
 
 let _errBound = false;
 const nowMs = () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
@@ -262,7 +262,7 @@ export function bindCursorToggle(canvas, isWindowUp = () => false, actionsOf = n
   // inside that gesture whatever swallowed the canvas arm (a DOM
   // element the hosts never knew, a host without the arm). A click on
   // any element of the page's UI is that element's and is left alone,
-  // and a finger never holds a lock (ui/touch.js; on Gecko it holds one
+  // and a finger never holds a lock (ui/touch/touch.js; on Gecko it holds one
   // only until its next touch event - TOUCH-UNLOCK above).
   const onDown = (e) => {
     if (e.pointerType === 'touch') return;
@@ -347,6 +347,10 @@ export function requestLook(canvas) {
     document.addEventListener('pointerlockchange', () => { if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook(); }, false);
     _errBound = true;
   }
+  // CLICK-STUTTER (2026-10-13): every world click lands here (the hosts' canvas pointerdown), and asking for a lock the
+  // canvas already holds is not free - the browser answers each one with a pointerlockchange (every listener on it runs)
+  // and, with unadjustedMovement, may re-take the lock, dropping that frame's mouse deltas. Held already: nothing to ask.
+  if (typeof document !== 'undefined' && document.pointerLockElement === canvas) return;
   try {
     // MAC1 (Mac, 2026-09-10: "camera turning being very jumpy"). The
     // bare request hands the look the OS pointer's ACCELERATED deltas

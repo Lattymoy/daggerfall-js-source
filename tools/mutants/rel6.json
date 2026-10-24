@@ -4,7 +4,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "  if (!from) return [];\n  const numbers = new Set();",
     "new": "  const numbers = new Set();",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "With no release before it, the first would read every merge ever made."
   },
   {
@@ -12,7 +12,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "run(['log', '--first-parent', '--format=%s', `${from}..${to}`])",
     "new": "run(['log', '--format=%s', `${from}..${to}`])",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "A pull request merged into a branch would bring its notes beside the branch's own."
   },
   {
@@ -20,7 +20,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": " ?? /\\(#(\\d+)\\)\\s*$/.exec(subject)",
     "new": "",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "A squash-merged pull request would bring no notes."
   },
   {
@@ -28,7 +28,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "  return [...numbers];",
     "new": "  return [...numbers].reverse();",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "The release would open on its oldest change."
   },
   {
@@ -36,7 +36,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "    if (m) numbers.add(Number(m[1]));",
     "new": "    if (m) numbers.add(numbers.has(Number(m[1])) ? m[1] : Number(m[1]));",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "A pull request named twice would be read twice."
   },
   {
@@ -44,7 +44,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": ".replace(/<!--[\\s\\S]*?(?:-->|$)/g, '')",
     "new": "",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "The template's guidance would be published as the notes."
   },
   {
@@ -52,7 +52,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "    const opens = FENCE_RE.exec(line);",
     "new": "    const opens = null;",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "A \"## \" line inside a code block would cut the notes short."
   },
   {
@@ -60,7 +60,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "if (section && level <= section.level) close();",
     "new": "if (section && level < section.level) close();",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "The description's next section (## Verification) would be published as notes."
   },
   {
@@ -68,7 +68,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "Math.min(6, level - section.level + 1)",
     "new": "level",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "A ### part would stay ### - a level below the release's own # title."
   },
   {
@@ -76,7 +76,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "(BREAK_RE.test(line) || /^\\s*🤖/u.test(line))",
     "new": "BREAK_RE.test(line)",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "The \"Generated with Claude Code\" footer and the session link would be published."
   },
   {
@@ -84,7 +84,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "(BREAK_RE.test(line) || /^\\s*🤖/u.test(line))",
     "new": "/^\\s*🤖/u.test(line)",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "What stands under a description's rule would be published."
   },
   {
@@ -92,7 +92,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "!body.split('\\n').some((l) => l.trim() && !HEADING_RE.test(l)) || ",
     "new": "",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "A section of empty headings would be a release of titles."
   },
   {
@@ -100,7 +100,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": " || NOTHING_RE.test(body)",
     "new": "",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "\"None.\" would be published as the release's notes."
   },
   {
@@ -108,7 +108,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "blocks.push(`# Patch Notes${s.title ? `: ${s.title}` : ''}\\n\\n${body}`);",
     "new": "blocks.push(`# Patch Notes\\n\\n${body}`);",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "Every release would be titled \"Patch Notes\"."
   },
   {
@@ -116,7 +116,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": ".replace(/\\r\\n?/g, '\\n')",
     "new": "",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "A description written in the browser (CRLF) would bring no notes."
   },
   {
@@ -124,7 +124,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "const NOTES_HEADING_RE = /^patch[ \\t-]?notes\\b[ \\t]*[:\\-–—]?[ \\t]*(.*)$/i;",
     "new": "const NOTES_HEADING_RE = /^patch[ \\t-]?notes[ \\t]*$()/i;",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "\"## Patch notes: <title>\", the template's own shape, would bring nothing."
   },
   {
@@ -132,7 +132,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "const text = capped(patchNotesOf(got.body));",
     "new": "const text = patchNotesOf(got.body);",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "One pull request could fill the release body past GitHub's limit."
   },
   {
@@ -140,7 +140,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "    if (!NOTES_AUTHORS.includes(got.author_association)) {",
     "new": "    if (false) {",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "An outside author could edit their merged description into the official release."
   },
   {
@@ -148,7 +148,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "    if (!got?.merged_at) {",
     "new": "    if (!got) {",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "A closed, unmerged pull request would bring notes for a change that never shipped."
   },
   {
@@ -156,7 +156,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "api(`repos/${repo}/pulls/${pr}`)",
     "new": "api(`repos/Lattymoy/daggerfall-js-source/pulls/${pr}`)",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "A fork's release would read another repository's pull requests."
   },
   {
@@ -164,7 +164,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "    if (text) notes.push({ pr, text });",
     "new": "    if (text) notes.unshift({ pr, text });",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "The release would open on its oldest change."
   },
   {
@@ -172,15 +172,15 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "    if (/HTTP 404/.test(String(e?.stderr ?? ''))) return null;\n",
     "new": "",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "A merge subject naming no pull request here would stop the release."
   },
   {
     "name": "REL6-23-a-failed-read-is-no-notes",
     "file": "scripts/desktopRelease.mjs",
-    "old": "    throw e;",
-    "new": "    return null;",
-    "tests": ["test/rel4_release.test.js"],
+    "old": "    if (/HTTP 404/.test(String(e?.stderr ?? ''))) return null;\n    throw e;",
+    "new": "    if (/HTTP 404/.test(String(e?.stderr ?? ''))) return null;\n    return null;",
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "GitHub down would publish \"Fixes and improvements.\" for a release with notes - for good."
   },
   {
@@ -188,7 +188,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "      return 1;\n    }\n    process.stdout.write(composeReleaseNotes(notes));",
     "new": "      return 0;\n    }\n    process.stdout.write(composeReleaseNotes(notes));",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "The step would pass with an empty body, and the release publish without notes."
   },
   {
@@ -196,7 +196,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "  if (cmd === 'notes') {\n    let notes;\n    try {\n      notes = pullRequestNotesSince(previousReleaseTag(a));",
     "new": "  if (cmd === 'notes') {\n    let notes;\n    try {\n      notes = pullRequestNotesSince(previousReleaseTag(b));",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "Every release would read the merges since itself - none."
   },
   {
@@ -204,7 +204,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "(?:[^/a-z][^/]*)?(?:\\/|$)/i;",
     "new": "(?:[^/a-z][^/]*)?$/i;",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "A patch-notes FOLDER would pass the tree's guard."
   },
   {
@@ -212,7 +212,7 @@
     "file": "scripts/desktopRelease.mjs",
     "old": "(?:[^/a-z][^/]*)?(?:\\/|$)/i;",
     "new": "(?:[^/a-z][^/]*)?(?:\\/|$)/;",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "PATCH-NOTES-*.md - the very files REL6 removed - would pass the guard."
   },
   {
@@ -220,7 +220,7 @@
     "file": ".github/workflows/release-desktop.yml",
     "old": "      pull-requests: read   # REL6: the notes are the merged pull requests' own\n",
     "new": "",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "gh would be refused the pull requests, and every release would fail at its notes."
   },
   {
@@ -228,7 +228,7 @@
     "file": ".github/workflows/release-desktop.yml",
     "old": "          GH_TOKEN: ${{ github.token }}\n          TAG: ${{ needs.version.outputs.tag }}\n        run: node scripts/desktopRelease.mjs notes",
     "new": "          TAG: ${{ needs.version.outputs.tag }}\n        run: node scripts/desktopRelease.mjs notes",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "gh would run unauthenticated, and the notes step fail."
   },
   {
@@ -236,7 +236,7 @@
     "file": ".github/pull_request_template.md",
     "old": "## Patch notes\n",
     "new": "## Player notes\n",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "The template would ask for a section the release never reads."
   },
   {
@@ -244,7 +244,7 @@
     "file": ".github/pull_request_template.md",
     "old": "<!--\nFor players.",
     "new": "For players.",
-    "tests": ["test/rel4_release.test.js"],
+    "tests": ["test/tooling/rel4_release.test.js"],
     "note": "A pull request left as the template has it would publish the guidance."
   }
 ]

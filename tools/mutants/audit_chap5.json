@@ -5,7 +5,7 @@
     "old": "?.event === 'crackdown' ? crackdownMerit(MERIT_WRIT) : MERIT_WRIT;",
     "new": "?.event === 'crackdown' ? MERIT_WRIT : MERIT_WRIT;",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": ".map((w) => ({ ...w, faction: f })));",
     "new": ".map((w) => ({ ...w, faction: f, pay: events.get(f)?.event === 'crackdown' ? Math.round(w.pay * 1.5) : w.pay })));",
     "tests": [
-      "test/chap6a_events.test.js"
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -23,8 +23,8 @@
     "old": "w.material, w.tier, w.units, w.pay, w.renown, (day + 1) * DAY_S)));",
     "new": "w.material, w.tier, w.units, events.get(f)?.event === 'crackdown' ? Math.round(w.pay * 1.5) : w.pay, w.renown, (day + 1) * DAY_S)));",
     "tests": [
-      "test/audit_chap5.test.js",
-      "test/chap6a_events.test.js"
+      "test/net/audit_chap5.test.js",
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "crackdownMerit: 1.5, crackdownShut: 30,",
     "new": "crackdownMerit: 1.5, crackdownPay: 1.5, crackdownShut: 30,",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -42,8 +42,8 @@
     "old": "let r = drawOf(gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)), total);",
     "new": "let r = gateHash(CHAPTER_EVENT_SALT, season, chapterTitleKey(faction, region)) % total;",
     "tests": [
-      "test/audit_chap5.test.js",
-      "test/chap6a_events.test.js"
+      "test/net/audit_chap5.test.js",
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "const out = drawOf(gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)), own.length);",
     "new": "const out = gateHash(CHAPTER_SCHISM_SALT, season, chapterTitleKey(faction, region)) % own.length;",
     "tests": [
-      "test/chap6b_backing.test.js"
+      "test/net/chap6b_backing.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "Math.floor((h / 2 ** 32) * n);",
     "new": "Math.floor((h / 2 ** 31) * n) % n;",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "if (ORDER_SET.has(/** @type {number} */ (faction)) || hallHidden(faction)) return ['writs'];",
     "new": "if (hallHidden(faction)) return ['writs'];",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -79,8 +79,8 @@
     "old": "if (ORDER_SET.has(/** @type {number} */ (faction)) || hallHidden(faction)) return ['writs'];",
     "new": "if (ORDER_SET.has(/** @type {number} */ (faction))) return ['writs'];",
     "tests": [
-      "test/audit_chap5.test.js",
-      "test/chap6a_events.test.js"
+      "test/net/audit_chap5.test.js",
+      "test/net/chap6a_events.test.js"
     ]
   },
   {
@@ -89,7 +89,7 @@
     "old": "if (faction === GUILD_FACTION_IDS.FightersGuild || faction === DIVINES.Kynareth) return ['training', 'writs'];",
     "new": "if (faction === DIVINES.Kynareth) return ['training', 'writs'];",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -98,7 +98,7 @@
     "old": "if (faction === GUILD_FACTION_IDS.FightersGuild || faction === DIVINES.Kynareth) return ['training', 'writs'];",
     "new": "if (faction === GUILD_FACTION_IDS.FightersGuild) return ['training', 'writs'];",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -107,7 +107,7 @@
     "old": "  if (chapterDoctrinesFor(faction).length < 2) { w.calm += w.schism; w.schism = 0; }   // AUDIT CHAP5 D3: no two doctrines, no Schism\n",
     "new": "",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "old": "  const own = chapterDoctrinesFor(faction);\n",
     "new": "  const own = [...CHAPTER_DOCTRINES];\n",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -125,7 +125,7 @@
     "old": "if (own.length < 3) return own.length === 2 ? own : [];",
     "new": "if (own.length < 3) return own;",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -134,7 +134,7 @@
     "old": "whole(row.rank) !== ROLL_BOOK_RANK_MAX || ",
     "new": "",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -143,7 +143,7 @@
     "old": "AND h.region = s.region AND h.kind = 'seat' AND json_extract(h.data, '$.to') = 'master')",
     "new": "AND h.region = s.region AND h.kind = 'seat' AND json_extract(h.data, '$.to') = 'none')",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -152,7 +152,7 @@
     "old": ".bind(season.start - 1, season.start, week - 1).all();",
     "new": ".bind(season.start - 1, season.start, season.start).all();",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -161,7 +161,7 @@
     "old": "WHERE h.char_id = s.char_id AND h.week BETWEEN ?2 AND ?3 AND h.faction = s.faction",
     "new": "WHERE h.char_id = s.char_id AND h.week BETWEEN ?2 AND ?3 AND h.faction = h.faction",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -170,7 +170,7 @@
     "old": "        AND h.region = s.region AND h.kind = 'seat' AND json_extract(h.data, '$.to') = 'master')",
     "new": "        AND h.region = h.region AND h.kind = 'seat' AND json_extract(h.data, '$.to') = 'master')",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -179,7 +179,7 @@
     "old": "WHERE week < ?1 AND open = 'on' LIMIT 1\").bind(week).first());",
     "new": "WHERE week < ?1 AND open = 'none' LIMIT 1\").bind(week).first());",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -188,7 +188,7 @@
     "old": "WHERE week BETWEEN ?1 AND ?2 AND open = 'dev' LIMIT 1\").bind(season.start, week - 1).first());",
     "new": "WHERE week BETWEEN ?1 AND ?2 AND open = 'none' LIMIT 1\").bind(season.start, week - 1).first());",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -197,7 +197,7 @@
     "old": "  const patrons = opened ? await patronsDrawn(db, PATRON_SEASONS_ALL, new Set())\n    : next && next.start === week + 1",
     "new": "  const patrons = next && next.start === week + 1",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -206,7 +206,7 @@
     "old": "SET state = CASE WHEN (faction, region, guild_id, season) IN (SELECT json_extract(value, '$[0]'),\n        json_extract(value, '$[1]'), json_extract(value, '$[2]'), ?1 FROM json_each(?2)) THEN 'won' ELSE 'lost' END\n      WHERE season <= ?1 AND state = 'open' AND (faction, region, guild_id, season) IN (SELECT json_extract(value, '$[4]'), json_extract(value, '$[5]'),\n        json_extract(value, '$[6]'), json_extract(value, '$[7]') FROM json_each(?3))`)",
     "new": "SET state = CASE WHEN EXISTS (SELECT 1 FROM json_each(?2) w WHERE json_extract(w.value, '$[0]') = faction\n        AND json_extract(w.value, '$[1]') = region AND json_extract(w.value, '$[2]') = guild_id AND season = ?1) THEN 'won' ELSE 'lost' END\n      WHERE season <= ?1 AND state = 'open' AND EXISTS (SELECT 1 FROM json_each(?3) v WHERE json_extract(v.value, '$[4]') = faction\n        AND json_extract(v.value, '$[5]') = region AND json_extract(v.value, '$[6]') = guild_id AND json_extract(v.value, '$[7]') = season)`)",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -215,7 +215,7 @@
     "old": "UPDATE npc_chapters SET patron = w.guild, patron_season = ?2\n      FROM (SELECT json_extract(value, '$[0]') AS f, json_extract(value, '$[1]') AS g, json_extract(value, '$[2]') AS guild FROM json_each(?1)) w\n      WHERE npc_chapters.faction = w.f AND npc_chapters.region = w.g`)",
     "new": "UPDATE npc_chapters SET patron = (SELECT json_extract(w.value, '$[2]') FROM json_each(?1) w WHERE json_extract(w.value, '$[0]') = faction\n        AND json_extract(w.value, '$[1]') = region), patron_season = ?2\n      WHERE EXISTS (SELECT 1 FROM json_each(?1) w WHERE json_extract(w.value, '$[0]') = faction AND json_extract(w.value, '$[1]') = region)`)",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -224,7 +224,7 @@
     "old": "    if (!raced.has(pair) && (ran.has(k) || ran.has(rk))) raced.set(pair, null);   // E5: one of the two raced already - even\n",
     "new": "",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -233,7 +233,7 @@
     "old": "      ran.add(k); ran.add(rk);\n",
     "new": "",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -242,7 +242,7 @@
     "old": "  if (hallHidden(faction) && !(await db.prepare('SELECT 1 FROM npc_roll WHERE char_id = ?1 AND player = ?2 AND faction_id = ?3 AND member = 1 AND dormant = 0')",
     "new": "  if (false && !(await db.prepare('SELECT 1 FROM npc_roll WHERE char_id = ?1 AND player = ?2 AND faction_id = ?3 AND member = 1 AND dormant = 0')",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -251,7 +251,7 @@
     "old": "AND faction_id = ?3 AND member = 1 AND dormant = 0')\n    .bind(character, player.id, faction).first())) return { error: 'no-event' };",
     "new": "AND faction_id = ?3')\n    .bind(character, player.id, faction).first())) return { error: 'no-event' };",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -260,7 +260,7 @@
     "old": "if (data && typeof data === 'object' && hallHidden(data.rival)) {",
     "new": "if (false) {",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -269,7 +269,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_npc_chapter_backing_season ON npc_chapter_backing (season, region, account);\n",
     "new": "",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -278,7 +278,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_npc_chapter_history_week ON npc_chapter_history (week, kind);\n",
     "new": "",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -287,8 +287,8 @@
     "old": "ON npc_chapter_history (week, kind);",
     "new": "ON npc_chapter_history (kind, week);",
     "tests": [
-      "test/audit_chap5.test.js",
-      "test/audit_chap4.test.js"
+      "test/net/audit_chap5.test.js",
+      "test/net/audit_chap4.test.js"
     ]
   },
   {
@@ -297,17 +297,18 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_npc_chapter_patron_bids_guild ON npc_chapter_patron_bids (guild_id, season, state);\n",
     "new": "",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
     "name": "AUDIT-CHAP5-S5-PATRONS-SPLIT",
     "file": "server-account/src/npcChapters.js",
-    "old": "  const { results = [] } = await (region == null ? db.prepare(`${head} WHERE c.patron_season = ?1`).bind(n)\n    : db.prepare(`${head} WHERE c.region = ?2 AND c.patron_season = ?1`).bind(n, region)).all();",
-    "new": "  const { results = [] } = await db.prepare(`${head} WHERE c.patron_season = ?1 AND (?2 IS NULL OR c.region = ?2)`).bind(n, region).all();",
+    "old": "  return region == null ? db.prepare(`${head} WHERE c.patron_season = ?1`).bind(n) : db.prepare(`${head} WHERE c.region = ?2 AND c.patron_season = ?1`).bind(n, region);",
+    "new": "  return db.prepare(`${head} WHERE c.patron_season = ?1 AND (?2 IS NULL OR c.region = ?2)`).bind(n, region);",
     "tests": [
-      "test/audit_chap5.test.js"
-    ]
+      "test/net/audit_chap5.test.js"
+    ],
+    "note": "PIN MOVED (PRIMARY-FOLD part two): re-aimed by content - the chapters' sheet reads in one batch, a week read settled kept (weekKept.js)."
   },
   {
     "name": "AUDIT-CHAP5-E4-KEEPS",
@@ -315,7 +316,7 @@
     "old": "`EXISTS (SELECT 1 FROM npc_chapter_patron_bids WHERE guild_id = ${p} AND state = 'open')`",
     "new": "`0`",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -324,7 +325,7 @@
     "old": "  ['guild-patron', (/** @type {string} */ p) =>",
     "new": "  ['guild-seat', (/** @type {string} */ p) =>",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -333,7 +334,7 @@
     "old": "this._tradeOffset = cureOfferMessageOffset(chapterPriced(this.presentedCost, this.deps.priceFactor?.() ?? 1), price);",
     "new": "this._tradeOffset = cureOfferMessageOffset(this.presentedCost, price);",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -342,8 +343,8 @@
     "old": "until it was opened\n    guildId: () => { const g = guildBook; if (g?.stale?.()) g.refresh().catch(() => {}); return g?.guild?.id ?? null; },",
     "new": "until it was opened\n    guildId: () => guildBook?.guild?.id ?? null,",
     "tests": [
-      "test/audit_chap5.test.js",
-      "test/chap7b_patrons_client.test.js"
+      "test/net/audit_chap5.test.js",
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -352,17 +353,17 @@
     "old": "      if (c?.patron && guildBook?.stale?.()) guildBook.refresh().catch(() => {});\n",
     "new": "",
     "tests": [
-      "test/audit_chap5.test.js",
-      "test/chap6d_halls.test.js"
+      "test/net/audit_chap5.test.js",
+      "test/systems/livingWorld/chap6d_halls.test.js"
     ]
   },
   {
     "name": "AUDIT-CHAP5-C1-OPEN",
     "file": "src/scenes/worldModes.js",
-    "old": "    shutBox();   // AUDIT CHAP5 C1",
-    "new": "    // AUDIT CHAP5 C1",
+    "old": "    const shutAtOpen = !!shutBox();   // AUDIT CHAP5 C1",
+    "new": "    const shutAtOpen = false;   // AUDIT CHAP5 C1",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -371,17 +372,17 @@
     "old": "chapterOf: (faction, region) => chapterSheet.chapterOf(chapterFactionOf(faction, townTalk?.factionDict ?? null) ?? faction, region),",
     "new": "chapterOf: (faction, region) => chapterSheet.chapterOf(faction, region),",
     "tests": [
-      "test/audit_chap5.test.js",
-      "test/chap7b_patrons_client.test.js"
+      "test/net/audit_chap5.test.js",
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
     "name": "AUDIT-CHAP5-C5-GATE",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const pixelChapterHalls = new Map(chapterSheet && dfLocation && locBlocks ? buildingSummaries(",
     "new": "const pixelChapterHalls = new Map(dfLocation && locBlocks ? buildingSummaries(",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -390,7 +391,7 @@
     "old": "        const shut = shutBox();   // AUDIT CHAP5 D2\n        if (shut) return shut;\n",
     "new": "",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -399,7 +400,7 @@
     "old": "? () => shutBox() ?? (openReforge() ? { dispatched: true } : null) : null,",
     "new": "? () => (openReforge() ? { dispatched: true } : null) : null,",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -408,7 +409,7 @@
     "old": "? () => shutBox() ?? (openLift() ? { dispatched: true } : null) : null,",
     "new": "? () => (openLift() ? { dispatched: true } : null) : null,",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -417,7 +418,7 @@
     "old": "healCurse: service === 'CureDisease' ? () => shutBox() ?? healCurseBox() : null,",
     "new": "healCurse: service === 'CureDisease' ? () => healCurseBox() : null,",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -426,7 +427,7 @@
     "old": "doctrine = NULL, doctrine_season = NULL, patron = NULL, patron_season = NULL WHERE true",
     "new": "doctrine = NULL, doctrine_season = NULL WHERE true",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -435,7 +436,7 @@
     "old": "INSERT INTO realm_tx_guard (moved, expected) SELECT 1, 0 WHERE EXISTS (SELECT 1 FROM npc_chapter_patron_bids WHERE season <= ?1 AND state = 'open')",
     "new": "INSERT INTO realm_tx_guard (moved, expected) SELECT 1, 1 WHERE EXISTS (SELECT 1 FROM npc_chapter_patron_bids WHERE season <= ?1 AND state = 'open')",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -444,7 +445,7 @@
     "old": "DO UPDATE SET amount = excluded.amount, at = excluded.at`).bind(faction, region, season, guild, marks, nowS),",
     "new": "DO UPDATE SET amount = excluded.amount`).bind(faction, region, season, guild, marks, nowS),",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -453,7 +454,7 @@
     "old": "marks: Number(bid?.amount ?? 0), guildMarks: await guildBalanceOf(db, prior.src_id) };",
     "new": "marks: 0, guildMarks: await guildBalanceOf(db, prior.src_id) };",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -462,7 +463,7 @@
     "old": "return { ok: true, repeat: true, season: Number(bid?.season ?? 0),",
     "new": "return { ok: true, repeat: true, season: 0,",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -471,7 +472,7 @@
     "old": "Number(bid?.amount ?? 0), guildMarks: await guildBalanceOf(db, prior.src_id) };",
     "new": "Number(bid?.amount ?? 0), guildMarks: 0 };",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -480,7 +481,7 @@
     "old": "tag: String(r.tag ?? ''), heraldry: heraldryOfRow(r.heraldry) });",
     "new": "tag: String(r.tag ?? ''), heraldry: null });",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -489,7 +490,7 @@
     "old": "  if (ended) {\n    const { results = [] } = await db.prepare(`SELECT faction, region, COUNT(*) AS n FROM npc_chapter_history",
     "new": "  if (true) {\n    const { results = [] } = await db.prepare(`SELECT faction, region, COUNT(*) AS n FROM npc_chapter_history",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -498,7 +499,7 @@
     "old": "WHERE e.week = ?1 AND e.state = 'law' AND e.edict = 'curfew'`)",
     "new": "WHERE e.week = ?1 AND e.edict = 'curfew'`)",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -507,7 +508,7 @@
     "old": "WHERE e.week = ?1 AND e.state = 'law' AND e.edict = 'curfew'`)",
     "new": "WHERE e.week = ?1 AND e.state = 'law'`)",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -516,7 +517,7 @@
     "old": ".filter((r) => r && keys.has(`${r.faction}|${r.region}`))",
     "new": ".filter((r) => r)",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -525,7 +526,7 @@
     "old": "  if (season.n > 0 && !opened && !trial) {",
     "new": "  if (season.n > 0 && !trial) {",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -534,7 +535,7 @@
     "old": "if (!b || typeof b.guild !== 'string' || !Number.isSafeInteger(b.amount)",
     "new": "if (!b || typeof b.guild !== 'string'",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -543,7 +544,7 @@
     "old": "top[1] = t[1] + b.a.top[1];",
     "new": "top[1] = t[1];",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -552,7 +553,7 @@
     "old": "top[0] = t[0] + b.a.top[0];",
     "new": "top[0] = t[0] - b.a.top[0];",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -561,7 +562,7 @@
     "old": "top[2] = t[2] + b.a.top[2];",
     "new": "top[2] = t[2] - b.a.top[2];",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -570,7 +571,7 @@
     "old": "right: b.a.right, out: b.a.out }",
     "new": "right: b.a.out, out: b.a.right }",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -579,7 +580,7 @@
     "old": "      if (outs.length <= BANNERS_MAX) return outs;",
     "new": "      return outs;",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -588,7 +589,7 @@
     "old": "      if (e) { eyeAt = e; nearest.sort(byEye); }",
     "new": "      if (e) { eyeAt = e; }",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -597,7 +598,7 @@
     "old": "    if (busy || workBusy || !work.patron) return;",
     "new": "    if (workBusy || !work.patron) return;",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -606,7 +607,7 @@
     "old": "    ...(bids && !hallHidden(f) ? { patronBid:",
     "new": "    ...(bids ? { patronBid:",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -615,7 +616,7 @@
     "old": "const gm = n != null && account && character ? await",
     "new": "const gm = account && character ? await",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -624,7 +625,7 @@
     "old": "WHERE player = ?1 AND char_id = ?2 AND rank = 0').bind(account, character)",
     "new": "WHERE player = ?1 AND char_id = ?2 AND rank <= 1').bind(account, character)",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   },
   {
@@ -633,8 +634,8 @@
     "old": "post('/v1/chapters/patron', { character, faction, region, marks, rid })",
     "new": "post('/v1/chapters/patrons', { character, faction, region, marks, rid })",
     "tests": [
-      "test/audit_chap5.test.js",
-      "test/chap7b_patrons_client.test.js"
+      "test/net/audit_chap5.test.js",
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -643,7 +644,7 @@
     "old": "post('/v1/chapters/back', { character, faction, region, side })",
     "new": "post('/v1/chapters/backs', { character, faction, region, side })",
     "tests": [
-      "test/audit_chap5.test.js"
+      "test/net/audit_chap5.test.js"
     ]
   }
 ]

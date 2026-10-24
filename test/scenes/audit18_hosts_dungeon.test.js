@@ -1,0 +1,646 @@
+// AUDIT 18, hosts-dungeon lane: pins for the scene-host parity fixes.
+//
+// HONESTY NOTE on pin shape. src/scenes/dungeonContext.js is a ~2000
+// line async scene builder that needs a GL renderer, a collider and a
+// laid-out dungeon before a single line of its combat code runs, and
+// it has zero execution coverage in this suite. Every law that COULD
+// be lifted out of it was lifted into src/scenes/hostCombat.js and is
+// pinned BEHAVIOURALLY here; src/scenes/cityGuards.js is driven for
+// real through the same faked-seam harness test/scenes/cityguards.test.js
+// uses. What remains - the call sites inside dungeonContext's frame
+// loop - is pinned by SOURCE SWEEP over the host files, which is what
+// this repo already does for host-gap defects. Those are labelled.
+
+import { test } from 'node:test';
+import assert from 'node:assert/strict';
+import { readFileSync, existsSync } from 'node:fs';
+import { join } from 'node:path';
+
+import {
+  weaponSkillUsed, attackSkillOf, isBowWeapon,
+  hasBowAttack, equipEnemy, SWING_WEAPON_FATIGUE_LOSS, tallySwingSkills,
+  backstabChanceOf, zeroDamageHitSound,
+  PARRY_1, CORPSE_ACTIVATION_DISTANCE,
+} from '../../src/scenes/hostCombat.js';
+import { SKILLS, WEAPON_SKILL } from '../../src/systems/skills.js';
+import { WEAPON_SKILL_USED } from '../../src/characters/weapons.js';
+import { ENEMY_GROUPS, bonusOrPenaltyByEnemyType } from '../../src/combat/formulas.js';
+import { tickPlayerMinutes } from '../../src/systems/worldTick.js';
+import { ENEMY_BASICS } from '../../src/characters/enemy/enemyBasics.js';
+import { corpseLootTargets } from '../../src/scenes/corpseMarker.js';   // AUDIT 24 wave 38: the shared corpse seam
+import { RAY_DISTANCE } from '../../src/player/activate.js';   // AUDIT 65 MC-2: the reach the ONE ray casts at
+import { makeEnemyEntity, loadMonsterCareer } from '../../src/characters/enemy/enemyEntity.js';
+import { swingSoundFor, SOUND } from '../../src/systems/soundClips.js';
+import { readSpellsStd } from '../../src/formats/spellsStd.js';
+import { createCityGuards } from '../../src/scenes/cityGuards.js';
+import { PlayerWeapon } from '../../src/combat/playerWeapon.js';
+import { FATIGUE_DRAIN_SCALE } from '../../src/systems/statMods.js';   // BALANCE1: exertion's scale on DFU's losses
+const charged = (loss, mult = 1) => Math.trunc(loss * mult * FATIGUE_DRAIN_SCALE);   // BALANCE1: DFU's loss x the multiplier x exertion's scale, truncated once
+
+const ARENA2 = process.env.ARENA2_PATH;
+const skipReal = !ARENA2 || !existsSync(ARENA2)
+  ? 'ARENA2_PATH not set or missing - real-data validation skipped'
+  : false;
+
+const HOSTS = ['dungeonContext.js', 'cityGuards.js', 'townTalk.js', 'arrestFlow.js', 'hostCombat.js'];
+const hostSrc = (n) => readFileSync(new URL(`../../src/scenes/${n}`, import.meta.url), 'utf8');
+const allHosts = () => HOSTS.map((n) => [n, hostSrc(n)]);
+
+// ---------------------------------------------------------------
+// 1. The attack skill is a property of the TEMPLATE, not the NAME
+//    (DaggerfallUnityItem.cs:910-962).
+// ---------------------------------------------------------------
+
+test('audit18: weaponSkillUsed is GetWeaponSkillUsed/GetWeaponSkillIDAsShort, verbatim by template', () => {
+  // ItemEnums.cs Weapons 113..130, mapped through ProficiencyFlags.
+  // AUDIT 68 S21-weapon-skill-table-testonly: the ONE table, read at its home (hostCombat's derived object copy had
+  // no production reader and is gone).
+  assert.deepEqual(Object.fromEntries(WEAPON_SKILL_USED), {
+    113: SKILLS.ShortBlade, 114: SKILLS.ShortBlade, 115: SKILLS.BluntWeapon,
+    116: SKILLS.ShortBlade, 117: SKILLS.ShortBlade, 118: SKILLS.LongBlade,
+    119: SKILLS.LongBlade, 120: SKILLS.LongBlade, 121: SKILLS.LongBlade,
+    122: SKILLS.LongBlade, 123: SKILLS.LongBlade, 124: SKILLS.BluntWeapon,
+    125: SKILLS.BluntWeapon, 126: SKILLS.BluntWeapon, 127: SKILLS.Axe,
+    128: SKILLS.Axe, 129: SKILLS.Archery, 130: SKILLS.Archery,
+  });
+  assert.equal(weaponSkillUsed(131), null, 'Arrow is not a weapon skill (Skills.None)');
+  assert.equal(weaponSkillUsed(undefined), null);
+});
+
+test('audit18: an ENCHANTED (renamed) weapon keeps its own skill - the name lookup lost it', () => {
+  // createRegularMagicItem overwrites `name` with the magic-item name,
+  // so every by-name read fell through to Hand-to-Hand: the player
+  // trained the wrong skill and rolled to hit on the wrong skill for
+  // the rest of the game.
+  const enchantedLongsword = { name: 'Wabbajack', templateIndex: 120, material: 4 };
+  assert.equal(attackSkillOf(enchantedLongsword), SKILLS.LongBlade);
+  assert.equal(WEAPON_SKILL[enchantedLongsword.name] ?? SKILLS.HandToHand, SKILLS.HandToHand,
+    'the old by-name read really does answer Hand-to-Hand here');
+
+  const enchantedBow = { name: 'Auriel’s Bow', templateIndex: 130 };
+  assert.equal(isBowWeapon(enchantedBow), true, 'a renamed Long Bow is still a bow');
+  assert.equal(WEAPON_SKILL[enchantedBow.name] === SKILLS.Archery, false,
+    'the old by-name bow test dropped it to a melee swing');
+
+  // And the two template spellings the port's name table never had.
+  assert.equal(attackSkillOf({ name: 'Wakizashi', templateIndex: 117 }), SKILLS.ShortBlade);
+  assert.equal(attackSkillOf({ name: 'Dai-katana', templateIndex: 123 }), SKILLS.LongBlade);
+  assert.equal(attackSkillOf(null), SKILLS.HandToHand, 'bare hands');
+});
+
+test('audit18 sweep: no host reads the attack skill by display name any more', () => {
+  for (const [name, src] of allHosts()) {
+    assert.equal(/WEAPON_SKILL\s*\[/.test(src), false, `${name} still keys the attack skill by name`);
+  }
+});
+
+// ---------------------------------------------------------------
+// 2. hasBowAttack comes from the MobileEnemy FLAGS (EnemyMotor.cs:131-137)
+// ---------------------------------------------------------------
+
+test('audit18: hasBowAttack is the EnemyMotor flag predicate, with zero inventory involvement', () => {
+  assert.equal(hasBowAttack({ hasRangedAttack1: true, castsMagic: false }), true);
+  assert.equal(hasBowAttack({ hasRangedAttack1: true, castsMagic: true }), false, 'ranged1 + magic = spells only');
+  assert.equal(hasBowAttack({ hasRangedAttack1: true, castsMagic: true, hasRangedAttack2: true }), true, 'the Nightblade case');
+  assert.equal(hasBowAttack({ hasRangedAttack1: false, hasRangedAttack2: true }), false);
+  assert.equal(hasBowAttack({}), false);
+  assert.equal(hasBowAttack(undefined), false);
+});
+
+test('audit18: fifteen real mobiles CAN fire a bow, and none of them owns one', async () => {
+  // The defect: rangedAttack was minted as `!!entity.weapon &&
+  // WEAPON_SKILL[entity.weapon.name] === Archery`, but
+  // AssignEnemyStartingEquipment never rolls a bow - so the predicate
+  // was false for every enemy in the game and no foe could ever shoot.
+  const archers = Object.entries(ENEMY_BASICS).filter(([, b]) => hasBowAttack(b)).map(([k]) => Number(k));
+  assert.equal(archers.length, 15, 'the flag table says fifteen');
+  assert.ok(archers.every((t) => t >= 128), 'all fifteen are class enemies; no monster has a bow attack');
+  assert.deepEqual(archers, [130, 131, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145]);
+
+  if (skipReal) return;
+  // and the equipment roll for one of them really does not produce a bow
+  const fb = async (n) => new Uint8Array(readFileSync(join(ARENA2, n)));
+  const { ClassFile } = await import('../../src/formats/classFile.js');
+  const cf = new ClassFile();
+  cf.load(await fb('CLASS02.CFG'));   // Archer = mobileType 130 -> careerIndex 2
+  let sawBow = false;
+  for (let i = 0; i < 200; i++) {
+    const e = makeEnemyEntity(130, ENEMY_BASICS[130], cf.career, 6);
+    e.items = [];
+    equipEnemy(e, 130, 6);
+    if (e.weapon && isBowWeapon(e.weapon)) sawBow = true;
+  }
+  assert.equal(sawBow, false, 'the Archer never rolls a bow - the old predicate could not fire');
+});
+
+test('audit18 sweep: both dungeon spawn branches mint rangedAttack from the flags', () => {
+  const src = hostSrc('dungeonContext.js');
+  const hits = src.match(/attack\.rangedAttack = hasBowAttack\(basics\);/g) ?? [];
+  assert.equal(hits.length, 2, 'the class branch AND the monster branch');
+  assert.equal(/rangedAttack\s*=\s*!!entity\.weapon/.test(src), false, 'the equipment-derived mint is gone');
+});
+
+// ---------------------------------------------------------------
+// 3. Equipment-using MONSTERS get SetEnemyEquipment (EnemyEntity.cs:330-347)
+// ---------------------------------------------------------------
+
+test('audit18: the five equipment-using monsters are equipped', { skip: skipReal }, async () => {
+  const fb = async (n) => new Uint8Array(readFileSync(join(ARENA2, n)));
+  for (const mt of [7, 8, 12, 21, 24]) {   // Orc, Centaur, OrcSergeant, OrcShaman, OrcWarlord
+    const basics = ENEMY_BASICS[mt];
+    const career = await loadMonsterCareer(mt, fb);
+    const e = makeEnemyEntity(mt, basics, career, 3);
+    e.items = [];
+    const eq = equipEnemy(e, mt, 3, () => 0);   // MOD: deterministic rolls - this test is about the equip chain reaching the corpse structurally, not the 75% humanoid loot cut itself
+    assert.ok(eq, `monster ${mt} takes the equipment chain`);
+    assert.ok(e.weapon, `monster ${mt} carries a right-hand weapon`);
+    assert.ok(Array.isArray(e.armorValues) && e.armorValues.length === 7, `monster ${mt} has armor values`);
+    assert.ok(e.items.length > 0, `monster ${mt}'s equipment reaches its corpse loot`);
+  }
+  // ... and a monster OUTSIDE the table still gets nothing.
+  const rat = makeEnemyEntity(3, ENEMY_BASICS[3], await loadMonsterCareer(3, fb), 3);
+  rat.items = [];
+  assert.equal(equipEnemy(rat, 3, 3), null, 'a Rat is not on the equipment table');
+  assert.equal(rat.weapon ?? null, null);
+});
+
+test('audit18 sweep: all three spawn sites run the one shared equip chain', () => {
+  const dungeon = hostSrc('dungeonContext.js');
+  const guards = hostSrc('cityGuards.js');
+  // RF2: the equip chain rides the ONE enemy-loot seam (hostCombat.spawnEnemyLoot) - a host calls that, once per branch
+  assert.equal((dungeon.match(/\bspawnEnemyLoot\(/g) ?? []).length, 2, 'class + monster branch');
+  // PIN MOVED (HOST-SPLIT, FIELD BUGS 2026-10-14): a room body's base - PARTY-LOOT's, the same one seam on the room's
+  // terms - left buildDungeonContext with its block for src/scenes/roomLootHost.js, which the dungeon host constructs
+  assert.equal((hostSrc('roomLootHost.js').match(/\bspawnEnemyLoot\(/g) ?? []).length, 1, 'a room body\'s base (PIN MOVED, PARTY-LOOT: the same one seam on the room\'s terms)');
+  assert.match(dungeon, /= createRoomLoot\(\{   \/\/ HOST-SPLIT: src\/scenes\/roomLootHost\.js/, 'and the dungeon host constructs it');
+  assert.equal((guards.match(/\bspawnEnemyLoot\(/g) ?? []).length, 1, 'the city watch');
+  for (const [name, src] of allHosts()) {
+    if (name === 'hostCombat.js') continue;   // the one shared home
+    assert.equal(/assignEnemyEquipment\(|\bequipEnemy\(/.test(src), false, `${name} keeps a private copy of the equip chain`);
+  }
+  assert.match(hostSrc('hostCombat.js'), /^  const eq = equipEnemy\(entity, mobileType, effectiveLevel\(player\), rolls, \{ player \}\);   \/\/ SOFTCAP2/m, 'the seam runs the shared chain (RRI2: the player rides in for a mod\'s assigner)');
+});
+
+// ---------------------------------------------------------------
+// 4. WeaponManager.cs:419-436 - the swing's fatigue and its tallies
+// ---------------------------------------------------------------
+
+test('audit18: swingWeaponFatigueLoss is 11 and tallySwingSkills counts CriticalStrike too', () => {
+  assert.equal(SWING_WEAPON_FATIGUE_LOSS, 11, 'WeaponManager.cs:72');
+  const player = { skillUses: new Array(35).fill(0) };
+  tallySwingSkills(player, { name: 'Whatever', templateIndex: 127 });   // Battle Axe
+  assert.equal(player.skillUses[SKILLS.Axe], 1, 'the weapon skill');
+  assert.equal(player.skillUses[SKILLS.CriticalStrike], 1, 'CriticalStrike, tallied nowhere in the port before');
+  tallySwingSkills(player, null);   // bare hands
+  assert.equal(player.skillUses[SKILLS.HandToHand], 1);
+  assert.equal(player.skillUses[SKILLS.CriticalStrike], 2);
+  assert.equal(player.skillUses[SKILLS.Axe], 1, 'a fist swing does not train the axe');
+});
+
+// ---------------------------------------------------------------
+// 5. CalculateBackstabChance tallies Backstabbing (FormulaHelper.cs:975-990)
+// ---------------------------------------------------------------
+
+test('audit18: the backstab chance IS the tally site', () => {
+  const player = { skillUses: new Array(35).fill(0), skills: new Array(35).fill(0) };
+  player.skills[SKILLS.Backstabbing] = 44;
+  assert.equal(backstabChanceOf(player, false), 0);
+  assert.equal(player.skillUses[SKILLS.Backstabbing], 0, 'a front-facing swing tallies nothing');
+  assert.equal(backstabChanceOf(player, true), 44, 'the chance is the live skill');
+  assert.equal(player.skillUses[SKILLS.Backstabbing], 1, 'every back-facing swing counts a use');
+  backstabChanceOf(player, true);
+  assert.equal(player.skillUses[SKILLS.Backstabbing], 2);
+});
+
+// ---------------------------------------------------------------
+// 6. GetBonusOrPenaltyByEnemyType's PlayerEntity arm (FormulaHelper.cs:1037-1053)
+// ---------------------------------------------------------------
+
+test('audit18: the player is the Humanoid group, and no host can kill the modifier', () => {
+  // REWRITTEN AT THE AUDIT 18 MERGE. This pin used to assert that each host
+  // passed `targetGroup: PLAYER_TARGET_GROUP` by hand. The combat domain then
+  // made calculateAttackDamage derive the group from the TARGET ENTITY,
+  // verbatim to GetBonusOrPenaltyByEnemyType (FormulaHelper.cs:1037-1052), so
+  // the parameter - and the constant - are gone. The BEHAVIOUR is what
+  // mattered, so it is pinned directly now instead of through source text.
+  const foe = {
+    level: 10,
+    attackModifierFlags: 0x04,       // DFCareer humanoid BONUS bit
+    stats: { strength: 50, agility: 50, luck: 50 }, skills: 40,
+  };
+  const player = { isPlayer: true, stats: { strength: 50, agility: 50, luck: 50 }, skills: 40 };
+  assert.equal(bonusOrPenaltyByEnemyType(foe, player), 10,
+    'DFU assumes the player is humanoid (:1048), so a humanoid-bonus attacker adds its level');
+  // A phobia attacker subtracts it, and a flagless one scores nothing.
+  assert.equal(bonusOrPenaltyByEnemyType({ ...foe, attackModifierFlags: 0x40 }, player), -10);
+  assert.equal(bonusOrPenaltyByEnemyType({ ...foe, attackModifierFlags: 0 }, player), 0);
+  // And no host may reintroduce an explicit group - the key is ignored now,
+  // so passing one is a lie about where the value comes from.
+  for (const [name, src] of allHosts()) {
+    if (name === 'hostCombat.js') continue;   // names the retired constant in a comment
+    assert.equal(/targetGroup:/.test(src), false,
+      `${name} passes targetGroup, which calculateAttackDamage no longer reads`);
+  }
+});
+
+test('audit18 sweep: the player arrow recovers the swing mods and the backstab it dropped', () => {
+  // WAVE D: the arm this pinned is no longer INSIDE the dungeon host -
+  // it is combat/arrowFlight.js's playerArrowHitFoe, which all four
+  // hosts call. The law is pinned where it lives, and the host is
+  // pinned to be a CALLER rather than a fourth copy of it.
+  const shared = readFileSync(new URL('../../src/combat/arrowFlight.js', import.meta.url), 'utf8');
+  const shot = shared.slice(shared.indexOf('export function playerArrowHitFoe'));
+  assert.ok(/damageMod: swing\.damage, toHitMod: swing\.toHit/.test(shot));
+  assert.ok(/backstabChance: backstabChanceOf\(playerEntity, back, foe\)/.test(shot));   // PIN MOVED (RVN2: the foe rides along - a Watchful revenant takes no backstab)
+  const src = hostSrc('dungeonContext.js');
+  assert.ok(!src.includes('SWING_MODS[playerWeapon.machine.state]'),
+    'the dungeon host no longer prices its own shot');
+  assert.match(src, /playerArrowHitFoe\(m, f, \{/, 'it calls the one that does');
+});
+
+// ---------------------------------------------------------------
+// 7. WeaponManager.cs:609-615 - the ZERO-damage connected swing
+// ---------------------------------------------------------------
+
+test('audit18: a zero-damage hit is a swing or a PARRY sound, never the wall pair', () => {
+  const weapon = { name: 'Longsword', templateIndex: 120 };
+  // no ParrySounds -> the weapon's own swing sound, at the player
+  assert.deepEqual(zeroDamageHitSound({ weapon, parrySounds: false, roll: 0.5 }),
+    { sound: swingSoundFor(weapon), at: 'player' });
+  // ParrySounds -> Parry1 + Range(0,9), at the ENEMY
+  assert.equal(PARRY_1, 428, 'SoundClips.Parry1');
+  assert.deepEqual(zeroDamageHitSound({ weapon, parrySounds: true, roll: 0 }), { sound: 428, at: 'enemy' });
+  assert.deepEqual(zeroDamageHitSound({ weapon, parrySounds: true, roll: 0.999 }), { sound: 436, at: 'enemy' });
+  // strikingWeapon == null short-circuits the parry arm entirely
+  assert.deepEqual(zeroDamageHitSound({ weapon: null, parrySounds: true, roll: 0.9 }),
+    { sound: swingSoundFor(null), at: 'player' });
+  // The old code played WeaponManager.cs:483's WALL pair - the ARMED
+  // arm was always Parry6 and the barehanded arm always Hit2, both as
+  // a flat 2D one-shot. Neither can come out of this branch now:
+  // barehanded goes to the swing sound, and the armed no-parry case
+  // goes to the weapon's swing sound.
+  for (const roll of [0, 0.3, 0.6, 0.99]) {
+    assert.notEqual(zeroDamageHitSound({ weapon: null, parrySounds: true, roll }).sound, SOUND.Hit2);
+    assert.notEqual(zeroDamageHitSound({ weapon: null, parrySounds: false, roll }).sound, SOUND.Hit2);
+    assert.notEqual(zeroDamageHitSound({ weapon, parrySounds: false, roll }).sound, SOUND.Parry6);
+    // the parry arm plays at the ENEMY's position, not flat at the player
+    assert.equal(zeroDamageHitSound({ weapon, parrySounds: true, roll }).at, 'enemy');
+  }
+});
+
+test('audit18 sweep: no host plays the wall pair on a connected swing', () => {
+  for (const [name, src] of allHosts()) {
+    assert.equal(/SOUND\.Parry6\s*:\s*SOUND\.Hit2/.test(src), false, `${name} still plays the wall pair`);
+  }
+  assert.ok(/zeroDamageHitSound\(/.test(hostSrc('dungeonContext.js')));
+  assert.ok(/zeroDamageHitSound\(/.test(hostSrc('cityGuards.js')));
+});
+
+// ---------------------------------------------------------------
+// 8. PlayerActivate.cs:85 - CorpseActivationDistance
+// ---------------------------------------------------------------
+
+test('audit18: corpses reach 150 * GlobalScale, not the 128-unit default', () => {
+  assert.equal(CORPSE_ACTIVATION_DISTANCE, 3.75);
+  // The dungeon still builds its own targets inline. AUDIT 24 (wave 38)
+  // moved the two exterior pools onto the shared builder, so the reach
+  // is asserted where each one now writes it - and for the shared one,
+  // by CALLING it rather than grepping for the constant's name.
+  // AUDIT 65 MC-2 MOVED THE FIELD, not the law: 150 units is the reach
+  // the HANDLER gates on (PlayerActivate.cs:936-941, which answers past
+  // it with SetMidScreenText(youAreTooFarAway) rather than silence), so
+  // the body now competes for the ONE ray at the ray's own reach (:76,
+  // :314) and carries its 150 as `reach`. A pick that drops the body
+  // can never reach the handler that speaks.
+  assert.ok(/reach: CORPSE_ACTIVATION_DISTANCE/.test(hostSrc('dungeonContext.js')), 'dungeonContext.js corpse targets carry the reach');
+  assert.ok(/distance: RAY_DISTANCE, reach: CORPSE_ACTIVATION_DISTANCE/.test(hostSrc('dungeonContext.js')),
+    'dungeonContext.js corpse targets compete for the RAY');
+  const built = corpseLootTargets(
+    [{ corpse: true, entity: { items: [] } }],
+    'x', { isCorpse: (e) => !!e.corpse, feetOf: () => [1, 2, 3] },
+  );
+  assert.equal(built.length, 1);
+  assert.equal(built[0].reach, CORPSE_ACTIVATION_DISTANCE, 'the shared builder carries the handler\'s reach');
+  assert.equal(built[0].distance, RAY_DISTANCE, 'and competes for the pick at the ray\'s');
+  assert.equal(built[0].key, 'x:0');
+});
+
+// ---------------------------------------------------------------
+// 9. cityGuards, driven for real
+// ---------------------------------------------------------------
+
+function makeDeps(rand, playerEntity, audio = null) {
+  return {
+    renderer: { createBillboardBatch: () => ({}), textures: new Map(), destroyBillboardBatch: () => {} },
+    collider: { heightAt: () => 0, raycast: () => Infinity,
+      // D9: the ring fallback places through FoeSpawner.PlaceFoeFreely,
+      // which asks the collider for a ray HIT and an overlap test
+      raycastHit: () => ({ dist: Infinity, normal: null }), sphereOverlaps: () => false },
+    fetchBytes: async (name) => new Uint8Array(readFileSync(join(ARENA2, name))),
+    getTexture: async () => ({
+      getFrameCount: () => 4,
+      getSize: () => ({ width: 64, height: 100 }),
+      getScale: () => ({ width: 0, height: 0 }),
+    }),
+    uploadRecordFrame: () => {},
+    currentMinute: () => 523530,   // AUDIT 23 (hosts-3): required now
+    playerEntity,
+    audio,
+    onPlayerHurt: () => {},
+    rand,
+  };
+}
+const makePlayer = () => ({
+  level: 6, reflexes: 2, gender: 'female',
+  skills: new Array(35).fill(50), skillUses: new Array(35).fill(0),
+  stats: { strength: 50, agility: 50, luck: 50 },
+  fatigue: 1000, health: 100,
+});
+
+test('guards audit18: the watch spawns EQUIPPED, and its loot rolls the PLAYER gender', { skip: skipReal }, async () => {
+  const player = makePlayer();
+  // MOD: deterministic rolls, as the five-monsters pin above takes. The
+  // loot rebalance (Handoff-FixPackage2.md) keeps each worn piece on a
+  // humanoid's corpse only on a roll under a quarter, off the pool's own
+  // stream - and 0.9 missed every piece, so this ARENA2-gated pin read an
+  // empty body. What it reads is the equip chain reaching the corpse, not
+  // the 75% cut itself (the watch has no loot table and no map chance, so
+  // the kit is the only thing that can be on it).
+  const g = createCityGuards(makeDeps(() => 0, player));
+  await g.spawnCityGuards(true, {
+    playerFeet: [0, 0, 0], playerFwd: [0, 0, 1],
+    pool: [{ pos: [5, 0, 5], fwdYaw: 0, guard: true, disable: () => {} }],
+  });
+  const e = g.guards[0].entity;
+  assert.ok(e.weapon, 'SetEnemyEquipment ran');
+  assert.ok(Array.isArray(e.armorValues) && e.armorValues.length === 7);
+  assert.ok(e.items.length > 0, 'the equipment is on the corpse');
+  // the loot call must not hard-code a gender any more
+  assert.equal(/gender: 'male'/.test(hostSrc('cityGuards.js')), false);
+  // RF2: the table roll moved into the one seam, so the watch's half of
+  // the law is handing hostCombat.spawnEnemyLoot the PLAYER entity - the
+  // seam's half (its generateItems reads player.gender) is pinned by
+  // 'enemy loot rolls the PLAYER gender at both dungeon spawn sites'
+  // below, which CI runs.
+  assert.match(hostSrc('cityGuards.js'), /spawnEnemyLoot\(entity, GUARD_MOBILE_TYPE, basics, playerEntity[,)]/,
+    'the watch rolls its loot on the PLAYER entity');
+});
+
+test('guards audit18: a connecting swing tallies the weapon skill AND CriticalStrike (the fatigue is the host\'s - wave 42)', { skip: skipReal }, async () => {
+  const player = makePlayer();
+  const g = createCityGuards(makeDeps(() => 0.5, player));
+  await g.spawnCityGuards(true, {
+    playerFeet: [0, 0, 0], playerFwd: [0, 0, 1],
+    pool: [{ pos: [0, 0, 1], fwdYaw: 0, guard: true, disable: () => {} }],
+  });
+  const pw = new PlayerWeapon();
+  pw.weapon = { name: 'Some Enchanted Blade', templateIndex: 120, material: 0, flags: 0x10, minDamage: 3, maxDamage: 12 };
+  const before = player.fatigue;
+  const hit = g.resolvePlayerHit(pw, [0, 1.7, 0], [0, 0, 1], [0, 0, 0], () => true, null);
+  // AUDIT 24 (wave 42) MOVED the drain out of here, and this
+  // ARENA2-gated pin kept asserting the old shape - invisible on CI,
+  // which is why it sat red. DFU charges swingWeaponFatigueLoss ONCE
+  // per swing at WeaponManager.cs:420, a property of swinging rather
+  // than of what you swung at; both exterior hosts drain it in their
+  // melee arm BEFORE calling this, so a second charge here billed 22
+  // near the watch and 11 everywhere else. The law is now: the hit
+  // resolver takes no fatigue at all.
+  assert.equal(player.fatigue, before, 'the swing drain belongs to the HOST, not the hit resolver');
+  assert.ok(hit, 'the guard is inside reach, in view and in LOS');
+  assert.equal(player.skillUses[SKILLS.LongBlade], 1, 'the TEMPLATE skill, not Hand-to-Hand');
+  assert.equal(player.skillUses[SKILLS.HandToHand], 0);
+  assert.equal(player.skillUses[SKILLS.CriticalStrike], 1);
+});
+
+test('guards audit18: the melee in-view gate REJECTS when no camera is supplied', { skip: skipReal }, async () => {
+  const player = makePlayer();
+  const g = createCityGuards(makeDeps(() => 0.5, player));
+  await g.spawnCityGuards(true, {
+    playerFeet: [0, 0, 0], playerFwd: [0, 0, 1],
+    pool: [{ pos: [0, 0, 1], fwdYaw: 0, guard: true, disable: () => {} }],
+  });
+  const pw = new PlayerWeapon();
+  pw.weapon = { name: 'Longsword', templateIndex: 120, material: 0, flags: 0x10, minDamage: 3, maxDamage: 12 };
+  // WeaponManager.cs:951-955 applies IsPositionInCameraView
+  // unconditionally - no projection cannot mean "accept".
+  assert.equal(g.resolvePlayerHit(pw, [0, 1.7, 0], [0, 0, 1], [0, 0, 0], null, null), false);
+  // once a host has handed one over, the assault-carry swing reuses it
+  g.resolvePlayerHit(pw, [0, 1.7, 0], [0, 0, 1], [0, 0, 0], () => true, null);
+  assert.equal(g.resolvePlayerHit(pw, [0, 1.7, 0], [0, 0, 1], [0, 0, 0], null, null), true);
+});
+
+test('guards audit18: a back-facing guard raises the backstab chance and tallies Backstabbing', { skip: skipReal }, async () => {
+  const player = makePlayer();
+  const g = createCityGuards(makeDeps(() => 0.5, player));
+  await g.spawnCityGuards(true, {
+    playerFeet: [0, 0, 0], playerFwd: [0, 0, 1],
+    pool: [{ pos: [0, 0, 1], fwdYaw: 0, guard: true, disable: () => {} }],
+  });
+  // The guard spawns facing yaw 0 (+Z) with the player at the origin
+  // behind it - IsBackFacing is true from the player's eye.
+  const pw = new PlayerWeapon();
+  pw.weapon = { name: 'Longsword', templateIndex: 120, material: 0, flags: 0x10, minDamage: 3, maxDamage: 12 };
+  g.resolvePlayerHit(pw, [0, 1.7, 0], [0, 0, 1], [0, 0, 0], () => true, null);
+  assert.equal(player.skillUses[SKILLS.Backstabbing], 1,
+    'the hard-zeroed backstab argument tallied nothing and rolled nothing');
+});
+
+test('guards audit18: a zero-damage swing against a guard makes a noise', { skip: skipReal }, async () => {
+  const player = makePlayer();
+  const played = [];
+  const audio = { playOneShot: (s) => played.push(['flat', s]), play3d: (s) => played.push(['3d', s]) };
+  const g = createCityGuards(makeDeps(() => 0.5, player, audio));
+  await g.spawnCityGuards(true, {
+    playerFeet: [0, 0, 0], playerFwd: [0, 0, 1],
+    pool: [{ pos: [0, 0, 1], fwdYaw: 0, guard: true, disable: () => {} }],
+  });
+  // material-too-low is CalculateAttackDamage's deterministic zero
+  g.guards[0].entity.minMetalToHit = 9;
+  const pw = new PlayerWeapon();
+  pw.weapon = { name: 'Longsword', templateIndex: 120, material: 0, flags: 0x10, minDamage: 3, maxDamage: 12 };
+  played.length = 0;
+  const hit = g.resolvePlayerHit(pw, [0, 1.7, 0], [0, 0, 1], [0, 0, 0], () => true, null);
+  assert.ok(hit, 'the swing connected');
+  assert.ok(!g.guards[0].dead, 'and dealt nothing');
+  // MERGE NOTE (AUDIT 18): this pin was written while ENEMY_BASICS still
+  // had no parrySounds column, and asserted DFU's FIRST arm. The enemies
+  // domain then landed the column, and EnemyBasics.cs:2197-2210 gives
+  // Knight_CityWatch (146) ParrySounds = true - so the guard takes the
+  // SECOND arm, which is the correct DFU behaviour and what the merged
+  // tree now does. WeaponManager.cs:609-614 -> EnemySounds.PlayParrySound
+  // (EnemySounds.cs:134-140) = Parry1 + Random.Range(0, 9), AT THE ENEMY.
+  assert.equal(played.length, 1, 'the exterior host played NOTHING at all on a zero-damage swing');
+  const [where, clip] = played[0];
+  assert.equal(where, '3d', 'a parrying enemy takes the sound at ITS position, not the player\'s');
+  assert.ok(clip >= PARRY_1 && clip <= PARRY_1 + 8,
+    `expected one of Parry1..Parry9 (${PARRY_1}..${PARRY_1 + 8}), got ${clip}`);
+});
+
+test('guards audit18: the weapon-poison seam reaches InflictPoison', { skip: skipReal }, () => {
+  // The roll happens at spawn (rollEnemyWeaponPoison inside equipEnemy)
+  // but the exterior damage call dropped onInflictPoison, so a
+  // poisoned guard weapon could never infect anyone.
+  const src = hostSrc('cityGuards.js');
+  const call = src.slice(src.indexOf('calculateAttackDamage(g.entity, playerEntity'));
+  assert.ok(/onInflictPoison: \(att, tgt, pt\) => inflictPoison\(playerEntity, pt, false/.test(call.slice(0, 500)));
+});
+
+// ---------------------------------------------------------------
+// 10. SPELLS.STD duplicate indices keep the FIRST record
+//     (EntityEffectBroker.cs:743-754)
+// ---------------------------------------------------------------
+
+test('audit18: the dungeon spell map keeps the FIRST duplicate, as DFU does', { skip: skipReal }, () => {
+  const spells = readSpellsStd(new Uint8Array(readFileSync(join(ARENA2, 'SPELLS.STD'))));
+  const first = new Map(), last = new Map();
+  for (const sp of spells) { if (!first.has(sp.index)) first.set(sp.index, sp); last.set(sp.index, sp); }
+  const differing = [...first.keys()].filter((k) => first.get(k) !== last.get(k));
+  assert.ok(differing.length > 0, 'real SPELLS.STD really does carry duplicate indices');
+  // the canonical case DFU comments on
+  assert.equal(first.get(58).spellName ?? first.get(58).name, 'Holy Word');
+  assert.equal(last.get(58).spellName ?? last.get(58).name, 'Holy Touch');
+  assert.notEqual(first.get(58).rangeType, last.get(58).rangeType, 'and they behave differently');
+  // The LOADER must build the first-wins map. G4 moved it out of
+  // dungeonContext into the shared one, so the pin follows the law
+  // rather than the file it used to sit in.
+  // AUDIT 68 S12-spellsstd-dup: through spellsStd.js's one fold, not a copy of it
+  // PIN MOVED (DEX4a): through the one RebuildClassicSpellsDict (systems/spell/standardSpells.js), which folds through it
+  assert.ok(/standardSpellsByIndex\(await fetch\('SPELLS\.STD'\)\)/.test(hostSrc('shared.js')));
+  assert.ok(readFileSync(new URL('../../src/systems/spell/standardSpells.js', import.meta.url), 'utf8').includes('spellsByIndexMap(mergeSpellRecords(readSpellsStd(bytes)))'));
+  assert.equal(/new Map\(readSpellsStd\(/.test(hostSrc('shared.js')), false, 'the last-wins fold is gone');
+});
+
+test('audit18 sweep: SPELLS.STD and MAGIC.DEF no longer share one catch', () => {
+  // G4 MOVED this law rather than retiring it. It used to live in
+  // dungeonContext, which is exactly why the EXTERIOR hosts never had
+  // the registries at all - a magic item minted out there found no
+  // templates. The two-catch rule now lives with the one loader, and
+  // the pin follows it there and gets stronger: every host reaches
+  // the registries through that loader and none of them reads the two
+  // files itself.
+  const src = hostSrc('shared.js');
+  const i = src.indexOf("standardSpellsByIndex(await fetch('SPELLS.STD')");   // PIN MOVED (DEX4a): the one rebuild
+  const j = src.indexOf('readMagicDef(await fetch(');
+  assert.ok(i > 0 && j > i, 'both reads live in loadMagicRegistries');
+  assert.ok(src.slice(i, j).includes('} catch {'), 'a bad MAGIC.DEF must not null the spell table');
+
+  for (const [name, host] of allHosts()) {
+    if (name === 'shared.js') continue;
+    assert.equal(/readMagicDef\(/.test(host), false, `${name} must not read MAGIC.DEF itself`);
+    assert.equal(/readSpellsStd\(/.test(host), false, `${name} must not read SPELLS.STD itself`);
+  }
+  for (const n of ['dungeonContext.js', 'exterior.js', 'world.js']) {
+    assert.ok(hostSrc(n).includes('loadMagicRegistries('), `${n} loads the registries`);
+  }
+});
+
+// ---------------------------------------------------------------
+// 11. Remaining dungeonContext call sites (SOURCE SWEEP - see the
+//     honesty note at the top of this file)
+// ---------------------------------------------------------------
+
+test('audit18 sweep: enemy cast cost is priced off the PLAYER skills', () => {
+  // EntityEffectManager.cs:322-327 + :148 (UsePlayerCharacterSkillsFor
+  // EnemyMagicCost defaults true) -> CalculateEffectCosts reads
+  // GameManager.PlayerEntity.Skills for a null caster.
+  // X3: the cast EXECUTOR moved to the shared enemyCasting.js - the
+  // law lives there now, and the dungeon binds it through foeDeps.
+  const src = readFileSync(new URL('../../src/characters/enemy/enemyCasting.js', import.meta.url), 'utf8');
+  assert.ok(/const cost = calculateCastCost\(spell, playerEntity, \{ portMods: false \}\)\.sp;/.test(src));   // SET2: and none of the player's own cost modifiers
+  assert.equal(/calculateCastCost\(spell, f\.entity\)/.test(src), false);
+  const dc = hostSrc('dungeonContext.js');
+  assert.ok(dc.includes('castEnemySpell: castShared'), 'the dungeon rides the ONE executor');
+});
+
+test('audit18 sweep: enemy loot rolls the PLAYER gender at both dungeon spawn sites', () => {
+  // RF2: both arms hand the PLAYER entity to the one seam, whose table roll reads its gender
+  const src = hostSrc('dungeonContext.js');
+  assert.equal((src.match(/spawnEnemyLoot\(entity, e\.mobileType, basics, D\.playerEntity, \{ \.\.\.eliteLootOpts\(e\), where: 'dungeon' \}\)/g) ?? []).length, 2);
+  assert.equal(/generateItems\([^)]*gender: e\.gender/.test(src), false);
+  assert.match(hostSrc('hostCombat.js'), /generateItems\(enemyLootTableKey\(mobileType, basics\?\.lootTableKey \?\? '-'\), \{ level: effectiveLevel\(player\), gender: player\.gender \}, rolls, \{ itemChanceScale, mobileType \}\)/, 'the PLAYER\'s gender (SOFTCAP2: at the mentor\'s level), LootTables.cs:212/:229/:237');   // PIN MOVED (PARTY-LOOT): on the caller's dice - the player a room's base hands in is the room's roller
+});
+
+test('audit18 sweep: the swing fatigue and the tally arm are wired into the dungeon rig', () => {
+  const src = hostSrc('dungeonContext.js');
+  assert.equal((src.match(/drainFatigue\(SWING_FATIGUE_COST\)/g) ?? []).length, 2,   // BALANCE1: DFU's swing loss on exertion's scale
+    'the melee swing and the bow release');
+  // PIN MOVED (TWO-HANDS AUDIT 2, bible/05-Combat/Two-Hands.md): the tally counts the swing's weight - an off-hand blow of
+  // a pair 0.8 of a use (hostCombat.js tallySwingSkills), every other swing 1 as before
+  assert.equal((src.match(/tallySwingSkills\(playerEntity, playerWeapon\.weapon, playerWeapon\.blowWeight\)/g) ?? []).length, 2);
+  assert.ok(/const hitEnemy = resolvePlayerHit\(/.test(src), 'the tally arm needs hitEnemy');
+});
+
+test('audit18 sweep: the Athleticism fatigue multiplier is applied and truncated AFTER the multiply', () => {
+  const src = hostSrc('dungeonContext.js');
+  // AUDIT 26 F044: the host used to spell the multiplier inline, with
+  // a comment saying the port had no source for the Improved
+  // Athleticism enchantment. It has, so the law collapsed into the
+  // ONE home in scenes/shared.js and the host delegates.
+  assert.ok(/const fatigueLossMultiplier = \(\) => fatigueLossMultiplierFor\(playerEntity\);/.test(src));
+  // AUDIT 23 (C6): the jump drain moved INTO tickPlayerMinutes
+  // (PlayerEntity.cs:425-430 is the entity update); the host now only
+  // forwards the motor's frame edge on the activity.
+  assert.ok(/_activity\.jumped = jumped;/.test(src), 'the host forwards the jump edge');
+  // The PER-MINUTE loss moved to systems/worldTick.js at AUDIT 18 so every
+  // host runs it. That made it testable for the first time, so it is pinned
+  // BEHAVIOURALLY here rather than by grepping the host it used to live in.
+  assert.ok(/fatigueMultiplier: fatigueLossMultiplier\(\)/.test(src),
+    'the host must still hand its multiplier to the shared tick');
+  const runTick = (mult, activity) => {
+    let drained = 0;
+    const entity = { chargenDone: true, skillUses: new Array(35).fill(0), stats: {}, skills: 30, activeEffects: [], lastSkillCheckTime: 0 };
+    tickPlayerMinutes({
+      entity, classicMinutes: 0, dt: 5.1, activity, fatigueMultiplier: mult, rolls: () => 0.5,
+      sinks: { drainFatigue: (n) => { drained += n; }, hurt() {}, heal() {}, drainMagicka() {}, restoreFatigue() {}, restoreMagicka() {}, say() {} },
+    });
+    return drained;
+  };
+  // BALANCE1: each is DFU's loss x the multiplier x exertion's scale, truncated once (charged)
+  assert.equal(runTick(1.0, { running: false, swimming: false }), charged(11), 'Default');
+  assert.equal(runTick(0.9, { running: false, swimming: false }), charged(11, 0.9), 'Default with Athleticism');
+  assert.equal(runTick(1.0, { running: true, swimming: false }), charged(88), 'Running');
+  assert.equal(runTick(0.9, { running: true, swimming: false }), charged(88, 0.9), 'Running with Athleticism');
+  // F044: and the enchantment's arm, which had no reachable value
+  // before - 0.8 is only ever produced FOR an Athleticism career.
+  assert.equal(runTick(0.8, { running: false, swimming: false }), charged(11, 0.8), 'Default with Improved Athleticism');
+  assert.equal(runTick(0.8, { running: true, swimming: false }), charged(88, 0.8), 'Running with Improved Athleticism');
+  // AUDIT 23 (C6): the jump edge drains its own 11 x multiplier in the
+  // SAME tick (PlayerEntity.cs:427), on top of the minute's band.
+  assert.equal(runTick(1.0, { running: false, swimming: false, jumped: true }), charged(11) + charged(11), 'jump + minute');
+  assert.equal(runTick(0.9, { running: false, swimming: false, jumped: true }), charged(11, 0.9) + charged(11, 0.9), 'jump truncates after its multiply too');
+  // (the pre-merge audit 0927b: x0.8 tells a truncated jump from a rounded one at this scale - 6.6 is 6, not 7)
+  assert.equal(runTick(0.8, { running: false, swimming: false, jumped: true }), charged(11, 0.8) + charged(11, 0.8), 'and at x0.8');
+  // PlayerEntity.cs:405 casts to int AFTER the multiply: 11 -> 9, 88 -> 79, 44 -> 39
+  assert.equal(Math.trunc(11 * 0.9), 9);
+  assert.equal(Math.trunc(88 * 0.9), 79);
+  assert.equal(Math.trunc(44 * 0.9), 39);
+});
+
+test('audit18: the three retired flags are DELETED, not rewritten', () => {
+  const src = hostSrc('dungeonContext.js');
+  // :786-791 - the record-cost interim, the rangeType note, the spellbook note
+  assert.equal(/Cost = the record's classic cost field/.test(src), false);
+  assert.equal(/Range types beyond 2\/4 \(missile\) are/.test(src), false);
+  assert.equal(/the spellbook UI pends/.test(src), false);
+  // and they were false: all three features are live below them
+  assert.ok(/calculateCastCost\(sp, playerEntity\)/.test(src), 'the cost really is computed');
+  // M3: the range arms live in the ONE engine (scenes/hostMagic.js).
+  const engineSrc = hostSrc('hostMagic.js');
+  assert.ok(/sp\.rangeType === 1/.test(engineSrc) && /sp\.rangeType === 3/.test(engineSrc), 'rangeTypes 1 and 3 really are handled');
+  // U42: the classic window's ready hook is DFU's own
+  // SpellsListBox_OnUseSelectedItem seam, so it carries the
+  // noSpellPointCost flag (the lycanthropy free cast) alongside the
+  // spell. The claim this pins is unchanged: the book READIES.
+  // PX23: the onReady arm moved into ui/spellbookDoor.js with the rest
+  // of the build the four hosts shared. The CLAIM this pins is
+  // unchanged - the book readies - and it is pinned where it now lives.
+  const doorSrc = readFileSync(new URL('../../src/ui/spellbookDoor.js', import.meta.url), 'utf8');
+  assert.ok(/onReady: \(sp, \{ noSpellPointCost \} = \{\}\) =>/.test(doorSrc),
+    'the spellbook really does ready a spell');
+  assert.ok(/createSpellbookWindow\(\{/.test(src), 'and this host opens the book through that door');
+  // the truncated "INTERIM (loud): the" sentence with no predicate
+  assert.equal(/INTERIM \(loud\): the\n/.test(src), false);
+  // the WORLD-state-is-FLAGGED quicksave note, false since collectWorld shipped
+  assert.equal(/WORLD state \(foes, piles,/.test(src), false);
+  assert.ok(/world: \{ \.\.\.collectWorld\(\),/.test(src));   // AUDIT REST II H6 (PIN MOVED): the record and the camps outside beside it
+});

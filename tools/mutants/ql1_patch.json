@@ -1,0 +1,299 @@
+[
+  {
+    "name": "AUDIT-QL-PATCH-draft-global-header-unread",
+    "file": "tools/qlSheetDraft.mjs",
+    "old": "if (!head && linked && globalVarsTable().hasValue(linked[1]))",
+    "new": "if (false)",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-draft-task-header-unread",
+    "file": "tools/qlSheetDraft.mjs",
+    "old": "    if (head) { cur = head[1] ?? `until ${head[2]}`; out.set(cur, []); continue; }",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-flagship-by-pay-name",
+    "file": "tools/qlSheetLaw.mjs",
+    "old": "  return JSON.stringify([!!outcome?.failure, given, !outcome?.failure && p.gear, p.step, Object.entries(outcome?.standing ?? {}).sort(), legal, repute]);",
+    "new": "  return JSON.stringify([outcome?.pay, outcome?.standing ?? {}, outcome?.legal ?? 0]);",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-gold-a-path-gives-not-read",
+    "file": "tools/qlSheetLaw.mjs",
+    "old": ".filter(([, r]) => r && r.itemName !== 'letter')",
+    "new": ".filter(() => false)",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-script-repute-not-read",
+    "file": "tools/qlSheetLaw.mjs",
+    "old": "const repute = acts.filter((a) => a.typeName === 'ChangeReputeWith')",
+    "new": "const repute = acts.filter(() => false)",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-ask-answer-unread",
+    "file": "tools/qlCheck.mjs",
+    "old": "for (const x of ask[2].matchAll(/(\\d+)\\s+_/g)) named.add(Number(x[1]));",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-patch-word-on-DFU-id-let-by",
+    "file": "tools/qlCheck.mjs",
+    "old": "if (!p.old.includes(m[0]) && shipped?.quest?.getMessage?.(Number(m[1])))",
+    "new": "if (false)",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-rows-unmeasured",
+    "file": "tools/qlCheck.mjs",
+    "old": "if (t.length > ROW_CHARS)",
+    "new": "if (false)",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-answers-unmeasured",
+    "file": "tools/qlCheck.mjs",
+    "old": "if (rows.length !== 1 || label.length > CHOICE_CHARS)",
+    "new": "if (false)",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-outcome-lines-unread",
+    "file": "tools/qlSheetLaw.mjs",
+    "old": "if (a.typeName === 'QlOutcome' && !outcomeIds.has(a.outcomeSymbol?.name))",
+    "new": "if (false)",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-standing-check-dropped",
+    "file": "tools/qlSheetLaw.mjs",
+    "old": "for (const f of Object.keys(o?.standing ?? {})) if (!individualFaction(f))",
+    "new": "for (const f of Object.keys(o?.standing ?? {})) if (false)",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-p2-read-first-old-factionIdOf",
+    "file": "tools/qlSheetLaw.mjs",
+    "old": "  if (!table.hasValue(name) || Number.parseInt(table.getValue('p2', name), 10) !== -1) return null;\n  const id = Number.parseInt(table.getValue('p3', name), 10);",
+    "new": "  if (!table.hasValue(name)) return null;\n  const p2 = Number.parseInt(table.getValue('p2', name), 10);\n  const id = p2 >= 0 ? p2 : Number.parseInt(table.getValue('p3', name), 10);",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-named-base-unchecked",
+    "file": "tools/qlSheetLaw.mjs",
+    "old": "else if (!NAMED_BASES[n.kind].includes(n?.base))",
+    "new": "else if (false)",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-whole-script-payer-dropped",
+    "file": "tools/qlSheetLaw.mjs",
+    "old": "if (!pays.length) { out.push(",
+    "new": "if (false) { out.push(",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-path-payer-dropped",
+    "file": "tools/qlSheetLaw.mjs",
+    "old": "if (t && t.actions.some((a) => a.typeName === 'EndQuest') && !pays.includes(t))",
+    "new": "if (false)",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-start-up-exemption-dropped",
+    "file": "tools/qlSheetLaw.mjs",
+    "old": "  const startPays = pays.some((t) => t.type === 'headless');",
+    "new": "  const startPays = false;",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-success-requirement-dropped",
+    "file": "tools/qlSheetLaw.mjs",
+    "old": "if (!fb && lines && canSucceedUnnamed(sheet, quest, lines))",
+    "new": "if (false)",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-betrayal-fallback-let-by",
+    "file": "tools/qlSheetLaw.mjs",
+    "old": "if (fb.pay === 'betrayal')",
+    "new": "if (false)",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-choice-task-fallback-let-by",
+    "file": "tools/qlSheetLaw.mjs",
+    "old": "if (fb && positiveSymbols(fb.on).some((x) => x.kind === 'task' && chosen.has(x.name)))",
+    "new": "if (false)",
+    "tests": [
+      "test/systems/questlines/ql1_sheets.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-kit-guard-on-the-text",
+    "file": "tools/qlPatchKit.mjs",
+    "old": "if (hasQuestlinePatch(quest) && !replace)",
+    "new": "if (/_ql[a-z]/i.test(text) && !replace)",
+    "tests": [
+      "test/systems/questlines/ql4_branches.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-kit-readers-unread",
+    "file": "tools/qlPatchKit.mjs",
+    "old": "if (found.length && readers !== 'copy') throw",
+    "new": "if (false) throw",
+    "tests": [
+      "test/systems/questlines/ql4_branches.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-kit-question-one-row",
+    "file": "tools/qlPatchKit.mjs",
+    "old": "...(centred ? wrapRows(text).map((l) => `<ce> ${l}`)",
+    "new": "...(centred ? [`<ce> ${String(text).trim()}`]",
+    "tests": [
+      "test/systems/questlines/ql4_branches.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-kit-refusal-always-ql-paid",
+    "file": "tools/qlPatchKit.mjs",
+    "old": "const paid = gives.every((l) => /^give pc nothing\\b/i.test(l)) ? 'give pc nothing' : 'ql paid';",
+    "new": "const paid = 'ql paid';",
+    "tests": [
+      "test/systems/questlines/ql4_branches.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-M0B50Y09-reader-not-copied",
+    "file": "src/systems/questlines/patches/fightersGuild.json",
+    "old": "\\n\\n_qlaltS06_ task:\\n\\twhen _map_ and _qlalt_\\n\\treveal _newdung_ readmap\\n\\tsay 1080",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql4_branches.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-knight-keep-gives-nothing",
+    "file": "src/systems/questlines/patches/knightlyOrders.json",
+    "old": "_success_ task:\\n\\twhen _qlkeep_\\n\\tgive pc _gold_\\n\",\"count\":1},{\"old\":\"\\nQBN:\",\"new\":\"\\nMessage:  1900\\n<ce> The herders",
+    "new": "_success_ task:\\n\\twhen _qlkeep_\\n\\tgive pc nothing\\n\",\"count\":1},{\"old\":\"\\nQBN:\",\"new\":\"\\nMessage:  1900\\n<ce> The herders",
+    "tests": [
+      "test/systems/questlines/ql4_branches.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-knight-refusal-ql-paid",
+    "file": "src/systems/questlines/patches/knightlyOrders.json",
+    "old": "_qlaltpath_ task:\\n\\twhen _qlalt_\\n\\tgive pc nothing\\n\\tchange repute with _local_ by +8",
+    "new": "_qlaltpath_ task:\\n\\twhen _qlalt_\\n\\tql paid\\n\\tchange repute with _local_ by +8",
+    "tests": [
+      "test/systems/questlines/ql4_branches.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-L0A01L00-story-dropped",
+    "file": "src/systems/questlines/patches/darkBrotherhood.json",
+    "old": "\\twhen _qlalt_\\n\\tsay 1903\\n\\tql paid\\n\\tend quest",
+    "new": "\\twhen _qlalt_\\n\\tql paid\\n\\tend quest",
+    "tests": [
+      "test/systems/questlines/ql4_branches.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-A0C01Y13-ql-paid-dropped",
+    "file": "src/systems/questlines/patches/commoners.json",
+    "old": "\\twhen _qlalt_\\n\\tql paid\\n\\tsay 1903\\n\\tdrop _lover_ face",
+    "new": "\\twhen _qlalt_\\n\\tsay 1903\\n\\tdrop _lover_ face",
+    "tests": [
+      "test/systems/questlines/ql4_branches.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-burned-a-success",
+    "file": "src/systems/questlines/sheets/merchants.json",
+    "old": "\"pay\":\"none\",\"standing\":{\"Generic_Temple\":3,\"The_Merchants\":-2},\"failure\":true}",
+    "new": "\"pay\":\"none\",\"standing\":{\"Generic_Temple\":3,\"The_Merchants\":-2}}",
+    "tests": [
+      "test/systems/questlines/ql4_branches.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-M0B11Y18-outrun-dropped",
+    "file": "src/systems/questlines/sheets/fightersGuild.json",
+    "old": "{\"id\":\"outrun\",\"text\":\"The Queen has the letter, but _traitor_ was never run to ground.\",\"on\":{\"all\":[{\"task\":\"_S.18_\"},{\"task\":\"_gettraitor_\"}]},\"pay\":\"standard\",\"standing\":{\"Queen_Akorithi\":2}},",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql4_branches.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-M0B40Y05-slain-on-the-kill",
+    "file": "src/systems/questlines/sheets/fightersGuild.json",
+    "old": "{\"id\":\"slain\",\"text\":\"The spriggan is dead and the woodsmen are back at work.\",\"on\":{\"task\":\"_victory_\"}",
+    "new": "{\"id\":\"slain\",\"text\":\"The spriggan is dead and the woodsmen are back at work.\",\"on\":{\"task\":\"_S.01_\"}",
+    "tests": [
+      "test/systems/questlines/ql4_branches.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-40C00Y00-done-on-S-06",
+    "file": "src/systems/questlines/sheets/daedra.json",
+    "old": "\"on\":{\"task\":\"_bonk_\"},\"pay\":\"own\"}",
+    "new": "\"on\":{\"task\":\"_S.06_\"},\"pay\":\"own\"}",
+    "tests": [
+      "test/systems/questlines/ql4_branches.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-PATCH-CUREWER-healed-dropped",
+    "file": "src/systems/questlines/sheets/vampires.json",
+    "old": "{\"id\":\"healed\",\"text\":\"You were cured of the curse another way, and _hunter_'s hunt never came.\",\"on\":{\"all\":[{\"ended\":true},{\"not\":{\"task\":\"_S.05_\"}}]},\"pay\":\"own\"},",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql4_branches.test.js"
+    ]
+  }
+]

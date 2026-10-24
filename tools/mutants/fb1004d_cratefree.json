@@ -2,10 +2,10 @@
   {
     "name": "CRATEFREE-lid-facing",
     "file": "src/characters/foeSpacing.js",
-    "old": "  if (lid?.back !== true || !Number.isFinite(lid.dist)) return false;",
-    "new": "  if (lid?.back === true || !Number.isFinite(lid?.dist)) return false;",
+    "old": "  const lidded = lid?.back === true && Number.isFinite(lid.dist);",
+    "new": "  const lidded = lid?.back !== true && Number.isFinite(lid?.dist);",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "a lid met from its front (a room's ceiling) read as the inside of a solid, the lid met from behind refused: no crate holds anybody and nothing is freed"
   },
@@ -15,27 +15,27 @@
     "old": "  const lid = collider.raycastHit(_knee, UP, LODGE_REACH);",
     "new": "  const lid = collider.raycastHit(_knee, UP, CAPSULE_HEIGHT - LODGE_KNEE);",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "the lid sought within a man's height only: a body in a crate taller than itself (41833, the real data's 2.1 m cube - Tower Yeomcroft's giants) or in a roomy store reads free, and the crate's walls hold it for good"
   },
   {
     "name": "CRATEFREE-walls-three",
     "file": "src/characters/foeSpacing.js",
-    "old": "  return walls >= 2;",
-    "new": "  return walls >= 3;",
+    "old": "  return walls >= (lidded ? 2 : KNEE_BEARINGS.length);",
+    "new": "  return walls >= (lidded ? 3 : KNEE_BEARINGS.length);",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "three walls asked: a crate in a corner (the room's two walls met first) holds nobody - the quest giant in the corner crate stays in it"
   },
   {
     "name": "CRATEFREE-walls-none",
     "file": "src/characters/foeSpacing.js",
-    "old": "  return walls >= 2;",
-    "new": "  return walls >= 0;",
+    "old": "  return walls >= (lidded ? 2 : KNEE_BEARINGS.length);",
+    "new": "  return walls >= (lidded ? 0 : KNEE_BEARINGS.length);",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "no wall asked: a body under a table whose top has no underside reads lodged"
   },
@@ -45,7 +45,7 @@
     "old": "    if (collider.sphereOverlaps(_bead, CAPSULE_RADIUS - FIT_SKIN)) return false;",
     "new": "    if (collider.sphereOverlaps(_bead, CAPSULE_RADIUS + FIT_SKIN)) return false;",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "a body resting on its floor touches it at its radius: with no skin nothing fits anywhere and no spot frees a lodged body"
   },
@@ -55,7 +55,7 @@
     "old": "    if (h.back !== true) return false;   // a face that looks at the line: a wall, the next crate\n",
     "new": "",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "the line passes every face: the picker's spots and the freed spot go through crate B and through the room's wall into the next room"
   },
@@ -65,7 +65,7 @@
     "old": "    if (h.back !== true) return false;   // a face that looks at the line: a wall, the next crate\n",
     "new": "    return false;\n",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "the skin the line starts in stops it too (the old picker's line): no way out of a crate, nothing freed, the search ring empty"
   },
@@ -75,7 +75,7 @@
     "old": "      if (y == null || !clearPast(collider, knee, [ux, 0, uz], r)) continue;",
     "new": "      if (y == null) continue;",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "a freed spot need not be reached: a crate penned against the wall frees its foe across the void into the next room"
   },
@@ -85,7 +85,7 @@
     "old": "  const h = collider.raycastHit(_from, DOWN, 2 * STEP_OFFSET);",
     "new": "  const h = collider.raycastHit(_from, DOWN, 20 * STEP_OFFSET);",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "any floor below: a crate at a dais's edge frees its foe onto the room floor a metre and a half down"
   },
@@ -95,7 +95,7 @@
     "old": "  if (Number.isFinite(g) && g > y && g <= _from[1] && g >= y0 - STEP_OFFSET) y = g;\n",
     "new": "",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "the terrain is no floor: a foe the open world's pool stands inside a boulder (no face under the grass beside it) is never freed"
   },
@@ -105,7 +105,7 @@
     "old": "      if (!bodyFits(collider, spot, fit) || lodgedIn(collider, spot)) continue;",
     "new": "      if (!bodyFits(collider, spot, fit)) continue;",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "a giant in a wide, tall store a 1.8 m body fits in is moved half a metre within it - still lodged"
   },
@@ -115,7 +115,7 @@
     "old": "      if (!puppet) freeLodgedFeet(collider, pos, { height: enemyControllerHeight(idleH, basics.behaviour ?? 'General') });",
     "new": "      void puppet;",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "the class arm of buildFoeAt stands a class foe (the Barbarian) inside the crate its marker is in"
   },
@@ -125,7 +125,7 @@
     "old": " if (!puppet) freeLodgedFeet(collider, pos, { height: enemyControllerHeight(idleH, behaviour), airborne: behaviour === 'Flying' });",
     "new": "",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "the monster arm stands the layout giant, the quest giant (through the dungeon adapter) and a search's giants inside their crates"
   },
@@ -135,7 +135,7 @@
     "old": "freeLodgedFeet(collider, pos, { height: enemyControllerHeight(idleH, behaviour), airborne: behaviour === 'Flying' });",
     "new": "freeLodgedFeet(collider, pos, { height: enemyControllerHeight(idleH, behaviour), airborne: false });",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "a bat hung inside a crate is freed onto the floor, off the wing it hung on"
   },
@@ -145,7 +145,7 @@
     "old": "D.floorLanding(collider, [e.x, e.y + 0.2, e.z]); if (!puppet) freeLodgedFeet(",
     "new": "D.floorLanding(collider, [e.x, e.y + 0.2, e.z]); if (true) freeLodgedFeet(",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "another client's foe is moved off the feet its owner streams"
   },
@@ -155,7 +155,7 @@
     "old": "    f.ai.yaw = sf.yaw; if (!sf.dead) freeLodgedFeet(collider, f.ai.feet, { height: f.ai.height, airborne: !!f.ai.flies });",
     "new": "    f.ai.yaw = sf.yaw;",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "a save (or the room's memory) that kept a giant inside a crate stands it there again on every load"
   },
@@ -165,7 +165,7 @@
     "old": "if (!sf.dead) freeLodgedFeet(collider, f.ai.feet,",
     "new": "if (true) freeLodgedFeet(collider, f.ai.feet,",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "a body is moved off the feet it fell on"
   },
@@ -175,7 +175,7 @@
     "old": "{ height: f.ai.height, airborne: !!f.ai.flies });",
     "new": "{ height: f.ai.height, airborne: false });",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "a restored bat inside a crate is freed onto the floor, off the wing"
   },
@@ -185,7 +185,7 @@
     "old": "      return clearPast(collider, [from[0], from[1] + 0.9, from[2]], [dx / d, 0, dz / d], d + 0.3);\n",
     "new": "      const hit = collider.raycast([from[0], from[1] + 0.9, from[2]], [dx / d, 0, dz / d], d + 0.35);\n      return !Number.isFinite(hit) || hit > d + 0.3;\n",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "the picker's old line: the searched crate's own skin refuses every ring spot and a party's foes stand at the unchecked last resort, the sixth inside the crate"
   },
@@ -195,7 +195,7 @@
     "old": "      if (!puppet) freeLodgedFeet(collider, pending.feet, { height: enemyControllerHeight(idleH, behaviour), airborne: behaviour === 'Flying' });\n",
     "new": "",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "the interior host's pool stands a building's quest foe (and a save's) inside the house crate its marker is in"
   },
@@ -205,7 +205,7 @@
     "old": "      if (!puppet) freeLodgedFeet(collider, pending.feet,",
     "new": "      if (true) freeLodgedFeet(collider, pending.feet,",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "a puppet in the interior pool is moved off its owner's feet"
   },
@@ -215,8 +215,28 @@
     "old": "freeLodgedFeet(collider, pending.feet, { height: enemyControllerHeight(idleH, behaviour), airborne: behaviour === 'Flying' });",
     "new": "freeLodgedFeet(collider, pending.feet, { height: enemyControllerHeight(idleH, behaviour), airborne: false });",
     "tests": [
-      "test/fb1004d_cratefree.test.js"
+      "test/systems/quest/fb1004d_cratefree.test.js"
     ],
     "note": "an imp handed its feet over a house floor inside a crate is freed onto the floor, off its height"
+  },
+  {
+    "name": "QUEST-FOE-WALL-the-column-unheld",
+    "file": "src/characters/foeSpacing.js",
+    "old": "  return walls >= (lidded ? 2 : KNEE_BEARINGS.length);",
+    "new": "  return walls >= (lidded ? 2 : Infinity);",
+    "tests": [
+      "test/systems/quest/fb1004d_cratefree.test.js"
+    ],
+    "note": "no lid, nobody held: a body inside a pillar that runs to the ceiling stays in it (FIELD BUGS 2026-10-15c)"
+  },
+  {
+    "name": "QUEST-FOE-WALL-the-open-room-held",
+    "file": "src/characters/foeSpacing.js",
+    "old": "  return walls >= (lidded ? 2 : KNEE_BEARINGS.length);",
+    "new": "  return walls >= (lidded ? 2 : 2);",
+    "tests": [
+      "test/systems/quest/fb1004d_cratefree.test.js"
+    ],
+    "note": "no lid and two walls enough: a body in a corridor of model shells meeting two backs reads lodged"
   }
 ]

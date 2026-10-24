@@ -1,8 +1,8 @@
 // @ts-check
 // BOUNTY1 (2026-09-28): THE BOUNTY BOARD IN THE WORLD - the ledger held, the packs stood and counted, the purse paid.
 //
-// The law is systems/bountyBoard.js (what a board posts, what it pays) and systems/bountyReward.js (the piece); the
-// windows are ui/bountyWindow.js through ui/bountyDoor.js. This file is the host's half, and it reaches the world only
+// The law is systems/bounty/bountyBoard.js (what a board posts, what it pays) and systems/bounty/bountyReward.js (the piece); the
+// windows are ui/bounty/bountyWindow.js through ui/bounty/bountyDoor.js. This file is the host's half, and it reaches the world only
 // through the deps the world host (scenes/world.js) hands it - so it can be driven headless by a test.
 //
 // A HUNT, START TO END:
@@ -27,14 +27,15 @@ import {
   bountyDungeons, newBountyLedger, readBountyLedger, takeBounty, dropBounty, payBounty, lapseBounties, pruneBountyLedger,
   bountyPoseField, bountyPackOwner, bountyHuntKey, bountyTierFits, bountyMinutesLeft, rewardStory, BOUNTY_REWARD_TITLE, BOUNTY_ACTIVE_MAX,
   MINUTES_PER_DAY, bountyIdAtLevel, bountyPartyKills, bountyClearPays, restampNeverLapsed,
-} from '../systems/bountyBoard.js';
-import { mintBountyItem, bountyItemName, bountyRewardRows } from '../systems/bountyReward.js';
+} from '../systems/bounty/bountyBoard.js';
+import { mintBountyItem, bountyItemName, bountyRewardRows } from '../systems/bounty/bountyReward.js';
 import { registerModSaveData } from '../systems/modSaveData.js';
 import { addGoldPieces, addItem } from '../systems/inventory.js';
-import { BOUNTY_RING_R } from '../ui/bountyMapMark.js';
-import { setBountyJournal, BOUNTY_QUEST_PREFIX } from '../systems/bountyJournal.js';
+import { BOUNTY_RING_R } from '../ui/bounty/bountyMapMark.js';
+import { setBountyJournal, BOUNTY_QUEST_PREFIX } from '../systems/bounty/bountyJournal.js';
 import { rewardContract } from '../systems/standing.js';   // REP4: a contract finished, the region's law two points better
 import { sharedClockOn } from '../systems/worldTick.js';   // AUDIT REST II Q3: the never-lapse build's rows, re-stamped online
+import { festivalBountyPaid } from '../systems/festival/festivalClient.js';   // WITCH1: a bounty paid asks a find
 
 /** How often the host looks at the world, seconds. */
 export const BOUNTY_TICK_S = 0.5;
@@ -170,7 +171,7 @@ export function createBountyHost(deps) {
     canShare: (id) => !!social()?.inParty && ledger.held.some((h) => h.id === id && !h.shared),
   });
   const line = (text) => ({ formatting: 'text', text });
-  /** My bounties as the quest log's active quests (scenes/questBridge.js questLog's own shape): filed as side quests,
+  /** My bounties as the quest log's active quests (scenes/quest/questBridge.js questLog's own shape): filed as side quests,
    *  the notice as the entry, the kills, the place and the purse under it, and the time left as the quest's clock. */
   function questLogEntries() {
     const now = deps.now();
@@ -178,8 +179,8 @@ export function createBountyHost(deps) {
       const p = postingOf(h.id);
       if (!p) return null;
       const where = p.kind === 'dungeon' && !p.graveyard
-        ? `Where: ${p.place}, ${p.dir} of ${p.town.name} - marked on your map with a black circle.`
-        : `Where: ${p.far} ${p.dir} of ${p.town.name} - marked on your map with a black circle.`;
+        ? `Where: ${p.place}, ${p.dir} of ${p.town.name}. Marked on your map with a black circle.`
+        : `Where: ${p.far} ${p.dir} of ${p.town.name}. Marked on your map with a black circle.`;
       const lines = [p.tierLabel, p.story, '', `Slain: ${h.killed} of ${p.count} ${p.foes}.`, where, `Reward: ${p.gold} gold pieces and a piece of kit.`];
       // BOUNTY-TRAIL: where the hunt stands in its two groups, and the last way named
       const groups = bountyGroups(p);
@@ -187,7 +188,7 @@ export function createBountyHost(deps) {
         const stage = bountyStage(p, h.killed);
         lines.push(stage === 0
           ? `They move in two groups: ${groups[0]} first, then ${groups[1]} more.`
-          : `The first group is dead. ${p.count - h.killed} ${p.foes} fled - follow their trail.`);
+          : `The first group is dead. ${p.count - h.killed} ${p.foes} fled. Follow their trail.`);
         const clue = clues.get(`${h.id}:${stage}`);
         if (clue) lines.push(clue);
       }
@@ -351,6 +352,7 @@ export function createBountyHost(deps) {
       reward,
     });
     deps.say(`Bounty fulfilled: ${posting.title}. +${posting.gold} gold, ${reward.item}.`);
+    festivalBountyPaid();   // WITCH1: a Witches' Festival find (nothing while it is not live)
     repaint();
     return true;
   }
@@ -417,7 +419,7 @@ export function createBountyHost(deps) {
           const before = bountyStage(p, row.killed);
           row.killed = Math.min(p.count, row.killed + 1);
           if (before === 0 && bountyStage(p, row.killed) === 1 && row.killed < p.count) {
-            deps.say(`The first group is dead - but ${p.count - row.killed} ${p.foes} got away. Look for their trail.`);
+            deps.say(`The first group is dead, but ${p.count - row.killed} ${p.foes} got away. Look for their trail.`);
           }
           repaint();
         }
@@ -459,8 +461,8 @@ export function createBountyHost(deps) {
           const m = Math.max(10, Math.round(Math.hypot(stood.dx, stood.dz) / 10) * 10);
           const way = compass8(stood.dx, stood.dz);
           const words = stage === 1
-            ? `You find tracks leading away from the bodies: the rest of the ${p.foes} fled ${m} metres to the ${way}.`
-            : `The farmstead lies ${m} metres to the ${way}.`;
+            ? `You find tracks leading away from the bodies: the rest of the ${p.foes} fled ${m} meters to the ${way}.`
+            : `The farmstead lies ${m} meters to the ${way}.`;
           clues.set(key, words);
           deps.say(words);
           repaint();
@@ -473,8 +475,8 @@ export function createBountyHost(deps) {
       packs.set(row.id, entry);
       const metres = Math.round(Math.hypot(stood.dx, stood.dz));
       deps.say(underground
-        ? `You hear ${p.foes} somewhere deeper in ${p.place} - ${remaining} of them, about ${metres} metres away.`
-        : `You spot ${remaining} ${p.foes}, ${metres} metres to the ${compass8(stood.dx, stood.dz)}!`);
+        ? `You hear ${p.foes} somewhere deeper in ${p.place}: ${remaining} of them, about ${metres} meters away.`
+        : `You spot ${remaining} ${p.foes}, ${metres} meters to the ${compass8(stood.dx, stood.dz)}!`);
       Promise.resolve(stood.foes).then((foes) => {
         const list = (foes ?? []).filter(Boolean);
         if (packs.get(row.id) !== entry) return;

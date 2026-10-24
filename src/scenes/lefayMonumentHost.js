@@ -1,17 +1,17 @@
 // @ts-check
 // LEFAY1 (2026-10-08): THE MONUMENT TO JULIAN LEFAY, WHERE IT STANDS - the exterior hosts' pool on the runtime pools'
-// shape (scenes/sigilBrokerPool.js, scenes/gatePool.js): its stone drawn in the host's world pass, its collider bucket,
+// shape (scenes/sigilBrokerPool.js, scenes/gate/gatePool.js): its stone drawn in the host's world pass, its collider bucket,
 // the eye's box and its name, the press on it, and the flowers - thrown, in flight, and laid.
 //
 // WHERE: the host says (`site`: the scene's x, z of its middle - world/lefayMonument.js lefaySpot's, carried by the
-// host's own frame - or null where Gothway Garden is not built); the ground there is the host's (`groundAt`), read when
+// host's own frame - or null where Privateer's Hold is not built - HOLD-MONUMENT; it was Gothway Garden); the ground there is the host's (`groundAt`), read when
 // the spot moves (a floating-origin recentre, across or up) and every LEFAY_GROUND_EVERY frames, never every frame. Its
 // collider bucket is restood when it moves, and held back while a body stands where it would first rise - anywhere in
 // its footprint (`bodyTrapped` - AUDIT SET W1's law: a body a wall rises round is sealed in).
 //
 // THE FLOWERS: a press throws one (a lit Throw row, or any mode but Info and Steal) - at most one every TOSS_EVERY_MS -
 // from the thrower's hand on an arc to its rest on the thrower's side (lefayMonument.js tossRest), where it is laid:
-// the character's tribute counts it and keeps it (`keep`, the save's - systems/save.js). The laid flowers are one
+// the character's tribute counts it and keeps it (`keep`, the save's - systems/save/save.js). The laid flowers are one
 // billboard batch to a kind of flower, made again when the pile changes, riding the monument's middle. Their pictures
 // are Daggerfall's (TEXTURE.254, the player's own); a game folder that will not give them leaves the flowers unseen,
 // and the count still counts.
@@ -19,8 +19,8 @@
 // NOTHING HERE IS SENT: each character keeps its own pile.
 //
 // THE FOUR HOSTS (bible/Home.md): scenes/world.js - WIRED (the pixel's build finds the spot and carves the people's
-// navgrid; the pool is made beside the Sigil Broker, framed, drawn, its flats on the live axis, taken down at a change
-// of place, a re-anchor and a load). scenes/exterior.js - WIRED (the bench's Gothway Garden: the same pool on its fixed
+// navgrid where there is one; the pool is made beside the Sigil Broker, framed, drawn, its flats on the live axis, taken down at a change
+// of place, a re-anchor and a load). scenes/exterior.js - WIRED (the bench's Privateer's Hold: the same pool on its fixed
 // frame). scenes/worldModes.js - WIRED for the press both exterior hosts share (`monumentTargets` in the street's one
 // ray, the `lefay:` arm with the too-far refusal and the plaque's lit row); its interiors stand no street and no
 // monument. scenes/dungeonContext.js - stands no street: nothing here reaches it.
@@ -31,6 +31,8 @@ import {
   TOSS_MS, TOSS_EVERY_MS, buildLefayModel, tossRest, flowerPlace, tossPoint, normalTribute, layFlower,
 } from '../world/lefayMonument.js';
 import { lefayArt } from '../world/lefayArt.js';
+import { dfLook, lookSeed } from '../world/dfLook.js';   // DF-LOOK: the monument's pictures in Daggerfall's colours
+import { wearPainted } from '../systems/studioArt/studioArt.js';   // STUDIO1: the studio's pictures over the painted ones (their rows top-down, as the monument's are)
 import { RAY_DISTANCE, STATIC_NPC_ACTIVATION_DISTANCE } from '../player/activate.js';
 import { CAPSULE_RADIUS, CAPSULE_HEIGHT } from '../player/motor.js';
 import { trs } from '../world/mat4.js';
@@ -65,7 +67,7 @@ export function bodyTrapped(at, f) {
  *   now?: () => number, rand?: () => number, restores?: () => number,
  * }} deps  `site` the scene x, z of its middle (null where it does not stand), and the frame's vertical compensation
  *   when the host has one (a change re-reads the ground); `tribute`/`keep` the character's record; `restores` how many
- *   saves the page has restored (systems/save.js restoresSoFar)
+ *   saves the page has restored (systems/save/save.js restoresSoFar)
  */
 export function createLefayMonument({
   renderer = null, getTexture = null, uploadRecord = null, billboardSize = null, site, groundAt, collider = () => null,
@@ -144,7 +146,7 @@ export function createLefayMonument({
     if (meshTried || !renderer?.createMesh) return;
     meshTried = true;
     try {
-      for (const [rec, art] of lefayArt()) renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, art);
+      for (const [rec, art] of lefayArt()) wearPainted(LEFAY_ARCHIVE, rec, () => dfLook(art, lookSeed(LEFAY_ARCHIVE, rec)), (pic, { late }) => { if (late) renderer.releaseTexture?.(LEFAY_ARCHIVE, rec); renderer.uploadTexture?.(LEFAY_ARCHIVE, rec, pic); }, { topDown: true });
       mesh = renderer.createMesh(model);
     } catch (e) { console.warn('[lefay] the monument would not build', e?.message ?? e); }
   }

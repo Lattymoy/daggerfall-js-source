@@ -1,0 +1,744 @@
+[
+  {
+    "name": "AUDITCC-UI-S1-the-row-on-one-line",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  plaques.style.gridArea = '1 / 2 / 2 / 3';",
+    "new": "  plaques.style.gridArea = '1 / 2';",
+    "why": "the row on '1 / 2' - an absolutely placed grid child's unnamed end lines run to the map's edge, and the Felt plaque stood on the R-Weapon panel",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S1-the-felt-plaque-first",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  plaques.append(armourPlaque(deps.entity));\n  const temp = temperaturePlaque(deps.entity);\n  if (temp) plaques.append(temp);",
+    "new": "  const temp = temperaturePlaque(deps.entity);\n  if (temp) plaques.append(temp);\n  plaques.append(armourPlaque(deps.entity));",
+    "why": "the Felt plaque at the Armour plaque's end of the row",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S1-the-row-never-wraps",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "display: flex; flex-wrap: wrap;\n  justify-content: space-between;",
+    "new": "display: flex; flex-wrap: nowrap;\n  justify-content: space-between;",
+    "why": "a narrow figure: the two plaques overrun the cell instead of the Felt one wrapping under the Armour one",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S1-the-plaques-bunched",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "justify-content: space-between; align-items: flex-start; gap: 4px; pointer-events: none; }",
+    "new": "justify-content: flex-start; align-items: flex-start; gap: 4px; pointer-events: none; }",
+    "why": "the Felt plaque beside the Armour one, not at the row's other end",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S1-the-felt-plaque-placed-alone",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".pack-shell .wornmap .worntemp-total { position: relative;",
+    "new": ".pack-shell .wornmap .worntemp-total { position: absolute;",
+    "why": "the Felt plaque out of the row's flow",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S1-the-armour-plaque-placed-alone",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".pack-shell .wornmap .wornac-total { position: relative;",
+    "new": ".pack-shell .wornmap .wornac-total { position: absolute;",
+    "why": "the Armour plaque out of the row's flow, the Felt one under it",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S3-no-piece-of-its-own",
+    "file": "src/ui/hud/hudLayout.js",
+    "old": "  { id: 'temp', sel: '.hud .hud-temp', name: 'Temperature', inside: 'quick' },\n",
+    "new": "",
+    "why": "the plate the quick block's: its X hides the plate, the plate has no X and no move of its own",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S3-not-inside-the-quick-block",
+    "file": "src/ui/hud/hudLayout.js",
+    "old": "name: 'Temperature', inside: 'quick' }",
+    "new": "name: 'Temperature' }",
+    "why": "the quick block's move and size not undone on the plate: it moves twice (UI-CALM: the corner's caption is its place)",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S3-the-quick-block-off-takes-it",
+    "file": "src/ui/hud/hudLayout.js",
+    "old": ".hud-quick[data-hm-off]:not([data-hm-edit]) .hud-temp[data-hm]:not([data-hm-off]) { visibility: visible !important; }",
+    "new": "",
+    "why": "the quick block switched off hides the plate with it while the plate's own part stands on (UI-CALM: the plate's outer piece)",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S4-no-warn-frame",
+    "file": "src/ui/grimoireDress.js",
+    "old": "${G} .hud-temp[data-level=\"warn\"] { border-color: #f3cf86 #7a5424 #7a5424 #f3cf86; }\n",
+    "new": "",
+    "why": "a felt plate wears the wood's frame in the Grimoire dress",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S4-no-danger-frame",
+    "file": "src/ui/grimoireDress.js",
+    "old": "${G} .hud-temp[data-level=\"danger\"] { border-color: #ff9a7a #b53a2e #b53a2e #ff9a7a; }\n",
+    "new": "",
+    "why": "a costing plate wears the wood's frame in the Grimoire dress",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S4-the-felt-number-in-the-red-ink",
+    "file": "src/ui/grimoireDress.js",
+    "old": "${G} .wornac-total .v { color: ${T.red} !important;",
+    "new": "${G} .wornac-total .v, ${G} .worntemp-total .v { color: ${T.red} !important;",
+    "why": "every Felt reading in the red ink of a cost",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S4-the-cold-ink-pale",
+    "file": "src/ui/grimoireDress.js",
+    "old": "export const TEMP_INK = Object.freeze({ cold: '#1f4f9e',",
+    "new": "export const TEMP_INK = Object.freeze({ cold: '#9ec3ff',",
+    "why": "the HUD's ice on the cream page: 1.1 to 1",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S4-the-cold-number-unpainted",
+    "file": "src/ui/grimoireDress.js",
+    "old": "${G} .worntemp-total[data-side=\"cold\"] .v { color: ${TEMP_INK.cold} !important; }\n",
+    "new": "",
+    "why": "a cold reading in the plain ink",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S4-the-felt-frame-red",
+    "file": "src/ui/grimoireDress.js",
+    "old": "${G} .worntemp-total[data-level=\"warn\"] { border-color: ${TEMP_INK.warn} !important; }",
+    "new": "${G} .worntemp-total[data-level=\"warn\"] { border-color: ${T.red} !important; }",
+    "why": "a felt plaque framed in the red of a cost",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S5-hungry-red",
+    "file": "src/systems/survival/status.js",
+    "old": "if (key === 'hunger') return tires && stage === 'starving' ? 'danger' : 'warn';",
+    "new": "if (key === 'hunger') return tires && stage !== 'peckish' ? 'danger' : 'warn';",
+    "why": "a Hungry chip red where Hungry charges nothing",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S5-parched-amber",
+    "file": "src/systems/survival/status.js",
+    "old": "(stage === 'parched' || stage === 'dehydrated')",
+    "new": "stage === 'dehydrated'",
+    "why": "a costing Parched amber",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S5-hard-tired-amber",
+    "file": "src/systems/survival/status.js",
+    "old": "if (key === 'sleep') return !held && (takes || (tires && stage === 'exhausted')) ? 'danger' : 'warn';",
+    "new": "if (key === 'sleep') return !held && (tires && stage === 'exhausted') ? 'danger' : 'warn';",
+    "why": "Hard's Tired and Drowsy amber while they take the attributes (the audit's S5)",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S5-the-heat-s-edge-amber",
+    "file": "src/systems/survival/status.js",
+    "old": "felt >= r.stamina.hotFrom",
+    "new": "felt > r.stamina.hotFrom",
+    "why": "a Warm of 20 in Hard amber while it charges",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S5-the-cold-s-edge-amber",
+    "file": "src/systems/survival/status.js",
+    "old": "felt <= r.stamina.coldFrom",
+    "new": "felt < r.stamina.coldFrom",
+    "why": "a Cold of -20 in Hard amber while it charges",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S5-hard-stiff-amber",
+    "file": "src/systems/survival/status.js",
+    "old": "if (key === 'stiff') return takes ? 'danger' : 'warn';",
+    "new": "if (key === 'stiff') return 'warn';",
+    "why": "Hard's stiff morning amber while it takes the attributes",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S5-the-stiff-chip-the-table-s",
+    "file": "src/systems/survival/status.js",
+    "old": "out.push({ key: 'stiff', text: 'Stiff', level: needLevel('stiff', 'stiff', { rules: tier }) });",
+    "new": "out.push({ key: 'stiff', text: 'Stiff', level: 'warn' });",
+    "why": "the strip's Stiff amber in every tier",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S5-no-tier-is-hard",
+    "file": "src/systems/survival/status.js",
+    "old": "const r = rules ?? SURVIVAL_RULES[SURVIVAL_DEFAULT];",
+    "new": "const r = rules ?? SURVIVAL_RULES.hard;",
+    "why": "a reader that hands no tier read by Hard's, not the default's",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S5-the-strip-s-tier-the-record-s",
+    "file": "src/systems/survival/status.js",
+    "old": "  const s = survivalOf(entity, now);\n  const tier = tierOf(s, rules);",
+    "new": "  const s = survivalOf(entity, now);\n  const tier = tierOf(s, null);",
+    "why": "the strip read by the record's tier: a turn shown a minute late",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S5-the-plate-s-tier-the-record-s",
+    "file": "src/systems/survival/status.js",
+    "old": "  const s = entity?.survival && typeof entity.survival === 'object' ? entity.survival : {};\n  const tier = tierOf(s, rules);",
+    "new": "  const s = entity?.survival && typeof entity.survival === 'object' ? entity.survival : {};\n  const tier = tierOf(s, null);",
+    "why": "the plate read by the record's tier: a turn shown a minute late",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S9-no-tier-s-fire-warms",
+    "file": "src/systems/survival/needs.js",
+    "old": "(rules ?? HARD_RULES).stamina.fireWarms && env?.byFire && felt < 0)",
+    "new": "(rules ?? { stamina: { fireWarms: true } }).stamina.fireWarms && env?.byFire && felt < 0)",
+    "why": "no rules read as a tier the fire warms - every law reads no rules as Hard",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S9-the-fire-warms-nought",
+    "file": "src/systems/survival/needs.js",
+    "old": "env?.byFire && felt < 0);",
+    "new": "env?.byFire && felt <= 0);",
+    "why": "a fire answering a reading of nought, which is no cold",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S9-the-minute-its-own-law",
+    "file": "src/systems/survival/needs.js",
+    "old": "  const warmed = warmedByFire(rules, env, temp.felt);",
+    "new": "  const warmed = !!(env.byFire && temp.felt < 0);",
+    "why": "the minute law's own fire, apart from the HUD's: Hard warmed beside a fire",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S9-the-strip-reads-the-record",
+    "file": "src/systems/survival/status.js",
+    "old": "  const felt = live ? live.felt : s.felt;",
+    "new": "  const felt = s.felt;",
+    "why": "the chip a minute behind the plate: Freezing beside a -51 Deadly cold",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S9-the-strip-s-fire-the-record-s",
+    "file": "src/systems/survival/status.js",
+    "old": "warmed: live ? warmedByFire(tier, live.env, felt) : warmedBy(s, word) });",
+    "new": "warmed: warmedBy(s, word) });",
+    "why": "a step to a fire: the chip red until the minute turns, the plate amber",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S9-the-plate-s-fire-the-record-s",
+    "file": "src/systems/survival/status.js",
+    "old": "  const warmed = env ? warmedByFire(tier, env, felt) : warmedBy(s, word);",
+    "new": "  const warmed = warmedBy(s, word);",
+    "why": "a step to a fire: the plate red until the minute turns",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S9-the-hud-hands-no-air",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "{ rules: survivalRules(), env: live?.env ?? null }",
+    "new": "{ rules: survivalRules(), env: null }",
+    "why": "the plate's fire the record's",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S9-the-strip-handed-nothing",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "  drawStatus(vitals, opts, live);",
+    "new": "  drawStatus(vitals, opts);",
+    "why": "the strip reads the record, the plate the live air",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S11-the-page-reads-the-record",
+    "file": "src/ui/statusBox.js",
+    "old": "survivalStatusRows(entity, survival.minutes, { rules: survivalRules(), ...survival })",
+    "new": "survivalStatusRows(entity, survival.minutes, survival)",
+    "why": "the Status page read by the record's tier: a turn from Boons said \"You are not tired.\" and the boons until a minute ran",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S11-the-lines-read-the-record",
+    "file": "src/systems/survival/status.js",
+    "old": "const kept = !!tierOf(s, rules).boons;",
+    "new": "const kept = Array.isArray(s.boons);",
+    "why": "the page's boons kept by the record, not the tier handed in",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S6-the-hidden-power-counted",
+    "file": "src/ui/armourCard.js",
+    "old": "affixes: [], legendary: null, imprint: null, gilded: null }",
+    "new": "affixes: [] }",
+    "why": "the unknown Mantle's Mountain-Born counted: -85 to -53",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S6-the-hidden-lines-counted",
+    "file": "src/ui/armourCard.js",
+    "old": "affixes: [], legendary: null, imprint: null, gilded: null }",
+    "new": "legendary: null, imprint: null, gilded: null }",
+    "why": "the unknown Mantle's lining counted",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S6-the-imprint-kept",
+    "file": "src/ui/armourCard.js",
+    "old": "legendary: null, imprint: null, gilded: null }",
+    "new": "legendary: null, gilded: null }",
+    "why": "a Rare's hidden imprint in the view",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S6-the-gilding-kept",
+    "file": "src/ui/armourCard.js",
+    "old": "legendary: null, imprint: null, gilded: null }",
+    "new": "legendary: null, imprint: null }",
+    "why": "a Gilded's hidden id in the view",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S6-known-read-as-unknown",
+    "file": "src/ui/armourCard.js",
+    "old": "(itemIsIdentified(item) ? item :",
+    "new": "(false ? item :",
+    "why": "an identified piece's powers left out",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S8-nothing-taken",
+    "file": "src/ui/credits.js",
+    "old": "Boons (the default: neglect costs nothing, and staying",
+    "new": "Boons (the default: nothing taken, and staying",
+    "why": "the credits say Boons takes nothing: the drink swings the attributes there",
+    "note": "BOONS-DEFAULT (2026-10-13): re-aimed by content - the credits name Boons the default.",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S8-the-comment-says-nothing-taken",
+    "file": "src/systems/features.js",
+    "old": "(SURV-BOONS, 2026-10-12: neglect costs nothing, a need met earns a bonus),",
+    "new": "(SURV-BOONS, 2026-10-12: nothing taken, a need met earns a bonus),",
+    "why": "the Features comment says Boons takes nothing",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S13-the-old-trigger",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "trigger: 'When a need first shows on your screen.',",
+    "new": "trigger: 'When you first get hungry, cold or tired.',",
+    "why": "the page says it opens on three needs; it opens on the first of any kind",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S13-beside-the-bars",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "Signs at the left edge of the screen show",
+    "new": "Signs next to your bars show",
+    "why": "the page puts the tiles beside the bars",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S14-the-cost-unsaid",
+    "file": "src/systems/survival/status.js",
+    "old": "danger: 'it costs you'",
+    "new": "danger: 'red'",
+    "why": "the level said as its colour",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S14-a-comfort-said",
+    "file": "src/systems/survival/status.js",
+    "old": "(Object.hasOwn(LEVEL_WORDS, level) ? ",
+    "new": "(level ? ",
+    "why": "a comfortable reading says \"undefined\"",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S14-the-tile-unsaid",
+    "file": "src/ui/hud/hudStatus.js",
+    "old": "say: c.level === 'boon' ? null : levelSaid(String(c.text ?? ''), c.level), cost:",
+    "new": "say: null, cost:",
+    "why": "a need's tile says no level",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S14-a-boon-said-as-a-level",
+    "file": "src/ui/hud/hudStatus.js",
+    "old": "say: c.level === 'boon' ? null : levelSaid(String(c.text ?? ''), c.level), cost:",
+    "new": "say: levelSaid(String(c.text ?? ''), c.level), cost:",
+    "why": "a boon's tile titled as a need",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S14-no-cost-flag",
+    "file": "src/ui/hud/hudStatus.js",
+    "old": "cost: c.level === 'danger' });",
+    "new": "cost: false });",
+    "why": "a costing need's tile unmarked",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S14-the-tile-unmarked",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "${t.cost ? ' hst-cost' : ''}",
+    "new": "",
+    "why": "the HUD draws no mark on a costing tile",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S14-the-tile-untitled",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "  if (t.say) cell.setAttribute('aria-label', t.say);",
+    "new": "",
+    "why": "the HUD says no level on a tile",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S14-the-plate-untitled",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "    t.el.title = said;\n",
+    "new": "",
+    "why": "the plate says its level in colour alone",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S14-the-plate-unlabelled",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "    t.el.setAttribute('aria-label', said);\n",
+    "new": "",
+    "why": "a reader of the label hears no level",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S14-no-mark",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".hst-cell.hst-cost .hst-tile::after { content: '!';",
+    "new": ".hst-cell.hst-cost .hst-tile::after { content: '';",
+    "why": "no mark on a costing plate or tile",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S14-the-plaque-unmarked",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".pack-shell .worntemp-total[data-level=\"danger\"]::after { content: '!';",
+    "new": ".pack-shell .worntemp-total[data-level=\"danger\"]::after { content: '';",
+    "why": "no mark on a costing plaque",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S14-the-plaque-unlabelled",
+    "file": "src/ui/temperatureCard.js",
+    "old": "n.setAttribute('aria-label', `Felt temperature ${r.text}, ${levelSaid(r.label, r.level)}`);",
+    "new": "n.setAttribute('aria-label', `Felt temperature ${r.text}, ${r.label}`);",
+    "why": "the plaque's label says no level",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S14-the-plaque-untitled",
+    "file": "src/ui/temperatureCard.js",
+    "old": "${levelSaid(r.label.toLowerCase(), r.level)} (${BAND_TEXT})",
+    "new": "${r.label.toLowerCase()} (${BAND_TEXT})",
+    "why": "the plaque's title says no level",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-D6-the-red-thermometer",
+    "file": "src/ui/hud/hudStatus.js",
+    "old": "r: '#b8ab8c', h: '#efe6cf'",
+    "new": "r: '#e0584a', h: '#ffb0a0'",
+    "why": "the comfortable reading's thermometer in the red of a cost",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-R11-the-campfire-for-the-hearth",
+    "file": "src/systems/survival/status.js",
+    "old": "own for the need it rewards, a flame for the hearth (its own - REST1's Next night is the campfire), a sparkle for",
+    "new": "own for the need it rewards, the campfire for the hearth, a sparkle for",
+    "why": "the code names the hearth's glyph wrong",
+    "note": "AUDIT C&C (lens S): re-aimed by content - REST1's tile is Next night now.",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-R7-the-wear-s-wardrobe-unread",
+    "file": "src/ui/temperatureCard.js",
+    "old": "const after = feltNow(entity, { worn: slots, mods: modsForSlots(entity, slots) });",
+    "new": "const after = feltNow(entity, { worn: slots });",
+    "why": "a lined cloak's card counts the cloak and not its lining: +12 for +16",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-R7-the-plate-s-tier-unread",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "{ rules: survivalRules(), env: live?.env ?? null }",
+    "new": "{ rules: null, env: live?.env ?? null }",
+    "why": "the plate wears the record's tier until a minute runs",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-R7-the-strip-s-tier-unread",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "endurance: liveStat(vitals, 'endurance'), rules: survivalRules(), live })",
+    "new": "endurance: liveStat(vitals, 'endurance'), live })",
+    "why": "the strip wears the record's tier until a minute runs",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-R6-the-section-unhung",
+    "file": "src/ui/statsCard.js",
+    "old": "    page.append(bn);\n",
+    "new": "",
+    "why": "the Stats side's Boons section built and never shown",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-R6-no-rows",
+    "file": "src/ui/statsCard.js",
+    "old": "    for (const [k, v] of boonRows) bn.append(row(k, v));",
+    "new": "",
+    "why": "the section with no boon in it",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-R6-one-boon",
+    "file": "src/ui/statsCard.js",
+    "old": "for (const [k, v] of boonRows) bn.append",
+    "new": "for (const [k, v] of boonRows.slice(0, 1)) bn.append",
+    "why": "one boon of four",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-R5-the-rows-undrawn",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    r.append(el('span', 'k', k), el('span', 'v', v));\n    detail.append(r);",
+    "new": "    r.append(el('span', 'k', k), el('span', 'v', v));",
+    "why": "the Attributes page's Boons divider over nothing",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-R5-one-boon",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  for (const [k, v] of boons) {\n    const r = el('div', 'px-stat');",
+    "new": "  for (const [k, v] of boons.slice(0, 1)) {\n    const r = el('div', 'px-stat');",
+    "why": "one boon of four",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-R5-the-character-page-stands-in",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "attributes: statsAttributes,",
+    "new": "attributes: statsCharacter,",
+    "why": "the Attributes press draws the Character page",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-R5-no-divider",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  detail.append(pxDivider('Boons'));",
+    "new": "",
+    "why": "the boons run on under the meters, unnamed",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ]
+  },
+  {
+    "name": "AUDITCC-UI-S5-the-salts-hold-nothing",
+    "file": "src/systems/survival/status.js",
+    "old": "  if (key === 'sleep') return !held && (takes || (tires && stage === 'exhausted')) ? 'danger' : 'warn';",
+    "new": "  if (key === 'sleep') return (takes || (tires && stage === 'exhausted')) ? 'danger' : 'warn';",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ],
+    "why": "S5 (REST6): under the Waking Salts the sleep costs nothing, and its chip is not red"
+  },
+  {
+    "name": "AUDITCC-UI-S5-the-strip-hears-no-salts",
+    "file": "src/systems/survival/status.js",
+    "old": "sleepStage(s.sleepDebt), { held: wakingHeld(s, now) });",
+    "new": "sleepStage(s.sleepDebt));",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ],
+    "why": "S5 (REST6): the strip hands the salts' hold to the sleep's level"
+  },
+  {
+    "name": "AUDITCC-UI-R-the-boon-tile-amber",
+    "file": "src/ui/hud/hudStatus.js",
+    "old": "kind: c.level === 'boon' ? 'buff' : c.level === 'danger'",
+    "new": "kind: c.level === 'boon' ? 'warn' : c.level === 'danger'",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ],
+    "why": "lens R: the boon tiles, driven through the real HUD - green, each by its word"
+  },
+  {
+    "name": "AUDITCC-UI-S-the-bank-s-line-runs-wide",
+    "file": "src/systems/survival/status.js",
+    "old": "`Rested for another ${restedLeft(s)}.`",
+    "new": "`Well rested (${restedLeft(s)} left): +5 Intelligence, +5 Willpower.`",
+    "tests": [
+      "test/systems/auditcc_ui.test.js"
+    ],
+    "why": "lens S: every line of the status page's third box is held to the classic box's width - the felt line's 53"
+  },
+  {
+    "name": "AUDITCC-UI-S-the-night-tile-named-rested",
+    "file": "src/ui/hud/hudStatus.js",
+    "old": "name: 'Next night', foot: `${rested.minutes}m`",
+    "new": "name: 'Rested', foot: `${rested.minutes}m`",
+    "tests": [
+      "test/systems/rest/rest1_act.test.js"
+    ],
+    "why": "lens S (D7): the interval's tile is Next night - Rested stood beside Boons' Well rested"
+  }
+]

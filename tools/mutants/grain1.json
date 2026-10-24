@@ -5,7 +5,7 @@
   "old": "  vec3 tex = textureGrad(uTileArr, vec3(tuv, float(layer)), gx, gy).rgb;",
   "new": "  vec3 tex = texture(uTileArr, vec3(tuv, float(layer))).rgb;",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "  vec3 tex = elDecode(textureGrad(uTileArr, vec3(tuv, float(layer)), gx, gy).rgb);",
   "new": "  vec3 tex = elDecode(texture(uTileArr, vec3(tuv, float(layer))).rgb);",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "  vec2 gx = ROT[t] * dFdx(unwrapped);\n  vec2 gy = ROT[t] * dFdy(unwrapped);",
   "new": "  vec2 gx = dFdx(tuv);\n  vec2 gy = dFdy(tuv);",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);",
   "new": "",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA, w, h, layers.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);",
   "new": "    gl.texImage3D(gl.TEXTURE_2D_ARRAY, 0, gl.RGBA, w, h, layers.length, 0, gl.RGBA, gl.UNSIGNED_BYTE, null);\n    gl.generateMipmap(gl.TEXTURE_2D_ARRAY);",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "  return { aniso: anisotropyFor(tier, driverMax), minFilter: tier === 'off' ? 'NEAREST_MIPMAP_NEAREST' : 'LINEAR_MIPMAP_LINEAR' };",
   "new": "  return { aniso: anisotropyFor(tier, driverMax), minFilter: 'NEAREST' };",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ],
   "why": "GRAIN AUDIT 1 re-aimed: the filter is the tier's, from groundSamplerFor."
  },
@@ -60,7 +60,7 @@
   "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.NEAREST);\n    // GRAIN1: and anisotropy",
   "new": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MAG_FILTER, gl.LINEAR);\n    // GRAIN1: and anisotropy",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -69,18 +69,18 @@
   "old": "    if (this._anisoExt === null) {",
   "new": "    if (!this._anisoExt) {",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ],
   "why": "GRAIN AUDIT 1 re-aimed: the memo of an absent extension is false; a falsy test re-asks on exactly the drivers without it."
  },
  {
   "name": "GRAIN1-the-water-pass-keeps-the-wrapped-footprint-so-the-scroll-rollover-draws-a-line",
   "file": "src/render/waterSurface.js",
-  "old": "      edge *= smoothstep(0.3, 0.7, textureGrad(uTileArr, vec3(puv, float(rec)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a);",
-  "new": "      edge *= smoothstep(0.3, 0.7, texture(uTileArr, vec3(puv, float(rec))).a);",
+  "old": "float pa = textureGrad(uTileArr, vec3(puv, float(rec)), PUDDLE_ROT[turn] * wgx, PUDDLE_ROT[turn] * wgy).a;",
+  "new": "float pa = texture(uTileArr, vec3(puv, float(rec))).a;",
   "tests": [
-   "test/grain1_terrainmip.test.js",
-   "test/water.test.js"
+   "test/render/grain1_terrainmip.test.js",
+   "test/world/terrain/water.test.js"
   ],
   "why": "GRAIN AUDIT 1 re-aimed: the derivatives moved above the discards."
  },
@@ -90,7 +90,7 @@
   "old": "  if (tier === 'max') return cap;",
   "new": "  if (tier === 'max') return 16;",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -99,7 +99,7 @@
   "old": "  if (tier === 'off') return 1;",
   "new": "  if (tier === 'off') return 0;",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -108,7 +108,7 @@
   "old": "  return Math.min(4, cap);",
   "new": "  return cap;",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -117,7 +117,7 @@
   "old": "  const cap = Math.max(1, driverMax || 1);",
   "new": "  const cap = driverMax;",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -126,7 +126,7 @@
   "old": "    this._setGroundSampler(groundSharpnessTier());",
   "new": "    this._setGroundSampler('default');",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ],
   "why": "GRAIN AUDIT 1 re-aimed."
  },
@@ -136,7 +136,7 @@
   "old": "    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'default', online: 'player',",
   "new": "    control: Object.freeze({ store: 'prefs', key: 'groundSharpness', initial: 'max', online: 'host',",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -145,7 +145,7 @@
   "old": "minFilter: tier === 'off' ? 'NEAREST_MIPMAP_NEAREST' : 'LINEAR_MIPMAP_LINEAR' };",
   "new": "minFilter: 'LINEAR_MIPMAP_LINEAR' };",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -154,7 +154,7 @@
   "old": "  return pageParam('ground', search) ?? getPref('groundSharpness');",
   "new": "  return getPref('groundSharpness');",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -163,7 +163,7 @@
   "old": "    if (this.tileArrays.has(archive)) return this.tileArrays.get(archive);\n    const gl = this.gl;\n    const tex = gl.createTexture();\n    gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);",
   "new": "    const gl = this.gl;\n    const tex = gl.createTexture();\n    gl.bindTexture(gl.TEXTURE_2D_ARRAY, tex);",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -172,7 +172,7 @@
   "old": "    if (ext) gl.texParameterf(gl.TEXTURE_2D_ARRAY, ext.TEXTURE_MAX_ANISOTROPY_EXT, s.aniso);",
   "new": "    if (ext && s.aniso > 1) gl.texParameterf(gl.TEXTURE_2D_ARRAY, ext.TEXTURE_MAX_ANISOTROPY_EXT, s.aniso);",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -181,7 +181,7 @@
   "old": "    gl.texParameteri(gl.TEXTURE_2D_ARRAY, gl.TEXTURE_MIN_FILTER, gl[s.minFilter]);\n    if (ext)",
   "new": "    if (ext)",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -190,7 +190,7 @@
   "old": "    for (const tex of this.tileArrays.values()) {\n      this._activeTexture(gl.TEXTURE0);",
   "new": "    for (const tex of []) {\n      this._activeTexture(gl.TEXTURE0);",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -199,16 +199,16 @@
   "old": "    this._tArrayTex = null;   // PERF-TEX2's shadow",
   "new": "    // PERF-TEX2's shadow",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
   "name": "AUDIT-GRAIN-the-world-host-forgets-to-apply-the-tier",
-  "file": "src/scenes/world.js",
+  "file": "src/scenes/groundSets.js",
   "old": "    renderer.applyGroundSharpness();   // GRAIN AUDIT 1",
   "new": "    // GRAIN AUDIT 1",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -217,7 +217,7 @@
   "old": "  renderer.applyGroundSharpness();   // GRAIN AUDIT 1",
   "new": "  // GRAIN AUDIT 1",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -226,7 +226,7 @@
   "old": "    kinds: Object.freeze(['enhanced', 'classic']),\n    control: Object.freeze({ store: 'prefs', key: 'groundSharpness',",
   "new": "    kinds: Object.freeze(['enhanced']),\n    control: Object.freeze({ store: 'prefs', key: 'groundSharpness',",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -235,7 +235,7 @@
   "old": "  await page.goto(`http://localhost:${PORT}${url}${GROUND}`);",
   "new": "  await page.goto(`http://localhost:${PORT}${url}`);",
   "tests": [
-   "test/grain1_terrainmip.test.js"
+   "test/render/grain1_terrainmip.test.js"
   ]
  },
  {
@@ -244,8 +244,8 @@
   "old": "    vec2 wgx = dFdx(unwrapped), wgy = dFdy(unwrapped);\n    ivec2 cell",
   "new": "    ivec2 cell",
   "tests": [
-   "test/water.test.js",
-   "test/grain1_terrainmip.test.js"
+   "test/world/terrain/water.test.js",
+   "test/render/grain1_terrainmip.test.js"
   ]
  }
 ]

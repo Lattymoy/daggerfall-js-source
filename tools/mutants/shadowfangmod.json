@@ -1,0 +1,26 @@
+[
+  {
+    "name": "SHADOW-FANG-MOD-1-canmoderate-ignores-the-title",
+    "file": "server-account/src/titles.js",
+    "old": "export const canModerate = (player, env) => isModerator(player, env) || isDeveloper(player, env)\n  || MOD_TIERS.some((t) => holdsTier(t, player, env));",
+    "new": "export const canModerate = (player, env) => isModerator(player, env) || isDeveloper(player, env);",
+    "tests": ["test/net/shadowfangmod.test.js"],
+    "note": "Mac's ask undone: the Shadow Fang holder is told 'Only moderators can do that.' at /ban."
+  },
+  {
+    "name": "SHADOW-FANG-MOD-2-no-title-moderates",
+    "file": "server-account/src/titles.js",
+    "old": "export const MOD_TIERS = Object.freeze(['shadowfang']);",
+    "new": "export const MOD_TIERS = Object.freeze([]);",
+    "tests": ["test/net/shadowfangmod.test.js"],
+    "note": "The list emptied - the same hole from the other side."
+  },
+  {
+    "name": "SHADOW-FANG-MOD-3-every-title-moderates",
+    "file": "server-account/src/titles.js",
+    "old": "export const MOD_TIERS = Object.freeze(['shadowfang']);",
+    "new": "export const MOD_TIERS = Object.freeze(Object.keys(TIER_LISTS));",
+    "tests": ["test/net/shadowfangmod.test.js"],
+    "note": "Every made-for-one title and every Patreon tier handed a ban hammer."
+  }
+]

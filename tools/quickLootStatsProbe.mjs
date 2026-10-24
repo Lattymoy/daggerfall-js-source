@@ -32,7 +32,7 @@ import { chromium } from 'playwright';
 import { mkdirSync, readFileSync } from 'node:fs';
 import { join, normalize } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { ENHANCED_CSS, ENHANCED_TOKENS } from '../src/ui/enhancedStyle.js';
+import { ENHANCED_CSS, ENHANCED_TOKENS } from '../src/ui/enhanced/enhancedStyle.js';
 
 const ROOT = normalize(join(fileURLToPath(import.meta.url), '..', '..'));
 /** The page imports the REAL modules, so the plaque it draws is the

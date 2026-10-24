@@ -26,7 +26,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { SpoilsGlowRenderer } from '../render/spoilsGlow.js';
-import { bestRarity, RARITIES, lootRarityOn } from '../systems/lootRarity.js';
+import { bestRarity, RARITIES, lootRarityOn } from '../systems/loot/lootRarity.js';
 import { isPresented } from '../systems/physicalItems.js';   // PI1: the items that stand as themselves
 
 /** The most lines a frame stands, and how far from the eye a find may be (metres). */
@@ -47,7 +47,7 @@ export function pickLootLines(finds, eye, { max = LOOT_LINES_MAX, reach = LOOT_L
   for (const f of finds) {
     const root = f?.root;
     if (!Array.isArray(root) || root.length !== 3 || !root.every(Number.isFinite) || !Array.isArray(f.items) || !f.items.length) continue;
-    // WILD1: a find with a `mark` of its own (my remains in the open zone - net/wildRemains.js) stands its own line, in
+    // WILD1: a find with a `mark` of its own (my remains in the open zone - net/wild/wildRemains.js) stands its own line, in
     // its own colour and height, with the rarity row on or off: it says where my things are, not what they are worth
     if (f.mark) {
       const d = Math.hypot(root[0] - eye[0], root[1] - eye[1], root[2] - eye[2]);
@@ -65,10 +65,12 @@ export function pickLootLines(finds, eye, { max = LOOT_LINES_MAX, reach = LOOT_L
   return out.slice(0, max).map(({ root, tier, alpha, colour, h, pulse }) => (colour ? { root, tier, alpha, colour, h, pulse } : { root, tier, alpha }));
 }
 
-/** WILD1: whether a MARKED find stands in the scene (my remains in the open zone - net/wildRemains.js hasMine). With the
- *  rarity row off the pass gathers the finds only then: off stays DFU exactly everywhere else. */
-let _marksLive = false;
-export const setLootMarksLive = (on) => { _marksLive = !!on; };
+/** WILD1: whether a MARKED find stands in the scene (my remains in the open zone - net/wild/wildRemains.js hasMine). With the
+ *  rarity row off the pass gathers the finds only then: off stays DFU exactly everywhere else. FB1013d: each standing
+ *  kind says its own word under its own name - the open zone's (`wild`) and the house's fallen (`legacy`,
+ *  scenes/legacyRemainsStand.js) - and either keeps the pass gathering: one saying none never puts out the other's. */
+const _marksLive = new Set();
+export const setLootMarksLive = (on, by = 'wild') => { if (on) _marksLive.add(by); else _marksLive.delete(by); };
 
 /** THE HOST'S PASS - one renderer a GL context, built once (a context that will not build it draws nothing). `draw`
  *  answers whether it lit a line (the host marks its foreign pass when it did). */
@@ -78,7 +80,7 @@ export function createLootLines(gl) {
   return {
     /** `finds` the list, or a function answering it - asked only while the row is on, so an off frame gathers nothing. */
     draw(finds, proj, view, eye, seconds, fog = null) {
-      if (!glow || (!lootRarityOn() && !_marksLive)) return false;   // WILD1: a marked find stands its line with the rarity row off too (pickLootLines)
+      if (!glow || (!lootRarityOn() && !_marksLive.size)) return false;   // WILD1: a marked find stands its line with the rarity row off too (pickLootLines)
       const lines = pickLootLines(typeof finds === 'function' ? finds() : finds, eye);
       if (!lines.length) return false;
       glow.draw(lines, proj, view, eye, seconds, fog);

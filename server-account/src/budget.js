@@ -4,7 +4,7 @@
 // "budgets per hour of online play the service measured itself", built.
 //
 // THE QUESTION IT ANSWERS. The world runs on the player's own machine (Multiplayer.md's first decision), so a kill, a
-// chest and a counter's price are the client's word, and the item law (systems/itemLaw.js) can prove only that a piece
+// chest and a counter's price are the client's word, and the item law (systems/item/itemLaw.js) can prove only that a piece
 // is one the game could mint - never that this player found it. What a modified client gains on its word is bounded
 // here instead: between two checkpoints the character's wealth (judge.js wealthOf) may rise by what the service saw
 // move in the open (a market sale, a vault's piece - `witnessed`) and by what time spent playing could have earned. The
@@ -38,6 +38,12 @@ export const BUDGET_DEFAULT = Object.freeze({
  *  pieces (Realm-Arc: about 27k at level 10, 33k at 30), with room past the mean - a Regalia piece one time in six. */
 export const SPOILS_GRANT_BASE = 60_000;
 export const SPOILS_GRANT_PER_LEVEL = 2_000;
+/** AUDIT WB14 (WIRE-6): a portent night's receipt pays a piece of Magic or better more for each of its portents
+ *  (src/systems/gate/gateSpoils.js SPOILS_PORTENT_BITS) - the fill grows by a piece's room for each (a Magic piece is
+ *  the dearer half of the mean's; a guess the measure replaces, as the rest). */
+export const SPOILS_GRANT_PIECE = 10_000;
+/** How many pieces a receipt's portents (`p`, its bits - net/gate/gateReceipt.js) pay: one a bit, three at most. */
+export const portentPieces = (/** @type {unknown} */ p) => (Number.isSafeInteger(p) && /** @type {number} */ (p) > 0 ? [1, 2, 4].filter((b) => (/** @type {number} */ (p) & b) !== 0).length : 0);
 export const spoilsGrant = (/** @type {number} */ level) => SPOILS_GRANT_BASE + SPOILS_GRANT_PER_LEVEL * Math.max(1, Math.trunc(Number(level) || 1));
 
 /** A band's shape - whole, positive numbers, rising levels. */
@@ -61,9 +67,18 @@ const kept = new WeakMap();
 const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? db[DB_ROOT] ?? db : null);
 /** The config standing: staff's, else the first setting. */
 export async function budgetConfig(/** @type {any} */ db) {
+  return budgetKept(db) ?? budgetFrom(db, await budgetRead(db).first());
+}
+/** SAVE-BATCH (2026-10-16): the config this isolate keeps (BUDGET_CONFIG_KEEP_MS), or null - so a checkpoint asks its row
+ *  in the batch that reads the character's record, and only when it has none. */
+export function budgetKept(/** @type {any} */ db) {
   const k = kept.get(keyOf(db) ?? {});
-  if (k && Date.now() - k.at < BUDGET_CONFIG_KEEP_MS) return k.config;
-  const row = await db.prepare("SELECT value FROM realm_config WHERE key = 'budget'").first();
+  return k && Date.now() - k.at < BUDGET_CONFIG_KEEP_MS ? k.config : null;
+}
+/** SAVE-BATCH: the config's row, as a statement. */
+export const budgetRead = (/** @type {any} */ db) => db.prepare("SELECT value FROM realm_config WHERE key = 'budget'");
+/** The config its row says (staff's, else the first setting), kept for the binding. */
+export function budgetFrom(/** @type {any} */ db, /** @type {any} */ row) {
   let c = null;
   try { c = budgetConfigOf(JSON.parse(row?.value ?? 'null')); } catch { c = null; }
   const config = c ?? BUDGET_DEFAULT;
@@ -99,19 +114,30 @@ export function stepBudget({ allowance, played, gain, band, enforce = true }) {
  * account) gains spoilsGrant at the level the realm TRUSTS (verdict.js trustedLevel - never the level its tile claims:
  * AUDIT INT, a level of 1000 written in one save made a win worth two million), once a receipt is RECORDED (a claim
  * answered again grants nothing). A character not yet judged has no bucket to fill; its first judgement starts it full.
- * @param {any} db @param {string} playerId
+ * AUDIT WB14 (WIRE-6): `pieces`, a gate receipt's portents' (portentPieces) - SPOILS_GRANT_PIECE more for each.
+ * @param {any} db @param {string} playerId @param {number} [pieces]
  */
-export async function grantSpoils(db, playerId) {
-  await db.prepare(
-    'UPDATE realm_characters SET allowance = allowance + ?2 + ?3 * MAX(1, COALESCE(level_seen, 1))'
-    + ' WHERE player = ?1 AND lease IS NOT NULL AND allowance IS NOT NULL AND dead_at IS NULL',
-  ).bind(playerId, SPOILS_GRANT_BASE, SPOILS_GRANT_PER_LEVEL).run();
+export async function grantSpoils(db, playerId, pieces = 0) {
+  await spoilsGrantStatement(db, playerId, pieces).run();
+}
+/**
+ * THE FILL AS ONE STATEMENT (AUDIT STARFALL B3): a claim whose own batch writes its receipt's row runs it IN that batch,
+ * held to the row by `guard` (an SQL condition of the batch's, its parameters `binds` from ?5 on) - run after the batch,
+ * a failure between the two (a 5xx, an isolate gone) lost the fill for good, the retry answered `claimed`.
+ * @param {any} db @param {string} playerId @param {number} [pieces] @param {string|null} [guard] @param {...unknown} binds
+ */
+export function spoilsGrantStatement(db, playerId, pieces = 0, guard = null, ...binds) {
+  return db.prepare(
+    'UPDATE realm_characters SET allowance = allowance + ?2 + ?3 * MAX(1, COALESCE(level_seen, 1)) + ?4'
+    + ' WHERE player = ?1 AND lease IS NOT NULL AND allowance IS NOT NULL AND dead_at IS NULL' + (guard ? ` AND (${guard})` : ''),
+  ).bind(playerId, SPOILS_GRANT_BASE, SPOILS_GRANT_PER_LEVEL, SPOILS_GRANT_PIECE * Math.max(0, Math.min(3, Math.trunc(Number(pieces) || 0))), ...binds);   // AUDIT WB14 (WIRE-6): and a portent's pieces
 }
 
 /** LW15 (bible/06-Systems/Living-World-II.md "LW15"): THE SERVICE'S OWN FAUCETS - gold it pays that no player paid (a
  *  patron's purchase: market.js reckonPatrons) - kept by the hour and kind (realm_faucets) beside the wealth's hours, so
- *  staff read what the living world mints before the budget is enforced (Living World II decision 7). */
-export const FAUCET_KINDS = Object.freeze(['patron']);
+ *  staff read what the living world mints before the budget is enforced (Living World II decision 7). SUMMON-REPAIR: and
+ *  staff's own refunds (review.js `repair`) - gold no player paid, named as its own kind. */
+export const FAUCET_KINDS = Object.freeze(['patron', 'repair']);
 /** One faucet's gold written to its hour. @param {any} db @param {string} kind @param {number} hour @param {number} gold */
 export const faucetStatement = (db, kind, hour, gold) => db.prepare(
   'INSERT INTO realm_faucets (hour, kind, gold, n) VALUES (?1, ?2, ?3, 1) ON CONFLICT (hour, kind) DO UPDATE SET gold = realm_faucets.gold + excluded.gold, n = realm_faucets.n + 1',

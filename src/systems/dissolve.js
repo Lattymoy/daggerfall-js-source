@@ -15,7 +15,7 @@ export const DISSOLVE_EMBER = Object.freeze([1.0, 0.42, 0.1]);
 export const DISSOLVE_ARCANE = Object.freeze([0.62, 0.4, 1.0]);
 
 /** MWNPC16 (AUDIT MWNPC16-18 R1): MORE GONE THAN WHOLE, NO SHADOW - the share past which a dissolving thing casts none:
- *  a flat (setBatchDissolve's noShadow) and the Morrowind body standing in its place (net/peerBodies.js `cast`), one
+ *  a flat (setBatchDissolve's noShadow) and the Morrowind body standing in its place (net/peer/peerBodies.js `cast`), one
  *  threshold. The body is drawn dissolving off its flat's dissolve and cast its whole shape: a foe burnt nine parts away
  *  (REVENANT-FATE) or a companion not yet through its portal threw a whole man's shadow, where the flat it replaced cast
  *  none. */

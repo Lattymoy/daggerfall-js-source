@@ -13,7 +13,7 @@ import { join } from 'node:path';
 
 import {
   buildRoadNetwork, nearestWithin, primEdges, MAP_W, MAP_H, DIR, ROAD_DIALS,
-} from '../src/world/roadNetwork.js';
+} from '../src/world/road/roadNetwork.js';
 import {
   TAMRIEL_ROADS_VERSION, REGION_APRON, REGION_CORE_W, REGION_CORE_H, LAND_LOOK, regionLattice, regionOf, regionAt, inCore, regionHasLand,
   regionsByNearness, buildTamrielRegion, rollSpec, rollTypeAt, regionKey, inputsPrint,
@@ -26,12 +26,13 @@ import { lairStandsAt, lairPlanned, lairBlockCount, lairPools, LAIR_TYPES } from
 import { createTamrielRoadsClient, roadsWorkerCount } from '../src/world/tamrielRoadsClient.js';
 import { createRoadsWorkerState } from '../src/world/tamrielRoadsWorker.js';
 import { createTamrielRoadsHost } from '../src/scenes/tamrielRoadsHost.js';
-import { TerrainGenClient } from '../src/world/terrainGenClient.js';
+import { TerrainGenClient } from '../src/world/terrain/terrainGenClient.js';
 import { GENERATOR_VERSION } from '../src/world/roadsCache.js';
 import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
-import { inBay, setTamrielFit } from '../src/world/tamrielFrame.js';
-import { setTamrielTrace } from '../src/world/tamrielLand.js';
-import { dropGroundCache } from '../src/world/tamrielGround.js';
+import { inBay, setTamrielFit } from '../src/world/tamriel/tamrielFrame.js';
+import { setTamrielTrace } from '../src/world/tamriel/tamrielLand.js';
+import { dropGroundCache } from '../src/world/tamriel/tamrielGround.js';
+import { hostText } from './hostText.mjs';   // HOST-SPLIT (at the merge of main): the world host read whole - its pixel build stands in scenes/pixelBuild.js
 
 const T = LOCATION_TYPES;
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -114,7 +115,7 @@ test('TESA14 the builder\'s searches: nearestWithin answers the brute force\'s l
   assert.ok(Math.abs(pl - kl) < 1e-6, `the least length (${pl} vs ${kl})`);
   assert.deepEqual(primEdges([]), []);
   assert.deepEqual(primEdges([{ x: 0, y: 0 }]), []);
-  assert.match(read('src/world/roadNetwork.js'), /for \(const \[i, j\] of \(owns \? primEdges\(roadNodes\) : kruskal\(roadNodes\)\)\)/, 'the Bay\'s tree Kruskal\'s still');
+  assert.match(read('src/world/road/roadNetwork.js'), /for \(const \[i, j\] of \(owns \? primEdges\(roadNodes\) : kruskal\(roadNodes\)\)\)/, 'the Bay\'s tree Kruskal\'s still');
 });
 
 // ── THE REGIONS ─────────────────────────────────────────────────
@@ -454,8 +455,8 @@ test('TESA14 the host\'s module: nothing before the trace or while the Bay\'s ne
 });
 
 test('TESA14 the world\'s wiring: the host made where the land past the Bay streams, on the frame with Arena\'s towns (a capital\'s own place its gates while the capitals stand), the roll\'s numbers and the player\'s pixel; the roll reads no road (mutant: the towns\' filter, the spec)', () => {
-  const W = read('src/scenes/world.js');
-  assert.match(W, /const _tamrielRoads = tamrielLand \? createTamrielRoadsHost\(\{ terrainGen, woodsBytes, heightAt: \(x, y\) => woods\.getHeightMapValue\(x, y\), joinLand: arenaJoinLand, onLanded: arenaRoadsLanded,\n\s+standing: \{ pixels: arenaPixels, towns: tamrielRoadTowns, spec: tamrielRoadsSpec, capitals: \(\) => !!_capitalBase, held: tamrielRoadHeld \} \}\) : null;/);
+  const W = hostText('src/scenes/world.js');
+  assert.match(W, /const _tamrielRoads = tamrielLand \? createTamrielRoadsHost\(\{ terrainGen, woodsBytes, heightAt: \(x, y\) => host\.woods\.getHeightMapValue\(x, y\), joinLand: arenaJoinLand, onLanded: arenaRoadsLanded,\n\s+standing: \{ pixels: arenaPixels, towns: tamrielRoadTowns, spec: tamrielRoadsSpec, capitals: \(\) => !!_capitalBase, held: tamrielRoadHeld \} \}\) : null;/);
   assert.match(W, /if \(_tamrielRoads\) _tamrielRoads\.frame\(state\.current\);/, 'on the frame, with the player\'s pixel (PERF-V8: what stands read by the host)');
   assert.match(W, /now\.stood\.filter\(\(p\) => !\(p\.pinned && _capitalBase\) && arenaTemplateOf\(_arenaTemplates, p\)\)/, 'a capital\'s place is its gates; a place with no template stands none');
   assert.match(W, /countryRates: countryRatesNow\(\), countryTemplates: _countryTemplates, lairRates: lairRatesNow\(\), lairTemplates: _lairTemplates, lairPools: _lairPools/);
@@ -470,14 +471,14 @@ const HAVE = !!ARENA2 && ['TMAP00I0.IMG', 'TAMRIEL2.IMG', 'ART_PAL.COL', 'WOODS.
 test('TESA14 with ARENA2: a region of the player\'s own continent, built twice in two orders the same - no path stops in the open, none crosses water, none on a capital, every hamlet and village on a path', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
   const { DFPalette } = await import('../src/formats/dfPalette.js');
   const { preloadTamrielTrace } = await import('../src/ui/tamrielTrace.js');
-  const { setTamrielTrace, tamrielTrace } = await import('../src/world/tamrielLand.js');
-  const { setTamrielFit, tamrielFit, tamrielFrameInBay } = await import('../src/world/tamrielFrame.js');
+  const { setTamrielTrace, tamrielTrace } = await import('../src/world/tamriel/tamrielLand.js');
+  const { setTamrielFit, tamrielFit, tamrielFrameInBay } = await import('../src/world/tamriel/tamrielFrame.js');
   const { WoodsFile, MAP_WIDTH } = await import('../src/formats/woodsFile.js');
   const { MapsFile } = await import('../src/formats/mapsFile.js');
-  const { groundWoods } = await import('../src/world/tamrielGround.js');
+  const { groundWoods } = await import('../src/world/tamriel/tamrielGround.js');
   const { WATER_BYTE } = await import('../src/world/roadsProducer.js');
   const { isWaterPixel } = await import('../src/ui/overworldModel.js');
-  const { isMainStoryDungeon } = await import('../src/world/dungeonTextures.js');
+  const { isMainStoryDungeon } = await import('../src/world/dungeon/dungeonTextures.js');
   const { countryTemplates, countryCounts, bayLand, countryRates } = await import('../src/world/tamrielCountry.js');
   const { lairTemplates } = await import('../src/world/tamrielDungeons.js');
   const { capitalOnPixel } = await import('../src/world/tamrielCapitals.js');

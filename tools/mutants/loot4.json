@@ -1,155 +1,155 @@
 [
   {
     "name": "LOOT4-the-procs-in-the-draw",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "const kinds = AFFIX_IDS.filter((id) => AFFIX_KINDS[id].groups.includes(item.group) && !AFFIX_KINDS[id].proc);",
     "new": "const kinds = AFFIX_IDS.filter((id) => AFFIX_KINDS[id].groups.includes(item.group));",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-a-proc-names-the-piece",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  const names = (a, slot) => AFFIX_KINDS[a?.id]?.slot === slot && !AFFIX_KINDS[a.id].proc;",
     "new": "  const names = (a, slot) => AFFIX_KINDS[a?.id]?.slot === slot;",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-the-exalted-before-the-procs",
-    "file": "src/systems/lootRarity.js",
-    "old": "  for (const it of pieces ?? []) if (it?.rarity === 'magic' || it?.rarity === 'rare') rollProcLine(it, rolls);\n  for (const it of pieces ?? []) if (it?.rarity === 'legendary') rollExalted(it, rolls);",
-    "new": "  for (const it of pieces ?? []) if (it?.rarity === 'legendary') rollExalted(it, rolls);\n  for (const it of pieces ?? []) if (it?.rarity === 'magic' || it?.rarity === 'rare') rollProcLine(it, rolls);",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  for (const it of pieces ?? []) if (it?.rarity === 'magic' || it?.rarity === 'rare') rollProcLine(it, rolls, on);\n  for (const it of pieces ?? []) if (it?.rarity === 'legendary') rollExalted(it, rolls, on);",
+    "new": "  for (const it of pieces ?? []) if (it?.rarity === 'legendary') rollExalted(it, rolls, on);\n  for (const it of pieces ?? []) if (it?.rarity === 'magic' || it?.rarity === 'rare') rollProcLine(it, rolls, on);",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-the-last-pass-without-procs",
-    "file": "src/systems/lootRarity.js",
-    "old": "  for (const it of pieces ?? []) if (it?.rarity === 'magic' || it?.rarity === 'rare') rollProcLine(it, rolls);\n",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  for (const it of pieces ?? []) if (it?.rarity === 'magic' || it?.rarity === 'rare') rollProcLine(it, rolls, on);\n",
     "new": "\n",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-a-magic-as-a-rare",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "export const PROC_PER_MILLE = Object.freeze({ magic: 200, rare: 350 });",
     "new": "export const PROC_PER_MILLE = Object.freeze({ magic: 350, rare: 350 });",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-two-a-piece",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  if (item.affixes.some((a) => AFFIX_KINDS[a?.id]?.proc)) return null;\n",
     "new": "\n",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-a-proc-off",
-    "file": "src/systems/lootRarity.js",
-    "old": "  if (!lootRarityOn() || (item?.rarity !== 'magic' && item?.rarity !== 'rare') || !Array.isArray(item.affixes)) return null;\n  if (item.affixes.some",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (!on || (item?.rarity !== 'magic' && item?.rarity !== 'rare') || !Array.isArray(item.affixes)) return null;\n  if (item.affixes.some",
     "new": "  if ((item?.rarity !== 'magic' && item?.rarity !== 'rare') || !Array.isArray(item.affixes)) return null;\n  if (item.affixes.some",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-a-kind-of-another-group",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  const kinds = AFFIX_IDS.filter((id) => AFFIX_KINDS[id].proc && AFFIX_KINDS[id].groups.includes(item.group) && !item.affixes.some((a) => a?.id === id));",
     "new": "  const kinds = AFFIX_IDS.filter((id) => AFFIX_KINDS[id].proc && !item.affixes.some((a) => a?.id === id));",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-the-legendary-band",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  const [lo, hi] = AFFIX_RANGES[id][item.rarity];\n  const value = rangeInt(lo, hi, rolls);\n  const line = k.params ? { id, param: pick(k.params, rolls), value } : { id, value };\n  item.affixes = [...item.affixes, line];\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line]);\n  return line;",
     "new": "  const [lo, hi] = AFFIX_RANGES[id].legendary;\n  const value = rangeInt(lo, hi, rolls);\n  const line = k.params ? { id, param: pick(k.params, rolls), value } : { id, value };\n  item.affixes = [...item.affixes, line];\n  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line]);\n  return line;",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-the-slayer-on-every-foe",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  for (const a of linesOf(weapon, 'slayer')) if (a.param === group) pct += a.value;",
     "new": "  for (const a of linesOf(weapon, 'slayer')) pct += a.value;",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-the-fire-through-immunity",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  return t === 'Immune' ? 0 : t === 'Resistant' ? 0.5 : 1;",
     "new": "  return t === 'Resistant' ? 0.5 : 1;",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-resisting-whole",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  return t === 'Immune' ? 0 : t === 'Resistant' ? 0.5 : 1;",
     "new": "  return t === 'Immune' ? 0 : 1;",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-the-fraction-dropped",
-    "file": "src/systems/lootPowers.js",
-    "old": "  _carry.set(key, Math.max(0, exact - more));",
-    "new": "  _carry.set(key, 0);",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  if (keep) _carry.set(key, Math.max(0, exact - more));",
+    "new": "  if (keep) _carry.set(key, 0);",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-a-class-foe-by-its-career",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  if (target.affinity === 'Human') return 'humanoid';\n",
     "new": "\n",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-a-duel-blow",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  if (!(damage > 0) || !mine(attacker) || !target || target.isPlayer || target.warded) return damage;",
     "new": "  if (!(damage > 0) || !mine(attacker) || !target || target.warded) return damage;",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-the-ward-cut",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  if (!(damage > 0) || !mine(attacker) || !target || target.isPlayer || target.warded) return damage;",
     "new": "  if (!(damage > 0) || !mine(attacker) || !target || target.isPlayer) return damage;",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-a-peers-blow",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "const mine = (e) => !!e?.isPlayer && !e.peer;",
     "new": "const mine = (e) => !!e?.isPlayer;",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "  entity.health = Math.min(max, entity.health + whole);",
     "new": "  entity.health = entity.health + whole;",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ],
     "note": "SERPENT-SET (PIN MOVED): the heal moved to systems/playerHeal.js, below lootPowers.js and the set powers."
   },
@@ -168,7 +168,7 @@
     "old": "  if (!entity || !(entity.health > 0) || !(amount > 0)) return 0;",
     "new": "  if (!entity || !(amount > 0)) return 0;",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ],
     "note": "SERPENT-SET (PIN MOVED): the heal moved to systems/playerHeal.js, below lootPowers.js and the set powers."
   },
@@ -178,62 +178,62 @@
     "old": "  _healOwed = exact - whole;",
     "new": "  _healOwed = 0;",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ],
     "note": "SERPENT-SET (PIN MOVED): the heal and its fraction moved to systems/playerHeal.js, below lootPowers.js and the set powers, which the serpent's Shed Skin heals through too."
   },
   {
     "name": "LOOT4-the-thorns-uncapped",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  const n = Math.min(THORNS_CAP, wornSum(entity, 'thorns'));",
     "new": "  const n = wornSum(entity, 'thorns');",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-the-focus-uncapped",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  let pct = Math.min(FOCUS_CAP, wornSum(entity, 'focus'));",
     "new": "  let pct = wornSum(entity, 'focus');",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-the-switch-ignored",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  if (!lootRarityOn() || !Array.isArray(item?.affixes)) return [];",
     "new": "  if (!Array.isArray(item?.affixes)) return [];",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-the-thorns-unregistered",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "registerPlayerBlowLanded(LOOT_POWERS, lootLanded);\n",
     "new": "\n",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-the-landed-hook-unread",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "  if (before - after > 0) for (const fn of _landed.values()) { try { fn(entity, blow.attacker, before - after); } catch { /* the loot is not the blow's problem */ } }   // LOOT4\n",
     "new": "\n",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   },
   {
     "name": "LOOT4-the-landed-hook-on-nothing",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "  if (before - after > 0) for (const fn of _landed.values())",
     "new": "  for (const fn of _landed.values())",
     "tests": [
-      "test/loot4_procs.test.js"
+      "test/systems/loot4_procs.test.js"
     ]
   }
 ]

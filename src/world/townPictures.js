@@ -12,6 +12,7 @@
 // texture, so they upload through the same door (systems/textureReplacement.js, `standIn` entries built here).
 
 import { mulberry32 } from '../render/grassPixelArt.js';
+import { dfLook, lookSeed } from './dfLook.js';
 
 export const TOWN_PICTURE_ARCHIVE = 38202;
 
@@ -217,6 +218,6 @@ export const PICTURE = Object.freeze({
 export function townPictureEntries(gate) {
   return TOWN_PICTURES.map((p, record) => ({
     archive: TOWN_PICTURE_ARCHIVE, record, fileName: `town-picture-${record}`, standIn: true, gate,
-    build: async () => p.draw(),
+    build: async () => dfLook(await p.draw(), lookSeed(TOWN_PICTURE_ARCHIVE, record)),   // DF-LOOK: in Daggerfall's colours
   }));
 }

@@ -1,0 +1,273 @@
+[
+  {
+    "name": "SERPENT5-the-title-chance",
+    "file": "server-account/src/serpents.js",
+    "old": "export const SERPENT_TITLE_CHANCE = 1 / 20;",
+    "new": "export const SERPENT_TITLE_CHANCE = 1 / 10;",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-the-aura-chance",
+    "file": "server-account/src/serpents.js",
+    "old": "export const SERPENT_AURA_CHANCE = 1 / 50;",
+    "new": "export const SERPENT_AURA_CHANCE = 1 / 25;",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-the-salt-the-hours",
+    "file": "server-account/src/serpents.js",
+    "old": "export const SERPENT_HONOURS_SALT = 0x434f494c;",
+    "new": "export const SERPENT_HONOURS_SALT = 0x484f5552;",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-grants-to-a-ship-that-stood",
+    "file": "server-account/src/serpents.js",
+    "old": "const draw = c.x === 'stood' ? null : rand(new Uint8Array(4));",
+    "new": "const draw = rand(new Uint8Array(4));",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-laid-by-any-claim",
+    "file": "server-account/src/serpents.js",
+    "old": "serpent_honours = CASE WHEN ${mine} THEN serpent_honours | ?10 ELSE serpent_honours END",
+    "new": "serpent_honours = serpent_honours | ?10",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-new-when-held",
+    "file": "server-account/src/serpents.js",
+    "old": "titleNew: title && !(prior & SERPENT_HONOUR_TITLE),",
+    "new": "titleNew: title,",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-the-kills-row-unwritten",
+    "file": "server-account/src/serpents.js",
+    "old": "title ? 1 : 0, aura ? 1 : 0),",
+    "new": "0, 0),",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-held-off-any-bit",
+    "file": "server-account/src/titles.js",
+    "old": "(Number(player?.serpent_honours) & SERPENT_HONOUR_TITLE)) held.push('coilbreaker');",
+    "new": "Number(player?.serpent_honours)) held.push('coilbreaker');",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-held-by-a-guest",
+    "file": "server-account/src/titles.js",
+    "old": "if (typeof player?.handle === 'string' && player.handle && (Number(player?.serpent_honours) & SERPENT_HONOUR_AURA)) held.push('maelstrom');",
+    "new": "if (Number(player?.serpent_honours) & SERPENT_HONOUR_AURA) held.push('maelstrom');",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-the-word",
+    "file": "src/ui/playerBadge.js",
+    "old": "  maelstrom: 'The Maelstrom',",
+    "new": "  maelstrom: 'Maelstrom',",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-the-paint",
+    "file": "src/ui/playerBadge.js",
+    "old": "maelstrom: 'coilbreaker', beaconlight:",
+    "new": "maelstrom: 'hourbreaker', beaconlight:",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ],
+    "note": "The fifth merge of main (re-aimed by content): the Spire's three after the Maelstrom in AURA_PAINT."
+  },
+  {
+    "name": "SERPENT5-popped-when-held",
+    "file": "src/net/serpent/serpentClaims.js",
+    "old": "if (answer.data.titleNew === true) hear(announce,",
+    "new": "if (answer.data.title === true) hear(announce,",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-the-keys",
+    "file": "src/net/serpent/serpentClaims.js",
+    "old": "Object.freeze({ title: 'coilbreaker', aura: 'maelstrom' });",
+    "new": "Object.freeze({ title: 'coilbreaker', aura: 'turninghour' });",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-the-kind",
+    "file": "src/render/auraRing.js",
+    "old": "maelstrom: Object.freeze({ kind: 8,",
+    "new": "maelstrom: Object.freeze({ kind: 7,",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-the-turn-the-js",
+    "file": "src/render/auraRing.js",
+    "old": "export const maelstromSpin = (t) => -Math.PI * 2 * MAELSTROM_HZ.spin * t;",
+    "new": "export const maelstromSpin = (t) => Math.PI * 2 * MAELSTROM_HZ.spin * t;",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-the-turn-the-shader",
+    "file": "src/render/auraRing.js",
+    "old": "float maelstromSpin() { return -TAU * uTime",
+    "new": "float maelstromSpin() { return TAU * uTime",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-the-eye-filled",
+    "file": "src/render/auraRing.js",
+    "old": "float arm = maelstromArm(r, a) * smoothstep(${MAELSTROM_EYE_R.toFixed(3)}, ${(MAELSTROM_EYE_R + 0.12).toFixed(3)}, r) *",
+    "new": "float arm = maelstromArm(r, a) *",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-no-lip",
+    "file": "src/render/auraRing.js",
+    "old": "col += MS_FOAM * exp(-ld * ld) *",
+    "new": "col += MS_FOAM * 0.0 * exp(-ld * ld) *",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-no-spray",
+    "file": "src/render/auraRing.js",
+    "old": "    spray += exp(-dot(dm, dm) / 0.0003)",
+    "new": "    spray += 0.0 * exp(-dot(dm, dm) / 0.0003)",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-kindled-down",
+    "file": "src/render/auraRing.js",
+    "old": "  float kindled = clamp((uKindle * 1.25 - v) / 0.15, 0.0, 1.0);",
+    "new": "  float kindled = clamp(uKindle, 0.0, 1.0);",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-the-world-hands-no-door",
+    "file": "src/scenes/world.js",
+    "old": "    announce: (kind, key) => announceHonour(kind, key),   // SERPENT5",
+    "new": "    // SERPENT5",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-AUDIT-the-foam-unshaded",
+    "file": "src/render/auraRing.js",
+    "old": "export const MAELSTROM_SHADE = 0.72;",
+    "new": "export const MAELSTROM_SHADE = 1;",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-AUDIT-a-pow-of-a-negative",
+    "file": "src/render/auraRing.js",
+    "old": "return pow(max(0.5 + 0.5 * cos(ph), 0.0),",
+    "new": "return pow(0.5 + 0.5 * cos(ph),",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-AUDIT-drops-past-the-edge",
+    "file": "src/render/auraRing.js",
+    "old": "float hy = crest + (uFlameH * ${MAELSTROM_DROP_TOP.toFixed(2)} - crest)",
+    "new": "float hy = crest + (uFlameH - crest)",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-AUDIT-spray-left-behind",
+    "file": "src/render/auraRing.js",
+    "old": "vec2 dm = vec2((fract(u - h1 - maelstromSpin() / TAU + 0.5) - 0.5) * circ, y - hy);",
+    "new": "vec2 dm = vec2((fract(u - h1 + 0.5) - 0.5) * circ, y - hy);",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-AUDIT-surf-stands-still",
+    "file": "src/render/auraRing.js",
+    "old": "sin(a * 7.0 + uTime * TAU ${hzGlsl(MAELSTROM_HZ.surf)})",
+    "new": "sin(a * 7.0)",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-AUDIT-aura-new-when-held",
+    "file": "server-account/src/serpents.js",
+    "old": "auraNew: aura && !(prior & SERPENT_HONOUR_AURA),",
+    "new": "auraNew: aura,",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-AUDIT-aura-popped-when-held",
+    "file": "src/net/serpent/serpentClaims.js",
+    "old": "if (answer.data.auraNew === true) hear(announce,",
+    "new": "if (answer.data.aura === true) hear(announce,",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-AUDIT-an-older-service-says-the-maelstrom",
+    "file": "src/net/serpent/serpentClaims.js",
+    "old": "if (answer.data.aura === true) say(SERPENT_CLAIM_TEXT.aura());",
+    "new": "if (answer.data.aura !== false) say(SERPENT_CLAIM_TEXT.aura());",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  },
+  {
+    "name": "SERPENT5-AUDIT-the-kills-row-aura-is-the-title",
+    "file": "server-account/src/serpents.js",
+    "old": "title ? 1 : 0, aura ? 1 : 0),",
+    "new": "title ? 1 : 0, title ? 1 : 0),",
+    "tests": [
+      "test/net/serpent/serpent5_honours.test.js"
+    ]
+  }
+]

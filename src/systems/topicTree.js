@@ -62,9 +62,13 @@
 //   onTopicListsUpdated()      - DaggerfallUI.TalkWindow
 //                                .UpdateListboxTopic (the instant tail)
 
-import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';
+import { BUILDING_TYPES, isResidence, OPENED_SHOP_TYPES, OPENED_SHOP_GROUPS } from '../world/buildingNames.js';   // PROF-FOUND: the shops the port opened
 import { QUEST_MESSAGES, isShelved } from './quest/quest.js';   // the message-id enum (QuestMachine.cs:260-270); QUEST-SHELF: a quest set aside
 import { NPC_CONTEXT } from '../characters/staticNpc.js';   // AUDIT 24: NPCData.context is a NUMBER
+import { localizedTable, localizedTextList } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { getLocalizedFactionName } from './textManager.js';   // L10N3e: the organizations' captions, in the player's language
+import { shownPersonName } from './quest/person.js';   // L10N3e: a quest person's caption, as shown
+import { shownItemName } from './item/itemInfo.js';   // L10N3e: a quest thing's caption, as shown
 import { FOUND_KIND_ORDER, FOUND_TALK_GROUPS } from './portPlaces.js';   // YARDS-FOUND: the town's yards on the Where-is page - SHIPYARDS-FOUND: and a port town's places after them, one order
 
 /** ListItemType (:128-133). */
@@ -105,8 +109,9 @@ export const FACTIONS_AND_BUILDINGS = Object.freeze([
 export const KNIGHTLY_ORDER_REGIONS = Object.freeze([0x05, 0x11, 0x12, 0x14, 0x15, 0x16, 0x17, 0x2b, 0x33, 0x37]);
 
 /** The 'buildingNames' localized list (Internal_Strings en id 63) -
- *  one caption per FactionsAndBuildings row. */
-export const REGIONAL_BUILDING_NAMES = Object.freeze([
+ *  one caption per FactionsAndBuildings row, read where
+ *  AddRegionalBuildingTalkItem reads it (:3404). */
+export const regionalBuildingNames = () => localizedTextList('buildingNames', [
   'Temple of Akatosh', 'Temple of Arkay', 'Temple of Dibella', 'Temple of Julianos',
   'Temple of Kynareth', 'Temple of Mara', 'Temple of Stendarr', 'Temple of Zen',
   'Order of the Raven', 'Knights of the Dragon', 'Knights of the Owl', 'Order of the Candle',
@@ -117,31 +122,32 @@ export const REGIONAL_BUILDING_NAMES = Object.freeze([
   'Bookstore', 'Clothing store', 'Gem store', 'Pawn shop',
 ]);
 
-/** The topic captions (Internal_Strings en). */
-export const EN = Object.freeze({
-  anyNews: 'Any news?',
-  whereAmI: 'Where am I?',
-  previousList: 'Previous List',
-  general: 'General',
-  regional: 'Regional',
-  any: 'Any %s',
+/** The topic captions (Internal_Strings en), by their DFU keys
+ *  (:3119/:3125, :3225-3347, :3411). */
+export const EN = localizedTable({
+  anyNews: ['AnyNews', 'Any news?'],
+  whereAmI: ['WhereAmI', 'Where am I?'],
+  previousList: ['PreviousList', 'Previous List'],
+  general: ['General', 'General'],
+  regional: ['Regional', 'Regional'],
+  any: ['any', 'Any %s'],
 });
 
 /** BuildingTypeToGroupString (:2884-2917) over the en table. */
-const GROUP_STRING_BY_TYPE = Object.freeze({
-  [BUILDING_TYPES.Alchemist]: 'Alchemists',
-  [BUILDING_TYPES.Armorer]: 'Armorers',
-  [BUILDING_TYPES.Bank]: 'Banks',
-  [BUILDING_TYPES.Bookseller]: 'Bookstores',
-  [BUILDING_TYPES.ClothingStore]: 'Clothing stores',
-  [BUILDING_TYPES.GemStore]: 'Gem stores',
-  [BUILDING_TYPES.GeneralStore]: 'General stores',
-  [BUILDING_TYPES.GuildHall]: 'Guilds',
-  [BUILDING_TYPES.Library]: 'Libraries',
-  [BUILDING_TYPES.PawnShop]: 'Pawn shops',
-  [BUILDING_TYPES.Tavern]: 'Taverns',
-  [BUILDING_TYPES.WeaponSmith]: 'Weapon smiths',
-  [BUILDING_TYPES.Temple]: 'Local temples',
+const GROUP_STRING_BY_TYPE = localizedTable({
+  [BUILDING_TYPES.Alchemist]: ['Alchemists', 'Alchemists'],
+  [BUILDING_TYPES.Armorer]: ['Armorers', 'Armorers'],
+  [BUILDING_TYPES.Bank]: ['Banks', 'Banks'],
+  [BUILDING_TYPES.Bookseller]: ['Bookstores', 'Bookstores'],
+  [BUILDING_TYPES.ClothingStore]: ['Clothingstores', 'Clothing stores'],
+  [BUILDING_TYPES.GemStore]: ['Gemstores', 'Gem stores'],
+  [BUILDING_TYPES.GeneralStore]: ['Generalstores', 'General stores'],
+  [BUILDING_TYPES.GuildHall]: ['Guilds', 'Guilds'],
+  [BUILDING_TYPES.Library]: ['Libraries', 'Libraries'],
+  [BUILDING_TYPES.PawnShop]: ['Pawnshops', 'Pawn shops'],
+  [BUILDING_TYPES.Tavern]: ['Taverns', 'Taverns'],
+  [BUILDING_TYPES.WeaponSmith]: ['Weaponsmiths', 'Weapon smiths'],
+  [BUILDING_TYPES.Temple]: ['Localtemples', 'Local temples'],
 });
 export const buildingTypeToGroupString = (buildingType) => GROUP_STRING_BY_TYPE[buildingType] ?? '';
 
@@ -594,14 +600,19 @@ export class TopicTree {
           case QUEST_INFO_RESOURCE_TYPE.Person: {
             itemQuestTopic.questionType = QUESTION_TYPE.QuestPerson;
             const person = info.questResource;
-            captionString = person.displayName;
-            dialogPartnerIsSamePersonAsPersonResource = this._dialogPartnerIsSamePerson(person, captionString);
+            // L10N3e: the caption SHOWS the name (Person.cs:617's record
+            // name, in the player's language); the same-person test
+            // (:3159) compares the canonical names, as the partner's is
+            captionString = shownPersonName(person);
+            dialogPartnerIsSamePersonAsPersonResource = this._dialogPartnerIsSamePerson(person, person.displayName);
             break;
           }
           case QUEST_INFO_RESOURCE_TYPE.Thing: {
             itemQuestTopic.questionType = QUESTION_TYPE.QuestItem;
             const item = info.questResource;
-            if (item != null && item.daggerfallUnityItem != null) captionString = item.daggerfallUnityItem.name;
+            // L10N3e: the item's name as shown (DFU's ItemName, :3173, is
+            // minted in the player's language)
+            if (item != null && item.daggerfallUnityItem != null) captionString = shownItemName(item.daggerfallUnityItem);
             break;
           }
         }
@@ -617,7 +628,10 @@ export class TopicTree {
       this.listTopicTellMeAbout.push(newListItem({
         questionType: QUESTION_TYPE.OrganizationInfo,
         factionID: INFO_FACTION_IDS[i],
-        caption: this.deps.factionName?.(INFO_FACTION_IDS[i]) ?? '',
+        // L10N3e: PersistentFactionData.GetFactionName (:3194) is the
+        // record's name through GetLocalizedFactionName (:313) - the
+        // player's language's, by the faction's id
+        caption: getLocalizedFactionName(INFO_FACTION_IDS[i], this.deps.factionName?.(INFO_FACTION_IDS[i]) ?? ''),
         index: i,
       }));
     }
@@ -653,6 +667,18 @@ export class TopicTree {
         }
         this.listTopicLocation.push(itemBuildingTypeGroup);
       }
+    }
+    // PROF-FOUND (2026-10-12, Mac: "Ensure all the professions new stores are flagged on the town map and you can ask
+    // NPCs where they are"; Ledger A): the shops the port opened that C#'s skip list keeps off this page - the Furniture
+    // Store, Carpentry's workbench (world/buildingNames.js OPENED_SHOP_TYPES) - a group each after DFU's, asked as any
+    // building is (LocalBuilding). Their own variable, as the yards' below: the shared one's flow is C#'s, untouched
+    for (const buildingType of OPENED_SHOP_TYPES) {
+      const shops = this.listBuildings.filter((x) => x.buildingType === buildingType);
+      if (!shops.length) continue;
+      const shopGroup = newListItem({ type: LIST_ITEM_TYPE.ItemGroup, caption: OPENED_SHOP_GROUPS[buildingType], listChildItems: [] });
+      shopGroup.listChildItems.push(this._newBackItem());
+      for (const s of shops) shopGroup.listChildItems.push(newListItem({ questionType: QUESTION_TYPE.LocalBuilding, caption: s.name, buildingKey: s.buildingKey }));
+      this.listTopicLocation.push(shopGroup);
     }
     // YARDS-FOUND (2026-10-10, from play: "Ensure these locations appear when talking to NPCs"; Ledger A): the town's
     // Stable and Wagon Yard - the port's own, rows of the directory under a key no building holds and a type no DFU
@@ -766,12 +792,13 @@ export class TopicTree {
 
   /** AddRegionalBuildingTalkItem (:3400-3414). */
   addRegionalBuildingTalkItem(index, itemBuildingTypeGroup) {
-    if (index < 0 || index > REGIONAL_BUILDING_NAMES.length - 1) {
+    const buildingNames = regionalBuildingNames();
+    if (index < 0 || index > buildingNames.length - 1) {
       throw new Error('buildingNames array text not found or idex out of range.');
     }
     itemBuildingTypeGroup.listChildItems.push(newListItem({
       questionType: QUESTION_TYPE.Regional,
-      caption: EN.any.replace('%s', REGIONAL_BUILDING_NAMES[index]),
+      caption: EN.any.replaceAll('%s', buildingNames[index]),
       index,
     }));
   }
@@ -787,7 +814,7 @@ export class TopicTree {
         const item = newListItem({
           questionType: QUESTION_TYPE.Person,
           questID,
-          caption: person.displayName,
+          caption: shownPersonName(person),   // L10N3e: as shown; the same-person test below keeps the canonical name
           key: resourceName,
         });
         let isPlayerInSameLocationWorldCell = false;

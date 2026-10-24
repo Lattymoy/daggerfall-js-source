@@ -18,7 +18,7 @@
  * Where it bites, in the two callers that have it:
  *   - `ui/horizontalSlider.js` - SetIndicator runs three values through
  *     it (:207-211) and SetValue one more (:246-250).
- *   - `player/eotbBillboard.js` - the 8-orientation snap divides the
+ *   - `player/eyeOfTheBeholder/eotbBillboard.js` - the 8-orientation snap divides the
  *     angle by 45, so a player standing exactly side-on to the camera
  *     lands on a tie, and JS's round-toward-+infinity would flip the
  *     sprite one orientation early on one side and not the other.
@@ -39,7 +39,7 @@ export const lerpF = (a, b, t) => Math.fround(a + Math.fround(Math.fround(b - a)
  * floats (OH-A, 2026-09-26: There's a Hole in the Bottom of the Ocean's
  * GetMidpointColor). ui/fadeLayer.js keeps a private double-precision
  * form of the same member - D4 pins FadeBehaviour's steps in doubles
- * (test/d4_fadelayer.test.js).
+ * (test/ui/d4_fadelayer.test.js).
  * @param {ArrayLike<number>} a @param {ArrayLike<number>} b - rgba
  * @param {number} t
  * @returns {number[]}
@@ -64,7 +64,7 @@ export function colorLerp(a, b, t) {
  *  with a third party (GLSL) is two chances to disagree with it.
  *
  *  It was written a second time in `render/labGrass.js` and a first time
- *  in `systems/weatherFront.js`; both now import it from here. */
+ *  in `systems/weather/weatherFront.js`; both now import it from here. */
 export function smoothstep(a, b, x) {
   const u = Math.min(1, Math.max(0, (x - a) / (b - a)));
   return u * u * (3 - 2 * u);

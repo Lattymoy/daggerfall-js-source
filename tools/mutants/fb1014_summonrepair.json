@@ -1,0 +1,146 @@
+[
+  {
+    "name": "SUMMON-REPAIR-the-bit-kept",
+    "file": "src/net/repairLaw.js",
+    "old": "  store.flags[at] = was & ~flag;",
+    "new": "  store.flags[at] = was;",
+    "tests": [
+      "test/net/fb1014_summonrepair.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-REPAIR-the-gold-as-coin",
+    "file": "src/net/repairLaw.js",
+    "old": "  store.flags[at] = was & ~flag;\n  if (gold > 0) creditSave(save, gold, { letter: true });",
+    "new": "  store.flags[at] = was & ~flag;\n  if (gold > 0) creditSave(save, gold);",
+    "tests": [
+      "test/net/fb1014_summonrepair.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-REPAIR-the-faction-looked-for-nowhere",
+    "file": "src/net/repairLaw.js",
+    "old": "  if (at < 0 || !Number.isSafeInteger(store.flags[at])) return 'repair-no-faction';",
+    "new": "  if (!store) return 'repair-no-faction';",
+    "tests": [
+      "test/net/fb1014_summonrepair.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-REPAIR-the-bit-not-asked",
+    "file": "src/net/repairLaw.js",
+    "old": "  if ((was & flag) === 0) return 'repair-not-set';\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1014_summonrepair.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-REPAIR-any-bit",
+    "file": "src/net/repairLaw.js",
+    "old": "  if (!REPAIR_FLAGS.includes(flag)) return null;",
+    "new": "  if (!Number.isSafeInteger(flag)) return null;",
+    "tests": [
+      "test/net/fb1014_summonrepair.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-REPAIR-no-bound",
+    "file": "src/net/repairLaw.js",
+    "old": "  if (!Number.isSafeInteger(gold) || gold < 0 || gold > REPAIR_GOLD_MAX) return null;",
+    "new": "  if (!Number.isSafeInteger(gold) || gold < 0) return null;",
+    "tests": [
+      "test/net/fb1014_summonrepair.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-REPAIR-the-flag-read-as-decimal",
+    "file": "src/net/repairLaw.js",
+    "old": "/^0x[0-9a-f]+$/i.test(s) ? parseInt(s, 16)",
+    "new": "/^0x[0-9a-f]+$/i.test(s) ? parseInt(s, 10)",
+    "tests": [
+      "test/net/fb1014_summonrepair.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-REPAIR-the-developer-gate",
+    "file": "server-account/src/review.js",
+    "old": "  if (!isDeveloper(player, env)) return { error: 'not-developer' };",
+    "new": "",
+    "tests": [
+      "test/net/fb1014_summonrepair.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-REPAIR-no-finding",
+    "file": "server-account/src/review.js",
+    "old": "    staffFinding(db, row, nowS, { act: 'repair', by, note, ticket: repair.ticket, faction: repair.faction, flag: repair.flag, was, gold: repair.gold, from: row.seq, to: seq }),\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1014_summonrepair.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-REPAIR-the-row-out-of-the-batch",
+    "file": "server-account/src/review.js",
+    "old": "    db.prepare('INSERT INTO realm_repairs (char_id, ticket, player, by_handle, at, faction, flag, was, gold, seq, note) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)')\n      .bind(row.id, repair.ticket, row.player, by, nowS, repair.faction, repair.flag, was, repair.gold, seq, note),\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1014_summonrepair.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-REPAIR-no-faucet",
+    "file": "server-account/src/review.js",
+    "old": "    ...(repair.gold > 0 ? [faucetStatement(db, 'repair', Math.floor(nowS / 3600), repair.gold)] : []),\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1014_summonrepair.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-REPAIR-the-ticket-unread",
+    "file": "server-account/src/review.js",
+    "old": "  if (had) return said(had, true);\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1014_summonrepair.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-REPAIR-the-seat-kept",
+    "file": "server-account/src/realm.js",
+    "old": "${seize ? ', lease = NULL' : ''}",
+    "new": "",
+    "tests": [
+      "test/net/fb1014_summonrepair.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-REPAIR-the-gold-unwitnessed",
+    "file": "server-account/src/realm.js",
+    "old": ".bind(at.seq + 1, bytes, key, nowS, witness ? wealthOf(save) - before : 0, at.id, playerId, at.lease, at.seq),",
+    "new": ".bind(at.seq + 1, bytes, key, nowS, 0, at.id, playerId, at.lease, at.seq),",
+    "tests": [
+      "test/net/fb1014_summonrepair.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-REPAIR-the-copy-played",
+    "file": "src/systems/realmSaves.js",
+    "old": "  if (kept && kept.seq === seq) {",
+    "new": "  if (kept) {",
+    "tests": [
+      "test/net/fb1014_summonrepair.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-REPAIR-the-gold-unchecked-by-the-tool",
+    "file": "tools/realmReview.mjs",
+    "old": "flag: repairFlagOf(flag), gold: /^[0-9]+$/.test(gold) ? Number(gold) : NaN",
+    "new": "flag: repairFlagOf(flag), gold: Number(gold)",
+    "tests": [
+      "test/net/fb1014_summonrepair.test.js"
+    ]
+  }
+]

@@ -1,0 +1,42 @@
+[
+  {
+    "name": "HOLD-SHARED-SOLO-KEY-BACK",
+    "file": "src/scenes/world.js",
+    "old": "      key = ident?.private ? privateRoomHere(ident) : roomKeyFor({",
+    "new": "      key = ident?.private ? privateRoomHere(ident) : ident?.kind === 'dungeon' && ident.mapId === 187853213 ? null : roomKeyFor({",
+    "tests": [
+      "test/net/holdshared.test.js"
+    ],
+    "why": "HOLD-SOLO back: Privateer's Hold keys no room"
+  },
+  {
+    "name": "HOLD-SHARED-SOLO-MARK-BACK",
+    "file": "src/scenes/worldModes.js",
+    "old": ", size: builtDungeonSize(dungeonLoc), instance: placeInstance })",
+    "new": ", size: builtDungeonSize(dungeonLoc), instance: placeInstance, ...(isStartDungeon(dungeonLoc) ? { solo: true } : {}) })",
+    "tests": [
+      "test/net/holdshared.test.js"
+    ],
+    "why": "HOLD-SOLO's `solo` back on the Hold's identity"
+  },
+  {
+    "name": "HOLD-SHARED-STAFF-REFUSED-BACK",
+    "file": "src/scenes/world.js",
+    "old": "    if (identity?.kind === 'arena') return { error: 'battle' };\n",
+    "new": "    if (identity?.kind === 'arena') return { error: 'battle' };\n    if (identity?.mapId === 187853213) return { error: 'unavailable' };\n",
+    "tests": [
+      "test/net/holdshared.test.js"
+    ],
+    "why": "AUDIT FB1007b H3 back: a staff /tp to the Hold refused"
+  },
+  {
+    "name": "HOLD-SHARED-WITH-ME-APART-BACK",
+    "file": "src/ui/partyPanel.js",
+    "old": "  && ((p.in ?? 0) !== 2 || (p.bk ?? null) === (here.bk ?? null));",
+    "new": "  && ((p.in ?? 0) !== 2 || (p.bk ?? null) === (here.bk ?? null))\n  && !((p.in ?? 0) === 1 && p.px === 109 && p.py === 158);",
+    "tests": [
+      "test/net/holdshared.test.js"
+    ],
+    "why": "AUDIT FB1007b H5 back: two members in the Hold drawn apart"
+  }
+]

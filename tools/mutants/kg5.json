@@ -1,0 +1,443 @@
+[
+ {
+  "name": "KG5-T-army-told",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "const seatView = (/** @type {any} */ s) => (s ? { id: s.id, name: s.name, chair: s.chair, crown: s.crown, ...(s.ready",
+  "new": "const seatView = (/** @type {any} */ s) => (s ? { id: s.id, name: s.name, chair: s.chair, crown: s.crown, army: s.army, ...(s.ready",
+  "tests": [
+   "test/net/gambit/kg5_table.test.js",
+   "test/net/kg5_relay.test.js"
+  ]
+ },
+ {
+  "name": "KG5-T-deal-wait",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "if (t.seats.every((/** @type {any} */ x) => x?.ready)) t.nextDealAt = now + GAMBIT_FIRST_MS;",
+  "new": "if (t.seats.every((/** @type {any} */ x) => x?.ready)) t.nextDealAt = now;",
+  "tests": [
+   "test/net/gambit/kg5_table.test.js"
+  ]
+ },
+ {
+  "name": "KG5-T-army-check",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "  if (!Array.isArray(army) || armyRefusal(army) !== null) return 'bad army';",
+  "new": "  if (!Array.isArray(army)) return 'bad army';",
+  "tests": [
+   "test/net/gambit/kg5_table.test.js"
+  ]
+ },
+ {
+  "name": "KG5-T-stale",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "  if (gameNo !== undefined && gameNo !== t.gameNo) return 'stale';\n  const out = gambitAct(t.game, p, cmd, rand32);",
+  "new": "  const out = gambitAct(t.game, p, cmd, rand32);",
+  "tests": [
+   "test/net/gambit/kg5_table.test.js"
+  ]
+ },
+ {
+  "name": "KG5-T-beat",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "  else if (t.game.ending) t.endAt = now + GAMBIT_TURN_END_MS;",
+  "new": "  else if (t.game.ending) t.endAt = now;",
+  "tests": [
+   "test/net/gambit/kg5_table.test.js",
+   "test/net/kg5_relay.test.js"
+  ]
+ },
+ {
+  "name": "KG5-T-clock",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "      if (t.game) t.clockAt = now + GAMBIT_TURN_MS;   // the next side's turn, its own clock",
+  "new": "      // the next side's turn, its own clock",
+  "tests": [
+   "test/net/gambit/kg5_table.test.js"
+  ]
+ },
+ {
+  "name": "KG5-T-timeout-count",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "    if (s) s.idle = (s.idle ?? 0) + 1;",
+  "new": "    if (s) s.idle = 0;",
+  "tests": [
+   "test/net/gambit/kg5_table.test.js"
+  ]
+ },
+ {
+  "name": "KG5-T-idle-reset",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "  t.seats[p].idle = 0;   // at the table",
+  "new": "  // at the table",
+  "tests": [
+   "test/net/gambit/kg5_table.test.js"
+  ]
+ },
+ {
+  "name": "KG5-T-winner",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "const winner = how === 'void' ? null : left >= 0 ? 1 - left : t.game.over?.winner ?? null;",
+  "new": "const winner = how === 'void' ? null : left >= 0 ? left : t.game.over?.winner ?? null;",
+  "tests": [
+   "test/net/gambit/kg5_table.test.js",
+   "test/net/kg5_relay.test.js",
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-T-valid-floor",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "    if (!intIn(p.col, 0, KG_COLS - 1) || !intIn(p.row, 0, KG_ROWS - 1) || st.tiles[p.row * KG_COLS + p.col] !== KG_TILE.floor) return false;",
+  "new": "    if (!intIn(p.col, 0, KG_COLS - 1) || !intIn(p.row, 0, KG_ROWS - 1)) return false;",
+  "tests": [
+   "test/net/gambit/kg5_table.test.js",
+   "test/net/kg5_relay.test.js"
+  ]
+ },
+ {
+  "name": "KG5-T-valid-cell",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "    if (cells.has(cell)) return false;",
+  "new": "    if (false) return false;",
+  "tests": [
+   "test/net/gambit/kg5_table.test.js"
+  ]
+ },
+ {
+  "name": "KG5-T-valid-hp",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "!intIn(p.hp, 1, p.maxHp)",
+  "new": "!intIn(p.hp, 1, 10_000)",
+  "tests": [
+   "test/net/gambit/kg5_table.test.js"
+  ]
+ },
+ {
+  "name": "KG5-T-valid-seats",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "  if (t.game !== null && !(validGambitState(t.game) && t.seats.every(Boolean))) return false;",
+  "new": "  if (t.game !== null && !validGambitState(t.game)) return false;",
+  "tests": [
+   "test/net/gambit/kg5_table.test.js"
+  ]
+ },
+ {
+  "name": "KG5-T-wire-cell",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "  if (c.type === 'move') return intIn(c.col, 0, KG_COLS - 1) && intIn(c.row, 0, KG_ROWS - 1) ? { type: 'move', piece: c.piece, col: c.col, row: c.row } : null;",
+  "new": "  if (c.type === 'move') return { type: 'move', piece: c.piece, col: c.col, row: c.row };",
+  "tests": [
+   "test/net/gambit/kg5_table.test.js"
+  ]
+ },
+ {
+  "name": "KG5-T-wire-state",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "  return s.game === null || (validGambitState(s.game) && s.seats.every(Boolean));",
+  "new": "  return true;",
+  "tests": [
+   "test/net/gambit/kg5_table.test.js",
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-T-flip-sides",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "return { ...p, col, row, side: 1 - p.side }; }),",
+  "new": "return { ...p, col, row, side: p.side }; }),",
+  "tests": [
+   "test/net/gambit/kg5_table.test.js",
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-T-unflip",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "  if (cmd?.type !== 'move') return cmd;",
+  "new": "  return cmd;",
+  "tests": [
+   "test/net/gambit/kg5_table.test.js",
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-R-iliac-refuses-kg",
+  "file": "server/src/index.js",
+  "old": "      if (kg && !gambitEmpty(kg)) { refuse('other game'); return; }   // KG5: The King's Gambit's too",
+  "new": "      // KG5: The King's Gambit's too",
+  "tests": [
+   "test/net/kg5_relay.test.js"
+  ]
+ },
+ {
+  "name": "KG5-R-holdem-refuses-kg",
+  "file": "server/src/index.js",
+  "old": "      if (kg && !gambitEmpty(kg)) { await no('other game'); return; }   // KG5: and The King's Gambit's",
+  "new": "      // KG5: and The King's Gambit's",
+  "tests": [
+   "test/net/kg5_relay.test.js"
+  ]
+ },
+ {
+  "name": "KG5-R-kg-refuses-others",
+  "file": "server/src/index.js",
+  "old": "      if ((hold && !holdemEmpty(hold)) || (ili && !iliacEmpty(ili))) { refuse('other game'); return; }",
+  "new": "      if (false) { refuse('other game'); return; }",
+  "tests": [
+   "test/net/kg5_relay.test.js"
+  ]
+ },
+ {
+  "name": "KG5-R-stored-check",
+  "file": "server/src/index.js",
+  "old": "          if (gambitTableValid(v)) this._gambit.set(Number(k), v);",
+  "new": "          if (v) this._gambit.set(Number(k), v);",
+  "tests": [
+   "test/net/kg5_relay.test.js"
+  ]
+ },
+ {
+  "name": "KG5-R-alarm",
+  "file": "server/src/index.js",
+  "old": "    const gheld = await this._gambitTick();",
+  "new": "    const gheld = false;",
+  "tests": [
+   "test/net/kg5_relay.test.js"
+  ]
+ },
+ {
+  "name": "KG5-R-leave",
+  "file": "server/src/index.js",
+  "old": "    if (a.id && String(a.key ?? '').startsWith('interior:')) { try { await this._gambitLeave(a, Date.now()); } catch (e) { console.warn('[gambit] leave failed', e?.message ?? e); } }",
+  "new": "    // the leave",
+  "tests": [
+   "test/net/kg5_relay.test.js"
+  ]
+ },
+ {
+  "name": "KG5-R-holdem-stands-kg",
+  "file": "server/src/index.js",
+  "old": "      if (await this._iliacUp(a.id, now)) await this._iliacSave();   // CARDS10: and off an Iliac table\n      if (await this._gambitUp(a.id, now)) await this._gambitSave();   // KG5: and off a King's Gambit table",
+  "new": "      if (await this._iliacUp(a.id, now)) await this._iliacSave();   // CARDS10: and off an Iliac table",
+  "tests": [
+   "test/net/kg5_relay.test.js"
+  ]
+ },
+ {
+  "name": "KG5-R-iliac-stands-kg",
+  "file": "server/src/index.js",
+  "old": "      if (stood) await this._holdemSave();\n      if (await this._gambitUp(a.id, now)) await this._gambitSave();   // KG5: and off a King's Gambit table",
+  "new": "      if (stood) await this._holdemSave();",
+  "tests": [
+   "test/net/kg5_relay.test.js"
+  ]
+ },
+ {
+  "name": "KG5-R-kg-stands-holdem",
+  "file": "server/src/index.js",
+  "old": "      for (const [k, other] of holdem) { const up = holdemStand(other, { id: a.id, now }); if (up.length) { stood = true; this._holdemSend(k, up, now); } }\n      if (stood) await this._holdemSave();\n      if (await this._iliacUp(a.id, now)) await this._iliacSave();\n      msgs = r;",
+  "new": "      if (await this._iliacUp(a.id, now)) await this._iliacSave();\n      msgs = r;",
+  "tests": [
+   "test/net/kg5_relay.test.js"
+  ]
+ },
+ {
+  "name": "KG5-R-sweep",
+  "file": "server/src/index.js",
+  "old": "    if (gambit.size && this._gambitGhosts(gambit, Date.now(), true)) await this._gambitSave();",
+  "new": "    // the sweep",
+  "tests": [
+   "test/net/kg5_relay.test.js"
+  ]
+ },
+ {
+  "name": "KG5-W-relay-min",
+  "file": "src/net/wire.js",
+  "old": "export const GAMBIT_RELAY_MIN = 204;",
+  "new": "export const GAMBIT_RELAY_MIN = 203;",
+  "tests": [
+   "test/net/kg5_relay.test.js",
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-W-frame-cap",
+  "file": "src/net/wire.js",
+  "old": "    if (text.length > GAMBIT_FRAME_MAX) return { error: 'frame too large' };",
+  "new": "    // the cap",
+  "tests": [
+   "test/net/kg5_relay.test.js"
+  ]
+ },
+ {
+  "name": "KG5-C-gate",
+  "file": "src/net/online.js",
+  "old": "      if (primary) this.gambitOk = relaySupportsGambit(relayV);",
+  "new": "      if (primary) this.gambitOk = true;",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-C-room",
+  "file": "src/net/online.js",
+  "old": "      if (!validGambitOut(m) || (!primary && m.receipt === undefined)) return;",
+  "new": "      if (!validGambitOut(m)) return;",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-M-flip",
+  "file": "src/systems/gambit/gambitRemoteTable.js",
+  "old": "  view(game) { return this.side === 1 ? flipGambitState(game) : game; }",
+  "new": "  view(game) { return game; }",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-M-check",
+  "file": "src/systems/gambit/gambitRemoteTable.js",
+  "old": "    const no = gambitRefusal(this.state, 0, cmd);\n    if (no) return no;",
+  "new": "    const no = null;",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-M-gap",
+  "file": "src/systems/gambit/gambitRemoteTable.js",
+  "old": "      if (q.theirs && now < this.shownAt + GAMBIT_REMOTE_GAP_MS) break;",
+  "new": "      // the gap",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-M-beat",
+  "file": "src/systems/gambit/gambitRemoteTable.js",
+  "old": "        this.resultAt = now + GAMBIT_RESULT_MS;",
+  "new": "        this.resultAt = now;",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-M-winner",
+  "file": "src/systems/gambit/gambitRemoteTable.js",
+  "old": "const winner = e.winner === null ? null : this.side === 1 ? 1 - e.winner : e.winner;",
+  "new": "const winner = e.winner;",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-M-one-at-a-time",
+  "file": "src/systems/gambit/gambitRemoteTable.js",
+  "old": "    if (this.sentAt !== null || this.queue.length) { if (this.held.length < GAMBIT_HELD_MAX) this.held.push(cmd); return null; }",
+  "new": "    // one at a time",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-M-unflip",
+  "file": "src/systems/gambit/gambitRemoteTable.js",
+  "old": "    if (!this.sendCmd(this.side === 1 ? unflipCommand(cmd) : cmd)) return 'link';",
+  "new": "    if (!this.sendCmd(cmd)) return 'link';",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-M-let-go",
+  "file": "src/systems/gambit/gambitRemoteTable.js",
+  "old": "    if (this.sentAt !== null && now - this.sentAt >= GAMBIT_SENT_MS) this.sentAt = null;",
+  "new": "    // let go",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-P-flip",
+  "file": "src/world/gambitCloth.js",
+  "old": "  const way = flip ? -1 : 1;",
+  "new": "  const way = 1;",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-H-watcher-mine",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "    const mine = s.playing() && st.turn === 0 && !st.ending && !watching();",
+  "new": "    const mine = s.playing() && st.turn === 0 && !st.ending;",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-H-guest-places",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "{ flip: side === 1 });",
+  "new": "{ flip: false });",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-H-close-stands",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "      if (online()) standUp();   // KG5: up from the relay's board",
+  "new": "      if (online()) g.sitting = false;   // KG5: up from the relay's board",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-H-regulars-stand",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "    standUp();\n    g.mode = 'regulars';",
+  "new": "    g.mode = 'regulars';",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-H-seated-army",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "      if (me >= 0 && g.phase === 'setup') g.phase = 'army';",
+  "new": "      if (false) g.phase = 'army';",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-H-deal-opens",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "    if (st?.game && (dealt || !s || s.gameNo !== st.gameNo)) openOnline(st, now, dealt);",
+  "new": "    if (st?.game && dealt && s) openOnline(st, now, dealt);",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-H-watch-step",
+  "file": "src/ui/gambitTableHud.js",
+  "old": "        out.actions.push({ id: 'regulars', label: GAMBIT_ONLINE_PRESS.regulars, enabled: true, strip: true });\n        out.actions.push({ id: 'stand', label: GAMBIT_PRESS.stand, enabled: true, kind: 'quiet', strip: true });",
+  "new": "        out.actions.push({ id: 'stand', label: GAMBIT_PRESS.stand, enabled: true, kind: 'quiet', strip: true });",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "KG5-H-result-why",
+  "file": "src/ui/gambitTableHud.js",
+  "old": "        why: online && !watching ? onlineEnd(over, name) : null,",
+  "new": "        why: null,",
+  "tests": [
+   "test/net/kg5_client.test.js"
+  ]
+ }
+]

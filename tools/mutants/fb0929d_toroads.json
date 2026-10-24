@@ -4,7 +4,9 @@
     "file": "src/scenes/world.js",
     "old": "|| (!!travelOptions && !!modSetting(TRAVEL_OPTIONS_VENDOR, 'GeneralOptions.FirstPersonTravelFollowsRoads') && isEnhanced()",
     "new": "|| (!!travelOptions && isEnhanced()",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "Every First-Person Travel pick is routed, the roads key never asked: the original straight journey Mac asked back is gone."
   },
   {
@@ -12,7 +14,9 @@
     "file": "src/scenes/world.js",
     "old": "&& !!modSetting(TRAVEL_OPTIONS_VENDOR, 'GeneralOptions.FirstPersonTravelFollowsRoads')",
     "new": "&& !modSetting(TRAVEL_OPTIONS_VENDOR, 'GeneralOptions.FirstPersonTravelFollowsRoads')",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "Off reads as on: the roads switched on walk straight through the forest - the report - and switched off follow them."
   },
   {
@@ -20,7 +24,9 @@
     "file": "src/scenes/world.js",
     "old": "!!modSetting(TRAVEL_OPTIONS_VENDOR, 'GeneralOptions.FirstPersonTravelFollowsRoads')",
     "new": "!!modSetting(TRAVEL_OPTIONS_VENDOR, 'GeneralOptions.FirstPersonTravel')",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "The roads read another key - First-Person Travel itself: every first-person journey routed, the roads key inert."
   },
   {
@@ -28,15 +34,19 @@
     "file": "src/scenes/world.js",
     "old": "'GeneralOptions.FirstPersonTravelFollowsRoads') && isEnhanced() && !!travelView); }",
     "new": "'GeneralOptions.FirstPersonTravelFollowsRoads') && !!travelView); }",
-    "tests": ["test/fb0929d_toroads.test.js"],
-    "note": "The classic skin's pick is routed too - refused in the Overworld's words ('part of the enhanced interface'), no journey at all: Travel Options no longer exact there."
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
+    "note": "The classic skin's pick is routed too - refused in the Overworld's words ('Turn on the enhanced interface'), no journey at all: Travel Options no longer exact there."
   },
   {
     "name": "TO-ROADS-first-person-only",
     "file": "src/scenes/world.js",
     "old": "function tvRoutesJourneys() { return tvOwnsJourneys() || (",
     "new": "function tvRoutesJourneys() { return (",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "The Overworld's own journeys are no longer routed unless the first-person roads key is on: OW-ONLY's map pick becomes the mod's straight ground journey."
   },
   {
@@ -44,7 +54,9 @@
     "file": "src/scenes/world.js",
     "old": "    if (tvRoutesJourneys()) {\n      const why = travelViewAllowed();",
     "new": "    if (tvOwnsJourneys()) {\n      const why = travelViewAllowed();",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "The map's fork asks who owns the journey: with both switches on the pick is still the mod's straight journey - the report, unfixed."
   },
   {
@@ -52,7 +64,9 @@
     "file": "src/scenes/world.js",
     "old": "      if (opts?.playerControlled && tvRoutesJourneys()) return;\n",
     "new": "      if (opts?.playerControlled && tvOwnsJourneys()) return;\n",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "A first-person route refused (no way by land) falls through to DFU's fast travel - a paid teleport past the route's own law (AUDIT OW3 J2's hole, reopened)."
   },
   {
@@ -60,7 +74,9 @@
     "file": "src/scenes/world.js",
     "old": "&& !tvRoutesJourneys()) townTalk.say('You cannot travel there now.');",
     "new": "&& !tvOwnsJourneys()) townTalk.say('You cannot travel there now.');",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "A first-person coordinate pick the route refused (the peaks) is also told 'You cannot travel there now.' beside its own words."
   },
   {
@@ -68,7 +84,9 @@
     "file": "src/scenes/world.js",
     "old": "    if (!tvOwnsJourneys() || travelView.state !== 'off' || !travelOptions.isTravelActive || !travelOptions.state?.autopilot) return;",
     "new": "    if (!tvRoutesJourneys() || travelView.state !== 'off' || !travelOptions.isTravelActive || !travelOptions.state?.autopilot) return;",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "The Overworld rises over a first-person route the first frame nothing forbids it - no longer first person."
   },
   {
@@ -76,7 +94,9 @@
     "file": "src/scenes/world.js",
     "old": "&& travelOptions?.isTravelActive && tvOwnsJourneys()) travelOptions.messages.pauseTravel(); },",
     "new": "&& travelOptions?.isTravelActive && tvRoutesJourneys()) travelOptions.messages.pauseTravel(); },",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "The Overworld raised by hand over a first-person route and brought down stops the journey - First-Person Travel's own walks on."
   },
   {
@@ -84,7 +104,9 @@
     "file": "src/scenes/world.js",
     "old": "    if (journey && !travelView?.active && tvOwnsJourneys()) {",
     "new": "    if (journey && !travelView?.active && tvRoutesJourneys()) {",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "A first-person route crawls at walking pace, held for a view that never rises (AUDIT OW4 J5's hold is the Overworld's journey's alone)."
   },
   {
@@ -92,7 +114,9 @@
     "file": "src/systems/modSettings.js",
     "old": "      'GeneralOptions.FirstPersonTravelFollowsRoads': Object.freeze({ default: false,",
     "new": "      'GeneralOptions.FirstPersonTravelFollowsRoads': Object.freeze({ default: true,",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "On by default: First-Person Travel is no longer the original travel option Mac asked back ('Off by default')."
   },
   {
@@ -100,7 +124,9 @@
     "file": "src/systems/features.js",
     "old": "\n    'GeneralOptions.FirstPersonTravelFollowsRoads',\n  ]),",
     "new": "\n  ]),",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "Declared but on no screen: a key nobody can turn (TORCH-BIND's lesson)."
   },
   {
@@ -108,7 +134,9 @@
     "file": "src/scenes/world.js",
     "old": "        return summary ? travelViewRouteTo(summary, { roads: tvMapForcesRoads() }) : false;",
     "new": "        return summary ? travelOptions.beginTravelAlongRoute({ legs: routeLegs(planRoute(playerTravelPixel(), summary.pixel, { roads: terrainGen.roads()?.roads ?? null })?.pixels ?? []), summary, name: summary.name }, !!opts?.speedCautious) : false;",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "THE ONE CONSTRUCTION SEAM broken: the fork plans its own route - no join, no peaks' law, no sea, no party, no trip line - beside the Overworld's."
   },
   {
@@ -116,7 +144,9 @@
     "file": "src/scenes/world.js",
     "old": "return tvOwnsJourneys() || (!!travelOptions && !!modSetting(",
     "new": "return tvOwnsJourneys() || (!!modSetting(",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "equivalent": true,
     "why": "Belt and braces, tvOwnsJourneys' own term: every door that asks has met the mod first - beginAcceleratedTravel returns on !travelOptions, the map's walked trip needs the popup's playerControlled (false with the mod off: isPlayerControlledTravel has no settings), and the coordinates popup opens only while coordsAllowed (the mod on)."
   },
@@ -125,7 +155,9 @@
     "file": "src/scenes/world.js",
     "old": "'GeneralOptions.FirstPersonTravelFollowsRoads') && isEnhanced() && !!travelView); }",
     "new": "'GeneralOptions.FirstPersonTravelFollowsRoads') && isEnhanced()); }",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "equivalent": true,
     "why": "Belt and braces, tvOwnsJourneys' own term: the view is built at the host's boot, before any map can open or a Resume be asked for, so no caller ever finds it missing."
   },
@@ -134,7 +166,9 @@
     "file": "src/scenes/world.js",
     "old": "return summary ? travelViewRouteTo(summary, { roads: tvMapForcesRoads() }) : false;",
     "new": "return summary ? travelViewRouteTo(summary) : false;",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "The map's first-person pick asks the Overworld's Path switch: on Free, \"First Person Travel Follows Roads\" walks across country."
   },
   {
@@ -142,7 +176,9 @@
     "file": "src/scenes/world.js",
     "old": "return travelViewWalkTo(at, pick.pixel, { roads: tvMapForcesRoads() });",
     "new": "return travelViewWalkTo(at, pick.pixel);",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "A first-person spot pick follows the Path switch: on Free it is pulled taut across country."
   },
   {
@@ -150,7 +186,9 @@
     "file": "src/scenes/world.js",
     "old": "const roads = tvMapForcesRoads();   // TO-ROADS x OW-PATH",
     "new": "const roads = false;   // TO-ROADS x OW-PATH",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "The map's Resume of a first-person route re-plans it by the Path switch: on Free, across country."
   },
   {
@@ -158,7 +196,9 @@
     "file": "src/scenes/world.js",
     "old": "let net = (roads || travelPathUsesRoads()) ? roadNet : null;",
     "new": "let net = travelPathUsesRoads() ? roadNet : null;",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "The place's route drops the forced roads: the first-person pick on Free never asks the road network."
   },
   {
@@ -166,15 +206,19 @@
     "file": "src/scenes/world.js",
     "old": "let wnet = (roads || travelPathUsesRoads()) ? roadNet : null;",
     "new": "let wnet = travelPathUsesRoads() ? roadNet : null;",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "The spot's walk drops the forced roads (a Free walk, the roads never asked)."
   },
   {
     "name": "TO-ROADS-a-forced-route-pulled-taut",
     "file": "src/scenes/world.js",
-    "old": "if (roads || travelPathUsesRoads() || !plan?.pixels",
-    "new": "if (travelPathUsesRoads() || !plan?.pixels",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "old": "{ return roads || travelPathUsesRoads() ? plan",
+    "new": "{ return travelPathUsesRoads() ? plan",
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "A forced-roads route the roads do not help is pulled taut as a Free one is - not the Roads switch's law."
   },
   {
@@ -182,7 +226,9 @@
     "file": "src/scenes/world.js",
     "old": "function tvMapForcesRoads() { return !tvOwnsJourneys() && tvRoutesJourneys(); }",
     "new": "function tvMapForcesRoads() { return tvRoutesJourneys(); }",
-    "tests": ["test/fb0929d_toroads.test.js"],
+    "tests": [
+      "test/systems/travel/fb0929d_toroads.test.js"
+    ],
     "note": "The Overworld's own journeys are forced onto the roads too: its Path switch on Free no longer frees them."
   }
 ]

@@ -62,7 +62,7 @@ export const heirButtonLabel = (p) => `Carry on as ${fullNameOf(p.given, p.surna
  */
 export function takeUpLine({ storage, tab, familyId, personId, now = Date.now() }) {
   const family = loadFamily(storage, familyId);
-  if (!family) return { ok: false, why: 'That house is not on this device. Play any character of the account online once, then try again.' };
+  if (!family) return { ok: false, why: 'That house is not on this device. Play any character on this account online once, then try again.' };
   const base = family.rev;   // the store's rev this copy was made from (store.js storeFamily's `base`)
   const heir = personOf(family, personId);
   if (!heir || !isAlive(heir) || (heir.kind ?? 'member') !== 'member' || heir.retired != null || heir.id === family.pending?.fallenId) {
@@ -72,10 +72,10 @@ export function takeUpLine({ storage, tab, familyId, personId, now = Date.now() 
   heir.characterId = null;   // never played as a living character here: born (takeBorn asks the same)
   setCurrent(family, heir.id);
   touch(family);
-  if (!storeFamily(storage, family, base)) return { ok: false, why: 'This device would not keep the family record. Free some space and try again.' };
+  if (!storeFamily(storage, family, base)) return { ok: false, why: 'The family record could not be saved on this device. Free some space and try again.' };
   const place = family.seat?.region && family.seat?.loc ? family.seat : DEFAULT_BIRTH_PLACE;
   if (!leaveBirth(tab, { familyId: family.id, personId: heir.id, region: place.region, loc: place.loc, estate: 0 }, now)) {
-    return { ok: false, why: 'This window would not keep the birth. Try again.' };
+    return { ok: false, why: 'The new heir could not be saved in this window. Try again.' };
   }
   return { ok: true, family, place: { region: place.region, loc: place.loc } };
 }

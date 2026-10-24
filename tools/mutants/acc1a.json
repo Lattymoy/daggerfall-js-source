@@ -5,7 +5,7 @@
     "old": "  if (v !== TOKEN_V) return { ok: false, why: 'version' };",
     "new": "  if (false) return { ok: false, why: 'version' };",
     "tests": [
-      "test/identitytoken.test.js"
+      "test/net/identitytoken.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (!good) return { ok: false, why: 'signature' };",
     "new": "  good = true;",
     "tests": [
-      "test/identitytoken.test.js"
+      "test/net/identitytoken.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (!valid(claims)) return { ok: false, why: 'claims' };",
     "new": "  if (false) return { ok: false, why: 'claims' };",
     "tests": [
-      "test/identitytoken.test.js"
+      "test/net/identitytoken.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (nowS >= claims.e) return { ok: false, why: 'expired' };",
     "new": "  if (nowS > claims.e + 86400) return { ok: false, why: 'expired' };",
     "tests": [
-      "test/identitytoken.test.js"
+      "test/net/identitytoken.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (nowS >= claims.e) return { ok: false, why: 'expired' };",
     "new": "  if (nowS > claims.e) return { ok: false, why: 'expired' };",
     "tests": [
-      "test/identitytoken.test.js"
+      "test/net/identitytoken.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (claims.i > nowS + skewS) return { ok: false, why: 'future' };",
     "new": "  if (false) return { ok: false, why: 'future' };",
     "tests": [
-      "test/identitytoken.test.js"
+      "test/net/identitytoken.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if (c.e - c.i > maxTtlS) return false;        // a minter that got greedy",
     "new": "  // the minter is trusted about how long its own token lives",
     "tests": [
-      "test/identitytoken.test.js"
+      "test/net/identitytoken.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (!nameIsIssuable(c.n)) return false;",
     "new": "  if (typeof c.n !== 'string') return false;",
     "tests": [
-      "test/identitytoken.test.js"
+      "test/net/identitytoken.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    && sanitizeName(name) === name;",
     "new": "    && /^[ -~]+$/.test(name);",
     "tests": [
-      "test/identitytoken.test.js"
+      "test/net/identitytoken.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    return await subtle.importKey('raw', bytes, { name: 'Ed25519' }, false, ['verify']);",
     "new": "    return await subtle.importKey('raw', bytes, { name: 'Ed25519' }, true, ['verify']);",
     "tests": [
-      "test/identitytoken.test.js"
+      "test/net/identitytoken.test.js"
     ],
     "equivalent": true,
     "why": "Extractable changes nothing an attacker can use: the key is PUBLIC, and its usages still exclude sign - which is the law the pin actually holds and which a mutation of `['verify']` would break. Recorded rather than dropped because the line reads like it matters and the next reader should know which half does."
@@ -97,7 +97,7 @@
     "old": "  if (typeof token !== 'string' || token.length > TOKEN_MAX_CHARS) return { ok: false, why: 'shape' };",
     "new": "  if (typeof token !== 'string') return { ok: false, why: 'shape' };",
     "tests": [
-      "test/identitytoken.test.js"
+      "test/net/identitytoken.test.js"
     ],
     "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
@@ -107,7 +107,7 @@
     "old": "  try { claims = JSON.parse(dec.decode(raw)); } catch { return { ok: false, why: 'json' }; }",
     "new": "  claims = JSON.parse(dec.decode(raw));",
     "tests": [
-      "test/identitytoken.test.js"
+      "test/net/identitytoken.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "old": "export const ID_RE = /^[A-Za-z0-9_-]{4,40}$/;",
     "new": "export const ID_RE = /^[A-Za-z0-9_-]{1,64}$/;",
     "tests": [
-      "test/identitytoken.test.js"
+      "test/net/identitytoken.test.js"
     ]
   },
   {
@@ -125,7 +125,7 @@
     "old": "  if (!claimsValid(claims)) throw new TypeError('mintToken refused a claim set it could not verify');",
     "new": "  if (false) throw new TypeError('mintToken refused a claim set it could not verify');",
     "tests": [
-      "test/identitytoken.test.js"
+      "test/net/identitytoken.test.js"
     ]
   },
   {
@@ -134,7 +134,7 @@
     "old": "  if (!sig || sig.length !== SIG_BYTES) return { ok: false, why: 'sig-shape' };",
     "new": "  if (!sig) return { ok: false, why: 'sig-shape' };",
     "tests": [
-      "test/identitytoken.test.js"
+      "test/net/identitytoken.test.js"
     ],
     "equivalent": true,
     "why": "WebCrypto's own verify answers false for a 63-byte Ed25519 signature, so the refusal lands either way and no pin can tell the two apart from outside. The check is kept because it says NO before a crypto call rather than after one, which is the same reason the length bound above it exists."
@@ -145,7 +145,7 @@
     "old": "  const signed = enc.encode(`${TOKEN_V}.${body}`);",
     "new": "  const signed = enc.encode(body);",
     "tests": [
-      "test/identitytoken.test.js"
+      "test/net/identitytoken.test.js"
     ]
   },
   {
@@ -154,7 +154,7 @@
     "old": "// ACC1d BUILT BOTH (2026-09-22), so the paragraphs above describe",
     "new": "// NOTHING HERE ENFORCES EITHER YET, AND THAT IS THE POINT OF SAYING SO:",
     "tests": [
-      "test/acc1dclient.test.js"
+      "test/net/acc1dclient.test.js"
     ],
     "note": "ACC1a wrote that sentence while the refusal was unbuilt and it was true; the relay imports this file now, so it is a lie - DEPLOY-PROSE's shape exactly, and the shape this project keeps paying for. The gate derives membership from RELAY_GRAPH, so it cannot go stale by nobody remembering."
   },
@@ -164,7 +164,7 @@
     "old": "// AND THE HONEST BOUND, BECAUSE THE REFUSAL IS PER ROOM: a Durable",
     "new": "// AND THE WINDOW IS SHUT, WHEREVER THE TOKEN IS PRESENTED: a Durable",
     "tests": [
-      "test/acc1dclient.test.js"
+      "test/net/acc1dclient.test.js"
     ],
     "note": "A token replayed into a DIFFERENT room, or after that room's object has been evicted, is not caught - bible ACC1d D4 refused to claim otherwise, because a comment claiming a shut window is worse than no comment at all."
   }

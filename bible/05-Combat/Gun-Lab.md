@@ -11,9 +11,9 @@ is the one no source sweep can: what does it FEEL like on the classic
 surface, at a real window size, with a real cadence.
 
 **Nothing here touches the game.** `combat/fpsWeapon.js`,
-`combat/weaponRig.js` and `characters/weapons.js` are untouched; no
+`combat/weapon/weaponRig.js` and `characters/weapons.js` are untouched; no
 module the game runs imports `src/tools/gunLab.js`, and
-`test/gunLab.test.js` fails if one ever does. This port is a 1:1 DFU
+`test/combat/weapon/gunLab.test.js` fails if one ever does. This port is a 1:1 DFU
 translation — a gun is a DEPARTURE, and a departure gets prototyped
 and judged before it is built, which is the same door
 `grass-proto.html` and `water.html` came through.
@@ -29,7 +29,7 @@ ever built for real:
   Left/Center/Right with a fractional offset, with the large-HUD
   offset lifting it. The alignment enum is the port's OWN — asserted
   identical, not equal — and it moved to a leaf
-  (`src/combat/weaponAlign.js`, which `fpsWeapon.js` re-exports, so
+  (`src/combat/weapon/weaponAlign.js`, which `fpsWeapon.js` re-exports, so
   its surface is unchanged) because three integers living in a module
   that reaches the CIF reader, the inventory and the Morrowind arms
   cost the lab's standalone build four megabytes of `.nif` it never
@@ -63,7 +63,7 @@ open on the same weapon.
 Mac: *"all the idle, bob enhancements from our in-game weapon mods
 need to be applied"*. They are — by **running** them. `Offset`, `Bob`
 and `Inertia`, and `GetWeaponRect`'s transform, are imported from
-`src/combat/weaponWidgetMotion.js`, which is WW1's 1:1 port of
+`src/combat/weapon/weaponWidgetMotion.js`, which is WW1's 1:1 port of
 FPSWeaponClone's own modules; the settings come from the mod's
 declared defaults through `readWidgetSettings`, so every multiplier
 LoadSettings applies (Offset.Speed ×10, Bob.Length ÷100, SizeX/Y ×2,
@@ -72,9 +72,9 @@ SpeedMove ×4, SpeedState ×500, Inertia.Scale/Speed ×500, Forward
 mod's switches.
 
 **The split.** Those four functions were inline in
-`combat/weaponWidget.js`; the arithmetic is untouched, the component
+`combat/weapon/weaponWidget.js`; the arithmetic is untouched, the component
 imports them back and calls them where it used to do the work itself,
-and `test/ww1_weaponwidget.test.js` passes unchanged. They are their
+and `test/combat/weapon/ww1_weaponwidget.test.js` passes unchanged. They are their
 own file for two reasons: a second copy of a bob pinned to an IL
 offset would be a second copy to drift, and the component reaches the
 inventory, the equip tables and a vendored mod's mesh folder — four
@@ -147,7 +147,7 @@ cannot be interrupted (FPSWeapon.OnAttackDirection).
 ## The art, and why it is sliced in the browser
 
 `public/art/gun-idle.png` and `public/art/gun-fire-sheet.webp` are
-OURS — on `test/doctrine.test.js`'s allow-list with that reason, no
+OURS — on `test/tooling/doctrine.test.js`'s allow-list with that reason, no
 ARENA2 pixel in them. The sheet is cut at runtime rather than
 pre-exported as six PNGs, because that makes the background key a LIVE
 CONTROL, and the key is the whole problem:
@@ -217,7 +217,7 @@ lock-up lands *with* the sprite arriving.
 **Every pick is CC0** — the only license that clears
 `public/README.md`'s bar for what ships out of `public/` without an
 attribution trail to maintain. All 16 files are on
-`test/doctrine.test.js`'s allow-list, `public/sfx/SOURCES.md` names
+`test/tooling/doctrine.test.js`'s allow-list, `public/sfx/SOURCES.md` names
 every one with its uploader and link, and the probe fetches all 16 and
 fails if any is not RIFF / 11025 / 8-bit / mono.
 
@@ -235,7 +235,7 @@ to fit into the paperdoll's right hand."*
 weapon's paperdoll layer and its inventory icon are the *same record*
 in Daggerfall — `GetInventoryTextureArchive` hands back the item's
 `PlayerTextureArchive`, the very field the doll draws from
-(`src/characters/paperdollArt.js`) — so whatever is cut out of the
+(`src/characters/paperdoll/paperdollArt.js`) — so whatever is cut out of the
 sprite is cut out of both. That is exactly why classic weapon icons
 have a notch in them: it is not an icon with a hole, it is a doll
 layer being shown in a list.
@@ -341,7 +341,16 @@ the recoil, the shake and the sounds were settled, and it is still the
 fastest way to change any of them.
 
 What the lab settled and the weapon inherited: the sprite sheet and
-its slicing (moved to `src/combat/gunSheet.js`, the game's home now -
+its slicing (moved to `src/combat/gun/gunSheet.js`, the game's home now -
 the lab reads it from there), the six-frame cycle, the sounds, and the
 art. What the weapon needed that the lab could not give it: the
 templates, the skill, the damage, the ammunition and the hosts.
+
+## The second lab
+
+**The pistol lab** (2026-10-21): a dwarven flintlock pistol, one in
+either hand, through this page's method - its own page, its own
+probe, its own deploy at `/preview/pistol-lab/`. It runs this lab's
+machine and sound player, the game's frame and feel that this lab
+graduated into, and the Two-Hands law for the pair.
+`bible/05-Combat/Pistol-Lab.md` is its record.

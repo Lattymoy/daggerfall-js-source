@@ -1,0 +1,733 @@
+[
+  {
+    "name": "STAFF-PANEL5-FEEDS-chat-as-other",
+    "file": "server/src/staffFeeds.js",
+    "old": "['chat', 5]",
+    "new": "['chat', 6]",
+    "why": "a chat frame counted as other",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-refusal-not-hot",
+    "file": "server/src/staffFeeds.js",
+    "old": "(m.nr | 0) > s.nr0 ||",
+    "new": "(m.nr | 0) > s.nr0 + 1000 ||",
+    "why": "a refused frame never makes a socket over a limit",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-close-words-unread",
+    "file": "server/src/staffFeeds.js",
+    "old": "!why.startsWith('too many')",
+    "new": "why.startsWith('too many')",
+    "why": "a \"too many\" close uncounted",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-quiet-reported",
+    "file": "server/src/staffFeeds.js",
+    "old": "if (!s.hot && !netHot(s, m)) return;",
+    "new": "if (false) return;",
+    "why": "a quiet socket reported",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-host-as-owner",
+    "file": "server/src/staffFeeds.js",
+    "old": "if (indoor) row.h = Math.max(row.h, live.size);",
+    "new": "if (!indoor) row.h = Math.max(row.h, live.size);",
+    "why": "an indoor host counted as owner",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-body-counted",
+    "file": "server/src/staffFeeds.js",
+    "old": "r.d !== 1 && r.i != null",
+    "new": "r.i != null",
+    "why": "a dead monster counted live",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-boss-as-regular",
+    "file": "server/src/staffFeeds.js",
+    "old": "row.bo++;",
+    "new": "row.r++;",
+    "why": "a boss counted regular",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-elite-unsplit",
+    "file": "server/src/staffFeeds.js",
+    "old": "else if (r.z === 1) row.e++;",
+    "new": "else if (r.z === 2) row.e++;",
+    "why": "an elite counted regular",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-strip-not-hot",
+    "file": "server/src/staffFeeds.js",
+    "old": "|| r.x > 0;",
+    "new": "|| r.x > 1;",
+    "why": "one stripped record not reported",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MONSTERS-not-measured-said",
+    "file": "server/src/staffFeeds.js",
+    "old": "ms: 1, net,",
+    "new": "ms: 0, net,",
+    "why": "a batch counted with grantStrip off says \"not measured\" (STAFF-PANEL5-MONSTERS: was STAFF-PANEL5-FEEDS-strip-switch-unsaid, whose `ms` followed grantStrip)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MONSTERS-strip-gate-back",
+    "file": "server/src/index.js",
+    "old": "    staffFoesSeen(this, a, data, now, lane);",
+    "new": "    if (relayCfgValue(this._relayCfg, this.env, 'grantStrip') === 'on') staffFoesSeen(this, a, data, now, lane);",
+    "why": "monsters counted only while grantStrip is on again: Monster watch blind with the switch off (STAFF-PANEL5-MONSTERS: was STAFF-PANEL5-FEEDS-strip-off-read, the old rule's mutant)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MONSTERS-counted-before-strip",
+    "file": "server/src/index.js",
+    "old": "    if (relayCfgValue(this._relayCfg, this.env, 'grantStrip') === 'on' && (kind === 'own' || isCellRoom(a.key))) data = this._grantStripped(a, data, kind, now);   // GRANT9: the switch on - a record its grant does not stand goes nowhere; FOE-BOUNDS: nor one no builder could give\n    staffFoesSeen(this, a, data, now, lane);   // STAFF-PANEL5-FEEDS: a full frame's live monsters, its sender's; STAFF-PANEL5-MONSTERS: whatever grantStrip says - read, never changed, and nothing at all while STAFF_NET_FEED_URL is unset; REVIEW: one a FOES_FIRST_MS on its lane",
+    "new": "    staffFoesSeen(this, a, data, now, lane);   // STAFF-PANEL5-FEEDS: a full frame's live monsters, its sender's; STAFF-PANEL5-MONSTERS: whatever grantStrip says - read, never changed, and nothing at all while STAFF_NET_FEED_URL is unset; REVIEW: one a FOES_FIRST_MS on its lane\n    if (relayCfgValue(this._relayCfg, this.env, 'grantStrip') === 'on' && (kind === 'own' || isCellRoom(a.key))) data = this._grantStripped(a, data, kind, now);   // GRANT9: the switch on - a record its grant does not stand goes nowhere; FOE-BOUNDS: nor one no builder could give",
+    "why": "with grantStrip on, the records the strip drops counted as its sender's live monsters",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MONSTERS-count-drops-a-body",
+    "file": "server/src/staffFeeds.js",
+    "old": "  for (const r of data.f) if (r && typeof r === 'object' && r.d !== 1 && r.i != null) live.set(r.i, r);",
+    "new": "  data.f = data.f.filter((r) => r?.d !== 1);\n  for (const r of data.f) if (r && typeof r === 'object' && r.d !== 1 && r.i != null) live.set(r.i, r);",
+    "why": "the count writes the frame it reads: a body dropped from what every reader is sent",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MONSTERS-REVIEW-lane-not-passed",
+    "file": "server/src/index.js",
+    "old": "    staffFoesSeen(this, a, data, now, lane);",
+    "new": "    staffFoesSeen(this, a, data, now);",
+    "why": "the count's lane not passed: a world room host saying full on every frame has every one walked, its 6,000 records 12 times a second (STAFF-PANEL5-MONSTERS REVIEW)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MONSTERS-REVIEW-gate-stamped-unwalked",
+    "file": "server/src/staffFeeds.js",
+    "old": "  if (lane) { if (now - (lane.counted ?? -Infinity) < FOES_FIRST_MS) return; lane.counted = now; }",
+    "new": "  if (lane) { const was = lane.counted; lane.counted = now; if (now - (was ?? -Infinity) < FOES_FIRST_MS) return; }",
+    "why": "the gate stamped on a frame it did not walk: a sender saying full more than once a second is never walked again (STAFF-PANEL5-MONSTERS REVIEW)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MONSTERS-REVIEW-gate-at-full-cadence",
+    "file": "server/src/staffFeeds.js",
+    "old": "< FOES_FIRST_MS) return; lane.counted = now;",
+    "new": "< FOES_FIRST_MS * 2) return; lane.counted = now;",
+    "why": "one walk each FOES_FULL_MS: an honest full frame a breath early not walked (STAFF-PANEL5-MONSTERS REVIEW)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MONSTERS-REVIEW-delta-takes-a-turn",
+    "file": "server/src/staffFeeds.js",
+    "old": "  if (!on(room.env?.STAFF_NET_FEED_URL) || !foesFrameFull(data) || !Array.isArray(data?.f)) return;\n  if (lane) { if (now - (lane.counted ?? -Infinity) < FOES_FIRST_MS) return; lane.counted = now; }",
+    "new": "  if (lane && on(room.env?.STAFF_NET_FEED_URL)) { if (now - (lane.counted ?? -Infinity) < FOES_FIRST_MS) return; lane.counted = now; }\n  if (!on(room.env?.STAFF_NET_FEED_URL) || !foesFrameFull(data) || !Array.isArray(data?.f)) return;",
+    "why": "the gate asked before the full check: a delta takes the walk's turn from the full frame after it (STAFF-PANEL5-MONSTERS REVIEW)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-spend-uncounted",
+    "file": "server/src/index.js",
+    "old": "if (!g.pass) m.nr = (m.nr | 0) + 1;",
+    "new": "if (false) m.nr = (m.nr | 0) + 1;",
+    "why": "a meter refusal uncounted",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-ask-unhooked",
+    "file": "server/src/index.js",
+    "old": "staffReactAsk(this, ws, a, gr, now);",
+    "new": "void gr;",
+    "why": "no episode opens at the ask",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-open-cap-off-by-one",
+    "file": "server/src/staffFeeds.js",
+    "old": "mine.length >= REACT_OPEN_MAX",
+    "new": "mine.length > REACT_OPEN_MAX",
+    "why": "a socket opens one episode past its cap",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-cell-check-dropped",
+    "file": "server/src/staffFeeds.js",
+    "old": "!REACT_KINDS.includes(gr?.k) || !isCellRoom(a.key) ||",
+    "new": "!REACT_KINDS.includes(gr?.k) ||",
+    "equivalent": true,
+    "why": "the relay mints enc and encr in a cell alone (index.js _grantHere mints in a cell or a world room, and GRANT4 refuses a world room the open country's kinds), so the cell check is belt-and-braces against a later change",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-first-3s-whole",
+    "file": "server/src/staffFeeds.js",
+    "old": "if (t <= REACT_FIRST_MS && Number.isFinite(q.x)",
+    "new": "if (t <= REACT_EPISODE_MS && Number.isFinite(q.x)",
+    "why": "distance and turn counted past the first 3 s",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-turn-unwrapped",
+    "file": "server/src/staffFeeds.js",
+    "old": "Math.abs(wrapAngle(p.yaw - q.yaw))",
+    "new": "Math.abs(p.yaw - q.yaw)",
+    "why": "a turn across the seam counted the long way",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-death-not-closing",
+    "file": "server/src/staffFeeds.js",
+    "old": "if (p.dd) { at.dd = t; reactClose(room, ws, e, now); }",
+    "new": "if (p.dd) { at.dd = t; }",
+    "why": "a death does not end its episode",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-refusal-retried",
+    "file": "server/src/staffFeeds.js",
+    "old": "res.status >= 500 ? 'failed' : 'refused'",
+    "new": "'failed'",
+    "why": "a batch the service refused sent again",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-kinds-sum-unchecked",
+    "file": "server/src/staffFeedLaw.js",
+    "old": "r.k.reduce((s, x) => s + x, 0) === r.n",
+    "new": "r.k.reduce((s, x) => s + x, 0) >= 0",
+    "why": "a net row whose kinds do not add up taken",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-members-unchecked",
+    "file": "server/src/staffFeedLaw.js",
+    "old": "&& r.n <= GRANT_KINDS",
+    "new": "&& 0 <= GRANT_KINDS",
+    "why": "an encounter bigger than its kind allows taken",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-word-unsigned",
+    "file": "server/src/staffFeedLaw.js",
+    "old": "const word = enc.encode(`${v}\\n`);",
+    "new": "const word = enc.encode('\\n');",
+    "why": "one feed's batch read as the other's",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-age-unchecked",
+    "file": "server/src/staffFeedLaw.js",
+    "old": "Math.abs(nowMs - batch.at) > STAFF_FEED_AGE_MAX_MS",
+    "new": "Math.abs(nowMs - batch.at) > STAFF_FEED_AGE_MAX_MS * 100",
+    "why": "a stale batch taken",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-net-moderator",
+    "file": "server-account/src/staffNet.js",
+    "old": "  if (who.role !== 'admin') { await audit",
+    "new": "  if (who.role === 'nobody') { await audit",
+    "why": "a Moderator reads Network bursts",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-net-watch-moderator",
+    "file": "server-account/src/staffNet.js",
+    "old": "if (who?.role !== 'admin') return { items: [], high: 0, total: 0 };",
+    "new": "if (who?.role === 'nobody') return { items: [], high: 0, total: 0 };",
+    "why": "a Moderator's home shows packet bursts",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-net-once",
+    "file": "server-account/src/staffNet.js",
+    "old": "if (await db.prepare('SELECT 1 AS y FROM staff_net_batches WHERE id = ?1').bind(b.id).first()) return { ok: true, read: false };",
+    "new": "if (false) return { ok: true, read: false };",
+    "why": "a resent batch kept twice",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-net-wave-whole",
+    "file": "server-account/src/staffNet.js",
+    "old": "if (p.at - r.at > NET_WAVE_S) continue;",
+    "new": "if (false) continue;",
+    "why": "a player's older window summed into its newest",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-net-kind-unfiltered",
+    "file": "server-account/src/staffNet.js",
+    "old": "(p.kinds[kind] ?? 0) > 0",
+    "new": "(p.kinds[kind] ?? 0) >= 0",
+    "why": "a player who sent none of a kind listed under it",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-net-urgent-reversed",
+    "file": "server-account/src/staffNet.js",
+    "old": "lvl(b) - lvl(a) || b.closes - a.closes",
+    "new": "lvl(a) - lvl(b) || b.closes - a.closes",
+    "why": "the quietest first",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-monsters-moderator",
+    "file": "server-account/src/staffMonsters.js",
+    "old": "  if (who.role !== 'admin') { await audit",
+    "new": "  if (who.role === 'nobody') { await audit",
+    "why": "a Moderator reads Monster watch",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-monsters-always-measured",
+    "file": "server-account/src/staffMonsters.js",
+    "old": "b.ms === 1 ? 'measured' : 'not measured'",
+    "new": "'measured'",
+    "why": "\"not measured\" never said",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-relay-reader-counted",
+    "file": "server-account/src/staffMonsters.js",
+    "old": "AND reader != ?2 AND",
+    "new": "AND ?2 = ?2 AND",
+    "why": "the relay's own refusals read as another game's",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-budget-no-rate",
+    "file": "server-account/src/staffMonsters.js",
+    "old": "Math.ceil(law.cap + law.rate * MONSTER_ASK_S)",
+    "new": "Math.ceil(law.cap)",
+    "why": "a kind's budget without its hour's rate",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-asks-never-high",
+    "file": "server-account/src/staffMonsters.js",
+    "old": "a.asks >= GRANT_ASK_CASE_TIMES * a.budget ? 2 : 1",
+    "new": "a.asks >= GRANT_ASK_CASE_TIMES * a.budget ? 1 : 1",
+    "why": "asks four times the budget only medium",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-host-owns",
+    "file": "server-account/src/staffMonsters.js",
+    "old": "if (p.live && p.live.owned >= FOE_HOT.own)",
+    "new": "if (p.live && p.live.owned + p.hosted >= FOE_HOT.own)",
+    "why": "a dungeon host counted as an owner",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-flag-source-unread",
+    "file": "server-account/src/staffMonsters.js",
+    "old": "openCaseFor(ctx, env, row.id, 'review', 'spawn')",
+    "new": "openCaseFor(ctx, env, row.id, 'report', 'spawn')",
+    "why": "a Flag's case opened as a report's (STAFF-PANEL5-FEEDS-FIX: the Flag opens its case itself now, so its source is written)",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-flag-failed-as-ok",
+    "file": "server-account/src/staffMonsters.js",
+    "old": "{ outcome: 'failed' }).run();\n    return { error: 'flag-failed' };",
+    "new": "{}).run();\n    return { error: 'flag-failed' };",
+    "why": "a failed Flag audited ok",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-reactions-moderator",
+    "file": "server-account/src/staffReactions.js",
+    "old": "  if (who.role !== 'admin') { await audit",
+    "new": "  if (who.role === 'nobody') { await audit",
+    "why": "a Moderator reads a player's Reactions",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-struck-at-swing",
+    "file": "server-account/src/staffReactions.js",
+    "old": "(r.ac === undefined || r.hu < r.ac)",
+    "new": "(r.ac === undefined || r.hu <= r.ac)",
+    "why": "a blow at the swing counted struck first",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-roll-early",
+    "file": "server-account/src/staffReactions.js",
+    "old": "b.rows.length > REACT_ROWS_HOUR",
+    "new": "b.rows.length >= REACT_ROWS_HOUR",
+    "why": "the hour's last own row rolled up",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-roll-window-stuck",
+    "file": "server-account/src/staffReactions.js",
+    "old": "THEN rate_limits.count + excluded.count ELSE excluded.count END",
+    "new": "THEN rate_limits.count + excluded.count ELSE rate_limits.count + excluded.count END",
+    "why": "a new hour's count not started again",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-roll-not-summed",
+    "file": "server-account/src/staffReactions.js",
+    "old": "`${c} = ${c} + excluded.${c}`",
+    "new": "`${c} = excluded.${c}`",
+    "why": "a player-hour's row holds only its last episode",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-react-once",
+    "file": "server-account/src/staffReactions.js",
+    "old": "if (seen?.kept) return { ok: true, read: false, rows: 0 };",
+    "new": "if (false) return { ok: true, read: false, rows: 0 };",
+    "why": "a resent batch summed twice",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-pop-uncached",
+    "file": "server-account/src/staffReactions.js",
+    "old": "if (popCache && nowS - popCache.at < REACT_POP_CACHE_S)",
+    "new": "if (false && popCache)",
+    "why": "the population's numbers read at every look",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-keep-never-let-go",
+    "file": "server-account/src/staffReactions.js",
+    "old": "const until = keep ? nowS + REACT_EVIDENCE_S : null;",
+    "new": "const until = nowS + REACT_EVIDENCE_S;",
+    "why": "rows kept as evidence for ever",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-read-unaudited",
+    "file": "server-account/src/staffReactions.js",
+    "old": "    audit('reactions-read', row.id, { name }, { onceIn: 10 * 60 }).run(),",
+    "new": "    void name,",
+    "why": "a Reactions read not in the audit log",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-renown-any-stream",
+    "file": "server-account/src/staffReactions.js",
+    "old": "AND stream = 'renown' AND",
+    "new": "AND",
+    "why": "every stream read as Renown",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-sweep-takes-kept",
+    "file": "server-account/src/cron.js",
+    "old": "AND (keep_until IS NULL OR keep_until < ?1 + ${REACT_KEEP_S})",
+    "new": "",
+    "why": "rows kept as evidence swept at 14 days",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-sweep-batches-kept",
+    "file": "server-account/src/cron.js",
+    "old": "'staff_net_batches', 'reaction_batches']",
+    "new": "'staff_net_batches']",
+    "why": "reaction batch ids kept for ever",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-feed-door-400",
+    "file": "server-account/src/index.js",
+    "old": "takeReactionFeed)(ctx, env, new Uint8Array(bytes), request.headers.get(STAFF_FEED_SIG_HEADER));\n        return 'error' in r ? no(r.error, r.error === 'feed-signature' ? 401 : 400",
+    "new": "takeReactionFeed)(ctx, env, new Uint8Array(bytes), request.headers.get(STAFF_FEED_SIG_HEADER));\n        return 'error' in r ? no(r.error, r.error === 'feed-signature' ? 400 : 400",
+    "why": "a bad signature answered as a bad shape",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-feed-behind-session",
+    "file": "server-account/src/service.js",
+    "old": " && r !== '/v1/staff/net-feed'",
+    "new": "",
+    "why": "the relay's feed listed as a staff session's door",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-flag-chat-case",
+    "file": "server-account/src/staffMonsters.js",
+    "old": "openCaseFor(ctx, env, row.id, 'review', 'spawn')",
+    "new": "openCaseFor(ctx, env, row.id, 'review')",
+    "why": "a Flag answered with a chat case beside the spawn case its line went to",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-FIX-teleport-moved",
+    "file": "server/src/staffFeeds.js",
+    "old": "if (step <= PIXEL_UNITS) e.mv += step;",
+    "new": "e.mv += step;",
+    "why": "a step past a cell counted as movement: a modded client's swings overflow its row (finding 9)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-FIX-react-row-unlawful",
+    "file": "server/src/staffFeeds.js",
+    "old": "lawful(R.rows.splice(0, STAFF_FEED_ROWS), (r) => reactRowOk(r, now))",
+    "new": "R.rows.splice(0, STAFF_FEED_ROWS)",
+    "why": "an episode the law refuses sealed with its batch, which then goes whole (finding 9)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-FIX-net-row-unlawful",
+    "file": "server/src/staffFeeds.js",
+    "old": "lawful([...W.rows.values()], netRowOk)",
+    "new": "[...W.rows.values()]",
+    "why": "a net row the law refuses sealed with its batch (finding 9)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-FIX-foe-row-unlawful",
+    "file": "server/src/staffFeeds.js",
+    "old": "lawful([...W.foes.values()], foeRowOk)",
+    "new": "[...W.foes.values()]",
+    "why": "a monster row the law refuses sealed with its batch (finding 9)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-FIX-retry-needs-episode",
+    "file": "server/src/staffFeeds.js",
+    "old": "if ((R.rows.length || R.retry) && now - R.from >= REACT_FEED_MS)",
+    "new": "if (R.rows.length && now - R.from >= REACT_FEED_MS)",
+    "why": "a failed reaction batch sent again only with a new episode, the tick re-armed for ever (finding 10)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-FIX-retry-every-minute",
+    "file": "server/src/staffFeeds.js",
+    "old": "R.from ||= R.retry ? now : 0;",
+    "new": "R.from ||= 0;",
+    "why": "a failing service asked again every tick (finding 10)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-FIX-quiet-row-made",
+    "file": "server/src/staffFeeds.js",
+    "old": "const row = foeRow(room, a, live.size >= (indoor ? FOE_HOT.host : FOE_HOT.own));",
+    "new": "const row = foeRow(room, a, true);",
+    "why": "a quiet sender takes a monster row (finding 12)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-FIX-outdoor-at-host-limit",
+    "file": "server/src/staffFeeds.js",
+    "old": "live.size >= (indoor ? FOE_HOT.host : FOE_HOT.own)",
+    "new": "live.size >= FOE_HOT.host",
+    "why": "an outdoor owner's row made only at the host's limit (finding 12)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-FIX-full-room-blind",
+    "file": "server/src/staffFeeds.js",
+    "old": "if (W.rows.size + W.foes.size >= STAFF_FEED_ROWS * 4) void staffNetFlush(room);   // its maps new",
+    "new": "if (W.rows.size + W.foes.size >= STAFF_FEED_ROWS * 4) return null;   // its maps new",
+    "why": "a full room refuses the next sender's row, blind to a spawner (finding 12)",
+    "tests": [
+      "test/net/staffpanel5feeds_relay.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-FIX-react-id-alone",
+    "file": "server-account/src/staffReactions.js",
+    "old": "  await db.batch([\n    db.prepare('INSERT INTO reaction_batches (id, at) VALUES (?1, ?2)').bind(b.id, nowS),",
+    "new": "  await db.prepare('INSERT INTO reaction_batches (id, at) VALUES (?1, ?2)').bind(b.id, nowS).run();\n  await db.batch([",
+    "why": "a reaction batch's id kept before its rows, alone: the resend after a failed rows write is read as kept (finding 11)",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-FIX-react-count-alone",
+    "file": "server-account/src/staffReactions.js",
+    "old": "window_start = MAX(rate_limits.window_start, excluded.window_start)`).bind(hour, b.rows.length),",
+    "new": "window_start = MAX(rate_limits.window_start, excluded.window_start)`).bind(hour, b.rows.length).run() && db.prepare('SELECT 1'),",
+    "why": "the hour's count kept before the rows, alone: a failed rows write counted (finding 11)",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-FIX-net-id-alone",
+    "file": "server-account/src/staffNet.js",
+    "old": ".bind(b.id, nowS, b.q, Math.max(1, Math.round((b.at - b.from) / 1000)), b.ms),",
+    "new": ".bind(b.id, nowS, b.q, Math.max(1, Math.round((b.at - b.from) / 1000)), b.ms).run() && db.prepare('SELECT 1'),",
+    "why": "a net batch's id kept before its rows, alone (finding 11)",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-FIX-flag-window-rule",
+    "file": "server-account/src/staffMonsters.js",
+    "old": "if (!(await keepCaseLines(db, caseId, [{ tab: GRANT_CASE_TAB",
+    "new": "if (await db.prepare('SELECT 1 AS y FROM mod_case_lines WHERE case_id = ?1 AND tab = ?2 AND at > ?3').bind(caseId, GRANT_CASE_TAB, nowS - 600).first()) {} else if (!(await keepCaseLines(db, caseId, [{ tab: GRANT_CASE_TAB",
+    "why": "a Flag held to the automatic findings' one line a window: inside one it writes nothing (finding 13)",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-FIX-flag-collision-silent",
+    "file": "server-account/src/staffMonsters.js",
+    "old": "throw new Error('a line this second already: flag again');",
+    "new": "{}",
+    "why": "a Flag whose line this second is held already answers ok, its note dropped (finding 13)",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FEEDS-FIX-flag-case-untouched",
+    "file": "server-account/src/staffMonsters.js",
+    "old": "UPDATE mod_cases SET updated_at = ?2,",
+    "new": "UPDATE mod_cases SET updated_at = updated_at,",
+    "why": "a Flag's case not touched: never risen in the queue (finding 13)",
+    "tests": [
+      "test/server/staffpanel5feeds.test.js"
+    ]
+  }
+]

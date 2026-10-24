@@ -1,0 +1,132 @@
+[
+  {
+    "name": "KEY-FACE-the-row-not-pack-only",
+    "file": "src/systems/eliteGates/weirKeyRow.js",
+    "old": "  packOnly: true,   // KEY-FACE: the face never leaves the pack\n",
+    "new": "",
+    "why": "the bug: a face goes to the wagon, the pack is given a new one, and the stowed ones carried back turn to rust",
+    "tests": [
+      "test/net/eliteGates/fb1019f_keyface.test.js"
+    ]
+  },
+  {
+    "name": "KEY-FACE-the-load-folds-nothing",
+    "file": "src/systems/save/save.js",
+    "old": "  const strayKeys = foldStrayWeirKeys(strayLists, strayRooms);\n",
+    "new": "  const strayKeys = 0;\n",
+    "why": "a save from before the fix keeps its stowed faces, and carried back they show keys the account never held",
+    "tests": [
+      "test/net/eliteGates/fb1019f_keyface.test.js"
+    ]
+  },
+  {
+    "name": "KEY-FACE-the-pack-folded-too",
+    "file": "src/systems/save/save.js",
+    "old": "const strayLists = repairLists.filter((l) => l !== entity.items), ",
+    "new": "const strayLists = repairLists, ",
+    "why": "the pack's own face folded with the strays",
+    "tests": [
+      "test/net/eliteGates/fb1019f_keyface.test.js"
+    ]
+  },
+  {
+    "name": "KEY-FACE-a-rooms-own-things-unread",
+    "file": "src/systems/save/save.js",
+    "old": "foldStrayWeirKeys(strayLists, strayRooms);",
+    "new": "foldStrayWeirKeys(strayLists);",
+    "why": "a face set out in a room (decorOwn - one item a piece, no list) kept, and taken down it comes back to the pack",
+    "tests": [
+      "test/net/eliteGates/fb1019f_keyface.test.js"
+    ]
+  },
+  {
+    "name": "KEY-FACE-a-list-unfolded",
+    "file": "src/systems/eliteGates/weirKey.js",
+    "old": "if (isWeirKey(list[i])) folded.add(list.splice(i, 1)[0]);",
+    "new": "if (isWeirKey(list[i])) folded.add(list[i]);",
+    "why": "the lists counted and left as they were",
+    "tests": [
+      "test/net/eliteGates/fb1019f_keyface.test.js"
+    ]
+  },
+  {
+    "name": "KEY-FACE-the-fold-blind",
+    "file": "src/systems/eliteGates/weirKey.js",
+    "old": "if (isWeirKey(list[i])) folded.add(list.splice(i, 1)[0]);",
+    "new": "if (!isWeirKey(list[i])) folded.add(list.splice(i, 1)[0]);",
+    "why": "everything but the faces folded",
+    "tests": [
+      "test/net/eliteGates/fb1019f_keyface.test.js"
+    ]
+  },
+  {
+    "name": "KEY-FACE-a-record-unfolded",
+    "file": "src/systems/eliteGates/weirKey.js",
+    "old": "{ folded.add(item); delete r[id]; }",
+    "new": "{ folded.add(item); }",
+    "why": "a room's own thing that is a face counted and kept",
+    "tests": [
+      "test/net/eliteGates/fb1019f_keyface.test.js"
+    ]
+  },
+  {
+    "name": "KEY-FACE-a-face-counted-twice",
+    "file": "src/systems/eliteGates/weirKey.js",
+    "old": "{ folded.add(item); delete r[id]; }",
+    "new": "{ folded.add({ ...item }); delete r[id]; }",
+    "why": "a room's own thing the load's walk also lists counted twice",
+    "tests": [
+      "test/net/eliteGates/fb1019f_keyface.test.js"
+    ]
+  },
+  {
+    "name": "KEY-FACE-the-count-of-records",
+    "file": "src/systems/eliteGates/weirKey.js",
+    "old": "  return [...folded].reduce((n, it) => n + Math.max(1, it.stackCount ?? 1), 0);",
+    "new": "  return [...folded].reduce((n, it) => n + 1, 0);",
+    "why": "the answer counts the faces, not the keys they showed",
+    "tests": [
+      "test/net/eliteGates/fb1019f_keyface.test.js"
+    ]
+  },
+  {
+    "name": "KEY-FACE-enh-pack-only-silent",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (remote && isPackOnly(item)) {",
+    "new": "  if (false) {",
+    "why": "the enhanced pack refuses a face in the bound law's words, which name the wagon and storage as its places",
+    "tests": [
+      "test/net/eliteGates/fb1019f_keyface.test.js"
+    ]
+  },
+  {
+    "name": "KEY-FACE-a-face-set-out-in-a-room",
+    "file": "src/systems/decor/decorItems.js",
+    "old": "  if (isBagItem(item) || isPackOnly(item)) return null;",
+    "new": "  if (isBagItem(item)) return null;",
+    "why": "a face stands as a room's own thing - out of the pack, and back to it when taken down",
+    "tests": [
+      "test/net/eliteGates/fb1019f_keyface.test.js"
+    ]
+  },
+  {
+    "name": "KEY-FACE-a-revenant-takes-a-face",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "&& !isPackOnly(item) && !isLocked(item);",
+    "new": "&& !isLocked(item);",
+    "why": "a face taken into a revenant's record - out of the pack, and back to it when the revenant falls",
+    "tests": [
+      "test/net/eliteGates/fb1019f_keyface.test.js"
+    ]
+  },
+  {
+    "name": "KEY-FACE-classic-pack-only-silent",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "        if (isPackOnly(it)) { this._refuse(",
+    "new": "        if (false) { this._refuse(",
+    "why": "the classic window refuses a face in the bound law's words",
+    "tests": [
+      "test/net/eliteGates/fb1019f_keyface.test.js"
+    ]
+  }
+]

@@ -7,8 +7,8 @@
 import { RACES } from './races.js';
 import { maxBreath } from './statMods.js';
 import { hasActiveEffect } from './effects.js';
-import { templeOf } from './guildVariants.js';
-import { activeMemberships } from './guilds.js';   // V2e: GuildManager.Memberships
+import { templeOf } from './guild/guildVariants.js';
+import { activeMemberships } from './guild/guilds.js';   // V2e: GuildManager.Memberships
 
 // The one guild whose DeepBreath override is not the identity.
 const KYNARETH = templeOf('Kynareth').name;
@@ -22,7 +22,7 @@ const KYNARETH = templeOf('Kynareth').name;
  *  widens float arithmetic to double); the two disagree inside the
  *  fortified-Endurance range - probed rank 0..9 x duration 0..120,
  *  float32 first drifts at rank 4 x 45 (63 vs 62).
- *  Lives here rather than beside the guild code: systems/guilds.js is
+ *  Lives here rather than beside the guild code: systems/guild/guilds.js is
  *  mid-flight in a parallel session (2026-08-19), and this is the
  *  member's only export either way. */
 export function deepBreath(memberships, duration) {

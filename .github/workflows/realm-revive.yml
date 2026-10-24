@@ -1,0 +1,258 @@
+name: Realm revive (a realm character's death taken back)
+
+# REVIVE (2026-10-14, Mac, of TheHalfinStream's Enduring elder, dead of her years in Castle Wayrest on 2026-10-13 while
+# the remains bug hid what she lay with: "I want to roll back this specific account", then "Undo the death", then "Full
+# revive"; bible/06-Systems/Legacy-Arc.md REVIVE). tools/reviveRealmCharacter.mjs says what a death wrote and what the
+# plan puts back; src/systems/legacy/revived.js is the law that makes it hold (a death taken back is stamped, and every
+# copy of the line that meets the stamp drops it - so a device that never heard of it cannot kill her again).
+#
+# RUN BY HAND from the Actions tab, on main, at a quiet hour - and only once the law is deployed (the account service at
+# acct132 or later, and the game built since: a copy merged by an older build keeps the death):
+#   1. with apply off (the default): a DRY RUN. The run's summary names the character, what would be written and what is
+#      held for you (a guild she was master of, a home no longer her heir's, a union with another player). Nothing is
+#      written - but the service IS held for its minute, because the past is read through a rewind.
+#   2. read it; then run again with apply on.
+#
+# WHAT A RUN DOES - realm-restore.yml's steps, each where it stands for the same reason:
+#   - finds the account by its handle and the character that fell (in the window 2026-10-12T12Z - 2026-10-14T12Z, or the
+#     one named) BEFORE anything is held, so a run that finds nothing holds nothing;
+#   - holds the service for maintenance, keeps the present (its bookmark and its counts), rewinds to two minutes before
+#     the death, reads that account's rows then - her guild seat, her homes, the pieces she held, her union - and puts
+#     the present back, ALWAYS, proven by its counts;
+#   - reads the same rows now, plans (every statement guarded on the row as read), writes with apply on, and lifts the
+#     maintenance - NEVER over a rewound database.
+# No table is exported whole and nothing of any other account is read: every query is the one account's.
+
+on:
+  workflow_dispatch:
+    inputs:
+      handle:
+        description: "The account's username"
+        required: true
+        type: string
+      character:
+        description: "The realm character's id (r + 20 hex), if more than one fell in the window - else leave empty"
+        required: false
+        default: ""
+        type: string
+      keep_homes:
+        description: "Leave the homes her heir inherited with the heir"
+        required: true
+        default: false
+        type: boolean
+      keep_guild:
+        description: "Do not put her guild seat back"
+        required: true
+        default: false
+        type: boolean
+      apply:
+        description: "Write the revive. Leave it off for a dry run that only reports."
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+# Never beside a deploy's migrations, a recovery or a restore: the deploy's own group, queued.
+concurrency:
+  group: account-deploy
+  cancel-in-progress: false
+
+jobs:
+  revive:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      DB_NAME: daggerfall-accounts
+      WRANGLER: npx --yes wrangler@4
+      # The inputs reach the scripts as ENVIRONMENT, never pasted into them (account-recovery.yml's law), and the tool
+      # holds each to its shape before any of it reaches a query.
+      HANDLE: ${{ inputs.handle }}
+      CHARACTER: ${{ inputs.character }}
+      KEEP_HOMES: ${{ inputs.keep_homes }}
+      KEEP_GUILD: ${{ inputs.keep_guild }}
+      APPLY: ${{ inputs.apply }}
+      REWOUND: "0"
+      HELD: "0"
+      COUNTS_SQL: "SELECT (SELECT COUNT(*) FROM players) AS p, (SELECT COUNT(*) FROM realm_characters) AS r, (SELECT COUNT(*) FROM homes) AS h, (SELECT COUNT(*) FROM guild_members) AS g, (SELECT COUNT(*) FROM item_uids) AS i, (SELECT COUNT(*) FROM lineages) AS l, (SELECT COUNT(*) FROM d1_migrations) AS m"
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Refuse to start without a token
+        run: |
+          if [ -z "${CLOUDFLARE_API_TOKEN}" ]; then
+            echo "::error::secrets.CLOUDFLARE_API_TOKEN is not set for this repository - nothing else in this job can work"
+            exit 1
+          fi
+
+      # The deploy's own resolution (account-deploy.yml), read-only: this job never creates a database.
+      - name: Resolve the database id into the runner's copy of the config
+        run: |
+          set -euo pipefail
+          id=$($WRANGLER d1 list --json | jq -r --arg n "$DB_NAME" 'map(select(.name == $n)) | .[0].uuid // .[0].id // empty')
+          if [ -z "$id" ]; then
+            echo "::error::there is no database named $DB_NAME"
+            exit 1
+          fi
+          echo "::add-mask::$id"
+          toml=server-account/wrangler.toml
+          sentinel='resolved-by-account-deploy-workflow'
+          grep -q "$sentinel" "$toml" || { echo "::error::$toml no longer carries the sentinel"; exit 1; }
+          sed -i "s|\"$sentinel\"|\"$id\"|" "$toml"
+          if grep -q "$sentinel" "$toml"; then
+            echo "::error::the sentinel survived the substitution"
+            exit 1
+          fi
+
+      # FOUND BEFORE ANYTHING IS HELD: a handle with no account, or no character that fell, holds nothing.
+      - name: Find the character
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          q() { $WRANGLER d1 execute "$DB_NAME" --remote --json --command "$1" | jq -c '.[0].results'; }
+          tool=../tools/reviveRealmCharacter.mjs
+          player=$(q "$(node $tool --player-query --handle "$HANDLE")" | jq -c '.[0] // null')
+          [ "$player" != "null" ] || { echo "::error::no registered account by that handle"; exit 1; }
+          pid=$(printf '%s' "$player" | jq -r '.id')
+          jq -n --argjson player "$player" --argjson chars "$(q "$(node $tool --query chars --player "$pid")")" --argjson lineages "$(q "$(node $tool --query lineages --player "$pid")")" \
+            '{player: $player, chars: $chars, lineages: $lineages}' > "$RUNNER_TEMP/facts.json"
+          node $tool --find --handle "$HANDLE" --facts "$RUNNER_TEMP/facts.json" --character "$CHARACTER" > "$RUNNER_TEMP/found.json"
+          jq . "$RUNNER_TEMP/found.json"
+          before=$(jq -r '.before // empty' "$RUNNER_TEMP/found.json")
+          [ -n "$before" ] || { echo "::error::the character stands, and no moment before a death can be read - nothing to revive"; exit 1; }
+          echo "PLAYER=$pid" >> "$GITHUB_ENV"
+          echo "FALLEN=$(jq -r '.fallen' "$RUNNER_TEMP/found.json")" >> "$GITHUB_ENV"
+          echo "BEFORE=$(node -e 'process.stdout.write(new Date(Number(process.argv[1]) * 1000).toISOString())' "$before")" >> "$GITHUB_ENV"
+          echo "BEFORE_S=$before" >> "$GITHUB_ENV"
+
+      # realm-restore.yml's hold, word for word: proven by content and by a write refused, five times running.
+      - name: Hold the service for maintenance
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          echo "HELD=1" >> "$GITHUB_ENV"
+          $WRANGLER deploy --var MAINTENANCE:1 | tee /tmp/held.log
+          base=$(grep -oE 'https://[A-Za-z0-9.-]+\.workers\.dev' /tmp/held.log | head -1)
+          test -n "$base" || { echo "::error::wrangler did not print a workers.dev URL"; exit 1; }
+          ok=0
+          for i in $(seq 1 36); do
+            h=$(curl -fsS --max-time 10 "$base/v1/health" || true)
+            code=$(curl -sS --max-time 10 -o /tmp/g.json -w '%{http_code}' -X POST "$base/v1/realm/customs" -H 'content-type: application/json' -d '{}' || true)
+            if printf '%s' "$h" | grep -q '"maintenance":true' && [ "$code" = "503" ] && grep -q '"maintenance"' /tmp/g.json; then ok=$((ok + 1)); else ok=0; fi
+            echo "attempt $i: health ${h:-unreachable}, a write answered ${code:-nothing} ($ok running)"
+            if [ "$ok" -ge 5 ]; then break; fi
+            sleep 5
+          done
+          if [ "$ok" -lt 5 ]; then echo "::error::the service never held - nothing was rewound"; exit 1; fi
+          sleep 20   # a request an instance took before it held may still be finishing
+
+      - name: Keep the present
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          b=$($WRANGLER d1 time-travel info "$DB_NAME" --json | jq -r '.bookmark // empty')
+          test -n "$b" || { echo "::error::no bookmark for the present"; exit 1; }
+          c=$($WRANGLER d1 execute "$DB_NAME" --remote --json --command "$COUNTS_SQL" | jq -c '.[0].results[0]')
+          test -n "$c" && [ "$c" != "null" ] || { echo "::error::the present's counts could not be read"; exit 1; }
+          echo "NOW_BOOKMARK=$b" >> "$GITHUB_ENV"
+          echo "NOW_COUNTS=$c" >> "$GITHUB_ENV"
+          echo "the present: bookmark $b, $c"
+          { echo "The present's bookmark, should it ever need putting back by hand:"; echo ""; echo "    npx wrangler d1 time-travel restore $DB_NAME --bookmark $b"; echo ""; echo "then redeploy the Worker (its isolates keep the weeks they read settled - server-account/src/weekKept.js)."; echo ""; } >> "$GITHUB_STEP_SUMMARY"
+
+      # REWOUND is set BEFORE the rewind is asked for: a rewind that fails half-way is put back as one that landed.
+      # Proven there by content: the character stands in it (the tombstone is the present's).
+      - name: Rewind to before the death
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          echo "REWOUND=1" >> "$GITHUB_ENV"
+          $WRANGLER d1 time-travel restore "$DB_NAME" --timestamp "$BEFORE" --json | tee /tmp/rewind.json
+          b=$($WRANGLER d1 time-travel info "$DB_NAME" --json | jq -r '.bookmark // empty')
+          if [ -z "$b" ] || [ "$b" = "$NOW_BOOKMARK" ]; then echo "::error::the database did not move"; exit 1; fi
+          dead=$($WRANGLER d1 execute "$DB_NAME" --remote --json --command "SELECT COUNT(*) AS n FROM realm_characters WHERE id = '$FALLEN' AND dead_at IS NULL" | jq -r '.[0].results[0].n')
+          [ "$dead" = "1" ] || { echo "::error::the database is not at $BEFORE (the character does not stand in it)"; exit 1; }
+          echo "rewound to $BEFORE: the character stands"
+
+      - name: Read what stood then
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          q() { $WRANGLER d1 execute "$DB_NAME" --remote --json --command "$1" | jq -c '.[0].results'; }
+          tool=../tools/reviveRealmCharacter.mjs
+          for n in seat homes items unions; do q "$(node $tool --query $n --player "$PLAYER" --fallen "$FALLEN")" > "$RUNNER_TEMP/then_$n.json"; done
+          jq -n --slurpfile s "$RUNNER_TEMP/then_seat.json" --slurpfile h "$RUNNER_TEMP/then_homes.json" --slurpfile i "$RUNNER_TEMP/then_items.json" --slurpfile u "$RUNNER_TEMP/then_unions.json" \
+            '{seat: $s[0], homes: $h[0], items: $i[0], unions: $u[0]}' > "$RUNNER_TEMP/then.json"
+          jq -c '{seat: (.seat | length), homes: (.homes | length), items: (.items | length), unions: (.unions | length)}' "$RUNNER_TEMP/then.json"
+
+      # ALWAYS, once a rewind was asked for - and proven by the counts the present was kept with.
+      - name: Put the present back
+        if: always() && env.REWOUND == '1'
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          back() {
+            echo "::error::THE PRESENT IS NOT BACK. The service stays held. Put it back by hand: npx wrangler d1 time-travel restore $DB_NAME --bookmark $NOW_BOOKMARK"
+            exit 1
+          }
+          $WRANGLER d1 time-travel restore "$DB_NAME" --bookmark "$NOW_BOOKMARK" --json | tee /tmp/back.json || back
+          c=$($WRANGLER d1 execute "$DB_NAME" --remote --json --command "$COUNTS_SQL" | jq -c '.[0].results[0]') || back
+          [ "$c" = "$NOW_COUNTS" ] || { echo "counts now $c, kept $NOW_COUNTS"; back; }
+          echo "REWOUND=0" >> "$GITHUB_ENV"
+          echo "the present is back: $c"
+
+      - name: Read what stands now, and plan
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          q() { $WRANGLER d1 execute "$DB_NAME" --remote --json --command "$1" | jq -c '.[0].results'; }
+          tool=../tools/reviveRealmCharacter.mjs
+          guild=$(jq -r '.seat[0].guild_id // empty' "$RUNNER_TEMP/then.json")
+          jq -c '[{results: .items}]' "$RUNNER_TEMP/then.json" > "$RUNNER_TEMP/then_items_d1.json"
+          for n in chars lineages homes unions; do q "$(node $tool --query $n --player "$PLAYER" --fallen "$FALLEN")" > "$RUNNER_TEMP/now_$n.json"; done
+          q "$(node $tool --query guild --player "$PLAYER" --guild "${guild:-}")" > "$RUNNER_TEMP/now_guild.json"
+          q "$(node $tool --query itemsNow --player "$PLAYER" --uids "$RUNNER_TEMP/then_items_d1.json")" > "$RUNNER_TEMP/now_items.json"
+          jq -n --slurpfile c "$RUNNER_TEMP/now_chars.json" --slurpfile l "$RUNNER_TEMP/now_lineages.json" --slurpfile h "$RUNNER_TEMP/now_homes.json" --slurpfile u "$RUNNER_TEMP/now_unions.json" --slurpfile g "$RUNNER_TEMP/now_guild.json" --slurpfile i "$RUNNER_TEMP/now_items.json" \
+            '{chars: $c[0], lineages: $l[0], homes: $h[0], unions: $u[0], guild: $g[0], items: $i[0]}' > "$RUNNER_TEMP/now.json"
+          flags=""
+          [ "$KEEP_HOMES" = "true" ] && flags="$flags --keep-homes"
+          [ "$KEEP_GUILD" = "true" ] && flags="$flags --keep-guild"
+          [ "$APPLY" = "true" ] && flags="$flags --apply"
+          node $tool --plan --handle "$HANDLE" --find "$RUNNER_TEMP/found.json" --then "$RUNNER_TEMP/then.json" --now "$RUNNER_TEMP/now.json" --out "$RUNNER_TEMP/revive.sql" --summary "$RUNNER_TEMP/summary.md" $flags
+          cat "$RUNNER_TEMP/summary.md" >> "$GITHUB_STEP_SUMMARY"
+
+      # Every statement guarded on the row as read: a run cut short is run again, and writes nothing twice.
+      - name: Write the revive
+        if: env.APPLY == 'true'
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          if [ ! -s "$RUNNER_TEMP/revive.sql" ]; then echo "nothing to write"; exit 0; fi
+          $WRANGLER d1 execute "$DB_NAME" --remote --file "$RUNNER_TEMP/revive.sql"
+          left=$($WRANGLER d1 execute "$DB_NAME" --remote --json --command "SELECT COUNT(*) AS n FROM realm_characters WHERE id = '$FALLEN' AND dead_at IS NOT NULL" | jq -r '.[0].results[0].n')
+          { echo ""; echo "**Written.** The character's tombstone: $([ "$left" = "0" ] && echo cleared || echo STILL STANDS - read the plan above)."; } >> "$GITHUB_STEP_SUMMARY"
+
+      # NEVER over a rewound database: with the present not back, the service stays held (the step above says why).
+      - name: Lift the maintenance
+        if: always() && env.HELD == '1' && env.REWOUND != '1'
+        working-directory: server-account
+        run: |
+          set -euo pipefail
+          $WRANGLER deploy | tee /tmp/lift.log
+          base=$(grep -oE 'https://[A-Za-z0-9.-]+\.workers\.dev' /tmp/lift.log | head -1)
+          test -n "$base" || { echo "::error::wrangler did not print a workers.dev URL - check /v1/health by hand"; exit 1; }
+          for i in $(seq 1 36); do
+            h=$(curl -fsS --max-time 10 "$base/v1/health" || true)
+            if [ -n "$h" ] && ! printf '%s' "$h" | grep -q '"maintenance"'; then echo "the service is open again: $h"; exit 0; fi
+            sleep 5
+          done
+          echo "::error::the service still says it is held"
+          exit 1

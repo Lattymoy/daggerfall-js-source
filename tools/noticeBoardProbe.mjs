@@ -4,7 +4,7 @@
 // Market's views, Vendors, Guilds, Seat), over books with something on every tab: notes new and old, the server's word,
 // a guild's poster, Court and guild writs, listings near and far, a seat held and besieged with the reader's guild
 // pledged to it. Each tab must stand inside the viewport with nothing spilling sideways, and its words in the pixel
-// face. The pins hold the window's law on a fake page (test/board_ui.test.js); this photographs what a fake cannot.
+// face. The pins hold the window's law on a fake page (test/ui/board_ui.test.js); this photographs what a fake cannot.
 // Photographs to SHOT_DIR (default tools/shots/, ignored).
 //
 //     node tools/noticeBoardProbe.mjs [--only=<tab>] [--skin=enhanced|classic]
@@ -30,6 +30,7 @@ const SHOTS = [
   ['notices', 'Notices', null],
   ['read', 'Notices', 'read'],
   ['work', 'Work', null],
+  ['work-guide', 'Work', 'open'],   // PLAIN-UI: How chapters work, unfolded
   ['market', 'Market', null],
   ['market-picked', 'Market', 'pick'],
   ['market-mine', 'Market', 'view:mine'],
@@ -37,6 +38,7 @@ const SHOTS = [
   ['vendors', 'Vendors', null],
   ['guilds', 'Guilds', null],
   ['seat', 'Seat', null],
+  ['seat-guide', 'Seat', 'open'],   // PLAIN-UI: How the seat war works and the board's words, unfolded
 ].filter(([n]) => !ONLY || n.startsWith(ONLY));
 
 for (const [W, H, width] of [[1280, 800, 'desktop'], [390, 760, 'phone']]) for (const skin of SKINS) {
@@ -46,7 +48,7 @@ for (const [W, H, width] of [[1280, 800, 'desktop'], [390, 760, 'phone']]) for (
   const timing = await page.evaluate(async () => {
     const { mountNoticeBoard } = await import('/src/ui/noticeWindow.js');
     const NB = await import('/src/net/noticeBook.js');
-    const { materialLabel, materialCountLabel } = await import('/src/systems/profItems.js');
+    const { materialLabel, materialCountLabel } = await import('/src/systems/professions/profItems.js');
     const { WEAVERS_STOCK, APOTHECARY_STOCK } = await import('/src/net/professionLaw.js');
     document.body.innerHTML = '';
     document.body.style.cssText = 'margin:0;background:repeating-linear-gradient(45deg,#2a2721 0 14px,#231f1a 14px 28px);height:100vh';
@@ -183,6 +185,12 @@ for (const [W, H, width] of [[1280, 800, 'desktop'], [390, 760, 'phone']]) for (
       await new Promise((r) => setTimeout(r, 200));
       if (step === 'read') document.querySelector('.notice-card')?.click();
       if (step === 'pick') document.querySelector('.market-row')?.click();
+      if (step === 'open') {
+        const folds = [...document.querySelectorAll('.notice-cork details')];
+        for (const d of folds) if (!d.open) d.querySelector('summary')?.click();
+        await new Promise((r) => setTimeout(r, 60));
+        document.querySelector('.notice-cork details')?.scrollIntoView({ block: 'start' });
+      }
       if (step?.startsWith('view:')) {
         const v = step.slice(5);
         const want = { mine: 'My listings', orders: 'Orders' }[v] ?? v;

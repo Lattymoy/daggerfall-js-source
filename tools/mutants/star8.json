@@ -1,0 +1,351 @@
+[
+ {
+  "name": "STAR8-the-event-dropped",
+  "file": "src/systems/questlines/qlLines.js",
+  "old": "opens: { level: 6, online: true, account: true, event: 'starfall' },",
+  "new": "opens: { level: 6, online: true, account: true },",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-level",
+  "file": "src/systems/questlines/qlLines.js",
+  "old": "opens: { level: 6, online: true, account: true, event: 'starfall' },",
+  "new": "opens: { level: 5, online: true, account: true, event: 'starfall' },",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-first-step-any-night",
+  "file": "src/systems/questlines/qlLines.js",
+  "old": "{ quest: 'QLTF01', title: () => t('ql.step.QLTF01', 'Music in the Woods'), needs: ['starfall'] },",
+  "new": "{ quest: 'QLTF01', title: () => t('ql.step.QLTF01', 'Music in the Woods') },",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-three-stars-any-night",
+  "file": "src/systems/questlines/qlLines.js",
+  "old": "{ quest: 'QLTF03', title: () => t('ql.step.QLTF03', 'Three Stars'), needs: ['starfall'] },",
+  "new": "{ quest: 'QLTF03', title: () => t('ql.step.QLTF03', 'Three Stars') },",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-opener-unread",
+  "file": "src/systems/questlines/qlLines.js",
+  "old": "  if (o.event && !eventHolds(l, probe)) return false;   // STAR8",
+  "new": "  if (false) return false;   // STAR8",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-event-always-holds",
+  "file": "src/systems/questlines/qlLines.js",
+  "old": "export const eventHolds = (l, probe) => !l.opens.event || (probe.need?.(l.opens.event) ?? true);",
+  "new": "export const eventHolds = () => true;",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-said-twice",
+  "file": "src/systems/questlines/qlLines.js",
+  "old": "const needs = new Set([...(o.event && !eventHolds(l, probe) ? [o.event] : []), ...unmetNeeds(l, step, probe)]);",
+  "new": "const needs = [...(o.event && !eventHolds(l, probe) ? [o.event] : []), ...unmetNeeds(l, step, probe)];",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-need-off-the-clock",
+  "file": "src/systems/questlines/qlLineRunner.js",
+  "old": "  const need = (n) => { try { return !!NEED_CHECKS[n]?.(nowMs()); } catch { return false; } };",
+  "new": "  const need = (n) => { try { return !!NEED_CHECKS[n]?.(); } catch { return false; } };",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-calendar-ignored",
+  "file": "src/systems/questlines/qlLineRunner.js",
+  "old": "  starfall: (/** @type {number} */ nowMs) => starfallRuns(nowMs),",
+  "new": "  starfall: () => true,",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-drawn-out-of-season",
+  "file": "src/systems/questlines/qlLineRunner.js",
+  "old": "      return QL_LINES.filter((l) => lines[l.id] || ((!l.opens.online || online()) && eventHolds(l, probe))).map((l) => {",
+  "new": "      return QL_LINES.filter((l) => lines[l.id] || !l.opens.online || online()).map((l) => {",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-title-on-the-fate",
+  "file": "src/net/questlineClaims.js",
+  "old": "title: 'starwarden', titleAt: 2 }),",
+  "new": "title: 'starwarden', titleAt: 3 }),",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js",
+   "test/server/ql12_claim.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-first-star-unwitnessed",
+  "file": "src/net/questlineClaims.js",
+  "old": "witness: Object.freeze({ 0: 'star', 2: 'stars3' }), title: 'starwarden'",
+  "new": "witness: Object.freeze({ 2: 'stars3' }), title: 'starwarden'",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js",
+   "test/server/ql12_claim.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-stars-table",
+  "file": "server-account/src/questlines.js",
+  "old": "  star: `(SELECT MIN(s.at) FROM stars_held s WHERE s.account = ?1 AND ${WINDOW('s')})`,",
+  "new": "  star: `(SELECT MIN(s.at) FROM star_spoils s WHERE s.account = ?1 AND ${WINDOW('s')})`,",
+  "tests": [
+   "test/server/ql12_claim.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-one-star-for-three",
+  "file": "server-account/src/questlines.js",
+  "old": "ORDER BY s.at, s.star LIMIT 1 OFFSET 2)`,",
+  "new": "ORDER BY s.at, s.star LIMIT 1 OFFSET 1)`,",
+  "tests": [
+   "test/server/ql12_claim.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-window-open",
+  "file": "server-account/src/questlines.js",
+  "old": "  star: `(SELECT MIN(s.at) FROM stars_held s WHERE s.account = ?1 AND ${WINDOW('s')})`,",
+  "new": "  star: `(SELECT MIN(s.at) FROM stars_held s WHERE s.account = ?1)`,",
+  "tests": [
+   "test/server/ql12_claim.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-foe-unnamed",
+  "file": "src/systems/questlines/qlActions.js",
+  "old": "    if (foe) {\n      foe.displayName = this.given;",
+  "new": "    if (foe) {\n      foe.displayName = foe.displayName;",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-gender-unread",
+  "file": "src/systems/questlines/qlActions.js",
+  "old": "foe.humanoidGender = this.gender === 'female' ? GENDERS.Female : GENDERS.Male;",
+  "new": "foe.humanoidGender = GENDERS.Male;",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-a-monster-made-a-woman",
+  "file": "src/systems/questlines/qlActions.js",
+  "old": "if (this.gender && isClassEnemyId(foe.foeType)) foe.humanoidGender",
+  "new": "if (this.gender) foe.humanoidGender",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-gender-unsaved",
+  "file": "src/systems/questlines/qlActions.js",
+  "old": "  get saveShape() { return [['personSymbol', 'sym'], ['given'], ['gender']]; }",
+  "new": "  get saveShape() { return [['personSymbol', 'sym'], ['given']]; }",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ],
+  "equivalent": true,
+  "why": "Belt and braces, as `given` beside it: a load builds the quest's actions again from its own lines (the machine re-reads `ql name ... female`), and the foe's gender itself rides the foe's save (quest/foe.js humanoidGender), which STAR8's `ql name` test holds across a save."
+ },
+ {
+  "name": "STAR8-the-ambush-unlatched",
+  "file": "src/systems/questlines/quests/QLTF02.txt",
+  "old": "_ambush_ task:\n\tcreate foe _spinner_",
+  "new": "_ambush_ task:\n\twhen _courier_ and _atbluff_\n\tcreate foe _spinner_",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-meeting-unlatched",
+  "file": "src/systems/questlines/quests/QLTF02.txt",
+  "old": "_back_ task:\n\twhen _hasspindle_ and _atcoven_\n\tstart task _home_\n\n_home_ task:\n",
+  "new": "_home_ task:\n\twhen _hasspindle_ and _atcoven_\n",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-spindle-as-pay",
+  "file": "src/systems/questlines/quests/QLTF04.txt",
+  "old": "\tplace npc _mage_ at _hall_\n\tget item _spindle_ saying 1035",
+  "new": "\tplace npc _mage_ at _hall_\n\tgive pc _spindle_ notify 1035",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-buyer-never-stood",
+  "file": "src/systems/questlines/quests/QLTF04.txt",
+  "old": "\tplace npc _mage_ at _hall_\n",
+  "new": "",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-guild-a-temple",
+  "file": "src/systems/questlines/quests/QLTF04.txt",
+  "old": "\tsay 1037\n\toutcome _guild_",
+  "new": "\tsay 1037\n\toutcome _temple_",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "STAR8-the-fallen-star-unnamed",
+  "file": "src/ui/questlines/qlJournal.js",
+  "old": "the Abyss Dungeon’s Shattered Hour, against the Sea Serpent or at a fallen star.",
+  "new": "the Abyss Dungeon’s Shattered Hour or against the Sea Serpent.",
+  "tests": [
+   "test/ui/questlines/ql2_journal.test.js"
+  ]
+ },
+ {
+  "name": "T-B-the-purse-unpaid",
+  "file": "server-account/src/questlines.js",
+  "old": "fest_cakes = fest_cakes + ?6 WHERE",
+  "new": "fest_cakes = fest_cakes + 0 * ?6 WHERE",
+  "tests": [
+   "test/server/ql12_claim.test.js"
+  ],
+  "why": "T-B: the Starwarden's purse lands on the account's count"
+ },
+ {
+  "name": "T-B-the-days-unread",
+  "file": "server-account/src/questlines.js",
+  "old": "&& festivalOpenFor(player, env) && festivalOpen(nowS * 1000) ?",
+  "new": "&& festivalOpenFor(player, env) ?",
+  "tests": [
+   "test/server/ql12_claim.test.js"
+  ],
+  "why": "T-B: only inside the festival's days"
+ },
+ {
+  "name": "T-B-the-switch-unread",
+  "file": "server-account/src/questlines.js",
+  "old": "Object.hasOwn(QL_PURSES, line) && festivalOpenFor(player, env) &&",
+  "new": "Object.hasOwn(QL_PURSES, line) &&",
+  "tests": [
+   "test/server/ql12_claim.test.js"
+  ],
+  "why": "T-B: only while FESTIVAL_OPEN opens the festival for the account"
+ },
+ {
+  "name": "T-B-the-purse-unguarded",
+  "file": "server-account/src/questlines.js",
+  "old": "fest_cakes = fest_cakes + ?6 WHERE id = ?1 AND (ql_titles & ?2) = 0",
+  "new": "fest_cakes = fest_cakes + ?6 WHERE id = ?1 AND (?6 > 0 OR (ql_titles & ?2) = 0)",
+  "tests": [
+   "test/server/ql12_claim.test.js"
+  ],
+  "why": "T-B: the title row's own guard is the purse's - once an account"
+ },
+ {
+  "name": "T-B-the-purse-said-to-every-claim",
+  "file": "server-account/src/questlines.js",
+  "old": "...(titled && purse > 0 ? { purse } : {}),",
+  "new": "...(purse > 0 ? { purse } : {}),",
+  "tests": [
+   "test/server/ql12_claim.test.js"
+  ],
+  "why": "T-B: `purse` answers the claim whose write paid it"
+ },
+ {
+  "name": "T-B-the-amount",
+  "file": "src/net/festivalLaw.js",
+  "old": "export const QL_STARWARDEN_CAKES = 30;",
+  "new": "export const QL_STARWARDEN_CAKES = 40;",
+  "tests": [
+   "test/server/ql12_claim.test.js"
+  ]
+ },
+ {
+  "name": "T-B-the-door-deaf",
+  "file": "src/scenes/quest/questlineHost.js",
+  "old": "const a = await door.claim(body); hearPurse(a); return a;",
+  "new": "const a = await door.claim(body); return a;",
+  "tests": [
+   "test/server/ql12_claim.test.js"
+  ],
+  "why": "T-B: the page hears a paid purse at the questlines' door"
+ },
+ {
+  "name": "T-B-the-pack-unrestacked",
+  "file": "src/scenes/quest/questlineHost.js",
+  "old": "  refresh().catch(() => {});\n",
+  "new": "  void refresh;\n",
+  "tests": [
+   "test/server/ql12_claim.test.js"
+  ],
+  "why": "T-B: the pack's Soul Cakes restacked through the festival's own door"
+ },
+ {
+  "name": "T-A-the-heart-unsaid",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "noteAct('star-held'); if (heart) noteAct('heart-star-held'); };",
+  "new": "noteAct('star-held'); };",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ],
+  "why": "T-A: the Heart-Star held notes its own act"
+ },
+ {
+  "name": "T-A-the-heart-for-every-star",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "const heart = !!c && heartStar(c.night, c.star);",
+  "new": "const heart = !!c;",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ],
+  "why": "T-A: the Heart-Star alone"
+ },
+ {
+  "name": "T-A-two-turns",
+  "file": "src/net/starfall/starClaims.js",
+  "old": "if (heart) noteAct('heart-star-held'); };",
+  "new": "if (heart) void Promise.resolve().then(() => noteAct('heart-star-held')); };",
+  "tests": [
+   "test/net/starfall/star7_claims.test.js"
+  ],
+  "why": "T-A: said in the star's own turn, so the festival's finds hear one deed"
+ },
+ {
+  "name": "T-A-another-family",
+  "file": "src/systems/questlines/qlActs.js",
+  "old": "  'heart-star-held': 'endgame',",
+  "new": "  'heart-star-held': 'world',",
+  "tests": [
+   "test/systems/questlines/ql11_acts.test.js",
+   "test/net/starfall/star7_claims.test.js"
+  ],
+  "why": "T-A: the endgame family, as its star's - one deed, one find"
+ }
+]

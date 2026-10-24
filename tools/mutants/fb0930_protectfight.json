@@ -5,7 +5,7 @@
     "old": "getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') && !!fightHere()));",
     "new": "getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection')));",
     "tests": [
-      "test/fb0930_protectfight.test.js"
+      "test/scenes/fb0930_protectfight.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') && !!fightHere()));",
     "new": "!!fightHere()));",
     "tests": [
-      "test/fb0930_protectfight.test.js"
+      "test/scenes/fb0930_protectfight.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    return !!person && (!!raidHere() || (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') && !!fightHere()));",
     "new": "    return !!person;",
     "tests": [
-      "test/fb0930_protectfight.test.js"
+      "test/scenes/fb0930_protectfight.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    return !!person && (!!raidHere() || (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') && !!fightHere()));",
     "new": "    return !!person && !!raidHere();",
     "tests": [
-      "test/fb0930_protectfight.test.js"
+      "test/scenes/fb0930_protectfight.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    fightHere: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]),   // PROTECT-FIGHT: under the protection, a fight spares the street's walkers\n",
     "new": "",
     "tests": [
-      "test/fb0930_protectfight.test.js"
+      "test/scenes/fb0930_protectfight.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    fightHere: () => areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]),   // PROTECT-FIGHT: world.js's twin\n",
     "new": "",
     "tests": [
-      "test/fb0930_protectfight.test.js"
+      "test/scenes/fb0930_protectfight.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    livePersons: () => _livePersons.filter((seat) => !cityGuards.playerSparesPerson(seat.person)),\n    foes: () => exteriorFoes.foes, guards: () => cityGuards.guards.filter((g) => !cityGuards.playerSpares(g)),",
     "new": "    livePersons: () => _livePersons,\n    foes: () => exteriorFoes.foes, guards: () => cityGuards.guards.filter((g) => !cityGuards.playerSpares(g)),",
     "tests": [
-      "test/fb0930_protectfight.test.js"
+      "test/scenes/fb0930_protectfight.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    foes: () => exteriorFoes.foes, guards: () => cityGuards.guards.filter((g) => !cityGuards.playerSpares(g)),\n    isGuardRecord",
     "new": "    foes: () => exteriorFoes.foes, guards: () => cityGuards.guards,\n    isGuardRecord",
     "tests": [
-      "test/fb0930_protectfight.test.js"
+      "test/scenes/fb0930_protectfight.test.js"
     ]
   }
 ]

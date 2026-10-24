@@ -1,50 +1,50 @@
 [
   {
     "name": "BANK-REGION-the-region-unnamed",
-    "file": "src/ui/enhancedPorts.js",
+    "file": "src/ui/enhanced/enhancedPorts.js",
     "old": "here ? `Account in ${here}` : 'Account balance', L.account]",
     "new": "'Account balance', L.account]",
     "tests": [
-      "test/fb0930b_bankregion.test.js"
+      "test/systems/fb0930b_bankregion.test.js"
     ],
     "note": "EMPIRE-ACCOUNT (PIN MOVED): re-aimed by content - online the row is the Empire's one account; offline, BANK-REGION as it shipped."
   },
   {
     "name": "BANK-REGION-the-others-unlisted",
-    "file": "src/ui/enhancedPorts.js",
+    "file": "src/ui/enhanced/enhancedPorts.js",
     "old": "L.account], ...elsewhere, ['Gold carried', L.inventory],",
     "new": "L.account], ['Gold carried', L.inventory],",
     "tests": [
-      "test/fb0930b_bankregion.test.js"
+      "test/systems/fb0930b_bankregion.test.js"
     ]
   },
   {
     "name": "BANK-REGION-the-account-itself-listed-again",
-    "file": "src/ui/enhancedPorts.js",
+    "file": "src/ui/enhanced/enhancedPorts.js",
     "old": "(i !== gold && a?.accountGold > 0 ?",
     "new": "(a?.accountGold > 0 ?",
     "tests": [
-      "test/fb0930b_bankregion.test.js"
+      "test/systems/fb0930b_bankregion.test.js"
     ],
     "note": "EMPIRE-ACCOUNT (PIN MOVED): re-aimed by content - online the row is the Empire's one account; offline, BANK-REGION as it shipped."
   },
   {
     "name": "BANK-REGION-every-empty-account-listed",
-    "file": "src/ui/enhancedPorts.js",
+    "file": "src/ui/enhanced/enhancedPorts.js",
     "old": "(i !== gold && a?.accountGold > 0 ?",
     "new": "(i !== gold && a ?",
     "tests": [
-      "test/fb0930b_bankregion.test.js"
+      "test/systems/fb0930b_bankregion.test.js"
     ],
     "note": "EMPIRE-ACCOUNT (PIN MOVED): re-aimed by content - online the row is the Empire's one account; offline, BANK-REGION as it shipped."
   },
   {
     "name": "BANK-REGION-a-werewolf-reads-the-vampire-book",
-    "file": "src/systems/guilds.js",
+    "file": "src/systems/guild/guilds.js",
     "old": "  const vamp = !!(entity.racialOverride && !entity.racialOverride.ended\n    && entity.racialOverride.racial === 'vampirism');",
     "new": "  const vamp = !!(entity.racialOverride && !entity.racialOverride.ended);",
     "tests": [
-      "test/fb0930b_bankregion.test.js"
+      "test/systems/fb0930b_bankregion.test.js"
     ]
   },
   {
@@ -53,7 +53,7 @@
     "old": "  if (!restore) endOldLifeEffects(entity);",
     "new": "  if (!restore) { endOldLifeEffects(entity); entity.guildMemberships = null; }",
     "tests": [
-      "test/fb0930b_bankregion.test.js"
+      "test/systems/fb0930b_bankregion.test.js"
     ]
   },
   {
@@ -62,25 +62,25 @@
     "old": "  if (!restore) endOldLifeEffects(entity);",
     "new": "  if (!restore) { endOldLifeEffects(entity); for (const a of entity.bankAccounts ?? []) a.accountGold = 0; }",
     "tests": [
-      "test/fb0930b_bankregion.test.js"
+      "test/systems/fb0930b_bankregion.test.js"
     ]
   },
   {
     "name": "BANK-REGION-the-save-drops-the-accounts",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "  snap.bankAccounts = (entity.bankAccounts ?? []).map((a) => ({ ...a }));",
     "new": "  snap.bankAccounts = [];",
     "tests": [
-      "test/fb0930b_bankregion.test.js"
+      "test/systems/fb0930b_bankregion.test.js"
     ]
   },
   {
     "name": "BANK-REGION-the-save-drops-the-guild-book",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "  snap.guildMemberships = entity.guildMemberships\n    ? (isMembershipStore",
     "new": "  snap.guildMemberships = !entity.guildMemberships\n    ? (isMembershipStore",
     "tests": [
-      "test/fb0930b_bankregion.test.js"
+      "test/systems/fb0930b_bankregion.test.js"
     ]
   }
 ]

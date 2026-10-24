@@ -5,25 +5,25 @@
   "old": "export const bakedTint = (rnd, x, z) => Math.max(0, Math.min(1, rnd + (grassClump(x, z) - rnd) * 0.55));",
   "new": "export const bakedTint = (rnd, x, z) => Math.max(0, Math.min(1, rnd + (grassClump(x, z) - rnd) * 0.0));",
   "tests": [
-   "test/labGrass.test.js"
+   "test/render/labGrass.test.js"
   ]
  },
  {
   "name": "GRASS6-one-octave-only",
   "file": "src/render/labGrass.js",
-  "old": "export const grassClump = (x, z) => grassVnoise(x * 0.055 + 0.317, z * 0.055 + 0.713) * 0.66 + grassVnoise(x * 0.017 + 0.531, z * 0.017 + 0.279) * 0.34;",
-  "new": "export const grassClump = (x, z) => grassVnoise(x * 0.055 + 0.317, z * 0.055 + 0.713);",
+  "old": "    sum = o === 0 ? v * 0.66 : sum + v * 0.34;",
+  "new": "    sum = o === 0 ? v : sum;",
   "tests": [
-   "test/labGrass.test.js"
+   "test/render/labGrass.test.js"
   ]
  },
  {
   "name": "GRASS6-the-noise-is-not-smoothed-so-the-patch-edges-are-creases",
   "file": "src/render/labGrass.js",
-  "old": "  fx = fx * fx * (3 - 2 * fx); fz = fz * fz * (3 - 2 * fz);",
-  "new": "",
+  "old": "  let fx = x - ix, fz = z - iz;\n  fx = fx * fx * (3 - 2 * fx); fz = fz * fz * (3 - 2 * fz);",
+  "new": "  let fx = x - ix, fz = z - iz;",
   "tests": [
-   "test/labGrass.test.js"
+   "test/render/labGrass.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "const fract = (v) => v - Math.floor(v);",
   "new": "const fract = (v) => v % 1;",
   "tests": [
-   "test/labGrass.test.js"
+   "test/render/labGrass.test.js"
   ]
  },
  {
@@ -41,9 +41,9 @@
   "old": "      const tint = bakedTint(tRnd, x, z);   // GRASS6; GRASS AUDIT 1: after keep(), for the blades that stand",
   "new": "      const tint = tRnd;   // GRASS6; GRASS AUDIT 1: after keep(), for the blades that stand",
   "tests": [
-   "test/labGrass.test.js",
-   "test/grasspath.test.js",
-   "test/perf2.test.js"
+   "test/render/labGrass.test.js",
+   "test/world/terrain/grasspath.test.js",
+   "test/render/perf2.test.js"
   ]
  },
  {
@@ -52,7 +52,7 @@
   "old": "  vTint = aInst2.z;\n  vGround = aGround;",
   "new": "  vTint = clamp(mix(aInst2.z, vnoise(root * 0.055) * 0.66 + vnoise(root * 0.017) * 0.34, 0.55), 0.0, 1.0);\n  vGround = aGround;",
   "tests": [
-   "test/labGrass.test.js"
+   "test/render/labGrass.test.js"
   ]
  },
  {
@@ -61,7 +61,7 @@
   "old": "  const a = grassHash(ix, iz), b = grassHash(ix + 1, iz), c = grassHash(ix, iz + 1), d = grassHash(ix + 1, iz + 1);",
   "new": "  const a = grassHash(ix, iz), b = grassHash(ix, iz + 1), c = grassHash(ix + 1, iz), d = grassHash(ix + 1, iz + 1);",
   "tests": [
-   "test/labGrass.test.js"
+   "test/render/labGrass.test.js"
   ]
  },
  {
@@ -70,25 +70,25 @@
   "old": "  return (a + (b - a) * fx) + ((c + (d - c) * fx) - (a + (b - a) * fx)) * fz;",
   "new": "  return (a + (b - a) * fx) + ((c + (d - c) * fx) - (a + (b - a) * fx)) * fx;",
   "tests": [
-   "test/labGrass.test.js"
+   "test/render/labGrass.test.js"
   ]
  },
  {
   "name": "AUDIT-GRASS6-the-weights-are-swapped",
   "file": "src/render/labGrass.js",
-  "old": "grassVnoise(x * 0.055 + 0.317, z * 0.055 + 0.713) * 0.66 + grassVnoise(x * 0.017 + 0.531, z * 0.017 + 0.279) * 0.34;",
-  "new": "grassVnoise(x * 0.055 + 0.317, z * 0.055 + 0.713) * 0.34 + grassVnoise(x * 0.017 + 0.531, z * 0.017 + 0.279) * 0.66;",
+  "old": "    sum = o === 0 ? v * 0.66 : sum + v * 0.34;",
+  "new": "    sum = o === 0 ? v * 0.34 : sum + v * 0.66;",
   "tests": [
-   "test/labGrass.test.js"
+   "test/render/labGrass.test.js"
   ]
  },
  {
   "name": "AUDIT-GRASS6-the-sample-sits-on-the-origin-corner",
   "file": "src/render/labGrass.js",
-  "old": "grassVnoise(x * 0.055 + 0.317, z * 0.055 + 0.713) * 0.66 + grassVnoise(x * 0.017 + 0.531, z * 0.017 + 0.279) * 0.34;",
-  "new": "grassVnoise(x * 0.055, z * 0.055) * 0.66 + grassVnoise(x * 0.017, z * 0.017) * 0.34;",
+  "old": "const vx = o === 0 ? x * 0.055 + 0.317 : x * 0.017 + 0.531, vz = o === 0 ? z * 0.055 + 0.713 : z * 0.017 + 0.279;",
+  "new": "const vx = o === 0 ? x * 0.055 : x * 0.017, vz = o === 0 ? z * 0.055 : z * 0.017;",
   "tests": [
-   "test/labGrass.test.js"
+   "test/render/labGrass.test.js"
   ]
  },
  {
@@ -97,7 +97,7 @@
   "old": "    const tRnd = rnd();   // GRASS6: the lab's tint random, drawn HERE so the stream is the lab's\n    const w = 0.052 + rnd() * 0.055;\n    const y = keep(x, z);\n    if (y === null || y === undefined) continue;\n    const tint = bakedTint(tRnd, fx, fz);",
   "new": "    const tint = bakedTint(rnd(), fx, fz);\n    const w = 0.052 + rnd() * 0.055;\n    const y = keep(x, z);\n    if (y === null || y === undefined) continue;",
   "tests": [
-   "test/labGrass.test.js"
+   "test/render/labGrass.test.js"
   ]
  },
  {
@@ -106,7 +106,7 @@
   "old": "      B[i * 4 + 2] = u8(placed.inst2[i * 4 + 2]);",
   "new": "      B[i * 4 + 2] = u8(0.5);",
   "tests": [
-   "test/labGrass.test.js"
+   "test/render/labGrass.test.js"
   ]
  },
  {
@@ -115,7 +115,7 @@
   "old": "    const u8 = (v) => Math.max(0, Math.min(255, Math.round(v * 255)));",
   "new": "    const u8 = (v) => (v * 255) | 0;",
   "tests": [
-   "test/labGrass.test.js"
+   "test/render/labGrass.test.js"
   ]
  }
 ]

@@ -5,7 +5,7 @@
     "old": "        st.cycled = true;\n        onCycle?.(slot, cycleQuickslot(slot, { entity }));   // the cycle raises the lamp itself",
     "new": "        st.cycled = false;\n        onCycle?.(slot, null);",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      if (!st.cycled) onTap?.(slot);",
     "new": "      onTap?.(slot); if (!st.cycled) {}",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (blocked || gap > QUICK_GAP_MS || typeof isHeld !== 'function' || hotbarInForce()) {",
     "new": "  if (gap > QUICK_GAP_MS || typeof isHeld !== 'function' || hotbarInForce()) {",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  const ms = Math.min(QUICK_TICK_MAX_MS, Math.max(0, (Number(dt) || 0) * 1000));",
     "new": "  const ms = Math.max(0, (Number(dt) || 0) * 1000);",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    const next = at < 0 ? (step > 0 ? 0 : list.length - 1) : (at + step + list.length) % list.length;\n    setSpellQuickslot(list[next]);",
     "new": "    const next = Math.max(0, Math.min(list.length - 1, at + step));\n    setSpellQuickslot(list[next]);",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (key == null || seen.has(key) || taken.includes(key)) continue;",
     "new": "    if (key == null || seen.has(key)) continue;",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    seen.add(key);\n    out.push({ key, name: itemLongName(it), item: it });",
     "new": "    out.push({ key, name: itemLongName(it), item: it });",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (!isQuickConsumable(it)) continue;",
     "new": "    if (false) continue;",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    const first = bookOf(entity).find(keyedSpell) ?? null;",
     "new": "    const first = null;",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  if (magic?.readiedIndex?.() === r.index) {",
     "new": "  if (false) {",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  if (!r.spell) { say?.(QUICKSLOT_TEXT.spellGone(r.name)); return { kind: 'gone', name: r.name }; }",
     "new": "  if (false) { say?.(QUICKSLOT_TEXT.spellGone(r.name)); return { kind: 'gone', name: r.name }; }",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  const spell = bookOf(entity).find((sp) => sp?.index === spellState.index) ?? null;",
     "new": "  const spell = bookOf(entity).find((sp) => sp?.name === spellState.name) ?? null;",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  if (!keyedSpell(sp)) return false;",
     "new": "  if (!sp) return false;",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -122,8 +122,8 @@
     "old": "  out.spell = spellState ? { index: spellState.index, name: spellState.name } : null;",
     "new": "  out.spell = null;",
     "tests": [
-      "test/qs6_spellslot.test.js",
-      "test/quickslots.test.js"
+      "test/systems/qs6_spellslot.test.js",
+      "test/systems/quickslots.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "  if (sp && Number.isFinite(sp.index) && typeof sp.name === 'string') spellState = { index: sp.index, name: sp.name };",
     "new": "  if (sp) spellState = { index: sp.index, name: sp.name };",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "state[s] = null; spellState = null; hotbar.fill(null);",
     "new": "state[s] = null; hotbar.fill(null);",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "export const offHandOffersSwap = (entity) => quickslotView(entity).off.kind === 'swap';",
     "new": "export const offHandOffersSwap = () => true;",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -159,16 +159,16 @@
     "old": "  const spell = sp ? { ...sp, readied: readiedIndex != null && readiedIndex === sp.index } : null;",
     "new": "  const spell = sp ? { ...sp, readied: true } : null;",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
     "name": "QS6-the-cycle-raises-no-lamp-so-the-HUD-never-shows-a-hold",
     "file": "src/systems/quickslots.js",
-    "old": "    cycling = { slot, ms: QUICK_CYCLE_LINGER_MS };\n    return { slot, index: list[next].index, name: list[next].name, spell: list[next] };",
-    "new": "    return { slot, index: list[next].index, name: list[next].name, spell: list[next] };",
+    "old": "    cycling = { slot, ms: QUICK_CYCLE_LINGER_MS };\n    return { slot, index: list[next].index, name: shownSpellName(list[next]), spell: list[next] };",
+    "new": "    return { slot, index: list[next].index, name: shownSpellName(list[next]), spell: list[next] };",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "  if (cycling) { cycling.ms -= ms; if (cycling.ms <= 0) cycling = null; }",
     "new": "  if (cycling) { cycling.ms -= 0; }",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -186,8 +186,8 @@
     "old": "  ['Digit3', 'QuickSpell'],",
     "new": "  ['Digit3', 'QuickSwap'],",
     "tests": [
-      "test/qs2_inputs.test.js",
-      "test/inputactions.test.js"
+      "test/systems/qs2_inputs.test.js",
+      "test/systems/inputactions.test.js"
     ]
   },
   {
@@ -196,8 +196,8 @@
     "old": "export const POLLED_ACTIONS = new Set(['ReadyWeapon', 'SwitchHand', 'QuickUse1', 'QuickUse2', 'QuickSpell']);",
     "new": "export const POLLED_ACTIONS = new Set(['ReadyWeapon', 'SwitchHand']);",
     "tests": [
-      "test/qs2_inputs.test.js",
-      "test/sheathkey.test.js"
+      "test/systems/qs2_inputs.test.js",
+      "test/scenes/sheathkey.test.js"
     ]
   },
   {
@@ -206,7 +206,7 @@
     "old": "    case 'QuickSpell': return !hotbarInForce() && ctx.quickSpell?.() === true;",
     "new": "    case 'QuickSpell': return false;",
     "tests": [
-      "test/qs2_inputs.test.js"
+      "test/systems/qs2_inputs.test.js"
     ]
   },
   {
@@ -215,7 +215,7 @@
     "old": "      if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && !POLLED_ACTIONS.has(act) && socialMenuCanOpen()) { if (!e.repeat && routeAction(act, hudCtx)) { e.preventDefault(); return true; } if (e.repeat) { e.preventDefault(); return true; } }   // MAC-R2: the press edge alone - a held key's auto-repeat is nothing (ui/input.js routeKey has the law)",
     "new": "      if (!townTalk.overlayActive && (modes?.mode ?? 'exterior') === 'exterior' && QUICKSLOT_ACTIONS.has(act) && socialMenuCanOpen()) { if (!e.repeat && routeAction(act, hudCtx)) { e.preventDefault(); return true; } if (e.repeat) { e.preventDefault(); return true; } }   // MAC-R2: the press edge alone - a held key's auto-repeat is nothing (ui/input.js routeKey has the law)",
     "tests": [
-      "test/qs2_inputs.test.js"
+      "test/systems/qs2_inputs.test.js"
     ],
     "why_reaimed": " MAC-R2/R3 (2026-09-17) moved the line; re-aimed to its new text."
   },
@@ -225,8 +225,8 @@
     "old": "        tickQuickHold(dt);   // QS6: the quickslot holds, beside the two latches they are modelled on",
     "new": "        void dt;",
     "tests": [
-      "test/qs6_spellslot.test.js",
-      "test/qs2_inputs.test.js"
+      "test/systems/qs6_spellslot.test.js",
+      "test/systems/qs2_inputs.test.js"
     ]
   },
   {
@@ -235,7 +235,7 @@
     "old": "    ctx.tickQuickHold?.(dt, { isHeld: (a) => held(keys, a), blocked: overlayHeld || !walkMode });",
     "new": "    void dt;",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -244,7 +244,7 @@
     "old": "    blocked: gamePaused(),   // `townTalk.overlayActive || modes.overlayHeld` - the same door every gameplay key takes",
     "new": "    blocked: false,",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -253,34 +253,34 @@
     "old": "    if (offHandOffersSwap(playerEntity)) return quickSwap();",
     "new": "    if (false) return quickSwap();",
     "tests": [
-      "test/qs2_inputs.test.js"
+      "test/systems/qs2_inputs.test.js"
     ]
   },
   {
     "name": "QS6-the-caption-doubles-the-readied-spell-the-chip-already-names",
-    "file": "src/ui/enhancedHud.js",
-    "old": "  const readyName = readySpell && !doubled ? String(readySpell.name ?? '') : null;",
-    "new": "  const readyName = readySpell ? String(readySpell.name ?? '') : null;",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "  const readyName = readySpell && !doubled ? String(shownSpellName(readySpell) ?? '') : null;",
+    "new": "  const readyName = readySpell ? String(shownSpellName(readySpell) ?? '') : null;",
     "tests": [
-      "test/enhancedHud.test.js"
+      "test/ui/enhanced/enhancedHud.test.js"
     ]
   },
   {
     "name": "QS6-a-fingers-hold-performs-the-slot-on-release-as-well-as-cycling",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "        if (!held) act();",
     "new": "        act();",
     "tests": [
-      "test/qs3_hud.test.js"
+      "test/ui/enhanced/qs3_hud.test.js"
     ]
   },
   {
     "name": "QS6-the-spell-chip-is-never-drawn",
-    "file": "src/ui/enhancedHud.js",
-    "old": "  cap.append(cornerWord, spellChip, readied);",
-    "new": "  cap.append(cornerWord, readied);",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "  cap.append(temp, cornerWord, spellChip, readied);",
+    "new": "  cap.append(temp, cornerWord, readied);",
     "tests": [
-      "test/qs3_hud.test.js"
+      "test/ui/enhanced/qs3_hud.test.js"
     ]
   },
   {
@@ -289,7 +289,7 @@
     "old": "    for (const slot of CYCLE_SLOTS) holds.set(slot, disarm());",
     "new": "    holds.clear();",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -298,7 +298,7 @@
     "old": "const disarm = () => ({ down: true, ms: 0, next: Infinity, cycled: true, disarmed: true });",
     "new": "const disarm = () => ({ down: true, ms: 0, next: Infinity, cycled: false, disarmed: true });",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -307,43 +307,43 @@
     "old": "const disarm = () => ({ down: true, ms: 0, next: Infinity, cycled: true, disarmed: true });",
     "new": "const disarm = () => ({ down: true, ms: 0, next: 0, cycled: true, disarmed: true });",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
     "name": "QS6-F4-the-cell-lamp-is-not-in-the-blocks-signature-so-it-never-goes-out",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "    quickslotCycling() ?? '',\n",
     "new": "",
     "tests": [
-      "test/qs3_hud.test.js"
+      "test/ui/enhanced/qs3_hud.test.js"
     ]
   },
   {
     "name": "QS6-F4-the-lamp-never-lights-at-all",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  const lamp = quickslotCycling();",
     "new": "  const lamp = null;",
     "tests": [
-      "test/qs3_hud.test.js"
+      "test/ui/enhanced/qs3_hud.test.js"
     ]
   },
   {
     "name": "QS6-F3-the-fingers-timers-outlive-the-HUD",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  for (const h of holds) h.off();   // AUDIT QS6 F3: a finger mid-cycle does not outlive the HUD\n  detachHotbarDock();",
     "new": "  detachHotbarDock();",
     "tests": [
-      "test/qs3_hud.test.js"
+      "test/ui/enhanced/qs3_hud.test.js"
     ]
   },
   {
     "name": "QS6-F3-a-finger-lifted-leaves-its-timer-running",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "        const held = cycled;\n        stop();",
     "new": "        const held = cycled;",
     "tests": [
-      "test/qs3_hud.test.js"
+      "test/ui/enhanced/qs3_hud.test.js"
     ]
   },
   {
@@ -352,7 +352,7 @@
     "old": "  if (blocked || gap > QUICK_GAP_MS || typeof isHeld !== 'function' || hotbarInForce()) {",
     "new": "  if (blocked || typeof isHeld !== 'function' || hotbarInForce()) {",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -361,7 +361,7 @@
     "old": "  lastTickAt = at;",
     "new": "  lastTickAt = 0;",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   },
   {
@@ -370,7 +370,7 @@
     "old": "    ctx.tickQuickHold?.(dt, { isHeld: (a) => held(keys, a), blocked: overlayHeld || !walkMode });",
     "new": "    ctx.tickQuickHold?.(dt, { isHeld: (a) => held(keys, a), blocked: overlayHeld });",
     "tests": [
-      "test/qs6_spellslot.test.js"
+      "test/systems/qs6_spellslot.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "    const p = g.scene.poses(now / 1000, table?.view() ?? null,",
     "new": "    const p = g.scene.poses(now / 1000, table.view(),",
     "tests": [
-      "test/auditcards6_e.test.js"
+      "test/systems/auditcards6_e.test.js"
     ]
   }
 ]

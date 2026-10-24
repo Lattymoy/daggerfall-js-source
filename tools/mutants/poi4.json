@@ -1,0 +1,101 @@
+[
+  {
+    "name": "POI4-the-x-kept",
+    "file": "src/poi/gltfImport.js",
+    "old": "          out.positions.push(-p[0] + 0, p[1], p[2]);",
+    "new": "          out.positions.push(p[0] + 0, p[1], p[2]);",
+    "tests": [
+      "test/poi/poi4_gltf.test.js"
+    ]
+  },
+  {
+    "name": "POI4-the-winding-kept",
+    "file": "src/poi/gltfImport.js",
+    "old": "        const flip = !mirrored;",
+    "new": "        const flip = false;",
+    "tests": [
+      "test/poi/poi4_gltf.test.js"
+    ]
+  },
+  {
+    "name": "POI4-the-mirror-unread",
+    "file": "src/poi/gltfImport.js",
+    "old": "        const flip = !mirrored;",
+    "new": "        const flip = true;",
+    "tests": [
+      "test/poi/poi4_gltf.test.js"
+    ]
+  },
+  {
+    "name": "POI4-the-parent-unread",
+    "file": "src/poi/gltfImport.js",
+    "old": "    const world = mul(parent, local);",
+    "new": "    const world = local;",
+    "tests": [
+      "test/poi/poi4_gltf.test.js"
+    ]
+  },
+  {
+    "name": "POI4-the-normal-by-the-plain-matrix",
+    "file": "src/poi/gltfImport.js",
+    "old": "            n = norm3(xformDir(Nv, n));",
+    "new": "            n = norm3(xform(linearOf(Mv), n));",
+    "tests": [
+      "test/poi/poi4_gltf.test.js"
+    ]
+  },
+  {
+    "name": "POI4-the-stride-unread",
+    "file": "src/poi/gltfImport.js",
+    "old": "      const step = stride || elem;",
+    "new": "      const step = elem;",
+    "tests": [
+      "test/poi/poi4_gltf.test.js"
+    ]
+  },
+  {
+    "name": "POI4-the-sparse-values-unread",
+    "file": "src/poi/gltfImport.js",
+    "old": "        for (let k = 0; k < size; k++) out[target * size + k] = conv(readV((val.byteOffset ?? 0) + (s * size + k) * comp.size));",
+    "new": "        for (let k = 0; k < size; k++) out[target * size + k] = 0;",
+    "tests": [
+      "test/poi/poi4_gltf.test.js"
+    ]
+  },
+  {
+    "name": "POI4-the-flat-normals-unflipped",
+    "file": "src/poi/gltfImport.js",
+    "old": "            const e0 = at(t), e1 = at(f ? t + 2 : t + 1), e2 = at(f ? t + 1 : t + 2);",
+    "new": "            const e0 = at(t), e1 = at(t + 1), e2 = at(t + 2);",
+    "tests": [
+      "test/poi/poi4_gltf.test.js"
+    ]
+  },
+  {
+    "name": "POI4-draco-read-anyway",
+    "file": "src/poi/gltfImport.js",
+    "old": "      if (ext === 'KHR_draco_mesh_compression' || ext === 'EXT_meshopt_compression') fail('compressed', { ext });",
+    "new": "      if (false) fail('compressed', { ext });",
+    "tests": [
+      "test/poi/poi4_gltf.test.js"
+    ]
+  },
+  {
+    "name": "POI4-the-texture-transform-unbaked",
+    "file": "src/poi/gltfImport.js",
+    "old": "          if (tt) [u, v] = applyTextureTransform(tt, u, v);",
+    "new": "          if (false) [u, v] = applyTextureTransform(tt, u, v);",
+    "tests": [
+      "test/poi/poi4_gltf.test.js"
+    ]
+  },
+  {
+    "name": "POI4-the-webp-source-unread",
+    "file": "src/poi/gltfImport.js",
+    "old": "    const source = tex.extensions?.EXT_texture_webp?.source ?? tex.source;",
+    "new": "    const source = tex.source;",
+    "tests": [
+      "test/poi/poi4_gltf.test.js"
+    ]
+  }
+]

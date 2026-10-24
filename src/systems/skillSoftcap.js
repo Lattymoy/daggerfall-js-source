@@ -78,7 +78,7 @@ export const milestoneAt = (v) => SKILL_MILESTONES.find((m) => m.at === v) ?? nu
 /** The sum of every milestone bonus at or below `v`. */
 export function milestoneBonus(v) {
   let b = 0;
-  for (const m of SKILL_MILESTONES) if (v >= m.at) b += m.bonus;
+  for (let i = 0; i < SKILL_MILESTONES.length; i++) if (v >= SKILL_MILESTONES[i].at) b += SKILL_MILESTONES[i].bonus;   // AUDIT MARTIAL L2 F3: indexed - a swing's pace reads the climb every frame of the swing
   return b;
 }
 
@@ -119,7 +119,8 @@ export const skillCategory = (id) => (COMBAT_SKILL_IDS.has(id) ? SKILL_CATEGORY.
 
 /** How long a struck/striking foe stays "the foe" for the tallies that follow the blow. */
 export const CHALLENGE_TTL_MS = 6000;
-/** A spell cast with no foe in the fight (a self-heal, a light) above 100 counts this much. */
+/** A spell cast with no foe in the fight (a self-heal, a light) above 100 counts this much - and BAL9a (bible/05-Combat/
+ *  Balance-Arc.md section 15), every spell's floor: a foe tough for the school raises it, none takes it lower. */
 export const UNCHALLENGED_MAGIC_WEIGHT = 0.25;
 export const SPAM_HALF_LIFE_MS = 60000;
 /** Weighted uses a skill may take inside roughly one half-life before each further use is damped. */
@@ -140,7 +141,8 @@ export function challengeQuality(tier, skill) {
   return 1 + 0.5 * Math.min(1, (r - 1) / 0.5);
 }
 
-/** Remember the foe this entity just traded a blow with (formulas.js calls it). */
+/** Remember the foe this entity just traded a blow with (formulas.js calls it) - or a spell (BAL9: scenes/hostMagic.js, a
+ *  spell of mine reaching a foe and a foe's reaching me). */
 export function noteSkillChallenge(entity, foe, now = Date.now()) {
   if (!entity || !foe || entity === foe) return;
   const tier = challengeTier(foe);
@@ -174,7 +176,7 @@ export function overcapTallyWeight(entity, skillId, amount, skill, now = Date.no
   const ch = liveChallenge(entity, now);
   let q;
   if (cat === SKILL_CATEGORY.combat) q = ch ? challengeQuality(ch.tier, skill) : 0;
-  else if (cat === SKILL_CATEGORY.magic) q = ch ? challengeQuality(ch.tier, skill) : UNCHALLENGED_MAGIC_WEIGHT;
+  else if (cat === SKILL_CATEGORY.magic) q = Math.max(UNCHALLENGED_MAGIC_WEIGHT, ch ? challengeQuality(ch.tier, skill) : 0);   // BAL9a: a spell now answers its foe (scenes/hostMagic.js) - a tough one raises its weight, a weak one never takes it under a cast at a wall
   else q = 1;
   if (q <= 0) return 0;
   return amount * q * spamWeight(entity, skillId, cat, amount * q, now);
@@ -334,10 +336,16 @@ const clamp01 = (x) => Math.max(0, Math.min(1, x));
 
 /** The combat edge, 0..EFFECTIVE_SKILL_MAX-100: the mean effective gain over
  *  100 of the three best combat/magic skills (REAL permanent values). */
+/** BAL9b (bible/05-Combat/Balance-Arc.md section 15): A SKILL'S CLIMB - its permanent value as a formula reads it (past
+ *  100 a mastered skill alone - SOFTCAP4 - at a quarter a point and the milestones), without what is worn or cast on it.
+ *  What the foes' edge reads below, and what a school's potency reads (systems/spell/spellPower.js schoolPotency): the climb
+ *  that raises the foes is the climb that pays the caster. */
+export const climbedSkill = (entity, id) => effectiveSkill(masterCappedSkill(entity, entity?.skills?.[id] ?? 0, id));
+
 export function combatEdge(entity) {
   // SOFTCAP3: no edge while mentoring, and none while Master Skills is off (or offline) - the climb is opt-in
   if (!Array.isArray(entity?.skills) || entity._mentor || !masterSkillsActive(entity)) return 0;
-  const gains = EDGE_SKILL_IDS.map((id) => Math.max(0, effectiveSkill(masterCappedSkill(entity, entity.skills[id] ?? 0, id)) - SKILL_SOFT_CAP))   // SOFTCAP4: mastered skills only
+  const gains = EDGE_SKILL_IDS.map((id) => Math.max(0, climbedSkill(entity, id) - SKILL_SOFT_CAP))   // SOFTCAP4: mastered skills only; BAL9b: the climb's one home
     .sort((a, b) => b - a).slice(0, EDGE_TOP_N);
   return gains.reduce((a, g) => a + g, 0) / EDGE_TOP_N;
 }
@@ -396,22 +404,26 @@ export const wildernessThreat = (night) => (night ? PLACE_THREAT.wilderness.nigh
 
 /** The whole scaling for one foe (pure). `standing` is combatStanding's { veteran, edge }; `place` the place's veteran
  *  (placeVeteran, 0..1 - BAL3). The veteran layer is the place's, or the player's veteran in this kind of place
- *  (dShare), whichever is more; the overcap is the player's climb, in this kind of place. null = none. */
-export function progressionScaling(standing, dShare, fShare, place = 0) {
+ *  (dShare), whichever is more; the overcap is the player's climb, in this kind of place. `hero` (BAL11,
+ *  systems/heroThreat.js heroThreatOf - the host hands it in, as it hands the place) multiplies onto both: its own
+ *  `damage` and `health`, whatever the foe's share - every kind answers the hero. null = none. */
+export function progressionScaling(standing, dShare, fShare, place = 0, hero = null) {
   const share = clamp01(dShare) * clamp01(fShare);
   const v = clamp01(standing?.veteran ?? 0);
   const p = clamp01(place);
   const o = clamp01((standing?.edge ?? 0) / (EFFECTIVE_SKILL_MAX - SKILL_SOFT_CAP));
   const vet = Math.max(clamp01(fShare) * p, share * v);   // BAL3: the place's veteran, the foe's share of it - Master Skills' a floor beside it
   const over = share * o;
-  if (!(vet > 0 || over > 0)) return null;
+  const hd = hero?.damage > 1 ? hero.damage : 1, hh = hero?.health > 1 ? hero.health : 1;   // BAL11: never under 1
+  if (!(vet > 0 || over > 0 || hd > 1 || hh > 1)) return null;
   const { veteran: V, overcap: O } = ENEMY_SCALING;
   const skillGain = V.skill * vet + O.skill * over;
   return {
     share, veteran: v, place: p, edge: standing?.edge ?? 0,
     skillGain,
-    healthMult: 1 + V.health * vet + O.health * over,
-    damageMult: 1 + V.damage * vet + O.damage * over,
+    healthMult: (1 + V.health * vet + O.health * over) * hh,
+    damageMult: (1 + V.damage * vet + O.damage * over) * hd,
+    heroHealth: hh, heroDamage: hd,
     challengeLevels: Math.round(skillGain * CHALLENGE_LEVELS_PER_SKILL),
   };
 }

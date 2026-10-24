@@ -1,0 +1,94 @@
+// @ts-check
+// WOD7 (2026-09-23, Mac: "and all the enemies are synced online?" ... "yes dude"): WORLD OF DAGGERFALL'S CAMPS,
+// SHARED. Every client of a room stands the same sites in the same places (the list is the room's, WOD2), but each
+// ran its own markers, so a camp sprang once per player and each fought a private copy (AUDIT BRANCH M1 kept the
+// copies home because they took a peer's puppet slots). Now the FIRST player to spring a marker owns what it made:
+// its foes ride that player's cell stream tagged with the marker's site, every reader stands them as puppets under
+// an allowance of their own, and a reader's own copy of the marker is spent - one camp, everyone's.
+//
+// A marker's SITE is the key every client shares without a word: the map pixel (one layout stands to a pixel) and the
+// marker's objectID - with its index among the pixel's markers of that objectID when there is more than one
+// (WOD_Nature_01 numbers two bears 0, WOD_Ruins_04 three warriors; AUDIT WOD7) - or `hold` for Privateer's Hold's camp. The tags and
+// the owner's sprung list ride the foes frame beside `c` (SURV3's camps) - validated here, at the reader, never by
+// the relay, which reads a frame's record count and nothing else. No wire or relay change.
+
+/** A site id: `px,py:objectID` or `px,py:hold` - WB12d: or `px,py:rite.<day>`, a breach's faithful (scenes/riteHost.js),
+ *  its day in it (AUDIT WB12d C14: a later breach's circle on the same pixel is a site of its own) - STAR5: or
+ *  `px,py:star.<night>.<k>`, a fallen star's coven, `.m` its master and `.c` its master's circle (starSiteId). */
+export const WOD_SITE_RE = /^-?\d{1,5},-?\d{1,5}:(?:\d{1,10}(?:\.\d{1,3})?|hold|rite\.\d{1,9}|star\.\d{1,10}\.[0-2](?:\.[mc])?)$/;   // STAR5: a fallen star's coven, its master (`.m`) and its circle (`.c`)
+/** WB12d: the site of a day's faithful at a breach in pixel (px, py). */
+export const riteSiteId = (px, py, day) => `${px},${py}:rite.${day}`;
+/** AUDIT WB12d (C5): a breach's faithful - today's site, or one a save from before the day joined the id held. */
+export const isRiteSite = (site) => typeof site === 'string' && /:rite(?:\.\d{1,9})?$/.test(site);
+/** STAR5 (bible/11-Multiplayer/Starfall.md section 4): a fallen star's sites in pixel (px, py) - night `n`, star `k`: its
+ *  coven's waves, its master (`m`) and its master's circle (`c`), one owner's all (the first to spring the waves'), so every
+ *  screen tells the master and its circle among the foes it sees. */
+export const starSiteId = (px, py, n, k, part = '') => `${px},${py}:star.${n}.${k}${part ? `.${part}` : ''}`;
+/** The most sites one frame may name, as tags or as the sprung list. */
+export const WOD_SITES_MAX = 64;
+/** A reader's allowance for one owner's camp foes - apart from CELL_PUPPETS_MAX, as the watch's is (WATCH1): a camp
+ *  that spent the encounter allowance was the bug M1 fixed by keeping them home. The biggest shipped camp stands
+ *  well under this. */
+export const WOD_CAMP_PUPPETS_MAX = 16;
+/** AUDIT STARFALL C7: a reader's allowance for one owner's fallen-star foes (its three sites, starSiteId), counted apart
+ *  from its camps' - the most of them the Starfall's law calls at once (scenes/starfall/starfallHost.js STAR_LIVE_MAX: a
+ *  wave's twenty-four - STAR-TUNE, from nine - the master, two calls of the Heart-Star's circle of ten), which its owner
+ *  never stands past. Under the camps' sixteen the excess of a master's circle stood nowhere but its owner's, and warded
+ *  the master still. Under a peer's whole frame (exteriorFoes.js PEER_PUPPETS_TOTAL_MAX, sixty-four). */
+export const WOD_STAR_PUPPETS_MAX = 45;
+/** STAR5: whether a site is a fallen star's - its waves', its master's or its circle's (starSiteId). */
+export const isStarSite = (site) => typeof site === 'string' && /:star\.\d{1,10}\.[0-2](?:\.[mc])?$/.test(site);
+/** Two players who spring one marker inside this window (a frame's latency, generously) are a RACE, settled by id;
+ *  past it the one who sprang FIRST keeps it (AUDIT WOD7: each side measured only its own spring's age, so a pair
+ *  ten seconds apart doubled or collapsed by id order alone). */
+export const WOD_CLAIM_WINDOW_MS = 5000;
+
+/** The longest age a sprung list states, in ms (a day) - older is as old. */
+export const WOD_AGE_MAX = 86400000;
+
+/** @param {number} px @param {number} py @param {number|string} oid @param {number} [n] the index among the pixel's
+ *  markers of that objectID - 0, the only one, is left unwritten */
+export const wodSiteId = (px, py, oid, n = 0) => `${px},${py}:${oid}${n > 0 ? `.${n}` : ''}`;
+
+/** A frame's sprung list - `[[site, ageMs], ...]`, newest first: how long ago the owner sprang each - projected:
+ *  the valid entries, at most WOD_SITES_MAX, each site once, the age clamped to [0, WOD_AGE_MAX]. */
+export function validSites(raw) {
+  if (!Array.isArray(raw)) return [];
+  const out = [], seen = new Set();
+  for (const e of raw) {
+    if (out.length >= WOD_SITES_MAX) break;
+    if (!Array.isArray(e) || e.length !== 2) continue;
+    const [s, age] = e;
+    if (typeof s !== 'string' || !WOD_SITE_RE.test(s) || seen.has(s) || !Number.isFinite(age)) continue;
+    seen.add(s);
+    out.push([s, Math.max(0, Math.min(WOD_AGE_MAX, age))]);
+  }
+  return out;
+}
+
+/** A frame's tags - `[[i, site], ...]`, the owner's record number and the site it stood for - projected into a Map. */
+export function validSiteTags(raw) {
+  const out = new Map();
+  if (!Array.isArray(raw)) return out;
+  for (const e of raw) {
+    if (out.size >= WOD_SITES_MAX) break;
+    if (!Array.isArray(e) || e.length !== 2) continue;
+    const [i, s] = e;
+    if (Number.isInteger(i) && i >= 0 && typeof s === 'string' && WOD_SITE_RE.test(s)) out.set(i, s);
+  }
+  return out;
+}
+
+/**
+ * Who keeps a marker two players both sprang: the one who sprang it first; inside the claim window (a frame's
+ * latency cannot order them), the smaller id. Both sides reach the same answer from the two ages.
+ * @param {string} mine my id  @param {string} theirs the peer's id
+ * @param {number} myAge how long ago I sprang it, ms  @param {?number} theirAge theirs, as their sprung list says
+ * @returns {boolean} true when MY copy yields to theirs; never on an age not yet heard
+ */
+export function yieldsTo(mine, theirs, myAge, theirAge) {
+  if (typeof mine !== 'string' || typeof theirs !== 'string' || !mine || !theirs || mine === theirs) return false;
+  if (!Number.isFinite(theirAge) || !Number.isFinite(myAge)) return false;
+  if (Math.abs(myAge - theirAge) <= WOD_CLAIM_WINDOW_MS) return theirs < mine;
+  return theirAge > myAge;
+}

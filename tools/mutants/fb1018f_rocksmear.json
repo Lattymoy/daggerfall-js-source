@@ -1,0 +1,135 @@
+[
+  {
+    "name": "ROCK-SMEAR-inside-out",
+    "file": "src/world/townStandIns.js",
+    "old": "const l2 = (n[0] * g[0] + n[1] * g[1] + n[2] * g[2] < 0 ? -1 : 1) * (Math.hypot(...n) || 1)",
+    "new": "const l2 = (Math.hypot(...n) || 1)",
+    "tests": [
+      "test/world/fb1018f_rocksmear.test.js"
+    ],
+    "why": "the report: each face takes the normal its corners' order gives - 40 of 48 looking into the rock, culled from outside"
+  },
+  {
+    "name": "ROCK-SMEAR-one-plan",
+    "file": "src/world/townStandIns.js",
+    "old": "m.tri(ROCK, a, b, c, nn, boulderUv(a, nn), boulderUv(b, nn), boulderUv(c, nn));",
+    "new": "m.tri(ROCK, a, b, c, nn, [a[0], -a[1]], [b[0], -b[1]], [c[0], -c[1]]);",
+    "tests": [
+      "test/world/fb1018f_rocksmear.test.js"
+    ],
+    "why": "the report: the side view (x, -y) laid on every face - the underside one smeared row, the x sides a sliver"
+  },
+  {
+    "name": "ROCK-SMEAR-underside-side-view",
+    "file": "src/world/townStandIns.js",
+    "old": "  if (ay >= ax && ay >= az) return [p[0], -p[2]];",
+    "new": "  if (ay >= ax && ay >= az) return [p[0], -p[1]];",
+    "tests": [
+      "test/world/fb1018f_rocksmear.test.js"
+    ],
+    "why": "the crown and the underside back on the side view: one row of the picture across them"
+  },
+  {
+    "name": "ROCK-SMEAR-x-side-front-view",
+    "file": "src/world/townStandIns.js",
+    "old": "  return ax >= az ? [p[2], -p[1]] : [p[0], -p[1]];",
+    "new": "  return ax >= az ? [p[0], -p[1]] : [p[0], -p[1]];",
+    "tests": [
+      "test/world/fb1018f_rocksmear.test.js"
+    ],
+    "why": "a side that faces x laid by the plan along z: squeezed to a sliver"
+  },
+  {
+    "name": "ROCK-SMEAR-signed-lean",
+    "file": "src/world/townStandIns.js",
+    "old": "  const ax = Math.abs(n[0]), ay = Math.abs(n[1]), az = Math.abs(n[2]);",
+    "new": "  const ax = n[0], ay = Math.abs(n[1]), az = Math.abs(n[2]);",
+    "tests": [
+      "test/world/fb1018f_rocksmear.test.js"
+    ],
+    "why": "the side facing -x read as leaning on z: smeared"
+  },
+  {
+    "name": "ROCK-SMEAR-rows-upside-down",
+    "file": "src/world/townStandIns.js",
+    "old": "  return ax >= az ? [p[2], -p[1]] : [p[0], -p[1]];",
+    "new": "  return ax >= az ? [p[2], p[1]] : [p[0], -p[1]];",
+    "tests": [
+      "test/world/fb1018f_rocksmear.test.js"
+    ],
+    "why": "a side's picture stood on its head - the rows level, but running up where every other face's run down"
+  },
+  {
+    "name": "ROCK-SMEAR-prism-on-trust",
+    "file": "src/world/townStandIns.js",
+    "old": "  const pts = area < 0 ? [...corners].reverse() : corners;",
+    "new": "  const pts = corners;",
+    "tests": [
+      "test/world/fb1018f_rocksmear.test.js"
+    ],
+    "why": "found beside it: the ramp's deck and the steps' stringers look into their prisms again"
+  },
+  {
+    "name": "ROCK-SMEAR-prism-backwards",
+    "file": "src/world/townStandIns.js",
+    "old": "  const pts = area < 0 ? [...corners].reverse() : corners;",
+    "new": "  const pts = area > 0 ? [...corners].reverse() : corners;",
+    "tests": [
+      "test/world/fb1018f_rocksmear.test.js"
+    ],
+    "why": "every prism wound against its corners' order"
+  },
+  {
+    "name": "ROCK-SMEAR-centroid-off-the-axis",
+    "file": "src/world/townStandIns.js",
+    "old": "(a[0] + b[0] + c[0]) / 3 - cx, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3 - cz]",
+    "new": "(a[0] + b[0] + c[0]) / 3, (a[1] + b[1] + c[1]) / 3, (a[2] + b[2] + c[2]) / 3]",
+    "tests": [
+      "test/world/fb1018f_rocksmear.test.js"
+    ],
+    "why": "AUDIT FB1018f L4-6: a face read against the origin, not the boulder's own axis - a rock stood off its origin faces into itself"
+  },
+  {
+    "name": "ROCK-SMEAR-prism-area-half-shoelace",
+    "file": "src/world/townStandIns.js",
+    "old": "area += a[0] * b[1] - b[0] * a[1];",
+    "new": "area += a[0] * b[1];",
+    "tests": [
+      "test/world/fb1018f_rocksmear.test.js"
+    ],
+    "why": "AUDIT FB1018f L4-6: half the shoelace - the winding right for the docks' corners, wrong for a prism in another quadrant"
+  },
+  {
+    "name": "ROCK-SMEAR-tie-flips",
+    "file": "src/world/townStandIns.js",
+    "old": "n[0] * g[0] + n[1] * g[1] + n[2] * g[2] < 0 ? -1 : 1",
+    "new": "n[0] * g[0] + n[1] * g[1] + n[2] * g[2] <= 0 ? -1 : 1",
+    "tests": [
+      "test/world/fb1018f_rocksmear.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT FB1018f L4-7: a boulder face's centre never lies in its own plane through the axis (the rings are pushed round it), so no face meets the tie"
+  },
+  {
+    "name": "ROCK-SMEAR-uv-of-raw-normal",
+    "file": "src/world/townStandIns.js",
+    "old": "boulderUv(a, nn), boulderUv(b, nn), boulderUv(c, nn)",
+    "new": "boulderUv(a, n), boulderUv(b, n), boulderUv(c, n)",
+    "tests": [
+      "test/world/fb1018f_rocksmear.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT FB1018f L4-7: boulderUv reads only which of the normal's absolute components is largest, which scaling and the sign leave as they are"
+  },
+  {
+    "name": "ROCK-SMEAR-prism-reverse-in-place",
+    "file": "src/world/townStandIns.js",
+    "old": "const pts = area < 0 ? [...corners].reverse() : corners;",
+    "new": "const pts = area < 0 ? corners.reverse() : corners;",
+    "tests": [
+      "test/world/fb1018f_rocksmear.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT FB1018f L4-7: both callers hand prismZ a list made for the call and never read it after; the copy keeps a caller's list its own"
+  }
+]

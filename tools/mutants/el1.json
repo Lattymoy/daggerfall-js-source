@@ -5,7 +5,7 @@
     "old": "  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);",
     "new": "  return Math.pow(c, 2.2);",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  c = Math.min(Math.max(c, 0), 1);\n  return c <= 0.0031308",
     "new": "  return c <= 0.0031308",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  for (let i = 0; i < count * 3; i++) out[i] = elDecode(src[i]);",
     "new": "  for (let i = 0; i < count * 3 - 1; i++) out[i] = elDecode(src[i]);",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  return EL_LIGHT_GAIN / (1 + EL_LIGHT_KNEE * x2) * win;",
     "new": "  return EL_LIGHT_GAIN / (1 + EL_LIGHT_KNEE * x2);",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  let win = 1 - x2 * x2;\n  win *= win;",
     "new": "  let win = 1 - x;",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (!(range > 0) || d >= range) return 0;",
     "new": "  if (!(range > 0) || d > range) return 0;",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ],
     "equivalent": true,
     "why": "at d == range the window (1 - x^4)^2 is exactly zero, so the early return only spares the arithmetic; d beyond the range is still the guard's"
@@ -61,7 +61,7 @@
     "old": "export const EL_LIGHT_GAIN = 2;",
     "new": "export const EL_LIGHT_GAIN = 3;",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "export const EL_LIGHT_KNEE = 16;",
     "new": "export const EL_LIGHT_KNEE = 25;",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "  return x * (1 + x / (white * white)) / (1 + x);",
     "new": "  return x / (1 + x);",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "export const EL_WHITE = 4;",
     "new": "export const EL_WHITE = 3;",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "export const EL_EXPOSURE = 1.4;",
     "new": "export const EL_EXPOSURE = 1.2;",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "  const ta = Math.max(0, t0 - chord), tb = Math.min(dist, t0 + chord);",
     "new": "  const ta = 0, tb = dist;",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "  const h = Math.max(Math.sqrt(h2), 0.25);",
     "new": "  const h = Math.sqrt(h2);",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "  return density * (Math.atan((tb - t0) / h) - Math.atan((ta - t0) / h)) / h;",
     "new": "  return density * (Math.atan((tb - t0) / h) - Math.atan((ta - t0) / h));",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "  if (mode === 1) return 1 / Math.max(end - start, 1e-4);",
     "new": "  if (mode === 1) return 1 / Math.max(end, 1e-4);",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "  if (mode === 2 || mode === 3) return density;",
     "new": "  if (mode === 2) return density;",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -151,7 +151,7 @@
     "old": "export const EL_SCATTER = 0.35;",
     "new": "export const EL_SCATTER = 0.5;",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "old": "  return isEnhanced() && !!getPref('enhancedLighting') && pageParam('lighting', search) !== 'classic';",
     "new": "  return !!getPref('enhancedLighting') && pageParam('lighting', search) !== 'classic';",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "  return isEnhanced() && !!getPref('enhancedLighting') && pageParam('lighting', search) !== 'classic';",
     "new": "  return isEnhanced() && !!getPref('enhancedLighting');",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "  return Number.isFinite(v) && v > 0 ? v : EL_EXPOSURE;",
     "new": "  return Number.isFinite(v) ? v : EL_EXPOSURE;",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "  vec3 col = mix(uFogColor, elEncode(tm), fogFactorAt(wp));",
     "new": "  vec3 col = mix(uFogColor, tm, fogFactorAt(wp));",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "export const EL_MAX_LIGHTS = 48;",
     "new": "export const EL_MAX_LIGHTS = 32;",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "  const k = classic[1];",
     "new": "  const k = 1;",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "  if (!on) return classic;\n  const k = classic[1];",
     "new": "  const k = classic[1];",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "if (on) { renderer.setExposure(exposureFor(search)); renderer.setAir(airOn(search));",
     "new": "if (on) { renderer.setAir(airOn(search));",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "  farRingFs: EL_FAR_RING_FS,",
     "new": "  farRingFs: EL_MESH_FS,",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "      if (!this._laneSet || this._laneSet.key !== lane.key) this._laneSet = this._buildWorldSet(lane);",
     "new": "      this._laneSet = this._buildWorldSet(lane);",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "    if (lane === this._lane) return;\n    if (lane) {",
     "new": "    if (lane) {",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "    this.maxPointLights = lane ? lane.maxLights : CLASSIC_MAX_LIGHTS;",
     "new": "    this.maxPointLights = lane ? lane.maxLights : this.maxPointLights;",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "    if (this._pointLights.length > n * 4) this._pointLights = this._pointLights.subarray ? this._pointLights.subarray(0, n * 4) : this._pointLights.slice(0, n * 4);",
     "new": "",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "    return this._lane ? this._lane.decode3(src, scratch) : src;",
     "new": "    return src;",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -286,16 +286,25 @@
     "old": "    if (!lane || raw) return out;",
     "new": "    return out;",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
     "name": "renderer-scatter-unfolded",
     "file": "src/render/renderer.js",
-    "old": "  _scatterGain() { const lane = this._lane; return lane ? lane.scatter * lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]) : 0; }",
+    "old": "  _scatterGain() { const lane = this._lane; return lane ? lane.scatter * Math.min(lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]), lane.scatterDensityMax ?? Infinity) : 0; }",
     "new": "  _scatterGain() { const lane = this._lane; return lane ? lane.scatter : 0; }",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
+    ]
+  },
+  {
+    "name": "renderer-scatter-uncapped",
+    "file": "src/render/renderer.js",
+    "old": "  _scatterGain() { const lane = this._lane; return lane ? lane.scatter * Math.min(lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]), lane.scatterDensityMax ?? Infinity) : 0; }",
+    "new": "  _scatterGain() { const lane = this._lane; return lane ? lane.scatter * Math.min(lane.scatterDensity(this._fogMode, this._fogDensity, this._fogRange[0], this._fogRange[1]), Infinity) : 0; }",
+    "tests": [
+      "test/render/uw_glow.test.js"
     ]
   },
   {
@@ -304,7 +313,7 @@
     "old": "      this._uploadEl('terrain');   // EL1\n",
     "new": "",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -313,7 +322,7 @@
     "old": "    this._uploadEl('char');   // EL1\n",
     "new": "",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -322,7 +331,7 @@
     "old": "      const am = this._c3(this._ambient, this._decA), mc = this._c3(this._moonColor, this._decB), sc = this._c3(this._sunColor, this._decC);",
     "new": "      const am = this._ambient, mc = this._moonColor, sc = this._sunColor;",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -331,16 +340,16 @@
     "old": "    const keep = Math.min(this.maxPointLights - 1, Math.floor(data.length / 4));   // EL1: one slot under the installed cap",
     "new": "    const keep = Math.min(15, Math.floor(data.length / 4));",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
     "name": "renderer-setlights-cap",
     "file": "src/render/renderer.js",
-    "old": "    const n = this.maxPointLights;   // EL1: the installed set's cap\n    // MAC-T1: the carried mask is a property of the composed array, and `subarray` returns a fresh view without it -\n    // so it is lifted FIRST, and cut to the same cap\n    const carried = data.carried ?? null;\n    this._pointCarried = carried ? carried.subarray(0, n) : null;\n    this._pointLights = data.subarray ? data.subarray(0, n * 4) : data;",
-    "new": "    const n = 16;\n    const carried = data.carried ?? null;\n    this._pointCarried = carried ? carried.subarray(0, n) : null;\n    this._pointLights = data.subarray ? data.subarray(0, n * 4) : data;",
+    "old": "    const n = this.maxPointLights;   // EL1: the installed set's cap\n    // MAC-T1: the carried mask is a property of the composed array",
+    "new": "    const n = 16;\n    // MAC-T1: the carried mask is a property of the composed array",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -349,7 +358,7 @@
     "old": "    const p = buildProgram(gl, VS, this.lane ? this.lane.farRingFs : FS, 'far ring');",
     "new": "    const p = buildProgram(gl, VS, FS, 'far ring');",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -358,7 +367,7 @@
     "old": "    const c3 = (c) => (this.lane ? this.lane.decode3(c, this._dec) : c);   // EL1: linear for the lane, as the renderer's _c3",
     "new": "    const c3 = (c) => c;",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -367,7 +376,7 @@
     "old": "      gl.uniform1f(this.u.uELExposure, exposure);\n",
     "new": "",
     "tests": [
-      "test/el1_enhancedlighting.test.js"
+      "test/render/el1_enhancedlighting.test.js"
     ]
   }
 ]

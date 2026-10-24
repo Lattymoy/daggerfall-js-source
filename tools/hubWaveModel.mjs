@@ -11,6 +11,12 @@
 //   node tools/hubWaveModel.mjs                 players 500, 1000 and 2000, twenty seeds each
 //   N=500 SEEDS=50 node tools/hubWaveModel.mjs
 //   SPREAD=1 node tools/hubWaveModel.mjs        SCALE2c: each page first waits its one offset in the wave's spread
+//   N=256 RATE=10 ARRIVE_S=5 node tools/hubWaveModel.mjs   GATE-DOOR: a crowd walking into a room whose door is RATE
+//
+// GATE-DOOR (2026-10-18; AUDIT PLAN-1000 B5, its figures re-run here): RATE is the door's hellos a second (burst the same;
+// CHAT_HELLO_HZ_MAX unless said - a gate's court is net/wire.js GATE_HELLO_HZ_MAX, every other room HELLO_HZ_MAX), and
+// ARRIVE_S, when set, puts each player's first hello uniform over that many seconds - a crowd arriving, not a drop - with
+// the same busy ladder after it. The refusals are said as the seeds' min / median / mean / max.
 //
 // SCALE2c (2026-10-10): it also counts the MINTS - a page's first hello after the drop is its one mint (its sockets
 // share it, TOKEN_REUSE_MS) - and says the busiest second's, the figure the account database feels. With SPREAD=1 the
@@ -24,6 +30,8 @@ import { isMain } from './lib/isMain.mjs';
 const PLAYERS = (process.env.N || '500,1000,2000').split(',').map(Number);
 const SEEDS = Number(process.env.SEEDS || 20);
 const SPREAD = process.env.SPREAD === '1';
+const RATE = Number(process.env.RATE || CHAT_HELLO_HZ_MAX);
+const ARRIVE_S = Number(process.env.ARRIVE_S || 0);
 
 /** A seeded roll (mulberry32), so a run is the same run. */
 function roll(seed) {
@@ -32,13 +40,14 @@ function roll(seed) {
 }
 
 /** One wave: N players dropped at 0. Answers the busy refusals, each player's welcome time (ms), and the mints of the
- *  busiest second (each page's first hello). `spread`: SCALE2c's page slot before the drop's retry. */
-export function wave(n, seed, { spread = false } = {}) {
+ *  busiest second (each page's first hello). `spread`: SCALE2c's page slot before the drop's retry; `rate`: the door's
+ *  hellos a second; `arriveS`: each first hello uniform over that many seconds instead of the drop's retry (GATE-DOOR). */
+export function wave(n, seed, { spread = false, rate = CHAT_HELLO_HZ_MAX, arriveS = 0 } = {}) {
   const rand = roll(seed);
   const at = [], backoff = [];
   const window = spread ? waveSpreadMs(n) : 0;
   for (let i = 0; i < n; i++) {   // the drop's own retry (`_scheduleRetry` with the backoff at its floor), held to the page's slot
-    const retry = BACKOFF_MIN_MS + rand() * BACKOFF_MIN_MS;
+    const retry = arriveS > 0 ? rand() * arriveS * 1000 : BACKOFF_MIN_MS + rand() * BACKOFF_MIN_MS;
     at.push(window ? Math.max(retry, rand() * window) : retry);
     backoff.push(Math.min(BACKOFF_MAX_MS, BACKOFF_MIN_MS * 2));
   }
@@ -51,7 +60,7 @@ export function wave(n, seed, { spread = false } = {}) {
   while (queue.length) {
     queue.sort((x, y) => x[0] - y[0]);
     const [t, i] = queue.shift();
-    const gate = tokenGate(bucket, t, CHAT_HELLO_HZ_MAX);
+    const gate = tokenGate(bucket, t, rate);
     bucket = gate.bucket;
     if (gate.pass) { welcomed.push(t); continue; }
     refused++;
@@ -66,12 +75,13 @@ export function wave(n, seed, { spread = false } = {}) {
 
 const mid = (a) => [...a].sort((x, y) => x - y)[Math.floor(a.length / 2)];
 if (isMain(import.meta.url)) {
-  process.stdout.write(`${SPREAD ? '(each page waits its slot in the spread - SCALE2c)' : '(every page retries at once)'}\n`);
-  process.stdout.write('players   busy refusals (min / median / max of seeds)   welcomed, s (median / p90 / last, median seed)   mints in the busiest second\n');
+  process.stdout.write(`${SPREAD ? '(each page waits its slot in the spread - SCALE2c)' : ARRIVE_S > 0 ? `(each player arrives within ${ARRIVE_S} s - GATE-DOOR)` : '(every page retries at once)'}, the door ${RATE} a second\n`);
+  process.stdout.write('players   busy refusals (min / median / mean / max of seeds)   welcomed, s (median / p90 / last, median seed)   mints in the busiest second\n');
   for (const n of PLAYERS) {
-    const runs = Array.from({ length: SEEDS }, (_, s) => wave(n, s + 1, { spread: SPREAD }));
+    const runs = Array.from({ length: SEEDS }, (_, s) => wave(n, s + 1, { spread: SPREAD, rate: RATE, arriveS: ARRIVE_S }));
     const r = runs.map((x) => x.refused).sort((a, b) => a - b);
+    const mean = (r.reduce((a, b) => a + b, 0) / r.length).toFixed(1);
     const s = (k) => (mid(runs.map((x) => x[k])) / 1000).toFixed(1);
-    process.stdout.write(`${String(n).padStart(7)}   ${`${r[0]} / ${mid(r)} / ${r[r.length - 1]}`.padStart(40)}   ${`${s('median')} / ${s('p90')} / ${s('last')}`.padStart(35)}   ${String(mid(runs.map((x) => x.mintPeak))).padStart(27)}\n`);
+    process.stdout.write(`${String(n).padStart(7)}   ${`${r[0]} / ${mid(r)} / ${mean} / ${r[r.length - 1]}`.padStart(47)}   ${`${s('median')} / ${s('p90')} / ${s('last')}`.padStart(35)}   ${String(mid(runs.map((x) => x.mintPeak))).padStart(27)}\n`);
   }
 }

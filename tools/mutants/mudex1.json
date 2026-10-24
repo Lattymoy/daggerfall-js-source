@@ -1,0 +1,117 @@
+[
+ {
+  "name": "MUDEX1-its-tables-never-read",
+  "file": "src/systems/enemyExpansion/dexInstall.js",
+  "old": "const dbAssets = (extension, mudex) => [...Object.entries(DEX_TABLE_TEXT), ...(mudex ? Object.entries(MUDEX_TABLE_TEXT) : [])]",
+  "new": "const dbAssets = (extension, mudex) => [...Object.entries(DEX_TABLE_TEXT), ...([])]",
+  "why": "MUDEX loaded and never read: the bear, the Goblin and the crypt are DEX's alone",
+  "tests": [
+   "test/systems/enemyExpansion/mudex1.test.js",
+   "test/net/foebounds_law.test.js"
+  ]
+ },
+ {
+  "name": "MUDEX1-its-tables-before-DEX-s",
+  "file": "src/systems/enemyExpansion/dexInstall.js",
+  "old": "const dbAssets = (extension, mudex) => [...Object.entries(DEX_TABLE_TEXT), ...(mudex ? Object.entries(MUDEX_TABLE_TEXT) : [])]",
+  "new": "const dbAssets = (extension, mudex) => [...(mudex ? Object.entries(MUDEX_TABLE_TEXT) : []), ...Object.entries(DEX_TABLE_TEXT)]",
+  "why": "MUDEX read before the mod it depends on: DEX's lines land over MUDEX's, and its restated defaults are DEX's again",
+  "tests": [
+   "test/systems/enemyExpansion/mudex1.test.js"
+  ]
+ },
+ {
+  "name": "MUDEX1-loaded-without-Meaner-Monsters",
+  "file": "src/systems/enemyExpansion/dexInstall.js",
+  "old": "latchModLoaded(MUDEX_VENDOR, !!on && !!meaner)",
+  "new": "latchModLoaded(MUDEX_VENDOR, !!on)",
+  "why": "MUDEX loads with Meaner Monsters off: a player who never chose the meaner monsters gets them",
+  "tests": [
+   "test/systems/enemyExpansion/mudex1.test.js"
+  ]
+ },
+ {
+  "name": "MUDEX1-loaded-without-DEX",
+  "file": "src/systems/enemyExpansion/dexInstall.js",
+  "old": "latchModLoaded(MUDEX_VENDOR, !!on && !!meaner)",
+  "new": "latchModLoaded(MUDEX_VENDOR, !!meaner)",
+  "why": "MUDEX loads with DEX off - a mod without the one it requires",
+  "tests": [
+   "test/systems/enemyExpansion/mudex1.test.js"
+  ]
+ },
+ {
+  "name": "MUDEX1-the-read-one-variant",
+  "file": "src/systems/enemyExpansion/dexInstall.js",
+  "old": "  const key = game ? mudexLoaded() : mudex === true;",
+  "new": "  const key = false;",
+  "why": "one read for every set of mods: MUDEX's never read, or DEX's alone answered with MUDEX's",
+  "tests": [
+   "test/systems/enemyExpansion/mudex1.test.js",
+   "test/net/foebounds_law.test.js"
+  ]
+ },
+ {
+  "name": "MUDEX1-reset-keeps-the-latch",
+  "file": "src/systems/enemyExpansion/dexInstall.js",
+  "old": "  latchModLoaded(MUDEX_VENDOR, false);\n",
+  "new": "",
+  "why": "a reset leaves MUDEX loaded: the next read is MUDEX's whatever was installed",
+  "tests": [
+   "test/systems/enemyExpansion/mudex1.test.js"
+  ]
+ },
+ {
+  "name": "MUDEX1-Meaner-Monsters-never-stands-aside",
+  "file": "src/systems/enemyExpansion/dexSwitches.js",
+  "old": "export const meanerMonstersAlone = (on) => !!on && modLatchedOn(DEX_VENDOR) !== true;",
+  "new": "export const meanerMonstersAlone = (on) => !!on;",
+  "why": "beside DEX, Meaner Monsters' rows go on under MUDEX's: the two mods its author says are incompatible stack",
+  "tests": [
+   "test/systems/enemyExpansion/mudex1.test.js",
+   "test/systems/enemyExpansion/dex1_registry.test.js"
+  ]
+ },
+ {
+  "name": "MUDEX1-its-rows-ignore-DEX",
+  "file": "src/characters/meanerMonsters.js",
+  "old": "export function applyMeanerMonsters(mobileType, baseRow, on = meanerMonstersAlone(meanerMonstersEnabled())) {",
+  "new": "export function applyMeanerMonsters(mobileType, baseRow, on = meanerMonstersEnabled()) {",
+  "why": "Meaner Monsters' rows at the mint beside DEX: a foe minted over MUDEX's table with Meaner Monsters' stats",
+  "tests": [
+   "test/systems/enemyExpansion/mudex1.test.js",
+   "test/systems/enemyExpansion/dex1_registry.test.js"
+  ]
+ },
+ {
+  "name": "MUDEX1-its-xml-ignores-DEX",
+  "file": "src/characters/meanerMonsters.js",
+  "old": "() => meanerMonstersAlone(meanerMonstersEnabled(read ?? undefined))",
+  "new": "() => meanerMonstersEnabled(read ?? undefined)",
+  "why": "the werewolf scaled by Meaner Monsters' xml beside DEX, where MUDEX ships none",
+  "tests": [
+   "test/systems/enemyExpansion/mudex1.test.js"
+  ]
+ },
+ {
+  "name": "MUDEX1-PCAAO-s-edit-ignores-DEX",
+  "file": "src/combat/pcaaoMeanerMonsters.js",
+  "old": "  !!read('Enabled') && meanerMonstersAlone(!!other('meanerMonsters', 'Enabled'));",
+  "new": "  !!read('Enabled') && !!other('meanerMonsters', 'Enabled');",
+  "why": "PCAAO's edit of Meaner Monsters live beside DEX: its lookup would find MUDEX, not Meaner Monsters",
+  "tests": [
+   "test/systems/enemyExpansion/mudex1.test.js",
+   "test/systems/enemyExpansion/dex1_registry.test.js"
+  ]
+ },
+ {
+  "name": "MUDEX1-the-bound-without-MUDEX",
+  "file": "src/net/foeBounds.js",
+  "old": "[37, [300, 16, 16]]",
+  "new": "[37, [245, 16, 16]]",
+  "why": "the relay refuses MUDEX's Flesh Atronach at its own 300 health",
+  "tests": [
+   "test/net/foebounds_law.test.js"
+  ]
+ }
+]

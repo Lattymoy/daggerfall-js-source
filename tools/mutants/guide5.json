@@ -1,92 +1,92 @@
 [
   {
     "name": "GUIDE5-resolver-throw-escapes",
-    "file": "src/ui/questMarks.js",
+    "file": "src/ui/quest/questMarks.js",
     "old": "    try { p = pixelOf(find); } catch { p = null; }",
     "new": "    p = pixelOf(find);",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-one-mark-a-quest",
-    "file": "src/ui/questMarks.js",
+    "file": "src/ui/quest/questMarks.js",
     "old": "    const key = `${p.x},${p.y}`;",
     "new": "    const key = `${p.x},${p.y},${v.id}`;",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-followed-flag-lost",
-    "file": "src/ui/questMarks.js",
+    "file": "src/ui/quest/questMarks.js",
     "old": "    at.tracked = at.tracked || tracked;",
     "new": "    at.tracked = tracked;",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-time-dropped",
-    "file": "src/ui/questMarks.js",
+    "file": "src/ui/quest/questMarks.js",
     "old": "lines: [fitHead(place, '', QUEST_TIP_TEXT), left(quests[0])].filter(Boolean) }",
     "new": "lines: [fitHead(place, '', QUEST_TIP_TEXT)] }",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-several-unnamed",
-    "file": "src/ui/questMarks.js",
-    "old": "lines: [fitHead(place, '', QUEST_TIP_TEXT), ...listed.map(lineOf), ...(more ? [`+${more} more`] : [])] },",
+    "file": "src/ui/quest/questMarks.js",
+    "old": "lines: [fitHead(place, '', QUEST_TIP_TEXT), ...listed.map(lineOf), ...(more ? [t('quest.mark.more', '+{n} more', { n: more })] : [])] },",
     "new": "lines: [fitHead(place, '', QUEST_TIP_TEXT)] },",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-off-bay-kept",
-    "file": "src/ui/questMarks.js",
+    "file": "src/ui/quest/questMarks.js",
     "old": "    if (!Number.isInteger(px) || !Number.isInteger(py) || px < 0 || py < 0 || px >= size.width || py >= size.height) continue;",
     "new": "    if (!Number.isInteger(px) || !Number.isInteger(py) || px < 0 || py < 0) continue;",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-key-blind-to-the-followed",
-    "file": "src/ui/questMarks.js",
+    "file": "src/ui/quest/questMarks.js",
     "old": "export const questMarksKey = (marks) => marks.map((m) => `${m.key}@${m.px},${m.py}|${m.tracked ? 1 : 0}|${m.label}`).join(';');",
     "new": "export const questMarksKey = (marks) => marks.map((m) => `${m.key}@${m.px},${m.py}|${m.label}`).join(';');",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-on-the-classic-skin",
-    "file": "src/ui/questMarks.js",
+    "file": "src/ui/quest/questMarks.js",
     "old": "export const marksOn = () => isEnhanced() && !!getPref(MARKS_PREF) && typeof document !== 'undefined';",
     "new": "export const marksOn = () => !!getPref(MARKS_PREF) && typeof document !== 'undefined';",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-switch-ignored",
-    "file": "src/ui/questMarks.js",
+    "file": "src/ui/quest/questMarks.js",
     "old": "export const marksOn = () => isEnhanced() && !!getPref(MARKS_PREF) && typeof document !== 'undefined';",
     "new": "export const marksOn = () => isEnhanced() && typeof document !== 'undefined';",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-resolved-by-the-region",
-    "file": "src/ui/travelMapWindow.js",
+    "file": "src/ui/travel/travelMapWindow.js",
     "old": "  const index = region?.mapNameLookup?.get(name);\n  if (index === undefined || index === null) return null;",
     "new": "  const index = region?.mapNameLookup?.get(regionName);\n  if (index === undefined || index === null) return null;",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    if (questsKey !== this._questsKey) { this._questsKey = questsKey; this._quests = quests; gateMoved = true; this._dirty = true; }\n",
     "new": "",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
@@ -104,16 +104,16 @@
     "old": "    if (this._quests.some((q) => q.tracked)) diamond(true, QUEST_FOLLOWED_TEXT);\n    if (this._quests.some((q) => !q.tracked)) diamond(false, QUEST_LEGEND_TEXT);",
     "new": "",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-quest-before-the-raid",
     "file": "src/ui/heldMap.js",
-    "old": "    if (raid) return { label: raid.label, cursor: m ? 'pointer' : '', tip: raid.tip };\n    // GUIDE5: a quest's place answers as the quest (its card names the place); a press still picks the place under it\n    const quest = this._questAt(sx, sy);\n    if (quest) return { label: quest.label, cursor: m || this._questPlace(quest) ? 'pointer' : '', tip: quest.tip };",
-    "new": "    const quest = this._questAt(sx, sy);\n    if (quest) return { label: quest.label, cursor: m || this._questPlace(quest) ? 'pointer' : '', tip: quest.tip };\n    if (raid) return { label: raid.label, cursor: m ? 'pointer' : '', tip: raid.tip };",
+    "old": "    if (raid) return { label: raid.label, cursor: m ? 'pointer' : '', tip: raid.tip };\n    // STAR6: a fallen star answers as itself (its card names its town, its coven and how it stands)\n    const star = this._starAt(sx, sy);\n    if (star) return { label: star.label, cursor: m ? 'pointer' : '', tip: star.tip };\n    // GUIDE5: a quest's place answers as the quest (its card names the place); a press still picks the place under it\n    const quest = this._questAt(sx, sy);\n    if (quest) return { label: quest.label, cursor: m || this._questPlace(quest) ? 'pointer' : '', tip: quest.tip };",
+    "new": "    const quest = this._questAt(sx, sy);\n    if (quest) return { label: quest.label, cursor: m || this._questPlace(quest) ? 'pointer' : '', tip: quest.tip };\n    if (raid) return { label: raid.label, cursor: m ? 'pointer' : '', tip: raid.tip };\n    // STAR6: a fallen star answers as itself (its card names its town, its coven and how it stands)\n    const star = this._starAt(sx, sy);\n    if (star) return { label: star.label, cursor: m ? 'pointer' : '', tip: star.tip };",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      const diamond = (x - sx) ** 2 + (y - (m.lift ?? QUEST_MARK_LIFT) - sy) ** 2;",
     "new": "      const diamond = (x - sx) ** 2 + (y - sy) ** 2;",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    if (quest) return { label: quest.label, cursor: m || this._questPlace(quest) ? 'pointer' : '', tip: quest.tip };",
     "new": "    if (quest) return { label: quest.label, cursor: m || this._questPlace(quest) ? 'pointer' : '' };",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
@@ -140,88 +140,88 @@
     "old": "          quests: this._quests,   // GUIDE5: where the quests point\n",
     "new": "",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-every-diamond-filled",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "paintQuestDiamond(ctx, x, cy, r, 1, m.tracked ? PEN.line : null);",
     "new": "paintQuestDiamond(ctx, x, cy, r, 1, PEN.line);",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-diamond-on-the-place",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  const cy = y - (m.lift ?? QUEST_MARK_LIFT), r = 6;",
     "new": "  const cy = y, r = 6;",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-overlay-skips-quests",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  for (const m of opts.quests ?? []) if (visible(m.x, m.y)) paintQuestMark(ctx, view, m);\n",
     "new": "",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-compass-never-placed",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  const at = Math.min(1, Math.max(0, compassMarkerLerp(quest, playerXZ, heading01)));",
     "new": "  const at = 0.5;",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-compass-in-the-gates-orange",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  + `transform:rotate(45deg);border:2px solid ${QUEST_MARK_CSS};background:rgba(10,12,17,0.7);`",
     "new": "  + 'transform:rotate(45deg);border:2px solid #ff5a2a;background:#ff5a2a;'",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-compass-node-rebuilt",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  if (!parts.questMark) {",
     "new": "  if (true) {",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-compass-never-hidden",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  if (!quest || !playerXZ) { if (node.style.display !== 'none') node.style.display = 'none'; return; }",
     "new": "  if (!quest || !playerXZ) return;",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-compass-draw-dropped",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  drawQuestMark(opts.quest ?? null, opts.playerXZ ?? null, heading01);   // GUIDE5\n",
     "new": "",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-drawhud-forward-dropped",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "      quest: quest ?? null,   // GUIDE5: the tracker's quest's place, scene XZ, on the street - the compass's quest mark\n",
     "new": "",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "      quests: () => (marksOn() ? questMapMarks(questTracker.views, questTracker.shown()?.id ?? null, questPixel) : []),",
     "new": "      quests: () => questMapMarks(questTracker.views, questTracker.shown()?.id ?? null, questPixel),",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "    if (!marksOn() || (modes?.mode ?? 'exterior') !== 'exterior') return null;\n    const find = questTracker.shown()?.target?.find;",
     "new": "    if (!marksOn()) return null;\n    const find = questTracker.shown()?.target?.find;",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "    return [t[0] + TERRAIN_SIZE / 2, t[2] + TERRAIN_SIZE / 2];\n  };",
     "new": "    return [t[0], t[2]];\n  };",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
@@ -257,34 +257,34 @@
     "old": "          quest: vendorCompassMark() ?? townQuestCompassMark() ?? questCompassMark(),   // GUIDE5: the tracker's quest's place on the compass, on the street; HOME-VENDOR: a trader's waypoint first, while it is set; GUIDE8: the Town tier's building, in its town\n",
     "new": "",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-marks-not-a-face",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "export const followOn = () => trackerOn() || marksOn() || guidanceTier() !== 'journal';",
     "new": "export const followOn = () => trackerOn() || guidanceTier() !== 'journal';",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-note-dropped",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "      note: v.words?.note ?? '',   // GUIDE5: a named place not on the map - no mark, the talk arc's answer instead",
     "new": "      note: '',   // GUIDE5: a named place not on the map - no mark, the talk arc's answer instead",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE5-note-row-not-drawn",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "  moved = setText(c, 'note', c.rows.note, f.note) || moved;   // GUIDE5: the place is named but not on the map - ask around\n",
     "new": "",
     "tests": [
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
@@ -293,8 +293,8 @@
     "old": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: 'player' }),",
     "new": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: false, online: 'player' }),",
     "tests": [
-      "test/guide5_marks.test.js",
-      "test/features.test.js"
+      "test/ui/quest/guide5_marks.test.js",
+      "test/systems/features.test.js"
     ]
   },
   {
@@ -303,8 +303,8 @@
     "old": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: 'player' }),",
     "new": "    control: Object.freeze({ store: 'prefs', key: 'questMarks', initial: true, online: true }),",
     "tests": [
-      "test/guide5_marks.test.js",
-      "test/features.test.js"
+      "test/ui/quest/guide5_marks.test.js",
+      "test/systems/features.test.js"
     ]
   }
 ]

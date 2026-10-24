@@ -1,76 +1,76 @@
 [
   {
     "name": "GUIDE1-quiet-read-reveals",
-    "file": "src/ui/questLens.js",
-    "old": "    return message.getTextTokens(-1, QUIET_ROLL, true, false);",
-    "new": "    return message.getTextTokens(-1, QUIET_ROLL, true, true);",
+    "file": "src/ui/quest/questLens.js",
+    "old": "    return quietly(quest, () => message.getTextTokens(-1, QUIET_ROLL, true, false));",
+    "new": "    return quietly(quest, () => message.getTextTokens(-1, QUIET_ROLL, true, true));",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ],
     "equivalent": true,
     "why": "AUDIT GUIDE L3 gave the quiet read its own hooks, whose addDialog answers nothing - a reveal the flag lets through lands there, so the flag is the first of two guards (the letter's signoff, which reveals with no flag, passes only the second); AUDIT-GUIDE-L3-the-letter-loud kills the hooks' removal"
   },
   {
     "name": "GUIDE1-quiet-read-draws-the-quest-rolls",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "    quest.rolls = QUIET_ROLL;\n",
     "new": "    quest.rolls = quest.rolls;\n",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-quiet-read-leaves-the-seed",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "    setSeed(seed);",
     "new": "    void seed;",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-quiet-read-leaves-the-resource-latch",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "      quest.lastResourceReferenced = kept.resource;",
     "new": "      void kept.resource;",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-quiet-read-leaves-the-place-latch",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "      quest.lastPlaceReferenced = kept.place;",
     "new": "      void kept.place;",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-quiet-read-leaves-the-log-id",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "      quest.currentLogMessageId = kept.logId;",
     "new": "      void kept.logId;",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-quiet-read-keeps-its-own-rolls",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "      quest.rolls = kept.rolls;",
     "new": "      void kept.rolls;",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-target-law-draws-the-engine-roll",
-    "file": "src/ui/questLens.js",
-    "old": "  const place = lastPlaceMentionedInMessage(message, QUIET_ROLL);",
-    "new": "  const place = lastPlaceMentionedInMessage(message);",
+    "file": "src/ui/quest/questLens.js",
+    "old": "  let place = lastPlaceMentionedInMessage(message, QUIET_ROLL);",
+    "new": "  let place = lastPlaceMentionedInMessage(message);",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "  const tokens = message.getTextTokens(-1, roll, false);",
     "new": "  const tokens = message.getTextTokens(-1, Math.random, false);",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "getTextTokens(variant = -1, roll = Math.random, expandMacros = true, revealDialogLinks = true) {",
     "new": "getTextTokens(variant = -1, roll = Math.random, expandMacros = true, revealDialogLinks = false) {",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
@@ -97,253 +97,253 @@
     "old": "      expandQuestMessage(quest, tokens, revealDialogLinks);",
     "new": "      expandQuestMessage(quest, tokens, true);",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-first-place-for-the-last",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "  for (const resource of resources) if (resource?.isPlace) lastPlace = resource;",
     "new": "  for (const resource of resources) if (resource?.isPlace && !lastPlace) lastPlace = resource;",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-building-named-unsaid",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "    buildingName: said.has(MACRO_TYPES.NameMacro1) ? (site.buildingName ?? null) : null,",
     "new": "    buildingName: site.buildingName ?? null,",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-town-named-unsaid",
-    "file": "src/ui/questLens.js",
-    "old": "  const named = onMap === true || here || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);",
+    "file": "src/ui/quest/questLens.js",
+    "old": "  const named = onMap === true || here || !!moved || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);",
     "new": "  const named = true;",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-town-underfoot-unnamed",
-    "file": "src/ui/questLens.js",
-    "old": "  const named = onMap === true || here || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);",
-    "new": "  const named = onMap === true || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);",
+    "file": "src/ui/quest/questLens.js",
+    "old": "  const named = onMap === true || here || !!moved || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);",
+    "new": "  const named = onMap === true || !!moved || said.has(MACRO_TYPES.NameMacro2) || said.has(MACRO_TYPES.NameMacro3);",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-kind-unsaid",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "    kind: named ? (SITE_KIND[site.siteType] ?? null) : null,",
     "new": "    kind: SITE_KIND[site.siteType] ?? null,",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-region-said-ignored",
-    "file": "src/ui/questLens.js",
-    "old": "    regionName: onMap === true || here || said.has(MACRO_TYPES.NameMacro4) ? (",
-    "new": "    regionName: onMap === true || here ? (",
+    "file": "src/ui/quest/questLens.js",
+    "old": "    regionName: onMap === true || here || moved || said.has(MACRO_TYPES.NameMacro4) ? (",
+    "new": "    regionName: onMap === true || here || moved ? (",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-find-where-you-stand",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "    find: onMap === true && !hereByName ? {",
     "new": "    find: onMap === true ? {",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-find-off-the-map",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "    find: onMap === true && !hereByName ? {",
     "new": "    find: !hereByName ? {",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-any-symbol-says-it",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "      if (macro.symbol === symbolName && macro.type >= MACRO_TYPES.NameMacro1",
     "new": "      if (macro.type >= MACRO_TYPES.NameMacro1",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-first-look-speaks",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "    this._last = null;         // id -> { title, main, clockSeconds, entryKeys } as of the previous look",
     "new": "    this._last = new Map();    // id -> { title, main, clockSeconds, entryKeys } as of the previous look",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-reset-look-speaks",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "  reset() {\n    this._last = null;",
     "new": "  reset() {\n    this._last = new Map();",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-known-ids-forgotten",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "    for (const q of quests) this._known.add(q.id);",
     "new": "    void quests;",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-urgent-on-every-look",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "      if (was?.clockSeconds != null && was.clockSeconds >= QUEST_URGENT_SECONDS && q.urgent) {",
     "new": "      if (q.urgent) {",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-urgent-at-a-day",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "        urgent: clockSeconds != null && clockSeconds < QUEST_URGENT_SECONDS,",
     "new": "        urgent: clockSeconds != null && clockSeconds <= QUEST_URGENT_SECONDS,",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-verdicts-swapped",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "      events.push({ type: verdict.success ? 'completed' : 'ended', id, title: was.title, main: was.main });",
     "new": "      events.push({ type: verdict.success ? 'ended' : 'completed', id, title: was.title, main: was.main });",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-an-ending-with-no-verdict-said",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "      if (!verdict) continue;",
     "new": "      if (!verdict) { events.push({ type: 'ended', id, title: was.title, main: was.main }); continue; }",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-restore-keeps-the-lens",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "      lens.reset();   // GUIDE1: a loaded game is not news",
     "new": "      void lens;",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-ended-always-paid",
-    "file": "src/scenes/questBridge.js",
-    "old": "success: !!q.questSuccess });",
-    "new": "success: true });",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "success: !!q.questSuccess, ql:",
+    "new": "success: true, ql:",
     "tests": [
-      "test/guide1_questLens.test.js",
-      "test/questbridge.test.js"
+      "test/ui/quest/guide1_questLens.test.js",
+      "test/systems/quest/questbridge.test.js"
     ]
   },
   {
     "name": "GUIDE1-steps-keep-a-gone-message",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "          if (!message) continue;\n          messages.push(message);",
     "new": "          if (!message) { steps.push({ stepID: le.stepID, messageID: le.messageID, time: le.time ?? null }); continue; }\n          messages.push(message);",
     "tests": [
-      "test/guide1_questLens.test.js",
-      "test/questbridge.test.js"
+      "test/ui/quest/guide1_questLens.test.js",
+      "test/systems/quest/questbridge.test.js"
     ]
   },
   {
     "name": "GUIDE1-order-first-logged",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "  return order.sort((a, b) => (at(a) === at(b) ? a - b : at(a) < at(b) ? -1 : 1));",
     "new": "  return order;",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-order-tie-reversed",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "at(a) === at(b) ? a - b :",
     "new": "at(a) === at(b) ? b - a :",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-order-timeless-last",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "  const at = (i) => (Number.isFinite(steps[i]?.time) ? steps[i].time : -Infinity);",
     "new": "  const at = (i) => (Number.isFinite(steps[i]?.time) ? steps[i].time : Infinity);",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-order-trusts-misaligned-steps",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "  if (!Array.isArray(steps) || steps.length !== messages.length) return order;",
     "new": "  if (!Array.isArray(steps)) return order;",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-logbook-loses-the-law",
-    "file": "src/ui/questJournal.js",
-    "old": "    const place = lastPlaceMentionedInMessage(message);   // GUIDE1: ui/questLens.js, the member's one home",
+    "file": "src/ui/quest/questJournal.js",
+    "old": "    const place = lastPlaceMentionedInMessage(message);   // GUIDE1: ui/quest/questLens.js, the member's one home",
     "new": "    const place = null;",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-urgent-literal-back",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "        const urgent = sel.clockSeconds < QUEST_URGENT_SECONDS;",
     "new": "        const urgent = sel.clockSeconds < 86400;",
     "tests": [
-      "test/guide1_questLens.test.js",
-      "test/enhancedPause.test.js"
+      "test/ui/quest/guide1_questLens.test.js",
+      "test/ui/enhanced/enhancedPause.test.js"
     ]
   },
   {
     "name": "GUIDE1-timer-words-urgent-at-a-day",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "urgent: q.clockSeconds < QUEST_URGENT_SECONDS };",
     "new": "urgent: q.clockSeconds <= QUEST_URGENT_SECONDS };",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   },
   {
     "name": "GUIDE1-order-read-as-written",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "  const written = writtenOrder(q).map((j) => read[j]).filter((e) => e.lines.length);",
     "new": "  const written = writtenOrder(q).map((j) => ({ ...read[j], lines: readLines(q.messages[j], q.steps?.[j] ?? null, q) ?? [] })).filter((e) => e.lines.length);",
     "tests": [
-      "test/guide1_questLens.test.js"
+      "test/ui/quest/guide1_questLens.test.js"
     ]
   }
 ]

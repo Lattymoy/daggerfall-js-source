@@ -1,0 +1,139 @@
+[
+  {
+    "name": "GH-holds-the-rifle-alone",
+    "file": "src/combat/gun/gunHold.js",
+    "old": "export const holdsGun = (weapon) => weapon?.holdAs === 'rifle' || weapon?.holdAs === 'pistol';",
+    "new": "export const holdsGun = (weapon) => weapon?.holdAs === 'rifle';",
+    "tests": [
+      "test/combat/pistolstance.test.js"
+    ]
+  },
+  {
+    "name": "GH-the-pistol-as-a-rifle",
+    "file": "src/combat/gun/gunHold.js",
+    "old": "return holdAs === 'pistol' ? applyPistolStance(",
+    "new": "return holdAs === 'pistolet' ? applyPistolStance(",
+    "tests": [
+      "test/combat/pistolstance.test.js"
+    ]
+  },
+  {
+    "name": "OWM-pistol-holds-nothing",
+    "file": "src/characters/ownModels/ownWeaponModels.js",
+    "old": "    holdAs: 'pistol',\n    id: 'daggerfall_pistolet',",
+    "new": "    id: 'daggerfall_pistolet',",
+    "tests": [
+      "test/combat/pistolstance.test.js",
+      "test/systems/pistolet.test.js"
+    ]
+  },
+  {
+    "name": "PS-fist-at-the-middle",
+    "file": "src/characters/ownModels/ownWeaponModels.js",
+    "old": "export const PISTOL_FIST_UP = 2.4;",
+    "new": "export const PISTOL_FIST_UP = 0;",
+    "tests": [
+      "test/combat/pistolstance.test.js",
+      "test/systems/pistolet_pins.test.js"
+    ]
+  },
+  {
+    "name": "PS-fist-open",
+    "file": "src/combat/gun/pistolStance.js",
+    "old": "export const PISTOL_HOLD = Object.freeze({ curl: 1.25 });",
+    "new": "export const PISTOL_HOLD = Object.freeze({ curl: 0 });",
+    "tests": [
+      "test/combat/pistolstance.test.js"
+    ]
+  },
+  {
+    "name": "PS-aim-scrunched",
+    "file": "src/combat/gun/pistolStance.js",
+    "old": "aim: Object.freeze({ grip: Object.freeze([-0.14, 1.12, 0.06]), pitch: 0, yaw: 7,",
+    "new": "aim: Object.freeze({ grip: Object.freeze([-0.1, 0.92, 0.02]), pitch: 0, yaw: 4,",
+    "tests": [
+      "test/combat/pistolstance.test.js"
+    ]
+  },
+  {
+    "name": "PS-free-hand-on-a-gun",
+    "file": "src/combat/gun/pistolStance.js",
+    "old": "only === 'L' || (only === 'R' && !(freeW > 0)) ? null : { ...freeHand(), w: freeW };",
+    "new": "only === 'L' || (only === 'R' && !(freeW > 0)) ? null : gunHand('L');",
+    "tests": [
+      "test/combat/pistolstance.test.js"
+    ]
+  },
+  {
+    "name": "PS-pair-the-single-rows",
+    "file": "src/combat/gun/pistolStance.js",
+    "old": "const guns = pair ? set.pair : set;",
+    "new": "const guns = set;",
+    "tests": [
+      "test/combat/pistolstance.test.js"
+    ]
+  },
+  {
+    "name": "PS-left-gun-unmirrored",
+    "file": "src/combat/gun/pistolStance.js",
+    "old": "g.grip, attitude, s === 'L');",
+    "new": "g.grip, attitude, false);",
+    "tests": [
+      "test/combat/pistolstance.test.js"
+    ]
+  },
+  {
+    "name": "PS-left-from-the-right-shoulder",
+    "file": "src/combat/gun/pistolStance.js",
+    "old": "return { grip: add(f[s], scale(inBody(f, m(st.grip)), f.arm)), barrel, top };",
+    "new": "return { grip: add(f.R, scale(inBody(f, m(st.grip)), f.arm)), barrel, top };",
+    "tests": [
+      "test/combat/pistolstance.test.js"
+    ]
+  },
+  {
+    "name": "PS-pair-left-turned-out",
+    "file": "src/combat/gun/pistolStance.js",
+    "old": "y = (s === 'L' ? -st.yaw : st.yaw) * RAD",
+    "new": "y = st.yaw * RAD",
+    "tests": [
+      "test/combat/pistolstance.test.js"
+    ]
+  },
+  {
+    "name": "PS-ready-ignored",
+    "file": "src/combat/gun/pistolStance.js",
+    "old": "const k = Math.min(1, Math.max(0, ready));",
+    "new": "const k = 0;",
+    "tests": [
+      "test/combat/pistolstance.test.js"
+    ]
+  },
+  {
+    "name": "PS-first-aim-over-the-crosshair",
+    "file": "src/combat/gun/pistolStance.js",
+    "old": "aim: Object.freeze({ grip: Object.freeze([0.22, 0.82, -0.35]), pitch: 2, yaw: 12,",
+    "new": "aim: Object.freeze({ grip: Object.freeze([0.16, 0.62, -0.25]), pitch: 3, yaw: 3,",
+    "tests": [
+      "test/combat/pistolstance.test.js"
+    ]
+  },
+  {
+    "name": "PS-no-weight-still-holds",
+    "file": "src/combat/gun/pistolStance.js",
+    "old": "  if (!(w > 0)) return null;\n  const bones = climbBones(skeleton);\n  const wb = skeleton?.byName?.get('weapon bone'), wbL",
+    "new": "  const bones = climbBones(skeleton);\n  const wb = skeleton?.byName?.get('weapon bone'), wbL",
+    "tests": [
+      "test/combat/pistolstance.test.js"
+    ]
+  },
+  {
+    "name": "FA-pair-unsaid",
+    "file": "src/combat/fpArm.js",
+    "old": "attitude: g.row.attitude, pair: g.pair, only: g.lone",
+    "new": "attitude: g.row.attitude, pair: false, only: g.lone",
+    "tests": [
+      "test/combat/pistolstance.test.js"
+    ]
+  }
+]

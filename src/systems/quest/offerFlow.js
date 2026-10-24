@@ -48,6 +48,8 @@
 //   getLocalizedQuestDisplayName(questName) - the localization table
 //                                override for picker labels (null =
 //                                the quest's own DisplayName)
+//   sharedClock()              - the shared world (REPUTE-GATE:
+//                                onlineRepute.js; absent = offline)
 //
 // The GUILD object a host passes offerGuildQuest is DFU's Guild:
 // { isMember(), rank, deity, getReputation(),
@@ -60,6 +62,8 @@ import { MEMBERSHIP_STATUS } from './questLists.js';
 import { QUEST_MESSAGES } from './quest.js';
 import { GUILD_GROUPS } from '../../formats/factionFile.js';
 import { GENDERS } from '../../characters/nameHelper.js';
+import { localizedText } from '../textManager.js';   // L10N3d: the wait box's two lines
+import { reputeGated } from './onlineRepute.js';   // REPUTE-GATE: online, two quests wait for their headers' standing
 
 /** DaggerfallQuestPopupWindow.cs:92 - TEXT.RSC's "You're too late, I
  *  gave the job to some spellsword" flavour family. */
@@ -68,6 +72,22 @@ export const FAIL_QUEST_FLAVOUR_ID = 600;
  *  %pcf expands in the message box's generic pass, not here. */
 export const GETTING_QUESTS_1 = 'Hmm, let me see what tasks we have available.';
 export const GETTING_QUESTS_2 = 'Please have patience and wait here a moment, %pcf.';
+/** QUESTOR-SAID: why a door closed - the clicked NPC is the questor of a quest still open. */
+export const ACTIVE_QUESTOR = 'activeQuestor';
+
+/**
+ * QUESTOR-SAID (FIELD BUGS 2026-10-19f, players' private reports: a guild - the Fighters Guild, the Knights of the
+ * Dragon - answered "That service is not available yet." while one of its quests was still open). A popup's door that
+ * closes on IsLastNPCClickedAnActiveQuestor says WHY, and names the quest still open: `{ kind: 'close', reason, quest }`
+ * (the quest null where the scan cannot be asked). DFU closes the window and says nothing - the guild's GetQuest
+ * (DaggerfallGuildServicePopupWindow.cs:550-553) and the coven's (DaggerfallWitchesCovenPopupWindow.cs:125-129) - and
+ * the port's guild popup read that silence as no service at all. The departure is the words (questBridge.offerBoxes
+ * says them); the law - no new quest from a questor whose quest is open - is DFU's. The social door keeps DFU's bare
+ * close: its talk session declines such a questor before it is reached (npcSession.isNpcOfferingQuest).
+ */
+export function questorBusy(machine) {
+  return { kind: 'close', reason: ACTIVE_QUESTOR, quest: machine.lastNPCClickedQuestorOf?.()?.quest ?? null };
+}
 
 export class QuestOfferFlow {
   constructor(machine, questLists, deps = {}) {
@@ -145,10 +165,13 @@ export class QuestOfferFlow {
     this._guild = null;
     this._guildCtx = { guildGroup: null, buildingFactionId: factionId };
     this.offeredQuest = this.questLists.getQuest(questName, factionId);
-    // GetQuest answers null for a quest the reader has no source for,
-    // and DFU simply does not offer one (:273-279) - the prince has
-    // still been summoned and recorded either way.
-    if (!this.offeredQuest) return { kind: 'close' };
+    // GetQuest answers null for a quest the reader has no source for, or
+    // whose parse threw - a remote Place or Person with no site in the
+    // player's region (ParseQuest swallows it) - and DFU then offers
+    // nothing (:273-279). So does this: NO STEP, not a silent close step
+    // - the summoning reads the null as "no quest here" before it spends
+    // the gold or records the prince (daedraSummoning.js SUMMON-OFFER).
+    if (!this.offeredQuest) return null;
     return this._offerQuest();
   }
 
@@ -167,8 +190,8 @@ export class QuestOfferFlow {
     this.menu = false;
     this._guild = null;
     this._guildCtx = { guildGroup: GUILD_GROUPS.Witches, buildingFactionId: factionId };
-    // Just exit if this NPC already involved in an active quest (:125-129)
-    if (this.machine.isLastNPCClickedAnActiveQuestor()) return { kind: 'close' };
+    // Just exit if this NPC already involved in an active quest (:125-129) - QUESTOR-SAID: saying why
+    if (this.machine.isLastNPCClickedAnActiveQuestor()) return questorBusy(this.machine);
     const level = this.machine.deps.playerLevel?.() ?? 0;
     this.offeredQuest = this.questLists.getGuildQuest(
       GUILD_GROUPS.Witches, MEMBERSHIP_STATUS.Nonmember, factionId, reputation, level);
@@ -181,8 +204,8 @@ export class QuestOfferFlow {
     this._guild = guild;
     this._guildCtx = { guildGroup, buildingFactionId };
     // Just exit if this NPC is already involved in an active quest -
-    // the guild rides in as the active quest's external MCP.
-    if (this.machine.isLastNPCClickedAnActiveQuestor(guild)) return { kind: 'close' };
+    // the guild rides in as the active quest's external MCP. QUESTOR-SAID: the close says why
+    if (this.machine.isLastNPCClickedAnActiveQuestor(guild)) return questorBusy(this.machine);
     // Member status, including the Temple's deity-specific statuses
     // (Enum.Parse throws on a name outside the enum, mirrored).
     let status = guild.isMember() ? MEMBERSHIP_STATUS.Member : MEMBERSHIP_STATUS.Nonmember;
@@ -196,11 +219,17 @@ export class QuestOfferFlow {
     let rank = guild.rank;
     const level = this.machine.deps.playerLevel?.() ?? 0;
     if (guild.isSatisfyQuestReqByLevel?.() && level > rank) rank = level;
-    this.questPool = this.questLists.getGuildQuestPool(guildGroup, status, factionId, guild.getReputation(), rank);
+    // REPUTE-GATE (onlineRepute.js): online, Guard the Guild and Protect an Honored Mage wait for the standing their
+    // headers name - offline the pool is DFU's
+    this.questPool = reputeGated(this.questLists.getGuildQuestPool(guildGroup, status, factionId, guild.getReputation(), rank),
+      guild.getReputation(), !!this.deps.sharedClock?.());
+    // QUEST-AUDIT III NO-WORK: with Choose Guild Jobs on and no work to offer, the wait box opened a picker of nothing;
+    // the classic draw's own "no work" line answers instead (selectQuest of an empty pool -> OfferQuest's failure)
+    if (this.deps.guildQuestListBox && !this.questPool?.length) return this._failGetQuestMessage();
     if (this.deps.guildQuestListBox) {
       return {
         kind: 'gettingQuests',
-        textLines: [GETTING_QUESTS_1, GETTING_QUESTS_2],
+        textLines: [localizedText('gettingQuests1', GETTING_QUESTS_1), localizedText('gettingQuests2', GETTING_QUESTS_2)],   // :578-579
         clickAnywhereToClose: true,
         onClose: () => this._gettingQuestsBoxClose(),
       };
@@ -283,6 +312,7 @@ export class QuestOfferFlow {
       if (i >= this.questPool.length) throw new Error('Index was out of range. Must be non-negative and less than the size of the collection.');
       this.questPool.splice(i, 1);
     }
+    if (!entries.length) return this._failGetQuestMessage();   // NO-WORK: every row failed its parse - nothing to pick
     return { kind: 'pickQuest', entries, onPick: (index) => this._questPicked(index) };
   }
 

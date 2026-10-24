@@ -1,0 +1,227 @@
+[
+ {
+  "name": "WATCH-LEAVES-vanish-on-stand-down",
+  "file": "src/scenes/cityGuards.js",
+  "old": "      g.leaving = true;\n      g.ai.target = null; g.ai.secondaryTarget = null;",
+  "new": "      g.dead = true; releaseGuardBatch(g);",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-target-kept-at-stand-down",
+  "file": "src/scenes/cityGuards.js",
+  "old": "      g.ai.target = null; g.ai.secondaryTarget = null;   // his fight is over",
+  "new": "      // his fight is over",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-gone-in-view",
+  "file": "src/scenes/cityGuards.js",
+  "old": "if (Number.isFinite(yaw) ? popAllowChange(dx, dz, yaw, dist) : dist > POP_VISIBLE_RANGE) { g.dead = true;",
+  "new": "if (true) { g.dead = true;",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-view-ignored",
+  "file": "src/scenes/cityGuards.js",
+  "old": "if (Number.isFinite(yaw) ? popAllowChange(dx, dz, yaw, dist) : dist > POP_VISIBLE_RANGE) { g.dead = true;",
+  "new": "if (dist > POP_VISIBLE_RANGE) { g.dead = true;",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-no-view-reads-yaw-zero",
+  "file": "src/scenes/cityGuards.js",
+  "old": "if (Number.isFinite(yaw) ? popAllowChange(dx, dz, yaw, dist) : dist > POP_VISIBLE_RANGE) { g.dead = true;",
+  "new": "if (popAllowChange(dx, dz, yaw ?? 0, dist)) { g.dead = true;",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-never-walks",
+  "file": "src/scenes/cityGuards.js",
+  "old": "        else if (!(g.ai.fleeLeft > 0)) g.ai.flee(playerFeet, DEFENDER_LEAVE_LEG_SECONDS);\n",
+  "new": "",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-leg-never-reaimed",
+  "file": "src/scenes/cityGuards.js",
+  "old": "        else if (!(g.ai.fleeLeft > 0)) g.ai.flee(playerFeet, DEFENDER_LEAVE_LEG_SECONDS);",
+  "new": "        else if (!(g.ai.fleeLeft > 0)) g.ai.flee(g.ai.fleeFrom ?? playerFeet, DEFENDER_LEAVE_LEG_SECONDS);",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-beset-walks-on",
+  "file": "src/scenes/cityGuards.js",
+  "old": "        if (g.beset) g.ai.fleeLeft = 0;   // he stands and fights\n",
+  "new": "",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-never-beset",
+  "file": "src/scenes/cityGuards.js",
+  "old": "        g.beset = !!foe && !isPlayerTarget(foe) && !foe.dead;",
+  "new": "        g.beset = false;",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-beset-by-the-dead",
+  "file": "src/scenes/cityGuards.js",
+  "old": "        g.beset = !!foe && !isPlayerTarget(foe) && !foe.dead;",
+  "new": "        g.beset = !!foe && !isPlayerTarget(foe);",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-beset-recalled",
+  "file": "src/scenes/cityGuards.js",
+  "old": "        if (g.beset) g.ai.fleeLeft = 0;   // he stands and fights",
+  "new": "        if (g.beset) recallDefender(g, foe);   // he stands and fights",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-walker-swings",
+  "file": "src/scenes/cityGuards.js",
+  "old": "const _tgt = g.fleeing || (g.leaving && !g.beset) ? null : _targetFeet(g, playerFeet);",
+  "new": "const _tgt = g.fleeing ? null : _targetFeet(g, playerFeet);",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-beset-cannot-swing",
+  "file": "src/scenes/cityGuards.js",
+  "old": "const _tgt = g.fleeing || (g.leaving && !g.beset) ? null : _targetFeet(g, playerFeet);",
+  "new": "const _tgt = g.fleeing || g.leaving ? null : _targetFeet(g, playerFeet);",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-counted-while-leaving",
+  "file": "src/scenes/cityGuards.js",
+  "old": "guards.filter((g) => !g.dead && g.defender && !g.leaving).length",
+  "new": "guards.filter((g) => !g.dead && g.defender).length",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-summon-mints-past-walkers",
+  "file": "src/scenes/cityGuards.js",
+  "old": "    for (const g of guards) if (!g.dead && g.leaving) { recallDefender(g, nearestThreat(g.ai.feet)); came++; }\n",
+  "new": "",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-raid-mints-past-walkers",
+  "file": "src/scenes/cityGuards.js",
+  "old": "    const back = guards.find((w) => !w.dead && w.leaving);",
+  "new": "    const back = null;",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-recall-keeps-walking",
+  "file": "src/scenes/cityGuards.js",
+  "old": "    g.ai.fleeLeft = 0;   // the walk over (revenantFate.js's spelling)",
+  "new": "    // the walk over (revenantFate.js's spelling)",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-recall-no-threat",
+  "file": "src/scenes/cityGuards.js",
+  "old": "    if (threat?.ai) g.ai.makeEnemyHostileToAttacker(threat, threat.ai.feet, 600);\n  }",
+  "new": "  }",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-crime-leaves-him-walking",
+  "file": "src/scenes/cityGuards.js",
+  "old": "    g.leaving = false; g.ai.fleeLeft = 0;   // WATCH-LEAVES: one walking off turns back for the criminal",
+  "new": "    // WATCH-LEAVES: one walking off turns back for the criminal",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-pop-range-inclusive",
+  "file": "src/systems/town/townPopulation.js",
+  "old": "  return dist > POP_VISIBLE_RANGE || !(dx * Math.sin(viewYaw) + dz * Math.cos(viewYaw) > 0);",
+  "new": "  return dist >= POP_VISIBLE_RANGE || !(dx * Math.sin(viewYaw) + dz * Math.cos(viewYaw) > 0);",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-pop-square-in-view",
+  "file": "src/systems/town/townPopulation.js",
+  "old": "  return dist > POP_VISIBLE_RANGE || !(dx * Math.sin(viewYaw) + dz * Math.cos(viewYaw) > 0);",
+  "new": "  return dist > POP_VISIBLE_RANGE || !(dx * Math.sin(viewYaw) + dz * Math.cos(viewYaw) >= 0);",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-pop-dist-ignored",
+  "file": "src/systems/town/townPopulation.js",
+  "old": "export function popAllowChange(dx, dz, viewYaw, dist = Math.hypot(dx, dz)) {",
+  "new": "export function popAllowChange(dx, dz, viewYaw, _d, dist = Math.hypot(dx, dz)) {",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-host-unwired",
+  "file": "src/scenes/world.js",
+  "old": "    viewYaw: () => cam.yaw,   // WATCH-LEAVES",
+  "new": "    // WATCH-LEAVES",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-raid-holds-him-twice",
+  "file": "src/systems/raidingParties.js",
+  "old": "    if (!_live.some((e) => e.foe === foe)) _live.push(",
+  "new": "    _live.push(",
+  "tests": [
+   "test/systems/fb1012e_watchleaves.test.js"
+  ]
+ },
+ {
+  "name": "WATCH-LEAVES-walk-off-leaks-batch",
+  "file": "src/scenes/cityGuards.js",
+  "old": "if (Number.isFinite(yaw) ? popAllowChange(dx, dz, yaw, dist) : dist > POP_VISIBLE_RANGE) { g.dead = true; releaseGuardBatch(g); continue; }",
+  "new": "if (Number.isFinite(yaw) ? popAllowChange(dx, dz, yaw, dist) : dist > POP_VISIBLE_RANGE) { g.dead = true; continue; }",
+  "tests": [
+   "test/scenes/audit24_lifetimes.test.js"
+  ]
+ }
+]

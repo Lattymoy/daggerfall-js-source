@@ -5,7 +5,7 @@
     "old": "      const sides = e.detour ? [-(e.side ?? 1), e.side ?? 1] : [1, -1];",
     "new": "      const sides = [1, -1];",
     "tests": [
-      "test/auditgalleon_sea.test.js"
+      "test/systems/naval/auditgalleon_sea.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      const sails = left >= ARRIVE_EASE_M ? 1 : Math.max(ARRIVE_SAILS, left / ARRIVE_EASE_M);",
     "new": "      const sails = 1;",
     "tests": [
-      "test/auditgalleon_sea.test.js"
+      "test/systems/naval/auditgalleon_sea.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      const sails = left >= ARRIVE_EASE_M ? 1 : Math.max(ARRIVE_SAILS, left / ARRIVE_EASE_M);",
     "new": "      const sails = left >= ARRIVE_EASE_M ? 1 : left / ARRIVE_EASE_M;",
     "tests": [
-      "test/auditgalleon_sea.test.js"
+      "test/systems/naval/auditgalleon_sea.test.js"
     ]
   },
   {
@@ -32,34 +32,34 @@
     "old": "    return d > range ? Math.max(b, closeIn) : b;",
     "new": "    return b;",
     "tests": [
-      "test/auditgalleon_sea.test.js"
+      "test/systems/naval/auditgalleon_sea.test.js"
     ]
   },
   {
     "name": "AUDIT-GN-T4b-her-pictures-never-registered",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "        art.register(addVendorTextures);\n",
     "new": "",
     "tests": [
-      "test/auditgalleon_sea.test.js"
+      "test/systems/naval/auditgalleon_sea.test.js"
     ]
   },
   {
     "name": "AUDIT-GN-T4b-her-glass-never-glows",
-    "file": "src/scenes/comeSailAwayPool.js",
-    "old": "{ const glow = glowOf(sm.textureArchive, sm.textureRecord); if (glow)",
-    "new": "{ const glow = null; if (glow)",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    const glow = artOf(archive).glow(night);",
+    "new": "    const glow = null;",
     "tests": [
-      "test/auditgalleon_sea.test.js"
+      "test/systems/naval/auditgalleon_sea.test.js"
     ]
   },
   {
     "name": "AUDIT-GN-T4b-her-glow-not-a-replacement",
-    "file": "src/scenes/comeSailAwayPool.js",
-    "old": "toColor32(glow), { replacement: !pipeline.isClassicArt?.(sm.textureArchive) }); }",
-    "new": "toColor32(glow)); }",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "toColor32(glow), { replacement: !pipeline.isClassicArt?.(archive) });",
+    "new": "toColor32(glow));",
     "tests": [
-      "test/auditgalleon_sea.test.js"
+      "test/systems/naval/auditgalleon_sea.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  const berthing = still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
     "new": "  const berthing = !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
     "tests": [
-      "test/auditgalleon_sea.test.js"
+      "test/systems/naval/auditgalleon_sea.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  const berthing = still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
     "new": "  const berthing = still && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
     "tests": [
-      "test/auditgalleon_sea.test.js"
+      "test/systems/naval/auditgalleon_sea.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  const berthing = still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
     "new": "  const berthing = still && !ship.route?.lost && d <= lookout(ship).dist;",
     "tests": [
-      "test/auditgalleon_sea.test.js"
+      "test/systems/naval/auditgalleon_sea.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  const berthing = still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater) && d <= lookout(ship).dist;",
     "new": "  const berthing = still && !ship.route?.lost && berthOpen(ship, berth, f, r, ship.berthSide, isWater);",
     "tests": [
-      "test/auditgalleon_sea.test.js"
+      "test/systems/naval/auditgalleon_sea.test.js"
     ]
   }
 ]

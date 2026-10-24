@@ -13,13 +13,14 @@ import {
   setArenaRoads, arenaRoadsLayer, arenaJoinByte, layerTouches, packArenaRoads, unpackArenaRoads,
 } from '../src/world/arenaRoads.js';
 import { buildTamrielRegion, regionLattice, regionOf } from '../src/world/tamrielRoads.js';   // TESA14: the network past the Bay
-import { MAP_W, MAP_H, DIR } from '../src/world/roadNetwork.js';
+import { MAP_W, MAP_H, DIR } from '../src/world/road/roadNetwork.js';
 import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
 import { MAP_WIDTH, MAP_HEIGHT } from '../src/formats/woodsFile.js';
-import { generatePixelTerrain } from '../src/world/terrainGen.js';
-import { roadRoom } from '../src/world/roadVerge.js';
-import { TerrainGenClient } from '../src/world/terrainGenClient.js';
-import { inBay } from '../src/world/tamrielFrame.js';
+import { generatePixelTerrain } from '../src/world/terrain/terrainGen.js';
+import { roadRoom } from '../src/world/road/roadVerge.js';
+import { TerrainGenClient } from '../src/world/terrain/terrainGenClient.js';
+import { inBay } from '../src/world/tamriel/tamrielFrame.js';
+import { hostText } from './hostText.mjs';   // HOST-SPLIT (at the merge of main): the world host read whole - its pixel build stands in scenes/pixelBuild.js
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 afterEach(() => setArenaRoads(null));
@@ -173,7 +174,7 @@ test('TESA5 the worker: the crossings\' layer merged into the one it installs - 
   const prevPost = globalThis.postMessage, prevOn = globalThis.onmessage;
   globalThis.postMessage = (msg) => posted.push(msg);
   try {
-    await import('../src/world/terrainGenWorker.js');
+    await import('../src/world/terrain/terrainGenWorker.js');
     globalThis.onmessage({ data: { t: 'init', woodsBytes: syntheticWoods(MAP_WIDTH, MAP_HEIGHT) } });
     globalThis.onmessage({ data: { t: 'roads', net: bayNet() } });
     const [j] = arenaJoins(bayWith([[310, 2]]), everywhere);
@@ -196,16 +197,16 @@ test('TESA5 the worker: the crossings\' layer merged into the one it installs - 
 });
 
 test('TESA5 the host: the crossings found on the Bay\'s own network with the land\'s two laws, handed over with their gates as road towns once that network is known - never before it lands - and the stale law takes a Bay pixel a join reaches (mutant: the wait, the land, a gate\'s grade) - PIN MOVED (TESA14): scenes/tamrielRoadsHost.js', () => {
-  const w = read('src/scenes/world.js'), host = read('src/scenes/tamrielRoadsHost.js');
-  assert.match(w, /const arenaJoinLand = \(x, y\) => \(onTheBay\(x, y\) \? !isWaterPixel\(maps\.getClimateIndex\(x, y\), woods\.getHeightMapValue\(x, y\)\) : woods\.getHeightMapValue\(x, y\) > WATER_BYTE\);/, 'the Bay\'s water law on it, the beach line past it');
-  assert.match(w, /createTamrielRoadsHost\(\{ terrainGen, woodsBytes, heightAt: \(x, y\) => woods\.getHeightMapValue\(x, y\), joinLand: arenaJoinLand, onLanded: arenaRoadsLanded,/);
+  const w = hostText('src/scenes/world.js'), host = read('src/scenes/tamrielRoadsHost.js');
+  assert.match(w, /const arenaJoinLand = \(x, y\) => \(onTheBay\(x, y\) \? !isWaterPixel\(maps\.getClimateIndex\(x, y\), host\.woods\.getHeightMapValue\(x, y\)\) : host\.woods\.getHeightMapValue\(x, y\) > WATER_BYTE\);/, 'the Bay\'s water law on it, the beach line past it');   // PIN MOVED (HOST-SPLIT, at the merge of main): the sweeps are scenes/tamrielSweepsHost.js's, their live names through host
+  assert.match(w, /createTamrielRoadsHost\(\{ terrainGen, woodsBytes, heightAt: \(x, y\) => host\.woods\.getHeightMapValue\(x, y\), joinLand: arenaJoinLand, onLanded: arenaRoadsLanded,/);
   assert.match(host, /const pixels = standing\.pixels\(\), bay = terrainGen\.roads\(\);/);
   assert.match(host, /if \(!pixels \|\| \(!bay && terrainGen\.hasRoads\)\) return;/, 'the Bay\'s network on its way: wait for it');
   assert.match(host, /const joins = forBay \? arenaJoins\(forBay, joinLand\) : \[\];/);
   assert.match(host, /\.\.\.joins\.map\(\(j\) => \(\{ x: j\.gate\[0\], y: j\.gate\[1\], type: LOCATION_TYPES\.TownCity \}\)\)\];/, 'a gate a road town');
   assert.match(host, /terrainGen\.addArenaRoads\(joinLayer\(joins\), onLanded, \{ reset: true \}\);/, 'the crossings first, the layer reset');
   assert.match(w, /const arenaRoadsStale = \(p, epoch, layer, reset = true\) => p\.arenaRoadsEpoch < epoch && /, 'a Bay pixel too');
-  assert.match(read('src/world/terrainGen.js'), /const join = arena \? 0 : arenaJoinByte\(px, py\);/);
+  assert.match(read('src/world/terrain/terrainGen.js'), /const join = arena \? 0 : arenaJoinByte\(px, py\);/);
 });
 
 const ARENA2 = process.env.ARENA2_PATH;
@@ -213,12 +214,12 @@ const HAVE = !!ARENA2 && ['TMAP00I0.IMG', 'TAMRIEL2.IMG', 'ART_PAL.COL', 'WOODS.
 test('TESA5 with ARENA2: on Basic Roads\' own network seven crossings - three north, three south, one east, none west (the Eltheric) - 19 join pixels on the Bay', { skip: HAVE ? false : 'ARENA2_PATH not set' }, async () => {
   const { DFPalette } = await import('../src/formats/dfPalette.js');
   const { preloadTamrielTrace } = await import('../src/ui/tamrielTrace.js');
-  const { setTamrielTrace } = await import('../src/world/tamrielLand.js');
-  const { setTamrielFit } = await import('../src/world/tamrielFrame.js');
+  const { setTamrielTrace } = await import('../src/world/tamriel/tamrielLand.js');
+  const { setTamrielFit } = await import('../src/world/tamriel/tamrielFrame.js');
   const { arenaPixels } = await import('../src/world/arenaPlaces.js');
   const { arenaRoadTowns } = await import('../src/world/arenaLocations.js');
   const { WoodsFile } = await import('../src/formats/woodsFile.js');
-  const { groundWoods } = await import('../src/world/tamrielGround.js');
+  const { groundWoods } = await import('../src/world/tamriel/tamrielGround.js');
   const { WATER_BYTE } = await import('../src/world/roadsProducer.js');
   const { MapsFile } = await import('../src/formats/mapsFile.js');
   const { isWaterPixel } = await import('../src/ui/overworldModel.js');

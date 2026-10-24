@@ -1,7 +1,7 @@
 /* DA8 - THE LAUNCHER'S FACE. The brand's own: the landing page's night,
    wordmark, rule and gem, and its plaques - every colour here is one the
-   Enhanced skin already uses (src/ui/enhancedStyle.js), and
-   test/da8_launcher.test.js holds it to that the way landing.test.js
+   Enhanced skin already uses (src/ui/enhanced/enhancedStyle.js), and
+   test/tooling/da8_launcher.test.js holds it to that the way landing.test.js
    holds the site. The two faces are on disk (fonts/README.md): this window
    runs before anything is known about the network.
    DA10 - THE FRONT DOOR: the patch notes on the left, the player's
@@ -10,8 +10,9 @@
    read #a89f88 (7.2:1 on the night); #7d7460 (4.1-4.4:1, under WCAG AA's
    4.5) is for rules, borders and a held Play (AUDIT INSTALL L5-23). The
    NEW badge's words read #e8e0c8 on the ruby (5.0:1 - #d8cfae there was
-   4.26, R2-E3); test/audit_install2.test.js computes every pair. */
+   4.26, R2-E3); test/tooling/audit_install2.test.js computes every pair. */
 @font-face { font-family: 'Pixelify Five'; unicode-range: U+0035; font-display: block; src: url(data:font/woff2;base64,d09GMgABAAAAAAIIAA0AAAAABKQAAAG5AAEAQgAAAAAAAAAAAAAAAAAAAAAAAAAAGyAcIAZgADQRCAo8UQE2AiQDCAsGAAQgBYQEByAb0gMRFZQRZF8mbyrtyKnsmUtW0uh5eajRkkYiwmd9zzwevvZ7PXd3A4jjU0BFqJDHE1p0Mq4uqiyrUX1VpBcA/QCAwLv/sfo5F6Rn9t09Ls65/8pEjkFdE/m2A84AIXIHmiZwJJFm0pbQC2cFlGjCRS2xqAUWJRAZpScLgtmEN4H2INg9T6DZqHGxacuuvRoVqAhYvaSloI70IIWdVRLHLfgNBOxl356deyxZYUWpr+rJNb8JiK/pmJSRkNErC/QqJlEUgRWVXLV6ESBEVQESKEjoRA+gAFJrOROtuU2rFi1ORpsvt1y9+lW3f3N7TL8NBMKGS6Nj8yes/za5Bg8HfwuvHq+zWX05l2uol0Dwz5V3RP1cQJeUzrud3rstkMyqCwJGSQINDsuiNGGRJvRaJGn3iGytlxSz0U6dvbHww+rNxh0babDbhyLLJzB13YBvnsCnqKuRDUnSwnPAMmETnOcpx2EEPp+mbgw1LSumfKYqw0bLELM6SbGdRm08TAsa7XeSzTUZDFX+dPS7X+6RR5RVmJvg9p8MY4EtHAlMk2kyC+YFf/8E/GKovmqrnuLEDhW0/Ak2MwEAAA==) format('woff2'); }
+@font-face { font-family: 'Pixelify Five'; unicode-range: U+0032, U+005A; font-display: block; src: url(data:font/woff2;base64,d09GMgABAAAAAAGgAAoAAAAAAxAAAAFVAAEAAAAAAAAAAAAAAAAAAAAAAAAAAAAABmAAPAqBJIEfATYCJAMKCwgABCAFaQcoG08CEK4G7CZ4Jq7VZnqPaS6YXuWQw1RbJh6+H/t27nvrmtQMbRCLt0hnKJGdvlT+z5/rbZqg29elVx1WpXCJB/CNL2EDTlNMNbGZr4i7wsrKf1Qlsx1PdmMc+kB2w92NINLQ3/I4DzSggLvLbQzxeALBIZ3X3J0op6mYYkWkA21shWnP+fr/hfwzOID4lQKdICGjSRZoUmQQJYqEZNpzAflL4Y8FADIoQSVGsQwoApTJRWg/BOVjEKpJt/zRejXl4RPResYon4PypSPKH6ezwgzNirNnNhfmUC4f5rlc/pHOPd3f5P95UE+t19nX6YofP9MAgeB3e0qV0f6R8wv8LSXHVguvqTEFZAkEBz1d7mKtI1ileMUFqwJZpzKQABWZFyBUUDgpVSGLonKhSX2hpEbfbhBlI6P9rLf8Vr0BeAJRrAMjezM9SwltXWsjdQs4kyybrQEAAAA=) format('woff2'); }
 @font-face { font-family: 'Pixelify Sans'; font-weight: 400 700; font-display: block; src: url(fonts/PixelifySans-latin.woff2) format('woff2'); }
 @font-face { font-family: 'Jacquard 12'; font-display: block; src: url(fonts/Jacquard12-latin.woff2) format('woff2'); }
 

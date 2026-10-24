@@ -1,7 +1,7 @@
 [
   {
     "name": "TESA3-the-bay-a-province",
-    "file": "src/world/tamrielLand.js",
+    "file": "src/world/tamriel/tamrielLand.js",
     "old": "  if (inBay(px, py)) return null;\n  return provinceKeyAt(...bayToPicture(px + 0.5, py + 0.5));",
     "new": "  return provinceKeyAt(...bayToPicture(px + 0.5, py + 0.5));",
     "tests": [
@@ -10,7 +10,7 @@
   },
   {
     "name": "TESA3-the-edge-decides",
-    "file": "src/world/tamrielLand.js",
+    "file": "src/world/tamriel/tamrielLand.js",
     "old": "  return provinceKeyAt(...bayToPicture(px + 0.5, py + 0.5));",
     "new": "  return provinceKeyAt(...bayToPicture(px + 1, py + 0.5));",
     "tests": [
@@ -33,7 +33,7 @@
     "new": "export function getRandomFullNameOfBank(bank) {\n  const gender = randomRangeInclusive(0, 1) === 0 ? GENDERS.Female : GENDERS.Male;",
     "tests": [
       "test/tesa3_provinces.test.js",
-      "test/audit58_magic.test.js"
+      "test/systems/audit58_magic.test.js"
     ]
   },
   {

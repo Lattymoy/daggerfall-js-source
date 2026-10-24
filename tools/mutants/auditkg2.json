@@ -1,0 +1,663 @@
+[
+ {
+  "name": "AKG2-B1-pending",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "if (me < 0 || g.staking || ready || g.stakeId) return true;",
+  "new": "if (me < 0 || g.staking || ready) return true;",
+  "tests": [
+   "test/net/auditkg2_online.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-B1-refused",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "      g.stakeId = null;   // AUDIT KG II B1: a Ready refused",
+  "new": "      // AUDIT KG II B1: a Ready refused",
+  "tests": [
+   "test/net/auditkg2_online.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-B8-pick",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "if (!pick?.enabled) { g.why = pick?.why ?? stakeChoose(); return true; }",
+  "new": "if (!pick) { g.why = stakeChoose(); return true; }",
+  "tests": [
+   "test/net/auditkg2_online.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-B16-words",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "if (!r?.ok) { g.why = stakeRefusal(r); paint(); return; }",
+  "new": "if (!r?.ok) { g.why = onlineRefusal('stake refused'); paint(); return; }",
+  "tests": [
+   "test/net/auditkg2_online.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-B2-last",
+  "file": "src/systems/gambit/gambitRemoteTable.js",
+  "old": "const told = !state?.game && last && !events.some((e) => e.t === 'result');",
+  "new": "const told = false;",
+  "tests": [
+   "test/net/auditkg2_online.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-B2-lost",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "else if (s && !s.over && !st?.game) { g.session = null;",
+  "new": "else if (false) { g.session = null;",
+  "tests": [
+   "test/net/iliac/auditkg2_panel.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-B3-watcher",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "const watching = () => online() && !!g.session && g.watcher;",
+  "new": "const watching = () => online() && mySeat() < 0 && !!g.session;",
+  "tests": [
+   "test/net/auditkg2_online.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-B4-stake",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "stake: me >= 0 && st.pot ? Math.floor(st.pot / 2) : 0,",
+  "new": "stake: st.pot ? Math.floor(st.pot / 2) : 0,",
+  "tests": [
+   "test/net/auditkg2_online.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-B5-deal",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "if (me >= 0) d.say(dealLine(name, g.game.stake));",
+  "new": "if (me >= 0) d.say(dealLine(name, 0));",
+  "tests": [
+   "test/net/auditkg2_online.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-B6-armed",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "if (g.session?.playing() && !watching() && g.armed !== 'stand')",
+  "new": "if (g.session?.playing() && g.armed !== 'stand')",
+  "tests": [
+   "test/net/auditkg2_online.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-B7-sit",
+  "file": "src/ui/gambitTableHud.js",
+  "old": "          if (online.canSit) out.actions.push({ id: 'sit', label: GAMBIT_ONLINE_PRESS.sit, enabled: true, kind: 'primary' });",
+  "new": "",
+  "tests": [
+   "test/net/auditkg2_online.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-B10-gap",
+  "file": "src/systems/gambit/gambitRemoteTable.js",
+  "old": "(this.watch || e.side === 1 - this.side)",
+  "new": "(e.side === 1 - this.side)",
+  "tests": [
+   "test/net/auditkg2_online.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-B11-held",
+  "file": "src/systems/gambit/gambitRemoteTable.js",
+  "old": "const no = this.over ? null : gambitRefusal(this.state, 0, cmd) ?? this._send(cmd, now);",
+  "new": "const no = null;",
+  "tests": [
+   "test/net/auditkg2_online.test.js",
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-B12-due",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "if (w.op === 'stand' || (ok && w.op === 'sit')) d.online.standDue?.(w.op === 'stand' && !ok);",
+  "new": "",
+  "tests": [
+   "test/net/auditkg2_online.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-B17-look",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "if (w !== g.welcomes) { g.stakeId = null; g.sitting = false; if (send({ op: 'look' })) g.welcomes = w; }",
+  "new": "if (w !== g.welcomes) { g.stakeId = null; g.sitting = false; g.welcomes = w; send({ op: 'look' }); }",
+  "tests": [
+   "test/net/iliac/auditkg2_panel.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-B18-midway",
+  "file": "src/world/gambitMotion.js",
+  "old": "          if (e.midway) continue;",
+  "new": "",
+  "tests": [
+   "test/net/auditkg2_online.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-A1-late",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "const late = !!t.game && Number.isInteger(gameNo) && gameNo < t.gameNo && now - t.dealtAt <= GAMBIT_LATE_MS && !t.seats[p].spoke;",
+  "new": "const late = false;",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-A1-window",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "gameNo < t.gameNo && now - t.dealtAt <= GAMBIT_LATE_MS && !t.seats[p].spoke;",
+  "new": "gameNo < t.gameNo && !t.seats[p].spoke;",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-A1-spoke",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "  t.seats[p].spoke = true;",
+  "new": "",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-A1-relay",
+  "file": "server/src/index.js",
+  "old": "msgs = gambitStand(t, { id: a.id, now, gameNo: m.gameNo });",
+  "new": "msgs = gambitStand(t, { id: a.id, now });",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-A1-client",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "send({ op: 'stand', gameNo: g.remote.state?.gameNo ?? 0 });",
+  "new": "send({ op: 'stand' });",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-A2-sitting",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "if (mySeat() >= 0 || g.sitting) send(",
+  "new": "if (mySeat() >= 0) send(",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-A3a-room",
+  "file": "server/src/index.js",
+  "old": "    if (c.cr !== a.key || c.ct !== m.table || c.cb !== GAMBIT_STAKE_BB) return 'stake elsewhere';",
+  "new": "    if (c.ct !== m.table || c.cb !== GAMBIT_STAKE_BB) return 'stake elsewhere';",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-A3b-drained",
+  "file": "server/src/index.js",
+  "old": "      if (everyone && t.game) { moved = true; this._gambitSend(k, gambitVoid(t, now), now); }",
+  "new": "",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-A3c-closed",
+  "file": "server/src/index.js",
+  "old": "    if (!this._verifyKey || !a.sub || !(await this._receiptKeyOf())) return 'stakes closed';",
+  "new": "    if (!this._verifyKey || !a.sub) return 'stakes closed';",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-A3d-keep",
+  "file": "server/src/index.js",
+  "old": "        if (done === false) break;\n        t.cashouts.shift();",
+  "new": "        t.cashouts.shift();",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-A3e-hello",
+  "file": "server/src/index.js",
+  "old": "try { await this._gambitOwed(ws, { sub: who.subject }, 0); }",
+  "new": "try { /* none */ }",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-A3e-sit",
+  "file": "server/src/index.js",
+  "old": "      await this._gambitOwed(ws, a, m.table);   // KG6: a returning player hears what he is owed first",
+  "new": "",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-A4-pot",
+  "file": "server-account/src/cards.js",
+  "old": "  if (Number(row.bb) === GAMBIT_STAKE_BB && c.r > 2 * Number(row.amount)) return { error: 'cards-receipt', why: 'sum' };",
+  "new": "",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-A8-to",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "&& Array.isArray(x.to) && x.to.length === 2 && x.to.every(seatId))) return false;",
+  "new": ")) return false;",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-A8-twice",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "&& x.f[0] !== x.f[1]",
+  "new": "",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-A8-stakeid",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "STAKE_ID_RE.test(x.j) && typeof x.s === 'string' && ID_RE.test(x.s)",
+  "new": "typeof x.s === 'string'",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-E1-blow",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "    return [room(t, [finish(t, now, -1, 'void')])];   // the relay's source broke: no contest",
+  "new": "    return [room(t, [finish(t, now, 1 - p, 'forfeit')])];   // the relay's source broke: no contest",
+  "tests": [
+   "test/net/auditkg2_relay.test.js",
+   "test/net/gambit/kg5_table.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-E1-turn",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "if ('refused' in out) return out.refused === 'rand' ? [room(t, [finish(t, now, -1, 'void')])] : [];",
+  "new": "if ('refused' in out) return out.refused === 'rand' ? [room(t, [finish(t, now, t.game.turn, 'forfeit')])] : [];",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-E1-deal",
+  "file": "src/net/gambit/gambitTable.js",
+  "old": "for (const s of t.seats) if (s) { s.ready = false; s.army = null; stakeBack(t, s, 'void'); }",
+  "new": "for (const s of t.seats) if (s) { s.ready = false; s.army = null; }",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-E4-layer-sit",
+  "file": "server/src/index.js",
+  "old": "      if (a.ly) { refuse('busy'); return; }",
+  "new": "",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-E4-layer-stake",
+  "file": "server/src/index.js",
+  "old": "    if (a.ly) return 'stakes closed';",
+  "new": "",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-E4-refused",
+  "file": "server/src/index.js",
+  "old": "    if (typeof r === 'string') await this._holdemReceipt(m.table, a.id, { j: c.cj, s: c.s, r: c.ca, w: 'refused' });",
+  "new": "",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-E9-account",
+  "file": "server/src/index.js",
+  "old": "[...tables.values()].some((x) => gambitSeatOf(x, b.id) >= 0))) { refuse('account seated'); return; }",
+  "new": "false)) { refuse('account seated'); return; }",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-E20-gowed",
+  "file": "server/src/index.js",
+  "old": "for (const k of await this._keysOf('gowed:')) if (!((await this.state.storage.get(k)) ?? []).some((x) => x && x.e > nowS)) dead.push(k);",
+  "new": "",
+  "tests": [
+   "test/net/auditkg2_relay.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-E5-season",
+  "file": "server-account/src/gambit.js",
+  "old": "seasonFull = Number(pairSeason?.n ?? 0) >= ARENA_PAIR_SEASON_MAX;",
+  "new": "seasonFull = false;",
+  "tests": [
+   "test/net/gambit/auditkg2_season.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-E5-board-rated",
+  "file": "server-account/src/gambit.js",
+  "old": "FROM gambit_games WHERE a = ${p} AND season = ${s} AND rated = 1",
+  "new": "FROM gambit_games WHERE a = ${p} AND season = ${s}",
+  "tests": [
+   "test/net/gambit/auditkg2_season.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-E5-sides-rated",
+  "file": "server-account/src/gambit.js",
+  "old": "      FROM gambit_games WHERE season = ?1 AND rated = 1 AND a IS NOT NULL",
+  "new": "      FROM gambit_games WHERE season = ?1 AND a IS NOT NULL",
+  "tests": [
+   "test/net/gambit/auditkg2_season.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-E5-race",
+  "file": "server-account/src/gambit.js",
+  "old": "WHERE ${RATING_NOW_SQL('?3')} = ?7 AND ${RATING_NOW_SQL('?4')} = ?8`)",
+  "new": "WHERE 1 = 1`)",
+  "tests": [
+   "test/net/gambit/auditkg2_season.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-E5-top",
+  "file": "server-account/src/gambit.js",
+  "old": "return na >= rating || nb >= rating;",
+  "new": "return false;",
+  "tests": [
+   "test/net/gambit/auditkg2_season.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-D11-cap",
+  "file": "server-account/src/gambit.js",
+  "old": "...(rated ? {} : { cap: seasonFull ? 'season' : 'day' })",
+  "new": "...(rated ? {} : { cap: 'day' })",
+  "tests": [
+   "test/net/gambit/auditkg2_season.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-C1-escape",
+  "file": "src/scenes/worldModes.js",
+  "old": "      if (gambitGame?.playing()) { gambitGame.key('Escape'); e.preventDefault(); return; }",
+  "new": "",
+  "tests": [
+   "test/systems/auditkg2_board.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-C2-mouse0",
+  "file": "src/scenes/worldModes.js",
+  "old": "      if (gg.playing() && !e.isTrusted && actionOf(e, keys) === 'ActivateCenterObject') { e.stopImmediatePropagation?.(); e.preventDefault?.(); return; }",
+  "new": "",
+  "tests": [
+   "test/systems/auditkg2_board.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-C3-finger",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "    if (how.touch) g.finger = true;",
+  "new": "",
+  "tests": [
+   "test/systems/auditkg2_board.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-C4-board",
+  "file": "src/ui/gamepadInput.js",
+  "old": "const boardUp = !overlay && !lb && !rb && !lootUp && !helmUp && !!hooks.board?.up?.();",
+  "new": "const boardUp = false;",
+  "tests": [
+   "test/systems/auditkg2_board.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-C5-floor",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "return area(best) >= GAMBIT_CLEAR_MIN * R.w * w * R.h * h ? best : null;",
+  "new": "return best;",
+  "tests": [
+   "test/systems/auditkg2_board.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-C5-lean",
+  "file": "src/world/gambitCloth.js",
+  "old": "const clear = given && given.x1 - given.x0 > 0 && given.y1 - given.y0 > 0 ? given : { x0: 0, x1: 1, y0: 0, y1: 1 };",
+  "new": "const clear = given;",
+  "tests": [
+   "test/systems/auditkg2_board.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-C6-decided",
+  "file": "src/ui/gambitTableHud.js",
+  "old": "const decided = !!game.decided || !!game.over;",
+  "new": "const decided = !!game.over;",
+  "tests": [
+   "test/systems/auditkg2_board.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-C7-lift",
+  "file": "src/world/gambitCloth.js",
+  "old": "(places.top + GAMBIT_CARD_FOOT + (p.id === selected ? GAMBIT_SELECT_LIFT : 0))",
+  "new": "(places.top + GAMBIT_CARD_FOOT)",
+  "tests": [
+   "test/systems/auditkg2_board.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-C8-hazard",
+  "file": "src/ui/gambitTableWords.js",
+  "old": "  if (x.hazard) lines.push(x.hazard);",
+  "new": "",
+  "tests": [
+   "test/systems/auditkg2_board.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-C8-names",
+  "file": "src/ui/gambitTableWords.js",
+  "old": "names: listOf(x.foes) }",
+  "new": "names: '' }",
+  "tests": [
+   "test/systems/auditkg2_board.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-C11-forfeit",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "else if (e.winner === 1 && e.by !== 'forfeit') sound(SOUND.Groan, GAMBIT_RESULT_MS);",
+  "new": "else if (e.winner === 1) sound(SOUND.Groan, GAMBIT_RESULT_MS);",
+  "tests": [
+   "test/systems/kg3_host.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-C14-again",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "      g.selected = mine ? pc.id : null;",
+  "new": "      g.selected = mine ? (g.selected === pc.id ? null : pc.id) : null;",
+  "tests": [
+   "test/systems/auditkg2_board.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-C14-letgo",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "    g.selected = null;   // the mod's: a press on anything else",
+  "new": "    if (!pc) g.selected = null;   // the mod's: a press on anything else",
+  "tests": [
+   "test/systems/auditkg2_board.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-D2-more",
+  "file": "src/ui/gambitTableHud.js",
+  "old": "        out.actions.push({ id: 'stand', label: GAMBIT_PRESS.stand, enabled: true, kind: 'quiet', strip: true });\n        out.actions.push({ id: 'more', label: GAMBIT_PRESS.more, enabled: true, kind: 'quiet', strip: true, phone: true });",
+  "new": "        out.actions.push({ id: 'stand', label: GAMBIT_PRESS.stand, enabled: true, kind: 'quiet', strip: true });",
+  "tests": [
+   "test/net/iliac/auditkg2_panel.test.js",
+   "test/net/kg5_client.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-D3-more-chips",
+  "file": "src/ui/gambitTableHud.js",
+  "old": "{ key: 'potionsMine', more: true,",
+  "new": "{ key: 'potionsMine',",
+  "tests": [
+   "test/net/iliac/auditkg2_panel.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-D3-attr",
+  "file": "src/ui/gambitTableHud.js",
+  "old": "          if (c.more) n.setAttribute('data-more', 'true');",
+  "new": "",
+  "tests": [
+   "test/net/iliac/auditkg2_panel.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-D4-title",
+  "file": "src/ui/gambitTableHud.js",
+  "old": "name: watching ? online.names?.[st.turn] ?? '' : name });",
+  "new": "name });",
+  "tests": [
+   "test/net/iliac/auditkg2_panel.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-D4-info",
+  "file": "src/ui/gambitTableHud.js",
+  "old": "mine: !names && pc.side === 0, regular: names ? names[pc.side] ?? '' : regular,",
+  "new": "mine: pc.side === 0, regular,",
+  "tests": [
+   "test/net/iliac/auditkg2_panel.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-D5-pot",
+  "file": "src/ui/gambitTableHud.js",
+  "old": "gold: watching ? watchGold(over, game.pot ?? 0, online.names ?? []) : resultGold(over, game.stake, name),",
+  "new": "gold: resultGold(over, game.stake, name),",
+  "tests": [
+   "test/net/iliac/auditkg2_panel.test.js",
+   "test/net/auditkg2_online.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-D9-guide",
+  "file": "src/ui/gambitTableHud.js",
+  "old": "paras: gambitGuide(p.online ? { gold: !!p.online.gold } : null) },",
+  "new": "paras: gambitGuide() },",
+  "tests": [
+   "test/net/iliac/auditkg2_panel.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-D9-words",
+  "file": "src/ui/gambitTableHud.js",
+  "old": "items: gambitWords(!!p.online) },",
+  "new": "items: gambitWords() },",
+  "tests": [
+   "test/net/iliac/auditkg2_panel.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-D10-foe",
+  "file": "src/net/iliac/iliacClaims.js",
+  "old": "      else if (answer?.ok && answer.data?.why === 'foe-unregistered') onFoeGuest();",
+  "new": "",
+  "tests": [
+   "test/net/iliac/auditkg2_panel.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-D14-first",
+  "file": "src/ui/gambitTableHud.js",
+  "old": "        if (a.stakes) {   // KG6: the gold table's stake picks - AUDIT KG II D14",
+  "new": "        if (false) {   // KG6: the gold table's stake picks - AUDIT KG II D14",
+  "tests": [
+   "test/net/iliac/auditkg2_panel.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-D16-names",
+  "file": "src/scenes/gambitTableGame.js",
+  "old": "? refusalWords(f.error, { piece: c?.piece != null ? nameOf(c.piece) : '', target: c?.target != null ? nameOf(c.target) : '' })",
+  "new": "? refusalWords(f.error)",
+  "tests": [
+   "test/net/iliac/auditkg2_panel.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-D17-fill",
+  "file": "src/ui/gambitTableHud.js",
+  "old": "out.actions.push({ id: 'autofill', label: GAMBIT_PRESS.autofill, enabled: !fillWhy, why: fillWhy });",
+  "new": "out.actions.push({ id: 'autofill', label: GAMBIT_PRESS.autofill, enabled: !fillWhy, why: null });",
+  "tests": [
+   "test/net/iliac/auditkg2_panel.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-D17-clear",
+  "file": "src/ui/gambitTableHud.js",
+  "old": "why: army.length ? null : armyEmpty() });",
+  "new": "why: null });",
+  "tests": [
+   "test/net/iliac/auditkg2_panel.test.js"
+  ]
+ },
+ {
+  "name": "AKG2-D18-label",
+  "file": "src/ui/gambitTableHud.js",
+  "old": "label: p.boardOpen ? boardHide() : GAMBIT_ONLINE_PRESS.board, enabled: true });   // KG6; AUDIT KG II D18\n",
+  "new": "label: GAMBIT_ONLINE_PRESS.board, enabled: true });   // KG6; AUDIT KG II D18\n",
+  "tests": [
+   "test/net/iliac/auditkg2_panel.test.js"
+  ]
+ }
+]

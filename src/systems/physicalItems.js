@@ -25,18 +25,18 @@
 //   "cannotRemoveItem".
 //
 // Not a DFU member: a vendored mod. Ledger A (PI).
-import { RARITIES, rarityOf, lootRarityOn } from './lootRarity.js';
+import { RARITIES, rarityOf, lootRarityOn } from './loot/lootRarity.js';
 import { tierColour } from '../render/spoilsGlow.js';
 import { modSetting } from './modSettings.js';
 import { TEMPLATES, isPotion } from './useItem.js';
 import { CANNOT_REMOVE_ITEM_TEXT } from './createItem.js';
 import { insideUnitCircle } from '../world/passiveFish.js';   // Random.insideUnitCircle's one home
 import { rangeFloat } from './unleveledLoot.js';   // Random.Range(float, float)'s
-import { planStore, applyTransfer, isKeptSpellbook, SPELLBOOK_KEPT_TEXT } from './itemTransfer.js';
-import { lockRefuses, lockedText } from './itemLock.js';
-import { boundRefusesPut, boundText, isPackOnly, packOnlyText } from './itemBound.js';
+import { planStore, applyTransfer, isKeptSpellbook, SPELLBOOK_KEPT_TEXT } from './item/itemTransfer.js';
+import { lockRefuses, lockedText } from './item/itemLock.js';
+import { boundRefusesPut, boundText, isPackOnly, packOnlyText } from './item/itemBound.js';
 import { bagMayLeave } from './materialsBag.js';
-import { itemLongName } from './itemInfo.js';
+import { itemLongName } from './item/itemInfo.js';
 
 export const PHYSICAL_ITEMS_VENDOR = 'physical-items';
 
@@ -44,7 +44,7 @@ export const PHYSICAL_ITEMS_VENDOR = 'physical-items';
 export const PI_CATEGORIES = Object.freeze(['Weapons', 'Arrows', 'Armor', 'Clothing', 'Ingredients', 'Gold', 'Potions', 'Books',
   'Gems', 'Jewellery', 'Maps', 'Magic Items', 'Religious Items', 'Quest Items', 'Transportation', 'Other Items']);
 
-/** GetItemCategory's switch [IL_2905] over DFU's ItemGroups, by the port's group names (systems/loot.js). A group the
+/** GetItemCategory's switch [IL_2905] over DFU's ItemGroups, by the port's group names (systems/loot/loot.js). A group the
  *  switch does not name - Drugs, UselessItems1, Furniture, UselessItems2, Paintings, Deeds - is Other Items. */
 export const PI_GROUP_CATEGORY = Object.freeze({
   Armor: 'Armor', Weapons: 'Weapons', MagicItems: 'Magic Items', Artifacts: 'Magic Items',
@@ -79,7 +79,7 @@ export function defaultWorldHeight(item) {
 }
 
 /** ApplySettings [IL_2f73]: the Weapon Sizes and Armor Sizes keys are DFU's Weapons and Armor enum names with `_` read as
- *  a space, and both pauldrons answer to the one "Pauldrons" key. By template index (systems/loot.js's numbering). */
+ *  a space, and both pauldrons answer to the one "Pauldrons" key. By template index (systems/loot/loot.js's numbering). */
 export const PI_WEAPON_SIZE_KEYS = Object.freeze({ 113: 'Dagger', 114: 'Tanto', 115: 'Staff', 116: 'Shortsword', 117: 'Wakazashi',
   118: 'Broadsword', 119: 'Saber', 120: 'Longsword', 121: 'Katana', 122: 'Claymore', 123: 'Dai Katana', 124: 'Mace',
   125: 'Flail', 126: 'Warhammer', 127: 'Battle Axe', 128: 'War Axe', 129: 'Short Bow', 130: 'Long Bow', 131: 'Arrow' });
@@ -516,12 +516,12 @@ export const diedRecently = (entity, at = Date.now()) => { const t = entity && t
 // ---- the shift-drop's refusals ---------------------------------------------------------------------------------------
 
 /** LocalItemLeftClickPrefix [IL_0565]: ItemGroups.Transportation (23) - DFU's "cannotRemoveItem" (its one home,
- *  systems/createItem.js). KEEP-SPELLBOOK (the port's own, systems/itemTransfer.js): and the character's spellbook. */
+ *  systems/createItem.js). KEEP-SPELLBOOK (the port's own, systems/item/itemTransfer.js): and the character's spellbook. */
 export const shiftDropRefusal = (item) => (item?.group === 'Transportation' ? { text: CANNOT_REMOVE_ITEM_TEXT }
   : isKeptSpellbook(item) ? { text: SPELLBOOK_KEPT_TEXT } : null);
 
 /**
- * THE SHIFT-DROP, ONE LAW FOR BOTH PACKS (ui/nativeInventory.js, ui/enhancedInventory.js): QueueInventoryPhysicalDrop
+ * THE SHIFT-DROP, ONE LAW FOR BOTH PACKS (ui/native/nativeInventory.js, ui/enhanced/enhancedInventory.js): QueueInventoryPhysicalDrop
  * [IL_34b8] moves the item through DFU's own TransferItem onto a fresh container - so the pack's ground guards hold
  * exactly as a Remove onto the ground holds them: the Transportation refusal above (in the mod's words - planStore's own
  * says nothing), a locked piece (LOCK1), a pack-only piece (WALLET1), a bound piece (SS3 - the ground is "elsewhere"),
@@ -538,7 +538,7 @@ export function shiftDrop(item, { items, entity, getQuest = null, dropRefusal = 
   if (no) return { refusal: no };
   if (lockRefuses(item, 'drop')) return { refusal: { text: lockedText(name()) } };
   if (isPackOnly(item)) return { refusal: { text: packOnlyText(name()) } };
-  if (boundRefusesPut(item, 'elsewhere')) return { refusal: { text: boundText(name()) } };
+  if (boundRefusesPut(item, 'elsewhere')) return { refusal: { text: boundText(name(), item) } };   // AUDIT AUTO-HOLD: a piece the realm locked says so
   const dest = [];
   const plan = /** @type {any} */ (planStore(item, { remote: dest, getQuest, groundRefusal: dropRefusal?.() ?? null, bagLoaded: !bagMayLeave(entity) }));   // its map arm is not in its declared shape
   if (!plan.ok) return { refusal: plan.refusal };

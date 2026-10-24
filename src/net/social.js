@@ -11,7 +11,7 @@
 // party (green), is this peer a friend, what does the badge count, what does a note say in words. Nothing here
 // talks to a socket: the session (net/online.js) hands frames in through `apply` and `applyParty`, and the panels
 // send acts through the session's `sendSocial`. So the whole thing is driven with plain objects and no browser
-// (test/soc2_session.test.js), which is what lets the awkward cases - a member with two tabs, an invite that lapsed
+// (test/net/soc2_session.test.js), which is what lets the awkward cases - a member with two tabs, an invite that lapsed
 // while the panel was closed, a note about myself - be written down as pins rather than as hopes.
 //
 // PEERS, NOT ACCOUNTS, IN THE WORLD. Everything drawn over a body in the world is keyed by PEER id (a tab's), and a
@@ -22,7 +22,8 @@
 //
 // THE CLOCK. Every stamp the hub says is the RELAY'S clock (a wall millisecond; the welcome's `now` says how far this
 // machine is from it - net/online.js clockOffsetMs). "Last online" is therefore read against the relay's clock as
-// this machine sees it: `now()` here is the session's clock plus the offset the host hands in.
+// this machine sees it: `now()` here is this machine's wall clock (Date.now - clockOffsetMs is measured against it, never
+// against the session's steadyNow, AUDIT ONLINE 3 F2) plus the offset the host hands in.
 //
 // Not a DFU member: Daggerfall Unity has no friends, no parties and no online. Ledger A row (ONLINE).
 import { NOTE_CODES, INVITE_TTL_MS, PARTY_MAX, PENDING_MAX } from './wire.js';
@@ -119,6 +120,9 @@ export class SocialState {
     this.onChange = null;
     /** The last refusal, for a panel that shows it beside the button; null once anything else happens. */
     this.lastError = null;
+    /** SAFE1 (bible/11-Multiplayer/Chat-Safety-Arc.md): whether the player hears an account - (acct) => boolean, the host's
+     *  from the block list; null hears everyone. A blocked account's friend request, party invite and notes never land. */
+    this.hears = null;
     this._now = now;
     this._offset = 0;
   }
@@ -139,9 +143,9 @@ export class SocialState {
         const got = this.now();
         this.acct = f.acct; this.name = f.name; this.peers = Array.isArray(f.peers) ? f.peers.slice() : [];   // a frame from before AUDIT SOC names none
         this.friends = new Map(f.friends.map((r) => [r.acct, r]));
-        this.in = f.in.slice(); this.out = f.out.slice();
+        this.in = f.in.filter((r) => this._hears(r.acct)); this.out = f.out.slice();   // SAFE1: a blocked account's request is not shown
         this.party = f.party;
-        this.invites = new Map(f.invites.slice(0, PENDING_MAX).map((i) => [i.party, { ...i, got }]));
+        this.invites = new Map(f.invites.filter((i) => this._hears(i.from?.acct)).slice(0, PENDING_MAX).map((i) => [i.party, { ...i, got }]));   // SAFE1: nor its invite
         this.lastError = null;
         this._changed('state');
         return 'state';
@@ -176,6 +180,7 @@ export class SocialState {
       case 'invite': {
         const { t, k, ...invite } = f;
         if (this.party && this.party.id === invite.party) return null;   // an invite to the party I sit in is nothing
+        if (!this._hears(invite.from?.acct)) return null;   // SAFE1: nor one from an account I blocked - its sender is never told
         // AUDIT SOC B1/B2: the door bounds a STATE frame's invites at PENDING_MAX; this arm is one invite at a time, so it
         // is bounded here - the oldest goes when the map is full - and every invite is stamped on ARRIVAL (`got`), on
         // this clock, because `at` and `expires` are the relay's word and a relay that stamps the future hands out an
@@ -197,6 +202,7 @@ export class SocialState {
         let swept = false;
         if (f.code === 'party.lapsed') for (const [id, inv] of [...this.invites]) if (inv.from.acct === f.acct) { this.invites.delete(id); swept = true; }
         if (swept) this._changed('note');   // AUDIT SOC B16: a note that changed nothing repaints nothing - the chat line is the whole of it
+        if (!this._hears(f.acct)) return 'note';   // SAFE1: a blocked account's notes are no line of mine
         this.onNote?.(note, noteText(note, this.acct));
         return 'note';
       }
@@ -208,6 +214,21 @@ export class SocialState {
       }
       default: return null;
     }
+  }
+
+  /** SAFE1: whether an account is heard (the host's block list) - an account named by nobody always is. */
+  _hears(acct) { return typeof acct !== 'string' || !acct || !this.hears || this.hears(acct); }
+
+  /** AUDIT SAFE CLIENT-11 (2026-10-17): THE PICTURE HEARS THROUGH A BLOCK MADE NOW - a friend request and a party invite
+   *  that already stood when the account was blocked are taken back, as a block takes back the lines already heard
+   *  (net/chat.js forgetSpeaker): they were filtered only as they arrived. Answers how many went; a change repaints. */
+  refilter() {
+    const inBefore = this.in.length, invitesBefore = this.invites.size;
+    this.in = this.in.filter((r) => this._hears(r.acct));
+    for (const [id, inv] of [...this.invites]) if (!this._hears(inv.from?.acct)) this.invites.delete(id);
+    const gone = inBefore - this.in.length + invitesBefore - this.invites.size;
+    if (gone) this._changed('block');
+    return gone;
   }
 
   /** A party member's pose in (net/online.js onParty) - onto the seat, if the account holds one. */

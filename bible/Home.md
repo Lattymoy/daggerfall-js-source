@@ -1,6 +1,6 @@
 # project-dagger
 
-**DFO Online** - an open-source reimplementation of The Elder Scrolls II: Daggerfall (BR5, 2026-10-11; it was DAGGERFALL ONLINE from BR4, 2026-09-27, DAGGERFALL ENHANCED from BR1, 2026-09-13, and DAGGERFALL JAVASCRIPT from U60 until then - `10-UI/UI-Arc.md` BR5 says where the original game is still named, and why). A 1:1 port, built the way we build: hand-rolled WebGL2, Vite, Node ESM, no framework. Data layer and game logic ported faithfully from Daggerfall Unity's reverse-engineered C#; presentation rebuilt on our stack; characters rebuilt on our voxel system.
+**DFO Online** - an open-source reimplementation of The Elder Scrolls II: Daggerfall (BR5, 2026-10-11; it was DAGGERFALL ONLINE from BR4, 2026-09-27, DAGGERFALL ENHANCED from BR1, 2026-09-13, and DAGGERFALL JAVASCRIPT from U60 until then - `10-UI/UI-Arc.md` BR5 says where the original game is still named, and why). Its own game, built the way we build: hand-rolled WebGL2, Vite, Node ESM, no framework. It began as a 1:1 port - data layer and game logic ported faithfully from Daggerfall Unity's reverse-engineered C#, presentation rebuilt on our stack, characters rebuilt on our voxel system - and since SCOPE1 (Mac, 2026-10-14) parity with DFU is no longer the goal: DFU is the reference we read first, not the target (`01-Overview/Port-Doctrine.md`, Scope).
 
 Read `01-Overview/Port-Doctrine.md` before touching anything.
 
@@ -128,7 +128,7 @@ number: `world.js:N` was a claim about every line above N, so every
 change to a host rewrote the docs that cited below it, and two branches
 that touched one conflicted on the same doc lines. Write a number and
 `npm run cites -- --apply` converts it (tools/citeAnchor.mjs);
-test/citeanchor.test.js resolves every anchor (CA1) and refuses a live
+test/tooling/citeanchor.test.js resolves every anchor (CA1) and refuses a live
 number (CA2). Records keep their numbers: struck text is the
 measurement's, a renumbering told as history is written as plain
 numbers (`world.js line 6142`), not as a cite, and a line the code no
@@ -176,7 +176,9 @@ the DFU value is unknown, the element does not draw until it is
 looked up. And native-window screenshots are eyeballed against the
 CLASSIC layout (the art's own frames are the ruler - an icon
 crossing a baked slot border is a positioning bug even when the
-code "looks right").
+code "looks right"). SCOPE1 (2026-10-14): this binds the windows that
+keep DFU's layout; a window redesigned on purpose cites its own design
+record instead (`01-Overview/Port-Doctrine.md`, Scope).
 
 **THE ONE CONSTRUCTION SEAM** (AUDIT 17i). When two hosts build the
 same object, every dependency it grows must be remembered twice - and
@@ -207,7 +209,7 @@ will notice says so in its pull request's description, under `## Patch
 notes: <title>` - the template asks, the release reads it there
 (`scripts/desktopRelease.mjs notes`), and the published release is the
 archive. Never commit a patch-notes file: 147 piled up at the root, each
-read once, and `test/rel4_release.test.js` now fails the suite on one.
+read once, and `test/tooling/rel4_release.test.js` now fails the suite on one.
 A description fixed after its release was cut reaches it on its own:
 editing a merged pull request's description has
 `.github/workflows/release-notes.yml` rewrite that release's notes (REL7).
@@ -222,6 +224,19 @@ version (`app-v0.1.<count>`, which the updater compares): the release is
 named `Update <n>` and the game shows it beside the commit
 (`01-Overview/Desktop-App.md` REL8).
 
+THE HOSTS DO NOT GROW (HOST-SPLIT, 2026-10-15). bootWorld, createWorldModes,
+buildDungeonContext, bootExterior, navalHost's createNavalHost and Come Sail Away's
+createComeSailAwayRuntime each keep their whole state in one
+function's scope, and world.js grew from 8,897 lines to 36,374 in a month. New
+behaviour goes into a module the host wires (`fishHost.js` is the shape) - and
+on the relay into a Room method of its own, not into `_message` - never into the
+host's own function. `test/scenes/hostceiling.test.js` holds each to a ceiling in logical
+lines (statements and entries, so layout and comments are no weight - LEGIBLE 1,
+`01-Overview/Readability-Arc.md`; a fix's 400 of room), on a pull request
+and on a contributor's machine, never on a deploy; a slice that moves code out
+lowers it in the same change. The method and the map are
+`01-Overview/Host-Split.md`.
+
 ## Sections
 
 - `01-Overview/` - vision, port doctrine, phase plan, Port-Ledger (departures/quirks/unported)
@@ -234,7 +249,7 @@ named `Update <n>` and the game shows it beside the commit
 - `08-Audio/` - music (HMI/XMI), sound effects, audio state machine
 - `09-Testing/` - test doctrine, harnesses, data validation
 - `10-UI/` - HUD, menus, native Daggerfall UI reproduction
-- `11-Multiplayer/` - co-op: the three locked decisions, the architecture, the arc (the design the ONLINE arc grows into - presence, then chat, then the room's memory (WORLD1), then the room's simulation (WORLD2), then the room's events (WORLD3), then the room's loot (WORLD4) - `06-Systems/Online-Arc.md`); and `World-Bosses.md` (WB, 2026-09-25) - the Oblivion Gate: a world boss on the shared clock, the relay's first authority over a foe; and `Sigil-Sets.md` (SET, 2026-09-26) - SIGIL SETS: armour, shields and weapons whose sigils name a Daedric Prince's set, 2 / 4 / 6-piece abilities that grow with the set's lowest piece, the gate boss's Aetheric Ruhn's Regalia, and the Sigil Broker beside the gate; and `Super-Dungeons-Look.md` (SD-LOOK, 2026-10-08) - the Abyss Dungeon's visual spec: the Rift, the Return, the step through and the Hour's set pieces rebuilt in Daggerfall's pixel art, five lights with five meanings, and the build order its slices ship in; and `Elite-Gates.md` (EG, 2026-10-11; revised by AUDIT EG0, widened by EG0b, polished by AUDIT EG II) - ELITE GATES: the gate's Elite tier, the Elite Breach - a Weir Key (account-held, rolled by the service: from Dagon's Breach with a pity count, a fallen Valkynaz, the Remnant and, rarely, dungeons' elites by tier) raises a company's arch, timed like the gate's, into the Battlespire's torn halls: endless procedural halls in a fixed rhythm (Rift-Yards, Spans, Ramparts, Athenaeums, Proving Walks and the Deepway, each with variants; twists; Brink halls), fragments the courses pass through (the Oblivion Caverns and nine kin, set-piece passages, a High Road and a Low Road at every fork, engines, alcoves), nine Court lords with three phases each and four Valkynaz on their own ground, Redoubts as checkpoints with one life and one recall (at a Redoubt or by a Memento), Reliquaries opened only by walking home, Vestiges with Masteries and Accords, five laws that keep every blow fair and nothing faster, the Covenant's patience, two season boards and an all-time one, and a presentation built to be read by everyone
+- `11-Multiplayer/` - co-op: the three locked decisions, the architecture, the arc (the design the ONLINE arc grows into - presence, then chat, then the room's memory (WORLD1), then the room's simulation (WORLD2), then the room's events (WORLD3), then the room's loot (WORLD4) - `06-Systems/Online-Arc.md`); and `World-Bosses.md` (WB, 2026-09-25) - the Oblivion Gate: a world boss on the shared clock, the relay's first authority over a foe; and `Sigil-Sets.md` (SET, 2026-09-26) - SIGIL SETS: armour, shields and weapons whose sigils name a Daedric Prince's set, 2 / 4 / 6-piece abilities that grow with the set's lowest piece, the gate boss's Aetheric Ruhn's Regalia, and the Sigil Broker beside the gate; and `Super-Dungeons-Look.md` (SD-LOOK, 2026-10-08) - the Abyss Dungeon's visual spec: the Rift, the Return, the step through and the Hour's set pieces rebuilt in Daggerfall's pixel art, five lights with five meanings, and the build order its slices ship in; and `Elite-Gates.md` (EG, 2026-10-11; revised by AUDIT EG0, widened by EG0b, polished by AUDIT EG II) - ELITE GATES: the gate's Elite tier, the Elite Breach - a Weir Key (account-held, rolled by the service: from Dagon's Breach with a pity count, a fallen Valkynaz, the Remnant and, rarely, dungeons' elites by tier) raises a company's arch, timed like the gate's, into the Battlespire's torn halls: endless procedural halls in a fixed rhythm (Rift-Yards, Spans, Ramparts, Athenaeums, Proving Walks and the Deepway, each with variants; twists; Brink halls), fragments the courses pass through (the Oblivion Caverns and nine kin, set-piece passages, a High Road and a Low Road at every fork, engines, alcoves), nine Court lords with three phases each and four Valkynaz on their own ground, Redoubts as checkpoints with one life and one recall (at a Redoubt or by a Memento), Reliquaries opened only by walking home, Vestiges with Masteries and Accords, five laws that keep every blow fair and nothing faster, the Covenant's patience, two season boards and an all-time one, and a presentation built to be read by everyone; and `Kings-Gambit.md` (KG0, 2026-10-13) - THE KING'S GAMBIT: a Daggerfall Unity mod's tactics game - two armies of Daggerfall's bestiary and their kings on a board of fifteen by thirteen - read off its assembly and designed onto the tavern's card table: the army the Iliac cards, the kings the Bay's, the board the cloth, the relay running it online; decided whole (the owner: "Make the best and most detailed decisions. We also have permission" - section 10): the cards standing, the mod's roster, nine creatures painted into the set, the Bay's kings, a regular's tier, the lean, a night's purse; KG1 SHIPPED the same day (section 11): the law, `src/net/kingsGambit.js` - the mod's whole game as pure data, every board, unit, blow and hazard its own, pinned by `test/net/kg1_law.test.js` and 98 mutants, all dead; KG2 SHIPPED (section 12): the innkeeper's play, `src/systems/gambit/gambitPatrons.js` - a regular's tier the regular's seed's, the army Auto-filled to it, AiAction verbatim at float32 - and the tiers measured, 1,000 games each (`tools/kgMeasure.mjs`); AUDIT KG (section 13, `01-Overview/audits/Audit-Kings-Gambit.md`): the law, the play and the record read cold and every finding fixed, and section 14 binds the table's UI to Enhanced Plus, the house's own coat and plain words; then KG-SET, KG3, KG4, KG5 (online) and KG6 (gold and the season's Grandmaster) shipped (sections 15-19), and AUDIT KG II (section 20, `01-Overview/audits/Audit-Kings-Gambit-II.md`) read them all cold - 83 findings, each fixed or pinned
 - `01-Overview/Active-Arcs.md` - ACTIVE ARCS, one line per arc, each naming its own page (HARD5, 2026-09-15: moved out of this file, which was 291 KB)
 - `01-Overview/Audit-Log.md` - THE AUDIT LOG, newest first: every audit that has no page of its own (HARD5, same move)
 
@@ -252,21 +267,21 @@ in 89 lines. One line per arc, each naming its own page.
 Regenerated mechanically at the AUDIT 18 close, from the FLAGGED/INTERIM
 sites themselves. The audit retired 30+ flags whose text had gone false and
 the eleven fix domains moved many more, so every line number and quotation
-here was re-derived rather than edited. test/audit18_bible_docs.test.js now
+here was re-derived rather than edited. test/bible/audit18_bible_docs.test.js now
 pins this list BOTH ways: a citation that drifts, a flag retired without its
 sentence, or a new flag never listed all fail the suite.
 
 AUDIT 18: "Line numbers refreshed" used to close this paragraph as a hand
 kept promise, and six of the 109 citations had already drifted (up to 41
 lines) when 9036e49 moved chargenArt.js. The promise is gone; the list is
-now checked mechanically both ways by test/audit18_bible_docs.test.js -
+now checked mechanically both ways by test/bible/audit18_bible_docs.test.js -
 every citation's quoted text must sit on the cited line, and every
 FLAGGED/INTERIM site in `src/` must appear here. A slice that moves a
 flagged site turns that test red until the list is regenerated.
 
 CITE-ANCHOR (2026-10-06): the entries carry no line numbers. An entry
 names its file and quotes its flag, and the quote is the address -
-test/audit18_bible_docs.test.js matches each entry to a line of its file
+test/bible/audit18_bible_docs.test.js matches each entry to a line of its file
 that reads so, and the flags in `src/` to the entries both ways, counted.
 A number here was a claim about every line above the flag: any edit above
 one rewrote this list, and two branches that both made one conflicted on it.
@@ -281,20 +296,22 @@ alone, flagged at its new site inside calculateAttackDamage.
 - `src/net/professionLaw.js` - *  metal's, and a twig's picture is neither's (unverified without the player's data - FLAGGED to Mac's eye). */
 - `src/player/mwView.js` - FLAGGED: Eye Of The Beholder has no sitting art - on that lane the driver's sprite stands on the bench's footboard, still (bible/06-Systems/Wagons.md WAGONS3).
 - `src/player/seatPose.js` - FLAGGED (Tavern-Cards.md section 12, CARDS2c): the seat poses the Morrowind body alone - Eye Of The Beholder has no sitting art, so a sprite body (a peer's walker, their paperdoll) stands at its seat facing the table.
+- `src/scenes/craftWritHost.js` - scenes/exterior.js - FLAGGED: the fixed-city bench never goes online, so it posts no crafting writ, as no Court writ.
 - `src/scenes/dungeonContext.js` - FLAGGED (bible/12-Enhanced-AI/Feud-Arc.md 10.1, section 32): this stream carries none of the street record's z, nm, yd, ex or sp - FEUD adds its own fields alone (RVN13: so no band follower's rt either)
 - `src/scenes/exterior.js` - TP2 INTERIM - THE ONE ARM THIS HOST CANNOT TAKE: a jump to an anchor on ANOTHER map pixel. Teleport.cs:145-163 respawns at the anchor's world position, which is StreamingWorld's job (scenes/world.js's `_teleportToPixel`, the door `teleportPrompt -> teleportTo` opens); `?exterior` loads ONE fixed city and runs no streamer, so there is no arrival to build - and it says so instead of eating the cast, the way the standalone dungeon says so about its two windows.
 - `src/scenes/horseCartPool.js` - FLAGGED: a peer's word does not say how many horses they own - their parked pair is drawn whole, and their second horse is not drawn at their parked wagon while they ride the first (bible/06-Systems/Wagons.md WAGONS3).
 - `src/scenes/horseCartPool.js` - FLAGGED: the horses are billboards, so a trace's collar and a rein's bit are measured points on the picture, not on a body - from some angles a trace meets the picture beside the horse's chest (bible/06-Systems/Wagons.md WAGONS3).
+- `src/scenes/jungleHost.js` - scenes/exterior.js (the fixed city), scenes/worldModes.js (interiors), scenes/dungeonContext.js (dungeons) - FLAGGED: none stands the wilderness the jungle grows in
 - `src/scenes/merchantYardsHost.js` - scenes/exterior.js - FLAGGED: the single-town bench stands no yard; the streaming host is where its towns are played.
+- `src/scenes/poiHost.js` - scenes/exterior.js - FLAGGED: the fixed-city bench (`?exterior`, `?region&loc`) has no feed; a POI stands in the streamed world.
 - `src/scenes/portHost.js` - scenes/exterior.js - FLAGGED: the single-town bench stands no port; the streaming host is where its towns are played.
 - `src/scenes/seatBanners.js` - and dungeonContext.js stand no street; exterior.js (the bench) FLAGGED -
-- `src/scenes/wagonWardenHost.js` - scenes/exterior.js - FLAGGED: the single-town bench runs no town watch (its wagon is never stamped nor thrown).
+- `src/scenes/wagon/wagonWardenHost.js` - scenes/exterior.js - FLAGGED: the single-town bench runs no town watch (its wagon is never stamped nor thrown).
 - `src/scenes/world.js` - FLAGGED (Legacy-Arc.md section 3): exterior.js, the fixed city, keeps DFU's death - no streamer to birth an heir into.
 - `src/systems/playerTorch.js` - arm is FLAGGED here rather than guessed - see the note below.
 - `src/systems/playerTorch.js` - FLAGGED (blocked on data this reference tree does not carry): the
-- `src/ui/enhancedMenu.js` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
+- `src/ui/enhanced/enhancedMenu.js` - FLAGGED: the rest of the keyboard. The wizard walks to `done` with
 - `src/ui/pauseWindow.js` - FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
-- `src/world/interiorGlass.js` - FLAGGED (unverified without the player's data): interior glass is read off palette index 0xff in a building interior's own records - tools/windowGlassScan.mjs lists the candidates from a real ARENA2 folder.
 - `src/world/wagonModels.js` - FLAGGED: the Small Cart has no bench (Mac's choice) - its driver rides its horse the mod's way, and RIDE-POV keeps the Morrowind body in the head on it (bible/06-Systems/Wagons.md WAGONS3).
 
 ## Audits
@@ -317,6 +334,10 @@ through the fetchBytes seam, signature unchanged.
 
 ## Repo layout
 
+The map is `01-Overview/Code-Map.md` (TIDY1, 2026-10-16): every directory, what lives there, where a new
+file goes, and how a file moves (`tools/moveModule.mjs`). Code is filed by layer, then by feature
+(`src/systems/arena/`), and the tests the same way (`test/systems/arena/` - TIDY2 and TIDY5).
+
 `src/main.js` is the entry point and scene router - no longer thin: it
 builds the Renderer, holds the ARENA2 data gate, installs the cursor,
 the settings/skin front-door choice and the stale-chunk recovery, then
@@ -330,13 +351,13 @@ held by text pins - tdz_selfreference.test.js is the standing guard.
 
 ## Ground rules carried from project-final
 
-- Desktop-first. A mobile touch layer (`src/ui/touch.js`: virtual stick +
+- Desktop-first. A mobile touch layer (`src/ui/touch/touch.js`: virtual stick +
   look/attack drag + button row speaking the desktop input language) ships
-  for on-device testing and is wired into all four hosts - Port-Doctrine.md:19,
+  for on-device testing and is wired into all four hosts - Port-Doctrine.md (Rebuilt on our stack, 3),
   approved by Mac 2026-08-13. (AUDIT 18: this bullet denied the touch
   layer outright for six days after it landed (approved 2026-08-13). The
   open-flags list below is grep-regenerated from `src/`, so it can never catch
   a false claim in this file's own prose.)
-- Bible is flat under `bible/`. This file is the index. No Dashboard.md.
+- Bible is filed by section under `bible/`, and `01-Overview/`'s dated records by kind in its `audits/`, `bugs/` and `handoffs/` (TIDY6, `01-Overview/Code-Map.md`). This file is the index. No Dashboard.md.
 - Prototype HTMLs at repo root must register in `vite.config.js` rollupOptions.input.
 - One feature at a time. Grep first. str_replace over rewrites.

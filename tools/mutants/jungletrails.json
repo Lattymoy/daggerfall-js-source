@@ -1,0 +1,166 @@
+[
+  {
+    "name": "JUNGLE-TRAILS-the-half-width-under-a-corner-s-diagonal",
+    "file": "src/world/jungle/jungleTrails.js",
+    "old": "  half: 0.75,",
+    "new": "  half: 0.6,",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-TRAILS-the-lattice-s-gap-gone",
+    "file": "src/world/jungle/jungleTrails.js",
+    "old": "  gap: 0.1,",
+    "new": "  gap: 0,",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-TRAILS-the-turn-gone",
+    "file": "src/world/jungle/jungleTrails.js",
+    "old": "  const x = c * wx - s * wz, z = s * wx + c * wz;   // turned: a rotation keeps every distance",
+    "new": "  const x = wx, z = wz;   // turned: a rotation keeps every distance",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-TRAILS-the-frame-mirrored-north-south",
+    "file": "src/world/jungle/jungleTrails.js",
+    "old": "scale = TERRAIN_SIZE / T, ox = px * T, oz = -py * T;",
+    "new": "scale = TERRAIN_SIZE / T, ox = px * T, oz = py * T;",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-TRAILS-the-culling-s-reach-gone",
+    "file": "src/world/jungle/jungleTrails.js",
+    "old": "const B = JUNGLE_TRAILS.block, H = B / 2, R = Math.SQRT2 * H, ox",
+    "new": "const B = JUNGLE_TRAILS.block, H = B / 2, R = 0, ox",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-TRAILS-the-water-painted",
+    "file": "src/world/jungle/jungleTrails.js",
+    "old": "          if (tileData[i] === WATER) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-TRAILS-the-town-s-rect-painted",
+    "file": "src/world/jungle/jungleTrails.js",
+    "old": "          if (rect && x >= rect.xMin && x <= rect.xMax && y >= rect.yMin && y <= rect.yMax) continue;   // the town's own ground, to its edge\n",
+    "new": "",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-TRAILS-a-tile-by-one-corner",
+    "file": "src/world/jungle/jungleTrails.js",
+    "old": "on[i] + on[i + 1] + on[i + D] + on[i + D + 1] >= 2",
+    "new": "on[i] + on[i + 1] + on[i + D] + on[i + D + 1] >= 1",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-TRAILS-a-tile-by-three-corners",
+    "file": "src/world/jungle/jungleTrails.js",
+    "old": "on[i] + on[i + 1] + on[i + D] + on[i + D + 1] >= 2",
+    "new": "on[i] + on[i + 1] + on[i + D] + on[i + D + 1] >= 3",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-TRAILS-a-road-s-tile-marked",
+    "file": "src/world/jungle/jungleTrails.js",
+    "old": "if (tilemap[t] === 0 && on[i]",
+    "new": "if (on[i]",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-TRAILS-the-gate-gone",
+    "file": "src/world/jungle/jungleTrails.js",
+    "old": "          if (!whole && jungleDepthAt(px, py, nine, x * scale, y * scale) < JUNGLE_EDGE.in) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-TRAILS-the-reach-test-answering-none",
+    "file": "src/world/jungle/jungleTrails.js",
+    "old": "  return hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX >= JUNGLE_EDGE.in;",
+    "new": "  return hi * TERRAIN_SIZE + JUNGLE_WANDER_MAX >= Infinity;",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-TRAILS-the-canopy-s-foot-unread",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "      const js = s0 + (s1 - s0) * tileDraw(wx, wz, 25);\n      if (onTrail(ti, mx, mz, species, js)) continue;\n",
+    "new": "      const js = s0 + (s1 - s0) * tileDraw(wx, wz, 25);\n",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-TRAILS-the-young-trees-foot-unread",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "        if (onTrail(ti, mx, mz, species, js)) continue;\n        out.push(",
+    "new": "        out.push(",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-TRAILS-the-foot-s-gate-unread",
+    "file": "src/world/terrain/jungleNature.js",
+    "old": "trails && share[ti] >= 1 && !trailClear(",
+    "new": "trails && !trailClear(",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-TRAILS-the-kernel-s-hook-gone",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "  if (jungle) paths = paintJungleTrails(",
+    "new": "  if (false) paths = paintJungleTrails(",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  },
+  {
+    "name": "JUNGLE-TRAILS-the-block-s-floor-without-the-half-width",
+    "file": "src/world/jungle/jungleTrails.js",
+    "old": "need = JUNGLE_TRAILS.half + reach / scale;",
+    "new": "need = reach / scale;",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ],
+    "equivalent": true,
+    "why": "The block's floor is a worst-case bound (the noise's steepest through the warp's stretch, less the block's half diagonal) and stands at least 4.85 tiles under a point's true distance - over 800,000 points of 40 pixels the half width (0.75) never decided the shortcut, so no pin can tell the two apart. It is kept because the shortcut is exact only with it: a floor that came within the half width of a trail would otherwise call a tree's foot clear of the dirt it stands on."
+  },
+  {
+    "name": "JUNGLE-TRAILS-the-kept-blocks-another-row-s",
+    "file": "src/world/jungle/jungleTrails.js",
+    "old": "if (_blocksOf === px && _blocksPy === py) return _blocks;",
+    "new": "if (_blocksOf === px) return _blocks;",
+    "tests": [
+      "test/world/jungletrails.test.js"
+    ]
+  }
+]

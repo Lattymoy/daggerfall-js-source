@@ -1,0 +1,146 @@
+[
+  {
+    "name": "RAINLEAK-lab-uptime-through",
+    "file": "src/render/precipitation.js",
+    "old": "gl.uniform1f(L.uTime, this.clock(timeSeconds));",
+    "new": "gl.uniform1f(L.uTime, timeSeconds);",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "RAINLEAK-classic-uptime-through",
+    "file": "src/render/precipitation.js",
+    "old": "gl.uniform1f(this.uTime, this.clock(timeSeconds));",
+    "new": "gl.uniform1f(this.uTime, timeSeconds);",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "RAINLEAK-pixel-snow-uptime-through",
+    "file": "src/render/precipitation.js",
+    "old": "gl.uniform1f(P.uTime, this.clock(timeSeconds));",
+    "new": "gl.uniform1f(P.uTime, timeSeconds);",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "RAINLEAK-no-rest",
+    "file": "src/render/precipitation.js",
+    "old": "seconds - last > PRECIP_REST_S || ",
+    "new": "",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "RAINLEAK-no-backwards",
+    "file": "src/render/precipitation.js",
+    "old": "seconds < last || ",
+    "new": "",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "RAINLEAK-no-hour",
+    "file": "src/render/precipitation.js",
+    "old": " || seconds - t0 >= PRECIP_CLOCK_MAX_S",
+    "new": "",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "RAINLEAK-travel-kept",
+    "file": "src/render/precipitation.js",
+    "old": "      this.windOff[0] = 0; this.windOff[1] = 0;\n",
+    "new": "",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "RAINLEAK-clock-before-count",
+    "file": "src/render/precipitation.js",
+    "old": "    if (count <= 0) return;\n    if (!this._vp) this._vp = new Float32Array(16);\n    mat4Multiply(this._vp, proj, view);\n    gl.useProgram(this.labProgram);",
+    "new": "    this.clock(timeSeconds);\n    if (count <= 0) return;\n    if (!this._vp) this._vp = new Float32Array(16);\n    mat4Multiply(this._vp, proj, view);\n    gl.useProgram(this.labProgram);",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "RAINLEAK-loop-gain-kept",
+    "file": "src/systems/audio.js",
+    "old": "releaseNodes(src, gain, tail);   // RAIN-LEAK: the whole chain",
+    "new": "releaseNodes(src, tail);   // RAIN-LEAK: the whole chain",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "RAINLEAK-loop-filter-kept",
+    "file": "src/systems/audio.js",
+    "old": "releaseNodes(src, gain, tail);   // RAIN-LEAK: the whole chain",
+    "new": "releaseNodes(src, gain);   // RAIN-LEAK: the whole chain",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "RAINLEAK-loop3d-panner-kept",
+    "file": "src/systems/audio.js",
+    "old": "releaseNodes(src, gain, pan, tail);",
+    "new": "releaseNodes(src, gain, tail);",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "RAINLEAK-loop-fade-source-alone",
+    "file": "src/systems/audio.js",
+    "old": "          src.onended = release;\n        } catch {\n          try { src.stop(); } catch { /* already stopped */ }\n          release();\n        }\n      },\n      /** FIELD-WIND1",
+    "new": "          src.onended = () => src.disconnect();\n        } catch {\n          try { src.stop(); } catch { /* already stopped */ }\n          release();\n        }\n      },\n      /** FIELD-WIND1",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "RAINLEAK-loop3d-fade-source-alone",
+    "file": "src/systems/audio.js",
+    "old": "          src.onended = release;\n        } catch {\n          try { src.stop(); } catch { /* already stopped */ }\n          release();\n        }\n      },\n    };\n  }\n\n  /** CSA-G: where the ears",
+    "new": "          src.onended = () => src.disconnect();\n        } catch {\n          try { src.stop(); } catch { /* already stopped */ }\n          release();\n        }\n      },\n    };\n  }\n\n  /** CSA-G: where the ears",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "RAINLEAK-world-rain-fresh-array",
+    "file": "src/scenes/world.js",
+    "old": "precip.drawFall(precipShown, proj, view, wxEye32, camRight, now / 1000);",
+    "new": "precip.drawFall(precipShown, proj, view, new Float32Array(wxEye), camRight, now / 1000);",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "RAINLEAK-exterior-wisps-fresh-array",
+    "file": "src/scenes/exterior.js",
+    "old": "wisps.draw(wd, proj, view, eye32, now / 1000);",
+    "new": "wisps.draw(wd, proj, view, new Float32Array(eye), now / 1000);",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  },
+  {
+    "name": "RAINLEAK-exterior-unfilled",
+    "file": "src/scenes/exterior.js",
+    "old": "    eye32[0] = eye[0]; eye32[1] = eye[1]; eye32[2] = eye[2];\n",
+    "new": "",
+    "tests": [
+      "test/systems/rainleak.test.js"
+    ]
+  }
+]

@@ -49,7 +49,7 @@ export const rollSpecText = ({ n, m, k }) => `${n}d${m}${k > 0 ? `+${k}` : k < 0
 
 /**
  * ONE UNBIASED DRAW in 0..m-1 from a source of uniform 32-bit integers - the dice's and the cards' (CARDS1,
- * `net/cardLaw.js` shuffleDeck) one home. A draw at or past the largest multiple of `m` below 2^32 is thrown back and
+ * `net/card/cardLaw.js` shuffleDeck) one home. A draw at or past the largest multiple of `m` below 2^32 is thrown back and
  * drawn again, so every value is exactly as likely (a bare `x % m` favours the low values whenever m does not divide
  * 2^32). `m` is an integer 1..2^32.
  * @param {number} m

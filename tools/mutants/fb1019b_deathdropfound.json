@@ -1,0 +1,26 @@
+[
+  {
+    "name": "ASF-DEATH-weapon-unmarked",
+    "file": "src/systems/unleveledLoot.js",
+    "old": "  item.foundCondition = item.currentCondition;   // ASF-DEATH: SELL-AS-FOUND's mark (tradeModes.js saleConditionPercentage)\n",
+    "new": "",
+    "tests": ["test/systems/fb1019b_deathdropfound.test.js"],
+    "why": "a Daedroth's blade falls unmarked - mended, it sells whole online"
+  },
+  {
+    "name": "ASF-DEATH-armour-unmarked",
+    "file": "src/systems/unleveledLoot.js",
+    "old": "  item.foundCondition = item.currentCondition;   // ASF-DEATH\n",
+    "new": "",
+    "tests": ["test/systems/fb1019b_deathdropfound.test.js"],
+    "why": "the field's farm: a Daedra Lord's plate mended and sold at full value"
+  },
+  {
+    "name": "ASF-DEATH-armour-marked-whole",
+    "file": "src/systems/unleveledLoot.js",
+    "old": "  item.foundCondition = item.currentCondition;   // ASF-DEATH\n",
+    "new": "  item.foundCondition = item.maxCondition;   // ASF-DEATH\n",
+    "tests": ["test/systems/fb1019b_deathdropfound.test.js"],
+    "why": "a mark at the piece's best is no mark"
+  }
+]

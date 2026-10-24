@@ -36,10 +36,10 @@
 // DaggerfallShortcut hotkey; the accelerators here are the port's own
 // (Ledger A).
 
-import { loadImg, nativeMetrics, drawImg, shadowText } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, shadowText } from './native/nativePanel.js';
 import { drawScreenDimBackdrop } from './chargenArt.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
-import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
+import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js';   // ENH-NOTICE2: the window's own click-anywhere box, as the enhanced panel
 import { typedChar } from './input.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
@@ -55,6 +55,7 @@ import {
 } from '../systems/banking.js';
 import { REGION_NAMES } from '../formats/mapsFile.js';   // REALM P0.3: the branch another loan or default stands in
 import { expandMacroValues } from '../systems/quest/questMacros.js';   // MH1: the ONE walk
+import { localizedText, getLocalizedRegionName } from '../systems/textManager.js';   // L10N3d: the TOO_HEAVY line; L10N3e: %reg's region shown
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
 /** mainPanel.Size (:77) - and the size BANK00I0.IMG ships. */
@@ -189,8 +190,19 @@ export class BankWindow {
       ml: () => String(calculateMaxBankLoan(this.hooks.level?.() ?? 1)),   // :139
       cn: this.hooks.cityName?.() ?? null,                      // :67, CityName :567-574
       pcn: this.hooks.playerName?.() ?? null,                   // :152, PlayerName :779-782
-      reg: this.hooks.regionName?.() ?? null,                   // :211, RegionInContext :1049-1057
+      reg: this._shownRegionName(),                             // :211, RegionInContext :1049-1057
     };
+  }
+
+  /** L10N3e: %reg's region AS SHOWN - RegionInContext falls to
+   *  CurrentRegion, PlayerGPS.CurrentLocalizedRegionName (MacroHelper.cs
+   *  :1053, :590), here the window's one region; the host's canonical
+   *  name is the fallback, and no producer leaves the token standing. */
+  _shownRegionName() {
+    if (!this.hooks.regionName) return null;
+    const canonical = () => this.hooks.regionName() ?? null;
+    const i = this.hooks.regionIndex?.();
+    return Number.isInteger(i) ? getLocalizedRegionName(i, canonical) : canonical();
   }
 
   /** GeneratePopup (:299-337). NONE says nothing at all; TOO_HEAVY is
@@ -200,7 +212,7 @@ export class BankWindow {
     if (result === TRANSACTION_RESULT.NONE) return;
     const values = this._macros(amount);
     const rows = result === TRANSACTION_RESULT.TOO_HEAVY
-      ? [{ text: CANNOT_CARRY_GOLD, center: true }]
+      ? [{ text: localizedText('cannotCarryGold', CANNOT_CARRY_GOLD), center: true }]
       : (this.hooks.rows?.(result) ?? []).map((r) => (typeof r === 'string'
         ? expandMacroValues(r, values)
         : { ...r, text: expandMacroValues(r.text, values) }));

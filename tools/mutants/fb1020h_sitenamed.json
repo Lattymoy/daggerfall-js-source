@@ -1,0 +1,83 @@
+[
+  {
+    "name": "SITE-NAMED-the-topics-gate-back",
+    "file": "src/scenes/townTalk.js",
+    "old": "  function nameOpts() {\n    if (!factions) return null;",
+    "new": "  function nameOpts() {\n    if (!topics || !factions) return null;",
+    "tests": [
+      "test/systems/quest/fb1020h_sitenamed.test.js"
+    ]
+  },
+  {
+    "name": "SITE-NAMED-the-town-pair-read-off-a-missing-town",
+    "file": "src/scenes/townTalk.js",
+    "old": "      locationName: topics?.locationName, regionName: topics?.regionName,",
+    "new": "      locationName: topics.locationName, regionName: topics?.regionName,",
+    "tests": [
+      "test/systems/quest/fb1020h_sitenamed.test.js"
+    ]
+  },
+  {
+    "name": "SITE-NAMED-the-region-read-off-a-missing-town",
+    "file": "src/scenes/townTalk.js",
+    "old": "    const region = topics?.regionIndex ?? regionNow();\n    const province = findFactions(",
+    "new": "    const region = topics.regionIndex ?? regionNow();\n    const province = findFactions(",
+    "tests": [
+      "test/systems/quest/fb1020h_sitenamed.test.js"
+    ]
+  },
+  {
+    "name": "SITE-NAMED-the-re-seat-unhooked",
+    "file": "src/systems/quest/machine.js",
+    "old": "    for (const resource of quest.resources.values()) if (resource.isPlace) resource.nameSiteAgain?.(world);",
+    "new": "",
+    "tests": [
+      "test/systems/quest/fb1020h_sitenamed.test.js"
+    ]
+  },
+  {
+    "name": "SITE-NAMED-a-named-site-named-again",
+    "file": "src/systems/quest/place.js",
+    "old": "if (sd?.siteType !== SITE_TYPES.Building || sd.buildingName !== '' || !recordStands(sd)) return false;",
+    "new": "if (sd?.siteType !== SITE_TYPES.Building || sd.buildingName == null || !recordStands(sd)) return false;",
+    "tests": [
+      "test/systems/quest/fb1020h_sitenamed.test.js"
+    ]
+  },
+  {
+    "name": "SITE-NAMED-the-layout-gate-dropped",
+    "file": "src/systems/quest/place.js",
+    "old": "if (sd?.siteType !== SITE_TYPES.Building || sd.buildingName !== '' || !recordStands(sd)) return false;",
+    "new": "if (sd?.siteType !== SITE_TYPES.Building || sd.buildingName !== '') return false;",
+    "tests": [
+      "test/systems/quest/fb1020h_sitenamed.test.js"
+    ]
+  },
+  {
+    "name": "SITE-NAMED-a-residence-named-again",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (!b || isResidence(b.buildingType)) return false;\n    const was = getSeed();",
+    "new": "    if (!b) return false;\n    const was = getSeed();",
+    "tests": [
+      "test/systems/quest/fb1020h_sitenamed.test.js"
+    ]
+  },
+  {
+    "name": "SITE-NAMED-the-seed-left-moved",
+    "file": "src/systems/quest/place.js",
+    "old": "try { name = this._getBuildingName(world, b.buildingType, this.siteTown(world), b, sd.buildingKey); } finally { setSeed(was); }",
+    "new": "try { name = this._getBuildingName(world, b.buildingType, this.siteTown(world), b, sd.buildingKey); } finally { void was; }",
+    "tests": [
+      "test/systems/quest/fb1020h_sitenamed.test.js"
+    ]
+  },
+  {
+    "name": "SITE-NAMED-an-empty-name-taken",
+    "file": "src/systems/quest/place.js",
+    "old": "    if (!name) return false;\n    sd.buildingName = name;",
+    "new": "    sd.buildingName = name;",
+    "tests": [
+      "test/systems/quest/fb1020h_sitenamed.test.js"
+    ]
+  }
+]

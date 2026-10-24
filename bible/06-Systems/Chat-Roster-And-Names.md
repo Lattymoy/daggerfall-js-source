@@ -385,7 +385,7 @@ caught it until a local relay was needed to reproduce this. Fixed as
 LOCALDEV1 (`world76`): the entry exports handlers alone, every pin
 reads `wire.js`.
 
-**Driven.** `test/rosterg.test.js` (4): the channel's welcome by name
+**Driven.** `test/net/rosterg.test.js` (4): the channel's welcome by name
 with the count, the join and the leave said and no host, no look in
 storage; the cut at `CHAT_ROSTER_MAX` with the count uncut; a channel
 link holding the roster through welcome, join and leave, the cut count
@@ -394,3 +394,35 @@ conditional tag by source. And in Chromium against a local relay: two
 players in other cells appear in the roster, two Bobs carry tags and
 FarAway does not, a leave drops the row. Mutants:
 `tools/mutants/rosterg.json` - **14 mutations, 14 dead**.
+
+## TITLE-C - a chat line wears no title (2026-10-12)
+
+Mac: "I also want to remove titles from appearing in the chat".
+
+TITLE-R took the title off this page's roster and kept it on a chat line ("Titles should remain over names and within
+chat itself"), where CHAT-FIT had laid it, before the name. A line now wears what a roster row wears: the name, then
+the guild's tag and the glyphs. The title is worn over the head and on the Inspect card.
+
+- `ui/chatPanel.js` badgeNodes lays the badge AFTER the name alone, and a line's parts are the time, the name, the
+  badge, the tag and the text. The `.dfchat-line-title` rule went with it - a rule for no element is a rule for
+  nothing - and the panel imports no title helper.
+- **Keyed by what is drawn.** The badge pass compares a line's badge by what it DRAWS (`badgeKeyOf`: the glyphs and
+  the tag), CHAT-R's own law for the roster's repaint, on a line: a title put on or taken off mid-conversation re-lays
+  nothing.
+- **Untouched**: the Dungeon Master's `/dm` lines keep the title's orange - a voice's colour, not a title on a name;
+  a letter's sender line keeps its title - the letterbox, not the chat.
+- **Pinned**: `test/ui/chatfit.test.js` (7), its line pins re-aimed - no title on a line or in the peek, no title rule
+  in the sheet, a title alone re-laying nothing; `test/ui/enhanced/acc3wear.test.js`, `test/net/guild1c.test.js`,
+  `test/ui/shadowfang.test.js` and `test/ui/chatsize.test.js` read the panel's new source. In Chromium,
+  `tools/chatFitProbe.mjs`: 12 of 12, every line's title null and the glyphs where they were. Mutants:
+  `tools/mutants/titlec.json` - 4, all dead; `tools/mutants/chatfit.json`'s layLine record and
+  `tools/mutants/titlen.json`'s roster record re-aimed at the new source - 40 of 40 dead across the three.
+
+## NAME-AS - what a player is called online is theirs to choose (2026-10-12)
+
+Mac: "I want to add an option to the profile menu where players can toggle to use their account name or character
+name for ingame use". The name a player is read by online is the account's, or - their choice, on the profile card -
+the realm character's they play. Two things on this page carry it: NAME-F's filter is what a chosen character's name
+must pass to be worn (the mint asks the token's own law, `nameIsIssuable`, and names the word it caught), and the
+roster's `#tag` is still the tie-breaker for two players with one name, which characters' names make more common. The
+record is `06-Systems/Accounts-And-Cloud-Saves-Arc.md` NAME-AS.

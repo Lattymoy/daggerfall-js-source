@@ -1,106 +1,106 @@
 [
   {
     "name": "FB0929-line-uncut-at-the-call",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "const d = routePath(f.route ?? [], vw, vh);",
     "new": "const d = routePath(f.route ?? []);",
-    "tests": ["test/fb0929_farroute.test.js"],
+    "tests": ["test/world/fb0929_farroute.test.js"],
     "note": "The readout hands the path no screen: a far pick's dashed line runs a million pixels off it again, every frame."
   },
   {
     "name": "FB0929-margin-inside-the-casing",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "export const ROUTE_CLIP_PX = 16;",
     "new": "export const ROUTE_CLIP_PX = 1;",
-    "tests": ["test/fb0929_farroute.test.js"],
+    "tests": ["test/world/fb0929_farroute.test.js"],
     "note": "Cut a pixel off the screen: the casing's round cap at the cut (half its 6 px) stands on the screen's edge."
   },
   {
     "name": "FB0929-no-screen-cuts-anyway",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "? -ROUTE_CLIP_PX : -Infinity,",
     "new": "? -ROUTE_CLIP_PX : 0,",
-    "tests": ["test/fb0929_farroute.test.js"],
+    "tests": ["test/world/fb0929_farroute.test.js"],
     "note": "No screen given, a line off the top-left is cut anyway - TV2's law was to cut nothing."
   },
   {
     "name": "FB0929-first-point-written-off-the-screen",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "if (on) d += `M${Math.round(p.x)} ${Math.round(p.y)} `;",
     "new": "d += `M${Math.round(p.x)} ${Math.round(p.y)} `;",
-    "tests": ["test/fb0929_farroute.test.js"],
+    "tests": ["test/world/fb0929_farroute.test.js"],
     "note": "The first point past the eye is written wherever it projects - hundreds of thousands of pixels out."
   },
   {
     "name": "FB0929-no-move-where-it-comes-back",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "if (!on) d += `M${Math.round(ax + (p.x - ax) * t0)}",
     "new": "if (on) d += `M${Math.round(ax + (p.x - ax) * t0)}",
-    "tests": ["test/fb0929_farroute.test.js"],
+    "tests": ["test/world/fb0929_farroute.test.js"],
     "note": "A line coming onto the screen starts no stroke of its own, and one on it breaks at every point."
   },
   {
     "name": "FB0929-stroke-joined-across-the-gap",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "on = t1 === 1;",
     "new": "on = t1 <= 1;",
-    "tests": ["test/fb0929_farroute.test.js"],
+    "tests": ["test/world/fb0929_farroute.test.js"],
     "note": "A line gone off the screen still reads as on it: where the route comes back, a straight line is drawn across whatever lay between."
   },
   {
     "name": "FB0929-endpoint-reckoned-not-written",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "d += t1 === 1 ? `L${Math.round(p.x)} ${Math.round(p.y)} ` :",
     "new": "d += t1 === 2 ? `L${Math.round(p.x)} ${Math.round(p.y)} ` :",
-    "tests": ["test/fb0929_farroute.test.js"],
+    "tests": ["test/world/fb0929_farroute.test.js"],
     "note": "A point on the screen written as a + (b - a) x 1: from the margin to x 6.5 that is 6.4999... and rounds to 6 - no longer the line it was, byte for byte."
   },
   {
     "name": "FB0929-right-edge-from-the-wrong-side",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "e === 1 ? hx - ax :",
     "new": "e === 1 ? hx + ax :",
-    "tests": ["test/fb0929_farroute.test.js"],
+    "tests": ["test/world/fb0929_farroute.test.js"],
     "note": "The right edge reckoned from the wrong side: a line out through it keeps its far end."
   },
   {
     "name": "FB0929-coming-on-keeps-its-far-start",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "if (r > t0) t0 = r;",
     "new": "if (r < t0) t0 = r;",
-    "tests": ["test/fb0929_farroute.test.js"],
+    "tests": ["test/world/fb0929_farroute.test.js"],
     "note": "A line coming onto the screen is never cut where it enters: its start stays hundreds of thousands of pixels out."
   },
   {
     "name": "FB0929-going-off-keeps-its-far-end",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "if (r < t1) t1 = r;",
     "new": "if (r > t1) t1 = r;",
-    "tests": ["test/fb0929_farroute.test.js"],
+    "tests": ["test/world/fb0929_farroute.test.js"],
     "note": "A line going off the screen is never cut where it leaves: the million pixels back, dashed."
   },
   {
     "name": "FB0929-along-an-edge-refused",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "if (p === 0) { if (q < 0) return false; continue; }",
     "new": "if (p === 0) { if (q > 0) return false; continue; }",
-    "tests": ["test/fb0929_farroute.test.js"],
+    "tests": ["test/world/fb0929_farroute.test.js"],
     "note": "A line straight up or straight across the screen is refused inside it and kept outside it."
   },
   {
     "name": "FB0929-corner-miss-drawn-coming-on",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "if (p < 0) { if (r > t1) return false;",
     "new": "if (p < 0) { if (r > t1) continue;",
-    "tests": ["test/fb0929_farroute.test.js"],
+    "tests": ["test/world/fb0929_farroute.test.js"],
     "note": "A line passing a corner of the screen, coming on after it has gone off, is drawn backwards past the corner."
   },
   {
     "name": "FB0929-corner-miss-drawn-going-off",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "else { if (r < t0) return false;",
     "new": "else { if (r < t0) continue;",
-    "tests": ["test/fb0929_farroute.test.js"],
+    "tests": ["test/world/fb0929_farroute.test.js"],
     "note": "A line passing a corner of the screen, going off before it has come on, is drawn backwards past the corner."
   }
 ]

@@ -1,0 +1,101 @@
+[
+  {
+    "name": "PERF-SAILS3-plan-past-other-nodes",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "if (p && p.ver === w.ver && p.stamp === stamp && p.frame === boat.MeshObject) return p;",
+    "new": "if (p && p.stamp === stamp && p.frame === boat.MeshObject) return p;",
+    "tests": [
+      "test/systems/comeSailAway/perfsails3.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SAILS3-plan-past-a-component",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "if (p && p.ver === w.ver && p.stamp === stamp && p.frame === boat.MeshObject) return p;",
+    "new": "if (p && p.ver === w.ver && p.frame === boat.MeshObject) return p;",
+    "tests": [
+      "test/systems/comeSailAway/perfsails3.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SAILS3-walk-made-anew",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "        if (nodes[at] !== n) { nodes[at] = n; moved = true; }",
+    "new": "        { nodes[at] = n; moved = true; }",
+    "tests": [
+      "test/systems/comeSailAway/perfsails3.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SAILS3-walk-tail-kept",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    if (nodes.length !== at) { nodes.length = at; mats.length = at; wrecs.length = at; moved = true; }",
+    "new": "    if (nodes.length !== at) { moved = true; }",
+    "tests": [
+      "test/systems/comeSailAway/perfsails3.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SAILS3-sweep-keeps-unmarked",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    for (const [n, b] of flats) if (b._csaSweep !== sweep) {",
+    "new": "    for (const [n, b] of flats) if (b._csaSweep !== sweep && b._csaSweep < 0) {",
+    "tests": [
+      "test/systems/comeSailAway/perfsails3.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SAILS3-size-kept",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "{ b.size.w = sw; b.size.h = sh; }",
+    "new": "{ }",
+    "tests": [
+      "test/systems/comeSailAway/perfsails3.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SAILS3-scale-term",
+    "file": "src/world/prefabNode.js",
+    "old": "      out[1] = R[4] * world[4] + R[5] * world[5] + R[6] * world[6];",
+    "new": "      out[1] = R[4] * world[4] + R[5] * world[5] + R[6] * world[2];",
+    "tests": [
+      "test/systems/comeSailAway/perfsails3.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SAILS3-bones-past-another-list",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "if (k.bonesOf !== skinnedNode || k.bonesList !== smr.m_Bones || k.bonesStamp !== shape) {",
+    "new": "if (k.bonesOf !== skinnedNode || k.bonesStamp !== shape) {",
+    "tests": [
+      "test/systems/comeSailAway/perfsails3.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SAILS3-key-past-other-materials",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "if (e.key === null || e.mesh !== mesh || e.mats !== mats || e.bundle !== bundle || e.bundleN !== bn) {",
+    "new": "if (e.key === null || e.mesh !== mesh || e.bundle !== bundle || e.bundleN !== bn) {",
+    "tests": [
+      "test/systems/comeSailAway/perfsails3.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SAILS3-holders-skipped",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "      for (let k = 0; k < holders.length; k += 2) lateUpdateHolder(holders[k], holders[k + 1], dt);",
+    "new": "      for (let k = 2; k < holders.length; k += 2) lateUpdateHolder(holders[k], holders[k + 1], dt);",
+    "tests": [
+      "test/systems/comeSailAway/perfsails3.test.js"
+    ]
+  },
+  {
+    "name": "PERF-SAILS3-pose-position",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "pose.position[0] = sw[12]; pose.position[1] = sw[13]; pose.position[2] = sw[14];",
+    "new": "pose.position[0] = sw[12]; pose.position[1] = sw[14]; pose.position[2] = sw[13];",
+    "tests": [
+      "test/systems/comeSailAway/perfsails3.test.js"
+    ]
+  }
+]

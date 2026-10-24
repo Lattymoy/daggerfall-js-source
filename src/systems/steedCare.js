@@ -3,15 +3,15 @@
 // feeding them grows your bond and improves their stats. Every horse should have different stats.") - HORSE CARE
 // (bible/06-Systems/Horse-Care.md). The law, pure: every horse's four stats, its bond with its owner, its hunger, what it
 // eats, its breath under a gallop. The runtime that runs it a frame at a time is systems/steedRuntime.js; the item's
-// fields are systems/itemFields.js's (`horseBond`, `horseFed`), on DFU's one Horse template alone (systems/itemLaw.js).
+// fields are systems/item/itemFields.js's (`horseBond`, `horseFed`), on DFU's one Horse template alone (systems/item/itemLaw.js).
 //
-//  - FOUR STATS, EACH HORSE ITS OWN. A horse's seed is the horse (systems/horseCoats.js - rolled at its birth, never
+//  - FOUR STATS, EACH HORSE ITS OWN. A horse's seed is the horse (systems/horse/horseCoats.js - rolled at its birth, never
 //    changed), and its stats are its seed's: SPEED (the ride's pace), STAMINA (how long it gallops), ENDURANCE (how fast
 //    its breath comes back, and how slowly a gallop spends it) and STRENGTH (what it pulls). Born 20-80, most near 50;
 //    no field holds them, so a horse born before STEED1 has had its stats all along.
 //  - THE BOND, 0-100 (`horseBond`, in tenths). Grown by feeding: a day's food a day's bond, more for what it loves.
 //    Every five points of it are a point on every stat (BOND_STEP) - a Kindred horse is twenty points better than the
-//    one bought. A horse traded away comes to its new owner a stranger (net/realmTradeLaw.js RECEIVER_MARKS).
+//    one bought. A horse traded away comes to its new owner a stranger (net/realm/realmTradeLaw.js RECEIVER_MARKS).
 //  - HUNGER (`horseFed`, the minute of the character's clock its food runs out). Fed, then Hungry (its stats ten down,
 //    its breath slower back), then STARVING two days on (twenty-five down, no gallop, and the bond fading two points a
 //    day). It never dies of it. A horse at the stable is fed there; one left waiting in the world grazes enough never to
@@ -19,9 +19,16 @@
 //  - BREATH (stepBreath): a pool of STAMINA_BASE + STAMINA_PER_POINT x Stamina. A gallop spends it, ENDURANCE slowing
 //    the spend; at nought the horse is WINDED and will not gallop again until WINDED_UNTIL of it is back. It comes back
 //    at a walk or standing, half as fast under a rider at the ride's own pace, slower hungry.
+//
+// HORSE-TIERS (2026-10-15, Mac: "Allow turn off. Rework this system to be more in line with how we handle climates and
+// calories boons."): what the horse PAYS is its tier's (systems/upkeep/upkeepTiers.js - Boons, the default: nothing below
+// DFU's plain horse; Hard: the system above as it stood). The laws that charge take the tier's rules as an argument -
+// steedStats, stepBreath, steedSpeedScale, teamDraftScale, feedHorse and tendHorses - and a law handed none runs HARD,
+// so every pin written before the tiers still pins it. Everything else here is the world's, in every tier.
 
-import { isHorseItem } from './horseCoats.js';
-import { UPKEEP_ITEM } from './upkeepItemRows.js';
+import { isHorseItem } from './horse/horseCoats.js';
+import { UPKEEP_ITEM } from './upkeep/upkeepItemRows.js';
+import { HORSE_CARE_HARD } from './upkeep/upkeepTiers.js';   // HORSE-TIERS: what a law handed no rules runs
 
 export const STEED_STATS = Object.freeze(['speed', 'stamina', 'endurance', 'strength']);
 export const STEED_STAT_TEXT = Object.freeze({ speed: 'Speed', stamina: 'Stamina', endurance: 'Endurance', strength: 'Strength' });
@@ -116,15 +123,24 @@ function setBond(item, tenths) {
   const t = Math.max(0, Math.min(BOND_TENTHS_MAX, Math.round(tenths)));
   if (t > 0) item.horseBond = t; else delete item.horseBond;
 }
-/** Move a horse's food clock to `until`, the fade so far taken off its bond first (so it is never taken twice). */
-function setFed(item, until, now) {
-  const fade = fadeBy(item, now);
+/** Move a horse's food clock to `until`, the fade so far taken off its bond first (so it is never taken twice) - in a
+ *  tier whose bond fades (HORSE-TIERS `bondFades`; Boons' never does, so none is owed there). */
+function setFed(item, until, now, fades = true) {
+  const fade = fades ? fadeBy(item, now) : 0;
   if (fade > 0) setBond(item, bondTenths(item) - fade);
   item.horseFed = Math.max(1, Math.round(until));
 }
+/** HORSE-TIERS: in a tier whose bond never fades, a starving horse's clock is held at the starving line - Starving still,
+ *  the same world - so no fade is owed for the time the tier spent there when the tier turns. Answers whether it moved. */
+function holdStarving(item, now) {
+  const f = fedUntil(item);
+  if (f == null || now - f <= STARVING_AFTER) return false;
+  item.horseFed = Math.max(1, Math.round(now - STARVING_AFTER));
+  return true;
+}
 
 // ── what a horse eats ───────────────────────────────────────────────
-/** STEED1's own: the Sack of Oats (systems/upkeepItemRows.js). */
+/** STEED1's own: the Sack of Oats (systems/upkeep/upkeepItemRows.js). */
 export const OATS_TEMPLATE = UPKEEP_ITEM.Oats;
 /** Climates & Calories' Apple, and Foraging's. */
 export const APPLE_TEMPLATES = Object.freeze([532, 1608]);
@@ -153,7 +169,7 @@ export const STEED_TEXT = Object.freeze({
   stabled: 'Your horse is at the stable, where it is fed.',
   full: (who) => `${who} is not hungry.`,
   noFood: (kind) => (kind === 'apple' ? 'You have no apples.' : 'You have no oats. A Stable sells them.'),
-  ate: (who, food, tier, grew) => `${who} eats ${food}${grew ? ` - your bond grows (${tier}).` : '.'}`,
+  ate: (who, food, tier, grew) => `${who} eats ${food}${grew ? `. Your bond grows (${tier}).` : '.'}`,
   winded: 'Your horse is winded.',
   starving: 'Your horse is too weak to gallop. Feed it.',
   rested: 'Your horse has its breath back.',
@@ -167,22 +183,22 @@ export const STEED_TEXT = Object.freeze({
  * In place: the horse and the pack keep their identity. Answers `{ ok, text, gained }` (gained in tenths). `from` the list
  * the food is taken out of (the pack, or the wagon's load - an inventory's Use), `food` the very piece (else the first).
  * @param {any[]} items @param {any} horse @param {'oats'|'apple'} kind @param {number} now @param {string} [who]
- * @param {{ from?: any[], food?: any }} [o]
+ * @param {{ from?: any[], food?: any, rules?: any }} [o]
  */
-export function feedHorse(items, horse, kind, now, who = 'Your horse', { from = items, food = null } = {}) {
+export function feedHorse(items, horse, kind, now, who = 'Your horse', { from = items, food = null, rules = HORSE_CARE_HARD } = {}) {
   if (!isHorseItem(horse) || !Array.isArray(items) || !items.includes(horse)) return { ok: false, text: STEED_TEXT.noHorse, gained: 0 };
   const piece = food && steedFoodOf(food)?.key === kind && Array.isArray(from) && from.includes(food) ? food : steedFoodIn(from, kind);
   if (!piece) return { ok: false, text: STEED_TEXT.noFood(kind), gained: 0 };
-  return eat(from, horse, piece, now, who);
+  return eat(from, horse, piece, now, rules, who);
 }
-function eat(items, horse, food, now, who) {
+function eat(items, horse, food, now, rules, who) {
   const f = steedFoodOf(food);
   const from = Math.max(now, fedUntil(horse) ?? now);
   if (from - now >= FULL_AHEAD) return { ok: false, text: STEED_TEXT.full(who), gained: 0 };
   const until = Math.min(now + FED_AHEAD_MAX, from + f.hours * 60);
   const gained = Math.round(((until - from) / MINUTES_A_DAY) * DAY_BOND_TENTHS * f.love);
   spend(items, food);
-  setFed(horse, until, now);
+  setFed(horse, until, now, rules.bondFades);
   const before = bondTenths(horse);
   setBond(horse, before + gained);
   const grew = bondTenths(horse) > before;
@@ -205,10 +221,11 @@ const GRAZED_BACK = STARVING_AFTER - 6 * 60;
  * food (NEW_HORSE_FED); a stabled one fed by the stable, a waiting one grazing; and one with its owner, across a span
  * skipped (SKIP_MINUTES or more), fed oats each time its food runs out while the oats last - the pack's first, then
  * `stores`' (the wagon's load, where it is with them) - the bond grown as by hand. In place. Answers `{ changed, ate }`
- * - whether any field moved, and how many sacks were eaten.
- * @param {any[]} items @param {number} now @param {{ since?: number|null, where?: string, stores?: any[] }} [o]
+ * - whether any field moved, and how many sacks were eaten. HORSE-TIERS: `rules` the tier's (none: Hard) - where the
+ * bond never fades, no fade is taken and a starving horse's clock is held at the starving line (holdStarving).
+ * @param {any[]} items @param {number} now @param {{ since?: number|null, where?: string, stores?: any[], rules?: any }} [o]
  */
-export function tendHorses(items, now, { since = null, where = 'with', stores = [] } = {}) {
+export function tendHorses(items, now, { since = null, where = 'with', stores = [], rules = HORSE_CARE_HARD } = {}) {
   let changed = false, ate = 0;
   if (!Array.isArray(items) || !Number.isFinite(now)) return { changed, ate };
   for (const horse of items.filter(isHorseItem)) {
@@ -218,23 +235,25 @@ export function tendHorses(items, now, { since = null, where = 'with', stores = 
     // span known, all of it to now
     const owedTo = since != null && since < now ? since : now;
     if (where === 'stabled') {
-      if (/** @type {number} */ (fedUntil(horse)) < now + STABLE_TOP_UNDER) { setFed(horse, now + STABLE_FED, owedTo); changed = true; }
+      if (/** @type {number} */ (fedUntil(horse)) < now + STABLE_TOP_UNDER) { setFed(horse, now + STABLE_FED, owedTo, rules.bondFades); changed = true; }
       continue;
     }
     if (where === 'waiting') {
-      if (now - /** @type {number} */ (fedUntil(horse)) > GRAZED_BACK) { setFed(horse, now - GRAZED_BACK, owedTo); changed = true; }
+      if (now - /** @type {number} */ (fedUntil(horse)) > GRAZED_BACK) { setFed(horse, now - GRAZED_BACK, owedTo, rules.bondFades); changed = true; }
       continue;
     }
-    if (since == null || now - since < SKIP_MINUTES) continue;
-    // the skipped span: each time its food ran out inside it, a sack from the packs - eaten THEN (the fade to then taken)
-    for (let f = /** @type {number} */ (fedUntil(horse)); f < now; f = /** @type {number} */ (fedUntil(horse))) {
-      const from = steedFoodIn(items, 'oats') ? items : Array.isArray(stores) && steedFoodIn(stores, 'oats') ? stores : null;
-      if (!from) break;
-      const at = Math.max(f, since);
-      const r = eat(from, horse, steedFoodIn(from, 'oats'), at);
-      if (!r.ok) break;
-      ate++; changed = true;
+    if (since != null && now - since >= SKIP_MINUTES) {
+      // the skipped span: each time its food ran out inside it, a sack from the packs - eaten THEN (the fade to then taken)
+      for (let f = /** @type {number} */ (fedUntil(horse)); f < now; f = /** @type {number} */ (fedUntil(horse))) {
+        const from = steedFoodIn(items, 'oats') ? items : Array.isArray(stores) && steedFoodIn(stores, 'oats') ? stores : null;
+        if (!from) break;
+        const at = Math.max(f, since);
+        const r = eat(from, horse, steedFoodIn(from, 'oats'), at, rules);
+        if (!r.ok) break;
+        ate++; changed = true;
+      }
     }
+    if (!rules.bondFades && holdStarving(horse, now)) changed = true;   // HORSE-TIERS: Boons owes no fade, then or later
   }
   return { changed, ate };
 }
@@ -243,13 +262,15 @@ export function tendHorses(items, now, { since = null, where = 'with', stores = 
 /**
  * A horse's stats at minute `now`: born, then its bond's points on each and its hunger's off each, held to
  * [1, STEED_STAT_CAP]. `{ born, stats, bond, tier, bonus, hunger, penalty }`, or null for a horse not yet born.
+ * HORSE-TIERS: `rules` the tier's (none: Hard) - hunger's penalty only where hunger costs, the fade only where the bond
+ * fades. The hunger's word is the world's in every tier.
  */
-export function steedStats(item, now) {
+export function steedStats(item, now, rules = HORSE_CARE_HARD) {
   const born = horseBornStats(item);
   if (!born) return null;
-  const bond = bondAt(item, now);
+  const bond = rules.bondFades ? bondAt(item, now) : bondTenths(item) / 10;
   const hunger = hungerOf(item, now);
-  const bonus = bondBonus(bond), penalty = HUNGER[hunger].penalty;
+  const bonus = bondBonus(bond), penalty = rules.hungerCosts ? HUNGER[hunger].penalty : 0;
   /** @type {Record<string, number>} */
   const stats = {};
   for (const k of STEED_STATS) stats[k] = Math.max(1, Math.min(STEED_STAT_CAP, born[k] + bonus - penalty));
@@ -262,11 +283,16 @@ export const STEED_PRICE = 1000;
 export const STEED_PRICE_LEAST = 400;
 export const steedValue = (born) => (born ? Math.max(STEED_PRICE_LEAST, Math.round(STEED_PRICE * (1 + (STEED_STATS.reduce((a, k) => a + born[k], 0) / STEED_STATS.length - 50) / 50))) : STEED_PRICE);
 
-/** SPEED: the ride's pace (the motor's ride base) times this - 1 at 50, 0.85 + 0.003 a point, held to [0.85, 1.15]. */
-export const steedSpeedScale = (speed) => Math.max(0.85, Math.min(1.15, 0.85 + 0.003 * speed));
+/** SPEED: the ride's pace (the motor's ride base) times this - 1 at 50, 0.85 + 0.003 a point, held to [0.85, 1.15].
+ *  HORSE-TIERS: where the tier floors the pace (`paceFloor` - Boons), never under DFU's own, 1. */
+export const steedSpeedScale = (speed, rules = HORSE_CARE_HARD) => {
+  const k = Math.max(0.85, Math.min(1.15, 0.85 + 0.003 * speed));
+  return rules.paceFloor ? Math.max(1, k) : k;
+};
 /** STRENGTH: a wagon's pace under its load (`load` its share of the wagon's limit, 0-1) times this, for a team of mean
- *  strength `strength` - nothing empty; full, 0.8 at 50 (0.3 - 0.002 a point of the load's share), never under 0.75. */
-export const teamDraftScale = (strength, load) => Math.max(0.75, Math.min(1, 1 - Math.max(0, Math.min(1, load)) * (0.3 - 0.002 * strength)));
+ *  strength `strength` - nothing empty; full, 0.8 at 50 (0.3 - 0.002 a point of the load's share), never under 0.75.
+ *  HORSE-TIERS: only where the tier's team drags (`draftDrags` - Hard); else 1, DFU's wagon. */
+export const teamDraftScale = (strength, load, rules = HORSE_CARE_HARD) => (rules.draftDrags ? Math.max(0.75, Math.min(1, 1 - Math.max(0, Math.min(1, load)) * (0.3 - 0.002 * strength))) : 1);
 
 // ── breath ──────────────────────────────────────────────────────────
 export const STAMINA_BASE = 40;
@@ -286,15 +312,16 @@ export const freshBreath = () => ({ spent: 0, winded: false });
 /**
  * A step of a horse's breath, `dt` seconds: galloping it spends, else it comes back (`ridden` at the ride's pace, half;
  * hungry slower). At nought it is winded, until WINDED_UNTIL is back. Answers a new `{ spent, winded }`.
+ * HORSE-TIERS: `rules` the tier's (none: Hard) - a hungry horse's breath slower back only where hunger costs.
  * @param {{ spent: number, winded: boolean }} b
- * @param {{ stats: any, hunger?: string, galloping?: boolean, ridden?: boolean, dt: number }} o
+ * @param {{ stats: any, hunger?: string, galloping?: boolean, ridden?: boolean, dt: number, rules?: any }} o
  */
-export function stepBreath(b, { stats, hunger = 'fed', galloping = false, ridden = false, dt }) {
+export function stepBreath(b, { stats, hunger = 'fed', galloping = false, ridden = false, dt, rules = HORSE_CARE_HARD }) {
   const max = breathMax(stats), end = stats?.endurance ?? 50;
   let spent = Math.max(0, Math.min(max, b?.spent ?? 0)), winded = !!b?.winded;
   const t = Number.isFinite(dt) && dt > 0 ? dt : 0;
   if (galloping && !winded) spent += GALLOP_SPEND * (1.25 - end / 200) * t;
-  else spent -= BREATH_BACK * (0.75 + end / 200) * (HUNGER[hunger]?.breath ?? 1) * (ridden ? RIDDEN_BACK : 1) * t;
+  else spent -= BREATH_BACK * (0.75 + end / 200) * (rules.hungerCosts ? HUNGER[hunger]?.breath ?? 1 : 1) * (ridden ? RIDDEN_BACK : 1) * t;
   spent = Math.max(0, Math.min(max, spent));
   if (spent >= max) winded = true;
   else if (winded && max - spent >= WINDED_UNTIL * max) winded = false;

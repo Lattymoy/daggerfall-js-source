@@ -9,6 +9,12 @@
 //      the action's own call - without the action's unhide and without its cull). The fault this answers: a party's
 //      shared-quest resync (machine.updateSharedQuest) replaces each Place's siteDetails with the partner's copy, and
 //      the targets written here after it are gone while the `place` action, complete, never runs again.
+//      CREATE-HOME (FIELD BUGS 2026-10-22b, "Delivery/Courier Quest Cannot Be Completed"): and every `create npc` that
+//      has run names its person's generated home (CreateNpc.cs -> Person.PlaceAtHome) - 38 corpus quests `create npc`
+//      48 people, and 44 of them (the courier's recipient among them) no `place npc` ever places; the pass had read the
+//      `place` actions alone, and answered "Nothing was missing" over a recipient no marker held. A person put back is
+//      assigned there too, where no Place is assigned them (both actions' own SetAssignedPlaceSymbol): the talk's Where
+//      is reads that.
 //   2. A SITE LINK THE QUEST NEVER GOT. The placement actions reserve a link only when `hasSiteLink` finds none AT THE
 //      SITE - any quest's - so a second quest placing where a first already had leans on the first's link, and when
 //      the first ends, the second's people, items and foes stand nowhere. One link per (quest, Place) holding targets.
@@ -27,11 +33,16 @@
 //
 // Not a DFU member: DFU has no such pass (its quest debugger is a developer's console). Ledger A (QREPAIR).
 import { MARKER_PREFERENCE, SITE_TYPES } from './place.js';
-import { ONLINE_DUNGEONS_STATE, portSize } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1 / SD-ONLINE: the sizes the room builds online; MEDIUM-DISTINCT: the two stamps whose builds are medium
-import { isOnlinePage } from '../onlineLane.js';   // MEDIUM-DISTINCT's audit: offline a dungeon no link holds is built by the settings
+import { SMALLER_DUNGEONS_STATE, portSize } from '../../world/smallerDungeons.js';   // AUDIT DELVE E1 / INSTANCES: the size a quest's markers know online (the whole dungeon's); MEDIUM-DISTINCT: the two stamps whose builds are medium
+import { isOnlinePage } from '../online/onlineLane.js';   // MEDIUM-DISTINCT's audit: offline a dungeon no link holds is built by the settings
 import { isShelved } from './quest.js';   // QUEST-SHELF's audit: the repair mends no quest set aside
+import { t } from '../textManager.js';   // QUEST-ELSEWHERE: its line in the player's language
 
-const PLACEMENTS = Object.freeze({ PlaceNpc: 'npcSymbol', PlaceItem: 'itemSymbol', PlaceFoe: 'foeSymbol' });
+const PLACEMENTS = Object.freeze({ PlaceNpc: 'npcSymbol', PlaceItem: 'itemSymbol', PlaceFoe: 'foeSymbol', CreateNpc: 'npcSymbol' });
+
+/** CREATE-HOME: the Place a completed `create npc` put its person at - their generated home (Person.PlaceAtHome), never
+ *  a questor's or an individual's, whom PlaceAtHome refuses. */
+const homeOf = (person) => (person?.isPerson && !person.isQuestor && !person.isIndividualNPC ? person.getHomePlace?.() ?? null : null);
 
 /** A quest still running: neither complete nor tombstoned. */
 export const questRunning = (quest) => !!quest && !quest.questComplete && !quest.questTombstoned;
@@ -80,7 +91,7 @@ export function placementIntents(quest) {
       const field = PLACEMENTS[a?.typeName];
       if (!field || !a.isComplete) continue;
       const res = quest.getResource?.(a[field]);
-      const place = quest.getPlace?.(a.placeSymbol);
+      const place = a.typeName === 'CreateNpc' ? homeOf(res) : quest.getPlace?.(a.placeSymbol);   // CREATE-HOME: `create npc` names no Place - its person's home is where it put them
       if (!res || !place) continue;
       const name = res.symbol?.name;
       const prev = out.get(name);
@@ -106,6 +117,7 @@ export function putBackPlacements(quest, env = {}, report = { people: 0, items: 
   for (const [name, it] of placementIntents(quest)) {
     if (it.ambiguous || held.has(name) || goneOnPurpose(it.res, quest, env)) continue;
     try { it.place.assignQuestResource(it.res.symbol, it.marker, it.pref, false); } catch { report.failed++; continue; }   // a Place with no markers throws: that one is not repairable here
+    if (it.res.isPerson && !it.res.assignedPlaceSymbol) it.res.setAssignedPlaceSymbol?.(it.place.symbol);   // CREATE-HOME: where the talk's Where is looks for them (topicTree.js assembleTopicListPerson)
     held.add(name);
     if (it.res.isPerson) report.people++;
     else if (it.res.isItem) report.items++;
@@ -136,6 +148,13 @@ const markerAddresses = (list) => (list ?? []).map((m) => `${m?.dungeonX},${m?.d
  * all - and each of its dungeons compared with its online build (a dungeon whose online size is the stamp's size
  * agrees, and nothing moves). A quest one of whose dungeons could not be read here (no world, no such location, a
  * throw) keeps its stamp: the size its markers there still know.
+ *
+ * INSTANCES (2026-10-15, bible/11-Multiplayer/Instances.md): AND THAT SIZE IS THE DUNGEON WHOLE NOW. Online a quest's
+ * markers are chosen on Daggerfall's own layout (the quest's world asks smallerDungeons.js dungeonSizeFor for it whole),
+ * the layout its instance builds - so every stamp but DFU's Disabled is re-laid on the whole dungeon at the load, the
+ * world's sizes' ONLINE_DUNGEONS_STATE among them, and stamped Disabled. A re-laid public room stands none of a quest's
+ * targets (systems/instancePlaces.js questMountsHere); its instance, or its whole room where the relay keeps no instance,
+ * stands them all.
  */
 export function relayOnlineDungeons(machine, env = {}) {
   let relaid = 0;
@@ -146,13 +165,13 @@ export function relayOnlineDungeons(machine, env = {}) {
 }
 
 /** One quest's re-lay (relayOnlineDungeons, above): whether its markers moved. AUDIT SD III (D5): asked of a quest a
- *  party member shares online too (systems/questShare.js receiveSharedQuest) - an older page lays every dungeon whole,
+ *  party member shares online too (systems/quest/questShare.js receiveSharedQuest) - an older page lays every dungeon whole,
  *  and its copy pointed into blocks this page's world-sized build has not; the load's pass alone re-laid it, the next
  *  time this player loaded online. */
 export function relayQuestOnline(quest, env = {}) {
-  if (!quest || quest.smallerDungeonsState === ONLINE_DUNGEONS_STATE) return false;
+  if (!quest || quest.smallerDungeonsState === SMALLER_DUNGEONS_STATE.Disabled) return false;   // INSTANCES: the whole dungeon's, as its markers know it
   const { moved, unread } = relayDungeonPlaces(quest);
-  if (!unread) quest.smallerDungeonsState = ONLINE_DUNGEONS_STATE;
+  if (!unread) quest.smallerDungeonsState = SMALLER_DUNGEONS_STATE.Disabled;
   if (!moved) return false;
   putBackPlacements(quest, env);
   return true;
@@ -183,6 +202,46 @@ function relayDungeonPlaces(quest, { only = null } = {}) {
 }
 
 /**
+ * QUEST-VOID (2026-10-12, a player online: the Dust of Restful Death's mummy in Ruins of Old Barbara's Place, "he cant
+ * find anything about it in the dungeon"; Mac: "the enemy is not marked on the map. i prob spawned the mob somewhere
+ * in the void"): THE NET UNDER THE MOUNT. The load's re-lays (relayOnlineDungeons, relayMovedLayouts) answer the drifts
+ * they know by the quest's stamp; this answers any other, at the one moment it costs the player: the dungeon as BUILT
+ * is in hand. `location` the built dungeon (its sized blocks, what the player walks); every quest linked to it whose
+ * Place there holds a target on a marker this build has not - a block address (dungeonX, dungeonZ) and flat
+ * (markerID) the enumeration of these blocks never yields - has that Place's markers enumerated again on THIS build
+ * and its placements put back (putBackPlacements: what is gone on purpose stays gone). A Place whose every target
+ * stands on a marker of this build is left alone, whatever else of its lists differs - nothing a player could find
+ * moves. `mapId` the mount's key for the dungeon (its site links'). Answers the count of Places re-laid. Run before the dungeon's scene mount (scenes/worldModes.js
+ * mountQuestResources). Not a DFU member (DFU's layout is the one size).
+ */
+export function relayBuiltDungeon(machine, location, env = {}, mapId = location?.mapTableData?.mapId ?? 0) {   // `mapId` the mount's own key (the dungeon adapter's currentMapId)
+  if (!machine?.getSiteLinks || !location?.dungeon?.blocks?.length) return 0;
+  let relaid = 0;
+  const seen = new Set();
+  for (const link of machine.getSiteLinks(SITE_TYPES.Dungeon, mapId, 0) ?? []) {
+    const quest = machine.getQuest?.(link.questUID);
+    if (!questRunning(quest) || isShelved(quest)) continue;
+    const place = quest.getPlace?.(link.placeSymbol);
+    const sd = place?.siteDetails;
+    if (!sd || sd.siteType !== SITE_TYPES.Dungeon || seen.has(place)) continue;
+    seen.add(place);
+    const world = quest.hooks?.world ?? null;
+    if (!world?.getBlock) continue;
+    let markers;
+    try { markers = place._enumerateDungeonQuestMarkers(world, location); } catch { continue; }
+    const here = new Set(`${markerAddresses(markers.questSpawnMarkers)};${markerAddresses(markers.questItemMarkers)}`.split(';'));
+    const held = [sd.selectedMarker, ...(sd.questSpawnMarkers ?? []), ...(sd.questItemMarkers ?? [])]
+      .filter((m) => (m?.targetResources?.length ?? 0) > 0 && Number.isInteger(m.dungeonX));   // a marker with no block address is not one to judge
+    if (!held.length || held.every((m) => here.has(markerAddresses([m])))) continue;
+    if (!markers.questSpawnMarkers && !markers.questItemMarkers) continue;   // a build with no markers at all: nowhere to stand them
+    place.siteDetails = { ...sd, questSpawnMarkers: markers.questSpawnMarkers, questItemMarkers: markers.questItemMarkers, selectedMarker: { targetResources: null } };
+    putBackPlacements(quest, env);
+    relaid++;
+  }
+  return relaid;
+}
+
+/**
  * MEDIUM-DISTINCT (2026-10-08, Mac: "Medium dungeons just copy and paste 2 layouts together"): A LAYOUT THE LAW MOVED.
  * A medium build no longer lays one interior block twice (world/smallerDungeons.js distinctInterior), so a dungeon whose
  * draws repeated is another layout now, and a running quest that chose its markers on the old one holds a marker in
@@ -199,7 +258,7 @@ export function relayMovedLayouts(machine, env = {}, online = isOnlinePage()) {
   return relaid;
 }
 /**
- * One quest's half of relayMovedLayouts - and a shared copy's on arrival (systems/questShare.js: a party member on an
+ * One quest's half of relayMovedLayouts - and a shared copy's on arrival (systems/quest/questShare.js: a party member on an
  * older page lays the old layout, and their copy's markers point into it). MEDIUM-DISTINCT's audit: only a dungeon
  * whose build MOVED (`distinct` - the clone says it took a block again) is compared, so a load reads no block of a
  * dungeon the law never touched; and offline only a dungeon a link holds - with none, the build is the settings' (the
@@ -222,7 +281,7 @@ export function relayQuestMovedLayout(quest, machine, env = {}, online = isOnlin
  * Answers the counts and the line the player reads.
  */
 export function repairActiveQuests(machine, env = {}) {
-  const report = { quests: 0, people: 0, items: 0, foes: 0, relinked: 0, revealed: 0, topics: 0, failed: 0 };
+  const report = { quests: 0, people: 0, items: 0, foes: 0, relinked: 0, revealed: 0, topics: 0, failed: 0, elsewhere: false };
   // QUEST-SHELF's audit: nor one set aside - its links stood again, its things went back, while it was away. Its markers
   // still follow a moved layout (the relays above), so a reclaim finds them true.
   const quests = [...(machine?.quests?.values?.() ?? [])].filter((q) => questRunning(q) && !isShelved(q));
@@ -254,8 +313,9 @@ export function repairActiveQuests(machine, env = {}) {
         if (env.hasQuestTopics && env.addQuestTopics && !env.hasQuestTopics(quest)) { env.addQuestTopics(quest); report.topics++; }
       } catch { report.failed++; }
     }
-    // 4. where the player stands, now
-    try { env.mountCurrentSite?.(); } catch { report.failed++; }
+    // 4. where the player stands, now - QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c): a re-laid public room mounts none of a
+    // quest's things (worldModes.js mountQuestResources answers 'elsewhere'), and the repair says where they are
+    try { if (env.mountCurrentSite?.() === 'elsewhere') report.elsewhere = true; } catch { report.failed++; }
   } finally {
     if (machine) machine.mountByName = was;
   }
@@ -265,7 +325,15 @@ export function repairActiveQuests(machine, env = {}) {
 
 const plural = (n, one, many) => `${n} ${n === 1 ? one : many}`;
 
-/** The line the player reads after a repair. */
+/** QUEST-ELSEWHERE (FIELD BUGS 2026-10-16c; MD-Geist, "Quest Objective only spawned in 'Instance' Dungeon, not
+ *  'Public'": "the Objective just did not want to spawn (I tried the dungeon in 'Public' mode) even after 'Quest
+ *  Repair'"): online, a dungeon's public room is laid smaller for most dungeons, and a quest's things stand in the dungeon
+ *  laid whole - the player's instance (systems/instancePlaces.js questMountsHere). The repair found nothing missing, and
+ *  said only that. */
+export const questElsewhereLine = () => t('quest.repair.elsewhere', "Your quest's targets in this dungeon are only in your own instance. Leave and enter again, choosing Your instance.");
+
+/** The line the player reads after a repair - QUEST-ELSEWHERE: where its things are, never "nothing was missing", when
+ *  the room the player stands in holds none of them. */
 export function questRepairText(r) {
   if (!r || !r.quests) return 'You have no active quests to repair.';
   const put = [r.people ? plural(r.people, 'person', 'people') : null, r.items ? plural(r.items, 'item', 'items') : null, r.foes ? plural(r.foes, 'foe', 'foes') : null].filter(Boolean);
@@ -274,6 +342,8 @@ export function questRepairText(r) {
   if (r.relinked) parts.push(`reconnected ${plural(r.relinked, 'place', 'places')}`);
   if (r.revealed) parts.push(`marked ${plural(r.revealed, 'location', 'locations')} on your map`);
   if (r.topics) parts.push(`restored what people know about ${plural(r.topics, 'quest', 'quests')}`);
-  const head = parts.length ? `Quests repaired: ${parts.join('; ')}.` : `Nothing was missing from ${r.quests === 1 ? 'your active quest' : `your ${r.quests} active quests`}.`;
-  return r.failed ? `${head} ${plural(r.failed, 'part', 'parts')} could not be checked.` : head;
+  const head = parts.length ? `Quests repaired: ${parts.join('; ')}.`
+    : r.elsewhere ? questElsewhereLine() : `Nothing was missing from ${r.quests === 1 ? 'your active quest' : `your ${r.quests} active quests`}.`;
+  const said = parts.length && r.elsewhere ? `${head} ${questElsewhereLine()}` : head;
+  return r.failed ? `${said} ${plural(r.failed, 'part', 'parts')} could not be checked.` : said;
 }

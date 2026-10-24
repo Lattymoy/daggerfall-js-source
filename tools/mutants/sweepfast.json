@@ -1,0 +1,102 @@
+[
+  {
+    "name": "SWEEP-FAST-part-off-by-one",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "seeds.filter((_, i) => i % k === p - 1)",
+    "new": "seeds.filter((_, i) => i % k === p % k)",
+    "tests": [
+      "test/tooling/sweepfast.test.js"
+    ],
+    "why": "SWEEP-FAST: a part sweeps its neighbour's seeds - one part's twice, another's never"
+  },
+  {
+    "name": "SWEEP-FAST-part-past-k",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "return k >= 1 && p >= 1 && p <= k ? { p, k } : null;",
+    "new": "return k >= 1 && p >= 1 ? { p, k } : null;",
+    "tests": [
+      "test/tooling/sweepfast.test.js"
+    ],
+    "why": "SWEEP-FAST: a part past the parts taken - it sweeps nothing"
+  },
+  {
+    "name": "SWEEP-FAST-part-zero",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "return k >= 1 && p >= 1 && p <= k ? { p, k } : null;",
+    "new": "return k >= 1 && p <= k ? { p, k } : null;",
+    "tests": [
+      "test/tooling/sweepfast.test.js"
+    ],
+    "why": "SWEEP-FAST: a part 0 taken - it sweeps nothing"
+  },
+  {
+    "name": "SWEEP-FAST-part-ignored",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "  const seeds = sweepPart(all, part.p, part.k);",
+    "new": "  const seeds = all;",
+    "tests": [
+      "test/tooling/sweepfast.test.js"
+    ],
+    "why": "SWEEP-FAST: every part sweeps every seed - six times the work, no faster"
+  },
+  {
+    "name": "SWEEP-FAST-bad-part-run",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "  if (!part) { log('--part is p/k, 1 <= p <= k'); return 2; }\n",
+    "new": "",
+    "tests": [
+      "test/tooling/sweepfast.test.js"
+    ],
+    "why": "SWEEP-FAST: a part that is none runs, and throws"
+  },
+  {
+    "name": "SWEEP-FAST-part-left-out",
+    "file": ".github/workflows/eg-sweep.yml",
+    "old": "'[1, 2, 3, 4, 5, 6]'",
+    "new": "'[1, 2, 3, 4, 5]'",
+    "tests": [
+      "test/tooling/sweepfast.test.js"
+    ],
+    "why": "SWEEP-FAST: the sixth part of every band never swept"
+  },
+  {
+    "name": "SWEEP-FAST-pr-split",
+    "file": ".github/workflows/eg-sweep.yml",
+    "old": "part: ${{ fromJSON((inputs.seeds || 500) > 100 &&",
+    "new": "part: ${{ fromJSON((inputs.seeds || 500) > 10 &&",
+    "tests": [
+      "test/tooling/sweepfast.test.js"
+    ],
+    "why": "SWEEP-FAST: a pull request's 25 split into six jobs a band"
+  },
+  {
+    "name": "SWEEP-FAST-course-step-unparted",
+    "file": ".github/workflows/eg-sweep.yml",
+    "old": "--seeds ${{ inputs.seeds || 500 }} --golden --part ${{ matrix.part }}/${{ matrix.parts }}",
+    "new": "--seeds ${{ inputs.seeds || 500 }} --golden",
+    "tests": [
+      "test/tooling/sweepfast.test.js"
+    ],
+    "why": "SWEEP-FAST: every part sweeps the band's every seed"
+  },
+  {
+    "name": "SWEEP-FAST-law9-unparted",
+    "file": ".github/workflows/eg-sweep.yml",
+    "old": "--law9 --band ${{ matrix.band }} --seeds 25 --golden --part ${{ matrix.part }}/${{ matrix.parts }}",
+    "new": "--law9 --band ${{ matrix.band }} --seeds 25 --golden",
+    "tests": [
+      "test/tooling/sweepfast.test.js"
+    ],
+    "why": "SWEEP-FAST: the law 9 walk swept whole in every part"
+  },
+  {
+    "name": "SWEEP-FAST-name-unparted",
+    "file": ".github/workflows/eg-sweep.yml",
+    "old": "${{ matrix.parts > 1 && format(' part {0}/{1}', matrix.part, matrix.parts) || '' }}",
+    "new": "",
+    "tests": [
+      "test/tooling/sweepfast.test.js"
+    ],
+    "why": "SWEEP-FAST: six jobs a band by one name"
+  }
+]

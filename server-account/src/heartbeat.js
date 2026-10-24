@@ -27,10 +27,11 @@ export const HEARTBEAT_PARTS = Object.freeze(['beat', 'mail', 'board', 'post']);
  * ONE HEARTBEAT: `beat: true` - a knock (/v1/account/played's `creditPlay`, the gap by this service's clock); `mail:
  * true` - a look at the box (/v1/mail/inbox's `inboxOf`, refused `mail-needs-account` to a guest as that route's door
  * refuses one); `board: <map>` - a town's Notice Board (/v1/board/read's `readBoard`, its refusals its own). A part the
- * body does not name is not answered; the order they are asked in is the routes' own, and none reads another's.
+ * body does not name is not answered; none reads another's, so the reads are asked first and the beat, the one write, last (BEAT-LAST).
  * @param {{ db: any, nowS: number }} ctx @param {any} player @param {any} env @param {any} body
+ * @param {string|null} [sessionId] the session the beat came under (SESSION-SIGN: a beat asks it still stands)
  */
-export async function heartbeat(ctx, player, env, body) {
+export async function heartbeat(ctx, player, env, body, sessionId = null) {
   /** @type {Record<string, any>} */
   const out = {};
   const part = async (/** @type {string} */ name, /** @type {() => Promise<any>} */ fn) => {
@@ -39,10 +40,15 @@ export async function heartbeat(ctx, player, env, body) {
       out[name] = { error: 'server' };
     }
   };
-  if (body?.beat === true) await part('beat', () => creditPlay(ctx, player.id));
+  // BEAT-LAST (2026-10-16, the account database's primary at its ceiling of round trips - bible/11-Multiplayer/
+  // Scale-Arc.md BEAT-LAST): THE READS FIRST, THE BEAT LAST. A D1 session sends every statement after a write to the
+  // primary, so the beat's UPDATE, asked first, sent the box, the board and the post there too - some 1.4 of a
+  // heartbeat's 2.6 primary statements, at seven heartbeats a second. None of them reads what the beat writes (the
+  // played seconds and the Renown credit), so they go first, on the session's replica, and the beat after them.
   if (body?.mail === true) await part('mail', async () => (accountKind(player) !== 'linked' ? { error: 'mail-needs-account' } : inboxOf(ctx, player, env)));
   if (body?.board !== undefined) await part('board', () => readBoard(ctx, player, env, body.board));
   // SERVER-POST: the server's post (/v1/post/box's `postBoxOf`, refused `post-needs-account` to a guest as its door refuses one)
-  if (body?.post === true) await part('post', async () => (accountKind(player) !== 'linked' ? { error: 'post-needs-account' } : postBoxOf(ctx, player)));
+  if (body?.post === true) await part('post', async () => (accountKind(player) !== 'linked' ? { error: 'post-needs-account' } : postBoxOf(ctx, player, env)));   // PRIVATE-REPORT: env, a reader's count
+  if (body?.beat === true) await part('beat', () => creditPlay(ctx, player.id, sessionId));   // SESSION-SIGN E3: under its session
   return out;
 }

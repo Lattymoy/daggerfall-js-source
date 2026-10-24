@@ -1,0 +1,38 @@
+[
+  {
+    "name": "RV-the-view-a-copy",
+    "file": "src/formats/bsaFile.js",
+    "old": "    return this._bytes.subarray(position, position + size);",
+    "new": "    return this._bytes.slice(position, position + size);",
+    "tests": [
+      "test/formats/regionviews.test.js"
+    ]
+  },
+  {
+    "name": "RV-the-view-from-the-archive-start",
+    "file": "src/formats/bsaFile.js",
+    "old": "    return this._bytes.subarray(position, position + size);",
+    "new": "    return this._bytes.subarray(0, size);",
+    "tests": [
+      "test/formats/regionviews.test.js"
+    ]
+  },
+  {
+    "name": "RV-mappitem-copied",
+    "file": "src/formats/mapsFile.js",
+    "old": "      mapPItem: this._bsa.getRecordView(record),",
+    "new": "      mapPItem: this._bsa.getRecordBytes(record),",
+    "tests": [
+      "test/formats/regionviews.test.js"
+    ]
+  },
+  {
+    "name": "RV-mapnames-copied",
+    "file": "src/formats/mapsFile.js",
+    "old": "      mapNames: this._bsa.getRecordView(record + 3),",
+    "new": "      mapNames: this._bsa.getRecordBytes(record + 3),",
+    "tests": [
+      "test/formats/regionviews.test.js"
+    ]
+  }
+]

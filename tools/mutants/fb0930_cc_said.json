@@ -2,19 +2,19 @@
   {
     "name": "WARM-SAID-no-recovery-line",
     "file": "src/systems/survival/needs.js",
-    "old": "  recoveryNote(s, family, stage, say);   // WARM-SAID: the way out of the red, said once\n",
+    "old": "  recoveryNote(s, family, stage, say, now);   // WARM-SAID: the way out of the red, said once\n",
     "new": "",
     "tests": [
-      "test/fb0930_cc_said.test.js"
+      "test/systems/survival/fb0930_cc_said.test.js"
     ]
   },
   {
     "name": "WARM-SAID-said-every-minute-it-improves",
     "file": "src/systems/survival/needs.js",
-    "old": "  delete s.notes[key];\n  say?.(SURVIVAL_TEXT[r.from[from]]);",
-    "new": "  say?.(SURVIVAL_TEXT[r.from[from]]);",
+    "old": "  delete s.notes[key];\n  const heard = `${family}@${r.from[from]}`;",
+    "new": "  const heard = `${family}@${r.from[from]}`;",
     "tests": [
-      "test/fb0930_cc_said.test.js"
+      "test/systems/survival/fb0930_cc_said.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (!from || (r.atDry && stage)) return;",
     "new": "  if (!from) return;",
     "tests": [
-      "test/fb0930_cc_said.test.js"
+      "test/systems/survival/fb0930_cc_said.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "scorching: 'cooling', freezing: 'warming', deadly: 'warming'",
     "new": "scorching: 'cooling', deadly: 'warming'",
     "tests": [
-      "test/fb0930_cc_said.test.js"
+      "test/systems/survival/fb0930_cc_said.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "scorching: 'cooling', freezing: 'warming', deadly: 'warming'",
     "new": "scorching: 'cooling', freezing: 'warming'",
     "tests": [
-      "test/fb0930_cc_said.test.js"
+      "test/systems/survival/fb0930_cc_said.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "from: Object.freeze({ soaked: 'dried', drenched: 'dried' })",
     "new": "from: Object.freeze({ drenched: 'dried' })",
     "tests": [
-      "test/fb0930_cc_said.test.js"
+      "test/systems/survival/fb0930_cc_said.test.js"
     ]
   },
   {
@@ -59,16 +59,16 @@
     "old": "scorching: 'cooling', freezing: 'warming', deadly: 'warming'",
     "new": "scorching: 'warming', freezing: 'cooling', deadly: 'cooling'",
     "tests": [
-      "test/fb0930_cc_said.test.js"
+      "test/systems/survival/fb0930_cc_said.test.js"
     ]
   },
   {
     "name": "WARM-SAID-the-replay-says-it",
     "file": "src/systems/survival/needs.js",
-    "old": "  if (replay) return;\n  const was = s.notes[family];\n  recoveryNote(s, family, stage, say);   // WARM-SAID: the way out of the red, said once\n",
-    "new": "  recoveryNote(s, family, stage, say);   // WARM-SAID: the way out of the red, said once\n  if (replay) return;\n  const was = s.notes[family];\n",
+    "old": "  if (replay) return;\n  const was = s.notes[family];\n  recoveryNote(s, family, stage, say, now);   // WARM-SAID: the way out of the red, said once\n",
+    "new": "  recoveryNote(s, family, stage, say, now);   // WARM-SAID: the way out of the red, said once\n  if (replay) return;\n  const was = s.notes[family];\n",
     "tests": [
-      "test/fb0930_cc_said.test.js"
+      "test/systems/survival/fb0930_cc_said.test.js"
     ]
   }
 ]

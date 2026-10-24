@@ -16,8 +16,8 @@
 import { createTamrielRoadsClient } from '../world/tamrielRoadsClient.js';
 import { regionLattice, regionsByNearness, regionHasLand, regionAt, inputsPrint } from '../world/tamrielRoads.js';
 import { arenaJoins, joinLayer } from '../world/arenaRoads.js';
-import { tamrielFrameInBay, tamrielFit, inBay } from '../world/tamrielFrame.js';
-import { tamrielTrace } from '../world/tamrielLand.js';
+import { tamrielFrameInBay, tamrielFit, inBay } from '../world/tamriel/tamrielFrame.js';
+import { tamrielTrace } from '../world/tamriel/tamrielLand.js';
 import { CAPITALS, capitalGates, capitalSpanPixels } from '../world/tamrielCapitals.js';
 import { WATER_BYTE } from '../world/roadsProducer.js';
 import { LOCATION_TYPES } from '../formats/mapsFile.js';

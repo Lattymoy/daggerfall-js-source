@@ -10,7 +10,7 @@
 // Math.PI/3, which is exactly 60: DFU's MINIMUM, not its default. So
 // wiring the setting also corrects the shipped view, which had been
 // five degrees narrower than Daggerfall Unity's own.
-import { getInt } from '../systems/settings.js';
+import { getInt } from '../systems/settings/settings.js';
 
 /** DFU's clamp, verbatim (SettingsManager.cs:418). */
 export const FOV_MIN = 60;

@@ -1,92 +1,92 @@
 [
   {
     "name": "NAVP-sink-the-old-depth",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const depth = sinkK > 0 ? sinkDepth(sinkUnder(e), sinkK) : 0;\n",
     "new": "    const depth = (hullBuild(s.hull).deck + 8) * sinkK * sinkK;\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-sink-no-clearance",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    e.sinkUnder = (Number.isFinite(top) ? sp.lift + top : reach) + SINK_CLEAR;\n",
     "new": "    e.sinkUnder = Number.isFinite(top) ? sp.lift + top : reach;\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-sink-the-rest-pose-measured",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const { roll, pitch } = sinkAngles(e.ship.seed, 1);\n",
     "new": "    const { roll, pitch } = sinkAngles(e.ship.seed, 0);\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-sink-the-lift-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    e.sinkUnder = (Number.isFinite(top) ? sp.lift + top : reach) + SINK_CLEAR;\n",
     "new": "    e.sinkUnder = (Number.isFinite(top) ? top : reach) + SINK_CLEAR;\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-sink-one-measure-every-rig",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const key = `${e.ship.hull}:${e.ship.variant | 0}`;\n",
     "new": "    const key = `${e.ship.hull}`;\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-sink-the-builds-reach-untrimmed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": " + Math.max(-build.aftZ, build.bowZ) * Math.sin(Math.abs(pitch) * NAVAL_DEG);\n",
     "new": ";\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-spars-skinned-sails-counted",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const local = node.activeInHierarchy ? meshLocalBounds({ models }, node.getComponent('MeshFilter')?.m_Mesh) : null;\n",
     "new": "    const local = node.activeInHierarchy ? meshLocalBounds({ models }, (node.getComponent('MeshFilter') ?? node.getComponent('SkinnedMeshRenderer'))?.m_Mesh) : null;\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-spars-the-rigs-off-counted",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const local = node.activeInHierarchy ? meshLocalBounds({ models }, node.getComponent('MeshFilter')?.m_Mesh) : null;\n",
     "new": "    const local = meshLocalBounds({ models }, node.getComponent('MeshFilter')?.m_Mesh);\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-spars-no-lift",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "  return { points, lift: mo.worldMatrix()[13] - boat.GameObject.worldMatrix()[13] };\n",
     "new": "  return { points, lift: 0 };\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-trim-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const pitch = Math.sin(t * wl) * wl * 0.5 + sink.pitch;\n",
     "new": "    const pitch = Math.sin(t * wl) * wl * 0.5;\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "pitch: (seed & 2 ? -1 : 1) * SINK_PITCH * kk",
     "new": "pitch: SINK_PITCH * kk",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "roll: (seed & 1 ? 1 : -1) * SINK_LIST * kk",
     "new": "roll: SINK_LIST * kk",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -113,43 +113,43 @@
     "old": "export const sinkDepth = (under, k) => Math.max(0, under) * clamp(Number.isFinite(k) ? k : 0, 0, 1) ** 2;",
     "new": "export const sinkDepth = (under, k) => Math.max(0, under) * clamp(Number.isFinite(k) ? k : 0, 0, 1);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-colours-fly-on",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (colours === 'struck') b.FlagEmitter.stop?.();\n",
     "new": "      if (colours === 'struck') void 0;\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-fires-no-awash",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (p[1] < seaY + FLAME_AWASH) { fire.handle?.retire?.(); fire.handle = null; fire.out = true; continue; }\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-fires-flat-on-the-sea",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        const p = mo.transformPoint([-lp[0], build.deck + 1 - lp[1], fire.at * len - lp[2]]);\n",
     "new": "        const p = [pos[0] + forwardOfYaw(yaw)[0] * fire.at * len, seaY - depth + build.deck + 1, pos[2] + forwardOfYaw(yaw)[2] * fire.at * len];\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-fires-loop-never-stopped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      } else if (e.fireLoop) { e.fireLoop.stop?.(); e.fireLoop = null; }\n",
     "new": "      }\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "        if (s.hull <= 0) { s.state = SHIP_STATES.sinking; s.sinkT = 0; }   // AUDIT NAV1: her fires burn on as she goes down\n",
     "new": "        if (s.hull <= 0) { s.state = SHIP_STATES.sinking; s.sinkT = 0; douse(); }\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "      if (s.state === SHIP_STATES.sinking && was !== SHIP_STATES.sinking) s.sinkT = 0;",
     "new": "      if (s.state === SHIP_STATES.sinking) s.sinkT = 0;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "    scuttle() { if (s.state !== SHIP_STATES.sunk && s.state !== SHIP_STATES.sinking) { s.state = SHIP_STATES.sinking; s.sinkT = 0; } },",
     "new": "    scuttle() { if (s.state !== SHIP_STATES.sunk) { s.state = SHIP_STATES.sinking; s.sinkT = 0; } },",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "      s.sinkT = Math.min(SINK_SECONDS, s.sinkT + Math.max(0, Number.isFinite(dt) ? dt : 0));",
     "new": "      s.sinkT = s.sinkT + Math.max(0, Number.isFinite(dt) ? dt : 0);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -194,252 +194,252 @@
     "old": "      if (s.state !== SHIP_STATES.sinking) return s.state === SHIP_STATES.sunk;\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-puppets-no-clock",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (e.ship.damage.sinkOn(d) && e.lost) drop(e);\n",
     "new": "      if (e.lost && e.ship.damage.sinkT >= SINK_SECONDS) drop(e);\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-puppets-lost-never-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (e.ship.damage.sinkOn(d) && e.lost) drop(e);\n",
     "new": "      e.ship.damage.sinkOn(d);\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-letgo-drops-at-once",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (e.ship.damage.state === SHIP_STATES.sinking) e.lost = true;\n    else if (e.ship.damage.state === SHIP_STATES.afloat) retire(e);   // SHIP-FADE: out of her stander's word, she fades as theirs did\n    else drop(e);\n",
     "new": "    drop(e);\n",
     "tests": [
-      "test/navaudit_presentation.test.js",
-      "test/shipfade.test.js"
+      "test/systems/naval/navaudit_presentation.test.js",
+      "test/render/shipfade.test.js"
     ]
   },
   {
     "name": "NAVP-letgo-keeps-afloat",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (e.ship.damage.state === SHIP_STATES.sinking) e.lost = true;\n    else if (e.ship.damage.state === SHIP_STATES.afloat) retire(e);   // SHIP-FADE: out of her stander's word, she fades as theirs did\n    else drop(e);\n",
     "new": "    e.lost = true;\n",
     "tests": [
-      "test/navaudit_presentation.test.js",
-      "test/shipfade.test.js"
+      "test/systems/naval/navaudit_presentation.test.js",
+      "test/render/shipfade.test.js"
     ]
   },
   {
     "name": "NAVP-lost-kept-when-seen",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      e.lost = false;\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-mix-my-ripple-unscaled",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": " / (mine ? Math.sqrt(n) : 1), { pitch });",
     "new": ", { pitch });",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-mix-every-ripple-scaled",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": " / (mine ? Math.sqrt(n) : 1), { pitch });",
     "new": " / Math.sqrt(n), { pitch });",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-mix-no-pitch-jitter",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        const pitch = 1 + (random() - 0.5) * 2 * GUN_PITCH_JITTER;\n",
     "new": "        const pitch = 1;\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-mix-no-level-jitter",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        const level = 10 ** (((random() - 0.5) * 2 * GUN_GAIN_JITTER_DB) / 20);\n",
     "new": "        const level = 1;\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-mix-roll-every-gun",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (x > 0 && (e.index ?? 0) === 0) sound(",
     "new": "      if (x > 0) sound(",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-mix-no-band",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "  const farShare = (d) => clamp((d - (NEAR_BOOM_M - FAR_FADE_M)) / (2 * FAR_FADE_M), 0, 1);",
     "new": "  const farShare = (d) => (d < NEAR_BOOM_M ? 0 : 1);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-mix-roll-unweighted",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": " * Math.sin(x * Math.PI / 2) * (mine ? 1 : Math.sqrt(n)), { far: true });",
     "new": " * Math.sin(x * Math.PI / 2), { far: true });",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-mix-linear-fade",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "weight * level * Math.cos(x * Math.PI / 2) /",
     "new": "weight * level * (1 - x) /",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-mix-no-cull",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (pos && f && Math.hypot(pos[0] - f[0], pos[1] - f[1], pos[2] - f[2]) > (o.maxDistance ?? 500)) return;\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-hit-no-confirm",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        const confirm = isMine(e.shooter) ? { refDistance: HIT_CONFIRM_REF_M } : {};\n",
     "new": "        const confirm = {};\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-hit-burst-unscaled",
-    "file": "src/scenes/navalHost.js",
-    "old": "e.gun === 'heavy', burstScale(e.point)); sound(",
-    "new": "e.gun === 'heavy'); sound(",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "e.gun === 'heavy', burstScale(e.point), e.shot); sound(",
+    "new": "e.gun === 'heavy', 1, e.shot); sound(",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-kick-none-a-gun",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (mine) deps.shake?.(GUN_KICK[e.gun] ?? GUN_KICK.long);   // each gun's kick along the ripple\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-blast-shake-small",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "deps.shake?.(e.type === 'blast' ? BLAST_SHAKE : zone === 'holed' ? 2.5 : 1.6);",
     "new": "deps.shake?.(zone === 'holed' ? 2.5 : 1.6);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-ready-no-word",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        sound(NAVAL_SFX.ready, toWorld(pose, mid), 0.8);\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-ready-at-the-helm-taken",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (loadedWas.get(bat.side) === false && now) {",
     "new": "      if (!loadedWas.get(bat.side) && now) {",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-ready-flash-forever",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const fresh = readyAt.has(side) && clock - readyAt.get(side) <= READY_FLASH_S;",
     "new": "      const fresh = readyAt.has(side);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-colours-struck-fly",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const colours = state === SHIP_STATES.afloat ? (falseFlagFor(e) && !e.blackFlag ? 'false' : 'hers') : state === SHIP_STATES.prize ? 'taken' : 'struck';",
     "new": "    const colours = state === SHIP_STATES.afloat ? (falseFlagFor(e) && !e.blackFlag ? 'false' : 'hers') : state === SHIP_STATES.prize ? 'taken' : 'hers';",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-colours-prize-hers",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        b.flagColor = colours === 'hers' ? NAVAL_FACTIONS[s.cls?.faction]?.flag ?? null : colours === 'false' ? NAVAL_FACTIONS.merchant.flag : null;",
     "new": "        b.flagColor = NAVAL_FACTIONS[s.cls?.faction]?.flag ?? null;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-colours-never-again",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (!b.FlagEmitter.isEmitting) b.FlagEmitter.play?.();\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-graft-none",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "    graftColours(boat);\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-graft-donor-lost",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "models.prefab(FIRST_HULL_MODEL_ID + FLAG_DONOR_HULL)",
     "new": "models.prefab(FIRST_HULL_MODEL_ID + 4)",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-graft-on-deck",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "      if (!truck || wb.max[1] > truck.at[1]) truck =",
     "new": "      if (!truck) truck =",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -448,7 +448,7 @@
     "old": "index: l.index, count: launches.length,",
     "new": "index: l.index,",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -457,70 +457,70 @@
     "old": "size0: (0.18 + r() * 0.22) * k, size1: 0.18 * k,",
     "new": "size0: 0.18 + r() * 0.22, size1: 0.18,",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-card-no-ghost",
-    "file": "src/ui/navalHud.js",
-    "old": "  width('cardg', parts.cardGhost, Math.round(g.at * 10) / 10);",
-    "new": "  width('cardg', parts.cardGhost, card.hull);",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  width(key, ghost, Math.round(g.at * 10) / 10);",
+    "new": "  width(key, ghost, pct);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-card-no-piece",
-    "file": "src/ui/navalHud.js",
-    "old": "  if (prev.pct - g.pct >= CARD_CHUNK_MIN_LOSS) {",
-    "new": "  if (prev.pct - g.pct > 100) {",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  width(key, ghost, Math.round(g.at * 10) / 10);\n  if (prev.pct - g.pct >= CARD_CHUNK_MIN_LOSS) {",
+    "new": "  width(key, ghost, Math.round(g.at * 10) / 10);\n  if (prev.pct - g.pct > 100) {",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-card-no-flash",
-    "file": "src/ui/navalHud.js",
-    "old": "  return hudClock < loss.until ? (loss.hits % 2 ? ' hit-a' : ' hit-b') : '';",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  return hudClock < state.until ? (state.hits % 2 ? ' hit-a' : ' hit-b') : '';",
     "new": "  return '';",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-card-new-ship-read-off-last",
-    "file": "src/ui/navalHud.js",
-    "old": "  if (!loss || loss.id !== card.id) {",
-    "new": "  if (!loss) {",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  if (!state || state.id !== id) {",
+    "new": "  if (!state) {",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-card-pieces-replayed",
-    "file": "src/ui/navalHud.js",
-    "old": "touchBrace = false; for (const c of parts.cardChunks) stowChunk(c); loss = null; return; }",
-    "new": "touchBrace = false; return; }",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "touchBrace = false; for (const c of parts.cardChunks) stowChunk(c); cardBar.s = null; for (const c of parts.plateChunks)",
+    "new": "touchBrace = false; for (const c of parts.plateChunks)",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-gauge-emptied-loaded",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "g.fill.style.height = `${b.fill}%`;",
     "new": "g.fill.style.height = `${b.ready ? 0 : b.fill}%`;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-hostile-under-trade",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": ".dfnaval-card.navy .dfnaval-card-name { color: #f1d0c6; }\n.dfnaval-card.merchant .dfnaval-card-name { color: #f6e3a6; }\n.dfnaval-card.hostile .dfnaval-card-name { color: #ffb4a6; }",
     "new": ".dfnaval-card.hostile .dfnaval-card-name { color: #ffb4a6; }\n.dfnaval-card.navy .dfnaval-card-name { color: #f1d0c6; }\n.dfnaval-card.merchant .dfnaval-card-name { color: #f6e3a6; }",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -529,344 +529,344 @@
     "old": "  [NAVAL_SFX.ready]: 'naval-ready.wav',\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js",
-      "test/nav_e_sounds.test.js"
+      "test/systems/naval/navaudit_presentation.test.js",
+      "test/tooling/nav_e_sounds.test.js"
     ]
   },
   {
     "name": "NAVP-plate-never-lifted",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  if (vitals && H - foot > vitals.top && W - right - plateW * scale < vitals.right + PLATE_GAP) foot = Math.max(foot, Math.ceil(H - vitals.top) + PLATE_GAP);\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-plate-bar-beside-read-over",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": ".filter((r) => r && r.right > left && r.left < W - right)",
     "new": ".filter((r) => r)",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-plate-bands-unread",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  for (const b of bands ?? []) {",
     "new": "  for (const b of []) {",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-plate-dearer-step",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    k = Math.min(k, Math.max((W / 2 - right - b.half) / plateW, (H - foot - b.bottom - PLATE_GAP) / plateH));",
     "new": "    k = Math.min(k, Math.min((W / 2 - right - b.half) / plateW, (H - foot - b.bottom - PLATE_GAP) / plateH));",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-plate-no-floor",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  return { scale: Math.max(PLATE_SCALE_MIN, Math.min(scale, k)), bottom: foot };",
     "new": "  return { scale: Math.min(scale, k), bottom: foot };",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-card-uncapped",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const k = Math.min(scale, (floor - top) / NAVAL_CARD_H);",
     "new": "  const k = scale;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-card-floor-unread",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  return k >= Math.min(scale, CARD_SCALE_MIN) ? k : null;",
     "new": "  return k;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-card-warning-on-foot",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "(warn ? NAVAL_WARN_UP * scale : NAVAL_CROSS_R)",
     "new": "NAVAL_WARN_UP * scale",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-card-head-unscaled",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "export const cardTopPx = (scale, foe = 0) => 18 + 28 * scale + 12 + foe * scale;",
     "new": "export const cardTopPx = (scale, foe = 0) => 18 + 28 + 12 + foe;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-card-foe-unread",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  if (due) shown.foe = foot > 0 ? 0 : foeStep(doc);",
     "new": "  if (due) shown.foe = 0;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-short-by-css-pixels",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const short = H > 0 && H <= NAVAL_SHORT_H * scale;",
     "new": "  const short = H > 0 && H <= NAVAL_SHORT_H;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-short-aim-keeps-side",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    put('aimt', parts.aimText, short && t.aim.range ? '' : t.aim.text);",
     "new": "    put('aimt', parts.aimText, t.aim.text);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-short-tally-over-aim",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  show('tally', parts.tally, !!t.tally && !(short && t.aim));",
     "new": "  show('tally', parts.tally, !!t.tally);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-short-tally-rest-kept",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": ".dfnaval-hud.short .dfnaval-tally-rest { display: none; }\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-card-scale-unwritten",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    setVar('--nc-card-scale', aside ? '' : String(Math.round(kc * 1000) / 1000));\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-placement-every-frame",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const due = key !== shown.layoutKey || hudClock - shown.layoutAt >= PLATE_LAYOUT_S;",
     "new": "  const due = true;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-placement-rows-unkeyed",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "${p.chips.length > 0}",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-compass-unread",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const bottom = compass ? Math.round(compass.h) + PLATE_GAP : touch ? NAVAL_PLATE_TOUCH_BOTTOM : NAVAL_PLATE_BOTTOM;",
     "new": "  const bottom = touch ? NAVAL_PLATE_TOUCH_BOTTOM : NAVAL_PLATE_BOTTOM;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-touch-foot-on-the-presses",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const bottom = compass ? Math.round(compass.h) + PLATE_GAP : touch ? NAVAL_PLATE_TOUCH_BOTTOM : NAVAL_PLATE_BOTTOM;",
     "new": "  const bottom = compass ? Math.round(compass.h) + PLATE_GAP : NAVAL_PLATE_BOTTOM;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-card-band-unreserved",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "over: [helm, band]",
     "new": "over: [helm]",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-aside-brace-width",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const right = 18 + (p ? pw + (braceOn ? 8 + NAVAL_BRACE_W : 0) + PLATE_GAP : 0);",
     "new": "  const right = 18 + (p ? pw + PLATE_GAP : 0);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-aside-quick-unread",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const from = q && q.bottom > rows[0] && q.top < rows[1] ? q.right + PLATE_GAP : 18;",
     "new": "  const from = 18;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-stack-uncapped",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  if (p && H - at.bottom - plateH * at.scale < sf) half = Math.min(half, W / 2 - 18 - pw - PLATE_GAP);\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-brace-in-the-plate",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  plate.append(head, hull.row, sail.row, crew.row, chips, rose, hint);\n  root.append(card, warn, stack, plate, brace, glassBtn);",
     "new": "  plate.append(head, hull.row, sail.row, crew.row, chips, rose, hint, brace);\n  root.append(card, warn, stack, plate, glassBtn);",
     "tests": [
-      "test/navaudit_presentation.test.js",
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_presentation.test.js",
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAVP-stack-order",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  stack.append(aim, tallyEl);",
     "new": "  stack.append(tallyEl, aim);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-finger-warning-says-hold",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "key: touch ? 'Brace' : bracePress }",
     "new": "key: bracePress }",
     "tests": [
-      "test/navaudit_presentation.test.js",
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_presentation.test.js",
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAVP-reload-seconds-broken",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "toFixed(1)}\\u00a0s`;",
     "new": "toFixed(1)} s`;",
     "tests": [
-      "test/navaudit_presentation.test.js",
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/navaudit_presentation.test.js",
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
     "name": "NAVP-short-rose-unpacked",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": ".dfnaval-hud.short .dfnaval-gun.port, .dfnaval-hud.short .dfnaval-gun.starboard { grid-row: 1 / span 2; display: flex; flex-direction: column; justify-content: center; }\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-pad-rows-unarmed",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  if (!model?.armed) return [];\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-pad-fire-words-swapped",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "model.aiming ? 'Let go: fire' : 'Hold: lay the guns'",
     "new": "model.aiming ? 'Hold: lay the guns' : 'Let go: fire'",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-pad-row-unbound",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  if (codes.brace) rows.push(",
     "new": "  if (true) rows.push(",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-pad-hold-words",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "b.kind === 'hold' ? `Open ${b.name}'s hold` : ",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-fonts-left-to-the-hud",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  if (doc.head) injectEnhancedFonts(doc);\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-stone-dim-left",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": ":root[data-plus-theme=\"stone\"] body .dfnaval-hint, :root[data-plus-theme=\"stone\"] body .dfnaval-waters,\n",
     "new": ":root[data-plus-theme=\"stone\"] body .dfnaval-waters,\n",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-refused-tile-faded",
-    "file": "src/ui/navalPlunderWindow.js",
+    "file": "src/ui/naval/navalPlunderWindow.js",
     "old": ".dfnaval-choice:disabled { cursor: default; background-color: rgba(8,9,12,0.6); }",
     "new": ".dfnaval-choice:disabled { cursor: default; opacity: 0.55; }",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-helm-bar-half-screen",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "padding: 8px 12px; width: max-content; max-width: calc(100vw - 24px);",
     "new": "padding: 8px 12px; max-width: calc(100vw - 24px);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-touch-bar-over-the-menu",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "max-width: calc(100vw - 144px - env(safe-area-inset-left, 0px) - env(safe-area-inset-right, 0px)); }",
     "new": "max-width: calc(100vw - 120px); }",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -875,7 +875,7 @@
     "old": "    const family = controllerLook() ? padFamily() : null;",
     "new": "    const family = null;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -884,7 +884,7 @@
     "old": "return r && naval?.atGuns ? [...r, ...navalPadPrompts(naval.hudModel(), navalPadCodes())] : r; },",
     "new": "return r; },",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -893,16 +893,16 @@
     "old": "      compass: !isEnhanced() && hudArt?.compassBox ? classicCompassBox() : null,",
     "new": "      compass: null,",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-raider-grammar",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "${entry.ship.names?.name ? `${entry.ship.names.name} is` : 'The pirates are'} coming alongside",
     "new": "${entry.ship.names?.name ?? 'The pirates'} are coming alongside",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -911,7 +911,7 @@
     "old": "v = writeRibbon(this.data, v, arc, eye, ARC_WIDTH_VH, tone.arc, { vh, period: ARC_DASH_M, offset });",
     "new": "v = writeRibbon(this.data, v, arc, eye, 0.12, tone.arc, { period: ARC_DASH_M, offset });",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -920,7 +920,7 @@
     "old": "      run('add', 'line', start);",
     "new": "      run('add', 'sheet', start);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -929,8 +929,8 @@
     "old": "const u0 = period > 0 ? (run - offset) / period : 0, u1 = period > 0 ? (run + len - offset) / period : 1;",
     "new": "const u0 = period > 0 ? -offset / period : 0, u1 = period > 0 ? (len - offset) / period : 1;",
     "tests": [
-      "test/navaudit_presentation.test.js",
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/navaudit_presentation.test.js",
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
@@ -939,7 +939,7 @@
     "old": "gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, pic.repeatS ? gl.REPEAT : gl.CLAMP_TO_EDGE);",
     "new": "gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -948,7 +948,7 @@
     "old": "const offset = (frame.time ?? 0) * ARC_DASH_SPEED;",
     "new": "const offset = 0;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -957,8 +957,8 @@
     "old": "const w = vh > 0 ? width * vh * Math.hypot(e[0], e[1], e[2]) : width;",
     "new": "const w = vh > 0 ? width * vh : width;",
     "tests": [
-      "test/navaudit_presentation.test.js",
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/navaudit_presentation.test.js",
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
@@ -967,7 +967,7 @@
     "old": "Math.max(0, Math.min(1, (0.97 - Math.abs(v)) / 0.3))",
     "new": "Math.max(0, Math.min(1, (1.2 - Math.abs(v)) / 0.3))",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
@@ -976,16 +976,16 @@
     "old": "* (u < 0 ? 1 : ARC_DASH_DIM)), repeatS: true });",
     "new": "), repeatS: true });",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
     "name": "NAVP-host-clock-unhanded",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "aim: aimDraw, time: clock };",
     "new": "aim: aimDraw };",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -994,215 +994,215 @@
     "old": "  if (!ps.playing && !ps.particles.length) return;\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-animators-walked-every-frame",
-    "file": "src/scenes/navalHost.js",
-    "old": "for (const a of (b.animators ??= boatAnimators(b))) a.update(e.lifeDt);",
-    "new": "for (const a of (b.animators = boatAnimators(b))) a.update(e.lifeDt);",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "for (const a of (b.animators ??= boatAnimators(b))) a.update(lived);",
+    "new": "for (const a of (b.animators = [...b.GameObject.walk()].flatMap((n) => n.getComponents('Animator').map((c) => c.animator).filter(Boolean)))) a.update(lived);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-far-stride-unread",
-    "file": "src/scenes/navalHost.js",
-    "old": "if (!eye || dist2d(s.pos, eye) <= NEAR_LIFE_M || (e.lifeN = (e.lifeN + 1) % FAR_LIFE_EVERY) === 0) {",
-    "new": "if (true) {",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "const lived = farLifeStep(e, dt, s.pos, eye);",
+    "new": "const lived = farLifeStep(e, dt, s.pos, null);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-far-missed-time-dropped",
-    "file": "src/scenes/navalHost.js",
-    "old": "for (const a of (b.animators ??= boatAnimators(b))) a.update(e.lifeDt);",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "for (const a of (b.animators ??= boatAnimators(b))) a.update(lived);",
     "new": "for (const a of (b.animators ??= boatAnimators(b))) a.update(dt);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-tags-every-ship",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (d <= NAVAL_TAG_RANGE && d >= NAVAL_TAG_NEAR) near.push({ e, d });",
     "new": "if (d >= NAVAL_TAG_NEAR) near.push({ e, d });",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-tags-near-tagged",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (d <= NAVAL_TAG_RANGE && d >= NAVAL_TAG_NEAR) near.push({ e, d });",
     "new": "if (d <= NAVAL_TAG_RANGE) near.push({ e, d });",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-tags-far-first",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "near.sort((a, b) => a.d - b.d);",
     "new": "near.sort((a, b) => b.d - a.d);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-tags-uncapped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "return near.slice(0, NAVAL_TAG_MAX).map(({ e, d }) => {",
     "new": "return near.map(({ e, d }) => {",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-tags-spar-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "point: [root[0], root[1] + mastTop(e) + TAG_LIFT, root[2]]",
     "new": "point: [root[0], root[1] + hullBuild(s.hull).top + TAG_LIFT, root[2]]",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-tags-sinking-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "point: [root[0], root[1] + mastTop(e) + TAG_LIFT, root[2]]",
     "new": "point: [root[0], mastTop(e) + TAG_LIFT, root[2]]",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-tags-hostile-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const isHostile = afloat && hostile(s, me, law);",
     "new": "    const isHostile = afloat;",
     "tests": [
-      "test/navaudit_presentation.test.js",
-      "test/shipstance.test.js"
+      "test/systems/naval/navaudit_presentation.test.js",
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "NAVP-tags-card-unmarked",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "lastCardId = target?.id ?? null;",
     "new": "lastCardId = null;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-hail-every-ship",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (s.damage.state !== SHIP_STATES.afloat || s.boarded || !hostile(s, me, law)) { e.hailed = false; continue; }",
     "new": "if (s.damage.state !== SHIP_STATES.afloat || s.boarded) { e.hailed = false; continue; }",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-hail-again",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "best.hailed = true;",
     "new": "best.hailed = false;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-hail-gap-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (!best || clock - lastHail < SAIL_HO_GAP_S) return;",
     "new": "if (!best) return;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-hail-bearing-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const bears = boat ? ` ${bearingWords(bearingOf([s.pos[0] - from[0], 0, s.pos[2] - from[2]], boat.GameObject.rotation))}` : '';",
     "new": "const bears = '';",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-hail-range-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (e.hailed || d > nightSight(SAIL_HO_RANGE * sight, { night, lit: showsLight(e) }) * veilOf(e)) continue;",
     "new": "if (e.hailed) continue;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-hail-far-first",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (d < bestD) { bestD = d; best = e; }",
     "new": "if (!best) { bestD = d; best = e; }",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-tags-rebuilt",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  while (tagSlots.length < want.length) {",
     "new": "  tagSlots.forEach((x) => x.n.remove()); tagSlots = [];\n  while (tagSlots.length < want.length) {",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-tags-scale-unread",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "Math.round(t.y)}px) scale(${scale}) translate(-50%, -100%)",
     "new": "Math.round(t.y)}px) scale(1) translate(-50%, -100%)",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-tags-never-covered",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "reach = 700, focus = null } = {}) {\n  const want = covered ? [] : layoutNavalTags(points, { scale, focus, held: tagHeld });",
     "new": "reach = 700, focus = null } = {}) {\n  const want = layoutNavalTags(points, { scale, focus, held: tagHeld });",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-tags-fade-reversed",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "export const tagAlpha = (d, reach, from = TAG_FADE_FROM) => 1 - (1 - TAG_FADE_TO) *",
     "new": "export const tagAlpha = (d, reach, from = TAG_FADE_FROM) => TAG_FADE_TO + (1 - TAG_FADE_TO) *",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-tags-state-unsaid",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  return t.state === 'afloat' && !t.boarded ? '' : cardState(t, null, '').text;",
     "new": "  return '';",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-tags-state-says-hostile",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  return t.state === 'afloat' && !t.boarded ? '' : cardState(t, null, '').text;",
     "new": "  return cardState(t, null, '').text;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -1211,79 +1211,79 @@
     "old": "drawNavalHud(null); drawNavalTags([]); drawCrewBars([]); drawCrewLines([]); lowerGlass(); };",
     "new": "drawNavalHud(null); drawCrewBars([]); drawCrewLines([]); lowerGlass(); };",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-hurt-list-one-side",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const listed = Math.sign(sinkAngles(s.seed, 1).roll) * Math.max(Math.abs(sink.roll), e.list);",
     "new": "const listed = Math.sign(sink.roll || 1) * Math.max(Math.abs(sink.roll), e.list);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-list-unscaled",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const want = DAMAGE_LIST_MAX * clamp((DAMAGE_LIST_FROM - hull) / DAMAGE_LIST_FROM, 0, 1);",
     "new": "const want = hull < DAMAGE_LIST_FROM ? DAMAGE_LIST_MAX : 0;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-list-snapped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "e.list = e.list == null ? want : e.list + (want - e.list) * (1 - Math.exp(-dt / DAMAGE_LIST_EASE_S));",
     "new": "e.list = want;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-list-first-pose-eased",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "e.list = e.list == null ? want : e.list + (want - e.list) * (1 - Math.exp(-dt / DAMAGE_LIST_EASE_S));",
     "new": "e.list = (e.list ?? 0) + (want - (e.list ?? 0)) * (1 - Math.exp(-dt / DAMAGE_LIST_EASE_S));",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-list-added-to-the-sinking",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "* Math.max(Math.abs(sink.roll), e.list);",
     "new": "* (Math.abs(sink.roll) + e.list);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-sails-all-kept",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const shown = s.damage.maxSail > 0 ? sailsShown(sails.length, s.damage.sailShare()) : sails.length;",
     "new": "const shown = sails.length;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-sails-lowest-first",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": ".map((n) => [n, canvasHeight(n)]).sort((p, q) => q[1] - p[1]).map(([n]) => n);",
     "new": ".map((n) => [n, canvasHeight(n)]).sort((p, q) => p[1] - q[1]).map(([n]) => n);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-sails-rounded-down",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "Math.ceil(n * Math.max(0, share) - 1e-9)",
     "new": "Math.floor(n * Math.max(0, share))",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -1292,7 +1292,7 @@
     "old": "if (r() >= SMOLDER_RATE * clamp(k, 0, 1) * clamp(dt, 0, 0.1)) return;",
     "new": "if (r() >= SMOLDER_RATE * clamp(dt, 0, 0.1)) return;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -1301,70 +1301,70 @@
     "old": "    const u = r();\n    push({ kind: 'smoke', pos: [a[0] + (b[0] - a[0]) * u",
     "new": "    const u = 0.5;\n    push({ kind: 'smoke', pos: [a[0] + (b[0] - a[0]) * u",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-smoke-from-amidships",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "mo.transformPoint([-lp[0], y, build.aftZ * SMOKE_SPAN - lp[2]]), mo.transformPoint([-lp[0], y, build.bowZ * SMOKE_SPAN - lp[2]])",
     "new": "mo.transformPoint([-lp[0], y, -lp[2]]), mo.transformPoint([-lp[0], y, -lp[2]])",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-smoke-awash-uncut",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": ", seaY + FLAME_AWASH);\n      if (deck) effects.smolder",
     "new": ", -Infinity);\n      if (deck) effects.smolder",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-smoke-whole-ship",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const smokeK = clamp((SMOKE_FROM - hull) / SMOKE_FROM, 0, 1);",
     "new": "const smokeK = 1;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-line-over-uncut",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "  const cut = [a[0] + (b[0] - a[0]) * k, floor, a[2] + (b[2] - a[2]) * k];\n  return ua ? [a, cut] : [cut, b];",
     "new": "  return [a, b];",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-timber-none",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "effects.timber([e.point[0], seaY, e.point[2]], TIMBER_PER_HIT + (e.gun === 'heavy' ? 1 : 0));",
     "new": "void 0;",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-timber-heavy-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "effects.timber([e.point[0], seaY, e.point[2]], TIMBER_PER_HIT + (e.gun === 'heavy' ? 1 : 0));",
     "new": "effects.timber([e.point[0], seaY, e.point[2]], TIMBER_PER_HIT);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-timber-off-the-rig",
-    "file": "src/scenes/navalHost.js",
-    "old": "if (e.zone === 'rig') { effects.tear(e.point, e.dir ?? [0, 0, 1]);",
-    "new": "if (e.zone === 'rig') { effects.tear(e.point, e.dir ?? [0, 0, 1]); effects.timber([e.point[0], seaY, e.point[2]], TIMBER_PER_HIT);",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (e.zone === 'rig') { effects.shotTear(e.point, e.dir ?? [0, 0, 1], e.shot);",
+    "new": "if (e.zone === 'rig') { effects.shotTear(e.point, e.dir ?? [0, 0, 1], e.shot); effects.timber([e.point[0], seaY, e.point[2]], TIMBER_PER_HIT);",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -1373,7 +1373,7 @@
     "old": "vel: [Math.sin(a) * sp, 0, Math.cos(a) * sp],",
     "new": "vel: [0, 0, 0],",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -1382,7 +1382,7 @@
     "old": "kind: p.kind, aspect: p.aspect ?? 1 };",
     "new": "kind: p.kind };",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -1391,52 +1391,52 @@
     "old": "const hl = h * (p.aspect ?? 1);",
     "new": "const hl = h;",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
     "name": "NAVP-sink-loop-never",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (state === SHIP_STATES.sinking) { e.sinkLoop ??= deps.audio?.loop3d?.(NAVAL_SFX.sinking, pos, 0.85, NAVAL_SINK_LOOP) ?? null; e.sinkLoop?.move?.(pos); }",
     "new": "if (state === SHIP_STATES.sinking) { e.sinkLoop?.move?.(pos); }",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-sink-loop-never-stopped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    entry.sinkLoop?.stop?.();   // AUDIT NAV1 (#15): her groaning gone with her\n",
     "new": "",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-sink-loop-fire-profile",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "loop3d?.(NAVAL_SFX.sinking, pos, 0.85, NAVAL_SINK_LOOP)",
     "new": "loop3d?.(NAVAL_SFX.sinking, pos, 0.85, NAVAL_FIRE_LOOP)",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-sink-loop-unmoved",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "NAVAL_SINK_LOOP) ?? null; e.sinkLoop?.move?.(pos); }",
     "new": "NAVAL_SINK_LOOP) ?? null; }",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
     "name": "NAVP-sink-loop-asked-once",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "e.sinkLoop ??= deps.audio?.loop3d?.(NAVAL_SFX.sinking, pos, 0.85, NAVAL_SINK_LOOP) ?? null;",
     "new": "if (!e.sinkAsked) { e.sinkAsked = true; e.sinkLoop = deps.audio?.loop3d?.(NAVAL_SFX.sinking, pos, 0.85, NAVAL_SINK_LOOP) ?? null; }",
     "tests": [
-      "test/navaudit_presentation.test.js"
+      "test/systems/naval/navaudit_presentation.test.js"
     ]
   },
   {
@@ -1445,7 +1445,7 @@
     "old": "  [NAVAL_SFX.sinking]: 'naval-sinking.wav',\n",
     "new": "",
     "tests": [
-      "test/nav_e_sounds.test.js"
+      "test/tooling/nav_e_sounds.test.js"
     ]
   },
   {
@@ -1454,7 +1454,7 @@
     "old": "  for (let i = 0; i < j; i++) out[i] = out[i] * (i / j) + out[n + i] * (1 - i / j);\n",
     "new": "",
     "tests": [
-      "test/nav_e_sounds.test.js"
+      "test/tooling/nav_e_sounds.test.js"
     ]
   }
 ]

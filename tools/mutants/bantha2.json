@@ -1,0 +1,437 @@
+[
+ {
+  "name": "BANTHA2-a-run-s-first-dropped",
+  "file": "src/world/jungle/banthaArea.js",
+  "old": "if (x >= r[k] && x <= r[k + 1]) return true;",
+  "new": "if (x > r[k] && x <= r[k + 1]) return true;",
+  "tests": [
+   "test/world/bantha2_area.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-a-run-s-last-dropped",
+  "file": "src/world/jungle/banthaArea.js",
+  "old": "if (x >= r[k] && x <= r[k + 1]) return true;",
+  "new": "if (x >= r[k] && x < r[k + 1]) return true;",
+  "tests": [
+   "test/world/bantha2_area.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-a-row-read-off-its-neighbour",
+  "file": "src/world/jungle/banthaArea.js",
+  "old": "const r = _byRow[y - ROW0];",
+  "new": "const r = _byRow[y - ROW0 + 1];",
+  "tests": [
+   "test/world/bantha2_area.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-the-field-s-default-not-the-area",
+  "file": "src/world/jungle/jungleRegion.js",
+  "old": "export function jungleFieldOf(maps, width, height, insideAt = banthaAreaHas) {",
+  "new": "export function jungleFieldOf(maps, width, height, insideAt = () => false) {",
+  "tests": [
+   "test/world/bantha2_area.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-the-host-s-area-dropped",
+  "file": "src/scenes/jungleHost.js",
+  "old": "jungleFieldOf(maps, mapWidth, mapHeight, insideAt)",
+  "new": "jungleFieldOf(maps, mapWidth, mapHeight)",
+  "tests": [
+   "test/world/bantha1_jungle.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-high-rock-s-shore-kept",
+  "file": "tools/banthaArea.mjs",
+  "old": "const south = (i) => region[i] !== SEA && races[region[i]] === 1;",
+  "new": "const south = (i) => region[i] !== SEA;",
+  "tests": [
+   "test/world/bantha2_area.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-the-coast-not-reached",
+  "file": "tools/banthaArea.mjs",
+  "old": "while (y >= 0 && top - y <= COAST_REACH && south(y * width + x)) y--;",
+  "new": "while (false) y--;",
+  "tests": [
+   "test/world/bantha2_area.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-the-coast-reached-past-its-reach",
+  "file": "tools/banthaArea.mjs",
+  "old": "while (y >= 0 && top - y <= COAST_REACH && south(y * width + x)) y--;",
+  "new": "while (y >= 0 && top - y <= COAST_REACH * 3 && south(y * width + x)) y--;",
+  "tests": [
+   "test/world/bantha2_area.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-the-coast-reached-from-inland",
+  "file": "tools/banthaArea.mjs",
+  "old": "if (y >= 0 && region[y * width + x] === SEA) for (let k = y + 1; k < top; k++) area[k * width + x] = 1;",
+  "new": "if (y >= 0) for (let k = y + 1; k < top; k++) area[k * width + x] = 1;",
+  "tests": [
+   "test/world/bantha2_area.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-the-lake-left-out",
+  "file": "tools/banthaArea.mjs",
+  "old": "if (!open && !dry) for (const i of piece) area[i] = 1;",
+  "new": "if (false) for (const i of piece) area[i] = 1;",
+  "tests": [
+   "test/world/bantha2_area.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-the-hole-filled",
+  "file": "tools/banthaArea.mjs",
+  "old": "if (!open && !dry) for (const i of piece) area[i] = 1;",
+  "new": "if (!open) for (const i of piece) area[i] = 1;",
+  "tests": [
+   "test/world/bantha2_area.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-the-staircase-kept",
+  "file": "tools/banthaArea.mjs",
+  "old": "export const DRAWN_SIGMA = 0.75;",
+  "new": "export const DRAWN_SIGMA = 0.05;",
+  "tests": [
+   "test/world/bantha2_area.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-the-pixel-s-corner-for-its-centre",
+  "file": "tools/banthaArea.mjs",
+  "old": "at((x + 0.5) / DRAWN_SCALE - 0.5, (y + 0.5) / DRAWN_SCALE - 0.5) >= 0.5",
+  "new": "at(x / DRAWN_SCALE, y / DRAWN_SCALE) >= 0.5",
+  "tests": [
+   "test/world/bantha2_area.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-the-threshold-moved",
+  "file": "tools/banthaArea.mjs",
+  "old": "at((x + 0.5) / DRAWN_SCALE - 0.5, (y + 0.5) / DRAWN_SCALE - 0.5) >= 0.5",
+  "new": "at((x + 0.5) / DRAWN_SCALE - 0.5, (y + 0.5) / DRAWN_SCALE - 0.5) >= 0.6",
+  "tests": [
+   "test/world/bantha2_area.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-the-blur-one-way",
+  "file": "tools/banthaArea.mjs",
+  "old": "s += taps[i + R] * across[clampI(v + i, H) * W + u]; soft[v * W + u] = s;",
+  "new": "s += (i === 0 ? 1 : 0) * across[clampI(v + i, H) * W + u]; soft[v * W + u] = s;",
+  "tests": [
+   "test/world/bantha2_area.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-a-missing-picture-stood-in",
+  "file": "src/render/jungleFloorArt.js",
+  "old": "    if (!pic?.width || !pic.height) return null;",
+  "new": "    if (!pic?.width || !pic.height) { sprites.push(MEADOW_SPRITES[0]); continue; }",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-scale-off-the-cell",
+  "file": "src/render/jungleFloorArt.js",
+  "old": "scale: p.height / (FLOOR_MEAN_BLADE * Math.max(boxes[i].v1, 1e-3))",
+  "new": "scale: p.height / FLOOR_MEAN_BLADE",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-rungs-cumulative-no-more",
+  "file": "src/render/labGrass.js",
+  "old": "    out += `    float mS${i} = ${at} + ${share([poor, lush])};\\n`;",
+  "new": "    out += `    float mS${i} = ${share([poor, lush])};\\n`;",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-last-plant-never-drawn",
+  "file": "src/render/labGrass.js",
+  "old": "  return `${out}    mVar = ${ladder}${glf(shares.at(-1)[0])};\\n`;",
+  "new": "  return `${out}    mVar = ${ladder}0.0;\\n`;",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-twin-not-cumulative",
+  "file": "src/render/jungleFloorArt.js",
+  "old": "    at += poor * (1 - lush) + rich * lush;",
+  "new": "    at = poor * (1 - lush) + rich * lush;",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-drawn-with-the-meadow-s-ladders",
+  "file": "src/render/labGrass.js",
+  "old": "GRASSLIT_VS_EDITS), meadowVsEdits(art)), fs: GAME_GRASS_FS });",
+  "new": "GRASSLIT_VS_EDITS), meadowVsEdits(MEADOW_ART)), fs: GAME_GRASS_FS });",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-foot-hung-at-the-top",
+  "file": "src/render/grassMeadow.js",
+  "old": "x0 = Math.floor((cell - fw) / 2), y0 = cell - fh;",
+  "new": "x0 = Math.floor((cell - fw) / 2), y0 = 0;",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-a-fern-stretched-to-the-cell",
+  "file": "src/render/grassMeadow.js",
+  "old": "k = fit >= 1 ? Math.floor(fit) : fit;",
+  "new": "k = fit;",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-soft-edge-kept-whole",
+  "file": "src/render/grassMeadow.js",
+  "old": "      if (data[i + 3] < 128) continue;",
+  "new": "      if (!data[i + 3]) continue;",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-last-row-never-sampled",
+  "file": "src/render/grassMeadow.js",
+  "old": "const sy = Math.min(h - 1, Math.floor((y + 0.5) / k));",
+  "new": "const sy = Math.min(h - 1, Math.floor(y / k));",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-dirt-not-the-floor-s",
+  "file": "src/render/labGrass.js",
+  "old": "if ((best === 1 || best === 2) && bd < 42 * 42) g++;",
+  "new": "if (best === 2 && bd < 42 * 42) g++;",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-a-road-let-in",
+  "file": "src/render/labGrass.js",
+  "old": "  for (let rec = 4; rec < layers.length; rec++) {\n    if (roadRecords.has(rec)) continue;",
+  "new": "  for (let rec = 4; rec < layers.length; rec++) {",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-grass-base-by-colour",
+  "file": "src/render/labGrass.js",
+  "old": "const out = new Set([1, 2]);   // the dirt and the grass, by their place",
+  "new": "const out = new Set([1]);   // the dirt and the grass, by their place",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-green-stone-let-in",
+  "file": "src/render/labGrass.js",
+  "old": "if ((best === 1 || best === 2) && bd < 42 * 42) g++;",
+  "new": "if (best !== 0 && bd < 42 * 42) g++;",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-draw-off-the-scene-s-frame",
+  "file": "src/scenes/jungleHost.js",
+  "old": "return share > 0 && jungleFloorDraw(w.px * PIXEL_M + w.lx, -w.py * PIXEL_M + w.lz) < share;",
+  "new": "return share > 0 && jungleFloorDraw(x, z) < share;",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-claim-the-depth-s-sign",
+  "file": "src/scenes/jungleHost.js",
+  "old": "return share > 0 && jungleFloorDraw(w.px * PIXEL_M + w.lx, -w.py * PIXEL_M + w.lz) < share;",
+  "new": "return share > 0;",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-3x3-kept-across-pixels",
+  "file": "src/scenes/jungleHost.js",
+  "old": "if (w.px !== _floor.px || w.py !== _floor.py) {",
+  "new": "if (_floor.px !== _floor.px) {",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-made-far-off",
+  "file": "src/scenes/jungleFloorHost.js",
+  "old": "if (!loading && !failed && jungle.depthAt(ex, ez) > -JUNGLE_FLOOR.near) make();",
+  "new": "if (!loading && !failed) make();",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-meadow-not-placed-again",
+  "file": "src/scenes/jungleFloorHost.js",
+  "old": "      onArrive();   // the host's meadow field made again",
+  "new": "      void onArrive;   // the host's meadow field made again",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-pair-s-invalidate-dropped",
+  "file": "src/scenes/jungleFloorHost.js",
+  "old": "meadow.invalidate(x0, z0, x1, z1); field?.invalidate(x0, z0, x1, z1);",
+  "new": "meadow.invalidate(x0, z0, x1, z1);",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-pair-s-shift-dropped",
+  "file": "src/scenes/jungleFloorHost.js",
+  "old": "meadow.shiftOrigin(offset); field?.shiftOrigin(offset);",
+  "new": "meadow.shiftOrigin(offset);",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-claim-not-asked",
+  "file": "src/scenes/jungleFloorHost.js",
+  "old": "(x, z) => (jungle.floorClaims(x, z) ? keep(x, z) : null)",
+  "new": "keep",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-another-style",
+  "file": "src/scenes/jungleFloorHost.js",
+  "old": "renderer.draw(...meadow.frame, 'meadow');",
+  "new": "renderer.draw(...meadow.frame, 'pixel');",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-a-claim-before-its-field",
+  "file": "src/scenes/jungleFloorHost.js",
+  "old": "claims(x, z) { return !!field && jungle.floorClaims(x, z); },",
+  "new": "claims(x, z) { return jungle.floorClaims(x, z); },",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-pref-s-share-ignored",
+  "file": "src/scenes/jungleFloorHost.js",
+  "old": "density: floorDensity(density), seed: JUNGLE_FLOOR.seed",
+  "new": "density: floorDensity(), seed: JUNGLE_FLOOR.seed",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-meadow-s-seed",
+  "file": "src/scenes/jungleFloorHost.js",
+  "old": "  seed: 0x4a464c52,   // 'JFLR'",
+  "new": "  seed: 0x2f6e2b1,",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-built-without-the-grass",
+  "file": "src/scenes/world.js",
+  "old": "const jungleFloor = jungle && labGrass ? createJungleFloorHost(",
+  "new": "const jungleFloor = jungle ? createJungleFloorHost(",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-meadow-not-kept-out",
+  "file": "src/scenes/world.js",
+  "old": "|| (!floor && jungleFloor?.claims(x, z))) return null;",
+  "new": ") return null;",
+  "tests": [
+   "test/render/labGrass.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-floor-takes-the-ground-s-hue",
+  "file": "src/render/jungleFloorArt.js",
+  "old": "green: MEADOW_GREEN, hue: 0,",
+  "new": "green: MEADOW_GREEN, hue: 1,",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-hue-s-share-never-uploaded",
+  "file": "src/render/labGrass.js",
+  "old": "    gl.uniform1f(u.uArtHue, this.art.hue);",
+  "new": "",
+  "tests": [
+   "test/world/bantha2_floor.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-stage-takes-the-whole-hue",
+  "file": "src/render/labGrass.js",
+  "old": ", 0.0, 1.0) * uArtHue); }",
+  "new": ", 0.0, 1.0)); }",
+  "tests": [
+   "test/render/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-twin-takes-the-whole-hue",
+  "file": "src/render/grassMeadow.js",
+  "old": "* MEADOW_GREEN_EDGE)) * hue;",
+  "new": "* MEADOW_GREEN_EDGE));",
+  "tests": [
+   "test/world/bantha2_floor.test.js",
+   "test/render/grassmeadow.test.js"
+  ]
+ },
+ {
+  "name": "BANTHA2-FLOOR-the-carpet-as-first-drawn",
+  "file": "src/render/jungleFloorArt.js",
+  "old": "export const JUNGLE_FLOOR_JUDGED = 1.8;",
+  "new": "export const JUNGLE_FLOOR_JUDGED = 2.5;",
+  "note": "JUNGLE-GRASS (PIN MOVED): the owner's judged 1.8 is the floor's flora's rate now (render/jungleFloorArt.js); the host's density is derived from it",
+  "tests": [
+   "test/world/bantha2_floor.test.js",
+   "test/world/junglegrass.test.js"
+  ]
+ }
+]

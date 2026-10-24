@@ -56,18 +56,29 @@
 
 import { capFoeLoot } from '../systems/foeLootCap.js';   // FOE-CAP: the death's cap, after its handlers
 import { championName, properName } from '../systems/champions.js';   // LOOT7: a champion's death line names it
-import { getBool } from '../systems/settings.js';   // AUDIT 28 W1: DisableEnemyDeathAlert
+import { getBool } from '../systems/settings/settings.js';   // AUDIT 28 W1: DisableEnemyDeathAlert
 import { floorLanding } from '../player/enterExit.js';
 import { billboardSize } from '../world/rmbFlats.js';
 import { addItem, takeOneInto } from '../systems/inventory.js';   // QUICK-LOOT B2: the one-item door, which the bulk take below is now written over
 import { SOUND } from '../systems/soundClips.js';
-import { lootRarityOn, bestRarity, RARITIES } from '../systems/lootRarity.js';   // LR3: the drop chime asks the body's best tier
+import { lootRarityOn, bestRarity, RARITIES } from '../systems/loot/lootRarity.js';   // LR3: the drop chime asks the body's best tier
 import { CORPSE_ACTIVATION_DISTANCE, RAY_DISTANCE } from '../player/activate.js';
-import { enemyDisplayName } from '../characters/enemyBasics.js';
+import { enemyDisplayName, ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
+import { FlatAnim, isAnimatedFlat } from '../render/flatAnimation.js';   // AUDIT DEX B3: a corpse of more than one frame animates, as DFU's billboard does
+import { localizedText, getLocalizedEnemyName } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3e: and the enemy's name
 import { silverFindAt } from '../systems/silverFinds.js';   // SILVER-FINDS: a body opened holds silver now and then
 
 /** ItemTemplates Arrow - the auto-pickup arm keys on it. */
 export const ARROW_TEMPLATE_INDEX = 131;
+
+/** EnemyDeath.cs:86-93 - the corpse's picture: a female mobile's own where its row names one (`FemaleCorpseTexture != 0`
+ *  - no classic row does; Daggerfall Enemy Expansion's riders and its Dark Slayer, AUDIT DEX A1), else CorpseTexture. A5:
+ *  the per-mobile struct copy (`f.mobile.basics` - the seducer's winged corpse) and its resolved gender (a mod's forced
+ *  one too), the row for a rig foe with no mobile. */
+export function corpseTextureOf(f) {
+  const row = f?.mobile?.basics ?? ENEMY_BASICS[f?.mobileType];
+  return ((f?.mobile?.gender ?? f?.gender) === 'female' && row?.femaleCorpseTexture) || row?.corpseTexture;
+}
 
 /**
  * CreateLootableCorpseMarker's mint. Resolves to the pool's corpse
@@ -82,6 +93,7 @@ export const ARROW_TEMPLATE_INDEX = 131;
 export async function mintCorpseMarker({
   renderer, getTexture, uploadRecordFrame, collider = null,
   corpseTexture, feet, fallbackSize = null, stillDead = () => true, sizeScale = 1,   // ELITE FOES: an elite's body lies larger
+  centre = null,   // DEX5: a flat stood by its CENTRE, `centre` over `feet` (GameObjectHelper.CreateDaggerfallBillboardGameObject aligns nothing) - a prefab's ash
 }) {
   if (!corpseTexture) return null;
   const { archive, record } = corpseTexture;
@@ -107,14 +119,30 @@ export async function mintCorpseMarker({
   uploadRecordFrame(archive, record, 0);
   const size0 = billboardSize(t, record) ?? fallbackSize;
   const size = sizeScale !== 1 && size0 ? { ...size0, w: size0.w * sizeScale, h: size0.h * sizeScale } : size0;   // ELITE FOES
+  if (centre != null && size) pos[1] += centre - size.h / 2;   // DEX5: the shader bottom-anchors, so the base is half a height under the centre
   const batch = renderer.createBillboardBatch(archive, record, size, [[pos[0], pos[1], pos[2]]]);
   // FA1 slice 3: a BARE record plus a frame FIELD - the draw builds
   // `record#frame`, so the record must not carry one already.
   batch.frame = 0;
+  // AUDIT DEX B3: DFU's corpse is a billboard (GameObjectHelper.cs:681-683) and animates when its record has frames
+  // (DaggerfallBillboard.cs:260 AnimatedMaterial) - every classic corpse has one, the mod's Hell Hound's (1614_20) three.
+  // The clock rides the record (`anim`, tickCorpseMarkers), so a batch rebuilt by a recentre keeps it.
+  const frames = t.getFrameCount?.(record) ?? 1;
+  let anim = null;
+  if (isAnimatedFlat(frames)) {
+    for (let i = 1; i < frames; i++) uploadRecordFrame(archive, record, i);
+    anim = new FlatAnim(archive, frames);
+    batch.frame = anim.frame;
+  }
   // AUDIT 17e F23 / THE FOUR HOSTS RULE: the creation params travel
   // with the record, because a floating-origin recenter has to REBUILD
   // the batch (centres are baked into a STATIC_DRAW buffer).
-  return { batch, archive, record, size, pos };
+  return { batch, archive, record, size, pos, anim };
+}
+
+/** AUDIT DEX B3: each animated marker's clock on the host's dt (FlatAnim - DFU's fixed step), its batch the frame. */
+export function tickCorpseMarkers(markers, dt) {
+  for (const c of markers) if (c.anim) c.batch.frame = c.anim.tick(dt);
 }
 
 /**
@@ -127,6 +155,10 @@ export async function mintCorpseMarker({
  * The name is GetLocalizedEnemyName's, which is why wave 38 moved that
  * table down to the leaf. A mobile type with no name in the list says
  * nothing rather than "undefined just died."
+ *
+ * L10N3e: and it is read in the player's language (EnemyDeath.cs:81) -
+ * a translation's enemyNames row by the MobileTypes id, the port's own
+ * name where the language has none.
  */
 // UL1: EnemyDeath.OnEnemyDeath (EnemyDeath.cs:29, raised at :139 after
 // the corpse container took the entity's items at :123). The pools
@@ -140,13 +172,85 @@ export function raiseEnemyDeath(entity, opts = {}) {
   capFoeLoot(entity);   // FOE-CAP: after EVERY handler's find - a plain foe's body never carries more than its cap
 }
 
+/**
+ * DEX5 (bible/04-Characters/Enemy-Expansion.md section 11): A MOD'S CORPSE PREFAB. DFU stands a corpse's billboard
+ * through MeshReplacement.ImportCustomFlatGameobject (GameObjectHelper.CreateLootContainer): a mod that ships a prefab
+ * named for the corpse's archive and record (`<archive>_<record>`) puts it in the billboard's place, components and all,
+ * and they run as the prefab's own from then on - Daggerfall Enemy Expansion's troll corpse (1618_20) takes the loot
+ * away, counts down and stands the troll again. Only a loaded mod's prefabs are found (AssetInjection reads an enabled
+ * mod's bundle), so a mod registers while it is loaded.
+ *   registerCorpsePrefab(archive, record, make) - `make(f, host)` answers the components on a body (or null): an object
+ *     with `frame(dt)` (each frame of the foes' clock), `sphere()` (`{ center, radius }`, a trigger a spell's missile
+ *     meets - or null) and `struck(spell, casterLevel, caster)` (that missile's bundle, assigned to it).
+ *   createCorpsePrefabs(host) - one foe host's runner: `mint(f, corpseTexture)` at its corpse mint, on every machine (a
+ *     copy's body is its owner's); `frame(foes, dt)`; `told(f, kind)` - DEX5b: the runner's record says the body is gone
+ *     (`bg`: 1 taken away, 2 burnt to its ash) and this copy loses it too; `destroy()` with the host (the bodies'
+ *     OnDestroy). `host` is the host's reach: `runs(f)` (this machine simulates the foe), `body(f)` (`{ pos, size }`, where
+ *     the body lies and its flat's size, or null), `rise(f)` (stand a new foe of its kind where the body lies, and take the
+ *     body away), `vanish(f)` (take the body away), `toAsh(f, ash)` (take the body away and stand `ash` - `{ archive,
+ *     record, centre }` - where it lay), `send(f, spell, casterLevel)` (a copy's: a missile's bundle on it, to the foe's
+ *     runner), `say(line)` and `key(f)` (the body's place in a save, or null where a save keeps no body). A body a prefab
+ *     destroyed is marked `corpseDestroyed` (1 or 2) - what the hosts' records carry (`bg`) and their saves write.
+ *     AUDIT DEX: `rise(f)` answers whether the new foe stood (D8 - a refused stand leaves the body); `forget(f)` - a foe
+ *     that stands up again (a load's rewind): its body's fate forgotten with its body (D2); `settle(f, kind)` - a load's or
+ *     the room's memory's word that the body is gone, with no rise and no ash, neither a saved object (D1, D3, D4);
+ *     `destroy()` lets every prefab it minted go (D12). A prefab answers `release()` - freed by another road.
+ *   scenes/corpsePrefabHost.js holds the two hosts' reach (AUDIT DEX D11).
+ */
+const _corpsePrefabs = new Map();   // `${archive}_${record}` -> make
+export function registerCorpsePrefab(archive, record, make) {
+  if (!Number.isInteger(archive) || !Number.isInteger(record) || typeof make !== 'function') throw new Error('registerCorpsePrefab(archive, record, make(f, host))');
+  _corpsePrefabs.set(`${archive}_${record}`, make);
+}
+/** The test seam. */
+export function _resetCorpsePrefabs() { _corpsePrefabs.clear(); }
+export function createCorpsePrefabs(host) {
+  let alive = true;
+  const reach = Object.freeze({ ...host, alive: () => alive });
+  const minted = new Set();
+  const release = (f) => { const c = f.corpsePrefab; f.corpsePrefab = null; minted.delete(f); c?.release?.(); };
+  return {
+    mint(f, corpseTexture) {
+      release(f);
+      // an executed revenant's body is the port's own fate (gone for good - revenant.js), never a prefab's to raise
+      const make = corpseTexture && !f.executed ? _corpsePrefabs.get(`${corpseTexture.archive}_${corpseTexture.record}`) : null;
+      f.corpsePrefab = make ? make(f, reach) ?? null : null;
+      if (f.corpsePrefab) minted.add(f);
+      return f.corpsePrefab;
+    },
+    frame(foes, dt) { for (const f of foes) if (f.corpsePrefab && f.dead && f.corpse) f.corpsePrefab.frame?.(dt); },
+    told(f, kind) {
+      if (!f?.dead || f.corpseDestroyed || (kind !== 1 && kind !== 2)) return;
+      if (f.corpsePrefab?.gone) f.corpsePrefab.gone(kind);
+      else reach.vanish(f);   // a copy with no prefab of its own (none to name the ash): the body goes, as its runner's did
+    },
+    forget(f) { release(f); f.corpseDestroyed = 0; },
+    settle(f, kind) {
+      if (kind !== 1 && kind !== 2) return;
+      release(f);
+      if (f.corpse) reach.vanish(f);
+      f.corpseDestroyed = kind;
+    },
+    destroy() { alive = false; for (const f of [...minted]) release(f); },
+  };
+}
+/** The body a missile at `pos` meets, among `foes` - a dead one whose prefab stands a trigger (its sphere and the
+ *  missile's own `reach`, DaggerfallMissile's cast) - or null. */
+export function corpsePrefabStruck(pos, foes, reach) {
+  for (const f of foes) {
+    const s = f?.dead && f.corpse ? f.corpsePrefab?.sphere?.() : null;
+    if (s && Math.hypot(pos[0] - s.center[0], pos[1] - s.center[1], pos[2] - s.center[2]) <= s.radius + reach) return f;
+  }
+  return null;
+}
+
 export function sayEnemyDied(say, mobileType, entity = null) {
   // AUDIT 28 W1: the gate the comment above quotes was never read - the
   // setting sat `stored` while every kill spoke. GetBool, as :82.
   if (getBool('GUI', 'DisableEnemyDeathAlert')) return null;
   const name = properName(entity) ?? championName(entity, enemyDisplayName(mobileType));   // LOOT7: a champion by its name; AUDIT WB12d (D2): the Summoner by his
   if (!name) return null;
-  const line = `${name} just died.`;   // thingJustDied, %s
+  const line = localizedText('thingJustDied', '%s just died.').replaceAll('%s', getLocalizedEnemyName(mobileType, name));
   say?.(line);
   return line;
 }
@@ -356,7 +460,7 @@ function corpsePrelude(entry, playerEntity, say) {
   // DISABLED: an emptied corpse stops being activatable.
   if (!items?.length) {
     entry.corpseDisabled = true;
-    say('The body has no treasure.');   // theBodyHasNoTreasure
+    say(localizedText('theBodyHasNoTreasure', 'The body has no treasure.'));
     return 0;
   }
   // :948-952 - one item and it is arrows: taken whole, no window.
@@ -416,16 +520,30 @@ export function openCorpseLoot(entry, { playerEntity, say = () => {}, openWindow
 }
 
 /**
+ * L10N3e: A BODY'S NAME - `loot.entityName`, which
+ * CreateLootableCorpseMarker fills through GetLocalizedEnemyName
+ * (GameObjectHelper.cs:701): a translation's enemyNames row for the
+ * MobileTypes id, the port's own name where the language has none, null
+ * for a type no list names. DFU stamps it on the marker at the kill; the
+ * port reads it where the body is SHOWN - the plaque's "<who> (dead)"
+ * (World Tooltips .cs:526) in every pool, and the loot tab below - so a
+ * body follows the language chosen, and nothing stores the word.
+ */
+export const corpseEntityName = (mobileType) => getLocalizedEnemyName(mobileType, enemyDisplayName(mobileType));
+
+/**
  * LOOT-STACK: A BODY AS THE LOOT WINDOW'S TAB (player/lootStack.js
  * lootPile) - its name and how much it holds - or null for a body a tab
  * must not offer: a disabled one, an empty one (its press would only say
  * "The body has no treasure." and close the window it came from), and a
  * PUPPET's, which is its owner's to empty and opens no window here.
+ * The name is the body's own (corpseEntityName, above); a tab is keyed
+ * by the body's key, never by this word.
  */
 export function pileBody(entry) {
   if (!entry || entry.corpseDisabled || entry.puppet) return null;
   const count = entry.entity?.items?.length ?? 0;
-  return count > 0 ? { name: enemyDisplayName(entry.mobileType) ?? 'Body', count } : null;
+  return count > 0 ? { name: corpseEntityName(entry.mobileType) ?? 'Body', count } : null;
 }
 
 export function takeCorpseLoot(entry, playerEntity, say = () => {}) {

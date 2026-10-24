@@ -10,7 +10,7 @@ lived under `public/visual-changes/`, twelve of them carrying classic
 Vite serves this directory verbatim every one of them shipped to GitHub
 Pages. A RENDER OF GAME DATA IS GAME DATA: the galleries are generated
 locally by `tools/fpProbe.mjs`, are gitignored, and do not live here.
-`test/doctrine.test.js` fails the suite if a tracked file under `public/`
+`test/tooling/doctrine.test.js` fails the suite if a tracked file under `public/`
 is not on the allow-list below.
 
 Port-Doctrine keeps ARENA2 out of the repo permanently: the readers load the user's own files at runtime (dev via
@@ -27,7 +27,15 @@ fullscreen iOS gives a web page. The three icons under `icons/` are
 DRAWN, by `scripts/makeIcons.mjs`: the enhanced skin's ink, brass and
 bone, a block-letter D over a seeded star field. No ARENA2 pixel is
 in them; re-run the script and the same bytes come out. All four are
-on the allow-list in `test/doctrine.test.js` with that reason.
+on the allow-list in `test/tooling/doctrine.test.js` with that reason.
+
+## art/studio/ — the game's artists' own pictures (STUDIO1)
+
+Where the game's artists put their drawings, one folder each, named for the texture each replaces. The game wears
+them; the dev server and the build list the folder themselves. The guide is `art/studio/README.md` and the record
+`bible/07-Rendering/Studio-Art.md`. The doctrine sweep reads the folder by the studio's own rule: a picture in a
+rostered artist's folder (`art/studio/artists.json`) that the listing serves. Committing one is the artist's word
+that it is their own drawing, with no ARENA2 pixel in it.
 
 ## logo.png — the title screen (U21c)
 

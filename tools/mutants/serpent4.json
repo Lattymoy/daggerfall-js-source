@@ -1,103 +1,103 @@
 [
   {
     "name": "SERPENT4-admission-closed-at-the-storm",
-    "file": "src/net/serpentLaw.js",
+    "file": "src/net/serpent/serpentLaw.js",
     "old": "return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.soundAt; };",
     "new": "return isSerpentDay(day) && nowMs >= t.riseAt && nowMs < t.sealAt; };",
     "tests": [
-      "test/serpent4.test.js",
-      "test/serpent1_law.test.js",
-      "test/serpent1_relay.test.js"
+      "test/net/serpent/serpent4.test.js",
+      "test/net/serpent/serpent1_law.test.js",
+      "test/net/serpent/serpent1_relay.test.js"
     ]
   },
   {
     "name": "SERPENT4-countdown-to-the-storm",
-    "file": "src/net/serpentLaw.js",
+    "file": "src/net/serpent/serpentLaw.js",
     "old": "if (phase === 'rising' || phase === 'hunt' || phase === 'late') return { to: 'sound', ms: Math.max(0, t.soundAt - nowMs) };",
     "new": "if (phase === 'rising' || phase === 'hunt') return { to: 'seal', ms: Math.max(0, t.sealAt - nowMs) };\n  if (phase === 'late') return { to: 'sound', ms: Math.max(0, t.soundAt - nowMs) };",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-the-old-health",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "export const SERPENT_TTK_S = 150;",
     "new": "export const SERPENT_TTK_S = 180;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-the-whole-throw",
-    "file": "src/systems/serpentStrike.js",
+    "file": "src/systems/serpent/serpentStrike.js",
     "old": "export const SERPENT_THROW_X = 0.5;",
     "new": "export const SERPENT_THROW_X = 1;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-the-throw-unscaled",
-    "file": "src/systems/serpentStrike.js",
+    "file": "src/systems/serpent/serpentStrike.js",
     "old": "const d = Math.hypot(dx, dz) || 1, v = A.shove * SERPENT_THROW_X;",
     "new": "const d = Math.hypot(dx, dz) || 1, v = A.shove;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-the-whole-canvas",
-    "file": "src/systems/serpentStrike.js",
+    "file": "src/systems/serpent/serpentStrike.js",
     "old": "sail: shared(A.sail * SERPENT_CANVAS_X * whole.maxSail, k, carry, 'sail')",
     "new": "sail: shared(A.sail * whole.maxSail, k, carry, 'sail')",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-the-old-girth",
-    "file": "src/net/serpentBody.js",
+    "file": "src/net/serpent/serpentBody.js",
     "old": "export const SERPENT_GIRTH = 1.6;",
     "new": "export const SERPENT_GIRTH = 1;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-a-dealers-bar-for-a-stander",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "return (share > 0 && p.dealt >= SERPENT_PART_SHARE * share) || p.stoodMs >= SERPENT_STOOD_SHARE * fight;",
     "new": "return (share > 0 && p.dealt >= SERPENT_RECEIPT_SHARE * share) || p.stoodMs >= SERPENT_STOOD_SHARE * fight;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-the-old-stand",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "export const SERPENT_STOOD_SHARE = 0.25;",
     "new": "export const SERPENT_STOOD_SHARE = 0.5;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-the-old-reach-of-the-stand",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "export const SERPENT_STAND_R = 600;",
     "new": "export const SERPENT_STAND_R = 450;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-the-kin-counting-an-earner",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "(p.stoodMs > 0 || p.dealt > 0) && !serpentEarned(f, sub))",
     "new": "(p.stoodMs > 0 || p.dealt > 0))",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "if (!party?.members?.some((m) => m !== sub && dealers.has(m))) continue;",
     "new": "if (!party) continue;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "for (const [sub, v] of rc) if (readSerpentReceipt(v.r)?.x === 'dealt') dealers.add(sub);",
     "new": "for (const [sub] of rc) dealers.add(sub);",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "    await this._serpentKinShare(body, fell, rc, now);   // SERPENT4: a party shares its kill\n",
     "new": "",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
@@ -133,34 +133,34 @@
     "old": ", kin: serpentBrain.serpentKinOf(f) };",
     "new": ", kin: [] };",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-the-point-of-sail-kept-in-a-gale",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "f(state.gale ? 1 : pointOfSail(offRun))",
     "new": "f(pointOfSail(offRun))",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-the-gale-wind-unraised",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "const galeWind = (wind) => (state.gale ? Math.max(wind, WIND_RATED * state.gale.wind) : wind);",
     "new": "const galeWind = (wind) => wind;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-the-gale-helm-unquickened",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "const galeTurn = () => (state.gale ? state.gale.turn : 1);",
     "new": "const galeTurn = () => 1;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "if (!b || b.boat !== boat || !b.atHelm || !nearMe()) return null;",
     "new": "if (!b || b.boat !== boat || !nearMe()) return null;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "if (!b || b.boat !== boat || !b.atHelm || !nearMe()) return null;",
     "new": "if (!b || b.boat !== boat || !b.atHelm) return null;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
@@ -187,88 +187,88 @@
     "old": "if (!galeSaid) { galeSaid = true; deps.mid?.(GALE_LINE, 3); }",
     "new": "deps.mid?.(GALE_LINE, 3);",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-the-bumper-the-hulls-own-size",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const grow = (h) => ({ ...h, hl: h.hl + BUMPER_M, hw: h.hw + BUMPER_M });",
     "new": "const grow = (h) => h;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-the-bumper-pushing-into-her",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (push) { vx += push[0] * BUMPER_GAIN; vz += push[1] * BUMPER_GAIN; }",
     "new": "if (push) { vx -= push[0] * BUMPER_GAIN; vz -= push[1] * BUMPER_GAIN; }",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-the-bumper-uncapped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const k = v > BUMPER_V_MAX ? BUMPER_V_MAX / v : 1;",
     "new": "const k = 1;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-bumpers-everywhere",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!deps.serpent?.near?.()) return d;\n    const pose = boatPose(boat);",
     "new": "    const pose = boatPose(boat);",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-a-hands-blow-on-the-ships-purse",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "const ref = hand ? SERPENT_HAND_REF : p.ref;",
     "new": "const ref = p.ref;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-a-captains-arrows-heard",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "  if (hand && serpentOnShip(p)) return out;   // SERPENT4: a captain's purse is her guns\n",
     "new": "",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-the-hands-reach-a-guns",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "const reach = (hand ? SERPENT_HAND_REACH_M : GUN_REACH_M) + SERPENT_POSE_SLACK;",
     "new": "const reach = GUN_REACH_M + SERPENT_POSE_SLACK;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-a-hands-part-unmeasured",
-    "file": "src/net/serpentBrain.js",
+    "file": "src/net/serpent/serpentBrain.js",
     "old": "const partOf = (p) => (p.share > 0 ? p.share : p.hd > 0 ? SERPENT_HAND_SHARE : 0);",
     "new": "const partOf = (p) => p.share;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
     "name": "SERPENT4-the-relay-deaf-to-r",
     "file": "server/src/index.js",
-    "old": "serpentBrain.applySerpentHit(f, a.sub, m.d, m.z, pose, now, m.r === 1)",
-    "new": "serpentBrain.applySerpentHit(f, a.sub, m.d, m.z, pose, now)",
+    "old": "SERPENT_SEAM.hit(f, a.sub, m.d, m.r, pose, now, null, { z: m.z })",
+    "new": "SERPENT_SEAM.hit(f, a.sub, m.d, undefined, pose, now, null, { z: m.z })",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "{ k: 'hit', d: m.d, z: m.z, ...(m.r === 1 ? { r: 1 } : {}) }",
     "new": "{ k: 'hit', d: m.d, z: m.z }",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
@@ -286,7 +286,7 @@
     "old": "      if (!live || deps.boat?.()) return [];\n      return this.targets();",
     "new": "      if (!live) return [];\n      return this.targets();",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": "z, ...(r ? { r } : {}) }, cell))",
     "new": "z }, cell))",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
@@ -304,7 +304,7 @@
     "old": "if (hit) { onPlayerArrowHitBox(m, hit); m.dead = true; continue; }",
     "new": "if (hit) onPlayerArrowHitBox(m, hit);",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
@@ -313,7 +313,7 @@
     "old": "const was = boxTargets?.length && m.fromPlayer ? [m.pos[0], m.pos[1], m.pos[2]] : null;",
     "new": "const was = boxTargets?.length ? [m.pos[0], m.pos[1], m.pos[2]] : null;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   },
   {
@@ -322,7 +322,7 @@
     "old": "const hitBox = boxMarksFor(m.spell).find((q) => missileInBox(m.pos, q.box));",
     "new": "const hitBox = null;",
     "tests": [
-      "test/serpent4.test.js"
+      "test/net/serpent/serpent4.test.js"
     ]
   }
 ]

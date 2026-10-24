@@ -16,7 +16,7 @@ for the provenance and the permission line).
 
 The port is read off `TrailingWagon.dll`'s IL and nothing else: no
 source ships with the mod. The scope of that reading is a table, not a
-sentence - `test/hcc_scope.test.js` holds every authored method of the
+sentence - `test/systems/horse/hcc_scope.test.js` holds every authored method of the
 assembly against the module that carries it, and the numbers below are
 its numbers.
 
@@ -68,7 +68,9 @@ WithPlayer, None, FollowingPlayer):
   inventory's wagon button inside asks the runtime rather than DFU - at a
   dungeon exit through the exit prompt's Yes, elsewhere by the access
   id (a building's must also be on the same map pixel). A failed entry
-  undoes the parking; stepping out closes the access.
+  undoes the parking; stepping out closes the access. A pair sent to the
+  Holdings Stable is parked at no door (WAGON-STABLED, the port's own:
+  `03-World/Holdings.md` section 2).
 - **Fast travel** takes a following horse along (re-stood behind the
   player once the world is up at the arrival, the team's wagon saved 2.5 m
   behind it - and drawn on its shafts, 3.1 m: WAGON-HITCH below), or leaves it waiting at the departure with the setting off;
@@ -82,25 +84,25 @@ WithPlayer, None, FollowingPlayer):
 
 ## The port's shape
 
-- `src/systems/horseCartLaw.js` - THE LAW: the enums, every constant off
+- `src/systems/horse/horseCartLaw.js` - THE LAW: the enums, every constant off
   the metadata Constant table, the save record and its normalisation, the
   name laws, the persistence resolutions, every predicate the runtime
   branches on, the text table, the ground pick, the billboard's
   orientation / view / walk clock, the wheel and cargo arithmetic, the
   scene <-> world conversions over `StreamingWorld.SceneMapRatio` (40).
-- `src/systems/horseFollow.js` - THE FOLLOWING: `HorseFollowPath`,
+- `src/systems/horse/horseFollow.js` - THE FOLLOWING: `HorseFollowPath`,
   `HorseFollowController` (the speeds, the step, the evasion, the stuck
   recovery), `WagonTrail`, `groundedPoseStep`, over a physics seam
   `{ now, raycastAll, sphereCastClear, threats }`.
-- `src/systems/wagon41214.js` - `Wagon41214VisualBuilder`: the classic
+- `src/systems/wagon/wagon41214.js` - `Wagon41214VisualBuilder`: the classic
   wagon welded into its five pieces (102 vertices, 48 triangles, four
   sub-meshes; a body of 14, two wheels of 10 planar in X, two shafts of
   7), the pivots and the radius, and `WagonCargoVisual`'s twelve pieces.
-- `src/systems/horseCart.js` - THE RUNTIME: `TrailingWagonRuntime`'s
+- `src/systems/horse/horseCart.js` - THE RUNTIME: `TrailingWagonRuntime`'s
   state and order of operations, `DeployedWagonVisual` and
   `StationaryHorseVisual` as pure state, over a `deps` bag the hosts fill
   (its header lists every seam).
-- `src/systems/horseCartWire.js` - HCC-ONLINE's record (below).
+- `src/systems/horse/horseCartWire.js` - HCC-ONLINE's record (below).
 - `src/scenes/horseCartPool.js` - THE PRESENTATION: the part meshes and
   the cargo meshes through the host's pipeline, the horse batches off the
   vendored PNGs (`renderer.uploadTexture('hcc', 'h<view>' | 'w<view>#<frame>')`,
@@ -185,7 +187,7 @@ Mac: "Let's do an audit on this, ensure online is handled properly and any
 new notifications or UI elements are enhancified." Three lenses - the
 online lane, the notifications and UI, the hosts' lifecycle - read the
 port whole; every finding is paid below, pinned by execution
-(`test/audit_hcc.test.js`, the O-rows in `test/hcc_pool.test.js`) and
+(`test/systems/audit_hcc.test.js`, the O-rows in `test/systems/horse/hcc_pool.test.js`) and
 killed by a mutant in `tools/mutants/hcc.json`.
 
 **Online.**
@@ -235,7 +237,7 @@ killed by a mutant in `tools/mutants/hcc.json`.
   world pass.
 - U5: the naming prompt (and every DaggerfallInputMessageBox) drew DFU's
   parchment in the bitmap font under the enhanced skin. Under the enhanced
-  skin it is its own window in the skin's face (`ui/enhancedInputBox.js`):
+  skin it is its own window in the skin's face (`ui/enhanced/enhancedInputBox.js`):
   centred, the notice's panel and rule, the label and the live entry with a
   caret, and a caption that says Enter accepts and Escape cancels -
   ENH-NOTICE1's law kept, a field is a decision and never a notice.
@@ -275,7 +277,7 @@ another players. Also need to ensure over people see others riding on
 horses."
 
 **HCC-PARK - the cell keeps a parked team.** Pinned in
-`test/hcc_park.test.js`, mutants in `tools/mutants/hccpark.json`.
+`test/net/hcc_park.test.js`, mutants in `tools/mutants/hccpark.json`.
 - The word. `parkWord` reads MY team off the SAVE record, not off what is
   drawn: a deployed wagon, or a horse standing loose or hitched to a
   deployed wagon. It carries the anchor `a` (the wagon's, else the horse's,
@@ -328,7 +330,7 @@ on everyone else's screen.
   (which Eye Of The Beholder mounted sprite set the rider chose). Both are
   omitted on foot, so a pose on foot is the bytes it was. A mount change is
   a pose change.
-- `net/peerRiders.js` draws a riding peer with EOTB's mounted sprites: the
+- `net/peer/peerRiders.js` draws a riding peer with EOTB's mounted sprites: the
   same eight views, idle, walk and gallop tables, size and offsets as the
   player's own third-person billboard. The move bit picks the table (2 is
   the gallop). The rider layer runs first, the Morrowind body and the doll
@@ -344,8 +346,8 @@ Mac: "Let's do an audit on everything before we merge. This needs to be
 perfect." Main had moved on first: FRIENDLY-SPELLS shipped `world98`, so
 this branch was merged with main and its relay law moved to `world99`.
 Five review lenses then read the whole branch. Every finding below is
-fixed. The park and rider findings are pinned in `test/hcc_park.test.js`,
-the others in `test/audit_hcc_branch.test.js`. The mutants are in
+fixed. The park and rider findings are pinned in `test/net/hcc_park.test.js`,
+the others in `test/scenes/audit_hcc_branch.test.js`. The mutants are in
 `tools/mutants/hccpark.json` and `tools/mutants/auditbranch.json`, and
 every one dies.
 
@@ -419,7 +421,7 @@ every one dies.
 riding loop; hearing a peer's would be a new feature.~~ **BUILT (RIDE-SOUND,
 DISC6, 2026-09-23).** A riding peer's hooves play at them - TransportManager's
 riding half run off their pose, through a positional loop. Record:
-`01-Overview/Field-Bugs-2026-09-23.md` and `06-Systems/Online-Arc.md`.
+`01-Overview/bugs/Field-Bugs-2026-09-23.md` and `06-Systems/Online-Arc.md`.
 
 **ACT-MENU (DISC7, 2026-09-23).** On the enhanced plaque the mod's verbs
 are rows - Ride / Drive the wagon, Follow me / Wait here, Name over my
@@ -483,9 +485,9 @@ Two faults beside it:
 - `offsetAll` takes the parked wagon's box down with the old frame.
 
 The kept records from before TERRAIN-SCALE1 need no purge: they stand on
-the ground now and expire on their own. Pinned by `test/disc20.test.js`
+the ground now and expire on their own. Pinned by `test/systems/disc20.test.js`
 (C); mutants `tools/mutants/disc20.json`.
-`01-Overview/Field-Bugs-2026-09-23.md`, DISC20-C.
+`01-Overview/bugs/Field-Bugs-2026-09-23.md`, DISC20-C.
 
 ## DISC21-B - the exit door's Yes opens the wagon (2026-09-24)
 
@@ -496,14 +498,14 @@ dungeon context's one overlay slot, and `openInventoryWithWagon` refuses a held 
 Every wagon at every exit; the mod's players noticed because it turns off the other road to a wagon underground (the
 inventory key by the exit door, "Access your wagon by activating the dungeon exit with your wagon parked nearby").
 Yes is taken on the next dungeon frame now, once the prompt has left the slot - DFU's close-then-open order.
-`test/disc21.test.js` (B). `01-Overview/Field-Bugs-2026-09-23.md`, DISC21-B.
+`test/systems/disc21.test.js` (B). `01-Overview/bugs/Field-Bugs-2026-09-23.md`, DISC21-B.
 
 ## What is and is not ported
 
 The assembly's dump carries 444 method bodies; 46 are compiler-generated
 and struck (constructors, the `<Start>d__161` coroutine's five, the
 `<>c` lambda bodies, the event accessors). That leaves
-**398 authored methods**, each a row of `test/hcc_scope.test.js` with the
+**398 authored methods**, each a row of `test/systems/horse/hcc_scope.test.js` with the
 symbol and module that carries it or a sentence saying why the port has
 no twin. **340 are ported**; **58 have no twin**, in these families and
 no other. AUDIT WAGON-HITCH: six of the 340 (the trail's five and ApplyGroundedPose) are retired from the drawn wagon by WAGON-HITCH -
@@ -536,17 +538,17 @@ still ported and pinned as the record, called by no runtime module (`RETIRED_BY_
 
 ## Verification
 
-- `test/hcc_law.test.js` (13), `test/hcc_follow.test.js` (7),
-  `test/hcc_wagon41214.test.js` (8, over `test/hccModel.mjs`'s synthetic
-  twin of the verified topology), `test/hcc_runtime.test.js` (15, the
+- `test/systems/horse/hcc_law.test.js` (13), `test/systems/horse/hcc_follow.test.js` (7),
+  `test/systems/wagon/hcc_wagon41214.test.js` (8, over `test/hccModel.mjs`'s synthetic
+  twin of the verified topology), `test/systems/horse/hcc_runtime.test.js` (15, the
   runtime driven over a fake flat world: mount, trail, park, activate,
   follow, wait, name, the windows' questions, the doors, the save, fast
   travel, Travel Options, the persistence setting, the origin),
-  `test/hcc_pool.test.js` (13, the presentation, the wire and the audit's
-  online rows), `test/hcc_park.test.js` (13, HCC-PARK, HCC-TIP, RIDE and the audit's park and rider rows),
-  `test/audit_hcc_branch.test.js` (6, the branch audit's IL and host rows), `test/audit_hcc.test.js` (9, AUDIT HCC),
-  `test/hcc_hosts.test.js` (10, the hosts' seams by execution and by
-  source), `test/hcc_scope.test.js` (4, the table), `test/hcc_assets.test.js`
+  `test/systems/horse/hcc_pool.test.js` (13, the presentation, the wire and the audit's
+  online rows), `test/net/hcc_park.test.js` (13, HCC-PARK, HCC-TIP, RIDE and the audit's park and rider rows),
+  `test/scenes/audit_hcc_branch.test.js` (6, the branch audit's IL and host rows), `test/systems/audit_hcc.test.js` (9, AUDIT HCC),
+  `test/player/hcc_hosts.test.js` (10, the hosts' seams by execution and by
+  source), `test/systems/horse/hcc_scope.test.js` (4, the table), `test/tooling/hcc_assets.test.js`
   (3, the vendored files are the assembly's).
 - `tools/mutants/hcc.json`, `tools/mutants/hccpark.json` and
   `tools/mutants/auditbranch.json`: the mutation lists, every one dead.
@@ -581,8 +583,8 @@ took the click from the door behind it besides.
   press and the plaque, and with nothing else on the ray their team is still
   named ("Owned by ...") and pressed.
 
-Pins: `test/prwagon1.test.js` (7: six failing on the base, the seventh the
-audit's below); `test/hcc_pool.test.js`'s O3 pin reversed; `test/disc20.test.js`'s
+Pins: `test/player/prwagon1.test.js` (7: six failing on the base, the seventh the
+audit's below); `test/systems/horse/hcc_pool.test.js`'s O3 pin reversed; `test/systems/disc20.test.js`'s
 kept team stands no box. Mutants: `tools/mutants/prwagon1.json` (11, all dead);
 `hcc.json` and `disc20.json` re-aimed, the three records on the removed box
 retired.
@@ -601,7 +603,7 @@ merge").**
   empty road was measured as the wagon (0.60 m where the wagon is 2.33 m
   away), so a wagon beyond reach could be named. The peer
   wagon now carries DISC10's `obb`, the same as Eye Of The Beholder's cart
-  (`player/eotbWagon.js`): the ray meets the wagon's own box, an eye in a
+  (`player/eyeOfTheBeholder/eotbWagon.js`): the ray meets the wagon's own box, an eye in a
   corner is outside it, and an eye inside the wagon itself still names
   nothing. Pinned at an eighth turn (the prwagon1 pins parked only at a quarter
   turn, where the two boxes are the same). Mutant: the `obb` dropped.
@@ -696,8 +698,8 @@ under the grown horse.
   speed. A parked wagon is never pulled.
 
 **The record kept.** The IL's `WagonTrail` and `groundedPoseStep` stay in
-`horseFollow.js`, pinned by `test/hcc_follow.test.js` and named by
-`test/hcc_scope.test.js`. They no longer place a drawn wagon.
+`horseFollow.js`, pinned by `test/systems/horse/hcc_follow.test.js` and named by
+`test/systems/horse/hcc_scope.test.js`. They no longer place a drawn wagon.
 
 **THE FOUR HOSTS:**
 
@@ -710,7 +712,7 @@ under the grown horse.
 
 **Verification.**
 
-- **The pins:** `test/wagonhitch.test.js` (10 at the slice; 17 after its audit, below). The gap held at 3.1 m on
+- **The pins:** `test/systems/horse/wagonhitch.test.js` (10 at the slice; 17 after its audit, below). The gap held at 3.1 m on
   every frame, riding (uneven frames, the stop, a turn) and following. The
   drive-off from the parked place, and the horse standing where the rider
   sat. `hitchedPoseStep`'s hidden, lost-ground, height and tilt arms.
@@ -725,10 +727,10 @@ under the grown horse.
 
 Four lenses read the commit whole - the runtime, the presentation (online and the Overworld), the pack's filter and
 Shift, the records - each proving its findings by execution (the UI lens in a real Chromium through vite and Playwright,
-from the scratchpad). One blocker, one major; every finding is paid below, pinned (`test/wagonhitch.test.js` 17,
-`test/shiftstow.test.js` 9, `test/audit_hcc_branch.test.js` IL3, `test/hcc_scope.test.js`) and killed by a mutant
+from the scratchpad). One blocker, one major; every finding is paid below, pinned (`test/systems/horse/wagonhitch.test.js` 17,
+`test/systems/shiftstow.test.js` 9, `test/scenes/audit_hcc_branch.test.js` IL3, `test/systems/horse/hcc_scope.test.js`) and killed by a mutant
 (`tools/mutants/wagonhitch.json`, `shiftstow.json`: 264 dead over the nine lists the change touches, none survived;
-`test/el2_shadows.test.js`'s renderer pin re-aimed to the `noShadow` gate).
+`test/render/el2_shadows.test.js`'s renderer pin re-aimed to the `noShadow` gate).
 
 **The runtime.**
 - **A1 (BLOCKER): the wagon swung round its hitch on any slope.** The drawn pose stands a metre up the ground's normal,

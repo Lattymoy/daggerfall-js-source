@@ -5,7 +5,7 @@
     "old": "  if (master?.hall) return { error: 'guild-hall' };\n",
     "new": "",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -14,8 +14,8 @@
     "old": "\n      AND EXISTS (SELECT 1 FROM realm_characters rc WHERE rc.id = g.char_id AND rc.player = k.p))))`;",
     "new": "))))`;",
     "tests": [
-      "test/auditguild1d.test.js",
-      "test/guild1d_service.test.js"
+      "test/net/auditguild1d.test.js",
+      "test/net/guild1d_service.test.js"
     ]
   },
   {
@@ -24,8 +24,8 @@
     "old": "building_key = ? AND guild_id IS NOT NULL))', [barred",
     "new": "building_key = ? AND guild_id IS NULL))', [barred",
     "tests": [
-      "test/auditguild1d.test.js",
-      "test/guild1d_service.test.js"
+      "test/net/auditguild1d.test.js",
+      "test/net/guild1d_service.test.js"
     ]
   },
   {
@@ -34,7 +34,7 @@
     "old": "  if (hallSaid) return { error: hallSaid };\n",
     "new": "",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "    if (landed?.kind === 'heraldry') return",
     "new": "    if (false) return",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "    if (now) return now.guild_id === gid ? { ok: true, repeat: true, hall: await hallViewOf(db, gid) } : { error: 'home-taken' };",
     "new": "    if (now) return { error: 'home-taken' };",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "  const mine = home.player === player.id && home.guild_id == null;",
     "new": "  const mine = home.player === player.id;",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "AND rank IN (${HALL_POWERS.hallEntry.join(', ')}))`).bind(entry, a.me.guild_id, a.me.rid)",
     "new": "AND rank IN (0, 1, 2, 3))`).bind(entry, a.me.guild_id, a.me.rid)",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "WHERE id = ? AND heraldry IS NULL AND ${stillMaster}`)",
     "new": "WHERE id = ? AND heraldry IS NULL`)",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "if (nowHome && (nowHome.player !== player || String(nowHome.char_id).startsWith('guild:'))) {",
     "new": "if (nowHome && nowHome.player !== player) {",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "SET treasury = treasury - ?1, realm_gold = realm_gold - ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall'",
     "new": "SET treasury = treasury - ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall'",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "AND building_key = ?2) = ?5\n        AND (SELECT COALESCE(SUM(paid), 0) FROM home_decor WHERE map_id = ?1 AND building_key = ?2) = ?6",
     "new": "AND building_key = ?2) <= ?5\n        AND (SELECT COALESCE(SUM(paid), 0) FROM home_decor WHERE map_id = ?1 AND building_key = ?2) <= ?6",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "AND guild_id = ?3 AND paid = ?4\n",
     "new": "AND guild_id = ?3 AND ?4 IS NOT NULL\n",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?7 AND guild_id = ?3 AND rank = ?8)`)",
     "new": "AND ?7 IS NOT NULL AND ?8 IS NOT NULL`)",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "AND EXISTS (SELECT 1 FROM guild_members WHERE rowid = ?5 AND guild_id = ?4 AND rank = ?6)`)",
     "new": "AND ?5 IS NOT NULL AND ?6 IS NOT NULL`)",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "moved_kind = 'hall-piece'\n        WHERE id = ?4 AND treasury + ?1 <= ?5`)",
     "new": "moved_kind = 'hall-piece'\n        WHERE id = ?4 AND ?5 IS NOT NULL`)",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -151,7 +151,7 @@
     "old": "moved_kind = 'hall-sale'\n          WHERE id = ?4 AND treasury + ?1 <= ?5`)",
     "new": "moved_kind = 'hall-sale'\n          WHERE id = ?4 AND ?5 IS NOT NULL`)",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "old": "      mustChange(db),\n    ]);\n  } catch {\n    const g = await db.prepare('SELECT treasury FROM guilds WHERE id = ?').bind(guildId).first();",
     "new": "    ]);\n  } catch {\n    const g = await db.prepare('SELECT treasury FROM guilds WHERE id = ?').bind(guildId).first();",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -169,8 +169,8 @@
     "old": "SET treasury = treasury + ?1, realm_gold = realm_gold + ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall-piece'",
     "new": "SET treasury = treasury + ?1, moved_by = ?2, moved_at = ?3, moved_kind = 'hall-piece'",
     "tests": [
-      "test/auditguild1d.test.js",
-      "test/guild1d_service.test.js"
+      "test/net/auditguild1d.test.js",
+      "test/net/guild1d_service.test.js"
     ]
   },
   {
@@ -179,7 +179,7 @@
     "old": "  UPDATE guilds SET moved_kind = NULL WHERE id = NEW.id AND moved_kind IS NOT NULL;\n",
     "new": "",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -188,7 +188,7 @@
     "old": "SET heraldry = ? WHERE id = ? AND heraldry = ? AND ${stillMaster} AND ${noBattle}`)",
     "new": "SET heraldry = ? WHERE id = ? AND ? IS NOT NULL AND ${stillMaster} AND ${noBattle}`)",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -197,7 +197,7 @@
     "old": "SET heraldry = ? WHERE id = ? AND heraldry IS NULL AND ${stillMaster}`)",
     "new": "SET heraldry = ? WHERE id = ? AND ${stillMaster}`)",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -206,7 +206,7 @@
     "old": "'guild-withdraw': 'withdraw', heraldry: 'heraldry', 'guild-deed': 'deed',",
     "new": "'guild-withdraw': 'withdraw', 'guild-deed': 'deed',",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -215,7 +215,7 @@
     "old": "home.own === true || !!(home.hall && home.member) || rentDaysLeft(home.tenant, nowS) > 0",
     "new": "home.own === true || rentDaysLeft(home.tenant, nowS) > 0",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -224,7 +224,7 @@
     "old": "      if (hallMemberHere() && interiorDecor.list().some((p) => p?.station === 'forge')) return { kind: 'home', fee: 0 };   // AUDIT GUILD1d A2: a hall's, its members'\n",
     "new": "",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -233,16 +233,16 @@
     "old": "        ...(homeHallBuyRow(price, hallGuild()) ? [{ code: 'KeyG'",
     "new": "        ...(false ? [{ code: 'KeyG'",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
     "name": "AUDIT-GUILD1d-A4-hall-half-to-the-purse",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "      back = r.hall ? 0 : decorRefund(paid);",
     "new": "      back = decorRefund(paid);",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -251,7 +251,7 @@
     "old": "onRank: () => { onlineHomes?.bump?.();",
     "new": "onRank: () => { void 0;",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -260,7 +260,7 @@
     "old": "        if (t && hallMemberHere()) return { title: HALL_CHEST_TITLE };",
     "new": "        if (false) return { title: HALL_CHEST_TITLE };",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -269,7 +269,7 @@
     "old": "(visitorDropRefusal() && !hallMemberHere() ?",
     "new": "(visitorDropRefusal() ?",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -278,16 +278,16 @@
     "old": "    if (_hallBuying.has(id)) return;\n",
     "new": "",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
     "name": "AUDIT-GUILD1d-R1-the-sliders-wind",
     "file": "src/scenes/world.js",
-    "old": "wind: Math.min(1, wd.strength01 * wd.gust),",
-    "new": "wind: Math.min(1, wd.slider * wd.gust),",
+    "old": "        light: { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },   // AUDIT GUILD1d R9: and the moon, as the grass takes it\n        wind: Math.min(1, wd.strength01 * wd.gust),",
+    "new": "        light: { sunDir: renderer._lightDir, amb: renderer._ambient, sunCol: renderer._sunColor, sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },   // AUDIT GUILD1d R9: and the moon, as the grass takes it\n        wind: Math.min(1, wd.slider * wd.gust),",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -296,7 +296,7 @@
     "old": "  float swing = 0.5 + 0.5 * sin(",
     "new": "  float swing = sin(",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -305,7 +305,7 @@
     "old": "  rx = 0 - oz; rz = ox + 0;   // (+0: never a signed zero)\n",
     "new": "",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -314,8 +314,8 @@
     "old": "    return true;\n  }\n}",
     "new": "    return this.drawn > 0;\n  }\n}",
     "tests": [
-      "test/auditguild1d.test.js",
-      "test/guild1d_client.test.js"
+      "test/net/auditguild1d.test.js",
+      "test/net/guild1d_client.test.js"
     ]
   },
   {
@@ -324,7 +324,7 @@
     "old": "    if (tex) this.textures.set(key, { tex, seen: seconds });",
     "new": "    this.textures.set(key, { tex, seen: seconds });",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -333,7 +333,7 @@
     "old": "    this.prune(seconds);\n",
     "new": "",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -342,7 +342,7 @@
     "old": "      gl.pixelStorei(gl.UNPACK_PREMULTIPLY_ALPHA_WEBGL, true);   // AUDIT GUILD1d R8: the cut's edge mipmaps without a dark rim\n",
     "new": "",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -351,7 +351,7 @@
     "old": "sunScale: renderer._sunScale, moonDir: renderer._moonDir, moonScale: renderer._moonScale, moonCol: renderer._moonColor },   // AUDIT GUILD1d R9",
     "new": "sunScale: renderer._sunScale },   // AUDIT GUILD1d R9",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -360,7 +360,7 @@
     "old": "    if (d.heraldryFrom !== from) { d.heraldry = null; d.heraldryFrom = from; }\n",
     "new": "",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -369,7 +369,7 @@
     "old": "const pick = (key, apply) => () => { apply(); draw(key); paintLiveBtns(); };",
     "new": "const pick = (key, apply) => () => { apply(); ui++; if (open) repaint(); };",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -378,7 +378,7 @@
     "old": "          : v.heraldry && !('marks' in v) ? accountRefusalText('marks-closed')",
     "new": "          : false ? accountRefusalText('marks-closed')",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
@@ -387,16 +387,16 @@
     "old": "run: () => guildDo(g.sellHall(), guildHallSoldText) })",
     "new": "run: () => guildDo(g.sellHall(), 'The hall is sold.') })",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   },
   {
     "name": "AUDIT-GUILD1d-R14-older-answer-clears",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "&& this._heraldryAsk?.rid === rid) this._heraldryAsk = null;",
     "new": ") this._heraldryAsk = null;",
     "tests": [
-      "test/auditguild1d.test.js"
+      "test/net/auditguild1d.test.js"
     ]
   }
 ]

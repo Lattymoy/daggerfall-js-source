@@ -1,0 +1,222 @@
+[
+  {
+    "name": "AUDIT-OL-B1-the-gone-body-hands-nothing-back",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "if (readers.get(keyOf(rb.owner, rb.seq)) !== rb) { settleReader(rb, false); handBack(rb); return; }",
+    "new": "if (readers.get(keyOf(rb.owner, rb.seq)) !== rb) { for (const m of listMovesSince(rb.seen, rb.view).takes) liftPiece(playerEntity, m.obj, m.k); return; }",
+    "tests": [
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-B1-the-hand-back-destroys",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "      else addItem((playerEntity.items ??= []), piece);",
+    "new": "      else void 0;",
+    "tests": [
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-B2-the-born-gate-back",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "  function settleReader(rb, claim = true) {\n    const { takes, grows, puts } = listMovesSince(rb.seen, rb.view, () => false);",
+    "new": "  function settleReader(rb, claim = true) {\n    if (stateOf(rb) !== 'born') return;\n    const { takes, grows, puts } = listMovesSince(rb.seen, rb.view, () => false);",
+    "tests": [
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-B2-the-frame-settles-only-the-born",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "      if (s !== 'born') settleReader(rb);",
+    "new": "      if (false) settleReader(rb);",
+    "tests": [
+      "test/net/bodyloot_protocol.test.js"
+    ],
+    "equivalent": true,
+    "why": "The close settles in any state now (settleReader has no born gate), and every pin reads the end state: the frame's settle under an open window only claims earlier. Kept as the latency it buys, not as a law a pin can fail."
+  },
+  {
+    "name": "AUDIT-OL-B3-re-asks-to-an-absent-owner",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "sendClaims(resay.filter((c) => h.ownerRecord(c.meta.owner) != null))",
+    "new": "sendClaims(resay)",
+    "tests": [
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-S1-4-the-owners-put-never-a-place",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "      const p = addPlace(st, piece);",
+    "new": "      const p = -1;",
+    "tests": [
+      "test/net/bodyloot_protocol.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-the-settles-hand-back",
+    "file": "src/scenes/bodyLootHost.js",
+    "old": "    if (rb.laid.size && open !== rb) handBack(rb);",
+    "new": "    void 0;",
+    "tests": [
+      "test/net/bodyloot_protocol.test.js"
+    ],
+    "equivalent": true,
+    "why": "Every close hands back explicitly after its settle (the window's `closed`, and the gone body's arm); a put is only ever made through an open window, so the settle's own hand-back is belt-and-braces."
+  },
+  {
+    "name": "AUDIT-OL-C1-a-lost-roll-lifts-any-take",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "now - t.at <= cross)",
+    "new": "true)",
+    "tests": [
+      "test/net/containerloot_edges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-C3-the-lost-rolls-puts-never-home",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "      for (const g of cup.gave) if (g.mint !== mint && now - g.at <= cross && was?.ids?.includes(g.id)) givePiece(entity, g.item, pieceCount(g.item));",
+    "new": "",
+    "tests": [
+      "test/net/containerloot_edges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-C3-the-seats-put-unrecorded",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "      else gaveIn(cup, piece, mintOf(st), put.id);\n",
+    "new": "",
+    "tests": [
+      "test/net/containerloot_edges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-C3-a-taken-put-home-as-well",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "now - g.at <= cross && was?.ids?.includes(g.id)) givePiece(",
+    "new": "now - g.at <= cross) givePiece(",
+    "tests": [
+      "test/net/containerloot_edges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-C2-puts-go-with-their-putter",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "      for (const [id, p] of [...puts]) if (p.refused || now - p.at >= ROOM_CLAIM_TIMEOUT_MS) { puts.delete(id); givePiece(entity, p.item, pieceCount(p.item)); }",
+    "new": "",
+    "tests": [
+      "test/net/containerloot_edges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-C2-every-put-home-at-the-leave",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "if (p.refused || now - p.at >= ROOM_CLAIM_TIMEOUT_MS) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/net/containerloot_edges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-D5-the-seat-grants-a-given-up-cupboard-claim",
+    "file": "src/world/interior/interiorRoomLoot.js",
+    "old": "!('it' in cl) && Number.isFinite(cl.tm) && now - cl.tm >= CLAIM_KEEP_MS / 2 ? { ...cl, stale: true } : cl, admit)",
+    "new": "cl, admit)",
+    "tests": [
+      "test/net/containerloot_edges.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-D1-a-strangers-find-unjudged",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "return host._authority ? judgeStrangerFind(canon, w, rec, from) : 0; }",
+    "new": "return 0; }",
+    "tests": [
+      "test/systems/searchfindloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-D2-only-the-first-mint-starts-the-hours",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "if ((seer || reborn) && who) searchHeard(",
+    "new": "if (seer && who) searchHeard(",
+    "tests": [
+      "test/systems/searchfindloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-D2-the-roll-left-over-the-rooms-find",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "if (state === was) { composeRoomContainer(canon); return true; }",
+    "new": "if (state === was) return true;",
+    "tests": [
+      "test/systems/searchfindloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-D3-a-find-with-pieces-let-go",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "    if (st && base && !roomEmptied(st, base.items.length)) return true;",
+    "new": "",
+    "tests": [
+      "test/systems/searchfindloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-D3-an-emptied-find-never-let-go",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "  function letFindGo(canon, h) {\n    if (!h?.search) return false;",
+    "new": "  function letFindGo(canon, h) {\n    if (true) return false;",
+    "tests": [
+      "test/systems/searchfindloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-find-an-older-first-word-is-a-diff",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "if (!prev || from == null || !host._authority",
+    "new": "if (from == null || !host._authority",
+    "tests": [
+      "test/systems/searchfindloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-D4-the-window-record-stored",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "      const g = judgeRoomClaim(st, base.items.length, base.full, put, roomAdmit);",
+    "new": "      const g = judgeRoomClaim(st, base.items.length, base.full, { ...put, it: obj }, roomAdmit);",
+    "tests": [
+      "test/systems/partyloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-D5-the-seat-grants-a-given-up-claim",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "judgeRoomClaim(st, base.items.length, base.full, tooOldToGrant(cl) ? { ...cl, stale: true } : cl, roomAdmit)]);\n    for (const id of reask) if (st.answers.has(id)",
+    "new": "judgeRoomClaim(st, base.items.length, base.full, cl, roomAdmit)]);\n    for (const id of reask) if (st.answers.has(id)",
+    "tests": [
+      "test/systems/partyloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-D21-claims-newest-32-only",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "for (let i = 0; i < Math.max(q.length, a.length); i += ROOM_CLAIMS_MAX) out.push(",
+    "new": "for (let i = 0; i < Math.min(1, Math.max(q.length, a.length)); i += ROOM_CLAIMS_MAX) out.push(",
+    "tests": [
+      "test/systems/partyloot.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-OL-D21-verdicts-first-32-only",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "for (let i = 0; i < Math.max(verdicts.length, 1); i += ROOM_ANSWERS_KEPT) {\n      const rec = roomStateWord(canon,",
+    "new": "for (let i = 0; i < 1; i += ROOM_ANSWERS_KEPT) {\n      const rec = roomStateWord(canon,",
+    "tests": [
+      "test/systems/partyloot.test.js"
+    ]
+  }
+]

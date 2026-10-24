@@ -5,7 +5,7 @@
     "old": "  cureAllAttributes(entity);\n  fillVitalSigns(entity);\n}",
     "new": "  cureAllAttributes(entity);\n  fillVitalSigns(entity);\n  for (const a of entity.activeEffects ?? []) if (a.kind !== 'disease' && a.kind !== 'poison') a.ended = true;\n}",
     "tests": [
-      "test/fb1001_regen.test.js"
+      "test/systems/fb1001_regen.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  cureAllAttributes(entity);\n  fillVitalSigns(entity);\n}",
     "new": "  cureAllAttributes(entity);\n}",
     "tests": [
-      "test/fb1001_regen.test.js"
+      "test/systems/fb1001_regen.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  cureAllPoisons(entity);\n  cureAllDiseases(entity);\n  cureAllAttributes(entity);\n  fillVitalSigns(entity);",
     "new": "  cureAllDiseases(entity);\n  cureAllAttributes(entity);\n  fillVitalSigns(entity);",
     "tests": [
-      "test/fb1001_regen.test.js"
+      "test/systems/fb1001_regen.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  cureAllDiseases(entity);\n  cureAllAttributes(entity);",
     "new": "  cureAllAttributes(entity);",
     "tests": [
-      "test/fb1001_regen.test.js"
+      "test/systems/fb1001_regen.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  cureAllAttributes(entity);\n  fillVitalSigns(entity);\n}",
     "new": "  fillVitalSigns(entity);\n}",
     "tests": [
-      "test/fb1001_regen.test.js"
+      "test/systems/fb1001_regen.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      const gift = caster?.entity === playerEntity && allyCastable(spell);",
     "new": "      const gift = false;",
     "tests": [
-      "test/fb1001_regen.test.js"
+      "test/systems/fb1001_regen.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      const gift = caster?.entity === playerEntity && allyCastable(spell);",
     "new": "      const gift = caster?.entity === playerEntity;",
     "tests": [
-      "test/fb1001_regen.test.js"
+      "test/systems/fb1001_regen.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      const gift = caster?.entity === playerEntity && allyCastable(spell);",
     "new": "      const gift = allyCastable(spell);",
     "tests": [
-      "test/fb1001_regen.test.js"
+      "test/systems/fb1001_regen.test.js"
     ]
   },
   {
@@ -77,16 +77,16 @@
     "old": "    if (!allyCastable(sp)) return;\n    const r = applySpellToPlayer({ ...sp, rangeType: 0 }",
     "new": "    return;\n    const r = applySpellToPlayer({ ...sp, rangeType: 0 }",
     "tests": [
-      "test/fb1001_regen.test.js"
+      "test/systems/fb1001_regen.test.js"
     ]
   },
   {
     "name": "AREA-CASTER-given-it-saved",
     "file": "src/scenes/hostMagic.js",
-    "old": "    const r = applySpellToPlayer({ ...sp, rangeType: 0 }, effectiveLevel(playerEntity), playerCaster());",
-    "new": "    const r = applySpellToPlayer(sp, effectiveLevel(playerEntity), playerCaster());",
+    "old": "    const r = applySpellToPlayer({ ...sp, rangeType: 0 }, effectiveLevel(playerEntity), playerCaster(cast));",
+    "new": "    const r = applySpellToPlayer(sp, effectiveLevel(playerEntity), playerCaster(cast));",
     "tests": [
-      "test/fb1001_regen.test.js"
+      "test/systems/fb1001_regen.test.js"
     ]
   },
   {
@@ -95,25 +95,25 @@
     "old": "    if (!allyCastable(sp)) return;\n    const r = applySpellToPlayer({ ...sp, rangeType: 0 }",
     "new": "    if (false) return;\n    const r = applySpellToPlayer({ ...sp, rangeType: 0 }",
     "tests": [
-      "test/fb1001_regen.test.js"
+      "test/systems/fb1001_regen.test.js"
     ]
   },
   {
     "name": "AREA-CASTER-around-caster-passes-her-by",
     "file": "src/scenes/hostMagic.js",
-    "old": "      giveAreaToCaster(sp);   // AREA-CASTER: and me, when it is all gifts",
+    "old": "      giveAreaToCaster(sp, cast);   // AREA-CASTER: and me, when it is all gifts",
     "new": "      // gone   // AREA-CASTER: and me, when it is all gifts",
     "tests": [
-      "test/fb1001_regen.test.js"
+      "test/systems/fb1001_regen.test.js"
     ]
   },
   {
     "name": "AREA-CASTER-at-range-only-at-its-burst",
     "file": "src/scenes/hostMagic.js",
-    "old": "    if (sp.rangeType === 4) giveAreaToCaster(sp);",
-    "new": "    if (false) giveAreaToCaster(sp);",
+    "old": "    if (sp.rangeType === 4) giveAreaToCaster(sp, cast);",
+    "new": "    if (false) giveAreaToCaster(sp, cast);",
     "tests": [
-      "test/fb1001_regen.test.js"
+      "test/systems/fb1001_regen.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    if (r.healed > 0) say(`You are healed ${r.healed} points.`);\n  }\n  function explodeAt",
     "new": "  }\n  function explodeAt",
     "tests": [
-      "test/fb1001_regen.test.js"
+      "test/systems/fb1001_regen.test.js"
     ]
   }
 ]

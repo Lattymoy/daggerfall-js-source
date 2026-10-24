@@ -15,26 +15,26 @@
 //
 // BOARD-UI (2026-10-06, Mac: "Enhance the guild war tab of the board for better organization, instruction and
 // readability"): the same parts, each on its own panel under its own name, in the order a reader asks them - the
-// Charter (who holds it, how firmly, the Tithe and Edict); This week (the phase on a strip - Muster, Reckoning,
-// Turning - and its clock, the Season, the Tide); the battle; the standings, each guild's bar toward what it needs (the
-// claim, or the holder's defence); your guild (its pledge, your part, the levers, its Fealty and Pacts - AUDIT 657 B10);
-// the holder's orders; the Works; HOW THE SEAT WAR WORKS, five steps folded under one line (its counts the law's own);
-// and the Chronicle.
+// Charter (who holds it, how firmly, the Tithe and Edict); PLAIN-UI (bible/10-UI/Plain-Words.md): WHAT THIS IS and the
+// reader's next step, HOW THE SEAT WAR WORKS (five steps, its counts the law's own) and WORDS ON THIS BOARD; This week
+// (the phase on a strip - Muster, Reckoning, Turning - and its clock, the Season, the Tide); the battle; the standings,
+// each guild's bar toward what it needs (the claim, or the holder's defence); your guild (its pledge, your part, the
+// levers, its Fealty and Pacts - AUDIT 657 B10); the holder's orders; the Works; and the Chronicle.
 //
 // Every act goes through the window's one-at-a-time door (`ui.run`), and the standings are read again after each.
-import { HALL_OF_RECORDS_SHUT } from '../systems/onlineHomes.js';   // AUDIT-SEATS: the Hall of Records' words where it cannot be read
+import { HALL_OF_RECORDS_SHUT } from '../systems/online/onlineHomes.js';   // AUDIT-SEATS: the Hall of Records' words where it cannot be read
 import { accountRefusalText } from '../net/accountClient.js';
 import {
-  seatInfoLine, seatWeekLine, seatStandingLine, seatNoStandingsLine, seatMineLines, seatTributeLine, seatMay,
+  seatInfoLine, seatWeekLine, seatSpanWords, seatStandingLine, seatNoStandingsLine, seatMineLines, seatTributeLine, seatMay,
   SEAT_PLEDGE_WORDS, SEAT_PLEDGE_REGIONS_MAX, TRIBUTE_MARKS_PER_INFLUENCE, CLAIM_THRESHOLD, CLAIM_FEE, CONTESTED_MARGIN, ACCOUNT_SEAT_WEEK_CAP, SEAT_MEMBER_WAIT_S,
   seatHolderLine, seatBattleLine, seatClaimLine, chronicleLine, SEAT_RELINQUISH_WORDS,
   seatRuleLine, seatHoldingLines, edictLine, edictMayFollow, edictForTier, royalTourneyLines, EDICTS, seatTitheCap, SEAT_LEVER_RANKS, BOUNTY_MARKS,
   politicsRows, POLITICS_ACTS, seasonLine, guildWords,
   sideLine, siegeWindowText, SIEGE_WINDOW_DAYS, SIEGE_WINDOW_HOURS, SIEGE_WINDOW_DEFAULT, SELLSWORD_FEE_MAX, passOpens, passWindowEnds,
-  CROWN_SIEGE_SLOT, CROWN_SEAT_REGIONS,
+  CROWN_SIEGE_SLOT, CROWN_SEAT_REGIONS, STANDING_START, STANDING_UNREST, UNREST_BONUS, TITHE_CAP, SEAT_LEGACY_SHARE,
 } from '../net/townSeatLaw.js';
-import { fightAnnouncement } from '../net/siegeHerald.js';   // AUDIT-SEATS G1: the battle's line, its start in the service's seconds
-import { GUILD_RANK_MASTER } from '../net/guildLaw.js';
+import { fightAnnouncement } from '../net/siege/siegeHerald.js';   // AUDIT-SEATS G1: the battle's line, its start in the service's seconds
+import { GUILD_RANK_MASTER } from '../net/guild/guildLaw.js';
 import { tideLine } from '../net/tideLaw.js';
 import { drawSeatWorks } from './seatWorks.js';   // SEAT2b: the works
 import { towersText } from '../net/fortLaw.js';   // SEAT2b part two: the Watchtowers' word
@@ -64,10 +64,11 @@ export const SEAT_TAB_WORDS = Object.freeze({
   slow: 'The standings did not load.',
   shut: 'The seats are not open to you yet.',
 });
-/** BOARD-UI: the panels' names, in the order they stand. */
+/** BOARD-UI: the panels' names, in the order they stand. PLAIN-UI: what the seat is, and the board's words, first. */
 export const SEAT_PANELS = Object.freeze({
+  about: 'What this is', guide: 'How the seat war works', words: 'Words on this board',
   week: 'This week', battle: 'This week\'s battle', standings: 'Standings', mine: 'Your guild', holding: 'The holder\'s orders',
-  guide: 'How the seat war works', chronicle: 'The Chronicle',
+  chronicle: 'The Chronicle',
 });
 /** BOARD-UI: the week's three phases, as the strip names them - the Muster (pledges open), the Reckoning (locked), the
  *  Turning (the week settles). */
@@ -86,10 +87,113 @@ export function seatGuide(seat) {
     ['Earn', `Members ${n(SEAT_MEMBER_WAIT_S / 86400)} days in the guild earn influence in the seat's region: walking the town (the Watch), closing Dagon's Breaches, a home in the town, Renown and seat writs. The Guildmaster adds Tribute from the treasury. One account counts for at most ${n(ACCOUNT_SEAT_WEEK_CAP)} a week at a seat.`],
     // AUDIT 657 B9: the law's taker - the strongest past the line whose treasury holds the fee (townSeatLaw.js turningPlan)
     ['Claim', `At the Turning, Sunday 18:00 UTC, an unheld Charter goes to the strongest guild with at least ${n(CLAIM_THRESHOLD[t])} influence whose treasury can pay ${n(CLAIM_FEE[t])} silver. Two guilds within ${Math.round(CONTESTED_MARGIN * 100)}% of each other meet in a Tourney for it.`],
-    ['Siege', `A held Charter is challenged by beating the holder's defence with at least ${n(CLAIM_THRESHOLD[t])}: the strongest challenger wins a Right of Siege, fought in the holder's battle window. Sign for your side on this tab.`],
-    ['Hold', 'The holder sets the Tithe and an Edict and pays upkeep each week. Keeping the town raises its Standing; a Standing of nought brings revolt.'],
+    ['Siege', `A held Charter is challenged by beating the holder's defense with at least ${n(CLAIM_THRESHOLD[t])}: the strongest challenger wins a Right of Siege, fought in the holder's battle window. Sign for your side on this tab.`],
+    ['Hold', 'The holder sets the Tithe and an Edict and pays upkeep each week. Keeping the town raises its Standing. At a Standing of 0 the town revolts.'],
   ];
 }
+
+/**
+ * PLAIN-UI (bible/10-UI/Plain-Words.md; a player: "The seat page on the notice board is extremely vague ... doesnt
+ * explain anything"): WHAT THIS IS - the seat in two sentences, before any of its numbers. Pure.
+ * @param {{ name: string }} seat
+ */
+export const seatAbout = (seat) => `${seat.name} is a seat: one player guild at a time holds its Charter and rules the town. `
+  + 'Each week the guilds pledged here earn influence; at the week\'s end the strongest takes an unheld Charter, or wins the right to fight its holder for it.';
+
+/**
+ * PLAIN-UI: whether the reader may pledge their guild HERE now - the Muster, the pledge's rank, no pledge in the region
+ * yet and room for one more region (leversNode's own pledge arm). AUDIT PLAIN-UI U2: the next step then carries the
+ * lever itself, where it stood two screens down under Your guild. Pure.
+ * @param {{ region: number }} seat @param {any} data the standings' answer
+ */
+export function seatMayPledgeHere(seat, data) {
+  const mine = data?.mine ?? null;
+  const pledges = mine?.pledges ?? [];
+  return !!mine && data?.phase === 'muster' && seatMay(mine.rank, 'pledge') && !pledges.some((/** @type {any} */ p) => p.region === seat.region)
+    && pledges.length < SEAT_PLEDGE_REGIONS_MAX;
+}
+
+/**
+ * PLAIN-UI: THE READER'S NEXT STEP at this seat - one sentence from where the reader stands (no guild; a guild not pledged
+ * here, in the Muster or after it; a pledge elsewhere; a member not yet counted; one who earns here). AUDIT PLAIN-UI U2:
+ * the seat a pledge elsewhere is for, by `nameOf`, and the time left to a deadline by `nowS`, where given. Pure.
+ * @param {{ name: string, region: number, key: number }} seat @param {any} data the standings' answer
+ * @param {{ nameOf?: (key: number) => (string|null), nowS?: number }} [o]
+ */
+export function seatNextStep(seat, data, { nameOf = () => null, nowS = NaN } = {}) {
+  const mine = data?.mine ?? null;
+  const left = (/** @type {unknown} */ at) => (Number.isFinite(at) && Number.isFinite(nowS) ? ` (in ${seatSpanWords(Number(at) - nowS)})` : '');
+  // AUDIT PLAIN-UI W12: a guest's guild is refused ('guilds-need-account') - the step says what a guild needs
+  if (!mine) return 'You need a guild to take part. Open Social (beside the chat), then its Guild page to join or found one. A guild needs an account with a username and a password.';
+  const here = (mine.pledges ?? []).find((/** @type {any} */ p) => p.region === seat.region) ?? null;
+  if (!here) {
+    if (data?.phase !== 'muster') return `Pledges are locked until the Turning, Sunday 18:00 UTC${left(data?.turningAt)}. Your guild can pledge here in next week's Muster.`;
+    // AUDIT PLAIN-UI W5: a guild at its regions' most has no pledge button here (leversNode) - its next step says so
+    if ((mine.pledges ?? []).length >= SEAT_PLEDGE_REGIONS_MAX) return `Your guild has pledged in ${SEAT_PLEDGE_REGIONS_MAX} regions this week, the most it can. Take one pledge down to pledge here.`;
+    return seatMay(mine.rank, 'pledge')
+      ? `Pledge your guild to ${seat.name} before Friday 18:00 UTC${left(data?.reckoningAt)}.`
+      : `Ask an Officer or your Guildmaster to pledge your guild to ${seat.name} before Friday 18:00 UTC${left(data?.reckoningAt)}.`;
+  }
+  if (here.key !== seat.key) return `Your guild fights for ${nameOf(here.key) ?? 'another seat of this region'} this week, and what you earn counts there.`;
+  if (!mine.seasoned) return `You count for your guild once you have been in it ${SEAT_MEMBER_WAIT_S / 86400} days.`;
+  if (mine.bound && mine.bound !== mine.guild) return 'Your account fights for another guild this week, and what you earn counts there.';
+  return here.held
+    ? 'Your guild holds this Charter. Earn influence here to keep its defense above every challenger: walk the town, close Dagon\'s Breaches, keep a home here, gain Renown, fill seat writs.'
+    : 'Earn influence for your guild here: walk the town, close Dagon\'s Breaches, keep a home here, gain Renown, fill seat writs.';
+}
+
+/**
+ * PLAIN-UI: WORDS ON THIS BOARD - every name the Seat tab uses, `[word, meaning]`, its numbers the law's own
+ * (net/townSeatLaw.js), so the words never drift from the rules. Pure.
+ * @param {{ tier?: string }} seat
+ */
+export function seatWords(seat) {
+  const t = seat?.tier === 'crown' ? 'crown' : 'palace';
+  return [
+    ['Charter', 'The right to rule this town. One player guild holds it at a time.'],
+    ['Influence', `A guild's score at this seat for the week, earned by its members and bought with Tribute. ${SEAT_LEGACY_SHARE === 0.1 ? 'A tenth' : `${Math.round(SEAT_LEGACY_SHARE * 100)}%`} carries into the next week (none past a Season's end); the rest is cleared at the Turning.`],
+    ['Muster, Reckoning, Turning', 'The week\'s three parts. The Muster, Sunday 18:00 to Friday 18:00 UTC: guilds pledge. The Reckoning, to Sunday 18:00: pledges are locked, influence still counts. The Turning, Sunday 18:00: the week is settled.'],
+    // AUDIT PLAIN-UI W4: the pledged seat takes the region's Breaches and Renown too (seatInfluence.js countsAt)
+    ['Pledge', 'A guild\'s choice of the one seat it fights for in a region this week. Its members\' work counts there: the Watch, a home and seat writs in that seat\'s town; Dagon\'s Breaches and Renown anywhere in the region.'],
+    ['Defence', 'The holder\'s strength here this week: its own influence, raised or cut by the town\'s Standing, its last siege, how many seats it holds and its liege. A challenger must beat it.'],   // seatDefence
+    ['Right of Siege', `Won at the Turning by the strongest challenger past the defense (and at least ${CLAIM_THRESHOLD[t].toLocaleString('en-US')} influence): a battle with the holder for the Charter, in the holder's battle window.`],
+    ['Tourney', `Two guilds that pass the claim's line within ${Math.round(CONTESTED_MARGIN * 100)}% of each other fight for an unheld Charter in a Tourney.`],
+    ['Standing', `How the town feels about its holder, from 0 to 100. A new Charter starts at ${STANDING_START}. Under ${STANDING_UNREST} the town is in Unrest and challengers earn ${Math.round(UNREST_BONUS * 100)}% more influence. At 0 it revolts.`],
+    ['Tithe', `The holder's cut of each sale at the Notice Boards of its part of the region, set once a week (at most ${TITHE_CAP[t]}% here, more with a Market Hall).`],
+    ['Edict', 'A law the holder proclaims for the coming week, such as a Market Day, a Curfew or a Festival. Some raise the town\'s Standing, some lower it.'],
+    ['Tribute', `Silver the Guildmaster pays from the treasury for influence: 1 for every ${TRIBUTE_MARKS_PER_INFLUENCE} silver, at most a fifth of the guild's influence here a week. The silver is spent.`],
+    // AUDIT PLAIN-UI W7: a player of neither guild in the battle - a third guild's member may be one
+    ['Sellsword', 'A player of neither guild in the battle, hired for a fee by one side\'s Guildmaster to fight on that side.'],
+    // AUDIT PLAIN-UI T6: the Works and crown politics are on this tab too
+    ['The Works', 'The seat\'s own buildings, such as Walls, a Gatehouse, Watchtowers, Barracks and a Market Hall. The holder builds them with silver and the goods in its stockpile. They stay with the seat when the Charter changes hands, and each drops a grade.'],
+    ['Fealty and Pacts', 'A guild holding a palace in a crown\'s kingdom can swear fealty to the crown\'s holder. The vassal pays the crown a share of its Tithe and gains half the crown\'s reach in its defense, and neither can pledge against the other. A Pact of non-aggression stops two guilds pledging against each other\'s seats for the rest of a Season.'],
+    ['Season and Tide', 'A Season is a run of weeks, and This week shows which week of it this is. A Tide is the week\'s change of fortune in a land, such as a Harvest, a Blight or a Plague.'],
+  ];
+}
+/**
+ * PLAIN-UI: A FOLD ON THE BOARD - a `<details>` under `title`, drawn `open`, whose reader's choice is told to `chose`
+ * from the `<summary>`'s press (a click, or Enter or Space on it) and never from `toggle`: AUDIT PLAIN-UI C1 - a browser
+ * fires `toggle` for an `open` the draw set as well, so the default the code drew was recorded as the reader's own and a
+ * redraw's queued echo could undo a fold. The press comes before the browser flips it, so the choice is `!open`.
+ * @param {(tag: string, cls?: string|null, text?: string|null) => any} make the window's element maker
+ * @param {string} cls @param {string} title @param {boolean} open @param {(open: boolean) => void} chose
+ */
+export function boardFold(make, cls, title, open, chose) {
+  const d = make('details', cls);
+  d.open = open;
+  const s = make('summary', null, title);
+  s.onclick = () => chose(!d.open);
+  d.append(s);
+  return d;
+}
+
+/**
+ * PLAIN-UI: whether HOW THE SEAT WAR WORKS stands open when the tab is drawn - open for a reader whose guild has no
+ * pledge in the seat's region (no guild, or a guild not in this war yet), folded for one already in it. Pure.
+ * @param {{ region: number }} seat @param {any} data the standings' answer
+ */
+export const seatGuideOpen = (seat, data) => !(data?.mine?.pledges ?? []).some((/** @type {any} */ p) => p.region === seat.region);
+
 /** The refusals that say the seats are shut to this account (no retry offered). */
 const SHUT = new Set(['seats-closed', 'no-session', 'auth', 'seat-unconfirmed']);
 
@@ -115,7 +219,8 @@ export function createSeatTab(host, ui) {
   let windowAsk = null, hireHandle = '', hireFee = 0;   // SEAT2a: the window and the contract asked, kept across redraws
   let politicsTag = '';   // CROWN2: the guild an offer is made to, kept across redraws
   let forts = null;   // SEAT2b: the works as last read, read with the standings
-  let guideOpen = false;   // BOARD-UI: the guide unfolded
+  let guideOpen = null;   // BOARD-UI: the guide unfolded - PLAIN-UI: null until the reader folds or unfolds it (seatGuideOpen)
+  let wordsOpen = false;   // PLAIN-UI: the board's words unfolded
 
   async function load(force) {
     // AUDIT-SEATS C9: a reload asked mid-read is queued - the act's read after another act's was dropped, and the tab
@@ -381,7 +486,7 @@ export function createSeatTab(host, ui) {
       out.append(b);
     }
     // SEAT2a part four: THE BATTLE ENTERED from here, while its door is open (ten minutes before the start to its
-    // window's close) - a signed fighter to fight, anyone else to watch (net/siegeSession.js, through the world's hook)
+    // window's close) - a signed fighter to fight, anyone else to watch (net/siege/siegeSession.js, through the world's hook)
     const nowS = ui.nowS();
     if (host.enterBattle && f.startsAt && nowS >= passOpens({ starts_at: f.startsAt }) && nowS < passWindowEnds({ starts_at: f.startsAt, kind: f.kind, tier: f.tier })) {
       const b = button('notice-seat-enter', mine?.signed ? 'Enter the battle' : 'Watch the battle', () => ui.run(async () => {
@@ -433,11 +538,40 @@ export function createSeatTab(host, ui) {
       who.append(el('p', 'seat-charter', seatInfoLine(seat, holder?.guild ?? null)));
       charter.append(who);
       body.append(charter);
+      /** PLAIN-UI (bible/10-UI/Plain-Words.md): WHAT THIS IS and the reader's next step (where the standings say it), then
+       *  HOW THE SEAT WAR WORKS and the board's words - above the numbers they explain, where they stood folded under the
+       *  whole tab; AUDIT PLAIN-UI C4: and drawn for a reader the standings refused or have not reached yet, whom they
+       *  explain the seat to as well. */
+      const explain = () => {
+        const about = panel(SEAT_PANELS.about, 'seat-aboutpanel');
+        about.append(el('p', 'seat-about', seatAbout(seat)));
+        if (data) {
+          const next = el('p', 'seat-next', seatNextStep(seat, data, { nameOf, nowS: ui.nowS() }));
+          // AUDIT PLAIN-UI U2: the step's own lever beside it - the pledge, where Your guild's stood two screens down
+          if (seatMayPledgeHere(seat, data)) {
+            const b = button('seat-next-pledge', SEAT_PLEDGE_WORDS.pledge(seat), () => act(() => book.pledge(seat)));
+            b.disabled = ui.busy();
+            next.append(b);
+          }
+          about.append(next);
+        }
+        const guide = boardFold(el, 'notice-panel seat-guide board-guide', SEAT_PANELS.guide, guideOpen ?? seatGuideOpen(seat, data), (o) => { guideOpen = o; });
+        const steps = el('ol');
+        for (const [name, words] of seatGuide(seat)) { const li = el('li'); li.append(el('b', null, `${name}. `), words); steps.append(li); }
+        guide.append(steps);
+        body.append(guide);
+        const glossary = boardFold(el, 'notice-panel seat-words board-words', SEAT_PANELS.words, wordsOpen, (o) => { wordsOpen = o; });
+        const dl = el('dl');
+        for (const [word, meaning] of seatWords(seat)) dl.append(el('dt', null, word), el('dd', null, meaning));
+        glossary.append(dl);
+        body.append(glossary);
+      };
       if (!data) {
         const shut = SHUT.has(error ?? '');
         const p = el('p', 'notice-empty', loading || !error ? SEAT_TAB_WORDS.reading : shut ? (error === 'seat-unconfirmed' ? accountRefusalText(error) : SEAT_TAB_WORDS.shut) : SEAT_TAB_WORDS.slow);
         if (error && !shut && !loading) p.append(button('notice-retry', 'Try again', () => load(true)));
         body.append(p);
+        explain();
         return body;
       }
       who.append(el('p', 'notice-seat-mine', seatHolderLine(holder)));
@@ -445,6 +579,7 @@ export function createSeatTab(host, ui) {
       const rule = seatRuleLine(seat, holder);
       if (rule) who.append(el('p', 'notice-seat-mine', rule));
       if (data.holding) for (const line of seatHoldingLines(seat, data.holding)) who.append(el('p', 'notice-seat-mine', line));
+      explain();
       // THIS WEEK: the phase on its strip, the Season, the Tide, the clock
       const week = panel(SEAT_PANELS.week, 'seat-weekpanel');
       const strip = el('ol', 'seat-phases');
@@ -505,15 +640,6 @@ export function createSeatTab(host, ui) {
           onBegin: (work) => act(() => book.fortFund(seat, work, host.port === true)),
         });
       }
-      // BOARD-UI: HOW THE SEAT WAR WORKS - folded under its line, and kept open across the tab's redraws
-      const guide = /** @type {any} */ (el('details', 'notice-panel seat-guide'));
-      guide.open = guideOpen;
-      guide.addEventListener?.('toggle', () => { guideOpen = !!guide.open; });
-      guide.append(el('summary', null, SEAT_PANELS.guide));
-      const steps = el('ol');
-      for (const [name, words] of seatGuide(seat)) { const li = el('li'); li.append(el('b', null, `${name}. `), words); steps.append(li); }
-      guide.append(steps);
-      body.append(guide);
       // SEAT1c: the Chronicle (SEAT0 9.2), newest first
       const lines = (data.chronicle ?? []).map((r) => chronicleLine(r, seat, book.zero ?? null)).filter(Boolean);   // SEASON1 part three: in its Season's words
       if (lines.length || host.readRecords) {

@@ -9,7 +9,7 @@
 // A VOTE is one registered account's word on one online home (a guild's
 // hall among them): up (+1) or down (-1), changed or taken back (0) at
 // will, never more than one standing an account. A home's SCORE is its
-// votes summed; while it runs NEGATIVE the home is SHUNNED, and what its
+// votes summed; while it runs down to HOME_SHUN_AT (-5 - HOME-SHUN) the home is SHUNNED, and what its
 // owner chose to show stands for its insiders alone - every other player
 // walks into the room Daggerfall furnished (no placed piece but a hired
 // trader with goods on sale, nothing taken out - AUDIT HOME-VOTE B2, II
@@ -47,15 +47,20 @@ export const homeVoteOwnerOk = (o) => typeof o === 'string' && o.length > 0 && o
 export const homeScoreOf = (raw) => (Number.isSafeInteger(raw) ? raw : 0);
 /** An account's own vote on a home as the service answers it - -1, +1, or 0 for none. */
 export const homeMyVoteOf = (raw) => (raw === HOME_VOTE_DOWN || raw === HOME_VOTE_UP ? raw : 0);
-/** THE LAW: a home whose votes run negative is shunned. */
-export const homeShunned = (score) => homeScoreOf(score) < 0;
+/** HOME-SHUN (2026-10-12, from play: "-1 is a bit crazy since you START at 0 when you buy a house... hide placements
+ *  from everyone starting at like -5, -10"): THE SCORE AT WHICH A HOME IS SHUNNED - five votes down, net. One account's
+ *  down-vote on a new house nobody had seen yet hid it, and a hidden house is one nobody sees to vote up; a home now
+ *  hides only when the town's word against it outweighs it by five. */
+export const HOME_SHUN_AT = -5;
+/** THE LAW: a home whose votes run down to HOME_SHUN_AT is shunned. */
+export const homeShunned = (score) => homeScoreOf(score) <= HOME_SHUN_AT;
 
 /**
  * WHETHER A HOME'S DECOR STANDS FOR THE PLAYER LOOKING - its placed pieces inside and out, the furniture its owner took
  * out, and the paint on its outside. Always for its INSIDERS: the owner's own account (`mine` - any of its characters)
  * and, for a guild's hall, an account with any character in its guild (`insider` - AUDIT A5: the service's own line, the
  * account's as `mine` is; `member`, the playing character's, is one of them); for everyone else, unless the home is
- * shunned. `home` is the client's registry row (systems/onlineHomes.js homeAt); none - not an online home - shows what
+ * shunned. `home` is the client's registry row (systems/online/onlineHomes.js homeAt); none - not an online home - shows what
  * stands.
  */
 export function homeDecorShown(home) {
@@ -77,14 +82,14 @@ export const homeScoreText = (score) => {
   return n > 0 ? `+${n}` : String(n);
 };
 /** The door's line under a voted home, to anyone who may vote on it: its score, and the reader's own vote. */
-export const homeVotesLine = (score, mine = 0) => `Votes: ${homeScoreText(score)}${mine === HOME_VOTE_UP ? ' - you voted up' : mine === HOME_VOTE_DOWN ? ' - you voted down' : ''}`;
+export const homeVotesLine = (score, mine = 0) => `Votes: ${homeScoreText(score)}${mine === HOME_VOTE_UP ? ' (you voted up)' : mine === HOME_VOTE_DOWN ? ' (you voted down)' : ''}`;
 /** What a shunned home's insiders are told at its door - its decor hidden from everyone else until its score climbs. */
-export const homeShunnedInsiderLine = (score, hall = false) => `Votes: ${homeScoreText(score)} - ${hall ? "your hall's" : "your home's"} decorations are hidden from other players.`;
+export const homeShunnedInsiderLine = (score, hall = false) => `Votes: ${homeScoreText(score)}. ${hall ? "Your hall's" : "Your home's"} decorations are hidden from other players.`;
 /** What a visitor is told at a shunned home's door. */
 export const HOME_SHUNNED_LINE = 'Its decorations are hidden: the town has voted it down.';
 /** A vote refused in its own words where the home door's would mislead - a guest's (the route's wall says owning a home
  *  needs an account), a home nobody holds now (the door's word is "not yours any more") - else null. */
-export const homeVoteRefusalLine = (error) => (error === 'homes-need-account' ? 'Voting on a home needs a username and a password. Give this account one and you can vote.'
+export const homeVoteRefusalLine = (error) => (error === 'homes-need-account' ? 'Voting on homes needs a username and password. Add them to this account to vote.'
   : error === 'no-home' ? HOME_VOTE_GONE_LINE : null);
 /** A vote on a home nobody owns now. */
 export const HOME_VOTE_GONE_LINE = 'Nobody owns that home any more.';

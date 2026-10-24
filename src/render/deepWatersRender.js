@@ -47,7 +47,7 @@ import { buildProgram } from './glProgram.js';
 import { FOG_GLSL } from './fogGlsl.js';
 import { COLUMN_GLSL } from './columnGlsl.js';   // DW-F: the column's share, one home (the renderer's billboards take it too)
 import { WATER_LAYER_UNITS } from './waterSurface.js';   // FIELD BUGS 2026-09-29 (the sea) #4: the top's place in the sea's stack
-import { SURFACE_TEXTURE_TILING, SURFACE_SCROLL, FLOOR_TEXTURE_WORLD_SCALE, FLOOR_SHADER_DEFAULTS } from '../world/deepWaterLook.js';
+import { SURFACE_TEXTURE_TILING, SURFACE_SCROLL, FLOOR_TEXTURE_WORLD_SCALE, FLOOR_SHADER_DEFAULTS } from '../world/deepWater/deepWaterLook.js';
 
 // THE COLUMN'S SHARE (the top's alpha, split - see above): columnGlsl.js,
 // one home - the floor and the decorations take it here, DFU's billboards a
@@ -350,7 +350,7 @@ void main() {
   else outColor = vec4((1.0 - exp(-d * uDwFog[1].w)) * uDwFog[2].xyz * k + uDwFog[3].xyz * f, 0.0);
 }`;
 
-// UNDER-LOOK and UNDER-RAYS (FIELD BUGS 2026-10-01 #4, #5; world/underwaterLook.js): the port's look over the sea
+// UNDER-LOOK and UNDER-RAYS (FIELD BUGS 2026-10-01 #4, #5; world/underwater/underwaterLook.js): the port's look over the sea
 // while the eye is under it - over every pixel the world drew, before the weapon and the HUD. The water body is
 // affine in the colour under it, c * keep + body, so it is the sky fog's two blends again (the first draw multiplies,
 // the second adds); the second also adds the shafts. A shaft is the sun let through where the moving surface focuses
@@ -430,17 +430,17 @@ export class DeepWatersRenderer {
     this._programs = {
       floor: { p: floor, u: locs(gl, floor, ['uProj', 'uView', 'uModel', 'uMainTex', 'uSurfaceTex', 'uSandColor', 'uMidColor', 'uDeepColor', 'uSwampColor',
         'uTextureWorldScale', 'uTextureStrength', 'uShelfMix', 'uDepthGamma', 'uAmbientBoost', 'uSceneTint',
-        'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uDwCamFwd', 'uColumnOn', 'uSeaY', 'uTopColor', 'uTopVision', 'uSurfaceScroll', 'uPixelOrigin', 'uDwFog', 'uFocus']) },
+        'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uDwCamFwd', 'uColumnOn', 'uSeaY', 'uTopColor', 'uTopVision', 'uSurfaceScroll', 'uPixelOrigin', 'uDwFog', 'uFocus', 'uJungleHaze']) },
       top: { p: top, u: locs(gl, top, ['uProj', 'uView', 'uModel', 'uLiftY', 'uSurfaceScroll', 'uMainTex', 'uColor', 'uUnderwater', 'uCamPos',
-        'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uFocus']) },
+        'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uFocus', 'uJungleHaze']) },
       topFar: { p: topFar, u: locs(gl, topFar, ['uProj', 'uView', 'uModel', 'uLiftY', 'uSurfaceScroll', 'uMainTex', 'uColor', 'uUnderwater', 'uCamPos',
-        'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uFocus']) },
+        'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uFocus', 'uJungleHaze']) },
       under: { p: under, u: locs(gl, under, ['uProj', 'uView', 'uModel', 'uLiftY', 'uSurfaceScroll', 'uMainTex', 'uColor', 'uUnderwaterFogColor', 'uUndersideAlpha',
-        'uHorizonColor', 'uFadeStart', 'uFadeEnd', 'uColumnFogStrength', 'uUnderwater', 'uCamPos', 'uDwFog', 'uFocus']) },
-      skyFog: { p: skyFog, u: locs(gl, skyFog, ['uRayC', 'uRayX', 'uRayY', 'uCamPos', 'uPass', 'uDwFog', 'uFocus']) },
+        'uHorizonColor', 'uFadeStart', 'uFadeEnd', 'uColumnFogStrength', 'uUnderwater', 'uCamPos', 'uDwFog', 'uFocus', 'uJungleHaze']) },
+      skyFog: { p: skyFog, u: locs(gl, skyFog, ['uRayC', 'uRayX', 'uRayY', 'uCamPos', 'uPass', 'uDwFog', 'uFocus', 'uJungleHaze']) },
       look: { p: look, u: locs(gl, look, ['uRayC', 'uRayX', 'uRayY', 'uCamPos', 'uSeaY', 'uKeep', 'uBody', 'uSunW', 'uShaft', 'uReach', 'uTime', 'uPass']) },
       decor: { p: decor, u: locs(gl, decor, ['uProj', 'uView', 'uModel', 'uViewCol2', 'uUpVector', 'uMainTex', 'uColor', 'uCutoff', 'uSceneTint',
-        'uTick', 'uFrames', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus',
+        'uTick', 'uFrames', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus', 'uJungleHaze',
         'uSurfaceTex', 'uDwCamFwd', 'uColumnOn', 'uSeaY', 'uTopColor', 'uTopVision', 'uSurfaceScroll', 'uPixelOrigin', 'uFacing', 'uCamRight', 'uCamUp']) },
       empty: gl.createVertexArray(),   // the sky pass's triangle is gl_VertexID's
     };
@@ -505,6 +505,7 @@ export class DeepWatersRenderer {
     if (u.uCamPos) gl.uniform3fv(u.uCamPos, r._camPos);
     if (u.uDwFog) gl.uniform4fv(u.uDwFog, r._dwFog);   // the distance fog's frame (renderer.setWaterFog)
     if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);   // AUDIT DEEP R-1: the travel view's focus - the seabed's fog is the traveller's, as the beach's is
+    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)
     if (u.uFogColor) {   // the world's fog (renderer.setFog): the floor, the top, and the column's share in the decorations
       gl.uniform3fv(u.uFogColor, r._fogColor);
       gl.uniform1i(u.uFogMode, r._fogMode);
@@ -850,6 +851,7 @@ export class DeepWatersRenderer {
     gl.uniform3fv(u.uCamPos, r._camPos);
     gl.uniform4fv(u.uDwFog, r._dwFog);
     if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);   // AUDIT DEEP R-1
+    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)
     gl.enable(gl.DEPTH_TEST);
     gl.depthFunc(gl.LEQUAL);
     gl.depthMask(false);
@@ -874,7 +876,7 @@ export class DeepWatersRenderer {
    * UNDER-LOOK and UNDER-RAYS: the water over every pixel the world drew, while the eye is under the sea - after the
    * last world pass and before the weapon and the HUD (the host's), into whatever target the world draws into. The
    * rays are drawSkyFog's; no depth test, no depth write, alpha kept.
-   * @param {{keep: number[], body: number[], sunW: number[], shaft: number[]}} u - world/underwaterLook.js underwaterLookUniforms
+   * @param {{keep: number[], body: number[], sunW: number[], shaft: number[]}} u - world/underwater/underwaterLook.js underwaterLookUniforms
    * @param {number} seaY - the sea's height in the scene
    * @param {number} reach - the shafts' march (m)
    * @param {number} timeSeconds

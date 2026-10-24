@@ -1,6 +1,6 @@
 // @ts-check
 // TACT4 - A FOE'S TELEGRAPH ON THE GROUND (bible/12-Enhanced-AI/Tactics-Arc.md): the world boss's floor telegraph
-// (render/gateTelegraph.js) at a foe's scale - one flat quad at the foe's feet, the shape the fragment's question
+// (render/gate/gateTelegraph.js) at a foe's scale - one flat quad at the foe's feet, the shape the fragment's question
 // against ai/foeBlows.js inBlow (the pins hold `blowField` to it point for point, and the shader's text to it): a dim
 // outline at once, filling outward as the wind-up runs, a bright flash at the landing. Depth-tested and never
 // depth-written, lifted and offset off the ground (SNOW-TELL: and over the deep snow). TELL2 (bible/12-Enhanced-AI/Feud-Arc.md 4.4): drawn in the boss's
@@ -175,13 +175,14 @@ const QUAD = new Float32Array([-1, -1, 1, -1, 1, 1, -1, -1, 1, 1, -1, 1]);
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 const NO_FOG_RANGE3 = new Float32Array([0, 0, 0]);
 const NO_FOCUS = new Float32Array([0, 0, 0, 0]);
+const NO_HAZE = new Float32Array(8);   // AUDIT BANTHA1 HAZE-3: uJungleHaze off ([1].x 0)
 
 export class FoeTelegraphPass {
   constructor(gl) {
     this.gl = gl;
     this.program = buildProgram(gl, VS, FS, 'foeTelegraph');
     this.u = {};
-    for (const n of ['uVP', 'uOrigin', 'uYaw', 'uHalf', 'uLift', 'uKind', 'uT', 'uFlash', 'uColor', 'uP', 'uSlope', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uNow', 'uNearFloor', 'uIron', 'uCut', 'uContrast', 'uShatter']) this.u[n] = gl.getUniformLocation(this.program, n);
+    for (const n of ['uVP', 'uOrigin', 'uYaw', 'uHalf', 'uLift', 'uKind', 'uT', 'uFlash', 'uColor', 'uP', 'uSlope', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze', 'uNow', 'uNearFloor', 'uIron', 'uCut', 'uContrast', 'uShatter']) this.u[n] = gl.getUniformLocation(this.program, n);
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     this.vbo = gl.createBuffer();
@@ -210,6 +211,7 @@ export class FoeTelegraphPass {
     gl.uniform1f(U.uFogDensity, fog?.density ?? 0);
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? NO_FOG_RANGE3);
+    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off
     if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);   // AUDIT DEEP R-1's law: under the travel view the fog is the traveller's
     gl.bindVertexArray(this.vao);
     gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE_MINUS_SRC_ALPHA);   // TELL2: premultiplied - the keyline darkens the floor, the line and the fill light it

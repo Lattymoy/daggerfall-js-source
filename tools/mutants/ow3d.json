@@ -1,121 +1,121 @@
 [
   {
     "name": "OW3D1-spawns-dropped",
-    "file": "src/systems/travelDungeons.js",
+    "file": "src/systems/travel/travelDungeons.js",
     "old": "  for (const s of spawns ?? []) {\n    const d = Math.hypot(s.x - at.x, s.y - at.y);",
     "new": "  for (const s of []) {\n    const d = Math.hypot(s.x - at.x, s.y - at.y);",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1: every spawned dungeon dropped again - online, most of the dungeons near a player never marked."
   },
   {
     "name": "OW3D1-unsaid-spawns-marked",
-    "file": "src/systems/travelDungeons.js",
+    "file": "src/systems/travel/travelDungeons.js",
     "old": "    if (d > range || !s.loc?.name || !spawnKnown(s)) continue;",
     "new": "    if (d > range || !s.loc?.name) continue;",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1: a spawn the spawned feature has not said (its pixel never entered - the one next door) is given away on the Overworld."
   },
   {
     "name": "OW3D1-spawn-circle",
-    "file": "src/systems/travelDungeons.js",
+    "file": "src/systems/travel/travelDungeons.js",
     "old": "    if (d > range || !s.loc?.name || !spawnKnown(s)) continue;",
     "new": "    if (!s.loc?.name || !spawnKnown(s)) continue;",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1: every spawn ever said stands on the Overworld, however far - past the far range's circle."
   },
   {
     "name": "OW3D1-said-is-named",
-    "file": "src/systems/travelDungeons.js",
+    "file": "src/systems/travel/travelDungeons.js",
     "old": "found: !!spawnFound(s), spawn: true",
     "new": "found: true, spawn: true",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1: a spawn said but not filed (a load of a save before its pixel was entered) wears its name and is a journey."
   },
   {
     "name": "OW3D1-spawn-a-place-key",
-    "file": "src/systems/travelDungeons.js",
+    "file": "src/systems/travel/travelDungeons.js",
     "old": "key: `spawn:${s.loc.mapTableData?.mapId}`",
     "new": "key: `dng:${s.loc.mapTableData?.mapId}`",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1: a spawn's plate keyed as a map row's - its click looks for a place summary it has none of, and walks nowhere."
   },
   {
     "name": "OW3D1-spawn-found-on-approach",
-    "file": "src/systems/travelDungeons.js",
+    "file": "src/systems/travel/travelDungeons.js",
     "old": "    if (g.found || g.spawn) continue;",
     "new": "    if (g.found) continue;",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1: a said-but-unfiled spawn within a kilometre is 'found' - the host reads the map row it has none of, and the frame throws."
   },
   {
     "name": "OW3D1-spawn-rows-double",
-    "file": "src/systems/travelDungeons.js",
+    "file": "src/systems/travel/travelDungeons.js",
     "old": "    if (!loc?.name || loc.spawned) continue;",
     "new": "    if (!loc?.name) continue;",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1: a spawn standing on a map row's pixel is marked as that row - unsaid, it is given away."
   },
   {
     "name": "OW3D3-rowless-take-slots",
-    "file": "src/systems/travelDungeons.js",
+    "file": "src/systems/travel/travelDungeons.js",
     "old": "    if (!loc?.name || loc.spawned) continue;",
     "new": "    if (loc?.spawned) continue;",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D3: a row with no named place in the index takes a slot of the twelve (and the host reads a name off nothing)."
   },
   {
     "name": "OW3D3-grid-spends-slots",
-    "file": "src/systems/travelDungeons.js",
+    "file": "src/systems/travel/travelDungeons.js",
     "old": "    if (found && Math.max(Math.abs(g.x - at.x), Math.abs(g.y - at.y)) <= grid) continue;\n",
     "new": "",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D3: a found dungeon inside the grid (TV2's own plate) spends a slot of the twelve, and a farther one goes unmarked."
   },
   {
     "name": "OW3D3-cap-before-filter",
-    "file": "src/systems/travelDungeons.js",
+    "file": "src/systems/travel/travelDungeons.js",
     "old": "  for (const g of dungeons ?? []) {\n    const d = Math.hypot(g.x - at.x, g.y - at.y);\n    if (d > range) continue;\n    const loc = locAt(g.x, g.y);",
     "new": "  for (const g of (dungeons ?? []).slice(0, max)) {\n    const d = Math.hypot(g.x - at.x, g.y - at.y);\n    if (d > range) continue;\n    const loc = locAt(g.x, g.y);",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D3: the twelve are taken before the filter - the unmarkable spend them."
   },
   {
     "name": "OW3D1-approach-the-middle",
-    "file": "src/systems/travelDungeons.js",
+    "file": "src/systems/travel/travelDungeons.js",
     "old": "  const x = Math.min(Math.max(feet.x, rect.minX - grow), rect.maxX + grow);",
     "new": "  const x = (rect.minX + rect.maxX) / 2;",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1: a walk to a spawn ends at its exterior's middle (on one axis) - into its walls."
   },
   {
     "name": "OW3D1-approach-no-buffer",
-    "file": "src/systems/travelDungeons.js",
+    "file": "src/systems/travel/travelDungeons.js",
     "old": "export function dungeonApproach(rect, feet, grow = ARRIVAL_BUFFER, within = null) {",
     "new": "export function dungeonApproach(rect, feet, grow = 0, within = null) {",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1: a walk to a spawn ends ON its exterior's edge, not the arrival buffer out a place journey stops at."
   },
@@ -125,19 +125,19 @@
     "old": "    const list = nearDungeons({ at, grid, dungeons, locAt,",
     "new": "    const list = nearDungeons({ at, dungeons, locAt,",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D3: the host keeps TV2's found dungeons in the list - each spends a slot of the twelve, and the marks draw a second plate over TV2's."
   },
   {
     "name": "OW3D3-rows-off-the-index",
     "file": "src/scenes/world.js",
-    "old": "const dungeons = (_tvDungeonRows ??= dungeonRows(mapDict)), locAt",
-    "new": "const dungeons = (_tvDungeonRows ??= dungeonRows(locationIndex)), locAt",
+    "old": "    const bay = (_tvDungeonRows ??= dungeonRows(mapDict));",
+    "new": "    const bay = (_tvDungeonRows ??= dungeonRows(locationIndex));",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
-    "note": "AUDIT OW3 D3: the fixed list a one-time read of the LIVE index again (and, with rows read off locations, no dungeon at all)."
+    "note": "AUDIT OW3 D3: the fixed list a one-time read of the LIVE index again (and, with rows read off locations, no dungeon at all). RE-AIMED (ETHER-OW): the rows' one home, tvDungeonRowsAt."
   },
   {
     "name": "OW3D3-spawns-snapshotted",
@@ -145,7 +145,7 @@
     "old": "isFound, spawns: [...spawnedPixels(locationIndex),",
     "new": "isFound, spawns: [...(_tvDungeonRows.spawns ??= spawnedPixels(locationIndex)),",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D3: the spawns read once - a spawn that came later is never marked, one whose time ran out is marked for good."
   },
@@ -155,7 +155,7 @@
     "old": " && tvDng.grid === grid && tvDng.n === n) return tvDng.list;",
     "new": " && tvDng.grid === grid) return tvDng.list;",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1/D3: a spawn gone from the index (its time out, a road's) stays marked, and clickable, until the traveller's pixel changes."
   },
@@ -165,7 +165,7 @@
     "old": "  const tvSpawnKnown = (s) => tvSpawnFound(s) || _announcedSpawnPixels.has(`${s.x},${s.y}`);",
     "new": "  const tvSpawnKnown = () => true;",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1: every spawn in the index is marked - the spawned feature's 'said on entering the pixel, not when it is rolled' undone from above."
   },
@@ -175,9 +175,9 @@
     "old": "  const tvSpawnKnown = (s) => tvSpawnFound(s) || _announcedSpawnPixels.has(`${s.x},${s.y}`);",
     "new": "  const tvSpawnKnown = (s) => tvSpawnFound(s);",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
-    "note": "AUDIT OW3 D1: a spawn the player has just been told of ('You see a Dungeon 410 metres to the North!') is not marked unless the store has it."
+    "note": "AUDIT OW3 D1: a spawn the player has just been told of ('You see a Dungeon 410 meters to the North!') is not marked unless the store has it."
   },
   {
     "name": "OW3D1-host-said-is-named",
@@ -185,7 +185,7 @@
     "old": "  const tvSpawnFound = (s) => hasDiscoveredLocationId(s.loc.mapTableData.mapId);",
     "new": "  const tvSpawnFound = (s) => hasDiscoveredLocationId(s.loc.mapTableData.mapId) || _announcedSpawnPixels.has(`${s.x},${s.y}`);",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1: the sight line ('a Dungeon') gives the spawn's name away."
   },
@@ -195,7 +195,7 @@
     "old": "    if (key.startsWith('spawn:')) { travelViewSpawnWalk(key); return; }",
     "new": "",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1: a named spawn's plate takes no click - no journey there."
   },
@@ -205,7 +205,7 @@
     "old": "    const g = travelViewDungeons().find((p) => p.key === key && p.found);",
     "new": "    const g = travelViewDungeons().find((p) => p.key === key);",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1: a '?' spawn is a journey - the lair law (no name, no journey) broken for spawns."
   },
@@ -215,7 +215,7 @@
     "old": " || tvSpawnGone(g.px, g.py) || !travelViewCanGo()) return false;",
     "new": " || tvSpawnGone(g.px, g.py)) return false;",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1: a spawn's walk skips the gate every click passes - no Travel Options, or foes near, and it starts anyway."
   },
@@ -225,27 +225,27 @@
     "old": "if (door) n = dungeonApproach(door, lastLegStart(legs, state.worldCoords(player.pos), tvLegMid), undefined, pixelBox(pix.x, pix.y));",
     "new": "if (door) n = { x: (door.minX + door.maxX) / 2, z: (door.minZ + door.maxZ) / 2 };",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1: the host walks to the exterior's middle - the traveller walks into its walls and never arrives."
   },
   {
     "name": "OW3D1-said-spawn-a-plate",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "      if (g.found) {\n        if (!g.spawn && `far:${g.row.mapID}` === farEnd) continue;",
     "new": "      if (g.found || g.spawn) {\n        if (!g.spawn && `far:${g.row.mapID}` === farEnd) continue;",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1: a said-but-unfiled spawn is drawn as a named far plate - its name given away."
   },
   {
     "name": "OW3D1-spawn-end-reads-a-row",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "        if (!g.spawn && `far:${g.row.mapID}` === farEnd) continue;",
     "new": "        if (`far:${g.row.mapID}` === farEnd) continue;",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D1: a found spawn's mark reads the map row it has none of - the readout throws every frame one stands in range."
   },
@@ -255,7 +255,7 @@
     "old": "    if (worldMoveBusy()) return;\n    const n = state.worldCoords(player.pos);\n    const g = dungeonToFind(",
     "new": "    const n = state.worldCoords(player.pos);\n    const g = dungeonToFind(",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D2: a fast travel, Recall, respawn or load finds (says, saves) a dungeon up to a kilometre from where the player lands."
   },
@@ -265,7 +265,7 @@
     "old": "  function bandFrame(now, dt) {\n    if (worldMoveBusy()) return;",
     "new": "  function bandFrame(now, dt) {",
     "tests": [
-      "test/tv6_dungeons.test.js"
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "AUDIT OW3 D2: a band sights, chases and stands at the feet read mid-arrival, a kilometre from where the player lands."
   }

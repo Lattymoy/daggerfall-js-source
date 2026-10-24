@@ -5,7 +5,7 @@
     "old": "const num2 = Math.imul(num ^ (num >>> 16), 2146121005);",
     "new": "const num2 = Math.imul(num ^ (num >> 16), 2146121005);",
     "tests": [
-      "test/oh_placement.test.js"
+      "test/world/oh_placement.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "Math.imul(mapPixelY, 19349663) ^ (salt | 0);",
     "new": "Math.imul(mapPixelY, 19349663);",
     "tests": [
-      "test/oh_placement.test.js"
+      "test/world/oh_placement.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "Math.trunc(f32(clamp01(f32(Number(rate) || 0))) * (2.0 * num2));",
     "new": "Math.trunc(f32(clamp01(f32(Number(rate) || 0))) * num2);",
     "tests": [
-      "test/oh_placement.test.js"
+      "test/world/oh_placement.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "const num3 = (num % 48) * num2 + Math.floor(num / 48);",
     "new": "const num3 = num;",
     "tests": [
-      "test/oh_placement.test.js"
+      "test/world/oh_placement.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "stableHash(mapPixelX, mapPixelY, (PLACEMENT_SALT ^ salt) >>> 0) & 0xffff;",
     "new": "stableHash(mapPixelX, mapPixelY, salt) & 0xffff;",
     "tests": [
-      "test/oh_placement.test.js"
+      "test/world/oh_placement.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "return f32(f32(0.28) + f32(f32(f32(h) / 65535) * f32(0.44)));",
     "new": "return f32(f32(f32(h) / 65535));",
     "tests": [
-      "test/oh_placement.test.js"
+      "test/world/oh_placement.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  const num = f32(32 * scale);\n  const num2 = f32(9 * scale);\n  if (distance >= num) return 0;",
     "new": "  const num = 32;\n  const num2 = 9;\n  if (distance >= num) return 0;",
     "tests": [
-      "test/oh_placement.test.js"
+      "test/world/oh_placement.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  num3 = f32(f32(num3 * num3) * f32(3 - f32(2 * num3)));\n  return f32(14 * num3);",
     "new": "  return f32(14 * num3);",
     "tests": [
-      "test/oh_placement.test.js"
+      "test/world/oh_placement.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "const flattened = !!allowFlatten && num5 > 0 && num8 > 5;",
     "new": "const flattened = !!allowFlatten && num5 > 0;",
     "tests": [
-      "test/oh_placement.test.js"
+      "test/world/oh_placement.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "const flattened = !!allowFlatten && num5 > 0 && num8 > 5;",
     "new": "const flattened = num5 > 0 && num8 > 5;",
     "tests": [
-      "test/oh_placement.test.js"
+      "test/world/oh_placement.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  if (!positions || positions.length < 3) return null;\n  const n = Math.floor(positions.length / 3);",
     "new": "  if (!positions || positions.length < 3) return null;\n  const n = Math.min(4225, Math.floor(positions.length / 3));",
     "tests": [
-      "test/oh_placement.test.js"
+      "test/world/oh_placement.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  if (!grid || positions.length / 3 < num) return grid;\n  for (let i = 0; i < num; i++)",
     "new": "  if (!grid) return grid;\n  for (let i = 0; i < positions.length / 3; i++)",
     "tests": [
-      "test/oh_placement.test.js"
+      "test/world/oh_placement.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "const top = f32(surfaceY + 5);",
     "new": "const top = f32(surfaceY);",
     "tests": [
-      "test/oh_placement.test.js"
+      "test/world/oh_placement.test.js"
     ]
   },
   {
@@ -122,8 +122,8 @@
     "old": "if (y != null) floorY = Math.max(floorY, y);",
     "new": "if (y != null) floorY = Math.min(floorY, y);",
     "tests": [
-      "test/oh_placement.test.js",
-      "test/oh_host.test.js"
+      "test/world/oh_placement.test.js",
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "if (hasLocation(entry)) { markTerrainProcessed(st, v, 'rejected:has-location'); return; }",
     "new": "",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "if (num6 < MINIMUM_DEPTH) {",
     "new": "if (num6 < 0) {",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "if (num || st.attempts % 30 === 0) deepWaters.refreshLoadedTile(entry);",
     "new": "if (num) deepWaters.refreshLoadedTile(entry);",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "    if (st.appliedFloorBuildVersion === v) return { ok: true, flattened };\n",
     "new": "",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "      if (num < MINIMUM_EDGE_DISTANCE) return",
     "new": "      if (num < 0) return",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "    const num = f32(worldPosition[0] - f32(t[0] + m.localX));",
     "new": "    const num = f32(worldPosition[0] - m.localX);",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "if (snap !== snapshot) { snapshot = snap; refreshLoadedPits(); }",
     "new": "{ snapshot = snap; refreshLoadedPits(); }",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "      if (flag && st.appliedFloorBuildVersion === v) { reprocess(st); enqueueTerrain(entry); }",
     "new": "      if (false) { reprocess(st); enqueueTerrain(entry); }",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "      e.nextAllowedTime = t + 1;\n",
     "new": "",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -213,52 +213,52 @@
     "old": "if (t < e.nextAllowedTime || inside || !swimming) return false;",
     "new": "if (t < e.nextAllowedTime || inside) return false;",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
     "name": "OH-B-dw-built-event-dropped",
-    "file": "src/scenes/deepWatersHost.js",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
     "old": "      onSeafloorBuilt?.(entry);   // OH-B: RaiseTerrainEvent(OnSeafloorBuilt) follows BuildOrRefreshFloor\n",
     "new": "",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
     "name": "OH-B-dw-commit-keeps-the-old-grid",
-    "file": "src/scenes/deepWatersHost.js",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
     "old": "      heightGridFromPositions(s.floor.positions, s.floor.vertexLocalY);\n",
     "new": "",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
     "name": "OH-B-dw-refresh-waits-its-turn",
-    "file": "src/scenes/deepWatersHost.js",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
     "old": "        const d = urgent.has(k) ? -1 : chebyshev({ x: e.px, y: e.py }, here);",
     "new": "        const d = chebyshev({ x: e.px, y: e.py }, here);",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
     "name": "OH-B-dw-refresh-rebuilds-current",
-    "file": "src/scenes/deepWatersHost.js",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
     "old": "      if (!force && this.isSeafloorCurrent(entry)) return;\n",
     "new": "",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
     "name": "OH-B-dw-refresh-while-frozen",
-    "file": "src/scenes/deepWatersHost.js",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
     "old": "if (disposed || !entry || !bake || !canMutateTerrainData()) return;",
     "new": "if (disposed || !entry || !bake) return;",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -267,7 +267,7 @@
     "old": "      if (particles.length < max) emit();",
     "new": "      emit();",
     "tests": [
-      "test/oh_placement.test.js"
+      "test/world/oh_placement.test.js"
     ]
   },
   {
@@ -276,7 +276,7 @@
     "old": "  for (let t = 0; t < DEFAULT_DURATION; t += 1 / 60) step(1 / 60);\n",
     "new": "",
     "tests": [
-      "test/oh_placement.test.js"
+      "test/world/oh_placement.test.js"
     ]
   },
   {
@@ -285,7 +285,7 @@
     "old": "      return v0 + (v1 - v0) * (u * u * (3 - 2 * u));",
     "new": "      return v0 + (v1 - v0) * u;",
     "tests": [
-      "test/oh_placement.test.js"
+      "test/world/oh_placement.test.js"
     ]
   },
   {
@@ -294,7 +294,7 @@
     "old": "layout(location = 1) in vec2 aCorner;\nlayout(location = 2) in vec2 aSizeRot;",
     "new": "in vec2 aCorner;\nin vec2 aSizeRot;",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -303,7 +303,7 @@
     "old": "layout(location = 0) in vec3 aPos;",
     "new": "in vec3 aPos;",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -312,7 +312,7 @@
     "old": "    if (player.isInside() || !player.isSwimming()) return false;",
     "new": "    if (player.isInside()) return false;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -321,7 +321,7 @@
     "old": "hud('The darkness below refuses to open.', 3);",
     "new": "hud('The darkness below refuses to open.', 4);",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -330,7 +330,7 @@
     "old": "      hasReturnPitDepth = num > 0.5;",
     "new": "      hasReturnPitDepth = num > 0;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -339,7 +339,7 @@
     "old": "    if (!moved) { entryPending = false; transitioning = false; return false; }\n    renameGpsLocation(gpsName());",
     "new": "    if (!moved) { entryPending = false; transitioning = false; return false; }",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -348,7 +348,7 @@
     "old": "    buildingAbyss = true;\n    let entered = false;",
     "new": "    let entered = false;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -357,7 +357,7 @@
     "old": "    if (!entered && entryPending) {\n      if (player.isRespawning())",
     "new": "    if (false) {\n      if (player.isRespawning())",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -366,7 +366,7 @@
     "old": "    await restoreOceanPosition(data.ReturnWorldX, data.ReturnWorldZ, false);",
     "new": "    await restoreOceanPosition(data.ReturnWorldX, data.ReturnWorldZ, true);",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -375,7 +375,7 @@
     "old": "      place = [x, f32(top + 0.25), z];",
     "new": "      place = [x, top, z];",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -384,7 +384,7 @@
     "old": "    else if (surface != null) player.placeCentreY(f32(surface - 0.1));",
     "new": "    else if (surface != null) player.placeCentreY(surface);",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -393,7 +393,7 @@
     "old": "      if (player.isRespawning()) { clearAbyssState(); return false; }\n      captureCurrentRecallBinding();",
     "new": "      captureCurrentRecallBinding();",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -402,7 +402,7 @@
     "old": "hud(`You rise from ${name}.`, 3);",
     "new": "hud(`You rose from ${name}.`, 3);",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -411,7 +411,7 @@
     "old": "hud(`You descend into ${data.DungeonName}.`, 4);",
     "new": "hud(`You descend into ${data.DungeonName}.`, 3);",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -420,7 +420,7 @@
     "old": "      renameDungeon(d, data.DungeonName);\n      processAbyssEnemies(d, true);",
     "new": "      renameDungeon(d, data.DungeonName);\n      processAbyssEnemies(d, false);",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -429,7 +429,7 @@
     "old": "      if (player.loadInProgress() || !isBoundAbyssDungeon()) clearAbyssState();",
     "new": "      if (!isBoundAbyssDungeon()) clearAbyssState();",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -438,7 +438,7 @@
     "old": "      if (!isLoadedTemplateDungeon()) { data.Active = false; renameGps(null, null); return; }",
     "new": "      if (false) { data.Active = false; renameGps(null, null); return; }",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -447,7 +447,7 @@
     "old": "      waitFrame().then(() => { if (data.Active && player.isInsideDungeon()) prepareAbyssDungeon(modes.dungeon()); });   // RefreshRestoredDungeon",
     "new": "      // RefreshRestoredDungeon",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -456,7 +456,7 @@
     "old": "  return f32(f32(f32(dx * dx) + f32(dy * dy)) + f32(dz * dz)) < f32(0.01);",
     "new": "  return f32(f32(f32(dx * dx) + f32(dy * dy)) + f32(dz * dz)) < f32(0.1);",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -465,7 +465,7 @@
     "old": "  const d = (i) => f32(f32(anchor.position[i]) - f32(binding.AnchorPosition[i]));",
     "new": "  const d = (i) => anchor.position[i] - binding.AnchorPosition[i];",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -474,7 +474,7 @@
     "old": "    if (!player.isRespawning() || player.loadInProgress()) return false;",
     "new": "    if (!player.isRespawning()) return false;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -483,7 +483,7 @@
     "old": "    else if (data.RecallBinding && !matchesRecallAnchor(data.RecallBinding, anchor)) data.RecallBinding = null;",
     "new": "    else if (false) data.RecallBinding = null;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -492,7 +492,7 @@
     "old": "        nextNameRefresh = t + 1;",
     "new": "        nextNameRefresh = t + 0.5;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -501,7 +501,7 @@
     "old": "      if (data.Active && isLoadedTemplateDungeon() && !isPlayerAtTemplateLocation()) clearAbyssState();   // ReleaseStaleAbyssContext",
     "new": "      // ReleaseStaleAbyssContext",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -510,7 +510,7 @@
     "old": "    if (!aquaticOnly && !flag && num % 3 !== 0) return;",
     "new": "    if (!aquaticOnly && !flag && num % 2 !== 0) return;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -519,7 +519,7 @@
     "old": "    const hash = aquaticOnly || flag ? num : Math.floor(num / 3);",
     "new": "    const hash = num;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -528,7 +528,7 @@
     "old": "|| type === MOBILE_TYPES.DaedraSeducer || !flag2",
     "new": "|| !flag2",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -537,7 +537,7 @@
     "old": "|| !flag2 || row?.noShadow || row?.glowColor) return;",
     "new": "|| !flag2) return;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -546,7 +546,7 @@
     "old": "    const pick = tryPickUnderwaterEnemy(hash, flag && !aquaticOnly, aquaticOnly, underwaterEnemyTypes());",
     "new": "    const pick = tryPickUnderwaterEnemy(hash, false, aquaticOnly, underwaterEnemyTypes());",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -555,7 +555,7 @@
     "old": "    const num3 = Math.ceil(f32(num * MINIMUM_AQUATIC_ENEMY_FRACTION));",
     "new": "    const num3 = Math.ceil(num * 0.3);",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -564,7 +564,7 @@
     "old": "        if ((j === 0 && wasHumanoid) || (j === 1 && !wasHumanoid)) continue;",
     "new": "        if ((j === 1 && wasHumanoid) || (j === 0 && !wasHumanoid)) continue;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -573,7 +573,7 @@
     "old": "        renderAmbient: [f32(ambient[0] * dungeonAmbientLightScale), f32(ambient[1] * dungeonAmbientLightScale), f32(ambient[2] * dungeonAmbientLightScale), f32(ambient[3] * dungeonAmbientLightScale)],",
     "new": "        renderAmbient: [...ambient],",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -582,7 +582,7 @@
     "old": "        indirect: 0, magicLightScale: ABYSS_MAGIC_LIGHT_SCALE, torchOff: true,",
     "new": "        indirect: 0, magicLightScale: ABYSS_MAGIC_LIGHT_SCALE, torchOff: false,",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -591,7 +591,7 @@
     "old": "    shouldUpgradeLoot() { return buildingAbyss || (data.Active && isBoundAbyssDungeon()) || isPendingAbyssRecall(); },",
     "new": "    shouldUpgradeLoot() { return buildingAbyss || (data.Active && isBoundAbyssDungeon()); },",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -600,7 +600,7 @@
     "old": "      if (player.loadInProgress() || !shouldAffectDungeon(d)) return undefined;",
     "new": "      if (!shouldAffectDungeon(d)) return undefined;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -609,7 +609,7 @@
     "old": "    return !!d && modes.dungeon() === d;",
     "new": "    return !!d;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -618,7 +618,7 @@
     "old": "export const ABYSS_FOG_BLEND_AT_MIDPOINT = f32(0.85);",
     "new": "export const ABYSS_FOG_BLEND_AT_MIDPOINT = f32(0.8);",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -627,7 +627,7 @@
     "old": "    num2 = f32(num2 * f32(0.5));",
     "new": "    num2 = f32(num2 * f32(0.75));",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -636,7 +636,7 @@
     "old": "  while (dice100(Math.trunc(num2), rolls())) {",
     "new": "  while (dice100(Math.max(1, Math.round(num2)), rolls())) {",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -645,7 +645,7 @@
     "old": "    if (it) { items.push(it); num++; }   // AddItem(item, AddPosition.Back)",
     "new": "    if (it) items.push(it);\n    num++;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -654,7 +654,7 @@
     "old": "    if (item.group === 'Weapons') {   // && GroupIndex != 131 - always so (the header)",
     "new": "    if (item.group === 'Weapons' && item.templateIndex !== 131) {",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -663,7 +663,7 @@
     "old": "      if (num < 9) fresh = remintWeapon(item.templateIndex, num + 1);",
     "new": "      if (num <= 9) fresh = remintWeapon(item.templateIndex, Math.min(9, num + 1));",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -672,7 +672,7 @@
     "old": "    Object.assign(item, fresh, { flags: 0, stackCount: 1 });",
     "new": "    Object.assign(item, fresh, { flags: 0 });",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -681,7 +681,7 @@
     "old": "    if (enchanted) for (const [k, v] of Object.entries(kept)) { if (v === undefined) delete item[k]; else item[k] = v; }",
     "new": "    void kept;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -690,7 +690,7 @@
     "old": "    delete item.isIdentified;\n",
     "new": "",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -699,7 +699,7 @@
     "old": "fresh = remintArmor(item.templateIndex, next, clampArmorVariant(item.templateIndex, item.material ?? 0, item.variant ?? 0));",
     "new": "fresh = remintArmor(item.templateIndex, next, 0);",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -708,7 +708,7 @@
     "old": "    if (!item || isCustom(item) || item.questItem || item.artifact) continue;",
     "new": "    if (!item || isCustom(item) || item.artifact) continue;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -717,25 +717,25 @@
     "old": "    value: t ? materialValue(t.basePrice, material) : 1,   // F103",
     "new": "    value: itemBaseValue({ group: 'Weapons', templateIndex, material }),   // F103",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
     "name": "OH-E-matrix-fallback",
-    "file": "src/systems/loot.js",
+    "file": "src/systems/loot/loot.js",
     "old": "export const lootMatrix = (key) => rriLootMatrix(key) ?? LOOT_MATRICES[key] ?? LOOT_MATRICES['-'];",
     "new": "export const lootMatrix = (key) => rriLootMatrix(key) ?? LOOT_MATRICES[key] ?? LOOT_MATRICES.A;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
     "name": "OH-E-worn-dropped",
     "file": "src/scenes/hostCombat.js",
-    "old": "items: entity.items, worn: eq?.worn ?? [], where });",
-    "new": "items: entity.items, worn: [], where });",
+    "old": "items: entity.items, worn: eq?.worn ?? [], where, rolls, roller: player });",
+    "new": "items: entity.items, worn: [], where, rolls, roller: player });",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -744,7 +744,7 @@
     "old": "      addBonusMagicLoot(lootMatrix(key).MI, items, () => {",
     "new": "      addBonusMagicLoot(lootMatrix(key).WP, items, () => {",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -753,7 +753,7 @@
     "old": "      dungeon: () => ohDungeonOf(modes?.dungeonCtx) ?? ohLayingOutOf(modes?.layingOutLocation),   // PlayerEnterExit.Dungeon",
     "new": "      dungeon: () => ohDungeonOf(modes?.dungeonCtx),   // PlayerEnterExit.Dungeon",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -762,7 +762,7 @@
     "old": "      layingOutLoc = dfLocation;   // OH-E",
     "new": "      // OH-E",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -771,7 +771,7 @@
     "old": "          modSaveRecords: () => host.modSaveRecords?.() ?? {},\n",
     "new": "",
     "tests": [
-      "test/wa1_warmAshesShips.test.js"
+      "test/systems/wa1_warmAshesShips.test.js"
     ]
   },
   {
@@ -780,7 +780,7 @@
     "old": "    const dfLocation = ownDungeonLocation(sized);",
     "new": "    const dfLocation = sized;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -789,17 +789,17 @@
     "old": "    dungeon: loc.dungeon && { ...loc.dungeon, blocks: loc.dungeon.blocks?.map((b) => ({ ...b })) },",
     "new": "    dungeon: loc.dungeon,",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
     "name": "OH-E-pile-event-only-in-window",
-    "file": "src/systems/loot.js",
+    "file": "src/systems/loot/loot.js",
     "old": "  if (alphabetIndex >= 10 && alphabetIndex <= 15) {   // between keys J and O",
     "new": "  if (alphabetIndex < 10 || alphabetIndex > 15) return items;\n  {",
     "tests": [
-      "test/oh_abyss.test.js",
-      "test/rri2_realism.test.js"
+      "test/scenes/oh_abyss.test.js",
+      "test/systems/rri2_realism.test.js"
     ]
   },
   {
@@ -808,8 +808,8 @@
     "old": "_ohTime += gamePaused() ? 0 : dt * worldTimeScale(); oceanHoles.checkSettings(); ohAbyss?.update(); }",
     "new": "_ohTime += gamePaused() ? 0 : dt * worldTimeScale(); ohAbyss?.update(); }",
     "tests": [
-      "test/oh_host.test.js",
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_host.test.js",
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -818,7 +818,7 @@
     "old": "    s = next;   // ApplySettings, every change\n    if (snap !== snapshot)",
     "new": "    if (snap !== snapshot)",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -827,7 +827,7 @@
     "old": "const isActive = (e) => !inside() && built.get(keyOf(e)) === e;",
     "new": "const isActive = (e) => built.get(keyOf(e)) === e;",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -836,7 +836,7 @@
     "old": "for (const e of built.values()) if (isActive(e)) deepWaters.refreshLoadedTile(e, true);",
     "new": "for (const e of built.values()) deepWaters.refreshLoadedTile(e, true);",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -845,7 +845,7 @@
     "old": "for (const e of built.values()) if (isActive(e)) promoted(e);",
     "new": "for (const e of built.values()) promoted(e);",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -854,7 +854,7 @@
     "old": "      if (oceanHoles) oceanHoles.processOneTerrain();\n",
     "new": "",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -863,7 +863,7 @@
     "old": "out = radius + DRIFT * SURFACE_MIASMA_LIFETIME + half;",
     "new": "out = radius + half;",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -872,7 +872,7 @@
     "old": "return [-out, -half, -out, out, height + half, out];",
     "new": "return [-out, -half, -out, out, half, out];",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -881,7 +881,7 @@
     "old": "if (b) for (let i = 0; i < 3; i++) { b[i] = Math.min(b[i], c[i] + reach[i]); b[3 + i] = Math.max(b[3 + i], c[i] + reach[3 + i]); }",
     "new": "",
     "tests": [
-      "test/oh_host.test.js"
+      "test/scenes/oh_host.test.js"
     ]
   },
   {
@@ -890,7 +890,7 @@
     "old": "        ...(f.abyssDestroyed ? { abyssDestroyed: true } : {}),   // AUDIT OH-F B1: Object.Destroy'd - in DFU's save not at all\n",
     "new": "",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -899,7 +899,7 @@
     "old": "if (sf.abyssDestroyed) { if (!f.abyssDestroyed) { f.abyssDestroyed = true; questPoolOps.removeFoe(f); } return; }",
     "new": "",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -908,8 +908,8 @@
     "old": "await modes?.restoreDungeonSave?.(extras); }",
     "new": "modes?.restoreDungeonSave?.(extras); }",
     "tests": [
-      "test/oh_abyss.test.js",
-      "test/mac6.test.js"
+      "test/scenes/oh_abyss.test.js",
+      "test/systems/save/mac6.test.js"
     ]
   },
   {
@@ -918,7 +918,7 @@
     "old": "    if (f.abyssDestroyed) return false;   // AUDIT OH-F B5/C1: Object.Destroy's enemy (the drowned dungeon's flame foe) is gone for good\n",
     "new": "",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -927,7 +927,7 @@
     "old": "loadRebuilds: (saved) => buildingAbyss || entryPending || data.Active || !!saved?.Active,",
     "new": "loadRebuilds: (saved) => buildingAbyss || entryPending || data.Active,",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -936,7 +936,7 @@
     "old": "loadRebuilds: (saved) => buildingAbyss || entryPending || data.Active || !!saved?.Active,",
     "new": "loadRebuilds: (saved) => !!saved?.Active,",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -945,17 +945,17 @@
     "old": "if (where !== 'dungeon' || !ohAbyss.shouldUpgradeLoot()) return;",
     "new": "if (!ohAbyss.shouldUpgradeLoot()) return;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
     "name": "OH-F-B3-pile-untagged",
-    "file": "src/systems/loot.js",
-    "old": "raiseTabledLootSpawned({ locationIndex, key: lootTableKey, items, rolls, luck, where });",
-    "new": "raiseTabledLootSpawned({ locationIndex, key: lootTableKey, items, rolls, luck });",
+    "file": "src/systems/loot/loot.js",
+    "old": "raiseTabledLootSpawned({ locationIndex, key: lootTableKey, items, rolls, luck, where, quarters });",
+    "new": "raiseTabledLootSpawned({ locationIndex, key: lootTableKey, items, rolls, luck, quarters });",
     "tests": [
-      "test/oh_abyss.test.js",
-      "test/rri2_realism.test.js"
+      "test/scenes/oh_abyss.test.js",
+      "test/systems/rri2_realism.test.js"
     ]
   },
   {
@@ -964,7 +964,7 @@
     "old": "      if (player.isRespawning()) { entryPending = false; buildingAbyss = false; transitioning = false; data.Active = false; renameGps(null, null); }\n      else await transitionFailed();",
     "new": "      await transitionFailed();",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -973,7 +973,7 @@
     "old": "_respawning || _loading || !!ohAbyss?.entering;",
     "new": "_respawning || _loading;",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -982,7 +982,7 @@
     "old": "const px = ohReturn?.pixel ?? playerTravelPixel();",
     "new": "const px = playerTravelPixel();",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -991,7 +991,7 @@
     "old": "returnPoint: () => (data.Active ? { worldX: data.ReturnWorldX, worldZ: data.ReturnWorldZ, pixel: { x: data.PitMapX, y: data.PitMapY } } : null),",
     "new": "returnPoint: () => null,",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -1000,7 +1000,7 @@
     "old": "get questSpawn() { return !!rec.questBehaviour || !!rec.src?.questSpawn; }",
     "new": "get questSpawn() { return !!rec.questBehaviour; }",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -1009,8 +1009,8 @@
     "old": "    if (e?.allied && entity) { entity.team = 'PlayerAlly'; entity.mobileTeam = 'PlayerAlly'; }\n",
     "new": "",
     "tests": [
-      "test/loosefoespawn.test.js",
-      "test/artifacts.test.js"
+      "test/scenes/loosefoespawn.test.js",
+      "test/systems/artifacts.test.js"
     ]
   },
   {
@@ -1019,7 +1019,7 @@
     "old": "[f.src.blockIndex, f.src.fixed ? 0 : 1, i]",
     "new": "[f.src.blockIndex, 0, i]",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -1028,7 +1028,7 @@
     "old": "i < layoutCount && Number.isInteger(f?.src?.blockIndex)",
     "new": "Number.isInteger(f?.src?.blockIndex)",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -1037,7 +1037,7 @@
     "old": "Promise.resolve(spawnLooseFoe(mobileType, at, { loadID: 0 })).then((nf) => {",
     "new": "Promise.resolve(spawnLooseFoe(mobileType, at)).then((nf) => {",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   },
   {
@@ -1046,7 +1046,7 @@
     "old": "fresh = remintArmor(item.templateIndex, next, clampArmorVariant(item.templateIndex, item.material ?? 0, item.variant ?? 0));",
     "new": "fresh = remintArmor(item.templateIndex, next, item.variant ?? 0);",
     "tests": [
-      "test/oh_abyss.test.js"
+      "test/scenes/oh_abyss.test.js"
     ]
   }
 ]

@@ -1,0 +1,7 @@
+[
+  { "name": "YARD-ROWS-the-auto-track", "file": "src/ui/shipyardWindow.js", "old": "minmax(0, 1.6fr) fit-content(40%); align-items: center;", "new": "minmax(0, 1.6fr) auto; align-items: center;", "tests": ["test/ui/fb1016b_yardrows.test.js"] },
+  { "name": "YARD-ROWS-no-fleet-row", "file": "src/ui/shipyardWindow.js", "old": "      const row = el('div', 'dfyard-row dfyard-fleetrow');", "new": "      const row = el('div', 'dfyard-row');", "tests": ["test/ui/fb1016b_yardrows.test.js"] },
+  { "name": "YARD-ROWS-the-fleet-row-three-tracks", "file": "src/ui/shipyardWindow.js", "old": ".dfyard-fleetrow { grid-template-columns: minmax(110px, 1fr) minmax(0, 1.6fr); }", "new": ".dfyard-fleetrow { grid-template-columns: minmax(110px, 1fr) minmax(0, 1.6fr) auto; }", "tests": ["test/ui/fb1016b_yardrows.test.js"] },
+  { "name": "YARD-ROWS-acts-beside", "file": "src/ui/shipyardWindow.js", "old": ".dfyard-fleetrow .dfyard-acts { grid-column: 1 / -1; }", "new": ".dfyard-fleetrow .dfyard-acts { }", "tests": ["test/ui/fb1016b_yardrows.test.js"] },
+  { "name": "YARD-ROWS-AUDIT-the-picker-uncapped", "file": "src/ui/shipyardWindow.js", "old": ".dfyard-acts .dfyard-post { min-width: 0; max-width: 12em; text-overflow: ellipsis; }", "new": ".dfyard-acts .dfyard-post { text-overflow: ellipsis; }", "tests": ["test/ui/fb1016b_yardrows.test.js"] }
+]

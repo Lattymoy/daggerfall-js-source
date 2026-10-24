@@ -1,0 +1,146 @@
+[
+  {
+    "name": "PARTY-LOOT-WIRE-an-early-word-dropped",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "    if (!roomBorn(h)) { _roomPending.set(canon, { rec, from }); return 0; }   // a body that has not fallen here yet: landed when it does",
+    "new": "    if (!roomBorn(h)) { return 0; }   // a body that has not fallen here yet: landed when it does",
+    "tests": [
+      "test/net/partyloot_wire.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-LOOT-WIRE-the-birth-not-said",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "    return roomSayNow(canon, () => roomStateWord(canon, false));   // the BIRTH: its terms and its stored pieces, whoever minted (a claimer says no state but this)",
+    "new": "    return false;   // the BIRTH: its terms and its stored pieces, whoever minted (a claimer says no state but this)",
+    "tests": [
+      "test/net/partyloot_wire.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-LOOT-WIRE-the-unborn-body-keeps-its-own-roll",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "    f.entity.items.length = 0;   // UNBORN holds nothing: this copy's own roll is no reader's (LOOT11's light, Hunting's body key, the save); the sweep counts its wait from here (mintUnbornRoom)",
+    "new": "    void f;   // UNBORN holds nothing: this copy's own roll is no reader's (LOOT11's light, Hunting's body key, the save); the sweep counts its wait from here (mintUnbornRoom)",
+    "tests": [
+      "test/net/partyloot_wire.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-LOOT-WIRE-the-claim-never-said",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "    for (let i = 0; i < Math.max(q.length, a.length); i += ROOM_CLAIMS_MAX) out.push(decorate(",
+    "new": "    for (let i = 0; i < 0; i += ROOM_CLAIMS_MAX) out.push(decorate(",
+    "tests": [
+      "test/net/partyloot_wire.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-LOOT-WIRE-the-press-opens-an-unborn-body",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if ((kind === 'loot' || kind === 'corpse') && roomUnborn(key)) return 0;   // PARTY-LOOT: the room's word for it has not come - nothing of this copy's own is taken",
+    "new": "      if ((kind === 'loot' || kind === 'corpse') && roomUnborn(key)) void 0;   // PARTY-LOOT: the room's word for it has not come - nothing of this copy's own is taken",
+    "tests": [
+      "test/net/partyloot_wire.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-LOOT-WIRE-the-heal-re-reads-nothing",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (isRoomBaseContainer(canon)) { const rec = roomRecordOf(canon); if (rec) out.push(rec); continue; }   // PARTY-LOOT: its terms and takes",
+    "new": "      if (isRoomBaseContainer(canon)) continue;   // PARTY-LOOT: its terms and takes",
+    "tests": [
+      "test/net/partyloot_wire.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-LOOT-WIRE-world-keeps-no-refused-key",
+    "file": "src/scenes/world.js",
+    "old": "    if (!online.sendAct(out)) { for (const k of keys) _actPend.add(k); return false; }",
+    "new": "    if (!online.sendAct(out)) { return false; }",
+    "tests": [
+      "test/net/partyloot_wire.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-LOOT-WIRE-the-take-kept-before-the-grant",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "    const give = roomLift(obj, k);",
+    "new": "    const give = k;",
+    "tests": [
+      "test/net/partyloot_wire.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-LOOT-WIRE-a-party-member-tells-the-rooms-state",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "    if (host._authority) { const rec = roomStateWord(canon, true); return rec ? [rec] : []; }",
+    "new": "    if (true) { const rec = roomStateWord(canon, true); return rec ? [rec] : []; }",
+    "tests": [
+      "test/net/partyloot_wire.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-WIRE-a-lost-claim-is-never-said-again",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "      if (host._authority || m.refused || nowMs - m.saidAt < ROOM_PUT_RESAY_MS) continue;",
+    "new": "      if (host._authority || m.refused || m.claim || nowMs - m.saidAt < ROOM_PUT_RESAY_MS) continue;",
+    "tests": [
+      "test/net/partyloot_wire.test.js"
+    ]
+  },
+  {
+    "name": "OUTDOOR-LOOT-WIRE-an-answered-claim-stays-open-to-be-said-again",
+    "file": "src/scenes/roomLootHost.js",
+    "old": "    _roomMine.delete(id);\n    const key = `${canon}#${m.terms.g}|${m.claim.p ?? m.claim.sp}`;",
+    "new": "    m.saidAt = -Infinity;\n    const key = `${canon}#${m.terms.g}|${m.claim.p ?? m.claim.sp}`;",
+    "tests": [
+      "test/net/partyloot_wire.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-LOOT-WIRE-onAct-lands-nothing",
+    "file": "src/scenes/world.js",
+    "old": "    online.onAct = (id, data) => { modes?.applyPlaceActions?.(id, data); };   // WORLD3: another's door, lever or platform; WORLD6a: in a building too",
+    "new": "    online.onAct = (id, data) => {};   // WORLD3: another's door, lever or platform; WORLD6a: in a building too",
+    "tests": [
+      "test/net/partyloot_wire.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-LOOT-WIRE-the-flush-reads-no-records",
+    "file": "src/scenes/world.js",
+    "old": "    const data = modes?.placeActionRecords?.([..._actPend]);",
+    "new": "    const data = null;",
+    "tests": [
+      "test/net/partyloot_wire.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-LOOT-WIRE-the-mode-reads-no-dungeon-records",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (mode === 'dungeon') return dungeonCtx ? (dungeonCtx.actionRecords?.(keys) ?? null) : null;",
+    "new": "      if (mode === 'dungeon') return dungeonCtx ? null : null;",
+    "tests": [
+      "test/net/partyloot_wire.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-LOOT-WIRE-the-mode-lands-no-dungeon-act",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (mode === 'dungeon') return dungeonCtx ? !!dungeonCtx.applyActions?.(id, data) : false;",
+    "new": "      if (mode === 'dungeon') return dungeonCtx ? false : false;",
+    "tests": [
+      "test/net/partyloot_wire.test.js"
+    ]
+  },
+  {
+    "name": "PARTY-LOOT-WIRE-the-mode-lands-no-foes-frame",
+    "file": "src/scenes/worldModes.js",
+    "old": "    applyDungeonFoes(id, data) { return mode === 'dungeon' && dungeonCtx ? !!dungeonCtx.applyFoes?.(data, id) : false; },   // AUDIT WORLD2 A1: the streaming host's id rides in - a new host's counter starts over",
+    "new": "    applyDungeonFoes(id, data) { return mode === 'dungeon' && dungeonCtx ? false : false; },   // AUDIT WORLD2 A1: the streaming host's id rides in - a new host's counter starts over",
+    "tests": [
+      "test/net/partyloot_wire.test.js"
+    ]
+  }
+]

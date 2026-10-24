@@ -77,6 +77,9 @@ What a fragment sees, in order:
    the density itself for exp and exp2, zero with the fog off), times
    `EL_SCATTER`. Clear air glows nowhere; Better Ambience's foggy dungeon
    shows every torch as a halo. Pinned against a numeric integration.
+   The glow's density is capped at `EL_SCATTER_DENSITY_MAX` (UW-GLOW,
+   below) - the integral carries no extinction, so past its tuning point
+   it grows without bound.
 6. **sRGB encode.** The fog COLOUR is blended in decoded form and
    re-encoded, so a fully fogged fragment is bit-for-bit the fog colour,
    which is the sky's colour at the horizon, drawn by a program this lane
@@ -111,7 +114,7 @@ brighter than the streamed ground where the fog did not hide the seam.
 the pref, `?lighting=classic` the kill door - waterSurface.js's
 `waterSwitchOn` composition, one home (`enhancedLightingOn`).
 
-**Pinned** (`test/el1_enhancedlighting.test.js`, 11): the switch and its
+**Pinned** (`test/render/el1_enhancedlighting.test.js`, 11): the switch and its
 doors; the row; decode/encode as the IEC curve and inverses; the falloff's
 gain, zero, monotone and the classic comparison; the tonemap's toe,
 white and shoulder with the three display numbers; the in-scatter
@@ -125,7 +128,7 @@ cap re-cut, the flash under the cap, the water's cloud-shadow slot
 surviving an install; every colour decoded on the lane and as given on
 classic, the lane's uniforms on all four programs, the scatter gain
 folded with the fog; the far ring's lane; the host wiring. The uniform
-sweep (`test/glstate.test.js`) now reads `enhancedLighting.js` and
+sweep (`test/render/glstate.test.js`) now reads `enhancedLighting.js` and
 `farRing.js` and expands every interpolated block a file defines.
 Campaign `tools/mutants/el1.json`: 41 mutants, 40 killed, 1 equivalent as
 recorded (the range guard at exactly the range, where the window is
@@ -207,7 +210,7 @@ none, as shadowPass.js's header says); the water surface receives none;
 the moon casts none (the map is the sun's, and at night the lanterns are
 the light). EL3 or a later pass owns those.
 
-**Pinned** (`test/el2_shadows.test.js`, 8): the constants; the cascades'
+**Pinned** (`test/render/el2_shadows.test.js`, 8): the constants; the cascades'
 geometry and snap; the cube faces against the depth reference; the caster
 pick and the kind; the receiver block, the depth shaders, the five lane
 shaders' use of them and the classic shaders' innocence; the fake-GL
@@ -291,7 +294,7 @@ composite is the later pass above); a classic panorama sky drawn as a
 screen quad (`?sky=classic` on the enhanced skin) would trigger the
 composite before the world's flats.
 
-**Pinned** (`test/el3_air.test.js`, 7; EL4 re-aimed the composite pins to
+**Pinned** (`test/render/el3_air.test.js`, 7; EL4 re-aimed the composite pins to
 the resolve): the door and the constants
 (four reserved units in a row); the reconstruction against the
 perspective matrix, mirrored and not, and the GLSL's arithmetic; the
@@ -383,7 +386,7 @@ writing the display values they always wrote. A float frame would need
 every one of their shaders to output linear, which is the one thing this
 tier does not touch; the resolve works in linear on the decoded frame.
 
-**Pinned** (`test/el4_frame.test.js`, 6): the constants and the encodings
+**Pinned** (`test/render/el4_frame.test.js`, 6): the constants and the encodings
 (inverses, the midpoint byte); the adaptation step (slow open, fast close,
 both clamps reached, mid-grey at rest, the bounded step, the GLSL's same
 lines); the frame-target law (the helper's two restores, the clouds' blit,
@@ -411,7 +414,7 @@ and two of my own (the frame lifecycle under real WebGL semantics; the
 classic lane's byte-identity against the merge base - the ten classic
 shaders compared template for template, the one difference the `vBBBase`
 varying EL2 added, which the classic fragment shader ignores). Twenty
-findings, every one fixed and pinned (`test/audit_el.test.js`, 11;
+findings, every one fixed and pinned (`test/render/audit_el.test.js`, 11;
 campaign `tools/mutants/audit_el.json`, 33 mutants, 33 killed; the four
 tier campaigns re-run over the audited code).
 
@@ -594,7 +597,7 @@ cured by the normal offset; a dungeon has no sun, so it shows outdoors
 under eaves and arches. The eye's image, the shafts and the AO were not
 re-judged here beyond "they run and the frame is right".
 
-**Pins:** test/el5_field.test.js (8): the sphere planes and the sphere
+**Pins:** test/render/el5_field.test.js (8): the sphere planes and the sphere
 test on an ortho box, a perspective frustum and the six faces; boundsOf
 and transformSphere; the casters' pick; the face basis against
 pointFaceMatrices on every face, and the shader's constants; every lane
@@ -672,7 +675,7 @@ the contrast in display space, the dither.
 (no image before the frame, the images and their counts at the resolve, the
 frame's depth bound for each, the AO on the resolve's unit at its mix, the
 flames never drawn from a lantern, the emitters replayed from this frame's
-records with their basis); test/el6_field.test.js (2) for the pins the
+records with their basis); test/render/el6_field.test.js (2) for the pins the
 EL6 campaign found no test could fail; tools/mutants/el6.json (26). The probe's new check:
 the emitter behind the wall.
 
@@ -735,7 +738,7 @@ whole-number constant takes into a shader. The probe's lantern B now has
 a flame flat under it, in view: the glare shows with the flat, not
 without, and not for a torch added in the hand.
 
-**Pins:** test/el7_polish.test.js (3); the el1/el2/el3/el5 pins re-aimed
+**Pins:** test/render/el7_polish.test.js (3); the el1/el2/el3/el5 pins re-aimed
 (three cascades, the compile counts, the glare's presence test and size,
 the rig's record from drawCharacter alone). tools/mutants/el7.json (26).
 
@@ -799,7 +802,7 @@ side, lit through the wall by A, reads 0.2019 with the march off and
 0.1060 with it on; the open floor, the glares (446 with the flame, none
 without) and the wall's far side unchanged.
 
-**Pins:** test/el8_contact.test.js (4); the el2/el3/el5 pins re-aimed
+**Pins:** test/render/el8_contact.test.js (4); the el2/el3/el5 pins re-aimed
 (the table's uniform, two depth textures on the frame, the cadence's
 counts). tools/mutants/el8.json (32).
 
@@ -873,9 +876,9 @@ A and B took the maps - the march was no longer what it measured). All
 checks pass on the real GL (WebKit/SwiftShader): the wall's foot 0.1948
 off / 0.0924 on, B's glare 446 / 0 bare / 446 carried / 0 panelled.
 
-**Pins:** test/bugs5_field.test.js (3 - the constants and the picker,
+**Pins:** test/render/bugs5_field.test.js (3 - the constants and the picker,
 the no-cast rules on the fake GL, the far cascade's radius rule),
-test/ww1_weaponwidget.test.js's F1 pin; the el2/el3/el5/el7/el8 pins
+test/combat/weapon/ww1_weaponwidget.test.js's F1 pin; the el2/el3/el5/el7/el8 pins
 re-aimed at the new numbers and the self check. tools/mutants/bugs5.json (20, all dead).
 
 ## LIGHT-NEAR1 - THE LAMP OVERHEAD (2026-09-23, kurkku on Discord, with video: "shadows disappear seemingly when you're too close to the light source")
@@ -903,7 +906,7 @@ A scene light's distance to the eye is not a reason to drop its shadow;
 the hand's light is excluded by its flag. The two constants are deleted
 rather than zeroed, so no pin can read a dead knob.
 
-Pinned: `test/lightnear1.test.js` (4) - the lamp overhead is the nearest
+Pinned: `test/render/lightnear1.test.js` (4) - the lamp overhead is the nearest
 caster and the hand's light is passed over by its flag alone; on the fake
 GL a lantern a hand's width from the eye draws its glare and the carried
 torch beside it does not; the shader and the glare loop by text; every
@@ -964,7 +967,7 @@ fragment, not the frame's count - so the cap can rise (every candle a
 light) without the fragment paying for the ones across the room. That is
 the next step's door; this one changes no picture.
 
-Pinned: `test/lc1_clusters.test.js` (7). `el2_shadows`' wiring window
+Pinned: `test/render/lc1_clusters.test.js` (7). `el2_shadows`' wiring window
 grew for the build line.
 
 ## SC1 - THE STATIC CASTERS ARE DRAWN ONCE (2026-09-23, Mac: "make some insane improvements to our lighting system ... while also improving performance")
@@ -1021,7 +1024,7 @@ while the old path draws the room every frame.
 6 x 6 x 512^2 x 24-bit, about 75 MB together. The lane is the enhanced
 skin's, on the desktop GPU it was built for.
 
-Pinned: `test/sc1_shadowcache.test.js` (7). `el8_contact`'s cadence pin
+Pinned: `test/render/sc1_shadowcache.test.js` (7). `el8_contact`'s cadence pin
 drives a walking mesh now; `el2_shadows`/`el5_field` count the cache's
 layers and storage; `weeds1_flatcasters`' replay signature carries the
 filter.
@@ -1165,7 +1168,7 @@ state (READ/DRAW bindings reset, blit legality, no sampler on the cache),
 the hold, the signature's order-freedom, slot refills, the door both
 ways.
 
-Pinned: `test/audit_lighting.test.js` (the two doors, the crossing, the
+Pinned: `test/render/audit_lighting.test.js` (the two doors, the crossing, the
 gib and the frame, the flame that is no reason, the lazy cache, the
 mask through a panel, the curve's laws), quickloot (the ring through the
 door, the seven calls), lc1 (the near band), el3 (the shader by text).
@@ -1214,7 +1217,7 @@ EL8's cadence, the cache holding no lean) and still the moment it
 drops, with no hold - it did not move, it was moving. A batch without
 sway stands in the cache under any wind.
 
-Pinned: `test/shadowreach.test.js` - the reach against a lantern's
+Pinned: `test/render/shadowreach.test.js` - the reach against a lantern's
 quantised far (the corner nearest the light), a translated box, the sun's
 cascades (behind the eye toward the light within the depth, across the
 light within the far radius, and past both), the classic set; the
@@ -1268,7 +1271,7 @@ The term is gone, the reason stands in enhancedLighting.js where it
 stood, and real bounce is its own step: a reflective shadow map, a
 colour and a normal beside the depth in the cube pass.
 
-Pinned: `test/vol1_glow.test.js` - the march by source (the leaf, the
+Pinned: `test/render/vol1_glow.test.js` - the march by source (the leaf, the
 three blocks handed in, the ray, the early-out, the closed form for a
 lantern with no map, the integrand and the jitter, the tonemap, the
 depth-aware tile blur, the resolve's add, the renderer's gate and the
@@ -1376,12 +1379,12 @@ whose sphere the ray crosses, times eight taps.
 
 **BOUNCE1 (HIGH): withdrawn** - see VOL1 above.
 
-Pinned: `test/audit_reach.test.js` (the double door, the eviction, the
-record and the flip, the crossing's records), `test/shadowreach.test.js`
+Pinned: `test/render/audit_reach.test.js` (the double door, the eviction, the
+record and the flip, the crossing's records), `test/render/shadowreach.test.js`
 (the sway's cadence and floor, a wind along z, the enclosing sphere, a
 box above the lantern, a translated box against the sun, a sphere's
 radius, a flat's lift, the no-caster guard, the seam's wind, the
-off-screen pixel's models, the peers), `test/vol1_glow.test.js` (the
+off-screen pixel's models, the peers), `test/render/vol1_glow.test.js` (the
 chord, the linear path and the tone pass, the fresh gate and the blank
 frame, the eye and the bloom reading the glow, the guarded build, the
 bounce gone). Campaigns: `tools/mutants/auditreach.json` 8, `vol1.json`
@@ -1393,7 +1396,7 @@ re-aimed by content.
 The nearest-`SHADOW_POINT_CASTERS` pick swapped near-ties on every step and head-bob, and the lamp that lost its
 cube map lit through the ceiling for a frame. `render/shadowPass.js` `CASTER_KEEP_RATIO` (0.8): last frame's
 casters (`holdCasters`, matched by position) are measured at 0.8 of their distance, so a newcomer must be clearly
-nearer to take a map. Record: `01-Overview/Field-Bugs-2026-09-23.md`. Pinned in `test/disc6.test.js`; `tools/mutants/disc6.json`.
+nearer to take a map. Record: `01-Overview/bugs/Field-Bugs-2026-09-23.md`. Pinned in `test/systems/disc6.test.js`; `tools/mutants/disc6.json`.
 
 ## DISC15 - EVERY LIGHT IN A ROOM CASTS (2026-09-24, Mac: "Constant reports of interior light flickering. Opus seemingly always considers it solved. Its not solved")
 
@@ -1412,14 +1415,18 @@ found two things, both from the same root: only the eight lamps nearest the eye 
   through a frame-old depth). `?contact=off` removed it; a stable light order did not (not an index bug).
 
 **The lo tier** (`render/shadowPass.js`, DISC15): in a room its host draws WHOLE, every light the caster table can name
-keeps its own cube map of the room's static casters at SHADOW_LO_SIZE (256), six layers of a second depth array on
-SHADOW_LO_UNIT (8) - sticky by position like SC1's slots, drawn when the light arrives or moves, redrawn for a changed
-static set SHADOW_LO_REBUILDS (2) a frame with the old map standing meanwhile. The eight keep their 512 maps with the
-movers on top; every other light reads its lo map (`uCasterOf` = SHADOW_POINT_CASTERS + j; the lo map's light and far
-are the light's own `uPointLights[i]` and `shadowFarFor` of its range, the same float arithmetic in JS and GLSL). A
-change of the eight now changes a shadow's resolution, never whether the ceiling is there, and no indoor lamp is left
-for the contact march. The same walk after: caster changes move at most 2% of the screen by 12+ levels (d1 <= 1.74),
-and the one-frame flash is gone.
+has a map. The nearest keep their 512 maps with the movers on top (twelve since FLICKER-FIX); every other light reads
+its own cube map of the room's static casters at SHADOW_LO_SIZE (256), six layers of a second depth array on
+SHADOW_LO_UNIT (8) (`uCasterOf` = SHADOW_POINT_CASTERS + j; the lo map's light and far are the light's own
+`uPointLights[i]` and `shadowFarFor` of its range, the same float arithmetic in JS and GLSL) - sticky by position like
+SC1's slots, drawn when its light first reads it and when that light moves, redrawn for a changed static set
+SHADOW_LO_REBUILDS (2) a frame with the old map standing meanwhile. Mac's decision (LIGHT-ID, 2026-10-14: "Engine fix
+(Recommended)"): a light holding a 512 slot draws no lo map, because no shader reads one while it holds the slot; a lo
+map it already has keeps its slot as it stands, and the frame the light leaves the twelve it reads its lo map - one
+drawn then, or its kept one asked its static signature then and redrawn at once if the room changed under it, outside
+the budget - so no lo map is read stale. A change of the twelve changes a shadow's resolution, never whether the
+ceiling is there, and no indoor lamp is left for the contact march. The same walk after: caster changes move at most
+2% of the screen by 12+ levels (d1 <= 1.74), and the one-frame flash is gone.
 
 - **Who asks.** `renderer.everyLightCasts()`, each frame before beginFrame, from the two building hosts (the world's
   interior arm and `?interior=`) - the hosts that draw everything, so every static caster is in the records. A host
@@ -1431,15 +1438,16 @@ and the one-frame flash is gone.
 - **The door.** The records a frame replays are the last frame's, so the first frame through a door had the street's:
   that frame drops them (nothing casts, once) and the tier runs from the next frame on the room's own. Before, the
   eight 512 maps were drawn from the street's walls for that frame.
-- **The cost.** A tavern's twenty lo maps are 120 face replays on the second frame inside (about 3300 draws on
-  TVRNGM03), then none while the room is still; the array grows by SHADOW_LO_STEP (8) slots - 24 for a tavern, 1.5 MB
+- **The cost.** A tavern's lo maps are drawn on the second frame inside - LIGHT-ID: the eight lamps past the twelve's,
+  48 face replays (they were all twenty's, 120, about 3300 draws on TVRNGM03) - then none while the room is still, and
+  six for each lamp that leaves the twelve with no map of its own yet; the array grows by SHADOW_LO_STEP (8) slots - 24 for a tavern, 1.5 MB
   a slot (six 256 x 256 layers of 4 bytes), 38 MB - and is never shrunk. The lo maps hold no movers: a walker casts from the
   eight alone.
 - **The look.** A corridor or a room with no lamp of its own is now lit by its ambient and what comes through its
   doors - it was lit before by the lamps in the rooms around it, through the walls, and that light is exactly what
   came and went as the eight changed.
 
-Pins: `test/disc15.test.js` (8); the source pins that quote the lit loop, `shadowOfLight` and the air's march re-aimed
+Pins: `test/render/disc15.test.js` (8); the source pins that quote the lit loop, `shadowOfLight` and the air's march re-aimed
 (el2, el5, el8, lightnear1, audit_reach, vol1, audit_lighting's array count). Mutants: `tools/mutants/disc15.json` 16,
 all dead; el3/el5/el8/vol1 records re-aimed by content, all still dead.
 
@@ -1449,7 +1457,7 @@ EL8's contact block sampled the previous frame's depth at the clip-space UV as i
 canvas; under a docked large HUD every sample came from the wrong row and near the bottom from the bar's cleared
 strip. `holdPrevRect` keeps the rect the depth was written under (with the view-projection, in `prepare`) and
 `prevDepthUV` maps through it, as DEPTH_GLSL's `depthAt` does for every other screen pass. Record:
-`01-Overview/Field-Bugs-2026-09-23.md` (DISC7). Pins: `test/disc7.test.js`.
+`01-Overview/bugs/Field-Bugs-2026-09-23.md` (DISC7). Pins: `test/systems/disc7.test.js`.
 
 ## LA - THE DEEP AUDIT: THE SHADOWS HOLD STILL (2026-09-27, Mac: "a deep audit on the enhanced lightning system, look for flickering issues, performance improvements and just a complete detailed overhaul to make this insanely better")
 
@@ -1484,7 +1492,7 @@ the frame callback's time, the GL calls by name, and the shadow pass's own count
   DISC15's: each torch's lo map is drawn when it arrives and then served; a light that MOVES past the eight (a thrown
   torch, a burning foe, the court's glow on the boss) is a new light every frame it moves and redraws its six 256
   faces, as it has in the buildings since DISC15 - the player's own candle, torch and muzzle flash are carried and take
-  no map. (LA-AUDIT A1 and A2 priced that and cut it: each face drew the whole level. And a peer's torch is carried too
+  no map. (LIGHT-ID, 2026-10-14: one that moves among the nearest draws no lo map and its cube whole.) (LA-AUDIT A1 and A2 priced that and cut it: each face drew the whole level. And a peer's torch is carried too
   - PEERLIGHT1 marks it so to spare its glare - so it takes no map and lights through the rock: A3, recorded.)
 - **LA-SHADOW4 - a torch's flicker is not a new light.** PERF-FLICKER rounds a shadow's far up to a quantum of 4, which
   swallows the town lantern's wobble (AnimateLight: 16.6 to 18.4, all 20) but not a dungeon's, where each light
@@ -1522,7 +1530,7 @@ text quad and the same lighting draws; three re-runs of the same code and walk w
 closed by the audit's lens D: BLOOD2e's bleed flash on a character the street had mauled, the same in both trees (AUDIT
 (LA) below).
 
-Pins: `test/la_shadow.test.js` (16); re-aimed by content: el2_shadows, perfexta, perfsun_fragment, perfon2_peercull,
+Pins: `test/render/la_shadow.test.js` (16); re-aimed by content: el2_shadows, perfexta, perfsun_fragment, perfon2_peercull,
 disc15, shadowreach. Mutants: `tools/mutants/la_shadow.json` 27, all dead; eight older records re-aimed, all still dead.
 
 ## LA-POST - THE POST CHAIN, AUDITED (2026-09-27, Mac: "a deep audit on the enhanced lighting system")
@@ -1642,7 +1650,7 @@ against synthetic frames and depths, with "the base" (the pass as it stood) run 
 (next to DISC15's discard), `_airGlows` asks for the built shader. The air's re-enable needed no renderer line -
 `release()` carries the cut.
 
-**Pinned:** `test/la_post.test.js` (10): the bright pass's footprint (every pixel a sixteenth) and the shader run on a
+**Pinned:** `test/render/la_post.test.js` (10): the bright pass's footprint (every pixel a sixteenth) and the shader run on a
 16x16 frame (a 3x3 flame's energy constant at all 16 places, the base's four-of-sixteen pop beside it, a lit field
 unchanged, the glow blooming through the variant that reads it); the glare's taps (28, rows and columns distinct, off
 the light's row, EL7's footprint, symmetric) and the vertex shader run on a ray-cast scene (a flame glares and a bare
@@ -1718,7 +1726,7 @@ setFlashLight and setLightingLane - and the lane that decoded it; fewer lights t
 8.4 us in node, and an interior frame paid it about fifteen times (beginFrame, the air's prepare, eight flat calls,
 the decals, the bodies); now once.
 
-**The proof is a differential, not a list.** `test/la_cost.test.js` drives a fake GL that keeps a driver's state (a
+**The proof is a differential, not a list.** `test/render/la_cost.test.js` drives a fake GL that keeps a driver's state (a
 uniform is its program's, a binding its unit's, a location null where no attached shader declares the name) through
 two frames of mesh, terrain, body, decal and flat draws with EVERY setter, borrow and seam above between them -
 including a foreign pass that binds junk on all sixteen units - and snapshots, at every one of its 678 draws, the
@@ -1796,7 +1804,7 @@ before): identical, but the contact scene's band (LA-COST5) and the one x^24 byt
 pixel-identical grid against plain, and against the tree before but for 604 pixels, by at most 2 of 255, of its
 forty-lantern street - LA-COST5's band again (with the hard edge put back, identical).
 
-Pins: `test/la_cost.test.js` (10). Re-aimed by content: audit68_render_a (the import), audit_el (the glint), el1 (the
+Pins: `test/render/la_cost.test.js` (10). Re-aimed by content: audit68_render_a (the import), audit_el (the glint), el1 (the
 same lane's no-op, read off the stamp: an install looks nothing up now either), el2 (the march line, the flat's sun at
 the corner), el4 (the eye vector, the lobe), el5 and el8 (the march line), glstate (the one forget), hard3 (the batch's
 36 fields), lc1 (the loop head), perf3 (the stamp sites, the sort), perfsun_fragment (PERF-SUN2's and TREES1's flat),
@@ -1899,9 +1907,6 @@ claims (mutants, the patch notes, the numbers).
   evaluator now (F-H3: a lo lookup comparing at the live range's own quantum passed every pin).
 
 **Declined, with the reason.**
-- **A2: a light holding a 512 map keeps drawing its lo map** - six unread faces a frame for a mover in the eight. With
-  A1's cells that is 7.8k indices a frame, and DISC15 keeps the eight's lo maps on purpose (a light that leaves the eight
-  has its map, and the hand-over draws nothing); its pins hold that. Tried and reverted.
 - **A1's other two cures** - the lo array blitted into its bigger self instead of redrawn, and a cadence for moving
   lights: with the cells the growth frame is 0.49M indices and a mover 7.8k, both under the base's entry frame.
 - **A3: a peer's torch takes no map and lights through the rock.** PEERLIGHT1 marks it carried to spare its glare, and
@@ -1936,7 +1941,7 @@ foreign pass; the trial merge's 34 conflicts were numbers only (cites, and the S
 and no relay file moved. Merged at `bceff1da` the same way (the 34 hunks re-checked against the audit's commit):
 12,911 tests, none failing; lint, types and the build clean.
 
-Pins: `test/la_audit.test.js` (12). Re-aimed by content: la_post (LA-POST1's blocks placed by the texel's
+Pins: `test/render/la_audit.test.js` (12). Re-aimed by content: la_post (LA-POST1's blocks placed by the texel's
 gl_FragCoord; LA-POST5's base and the far ground to 150; the recentre's stamp), la_shadow and perfon2_peercull (the
 pool fill run), la_cost (the counts compared), and the source pins the fixes' text moved - a10_world_misc,
 audit_lighting, auditdisc19, disc15, disc19, el4_frame, el7_polish, perf5. Mutants: `tools/mutants/la_audit.json` 42, all dead; fourteen older records re-aimed by content
@@ -1979,25 +1984,25 @@ recorded one: a regex over the whole shader that VOL1's `pointShadowOne` satisfi
 lamp lit through a wall or a floor in the browser. What does is a CARRIED light (a torch, a lantern, a Light spell's
 candle, and a peer's), which has no map at all: a torch behind MAGEAA00's corridor wall lights 57.5% of the corridor
 view through it. Recorded, not changed - a carried light's map redrawn every frame is a cost for Mac to weigh.
-`test/disc29_lamps.test.js` (4); DISC24-C's walk re-aimed so the card walks with the eye; the SC1 and WEEDS1 source
+`test/render/disc29_lamps.test.js` (4); DISC24-C's walk re-aimed so the card walks with the eye; the SC1 and WEEDS1 source
 pins re-aimed. `tools/mutants/disc29.json` (DISC29-E, 11); seven older records re-aimed by content (auditlight,
-auditreach 2, el8, perfexta, perfextb, weeds1). `01-Overview/Field-Bugs-2026-09-28f.md` DISC29-E.
+auditreach 2, el8, perfexta, perfextb, weeds1). `01-Overview/bugs/Field-Bugs-2026-09-28f.md` DISC29-E.
 
-**AUDIT PRE-MERGE 0929 E1-E3** (`01-Overview/Audit-PreMerge-0929.md`, lens E, on the real ShadowPass).
+**AUDIT PRE-MERGE 0929 E1-E3** (`01-Overview/audits/Audit-PreMerge-0929.md`, lens E, on the real ShadowPass).
 - **E1 - a walker's ghost in the lo lamps.** "A flat whose place is still" was every flat an ORIGIN places, the moment
   it stood: a dungeon foe, a peer, the Warden. The lo tier's maps are rebuilt two faces a frame, nearest the eye first,
   so each time one walked on, the lamps outside the eight - the maps they read - kept its silhouette where it had stood:
   a ghost on 4.7% of the frames of a fight of three under fourteen lamps, 49% under thirty with six; and every stop and
   start rebuilt every lo map in its reach (+20% script time). Only a flat that cannot walk - its centre baked into its
   vertices, no origin - is in place now; a flat an origin places stays the eight's, as before DISC29-E. `_shPlacedAt`
-  has no reader and is gone (39 fields a batch, `test/hard3_types.test.js`).
+  has no reader and is gone (39 fields a batch, `test/systems/save/hard3_types.test.js`).
 - **E2** - finding the player's card walked every batch of every record, every frame, lamp or none: recordBillboards
   notes it as it passes it (`_selfCard`), and the lamps read it only when one casts.
 - **E3 - the card's lamps were the eye's.** The card's two were ranked among the eight nearest the EYE, so with the
   camera 4 m or more away the lamps nearest a still player were often not casters, and the silhouette still hopped as
   the camera circled (MAGEAA00: 12 of 39 spots at 6 m). The two casting lights nearest the card, by the pick's own
   measure and DISC6's hold, are made casters (`reserveSelfCasters`), each in place of the eye's farthest pick.
-`test/disc29_lamps.test.js` (5), `test/lightnear1.test.js`'s source pin; `tools/mutants/audit0929_render.json` (4, all
+`test/render/disc29_lamps.test.js` (5), `test/render/lightnear1.test.js`'s source pin; `tools/mutants/audit0929_render.json` (4, all
 dead).
 
 ## AUDIT FLICKER - THE SHADOWS THAT CHANGED WHEN NOTHING DID (2026-09-30, a player through Mac: "interior lights flickering and not casting right on nvidia gpu but not on amd build"; Mac: "investigate shadow flickering with enhanced lighting")
@@ -2054,13 +2059,13 @@ Recorded, not changed: a mesh drawn at more than 1,024 places at once, every one
 record pool stops at 6000; a boat's lantern follows the boat a frame behind; the player's own card, the corpses and the
 flyers are not moved at a crossing (one frame); a cut from room to room inside one interior replays the last room's
 casters for a frame; a peer's WB9h body out of view does not cast.
-`test/audit_flicker.test.js` (7); fourteen older pins re-aimed at the new text (el2, perfsun_fragment, la_audit,
+`test/render/audit_flicker.test.js` (7); fourteen older pins re-aimed at the new text (el2, perfsun_fragment, la_audit,
 la_shadow, perfexta, la_post, sc1, disc15, el5_field, disc23b, la_cost, invislook; el3_air and lc1_clusters for F3
 and F4). `tools/mutants/audit_flicker.json` (28, all dead).
 
 ## CACHE-COPY - THE BLINK WAS THE CACHE'S COPY, NOT THE CACHE (2026-10-07, Mac: "So one thing I noticed, instead of one of my developers fixing the flickering shadow issue, they just turned on the non-baked version on by default, which really really kill performance. Instead of such a half baked fix, I want to fix the flickering issue properly")
 
-**What was turned off.** The anti-flicker patch (`01-Overview/Waypoints-And-Pace.md`, 2026-10-06) answered "every
+**What was turned off.** The anti-flicker patch (`01-Overview/handoffs/Waypoints-And-Pace.md`, 2026-10-06) answered "every
 shadow in the tavern blinking at once ... on every card, and none with `&shadowcache=off`" with CACHE-OFF: SC1's static
 cache off unless asked on. With it off every caster slot replays every caster in its reach into six faces every frame
 (under Steady shadows, every slot) - the cost SC1 was built to remove. The patch's other parts were its guesses on the
@@ -2134,7 +2139,7 @@ could not make.
 **The four hosts.** No host changed: the copy is the renderer's shadow pass, under `scenes/exterior.js`,
 `scenes/world.js`, `scenes/worldModes.js` (interiors) and `scenes/dungeonContext.js` alike.
 
-`test/cachecopy.test.js` (5); `tools/mutants/cachecopy.json` (15, all dead). Pins moved: sc1_shadowcache, audit_lighting,
+`test/render/cachecopy.test.js` (5); `tools/mutants/cachecopy.json` (15, all dead). Pins moved: sc1_shadowcache, audit_lighting,
 audit_reach, shadowreach and disc24c_self_shadow count the copy program's draws where they counted `blitFramebuffer`;
 el1_enhancedlighting's lane install compiles 24 (farclip1's 24 + 2) and its row has no Shadow cache part; perfurl_doors and sc1 read the door
 on again; antiflicker keeps EMPTY-HOLD's constant alone, and its four CACHE-OFF mutants went with the code they mutated.
@@ -2145,7 +2150,7 @@ on again; antiflicker keeps EMPTY-HOLD's constant alone, and its four CACHE-OFF 
 to 0.027 in linear, and the dark between the lamps already sat about where the screenshot's does. Two things lifted the
 room:
 - **The lamps.** AddLight's second switch gives a building's lamp an intensity that the hosts multiply into its colour
-  (`world/interiorLights.js` interiorLightProperties), and the lane decodes that product as a colour. A lantern's 1.4
+  (`world/interior/interiorLights.js` interiorLightProperties), and the lane decodes that product as a colour. A lantern's 1.4
   (records 24-27, `[1, 0.98, 0.64]`) decodes to 2.16 in linear, about 3.5 times the street's lantern (lanternColor at the
   city's 1, the ~1900 K flame). Every lamp's range (15 for most) covers a tavern, so a room of four lanterns was lit
   flat from wall to wall, with no pools.
@@ -2167,7 +2172,7 @@ room:
 Unchanged: the ambient (EL4's "an interior keeps its daylight ambient" stands), the night ambient, every lamp's range
 and place, and the shadows. The player's own lights (the torch, the magic candle, the spells, a dropped torch), the
 others' torches, a ship's lanterns (CSA) and Improved Interior Lighting's lights (IIL1, its own colours and intensities,
-the `?iil=shadows` door) keep their numbers. A home's decor lamps join the room's own list (`scenes/decorRoom.js`), so
+the `?iil=shadows` door) keep their numbers. A home's decor lamps join the room's own list (`scenes/decor/decorRoom.js`), so
 they burn lower with it.
 
 **The four hosts.** `scenes/worldModes.js`'s interior arm: the lamps through `interiorLightColor`, and the grade after
@@ -2195,7 +2200,98 @@ light away. The pictures are written where the probe is told (they are synthetic
 What the probe cannot say is how a real room reads to the eye. Every number above is a named constant, and that call
 is Mac's.
 
-`test/interiordim.test.js` (4); `tools/mutants/interiordim.json` (15, all dead). PINS MOVED: sd25_look counted ONE
+`test/render/interiordim.test.js` (4); `tools/mutants/interiordim.json` (15, all dead). PINS MOVED: sd25_look counted ONE
 `setSceneGrade` in worldModes.js ("the Hour alone asks a grade"); it counts two now and holds the Hour as the dungeon
 arm's only grade. perlightcolors (LT1) and audit18_hosts_outer read both hosts' colour x intensity as the literal
 product; they read the `interiorLightColor` call now, and LT1 holds its off-the-lane answer to the product.
+
+## UW-GLOW - THE LIGHT IN THE HAND UNDER WATER (2026-10-11, a player on Discord: "having a candle spell or other light source on while underwater results in almost total blindness")
+
+The disc was the lane's fog in-scatter (step 5 above), not the underwater
+tint. Its gain is `EL_SCATTER` times the fog's density, and `EL_SCATTER`
+was tuned in Better Ambience's linear 0..40 fog - a density of 1/40. The
+dungeon's underwater murk (`UnderwaterFog`, exp up to 0.25) is a visibility
+fog ten times that, and the integral has no extinction: a light within a
+stride of the eye integrated at 0.25, lifted by the eye's adaptation and
+per-channel tonemap, read 221 grey at the screen's centre (the candle) and
+an orange haze over the whole view (the torch). The rings were that smooth
+ramp through the 8-bit and retro passes.
+
+`EL_SCATTER_DENSITY_MAX = 1 / 40` (`enhancedLighting.js`) caps the density
+the GLOW integrates - `Renderer._scatterGain` takes the lesser of the fog's
+and the lane's `scatterDensityMax`, for both the lane's `uELScatter` and the
+air pass's volumetric glow. The candle's centre under water now reads ~111,
+the tuned halo; the light still lights the walls through `elPointLit`. The
+air pass's haze EXTINCTION is not capped (vc7b's pin holds it to the raw
+law). Every fog at or under 1/40 is bit-identical - DFU's dungeon, Better
+Ambience, rain, snow, the interiors; the outdoor weather's `heavy` (0.05)
+and `sandstorm` (0.09) glow lower by the same cap, the same unbounded
+growth. test/render/uw_glow.test.js pins the gain under the murk and the centre
+pixel it makes.
+
+## LIGHT-ID - A LIGHT IS SOMEBODY'S LIGHT (2026-10-14, Mac, of AOE-PERF's shadow pass: "Engine fix (Recommended)")
+
+**What the pass spent for nothing** (`01-Overview/bugs/Field-Bugs-2026-10-13e.md` AOE-PERF, counted by
+`tools/courtShadowProbe.mjs`). The shadow pass knew a light only by where it stood: SC1's sticky slots and DISC15's lo
+slots matched a light to its map by position (`samePlace`). A light that moves - the gate boss's glow walking among the
+crowd, a thrown torch, a burning foe - was a new light every frame it moved: its static cache was redrawn, then copied
+into the live layers, and the movers drawn on top - twelve faces and six copies for six faces anyone sees. And DISC15
+drew a lo map for every light that may cast, the twelve's included, though no shader reads a lo map while its light
+holds a 512 slot (`uCasterOf` names the slot): six more faces a frame for his glow. Mac was asked whether his lights
+should stop casting (composed carried, they cost nothing and cast nothing) and chose to keep the look and fix the
+engine.
+
+**THE ONE CONSTRUCTION SEAM** (`render/lightId.js`). A light's identity is its producer's record's: minted on first ask
+(`src/render/lightId.js:"export function lightIdOf(l)"`) under a Symbol defined not enumerable - the record's fields,
+its deep-equal, a spread of it and its JSON are what they were - and a frozen record (the court's braziers) keeps one in
+a WeakMap. A copy is another record: the two that stand for their light each frame adopt it (worldModes.js's dungeon
+flame tint, `_dgTint`, and the abyss's candle, `abyssCandle`). Every list a frame hands the renderer
+is written there: `lightList` makes it with its `ids` beside the vec4s (a non-enumerable Float64Array, so a list is the
+Float32Array it was), `packLight` writes a record's place and identity side by side, `copyLights` carries a base's
+identities (an anonymous base, none). A pool that refills in order names each entry by the light it stands for
+(`adoptLight` - the street's lanterns, the World of Daggerfall lights and boats, the quays, the yards, the Hour's
+lights, a ship's), a record re-made each frame for a light that lives on adopts its source's (a thrown torch, a camp,
+the gate's and the spoils' lights), and a record reused for another light is `relight`ed (the court's and the Hour's
+burst slots). His glow is one kept record (`world/gate/gateBoss.js` bossGlow's `out`, `scenes/gate/gateCourt.js` `_glow`). The
+renderer lifts the identities with the list (`src/render/renderer.js:"ids: this._pointIds,"`), shifts them under the
+storm's flash and keeps them through a snapshot. A list with no ids - a raw vec4 array - names no light, and the pass
+is what it was. `test/render/lightid.test.js` sweeps src/ for a light written into a list anywhere else.
+
+**The mover** (`render/shadowPass.js`). A slot is kept by its light's identity first, by place after
+(`src/render/shadowPass.js:"if (!taken[k] && sid[k] === id)"`); a light that kept its own slot and stands elsewhere
+moved (`src/render/shadowPass.js:"const mover = own[rank] === 1"`) and draws its cube whole, straight into the layers
+it is read from - the cached path's casters, static and moving, in one replay: six faces, no static cache, no copy. Its
+slot's cache is marked stale, so the frame it stops it goes back to the cached path and draws its cache once. A light
+with no name is never a mover. `stats.moverFaces` counts the faces.
+
+**The lo law** is DISC15's, amended there: a light holding a 512 slot draws no lo map
+(`src/render/shadowPass.js:"const hi = (i) => SHADOW_TUNING.loUnread"`); one it has is kept and asked its signature
+the frame its light leaves the twelve, redrawn then if the room changed, outside the budget, and one for a light that
+arrived or moved meanwhile is dropped - no lo map is read stale. SHADOW_TUNING's `moverDirect` and `loUnread` false
+put each law back as it was: the pins' oracles and an A/B's off arms. Neither changes a map.
+
+**Counted** (the court, eight Morrowind bodies, Steady shadows, a frame, mean (worst); before / after). He walks among
+them: 12 cube faces (6 static, 6 dynamic), 6 lo faces, 6 copies, 25 depth draws / 6 faces, all whole, no lo face, no
+copy, 19 draws - the same body corners in his maps. A Hellfire lands on five: the flashes stand still, so 36 (66) cube
+faces either way; lo faces 4.3 (126) / 1.9 (54), the worst the session's first landing growing the lo array; depth
+draws 79 (238) / 76 (164). A still court: nothing either way. **The look**, on a real GL (`tools/lightIdLookProbe.mjs`,
+Chromium on SwiftShader: the court's whole frame, his glow walking among ten walkers, then a five-mark Hellfire, 14
+frames each, read back with both laws off and on): not one channel value apart in any frame. Not measured: a GPU's
+time - on SwiftShader the pass is a few per cent of the court's frame.
+
+**No new GPU allocation.** The mover draws into the live layers its slot already owns; the pass's new state is CPU
+arrays it owns beside the slots (`_slotId`, one a slot) and the lo array (`_loUnminded`, grown with it).
+
+**The four hosts.** The pass is the renderer's, under all four (`scenes/exterior.js`, `scenes/world.js`,
+`scenes/worldModes.js`, `scenes/dungeonContext.js`); each host's lights reach it through the composers above, and a
+host list the seam does not name keeps the old path.
+
+`test/render/lightid.test.js` (10); `tools/mutants/lightid.json` (28, all dead). Re-pinned to the lo law, none loosened, each
+still failing under a one-character mutation: disc15 (six, and the hand-over added), disc29_lamps (DISC29-E's idler),
+la_shadow (LA-SHADOW4's pass: 72 static and 24 lo faces at the crossing), perfexta (PERF-EXT's still hall); PERF-SHADOW1
+needed none. Records re-aimed by content: disc15, el1, el3, perfon2 (2), perfsun3, perfvol, wb3b - all still dead. Pins
+moved: quays (the quay lantern's record adopts its lantern), seraphwings and auditdisc19 (the tint and the candle adopt
+theirs; seraphwings' record re-aimed, dead), and the three rigs that run the hosts' own light composition
+(audit0928_render's R2, audit0928_merge's M4, `test/yardLightRig.mjs`) hand it `adoptLight`. **Measured, kept:** the seam
+copies element by element and names a record through one shared descriptor, so the Hour's lines make nothing a frame
+(sd11a's, sd20c's and sd25's measures).

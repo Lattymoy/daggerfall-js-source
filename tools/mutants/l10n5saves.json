@@ -1,0 +1,9 @@
+[
+  {"name":"L10N5-message-saves-translation","file":"src/systems/quest/message.js","old":"    if (this.ownLines) return { id: this.id, lines: [...this.ownLines] };   // L10N5: the quest's own words, never a translation's\n","new":"","tests":["test/systems/quest/l10n5_saves.test.js"]},
+  {"name":"L10N5-message-own-never-read-again","file":"src/systems/quest/quest.js","old":"    else result.ownText();   // L10N5: a language with no translation of it reads the quest's own again\n","new":"","tests":["test/systems/quest/l10n5_saves.test.js"]},
+  {"name":"L10N5-message-own-kept-after","file":"src/systems/quest/message.js","old":"    const own = this.ownLines;\n    this.ownLines = null;\n","new":"    const own = this.ownLines;\n","tests":["test/systems/quest/l10n5_saves.test.js"]},
+  {"name":"L10N5-message-restore-keeps-stale-own","file":"src/systems/quest/message.js","old":"  restoreSaveData(data) {\n    this.ownLines = null;\n","new":"  restoreSaveData(data) {\n","tests":["test/systems/quest/l10n5_saves.test.js"]},
+  {"name":"L10N5-displayname-saves-translation","file":"src/systems/quest/quest.js","old":"      displayName: this.ownDisplayName !== undefined ? this.ownDisplayName : this.displayName,","new":"      displayName: this.displayName,","tests":["test/systems/quest/l10n5_saves.test.js"]},
+  {"name":"L10N5-displayname-own-retaken","file":"src/systems/quest/quest.js","old":"    if (this.ownDisplayName === undefined) this.ownDisplayName = this.displayName;","new":"    this.ownDisplayName = this.displayName;","tests":["test/systems/quest/l10n5_saves.test.js"]},
+  {"name":"L10N5-restored-quest-unnamed","file":"src/systems/quest/machine.js","old":"        localizeDisplayName(quest);   // L10N5: the save holds the quest's own name; the language names it again\n","new":"","tests":["test/systems/quest/l10n5_saves.test.js"]}
+]

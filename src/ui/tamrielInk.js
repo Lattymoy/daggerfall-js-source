@@ -6,7 +6,7 @@
 // connected as a gigantic map ... seen by players ingame", and "Performance should also not be affected".
 //
 // The held map's world sheet (ui/heldMap.js) draws the Iliac Bay from the data; this layer draws the rest of Tamriel
-// round it from the authored geography (world/tamrielGeography.js), in the same hand - the pen, the wash, the carets
+// round it from the authored geography (world/tamriel/tamrielGeography.js), in the same hand - the pen, the wash, the carets
 // for the high ground, the dashed borders, the letter-spaced province names - so the sheet reads as one map.
 //
 // HOW IT JOINS THE BAY. The Bay's own ground is a HOLE in this layer: every authored chain is CLIPPED to the outside
@@ -29,21 +29,21 @@
 // ═══════════════════════════════════════════════════════════════════
 import {
   PROVINCES, MOUNTAIN_RANGES, RIVERS, SEAS, CITIES, COAST, ISLANDS, BORDERS, closedRing, pts, seaAt, provinceByKey,
-} from '../world/tamrielGeography.js';
-import { pictureToBay, bayToPicture, inBay, BAY_W, BAY_H, tamrielFit, tamrielFrameInBay } from '../world/tamrielFrame.js';
-// TAMRIEL3: the picture's own land where the world host traced it (world/tamrielLand.js) - the coast, the borders and
+} from '../world/tamriel/tamrielGeography.js';
+import { pictureToBay, bayToPicture, inBay, BAY_W, BAY_H, tamrielFit, tamrielFrameInBay } from '../world/tamriel/tamrielFrame.js';
+// TAMRIEL3: the picture's own land where the world host traced it (world/tamriel/tamrielLand.js) - the coast, the borders and
 // the provinces' places come off the trace, the authored shape stands where there is none
-import { tamrielTrace, tamrielLandVersion, provinceKeyAt, PROVINCE_OF_ID } from '../world/tamrielLand.js';
+import { tamrielTrace, tamrielLandVersion, provinceKeyAt, PROVINCE_OF_ID } from '../world/tamriel/tamrielLand.js';
 // TESA1: the places past the Bay where the trace stands them (world/arenaPlaces.js; TESA12: the port's own)
 import { arenaPlaces, arenaPlacesVersion, arenaPixels, arenaStanding } from '../world/arenaPlaces.js';
 import { capitalPin, capitalsStanding, capitalsVersion } from '../world/tamrielCapitals.js';   // TESA10d: a capital's pixel on the map, Arena or none
 import { arenaRoadsLayer, arenaRoadTiles, arenaRoadTilePixels, beyondKey, beyondPixel, ROAD_TILE, roadTileKey } from '../world/arenaRoads.js';
-import { DIR, DIR_DELTA } from '../world/roadNetwork.js';   // TESA15: a pixel's steps, as the far view draws them   // TESA13: the roads past the Bay, as the kernels paint them; TESA15: a tile at a time
+import { DIR, DIR_DELTA } from '../world/road/roadNetwork.js';   // TESA15: a pixel's steps, as the far view draws them   // TESA13: the roads past the Bay, as the kernels paint them; TESA15: a tile at a time
 import { pastBayPlacesStamp } from '../world/pastBayPlaces.js';   // TESA15: the places the roads' regions laid, a bin at a time
-import { getPixelColorIndex } from './travelMapWindow.js';   // TESA13: a place's classic bucket, under the map's filters
-import { locationTypeName } from '../systems/travelOptions.js';   // TESA13: MacroHelper.LocationTypeName - a place's kind in words
-import { makeNoise, octaveNoise } from './introMap.js';   // the intro's own seeded value noise - ONE home for it
-import { PEN, NAME_FACE, HALO_PEN, FAR_TRACK_PEN, penOf, toPaper, paintGlyph, roundCorners, spacedName, boundarySegments, linkSegments, pathChains, strokePaths, zoomBand, BAND_MARKS, markKind } from './inkMap.js';
+import { getPixelColorIndex } from './travel/travelMapWindow.js';   // TESA13: a place's classic bucket, under the map's filters
+import { locationTypeName } from '../systems/travel/travelOptions.js';   // TESA13: MacroHelper.LocationTypeName - a place's kind in words
+import { makeNoise, octaveNoise } from './intro/introMap.js';   // the intro's own seeded value noise - ONE home for it
+import { PEN, NAME_FACE, HALO_PEN, FAR_TRACK_PEN, penOf, toPaper, paintGlyph, roundCorners, spacedName, boundarySegments, linkSegments, pathChains, strokePaths, zoomBand, BAND_MARKS, markKind } from './ink/inkMap.js';
 import { simplifyChain } from './overworldModel.js';   // TAMRIEL3: the coast's chain thinned as the overworld's are
 import { labelPoint } from './provinceMap.js';   // TAMRIEL3: a province's name hangs where the chargen's map hangs it
 

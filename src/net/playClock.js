@@ -32,7 +32,7 @@
 // Both ends read these numbers, and imports run one way in this repo
 // (src/net/handleShape.js says why). The account Worker bundles this
 // file, and account-deploy.yml's path filter is held to the Worker's
-// real import graph by test/accountdeploy.test.js.
+// real import graph by test/server/accountdeploy.test.js.
 // ═══════════════════════════════════════════════════════════════════
 
 /** How often a tab in the world knocks. Five minutes: the grace has to

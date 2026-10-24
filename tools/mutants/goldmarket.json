@@ -5,7 +5,7 @@
     "old": "material = ?6 AND origin IN ('own', ?18)), 0) >= ?8)",
     "new": "material = ?6), 0) >= ?8)",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (total + courier !== max) return { error: 'market-price-moved' };",
     "new": "  if (total + courier > max) return { error: 'market-price-moved' };",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      mustChange(db),   // no sale, no gold moved: the record's step rolls back with it\n",
     "new": "",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "SELECT buyer, char_id, material, 'gold', units FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'material' AND delivered = 1",
     "new": "SELECT buyer, char_id, material, 'bought', units FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'material' AND delivered = 1",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -41,17 +41,18 @@
     "old": "const BOUGHT_ORIGIN_SQL = \"CASE WHEN currency = 'gold' THEN 'gold' ELSE 'bought' END\";",
     "new": "const BOUGHT_ORIGIN_SQL = \"'bought'\";",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
     "name": "GOLDMARKET-piece-unmarked",
     "file": "server-account/src/market.js",
-    "old": "UPDATE products SET owner = ?1, credited = 0, listed = 0, bought_with = 'gold' WHERE",
-    "new": "UPDATE products SET owner = ?1, credited = 0, listed = 0 WHERE",
+    "old": "UPDATE products SET owner = ?1, credited = 0, listed = 0, bought_with = 'gold', loose = 0 WHERE",
+    "new": "UPDATE products SET owner = ?1, credited = 0, listed = 0, loose = 0 WHERE",
     "tests": [
-      "test/goldmarket_service.test.js"
-    ]
+      "test/net/goldmarket_service.test.js"
+    ],
+    "note": "FB1020h ESSENCE-LOOSE (RE-AIMED by content): the purchase clears the maker's goods' mark beside it."
   },
   {
     "name": "GOLDMARKET-seller-share-whole",
@@ -59,7 +60,7 @@
     "old": "MAX(0, total - tax - tithe - fee) FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3",
     "new": "total FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -68,7 +69,7 @@
     "old": "  if ((l.currency === 'gold') !== (at != null)) return",
     "new": "  if (l.currency !== 'gold' && at != null) return",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -77,7 +78,7 @@
     "old": "  if (currency === 'gold' && !REALM_ID_RE.test(character)) return { error: 'market-gold-realm' };",
     "new": "",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -86,8 +87,10 @@
     "old": "AND listed = 0 AND (bought_with IS NULL OR bought_with = ?17))",
     "new": "AND listed = 0)",
     "tests": [
-      "test/goldmarket_service.test.js"
-    ]
+      "test/net/goldmarket_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "INT19: pieceListRefusal says the wall's word before the record moves, and `bought_with` moves only with a sale - which takes the piece out of the seller's record first, so the listing's record step then fails whole"
   },
   {
     "name": "GOLDMARKET-view-both-currencies",
@@ -95,7 +98,7 @@
     "old": "AND expires_at > ?1 AND currency = '${currency}'",
     "new": "AND expires_at > ?1",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -104,7 +107,7 @@
     "old": "creditSave(save, gold, { bank: region })",
     "new": "creditSave(save, gold, {})",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -113,7 +116,7 @@
     "old": "\n  + (SELECT COUNT(*) FROM market_gold WHERE player = ?1 AND char_id = ?2 AND gold > 0)",
     "new": "",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -122,7 +125,7 @@
     "old": "AND origin IN (${originsSql(WRIT_ORIGINS)})), 0)`;",
     "new": "AND origin IN (${originsSql([...WRIT_ORIGINS, 'gold'])})), 0)`;",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -131,7 +134,7 @@
     "old": "      order: ['gold', LOOSE_ORIGIN, 'bought', 'own'],",
     "new": "      order: [LOOSE_ORIGIN, 'bought', 'own', 'gold'],",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -140,7 +143,7 @@
     "old": "        AND ${spendableSql('?1', '?3', 'o.material')} >= ?4",
     "new": "        AND 1 = 1",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -149,7 +152,7 @@
     "old": "        AND ${spendableSql('?1', '?3', 'w.material')} >= ?4",
     "new": "        AND COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?3 AND material = w.material), 0) >= ?4",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -158,7 +161,7 @@
     "old": "        AND ${spendableSql('?1', '?3', '?5')} >= ?6",
     "new": "        AND COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?3 AND material = ?5), 0) >= ?6",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -167,7 +170,7 @@
     "old": "        AND ${spendableSql('?1', '?2', 'writs.material')} >= writs.qty",
     "new": "        AND COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = writs.material), 0) >= writs.qty",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -176,7 +179,7 @@
     "old": "    held.push(`${workableSql('?1', '?2', `?${17 + 2 * i}`)} >= ?${18 + 2 * i}`);",
     "new": "    held.push(`COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?${17 + 2 * i}), 0) >= ?${18 + 2 * i}`);",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -185,7 +188,7 @@
     "old": "    held.push(`${workableSql('?1', '?2', k)} >= ${need}`);",
     "new": "    held.push(`COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ${k}), 0) >= ${need}`);",
     "tests": [
-      "test/goldmarket_service.test.js"
+      "test/net/goldmarket_service.test.js"
     ]
   },
   {
@@ -194,7 +197,7 @@
     "old": "reserve: walletReserve(w, cost).reserve",
     "new": "reserve: () => () => {}",
     "tests": [
-      "test/goldmarket_client.test.js"
+      "test/net/goldmarket_client.test.js"
     ]
   },
   {
@@ -203,7 +206,7 @@
     "old": "if (!a?.data?.repeat) w.pay(cost);",
     "new": "w.pay(cost);",
     "tests": [
-      "test/goldmarket_client.test.js"
+      "test/net/goldmarket_client.test.js"
     ]
   },
   {
@@ -212,7 +215,7 @@
     "old": "if (r?.unknown || kept(r) || !Number.isSafeInteger(r?.status)) return",
     "new": "if (r?.unknown || kept(r)) return",
     "tests": [
-      "test/goldmarket_client.test.js"
+      "test/net/goldmarket_client.test.js"
     ]
   },
   {
@@ -221,7 +224,7 @@
     "old": "wallet(region).bank(a.data.gold)",
     "new": "wallet(region).credit(a.data.gold)",
     "tests": [
-      "test/goldmarket_client.test.js"
+      "test/net/goldmarket_client.test.js"
     ]
   },
   {
@@ -230,7 +233,7 @@
     "old": ", (q.materials ?? []).join(','), q.currency ?? 'marks', (q.pieces ?? []).join(','),",
     "new": ", (q.materials ?? []).join(','), (q.pieces ?? []).join(','),",
     "tests": [
-      "test/goldmarket_client.test.js"
+      "test/net/goldmarket_client.test.js"
     ]
   },
   {
@@ -239,7 +242,7 @@
     "old": "        if (gold && wallet(ask.region).gold() < ask.max) return { ok: false, error: 'realm-gold' };\n",
     "new": "",
     "tests": [
-      "test/goldmarket_client.test.js"
+      "test/net/goldmarket_client.test.js"
     ]
   },
   {
@@ -248,7 +251,7 @@
     "old": " * (row.currency === 'gold' ? MARK_WORTH_GOLD : 1)",
     "new": "",
     "tests": [
-      "test/goldmarket_client.test.js"
+      "test/net/goldmarket_client.test.js"
     ]
   },
   {
@@ -257,7 +260,7 @@
     "old": "(currency === 'gold' ? (s.gold | 0) : s.bought)",
     "new": "s.bought + (s.gold | 0)",
     "tests": [
-      "test/goldmarket_client.test.js"
+      "test/net/goldmarket_client.test.js"
     ]
   },
   {
@@ -266,7 +269,7 @@
     "old": "    if (!goldOk() || !CURRENCY_VIEWS.includes(st.view)) return null;",
     "new": "    if (!CURRENCY_VIEWS.includes(st.view)) return null;",
     "tests": [
-      "test/goldmarket_client.test.js"
+      "test/net/goldmarket_client.test.js"
     ]
   },
   {
@@ -275,7 +278,7 @@
     "old": "hubs: m.hubs, ...at(), ...(gold ? { currency: 'gold' } : {}) }, m.mint)",
     "new": "hubs: m.hubs, ...at() }, m.mint)",
     "tests": [
-      "test/goldmarket_client.test.js"
+      "test/net/goldmarket_client.test.js"
     ]
   },
   {
@@ -284,7 +287,7 @@
     "old": "const shortOf = (amount, currency) => (currency === 'gold' ? (purse() ?? 0) < amount : short(amount));",
     "new": "const shortOf = (amount) => short(amount);",
     "tests": [
-      "test/goldmarket_client.test.js"
+      "test/net/goldmarket_client.test.js"
     ]
   },
   {
@@ -293,16 +296,16 @@
     "old": "...(gold > 0 ? { gold } : {}), ...(loose > 0",
     "new": "...(loose > 0",
     "tests": [
-      "test/goldmarket_client.test.js"
+      "test/net/goldmarket_client.test.js"
     ]
   },
   {
     "name": "GOLDMARKET-stores-total-no-gold",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "total: s.own + s.bought + (s.gold | 0) + (s.loose | 0), carried: s.carried | 0, uncounted: s.uncounted | 0 };",
     "new": "total: s.own + s.bought + (s.loose | 0), carried: s.carried | 0, uncounted: s.uncounted | 0 };",
     "tests": [
-      "test/goldmarket_client.test.js"
+      "test/net/goldmarket_client.test.js"
     ]
   },
   {
@@ -311,16 +314,16 @@
     "old": "    if (h === 'yours' && (item.foodStage ?? 0) > 0) return SPOILED_DISH_WHY;\n",
     "new": "",
     "tests": [
-      "test/goldmarket_client.test.js"
+      "test/net/goldmarket_client.test.js"
     ]
   },
   {
     "name": "PROF541-R2-S3-drakes-goods-words",
     "file": "src/net/accountClient.js",
-    "old": "  'market-drakes-goods': 'Goods bought with silver, and pieces made with them, sell only for silver.",
-    "new": "  'market-drakes-goods': 'What you bought with silver sells for silver.",
+    "old": "  'market-drakes-goods': () => t('account.refusal.marketDrakesGoods', 'Goods bought with silver, and pieces made with them, sell only for silver.",
+    "new": "  'market-drakes-goods': () => t('account.refusal.marketDrakesGoods', 'What you bought with silver sells for silver.",
     "tests": [
-      "test/goldmarket_client.test.js"
+      "test/net/goldmarket_client.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S3: a piece made of counter goods is silver's, in words."
   }

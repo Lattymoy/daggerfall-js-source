@@ -10,7 +10,7 @@
 //      (Saves/SAVE9/SaveData.txt + SaveInfo.txt + Screenshot.jpg,
 //      with the screenshot a real JPEG), reads back byte-identical,
 //      and enumerates. (This drives the BRIDGE; the DA1 seam's wrap
-//      of it is pinned node-side in test/filestorage.test.js - the
+//      of it is pinned node-side in test/systems/save/filestorage.test.js - the
 //      built bundle's own use of the seam is not separately proved
 //      here, said out loud so nobody reads this probe as covering
 //      it.)

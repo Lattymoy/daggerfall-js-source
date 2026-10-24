@@ -23,8 +23,8 @@
 // has holes wherever its alpha is under a half, in every solid pass and in the shadows' too.
 //
 // Which interior texels are glass: an exterior window record drawn inside a building (DFU lays interiors out with the
-// same window table - DaggerfallInterior.cs:473/:517/:1270 apply WindowStyle.Disabled to them), and a building
-// interior's own texture whose record carries the palette's 0xff texels (world/interiorGlass.js). A context that is not
+// same window table - DaggerfallInterior.cs:473/:517/:1270 apply WindowStyle.Disabled to them), and the panes of a
+// building interior set's window wall (world/interior/interiorGlass.js - GLASS-ALL, read off the data). A context that is not
 // ARENA2's declares its own glass with renderer.uploadGlassMask (white = glass) or with a cutout picture.
 //
 // Not a DFU member: the port's own presentation (Port-Doctrine, the renderer rebuilt on our stack).
@@ -184,8 +184,8 @@ uniform vec4 uGlassRect;   // the view out's rect in window pixels (x0, y0, x1, 
 uniform vec4 uRoomLamp;    // rgb a lit room's lamp; a the night (the window style's own warmth)
 uniform vec3 uRoomDay;     // the light a room takes from the day outside
 uniform mat4 uModel;       // the room's seed reads the model's own frame (a floating origin moves the world, not it)
-uniform vec4 uViewClipMin; // the view out's pass: the building the player stands in, a box no fragment of it draws in
-uniform vec4 uViewClipMax; //   (w on; every other pass leaves it off)
+uniform highp sampler2D uPaneDepth; // the view out's pass: the glass's own depth - nothing on the room's side of a pane draws
+uniform float uPaneOn;              //   (on in that pass alone; FIELD BUGS 2026-10-12g PANE-CLIP)
 vec3 rwDecode(vec3 c) { return ${decode}; }   // the lane's colour decode of an sRGB constant
 const vec3 RW_COL[${cols.length}] = vec3[${cols.length}](${cols.map(v3).join(', ')});
 const vec4 RW_PAT[${pats.length}] = vec4[${pats.length}](${pats.join(', ')});
@@ -356,7 +356,7 @@ vec3 rwRoomOver(vec3 base, float glass, vec3 dp1, vec3 dp2, vec2 duv1, vec2 duv2
  *  emission and the albedo it is subtracted from (an interior's glass wears no window style); ROOM once the lighting
  *  is summed and before the fog - `lit` carries the room, so the shader's own output line stands as it was. */
 export const RW_MAIN_DERIVS = '  vec3 rwDp1 = dFdx(vWorldPos), rwDp2 = dFdy(vWorldPos); vec2 rwDuv1 = dFdx(vUV), rwDuv2 = dFdy(vUV);   // RW1: the room\'s frame, in uniform control flow\n'
-  + '  if (uViewClipMax.w > 0.5 && all(greaterThan(vWorldPos, uViewClipMin.xyz)) && all(lessThan(vWorldPos, uViewClipMax.xyz))) discard;   // RW1: the view out leaves out the building it is seen from';
+  + '  if (uPaneOn > 0.5 && gl_FragCoord.z <= texelFetch(uPaneDepth, ivec2(gl_FragCoord.xy), 0).r) discard;   // PANE-CLIP: the view out draws only what stands past the glass';
 export const RW_MAIN_CUTOUT = '  if (uCutout > 0.5 && tex.a < 0.5) discard;   // RW1: a cutout picture\'s hole (every other picture keeps INCIDENT 2026-09-04\'s no-clip law)';
 export const RW_MAIN_GLASS = '  float rwGlass = texture(uEmissionTex, vUV).r;   // RW1: the glass mask\n'
   + '  if (uWinMode > 2.5 && rwGlass > 0.5 && rwInRect(gl_FragCoord.xy)) discard;   // RW1: an interior\'s glass, cut to the view out\n'
@@ -391,9 +391,25 @@ export const VIEW_RELEASE_MS = 10000;
 /** The streamed world's rings the view out walks: the player's pixel and the eight round it (through a pane, a town's
  *  next street is the far distance - the fog and the sky take the rest). */
 export const VIEW_RINGS = 1;
-/** The box the view out leaves the player's own building out by grows this much past the building's model (metres):
- *  its trim and its sills stand a hand proud of the walls the box was measured on. */
-export const VIEW_CLIP_PAD = 0.25;
+/** FIELD BUGS 2026-10-12g PANE-CLIP ("Wall missing through window", The Savage Goat in Fontbridge): THE VIEW OUT DRAWS
+ *  ONLY WHAT STANDS PAST THE GLASS. The watched frame's glass and cutout sub-meshes are drawn again, depth alone, under the
+ *  view out's own lens, and a fragment of the street at or before that depth is the room's side of a pane - it never
+ *  draws. It was the building's model box (and a quarter metre round it), and every fragment in it: the building's own
+ *  other wing across a notch, a second model of it, a neighbour's wall flush against it - and, its near face gone and
+ *  the rest back-faced, the whole neighbour. Its own walls seen from inside are back faces; those between the eye and
+ *  a pane (a room that reaches past its shell) are before the glass. The panes a frame keeps, at most: */
+export const VIEW_PANES_MAX = 256;
+/** ...the unit the pane depth is read from in the view out's pass (none of the street's programs binds it). */
+export const VIEW_PANE_UNIT = 22;
+/** The panes' depth: a sub-mesh's position alone, through the view out's lens; no colour. */
+export const VIEW_PANE_VS = `#version 300 es
+layout(location=0) in vec3 aPos;
+uniform mat4 uPV;
+uniform mat4 uModel;
+void main() { gl_Position = uPV * uModel * vec4(aPos, 1.0); }`;
+export const VIEW_PANE_FS = `#version 300 es
+precision mediump float;
+void main() {}`;
 
 /** A sphere (world centre, radius) through a view-projection, as an NDC rectangle that holds it: [x0, y0, x1, y1] held
  *  to the screen, the whole screen when it reaches the eye's plane, null when it is wholly off screen or behind the eye.

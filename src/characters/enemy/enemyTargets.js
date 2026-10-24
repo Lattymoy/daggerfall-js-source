@@ -1,0 +1,590 @@
+// MT-i - THE TARGET-SELECTION HALF of EnemySenses (MIT, Daggerfall
+// Workshop): MobileTeams, GetTargets' priority walk, and the classic
+// target machine (EnemySenses.Update:312-414) that the motor's own
+// header promised ("constants stay exported for E3 multi-target" -
+// SENSES_INTERVAL_UNITS sat exported and unconsumed since C8).
+//
+// The port's EnemyAI stays single-target in SHAPE - one target, one
+// destination - exactly as DFU's senses hold ONE Target field. What
+// this module adds is the SELECTION: who that target is, re-evaluated
+// on the classic system timer over a host-provided candidate list.
+// THE SEAM (headless charter): the machine arms only when the host's
+// senses context carries a `targeting` closure; without it every existing
+// caller keeps the player-only path unchanged, which is also DFU's
+// exact behavior with no other enemy in range.
+//
+// A CANDIDATE is one foe's stable descriptor, shared by every AI in
+// the pool and BY the pool (self walks its own list, skipped by
+// identity as :768 skips entityBehaviour):
+//   { ai, entity, mobileType?, isQuestFoe?, questAttackable?,
+//     concealment?(), stealthOf?() }
+// feet/hostility read live off ai, team/suppressInfighting off entity
+// - the same split as DFU's motor/entity components. The PLAYER is
+// the module's own sentinel, appended the way GetActiveTarget-
+// EntityBehaviours yields the player after the enemies (:748).
+
+import { canSeeTarget, SYSTEM_TIMER_UPDATES_DIVISOR, SENSES_INTERVAL_UNITS } from './enemyMotor.js';
+import { CAPSULE_HEIGHT } from '../../player/motor.js';   // REVIEW 2026-09-05: the player's transform above its feet
+import { getBool } from '../../systems/settings/settings.js';
+import { ENEMY_BASICS } from './enemyBasics.js';   // the STATIC table the ally revert reads
+
+/** MobileTeams (DaggerfallUnityEnums.cs:262-286), index = enum value.
+ *  EnemyEntity.team already carries these as STRINGS (enemyBasics'
+ *  rows); the array is the number<->name door ChangeFoeTeam's numeric
+ *  spelling needs. */
+export const MOBILE_TEAMS = Object.freeze([
+  'PlayerEnemy', 'PlayerAlly', 'Vermin', 'Spriggans', 'Bears', 'Tigers',
+  'Spiders', 'Orcs', 'Centaurs', 'Werecreatures', 'Nymphs', 'Aquatic',
+  'Harpies', 'Undead', 'Giants', 'Scorpions', 'Magic', 'Daedra',
+  'Dragonlings', 'KnightsAndMages', 'Criminals', 'CityWatch',
+]);
+
+/** DaggerfallUnity.Settings.EnemyInfighting - live at the point of
+ *  use, the CombatVoices idiom. Ships True. */
+export const enemyInfightingEnabled = () => getBool('Enhancements', 'EnemyInfighting');
+
+/** The player's sentinel candidate - one identity so `target ===
+ *  PLAYER_TARGET` is DFU's `target == player` reference compare. */
+export const PLAYER_TARGET = Object.freeze({ isPlayer: true });
+/** WORLD6b-iii / AUDIT WORLD6b-iii(a) A10: the ENTITY the cast decision reads for a PEER target - a peer's effects are
+ *  not mine to read (AUDIT WORLD6b-ii A9), so the pick's EffectsAlreadyOnTarget veto sees none on it. Frozen: the veto
+ *  only reads. ONE home for both pools (the dungeon read MY effects for a peer until the audit). */
+export const PEER_CAST_TARGET = Object.freeze({ activeEffects: Object.freeze([]) });
+export const isPlayerTarget = (c) => c === PLAYER_TARGET || c?.isPlayer === true;
+/** WORLD3: a PEER - another player in the room, a candidate the world host mints off the pose stream:
+ *  `{ isPlayer: true, isPeer: true, id, feet, height, health }`. A player to every gate of GetTargets (the
+ *  team chain, the quest gate, the NoTarget mode) and to the melee fork, measured at its OWN feet and height
+ *  where the local player is measured at playerFeet; its health the host's word (0 once it left). */
+export const isPeerTarget = (c) => c?.isPeer === true;
+/** AUDIT WATCH1 (one home): a target in the WIRE's spelling - '.' the owner (the local player), a peer's id, '' none
+ *  (WORLD3's spelling for the dungeon's stream, WORLD6b-ii's for the cell's). Every pool that streams whom a foe's
+ *  blow or cast was at reads it from here; the audit found three hand copies, one of them handed FEET instead of a
+ *  target and so always '' (the watch's swing was never at anyone). */
+export const wireRecipient = (t) => (t?.isPeer ? t.id : (t == null ? '' : (t.isPlayer ? '.' : '')));
+/** AUDIT WATCH1 (one home): the attack count on the wire - the count in the high bits, the ranged bit low (WORLD2's
+ *  spelling); one more swing, this one ranged or not. */
+export const bumpAtkCount = (a, ranged) => ((((a | 0) >> 1) + 1) << 1) | (ranged ? 1 : 0);
+/** AUDIT WORLD3 C3: THE LOCAL player - the one this client answers for. WORLD3 made `isPlayer` true for a PEER, so
+ *  every guard that spelled "not another foe, therefore mine" as isPlayerTarget now admits another player's body: the
+ *  alert, the rest gate, the exhaustion collapse, the encounter edge, the stealth roll. A site that means MY player
+ *  reads this; a site that means ANY player reads isPlayerTarget. */
+export const isLocalPlayerTarget = (c) => isPlayerTarget(c) && !isPeerTarget(c);
+
+/**
+ * `MobileEnemy.Team` - the per-instance STRUCT COPY's team, which
+ * GetTargets' :776 and :801 arms read. Not the live Entity.Team
+ * (ChangeFoeTeam's field) and NOT the static table either: an allied
+ * summon overwrites this copy alone (SetupDemoEnemy.cs:85-86).
+ * makeEnemyEntity seeds it from the row; a caller with no entity at
+ * all reads PlayerEnemy, the enum's zero member.
+ */
+export const mobileTeamOf = (entity) => entity?.mobileTeam ?? entity?.basics?.team ?? 'PlayerEnemy';
+
+/**
+ * The STATIC row's team - `EnemyBasics.Enemies.First(x => x.ID == id)
+ * .Team`, which is the ONLY thing MakeEnemyHostileToAttacker's revert
+ * reads (:211). It is deliberately NOT mobileTeamOf: a struck ally
+ * must fall back to what its species is, not to the PlayerAlly the
+ * summon wrote over its copy.
+ */
+export const staticTeamOf = (mobileType) => ENEMY_BASICS[mobileType]?.team ?? 'PlayerEnemy';
+
+/** GetTargets' priority arithmetic (:829-841): +5 when the candidate
+ *  is not already targeting someone, +10 when seen, plus the distance
+ *  band 30 - d floored at 0. */
+/** ASSIST (FIELD BUGS 2026-10-05c, the port's own; 'revenants just "stand there" during fight sometimes' - "have to kite
+ *  them INTO the enemy at times to register even if enemy is hitting me or im hitting them"): a COMPANION (a sworn
+ *  revenant, a ship's hand ashore - CREW-COMPANIONS) puts a foe fighting his side first: one whose target is a player,
+ *  another companion, or himself. DFU has no companion and its chain knows no fight but the candidate's own: its +5 goes
+ *  to a foe that targets NO ONE, so an idle foe in the spawn band behind a wall (unseen candidates are kept there,
+ *  :824-825) outranked the one striking the player whenever it stood outside the companion's view cone - he walked into
+ *  the wall at it, or stood at heel holding it. 20 outweighs the idle foe's +5 and fifteen metres of the distance band:
+ *  a foe in the fight is taken unless an idle one stands that much nearer. Every other foe keeps DFU's arithmetic. */
+export const COMPANION_ASSIST_PRIORITY = 20;
+/** Whether a candidate foe (its AI) is fighting `self`'s side - a player, a companion, or `self`. */
+export const fightsOurSide = (targetAi, self) => {
+  const t = targetAi?.target ?? null;
+  return t != null && (isPlayerTarget(t) || t.companion != null || t === self);
+};
+/**
+ * WATCH-PROTECTS: whether a foe hunts the living world's townspeople (a `civilian` body, systems/livingWorld/quarry.js):
+ * a hostile monster that fights hand to hand. Never the watch, an ally, a companion or a quest's foe; never a class
+ * (a man with a blade is no monster, and the city's own watch is one); never an archer or a caster, whose shot nothing
+ * on the street would stop (arrows and spells meet foes and players alone). DFU weighs no civilian at all
+ * (EnemySenses.cs:739-741) - the living world's lane alone hands one in.
+ */
+export function huntsCivilians(self) {
+  if (!self?.ai?.isHostile || self.isQuestFoe || self.companion != null) return false;
+  const team = self.entity?.team, mobile = mobileTeamOf(self.entity);
+  if (team === 'PlayerAlly' || mobile === 'PlayerAlly' || mobile === 'CityWatch' || self.entity?.isClass) return false;
+  if (self.caster || (self.entity?.spells?.length ?? 0) > 0) return false;
+  return !self.mobile?.basics?.hasRangedAttack1;
+}
+/**
+ * STAR5 (bible/11-Multiplayer/Starfall.md section 4): THE STAR'S HUNTERS. A fallen star stands in its owner's machine as
+ * a body of its own (scenes/starfall/starfallHost.js - `starWard`, the townsperson's shape): quarry for its own coven's
+ * monsters alone - those the townsperson's law hunts (huntsCivilians: hostile, no class, no spell, no bow), stood at that
+ * star (`starSite`, its site). No other foe, ally, companion or watchman takes it for a foe.
+ */
+export const huntsStar = (self, ward) => self?.starSite != null && self.starSite === ward?.site && huntsCivilians(self);
+/** A hunter no defender has turned (`starTurned` - struck, it turns on its striker as any foe does) goes for the star
+ *  before anyone beside it: this much over a target's own priority (distance, sight). */
+export const STAR_HUNT_PRIORITY = 40;
+export function targetPriority(targetHasNoTarget, seen, distance) {
+  let p = 0;
+  if (targetHasNoTarget) p += 5;
+  if (seen) p += 10;
+  p += Math.max(0, 30 - distance);
+  return p;
+}
+
+/**
+ * ARENA2 (2026-10-02, Mac: "Players can choose to watch AI fights"): THE BOUT TEAM - an isolation seam beside the
+ * camp's (`campId`). A fighter on the arena's sand carries its bout on its entity (`entity.bout` - `{ id, side, out, hold }`,
+ * stood by scenes/arena/arenaBouts.js), and so may the player (`setPlayerBout`, a ladder bout's own). The law
+ * (bible/11-Multiplayer/Arena.md "2. The fights"): the fighters of one bout target only each other, across their sides
+ * (a Grand Melee is every fighter a side of its own) - never a teammate, never one already out; nobody outside the bout
+ * joins it (the city watch, the passers-by, another foe); and a fighter never takes the player for a target unless the
+ * player is in that bout on another side. Answers true (a bout's pair - the team, ally, infighting and hostility gates
+ * stand aside: two fighters fight whatever their kinds and whatever the infighting setting), false (never), or null (no
+ * bout on either side - the classic chain decides). Pure.
+ */
+let _playerBout = null;
+/** The player's bout - `{ id, side, out?, hold? }` - or null (the host's, set as a ladder bout stands and cleared after).
+ *  AUDIT ARENA-LADDER A3: THE DRIVER'S OWN TAG, HELD LIVE. The driver writes `out` and `hold` on it as the bout runs (a
+ *  yield, a fall, the word, the verdict - scenes/arena/arenaBouts.js); a copy taken at the bell missed every one, so a player
+ *  out of a Grand Melee stayed the fighters' target, beaten at the breath of life to its end. boutGate reads its fields
+ *  as it reads a fighter's (`String(id)`, `side | 0`); `playerBoutOf` answers the read as plain data. */
+export function setPlayerBout(b) { _playerBout = b ?? null; }
+export const playerBoutOf = () => (_playerBout ? { id: String(_playerBout.id), side: _playerBout.side | 0, out: !!_playerBout.out, ...(_playerBout.hold ? { hold: true } : {}), ...(_playerBout.kit ? { kit: true } : {}) } : null);   // AUDIT ARENA-LADDER 2: `kit` a ladder bout's (systems/arena/arenaKit.js)
+/** AUDIT ARENA-LADDER A2: a fighter on the sand is its bout's alone - no Dispel Daedra/Undead sends it off and no
+ *  Wabbajack changes it (either door removed the body past the foe yield floor, and the driver read the gone body as a
+ *  FALL: a champion dispelled in the Herald's call was a champion beaten, its purse and its title paid). */
+export const inBout = (f) => !!f?.entity?.bout;
+export function boutGate(self, c, isPlayer, playerBout = _playerBout) {
+  const sb = self?.entity?.bout ?? null;
+  const tb = isPlayer ? (isPeerTarget(c) ? (c.bout ?? null) : playerBout) : (c?.entity?.bout ?? null);
+  if (!sb && !tb) return null;
+  if (!sb || !tb) return false;
+  if (String(sb.id) !== String(tb.id) || sb.out || tb.out || sb.hold || tb.hold) return false;   // `hold`: before the word "Fight!" and after the verdict
+  return (sb.side | 0) !== (tb.side | 0);
+}
+
+/**
+ * EnemySenses.GetTargets (:752-878), the classic path. Walks the
+ * candidates (self included - skipped by identity, :768) plus the
+ * player, applies the team/ally/quest gates verbatim, and returns
+ * { target, targetInSight, distanceToTarget } for the winner (the
+ * holder-restore law: distance belongs to the SELECTED target,
+ * :860-862). secondaryTarget's write is Enhanced-only (:867-872) and
+ * stays out; sawSelectedTarget rides out as targetInSight (:866).
+ *
+ * TWO TEAM READS, kept apart as C# keeps them: :776 and :801 read
+ * `MobileEnemy.Team` - the per-instance struct copy (mobileTeamOf) -
+ * where :784, :792 and :796 read the LIVE `Entity.Team`
+ * (entity.team, what ChangeFoeTeam rewrites). A quest-retargeted
+ * ally still passes the :801 else-arm on its MOBILE team; that
+ * asymmetry is the source's, not a slip here.
+ */
+export function getTargets(self, candidates, playerFeet, {
+  noTargetMode = false,
+  dropLocal = false,   // AUDIT-F5 (the port's own, WILD-ALERT): the LOCAL player left off the list, every other candidate kept
+  infighting = enemyInfightingEnabled(),
+  // AUDIT 62 F23: the PLAYER candidate's LIVE controller height - DFU
+  // reads the component (EnemySenses.cs:896-898 for the eye,
+  // :816-818 for the transform distance) and PlayerHeightChanger.cs
+  // :54-57/:475-478 makes it 0.9 crouched, 2.6 mounted, 0.30 swimming
+  // with the capsule bottom planted. The 1.8 default is the headless
+  // charter.
+  playerHeight = CAPSULE_HEIGHT,
+  playerBout = _playerBout,   // ARENA2: the player's bout (setPlayerBout), or null
+} = {}) {
+  const ai = self.ai;
+  const selfTeam = self.entity?.team ?? 'PlayerEnemy';
+  const selfMobileTeam = mobileTeamOf(self.entity);
+  let highestPriorityTarget = null;
+  let highestPriority = -1;
+  let secondHighestPriority = -1;
+  let sawSelectedTarget = false;
+  // :848 and :855 - written UNCONDITIONALLY, OUTSIDE the
+  // EnhancedCombatAI guard at :868 that owns secondaryTarget itself.
+  // So this flag is live on the classic path even though nothing
+  // classic ever writes secondaryTargetPos. See the switch arm in
+  // runTargetMachine for what that costs.
+  let sawSecondaryTarget = false;
+  let selectedDistance = 0;
+  // AUDIT WORLD6b-ii A5: DFU appends the player LAST (:748) so the player loses priority ties to foes; a caller that
+  // carries PEERS names the player's slot by putting PLAYER_TARGET in the list itself, so the peers walk AFTER the
+  // local player and a peer never beats me on a tie (the recorded order: foes, me, the peers)
+  const walk = (candidates ?? []).includes(PLAYER_TARGET) ? [...candidates] : [...(candidates ?? []), PLAYER_TARGET];
+  for (const c of walk) {
+    const isPlayer = isPlayerTarget(c);
+    const targetEntity = isPlayer ? null : c.entity;
+    const targetAi = isPlayer ? null : c.ai;
+    // Can't target self (:768)
+    if (c === self || (targetAi && targetAi === ai)) continue;
+    // REVENANT-FATE: a beaten revenant on its knees, judged or burning, and COMPANION-PORTAL's body stepping through its
+    // portal, are nobody's foe - nothing can reach them, so nothing hunts them
+    if (!isPlayer && (c.yielded || c.executing || c.sparing || c.leaving)) continue;
+    // WATCH-PROTECTS: a townsperson is quarry for a hostile monster alone (huntsCivilians), and no team's - the chain
+    // below weighs foes and players
+    const civilian = !isPlayer && c.civilian === true;
+    if (civilian && !huntsCivilians(self)) continue;
+    // STAR5: a fallen star is quarry for its own coven's monsters alone (huntsStar), and no team's
+    const star = !isPlayer && c.starWard === true;
+    if (star && !huntsStar(self, c)) continue;
+    // ARENA2: THE BOUT TEAM - a bout's pair skips the chain below; anyone else meets no fighter, and no fighter meets them
+    const bout = boutGate(self, c, isPlayer, playerBout);
+    if (bout === false) continue;
+    if (bout !== true && !civilian && !star) {
+    // NoTarget mode (:776-777): the BASICS team here
+    if ((noTargetMode || !ai.isHostile || selfMobileTeam === 'PlayerAlly' || self.companion != null) && isPlayer) continue;   // AUDIT CC-B2: a companion never the player's foe, whatever his team reads
+    if (dropLocal && isLocalPlayerTarget(c)) continue;   // AUDIT-F5: a wilderness foe unaware of a fast traveller (scenes/exteriorFoes.js) - them alone
+    // Pacified enemies should not attack player allies (:780-781)
+    if (!ai.isHostile && targetEntity && targetEntity.team === 'PlayerAlly') continue;
+    // Player allies should not attack pacified enemies (:784-789)
+    if (selfTeam === 'PlayerAlly' && !isPlayer) {
+      if (targetAi && !targetAi.isHostile) continue;
+    }
+    // Can't target ally (:792-803) - the three-arm chain, verbatim
+    if (isPlayer && selfTeam === 'PlayerAlly') {
+      continue;
+    } else if (infighting && !self.entity?.suppressInfighting && targetEntity && !targetEntity.suppressInfighting) {
+      // CAMP-RIVALS (2026-09-25, Mac: "if not the same kind they attack each other"): two
+      // wilderness groups of the SAME kind (combat Team) keep the classic truce and never fight;
+      // groups of different kinds fight on sight through this ordinary infighting arm.
+      if (targetEntity.team === selfTeam) continue;
+      // CAMP2: campEncounters.js groups by THEME (mobileFactions.js), which can
+      // straddle several combat Teams - a "vermin nest" is Spiders + Scorpions,
+      // a "bandit gang" several classes - so the line above does not hold them
+      // together and infighting has campmates fighting each other on sight.
+      // Scoped to the CAMP, not set as suppressInfighting on the entity: that
+      // flag skips this whole arm, dropping to the `else` below, where a
+      // campmate stops targeting every non-player candidate - the player's own
+      // summoned ally included. This exempts a campmate from its campmates and
+      // from nothing else, and it lapses with campId rather than outliving it.
+      if (self.entity?.campId != null && targetEntity.campId === self.entity.campId) continue;
+    } else {
+      // CREW-COMPANIONS: with infighting off a hostile still fights the player's companions (they fight at the
+      // player's side, and are fought back), and a companion never takes another ally for its foe - neither arm is
+      // DFU's, which has no companion; every other pair keeps the chain above.
+      if (!isPlayer && selfMobileTeam !== 'PlayerAlly' && !(c.companion != null && ai.isHostile)) continue;
+    }
+    // AUDIT CC-B2: a companion's own side, by what he IS - never by his team, which a blow can reset for a frame: he
+    // takes no ally for his foe, and no ally takes him
+    if (self.companion != null && (c.companion != null || targetEntity?.team === 'PlayerAlly')) continue;
+    if (c.companion != null && selfTeam === 'PlayerAlly') continue;
+    // Quest enemy AI only targets player unless marked attackable (:806-807)
+    if (self.isQuestFoe && !self.questAttackable && !isPlayer && c.companion == null) continue;   // AUDIT CC-B7: a quest's foe fights the player's companions
+    // For now, quest AI can't be targeted (:814-815)
+    if (targetAi && c.isQuestFoe && !c.questAttackable && self.companion == null) continue;   // AUDIT CC-B7: and they fight it
+    }   // ARENA2: the bout's pair rejoins here
+    const tFeet = isPlayer ? (c.feet ?? playerFeet) : targetAi.feet;   // WORLD3: a peer at its own feet
+    if (!tFeet) continue;
+    const tHeight = isPlayer ? (c.height ?? playerHeight) : targetAi.height;   // WORLD3: and its own capsule
+    // REVIEW 2026-09-05: EnemySenses.cs:818-819 measures transform to
+    // transform - each side's feet lifted by its own centre offset.
+    const tOff = isPlayer ? tHeight / 2 : (targetAi.centreOffset ?? (targetAi.height ?? CAPSULE_HEIGHT) / 2);
+    const sOff = ai.centreOffset ?? (ai.height ?? CAPSULE_HEIGHT) / 2;
+    const dx = tFeet[0] - ai.feet[0], dy = (tFeet[1] + tOff) - (ai.feet[1] + sOff), dz = tFeet[2] - ai.feet[2];
+    const distance = Math.hypot(dx, dy, dz);
+    const see = canSeeTarget(ai.collider, ai.feet, ai.yaw, ai.height, tFeet, tHeight, null, distance, ai.sightRadius);   // CAMP-SIGHT
+    // Neither visible nor in the area around the player (:824-825) -
+    // foe candidates only; the player has no senses.
+    if (targetAi && !targetAi.wouldBeSpawned && !see) continue;
+    // WATCH-PROTECTS: a townsperson has no foe of their own, and is no likelier quarry for it than the player beside them
+    let priority = targetPriority(targetAi && !civilian && !star ? (targetAi.target ?? null) === null : false, see, distance);
+    if (star && !self.starTurned) priority += STAR_HUNT_PRIORITY;   // STAR5: the star first, until a defender turns it
+    if (self.companion != null && fightsOurSide(targetAi, self)) priority += COMPANION_ASSIST_PRIORITY;   // ASSIST (FIELD BUGS 2026-10-05c)
+    if (priority > highestPriority) {
+      secondHighestPriority = highestPriority;
+      highestPriority = priority;
+      sawSecondaryTarget = sawSelectedTarget;   // :848
+      sawSelectedTarget = see;
+      selectedDistance = distance;
+      highestPriorityTarget = c;
+    } else if (priority > secondHighestPriority) {
+      sawSecondaryTarget = see;                 // :855
+      secondHighestPriority = priority;
+    }
+  }
+  // THE HOLDER (:758-759, :862-863) is deliberately not carried: C#
+  // seeds distanceToTargetHolder from the INCOMING field and restores
+  // it when no candidate wins, but the port recomputes `_dist` in
+  // _senses on every fixed step and the one frame where it could
+  // differ - the frame the target goes null - is the frame the reset
+  // block zeroes it anyway (:336). Unobservable here, recorded rather
+  // than written as dead code.
+  return {
+    target: highestPriorityTarget, targetInSight: sawSelectedTarget,
+    distanceToTarget: selectedDistance, sawSecondaryTarget,
+  };
+}
+
+/**
+ * AUDIT 62 F21 (review): the aim POINT every ranged component takes -
+ * the TARGET'S TRANSFORM, one law for every host.
+ *
+ * DaggerfallMissile.cs:571-581 (GetAimDirection) reads
+ * `enemySenses.LastKnownTargetPos`, and EnemySenses.cs:453/:465 set
+ * that to `target.transform.position`. There is NO arrow-specific
+ * variation of the aim point: the arrow's `caster.transform.forward *
+ * 0.6 + casterController.height / 3` lift (DaggerfallMissile.cs:
+ * 518-527) belongs to GetAimPosition - the ORIGIN - and says nothing
+ * about where the shaft is pointed.
+ *
+ * For a FOE that transform is feet + centreOffset, the idle sprite's
+ * centre (SetupDemoEnemy.cs:98-115 sets controller.center, never the
+ * transform, over the prefab's m_Center {0,0,0}). For the PLAYER it
+ * is feet + the LIVE controller height / 2: PlayerHeightChanger.cs
+ * :477-478 (ControllerHeightChange) keeps the capsule bottom planted
+ * and moves the transform by heightChange/2, and the player's
+ * controller has no centre offset either.
+ *
+ * The four hosts each carried their own `+ 0.9` here - the PLAYER's
+ * STANDING half-capsule, applied to whoever was struck. Against a
+ * crouched player that aimed at the very crown of the capsule; against
+ * a bat (centreOffset 1.6) it flew 0.7 m under DFU's point, against a
+ * rat (0.3) 0.6 m over.
+ *
+ * A null target is the player, which is what every host's
+ * `_targetFeet` already falls back to.
+ */
+export function targetAimPoint(target, playerFeet, playerHeight = CAPSULE_HEIGHT) {
+  if (isPeerTarget(target)) return target.feet ? [target.feet[0], target.feet[1] + (target.height ?? CAPSULE_HEIGHT) / 2, target.feet[2]] : null;   // WORLD3: a peer's transform, its own capsule's half
+  if (target == null || isPlayerTarget(target)) {
+    return playerFeet ? [playerFeet[0], playerFeet[1] + playerHeight / 2, playerFeet[2]] : null;
+  }
+  const a = target.ai;
+  if (!a?.feet) return null;
+  return [a.feet[0], a.feet[1] + (a.centreOffset ?? (a.height ?? CAPSULE_HEIGHT) / 2), a.feet[2]];
+}
+
+/** ROAD-H H1: GetAimPosition's ENEMY ARROW arm
+ *  (DaggerfallMissile.cs:528-539) - "Offset up so it comes from same
+ *  place LOS check is done from". */
+export const ARROW_ORIGIN_FORWARD = 0.6;      // :534, caster.transform.forward * 0.6f
+export const ARROW_ORIGIN_HEIGHT_DIVISOR = 3; // :537, adjust.y += casterController.height / 3
+
+/** `caster.transform.position` for a foe - feet + centreOffset, the
+ *  idle sprite's centre (AUDIT 62 F21's reading of SetupDemoEnemy.cs
+ *  :103-115). GetAimDirection measures FROM this (DaggerfallMissile.cs
+ *  :581) even for an arrow, which leaves from the offset point below -
+ *  DFU's two functions do not share an origin, and neither do these. */
+export function enemyTransformPoint(ai) {
+  if (!ai?.feet) return null;
+  return [ai.feet[0], ai.feet[1] + (ai.centreOffset ?? (ai.height ?? CAPSULE_HEIGHT) / 2), ai.feet[2]];
+}
+
+/**
+ * ROAD-H H1 - where a non-player archer's shaft LEAVES ITS BOW, one
+ * law for both foe pools (DaggerfallMissile.cs:521-551):
+ *
+ *     Vector3 aimPosition = caster.transform.position;   // :521
+ *     if (isArrow) {
+ *         adjust = caster.transform.forward * 0.6f;       // :534
+ *         if (casterController) adjust.y += casterController.height / 3;   // :537
+ *         aimPosition += adjust;
+ *     }
+ *
+ * Three terms, and the port had none of them: both archer sites loosed
+ * from a hardcoded `feet + 1.2` - a guess in the PLAYER's scale, with
+ * no forward lean at all.
+ *
+ *   - `caster.transform.position` for an enemy is the idle sprite's
+ *     CENTRE, feet + centreOffset (SetupDemoEnemy.cs:103-115 moves the
+ *     controller's centre under BOTTOM justification and never the
+ *     transform; enemyAnchor / EnemyAI._centre). A giant bat's is 1.6,
+ *     a rat's 0.45.
+ *   - `transform.forward` is [sin(yaw), 0, cos(yaw)] - the motor's own
+ *     convention (enemyMotor.yawOf = atan2(dx, dz), and its walk
+ *     builds `dir2d` exactly so).
+ *   - `casterController.height` is the CAPSULE height (EnemyAI.height,
+ *     enemyAnchor.enemyControllerHeight), not the sprite's: a flyer's
+ *     is halved and everything is floored at 1.6.
+ *
+ * The non-arrow enemy cast is the BARE transform (AUDIT 62 F21 landed
+ * that in enemyCasting) - this offset is the arrow's alone.
+ */
+export function enemyArrowOrigin(ai) {
+  if (!ai?.feet) return null;
+  const h = ai.height ?? CAPSULE_HEIGHT;
+  const centre = ai.centreOffset ?? h / 2;
+  return [
+    ai.feet[0] + Math.sin(ai.yaw ?? 0) * ARROW_ORIGIN_FORWARD,
+    ai.feet[1] + centre + h / ARROW_ORIGIN_HEIGHT_DIVISOR,
+    ai.feet[2] + Math.cos(ai.yaw ?? 0) * ARROW_ORIGIN_FORWARD,
+  ];
+}
+
+/** ROAD-H H1b: "Enemy archers must aim lower to compensate for
+ *  crouched player capsule" - DaggerfallMissile.cs:583-585. */
+export const ARROW_CROUCH_DIP = 0.05;
+
+/**
+ * ROAD-H H1 + H1b - GetAimDirection's enemy arm for an ARROW
+ * (DaggerfallMissile.cs:570-586):
+ *
+ *     aimDirection = (predictedPosition - caster.transform.position).normalized;
+ *     if (IsArrow && enemySenses.Target?.EntityType == EntityTypes.Player
+ *         && gm.PlayerMotor.IsCrouching)
+ *         aimDirection += Vector3.down * 0.05f;
+ *
+ * TWO teeth. The dip lands AFTER the normalisation and NOTHING
+ * renormalises it: DoMissile stores the vector as-is (:470) and the
+ * flight is `transform.position += direction * MovementSpeed *
+ * Time.deltaTime` (:293), so a dipped shaft is a hair longer as well as
+ * lower. And the gate is `PlayerMotor.IsCrouching` - the latched crouch
+ * STATE (PlayerMotor.cs:132-136 over `isCrouching`), not the live
+ * capsule: a swimming player is also 0.9 tall and draws no dip.
+ *
+ * `casterTransform` is what C# subtracts here (:581) - the BARE
+ * transform, not the offset loose point GetAimPosition returns - so
+ * this takes the two apart at the call site, as DFU keeps them apart.
+ */
+/** AUDIT WORLD6b-iii(a) C3: an ENEMY MISSILE's direction - normalized (aim - from), DaggerfallMissile.cs:571-581's
+ *  `direction = (target - transform.position).normalized`, no dip (the dip is the ARROW's, above). ONE law for the
+ *  three hosts' fireMissile hooks (world.js, exterior.js, worldModes.js) - each carried its own subtraction, and two of
+ *  them dropped the aim point the executor hands them, so a cast at a peer there flew at the local player. */
+export function missileAimDirection(from, aimPoint) {
+  const d = [aimPoint[0] - from[0], aimPoint[1] - from[1], aimPoint[2] - from[2]];
+  const l = Math.hypot(d[0], d[1], d[2]) || 1;
+  return [d[0] / l, d[1] / l, d[2] / l];
+}
+
+export function arrowAimDirection(casterTransform, aimPoint, { targetIsPlayer = false, playerCrouching = false } = {}) {
+  if (!casterTransform || !aimPoint) return null;
+  const dx = aimPoint[0] - casterTransform[0], dy = aimPoint[1] - casterTransform[1], dz = aimPoint[2] - casterTransform[2];
+  const l = Math.hypot(dx, dy, dz) || 1;
+  const dir = [dx / l, dy / l, dz / l];
+  if (targetIsPlayer && playerCrouching) dir[1] -= ARROW_CROUCH_DIP;   // :584-585, after the normalise, NOT renormalised
+  return dir;
+}
+
+/** The dead-target cull's health read (:317, `target.Entity
+ *  .CurrentHealth`): the player's rides the context; without it the
+ *  player is presumed standing. */
+const targetHealth = (c, playerEntity) =>
+  (isPlayerTarget(c) ? (c.health ?? playerEntity?.health ?? 1) : (c.entity?.health ?? 0));   // WORLD3: a peer's is its own
+
+/**
+ * The classic target machine - EnemySenses.Update:312-414's
+ * ClassicUpdate block, run once per classic tick by EnemyAI._step
+ * when the host arms candidates. Owns: the classicTargetUpdateTimer
+ * cadence (>5 system-timer units; the port's classic-tick dt is
+ * FIXED_DT per the P16/P17 folding, RECORDED - DFU adds the Unity
+ * fixed delta on classic frames), the dead-target cull, the
+ * non-hostile player drop, the null-target resets with the
+ * secondary-switch arm, GetTargets behind the `wouldBeSpawned ||
+ * playerInSight` gate (:391-395 + the :377-383 out-of-band LOS
+ * check), and mutual targeting (:396-400).
+ *
+ * `self` is this foe's OWN candidate from the shared list. Returns
+ * the target's feet (null target -> null; the caller takes the
+ * :410-414 blind arm).
+ */
+export function runTargetMachine(self, candidates, playerFeet, classicDt, {
+  noTargetMode = false,
+  dropLocal = false,   // AUDIT-F5: getTargets' own
+  infighting,
+  playerEntity = null,
+  playerHeight = CAPSULE_HEIGHT,   // AUDIT 62 F23: the live player capsule, off the senses context
+  playerBout = _playerBout,   // ARENA2: the player's bout (setPlayerBout), or null
+} = {}) {
+  const ai = self.ai;
+  ai.classicTargetUpdateTimer = (ai.classicTargetUpdateTimer ?? 0) + classicDt / SYSTEM_TIMER_UPDATES_DIVISOR;
+  // Dead target drops (:315-318)
+  if (ai.target && targetHealth(ai.target, playerEntity) <= 0) ai.target = null;
+  // Non-hostile mode (:321-327): a pacified foe drops the PLAYER as
+  // its target; secondaryTarget likewise.
+  if (noTargetMode || !ai.isHostile) {
+    if (isPlayerTarget(ai.target) && boutGate(self, ai.target, true, playerBout) !== true) ai.target = null;   // ARENA2: a bout's opponent stays one
+    if (isPlayerTarget(ai.secondaryTarget) && boutGate(self, ai.secondaryTarget, true, playerBout) !== true) ai.secondaryTarget = null;
+  }
+  // ARENA2: THE BOUT TEAM holds a target already chosen too - a blow from outside the bout (the player striking an
+  // exhibition fighter: MakeEnemyHostileToAttacker writes the striker in) and a fighter out of the bout are dropped
+  if (ai.target && boutGate(self, ai.target, isPlayerTarget(ai.target), playerBout) === false) ai.target = null;
+  if (ai.secondaryTarget && boutGate(self, ai.secondaryTarget, isPlayerTarget(ai.secondaryTarget), playerBout) === false) ai.secondaryTarget = null;
+  // Reset these values if no target (:330-345). The secondary-switch
+  // arm survives on the classic path because MakeEnemyHostileToAttacker
+  // writes SecondaryTarget (:197) - DFU's comment ("only if using
+  // enhanced") describes GetTargets' write, not that one.
+  if (ai.target == null) {
+    ai.lastKnownTargetPos = null;
+    ai.predictedTargetPos = null;
+    ai._dist = 0;
+    if (ai.secondaryTarget && targetHealth(ai.secondaryTarget, playerEntity) > 0) {
+      ai.target = ai.secondaryTarget;
+      // :347-349 - "If the secondary target was actually seen, use the
+      // last place we saw it to begin pursuit." A LOUD DFU QUIRK on
+      // the classic path: sawSecondaryTarget is written outside the
+      // Enhanced guard (:848/:855) but secondaryTargetPos is written
+      // only INSIDE it (:872), so classic reads a Vector3.zero that
+      // nothing ever filled - the foe begins its pursuit at the world
+      // ORIGIN rather than at its target. Ported as C# runs it,
+      // because the alternative is inventing a position DFU does not
+      // have; the port's origin travels with the streamer, exactly as
+      // DFU's does under StreamingWorld.
+      if (ai.sawSecondaryTarget) ai.lastKnownTargetPos = [0, 0, 0];
+      ai.awareOfTargetForLastPrediction = false;
+    }
+  }
+  // :377-383 - out of the classic area, still check direct LOS to the
+  // player so enemies who see the player will try to attack.
+  let playerInSight = false;
+  if (!ai.wouldBeSpawned && playerFeet) {
+    playerInSight = canSeeTarget(ai.collider, ai.feet, ai.yaw, ai.height, playerFeet, playerHeight, null, null, ai.sightRadius);   // CAMP-SIGHT
+    // WORLD3: a PEER in sight is a player in sight - the area DFU draws around the one player is drawn around
+    // every player in the room, so a foe far from the host and beside a joiner still takes its targets
+    if (!playerInSight) for (const c of candidates ?? []) {
+      if (!isPeerTarget(c) || !c.feet) continue;
+      if (canSeeTarget(ai.collider, ai.feet, ai.yaw, ai.height, c.feet, c.height ?? playerHeight, null, null, ai.sightRadius)) { playerInSight = true; break; }
+    }
+  }
+  if (ai.classicTargetUpdateTimer > SENSES_INTERVAL_UNITS) {
+    ai.classicTargetUpdateTimer = 0;
+    // Is enemy in area around player or can see player? (:392-401)
+    if (ai.wouldBeSpawned || playerInSight) {
+      const got = getTargets(self, candidates, playerFeet, { noTargetMode, dropLocal, infighting, playerHeight, playerBout });
+      ai.target = got.target;
+      ai.sawSecondaryTarget = got.sawSecondaryTarget;
+      // `targetSenses = target.GetComponent<EnemySenses>()` (:397-400)
+      // - the port's equivalent is the target CANDIDATE itself, since
+      // its `ai` IS the senses. Null for the player, as C# nulls it.
+      ai.targetSenses = ai.target && !isPlayerTarget(ai.target) ? ai.target : null;
+    }
+    // MT-i (the adversarial re-read): "Make targeted character also
+    // target this character if it doesn't have a target yet" sits
+    // OUTSIDE that gate (:403-407), at the timer-expiry level - and
+    // `targetSenses` is a persistent FIELD (:56), not a local. So on
+    // a tick where the gate REJECTS, GetTargets never runs and the
+    // stale targetSenses from an earlier pass is what gets written
+    // to. Nesting this inside the gate (the port's first cut) lost
+    // exactly that: a foe that walked out of the spawn band stopped
+    // recruiting the target it was still holding.
+    if (ai.target != null && ai.targetSenses && (ai.targetSenses.ai?.target ?? null) === null) {
+      ai.targetSenses.ai.target = self;
+    }
+  }
+  if (ai.target == null) return null;
+  return isPlayerTarget(ai.target) ? (ai.target.feet ?? playerFeet) : ai.target.ai.feet;   // WORLD3: a peer's own feet
+}
+
+/**
+ * EnemyMotor.MakeEnemyHostileToAttacker's PLAYER arm (:204-213): a
+ * player attack turns the foe hostile and a struck former ally
+ * reverts to the STATIC row's team - `EnemyBasics.Enemies.First(x =>
+ * x.ID == id).Team` (:211), which is staticTeamOf and deliberately
+ * NOT the instance's own MobileEnemy copy. (The target-reassign
+ * guard at :193-202 is the motor's makeEnemyHostileToAttacker; this
+ * half owns the entity-side writes.)
+ */
+export function resetAllyTeamOnPlayerAttack(ai, entity, mobileType) {
+  ai.isHostile = true;
+  if (entity && entity.team === 'PlayerAlly') {
+    // the STATIC table by mobile ID (:210-211), never the instance's
+    // own copy - a summoned ally's copy IS PlayerAlly, so reading it
+    // would leave the struck ally allied forever.
+    entity.team = staticTeamOf(mobileType ?? entity.mobileType);
+  }
+}

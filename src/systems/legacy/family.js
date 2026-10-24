@@ -18,6 +18,7 @@ import { firstName, surname as bankSurname, getNameBank, GENDERS } from '../../c
 import { getSeed, setSeed } from '../../formats/dfRandom.js';
 import { startAgeOf } from './age.js';
 import { readStanding, readNews, readHeard } from './influence.js';   // LEGACY6; AUDIT LEGACY III A8: a reader's heard news
+import { BLOOD_MAX, HEARTH_MAX, ESTATE_SHARE, ESTATE_MAX } from './legacyLaw.js';   // INT18: the family law's bounds, the realm's to ask too
 import { readHouse } from '../../net/houseLaw.js';   // LEGACY7 part three: a player spouse's house
 import { validLook } from '../../net/wire.js';   // LEGACY7 part four: a member's look, the hello's own recipe
 
@@ -52,16 +53,9 @@ export const RACE_INHERIT_CHANCE = 0.7;
 export const SURNAME_KEEP_CHANCE = 0.9;
 /** The arc's section 5: half the time the parent's career. */
 export const CAREER_INHERIT_CHANCE = 0.5;
-/** THE BLOOD: a stat's gift is `round((parent - 50) / 10)`, held to 0..3. */
-export const BLOOD_MAX = 3;
-/** THE HEARTH: a primary or major skill's gift is `floor(parent / 20)`, held to 0..3. */
-export const HEARTH_MAX = 3;
-/** THE ESTATE: a quarter of the purse the dead carried, at most what fits under the online birth's liquid ceiling
- *  beside the gold every birth carries (net/realmGoldLaw.js REALM_BIRTH_WEALTH_MAX less systems/startingGear.js
- *  STARTING_GOLD - restated, and pinned equal, so this leaf imports no net code). AUDIT LEGACY H7: it was the ceiling
- *  itself, and a born heir's first save would have carried 10,100. */
-export const ESTATE_SHARE = 0.25;
-export const ESTATE_MAX = 9_900;
+/** THE BLOOD (0..BLOOD_MAX), THE HEARTH (0..HEARTH_MAX) and THE ESTATE (ESTATE_SHARE of the purse, at most ESTATE_MAX) -
+ *  INT18: their home is legacyLaw.js, the leaf the account service asks a line's copy by; said here as they always were. */
+export { BLOOD_MAX, HEARTH_MAX, ESTATE_SHARE, ESTATE_MAX };
 
 const RACE_KEYS = Object.freeze(Object.keys(RACES));
 
@@ -188,13 +182,14 @@ function careerFields(entity) {
     // AUDIT LEGACY III O10/P1: a stock career is its index's (its CLASS*.CFG is read fresh at a birth - bornResult); only
     // a custom one is kept whole, as isCustomCareer and inheritCareer read it. Every played member carried six hundred
     // bytes of a career the game ships
-    career: career && String(career.name ?? '') !== CLASS_CAREERS[idx] ? JSON.parse(JSON.stringify(career)) : null,
+    // AUDIT SUGGESTIONS-1019 L5-4: and a stock class with a class skill changed (skillSwap.js) is no longer its index's
+    career: career && (career.swapped === true || String(career.name ?? '') !== CLASS_CAREERS[idx]) ? JSON.parse(JSON.stringify(career)) : null,
     groups: groupsOf(career),
   };
 }
 
 /** Is a person's career a custom one - a career object whose name is not its index's stock name. */
-export const isCustomCareer = (person) => !!person?.career && String(person.career.name ?? '') !== CLASS_CAREERS[person.careerIndex];
+export const isCustomCareer = (person) => !!person?.career && (person.career.swapped === true || String(person.career.name ?? '') !== CLASS_CAREERS[person.careerIndex]);   // AUDIT SUGGESTIONS-1019 L5-4: a swapped class too
 
 /** Write the PLAYED character into their person: identity, level, the permanent eight and thirty-five, the career and
  *  the character id. The mod's `SaveCurrentCharacter` / `SaveCharacterData`, the parts the port keeps (D8: no kit -
@@ -537,6 +532,8 @@ export function readFamily(rec) {
     // PERMADEATH-HOUSES: the dead's deeds this member's save took up (household.js deedsDue), by house key
     p.deedsTaken = Array.isArray(raw.deedsTaken) ? [...new Set(raw.deedsTaken.filter((k) => typeof k === 'string' && /^-?\d+:\d+$/.test(k)))] : [];
     p.died = raw.died && typeof raw.died === 'object' ? { at: Number(raw.died.at) || 0, cause: String(raw.died.cause ?? 'unknown'), place: raw.died.place ?? null, by: raw.died.by ?? null } : null;
+    // REVIVE (revived.js): the deaths taken back on them, by `died.at` - held to its shape, never dropped
+    p.revived = Array.isArray(raw.revived) ? raw.revived.filter((n) => Number.isFinite(n)) : [];
     // LEGACY5: courtships, a wedding, children's clock, a minor, a spouse's own face - held to their shape
     p.courting = raw.courting && typeof raw.courting === 'object' && !Array.isArray(raw.courting)
       ? Object.fromEntries(Object.entries(raw.courting).filter(([k, c]) => typeof k === 'string' && c && typeof c === 'object')

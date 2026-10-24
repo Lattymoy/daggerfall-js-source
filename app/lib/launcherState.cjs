@@ -13,13 +13,21 @@
 // first run was a bare OS folder dialog before any window.
 //
 // A separate launcher PROGRAM would fix none of that and add a second
-// thing to install, sign and update - the updates themselves are already
-// small (a Windows update between two releases is ~4.5 MB of a 208 MB
-// installer: electron-updater's blockmap delta, measured off the releases'
-// own blockmaps). So the launcher is the shell's FIRST WINDOW: it checks,
-// updates BEFORE play when it can (the download shown, the install silent,
-// the app reopening itself), says what changed, finds the player's
-// Daggerfall files, and hands over to the game.
+// thing to install, sign and update - and would make no update smaller.
+// So the launcher is the shell's FIRST WINDOW: it checks, updates BEFORE
+// play when it can (the download shown, the install silent, the app
+// reopening itself), says what changed, finds the player's Daggerfall
+// files, and hands over to the game.
+//
+// DA13 (2026-10-14, Mac: "B only: per-file channel"): AND THE GAME'S UPDATE
+// IS ONLY THE FILES THAT CHANGED. DA8 counted on the installer's blockmap
+// delta being small (~4.5 MB of a 208 MB installer, measured then); DA11 put
+// the site in one archive and it stopped being so - ~130 MB an update,
+// measured off the published blockmaps. A release the game's own channel
+// carries (app/lib/gameChannel.cjs) is `kind: 'game'` here: fetched before
+// play like an installer, the files that changed and no more, and played by
+// Play at once - no install, no restart (`game-applied`). A release it
+// cannot carry is the installer's, as before (`game-failed` hands it back).
 //
 // DA10 (2026-09-29, Mac: "So this is an actual launcher now? Like
 // warframe?" - and to the offer of one that stays open with a Play
@@ -38,8 +46,8 @@
 // shell, for an open dialog), and the launcher reopens on the new version.
 //
 // Pure, no Electron: the shell (app/main.cjs) feeds events in and renders
-// `viewOf` into app/launcher/; test/da8_launcher.test.js and
-// test/da10_launcher.test.js drive every screen and transition here.
+// `viewOf` into app/launcher/; test/tooling/da8_launcher.test.js and
+// test/tooling/da10_launcher.test.js drive every screen and transition here.
 'use strict';
 
 const { parseReleaseTag, parseVersion } = require('./updateCheck.cjs');
@@ -109,6 +117,11 @@ const cmpV = (a, b) => { for (let i = 0; i < 3; i++) if (a[i] !== b[i]) return a
  *               It is never tried before play again, so a failing installer
  *               cannot close the app on every launch.
  *   notice      the notice transport found one: Download it, or Play this one
+ * update.kind
+ *   'game'      DA13: what downloads is the game's own update - the files that
+ *               changed, from the release's pack (app/lib/gameChannel.cjs) -
+ *               played by Play once it is down, with no install; null, the
+ *               installer's (DA7's updater, DA6's notice)
  * setup.status
  *   checking the folder config.json keeps (setup.dir) is being looked at, in
  *            a process of its own (AUDIT INSTALL R2-D1) - the front door
@@ -150,7 +163,7 @@ function initialState({
     installFailedFor: parseVersion(installFailedFor) ? String(installFailedFor).trim() : null,
     lastPlayed: parseVersion(lastPlayed) ? String(lastPlayed).trim() : null,
     returning: !!returning,
-    update: { status: checkEnabled ? 'checking' : 'skipped', version: null, percent: 0, transferred: 0, total: 0, download: null },
+    update: { status: checkEnabled ? 'checking' : 'skipped', kind: null, version: null, percent: 0, transferred: 0, total: 0, download: null },
     setup: {
       status: arena2Dir ? 'ready' : checking ? 'checking' : inGamePicker ? 'skipped' : 'looking',
       dir: arena2Dir || (checking ? savedDir : null),
@@ -223,7 +236,7 @@ function reduce(state, ev) {
       }
       break;
     case 'downloaded':
-      if (u.status === 'downloading') {
+      if (u.status === 'downloading' && u.kind !== 'game') {
         u.percent = 100;
         // a version whose install already failed is not tried before play again - the player is not locked out
         const failed = parseVersion(s.installFailedFor), v = parseVersion(u.version);
@@ -239,6 +252,24 @@ function reduce(state, ev) {
         u.status = 'background';
         if (canPlay(s)) s.launch = 'requested';
       }
+      break;
+    case 'game-available':
+      // DA13: the game's own channel carries it - the files that changed, fetched before play as an installer is
+      if (s.launch || !MAY_FIND.has(u.status)) break;
+      u.kind = 'game';
+      u.version = ev.version ?? null;
+      u.status = 'downloading';
+      u.percent = 0; u.transferred = 0; u.total = Number(ev.total) || 0;
+      break;
+    case 'game-applied':
+      // DA13: the version this copy plays is the one the channel brought - Play runs it, nothing installs or restarts
+      if (s.launch || !parseVersion(ev.version)) break;
+      s.current = String(ev.version).trim();
+      if (u.kind === 'game') { u.status = 'current'; u.kind = null; u.percent = 100; } else if (u.status === 'checking' || u.status === 'offline') u.status = 'current';
+      break;
+    case 'game-failed':
+      // DA13: the channel could not bring it - the shell asks the installer's path next, from a check
+      if (u.kind === 'game' && (u.status === 'downloading' || u.status === 'background')) { u.status = 'checking'; u.kind = null; u.version = null; }
       break;
     case 'install-failed':
       // the installer never took over (it would have closed the app): Play is free, and the installer is offered
@@ -572,7 +603,9 @@ function viewOf(s) {
     }
   } else if (u.status === 'downloading') {
     v.status = `Downloading v${u.version}`;
-    v.detail = 'It installs before you play, so you are on the same version as everyone online.';
+    v.detail = u.kind === 'game'
+      ? 'Only the files that changed. It is ready before you play, so you are on the same version as everyone online.'
+      : 'It installs before you play, so you are on the same version as everyone online.';
     v.progress = { percent: u.percent, label: u.total ? `${mb(u.transferred)} of ${mb(u.total)} MB` : 'Starting the download' };
     v.busy = true;
     if (SETUP_DONE.has(st.status)) v.statusActions = [{ id: 'play-now', label: 'Play without updating' }];
@@ -584,7 +617,7 @@ function viewOf(s) {
     v.detail = `You have v${s.current}. Download it, quit, and put it in place of this copy - your saves, settings and game files stay where they are.`;
     v.statusActions = [{ id: 'download', label: 'Download', primary: true }];
   } else if (u.status === 'background') {
-    v.status = `v${u.version} installs when you quit`;
+    v.status = u.kind === 'game' ? `v${u.version} plays from your next start` : `v${u.version} installs when you quit`;
     v.detail = 'It finishes downloading while you play.';
   } else if (u.status === 'failed') {
     v.status = `Could not download v${u.version}`;

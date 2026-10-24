@@ -2,7 +2,7 @@
 // OW-HUBS (FIELD BUGS 2026-10-04e, Discord: "Highlight fast travel hubs (cities with carriages)" - "WHEEL icon for
 // carriage places"): THE CARRIAGE'S WHEEL, the one glyph both maps draw at a town whose gate stands a carriage driver
 // (systems/immersiveTravel.js hasCarriageGate - Immersive Travel's walled cities): the Overworld beside its plate's dot
-// (ui/travelViewHud.js) and the held map beside its mark (ui/inkMap.js), as the harbour's anchor stands by a port's.
+// (ui/travel/travelViewHud.js) and the held map beside its mark (ui/ink/inkMap.js), as the harbour's anchor stands by a port's.
 // A rim, six spokes and a hub - one path, stroked by each map in its own pens. Pure canvas, no state.
 
 /** The wheel's six spokes. */

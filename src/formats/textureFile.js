@@ -38,6 +38,8 @@ export const UNSUPPORTED_FILENAMES = Object.freeze([
  *  caught it in the same slice - two modules exporting one name is
  *  the drift that gate exists for. */
 export const texName = (archive) => `TEXTURE.${String(archive).padStart(3, '0')}`;
+/** DS1: TEXTURE.511 is the last archive Daggerfall ships; a higher number is a mod's own, or the port's. */
+export const LAST_CLASSIC_TEXTURE_ARCHIVE = 511;
 
 export class TextureFile extends BaseImageFile {
   constructor() {

@@ -1,0 +1,91 @@
+# EG6a (2026-10-12; bible/11-Multiplayer/Elite-Gates.md section 10.5 "The sweep"): THE COURSE SWEEP.
+#
+# Every course the Elite Breach's span generator lays (src/net/eliteGates/egSpanLaw.js egSpanOf) is crossed STEP BY STEP BY THE REAL
+# PLAYER MOTOR - src/player/motor.js PlayerMotor at THE SPAN BUILD (Speed 10, Running 0, Jumping 0) on the real Collider,
+# over each circle's floors and its pieces as the screen rides them (tools/egSpanSolve.mjs --sweep; SD7b's harness is
+# the model). The timed solver proves a course on the motor's closed form; this proves it on the motor itself. A course
+# the motor does not cross fails the run, and the log names its seed, hall, road and step.
+#
+# HOW MANY SEEDS A BAND - one home, the `seeds` each caller asks:
+#   - 25 on every pull request and before every deploy: verify.yml calls this with its own `sweep` input, 25 by default,
+#     and the law pin's four golden seeds beside them;
+#   - 500 nightly (the schedule below, or a dispatch);
+#   - 500 before every relay deploy: relay-deploy.yml asks verify.yml for 500.
+# The four bands run at once beside the test shards - so the sweep adds no time to verify's longest leg.
+#
+# SWEEP-FAST (2026-10-19, Mac: "Yes"): A BAND IN PARTS. Measured on CI on 2026-10-19 (about a second of motor a course -
+# the 182 ms it was measured at is long gone): a band's 25 seeds take 2.5 to 3 minutes; its 500 took 27 to 53 minutes in
+# one job, and every relay deploy that moved the relay waited about an hour on it (54, 70, 54 minutes) with the account
+# service's and the site's deploys waiting behind it. Past a hundred seeds a band now runs in SIX PARTS at once (`part`,
+# tools/egSpanSolve.mjs --part p/k: every sixth seed of the band's list from the part's own, the golden ones among them -
+# each seed swept by exactly one part), ~84 seeds and ~9 minutes a job; a pull request's 25 stay one job a band.
+#
+# THE ASCENT (LAW 9, 2026-10-16; bible/11-Multiplayer/Elite-Gates-Ascent.md section 6): a hall of THE ASCENT's law is a way,
+# and the pilot walks its ROUTE (tools/egSpanSolve.mjs sweepRoute) - turning onto each link, running its stairs, CLIMBING its
+# climbs with the real climbing motor (player/parkour.js at Climbing 0 with its fatigue spent, resting on each ledge), running
+# off its Drops, crossing each course pair by pair - to the door, on every road the route proves. The circle's own halls are
+# swept so the moment they are THE ASCENT's (net/eliteGates/egLaw.js EG_SPEC 9): the step above walks them. Until THE ROOMS lays them,
+# the second step walks SYNTHETIC LAW 9 halls (tools/lib/egLaw9Synth.mjs - a corridor, a turn, a stair, a climb of one or two
+# pitches and the long way round it, a side climb never asked, a Drop and a course, given as the relay gives a hall): 25
+# seeds a band and the golden four, five halls each, both roads - about 50 s a band; it runs when the step above fails too. It stays a fixed 25 (synthetic halls are the pilot's bench,
+# not the law's halls) and can go once the law's halls are THE ASCENT's.
+name: span sweep
+
+on:
+  workflow_call:
+    inputs:
+      ref:
+        description: The commit to sweep (empty - the caller's own).
+        type: string
+        default: ""
+      seeds:
+        description: Seeds a band.
+        type: number
+        default: 25
+  schedule:
+    - cron: "41 6 * * *"
+  workflow_dispatch:
+    inputs:
+      seeds:
+        description: Seeds a band.
+        type: number
+        default: 500
+
+permissions:
+  contents: read
+
+jobs:
+  sweep:
+    name: span sweep, band ${{ matrix.band }}${{ matrix.parts > 1 && format(' part {0}/{1}', matrix.part, matrix.parts) || '' }}
+    runs-on: ubuntu-latest
+    strategy:
+      # every band reports, so one red run names every failing course
+      fail-fast: false
+      matrix:
+        band: [0, 1, 2, 3]
+        # SWEEP-FAST: six parts past a hundred seeds a band (a scheduled run carries no inputs: the nightly's 500), one else
+        part: ${{ fromJSON((inputs.seeds || 500) > 100 && '[1, 2, 3, 4, 5, 6]' || '[1]') }}
+        parts: ${{ fromJSON((inputs.seeds || 500) > 100 && '[6]' || '[1]') }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - name: Cached dependencies
+        id: deps
+        uses: actions/cache@v4
+        with:
+          path: node_modules
+          key: node-modules-${{ runner.os }}-node22-${{ hashFiles('package-lock.json') }}
+      - name: Install dependencies
+        if: steps.deps.outputs.cache-hit != 'true'
+        run: npm ci
+      # a scheduled run carries no inputs: the nightly's 500
+      - name: Cross every course of band ${{ matrix.band }} with the real motor
+        run: node tools/egSpanSolve.mjs --sweep --band ${{ matrix.band }} --seeds ${{ inputs.seeds || 500 }} --golden --part ${{ matrix.part }}/${{ matrix.parts }}
+      - name: Walk every synthetic LAW 9 hall's route of band ${{ matrix.band }} with the real motor
+        if: ${{ !cancelled() }}
+        run: node tools/egSpanSolve.mjs --sweep --law9 --band ${{ matrix.band }} --seeds 25 --golden --part ${{ matrix.part }}/${{ matrix.parts }}

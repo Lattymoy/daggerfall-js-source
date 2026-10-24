@@ -15,10 +15,10 @@
 // it without Vite and assert the tokens on the page ARE the skin's.
 import { readFileSync, readdirSync } from 'node:fs';
 import { execFileSync } from 'node:child_process';
-import { ENHANCED_TOKENS, ENHANCED_FONTS_URL } from '../src/ui/enhancedStyle.js';
+import { ENHANCED_TOKENS, ENHANCED_FONTS_URL } from '../src/ui/enhanced/enhancedStyle.js';
 import { PIXELIFY_FIVE_FACE } from '../src/ui/pixelifyFive.js';   // TERMS1: the documents take the five from its home
 import { SUPPORT_MARKS_CSS } from '../src/ui/supportAsks.js';   // SUPPORT1: the asks' marks, the game door's own pixels
-import { SITE_KIT_CSS } from '../src/ui/enhancedFrame.js';   // PLUS-SITE: the game's stone and brass, cut without a picture
+import { SITE_KIT_CSS } from '../src/ui/enhanced/enhancedFrame.js';   // PLUS-SITE: the game's stone and brass, cut without a picture
 
 /** U63: the landing page asks for THE SKIN'S OWN REQUEST, not a subset.
  *  It used to load the brand + data faces, because the site was set in
@@ -62,13 +62,11 @@ export function readBuildSha(read = (p) => readFileSync(p, 'utf8')) {
    the size of the suite and the size of the port. Both come from the
    tree the build is made of, the way the sha does, so the page can
    never claim a number the repository does not hold. The test count
-   uses the manifest gate's own definition (test/manifest.test.js:
-   top-of-line `test(` calls in test/*.test.js), which that gate pins
-   equal to bible/09-Testing/Testing.md - so the strip, the doc and
-   the runner agree or the suite is red. */
+   is the declared tests: top-of-line `test(` calls in every *.test.js
+   under test/ (test/ui/enhanced/landing.test.js walks the tree to hold it). */
 export function countTests(dir = 'test', read = (p) => readFileSync(p, 'utf8')) {
   let n = 0;
-  for (const f of readdirSync(dir)) {
+  for (const f of readdirSync(dir, { recursive: true })) {   // TIDY5: every folder under test/
     if (!f.endsWith('.test.js')) continue;
     n += (read(`${dir}/${f}`).match(/^test\(/gm) || []).length;
   }

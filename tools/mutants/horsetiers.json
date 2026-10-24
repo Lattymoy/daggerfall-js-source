@@ -1,0 +1,182 @@
+[
+  {
+    "name": "HORSE-TIERS-the-default-the-old-system",
+    "file": "src/systems/upkeep/upkeepTiers.js",
+    "old": "export const HORSE_CARE_DEFAULT = 'boons';",
+    "new": "export const HORSE_CARE_DEFAULT = 'hard';",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-a-tiers-field",
+    "file": "src/systems/upkeep/upkeepTiers.js",
+    "old": "    paceFloor: true,         // the ride's pace is never under DFU's",
+    "new": "    paceFloor: false,         // the ride's pace is never under DFU's",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-forced-online",
+    "file": "src/systems/features.js",
+    "old": "store: 'prefs', key: 'horseCare', initial: 'boons', online: 'player',",
+    "new": "store: 'prefs', key: 'horseCare', initial: 'boons', online: true,",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-the-accessor-read-once",
+    "file": "src/systems/upkeep/upkeepSwitch.js",
+    "old": "export const horseCareRules = () => (isEnhanced() ? horseCareRulesForTier(horseCareTierOfStored(getPref(HORSE_CARE_PREF))) : null);",
+    "new": "const HORSE_CARE_AT_LOAD = horseCareRulesForTier(horseCareTierOfStored(getPref(HORSE_CARE_PREF)));\nexport const horseCareRules = () => (isEnhanced() ? HORSE_CARE_AT_LOAD : null);",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-a-refused-gallop-walked",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "    if (runAsked && !care.refusedRunWalks) return false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-the-motors-walk-without-the-run",
+    "file": "src/player/motor.js",
+    "old": "this.rideWalking = rideBase != null && !this.isRunning && rideWalks(this.transportMode, this._runMode);",
+    "new": "this.rideWalking = rideBase != null && !this.isRunning && rideWalks(this.transportMode);",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-its-base-without-the-run",
+    "file": "src/player/motor.js",
+    "old": "_rideBaseNow() { return rideWalks(this.transportMode, this._runMode) ? DF_WALK_BASE",
+    "new": "_rideBaseNow() { return rideWalks(this.transportMode) ? DF_WALK_BASE",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-the-pace-unfloored",
+    "file": "src/systems/steedCare.js",
+    "old": "  return rules.paceFloor ? Math.max(1, k) : k;",
+    "new": "  return k;",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-the-hungers-penalty-paid",
+    "file": "src/systems/steedCare.js",
+    "old": "penalty = rules.hungerCosts ? HUNGER[hunger].penalty : 0;",
+    "new": "penalty = HUNGER[hunger].penalty;",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-the-breath-slowed",
+    "file": "src/systems/steedCare.js",
+    "old": "(rules.hungerCosts ? HUNGER[hunger]?.breath ?? 1 : 1)",
+    "new": "(HUNGER[hunger]?.breath ?? 1)",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-the-draft-dragging",
+    "file": "src/systems/steedCare.js",
+    "old": "export const teamDraftScale = (strength, load, rules = HORSE_CARE_HARD) => (rules.draftDrags ?",
+    "new": "export const teamDraftScale = (strength, load, rules = HORSE_CARE_HARD) => (true ?",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-the-bond-faded-on-boons",
+    "file": "src/systems/steedCare.js",
+    "old": "  const bond = rules.bondFades ? bondAt(item, now) : bondTenths(item) / 10;",
+    "new": "  const bond = bondAt(item, now);",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-the-fade-taken-at-a-boons-meal",
+    "file": "src/systems/steedCare.js",
+    "old": "  const fade = fades ? fadeBy(item, now) : 0;",
+    "new": "  const fade = fadeBy(item, now);",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-the-old-on-read-as-the-default",
+    "file": "src/systems/uiPrefs.js",
+    "old": "_prefs.horseCare = p.horseCare === HORSE_CARE_OLD_ON ? HORSE_CARE_OLD_ON_TIER : PREF_DEFAULTS.horseCare;",
+    "new": "_prefs.horseCare = PREF_DEFAULTS.horseCare;",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-junk-kept",
+    "file": "src/systems/uiPrefs.js",
+    "old": "        if (p.horseCare !== undefined && !isStoredHorseCare(p.horseCare)) _prefs.horseCare =",
+    "new": "        if (false) _prefs.horseCare =",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-offs-clock-left-running",
+    "file": "src/systems/upkeep/upkeepRuntime.js",
+    "old": "h.horseFed = Math.round(h.horseFed + (t - lastNow));",
+    "new": "void h;",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-the-starving-line-unheld",
+    "file": "src/systems/steedCare.js",
+    "old": "    if (!rules.bondFades && holdStarving(horse, now)) changed = true;   // HORSE-TIERS: Boons owes no fade, then or later\n",
+    "new": "",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-the-chip-red-on-boons",
+    "file": "src/ui/enhanced/enhancedSaddle.js",
+    "old": "return h.hungerCosts === false && tone === 'low' ? 'warn' : tone; };",
+    "new": "return tone; };",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-the-stable-chip-red-on-boons",
+    "file": "src/ui/holdingsPages.js",
+    "old": "(care?.hungerCosts === false && h.hungerKey === 'starving' ? HUNGER_TONE.hungry : HUNGER_TONE[h.hungerKey] ?? '')",
+    "new": "(HUNGER_TONE[h.hungerKey] ?? '')",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  },
+  {
+    "name": "HORSE-TIERS-boons-said-in-hards-words",
+    "file": "src/ui/holdingsPages.js",
+    "old": "(care?.hungerCosts === false ? HUNGER_LINE_BOONS : HUNGER_LINE)[h.hungerKey]",
+    "new": "HUNGER_LINE[h.hungerKey]",
+    "tests": [
+      "test/systems/horsetiers.test.js"
+    ]
+  }
+]

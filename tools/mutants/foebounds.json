@@ -1,0 +1,545 @@
+[
+  {
+    "name": "FOE-BOUNDS-elite-left-out",
+    "file": "src/net/foeBounds.js",
+    "old": "  if (r.z === 1) v = stage(v, FOE_BOUND.elite);\n",
+    "new": "",
+    "why": "an elite's x5 never allowed - an honest elite refused",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-progression-left-out",
+    "file": "src/net/foeBounds.js",
+    "old": "  v = stage(v, worstProgression(r.t, wildernessShare(true), placeVeteran(wildernessThreat(true))));\n",
+    "new": "",
+    "why": "progression never allowed - an honest veteran's foe refused",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-champion-left-out",
+    "file": "src/net/foeBounds.js",
+    "old": "  if (r.z !== 1 && Number.isInteger(r.cp)) v = stage(v, FOE_BOUND.champion * (FOE_BOUND.championTraits[r.cp] ?? 1));\n",
+    "new": "",
+    "why": "a champion's trait never allowed",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-revenant-left-out",
+    "file": "src/net/foeBounds.js",
+    "old": "  if (typeof r.nm === 'string' && r.nm) v = revenantStages(v);\n",
+    "new": "",
+    "why": "a revenant's rank, wrath and the Dread never allowed",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-wild-left-out",
+    "file": "src/net/foeBounds.js",
+    "old": "  if (wild) v = stage(v, FOE_BOUND.wild * FOE_BOUND.wildRingTop);\n",
+    "new": "",
+    "why": "the wild zone's x8 never allowed",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-giant-left-out",
+    "file": "src/net/foeBounds.js",
+    "old": "  if (Number.isInteger(r.gg) && r.t === FOE_BOUND.giantType) v = stage(v, FOE_BOUND.giant);\n",
+    "new": "",
+    "why": "a Greater Giant's x10 never allowed",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-rite-left-out",
+    "file": "src/net/foeBounds.js",
+    "old": "isClass(r.t) ? Math.max(FOE_BOUND.rite, FOE_BOUND.star) : FOE_BOUND.star);",
+    "new": "FOE_BOUND.star);",
+    "why": "a Rite's Summoner never allowed",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ],
+    "note": "STAR-TUNE (re-aimed by content): the camp stage a star's coven's alone - a Rite's Summoner x3 never allowed"
+  },
+  {
+    "name": "FOE-BOUNDS-rite-every-class-foe",
+    "file": "src/net/foeBounds.js",
+    "old": "  if (camp) v = stage(v, isClass(r.t)",
+    "new": "  if (camp || isClass(r.t)) v = stage(v, isClass(r.t)",
+    "why": "every class foe given the Summoner's x3 - the bound loose for no camp",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ],
+    "note": "STAR-TUNE (re-aimed by content): every class foe given the camp stage - the bound loose for no camp"
+  },
+  {
+    "name": "FOE-BOUNDS-rounding",
+    "file": "src/net/foeBounds.js",
+    "old": "const stage = (v, m) => Math.max(1, Math.round(v * m));",
+    "new": "const stage = (v, m) => Math.max(1, Math.ceil(v * m));",
+    "why": "the builders' rounding not followed - the bound one off the real maximum",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-hero-at-1",
+    "file": "src/net/foeBounds.js",
+    "old": "{ health: FOE_HERO_HEALTH_MAX, damage: 1 }",
+    "new": "{ health: 1, damage: 1 }",
+    "why": "the hero's threat left out - an honest high-level player's foes refused",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-mark-read-when-absent",
+    "file": "src/net/foeBounds.js",
+    "old": "  if (r.z === 1) v = stage(v, FOE_BOUND.elite);\n",
+    "new": "  v = stage(v, FOE_BOUND.elite);\n",
+    "why": "an elite's x5 allowed to a record that claims none",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-watch-marks-believed",
+    "file": "src/net/foeBounds.js",
+    "old": "  if (r.t === FOE_BOUND.watch && (r.z === 1 || Number.isInteger(r.cp))) return { t: r.t, k: r.k ?? r.h ?? 0, mx: 0 };\n",
+    "new": "",
+    "why": "an elite or champion City Watch believed",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-champion-floor",
+    "file": "src/net/foeBounds.js",
+    "old": "  if (Number.isInteger(r.cp) && Number.isInteger(level) && level < FOE_BOUND.championMinLevel) return { t: r.t, k: r.k ?? r.h ?? 0, mx: 0 };\n",
+    "new": "",
+    "why": "a champion under level 3 believed",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-health-unread",
+    "file": "src/net/foeBounds.js",
+    "old": "  const k = Math.max(Number.isFinite(r.k) ? r.k : 0, Number.isFinite(r.h) ? r.h : 0);",
+    "new": "  const k = Number.isFinite(r.k) ? r.k : 0;",
+    "why": "a record's current health never judged",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-row-one-off",
+    "file": "src/net/foeBounds.js",
+    "old": "  [0, [35, 1, 1]],",
+    "new": "  [0, [36, 1, 1]],",
+    "why": "a monster's row one off its profiles' most",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-elite-copy-off",
+    "file": "src/net/foeBounds.js",
+    "old": "  elite: 5,                 // systems/eliteFoes.js ELITE_FOE_HEALTH_MULT",
+    "new": "  elite: 4,                 // systems/eliteFoes.js ELITE_FOE_HEALTH_MULT",
+    "why": "the elite's multiplier off its home",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-dungeon-super-left-out",
+    "file": "src/net/foeBounds.js",
+    "old": "  const v = stage(stage(stage(base, FOE_BOUND.superFoe), FOE_BOUND.champion * Math.max(...FOE_BOUND.championTraits)), worstProgression(r.t, Math.max(...DUNGEON_SHARE), 1));",
+    "new": "  const v = stage(stage(base, FOE_BOUND.champion * Math.max(...FOE_BOUND.championTraits)), worstProgression(r.t, Math.max(...DUNGEON_SHARE), 1));",
+    "why": "a Super dungeon's x4 never allowed - its honest foes refused",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-ally-refused",
+    "file": "src/scenes/grantHost.js",
+    "old": "    if (ally || !open() || typeof from !== 'string') return false;",
+    "new": "    if (!open() || typeof from !== 'string') return false;",
+    "why": "an ally, a companion or a crewman refused",
+    "tests": [
+      "test/scenes/foebounds_pool.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-judged-law-off",
+    "file": "src/scenes/grantHost.js",
+    "old": "    if (ally || !open() || typeof from !== 'string') return false;",
+    "new": "    if (ally || typeof from !== 'string') return false;",
+    "why": "foes refused while the staff have the law off",
+    "tests": [
+      "test/scenes/foebounds_pool.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-tallied-every-frame",
+    "file": "src/scenes/grantHost.js",
+    "old": "    if (!statsSaid.has(k)) { statsSaid.add(k); capMap(statsSaid, GRANT_MEMBERS_MAX); note(from, 'stats'); }",
+    "new": "    note(from, 'stats');",
+    "why": "one impossible record tallied on every frame",
+    "tests": [
+      "test/scenes/foebounds_pool.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-no-zone-no-wild",
+    "file": "src/scenes/grantHost.js",
+    "old": "    if (!mask || wildHere()) return true;",
+    "new": "    if (wildHere()) return true;",
+    "why": "no zone mask yet read as no zone - honest wild foes refused at load",
+    "tests": [
+      "test/scenes/foebounds_pool.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-stats-to-older-relay",
+    "file": "src/scenes/grantHost.js",
+    "old": "[...tallies].filter(([k]) => said || !k.endsWith('|stats'))",
+    "new": "[...tallies]",
+    "why": "`stats` handed to a relay that refuses the whole tally for it",
+    "tests": [
+      "test/scenes/foebounds_pool.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-DOOR-vouch-unread-reader",
+    "file": "src/scenes/grantHost.js",
+    "old": "capable.has(from) || session()?.grantSenders?.has(from) ? note(from, 'ungranted')",
+    "new": "capable.has(from) ? note(from, 'ungranted')",
+    "why": "a vouched sender's ungranted record never counted",
+    "tests": [
+      "test/scenes/foebounds_pool.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-street-unchecked",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (_net.grants?.statsRefused?.(from, r, { camp: campTags.has(r.i), ally: comp.has(r.i) || allied.has(r.i) || crew.has(r.i) })) { if (f) removePuppet(f); _pupPending.delete(key); continue; }",
+    "new": "      if (false) continue;",
+    "why": "the street's pool builds, updates and adopts an impossible foe",
+    "tests": [
+      "test/scenes/foebounds_pool.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-dungeon-own-unchecked",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (grants?.()?.statsRefused?.(from, r, { lane: 'dungeon', ally: lo && comp.has(r.i) })) { if (f) dropOwnPuppet(key, f); _ownPending.delete(key); continue; }",
+    "new": "      if (false) continue;",
+    "why": "the dungeon's own lane stands an impossible foe",
+    "tests": [
+      "test/scenes/foebounds_pool.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-DOOR-hello-unsaid",
+    "file": "src/net/online.js",
+    "old": "    if (streamsFoes(room)) frame.gv = GRANT_HELLO_LAW;",
+    "new": "    if (false) frame.gv = GRANT_HELLO_LAW;",
+    "why": "the hello never says its spawn grants - the door turns the current build away",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-DOOR-vouch-unread-session",
+    "file": "src/net/online.js",
+    "old": "{ if (m.g === 1) this._grantSender(m.id); this._deliver('own',",
+    "new": "{ if (false) this._grantSender(m.id); this._deliver('own',",
+    "why": "the relay's vouch never reaches the reader",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-relay-version-unread",
+    "file": "src/net/online.js",
+    "old": "      if (primary) this.grantStatsOk = relaySupportsGrantStats(relayV);",
+    "new": "      if (primary) this.grantStatsOk = true;",
+    "why": "`stats` said to a world222 relay",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-DOOR-field-dropped",
+    "file": "src/net/wire.js",
+    "old": "    if (Number.isSafeInteger(m.gv) && m.gv >= 1 && m.gv <= GRANT_HELLO_LAW_WIRE_MAX) hello.gv = m.gv;",
+    "new": "    void m.gv;",
+    "why": "the relay never reads the hello's spawn grants",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-DOOR-range",
+    "file": "src/net/wire.js",
+    "old": "m.gv >= 1 && m.gv <= GRANT_HELLO_LAW_WIRE_MAX) hello.gv",
+    "new": "m.gv >= 0 && m.gv <= GRANT_HELLO_LAW_WIRE_MAX + 1) hello.gv",
+    "why": "a `gv` outside its law read",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-stats-floor-off-by-one",
+    "file": "src/net/grantLaw.js",
+    "old": "export const GRANT_STATS_RELAY_MIN = 223;",
+    "new": "export const GRANT_STATS_RELAY_MIN = 222;",
+    "why": "a world222 relay handed `stats`",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-relay-reader-refused",
+    "file": "src/net/grantMeasure.js",
+    "old": "(ID_RE.test(t.a) || t.a === GRANT_RELAY_READER)",
+    "new": "ID_RE.test(t.a)",
+    "why": "the relay's own tally makes its batch unreadable",
+    "tests": [
+      "test/net/grantdoor_relay.test.js",
+      "test/server/grantcase_own.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-evidence-first-kept",
+    "file": "src/net/grantMeasure.js",
+    "old": "  if (e && (!kept.e || e.k - e.mx > kept.e.k - kept.e.mx)) kept.e = { t: e.t, k: e.k, mx: e.mx };",
+    "new": "  if (e && !kept.e) kept.e = { t: e.t, k: 0, mx: e.mx };",
+    "why": "the first evidence kept, not the worst",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-DOOR-setting-unread",
+    "file": "server/src/index.js",
+    "old": "    return relayCfgValue(await this._relayCfgOf(), this.env, 'grantDoor') === 'on';",
+    "new": "    return false;",
+    "why": "the door never shuts",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-DOOR-cold-ask-unawaited",
+    "file": "server/src/index.js",
+    "old": "    if (!streamsFoes(key) || m.gv >= GRANT_HELLO_LAW) return false;\n    if (this._relayCfgAt === -Infinity) await this._relayCfgFresh(now);",
+    "new": "    if (!streamsFoes(key) || m.gv >= GRANT_HELLO_LAW) return false;\n    if (this._relayCfgAt === -Infinity) void this._relayCfgFresh(now);",
+    "why": "a cold room lets an old build in on the Worker's var",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-DOOR-hub-refused",
+    "file": "server/src/index.js",
+    "old": "    if (!streamsFoes(key) || m.gv >= GRANT_HELLO_LAW) return false;",
+    "new": "    if (m.gv >= GRANT_HELLO_LAW) return false;",
+    "why": "the hub turns an old build away from its friends and chat",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-DOOR-reason-the-grounds",
+    "file": "server/src/index.js",
+    "old": "this._refuse(ws, GROUND_OLD_WORDS, CLOSE_POLICY, GRANT_OLD_REASON); return true; }",
+    "new": "this._refuse(ws, GROUND_OLD_WORDS, CLOSE_POLICY, GROUND_OLD_REASON); return true; }",
+    "why": "the grant door closes with the ground's reason",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-DOOR-vouch-dropped",
+    "file": "server/src/index.js",
+    "old": "    const out = fanOut(kind, a.id, data, length, a.gv === 1);",
+    "new": "    const out = fanOut(kind, a.id, data, length, false);",
+    "why": "no frame vouched - a changed client passes as an old build",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-DOOR-vouched-for-everyone",
+    "file": "server/src/index.js",
+    "old": "    const out = fanOut(kind, a.id, data, length, a.gv === 1);",
+    "new": "    const out = fanOut(kind, a.id, data, length, true);",
+    "why": "every sender vouched - an old build's foes stood down",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-DOOR-socket-word-dropped",
+    "file": "server/src/index.js",
+    "old": "...(m.gv >= GRANT_HELLO_LAW && streamsFoes(a.key) ? { gv: 1 } : {}), id: m.id, name: who.name,",
+    "new": "id: m.id, name: who.name,",
+    "why": "the hello's word never kept on the socket",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-relay-bound-unread",
+    "file": "server/src/index.js",
+    "old": "      const s = allies.has(r.i) ? null : foeStatsRefusal(r, { lane: kind === 'own' ? 'any' : 'street', camp: camps.has(r.i) });",
+    "new": "      const s = null;",
+    "why": "the relay passes a foe no builder could give",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-relay-counted-every-frame",
+    "file": "server/src/index.js",
+    "old": "      if (s) { if (this._grantStripSeen(a, r)) stripped++;",
+    "new": "      if (s) { stripped++;",
+    "why": "one stripped record counted five times a second",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-DOOR-vouched-sender-whole",
+    "file": "server/src/index.js",
+    "old": "    const asker = !!G?.askers?.has(a.id) || a.gv === 1;",
+    "new": "    const asker = !!G?.askers?.has(a.id);",
+    "why": "a vouched sender's ungranted record passes the strip",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-relay-evidence-dropped",
+    "file": "server/src/index.js",
+    "old": "    if (foldGrantTally(G.w, GRANT_RELAY_READER, a.sub || a.id, 'stats', n, e)) void this._grantFlush();",
+    "new": "    if (foldGrantTally(G.w, GRANT_RELAY_READER, a.sub || a.id, 'stats', n, null)) void this._grantFlush();",
+    "why": "the relay's evidence never folded",
+    "tests": [
+      "test/net/grantdoor_relay.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-relay-word-weighed-as-a-readers",
+    "file": "server-account/src/grants.js",
+    "old": "  for (const t of b.tl) if (t.a === GRANT_RELAY_READER && GRANT_CASE_REASONS.includes(t.r)) add(String(t.b), grantRelayText(t));",
+    "new": "  void grantRelayText;",
+    "why": "what the relay itself stripped opens no case",
+    "tests": [
+      "test/server/grantcase_own.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-service-evidence-dropped",
+    "file": "server-account/src/grants.js",
+    "old": "no builder could give${t.e ? ` - the worst",
+    "new": "no builder could give${false ? ` - the worst",
+    "why": "the case line without its evidence",
+    "tests": [
+      "test/server/grantcase_own.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-ASKS-bucket-not-asks",
+    "file": "server-account/src/grants.js",
+    "old": "  if (r.asks < GRANT_ASK_CASE_TIMES * allow || r.asks - allow < GRANT_ASK_CASE_OVER_MIN) return null;",
+    "new": "  if (r.bucket < GRANT_ASK_CASE_TIMES * allow || r.bucket - allow < GRANT_ASK_CASE_OVER_MIN) return null;",
+    "why": "a flood counted `ceiling` never a case",
+    "tests": [
+      "test/server/grantcase_own.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-ASKS-floor-dropped",
+    "file": "server-account/src/grants.js",
+    "old": "  if (r.asks < GRANT_ASK_CASE_TIMES * allow || r.asks - allow < GRANT_ASK_CASE_OVER_MIN) return null;",
+    "new": "  if (r.asks < GRANT_ASK_CASE_TIMES * allow) return null;",
+    "why": "a handful of asks past a tiny budget a case",
+    "tests": [
+      "test/server/grantcase_own.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-a-line-a-finding",
+    "file": "server-account/src/grants.js",
+    "old": "text: f.texts.join('; ') }]",
+    "new": "text: f.texts[0] }]",
+    "why": "a batch's second finding on an account lost",
+    "tests": [
+      "test/server/grantcase_own.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-hour-cap-unread",
+    "file": "server-account/src/grants.js",
+    "old": "      && await overRate(ctx, 'grant-own-cases', GRANT_OWN_CASES_HOUR, 3600)) continue;",
+    "new": "      && false) continue;",
+    "why": "a flood of fresh accounts floods #mod-queue",
+    "tests": [
+      "test/server/grantcase_own.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-card-every-review-renamed",
+    "file": "server-account/src/discord.js",
+    "old": "  const spawn = c.source === 'review' && !c.ai_category && lines.some((l) => l.tab === GRANT_CASE_TAB);",
+    "new": "  const spawn = c.source === 'review' && !c.ai_category;",
+    "why": "every reviewer's case called the spawn grants'",
+    "tests": [
+      "test/server/grantcase_own.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-card-old-words",
+    "file": "server-account/src/discord.js",
+    "old": "  const spawn = c.source === 'review' && !c.ai_category && lines.some((l) => l.tab === GRANT_CASE_TAB);",
+    "new": "  const spawn = false && !!GRANT_CASE_TAB;",
+    "why": "a spawn grants' case says the chat reviewer found nothing",
+    "tests": [
+      "test/server/grantcase_own.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-star-left-out",
+    "file": "src/net/foeBounds.js",
+    "old": ": FOE_BOUND.star);   // STAR-TUNE",
+    "new": ": 1);   // STAR-TUNE",
+    "why": "a fallen star's coven never allowed: the relay strips the foes the client stands",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  },
+  {
+    "name": "FOE-BOUNDS-star-off-its-home",
+    "file": "src/net/foeBounds.js",
+    "old": "  star: 2,                  // net/starfall/starfallLaw.js STAR_FOE_HEALTH",
+    "new": "  star: 3,                  // net/starfall/starfallLaw.js STAR_FOE_HEALTH",
+    "why": "the copy off its home",
+    "tests": [
+      "test/net/foebounds_law.test.js"
+    ]
+  }
+]

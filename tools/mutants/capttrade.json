@@ -5,7 +5,7 @@
     "old": "export const goodIn = (items, id) => { const t = goodTemplate(id); return (items ?? []).reduce((n, it) => n + (it?.templateIndex === t ? Math.max(1, it.stackCount | 0) : 0), 0); };",
     "new": "export const goodIn = (items, id) => { const t = goodTemplate(id); return (items ?? []).reduce((n, it) => n + (it?.templateIndex === t ? 1 : 0), 0); };",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (have > left) { it.stackCount = have - left; left = 0; } else { items.splice(i, 1); left -= have; }",
     "new": "    items.splice(i, 1); left -= have;",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "return kg + (g ? g.kg * Math.max(1, it.stackCount | 0) : 0); }, 0);",
     "new": "return kg + (g ? g.kg : 0); }, 0);",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (free.length) (h & 1 ? makes : wants).push(free[(h >>> 1) % free.length]);",
     "new": "  if (false) (h & 1 ? makes : wants).push(free[(h >>> 1) % free.length]);",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -41,16 +41,16 @@
     "old": "  const h = hashKey(`${port?.key ?? ''}:trade`);",
     "new": "  const h = hashKey(`${port?.crown ?? ''}:trade`);",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
     "name": "TRADE-isle-wants",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "  if (port?.ether) return { makes: GOODS.filter((g) => g.ether).map((g) => g.id), wants: BAY.slice() };",
-    "new": "  if (port?.ether) return { makes: GOODS.filter((g) => g.ether).map((g) => g.id), wants: [] };",
+    "old": "  if (port?.ether) { const own = isleGood(port); return { makes: [...ETHER, own], wants: BAY.filter((g) => g !== own) }; }",
+    "new": "  if (port?.ether) { const own = isleGood(port); return { makes: [...ETHER, own], wants: [] }; }",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if (t.wants.includes(id) || (g.ether && !port?.ether)) return 'wants';",
     "new": "  if (t.wants.includes(id)) return 'wants';",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  const mood = stand === 'makes' ? MADE_K : stand === 'wants' ? (exotic ? EXOTIC_K : WANT_K) : 1;",
     "new": "  const mood = stand === 'makes' ? 1 : stand === 'wants' ? (exotic ? EXOTIC_K : WANT_K) : 1;",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  const mood = stand === 'makes' ? MADE_K : stand === 'wants' ? (exotic ? EXOTIC_K : WANT_K) : 1;",
     "new": "  const mood = stand === 'makes' ? MADE_K : stand === 'wants' ? EXOTIC_K : 1;",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  const mood = stand === 'makes' ? MADE_K : stand === 'wants' ? (exotic ? EXOTIC_K : WANT_K) : 1;",
     "new": "  const mood = stand === 'makes' ? MADE_K : stand === 'wants' ? WANT_K : 1;",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  const r = mulberry32((hashKey(`${port?.key ?? ''}:${id}`) ^ Math.imul((day | 0) + 1, 0x85ebca6b)) >>> 0);",
     "new": "  const r = mulberry32((hashKey(`${port?.key ?? ''}:${id}`)) >>> 0);",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  const mid = g.base * mood * (1 - PRICE_DRIFT + 2 * PRICE_DRIFT * r());",
     "new": "  const mid = g.base * mood * (1 - 2 * PRICE_DRIFT + 4 * PRICE_DRIFT * r());",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "sell: Math.max(1, Math.round(mid * (1 + SPREAD)))",
     "new": "sell: Math.max(1, Math.round(mid))",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "buy: Math.max(1, Math.round(mid * (1 - SPREAD)))",
     "new": "buy: Math.max(1, Math.round(mid))",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "      sells: exotic ? 0 : Math.max(0, stock.sell - (dealt.bought?.[g.id] | 0)),",
     "new": "      sells: Math.max(0, stock.sell - (dealt.bought?.[g.id] | 0)),",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -140,25 +140,25 @@
     "old": "      sells: exotic ? 0 : Math.max(0, stock.sell - (dealt.bought?.[g.id] | 0)), buys: Math.max(0, stock.buy - (dealt.sold?.[g.id] | 0)),",
     "new": "      sells: exotic ? 0 : Math.max(0, stock.sell - (dealt.sold?.[g.id] | 0)), buys: Math.max(0, stock.buy - (dealt.bought?.[g.id] | 0)),",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
     "name": "TRADE-other-sea-listed",
     "file": "src/systems/naval/tradeGoods.js",
-    "old": "    if (!!g.ether !== !!port?.ether && stand !== 'wants') continue;",
-    "new": "    if (!!g.ether !== !!port?.ether) continue;",
+    "old": "    if (other && stand === 'neither') continue;   // the other sea's goods: only where they are wanted - or made (ISLE-TRADE)",
+    "new": "    if (other && stand !== 'wants') continue;   // the other sea's goods: only where they are wanted - or made (ISLE-TRADE)",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
     "name": "OFFICE-buy-unpaid",
     "file": "src/scenes/harbourOffice.js",
-    "old": "    deps.pay?.(k * r.sell);\n    deps.stow?.(hold, mintGood(id, k));",
-    "new": "    deps.stow?.(hold, mintGood(id, k));",
+    "old": "    deps.pay?.(k * r.sell);\n    const goods = mintGood(id, k);",
+    "new": "    const goods = mintGood(id, k);",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    const k = Math.min(asked(n), r.sells, Math.floor((deps.gold?.() ?? 0) / r.sell), fit);",
     "new": "    const k = Math.min(asked(n), Math.floor((deps.gold?.() ?? 0) / r.sell), fit);",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "    L.deal(port.key, day, id, k, 'bought');\n",
     "new": "",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    const k = takeGood(hold, id, Math.min(asked(n), have, r.buys));",
     "new": "    const k = takeGood(hold, id, Math.min(asked(n), have));",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "    L.note('traded', k * r.buy);\n",
     "new": "",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "  const asked = (n) => Math.max(1, Number.isFinite(n) ? Math.floor(n) : Number.MAX_SAFE_INTEGER);",
     "new": "  const asked = (n) => Math.max(1, n | 0);",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "      const at = dealt && dealt.day === day && typeof port === 'string' && Object.hasOwn(dealt.at, port) ? dealt.at[port] : null;",
     "new": "      const at = dealt && typeof port === 'string' && Object.hasOwn(dealt.at, port) ? dealt.at[port] : null;",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "dealt: dealt ? JSON.parse(JSON.stringify(dealt)) : null, charts:",
     "new": "dealt: null, charts:",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "  if (cls?.faction !== 'pirate') return null;\n",
     "new": "",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "  const p = cls.flagship ? CHART_CHANCE.flagship : deep ? CHART_CHANCE.deep : CHART_CHANCE.pirate;",
     "new": "  const p = cls.flagship ? CHART_CHANCE.flagship : CHART_CHANCE.pirate;",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "  const p = cls.flagship ? CHART_CHANCE.flagship : deep ? CHART_CHANCE.deep : CHART_CHANCE.pirate;",
     "new": "  const p = deep ? CHART_CHANCE.deep : CHART_CHANCE.pirate;",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "  const site = siteFor(port, r, seaAt, CHART_PX);",
     "new": "  const site = siteFor(port, r, seaAt);",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "  return Math.round((CACHE_GOLD.base + CACHE_GOLD.level * Math.max(1, level | 0)) * (0.8 + 0.4 * r()));",
     "new": "  return Math.round(CACHE_GOLD.base * (0.8 + 0.4 * r()));",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "      if (!c || typeof c.id !== 'string' || charts.some((x) => x.id === c.id) || charts.length >= CHARTS_MAX) return false;",
     "new": "      if (!c || typeof c.id !== 'string' || charts.length >= CHARTS_MAX) return false;",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "      if (!c || typeof c.id !== 'string' || charts.some((x) => x.id === c.id) || charts.length >= CHARTS_MAX) return false;",
     "new": "      if (!c || typeof c.id !== 'string' || charts.some((x) => x.id === c.id)) return false;",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "      raised = [...raised.filter((x) => x !== id), id].slice(-CHARTS_RAISED_KEEP);\n      ledger.note('maps');",
     "new": "      raised = [...raised.filter((x) => x !== id), id].slice(-CHARTS_RAISED_KEEP);",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "    deps.credit?.(g);\n    return g;",
     "new": "    return g;",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -311,61 +311,61 @@
     "old": "    sites: () => [...contractSites(L.contracts()), ...L.charts().map((c) => ({ id: c.id, kind: 'cache', px: c.px, py: c.py, seed: c.seed, n: 1 }))],",
     "new": "    sites: () => [...contractSites(L.contracts())],",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
     "name": "HOST-chart-ungiven",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "deps.board?.giveItems?.([chart], boatInPlay() ?? null, { force: true });",
     "new": "void chart;",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
     "name": "HOST-cache-one-lot",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    for (let i = 0; i < CACHE_LOTS; i++) for (const it of deps.hold?.(STRONGBOX_KEY, STRONGBOX_RARITY_TIER) ?? []) items.push(it);",
     "new": "    for (const it of deps.hold?.(STRONGBOX_KEY, STRONGBOX_RARITY_TIER) ?? []) items.push(it);",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
     "name": "HOST-cache-unraised",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const gold = deps.captain?.raiseCache?.(e.lot.slice(SITE_LOT.length)) ?? 0;",
     "new": "    const gold = 0;",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
     "name": "HOST-cache-unstood",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      } else if ((site.kind === 'salvage' || site.kind === 'cache' || site.kind === 'strand') && site.n > 0) {",
     "new": "      } else if ((site.kind === 'salvage' || site.kind === 'strand') && site.n > 0) {",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
     "name": "TAB-trade-unbought",
-    "file": "src/ui/navalYardWindow.js",
+    "file": "src/ui/naval/navalYardWindow.js",
     "old": "      mk('Buy 1', r.canBuy, () => press(x.buy(r.id, 1)));",
     "new": "      mk('Buy 1', r.canBuy, () => press(null));",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
     "name": "TAB-trade-stand-unsaid",
-    "file": "src/ui/navalYardWindow.js",
-    "old": "  const STAND = { makes: 'Made here - cheap', wants: 'Wanted here - dear', neither: '' };",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "  const STAND = { makes: 'Made here: cheap', wants: 'Wanted here: dear', neither: '' };",
     "new": "  const STAND = { makes: '', wants: '', neither: '' };",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "    if (i >= 0) collection.splice(i, 1);\n    return { kind: 'treasureChart', text: r.text };",
     "new": "    return { kind: 'treasureChart', text: r.text };",
     "tests": [
-      "test/capttrade.test.js"
+      "test/systems/naval/capttrade.test.js"
     ]
   }
 ]

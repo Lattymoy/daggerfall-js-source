@@ -1,0 +1,182 @@
+[
+ {
+  "name": "DEX7-a-mod-row-no-look",
+  "file": "src/characters/creatureBodies.js",
+  "old": "    if (m.creature) LOOKS.set(t, lookOf(m));\n",
+  "new": "",
+  "why": "a mod's matched monster stands in no body - its row is named and never read",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ },
+ {
+  "name": "DEX7-the-swimmer-walks",
+  "file": "src/characters/creatureBodies.js",
+  "old": "if (m.creature && (b === 'Aquatic' || (b === 'Flying' && !m.flies)))",
+  "new": "if (m.creature && (b === 'Flying' && !m.flies))",
+  "why": "a swimmer stood in a walking creature (AUDIT MW-NPC D5's law, unheld at the door)",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ },
+ {
+  "name": "DEX7-the-flyer-walks",
+  "file": "src/characters/creatureBodies.js",
+  "old": "(b === 'Flying' && !m.flies)",
+  "new": "(b === 'Flying' && false)",
+  "why": "a flyer stood in a walking creature (AUDIT MW-NPC D4's law, unheld at the door)",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ },
+ {
+  "name": "DEX7-a-class-a-creature",
+  "file": "src/characters/creatureBodies.js",
+  "old": "    if (isClassEnemyId(t)) throw new Error(`registerCreatureMatches: mobile ${t} is a class - a person (foeBodies.js registerPersonFoes), never a creature`);\n",
+  "new": "",
+  "why": "a class mobile takes a creature's row",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ },
+ {
+  "name": "DEX7-the-seam-keeps-looks",
+  "file": "src/characters/creatureBodies.js",
+  "old": "  for (const t of _modMatch.keys()) LOOKS.delete(t);\n",
+  "new": "",
+  "why": "the seam forgets the rows and keeps their looks - a game after it stands the mod's bodies",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ },
+ {
+  "name": "DEX7-the-rider-on-foot",
+  "file": "src/characters/foeBodies.js",
+  "old": "  if (p) return !!p.race;\n",
+  "new": "  if (p?.race) return true;\n",
+  "why": "a rider stands as a person walking - its horse dropped",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ },
+ {
+  "name": "DEX7-the-lizard-a-breton",
+  "file": "src/characters/foeBodies.js",
+  "old": "modRace(f.mobileType) ?? bay.race",
+  "new": "bay.race",
+  "why": "a lizard man drawn as any of the Bay's people",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ },
+ {
+  "name": "DEX7-the-roster-rider",
+  "file": "src/characters/foeBodies.js",
+  "old": "  if (mod?.sprite) return (rec._mwRosterLook = null);\n",
+  "new": "",
+  "why": "a roster's rider stands as a person",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ },
+ {
+  "name": "DEX7-the-roster-lizard-armed",
+  "file": "src/characters/foeBodies.js",
+  "old": "vampire || wolf || (mod && !isClassEnemyId(mobileType)) ? []",
+  "new": "vampire || wolf ? []",
+  "why": "a roster's lizard man carries a class's blade DFU never gave it",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ },
+ {
+  "name": "DEX7-the-roster-lizard-a-breton",
+  "file": "src/characters/foeBodies.js",
+  "old": "race: orc ? 'Orc' : mod?.race ?? race ?? bay.race,",
+  "new": "race: orc ? 'Orc' : race ?? bay.race,",
+  "why": "a roster's lizard man drawn as any of the Bay's people",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ },
+ {
+  "name": "DEX7-a-race-of-nowhere",
+  "file": "src/characters/foeBodies.js",
+  "old": "    if (p.race && !FOE_RACES.some(([r]) => r === p.race)) throw",
+  "new": "    if (false) throw",
+  "why": "a person of a race no body is built for",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ },
+ {
+  "name": "DEX7-installed-twice",
+  "file": "src/systems/enemyExpansion/dexBodies.js",
+  "old": "  if (_installed) return false;\n",
+  "new": "",
+  "why": "a second install names every mobile twice",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ },
+ {
+  "name": "DEX7-never-installed",
+  "file": "src/systems/enemyExpansion/dexInstall.js",
+  "old": "  installDexBodies();   // DEX7: their Morrowind bodies - a creature's, a person's, or the sprite's\n",
+  "new": "",
+  "why": "the fifty stand in no body - the table is never registered",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ },
+ {
+  "name": "DEX7-the-wraith-unveiled",
+  "file": "src/systems/enemyExpansion/dexBodies.js",
+  "old": "  273: { creature: ['ancestor_ghost'], veil: true },",
+  "new": "  273: { creature: ['ancestor_ghost'] },",
+  "why": "the Gloom Wraith's ghost drawn solid, where the classic wraith's is seen through",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ },
+ {
+  "name": "DEX7-the-troll-misnamed",
+  "file": "src/systems/enemyExpansion/dexBodies.js",
+  "old": "  272: { creature: ['bm_ice_troll'] },",
+  "new": "  272: { creature: ['bm_troll'] },",
+  "why": "an id from memory - no master carries it, and the troll never stands",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ },
+ {
+  "name": "DEX7-the-archer-rides-nothing",
+  "file": "src/systems/enemyExpansion/dexBodies.js",
+  "old": "  398: { sprite: NO_RIDE },    // Archer Rider\n",
+  "new": "",
+  "why": "one rider stands on foot",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ },
+ {
+  "name": "DEX7-the-body-casts-for-a-noshadow-row",
+  "file": "src/net/peer/peerBodies.js",
+  "old": " && !dissolveShadowless(fx?.dissolve) && !fx?.noShadow;",
+  "new": " && !dissolveShadowless(fx?.dissolve);",
+  "why": "AUDIT DEX B2: a NoShadow row's Morrowind body casts its shadow (SetupDemoEnemy.cs:137-140 turns the mobile's off)",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ },
+ {
+  "name": "DEX7-foefx-drops-the-flats-noshadow",
+  "file": "src/characters/foeBodies.js",
+  "old": "  const noShadow = batch.noShadow === true;",
+  "new": "  const noShadow = false;",
+  "why": "AUDIT DEX B2: the flat's noShadow never reaches the body standing in its place",
+  "tests": [
+   "test/systems/enemyExpansion/dex7_bodies.test.js"
+  ]
+ }
+]

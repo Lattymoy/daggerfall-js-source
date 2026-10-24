@@ -1,4 +1,4 @@
-// AUDIT LW-STIR D10 (2026-10-08; bible/01-Overview/Audit-LW-Stir.md): THE STREET'S STIR, MEASURED - the synthetic row of
+// AUDIT LW-STIR D10 (2026-10-08; bible/01-Overview/audits/Audit-LW-Stir.md): THE STREET'S STIR, MEASURED - the synthetic row of
 // LW-STIR's measured table (bible/06-Systems/Living-World.md "LW-STIR", "Measured"), which no harness or day could re-run:
 // lens D's own measure, committed. No GPU and no ARENA2: the synthetic town the pins stand (test/lwTown.mjs synthTown),
 // its day's incidents as the town deals them (livingTown.js _stirOf) and every resident's small voices over the day's
@@ -13,7 +13,7 @@ import { travellerRoster } from '../src/systems/livingWorld/census.js';
 import { DAY_MIN, DAY_START_MIN } from '../src/systems/livingWorld/dayPlan.js';
 import { smallVoice, humourOf } from '../src/systems/livingWorld/stir.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
-import { PERSON_MOVE_SPEED } from '../src/characters/mobilePerson.js';
+import { PERSON_MOVE_SPEED } from '../src/characters/mobile/mobilePerson.js';
 import { CLASSIC_MINUTES_PER_SECOND } from '../src/systems/worldTick.js';
 
 const RATE = CLASSIC_MINUTES_PER_SECOND, MPM = PERSON_MOVE_SPEED / RATE, MAP = 24680;

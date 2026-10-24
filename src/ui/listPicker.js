@@ -29,11 +29,11 @@
 // and MouseMove's highlightedIndex feeds DecideTextColor's two hover
 // arms (:360-380).
 
-import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, shadowText, DEFAULT_TEXT_COLOR } from './native/nativePanel.js';
 import { drawMenuBackdrop, DOUBLE_CLICK_DELAY_MS } from './chargenArt.js';
 import { VerticalScrollBar, drawScrollThumb } from './verticalScrollBar.js';
 import { FntFile } from '../formats/fntFile.js';   // AUDIT 58: FONT0002, DaggerfallUI.SmallFont
-import { makeFont } from './text.js';  import { isEnhancedPlus } from '../systems/uiSkin.js';  import { drawEnhancedPicker } from './enhancedPicker.js';   // PORT3: the list, in the enhanced skin
+import { makeFont } from './text.js';  import { isEnhancedPlus } from '../systems/uiSkin.js';  import { drawEnhancedPicker } from './enhanced/enhancedPicker.js';   // PORT3: the list, in the enhanced skin
 
 /** pickerPanel.Size = the texture's size (:73), Center/Middle (:74-75). */
 export const PICKER_W = 200, PICKER_H = 128;
@@ -332,7 +332,7 @@ export class ListPickerWindow {
       // argument is only a pre-first-frame seed now, and is ignored
       // unless it really is a font: the three routers that mount a bare
       // picker pass a right-button BOOLEAN in that slot
-      // (townTalk.js:"else overlay.click?.(v[0], v[1], e.button === 2, e.button === 1)", worldModes.js:"(v) interiorOverlay?.click?.(v[0], v[1], e.button === 2, e.button === 1)", dungeonContext.js:"else activeOverlay.click" - all three re-resolved BY CONTENT and pinned in test/citedrift.test.js by the ROAD-H tail review: they were stale together and a mechanical +1 had kept the dungeon's that way),
+      // (townTalk.js:"else overlay.click?.(v[0], v[1], e.button === 2, e.button === 1)", worldModes.js:"(v) interiorOverlay?.click?.(v[0], v[1], e.button === 2, e.button === 1)", dungeonContext.js:"else activeOverlay.click" - all three re-resolved BY CONTENT and pinned in test/scenes/citedrift.test.js by the ROAD-H tail review: they were stale together and a mechanical +1 had kept the dungeon's that way),
       // and `false ?? this._font` kept the `false`, dropping the click
       // grid to 6+1=7 against a drawn and hovered grid of 7+1=8 for
       // FONT0003 - so from the 6th visible row on, the row you

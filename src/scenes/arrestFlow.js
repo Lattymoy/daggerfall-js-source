@@ -37,15 +37,17 @@ import {
   TEXT_FREE_TO_GO, TEXT_BANISHED, TEXT_HOW_CONVINCE,
   lowerRepForCrime, surrenderToCityGuards, startCourt, pleaGuilty,
   pleaNotGuilty, resolveGuiltyVerdict, raiseRepForSentence, TEXT_EXECUTED,
-  guildRescue, setCrimeCommitted,
+  guildRescue, setCrimeCommitted, confiscateStolen, legalRepOf,
 } from '../systems/court.js';
+import { confiscatedText, piecesOf } from '../systems/stolenGoods.js';   // STOLEN-GOODS: the court's word for what it took
 import { isTransformedLycanthrope, frightenChance, frightenRoar } from '../systems/lycanthropy.js';   // WERE-FRIGHT: the beast cannot surrender
-import { guildOfFaction, membershipOf, activeMemberships } from '../systems/guilds.js';   // CR1: the rescue arms' member reads
-import { resolveVariantGuild } from '../systems/guildVariants.js';
+import { guildOfFaction, membershipOf, activeMemberships } from '../systems/guild/guilds.js';   // CR1: the rescue arms' member reads
+import { resolveVariantGuild } from '../systems/guild/guildVariants.js';
 import { advanceOwnMinutes, MINUTES_PER_DAY, ownMinutes, trustedWorldMinutes } from '../systems/worldTick.js';   // LIVED1: a sentence is served on the prisoner's own clock, online too
-import { banish, grantGrace, warningDue, noteWarning } from '../systems/standing.js';   // REP3: a banishment's term; REP1: the grace an answered law gives; WATCH-KNOWS: a first offence warned
+import { banish, grantGrace, warningDue, noteWarning, sentenceMends } from '../systems/standing.js';   // REP3: a banishment's term; REP1: the grace an answered law gives; WATCH-KNOWS: a first offence warned
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: DaggerfallCourtWindow_OnEndPrisonTime (EntityEffectBroker.cs:841-842)
 import { fillVitalSigns } from '../systems/statMods.js';
+import { alignSurvival } from '../systems/survival/needs.js';   // AUDIT C&C N3/H2: the prison feeds, waters and rests its prisoner
 import { registerPlayerDamageVeto } from '../characters/playerEntity.js';   // ARREST-SHIELD: the one damage door consults this flow while a trial is up online
 import { SEVERE_PUNISHMENT_EXECUTED } from '../systems/encounters.js';   // F99: the court's own two bits
 import { PrisonScreenWindow, CourtScreenWindow } from '../ui/prisonScreen.js';   // the serving-time presentation (SwitchToPrisonScreen + UpdatePrisonScreen)   // ROAD-B B5: Setup's courtPanel, the backdrop the trial stands on
@@ -160,12 +162,17 @@ export function createArrestFlow({
    *  armed (a plea's answer, the verdict box's close, the prison's end and its close) asks before it acts: is my trial
    *  still the one standing? A load ends it (`abandon`, below) without running it to its release, and a step armed for
    *  a trial that is no longer standing does nothing at all - the boxes it drains and the keys that reach them before
-   *  the drain act on no game. Null between trials. */
+   *  the drain act on no game. Null before the first trial and after a load.
+   *  PLEA-LOOP (FIELD BUGS 2026-10-13b): ITS RELEASE ENDS IT TOO. ReleaseFromPrison is the court's last act - its
+   *  CancelWindow (:490) takes every box of the trial with it - and the token used to stand on past it, so a step of a
+   *  released trial still acted: a plea answered again after its release pleaded, took the fine and released again (four
+   *  hours, the grace, the reposition), as often as it was pressed. `released` is set as the release begins; the token
+   *  stays, so the trial's last box (the verdict's words, shown after it) is still the trial's for a load to take down. */
   let trial = null;
   /** A window the trial puts up, remembered so `abandon` can take it down. */
   const own = (win) => { trial?.windows.add(win); return win; };
-  /** A step of the trial now standing: it runs only while that same trial stands. */
-  const step = (fn) => { const t = trial; return (...args) => (t && trial === t ? fn(...args) : undefined); };
+  /** A step of the trial now standing: it runs only while that same trial stands, unreleased. */
+  const step = (fn) => { const t = trial; return (...args) => (t && trial === t && !t.released ? fn(...args) : undefined); };
   function openCourtScreen() {
     courtScreen = own(new CourtScreenWindow());
     townTalk.showOverlay(courtScreen);
@@ -262,7 +269,8 @@ export function createArrestFlow({
   function chargeOnce() {
     if (playerEntity.chargedCrime === crimeId()) return;
     playerEntity.chargedCrime = crimeId();
-    lowerRepForCrime(playerEntity, region(), crimeId());
+    playerEntity.chargedFrom = legalRepOf(playerEntity, region());   // AUDIT FB1021d SM-3: the name it came in with, which a sentence answers
+    playerEntity.chargedFactor = lowerRepForCrime(playerEntity, region(), crimeId(), { curfew: true });   // CURFEW-REFUND: the court gives back what was charged (SM-8: the town's Curfew, this charge's alone)
   }
 
   /** WATCH-KNOWS: the watch's warning, in its words. @param {number} crime @param {string} name */
@@ -429,6 +437,8 @@ export function createArrestFlow({
     // courtroom with no box and `arrested` standing, which is every damage veto on and nothing that can close it.
     const court = startCourt(playerEntity, region(), crimeId(), { rolls });
     if (!court) return;
+    court.factor = playerEntity.chargedFactor ?? 1;   // CURFEW-REFUND (FIELD BUGS 2026-10-21d): the charge as it was laid
+    court.from = playerEntity.chargedFrom ?? null;   // AUDIT FB1021d SM-3: and the name it was laid on
     trial = { windows: new Set() };   // AUDIT DISC28 AR-1: this trial's token - its windows and its steps are its own
     // PlayerEntity.CourtWindow (:2341) sets `arrested` immediately before
     // the court window opens, and DaggerfallCourtWindow.OnPop (:435)
@@ -511,6 +521,12 @@ export function createArrestFlow({
   }
 
   function finish(result, court) {
+    // STOLEN-GOODS (FIELD BUGS 2026-10-16b): EVERY GUILTY EXIT ENDS HERE - the plea's (a fine paid, a sentence, banishment),
+    // the failed defence's (state 2's verdict and its banishment) - and the court takes the stolen goods the prisoner
+    // carries (court.js confiscateStolen), at the verdict. An acquittal (verdict's `free` arm) and a guild's rescue
+    // (startCourtFlow) release without coming here: nothing is taken, the guild got you out. The line is said at the
+    // release (release, below), so a sentence's days do not run it off the screen before the prisoner walks out.
+    if (trial) trial.taken = confiscateStolen(playerEntity);
     if (result.outcome === 'banished') {
       // AUDIT 17e F22: state 4 (Banished) does NOT call
       // RaiseReputationForDoingSentence (DaggerfallCourtWindow.cs:263-278)
@@ -613,6 +629,16 @@ export function createArrestFlow({
           // refill is their price again, as DFU pays it, in both lanes; the
           // floor it replaced is inside the refill (a full pool is above it).
           fillVitalSigns(playerEntity);
+          // SENTENCE-MENDS (FIELD BUGS 2026-10-21d): and the name it was priced by - AUDIT FB1021d SM-1: once the days are
+          // served, never at the sentence: a save under the prison screen (a tab closed) kept a mend no day had paid for
+          sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });
+          // AUDIT C&C (2026-10-12, N3/H2): AND THE NEEDS LEAVE PRISON FED, WATERED AND RESTED. The days above are a bare
+          // move of the clock, so the first frame out walked the sentence's last two days (the needs' catch-up) AFTER this
+          // refill, awake and unfed, in the street's weather: a Hard ten-day sentence let out into snow left 5 health, no
+          // stamina, -20 from every attribute, Starving, Exhausted and Drenched. The prison kept its prisoner (as DFU's
+          // refill and the mod's own reset say): the needs start fresh at the minute the sentence ends (needs.js
+          // alignSurvival - WORLD5's law for an absence), and the walk resumes from there.
+          if (playerEntity.survival) alignSurvival(playerEntity, Math.floor(ownMinutes()), null);
         }),
       // The window closes into state 100 with InPrison false, which is
       // ReleaseFromPrison (:318) - and repositionPlayer was set back
@@ -633,6 +659,7 @@ export function createArrestFlow({
     // :347 on the plea, where DFU names the divergence it is fixing
     // ("Oversight in classic: Does not refill vital signs when
     // releasing in this case, so player is left with 1 health").
+    sentenceMends(playerEntity, court.regionIndex, { from: court.from, ownNow: ownMinutes() });   // SENTENCE-MENDS: the court's fine paid with no days answers the name too
     fillVitalSigns(playerEntity);
     release();
   }
@@ -716,6 +743,7 @@ export function createArrestFlow({
    *  member walks out of the courthouse where they stood; everyone
    *  else is put down at the location entrance. */
   function release({ reposition = true } = {}) {
+    if (trial) trial.released = true;   // PLEA-LOOP: the court's last act - no step of this trial acts after it
     clearArrest();
     // ReleaseFromPrison ends in CancelWindow (:490) - the court window
     // itself pops. EVERY court exit funnels through release(), which is
@@ -727,6 +755,7 @@ export function createArrestFlow({
     if (reposition) positionPlayerAtLocationEntrance();
     clearEnemies();
     playerEntity.health = Math.max(1, playerEntity.health);   // the port's own floor, not DFU's
+    if (trial?.taken?.length) say(confiscatedText(piecesOf(trial.taken)));   // STOLEN-GOODS: what the verdict took (finish)
   }
 
   /** ARREST-SHIELD: a host that tears this flow down takes its veto

@@ -13,7 +13,8 @@ ported as `src/systems/unleveledLoot.js`. Its ten switches and
 `Enabled` live in the Mods pane; off by default, as DFU without the mod
 listed, until MO1 (2026-09-12, Mac: "All mods should be enabled by
 default") turned it on - and with it the mod's arms decline without a
-player to read (no world yet: DFU's own roll stands).
+player to read (no world yet: DFU's own roll stands). Since 2026-10-19 it is 1:1 save for the moves named under
+Departures, below.
 
 ## The source the port reads
 
@@ -39,7 +40,7 @@ The shipped modsettings is byte for byte the repository's.
 | `WpnMatSelector` / `RandomMat` / `ShopMat` / `RandomHighTier` / `ShopLevel` / `dungeonQuality` / `MaterialSwitch` | a shop's shelf (-35 + level x 8; Orsinium over 70 may stock Orcish; 99/97/94/88/80/70, under 10 Iron) or the world (a dungeon's quality less 15, else -Range(10, 20); luck's double lifts by luck x 4 or, in Orsinium or an Orc Stronghold on luck, Orcish; 90 -> Dwarven or, on luck x 3, the high tier; 83/75/35); then the switch | the same names, over the shared `matRoll` and `luckMod` statics |
 | `ArmMatSelector` | Range(1, 91) + luck, the shop's quality x 6 or the dungeon's quality; over 80 plate of WpnMatSelector's material (the SAME matRoll), over 50 chain, else leather | `armMatSelector` |
 | `SetDungeon_OnPreTransition` / `ClearData_OnTransitionExterior` | `region = CurrentRegionIndex; dungeon = CurrentLocation.MapTableData.DungeonType` at every transition; `dungeon = -1` on a BUILDING exit | `unleveledLootPreTransition` at DFU's five OnPreTransition doors (tryEnter, tryExit, tryEnterDungeon, exitDungeonNow, the teleport's forceExitToExterior), `unleveledLootExteriorTransition` at tryExit alone |
-| `UnlevelDroppedLoot_OnEnemyDeath` / `AddDaedric` / `AddOrcish` | a Daedra's (MobileAffinity.Daedra) or an Orc's (MobileTeams.Orcs) corpse may take a daedric or orcish weapon (Range(Dagger, Long_Bow + 1), 30-75%) or piece; every gold stack / level (never under 1) x Range(1, luck's tenth + 1) | `unlevelDroppedLoot`, `addDaedric`, `addOrcish`, over the corpse's items (the entity's) |
+| `UnlevelDroppedLoot_OnEnemyDeath` / `AddDaedric` / `AddOrcish` | a Daedra's (MobileAffinity.Daedra) or an Orc's (MobileTeams.Orcs) corpse may take a daedric or orcish weapon (Range(Dagger, Long_Bow + 1), 30-75%) or piece; every gold stack / level (never under 1) x Range(1, luck's tenth + 1) | `unlevelDroppedLoot`, `addDaedric`, `addOrcish`, over the corpse's items (the entity's) - with METAL-RAMP, ASF-DEATH and the armour's condition cap (Departures, below) |
 | `UnleveledGoldLootPiles` | books worn to 20-75%, currency / level - the ModifyFoundLootItems override | `unleveledGoldLootPiles`, registered under the same name, READ BY NOTHING - see below |
 
 The world the mod asks of PlayerEnterExit, PlayerGPS and the player -
@@ -96,7 +97,7 @@ scenes/worldModes.js (`setUnleveledLootWorld`); the two hosts hand it
 - **The rolls are the caller's `rolls`**, so a test drives every
   Range and Dice100.
 
-## Pinned (`test/unleveledLoot.test.js`, 8)
+## Pinned (`test/systems/unleveledLoot.test.js`, 8)
 
 Unity's Range forms; the tables (dungeonQuality, ShopLevel,
 RandomHighTier's thresholds, MaterialSwitch through the ten keys and
@@ -115,3 +116,29 @@ OnEnemyDeath through the seam and at the three kills, the pane's
 choice keys against the shipped modsettings and their clamp, the
 credit, the vendor, the boot order, the world reader and the hosts'
 hand-off. Not run here: a game.
+
+## Departures (2026-10-19, `01-Overview/bugs/Field-Bugs-2026-10-19b.md`)
+
+The mod stood 1:1 until the Discord's "Weapon/Armor Materials" thread ("any new character can wander outside, kill some
+easy orcs on the overworld, and get orcish gear right from the get-go"); SCOPE1 makes it ours to move, and two moves are
+named here and in Port-Ledger A.
+
+- **METAL-RAMP** (Mac: "Level ramp"). AddOrcish and AddDaedric read the killer's level: a drop the mod's roll grants is
+  its race's metal on a draw of `Range(0, 20)` under the level, else the level's middle metal (`rampMetal`: Elven 1-4,
+  Dwarven 5-8, Mithril 9-12, Adamantium 13-16, Ebony 17-19; plate of it for the armour arm). At 20 and up nothing
+  changes - no draw more. `unlevelDroppedLoot` reads the level once, the raiser's (a room's base the room's) or the
+  player's, for the drop and the gold alike - a kill's the player's, not a mentor's lowered one, as the mod's gold does
+  (AUDIT SUGGESTIONS-1019 L1-5, recorded). For the whole raise the mod's own Luck and level are the raiser's, so an
+  armour drop's CreateRandomArmor, which reaches the RandomArmorMaterial override, rolls the same on every client of a
+  room (AUDIT L1-1, a fault older than the departures). The middle metal goes through the Mods pane's material switches
+  as the race's does (AUDIT L1-4).
+- **ASF-DEATH**. Both death drops leave the condition they roll as `foundCondition`, SELL-AS-FOUND's mark, so online a
+  drop mended at a smith sells as it fell, and its owner's own mends a third more (MEND-THIRD, `Economy-Arc.md`). The
+  rolls and the draws are the mod's.
+- **The armour's condition, capped** (AUDIT SUGGESTIONS-1019 L1-2). 1.1.2 reads the armour drop's condition off a
+  RANDOM piece's maximum; under the ramp that piece can be heavier plate than the drop, so the drop could stand at up to
+  135% of its own maximum - an online sale over whole. It is never over its own piece's maximum now: the one change to
+  the mod's condition roll.
+
+What stays the mod's: whether a corpse drops at all (the thresholds and Luck), the weapon-or-armour roll, the Seducer's
+weapon, the condition rolls (save the cap above), the gold's division, the world and shop material rolls, the Mods pane.

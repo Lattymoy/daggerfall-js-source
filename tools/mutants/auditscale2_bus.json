@@ -5,7 +5,7 @@
     "old": "ps: m.ps === 1 ? 1 : 0, cl: m.cl ? 1 : 0, secret: m.secret } });",
     "new": "ps: m.ps === 1 ? 1 : 0, cl: m.cl ? 1 : 0 } });",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a shard hands up no secret - the bus asks none"
   },
@@ -15,7 +15,7 @@
     "old": "if (kept && kept !== secret) { vws.att = a; this._refuse(vws, 'id taken'); return; }",
     "new": "if (false) { vws.att = a; this._refuse(vws, 'id taken'); return; }",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "the bus asks no secret of a shard's hello"
   },
@@ -25,7 +25,7 @@
     "old": "if (secret && (kept !== secret || !this._secrets.has(a.id))) {",
     "new": "if (false) {",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "the bus keeps no shard player's secret - a stranger on the bus takes the id"
   },
@@ -35,19 +35,19 @@
     "old": "    for (const [other, b] of this._withId(a.id, vws)) {\n      this._setAttach(other, { ...b, id: null, replaced: true });",
     "new": "    for (const [other, b] of []) {\n      this._setAttach(other, { ...b, id: null, replaced: true });",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "the player's own tab before the shards not replaced"
   },
   {
     "name": "AUDIT-SCALE2-R2-5-order-unread",
     "file": "server/src/index.js",
-    "old": "    if (order && order.i > ti) a = { ...a, mu: order.mu };\n",
+    "old": "    if (order && order.i > ti) a = { ...a, mu: order.mu, lt: order.i };",
     "new": "",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
-    "note": "a mute the bus applied unread at a shard's hello"
+    "note": "LEASE1 (PIN MOVED): the line also keeps a socket's lease. a mute the bus applied unread at a shard's hello"
   },
   {
     "name": "AUDIT-SCALE2-R2-5-guildout-unread",
@@ -55,7 +55,7 @@
     "old": "if (a.gi) { await this._loadGuildOuts(Math.floor(now / 1000)); if (this._guildOutAfter(a.gi, a.gm, ti)) a = this._unguild(a); }",
     "new": "",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a guild's removal unread at a shard's hello"
   },
@@ -65,7 +65,7 @@
     "old": "    if (!d) return;\n    this._vbatch(vws.hub).att.push([vws.vid, d]);",
     "new": "    return;\n    this._vbatch(vws.hub).att.push([vws.vid, d]);",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "the law never told the shard"
   },
@@ -75,7 +75,7 @@
     "old": "for (const k of SHARD_LAW_KEYS) if (k in t[1]) {",
     "new": "for (const k of []) if (k in t[1]) {",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "the shard takes no law the bus says"
   },
@@ -85,7 +85,7 @@
     "old": "    if (ws.virtual && was) this._vlaw(ws, was, a);",
     "new": "",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a ShardSocket's law moved by an order never said down"
   },
@@ -95,7 +95,7 @@
     "old": "if (this._hubKeyKept !== this._hubKey) {",
     "new": "if (false) {",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a shard keeps no name"
   },
@@ -105,7 +105,7 @@
     "old": "if (!key && this._hubKey === undefined) { try {",
     "new": "if (false) { try {",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a woken shard reads no name back"
   },
@@ -115,7 +115,7 @@
     "old": "isChatRoom(a.key) && !(isChannelShard(a.key) && this._hubTotal == null) ?",
     "new": "isChatRoom(a.key) ?",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a woken shard's leave its own few as the hub's"
   },
@@ -125,39 +125,29 @@
     "old": "        if (Number.isSafeInteger(ans.n) && ans.n >= 0) this._hubTotalSet(ans.n);",
     "new": "",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "the answer's hub count unread"
   },
   {
     "name": "AUDIT-SCALE2-R2-6-shards-unasked",
     "file": "server/src/index.js",
-    "old": "if (rooms?.get) for (const h of this._vhubs) void",
-    "new": "if (false) for (const h of this._vhubs) void",
+    "old": "    const rs = b.rb !== this._boot;",
+    "new": "    const rs = false;",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
-    "note": "a woken bus asks no shard"
-  },
-  {
-    "name": "AUDIT-SCALE2-R2-6-hubs-unkept",
-    "file": "server/src/index.js",
-    "old": "if (hub && !this._vhubs.has(hub)) {",
-    "new": "if (false) {",
-    "tests": [
-      "test/auditscale2_bus.test.js"
-    ],
-    "note": "the shards heard from never kept"
+    "note": "a woken bus tells no shard's first poll to say its sockets (HUB-PULL: the resync call it replaced)"
   },
   {
     "name": "AUDIT-SCALE2-R2-6-resync-unsynced",
     "file": "server/src/index.js",
-    "old": "    this._hubSyncAt = 0;\n    this._upHoldUntil = 0;\n    await this._hubUpFlush();\n    return json({ ok: 1 });",
-    "new": "    this._upHoldUntil = 0;\n    await this._hubUpFlush();\n    return json({ ok: 1 });",
+    "old": "      this._hubSyncAt = 0; this._upHoldUntil = 0;\n      // HUB-PULL audit: the held loop",
+    "new": "      this._upHoldUntil = 0;\n      // HUB-PULL audit: the held loop",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
-    "note": "an asked shard says no socket"
+    "note": "a told shard says no socket"
   },
   {
     "name": "AUDIT-SCALE2-R2-6-frames-not-redone",
@@ -165,19 +155,19 @@
     "old": "for (const ev of body.e) if (ev[0] === vid && (ev[1] === 'f' || ev[1] === 'p')) redo.push(ev);",
     "new": "",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "the frame the bus could not run dropped"
   },
   {
     "name": "AUDIT-SCALE2-R2-7-upmiss-dropped",
     "file": "server/src/index.js",
-    "old": "          this._upRetry = body;\n",
-    "new": "          this._upRetry = null;\n",
+    "old": "{ this._upRetry = body; await busMissed",
+    "new": "{ this._upRetry = null; await busMissed",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
-    "note": "a missed hand-up let go"
+    "note": "a missed hand-up let go STAFF-PANEL5-FREEZE-FIX round two (re-aimed by content): the miss kept only on its first time, its lease asks answered by a pass (staffFreeze.js busMissed)."
   },
   {
     "name": "AUDIT-SCALE2-R2-7-up-notok-taken",
@@ -185,7 +175,7 @@
     "old": "          ans = res?.ok ? await res.json() : null;",
     "new": "          ans = await res.json().catch(() => ({}));",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a refused hand-up taken as landed"
   },
@@ -195,29 +185,29 @@
     "old": "      if (seen && seen.b === b.b && b.q <= seen.q) return json({ ok: 1, unknown: [] });",
     "new": "",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a hand-up landed twice run twice"
   },
   {
     "name": "AUDIT-SCALE2-R2-7-down-replay-run",
     "file": "server/src/index.js",
-    "old": "      if (this._downSeen && this._downSeen.b === b.b && b.q <= this._downSeen.q) return json({ ok: 1, gone: [] });",
+    "old": "      if (this._downSeen && this._downSeen.b === b.b && b.q <= this._downSeen.q) return null;",
     "new": "",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a delivery landed twice run twice"
   },
   {
     "name": "AUDIT-SCALE2-R2-7-downmiss-dropped",
     "file": "server/src/index.js",
-    "old": "if (rooms?.get && ++send.tries < HUB_DOWN_TRIES) {",
-    "new": "if (false) {",
+    "old": "while (box.l.length && box.l[0].q <= ack.q)",
+    "new": "while (box.l.length && box.l[0].q <= ack.q + 1)",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
-    "note": "a missed delivery let go at once"
+    "note": "a delivery let go before its shard said it ran it (HUB-PULL: was a missed push let go at once)"
   },
   {
     "name": "AUDIT-SCALE2-R2-7-close-not-resaid",
@@ -225,7 +215,7 @@
     "old": "if (shut) { this._vbatch(hub).close.push([vid, shut.code ?? CLOSE_POLICY, shut.reason ?? '']); this._downArm(); }",
     "new": "if (shut) { }",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a close its shard never heard left unsaid"
   },
@@ -235,7 +225,7 @@
     "old": "if (!this._vidLeaving(e[0])) gone.add(e[0]);",
     "new": "gone.add(e[0]);",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a socket whose replacement is owed reported gone"
   },
@@ -245,7 +235,7 @@
     "old": "      if (now - (this._shardSeen.get(v.hub) ?? 0) < HUB_SILENT_MS) continue;",
     "new": "      continue;",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a silent shard's ghosts kept"
   },
@@ -255,7 +245,7 @@
     "old": "    this._shardSeen.set(hub, now);   // AUDIT SCALE II R2-9",
     "new": "",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "no shard ever heard from"
   },
@@ -265,7 +255,7 @@
     "old": "if (n && bytes + w > HUB_BATCH_BYTES) break;",
     "new": "",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a hand-up of any size"
   },
@@ -275,19 +265,19 @@
     "old": "    if (this._upBytes + message.length > HUB_UP_QUEUE_BYTES) { this._metrics.c.drops++; return; }\n",
     "new": "",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a shard queues without end"
   },
   {
     "name": "AUDIT-SCALE2-R1-7-kept-by-prefix",
     "file": "server/src/index.js",
-    "old": "    if (a.vid && a.id && isChannelShard(a.key) && m.t !== 'hello' && m.t !== 'ping' && m.t !== 'pose') { this._hubForward(ws, a, message); return; }\n",
+    "old": "    if (a.vid && a.id && isChannelShard(a.key) && m.t !== 'hello' && m.t !== 'ping' && m.t !== 'pose' && m.t !== 'lease') { a = await this._leaseHeard(ws, a); if (a) this._hubForward(ws, a, message); return; }   // LEASE1: as above\n",
     "new": "",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
-    "note": "a shard keeps a frame by its first key"
+    "note": "LEASE1 (PIN MOVED): the line also keeps a socket's lease. a shard keeps a frame by its first key LEASE1 REVIEW II (PIN MOVED): the line passes the lease door before it goes up."
   },
   {
     "name": "AUDIT-SCALE2-R3-1-copy-fights",
@@ -295,7 +285,7 @@
     "old": "      if (a.ly) { if (a.vid && a.id) this._hubUpOwe(a.vid, 'f', JSON.stringify({ t: 'gate', ...m })); return; }\n",
     "new": "",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a copy runs a gate word as its own fight"
   },
@@ -305,7 +295,7 @@
     "old": "this._hubUpOwe(a.vid, 'f', JSON.stringify({ t: 'gate', ...m }));",
     "new": "this._hubUpOwe(a.vid, 'f', JSON.stringify(m));",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a gate word handed up in its own key order",
     "equivalent": true,
@@ -317,7 +307,7 @@
     "old": "    if (ws.court && m.t !== 'gate') { this._junk(ws); return; }\n",
     "new": "",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a court runs a copy socket's line"
   },
@@ -327,7 +317,7 @@
     "old": "try { no = p.m?.re === 1 ? (",
     "new": "try { no = false ? (",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a woken court judges its copies' sockets as newcomers"
   },
@@ -337,7 +327,7 @@
     "old": "secret: a.hm?.sc ?? null, re: 1 } }]];",
     "new": "secret: a.hm?.sc ?? null } }]];",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a hello said again not marked"
   },
@@ -347,7 +337,7 @@
     "old": "catch (e) { console.warn('[gate] a copy\\'s hello', e?.message ?? e); no = 'busy'; }",
     "new": "catch (e) { throw e; }",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a court hello's throw escapes - the copy socket never answered"
   },
@@ -357,7 +347,7 @@
     "old": "    if (this._vsocks.has(vid) || !p || !p.att || typeof p.att !== 'object' || typeof p.att.id !== 'string') return;\n    const now = Date.now();\n    const m = { id: p.att.id",
     "new": "    if (!p || !p.att || typeof p.att !== 'object' || typeof p.att.id !== 'string') return;\n    const now = Date.now();\n    const m = { id: p.att.id",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a ShardSocket greeted twice"
   },
@@ -367,7 +357,7 @@
     "old": "while (n < this._up.length && n < HUB_BATCH_MAX) {",
     "new": "while (n < this._up.length) {",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a hand-up of any count"
   },
@@ -377,7 +367,7 @@
     "old": "export const HUB_BATCH_MS = 25;",
     "new": "export const HUB_BATCH_MS = 250;",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "the batch window moved"
   },
@@ -387,7 +377,7 @@
     "old": "export const HUB_SYNC_MS = 60_000;",
     "new": "export const HUB_SYNC_MS = 120_000;",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "the sync moved"
   },
@@ -397,7 +387,7 @@
     "old": "export const HUB_UP_HZ_MAX = 16;",
     "new": "export const HUB_UP_HZ_MAX = 160;",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "the up gate moved"
   },
@@ -407,7 +397,7 @@
     "old": "export const HUB_UP_BURST = 32;",
     "new": "export const HUB_UP_BURST = 64;",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "the up burst moved"
   },
@@ -417,7 +407,7 @@
     "old": "export const HUB_WHO_MS = 15_000;",
     "new": "export const HUB_WHO_MS = 30_000;",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "everyone asked less often"
   },
@@ -427,7 +417,7 @@
     "old": "export const HUB_COUNT_MS = 1000;",
     "new": "export const HUB_COUNT_MS = 2000;",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "the count said less often"
   },
@@ -437,7 +427,7 @@
     "old": "export const HUB_BATCH_MAX = 512;",
     "new": "export const HUB_BATCH_MAX = 1024;",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "the batch count moved"
   },
@@ -447,8 +437,48 @@
     "old": "export const HUB_SILENT_MS = 3 * HUB_SYNC_MS;",
     "new": "export const HUB_SILENT_MS = 10 * HUB_SYNC_MS;",
     "tests": [
-      "test/auditscale2_bus.test.js"
+      "test/net/auditscale2_bus.test.js"
     ],
     "note": "a silent shard kept longer"
+  },
+  {
+    "name": "HUB-PULL-silent-outbox-kept",
+    "file": "server/src/index.js",
+    "old": "&& !this._polls.has(hub)) this._outbox.delete(hub);",
+    "new": "&& !this._polls.has(hub)) void hub;",
+    "tests": [
+      "test/net/auditscale2_bus.test.js"
+    ],
+    "note": "a silent shard's deliveries kept for good"
+  },
+  {
+    "name": "HUB-PULL-poll-ms",
+    "file": "src/net/hubShards.js",
+    "old": "export const HUB_POLL_MS = 20_000;",
+    "new": "export const HUB_POLL_MS = 60_000;",
+    "tests": [
+      "test/net/auditscale2_bus.test.js"
+    ],
+    "note": "the poll's hold moved"
+  },
+  {
+    "name": "HUB-PULL-outbox-max",
+    "file": "src/net/hubShards.js",
+    "old": "export const HUB_OUTBOX_MAX = 1024;",
+    "new": "export const HUB_OUTBOX_MAX = 256;",
+    "tests": [
+      "test/net/auditscale2_bus.test.js"
+    ],
+    "note": "the outbox's count moved"
+  },
+  {
+    "name": "HUB-PULL-outbox-bytes",
+    "file": "src/net/hubShards.js",
+    "old": "export const HUB_OUTBOX_BYTES = 2 * 1024 * 1024;",
+    "new": "export const HUB_OUTBOX_BYTES = 4 * 1024 * 1024;",
+    "tests": [
+      "test/net/auditscale2_bus.test.js"
+    ],
+    "note": "the outbox's bytes moved"
   }
 ]

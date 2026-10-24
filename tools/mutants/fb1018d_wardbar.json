@@ -1,0 +1,62 @@
+[
+  {
+    "name": "WARD-BAR-ward-unread",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "      ward: (L.fl & EG_FL.ward) !== 0 }));",
+    "new": "      ward: false }));",
+    "tests": [
+      "test/ui/eliteGates/fb1018d_wardbar.test.js"
+    ],
+    "why": "the bug: her ward stands and the bar says nothing"
+  },
+  {
+    "name": "WARD-BAR-cage-undrawn",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "  const cls = on ? 'eg-lord-track ward' : 'eg-lord-track';",
+    "new": "  const cls = on ? 'eg-lord-track' : 'eg-lord-track';",
+    "tests": [
+      "test/ui/eliteGates/fb1018d_wardbar.test.js"
+    ],
+    "why": "the model knows the ward and the track never wears the cage"
+  },
+  {
+    "name": "WARD-BAR-word-unsaid",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "${L.ward ? ` - ${BOSS_BAR_TEXT.warded}` : ''}",
+    "new": "${''}",
+    "tests": [
+      "test/ui/eliteGates/fb1018d_wardbar.test.js"
+    ],
+    "why": "the cage without its word - nothing a screen reader says"
+  },
+  {
+    "name": "WARD-BAR-second-track",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "wardOn(P.track, !!L?.ward); wardOn(P.track2, !!L2?.ward);",
+    "new": "wardOn(P.track, !!L?.ward); wardOn(P.track2, !!L?.ward);",
+    "tests": [
+      "test/ui/eliteGates/fb1018d_wardbar.test.js"
+    ],
+    "why": "a second lord's bar caged by the first's ward"
+  },
+  {
+    "name": "WARD-BAR-conquest-unexplained",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "conquest: () => 'Banners claim the floor, and it burns. Two standing ward the lord. Break them!',",
+    "new": "conquest: () => 'Banners claim the floor. Break them!',",
+    "tests": [
+      "test/ui/eliteGates/fb1018d_wardbar.test.js"
+    ],
+    "why": "the Conquest's word says to break them and never what they do"
+  },
+  {
+    "name": "WARD-BAR-any-flag",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "      ward: (L.fl & EG_FL.ward) !== 0 }));",
+    "new": "      ward: L.fl !== 0 }));",
+    "tests": [
+      "test/ui/eliteGates/fb1018d_wardbar.test.js"
+    ],
+    "why": "AUDIT FB1018D L5-6: a lord in fury, stunned or flying drawn caged and Warded"
+  }
+]

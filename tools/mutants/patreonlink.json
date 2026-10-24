@@ -5,7 +5,7 @@
     "old": "  if (status !== PATREON_ACTIVE) return [];",
     "new": "  if (status === 'never') return [];",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A declined card, a former patron and a member who never pledged would all hold the tier their last payment named."
   },
@@ -15,7 +15,7 @@
     "old": "  const held = new Set(tierIds.map((id) => map.get(id)).filter(Boolean));",
     "new": "  const held = new Set(tierIds.length ? PATREON_TITLES.slice(0, 1) : []);",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "Any pledge at all - a tier the config never named - would be a Disciple."
   },
@@ -25,7 +25,7 @@
     "old": "  if (typeof player?.handle !== 'string' || !player.handle) return [];\n  return pledgeTitles(",
     "new": "  return pledgeTitles(",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A row with no handle - a guest's, one storage clear from gone - would hold a pledge's title."
   },
@@ -35,7 +35,7 @@
     "old": "  && (handleList(env?.[TIER_LISTS[title]]).has(player.handle.toLowerCase()) || patreonTitlesOf(player, env).includes(title));",
     "new": "  && (handleList(env?.[TIER_LISTS[title]]).has(player.handle.toLowerCase()));",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "The handle lists alone again: every patron a message to Mac and a deploy, the workflow this ends."
   },
@@ -45,7 +45,7 @@
     "old": "PATREON_TITLES.includes(/** @type {string} */ (title))",
     "new": "typeof title === 'string' && !!title",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A tier mapped to the Dungeon Master or a one-player title would sell what is granted by name."
   },
@@ -55,7 +55,7 @@
     "old": "if (extra === undefined && PATREON_ID_RE.test(id ?? '') &&",
     "new": "if (PATREON_ID_RE.test(id ?? '') &&",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "An entry with a third part read as if it had two."
   },
@@ -65,7 +65,7 @@
     "old": "const MD5_S = [7, 12, 17, 22, 5, 9, 14, 20, 4, 11, 16, 23, 6, 10, 15, 21];",
     "new": "const MD5_S = [7, 12, 17, 22, 5, 9, 14, 20, 4, 11, 16, 23, 6, 10, 15, 20];",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "One shift off: every webhook's signature refused."
   },
@@ -75,7 +75,7 @@
     "old": "  x[len - 2] = (n * 8) >>> 0;",
     "new": "  x[len - 2] = n >>> 0;",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "The length in bytes where RFC 1321 says bits."
   },
@@ -85,7 +85,7 @@
     "old": "  block.set(key.length > 64 ? md5(key) : key);",
     "new": "  block.set(key.length > 64 ? key.subarray(0, 64) : key);",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A long key cut where RFC 2104 hashes it."
   },
@@ -95,7 +95,7 @@
     "old": "  return timingSafeEqual(enc.encode(got), enc.encode(hex(hmacMd5(enc.encode(secret), body))));",
     "new": "  return got.length === 32;",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "Any 32 hex digits a signature: anyone could tell the service a member pledged."
   },
@@ -105,7 +105,7 @@
     "old": "  const got = typeof signature === 'string' ? signature.trim().toLowerCase() : '';",
     "new": "  const got = typeof signature === 'string' ? signature.trim() : '';",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "Patreon's hex in capitals refused."
   },
@@ -115,7 +115,7 @@
     "old": "salt: enc.encode('daggerfall-accounts patreon-link'), info: enc.encode(kind) },",
     "new": "salt: enc.encode('daggerfall-accounts patreon-link'), info: enc.encode('state') },",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "One key for both kinds: a state - which the account read hands every registered player - opens as a confirm's ticket."
   },
@@ -125,7 +125,7 @@
     "old": "!Number.isSafeInteger(claims.x) || claims.x < nowS) return null;",
     "new": "!Number.isSafeInteger(claims.x) || claims.x < 0) return null;",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A link or a ticket good for ever."
   },
@@ -135,7 +135,7 @@
     "old": "  if (typeof claims.p !== 'string' || !claims.p) return null;",
     "new": "",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A sealed value naming no account opened as one."
   },
@@ -145,7 +145,7 @@
     "old": "  const status = attrs && typeof attrs === 'object' && 'patron_status' in attrs",
     "new": "  const status = attrs && typeof attrs === 'object'",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A payload that leaves the status out read as no status - a patron's title lapsed by a webhook that did not mention it."
   },
@@ -155,7 +155,7 @@
     "old": "    : undefined;\n  const attrs = m.attributes;",
     "new": "    : [];\n  const attrs = m.attributes;",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A payload that leaves the tiers out read as none."
   },
@@ -165,7 +165,7 @@
     "old": "  const state = registered ? await sealPatreon('state', { p: player.id, x: nowS + PATREON_STATE_S }, env, { subtle, rand }) : null;",
     "new": "  const state = await sealPatreon('state', { p: player.id, x: nowS + PATREON_STATE_S }, env, { subtle, rand });",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A guest offered a link the confirm can never finish."
   },
@@ -175,7 +175,7 @@
     "old": "response_type: 'code', client_id: String(env.PATREON_CLIENT_ID)",
     "new": "response_type: 'code', client_id: String(env.PATREON_CLIENT_SECRET)",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "The client secret in every authorize URL - in every player's browser history."
   },
@@ -185,7 +185,7 @@
     "old": "  if (!patreonLinkOn(env)) return { on: false };",
     "new": "  if (!env) return { on: false };",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "The card offered a link while the client is not configured."
   },
@@ -195,7 +195,7 @@
     "old": "          const from = await db.prepare('SELECT handle FROM players WHERE patreon_user = ?1 AND id <> ?2').bind(who.user, player.id).first();",
     "new": "          await linkPatreon(ctx, { p: player.id, u: who.user, t: who.tiers.join(','), s: who.status });\n          const from = await db.prepare('SELECT handle FROM players WHERE patreon_user = ?1 AND id <> ?2').bind(who.user, player.id).first();",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "The link written before the patron reads which game account: a link another player started is finished by the patron's Allow."
   },
@@ -205,7 +205,7 @@
     "old": "        const r = await linkPatreon(ctx, { p: ticket.p, u: who.user, t: who.tiers.join(','), s: who.status });",
     "new": "        const r = { ok: true };",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A yes that links nothing."
   },
@@ -215,7 +215,7 @@
     "old": "        const who = await patreonIdentity(outbound, ticket.k);",
     "new": "        const who = { user: ticket.u, name: '', tiers: ['1001'], status: 'active_patron' };",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "The yes writes what the page showed: a pledge cancelled before the press - or a yes pressed again after it - keeps a title no webhook will ever lapse."
   },
@@ -225,7 +225,7 @@
     "old": "        if (who.user !== ticket.u) return page(PATREON_PAGES.expired, 400);   // the token answers for another Patreon account now",
     "new": "",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "The page named one Patreon account and the yes links another."
   },
@@ -235,7 +235,7 @@
     "old": "          const token = await patreonExchange(outbound, env, code, `${url.origin}${PATREON_CALLBACK_PATH}`);",
     "new": "          const token = await patreonExchange(outbound, env, code, `${url.origin}${PATREON_CALLBACK_PATH}/`);",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "Patreon refuses a code spent with a redirect it was not authorized for."
   },
@@ -245,7 +245,7 @@
     "old": "  if (!patreonSignatureOk(secret, body, signature)) return { error: 'signature' };",
     "new": "  if (!signature) return { error: 'signature' };",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "Anybody's POST is Patreon's word on a member."
   },
@@ -255,7 +255,7 @@
     "old": "  const tiers = ended ? '' : (m.tiers === undefined ? null : m.tiers.join(','));",
     "new": "  const tiers = m.tiers === undefined ? null : m.tiers.join(',');",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A deleted pledge whose payload still lists the tier it paid through."
   },
@@ -265,7 +265,7 @@
     "old": "  const statusStated = ended || m.status !== undefined;",
     "new": "  const statusStated = ended;",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A declined card never written: the title held while unpaid."
   },
@@ -275,7 +275,7 @@
     "old": "      patreon_tiers = COALESCE(?2, patreon_tiers),",
     "new": "      patreon_tiers = ?2,",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A payload that leaves the tiers out clears them."
   },
@@ -285,7 +285,7 @@
     "old": "      WHERE patreon_user = ?1 AND id <> ?2 AND ${registered}`).bind(c.u, c.p),",
     "new": "      WHERE 0 AND patreon_user = ?1 AND id <> ?2 AND ${registered}`).bind(c.u, c.p),",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "The other account keeps it: the UNIQUE index refuses the link, and a patron with a new game account cannot take their title along."
   },
@@ -295,7 +295,7 @@
     "old": "      ...(from ? [`This Patreon is linked to ${from} now. Linking moves it to ${handle}.`] : []),",
     "new": "      ...([]),",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "The move made without a word on the page that asks."
   },
@@ -305,7 +305,7 @@
     "old": "  await db.prepare('UPDATE players SET patreon_user = NULL, patreon_tiers = NULL, patreon_status = NULL, patreon_at = NULL WHERE id = ?1')",
     "new": "  await db.prepare('UPDATE players SET patreon_at = NULL WHERE id = ?1')",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "Unlink answers unlinked and keeps the pledge."
   },
@@ -315,7 +315,7 @@
     "old": "          if (!code || url.searchParams.has('error')) return page(PATREON_PAGES.declined, 200);",
     "new": "          if (url.searchParams.has('never')) return page(PATREON_PAGES.declined, 200);",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A no on Patreon sent to Patreon's token endpoint anyway."
   },
@@ -325,7 +325,7 @@
     "old": "          if ('error' in token) return page(PATREON_PAGES.down, 502);",
     "new": "          void token;",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A code Patreon refused carried on to the identity."
   },
@@ -335,7 +335,7 @@
     "old": "        if (!ticket || typeof ticket.k !== 'string') return page(PATREON_PAGES.expired, 400);",
     "new": "        void 0;",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A forged ticket reaches the write."
   },
@@ -345,7 +345,7 @@
     "old": "    ...lines.map((l) => `<p>${esc(l)}</p>`),",
     "new": "    ...lines.map((l) => `<p>${l}</p>`),",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A Patreon name of <script> runs on the service's own origin."
   },
@@ -355,7 +355,7 @@
     "old": "      'content-security-policy': \"default-src 'none'; style-src 'unsafe-inline'; form-action 'self'; frame-ancestors 'none'; base-uri 'none'\",\n",
     "new": "",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "The confirm page framed, its button clicked under another page."
   },
@@ -365,7 +365,7 @@
     "old": "    if (!r || !r.ok || self.stage !== 'in' || secret() !== asked) return false;   // signed out, a blip, or another account since",
     "new": "    return false;",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "Back from Patreon to a card that still offers Link Patreon."
   },
@@ -375,7 +375,7 @@
     "old": "    if (self.patreonWaiting && self.patreon?.linked && (",
     "new": "    if (false && self.patreonWaiting && self.patreon?.linked && (",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "The card never says the link landed."
   },
@@ -385,79 +385,89 @@
     "old": "      self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };   // the service's word whole: a tier's title gone with the link",
     "new": "      self.wardrobe = { ...(self.wardrobe ?? {}) };",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "The card keeps a title the service says is gone."
   },
   {
     "name": "PL-row-for-guest",
-    "file": "src/ui/enhancedAccount.js",
+    "file": "src/ui/enhanced/enhancedAccount.js",
     "old": "    if (!p?.on || !flow.account?.handle) return;",
     "new": "    if (!p?.on) return;",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A guest offered a row it can do nothing with."
   },
   {
     "name": "PL-row-while-off",
-    "file": "src/ui/enhancedAccount.js",
+    "file": "src/ui/enhanced/enhancedAccount.js",
     "old": "    if (!p?.on || !flow.account?.handle) return;",
     "new": "    if (!p || !flow.account?.handle) return;",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "The row drawn while linking is off."
   },
   {
     "name": "PL-link-not-link",
-    "file": "src/ui/enhancedAccount.js",
-    "old": "    const a = keyedAs(el('a', 'act', p.linked ? 'Refresh' : 'Link Patreon'), 'patreon:link');",
-    "new": "    const a = keyedAs(el('button', 'act', p.linked ? 'Refresh' : 'Link Patreon'), 'patreon:link');",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "    const a = keyedAs(el('a', 'act', p.linked ? t('account.patreon.refresh', 'Refresh') : t('account.patreon.link', 'Link Patreon')), 'patreon:link');",
+    "new": "    const a = keyedAs(el('button', 'act', p.linked ? t('account.patreon.refresh', 'Refresh') : t('account.patreon.link', 'Link Patreon')), 'patreon:link');",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A button with an href goes nowhere."
   },
   {
     "name": "PL-no-read-back",
-    "file": "src/ui/enhancedAccount.js",
+    "file": "src/ui/enhanced/enhancedAccount.js",
     "old": "      if (flow.stage === 'in' && flow.patreon?.on && typeof flow.refresh === 'function') Promise.resolve(flow.refresh()).catch(() => {});",
     "new": "      void 0;",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "Back from the browser to a card that does not know."
   },
   {
     "name": "PL-listener-outlives",
-    "file": "src/ui/enhancedAccount.js",
+    "file": "src/ui/enhanced/enhancedAccount.js",
     "old": "      if (!root.isConnected) { win.removeEventListener('focus', onFocus); return; }",
     "new": "      if (!root.isConnected) return;",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "Every card ever drawn listening for ever."
   },
   {
     "name": "PL-secret-as-var",
     "file": "server-account/wrangler.toml",
-    "old": "PATREON_TIERS = \"29666211:disciple,29666234:herald\"\n",
-    "new": "PATREON_TIERS = \"29666211:disciple,29666234:herald\"\nPATREON_CLIENT_SECRET = \"\"\n",
+    "old": "PATREON_TIERS = \"29666211:disciple,29666234:herald,29666221:hierophant\"\n",
+    "new": "PATREON_TIERS = \"29666211:disciple,29666234:herald,29666221:hierophant\"\nPATREON_CLIENT_SECRET = \"\"\n",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
-    "note": "A var of the secret's name: Cloudflare refuses the secret its binding."
+    "note": "A var of the secret's name: Cloudflare refuses the secret its binding. HIEROPHANT-TIER (re-aimed by content): the line gained the Hierophant tier."
   },
   {
     "name": "PL-a-tier-mapped-mac-did-not-name",
     "file": "server-account/wrangler.toml",
-    "old": "PATREON_TIERS = \"29666211:disciple,29666234:herald\"\n",
-    "new": "PATREON_TIERS = \"29666211:disciple,29666234:herald,29666221:hierophant\"\n",
+    "old": "PATREON_TIERS = \"29666211:disciple,29666234:herald,29666221:hierophant\"\n",
+    "new": "PATREON_TIERS = \"29666211:disciple,29666234:herald,29666221:hierophant,29701293:disciple\"\n",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
-    "note": "Mac: \"Heriophant is custom\" - a Hierophant patron's title is made for them and granted by name, never the stock one by the pledge."
+    "note": "Mac: \"Supporter doesnt recieve a title/glyph\" - a Supporter would wear the Disciple's. HIEROPHANT-TIER (re-aimed): it mapped the Hierophant tier, which Mac named on 2026-10-17 (\"The $50 patreon tier doesnt have a title/glyph ingame. The Heirophant\")."
+  },
+  {
+    "name": "PL-the-hierophant-tier-unmapped",
+    "file": "server-account/wrangler.toml",
+    "old": "PATREON_TIERS = \"29666211:disciple,29666234:herald,29666221:hierophant\"\n",
+    "new": "PATREON_TIERS = \"29666211:disciple,29666234:herald\"\n",
+    "tests": [
+      "test/server/patreon_link.test.js"
+    ],
+    "note": "HIEROPHANT-TIER: Mac's $50 patrons hold nothing by their pledge again."
   },
   {
     "name": "PL-secrets-echoed",
@@ -465,7 +475,7 @@
     "old": "            echo \"neither PATREON_CLIENT_SECRET nor PATREON_WEBHOOK_SECRET is set for this repository - Patreon linking stays off\"",
     "new": "            echo \"${PATREON_CLIENT_SECRET}\"",
     "tests": [
-      "test/patreon_link.test.js"
+      "test/server/patreon_link.test.js"
     ],
     "note": "A secret in the run's log."
   }

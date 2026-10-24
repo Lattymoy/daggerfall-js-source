@@ -5,7 +5,7 @@
     "old": "export const SEA_CHANCE = Object.freeze({ merchant: 0.4,",
     "new": "export const SEA_CHANCE = Object.freeze({ merchant: 0.5,",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const SEA_PACE_X = 3;",
     "new": "export const SEA_PACE_X = 2;",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const SEA_TIDE_H = Object.freeze([6, 9]);",
     "new": "export const SEA_TIDE_H = Object.freeze([6, 10]);",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    const srng = lwRng(res.town, res.slot, k, 0x736561);   // 'sea'",
     "new": "    const srng = lwRng(res.town, res.slot, k, 0x64697665);   // 'sea'",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      if (sea !== null) return sea;   // undefined (the map unread) or the passage; none that fits, the road's trip",
     "new": "      return sea;   // undefined (the map unread) or the passage; none that fits, the road's trip",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (all === undefined) return undefined;",
     "new": "  void 0;",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    const cross = Math.ceil(l.len / (Math.max(0.1, mpm) * SEA_PACE_X));",
     "new": "    const cross = Math.ceil(l.len / (Math.max(0.1, mpm) * SEA_PACE_X * 2));",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  const tideMin = Math.floor((SEA_TIDE_H[0] + rng() * (SEA_TIDE_H[1] - SEA_TIDE_H[0])) * 60);",
     "new": "  const tideMin = Math.floor((SEA_TIDE_H[0] + rng() * 12) * 60);",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "(Math.floor(outT1 / DAY_MIN) + Math.max(1, stay)) * DAY_MIN + tideMin);",
     "new": "(Math.floor(outT1 / DAY_MIN) + Math.max(0, stay)) * DAY_MIN + tideMin);",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    if (backT1 > cycleEnd) continue;",
     "new": "    void cycleEnd;",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  if (trip.sea) return { phase: t < trip.outT1 || t >= trip.backT0 ? 'sea' : 'stay' };",
     "new": "  void 0;",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  if (trip.sea) return { phase: t < trip.outT1 || t >= trip.backT0 ? 'sea' : 'stay' };",
     "new": "  if (trip.sea) return { phase: 'sea' };",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "armed: res.cls != null, dock: !!tr.sea });",
     "new": "armed: res.cls != null, dock: false });",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "yaw: arrivingYaw(tr), dock: !!tr.sea });",
     "new": "yaw: arrivingYaw(tr), dock: false });",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  for (const l of lanes ?? []) if (l.to && !homes.some((h) => h.mapId === l.to.mapId)) homes.push(l.to);",
     "new": "  void lanes;",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  if (lanes === undefined) pending = true;",
     "new": "  void 0;",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "dive: !!tr.dive, sea: !!tr.sea });",
     "new": "dive: !!tr.dive, sea: false });",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "  if (trip.sea) return seaTrouble(trip, world);   // LW5b",
     "new": "  void seaTrouble;   // LW5b",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "  const dead = trip.party.filter((m) => world.dies?.(m, trip)).map((m) => m.id);\n  if (!dead.length) return null;\n  const rng = lwRng(textSeed(trip.id), TROU, 0x736561);",
     "new": "  const dead = trip.party.filter((m) => world.dies?.(m, trip)).map((m) => m.id);\n  const rng = lwRng(textSeed(trip.id), TROU, 0x736561);",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "  const t0 = a + (b - a) * (0.2 + 0.6 * rng());",
     "new": "  const t0 = a - 100;",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "  const out = rng() < 0.6;",
     "new": "  const out = rng() < 0.2;",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "      if (f.inside || f.atSea || !(f.t <= t && t < f.t + REMAINS_MIN)) return;",
     "new": "      if (f.inside || !(f.t <= t && t < f.t + REMAINS_MIN)) return;",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "({ res: byId.get(id), t: enc.t0, s: 0, atSea: true })",
     "new": "({ res: byId.get(id), t: enc.t0, s: 0, atSea: false })",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": ".filter((f) => f.res), turned: false };\n  }\n  const shape = /** @type {any} */ (enc).shape ?? enc.kind;",
     "new": ".filter((f) => f.res), turned: true };\n  }\n  const shape = /** @type {any} */ (enc).shape ?? enc.kind;",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "  if (enc.leg === 'sea') {",
     "new": "  if (false) {",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "      : item.sea ? SEA_NEWS[",
     "new": "      : false ? SEA_NEWS[",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "exit: w.dock ? (this.dockSpot() ?? exitToward(this.places, w.yaw)) : exitToward(this.places, w.yaw), armed: w.armed }));",
     "new": "exit: exitToward(this.places, w.yaw), armed: w.armed }));",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "        const exit = visit.dock ? (this.dockSpot() ?? exitToward(this.places, visit.yaw)) : exitToward(this.places, visit.yaw);",
     "new": "        const exit = exitToward(this.places, visit.yaw);",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "    if (!town?.port) return [];\n    if (!mapDict || (typeof _lanesReady",
     "new": "    if (true) return [];\n    if (!mapDict || (typeof _lanesReady",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "if (!mapDict || (typeof _lanesReady !== 'undefined' && !_lanesReady)) return undefined;",
     "new": "if (typeof _lanesReady !== 'undefined' && !_lanesReady) return undefined;",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "to = livingTownOfPort(l.a.id === id ? l.b.id : l.a.id);",
     "new": "to = livingTownOfPort(id);",
     "tests": [
-      "test/lw5b_sea.test.js"
+      "test/systems/livingWorld/lw5b_sea.test.js"
     ]
   }
 ]

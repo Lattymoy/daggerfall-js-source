@@ -64,7 +64,7 @@
 //
 // FLAGGED: PauseOptionsDropdown (:83-84) - DFU's own quick-settings
 // dropdown, a DFU-era addition riding its settings stack; the port's
-// settings home is the one front door (ui/enhancedMenu.js, under
+// settings home is the one front door (ui/enhanced/enhancedMenu.js, under
 // either skin), and the dropdown pends with the settings arc.
 //
 // AN APPROVED DEPARTURE, and NOT part of the flag above: THE VERSION
@@ -83,17 +83,18 @@
 
 import { ControlsWindow, preloadControlsArt, controlsArtLoaded } from './controlsWindow.js';
 import { SaveWindow } from './saveWindow.js';   // SAV4: the slot window rides the pause seam
-import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './nativePanel.js';
+import { loadImg, nativeMetrics, drawImg, drawRect, shadowText } from './native/nativePanel.js';
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';
 import { drawMenuBackdrop } from './chargenArt.js';
 import { measureText } from './text.js';
-import { getFloat, effectiveSettings, setValue, saveSettings } from '../systems/settings.js';
-import { ENUM_LAW } from './settingsLaw.js';
+import { getFloat, effectiveSettings, setValue, saveSettings } from '../systems/settings/settings.js';
+import { ENUM_LAW } from './settings/settingsLaw.js';
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { BUILD_TAG, UPDATE } from '../buildTag.js';
 import { bindings, eventMeans } from './input.js';   // KB1: the live registry, for the toggle-close binding; AUDIT DISC28 UI-1: the event's own read of it
 import { getBinding } from '../systems/inputActions.js';   // KB1: InputManager.GetBinding(Actions.Escape)
+import { localizedText, t } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** barMaxLength (:28). */
 export const BAR_MAX = 109.1;
@@ -206,7 +207,7 @@ export class PauseOptionsWindow {
     // The stored codes below compare the press's bare code with GetBinding's answer, and DFU's toggleClosedBinding may
     // be a COMBO (GetKeyUp's GetUnaryKey reads one, its modifier held): a pause moved to Alt+P opened this window through
     // the host's read and never closed, because 'KeyP' is never 'AltLeft+KeyP'. ui/input.js eventMeans is the door the
-    // enhanced face closes through (ui/enhancedMenu.js onKey) - the event's modifier flags, both dicts, a shared key.
+    // enhanced face closes through (ui/enhanced/enhancedMenu.js onKey) - the event's modifier flags, both dicts, a shared key.
     // The literal Escape stays GetBackButtonUp's; a caller that hands no event keeps the codes read at push.
     if (code !== 'Escape' && e?.code) return eventMeans(e, 'Escape');
     return code === 'Escape' || (!!this.toggleClosedBinding && code === this.toggleClosedBinding)
@@ -301,7 +302,7 @@ export class PauseOptionsWindow {
       this._click();
       if (this.hooks.savingPrevented?.()) {
         this.top = 'note';
-        this._noteRows = ['You cannot save now.'];   // cannotSaveNow (Internal_Strings, recovered)
+        this._noteRows = [localizedText('cannotSaveNow', 'You cannot save now.')];   // cannotSaveNow (Internal_Strings, recovered)
       } else if (this.hooks.openSave) {
         // SAV4: DFU's SAVE GAME opens the slot window (:302), with
         // this window as its previous.
@@ -331,7 +332,7 @@ export class PauseOptionsWindow {
       // nothing (or the note appearing to come from nowhere).
       if (this.hooks.loadingPrevented?.()) {
         this.top = 'note';
-        this._noteRows = ['Loading is disabled during online play.'];
+        this._noteRows = [t('pause.loadOnlineLocked', 'Loading is disabled during online play.')];
         return true;
       }
       // SAV4: LOAD GAME opens the slot window too (:308); a host
@@ -392,7 +393,7 @@ export class PauseOptionsWindow {
         this.hooks.openControls();
       } else {
         this.top = 'note';
-        this._noteRows = ['The controls window needs its art loaded.'];
+        this._noteRows = [t('pause.controlsNoArt', 'The controls window needs its art loaded.')];
       }
       return true;
     }
@@ -432,7 +433,7 @@ export class PauseOptionsWindow {
     if (this.top) {
       const got = this.top === 'exit' ? this.hooks.textLines?.(ARE_YOU_SURE_ID) : null;
       const rows = this.top === 'exit'
-        ? (got?.length ? got : ['Are you sure you want to quit?'])   // townTalk.lines answers [] without data
+        ? (got?.length ? got : [t('pause.quitConfirm', 'Are you sure you want to quit?')])   // townTalk.lines answers [] without data
         : this._noteRows;
       const buttons = this.top === 'exit' ? [MB_BUTTONS.Yes, MB_BUTTONS.No] : [];
       this._box = layoutMessageBox(font, rows, buttons);

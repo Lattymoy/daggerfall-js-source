@@ -7,15 +7,16 @@
 // kept place holds it (scenes/placeHolds.js); what is asked for outside
 // any place is kept for good, as everything once was.
 
-import { TextureFile } from '../formats/textureFile.js'; import { changeMask } from '../formats/baseImageFile.js';   // HM1: the item icons' removeMask (one line: the cites below stand)
+import { TextureFile, LAST_CLASSIC_TEXTURE_ARCHIVE } from '../formats/textureFile.js'; import { changeMask } from '../formats/baseImageFile.js';   // HM1: the item icons' removeMask (one line: the cites below stand)
 import { FlatsFile } from '../formats/flatsFile.js';   // NPC1: captions + portrait indices
 import { isExteriorWindow } from '../world/climateSwaps.js';
-import { isInteriorGlassArchive, interiorGlassMask } from '../world/interiorGlass.js';   // RW1: an interior's own glass
-import { isEmissive, FIRE_WALLS_ARCHIVE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
+import { isInteriorGlassArchive, interiorGlassMask } from '../world/interior/interiorGlass.js';   // RW1: an interior's own glass
+import { isEmissive, FIRE_WALLS_ARCHIVE, FIRE_WALL_COLOR, FIRE_WALL_SCALE } from '../world/emissiveTextures.js';   // TextureReader's auto-emissive table (lit lanterns, fireplaces, fire daedra)
 import { dfMeshToModel } from '../world/meshReader.js'; import { patchSeams } from '../world/arch3dSeams.js';   // DUNGEON-SEAMS (one line: the cites below stand)
 import { fetchBytes, texName } from './shared.js';
-import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureStandIn, setTextureDeriveContext, textureTierEpoch } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones; AUDIT VE R1: the tiers' epoch
+import { decodedTexture, preloadTextureArchive, isVendorArchive, vendorTextureStandIn, setTextureDeriveContext, textureTierEpoch, textureTiersSettled } from '../systems/textureReplacement.js';   // M-TEX: user-supplied textures override the classic ones; AUDIT VE R1: the tiers' epoch
 import { classicRecordRgba } from '../formats/derivedTexture.js';   // WD2: a mod sprite rebuilt from the player's own record
+import { setDfLookPalette } from '../world/dfLook.js';   // DF-LOOK: the port's own painted pictures in this palette's colours
 import { customModelBuilt, customAliasFor, aliasSubMeshes, customModelNeeds } from '../world/customModels.js';   // DS1: models no ARCH3D carries; WD3: a classic model with its pictures swapped
 import { dyeToken, changeDyeBitmap } from '../characters/dyes.js';   // DW3: the per-dye UI variant; DYE-ICON: and the classic arm's ChangeDye
 import { ROTOR, MACHINERY, MACHINERY_MODEL_ID, MACHINERY_CHILDREN, PLANK_GEAR, ROLLER } from '../world/windmillMesh.js';   // WM2b/WM2d/WM4b: the vendored mill and its machinery, uploaded like any other model
@@ -29,8 +30,7 @@ import { createPlaceHolds } from './placeHolds.js';   // FIELD BUGS 2026-10-04d 
  *  the upload arms over a texture it built itself, in a container with
  *  no ARENA2. No host passes it.
  *  @param deps {{renderer, arch: Arch3dFile, palette: DFPalette, fetch?: (name: string) => Promise<Uint8Array>}} */
-/** DS1: TEXTURE.511 is the last archive Daggerfall ships; a higher number is a mod's own. */
-export const LAST_CLASSIC_TEXTURE_ARCHIVE = 511;
+export { LAST_CLASSIC_TEXTURE_ARCHIVE };   // DS1's, kept here for its importers (formats/textureFile.js since STUDIO1: the studio reads it too)
 
 export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes }) {
   const textureFiles = new Map();
@@ -75,12 +75,16 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
    *  uploads after that find them (what it uploads now stands as it is, as anything already drawn does). */
   const freshen = (archive) => { if (preloadedAt.get(archive) !== textureTierEpoch()) refresh(archive); };
   async function getTexture(archive) {
+    // STUDIO1: a registration on its way (the studio's listing) is waited for before an archive is first decided - at
+    // most a bounded while (textureReplacement.js holdTextureTiers) - so the first area is not drawn without it
+    const held = textureTiersSettled();
+    if (held) await held;
     if (textureFiles.has(archive)) {
       if (preloadedAt.get(archive) !== textureTierEpoch()) await refresh(archive);   // AUDIT VE R1
       return textureFiles.get(archive);
     }
     if (!texturePromises.has(archive)) {
-      texturePromises.set(archive, (async () => {
+      const asked = (async () => {
         // SURV2: an archive that exists only as the port's vendored art
         // (a mod's item icons, 532-539) has no TEXTURE file to fetch -
         // decode the PNGs and stand a sized shell in for the file, and
@@ -125,7 +129,14 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
         preloadedAt.set(archive, epoch);
         textureFiles.set(archive, t);
         return t;
-      })());
+      })();
+      texturePromises.set(archive, asked);
+      // BUILD-RETRY (bible/06-Systems/Travel-View.md LOAD-OWED): A READ THAT FAILED IS NO ANSWER. The rejection stood
+      // here as the archive's answer for the page, so one failed read - a dropped fetch, an IndexedDB read that failed
+      // and fell through to a server without the file - failed every later ask for the archive without reading again:
+      // every pixel of that climate, every town wearing that picture, threw for the rest of the session. A failed ask
+      // is forgotten and the next one reads (AUDIT VE R12's law for a tile set; getGpuMesh's in-flight map's)
+      asked.catch(() => { if (texturePromises.get(archive) === asked) texturePromises.delete(archive); });
     }
     return texturePromises.get(archive);
   }
@@ -145,10 +156,13 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
       return !t || t.vendor ? null : t.getScale(record);
     },
   });
+  // DF-LOOK: the port's own painted pictures (the ships, the wagons, the yards, the port, the monument, the town's
+  // hangings) go up grained and snapped to the palette every TEXTURE record is drawn in - this host's ART_PAL.COL
+  setDfLookPalette(palette);
   // AUDIT GN2-PF5: THE ARCHIVES WHOSE STAND-INS ARE CLASSIC ART - the port's own pictures standing where a TEXTURE file
   // would (the new galleon's 38131: a hull's planking, as ARENA2's is every other hull's), uploaded as a classic record
   // is, so Retro Mode's no-mip cap reaches them. Every other stand-in is a mod's picture, TryImportTexture's, never
-  // capped. Marked by whoever registers them (scenes/comeSailAwayPool.js); a pack's picture over one is taken as its own.
+  // capped. Marked by whoever registers them (scenes/comeSailAway/comeSailAwayPool.js); a pack's picture over one is taken as its own.
   const classicArt = new Set();
   const markClassicArt = (archive) => { classicArt.add(Number(archive)); };
   const isClassicArt = (archive) => classicArt.has(Number(archive));
@@ -157,7 +171,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     return { width: t.getWidth(record), height: t.getHeight(record) };
   };
   const _standInMisses = new Set();   // WD3: the stand-in records said once each
-  const uploadRecord = (archive, record, { opaque = false, mips, removeMask = false, dye = null, dyeTarget = null } = {}) => {   // DYE-ICON: `dyeTarget` - the swatch the classic arm dyes (itemDye.js itemDyeTarget)   // DW3: `dye` - GetItemImage asks the replacement by the item's dye (ItemHelper.cs:458); the icon uploads under a per-dye variant and answers which   // REVIEW 2026-09-05: `mips: false` for item icons (ImageReader.cs:59 builds UI art with no chain); HM1: `removeMask` = ItemHelper's GetItemImage(removeMask: true), the item icons' door - 0xFF becomes the cutout before the upload
+  const uploadRecord = (archive, record, { opaque = false, mips, removeMask = false, dye = null, dyeTarget = null, cutout = false } = {}) => {   // DYE-ICON: `dyeTarget` - the swatch the classic arm dyes (itemDye.js itemDyeTarget)   // DW3: `dye` - GetItemImage asks the replacement by the item's dye (ItemHelper.cs:458); the icon uploads under a per-dye variant and answers which   // REVIEW 2026-09-05: `mips: false` for item icons (ImageReader.cs:59 builds UI art with no chain); HM1: `removeMask` = ItemHelper's GetItemImage(removeMask: true), the item icons' door - 0xFF becomes the cutout before the upload   // DF-LOOK (DF-ART II's, kept): `cutout` - a model's picture whose glass is seen through (renderer.uploadTexture's RW1 cut-out; the port's ships' stern windows)
     const t = textureFiles.get(archive); freshen(archive);   // AUDIT VE R1
     const bitmap = t.getDFBitmap(record, 0);
     // Spectral archives (ghost/wraith/Lysandus) take the verbatim
@@ -225,7 +239,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // AUDIT RETRO1 A4: a replacement is flagged - TextureReader's retro arm (no mip chain) never reaches TryImportTexture's.
     // AUDIT GN2-PF5: a stand-in the port paints as a hull's classic art (markClassicArt) is no replacement
     const replacement = !!swap && !classicArt.has(Number(archive));
-    renderer.uploadTexture(archive, record, color32, variant !== undefined ? { opaque, mips, variant, replacement } : { opaque, mips, replacement });
+    renderer.uploadTexture(archive, record, color32, variant !== undefined ? { opaque, mips, variant, replacement, cutout } : { opaque, mips, replacement, cutout });
     // Exterior windows also get their emission mask (R2, MaterialReader
     // semantics: glass texels glow with the active window style).
     // DS1: a stand-in (a mod-only archive) has no classic bitmap to cut a
@@ -234,19 +248,23 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     // window emission in DFU (GetStaticBillboardMaterial), so it gets none.
     if (isExteriorWindow(archive, record) && !t.vendor) {
       renderer.uploadEmissionTexture(archive, record, t.getWindowColors32(bitmap), { replacement, window: true });   // RW1: DFU's window mask - the rooms' glass from the street, the street's from inside (render/realWindows.js)
-    } else if (isEmissive(archive, record) && archive !== FIRE_WALLS_ARCHIVE) {
+    } else if (isEmissive(archive, record)) {
       // AUDIT 39 F49: THE AUTO-EMISSIVE ARM (MaterialReader.cs:419-423
       // -> TextureReader.cs:301-308 "Just reuse albedo map for basic
       // colour emission" -> :448-453 EmissionColor = Color.white). The
       // `!isWindow` is the C#'s own; the white flag keeps the window
       // style off it, so a lit lantern draws its own texels instead of
       // sitting at scene ambient beside the light it casts.
-      renderer.uploadEmissionTexture(archive, record, color32, { white: true, replacement });
-    } else if (!t.vendor && !swap && isInteriorGlassArchive(archive) && renderer.uploadGlassMask) {
-      // RW1: A BUILDING INTERIOR'S OWN GLASS (render/realWindows.js interiorGlassMask - the rule's one home): a record of
-      // an interior set whose bitmap carries the glass index, its mask cut by the exterior arm's own reader. Never a
-      // mod's picture: its texels are not the classic bitmap's, and its glass is its own to declare.
-      const glass = interiorGlassMask(archive, bitmap, (b) => t.getWindowColors32(b));
+      // EG-ZH: the fire walls (TextureReader.cs:303 `if (settings.archive != FireWallsArchive)` ... :309 `else if
+      // (hasReferenceTexture)`) take GetFireWallColors32 over the CLASSIC albedo (albedoColors is the reference
+      // texture's whether or not a pack's picture was imported over it) - and nothing on a stand-in, which has none.
+      if (archive === FIRE_WALLS_ARCHIVE) { if (!t.vendor) { const classic = swap ? t.getColor32(bitmap, opaque ? -1 : 0) : color32; renderer.uploadEmissionTexture(archive, record, t.getFireWallColors32(classic.colors, classic.width, classic.height, FIRE_WALL_COLOR, FIRE_WALL_SCALE), { white: true, replacement }); } }
+      else renderer.uploadEmissionTexture(archive, record, color32, { white: true, replacement });
+    } else if (!t.vendor && isInteriorGlassArchive(archive) && renderer.uploadGlassMask) {
+      // RW1: A BUILDING INTERIOR'S OWN GLASS (world/interior/interiorGlass.js interiorGlassMask - the rule's one home): a building
+      // set's window wall, its panes read off the classic bitmap against its twin wall. GLASS-ALL: a pack's picture of it
+      // too, cut by the classic mask as the exterior arm cuts a pack's window - a repaint keeps the window where it was.
+      const glass = interiorGlassMask(archive, record, bitmap, (r) => (r < t.recordCount ? t.getDFBitmap(r, 0) : null));
       if (glass) renderer.uploadGlassMask(archive, record, glass, { replacement });
     }
     return variant;   // DW3: the icon drawers read the GL texture by `${archive}_${record}${variant}`
@@ -260,6 +278,9 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     const key = `${record}#${frame}`;
     const t = textureFiles.get(archive); freshen(archive);   // AUDIT VE R1
     if (!t) return;
+    // GATE-MIX: a frame already on the GPU is not decoded again only for uploadTexture to turn it away - held for the
+    // place asking as that hit would hold it. Not a spectral or self-lit frame: those carry a second picture of their own.
+    if (!TextureFile.isSpectralArchive(archive) && !isEmissive(archive, record) && renderer.heldTexture?.(archive, key)) return;
     const bitmap = t.getDFBitmap(record, frame);
     if (TextureFile.isSpectralArchive(archive)) {
       const spec = { ...bitmap, data: bitmap.data.slice() };
@@ -279,11 +300,21 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
     const color32 = swapFrame ?? t.getColor32(bitmap, 0);
     const replacement = !!swapFrame;   // AUDIT RETRO1 A4 (second pass F2): a pack's frame is TryImportTexture's too
     renderer.uploadTexture(archive, key, color32, { replacement });
+    // DEX2: A FRAME'S OWN EMISSION MAP - TextureReplacement.GetMobileBillboardMaterial imports a frame's `_Emission`
+    // beside its albedo and lights it white (a mod's glowing enemy: Daggerfall Enemy Expansion's Will-o'-wisp, 1610, and
+    // Hell Hound, 1614). Only beside an imported frame, as there: a classic frame has no map to import.
+    const lit = swapFrame ? decodedTexture(archive, record, frame, 'Emission') : null;
     // F49: the auto-emissive arm follows the FRAME - DFU builds a
     // material per frame, and a torch's every frame is self-lit. The
     // billboard path looks the mask up under this same composite key.
-    if (isEmissive(archive, record) && archive !== FIRE_WALLS_ARCHIVE) {
+    if (lit) {
+      renderer.uploadEmissionTexture(archive, key, lit, { white: true, replacement: true });
+    } else if (isEmissive(archive, record) && archive !== FIRE_WALLS_ARCHIVE) {
       renderer.uploadEmissionTexture(archive, key, color32, { white: true, replacement });
+    } else if (isEmissive(archive, record) && !t.vendor) {
+      // EG-ZH: the fire walls' frame - GetFireWallColors32 over the classic frame's albedo (TextureReader.cs:309-320)
+      const classic = swapFrame ? t.getColor32(bitmap, 0) : color32;
+      renderer.uploadEmissionTexture(archive, key, t.getFireWallColors32(classic.colors, classic.width, classic.height, FIRE_WALL_COLOR, FIRE_WALL_SCALE), { white: true, replacement });
     }
   };
   const gpuMeshes = new Map(); // shared across pixels and places; freed when no place holds one (PLACE-LRU, below)
@@ -547,7 +578,7 @@ export function createDataPipeline({ renderer, arch, palette, fetch = fetchBytes
   }
 
   loadFlats();   // warm it with the scene; the getters answer null until it lands
-  // DISC22-D: the icon doors' per-record decode is the drawer's own (ui/itemScroller.js preloadIconRecord) - the
+  // DISC22-D: the icon doors' per-record decode is the drawer's own (ui/item/itemScroller.js preloadIconRecord) - the
   // handout this bag once carried was taken by no scene, which is how the Steel Light Flail drew nothing.
   return { textureFiles, getTexture, getTextureSize, uploadRecord: pinnedUpload, uploadRecordFrame: pinnedUploadFrame, getGpuMesh: pinnedGpuMesh, getWindmillMeshes, getMachineryParts, gpuMeshes, cpuModels, palette,
     markClassicArt, isClassicArt,   // AUDIT GN2-PF5

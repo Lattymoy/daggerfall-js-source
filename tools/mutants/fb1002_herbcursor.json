@@ -5,7 +5,7 @@
     "old": "export const ACT_POINTER = Object.freeze({ basket: 'cursor', mine: 'look', trace: 'look', fish: 'look' });",
     "new": "export const ACT_POINTER = Object.freeze({ mine: 'look', trace: 'look', fish: 'look' });",
     "tests": [
-      "test/fb1002_herbcursor.test.js"
+      "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const ACT_POINTER = Object.freeze({ basket: 'cursor', mine: 'look', trace: 'look', fish: 'look' });",
     "new": "export const ACT_POINTER = Object.freeze({ basket: 'cursor', trace: 'look', fish: 'look' });",
     "tests": [
-      "test/fb1002_herbcursor.test.js"
+      "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const actPointer = (st) => (st?.gentle === true && st.kind !== 'fish' ? null : ACT_POINTER[st?.kind] ?? null);",
     "new": "export const actPointer = (st) => (st?.gentle === true && st.kind !== 'fish' ? null : ACT_POINTER[st?.kind] ?? 'cursor');",
     "tests": [
-      "test/fb1002_herbcursor.test.js"
+      "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    syncPointer();   // HERB-CURSOR: in the press's frame, while its activation stands (a lock a browser asks one for)\n",
     "new": "",
     "tests": [
-      "test/fb1002_herbcursor.test.js"
+      "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    off?.();\n",
     "new": "",
     "tests": [
-      "test/fb1002_herbcursor.test.js"
+      "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "act.act.cancel(); act = null; syncPointer(); hud.setMeter(null); return true; },",
     "new": "act.act.cancel(); act = null; hud.setMeter(null); return true; },",
     "tests": [
-      "test/fb1002_herbcursor.test.js"
+      "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      hud.frame(dt);\n      syncPointer();   // HERB-CURSOR: an act this frame ended",
     "new": "      hud.frame(dt);\n      // HERB-CURSOR: an act this frame ended",
     "tests": [
-      "test/fb1002_herbcursor.test.js"
+      "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   },
   {
@@ -68,16 +68,16 @@
     "old": "        syncPointer();   // HERB-CURSOR\n        hud.setPrompt(null); hud.setMeter(null); hud.setChip(null); hud.frame(dt); return;",
     "new": "        hud.setPrompt(null); hud.setMeter(null); hud.setChip(null); hud.frame(dt); return;",
     "tests": [
-      "test/fb1002_herbcursor.test.js"
+      "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   },
   {
     "name": "HERB-CURSOR-dispose-unsynced",
     "file": "src/scenes/gatherHost.js",
-    "old": "stood.clear(); act = null; syncPointer(); hud.dispose(); },",
-    "new": "stood.clear(); act = null; hud.dispose(); },",
+    "old": "standGen.clear(); act = null; syncPointer(); hud.dispose(); },",
+    "new": "standGen.clear(); act = null; hud.dispose(); },",
     "tests": [
-      "test/fb1002_herbcursor.test.js"
+      "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  if (_cursorActive || _cursorHolds.size) return;",
     "new": "  if (_cursorActive) return;",
     "tests": [
-      "test/fb1002_herbcursor.test.js"
+      "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook();",
     "new": "if (_cursorActive && document.pointerLockElement) releaseLook();",
     "tests": [
-      "test/fb1002_herbcursor.test.js"
+      "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  _cursorHolds.add(hold);\n  releaseLook();",
     "new": "  _cursorHolds.add(hold);",
     "tests": [
-      "test/fb1002_herbcursor.test.js"
+      "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  return () => _cursorHolds.delete(hold) && _cursorHolds.size === 0;",
     "new": "  return () => (_cursorHolds.delete(hold), _cursorHolds.size === 0);",
     "tests": [
-      "test/fb1002_herbcursor.test.js"
+      "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  _cursorHolds.clear();   // HERB-CURSOR: and an act's hold the last host never let go\n",
     "new": "",
     "tests": [
-      "test/fb1002_herbcursor.test.js"
+      "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": " pointer: (want) => {",
     "new": " _pointer: (want) => {",
     "tests": [
-      "test/fb1002_herbcursor.test.js"
+      "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "!overlayOpen() && !travelView?.active) requestLook(canvas); }; if (want === 'look')",
     "new": "!overlayOpen()) requestLook(canvas); }; if (want === 'look')",
     "tests": [
-      "test/fb1002_herbcursor.test.js"
+      "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    if (act === pointerAct) return;\n",
     "new": "",
     "tests": [
-      "test/fb1002_herbcursor.test.js"
+      "test/systems/foraging/fb1002_herbcursor.test.js"
     ]
   }
 ]

@@ -1,0 +1,79 @@
+[
+  {
+    "name": "SHORESILT-a-shore-left-out",
+    "file": "src/world/puddleMask.js",
+    "old": "  .filter((r) => anyTurn(r) && !PUDDLE_RECORDS.includes(r)));",
+    "new": "  .filter((r) => anyTurn(r) && !PUDDLE_RECORDS.includes(r) && r !== 21));",
+    "tests": ["test/world/shoresilt.test.js"]
+  },
+  {
+    "name": "SHORESILT-the-ratio-loosened",
+    "file": "src/world/puddleMask.js",
+    "old": "export const SHORE_DRY_RATIO = 0.05;",
+    "new": "export const SHORE_DRY_RATIO = 50;",
+    "tests": ["test/world/shoresilt.test.js"]
+  },
+  {
+    "name": "SHORESILT-the-dry-tiles-unasked",
+    "file": "src/world/puddleMask.js",
+    "old": "  wet.c.forEach((k, n) => { if (dry.c.get(k) / dry.total < SHORE_DRY_RATIO * n / wet.total) water.add(k); });",
+    "new": "  wet.c.forEach((k) => { water.add(k); });",
+    "tests": ["test/world/shoresilt.test.js"]
+  },
+  {
+    "name": "SHORESILT-no-clean",
+    "file": "src/world/puddleMask.js",
+    "old": "    cleanMask(wet, layer.width, layer.height, MIN_PATCH_TEXELS * Math.max(1, (layer.width * layer.height) / 4096));",
+    "new": "    void 0;",
+    "tests": ["test/world/shoresilt.test.js"]
+  },
+  {
+    "name": "SHORESILT-the-shore-written-in-place",
+    "file": "src/world/puddleMask.js",
+    "old": "    const b = new Uint8Array(bytesOf(layer));",
+    "new": "    const b = bytesOf(layer);",
+    "tests": ["test/world/shoresilt.test.js"]
+  },
+  {
+    "name": "SHORESILT-the-upload-skips-the-shores",
+    "file": "src/world/puddleMask.js",
+    "old": "  return yield* markShoreWaterSteps(out);   // SHORE-SILT",
+    "new": "  return out;   // SHORE-SILT",
+    "tests": ["test/world/shoresilt.test.js"]
+  },
+  {
+    "name": "SHORESILT-a-mod-carries-no-shore",
+    "file": "src/world/puddleMask.js",
+    "old": "  for (const rec of [...PUDDLE_RECORDS, ...SHORE_RECORDS]) {",
+    "new": "  for (const rec of PUDDLE_RECORDS) {",
+    "tests": ["test/world/shoresilt.test.js"]
+  },
+  {
+    "name": "SHORESILT-a-paletted-mod-carried",
+    "file": "src/world/puddleMask.js",
+    "old": "  return palettedSet(modLayers) ? yield* markShoreWaterSteps(out) : out;",
+    "new": "  return out;",
+    "tests": ["test/world/shoresilt.test.js"]
+  },
+  {
+    "name": "SHORESILT-palette-limit-off-by-one",
+    "file": "src/world/puddleMask.js",
+    "old": "    if (seen.size > 256) return false;",
+    "new": "    if (seen.size > 255) return false;",
+    "tests": ["test/world/shoresilt.test.js"]
+  },
+  {
+    "name": "SHORESILT-the-silt-ignores-the-art",
+    "file": "src/render/waterBedGlsl.js",
+    "old": "  return vec2(max(k, art), max(art - k, 0.0));",
+    "new": "  return vec2(k, max(art - k, 0.0));",
+    "tests": ["test/world/shoresilt.test.js"]
+  },
+  {
+    "name": "SHORESILT-no-wet-mud",
+    "file": "src/render/waterBedGlsl.js",
+    "old": "export const WET_MUD_SHARE = 0.8;",
+    "new": "export const WET_MUD_SHARE = 0.0;",
+    "tests": ["test/world/shoresilt.test.js"]
+  }
+]

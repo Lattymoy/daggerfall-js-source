@@ -10,7 +10,7 @@
 //
 // THE BAG IS AN ITEM IN THE PACK, the way the Small Cart is (DFU's
 // HasCart reads the cart's template in the pack): owning one is
-// holding one. Its own list is the save's (systems/save.js), and a bag
+// holding one. Its own list is the save's (systems/save/save.js), and a bag
 // sold or dropped while it holds anything is refused - the cart's own
 // rule (tradeModes.js), so nothing is ever left in a list nobody owns.
 //
@@ -28,9 +28,16 @@
 import { BAG_KG_LIMIT, BAG_WORDS, CARRIED_MAX, hasBag, isBagItem, depositOrderOk } from '../net/bagLaw.js';
 import { PLANT_GROUP_TEMPLATES, FOOD_KEYS, MINED_KEYS, withdrawable } from '../net/professionLaw.js';
 import { material } from '../net/nodeLaw.js';
-import { mintMaterialItem, withdrawIntoPack } from './profItems.js';
+import { mintMaterialItem, withdrawIntoPack } from './professions/profItems.js';
 import { addItem, totalWeight, effectiveUnitWeightInKg, canHoldAmount, carriedWeight, isSummoned, isEnchanted } from './inventory.js';
 import { entityMaxEncumbrance } from '../combat/formulas.js';
+import { PATRON_COUNTER_MARK } from '../net/patronLaw.js';   // AUDIT TOWN-ECON 2 PRICE-2: a counter's piece is no service unit
+
+/** AUDIT TOWN-ECON 2 PRICE-2: A PIECE AN NPC COUNTER SOLD ONLINE (tradeModes.js markCounterBought) - never the service's
+ *  unit: a Stores put-in of it came back out of a withdrawal minted fresh, its LAW-3 price and its counter's mark gone,
+ *  and the carry LAW-3 closed paid again. Only a station's own shortfall puts it in (and spends it there and then); the
+ *  Stores page, a writ and the market never take it, and the count is never read off it. @param {any} it */
+export const counterPiece = (it) => it?.[PATRON_COUNTER_MARK] === true;
 
 /** Whether a list (the pack) holds a Materials Bag, and whether a record is one - net/bagLaw.js's, the one spelling. */
 export { hasBag, isBagItem };
@@ -80,10 +87,10 @@ export const isMaterialItem = (item) => materialKeyOfItem(item) != null;
 /** How many units of a material the bag and the pack hold together - the `held` a carrying request says. AUDIT BAG1 B6:
  *  and the wagon - the realm counts it with them (realmGoldLaw.js carriedItemLists), and herbs moved from the bag into
  *  the wagon were said as gone, the count cut under them. */
-export function heldOf(entity, key) {
+export function heldOf(entity, key, { counter = true } = {}) {
   let n = 0;
   for (const list of [entity?.items ?? [], entity?.bagItems ?? [], entity?.wagonItems ?? []]) {
-    for (const it of list) if (materialKeyOfItem(it) === key) n += it.stackCount ?? 1;
+    for (const it of list) if (materialKeyOfItem(it) === key && (counter || !counterPiece(it))) n += it.stackCount ?? 1;   // AUDIT TOWN-ECON 2 PRICE-2: `counter` false, a counter's pieces not
   }
   return n;
 }
@@ -158,19 +165,20 @@ function listOf(entity, role) {
  * it holds is held (heldOf), so a station may use it as it uses the pack.
  * AUDIT2 BAG1 H3: the undo puts each back by its list's ROLE, read at the undo (listOf) - a split stack whose rest has gone
  * (merged, sold) comes back as a record of its own, never onto a record the lists no longer hold.
- * AUDIT2 BAG1 K3/K7/H2: `stamp` - a deposit's id, written into the save with the take (`entity.bagTakes`, systems/save.js)
+ * AUDIT2 BAG1 K3/K7/H2: `stamp` - a deposit's id, written into the save with the take (`entity.bagTakes`, systems/save/save.js)
  * with its material, units and `order`, so a page loaded later knows whether the save it booted saw these units go, and
  * can ask a deposit no kept act names (net/profBook.js strayStamps). The undo takes the stamp off with them.
  * @param {any} entity @param {string} key @param {number} n @param {string|null} [stamp] @param {string|null} [order]
  */
-export function takeCarried(entity, key, n, stamp = null, order = null) {
+export function takeCarried(entity, key, n, stamp = null, order = null, { counter = false } = {}) {
   /** @type {{ role: string, item: any, count: number, whole: boolean }[]} */
   const moves = [];
   let left = Math.max(0, n | 0);
-  for (const [role, list] of /** @type {[string, any[]][]} */ ([['bag', bagItemsOf(entity)], ['items', entity?.items ?? []], ['wagon', entity?.wagonItems ?? []]])) {
+  // AUDIT TOWN-ECON 2 PRICE-2: a counter's pieces last, and only for a station's own put-in (`counter`)
+  for (const marked of counter ? [false, true] : [false]) for (const [role, list] of /** @type {[string, any[]][]} */ ([['bag', bagItemsOf(entity)], ['items', entity?.items ?? []], ['wagon', entity?.wagonItems ?? []]])) {
     for (let i = list.length - 1; i >= 0 && left > 0; i--) {
       const it = list[i];
-      if (materialKeyOfItem(it) !== key) continue;
+      if (materialKeyOfItem(it) !== key || counterPiece(it) !== marked) continue;
       const count = it.stackCount ?? 1;
       const take = Math.min(left, count);
       if (take === count) { list.splice(i, 1); moves.push({ role, item: it, count, whole: true }); } else { it.stackCount = count - take; moves.push({ role, item: it, count: take, whole: false }); }

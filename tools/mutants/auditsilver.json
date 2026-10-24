@@ -5,7 +5,7 @@
     "old": "CREATE UNIQUE INDEX IF NOT EXISTS idx_guild_deed_marks_event",
     "new": "CREATE INDEX IF NOT EXISTS idx_guild_deed_marks_event",
     "tests": [
-      "test/auditsilver_service.test.js"
+      "test/net/auditsilver_service.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "        AND ${CLAIM_GUARDS[kind](11)}`)",
     "new": "        AND (${CLAIM_GUARDS[kind](11)} OR 1)`)",
     "tests": [
-      "test/auditsilver_service.test.js"
+      "test/net/auditsilver_service.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      ...(await guildDeedsToday(db, guildId, nowS)),\n",
     "new": "",
     "tests": [
-      "test/auditsilver_service.test.js"
+      "test/net/auditsilver_service.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "if (Number.isSafeInteger(v.deedsMax)) out.push(el('div', 'dfsocial-note', guildDeedsText(v.deeds, v.deedsMax)));",
     "new": "if (false) out.push(el('div', 'dfsocial-note', guildDeedsText(v.deeds, v.deedsMax)));",
     "tests": [
-      "test/auditsilver_client.test.js"
+      "test/net/auditsilver_client.test.js"
     ]
   },
   {
@@ -41,8 +41,8 @@
     "old": "const deedTaxSql = `(((c.deeds - c.left_deeds + 1) * c.pay * ${TAX_PCT}) / 100",
     "new": "const deedTaxSql = `(((c.deeds - c.left_deeds) * c.pay * ${TAX_PCT}) / 100",
     "tests": [
-      "test/auditsilver_service.test.js",
-      "test/silverways_service.test.js"
+      "test/net/auditsilver_service.test.js",
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -51,8 +51,8 @@
     "old": "const deedTaxSql = `(((c.deeds - c.left_deeds + 1) * c.pay * ${TAX_PCT}) / 100 - ((c.deeds - c.left_deeds) * c.pay * ${TAX_PCT}) / 100)`;",
     "new": "const deedTaxSql = `((c.pay * ${TAX_PCT}) / 100)`;",
     "tests": [
-      "test/auditsilver_service.test.js",
-      "test/silverways_service.test.js"
+      "test/net/auditsilver_service.test.js",
+      "test/net/silverways_service.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "const CONTRACTS_READ_MAX = CONTRACTS_PAID_MAX * 2;",
     "new": "const CONTRACTS_READ_MAX = CONTRACTS_PAID_MAX;",
     "tests": [
-      "test/auditsilver_service.test.js"
+      "test/net/auditsilver_service.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "AND (SELECT COUNT(*) FROM guild_contract_pays p WHERE p.event = ?3 AND p.account = ?1) < ?10`)",
     "new": "AND (SELECT COUNT(*) FROM guild_contract_pays p WHERE p.event = ?3 AND p.account = ?1) < ?10 + 5`)",
     "tests": [
-      "test/auditsilver_service.test.js"
+      "test/net/auditsilver_service.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": " AND left_deeds >= 1 AND NOT ${posters('guild_contracts.guild_id')}",
     "new": " AND left_deeds >= 1 AND (${posters('guild_contracts.guild_id')} OR 1)",
     "tests": [
-      "test/auditsilver_service.test.js"
+      "test/net/auditsilver_service.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "  'guild-contracts': 409,",
     "new": "  'guild-contracts-x': 409,",
     "tests": [
-      "test/auditsilver_service.test.js"
+      "test/net/auditsilver_service.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "i >= at - MOTHERLODE_WATCH_S && i <= at + MOTHERLODE_WATCH_AHEAD_S;",
     "new": "i >= at - MOTHERLODE_WATCH_S;",
     "tests": [
-      "test/auditsilver_service.test.js"
+      "test/net/auditsilver_service.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "export const MOTHERLODE_WATCH_AHEAD_S = 30;",
     "new": "export const MOTHERLODE_WATCH_AHEAD_S = 60;",
     "tests": [
-      "test/auditsilver_service.test.js"
+      "test/net/auditsilver_service.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "c.y !== lode.y || !motherlodeWatchOk(c.i, at))",
     "new": "c.y !== lode.y || c.i < at - 600)",
     "tests": [
-      "test/auditsilver_service.test.js"
+      "test/net/auditsilver_service.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "return balance + MOTHERLODE_SILVER > MARKS_MAX ? { marks: { struck: 0, balance, why: 'full' } } : {};",
     "new": "return { marks: { struck: 0, balance, why: 'full' } };",
     "tests": [
-      "test/auditsilver_service.test.js"
+      "test/net/auditsilver_service.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "  const marked = async (/** @type {any} */ db) => !!(await db.prepare('SELECT 1 FROM motherlode_days WHERE day = ?1').bind(day).first());",
     "new": "  const marked = async () => false;",
     "tests": [
-      "test/auditsilver_service.test.js"
+      "test/net/auditsilver_service.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "WHERE EXISTS (SELECT 1 FROM motherlode_days WHERE day = ?1 AND n = ?10)`)",
     "new": "WHERE ?10 IS NOT NULL`)",
     "tests": [
-      "test/auditsilver_service.test.js"
+      "test/net/auditsilver_service.test.js"
     ]
   },
   {
@@ -151,7 +151,7 @@
     "old": " && nowMs() - askedAt >= MOTHERLODE_RETRY_MS;",
     "new": ";",
     "tests": [
-      "test/auditsilver_client.test.js"
+      "test/net/auditsilver_client.test.js"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "old": "state.day !== today && (t - today * 86400) * 1000 >= turnMs && ",
     "new": "state.day !== today && ",
     "tests": [
-      "test/auditsilver_client.test.js"
+      "test/net/auditsilver_client.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "if (l) l.struck = Math.max(l.struck ?? 0, MOTHERLODE_STRIKERS);",
     "new": "if (l) l.struck = l.struck ?? 0;",
     "tests": [
-      "test/auditsilver_client.test.js"
+      "test/net/auditsilver_client.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "else if (error === 'motherlode-found') state.found = state.found ?? key;",
     "new": "else if (error === 'motherlode-found') state.found = state.found ?? null;",
     "tests": [
-      "test/auditsilver_client.test.js"
+      "test/net/auditsilver_client.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "if (typeof key === 'string') for (const k of kinds) {",
     "new": "if (typeof key === 'number') for (const k of kinds) {",
     "tests": [
-      "test/auditsilver_client.test.js"
+      "test/net/auditsilver_client.test.js"
     ]
   },
   {
@@ -196,16 +196,16 @@
     "old": "if (typeof key === 'string' && key.startsWith('mlode:')) lodes?.refused?.(key, error);",
     "new": "if (typeof key === 'string' && key.startsWith('vein:')) lodes?.refused?.(key, error);",
     "tests": [
-      "test/auditsilver_client.test.js"
+      "test/net/auditsilver_client.test.js"
     ]
   },
   {
     "name": "AUDIT-SILVER-WAYS-D3-stand",
     "file": "src/net/motherlodeBook.js",
-    "old": "Walk about on it a moment - the Watch marks those on the move, every two minutes.",
-    "new": "Stand a moment - it will within two minutes.",
+    "old": "Keep moving on its ground: the Watch checks every 2 minutes.",
+    "new": "Stand a moment: the Watch will see you within 2 minutes.",
     "tests": [
-      "test/auditsilver_client.test.js"
+      "test/net/auditsilver_client.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "        ?? standAnywhere(samples, tilemap, locationRect, solid, stone, beach);",
     "new": "        ?? (standAnywhere && null);",
     "tests": [
-      "test/auditsilver_client.test.js"
+      "test/net/auditsilver_client.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "    const at = natureStandsAt(samples, tilemap, locationRect, x, y, clear, beach);\n    if (at && onPixel(at.x, at.z) && !insideRocks(rocks, at.x, at.z)) return at;",
     "new": "    const at = natureStandsAt(samples, tilemap, null, x, y, clear, beach);\n    if (at && onPixel(at.x, at.z) && !insideRocks(rocks, at.x, at.z)) return at;",
     "tests": [
-      "test/auditsilver_client.test.js"
+      "test/net/auditsilver_client.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "ask: () => ({ watch: lodes?.watchFor?.(n.lode.x, n.lode.y, 0) ?? watch })",
     "new": "ask: () => ({ watch })",
     "tests": [
-      "test/auditsilver_client.test.js"
+      "test/net/auditsilver_client.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "...((typeof a.ask === 'function' ? a.ask() : a.ask) ?? {}),",
     "new": "...(a.ask ?? {}),",
     "tests": [
-      "test/auditsilver_client.test.js"
+      "test/net/auditsilver_client.test.js"
     ]
   },
   {
@@ -250,8 +250,8 @@
     "old": "      const m = meNow(true);\n      const w = watches.get(`${x},${y}`);",
     "new": "      const m = meNowV;\n      const w = watches.get(`${x},${y}`);",
     "tests": [
-      "test/auditsilver_client.test.js",
-      "test/motherlode_identity_regression.test.js"
+      "test/net/auditsilver_client.test.js",
+      "test/net/motherlode_identity_regression.test.js"
     ],
     "note": "Bugs update reconciliation 2026-10-03: re-aimed by the current source law; forced Watch identity refresh, cached frame reads, receipt ownership/expiry, and actual host seed citations remain independently killable. The action now refreshes identity before fetching the receipt, clearing old receipts; mutate that refresh rather than removing its redundant subject comparison."
   },
@@ -261,7 +261,7 @@
     "old": "      meNowV = m;\n      watches.clear();",
     "new": "      meNowV = m;",
     "tests": [
-      "test/auditsilver_client.test.js"
+      "test/net/auditsilver_client.test.js"
     ]
   },
   {
@@ -270,7 +270,7 @@
     "old": "    if (!force && t - meAt < MOTHERLODE_ME_MS) return meNowV;\n",
     "new": "",
     "tests": [
-      "test/auditsilver_client.test.js"
+      "test/net/auditsilver_client.test.js"
     ],
     "note": "Bugs update reconciliation 2026-10-03: re-aimed by the current source law; forced Watch identity refresh, cached frame reads, receipt ownership/expiry, and actual host seed citations remain independently killable."
   },
@@ -280,7 +280,7 @@
     "old": "    standingAll(out = []) {\n      meNow();\n      out.length = 0;",
     "new": "    standingAll(out = []) {\n      meNow();\n      out = [];",
     "tests": [
-      "test/auditsilver_client.test.js"
+      "test/net/auditsilver_client.test.js"
     ]
   },
   {
@@ -289,7 +289,7 @@
     "old": "const tr = state.pixelTranslation(l.x, l.y, _lodeTr), m = _lodePool[_lodeMarks.length] ??=",
     "new": "const tr = state.pixelTranslation(l.x, l.y, [0, 0, 0]), m = _lodePool[_lodeMarks.length] ??=",
     "tests": [
-      "test/auditsilver_client.test.js"
+      "test/net/auditsilver_client.test.js"
     ]
   }
 ]

@@ -1,0 +1,667 @@
+[
+  {
+    "name": "EGZM-room-word-never-waited",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        if (!(R.op > 0)) {   // EG-ZM: no seed known",
+    "new": "        if (false) {   // EG-ZM: no seed known",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-no-word-builds-anyway",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "          if (!heard.st) return false;",
+    "new": "          if (false) return false;",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-record-unkept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "          backFrame(heard.st, egMemberOf(heard.st, me()));",
+    "new": "          void 0;",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-circle-the-starts",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        return M?.enterEgHall?.({ b: R.b, seed: R.seed, c: R.h > 0 ? egCircleOfHall(R.h) : R.ew + 1,",
+    "new": "        return M?.enterEgHall?.({ b: R.b, seed: R.seed, c: R.ew + 1,",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-circle-standing-unsaid",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      circleSeed = R.seed >>> 0;\n      say(EG_BACK_TEXT.back);",
+    "new": "      circleSeed = 0;\n      say(EG_BACK_TEXT.back);",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-listener-never-left-at-its-answer",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (a) close();\n      return a;",
+    "new": "      return a;",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-wait-never-closes-its-listener",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    seedWait = null;\n    L.close();\n    resolve(a);",
+    "new": "    seedWait = null;\n    resolve(a);",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-slot-emptied-after",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    seedWait = null;\n    L.close();\n    resolve(a);",
+    "new": "    L.close();\n    resolve(a);",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ],
+    "equivalent": true,
+    "why": "THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD, kept as the law orders it: a wait left in the slot asks a listener that has answered (closed - it answers null for good) and settles a promise already settled, so nothing can tell the order apart"
+  },
+  {
+    "name": "EGZM-another-breachs-state",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (r === room && w?.k === 'st' && w.b === b) st ??=",
+    "new": "if (r === room && w?.k === 'st') st ??=",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-answered-twice",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (done) return null;\n      link.tick();",
+    "new": "      link.tick();",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-presence-on",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "mintToken: main.mintToken, presence: false });",
+    "new": "mintToken: main.mintToken, presence: true });",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-bound-off-by-one",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": ": nowMs - at >= waitMs ? { silent: true } : null;",
+    "new": ": nowMs - at > waitMs ? { silent: true } : null;",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-wait-unbounded",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": ": nowMs - at >= waitMs ? { silent: true } : null;",
+    "new": ": null;",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-terminal-unread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "const a = st ? { st } : link.terminal ? { no: String(link.error ?? '') } :",
+    "new": "const a = st ? { st } : false ? { no: String(link.error ?? '') } :",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-any-refusal-lets-go",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        if (roomRefused(heard?.no)) { backDrop(R.b);",
+    "new": "        if (heard?.no) { backDrop(R.b);",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-room-refusal-kept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "{ backDrop(R.b); say(sentenceOf(heard.no)); }",
+    "new": "{ say(sentenceOf(heard.no)); }",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-silence-as-shut",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        else say(heard?.silent ? EG_BACK_TEXT.silent : EG_TEXT.shut);",
+    "new": "        else say(EG_TEXT.shut);",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-wait-outlives-the-frame",
+    "note": "EG-ZR (PIN MOVED): re-aimed by content - `away` lets the Vestiges held go after the seed's wait (spireHolderStep)",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "sw?.close?.(); seedFrame({ silent: true }); spireHolderStep(entity, null); },",
+    "new": "sw?.close?.(); spireHolderStep(entity, null); },",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-frame-never-asks",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      seedFrame();   // EG-ZM: a way back waiting",
+    "new": "      void 0;   // EG-ZM: a way back waiting",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-the-bound-the-tokens-alone",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "export const EG_BACK_SEED_WAIT_MS = TOKEN_WAIT_MS + 4000;",
+    "new": "export const EG_BACK_SEED_WAIT_MS = TOKEN_WAIT_MS;",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-no-session-listened-on",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (!main?.url) return Promise.resolve({ silent: true });",
+    "new": "    if (!main) return Promise.resolve({ silent: true });",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-room-refusal-unread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "const roomRefused = (w) => typeof w === 'string' && /breach|order|fallen|home|company/i.test(w);",
+    "new": "const roomRefused = (w) => typeof w === 'string' && /$^/i.test(w);",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js",
+      "test/net/eliteGates/egz_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-refusal-not-a-sentence",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "const sentenceOf = (w) => `${w.charAt(0).toUpperCase()}${w.slice(1)",
+    "new": "const sentenceOf = (w) => `${w.charAt(0)}${w.slice(1)",
+    "tests": [
+      "test/net/eliteGates/egz_ends_return.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-season-row-unstood",
+    "file": "src/systems/eventTimers.js",
+    "old": "    coming(`elite:season:${season}`, 'elite',",
+    "new": "    void (`elite:season:${season}`, 'elite',",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-season-end-the-next",
+    "file": "src/systems/eventTimers.js",
+    "old": "arenaSeasonEndsS(season) * 1000, null,",
+    "new": "arenaSeasonEndsS(season + 1) * 1000, null,",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-season-of-ms",
+    "file": "src/systems/eventTimers.js",
+    "old": "const season = arenaSeasonOf(Math.floor(now / 1000));",
+    "new": "const season = arenaSeasonOf(now);",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-door-on-every-row",
+    "file": "src/systems/eventTimers.js",
+    "old": "for (const r of rows) if (r.kind === 'elite') r.door = 'board';",
+    "new": "for (const r of rows) if (true) r.door = 'board';",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-door-any-truthy",
+    "file": "src/systems/eventTimers.js",
+    "old": "  if (typeof src?.doors?.board === 'function') {",
+    "new": "  if (src?.doors?.board) {",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-button-never-drawn",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "        if (TIMER_DOOR_TEXT[r.door]) {",
+    "new": "        if (false) {",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-press-past-the-caller",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "if (typeof fn === 'function') door(fn); });",
+    "new": "if (typeof fn === 'function') fn(); });",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-press-with-no-door",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "if (typeof fn === 'function') door(fn); });",
+    "new": "door(fn); });",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-shape-blind-to-the-door",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "r.where, r.detail, r.door ?? null])])]);",
+    "new": "r.where, r.detail])])]);",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ],
+    "equivalent": true,
+    "why": "the shape names everything a row draws, its door with the rest; but eventTimerRows stands the season row only beside the boards' door, so a door that comes or goes moves the rows themselves and the list is drawn again either way"
+  },
+  {
+    "name": "EGZM-door-text",
+    "file": "src/ui/enhanced/enhancedTimers.js",
+    "old": "export const TIMER_DOOR_TEXT = Object.freeze({ board: 'Boards' });",
+    "new": "export const TIMER_DOOR_TEXT = Object.freeze({ board: 'Board' });",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-press-resumes-under-the-boards",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  handoff(fn, (r) => !!r);",
+    "new": "  onAction('resume'); fn();",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-timers-window-never-handed-the-door",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "door: timersDoor, focus: timersFocusIn });   // EG-ZM: a row's door",
+    "new": "focus: timersFocusIn });   // EG-ZM: a row's door",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-start-row-unoffered",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "  if (board) rows.push({ kind: 'board', label: EG_BOARD_TEXT.title });",
+    "new": "  void 0;",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-start-door-unread",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "    rows = egStartRows({ ...o, wager, board: typeof o.board === 'function' });",
+    "new": "    rows = egStartRows({ ...o, wager, board: false });",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-list-left-in-the-slot",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "    if (r.kind === 'board') { shut(); let back = false;",
+    "new": "    if (r.kind === 'board') { let back = false;",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-window-never-back",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "const again = () => { if (!back && !done) { back = true; showMain(); } };",
+    "new": "const again = () => {};",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-window-back-twice",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "const again = () => { if (!back && !done) { back = true; showMain(); } };",
+    "new": "const again = () => { if (!done) { back = true; showMain(); } };",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-window-back-after-its-end",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "const again = () => { if (!back && !done) { back = true; showMain(); } };",
+    "new": "const again = () => { if (!back) { back = true; showMain(); } };",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-none-opened-never-back",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "if (!o.board(again)) again(); return; }",
+    "new": "o.board(again); return; }",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-two-boards-standing",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "    standing?.close();\n    standing = open(",
+    "new": "    standing = open(",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-done-window-holds-the-slot",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "const top = slot.top(); if (top?.done) slot.close(top); return !!slot.mount(w);",
+    "new": "return !!slot.mount(w);",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-live-window-thrown-out",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "const top = slot.top(); if (top?.done) slot.close(top);",
+    "new": "const top = slot.top(); if (top) slot.close(top);",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-close-untold",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "onClosed: () => onClosed?.() });",
+    "new": "onClosed: () => {} });",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-door-mount-ignored",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "    standing = open({ mountWindow, closeWindow: slot.close,",
+    "new": "    standing = open({ closeWindow: slot.close,",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-start-window-no-door",
+    "file": "src/scenes/world.js",
+    "old": "    board: (onClosed) => egBoardDoor(onClosed),",
+    "new": "    board: (onClosed) => egBoardDoor(),",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-timers-no-door",
+    "file": "src/scenes/world.js",
+    "old": "        doors: egClient ? { board: () => egBoardDoor() } : null,",
+    "new": "        doors: null,",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-breach-board-around-the-door",
+    "file": "src/scenes/world.js",
+    "old": "    board: () => egBoardDoor(),   // EG-E2: `/breach board`",
+    "new": "    board: () => openEgBoard({ doc: document, fetchBoard: () => _accountEg.board() }),   // EG-E2: `/breach board`",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js",
+      "test/scenes/eliteGates/egeco_hosts.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-door-slot-not-the-modes",
+    "file": "src/scenes/world.js",
+    "old": "egWindowSlot = { top: () => modes?.topWindow?.() ?? null,",
+    "new": "egWindowSlot = { top: () => null,",
+    "tests": [
+      "test/ui/eliteGates/egz_ends_board.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-clock-a-second-early",
+    "file": "server-account/src/eg.js",
+    "old": ".bind(nowS - EG_STAKE_CLOCK_S, limit).all())",
+    "new": ".bind(nowS - EG_STAKE_CLOCK_S + 1, limit).all())",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-clock-a-second-late",
+    "file": "server-account/src/eg.js",
+    "old": "WHERE state = 'held' AND until <= ?1 ORDER BY",
+    "new": "WHERE state = 'held' AND until < ?1 ORDER BY",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-clock-the-void-window-alone",
+    "file": "server-account/src/eg.js",
+    "old": "export const EG_STAKE_CLOCK_S = EG_VOID_WINDOW_S + EG_RECEIPT_TTL_S;",
+    "new": "export const EG_STAKE_CLOCK_S = EG_VOID_WINDOW_S;",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-void-window-not-the-relays",
+    "file": "server-account/src/eg.js",
+    "old": "export const EG_VOID_WINDOW_S = 7 * 24 * 3600;",
+    "new": "export const EG_VOID_WINDOW_S = 6 * 24 * 3600;",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-settled-stake-spent",
+    "file": "server-account/src/eg.js",
+    "old": "SELECT ez FROM eg_stakes WHERE state = 'held' AND until",
+    "new": "SELECT ez FROM eg_stakes WHERE state != 'spent' AND until",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-key-returned",
+    "file": "server-account/src/eg.js",
+    "old": "UPDATE eg_stakes SET state = 'spent' WHERE state = 'held' AND ez IN",
+    "new": "UPDATE eg_stakes SET state = 'returned' WHERE state = 'held' AND ez IN",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-raced-stake-spent",
+    "file": "server-account/src/eg.js",
+    "old": "UPDATE eg_stakes SET state = 'spent' WHERE state = 'held' AND ez IN",
+    "new": "UPDATE eg_stakes SET state = 'spent' WHERE ez IN",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-letter-unwritten",
+    "file": "server-account/src/eg.js",
+    "old": "FROM eg_stakes WHERE state = 'held' AND rh = 0 AND ez IN",
+    "new": "FROM eg_stakes WHERE state = 'held' AND 0 AND ez IN",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-letter-to-a-rehearsal",
+    "file": "server-account/src/eg.js",
+    "old": "FROM eg_stakes WHERE state = 'held' AND rh = 0 AND ez IN",
+    "new": "FROM eg_stakes WHERE state = 'held' AND 1 AND ez IN",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-raced-stake-told",
+    "file": "server-account/src/eg.js",
+    "old": "FROM eg_stakes WHERE state = 'held' AND rh = 0 AND ez IN",
+    "new": "FROM eg_stakes WHERE rh = 0 AND ez IN",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-letter-holds-the-clock",
+    "file": "server-account/src/eg.js",
+    "old": "INSERT OR IGNORE INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\n      SELECT",
+    "new": "INSERT INTO server_post (id, to_id, batch, sender, subject, body, item, sent_at)\n      SELECT",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-letter-the-breachs-batch",
+    "file": "server-account/src/eg.js",
+    "old": "account, ?2 || ez,",
+    "new": "account, ?2 || b,",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-letter-the-days-unsaid",
+    "file": "server-account/src/eg.js",
+    "old": "replace(CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch'))",
+    "new": "CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN ?7 ELSE ?5 END",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-letter-the-ends-day",
+    "file": "server-account/src/eg.js",
+    "old": "END, '{day}', strftime('%Y-%m-%d', at, 'unixepoch'))",
+    "new": "END, '{day}', strftime('%Y-%m-%d', until, 'unixepoch'))",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-newest-first",
+    "file": "server-account/src/eg.js",
+    "old": "ORDER BY until, ez LIMIT ?2",
+    "new": "ORDER BY until DESC, ez LIMIT ?2",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-page-unbounded",
+    "file": "server-account/src/eg.js",
+    "old": "ORDER BY until, ez LIMIT ?2",
+    "new": "ORDER BY until, ez LIMIT -1",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-count-unsaid",
+    "file": "server-account/src/eg.js",
+    "old": "  return Number(spent?.meta?.changes ?? 0);\n}",
+    "new": "  return 0;\n}",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-quiet-hour-writes",
+    "file": "server-account/src/eg.js",
+    "old": "  if (!due.length) return 0;\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js",
+      "test/net/auditscale.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-letter-words",
+    "file": "server-account/src/eg.js",
+    "old": "  subject: 'A Weir Key spent',",
+    "new": "  subject: 'A Weir Key',",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-job-off-the-hour",
+    "file": "server-account/src/cron.js",
+    "old": "  ['eg-stakes', (ctx) => rounds(() => spendLapsedStakes(ctx.db, ctx.nowS, SWEEP_ROWS), SWEEP_ROWS, ctx.budget)],",
+    "new": "  ['eg-stakes', async () => 0],",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-job-page-of-one",
+    "file": "server-account/src/cron.js",
+    "old": "spendLapsedStakes(ctx.db, ctx.nowS, SWEEP_ROWS), SWEEP_ROWS, ctx.budget)],",
+    "new": "spendLapsedStakes(ctx.db, ctx.nowS, 1), SWEEP_ROWS, ctx.budget)],",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  },
+  {
+    "name": "EGZM-index-unmade",
+    "file": "server-account/migrations/0124_elite_breach.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_eg_stakes_held ON eg_stakes (state, until);",
+    "new": "CREATE INDEX IF NOT EXISTS idx_eg_stakes_held ON eg_stakes (account);",
+    "tests": [
+      "test/net/eliteGates/egz_ends_stake.test.js"
+    ]
+  }
+]

@@ -1,0 +1,382 @@
+[
+  {
+    "name": "VIRT-the-spacers-gap-not-taken-off",
+    "file": "src/ui/virtualRows.js",
+    "old": "    top = spacer(top, above > 0 ? span(0, above) - gap : 0, true);",
+    "new": "    top = spacer(top, above > 0 ? span(0, above) : 0, true);",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "VIRT-the-foot-gap-not-taken-off",
+    "file": "src/ui/virtualRows.js",
+    "old": "    foot = spacer(foot, below < lines ? span(below, lines) - gap : 0, false);",
+    "new": "    foot = spacer(foot, below < lines ? span(below, lines) : 0, false);",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "VIRT-the-window-never-moved",
+    "file": "src/ui/virtualRows.js",
+    "old": "    aim(line(v0 - over) * cols, Math.min(total, (line(v1 + over) + 1) * cols));",
+    "new": "    place();",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "VIRT-the-window-rebuilt-whole-on-every-move",
+    "file": "src/ui/virtualRows.js",
+    "old": "    for (const [i, n] of nodes) if (i < ns || i >= ne) { if (active && n.contains?.(active)) lostFocus = true; n.remove(); nodes.delete(i); }",
+    "new": "    for (const [i, n] of nodes) if (i >= 0) { if (active && n.contains?.(active)) lostFocus = true; n.remove(); nodes.delete(i); }",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "VIRT-the-window-rebuilt-inside-its-margin",
+    "file": "src/ui/virtualRows.js",
+    "old": "    if (aligned && start <= line(v0 - 1) * cols && end >= Math.min(total, (line(v1 + 1) + 1) * cols)) { place(); return false; }",
+    "new": "    if (false) { place(); return false; }",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "VIRT-a-resize-never-measured-again",
+    "file": "src/ui/virtualRows.js",
+    "old": "    if (remeasure || !geo) {",
+    "new": "    if (!geo) {",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "VIRT-an-unmeasurable-list-left-cut-short",
+    "file": "src/ui/virtualRows.js",
+    "old": "      if (!g) { if (!geo) drawAll(); return; }",
+    "new": "      if (!g) return;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "VIRT-a-short-list-windowed",
+    "file": "src/ui/virtualRows.js",
+    "old": "  if (total < min) {",
+    "new": "  if (total < 0) {",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "VIRT-the-scroll-never-let-go",
+    "file": "src/ui/virtualRows.js",
+    "old": "      for (const s of scrollers ?? []) s.removeEventListener('scroll', onScroll);",
+    "new": "      for (const s of []) s.removeEventListener('scroll', onScroll);",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "VIRT-the-fitted-bound-by-the-order-made",
+    "file": "src/ui/textureCanvas.js",
+    "old": "  if (fitted.has(key)) { const pic = fitted.get(key); fitted.delete(key); fitted.set(key, pic); hear(fitWaiting.get(key), onReady); return pic; }",
+    "new": "  if (fitted.has(key)) { const pic = fitted.get(key); hear(fitWaiting.get(key), onReady); return pic; }",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "VIRT-the-fitted-bound-back-at-600",
+    "file": "src/ui/textureCanvas.js",
+    "old": "export const FIT_CACHE_MAX = 2000;",
+    "new": "export const FIT_CACHE_MAX = 600;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "VIRT-a-landing-repaints-the-pack",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "const _tiles = landingTiles((t, landed) => itemTile(t.line, t.box, landed, t.snap), { alive: () => !!host });",
+    "new": "const _tiles = landingTiles((t) => itemTile(t.line, t.box, render, t.snap), { alive: () => !!host });",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "VIRT-the-tile-left-on-its-initials",
+    "file": "src/ui/enhanced/landingTiles.js",
+    "old": "      tile.replaceWith(fresh);",
+    "new": "      void fresh;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "VIRT-the-wear-bar-lost",
+    "file": "src/ui/enhanced/landingTiles.js",
+    "old": "      if (bar) fresh.append(bar);",
+    "new": "      void bar;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "VIRT-the-lines-kept-across-passes",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  _lineEpoch++;   // VIRT: a pass reads every item as it stands now",
+    "new": "  void _lineEpoch;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "VIRT-the-hit-put-back-as-nothing",
+    "file": "src/ui/textureCanvas.js",
+    "old": "  if (fitted.has(key)) { const pic = fitted.get(key); fitted.delete(key); fitted.set(key, pic); hear(fitWaiting.get(key), onReady); return pic; }",
+    "new": "  if (fitted.has(key)) { const pic = fitted.get(key); fitted.delete(key); fitted.set(key, null); hear(fitWaiting.get(key), onReady); return pic; }",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-bytes-unbounded",
+    "file": "src/ui/textureCanvas.js",
+    "old": "    if (fitted.size <= FIT_CACHE_MAX && fittedBytes <= FIT_CACHE_BYTES) break;",
+    "new": "    if (fitted.size <= FIT_CACHE_MAX) break;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-no-trim-at-a-landing",
+    "file": "src/ui/textureCanvas.js",
+    "old": "      trimFitted();   // AUDIT VIRT: a picture put out while it was made comes back as it lands - the bound kept then too",
+    "new": "      void 0;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-empty-entry-kept",
+    "file": "src/ui/textureCanvas.js",
+    "old": "    if (!url) { if (fitted.get(key) === null) fitted.delete(key); fitWaiting.delete(key); wakeAll(wake); return; }",
+    "new": "    if (!url) { fitWaiting.delete(key); return; }",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-fitted-cache-blind-to-the-mods",
+    "file": "src/ui/textureCanvas.js",
+    "old": "  if (_fittedGen !== iconsGeneration()) { fitted.clear(); fitWaiting.clear(); fittedBytes = 0; _fittedGen = iconsGeneration(); }",
+    "new": "  if (_fittedGen !== iconsGeneration()) { _fittedGen = iconsGeneration(); }",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-old-sets-make-kept",
+    "file": "src/ui/textureCanvas.js",
+    "old": "      if (gen !== _fittedGen) { wakeAll(wake); return; }   // made from a mod set since replaced: not kept, asked again",
+    "new": "      void gen;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-scroll-heard-and-never-followed",
+    "file": "src/ui/virtualRows.js",
+    "old": "  const onScroll = () => { if (queued || gone) return; queued = true; later(() => { queued = false; sync(); }); };",
+    "new": "  const onScroll = () => { if (queued || gone) return; queued = true; later(() => { queued = false; }); };",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-browsers-anchor-left-on",
+    "file": "src/ui/virtualRows.js",
+    "old": "  container.style.overflowAnchor = 'none';",
+    "new": "  void 0;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-window-past-the-last-piece",
+    "file": "src/ui/virtualRows.js",
+    "old": "    aim(line(v0 - over) * cols, Math.min(total, (line(v1 + over) + 1) * cols));",
+    "new": "    aim(line(v0 - over) * cols, (line(v1 + over) + 1) * cols);",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-partial-line-not-counted",
+    "file": "src/ui/virtualRows.js",
+    "old": "    const below = Math.ceil(end / cols);",
+    "new": "    const below = Math.floor(end / cols);",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-margins-share-cut",
+    "file": "src/ui/virtualRows.js",
+    "old": "const OVERSCAN = 0.5;",
+    "new": "const OVERSCAN = 0;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-margins-floor-cut",
+    "file": "src/ui/virtualRows.js",
+    "old": "const OVERSCAN_LINES = 2;",
+    "new": "const OVERSCAN_LINES = 1;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-boxes-round-it-ignored",
+    "file": "src/ui/virtualRows.js",
+    "old": "      for (let a = container; a && a.nodeType === 1 && a !== doc?.body && a !== doc?.documentElement; a = a.parentElement) {",
+    "new": "      for (let a = container; a && a.nodeType === 1 && a !== doc?.body && a !== doc?.documentElement; a = null) {",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-no-stop-at-the-fixed-box",
+    "file": "src/ui/virtualRows.js",
+    "old": "        if (cs?.position === 'fixed') break;",
+    "new": "        void 0;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-hidden-list-never-aimed",
+    "file": "src/ui/virtualRows.js",
+    "old": "    if (!(hi > lo) && own) { const r = own.getBoundingClientRect(); return [r.top, r.bottom]; }",
+    "new": "    void own;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-focus-dropped-to-the-page",
+    "file": "src/ui/virtualRows.js",
+    "old": "    if (lostFocus) keepFocus();",
+    "new": "    void lostFocus;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-caller-never-told",
+    "file": "src/ui/virtualRows.js",
+    "old": "    onAim?.();",
+    "new": "    void onAim;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-a-misaligned-window-stands",
+    "file": "src/ui/virtualRows.js",
+    "old": "    const aligned = start % cols === 0 && (end === total || end % cols === 0);",
+    "new": "    const aligned = true;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ],
+    "equivalent": true,
+    "why": "Belt and braces, kept on purpose. A window measured again on new columns (a resize) is covered by its old index range only near the list's top, where its start is 0 and so already aligned: fewer columns put the old start past the new band's top, more columns put the old end above its foot. No layout this pane has reaches a covered, misaligned window; the check stays as the law's own guard against one that might."
+  },
+  {
+    "name": "AUDIT-VIRT-the-still-waiting-tiles-thrown-away",
+    "file": "src/ui/enhanced/landingTiles.js",
+    "old": "      if (!fresh.classList.contains('has-icon')) continue;   // its picture is still being made - the pass is every waiting tile's, and another picture woke it",
+    "new": "      void 0;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-a-frame-a-landing",
+    "file": "src/ui/enhanced/landingTiles.js",
+    "old": "    if (queued) return;",
+    "new": "    void queued;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-window-aimed-before-the-scroll-is-given-back",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    syncLists({ draw: false });",
+    "new": "    void 0;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-refill-aimed-at-once",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  v.sync({ draw: false });\n  if (kept) list.scrollTop = kept;\n  v.sync();",
+    "new": "  v.sync();",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-card-left-beside-nothing",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "const rowsMoved = () => { if (tipRow && tipRow.isConnected === false) hideTip(); };",
+    "new": "const rowsMoved = () => {};",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-old-lists-kept-on-a-repaint",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    dropLists();   // VIRT: the old DOM's windows and waiting tiles go with it",
+    "new": "    void 0;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-old-window-kept-on-a-refill",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  dropLists(list);   // VIRT: a refill (the filter's) lets go of the window it replaces",
+    "new": "  void 0;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-line-read-on-every-key",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (had && had.epoch === _lineEpoch) return had.line;",
+    "new": "  void had;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-VIRT-the-lists-kept-at-unmount",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "      dropLists();   // VIRT: the windows' scroll listeners, and the tiles that will never be drawn into",
+    "new": "      void 0;",
+    "tests": [
+      "test/systems/virt_pack.test.js"
+    ]
+  }
+]

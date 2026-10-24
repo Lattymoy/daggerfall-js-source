@@ -5,7 +5,7 @@
     "old": "    if (ship.clock - since < RUN_OUT_S || err > window) return;",
     "new": "    if (err > window) return;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "{ ship.runOut.set(side, ship.clock); out.runOuts.push(side); }",
     "new": "{ ship.runOut.set(side, ship.clock); }",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    ship.guns.fired(side);\n    ship.runOut.delete(side);",
     "new": "    ship.guns.fired(side);",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (Math.sign(rate) === Math.sign(err) || Math.abs(rate) < 1e-6) return Infinity;",
     "new": "  if (Math.sign(rate) !== Math.sign(err) || Math.abs(rate) < 1e-6) return Infinity;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  const rate = ((dz * rx - dx * rz) / d2 - (ship.yawRate ?? 0)) / DEG;",
     "new": "  const rate = ((dz * rx - dx * rz) / d2) / DEG;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "toLead.dist <= reach * RUN_OUT_REACH &&",
     "new": "toLead.dist <= reach * 1.02 &&",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (!loaded || !inReach || err > RUN_IN_DEG || !clear || ship.clock - since > RUN_OUT_S + RUN_OUT_WAIT_S) {",
     "new": "    if (!loaded || !inReach || err > RUN_IN_DEG || !clear) {",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (!loaded || !inReach || err > RUN_IN_DEG || !clear || ship.clock - since > RUN_OUT_S + RUN_OUT_WAIT_S) {",
     "new": "    if (!loaded || !inReach || !clear || ship.clock - since > RUN_OUT_S + RUN_OUT_WAIT_S) {",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      if ((ship.runIn.get(side) ?? -Infinity) > ship.clock - RUN_IN_S) return;\n",
     "new": "",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "halfLen * Math.abs(Math.sin(eyaw - los)) + b.halfWidth * Math.abs(Math.cos(eyaw - los));",
     "new": "halfLen * Math.abs(Math.cos(eyaw - los)) + b.halfWidth * Math.abs(Math.sin(eyaw - los));",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  const miss = extent * (FIRE_EXTENT_K + FIRE_EXTENT_SKILL * (1 - ship.cls.skill));",
     "new": "  const miss = extent * (FIRE_EXTENT_K + FIRE_EXTENT_SKILL * ship.cls.skill);",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  return Math.min(bear, Math.max(spread, Math.asin(Math.min(1, miss / dist)) / DEG));",
     "new": "  return Math.min(bear, Math.asin(Math.min(1, miss / dist)) / DEG);",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  return Math.min(bear, Math.max(spread, Math.asin(Math.min(1, miss / dist)) / DEG));",
     "new": "  return Math.max(spread, Math.asin(Math.min(1, miss / dist)) / DEG);",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "const extent = eyaw == null ? (halfLen + b.halfWidth) * 2 / Math.PI :",
     "new": "const extent = eyaw == null ? b.halfWidth :",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "Math.hypot(v[0], v[2]) > 0.3 ? Math.atan2(v[0], v[2]) : null;",
     "new": "null;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  return y >= band[0] - 0.25 && y <= band[1];",
     "new": "  return true;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "  return y >= band[0] - 0.25 && y <= band[1];",
     "new": "  return y >= band[0] - 0.25;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    if (crosses) return true;",
     "new": "    if (crosses) return false;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    if (c.id === ship.id || c.id === enemy.id || c.gone || hostile(ship, c, world)) continue;",
     "new": "    if (c.id === ship.id || c.id === enemy.id || c.gone) continue;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "const hl = (hb.bowZ - hb.aftZ) / 2 + FRIEND_CLEAR, hw = hb.halfWidth + FRIEND_CLEAR;",
     "new": "const hl = (hb.bowZ - hb.aftZ) / 2 + FRIEND_CLEAR * 4, hw = hb.halfWidth + FRIEND_CLEAR * 4;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -185,16 +185,16 @@
     "old": "    const aimY = rig ? (rig[0] + rig[1]) / 2 : world.seaY + build.top * AIM_FREEBOARD;",
     "new": "    const aimY = rig ? (rig[0] + rig[1]) / 2 : world.seaY;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
     "name": "NAV1G-chain-for-the-hull",
     "file": "src/systems/naval/navalAI.js",
-    "old": "    const rig = bat.gun === 'chain' && build.rig.length ? rigBand(build).map((y) => world.seaY + y) : null;",
+    "old": "    const rig = shot === 'chain' && build.rig.length ? rigBand(build).map((y) => world.seaY + y) : null;",
     "new": "    const rig = null;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "sails: clamp(pace / best, PRESENT_SAILS, 1), sailable: true, track: true };",
     "new": "sails: PRESENT_SAILS, sailable: true, track: true };",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "bat.gun, BEAR_DEG) ? NO_BEAR_S : 0;",
     "new": "bat.gun, BEAR_DEG) ? 0 : 0;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": " && d >= Math.max(range * POINT_BLANK, deadZone) && holdsLead(side)) return 0;",
     "new": " && d >= deadZone && holdsLead(side)) return 0;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "  const cmd = clamp(err / (4 * tau) + lead, -maxRate, maxRate);",
     "new": "  const cmd = clamp(err / (4 * tau), -maxRate, maxRate);",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "      s.hull = Math.max(Math.min(s.hull, floor), s.hull - Math.max(0, hurt.hull | 0));",
     "new": "      s.hull = Math.max(0, s.hull - Math.max(0, hurt.hull | 0));",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "      s.hull = Math.max(Math.min(s.hull, floor), s.hull - Math.max(0, hurt.hull | 0));",
     "new": "      s.hull = Math.max(floor, s.hull - Math.max(0, hurt.hull | 0));",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "{ s.state = SHIP_STATES.struck; douse(); }",
     "new": "{ s.state = SHIP_STATES.struck; }",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "    if (s.fires.length < FIRE_STACK) { s.fires.push(f); return; }",
     "new": "    { s.fires.push(f); return; }",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "    if (harm(s.fires[low]) < harm(f)) s.fires[low] = f;",
     "new": "    s.fires[low] = f;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "  return kind === 'barrel' || kind === 2 ?",
     "new": "  return kind === 2 ?",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -293,8 +293,8 @@
     "old": "          s.sail = Math.max(0, s.sail - FIRE_SAIL * burn);\n",
     "new": "",
     "tests": [
-      "test/navaudit_guns.test.js",
-      "test/nav_a_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js",
+      "test/systems/naval/nav_a_guns.test.js"
     ]
   },
   {
@@ -303,7 +303,7 @@
     "old": "    for (const r of rigsCrossed(targets, a, next, radius, b, firstT)) {",
     "new": "    for (const r of []) {",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -312,7 +312,7 @@
     "old": " || !t.rig?.length || ball.rigged?.has(t.id)) continue;",
     "new": " || !t.rig?.length) continue;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -321,7 +321,7 @@
     "old": "    const ship = nearestHit(targets, a, next, radius, b.shooter);",
     "new": "    const ship = nearestHit(deps.targets(), a, next, radius, b.shooter);",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -330,17 +330,17 @@
     "old": "      if (w) { f.pos[0] += (w[0] ?? 0) * FLOAT_DRIFT * span;",
     "new": "      if (false) { f.pos[0] += (w[0] ?? 0) * FLOAT_DRIFT * span;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
     "name": "NAV1G-gone-unsaid",
     "file": "src/systems/naval/navalShots.js",
-    "old": "      if (age > BALL_LIFE) { emit({ type: 'gone', volley: b.volley, shooter: b.shooter, gun: b.gun }); continue; }",
-    "new": "      if (age > BALL_LIFE) continue;",
+    "old": "passTold(b, id); emit({ type: 'gone', volley: b.volley, shooter: b.shooter, gun: b.gun }); continue; }",
+    "new": "passTold(b, id); continue; }",
     "tests": [
-      "test/navaudit_guns.test.js",
-      "test/nav_a_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js",
+      "test/systems/naval/nav_a_guns.test.js"
     ]
   },
   {
@@ -349,7 +349,7 @@
     "old": "    return { delay, p0: [p0[0] + (c[0] ?? 0) * delay, p0[1] + (c[1] ?? 0) * delay, p0[2] + (c[2] ?? 0) * delay],",
     "new": "    return { delay, p0: [...p0],",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -358,7 +358,7 @@
     "old": "    step(dt) { if (braced) return; for",
     "new": "    step(dt) { for",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -367,7 +367,7 @@
     "old": "  if (!look && Number.isFinite(targetY)) layDy = c[1] - targetY;\n",
     "new": "",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -376,7 +376,7 @@
     "old": "  long: Object.freeze({ speed: 62, minEl: -8,",
     "new": "  long: Object.freeze({ speed: 62, minEl: -3,",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -385,115 +385,115 @@
     "old": "  heavy: Object.freeze({ speed: 68, minEl: -6, maxEl: 15,",
     "new": "  heavy: Object.freeze({ speed: 56, minEl: -2, maxEl: 13,",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
     "name": "NAV1G-the-trade-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!stray && (!striker || !kindred(striker, s))) provoke(s, by, clock);",
     "new": "    if (!stray) provoke(s, by, clock);",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
     "name": "NAV1G-the-lawful-pair-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "  const kindred = (a, b) => a.cls.faction === b.cls.faction || (!!NAVAL_FACTIONS[a.cls.faction]?.lawful && !!NAVAL_FACTIONS[b.cls.faction]?.lawful);",
     "new": "  const kindred = (a, b) => a.cls.faction === b.cls.faction;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
     "name": "NAV1G-the-grace-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const floor = entry.struck && entry.struck.by === by && clock - entry.struck.at <= STRUCK_GRACE_S ? 1 : 0;",
     "new": "    const floor = 0;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
     "name": "NAV1G-fire-on-every-zone",
-    "file": "src/scenes/navalHost.js",
-    "old": "    const fire = e.type === 'blast' ? 'barrel' : zone === 'hull' && random() < FIRE_CHANCE;",
-    "new": "    const fire = e.type === 'blast' ? 'barrel' : random() < FIRE_CHANCE;",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const fire = e.type === 'blast' ? 'barrel' : (zone === 'hull' || (zone === 'rig' && shotRigFire(e.shot))) && random() < shotFireChance(e.shot, FIRE_CHANCE, gun.fireK);",
+    "new": "    const fire = e.type === 'blast' ? 'barrel' : random() < shotFireChance(e.shot, FIRE_CHANCE, gun.fireK);",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
     "name": "NAV1G-the-warning-not-through-the-flight",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    let best = inbound.length ? { name: inbound[0].name, side: inbound[0].side, t: 0 } : null;",
     "new": "    let best = null;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
     "name": "NAV1G-every-run-out-warns",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      for (const [side, since] of s.runOut) {\n        if (!bearsOn(s, side, p)) continue;",
     "new": "      for (const [side, since] of s.runOut) {",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
     "name": "NAV1G-the-tell-unheard",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    sound(NAVAL_SFX.runout, mid, 1);",
     "new": "    void mid;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
     "name": "NAV1G-the-glint-mirrored",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      for (const m of bat.muzzles) effects.glint(toWorld(pose, m), k, d);",
     "new": "      for (const m of bat.muzzles) effects.glint(toWorld(pose, [-m[0], m[1], m[2]]), k, d);",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
     "name": "NAV1G-the-bits-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        const on = (w.runOut & (1 << i)) !== 0;",
     "new": "        const on = false;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
     "name": "NAV1G-the-tally-early",
-    "file": "src/scenes/navalHost.js",
-    "old": "    if (t.ended >= t.balls) {",
-    "new": "    if (t.ended >= t.balls - 1) {",
+    "file": "src/scenes/naval/navalTally.js",
+    "old": "      if (t.ended >= t.balls) {",
+    "new": "      if (t.ended >= t.balls - 1) {",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
     "name": "NAV1G-a-miss-a-hit",
-    "file": "src/scenes/navalHost.js",
-    "old": "    } else if (e.type === 'splash' || e.type === 'land' || e.type === 'gone') t.ended++;",
-    "new": "    } else if (e.type === 'splash' || e.type === 'land' || e.type === 'gone') { t.ended++; t.hits++; }",
+    "file": "src/scenes/naval/navalTally.js",
+    "old": "      } else if (e.type === 'splash' || e.type === 'land' || e.type === 'gone') t.ended++;",
+    "new": "      } else if (e.type === 'splash' || e.type === 'land' || e.type === 'gone') { t.ended++; t.hits++; }",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
     "name": "NAV1G-the-warning-unsaid",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const warn = model.incoming ? { text: 'Broadside', key: touch ? 'Brace' : bracePress } : null;",
     "new": "  const warn = null;",
     "tests": [
-      "test/navaudit_guns.test.js"
+      "test/systems/naval/navaudit_guns.test.js"
     ]
   },
   {
@@ -502,7 +502,7 @@
     "old": "sh.fire ? 1 : 0, (sh.runOut | 0) & 15,",
     "new": "sh.fire ? 1 : 0, 0,",
     "tests": [
-      "test/nav_g_online.test.js"
+      "test/systems/naval/nav_g_online.test.js"
     ]
   },
   {
@@ -511,7 +511,7 @@
     "old": "(w.length !== 16 && w.length !== 17 && w.length !== 19)",
     "new": "(w.length !== 17 && w.length !== 19)",
     "tests": [
-      "test/nav_g_online.test.js"
+      "test/systems/naval/nav_g_online.test.js"
     ]
   },
   {
@@ -520,7 +520,7 @@
     "old": "f: fire === 'barrel' ? 2 : fire ? 1 : 0,",
     "new": "f: fire ? 1 : 0,",
     "tests": [
-      "test/nav_g_online.test.js"
+      "test/systems/naval/nav_g_online.test.js"
     ]
   },
   {
@@ -529,8 +529,8 @@
     "old": "  [NAVAL_SFX.runout]: Object.freeze({ refDistance: 24, maxDistance: 900 }),\n",
     "new": "",
     "tests": [
-      "test/navaudit_guns.test.js",
-      "test/nav_e_sounds.test.js"
+      "test/systems/naval/navaudit_guns.test.js",
+      "test/tooling/nav_e_sounds.test.js"
     ]
   },
   {
@@ -539,7 +539,7 @@
     "old": "    const dir = Math.abs(brg) < AVOID_HEAD_ON * DEG ? 1 : side > 0 ? -1 : 1;",
     "new": "    const dir = Math.abs(brg) < 112.5 * DEG ? 1 : side > 0 ? -1 : 1;",
     "tests": [
-      "test/navaudit_captains.test.js"
+      "test/systems/naval/navaudit_captains.test.js"
     ]
   }
 ]

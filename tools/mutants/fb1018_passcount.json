@@ -1,0 +1,182 @@
+[
+  {
+    "name": "PASS-COUNT-view-unsummed",
+    "file": "src/ui/fpsCounter.js",
+    "old": "sumView += st.viewDraws ?? 0; ",
+    "new": "",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "the view out counted nowhere on the screen - the report's draws 67 over a city drawn through the glass"
+  },
+  {
+    "name": "PASS-COUNT-shadow-unsummed",
+    "file": "src/ui/fpsCounter.js",
+    "old": "sumShadow += st.shadowDraws ?? 0; ",
+    "new": "",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "the shadow maps' replays left off"
+  },
+  {
+    "name": "PASS-COUNT-means-carried",
+    "file": "src/ui/fpsCounter.js",
+    "old": "      sumView = 0; sumShadow = 0;   // PASS-COUNT",
+    "new": "",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "a second's means carried into the next - the count grows with play"
+  },
+  {
+    "name": "PASS-COUNT-shell-unread",
+    "file": "src/ui/fpsCounter.js",
+    "old": "paceLine(!!globalThis.window?.daggerShell?.framesLifted, frameCapFps())",
+    "new": "paceLine(false, frameCapFps())",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "VSync off never said - a 1000 fps frame read as a display's"
+  },
+  {
+    "name": "PASS-COUNT-cap-unread",
+    "file": "src/ui/fpsCounter.js",
+    "old": "paceLine(!!globalThis.window?.daggerShell?.framesLifted, frameCapFps())",
+    "new": "paceLine(!!globalThis.window?.daggerShell?.framesLifted, 0)",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "the cap never said"
+  },
+  {
+    "name": "PASS-COUNT-line-at-defaults",
+    "file": "src/ui/fpsCounter.js",
+    "old": "  if (!lifted && !(cap > 0)) return '';",
+    "new": "",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "a pace line at the defaults - noise on every counter, and every older pin of its last line broken"
+  },
+  {
+    "name": "PASS-COUNT-shadow-never-written",
+    "file": "src/render/renderer.js",
+    "old": "    this.stats.shadowDraws = (sp.stats.sunDraws | 0) + (sp.stats.pointDraws | 0);",
+    "new": "",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "the maps' replays counted nowhere"
+  },
+  {
+    "name": "PASS-COUNT-shadow-not-zeroed",
+    "file": "src/render/renderer.js",
+    "old": "s.bbCulled = 0; s.shadowDraws = 0;   // PERF-CROWD2; PASS-COUNT",
+    "new": "s.bbCulled = 0;   // PERF-CROWD2; PASS-COUNT",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "a frame with no shadow render carries the last one's count"
+  },
+  {
+    "name": "PASS-COUNT-view-uncounted",
+    "file": "src/render/renderer.js",
+    "old": "      this._rwViewDraws = (begun ? this.stats.draws : 0) + panes;\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "the view out's draws never reach the room's frame"
+  },
+  {
+    "name": "PASS-COUNT-panes-uncounted",
+    "file": "src/render/renderer.js",
+    "old": "this._rwViewDraws = (begun ? this.stats.draws : 0) + panes;",
+    "new": "this._rwViewDraws = (begun ? this.stats.draws : 0);",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "AUDIT FB1018 L2-3: the panes' depth draws, zeroed by the view out's own begin, uncounted"
+  },
+  {
+    "name": "PASS-COUNT-throw-uncounted",
+    "file": "src/render/renderer.js",
+    "old": "this._rwViewDraws = (begun ? this.stats.draws : 0) + panes;",
+    "new": "this._rwViewDraws = (drew ? this.stats.draws : 0) + panes;",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "AUDIT FB1018 L2-4: a view out that threw mid-street counts nothing it sent"
+  },
+  {
+    "name": "PASS-COUNT-view-not-taken",
+    "file": "src/render/renderer.js",
+    "old": "    s.viewDraws = this._rwOutside ? 0 : this._rwViewDraws;",
+    "new": "    s.viewDraws = 0;",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "the room's frame never takes the view out's count"
+  },
+  {
+    "name": "PASS-COUNT-view-not-reset",
+    "file": "src/render/renderer.js",
+    "old": "    this._rwViewDraws = 0;   // PASS-COUNT: the view out's draws, taken by the room's frame",
+    "new": "    void 0;   // PASS-COUNT: the view out's draws, taken by the room's frame",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "a cached view out reads the last redraw's count for every frame after"
+  },
+  {
+    "name": "PASS-COUNT-shadow-threshold",
+    "file": "src/ui/fpsCounter.js",
+    "old": "(shadow >= 0.5 ? `  shadow ${Math.round(shadow)}` : '')",
+    "new": "(shadow > 0 ? `  shadow ${Math.round(shadow)}` : '')",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "AUDIT FB1018 L4-3: \"shadow 0\" printed for a second whose maps drew under half a replay a frame"
+  },
+  {
+    "name": "PASS-COUNT-shadow-nullish",
+    "file": "src/ui/fpsCounter.js",
+    "old": "sumShadow += st.shadowDraws ?? 0; ",
+    "new": "sumShadow += st.shadowDraws; ",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "AUDIT FB1018 L4-3: a stats object without the field (a host before PASS-COUNT, a stub) makes the probe's mean NaN"
+  },
+  {
+    "name": "PASS-COUNT-view-nullish",
+    "file": "src/ui/fpsCounter.js",
+    "old": "sumView += st.viewDraws ?? 0; ",
+    "new": "sumView += st.viewDraws; ",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "AUDIT FB1018 L4-3: the same for the view out"
+  },
+  {
+    "name": "PASS-COUNT-probe-view-null",
+    "file": "src/ui/fpsCounter.js",
+    "old": "viewDraws: samples ? sumView / samples : null, ",
+    "new": "viewDraws: null, ",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "AUDIT FB1018 L4-3: the probe (window.__fpsStats, tools/perfProbe.mjs) never carries the view out"
+  },
+  {
+    "name": "PASS-COUNT-probe-shadow-null",
+    "file": "src/ui/fpsCounter.js",
+    "old": "shadowDraws: samples ? sumShadow / samples : null,   // PASS-COUNT",
+    "new": "shadowDraws: null,   // PASS-COUNT",
+    "tests": [
+      "test/systems/fb1018_passcount.test.js"
+    ],
+    "why": "AUDIT FB1018 L4-3: the probe never carries the shadow maps"
+  }
+]

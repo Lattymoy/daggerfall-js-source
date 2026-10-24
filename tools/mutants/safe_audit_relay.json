@@ -1,0 +1,326 @@
+[
+  {
+    "name": "AUDIT-SAFE-RELAY-4-the-ban-never-closes",
+    "file": "server/src/index.js",
+    "old": "      if (bn) this._banClose(other);\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js",
+      "test/net/safety/safe_relay.test.js"
+    ],
+    "note": "A ban that only silences leaves a banned socket in the room, posing and hearing everything (RELAY-4)."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-4-no-hello-refused",
+    "file": "server/src/index.js",
+    "old": "    if (!ban || !(ban.bn > nowS) || ban.i < (Number.isSafeInteger(ti) ? ti : 0)) return false;",
+    "new": "    return false;",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "A room that refuses no banned hello lets a token minted before the ban straight back in."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-4-a-newer-token-refused",
+    "file": "server/src/index.js",
+    "old": "|| ban.i < (Number.isSafeInteger(ti) ? ti : 0)) return false;",
+    "new": ") return false;",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "A token minted after the ban is the service's word that the account plays again - refusing it keeps an unbanned player out of every room the unban never reached."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-4-a-lifted-ban-refusing",
+    "file": "server/src/index.js",
+    "old": "    if (!ban || !(ban.bn > nowS) ||",
+    "new": "    if (!ban ||",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js",
+      "test/net/safety/safe_relay.test.js"
+    ],
+    "note": "A ban lifted (bn 0) must refuse nothing."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-4-the-bus-asks-no-ban",
+    "file": "server/src/index.js",
+    "old": "    if (await this._bannedHello(vws, a.sub, ti, now)) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "The hub's bans are the bus's; a shard's hello the bus never asks about them is a banned account back in the hub."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-4-the-door-reaps-nothing",
+    "file": "server/src/index.js",
+    "old": "    const ok = await this._takeOrder(body?.order, Date.now(), ['ban', 'mute', 'staffcut'], true);   // STAFF-PANEL2-FIX: and a staff member cut off\n    await this._reap();\n",
+    "new": "    const ok = await this._takeOrder(body?.order, Date.now(), ['ban', 'mute', 'staffcut'], true);   // STAFF-PANEL2-FIX: and a staff member cut off\n",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "The law door is no socket's, so nothing reaps after it: the sockets a ban closed there never say their leave."
+  },
+  {
+    "name": "AUDIT-SAFE-CLIENT-2-banned-before-law",
+    "file": "server/src/index.js",
+    "old": "      if (law) this._send(other, law);\n      if (!ban) this._setAttach(other, { ...b, mu: c.mu });\n      this._send(other, told);\n",
+    "new": "      if (!ban) this._setAttach(other, { ...b, mu: c.mu });\n      this._send(other, told);\n      if (law) this._send(other, law);\n",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "The client leaves every room on `banned`; said before `law`, the order never reaches its hand to be carried on (CLIENT-2)."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-5-the-ban-in-the-mutes-row",
+    "file": "server/src/index.js",
+    "old": "    const book = ban ? this._bans : this._orders;",
+    "new": "    const book = this._orders;",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "One row for both: a newer unmute lifts a ban, an unban lifts a standing mute."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-6-the-door-reads-no-token-age",
+    "file": "server/src/index.js",
+    "old": "      if (b.sub !== c.s || b.gio > c.i) continue;   // AUDIT SAFE RELAY-6: a token minted after the order is newer than it",
+    "new": "      if (b.sub !== c.s) continue;",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "An order older than the socket's own token overrides the newer word that token carries."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-6-MOD1-reads-no-token-age",
+    "file": "server/src/index.js",
+    "old": "        if (b.sub !== sub || b.gio > i) continue;   // AUDIT SAFE RELAY-6: a socket whose token was minted after the order already carries the truth (`_takeOrder`'s law)",
+    "new": "        if (b.sub !== sub) continue;",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "The same, on MOD1's arm - the path a client carrying an order it was handed earlier takes."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-7-bans-never-written",
+    "file": "server/src/index.js",
+    "old": "    if (ban) await this._saveBans(nowS);\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "A ban in memory alone is forgotten at the room's next wake."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-7-bans-never-read-back",
+    "file": "server/src/index.js",
+    "old": "      try { kept = await this.state.storage.get(BANS_KEY); }",
+    "new": "      try { kept = await Promise.resolve(null); }",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "Written and never read: the woken room lets a pre-ban token back in."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-8-the-meter-by-socket",
+    "file": "server/src/index.js",
+    "old": "    const k = a.sub ?? a.id;\n",
+    "new": "    const k = a.id;\n",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js",
+      "test/net/safety/safe_relay.test.js"
+    ],
+    "note": "A meter that is not the account's lets K sockets (or a reconnect) say K lines a gap."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-9-the-stamp-before-the-budget",
+    "file": "server/src/index.js",
+    "old": "    const room = tokenGate(this._roomChat, now, CHAT_ROOM_HZ_MAX);",
+    "new": "    if (words) await this._stamped(ws, a, ch, frame);\n    const room = tokenGate(this._roomChat, now, CHAT_ROOM_HZ_MAX);",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "A line signed before the room's budget is a signature for every line the room then drops."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-9-the-meter-before-the-budget",
+    "file": "server/src/index.js",
+    "old": "    if (wait > 0) { this._send(ws, JSON.stringify({ t: 'slowed', ms: Math.ceil(wait) })); return; }\n",
+    "new": "    if (wait > 0) { this._send(ws, JSON.stringify({ t: 'slowed', ms: Math.ceil(wait) })); return; }\n    if (words) this._newVoiceSpends(a, now);\n",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "A new voice's gap spent by a line the room's budget dropped runs from a line nobody heard."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-10-the-body-unbounded",
+    "file": "server/src/index.js",
+    "old": "  const raw = await bodyCapped(request, LAW_BODY_MAX);",
+    "new": "  const raw = new Uint8Array(await request.arrayBuffer());",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "A stranger's megabyte read and parsed whole before the door refuses it."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-10-both-kinds-verified",
+    "file": "server/src/index.js",
+    "old": "  const r = await verifyOrder(order, key, { subtle: crypto.subtle, nowS, kind });\n",
+    "new": "  const r = (await verifyOrder(order, key, { subtle: crypto.subtle, nowS, kind: 'ban' })).ok ? await verifyOrder(order, key, { subtle: crypto.subtle, nowS, kind: 'ban' }) : await verifyOrder(order, key, { subtle: crypto.subtle, nowS, kind: 'mute' });\n",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "Two verifies for every forgery and every mute - the door's price doubled."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-10-replays-wake-the-hub",
+    "file": "server/src/index.js",
+    "old": "    lawSeen.set(sig, r.claims.e);\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "An order the hub took, posted again, wakes the hub again."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-13a-the-status-for-the-hubs-word",
+    "file": "server/src/index.js",
+    "old": "    if (said?.ok !== true) return json({ ok: false, error: 'not taken' }, 409);\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "The Worker answers ok off the HTTP status while the hub said it took nothing."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-11-the-guest-unmarked",
+    "file": "server/src/index.js",
+    "old": "...(chat && who.kind === 'guest' ? { gu: 1 } : {}), ",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "A guest older than SPROUT_S, unpaced - the arc's law is \"a guest, or an account younger than SPROUT_S\"."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-11-the-mark-unread",
+    "file": "server/src/index.js",
+    "old": "  _newVoice(a) { return a.gu === 1 || (Array.isArray(a.glyphs) && a.glyphs.includes('sprout')); }",
+    "new": "  _newVoice(a) { return Array.isArray(a.glyphs) && a.glyphs.includes('sprout'); }",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "The guest is marked and the pace never asks the mark."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-SAFE6-every-voice-slowed",
+    "file": "server/src/index.js",
+    "old": "  _newVoice(a) { return a.gu === 1 || (Array.isArray(a.glyphs) && a.glyphs.includes('sprout')); }",
+    "new": "  _newVoice(a) { void a; return true; }",
+    "tests": [
+      "test/net/safety/safe_relay.test.js",
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "SAFE6-every-voice-slowed (safe.json), re-aimed: a registered account without the sprout is never slowed."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-SAFE2-the-relay-stamps-nothing",
+    "file": "server/src/index.js",
+    "old": "    if (words) frame = await this._stamped(ws, a, ch, frame);   // SAFE2: the relay's stamp on what it relays\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_relay.test.js"
+    ],
+    "note": "SAFE2-the-relay-stamps-nothing (safe.json), re-aimed: a channel's line goes out with no witness."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-SAFE4-the-door-unchecked",
+    "file": "server/src/index.js",
+    "old": "  if (!r.ok) return json({ error: 'bad law' }, 403);\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_relay.test.js"
+    ],
+    "note": "SAFE4-the-door-unchecked (safe.json), re-aimed: a stranger's post wakes the hub."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-12-the-post-one-line-late",
+    "file": "server/src/index.js",
+    "old": "    if (q.lines.length >= FEED_BATCH) void this._feedFlush();",
+    "new": "    if (q.lines.length > FEED_BATCH) void this._feedFlush();",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "FEED_BATCH is the whole bound of a room's batch; posted a line late, a batch holds one more."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-13c-the-stamp-a-receipts-tag",
+    "file": "src/net/safety/chatStamp.js",
+    "old": "export const STAMP_V = 'chat-stamp1';",
+    "new": "export const STAMP_V = 'c1';",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "The card receipt's own tag: the two signed byte strings kept apart by one byte."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-13c-the-feed-a-receipts-tag",
+    "file": "src/net/safety/chatFeed.js",
+    "old": "export const FEED_V = 'chat-feed1';",
+    "new": "export const FEED_V = 'f1';",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "The wild receipt's own tag, the same one byte apart."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-S1-the-binding-unread",
+    "file": "server/src/index.js",
+    "old": "      const svc = this.env?.ACCOUNTS;\n      const res = typeof svc?.fetch === 'function' ? await svc.fetch(new Request(this.env.MOD_FEED_URL, init))",
+    "new": "      const svc = null;\n      const res = typeof svc?.fetch === 'function' ? await svc.fetch(new Request(this.env.MOD_FEED_URL, init))",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "The feed fetches the account Worker's workers.dev address from a Worker on the same account - refused (1042), and never said."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-S1-the-binding-dropped",
+    "file": "server/wrangler.toml",
+    "old": "[[services]]\nbinding = \"ACCOUNTS\"\nservice = \"daggerfall-accounts\"\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "No binding in the config: the code reads one that is never there."
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY-S3-the-speaker-unread-after-the-sign",
+    "file": "server/src/index.js",
+    "old": "    if (this._dead.has(ws) || this._gone.has(ws)) return null;\n",
+    "new": "",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "A line in flight when its speaker was banned and closed is still said to the room."
+  },
+  {
+    "name": "AUDIT-SAFE-DOC-17-the-newest-order-does-not-win",
+    "file": "server/src/index.js",
+    "old": "    if (held && (c.i < held.i || held.sig === sig)) return true;",
+    "new": "    if (held && held.sig === sig) return true;",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "An older order, replayed inside its minute, undoes the newer one the room took."
+  },
+  {
+    "name": "AUDIT-SAFE-DOC-8-the-pace-before-the-party-and-guild-arms",
+    "file": "server/src/index.js",
+    "old": "    const words = frame.t === 'chat';   // a chat line - stamped, and paced in a channel; a roll is neither\n",
+    "new": "    const words = frame.t === 'chat';   // a chat line - stamped, and paced in a channel; a roll is neither\n    if (words && this._newVoiceWait(a, now) > 0) { this._send(ws, JSON.stringify({ t: 'slowed', ms: 1 })); return; }\n    if (words) this._newVoiceSpends(a, now);\n",
+    "tests": [
+      "test/net/safety/safe_relay_audit.test.js"
+    ],
+    "note": "A new voice paced on the hub before its line is a party's or a guild's - the old shape without its exclusion."
+  }
+]

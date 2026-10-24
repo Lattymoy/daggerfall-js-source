@@ -11,9 +11,9 @@
 //
 // This page was Climates & Calories' hunt window (SURV6) until the text
 // hunt was removed (2026-10-04); its Yes/No and result pages went with it.
-import { nativeMetrics } from './nativePanel.js';
+import { nativeMetrics } from './native/nativePanel.js';
 import { layoutMessageBox, drawMessageBox } from './messageBox.js';
-import { noticeFrame, noticeRelease } from './enhancedNotice.js';   // ENH-NOTICE3: the page's own parchment, as the enhanced panel
+import { noticeFrame, noticeRelease } from './enhanced/enhancedNotice.js';   // ENH-NOTICE3: the page's own parchment, as the enhanced panel
 
 /** The page's dots: this many at the full wait. */
 export const BUSY_DOTS = 12;
@@ -74,7 +74,7 @@ export class WaitWindow {
     // THE PAGE IS THE PANEL'S. It is drawn with `drawMessageBox` and no
     // buttons, in the parchment's shape - but it is the PORT'S page, not
     // a DaggerfallUI.MessageBox, and it takes no click and no key. So it
-    // rides the same per-frame door the eight classic windows take
+    // rides the same per-frame door the nine classic windows take
     // (ui/restWindow.js, ui/bankWindow.js) with no caption, never "click
     // or press a key" (AUDIT ENH-NOTICE3 B2 - the hint tells the truth).
     // A per-frame door and not noticeHold: this window IS drawn every

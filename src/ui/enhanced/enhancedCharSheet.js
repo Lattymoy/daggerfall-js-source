@@ -1,0 +1,234 @@
+// ═══════════════════════════════════════════════════════════════════
+// U52 — THE ENHANCED CHARACTER SHEET'S MODEL
+//
+// The first of the port's IN-GAME screens to grow an enhanced twin.
+// ui/charSheetDoor.js chooses; the PAUSE WINDOW's Stats page draws
+// (ui/enhanced/enhancedMenu.js), out of the `sheetModel` below.
+//
+// ── WHAT IS LEFT HERE, AND WHY ───────────────────────────────────
+//
+// PX27 retired this file's own view: there were two enhanced
+// character sheets reading the same four sections out of the same
+// model, and the door now hands the host the pause window's Stats
+// page instead. AUDIT 39 found that only the CALL SITE had gone -
+// mountEnhancedCharSheet, its render, its window-level capture
+// keydown claiming F5 and its pointer-lock handler were still
+// exported with no caller anywhere in src/, tools/ or test/, which
+// is the orphan-listener hazard this file's own tests warn about
+// wearing the mask of live code. The view is gone now; the model,
+// which both sheets always read, stays.
+//
+// ── THE DENSITY ARGUMENT, WHICH IS THIS SCREEN'S WHOLE POINT ─────
+//
+// src/tools/enhanced/enhancedUI.js's header makes it: Daggerfall has 35 skills
+// where Skyrim has 18, and the density IS the game. The classic sheet
+// answers that by showing NINE of them - keys 1-4 pop a text panel over
+// the art and `_drawSkillPage` slices to `ids.slice(0, 9)`, because a
+// 320x200 panel has nowhere else to put them. A player who wants to
+// compare a Major against a Miscellaneous presses two keys and
+// remembers the first number.
+//
+// So this screen shows every skill the character HAS a career for, in
+// DFU's own three groups, and puts the twenty-odd Miscellaneous ones
+// one press away rather than absent. Disclosure, not deletion - which
+// is the prototype's rule and the reason it is not simply "Skyrim's
+// sheet with Daggerfall's words in it".
+//
+// ── THE NUMBERS ARE THE CLASSIC SHEET'S ──────────────────────────
+//
+// Every figure here comes from the same expression
+// ui/charsheet.js draws: liveStat for the eight attributes (so a
+// magical drain shows), maxFatigue with DFU's /64 display divisor,
+// FormulaHelper.MaxEncumbrance over liveStat strength, and
+// `carriedWeight` - which was module-private in that file and is
+// EXPORTED for this one rather than re-reduced here. `sheetModel` is
+// pure and separate precisely so a node test can hold it against the
+// classic window's own draw() and prove the two sheets never disagree
+// about a number.
+//
+// ── WHAT THE ENHANCED SHEET DOES NOT DRAW ────────────────────────
+//
+// THE PAPERDOLL. The classic sheet composes it at DFU's (200,8) and
+// the prototype answers the same slot with a 28-node body schematic -
+// but that schematic is the INVENTORY's signature, it wants
+// tools/enhanced/enhancedVisuals.js and the three.js tag enhanced.html loads
+// from a CDN, and the port's doctrine has exactly one third-party
+// request in it already - the Ledger's THE ENHANCED SKIN'S WEB FONTS
+// row, which is another file's departure and not a claim of one here.
+// It belongs to the
+// inventory slice with the equip map it explains. Recorded as a real
+// loss rather than dropped quietly.
+//
+// THE LEVEL-UP SCREEN: RETIRED, LV1 (2026-09-18). This paragraph said
+// it stays classic - "a different window (LevelUpScreen), the hosts
+// push it themselves... not this door's business" - and that was the
+// last screen in the game with no enhanced face. It has one now
+// (ui/enhanced/enhancedLevelUp.js, over ui/levelUp/levelUpView.js's reading), the hosts
+// all reach it through ui/charSheetDoor.js, and it still mutates
+// nothing: the window drives the same LevelUpScreen this sentence
+// named, through that screen's own input. The sentence is replaced
+// rather than appended to, per bible/Home.md's RETIRING A FLAG DELETES
+// THE SENTENCE.
+// ═══════════════════════════════════════════════════════════════════
+
+import { STAT_KEYS_ORDER } from '../../systems/chargen.js';
+import { skillAdvanceProgress } from '../../systems/advancement.js';   // SKILL-TICK: the uses toward each skill's next point
+import { SKILLS, SKILL_NAMES, skillValue, displaySkillValue, realSkillValue, skillValueText, skillModOf } from '../../systems/skills.js';
+import { mentorStatusText } from '../../systems/mentorMode.js';   // SOFTCAP1
+import { masterSkillsActive, masterSkillsSwitchable, masterSkillsBlockReason, setMasterSkills, MASTER_SKILLS_ABOUT, MASTERY_GROUP_NAMES, masterySlots, masteryCandidates, masteryChoiceRows, masterSkill, isMasteredSkill } from '../../systems/masterSkills.js';   // SOFTCAP3/4
+import { pathOf, pathPossible } from '../../systems/arcanePaths.js';   // AUDIT GROWTH LANE5-6: the specialisations' line
+import { martialPathOf, martialPossible } from '../../systems/martialPaths.js';
+import { liveStat, maxFatigue, FATIGUE_MULTIPLIER } from '../../systems/statMods.js';
+import { entityMaxEncumbrance, handToHandMinDamage, handToHandMaxDamage } from '../../combat/formulas.js';   // AUDIT 26: PlayerEntity.MaxEncumbrance, enchantment allowance and all; AUDIT 63 F34: the H2H damage line
+import { carriedWeight } from '../charsheet.js';
+import { totalGoldAmount } from '../../systems/court.js';   // PlayerEntity.GetGoldAmount, the figure the classic sheet draws
+import { classSpecials } from '../../systems/specialAdvantages.js';   // MAC-G: GetClassSpecials, read back off the career's own flags
+import { arenaLadderRestore, ladderTitle } from '../../systems/arena/arenaLadder.js';   // ARENA2: the arena's name for you
+import { ARENA_TEXT } from '../../systems/arena/arenaText.js';   // ARENA3: the banner's name
+import { liveRaceTemplate, liveRaceName } from '../../systems/vampirism.js';     // MAC-G: the blood half of that list; DISC10-D V5: PlayerEntity.RaceTemplate, the LIVE (compound) race
+import { processGrammar } from '../../systems/textManager.js';   // L10N3g: the race label's grammar (DaggerfallCharacterSheetWindow.cs:398)
+
+/** ARENA2: the sheet's Arena lines - the title the ladder gives and the record ("12 won, 3 lost") - or null for a
+ *  character who never fought there. ARENA3: and the banner worn (systems/arena/arenaLeague.js - "The Red Banner"), which
+ *  alone is enough to show the lines. Pure. */
+function arenaSheetLine(raw, league = null) {
+  const team = league?.team === 'red' || league?.team === 'blue' ? league.team : null;
+  if (!raw && !team) return null;
+  const L = arenaLadderRestore(raw);
+  const r = L.record;
+  if (!(r.wins + r.losses > 0) && !team) return null;
+  return { title: ladderTitle(L), record: `${r.wins} won, ${r.losses} lost`, banner: team ? ARENA_TEXT.teams.name[team] : null };
+}
+
+/** The three career groups, in DFU's own order, plus the remainder.
+ *  `_drawSkillPage`'s `names` array, which is what keys 1-4 page. */
+export const SKILL_GROUPS = Object.freeze(['Primary', 'Major', 'Minor', 'Miscellaneous']);
+
+/** MAC-G: the entity's RaceTemplate, however the character was made -
+ *  and DISC10-D V5: the LIVE one, PlayerEntity.RaceTemplate (:151), so a
+ *  vampire's sheet reads the compound race DFU's does (the birth reader
+ *  moved beside it, systems/vampirism.js birthRaceTemplate). No template
+ *  means no racial rows, not a crash. */
+const raceTemplateOf = (e) => liveRaceTemplate(e);
+
+/**
+ * THE SHEET, as data. Pure: no DOM, no entity mutation, every figure
+ * lifted from the expression ui/charsheet.js's draw() uses.
+ *
+ * Miscellaneous is "every skill in no career group", which is
+ * `_drawSkillPage`'s own definition and NOT a fixed list - a career
+ * with a different spread moves skills between groups and this follows
+ * it.
+ */
+export function sheetModel(entity) {
+  const e = entity ?? {};
+  const career = [
+    e.career?.primarySkills ?? [],
+    e.career?.majorSkills ?? [],
+    e.career?.minorSkills ?? [],
+  ];
+  const inCareer = new Set(career.flat());
+  const misc = SKILL_NAMES.map((_, id) => id).filter((id) => !inCareer.has(id));
+  const strength = liveStat(e, 'strength');
+  return {
+    name: e.name ?? '',
+    // The classic sheet's own default when an entity carries none.
+    // DISC10-D V5: RaceTemplate.Name (DaggerfallCharacterSheetWindow.cs:398)
+    race: processGrammar(liveRaceName(e) || 'Breton'),   // L10N3d: shown in the player's language; L10N3g: through the grammar, as the classic sheet's raceLabel (:398)
+    career: e.career?.name ?? '',
+    level: e.level ?? 1,
+    // The classic sheet's own read: GetGoldAmount, coins plus every
+    // letter of credit (DaggerfallCharacterSheetWindow.cs:401).
+    gold: totalGoldAmount(e),
+    health: { now: e.health ?? 0, max: e.maxHealth ?? 0 },
+    magicka: { now: e.magicka ?? 0, max: e.maxMagicka ?? 0 },
+    // FatigueMultiplier is the DISPLAY divisor: DFU stores fatigue in
+    // points and the sheet draws points/64. The constant is
+    // statMods.js's own export, not a fourth copy of the number -
+    // ui/charsheet.js had two inline and this would have been the
+    // third and fourth.
+    fatigue: {
+      now: Math.trunc((e.fatigue ?? maxFatigue(e)) / FATIGUE_MULTIPLIER),
+      max: Math.trunc(maxFatigue(e) / FATIGUE_MULTIPLIER),
+    },
+    encumbrance: { now: Math.trunc(carriedWeight(e)), max: entityMaxEncumbrance(e) },
+    attributes: STAT_KEYS_ORDER.map((key) => ({ key, value: liveStat(e, key) })),
+    // MAC-G (Mac: "the enhanced stat page ... doesn't have any listing
+    // for character advantages/disadvantages"). GetClassSpecials, off
+    // the career's flags and the race template - the same list the
+    // classic sheet's History button pops before the history window,
+    // which the port had never drawn in EITHER skin.
+    specials: classSpecials(e.career, raceTemplateOf(e)),
+    groups: SKILL_GROUPS.map((name, i) => ({
+      name,
+      ids: i < 3 ? career[i] : misc,
+      // The three career groups are the character's chosen shape and
+      // open; the remainder is the disclosure.
+      career: i < 3,
+    })),
+    // SOFTCAP1: the PRINTED value - 0..200, mentored while mentoring - never the
+    // softcap's quarter-weighted formula value (skillValue); `skillReal` and
+    // `skillText` carry the real number beside a mentored one ("85 (150)").
+    skill: (id) => displaySkillValue(e, id),
+    // SOFTCAP7: the TRAINED value alone (no curse, enchantment or Fortify) - what the bars climb; the number beside
+    // them stays the live total, as the sheet always printed it
+    skillBase: (id) => displaySkillValue(e, id) - skillModOf(e, id),
+    skillReal: (id) => realSkillValue(e, id),
+    skillText: (id) => skillValueText(e, id),
+    // SKILL-TICK: where each skill stands against the next pass's raise (systems/advancement.js skillAdvanceProgress)
+    progress: (id, now = null) => skillAdvanceProgress(e, id, { now }),   // AUDIT SUGGESTIONS-1019 L3-1: `now` the character's own clock, for the gate
+    mentor: e._mentor ? mentorStatusText(e) : null,   // automatic: said only while mentoring
+    // ARENA2: the arena's title and record (systems/arena/arenaLadder.js) - null until a bout has been fought on its sand
+    arena: arenaSheetLine(e.arenaLadder, e.arenaLeague),
+    // SOFTCAP3: the Master Skills switch - its state, why it cannot move right now (null when it can), what it
+    // does in words, and the one door that moves it (systems/masterSkills.js setMasterSkills: { ok, text })
+    master: {
+      on: masterSkillsActive(e),
+      switchable: masterSkillsSwitchable(e),   // offline only - online it is always on
+      blocked: masterSkillsBlockReason(e),
+      about: MASTER_SKILLS_ABOUT,
+      toggle: () => setMasterSkills(e, !masterSkillsActive(e)),
+      // SOFTCAP4: the 2/2/1 masteries - each group's count, the skills that can be mastered right now (with their
+      // box's rows: what it does, that it is permanent, the count before and after), and the one door that masters
+      slots: Object.keys(MASTERY_GROUP_NAMES).map((g) => ({ group: g, label: MASTERY_GROUP_NAMES[g], ...masterySlots(e, g) })),
+      candidates: masteryCandidates(e).map((id) => ({ id, name: SKILL_NAMES[id], rows: masteryChoiceRows(e, id, SKILL_NAMES) })),
+      isMastered: (id) => isMasteredSkill(e, id),
+      master: (id) => masterSkill(e, id, SKILL_NAMES),
+      // SCHOOLS1/MARTIAL1's specialisations moved to the Growth tab's guide (GROWTH2, ui/growth/specGuide.js specGuideModel);
+      // AUDIT GROWTH LANE5-6 (AUDIT SCHOOLS L4 8's law again): the families this character can still reach (none held, the
+      // slots left hold a pair) and those it holds - the page's line is drawn from them, never for a class with neither
+      paths: {
+        open: [[pathOf, pathPossible], [martialPathOf, martialPossible]].filter(([held, can]) => !held(e) && can(e)).length,
+        held: (pathOf(e) ? 1 : 0) + (martialPathOf(e) ? 1 : 0),
+      },
+      // SOFTCAP6: the Master Skills page - each career group with its slots and every one of its skills: the REAL
+      // value, mastered or not, whether it can be mastered now (and the box's rows), and why not in a word
+      groups: ['primary', 'major', 'minor'].map((g) => {
+        const ids = g === 'primary' ? e.career?.primarySkills : g === 'major' ? e.career?.majorSkills : e.career?.minorSkills;
+        const slots = masterySlots(e, g);
+        return {
+          group: g, label: MASTERY_GROUP_NAMES[g], ...slots,
+          skills: (ids ?? []).map((id) => {
+            const value = Array.isArray(e.skills) ? e.skills[id] ?? 0 : 0;
+            const mastered = isMasteredSkill(e, id);
+            const candidate = !mastered && masteryCandidates(e).includes(id);
+            const why = mastered || candidate ? null : !masterSkillsActive(e) ? 'Off' : value < 100 ? `${100 - value} to 100` : 'No slot left';
+            return { id, name: SKILL_NAMES[id], value, mastered, candidate, why, rows: candidate ? masteryChoiceRows(e, id, SKILL_NAMES) : null };
+          }),
+        };
+      }),
+    },   // AUDIT 65 CV-1: TextProvider.cs:503 - every row of GetSkillSummary is GetLiveSkillValue, so the number AND its meter move with a lycanthrope's +30
+    // AUDIT 63 F34: ShowSkillsDialog's hand-to-hand damage line
+    // (DaggerfallCharacterSheetWindow.cs:283-284, :309-318) - one
+    // extra row under whichever GROUP holds HandToHand, formatted
+    // `{0} dmg: {1}-{2}` (hthDamageFormatString,
+    // Internal_Strings.csv:1553) over CalculateHandToHandMin/MaxDamage
+    // of the LIVE skill value (GetLiveSkillValue, :313-314). The
+    // figure lives in the model so both skins read one law; the
+    // per-group gate is the renderer's, as it is DFU's.
+    handToHandDamage: {
+      min: handToHandMinDamage(skillValue(e, SKILLS.HandToHand)),
+      max: handToHandMaxDamage(skillValue(e, SKILLS.HandToHand)),
+    },
+  };
+}

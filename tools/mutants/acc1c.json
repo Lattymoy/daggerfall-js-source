@@ -5,7 +5,7 @@
     "old": "  const salt = new Uint8Array(SALT_BYTES);\n  rand(salt);",
     "new": "  const salt = new Uint8Array(SALT_BYTES);",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "Every account then shares a zero salt: one rainbow table does the lot."
   },
@@ -15,7 +15,7 @@
     "old": "export const PBKDF2_ITERS = PBKDF2_CAP;",
     "new": "export const PBKDF2_ITERS = 1_000;",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "A KDF nobody has to wait for is a KDF nobody has to wait for."
   },
@@ -25,7 +25,7 @@
     "old": "  let diff = x.length ^ y.length;\n  const n = Math.max(x.length, y.length);\n  for (let i = 0; i < n; i++) diff |= (x[i % (x.length || 1)] ?? 0) ^ (y[i % (y.length || 1)] ?? 0);\n  return diff === 0;",
     "new": "  if (x.length !== y.length) return false;\n  for (let i = 0; i < x.length; i++) if (x[i] !== y[i]) return false;\n  return true;",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "equivalent": true,
     "why": "Functionally identical, and the property it destroys - the time saying where the first differing byte was - is not one a node test can measure through a PBKDF2 derivation that dwarfs it. Held by reading rather than by timing, which is the honest place for it; the derivation in front of this compare is what actually makes the whole call constant-ish, and THAT is driven."
@@ -36,7 +36,7 @@
     "old": "export const normalise = (pw) => (typeof pw === 'string' ? pw.normalize('NFKC') : '');",
     "new": "export const normalise = (pw) => (typeof pw === 'string' ? pw : '');",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "A decomposed accent then locks its owner out of their own account, on a different keyboard."
   },
@@ -46,7 +46,7 @@
     "old": "  if (!parsed) return false;",
     "new": "  if (!parsed) return true;",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "An account with no password would then admit anybody."
   },
@@ -56,7 +56,7 @@
     "old": "  const got = await derive(pw, salt, iters, subtle);\n  if (!parsed) return false;",
     "new": "  if (!parsed) return false;\n  const got = await derive(pw, salt, iters, subtle);",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "Then 'this account has no password' is visibly faster than 'this password is wrong' - the username oracle, by the clock."
   },
@@ -66,7 +66,7 @@
     "old": "    .replace(/O/g, '0').replace(/[IL]/g, '1');",
     "new": "    .replace(/[OQ]/g, '0').replace(/[IL]/g, '1');",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "THE BUG ITS OWN PIN FOUND, put back: Q is in the alphabet, so a minted code carrying one canonicalises to a different string than the one that was hashed."
   },
@@ -76,7 +76,7 @@
     "old": "export const CODE_GROUPS = 4;",
     "new": "export const CODE_GROUPS = 1;",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "Five characters is 25 bits, which is a weekend."
   },
@@ -86,7 +86,7 @@
     "old": "  const ok = await verifyPassword(password, player?.password ?? null, { subtle });\n  if (!player || !ok) return { error: 'bad-login' };",
     "new": "  if (!player) return { error: 'bad-login' };\n  const ok = await verifyPassword(password, player.password, { subtle });\n  if (!ok) return { error: 'bad-login' };",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "The username oracle, spelled out: a name nobody holds costs a lookup and a name somebody holds costs a derivation."
   },
@@ -96,17 +96,17 @@
     "old": "UPDATE players SET password = ?, recovery_hash = ? WHERE id = ? AND recovery_hash = ?').bind(pw, rc, player.id, player.recovery_hash)",
     "new": "UPDATE players SET password = ? WHERE id = ? AND recovery_hash = ?').bind(pw, player.id, player.recovery_hash)",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "A code that still works after it has been used is a permanent skeleton key on a scrap of paper."
   },
   {
     "name": "ACC1c-11-recovering-leaves-the-thief-signed-in",
     "file": "server-account/src/accounts.js",
-    "old": "  await closeAllSessions({ db }, player.id);\n  await clearRate({ db }, `recover:${lc}`);",
-    "new": "  await clearRate({ db }, `recover:${lc}`);",
+    "old": "  await closeAllSessions({ db }, player.id);\n  await closeStaffSessions({ db }, player.id);   // STAFF-PANEL2-FIX: a new password ends the staff panel's sessions too\n",
+    "new": "  await closeStaffSessions({ db }, player.id);   // STAFF-PANEL2-FIX: a new password ends the staff panel's sessions too\n",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "The reason somebody is standing at recovery may be that another person has their password."
   },
@@ -116,7 +116,7 @@
     "old": "  if (!await verifyPassword(oldPassword, player.password, { subtle })) return { error: 'bad-login' };",
     "new": "  if (false) return { error: 'bad-login' };",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "A borrowed phone could then lock its owner out of their own account."
   },
@@ -126,7 +126,7 @@
     "old": "    if (/UNIQUE|constraint/i.test(String(e?.message ?? e))) return { error: 'handle-taken' };\n    throw e;",
     "new": "    throw e;",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "The UNIQUE index is the authority; without the catch, a race reads as a 500."
   },
@@ -136,7 +136,7 @@
     "old": "  return (row?.count ?? 0) > max;",
     "new": "  return false;",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "Online guessing, unlimited."
   },
@@ -146,7 +146,7 @@
     "old": "  await clearRate({ db }, `login:${lc}`);",
     "new": "  void lc;",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "Someone who mistyped twice and then got it right stays on a countdown."
   },
@@ -156,7 +156,7 @@
     "old": "'WHERE id = ? AND handle IS NULL')",
     "new": "'WHERE id = ?')",
     "tests": [
-      "test/audit68_backend.test.js"
+      "test/server/audit68_backend.test.js"
     ],
     "note": "An upgrade in place is the property that keeps the friends and the saves."
   },
@@ -166,7 +166,7 @@
     "old": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest', '/v1/auth/login', '/v1/auth/recover']);",
     "new": "export const OPEN_ROUTES = new Set(['/v1/health', '/v1/auth/guest']);",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "note": "A player standing at a login form has no session - that is why they are standing there. (AUDIT-ACC F2 moved OPEN_ROUTES to service.js: the entrypoint may export only a handler, so the constants left index.js. Re-aimed at the new home and confirmed dead there.)"
   },
@@ -176,7 +176,7 @@
     "old": "          return r.error ? no(r.error, r.error === 'rate' ? 429 : 401, origin) : json(r, 200, origin);\n        }\n        // /v1/auth/recover",
     "new": "          return r.error ? no(r.error + (body.handle ? '-user-exists' : ''), r.error === 'rate' ? 429 : 401, origin) : json(r, 200, origin);\n        }\n        // /v1/auth/recover",
     "tests": [
-      "test/accountworker.test.js"
+      "test/server/accountworker.test.js"
     ],
     "equivalent": true,
     "why": "The mutation appends a constant to every refusal rather than distinguishing the two cases, so the pin that compares the two bodies still sees them equal - it is not actually the defect it is named for. Kept as a record that the pin holds EQUALITY of the two refusals rather than their literal text, which is the property that matters and the one a real leak would break."

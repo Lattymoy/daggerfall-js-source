@@ -5,7 +5,7 @@
     "old": "  return s && !(show ?? showNudity()) ? [s[0], s[1]] : [archive, record];",
     "new": "  return s ? [s[0], s[1]] : [archive, record];",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const showNudity = () => getBool('ChildGuard', 'PlayerNudity');",
     "new": "export const showNudity = () => getBool('GUI', 'EnableGeographicBackgrounds');",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  '184_11': Object.freeze([184, 29]),",
     "new": "",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  '179_3': Object.freeze([179, 2]),",
     "new": "",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    const [da, dr] = drawnFlat(v?.textureArchive ?? pn.textureArchive, v?.textureRecord ?? pn.textureRecord);",
     "new": "    const [da, dr] = [v?.textureArchive ?? pn.textureArchive, v?.textureRecord ?? pn.textureRecord];",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
@@ -50,16 +50,16 @@
     "old": "    const redrawn = v || da !== pn.textureArchive || dr !== pn.textureRecord;",
     "new": "    const redrawn = v;",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
     "name": "NUDEFLATS-world-flats-born",
-    "file": "src/scenes/world.js",
-    "old": "      [archive, record] = drawnFlat(archive, record);   // NUDE-FLATS: base-anchored, so the stand-in stands where the figure did\n",
-    "new": "",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "    const [archive, record] = drawnFlat(pics[j][0], pics[j][1]);",
+    "new": "    const [archive, record] = pics[j];",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
@@ -68,16 +68,16 @@
     "old": "      const archive = pn.drawArchive ?? pn.textureArchive, record = pn.drawRecord ?? pn.textureRecord;",
     "new": "      const archive = pn.textureArchive, record = pn.textureRecord;",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
     "name": "NUDEFLATS-world-street-npc-box-born",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "      const [drawArchive, drawRecord] = drawnFlat(flat.archive, flat.record);",
     "new": "      const [drawArchive, drawRecord] = [flat.archive, flat.record];",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      const key = drawnFlat(flat.archive, flat.record).join('_');",
     "new": "      const key = `${flat.archive}_${flat.record}`;",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    const [da, dr] = drawnFlat(flat.archive, flat.record);   // NUDE-FLATS: the box of the picture the batch above drew",
     "new": "    const [da, dr] = [flat.archive, flat.record];",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    const [archive, record] = drawnFlat(bornArchive, bornRecord);",
     "new": "    const [archive, record] = [bornArchive, bornRecord];",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    size = billboardSize(t, record);\n",
     "new": "",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    pn.height = drawn.h;\n    pn.y -= size.h / 2;",
     "new": "    pn.height = drawn.h;\n    pn.y -= drawn.h / 2;",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
@@ -131,34 +131,34 @@
     "old": "    const [drawArchive, drawRecord] = isItem ? [archive, record] : drawnFlat(archive, record);",
     "new": "    const [drawArchive, drawRecord] = [archive, record];",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
     "name": "NUDEFLATS-mw-weld-ignores-setting",
-    "file": "src/formats/mwItemMap.js",
-    "old": "  if (show || !args.female || worn.shadows.includes('chest')) return worn;",
-    "new": "  if (!args.female || worn.shadows.includes('chest')) return worn;",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn;",
+    "new": "  if (!args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn;",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
     "name": "NUDEFLATS-mw-weld-men-too",
-    "file": "src/formats/mwItemMap.js",
-    "old": "  if (show || !args.female || worn.shadows.includes('chest')) return worn;",
-    "new": "  if (show || worn.shadows.includes('chest')) return worn;",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn;",
+    "new": "  if (show || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn;",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
     "name": "NUDEFLATS-mw-weld-under-cover",
-    "file": "src/formats/mwItemMap.js",
-    "old": "  if (show || !args.female || worn.shadows.includes('chest')) return worn;",
-    "new": "  if (show || !args.female) return worn;",
+    "file": "src/formats/morrowind/mwItemMap.js",
+    "old": "  if (show || !args.female || worn.shadows.includes('chest') || worn.covers.includes('chest')) return worn;",
+    "new": "  if (show || !args.female || worn.covers.includes('chest')) return worn;",
     "tests": [
-      "test/nudeflats.test.js"
+      "test/formats/nudeflats.test.js"
     ]
   },
   {
@@ -167,8 +167,8 @@
     "old": "      : composeWornModest({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf, helmStyle }, showNudity());",
     "new": "      : composeWornArmor({ pieces: armor ?? [], armors: armors ?? [], clothes: clothes ?? [], bodyPool: parts, female, colourOf, helmStyle });",
     "tests": [
-      "test/nudeflats.test.js",
-      "test/fparm.test.js"
+      "test/formats/nudeflats.test.js",
+      "test/formats/morrowind/fparm.test.js"
     ]
   }
 ]

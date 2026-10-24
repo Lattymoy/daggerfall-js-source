@@ -1,0 +1,375 @@
+[
+  {
+    "name": "MINE-PERKS-prospector-reach-200",
+    "file": "src/scenes/mineHost.js",
+    "old": "export const PROSPECT_M = 500;",
+    "new": "export const PROSPECT_M = 200;",
+    "tests": [
+      "test/ui/mineperks.test.js",
+      "test/net/prof2_client.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-ow-singles-for-anyone",
+    "file": "src/scenes/mineHost.js",
+    "old": "overworldOne: (n, { specs }) => (n.what === 'vein' && specs('mining')[50] === 'prospector' ? mineNodeName(n) : null),",
+    "new": "overworldOne: (n, { specs }) => (n.what === 'vein' ? mineNodeName(n) : null),",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-ow-boulder-single",
+    "file": "src/scenes/mineHost.js",
+    "old": "overworldOne: (n, { specs }) => (n.what === 'vein' && specs('mining')[50] === 'prospector' ? mineNodeName(n) : null),",
+    "new": "overworldOne: (n, { specs }) => (n.what !== 'motherlode' && specs('mining')[50] === 'prospector' ? mineNodeName(n) : null),",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-ow-singles-never-asked",
+    "file": "src/scenes/gatherHost.js",
+    "old": "const one = k.overworldOne?.(n, markCtx) ?? null;",
+    "new": "const one = null;",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-deep-delver-x1.5",
+    "file": "src/net/professionLaw.js",
+    "old": "export const DEEP_DELVER_MULT = 2;",
+    "new": "export const DEEP_DELVER_MULT = 1.5;",
+    "tests": [
+      "test/ui/mineperks.test.js",
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_service.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-deep-delver-mark-lost",
+    "file": "src/scenes/mineHost.js",
+    "old": "      if (n.what === 'dvein' && specs('mining')[50] === 'deep-delver') return DEEP_DELVER_MARK;\n",
+    "new": "",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-deep-delver-mark-every-vein",
+    "file": "src/scenes/mineHost.js",
+    "old": "      if (n.what === 'dvein' && specs('mining')[50] === 'deep-delver') return DEEP_DELVER_MARK;",
+    "new": "      if (specs('mining')[50] === 'deep-delver') return DEEP_DELVER_MARK;",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-vein-off-the-face-again",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "PROF_VEIN_OFF_M = 0.75, PROF_VEIN_CHEST_M = 0.9, PROF_VEIN_UP_M = 0;",
+    "new": "PROF_VEIN_OFF_M = 0.33, PROF_VEIN_CHEST_M = 0.9, PROF_VEIN_UP_M = 0.5;",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-surveyed-unread",
+    "file": "src/net/nodeLaw.js",
+    "old": "4), confirmed || surveyed ? 7 : UNCONFIRMED_VEIN_TIER);",
+    "new": "4), confirmed ? 7 : UNCONFIRMED_VEIN_TIER);",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-surveyed-signature",
+    "file": "src/net/nodeLaw.js",
+    "old": "  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= veinSlots({ climate, region, confirmed })) return null;",
+    "new": "  if (!table || !Number.isSafeInteger(slot) || slot < 0 || slot >= veinSlots({ climate, region, confirmed: confirmed || surveyed })) return null;",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-service-surveyed-never",
+    "file": "server-account/src/professions.js",
+    "old": "    const surveyed = n.kind === 'vein' && !confirmed && specs[100] === SURVEYOR;",
+    "new": "    const surveyed = false;",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-service-surveyed-anyone",
+    "file": "server-account/src/professions.js",
+    "old": "    const surveyed = n.kind === 'vein' && !confirmed && specs[100] === SURVEYOR;",
+    "new": "    const surveyed = n.kind === 'vein' && !confirmed;",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-service-surveyed-gemless",
+    "file": "server-account/src/professions.js",
+    "old": "climate, glints: s.glints, confirmed: confirmed || surveyed, prospector",
+    "new": "climate, glints: s.glints, confirmed, prospector",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-client-surveyed-unread",
+    "file": "src/scenes/mineHost.js",
+    "old": "      const surveyed = specs?.('mining')?.[100] === SURVEYOR;",
+    "new": "      const surveyed = false;",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-restand-key-herbs-alone",
+    "file": "src/scenes/gatherHost.js",
+    "old": "`${specs('herbalism')[100] ?? ''}|${specs('mining')[100] ?? ''}`",
+    "new": "`${specs('herbalism')[100] ?? ''}|`",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-ore-card-table-held",
+    "file": "src/ui/oreMapTip.js",
+    "old": "...(surveyed ? [] : table.filter(",
+    "new": "...(false ? [] : table.filter(",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-sensed-a-finder",
+    "file": "src/net/motherlodeBook.js",
+    "old": "      if (state.found || state.day !== Math.floor(t / 86400)) return out;",
+    "new": "      if (state.day !== Math.floor(t / 86400)) return out;",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-sensed-gone-kept",
+    "file": "src/net/motherlodeBook.js",
+    "old": "if (t < l.closesAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS) out.push(l);",
+    "new": "if ((l.struck ?? 0) < MOTHERLODE_STRIKERS) out.push(l);",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-sensed-spent-kept",
+    "file": "src/net/motherlodeBook.js",
+    "old": "if (t < l.closesAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS) out.push(l);",
+    "new": "if (t < l.closesAt) out.push(l);",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-lode-hour-once-risen",
+    "file": "src/ui/lodeMapMark.js",
+    "old": "Number.isFinite(l.opensAt) && nowS < l.opensAt ? clock(l.opensAt) : null;",
+    "new": "Number.isFinite(l.opensAt) ? clock(l.opensAt) : null;",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-lode-off-its-pixel",
+    "file": "src/ui/lodeMapMark.js",
+    "old": "out.push({ cx: l.x + 0.5, cy: l.y + 0.5,",
+    "new": "out.push({ cx: l.x, cy: l.y,",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-held-map-unread",
+    "file": "src/ui/heldMap.js",
+    "old": "const lodes = readBountyMarks(this.deps.lodes, this._size, LODE_LEGEND_TEXT);",
+    "new": "const lodes = readBountyMarks(null, this._size, LODE_LEGEND_TEXT);",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-classic-page-unread",
+    "file": "src/ui/travel/travelMapWindow.js",
+    "old": "    const lodes = readBountyMarks(this.deps.lodes, { width: MAP_WIDTH, height: MAP_HEIGHT }, LODE_LEGEND_TEXT);",
+    "new": "    const lodes = readBountyMarks(null, { width: MAP_WIDTH, height: MAP_HEIGHT }, LODE_LEGEND_TEXT);",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-ink-unpainted",
+    "file": "src/ui/ink/inkMap.js",
+    "old": "  for (const b of opts.lodes ?? []) if (visible(b.cx, b.cy, b.r + 2)) paintBountyRing(ctx, view, b, pulse, LODE_INK);",
+    "new": "",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "MINE-PERKS-surveyor-id-moved",
+    "file": "src/net/professionLaw.js",
+    "old": "export const SURVEYOR = 'stonebreaker';",
+    "new": "export const SURVEYOR = 'surveyor';",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MINE-PERKS-walk-unread",
+    "file": "src/scenes/gatherHost.js",
+    "old": "        for (const s of nearPixels(pos, walk)) {",
+    "new": "        for (const s of nearPixels(pos, MARK_WALK_M)) {",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MINE-PERKS-count-unread",
+    "file": "src/scenes/gatherHost.js",
+    "old": "      if (out.length > max) out.length = max;",
+    "new": "      if (out.length > NODE_MARK_MAX) out.length = NODE_MARK_MAX;",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MINE-PERKS-reach-for-anyone",
+    "file": "src/scenes/mineHost.js",
+    "old": "    markReach: ({ specs }) => (specs('mining')[50] === 'prospector' ? PROSPECT_REACH : null),",
+    "new": "    markReach: () => PROSPECT_REACH,",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MINE-PERKS-prospector-deep-500",
+    "file": "src/scenes/mineHost.js",
+    "old": "dvein: Object.freeze({ ...MINE_MARKS.dvein, reach: PROSPECT_DEEP_M }) });",
+    "new": "dvein: Object.freeze({ ...MINE_MARKS.dvein, reach: PROSPECT_M }) });",
+    "tests": [
+      "test/ui/mineperks.test.js",
+      "test/scenes/nodemarks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MINE-PERKS-ow-overflow-dropped",
+    "file": "src/scenes/gatherHost.js",
+    "old": "          for (const o of ones.splice(kept)) join(o.s, o.n, o.profession);",
+    "new": "          ones.splice(kept);",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MINE-PERKS-ow-cap-unread",
+    "file": "src/scenes/gatherHost.js",
+    "old": "while (kept < ones.length && kept < OW_ONE_MAX && ones[kept].d <= GROUP_M) kept++;",
+    "new": "while (kept < ones.length && ones[kept].d <= GROUP_M) kept++;",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MINE-PERKS-respec-never",
+    "file": "src/net/profBook.js",
+    "old": "      if (r && (r.rank === 50 || r.rank === 100) && Number.isFinite(r.at) && now() >= r.at * 1000) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MINE-PERKS-respec-early",
+    "file": "src/net/profBook.js",
+    "old": "Number.isFinite(r.at) && now() >= r.at * 1000) {",
+    "new": "Number.isFinite(r.at) && now() + 1 >= r.at * 1000) {",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MINE-PERKS-vein-on-the-marker",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "        if (hit.dist < PROF_VEIN_OFF_M) { close ??= foot; continue; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MINE-PERKS-service-surveyed-underground",
+    "file": "server-account/src/professions.js",
+    "old": "    const surveyed = n.kind === 'vein' && !confirmed && specs[100] === SURVEYOR;",
+    "new": "    const surveyed = !confirmed && specs[100] === SURVEYOR;",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MINE-PERKS-page-line-for-anyone",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    if (_sel === 'mining' && tr.specs?.[100] === SURVEYOR) pane.append",
+    "new": "    if (_sel === 'mining') pane.append",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MINE-PERKS-aqua-on-parchment",
+    "file": "src/ui/lodeMapMark.js",
+    "old": "export const LODE_RING_CSS = '#0e6b5e';",
+    "new": "export const LODE_RING_CSS = MOTHERLODE_MARK_CSS;",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MINE-PERKS-relay-clock",
+    "file": "src/scenes/world.js",
+    "old": "clock: (s) => localWhenText(s * 1000 - _sharedOffsetMs, Date.now()) };",
+    "new": "clock: (s) => localWhenText(s * 1000, Date.now()) };",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MINE-PERKS-maps-without-the-sense",
+    "file": "src/scenes/world.js",
+    "old": "const lodeSense = () => !!motherlodeBook && profBook?.state.open === true && profBook.track('mining').specs?.[100] === 'motherlode-sense';",
+    "new": "const lodeSense = () => !!motherlodeBook && profBook?.state.open === true;",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MINE-PERKS-overworld-unwired",
+    "file": "src/scenes/travelViewMarks.js",
+    "old": "          marks.push({ key: `lode:${l.key}`, at: tvSceneKept(h, x, z, TV_PLACE_LIFT), label: lodeLabel(l, nowS, lodeWords), sub: farDistanceText(km), kind: 'gather mining', color: LODE_COMPASS_CSS, edge: true });\n",
+    "new": "",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-MINE-PERKS-legend-unrouted",
+    "file": "src/ui/heldMap.js",
+    "old": "      leg.append(dot, el('span', 'hmlegtext', lodeLegendText()));",
+    "new": "      leg.append(dot, el('span', 'hmlegtext', LODE_LEGEND_TEXT));",
+    "tests": [
+      "test/ui/mineperks.test.js"
+    ]
+  }
+]

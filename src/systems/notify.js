@@ -5,7 +5,7 @@
 // THROUGH.
 //
 // WHAT THE AUDIT FOUND. ENH-NOTICE1/2 gave the enhanced skin its face
-// (ui/enhancedNotice.js) and hooked it where the parchment was DRAWN:
+// (ui/enhanced/enhancedNotice.js) and hooked it where the parchment was DRAWN:
 // ActionTextBox, the no-options ChoiceWindow, eight windows' own
 // boxes. Nothing made a producer BUILD one of those. Six host seams
 // each decided by hand which class to raise; one of them
@@ -35,14 +35,14 @@
 // THE LAW: notify decides WHICH MODEL; the draw decides WHICH FACE.
 // This module does not import ui/uiSkin.js and never will: the skin
 // fork lives where the enhanced idiom already put it - the box's own
-// draw (ui/actionText.js), the HUD text's own draw (ui/hudText.js),
+// draw (ui/actionText.js), the HUD text's own draw (ui/hud/hudText.js),
 // the label's (ui/midScreenText.js). A second fork here would be a
 // second home for the skin decision, and the faces would drift.
 //
 // THE SLOT. The port's hosts hold ONE overlay slot each and no window
 // stack, so a box must reach the LIVE host's slot without every
 // producer carrying a host handle. Hosts register a PRESENTER here
-// (the registry idiom ui/enhancedOverlays.js already uses: functions,
+// (the registry idiom ui/enhanced/enhancedOverlays.js already uses: functions,
 // never DOM; an unregister the teardown MUST call), and a box is
 // offered to the presenters by priority then by recency - the modal
 // mode host before the town host, which is world.js's showQuestBox
@@ -67,7 +67,7 @@ import { ActionTextBox } from '../ui/actionText.js';
  *   push) have none, and a contract one host honours and two drop is a lie
  *   (AUDIT ENH-NOTICE3 F6) - a caller that needs OnClose owns its window.
  * @property {(text: string, delay?: number) => boolean} [hudText]
- *   This host's PopupText model (ui/hudText.js - two are live at once, the town's
+ *   This host's PopupText model (ui/hud/hudText.js - two are live at once, the town's
  *   and the dungeon's; AUDIT FONT F1 keys them). True when queued.
  * @property {(win: object) => boolean} [holds]
  *   Whether this host's window stack still holds `win` - on top or covered (TUT1 audit: a window can leave a slot by a

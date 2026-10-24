@@ -1,0 +1,137 @@
+[
+  {
+    "name": "F1-the-timed-seed-at-zero",
+    "file": "src/net/online.js",
+    "old": "const c = p.timed ? (p.tsU ?? 0) : 0;",
+    "new": "const c = 0;",
+    "tests": [
+      "test/net/auditonline3.test.js"
+    ]
+  },
+  {
+    "name": "F2-the-clock-steps-back",
+    "file": "src/net/online.js",
+    "old": "    if (t < last) { back += last - t; return last; }",
+    "new": "    if (t < last) return (last = t);",
+    "tests": [
+      "test/net/auditonline3.test.js"
+    ]
+  },
+  {
+    "name": "F2-the-step-held-for-ever",
+    "file": "src/net/online.js",
+    "old": "    if (t < last) { back += last - t; return last; }",
+    "new": "    if (t < last) return last;",
+    "tests": [
+      "test/net/auditonline3.test.js"
+    ]
+  },
+  {
+    "name": "F2-the-wall-by-default",
+    "file": "src/net/online.js",
+    "old": "WebSocketImpl = globalThis.WebSocket, now = steadyNow, rand",
+    "new": "WebSocketImpl = globalThis.WebSocket, now = () => Date.now(), rand",
+    "tests": [
+      "test/net/auditonline3.test.js"
+    ]
+  },
+  {
+    "name": "F3-the-halo-loses-its-look-word",
+    "file": "src/net/online.js",
+    "old": "      old.lookOk = this.lookOk; this.lookOk = !!h.lookOk;",
+    "new": "      this.lookOk = !!h.lookOk;",
+    "tests": [
+      "test/net/auditonline3.test.js"
+    ]
+  },
+  {
+    "name": "F3-the-crossed-cell-keeps-the-old-word",
+    "file": "src/net/online.js",
+    "old": "      old.lookOk = this.lookOk; this.lookOk = !!h.lookOk;",
+    "new": "      old.lookOk = this.lookOk;",
+    "tests": [
+      "test/net/auditonline3.test.js"
+    ]
+  },
+  {
+    "name": "F4-the-slower-copy-stands-the-dead",
+    "file": "src/net/online.js",
+    "old": "      if (!pose.dd && this._diedSince(m.id, pose, now)) return;   // AUDIT ONLINE 3 F4: a slower room's copy of a pose from before the death\n",
+    "new": "",
+    "tests": [
+      "test/net/auditonline3.test.js"
+    ]
+  },
+  {
+    "name": "F4-the-send-time-trusted-for-ever",
+    "file": "src/net/online.js",
+    "old": " && now - f.at <= TS_RESYNC_MS && ",
+    "new": " && ",
+    "tests": [
+      "test/net/auditonline3.test.js"
+    ]
+  },
+  {
+    "name": "F5-a-roster-stands-the-fallen",
+    "file": "src/net/online.js",
+    "old": "    if (dead?.dd) this._fell(id, made, dead, room, now, true);\n",
+    "new": "",
+    "tests": [
+      "test/net/auditonline3.test.js"
+    ]
+  },
+  {
+    "name": "F5-a-standing-peer-introduced-dead-stands",
+    "file": "src/net/online.js",
+    "old": " if (dead?.dd) this._fell(id, this.peers.get(id), dead, room, now, true); return; }",
+    "new": " return; }",
+    "tests": [
+      "test/net/auditonline3.test.js"
+    ]
+  },
+  {
+    "name": "F5-the-introduction-unsaid",
+    "file": "src/net/online.js",
+    "old": "pose, room, intro ? { intro: true } : undefined));",
+    "new": "pose, room));",
+    "tests": [
+      "test/net/auditonline3.test.js"
+    ]
+  },
+  {
+    "name": "F5-the-host-cries-an-old-death",
+    "file": "src/scenes/world.js",
+    "old": "?? null }, pose, room, how);",
+    "new": "?? null }, pose, room);",
+    "tests": [
+      "test/net/auditonline3.test.js"
+    ]
+  },
+  {
+    "name": "F6-the-hello-forgets-its-token",
+    "file": "src/net/online.js",
+    "old": "      const frame = this._helloFrame(tok, room);",
+    "new": "      const frame = this._helloFrame(null, room);",
+    "tests": [
+      "test/net/auditonline3.test.js"
+    ]
+  },
+  {
+    "name": "F6-the-why-is-not-the-minters",
+    "file": "src/net/online.js",
+    "old": "{ tok: null, why: this.mintToken?.lastWhy ?? 'refused' }",
+    "new": "{ tok: null, why: 'refused' }",
+    "tests": [
+      "test/net/auditonline3.test.js"
+    ]
+  },
+  {
+    "name": "F7-a-leave-keeps-the-room",
+    "file": "src/net/online.js",
+    "old": "    if (this.room != null) this._forgetRoom(this.room);\n",
+    "new": "",
+    "tests": [
+      "test/net/auditonline3.test.js"
+    ]
+  }
+]

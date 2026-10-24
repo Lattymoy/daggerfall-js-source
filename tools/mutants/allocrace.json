@@ -1,0 +1,29 @@
+[
+  {
+    "name": "ALLOC-RACE-the-settle-dropped-from-the-list",
+    "file": "test/allocChild.mjs",
+    "old": "  '--import', fileURLToPath(new URL('./allocSettle.mjs', import.meta.url)),\n",
+    "new": "",
+    "tests": [
+      "test/tooling/allocchild.test.js"
+    ]
+  },
+  {
+    "name": "ALLOC-RACE-the-settle-waits-for-nothing",
+    "file": "test/allocSettle.mjs",
+    "old": "globalThis.gc = () => { settle(); gc(); };",
+    "new": "globalThis.gc = () => { gc(); };",
+    "tests": [
+      "test/tooling/allocchild.test.js"
+    ]
+  },
+  {
+    "name": "ALLOC-RACE-a-suite-spells-its-own-list",
+    "file": "test/systems/techfx1.test.js",
+    "old": "[...ALLOC_CHILD_ARGS, '--input-type=module'",
+    "new": "['--expose-gc', '--min-semi-space-size=64', '--max-semi-space-size=64', '--input-type=module'",
+    "tests": [
+      "test/tooling/allocchild.test.js"
+    ]
+  }
+]

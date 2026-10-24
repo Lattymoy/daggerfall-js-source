@@ -5,7 +5,7 @@
   "old": "  if (!hasValues && !questLike && !macroWorld()) return rows;",
   "new": "  if (!hasValues) return rows;",
   "tests": [
-   "test/daedrasummoning.test.js"
+   "test/systems/daedrasummoning.test.js"
   ]
  },
  {
@@ -14,16 +14,16 @@
   "old": "  const one = (t) => expandMacroValues(t ?? '', values ?? {}, questLike);",
   "new": "  const one = (t) => expandMacroValues(t ?? '', values ?? {}, null);",
   "tests": [
-   "test/daedrasummoning.test.js"
+   "test/systems/daedrasummoning.test.js"
   ]
  },
  {
   "name": "DAEDRA1-a-null-daedra-prints-a-hole",
   "file": "src/systems/daedraSummoning.js",
-  "old": "export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name ?? null });",
-  "new": "export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name ?? '' });",
+  "old": "export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name != null ? getLocalizedFactionName(daedra.factionId, daedra.name) : null });",
+  "new": "export const summonMacroValues = (daedra) => Object.freeze({ dae: daedra?.name != null ? getLocalizedFactionName(daedra.factionId, daedra.name) : '' });",
   "tests": [
-   "test/daedrasummoning.test.js"
+   "test/systems/daedrasummoning.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "    const rows = (id) => expandRowValues(rawRows(id), null, null);",
   "new": "    const rows = (id) => rawRows(id);",
   "tests": [
-   "test/daedrasummoning.test.js"
+   "test/systems/daedrasummoning.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "      const say = (id, d = daedra, part = (record) => record) => expandRowValues(part(rows?.(id) ?? []), summonMacroValues(d), null);",
   "new": "      const say = (id) => rows?.(id) ?? [];",
   "tests": [
-   "test/daedrasummoning.test.js"
+   "test/systems/daedrasummoning.test.js"
   ]
  },
  {
@@ -50,16 +50,16 @@
   "old": "      const box = (id, d, fallback) => { const r = say(id, d); return r.length ? r : [{ text: fallback, center: true }]; };",
   "new": "      const box = (id, d, fallback) => (say(id, d).length ? say(id, d) : [{ text: fallback, center: true }]);",
   "tests": [
-   "test/daedrasummoning.test.js"
+   "test/systems/daedrasummoning.test.js"
   ]
  },
  {
   "name": "DAEDRA1-the-princes-offer-goes-out-raw",
   "file": "src/scenes/worldModes.js",
-  "old": "          const boxes = offered ? questBridge.offerBoxes(offered, (id) => say(id, r.daedra)) : [];",
-  "new": "          const boxes = offered ? questBridge.offerBoxes(offered, (id) => townTalk?.lines?.(id) ?? []) : [];",
+  "old": "          const boxes = questBridge.offerBoxes(offered, (id) => say(id, r.daedra));",
+  "new": "          const boxes = questBridge.offerBoxes(offered, (id) => townTalk?.lines?.(id) ?? []);",
   "tests": [
-   "test/daedrasummoning.test.js"
+   "test/systems/daedrasummoning.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "        guild: null, memberships: [], store, rows: rawRows, route: null,",
   "new": "        guild: null, memberships: [], store, rows, route: null,",
   "tests": [
-   "test/daedrasummoning.test.js"
+   "test/systems/daedrasummoning.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "  return symbolStr + '[srcDataUnknown]';",
   "new": "  return symbolStr;",
   "tests": [
-   "test/daedrasummoning.test.js"
+   "test/systems/daedrasummoning.test.js"
   ]
  },
  {
@@ -86,7 +86,7 @@
   "old": "          gold: totalGoldAmount(playerEntity),",
   "new": "          gold: goldAmount(playerEntity),",
   "tests": [
-   "test/daedrasummoning.test.js"
+   "test/systems/daedrasummoning.test.js"
   ]
  },
  {
@@ -95,7 +95,7 @@
   "old": "    if (totalGoldAmount(playerEntity) < price) return null;",
   "new": "    if (goldAmount(playerEntity) < price) return null;",
   "tests": [
-   "test/daedrasummoning.test.js"
+   "test/systems/daedrasummoning.test.js"
   ]
  },
  {
@@ -104,7 +104,7 @@
   "old": "    if (totalGoldAmount(playerEntity) < price) {",
   "new": "    if (goldAmount(playerEntity) < price) {",
   "tests": [
-   "test/daedrasummoning.test.js"
+   "test/systems/daedrasummoning.test.js"
   ]
  },
  {
@@ -113,7 +113,7 @@
   "old": "export function totalGoldAmount(player) {\n  return goldAmount(player) + creditAmount(player);\n}",
   "new": "export function totalGoldAmount(player) {\n  return goldAmount(player);\n}",
   "tests": [
-   "test/daedrasummoning.test.js"
+   "test/systems/daedrasummoning.test.js"
   ]
  }
 ]

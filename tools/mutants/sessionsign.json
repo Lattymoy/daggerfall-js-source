@@ -1,0 +1,382 @@
+[
+ {
+  "name": "SESSIONSIGN-pass-drops-handle",
+  "file": "server-account/src/sessionPass.js",
+  "old": "handle: c.h ?? null,",
+  "new": "handle: null,",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: the handle a pass carries: a developer's switches, an account's kind."
+ },
+ {
+  "name": "SESSIONSIGN-pass-drops-registration",
+  "file": "server-account/src/sessionPass.js",
+  "old": "registered_at: c.r ?? null,",
+  "new": "registered_at: null,",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: when it registered: whether a week can witness."
+ },
+ {
+  "name": "SESSIONSIGN-pass-drops-mute",
+  "file": "server-account/src/sessionPass.js",
+  "old": "muted_until: c.m ?? null }",
+  "new": "muted_until: null }",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: the mute: the board's muted and canPin."
+ },
+ {
+  "name": "SESSIONSIGN-mint-before-ban",
+  "file": "server-account/src/index.js",
+  "old": "      if (isBanned(who.player, nowS) && path !== '/v1/auth/logout') return json(bannedAnswer(who.player), 403, origin);\n      // SESSION-SIGN: the next pass, after the ban (a banned account pays its lookup - AUDIT PLAN-1000 E6) and off the\n      // primary's own answer alone (a replica's may stand before a sign-out - E5)\n      if (hot && !('pass' in who) && passMintable(db, env.DB)) held.pass = await mintPass(hot, who, secret, nowS, subtle);\n",
+  "new": "      // SESSION-SIGN: the next pass, after the ban (a banned account pays its lookup - AUDIT PLAN-1000 E6) and off the\n      // primary's own answer alone (a replica's may stand before a sign-out - E5)\n      if (hot && !('pass' in who) && passMintable(db, env.DB)) held.pass = await mintPass(hot, who, secret, nowS, subtle);\n      if (isBanned(who.player, nowS) && path !== '/v1/auth/logout') return json(bannedAnswer(who.player), 403, origin);\n",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: AUDIT PLAN-1000 E6: a banned account is handed no pass, so an unban waits on none."
+ },
+ {
+  "name": "SESSIONSIGN-minted-off-replica",
+  "file": "server-account/src/index.js",
+  "old": "passMintable(db, env.DB)) held.pass",
+  "new": "true) held.pass",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: AUDIT PLAN-1000 E5: a bookmarked session's lookup is a replica's, which may stand before a sign-out."
+ },
+ {
+  "name": "SESSIONSIGN-mintable-binding-only",
+  "file": "server-account/src/sessionPass.js",
+  "old": "db === binding || db?.[DB_FIRST_PRIMARY] === true",
+  "new": "db === binding",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: a session begun at the primary is the primary's lookup: the heartbeat's pass."
+ },
+ {
+  "name": "SESSIONSIGN-first-primary-any",
+  "file": "server-account/src/service.js",
+  "old": "if (key === DB_FIRST_PRIMARY) return constraint === REPLICA_CONSTRAINT;",
+  "new": "if (key === DB_FIRST_PRIMARY) return true;",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: AUDIT PLAN-1000 E5: the word is the session's own constraint."
+ },
+ {
+  "name": "SESSIONSIGN-believed-everywhere",
+  "file": "server-account/src/sessionPass.js",
+  "old": "PASS_PATH_SET.has(path) || (method === 'PUT' && CHECKPOINT_RE.test(path))",
+  "new": "true",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: the hot routes alone: a claim, the mint and every route that changes an account keep the lookup."
+ },
+ {
+  "name": "SESSIONSIGN-checkpoint-not-hot",
+  "file": "server-account/src/sessionPass.js",
+  "old": "PASS_PATH_SET.has(path) || (method === 'PUT' && CHECKPOINT_RE.test(path))",
+  "new": "PASS_PATH_SET.has(path)",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: the checkpoint, the busiest binding route of them."
+ },
+ {
+  "name": "SESSIONSIGN-paths-plus-account",
+  "file": "server-account/src/sessionPass.js",
+  "old": "'/v1/seats/list', '/v1/festival/town']);",
+  "new": "'/v1/seats/list', '/v1/festival/town', '/v1/account']);",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: AUDIT PLAN-1000 E8: the oracle asks every hot route there is - one added unasked is one the oracle never held."
+ },
+ {
+  "name": "SESSIONSIGN-secret-out-of-mac",
+  "file": "server-account/src/sessionPass.js",
+  "old": "new TextEncoder().encode(`p1.${body}.${secret}`)",
+  "new": "new TextEncoder().encode(`p1.${body}`)",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: bound to its secret: another account's secret with this pass is the lookup."
+ },
+ {
+  "name": "SESSIONSIGN-mac-unchecked",
+  "file": "server-account/src/sessionPass.js",
+  "old": "if (!(await subtle.verify('HMAC', key, mac, macInput(parts[1], secret)))) return null;",
+  "new": "",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: an altered pass is no pass."
+ },
+ {
+  "name": "SESSIONSIGN-time-unread",
+  "file": "server-account/src/sessionPass.js",
+  "old": "c.x - nowS <= PASS_RENEW_S) return null;",
+  "new": "false) return null;",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: a pass past its time is no pass."
+ },
+ {
+  "name": "SESSIONSIGN-renewal-unread",
+  "file": "server-account/src/sessionPass.js",
+  "old": "c.x - nowS <= PASS_RENEW_S) return null;",
+  "new": "c.x - nowS <= 0) return null;",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: renewed before it ends: the lag under PASS_TTL_S - PASS_RENEW_S."
+ },
+ {
+  "name": "SESSIONSIGN-ttl-longer",
+  "file": "server-account/src/sessionPass.js",
+  "old": "export const PASS_TTL_S = 300;",
+  "new": "export const PASS_TTL_S = 3000;",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: five minutes, the owner's call."
+ },
+ {
+  "name": "SESSIONSIGN-bound-unminted",
+  "file": "server-account/src/sessionPass.js",
+  "old": "return pass.length > PASS_MAX_CHARS ? null : pass;",
+  "new": "return pass;",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: AUDIT PLAN-1000 E9: one that would never be believed is never handed."
+ },
+ {
+  "name": "SESSIONSIGN-bound-unread",
+  "file": "server-account/src/sessionPass.js",
+  "old": "pass.length > PASS_MAX_CHARS || ",
+  "new": "",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: AUDIT PLAN-1000 E8: past the bound, none."
+ },
+ {
+  "name": "SESSIONSIGN-key-without-service-key",
+  "file": "server-account/src/sessionPass.js",
+  "old": "  if (!b64) return Promise.resolve(null);\n",
+  "new": "",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: no service key, no pass key."
+ },
+ {
+  "name": "SESSIONSIGN-never-minted",
+  "file": "server-account/src/index.js",
+  "old": "      // SESSION-SIGN: the next pass, after the ban (a banned account pays its lookup - AUDIT PLAN-1000 E6) and off the\n      // primary's own answer alone (a replica's may stand before a sign-out - E5)\n      if (hot && !('pass' in who) && passMintable(db, env.DB)) held.pass = await mintPass(hot, who, secret, nowS, subtle);\n",
+  "new": "",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: the lookup on a hot route hands the pass back."
+ },
+ {
+  "name": "SESSIONSIGN-never-believed",
+  "file": "server-account/src/index.js",
+  "old": "const who = (hot && await readPass(hot, request.headers.get(SESSION_PASS_HEADER), secret, nowS, subtle)) || await resolveSession(ctx, secret);",
+  "new": "const who = await resolveSession(ctx, secret);",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: the pass believed: no lookup."
+ },
+ {
+  "name": "SESSIONSIGN-unexposed",
+  "file": "server-account/src/index.js",
+  "old": "if (held.pass) { out.headers.set(SESSION_PASS_HEADER, held.pass); out.headers.append('access-control-expose-headers', SESSION_PASS_HEADER); }",
+  "new": "if (held.pass) { out.headers.set(SESSION_PASS_HEADER, held.pass); }",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: exposed, so the page can read it."
+ },
+ {
+  "name": "SESSIONSIGN-preflight-shut",
+  "file": "server-account/src/index.js",
+  "old": "x-d1-bookmark, if-none-match, x-session-pass, x-staff-session'",
+  "new": "x-d1-bookmark, if-none-match, x-staff-session'",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: the preflight lets a page send it."
+ },
+ {
+  "name": "SESSIONSIGN-save-session-unread",
+  "file": "server-account/src/realm.js",
+  "old": "  if (session != null && row.session_alive == null) return { error: 'auth' };\n",
+  "new": "",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: AUDIT PLAN-1000 E3: a save under a signed-out session saves nothing."
+ },
+ {
+  "name": "SESSIONSIGN-save-ban-unread",
+  "file": "server-account/src/realm.js",
+  "old": "  if (Number.isSafeInteger(row.ban_until_now) && row.ban_until_now > nowS) return { error: 'banned', player: { banned_until: row.ban_until_now, ban_reason: row.ban_reason_now } };\n",
+  "new": "",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: AUDIT PLAN-1000 E3: a banned account saves nothing (SAFE4)."
+ },
+ {
+  "name": "SESSIONSIGN-save-session-unsent",
+  "file": "server-account/src/index.js",
+  "old": "              session: who.session?.id ?? null,",
+  "new": "              session: null,",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: AUDIT PLAN-1000 E3: the save is handed the session it came under."
+ },
+ {
+  "name": "SESSIONSIGN-beat-session-unread",
+  "file": "server-account/src/accounts.js",
+  "old": "OR EXISTS (SELECT 1 FROM sessions s WHERE s.id = ?4 AND s.player_id = ?3))",
+  "new": "OR ?4 IS NOT NULL)",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: AUDIT PLAN-1000 E3: a beat under a signed-out session credits nothing."
+ },
+ {
+  "name": "SESSIONSIGN-beat-ban-unread",
+  "file": "server-account/src/accounts.js",
+  "old": "WHERE id = ?3 AND COALESCE(banned_until, 0) <= ?1",
+  "new": "WHERE id = ?3",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: AUDIT PLAN-1000 E3: a banned account is credited nothing."
+ },
+ {
+  "name": "SESSIONSIGN-beat-session-unsent",
+  "file": "server-account/src/heartbeat.js",
+  "old": "creditPlay(ctx, player.id, sessionId)",
+  "new": "creditPlay(ctx, player.id)",
+  "tests": [
+   "test/server/sessionsign.test.js"
+  ],
+  "note": "SESSION-SIGN: AUDIT PLAN-1000 E3: the heartbeat's beat is handed its session."
+ },
+ {
+  "name": "SESSIONSIGN-client-any-secret",
+  "file": "src/net/accountClient.js",
+  "old": "return secret && _pass.secret === secret ? _pass.pass : null;",
+  "new": "return _pass.pass;",
+  "tests": [
+   "test/net/sessionsign_client.test.js"
+  ],
+  "note": "SESSION-SIGN: never with another secret."
+ },
+ {
+  "name": "SESSIONSIGN-client-never-sent",
+  "file": "src/net/accountClient.js",
+  "old": "  if (pass) headers[SESSION_PASS_HEADER] = pass;\n",
+  "new": "",
+  "tests": [
+   "test/net/sessionsign_client.test.js"
+  ],
+  "note": "SESSION-SIGN: sent with its secret."
+ },
+ {
+  "name": "SESSIONSIGN-client-kept-offline",
+  "file": "src/net/accountClient.js",
+  "old": "    if (!passKeptThrough(e)) forgetSessionPass();   // SESSION-SIGN: the same, for the pass's - but a timeout's (E7)\n",
+  "new": "",
+  "tests": [
+   "test/net/sessionsign_client.test.js"
+  ],
+  "note": "SESSION-SIGN: a call that could not be made lets it go."
+ },
+ {
+  "name": "SESSIONSIGN-client-timeout-forgets",
+  "file": "src/net/accountClient.js",
+  "old": "    if (!passKeptThrough(e)) forgetSessionPass();   // SESSION-SIGN: the same, for the pass's - but a timeout's (E7)\n",
+  "new": "    forgetSessionPass();\n",
+  "tests": [
+   "test/net/sessionsign_client.test.js"
+  ],
+  "note": "SESSION-SIGN: AUDIT PLAN-1000 E7: a timeout or an abort keeps it."
+ },
+ {
+  "name": "SESSIONSIGN-client-moves-kept",
+  "file": "src/net/accountClient.js",
+  "old": "if (PASS_MOVES.has(path)) forgetSessionPass(); else noteSessionPass(secret, res);",
+  "new": "noteSessionPass(secret, res);",
+  "tests": [
+   "test/net/sessionsign_client.test.js"
+  ],
+  "note": "SESSION-SIGN: AUDIT PLAN-1000 E2: a guest registered lets its guest pass go."
+ },
+ {
+  "name": "SESSIONSIGN-client-kept-past-auth",
+  "file": "src/net/accountClient.js",
+  "old": "    if (data?.error === 'auth') forgetSessionPass();   // SESSION-SIGN: a session refused is no pass's\n",
+  "new": "",
+  "tests": [
+   "test/net/sessionsign_client.test.js"
+  ],
+  "note": "SESSION-SIGN: a refusal of the session lets it go."
+ },
+ {
+  "name": "SESSIONSIGN-client-kept-past-signout",
+  "file": "src/net/accountClient.js",
+  "old": "  forgetSessionPass();   // SESSION-SIGN: the session's pass with it\n",
+  "new": "",
+  "tests": [
+   "test/net/sessionsign_client.test.js"
+  ],
+  "note": "SESSION-SIGN: a sign-out lets it go."
+ },
+ {
+  "name": "SESSIONSIGN-realm-sends-none",
+  "file": "src/systems/realmSaves.js",
+  "old": "  if (pass) headers[SESSION_PASS_HEADER] = pass;\n",
+  "new": "",
+  "tests": [
+   "test/net/sessionsign_client.test.js"
+  ],
+  "note": "SESSION-SIGN: the checkpoint carries it."
+ },
+ {
+  "name": "SESSIONSIGN-realm-keeps-none",
+  "file": "src/systems/realmSaves.js",
+  "old": "  noteSessionPass(io.secret, res);\n",
+  "new": "",
+  "tests": [
+   "test/net/sessionsign_client.test.js"
+  ],
+  "note": "SESSION-SIGN: and keeps its answer's."
+ },
+ {
+  "name": "SESSIONSIGN-realm-kept-offline",
+  "file": "src/systems/realmSaves.js",
+  "old": "    if (!passKeptThrough(e)) forgetSessionPass();   // SESSION-SIGN: a call that could not be made forgets the pass (accountClient.js call's law)\n",
+  "new": "",
+  "tests": [
+   "test/net/sessionsign_client.test.js"
+  ],
+  "note": "SESSION-SIGN: AUDIT PLAN-1000 E8: the realm's door lets it go on a call that could not be made."
+ }
+]

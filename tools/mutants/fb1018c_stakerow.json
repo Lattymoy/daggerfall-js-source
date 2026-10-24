@@ -1,0 +1,135 @@
+[
+  {
+    "name": "STAKE-ROW-a-word-row-strands-the-window",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "    if (r.kind !== 'start') { shut(); showMain(); return; }",
+    "new": "    if (r.kind !== 'start') return;",
+    "tests": [
+      "test/ui/eliteGates/fb1018c_stakerow.test.js",
+      "test/net/eliteGates/egarch_client.test.js"
+    ],
+    "why": "the report: the stake picked closes the port's picker and nothing asks again - no window, and the key answers that the Spire already asks"
+  },
+  {
+    "name": "STAKE-ROW-the-list-asked-over-the-dead-one",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "    if (r.kind !== 'start') { shut(); showMain(); return; }",
+    "new": "    if (r.kind !== 'start') { showMain(); return; }",
+    "tests": [
+      "test/ui/eliteGates/fb1018c_stakerow.test.js",
+      "test/net/eliteGates/egarch_client.test.js"
+    ],
+    "why": "THE SLOT IS EMPTIED BEFORE THE OCCUPANT IS TOLD, broken: without the shut the picked list still holds the slot when the list is asked again, so the host refuses the new list's mount (worldModes.js mountSpellWindow, on townTalk's pause latch)"
+  },
+  {
+    "name": "STAKE-ROW-the-word-row-cancels",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "    if (r.kind !== 'start') { shut(); showMain(); return; }",
+    "new": "    if (r.kind !== 'start') { cancel(); return; }",
+    "tests": [
+      "test/ui/eliteGates/fb1018c_stakerow.test.js",
+      "test/net/eliteGates/egarch_client.test.js"
+    ],
+    "why": "the stake picked ends the window as a cancel - the top row still does nothing the player asked"
+  },
+  {
+    "name": "AUDIT-STAKE-ROW-L1-1-no-give-up",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "      if (top?.done) slot.close(top);\n",
+    "new": "",
+    "tests": [
+      "test/ui/eliteGates/fb1018c_stakerow.test.js"
+    ],
+    "why": "the question answered No: its box still holds the slot, the list's mount is refused, and the window is cancelled unsaid"
+  },
+  {
+    "name": "AUDIT-STAKE-ROW-L1-U1-no-leave-guard",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "      win.dispose = () => { dispose(); if (!win.done) { win.done = true; onCancel(); } };",
+    "new": "      win.dispose = () => { dispose(); };",
+    "tests": [
+      "test/ui/eliteGates/fb1018c_stakerow.test.js"
+    ],
+    "why": "a list put off the screen unpicked tells nobody: the window and the key go on asking with nothing on the screen"
+  },
+  {
+    "name": "AUDIT-STAKE-ROW-L1-U1-leave-guard-twice",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "      win.dispose = () => { dispose(); if (!win.done) { win.done = true; onCancel(); } };",
+    "new": "      win.dispose = () => { dispose(); if (!win.done) { onCancel(); } };",
+    "tests": [
+      "test/ui/eliteGates/fb1018c_stakerow.test.js"
+    ],
+    "why": "the leave told on every dispose - it is told once"
+  },
+  {
+    "name": "AUDIT-STAKE-ROW-L2-3-refused-mount-unsaid",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "      if (slot.mount(win)) return win;\n      Promise.resolve().then(onCancel);\n",
+    "new": "      if (slot.mount(win)) return win;\n",
+    "tests": [
+      "test/ui/eliteGates/fb1018c_stakerow.test.js"
+    ],
+    "why": "a refused mount strands the window: nothing on the screen, the flow asking"
+  },
+  {
+    "name": "AUDIT-STAKE-ROW-L2-3-no-list-unsaid",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "      if (!ready()) { Promise.resolve().then(onCancel); return null; }",
+    "new": "      if (!ready()) { return null; }",
+    "tests": [
+      "test/ui/eliteGates/fb1018c_stakerow.test.js"
+    ],
+    "why": "no list to ask with strands the window"
+  },
+  {
+    "name": "AUDIT-STAKE-ROW-L2-5-cancel-unguarded",
+    "file": "src/ui/eliteGates/egStartWindow.js",
+    "old": "  function cancel() { if (done) return; done = true; shut(); o.onCancel?.(); }",
+    "new": "  function cancel() { done = true; shut(); o.onCancel?.(); }",
+    "tests": [
+      "test/ui/eliteGates/fb1018c_stakerow.test.js"
+    ],
+    "why": "a late door's cancel tells the occupant twice"
+  },
+  {
+    "name": "AUDIT-STAKE-ROW-L1-2-pack-left-up",
+    "file": "src/systems/eliteGates/weirKey.js",
+    "old": "  return { kind: 'text', text, closesWindow: text === '' };",
+    "new": "  return { kind: 'text', text, closesWindow: false };",
+    "tests": [
+      "test/ui/eliteGates/fb1018c_stakerow.test.js"
+    ],
+    "why": "the key used from the pack: the pack holds the slot when the preflight lands, the window is refused, unsaid"
+  },
+  {
+    "name": "AUDIT-STAKE-ROW-L2-1-pickrow-a-row-low",
+    "file": "src/ui/enhanced/enhancedPicker.js",
+    "old": "  const vy = geo.y + geo.list[1] + row * rh + Math.max(1, Math.floor(rh / 2));",
+    "new": "  const vy = geo.y + geo.list[1] + (row + 1) * rh + Math.max(1, Math.floor(rh / 2));",
+    "tests": [
+      "test/ui/eliteGates/fb1018c_stakerow.test.js"
+    ],
+    "why": "the tap Mac used presses the row under the one tapped"
+  },
+  {
+    "name": "AUDIT-STAKE-ROW-L2-1-pickrow-one-press",
+    "file": "src/ui/enhanced/enhancedPicker.js",
+    "old": "  replayClick(a.canvas, a.m, vx, vy);\n  return replayClick(a.canvas, a.m, vx, vy);",
+    "new": "  return replayClick(a.canvas, a.m, vx, vy);",
+    "tests": [
+      "test/ui/eliteGates/fb1018c_stakerow.test.js"
+    ],
+    "why": "a tap replays one press: DFU's list only selects on it, and the tap uses nothing"
+  },
+  {
+    "name": "AUDIT-STAKE-ROW-L2-2-single-click-uses",
+    "file": "src/ui/listPicker.js",
+    "old": "          if (wasDouble) this._use();",
+    "new": "          this._use();",
+    "tests": [
+      "test/ui/eliteGates/fb1018c_stakerow.test.js"
+    ],
+    "why": "a single press uses the row - the tap's first press must only select (ListBox.MouseClick)"
+  }
+]

@@ -1,121 +1,122 @@
 [
   {
     "name": "WB9c-a-count-unbounded",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "Math.max(RECKON_CRYSTALS[0], Math.min(RECKON_CRYSTALS[1], 2 + Math.ceil(Math.max(0, n) / 2)))",
     "new": "Math.max(RECKON_CRYSTALS[0], 2 + Math.ceil(Math.max(0, n) / 2))",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-a-health-off-the-court",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "Math.round((RECKON_TEAM_S * lvs.reduce((s, lv) => s + dpsRef(lv), 0)) / Math.max(1, n))",
     "new": "Math.round((RECKON_TEAM_S * lvs.length * dpsRef(60)) / Math.max(1, n))",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-the-reckoning-never-armed",
-    "file": "src/net/gateBrain.js",
-    "old": "    if (!f.rk && f.court === COURTS.length - 1) f.rk = now + RECKON_FIRST_MS;",
-    "new": "    if (!f.rk && f.court === COURTS.length - 1 && f.phase > 3) f.rk = now + RECKON_FIRST_MS;",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (!f.rk && f.court === finalCourt(f)) f.rk = now + RECKON_FIRST_MS;",
+    "new": "    if (!f.rk && f.court === finalCourt(f) && f.phase > 3) f.rk = now + RECKON_FIRST_MS;",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-a-crystal-off-the-floor",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "r = Math.sqrt(RECKON_RING[0] ** 2 + rng() * (RECKON_RING[1] ** 2 - RECKON_RING[0] ** 2));",
     "new": "r = RECKON_RING[1] + 8 * rng();",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-the-dead-counted",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  const live = bodies.filter((b) => !b.dead && f.players[b.sub]);\n  const n = crystalCountFor(live.length)",
     "new": "  const live = bodies.filter((b) => f.players[b.sub]);\n  const n = crystalCountFor(live.length)",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ],
     "equivalent": true,
     "why": "Belt and braces: stepBrain hands begin the challengers standing ALIVE in his court (`here` - the dead filtered out once, there), so growCrystals' own `!b.dead` never turns a count; the dead are counted out at `here` (WB3-a-dead-target-kept's line)."
   },
   {
     "name": "WB9c-the-rate-unshared",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  if (!spendBlow(p, now, seq, `x${c}`)) return out;",
     "new": "",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-a-swing-from-across-the-court",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, q.x, q.z) - CRYSTAL_R > MELEE_REACH + POSE_SLACK) return out;",
     "new": "",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-the-reckoning-left-standing",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  if (X.c.every((o) => o.h <= 0)) {",
     "new": "  if (false) {",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-an-attack-through-the-stun",
-    "file": "src/net/gateBrain.js",
-    "old": "  if (now < (f.stunUntil ?? 0)) { hpFrame(f, now, out); stateFrame(f, now, out); return out; }",
-    "new": "  if (false) { hpFrame(f, now, out); stateFrame(f, now, out); return out; }",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (now < (f.stunUntil ?? 0)) return;",
+    "new": "  if (false) return;",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-the-blow-unscaled",
-    "file": "src/net/gateBrain.js",
-    "old": "  const want = d * P.hitX * (now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1);",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  const want = d * P.hitX * (!H && now < (f.stunUntil ?? 0) ? STUN_HIT_X : 1);",
     "new": "  const want = d * P.hitX;",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
-    ]
+      "test/net/gate/wb9c_gate_reckoning.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
   },
   {
     "name": "WB9c-a-saving-throw-answering-it",
-    "file": "src/net/gateStrike.js",
+    "file": "src/net/gate/gateStrike.js",
     "old": "saved: L.el != null && !isDagons(A) };",
     "new": "saved: L.el != null && A !== ATTACKS.wrath };",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-a-reckoning-landing-on-one-court",
-    "file": "src/net/gateStrike.js",
+    "file": "src/net/gate/gateStrike.js",
     "old": "    case 'all': return true;",
     "new": "    case 'all': return Math.hypot(px - atk.x, pz - atk.z) <= 24;",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-every-beat",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  if (key === f.cxSent) return;",
     "new": "",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
@@ -124,7 +125,7 @@
     "old": "intIn(m.c, 0, GATE_CRYSTALS_MAX - 1) ? { k: 'xhit'",
     "new": "intIn(m.c, 0, 99) ? { k: 'xhit'",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
@@ -133,7 +134,7 @@
     "old": "gateMs(m.until) && gateMs(m.at) && m.until > m.at ?",
     "new": "gateMs(m.until) && gateMs(m.at) ?",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
@@ -142,7 +143,7 @@
     "old": "    if (m.k === 'xhit') this._gateFan(applyCrystalHit(",
     "new": "    if (m.k === 'never') this._gateFan(applyCrystalHit(",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
@@ -151,97 +152,97 @@
     "old": "this._gateFan(applyCrystalHit(f, a.sub, m.c, m.d, m.r,",
     "new": "(applyCrystalHit(f, a.sub, m.c, m.d, m.r,",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-another-reckonings-health-taken",
-    "file": "src/net/gateLink.js",
+    "file": "src/net/gate/gateLink.js",
     "old": "    case 'cxh': return s.cx && s.cx.i === g.i ?",
     "new": "    case 'cxh': return s.cx ?",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-the-breaker-forgotten-by-the-state",
-    "file": "src/net/gateLink.js",
+    "file": "src/net/gate/gateLink.js",
     "old": "broke: same && s.cx?.i === g.cx.i ? s.cx.broke : []",
     "new": "broke: []",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-the-call-every-frame",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "    if (X && X.c.length && !sameCx(rk, X) && !(rkDone",
     "new": "    if (X && X.c.length && !(rkDone",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-a-target-still-in-the-stone",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "    if (!rk.ended && grow >= CRYSTAL_STRIKE_GROWN && !(rk.landAt",
     "new": "    if (!rk.ended && !(rk.landAt",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-the-number-unrounded",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "      if ((rk.landAt !== null && t >= rk.landAt - RECKON_CLOSE_MS) || !fromHisCourt(s, t)) return false;   // AUDIT WB9 (brain F1, F2)\n      const dmg = Math.round(d);",
     "new": "      if ((rk.landAt !== null && t >= rk.landAt - RECKON_CLOSE_MS) || !fromHisCourt(s, t)) return false;   // AUDIT WB9 (brain F1, F2)\n      const dmg = d;",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-a-breaker-unsaid",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "    say(COURT_RECKON_TEXT.shattered(who, left));",
     "new": "",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-a-stale-reckoning-grown-again",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "        rkDone = { i: rk.i, x0: rk.x0, z0: rk.z0 };",
     "new": "",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-the-beam-into-the-floor",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "_chest[1] = COURT_CENTRE[1] + P.bossH * 0.62;",
     "new": "_chest[1] = COURT_CENTRE[1];",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-a-light-for-a-broken-one",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "        if (!(d.broke < 0) || !(d.grow > 0.05)) continue;",
     "new": "        if (!(d.grow > 0.05)) continue;",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
     "name": "WB9c-the-count-of-all-crystals",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "    for (const q of s.cx.c) if (q[2] > 0) left++;",
     "new": "    for (const q of s.cx.c) left++;",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
@@ -250,7 +251,7 @@
     "old": "5 + (i % 2), 1 + i * 1.7 + rolls());",
     "new": "5 + (i % 2), 0.3);",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
@@ -259,7 +260,7 @@
     "old": "    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE); gl.depthMask(false);",
     "new": "    gl.enable(gl.BLEND); gl.blendFunc(gl.ONE, gl.ONE); gl.depthMask(true);",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
@@ -268,7 +269,7 @@
     "old": "    gl.depthMask(true); gl.disable(gl.BLEND); gl.enable(gl.CULL_FACE);",
     "new": "    gl.depthMask(true); gl.enable(gl.CULL_FACE);",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   },
   {
@@ -277,7 +278,7 @@
     "old": "    const items = this._items;",
     "new": "    const items = [];",
     "tests": [
-      "test/wb9c_gate_reckoning.test.js"
+      "test/net/gate/wb9c_gate_reckoning.test.js"
     ]
   }
 ]

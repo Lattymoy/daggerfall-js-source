@@ -1,4 +1,4 @@
-import { MOBILE_TYPES } from './mobileTypes.js';
+import { MOBILE_TYPES } from './mobile/mobileTypes.js';
 
 // ═══════════════════════════════════════════════════════════════════
 // THE UNDEAD LINE, AND WHAT CAME AFTER IT

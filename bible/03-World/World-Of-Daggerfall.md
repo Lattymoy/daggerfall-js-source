@@ -46,7 +46,12 @@ instance list, in list order, and for each instance:
 1. the tile already holds a location (`MapData.hasLocation`) - a type-0
    instance anywhere in the list ends the call, a type-2 skips;
 2. the tile is sea (region 31, 3, 29, 28 or 30 AND a WOODS height of 2
-   or less) - the same two arms;
+   or less) - the same two arms. Dead in DFU: it asks MapPixelData's
+   `mapRegionIndex`, which `GetMapPixelData` fills from the pixel's
+   location alone, and a pixel with one has left at step 1. The port
+   asks the pixel's own region (`formats/mapsFile.js` getRegionIndexAt,
+   the sea's politic 64 is 31), a departure - WOD-SEA-TEST (FIELD BUGS
+   2026-10-18f, `01-Overview/Port-Ledger.md` section A);
 3. the instance names another map pixel - skip;
 4. `terrainX`/`terrainY` outside 1..128 - skip;
 5. Basic Roads says a road or a track crosses the pixel
@@ -68,7 +73,7 @@ there - the one instance of another pixel that can act (it ends the call once th
 type 2 there is skipped either way, anything else fails step 3). The verbatim scan is kept as `pickLocationsScan`,
 the law the walk is held to: equal on every pixel of the shipped lists under four tiles (the game's, no roads with a
 site refused, a tile that holds a location, the sea - 587,384 tiles, 239,059 placements), and pinned on made lists of
-types 0, 1 and 2 on and off the grid (test/flow2_fast_tests.test.js). A pixel off the 1000 x 500 grid, or a session
+types 0, 1 and 2 on and off the grid (test/systems/flow2_fast_tests.test.js). A pixel off the 1000 x 500 grid, or a session
 with no index, walks the scan.
 
 Step 8's `hasLocation` is what makes the FIRST valid instance naming a
@@ -216,7 +221,7 @@ flat, by its ARCHIVE STRING:
   DFU as here. The rock fields' 157 placements of the same model are
   boulders set into the outcrops and keep the mod's height (ROCK-SUNK,
   `isWodShrub`): standing them raised shards up to 377 m tall round
-  every rock field (`01-Overview/Field-Bugs-2026-10-02.md`).
+  every rock field (`01-Overview/bugs/Field-Bugs-2026-10-02.md`).
 - **a flat** is a billboard, base-anchored where `AlignToBase` and the
   scale fix (`LocationLoader.cs:243-248`) leave it; the four records the
   layouts scale are batches at their own size.
@@ -242,7 +247,7 @@ flat, by its ARCHIVE STRING:
 ## The spawn points (WOD3)
 
 `LocationEnemySpawner` is a state machine over one number, the
-player's distance, and is ported as one (`world/wodSpawner.js`):
+player's distance, and is ported as one (`world/worldOfDaggerfall/wodSpawner.js`):
 `tick(dist)` is one Unity frame for one marker.
 
 - **Start spends, Update springs.** A marker the player is within 300
@@ -333,7 +338,7 @@ commented-out HUD text. The fast-travel cleanup is never subscribed, and
 the crashed ship and the labyrinth blocks are commented out.) The
 component's Start is the whole camp, built in the block's frame under
 an "Extra_Detail" child at its origin, and ported as data
-(`world/wodPrivateersHold.js`, pinned line for line against the
+(`world/worldOfDaggerfall/wodPrivateersHold.js`, pinned line for line against the
 vendored C#):
 
 - **33 models**, each `CreateDaggerfallMeshGameObject` (the mesh and its
@@ -413,7 +418,7 @@ that lands while the build is in flight is heard (AUDIT BRANCH m4).
 
 A second, independent pass read the port against the eight sources.
 It found four behaviours the port did not yet share, and all four are
-fixed and pinned (`test/wod5_audit.test.js`):
+fixed and pinned (`test/scenes/wod5_audit.test.js`):
 
 - the mirrored wall drawn inside out;
 - a region visited between two builds going unheard;
@@ -441,7 +446,7 @@ and HCC's own AUDIT BRANCH). Five lenses then read the whole branch: the
 C# again, the streaming host at run time, the shared modules against
 main, online with saves and HCC, and performance, the build, the data
 and the docs. Every finding below was reproduced by execution before it
-was fixed. They are pinned in `test/audit_wod_branch.test.js`, the
+was fixed. They are pinned in `test/world/worldOfDaggerfall/audit_wod_branch.test.js`, the
 mutants are in `tools/mutants/auditwod.json`, and every one dies.
 
 - **B1, the blocker: a mountain froze the tab.** All nine
@@ -507,7 +512,7 @@ try. The treasure marker's save stays a reading above.
 ## AFTER THE AUDIT: TERRAIN-SCALE1, BUILD-FAIL1, WOD6 (2026-09-23)
 
 Mac: "Make the best decisions and take care of the found properly".
-Pinned in `test/terrainscale1.test.js` and `test/audit_wod_branch.test.js`;
+Pinned in `test/world/terrain/terrainscale1.test.js` and `test/world/worldOfDaggerfall/audit_wod_branch.test.js`;
 the mutants are `tools/mutants/terrainscale1.json` and `auditwod.json`,
 and every one dies.
 
@@ -518,7 +523,7 @@ and every one dies.
   (`TerrainHelper.defaultTerrainScale`) is only its default, and the
   port had read it: every hill stood a fifth taller than DFU's. Every
   height the streamed world draws, collides with or stands things on
-  now reads `STREAMING_TERRAIN_SCALE` (`world/terrainSampler.js`): the
+  now reads `STREAMING_TERRAIN_SCALE` (`world/terrain/terrainSampler.js`): the
   terrain, the nature layout, the far ring, the grass, the overworld
   model and this mod's sites (1923.75, the author's own constant).
 - **Saves written on 1.5 still land.** `SAVE_VERSION` does not move.
@@ -595,7 +600,7 @@ client of a room stood the same sites (the list is the room's), but each
 ran its own markers, so a camp sprang once per player and each fought a
 private copy (the AUDIT BRANCH's M1 had kept those foes home because
 they spent a peer's puppet slots). Now THE FIRST PLAYER TO SPRING A
-MARKER OWNS WHAT IT MADE (`world/wodShared.js`):
+MARKER OWNS WHAT IT MADE (`world/worldOfDaggerfall/wodShared.js`):
 - **A marker's site** is the key every client shares without a word:
   the map pixel (one layout stands to a pixel - every shipped pack
   checked) and the marker's objectID, with its index among the pixel's
@@ -640,8 +645,8 @@ measured on each side's own clock (a pair ten seconds apart doubled or
 collapsed by id order); a race lost while the camp still built; a
 reader's allowance full of an owner's old camps spending a new marker
 it could not show; the owner's list sending its oldest 64 for ever; a
-peer's springs never forgotten; and the stale paragraph above. Pinned in `test/wod7_sharedcamps.test.js` and the audit's rig
-(`test/audit_wod_branch.test.js`); mutants `tools/mutants/wod7.json`.
+peer's springs never forgotten; and the stale paragraph above. Pinned in `test/scenes/wod7_sharedcamps.test.js` and the audit's rig
+(`test/world/worldOfDaggerfall/audit_wod_branch.test.js`); mutants `tools/mutants/wod7.json`.
 
 ## THE FOUR HOSTS
 
@@ -650,7 +655,7 @@ peer's springs never forgotten; and the stale paragraph above. Pinned in `test/w
   region under the player is announced (`OnRegionIndexChanged` is heard
   on every crossing, and again at each build, where the list is read), every
   announced folder lands, the pick is taken. The smoothing arms run IN
-  the kernel (`world/terrainGen.js`), after the tiles are assigned and
+  the kernel (`world/terrain/terrainGen.js`), after the tiles are assigned and
   before the grid and the nature - the order `OnPromoteTerrainData`
   holds in DFU - and the averages ride back. The objects stand after the
   location block, pixel-local, so `destroyPixel` takes them with the
@@ -681,7 +686,7 @@ player has travelled. Two players standing on one pixel can pick
 different instances on the 176 pixels named from two folders, and on
 the border pixels of a region only one of them has entered - and this
 mod levels the ground, which is what a room must agree on. So the mod's
-one switch is ROOM-OWNED (`systems/onlineLane.js`, beside the roads),
+one switch is ROOM-OWNED (`systems/online/onlineLane.js`, beside the roads),
 and an online page loads every folder at once in one order: 17 first,
 then ascending. Offline the list is the reference's, path and all.
 
@@ -722,20 +727,20 @@ then differ from the room's for the rest of the page.
 
 ## Where it lives in the port
 
-- `src/world/wodLocationData.js` - `LocationData.cs` and the reading
+- `src/world/worldOfDaggerfall/wodLocationData.js` - `LocationData.cs` and the reading
   half of `LocationHelper.cs`: the shapes, the two XML loaders, .NET's
   `TryParse`, `ValidateValue`, NTFS name order.
-- `src/world/wodLocationPack.js` - one region folder as one pack.
-- `src/world/wodLocationLoader.js` - `LocationLoader.cs`: the session
+- `src/world/worldOfDaggerfall/wodLocationPack.js` - one region folder as one pack.
+- `src/world/worldOfDaggerfall/wodLocationLoader.js` - `LocationLoader.cs`: the session
   list, the pick, the flatten, the object positions.
-- `src/world/wodLocationObjects.js` - `LoadObject` and its helpers as
+- `src/world/worldOfDaggerfall/wodLocationObjects.js` - `LoadObject` and its helpers as
   data: the archive-string arms, the mod's `AddLight`, the transform.
-- `src/world/worldOfDaggerfall.js` - the page's one loader: Awake, the
+- `src/world/worldOfDaggerfall/worldOfDaggerfall.js` - the page's one loader: Awake, the
   region events in order, the room's list, the placements.
-- `src/world/wodSpawner.js` - `LocationEnemySpawner.cs`: Start, Update
+- `src/world/worldOfDaggerfall/wodSpawner.js` - `LocationEnemySpawner.cs`: Start, Update
   and the five arms as one machine.
 - `src/world/groundAlign.js` - GameObjectHelper's two ground aligns.
-- `src/world/wodPrivateersHold.js` - `DungeonExterior.cs` and
+- `src/world/worldOfDaggerfall/wodPrivateersHold.js` - `DungeonExterior.cs` and
   `PrivateersHold.cs`: the block's name, Start's camp as data, its rolls.
 - `src/world/roadsProducer.js` `basicRoadsPathsPoint` - the question the
   loader asks Basic Roads.
@@ -748,7 +753,7 @@ site off a pixel whose own byte carries a road or track (LocationLoader.cs:146-1
 and nothing more - but the shipped layouts reach far past their pixel: the
 mountains ~1.9 km from the site, the large rock fields ~500 m, and 41,349 of the
 114,087 sites the lists stand spill into the next pixel, where its road runs.
-`world/roadClearance.js` asks the FOOTPRINT against the painted network (every
+`world/road/roadClearance.js` asks the FOOTPRINT against the painted network (every
 path a band from its pixel's centre to the edge or corner its compass bit names,
 half a path width either side) in the site's pixel and every pixel it reaches.
 A camp, fort, shrine, ruin, cave or nature spot is refused whole at its pick (a
@@ -757,7 +762,7 @@ pixel); a rock field or mountain keeps every piece but those whose own mesh box
 reaches a road (no mesh, no collider). Deterministic online: the lane forces
 Basic Roads. A pixel built before the network lands is built again by the roads
 sweep, and asks then. Over the shipped lists no whole site reaches a road; the
-pieces do. Pinned in `test/roadsclear.test.js`, mutants in
+pieces do. Pinned in `test/world/worldOfDaggerfall/roadsclear.test.js`, mutants in
 `tools/mutants/roadsclear.json`. The wilderness camps (CAMP-RING) take the same
 test for their anchor (its whole ring) and each member.
 
@@ -775,7 +780,7 @@ fire is out of reach (the rock's collider takes the press's ray and the body
 first), so nobody fought and the gate stood its whole schedule.
 
 The gate does not move; the rock yields, ROADS-CLEAR's shape
-(`world/gateClearance.js`, read by `scenes/world.js`):
+(`world/gate/gateClearance.js`, read by `scenes/world.js`):
 - a camp, fort, shrine, ruin, cave or nature spot whose objects (grown by the
   road test's 8 m site margin) reach the gate's 24 m clearing is refused at its
   pick, after the road test - a `continue`, so a later instance may take the
@@ -796,8 +801,8 @@ places (`riteLocalOf`): the same refusals, so no boulder stands through the alta
 the braziers or the faithful's tents (AUDIT WB12d G12).
 
 Online alone: the gate is online's, and online this mod is the room's, forced
-on (`systems/onlineLane.js`) - so every client that sees a gate stands the same
+on (`systems/online/onlineLane.js`) - so every client that sees a gate stands the same
 rock and refuses the same pieces, and the ground the room shares (the flatten)
 is refused with the site on every one of them. Offline the mod stands 1:1.
-Pinned in `test/gateclear.test.js`, mutants in `tools/mutants/gateclear.json`;
-`01-Overview/Field-Bugs-2026-09-28b.md` has the reading.
+Pinned in `test/world/gate/gateclear.test.js`, mutants in `tools/mutants/gateclear.json`;
+`01-Overview/bugs/Field-Bugs-2026-09-28b.md` has the reading.

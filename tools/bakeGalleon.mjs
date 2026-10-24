@@ -38,7 +38,7 @@
 // polygon work; this is the bake for a SCENE OF PARTS rather than one mesh.
 // It does three things and nothing else, and leaves everything that is art
 // (which face wears which texture, how a texture lies on it, what a part is
-// hung from) to src/world/galleonModel.js, where a test can read it:
+// hung from) to src/world/ships/galleonModel.js, where a test can read it:
 //
 // 1. EACH OBJECT INTO THE BOAT'S FRAME. A Blender export carries its axis
 //    conversion on every object (Lcl Rotation -90 about X, Lcl Scaling 100,
@@ -102,7 +102,7 @@
 //    mirror images - her stern quarters (0.36 m apart) and four quads: Mac
 //    drew each the mirror of its partner, but their corners start
 //    elsewhere - and the bake keeps that too, as he sees it (pinned in
-//    test/auditgalleon_bake.test.js). A polygon
+//    test/tooling/auditgalleon_bake.test.js). A polygon
 //    its triangles do not TILE is refused by object and number, never
 //    patched (tools/fbxMesh.mjs tilingFault: every triangle wound with its
 //    face, their areas its area to 1e-6, no part of its plane covered more
@@ -110,7 +110,7 @@
 //    point and no triangle of its own. Where Mac drew three corners on one
 //    line (a gunport's sill, a lintel, the fold of her port inner planking,
 //    #76), Blender's fill can cut a triangle of no area along it: it is
-//    kept, as Blender keeps it, and draws nothing (world/galleonMesh.js
+//    kept, as Blender keeps it, and draws nothing (world/ships/galleonMesh.js
 //    MeshBench drops a triangle of no area). The polygons are kept as well,
 //    since a face's texture is chosen per polygon.
 //
@@ -118,7 +118,7 @@
 //    (five faces aft of the sternpost); it turns, so it is its own part.
 //
 // The output is a JSON a test re-bakes byte for byte
-// (test/galleon_model.test.js): the source is committed beside it, so the
+// (test/world/ships/galleon_model.test.js): the source is committed beside it, so the
 // file is a DERIVATION, never a blob.
 //
 // SHIPS-2 (2026-10-07): the reading, the cut and the refusals are every ship's now - tools/shipBake.mjs, the bake for

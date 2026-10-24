@@ -5,7 +5,7 @@
     "old": "high + Math.max(1, Math.ceil((high * AUCTION_RAISE_PCT) / 100)))",
     "new": "high + Math.max(0, Math.ceil((high * AUCTION_RAISE_PCT) / 100)))",
     "tests": [
-      "test/prof5b_law.test.js"
+      "test/net/prof5b_law.test.js"
     ],
     "equivalent": true,
     "why": "a bid is a whole Mark or more, and the ceiling of 5% of 1 or more is already 1 or more: the floor of a Mark is the record's word (10.2 says at least a Mark), binding on no bid"
@@ -16,7 +16,7 @@
     "old": "high + Math.max(1, Math.ceil((high * AUCTION_RAISE_PCT) / 100)))",
     "new": "high + Math.max(1, Math.floor((high * AUCTION_RAISE_PCT) / 100)))",
     "tests": [
-      "test/prof5b_law.test.js"
+      "test/net/prof5b_law.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "export const auctionNext = (high, opening) => (high == null ? opening :",
     "new": "export const auctionNext = (high, opening) => (high == null ? 1 :",
     "tests": [
-      "test/prof5b_law.test.js",
-      "test/prof5b_service.test.js"
+      "test/net/prof5b_law.test.js",
+      "test/net/prof5b_service.test.js"
     ]
   },
   {
@@ -35,7 +35,7 @@
     "old": "(endsAt - atS < AUCTION_LATE_S ? endsAt + AUCTION_ADD_S : endsAt)",
     "new": "(endsAt - atS <= AUCTION_LATE_S ? endsAt + AUCTION_ADD_S : endsAt)",
     "tests": [
-      "test/prof5b_law.test.js"
+      "test/net/prof5b_law.test.js"
     ]
   },
   {
@@ -44,7 +44,7 @@
     "old": "(endsAt - atS < AUCTION_LATE_S ? endsAt + AUCTION_ADD_S : endsAt)",
     "new": "(endsAt)",
     "tests": [
-      "test/prof5b_law.test.js"
+      "test/net/prof5b_law.test.js"
     ]
   },
   {
@@ -53,7 +53,7 @@
     "old": "export const auctionable = (recipeId, quality) => quality === MASTERWORK && pieceListable(recipeId) &&",
     "new": "export const auctionable = (recipeId, quality) => pieceListable(recipeId) &&",
     "tests": [
-      "test/prof5b_law.test.js"
+      "test/net/prof5b_law.test.js"
     ]
   },
   {
@@ -62,7 +62,7 @@
     "old": "export const bidOk = (n) => Number.isSafeInteger(n) && n >= 1 && n <= AUCTION_BID_MAX;",
     "new": "export const bidOk = (n) => Number.isSafeInteger(n) && n >= 1;",
     "tests": [
-      "test/prof5b_law.test.js"
+      "test/net/prof5b_law.test.js"
     ]
   },
   {
@@ -71,7 +71,7 @@
     "old": "export const AUCTION_S = 24 * 3600;",
     "new": "export const AUCTION_S = 72 * 3600;",
     "tests": [
-      "test/prof5b_law.test.js"
+      "test/net/prof5b_law.test.js"
     ]
   },
   {
@@ -80,7 +80,7 @@
     "old": "  'bid-escrow': 'move',",
     "new": "  'bid-escrow': 'burn',",
     "tests": [
-      "test/prof5b_law.test.js"
+      "test/net/prof5b_law.test.js"
     ]
   },
   {
@@ -89,8 +89,8 @@
     "old": "'bid-escrow', amount + courier, ?3, at, bidder, auction, rid || ':bid'",
     "new": "'bid-escrow', amount, ?3, at, bidder, auction, rid || ':bid'",
     "tests": [
-      "test/prof5b_service.test.js",
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_service.test.js",
+      "test/net/prof5b_client.test.js"
     ]
   },
   {
@@ -99,8 +99,8 @@
     "old": "    db.prepare(`UPDATE market_bids SET state = 'outbid' WHERE auction = ?1 AND state = 'high' AND id != ?3 AND ${decided}`).bind(id, nonce, bidId),\n",
     "new": "",
     "tests": [
-      "test/prof5b_service.test.js",
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_service.test.js",
+      "test/net/prof5b_client.test.js"
     ]
   },
   {
@@ -109,8 +109,8 @@
     "old": "        ends_at = CASE WHEN ends_at - ?7 < ?8 THEN ends_at + ?9 ELSE ends_at END\n",
     "new": "        ends_at = ends_at\n",
     "tests": [
-      "test/prof5b_service.test.js",
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_service.test.js",
+      "test/net/prof5b_client.test.js"
     ]
   },
   {
@@ -119,7 +119,7 @@
     "old": "      WHERE id = ?1 AND state = 'open' AND ends_at > ?7 AND seller != ?2 AND high IS ?3\n",
     "new": "      WHERE id = ?1 AND state = 'open' AND ends_at > ?7 AND seller != ?2\n",
     "tests": [
-      "test/prof5b_service.test.js"
+      "test/net/prof5b_service.test.js"
     ]
   },
   {
@@ -128,8 +128,8 @@
     "old": "'auction:' || a.id || ':sale' ${won}`)\n        .bind(a.id, nonce, gets, day, nowS),",
     "new": "'auction:' || a.id || ':sale' ${won}`)\n        .bind(a.id, nonce, high, day, nowS),",
     "tests": [
-      "test/prof5b_service.test.js",
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_service.test.js",
+      "test/net/prof5b_client.test.js"
     ]
   },
   {
@@ -138,7 +138,7 @@
     "old": "'auction:' || a.id || ':courier' ${won} AND b.courier > 0`)",
     "new": "'auction:' || a.id || ':courier' ${won} AND b.courier < 0`)",
     "tests": [
-      "test/prof5b_service.test.js"
+      "test/net/prof5b_service.test.js"
     ]
   },
   {
@@ -147,8 +147,8 @@
     "old": "      db.prepare(`UPDATE products SET owner = (SELECT b.bidder ${won}), credited = 0, listed = 0",
     "new": "      db.prepare(`UPDATE products SET listed = 0",
     "tests": [
-      "test/prof5b_service.test.js",
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_service.test.js",
+      "test/net/prof5b_client.test.js"
     ]
   },
   {
@@ -157,7 +157,7 @@
     "old": "'bought', a.region, ?4 + b.seconds, ?4 ${won}",
     "new": "'bought', a.region, ?4, ?4 ${won}",
     "tests": [
-      "test/prof5b_service.test.js"
+      "test/net/prof5b_service.test.js"
     ]
   },
   {
@@ -166,8 +166,8 @@
     "old": "  if (dueAuctions.length) await closeAuctions(ctx, dueAuctions);",
     "new": "  // closeAuctions",
     "tests": [
-      "test/prof5b_service.test.js",
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_service.test.js",
+      "test/net/prof5b_client.test.js"
     ],
     "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
   },
@@ -177,8 +177,8 @@
     "old": "WHERE bidder = ?1 AND state IN ('outbid', 'void') AND returned = 0\n      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + amount + courier <= ?2",
     "new": "WHERE bidder = ?1 AND state IN ('outbid', 'void') AND returned = 0 AND 0\n      AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + amount + courier <= ?2",
     "tests": [
-      "test/prof5b_service.test.js",
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_service.test.js",
+      "test/net/prof5b_client.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "WHERE seller = ?1 AND state IN ('unsold', 'removed') AND returned = 0\n    ORDER BY closed_at",
     "new": "WHERE seller = ?1 AND state IN ('unsold', 'removed') AND returned = 0 AND 0\n    ORDER BY closed_at",
     "tests": [
-      "test/prof5b_service.test.js"
+      "test/net/prof5b_service.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "  + (SELECT COUNT(*) FROM market_auctions WHERE seller = ?1 AND state = 'open' AND ends_at > ${now}))`;",
     "new": "  + (SELECT COUNT(*) FROM market_auctions WHERE seller = ?1 AND 0 AND ends_at > ${now}))`;",
     "tests": [
-      "test/prof5b_service.test.js"
+      "test/net/prof5b_service.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "      SELECT 'account', ?1, 'burn', NULL, 'market-fee', fee, ?4, at, ?1, id, rid || ':afee' FROM market_auctions",
     "new": "      SELECT 'account', ?1, 'burn', NULL, 'market-fee', fee, ?4, at, ?1, id, rid || ':fee' FROM market_auctions",
     "tests": [
-      "test/prof5b_service.test.js"
+      "test/net/prof5b_service.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "    db.prepare(`UPDATE market_bids SET state = 'void' WHERE auction = ?1 AND state = 'high'\n",
     "new": "    db.prepare(`UPDATE market_bids SET state = 'void' WHERE auction = ?1 AND state = 'high' AND 0\n",
     "tests": [
-      "test/prof5b_service.test.js"
+      "test/net/prof5b_service.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "        AND EXISTS (SELECT 1 FROM products WHERE provenance = ?5 AND owner = ?1 AND listed = 0 AND quality = ?14 AND COALESCE(bought_with, '') != 'gold')",
     "new": "        AND EXISTS (SELECT 1 FROM products WHERE provenance = ?5 AND owner = ?1 AND listed = 0 AND ?14 = ?14 AND COALESCE(bought_with, '') != 'gold')",
     "tests": [
-      "test/prof5b_service.test.js"
+      "test/net/prof5b_service.test.js"
     ],
     "equivalent": true,
     "why": "the decision's Masterwork guard is also the early refusal's (auctionable, before the batch) - it holds only a piece whose quality changed between the two, which no product row can"
@@ -234,8 +234,10 @@
     "old": "        AND EXISTS (SELECT 1 FROM products WHERE provenance = ?5 AND owner = ?1 AND listed = 0 AND quality = ?14 AND COALESCE(bought_with, '') != 'gold')",
     "new": "        AND EXISTS (SELECT 1 FROM products WHERE provenance = ?5 AND owner = ?1 AND quality = ?14 AND COALESCE(bought_with, '') != 'gold')",
     "tests": [
-      "test/prof5b_service.test.js"
-    ]
+      "test/net/prof5b_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "INT19: pieceAuctionRefusal says a listed piece ('market-listed') before the record moves, and a listing landing between takes the Masterwork out of the seller's record - the auction's record step (its sequence) then fails whole"
   },
   {
     "name": "PROF5b-svc-cancel-with-bid",
@@ -243,7 +245,7 @@
     "old": "  if (a.high_bid != null) return { error: 'auction-bid-standing' };\n",
     "new": "",
     "tests": [
-      "test/prof5b_service.test.js"
+      "test/net/prof5b_service.test.js"
     ],
     "equivalent": true,
     "why": "the cancel's decision asks `high_bid IS NULL` itself and its derivation answers auction-bid-standing: this early word spares the batch, and changes no answer"
@@ -251,10 +253,10 @@
   {
     "name": "PROF5b-svc-seller-bids",
     "file": "server-account/src/market.js",
-    "old": "  if (a.seller === me) return { error: 'market-own' };\n  if (a.high_bidder === me) return { error: 'auction-leading' };",
-    "new": "  if (a.high_bidder === me) return { error: 'auction-leading' };",
+    "old": "  if (a.seller === me) return { error: 'market-own' };\n  if (Number(a.seller_stopped))",
+    "new": "  if (Number(a.seller_stopped))",
     "tests": [
-      "test/prof5b_service.test.js"
+      "test/net/prof5b_service.test.js"
     ]
   },
   {
@@ -263,8 +265,8 @@
     "old": "  if (a.high_bidder === me) return { error: 'auction-leading' };\n  const high = a.high == null",
     "new": "  const high = a.high == null",
     "tests": [
-      "test/prof5b_service.test.js",
-      "test/audit31_service.test.js"
+      "test/net/prof5b_service.test.js",
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -273,8 +275,8 @@
     "old": "  if (amount < next) return { error: 'auction-low' };\n",
     "new": "",
     "tests": [
-      "test/prof5b_service.test.js",
-      "test/audit31_service.test.js"
+      "test/net/prof5b_service.test.js",
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -283,7 +285,7 @@
     "old": "(l.route === 'auction' ? door.auction(l.body) : door.list(l.body))",
     "new": "door.list(l.body)",
     "tests": [
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_client.test.js"
     ]
   },
   {
@@ -292,7 +294,7 @@
     "old": "'market-price-moved', 'auction-low', 'auction-leading',",
     "new": "'market-price-moved', 'auction-leading',",
     "tests": [
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_client.test.js"
     ]
   },
   {
@@ -301,7 +303,7 @@
     "old": "    if (Number.isSafeInteger(d.held)) state.held = d.held;\n",
     "new": "",
     "tests": [
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_client.test.js"
     ]
   },
   {
@@ -310,7 +312,7 @@
     "old": "door.bid({ character: character(), ...req, rid: idFor(k) })",
     "new": "door.bid({ character: character(), ...req, rid: mintMarketRid() })",
     "tests": [
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_client.test.js"
     ]
   },
   {
@@ -319,7 +321,7 @@
     "old": "const all = m.pieces().filter((p) => !auction || p.item.quality === MASTERWORK);",
     "new": "const all = m.pieces();",
     "tests": [
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_client.test.js"
     ]
   },
   {
@@ -328,7 +330,7 @@
     "old": "      n.oninput = () => { st.bid[a.id] = intOf(n.value, a.next, AUCTION_BID_MAX); refresh(); };",
     "new": "      n.oninput = () => { st.bid[a.id] = intOf(n.value, a.next, AUCTION_BID_MAX); ui.rerender(); };",
     "tests": [
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_client.test.js"
     ]
   },
   {
@@ -337,7 +339,7 @@
     "old": "      const amountNow = () => Math.max(a.next, intOf(st.bid[a.id] ?? a.next, a.next, AUCTION_BID_MAX));",
     "new": "      const amountNow = () => a.next;",
     "tests": [
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_client.test.js"
     ]
   },
   {
@@ -346,7 +348,7 @@
     "old": "    if (a.leading) {\n      bar.append(el('span', 'market-ask', `Your bid of",
     "new": "    if (false) {\n      bar.append(el('span', 'market-ask', `Your bid of",
     "tests": [
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_client.test.js"
     ]
   },
   {
@@ -355,16 +357,16 @@
     "old": "${held > 0 ? ` (${marksText(held)} held in bids)` : ''}",
     "new": "",
     "tests": [
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_client.test.js"
     ]
   },
   {
     "name": "PROF5b-tab-auction-row-undressed",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": ".market-auction .market-where { grid-column: 1 / -1; }",
     "new": ".market-auction .market-where { }",
     "tests": [
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_client.test.js"
     ]
   },
   {
@@ -373,7 +375,7 @@
     "old": "const MOVED = MARKET_MOVED;",
     "new": "const MOVED = MARKET_MOVED.filter((w) => w !== 'auction-low');",
     "tests": [
-      "test/prof5b_client.test.js"
+      "test/net/prof5b_client.test.js"
     ]
   },
   {
@@ -382,7 +384,7 @@
     "old": "      FROM market_auctions a LEFT JOIN products p ON p.provenance = a.provenance\n      WHERE a.seller",
     "new": "      FROM market_auctions a JOIN products p ON p.provenance = a.provenance\n      WHERE a.seller",
     "tests": [
-      "test/prof5b_service.test.js"
+      "test/net/prof5b_service.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S4: a disenchanted piece's auction kept."
   },
@@ -392,7 +394,7 @@
     "old": "JOIN market_auctions a ON a.id = b.auction LEFT JOIN products p ON p.provenance = a.provenance",
     "new": "JOIN market_auctions a ON a.id = b.auction JOIN products p ON p.provenance = a.provenance",
     "tests": [
-      "test/prof5b_service.test.js"
+      "test/net/prof5b_service.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S4: its bids kept."
   },
@@ -402,7 +404,7 @@
     "old": "const GONE_RECIPE_SQL = 'COALESCE(p.recipe, (SELECT recipe FROM prof_disenchants WHERE provenance = a.provenance)) AS recipe';",
     "new": "const GONE_RECIPE_SQL = 'p.recipe';",
     "tests": [
-      "test/prof5b_service.test.js"
+      "test/net/prof5b_service.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S4: named by its disenchant's recipe."
   },
@@ -412,7 +414,7 @@
     "old": "p.material AS dfu_material, a.provenance\n",
     "new": "p.material AS dfu_material, p.provenance\n",
     "tests": [
-      "test/prof5b_service.test.js"
+      "test/net/prof5b_service.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S4: the bid's piece the auction's provenance."
   }

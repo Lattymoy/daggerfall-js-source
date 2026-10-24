@@ -1,0 +1,56 @@
+-- QL16 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.3): THE OLD COIL, step 2 of 3.
+-- Begun with the giver's word in the journal at once (the line's runner starts it an hour after the tale). The act:
+-- two ports reached under sail (`ql act port-reached 2` - systems/questlines/qlActs.js, the harbour office's berth);
+-- Hamid's packet meets the player's at the second port and pays there, so no voyage ends in a walk inland. Lore: the
+-- port's own - the packet lanes, the harbour bells that ring for the Old Coil (bible/03-World/Sea-Serpent.md).
+Quest: QLOC02
+DisplayName: The Packet Lanes
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>         The sailing season has turned, and Hamid al-Rasheen
+<ce>             has gone home to Sentinel without your word.
+
+QuestComplete:  [1004]
+<ce>         Hamid tosses a purse across the gap between the two
+<ce>          ships. "_gold_ gold, captain, and cheap at that!"
+
+QuestLogEntry:  [1010]
+%qdt:
+ Hamid al-Rasheen has asked me to sail the packet
+ lanes and watch the water. I am to make port twice
+ under sail, each port a quarter league or more from
+ the last. If the Old Coil swims, the lanes will
+ show its signs, and Hamid's packet will be looking
+ out for my sails.
+
+Message:  1013
+<ce>         As you make port, a packet under Sentinel's colors
+<ce>          comes alongside, and Hamid al-Rasheen hails you
+<ce>                         from her rail.
+<ce>
+<ce>         "Did you see it? The water lying flat where the
+<ce>          wind should crease it, a wake with no ship in it?
+<ce>          I did. And every harbor I put into, the bells
+<ce>          were ringing the same. It is rising, captain.
+<ce>          When the bells ring for it, I will send word."
+
+QBN:
+Item _gold_ gold range 300 to 600
+
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	log 1010 step 0
+	start timer _wait_
+
+_lanes_ task:
+	ql act port-reached 2
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

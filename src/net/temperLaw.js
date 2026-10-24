@@ -45,7 +45,7 @@
 // ═══ REFORGE (41.2, DECIDED) ════════════════════════════════════════
 //
 // - Enchanting 50: one property of a Magic or Rare piece rolled again -
-//   the Loot arc's own Reforge (systems/lootRarity.js reforgeAffix: one
+//   the Loot arc's own Reforge (systems/loot/lootRarity.js reforgeAffix: one
 //   line, and once a piece is reforged, that line alone) - for 2 (Magic)
 //   or 5 (Rare) Arcane Essence from the Stores, in place of the Mages
 //   Guild's shards and gold. The roll's seed is the service's.

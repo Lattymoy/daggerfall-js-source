@@ -1,6 +1,6 @@
 // Vendored from project-final's Rewrite Engine (rewrite/rig/bodySpec.js) at C4a -
 // same-owner code, flat-pathed; byte-parity against the canonical copy
-// is pinned by test/rig.test.js over fixtures/bare-body-parity.json.
+// is pinned by test/characters/rig.test.js over fixtures/bare-body-parity.json.
 // Do not hand-diverge: upstream first, then re-vendor + re-capture.
 // ── body spec (proportion seam) ──────────────────────────────────────
 // Trunk prisms, limb anchors, and bone spans as DATA - the solver and

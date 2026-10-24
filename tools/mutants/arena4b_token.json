@@ -5,7 +5,7 @@
     "old": "WHERE r.id = ? AND r.player = ?').bind(id, playerId).first();",
     "new": "WHERE r.id = ? OR r.player = ?').bind(id, playerId).first();",
     "tests": [
-      "test/arena4b_token.test.js"
+      "test/server/arena4b_token.test.js"
     ],
     "note": "SCALE4f (2026-10-10) re-aimed it by content: the four reads of the realm row are one (realm.js realmMintFacts)."
   },
@@ -15,7 +15,7 @@
     "old": "  const lv = row.level_seen ?? summary?.level;",
     "new": "  const lv = 12;",
     "tests": [
-      "test/arena4b_token.test.js"
+      "test/server/arena4b_token.test.js"
     ],
     "note": "SCALE4f (2026-10-10) re-aimed it by content: the four reads of the realm row are one (realm.js realmMintFacts)."
   },
@@ -25,7 +25,7 @@
     "old": "lv >= 1 && lv <= REALM_LEVEL_CLAIM_MAX ? lv : null,",
     "new": "lv >= 0 ? lv : null,",
     "tests": [
-      "test/arena4b_token.test.js"
+      "test/server/arena4b_token.test.js"
     ],
     "note": "SCALE4f (2026-10-10) re-aimed it by content: the four reads of the realm row are one (realm.js realmMintFacts)."
   },
@@ -35,7 +35,7 @@
     "old": "const cl = facts.cl;",
     "new": "const cl = facts.cl ?? 5;",
     "tests": [
-      "test/arena4b_token.test.js"
+      "test/server/arena4b_token.test.js"
     ],
     "note": " SCALE4f (2026-10-10) re-aimed it by content: the four reads of the realm row are one (realm.js realmMintFacts)."
   },
@@ -46,7 +46,7 @@
     "new": "cl >= 0 && cl <= CHARACTER_LEVEL_MAX",
     "note": "The merge of ARENA4b's streams (re-aimed by content): the relay stream's characterLevelIssuable is the one validation.",
     "tests": [
-      "test/arena4b_token.test.js"
+      "test/server/arena4b_token.test.js"
     ]
   },
   {
@@ -56,7 +56,7 @@
     "new": "cl >= CHARACTER_LEVEL_MIN",
     "note": "The merge of ARENA4b's streams (re-aimed by content): the relay stream's characterLevelIssuable is the one validation.",
     "tests": [
-      "test/arena4b_token.test.js"
+      "test/server/arena4b_token.test.js"
     ]
   },
   {
@@ -65,7 +65,7 @@
     "old": "  if (who?.cl !== undefined) claims.cl = who.cl;",
     "new": "  // cl",
     "tests": [
-      "test/arena4b_token.test.js"
+      "test/server/arena4b_token.test.js"
     ]
   }
 ]

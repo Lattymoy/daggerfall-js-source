@@ -1,0 +1,146 @@
+[
+  {
+    "name": "DECKPOSE-door-stripped",
+    "file": "src/net/wire.js",
+    "old": "    ...aboardOf(ab),   // DECK-POSE: a pose aboard a boat - whose, which of theirs, and the feet in her own frame\n",
+    "new": "",
+    "tests": [
+      "test/net/peer/deckpose.test.js"
+    ]
+  },
+  {
+    "name": "DECKPOSE-door-owner-bound",
+    "file": "src/net/wire.js",
+    "old": "if (typeof owner !== 'string' || !owner || owner.length > POSE_ABOARD_OWNER_MAX) return null;",
+    "new": "if (typeof owner !== 'string' || !owner || owner.length >= POSE_ABOARD_OWNER_MAX) return null;",
+    "tests": [
+      "test/net/peer/deckpose.test.js"
+    ]
+  },
+  {
+    "name": "DECKPOSE-door-slot-floor",
+    "file": "src/net/wire.js",
+    "old": "if (!Number.isInteger(slot) || slot < 0 || slot >= POSE_ABOARD_SLOTS) return null;",
+    "new": "if (!Number.isInteger(slot) || slot < -1 || slot >= POSE_ABOARD_SLOTS) return null;",
+    "tests": [
+      "test/net/peer/deckpose.test.js"
+    ]
+  },
+  {
+    "name": "DECKPOSE-door-unrounded",
+    "file": "src/net/wire.js",
+    "old": "  return [owner, slot, cm(x), cm(y), cm(z)];",
+    "new": "  return [owner, slot, x, y, z];",
+    "tests": [
+      "test/net/peer/deckpose.test.js"
+    ]
+  },
+  {
+    "name": "DECKPOSE-door-negative-zero",
+    "file": "src/net/wire.js",
+    "old": "const cm = (v) => { const r = Math.round(v * 100) / 100; return r === 0 ? 0 : r; };",
+    "new": "const cm = (v) => { const r = Math.round(v * 100) / 100; return r; };",
+    "tests": [
+      "test/net/peer/deckpose.test.js"
+    ]
+  },
+  {
+    "name": "DECKPOSE-sender-unlaid",
+    "file": "src/net/online.js",
+    "old": "const out = { ...pose, ...(pl ? { pl } : {}), ...(ab ? { ab } : {}), ts: this._stampTs() };",
+    "new": "const out = { ...pose, ...(pl ? { pl } : {}), ts: this._stampTs() };",
+    "tests": [
+      "test/net/peer/deckpose.test.js"
+    ]
+  },
+  {
+    "name": "DECKPOSE-playout-dropped",
+    "file": "src/net/online.js",
+    "old": "    ...(to.ab ? { ab: aboardAlong(from.ab, to.ab, k) } : {}),",
+    "new": "",
+    "tests": [
+      "test/net/peer/deckpose.test.js"
+    ]
+  },
+  {
+    "name": "DECKPOSE-playout-whole-on-one-deck",
+    "file": "src/net/online.js",
+    "old": "  if (!Array.isArray(from) || from[0] !== to[0] || from[1] !== to[1]) return [...to];",
+    "new": "  return [...to];",
+    "tests": [
+      "test/net/peer/deckpose.test.js"
+    ]
+  },
+  {
+    "name": "DECKPOSE-playout-eased-across-boats",
+    "file": "src/net/online.js",
+    "old": "  if (!Array.isArray(from) || from[0] !== to[0] || from[1] !== to[1]) return [...to];",
+    "new": "  if (!Array.isArray(from) || from[0] !== to[0]) return [...to];",
+    "tests": [
+      "test/net/peer/deckpose.test.js"
+    ]
+  },
+  {
+    "name": "DECKPOSE-playout-shares-the-list",
+    "file": "src/net/online.js",
+    "old": "  if (!Array.isArray(from) || from[0] !== to[0] || from[1] !== to[1]) return [...to];",
+    "new": "  if (!Array.isArray(from) || from[0] !== to[0] || from[1] !== to[1]) return to;",
+    "tests": [
+      "test/net/peer/deckpose.test.js"
+    ]
+  },
+  {
+    "name": "DECKPOSE-glue-pose-unread",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
+    "old": "      const on = d.shown.ab, r = riders.get(d.id);",
+    "new": "      const on = undefined, r = riders.get(d.id);",
+    "tests": [
+      "test/net/peer/deckpose.test.js"
+    ]
+  },
+  {
+    "name": "DECKPOSE-glue-word-over-a-pose-ashore",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
+    "old": "      } else if (!r || posed.has(d.id)) continue;",
+    "new": "      } else if (!r) continue;",
+    "tests": [
+      "test/net/peer/deckpose.test.js"
+    ]
+  },
+  {
+    "name": "DECKPOSE-glue-word-uneased",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
+    "old": "        for (let k = 0; k < 3; k++) r.shown[k] += (r.local[k] - r.shown[k]) * t;\n        ({ owner, slot } = r); at = r.shown;",
+    "new": "        r.shown = [...r.local];\n        ({ owner, slot } = r); at = r.shown;",
+    "tests": [
+      "test/net/peer/deckpose.test.js"
+    ]
+  },
+  {
+    "name": "DECKPOSE-sweep-keeps-who-spoke",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
+    "old": "    for (const id of [...posed]) if (!alive?.has?.(id)) posed.delete(id);\n",
+    "new": "",
+    "tests": [
+      "test/net/peer/deckpose.test.js"
+    ]
+  },
+  {
+    "name": "DECKPOSE-clear-keeps-who-spoke",
+    "file": "src/scenes/comeSailAway/comeSailAwayAboard.js",
+    "old": "function clearRiders() { riders.clear(); posed.clear(); }",
+    "new": "function clearRiders() { riders.clear(); }",
+    "tests": [
+      "test/net/peer/deckpose.test.js"
+    ]
+  },
+  {
+    "name": "DECKPOSE-host-hook-unset",
+    "file": "src/scenes/world.js",
+    "old": "    online.poseAboard = csaDeckWord;",
+    "new": "    online.poseAboard = null;",
+    "tests": [
+      "test/net/peer/deckpose.test.js"
+    ]
+  }
+]

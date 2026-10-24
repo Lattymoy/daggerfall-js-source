@@ -44,16 +44,16 @@
 // the feature closes both.
 import { setClassicLootFrame } from './classicLootFrame.js';   // DISC22-C: a leaf - the classic panel's frame, cleared with the selection
 import { getPref } from './uiPrefs.js';
-import { itemNameParts, itemStatRows } from './itemInfo.js';   // RF6: the long name's name part, the same one the plaque's rows wear; QUICK-LOOT-STATS: and the rows the lit one says about itself
+import { itemNameParts, itemStatRows } from './item/itemInfo.js';   // RF6: the long name's name part, the same one the plaque's rows wear; QUICK-LOOT-STATS: and the rows the lit one says about itself
 import { nextSelection, selectedRow, hoverItemAt } from './worldHover.js';   // the fold's LAW and the row -> item walk, both driven there
-import { planTake, applyTransfer, sendQuestItemClick, REFUSAL } from './itemTransfer.js';   // QL-WEIGHT1: the window's own plan and move - the carry gate, the summoned and quest guards, the split, the gold door
+import { planTake, applyTransfer, sendQuestItemClick, REFUSAL } from './item/itemTransfer.js';   // QL-WEIGHT1: the window's own plan and move - the carry gate, the summoned and quest guards, the split, the gold door
 import { isMap } from './useItem.js';   // the map the window USES rather than takes (F156) - left for the window here
 import { racialSuppressInventory } from './lycanthropy.js';   // DISC10-E L3: the beast takes nothing into a pack it cannot open
 import { audio } from './audio.js';   // SND1: the take's own sound
 import { SOUND } from './soundClips.js';
-import { lootRarityOn, rarityRank, RARITIES } from './lootRarity.js';   // LOOT18: the take-all's tier
-import { isJunk, JUNK_GROUPS } from './itemJunk.js';   // LOOT18: and the player's junk; the gear groups
-import { isAmmunition } from './itemTemplates.js';   // LOOT18: a quiver is a supply, always taken
+import { lootRarityOn, rarityRank, RARITIES } from './loot/lootRarity.js';   // LOOT18: the take-all's tier
+import { isJunk, JUNK_GROUPS } from './item/itemJunk.js';   // LOOT18: and the player's junk; the gear groups
+import { isAmmunition } from './item/itemTemplates.js';   // LOOT18: a quiver is a supply, always taken
 import { isEnchanted } from './inventory.js';   // LOOT18: and DFU's own magic item, whatever its tier reads
 
 /** The player's own switch (features.js, `quick-loot`). Off is
@@ -65,7 +65,7 @@ export const quickLootOn = () => !!getPref('quickLoot');
  *  part (features.js, `quickLootTier`): 'all' takes every piece of gear, 'magic' leaves a Common piece on the pile,
  *  'rare' a Common and a Magic one. Gear is what the ladder grades (a weapon, armour, a jewel, a garment - never a
  *  quiver); gold, supplies, a quest's items, DFU's own magic items and everything else are always taken. With the ladder
- *  off there is no tier to read and the part leaves nothing (Off is DFU exactly). A junk piece (systems/itemJunk.js) is
+ *  off there is no tier to read and the part leaves nothing (Off is DFU exactly). A junk piece (systems/item/itemJunk.js) is
  *  the player's word that it goes, and the take-all always leaves it. A row the player lights and takes is taken
  *  whatever it is: the part is the take-all's. */
 export const QUICK_LOOT_TIER = 'quickLootTier';
@@ -96,7 +96,7 @@ export const tookItemText = (item) => `You take the ${itemNameParts(item).name |
  * first statement and nothing before it - so it had no CanCarryAmount
  * (DaggerfallInventoryWindow.cs:1414-1422), no summoned guard, no quest
  * arm and no split. The window plans every take through `planTake`
- * (systems/itemTransfer.js) and performs it with `applyTransfer`, and
+ * (systems/item/itemTransfer.js) and performs it with `applyTransfer`, and
  * so does this now: ONE plan for a row whichever door it leaves by, so
  * the two cannot disagree about what the player can carry. A refusal
  * is SAID where the window would box it (the mid-screen line the take
@@ -240,7 +240,10 @@ export function quickLootWheel(deltaY) {
  *  spent looking at a door does not arrive later at a chest. */
 export function foldQuickLoot(frame) {
   const verbs = frame?.kind === 'actions';
-  _sel = (verbs || quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;
+  // CONTAINER-PEEK: a cupboard's rows are a glance. Lighting one would arm P and J for a take the press does not
+  // make (the private-property question, the storage window), and the armed take would land on the next pile.
+  const take = frame?.kind === 'items' && !frame.preview;
+  _sel = (verbs || (take && quickLootOn())) ? nextSelection(_sel, frame, _nudge) : null;
   _actionIds = verbs && _sel ? frame.rows.map((r) => r.id) : null;
   _lastKey = _sel ? frame.key : null;
   _nudge = 0;

@@ -36,7 +36,7 @@ CityDataFile and the location laws beside it (ArenaLocationUtils):
 | a province | a 20-byte name, its world-map rectangle (four u16), 48 locations | CityDataFile::init |
 | a location (LOCATION_BYTES 25) | a 20-byte name, a point on the province's own 320 x 200 map (two u16), a visibility byte | initLocation |
 | the location ids | 0-7 city-states, 8-15 towns, 16-31 villages, 32 the staff dungeon, 33 the staff map dungeon, 34-47 dungeons | getLocationData, getCityType, getDungeonType |
-| the province order | High Rock, Hammerfell, Skyrim, Morrowind, Summurset Isle, Valenwood, Elsweyr, Black Marsh, the Imperial Province | the file; the picker's race order (`world/tamrielLand.js` PROVINCE_OF_ID, 1-9) |
+| the province order | High Rock, Hammerfell, Skyrim, Morrowind, Summurset Isle, Valenwood, Elsweyr, Black Marsh, the Imperial Province | the file; the picker's race order (`world/tamriel/tamrielLand.js` PROVINCE_OF_ID, 1-9) |
 
 `arenaGlobalPoint` is getGlobalPoint verbatim, the integer arithmetic and all (`(x * trunc(w * 100 / 320)) / 100 + x0`);
 `arenaGlobalCityId` is getGlobalCityID's `(province << 5) + city`; `arenaLocationVisible` the dungeons' 0x02. The reader
@@ -110,7 +110,7 @@ Labyrinthian (dungeon, beyond the Bay)". The ink keeps the land's version as `ve
 `arenaVersion`, and `tamrielInkFor` rebuilds when either moves; the held map's static key carries both, so a pick or a
 removal while the sheet is up repaints it.
 
-## The door (`scenes/dataSource.js`, `ui/enhancedMenu.js`, `scenes/world.js`)
+## The door (`scenes/dataSource.js`, `ui/enhanced/enhancedMenu.js`, `scenes/world.js`)
 
 - **The store.** `arena`, a store of its own beside the Morrowind one (the database at version 6, the upgrade additive
   as every arm of it is). Not ARENA2's: KEEP's diet and `clearStoredData`'s recovery wipe never see it. A folder pick
@@ -187,7 +187,7 @@ into, a dungeon to go down - and the held map takes the player there.
   stones online or the player can traverse using the overworld"): on the travel map a press beyond the Bay is no
   journey - the land past the Bay is walked or reached through a stone's portal (`06-Systems/Portal-Stone.md`). TESA2
   had made it the coordinates' own trip; that is gone. TAMRIEL1's law that a press beyond the Bay picks nothing stands
-  for everything else (PIN MOVED in `test/tamriel.test.js`).
+  for everything else (PIN MOVED in `test/ui/tamriel.test.js`).
 - **What an Arena town is not yet**: no house is sold in one (`scenes/worldModes.js`, the isles' rule, AUDIT CAPTAIN'S SEA
   P9 - every Arena town answers the clamp's region until TESA3, so a deed's key would own the same key in all of them);
   no spawn ever clones one (`spawnTemplates`, AUDIT CAPTAIN'S SEA P3's law); its port byte is 0. `/tp` names Arena's
@@ -234,13 +234,13 @@ and every town of Skyrim said so and named its people as Redguards.
 **WHY NOT A REGION OF ITS OWN.** A sweep of every region read (world.js's 35, and the rest of `src/`) found the 62
 regions are a wall the whole online game stands on: `net/wire.js` CHAT_REGION_COUNT and the relay's CHAT_ROOMS whitelist,
 `net/hubShards.js` REGION_CHANNELS, `net/nodeLaw.js` regionOk (professions, the market, writs, contracts, cards, halls,
-chapters, receipts), `net/townSeatLaw.js` seatRegionOk, the banks' BANK_REGION_COUNT, `systems/regionConditions.js`
+chapters, receipts), `net/townSeatLaw.js` seatRegionOk, the banks' BANK_REGION_COUNT, `systems/region/regionConditions.js`
 REGION_COUNT (prices, flags, stock) and the save's 62 legal reputations - an index of 62 or past it is refused or
 silently off in each, and the bare `REGION_NAMES[r]` / `REGION_RACES[r]` reads answer undefined. Nine more regions is the
 save's shape, the services' and the relay's at once - its own arc, and the owner's to call. So the province answers what
 the player READS and whose NAMES they hear, and never a region index.
 
-- **The province** (`world/tamrielLand.js` provinceKeyBeyondBay): a Bay pixel past the Bay answers the province its
+- **The province** (`world/tamriel/tamrielLand.js` provinceKeyBeyondBay): a Bay pixel past the Bay answers the province its
   CENTRE stands on (provinceKeyAt - the trace's, else the authored rings'), or null on the Bay's own pixels (Daggerfall's
   regions answer there) and at sea. Pure: the worker's land module (it reads nothing of characters/).
 - **The host** (`scenes/world.js` provinceAt, provinceHere): the province where the land beyond the Bay streams, never on
@@ -505,7 +505,7 @@ each is laid out to a plan of its own from Daggerfall's dungeon blocks.
   the caves and the desecrated temples, Monster3 for the crypts and the vampires' houses); a keep a castle's frame
   whatever its type; a ruin "Ruins of" a country place's name (a farm, a manor, a hovel) or a keep's. The frames are the
   port's own words in the shape MAPS.BSA's names take.
-- **Its own map** (`systems/automap.js` automapKeyOf): DFU keys a dungeon's automap by region and name, and a lair's
+- **Its own map** (`systems/automap/automap.js` automapKeyOf): DFU keys a dungeon's automap by region and name, and a lair's
   name repeats in the clamp's region; its key takes its map id after it - the game's places keep DFU's key exactly
   (`scenes/dungeonContext.js`, `scenes/worldModes.js`' beacon read). No spawn ever clones one (`spawnTemplates`).
 - **The host** (`scenes/world.js` lairLocationAt): `_locationToBuild` past the Bay asks Arena's place, else the
@@ -532,7 +532,7 @@ own. Each capital's signatures in a layout of the port's own - never a copy of a
 Imperial City is the first; Solitude (its arch over the water, the Blue Palace, Castle Dour) is next.
 
 - **Where** (`world/tamrielCapitals.js` capitalPixel, capitalOnPixel): the capital's point on Daggerfall's map of Tamriel
-  (TAMRIEL1's CITIES, `world/tamrielGeography.js` - the port's own reading of the picture) on the live fit: the Imperial
+  (TAMRIEL1's CITIES, `world/tamriel/tamrielGeography.js` - the port's own reading of the picture) on the live fit: the Imperial
   City's (178, 96) is Bay pixel (2177, 612) on the freeware's fit. Every client's the same pixel, Arena attached or not.
   With Arena attached, Arena's place of the capital's name and province stands on it too (`world/arenaPlaces.js`
   standArenaPixels' `pinned`, capitalPin: before any other place takes it, `pinned: true`), so Arena's roads (TESA4), its
@@ -548,7 +548,7 @@ Imperial City is the first; Solitude (its arch over the water, the Blue Palace, 
   District (houses), and the Arcane University (the Mages Guild, a library, a bookseller). Each block of a district's kind
   off the cell's hash among every block of that kind the game's cities lay (cityBlockNames: never a wall or a palace).
 - **The buildings are the blocks' own** (capitalBuildings): Daggerfall names, staffs and serves a building off its
-  location's list drawn by type in grid order (`systems/talkTopics.js` drawNamedBuildings); a capital's list is each
+  location's list drawn by type in grid order (`systems/talk/talkTopics.js` drawNamedBuildings); a capital's list is each
   classic block's own records (its RMB's building data - its guild's faction, its temple's, its shop's quality) in that
   order, the named ones alone, under name seeds of the capital's - so every building draws its own record, named afresh.
   On the freeware: 45 named buildings, the Mages Guild (40), the Fighters Guild (41) and a temple among them.
@@ -591,7 +591,7 @@ The owner: "skyrims solitude". The second capital, and the laws the next ones ne
 
 - **The pixel law** (capitalPixel): a capital stands on the nearest pixel to its picture point's centre - ring by ring out
   to CAPITAL_REACH (320), in each ring the nearest centre - whose centre is its OWN province's land past the Bay
-  (`world/tamrielLand.js` provinceKeyBeyondBay: the trace's, or the authored shape's where none is set), and, for a
+  (`world/tamriel/tamrielLand.js` provinceKeyBeyondBay: the trace's, or the authored shape's where none is set), and, for a
   capital on the shore (`shore`), one of whose eight is the sea (the Bay is no sea); none where none is in reach.
   TAMRIEL1's points are drawn from memory of the lore map and the trace is the player's own picture: Solitude's point
   is at sea (the shore three picture rows south), Torval's on Valenwood's land. The Imperial City's own point is
@@ -689,7 +689,7 @@ out past the Bay, press the capital; or walk.
 The owner: "Lets do a comprehensive audit across everything so far". `01-Overview/Audit-TESA.md` is the record - seven
 lanes, every finding's verdict. What it changed here, by id:
 
-- **Arena's names** (A1-1, A1-2): an Arena place's automap key is its map id (`systems/automap.js` automapKeyOf), the
+- **Arena's names** (A1-1, A1-2): an Arena place's automap key is its map id (`systems/automap/automap.js` automapKeyOf), the
   party pose and a discovery carry no name of it - a capital's name is the port's and stays.
 - **A quest's site past the Bay** (A2-1): `scenes/world.js` placeByName - MAPS.BSA's, else the place the world stands.
 - **The capitals' ground** (A6-1 to A6-5): start markers on each carrier block; each capital's gardens its own blocks
@@ -721,7 +721,7 @@ at 317 m); Solitude and the other five stand as they were.
 - **Where**: the pixel law over nine - the centre the nearest pixel to TAMRIEL1's point all nine of whose pixels are the
   Imperial Province's land (the 8 x 8 city's pixel when its eight neighbours are land too). With Arena attached, the pinned place of the name stands on the centre and no other Arena place on any of the
   nine (`world/arenaPlaces.js` standArenaPixels' `reserved`: the next free pixel).
-- **One ground** (`world/terrainGen.js` flattenAt): a location flattens its pixel to the pixel's own average height,
+- **One ground** (`world/terrain/terrainGen.js` flattenAt): a location flattens its pixel to the pixel's own average height,
   so nine slices stood nine levels with walls at every seam. Every slice is flattened to its centre pixel's average (cached
   by its inputs), so the nine meet level; the outer edge steps to the land as any city's does.
 - **The layout is the city's canon** - the wheel the later games mapped, in Daggerfall's day (3E 405, Uriel Septim VII)
@@ -766,7 +766,7 @@ Arena). How can we do that"*; asked, *"Canon + generated"* and *"Remove it"*. No
 places TESA1 to TESA6 stood from the player's own CITYDATA.65 and A.EXE are the port's own, made on the trace from the
 player's Daggerfall files, the same Tamriel on every client, online and off.
 
-- **The cities** (`world/tamrielPlaces.js` makeTamrielPlaces): TAMRIEL1's 67 (`world/tamrielGeography.js` CITIES - the
+- **The cities** (`world/tamrielPlaces.js` makeTamrielPlaces): TAMRIEL1's 67 (`world/tamriel/tamrielGeography.js` CITIES - the
   lore's own, placed by the port's reading of the lore map: Windhelm and Whiterun, Anvil and Kvatch, Vivec and Necrom,
   Senchal, Woodhearth, Lilmoth and the rest, the seven capitals among them), each in its province's slots from 0 in
   TAMRIEL1's order, on its point where that is its province's land, else on the nearest of it within SNAP_REACH (24
@@ -809,7 +809,7 @@ laws.
 
 - **The roads** (`ui/tamrielInk.js` arenaRoadInk): the layer the kernels paint (`world/arenaRoads.js`: a Bay pixel's
   byte its compass bits, the Bay's own masks' layout; `beyondPixel` the key's inverse) walked into chains on pixel
-  centres and softened as the Bay's roads are (`ui/inkMap.js` pathChains), a ROAD_TILE (64) tile at a time - the layer
+  centres and softened as the Bay's roads are (`ui/ink/inkMap.js` pathChains), a ROAD_TILE (64) tile at a time - the layer
   spans the continent, and one mask of it would be fifteen million bytes for 34,000 road pixels. A tile's mask has a
   pixel's margin round it: traceChains follows a pixel's last bit over the tile's edge into it, so the tiles either side
   both draw that step and a road's halves meet. Stroked by the Bay's law (`inkMap.js` strokePaths, the Bay's and the
@@ -839,11 +839,11 @@ laws.
   fill in over the next frames. The one map seam hands it to the window
   (`buildTravelMapWindow`'s `tamrielPlacesIn` and `tamrielPlacesPending`).
 - **Their marks** (`ui/tamrielInk.js` tamrielMarksIn): the Bay's own laws for its marks - the classic bucket under the
-  map's filters (`ui/travelMapWindow.js` getPixelColorIndex), the band's kinds (inkMap BAND_MARKS: at mid the dungeons,
+  map's filters (`ui/travel/travelMapWindow.js` getPixelColorIndex), the band's kinds (inkMap BAND_MARKS: at mid the dungeons,
   temples, taverns and towns, at near every kind), the glyph (markKind), every halo before every glyph (MAP-FIELD6) and
   each kind's hue (MAP-KEY). None at far and none out on the continent, where the atlas is not asked. The hover names
   one - "Skyrim : The Sacred Oracle (temple, beyond the Bay)", its kind in MacroHelper.LocationTypeName's word
-  (`systems/travelOptions.js` locationTypeName). No press: TESA-NO-FAST keeps a portal's ends to the cities.
+  (`systems/travel/travelOptions.js` locationTypeName). No press: TESA-NO-FAST keeps a portal's ends to the cities.
 - **A recorded departure - no discovery law.** The Bay's map marks a place once it is discovered (DFU's
   checkLocationDiscovered); every place past the Bay is inked, as TESA1's cities, towns and villages are. The discovery
   store keys a place by its map id's low twenty bits (DFU's MapId & 0xfffff), and the countryside's sixty-four lanes and
@@ -867,7 +867,7 @@ into the sea to its cell's centre - a road reads the ground once a five-pixel ce
 the same, 71 road pixels over water, a road across every capital's pixels and its lake or harbour, and no way at all to
 the countryside's 226,068 places or the lairs.
 
-- **The law** (`world/tamrielRoads.js`): the port's road builder (`world/roadNetwork.js` buildRoadNetwork, ROADS 1-21,
+- **The law** (`world/tamrielRoads.js`): the port's road builder (`world/road/roadNetwork.js` buildRoadNetwork, ROADS 1-21,
   the dials untouched) at the Bay's own scale - a pixel a cell - a REGION at a time. The continent's frame is cut into
   cores of REGION_CORE_W x REGION_CORE_H (800 x 300) Bay pixels from its north-west pixel (regionLattice); a region's
   grid is its core with REGION_APRON (100) round it - the builder's own 1000 x 500, the apron past a road's reach (70)
@@ -913,7 +913,7 @@ the countryside's 226,068 places or the lairs.
   of a build a new one superseded; gives a dead worker's region back to the queue.
 - **When it lands** (`scenes/tamrielRoadsHost.js`, wired on the world host's frame): once the places past the Bay stand
   and the Bay's own network is known (TESA5's wait), the crossings' joins go to the terrain client first with the layer
-  reset, then each region's layer as it lands (`world/terrainGenClient.js` addArenaRoads: each add an epoch, merged into
+  reset, then each region's layer as it lands (`world/terrain/terrainGenClient.js` addArenaRoads: each add an epoch, merged into
   the installed layer on this thread and on the terrain worker - bits OR'd where two regions meet), and the host paints
   again the built pixels each one reaches (`scenes/world.js` arenaRoadsLanded; a reset repaints every pixel Arena's roads
   had painted). A move of the places that stand starts the build again.
@@ -976,7 +976,7 @@ pixel again on each of the forty-eight landings (6 to 13 s a landing on the page
   there a walked chain and its pixels' own run are the same stroke, and the walk is seconds; below DOTS_BELOW (0.7 paper pixels a Bay pixel) each pixel
   a dot of the far pen's width, a kind's dots one filled path. A mark whose glyph reaches a tile from just outside it is
   painted on it too (MARK_REACH_PX), so a tile's edge cuts no glyph.
-- **The tracks at far are a hair** (`ui/inkMap.js` strokePaths, FAR_TRACK_PEN 0.6 in the soft pen), not left off - the
+- **The tracks at far are a hair** (`ui/ink/inkMap.js` strokePaths, FAR_TRACK_PEN 0.6 in the soft pen), not left off - the
   Bay's and the continent's one law, so the Bay's own far band draws its tracks too: a recorded change to
   `10-UI/Held-Map-Arc.md`'s far band (MAP-FIELD6: "the far band draws neither ... skipping the tracks"). The far band
   still inks the cities alone of the marks (BAND_MARKS), as the Bay's.
@@ -1164,7 +1164,7 @@ routed round; the terrain client's add; the kept tiles (the level, painted once,
 budget, the stand-ins, said once, the count, no context); the painter's levels and its glyphs' reach; the window's and the
 world's wiring. Mutants `tools/mutants/tesa15.json` (49, all dead). PIN MOVED: `test/tesa13_mapink.test.js` (two tests
 retired with the page's own roll, the host's and the window's pins moved), `test/tesa14_roads.test.js`,
-`test/roads.test.js`; `tesa13.json`'s eleven records on the retired roll and the whole-layer ink deleted with them, and
+`test/world/road/roads.test.js`; `tesa13.json`'s eleven records on the retired roll and the whole-layer ink deleted with them, and
 `tesa13.json` (9), `tesa14.json` (3), `map1.json`, `tamriel3.json`, `tesa10.json` and `tesa8.json` (1 each) re-aimed by
 content, all judged dead again. Browser: `tools/tesa15MapProbe.mjs`.
 
@@ -1216,7 +1216,7 @@ the gates' sides; the roll carried as numbers answering as the host's; the print
 (the cache, the inputs first, a superseded or stopped build, `near`, a dead worker), the terrain client's merge, the host
 module and the world's wiring; with ARENA2_PATH a region built the same in two orders with no end in the open, no wet
 pixel and none on a capital. Mutants `tools/mutants/tesa14.json` (54, all dead). PIN MOVED: `test/tesa13_mapink.test.js`,
-`test/perfv8.test.js` (frameWeatherDrain), `test/tesa4_roads.test.js` (eight retired), `test/tesa5_join.test.js`, `test/tesa7_country.test.js`,
+`test/scenes/perfv8.test.js` (frameWeatherDrain), `test/tesa4_roads.test.js` (eight retired), `test/tesa5_join.test.js`, `test/tesa7_country.test.js`,
 `test/tesa8_lairs.test.js`, `test/audit_tesa.test.js`; the stale records of `tesa4.json` (29), `tesa5.json` (4),
 `tesa7.json` (1) and `tesa8.json` (1) deleted with their laws, and `tesa4.json` (2), `tesa5.json` (4), `tesa7.json` (2),
 `tesa8.json` (4), `audittesa.json` (1) and `tesa13.json` (1) re-aimed by content, all judged dead again. Tool:
@@ -1229,8 +1229,8 @@ stamp; the budget's middle-first rolling, owed once; ATLAS_TILES_KEPT, the oldes
 buckets, glyphs, bands, filters, the pixel's centre, the frame; none at far nor on the continent; the hover's nearest
 and its words; halos first, each kind's hue); the host's read in `_locationToBuild`'s order and the one roll; the
 window's paint, hover, static key and the owed repaint. Mutants `tools/mutants/tesa13.json` (41, all dead). PIN MOVED:
-`test/tesa7_country.test.js` and `test/tesa8_lairs.test.js` lift the roll beside the build's ask; `test/tamriel.test.js`'s
-hover pin; `test/roads.test.js`'s four stroke pins (`inkMap.js` strokePaths); re-aimed and dead: `map1.json` (3), `tamriel.json` (1), `tamriel3.json` (1), `tesa10.json` (1), `tesa7.json` (7), `tesa8.json` (5).
+`test/tesa7_country.test.js` and `test/tesa8_lairs.test.js` lift the roll beside the build's ask; `test/ui/tamriel.test.js`'s
+hover pin; `test/world/road/roads.test.js`'s four stroke pins (`inkMap.js` strokePaths); re-aimed and dead: `map1.json` (3), `tamriel.json` (1), `tamriel3.json` (1), `tesa10.json` (1), `tesa7.json` (7), `tesa8.json` (5).
 Browser: `tools/tesa13MapProbe.mjs` (RETIRED by TESA15 with the page's own roll it watched fill in - grown into `tools/tesa15MapProbe.mjs`).
 
 `test/tesa12_places.test.js` (7, TESA12): the cities (TAMRIEL1's in their slots, on their points or snapped within
@@ -1278,8 +1278,8 @@ the rows before they go, the capital before Arena's place) and run (stood once, 
 lands and stood again, none on another pixel, out when the fit moves, the door shut) and its sweep (a moved fit builds
 again the pixels a capital came to or went from, the Bay's never, once a fit). Mutants `tools/mutants/tesa10.json`
 (76, all dead). PIN MOVED: `test/tesa2_arena.test.js`, `test/tesa7_country.test.js`, `test/tesa8_lairs.test.js` (the
-build's order; the capitals' lane a place the port made), `test/spawneddungeons.test.js` (the build's window 640 -> 700,
-its harness's `_capitalBase`), `test/fb0929h_spawnplate.test.js` (its harness's `_capitalBase`); `tools/mutants/tesa2.json`'s
+build's order; the capitals' lane a place the port made), `test/world/spawneddungeons.test.js` (the build's window 640 -> 700,
+its harness's `_capitalBase`), `test/world/fb0929h_spawnplate.test.js` (its harness's `_capitalBase`); `tools/mutants/tesa2.json`'s
 TESA2-no-arm and TESA2-the-nameless-stand, `tesa7.json`'s TESA7-host-arena-last, TESA7-host-no-country,
 TESA7-host-not-indexed and the three id records, and `tesa8.json`'s TESA8-host-no-lairs re-aimed by content, all judged
 dead again.
@@ -1302,8 +1302,8 @@ automap is its own (DFU's key for the game's places, both callers through automa
 before they go under the countryside's door, the Bay's land read once for both rates, the build's order, the
 countryside leaving a lair alone) and run (on its cell's site alone, stood once under its province's name and its
 template's size, a climate with none takes it out, water and a road none, a road landed late takes it out). Mutants
-`tools/mutants/tesa8.json` (70, all dead). PIN MOVED: `test/spawneddungeons.test.js` (the build's window 600 -> 640),
-`test/roadc_automap_interior.test.js` (the beacon's read through automapKeyOf, DFU's string for the game's places),
+`tools/mutants/tesa8.json` (70, all dead). PIN MOVED: `test/world/spawneddungeons.test.js` (the build's window 600 -> 640),
+`test/systems/automap/roadc_automap_interior.test.js` (the beacon's read through automapKeyOf, DFU's string for the game's places),
 `test/tesa7_country.test.js` (the lairs' lane is no country place's, the Bay's land read once, the lair's ask after the
 country's), `test/tesa2_arena.test.js` (the build's order); `tools/mutants/tesa7.json`'s TESA7-is-id-lane-floor,
 TESA7-is-id-lane-ceiling, TESA7-is-id-low-bit, TESA7-host-rates-dry, TESA7-host-arena-last, TESA7-host-no-country,
@@ -1323,9 +1323,9 @@ source (the door, the rows before they go, the rates' water law, Arena's first, 
 (stood once under the province's bank, the clamp's region's without a province, a moved climate cloned again, water, an
 Arena road and the sea's edge none, a road painted late takes it out, the door shut none) and the build's order
 (Arena's, else the country's, the Bay its own). Mutants `tools/mutants/tesa7.json` (66, all dead). PIN MOVED:
-`test/auditcaptsea.test.js`, `test/houses.test.js`, `test/housecontainers.test.js` and `test/tesa2_arena.test.js` (the
+`test/systems/naval/auditcaptsea.test.js`, `test/systems/houses.test.js`, `test/world/housecontainers.test.js` and `test/tesa2_arena.test.js` (the
 deed's one reading: nor a country place's), `test/tesa2_arena.test.js` (the build past the Bay: Arena's, else the
-country's), `test/fb0929h_spawnplate.test.js` and `test/spawneddungeons.test.js` (their harnesses lift
+country's), `test/world/fb0929h_spawnplate.test.js` and `test/world/spawneddungeons.test.js` (their harnesses lift
 `_locationToBuild`: the countryside off, the Bay's pixels theirs); `tools/mutants/auditcaptsea.json`'s ACS-P9-deed and
 `tesa2.json`'s TESA2-no-arm re-aimed by content, judged dead again.
 
@@ -1338,7 +1338,7 @@ Ports row; the host by source (each port reader, no crown, the clone's and the s
 A.EXE's list known; with ARENA2_PATH and ARENA_PATH 248 stood, 51 ports, each beside the ground's sea. Mutants
 `tools/mutants/tesa6.json` (33, all dead). PIN MOVED: `test/tesa1_arena.test.js` (DELETED by TESA12) (ARENA_FILES, the card's Ports row),
 `test/tesa2_arena.test.js` (`arena.port`, the clone's cache, the sweep's slot), `test/tesa2_online.test.js` (DELETED by TESA12; online needs
-the list too), `test/fb0929h_deedport.test.js` (its harness lifts the port test and the nearest-port finder: Arena's
+the list too), `test/systems/comeSailAway/fb0929h_deedport.test.js` (its harness lifts the port test and the nearest-port finder: Arena's
 ports past the Bay, the Bay's on it); `tools/mutants/tesa1.json` (DELETED by TESA12)'s TESA1-a-registration-installs-nothing, `tesa2.json`'s TESA2-one-fit-ever,
 TESA2-a-harbour-kept and TESA2-the-index-keeps-it, `tesa_online.json`'s TESA-ONLINE-any-copy-online re-aimed by content,
 all judged dead again.
@@ -1366,8 +1366,8 @@ kept, a hit drawn, a superseded ask dropped) and with one (the post and its epoc
 kept, a copy across, a death answered here); the real worker (built and installed for its jobs, cleared, a held network
 not built again, a failure its own message); the host by source (the hand-over, on the frame building or not, the epoch read as the job is posted,
 the stale law, a pixel in flight, the sweep, the mount's clear); with ARENA2_PATH and ARENA_PATH, the freeware's counts. Mutants
-`tools/mutants/tesa4.json` (49, all dead). PIN MOVED: `test/terrainworker.test.js` (the worker's imports take `arenaRoads.js`),
-`test/disc20.test.js` (DISC20-C's window 10200 -> 10400, the entry's `arenaRoadsEpoch` line);
+`tools/mutants/tesa4.json` (49, all dead). PIN MOVED: `test/world/terrain/terrainworker.test.js` (the worker's imports take `arenaRoads.js`),
+`test/systems/disc20.test.js` (DISC20-C's window 10200 -> 10400, the entry's `arenaRoadsEpoch` line);
 `tools/mutants/verge1.json`'s VERGE1-north-the-row-below re-aimed by content (the row is read on its own line now),
 judged dead again.
 
@@ -1377,8 +1377,8 @@ Imperial arm, none for none); the stranger's draw equal to getRandomFullName's o
 host by source (provinceAt's gates, the pin's exception, the loading screen, the Overworld, the new region and its edge,
 every name site, the town talk told, the player's region index untouched, the land module free of characters/); with
 ARENA2_PATH, Winterhold's pixel Skyrim's, Mournhold's Morrowind's, Daggerfall none. Mutants `tools/mutants/tesa3.json`
-(13, all dead). PIN MOVED: `test/audit58_magic.test.js` (the talk's and the stranger's names through nameBankHere and
-getRandomFullNameOfBank) and `test/macro6_talk.test.js` (the town talk's %fn/%mn through the province's bank first).
+(13, all dead). PIN MOVED: `test/systems/audit58_magic.test.js` (the talk's and the stranger's names through nameBankHere and
+getRandomFullNameOfBank) and `test/systems/talk/macro6_talk.test.js` (the town talk's %fn/%mn through the province's bank first).
 
 RETIRED by TESA12 (the file deleted): `test/tesa2_online.test.js` (5, TESA-ONLINE): the print (SHA-256 in hex, every byte two digits, the one list, case
 held), the room (online only a known release stands; offline any copy; the switch's version), the registration and the
@@ -1398,8 +1398,8 @@ place); the clone (every id field, the pixel, the region handed, no harbour, the
 carried only where a host stands them, the hit, the press's arm by source); the host by source (online and off since TESA-ONLINE, the arm, one
 clone a pixel, the key, the sweep, the load's wait, /tp, no house); and, where ARENA_PATH and ARENA2_PATH name the data,
 all 248 stood under their own points (a capital's on the capital since AUDIT-TESA A7-2), MAPS.BSA's five template counts and Winterhold's 6 x 7 city. Mutants
-`tools/mutants/tesa2.json` (28, all dead). PIN MOVED: `test/tamriel.test.js` (a press beyond the Bay picks an Arena place
-the world stands, and nothing else) and `test/auditcaptsea.test.js` (the house rule names an Arena town beside an isle's).
+`tools/mutants/tesa2.json` (28, all dead). PIN MOVED: `test/ui/tamriel.test.js` (a press beyond the Bay picks an Arena place
+the world stands, and nothing else) and `test/systems/naval/auditcaptsea.test.js` (the house rule names an Arena town beside an isle's).
 Re-aimed by content, each judged dead again: `tools/mutants/auditcaptsea.json`'s ACS-P3-spawn-filter and ACS-P9-deed
 (each still drops the isles' own exclusion alone), `tools/mutants/tamriel.json`'s TAMRIEL1-the-hover-names-the-bay-too
 (the hover's city read is `tamrielCityAt` now) and TAMRIEL1-window-hover-silent-beyond-the-bay (its line carries the
@@ -1422,7 +1422,7 @@ own, the version, the filter, a registration with no IndexedDB) and the doors (t
 card's rows and buttons); and, where ARENA_PATH and ARENA2_PATH name the data, the freeware CITYDATA.65 (401 placed, 273
 named, the provinces and rectangles) and the placement on the real trace (392 by the fit, 9 snapped, none lost, 248
 inked, the eight capitals). Mutants `tools/mutants/tesa1.json` (DELETED by TESA12) (33, all dead).
-PIN MOVED: `test/features.test.js`, `test/org2_options.test.js` and `test/settingsUI.test.js` name the Arena card in
+PIN MOVED: `test/systems/features.test.js`, `test/systems/org2_options.test.js` and `test/ui/settings/settingsUI.test.js` name the Arena card in
 Your files and in the card table. Re-aimed by content, each judged dead again: `tools/mutants/mwa4.json`'s
 MWA4-the-card-off-the-head-of-the-files-page (the files row now ends with the Arena card), `tools/mutants/tamriel.json`'s
 TAMRIEL1-one-model-a-call and `tools/mutants/tamriel3.json`'s TAMRIEL3-the-ink-never-rebuilds (the ink's cache now asks

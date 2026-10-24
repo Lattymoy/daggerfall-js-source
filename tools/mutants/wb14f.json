@@ -1,0 +1,342 @@
+[
+  {
+    "name": "WB14f-a-gaoler-that-walks",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "Object.freeze({ id: 7, key: 'gaoler', r: 0.6, h: 2.2, speed: 0 }),",
+    "new": "Object.freeze({ id: 7, key: 'gaoler', r: 0.6, h: 2.2, speed: 3 }),",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-a-captive-on-a-plain-night",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "cp: hasPortent(night, 'captive') ? newCaptive() : null,",
+    "new": "cp: newCaptive(),",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14f-risen-at-the-fight-s-birth",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (!Number.isFinite(woke) || now < woke + OPENING_MS) return;\n    f.xa = [",
+    "new": "    if (!Number.isFinite(woke)) return;\n    f.xa = [",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-the-walkway-never-laid",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (!Number.isFinite(f.xa[WALKWAY.pen])) f.xa[WALKWAY.pen] = now;\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-one-body-sized-whole",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "hostTeamHpFor(BEARER_TEAM_S, living.map((b) => f.players[b.sub].lv), n), now, out);\n    K.n = n;",
+    "new": "hostTeamHpFor(BEARER_TEAM_S, living.map((b) => f.players[b.sub].lv), 1), now, out);\n    K.n = n;",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
+  },
+  {
+    "name": "WB14f-the-ring-about-his-court",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "C = COURTS[FLOOR.pen], a0 = rng() * 2 * Math.PI, spots = [];",
+    "new": "C = COURTS[FLOOR.first], a0 = rng() * 2 * Math.PI, spots = [];",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-the-state-a-beat-late",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    f.lastStateAt = -Infinity;   // the state says the walkway at once\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-crumbled-at-the-turn",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "hostGone(f, now, out, HOST_GONE.crumbled, notGaoler);",
+    "new": "hostGone(f, now, out, HOST_GONE.crumbled);",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-freed-with-one-standing",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (gaolers.length) {\n      for (const a of gaolers)",
+    "new": "    if (gaolers.length > 1) {\n      for (const a of gaolers)",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-the-freeing-never-said",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    out.push({ k: 'cpf', at: now });\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-the-ward-given-none",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (atk === ATTACKS.reckon) captiveWard(f, now, out);   // WB14f: and the Covenant's ward takes it, the knight freed\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-spent-at-its-word",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "if (!K.s && wardTakes(K, f.atk) && now >= f.atk.at) { K.s = f.atk.at;",
+    "new": "if (!K.s && wardTakes(K, f.atk)) { K.s = f.atk.at;",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-the-ward-lost-to-a-broken-Reckoning",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (f.cp?.w === X.i) f.cp.w = 0;   // WB14f: a Reckoning broken never lands - the Covenant's ward waits for the next\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-given-in-its-last-breath",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (reckonOpen(f, now)) captiveWard(f, now, out);",
+    "new": "    if (f.atk) captiveWard(f, now, out);",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-never-the-one-winding-up",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (reckonOpen(f, now)) captiveWard(f, now, out);   // a Reckoning still winding up as he goes free: the ward takes it\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-the-state-never-says-it-spent",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "{ cp: [f.cp.at, f.cp.n, f.cp.f, f.cp.w, f.cp.s] }",
+    "new": "{ cp: [f.cp.at, f.cp.n, f.cp.f, f.cp.w, 0] }",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-the-judge-counts-it",
+    "file": "src/net/bossRef.js",
+    "old": "  if (wardTakes(f.cp, f.atk)) f.atk.bj = true;   // WB14f: the Reckoning the Covenant's ward takes lands on no fighter\n",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-a-cp-of-any-length",
+    "file": "src/net/wire.js",
+    "old": "Array.isArray(c) && c.length === 5 && msOrNone(c[0])",
+    "new": "Array.isArray(c) && c.length >= 5 && msOrNone(c[0])",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-a-cpw-of-no-number",
+    "file": "src/net/wire.js",
+    "old": "case 'cpw': return Number.isSafeInteger(m.i) && m.i >= 1 && gateMs(m.at)",
+    "new": "case 'cpw': return gateMs(m.at)",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-the-freeing-never-folded",
+    "file": "src/net/gate/gateLink.js",
+    "old": "case 'cpf': return s.cp ? { ...s, cp: { ...s.cp, f: s.cp.f || g.at }, heardAt: now } : s;",
+    "new": "case 'cpf': return s;",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-struck-all-the-same",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "if (v === 'hit' && !wardTakes(s.cp, atk)) {",
+    "new": "if (v === 'hit') {",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-AUDIT-WB14c-blows-from-his-court-alone",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "|| !fromItsFloor(s, i, t)) return false;",
+    "new": "|| !fromHisCourt(s, t)) return false;",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-drawn-in-Dagon-s-crimson",
+    "file": "src/scenes/gate/gateCaptive.js",
+    "old": "if (!shape || !wardTakes(s?.cp, s?.atk)) return shape;",
+    "new": "if (!shape) return shape;",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-his-chains-said-twice",
+    "file": "src/scenes/gate/gateCaptive.js",
+    "old": "if (!chainedSaid && K.at > 0) { chainedSaid = true;",
+    "new": "if (K.at > 0) { chainedSaid = true;",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-a-stale-freeing-said",
+    "file": "src/scenes/gate/gateCaptive.js",
+    "old": "if (live && now - K.f <= CAPTIVE_LATE_MS) { say(CAPTIVE_TEXT.freed(name));",
+    "new": "if (live) { say(CAPTIVE_TEXT.freed(name));",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-the-last-gaoler-said-beside-the-freeing",
+    "file": "src/scenes/gate/gateCaptive.js",
+    "old": "if (live && left > 0 && now - g.at <= CAPTIVE_LATE_MS) say(CAPTIVE_TEXT.felled(g.n, left));",
+    "new": "if (live && now - g.at <= CAPTIVE_LATE_MS) say(CAPTIVE_TEXT.felled(g.n, left));",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-never-gone",
+    "file": "src/scenes/gate/gateCaptive.js",
+    "old": "return !spent || now < (K.s > 0 ? K.s : s.atk?.at ?? now) + CAPTIVE_GONE_MS;",
+    "new": "return true;",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-chains-after-his-freeing",
+    "file": "src/scenes/gate/gateCaptive.js",
+    "old": "if (!K || !(K.at > 0) || K.f > 0 || s.fell || s.wrath != null) return out;",
+    "new": "if (!K || !(K.at > 0) || s.fell || s.wrath != null) return out;",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-shown-before-the-Pen",
+    "file": "src/scenes/gate/gateCaptive.js",
+    "old": "if (!K || !(K.at > 0) || s.fell || s.wrath != null) return false;",
+    "new": "if (!K || s.fell || s.wrath != null) return false;",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-the-gaolers-counted-his-host",
+    "file": "src/ui/gate/gateBossBar.js",
+    "old": "else if (a.k === HOST.gaoler) gaolers++; ",
+    "new": "",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-the-ward-said-after-it-is-spent",
+    "file": "src/ui/gate/gateBossBar.js",
+    "old": "s.cp?.f > 0 && !captiveSpent(s.cp, s.atk, now) ? BOSS_BAR_TEXT.ward()",
+    "new": "s.cp?.f > 0 ? BOSS_BAR_TEXT.ward()",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-the-gaoler-named-a-Daedra",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "  if (k === HOST.gaoler) return { mobile, name: t('gate.host.gaoler', 'Gaoler'),",
+    "new": "  if (k === -1) return { mobile, name: t('gate.host.gaoler', 'Gaoler'),",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "WB14f-a-Dame-drawn-as-a-knight",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "archive: (dame ? ENEMY_BASICS[KNIGHT_MOBILE]?.femaleTexture : null) ?? ",
+    "new": "archive: ",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-captive-gaolers-a-fixed-two",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    const n = bearerCountFor(living.length), C = COURTS[FLOOR.pen]",
+    "new": "    const n = 2, C = COURTS[FLOOR.pen]",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-captive-ward-to-a-chained-knight",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "if (!K || !K.f || K.s || K.w || f.atk?.a !== ATTACKS.reckon.id) return;",
+    "new": "if (!K || K.s || K.w || f.atk?.a !== ATTACKS.reckon.id) return;",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-captive-gaoler-struck-from-anywhere",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  if (!inCourt(pose.x, pose.z, nearestCourt(ax, az), POSE_SLACK)) return out;",
+    "new": "  void 0;",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  },
+  {
+    "name": "AUDIT-WB14-RECORD-6-captive-ward-spent-twice",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "if (!K.s && wardTakes(K, f.atk) && now >= f.atk.at) { K.s = f.atk.at; f.lastStateAt = -Infinity; }",
+    "new": "if (wardTakes(K, f.atk) && now >= f.atk.at) { K.s = f.atk.at; f.lastStateAt = -Infinity; }",
+    "tests": [
+      "test/net/gate/wb14f_captive.test.js",
+      "test/net/gate/audit_wb14.test.js"
+    ],
+    "note": "AUDIT WB14 (RECORD-6): a claim its test's title makes, committed (the RECORD lane wrote and ran it)."
+  }
+]

@@ -10,7 +10,7 @@
 // the pictures on the texture door.
 import { registerCustomModel, customModelFor } from './customModels.js';
 import { MeshBuilder } from './detStandIns.js';
-import { registerPortBlock, installWorldDataReplacement } from '../formats/worldDataReplacement.js';
+import { registerPortBlock, installWorldDataReplacement } from '../formats/worldData/worldDataReplacement.js';
 import { addVendorTextures } from '../systems/textureReplacement.js';
 import { CAPITAL_MODELS, capitalPortBlocks, BLOCK_M } from './tamrielCapitals.js';
 import { CAPITAL_ARCHIVE, CAPITAL_ART } from './capitalShapes.js';
@@ -49,7 +49,7 @@ function noise(seed, n, S = CAPITAL_ART_SIZE) {
   };
 }
 const mix = (a, b, t) => { const k = Math.min(1, Math.max(0, t)); return [0, 1, 2].map((i) => Math.round(a[i] + (b[i] - a[i]) * k)); };
-/** A picture by a texel's colour law - `{width, height, data}` (the texture door's shape, world/galleonArt.js's). */
+/** A picture by a texel's colour law - `{width, height, data}` (the texture door's shape, world/ships/galleonArt.js's). */
 function picture(fn, S = CAPITAL_ART_SIZE) {
   const img = { width: S, height: S, data: new Uint8Array(S * S * 4) };
   for (let y = 0; y < S; y++) for (let x = 0; x < S; x++) { const c = fn(x, y); const i = (y * S + x) * 4; img.data[i] = c[0]; img.data[i + 1] = c[1]; img.data[i + 2] = c[2]; img.data[i + 3] = 255; }

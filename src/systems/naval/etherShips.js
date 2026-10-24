@@ -1,9 +1,9 @@
 // @ts-check
 // ETHER-SHIPS (2026-10-11, the owner: "The etheric sea is a infinite procedural oceanscape with procedural islands with
-// towns, dungeons, exotic resources, deadly legendary ships"; bible/03-World/Etheric-Sea.md ETHER-SHIPS, ETHER-LEGENDS) -
-// THE ETHERIC SEA'S SHIPS. Pure: the naval host and its director read them (scenes/navalHost.js, navalDirector.js).
+// towns, dungeons, exotic resources, deadly legendary ships"; bible/03-World/Eltheric-Ocean.md ETHER-SHIPS, ETHER-LEGENDS) -
+// THE ELTHERIC OCEAN'S SHIPS. Pure: the naval host and its director read them (scenes/naval/navalHost.js, navalDirector.js).
 //
-// ITS TRAFFIC: corsairs and the isles' traders - the Bay's own classes under the Etheric Sea's names (`etherShipNames`,
+// ITS TRAFFIC: corsairs and the isles' traders - the Bay's own classes under the Eltheric Ocean's names (`etherShipNames`,
 // her captain the Bay's own law's) and the Isles' colours on a trader, the black flag on a corsair; no crown's navy sails
 // past the Veil. The deeper the band, the likelier a corsair (world/ethericSea.js BANDS `pirate`) and the bigger every
 // class (`level`); a port's waters keep the traders' peace (ETHER_PORT_WEIGHTS).
@@ -16,13 +16,13 @@
 // she is gone LEGEND_RISE_DAYS - then the aether raises her again. The harbourmasters of the isles say where each was
 // last seen (`rumourOf`).
 
-import { mulberry32 } from '../../combat/bloodArt.js';
+import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { classById, shipNames } from './navalShips.js';
 import { BANDS, LEAGUE_PX, VEIL_X, veilhaven, etherHash, etherRng, inEther, compassPoint } from '../../world/ethericSea.js';
 
 /** A trader of the isles flies their colours (the spyglass reads "the Isles' merchant colours"). */
 export const ISLES_FLAG = 'the Isles';
-/** The Etheric Sea's ship names - its corsairs' and its traders', ours: two words a name, a first and a last of each
+/** The Eltheric Ocean's ship names - its corsairs' and its traders', ours: two words a name, a first and a last of each
  *  trade's own (AUDIT CAPTAIN'S SEA D20 - sixteen names a trade moored two ships of one harbour under the same name;
  *  these are 256 a trade, drawn as the sixteen were). */
 const PIRATE_FIRSTS = ['Gloam', 'Void', 'Starving', 'Pale', 'Ashen', 'Hollow', 'Black', 'Sable', 'Crooked', 'Mourning', 'Weeping', 'Amber', 'Drowned', 'Grim', 'Red', 'Last'];
@@ -35,7 +35,7 @@ export const ETHER_MERCHANT_NAMES = twoWords(MERCHANT_FIRSTS, MERCHANT_LASTS);
 /** The names' own stream's salt (her captain's and every other draw stay the ones they were). */
 export const ETHER_NAME_SALT = 0xe7a3e;
 /**
- * A ship of the Etheric Sea's names: `{ name, captain, crown: null }` - her name the Etheric Sea's by her trade, her
+ * A ship of the Eltheric Ocean's names: `{ name, captain, crown: null }` - her name the Eltheric Ocean's by her trade, her
  * captain the Bay's own law's (shipNames, the Breton bank), no crown. A legend's are her own.
  * @param {any} cls @param {number} seed
  */
@@ -64,12 +64,12 @@ export function etherFactionWeights(band, { nearPort = false } = {}) {
 /** @typedef {{ id: string, name: string, captain: string, classId: string, band: string, trait: string, purse: number, lore: string }} Legend */
 /** THE LEGENDS: two to a band past the Shallows, the deeper the deadlier and the richer. @type {readonly Legend[]} */
 export const LEGENDS = Object.freeze([
-  Object.freeze({ id: 'wake', name: "Sorrow's Wake", captain: 'Ysolde the Unmourned', classId: 'legendWake', band: 'reaches', trait: 'swift', purse: 2500, lore: 'The swiftest hull afloat: she runs down what she hunts, and runs from nothing.' }),
-  Object.freeze({ id: 'queen', name: 'The Drowned Queen', captain: 'Maraveth, Thrice Drowned', classId: 'legendQueen', band: 'reaches', trait: 'mends', purse: 3000, lore: 'Thrice sunk and thrice raised by the aether - her timbers knit between broadsides.' }),
+  Object.freeze({ id: 'wake', name: "Sorrow's Wake", captain: 'Ysolde the Unmourned', classId: 'legendWake', band: 'reaches', trait: 'swift', purse: 2500, lore: 'The fastest hull afloat. It runs down whatever it hunts and runs from nothing.' }),
+  Object.freeze({ id: 'queen', name: 'The Drowned Queen', captain: 'Maraveth, Thrice Drowned', classId: 'legendQueen', band: 'reaches', trait: 'mends', purse: 3000, lore: 'Sunk and raised by the aether three times. Its timbers repair themselves between broadsides.' }),
   Object.freeze({ id: 'hunger', name: 'Ninefold Hunger', captain: 'Ghorvak Ninefold', classId: 'legendHunger', band: 'deep', trait: 'boarders', purse: 5000, lore: 'A galley packed rail to rail with hands who board, and board again.' }),
-  Object.freeze({ id: 'lantern', name: 'The Lantern-Eater', captain: 'the Hooded Pilot', classId: 'legendLantern', band: 'deep', trait: 'night', purse: 5500, lore: 'She sails by night alone and shows no light, and makes for the lanterns of others.' }),
-  Object.freeze({ id: 'regent', name: 'The Pale Regent', captain: 'Lord Aumbrel the Pale', classId: 'legendRegent', band: 'abyss', trait: 'gunnery', purse: 9000, lore: 'Her gunners have not missed in a hundred years.' }),
-  Object.freeze({ id: 'starless', name: 'The Starless', captain: 'no one living', classId: 'legendStarless', band: 'abyss', trait: 'veiled', purse: 12000, lore: 'Black canvas under a black sky: even the glass cannot hold her until she is upon you.' }),
+  Object.freeze({ id: 'lantern', name: 'The Lantern-Eater', captain: 'the Hooded Pilot', classId: 'legendLantern', band: 'deep', trait: 'night', purse: 5500, lore: 'It sails only at night, shows no light, and hunts ships that do.' }),
+  Object.freeze({ id: 'regent', name: 'The Pale Regent', captain: 'Lord Aumbrel the Pale', classId: 'legendRegent', band: 'abyss', trait: 'gunnery', purse: 9000, lore: 'Its gunners have not missed in a hundred years.' }),
+  Object.freeze({ id: 'starless', name: 'The Starless', captain: 'no one living', classId: 'legendStarless', band: 'abyss', trait: 'veiled', purse: 12000, lore: 'Black sails under a black sky. Even a spyglass can\'t find it until it is right on top of you.' }),
 ]);
 /** The traits' numbers: a `mends` legend's hull knits this share of its whole a second while no ball has struck her for
  *  LEGEND_MEND_QUIET_S; a `gunnery` legend's guns load this much quicker; a `veiled` one is made out at this share of
@@ -139,7 +139,7 @@ export const legendAbroad = (legend, { night = false } = {}) => legend?.trait !=
 export function rumourOf(legend, from, { endedDay = null, day = 0 } = {}) {
   if (!legendSails(endedDay, day)) {
     const ago = Math.max(0, (day | 0) - (endedDay | 0));
-    return `${legend.name} went down ${ago === 0 ? 'today' : ago === 1 ? 'yesterday' : `${ago} days ago`}; they say the aether will raise her again.`;
+    return `${legend.name} went down ${ago === 0 ? 'today' : ago === 1 ? 'yesterday' : `${ago} days ago`}; they say the aether will raise it again.`;
   }
   const h = hauntOf(legend);
   const dx = h.px - from.px, dy = h.py - from.py;

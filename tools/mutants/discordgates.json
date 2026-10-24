@@ -1,182 +1,182 @@
 [
   {
     "name": "DISCORD-GATES-any-https-a-webhook",
-    "file": "src/net/gateHerald.js",
+    "file": "src/net/herald/heraldCard.js",
     "old": "const WEBHOOK_RE = /^https:\\/\\/(?:(?:ptb|canary)\\.)?discord(?:app)?\\.com\\/api(?:\\/v\\d{1,2})?\\/webhooks\\/\\d{1,20}\\/[A-Za-z0-9_-]{1,128}$/;",
     "new": "const WEBHOOK_RE = /^https:\\/\\/\\S+$/;",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-the-role-taken-unread",
-    "file": "src/net/gateHerald.js",
-    "old": "return ROLE_RE.test(s) ? s : null;",
-    "new": "return s || null;",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "export const heraldRole = (raw) => { const s = String(raw ?? '').trim(); return SNOWFLAKE_RE.test(s) ? s : null; };",
+    "new": "export const heraldRole = (raw) => { const s = String(raw ?? '').trim(); return s || null; };",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-the-omen-pings-nobody",
-    "file": "src/net/gateHerald.js",
-    "old": "const ping = role ? `<@&${role}> ` : '';",
-    "new": "const ping = '';",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "family: 'gate', moment: 'Omen', role,",
+    "new": "family: 'gate', moment: 'Omen',",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-every-mention-allowed",
-    "file": "src/net/gateHerald.js",
-    "old": "allowed_mentions: role ? { roles: [role] } : { parse: [] },",
-    "new": "allowed_mentions: { parse: ['everyone', 'roles', 'users'] },",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "allowed_mentions: r ? { roles: [r] } : { parse: [] }",
+    "new": "allowed_mentions: { parse: ['everyone', 'roles', 'users'] }",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-the-open-said-as-the-seal",
-    "file": "src/net/gateHerald.js",
-    "old": "open a breach ${heraldStamp(t.openAt, 'R')} ",
-    "new": "open a breach ${heraldStamp(t.sealAt, 'R')} ",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "fields: [['Opens', heraldWhen(t.openAt)]",
+    "new": "fields: [['Opens', heraldWhen(t.sealAt)]",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-the-kill-pings",
-    "file": "src/net/gateHerald.js",
-    "old": "The breach collapses.`,\n    allowed_mentions: { parse: [] },",
-    "new": "The breach collapses.`,\n    allowed_mentions: { parse: ['everyone', 'roles', 'users'] },",
+    "file": "src/net/gate/gateHerald.js",
+    "old": "family: 'gate', moment: 'Slain',",
+    "new": "family: 'gate', moment: 'Slain', role: '1555589839825670258',",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-the-others-miscounted",
-    "file": "src/net/gateHerald.js",
-    "old": "Math.max(0, n - names.length) : 0;\n  const by = names.length",
-    "new": "Math.max(0, n) : 0;\n  const by = names.length",
+    "file": "src/net/herald/heraldCard.js",
+    "old": "Math.max(0, n - shown.length)",
+    "new": "Math.max(0, n)",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-a-name-posted-raw",
-    "file": "src/net/gateHerald.js",
+    "file": "src/net/herald/heraldCard.js",
     "old": "String(n ?? '').replace(/[^A-Za-z0-9 '-]/g, '')",
     "new": "String(n ?? '')",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-posted-after-the-open",
-    "file": "src/net/gateHerald.js",
+    "file": "src/net/gate/gateHerald.js",
     "old": "if (t.openAt <= nowMs) continue;",
     "new": "if (t.wrathAt <= nowMs) continue;",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-the-omen-posted-again",
-    "file": "src/net/gateHerald.js",
+    "file": "src/net/gate/gateHerald.js",
     "old": "if (!isGateDay(d) || d <= posted) continue;",
     "new": "if (!isGateDay(d)) continue;",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-the-omen-instant-ignored",
-    "file": "src/net/gateHerald.js",
+    "file": "src/net/gate/gateHerald.js",
     "old": "return { day: d, at: Math.max(nowMs, t.omenAt) };",
     "new": "return { day: d, at: nowMs };",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-a-day-not-come-trusted",
-    "file": "src/net/gateHerald.js",
+    "file": "src/net/gate/gateHerald.js",
     "old": "const posted = Number.isSafeInteger(postedDay) && postedDay <= today ? postedDay : -1;",
     "new": "const posted = postedDay;",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-a-kill-news-for-ever",
-    "file": "src/net/gateHerald.js",
+    "file": "src/net/gate/gateHerald.js",
     "old": "nowMs < gateTimes(day).wrathAt + GATE_COLLAPSE_MS + HERALD_FELL_KEEP_MS",
     "new": "nowMs < Infinity",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-a-site-for-any-day",
-    "file": "src/net/gateHerald.js",
+    "file": "src/net/gate/gateHerald.js",
     "old": "(day === gateAt(nowMs).day || day === gateAt(nowMs + GATE_SITE_SKEW_MS).day)",
     "new": "day >= 0",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-one-account-names-the-place",
-    "file": "src/net/gateHerald.js",
+    "file": "src/net/gate/gateHerald.js",
     "old": "if (e[3].length >= GATE_SITE_AGREE &&",
     "new": "if (e[3].length >= 1 &&",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-a-second-word-counted",
-    "file": "src/net/gateHerald.js",
+    "file": "src/net/gate/gateHerald.js",
     "old": "  if (c.some((e) => e[3].includes(sub))) return rec;\n",
     "new": "",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-the-last-said-wins-a-tie",
-    "file": "src/net/gateHerald.js",
+    "file": "src/net/gate/gateHerald.js",
     "old": "(!best || e[3].length > best[3].length)",
     "new": "(!best || e[3].length >= best[3].length)",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-places-unbounded",
-    "file": "src/net/gateHerald.js",
+    "file": "src/net/gate/gateHerald.js",
     "old": "    if (c.length >= GATE_SITE_CANDIDATES_MAX) return rec;\n",
     "new": "",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-votes-unbounded",
-    "file": "src/net/gateHerald.js",
+    "file": "src/net/gate/gateHerald.js",
     "old": "    if (c[i][3].length >= GATE_SITE_VOTES_MAX) return rec;\n",
     "new": "",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-an-older-day-restarts",
-    "file": "src/net/gateHerald.js",
+    "file": "src/net/gate/gateHerald.js",
     "old": "  if (cur && cur.d > day) return rec;\n",
     "new": "",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "return /^[A-Za-z]/.test(m.pl) && gatePlaceWire(m.pl) === m.pl ? { k: 'site', d: m.d, px:",
     "new": "return /^[A-Za-z]/.test(m.pl) ? { k: 'site', d: m.d, px:",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "!intIn(m.px, 0, 999) || !intIn(m.py, 0, 499) || typeof m.pl !== 'string'",
     "new": "typeof m.pl !== 'string'",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "export const GATE_SITE_RELAY_MIN = 123;",
     "new": "export const GATE_SITE_RELAY_MIN = 116;",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -212,16 +212,16 @@
     "old": "replace(/[^A-Za-z0-9 ',-]/g, '')",
     "new": "replace(/[\\u0000-\\u001f]/g, '')",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-the-herald-ignores-its-door",
     "file": "server/src/index.js",
-    "old": "this._herald = hook ? { hook, role: heraldRole(role('gateRole')), serpentRole: serpentHeraldRole(role('serpentRole'), role('gateRole')), sdRole: serpentHeraldRole(role('sdRole'), role('gateRole')) } : null;",
-    "new": "this._herald = { hook: String(this.env?.GATE_DISCORD_WEBHOOK), role: heraldRole(role('gateRole')), serpentRole: serpentHeraldRole(role('serpentRole'), role('gateRole')), sdRole: serpentHeraldRole(role('sdRole'), role('gateRole')) };",
+    "old": "this._herald = hook ? { hook, threads, role: heraldRole(role('gateRole')), serpentRole: serpentHeraldRole(role('serpentRole'), role('gateRole')), sdRole: serpentHeraldRole(role('sdRole'), role('gateRole')) } : null;",
+    "new": "this._herald = { hook: String(this.env?.GATE_DISCORD_WEBHOOK), threads, role: heraldRole(role('gateRole')), serpentRole: serpentHeraldRole(role('serpentRole'), role('gateRole')), sdRole: serpentHeraldRole(role('sdRole'), role('gateRole')) };",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ],
     "note": "SCALE5b (re-aimed by content): the roles through relayCfgValue."
   },
@@ -231,7 +231,7 @@
     "old": "      if (res.ok) return true;\n",
     "new": "      return true;\n",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -240,7 +240,7 @@
     "old": "      await this._heraldArm(now);   // DISCORD-GATES",
     "new": "      // DISCORD-GATES",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -249,7 +249,7 @@
     "old": "try { await this._heraldOwe(fell, now); }",
     "new": "try { /* nothing */ }",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -258,7 +258,7 @@
     "old": "if (st.fell >= fell.d || st.owe?.d === fell.d) return;",
     "new": "if (st.owe?.d === fell.d) return;",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -267,7 +267,7 @@
     "old": "        else retry = now + HERALD_RETRY_MS;\n      }\n      const due = heraldOmenDue(now, st.omen);",
     "new": "        else { retry = now + HERALD_RETRY_MS; st.owe = null; }\n      }\n      const due = heraldOmenDue(now, st.omen);",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -276,7 +276,7 @@
     "old": "if (!this._heraldOf() || !heraldFellLive(fell.d, now)) return;",
     "new": "if (!this._heraldOf()) return;",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -285,7 +285,7 @@
     "old": "if (!gateSiteDayOk(m.d, now)) return;   // AUDIT WB12d (R1): kept with no herald too - the rite stands by the agreed site",
     "new": "if (!this._heraldOf() || !gateSiteDayOk(m.d, now)) return;",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -294,7 +294,7 @@
     "old": "if (!gateSiteDayOk(m.d, now)) return;   // AUDIT WB12d (R1): kept with no herald too - the rite stands by the agreed site",
     "new": "if (false) return;",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -303,7 +303,7 @@
     "old": "if (m.k === 'site') {\n        if (!isSocialRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }\n        try { await this._gateSite(",
     "new": "if (m.k === 'site') {\n        if (typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }\n        try { await this._gateSite(",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -312,7 +312,7 @@
     "old": "if (due && due.at <= now) {\n        const site = agreedGateSite(",
     "new": "if (due && due.at < now) {\n        const site = agreedGateSite(",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -321,7 +321,7 @@
     "old": "      if (next.length) await this._hubArm(Math.min(...next));\n    } catch (e) { console.warn('[herald] beat failed'",
     "new": "    } catch (e) { console.warn('[herald] beat failed'",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -330,7 +330,7 @@
     "old": "const owed = st.owe || st.riteOwe ? null : heraldOmenDue(now, st.omen);\n      const next = [retry, owed && owed.at > now ? owed.at : null]",
     "new": "const owed = st.owe || st.riteOwe ? null : heraldOmenDue(now, st.omen);\n      const next = [owed && owed.at > now ? owed.at : null]",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -339,7 +339,7 @@
     "old": "    if (this._gateSiteSaid && this._gateSiteSaid.ws === this._ws && this._gateSiteSaid.d === day) return true;\n",
     "new": "",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -348,7 +348,7 @@
     "old": "if (primary) this.gateSiteOk = relaySupportsGateSite(relayV);",
     "new": "if (primary) this.gateSiteOk = true;",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -357,7 +357,7 @@
     "old": "px, py, pl: gatePlaceWire(place) });",
     "new": "px, py, pl: place });",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -366,7 +366,7 @@
     "old": "if (!this.acct || !this.gateSiteOk",
     "new": "if (!this.gateSiteOk",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -375,25 +375,25 @@
     "old": "    if (gateOmen) reportGateSite();   // DISCORD-GATES: where the gate stands, to the hub\n",
     "new": "",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-a-dead-webhook-posted-for-ever",
     "file": "server/src/index.js",
-    "old": "      return res.status >= 400 && res.status < 500 && res.status !== 429;\n",
+    "old": "      return forGood(res.status);\n",
     "new": "      return false;\n",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
     "name": "DISCORD-GATES-a-429-given-up",
     "file": "server/src/index.js",
-    "old": "res.status < 500 && res.status !== 429;",
-    "new": "res.status < 500;",
+    "old": "status < 500 && status !== 429;",
+    "new": "status < 500;",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   },
   {
@@ -402,7 +402,7 @@
     "old": "        if (cur.owe && cur.owe.d !== read?.d && cur.owe.d > st.fell) st.owe = cur.owe;\n",
     "new": "",
     "tests": [
-      "test/discordgates.test.js"
+      "test/net/gate/discordgates.test.js"
     ]
   }
 ]

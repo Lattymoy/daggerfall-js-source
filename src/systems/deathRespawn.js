@@ -25,7 +25,7 @@ import { LOCATION_TYPES, DUNGEON_TYPES, longitudeLatitudeToMapPixel } from '../f
 import { cureAllOfKind } from './effects.js';   // DEATHLOOP1
 import { maxFatigue, liveStat, STAT_KEYS_ORDER } from './statMods.js';   // AUDIT DISC19: the revival's fatigue floor; DISC24-D: its stat floor
 import { sharedClockOn, worldMinutes, skipDeadMinutes } from './worldTick.js';   // DISC28-E: the dead live no minutes
-import { SD_REALM_TEXT } from '../world/sdRealm.js';   // AUDIT SD II (L6 F4): the Shattered Hour's own waking
+import { SD_REALM_TEXT } from '../world/superDungeon/sdRealm.js';   // AUDIT SD II (L6 F4): the Shattered Hour's own waking
 
 const SAFE_KINDS = Object.freeze([
   { kind: 'temple', match: (e) => e.locationType === LOCATION_TYPES.ReligionTemple },
@@ -97,11 +97,11 @@ const FLAVOR = Object.freeze({
     'The Divines were not ready for you yet. You wake on the temple steps, the chanting still fading from your ears.',
   ],
   city: [
-    'You wake in an alley just outside the gates, alive against the odds and no idea how you got here.',
+    'You wake in an alley just outside the gates, alive against the odds and with no idea how you got here.',
     'A passing guard found you and dragged you to the city gate. You come to just outside the walls, owing him one.',
   ],
   graveyard: [
-    'You claw your way up through loose earth - not your grave, not yet.',
+    'You claw your way up through loose earth. It was not your grave. Not yet.',
     'You wake among the headstones, cold and very much alive, brushing the dirt from your clothes.',
   ],
   dungeon: [
@@ -160,10 +160,10 @@ export function undergroundWakeSpot(mapTable, pixel) {
 }
 
 const WAKE_FLAVOR = Object.freeze({
-  temple: 'You went to sleep underground and wake on the temple steps - someone carried you out while you were away.',
-  city: 'You went to sleep underground and wake just outside the city gate - someone carried you out while you were away.',
-  graveyard: 'You went to sleep underground and wake among the headstones - someone carried you out while you were away.',
-  dungeon: 'You went to sleep underground and wake outside the dungeon door - someone carried you out while you were away.',
+  temple: 'You fell asleep underground and wake on the temple steps. Someone carried you out while you were away.',
+  city: 'You fell asleep underground and wake just outside the city gate. Someone carried you out while you were away.',
+  graveyard: 'You fell asleep underground and wake among the headstones. Someone carried you out while you were away.',
+  dungeon: 'You fell asleep underground and wake outside the dungeon door. Someone carried you out while you were away.',
 });
 
 /** The one line said when an online load wakes a character above ground; an unknown kind reads as the city's. */

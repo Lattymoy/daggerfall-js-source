@@ -5,8 +5,8 @@
     "old": "if (!c || c.classic) return false;",
     "new": "if (!c) return false;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -15,17 +15,17 @@
     "old": "return !!c.move || c.mode === 'hang' || c.mode === 'climb';",
     "new": "return c.mode === 'hang' || c.mode === 'climb';",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
     "name": "CLIMBHANDS-snapshot-never-classic",
-    "file": "src/player/climbPose.js",
+    "file": "src/player/climb/climbPose.js",
     "old": "    classic,   // CLIMB-HANDS",
     "new": "    classic: false,   // CLIMB-HANDS",
     "tests": [
-      "test/climbhands.test.js"
+      "test/player/climb/climbhands.test.js"
     ]
   },
   {
@@ -34,38 +34,41 @@
     "old": "flip: s === 'R' });",
     "new": "flip: s === 'L' });",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
     "name": "CLIMBHANDS-reach-mirrored-wrong",
     "file": "src/combat/climbHands.js",
-    "old": "flip: side === 'L' };",
-    "new": "flip: side === 'R' };",
+    "old": "flip: side === 'R' };",
+    "new": "flip: side === 'L' };",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js",
+      "test/combat/climbhands2.test.js"
     ]
   },
   {
     "name": "CLIMBHANDS-reach-on-the-look-side",
     "file": "src/combat/climbHands.js",
-    "old": "const x = side === 'R' ? xl : NATIVE_W - xl - rw;",
-    "new": "const x = side === 'L' ? xl : NATIVE_W - xl - rw;",
+    "old": "const x = side === 'R' ? NATIVE_W - xl - rw : xl;",
+    "new": "const x = side === 'R' ? xl : NATIVE_W - xl - rw;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js",
+      "test/combat/climbhands2.test.js"
     ]
   },
   {
     "name": "CLIMBHANDS-fists-stay-looking-away",
     "file": "src/combat/climbHands.js",
-    "old": "y += smooth(a) * OUT;",
-    "new": "y += 0;",
+    "old": "y += enter + gone + smooth(this.letGo[s]) * OUT;",
+    "new": "y += enter + gone;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js",
+      "test/combat/climbhands2.test.js"
     ]
   },
   {
@@ -74,8 +77,8 @@
     "old": "const deep = !m ? smooth(",
     "new": "const deep = true ? smooth(",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -84,8 +87,8 @@
     "old": "const gone = smooth((-pitch / DEG - HANDS.DOWN_FROM_DEG)",
     "new": "const gone = 0 * smooth((-pitch / DEG - HANDS.DOWN_FROM_DEG)",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -94,11 +97,10 @@
     "old": "y = Math.max(y, NATIVE_H - gh);   // never lifted past the sleeve's slack",
     "new": "y = y;   // never lifted past the sleeve's slack",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
-    ],
-    "equivalent": true,
-    "why": "Belt and braces: no motion reaches the slack - the free climb's highest reach (half the duty's stride, 30.7 px) and the tremble's 2.4 px stay under BOTTOM_SLACK's 34; the shimmy's lift with the landing's swing under 25. Kept so a retuned constant cannot show the cut sleeve."
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js",
+      "test/combat/climbhands2.test.js"
+    ]
   },
   {
     "name": "CLIMBHANDS-mirror-uv-dropped",
@@ -106,8 +108,8 @@
     "old": "b.flip ? { u0: 1, v0: 0, u1: 0, v1: 1 } : undefined",
     "new": "undefined",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -116,8 +118,8 @@
     "old": "const tau = want ? POSE.IN_TAU : POSE.OUT_TAU;",
     "new": "const tau = POSE.OUT_TAU;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -126,8 +128,8 @@
     "old": "if (!want && this.present <= 0) { this.reset(); return this.out; }",
     "new": "if (!want) { this.reset(); return this.out; }",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -136,8 +138,8 @@
     "old": "    if (want) this._place(dt, c, d, view);",
     "new": "    this._place(dt, c ?? {}, d, view);",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -146,8 +148,8 @@
     "old": "this.carry[s][i] = changed ? (this.base && this.present > 0 ? this.base[s][i] - base[s][i] : 0) : this.carry[s][i] * k;",
     "new": "this.carry[s][i] = 0;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -156,8 +158,8 @@
     "old": ": 0) : this.carry[s][i] * k;",
     "new": ": 0) : this.carry[s][i];",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -166,8 +168,8 @@
     "old": "this.moveStart = this.present >= 0.5 && this.base ? copyPair(this.base) : null;",
     "new": "this.moveStart = null;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -176,8 +178,8 @@
     "old": "const k = 1 - Math.exp(-dt / HANDS.WAY_TAU);",
     "new": "const k = 1;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -186,8 +188,8 @@
     "old": "        this.travel = 0;\n        this.travelDir = [0, 1];",
     "new": "        this.travelDir = [0, 1];",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -196,8 +198,8 @@
     "old": "        for (const s of SIDES) this.settle[s] = { v: 0, prev: 0, cycle: null };\n        d = [0, 0, 0];",
     "new": "        for (const s of SIDES) this.settle[s] = { v: 0, prev: 0, cycle: null };",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -206,8 +208,8 @@
     "old": "Math.abs(lip - this.lipY) > PARKOUR_LIP_FOLLOW;",
     "new": "Math.abs(lip - this.lipY) > 0;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -216,8 +218,8 @@
     "old": "const changed = src !== this.src || lipJump;",
     "new": "const changed = src !== this.src;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -226,8 +228,8 @@
     "old": "s === 'R' ? span / 2 : 1.5 * span, POSE.SHIMMY_REACH * span",
     "new": "s === 'R' ? 1.5 * span : span / 2, POSE.SHIMMY_REACH * span",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -236,8 +238,8 @@
     "old": "s === 'R' ? span / 2 : 1.5 * span, POSE.SHIMMY_REACH * span",
     "new": "s === 'R' ? span / 2 : 1.5 * span, span",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -246,8 +248,8 @@
     "old": "out[s] = [atLip * HANDS.GAIT_PX, -HANDS.SHIMMY_LIFT * bump(sw)];",
     "new": "out[s] = [(atLip + this.travel) * HANDS.GAIT_PX, -HANDS.SHIMMY_LIFT * bump(sw)];",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -256,8 +258,8 @@
     "old": "-HANDS.SHIMMY_LIFT * bump(sw)];",
     "new": "0];",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -266,8 +268,8 @@
     "old": "if (!moving) st.v = st.v >= 0.5 ?",
     "new": "if (!moving) st.v = st.v >= 2 ?",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -276,8 +278,8 @@
     "old": "gait(this.travel, 2 * FEEL.REACH, s === 'R' ? 0 : 0.5, POSE.CLIMB_DUTY)",
     "new": "gait(this.travel, 2 * FEEL.REACH, s === 'R' ? 0.5 : 0, POSE.CLIMB_DUTY)",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -286,8 +288,8 @@
     "old": "s === 'R' ? 0 : 0.5, POSE.CLIMB_DUTY)",
     "new": "s === 'R' ? 0 : 0.5, 0.5)",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -296,8 +298,8 @@
     "old": "out[s] = [ta * rel * HANDS.GAIT_PX, -tu * rel * HANDS.GAIT_PX];",
     "new": "out[s] = [ta * rel * HANDS.GAIT_PX, tu * rel * HANDS.GAIT_PX];",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -306,8 +308,8 @@
     "old": "const ring = -HANDS.RING * this.ringA",
     "new": "const ring = 0 * this.ringA",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -316,8 +318,8 @@
     "old": "const ring = -HANDS.RING * this.ringA",
     "new": "const ring = HANDS.RING * this.ringA",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -326,8 +328,8 @@
     "old": "off[s][1] += swayY;",
     "new": "off[s][1] += s === 'R' ? -swayY : swayY;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -336,8 +338,8 @@
     "old": "const still = !m && c.mode === 'hang' && Math.hypot(d[0], d[2]) < 1e-5;",
     "new": "const still = !m && c.mode === 'hang';",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -346,8 +348,8 @@
     "old": "off.R[0] += HANDS.TREMBLE * fail * tremble(ft + 3.1);",
     "new": "off.R[0] += 0;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -356,8 +358,8 @@
     "old": "const k = smooth(t / 0.45);",
     "new": "const k = smooth(t / 0.9);",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -366,8 +368,8 @@
     "old": "lerp(f[1], HANDS.LEAP_DROP, push)",
     "new": "lerp(f[1], 0, push)",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -376,8 +378,8 @@
     "old": "const across = Math.max(-1, Math.min(1, moveAcross(m, this.moveNormal, m.to) / HANDS.LEAP_FULL));",
     "new": "const across = 1;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -386,8 +388,8 @@
     "old": "const across = Math.max(-1, Math.min(1, moveAcross(m, this.moveNormal, m.to) / HANDS.LEAP_FULL));",
     "new": "const across = moveSide(m, this.moveNormal);",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -396,8 +398,8 @@
     "old": "const toSide = Math.abs(turn) > HANDS.LOOK_BACK_DEG * DEG ? this.side : turn >= 0 ? 'R' : 'L';",
     "new": "const toSide = turn >= 0 ? 'R' : 'L';",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -406,18 +408,19 @@
     "old": "if (toSide !== this.side && this.arm < 0.2) this.side = toSide;",
     "new": "if (toSide !== this.side) this.side = toSide;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
     "name": "AUDIT-CLIMBHANDS-fists-up-with-the-arm",
     "file": "src/combat/climbHands.js",
-    "old": "const a = this.look, side = this.side;",
-    "new": "const a = this.arm, side = this.side;",
+    "old": "const t = s === this.side ? this.look : 0;",
+    "new": "const t = s === this.side ? this.arm : 0;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js",
+      "test/combat/climbhands2.test.js"
     ]
   },
   {
@@ -426,8 +429,8 @@
     "old": "if (t >= 0.45) this._land(m.speed ?? 0);",
     "new": "if (t >= 0.45) this._land(0);",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -436,16 +439,16 @@
     "old": "    move.speed = Math.hypot(this.velY, this._airVelX, this._airVelZ);\n    this._pkMoveEvent(move, move.speed);",
     "new": "    this._pkMoveEvent(move, Math.hypot(this.velY, this._airVelX, this._airVelZ));",
     "tests": [
-      "test/auditclimbhands.test.js"
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
     "name": "AUDIT-CLIMBHANDS-pose-restarts-every-height",
-    "file": "src/player/climbPose.js",
+    "file": "src/player/climb/climbPose.js",
     "old": "!(Math.abs(c.lipY - this.hangLip) <= PARKOUR_LIP_FOLLOW)",
     "new": "this.hangLip !== c.lipY",
     "tests": [
-      "test/auditclimbhands.test.js"
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -454,8 +457,8 @@
     "old": "[lead, lerp(HANDS.LEAP_DROP, 0, reach)]",
     "new": "[lead, lerp(HANDS.LEAP_DROP, 0, reach * 0.8)]",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -464,8 +467,8 @@
     "old": "return Math.abs(a) > 1e-4 ? Math.sign(a) : 0;",
     "new": "return 1;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -474,8 +477,8 @@
     "old": "const sink = HANDS.MANTLE_SINK * clamp01(rise / PARKOUR_HANG_DROP)",
     "new": "const sink = -HANDS.MANTLE_SINK * clamp01(rise / PARKOUR_HANG_DROP)",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -484,8 +487,8 @@
     "old": "const edge = HANDS.MANTLE_SINK * clamp01((PARKOUR_HANG_DROP - rise) / 1.2);",
     "new": "const edge = 0;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -494,8 +497,8 @@
     "old": "const letGo = m.exit ? smooth((over - 0.45) / 0.3)",
     "new": "const letGo = m.exit ? smooth((over - 0.6) / 0.35)",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -504,8 +507,8 @@
     "old": ": smooth((over - 0.6) / 0.35);",
     "new": ": 0;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -514,8 +517,8 @@
     "old": "lerp(f[1], HANDS.VAULT_PLANT, plant)",
     "new": "lerp(f[1], 0, plant)",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -524,8 +527,8 @@
     "old": "letGo = smooth((t - 0.55) / 0.25);",
     "new": "letGo = smooth((t - 0.85) / 0.25);",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -534,8 +537,8 @@
     "old": "const onEdge = smooth((t - 0.04) / 0.22)",
     "new": "const onEdge = smooth((t - 0.45) / 0.22)",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -544,8 +547,8 @@
     "old": "drop = smooth((t - 0.32) / 0.68);",
     "new": "drop = 0;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -554,8 +557,8 @@
     "old": "const lead = (s === 'R' ? 1 : -1) === way;",
     "new": "const lead = s === 'R';",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -564,8 +567,8 @@
     "old": "const k = lead ? smooth(t / 0.55) : smooth((t - 0.4) / 0.6), f = from(s);",
     "new": "const k = smooth(t / 0.55), f = from(s);",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -574,8 +577,8 @@
     "old": "- HANDS.CORNER_LIFT * bump(k)];",
     "new": "];",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -584,8 +587,8 @@
     "old": "- HANDS.WALLRUN_PUMP * pump];",
     "new": "];",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -594,8 +597,8 @@
     "old": "const up = smooth((t - 0.55) / 0.4), pumping",
     "new": "const up = 0 * smooth((t - 0.55) / 0.4), pumping",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -604,8 +607,8 @@
     "old": "y: b.y * sy - offsetHeight",
     "new": "y: b.y * sy",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
@@ -614,67 +617,67 @@
     "old": "offsetHeight = weaponOffsetHeight() } = {}",
     "new": "offsetHeight = 0 } = {}",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
     "name": "AUDIT-CLIMBHANDS-weapon-back-under-the-hands",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "_climbLower = climbLowerStep(_climbLower, climbing || (handsLane && climbHands.showing()), dt);",
     "new": "_climbLower = climbLowerStep(_climbLower, climbing, dt);",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
     "name": "AUDIT-CLIMBHANDS-hands-over-the-weapon",
-    "file": "src/combat/weaponRig.js",
-    "old": "handsLane && _climbLower >= CLIMB_HANDS_AFTER ? (camNow?.climb ?? null) : null",
-    "new": "handsLane ? (camNow?.climb ?? null) : null",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "handsLane && _climbLower >= CLIMB_HANDS_AFTER && !castTakesHands ? (camNow?.climb ?? null) : null",
+    "new": "handsLane && !castTakesHands ? (camNow?.climb ?? null) : null",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
     "name": "AUDIT-CLIMBHANDS-hands-on-every-lane",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "const handsLane = !fpArm.active() && !fpArm.thirdActive() && !eotbHidesWeapon();",
     "new": "const handsLane = true;",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
     "name": "AUDIT-CLIMBHANDS-hands-under-the-third-person-body",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "const handsLane = !fpArm.active() && !fpArm.thirdActive() && !eotbHidesWeapon();",
     "new": "const handsLane = !fpArm.active() && !eotbHidesWeapon();",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
     "name": "AUDIT-CLIMBHANDS-drawn-under-the-map",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "!eotbHidesWeapon() && !sheetWindowUp()) climbHands.draw(c, { tint: fpTint });",
     "new": "!eotbHidesWeapon()) climbHands.draw(c, { tint: fpTint });",
     "tests": [
-      "test/climbhands.test.js",
-      "test/auditclimbhands.test.js"
+      "test/player/climb/climbhands.test.js",
+      "test/player/climb/auditclimbhands.test.js"
     ]
   },
   {
     "name": "AUDIT-CLIMBHANDS-pose-corner-right-leads",
-    "file": "src/player/climbPose.js",
+    "file": "src/player/climb/climbPose.js",
     "old": "const way = toward && m.from ? Math.sign((toward[0] - m.from[0]) * was.right[0] + (toward[2] - m.from[2]) * was.right[2]) || 1 : 1;",
     "new": "const way = 1;",
     "tests": [
-      "test/auditclimbhands.test.js"
+      "test/player/climb/auditclimbhands.test.js"
     ]
   }
 ]

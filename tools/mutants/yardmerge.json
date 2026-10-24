@@ -1,0 +1,479 @@
+[
+  {
+    "name": "YARD-MERGE-a-the-origin-not-taken-off",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "    local[12] -= o[0]; local[13] -= o[1]; local[14] -= o[2];\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-b-a-piece-matrix-unread",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "    const local = Float32Array.from(e.matrix);",
+    "new": "    const local = Float32Array.from(decorMergeMatrix([0, 0, 0]));",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-c-the-keys-resolved",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "const RAW_KEY = keyResolver(null);",
+    "new": "const RAW_KEY = (a) => `${a}_0`;",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-d-no-model-standing-joins",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "return !!(e.gpu && !e.door && cpu?.positions",
+    "new": "return !!(!e.door && cpu?.positions",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-e-a-door-joins",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "return !!(e.gpu && !e.door && cpu?.positions",
+    "new": "return !!(e.gpu && cpu?.positions",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-f-no-triangles-joins",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "&& cpu?.positions && cpu.indices && cpu.normals",
+    "new": "&& cpu?.normals",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-g-no-normals-joins",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": " && cpu.normals && cpu.uvs && ",
+    "new": " && cpu.uvs && ",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-h-no-uvs-joins",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": " && cpu.uvs && cpu.subMeshes?.length",
+    "new": " && cpu.subMeshes?.length",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-i-no-submeshes-joins",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": " && cpu.subMeshes?.length\n",
+    "new": "\n",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-j-another-origin-joins",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "\n    && e.o[0] === o[0] && e.o[1] === o[1] && e.o[2] === o[2]);",
+    "new": ");",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-k-the-settle-unread",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "    if (mergeDue && merge && merge.now() - changedAt >= DECOR_MERGE_SETTLE_MS && merge.take()) remerge();",
+    "new": "    if (mergeDue && merge && merge.take()) remerge();",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-l-the-budget-unread",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": " >= DECOR_MERGE_SETTLE_MS && merge.take()) remerge();",
+    "new": " >= DECOR_MERGE_SETTLE_MS) remerge();",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-m-the-merged-pieces-drawn-twice",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "      if (!e.gpu || e.merged) continue;",
+    "new": "      if (!e.gpu) continue;",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-n-the-remap-dropped",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "r?.drawMesh?.(merged.gpu, merged.matrix, texRemap);",
+    "new": "r?.drawMesh?.(merged.gpu, merged.matrix, null);",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-o-the-count-a-draw",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "n += merged.n; }",
+    "new": "n += 1; }",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-p-the-verdict-unread",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "const seen = cull ? cull(merged.wbox ??= transformedAabb(merged.box, merged.matrix)) : DECOR_DRAW;",
+    "new": "const seen = DECOR_DRAW;",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-q-the-cast-arm-drawn",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "      else if (seen === DECOR_DRAW) { r?.drawMesh?.(merged.gpu",
+    "new": "      if (seen !== DECOR_SKIP) { r?.drawMesh?.(merged.gpu",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-r-the-matrix-kept-where-it-stood",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "    if (merged) { merged.matrix = decorMergeMatrix(o); merged.wbox = null; }\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-s-the-box-kept-where-it-stood",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "    if (merged) { merged.matrix = decorMergeMatrix(o); merged.wbox = null; }",
+    "new": "    if (merged) { merged.matrix = decorMergeMatrix(o); }",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-t-the-merge-kept-after-its-piece-went",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "    if (entry.merged) unmerge();   // YARD-MERGE: a merged piece going takes the merges with it\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-u-the-flags-kept",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "    for (const e of standing.values()) e.merged = false;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-v-a-removal-never-asking",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "    if (entry.gpu || entry.batch) changed();\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-w-the-late-piece-hidden",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "          entry.mesh = m.cpu;   // YARD-MERGE: its triangles, for the pool's merge\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-x-a-model-standing-never-asking",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "          entry.mesh = m.cpu;   // YARD-MERGE: its triangles, for the pool's merge\n          changed();\n",
+    "new": "          entry.mesh = m.cpu;   // YARD-MERGE: its triangles, for the pool's merge\n",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-y-the-floor-unread",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "    if (into.length >= DECOR_MERGE_MIN && renderer?.createMesh) {",
+    "new": "    if (into.length && renderer?.createMesh) {",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-z-the-old-merge-never-let-go",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "    mergeDue = false;\n    unmerge();\n",
+    "new": "    mergeDue = false;\n",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-aa-the-size-out-of-the-key",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "|${b.size.w}|${b.size.h}|",
+    "new": "|",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-ab-the-lean-out-of-the-key",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "|${b.sway ?? 0}|${b.windfall ?? 0}`",
+    "new": "`",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-ac-an-animated-flat-joins",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  if (!b || e.anims || e.mount || decorIsFigure(e.piece)) return null;",
+    "new": "  if (!b || e.mount || decorIsFigure(e.piece)) return null;",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-ad-a-mount-joins",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  if (!b || e.anims || e.mount || decorIsFigure(e.piece)) return null;",
+    "new": "  if (!b || e.anims || decorIsFigure(e.piece)) return null;",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-ae-a-figure-joins",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  if (!b || e.anims || e.mount || decorIsFigure(e.piece)) return null;",
+    "new": "  if (!b || e.anims || e.mount) return null;",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-af-many-quads-join",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  if (b._quads !== 1 || b._dyn || b._scales) return null;",
+    "new": "  if (b._dyn || b._scales) return null;",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-ag-a-dynamic-batch-joins",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  if (b._quads !== 1 || b._dyn || b._scales) return null;",
+    "new": "  if (b._quads !== 1 || b._scales) return null;",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-ah-a-scaled-batch-joins",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  if (b._quads !== 1 || b._dyn || b._scales) return null;",
+    "new": "  if (b._quads !== 1 || b._dyn) return null;",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-ai-a-look-of-its-own-joins",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  for (const k of FLAT_ALONE) if (b[k] != null) return null;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-aj-a-flat-of-another-origin-joins",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  if (e.o[0] !== o[0] || e.o[1] !== o[1] || e.o[2] !== o[2]) return null;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-ak-a-group-of-one",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "      if (members.length < 2) continue;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-al-the-centres-off",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "members.map((e) => [o[0] + e.piece.pos[0], o[1] + e.piece.pos[1], o[2] + e.piece.pos[2]])",
+    "new": "members.map((e) => [e.piece.pos[0], e.piece.pos[1], e.piece.pos[2]])",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-am-the-sway-dropped",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "      if (b0.sway != null) batch.sway = b0.sway;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-an-windfall-dropped",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "      if (b0.windfall != null) batch.windfall = b0.windfall;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-ao-the-flats-unmerged",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "    for (const g of flatGroups) if (g.members.some(seen)) out.push(g.batch);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-ap-the-members-handed-twice",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "      if (!e.batch || e.merged || !seen(e)) continue;",
+    "new": "      if (!e.batch || !seen(e)) continue;",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-aq-the-size-test-dropped-for-a-group",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "if (g.members.some(seen)) out.push(g.batch);",
+    "new": "out.push(g.batch);",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-ar-the-group-origin-unmoved",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "    if (d[0] || d[1] || d[2]) for (const g of flatGroups) {",
+    "new": "    if (false) for (const g of flatGroups) {",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-as-the-recentre-twice",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "    if (d[0] || d[1] || d[2]) for (const g of flatGroups) { const b = g.batch.origin ?? [0, 0, 0]; g.batch.origin = [b[0] + d[0], b[1] + d[1], b[2] + d[2]]; }\n    mergedAt = [o[0], o[1], o[2]];\n",
+    "new": "    if (d[0] || d[1] || d[2]) for (const g of flatGroups) { const b = g.batch.origin ?? [0, 0, 0]; g.batch.origin = [b[0] + d[0], b[1] + d[1], b[2] + d[2]]; }\n",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-at-the-groups-never-let-go",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "    for (const g of flatGroups) renderer?.destroyBillboardBatch?.(g.batch);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-au-a-flats-only-pool-never-let-go",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "    if (!merged && !flatGroups.length) return;",
+    "new": "    if (!merged) return;",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-av-the-host-flat-never-asking",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "      entry.release = got.release ?? null;\n      changed();",
+    "new": "      entry.release = got.release ?? null;",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-aw-a-room-flat-never-asking",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "entry.anims = anims;   // FA1: a lamp's flame moves as the room's own do\n        changed();",
+    "new": "entry.anims = anims;   // FA1: a lamp's flame moves as the room's own do",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-ax-batches-unmerged",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "  const batches = () => batchesSeen([]);",
+    "new": "  const batches = () => [...standing.values()].map((e) => e.batch).filter(Boolean);",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-ay-the-budget-unrefilled",
+    "file": "src/scenes/homeYards.js",
+    "old": "      mergesLeft = YARD_MERGES_A_FRAME;   // YARD-MERGE: the frame's budget\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-az-the-budget-unbounded",
+    "file": "src/scenes/homeYards.js",
+    "old": "take: () => (mergesLeft > 0 ? (mergesLeft--, true) : false)",
+    "new": "take: () => true",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  },
+  {
+    "name": "YARD-MERGE-ba-the-yards-unwired",
+    "file": "src/scenes/homeYards.js",
+    "old": "      merge,   // YARD-MERGE: a yard's models one mesh once it settles, a frame's budget at a time\n",
+    "new": "",
+    "tests": [
+      "test/scenes/yardmerge.test.js"
+    ]
+  }
+]

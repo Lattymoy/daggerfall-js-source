@@ -5,7 +5,7 @@
     "old": "p.kind === 'smoke' ? Math.min(1, k * 6) * (1 - k) :",
     "new": "p.kind === 'smoke' ? (1 - k) :",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "(p.kind === 'smoke' ? Math.sqrt(k) : k);",
     "new": "k;",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
@@ -23,16 +23,16 @@
     "old": "    parts = keep.length > PARTICLE_BUDGET ? evict(keep, keep.length - PARTICLE_BUDGET) : keep;",
     "new": "    parts = keep.length > PARTICLE_BUDGET ? keep.slice(0, PARTICLE_BUDGET) : keep;",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
     "name": "NAV-B-the-wind-ignored",
     "file": "src/systems/naval/navalEffects.js",
-    "old": "      if (p.kind === 'smoke') { p.vel[0] += (w[0] ?? 0) * 0.35 * t; p.vel[2] += (w[2] ?? 0) * 0.35 * t; }",
-    "new": "",
+    "old": "    const ax = (w[0] ?? 0) * WIND_MPS, az = (w[2] ?? 0) * WIND_MPS;",
+    "new": "    const ax = 0, az = 0;",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    const k = clamp(dt, 0, 0.1);\n    if (r() < 14 * k)",
     "new": "    const k = 0.05;\n    if (r() < 14 * k)",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      p.vel[1] = p.vel[1] * drag - (p.gravity ?? 0) * t + (p.lift ?? 0) * t;",
     "new": "      p.vel[1] = p.vel[1] * drag + (p.lift ?? 0) * t;",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if (p.flat) return { ax: [c * hl, 0, s * hl], ay: [-s * h, 0, c * h] };",
     "new": "",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      gl.blendFunc(gl.ONE, blend === 'add' ? gl.ONE : gl.ONE_MINUS_SRC_ALPHA);",
     "new": "      gl.blendFunc(gl.ONE, blend === 'add' ? gl.ONE_MINUS_SRC_ALPHA : gl.ONE);",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    alpha.sort((a, b) => d2(b) - d2(a));",
     "new": "    alpha.sort((a, b) => d2(a) - d2(b));",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
@@ -86,26 +86,26 @@
     "old": "    gl.depthMask(false);",
     "new": "    gl.depthMask(true);",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
     "name": "NAV-B-the-focus-unsent",
     "file": "src/render/navalRender.js",
-    "old": "    if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);\n  }",
-    "new": "  }",
+    "old": "    if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);\n    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)\n  }",
+    "new": "    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)\n  }",
     "tests": [
-      "test/nav_b_picture.test.js",
-      "test/tv4_weather_above.test.js"
+      "test/systems/naval/nav_b_picture.test.js",
+      "test/render/tv4_weather_above.test.js"
     ]
   },
   {
     "name": "NAV-B-the-cap-ignored",
     "file": "src/render/navalRender.js",
-    "old": "        if (v + 6 > cap) break;\n        const { ax, ay } = particleAxes(p, axes);",
+    "old": "        if (v + 6 > fxCap) break;\n        const { ax, ay } = particleAxes(p, axes);",
     "new": "        const { ax, ay } = particleAxes(p, axes);",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "out[o + 4] = v0 + (v1 - v0) * (1 - sy) / 2;",
     "new": "out[o + 4] = v0 + (v1 - v0) * (sy + 1) / 2;",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "    let s = [d[1] * e[2] - d[2] * e[1], d[2] * e[0] - d[0] * e[2], d[0] * e[1] - d[1] * e[0]];",
     "new": "    let s = [d[0], d[1], d[2]];",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
@@ -132,34 +132,34 @@
     "old": "      data[i] = 255; data[i + 1] = 255; data[i + 2] = 255;",
     "new": "      data[i] = 255; data[i + 1] = 200; data[i + 2] = 255;",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
     "name": "NAV-B-a-batch-a-move",
-    "file": "src/scenes/navalFlames.js",
+    "file": "src/scenes/naval/navalFlames.js",
     "old": "        move(p) { f.pos[0] = p[0]; f.pos[1] = p[1]; f.pos[2] = p[2]; },",
     "new": "        move(p) { f.pos = [...p]; },",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
     "name": "NAV-B-a-retired-flame-burning",
-    "file": "src/scenes/navalFlames.js",
+    "file": "src/scenes/naval/navalFlames.js",
     "old": "        retire() { f.dead = true; unmount(f); live.delete(f); },",
     "new": "        retire() { f.dead = true; live.delete(f); },",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
     "name": "NAV-B-the-flame-scale",
-    "file": "src/scenes/navalFlames.js",
+    "file": "src/scenes/naval/navalFlames.js",
     "old": "      art = { count, size: { w: size.width * GLOBAL_SCALE * FLAME_SCALE, h: size.height * GLOBAL_SCALE * FLAME_SCALE } };",
     "new": "      art = { count, size: { w: size.width * GLOBAL_SCALE, h: size.height * GLOBAL_SCALE } };",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "    const key = Array.isArray(q.color) ? q.color.join(',') : '';",
     "new": "    const key = '';",
     "tests": [
-      "test/nav_b_picture.test.js"
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   },
   {
@@ -177,16 +177,43 @@
     "old": "    data[i] = a; data[i + 1] = a; data[i + 2] = a; data[i + 3] = a;   // white, premultiplied",
     "new": "    data[i] = 255; data[i + 1] = 255; data[i + 2] = 255; data[i + 3] = a;",
     "tests": [
-      "test/csa_effects.test.js"
+      "test/systems/comeSailAway/csa_effects.test.js"
     ]
   },
   {
     "name": "NAV-B-her-colours-struck",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "          e.boat.flagColor = NAVAL_FACTIONS[e.ship.cls?.faction]?.flag ?? null;",
     "new": "          e.boat.flagColor = null;",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
+    ]
+  },
+  {
+    "name": "NAV-B-aim-room-ignored",
+    "file": "src/render/navalRender.js",
+    "old": "    const fxCap = cap - Math.min(cap, aimQuads * 6);",
+    "new": "    const fxCap = cap;",
+    "tests": [
+      "test/systems/naval/nav_b_picture.test.js"
+    ]
+  },
+  {
+    "name": "NAV-B-near-let-go",
+    "file": "src/render/navalRender.js",
+    "old": "    if (over > 0) alpha.splice(0, Math.min(alpha.length, over));",
+    "new": "    if (over > 0) alpha.length = Math.max(0, alpha.length - over);",
+    "tests": [
+      "test/systems/naval/nav_b_picture.test.js"
+    ]
+  },
+  {
+    "name": "NAV-B-aim-posts-uncounted",
+    "file": "src/render/navalRender.js",
+    "old": "(aim.zone?.length ?? 0) * (aim.posts ? 2 : 1)",
+    "new": "(aim.zone?.length ?? 0)",
+    "tests": [
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   }
 ]

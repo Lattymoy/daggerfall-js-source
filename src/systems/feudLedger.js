@@ -1,12 +1,12 @@
 // @ts-check
 // RVN1 (bible/12-Enhanced-AI/Feud-Arc.md section 12; Mac, 2026-10-04: "more complex, less easy to accomplish and more
 // detailed", then "Go"): THE LEDGER OF WOUNDS - how the player fought a foe that may become (or already is) a revenant,
-// kept for the length of the fight and folded into its record's SCARS at the deed (systems/revenant.js revenantDeed).
+// kept for the length of the fight and folded into its record's SCARS at the deed (systems/revenant/revenant.js revenantDeed).
 //
 // A LEAF: it imports nothing, because the brain (ai/tactics.js - its staggers and the blows dodged at me), the magic
 // rounds (systems/effects.js) and the hosts' doors write to it, and none of them may bring the revenant system with
 // them. What it cannot know - whether a body may be a revenant, the clock and the sky - is handed in once by
-// systems/revenant.js (`setFeudGate`, `setFeudClock`).
+// systems/revenant/revenant.js (`setFeudGate`, `setFeudClock`).
 //
 // THE LEDGER LIVES ON THE FOE'S ENTITY (`entity._feud`), not on its pool record: every seam that writes it holds the
 // entity (the formulas' strike listener, a spell's landing, a magic round, the brain's vitals) and the deed reads it
@@ -29,11 +29,11 @@ let _weak = null;
 let _onWeak = null;
 /** @type {null | (() => { now?: number, night?: boolean })} */
 let _clock = null;
-/** systems/revenant.js: which bodies keep a ledger (a revenant candidate, the switch on). */
+/** systems/revenant/revenant.js: which bodies keep a ledger (a revenant candidate, the switch on). */
 export function setFeudGate(fn) { _gate = typeof fn === 'function' ? fn : null; }
-/** systems/revenant.js: the character's minute and whether the sky reads night, when a ledger opens. */
+/** systems/revenant/revenant.js: the character's minute and whether the sky reads night, when a ledger opens. */
 export function setFeudClock(fn) { _clock = typeof fn === 'function' ? fn : null; }
-/** RVN3: systems/revenant.js's word on whether a blow is of a body's weakness - `info` `{ cls, metal }` as the ledger's
+/** RVN3: systems/revenant/revenant.js's word on whether a blow is of a body's weakness - `info` `{ cls, metal }` as the ledger's
  *  writers know it, or `{ kind, weapon, element, attacker }` as a door does - and what follows a blow of it (`onWeak`). */
 export function setFeudWeakTest(fn, onWeak = null) { _weak = typeof fn === 'function' ? fn : null; _onWeak = typeof onWeak === 'function' ? onWeak : null; }
 /** RVN13 (bible/12-Enhanced-AI/Feud-Arc.md 25): a PEER's blow of its weakness (the relayed hit's `wc`) - revealed to me as
@@ -62,7 +62,7 @@ export function feudOf(entity, open = true) {
   const dmg = {};
   for (const k of FEUD_CLASSES) dmg[k] = 0;
   const place = entity._feudPlace === 'building' || entity._feudPlace === 'dungeon' ? entity._feudPlace : 'street';
-  entity._feud = { dmg, silver: 0, staggers: 0, dodged: 0, perfect: 0, backHits: 0, backstab: false, weak: 0, night: !!c?.night, place, start: Number.isFinite(c?.now) ? c.now : 0 };
+  entity._feud = { dmg, silver: 0, staggers: 0, dodged: 0, perfect: 0, backHits: 0, backstab: false, weak: 0, night: !!c?.night, place, start: Number.isFinite(c?.now) ? c.now : 0, last: null };   // UNQUIET: `last` - the class of the last harm that reached it (the blow that broke it leaves its wound)
   return entity._feud;
 }
 
@@ -73,6 +73,7 @@ export function noteFeudHarm(entity, cls, n, { silver = false, metal = null } = 
   const l = feudOf(entity);
   if (!l) return;
   l.dmg[FEUD_CLASSES.includes(cls) ? cls : 'other'] += n;
+  l.last = FEUD_CLASSES.includes(cls) ? cls : 'other';   // UNQUIET (bible/06-Systems/Revenants.md section 46): the blow that broke it
   if (silver) l.silver += n;
   if (feudWeakBlow(entity, { cls, metal })) {
     l.weak++;

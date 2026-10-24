@@ -5,7 +5,7 @@
     "old": "  if (!hoodCapable(item)) return false;\n  const total = templateByIndex(item.templateIndex)?.variants ?? 0;\n  const from = item.variant ?? 0;",
     "new": "  if (!hoodCapable(item)) return false;\n  return nextVariant(item);\n  const total = templateByIndex(item.templateIndex)?.variants ?? 0;\n  const from = item.variant ?? 0;",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    item.variant = from ^ 1;",
     "new": "    item.variant = (from + 1) % total;",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if ((from ^ 1) < total) {",
     "new": "  if (false) {",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  for (let i = 1; i < total; i++) {\n    nextVariant(item);\n    if (hoodUp(item) !== up) return true;\n  }\n",
     "new": "",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "export const hoodCapable = (item) => CASUAL_CLOAKS.has(item?.templateIndex)",
     "new": "export const hoodCapable = (item) => !!item || CASUAL_CLOAKS.has(item?.templateIndex)",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "\n  || HOODED_ROBES.has(item?.templateIndex);",
     "new": ";",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  return cloakState({ [HOODED_ROBES.has(item.templateIndex) ? EQUIP_SLOTS.ChestClothes : EQUIP_SLOTS.Cloak1]: item }).hood;",
     "new": "  return cloakState({ [EQUIP_SLOTS.ChestClothes]: item }).hood;",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
@@ -68,155 +68,155 @@
     "old": "export const HOOD_TEXT = Object.freeze({ raise: 'You raise your hood.', lower: 'You lower your hood.' });",
     "new": "export const HOOD_TEXT = Object.freeze({ raise: 'You lower your hood.', lower: 'You raise your hood.' });",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
     "name": "HOOD-SAID-use-kept-on-a-hooded-piece",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (usableItem(picked) && (!hooded || isEnchanted(picked))) {",
     "new": "  if (usableItem(picked)) {",
     "tests": [
-      "test/fb0930_hoodsaid.test.js",
-      "test/auditsurv.test.js"
+      "test/systems/fb0930_hoodsaid.test.js",
+      "test/systems/survival/auditsurv.test.js"
     ]
   },
   {
     "name": "HOOD-SAID-the-enchanted-cloaks-used-payload-out-of-reach",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (usableItem(picked) && (!hooded || isEnchanted(picked))) {",
     "new": "  if (usableItem(picked) && !hooded) {",
     "tests": [
-      "test/fb0930_hoodsaid.test.js",
-      "test/auditsurv.test.js"
+      "test/systems/fb0930_hoodsaid.test.js",
+      "test/systems/survival/auditsurv.test.js"
     ]
   },
   {
     "name": "HOOD-SAID-no-hood-button",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  const hooded = side === 'local' && line.equipped && hoodCapable(picked);",
     "new": "  const hooded = false;",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
     "name": "HOOD-SAID-a-carried-cloaks-hood",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  const hooded = side === 'local' && line.equipped && hoodCapable(picked);",
     "new": "  const hooded = side === 'local' && hoodCapable(picked);",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
     "name": "HOOD-SAID-the-label-backwards",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    const h = el('button', 'act', hoodUp(picked) ? 'Lower hood' : 'Raise hood');",
     "new": "    const h = el('button', 'act', hoodUp(picked) ? 'Raise hood' : 'Lower hood');",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
     "name": "HOOD-SAID-no-hood-row",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    if (line.equipped && hoodCapable(picked)) pair('Hood', hoodUp(picked) ? 'up' : 'down');",
     "new": "    if (false) pair('Hood', hoodUp(picked) ? 'up' : 'down');",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
     "name": "HOOD-SAID-nothing-said",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  notice = hoodUp(item) ? HOOD_TEXT.raise : HOOD_TEXT.lower;",
     "new": "  notice = null;",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
     "name": "HOOD-SAID-the-card-closed",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  notice = hoodUp(item) ? HOOD_TEXT.raise : HOOD_TEXT.lower;",
     "new": "  notice = hoodUp(item) ? HOOD_TEXT.raise : HOOD_TEXT.lower; picked = null;",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
     "name": "HOOD-SAID-the-doll-not-redrawn",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  notice = hoodUp(item) ? HOOD_TEXT.raise : HOOD_TEXT.lower;\n  refresh();\n  refreshFigure();\n",
     "new": "  notice = hoodUp(item) ? HOOD_TEXT.raise : HOOD_TEXT.lower;\n  refresh();\n",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
     "name": "HOOD-SAID-the-repaint-flag-unread",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (act.repaint) refreshFigure();   // HOOD-SAID: a garment's drawing changed - the doll wears the new one (useResultAction's flag, unread until now)\n",
     "new": "",
     "tests": [
-      "test/fb0930_hoodsaid.test.js",
-      "test/enhancedInventory.test.js"
+      "test/systems/fb0930_hoodsaid.test.js",
+      "test/ui/enhanced/enhancedInventory.test.js"
     ]
   },
   {
     "name": "HOOD-SAID-the-panel-silent",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (hoodUp(top.item)) b.append(el('span', 'wornhood', 'Hood'));\n",
     "new": "",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
     "name": "HOOD-SAID-the-chip-left-up",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (hoodUp(top.item)) b.append(el('span', 'wornhood', 'Hood'));",
     "new": "  if (hoodCapable(top.item)) b.append(el('span', 'wornhood', 'Hood'));",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
     "name": "HOOD-SAID-the-chip-undressed",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": ".pack-shell .equipped .wornhood { position: absolute; right: 3px; top: 3px; z-index: 2;",
     "new": ".pack-shell .equipped .wornhood-gone { position: absolute; right: 3px; top: 3px; z-index: 2;",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
     "name": "HOOD-SAID-the-chip-on-the-count",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": ".pack-shell .equipped .worncount ~ .wornhood { right: 20px; }\n",
     "new": "",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
     "name": "HOOD-SAID-the-hint-the-old-sentence",
     "file": "src/systems/vampirism.js",
-    "old": "export const VAMPIRE_HOOD_TEXT = 'Raise the hood of a cloak or robe to travel by day - Raise hood, on its card in the pack.';",
+    "old": "export const VAMPIRE_HOOD_TEXT = 'Raise the hood of a cloak or robe to travel by day. Use Raise hood on its card in your pack.';",
     "new": "export const VAMPIRE_HOOD_TEXT = 'Raise the hood of a cloak or robe to travel by day.';",
     "tests": [
-      "test/fb0930_hoodsaid.test.js",
-      "test/fb0929_vampirehood.test.js"
+      "test/systems/fb0930_hoodsaid.test.js",
+      "test/systems/fb0929_vampirehood.test.js"
     ]
   },
   {
     "name": "HOOD-SAID-the-skin-unread",
     "file": "src/systems/vampirism.js",
-    "old": "  return { text: SUNLIGHT_TRAVEL_TEXT, hint: isEnhanced() ? VAMPIRE_HOOD_TEXT : VAMPIRE_HOOD_TEXT_CLASSIC };",
-    "new": "  return { text: SUNLIGHT_TRAVEL_TEXT, hint: VAMPIRE_HOOD_TEXT };",
+    "old": "  return { text: sunlightTravelText(), hint: isEnhanced() ? VAMPIRE_HOOD_TEXT : VAMPIRE_HOOD_TEXT_CLASSIC };",
+    "new": "  return { text: sunlightTravelText(), hint: VAMPIRE_HOOD_TEXT };",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   },
   {
@@ -225,7 +225,7 @@
     "old": "export const VAMPIRE_HOOD_TEXT_CLASSIC = 'Use a cloak or robe on your doll until its hood is up.';",
     "new": "export const VAMPIRE_HOOD_TEXT_CLASSIC = VAMPIRE_HOOD_TEXT;",
     "tests": [
-      "test/fb0930_hoodsaid.test.js"
+      "test/systems/fb0930_hoodsaid.test.js"
     ]
   }
 ]

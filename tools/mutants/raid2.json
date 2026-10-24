@@ -4,293 +4,293 @@
     "file": "src/world/raidShared.js",
     "old": "    if (out.length >= RAID_WORDS_MAX) break;\n",
     "new": "",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-word-twice-for-a-raid",
     "file": "src/world/raidShared.js",
     "old": "if (typeof key !== 'string' || !RAID_KEY_RE.test(key) || seen.has(key)) continue;",
     "new": "if (typeof key !== 'string' || !RAID_KEY_RE.test(key)) continue;",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-deaths-bound-off-by-one",
     "file": "src/world/raidShared.js",
     "old": "n > RAID_KILLS_WIRE_MAX) continue;",
     "new": "n > RAID_KILLS_WIRE_MAX + 1) continue;",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-claim-age-floor-off-by-one",
     "file": "src/world/raidShared.js",
     "old": "age < -1 || age > RAID_CLAIM_AGE_MAX) continue;",
     "new": "age < -2 || age > RAID_CLAIM_AGE_MAX) continue;",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-claim-age-ceiling-off-by-one",
     "file": "src/world/raidShared.js",
     "old": "age < -1 || age > RAID_CLAIM_AGE_MAX) continue;",
     "new": "age < -1 || age >= RAID_CLAIM_AGE_MAX) continue;",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-tag-any-key",
     "file": "src/world/raidShared.js",
     "old": "if (recordNumber(i) && typeof key === 'string' && RAID_KEY_RE.test(key)) out.set(i, key);",
     "new": "if (recordNumber(i) && typeof key === 'string') out.set(i, key);",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-tags-past-the-frame",
     "file": "src/world/raidShared.js",
     "old": "    if (out.size >= RAID_TAGS_MAX) break;\n    if (!Array.isArray(e) || e.length !== 2) continue;\n    const [i, key] = e;",
     "new": "    if (!Array.isArray(e) || e.length !== 2) continue;\n    const [i, key] = e;",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-record-number-bound",
     "file": "src/world/raidShared.js",
     "old": "i >= 0 && i <= FOE_SEQ_MAX;",
     "new": "i >= 0 && i < FOE_SEQ_MAX;",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-window-edge",
     "file": "src/world/raidShared.js",
     "old": "Math.abs(win.age - c.age) <= RAID_CLAIM_WINDOW_MS",
     "new": "Math.abs(win.age - c.age) < RAID_CLAIM_WINDOW_MS",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-race-to-the-larger-id",
     "file": "src/world/raidShared.js",
     "old": "<= RAID_CLAIM_WINDOW_MS && c.id < win.id) win = c;",
     "new": "<= RAID_CLAIM_WINDOW_MS && c.id > win.id) win = c;",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-newest-claim-first",
     "file": "src/world/raidShared.js",
     "old": "sort((a, b) => b.age - a.age ||",
     "new": "sort((a, b) => a.age - b.age ||",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-largest-id-claims",
     "file": "src/world/raidShared.js",
     "old": "  return ids[0] ?? null;",
     "new": "  return ids.at(-1) ?? null;",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-raiders-untagged",
     "file": "src/scenes/exteriorFoes.js",
     "old": "    const rz = out.filter((r) => src.get(r)?.raidKey).map((r) => [r.i, src.get(r).raidKey]);",
     "new": "    const rz = [];",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-allies-unnamed",
     "file": "src/scenes/exteriorFoes.js",
     "old": "    const al = out.filter((r) => r.t === KNIGHT_CITYWATCH_ID && r.d !== 1 && src.get(r)?.defender).map((r) => r.i);",
     "new": "    const al = [];",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-raid-under-the-old-allowance",
     "file": "src/scenes/exteriorFoes.js",
     "old": "raidKey ? livePuppetsOf(from, false, false, false, false, true) >= RAID_PUPPETS_MAX : livePuppetsOf(from) >= ENCOUNTER_PUPPETS_MAX",
     "new": "livePuppetsOf(from) >= ENCOUNTER_PUPPETS_MAX",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-raid-counted-as-foes",
     "file": "src/scenes/exteriorFoes.js",
     "old": "qq ? 'quest' : rd ? 'raid' : dp ?",
     "new": "qq ? 'quest' : dp ?",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-puppet-forgets-its-raid",
     "file": "src/scenes/exteriorFoes.js",
     "old": "          nf._pupRaid = rec._raid ?? raidKey;   // RAID2: and its raid\n",
     "new": "",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-ally-built-as-the-watch",
     "file": "src/scenes/exteriorFoes.js",
-    "old": ", allied: (r.t === KNIGHT_CITYWATCH_ID && allied.has(r.i)) || shipmate, champion: r.cp ?? null })",
-    "new": ", allied: shipmate, champion: r.cp ?? null })",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "old": ", allied: (r.t === KNIGHT_CITYWATCH_ID && allied.has(r.i)) || shipmate, champion: cp })",
+    "new": ", allied: shipmate, champion: cp })",
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-ally-never-turned",
     "file": "src/scenes/exteriorFoes.js",
     "old": "if (f.mobileType === KNIGHT_CITYWATCH_ID) alliedWatchPuppet(f, allied.has(r.i)); crewPuppet(f, crew.has(r.i), comp.has(r.i)); f.companionName",
     "new": "crewPuppet(f, crew.has(r.i), comp.has(r.i)); f.companionName",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-taken-raider-untagged",
     "file": "src/scenes/exteriorFoes.js",
     "old": "    if (f._pupRaid) { f.raidKey = f._pupRaid; f._pupRaid = null; }",
     "new": "",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-word-unheard",
     "file": "src/scenes/exteriorFoes.js",
     "old": "    if (data.rk !== undefined) _onRaids?.(from, data.rk, _now());",
     "new": "",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-peers-shares-ignored",
     "file": "src/systems/raidingParties.js",
     "old": "  for (const e of _peerWords.get(raidKey(raid))?.values() ?? []) n += e.n;\n",
     "new": "",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-share-taken-back",
     "file": "src/systems/raidingParties.js",
     "old": "    e.n = Math.max(e.n, w.n);",
     "new": "    e.n = w.n;",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-no-claim-read-as-a-claim",
     "file": "src/systems/raidingParties.js",
     "old": "    e.since = w.age >= 0 ? t - w.age : null;",
     "new": "    e.since = t - w.age;",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-stale-claims-kept",
     "file": "src/systems/raidingParties.js",
     "old": "if (e.since != null && t - e.at <= RAID_WORD_STALE_MS) claims.push",
     "new": "if (e.since != null) claims.push",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-no-grace",
     "file": "src/systems/raidingParties.js",
     "old": "    if (t - _unclaimedSince.get(key) >= RAID_CLAIM_GRACE_MS) runner = me;\n",
     "new": "",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-claim-kept-after-a-loss",
     "file": "src/systems/raidingParties.js",
     "old": "  if (runner !== me) { _myClaims.delete(key); return false; }",
     "new": "  if (runner !== me) return false;",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-election-skipped",
     "file": "src/systems/raidingParties.js",
     "old": "  if (sharedClockOn() && !runsRaid(raid)) { cancelPending(); return 'standing-by'; }",
     "new": "  if (sharedClockOn() && false) { cancelPending(); return 'standing-by'; }",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-share-unsaid-without-a-claim",
     "file": "src/systems/raidingParties.js",
     "old": "(!_myClaims.has(key) && r.killed === 0)",
     "new": "(!_myClaims.has(key))",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-no-claim-says-an-age",
     "file": "src/systems/raidingParties.js",
     "old": "Math.round(t - _myClaims.get(key))) : -1]);",
     "new": "Math.round(t - _myClaims.get(key))) : 0]);",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-summed-cleanse-unchecked",
     "file": "src/systems/raidingParties.js",
     "old": "  for (const r of state.raids) if (!relay && raidActive(r, now) && raidKillTotal(r) >= r.attackAmount) cleanse(r);   // RAID2: the owners' shares summed; RAID3: at a raid relay, its cleanse alone\n",
     "new": "",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-puppet-blow-unread",
     "file": "src/systems/raidingParties.js",
     "old": "    if (r && !r.struck && renownStruckAt(pup) != null) r.struck = true;\n",
     "new": "",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-taken-raiders-uncounted",
     "file": "src/systems/raidingParties.js",
     "old": "  for (const f of h.ownRaidFoes?.() ?? []) if (!_live.some((e) => e.foe === f)) _live.push({ foe: f, key: f.raidKey, kind: 'raider', routed: false, counted: false });\n",
     "new": "",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-raider-untagged-at-its-stand",
     "file": "src/systems/raidingParties.js",
     "old": "    if (kind === 'raider') foe.raidKey = p.key;   // RAID2: it rides my frame tagged with its raid\n",
     "new": "",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-claim-kept-out-of-town",
     "file": "src/systems/raidingParties.js",
     "old": "  if (!raid) { cancelPending(); _myClaims.clear(); return 'idle'; }",
     "new": "  if (!raid) { cancelPending(); return 'idle'; }",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-host-word-unsent",
     "file": "src/scenes/world.js",
     "old": "if (cell) { const rk = raidWireWord(); if (rk) frame.rk = rk; }",
     "new": "if (cell) { const rk = null; if (rk) frame.rk = rk; }",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-host-word-unheard",
     "file": "src/scenes/world.js",
     "old": "    exteriorFoes.setOnRaids((from, rk, at) => raidPeerWord(from, rk, at));",
     "new": "    exteriorFoes.setOnRaids(() => 0);",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-host-no-one-in-town",
     "file": "src/scenes/world.js",
     "old": "peersInTown: () => (peersNear() ?? []).filter((p) => _foeInTownRect({ ai: { feet: p.feet } })).map((p) => p.id),",
     "new": "peersInTown: () => [],",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-lane-the-players-own",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "  'world-events-raiding-parties': Object.freeze({ Enabled: true }),\n",
     "new": "",
-    "tests": ["test/raid2_raidsOnline.test.js", "test/modsonline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js", "test/systems/modsonline.test.js"]
   },
   {
     "name": "RAID2-lock-the-hosts-words",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "ONLINE_WORLD_EVENT_VENDORS.includes(vendor) ? ONLINE_WORLD_EVENT_NOTE : ONLINE_TRAVEL_VENDORS",
     "new": "ONLINE_TRAVEL_VENDORS",
-    "tests": ["test/raid2_raidsOnline.test.js", "test/modsonline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js", "test/systems/modsonline.test.js"]
   },
   {
     "name": "RAID2-the-worlds-day-ignored",
     "file": "src/systems/raidingParties.js",
     "old": "  if (day > state.lastSelectedDay || (sharedClockOn() && _dayFromSave && day !== state.lastSelectedDay)) {",
     "new": "  if (day > state.lastSelectedDay) {",
-    "tests": ["test/raid2_raidsOnline.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js"]
   },
   {
     "name": "RAID2-the-rollover-rule-taken-offline",
     "file": "src/systems/raidingParties.js",
     "old": "(sharedClockOn() && _dayFromSave && day !== state.lastSelectedDay)",
     "new": "(_dayFromSave && day !== state.lastSelectedDay)",
-    "tests": ["test/raid2_raidsOnline.test.js", "test/raid1_raidingParties.test.js"]
+    "tests": ["test/systems/raid2_raidsOnline.test.js", "test/systems/raid1_raidingParties.test.js"]
   }
 ]

@@ -42,12 +42,12 @@
     "new": "",
     "tests": [
       "test/tesa6_ports.test.js",
-      "test/fb0929h_deedport.test.js"
+      "test/systems/comeSailAway/fb0929h_deedport.test.js"
     ]
   },
   {
     "name": "TESA6-a-crown-past-the-bay",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPortsHost.js",
     "old": "region: maps.getRegionIndexAt(q.bx, q.by), crown: null });",
     "new": "region: maps.getRegionIndexAt(q.bx, q.by), crown: 'Wayrest' });",
     "tests": [
@@ -74,7 +74,7 @@
   },
   {
     "name": "TESA6-a-port-clone-kept",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPlacesHost.js",
     "old": " && had.arena.port === !!place.port) return had;",
     "new": ") return had;",
     "tests": [
@@ -89,7 +89,7 @@
     "new": "",
     "tests": [
       "test/tesa6_ports.test.js",
-      "test/fb0929h_deedport.test.js"
+      "test/systems/comeSailAway/fb0929h_deedport.test.js"
     ]
   }
 ]

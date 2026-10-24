@@ -5,7 +5,7 @@
     "old": "      this._resolveSphere(high, CAPSULE_RADIUS, out, standCeil, axis === 0 ? lowOneWay : false, axis !== 0);",
     "new": "      this._resolveSphere(high, CAPSULE_RADIUS, out, standCeil, axis === 0 ? lowOneWay : false);",
     "tests": [
-      "test/squeeze1.test.js"
+      "test/player/squeeze1.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    const tall = height > RIDE_HEIGHT || !!this._keepFloor;",
     "new": "    const tall = height > RIDE_HEIGHT;",
     "tests": [
-      "test/squeeze1.test.js"
+      "test/player/squeeze1.test.js"
     ]
   },
   {
@@ -23,16 +23,16 @@
     "old": "    this._keepFloor = !!keepFloor;",
     "new": "    this._keepFloor = false;",
     "tests": [
-      "test/squeeze1.test.js"
+      "test/player/squeeze1.test.js"
     ]
   },
   {
     "name": "ASQ-S2-motor-never-asks",
-    "file": "src/characters/enemyMotor.js",
+    "file": "src/characters/enemy/enemyMotor.js",
     "old": "const FOE_KEEPS_FLOOR = true;",
     "new": "const FOE_KEEPS_FLOOR = false;",
     "tests": [
-      "test/squeeze1.test.js"
+      "test/player/squeeze1.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "-d \"{\\\"secret\\\":\\\"$secret\\\",\\\"receipt\\\":\\\"r1.deploy.smoke\\\"}\" || true",
     "new": "-d \"{\\\"secret\\\":\\\"$secret\\\",\\\"receipt\\\":\\\"r1.deploy.smoke\\\"}\"",
     "tests": [
-      "test/accountdeploy.test.js"
+      "test/server/accountdeploy.test.js"
     ]
   }
 ]

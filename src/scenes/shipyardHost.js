@@ -2,7 +2,7 @@
 // SHIPYARDS (2026-10-11): THE SHIPMASTER'S WINDOW'S HOST HALF. The window (ui/shipyardWindow.js) reads a model and asks
 // acts; this builds the one and carries out the other over the world host's runtimes - the Fleet's host half
 // (scenes/fleetHost.js: the ledger, where each ship lies, her summoning and laying up, her refits and her name), the sea
-// fight's state of each (scenes/navalHost.js: the shipwright's model, her named hands, the recruits signed on and paid
+// fight's state of each (scenes/naval/navalHost.js: the shipwright's model, her named hands, the recruits signed on and paid
 // off), Come Sail Away's runtime (laying a sold ship up, her hold let go) and the purse - and the laws:
 // systems/shipyards.js (the ships for sale, their price and their sale), systems/crewHall.js (the day's recruits).
 // Built by scenes/world.js, the one host that stands Come Sail Away and the ports.
@@ -13,7 +13,7 @@
 //   fleet  - every ship of the player's: where she lies (fleetHost's whereIs), her worth and the shipmaster's offer for
 //            her (shipWorth, shipSalePrice), why he will not buy her here (saleRefusal), her summoning, her laying up
 //            and her name;
-//   yard   - the shipwright's work on a ship at hand (scenes/navalHost.js yardModelOf - the yard's own window's model);
+//   yard   - the shipwright's work on a ship at hand (scenes/naval/navalHost.js yardModelOf - the yard's own window's model);
 //   refits - her four lines (scenes/fleetHost.js offer);
 //   crew   - the town's hall today (recruitsOf: none already serving a ship of the player's) against the crewed ships at
 //            hand, each with her named hands and her place for another (crewHall.js enlistPlan).
@@ -21,7 +21,7 @@
 // any port: the Fleet's own law).
 //
 //   deps = {
-//     fleet() -> scenes/fleetHost.js's | null     naval() -> scenes/navalHost.js's | null     csa() -> Come Sail Away's | null
+//     fleet() -> scenes/fleetHost.js's | null     naval() -> scenes/naval/navalHost.js's | null     csa() -> Come Sail Away's | null
 //     pack() -> the pack (live)    addToPack(item)    gold() -> the purse    pay(n)    credit(n)
 //     skills() -> { mercantile, personality } (live)    traded() -> a concluded deal's Mercantile tally (DFU OnTrade)
 //     mintUid() -> a new Come Sail Away UID    day() -> the world's day
@@ -87,7 +87,7 @@ export function createShipyardHost(deps) {
       aboard: s.at.boat && s.at.where === 'here' ? deps.passengersAboard?.(s.at.boat) ?? 0 : 0, atPort: true, crossed: fleetCrossed(s.row.uid),
     });
     if (why) return why;
-    if ((deps.cabinHolds?.(s.row.uid) ?? 0) > 0) return 'Clear her cabin first - what lies in it would go with her.';
+    if ((deps.cabinHolds?.(s.row.uid) ?? 0) > 0) return 'Empty the cabin first. Anything left in it is sold with the ship.';
     return null;
   }
   /** Her worth sold back, and what the shipmaster offers this seller for it. */
@@ -136,7 +136,7 @@ export function createShipyardHost(deps) {
       const cands = atHand.filter((s) => s.row.can?.yard == null);
       const s = pick(cands);
       return { ...base, choices: choice(cands), uid: s?.row.uid ?? null, ship: s?.row ?? null, yard: s && s.at.boat ? naval()?.yardModelOf?.(s.at.boat) ?? null : null,
-        why: !naval() ? 'The shipwrights work for the sea fight\'s ships - turn on Naval Combat.' : cands.length ? null : 'No ship of yours lies at this port or laid up.' };
+        why: !naval() ? 'Turn on Naval Combat to use the shipwrights.' : cands.length ? null : 'No ship of yours lies at this port or laid up.' };
     }
     if (page === 'refits') {
       const cands = atHand.filter((s) => s.row.can?.refit == null || s.row.loan);
@@ -161,7 +161,7 @@ export function createShipyardHost(deps) {
     /** What signing `r` on costs on this ship: his fee, or the shipwright's price for the men a hire raises her by. */
     const priceOf = (r) => (room?.ok ? hireCharge(r.fee, room.raise) : r.fee);
     const whyOf = (r) => (!naval() ? CREW_HALL_TEXT.noSea : !s ? CREW_HALL_TEXT.noShip : fighting ? CREW_HALL_TEXT.fighting
-      : room && !room.ok && !room.full ? room.why : room?.full && !swappable ? CREW_HALL_TEXT.ashore('Every hand of hers')
+      : room && !room.ok && !room.full ? room.why : room?.full && !swappable ? CREW_HALL_TEXT.ashore('The whole crew')
         : purse < priceOf(r) ? CREW_HALL_TEXT.short(priceOf(r)) : null);
     return {
       ...base, choices: choice(crewed), uid: s?.row.uid ?? null, ship: s?.row ?? null, hands, room, fighting,
@@ -214,7 +214,7 @@ export function createShipyardHost(deps) {
       // let go first - its click would stand her again off the item the sale spends, a ship sold twice
       const c = csa();
       if (c?.state?.placing && c.state.placeItem?.UID === uid) c.StopPlacing?.();
-      if (s.at.where === 'here' && !csa()?.LayUpBoat?.(s.at.boat)) return said(false, 'She could not be brought in to be sold.');
+      if (s.at.where === 'here' && !csa()?.LayUpBoat?.(s.at.boat)) return said(false, 'The ship couldn\'t be brought in to be sold.');
       if (s.at.where === 'packed') {
         const pack = deps.pack?.() ?? [];
         const i = pack.findIndex((it) => it?.templateIndex === BOAT_PARTS_TEMPLATE && it.UID === uid);

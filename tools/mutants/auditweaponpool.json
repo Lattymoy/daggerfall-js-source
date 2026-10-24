@@ -1,11 +1,11 @@
 [
   {
     "name": "AUDIT-WEAPON-POOL-P1-found-mark-left-behind",
-    "file": "src/systems/conditionRepair.js",
-    "old": "  if (Number.isInteger(it.foundCondition)) it.foundCondition = share(it.foundCondition);",
+    "file": "src/systems/item/foundMark.js",
+    "old": "  if (isFoundMarked(item)) item.foundCondition = share(item.foundCondition);\n",
     "new": "",
     "tests": [
-      "test/auditweaponpool.test.js"
+      "test/systems/auditweaponpool.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  repoolWeapon(item);\n",
     "new": "",
     "tests": [
-      "test/auditweaponpool.test.js"
+      "test/systems/auditweaponpool.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "it.artifact || it.repairData != null || !Object.isExtensible(it)",
     "new": "it.artifact || !Object.isExtensible(it)",
     "tests": [
-      "test/auditweaponpool.test.js"
+      "test/systems/auditweaponpool.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "it.magic || it.artifact || it.repairData",
     "new": "it.magic || it.repairData",
     "tests": [
-      "test/auditweaponpool.test.js"
+      "test/systems/auditweaponpool.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "if (!it || it.group !== 'Weapons' || it.magic",
     "new": "if (!it || it.group === 'Armor' || it.magic",
     "tests": [
-      "test/weaponpool.test.js"
+      "test/systems/weaponpool.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "[ITEM_TEMPLATES[templateIndex]?.hitPoints,",
     "new": "[ITEM_TEMPLATES[templateIndex - 1]?.hitPoints,",
     "tests": [
-      "test/weaponpool.test.js"
+      "test/systems/weaponpool.test.js"
     ]
   }
 ]

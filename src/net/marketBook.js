@@ -33,10 +33,13 @@
 
 import { MARKET_RID_RE } from './marketLaw.js';
 import { ASK_AGAIN_NOW, jittered } from './backoff.js';
-import { walletReserve } from './realmGoldLaw.js';   // MARKET-AUDIT: a refusal gives back exactly what the payment took   // SCALE1: asks again spread out, and never at once into a minute's refusal
+import { walletReserve } from './realm/realmGoldLaw.js';   // MARKET-AUDIT: a refusal gives back exactly what the payment took   // SCALE1: asks again spread out, and never at once into a minute's refusal
 
 export const MARKET_KEPT_KEY = 'prof5.kept';
 export const MARKET_CACHE_MS = 60_000;
+/** MEM-AUDIT (2026-10-23): how many reads the cache keeps - one a query (a page, a sort, a filter), each a whole view, and it
+ *  was cleared only by an act; past their minute they are the stale answer to a failed read, so the oldest go, not the old. */
+export const MARKET_CACHE_KEPT = 256;   // AUDIT MEM-AUDIT U3: a long browse's views (64 dropped a view the player came back to after 70 pages)
 export const MARKET_TRIES = 3;
 export const MARKET_RETRY_MS = Object.freeze([400, 1500]);
 /** How long an order's, a fill's or a withdrawal's id is kept for a press asked again (the lost answer's re-ask). */
@@ -68,6 +71,35 @@ const MOVED = MARKET_MOVED;
 export const PIECE_GONE = Object.freeze(['market-listed', 'market-uncollected', 'market-standing']);
 /** AUDIT 31 H1: a piece another act of the counting-house holds (this book's kept listing, or the writs' kept fill). */
 export const PIECE_KEPT_ERROR = 'piece-kept';
+
+/**
+ * INT19 (2026-10-17, the INTEGRITY arc's lane 1 - bible/06-Systems/Integrity-Arc.md section 7): A CRAFTED PIECE HANDED ON
+ * THROUGH THE REALM ACT (systems/realmSaves.js realmGoldAct) - listed, auctioned, or filled to a commission. The service
+ * takes the piece out of the character's realm record by its provenance (server-account/src/craftedPiece.js), so the save
+ * is checkpointed first and held; the piece leaves the save (`piece.take()`) only inside the hold, as the service is first
+ * asked (`send(at)`, where the record stands), so no checkpoint carries the pack without it while the record still holds
+ * it, and nothing is asked for a piece the save would not give up (AUDIT 31 H8). A refusal puts it back - never one that
+ * says the piece is elsewhere (PIECE_GONE, AUDIT 31 H1: the save's was a copy); silence ends the session (a join reads the
+ * record: the piece is handed on, or in the pack). Nothing is kept: the record is the truth. It was taken out of the pack
+ * alone, the service asked on the products row's word - so a tab that had lost its seat listed a piece the live record held.
+ * @param {{ act: (o: any) => Promise<any> }} realm @param {{ item: any, where: string, take: () => boolean, putBack: (item: any, where: string) => void }} piece
+ * @param {(at: any) => Promise<any>} send
+ */
+export async function realmPieceAct(realm, piece, send) {
+  let taken = false, asked = false, gone = false;
+  return realm.act({
+    reserve: () => () => {
+      if (!taken || gone) return;
+      taken = false;
+      try { piece.putBack(piece.item, piece.where); } catch (e) { console.warn('[market] put back', e); }
+    },
+    call: (/** @type {any} */ at) => {
+      if (!asked) { asked = true; taken = !!piece?.take?.(); }
+      if (!taken) return Promise.resolve({ ok: false, error: 'piece-held', status: 409 });
+      return Promise.resolve(send(at)).then((a) => { if (PIECE_GONE.includes(a?.error)) gone = true; return a; });
+    },
+  });
+}
 /** What the Market tab says while a kept act waits for its answer. */
 export const MARKET_KEPT_TEXT = 'The counting-house has your order and will settle it when it answers.';
 
@@ -91,7 +123,7 @@ export function mintMarketRid() {
  *   `stores` - the professions' book (AUDIT 30 U1: what an answer says of the Stores is its count too); `holds` - AUDIT 31
  *   H1: whether another book keeps an act on a piece (the writs' kept fill), so it is not taken twice; GOLD-MARKET:
  *   `realm` - a realm character's act on its record (systems/realmSaves.js realmGoldAct over the playing session), null
- *   for any other character (no gold trade); `wallet` - the save's gold as it pays at a board's region (the purse, its
+ *   for any other character (no gold trade, and - INT19 - no crafted piece listed or auctioned); `wallet` - the save's gold as it pays at a board's region (the purse, its
  *   letters, then that region's account - realmGoldLaw payFromSave's order; MARKET-AUDIT: answering the undo of exactly what it
  *   took, `credit` the whole cost only where it answers none) and `bank`, gold into that region's account;
  *   MARKET-ANY: `goods.receive(item)` - a piece from a pack, as the service put it into the record, into the save's pack
@@ -190,8 +222,12 @@ export function createMarketBook({ door, storage = null, character, now = () => 
 
   // ─── THE READS ─────────────────────────────────────────────────────
   const cache = new Map();
+  /** AUDIT MEM-AUDIT U3: an entry asked for is the newest - the views a player comes back to stay; the cap takes the
+   *  ones long unasked. */
+  const touch = (key) => { const e = cache.get(key); if (e) { cache.delete(key); cache.set(key, e); } return e; };
   // MARKET-ANY: and the crafted pieces a "My listings" read names (the service says how each may list)
-  const keyOf = (view, q) => [slot(), view, q.region, q.family ?? '', q.tier ?? '', q.material ?? '', (q.materials ?? []).join(','), q.currency ?? 'marks', (q.pieces ?? []).join(','), (q.board ?? []).join(',')].join('|');   // AUDIT SEATS-3 D2: and the board (its cap); MARKET-AUDIT P2: and the account and character (another's My listings was served a minute)
+  const keyOf = (view, q) => [slot(), view, q.region, q.family ?? '', q.tier ?? '', q.material ?? '', (q.materials ?? []).join(','), q.currency ?? 'marks', (q.pieces ?? []).join(','), (q.board ?? []).join(','),
+    q.page ?? 0, q.sort ?? '', q.recipes ? `r:${q.recipes.join(',')}` : '', q.quality ?? 0].join('|');   // AUDIT SEATS-3 D2: and the board (its cap); MARKET-AUDIT P2: and the account and character (another's My listings was served a minute); BOARD-SIFT: and the page, its order, a search's recipes (AUDIT BOARD-SIFT: one that names none is no read without one) and the least quality
   const pending = new Map();
   /** AUDIT 30 C6: the acts answered so far - a read begun before an act's answer is overtaken by it, and asked again. */
   let gen = 0;
@@ -199,7 +235,7 @@ export function createMarketBook({ door, storage = null, character, now = () => 
    *  act's answer overtook tells nothing (its balance is older than the act's) and is read again (AUDIT 30 C6). */
   async function read(view, q, { force = false } = {}) {
     const key = keyOf(view, q);
-    const hit = cache.get(key);
+    const hit = touch(key);
     if (!force && hit && now() - hit.at < MARKET_CACHE_MS) {
       // MARKET-AUDIT P3: the board's own listing cap with it - two boards a minute apart said the other's
       if (Number.isSafeInteger(hit.data?.listingsMax) && hit.data.listingsMax > 0) state.listingsMax = hit.data.listingsMax;
@@ -215,7 +251,8 @@ export function createMarketBook({ door, storage = null, character, now = () => 
       if (g !== gen) return null;
       const r = heard(a);
       const e = { at: now(), data: r?.ok ? r.data : hit?.data ?? null, error: r?.ok ? null : (r?.error ?? 'server'), stale: !r?.ok && !!hit?.data };
-      cache.set(key, e);
+      cache.delete(key); cache.set(key, e);   // MEM-AUDIT (2026-10-23): the newest last - a minute's reads past the cap go oldest first
+      if (cache.size > MARKET_CACHE_KEPT) cache.delete(cache.keys().next().value);
       return { ok: !!r?.ok, data: e.data, error: e.error, stale: e.stale };
     })();
     pending.set(pk, p);
@@ -291,22 +328,17 @@ export function createMarketBook({ door, storage = null, character, now = () => 
     return { ok: false, error: r?.error ?? 'server' };
   }
 
-  /** A piece posted (listed, or PROF5b auctioned): out of the save first, kept with its request and its route, let go on
-   *  the answer, put back on a refusal, kept on silence. AUDIT 31: never without an account to keep it under (B1), never
-   *  a piece another kept act holds (H1), the slot the press's (B2), and never put back when the service says the piece
-   *  is elsewhere (H1 - the save's was a copy) or when it was not ours to put back (a settle answered it first). */
+  /** A piece posted (listed, or PROF5b auctioned) - INT19: through the realm act, out of the record by its provenance
+   *  (realmPieceAct). AUDIT 31: never without an account (B1), never a piece another kept act holds (H1). A list kept by
+   *  a tab from before INT19 is still asked again by the settle, below, with its own id. */
   async function postPiece(route, body, piece) {
     if (!signedIn()) return { ok: false, error: 'no-session' };
     if (body.provenance && (keptPieces().has(body.provenance) || holds?.(body.provenance))) return { ok: false, error: PIECE_KEPT_ERROR };
-    if (!piece?.take?.()) return { ok: false, error: 'piece-held' };   // AUDIT 31 H8: the save would not give it up - never "only a crafted piece lists"
-    const key = slot();
-    keep('lists', { rid: body.rid, body, item: piece.item, where: piece.where, ...(route === 'list' ? {} : { route }) }, key);
-    const r = heard(await ask(() => door[route](body)));
-    if (r?.ok) { letGo('lists', body.rid, key); forget(); return { ok: true, data: r.data }; }
-    if (kept(r) || slot() !== key) return { ok: false, kept: true, error: r?.error, text: MARKET_KEPT_TEXT };
-    const had = letGo('lists', body.rid, key);
-    if (had && !PIECE_GONE.includes(r?.error)) { try { piece.putBack(piece.item, piece.where); } catch (e) { console.warn('[market] put back', e); } }
-    return { ok: false, error: r?.error ?? 'server' };
+    if (!realm) return { ok: false, error: 'realm-needed' };   // INT19: a crafted piece is handed on out of a realm record alone
+    if (!piece) return { ok: false, error: 'piece-held' };
+    const r = heard(await realmPieceAct(realm, piece, (at) => door[route]({ ...body, realm: at })));
+    if (r?.ok) forget();
+    return r ?? { ok: false, error: 'server' };
   }
 
   /**
@@ -356,7 +388,7 @@ export function createMarketBook({ door, storage = null, character, now = () => 
   const book = {
     state,
     read,
-    cached: (view, q) => cache.get(keyOf(view, q))?.data ?? null,
+    cached: (view, q) => touch(keyOf(view, q))?.data ?? null,
     /** MARKET-SPEED: whether a read of this view would be answered by the minute's cache, nothing asked (`read`'s own test) -
      *  the tab draws such a view once, never a "Reading the market..." frame before it. */
     fresh: (view, q) => { const hit = cache.get(keyOf(view, q)); return !!hit && now() - hit.at < MARKET_CACHE_MS; },
@@ -422,6 +454,8 @@ export function createMarketBook({ door, storage = null, character, now = () => 
     me: () => character(),
     /** GOLD-MARKET: whether this character trades in gold - a realm character's (its gold is its record's). */
     get goldOk() { return !!(realm && wallet); },
+    /** INT19: the realm act a crafted piece is handed on through - the writs' book's commission fill asks it too. */
+    realm,
     /** GOLD-MARKET: the gold the save can pay at a board of `region` (the purse, its letters, that region's account), or
      *  null for a character that trades in none. */
     purse(region) { try { return realm && wallet ? wallet(region).gold() : null; } catch { return null; } },

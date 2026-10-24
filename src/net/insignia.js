@@ -6,7 +6,7 @@
 //
 // ═══ THIS FILE IS THE LAW BOTH ENDS READ ═══════════════════════════
 //
-// A day's ware (systems/sigilBroker.js) is an item: made on the pack, carried by the save, sold client-side as every
+// A day's ware (systems/sigil/sigilBroker.js) is an item: made on the pack, carried by the save, sold client-side as every
 // shop here is. A piece of the INSIGNIA is not an item - it is a thing worn over the name or at the feet, that every
 // other player SEES - and a thing others see must be one no client can assert (ACC3's law: a title rides the signed
 // token). So a piece is bought ONCE and kept by the ACCOUNT: the account service records the sale (players.insignia,

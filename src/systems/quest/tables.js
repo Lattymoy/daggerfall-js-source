@@ -25,13 +25,25 @@ const _tables = {
 /** RR3: rows a mod adds with `QuestMachine.PlacesTable.AddIntoTable(...)`
  *  (RoleplayRealism.cs:250-251) - by table key, applied to a loaded
  *  table at once and to a later load as it lands, so a mod that
- *  registers at boot (before the pack loads) is not lost. */
+ *  registers at boot (before the pack loads) is not lost.
+ *  DEX1: a row may be `{ line, unlessKey }` - added only where the table
+ *  does not already hold `unlessKey` (BestiaryMod.ParseCustomEnemies:
+ *  `if (!QuestMachine.Instance.FoesTable.HasValue(questName))`, :1326),
+ *  asked of the table as it stands when the row lands - after every row
+ *  registered before it, as DFU asks it after every earlier mod's Init. */
 const _extraRows = { places: [], factions: [], items: [], foes: [] };
+/** Lay `entries` on `table` in order: a line as it is, a keyed row only where its key is new. */
+function applyExtraRows(table, entries) {
+  for (const e of entries) {
+    if (typeof e === 'string') table.addIntoTable([e]);
+    else if (e && typeof e.line === 'string' && !table.hasValue(e.unlessKey)) table.addIntoTable([e.line]);
+  }
+}
 export function addIntoQuestTables(rows = {}) {
   for (const [key, lines] of Object.entries(rows)) {
     if (!_extraRows[key] || !Array.isArray(lines)) continue;
     _extraRows[key].push(...lines);
-    if (_tables[key]) _tables[key].addIntoTable(lines);
+    if (_tables[key]) applyExtraRows(_tables[key], lines);
   }
 }
 export function _resetExtraQuestRows() { for (const k of Object.keys(_extraRows)) _extraRows[k].length = 0; }
@@ -52,7 +64,7 @@ export function loadQuestTables(sources) {
   for (const [file, key] of Object.entries(map)) {
     if (sources[file] != null) {
       _tables[key] = new Table(sources[file]);
-      if (_extraRows[key]?.length) _tables[key].addIntoTable(_extraRows[key]);   // RR3: the mod's rows ride the fresh table
+      if (_extraRows[key]?.length) applyExtraRows(_tables[key], _extraRows[key]);   // RR3: the mod's rows ride the fresh table (DEX1: a keyed one where its key is new)
     }
   }
 }

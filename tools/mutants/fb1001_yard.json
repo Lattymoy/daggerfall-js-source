@@ -5,7 +5,7 @@
     "old": "if (!onPathTile(bytes[i] >> 2) && !p.paths?.[i]) continue;",
     "new": "if (!p.paths?.[i]) continue;",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "if (!onPathTile(bytes[i] >> 2) && !p.paths?.[i]) continue;",
     "new": "if (!onPathTile(bytes[i] >> 2)) continue;",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "if (!onPathTile(bytes[i] >> 2) && !p.paths?.[i]) continue;",
     "new": "if (!onPathTile(bytes[i]) && !p.paths?.[i]) continue;",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      const i = tz * N + tx;",
     "new": "      const i = tx * N + tz;",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "out.push([tx * S - at[0], tz * S - at[2], (tx + 1) * S - at[0], (tz + 1) * S - at[2]]);",
     "new": "out.push([tx * S - at[0], tz * S - at[2], (tx + 1) * S - at[0], (tz + 2) * S - at[2]]);",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  for (let tz = tz0; tz <= tz1; tz++) {",
     "new": "  for (let tz = tz0; tz < tz1; tz++) {",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if ((roads ?? []).some((r) => yardFootMeets(ground, r, YARD_EDGE_PAD))) return YARD_ON_ROAD;\n",
     "new": "",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if ((roads ?? []).some((r) => yardFootMeets(ground, r, YARD_EDGE_PAD))) return YARD_ON_ROAD;",
     "new": "  if ((roads ?? []).some((r) => yardFootMeets(ground, r, -YARD_EDGE_PAD))) return YARD_ON_ROAD;",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
@@ -77,25 +77,25 @@
     "old": "  if ((roads ?? []).some((r) => yardFootMeets(ground, r, YARD_EDGE_PAD))) return YARD_ON_ROAD;",
     "new": "  if ((roads ?? []).some((r) => yardFootMeets([[x, z]], r, YARD_EDGE_PAD))) return YARD_ON_ROAD;",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
     "name": "ROAD-LOT-the-host-finds-no-road",
     "file": "src/scenes/homeYards.js",
-    "old": "return { yard: y, others, roads: yardRoadsOf(p, y.frame.at, y.lot), hall: !!home.hall };",
-    "new": "return { yard: y, others, roads: [], hall: !!home.hall };",
+    "old": "return { yard: y, others, lines, roads: yardRoadsOf(p, y.frame.at, y.lot), hall: !!home.hall };",
+    "new": "return { yard: y, others, lines, roads: [], hall: !!home.hall };",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
     "name": "ROAD-LOT-the-decorator-asks-no-road",
     "file": "src/scenes/homeYards.js",
-    "old": "yardWhyNot(piece.pos, cur.yard.lot, cur.others, foot, cur.roads)",
-    "new": "yardWhyNot(piece.pos, cur.yard.lot, cur.others, foot)",
+    "old": "yardWhyNot(piece.pos, cur.yard.lot, cur.others, foot, cur.roads, cur.lines)",
+    "new": "yardWhyNot(piece.pos, cur.yard.lot, cur.others, foot, [], cur.lines)",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "yardLotQuads(cur.yard.lot, originOf(cur.yard), YARD_MARK_HIGH, cur.roads)",
     "new": "yardLotQuads(cur.yard.lot, originOf(cur.yard), YARD_MARK_HIGH)",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
@@ -113,8 +113,8 @@
     "old": "if (w !== e) segs.push(e ? [xs[i], zs[j + 1], xs[i], zs[j]] : [xs[i], zs[j], xs[i], zs[j + 1]]);",
     "new": "if (w !== e) segs.push(e ? [xs[i], zs[j], xs[i], zs[j + 1]] : [xs[i], zs[j + 1], xs[i], zs[j]]);",
     "tests": [
-      "test/fb1001_yard.test.js",
-      "test/homeyard.test.js"
+      "test/scenes/fb1001_yard.test.js",
+      "test/scenes/homeyard.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "return !holes.some((r) => cx > r[0] && cx < r[2] && cz > r[1] && cz < r[3]);",
     "new": "return !holes.some((r) => cx > r[0] && cx < r[2] && cz > r[1]);",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
@@ -132,16 +132,16 @@
     "old": "      if (dir(next) === dir(run)) { run[2] = next[2]; run[3] = next[3]; continue; }",
     "new": "      if (dir(next) === 'x') { run[2] = next[2]; run[3] = next[3]; continue; }",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
     "name": "ROAD-LOT-four-bands-at-the-most",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    for (let i = 0; i < DECOR_LOT_MARKS; i++) {\n      if (quads[i]) writeDecalQuad(out, i * DECAL_FLOATS, { ...quads[i], tint: DECOR_LOT_MARK, wet: 0 });",
     "new": "    for (let i = 0; i < 4; i++) {\n      if (quads[i]) writeDecalQuad(out, i * DECAL_FLOATS, { ...quads[i], tint: DECOR_LOT_MARK, wet: 0 });",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
@@ -150,8 +150,8 @@
     "old": "  const edges = poly.length > 2 ? poly.length : poly.length - 1;",
     "new": "  const edges = 0;",
     "tests": [
-      "test/fb1001_yard.test.js",
-      "test/homeyard.test.js"
+      "test/scenes/fb1001_yard.test.js",
+      "test/scenes/homeyard.test.js"
     ]
   },
   {
@@ -160,8 +160,8 @@
     "old": "  if ((lot.walls ?? [lot.house]).some(meets)) return YARD_IN_HOUSE;",
     "new": "  if ((lot.walls ?? [lot.house]).some((r) => ground.some(([px, pz]) => inRect(px, pz, r, -YARD_EDGE_PAD)))) return YARD_IN_HOUSE;",
     "tests": [
-      "test/fb1001_yard.test.js",
-      "test/homeyard.test.js"
+      "test/scenes/fb1001_yard.test.js",
+      "test/scenes/homeyard.test.js"
     ]
   },
   {
@@ -170,9 +170,9 @@
     "old": "  if ((others ?? []).some(meets)) return YARD_ON_OTHER;",
     "new": "  if ((others ?? []).some((r) => ground.some(([px, pz]) => inRect(px, pz, r, -YARD_EDGE_PAD)))) return YARD_ON_OTHER;",
     "tests": [
-      "test/fb1001_yard.test.js",
-      "test/homeyard.test.js",
-      "test/fb1011b_homeline.test.js"
+      "test/scenes/fb1001_yard.test.js",
+      "test/scenes/homeyard.test.js",
+      "test/scenes/fb1011b_homeline.test.js"
     ]
   },
   {
@@ -181,8 +181,8 @@
     "old": "  if ((lot.walls ?? [lot.house]).some(meets)) return YARD_IN_HOUSE;",
     "new": "  if ((lot.walls ?? [lot.house]).some((r) => inRect(x, z, r) || yardFootMeets(ground, r, -YARD_EDGE_PAD))) return YARD_IN_HOUSE;",
     "tests": [
-      "test/fb1001_yard.test.js",
-      "test/homeyard.test.js"
+      "test/scenes/fb1001_yard.test.js",
+      "test/scenes/homeyard.test.js"
     ]
   },
   {
@@ -191,43 +191,43 @@
     "old": "  const edges = poly.length > 2 ? poly.length : poly.length - 1;",
     "new": "  const edges = poly.length > 2 ? poly.length : 0;",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
     "name": "YARD-STALE-the-write-unrecorded",
     "file": "src/scenes/homeYards.js",
-    "old": "    writes.get(y.mapId).set(y.bk, { n: ++wrote, list });   // FB1001 YARD-STALE",
-    "new": "    writes.get(y.mapId).set(y.bk, { n: wrote, list });   // FB1001 YARD-STALE",
+    "old": "    writes.get(y.mapId).set(y.bk, { n: ++wrote, at: now(), list });   // FB1001 YARD-STALE",
+    "new": "    writes.get(y.mapId).set(y.bk, { n: wrote, at: now(), list });   // FB1001 YARD-STALE",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
     "name": "YARD-STALE-the-old-answer-believed",
     "file": "src/scenes/homeYards.js",
-    "old": "      for (const [bk, w] of writes.get(mapId) ?? []) if (w.n > asked) byKey.set(bk, w.list);   // YARD-STALE: written since it was asked\n",
+    "old": "      for (const [bk, w] of writes.get(mapId) ?? []) if (w.n > asked || now() - w.at < YARD_WRITE_HOLD_MS) byKey.set(bk, w.list);   // YARD-STALE: written since it was asked - or (PRIMARY-TRIPS audit) within YARD_WRITE_HOLD_MS of it\n",
     "new": "",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
     "name": "YARD-STALE-every-answer-after-a-write-overruled",
     "file": "src/scenes/homeYards.js",
-    "old": "if (w.n > asked) byKey.set(bk, w.list);",
-    "new": "if (w.n >= asked) byKey.set(bk, w.list);",
+    "old": "if (w.n > asked || now()",
+    "new": "if (w.n >= asked || now()",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
     "name": "YARD-STALE-the-answers-turn",
     "file": "src/scenes/homeYards.js",
-    "old": "if (w.n > asked) byKey.set(bk, w.list);",
-    "new": "if (w.n > wrote) byKey.set(bk, w.list);",
+    "old": "if (w.n > asked || now()",
+    "new": "if (w.n > wrote || now()",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
@@ -236,7 +236,7 @@
     "old": "csaSyncColliders(); yards?.rebase();",
     "new": "csaSyncColliders();",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
@@ -245,7 +245,7 @@
     "old": "      y.pool.restand();   // in place, at once",
     "new": "      y.pool.set(y.pool.list());   // in place, at once",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
@@ -254,61 +254,61 @@
     "old": "      if (t[0] === y.t[0] && t[1] === y.t[1] && t[2] === y.t[2]) continue;\n      y.t = [...t];\n      y.pool.restand();",
     "new": "      if (t[1] === y.t[1]) continue;\n      y.t = [...t];\n      y.pool.restand();",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
     "name": "YARD-RECENTRE-the-matrix-kept",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "      e.o = [o[0], o[1], o[2]];\n      e.matrix = decorMatrix(e.piece, o);",
     "new": "      e.o = [o[0], o[1], o[2]];",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
     "name": "YARD-RECENTRE-the-bucket-left-behind",
-    "file": "src/scenes/decorRoom.js",
-    "old": "        c?.removeBucket?.(decorKeyOf(e.piece.id));\n        c?.addMesh?.(decorKeyOf(e.piece.id), e.cpu.positions",
-    "new": "        c?.addMesh?.(decorKeyOf(e.piece.id), e.cpu.positions",
+    "file": "src/player/lateSolid.js",
+    "old": "      collider.removeBucket?.(key);\n      if (was) held.set(key, [h]); else stand(key, h);",
+    "new": "      if (was) held.set(key, [h]); else stand(key, h);",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
     "name": "YARD-RECENTRE-the-bucket-never-stood-again",
-    "file": "src/scenes/decorRoom.js",
-    "old": "        c?.addMesh?.(decorKeyOf(e.piece.id), e.cpu.positions, e.cpu.indices, e.matrix);\n",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "      if (e.cpu) late()?.replace(decorKeyOf(e.piece.id), e.cpu.positions, e.cpu.indices, e.matrix);\n",
     "new": "",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
     "name": "YARD-RECENTRE-its-model-never-kept",
-    "file": "src/scenes/decorRoom.js",
-    "old": "{ entry.cpu = m.cpu; collider?.()?.addMesh?.(",
-    "new": "{ collider?.()?.addMesh?.(",
+    "file": "src/scenes/decor/decorRoom.js",
+    "old": "{ entry.cpu = m.cpu; late()?.add(",
+    "new": "{ late()?.add(",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
     "name": "YARD-RECENTRE-a-flat-moved-again-and-again",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "      e.o = [o[0], o[1], o[2]];\n      e.matrix = decorMatrix(e.piece, o);",
     "new": "      e.matrix = decorMatrix(e.piece, o);",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   },
   {
     "name": "YARD-RECENTRE-the-hosts-origin-held-by-reference",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "    const entry = { piece, o: [o[0], o[1], o[2]], gpu: null,",
     "new": "    const entry = { piece, o, gpu: null,",
     "tests": [
-      "test/fb1001_yard.test.js"
+      "test/scenes/fb1001_yard.test.js"
     ]
   }
 ]

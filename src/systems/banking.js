@@ -39,13 +39,14 @@
 
 import { CRIMES } from './court.js';
 import { BUILDING_TYPES, isResidence } from '../world/buildingNames.js';   // H1: the houses-for-sale filter
-import { isOnlinePage } from './onlineLane.js';   // EMPIRE-BANK: online, the Empire lends a tenth
+import { isOnlinePage } from './online/onlineLane.js';   // EMPIRE-BANK: online, the Empire lends a tenth
 import { stampLayout, layoutStampOfMapId, recordStands } from './layoutPins.js';   // WD3: a deed keeps the layout its town was bought in
 import { GOLD_PIECE_WEIGHT_KG, letterOfCredit } from './inventory.js';
 import {
   DAYS_PER_YEAR, DAYS_PER_MONTH, MINUTES_PER_DAY,
   dateString, dateFromClassicMinutes,   // AUDIT 64 F28: GetLoanDueDateString's two halves
 } from './gameDate.js';
+import { localizedText, getLocalizedRegionName } from './textManager.js';   // L10N3d: the status box's words; L10N3e: the region names shown
 
 /** TransactionResult (:29-51). The values ARE TEXT.RSC record ids for
  *  everything the bank says out loud - 0282-0299 is one contiguous
@@ -212,7 +213,9 @@ export function allocateHouseToPlayer(houses, regionIndex, { buildingKey, mapId,
   stampLayout(slot, layoutStampOfMapId(mapId));   // WD3: the layout the town stands in, which a load keeps it in (systems/layoutPins.js)
   discoverBuilding?.(buildingKey, `${playerName}'s residence`);
   addPermanentScene?.(mapId, buildingKey);
-  addNote?.(`Deed to a house in ${location}, ${regionName}.`);
+  // L10N3e: the deed names its region as shown - GetLocalizedRegionName
+  // (DaggerfallBankManager.cs:447); the town stays location.Name there too
+  addNote?.(`Deed to a house in ${location}, ${getLocalizedRegionName(regionIndex, () => regionName)}.`);
   return slot;
 }
 
@@ -300,7 +303,7 @@ export function sellHouse(accounts, houses, regionIndex, { meshRadius = 0, found
  */
 /** shipInteriorSceneNames' two mapIds (:103-106). Both interiors are
  *  keyed with BuildingDirectory.buildingKey0, which already has a home
- *  in systems/talkTopics.js - a ship is not in any building directory,
+ *  in systems/talk/talkTopics.js - a ship is not in any building directory,
  *  so it takes the no-key key. */
 export const SHIP_INTERIOR_MAP_IDS = Object.freeze([1050578, 2102157]);
 
@@ -453,7 +456,7 @@ const mustValidate = (accounts, regionIndex) => {
  *  became the bank of the Empire). Gold paid in at any branch is drawn at any branch, and every deed, sale and wallet
  *  pays from it and into it. A LOAN STILL STANDS WHERE IT WAS TAKEN - its due date, its default and the reputation a
  *  default costs are that region's - but the gold it lends and the gold that repays it are the Empire account's.
- *  Offline, Daggerfall's sixty-two accounts stand. The service pays a realm record the same way (net/realmGoldLaw.js
+ *  Offline, Daggerfall's sixty-two accounts stand. The service pays a realm record the same way (net/realm/realmGoldLaw.js
  *  REALM_EMPIRE_ACCOUNT, pinned equal). */
 export const EMPIRE_ACCOUNT_REGION = 17;
 /** The index whose `accountGold` region `regionIndex`'s gold moves in: the Empire's online, the region's own offline (or
@@ -977,7 +980,8 @@ export function sellDecision(kind, { owns = false, price = 0 } = {}) {
  */
 export const BANKING_STATUS_COLUMNS = Object.freeze([0, 60, 120, 180]);
 /** Internal_Strings.csv:856-859 - region/account/loan/dueDate. */
-export const BANKING_STATUS_HEADERS = Object.freeze(['Region', 'Account', 'Loan', 'Loan Due Date']);
+const HEADER_REGION = 'Region', HEADER_ACCOUNT = 'Account', HEADER_LOAN = 'Loan', HEADER_DUE_DATE = 'Loan Due Date';
+export const BANKING_STATUS_HEADERS = Object.freeze([HEADER_REGION, HEADER_ACCOUNT, HEADER_LOAN, HEADER_DUE_DATE]);
 /** Internal_Strings.csv:860 - the empty case is one word. */
 export const NO_ACCOUNT_TEXT = 'None';
 
@@ -994,13 +998,19 @@ const loansLine = (cells, highlight = false) => ({
 });
 
 export function bankingStatusRows(accounts, { regionName = () => '', dueText = null } = {}) {
-  const rows = [loansLine(BANKING_STATUS_HEADERS), { text: '', center: false }];
+  // L10N3d: the four headers and the empty row are GetLocalizedText'd as
+  // the box is made (:526-530, :543), so they read in the player's language
+  const headers = [localizedText('region', HEADER_REGION), localizedText('account', HEADER_ACCOUNT),
+    localizedText('loan', HEADER_LOAN), localizedText('dueDate', HEADER_DUE_DATE)];
+  const rows = [loansLine(headers), { text: '', center: false }];
   let found = false;
   for (let i = 0; i < (accounts?.length ?? 0); i++) {
     if (!(accountTotal(accounts, i) > 0 || hasLoan(accounts, i))) continue;
     const due = loanDueDate(accounts, i);
     rows.push(loansLine([
-      shortenName(regionName(i), 12),
+      // L10N3e: GetLocalizedRegionName(regionIndex) (:537), the host's
+      // canonical name its fallback
+      shortenName(getLocalizedRegionName(i, regionName), 12),
       String(accountTotal(accounts, i)),
       String(loanedTotal(accounts, i)),
       // GetLoanDueDateString (:573-582) - the same expression the bank
@@ -1012,7 +1022,7 @@ export function bankingStatusRows(accounts, { regionName = () => '', dueText = n
     ], hasDefaulted(accounts, i)));
     found = true;
   }
-  if (!found) rows.push({ text: NO_ACCOUNT_TEXT, center: false });
+  if (!found) rows.push({ text: localizedText('noAccount', NO_ACCOUNT_TEXT), center: false });
   return rows;
 }
 

@@ -5,7 +5,7 @@
     "old": "if (deps.inside || deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP))",
     "new": "if (deps.inside || soundSilenced(AMBIENT_CRICKETS_LOOP))",
     "tests": [
-      "test/cricketquiet.test.js"
+      "test/systems/cricketquiet.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "if (deps.inside || deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) { if (this._cricketsLoop) {",
     "new": "if (deps.inside || deps.underground || soundSilenced(AMBIENT_CRICKETS_LOOP)) { this._cricketT += dt; if (this._cricketsLoop) {",
     "tests": [
-      "test/cricketquiet.test.js"
+      "test/systems/cricketquiet.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "underground: modes?.mode === 'dungeon', waterSurfaceY:",
     "new": "underground: !!modes?.mode, waterSurfaceY:",
     "tests": [
-      "test/cricketquiet.test.js"
+      "test/systems/cricketquiet.test.js"
     ]
   }
 ]

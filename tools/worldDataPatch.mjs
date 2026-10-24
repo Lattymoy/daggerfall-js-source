@@ -5,7 +5,7 @@
 // blocks and whole building records as DFU's World Data Editor writes
 // them - the classic block with the author's edits in it. This tool
 // takes each file against the player's own BLOCKS.BSA (the block the
-// editor read it out of), keeps only the edit (formats/worldDataJson.js
+// editor read it out of), keeps only the edit (formats/worldData/worldDataJson.js
 // diffJson) and checks that the edit, laid back on the classic block,
 // gives the author's file again - canonical form, sha256 for sha256 -
 // before it writes anything.
@@ -22,8 +22,8 @@ import { basename, join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { isMain } from './lib/isMain.mjs';
 import { BlocksFile } from '../src/formats/blocksFile.js';
-import { blockToDfuJson, buildingToDfuJson, diffJson, canonicalJson } from '../src/formats/worldDataJson.js';
-import { PATCH_FORMAT, rebuildWorldDataPatch } from '../src/formats/worldDataPatch.js';
+import { blockToDfuJson, buildingToDfuJson, diffJson, canonicalJson } from '../src/formats/worldData/worldDataJson.js';
+import { PATCH_FORMAT, rebuildWorldDataPatch } from '../src/formats/worldData/worldDataPatch.js';
 
 /** What a world-data asset name says it is: a block (with its variant) or a building record of a block. */
 export function parseWorldDataName(name) {
@@ -103,7 +103,7 @@ export function makePatch(blocks, assetName, modJson, copyFrom = []) {
     ? { kind: 'building', block: parsed.block, index, record: parsed.record }
     : { kind: 'block', block: parsed.block, index };
   const patch = { format: PATCH_FORMAT, rebuilds: `${assetName}.json`, base: baseRef, sha256: sha256Canonical(modJson), ops };
-  // Checked through the runtime's own rebuild (formats/worldDataPatch.js), not a second copy of it.
+  // Checked through the runtime's own rebuild (formats/worldData/worldDataPatch.js), not a second copy of it.
   if (sha256Canonical(rebuildWorldDataPatch(patch, blocks)) !== patch.sha256) throw new Error(`world-data patch: ${assetName} does not rebuild`);
   return patch;
 }

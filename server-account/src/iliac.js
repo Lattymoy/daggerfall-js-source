@@ -19,7 +19,7 @@
 // ═══ A ROW IS A RECEIPT (/v1/iliac/claim) ═══════════════════════════
 //
 // The arena players' bouts' law (arena.js claimPlayers), for a card
-// game: the relay's signed result (net/iliacReceipt.js i1) is ONE row
+// game: the relay's signed result (net/iliac/iliacReceipt.js i1) is ONE row
 // keyed by the game's id, whichever of the two accounts carries it first;
 // the Elo the arena's (arenaLaw.js eloAfter), its season the arena's
 // (arenaSeasonOf), a pair's day and season capped as the arena's are - so
@@ -41,11 +41,11 @@
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
 // ═══════════════════════════════════════════════════════════════════
-import { verifyIliacReceipt } from '../../src/net/iliacReceipt.js';
+import { verifyIliacReceipt } from '../../src/net/iliac/iliacReceipt.js';
 import { mintDeckOrder, deckDigest } from '../../src/net/identityToken.js';
-import { arenaSeasonOf, arenaSeasonEndsS, arenaSeasonDay, eloAfter, ARENA_ELO_START, ARENA_ELO_MIN, ARENA_ELO_MAX, arenaRatingOk, ARENA_PAIR_DAY_MAX, ARENA_PAIR_SEASON_MAX } from '../../src/net/arenaLaw.js';
-import { deckShortOf } from '../../src/net/cardWorthLaw.js';
-import { deckValid } from '../../src/net/iliacHand.js';   // the rules' own deck law (iliacHand.js imports cardLaw.js, dice.js and iliacCards.js - the bundle's already)
+import { arenaSeasonOf, arenaSeasonEndsS, arenaSeasonDay, eloAfter, ARENA_ELO_START, ARENA_ELO_MIN, ARENA_ELO_MAX, arenaRatingOk, ARENA_PAIR_DAY_MAX, ARENA_PAIR_SEASON_MAX } from '../../src/net/arena/arenaLaw.js';
+import { deckShortOf } from '../../src/net/card/cardWorthLaw.js';
+import { deckValid } from '../../src/net/iliac/iliacHand.js';   // the rules' own deck law (iliacHand.js imports cardLaw.js, dice.js and iliacCards.js - the bundle's already)
 import { realmActFirst, getRealmBlob, realmSaveTextOf } from './realm.js';
 import { boardNamesOf } from './boardNames.js';   // AUDIT CARDS-6 D3: a board's names wear every honour, the arena's too
 
@@ -166,16 +166,37 @@ export async function storeIliacChampion(ctx, season, nowS) {
 /** Whether the season has a rated game - a season nobody played counts no board and writes nothing (STORM-SHED 2's
  *  law: a token's mint, an account's read, a board's badges read the kept word, and the board is counted only when a
  *  rated game moved it). */
-const seasonPlayed = async ({ db }, season) => !!(await db.prepare('SELECT 1 AS one FROM iliac_games WHERE season = ?1 AND rated = 1 LIMIT 1').bind(season).first());
+const seasonPlayed = async ({ db }, season) => !!(await playedRead(db, season).first());
 /** The season's #1 as the service last counted it - counted afresh only where it never was this season or is old, and
  *  only when the season has a rated game at all. */
 async function championNow(ctx, nowS) {
   const season = arenaSeasonOf(nowS);
   if (_champ.season === season && nowS - _champ.at < ILIAC_CHAMPION_CACHE_S) return _champ.id;
-  const kept = await ctx.db.prepare('SELECT player, at FROM iliac_champions WHERE season = ?1').bind(season).first();
-  const id = kept && nowS - Number(kept.at) < ILIAC_CHAMPION_STORED_S ? kept.player ?? null : (await seasonPlayed(ctx, season)) ? await storeIliacChampion(ctx, season, nowS) : null;
+  const kept = await championKeptRead(ctx.db, season).first();
+  const stale = !(kept && nowS - Number(kept.at) < ILIAC_CHAMPION_STORED_S);
+  return championFrom(ctx, nowS, season, kept, stale && await seasonPlayed(ctx, season));
+}
+/** SIGN-BATCH: the kept #1's row, as a statement; and whether the season has a rated game, as one. */
+const championKeptRead = (/** @type {any} */ db, /** @type {number} */ season) => db.prepare('SELECT player, at FROM iliac_champions WHERE season = ?1').bind(season);
+const playedRead = (/** @type {any} */ db, /** @type {number} */ season) => db.prepare('SELECT 1 AS one FROM iliac_games WHERE season = ?1 AND rated = 1 LIMIT 1').bind(season);
+/** The season's #1 from its kept row - counted again and stored where it is none or stale and the season was played -
+ *  and kept by this Worker. */
+async function championFrom(/** @type {any} */ ctx, /** @type {number} */ nowS, /** @type {number} */ season, /** @type {any} */ kept, /** @type {boolean} */ played) {
+  const id = kept && nowS - Number(kept.at) < ILIAC_CHAMPION_STORED_S ? kept.player ?? null : played ? await storeIliacChampion(ctx, season, nowS) : null;
   _champ = { season, at: nowS, id };
   return id;
+}
+/** SIGN-BATCH (2026-10-16; arena.js arenaHonoursPlan says why): the season's #1's reads - its kept row and whether the
+ *  season was played, where this Worker kept none - and its honours from theirs, as iliacHonoursOf answers them. */
+export function iliacHonoursPlan(/** @type {any} */ ctx, /** @type {any} */ player, /** @type {number} */ nowS) {
+  if (!player?.handle) return { reads: [], from: async () => ({ champion: false }) };
+  const season = arenaSeasonOf(nowS);
+  const cached = _champ.season === season && nowS - _champ.at < ILIAC_CHAMPION_CACHE_S;
+  const keptId = cached ? _champ.id : null;   // PRIMARY-TRIPS audit: the #1 kept when the plan was made - read after the batch, another request's count of a new season could stand in its place
+  return {
+    reads: cached ? [] : [championKeptRead(ctx.db, season), playedRead(ctx.db, season)],
+    from: async (/** @type {any[]} */ res) => ({ champion: (cached ? keptId : await championFrom(ctx, nowS, season, res[0]?.results?.[0] ?? null, !!res[1]?.results?.[0])) === player.id }),
+  };
 }
 /**
  * THE CLOCK'S COUNT (cron.js, every minute): the season's #1 counted before a reader would count it - only once the kept
@@ -242,7 +263,7 @@ async function topMayMove(ctx, season, a, b, na, nb) {
 }
 
 /**
- * A RANKED GAME'S CLAIM: the relay's receipt (net/iliacReceipt.js) for a game this account played. One row a game,
+ * A RANKED GAME'S CLAIM: the relay's receipt (net/iliac/iliacReceipt.js) for a game this account played. One row a game,
  * whichever seat carries it first; both accounts must be registered to be rated. Answers `{ recorded, ... }`, a game
  * already kept `{ recorded: false, why: 'claimed', ... }`, a guest's `{ recorded: false, why: 'guest' }` (registering
  * mends it), one whose OTHER seat is no registered account `{ recorded: false, why: 'foe-unregistered' }` (nothing

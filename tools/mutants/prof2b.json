@@ -5,7 +5,7 @@
     "old": "export const MOTHERLODE_STRIKERS = 20;",
     "new": "export const MOTHERLODE_STRIKERS = 21;",
     "tests": [
-      "test/prof2b_motherlode.test.js"
+      "test/net/prof2b_motherlode.test.js"
     ]
   },
   {
@@ -14,8 +14,8 @@
     "old": "export const MOTHERLODE_RANK = 25;",
     "new": "export const MOTHERLODE_RANK = 26;",
     "tests": [
-      "test/prof2b_motherlode.test.js",
-      "test/prof2b_client.test.js"
+      "test/net/prof2b_motherlode.test.js",
+      "test/net/prof2b_client.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "export const MOTHERLODE_OPEN_S = 2 * 3600;",
     "new": "export const MOTHERLODE_OPEN_S = 3 * 3600;",
     "tests": [
-      "test/prof2b_motherlode.test.js"
+      "test/net/prof2b_motherlode.test.js"
     ]
   },
   {
@@ -33,8 +33,8 @@
     "old": "export const MOTHERLODE_WARN_S = 600;",
     "new": "export const MOTHERLODE_WARN_S = 660;",
     "tests": [
-      "test/prof2b_motherlode.test.js",
-      "test/prof2b_client.test.js"
+      "test/net/prof2b_motherlode.test.js",
+      "test/net/prof2b_client.test.js"
     ]
   },
   {
@@ -43,8 +43,8 @@
     "old": "export const MOTHERLODE_SENSE_WARN_S = 1800;",
     "new": "export const MOTHERLODE_SENSE_WARN_S = 1200;",
     "tests": [
-      "test/prof2b_motherlode.test.js",
-      "test/prof2b_client.test.js"
+      "test/net/prof2b_motherlode.test.js",
+      "test/net/prof2b_client.test.js"
     ]
   },
   {
@@ -53,7 +53,7 @@
     "old": "export const MOTHERLODE_WATCH_S = 600;",
     "new": "export const MOTHERLODE_WATCH_S = 660;",
     "tests": [
-      "test/prof2b_motherlode.test.js"
+      "test/net/prof2b_motherlode.test.js"
     ]
   },
   {
@@ -62,7 +62,7 @@
     "old": "const opensAt = day * 86400 + k * MOTHERLODE_THIRD_S +",
     "new": "const opensAt = day * 86400 +",
     "tests": [
-      "test/prof2b_motherlode.test.js"
+      "test/net/prof2b_motherlode.test.js"
     ]
   },
   {
@@ -71,7 +71,7 @@
     "old": "const pool = (rich.length >= MOTHERLODES_A_DAY ? rich : all).slice();",
     "new": "const pool = all.slice();",
     "tests": [
-      "test/prof2b_motherlode.test.js"
+      "test/net/prof2b_motherlode.test.js"
     ]
   },
   {
@@ -80,7 +80,7 @@
     "old": "\n    .sort((a, b) => a.y - b.y || a.x - b.x);",
     "new": ";",
     "tests": [
-      "test/prof2b_motherlode.test.js"
+      "test/net/prof2b_motherlode.test.js"
     ]
   },
   {
@@ -89,7 +89,7 @@
     "old": "  if (sig && MOTHERLODE_ORES.includes(sig)) return sig;\n",
     "new": "",
     "tests": [
-      "test/prof2b_motherlode.test.js"
+      "test/net/prof2b_motherlode.test.js"
     ]
   },
   {
@@ -98,7 +98,7 @@
     "old": "return clean ? Math.floor(base * 1.5) : base;",
     "new": "return base;",
     "tests": [
-      "test/prof2b_motherlode.test.js"
+      "test/net/prof2b_motherlode.test.js"
     ]
   },
   {
@@ -107,7 +107,7 @@
     "old": "export const MOTHERLODE_KEY_RE = /^mlode:(0|[1-9]\\d{0,6}):([0-2])$/;",
     "new": "export const MOTHERLODE_KEY_RE = /^mlode:(\\d{1,7}):([0-2])$/;",
     "tests": [
-      "test/prof2b_motherlode.test.js"
+      "test/net/prof2b_motherlode.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "old": "c.s !== player.id || c.x !== lode.x || c.y !== lode.y ||",
     "new": "c.s !== player.id ||",
     "tests": [
-      "test/prof2b_motherlode.test.js"
+      "test/net/prof2b_motherlode.test.js"
     ]
   },
   {
@@ -125,7 +125,7 @@
     "old": "|| !motherlodeWatchOk(c.i, at)) return { error: 'motherlode-watch' };",
     "new": ") return { error: 'motherlode-watch' };",
     "tests": [
-      "test/prof2b_motherlode.test.js"
+      "test/net/prof2b_motherlode.test.js"
     ],
     "note": "AUDIT SILVER-WAYS (PIN MOVED): re-aimed by content to the code the audit's fix left (the Watch both ways, the receipt asked at the act's end and this account's alone, the tax reckoned in the batch)."
   },
@@ -135,7 +135,7 @@
     "old": "if (!c || c.s !== player.id || c.x",
     "new": "if (!c || c.x",
     "tests": [
-      "test/prof2b_motherlode.test.js"
+      "test/net/prof2b_motherlode.test.js"
     ]
   },
   {
@@ -144,7 +144,7 @@
     "old": "  if (rank < MOTHERLODE_RANK) return { error: 'prof-rank' };\n",
     "new": "",
     "tests": [
-      "test/prof2b_motherlode.test.js"
+      "test/net/prof2b_motherlode.test.js"
     ]
   },
   {
@@ -153,7 +153,7 @@
     "old": "AND (SELECT COUNT(*) FROM motherlode_strikes WHERE day = ?5 AND k = ?6) < ?13",
     "new": "AND (SELECT COUNT(*) FROM motherlode_strikes WHERE day = ?5 AND k = ?6) <= ?13",
     "tests": [
-      "test/prof2b_motherlode.test.js"
+      "test/net/prof2b_motherlode.test.js"
     ]
   },
   {
@@ -162,7 +162,7 @@
     "old": "  const silver = marksOpenFor(player, env);",
     "new": "  const silver = true;",
     "tests": [
-      "test/prof2b_motherlode.test.js"
+      "test/net/prof2b_motherlode.test.js"
     ]
   },
   {
@@ -171,7 +171,7 @@
     "old": "      .bind(player.id, rid, nonce, MOTHERLODE_SILVER, day, nowS, motherlodeRid(day), MARKS_MAX)] : []),",
     "new": "      .bind(player.id, rid, nonce, MOTHERLODE_SILVER, day, nowS, motherlodeRid(day), MARKS_MAX)].slice(1) : []),",
     "tests": [
-      "test/prof2b_motherlode.test.js"
+      "test/net/prof2b_motherlode.test.js"
     ]
   },
   {
@@ -180,7 +180,7 @@
     "old": "if (t >= l.opensAt - ahead && t < l.opensAt",
     "new": "if (t >= l.opensAt - ahead - 60 && t < l.opensAt",
     "tests": [
-      "test/prof2b_client.test.js"
+      "test/net/prof2b_client.test.js"
     ]
   },
   {
@@ -189,7 +189,7 @@
     "old": "const ahead = motherlodeWarnS(sense);",
     "new": "const ahead = motherlodeWarnS(false);",
     "tests": [
-      "test/prof2b_client.test.js"
+      "test/net/prof2b_client.test.js"
     ]
   },
   {
@@ -198,7 +198,7 @@
     "old": "if (!c || !c.signed || c.s !== meNow(true)) return false;",
     "new": "if (!c || !c.signed) return false;",
     "tests": [
-      "test/prof2b_client.test.js"
+      "test/net/prof2b_client.test.js"
     ],
     "note": "AUDIT SILVER-WAYS (PIN MOVED): re-aimed by content to the code the audit's fix left (the Watch both ways, the receipt asked at the act's end and this account's alone, the tax reckoned in the batch). Bugs update reconciliation 2026-10-03: re-aimed by the current source law; forced Watch identity refresh, cached frame reads, receipt ownership/expiry, and actual host seed citations remain independently killable."
   },
@@ -208,7 +208,7 @@
     "old": "      if ((watches.get(k)?.i ?? -Infinity) >= c.i) return false;\n",
     "new": "",
     "tests": [
-      "test/prof2b_client.test.js"
+      "test/net/prof2b_client.test.js"
     ]
   },
   {
@@ -217,7 +217,7 @@
     "old": "return w && w.s === m && motherlodeWatchOk(w.i, nowS() + Math.max(0, aheadS)) ? w.r : null;",
     "new": "return w && w.s === m ? w.r : null;",
     "tests": [
-      "test/prof2b_client.test.js"
+      "test/net/prof2b_client.test.js"
     ],
     "note": "AUDIT SILVER-WAYS (PIN MOVED): re-aimed by content to the code the audit's fix left (the Watch both ways, the receipt asked at the act's end and this account's alone, the tax reckoned in the batch). Bugs update reconciliation 2026-10-03: re-aimed by the current source law; forced Watch identity refresh, cached frame reads, receipt ownership/expiry, and actual host seed citations remain independently killable."
   },
@@ -227,7 +227,7 @@
     "old": "      state.found = typeof data.node === 'string' ? data.node : state.found;\n",
     "new": "",
     "tests": [
-      "test/prof2b_client.test.js"
+      "test/net/prof2b_client.test.js"
     ]
   },
   {
@@ -236,7 +236,7 @@
     "old": "      if (n.what === 'motherlode' && !watch) return { refused: MOTHERLODE_TEXT.watch };\n",
     "new": "",
     "tests": [
-      "test/prof2b_client.test.js"
+      "test/net/prof2b_client.test.js"
     ]
   },
   {
@@ -245,7 +245,7 @@
     "old": "        ...(watch ? { ask: () => ({ watch: lodes?.watchFor?.(n.lode.x, n.lode.y, 0) ?? watch }) } : {}),\n",
     "new": "",
     "tests": [
-      "test/prof2b_client.test.js"
+      "test/net/prof2b_client.test.js"
     ],
     "note": "AUDIT SILVER-WAYS (PIN MOVED): re-aimed by content to the code the audit's fix left (the Watch both ways, the receipt asked at the act's end and this account's alone, the tax reckoned in the batch)."
   },
@@ -255,7 +255,7 @@
     "old": "  if (rank < MOTHERLODE_RANK) return { harvest: 'ore', verb, rest: `needs Mining ${MOTHERLODE_RANK}`",
     "new": "  if (rank < 0) return { harvest: 'ore', verb, rest: `needs Mining ${MOTHERLODE_RANK}`",
     "tests": [
-      "test/prof2b_client.test.js"
+      "test/net/prof2b_client.test.js"
     ]
   },
   {
@@ -264,7 +264,7 @@
     "old": "&& ![...taken, ...out.map((n) => n.local)].some((t) => Math.hypot(t[0] - x, t[2] - z) < NODE_SPACING_M);",
     "new": ";",
     "tests": [
-      "test/prof2b_client.test.js"
+      "test/net/prof2b_client.test.js"
     ]
   },
   {
@@ -273,7 +273,7 @@
     "old": "      if (typeof line === 'string' && line && o?.hauled !== true) toast(line);",
     "new": "      void line;",
     "tests": [
-      "test/prof2b_client.test.js"
+      "test/net/prof2b_client.test.js"
     ],
     "note": "HAUL-CARDS (PIN MOVED): re-aimed by content - the queue's own hold and merge, the haul card's twin lines (the anchor widened to the pickup's own), the goods' line said where no card stood, a Motherlode's silver unsaid under its card."
   },
@@ -283,7 +283,7 @@
     "old": "      return here.length ? [...nodes, ...standMotherlodes({ lodes: here, ...stone, taken: nodes.map((n) => n.local) })] : nodes;",
     "new": "      return nodes;",
     "tests": [
-      "test/prof2b_client.test.js"
+      "test/net/prof2b_client.test.js"
     ]
   },
   {
@@ -292,7 +292,7 @@
     "old": "      ...(typeof h.watch === 'string' ? { watch: h.watch } : {}),   // PROF2b",
     "new": "      // PROF2b",
     "tests": [
-      "test/prof2b_client.test.js"
+      "test/net/prof2b_client.test.js"
     ]
   }
 ]

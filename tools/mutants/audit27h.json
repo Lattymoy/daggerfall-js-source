@@ -5,8 +5,8 @@
     "old": "    openCharSheet: openInteriorSheet,   // AUDIT 27h A1: the pack's F5 crosses over to this building's page, not the street's\n",
     "new": "",
     "tests": [
-      "test/audit27h.test.js",
-      "test/macc_window_keys.test.js"
+      "test/ui/enhanced/audit27h.test.js",
+      "test/ui/macc_window_keys.test.js"
     ]
   },
   {
@@ -15,7 +15,7 @@
     "old": "const openInteriorSheet = () => { const w = host.makeCharSheet?.(interiorSheetDoors());",
     "new": "const openInteriorSheet = () => { const w = host.makeCharSheet?.();",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
@@ -24,9 +24,9 @@
     "old": "toggleCharSheet() { openInteriorSheet(); },",
     "new": "toggleCharSheet() { mountInterior(host.makeCharSheet?.()); },",
     "tests": [
-      "test/inputmap.test.js",
-      "test/flagsweep.test.js",
-      "test/f5quests.test.js"
+      "test/scenes/inputmap.test.js",
+      "test/scenes/flagsweep.test.js",
+      "test/ui/f5quests.test.js"
     ]
   },
   {
@@ -35,7 +35,7 @@
     "old": "if (w) mountInterior(w); return !!w; };\n  const interiorInventory",
     "new": "if (w) mountInterior(w); return true; };\n  const interiorInventory",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
@@ -44,8 +44,8 @@
     "old": "makeCharSheet: (doors) => (charSheetDoorReady() ? makeCharSheetWindow(doors) : null),",
     "new": "makeCharSheet: (doors) => (charSheetDoorReady() ? makeCharSheetWindow() : null),",
     "tests": [
-      "test/audit27h.test.js",
-      "test/f5quests.test.js"
+      "test/ui/enhanced/audit27h.test.js",
+      "test/ui/f5quests.test.js"
     ]
   },
   {
@@ -54,7 +54,7 @@
     "old": "pause: pause ?? (() => pauseDoorHooks()),",
     "new": "pause: () => pauseDoorHooks(),",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
@@ -63,7 +63,7 @@
     "old": "    playerId: host.playerId,   // AUDIT 27h A3: CHARID1's by-id Save list - the street's bag always carried it, this one never did\n",
     "new": "",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
@@ -72,19 +72,19 @@
     "old": "() => { close(); return bag[arm](); }",
     "new": "() => { close(); bag[arm](); }",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "A4-stats-door-never-resumes",
-    "file": "src/ui/enhancedMenu.js",
-    "old": "b.onclick = () => { onAction('handoff'); if (fn() === false) onAction('resume'); };",
-    "new": "b.onclick = () => { onAction('handoff'); fn(); };",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "b.onclick = () => { handoff(fn); };",
+    "new": "b.onclick = () => { handoff(fn, () => true); };",
     "tests": [
-      "test/audit27h.test.js",
-      "test/escbook.test.js",
-      "test/enhancedPause.test.js",
-      "test/levelNotice.test.js"
+      "test/ui/enhanced/audit27h.test.js",
+      "test/ui/escbook.test.js",
+      "test/ui/enhanced/enhancedPause.test.js",
+      "test/ui/levelNotice.test.js"
     ]
   },
   {
@@ -93,7 +93,7 @@
     "old": "openPack: () => { const w = makeInventoryWindow(); if (w) townTalk.showOverlay(w); return !!w; },",
     "new": "openPack: () => { const w = makeInventoryWindow(); if (w) townTalk.showOverlay(w); return true; },",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
@@ -102,7 +102,7 @@
     "old": "openChronicle: () => { const w = makeJournalWindow('notebook'); if (w) townTalk.showOverlay(w); return !!w; },",
     "new": "openChronicle: () => { const w = makeJournalWindow('notebook'); if (w) townTalk.showOverlay(w); },",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
@@ -111,7 +111,7 @@
     "old": "openPack: () => { const w = makeInventoryWindow(); if (w) townTalk.showOverlay(w); return !!w; },",
     "new": "openPack: () => { const w = makeInventoryWindow(); if (w) townTalk.showOverlay(w); return true; },",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
@@ -120,7 +120,7 @@
     "old": "const mountedInterior = (w) => { if (w) mountInterior(w); return !!w; };",
     "new": "const mountedInterior = (w) => { if (w) mountInterior(w); return true; };",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
@@ -129,8 +129,8 @@
     "old": "openChronicle: opts.questBridge ? () =>",
     "new": "openChronicle: true ? () =>",
     "tests": [
-      "test/audit27h.test.js",
-      "test/audit39_dungeonshared.test.js"
+      "test/ui/enhanced/audit27h.test.js",
+      "test/scenes/audit39_dungeonshared.test.js"
     ]
   },
   {
@@ -139,17 +139,18 @@
     "old": "  preloadQuestJournalArt({ renderer, fetchBytes, palette });   // AUDIT 27h A4: LGBK00I0 warms at boot too (exterior.js's U43 line) - the classic journal's door answered null until it had, so the first L, N or Chronicle press opened nothing\n",
     "new": "",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "A5-ascend-resumes-under-the-level-up",
     "file": "src/ui/pauseDoor.js",
-    "old": "act('handoff');   // down first, then the level-up",
-    "new": "act('resume');   // down first, then the level-up",
+    "old": "ascendScreen: () => (playerEntity ? levelUpScreenFor(playerEntity) : null),",
+    "new": "ascendScreen: () => null,",
     "tests": [
-      "test/ascendanytime.test.js"
-    ]
+      "test/ui/ascendanytime.test.js"
+    ],
+    "note": "GROWTH (PIN MOVED, bible/10-UI/Growth.md): re-aimed by content - a level owed no longer swaps in over the window: the pause door hands the Growth tab's Level page the rollout, and a door that hands none draws the view for a level owed"
   },
   {
     "name": "S1-dungeon-breath-under-the-street-slot",
@@ -157,7 +158,7 @@
     "old": "breathTick(opts.breathHeld?.() ? 0 : dt, playerFeet, playerHeight);",
     "new": "breathTick(dt, playerFeet, playerHeight);",
     "tests": [
-      "test/searise.test.js"
+      "test/player/searise.test.js"
     ]
   },
   {
@@ -166,7 +167,7 @@
     "old": "          breathHeld: () => !!townTalk?.overlayActive,   // AUDIT 27h S1: a street-slot window up over the dungeon (Recall's prompt) holds its breath too, as its own slot's do\n",
     "new": "",
     "tests": [
-      "test/searise.test.js"
+      "test/player/searise.test.js"
     ]
   },
   {
@@ -175,7 +176,7 @@
     "old": "    player.stopAutorun();   // AUDIT 27h S2: SEA-RISE's law for every rise - a drowned autorunner raised on the seabed walked on\n",
     "new": "",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
@@ -184,7 +185,7 @@
     "old": "      player.stopAutorun();   // AUDIT 27h S2: nor the old one's autorun latch - F11 off a death screen came back running at the sea\n",
     "new": "",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
@@ -193,7 +194,7 @@
     "old": "                player.stopAutorun();   // AUDIT 27h S2: SEA-RISE's law for every rise\n",
     "new": "",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
@@ -203,9 +204,9 @@
     "new": "const placeLoadedPlayer = (p, fall = null) => { player.spawn(p[0], p[1], p[2]); player.restoreFall(fall); };",
     "note": "FALL-KEPT (FIELD BUGS 2026-09-30, PIN MOVED): the law takes the save's fall beside the position and lands it after the spawn; the mutant is the same latch removal.",
     "tests": [
-      "test/audit27h.test.js",
-      "test/audit23.test.js",
-      "test/mac6.test.js"
+      "test/ui/enhanced/audit27h.test.js",
+      "test/systems/audit23.test.js",
+      "test/systems/save/mac6.test.js"
     ]
   },
   {
@@ -214,9 +215,9 @@
     "old": "_motorRef.spawn(p[0], p[1], p[2]); _motorRef.stopAutorun(); };",
     "new": "_motorRef.spawn(p[0], p[1], p[2]); };",
     "tests": [
-      "test/audit27h.test.js",
-      "test/audit23.test.js",
-      "test/overlayTyping.test.js"
+      "test/ui/enhanced/audit27h.test.js",
+      "test/systems/audit23.test.js",
+      "test/ui/overlayTyping.test.js"
     ]
   },
   {
@@ -225,196 +226,196 @@
     "old": "function offFrame() { ++_widgetSteps; }",
     "new": "function offFrame() { }",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "S3-rig-skips-the-off-frame",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "\n      if (!shieldOn()) shield.offFrame();",
     "new": "",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "S3b-count-inside-the-gate",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "if (!shieldOn()) shield.offFrame();",
     "new": "if (!shieldOn() && (widgetOn() || _torchesOn || thunderlockHeld())) shield.offFrame();",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "M1-court-takes-a-slot",
     "file": "src/scenes/dungeonContext.js",
-    "old": "let automapRec = isGateArena(dfLocation) || isArenaFloor(dfLocation) || _sdRealm ? detachedAutomapRecord()",
+    "old": "let automapRec = madeLevelRule(_made, 'automap') === 'off' || isArenaFloor(dfLocation) ? detachedAutomapRecord()",
     "new": "let automapRec = false ? detachedAutomapRecord()",
     "tests": [
-      "test/mapkeep.test.js"
+      "test/systems/automap/mapkeep.test.js"
     ]
   },
   {
     "name": "M1-court-record-in-the-store",
-    "file": "src/systems/automap.js",
+    "file": "src/systems/automap/automap.js",
     "old": "export const detachedAutomapRecord = () => newAutomapRecord();",
     "new": "export const detachedAutomapRecord = () => enterDungeonAutomap('3/The Burning Court', 0);",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "B1-tile-swallows-any-release",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "up: (e) => { if (took && took.button === e.button) e.stopPropagation(); },",
     "new": "up: (e) => { if (cellOf(e)) e.stopPropagation(); },",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "B1-menu-ends-a-press-begun-elsewhere",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "      if (took?.bundle !== cell.dataset.bundle || took.button !== 2) return;",
     "new": "",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "B1-a-press-of-the-world-inherits",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  globalThis.addEventListener?.('mousedown', g.forget, true);\n",
     "new": "",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "B1-press-keyed-by-the-node",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "took = { bundle: cell.dataset.bundle, button: e.button };",
     "new": "took = { bundle: cell, button: e.button };",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "B2-hidden-large-hud-keeps-the-rects",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "    if (!hudDrawn) { _placedSpellIcons = []; return; }",
     "new": "    if (!hudDrawn) return;",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "B2-hidden-classic-hud-keeps-the-rects",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  // of the two HUD panels (DaggerfallHUD.cs:157-192).\n  if (!hudDrawn) { _placedSpellIcons = []; return; }",
     "new": "  // of the two HUD panels (DaggerfallHUD.cs:157-192).\n  if (!hudDrawn) return;",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "B2-placement-never-goes-stale",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "export const activeSpellIconsPlaced = () => (nowMs() - _placedAt <= PLACED_FRESH_MS ? _placedSpellIcons : []);",
     "new": "export const activeSpellIconsPlaced = () => _placedSpellIcons;",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "H1-repeat-on-the-last-drawn-view",
-    "file": "src/ui/enhancedPort.js",
+    "file": "src/ui/enhanced/enhancedPort.js",
     "old": "      if (vs !== sig) { sig = vs; render(view); } else acts = collectActs(view);\n",
     "new": "",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "H1-stale-editor-acts-press",
-    "file": "src/ui/enhancedPorts.js",
+    "file": "src/ui/enhanced/enhancedPorts.js",
     "old": "const live = (fn) => (...a) => (w.editor === ed ? fn(...a) : undefined);",
     "new": "const live = (fn) => fn;",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "H2-field-lets-the-browser-steal",
-    "file": "src/ui/enhancedPort.js",
+    "file": "src/ui/enhanced/enhancedPort.js",
     "old": "      swallowBrowserKey(e);   // AUDIT 27h H2: ...but F5, F6 and F11 are still not the browser's - the hosts' swallow never heard them here, and F5 reloaded the page (chatPanel.js's own guard)\n",
     "new": "",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "H3-clamped-value-left-standing",
-    "file": "src/ui/enhancedPort.js",
+    "file": "src/ui/enhanced/enhancedPort.js",
     "old": "      sig = '';   // AUDIT 27h H3: repainted from the model - a value clamped to the one already set changes no view, and \"999\" stood in the field\n",
     "new": "",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "H4-typed-text-lost-in-a-rebuild",
-    "file": "src/ui/enhancedPort.js",
+    "file": "src/ui/enhanced/enhancedPort.js",
     "old": "      if (kept.dirty) nf.value = kept.value;\n",
     "new": "",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "H5-body-scroll-resets",
-    "file": "src/ui/enhancedPort.js",
+    "file": "src/ui/enhanced/enhancedPort.js",
     "old": "    main.dataset.scrollKey = `body:${view.title ?? ''}`;   // AUDIT 27h H5: the body keeps its place too - each step's rebuild put a phone's scrolled editor back at the top, the held spinner out from under the finger\n",
     "new": "",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "H6-pad-release-unheard",
-    "file": "src/ui/enhancedPort.js",
+    "file": "src/ui/enhanced/enhancedPort.js",
     "old": "        spin.addEventListener('pointerup', onRelease, { once: true });\n",
     "new": "",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "H7-press-before-the-commit",
-    "file": "src/ui/enhancedPort.js",
+    "file": "src/ui/enhanced/enhancedPort.js",
     "old": "      if (b && !b.disabled) commitTyped();",
     "new": "",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "B1-hotbar-socket-inherits-a-world-press",
-    "file": "src/ui/enhancedHotbar.js",
+    "file": "src/ui/enhanced/enhancedHotbar.js",
     "old": "  hbTook = null;   // AUDIT 27h B1 (HB1c's twin)",
     "new": "  // AUDIT 27h B1 (HB1c's twin)",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   },
   {
     "name": "B1-hotbar-socket-swallows-any-release",
-    "file": "src/ui/enhancedHotbar.js",
+    "file": "src/ui/enhanced/enhancedHotbar.js",
     "old": "node.addEventListener('mouseup', (e) => { if (hbTook?.node === node && hbTook.button === e.button) e.stopPropagation(); });",
     "new": "node.addEventListener('mouseup', (e) => { if (editable()) e.stopPropagation(); });",
     "tests": [
-      "test/audit27h.test.js"
+      "test/ui/enhanced/audit27h.test.js"
     ]
   }
 ]

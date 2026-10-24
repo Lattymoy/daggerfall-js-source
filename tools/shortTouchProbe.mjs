@@ -18,6 +18,8 @@ const SCREENS = [
   ['AYN Thor top screen (1920x1080 @ 2.625)', 731, 411],
   ['short handheld (1920x1080 @ 2.75)', 698, 393],
   ['Pixel 5 landscape', 851, 393],
+  ['ASUS ROG Xbox Ally X (1920x1080 @ 1.5) - TALL-TOUCH', 1280, 720],
+  ['Ally X at 2.25 (a narrowed page)', 853, 480],
   ['handheld with the toolbar showing', 731, 355],
 ];
 const DOORS = ['Continue', 'New Game', 'Load Game', 'Online', 'Test Room', 'Settings'];

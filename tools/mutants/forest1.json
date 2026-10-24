@@ -1,236 +1,237 @@
 [
   {
     "name": "FOREST1-field-north-up",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "const ox = mapPixelX * WORLD_MAP_TILE_DIM, oz = -mapPixelY * WORLD_MAP_TILE_DIM;",
     "new": "const ox = mapPixelX * WORLD_MAP_TILE_DIM, oz = mapPixelY * WORLD_MAP_TILE_DIM;",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-field-on-its-own-tile",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "g[j * n + i] = forestAt(ox + i * L, oz + j * L);",
     "new": "g[j * n + i] = forestAt(ox + 1 + i * L, oz + j * L);",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-no-grid",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "inset: Object.freeze([0.1, 0.9])",
     "new": "inset: Object.freeze([0, 0])",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-no-grid-z",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "const mz = (y + in0 + (in1 - in0) * tileDraw(wx, wz, 3)) * scale;",
     "new": "const mz = (y + in0) * scale;",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-trees-in-the-woods",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "const pool = roll < tree ? trees : cover;",
     "new": "const pool = roll < under ? trees : cover;",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-every-tree-record",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "const record = pool[Math.floor(tileDraw(wx, wz, 1) * pool.length)];",
     "new": "const record = pool[0];",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-undergrowth",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "undergrowth: 0.12,",
     "new": "undergrowth: 0,",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-towns-in-fields",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "pull += p.hide ? k : -k;",
     "new": "pull += k;",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-every-place-a-clearing",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "const clear = [opts.locationRect, ...pois]",
     "new": "const clear = [opts.locationRect]",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-pull-fades-at-every-edge",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "Math.min(x, y, tDim - 1 - x, tDim - 1 - y)",
     "new": "Math.min(tDim - 1 - x, tDim - 1 - y)",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-pull-max-exclusive",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "x - (p.xMax - 1)",
     "new": "x - p.xMax",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-town-fields-near",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "clear: Object.freeze({ near: 6,",
     "new": "clear: Object.freeze({ near: 12,",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-deserts-keep-dfu",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "const forestsFor = (forests, archive, climateType) => !!forests && climateType !== CLIMATE_TYPE_DESERT && !!TREE_RECORDS[archive];",
     "new": "const forestsFor = (forests, archive, climateType) => !!forests && !!TREE_RECORDS[archive];",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-on-the-ground-there",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "y: groundAt(heightmapData, mx, mz) - steepness / SLOPE_SINK_RATIO, z: mz, wood",
     "new": "y: at(x, y) - steepness / SLOPE_SINK_RATIO, z: mz, wood",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-ground-shares",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "const ground = FOREST.ground[tilemapData[ti] & 0x3f];",
     "new": "const ground = FOREST.ground[2];",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-beach-line",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "if (sampleHeight((opts.beach ?? heightmapData)[hy + hx * hDim]) < SCALED_BEACH_ELEVATION) return null;   // AUDIT LANDFORMS II H2\n\n    const wood",
     "new": "const wood",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-steepness",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "if (g2 > TAN_MAX_STEEP_SQ) return null;",
     "new": "if (false) return null;",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-tracks",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "if (!ground || paths?.[ti]) return null;",
     "new": "if (!ground) return null;",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-tile-dice",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "const roll = tileDraw(wx, wz, 0);",
     "new": "const roll = tileDraw(flats.length, 0, 0);",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-kernel-hidden-flag",
-    "file": "src/world/terrainGen.js",
-    "old": "hide: !!forests.hidden }",
-    "new": "hide: true }",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "[{ ...locationRect, hide: !!hidden }]",
+    "new": "[{ ...locationRect, hide: true }]",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-kernel-location-a-place",
-    "file": "src/world/terrainGen.js",
-    "old": "...(hasLocation && locationRect ? [{ ...locationRect, hide: !!forests.hidden }] : []),",
+    "file": "src/world/terrain/terrainGen.js",
+    "old": "...(hasLocation && locationRect ? [{ ...locationRect, hide: !!hidden }] : []),",
     "new": "",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-kernel-scenery-no-place",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": ".filter((p) => p.hide !== false)",
     "new": ".filter(() => true)",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-kernel-footprint",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "({ rect: r, bounds: b }) => (b",
     "new": "({ rect: r, bounds: b }) => (false",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-host-gate-clear",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "      if (pointNearGate(gateClear, px, py, f.x, f.z, WOD_FLAT_GATE_CLEAR_M)) continue;\n",
     "new": "",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-host-rocks",
-    "file": "src/scenes/world.js",
-    "old": "      if (forests && insideRocks(pixelRocks, f.x, f.z)) continue;\n",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      if ((forests || (jungle && f.archive === JUNGLE_ARCHIVE)) && insideRocks(pixelRocks, f.x, f.z)) continue;   // AUDIT BANTHA1 LAY-4: and the jungle's, whatever the woods' switch\n",
     "new": "",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "FOREST1-logging-in-the-woods",
     "file": "src/scenes/treeHost.js",
-    "old": "const flats = woods.length ? woods : all;",
-    "new": "const flats = all;",
+    "old": "const flats = (woods.length ? woods : all).filter(",
+    "new": "const flats = all.filter(",
+    "note": "JUNGLE-WOODS (PIN MOVED): the rock check rides the woods' line - the mutation is the woods unpreferred, as it was",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   },
   {
@@ -239,7 +240,7 @@
     "old": "if (pageParam('forests', search) === 'off' && !isOnlinePage(search)) return false;",
     "new": "if (pageParam('forests', search) === 'off') return false;",
     "tests": [
-      "test/forest1.test.js"
+      "test/systems/forest1.test.js"
     ]
   }
 ]

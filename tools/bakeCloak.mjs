@@ -5,19 +5,19 @@
 //
 // MW-CLOAK1 (2026-10-09, Mac: "2. The new cloak and its textures. Note: The new cloak will need bones to animate with
 // the character movement"). One mesh, hung from the shoulders down the back to the calves, in eight paintings - a mesh
-// per painting, each naming its own (src/characters/ownClothingModels.js CLOAK_PAINTINGS).
+// per painting, each naming its own (src/characters/ownModels/ownClothingModels.js CLOAK_PAINTINGS).
 //
 //   THE STEEL PLATE'S SCENE. The cloak came out of the Blender file the steel plate did ("New Ship.blend"), fitted on
 //   the same body: its axes are Morrowind's (front +Y - the cloak stands wholly behind, y -21.7 to -1.4), its placement
 //   the scene's, and SCENE_FROM_BIND stands it on retail's bind as it stands the plate (tools/bakeSteelPlate.mjs).
 //
-//   IT HAS BONES - SKINNED AT BAKE TIME, as the plate is (MW-STEEL4): from the shoulders to the waist it rides the
-//   spine as the steel breastplate does (the pelvis, the spine to the neck, the clavicles at its shoulders), and from
-//   the waist down it HANGS OVER that (tools/skinWeights.mjs, mode 'over'): each thigh takes a growing share of its
-//   own side, to 0.85 at the hem, split across the middle's 20 units (10 either side) - so the cloak walks with the legs, the side over
-//   the leg stepping back going back with it, without riding a leg outright and tearing at the middle. Half at the hem
-//   was tried first and lost: posed on retail's rig in a stride (the back thigh 30 degrees, its knee 45), the trailing
-//   calf came through the hem; at 0.85 the hem stays behind it.
+//   ONE BONE, THE CHEST (MW-CAPE-RIGID, 2026-10-14, Mac: "Remove all waypaiting from capes, attach cape mesh to
+//   chestbone. So it exclusively moves with the chest bone and no other bone with effect the vertices of the cape").
+//   Every vertex is skinned to CHEST_BONE at weight 1 and to nothing else, so the cloak moves as one rigid sheet with the
+//   chest. It was skinned over the spine, the clavicles and both thighs (MW-CLOAK1's hang, tools/skinWeights.mjs mode
+//   'over'); that painting is gone whole. It stays a skinned NIF of one bone, not a rigid part on the Chest node:
+//   retail's bind (RETAIL_SKELETON) carries Bip01 Spine2's frame and not the Chest node's, and the fits
+//   (src/formats/morrowind/mwCloakFit.js) edit a skinned cloak's batch.
 //
 //   SMOOTHED, TWO LEVELS (MW-CLOAK2, Mac: "I dont like how the cloak isnt smooth around the shoulders"). The export is
 //   140 vertices about five units apart - over the shoulders, where it turns from the back over the top, a face stood
@@ -29,12 +29,11 @@ import { dirname } from 'node:path';
 import { readFbx } from './fbxRead.mjs';
 import { mipChain, writeDds } from './meshTexture.mjs';
 import { skinnedMeshesToNif } from './nifWrite.mjs';
-import { jointWeights } from './skinWeights.mjs';
 import { loopSubdivide } from './meshSubdivide.mjs';
 import { readPng } from './pngIO.mjs';
 import { isMain } from './lib/isMain.mjs';
-import { PLATE_RIG, RETAIL_SKELETON, plateBind, rigSegments, bakeObject } from './bakeSteelPlate.mjs';
-import { CLOAK_PAINTINGS, cloakModel } from '../src/characters/ownClothingModels.js';
+import { RETAIL_SKELETON, plateBind, bakeObject } from './bakeSteelPlate.mjs';
+import { CLOAK_PAINTINGS, cloakModel } from '../src/characters/ownModels/ownClothingModels.js';
 
 /** Mac's export, as committed - the cloak alone, as it came. */
 export const SOURCE = 'src/assets/mw/source/Cloak.fbx';
@@ -51,19 +50,18 @@ export const textureName = (painting) => `cloak_${painting}.dds`;
 export const meshFile = (painting) => `src/assets/mw/meshes/${cloakModel(painting)}`;
 export const textureFile = (painting) => `src/assets/mw/textures/${textureName(painting)}`;
 
-const [, LEFT_THIGH, RIGHT_THIGH] = PLATE_RIG.skirt.bones;
-/** The cloak's rig: the steel breastplate's spine and clavicles, the thighs' share hung over them below the waist. */
-export const CLOAK_RIG = Object.freeze({
-  shape: 'Tri Cloak',
-  bones: Object.freeze([...PLATE_RIG.cuirass.bones, LEFT_THIGH, RIGHT_THIGH]),
-  hang: Object.freeze({ mode: 'over', root: 'Bip01 Pelvis', legs: Object.freeze([LEFT_THIGH.name, RIGHT_THIGH.name]), top: 86, bottom: 29.28, share: 0.85, centre: 10 }),
-});
+/** MW-CAPE-RIGID: the one bone the cloak moves with - the chest (the spine's top, where the clavicles join). */
+export const CHEST_BONE = 'Bip01 Spine2';
+/** The cloak's rig: the chest alone. */
+export const CLOAK_RIG = Object.freeze({ shape: 'Tri Cloak', bones: Object.freeze([CHEST_BONE]) });
 
-/** The cloak's mesh in the scene's placement, smoothed, its weights in `bind` (plateBind), and its bones at their binds. */
+/** The cloak's mesh in the scene's placement, smoothed, every vertex weighted wholly to the chest, and that bone at its
+ *  bind (plateBind). */
 export function cloakRig(tree, bind) {
   const mesh = loopSubdivide(bakeObject(tree, CLOAK_OBJECT, CLOAK_BOX), CLOAK_SUBDIVISIONS);
-  const weights = jointWeights(mesh.positions, rigSegments(CLOAK_RIG.bones, bind), { hang: CLOAK_RIG.hang });
-  return { mesh, weights, bones: CLOAK_RIG.bones.map((b) => ({ name: b.name, bind: bind.get(b.name) })) };
+  if (!bind.get(CHEST_BONE)) throw new Error(`no ${CHEST_BONE} in the skeleton to hang the cloak from`);
+  const weights = Array.from({ length: mesh.positions.length / 3 }, () => [[CHEST_BONE, 1]]);
+  return { mesh, weights, bones: CLOAK_RIG.bones.map((name) => ({ name, bind: bind.get(name) })) };
 }
 
 /** The bake: the committed export, the eight paintings and retail's skeleton in; a NIF and a DDS per painting out, the

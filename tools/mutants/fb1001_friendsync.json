@@ -5,7 +5,7 @@
     "old": "    const me = this._attach(ws).sub || m.acct;",
     "new": "    const me = m.acct;",
     "tests": [
-      "test/fb1001_friendsync.test.js"
+      "test/net/fb1001_friendsync.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (!held || held !== m.asecret) return;   // never minted here",
     "new": "    if (!held) return;   // never minted here",
     "tests": [
-      "test/fb1001_friendsync.test.js"
+      "test/net/fb1001_friendsync.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      const friends = ids([...mine.friends, ...legacy.friends], me).slice(0, FRIENDS_MAX);",
     "new": "      const friends = ids([...legacy.friends], me).slice(0, FRIENDS_MAX);",
     "tests": [
-      "test/fb1001_friendsync.test.js"
+      "test/net/fb1001_friendsync.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    const swap = (id) => (id === old ? me : id);",
     "new": "    const swap = (id) => id;",
     "tests": [
-      "test/fb1001_friendsync.test.js"
+      "test/net/fb1001_friendsync.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    await this.state.storage.delete([acctKey(old), acctSecretKey(old)]);\n",
     "new": "",
     "tests": [
-      "test/fb1001_friendsync.test.js"
+      "test/net/fb1001_friendsync.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "!(Array.isArray(this.expect) ? this.expect.includes(f.acct) : f.acct === this.expect)",
     "new": "!(Array.isArray(this.expect) ? this.expect.at(-1) === f.acct : f.acct === this.expect)",
     "tests": [
-      "test/fb1001_friendsync.test.js"
+      "test/net/fb1001_friendsync.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (this.expect && !(Array.isArray(this.expect)",
     "new": "if (false && !(Array.isArray(this.expect)",
     "tests": [
-      "test/fb1001_friendsync.test.js"
+      "test/net/fb1001_friendsync.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "social = new SocialState({ acct: [storedSession(appStorage())?.id, link.acct].filter(Boolean) });",
     "new": "social = new SocialState({ acct: link.acct });",
     "tests": [
-      "test/fb1001_friendsync.test.js"
+      "test/net/fb1001_friendsync.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    const me = social?.acct;   // FRIENDS-SYNC",
     "new": "    const me = accountId();   // FRIENDS-SYNC",
     "tests": [
-      "test/fb1001_friendsync.test.js"
+      "test/net/fb1001_friendsync.test.js"
     ]
   }
 ]

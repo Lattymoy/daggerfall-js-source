@@ -30,21 +30,25 @@ import { SWING_MODS } from './playerWeapon.js';
 import { enchantChanceToHitMod } from '../systems/enchantments.js';
 import { weaponDamageMods, weaponBlowMods } from '../systems/entityMods.js';
 import { weaponSkillUsed, WEAPONS } from '../characters/weapons.js';
-import { skillsLevel } from '../characters/enemyEntity.js';
+import { skillsLevel } from '../characters/enemy/enemyEntity.js';
 import { equipTableOf, EQUIP_SLOTS } from '../systems/equip.js';
 import { getItemHands, ITEM_HANDS } from '../characters/equipTable.js';
+import { clawMetalDamage } from './clawMetal.js';   // BAL6-GAUNTLETS: the beast's claws take its gauntlets' metal
 
 const int = Math.trunc;
 const clamp = (x) => Math.max(3, Math.min(97, x));   // CalculateSuccessfulHit / pcaaoSuccessfulHit: 3..97
+/** AUDIT MARTIAL L2 F7: the blow modifiers' word that this is the page's estimate - answered, and nothing kept by it
+ *  (systems/entityMods.js registerWeaponBlowMod: no fraction carried, no next-blow window spent). */
+const ESTIMATE = Object.freeze({ unaware: false, estimate: true });
 const STAT_KEYS = Object.freeze(['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck']);
 
 /** The reference foes. A monster's `armorValue` is MobileEnemy.ArmorValue (lower = harder to hit; the part values are that x5,
  *  enemyEntity.js). The human is an EnemyClass entity in mail: 100 - 5 x 8 = 60 on every part. */
 export const REFERENCE_FOES = Object.freeze([
-  { id: 'soft', label: 'Soft monster', isClass: false, armorValue: 6, tip: 'A monster with armour value 6 (30 on every part): rats, imps and most of the early bestiary.' },
-  { id: 'tough', label: 'Tough monster', isClass: false, armorValue: 0, tip: 'A monster with armour value 0: the middle of the bestiary.' },
-  { id: 'armoured', label: 'Armoured monster', isClass: false, armorValue: -10, tip: 'A monster with armour value -10 (-50 on every part): the daedra and the ancient undead.' },
-  { id: 'human', label: 'Human foe', isClass: true, armorValue: null, tip: 'A warrior in mail (60 on every part). Class foes get no monster bonus to be hit, and the overhaul reads a flat 60 off them.' },
+  { id: 'soft', label: 'Soft monster', isClass: false, armorValue: 6, tip: 'A monster with armor value 6 (30 on every part): rats, imps and most of the early bestiary.' },
+  { id: 'tough', label: 'Tough monster', isClass: false, armorValue: 0, tip: 'A monster with armor value 0: the middle of the bestiary.' },
+  { id: 'armoured', label: 'Armored monster', isClass: false, armorValue: -10, tip: 'A monster with armor value -10 (-50 on every part): the daedra and the ancient undead.' },
+  { id: 'human', label: 'Human foe', isClass: true, armorValue: null, tip: 'A warrior in mail (60 on every part). Human foes get no monster bonus to be hit, and the combat overhaul uses a flat 60 for them.' },
 ]);
 
 /** The swings the melee machine offers, and the single release of a bow (WeaponManager: a bow release is StrikeDown). */
@@ -151,6 +155,7 @@ function damageModel(ctx, swing, foe) {
     const h2h = skillValue(entity, SKILLS.HandToHand);
     for (let r = handToHandMinDamage(h2h); r <= handToHandMaxDamage(h2h); r++) rolls.push(r);
     strMod = core.overhaul ? pcaaoDamageModifier(str) : damageModifier(str);
+    matMod = clawMetalDamage(entity);   // BAL6-GAUNTLETS: both cores add it where a weapon's material stands
   } else {
     for (let r = baseDamageMin(weapon); r <= baseDamageMax(weapon); r++) rolls.push(weaponDamageMods(weapon, r));
     matMod = WEAPON_MATERIAL_MODIFIER[weapon.material] ?? 0;
@@ -158,10 +163,14 @@ function damageModel(ctx, swing, foe) {
   }
   const one = (roll) => {
     let d = roll + dmgMods + strMod + matMod;
-    if (!weapon) { if (core.overhaul && d < 1) d = 0; return d + bonusOrPenaltyByEnemyType(entity, foe); }
+    if (!weapon) {
+      if (core.overhaul && d < 1) d = 0;
+      d += bonusOrPenaltyByEnemyType(entity, foe);
+      return entity.isInBeastForm ? d : weaponBlowMods(null, d, entity, foe, ESTIMATE);   // BAL10: both cores read the fists' blow modifiers now - never the beast's claws
+    }
     if (d < 1) d = 0;
     d += bonusOrPenaltyByEnemyType(entity, foe);
-    d = weaponBlowMods(weapon, d, entity, foe, { unaware: false });
+    d = weaponBlowMods(weapon, d, entity, foe, ESTIMATE);
     return core.overhaul ? d : adjustWeaponAttackDamage(entity, foe, d, 0, weapon);
   };
   const finish = (d, critical) => {

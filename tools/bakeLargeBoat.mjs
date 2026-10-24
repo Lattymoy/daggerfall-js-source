@@ -5,13 +5,13 @@
 //
 // SHIPS-2 (2026-10-07, Mac, sending Tiny_Ship.fbx with New Ship 2: "implement both of these new ship placement models,
 // UV Map/Texture, and ensure it matches the love we gave the other new ship model we implemented"): the TINY SHIP, which
-// stands in for Come Sail Away's hull 1, the Large Boat (the mod's `OldSkiffHull` - world/largeBoatModel.js). The scene
+// stands in for Come Sail Away's hull 1, the Large Boat (the mod's `OldSkiffHull` - world/ships/largeBoatModel.js). The scene
 // and why this file is the one committed: tools/bakeCarrack.mjs's header.
 //
 // HER PARTS (`ROLES`): an open boat - her hull a double skin (her outer planking and her ceiling inside it, met at her
 // gunwale's cap, the ceiling open at its foot under her deck), her deck, one mast with its collar where it passes the
 // deck (`mastStep`), a bowsprit, and a rail round her stern (`sternRail`). No rudder, no tiller, no cabin, no gunport:
-// those she is given (world/largeBoatModel.js). Her deck, mast and bowsprit stand on the scene's Y -10.067 and her
+// those she is given (world/ships/largeBoatModel.js). Her deck, mast and bowsprit stand on the scene's Y -10.067 and her
 // hull's origin on -10.091: her centreline is the hull's (AUDIT GN-B6's law), so her mast stands 1.7 cm to port of it -
 // as Mac drew it, and the rig stands on the mast's own axis.
 //
@@ -24,7 +24,7 @@
 // under the sea (the mod's skiff's 0.64), her deck 0.90 m over it and her gunwale 2.25; MIDSHIP 6.24 the middle of her
 // length (to 0.3 cm); CENTRELINE her hull object's own scene Y, to the bit.
 //
-// The output is a JSON a test re-bakes byte for byte (test/ships2_bake.test.js).
+// The output is a JSON a test re-bakes byte for byte (test/tooling/ships2_bake.test.js).
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { readFbx } from './fbxRead.mjs';

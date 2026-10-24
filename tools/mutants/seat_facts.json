@@ -1,0 +1,102 @@
+[
+ {
+  "name": "SEATFACTS-unconfirmed-kept",
+  "file": "server-account/src/townSeats.js",
+  "old": "seats: seats.filter((x) => factConfirmed(x.fact)).map(",
+  "new": "seats: seats.map(",
+  "tests": [
+   "test/server/seat_facts.test.js"
+  ],
+  "note": "an unconfirmed seat kept - the row no answer at all"
+ },
+ {
+  "name": "SEATFACTS-job-dropped",
+  "file": "server-account/src/cron.js",
+  "old": "  ['seat-facts', async (ctx, env) => (seatsSwitchOf(env?.SEATS_OPEN) === 'off' ? 0 : keepSeatFacts(ctx.db, ctx.nowS))],\n",
+  "new": "",
+  "tests": [
+   "test/server/seat_facts.test.js"
+  ],
+  "note": "no clock keeps the facts"
+ },
+ {
+  "name": "SEATFACTS-job-behind-off",
+  "file": "server-account/src/cron.js",
+  "old": "(seatsSwitchOf(env?.SEATS_OPEN) === 'off' ? 0 : keepSeatFacts(ctx.db, ctx.nowS))",
+  "new": "(false ? 0 : keepSeatFacts(ctx.db, ctx.nowS))",
+  "tests": [
+   "test/server/seat_facts.test.js"
+  ],
+  "note": "the facts kept while the seats are shut"
+ },
+ {
+  "name": "SEATFACTS-age-unread",
+  "file": "server-account/src/townSeats.js",
+  "old": "k.of > (seatWroteAt.get(root) ?? -Infinity) && nowS - k.of <= SEAT_FACTS_FRESH_S",
+  "new": "k.of > (seatWroteAt.get(root) ?? -Infinity)",
+  "tests": [
+   "test/server/seat_facts.test.js"
+  ],
+  "note": "a row the stopped clock left answers forever"
+ },
+ {
+  "name": "SEATFACTS-write-age-unread",
+  "file": "server-account/src/townSeats.js",
+  "old": "k.of > (seatWroteAt.get(root) ?? -Infinity) && nowS - k.of <= SEAT_FACTS_FRESH_S",
+  "new": "nowS - k.of <= SEAT_FACTS_FRESH_S",
+  "tests": [
+   "test/server/seat_facts.test.js"
+  ],
+  "note": "a row from before this isolate's write answers after it"
+ },
+ {
+  "name": "SEATFACTS-same-second",
+  "file": "server-account/src/townSeats.js",
+  "old": "k.of > (seatWroteAt.get(root) ?? -Infinity)",
+  "new": "k.of >= (seatWroteAt.get(root) ?? -Infinity)",
+  "tests": [
+   "test/server/seat_facts.test.js"
+  ],
+  "note": "a row of the write's own second taken as after it"
+ },
+ {
+  "name": "SEATFACTS-facts-unkept",
+  "file": "server-account/src/townSeats.js",
+  "old": "    seatFactsKept.set(root, { at: nowS, of: row.of, facts: row.facts });\n",
+  "new": "",
+  "tests": [
+   "test/server/seat_facts.test.js"
+  ],
+  "note": "the row asked on every ask"
+ },
+ {
+  "name": "SEATFACTS-unfit-asked-again",
+  "file": "server-account/src/townSeats.js",
+  "old": "  seatFactsKept.set(root, { at: nowS, of: -Infinity, facts: null });",
+  "new": "  void root;",
+  "tests": [
+   "test/server/seat_facts.test.js"
+  ],
+  "note": "an unfit row asked again on every ask"
+ },
+ {
+  "name": "SEATFACTS-write-clock-unkept",
+  "file": "server-account/src/townSeats.js",
+  "old": "  seatWroteAt.set(root, nowS);   // SEAT-FACTS",
+  "new": "  void nowS;   // SEAT-FACTS",
+  "tests": [
+   "test/server/seat_facts.test.js"
+  ],
+  "note": "a write here not remembered - the row from before it answers"
+ },
+ {
+  "name": "SEATFACTS-overload-swallowed",
+  "file": "server-account/src/townSeats.js",
+  "old": "catch (e) { if (d1Overloaded(e)) throw e; return null; }",
+  "new": "catch { return null; }",
+  "tests": [
+   "test/server/seat_facts.test.js"
+  ],
+  "note": "an overloaded database taken for no row, and the rows read behind it"
+ }
+]

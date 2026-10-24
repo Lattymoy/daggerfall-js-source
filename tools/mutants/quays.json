@@ -5,7 +5,7 @@
     "old": "  const theta = Math.atan2(nz, -nx);",
     "new": "  const theta = Math.atan2(-nz, -nx);",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const zSign = fz >= 0 ? 1 : -1;",
     "new": "  const zSign = 1;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  return [dx * c - dz * s, dx * s + dz * c];",
     "new": "  return [dx * c + dz * s, dx * s + dz * c];",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  const x0 = frame.halfWidth + QUAY_GAP, x1 = x0 + QUAY_WIDTH;",
     "new": "  const x0 = frame.halfWidth, x1 = x0 + QUAY_WIDTH;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  const z0 = frame.z0 - QUAY_ENDS, z1 = frame.z1 + QUAY_ENDS;",
     "new": "  const z0 = frame.z0, z1 = frame.z1;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (!Number.isFinite(g)) { unbuilt = true; return NaN; }",
     "new": "    if (!Number.isFinite(g)) { return NaN; }",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  const footOf = (lx, lz) => { const g = ground(lx, lz); return Math.max(-PILE_DEPTH, Number.isFinite(g) ? g - 0.3 : -PILE_DEPTH); };",
     "new": "  const footOf = (lx, lz) => { const g = ground(lx, lz); return Number.isFinite(g) ? g - 0.3 : -PILE_DEPTH; };",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      if (foot < deck - QUAY_DECK_T - 0.4) piles.push([lx, lz, foot]);",
     "new": "      piles.push([lx, lz, foot]);",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  pileRow(x1 - PILE_R, z0 + PILE_R, z1 - PILE_R);\n",
     "new": "",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "x1: x1 + t + (g <= deck + 2 * STEP_M ? JETTY_LAND : 0), z0",
     "new": "x1: x1 + t, z0",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   },
@@ -96,7 +96,7 @@
     "old": "    if (g >= deck - STEP_M) {",
     "new": "    if (g >= deck + STEP_M) {",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "      ramp = { x0: x1 + t, x1: x1 + t + end, y0: deck, y1: endY, z0: jetty.z0, z1: jetty.z1 };",
     "new": "      ramp = null;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "        if (y <= gs + 0.05) { end = s; endY = Math.max(y, gs); break; }",
     "new": "        if (y <= gs + 0.05) { end = s; endY = y; break; }",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "        if (y <= gs + 0.05) { end = s; endY = Math.max(y, gs); break; }",
     "new": "        if (y <= gs - 50) { end = s; endY = Math.max(y, gs); break; }",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "  for (let t = 0; t <= JETTY_MAX && !jetty; t += JETTY_STEP) {",
     "new": "  for (let t = 0; t <= JETTY_MAX * 3 && !jetty; t += JETTY_STEP) {",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "    const lx = x1 - 0.9 - r() * 1.2;",
     "new": "    const lx = x0 + 0.5 + r() * 1.2;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "    if (Math.abs(lz - zJ) < JETTY_WIDTH / 2 + 1 || Math.abs(lz) < GANGWAY_LANE || Math.abs(lz - z0) < 1.6 || Math.abs(lz - z1) < 1.6) continue;",
     "new": "    if (Math.abs(lz) < GANGWAY_LANE || Math.abs(lz - z0) < 1.6 || Math.abs(lz - z1) < 1.6) continue;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   },
@@ -160,7 +160,7 @@
     "old": "  const r = mulberry32(hash32(keyHash(key), index >>> 0, QUAY_SALT));",
     "new": "  const r = mulberry32(hash32(QUAY_SALT));",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "export const lanternHead = (lx, lz, deck) => [lx - LANTERN_ARM, deck + LANTERN_UP - LANTERN_DROP, lz];",
     "new": "export const lanternHead = (lx, lz, deck) => [lx, deck + LANTERN_UP - LANTERN_DROP, lz];",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "    if (d > DOCK_REACH_M || (best && d >= best.d)) continue;",
     "new": "    if (best && d >= best.d) continue;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "    if (Math.abs(wrap(ship.yaw - yaw)) > DOCK_ANGLE * DEG) continue;",
     "new": "",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "    const yaw = ahead ? b.berth.yaw : wrap(b.berth.yaw + Math.PI);",
     "new": "    const yaw = b.berth.yaw;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "    if (b.free === false) continue;",
     "new": "",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "    const at = alongside(b.berth, ship.hull, b.hull ?? BERTH_HULL);",
     "new": "    const at = b.berth.pos;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "  return !!dock && dock.d <= FAST_M && Math.abs(wrap(ship.yaw - dock.yaw)) <= FAST_DEG * DEG;",
     "new": "  return !!dock && dock.d <= FAST_M;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "  const step = Math.min(WARP_SPEED * t, d * ease);",
     "new": "  const step = d * ease;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "  return { pos: [pos[0] + dx * k, pos[1] + dz * k], yaw: wrap(yaw + wrap(dock.yaw - yaw) * Math.max(k, ease)) };",
     "new": "  return { pos: [pos[0] + dx * k, pos[1] + dz * k], yaw };",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "  return sx * landward[0] + sz * landward[1] >= 0 ? 1 : -1;",
     "new": "  return sx * landward[0] + sz * landward[1] >= 0 ? -1 : 1;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -259,8 +259,8 @@
     "old": "  const off = hullSize(hull).halfWidth - berthSize(harbourHull).halfWidth;",
     "new": "  const off = 0;",
     "tests": [
-      "test/quays.test.js",
-      "test/shiplife.test.js"
+      "test/systems/naval/quays.test.js",
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -269,8 +269,8 @@
     "old": "      return { hold: { pos: alongside(b, ship.hull, hb.hull), yaw: b.yaw } };   // QUAYS: her side to its quay",
     "new": "      return { hold: { pos: b.pos, yaw: b.yaw } };   // QUAYS: her side to its quay",
     "tests": [
-      "test/quays.test.js",
-      "test/shiplife.test.js"
+      "test/systems/naval/quays.test.js",
+      "test/systems/naval/shiplife.test.js"
     ]
   },
   {
@@ -279,7 +279,7 @@
     "old": "  m.box(WOOD, [(q.x0 + q.x1) / 2, deck - t / 2, (q.z0 + q.z1) / 2], [q.x1 - q.x0, t, q.z1 - q.z0], 0.5);",
     "new": "",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -288,7 +288,7 @@
     "old": "    m.box(GLOW, [hx, hy, hz], [0.18, 0.32, 0.18]);",
     "new": "",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -297,7 +297,7 @@
     "old": "  m.box(WOOD, [0, 0.04, 0.5], [0.9, 0.08, 1], 1);",
     "new": "  m.box(WOOD, [0, 0.04, 1], [0.9, 0.08, 2], 1);",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -306,7 +306,7 @@
     "old": "      if (!h || h.harbour !== q.harbour || far) takeDown(q);",
     "new": "      if (!h || h.harbour !== q.harbour) takeDown(q);",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -315,7 +315,7 @@
     "old": "      if (!h || h.harbour !== q.harbour || far) takeDown(q);",
     "new": "      if (!h || far) takeDown(q);",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -324,7 +324,7 @@
     "old": "        if (Math.hypot(h.harbour.mouth[0] - feet[0], h.harbour.mouth[1] - feet[2]) > QUAY_STAND_M) continue;",
     "new": "",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -333,7 +333,7 @@
     "old": "    if (deps.mode() !== 'exterior') { if (quays.size) destroyAll(); return; }",
     "new": "",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -342,7 +342,7 @@
     "old": "    if (!b.plan) { b.retryAt = now() + QUAY_RETRY_S; return; }",
     "new": "    if (!b.plan) { return; }",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -351,7 +351,7 @@
     "old": "    try { deps.collider()?.removeBucket?.(b.bucket); } catch { /* the collider went with the scene */ }",
     "new": "",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -360,7 +360,7 @@
     "old": "if (b.stood && !b.dead) standCollider(b); }",
     "new": "if (b.stood && b.dead) standCollider(b); }",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   },
@@ -370,7 +370,7 @@
     "old": "    return out.sort((a, b) => a.d - b.d).slice(0, QUAY_LIGHTS_MAX).map((o) => o.l);",
     "new": "    return out.map((o) => o.l);",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -379,7 +379,7 @@
     "old": "        if (d <= QUAY_LIGHT_REACH) out.push({ d, l });",
     "new": "        out.push({ d, l });",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -388,7 +388,7 @@
     "old": "    if (gangwayGpu && !gangwayGpu.pending) for (const w of ways) { r.drawMesh(gangwayGpu, gangwayMatrix(w.foot, w.head), null); n++; }",
     "new": "",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -397,212 +397,212 @@
     "old": "  const yaw = Math.atan2(dx, dz), pitch = -Math.atan2(dy, flat);",
     "new": "  const yaw = Math.atan2(dx, dz), pitch = 0;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "QUAY-host-berth-free-of-mine",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    return !(b && boatAtBerth(b, null));   // QUAYS: nor a boat of mine or another player's lying at it - none moors into her",
     "new": "    return true;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "QUAY-host-sailing-by-takes-berth",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (Math.hypot(v[0], v[2]) < BERTH_WAY) return true;",
     "new": "      return true;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "QUAY-host-dock-moored",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (r && r.harbour === key && r.berth === i && r.kind === 'moored') return false;\n      if (e.ship.damage.state",
     "new": "      if (e.ship.damage.state",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "QUAY-host-warp-under-sail",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!enabled || !pose || !struck || oars || boarding || Math.hypot(pose.velocity[0], pose.velocity[2]) > DOCK_WAY || hostileNearMe()) { warping = null; return null; }",
     "new": "    if (!enabled || !pose || oars || boarding || Math.hypot(pose.velocity[0], pose.velocity[2]) > DOCK_WAY || hostileNearMe()) { warping = null; return null; }",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "QUAY-host-warp-at-the-oars",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!enabled || !pose || !struck || oars || boarding || Math.hypot(pose.velocity[0], pose.velocity[2]) > DOCK_WAY || hostileNearMe()) { warping = null; return null; }",
     "new": "    if (!enabled || !pose || !struck || boarding || Math.hypot(pose.velocity[0], pose.velocity[2]) > DOCK_WAY || hostileNearMe()) { warping = null; return null; }",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "QUAY-host-warp-at-speed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!enabled || !pose || !struck || oars || boarding || Math.hypot(pose.velocity[0], pose.velocity[2]) > DOCK_WAY || hostileNearMe()) { warping = null; return null; }",
     "new": "    if (!enabled || !pose || !struck || oars || boarding || hostileNearMe()) { warping = null; return null; }",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "QUAY-host-not-put-off",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      putOff(dock.key, dock.index);\n",
     "new": "",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "QUAY-host-said-every-step",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (warping?.k !== k) {\n      warping = { k, fast: madeFast({ pos: pose.position, yaw }, dock) };",
     "new": "    if (true) {\n      warping = { k, fast: madeFast({ pos: pose.position, yaw }, dock) };",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "QUAY-host-never-fast",
-    "file": "src/scenes/navalHost.js",
-    "old": "      warping.fast = true;\n      deps.say?.(`Made fast at ${portWords(dock.name)}.`, 3);",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      warping.fast = true;\n      deps.say?.(`Moored at ${portWords(dock.name)}.`, 3);",
     "new": "      warping.fast = true;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "QUAY-host-docked-anywhere",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!d || !madeFast({ pos: p, yaw }, d)) return null;",
     "new": "    if (!d) return null;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "QUAY-host-fleet-not-told",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (at != null) { deps.dockedPort(b, at); continue; }",
     "new": "      if (at != null) { continue; }",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   },
   {
     "name": "QUAY-host-gangway-foot-at-the-berth",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const [fx, fz] = quayToScene(frame, f.x, hz);",
     "new": "    const [fx, fz] = quayToScene(frame, 0, hz);",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   },
   {
     "name": "QUAY-host-gangway-any-look",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const facing = (dir) => !lf || lf[0] * dir[0] + lf[2] * dir[1] >= GANGWAY_FACING;",
     "new": "    const facing = () => true;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   },
   {
     "name": "QUAY-host-gangway-ashore-anywhere",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (Math.hypot(g.deckAt[0] - feet[0], g.deckAt[2] - feet[2]) <= GANGWAY_ASHORE && facing(g.landward)) return { ...g, way: 'ashore' };",
     "new": "        if (facing(g.landward)) return { ...g, way: 'ashore' };",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   },
   {
     "name": "QUAY-host-gangway-not-taken",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!e) { const g = boatTrigger ? null : gangwayInReach(); return g ? takeGangway(g) : false; }",
     "new": "    if (!e) return false;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   },
   {
     "name": "QUAY-host-gangway-press-not-said",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    return !!(boardableOnFoot() || (!boatTrigger && gangwayInReach()));",
     "new": "    return !!boardableOnFoot();",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   },
   {
     "name": "QUAY-host-ashore-in-the-sea",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      deps.board?.placePlayer?.([...g.ashore], Math.atan2(g.landward[0], g.landward[1]));",
     "new": "      deps.board?.placePlayer?.([g.ashore[0], deps.seaY(), g.ashore[2]], Math.atan2(g.landward[0], g.landward[1]));",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   },
   {
     "name": "QUAY-host-hint-every-frame",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (k && k !== gangwaySaid) deps.say?.(",
     "new": "    if (k) deps.say?.(",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "QUAY-host-summon-at-the-point",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (d < bestD) { const at = alongside(b, hull, h.harbour.hull); bestD = d;",
     "new": "        if (d < bestD) { const at = b.pos; bestD = d;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "QUAY-csa-warp-way-kept",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (w) {\n        state.MoveVectorCurrent = [0, 0, 0];",
     "new": "      if (w) {",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "QUAY-csa-warp-ignored",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        setPositionChecked(t, [f(w.pos[0]), t.position[1], f(w.pos[1])], log);",
     "new": "",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "QUAY-csa-oars-unsaid",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      const w = deps.warp?.(boat, { struck: state.sailPosition === 0, oars: vSqrMagnitude(state.MoveVectorTarget) > 0 || state.TurnTarget !== 0, dt: dt() }) ?? null;",
     "new": "      const w = deps.warp?.(boat, { struck: state.sailPosition === 0, oars: false, dt: dt() }) ?? null;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -611,7 +611,7 @@
     "old": "      const berth = n?.freeBerth?.(rec.hull) ?? null;",
     "new": "      const berth = n?.freeBerth?.() ?? null;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -620,7 +620,7 @@
     "old": "        docked: at.where === 'here' || at.where === 'sailing' ? n0()?.dockedAt?.(at.boat) ?? null : at.where === 'away' ? rec.port?.name ?? null : null,",
     "new": "        docked: null,",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -629,16 +629,16 @@
     "old": "    case 'here': return s.docked != null ? {",
     "new": "    case 'here': return false ? {",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "QUAY-fleet-page-away-unsaid",
     "file": "src/ui/fleetPage.js",
-    "old": "      if (s.docked != null) return { state: 'Made fast', tone: 'is-away',",
-    "new": "      if (false) return { state: 'Made fast', tone: 'is-away',",
+    "old": "      if (s.docked != null) return { state: 'Moored', tone: 'is-away',",
+    "new": "      if (false) return { state: 'Moored', tone: 'is-away',",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   },
@@ -648,7 +648,7 @@
     "old": "if (lightsOnAt(minute)) for (const l of quays?.lights() ?? []) csaLit.push(",
     "new": "for (const l of quays?.lights() ?? []) csaLit.push(",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   },
@@ -658,7 +658,7 @@
     "old": "    warp: (boat, s) => naval?.warp?.(boat, s) ?? null,   // QUAYS: her hands warping her in alongside a harbour's quay\n",
     "new": "",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -667,7 +667,7 @@
     "old": "    quays?.destroyAll();   // QUAYS: and the quays - stood again off the harbours found in the new one\n",
     "new": "",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   }
 ]

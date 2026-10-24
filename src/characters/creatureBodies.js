@@ -1,13 +1,13 @@
 // @ts-check
 // MWNPC9 (2026-10-09, the MW-NPC arc's ninth slice - bible/04-Characters/Morrowind-NPCs.md section 14b): DAGGERFALL'S
-// CREATURES, MATCHED TO MORROWIND'S. Every creature mobile (characters/mobileTypes.js, 0-42) is either matched to the
+// CREATURES, MATCHED TO MORROWIND'S. Every creature mobile (characters/mobile/mobileTypes.js, 0-42) is either matched to the
 // Morrowind creature that stands for it - an ordered list of CREA ids, the first the attached masters carry building
 // its body (combat/fpArm.js buildCreatureBody) - or a DECLARED MISS with its reason, keeping its Daggerfall sprite. The
 // ids are the records' own, read off UESP's creature tables (2026-10-09), never recalled: Morrowind.esm's, Tribunal's
 // (lich) and Bloodmoon's (BM_spriggan, BM_bear_black, bm_frost_giant, draugr); a master that lacks one refuses the
 // build and the sprite stands, as for any refused body.
-import { MOBILE_TYPES as M } from './mobileTypes.js';
-import { ENEMY_BASICS } from './enemyBasics.js';   // MWNPC13: a spectral's own archive (a named one keeps its sprite)
+import { MOBILE_TYPES as M } from './mobile/mobileTypes.js';
+import { ENEMY_BASICS, isClassEnemyId } from './enemy/enemyBasics.js';   // MWNPC13: a spectral's own archive (a named one keeps its sprite); DEX7: a mod's row a monster's, never a class's
 import { BaseImageFile } from '../formats/baseImageFile.js';   // MWNPC13: the spectral sprite's opacity
 
 /** The match: mobile type -> `{ creature: [CREA ids, first carried wins] }` or `{ miss: reason }`. Every creature
@@ -71,9 +71,40 @@ export const CREATURE_MATCH = Object.freeze({
  *  clock. A look carries it, so every lane standing the look veils it (characters/npcBodies.js `stand`). */
 export const SPECTRAL_VEIL = Object.freeze({ mode: 3, alpha: BaseImageFile.SPECTRAL_ALPHA / 255, t: 0, phase: 0 });
 
-/** The looks, one frozen object a mobile type (a look is a body key - PeerBodies keys it `crea|<ids>`). */
-const LOOKS = new Map(Object.entries(CREATURE_MATCH).filter(([, m]) => m.creature)
-  .map(([t, m]) => [Number(t), Object.freeze({ creature: Object.freeze([...m.creature]), ...(m.veil ? { veil: SPECTRAL_VEIL } : {}), ...(m.flies ? { flies: true } : {}) })]));
+/** A row's look, one frozen object (a look is a body key - PeerBodies keys it `crea|<ids>`). */
+const lookOf = (m) => Object.freeze({ creature: Object.freeze([...m.creature]), ...(m.veil ? { veil: SPECTRAL_VEIL } : {}), ...(m.flies ? { flies: true } : {}) });
+/** The looks, one a mobile type. */
+const LOOKS = new Map(Object.entries(CREATURE_MATCH).filter(([, m]) => m.creature).map(([t, m]) => [Number(t), lookOf(m)]));
+
+/** DEX7 (bible/04-Characters/Enemy-Expansion.md section 10): A MOD'S CREATURES, matched by the classic table's law - a
+ *  mod that adds monsters past the classic ids (characters/enemy/enemyBasics.js registerEnemyRows) registers a row for
+ *  each here, a match or a declared miss, and creatureLook reads them after the classic table. CREATURE_MATCH stays the
+ *  census of DFU's own; a mod names only its own mobiles. A row is refused where the classic table's audits would refuse
+ *  it: a match or a miss, never both; ids as the reader keeps them; and a creature that flies or swims in Daggerfall
+ *  never stood in one that walks (AUDIT MW-NPC D4/D5 - a flyer's row says `flies`, a swimmer has none).
+ *  @type {Map<number, Readonly<{ creature?: string[], miss?: string, veil?: boolean, flies?: boolean }>>} */
+const _modMatch = new Map();
+/** Register a mod's rows: `[mobileType, row]` pairs, each mobile once. */
+export function registerCreatureMatches(rows) {
+  for (const [t, m] of rows) {
+    if (!Number.isInteger(t) || t in CREATURE_MATCH || _modMatch.has(t)) throw new Error(`registerCreatureMatches: mobile ${t} is already named`);
+    if (isClassEnemyId(t)) throw new Error(`registerCreatureMatches: mobile ${t} is a class - a person (foeBodies.js registerPersonFoes), never a creature`);
+    if (!!m.creature === !!m.miss) throw new Error(`registerCreatureMatches: mobile ${t} is a match or a miss, never both`);
+    if (m.creature && !(m.creature.length && m.creature.every((id) => typeof id === 'string' && id === id.toLowerCase() && id.trim() === id))) throw new Error(`registerCreatureMatches: mobile ${t}'s ids as the reader keeps them (lower case, trimmed)`);
+    if (m.miss && !(String(m.miss).length > 4)) throw new Error(`registerCreatureMatches: mobile ${t}'s miss says why`);
+    const b = ENEMY_BASICS[t]?.behaviour ?? 'General';
+    if (m.creature && (b === 'Aquatic' || (b === 'Flying' && !m.flies))) throw new Error(`registerCreatureMatches: mobile ${t} (${b}) needs a Morrowind creature that moves as it does`);
+    _modMatch.set(t, Object.freeze({ ...m, ...(m.creature ? { creature: Object.freeze([...m.creature]) } : {}) }));
+    if (m.creature) LOOKS.set(t, lookOf(m));
+  }
+}
+/** A mobile's row - the classic table's, else a mod's - or null where none names it. */
+export const creatureMatch = (t) => CREATURE_MATCH[t] ?? _modMatch.get(t) ?? null;
+/** The test seam. */
+export function _resetCreatureMatches() {
+  for (const t of _modMatch.keys()) LOOKS.delete(t);
+  _modMatch.clear();
+}
 
 /** The creature foe's look - `{ creature: [ids] }` - or null: a person (a class mobile, 128 and up, is in no row), or a
  *  creature Morrowind has no match for.

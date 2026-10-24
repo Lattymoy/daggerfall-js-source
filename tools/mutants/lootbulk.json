@@ -1,0 +1,38 @@
+[
+  {
+    "name": "MAT-SHOW-heirloom-legendary-takes-the-metal",
+    "file": "src/systems/item/itemInfo.js",
+    "old": "  const whole = parts.material && !bare ? `${parts.material} ${parts.name}` : parts.name;",
+    "new": "  const whole = parts.material ? `${parts.material} ${parts.name}` : parts.name;",
+    "tests": [
+      "test/systems/legacy/legacy4_heirloom.test.js"
+    ]
+  },
+  {
+    "name": "MAT-FILTER-reads-the-raw-metal",
+    "file": "src/ui/storeFilter.js",
+    "old": "  if (!itemSaysMaterial(it)) return '';",
+    "new": "  if (it?.group !== 'Armor' && it?.group !== 'Weapons') return '';",
+    "tests": [
+      "test/ui/lootbulk.test.js"
+    ]
+  },
+  {
+    "name": "LOOT-BULK-take-all-launders-the-owners-piece",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "toPlayer: taking, stolenFrom: taking ? keeping : null, returnTo",
+    "new": "toPlayer: taking, returnTo",
+    "tests": [
+      "test/ui/lootbulk.test.js"
+    ]
+  },
+  {
+    "name": "CONTAINER-PEEK-asks-the-room-for-every-key",
+    "file": "src/systems/containerPreview.js",
+    "old": "  return (key) => (typeof key === 'string' && (key.startsWith('container:') || key.startsWith('decor:'))",
+    "new": "  return (key) => (typeof key === 'string' && (shut(), true)",
+    "tests": [
+      "test/systems/containerpreview.test.js"
+    ]
+  }
+]

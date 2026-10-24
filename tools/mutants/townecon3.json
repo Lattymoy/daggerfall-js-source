@@ -1,0 +1,142 @@
+[
+  {
+    "name": "TOWNECON3-boom-day",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const MARKET_BOOM_DAY = 4;",
+    "new": "export const MARKET_BOOM_DAY = 3;",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "a Booming town's second market a day sooner"
+  },
+  {
+    "name": "TOWNECON3-destitute-weeks",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "export const MARKET_DESTITUTE_WEEKS = 2;",
+    "new": "export const MARKET_DESTITUTE_WEEKS = 1;",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "a Destitute town's market every week"
+  },
+  {
+    "name": "TOWNECON3-band-unread",
+    "file": "src/systems/livingWorld/trips.js",
+    "old": "if (marketDay(to, d, world.marketBandOf?.(to, d) ?? null))",
+    "new": "if (marketDay(to, d))",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "a carter never asks the market town's band"
+  },
+  {
+    "name": "TOWNECON3-news-days",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "export const TOWN_ECON_NEWS_DAYS = 3;",
+    "new": "export const TOWN_ECON_NEWS_DAYS = 2;",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "the trade told two days a week"
+  },
+  {
+    "name": "TOWNECON3-news-steady",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    if (!kind || !Object.prototype.hasOwnProperty.call(townEconNews(), kind)) return [];",
+    "new": "    if (!kind) return [];",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "a Steady town has news it has no words for"
+  },
+  {
+    "name": "TOWNECON3-news-pool",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "\n  : item.econ ? townEconNews()[item.kind]   // TOWN-ECON TE3: the town's trade",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "the town's trade told in the road's words"
+  },
+  {
+    "name": "TOWNECON3-news-unread",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    if (trade.length) ctx.news = [...(ctx.news ?? []), ...trade];\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "the town's trade never reaches its talk"
+  },
+  {
+    "name": "TOWNECON3-news-language",
+    "file": "src/systems/livingWorld/lines.js",
+    "old": "  if (!_econNews || sig !== _econSig) {",
+    "new": "  if (!_econNews) {",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "the trade's words kept in the language they were first read in"
+  },
+  {
+    "name": "TOWNECON3-patrons-hidden",
+    "file": "src/net/chapterSheet.js",
+    "old": "          if (!s.patron || hallHidden(f)) continue;",
+    "new": "          if (!s.patron) continue;",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "a hidden guild's chapter's patron named"
+  },
+  {
+    "name": "TOWNECON3-patrons-unread",
+    "file": "src/systems/town/townEcon.js",
+    "old": "patrons: host.patronsIn?.(r.town.region) ?? [], lanes: r.lanes }",
+    "new": "patrons: [], lanes: r.lanes }",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "the card never names a patron"
+  },
+  {
+    "name": "TOWNECON3-patrons-max",
+    "file": "src/net/townEconLaw.js",
+    "old": "export const TOWN_TIP_PATRONS_MAX = 2;",
+    "new": "export const TOWN_TIP_PATRONS_MAX = 3;",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "three patrons by name on a phone's card"
+  },
+  {
+    "name": "TOWNECON3-market-unfrozen",
+    "file": "src/scenes/townEconHost.js",
+    "old": "      if (!marketBands.has(k)) {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "a day's market read again under its plans"
+  },
+  {
+    "name": "TOWNECON3-trips-unwired",
+    "file": "src/scenes/world.js",
+    "old": ", marketBandOf: townEcon.marketBandOf,",
+    "new": ",",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "the trips' world never handed the market band"
+  },
+  {
+    "name": "TOWNECON3-living-unwired",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "          econBandOf: () => townEcon.bandOf(livingTown.mapId),   // TOWN-ECON TE3: the town's economy, as its talk tells it (none offline)\n",
+    "new": "",
+    "tests": [
+      "test/systems/livingWorld/townecon_living.test.js"
+    ],
+    "note": "the living town never told its band"
+  }
+]

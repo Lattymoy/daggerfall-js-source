@@ -5,7 +5,7 @@
     "old": "return m ? Math.floor((m.value * WRIT_PAY_PCT) / 100) : 0;",
     "new": "return m ? Math.ceil((m.value * WRIT_PAY_PCT) / 100) : 0;",
     "tests": [
-      "test/prof6_law.test.js"
+      "test/net/prof6_law.test.js"
     ]
   },
   {
@@ -14,8 +14,8 @@
     "old": "export const WRIT_S = 7 * DAY_S;",
     "new": "export const WRIT_S = 6 * DAY_S;",
     "tests": [
-      "test/prof6_law.test.js",
-      "test/prof6_service.test.js"
+      "test/net/prof6_law.test.js",
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -24,8 +24,8 @@
     "old": "export const writUnitsOk = (n) => Number.isSafeInteger(n) && n >= 1 && n <= WRIT_UNITS_MAX;",
     "new": "export const writUnitsOk = (n) => Number.isSafeInteger(n) && n >= 1 && n < WRIT_UNITS_MAX;",
     "tests": [
-      "test/prof6_law.test.js",
-      "test/prof6_service.test.js"
+      "test/net/prof6_law.test.js",
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -34,8 +34,8 @@
     "old": "export const writMaterialOk = (key) => typeof key === 'string' && marketCatalogue().some((m) => m.key === key);",
     "new": "export const writMaterialOk = (key) => typeof key === 'string' && key.length > 0;",
     "tests": [
-      "test/prof6_law.test.js",
-      "test/prof6_service.test.js"
+      "test/net/prof6_law.test.js",
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -44,8 +44,8 @@
     "old": "export const seatWeek = (nowS) => Math.floor((nowS - SEAT_WEEK_ZERO_S) / SEAT_WEEK_S);",
     "new": "export const seatWeek = (nowS) => Math.round((nowS - SEAT_WEEK_ZERO_S) / SEAT_WEEK_S);",
     "tests": [
-      "test/prof6_law.test.js",
-      "test/prof6_service.test.js"
+      "test/net/prof6_law.test.js",
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -54,7 +54,7 @@
     "old": "export const SEAT_WEEK_ZERO_S = Date.UTC(2026, 8, 20, 18, 0, 0) / 1000;",
     "new": "export const SEAT_WEEK_ZERO_S = Date.UTC(2026, 8, 20, 0, 0, 0) / 1000;",
     "tests": [
-      "test/prof6_law.test.js"
+      "test/net/prof6_law.test.js"
     ]
   },
   {
@@ -63,7 +63,7 @@
     "old": "  : q === null);",
     "new": "  : true);",
     "tests": [
-      "test/prof6_law.test.js"
+      "test/net/prof6_law.test.js"
     ]
   },
   {
@@ -72,8 +72,8 @@
     "old": "&& (c.quality == null || (Number.isInteger(piece.quality) && piece.quality >= c.quality));",
     "new": "&& (c.quality == null || (Number.isInteger(piece.quality) && piece.quality > c.quality));",
     "tests": [
-      "test/prof6_law.test.js",
-      "test/prof6_service.test.js"
+      "test/net/prof6_law.test.js",
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -82,8 +82,8 @@
     "old": "export const commissionable = (recipeId) => pieceListable(recipeId) && !commissionUnyielded(recipeId);",
     "new": "export const commissionable = (recipeId) => !!recipeById(recipeId) && !commissionUnyielded(recipeId);",
     "tests": [
-      "test/prof6_law.test.js",
-      "test/prof6_service.test.js"
+      "test/net/prof6_law.test.js",
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -92,7 +92,7 @@
     "old": "export const guildMoveOk = (n) => Number.isSafeInteger(n) && n >= 1 && n <= STORES_MAX;",
     "new": "export const guildMoveOk = (n) => Number.isSafeInteger(n) && n >= 0 && n <= STORES_MAX;",
     "tests": [
-      "test/prof6_law.test.js"
+      "test/net/prof6_law.test.js"
     ]
   },
   {
@@ -101,8 +101,8 @@
     "old": "  postWrit: Object.freeze([0, 1]),",
     "new": "  postWrit: Object.freeze([0]),",
     "tests": [
-      "test/prof6_law.test.js",
-      "test/prof6_service.test.js"
+      "test/net/prof6_law.test.js",
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -111,8 +111,8 @@
     "old": "  storesWithdraw: Object.freeze([0, 1]),",
     "new": "  storesWithdraw: Object.freeze([0, 1, 2]),",
     "tests": [
-      "test/prof6_law.test.js",
-      "test/prof6_service.test.js"
+      "test/net/prof6_law.test.js",
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -121,8 +121,8 @@
     "old": "export const NOTE_BUTTONS = Object.freeze(['party', 'guild', 'duel', 'commission']);",
     "new": "export const NOTE_BUTTONS = Object.freeze(['party', 'guild', 'duel']);",
     "tests": [
-      "test/prof6_law.test.js",
-      "test/prof6_service.test.js"
+      "test/net/prof6_law.test.js",
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  'writ-pay': 'move',",
     "new": "  'writ-pay': 'mint',",
     "tests": [
-      "test/prof6_law.test.js"
+      "test/net/prof6_law.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = ?4), 0) >= ?11\n",
     "new": "",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "        AND (SELECT COUNT(*) FROM guild_writs WHERE guild_id = ?4 AND state = 'open' AND expires_at > ?12) < ?17\n",
     "new": "        AND (SELECT COUNT(*) FROM guild_writs WHERE guild_id = ?4 AND state = 'open' AND expires_at > ?12) <= ?17\n",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "        AND (?5 = 0 OR ${officerSpentSql('?4', '?6')}",
     "new": "        AND (?5 = 1 OR ${officerSpentSql('?4', '?6')}",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "(SELECT SUM(units * pay) FROM guild_writs WHERE guild_id = ${g} AND week = ${week} AND officer = 1), 0)",
     "new": "(SELECT SUM(units * pay) FROM guild_writs WHERE guild_id = ${g} AND week = ${week}), 0)",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "(SELECT SUM(units * pay) FROM guild_writs WHERE guild_id = ${g} AND week = ${week} AND officer = 1), 0)",
     "new": "(SELECT SUM(units * pay) FROM guild_writs WHERE guild_id = ${g} AND officer = 1), 0)",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "        AND NOT EXISTS (SELECT 1 FROM marks_ledger WHERE actor = ?1 AND rid = ?14 || ':wesc')`)",
     "new": "        `)",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "      WHERE EXISTS (SELECT 1 FROM guild_members WHERE player = ?1 AND char_id = ?2 AND guild_id = ?4 AND rank = ?16)\n",
     "new": "      WHERE ?16 = ?16\n",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "w.left_units >= ?4 AND w.left_units = ?12\n",
     "new": "w.left_units >= ?4\n",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "        AND ${spendableSql('?1', '?3', 'w.material')} >= ?4   -- GOLD-MARKET: never gold's units\n",
     "new": "",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "        AND (w.seat IS NOT NULL OR COALESCE((SELECT SUM(qty) FROM guild_prof_stores WHERE guild_id = w.guild_id AND material = w.material), 0) + ?4 <= ?13)",
     "new": "        AND (w.seat IS NOT NULL OR ?13 = ?13)",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "        AND COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) + ?5 <= ?14`)",
     "new": "        AND ?14 = ?14`)",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "    db.prepare(`UPDATE guild_writs SET left_units = left_units - ?3, escrow = escrow - pay * ?3,",
     "new": "    db.prepare(`UPDATE guild_writs SET left_units = left_units - ?3, escrow = escrow - ?3,",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "        state = CASE WHEN left_units = ?3 THEN 'filled' ELSE state END, closed_at = CASE WHEN left_units = ?3 THEN ?4 ELSE closed_at END\n      WHERE id = ?2 AND EXISTS (SELECT 1 FROM guild_writ_fills",
     "new": "        closed_at = CASE WHEN left_units = ?3 THEN ?4 ELSE closed_at END\n      WHERE id = ?2 AND EXISTS (SELECT 1 FROM guild_writ_fills",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "      SELECT guild_id, material, '', '', units, ?4, at FROM guild_writ_fills WHERE filler = ?1 AND rid = ?2 AND n = ?3",
     "new": "      SELECT guild_id, material, filler, char_id, units, ?4, at FROM guild_writ_fills WHERE filler = ?1 AND rid = ?2 AND n = ?3",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "  const tax = saleTaxOn((Number(w.units) - Number(w.left_units)) * Number(w.pay), total);",
     "new": "  const tax = saleTax(total);",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "      FROM guild_writ_fills WHERE filler = ?1 AND rid = ?2 AND n = ?3 AND tax > 0`).bind(me, rid, nonce),",
     "new": "      FROM guild_writ_fills WHERE filler = ?1 AND rid = ?2 AND n = ?3`).bind(me, rid, nonce),",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "        AND COALESCE((SELECT balance FROM guild_marks WHERE guild_id = guild_writs.guild_id), 0) + escrow <= ?4`)",
     "new": "        AND ?4 = ?4`)",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "      db.prepare(`UPDATE guild_writs SET state = 'expired', closed_at = ?2 WHERE id = ?1 AND state = 'open' AND expires_at <= ?2`).bind(w.id, nowS),",
     "new": "      db.prepare(`UPDATE guild_writs SET closed_at = ?2 WHERE id = ?1 AND state = 'open' AND expires_at <= ?2`).bind(w.id, nowS),",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -302,8 +302,8 @@
     "old": "const mayWithdraw = (rank, w, me) => rank === GUILD_RANK_MASTER || (rank != null && writMay(rank, 'postWrit') && w.poster === me);",
     "new": "const mayWithdraw = (rank, w, me) => rank === GUILD_RANK_MASTER || (rank != null && writMay(rank, 'postWrit'));",
     "tests": [
-      "test/prof6_service.test.js",
-      "test/prof6_client.test.js"
+      "test/net/prof6_service.test.js",
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -312,7 +312,7 @@
     "old": "  if (!writMay(Number(a.me.rank), 'writBudget')) return { error: 'guild-rank' };\n",
     "new": "",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ],
     "equivalent": true,
     "why": "the budget's decision asks the Guildmaster's rank itself (an INSERT ... WHERE rank = 0) and answers guild-rank when it writes nothing: this early word spares the write, and changes no answer"
@@ -323,7 +323,7 @@
     "old": "  if (c.id === me) return { error: 'commission-self' };\n",
     "new": "",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -332,7 +332,7 @@
     "old": "        AND (SELECT COUNT(*) FROM commissions WHERE poster = ?1 AND state = 'open' AND expires_at > ?9) < ?13\n",
     "new": "        AND (SELECT COUNT(*) FROM commissions WHERE poster = ?1 AND state = 'open' AND expires_at > ?9) <= ?13\n",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -341,7 +341,7 @@
     "old": "        AND (SELECT COUNT(*) FROM commissions WHERE crafter = ?4 AND state = 'open' AND expires_at > ?9) < ?14\n",
     "new": "        AND ?14 = ?14\n",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -350,7 +350,7 @@
     "old": "      WHERE COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) >= ?8\n        -- AUDIT 31 L1",
     "new": "      WHERE 1 = 1\n        -- AUDIT 31 L1",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -359,7 +359,7 @@
     "old": "  if (wear !== WEAR_WHOLE) return { error: 'commission-worn' };\n",
     "new": "",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -368,8 +368,10 @@
     "old": "        AND EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?2 AND (provenance = ?4 OR provenance2 = ?4))\n        AND NOT EXISTS (SELECT 1 FROM market_listings",
     "new": "        AND NOT EXISTS (SELECT 1 FROM market_listings",
     "tests": [
-      "test/prof6_service.test.js"
-    ]
+      "test/net/prof6_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "INT19: the fill's pieceBusy says a piece not of the crafter's make ('commission-not-made') before the record moves, and a craft's row never changes after - the decision's own guard is the same question asked twice"
   },
   {
     "name": "PROF6-svc-listed-piece-fills",
@@ -377,8 +379,10 @@
     "old": "        AND EXISTS (SELECT 1 FROM products p WHERE p.provenance = ?4 AND p.owner = ?2 AND p.listed = 0 AND p.recipe = commissions.recipe",
     "new": "        AND EXISTS (SELECT 1 FROM products p WHERE p.provenance = ?4 AND p.owner = ?2 AND p.recipe = commissions.recipe",
     "tests": [
-      "test/prof6_service.test.js"
-    ]
+      "test/net/prof6_service.test.js"
+    ],
+    "equivalent": true,
+    "why": "INT19: the fill's pieceBusy says a listed piece before the record moves, and a listing landing between takes the piece out of the crafter's record - the fill's record step (its sequence) then fails whole"
   },
   {
     "name": "PROF6-svc-owner-kept",
@@ -386,8 +390,8 @@
     "old": "    db.prepare(`UPDATE products SET credited = 0, owner = (SELECT poster FROM commissions WHERE id = ?1 AND fn = ?2), listed = 0",
     "new": "    db.prepare(`UPDATE products SET listed = 0",
     "tests": [
-      "test/prof6_service.test.js",
-      "test/prof6_client.test.js"
+      "test/net/prof6_service.test.js",
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -396,8 +400,8 @@
     "old": "    db.prepare(`INSERT OR IGNORE INTO market_deliveries (id, player, char_id, provenance, wear, why, from_region, arrives_at, at)\n      SELECT id, poster, poster_char, provenance, ?3, 'bought', region, ?4, ?4 FROM commissions WHERE id = ?1 AND fn = ?2`).bind(id, nonce, WEAR_WHOLE, nowS),\n",
     "new": "",
     "tests": [
-      "test/prof6_service.test.js",
-      "test/prof6_client.test.js"
+      "test/net/prof6_service.test.js",
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -406,8 +410,8 @@
     "old": "  const tax = saleTax(Number(c.pay));",
     "new": "  const tax = 0;",
     "tests": [
-      "test/prof6_service.test.js",
-      "test/prof6_client.test.js"
+      "test/net/prof6_service.test.js",
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -416,7 +420,7 @@
     "old": "      FROM commissions WHERE id = ?1 AND fn = ?2 AND pay - tax > 0`).bind(id, nonce, day, nowS),",
     "new": "      FROM commissions WHERE EXISTS (SELECT 1 FROM commissions WHERE id = ?1 AND fn = ?2) AND pay - tax > 0`).bind(id, nonce, day, nowS),",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -425,7 +429,7 @@
     "old": "    db.prepare(`UPDATE commissions SET state = 'declined', closed_at = ?2 WHERE poster = ?1 AND state = 'open' AND crafter IS NULL`).bind(me, nowS),\n",
     "new": "",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -434,7 +438,7 @@
     "old": "        AND COALESCE((SELECT balance FROM marks WHERE account = commissions.poster), 0) + pay <= ?4`)",
     "new": "        AND ?4 = ?4`)",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -443,7 +447,7 @@
     "old": "      db.prepare(`UPDATE commissions SET state = 'expired', closed_at = ?2 WHERE (poster = ?1 OR crafter = ?1) AND state = 'open' AND expires_at <= ?2`)\n        .bind(me, nowS),\n",
     "new": "",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -452,7 +456,7 @@
     "old": "        MAX(0, ?6 - COALESCE((SELECT qty FROM prof_stores WHERE player = ?1 AND char_id = ?3 AND material = ?5 AND origin = 'bought'), 0)), ?7, ?8",
     "new": "        0, ?7, ?8",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -461,7 +465,7 @@
     "old": "        MIN(?6, COALESCE((SELECT qty FROM guild_prof_stores WHERE guild_id = ?4 AND material = ?5 AND dep_player = ?1 AND dep_char = ?3), 0)), ?7, ?8",
     "new": "        0, ?7, ?8",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -470,7 +474,7 @@
     "old": "CASE WHEN dep_player = ?1 AND dep_char = ?2 THEN 0 WHEN dep_player = '' THEN 1 ELSE 2 END AS prio",
     "new": "CASE WHEN dep_player = ?1 AND dep_char = ?2 THEN 0 WHEN dep_player = '' THEN 2 ELSE 1 END AS prio",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -479,8 +483,8 @@
     "old": "  if (kind === 'withdraw' && !guildTakeMay(rank, units, await ownDeposit(db, g, key, me, character))) return { error: 'guild-stores-mine' };\n",
     "new": "",
     "tests": [
-      "test/prof6_service.test.js",
-      "test/audit31_service.test.js"
+      "test/net/prof6_service.test.js",
+      "test/net/audit31_service.test.js"
     ]
   },
   {
@@ -489,7 +493,7 @@
     "old": "        AND COALESCE((SELECT SUM(qty) FROM guild_prof_stores WHERE guild_id = ?4 AND material = ?5), 0) + ?6 <= ?9`)",
     "new": "        AND ?9 = ?9`)",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -498,7 +502,7 @@
     "old": "      AND NOT ${guildKeepsSql('?1')}\n",
     "new": "",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -507,7 +511,7 @@
     "old": "      AND NOT ${guildKeepsSql('?1')}   -- PROF6: a guild that keeps its Stores or a writ does not go, so its Marks stay\n",
     "new": "",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -516,7 +520,7 @@
     "old": "    - COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s FROM marks_ledger WHERE dst_kind = 'escrow' OR src_kind = 'escrow'`).first();",
     "new": "    - COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s FROM marks_ledger WHERE kind LIKE 'order-%'`).first();",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -525,7 +529,7 @@
     "old": "INSERT OR IGNORE INTO board_reports (note_id, reporter, at) SELECT note_id, reporter, at FROM board_reports_keep\n  WHERE note_id IN (SELECT id FROM board_notes);\n",
     "new": "",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
@@ -534,25 +538,27 @@
     "old": "  button      TEXT CHECK (button IS NULL OR button IN ('party', 'guild', 'duel', 'commission')),",
     "new": "  button      TEXT CHECK (button IS NULL OR button IN ('party', 'guild', 'duel')),",
     "tests": [
-      "test/prof6_service.test.js"
+      "test/net/prof6_service.test.js"
     ]
   },
   {
     "name": "PROF6-book-fill-unkept",
     "file": "src/net/writBook.js",
-    "old": "        keep({ rid: body.rid, body, item: piece.item, where: piece.where }, key);\n",
-    "new": "",
+    "note": "INT19 (PIN MOVED): re-aimed by content - a fill is no longer kept (the realm act's record is the truth); the fills a tab from before kept are asked again by the settle",
+    "old": "        for (const f of keptOf(key)) {",
+    "new": "        for (const f of []) {",
     "tests": [
-      "test/prof6_client.test.js"
+      "test/net/prof6_client.test.js"
     ]
   },
   {
     "name": "PROF6-book-refused-not-put-back",
     "file": "src/net/writBook.js",
-    "old": "        if (had && !PIECE_GONE.includes(r?.error)) { try { piece.putBack(piece.item, piece.where); } catch (e) { console.warn('[writs] put back', e); } }",
+    "note": "INT19 (PIN MOVED): re-aimed by content - a new fill's refusal is the realm act's undo (realmPieceAct, PROF5-book-piece-lost); the writs' own put back is their settle's",
+    "old": "            else { try { putBack(f.item, f.where); } catch (e) { console.warn('[writs] put back', e); } }",
     "new": "",
     "tests": [
-      "test/prof6_client.test.js"
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -561,7 +567,7 @@
     "old": "          if (r?.ok) { letGo(f.rid, key); try { drop?.(f.item, f.where); } catch (e) { console.warn('[writs] drop', e); } settled++; }",
     "new": "          if (r?.ok) { letGo(f.rid, key); settled++; }",
     "tests": [
-      "test/prof6_client.test.js"
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -570,7 +576,7 @@
     "old": "    if (!kept(r)) ids.delete(k);",
     "new": "    ids.delete(k);",
     "tests": [
-      "test/prof6_client.test.js"
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -579,7 +585,7 @@
     "old": "      try { marks?.set?.(d.balance); } catch { /* the Marks book's own */ }\n",
     "new": "",
     "tests": [
-      "test/prof6_client.test.js"
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -588,7 +594,7 @@
     "old": "    if (d.store && typeof d.store.material === 'string') { try { stores?.apply?.(d.store); } catch { /* the professions' book's own */ } }",
     "new": "",
     "tests": [
-      "test/prof6_client.test.js"
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -597,7 +603,7 @@
     "old": "    if (_busy) return _busyKey === key ? _busy : Promise.resolve({ ok: false, error: 'writ-busy' });",
     "new": "    if (_busy && _busyKey === key) return _busy;",
     "tests": [
-      "test/prof6_client.test.js"
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -606,7 +612,7 @@
     "old": "      const units = () => intOf(st.supply[x.id] ?? most, 1, most);",
     "new": "      const units = () => most;",
     "tests": [
-      "test/prof6_client.test.js"
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -615,7 +621,7 @@
     "old": "    if (x.may) bar.append(withdrawWrit(x));",
     "new": "    bar.append(withdrawWrit(x));",
     "tests": [
-      "test/prof6_client.test.js"
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -624,26 +630,26 @@
     "old": "    if (r?.ok) { w.reload(); return",
     "new": "    if (r?.ok) { return",
     "tests": [
-      "test/prof6_client.test.js"
+      "test/net/prof6_client.test.js"
     ]
   },
   {
     "name": "PROF6-tab-fill-elsewhere",
     "file": "src/ui/workTab.js",
-    "old": "here ? 'Fill it on its card above.' : `Filled at the boards of ${where}.`",
-    "new": "'Fill it on its card above.'",
+    "old": "here ? t('prof.work.yours.fillAbove', 'Fill it on its card above.') : t('prof.work.yours.fillThere', 'Filled at the boards of {where}.', { where })",
+    "new": "t('prof.work.yours.fillAbove', 'Fill it on its card above.')",
     "tests": [
-      "test/prof6_client.test.js",
-      "test/audit31_tabs.test.js"
+      "test/net/prof6_client.test.js",
+      "test/ui/audit31_tabs.test.js"
     ]
   },
   {
     "name": "PROF6-tab-budget-unsaid",
     "file": "src/ui/workTab.js",
-    "old": "              : officer && escrow > (g.left ?? 0) ? `That is past your writ budget this week (${marksText(g.left ?? 0)} left).` : '');\n      said.textContent = `Holds ${marksText(escrow)} of the treasury's ${marksText(g.marks ?? 0)} for up to 7 days. At most",
-    "new": "              : false ? `That is past your writ budget this week (${marksText(g.left ?? 0)} left).` : '');\n      said.textContent = `Holds ${marksText(escrow)} of the treasury's ${marksText(g.marks ?? 0)} for up to 7 days. At most",
+    "old": "              : officer && escrow > (g.left ?? 0) ? pastBudget(g) : '');\n      said.textContent = t('prof.work.writ.said',",
+    "new": "              : false ? pastBudget(g) : '');\n      said.textContent = t('prof.work.writ.said',",
     "tests": [
-      "test/prof6_client.test.js"
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -652,7 +658,7 @@
     "old": "quality: takesQ ? f.quality : null, pay: f.pay,",
     "new": "quality: f.quality, pay: f.pay,",
     "tests": [
-      "test/prof6_client.test.js"
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -661,7 +667,7 @@
     "old": "        if (n.button === 'commission') {",
     "new": "        if (n.button === 'commission-never') {",
     "tests": [
-      "test/prof6_client.test.js"
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -670,7 +676,7 @@
     "old": "    if (yours) body.append(yours);",
     "new": "",
     "tests": [
-      "test/prof6_client.test.js"
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -679,7 +685,7 @@
     "old": "    if (!guildUi.storesAsked) {\n      guildUi.storesAsked = true; guildUi.storesError = null;",
     "new": "    if (true) {\n      guildUi.storesAsked = true; guildUi.storesError = null;",
     "tests": [
-      "test/prof6_client.test.js"
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -688,7 +694,7 @@
     "old": "&& commissionFilledBy(c, { recipe: pieceOfRecipe(it, c.recipe) ? c.recipe : null, quality: it.quality ?? null }) && wearOf(it) === WEAR_WHOLE;",
     "new": "&& commissionFilledBy(c, { recipe: pieceOfRecipe(it, c.recipe) ? c.recipe : null, quality: it.quality ?? null });",
     "tests": [
-      "test/prof6_client.test.js"
+      "test/net/prof6_client.test.js"
     ]
   },
   {
@@ -697,7 +703,7 @@
     "old": "    const prof = professionName(d.track?.profession) || 'profession';\n",
     "new": "    const prof = 'Herbalism';\n",
     "tests": [
-      "test/prof6_client.test.js"
+      "test/net/prof6_client.test.js"
     ],
     "note": "CHAP2a: re-aimed by content - the hall writ's lines stand between the profession and the line."
   },
@@ -707,8 +713,8 @@
     "old": "  return item.group === s.group && item.templateIndex === s.templateIndex && (item.material ?? 0) === (s.material ?? 0)",
     "new": "  return item.group === s.group && item.templateIndex === s.templateIndex",
     "tests": [
-      "test/prof6_client.test.js",
-      "test/audit31_client.test.js"
+      "test/net/prof6_client.test.js",
+      "test/net/audit31_client.test.js"
     ]
   }
 ]

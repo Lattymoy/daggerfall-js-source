@@ -5,7 +5,7 @@
     "old": "    for (const e of p.fx.slice(0, PARTY_FX_MAX)) {",
     "new": "    for (const e of p.fx) {",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      const i = Number.isInteger(e.i) && e.i >= 0 && e.i <= CAST_ICON_MAX ? e.i : null;",
     "new": "      const i = Number.isInteger(e.i) && e.i >= 0 ? e.i : null;",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      fx.push(e.d === 1 ? { i, r, n, d: 1 } : { i, r, n });",
     "new": "      fx.push(e.d ? { i, r, n, d: 1 } : { i, r, n });",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (p.rs === 1) out.rs = 1;",
     "new": "  if (p.rs) out.rs = 1;",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (!b.showIcon || b.bundleType === 'HeldMagicItem') continue;",
     "new": "    if (!b.showIcon) continue;",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  return [...buffs, ...debuffs].slice(0, PARTY_FX_MAX);",
     "new": "  return [...debuffs, ...buffs].slice(0, PARTY_FX_MAX);",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    const most = (b.entries ?? []).reduce((m, e) => Math.max(m, Number(e.roundsRemaining) || 0), 0);",
     "new": "    const most = Number(b.entries?.[0]?.roundsRemaining) || 0;",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (b.selfCast || b.ally) buffs.push({ i, r, n });",
     "new": "    if (b.selfCast) buffs.push({ i, r, n });",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    const n = String(b.name ?? '').replace(/^!+/, '').slice(0, PARTY_FX_NAME_MAX);",
     "new": "    const n = String(b.name ?? '').slice(0, PARTY_FX_NAME_MAX);",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "|| prevH <= 0 || pose?.rest || pose?.rs) return 0;",
     "new": "|| prevH <= 0 || pose?.rest) return 0;",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "|| prevH <= 0 || pose?.rest || pose?.rs) return 0;",
     "new": "|| pose?.rest || pose?.rs) return 0;",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    setCls(card.fx, `dfparty-fx${list.length ? '' : ' off'}`);",
     "new": "    setCls(card.fx, 'dfparty-fx off');",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      const tile = el('span', `dfparty-fxe${e.d ? ' debuff' : ''}`);",
     "new": "      const tile = el('span', 'dfparty-fxe');",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    if (key === card.fxKey) return;\n    card.fxKey = key;",
     "new": "    card.fxKey = key;",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    const key = `${partyFxKey(list)}#${urls.map((u) => (u ? 1 : 0)).join('')}`;",
     "new": "    const key = partyFxKey(list);",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    paintFx(card, m.online ? p?.fx : null);",
     "new": "    paintFx(card, p?.fx);",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    if (healed > 0) floatHeal(card, healed);\n",
     "new": "",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -158,25 +158,25 @@
     "old": "    node.addEventListener?.('animationend', gone);\n",
     "new": "",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
     "name": "PARTY-BUFFS-hud-reading-kept-under-a-window",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "    last.hpSeen = null;   // PARTY-BUFFS: what a window restored (a rest, a level-up, a load, a rise) is no heal to float\n",
     "new": "",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
     "name": "PARTY-BUFFS-hud-heal-never-shown",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  if (heal) showNumber(heal);\n",
     "new": "",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "  if (prev == null || !Number.isFinite(a) || !Number.isFinite(b)) return null;",
     "new": "  if (!Number.isFinite(a) || !Number.isFinite(b)) return null;",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "  return n > 0 ? { kind: 'heal', text: `+${n}`, tag: null } : null;",
     "new": "  return n !== 0 ? { kind: 'heal', text: `+${n}`, tag: null } : null;",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "      ...partyFxField(),   // PARTY-BUFFS: my live spell effects, for the party's cards (net/partyBuffs.js)\n",
     "new": "",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "      ...(playerEntity.isResting ? { rs: 1 } : {}),   // PARTY-BUFFS: resting, mine or followed - what I gain is the night's, no heal to float\n",
     "new": "",
     "tests": [
-      "test/partybuffs.test.js"
+      "test/ui/partybuffs.test.js"
     ]
   }
 ]

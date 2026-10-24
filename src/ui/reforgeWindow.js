@@ -6,33 +6,34 @@
 // Legendary), a row each in its tier's frame; a row pressed shows the piece whole beside the list, and each line the
 // Reforge may roll again carries its own press with the price on it (or why not, in a word or two: "Need 2 more
 // shards", "Not identified") - and SALVAGE - every laddered piece that will break, what it breaks into, and a press
-// that asks before it breaks it ("Break it" / "Keep"). The purse (the Welkynd Shards a press may spend, the gold) and
-// the last word of a press stand in the header.
+// that asks before it breaks it ("Break it" / "Keep"); after them (FB1012d SALVAGE-CLASSIC) every piece that wears
+// Magic the ladder never graded - DFU's own magic - its press "Classic magic", saying why it never breaks. The purse
+// (the Welkynd Shards a press may spend, the gold) and the last word of a press stand in the header.
 //
 // THE BROKER'S SHAPE (ui/brokerWindow.js): a lazy chunk the door (ui/reforgeDoor.js) mounts in its own host -
 // `mountReforgeWindow(host, deps)` answers `{ repaint, unmount }` - its rows the Broker's own classes, so both skins
 // dress it as they dress his (the classic skin lays the Broker's own sheet, `brokerSkinCss`). Everything the window does
 // to the world is handed in: the pack, the payer, the reforge and the salvage (systems/reforge.js, which the host
 // calls) - this file draws and asks, and never touches a pack.
-import { rarityAttr, affixLine, reforgeableLines, RARITIES, tierLabel, imprintLine, powerLine, powerOf, legendaryById, curseLine, honeableLines } from '../systems/lootRarity.js';
-import { cursedKnown, liftPrice, liftRefusal } from '../systems/lootCurse.js';   // LOOT16: the temple's lifting
-import { SCRY_FAMILIES, SCRY_FAMILY_WORDS, SCRY_PRICE, familyPlaces, scryRefusal } from '../systems/lootScry.js';   // LOOT19: scrying
-import { foundAmong, hasSocket, socketsOf, emptySockets, gemLine, affixLabel, ALL_GEM_IDS, GEM_NAMES, SOCKET_EMPTY } from '../systems/lootRarity.js';   // LOOT20: the sockets; GEM1: a list of them, every grade of gem
+import { rarityAttr, affixLine, reforgeableLines, RARITIES, tierLabel, imprintLine, powerLine, powerOf, legendaryById, curseLine, honeableLines } from '../systems/loot/lootRarity.js';
+import { cursedKnown, liftPrice, liftRefusal } from '../systems/loot/lootCurse.js';   // LOOT16: the temple's lifting
+import { SCRY_FAMILIES, SCRY_FAMILY_WORDS, SCRY_PRICE, familyPlaces, scryRefusal } from '../systems/loot/lootScry.js';   // LOOT19: scrying
+import { foundAmong, hasSocket, socketsOf, emptySockets, gemLine, affixLabel, ALL_GEM_IDS, GEM_NAMES, SOCKET_EMPTY } from '../systems/loot/lootRarity.js';   // LOOT20: the sockets; GEM1: a list of them, every grade of gem
 import { gemsHeld, setGemRefusal, unsetGemRefusal, extractGemRefusal, extractPrice } from '../systems/reforge.js';   // GEM1: and the extraction
-import { codexRows, codexSets, codexCount, codexGilded, imprintChoices, imprintRefusal, IMPRINT_PRICE } from '../systems/lootCodex.js';   // LOOT10: the codex's page and the imprint's - GILDED1: and the Gilded rung's rows
+import { codexRows, codexSets, codexCount, codexGilded, imprintChoices, imprintRefusal, IMPRINT_PRICE } from '../systems/loot/lootCodex.js';   // LOOT10: the codex's page and the imprint's - GILDED1: and the Gilded rung's rows
 import { gildedById } from '../systems/gilded.js';
-import { setById } from '../systems/sigilSets.js';
+import { setById } from '../systems/sigil/sigilSets.js';
 import { itemIsIdentified } from '../systems/tradeModes.js';
 import { reforgePrice, reforgeRefusal, salvageShards, salvageRefusal, shardsHeld, shardsText, honePrice, honeRefusal } from '../systems/reforge.js';   // LOOT17: and the hone
-import { inventoryItemImage } from '../systems/itemTemplates.js';
+import { inventoryItemImage } from '../systems/item/itemTemplates.js';
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';
 import { SLOT_BOX, screenDpr } from './iconFit.js';
-import { closeOnOutsideTap } from './enhancedOverlays.js';
+import { closeOnOutsideTap } from './enhanced/enhancedOverlays.js';
 import { overlayAction } from './input.js';
-import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { brokerSkinCss, BROKER_SKIN_STYLE_ID } from './brokerWindow.js';
-import { techniqueDetail } from '../systems/lootRarity.js';   // AUDIT TECH1: a technique line's "what a press does", as the card says it
-import { REFORGE_CSS } from './enhancedPlusStyle.js';   // AUDIT LOOT F6: the window's own rules, beside the Broker's sheet
+import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedStyle.js';
+import { brokerSkinCss, BROKER_SKIN_STYLE_ID, refusePress } from './brokerWindow.js';   // MENU-ORDER: and a refused press that says why
+import { techniqueDetail } from '../systems/loot/lootRarity.js';   // AUDIT TECH1: a technique line's "what a press does", as the card says it
+import { REFORGE_CSS } from './enhanced/enhancedPlusStyle.js';   // AUDIT LOOT F6: the window's own rules, beside the Broker's sheet
 import { isEnhancedPlus } from '../systems/uiSkin.js';
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
@@ -45,60 +46,66 @@ const el = (tag, cls = null, text = null) => {
 
 /** The window's words. */
 export const REFORGE_TITLE = 'The Reforge';
-export const REFORGE_SUB = 'Welkynd Shards and gold roll one line again or hone it up its band · a piece salvaged breaks into shards';   // LOOT17: the hone
+export const REFORGE_SUB = 'Spend Welkynd Shards and gold to remake or improve one line · Salvage breaks a piece into shards';   // LOOT17: the hone
 export const REFORGE_PAGES = Object.freeze({ reforge: 'Reforge', salvage: 'Salvage', imprint: 'Imprint', codex: 'Codex', scry: 'Scry', sockets: 'Sockets', lift: 'Lift Curse' });   // LOOT10: the imprint and the codex; LOOT16: the temple's lifting; LOOT19: scrying; LOOT20: sockets
+/** MENU-ORDER (2026-10-12): each page's picture (ui/menu/menuGlyphs.js). */
+export const REFORGE_PAGE_ICONS = Object.freeze({ reforge: 'anvil', salvage: 'chisel', imprint: 'rune', codex: 'books', scry: 'eye', sockets: 'gem', lift: 'light' });
 /** The pages the guild's window shows when its host names none - never the temple's (LOOT16); LOOT19: and its scryers'. */
 export const REFORGE_GUILD_PAGES = Object.freeze(['reforge', 'salvage', 'imprint', 'codex', 'scry', 'sockets']);   // LOOT20: and its sockets
 /** LOOT20 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 12): THE SOCKETS' PAGE - every piece of the pack with
  *  a socket; picked, its card - an empty socket offers each gem the pack holds, a set one its unsetting, asked first.
  *  GEM1 (bible/06-Systems/Gem-Sockets.md section 3): a row a socket of the piece, and a set one's EXTRACTION beside its
  *  unsetting - the gem out whole, for gold by its grade; setting is free (the pack's card sets too). */
-export const SOCKETS_NONE = 'Nothing in your pack carries a socket - a weapon, a Rare or a Legendary found on a body or in a pile may.';
-export const GEMS_NONE = 'No gem in your pack to set - a Ruby, an Emerald, a Sapphire, a Diamond, Jade, Turquoise, Malachite or Amber, of any grade.';
+export const SOCKETS_NONE = 'Nothing in your pack has a socket. Weapons, Rares and Legendaries found as loot can have one.';
+export const GEMS_NONE = 'You have no gems to set. Any grade of Ruby, Emerald, Sapphire, Diamond, Jade, Turquoise, Malachite or Amber will do.';
 export const GEM_SET = (name, gem) => `Set: the ${GEM_NAMES[gem] ?? 'gem'} in ${name}.`;
 export const UNSET_ASK = (gem) => `Unset the ${GEM_NAMES[gem] ?? 'gem'}? It shatters.`;
-export const GEM_SHATTERED = (name, gem) => `The ${GEM_NAMES[gem] ?? 'gem'} in ${name} shatters; the socket is empty.`;
-export const GEM_EXTRACTED = (name, gem, price) => `Extracted: the ${GEM_NAMES[gem] ?? 'gem'} out of ${name}, whole, for ${price} gold.`;
-export const SOCKETS_NOTE = 'Setting a gem is free - the gem is the price. Unset, it shatters; the guild extracts it whole for gold by its grade.';
+export const GEM_SHATTERED = (name, gem) => `The ${GEM_NAMES[gem] ?? 'gem'} in ${name} shatters. The socket is empty.`;
+export const GEM_EXTRACTED = (name, gem, price) => `Extracted: the ${GEM_NAMES[gem] ?? 'gem'} from ${name}, for ${price} gold.`;
+export const SOCKETS_NOTE = 'Setting a gem is free. Unsetting a gem destroys it, or the guild can extract it intact for gold, based on its grade.';
 /** LOOT19 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 11): THE SCRYERS' PAGE - a row a family, its dungeon
  *  kinds, the price, and a press that names the nearest of its haunts in the region not yet on the map (systems/
  *  lootScry.js); asked first of the region, so a family with nothing hidden says so before a coin is taken. */
-export const SCRIED = (name, family) => `Scried: ${name} - a haunt of ${String(SCRY_FAMILY_WORDS[family] ?? 'them').toLowerCase()}, on your map now.`;
-export const SCRY_FOR_KIN = 'Scry for its kin';
+export const SCRIED = (name, family) => `Scried: ${name}, a haunt of ${String(SCRY_FAMILY_WORDS[family] ?? 'them').toLowerCase()}. It is on your map now.`;
+export const SCRY_FOR_KIN = 'Scry for who carries it';
 /** LOOT16 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 8): THE TEMPLE'S PAGE - the window on its one page,
  *  opened by a temple's Cure Disease priest (scenes/worldModes.js openLift): every known cursed piece of the pack, its
- *  drawback named, its price, and a press that lifts it (systems/lootCurse.js liftCurse). */
+ *  drawback named, its price, and a press that lifts it (systems/loot/lootCurse.js liftCurse). */
 export const LIFT_TITLE = 'Lift a Curse';
-export const LIFT_SUB = 'The temple lifts a curse for gold - the drawback gone, the line it came with kept';
-export const LIFT_NONE = 'Nothing cursed in your pack that the temple can see - a curse is known once the piece is identified.';
-export const LIFTED = (name) => `Lifted: ${name} - the curse is gone, and its line stays.`;
+export const LIFT_SUB = 'The temple lifts a curse for gold. Its drawback is removed and the bonus line stays';
+export const LIFT_NONE = 'You have no known cursed items. A curse shows once the item is identified.';
+export const LIFTED = (name) => `Curse lifted from ${name}. Its bonus line stays.`;
 /** Why a lifting is refused, by the law's word (lootCurse.js liftRefusal). */
 export const LIFT_REFUSALS = Object.freeze({
-  off: 'Loot rarity is off', not: 'No curse on it', unknown: 'Not yet identified - the guild identifies it first',
+  off: 'Loot rarity is off', not: 'No curse on it', unknown: 'Not identified yet. Have the guild identify it first',
   worn: 'Take it off first', gold: 'Not enough gold', gone: 'No longer in your pack',
-  damned: 'Damned - no temple can lift this curse',   // TRUE-CURSE
+  damned: 'Damned: no temple can lift this curse',   // TRUE-CURSE
 });
 export const CODEX_TITLE = 'The Codex';
-export const CODEX_SUB = 'Every Gilded, Legendary and Aetheric piece you have found - and where the rest are said to be';
+export const CODEX_SUB = 'Every Gilded, Legendary and Aetheric piece you have found, and where the rest are said to be';
 /** LOOT10: the imprint's words. */
 export const IMPRINTED = (name, rec, power) => `Imprinted: ${name} - ${power} (of ${rec}).`;
-export const IMPRINT_NONE = 'Your codex holds no Legendary of its kind yet - find one, and its power may be taken.';
-export const IMPRINT_ONCE = 'A Rare takes one power, once.';
+export const IMPRINT_NONE = 'Your codex has no Legendary of this kind yet. Find one to unlock its power here.';
+export const IMPRINT_ONCE = 'A Rare can take only one power.';
+/** PURSE-MEND (FIELD BUGS 2026-10-19f): the gold the window says - the coins and the letters (court.js totalGoldAmount),
+ *  whole and never below nothing; `| 0` wrapped a total past 2^31 (letters past one int's worth) to nothing. */
+const goldSaid = (gold) => Math.max(0, Math.trunc(gold) || 0);
 /** The purse: the shards a press may spend, and the gold. */
-export const reforgePurseText = (shards, gold) => `${shardsText(shards)} · ${Math.max(0, gold | 0)} gold`;
+export const reforgePurseText = (shards, gold) => `${shardsText(shards)} · ${goldSaid(gold)} gold`;
 /** A price, said: "4 Welkynd Shards and 400 gold". */
 export const reforgePriceText = (p) => (p ? `${shardsText(p.shards)} and ${p.gold} gold` : '');
 /** The whole reason a press is refused (its title), by the law's word. */
 export const REFORGE_REFUSALS = Object.freeze({
-  off: 'Loot rarity is off', not: 'Nothing the Reforge can roll', unknown: 'Not yet identified - the guild identifies it first',
+  off: 'Loot rarity is off', not: 'Nothing the Reforge can roll', unknown: 'Not identified yet. Have the guild identify it first',
   worn: 'Take it off first', line: 'Only the line it was reforged on', shards: 'Not enough Welkynd Shards', gold: 'Not enough gold',
-  top: 'At the top of its band',   // LOOT17
-  imprinted: 'It has taken a power already', unfound: 'Not a power your codex holds for it',
-  none: 'Nothing of theirs is hidden in this region', nowhere: 'No map to scry here', family: 'No such kin',   // LOOT19
-  set: 'A gem is set in it - unset it first', nogem: 'None of that gem in your pack', empty: 'No gem in it',   // LOOT20
-  gone: 'No longer in your pack', aetheric: 'An Aetheric piece is the Broker\'s to dismantle', gilded: 'A Gilded piece will not break', artifact: 'An artifact will not break',
-  quest: 'A quest\'s item will not break', bound: 'Bound - it will not break', locked: 'Locked - unlock it first',
-  gems: 'A gem is set in it - extract or unset it first',   // AUDIT GEM: salvage never breaks a set gem
+  top: 'Already at its highest value',   // LOOT17
+  imprinted: 'It already has a power', unfound: 'Your codex has no such power for it',
+  none: 'Nothing left to find in this region', nowhere: 'No map to scry here', family: 'No such kin',   // LOOT19
+  set: 'Unset its gem first', nogem: 'None of that gem in your pack', empty: 'No gem in it',   // LOOT20
+  gone: 'No longer in your pack', aetheric: 'Only the Broker can dismantle Aetheric pieces', gilded: "Gilded pieces can't be salvaged", artifact: "Artifacts can't be salvaged",
+  quest: "Quest items can't be salvaged", bound: "Bound items can't be salvaged", locked: 'Locked. Unlock it first',
+  gems: 'Extract or unset its gem first',   // AUDIT GEM: salvage never breaks a set gem
+  classic: "Classic magic items can't be salvaged. Only pieces with a rarity give shards",   // FB1012d SALVAGE-CLASSIC
 });
 /** A line's press word - "Reforge" (the imprint's "Imprint" - AUDIT LOOT F6: its presses said Reforge), or why not in a
  *  word or two that fits the button. */
@@ -118,7 +125,7 @@ export function reforgeLabel(why, price, have, verb = 'Reforge') {
 export const REFORGED = (name, line) => `Reforged: ${name} - ${line}.`;
 export const HONED = (name, line) => `Honed: ${name} - ${line}.`;   // LOOT17
 /** LOOT17: the card's word on the hone's price. */
-export const HONE_NOTE = (price) => `A hone costs ${reforgePriceText(price)} - it doubles with every hone the piece takes, and a line at the top of its band takes none.`;
+export const HONE_NOTE = (price) => `A hone costs ${reforgePriceText(price)}. The price doubles with each hone, and a line at its highest value can't be honed.`;
 export const SALVAGED = (name, n) => `Salvaged: ${name}, for ${shardsText(n)}.`;
 export const BREAK_ASK = (name, n) => `Break ${name} for ${shardsText(n)}? It is gone for good.`;
 /** LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): SALVAGE EVERY MAGIC - one press, asked first. */
@@ -169,9 +176,9 @@ function injectSkinStyle(doc = document) {
  *   extractGem?: ((item: any, at?: number|null) => { ok: boolean, reason?: string|null, price?: number }) | null,
  * }} deps
  *   LOOT10: `pages` the pages this window shows (the guild's all four; the pack's Codex its one), `imprint` the host's
- *   imprint (systems/lootCodex.js imprintPiece). LOOT16: the temple's `['lift']`, and its `lift` (systems/lootCurse.js
+ *   imprint (systems/loot/lootCodex.js imprintPiece). LOOT16: the temple's `['lift']`, and its `lift` (systems/loot/lootCurse.js
  *   liftCurse). LOOT17: `hone` the host's hone (systems/reforge.js honePiece). LOOT19: `scry` the host's scrying
- *   (systems/lootScry.js scryPlace) and `scryWhere` its region (scenes/world.js). LOOT20: `setGem` and `unsetGem` the
+ *   (systems/loot/lootScry.js scryPlace) and `scryWhere` its region (scenes/world.js). LOOT20: `setGem` and `unsetGem` the
  *   host's (systems/reforge.js setGemPiece, unsetGemPiece); GEM1: `extractGem` too (extractGemPiece), and each
  *   takes the socket's index.
  * @returns {{ repaint: () => void, unmount: () => void }}
@@ -216,6 +223,7 @@ export function mountReforgeWindow(host, deps) {
   for (const id of pages) {
     const t = el('button', 'act reforge-tab', REFORGE_PAGES[id]);
     t.setAttribute('type', 'button');
+    t.setAttribute('data-dficon', REFORGE_PAGE_ICONS[id] ?? 'anvil');   // MENU-ORDER: each page its picture
     t.setAttribute('role', 'tab');
     t.dataset.page = id;
     t.onclick = (e) => { e.stopPropagation(); page = /** @type {any} */ (id); picked = null; dropAsk(); render(); };
@@ -247,6 +255,10 @@ export function mountReforgeWindow(host, deps) {
     return frame;
   };
   const say = (ok, text) => { note = { ok, text }; };
+  /** MENU-ORDER (refusePress): a refused press pressed - its reason in the note, and a pending ask let go with it. AUDIT
+   *  MENU-ORDER U4: the note alone drawn again unless an ask was let go (its press reads its own word again) - the whole
+   *  page drawn again took the keys' focus off the press; refusePress finds it again when it was */
+  const refused = (reason) => { const ask = asking; asking = null; say(false, reason); if (ask) render(); else drawNote(); };
   /** AUDIT LOOT II B4: a pending ask let go - another page, another piece - takes its question with it ("Break all 3 Magic
    *  pieces...?" stood over the next page); any other word stays. */
   const dropAsk = () => { if (asking) note = null; asking = null; };
@@ -274,11 +286,12 @@ export function mountReforgeWindow(host, deps) {
     if (page === 'sockets') { renderSockets(items, payer, have, picture); return; }   // LOOT20
     const rows = page === 'reforge'
       ? items.filter((it) => reforgePrice(it) && reforgeableLines(it).length)
-      : items.filter((it) => salvageShards(it) > 0 && !['aetheric', 'gilded', 'artifact', 'quest', 'off'].includes(salvageRefusal(it) ?? ''));
+      : [...items.filter((it) => salvageShards(it) > 0 && !['aetheric', 'gilded', 'artifact', 'quest', 'off'].includes(salvageRefusal(it) ?? '')),
+        ...items.filter((it) => salvageRefusal(it) === 'classic')];   // FB1012d SALVAGE-CLASSIC: a piece that wears Magic and will never break is listed after them, saying why
     if (!rows.includes(picked)) picked = page === 'reforge' ? rows[0] ?? null : null;
     if (page === 'salvage') everyMagic(rows);   // LOOT18
     if (!rows.length) {
-      const empty = el('li', 'broker-insignia-head reforge-empty', page === 'reforge' ? 'Nothing in your pack the Reforge takes - a Magic or Rare piece, or an Exalted Legendary.' : 'Nothing in your pack that will break - a Magic piece or better the ladder graded.');
+      const empty = el('li', 'broker-insignia-head reforge-empty', page === 'reforge' ? 'Nothing in your pack can be reforged. The Reforge takes Magic and Rare pieces and Exalted Legendaries.' : 'Nothing in your pack can be salvaged. Salvage takes Magic pieces or better.');
       empty.setAttribute('role', 'presentation');
       list.append(empty);
     }
@@ -295,20 +308,19 @@ export function mountReforgeWindow(host, deps) {
       } else {
         const n = salvageShards(it);
         const why = salvageRefusal(it);
-        const btn = el('button', 'act broker-buy', why ? (why === 'worn' ? 'Worn' : why === 'locked' ? 'Locked' : why === 'gems' ? 'Gem set' : 'Cannot') : asking === it ? 'Break it' : 'Salvage');
+        const btn = el('button', 'act broker-buy', why ? (why === 'worn' ? 'Worn' : why === 'locked' ? 'Locked' : why === 'gems' ? 'Gem set' : why === 'classic' ? 'Classic magic' : 'Cannot') : asking === it ? 'Break it' : 'Salvage');
         btn.setAttribute('type', 'button');
         btn.setAttribute('aria-label', why ? `${nameOf(it)}: ${REFORGE_REFUSALS[why] ?? ''}` : asking === it ? BREAK_ASK(nameOf(it), n) : `Salvage ${nameOf(it)} for ${shardsText(n)}`);
-        if (why) { btn.setAttribute('disabled', ''); btn.setAttribute('title', REFORGE_REFUSALS[why] ?? ''); }
         btn.onclick = (e) => {
           e.stopPropagation();
-          if (why) return;
           if (asking !== it) { asking = it; say(false, BREAK_ASK(nameOf(it), n)); render(); return; }
           asking = null;
           const done = deps.salvage(it);
-          if (done?.ok) say(true, SALVAGED(nameOf(it), done.shards ?? n)); else say(false, REFORGE_REFUSALS[done?.reason ?? ''] ?? 'It will not break.');
+          if (done?.ok) say(true, SALVAGED(nameOf(it), done.shards ?? n)); else say(false, REFORGE_REFUSALS[done?.reason ?? ''] ?? "It can't be salvaged.");
           render();
         };
-        row.append(frameOf(it, picture), text, el('span', 'broker-price', shardsText(n)), btn);
+        if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why
+        row.append(frameOf(it, picture), text, el('span', 'broker-price', n > 0 ? shardsText(n) : 'No shards'), btn);   // FB1012d: a classic piece's
         if (asking === it) {
           const keep = el('button', 'act broker-buy reforge-keep', 'Keep');
           keep.setAttribute('type', 'button');
@@ -347,14 +359,13 @@ export function mountReforgeWindow(host, deps) {
         const btn = el('button', 'act broker-buy reforge-press', reforgeLabel(why, price, have));
         btn.setAttribute('type', 'button');
         btn.setAttribute('aria-label', why ? `${affixLine(it, i)}: ${REFORGE_REFUSALS[why] ?? ''}` : `Reforge ${affixLine(it, i)} for ${reforgePriceText(price)}`);
-        if (why) { btn.setAttribute('disabled', ''); btn.setAttribute('title', REFORGE_REFUSALS[why] ?? ''); }
         btn.onclick = (e) => {
           e.stopPropagation();
-          if (why) return;
           const done = deps.reforge(it, i);
           if (done?.ok) say(true, REFORGED(nameOf(it), affixLine(it, i))); else say(false, REFORGE_REFUSALS[done?.reason ?? ''] ?? 'The Reforge will not take that.');
           render();
         };
+        if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why
         li.append(btn);
       }
       if (hp && hone.includes(i)) {   // LOOT17: the hone, beside the line's Reforge - a line under its band's top
@@ -362,21 +373,20 @@ export function mountReforgeWindow(host, deps) {
         const hb = el('button', 'act broker-buy hone-press', reforgeLabel(why, hp, have, 'Hone'));
         hb.setAttribute('type', 'button');
         hb.setAttribute('aria-label', why ? `${affixLine(it, i)}: ${REFORGE_REFUSALS[why] ?? ''}` : `Hone ${affixLine(it, i)} for ${reforgePriceText(hp)}`);
-        if (why) { hb.setAttribute('disabled', ''); hb.setAttribute('title', REFORGE_REFUSALS[why] ?? ''); }
         hb.onclick = (e) => {
           e.stopPropagation();
-          if (why) return;
           const done = deps.hone?.(it, i) ?? { ok: false, reason: 'not' };
           if (done.ok) say(true, HONED(nameOf(it), affixLine(it, i))); else say(false, REFORGE_REFUSALS[done.reason ?? ''] ?? 'The Reforge will not take that.');
           render();
         };
+        if (why) refusePress(hb, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why
         li.append(hb);
       }
       ul.append(li);
     });
     card.append(ul);
-    if (Number.isInteger(it.reforged)) card.append(el('p', 'boundline', 'Reforged once - only that line may be rolled again.'));
-    else if (price) card.append(el('p', 'boundline', `A reforge costs ${reforgePriceText(price)}. Once a line is reforged, only it may be again.`));
+    if (Number.isInteger(it.reforged)) card.append(el('p', 'boundline', 'Reforged once. Only that line can be reforged again.'));
+    else if (price) card.append(el('p', 'boundline', `A reforge costs ${reforgePriceText(price)}. Once you reforge a line, only that line can be reforged again.`));
     if (hp && hone.length) card.append(el('p', 'boundline hone-note', HONE_NOTE(hp)));   // LOOT17
     body.append(card);
   };
@@ -398,7 +408,7 @@ export function mountReforgeWindow(host, deps) {
       asking = null;
       let n = 0, got = 0;
       for (const it of magics) { const done = deps.salvage(it); if (done?.ok) { n++; got += done.shards ?? salvageShards(it); } }
-      say(n > 0, n ? SALVAGED_EVERY(n, got) : 'Nothing would break.');
+      say(n > 0, n ? SALVAGED_EVERY(n, got) : 'Nothing to salvage.');
       render();
     };
     head.append(btn);
@@ -479,7 +489,7 @@ export function mountReforgeWindow(host, deps) {
   function renderImprint(items, payer, have, picture) {
     const rows = items.filter((it) => it?.rarity === 'rare');
     if (!rows.includes(picked)) picked = rows[0] ?? null;
-    if (!rows.length) list.append(head2('Nothing in your pack to imprint - a Rare piece takes a Legendary\'s power.'));
+    if (!rows.length) list.append(head2('Nothing in your pack can be imprinted. A Rare piece can take a Legendary\'s power.'));
     for (const it of rows) {
       const row = el('li', `broker-offer${it === picked ? ' on' : ''}`);
       row.dataset.rarity = 'rare';
@@ -508,14 +518,13 @@ export function mountReforgeWindow(host, deps) {
       const btn = el('button', 'act broker-buy imprint-press', reforgeLabel(why, IMPRINT_PRICE, have, 'Imprint'));
       btn.setAttribute('type', 'button');
       btn.setAttribute('aria-label', why ? `${p?.name ?? rec.name}: ${REFORGE_REFUSALS[why] ?? ''}` : `Imprint ${p?.name ?? rec.name} on ${nameOf(it)} for ${reforgePriceText(IMPRINT_PRICE)}`);   // AUDIT LOOT F6: said, as the Reforge's press is
-      if (why) { btn.setAttribute('disabled', ''); btn.setAttribute('title', REFORGE_REFUSALS[why] ?? ''); }
       btn.onclick = (e) => {
         e.stopPropagation();
-        if (why) return;
         const done = deps.imprint?.(it, rec.id) ?? { ok: false, reason: 'not' };
         if (done.ok) say(true, IMPRINTED(nameOf(it), rec.name, p?.name ?? '')); else say(false, REFORGE_REFUSALS[done.reason ?? ''] ?? 'The Reforge will not take that.');
         render();
       };
+      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why
       li.append(btn);
       ul.append(li);
     }
@@ -559,30 +568,28 @@ export function mountReforgeWindow(host, deps) {
       const x = el('button', 'act broker-buy extract-press', reforgeLabel(xwhy, { shards: 0, gold: price }, have, `Extract · ${price} gold`));
       x.setAttribute('type', 'button');
       x.setAttribute('aria-label', xwhy ? `${GEM_NAMES[gem]}: ${REFORGE_REFUSALS[xwhy] ?? ''}` : `Extract the ${GEM_NAMES[gem]} whole for ${price} gold`);
-      if (xwhy) { x.setAttribute('disabled', ''); x.setAttribute('title', REFORGE_REFUSALS[xwhy] ?? ''); }
       x.onclick = (e) => {
         e.stopPropagation();
-        if (xwhy) return;
         asking = null;
         const done = deps.extractGem?.(it, at) ?? { ok: false, reason: 'not' };
         if (done.ok) say(true, GEM_EXTRACTED(nameOf(it), gem, done.price ?? price)); else fail(done);
         render();
       };
+      if (xwhy) refusePress(x, REFORGE_REFUSALS[xwhy] ?? '', refused);   // MENU-ORDER: pressed, it says why
       const why = unsetGemRefusal(it, at);
       const ask = asking === it && askingAt === at;
       const btn = el('button', 'act broker-buy unset-press', why ? reforgeLabel(why, null, have) : ask ? 'Shatter it' : 'Unset');
       btn.setAttribute('type', 'button');
       btn.setAttribute('aria-label', why ? `${GEM_NAMES[gem]}: ${REFORGE_REFUSALS[why] ?? ''}` : UNSET_ASK(gem));
-      if (why) { btn.setAttribute('disabled', ''); btn.setAttribute('title', REFORGE_REFUSALS[why] ?? ''); }
       btn.onclick = (e) => {
         e.stopPropagation();
-        if (why) return;
         if (!ask) { asking = it; askingAt = at; say(false, UNSET_ASK(gem)); render(); return; }
         asking = null;
         const done = deps.unsetGem?.(it, at) ?? { ok: false, reason: 'not' };
         if (done.ok) say(true, GEM_SHATTERED(nameOf(it), gem)); else fail(done);
         render();
       };
+      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why
       li.append(x, btn);
       ul.append(li);
     });
@@ -599,15 +606,14 @@ export function mountReforgeWindow(host, deps) {
         const btn = el('button', 'act broker-buy set-press', reforgeLabel(why, null, have, 'Set'));
         btn.setAttribute('type', 'button');
         btn.setAttribute('aria-label', why ? `${GEM_NAMES[g]}: ${REFORGE_REFUSALS[why] ?? ''}` : `Set the ${GEM_NAMES[g]} in ${nameOf(it)}`);
-        if (why) { btn.setAttribute('disabled', ''); btn.setAttribute('title', REFORGE_REFUSALS[why] ?? ''); }
         btn.onclick = (e) => {
           e.stopPropagation();
-          if (why) return;
           asking = null;
           const done = deps.setGem?.(it, g) ?? { ok: false, reason: 'not' };
           if (done.ok) say(true, GEM_SET(nameOf(it), g)); else fail(done);
           render();
         };
+        if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why
         li.append(btn);
         ul.append(li);
       }
@@ -630,15 +636,14 @@ export function mountReforgeWindow(host, deps) {
       const btn = el('button', 'act broker-buy scry-press', reforgeLabel(why, SCRY_PRICE, have, 'Scry'));
       btn.setAttribute('type', 'button');
       btn.setAttribute('aria-label', why ? `${SCRY_FAMILY_WORDS[f]}: ${REFORGE_REFUSALS[why] ?? ''}` : `Scry a haunt of ${SCRY_FAMILY_WORDS[f].toLowerCase()} for ${reforgePriceText(SCRY_PRICE)}`);
-      if (why) { btn.setAttribute('disabled', ''); btn.setAttribute('title', REFORGE_REFUSALS[why] ?? ''); }
       btn.onclick = (e) => {
         e.stopPropagation();
-        if (why) return;
         const done = deps.scry?.(f) ?? { ok: false, reason: 'nowhere' };
         if (done.ok && done.place) say(true, SCRIED(done.place.name, f)); else say(false, REFORGE_REFUSALS[done.reason ?? ''] ?? 'The scryers see nothing.');
         scryKin = f;
         render();
       };
+      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why
       row.append(text, el('span', 'broker-price', reforgePriceText(SCRY_PRICE)), btn);
       pressable(row, () => { scryKin = f; render(); });
       list.append(row);
@@ -646,7 +651,7 @@ export function mountReforgeWindow(host, deps) {
   }
   /** LOOT16: THE TEMPLE'S LIFTING - every known cursed piece of the pack, its drawback and its price; a press lifts it. */
   function renderLift(items, payer, have, picture) {
-    purse.textContent = `${Math.max(0, have.gold | 0)} gold`;
+    purse.textContent = `${goldSaid(have.gold)} gold`;
     const rows = cursedKnown(items);
     if (!rows.length) list.append(head2(LIFT_NONE));
     for (const it of rows) {
@@ -660,14 +665,13 @@ export function mountReforgeWindow(host, deps) {
       const btn = el('button', 'act broker-buy lift-press', reforgeLabel(why, { shards: 0, gold: price }, have, 'Lift'));
       btn.setAttribute('type', 'button');
       btn.setAttribute('aria-label', why ? `${nameOf(it)}: ${LIFT_REFUSALS[why] ?? ''}` : `Lift the curse on ${nameOf(it)} for ${price} gold`);
-      if (why) { btn.setAttribute('disabled', ''); btn.setAttribute('title', LIFT_REFUSALS[why] ?? ''); }
       btn.onclick = (e) => {
         e.stopPropagation();
-        if (why) return;
         const done = deps.lift?.(it) ?? { ok: false, reason: 'not' };
         if (done.ok) say(true, LIFTED(nameOf(it))); else say(false, LIFT_REFUSALS[done.reason ?? ''] ?? 'The priest will not lift that.');
         render();
       };
+      if (why) refusePress(btn, LIFT_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why
       row.append(frameOf(it, picture), text, el('span', 'broker-price', why === 'damned' ? '-' : `${price} gold`), btn);   // AUDIT FB1010 D2: no price for what no temple lifts
       list.append(row);
     }

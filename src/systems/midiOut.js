@@ -14,7 +14,7 @@
 // pitch bend, the two pressures. Not sent: HMI's own events and the meta events (they are the driver's, not MIDI's),
 // and system exclusive (asking for sysex makes the browser ask the player a second, scarier question, and nothing the
 // songs need is in it). THE NOTE-OFFS ARE THE PLAYER'S: it releases each note at the length the synth gives it
-// (songPlayer.js noteSeconds over sustainedDuration), because a song made in code (systems/gateScore.js) carries
+// (songPlayer.js noteSeconds over sustainedDuration), because a song made in code (systems/gate/gateScore.js) carries
 // lengths and no note-offs, and because a release queued seconds ahead cannot be taken back - Chrome has never had
 // MIDIOutput.clear() - and would cut the next song's note. Releases are queued a window at a time like everything
 // else. The sustain pedal (CC64) is sent as well; it releases nothing the length has not already released.
@@ -31,7 +31,7 @@
 
 import {
   SongPlayer, eventsInWindow, noteSeconds, songLevel, trackGain,
-} from './songPlayer.js';
+} from './song/songPlayer.js';
 import { getPref, setPref } from './uiPrefs.js';
 
 /** The shelf's key: the output's name, '' for none (systems/uiPrefs.js). */

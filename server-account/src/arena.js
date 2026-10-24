@@ -13,7 +13,7 @@
 // ═══ A ROW IS A RECEIPT ════════════════════════════════════════════
 //
 // Every result here was refereed by the relay and SIGNED by it
-// (src/net/arenaReceipt.js). The claim verifies the signature with the
+// (src/net/arena/arenaReceipt.js). The claim verifies the signature with the
 // relay's public half (the gate's own key, GATE_PUBLIC_KEY) and writes
 // ONE row keyed by the bout's id - so a receipt counts once whoever
 // carries it, and a bout between two players is one row whichever of
@@ -23,7 +23,7 @@
 //
 // A ladder WIN is written only where it is the account's next bout:
 // the won rows are only ever written in order, so their count IS the
-// next bout's key (src/net/arenaLaw.js ladderKey), and the INSERT asks
+// next bout's key (src/net/arena/arenaLaw.js ladderKey), and the INSERT asks
 // exactly that in its own WHERE. Two claims at once cannot both step,
 // and no receipt for the Grand Champion lands on an account that has not
 // won the thirty-nine bouts under it. A loss is kept whatever its order
@@ -39,20 +39,21 @@
 // the laurel while the account is the season's #1 - so the laurel passes
 // to whoever takes the top and lapses by itself, with no cron.
 // ═══════════════════════════════════════════════════════════════════
-import { verifyArenaReceipt } from '../../src/net/arenaReceipt.js';
+import { verifyArenaReceipt } from '../../src/net/arena/arenaReceipt.js';
 import {
   arenaSeasonOf, arenaSeasonEndsS, arenaSeasonDay, eloAfter, ARENA_ELO_START, arenaLadderOf, ladderKey, ARENA_BANNERS, ARENA_TEAM_POINTS,
   ARENA_TIERS, ARENA_TIER_BOUTS, ARENA_PAIR_DAY_MAX, ARENA_CHAMPION_MIN_BOUTS, arenaRatingOk, ARENA_ELO_MIN, ARENA_ELO_MAX,
   ARENA_CHAMPION_MIN_FOES, ARENA_PAIR_SEASON_MAX, ARENA_TICKET_RE, arenaNextOf, ARENA_BOUT_ID_RE, ARENA_ATTEMPT_LIFE_S,   // AUDIT ARENA-LADDER
-} from '../../src/net/arenaLaw.js';
+} from '../../src/net/arena/arenaLaw.js';
 import { boardNamesOf } from './boardNames.js';   // AUDIT CARDS-6 D3: a board's names wear every honour, Iliac Hand's too
 import { renownQuestXp } from '../../src/net/renown.js';   // ARENA4b: a bout's Renown, sized as quests are
 import { reportRenownXp, renownTrackOf, renownCharacterOk } from './renownTracks.js';   // ARENA4b: credited through the renown law's own door
+import { shapeOf, keptFits } from './keptBoard.js';   // AUDIT LEAN-READS B1/B10: a kept board's shape, and its bound in bytes
 
 /** The service's doors that read a badge (a token's mint, the account's wardrobe, an equip): the arena's honours ride the
  *  row there (two reads - one an index lookup, one kept a minute). AUDIT PRE-MERGE 1003 S8: and on the rows a box's
  *  letters and a board's notes are badged from (withArenaHonoursAll - letters.js, board.js). */
-export const ARENA_HONOUR_PATHS = new Set(['/v1/auth/token', '/v1/account', '/v1/account/title', '/v1/account/aura', '/v1/account/insignia', '/v1/patreon/unlink']);
+export const ARENA_HONOUR_PATHS = new Set(['/v1/auth/token', '/v1/account', '/v1/account/title', '/v1/account/aura', '/v1/account/insignia', '/v1/patreon/unlink', '/v1/account/glyph', '/v1/account/icon']);   // AUDIT COLLECTIONS-II (lanes 1, 2): and the glyph's and the icon's doors - each answers the whole wardrobe, which the flow takes whole, so an answer read without the honours dropped a champion's title and laurel (and the laurel could not be hidden)
 /** A board's rows before the caller's own is pinned under them. */
 export const ARENA_BOARD_TOP = 10;
 /** The Hall of Champions' names a board carries. */
@@ -133,11 +134,11 @@ export async function arenaPveOf({ db }, playerId) {
   const n = (v) => Number(v ?? 0) || 0;
   return { won, record: { wins: n(r?.wins), losses: n(r?.losses), yields: n(r?.yields), falls: n(r?.falls), ringouts: n(r?.ringouts) } };
 }
-/** The account's ladder, in the save ladder's own shape (src/net/arenaLaw.js arenaLadderOf). */
+/** The account's ladder, in the save ladder's own shape (src/net/arena/arenaLaw.js arenaLadderOf). */
 export async function arenaLadderOfAccount(ctx, playerId) {
   const { won, record } = await arenaPveOf(ctx, playerId);
   const L = arenaLadderOf(won, record);
-  // AUDIT ARENA-LADDER 2: `paid` - the current tier's bouts ever won, broken runs' too (src/systems/arenaLadder.js): a bout
+  // AUDIT ARENA-LADDER 2: `paid` - the current tier's bouts ever won, broken runs' too (src/systems/arena/arenaLadder.js): a bout
   // won again after a lost run is told so before it is fought (no purse, no points, no Renown - claimLadder's `repeat`)
   const p = await ctx.db.prepare(`SELECT COUNT(DISTINCT step) AS n FROM arena_pve WHERE player = ?1 AND tier = ?2 AND won = 1 AND step < ${ARENA_TIER_BOUTS}`).bind(playerId, L.tier).first();
   return { ...L, paid: Math.max(L.won ?? 0, Math.min(ARENA_TIER_BOUTS, Number(p?.n ?? 0) || 0)) };
@@ -209,7 +210,14 @@ export function _resetArenaCache() { _champ = { season: 0, at: -Infinity, id: nu
 async function championNow(ctx, nowS) {
   const season = arenaSeasonOf(nowS);
   if (_champ.season === season && nowS - _champ.at < ARENA_CHAMPION_CACHE_S) return _champ.id;
-  const kept = await ctx.db.prepare('SELECT player, at FROM arena_champions WHERE season = ?1').bind(season).first();
+  return championFrom(ctx, nowS, season, await championKeptRead(ctx.db, season).first());
+}
+/** SIGN-BATCH: a Grand Champion's row (the ladder's top tier's last bout won), as a statement - one home for both readers. */
+const grandRead = (/** @type {any} */ db, /** @type {string} */ id) => db.prepare(`SELECT 1 AS one FROM arena_pve WHERE player = ?1 AND tier = ${GRAND_TIER} AND step = ${ARENA_TIER_BOUTS} AND won = 1 LIMIT 1`).bind(id);
+/** SIGN-BATCH: the kept #1's row, as a statement. */
+const championKeptRead = (/** @type {any} */ db, /** @type {number} */ season) => db.prepare('SELECT player, at FROM arena_champions WHERE season = ?1').bind(season);
+/** The season's #1 from its kept row - counted again and stored where it is none or stale - and kept by this Worker. */
+async function championFrom(/** @type {any} */ ctx, /** @type {number} */ nowS, /** @type {number} */ season, /** @type {any} */ kept) {
   const id = kept && nowS - Number(kept.at) < ARENA_CHAMPION_STORED_S ? kept.player ?? null : await storeArenaChampion(ctx, season, nowS);
   _champ = { season, at: nowS, id };
   return id;
@@ -223,9 +231,26 @@ async function championNow(ctx, nowS) {
  */
 export async function arenaHonoursOf(ctx, player, nowS) {
   if (!player?.handle) return { grand: false, champion: false };
-  const g = await ctx.db.prepare(`SELECT 1 AS one FROM arena_pve WHERE player = ?1 AND tier = ${GRAND_TIER} AND step = ${ARENA_TIER_BOUTS} AND won = 1 LIMIT 1`).bind(player.id).first();
+  const g = await grandRead(ctx.db, player.id).first();
   const champion = (await championNow(ctx, nowS)) === player.id;
   return { grand: !!g, champion };
+}
+/** SIGN-BATCH (2026-10-16, the account database's primary at its ceiling of round trips - bible/11-Multiplayer/Scale-Arc.md
+ *  SIGN-BATCH): arenaHonoursOf as its reads - the Grand Champion's row, and the kept #1's where this Worker kept none - and
+ *  its answer from theirs, so the doors that read a badge (honours.js withHonours) ask the three games' honours in ONE
+ *  batch. The answer is arenaHonoursOf's: a stale #1 counted again and stored as championNow stores it. */
+export function arenaHonoursPlan(/** @type {any} */ ctx, /** @type {any} */ player, /** @type {number} */ nowS) {
+  if (!player?.handle) return { reads: [], from: async () => ({ grand: false, champion: false }) };
+  const season = arenaSeasonOf(nowS);
+  const cached = _champ.season === season && nowS - _champ.at < ARENA_CHAMPION_CACHE_S;
+  const keptId = cached ? _champ.id : null;   // PRIMARY-TRIPS audit: the #1 kept when the plan was made - read after the batch, another request's count of a new season could stand in its place
+  return {
+    reads: [grandRead(ctx.db, player.id), ...(cached ? [] : [championKeptRead(ctx.db, season)])],
+    from: async (/** @type {any[]} */ res) => ({
+      grand: !!res[0]?.results?.[0],
+      champion: (cached ? keptId : await championFrom(ctx, nowS, season, res[1]?.results?.[0] ?? null)) === player.id,
+    }),
+  };
 }
 /** The row with its honours on it - what titles.js reads (`arena`). */
 export async function withArenaHonours(ctx, player, nowS) {
@@ -318,7 +343,7 @@ async function claimLadder(ctx, player, c, season, banner) {
   const won = c.r === 1;
   const repeat = won && await wonBefore(db, player.id, c.q, c.u);
   if (repeat) banner = null;
-  // AUDIT ARENA-LADDER: A TICKETED ATTEMPT (`z`, net/arenaReceipt.js) - its row keyed by the ticket, the account's own
+  // AUDIT ARENA-LADDER: A TICKETED ATTEMPT (`z`, net/arena/arenaReceipt.js) - its row keyed by the ticket, the account's own
   // and this tier and bout's; a loss breaks the tier's run in the same write, and the attempt is done
   if (c.z !== undefined) {
     const att = await db.prepare('SELECT player, tier, step, room, at, done FROM arena_attempts WHERE id = ?1').bind(c.z).first();
@@ -407,7 +432,7 @@ async function claimPlayers(ctx, player, c, season) {
     }
     if (row) return { recorded: false, why: 'claimed', ...(await pvpAnswer(ctx, player.id, row)) };
   }
-  return { error: 'busy' };   // the receipt is kept and carried again (net/arenaClaims.js - every error but a receipt's)
+  return { error: 'busy' };   // the receipt is kept and carried again (net/arena/arenaClaims.js - every error but a receipt's)
 }
 /** AUDIT ARENA-LADDER 2: how long a done attempt is kept (a week - a receipt's own life), then let go. */
 export const ARENA_ATTEMPTS_KEEP_S = 7 * 86400;
@@ -415,7 +440,7 @@ export const ARENA_ATTEMPTS_KEEP_S = 7 * 86400;
  * AUDIT ARENA-LADDER: AN ATTEMPT AT THE ACCOUNT'S NEXT LADDER BOUT - its ticket (16 hex), which the relay opens the bout
  * for and signs into its receipt (`z`). Every attempt still open is FORFEIT first: its loss row written now (`forfeit`),
  * its tier's run broken - so a bout lost and never carried here is lost all the same, and one walked away from is too.
- * The client carries every receipt it holds before it asks (scenes/arenaOnline.js), so a win it fought is counted, not
+ * The client carries every receipt it holds before it asks (scenes/arena/arenaOnline.js), so a win it fought is counted, not
  * forfeit. `tier`/`bout` must be the account's next (`order` and the ladder otherwise - a device behind the climb).
  * A guest's attempt is minted and forfeit alike, and nothing of it is kept as a row (a guest's bouts are not counted).
  */
@@ -475,7 +500,7 @@ async function pvpAnswer(ctx, me, row) {
 // ── THE BANNERS ──────────────────────────────────────────────────────────────────────────────
 /**
  * JOIN OR QUIT A BANNER - `banner` 'red' or 'blue' to join, null to quit. Free; quitting is at once; the OTHER banner
- * is refused until the next season (`season`), the banner quit takes you back at once (systems/arenaLeague.js's law).
+ * is refused until the next season (`season`), the banner quit takes you back at once (systems/arena/arenaLeague.js's law).
  * A guest joins none (`guest`); a second banner while one is worn is `joined`.
  * @param {{ db: any, nowS: number }} ctx
  */
@@ -498,24 +523,102 @@ export async function arenaTeam(ctx, player, banner) {
   return { ok: true, banner };
 }
 
-/** A season's points by banner, counted from the rows: ladder wins by step, rated players' wins two each. */
-export async function arenaStandingsOf({ db }, season) {
-  const pve = (await db.prepare(`SELECT banner, SUM(${PVE_POINTS_SQL}) AS pts FROM arena_pve WHERE season = ?1 AND won = 1 AND banner IS NOT NULL GROUP BY banner`).bind(season).all()).results ?? [];
-  const pvp = (await db.prepare(`SELECT banner, SUM(n) AS n FROM (
+/** A season's points by banner, counted from the rows: ladder wins by step, rated players' wins two each - its two
+ *  statements (ARENA-BOARD: asked in the board's one batch), and the points off their rows. */
+const STANDINGS_PVE_SQL = `SELECT banner, SUM(${PVE_POINTS_SQL}) AS pts FROM arena_pve WHERE season = ?1 AND won = 1 AND banner IS NOT NULL GROUP BY banner`;
+const STANDINGS_PVP_SQL = `SELECT banner, SUM(n) AS n FROM (
       SELECT banner_a AS banner, COUNT(*) AS n FROM arena_pvp WHERE season = ?1 AND rated = 1 AND result = 0 AND banner_a IS NOT NULL GROUP BY banner_a
-      UNION ALL SELECT banner_b, COUNT(*) FROM arena_pvp WHERE season = ?1 AND rated = 1 AND result = 1 AND banner_b IS NOT NULL GROUP BY banner_b) GROUP BY banner`).bind(season).all()).results ?? [];
+      UNION ALL SELECT banner_b, COUNT(*) FROM arena_pvp WHERE season = ?1 AND rated = 1 AND result = 1 AND banner_b IS NOT NULL GROUP BY banner_b) GROUP BY banner`;
+const standingsReads = (/** @type {any} */ db, /** @type {number} */ season) => [db.prepare(STANDINGS_PVE_SQL).bind(season), db.prepare(STANDINGS_PVP_SQL).bind(season)];
+function standingsFrom(/** @type {any[]} */ pve, /** @type {any[]} */ pvp) {
   const out = { red: 0, blue: 0 };
   for (const r of pve) if (r.banner in out) out[r.banner] += Number(r.pts) || 0;
   for (const r of pvp) if (r.banner in out) out[r.banner] += (Number(r.n) || 0) * ARENA_TEAM_POINTS.pvp;
   return out;
 }
-/** A banner's fighters this season by the points they gave it, ranked. */
-async function bannerRoster({ db }, season, banner) {
-  return (await db.prepare(`SELECT p AS player, SUM(pts) AS points, SUM(w) AS wins FROM (
+/** A banner's fighters this season by the points they gave it, ranked - its statement. */
+const ROSTER_SQL = `SELECT p AS player, SUM(pts) AS points, SUM(w) AS wins FROM (
       SELECT player AS p, ${PVE_POINTS_SQL} AS pts, 1 AS w FROM arena_pve WHERE season = ?1 AND won = 1 AND banner = ?2
       UNION ALL SELECT a, ${ARENA_TEAM_POINTS.pvp}, 1 FROM arena_pvp WHERE season = ?1 AND rated = 1 AND result = 0 AND banner_a = ?2
       UNION ALL SELECT b, ${ARENA_TEAM_POINTS.pvp}, 1 FROM arena_pvp WHERE season = ?1 AND rated = 1 AND result = 1 AND banner_b = ?2)
-    WHERE p IS NOT NULL GROUP BY p ORDER BY points DESC, wins DESC, p ASC`).bind(season, banner).all()).results ?? [];
+    WHERE p IS NOT NULL GROUP BY p ORDER BY points DESC, wins DESC, p ASC`;
+const rosterRead = (/** @type {any} */ db, /** @type {number} */ season, /** @type {string} */ banner) => db.prepare(ROSTER_SQL).bind(season, banner);
+/** ARENA-BOARD: the Grand Champions, each at its first such win, newest first. */
+const GRAND_SQL = `SELECT player, MIN(at) AS at FROM arena_pve WHERE tier = ${GRAND_TIER} AND step = ${ARENA_TIER_BOUTS} AND won = 1 GROUP BY player ORDER BY at DESC`;
+/** ARENA-BOARD: the climb - each account's wins in order (the won rows' count is the bout it reached), its record, its
+ *  first and last. AUDIT ARENA-LADDER: the bout reached is the climb's - its won rows a loss did not break (`voided`). */
+const CLIMB_SQL = `SELECT player, SUM(CASE WHEN won = 1 AND voided = 0 THEN 1 ELSE 0 END) AS reached, SUM(1 - won) AS losses, MIN(at) AS first, MAX(CASE WHEN won = 1 AND voided = 0 THEN at END) AS last
+      FROM arena_pve GROUP BY player HAVING reached > 0 ORDER BY reached DESC, last ASC, player ASC`;
+/** ARENA-BOARD: the Grand Champions with their first bout - the fastest board's. */
+const FAST_SQL = `SELECT g.player AS player, g.at AS at, (SELECT MIN(at) FROM arena_pve f WHERE f.player = g.player) AS first
+      FROM (SELECT player, MIN(at) AS at FROM arena_pve WHERE tier = ${GRAND_TIER} AND step = ${ARENA_TIER_BOUTS} AND won = 1 GROUP BY player) g`;
+const MEMBERS_SQL = 'SELECT banner, COUNT(*) AS n FROM arena_members WHERE banner IS NOT NULL GROUP BY banner';
+
+/**
+ * ARENA-BOARD (2026-10-19, the account database overloaded again; bible/11-Multiplayer/Scale-Arc.md ARENA-BOARD;
+ * migration 0139): THE BOARD'S COUNTS, EVERY CALLER'S ALIKE, ONE ROW A SEASON - the Grand Champions, the season's rated
+ * board, the climb, the fastest, two seasons' standings, both rosters and the banners' members. Ten aggregates over the
+ * arena's whole record on every open (28,586 on the day); now the season's kept row while it is the arena's version's
+ * (the database moves it on every bout, void, account gone and banner joined or left) and its shape's (these counts' -
+ * keptBoard.js), else counted in ONE batch with the version and kept at it - only where the version is still the one
+ * counted, so a slow count never stands over a newer, and only where no board of that version is kept already, so
+ * callers that missed together write it once (AUDIT LEAN-READS B2). `later`, where given, takes the keep to run after
+ * the caller's own reads (D5: on a replica's session a read after a write waits for the write's position).
+ * @param {{ db: any }} ctx @param {number} season @param {(() => Promise<unknown>)[]} [later]
+ */
+export async function arenaShared({ db }, season, later) {
+  const kept = await db.prepare(ARENA_BOARD_READ).bind(season).first();
+  const shared = kept && Number(kept.built) === Number(kept.ver) && kept.shape === ARENA_BOARD_SHAPE ? arenaSharedOf(kept.rows) : null;
+  if (shared) return arenaView(shared, season);
+  const rs = await db.batch([
+    db.prepare('SELECT ver FROM arena_board_ver WHERE id = 1'),
+    db.prepare(GRAND_SQL),
+    db.prepare(BOARD_SQL).bind(season),
+    db.prepare(CLIMB_SQL),
+    db.prepare(FAST_SQL),
+    ...standingsReads(db, season), ...standingsReads(db, season - 1),
+    rosterRead(db, season, 'red'), rosterRead(db, season, 'blue'),
+    db.prepare(MEMBERS_SQL),
+  ]);
+  const at = (/** @type {number} */ i) => rs[i]?.results ?? [];
+  // AUDIT LEAN-READS 2 B5: the counts as the reads answer them - the banners' points worked out on the way out
+  // (arenaView), so the kept row is the reads' alone and their shape is all of it
+  const counted = {
+    grandRows: at(1), pvpAll: at(2), pveAll: at(3), fastAll: at(4),
+    standingRows: { now: [at(5), at(6)], last: [at(7), at(8)] },
+    rosters: { red: at(9), blue: at(10) }, counts: at(11),
+  };
+  const ver = at(0)[0]?.ver;
+  const text = JSON.stringify(counted);
+  if (Number.isSafeInteger(ver) && keptFits(text, 'the arena\'s board')) {
+    const keep = () => db.prepare(ARENA_BOARD_KEEP).bind(season, ver, ARENA_BOARD_SHAPE, text).run()
+      .catch((/** @type {any} */ e) => console.warn('[arena] the season\'s board not kept', e?.message ?? e));   // the answer stands; the next caller counts again
+    if (later) later.push(keep); else await keep();
+  }
+  return arenaView(counted, season);
+}
+/** ARENA-BOARD: the counts as the board reads them - each season's standings worked out off its banners' rows. */
+function arenaView(/** @type {any} */ c, /** @type {number} */ season) {
+  const { standingRows: { now, last }, ...rest } = c;
+  return { ...rest, standings: standingsFrom(now[0], now[1]), last: season > 1 ? standingsFrom(last[0], last[1]) : { red: 0, blue: 0 } };
+}
+/** ARENA-BOARD: a season's kept counts, and the arena's version. */
+export const ARENA_BOARD_READ = `SELECT v.ver, b.built, b.shape, b.rows FROM arena_board_ver v LEFT JOIN arena_boards b ON b.season = ?1 WHERE v.id = 1`;
+/** ARENA-BOARD: counts kept - where the arena's version is the one counted (?2) and no board of it and this shape is kept. */
+export const ARENA_BOARD_KEEP = `INSERT INTO arena_boards (season, built, shape, rows) SELECT ?1, ?2, ?3, ?4 WHERE (SELECT ver FROM arena_board_ver WHERE id = 1) = ?2
+  ON CONFLICT (season) DO UPDATE SET built = excluded.built, shape = excluded.shape, rows = excluded.rows WHERE NOT (built = excluded.built AND shape IS excluded.shape)`;
+/** ARENA-BOARD (AUDIT LEAN-READS B1, 2 B5): the counts a kept board was counted by, and the text they are kept as - the
+ *  reads' rows alone, so a deploy that changes any counts again. */
+export const ARENA_BOARD_SHAPE = shapeOf('arena-board: {grandRows, pvpAll, pveAll, fastAll, standingRows: {now, last: [pve, pvp]}, rosters: {red, blue}, counts}',
+  GRAND_SQL, BOARD_SQL, CLIMB_SQL, FAST_SQL, STANDINGS_PVE_SQL, STANDINGS_PVP_SQL, ROSTER_SQL, MEMBERS_SQL);
+/** ARENA-BOARD: kept counts read back, or null for a text that is not them. */
+export function arenaSharedOf(/** @type {unknown} */ text) {
+  let o;
+  try { o = JSON.parse(String(text)); } catch { return null; }
+  const lists = ['grandRows', 'pvpAll', 'pveAll', 'fastAll', 'counts'];
+  const pair = (/** @type {unknown} */ x) => Array.isArray(x) && x.length === 2 && x.every(Array.isArray);
+  return o && lists.every((k) => Array.isArray(o[k])) && pair(o.standingRows?.now) && pair(o.standingRows?.last)
+    && Array.isArray(o.rosters?.red) && Array.isArray(o.rosters?.blue) ? o : null;
 }
 
 // ── THE RECORDS PAGE (ARENA4b) ───────────────────────────────────────────────────────────────
@@ -577,9 +680,11 @@ export async function arenaRecordsOf({ db }, me) {
 }
 
 // ── THE BOARD ────────────────────────────────────────────────────────────────────────────────
-/** The ranked rows cut to the top and the caller's own pinned under them when it is not among them. */
-function topWithMe(rows, me, top = ARENA_BOARD_TOP) {
-  rows.forEach((r, i) => { r.rank = i + 1; r.you = r.player === me; });
+/** The ranked rows cut to the top and the caller's own pinned under them when it is not among them. EG-E2: exported for
+ *  the Elite Breach's boards (egHonours.js egBoardOf), and `me` may be a test of a row - a Descent row is a company,
+ *  the caller's whichever names them - where every other board's is the caller's id. */
+export function topWithMe(rows, me, top = ARENA_BOARD_TOP) {
+  rows.forEach((r, i) => { r.rank = i + 1; r.you = typeof me === 'function' ? !!me(r) : r.player === me; });
   const shown = rows.slice(0, top);
   const mine = rows.find((r) => r.you) ?? null;
   return { rows: shown, pinned: mine && !shown.includes(mine) ? mine : null, total: rows.length };
@@ -594,30 +699,22 @@ function topWithMe(rows, me, top = ARENA_BOARD_TOP) {
  * @param {{ db: any, nowS: number }} ctx
  */
 export async function arenaBoardOf(ctx, player, env) {
-  const { db, nowS } = ctx;
+  const { nowS } = ctx;
   const season = arenaSeasonOf(nowS);
   const me = player?.id ?? null;
+  // ARENA-BOARD: the board's counts, every caller's alike (arenaShared) - the caller's own rows read after them, and its
+  // keep after those (AUDIT LEAN-READS D5)
+  const later = /** @type {(() => Promise<unknown>)[]} */ ([]);
+  const { grandRows, pvpAll, pveAll, fastAll, standings, last, rosters, counts } = await arenaShared(ctx, season, later);
   // the honours every badge on the board reads: the Grand Champions, and the season's #1
-  const grandRows = (await db.prepare(`SELECT player, MIN(at) AS at FROM arena_pve WHERE tier = ${GRAND_TIER} AND step = ${ARENA_TIER_BOUTS} AND won = 1 GROUP BY player ORDER BY at DESC`).all()).results ?? [];
-  const pvpAll = (await db.prepare(BOARD_SQL).bind(season).all()).results ?? [];
   const champion = laurelOfBoard(pvpAll);   // AUDIT ARENA-LADDER O2: the one law (bouts and foes)
   const honours = { grands: new Set(grandRows.map((r) => r.player)), champion };
-  // the climb: each account's wins in order (the won rows' count is the bout it reached), its record, its first and last
-  // AUDIT ARENA-LADDER: the bout reached is the climb's - its won rows a loss did not break (`voided`)
-  const pveAll = (await db.prepare(`SELECT player, SUM(CASE WHEN won = 1 AND voided = 0 THEN 1 ELSE 0 END) AS reached, SUM(1 - won) AS losses, MIN(at) AS first, MAX(CASE WHEN won = 1 AND voided = 0 THEN at END) AS last
-      FROM arena_pve GROUP BY player HAVING reached > 0 ORDER BY reached DESC, last ASC, player ASC`).all()).results ?? [];
-  const fastAll = (await db.prepare(`SELECT g.player AS player, g.at AS at, (SELECT MIN(at) FROM arena_pve f WHERE f.player = g.player) AS first
-      FROM (SELECT player, MIN(at) AS at FROM arena_pve WHERE tier = ${GRAND_TIER} AND step = ${ARENA_TIER_BOUTS} AND won = 1 GROUP BY player) g`).all()).results ?? [];
   const fast = fastAll.map((r) => ({ player: r.player, days: Math.max(1, Math.ceil((Number(r.at) - Number(r.first)) / 86400)), at: Number(r.at) }))
     .sort((x, y) => x.days - y.days || x.at - y.at || (x.player < y.player ? -1 : 1));
-  const standings = await arenaStandingsOf(ctx, season);
-  const last = season > 1 ? await arenaStandingsOf(ctx, season - 1) : { red: 0, blue: 0 };
   const laurel = last.red > last.blue ? 'red' : last.blue > last.red ? 'blue' : null;
   const member = me ? await arenaMemberOf(ctx, me) : null;
   const banner = member?.banner ?? null;
-  const rosters = { red: await bannerRoster(ctx, season, 'red'), blue: await bannerRoster(ctx, season, 'blue') };
   const roster = banner ? rosters[banner] : [];
-  const counts = (await db.prepare('SELECT banner, COUNT(*) AS n FROM arena_members WHERE banner IS NOT NULL GROUP BY banner').all()).results ?? [];
   const pvp = topWithMe(pvpAll.map((r) => ({ player: r.player, rating: Number(r.rating), wins: Number(r.wins), losses: Number(r.losses), draws: Number(r.draws), bouts: Number(r.bouts) })), me);
   const pve = topWithMe(pveAll.map((r) => ({ player: r.player, reached: Number(r.reached), losses: Number(r.losses), grand: honours.grands.has(r.player) })), me);
   const fastB = topWithMe(fast, me);
@@ -643,6 +740,7 @@ export async function arenaBoardOf(ctx, player, env) {
     recent: records.recent.map((b) => (b.opponent ? { ...b, opponent: names.get(b.opponent) ?? { name: '', title: null, glyphs: [] } } : b)),
     record: records.record,
   } : null;
+  for (const keep of later) await keep();
   return {
     season, day: arenaSeasonDay(nowS), endsAt: arenaSeasonEndsS(season),
     pvp: board(pvp), pve: board(pve), fast: board(fastB),

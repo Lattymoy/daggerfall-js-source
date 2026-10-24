@@ -1,11 +1,11 @@
 [
   {
     "name": "TOUCH-HOLD-the-third-slot-none",
-    "file": "src/ui/touchButtons.js",
+    "file": "src/ui/touch/touchButtons.js",
     "old": "touchButton2: 'ReadyWeapon', touchButton3: 'Interact' });",
     "new": "touchButton2: 'ReadyWeapon', touchButton3: 'none' });",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
@@ -14,25 +14,25 @@
     "old": "  touchButton3: 'Interact',",
     "new": "  touchButton3: 'none',",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
     "name": "TOUCH-HOLD-interact-a-tap",
-    "file": "src/ui/touchButtons.js",
+    "file": "src/ui/touch/touchButtons.js",
     "old": "glyph: 'E', kind: 'hold', w: 52 },",
     "new": "glyph: 'E', kind: 'tap', w: 52 },",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
     "name": "TOUCH-HOLD-no-interact-choice",
-    "file": "src/ui/touchButtons.js",
+    "file": "src/ui/touch/touchButtons.js",
     "old": "  { id: 'Interact', label: 'Interact (the use key)', glyph: 'E', kind: 'hold', w: 52 },\n",
     "new": "",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
@@ -41,52 +41,52 @@
     "old": "  ['JoystickButton1', 'Interact'],        // B / Circle - in the world (Back in a window)\n",
     "new": "",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
     "name": "TOUCH-HOLD-plus-lt-recast",
-    "file": "src/ui/plusPad.js",
+    "file": "src/ui/plus/plusPad.js",
     "old": "  ['JoystickAxis9Button0', 'Interact'],      // LT",
     "new": "  ['JoystickAxis9Button0', 'RecastSpell'],      // LT",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
     "name": "TOUCH-HOLD-plus-layout-not-bumped",
-    "file": "src/ui/plusPad.js",
+    "file": "src/ui/plus/plusPad.js",
     "old": "export const PLUS_PAD_LAYOUT_VERSION = 2;",
     "new": "export const PLUS_PAD_LAYOUT_VERSION = 1;",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
     "name": "TOUCH-HOLD-the-retired-row-kept",
-    "file": "src/ui/plusPad.js",
+    "file": "src/ui/plus/plusPad.js",
     "old": "for (const [code, action] of [...DEFAULT_SECONDARY_BINDINGS, ...PLUS_PAD_RETIRED]) {",
     "new": "for (const [code, action] of DEFAULT_SECONDARY_BINDINGS) {",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
     "name": "TOUCH-HOLD-recast-dropped",
-    "file": "src/ui/plusPad.js",
+    "file": "src/ui/plus/plusPad.js",
     "old": "right: Object.freeze({ tap: 'Rest', hold: 'RecastSpell' }),",
     "new": "right: Object.freeze({ tap: 'Rest', hold: null }),",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
     "name": "TOUCH-HOLD-no-bind-row",
-    "file": "src/ui/plusPadBinds.js",
+    "file": "src/ui/plus/plusPadBinds.js",
     "old": "  { id: 'interact', label: 'Interact (the use key)', sec: 'Interact' },",
     "new": "",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
@@ -95,34 +95,34 @@
     "old": "    const padHeld = controllerLook() ? padFamily() : null;",
     "new": "    const padHeld = null;",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
     "name": "TOUCH-HOLD-no-knife-use",
-    "file": "src/systems/foragingInstall.js",
+    "file": "src/systems/foraging/foragingInstall.js",
     "old": "  registerItemUseHandler(SKINNING_KNIFE.templateIndex, knifeUse);\n",
     "new": "",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
     "name": "TOUCH-HOLD-the-knife-usable-offline",
-    "file": "src/systems/foragingInstall.js",
+    "file": "src/systems/foraging/foragingInstall.js",
     "old": "knifeUse.usable = (item) => !!professionToolLine(item?.templateIndex);",
     "new": "knifeUse.usable = () => true;",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
     "name": "TOUCH-HOLD-the-knife-line-unsaid",
-    "file": "src/systems/foragingInstall.js",
+    "file": "src/systems/foraging/foragingInstall.js",
     "old": "  [SKINNING_KNIFE.templateIndex]: (k) => `Hunting is done at a body",
     "new": "  [-1]: (k) => `Hunting is done at a body",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    tools: Object.freeze([SKINNING_KNIFE.templateIndex]),",
     "new": "    tools: Object.freeze([]),",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "        heldByUse: !!used,",
     "new": "        heldByUse: false,",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "      return { ...plan, profession: 'hunting' };\n    },\n    /** PROF-MENU (2026-10-01",
     "new": "      return { ...huntPlan({ body: b, taken: false, counting: false, rank: 0, storesFull: () => false, hides: 0, high: 0, loot: true }), profession: 'hunting' };\n    },\n    /** PROF-MENU (2026-10-01",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
@@ -158,25 +158,25 @@
     "old": "label: used ? '' : keyLabel('Interact'),",
     "new": "label: keyLabel('Interact'),",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
     "name": "TOUCH-HOLD-the-meter-names-a-key",
-    "file": "src/ui/profReticle.js",
-    "old": "s.tracing ? 'draw the knife along the line' : byUse ? 'aim the knife at the first point' :",
-    "new": "s.tracing ? 'draw the knife along the line' :",
+    "file": "src/ui/professions/profReticle.js",
+    "old": " : byUse ? t('prof.reticle.trace.aim', 'aim the knife at the first point')\n        : s.slips",
+    "new": "\n        : s.slips",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
     "name": "TOUCH-HOLD-the-gentle-meter-names-a-key",
-    "file": "src/ui/profReticle.js",
-    "old": "? (byUse ? 'skinning...' : `hold ${label || 'the use key'}`)",
-    "new": "? (`hold ${label || 'the use key'}`)",
+    "file": "src/ui/professions/profReticle.js",
+    "old": "? (byUse ? t('prof.reticle.hold.skinning', 'skinning...') : t('prof.reticle.hold.hold', 'hold {key}', { key: label || useKey() }))",
+    "new": "? (t('prof.reticle.hold.hold', 'hold {key}', { key: label || useKey() }))",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "else hud.setMeter(act.act, act.label ?? '', { byUse: act.heldByUse === true });",
     "new": "else hud.setMeter(act.act, act.label ?? '', { byUse: false });",
     "tests": [
-      "test/fb1001_touchhold.test.js"
+      "test/systems/fb1001_touchhold.test.js"
     ]
   }
 ]

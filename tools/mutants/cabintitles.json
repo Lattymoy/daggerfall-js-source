@@ -5,7 +5,7 @@
     "old": "  const legacyCabinItems = () => [...(playerEntity.items ?? []), ...(playerEntity.wagonItems ?? []), ...fleetBook()];",
     "new": "  const legacyCabinItems = () => [...(playerEntity.items ?? []), ...(playerEntity.wagonItems ?? [])];",
     "tests": [
-      "test/cabintitles.test.js"
+      "test/systems/cabintitles.test.js"
     ]
   },
   {
@@ -14,16 +14,16 @@
     "old": "  const legacyCabinItems = () => [...(playerEntity.items ?? []), ...(playerEntity.wagonItems ?? []), ...fleetBook()];",
     "new": "  const legacyCabinItems = () => [...fleetBook()];",
     "tests": [
-      "test/cabintitles.test.js"
+      "test/systems/cabintitles.test.js"
     ]
   },
   {
     "name": "CABINTITLES-old-refusal",
     "file": "src/scenes/world.js",
-    "old": "townTalk.say('Summon your linked ship from Holdings > Fleet, or place her parts, first.')",
+    "old": "townTalk.say('Summon your linked ship from Holdings > Fleet, or place its parts, first.')",
     "new": "townTalk.say('Launch your linked ship using its existing deed or packed parts first.')",
     "tests": [
-      "test/cabintitles.test.js"
+      "test/systems/cabintitles.test.js"
     ]
   }
 ]

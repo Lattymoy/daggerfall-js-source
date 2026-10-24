@@ -1,0 +1,65 @@
+[
+  {
+    "name": "BAL8-the-blow-past-the-ceiling",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp, harmRoom(by, now));   // BAL8: and the striker's harm ceiling",
+    "new": "  const got = Math.min(want, siegeBlowMax(held.w, held.m, wa), to.hp);",
+    "tests": [
+      "test/net/siege/bal8_pvp.test.js"
+    ]
+  },
+  {
+    "name": "BAL8-the-cast-past-the-ceiling",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  const got = Math.min(want, SIEGE_CASTS.damageMax, to.hp, harmRoom(by, now));   // BAL8: the blows' and the casts' one ceiling",
+    "new": "  const got = Math.min(want, SIEGE_CASTS.damageMax, to.hp);",
+    "tests": [
+      "test/net/siege/bal8_pvp.test.js"
+    ]
+  },
+  {
+    "name": "BAL8-the-window-never-slides",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "  f.harm = (f.harm ?? []).filter((h) => Array.isArray(h) && now - h[0] < SIEGE_HARM.windowMs);",
+    "new": "  f.harm = (f.harm ?? []).filter((h) => Array.isArray(h));",
+    "tests": [
+      "test/net/siege/bal8_pvp.test.js"
+    ]
+  },
+  {
+    "name": "BAL8-harm-never-spent",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "const spendHarm = (f, now, n) => { if (n > 0) f.harm.push([now, n]); };",
+    "new": "const spendHarm = () => {};",
+    "tests": [
+      "test/net/siege/bal8_pvp.test.js"
+    ]
+  },
+  {
+    "name": "BAL8-the-ceiling-at-the-arenas",
+    "file": "src/net/siege/siegeRef.js",
+    "old": "export const SIEGE_HARM = Object.freeze({ max: SIEGE_CASTS.max * SIEGE_CASTS.damageMax, windowMs: SIEGE_CASTS.windowMs });",
+    "new": "export const SIEGE_HARM = Object.freeze({ max: 200, windowMs: SIEGE_CASTS.windowMs });",
+    "tests": [
+      "test/net/siege/bal8_pvp.test.js"
+    ]
+  },
+  {
+    "name": "BAL8-the-rival-backstabbed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (rival) { rival._backFacing = false; live.push(rival); }",
+    "new": "    if (rival) { rival._backFacing = foeDeps.isBackFacing(rival.ai.yaw, rival.ai.feet, playerFeet); live.push(rival); }",
+    "tests": [
+      "test/net/siege/bal8_pvp.test.js"
+    ]
+  },
+  {
+    "name": "BAL8-the-rivals-shaft-from-behind",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "playerArrowHitFoe(m, rv, { playerEntity, playerWeapon, playerFeet: null,",
+    "new": "playerArrowHitFoe(m, rv, { playerEntity, playerWeapon, playerFeet,",
+    "tests": [
+      "test/net/siege/bal8_pvp.test.js"
+    ]
+  }
+]

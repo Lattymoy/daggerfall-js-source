@@ -25,10 +25,10 @@ The HONEST still-open list as of the re-verification:
 1. **Classic-save import** (SaveTree/SaveVars/SaveGames/
    CharacterRecord, ~3,200 C# loc) - ~~absent, unchanged~~ **NARROWED
    (SAV1 2026-08-27): the READER half ships** - all 13 API/Save files
-   (formats/saveTreeFile.js, characterRecord.js, saveVarsFile.js,
+   (formats/save/saveTreeFile.js, characterRecord.js, saveVarsFile.js,
    saveImageFile.js, bioFile.js, saveGames.js + spellsStd's
    readSpellRecord + systems/classicSave.js's document conversion),
-   pinned in test/classicsave.test.js. **NARROWED AGAIN (SAV2, same
+   pinned in test/systems/classicsave.test.js. **NARROWED AGAIN (SAV2, same
    day): the IMPORT CORE ships too** - classicSaveToSnapshot builds
    the port's own save envelope from a classic save
    (StartFromClassicSave's whole data half, the weather 0x7f/5<->6
@@ -48,7 +48,7 @@ The HONEST still-open list as of the re-verification:
    2026-08-27)**: every MacroHelper.cs row is now handled in
    questMacros.js, null-handled where C# is null, or RECORDED at the
    per-window expander that owns it (37 tokens, each verified in its
-   named home) - and `test/macrocoverage.test.js` is the coverage
+   named home) - and `test/systems/quest/macrocoverage.test.js` is the coverage
    GATE this page asked for, diffing the C# table mechanically. What
    remains is per-MCP SOURCES: the biography MCP (the %q block's
    answers), the spell-info MCP (%1am..%clm/%mpw), the bank MCP
@@ -58,7 +58,7 @@ The HONEST still-open list as of the re-verification:
    actions (Q5 + MT-iii, 2026-08-27)**: fourteen guards retired in one slice (the skill/
    attribute/season/weather/climate conditions, SetPlayerCrime,
    PayMoney, JournalNote, TrainPc, KillFoe, UnrestrainFoe, RunQuest,
-   SpawnCityGuards, Enemies - pinned in test/questactions5.test.js,
+   SpawnCityGuards, Enemies - pinned in test/systems/questactions5.test.js,
    including DFU's own RestrainFoe-shadows-UnrestrainFoe parse
    quirk). The four left each name their blocker in GUARD_PATTERNS:
    CastEffectDo (effect-template registry lookup by key), WorldUpdate
@@ -68,7 +68,7 @@ The HONEST still-open list as of the re-verification:
    list is FOUR.
 5. ~~Enemy infighting / MobileTeams combat / PlayerAlly~~ **SHIPPED
    ABOVE GROUND (MT 2026-08-27); the DUNGEON host is the remainder.**
-   `characters/enemyTargets.js` is EnemySenses' selection half whole
+   `characters/enemy/enemyTargets.js` is EnemySenses' selection half whole
    (MOBILE_TEAMS, GetTargets, the classic target machine) and
    `hostCombat.applyDamageToNonPlayer` is EnemyAttack.cs:303-392,
    which had no port because until this slice no foe could hold a foe
@@ -103,7 +103,7 @@ The HONEST still-open list as of the re-verification:
    CLOSED.
 7. **CfaFile** (horse/cart FP sprites), **HeadBobber** (a settings
    toggle exists, no bobber), **DilateCoastalClimate**, ~~city gates
-   closing at night~~ SHIPPED (AUDIT 64 F14 - world/cityGate.js, both
+   closing at night~~ SHIPPED (AUDIT 64 F14 - world/city/cityGate.js, both
    exterior hosts), HUDActiveSpells + escorting faces, the
    transformed move-sound loop - the small-residue tail.
 
@@ -146,7 +146,7 @@ other ~~21~~ ~~20~~ ~~6~~ FOUR are `PendingTrigger` guards
 and PENDS, exactly as DFU sends an unregistered line, and nothing
 runs: `CastEffectDo`, `ClickedFoe`, `PromptMulti`, `WorldUpdate` -
 each guard now carries its blocker in a comment. **PlaySong SHIPPED 2026-08-25** - a real
-template over `systems/songFiles.js` (SongFiles.cs + EnumToFilename
+template over `systems/song/songFiles.js` (SongFiles.cs + EnumToFilename
 in the archive's spelling); its Ledger row is struck. **FOURTEEN MORE
 SHIPPED 2026-08-27 (Q5)**: ~~`Climate`~~, ~~`Enemies`~~,
 ~~`JournalNote`~~, ~~`KillFoe`~~, ~~`PayMoney`~~, ~~`RunQuest`~~,
@@ -154,11 +154,11 @@ SHIPPED 2026-08-27 (Q5)**: ~~`Climate`~~, ~~`Enemies`~~,
 ~~`TrainPc`~~, ~~`UnrestrainFoe`~~, ~~`Weather`~~,
 ~~`WhenAttributeLevel`~~, ~~`WhenSkillLevel`~~ - real templates with
 host doors through world.js (Quest-Arc's Q5 record;
-test/questactions5.test.js). **TWO MORE SHIPPED 2026-08-27 (MT-iii)**:
+test/systems/questactions5.test.js). **TWO MORE SHIPPED 2026-08-27 (MT-iii)**:
 ~~`ChangeFoeInfighting`~~ and ~~`ChangeFoeTeam`~~, which item 5's
 MobileTeams slice unblocked the same day - both writing every live
 instance of a foe symbol through the new `questFoeInstances` door
-(Characters-Arc's MT record; test/enemyinfighting.test.js).
+(Characters-Arc's MT record; test/characters/enemy/enemyinfighting.test.js).
 
 **Macros: 83 of MacroHelper's 217 appear anywhere in `src/`; 134 do not.**
 The missing set is dominated by the biography/class-question block
@@ -180,16 +180,16 @@ AUDIT 24's regeneration gate rebuilds that set from the source tree.
 
 | Subsystem | DFU loc | Notes |
 |---|---|---|
-| ~~Interior automap~~ SHIPPED (A-slices: systems/automap.js + ui/automapWindow.js) | 5,091 | struck 2026-08-27 |
-| ~~Controls / keybinding + InputManager~~ SHIPPED (SETT: ui/input.js + ui/controlsWindow.js + systems/settings.js; gamepad still absent) | 4,110 | struck 2026-08-27 |
+| ~~Interior automap~~ SHIPPED (A-slices: systems/automap/automap.js + ui/automap/automapWindow.js) | 5,091 | struck 2026-08-27 |
+| ~~Controls / keybinding + InputManager~~ SHIPPED (SETT: ui/input.js + ui/controlsWindow.js + systems/settings/settings.js; gamepad still absent) | 4,110 | struck 2026-08-27 |
 | ~~Exterior automap~~ SHIPPED (ui/exteriorAutomapWindow.js) | 3,582 | struck 2026-08-27 |
 | ~~Enchanting effect tree~~ SHIPPED (E1/E2 2026-08-23 + V3's nine artifacts 2026-08-27) | 3,498 | struck 2026-08-27 |
-| ~~HUD component set~~ MOSTLY SHIPPED (ui/hudLarge.js with compass/vitals/head incl. V5's curse heads; HUDActiveSpells, place marker, escorting faces still absent) | 3,272 | narrowed 2026-08-27 |
+| ~~HUD component set~~ MOSTLY SHIPPED (ui/hud/hudLarge.js with compass/vitals/head incl. V5's curse heads; HUDActiveSpells, place marker, escorting faces still absent) | 3,272 | narrowed 2026-08-27 |
 | Classic-save import (`API/Save/*`) | 3,200 | SaveTree, SaveVars, SaveGames, CharacterRecord + 7 typed records |
 | ~~Lycanthropy / vampirism / artifact effects~~ SHIPPED WHOLE (V1-V5 + V3, 2026-08-24..27) | 2,527 | struck 2026-08-27 |
-| ~~Spell maker~~ SHIPPED (systems/spellMaker.js + ui/spellMakerWindow.js) | 2,390 | struck 2026-08-27 |
+| ~~Spell maker~~ SHIPPED (systems/spell/spellMaker.js + ui/spell/spellMakerWindow.js) | 2,390 | struck 2026-08-27 |
 | ~~Banking~~ SHIPPED (systems/banking.js + the H-slices through H4's 3D preview) | 1,707 | struck 2026-08-27 |
-| ~~Item maker / enchanting UI~~ SHIPPED (ui/itemMakerWindow.js) | 1,320 | struck 2026-08-27 |
+| ~~Item maker / enchanting UI~~ SHIPPED (ui/item/itemMakerWindow.js) | 1,320 | struck 2026-08-27 |
 | Save/load game windows | 937 | STILL OPEN (re-verified 2026-08-27) - the pause menu rides the quicksave; no slot UI |
 | ~~Rappel / hanging~~ SHIPPED (player/climbing.js + motor.js); HeadBobber still absent (a settings toggle only) | 857 | narrowed 2026-08-27 |
 | ~~Potion maker~~ SHIPPED (ui/potionMakerWindow.js) | 408 | struck 2026-08-27 |
@@ -197,7 +197,7 @@ AUDIT 24's regeneration gate rebuilds that set from the source tree.
 One architectural note that changes the arithmetic: DFU carries a
 16,404-loc retained widget toolkit (`Game/UserInterface`) under 37,693 loc
 of windows. The port draws immediate-mode onto a virtual 320x200 surface
-(`ui/nativePanel.js`), so each remaining window is far cheaper than its C#
+(`ui/native/nativePanel.js`), so each remaining window is far cheaper than its C#
 line count - but there is no `ListBox`, `HorizontalSlider`, `MultiTextBox`
 or `Paginator` to reuse either, which is why every window has cost a whole
 slice. Whether to build a small widget layer before the remaining ~20
@@ -227,7 +227,7 @@ reader that touches a shipping ARENA2 file. What remains:
 
 ### World / terrain / location - ~4,905 loc
 Static assembly is finished and verbatim. The gaps are dynamic:
-- ~~No dynamic weather at all~~ SHIPPED (S41: systems/weatherSim.js -
+- ~~No dynamic weather at all~~ SHIPPED (S41: systems/weather/weatherSim.js -
   the climate arrays, the day roll, the save).
 - ~~The season never advances~~ SHIPPED (S41's day block advances it;
   the sky and the enchant ctx read it live).
@@ -287,14 +287,18 @@ The most complete subsystem measured. Residue only, but some of it bites:
 
 ### Enemy AI / spawning / population - ~1,245 loc
 Also close to 1:1 on the classic path. Gaps:
-- Every enemy uses one fixed 1.8m capsule; DFU sizes each foe's controller
-  from its sprite (~60).
+- ~~Every enemy uses one fixed 1.8m capsule; DFU sizes each foe's controller
+  from its sprite (~60).~~ SHIPPED (INCIDENT 2026-09-04: characters/enemy/enemyAnchor.js
+  enemyControllerHeight, SetupDemoEnemy's law - `04-Characters/Characters-Arc.md`).
 - No multi-target AI: `GetTargets`, `MobileTeams`, infighting, PlayerAlly
   and quest-foe targeting are all absent (~350).
 - ~~Daedra Seducer transformation unported~~ SHIPPED
-  (characters/enemyAttack.js + enemyBasics carry it).
-- `HeightAdjust` unported - tall enemies cannot follow through doorways
-  (~35).
+  (characters/enemy/enemyAttack.js + enemyBasics carry it).
+- ~~`HeightAdjust` unported - tall enemies cannot follow through doorways
+  (~35).~~ SHIPPED (DOOR-JAM, FIELD BUGS 2026-10-14b: characters/enemy/enemyMotor.js
+  _heightAdjust and the collider's CollidedSides - `01-Overview/bugs/Field-Bugs-2026-10-14b.md`;
+  it bit once the capsule above was sized: 94% of the dungeons' doorways are lower than a
+  Mage stands).
 - ~~Interior people are always visible~~ SHIPPED
   (characters/interiorPeople.js gates on hours/ownership).
 - Mobile townspeople get no face record, so every talk portrait falls back

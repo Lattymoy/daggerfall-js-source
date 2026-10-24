@@ -1,399 +1,399 @@
 [
   {
     "name": "GUIDE4-news-not-followed",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "      if (e.type === 'started' || e.type === 'updated' || e.type === 'urgent') this.follow = e.id;",
     "new": "      if (e.type === 'started' || e.type === 'urgent') this.follow = e.id;",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-deadline-not-followed",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "      if (e.type === 'started' || e.type === 'updated' || e.type === 'urgent') this.follow = e.id;",
     "new": "      if (e.type === 'started' || e.type === 'updated') this.follow = e.id;",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-ending-keeps-the-pin",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "        if (this.pinned === e.id) this.pinned = null;   // a finished quest is tracked no more\n",
     "new": "",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-ending-keeps-the-follow",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "        if (this.follow === e.id) this.follow = null;\n",
     "new": "",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-order-inverted",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "    return byId(this.pinned) ?? byId(this.follow) ?? latestOf(this.views);",
     "new": "    return byId(this.follow) ?? byId(this.pinned) ?? latestOf(this.views);",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-no-fallback",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "    return byId(this.pinned) ?? byId(this.follow) ?? latestOf(this.views);",
     "new": "    return byId(this.pinned) ?? byId(this.follow);",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-latest-is-oldest",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "  for (const v of views) if (!best || (v.updatedAt ?? -Infinity) > (best.updatedAt ?? -Infinity)) best = v;",
     "new": "  for (const v of views) if (!best || (v.updatedAt ?? -Infinity) < (best.updatedAt ?? -Infinity)) best = v;",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-tie-takes-the-last",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "  for (const v of views) if (!best || (v.updatedAt ?? -Infinity) > (best.updatedAt ?? -Infinity)) best = v;",
     "new": "  for (const v of views) if (!best || (v.updatedAt ?? -Infinity) >= (best.updatedAt ?? -Infinity)) best = v;",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-forget-drops-the-choice",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "  forget() { this.views = []; this.follow = null; }",
     "new": "  forget() { this.views = []; this.follow = null; this.pinned = null; }",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-toggle-one-way",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "    this.pinned = this.isPinned(id) || id == null ? null : String(id);",
     "new": "    this.pinned = id == null ? null : String(id);",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-the-heralds-cap",
-    "file": "src/ui/questTracker.js",
-    "old": "      opening: entryOpening(v.latest?.lines, TRACKER_OPENING_MAX),",
-    "new": "      opening: entryOpening(v.latest?.lines),",
+    "file": "src/ui/quest/questTracker.js",
+    "old": "entryOpening(v.latest?.lines, TRACKER_OPENING_MAX),",
+    "new": "entryOpening(v.latest?.lines),",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-time-without-its-word",
-    "file": "src/ui/questRail.js",
-    "old": "export const timeLeftWords = (s) => `${remainWords(s)} left`;",
+    "file": "src/ui/quest/questRail.js",
+    "old": "export const timeLeftWords = (s) => t('quest.remain.left', '{time} left', { time: remainWords(s) });",
     "new": "export const timeLeftWords = (s) => remainWords(s);",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-urgent-dropped",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "      urgent: !!v.urgent,",
     "new": "      urgent: false,",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-main-dropped",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "      main: !!v.main,",
     "new": "      main: false,",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-slot-unregistered",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "registerModSaveData(TRACKER_SAVE, {",
     "new": "registerModSaveData('QuestTrackerElsewhere', {",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-load-keeps-the-follow",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "  restoreSaveData: (r) => { questTracker.pinned = validPin(r); questTracker.forget(); },",
     "new": "  restoreSaveData: (r) => { questTracker.pinned = validPin(r); },",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-junk-record-taken",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "const validPin = (r) => (typeof r?.pinned === 'string' && r.pinned.length ? r.pinned : null);",
     "new": "const validPin = (r) => r?.pinned ?? null;",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-on-the-classic-skin",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "export const trackerOn = () => isEnhanced() && !!getPref(TRACKER_PREF) && typeof document !== 'undefined';",
     "new": "export const trackerOn = () => !!getPref(TRACKER_PREF) && typeof document !== 'undefined';",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-on-without-a-page",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "export const trackerOn = () => isEnhanced() && !!getPref(TRACKER_PREF) && typeof document !== 'undefined';",
     "new": "export const trackerOn = () => isEnhanced() && !!getPref(TRACKER_PREF);",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-switch-ignored",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "export const trackerOn = () => isEnhanced() && !!getPref(TRACKER_PREF) && typeof document !== 'undefined';",
     "new": "export const trackerOn = () => isEnhanced() && typeof document !== 'undefined';",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-rebuilt-every-frame",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "  if (!card || card.doc !== doc) { dropCard(); card = build(doc); }",
     "new": "  dropCard(); card = build(doc);",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-a-still-frame-writes",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "  if (c.last[key] === text) return false;\n",
     "new": "",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-height-kept-while-hidden",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "  card.node.style.display = 'none';\n  publishHeight(card.doc, 0);\n",
     "new": "  card.node.style.display = 'none';\n",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-height-without-the-gap",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "px = h ? h + TRACKER_GAP : 0; }",
     "new": "px = h; }",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-hide-door-skipped",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "    dropCard();   // GUIDE5: what the model followed is the bridge's to forget - the marks may still be following it\n    return null;",
     "new": "    return null;",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-off-keeps-the-follow",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "    if (!follow && (questTracker.views.length || questTracker.follow != null)) questTracker.forget();\n",
     "new": "",
     "tests": [
-      "test/guide4_tracker.test.js",
-      "test/guide5_marks.test.js"
+      "test/ui/quest/guide4_tracker.test.js",
+      "test/ui/quest/guide5_marks.test.js"
     ]
   },
   {
     "name": "GUIDE4-shown-under-a-window",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "  if (!f || hidden || !doc) { hideCard(); return null; }",
     "new": "  if (!f || !doc) { hideCard(); return null; }",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-empty-row-shown",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "  n.style.display = text ? '' : 'none';",
     "new": "  n.style.display = '';",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-marks-swapped",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "f.pinned ? '\\u25c6' : '\\u25c7'",
     "new": "f.pinned ? '\\u25c7' : '\\u25c6'",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-spoken-by-the-card",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "  node.setAttribute('aria-hidden', 'true');",
     "new": "  node.setAttribute('aria-live', 'polite');",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-pressed-always",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "  if (b && b.getAttribute?.('aria-pressed') !== (on ? 'true' : 'false')) b.setAttribute('aria-pressed', on ? 'true' : 'false');",
     "new": "  if (b) b.setAttribute('aria-pressed', 'true');",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-toggle-does-nothing",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "    questTracker.toggle(id);\n    paintTrackBox(box);",
     "new": "    paintTrackBox(box);",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-no-redraw",
-    "file": "src/ui/questTracker.js",
+    "file": "src/ui/quest/questTracker.js",
     "old": "    syncTrackButtons(doc);\n  };",
     "new": "  };",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-button-without-the-switch",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "      if (followOn() && sel.id != null) meta.append(trackButton(",
     "new": "      if (sel.id != null) meta.append(trackButton(",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-journal-ignores-the-hud",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "    const onHud = followOn() ? questTracker.tracked()?.id : null;",
     "new": "    const onHud = null;",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-chronicle-only-where-a-place",
-    "file": "src/ui/enhancedChronicle.js",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
     "old": "  const track = followOn() && e.uid != null;",
     "new": "  const track = followOn() && e.uid != null && !!e.where;",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-chronicle-without-the-switch",
-    "file": "src/ui/enhancedChronicle.js",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
     "old": "  const track = followOn() && e.uid != null;",
     "new": "  const track = e.uid != null;",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-tracker-not-fed",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "    if (follow) questTracker.hear(seen);\n",
     "new": "",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-baseline-withheld",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "      if (follow) questTracker.hear(seen);",
     "new": "      if (follow && seen.events.length) questTracker.hear(seen);",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-questions-not-asked",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "      const seen = lens.look(ctx.questWhere ?? {});",
     "new": "      const seen = lens.look({});",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-load-keeps-the-follow-bridge",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "      questTracker.forget();   // GUIDE4: ...nor what the last game's card followed (the tracked quest is the save's own record)\n",
     "new": "",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-words-not-on-the-view",
-    "file": "src/ui/questLens.js",
+    "file": "src/ui/quest/questLens.js",
     "old": "        words: targetWords(latest.target),\n",
     "new": "",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-draw-inside-the-gate",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  drawQuestTracker({ hidden: cursorActive || !hudRenderEnabled() });",
     "new": "  if (isEnhanced() && typeof document !== 'undefined') drawQuestTracker({ hidden: cursorActive || !hudRenderEnabled() });",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
     "name": "GUIDE4-hud-gate-loose",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  drawQuestTracker({ hidden: cursorActive || !hudRenderEnabled() });",
     "new": "  drawQuestTracker({ hidden: !hudRenderEnabled() });",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
@@ -402,7 +402,7 @@
     "old": "    questWhere: { canFindPlace: (regionName, name) => canFindPlace(maps, mapDict, regionName, name, questPlacePixel), currentLocationName: () => _questLoc()?.name ?? '' },   // AUDIT GUIDE O3: every tick, so through the host's memo\n",
     "new": "",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
@@ -411,7 +411,7 @@
     "old": "    questWhere: { currentLocationName: () => dfLocation.name ?? locationName },   // GUIDE4: the city it stands in, and no map to ask (GUIDE2's four hosts)\n",
     "new": "",
     "tests": [
-      "test/guide4_tracker.test.js"
+      "test/ui/quest/guide4_tracker.test.js"
     ]
   },
   {
@@ -420,8 +420,8 @@
     "old": "top: calc(92px + var(--dfquest-h, 0px) + env(safe-area-inset-top, 0px));",
     "new": "top: calc(92px + env(safe-area-inset-top, 0px));",
     "tests": [
-      "test/guide4_tracker.test.js",
-      "test/soc4_partyhud.test.js"
+      "test/ui/quest/guide4_tracker.test.js",
+      "test/net/soc4_partyhud.test.js"
     ]
   },
   {
@@ -430,8 +430,8 @@
     "old": "    control: Object.freeze({ store: 'prefs', key: 'questTracker', initial: true, online: 'player' }),",
     "new": "    control: Object.freeze({ store: 'prefs', key: 'questTracker', initial: false, online: 'player' }),",
     "tests": [
-      "test/guide4_tracker.test.js",
-      "test/features.test.js"
+      "test/ui/quest/guide4_tracker.test.js",
+      "test/systems/features.test.js"
     ]
   },
   {
@@ -440,8 +440,8 @@
     "old": "    control: Object.freeze({ store: 'prefs', key: 'questTracker', initial: true, online: 'player' }),",
     "new": "    control: Object.freeze({ store: 'prefs', key: 'questTracker', initial: true, online: true }),",
     "tests": [
-      "test/guide4_tracker.test.js",
-      "test/features.test.js"
+      "test/ui/quest/guide4_tracker.test.js",
+      "test/systems/features.test.js"
     ]
   }
 ]

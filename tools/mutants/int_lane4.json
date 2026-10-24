@@ -1,0 +1,258 @@
+[
+  {
+    "name": "INT16-gate-off",
+    "file": "server-account/src/index.js",
+    "old": "        if (seat) return json(seat, 403, origin);",
+    "new": "        if (false) return json(seat, 403, origin);",
+    "why": "every progression route believes any character again - an offline id's fresh nodes, a held character's Renown",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT16-the-name-unread",
+    "file": "server-account/src/progress.js",
+    "old": "  if (!row || (named && character !== row.id)) return { error: 'progress-seat' };",
+    "new": "  if (!row) return { error: 'progress-seat' };",
+    "why": "an account with any seat claims for any character it names - an offline id beside the realm one",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT16-no-lease",
+    "file": "server-account/src/progress.js",
+    "old": "export const SEAT_WHERE = 'player = ?1 AND lease IS NOT NULL AND dead_at IS NULL';",
+    "new": "export const SEAT_WHERE = 'player = ?1 AND dead_at IS NULL';",
+    "why": "a character another device's join unseated still claims",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT16-the-dead-seated",
+    "file": "server-account/src/progress.js",
+    "old": "export const SEAT_WHERE = 'player = ?1 AND lease IS NOT NULL AND dead_at IS NULL';",
+    "new": "export const SEAT_WHERE = 'player = ?1 AND lease IS NOT NULL';",
+    "why": "a dead character's lease still claims a find - the find names no character, so the tombstone door never asks",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT16-the-hold-unread",
+    "file": "server-account/src/progress.js",
+    "old": "  if (row.held) return { error: 'trade-held', held: row.held };",
+    "new": "  if (false) return { error: 'trade-held', held: row.held };",
+    "why": "a character the judge holds for a forged record goes on earning",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT16-a-read-gated",
+    "file": "server-account/src/progress.js",
+    "old": "  '/v1/marks/find': Object.freeze(['find', false]),",
+    "new": "  '/v1/marks/find': Object.freeze(['find', true]),",
+    "why": "a find names no character: asked as if it named one, every find is refused",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT17-enforce-room-unasked",
+    "file": "server-account/src/index.js",
+    "old": "          if (room < 1) return no('progress-play', 429, origin);",
+    "new": "          if (room < 0) return no('progress-play', 429, origin);",
+    "why": "an empty bucket takes one more claim",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT17-enforce-renown-unclamped",
+    "file": "server-account/src/index.js",
+    "old": "          if (stream === 'renown' && Number.isSafeInteger(body.xp)) body.xp = Math.min(body.xp, room);",
+    "new": "",
+    "why": "an enforced line credits a report its whole five thousand while the bucket holds a thousand",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT17-renown-unmeasured",
+    "file": "server-account/src/index.js",
+    "old": "        await progressSpent(ctx, who.player.id, path, r);   // INT17: what it credited, measured against the play that paid for it",
+    "new": "",
+    "why": "a Renown report spends no bucket and keeps no hour - the measure staff set the line from is empty",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT17-asked-not-credited",
+    "file": "server-account/src/progress.js",
+    "old": "    case '/v1/renown/xp': add('renown', n(a.credited)); break;",
+    "new": "    case '/v1/renown/xp': add('renown', n(a.xp)); break;",
+    "why": "the measure counts the track's total, never what this report credited",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT17-a-repeat-spends",
+    "file": "server-account/src/progress.js",
+    "old": "  if (!a || typeof a !== 'object' || a.error || a.repeat) return [];",
+    "new": "  if (!a || typeof a !== 'object' || a.error) return [];",
+    "why": "an answer sent again because the first was lost spends the bucket twice",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT17-harvest-silver-everywhere",
+    "file": "server-account/src/progress.js",
+    "old": "        if (path === '/v1/prof/harvest' && n(a.marks?.struck)) add('gather', 1);",
+    "new": "        if (n(a.marks?.struck)) add('gather', 1);",
+    "why": "a craft's Marks answer counted as a harvest's silver",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT17-first-claim-empty",
+    "file": "server-account/src/progress.js",
+    "old": "CASE WHEN b.played_at IS NULL THEN 0 ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played",
+    "new": "CASE WHEN b.played_at IS NULL THEN COALESCE(p.played_s, 0) ELSE MAX(0, COALESCE(p.played_s, 0) - b.played_at) END AS played",
+    "why": "a first claim credits the account's whole life of play to the hour it lands in",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT17-measure-keeps-debt",
+    "file": "server-account/src/progress.js",
+    "old": "SELECT ?1, ?2, CASE WHEN ?7 THEN s.left ELSE MAX(0, s.left) END, s.now, ?3",
+    "new": "SELECT ?1, ?2, s.left, s.now, ?3",
+    "why": "a measured week's debt holds every claimant the day staff turn the line on (AUDIT INT's lesson, the budget's)",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT17-a-stream-unnamed",
+    "file": "server-account/src/progress.js",
+    "old": "  if (keys.length !== PROGRESS_STREAMS.length || !PROGRESS_STREAMS.every((k) => validLine(c.streams[k]))) return null;",
+    "new": "  if (!PROGRESS_STREAMS.every((k) => validLine(c.streams[k]))) return null;",
+    "why": "a line naming a stream no route spends is taken",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT17-the-line-kept-past-a-write",
+    "file": "server-account/src/review.js",
+    "old": "      forgetProgressConfig(db);",
+    "new": "",
+    "why": "the line staff wrote waits a minute where they wrote it - the old one kept",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT17-the-review-anyones",
+    "file": "server-account/src/review.js",
+    "old": "  if (act === 'progress') {",
+    "new": "  if (act === 'progress-x') {",
+    "why": "the progression claims' measure and line are no act",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT17-the-hours-kept-forever",
+    "file": "server-account/src/cron.js",
+    "old": "  ['progress-hours', (ctx) => rounds(() => deleted(ctx.db,",
+    "new": "  ['progress-hours-x', (ctx) => rounds(() => deleted(ctx.db,",
+    "why": "the measure's hours swept under another name - the hourly job's roll moved",
+    "tests": ["test/net/auditscale.test.js"]
+  },
+  {
+    "name": "INT16-renown-retried-forever",
+    "file": "src/net/renownTracker.js",
+    "old": "'renown-full', 'progress-seat', 'trade-held']);",
+    "new": "'renown-full']);",
+    "why": "a tab that lost its seat reports every minute, doubling, for the rest of the page",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT16-finds-owed-past-the-seat",
+    "file": "src/net/marksBook.js",
+    "old": "export const FIND_DROPS = Object.freeze(['marks-young', 'progress-seat', 'trade-held']);",
+    "new": "export const FIND_DROPS = Object.freeze(['marks-young']);",
+    "why": "a held character's finds are owed and asked again",
+    "tests": ["test/server/int16_progress.test.js"]
+  },
+  {
+    "name": "INT18-blood-past-its-most",
+    "file": "src/systems/legacy/legacyLaw.js",
+    "old": "!Object.values(p.blood).every((v) => whole(v, BLOOD_MAX))",
+    "new": "!Object.values(p.blood).every((v) => whole(v, BLOOD_MAX + 1))",
+    "why": "a gift of four",
+    "tests": ["test/server/int18_lineage_law.test.js"]
+  },
+  {
+    "name": "INT18-hearth-a-skill-past",
+    "file": "src/systems/legacy/legacyLaw.js",
+    "old": "Number(k) < SKILL_COUNT",
+    "new": "Number(k) <= SKILL_COUNT",
+    "why": "a hearth on a skill the game has none of",
+    "tests": ["test/server/int18_lineage_law.test.js"]
+  },
+  {
+    "name": "INT18-hearth-past-its-most",
+    "file": "src/systems/legacy/legacyLaw.js",
+    "old": "&& whole(v, HEARTH_MAX))) out.add('hearth');",
+    "new": "&& whole(v, HEARTH_MAX + 1))) out.add('hearth');",
+    "why": "a hearth gift of four",
+    "tests": ["test/server/int18_lineage_law.test.js"]
+  },
+  {
+    "name": "INT18-estate-past-its-ceiling",
+    "file": "src/systems/legacy/legacyLaw.js",
+    "old": "!whole(record.pending.estate ?? 0, ESTATE_MAX)",
+    "new": "!whole(record.pending.estate ?? 0, ESTATE_MAX + 1)",
+    "why": "a waiting estate one past the birth's ceiling",
+    "tests": ["test/server/int18_lineage_law.test.js"]
+  },
+  {
+    "name": "INT18-a-death-unwritten",
+    "file": "src/systems/legacy/legacyLaw.js",
+    "old": "      if (was.died && !now.died) out.add('death');",
+    "new": "",
+    "why": "a copy that takes back a death the line recorded lands",
+    "tests": ["test/server/int18_lineage_law.test.js"]
+  },
+  {
+    "name": "INT18-a-retirement-unwritten",
+    "file": "src/systems/legacy/legacyLaw.js",
+    "old": "      if (was.retired != null && now.retired == null) out.add('retired');",
+    "new": "",
+    "why": "an Enduring elder retired, played again",
+    "tests": ["test/server/int18_lineage_law.test.js"]
+  },
+  {
+    "name": "INT18-a-member-dropped",
+    "file": "src/systems/legacy/legacyLaw.js",
+    "old": "      if (!now) { out.add('member'); continue; }",
+    "new": "      if (!now) continue;",
+    "why": "a copy that loses a member lands",
+    "tests": ["test/server/int18_lineage_law.test.js"]
+  },
+  {
+    "name": "INT18-remains-dropped",
+    "file": "src/systems/legacy/legacyLaw.js",
+    "old": "for (const r of Array.isArray(stored.remains) ? stored.remains : []) if (!rows.has(r?.id)) out.add('remains');",
+    "new": "for (const r of Array.isArray(stored.remains) ? stored.remains : []) if (false) out.add('remains');",
+    "why": "a fallen's remains vanish from the record",
+    "tests": ["test/server/int18_lineage_law.test.js"]
+  },
+  {
+    "name": "INT18-a-stale-copy-refused",
+    "file": "server-account/src/legacy.js",
+    "old": "    const broke = lineageLawFindings(record, base === had.rev ? parsed(had.record) : null);",
+    "new": "    const broke = lineageLawFindings(record, parsed(had.record));",
+    "why": "a copy made before another device's new member is refused as the law's, never answered stale - it never takes the member in",
+    "tests": ["test/server/int18_lineage_law.test.js"]
+  },
+  {
+    "name": "INT18-the-stored-copy-unread",
+    "file": "server-account/src/legacy.js",
+    "old": "    const broke = lineageLawFindings(record, base === had.rev ? parsed(had.record) : null);",
+    "new": "    const broke = lineageLawFindings(record, null);",
+    "why": "a copy made from the stored one that unwrites a death lands",
+    "tests": ["test/server/int18_lineage_law.test.js"]
+  },
+  {
+    "name": "INT18-a-founding-unasked",
+    "file": "server-account/src/legacy.js",
+    "old": "  if (founding.length) return lineageLaw(founding);",
+    "new": "",
+    "why": "a line founded with forged blood",
+    "tests": ["test/server/int18_lineage_law.test.js"]
+  },
+  {
+    "name": "INT18-the-client-sends-again",
+    "file": "src/systems/legacy/realmLine.js",
+    "old": "'too-many-lineages', 'lineage-law']);",
+    "new": "'too-many-lineages']);",
+    "why": "a copy the law refused is sent again at every write",
+    "tests": ["test/server/int18_lineage_law.test.js"]
+  }
+]

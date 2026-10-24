@@ -47,17 +47,17 @@ of OpenMW/openmw at 3ee798e, 0.52.0-dev), and the skin that dresses one player's
   ("Werewolfs can not cast spells", mechanicsmanagerimp.cpp:1888-1890), and the claws key as the empty hand. A form
   asked during the first build waits for it; one asked while a door's build is queued rides that build. A wolf refused
   (no Bloodmoon) still turns back - see AUDIT D1.
-- `combat/weaponRig.js`: `isMwWerewolf(entity)` - transformed, and the curse the wolf's (LycanthropyTypes 1); the
+- `combat/weapon/weaponRig.js`: `isMwWerewolf(entity)` - transformed, and the curse the wolf's (LycanthropyTypes 1); the
   wereboar has no Morrowind form and keeps the person's body. It rides `armBuildOptsOf` (a save loaded mid-change
   builds the wolf at the door) and `armIdentityOf`, and every frame the form is handed to `setWerewolf` AHEAD of the
   `ready()` gate and of the hand, the worn table and the spell; the skin is read when the form changes, not per frame.
-- **Peers.** `net/peerBodies.js`: the pose's `wb` 1 is the wolf (`peerIsWolf`); `peerBodyKey` keys the wolf by what its
+- **Peers.** `net/peer/peerBodies.js`: the pose's `wb` 1 is the wolf (`peerIsWolf`); `peerBodyKey` keys the wolf by what its
   build reads - race, sex, skin - apart from the person, so a transformation rebuilds at once rather than after
   `BODY_REBUILD_MS`, and a refused wolf is waited out as a wolf. The wolf's body is built holding nothing, readying no
   spell and hanging no lantern. A wolf refused at its skeleton is the data's answer: until the data changes no werewolf
   is the bodies' (one refusal, one warning, the person's body lingering for a turn back). A form flipped back within
   `BODY_REBUILD_MS` of a form's body waits the rest out. In `scenes/world.js` a werewolf on foot goes to the bodies
-  either way (its wolf builds while Eye Of The Beholder's lycanthrope stands for it); `net/peerRiders.js` DEFERS a
+  either way (its wolf builds while Eye Of The Beholder's lycanthrope stands for it); `net/peer/peerRiders.js` DEFERS a
   werewolf on foot and `settle`s it after the bodies have synced - drawn by the riders unless its wolf stands this
   frame (`wolfStands`). A mounted beast and the wereboar stay the rider layer's.
 - **Not a garment.** `mwClothingRecord` never resolves a Daggerfall robe to `werewolfrobe` (OpenMW hides it from the
@@ -118,14 +118,14 @@ The first player to transform with Bloodmoon attached is the check; a refusal is
 
 ## Pins
 
-- `test/werewolf1.test.js` (17): the paths and sources, the robe and its first-person ladder, the head and hair, the
+- `test/net/peer/werewolf1.test.js` (17): the paths and sources, the robe and its first-person ladder, the head and hair, the
   build (read log: the wolf's files - its head and hair bound on the fixture's own third-person skeleton - none of the
   person's, not the base's bone addon nor the person's first-person neck), the refusal and its notes, the robe with no
   MODL, the third person's ladder, the rig and its gates, the queue, the per-frame door through a refusal and back
   (a real `createWeaponRig().frame()`), the weapon rig, the peers (key, refusal, throttle), the host, the same-frame
   handoff and the garment pool, and (the merge) BEAST-SELF's stand-aside asked of the form. `tools/mutants/werewolf1.json`
   29, all dead.
-- `test/shadowfangskin.test.js` (8): who wears it, the law (base, strand, flat light, cut-only fringe, wrap, the opaque
+- `test/net/shadowfangskin.test.js` (8): who wears it, the law (base, strand, flat light, cut-only fringe, wrap, the opaque
   neighbourhood), the eyes (named, the head's blob, never the fur - seven furs, three seeds), light and dark wolves and
   the law's golden fingerprint, the mips, the rig (both views skinned, painted in the build, shared module-wide), the
   skin riding the form, and whose skin (the stored session, the asking session, the peer's key and build).
@@ -197,7 +197,7 @@ fixes stand on this page's ground.
 
 - **BEAST-SELF** (`02-Formats/Morrowind-Rules.md`, its DECLARED DIVERGENCE): main stood the Morrowind arm and body
   aside for every transformed lycanthrope, because the rig had no beast. It has one here, so the stand-aside is asked
-  of the FORM (`combat/weaponRig.js` bindArm, `fpArm.wolfStanding()`): aside while the rig is not the form the curse
+  of the FORM (`combat/weapon/weaponRig.js` bindArm, `fpArm.wolfStanding()`): aside while the rig is not the form the curse
   holds - the person while the wolf builds, a wolf refused, a wereboar, the wolf while the person rebuilds after the
   turn back - and never while the wolf stands for a werewolf, whose arm draws in first person and whose body the wheel
   crosses into. A change of form is two edges, each carried by main's camera hand-off; with Eye Of The Beholder off a

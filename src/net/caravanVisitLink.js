@@ -14,8 +14,8 @@
 // and the page - so the relay never closes it as my own id replaced, and it forwards no superseding: the seat is my primary's to lose. Pure of any scene.
 import { OnlineSession } from './online.js';
 import { cellRoomOfWire } from './wire.js';
-import { validHccRecord, HCC_WIRE_KIND } from '../systems/horseCartWire.js';
-import { thrownRecord } from '../systems/wagonWarden.js';   // AUDIT WARDEN1 R9: a caravan the town watch threw stands where it landed
+import { validHccRecord, HCC_WIRE_KIND } from '../systems/horse/horseCartWire.js';
+import { thrownRecord } from '../systems/wagon/wagonWarden.js';   // AUDIT WARDEN1 R9: a caravan the town watch threw stands where it landed
 
 import { CARAVAN_STANDS_NATIVES } from '../systems/caravanRoom.js';   // the caravan the room stands on, where it stands - one reach for the visit and the owner's own room
 export { CARAVAN_STANDS_NATIVES };

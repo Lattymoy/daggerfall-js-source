@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// FAST-SUITE (2026-10-04): THE ROAD PAINTER'S SKIP GUARD, PROVEN - world/roadPainter.js paintRoads passes by every tile
+// FAST-SUITE (2026-10-04): THE ROAD PAINTER'S SKIP GUARD, PROVEN - world/road/roadPainter.js paintRoads passes by every tile
 // no painter can reach (off the centre cross, the two diagonals and the location rect). This runs the painter as it is
 // against the painter as it stood BEFORE the guard - taken from git, `--ref` (default the guard's parent commit) - over
 // every road, track, river and stream pixel of the shipped map (vendor/roads-hazelnut), water on and off, a location
@@ -24,7 +24,7 @@ export const GUARD_PARENT = 'ae33fe8e7';   // the commit the guard (a06279295) w
 
 /** The painter as it stood at `ref`, its relative imports pointed back into this tree; answers its module. */
 async function painterAt(ref) {
-  const text = execFileSync('git', ['show', `${ref}:src/world/roadPainter.js`], { cwd: ROOT, encoding: 'utf8' })
+  const text = execFileSync('git', ['show', `${ref}:src/world/road/roadPainter.js`], { cwd: ROOT, encoding: 'utf8' })
     .replace(/from '\.\/([^']+)'/g, (_, p) => `from '${pathToFileURL(join(ROOT, 'src/world', p)).href}'`)
     .replace(/from '\.\.\/([^']+)'/g, (_, p) => `from '${pathToFileURL(join(ROOT, 'src', p)).href}'`);
   const dir = mkdtempSync(join(tmpdir(), 'roadguard-'));
@@ -37,8 +37,8 @@ async function main(argv) {
   const at = (flag) => { const i = argv.indexOf(flag); return i >= 0 ? argv[i + 1] : null; };
   const every = Math.max(1, Number(at('--every')) || 1);
   const before = await painterAt(at('--ref') ?? GUARD_PARENT);
-  const now = await import(pathToFileURL(join(ROOT, 'src/world/roadPainter.js')).href);
-  const { MAP_W } = await import(pathToFileURL(join(ROOT, 'src/world/roadNetwork.js')).href);
+  const now = await import(pathToFileURL(join(ROOT, 'src/world/road/roadPainter.js')).href);
+  const { MAP_W } = await import(pathToFileURL(join(ROOT, 'src/world/road/roadNetwork.js')).href);
   const plane = (f) => new Uint8Array(readFileSync(join(ROOT, 'vendor/roads-hazelnut', f)));
   const R = { road: plane('roadData.bytes'), track: plane('trackData.bytes'), river: plane('riverData.bytes'), stream: plane('streamData.bytes') };
   let seed = 12345;

@@ -6,7 +6,8 @@
 //
 //  - COURTING: a Living World resident who counts the one played a FRIEND (relations.js FRIEND_AT) and is no one's in
 //    the house. "Courtship" on the Tell me about page, once a day: affection by Personality, Etiquette and the
-//    question's tone, a roll on it. At AFFECTION_MAX the resident hears a proposal ("Marriage").
+//    question's tone as the resident took it (TONE-TASTE - a tone taken ill costs affection), a roll on it. At
+//    AFFECTION_MAX the resident hears a proposal ("Marriage").
 //  - THE WEDDING: a proposal taken, the two are wed at the temple of the resident's town - its door asks, once a visit.
 //    The spouse is a person of the house (`kind: 'resident'`), keeping their own name, face and day for life (the
 //    Living World's law: a resident's identity is for life).
@@ -18,11 +19,16 @@ import { RACE_KEYS } from '../races.js';
 import { personOf, isAlive, touch, newPerson, addChild, fullNameOf } from './family.js';
 import { readHouse } from '../../net/houseLaw.js';   // LEGACY7 part three: the other player's house, held to its law
 import { houseWord } from './houseName.js';   // LEGACY-NAME: a seat's house said once
+import { t } from '../textManager.js';   // TONE-TASTE: the cooled courtship's line, said in the player's language
 
 export const AFFECTION_MAX = 100;
-/** A day's courtship: the base, a point per twenty of Personality and of Etiquette, the tone's (Polite, Normal, Blunt). */
+/** A day's courtship: the base, a point per twenty of Personality and of Etiquette, and the tone's as the resident took
+ *  it (TONE-TASTE, 2026-10-15, Mac: "someone who didnt like etiquette still went up" - talkTopics.js toneTaste):
+ *  COURT_TASTE more for a tone they take kindly, nothing for the Normal tone - and a tone they take ill COSTS
+ *  COURT_TASTE of the affection, the day's courtship spent on it. LEGACY5's COURT_TONE ([3, 0, -3], by the tone alone:
+ *  Polite won everyone) is gone. */
 export const COURT_BASE = 6;
-export const COURT_TONE = Object.freeze([3, 0, -3]);
+export const COURT_TASTE = 3;
 export const CHILD_DAYS = 30;
 export const CHILD_CHANCE = 0.25;
 export const CHILDREN_MAX = 6;
@@ -85,23 +91,26 @@ export const topicLabel = (t) => LABEL[t] ?? t;
 export function topicQuestion(t, tone = 1) {
   const i = Math.max(0, Math.min(2, tone | 0));
   if (t === TOPIC.court) return ['Would you let me court you?', 'I would like to spend some time with you.', 'You and me - what do you say?'][i];
-  if (t === TOPIC.propose) return ['Will you do me the honour of marrying me?', 'Will you marry me?', 'Marry me.'][i];
+  if (t === TOPIC.propose) return ['Will you do me the honor of marrying me?', 'Will you marry me?', 'Marry me.'][i];
   if (t === TOPIC.wedding) return 'When shall we be wed?';
   return 'How is our family?';
 }
 
-/** A day's affection: the base, Personality and Etiquette, the tone - on a roll from three quarters to five quarters. */
-export function courtGain({ personality = 50, etiquette = 0, tone = 1, roll = 0.5 } = {}) {
-  const base = COURT_BASE + Math.floor(Math.max(0, personality) / 20) + Math.floor(Math.max(0, etiquette) / 20) + COURT_TONE[Math.max(0, Math.min(2, tone | 0))];
+/** A day's affection: the base, Personality and Etiquette, the tone taken kindly - on a roll from three quarters to five
+ *  quarters; a tone taken ill, -COURT_TASTE whatever else (TONE-TASTE). `taste` toneTaste's: 1, 0 or -1. */
+export function courtGain({ personality = 50, etiquette = 0, taste = 0, roll = 0.5 } = {}) {
+  if (taste < 0) return -COURT_TASTE;
+  const base = COURT_BASE + Math.floor(Math.max(0, personality) / 20) + Math.floor(Math.max(0, etiquette) / 20) + (taste > 0 ? COURT_TASTE : 0);
   return Math.max(1, Math.round(base * (0.75 + 0.5 * Math.max(0, Math.min(1, roll)))));
 }
 
 /**
- * COURTSHIP: once a day, the day's affection. Answers `{ gained, affection, again }` - `again` when this day's was
+ * COURTSHIP: once a day, the day's affection. Answers `{ gained, affection, again, cooled }` - `again` when this day's was
  * already given (nothing gained). AUDIT LEGACY III P7: a day PAST the last one courted - an older save loaded rewinds
  * the own clock, never the courtship (the store's), and its days were courted over again.
  * @param {any} member @param {{ id: string, name: string, town: number, sex?: string, race?: string, face?: number }} res
- * @param {{ day: number, townName?: string, personality?: number, etiquette?: number, tone?: number, roll?: number }} o
+ * TONE-TASTE: `cooled` when the tone was taken ill, `gained` then below nought - never past nothing.
+ * @param {{ day: number, townName?: string, personality?: number, etiquette?: number, taste?: number, roll?: number }} o
  */
 export function court(member, res, o) {
   const courts = courtsOf(member);
@@ -109,10 +118,11 @@ export function court(member, res, o) {
   const c = (courts[res.id] ??= { name: String(res.name), mapId: res.town | 0, town: String(o.townName ?? ''), affection: 0, day: -1, betrothed: false,
     sex: res.sex === 'female' ? 'female' : 'male', race: String(res.race ?? ''), face: res.face | 0 });
   if (c.day >= o.day) return { gained: 0, affection: c.affection, again: true };
-  const gained = Math.min(AFFECTION_MAX - c.affection, courtGain(o));
+  const gain = courtGain(o);
+  const gained = Math.max(-c.affection, Math.min(AFFECTION_MAX - c.affection, gain));
   c.affection += gained;
   c.day = o.day;
-  return { gained, affection: c.affection, again: false };
+  return { gained, affection: c.affection, again: false, cooled: gain < 0 };
 }
 
 /** A PROPOSAL, heard at full affection: the two are betrothed. Answers whether it was taken. */
@@ -252,6 +262,8 @@ export const MARRIAGE_TEXT = Object.freeze({
       : affection >= 34 ? `${name} smiles. "I like your company. Come and find me again."`
         : `${name} looks at you a long moment. "You're kind. We'll see."`),
   again: (name) => `${name} smiles. "You've had my day already. Tomorrow."`,
+  // TONE-TASTE: a tone the resident took ill - the day's courtship spent, and some of what was between them with it
+  cooled: (name) => t('legacy.court.cooled', '{name} stiffens. "That is no way to ask me. Another day."', { name }),
   // AUDIT LEGACY III F3: the temple's door asks the wedding (the priest is DFU's own static NPC, whose talk is the
   // engine's - section 8), so the words send the player through it, never to a priest who asks nothing
   accepted: (name, town) => `${name} says yes. "Meet me at the temple${town ? ` in ${town}` : ''}, and we'll be wed."`,

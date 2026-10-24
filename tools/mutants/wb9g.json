@@ -5,7 +5,7 @@
     "old": "Object.freeze({ id: 'title:gatebreaker', kind: 'title', key: 'gatebreaker', price: 30 })",
     "new": "Object.freeze({ id: 'title:gatebreaker', kind: 'title', key: 'gatebreaker', price: 3 })",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  for (const w of column.split(' ')) if (insigniaById(w) && !out.includes(w)) out.push(w);",
     "new": "  for (const w of column.split(' ')) if (insigniaById(w)) out.push(w);",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": " || column.length > INSIGNIA_COLUMN_MAX) return [];",
     "new": ") return [];",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (Array.isArray(held) && held.includes(offer.id)) return 'owned';\n",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (!online) return 'offline';\n",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (!(stones >= offer.price)) return 'stones';\n",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -59,8 +59,8 @@
     "old": "  if (who?.au !== undefined) claims.au = who.au;",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js",
-      "test/identitytoken.test.js"
+      "test/net/wb9g_insignia.test.js",
+      "test/net/identitytoken.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "  if (c.au !== undefined && !AURAS.includes(c.au)) return false;",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "  if (typeof au === 'string' && AURAS.includes(au)) row.au = au;",
     "new": "  if (typeof au === 'string') row.au = au;",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -87,25 +87,25 @@
     "old": "export const readAura = (row) => (typeof row?.au === 'string' && AURAS.includes(row.au) ? row.au : null);",
     "new": "export const readAura = (row) => (typeof row?.au === 'string' ? row.au : null);",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
     "name": "WB9g-the-relay-reads-no-aura",
     "file": "server/src/index.js",
-    "old": "glyphs: c.g, gx: c.gx, au: c.au, rb: c.rb, mu, lv: c.lv,",
-    "new": "glyphs: c.g, gx: c.gx, rb: c.rb, mu, lv: c.lv,",
+    "old": "glyphs: c.g, gx: c.gx, au: c.au, pi: c.pi, rb: c.rb, mu, lt, lv: c.lv,",
+    "new": "glyphs: c.g, gx: c.gx, pi: c.pi, rb: c.rb, mu, lt, lv: c.lv,",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
     "name": "WB9g-the-socket-row-drops-it",
     "file": "server/src/index.js",
-    "old": "glyphs: who.glyphs, gx: who.gx, au: who.au, ...(who.rb ? { rb: who.rb } : {}), lv: who.lv,",
-    "new": "glyphs: who.glyphs, gx: who.gx, ...(who.rb ? { rb: who.rb } : {}), lv: who.lv,",
+    "old": "glyphs: who.glyphs, gx: who.gx, au: who.au, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), lv: who.lv,",
+    "new": "glyphs: who.glyphs, gx: who.gx, ...(who.pi ? { pi: who.pi } : {}), ...(who.rb ? { rb: who.rb } : {}), lv: who.lv,",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "       AND ${EMBERS_EARNED_SQL} - insignia_spent >= ?3\n",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ],
     "note": "SERPENT-SET / SILVER-FINDS (PIN MOVED): the sale reads the embers' one sum (EMBERS_EARNED_SQL) - re-aimed by content."
   },
@@ -124,7 +124,7 @@
     "old": "insignia_spent = insignia_spent + ?3, last_seen",
     "new": "insignia_spent = insignia_spent, last_seen",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "       AND (' ' || COALESCE(insignia, '') || ' ') NOT LIKE ('% ' || ?2 || ' %')\n",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "  if (!player?.handle) return { error: 'guest' };\n",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -151,7 +151,7 @@
     "old": "  return Math.max(0, Number(r?.n ?? 0) - spent);",
     "new": "  return Math.max(0, Number(r?.n ?? 0));",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "old": "  for (const t of insigniaKeys(player?.insignia, 'title')) if (!held.includes(t)) held.push(t);\n",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "  return aurasHeld(player, env).includes(a) ? a : undefined;",
     "new": "  return a;",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ],
     "note": "AEGIS (re-aimed by content): the line now passes the config (`env`), which a list's aura is read off."
   },
@@ -179,7 +179,7 @@
     "old": "  return aurasHeld(player, env).includes(aura) ? null : 'not-held';",
     "new": "  return null;",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ],
     "note": "AEGIS (re-aimed by content): the line now passes the config (`env`), which a list's aura is read off."
   },
@@ -189,7 +189,7 @@
     "old": "          au: auraWorn(who.player, env),   // WB9g: the aura worn, the title's law - absent for none; AEGIS: a list's read off the config\n",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ],
     "note": "AEGIS (re-aimed by content): the line now passes the config (`env`), which a list's aura is read off."
   },
@@ -199,7 +199,7 @@
     "old": "          aura: wardrobe.au ?? null,   // WB9g: the aura at my own feet, beside the token as the title is\n",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -208,7 +208,7 @@
     "old": "purse: await insigniaPurse(ctx, who.player) },   // SEAT1c: and a Charter's titles",
     "new": "},   // SEAT1c: and a Charter's titles",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ],
     "note": "SEAT1c (PIN MOVED): re-aimed by content."
   },
@@ -218,7 +218,7 @@
     "old": "        const r = await equipAura(ctx, await withSeatTitles(ctx, who.player, env), env, body.aura ?? null);   // AUDIT SEATS-3 E2: the wardrobe it answers keeps a Charter's titles\n        return r.error ? no(r.error, r.error === 'not-held' ? 403 : 400, origin)",
     "new": "        const r = await equipAura(ctx, await withSeatTitles(ctx, who.player, env), env, body.aura ?? null);   // AUDIT SEATS-3 E2: the wardrobe it answers keeps a Charter's titles\n        return r.error ? no(r.error, 400, origin)",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -227,7 +227,7 @@
     "old": "  if (aura !== undefined) next.aura = typeof aura === 'string' && AURAS.includes(aura) ? aura : null;",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -236,26 +236,28 @@
     "old": "next.aura = typeof aura === 'string' && AURAS.includes(aura) ? aura : null;",
     "new": "next.aura = typeof aura === 'string' ? aura : null;",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
     "name": "WB9g-the-session-writes-no-aura",
     "file": "src/net/accountClient.js",
-    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura })",
-    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs })",
+    "old": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, aura, icon, nameAsAt })",
+    "new": "JSON.stringify({ id, name, kind, sessionId, secret, glyphs, icon, nameAsAt })",
     "tests": [
-      "test/wb9g_insignia.test.js"
-    ]
+      "test/net/wb9g_insignia.test.js"
+    ],
+    "note": "NAME-AS (PIN MOVED): re-aimed by content - the session keeps the choice's stamp beside it."
   },
   {
     "name": "WB9g-a-changed-aura-never-written",
     "file": "src/net/accountClient.js",
-    "old": "&& sameGlyphs && sameAura) return false;",
-    "new": "&& sameGlyphs) return false;",
+    "old": "&& sameGlyphs && sameAura && next.nameAsAt === was.nameAsAt) return false;",
+    "new": "&& sameGlyphs && next.nameAsAt === was.nameAsAt) return false;",
     "tests": [
-      "test/wb9g_insignia.test.js"
-    ]
+      "test/net/wb9g_insignia.test.js"
+    ],
+    "note": "NAME-AS (PIN MOVED): re-aimed by content - the guard reads the choice's stamp too."
   },
   {
     "name": "WB9g-own-aura-any-word",
@@ -263,16 +265,16 @@
     "old": "  _aura = typeof s?.aura === 'string' && AURAS.includes(s.aura) ? s.aura : null;",
     "new": "  _aura = s?.aura ?? null;",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
     "name": "WB9g-the-peers-aura-never-read",
     "file": "src/net/online.js",
-    "old": "title, ts, glyphs, au: readAura(p), rb: readRibbon(p), lv: readRenown(p),",
-    "new": "title, ts, glyphs, rb: readRibbon(p), lv: readRenown(p),",
+    "old": "title, ts, glyphs, au: readAura(p), pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
+    "new": "title, ts, glyphs, pi: readIcon(p), rb: readRibbon(p), lv: readRenown(p),",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ],
     "note": "SEAT1c (PIN MOVED): re-aimed by content - a seat title's claim rides beside the title."
   },
@@ -282,26 +284,26 @@
     "old": "    p.au = readAura(m);   // WB9g: and the newest hello's aura, including none - one taken off is gone at the next hello\n",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
     "name": "WB9g-the-memory-loses-it",
     "file": "src/net/online.js",
-    "old": "gt: p.gt ?? null, au: p.au ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub",
-    "new": "gt: p.gt ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub",
+    "old": "gt: p.gt ?? null, au: p.au ?? null, pi: p.pi ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub",
+    "new": "gt: p.gt ?? null, pi: p.pi ?? null, rb: p.rb ?? null, house: p.house ?? null, sub: p.sub",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ],
     "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
   {
     "name": "WB9g-the-re-stood-peer-bare",
     "file": "src/net/online.js",
-    "old": "gt: knew.gt, au: knew.au, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub",
-    "new": "gt: knew.gt, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub",
+    "old": "gt: knew.gt, au: knew.au, pi: knew.pi, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub",
+    "new": "gt: knew.gt, pi: knew.pi, rb: knew.rb, ...(knew.house ?? {}), sub: knew.sub",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ],
     "note": "LEGACY7 part two (PIN MOVED): re-aimed by content - the house rides beside it."
   },
@@ -311,7 +313,7 @@
     "old": "    if (aura !== undefined) { const au = readAura({ au: aura }); if (au !== (this.au ?? null)) { this.au = au; changed = true; } }",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -320,7 +322,7 @@
     "old": "    if (id === this.id) return this.au ?? null;\n",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -329,16 +331,16 @@
     "old": "  self.wearAura = async (aura) => {\n    if (self.busy || self.stage !== 'in') return false;",
     "new": "  self.wearAura = async (aura) => {\n    if (self.stage !== 'in') return false;",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
     "name": "WB9g-the-client-decides-the-aura",
     "file": "src/ui/accountFlow.js",
-    "old": "      self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };\n      self.busy = false;\n      self.note = want ? `Wearing ${AURA_TEXT[want] ?? want}.` : 'Aura removed.';",
-    "new": "      self.wardrobe = { ...self.wardrobe, aura: want };\n      self.busy = false;\n      self.note = want ? `Wearing ${AURA_TEXT[want] ?? want}.` : 'Aura removed.';",
+    "old": "      self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };\n      self.busy = false;\n      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');",
+    "new": "      self.wardrobe = { ...self.wardrobe, aura: want };\n      self.busy = false;\n      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -347,16 +349,16 @@
     "old": "      const r = await ask(() => equipAura(door(), want));\n      if (!r) return false;\n      if (!r.ok) return refuse(accountRefusalText(r.error));",
     "new": "      const r = await ask(() => equipAura(door(), want));\n      if (!r) return false;\n      if (!r.ok) { self.wardrobe = { ...self.wardrobe, aura: want }; return refuse(accountRefusalText(r.error)); }",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
     "name": "WB9g-my-feet-never-told",
     "file": "src/ui/accountFlow.js",
-    "old": "      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), secret: asked });\n      changed();",
-    "new": "      changed();",
+    "old": "      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');   // SHADOW-CLOAK (AUDIT): the aura's name, never its key\n      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), icon: iconStated(r.data), secret: asked });\n      changed();",
+    "new": "      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');   // SHADOW-CLOAK (AUDIT): the aura's name, never its key\n      changed();",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -365,25 +367,25 @@
     "old": "    const want = self.wardrobe?.aura === aura ? null : (aura ?? null);",
     "new": "    const want = aura ?? null;",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
     "name": "WB9g-no-aura-row",
-    "file": "src/ui/enhancedAccount.js",
+    "file": "src/ui/enhanced/enhancedAccount.js",
     "old": "    if (auras.length) {",
     "new": "    if (false) {",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
     "name": "WB9g-the-aura-button-wears-a-title",
-    "file": "src/ui/enhancedAccount.js",
+    "file": "src/ui/enhanced/enhancedAccount.js",
     "old": "        b.onclick = () => flow.wearAura(key);",
     "new": "        b.onclick = () => flow.equip(key);",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -392,7 +394,7 @@
     "old": "    if (insig.length) {",
     "new": "    if (false) {",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -401,7 +403,7 @@
     "old": "        const can = g.owned || have >= g.price;",
     "new": "        const can = true;",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -410,7 +412,7 @@
     "old": "          if (!act || pendingInsig) return;",
     "new": "          if (!act) return;",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -419,7 +421,7 @@
     "old": "    if (pickedG) {",
     "new": "    if (false) {",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -428,7 +430,7 @@
     "old": "  if (deps.insigniaLoad) Promise.resolve().then(() => deps.insigniaLoad()).catch(() => null).then(() => render());",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -437,25 +439,25 @@
     "old": "        pressable(row, () => { pickedInsig = g.id; render({ reveal: true }); });",
     "new": "        row.onclick = () => { pickedInsig = g.id; render({ reveal: true }); };",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
     "name": "WB9g-a-short-pack-emptied",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  if (stoneCount(spendable) < price) return false;\n  takeFromPack",
     "new": "  takeFromPack",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
     "name": "WB9g-a-locked-stack-spent",
-    "file": "src/systems/sigilBroker.js",
+    "file": "src/systems/sigil/sigilBroker.js",
     "old": "  const spendable = spendableStonesIn(items);\n  if (stoneCount(spendable) < price) return false;",
     "new": "  const spendable = stonesIn(items);\n  if (stoneCount(spendable) < price) return false;",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -464,7 +466,7 @@
     "old": "    if (!(d2 <= r2)) continue;\n",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -473,7 +475,7 @@
     "old": "  if (out.length > AURA_DRAW_MAX) out.length = AURA_DRAW_MAX;\n",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -482,7 +484,7 @@
     "old": "  out.sort((a, b) => a._d2 - b._d2);",
     "new": "  out.sort((a, b) => b._d2 - a._d2);",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -491,7 +493,7 @@
     "old": "    gl.depthMask(false);",
     "new": "    gl.depthMask(true);",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -500,7 +502,7 @@
     "old": "    gl.disable(gl.POLYGON_OFFSET_FILL);\n",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -509,7 +511,7 @@
     "old": "          if (!closed) gl.drawArrays(gl.TRIANGLES, 0, wings ? WING_VERTS : AURA_STEPS * 6);\n",
     "new": "",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ],
     "note": "SERAPH-WINGS (re-aimed by content): the strip's draw now shares its line with the wings' strands."
   },
@@ -519,7 +521,7 @@
     "old": "abs(r - uRingR - (flow - 0.5) * 0.16)",
     "new": "abs(r - (flow - 0.5) * 0.16)",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -528,7 +530,7 @@
     "old": "  vec2 i0 = mod(i, per), i1 = mod(i + 1.0, per);",
     "new": "  vec2 i0 = i, i1 = i + 1.0;",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -537,7 +539,7 @@
     "old": "  o = vec4(col * uKindle * fogFactorAt(vWorld), 1.0);",
     "new": "  o = vec4(col * fogFactorAt(vWorld), 1.0);",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -546,7 +548,7 @@
     "old": "    float fade = pow(1.0 - v, 1.3);",
     "new": "    float fade = pow(v, 1.3);",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -555,7 +557,7 @@
     "old": "  float turn = uTime * TAU * ${AURA_TURN_HZ.toFixed(3)};",
     "new": "  float turn = uTime * ${(AURA_TURN_HZ * Math.PI * 2).toFixed(6)};",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -564,16 +566,16 @@
     "old": "    auraFrame(seen);   // WB9g",
     "new": "    // WB9g",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
     "name": "WB9g-the-auras-never-drawn",
     "file": "src/scenes/world.js",
-    "old": "peerBodies?.drawVeiled(); drawAuras(); nodeGlowPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); };",
-    "new": "peerBodies?.drawVeiled(); nodeGlowPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); };",
+    "old": "peerBodies?.drawVeiled(); drawAuras(); nodeGlintPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); partyPing?.draw(renderer); };",
+    "new": "peerBodies?.drawVeiled(); nodeGlintPass.draw(travelView?.active ? null : nodeMarksAt(enchantFeet())); partyPing?.draw(renderer); };",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   },
   {
@@ -582,7 +584,7 @@
     "old": "      if (_veils.has(d.id) || !d.shown) continue;",
     "new": "      if (!d.shown) continue;",
     "tests": [
-      "test/wb9g_insignia.test.js"
+      "test/net/wb9g_insignia.test.js"
     ]
   }
 ]

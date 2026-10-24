@@ -1,74 +1,74 @@
 [
   {
     "name": "SETS-L1-mark-on-a-body",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "export const markedFoe = (now = _now()) => (now < _s.markUntil && !(_s.marked?.health <= 0) ? _s.marked : null);",
     "new": "export const markedFoe = (now = _now()) => (now < _s.markUntil ? _s.marked : null);",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
     "name": "SETS-L1-kill-keeps-the-mark",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "  if (entity && _s.marked === entity) _s.markUntil = 0;",
     "new": "  if (false) _s.markUntil = 0;",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
     "name": "SETS-L5-re-mark-said",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "  if (had === best.entity) return;",
     "new": "  if (false) return;",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
     "name": "SETS-L5-ready-with-the-set-off",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "    if (tierOf(entity, r.set, r.tier) && (!r.spent || r.spent())) say(r.line);",
     "new": "    if (setsAwake() && (!r.spent || r.spent())) say(r.line);",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
     "name": "SETS-L5-ready-over-a-ward",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "    if (tierOf(entity, r.set, r.tier) && (!r.spent || r.spent())) say(r.line);",
     "new": "    if (tierOf(entity, r.set, r.tier)) say(r.line);",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
     "name": "SETS-L2-your-the",
-    "file": "src/systems/sigilSets.js",
+    "file": "src/systems/sigil/sigilSets.js",
     "old": "  const line = `${/^The /.test(set.name) ? set.name : `Your ${set.name}`} brightens: ${stage.name}.`;",
     "new": "  const line = `Your ${set.name} brightens: ${stage.name}.`;",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
     "name": "SETS-L3-not-held",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "export const heldPlayerBlow = () => (_blow && _now() - _blow.at <= BLOW_WINDOW_S ? { attacker: _blow.attacker } : null);",
     "new": "export const heldPlayerBlow = () => null;",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
     "name": "SETS-L3-not-remarked",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "export function remarkPlayerBlow(b) { if (b?.attacker) _blow = { attacker: b.attacker, at: _now() }; }",
     "new": "export function remarkPlayerBlow(b) { }",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "        remarkPlayerBlow(held);   // AUDIT SETS L3: marked again as it lands, so the set powers that answer a blow hear it\n",
     "new": "",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
@@ -86,16 +86,16 @@
     "old": "      else playerBlowCameToNothing(playerEntity);   // AUDIT SETS L3: withheld now - its mark is the door's \"nothing\", never the next hurt's\n",
     "new": "",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
     "name": "SETS-L4-warded-blow-modded",
-    "file": "src/systems/sigilSetPowers.js",
+    "file": "src/systems/sigil/sigilSetPowers.js",
     "old": "  if (target.warded) return damage;",
     "new": "  if (false) return damage;",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    b.entity.warded = !!b.warded;",
     "new": "",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  if (r.k !== undefined) { if (!Number.isFinite(r.k) || r.k < 1 || r.k > FOE_HEALTH_MAX) return null; out.k = r.k; }",
     "new": "  if (r.k !== undefined) { out.k = r.k; }",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  if (r.k !== undefined) { if (!Number.isFinite(r.k) || r.k < 1 || r.k > FOE_HEALTH_MAX) return null; out.k = r.k; }",
     "new": "  if (r.k !== undefined) { if (!Number.isFinite(r.k) || r.k < 1 || r.k > FOE_HEALTH_MAX) return null; }",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    if (r.k !== undefined) f.entity.maxHealth = r.k;",
     "new": "",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
@@ -140,34 +140,34 @@
     "old": "    if (Number.isFinite(r.k)) f.entity.maxHealth = r.k;",
     "new": "",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
     "name": "SETS-M2-unreadable-forgotten",
-    "file": "src/world/interiorShared.js",
+    "file": "src/world/interior/interiorShared.js",
     "old": "    if (!items) { if (unreadable && interiorLootTarget(ctx, canon)) { seen.add(canon); unreadable.add(canon); } continue; }",
     "new": "    if (!items) continue;",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
     "name": "SETS-M2-never-cleared",
-    "file": "src/world/interiorShared.js",
+    "file": "src/world/interior/interiorShared.js",
     "old": "    unreadable?.delete(canon);\n",
     "new": "",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
     "name": "SETS-M2-building-claims-over-it",
-    "file": "src/scenes/worldModes.js",
-    "old": "    if (s.unreadable?.has(canon)) return false;   // AUDIT SETS M2: never over a word this build cannot read\n",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "  if (bag.unreadable?.has(canon)) return false;   // AUDIT SETS M2: never over a word this build cannot read\n",
     "new": "",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
@@ -176,17 +176,18 @@
     "old": "    if (_lootUnreadable.has(canon)) return false;   // AUDIT SETS M2: never over a word this build cannot read\n",
     "new": "",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
     "name": "SETS-M2-dungeon-opens-it",
     "file": "src/scenes/dungeonContext.js",
-    "old": "      { const _u = roomLootKey(key); if (_u && _lootUnreadable.has(lootKeyOf(_u))) { setMidScreenText(LOOT_NEWER_TEXT); return 0; } }   // AUDIT SETS M2: not opened here\n",
+    "old": "      { const _u = roomLootKey(key); if (_u && _lootUnreadable.has(lootKeyOf(_u))) { setMidScreenText(LOOT_NEWER_TEXT); return 0; } }   // AUDIT SETS M2: not opened here - AUDIT GRAVE-PARTY G2: a room container too (PARTY-LOOT's), a target again so its press says so (roomLootHost.js roomUnborn)\n",
     "new": "",
     "tests": [
-      "test/auditsetsonline.test.js"
-    ]
+      "test/systems/auditsetsonline.test.js"
+    ],
+    "note": "PIN MOVED BACK (AUDIT GRAVE-PARTY G2): GRAVE-PARTY's personal arm (roomPersonal) is gone and the line is M2's refusal again, its comment saying so - re-aimed by content; deleting it still opens what no word says may open."
   },
   {
     "name": "SETS-L6-values-unchecked",
@@ -194,7 +195,7 @@
     "old": "      if (r.set !== REGALIA_SET && !(a.value <= want[i].value)) return null;",
     "new": "      if (false) return null;",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
@@ -203,7 +204,7 @@
     "old": "      if (a?.id !== want[i].id || (a.param ?? null) !== (want[i].param ?? null)) return null;",
     "new": "      if (false) return null;",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
@@ -212,7 +213,7 @@
     "old": "    if (have.length !== want.length) return null;\n    for (let i = 0; i < want.length; i++) {",
     "new": "    for (let i = 0; i < Math.min(have.length, want.length); i++) {",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
@@ -221,7 +222,7 @@
     "old": "    if (item.sigil?.power !== undefined && item.sigil.power !== r.power) return null;",
     "new": "",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
@@ -230,7 +231,7 @@
     "old": "      if (r.set !== REGALIA_SET && !(a.value <= want[i].value)) return null;",
     "new": "      if (!(a.value <= want[i].value)) return null;",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   },
   {
@@ -239,7 +240,7 @@
     "old": "if (lootHolder(canon) && !respawnDue(rec.t, _wallNow())) { _lootSeen.add(canon); _lootUnreadable.add(canon); }",
     "new": "if (lootHolder(canon)) { _lootSeen.add(canon); _lootUnreadable.add(canon); }",
     "tests": [
-      "test/auditsetsonline.test.js"
+      "test/systems/auditsetsonline.test.js"
     ]
   }
 ]

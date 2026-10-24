@@ -5,7 +5,7 @@
     "old": "  if (!dfBlock?.fromWorldData || !name) return null;",
     "new": "  if (!name) return null;",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "Daggerfall's own block of a listed name (BLOCKS.BSA, no town pack serving it) would have its markers moved"
   },
@@ -15,7 +15,7 @@
     "old": "    if (!worldDataVendorCarries(vendor, blockReplacementFilename(name))) continue;",
     "new": "    if (!blockReplacementFilename(name)) continue;",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "a block no listed pack carries on the door - another pack's of the name - would be curated as the listed pack's"
   },
@@ -25,7 +25,7 @@
     "old": "  for (const { vendor, markers } of BY_BUILDING.get(`${name}#${recordIndex}`) ?? []) {",
     "new": "  for (const { vendor, markers } of BY_BUILDING.get(`${name}#0`) ?? []) {",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "the key's record: another building of a listed block would take the listed building's spots"
   },
@@ -35,7 +35,7 @@
     "old": "    const m = markers.find((k) => k.record === textureRecord && same(k.at, xPos, yPos, zPos));",
     "new": "    const m = markers.find((k) => k.record === textureRecord);",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "the key's position: every marker of the kind in a listed building would be moved, the sound ones too"
   },
@@ -45,7 +45,7 @@
     "old": "    const m = markers.find((k) => k.record === textureRecord && same(k.at, xPos, yPos, zPos));",
     "new": "    const m = markers.find((k) => same(k.at, xPos, yPos, zPos));",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "the key's kind: a person's marker standing where a listed item marker stands would be moved"
   },
@@ -55,7 +55,7 @@
     "old": "      const [x, y, z] = curatedMarkerSpot(blockData, recordIndex, obj.textureRecord, obj.xPos, obj.yPos, obj.zPos) ?? [obj.xPos, obj.yPos, obj.zPos];",
     "new": "      const [x, y, z] = [obj.xPos, obj.yPos, obj.zPos];",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "the fault itself: a quest site enumerates the stairs' marker, and its gem stands in the stairs"
   },
@@ -65,7 +65,7 @@
     "old": "      const [x, y, z] = curatedMarkerSpot(blockData, recordIndex, obj.textureRecord, obj.xPos, obj.yPos, obj.zPos) ?? [obj.xPos, obj.yPos, obj.zPos];",
     "new": "      const [x, y, z] = curatedMarkerSpot(blockData, 0, obj.textureRecord, obj.xPos, obj.yPos, obj.zPos) ?? [obj.xPos, obj.yPos, obj.zPos];",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "the enumeration asks for the building it walks (RESIGM02's House4 is record 3)"
   },
@@ -75,7 +75,7 @@
     "old": "    for (const resource of quest.resources.values()) if (resource.isPlace) resource.mendCuratedMarkers?.(world);",
     "new": "",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "a save's site keeps the marker no player reaches, its gem with it"
   },
@@ -85,7 +85,7 @@
     "old": "    return dfBlock ? curateSiteMarkers(sd, dfBlock, key & 0xff) : 0;",
     "new": "    return dfBlock ? curateSiteMarkers(sd, dfBlock, 0) : 0;",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "the mend asks for the building the site's key names"
   },
@@ -95,7 +95,7 @@
     "old": "  for (const m of siteDetails?.questItemMarkers ?? []) mend(m, 18);",
     "new": "",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "the site's item list keeps the old marker - the next placement on it stands in the stairs"
   },
@@ -105,7 +105,7 @@
     "old": "  mend(siteDetails?.selectedMarker, siteDetails?.selectedMarker?.markerType);",
     "new": "",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "the selected marker is a copy of the list's: the gem it holds stays in the stairs"
   },
@@ -115,7 +115,7 @@
     "old": "  if (hasFloor(own)) return own;",
     "new": "",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "a marker with a floor under it stands as DFU stands it - never moved to another"
   },
@@ -125,7 +125,7 @@
     "old": "    .filter((p) => d2(p) > 1e-9)\n    .sort((a, b) => d2(a) - d2(b));",
     "new": "    .filter((p) => d2(p) > 1e-9);",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "the site's NEAREST marker with a floor, not the first listed"
   },
@@ -135,17 +135,17 @@
     "old": "export const MARKER_FLOOR_REACH = 4;",
     "new": "export const MARKER_FLOOR_REACH = 40;",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "AlignBillboardToGround's 4 m: a marker six metres over the floor has none under it"
   },
   {
     "name": "QUEST-MARKERS-enter-markers-unsorted",
     "file": "src/scenes/worldModes.js",
-    "old": "    return [...others, ...[...(ctx.enterMarkers ?? [])].sort((a, b) => d2(a) - d2(b))];",
-    "new": "    return [...others, ...(ctx.enterMarkers ?? [])];",
+    "old": "    return Object.assign([...others, ...[...(ctx.enterMarkers ?? [])].sort((a, b) => d2(a) - d2(b))], {",
+    "new": "    return Object.assign([...others, ...(ctx.enterMarkers ?? [])], {",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "the room's NEAREST enter marker, not the first"
   },
@@ -155,7 +155,7 @@
     "old": "marker?.flatPosition ?? null, false, interiorStandSpots(quest, marker)),",
     "new": "marker?.flatPosition ?? null),",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "a person whose marker has no floor stands in the air past the wall"
   },
@@ -165,7 +165,7 @@
     "old": "t.worldTextureRecord, position, behaviour, null, null, true, interiorStandSpots(quest, marker));",
     "new": "t.worldTextureRecord, position, behaviour, null, null, true);",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "a building's quest item with no floor under its marker hangs where no player reaches"
   },
@@ -175,7 +175,7 @@
     "old": "      interiorFoes.spawnFoe(foe.foeType, feet, {",
     "new": "      interiorFoes.spawnFoe(foe.foeType, interiorCtx.parentPt(position.x, position.y + INTERIOR_MARKER_FEET_LIFT, position.z), {",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "a building's quest foe with no floor under its marker falls through the room"
   },
@@ -185,7 +185,7 @@
     "old": "        stand.x = x; stand.z = z;",
     "new": "",
     "tests": [
-      "test/fb1004d_questmarkers.test.js"
+      "test/systems/quest/fb1004d_questmarkers.test.js"
     ],
     "note": "the stand's own point (its click box, questStandBox) is where it is drawn"
   }

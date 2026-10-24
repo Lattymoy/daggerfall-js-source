@@ -5,7 +5,7 @@
     "old": "export const isLayered = (key) => isCellRoom(key) || isWorldRoom(key);",
     "new": "export const isLayered = (key) => isCellRoom(key) || isWorldRoom(key) || isChatRoom(key);",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "a channel split by fullness - its shards are its own law"
   },
@@ -15,7 +15,7 @@
     "old": "export const isLayered = (key) => isCellRoom(key) || isWorldRoom(key);",
     "new": "export const isLayered = (key) => isCellRoom(key) || isWorldRoom(key) || String(key).startsWith('gate:');",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "a fight split into fights"
   },
@@ -25,7 +25,7 @@
     "old": "export const isLayered = (key) => isCellRoom(key) || isWorldRoom(key);",
     "new": "export const isLayered = (key) => isCellRoom(key);",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "a full tavern refuses"
   },
@@ -35,7 +35,7 @@
     "old": "return /^[1-9]$/.test(s) && Number(s) < LAYERS_MAX ? Number(s) : 0;",
     "new": "return /^[1-9]$/.test(s) ? Number(s) : 0;",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "a ninth layer asked"
   },
@@ -45,7 +45,7 @@
     "old": "return /^[1-9]$/.test(s) && Number(s) < LAYERS_MAX",
     "new": "return /^0?[1-9]$/.test(s) && Number(s) < LAYERS_MAX",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "two names for one layer"
   },
@@ -55,7 +55,7 @@
     "old": "export const layerName = (key, ly) => (ly > 0 ? `${key}#${ly}` : key);",
     "new": "export const layerName = (key, ly) => `${key}#${ly}`;",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "the place itself a new object - every room's state lost"
   },
@@ -65,7 +65,7 @@
     "old": "    if (res.status !== 503 || res.headers.get(LAYER_FULL_HEADER) !== '1') return res;\n  }\n  return res;",
     "new": "    return res;\n  }\n  return res;",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "a full room's refusal the answer - no layer"
   },
@@ -75,7 +75,7 @@
     "old": "    if (res.status !== 503 || res.headers.get(LAYER_FULL_HEADER) !== '1') return res;",
     "new": "    if (res.status !== 503) return res;",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "any refusal walked past"
   },
@@ -85,7 +85,7 @@
     "old": "    const ly = (start + i) % LAYERS_MAX;",
     "new": "    const ly = start + i; if (ly >= LAYERS_MAX) break;",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "a party's layer full and the place never tried"
   },
@@ -95,7 +95,7 @@
     "old": "    const headers = { ...page, [LAYER_HEADER]: String(ly) };",
     "new": "    const headers = { ...page };",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "the object believes the page's word"
   },
@@ -105,7 +105,7 @@
     "old": "    if (isLayered(key)) return layerWalk(env.ROOMS, key, request, layerOf(url.searchParams.get('ly')));\n",
     "new": "",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "room full as before"
   },
@@ -115,7 +115,7 @@
     "old": " full.headers.set(LAYER_FULL_HEADER, '1'); return full;",
     "new": " return full;",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "the Worker cannot tell full from busy"
   },
@@ -125,7 +125,7 @@
     "old": "    const ly = isLayered(key) || isGateRoom(key) ? layerOf(request.headers.get(LAYER_HEADER)) : 0;",
     "new": "    const ly = 0;",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "a layer that does not know it is one SCALE5d part two (re-aimed by content): the court's copies beside it."
   },
@@ -135,7 +135,7 @@
     "old": "    const ly = isLayered(key) || isGateRoom(key) ? layerOf(request.headers.get(LAYER_HEADER)) : 0;",
     "new": "    const ly = layerOf(request.headers.get(LAYER_HEADER));",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "a room that does not layer told it does SCALE5d part two (re-aimed by content): the court's copies beside it."
   },
@@ -145,19 +145,19 @@
     "old": "${a.ly ? `,\"ly\":${a.ly}` : ''}}`;",
     "new": "}`;",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "the welcome never says the layer"
   },
   {
     "name": "SCALE5d-hint-unasked",
     "file": "src/net/online.js",
-    "old": "    try { ws = new this._WS(`${this.url}/room/${this.room}${isLayered(this.room) && ly > 0 ? `?ly=${ly}` : ''}`); }",
-    "new": "    try { ws = new this._WS(`${this.url}/room/${this.room}`); }",
+    "old": "    try { ws = this._leased(new this._WS(`${this.url}/room/${this.room}${isLayered(this.room) && ly > 0 ? `?ly=${ly}` : ''}`), this.room); }",
+    "new": "    try { ws = this._leased(new this._WS(`${this.url}/room/${this.room}`), this.room); }",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
-    "note": "a party scattered over the layers"
+    "note": "LEASE1 (PIN MOVED): the socket is now wrapped by _leased. a party scattered over the layers"
   },
   {
     "name": "SCALE5d-reconnect-hint",
@@ -165,7 +165,7 @@
     "old": "    const ly = this.room === this._layerRoom && this.layer > 0 ? this.layer : this.layerHint;",
     "new": "    const ly = this.layerHint;",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "a reconnect lands in another layer"
   },
@@ -175,7 +175,7 @@
     "old": "${isLayered(this.room) && ly > 0 ? `?ly=${ly}` : ''}",
     "new": "${ly > 0 ? `?ly=${ly}` : ''}",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "a channel asked a layer"
   },
@@ -185,7 +185,7 @@
     "old": "if (primary) { this.layer = ly; this._layerRoom = room; }",
     "new": "if (primary) { this._layerRoom = room; }",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "the session never knows its layer"
   },
@@ -195,7 +195,7 @@
     "old": "      old.ly = this.layer; this.layer = h.ly ?? 0; this._layerRoom = room;",
     "new": "      old.ly = this.layer; this._layerRoom = room;",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "a crossing keeps the old cell's layer"
   },
@@ -205,7 +205,7 @@
     "old": "  if (Number.isInteger(p.ly) && p.ly >= 1 && p.ly < LAYERS_MAX) out.ly = p.ly;\n",
     "new": "",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "a party never told my layer"
   },
@@ -215,7 +215,7 @@
     "old": "online.layerHint = partyLayerAt(key); online.join(",
     "new": "online.join(",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "the host never asks its party's layer"
   },
@@ -225,7 +225,7 @@
     "old": "      ...(online?.layer ? { ly: online.layer } : {}),   // SCALE5d",
     "new": "      // SCALE5d",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "my party never hears my layer"
   },
@@ -235,7 +235,7 @@
     "old": "    const mate = party.members.find((m) => m.acct === party.leader && near(m)) ?? party.members.find(near);",
     "new": "    const mate = party.members.find(near);",
     "tests": [
-      "test/scale5d.test.js"
+      "test/net/scale5d.test.js"
     ],
     "note": "any mate's layer before the leader's"
   }

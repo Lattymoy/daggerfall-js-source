@@ -1,0 +1,524 @@
+[
+  {
+    "name": "AUDIT-EG-IV-net-again-takes-a-key",
+    "file": "server-account/src/eg.js",
+    "old": "  if (body?.again === 1) {\n    if (!had) return { error: 'none' };",
+    "new": "  if (false) {\n    if (!had) return { error: 'none' };",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-again-order-as-of-now",
+    "file": "server-account/src/eg.js",
+    "old": "ewg: wagerOfRow(had.wg) }, key, { subtle, nowS: int(had.at) });\n    return { order, b: had.b, ez: had.ez, keys: int(row?.eg_keys), until: int(had.until), rh: int(had.rh), at: int(had.at) };",
+    "new": "ewg: wagerOfRow(had.wg) }, key, { subtle, nowS });\n    return { order, b: had.b, ez: had.ez, keys: int(row?.eg_keys), until: int(had.until), rh: int(had.rh), at: int(had.at) };",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-again-none-unsaid",
+    "file": "server-account/src/eg.js",
+    "old": "    if (!had) return { error: 'none' };",
+    "new": "    if (!had) return { error: 'spent' };",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-open-ask-never-kept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    opensKeep([...opensKept().filter((p) => p.rq !== rq), { rq, s: me(), at: Math.floor(Date.now() / 1000) }]);   // AUDIT EG IV (lane3 #1): kept before it is asked\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-open-ask-let-go-unanswered",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (a?.ok || !EG_OPEN_LOST.includes(a?.error)) opensDrop(rq);",
+    "new": "    if (true) opensDrop(rq);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-open-asked-again-without-again",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "account.open(p.rq, false, { again: true })",
+    "new": "account.open(p.rq, false, {})",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-open-stake-unkept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        stakeKeep({ b: a.data.b, z: a.data.order, at: Number.isSafeInteger(a.data.at) ? a.data.at : p.at });\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-open-none-believed-at-once",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "a?.error === 'none' ? Math.floor(Date.now() / 1000) - p.at >= EG_OPEN_SURE_S :",
+    "new": "a?.error === 'none' ? true :",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-open-offline-an-answer",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "export const EG_OPEN_LOST = Object.freeze(['offline', 'server']);",
+    "new": "export const EG_OPEN_LOST = Object.freeze(['server']);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-open-live-waits",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": " if (a?.error === 'live') openAgainAt = -Infinity;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-hello-rehands-every-receipt",
+    "file": "server/src/index.js",
+    "old": "    for (const r of sub ? rq : []) if (!this._send(ws, JSON.stringify({ t: 'eg', k: 'rcpt', r }))) return false;",
+    "new": "    for (const r of (sub && B.rc?.[sub]) || []) if (!this._send(ws, JSON.stringify({ t: 'eg', k: 'rcpt', r }))) return false;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-hubless-hello-hands-none",
+    "file": "server/src/index.js",
+    "old": ".map((e) => e[1]) : ((sub && B.rc?.[sub]) || []);",
+    "new": ".map((e) => e[1]) : [];",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-counted-unread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (rc && countedOf(rc)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-counted-unkept",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "{ drop(); countedAdd(c); hub()?.sendEg?.('claimed'",
+    "new": "{ drop(); hub()?.sendEg?.('claimed'",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-again-marks-handed-on",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "paid?.(c, a.data?.recorded ? a.data : { ...a.data, marks: null, deed: null });",
+    "new": "paid?.(c, a.data);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-heal-cast-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (d > 0 && cast(by)) q.hh",
+    "new": "if (d > 0) q.hh",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-heal-cast-unbounded",
+    "file": "server/src/index.js",
+    "old": "    return t != null && now - t <= EG_HEAL_CAST_MS;",
+    "new": "    return t != null;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-heal-cast-never-noted",
+    "file": "server/src/index.js",
+    "old": "      if (isEgRoom(a.key) && a.sub && target[1]?.sub) this._egCastSeen(a.sub, target[1].sub, now);",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-launch-letter-to-the-rite",
+    "file": "server-account/migrations/0124_elite_breach.sql",
+    "old": "FROM players p WHERE EXISTS (SELECT 1 FROM gate_kills g WHERE g.account = p.id AND g.earned != 'rite');",
+    "new": "FROM players p WHERE EXISTS (SELECT 1 FROM gate_kills g WHERE g.account = p.id);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-launch-letter-twice",
+    "file": "server-account/migrations/0124_elite_breach.sql",
+    "old": "INSERT OR IGNORE INTO server_post",
+    "new": "INSERT INTO server_post",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-launch-letter-words",
+    "file": "server-account/src/eg.js",
+    "old": "  subject: 'From the Battlespire',",
+    "new": "  subject: 'From the Spire',",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-hub-words-on-the-blow-bucket",
+    "file": "server/src/index.js",
+    "old": " : EG_HUB_KINDS.includes(m.k) ? !this._spend(ws, now, egHubGate, 'egHubBucket', 'egHubDrops', 'too many breach words')",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-hub-burst-deeper",
+    "file": "src/net/wire.js",
+    "old": "export const EG_HUB_BURST = 8;",
+    "new": "export const EG_HUB_BURST = 16;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-hub-words-home-on-the-blow-bucket",
+    "file": "src/net/online.js",
+    "old": " : hubWord ? egHubGate(this._egHubBucket, this._now())",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-void-held-copy-unread",
+    "file": "server/src/index.js",
+    "old": "    if (held) { this._send(ws, JSON.stringify({ t: 'eg', k: 'rcpt', r: held.r })); return; }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-held-letter-never",
+    "file": "server-account/src/eg.js",
+    "old": "THEN ?7 ELSE ?5 END",
+    "new": "THEN ?5 ELSE ?5 END",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-held-letter-always",
+    "file": "server-account/src/eg.js",
+    "old": "CASE WHEN EXISTS (SELECT 1 FROM eg_runs r WHERE r.b = eg_stakes.b AND r.account = eg_stakes.account) THEN",
+    "new": "CASE WHEN 1 THEN",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-receipt-falls-unbounded",
+    "file": "src/net/eliteGates/egReceipt.js",
+    "old": "  if (c.fl !== undefined && !int(c.fl, 0, 2)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-receipt-lone-on-an-end",
+    "file": "src/net/eliteGates/egReceipt.js",
+    "old": "(c.q !== 'w' || c.lb !== 1)",
+    "new": "(c.lb !== 1)",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-receipt-vestiges-on-an-end",
+    "file": "src/net/eliteGates/egReceipt.js",
+    "old": "(c.q !== 'w' || !Array.isArray(c.vs)",
+    "new": "(!Array.isArray(c.vs)",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-receipt-vestige-rank",
+    "file": "src/net/eliteGates/egReceipt.js",
+    "old": "int(p[0], 0, 99) && int(p[1], 1, 3)",
+    "new": "int(p[0], 0, 99) && int(p[1], 1, 9)",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-receipt-relics-on-a-redoubt",
+    "file": "src/net/eliteGates/egReceipt.js",
+    "old": "(c.q !== 'x' || !Array.isArray(c.rl)",
+    "new": "(!Array.isArray(c.rl)",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-receipt-wager-unbounded",
+    "file": "src/net/eliteGates/egReceipt.js",
+    "old": "  if (c.wg !== undefined && (!Array.isArray(c.wg) || c.wg.length > 3 || !c.wg.every((d) => int(d, 0, 31)))) return false;\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-receipt-feats-on-an-end",
+    "file": "src/net/eliteGates/egReceipt.js",
+    "old": "  if ((c.lk !== undefined || c.ft !== undefined) && c.q !== 'w') return false;\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-receipt-vestiges-past-the-mint",
+    "file": "src/net/eliteGates/egReceipt.js",
+    "old": "export const EG_RECEIPT_LIST_MAX = 32;",
+    "new": "export const EG_RECEIPT_LIST_MAX = 31;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-table-drops-the-annals",
+    "file": "bible/11-Multiplayer/Elite-Gates.md",
+    "old": "`an` (the Annals' pages the breach gave), ",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-calls-unswept",
+    "file": "server/src/index.js",
+    "old": "    for (const [k, v] of calls) { clast = k; if (!(v?.until > now)) dead.push(k); }\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-live-call-swept",
+    "file": "server/src/index.js",
+    "old": "{ clast = k; if (!(v?.until > now)) dead.push(k); }",
+    "new": "{ clast = k; if (true) dead.push(k); }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-restack-as-it-lands",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": " || !entity?.items || seq < keysSaid) return;",
+    "new": " || !entity?.items) return;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-rust-unsaid",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (weirKeysHeld(entity.items) - spent - opensKept().filter((p) => p.s === me()).length > n) say(EG_TEXT.rust);\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-rust-for-the-open",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    restack(a.data?.keys, seq, rh ? 0 : 1);",
+    "new": "    restack(a.data?.keys, seq, 0);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-unasked-balance-not-asked-again",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    restack: (n) => { restack(n); askKeys(); },",
+    "new": "    restack: (n) => { restack(n); },",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-opener-never-owed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (first && !B.mem[B.s]?.in) oweEnd(B, B.s, 'empty', now);",
+    "new": "  if (false) oweEnd(B, B.s, 'empty', now);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-opener-owed-when-in",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (first && !B.mem[B.s]?.in) oweEnd(B, B.s, 'empty', now);",
+    "new": "  if (first) oweEnd(B, B.s, 'empty', now);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-call-off-the-party",
+    "file": "server/src/index.js",
+    "old": "    const company = kept ? kept.co : co, called",
+    "new": "    const company = co, called",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-room-company-unsaid",
+    "file": "server/src/index.js",
+    "old": "json({ ok: true, seed: had.seed, op: had.op, egv: had.egv, co: had.co.map((c) => [c.sub, c.name, c.n]), site: had.site })",
+    "new": "json({ ok: true, seed: had.seed, op: had.op, egv: had.egv })",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-champions-kept-at-first-read",
+    "file": "server-account/src/egHonours.js",
+    "old": "  if (last >= 1 && nowS < arenaSeasonEndsS(last) + EG_RECEIPT_TTL_S) ids =",
+    "new": "  if (false) ids =",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-champions-grace-short",
+    "file": "server-account/src/egHonours.js",
+    "old": "nowS < arenaSeasonEndsS(last) + EG_RECEIPT_TTL_S)",
+    "new": "nowS < arenaSeasonEndsS(last) + 3600)",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-fallen-refused",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (m?.in) return null;   // a reload, a witness",
+    "new": "  if (m?.in && m.alive) return null;   // a reload, a witness",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-weir-never-in-the-batch",
+    "file": "server-account/src/accounts.js",
+    "old": "  const roll = c.x === 'rite' ? null : weir?.(c) ?? null;",
+    "new": "  const roll = null;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-weir-on-a-claim-that-wrote-no-row",
+    "file": "server-account/src/eg.js",
+    "old": "    WHERE id = ?1 AND changes() > 0 RETURNING eg_keys, eg_key_miss",
+    "new": "    WHERE id = ?1 RETURNING eg_keys, eg_key_miss",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-live-never-coalesced",
+    "file": "server/src/index.js",
+    "old": "  let asking = egLiveAsking.get(rooms);",
+    "new": "  let asking = null;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-live-kept-past-its-answer",
+    "file": "server/src/index.js",
+    "old": ".finally(() => { if (egLiveAsking.get(rooms) === asking) egLiveAsking.delete(rooms); });",
+    "new": ".finally(() => {});",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-route-comment-without-again",
+    "file": "server-account/src/index.js",
+    "old": "{ rq, rh?, ew?, wg?, again? }",
+    "new": "{ rq, rh?, ew?, wg? }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_service.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-the-hold-asked",
+    "file": "bible/11-Multiplayer/Elite-Gates.md",
+    "old": "  rest), then goes; each room holds itself as it wakes between trials",
+    "new": "  rest), asks each room to hold, then goes; each room holds itself as it wakes between trials",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-answer-unchecked-after",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        const again = answerNo(c, now(), modes());\n        if (again !== null) { if (again) say(again); return false; }\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-answer-late-unsaid-after",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (phase !== 'open') return EG_TEXT.late(c.o);\n    if ((M?.mode ?? 'exterior') !== 'exterior') return EG_TEXT.indoors;",
+    "new": "    if ((M?.mode ?? 'exterior') !== 'exterior') return EG_TEXT.indoors;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-IV-net-portal-under-a-step",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (answering || modes()?.stepping) return false;\n    callPortal?.clear?.();",
+    "new": "    callPortal?.clear?.();",
+    "tests": [
+      "test/net/eliteGates/egaudit4_net_client.test.js"
+    ]
+  }
+]

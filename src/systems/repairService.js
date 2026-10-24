@@ -29,11 +29,12 @@
 // omits it too) - estimates recompute per refresh.
 
 import { calculateCost } from './shopStock.js';
-import { templateByIndex, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from './itemTemplates.js';
+import { templateByIndex, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from './item/itemTemplates.js';
 import { isEnchantedItem } from './enchantments.js';
 import { MINUTES_PER_DAY, MINUTES_PER_HOUR } from './gameDate.js';
-import { getBool } from './settings.js';   // RRI2: InstantRepairs picks the mod's repair factor
-import { conditionBasedPricesOn, conditionRepairCostBase } from './rriRealism.js';   // RRI2: the CalculateItemRepairCost override
+import { getBool } from './settings/settings.js';   // RRI2: InstantRepairs picks the mod's repair factor
+import { conditionBasedPricesOn, conditionRepairCostBase } from './roleplayRealismItems/rriRealism.js';   // RRI2: the CalculateItemRepairCost override
+import { localizedText } from './textManager.js';   // L10N3d: the refusal, the interrupt box, the label
 import { stampLayout, layoutStampOfMapId, recordStands } from './layoutPins.js';   // WD3: a ticket names the smith's town and its layout
 
 /** CalculateItemRepairCost (:1901-1922): free at full condition; ten
@@ -121,9 +122,13 @@ export const CANNOT_BE_REPAIRED_TEXT = 'This cannot be repaired.';   // Internal
  *  note its sense, Yes = take the item back. Both the native Repair
  *  window and the keyed flow speak this one constant. */
 export const INTERRUPT_REPAIR_TEXT = "Take back that item before it's repaired?";
+/** L10N3d: the two lines as the windows show them (:813, :848), in the
+ *  player's language - every skin reads these. */
+export const cannotBeRepairedText = () => localizedText('cannotBeRepaired', CANNOT_BE_REPAIRED_TEXT);
+export const interruptRepairText = () => localizedText('interruptRepair', INTERRUPT_REPAIR_TEXT);
 /** WAGONS4: a smith's word on a horse or a wagon - the port's own (a wagon left at a smith's counter left the pack for
- *  days, and the horse and wagon the mod stood in the world with it): a Wagon Yard mends wagons (systems/wagonUpkeep.js). */
-export const TRANSPORT_CANNOT_BE_REPAIRED_TEXT = 'A smith mends no horse and no wagon. A town\u2019s Wagon Yard mends wagons.';
+ *  days, and the horse and wagon the mod stood in the world with it): a Wagon Yard mends wagons (systems/wagon/wagonUpkeep.js). */
+export const TRANSPORT_CANNOT_BE_REPAIRED_TEXT = 'A smith does not repair horses or wagons. A town\u2019s Wagon Yard repairs wagons.';
 export function repairRefusal(item, { allowMagicRepairs = false } = {}) {
   if (item?.templateIndex === TRANSPORT_HORSE || item?.templateIndex === TRANSPORT_SMALL_CART) return 'transport';   // WAGONS4: never left at a smith
   if (isEnchantedItem(item) && !allowMagicRepairs) return 'magic';
@@ -219,9 +224,9 @@ export function repairCountdownText(c) {
  *  item (or its committed time). */
 export function repairStatusLabel(item, nowMinutes, estimateMinutes = null) {
   const repairDone = isBeingRepaired(item) ? isRepairFinished(item, nowMinutes) : item.currentCondition === item.maxCondition;
-  if (repairDone) return 'DONE';   // Internal_Strings.csv:817 (key repairDone), verbatim
+  if (repairDone) return localizedText('repairDone', 'DONE');   // Internal_Strings.csv:817 (key repairDone), verbatim
   const doneAt = isBeingRepaired(item)
     ? repairTimeDone(item)
     : nowMinutes + (estimateMinutes ?? calculateItemRepairTime(item.currentCondition, item.maxCondition));
-  return `${daysUntil(doneAt, nowMinutes)} days`;   // key repairDays ("%d")
+  return localizedText('repairDays', '%d days').replaceAll('%d', String(daysUntil(doneAt, nowMinutes)));   // .Replace("%d", ...)
 }

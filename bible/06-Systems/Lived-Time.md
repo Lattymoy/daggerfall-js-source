@@ -185,8 +185,8 @@ stands.
 The sun is everyone's. A rest moves the character's clock, not the sky, so a bare-headed vampire
 still cannot set out by day. The sunlight refusals (the career's, the curse's, and PARTY-TRAVEL's) now
 add, online, when the world's night falls, in real minutes: *"You cannot initiate fast travel during
-the day. The sun is the world's - night falls in about 23 minutes."* (`worldNightfallText`). [MERGE
-with main's VAMP-HOOD (`01-Overview/Field-Bugs-2026-09-29.md`): a raised hood opens the map by day,
+the day. Online, resting does not move the sun. Night falls in about 23 minutes."* (`worldNightfallText`). [MERGE
+with main's VAMP-HOOD (`01-Overview/bugs/Field-Bugs-2026-09-29.md`): a raised hood opens the map by day,
 online and offline; bare-headed, the map door says DFU's line, the nightfall, then the hood's hint.]
 
 A world day is two real hours, so the wait is at most one. [TIME1: the sun is the sky's now, a day every half
@@ -203,12 +203,14 @@ journeys make them hungry, as DFU has it. A vampire must still be fed within the
 ## The numbers, and what a rest can buy
 
 The character's clock opens no faucet the world pays for. Everything the world owns reads the world's
-clock: stock, prices, respawns, events, the day's shelf.
+clock: stock, prices, respawns, events, the day's shelf - and a sworn revenant abroad (OFFLINE-ROAD, FIELD BUGS
+2026-10-21, `Revenants.md` section 42): out in the world, it keeps the world's time, so its errand goes on while the
+player is away, and no rest moves it.
 
 What a player can speed by resting is their own waits, each exactly as DFU lets a single player, and
 every cost comes with it:
 
-- **the waits:** an infection's turn, a promotion's 28 days, training's cooldown, a repair, a letter,
+- **the waits:** an infection's turn, a demotion's 28 days (a promotion online waits none - PROMO-NOW), training's cooldown, a repair, a letter,
   the reputation drift, the cure roll;
 - **the costs:** effects run out; hunger, thirst and sleep build; the vampire thirsts; the werewolf's
   urge builds; rooms and loans run.
@@ -285,21 +287,21 @@ it.
   - words: `ownTimeLeftText`, `ownTimeLeftShort`, `worldNightfallText`.
 - `systems/offlineCopy.js`: the two doors between the lanes (AUDIT LIVED1 E, G), and `saneSaveClock`
   (AUDIT LIVED1b F3).
-- `systems/onlineCheckpoint.js`: `walkWaiting` (AUDIT LIVED1b S1).
+- `systems/online/onlineCheckpoint.js`: `walkWaiting` (AUDIT LIVED1b S1).
 - `scenes/shared.js`:
   - the ticker's `ownMinutes`, and `advance` online;
   - RaiseSkills on the character's clock;
   - the turn's fortnight;
   - the rest deps' composed quest stand-down [retired by TIME3: the rest ticks the quests online too].
-- `systems/restSession.js`: one sub-tick law.
+- `systems/rest/restSession.js`: one sub-tick law.
 - The four hosts:
   - `world.js`, `exterior.js`, `worldModes.js` and `dungeonContext.js`: every personal read on the
     character's clock, every sky read on the world's (the dungeon's clock view is the character's);
   - `world.js` only: the journey's days, the cautious heal, the nightfall words, and the arrival.
-- `scenes/arrestFlow.js` (the sentence), `systems/rest.js` (the collapse), `systems/save.js` (the
+- `scenes/arrestFlow.js` (the sentence), `systems/rest/rest.js` (the collapse), `systems/save/save.js` (the
   envelope and the arrival).
-- The words: `ui/restWindow.js`, `ui/travelPopUp.js`, `ui/heldMap.js`, `ui/tavernWindow.js`,
-  `ui/enhancedTavern.js`, `ui/enhancedTrade.js`, `ui/enhancedHud.js`, `ui/enhancedMenu.js`.
+- The words: `ui/restWindow.js`, `ui/travel/travelPopUp.js`, `ui/heldMap.js`, `ui/tavernWindow.js`,
+  `ui/enhanced/enhancedTavern.js`, `ui/enhanced/enhancedTrade.js`, `ui/enhanced/enhancedHud.js`, `ui/enhanced/enhancedMenu.js`.
 - Spawns: `systems/encounters.js` and `systems/campEncounters.js` (`skyMinutes`).
 - The curses: `systems/lycanthropy.js` and `systems/vampirism.js` (`skyMinutes` for the moon and
   the day).
@@ -323,7 +325,7 @@ No relay change. The servers keep the save opaque, and `RELAY_VERSION` does not 
    - A shared quest runs on its owner's clock.
 2. **A vampire's daylight departure.** [ANSWERED by VAMP-HOOD at the merge with main: a raised hood
    sets out by day; the order of the door's rows and a hint on the party's refusal stay Mac's -
-   `01-Overview/Audit-Lived1b.md`, For Mac 6.]
+   `01-Overview/audits/Audit-Lived1b.md`, For Mac 6.]
    - **Recommended:** keep DFU's refusal on the shared sun, with the nightfall words above.
    - **The alternative:** let them set out by day at the cost of waiting for dusk on their own clock.
      They would arrive in the world's day, at -20.
@@ -332,20 +334,20 @@ No relay change. The servers keep the save opaque, and `RELAY_VERSION` does not 
 
 ## Record
 
-- Pins: `test/lived1.test.js` (13). The superseded pins are re-aimed in their own files; each re-aim is
+- Pins: `test/systems/lived1.test.js` (13). The superseded pins are re-aimed in their own files; each re-aim is
   named in the commit.
 - Mutants: `tools/mutants/lived1.json` (26, all dead). The older slices' records that named the retired
   source were re-aimed by content where their law stands (46, all dead) and retired with it where it
   does not (14: the arrival's and the correction's shifts and pauses, the session counter and its seed,
   the rest arm's second window).
-- Audited: `01-Overview/Audit-Lived1.md` - six lanes, every finding reproduced and fixed or recorded;
-  `test/auditlived1.test.js` (13), `tools/mutants/auditlived1.json` (67, all dead; three of I's retired
+- Audited: `01-Overview/audits/Audit-Lived1.md` - six lanes, every finding reproduced and fixed or recorded;
+  `test/systems/auditlived1.test.js` (13), `tools/mutants/auditlived1.json` (67, all dead; three of I's retired
   with the mark they tested by AUDIT LIVED1b, their law held by its P3 records).
-- Audited again, comprehensively: `01-Overview/Audit-Lived1b.md` - eleven lanes (the clock core, a
+- Audited again, comprehensively: `01-Overview/audits/Audit-Lived1b.md` - eleven lanes (the clock core, a
   604-site census, the save, party and exploits, the words, systematic mutants, the merge with main, DFU
-  fidelity, offline parity, a fuzzer, the first audit's own fixes); `test/auditlived1b.test.js` (17) and
-  lane T's `test/auditlived1b_t.test.js` (16: the laws 53 of its 237 new mutants found unpinned, and V9's hole),
+  fidelity, offline parity, a fuzzer, the first audit's own fixes); `test/systems/auditlived1b.test.js` (17) and
+  lane T's `test/systems/auditlived1b_t.test.js` (16: the laws 53 of its 237 new mutants found unpinned, and V9's hole),
   `tools/mutants/auditlived1b.json` (118, all dead).
 - Merged with main after AUDIT LIVED1b (PRs #418, #428-#433, #435-#439, #441): the resolutions are its M's,
-  recorded in `01-Overview/Audit-Lived1b.md`.
+  recorded in `01-Overview/audits/Audit-Lived1b.md`.
 - Not verified in a browser: no online session exists in this container.

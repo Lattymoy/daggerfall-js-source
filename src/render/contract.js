@@ -58,12 +58,15 @@
  * @property {ReadonlyArray<number> | null} [elitePad] ELITE FOES: the quad widened past the sprite (left, bottom, right, top, as fractions of it)
  * @property {ReadonlyArray<number>} [glint]          TELL2: a wind-up's glint, [r, g, b, strength] - its outline and its body (systems/hitFlash.js setBatchGlint)
  * @property {ReadonlyArray<number> | null} [dissolve] DISSOLVE: [share gone 0..1, r, g, b] - a body burnt away or gathering through a portal (systems/dissolve.js)
- * @property {ReadonlyArray<number> | null} [tint]     ARENA5: a soft wash multiplied into the lit flat after both maps are sampled ([r, g, b], display colour; none - white) - the arena crowd's half in a banner's colours (scenes/arenaBouts.js buildCrowd)
+ * @property {number[] | null} [crack]               VEIN-CRACKS: [share worked 0..1, seed 0..1] - a worked vein's seams (systems/veinCrack.js setBatchCrack)
+ * @property {ReadonlyArray<number> | null} [tint]     ARENA5: a soft wash multiplied into the lit flat after both maps are sampled ([r, g, b], display colour; none - white) - the arena crowd's half in a banner's colours (scenes/arena/arenaBouts.js buildCrowd)
+ * @property {number} [dye]                          VEIN-HUE: how far `tint` is the flat's colour rather than a multiply (0..1: the lit flat's brightness in the wash's hue) - an ore vein's (scenes/mineHost.js ORE_DYE)
  * @property {Float32Array} [bounds]                  EL5: the sphere [cx, cy, cz, r] about the origin the shadow and air replays cull by
  * @property {number} [_quads]                        BLOOD1b: how many quads the buffer holds, so `moveBillboardBatch` cannot write past it
  * @property {ArrayLike<number>|null} [_scales]       LPT1: each flat's share of the batch's size (null: all whole), kept for a move
- * @property {object|null} [lptProto]                 LPT1: the low-poly tree a far picture stands for (its handle) - it gives way to the tree near the eye (renderer setLowPolyTrees)
+ * @property {object|object[]|null} [lptProto]       LPT1: the low-poly tree a far picture stands for (its handle) - it gives way to the tree near the eye (renderer setLowPolyTrees); JUNGLE-ROADSIDE: or several (a jungle species' batch and its roadside pairs' halves - scenes/roadsidePairs.js)
  * @property {number} [farH]                          LPT1: the height MAC1's far-ring rule reads in place of size.h (a far picture's classic flat's)
+ * @property {number} [sunLift]                       AUDIT BANTHA1 TREE-2: the share of its height its sun is read at (a jungle tree's crown; none, its root)
  * @property {boolean} [_dyn]                         BLOOD1b: born DYNAMIC_DRAW, because its centres move every frame
  * @property {object|null} [_arena]                   PERF-ARENA: a still batch's arena (renderer _bbArenaFor) - its VAO and buffers the arena's; null for one with its own (dynamic), or freed
  * @property {number} [_q0]                           PERF-ARENA: the first of its arena's quads it holds
@@ -72,6 +75,7 @@
  * @property {Float32Array} [_moveScratch]            BLOOD1b: the move's own vertex staging, kept rather than re-minted each frame
  * @property {number[]} [_box]                        EV3: the host's cull box [minX, minY, minZ, maxX, maxY, maxZ] (flatBatchAabb)
  * @property {boolean} [noShadow]                     F2: a thing lying on the ground casts nothing (a loot pile)
+ * @property {boolean} [ghost]                        DEX2: wears the ghost shader though its archive is no classic ghost's (characters/enemy/foeLook.js - a Spectral row, or a mod's word)
  * @property {boolean} [selfCard]                     DISC24-C: the player's own body card - it casts as drawn
  * @property {boolean} [castOnly]                     MWNPC5b: a foe standing in its Morrowind body - the billboard draws nothing (MWNPC16: nor casts - the body casts its own shape)
  * @property {boolean} [_dead]                        EL2: freed - a shadow record from the last frame may still hold it

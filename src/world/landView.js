@@ -37,7 +37,7 @@
 // with TerrainDistance 2 shows 2 on the classic skin).
 
 import { getPref, setPref } from '../systems/uiPrefs.js';
-import { getInt, setValue, saveSettings } from '../systems/settings.js';
+import { getInt, setValue, saveSettings } from '../systems/settings/settings.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { registerFeatureLane } from '../systems/features.js';   // RF4: the row's lane is this module's
 
@@ -88,5 +88,13 @@ export function landViewWrite(v) {
   return n;
 }
 
+/** AUDIT MEM-AUDIT G2: what the current lane reads once `v` is written (landViewWrite's two stores) - the Graphics
+ *  preset's question: off the enhanced outdoors DFU's number caps at 4, so High's 5 and Ultra's 6 read 4, and a preset
+ *  that compared its own 5 against the row's reading could never be High there. */
+export function landViewAsRead(v, { enhanced = enhancedOutdoors() } = {}) {
+  const n = clampInt(v, LAND_VIEW_MIN, LAND_VIEW_MAX, LAND_VIEW_DEFAULT);
+  return landViewDistance({ enhanced, pref: n, setting: Math.min(n, LAND_VIEW_DFU_MAX) });
+}
+
 // RF4: the Features row `land-view-distance` reads its tiers and its two-store read/write from here.
-registerFeatureLane('landView', { tiers: LAND_VIEW_TIERS, read: landViewRead, write: landViewWrite });
+registerFeatureLane('landView', { tiers: LAND_VIEW_TIERS, read: landViewRead, write: landViewWrite, readOf: landViewAsRead });

@@ -1,0 +1,93 @@
+[
+  {
+    "name": "HONOUR-BANNER-dropped-as-not-held",
+    "file": "src/ui/lootBanner.js",
+    "old": "canEnter: (e) => !!e.honour || !held || bannerStillHeld(held, e) });",
+    "new": "canEnter: (e) => !held || bannerStillHeld(held, e) });",
+    "tests": [
+      "test/systems/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "HONOUR-BANNER-a-gradient-title-its-first-stop",
+    "file": "src/ui/lootBanner.js",
+    "old": "gradientAt(badge.gradient, 0.5)",
+    "new": "gradientAt(badge.gradient, 0)",
+    "tests": [
+      "test/systems/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "HONOUR-BANNER-the-tiers-colour-kept",
+    "file": "src/ui/lootBanner.js",
+    "old": "  if (e.honour) paintHonour(node, e.honour);   // HONOUR-BANNER: the title's colour over the tier's",
+    "new": "",
+    "tests": [
+      "test/systems/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "HONOUR-BANNER-small",
+    "file": "src/ui/lootBanner.js",
+    "old": "exalted: false, big: true, count: 1, codex: false, image: null,",
+    "new": "exalted: false, big: false, count: 1, codex: false, image: null,",
+    "tests": [
+      "test/systems/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "HONOUR-BANNER-the-classic-skin-built",
+    "file": "src/ui/lootBanner.js",
+    "old": "    if (!doc?.body || !isEnhanced()) return false;\n    const e = honourEntry({ kind, key });",
+    "new": "    if (!doc?.body) return false;\n    const e = honourEntry({ kind, key });",
+    "tests": [
+      "test/systems/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "HONOUR-BANNER-the-hour-pops-nothing",
+    "file": "src/net/superDungeon/sdClaims.js",
+    "old": "          if (answer.data.titleNew === true) announce('title', SD_HONOUR_KEYS.title);\n",
+    "new": "",
+    "tests": [
+      "test/server/sd9b_claim.test.js",
+      "test/systems/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "HONOUR-BANNER-the-aura-pops-nothing",
+    "file": "src/net/superDungeon/sdClaims.js",
+    "old": "          if (answer.data.auraNew === true) announce('aura', SD_HONOUR_KEYS.aura);\n",
+    "new": "",
+    "tests": [
+      "test/server/sd9b_claim.test.js"
+    ]
+  },
+  {
+    "name": "HONOUR-BANNER-world-hands-no-door",
+    "file": "src/scenes/world.js",
+    "old": "    announce: (kind, key) => announceHonour(kind, key),   // HONOUR-BANNER (2026-10-14)",
+    "new": "    // HONOUR-BANNER (2026-10-14)",
+    "tests": [
+      "test/systems/lootbanner.test.js"
+    ]
+  },
+  {
+    "name": "HONOUR-BANNER-every-claim-new",
+    "file": "server-account/src/sds.js",
+    "old": "titleNew: title && !(prior & SD_HONOUR_TITLE)",
+    "new": "titleNew: title",
+    "tests": [
+      "test/server/sd9b_claim.test.js"
+    ]
+  },
+  {
+    "name": "HONOUR-BANNER-every-aura-new",
+    "file": "server-account/src/sds.js",
+    "old": "auraNew: aura && !(prior & SD_HONOUR_AURA)",
+    "new": "auraNew: aura",
+    "tests": [
+      "test/server/sd9b_claim.test.js"
+    ]
+  }
+]

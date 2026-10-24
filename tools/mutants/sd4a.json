@@ -1,56 +1,56 @@
 [
   {
     "name": "SD4A-the-band-floor-lost",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "export const superFoeLevel = (level) => Math.max(SUPER_FOE_LEVEL_MIN, Number.isFinite(level) ? Math.floor(level) : 0);",
     "new": "export const superFoeLevel = (level) => (Number.isFinite(level) ? Math.floor(level) : 0);",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
     "name": "SD4A-the-scale-the-Elite's",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "export const SUPER_HEALTH_SCALE = 4;",
     "new": "export const SUPER_HEALTH_SCALE = 2;",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
     "name": "SD4A-the-damage-the-Elite's",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "export const SUPER_DAMAGE_SCALE = 2.5;",
     "new": "export const SUPER_DAMAGE_SCALE = 2;",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
     "name": "SD4A-no-Elite-mark",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "  e.elite = true;\n  return entity;",
     "new": "  return entity;",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
     "name": "SD4A-the-loot-the-Elite's",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "export const SUPER_LOOT_DROP_MULT = 1.5;",
     "new": "export const SUPER_LOOT_DROP_MULT = 1.2;",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
     "name": "SD4A-four-elites",
-    "file": "src/world/sdDungeon.js",
+    "file": "src/world/superDungeon/sdDungeon.js",
     "old": "export const SUPER_ELITE_FOES = 6;",
     "new": "export const SUPER_ELITE_FOES = 4;",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    const hm = superDungeon ? ELITE_FOE_SUPER_DUNGEON_HEALTH_MULT : eliteDungeon ?",
     "new": "    const hm = eliteDungeon ?",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  entity.damageScale = prior * (superDungeon ? ELITE_FOE_SUPER_DUNGEON_DAMAGE_MULT : eliteDungeon ?",
     "new": "  entity.damageScale = prior * (eliteDungeon ?",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  const want = Number.isInteger(count) ? Math.max(0, count) : elite\n",
     "new": "  const want = elite\n",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
@@ -86,16 +86,16 @@
     "old": "  const _superTier = dungeonTier(dfLocation) === 'super';",
     "new": "  const _superTier = dungeonTier(dfLocation) === 'elite';",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
     "name": "SD4A-the-fires-lit",
-    "file": "src/world/dungeonFires.js",
+    "file": "src/world/dungeon/dungeonFires.js",
     "old": "  if (cold) return { fires: [], doorFire: null, candidates: 0, valid: 0 };",
     "new": "  if (false) return { fires: [], doorFire: null, candidates: 0, valid: 0 };",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    cold: _superTier || _sdRealm,   // SD4a",
     "new": "    cold: _sdRealm,   // SD4a",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      playerLevel: _superTier ? superFoeLevel(effectiveLevel(playerEntity)) : effectiveLevel(playerEntity),   // SOFTCAP2: a mentor's dungeon",
     "new": "      playerLevel: effectiveLevel(playerEntity),   // SOFTCAP2: a mentor's dungeon",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
@@ -122,16 +122,16 @@
     "old": "      playerLevel: _superTier ? superFoeLevel(effectiveLevel(playerEntity)) : effectiveLevel(playerEntity),   // SOFTCAP2: mentor mode",
     "new": "      playerLevel: effectiveLevel(playerEntity),   // SOFTCAP2: mentor mode",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
     "name": "SD4A-the-class-foe-at-the-player's-level",
     "file": "src/scenes/dungeonContext.js",
-    "old": "cf.career, e.level ?? (_superTier ? superFoeLevel(effectiveLevel(D.playerEntity)) : effectiveLevel(D.playerEntity)));",
-    "new": "cf.career, e.level ?? effectiveLevel(D.playerEntity));",
+    "old": "await D.loadEnemyCareer(e.mobileType, D.fetchBytes), e.level ?? (_superTier ? superFoeLevel(effectiveLevel(D.playerEntity)) : effectiveLevel(D.playerEntity)));",
+    "new": "await D.loadEnemyCareer(e.mobileType, D.fetchBytes), e.level ?? effectiveLevel(D.playerEntity));",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  const enemies = dfLocation?.elite || _superTier   // SD4a",
     "new": "  const enemies = dfLocation?.elite   // SD4a",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "  if (_superTier) for (const e of enemies) e.superTier = true;",
     "new": "  if (_superTier) for (const e of enemies) void e;",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "count: _superTier ? SUPER_ELITE_FOES : null, classLevel:",
     "new": "count: null, classLevel:",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ],
     "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
   },
@@ -168,7 +168,7 @@
     "old": "    if (e?.superTier && entity) { scaleSuperFoe(entity); return void applyChampion(entity, e.champion); }",
     "new": "    if (false) { scaleSuperFoe(entity); return void applyChampion(entity, e.champion); }",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "promoteEliteFoe(entity, { eliteDungeon: !!e.elite, superDungeon: !!e.superTier, checkLevel: false })",
     "new": "promoteEliteFoe(entity, { eliteDungeon: !!e.elite, checkLevel: false })",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
@@ -186,16 +186,16 @@
     "old": "    if (e?.superTier) return SUPER_LOOT_OPTS;   // SD4a: a Super dungeon's +50%\n",
     "new": "",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
     "name": "SD4A-the-piles'-drop-the-Elite's",
     "file": "src/scenes/dungeonContext.js",
-    "old": "undefined, _superTier ? { itemChanceScale: SUPER_LOOT_DROP_MULT } : elite ?",
-    "new": "undefined, elite ?",
+    "old": "rolls, _superTier ? { itemChanceScale: SUPER_LOOT_DROP_MULT } : elite ?",
+    "new": "rolls, elite ?",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "qualityMult: _superTier ? SUPER_LOOT_QUALITY_MULT : elite ? ELITE_LOOT_QUALITY_MULT : 1,",
     "new": "qualityMult: elite ? ELITE_LOOT_QUALITY_MULT : 1,",
     "tests": [
-      "test/sd4a_super.test.js"
+      "test/systems/sd4a_super.test.js"
     ]
   }
 ]

@@ -17,7 +17,13 @@
 // ends in nothing - a fingertip, the toes, the crown). For each vertex:
 //
 //   1. Its bone is the NEAREST segment, less the bone's `bias` (units; a bone that should claim more than its
-//      geometry reaches). The first listed wins a tie.
+//      geometry reaches). The first listed wins a tie. AUDIT MW-FOLK1 (L1-F5): a bone with a `reach` claims in full
+//      within that of its segment, and its claim fades to nothing over `fade` past it - there the vertex's weights
+//      blend this law's answer with the answer of every bone that does not reach, by the nearest reaching bone's
+//      claim, so the field stays whole (a hard edge split the neighbours either side of it, and a seam opened). An
+//      arm's bones in a tunic's rig claim the sleeve's tube and the shoulder's cap so, never the body's side under the
+//      armpit, which stands nearer the shoulder joint than the spine's line but is the ribcage's: nearest-first,
+//      lowering the arm swung it into the chest.
 //   2. Across a JOINT it blends with the bone on the other side: with the bone's rig `parent` when it stands within
 //      `blend` units past the bone's own origin, else with the nearest rig child whose origin it stands within that
 //      child's `blend` of. The split is a smoothstep across the joint's plane (the child's axis), `blend` units either
@@ -31,7 +37,9 @@
 //      cloak): above `top` the joint law alone, below it the joint law's own answer keeps 1 - share and the legs
 //      take the share, so the waist is one surface - nothing changes where the share is nought. The legs weigh in by
 //      the hang alone: the joint law never picks them - as the nearest bone, as a child's blend, or as a parent's -
-//      so a plate over the thigh is not the thigh's outright, and a bone is weighed once.
+//      so a plate over the thigh is not the thigh's outright, and a bone is weighed once. AUDIT MW-FOLK1 (L2-F1): with
+//      `calves` the legs' share passes from the thighs to the calves across the knees (`knee` its height, `kneeBlend`
+//      either side), so cloth hanging past a knee goes with the shin when the knee bends, never left behind it.
 //
 // Welded vertices (one position, split by a seam in the UVs or the normals) are weighted once and share the answer,
 // so a seam never opens under a pose. Every list is normalised to 1; a vertex carries one bone or a joint's two (a
@@ -73,25 +81,31 @@ export function weldGroups(positions) {
 }
 
 /**
- * The weights, by the law above. `bones`: `[{ name, from, to, parent?, blend?, bias? }]`; `hang`:
- * `{ root, legs: [left, right], top, bottom, share, centre }` or null.
+ * The weights, by the law above. `bones`: `[{ name, from, to, parent?, blend?, bias?, reach?, fade? }]`; `hang`:
+ * `{ root, legs: [left, right], top, bottom, share, centre, mode?, calves?: [left, right], knee?, kneeBlend? }` or null.
  */
 export function jointWeights(positions, bones, { hang = null } = {}) {
   if (!bones?.length) throw new Error('no bones to weight to');
   const index = new Map(bones.map((b, i) => [b.name, i]));
   for (const b of bones) if (b.parent && !index.has(b.parent)) throw new Error(`"${b.name}" blends with "${b.parent}", which is not one of the bones`);
-  if (hang) for (const n of [hang.root, ...hang.legs]) if (!index.has(n)) throw new Error(`the hang names "${n}", which is not one of the bones`);
+  if (hang) for (const n of [hang.root, ...hang.legs, ...(hang.calves ?? [])]) if (!index.has(n)) throw new Error(`the hang names "${n}", which is not one of the bones`);
+  if (hang?.calves && !(hang.mode === 'over' && Number.isFinite(hang.knee) && hang.kneeBlend > 0)) throw new Error('a hang with calves hangs over its joints, from a knee height and a blend');
   const axis = bones.map((b) => unit(sub(b.to, b.from)));
   const children = bones.map((b) => bones.flatMap((c, j) => (c.parent === b.name ? [j] : [])));
   /** The joint blend across child c's origin: c's share, by where p stands along c's axis. */
   const across = (p, c) => { const L = bones[c].blend ?? 1; return smoothstep((dot(sub(p, bones[c].from), axis[c]) + L) / (2 * L)); };
   const over = hang?.mode === 'over';
   if (hang && hang.mode != null && !over) throw new Error(`a hang's mode is 'over' or none, not "${hang.mode}"`);
-  const legIndex = over ? new Set(hang.legs.map((n) => index.get(n))) : null;
-  const joint = (p) => {
+  const legIndex = over ? new Set([...hang.legs, ...(hang.calves ?? [])].map((n) => index.get(n))) : null;
+  for (const b of bones) if (b.reach != null && !(b.reach >= 0 && b.fade > 0)) throw new Error(`"${b.name}" reaches ${b.reach} with no fade past it`);
+  const reaches = bones.some((b) => b.reach != null);
+  if (reaches && bones.every((b, i) => b.reach != null || legIndex?.has(i))) throw new Error('every bone reaches - nothing claims what they do not');
+  /** The joint law's answer, `bare` among the bones that do not reach alone. */
+  const joint1 = (p, bare) => {
     const d = bones.map((b) => segmentDistance(p, b.from, b.to) - (b.bias ?? 0));
-    let k = legIndex?.has(0) ? -1 : 0;
-    for (let i = 0; i < d.length; i++) if (!legIndex?.has(i) && (k < 0 || d[i] < d[k])) k = i;
+    const can = bones.map((b, i) => !legIndex?.has(i) && !(bare && b.reach != null));
+    let k = -1;
+    for (let i = 0; i < d.length; i++) if (can[i] && (k < 0 || d[i] < d[k])) k = i;
     const b = bones[k];
     if (b.parent && !legIndex?.has(index.get(b.parent))) {   // AUDIT MW-CLOAK: over its joints, a leg is never a parent's blend either
       const L = b.blend ?? 1;
@@ -99,18 +113,33 @@ export function jointWeights(positions, bones, { hang = null } = {}) {
     }
     let c = -1;
     for (const j of children[k]) {
-      if (legIndex?.has(j)) continue;
+      if (!can[j]) continue;   // a leg (the hang's alone), or - bare - a child that reaches
       const L = bones[j].blend ?? 1;
       if (dot(sub(p, bones[j].from), axis[j]) > -L && (c < 0 || d[j] < d[c])) c = j;
     }
     if (c >= 0) { const w = across(p, c); return [[c, w], [k, 1 - w]]; }
     return [[k, 1]];
   };
+  /** AUDIT MW-FOLK1: the law's answer, faded where its reaching bones' claim does into the answer without them. */
+  const joint = (p) => {
+    if (!reaches) return joint1(p, false);
+    let claim = 0;
+    bones.forEach((b) => { if (b.reach != null) claim = Math.max(claim, 1 - smoothstep((segmentDistance(p, b.from, b.to) - b.reach) / b.fade)); });
+    if (claim >= 1) return joint1(p, false);
+    const bare = joint1(p, true);
+    if (claim <= 0) return bare;
+    const out = new Map();
+    for (const [i, w] of joint1(p, false)) out.set(i, (out.get(i) ?? 0) + w * claim);
+    for (const [i, w] of bare) out.set(i, (out.get(i) ?? 0) + w * (1 - claim));
+    return [...out];
+  };
   const weigh = (p) => {
     if (!hang) return joint(p);
     const legs = smoothstep((hang.top - p[2]) / (hang.top - hang.bottom)) * hang.share;
     const right = smoothstep((p[0] + hang.centre) / (2 * hang.centre));
-    const shares = [[index.get(hang.legs[0]), legs * (1 - right)], [index.get(hang.legs[1]), legs * right]];
+    const low = hang.calves ? smoothstep((hang.knee + hang.kneeBlend - p[2]) / (2 * hang.kneeBlend)) : 0;   // the shin's, past the knee
+    const shares = [[index.get(hang.legs[0]), legs * (1 - right) * (1 - low)], [index.get(hang.legs[1]), legs * right * (1 - low)],
+      ...(hang.calves ? [[index.get(hang.calves[0]), legs * (1 - right) * low], [index.get(hang.calves[1]), legs * right * low]] : [])];
     if (!over) return [[index.get(hang.root), 1 - legs], ...shares];
     return [...joint(p).map(([i, w]) => [i, w * (1 - legs)]), ...shares];
   };

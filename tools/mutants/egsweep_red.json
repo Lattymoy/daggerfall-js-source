@@ -1,0 +1,38 @@
+[
+  {
+    "name": "EG-SWEEP-RED-a-run-unbroken-at-its-span-link",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "      if (run && q.span !== run.span) run = null;\n",
+    "new": "",
+    "tests": [
+      "test/tooling/egsweep_red.test.js"
+    ]
+  },
+  {
+    "name": "EG-SWEEP-RED-the-chain-asked-at-the-launch-alone",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "      if (!follows(pi, u, depth) || !follows(pi, u + HOLD_S, depth)) continue;",
+    "new": "      if (!follows(pi, u, depth)) continue;",
+    "tests": [
+      "test/tooling/egsweep_red.test.js"
+    ]
+  },
+  {
+    "name": "EG-SWEEP-RED-a-receding-landing-judged-at-the-whole-reach",
+    "file": "tools/egSpanSolve.mjs",
+    "old": " && (!recedes(p, u) || egJumpLands(p, u, UNCAUGHT));",
+    "new": ";",
+    "tests": [
+      "test/tooling/egsweep_red.test.js"
+    ]
+  },
+  {
+    "name": "EG-SWEEP-RED-the-reach-uncaught-at-the-whole-reach",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "return { reach: r.reach - EG_BODY_R, air: r.air };",
+    "new": "return { reach: r.reach, air: r.air };",
+    "tests": [
+      "test/tooling/egsweep_red.test.js"
+    ]
+  }
+]

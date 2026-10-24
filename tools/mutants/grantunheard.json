@@ -1,0 +1,32 @@
+[
+  {
+    "name": "GRANT-UNHEARD-unheard-a-forgery",
+    "file": "src/scenes/grantHost.js",
+    "old": "    if (!v) return note(from, 'ungranted');",
+    "new": "    if (!v) return note(from, 'unsigned');",
+    "why": "a grant the relay's budget dropped tallied `unsigned` - a case's reason against an honest owner",
+    "tests": [
+      "test/scenes/grantunheard.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-UNHEARD-never-judged-anew",
+    "file": "src/scenes/grantHost.js",
+    "old": "    if (v.why === 'ungranted' && r?.gr && verdicts.has(`${from}|${r.gr[0]}`)) return null;",
+    "new": "    if (false && r?.gr && verdicts.has(`${from}|${r.gr[0]}`)) return null;",
+    "why": "a grant unheard, heard since, still stands its foe down",
+    "tests": [
+      "test/scenes/grantunheard.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-UNHEARD-forgery-judged-anew",
+    "file": "src/scenes/grantHost.js",
+    "old": "    if (v.why === 'ungranted' && r?.gr && verdicts.has(`${from}|${r.gr[0]}`)) return null;",
+    "new": "    if ((v.why === 'ungranted' || v.why === 'unsigned') && r?.gr && verdicts.has(`${from}|${r.gr[0]}`)) return null;",
+    "why": "a failed signature built, judged and tallied again on every frame",
+    "tests": [
+      "test/scenes/grantunheard.test.js"
+    ]
+  }
+]

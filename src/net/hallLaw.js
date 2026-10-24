@@ -14,9 +14,9 @@
 // sale pays the deed share back into the treasury. Server-wide one
 // owner a building, as every home (HOME1).
 //
-// Its own module, beside net/guildLaw.js and never inside it: guildLaw
+// Its own module, beside net/guild/guildLaw.js and never inside it: guildLaw
 // is in the relay's bundle (GUILD1c - the token carries a guild), where
-// every byte is a relay deploy (test/relayversion.test.js SLAM8), and
+// every byte is a relay deploy (test/net/relayversion.test.js SLAM8), and
 // nothing of a hall is the relay's.
 //
 // The shapes BOTH ends read - the account service

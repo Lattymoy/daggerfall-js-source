@@ -1,0 +1,391 @@
+// GUILD SERVICES - what a guild lets you DO, and at what rank. 1:1
+// from Daggerfall Unity's Services.cs and the Benefits/Training
+// regions of Guild.cs and its six subclasses (MIT, Daggerfall
+// Workshop / Hazelnut).
+//
+// G1 and G2 built membership and rank. This is what rank BUYS. The
+// windows that spend it are their own slice; everything here is law.
+//
+// ── the service NPC table ─────────────────────────────────────────
+// A guild service is offered by a specific NPC, identified by faction
+// id, and DFU maps 61 of them by hand. Its own comment says why:
+//   "Note this duplicates data from faction.txt mainly because guild
+//    flags are not consistent, and also for readability."
+// So this table is DELIBERATELY not derived from FACTION.TXT, and the
+// port copies it rather than reading the file.
+//
+// It is copied from DFU's SWITCH, not inferred from the enum names,
+// and that matters in exactly three places: MG_BuySpells maps to
+// BuySpellsMages (not BuySpells), KO_Smith to ReceiveArmor and
+// KO_Seneschal to ReceiveHouse. A name-derived table would have got
+// all three wrong; the pins check the whole set against DFU's switch.
+//
+// ── -1 IN THE TEMPLE TABLE DOES NOT MEAN "NEVER" ──────────────────
+// CanAccessService tests `serviceRank <= rank`, so a -1 column passes
+// at every rank. It reads as "never offered" only because the temple
+// has no NPC for that service, so the question is never asked - the
+// rank gate and the OFFER are two different things. The same -1 in
+// GetPromotionMsgId never matches, since ranks run 0..9.
+//
+// ── the fixed-point money formulas ────────────────────────────────
+// AlterReward and the reduced-cost pair are C# integer arithmetic:
+//     (((10 + rank) << 8) / 10 * reward) >> 8
+// The `/ 10` truncates BEFORE the multiply, so this is not the same
+// as reward * (10 + rank) / 10. Ported with Math.trunc and the same
+// >> 8, which is JS int32 arithmetic and matches for any value that
+// fits - the same range C# int holds.
+import { SKILLS } from '../skills.js';
+import { isMember } from './guilds.js';
+import { localizedText, localizedTable } from '../textManager.js';   // L10N3d: the deity lines and Stendarr's mercy
+import { NPC_SERVICE } from './guildNpcServices.js';
+
+/** Services.GuildServices - the service kinds. */
+export const GUILD_SERVICES = Object.freeze([
+  'Training', 'Quests', 'Repair', 'Identify', 'Donate', 'CureDisease',
+  'BuyPotions', 'MakePotions', 'BuySpells', 'BuySpellsMages', 'MakeSpells',
+  'BuyMagicItems', 'MakeMagicItems', 'SellMagicItems', 'Teleport',
+  'DaedraSummoning', 'Spymaster', 'BuySoulgems', 'ReceiveArmor', 'ReceiveHouse',
+]);
+
+/** Services.GuildNpcServices -> GuildServices: the table, a leaf of its own (systems/guild/guildNpcServices.js - AUDIT QA2). */
+export { NPC_SERVICE };
+
+/** Services.HasGuildService (:277-282), the built-in half: is this NPC
+ *  faction a guild service at all? (DFU also consults mod registries,
+ *  which the port has no equivalent for.) */
+export const hasGuildService = (npcFactionId) => Object.hasOwn(NPC_SERVICE, npcFactionId);
+/** Services.GetService. Null for an NPC that offers none. */
+export const npcServiceKind = (npcFactionId) => NPC_SERVICE[npcFactionId] ?? null;
+
+// ── training ──────────────────────────────────────────────────────
+// Guild.cs :335-346. No guild overrides either method, so the cap is
+// flat and the price is the member/non-member split times LEVEL.
+export const TRAINING_SKILLS = Object.freeze({
+  // FGH2H: the hall trains HandToHand too - the rank law's new skill is one
+  // a member can buy (a DEPARTURE, Port-Ledger row for guilds.js and this file;
+  // R&R's fightersTeachHandToHand, which swapped Giantish out, is retired).
+  FightersGuild: [SKILLS.Archery, SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.CriticalStrike,
+    SKILLS.Giantish, SKILLS.HandToHand, SKILLS.Jumping, SKILLS.LongBlade, SKILLS.Orcish,
+    SKILLS.Running, SKILLS.ShortBlade, SKILLS.Swimming],
+  MagesGuild: [SKILLS.Alteration, SKILLS.Daedric, SKILLS.Destruction, SKILLS.Dragonish,
+    SKILLS.Harpy, SKILLS.Illusion, SKILLS.Impish, SKILLS.Mysticism, SKILLS.Orcish,
+    SKILLS.Restoration, SKILLS.Spriggan, SKILLS.Thaumaturgy],
+  ThievesGuild: [SKILLS.Backstabbing, SKILLS.BluntWeapon, SKILLS.Climbing, SKILLS.Dodging,
+    SKILLS.Jumping, SKILLS.Lockpicking, SKILLS.Pickpocket, SKILLS.ShortBlade,
+    SKILLS.Stealth, SKILLS.Streetwise, SKILLS.Swimming],
+  DarkBrotherhood: [SKILLS.Archery, SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.CriticalStrike,
+    SKILLS.Daedric, SKILLS.Destruction, SKILLS.Dodging, SKILLS.Running, SKILLS.ShortBlade,
+    SKILLS.Stealth, SKILLS.Streetwise, SKILLS.Swimming],
+});
+
+/** Temple trainingSkills (:232-273), per divine - LONGER than the
+ *  guild-skill lists the rank law reads, and a different set. */
+export const TEMPLE_TRAINING_SKILLS = Object.freeze({
+  Akatosh: [SKILLS.Alteration, SKILLS.Archery, SKILLS.Daedric, SKILLS.Destruction,
+    SKILLS.Dragonish, SKILLS.LongBlade, SKILLS.Running, SKILLS.Stealth, SKILLS.Swimming],
+  Arkay: [SKILLS.Axe, SKILLS.Backstabbing, SKILLS.Climbing, SKILLS.CriticalStrike,
+    SKILLS.Daedric, SKILLS.Destruction, SKILLS.Medical, SKILLS.Restoration, SKILLS.ShortBlade],
+  Dibella: [SKILLS.Daedric, SKILLS.Etiquette, SKILLS.Harpy, SKILLS.Illusion, SKILLS.Lockpicking,
+    SKILLS.LongBlade, SKILLS.Nymph, SKILLS.Orcish, SKILLS.Restoration, SKILLS.Streetwise],
+  Julianos: [SKILLS.Alteration, SKILLS.CriticalStrike, SKILLS.Daedric, SKILLS.Impish,
+    SKILLS.Lockpicking, SKILLS.Mercantile, SKILLS.Mysticism, SKILLS.ShortBlade, SKILLS.Thaumaturgy],
+  Kynareth: [SKILLS.Archery, SKILLS.Climbing, SKILLS.Daedric, SKILLS.Destruction, SKILLS.Dodging,
+    SKILLS.Dragonish, SKILLS.Harpy, SKILLS.Illusion, SKILLS.Jumping, SKILLS.Running, SKILLS.Stealth],
+  Mara: [SKILLS.Archery, SKILLS.CriticalStrike, SKILLS.Daedric, SKILLS.Etiquette, SKILLS.Harpy,
+    SKILLS.Illusion, SKILLS.Medical, SKILLS.Nymph, SKILLS.Restoration, SKILLS.Streetwise],
+  Stendarr: [SKILLS.Axe, SKILLS.BluntWeapon, SKILLS.CriticalStrike, SKILLS.Daedric,
+    SKILLS.Dodging, SKILLS.Medical, SKILLS.Orcish, SKILLS.Restoration, SKILLS.Spriggan],
+  Zenithar: [SKILLS.BluntWeapon, SKILLS.Centaurian, SKILLS.Daedric, SKILLS.Etiquette,
+    SKILLS.Giantish, SKILLS.Harpy, SKILLS.Mercantile, SKILLS.Orcish, SKILLS.Pickpocket,
+    SKILLS.Spriggan, SKILLS.Streetwise, SKILLS.Thaumaturgy],
+});
+
+/** MACRO-4: %gdd - Temple.templeData's deityDesc column
+ *  (Temple.cs:134-141), DFU's Internal_Strings akatoshDesc..zenDesc,
+ *  each read through its key when a record quotes it (L10N3d). */
+export const DEITY_DESCRIPTIONS = localizedTable({
+  Akatosh: ['akatoshDesc', 'God of Time'], Arkay: ['arkayDesc', 'God of Birth and Death'],
+  Dibella: ['dibellaDesc', 'Goddess of Beauty'], Julianos: ['julianosDesc', 'God of Logic'],
+  Kynareth: ['kynarethDesc', 'Goddess of Air'], Mara: ['maraDesc', 'Goddess of Love'],
+  Stendarr: ['stendarDesc', 'God of Mercy'], Zenithar: ['zenDesc', 'God of Work and Commerce'],
+});
+
+/** Which skills a guild will train. NULL for a knightly order, which
+ *  trains NOTHING - KnightlyOrder.cs:81 returns null outright, and
+ *  that is a law rather than a gap. */
+export function trainingSkills(guild) {
+  if (guild.divine) return TEMPLE_TRAINING_SKILLS[guild.divine];
+  if (guild.order) return null;
+  return TRAINING_SKILLS[guild.name] ?? null;   // FGH2H-R: FightersGuildRR's override retired
+}
+
+/** GetTrainingMax (:335-338): defaultTrainingMax, and no guild
+ *  overrides it. Training cannot take a skill past 50. */
+export const trainingMax = () => 50;
+
+/** GetTrainingPrice (:340-344): the member/non-member split times the
+ *  player's LEVEL - so training scales with the character, not the
+ *  skill. */
+export function trainingPrice(membership, level) {
+  return (isMember(membership) ? 100 : 400) * level;
+}
+
+// ── the rank gates ────────────────────────────────────────────────
+/** Guild.CanAccessService (:265-288) - the base every guild but the
+ *  Temple uses. Note Quests, Identify, Donate, CureDisease and
+ *  BuySpellsMages are open to NON-MEMBERS; Training and Repair are not. */
+function baseCanAccessService(membership, service) {
+  switch (service) {
+    case 'Training': return isMember(membership);
+    case 'Quests': return true;
+    case 'Repair': return isMember(membership);
+    case 'Identify': return true;
+    case 'BuySpells': return false;
+    case 'BuySpellsMages': return true;
+    case 'Donate': return true;
+    case 'CureDisease': return true;
+    default: return false;
+  }
+}
+
+/** Temple.CanAccessService (:471-504): its own switch, gated on the
+ *  divine's SERVICE-RANK columns. Training and Quests are open to
+ *  anyone here - a temple trains non-members, where a guild does not. */
+function templeCanAccessService(guild, membership, service) {
+  const d = guild.services, rank = membership?.rank ?? -1;
+  switch (service) {
+    case 'Training': return true;
+    case 'Quests': return true;
+    case 'Donate': return true;
+    case 'CureDisease': return true;
+    case 'BuyPotions': return d.buyPotions <= rank;
+    case 'MakePotions': return d.makePotions <= rank;
+    case 'BuySpells': return d.buySpells <= rank;
+    case 'MakeSpells': return d.makeSpells <= rank;
+    case 'BuyMagicItems': return d.buyMagic <= rank;
+    case 'MakeMagicItems': return d.makeMagic <= rank;
+    case 'DaedraSummoning': return d.summoning <= rank;
+    case 'BuySoulgems': return d.soulGems <= rank;
+    default: return false;
+  }
+}
+
+/** AUDIT 23 (guilds-1): the four subclass overrides the port had
+ *  dropped, each a verbatim switch. Note every one REPLACES the base
+ *  switch entirely - DFU's overrides do not fall through to Guild.cs,
+ *  so MagesGuild loses the base's Repair/Donate/CureDisease arms and
+ *  the Thieves/Brotherhood lose Identify, exactly as here. */
+function magesCanAccessService(membership, service) {
+  const rank = membership?.rank ?? -1;
+  switch (service) {   // MagesGuild.cs:134-161
+    case 'Training': return isMember(membership);
+    case 'Quests': return true;
+    case 'Identify': return true;
+    case 'BuySpellsMages': return true;
+    case 'MakeSpells': return isMember(membership);
+    case 'BuyMagicItems': return rank >= 3;
+    case 'MakeMagicItems': return rank >= 5;
+    case 'Teleport': return rank >= 8;
+    case 'DaedraSummoning': return rank >= 6;
+    case 'BuySoulgems': return rank >= 4;
+    default: return false;
+  }
+}
+function thievesCanAccessService(membership, service) {
+  const rank = membership?.rank ?? -1;
+  switch (service) {   // ThievesGuild.cs:146-162
+    case 'Training': return isMember(membership);
+    case 'Quests': return true;
+    case 'SellMagicItems': return rank >= 2;
+    case 'Spymaster': return rank >= 4;
+    default: return false;
+  }
+}
+function brotherhoodCanAccessService(membership, service) {
+  const rank = membership?.rank ?? -1;
+  switch (service) {   // DarkBrotherhood.cs:151-171
+    case 'Training': return isMember(membership);
+    case 'Quests': return true;
+    case 'BuyPotions': return rank >= 1;
+    case 'MakePotions': return rank >= 3;
+    case 'BuySoulgems': return rank >= 5;
+    case 'Spymaster': return rank >= 7;
+    default: return false;
+  }
+}
+function knightlyCanAccessService(membership, service) {
+  switch (service) {   // KnightlyOrder.cs:176-189
+    case 'Quests': return true;
+    case 'ReceiveArmor': return isMember(membership);
+    case 'ReceiveHouse': return true;
+    default: return false;
+  }
+}
+
+// ── AUDIT-TO1 F1: GuildManager.RegisterCustomGuild ────────────────
+// DFU lets a mod replace a guild's own class for a whole guild GROUP
+// (GuildManager.cs RegisterCustomGuild / customGuilds), and Travel
+// Options is the first mod here that uses it: with paid teleportation
+// on it registers MagesGuildTO (MagesGuildTO.cs:9-17), whose entire
+// body is `CanAccessService(Teleport) => true`, so a member of ANY
+// rank can reach the teleport service and be charged for it. Without
+// it the port's own MagesGuild.CanAccessService still answers rank >= 8
+// - and above rank 8 the service is FREE, so the whole paid-teleport
+// feature was unreachable by exactly the players it is written for.
+//
+// The registry is the formula registry's shape (combat/formulas.js:"name per member,",
+// FormulaHelper.RegisterOverride): one entry per guild name, an arm that
+// returns `undefined` to DECLINE so the stock law stands, and the mod's
+// own install as the only writer. This file stays a LEAF - the mod
+// pushes into it, nothing here reads a setting.
+const _customGuilds = new Map();
+/** Register (fn) or retire (null) a guild's service override by guild
+ *  name, e.g. 'MagesGuild'. The arm is (membership, service) and
+ *  returns true, false, or undefined to decline. */
+export function registerCustomGuild(name, fn) { if (fn) _customGuilds.set(name, fn); else _customGuilds.delete(name); }
+
+export function canAccessService(guild, membership, service) {
+  // AUDIT 26 F115: a NON-MEMBER never reaches the subclass switch.
+  // GuildManager.GetGuild (:229-249) hands them guildNotMember - or
+  // templeNotMember at a temple - BEFORE CanAccessService is asked,
+  // and NonMemberGuild.CanAccessService (:52-58) is the BASE switch
+  // with one override: Training answers its canTrain flag, true only
+  // for the temple instance. So a stranger at a knightly seneschal is
+  // refused ReceiveHouse (base default false -> "members only"), not
+  // handed the order's own ReceiveHouse=true and then the rank-9
+  // refusal DFU reserves for members. membershipOf already answers
+  // null for a member of a DIFFERENT order or temple in the same
+  // slot, which is exactly GetGuild's order-matching.
+  if (!isMember(membership)) {
+    if (service === 'Training') return !!guild.divine;
+    return baseCanAccessService(membership, service);
+  }
+  if (guild.divine) return templeCanAccessService(guild, membership, service);
+  if (guild.order) return knightlyCanAccessService(membership, service);
+  // AUDIT-TO1 F1: a registered custom guild answers FIRST, and only for
+  // a MEMBER - RegisterCustomGuild replaces the class GetGuild hands
+  // back for the group, and a non-member is still handed
+  // guildNotMember above before any subclass is asked.
+  const custom = _customGuilds.get(guild.name);
+  if (custom) { const r = custom(membership, service); if (r !== undefined) return r; }
+  switch (guild.name) {
+    case 'MagesGuild': return magesCanAccessService(membership, service);
+    case 'ThievesGuild': return thievesCanAccessService(membership, service);
+    case 'DarkBrotherhood': return brotherhoodCanAccessService(membership, service);
+    default: return baseCanAccessService(membership, service);
+  }
+}
+
+/** Temple.CanAccessLibrary (:466-469) + MagesGuild.CanAccessLibrary
+ *  (:129-132, rank >= 2 - AUDIT 23 guilds-6); false everywhere else. */
+export function canAccessLibrary(guild, membership) {
+  if (guild.name === 'MagesGuild') return (membership?.rank ?? -1) >= 2;
+  if (!guild.divine) return false;
+  return guild.services.library <= (membership?.rank ?? -1);
+}
+
+// ── the benefits ──────────────────────────────────────────────────
+// Guild.cs's virtuals default to false / the price unchanged; only the
+// guilds listed here override one.
+
+/** The fixed-point scale DFU uses for both directions. `/ 10`
+ *  TRUNCATES before the multiply, so this is NOT price * (10-rank)/10. */
+const scaleByRank = (n, price) => (Math.trunc((n << 8) / 10) * price) >> 8;
+
+/** FightersGuild.CanRest - members may rest in the hall. */
+export const canRest = (guild, m) => guild.name === 'FightersGuild' && isMember(m);
+
+/** HallAccessAnytime: rank 6 for the Fighters and Mages guilds, plain
+ *  membership for the Thieves Guild and the Dark Brotherhood - whose
+ *  halls are not open to the public at any hour. */
+export function hallAccessAnytime(guild, m) {
+  switch (guild.name) {
+    case 'FightersGuild':
+    case 'MagesGuild': return (m?.rank ?? -1) >= 6;
+    case 'ThievesGuild':
+    case 'DarkBrotherhood': return isMember(m);
+    default: return false;
+  }
+}
+
+/** Temple.FreeHealing - at the divine's own healing rank. */
+export const freeHealing = (guild, m) =>
+  !!guild.divine && guild.services.healing <= (m?.rank ?? -1);
+
+/** MagesGuild.FreeMagickaRecharge - and note WHO it is for: a member
+ *  whose career cannot regenerate spell points at all. The guild's
+ *  perk exists for the Sorcerer, and reads the same career flag U20b
+ *  writes. */
+export const freeMagickaRecharge = (guild, m, entity) =>
+  guild.name === 'MagesGuild' && isMember(m) && !!entity?.career?.noRegenSpellPoints;
+
+/** KnightlyOrder.FreeTavernRooms: rank 4, OR anywhere in the order's
+ *  OWN REGION at any rank - a knight is a local somebody at home. */
+export function freeTavernRooms(guild, m, { regionIndex = null, orderRegion = null } = {}) {
+  if (!guild.order) return false;
+  if ((m?.rank ?? -1) >= 4) return true;
+  return regionIndex != null && orderRegion != null && regionIndex === orderRegion;
+}
+
+/** KnightlyOrder.FreeShipTravel - rank 6. */
+export const freeShipTravel = (guild, m) => !!guild.order && (m?.rank ?? -1) >= 6;
+
+/** GuildManager.AvoidDeath (:396-402) asks every membership; only
+ *  Temple overrides the base false (Temple.cs:450-460), and only
+ *  Stendarr's arm can answer: not submerged, and Random.Range(0,50)
+ *  < rank - rank-in-fifty odds of surviving a killing blow. The
+ *  CONSEQUENCE (health restored to 10% of max instead of the death
+ *  event) is PlayerEntity.SetHealth's (:1205-1211) and lives on the
+ *  port's one damage door, not here. AUDIT 26 F117. */
+export function avoidDeath(memberships, { submerged = false, rolls = Math.random } = {}) {
+  for (const m of Object.values(memberships ?? {})) {
+    if (m.guild !== 'Temple:Stendarr') continue;
+    if (!submerged && Math.floor(rolls() * 50) < (m.rank ?? 0)) return true;
+  }
+  return false;
+}
+/** GetLocalizedText("avoidDeath") - DFU's en table, m_Id 106. */
+export const AVOID_DEATH_TEXT = 'By the mercy of Stendarr, you survive certain death!';
+/** L10N3d: ...as the HUD says it (Temple.cs:456), in the player's language. */
+export const avoidDeathText = () => localizedText('avoidDeath', AVOID_DEATH_TEXT);
+
+/** FightersGuild.AlterReward - a member's quest reward GROWS with rank. */
+export const alterReward = (guild, m, reward) =>
+  (guild.name === 'FightersGuild' ? scaleByRank(10 + (m?.rank ?? 0), reward) : reward);
+
+/** FightersGuild.ReducedRepairCost - and it shrinks the cost. */
+export const reducedRepairCost = (guild, m, price) =>
+  (guild.name === 'FightersGuild' ? scaleByRank(10 - (m?.rank ?? 0), price) : price);
+
+/** Temple.ReducedCureCost - ARKAY ONLY. The god of burial and the
+ *  cycle of life is the one who discounts curing you. */
+export const reducedCureCost = (guild, m, price) =>
+  (guild.divine === 'Arkay' ? scaleByRank(10 - (m?.rank ?? 0), price) : price);
+
+// ── Services.cs:146-175 - the custom merchant services ──────────────────
+// A mod's service on a merchant NPC, by the NPC's faction id: the popup
+// shows its name on the service button and the button runs it (RR3 -
+// Roleplay & Realism's master armorer, faction 1022). `service(window)`
+// receives the popup's own door: { messageBox(text), openBuy(items) }.
+const _customMerchantServices = new Map();
+const _customMerchantServiceNames = new Map();
+const _customMerchantServiceGates = new Map();
+const serviceOn = (id) => _customMerchantServices.has(id) && (_customMerchantServiceGates.get(id)?.() ?? true);
+/** HasCustomMerchantService (:151-154) - under the port's gate: a mod's
+ *  Enabled off is DFU's "mod not loaded", so its service is not there. */
+export const hasCustomMerchantService = (npcFactionId) => serviceOn(npcFactionId);
+/** RegisterMerchantService (:156-166): false when the faction has one.
+ *  `isOn` is the registering mod's switch (the port's stand-in for the
+ *  mod being loaded at all). */
+export function registerMerchantService(npcFactionId, service, serviceName, isOn = null) {
+  if (_customMerchantServices.has(npcFactionId)) return false;
+  _customMerchantServices.set(npcFactionId, service);
+  _customMerchantServiceNames.set(npcFactionId, serviceName);
+  if (typeof isOn === 'function') _customMerchantServiceGates.set(npcFactionId, isOn);
+  return true;
+}
+/** GetCustomMerchantService (:168-171): the delegate, or null. */
+export const getCustomMerchantService = (npcFactionId) => (serviceOn(npcFactionId) ? _customMerchantServices.get(npcFactionId) : null);
+/** GetCustomMerchantServiceLabel (:173-175). */
+export const getCustomMerchantServiceLabel = (npcFactionId) => _customMerchantServiceNames.get(npcFactionId) ?? '?';   // AUDIT-RR2 G17: GetCustomMerchantServiceLabel's `else return "?"` (Services.cs:173-179)
+export function _resetMerchantServices() { _customMerchantServices.clear(); _customMerchantServiceNames.clear(); _customMerchantServiceGates.clear(); }

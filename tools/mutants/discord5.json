@@ -5,7 +5,7 @@
     "old": "    const a = color[3] ?? 1;\n",
     "new": "    const a = color[3];\n",
     "tests": [
-      "test/discord5.test.js"
+      "test/systems/discord5.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    const a = color[3] ?? 1;\n",
     "new": "    const a = color[3] ?? 0;\n",
     "tests": [
-      "test/discord5.test.js"
+      "test/systems/discord5.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "q.a !== a) {\n      gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], a);",
     "new": "q.a !== color[3]) {\n      gl.uniform4f(this._screenQuad.color, color[0], color[1], color[2], a);",
     "tests": [
-      "test/discord5.test.js"
+      "test/systems/discord5.test.js"
     ]
   },
   {
@@ -32,8 +32,8 @@
     "old": "      if (getItemHands(right) === ITEM_HANDS.Both) {",
     "new": "      if (getItemHands(right) === ITEM_HANDS.LeftOnly) {",
     "tests": [
-      "test/ht1_handheldtorches.test.js",
-      "test/discord5.test.js"
+      "test/systems/ht1_handheldtorches.test.js",
+      "test/systems/discord5.test.js"
     ]
   },
   {
@@ -42,8 +42,8 @@
     "old": "        if (w.s.twoHandedRelaxed) { if (isBow(right) || w.attacking) w.handLeft = false; }",
     "new": "        if (w.s.twoHandedRelaxed) { if (isBow(right)) w.handLeft = false; }",
     "tests": [
-      "test/ht1_handheldtorches.test.js",
-      "test/discord5.test.js"
+      "test/systems/ht1_handheldtorches.test.js",
+      "test/systems/discord5.test.js"
     ]
   },
   {
@@ -52,8 +52,8 @@
     "old": "        if (w.s.twoHandedRelaxed) { if (isBow(right) || w.attacking) w.handLeft = false; }\n        else w.handLeft = false;",
     "new": "        if (isBow(right) || w.attacking) w.handLeft = false;",
     "tests": [
-      "test/ht1_handheldtorches.test.js",
-      "test/discord5.test.js"
+      "test/systems/ht1_handheldtorches.test.js",
+      "test/systems/discord5.test.js"
     ]
   },
   {
@@ -62,9 +62,9 @@
     "old": "    } else if (!sheathedNow && !usingRightNow) w.handLeft = false;   // bare left hand",
     "new": "    } else if (false) w.handLeft = false;   // bare left hand",
     "tests": [
-      "test/ht1_handheldtorches.test.js",
-      "test/audit66_handheldtorches.test.js",
-      "test/discord5.test.js"
+      "test/systems/ht1_handheldtorches.test.js",
+      "test/systems/audit66_handheldtorches.test.js",
+      "test/systems/discord5.test.js"
     ]
   },
   {
@@ -73,18 +73,18 @@
     "old": "      if (getItemHands(left) === ITEM_HANDS.Both || isBow(left)) w.handRight = false;",
     "new": "      if (isBow(left)) w.handRight = false;",
     "tests": [
-      "test/ht1_handheldtorches.test.js",
-      "test/discord5.test.js"
+      "test/systems/ht1_handheldtorches.test.js",
+      "test/systems/discord5.test.js"
     ]
   },
   {
     "name": "D5-3ARMS-widget-mirror-back-to-LeftOnly",
-    "file": "src/combat/weaponWidget.js",
+    "file": "src/combat/weapon/weaponWidget.js",
     "old": "    if (getItemHands(w.specificWeapon) !== ITEM_HANDS.Both) return false;",
     "new": "    if (getItemHands(w.specificWeapon) !== ITEM_HANDS.LeftOnly) return false;",
     "tests": [
-      "test/ww1_weaponwidget.test.js",
-      "test/discord5.test.js"
+      "test/combat/weapon/ww1_weaponwidget.test.js",
+      "test/systems/discord5.test.js"
     ]
   },
   {
@@ -93,8 +93,8 @@
     "old": "      'Handling.RelaxedTwoHandedWeapons': Object.freeze({ default: false,",
     "new": "      'Handling.RelaxedTwoHandedWeapons': Object.freeze({ default: true,",
     "tests": [
-      "test/ht1_handheldtorches.test.js",
-      "test/discord5.test.js"
+      "test/systems/ht1_handheldtorches.test.js",
+      "test/systems/discord5.test.js"
     ]
   },
   {
@@ -103,34 +103,34 @@
     "old": "  'handheld-torches': Object.freeze([\n    'Handling.RelaxedTwoHandedWeapons',",
     "new": "  'handheld-torches': Object.freeze(['Handling.ToggleLightInput',\n    'Handling.RelaxedTwoHandedWeapons',",
     "tests": [
-      "test/discord5.test.js"
+      "test/systems/discord5.test.js"
     ]
   },
   {
     "name": "D5-TORCH-BIND-eotb-keys-uncurated",
-    "file": "src/player/eotbCamera.js",
+    "file": "src/player/eyeOfTheBeholder/eotbCamera.js",
     "old": "    // KB1: the two keys the mod binds beside the wheel are the registry's ShoulderSwitch and AutoPerspective\n",
     "new": "    switchShoulderKey: g('Camera.SwitchShoulder') ?? null,\n    // KB1: the two keys the mod binds beside the wheel are the registry's ShoulderSwitch and AutoPerspective\n",
     "tests": [
-      "test/discord5.test.js"
+      "test/systems/discord5.test.js"
     ]
   },
   {
     "name": "D5-TORCH-BIND-foot-continue-dead",
-    "file": "src/ui/enhancedControls.js",
+    "file": "src/ui/enhanced/enhancedControls.js",
     "old": "  cont2.onclick = act(applyAndSave);",
     "new": "  cont2.onclick = act(() => {});",
     "tests": [
-      "test/discord5.test.js"
+      "test/systems/discord5.test.js"
     ]
   },
   {
     "name": "D5-TORCH-BIND-foot-continue-missing",
-    "file": "src/ui/enhancedControls.js",
+    "file": "src/ui/enhanced/enhancedControls.js",
     "old": "  foot.append(cont2);\n  body.append(foot);",
     "new": "  body.append(foot);",
     "tests": [
-      "test/discord5.test.js"
+      "test/systems/discord5.test.js"
     ]
   },
   {
@@ -139,34 +139,34 @@
     "old": "  return bookOf(entity).filter((sp) => keyedSpell(sp) && !seen.has(sp.index) && (seen.add(sp.index), true));",
     "new": "  return bookOf(entity).filter((sp) => keyedSpell(sp) && (seen.add(sp.index), true));",
     "tests": [
-      "test/discord5.test.js"
+      "test/systems/discord5.test.js"
     ]
   },
   {
     "name": "D5-HOTSLOT-book-button-never-clears",
-    "file": "src/ui/enhancedSpellbook.js",
+    "file": "src/ui/enhanced/enhancedSpellbook.js",
     "old": "    if (inSlot) clearSpellQuickslot(); else setSpellQuickslot(sel.spell);",
     "new": "    setSpellQuickslot(sel.spell);",
     "tests": [
-      "test/discord5.test.js"
+      "test/systems/discord5.test.js"
     ]
   },
   {
     "name": "D5-HOTSLOT-book-button-does-not-rerender",
-    "file": "src/ui/enhancedSpellbook.js",
-    "old": "      notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot - press its key to ready it, hold to cycle the book.';\n      render();",
-    "new": "      notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot - press its key to ready it, hold to cycle the book.';",
+    "file": "src/ui/enhanced/enhancedSpellbook.js",
+    "old": "      notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot. Press its key to ready it, or hold the key to cycle through your spells.';\n      render();",
+    "new": "      notice = inSlot ? 'Taken out of the quickslot.' : 'In the quickslot. Press its key to ready it, or hold the key to cycle through your spells.';",
     "tests": [
-      "test/discord5.test.js"
+      "test/systems/discord5.test.js"
     ]
   },
   {
     "name": "D5-HOTSLOT-empty-chip-hidden",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "  chip.chip.classList.toggle('qspell-empty', !sp);",
     "new": "  chip.chip.classList.toggle('qspell-empty', false);",
     "tests": [
-      "test/discord5.test.js"
+      "test/systems/discord5.test.js"
     ]
   },
   {
@@ -175,7 +175,7 @@
     "old": "        const _q = roomLootKey(key);   // REST-SYNC: the room's name for it\n        if (_q) publishLoot(_q);\n",
     "new": "",
     "tests": [
-      "test/discord5.test.js"
+      "test/systems/discord5.test.js"
     ]
   },
   {
@@ -184,7 +184,7 @@
     "old": "        if (!source.length) onEmptied?.();\n        return source.length;",
     "new": "        return source.length;",
     "tests": [
-      "test/discord5.test.js"
+      "test/systems/discord5.test.js"
     ]
   }
 ]

@@ -3,7 +3,7 @@
 // (Bloodline) or non-permadeath (Enduring)" - the design's "two players' characters may wed: both in the same temple,
 // both asking the priest, the service records the union (each family names the other's member as spouse)"): THE
 // WEDDING'S HANDSHAKE, AS A STATE MACHINE. Pure - no DOM, no game import: the socket, the account service and the house
-// are handed in, so test/legacy7_wed.test.js drives two of these against each other over a fake wire and a real Worker.
+// are handed in, so test/systems/legacy/legacy7_wed.test.js drives two of these against each other over a fake wire and a real Worker.
 //
 // THE HANDSHAKE (net/wire.js's LEGACY7 header names the frames):
 //   1. A PROPOSES (the Inspect card's Propose): `ask`. Each must stand in a temple, a realm character of a house, wed to
@@ -42,12 +42,12 @@ export function wedWhyText(why, name = 'They') {
   switch (why) {
     case 'declined': return `${name} declined your proposal.`;
     case 'busy': return `${name} cannot answer a proposal now.`;
-    case 'temple': return 'A wedding is made in a temple - both of you must stand inside one.';
-    case 'house': return 'Only two characters of houses (Project Legacy) can be wed in the realm.';
+    case 'temple': return 'Weddings take place in a temple. Both of you must stand inside one.';
+    case 'house': return 'Only characters who belong to a house (Project Legacy) can wed in the realm.';
     case 'wed': return `${name} is wed already.`;
-    case 'timeout': return 'No answer came - the proposal lapsed.';
+    case 'timeout': return 'No answer came, and the proposal lapsed.';
     case 'cancelled': return `${name} took the proposal back.`;
-    case 'refused': return 'The temple\'s book would not take the wedding.';
+    case 'refused': return 'The temple could not record the wedding.';
     default: return 'The wedding did not happen.';
   }
 }
@@ -55,9 +55,9 @@ export function wedWhyText(why, name = 'They') {
 /** Why I cannot wed now, in words - my own side of WED_WHY (the Inspect card's reason, and a yes that came too late). */
 export function wedMineText(why) {
   switch (why) {
-    case 'house': return 'Only a character of a house (Project Legacy) can wed in the realm.';
+    case 'house': return 'Only a character who belongs to a house (Project Legacy) can wed in the realm.';
     case 'wed': return 'You are wed already.';
-    case 'temple': return 'A wedding is made in a temple - stand inside one together.';
+    case 'temple': return 'Weddings take place in a temple. Stand inside one together.';
     case 'busy': return 'Not now.';
     default: return 'The wedding did not happen.';
   }
@@ -139,7 +139,7 @@ export function createWedManager({
     if (r?.ok && r.wed) { if (waiting === w) waiting = null; wedNow(r.union, w.peer); changed(); return; }   // recorded whatever came meanwhile
     if (waiting !== w) return;
     waiting = null;
-    say(r?.ok ? `No word of ${nameOf(w.peer)}'s came to the temple. The wedding did not happen.` : refusalText(r?.error ?? 'server'));
+    say(r?.ok ? `${nameOf(w.peer)}'s answer never reached the temple. The wedding did not happen.` : refusalText(r?.error ?? 'server'));
     changed();
   };
 
@@ -243,7 +243,7 @@ export function createWedManager({
           if (quiet.size > 64) for (const [p, at] of quiet) if (now() - at >= WED_REASK_MS) quiet.delete(p);
           const fresh = !incoming.has(from);
           incoming.set(from, { s: d.s, at: now(), sub, sc });
-          if (fresh) { say(`${nameOf(from)} asks for your hand - answer on the prompt, or on their Inspect card.`); onPrompt(from); }
+          if (fresh) { say(`${nameOf(from)} asks for your hand. Answer on the prompt, or on their Inspect card.`); onPrompt(from); }
           changed();
           return;
         }
@@ -269,7 +269,7 @@ export function createWedManager({
               // told it did not happen: my half withdrawn (a union that stood first is recorded, and said done)
               takeBack({ peer: from, s, sub, sc }, () => once({ k: 'done', to: from, s }));
               once({ k: 'no', to: from, s, why: 'refused' });
-              say(r?.ok ? `No word of ${nameOf(from)}'s came to the temple. The wedding did not happen.` : refusalText(r?.error ?? 'server'));
+              say(r?.ok ? `${nameOf(from)}'s answer never reached the temple. The wedding did not happen.` : refusalText(r?.error ?? 'server'));
             }
             changed();
           })();

@@ -1,0 +1,290 @@
+[
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-9-missing-message-completes-silently",
+    "file": "src/systems/questlines/qlActions.js",
+    "old": "    if (!choices.length) return;\n    latch.set(key, UP);",
+    "new": "    if (!choices.length || choices.length < offered.length || !message) { this.setComplete(); return; }\n    latch.set(key, UP);",
+    "tests": [
+      "test/systems/questlines/ql4_actions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-9-said-every-tick",
+    "file": "src/systems/questlines/qlActions.js",
+    "old": "      this.reported = true;\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql4_actions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-10-outcome-unchecked",
+    "file": "src/systems/questlines/qlActions.js",
+    "old": "      if (!sheet || (sheet.outcomes ?? []).some((o) => o.id === name)) quest.ql.outcome = name;",
+    "new": "      if (name) quest.ql.outcome = name;",
+    "tests": [
+      "test/systems/questlines/ql4_actions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-3-null-asks-next-tick",
+    "file": "src/systems/questlines/qlActions.js",
+    "old": "export const ASK_AGAIN_TICKS = 300;",
+    "new": "export const ASK_AGAIN_TICKS = 0;",
+    "tests": [
+      "test/systems/questlines/ql4_actions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-3-null-never-again",
+    "file": "src/systems/questlines/qlActions.js",
+    "old": "      if (!chosen) { latch.set(key, ASK_AGAIN_TICKS); return; }",
+    "new": "      if (!chosen) { latch.set(key, UP); return; }",
+    "tests": [
+      "test/systems/questlines/ql4_actions.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-1-every-copy-asks",
+    "file": "src/systems/questlines/qlActions.js",
+    "old": "    if (awaitsSharer(quest)) return;\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-1-no-party-waits",
+    "file": "src/systems/questlines/qlActions.js",
+    "old": "&& (quest.hooks?.partySize?.() ?? quest.hooks?.rewardShares?.(quest) ?? 1) > 1 && quest.hooks?.sharerHere?.(quest) !== false;",
+    "new": ";",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-1-answer-unguarded",
+    "file": "src/systems/questlines/qlActions.js",
+    "old": "      const live = task ? quest.getTask?.(task)?.actions?.[at] : this;\n      if (!(live instanceof QlAsk) || live.id !== this.id || live.isComplete || isEnding(quest) || quest.questTombstoned\n        || live.choiceTasks.some((s) => quest.getTask?.(s)?.getTriggerValue?.())) return;",
+    "new": "      const live = this;",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-1-latch-on-the-action",
+    "file": "src/systems/questlines/qlActions.js",
+    "old": "latch = heldOf(quest), was",
+    "new": "latch = heldOf(this), was",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-1-answer-on-the-thrown-away-action",
+    "file": "src/systems/questlines/qlActions.js",
+    "old": "      const live = task ? quest.getTask?.(task)?.actions?.[at] : this;",
+    "new": "      const live = this;",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-1-no-choice-set-guard",
+    "file": "src/systems/questlines/qlActions.js",
+    "old": "\n        || live.choiceTasks.some((s) => quest.getTask?.(s)?.getTriggerValue?.())) return;",
+    "new": ") return;",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-1-no-ending-guard",
+    "file": "src/systems/questlines/qlActions.js",
+    "old": " || isEnding(quest) || quest.questTombstoned",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-1-received-not-read-back",
+    "file": "src/systems/questlines/qlState.js",
+    "old": "received: data.received === true,",
+    "new": "received: false,",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-1-received-not-marked",
+    "file": "src/systems/questlines/qlState.js",
+    "old": "acts: {}, received: true } : null;",
+    "new": "acts: {} } : null;",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-2-qlact-not-in-the-law",
+    "file": "src/systems/quest/shareActions.js",
+    "old": "  QlAct: { from: (v) => v === null || count(v) },\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-2-from-taken-from-the-partner",
+    "file": "src/systems/quest/shareActions.js",
+    "old": "  RunQuest: { questStarted: bool, questUId: (v) => v === null || count(v) },\n};",
+    "new": "  RunQuest: { questStarted: bool, questUId: (v) => v === null || count(v) },\n  QlAct: { from: (v) => v === null || count(v) },\n};",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-11-escape-closes-unanswered",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "(why === 'unshown' ? answer(null) : [question()])",
+    "new": "(why === 'unshown' ? answer(null) : [])",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-11-a-second-pick-answers-again",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "if (!answered) { answered = true; respond(i); }",
+    "new": "respond(i);",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-3-unshown-pick-reshows",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "(why === 'unshown' ? answer(null) : [question()])",
+    "new": "[question()]",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-3-pick-without-art-dropped-bare",
+    "file": "src/ui/guildServiceWindows.js",
+    "old": "if (!listPickerArtLoaded()) { this._advance(t.onCancel?.(PICK_UNSHOWN) ?? null); return; }",
+    "new": "if (!listPickerArtLoaded()) { this._advance(); return; }",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-7-pushed-in-front",
+    "file": "src/ui/guildServiceWindows.js",
+    "old": "    const front = (boxes ?? []).filter((b) => !b?.behind);\n    if (front.length) { this.boxes.unshift(...front); this._shownAt = graceNow(); }\n    for (const b of boxes ?? []) if (b?.behind) this.boxes.push(b);",
+    "new": "    const front = boxes ?? [];\n    if (front.length) { this.boxes.unshift(...front); this._shownAt = graceNow(); }",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-7-no-behind-flag",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "  return { ...question(), behind: true };",
+    "new": "  return question();",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-12-shape-read-by-the-switch-machine",
+    "file": "src/systems/quest/machine.js",
+    "old": "    const lines = this.deps.getQuestSourceLines?.(questName, questlines);",
+    "new": "    const lines = this.deps.getQuestSourceLines?.(questName);",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-12-shape-read-by-the-switch-share",
+    "file": "src/systems/quest/questShare.js",
+    "old": "{ questlines: data.ql?.stamp === QL_STAMP }",
+    "new": "{}",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-14-restart-stamped-by-the-switch",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (stamped) fresh.ql = this.deps.questlinesStamp?.(fresh) ?? { ...freshState(), tier: old.ql.tier };\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-BRANCH-14-restart-read-by-the-switch",
+    "file": "src/systems/quest/machine.js",
+    "old": "this.deps.getQuestSourceLines?.(old.questName, stamped || undefined);",
+    "new": "this.deps.getQuestSourceLines?.(old.questName);",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-REWARD-1-copy-not-re-tiered",
+    "file": "src/systems/quest/machine.js",
+    "old": "    if (quest.ql) quest.ql.tier = this.deps.questlinesStamp?.(quest)?.tier ?? 1;\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-REWARD-1-envelope-tier-kept",
+    "file": "src/systems/questlines/qlState.js",
+    "old": "return st ? { ...st, tier: 1, paid: false",
+    "new": "return st ? { ...st, paid: false",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-REWARD-2-sender-gate-gone",
+    "file": "src/systems/quest/questShare.js",
+    "old": "  if (lineStepOf(data.questName)) return { ok: false, reason: 'questline' };\n",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-REWARD-2-receiver-gate-gone",
+    "file": "src/systems/quest/questShare.js",
+    "old": "  if (lineStepOf(questName)) return { ok: false, reason: 'questline' };",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-REWARD-15-offer-back",
+    "file": "src/systems/questlines/qlState.js",
+    "old": "acts: {}, received: false });",
+    "new": "acts: {}, received: false, offer: null });",
+    "tests": [
+      "test/systems/questlines/ql4_flow.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-FLOW-DOC-19-name-underscores-kept",
+    "file": "src/systems/questlines/qlActions.js",
+    "old": "action.given = match.groups.given.replace(/_/g, ' ');",
+    "new": "action.given = match.groups.given;",
+    "tests": [
+      "test/systems/questlines/ql4_actions.test.js"
+    ]
+  }
+]

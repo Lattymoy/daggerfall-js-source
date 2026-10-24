@@ -5,7 +5,7 @@
     "old": "  ['/v1/auth/token', 'POST'],\n",
     "new": "",
     "tests": [
-      "test/scale4d.test.js"
+      "test/server/scale4d.test.js"
     ],
     "note": "no route on a session - the reconnect wave's mints back on the one primary SCALE4g (2026-10-10) re-aimed it by content."
   },
@@ -15,7 +15,7 @@
     "old": "    const db = routeDb(env.DB, path, request.method, d1BookmarkOf(request));",
     "new": "    const db = path === '/v1/auth/token' ? env.DB : routeDb(env.DB, path, request.method, d1BookmarkOf(request));",
     "tests": [
-      "test/scale4d.test.js"
+      "test/server/scale4d.test.js"
     ],
     "note": "the mint left on the binding SCALE4g (2026-10-10) re-aimed it by content."
   },
@@ -25,7 +25,7 @@
     "old": "    const db = routeDb(env.DB, path, request.method, d1BookmarkOf(request));",
     "new": "    const db = routeDb(env.DB, '/v1/heartbeat', 'POST', d1BookmarkOf(request));",
     "tests": [
-      "test/scale4d.test.js"
+      "test/server/scale4d.test.js"
     ],
     "note": "every route on a session - a write's reads served by a replica the route never reasoned about SCALE4g (2026-10-10) re-aimed it by content."
   },
@@ -35,7 +35,7 @@
     "old": "export const REPLICA_CONSTRAINT = 'first-primary';",
     "new": "export const REPLICA_CONSTRAINT = 'first-unconstrained';",
     "tests": [
-      "test/scale4d.test.js"
+      "test/server/scale4d.test.js"
     ],
     "note": "the session lookup on any replica - a guest made a moment ago refused `auth`, which the client takes as final"
   },
@@ -45,7 +45,7 @@
     "old": "      if (key === 'withSession') {",
     "new": "      if (key === 'withSession-') {",
     "tests": [
-      "test/scale4d.test.js"
+      "test/server/scale4d.test.js"
     ],
     "note": "a session opened past the counter - a mint's metrics point says it ran nothing"
   },
@@ -55,7 +55,7 @@
     "old": "      if (key === DB_ROOT) return root;",
     "new": "      if (key === DB_ROOT) return target;",
     "tests": [
-      "test/scale4d.test.js"
+      "test/server/scale4d.test.js"
     ],
     "note": "DB_ROOT the session - what an isolate keeps beside its database split per request"
   },
@@ -65,7 +65,7 @@
     "old": "  if (typeof open !== 'function') return db;\n  const root = db[DB_ROOT] ?? db;",
     "new": "  const root = db[DB_ROOT] ?? db;",
     "tests": [
-      "test/scale4d.test.js"
+      "test/server/scale4d.test.js"
     ],
     "note": "a binding with no sessions throws at the mint"
   },
@@ -75,7 +75,7 @@
     "old": "const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? db[DB_ROOT] ?? db : null);",
     "new": "const keyOf = (/** @type {any} */ db) => (db && typeof db === 'object' ? db : null);",
     "tests": [
-      "test/scale4d.test.js"
+      "test/server/scale4d.test.js"
     ],
     "note": "the budget's config kept by the request's Proxy - kept nothing past its request in a deployed service"
   },
@@ -85,7 +85,7 @@
     "old": "      const honoursCtx = { ...ctx, db: env.DB };",
     "new": "      const honoursCtx = ctx;",
     "tests": [
-      "test/scale4d.test.js"
+      "test/server/scale4d.test.js"
     ],
     "note": "AUDIT SCALE4d A1: a stale #1 counted off the replica session and written back over a newer one"
   },
@@ -95,7 +95,7 @@
     "old": "-d '{\"read_replication\":{\"mode\":\"auto\"}}'",
     "new": "-d '{\"read_replication\":{\"mode\":\"disabled\"}}'",
     "tests": [
-      "test/scale4d.test.js"
+      "test/server/scale4d.test.js"
     ],
     "note": "the deploy turns the replicas off - the mint's session the primary's alone"
   },
@@ -105,17 +105,17 @@
     "old": "--max-time 20 -o /tmp/replicas.json -w '%{http_code}' -X PUT \\",
     "new": "--max-time 20 -o /tmp/replicas.json -w '%{http_code}' -X GET \\",
     "tests": [
-      "test/scale4d.test.js"
+      "test/server/scale4d.test.js"
     ],
     "note": "the step reads the setting and changes nothing"
   },
   {
     "name": "AUDIT-SCALE4d-D8-session-unbound",
     "file": "server-account/src/service.js",
-    "old": "      if (key === DB_ROOT) return root;\n      const v = Reflect.get(target, key);\n      return typeof v === 'function' ? v.bind(target) : v;",
-    "new": "      if (key === DB_ROOT) return root;\n      const v = Reflect.get(target, key);\n      return v;",
+    "old": "      if (key === DB_FIRST_PRIMARY) return constraint === REPLICA_CONSTRAINT;   // SESSION-SIGN: its lookup the primary's\n      const v = Reflect.get(target, key);\n      return typeof v === 'function' ? v.bind(target) : v;",
+    "new": "      if (key === DB_FIRST_PRIMARY) return constraint === REPLICA_CONSTRAINT;   // SESSION-SIGN: its lookup the primary's\n      const v = Reflect.get(target, key);\n      return v;",
     "tests": [
-      "test/scale4d.test.js"
+      "test/server/scale4d.test.js"
     ],
     "note": "a session method called off its object - workerd's session reads its own fields"
   }

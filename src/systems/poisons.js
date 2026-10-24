@@ -42,8 +42,9 @@
 import { savingThrow, careerTolerance, EFFECT_FLAGS } from './spellcast.js';
 import { FATIGUE_MULTIPLIER } from './statMods.js';
 import { dice100 } from '../combat/formulas.js';
-import { MOBILE_TYPES } from '../characters/mobileTypes.js';
-import { YOU_FEEL_SOMEWHAT_BAD } from './diseases.js';
+import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
+import { youFeelSomewhatBadText } from './diseases.js';
+import { isClassEnemyId } from '../characters/enemy/enemyBasics.js';   // DEX1: DFU's class test (DaggerfallEntity.IsClassEnemyId) - a mod's monster past 255 is no class
 
 // ---- ItemEnums.Poisons, verbatim (0-7 weapon poisons, 8-11 drugs) ----
 export const POISONS = Object.freeze({
@@ -172,7 +173,7 @@ function incrementPoisonEffects(entry, sinks, rolls, onAlert) {
       if (sinks.restoreMagicka) sinks.restoreMagicka(range(5, 10));
       break;
   }
-  if (onAlert) onAlert(YOU_FEEL_SOMEWHAT_BAD);   // player hosts only (the scene wires it)
+  if (onAlert) onAlert(youFeelSomewhatBadText());   // player hosts only (the scene wires it)
   if (--entry.minutesRemaining <= 0) entry.state = 'complete';
 }
 
@@ -231,7 +232,7 @@ export function inflictPoison(target, poisonType, bypassResistance, { rolls = Ma
  */
 export function rollEnemyWeaponPoison(mobileType, playerLevel, rolls = Math.random) {
   if (playerLevel <= 1) return null;
-  const isClass = mobileType >= 128 && mobileType !== MOBILE_TYPES.None;
+  const isClass = isClassEnemyId(mobileType) && mobileType !== MOBILE_TYPES.None;
   if (!isClass && mobileType !== MOBILE_TYPES.Orc && mobileType !== MOBILE_TYPES.Centaur && mobileType !== MOBILE_TYPES.OrcSergeant) return null;
   const chanceToPoison = mobileType === MOBILE_TYPES.Assassin ? 60 : 5;
   if (!dice100(chanceToPoison, rolls())) return null;

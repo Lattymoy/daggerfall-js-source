@@ -37,13 +37,15 @@ import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { SKILL_NAMES } from '../systems/skills.js';
 import { drawText, measureText } from './text.js';
-import { nativeMetrics } from './nativePanel.js';
+import { nativeMetrics } from './native/nativePanel.js';
 import { chargenArtLoaded, drawChargenNative, loadFaceSet, chargenHit, raceDescriptionLines, classDescriptionLines, textRecordLines, DOUBLE_CLICK_DELAY_MS, CLASS_LIST_ROWS, ADV_PICKER_ITEM_COUNT, PLAYER_REFLEXES, REFLEX_COUNT, QUESTION_ROW_H, QSCROLL_H, QSCROLL_TEXT_OFFSET, QSCROLL_FRAMES, PICK_SCROLL_RECT, startConstellationAnim, tickConstellationAnim, stopConstellationAnim } from './chargenArt.js';   // U10 / U17 / U18 / U20a
 
 // AUDIT 24 (wave 24): FormulaHelper.MaxStatValue, one home.
 import { MAX_STAT_VALUE } from '../systems/statMods.js';
 import { hotkeyHit } from '../systems/dialogShortcuts.js';   // ROAD-E2: the DaggerfallShortcut table - the builder's ResetBonusPool
 import { VerticalScrollBar } from './verticalScrollBar.js';   // ROAD-E2: DFU's VerticalScrollBar, the picker's bar
+import { localizedStrings, localizedText, processGrammar, GrammarManager } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; L10N3g: the grammar and the hero's gender
+import { raceDisplayName } from '../systems/talk/talkSession.js';   // L10N3d: RaceTemplate.Name, read in the player's language
 
 export { MAX_STAT_VALUE };
 
@@ -126,6 +128,29 @@ const STATES = ['race', 'gender', 'classMethod', 'classQuestions', 'class', 'cus
  *  button, which assigns rather than types, could already mint a
  *  name the player was then unable to retype. */
 export const NAME_MAX_CHARACTERS = 31;
+
+/** CreateCharClassSelect :59-61 - each CLASS*.CFG career's name is its
+ *  own Internal_Strings key (L10N3d); the list shows the key's word. */
+const CLASS_NAMES = localizedStrings({
+  Mage: 'Mage', Spellsword: 'Spellsword', Battlemage: 'Battlemage', Sorcerer: 'Sorcerer', Healer: 'Healer',
+  Nightblade: 'Nightblade', Bard: 'Bard', Burglar: 'Burglar', Rogue: 'Rogue', Acrobat: 'Acrobat', Thief: 'Thief',
+  Assassin: 'Assassin', Monk: 'Monk', Archer: 'Archer', Ranger: 'Ranger', Barbarian: 'Barbarian', Warrior: 'Warrior',
+  Knight: 'Knight',
+});
+
+/** L10N3g: THE HERO'S GENDER, TWO GETTERS. The wizard hands the grammar
+ *  a CONSTANT one at the pick (CreateCharGenderSelect.cs:63/:70, the
+ *  gender arm of applyHit below); every start of a game hands it a LIVE
+ *  read of the entity, never a copy - InvokeStartMethod's
+ *  `SetHeroGenderGetter(() => GameManager.Instance.PlayerEntity.Gender)`
+ *  (StartGameBehaviour.cs:147), which DFU runs for every start method.
+ *  That is what ends the wizard's constant when the new character's
+ *  game begins (finishChargen), and what a load reads (the world
+ *  host's boot): a save loaded later in the session speaks of the
+ *  loaded hero. */
+export function handHeroGenderToGrammar(entity) {
+  GrammarManager.grammarProcessor.setHeroGenderGetter(() => entity.gender);
+}
 
 /** AUDIT 18: what `new ClassFile(files[0]).Career` yields - a DISTINCT
  *  DFCareer object carrying identical values, re-read from the same
@@ -468,9 +493,15 @@ export class ChargenFlow {
   }
 
   /** U20a: the list's LAST row is Custom (CreateCharClassSelect
-   *  :66-67 appends it after the eighteen CLASS*.CFG rows). */
+   *  :66-67 appends it after the eighteen CLASS*.CFG rows). L10N3d: a
+   *  class row reads its own name as its key, through the grammar
+   *  (:60-61), and Custom its key (:65). */
   classRowCount() { return this.careers.length + 1; }
-  classRowName(i) { return this.careers[i]?.name ?? 'Custom'; }
+  classRowName(i) {
+    const name = this.careers[i]?.name;
+    if (name == null) return localizedText('Custom', 'Custom');
+    return processGrammar(Object.hasOwn(CLASS_NAMES, name) ? CLASS_NAMES[name] : name);
+  }
 
   /** S3e / U19: the class choice leads into the biography METHOD
    *  screen when its question file loaded (every accept arm calls
@@ -519,9 +550,15 @@ export class ChargenFlow {
   }
 
   /** DisplayQuestion (:255-289): the question on screen, the scroll
-   *  rewound to frame 0 and the label back at the top offset. */
+   *  rewound to frame 0 and the label back at the top offset.
+   *  L10N3g: each line is one text token of questionLabel, a
+   *  MultiFormatTextLabel, whose AddTextLabel runs the grammar on it
+   *  (MultiFormatTextLabel.cs:230) - so a translation's question reads
+   *  resolved on both skins. The a/b/c rows are found on the lines as
+   *  they stand; no token carries an answer's "a)". */
   _displayClassQuestion() {
-    this.qDisplay = displayQuestion(this.questionLibrary[this.qIndices[this.qAnswered]]);
+    const q = displayQuestion(this.questionLibrary[this.qIndices[this.qAnswered]]);
+    this.qDisplay = { ...q, lines: q.lines.map((line) => processGrammar(line)) };
     this.qLabelY = QSCROLL_TEXT_OFFSET;
     this.qScrollFrame = 0;
   }
@@ -1146,7 +1183,7 @@ export class ChargenFlow {
    *  list to row 0. The FRAME is skipped, never the latch:
    *  `releasePickBar()` is what ends a drag, which is why the two
    *  sibling machines (`ui/spellbookWindow.js`,
-   *  `ui/spellIconPickerWindow.js`) carry the identical arm. */
+   *  `ui/spell/spellIconPickerWindow.js`) carry the identical arm. */
   hover(vx, vy, e = null) {
     const p = this.syncPickBar();
     if (!p) return;
@@ -1719,7 +1756,7 @@ export class ChargenFlow {
         // (CreateCharClassSelect.cs:87-88), so no default button and
         // Return is inert; Y and N carry the keyboard
         // (DaggerfallMessageBox.cs:377).
-        if (hotkeyHit('Yes', action, e)) { audio.playOneShot(SOUND.ButtonClick, 1); this.classConfirm = null; this._acceptStandardClass(); }
+        if (hotkeyHit('Yes', action, e)) { audio.playOneShot(SOUND.ButtonClick, 1); if (this.classCalm) audio.playOneShot(SOUND.SelectClassDrums, 1); this.classConfirm = null; this._acceptStandardClass(); }   // UI-CALM: the drums for the choice
         else if (hotkeyHit('No', action, e)) { audio.playOneShot(SOUND.ButtonClick, 1); this.classConfirm = null; }
         else if (action === 'back') { audio.playOneShot(SOUND.ButtonClick, 1); this.classConfirm = null; }
         return;
@@ -1984,9 +2021,14 @@ export class ChargenFlow {
    *  not land on the same row, because MouseClick has already moved
    *  the selection to it by the time MouseDoubleClick reads it. */
   clickClassRow(idx, now) {
-    const wasDouble = this._lastClassClick != null && (now - this._lastClassClick) < DOUBLE_CLICK_DELAY_MS;
+    // UI-CALM (2026-10-14, a player: "when i randomly click around in the class selection i hear drums all the time"):
+    // under the enhanced wizard (`classCalm`) a double click is two on the SAME row - a quick click on one class and
+    // then another is browsing, not a pick (DFU's time-alone test stands for the classic screen)
+    const wasDouble = this._lastClassClick != null && (now - this._lastClassClick) < DOUBLE_CLICK_DELAY_MS
+      && (!this.classCalm || idx === this._lastClassRow);
     this._selectClassRow(idx);   // MouseClick moves the LIST's selection
     this._lastClassClick = now;
+    this._lastClassRow = idx;
     if (wasDouble) { this._lastClassClick = null; this.useClass(); }
     return true;
   }
@@ -2024,7 +2066,9 @@ export class ChargenFlow {
       this._enterCustomClass();
       return;
     }
-    audio.playOneShot(SOUND.SelectClassDrums, 1);   // CreateCharClassSelect (:93-94) - the pick opens the confirm under drums
+    // CreateCharClassSelect (:93-94) - the pick opens the confirm under drums. UI-CALM: under the enhanced wizard
+    // (`classCalm`) reading a class is quiet, and the drums sound for the choice itself (confirmClass, below)
+    if (!this.classCalm) audio.playOneShot(SOUND.SelectClassDrums, 1);
     this.classConfirm = this.describeClass?.(this.classListIndex) ?? null;
     if (!this.classConfirm) this._acceptStandardClass();   // no description available: the pick stands
   }
@@ -2066,6 +2110,13 @@ export class ChargenFlow {
       // a separate confirm, which classic has no button for.
       // U18: the close lands on the method screen (:305-316).
       this.gender = hit.setGender;
+      // L10N3g: each handler hands the grammar the hero's gender as it
+      // closes (:63 `() => Genders.Male`, :70 `() => Genders.Female`), so
+      // everything the wizard shows after the pick - the class list, the
+      // questions, the biography - reads a translation's {male/female}
+      // words for this hero. The keys and both skins take this one door.
+      const picked = hit.setGender;
+      GrammarManager.grammarProcessor.setHeroGenderGetter(() => picked);
       this._enterClassMethod();
       return true;
     }
@@ -2077,7 +2128,7 @@ export class ChargenFlow {
     if (hit.setStatCursor != null) { this._setStatCursor(hit.setStatCursor); return true; }
     if (hit.setSkillCursor != null) { this.skillCursor = hit.setSkillCursor; this._syncSkillSel(); return true; }
     if (hit.setClass != null) { this._selectClassRow(hit.setClass); return true; }   // DISC24-A: the one door
-    if (hit.confirmClass) { this.classConfirm = null; this._acceptStandardClass(); return true; }
+    if (hit.confirmClass) { if (this.classCalm) audio.playOneShot(SOUND.SelectClassDrums, 1); this.classConfirm = null; this._acceptStandardClass(); return true; }   // UI-CALM: the drums for the choice
     if (hit.cancelClass) { this.classConfirm = null; return true; }
     // U18: the method screen's two buttons - the click sets AND closes,
     // as both DFU handlers end in CloseWindow (:63-72).
@@ -2246,10 +2297,10 @@ export class ChargenFlow {
       RACE_TEMPLATES.forEach((r, i) => line((i === this.raceIndex ? '> ' : '  ') + r.name, i, i === this.raceIndex ? hot : white));
     } else if (this.state === 'face') {
       title('CHOOSE YOUR FACE');
-      line(`${this.race.name} ${this.gender}`, 0, white);
+      line(`${raceDisplayName(this.race.key)} ${this.gender}`, 0, white);
       line(`face ${this.facePick + 1} of ${FACES_PER_RACE}`, 2, hot);
       line('up/down to cycle, ENTER to continue', 4, dim);
-      line('(the portrait draws with the chargen art slice)', 6, dim);
+      line('(the portrait shows once the art loads)', 6, dim);
     } else if (this.state === 'class') {
       title('CHOOSE YOUR CLASS');
       for (let i = 0; i < this.classRowCount(); i++) {
@@ -2278,7 +2329,7 @@ export class ChargenFlow {
         line(`HP/level: ${c.hp}  difficulty: ${this.customDifficulty()}`, 1, white);
         line(`Skills set: ${c.skills.filter((v) => v != null).length}/12`, 2, white);
         line(`Stat pool: ${c.statPool}`, 3, white);
-        line('ENTER exit (gated), ESC cancel', 5, dim);
+        line('ENTER when done, ESC cancel', 5, dim);
       }
     } else if (this.state === 'bioMethod') {
       title('CHOOSE YOUR HISTORY METHOD');

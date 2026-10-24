@@ -1,0 +1,92 @@
+[
+  {
+    "name": "SPELL-COST-PAST-the-shape-gone",
+    "file": "src/systems/spellcost.js",
+    "old": "  if (online && skill > R) return Math.trunc((value * (110 - R) * R) / (skill * divisor));",
+    "new": "  if (false && skill > R) return Math.trunc((value * (110 - R) * R) / (skill * divisor));",
+    "tests": [
+      "test/systems/fb1012c_spellcost.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-COST-PAST-a-hard-cap-at-100",
+    "file": "src/systems/spellcost.js",
+    "old": "  if (online && skill > R) return Math.trunc((value * (110 - R) * R) / (skill * divisor));",
+    "new": "  if (online && skill > R) return Math.trunc((value * (110 - R)) / divisor);",
+    "tests": [
+      "test/systems/fb1012c_spellcost.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-COST-PAST-the-reference-at-110",
+    "file": "src/systems/spellcost.js",
+    "old": "  const R = SPELL_COST_SKILL_REFERENCE;",
+    "new": "  const R = 110;",
+    "tests": [
+      "test/systems/fb1012c_spellcost.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-COST-PAST-the-helper-default-offline",
+    "file": "src/systems/spellcost.js",
+    "old": "export function skillScaledCost(value, skill, divisor, { online = isOnlinePage() } = {}) {",
+    "new": "export function skillScaledCost(value, skill, divisor, { online = false } = {}) {",
+    "tests": [
+      "test/systems/fb1012c_spellcost.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-COST-PAST-the-effect-default-offline",
+    "file": "src/systems/spellcost.js",
+    "old": "export function effectCost(e, casterSkillOf, { online = isOnlinePage() } = {}) {",
+    "new": "export function effectCost(e, casterSkillOf, { online = false } = {}) {",
+    "tests": [
+      "test/systems/fb1012c_spellcost.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-COST-PAST-the-effect-unpassed",
+    "file": "src/systems/spellcost.js",
+    "old": "  return { gold, sp: skillScaledCost(gold, skill, 400, { online }) };   // SPELL-COST-PAST",
+    "new": "  return { gold, sp: skillScaledCost(gold, skill, 400) };   // SPELL-COST-PAST",
+    "tests": [
+      "test/systems/fb1012c_spellcost.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-COST-PAST-the-cast-default-offline",
+    "file": "src/systems/spellcost.js",
+    "old": "export function calculateCastCost(spell, casterEntity, { portMods = true, online = isOnlinePage() } = {}) {",
+    "new": "export function calculateCastCost(spell, casterEntity, { portMods = true, online = false } = {}) {",
+    "tests": [
+      "test/systems/fb1012c_spellcost.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-COST-PAST-the-cast-unpassed",
+    "file": "src/systems/spellcost.js",
+    "old": "    const c = effectCost(e, skillOf, { online });",
+    "new": "    const c = effectCost(e, skillOf);",
+    "tests": [
+      "test/systems/fb1012c_spellcost.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-COST-PAST-the-classic-default-offline",
+    "file": "src/systems/spellcost.js",
+    "old": "export function classicCastingCost(spell, skillOf = null, { online = isOnlinePage() } = {}) {",
+    "new": "export function classicCastingCost(spell, skillOf = null, { online = false } = {}) {",
+    "tests": [
+      "test/systems/fb1012c_spellcost.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-COST-PAST-the-classic-unpassed",
+    "file": "src/systems/spellcost.js",
+    "old": "    cost += skillScaledCost(classicCostFromSettings(CLASSIC_SETTINGS_TYPES[e.type] ?? 0, e, coef), skill, 100, { online });   // SPELL-COST-PAST",
+    "new": "    cost += skillScaledCost(classicCostFromSettings(CLASSIC_SETTINGS_TYPES[e.type] ?? 0, e, coef), skill, 100);   // SPELL-COST-PAST",
+    "tests": [
+      "test/systems/fb1012c_spellcost.test.js"
+    ]
+  }
+]

@@ -37,7 +37,7 @@ and `InventoryTextureRecord`, `NativeMaterialValue`, `GroupIndex`,
 `GetEquipSound`, `GetSwingSound`, `GetWeaponType`, `GetItemHands`,
 `GetWeaponSkillUsed`, `GetBaseDamageMin/Max`, and a `CurrentVariant`
 setter that fixes the name at the mint. The port's items are plain rows
-and its laws are pure functions, so `src/systems/rriItems.js` holds
+and its laws are pure functions, so `src/systems/roleplayRealismItems/rriItems.js` holds
 each class as a TABLE of those virtuals (`RRI_CLASSES`, fourteen rows,
 each named for the `.cs` it restates), and each of the port's law sites
 asks `customItemClass(templateIndex)` first - DFU's dispatch, one line
@@ -45,7 +45,7 @@ at a time, the law staying where it lives:
 
 | DFU virtual | the port's site |
 |---|---|
-| `InventoryTextureArchive` / `Record` | `systems/itemTemplates.js inventoryItemImage`, `ui/paperDoll.js paperdollItemImage` (with GetItemImage's right-hand +1, :412-414) |
+| `InventoryTextureArchive` / `Record` | `systems/item/itemTemplates.js inventoryItemImage`, `ui/paperDoll.js paperdollItemImage` (with GetItemImage's right-hand +1, :412-414) |
 | `GetEquipSlot` | `characters/equipTable.js getEquipSlot`; `systems/equip.js armorSlotRule` (the body part the value lands on) |
 | `GetItemHands` | `characters/equipTable.js getItemHands` |
 | `GetMaterialArmorValue` | `systems/armorMaterials.js itemArmorValue` (a leaf: the installer registers the answer) |
@@ -53,12 +53,12 @@ at a time, the law staying where it lives:
 | `GetEquipSound`, `GetWeaponSkillUsed`, `GetBaseDamageMin/Max` | `characters/weapons.js` |
 | `GetSwingSound` | `systems/soundClips.js` (a leaf: registered) |
 | `GetWeaponType` | `combat/fpsWeapon.js weaponTypeForItem` |
-| `CurrentVariant` setter | `systems/itemTemplates.js setItemFields`, once per item (marked `rriVariant`) |
+| `CurrentVariant` setter | `systems/item/itemTemplates.js setItemFields`, once per item (marked `rriVariant`) |
 
 Names cross to the sites, not constants ('ChestArmor', 'Either',
 'Axe', 'EquipAxe', 'Battleaxe'), and each site maps them onto its own
 enum, so the law module imports none of the systems it feeds - no
-cycle, no TDZ (DW3's lesson). `systems/rriInstall.js` is the boot: the
+cycle, no TDZ (DW3's lesson). `systems/roleplayRealismItems/rriInstall.js` is the boot: the
 rows, the patches, the two leaf registrations, the art.
 
 ### The fourteen
@@ -133,7 +133,7 @@ port's `loot.js` makers take the same roll.
 280 textures, extracted by `tools/rriExtract.mjs` into
 `public/art/roleplay-realism-items/` by the name DFU asks for (99 as
 indexed PNG, the rest RGBA, each read back against its texel) with the
-`<rect>` beside 232 of them written into `systems/rriIndex.js`. They
+`<rect>` beside 232 of them written into `systems/roleplayRealismItems/rriIndex.js`. They
 are registered on the texture-replacement door as **stand-in** entries
 (archives 513-526 have no TEXTURE file; SURV-TENT's kind), **lazy**
 (AUDIT-DW F1: fetched when an item wearing one is drawn), **gated** on
@@ -162,7 +162,7 @@ the switches once at Awake; the port reads each at its site every
 time, so a pane toggle takes effect at the next roll - the Features
 row says so. Three modules and their seams:
 
-- `systems/rriRealism.js` - the laws that touch no entity: the loot
+- `systems/roleplayRealismItems/rriRealism.js` - the laws that touch no entity: the loot
   matrix and the mob keys, the bandage's arithmetic, the condition
   price and repair factors, the store-quality table, the potion count,
   the two damage tables, the swing time. A leaf (`rriItems`,
@@ -170,7 +170,7 @@ row says so. Three modules and their seams:
   import it.
 - `combat/rriEnemyEquipment.js` - the mod's
   `AssignEnemyStartingEquipment` and `ConvertOrcish`.
-- `systems/rriKits.js` - what mints and equips: the starting kit by
+- `systems/roleplayRealismItems/rriKits.js` - what mints and equips: the starting kit by
   skill, the spellbook by skill (the nine spells), the three shelf
   hooks, the bandage's use handler, the swing-time adapter.
 
@@ -189,7 +189,7 @@ for the C# member.
 | `RandomConditionEnemyItems` / `RandomConditionLootItems` | EnemyEntity.OnLootSpawned (:399), LootTables.OnLootSpawned (:163) | `hostCombat.spawnEnemyLoot` after the trio (the worn set walked too - DFU's Items holds it, the port's droppable cut does not); `loot.addPileLootExtras` after the J..O tail - since FORAGE3 (2026-09-28) through the event's one home (`raiseTabledLootSpawned`, RRI's the first subscriber) and for EVERY key GenerateLoot finds, as :163 does: a Coven's (Q), a Laboratory's (U) and the other keys outside J..O wear their piles' armour, weapons and books too, which they had not (main's OH-E found the same at 2026-09-26 and built the event a second time; THE MERGE made the two one list - `loot.tableLootSpawned` is OH-E's add-and-remove door onto it, beside `enemyEntity.enemyLootSpawned`, and There's a Hole in the Bottom of the Ocean's AddBonusMagicLoot and UpgradeLoot subscribe after RRI's) |
 | `CalculateCost` override (:247-260) | FormulaHelper.cs:1884 - `conditionPercentage`, the third parameter DFU's arm never reads | `shopStock.calculateCost`'s fourth argument; `tradeModes` Sell passes `conditionPercentage(item)` as DaggerfallTradeWindow.cs:462 does |
 | `CalculateItemRepairCost` override (:262-278) | FormulaHelper.cs:1901 | `repairService.calculateItemRepairCost`, 0.6 / 0.9 under InstantRepairs |
-| `EnemyEntity.AssignEnemyEquipment = ...` (:113) | EnemyEntity.cs:133, the delegate | `enemyEquipment.setEnemyEquipmentAssigner`; `assignEnemyStartingEquipment` dispatches; the roll and the armor-value pass are two exports now (`rollEnemyEquipment`, `enemyArmorValues`), the pass reading a custom piece's own `GetMaterialArmorValue` and its class's slot |
+| `EnemyEntity.AssignEnemyEquipment = ...` (:114) | EnemyEntity.cs:133, the delegate | `enemyEquipment.setEnemyEquipmentAssigner`; `assignEnemyStartingEquipment` dispatches; the roll and the armor-value pass are two exports now (`rollEnemyEquipment`, `enemyArmorValues`), the pass reading a custom piece's own `GetMaterialArmorValue` and its class's slot |
 | `AssignStartingEquipment = AssignSkillEquipment` (:118) | StartGameBehaviour.cs:84/:115 | `startingGear.setStartingEquipmentAssigner`; `assignStartingEquipment` dispatches at both chargen seeds |
 | `AssignStartingSpells = AssignSkillSpellbook` (:122) | StartGameBehaviour.cs:87/:116 | `chargen.setStartingSpellsAssigner`; `assignStartingSpells(careerIndex, spellsByIndex, career)` |
 | `CalculateWeaponMin/MaxDamage` overrides (:130-131) | FormulaHelper's TryGetOverride | `weapons.registerWeaponDamageOverride`, an arm after the custom class and before the verbatim table; `enemyEquipment.createWeapon` mints through the same two functions now |
@@ -209,7 +209,26 @@ Read against the C#:
   runs ItemHelper's arm and then ConvertOrcish (:683-705): the Orcs
   team, 80%, Ebony and up (a Warlord's Mithril and up), the material
   re-applied over the template's weight, value and condition - which
-  the port's mint derives from the material alone.
+  the port's mint derives from the material alone. DEX6 (2026-10-20):
+  Daggerfall Enemy Expansion takes the delegate over with its own copy
+  of this arm, and the port runs this arm with the copy's reads - the
+  `read` argument (RRI_READ is RRI's own: the class the id, the armor
+  the class's preference, nothing for a class the switch does not
+  name); the answer's `poisonClass` is the class the poison roll asks
+  (`04-Characters/Enemy-Expansion.md` section 12).
+- **AUDIT DEX E2/E3 (2026-10-20), this arm's own, found through the copy.**
+  The kit filled the hands in order and took nothing off, so a Barbarian,
+  a Knight, a Monk or the City Watch with a two-hander and a shield swung
+  both: every piece is laid on a stand-in equip table through EquipItem's
+  rules (ItemEquipTable.cs:94-154 - GetEquipSlot's slot, then what
+  `systems/equip.js` wearLeavers takes off), and `worn` and the hands are
+  that table's; what comes off stays in `items`. A foe left with no
+  right-hand weapon fights bare-handed and rolls no poison (DFU's
+  `mainWeapon != null`). And ItemHelper's arm rolls a monster's poison
+  inside itself (ItemHelper.cs:1460-1474), before ConvertOrcish
+  (:528-529); the port had drawn ConvertOrcish's Dice100 first - the
+  monster branch now rolls it before, and answers `poisonRolled` so the
+  spawn does not roll again.
 - **The starting kit** (:759-810) sets AssignStartingGear aside whole:
   no class weapon, no 100 gold; `Range(5, Luck)` gold, the iron dagger,
   the ebony dagger a biography answer gave at 20%, six torches and
@@ -289,7 +308,7 @@ comments carry them (`AUDIT-RR Fn`).
   + `(Armor)` (:691-692): the loot table's rolls are in Items already;
   the port converted the equip table alone.
 
-Suite `test/auditrr.test.js` (the Items test executes the class
+Suite `test/systems/auditrr.test.js` (the Items test executes the class
 virtuals, the group registry under each switch and the stored weight;
 the shelf's second loop and the mints are pinned by source).
 
@@ -337,7 +356,7 @@ hook. The paid findings, numbered as the code comments carry them:
   (RoleplayRealismItemsMod.cs:788-789 draws twice; the port once - the
   same distribution, a seeded stream differs).
 
-Suite `test/auditrr2.test.js` (shared with the RR page): G7-G10 by
+Suite `test/systems/auditrr2.test.js` (shared with the RR page): G7-G10 by
 execution, G11/G12 by source.
 
 ## DISC21-A (2026-09-24) - the questions' dagger, worn to 20% of nothing
@@ -349,7 +368,7 @@ damaged". `AssignSkillEquipment`'s first act wears the dagger a biography answer
 of nothing is 0: broken to the equip check, undamaged to the repairer. The biography mints through `createWeapon` and
 `mintCondition` now, the kit mints the dagger before it wears it (`isQuestionsDagger`, `QUESTIONS_DAGGER_WEAR`, one
 home in `systems/conditionRepair.js`), and a load mints a never-minted wearable by the law it missed - the kit's 20%
-for this dagger at 0. `test/disc21.test.js` (A). `01-Overview/Field-Bugs-2026-09-23.md`, DISC21-A.
+for this dagger at 0. `test/systems/disc21.test.js` (A). `01-Overview/bugs/Field-Bugs-2026-09-23.md`, DISC21-A.
 
 ## DISC29-B (2026-09-28) - the word a rarity name dropped, and the two mods that read the raw make
 
@@ -357,9 +376,9 @@ Julian on Discord: a coloured-tier "iron" helmet his class was refused as leathe
 a light-set piece of a plate material is BRIGANDINE, and `NativeMaterialValue` takes 0x0200 off "so DFU treats this
 item as leather for forbidden checks" - but the list gave him no way to know: the class's CurrentVariant setter
 names the mint "Brigandine Helmet", and the Loot Rarity ladder built its "Sentinel's Helmet of the Bear" again from
-the bare TEMPLATE's name (`systems/lootRarity.js rarityName`), so the long name read "Iron Sentinel's Helmet".
+the bare TEMPLATE's name (`systems/loot/lootRarity.js rarityName`), so the long name read "Iron Sentinel's Helmet".
 
-- **One rule for the word** (`systems/rriItems.js`): each armour class carries `variantWord` - the light set's
+- **One rule for the word** (`systems/roleplayRealismItems/rriItems.js`): each armour class carries `variantWord` - the light set's
   `lightWord` (a plate material is Brigandine; Chain is Fur, read before the fold or after it as Leather with
   `message` 1) and the chain set's `mailWord` (plate is Mail). The setters build their names from it, and
   `rriVariantWord(item)` answers it to anyone else ('' for a classic item, the weapons, leather, the mod off).
@@ -369,20 +388,20 @@ the bare TEMPLATE's name (`systems/lootRarity.js rarityName`), so the long name 
 - **A save's names are given it back** (`repairRarityNames`, run on load over the pack, the wagon and the repair
   shelf, beside DISC21-A's repair - and, since AUDIT PRE-MERGE 0929 D3, over every list of the character's own things
   the save carries: a cached scene's chests, piles and storage pieces, the world's piles and dead foes' packs, Come Sail
-  Away's boats and cargoes, `net/realmGoldLaw.js stashedItemLists`): only a Magic or Rare name that IS the old bare
+  Away's boats and cargoes, `net/realm/realmGoldLaw.js stashedItemLists`): only a Magic or Rare name that IS the old bare
   build moves - idempotent, and a name that is anything else is left.
 - **The same class value, read by two other mods**: Immersive Footsteps (`boots.NativeMaterialValue`,
   ImmersiveFootstepsMain.cs:502-532) and Better Ambience's HasArmor (`chest.NativeMaterialValue`,
   BetterFootstepsComponent.cs:256-259) read the PROPERTY this mod overrides; the port read the raw `material`, so
   brigandine boots walked in plate and a mail hauberk clanked as plate. Both read `rriNativeMaterialValue` now.
 
-`test/disc29_rarity.test.js` (6), `test/if1_immersivefootsteps.test.js` (the boots' ladder);
-`tools/mutants/disc29.json` (DISC29-B, 11). `01-Overview/Field-Bugs-2026-09-28f.md`, DISC29-B.
+`test/systems/disc29_rarity.test.js` (6), `test/systems/if1_immersivefootsteps.test.js` (the boots' ladder);
+`tools/mutants/disc29.json` (DISC29-B, 11). `01-Overview/bugs/Field-Bugs-2026-09-28f.md`, DISC29-B.
 
 ## Record
 
-`vendor/roleplay-realism-items/`. Suites `test/rri1_items.test.js` (9),
-`test/rri2_realism.test.js` (11), `test/auditrr.test.js` (15) and `test/auditrr2.test.js` (17, both shared with the RR page). Campaigns `tools/mutants/rri1.json`
+`vendor/roleplay-realism-items/`. Suites `test/systems/rri1_items.test.js` (9),
+`test/systems/rri2_realism.test.js` (11), `test/systems/auditrr.test.js` (15) and `test/systems/auditrr2.test.js` (17, both shared with the RR page). Campaigns `tools/mutants/rri1.json`
 (11), `tools/mutants/rri2.json` (18). The shipped set:
-`public/art/roleplay-realism-items/` (280 PNGs), `src/systems/rriIndex.js`
+`public/art/roleplay-realism-items/` (280 PNGs), `src/systems/roleplayRealismItems/rriIndex.js`
 (generated), `tools/rriExtract.mjs`.

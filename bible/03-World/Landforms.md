@@ -75,7 +75,7 @@ the gathering nodes' door (`natureStandsAt`, the herb and mine hosts) ask it:
 ## ONE FUNCTION OF WORLD POSITION, INSIDE THE KERNEL
 
 The shaper rides `sampleKernel`'s new `landform` argument
-(`world/terrainSampler.js`), so every reader of the kernel takes the same
+(`world/terrain/terrainSampler.js`), so every reader of the kernel takes the same
 ground: the pixel's own samples, the ghost rows its edge normals read (EV4), a
 promotion's restride (PERF-EXT26, on the worker or this thread), the gate's
 beacon (GATE-SEEN, `gateGroundAt`). Nothing the shaper reads is a pixel's own:
@@ -248,14 +248,14 @@ carries no river switch of its own, so the painter's switch is the cut's.
 
 ONLINE TOO (2026-10-06, Mac, asked whether the channels should reach a room:
 *"Yes rivers should be online"*). This slice first kept them out: the river
-switch was each player's own online (`systems/onlineLane.js`: "a river paints
+switch was each player's own online (`systems/online/onlineLane.js`: "a river paints
 tiles and never moves a height"), and a channel one player cut and another did
 not would stand two players on two floors. A river cut into the land IS ground,
 so the switch is the room's now - in `ONLINE_ROOM_MOD_KEYS` beside Enabled and
 SmoothRoads, the roads' own reason - and the room's rivers are ON, past the
 mod's shipped off: a room that held the mod's default would have no rivers at
 all. It is the one key the room forces past its default, named so in
-`test/modsonline.test.js`. The old sentence was true of Basic Roads' smoother
+`test/systems/modsonline.test.js`. The old sentence was true of Basic Roads' smoother
 and still is (its pin still measures it); it is the landforms' kernel that
 moves the height. Offline the switch stays the player's, off as the mod ships
 it, and the online sync (UXB1-E) copies the room's on home with the rest.
@@ -333,7 +333,7 @@ pulls the land beside it down no further than LANDFORM_FLOOR, as a cut is held. 
 the sites about a pixel are gathered in one global order (pixel row, then
 column), so a seam is one number from both pixels.
 
-Measured on that synthetic upland (`test/landform45.test.js`): round the 4x4
+Measured on that synthetic upland (`test/world/terrain/landform45.test.js`): round the 4x4
 town 24.1 degrees on land of 24.3, round the 6x6 22.9 on 23.5, round a 2x2
 hamlet 23.6 on 23.6 (walled: 39.4, 53.4, 28.5). ON THE REAL DATA (AUDIT
 LANDFORMS III, the freeware ARENA2 in scratch): of 60 towns of 3x3 blocks or
@@ -385,7 +385,7 @@ and the land's own macro height:
   real map 215 of 2,882 inland water pixels stood over every dry neighbour by
   more than 10 m, the worst 77 m (the foothills' wrong centre, A2, much of it).
   Now on the synthetic world no dry sample lies further under its river than on
-  DFU's own land (`test/auditlandforms3.test.js`), and on the real map the river
+  DFU's own land (`test/world/terrain/auditlandforms3.test.js`), and on the real map the river
   centres over their lowest dry neighbour by more than 10 m are 266 (1,612 with
   the stilling and the stale centres) - under DFU's own land's 957 (the hills off). Only where rivers
   are cut (the network's `water`); with them off the hills stand there too.
@@ -437,7 +437,7 @@ valley floor a shape overreaches rounds off instead of being cut flat):
 |---|---|---|---|---|
 | woodlands | Woodlands (231) | rolling: LANDFORM5's octaves | 4-48 x 1.6 | 88 m across; p99 5 deg |
 | mountain woods | MountainWoods (230) | foothills: half rolling, half ridgelines | 8-56 x 1.6 | 191 m; p99 16 deg |
-| mountain | Mountain (226) | ridgelines | 16-80 x 1.6 | 260 m; p99 24, at most 37 deg |
+| mountain | Mountain (226) | ridgelines, and sharp peaks (MOUNTAINS-SHARP, below) | 16-112 x 1.6, peaks 320 | 260 m; p99 24, at most 37 deg (LANDFORM6's ridges alone, 16-80) |
 | desert | Desert (224), the Alik'r | dune seas, mesas where the rock field rises past 0.3 | 6-26 x 1.3 | 52 m; p99 23 deg |
 | desert2 | Desert2 (225), Dak'fron | the same, mesas from -0.1: far more rock | 6-30 x 1.3 | 58 m; p99 17 deg |
 | rainforest | Rainforest (227) | karst towers over plains | 8-50 x 1.4 | 86 m; at most 44 deg |
@@ -560,6 +560,61 @@ lens's town figures are the steepest sample over nine pixels. Hills shrunk by
 the land's slope would have taken the detail off the steep ground for a third of
 a point of grades over 45 degrees, and were not made; where the hills did bite
 was the roads.
+
+## MOUNTAINS-SHARP - THE RANGES STAND SHARP AND TALL
+
+(2026-10-14, the owner: "Mountains shape (Dragontail/Wrothgarian). More pointy, less rounded (sharp), more height".) The Dragontail and the
+Wrothgarian Mountains are CLIMATE.PAK's Mountain (226), so the mountain land is
+what they wear (`LANDFORM_DIALS.lands.mountain`); the mountain woods, their
+foothills, keep LANDFORM8's round bells. Three dials moved, one law added:
+
+- **Sharp peaks.** `peaks.sharp`: each peak is `(1 - q)^2` from its summit to
+  its foot (`peakField`'s `sharp`) where LANDFORM8's is a bell,
+  `(1 + cos(pi q)) / 2` - a point on top, flanks that steepen toward it, easing
+  out at the foot - at the same place, girth, height and lean, so a sharp peak
+  stands wherever its bell did, never over it. Centred by its own mean
+  (`PEAK_MEAN_SHARP`: `(1 - q)^2` averages 1/6 over its ellipse, the bell
+  1/2 - 2/pi^2), so the land's mean height, and a town's level on it, stay
+  their own.
+- **Twice as tall.** `peaks.high` 160 -> 320 units: a peak 400 m at the most
+  where it stood 200 (LANDFORM8's "not super huge" - the owner's newer word
+  takes it). Its steepest flank, at the summit of the tallest and narrowest,
+  `2 x high` over a 553 m radius: some 55 degrees, under the motor's 70
+  (`player/motor.js` SLOPE_LIMIT_DEG - past it a walker slides).
+- **Ridges 1.4 times as tall.** `high` 80 -> 112 units.
+
+The tallest hill (`HILLS_TOP`) is now the mountains' 499.2 units (624 m) and
+`LANDFORM_CEILING` 2915.25 (about 3,644 m; THE CEILING above told 2544 and
+3,180 m before LANDFORM8, 2704 and 3,380 m after it).
+
+Measured on all-mountain country (20 km square, a value every 51 m, the land
+1 km and more over the knee): its relief from 419 m across to 670, its tallest
+hill from 265 m over the land to 456, the 99th percentile 51 m grade from 29
+degrees to 39 and the steepest from 49 to 60; its mean unmoved (0.3 m to 0.2).
+The mountain woods' numbers are unchanged to the metre.
+
+**What it costs: the low fringe.** LANDFORM5's ease - a land's hills come in
+over its height above the knee, whole only once it stands `coast` (1.25)
+times its tallest hill, so a hill is never taller than the land under it -
+measures by the land's tallest, now 624 m where it was 360. So the ranges'
+hills ease in over a longer rise: over all-mountain country the new ground
+stands taller from some 500 m over the knee up (563 m: the tallest 329 m
+against 236; 688 m: 419 against 253), and lower than it was under that (313 m:
+118 against 151; 188 m: 44 against 67). The law is every land's and pinned
+(test/world/terrain/landform6.test.js, a hill under 0.91 of its land's height over the
+knee), so it stands; mountain land stands high on the real map, and how much of
+it lies under 500 m was not measured here (no ARENA2 in this container).
+
+Not moved: the far ring and the travel view take no hills (RESIDUES), so a
+taller range there is a wider hand-over, as it was; the overworld map's relief
+is the bytes'. Every client stands the same ground from the same dials - no
+server copy. A tab built before this stands the old ground until it reloads
+(TWO BUILDS IN ONE ROOM, RESIDUES). Saves are in DFU's frame and re-stand.
+Pinned: `test/world/terrain/landform6.test.js` (the dials, the sharp law on a peak's own
+axis, its point, its footprint the bell's, its mean, its steepest flank),
+`test/systems/landform.test.js` (the ceiling), `test/world/terrain/auditlandforms.test.js` (the
+dials written out); mutants `tools/mutants/mountainsharp.json`, and LANDFORM8's
+and LANDFORM6's re-aimed (`wodpeaks.json`, `landform6.json`).
 
 ## LANDFORM7 - A ROAD EASES THE HILLS
 
@@ -805,27 +860,33 @@ Roads network, in scratch, with the slice's own functions:
   ring's vertex with the row off and 212 m with it on (AUDIT LANDFORMS): the
   lift scales that gap and opens none. The extremes widen with the relief
   (726 -> 1,174 m), which is the ring's own law at taller heights.
-- TWO BUILDS IN ONE ROOM (AUDIT LANDFORMS C2). Nothing keeps builds apart
-  online: `worldRoom` carries no ground tag, the relay reads no client build,
-  a deploy reloads no open tab (updateNotice.js), and the macOS and portable
-  desktop copies never update themselves. A player on a build without the row
-  and one with it share a room on two grounds - each draws the other at the
-  sender's height (interiors ride the exterior frame), so in a town they part
-  by the town's lift: at the location pixels median 0 m, 75th percentile
-  10.9 m, 90th 184 m, 99th 492 m (97 of 410 cities over 10 m, Makilliweyn about
-  390 m) - until the old tab reloads or the old copy updates. No earlier ground
-  slice kept builds apart either (TERRAIN-SCALE1, WOD1, WD3, DW-A..D bumped
-  nothing; a RELAY_VERSION bump restarts the relay and the old tabs reconnect
-  into the same rooms). Real separation is a relay change - a ground law in
-  the world hello, GATE_BRAIN_MIN's shape, or a tag in `worldRoom` - and
-  Mac's call. The room's memory (WORLD1) holds dungeon and building places
-  only, no exterior height.
+- TWO BUILDS IN ONE ROOM (AUDIT LANDFORMS C2; GROUND-GATE, 2026-10-17,
+  `01-Overview/bugs/Field-Bugs-2026-10-17f.md` - Mac's call: "Relay turns old
+  builds away"). Each client draws a peer at the sender's height on its own
+  ground (interiors ride the exterior frame), so two grounds in one room part
+  by the difference: in a town by the town's lift, at the location pixels
+  median 0 m, 75th percentile 10.9 m, 90th 184 m, 99th 492 m (97 of 410
+  cities over 10 m, Makilliweyn about 390 m) - and at the Oblivion Gate in the
+  Alik'r the field saw the whole crowd tens of metres over the sand. A deploy
+  reloads no open tab (updateNotice.js), and the macOS and portable desktop
+  copies never update themselves. A ground room's hello (net/wire.js
+  groundRoom: a cell, a building's or a dungeon's place, a battle, an owned
+  room) now says the ground its build stands on (`gl`, GROUND_LAW), and while
+  the relay setting `groundGate` is on (`/relay groundGate on`), the relay
+  refuses one that says less or none, telling the player to update. The
+  ground is held to a print recorded under that law
+  (`test/net/fb1017f_groundgate.test.js`, `tools/groundPrint.mjs`), so a
+  slice that moves the ground moves GROUND_LAW and RELAY_VERSION with it. The
+  print reads the kernel's shaped ground over the synthetic world; a ground
+  that moves only on the real data (a World of Daggerfall site, a location's
+  blend) is outside it, and its slice names the bump itself. The room's
+  memory (WORLD1) holds dungeon and building places only, no exterior height.
 - A RECORD BY A PATH, ACROSS A CHANGE OF THE ROW (THE SAVES, above): the mod's
   SmoothRoads smooths DFU's own road and not the landforms' level bed, so a
   record on a road from before the row lands within 1.6 m over or 2.0 m under
   it; World of Daggerfall's flatten is not followed either.
 - OW-MOUNTAINS judges a travel route's open step on raw bytes
-  (`systems/travelRoute.js` openStepBlocked: 16 bytes, 160 m between pixel
+  (`systems/travel/travelRoute.js` openStepBlocked: 16 bytes, 160 m between pixel
   centres, DFU's slopes); with the row on, 251 of the 839,697 steps it admits
   outside the Mountain climate rise more than 160 m on the lifted ground (the
   worst 390 m, (803, 212) -> (804, 212), about 25 degrees). It said "No
@@ -836,7 +897,7 @@ Roads network, in scratch, with the slice's own functions:
   row on is Mac's call (AUDIT LANDFORMS A2). Moot since 2026-10-08: the owner retired
   OW-MOUNTAINS in the Wrothgarian zone's merge (MOUNTAINS WALKABLE - openStepBlocked
   refuses no step, `11-Multiplayer/Wild-Zone.md` section 19).
-- Come Sail Away's `Terrain.SampleHeight` (world/terrainSurface.js
+- Come Sail Away's `Terrain.SampleHeight` (world/terrain/terrainSurface.js
   `unityHeightmapStep`) still caps the ground at DFU's 1,923.75 m, the one
   reader that keeps a ceiling at 1; 0.85% of land samples stand over it, where
   no boat goes (AUDIT LANDFORMS N1).
@@ -881,7 +942,7 @@ Roads network, in scratch, with the slice's own functions:
 ## AUDIT LANDFORMS (2026-10-07)
 
 Mac: *"Dont worry about it. Instead let's do just an audit and ensure this is
-perfect"* - the record is `01-Overview/Audit-Landforms.md`. It changed these
+perfect"* - the record is `01-Overview/audits/Audit-Landforms.md`. It changed these
 laws of this page, each above where it lives:
 
 - a road's low bank falls to the land (E1) and a channel is the water's (E2) -
@@ -899,7 +960,7 @@ laws of this page, each above where it lives:
 ## AUDIT LANDFORMS II (2026-10-07)
 
 Mac: *"Do another deep audit on this"* - the record is
-`01-Overview/Audit-Landforms.md`, AUDIT LANDFORMS II. It changed these laws of
+`01-Overview/audits/Audit-Landforms.md`, AUDIT LANDFORMS II. It changed these laws of
 this page, each above where it lives:
 
 - a track over water is a ford (J1), and a bank is never a launch ramp (I2) -
@@ -921,7 +982,7 @@ this page, each above where it lives:
 
 ## Pins
 
-`test/landform.test.js` - the knee (every sample of eleven coastal pixels, the
+`test/systems/landform.test.js` - the knee (every sample of eleven coastal pixels, the
 classifier's tiles equal, no step where a road or a river meets the beach, the
 shaper at its worst; the floor half a unit over it, AUDIT LANDFORMS II J4), the
 lift and the ring (the top byte 1.9 x its own term),
@@ -931,8 +992,8 @@ levee, the causeway, rivers off and the room's switch online, the build's edge
 normals, a point's lift against the real pipeline in a town, a record's height
 DFU's frame both ways and no stamp anywhere, the switch, the host's wiring, the
 worker byte for byte, and THE CEILING (a glitch byte in a lowland, a road graded
-across it). `test/auditlandforms.test.js` - the audit's own (its record:
-`01-Overview/Audit-Landforms.md`), THE LAW WRITTEN OUT among them: a second
+across it). `test/world/terrain/auditlandforms.test.js` - the audit's own (its record:
+`01-Overview/audits/Audit-Landforms.md`), THE LAW WRITTEN OUT among them: a second
 statement of the shaper, equal to it at every sample of the fixture's bend,
 junction, ends, crossing and shore; and AUDIT LANDFORMS II's - the ford and the
 stream's crossings and join (the fixture's new track, stream and road), the

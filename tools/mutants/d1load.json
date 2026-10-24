@@ -5,7 +5,7 @@
   "old": "waitS: 'SUM(double5 * _sample_interval) / 1000',",
   "new": "waitS: 'SUM(double5) / 1000',",
   "tests": [
-   "test/d1load.test.js"
+   "test/server/d1load.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "waitS: 'SUM(double5 * _sample_interval) / 1000',",
   "new": "waitS: 'SUM(double1 * _sample_interval) / 1000',",
   "tests": [
-   "test/d1load.test.js"
+   "test/server/d1load.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "ORDER BY d1_wait_s DESC LIMIT 40",
   "new": "ORDER BY requests DESC LIMIT 40",
   "tests": [
-   "test/d1load.test.js"
+   "test/server/d1load.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "if (!Number.isSafeInteger(h) || h < 1 || h > HOURS_MAX)",
   "new": "if (!Number.isSafeInteger(h) || h > HOURS_MAX)",
   "tests": [
-   "test/d1load.test.js"
+   "test/server/d1load.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "if (!rows.length) return `${head}No points in the window.\\n`;",
   "new": "",
   "tests": [
-   "test/d1load.test.js"
+   "test/server/d1load.test.js"
   ]
  },
  {
@@ -50,10 +50,9 @@
   "old": "if [ \"${code:-000}\" = \"200\" ] && node tools/d1Load.mjs",
   "new": "if node tools/d1Load.mjs",
   "tests": [
-   "test/d1load.test.js"
+   "test/server/d1load.test.js"
   ],
-  "equivalent": true,
-  "why": "Belt and braces: an SQL API refusal carries no data array, and loadTable throws on any answer without rows (pinned in the first test), so the step still never draws a refusal; the status check keeps a non-200 body that happens to carry rows out too."
+  "note": "AUDIT PLAN-1000 A7: not equivalent - an HTTP 500 whose body carries rows was drawn; its fixture now kills it."
  },
  {
   "name": "D1LOAD-input-spliced",
@@ -61,16 +60,16 @@
   "old": "node tools/d1Load.mjs --sql \"$q\" \"$HOURS\"",
   "new": "node tools/d1Load.mjs --sql \"$q\" \"${{ inputs.hours }}\"",
   "tests": [
-   "test/d1load.test.js"
+   "test/server/d1load.test.js"
   ]
  },
  {
   "name": "D1LOAD-seats-default-kept",
   "file": "server-account/src/townSeats.js",
-  "old": "await (fresh ? allSeatRows(db) : seatRowsOf(db, nowS))",
-  "new": "await (fresh || true ? allSeatRows(db) : seatRowsOf(db, nowS))",
+  "old": "fresh ? seatFacts(await judgedSeatRows(db, nowS), nowS) : await keptSeatFacts(db, nowS)",
+  "new": "fresh || true ? seatFacts(await judgedSeatRows(db, nowS), nowS) : await keptSeatFacts(db, nowS)",
   "tests": [
-   "test/d1load.test.js"
+   "test/server/d1load.test.js"
   ]
  },
  {
@@ -79,7 +78,7 @@
   "old": "const registry = await confirmedSeats(db, nowS, { fresh: true });",
   "new": "const registry = await confirmedSeats(db, nowS);",
   "tests": [
-   "test/d1load.test.js"
+   "test/server/d1load.test.js"
   ]
  },
  {
@@ -88,7 +87,7 @@
   "old": "if (held && Number(held.until) > nowS) return { settled: 0, pending: true };",
   "new": "",
   "tests": [
-   "test/d1load.test.js"
+   "test/server/d1load.test.js"
   ]
  },
  {
@@ -97,7 +96,7 @@
   "old": "seatWeekOf(at) !== seatWeekOf(nowMs() - turnSpreadMs)",
   "new": "seatWeekOf(at) !== seatWeekOf(nowMs())",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  },
  {
@@ -106,7 +105,7 @@
   "old": "export const SEAT_TURN_READ_SPREAD_MS = 120_000;",
   "new": "export const SEAT_TURN_READ_SPREAD_MS = 600_000;",
   "tests": [
-   "test/seat_standing_festival.test.js"
+   "test/scenes/seat_standing_festival.test.js"
   ]
  }
 ]

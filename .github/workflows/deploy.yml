@@ -55,6 +55,16 @@ jobs:
       ref: ${{ needs.main.outputs.sha }}
       build: false
 
+  # CI-TIMES (2026-10-19): the shards' times this green run recorded, saved
+  # for every later run's split (test-times.yml) - beside the publish, which
+  # never waits on it
+  times:
+    needs: [main, verify]
+    uses: ./.github/workflows/test-times.yml
+    with:
+      ref: ${{ needs.main.outputs.sha }}
+      planned: ${{ needs.verify.outputs.times }}
+
   site:
     needs: main
     runs-on: ubuntu-latest
@@ -148,6 +158,18 @@ jobs:
           mkdir -p site/preview/gun-lab
           cp -a production/dist-gun/. site/preview/gun-lab/
 
+      # THE PISTOL LAB, the same shape (bible/05-Combat/Pistol-Lab.md):
+      # its own config (vite.config.pistol.js), built from the production
+      # checkout, mounted at /preview/pistol-lab/.
+      - name: Build pistol lab
+        run: npx vite build --config vite.config.pistol.js
+        working-directory: production
+
+      - name: Mount the pistol lab under production site
+        run: |
+          mkdir -p site/preview/pistol-lab
+          cp -a production/dist-pistol/. site/preview/pistol-lab/
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
@@ -167,13 +189,20 @@ jobs:
       # it answers 200 and records nothing - a named account whose row
       # says "never asked" for a player who ticked both boxes. This job
       # and account-deploy.yml start on the same push with nothing
-      # ordering them, and that job itself waits up to twenty minutes on
-      # the relay (AUDIT B1) - or deploys nothing. So the site is
-      # published only once the service's /v1/health serves the version
-      # this tree names (or a later one), and not at all if it never
-      # does: the old site keeps asking the old service, which it knows.
-      # A push that changed no account behaviour finds it served
-      # already: one request.
+      # ordering them, and that job itself waits on the relay - or
+      # deploys nothing. So the site is published only once the
+      # service's /v1/health serves the version this tree names (or a
+      # later one), and not at all if it never does: the old site keeps
+      # asking the old service, which it knows. A push that changed no
+      # account behaviour finds it served already: one request.
+      # DEPLOY-WAIT (2026-10-17, #983's site gave up at 15:30 and its
+      # service came at 15:36): AS LONG AS THE SERVICE MAY TAKE. The
+      # account deploy waits up to five and a half hours on the relay
+      # (1000 asks, SEAT2a's siege blackout) - and a relay bump's
+      # 500-seed sweep alone ran 47 minutes - so thirty minutes gave up
+      # on a chain still moving. 1050 asks: the relay's wait, then the
+      # service's own deploy and checks, inside GitHub's six-hour job
+      # ceiling (test/server/audit0929_terms.test.js holds the three).
       - name: Wait for the account service to serve this build's version
         env:
           WANT: ${{ needs.site.outputs.account_version }}
@@ -182,16 +211,16 @@ jobs:
           set -euo pipefail
           test -n "$WANT" && test -n "$BASE" || { echo "::error::the site job named no account service"; exit 1; }
           n() { printf '%s' "$1" | grep -oE '[0-9]+$' || echo -1; }
-          for i in $(seq 1 90); do
+          for i in $(seq 1 1050); do
             got=$(curl -fsS --max-time 15 "$BASE/v1/health" | sed -n 's/.*"v":"\([^"]*\)".*/\1/p' || true)
             if [ "$got" = "$WANT" ] || { [ -n "$got" ] && [ "$(n "$got")" -ge "$(n "$WANT")" ]; }; then
               echo "the account service serves ${got} - this build's forms may ask it"
               exit 0
             fi
-            echo "the account service serves '${got:-unreachable}', not $WANT yet - waiting (${i}/90)"
+            echo "the account service serves '${got:-unreachable}', not $WANT yet - waiting (${i}/1050)"
             sleep 20
           done
-          echo "::error::the account service never came to serve $WANT in thirty minutes - not publishing a site whose forms it would not answer (see account-deploy.yml's run, then re-run this)"
+          echo "::error::the account service never came to serve $WANT in five hours fifty minutes - not publishing a site whose forms it would not answer (see account-deploy.yml's run, then re-run this)"
           exit 1
 
       - id: deployment

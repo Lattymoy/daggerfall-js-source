@@ -10,7 +10,7 @@
 //     after a strike - each its pixel, its ore, its hours and its strikers;
 //     and the one this account found today.
 //   - THE WARNING, every client's own from the shared clock (the gate's
-//     omen's way, systems/gateOmen.js): MOTHERLODE_WARN_S ahead of a rising
+//     omen's way, systems/gate/gateOmen.js): MOTHERLODE_WARN_S ahead of a rising
 //     - a Motherlode Sense's 30 minutes - a line in the chat; another as it
 //     breaks ground. Each said once a session.
 //   - THE WATCH: the relay's `k1` receipts this socket is handed (one every
@@ -42,11 +42,11 @@ export const MOTHERLODE_ME_MS = 1000;
 
 /** The words. `where` a region's name, `ore` the ore's. */
 export const MOTHERLODE_TEXT = Object.freeze({
-  warn: (ore, where, minutes) => `The surveyors report a Motherlode of ${ore} about to break ground in ${where} - in ${minutes} minutes. Look for it on your compass.`,
+  warn: (ore, where, minutes) => `The surveyors report a Motherlode of ${ore} will break ground in ${where} in ${minutes} minutes. Look for it on your compass.`,
   risen: (ore, where) => `A Motherlode of ${ore} has broken ground in ${where}. The first ${MOTHERLODE_STRIKERS} miners to strike it each find ${marksText(MOTHERLODE_SILVER)}.`,
   // AUDIT SILVER-WAYS D3: the relay marks a pose that MOVED in its last five minutes (watchReceipt.js watchDue) - a
   // miner standing still at the rock was told to stand, and was never seen
-  watch: 'The Watch has not seen you on the Motherlode\'s ground lately. Walk about on it a moment - the Watch marks those on the move, every two minutes.',
+  watch: 'The Watch has not seen you on the Motherlode lately. Keep moving on its ground: the Watch checks every 2 minutes.',
   found: 'You have found your Motherlode today. Another breaks ground tomorrow.',
   full: 'Its twenty miners have struck it. The Motherlode is spent.',
 });
@@ -153,6 +153,8 @@ export function createMotherlodeBook({ door, character, me, nowS, onChange = () 
       for (const l of state.lodes) {
         if (state.day !== today) break;
         // AUDIT SILVER-WAYS D7: the names made only for a line said
+        // FIELD BUGS 2026-10-12g LODE-MARK: never to an account whose Motherlode today is found - it stands for them nowhere
+        if (state.found) break;
         if (t >= l.opensAt - ahead && t < l.opensAt && !said.has(`warn|${l.key}`)) {
           said.add(`warn|${l.key}`);
           say(MOTHERLODE_TEXT.warn(oreName(l.material), regionName(l.region), Math.max(1, Math.ceil((l.opensAt - t) / 60))));
@@ -199,6 +201,30 @@ export function createMotherlodeBook({ door, character, me, nowS, onChange = () 
       const t = nowS();
       if (state.day !== Math.floor(t / 86400)) return out;
       for (const l of state.lodes) if (standing(l, t)) out.push(l);
+      return out;
+    },
+    /** FIELD BUGS 2026-10-12g LODE-MARK: what the compass marks - every Motherlode standing now, and every one the
+     *  warning has told of that is still to break ground ("Look for it on your compass" was said before anything stood
+     *  to mark), into `out` as standingAll's. */
+    markedAll(out = []) {
+      meNow();
+      out.length = 0;
+      const t = nowS();
+      if (state.day !== Math.floor(t / 86400) || state.found) return out;
+      for (const l of state.lodes) {
+        if (standing(l, t) || (said.has(`warn|${l.key}`) && t < l.opensAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS)) out.push(l);
+      }
+      return out;
+    },
+    /** MINE-PERKS (Professions-Arc 43): what a Motherlode Sense's maps mark - every one of the day's still to rise or
+     *  standing, from the day's start, never once it is gone or spent nor after this account's find today (ui/lodeMapMark.js),
+     *  into `out` as standingAll's. */
+    sensedAll(out = []) {
+      meNow();
+      out.length = 0;
+      const t = nowS();
+      if (state.found || state.day !== Math.floor(t / 86400)) return out;
+      for (const l of state.lodes) if (t < l.closesAt && (l.struck ?? 0) < MOTHERLODE_STRIKERS) out.push(l);
       return out;
     },
     /** A lode by its node key. */

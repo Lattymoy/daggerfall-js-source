@@ -7,6 +7,7 @@ import { SKILL_NAMES, SKILL_COUNT, MAGIC_SKILLS } from './skills.js';   // DFCar
 import {
   ADVANTAGE_KEYS, DISADVANTAGE_KEYS, ONLY_ONE_KEYS, MAX_ITEMS, secondaryListFor, advDisAdjustment, cannotAdd,
 } from './specialAdvantages.js';   // UXB1-H: an imported pick passes the window's own gates
+import { localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 // CreateCharCustomClass.cs:29-34
 export const HP_MIN = 4;                  // minHpPerLevel
@@ -154,11 +155,19 @@ export function customSpellSetIndex(career) {
 }
 
 /** The help picker's topics -> TEXT.RSC ids (:176-185, the
- *  localization keys' English strings, in DFU's insertion order). */
+ *  localization keys' English strings, in DFU's insertion order).
+ *  L10N3d: each [title, id] pair's title is read by its DFU key, in
+ *  the player's language, when the picker lists it. */
+const HELP_TITLES = localizedStrings({
+  helpAttributes: 'Attributes', helpClassName: 'Class Name', helpGeneral: 'General',
+  helpReputations: 'Reputations', helpSkillAdvancement: 'Skill Advancement', helpSkills: 'Skills',
+  helpSpecialAdvantages: 'Special Advantages', helpSpecialDisadvantages: 'Special Disadvantages',
+});
+const helpTopic = (key, id) => Object.freeze(Object.defineProperty([key, id], 0, { get: () => HELP_TITLES[key] }));
 export const HELP_TOPICS = Object.freeze([
-  ['Attributes', 2402], ['Class Name', 2401], ['General', 2400],
-  ['Reputations', 2406], ['Skill Advancement', 2407], ['Skills', 2403],
-  ['Special Advantages', 2404], ['Special Disadvantages', 2405],
+  helpTopic('helpAttributes', 2402), helpTopic('helpClassName', 2401), helpTopic('helpGeneral', 2400),
+  helpTopic('helpReputations', 2406), helpTopic('helpSkillAdvancement', 2407), helpTopic('helpSkills', 2403),
+  helpTopic('helpSpecialAdvantages', 2404), helpTopic('helpSpecialDisadvantages', 2405),
 ]);
 
 // ---- CreateCharReputationWindow (CUST03I0) ----
@@ -270,10 +279,10 @@ export function parseCustomClassDoc(input) {
   const fail = (error) => ({ ok: false, error });
   let doc = input;
   if (typeof input === 'string') {
-    try { doc = JSON.parse(input); } catch { return fail('That is not a class file - it could not be read as JSON.'); }
+    try { doc = JSON.parse(input); } catch { return fail('That is not a class file. It could not be read.'); }
   }
   if (!doc || typeof doc !== 'object' || doc.format !== CLASS_FILE_FORMAT) return fail('That is not a DFO Online class file.');
-  if (!Number.isInteger(doc.version) || doc.version < 1) return fail('That class file has no version it can be read by.');
+  if (!Number.isInteger(doc.version) || doc.version < 1) return fail('That class file has no valid version number.');
   if (doc.version > CLASS_FILE_VERSION) return fail('That class file was made by a newer version of the game.');
   // AUDIT UXB1: the name box types printable characters alone; a file could carry anything - a line break into the
   // classic font's one-line label, or a bidi override that turns the name around wherever another player reads it

@@ -1,6 +1,6 @@
 // @ts-check
 // QUAYS (2026-10-03; systems/naval/quays.js, world/quayModel.js) - THE QUAYS THE WORLD HOST STANDS: the pool on the
-// runtime pools' shape (scenes/bountyFarms.js, scenes/gatePool.js) - each berth's quay a model of its own, its
+// runtime pools' shape (scenes/bountyFarms.js, scenes/gate/gatePool.js) - each berth's quay a model of its own, its
 // collider bucket, drawn in the host's world pass, its lanterns lit in the lanterns' hours; and the gangways run out to
 // the player's ships made fast at them.
 //
@@ -89,7 +89,9 @@ export function createQuayPool(deps) {
 
   /** Lay one berth's quay: its plan off the ground, its model, its textures, its mesh and its collider. */
   async function lay(q, b) {
-    b.plan = planQuay({ berth: b.berth, hull: q.harbour.hull, key: q.key, index: b.index, seaY: deps.seaY(), groundAt: deps.groundAt });
+    // QUAY-CROSSING: planned after every earlier berth (frame's order), its jetty ending on their piers
+    const others = q.berths.slice(0, b.index).map((o) => ({ plan: o.plan, origin: o.berth.pos }));
+    b.plan = planQuay({ berth: b.berth, hull: q.harbour.hull, key: q.key, index: b.index, seaY: deps.seaY(), groundAt: deps.groundAt, others });
     if (!b.plan) { b.retryAt = now() + QUAY_RETRY_S; return; }   // the ground behind it is not up yet
     b.model = buildQuayModel(b.plan);
     b.laying = true;
@@ -123,9 +125,13 @@ export function createQuayPool(deps) {
         q = { key: h.key, name: h.name ?? null, harbour: h.harbour, berths: h.harbour.berths.map((berth, index) => ({ index, berth, plan: null, model: null, gpu: null, bucket: `${QUAY_BUCKET}${h.key}:${index}`, retryAt: 0, laying: false, dead: false })) };
         quays.set(h.key, q);
       }
+      // QUAY-CROSSING: in the berths' order, a berth laid only once every earlier one has its plan - its jetty meets
+      // theirs, so every client plans it against the same piers
       for (const b of q.berths) {
-        if (b.plan || b.laying || t < b.retryAt) continue;
+        if (b.plan) continue;
+        if (b.laying || t < b.retryAt) break;
         lay(q, b).catch(() => layFailed(b));
+        if (!b.plan) break;
       }
     }
   }
@@ -190,7 +196,7 @@ export function createQuayPool(deps) {
   const laid = (key, index) => !!quays.get(key)?.berths[index]?.stood;
   /** SHIPYARDS-FOUND (2026-10-11, Mac: "Everything should show on the map/overworld"): each harbour whose quays stand, as
    *  an Overworld mark over its first laid quay - "<Town> Docks" (systems/portPlaces.js portPlaceName), its kind the look's
-   *  (`yard docks` - ui/travelViewHud.js portGlyph: a bollard) and the Towns switch's. */
+   *  (`yard docks` - ui/travel/travelViewHud.js portGlyph: a bollard) and the Towns switch's. */
   function overworldMarks() {
     const out = [];
     if (!quays.size) return out;

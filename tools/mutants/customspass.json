@@ -4,42 +4,42 @@
     "file": "server-account/src/realm.js",
     "old": "        'UPDATE realm_passes SET origin_id = ?, spent_at = ? WHERE player = ? AND spent_at IS NULL'",
     "new": "        'UPDATE realm_passes SET origin_id = ?, spent_at = ? WHERE player = ? AND 0'",
-    "tests": ["test/customspass.test.js"]
+    "tests": ["test/server/customspass.test.js"]
   },
   {
     "name": "CUSTOMS-PASS-ignored-by-customs",
     "file": "server-account/src/realm.js",
     "old": "        + ' OR (EXISTS (SELECT 1 FROM realm_passes WHERE player = ? AND spent_at IS NULL)'",
     "new": "        + ' OR (0 AND EXISTS (SELECT 1 FROM realm_passes WHERE player = ? AND spent_at IS NULL)'",
-    "tests": ["test/customspass.test.js"]
+    "tests": ["test/server/customspass.test.js"]
   },
   {
     "name": "CUSTOMS-PASS-a-spent-pass-still-admits",
     "file": "server-account/src/realm.js",
     "old": "        + ' OR (EXISTS (SELECT 1 FROM realm_passes WHERE player = ? AND spent_at IS NULL)'",
     "new": "        + ' OR (EXISTS (SELECT 1 FROM realm_passes WHERE player = ? AND 1)'",
-    "tests": ["test/customspass.test.js"]
+    "tests": ["test/server/customspass.test.js"]
   },
   {
     "name": "CUSTOMS-PASS-admits-a-spent-origin",
     "file": "server-account/src/realm.js",
     "old": "        + ' AND NOT EXISTS (SELECT 1 FROM realm_census WHERE char_id = ? AND spent = 1)'",
     "new": "        + ' AND NOT EXISTS (SELECT 1 FROM realm_census WHERE char_id = ? AND 0)'",
-    "tests": ["test/customspass.test.js"]
+    "tests": ["test/server/customspass.test.js"]
   },
   {
     "name": "CUSTOMS-PASS-admits-an-origin-a-realm-character-stands-on",
     "file": "server-account/src/realm.js",
     "old": "        + ' AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE origin_id = ?)))',",
     "new": "        + ' AND NOT EXISTS (SELECT 1 FROM realm_characters WHERE origin_id = ? AND 0)))',",
-    "tests": ["test/customspass.test.js"]
+    "tests": ["test/server/customspass.test.js"]
   },
   {
     "name": "CUSTOMS-PASS-a-census-customs-spends-it",
     "file": "server-account/src/realm.js",
     "old": "        + ' AND NOT EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 0)',\n      ).bind(origin, nowS, playerId, playerId, origin),",
     "new": "        + ' AND NOT EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 7)',\n      ).bind(origin, nowS, playerId, playerId, origin),",
-    "tests": ["test/customspass.test.js"]
+    "tests": ["test/server/customspass.test.js"]
   },
   {
     "name": "CUSTOMS-PASS-refusal-forgets-the-pass",
@@ -47,55 +47,55 @@
     "old": "    if (!(await openPassOf(db, playerId))) {\n      // CUSTOMS-ELSEWHERE",
     "new": "    if (true) {\n      // CUSTOMS-ELSEWHERE",
     "note": "CUSTOMS-ELSEWHERE (FIELD BUGS 2026-09-30, PIN MOVED): re-aimed by content - the no-pass arm is a block now, naming the other account's case before 'no record'.",
-    "tests": ["test/customspass.test.js"]
+    "tests": ["test/server/customspass.test.js"]
   },
   {
     "name": "CUSTOMS-PASS-any-registered-player-grants",
     "file": "server-account/src/realm.js",
     "old": "  if (!isDeveloper(actor, env)) return { error: 'not-developer' };",
     "new": "  if (!isDeveloper(actor, env) && !actor?.handle) return { error: 'not-developer' };",
-    "tests": ["test/customspass.test.js"]
+    "tests": ["test/server/customspass.test.js"]
   },
   {
     "name": "CUSTOMS-PASS-an-ambiguous-name-picks-one",
     "file": "server-account/src/realm.js",
     "old": "  if (rows.length > 1) return { error: 'ambiguous' };\n",
     "new": "",
-    "tests": ["test/customspass.test.js"]
+    "tests": ["test/server/customspass.test.js"]
   },
   {
     "name": "CUSTOMS-PASS-revoke-takes-a-spent-pass",
     "file": "server-account/src/realm.js",
     "old": "    ? await db.prepare('DELETE FROM realm_passes WHERE player = ? AND spent_at IS NULL').bind(target.id).run()",
     "new": "    ? await db.prepare('DELETE FROM realm_passes WHERE player = ?').bind(target.id).run()",
-    "tests": ["test/customspass.test.js"]
+    "tests": ["test/server/customspass.test.js"]
   },
   {
     "name": "CUSTOMS-PASS-two-open-passes",
     "file": "server-account/migrations/0024_customs_passes.sql",
     "old": "CREATE UNIQUE INDEX IF NOT EXISTS realm_passes_open ON realm_passes (player) WHERE spent_at IS NULL;",
     "new": "CREATE INDEX IF NOT EXISTS realm_passes_open ON realm_passes (player) WHERE spent_at IS NULL;",
-    "tests": ["test/customspass.test.js"]
+    "tests": ["test/server/customspass.test.js"]
   },
   {
     "name": "CUSTOMS-PASS-tool-splits-a-guest-name",
     "file": "tools/customsPass.mjs",
     "old": "  const body = account !== undefined ? { account } : { name: words.join(' ') };",
     "new": "  const body = account !== undefined ? { account } : { name: words[0] };",
-    "tests": ["test/customspass.test.js"]
+    "tests": ["test/server/customspass.test.js"]
   },
   {
     "name": "CUSTOMS-PASS-tool-takes-a-flag-as-a-name",
     "file": "tools/customsPass.mjs",
     "old": "    if (a.startsWith('--')) return { usage: USAGE };\n",
     "new": "",
-    "tests": ["test/customspass.test.js"]
+    "tests": ["test/server/customspass.test.js"]
   },
   {
     "name": "CUSTOMS-PASS-refusal-text-says-nowhere-to-ask",
     "file": "src/net/accountClient.js",
-    "old": " If you played it online on an older version of the game after the realm opened, ask the developers on the Discord.',",
-    "new": "',",
-    "tests": ["test/customspass.test.js"]
+    "old": " If you played it online on an older version of the game after the realm opened, ask the developers on Discord.')",
+    "new": "')",
+    "tests": ["test/server/customspass.test.js"]
   }
 ]

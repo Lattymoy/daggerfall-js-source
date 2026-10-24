@@ -12,7 +12,7 @@ const srcFiles = [];
   }
 })(path.join(ROOT, 'src'));
 
-const testText = fs.readdirSync(path.join(ROOT, 'test'))
+const testText = fs.readdirSync(path.join(ROOT, 'test'), { recursive: true })
   .filter(f => f.endsWith('.test.js'))
   .map(f => [f, fs.readFileSync(path.join(ROOT, 'test', f), 'utf8')]);
 

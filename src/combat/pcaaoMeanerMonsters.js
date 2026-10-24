@@ -14,11 +14,12 @@
 // Ralzar's at mint, as PCAAO Awakes after its dependency. The rows are the C#'s, index for index, value for
 // value; every field the C# leaves alone is the base row's.
 //
-// A LEAF on purpose: characters/enemyEntity.js reads it when it mints a
+// A LEAF on purpose: characters/enemy/enemyEntity.js reads it when it mints a
 // foe, and that file must not reach the combat formulas.
 // ═══════════════════════════════════════════════════════════════════
 
 import { modSetting, modSettingIfDeclared } from '../systems/modSettings.js';
+import { meanerMonstersAlone } from '../systems/enemyExpansion/dexSwitches.js';   // MUDEX1: beside DEX, Meaner Monsters is MUDEX
 
 /** EnemyBasics.Enemies[i] <- {...}, exactly as InitMod writes them. */
 export const MEANER_MONSTERS = Object.freeze({
@@ -69,9 +70,10 @@ export const MEANER_MONSTERS = Object.freeze({
 /** Is the edit live: the overhaul on, AND Meaner Monsters on - DFU's
  *  `ModManager.Instance.GetMod("Meaner Monsters") != null` (Awake),
  *  read off that mod's own `Enabled` (MM1: no compatibility switch;
- *  `other` is the cross-mod read, a test hands in its own). */
+ *  `other` is the cross-mod read, a test hands in its own) - as itself:
+ *  beside DEX that mod is MUDEX (MUDEX1), which the lookup does not find. */
 export const meanerMonstersOn = (read = (k) => modSetting('pcaao', k), other = modSettingIfDeclared) =>
-  !!read('Enabled') && !!other('meanerMonsters', 'Enabled');
+  !!read('Enabled') && meanerMonstersAlone(!!other('meanerMonsters', 'Enabled'));
 
 /** The row a foe of `mobileType` is minted from: the base row with
  *  the edit's fields written over it when the edit is live, the base

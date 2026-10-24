@@ -15,10 +15,11 @@
 //  - THE HEAD (`headOf`): the highest level of those holding its places that cycle - its word to the player, its name
 //    on a greeting. The trip is its FIRST place's (its cycle and its dice: trips.js ownTrip), as a patrol's is.
 //  - ROLES (`roleOf`, `byRole`): warriors before, thieves between, mages behind - the order it walks in.
-//  - THE PILGRIMS' HOLY DAY (`holyDayOf`): a temple town's region's own holy day (holidays.js getHolidayId, a day only
+//  - THE PILGRIMS' HOLY DAY (`holyDayOf`): a temple town's region's own holy day (holidays.js holidayOn, a day only
 //    its region keeps) inside a pilgrim's cycle draws them to it - out to arrive by its morning, home the next.
 import { lwSeed, lwRng, rollInt, pickOf, textSeed } from './seed.js';
-import { getHolidayId, holidayRegion } from '../holidays.js';
+import { holidayOn, holidayKeptIn } from '../holidays.js';
+import { dayOfYearFromMinutes } from '../gameDate.js';
 import { DAY_MIN } from './dayPlan.js';
 
 /** A company's size (its first place's draw), and the most a town of that many adventurers keeps together. */
@@ -105,15 +106,15 @@ export const headOf = (members) => members.reduce((a, m) => (!a || (m.level ?? 1
 /**
  * THE HOLY DAY a pilgrim's cycle reaches - the first day inside it (from its second to its last but one) that one of
  * `temples` keeps as its region's own holy day (never the day every region keeps), the nearer town first on a tie; null
- * none. `day0` the cycle's first day, `days` its length.
+ * none. `day0` the cycle's first day, `days` its length. HOLY-DAYS: getHolidayId's answer read a day at a time off its
+ * tables (holidays.js holidayOn, holidayKeptIn) - a day that is no holiday, or every region's, asks no temple.
  * @param {any[]} temples @param {number} day0 @param {number} days @returns {{ town: any, day: number, id: number } | null}
  */
 export function holyDayOf(temples, day0, days) {
   for (let d = day0 + 1; d < day0 + days - 1; d++) {
-    for (const t of temples) {
-      const id = getHolidayId(d * DAY_MIN + 12 * 60, t.region ?? -1);
-      if (id && holidayRegion(id) !== 0xFF) return { town: t, day: d, id };
-    }
+    const row = holidayOn(dayOfYearFromMinutes(d * DAY_MIN + 12 * 60));
+    if (!row || row.region === 0xFF) continue;   // never a day every region keeps
+    for (const t of temples) if (holidayKeptIn(row, t.region ?? -1)) return { town: t, day: d, id: row.id };
   }
   return null;
 }

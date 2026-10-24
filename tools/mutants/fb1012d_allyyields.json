@@ -1,0 +1,198 @@
+[
+  {
+    "name": "ALLY-YIELDS-the-reach-unread",
+    "file": "src/player/activate.js",
+    "old": "export const answersPress = (p) => !!p && !yieldsRay(p) && p.distance <= p.reach;",
+    "new": "export const answersPress = (p) => !!p && !yieldsRay(p);",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-a-yielding-team-taken-for-an-answer",
+    "file": "src/player/activate.js",
+    "old": "export const answersPress = (p) => !!p && !yieldsRay(p) && p.distance <= p.reach;",
+    "new": "export const answersPress = (p) => !!p && p.distance <= p.reach;",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-asked-of-every-foe",
+    "file": "src/player/activate.js",
+    "old": "export const allyYields = (foe, behind) => isCompanion(foe) && answersPress(behind);",
+    "new": "export const allyYields = (foe, behind) => !!foe && answersPress(behind);",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-the-peers-companion-kept-out",
+    "file": "src/player/activate.js",
+    "old": "export const isCompanion = (f) => !!f && f.companion != null;",
+    "new": "export const isCompanion = (f) => !!f && f.companion != null && !String(f.companion).startsWith('peer:');",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-the-target-unmarked",
+    "file": "src/player/activate.js",
+    "old": "      ...(isCompanion(f) ? { ally: true } : {}),",
+    "new": "      ...({}),",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-the-hit-unmarked",
+    "file": "src/player/activate.js",
+    "old": "  if (foeHit && targets.find((t) => t.key === foeHit.key)?.ally === true) return { ...foeHit, ally: true };",
+    "new": "  if (foeHit && targets.find((t) => t.key === foeHit.key)?.ally === true) return foeHit;",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-the-press-never-asks",
+    "file": "src/player/mobileEnemyActivate.js",
+    "old": "  if (allyYields(hit.foe, deps.behind)) return false;",
+    "new": "  if (allyYields(hit.foe, null)) return false;",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-the-door-set-without-its-reach",
+    "file": "src/player/activationRace.js",
+    "old": "    ground: door ?? ground,",
+    "new": "    ground,",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js",
+      "test/scenes/hard2_activationrace.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-the-door-sets-distance-not-its-picks",
+    "file": "src/player/activationRace.js",
+    "old": "doorDistance = door?.distance ?? Infinity,",
+    "new": "doorDistance = Infinity,",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js",
+      "test/scenes/hard2_activationrace.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-a-townsperson-without-his-reach",
+    "file": "src/player/activationRace.js",
+    "old": "{ key: PERSON_KEY, distance: nearPerson, reach: MOBILE_NPC_ACTIVATION_DISTANCE }",
+    "new": "{ key: PERSON_KEY, distance: nearPerson }",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-the-plaques-race-never-yields",
+    "file": "src/player/activationRace.js",
+    "old": "  if (foe?.ally === true) {",
+    "new": "  if (foe?.ally === false) {",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js",
+      "test/systems/worldhover.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-the-plaque-yields-to-a-refusal",
+    "file": "src/player/activationRace.js",
+    "old": "    if (answersPress(next)) return next;",
+    "new": "    if (next) return next;",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-the-street-hands-no-behind",
+    "file": "src/scenes/world.js",
+    "old": "behind: _race.next,   // FB1012d ALLY-YIELDS: what the press takes past him",
+    "new": "behind: null,   // FB1012d ALLY-YIELDS: what the press takes past him",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-the-bench-street-hands-no-behind",
+    "file": "src/scenes/exterior.js",
+    "old": "behind: _race.next,   // FB1012d ALLY-YIELDS: what the press takes past a companion",
+    "new": "behind: null,   // FB1012d ALLY-YIELDS: what the press takes past a companion",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-a-building-hands-no-behind",
+    "file": "src/scenes/worldModes.js",
+    "old": "behind: _pick,   // FB1012d ALLY-YIELDS: the ladder's winner (read when the arm runs)",
+    "new": "behind: null,   // FB1012d ALLY-YIELDS: the ladder's winner (read when the arm runs)",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-the-worlds-dungeon-hands-no-behind",
+    "file": "src/scenes/worldModes.js",
+    "old": "behind: _pick,   // FB1012d ALLY-YIELDS: the ladder's winner, underground",
+    "new": "behind: null,   // FB1012d ALLY-YIELDS: the ladder's winner, underground",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-the-standalone-dungeon-hands-no-behind",
+    "file": "src/scenes/dungeon.js",
+    "old": "behind: _pick,   // FB1012d ALLY-YIELDS",
+    "new": "behind: null,   // FB1012d ALLY-YIELDS",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-the-street-hands-no-door-pick",
+    "file": "src/scenes/world.js",
+    "old": "door: modes.exteriorActivationHit(cam.pos, useFwd),",
+    "new": "door: null,",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js",
+      "test/scenes/hard2_activationrace.test.js",
+      "test/systems/audit66_handheldtorches.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-the-bench-street-hands-no-door-pick",
+    "file": "src/scenes/exterior.js",
+    "old": "door: modes.exteriorActivationHit(cam.pos, useFwd),",
+    "new": "door: null,",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js",
+      "test/scenes/hard2_activationrace.test.js",
+      "test/systems/audit66_handheldtorches.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-the-hit-never-picked",
+    "file": "src/scenes/worldModes.js",
+    "old": "    return pickActivatableHit(eye, dir, exteriorActivationTargets().targets, baseCollider());",
+    "new": "    return null;",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js"
+    ]
+  },
+  {
+    "name": "ALLY-YIELDS-the-distance-not-the-hits",
+    "file": "src/scenes/worldModes.js",
+    "old": "    return exteriorActivationHit(eye, dir)?.distance ?? Infinity;",
+    "new": "    return Infinity;",
+    "tests": [
+      "test/scenes/fb1012d_allyyields.test.js"
+    ]
+  }
+]

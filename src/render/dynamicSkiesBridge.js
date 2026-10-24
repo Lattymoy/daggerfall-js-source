@@ -17,14 +17,16 @@ import { isNight, daylightScale } from '../world/worldClock.js';
  *  dynamicMoonState the world's moonlight already takes), and ITS fog
  *  colour as the horizon the clouds fade into (RenderSettings.fogColor,
  *  what the mod's own horizon blends to). Pure; the lab calls it too. */
-export function cloudsStateUnderMod(st, moons, { minuteOfDay, weather, classicMinutes = 0, skyMinutes = classicMinutes, seconds = 0, drift = null, row = null }) {   // TIME1: the moons' date beside the clouds' clock
+export function cloudsStateUnderMod(st, moons, { minuteOfDay, weather, classicMinutes = 0, skyMinutes = classicMinutes, seconds = 0, drift = null, row = null, skyRow = null }) {   // TIME1: the moons' date beside the clouds' clock
   const base = skyState({ minuteOfDay, weather, classicMinutes, skyMinutes, seconds, drift, row });
   return {
     ...base,
     sunDir: st.sunDir,
     masser: moons?.masser ?? base.masser,
     secunda: moons?.secunda ?? base.secunda,
-    horizon: modHorizon(st.clearColor ?? base.horizon, base.cloudShade, row ?? WEATHER_SKY[weather] ?? WEATHER_SKY.sunny),
+    // SKY-HZN: greyed by the row the SKY wears (`skyRow`, the player's eased one) - on the map's lane `row` is the clear
+    // air the clouds stand on, and the colour every far bank fades into is the air's the player sees, never the base's
+    horizon: modHorizon(st.clearColor ?? base.horizon, base.cloudShade, skyRow ?? row ?? WEATHER_SKY[weather] ?? WEATHER_SKY.sunny),
   };
 }
 
@@ -55,7 +57,7 @@ export function modHorizon(modColor, shade, w) {
 
 /** DS1: the moons as moonlightTerm reads them, from the mod's own
  *  state: each moon's place is the shader's orbit (the CPU twin in
- *  systems/dynamicSkies.js), its phase is DFU's ladder, its visibility
+ *  systems/dynamicSkies/dynamicSkies.js), its phase is DFU's ladder, its visibility
  *  is "up, and not in daylight" on the shader's own `day` term
  *  (Remap(sunY, NightEnd..NightStart)), its colour the preset's. Night
  *  is the port's law, as for the enhanced dome. */

@@ -4,16 +4,16 @@
 // RF4 has a condensed row's lane registered by the module that owns its keys, and the two before these own real
 // logic: world/landView.js caps one radius per lane, world/outdoors.js splits the sky across two stores. The three
 // here own nothing but the composition - one bar over two or four prefs whose consumers go on reading them exactly as
-// they did (combat/bloodSwitch.js, ui/enhancedHud.js, ui/enhancedHotbar.js, systems/windDrive.js,
+// they did (combat/blood/bloodSwitch.js, ui/enhanced/enhancedHud.js, ui/enhanced/enhancedHotbar.js, systems/wind/windDrive.js,
 // render/windWisps.js). So they live together, over the shelf alone, and no consumer learns they exist. Nothing a
 // lane writes is a new key: every value it sets is one a row of its own could already set.
 //
 //   'wind'       - Sway (the trees' and the grass's) and Wisps: the bar is both, each is its own in the drawer.
-//   'quickSlots' - QS's diamond switch and HB1's quickbar-or-hotbar: Off, Diamond, Hotbar.
+//   'quickSlots' - QS's diamond switch and HB1's quickbar-or-hotbar: Off, Diamond, Hotbar, Diamonds (DIAMOND-HB).
 //   'blood'      - BLOOD1's marks, BLOOD1b's overkill, BLOOD2e's lens and BLOOD2g's gore: the gore dial with an Off.
 import { getPref, setPref } from './uiPrefs.js';
 import { registerFeatureLane } from './features.js';
-import { BLOOD_PREF, BLOOD_OVERKILL_PREF, BLOOD_SCREEN_PREF, BLOOD_GORE_PREF, GORE_TIERS, GORE_DEFAULT } from '../combat/bloodSwitch.js';
+import { BLOOD_PREF, BLOOD_OVERKILL_PREF, BLOOD_SCREEN_PREF, BLOOD_GORE_PREF, GORE_TIERS, GORE_DEFAULT } from '../combat/blood/bloodSwitch.js';
 
 /** How every one of these switches is read by its consumer: on unless it says false. */
 const on = (k) => getPref(k) !== false;
@@ -26,20 +26,34 @@ export const windRead = () => WIND_PARTS.some(on);
 export function windWrite(v) { for (const k of WIND_PARTS) setPref(k, v === true || v === 'true'); }
 
 // ── THE QUICK SLOTS ────────────────────────────────────────────────
-/** HB1's key (ui/enhancedHotbar.js HOTBAR_PREF, read by systems/uiSkin.js hotbarInForce) and QS's. */
+/** HB1's key (ui/enhanced/enhancedHotbar.js HOTBAR_PREF, read by systems/uiSkin.js hotbarInForce) and QS's. */
 export const QUICKBAR_STYLE_PREF = 'quickbarStyle';
 export const QUICKSLOTS_PREF = 'quickslots';
-export const QUICK_SLOTS_TIERS = Object.freeze([['off', 'Off'], ['diamond', 'Diamond'], ['hotbar', 'Hotbar']]);
+/** DIAMOND-HB: slot shape of the ten-slot bar, 'square' (default) or 'diamond' (ui/enhanced/enhancedHotbar.js
+ *  HOTBAR_SHAPE_PREF, read by its hotbarGems). */
+export const QUICKBAR_SHAPE_PREF = 'hotbarShape';
+/** DIAMOND-HB: Diamond is the hotbar's first four slots drawn as a diamond (style 'diamond'), so it works like the
+ *  ten-slot bar. Off is unchanged: the old QS diamond, hidden, with its keys working. Diamonds is the ten-slot bar
+ *  with diamond-shaped slots. */
+export const QUICK_SLOTS_TIERS = Object.freeze([['off', 'Off'], ['diamond', 'Diamond'], ['hotbar', 'Hotbar'], ['gems', 'Diamonds']]);
 export const QUICK_SLOTS_DEFAULT = 'hotbar';   // HB-LYCFREE: the hotbar is the default (systems/features.js 'quick-slots' initial)
-/** The hotbar wins: while it is up the diamond is put away whatever its switch says (HB1). */
+/** The hotbar wins: while it is up the diamond is put away whatever its switch says (HB1). 'quickbar' with the switch
+ *  on is an old save that chose Diamond; systems/uiPrefs.js moves it to 'diamond' on load. */
 export function quickSlotsRead() {
-  if (getPref(QUICKBAR_STYLE_PREF) === 'hotbar') return 'hotbar';
+  const style = getPref(QUICKBAR_STYLE_PREF);
+  if (style === 'hotbar') return getPref(QUICKBAR_SHAPE_PREF) === 'diamond' ? 'gems' : 'hotbar';
+  if (style === 'diamond') return 'diamond';
   return getPref(QUICKSLOTS_PREF) === false ? 'off' : 'diamond';
 }
 export function quickSlotsWrite(v) {
-  if (v === 'hotbar') { setPref(QUICKBAR_STYLE_PREF, 'hotbar'); return; }
+  if (v === 'hotbar' || v === 'gems') {
+    setPref(QUICKBAR_STYLE_PREF, 'hotbar');
+    setPref(QUICKBAR_SHAPE_PREF, v === 'gems' ? 'diamond' : 'square');
+    return;
+  }
+  if (v === 'diamond') { setPref(QUICKBAR_STYLE_PREF, 'diamond'); setPref(QUICKSLOTS_PREF, true); return; }
   setPref(QUICKBAR_STYLE_PREF, 'quickbar');
-  setPref(QUICKSLOTS_PREF, v !== 'off');
+  setPref(QUICKSLOTS_PREF, false);
 }
 
 // ── THE BLOOD ──────────────────────────────────────────────────────

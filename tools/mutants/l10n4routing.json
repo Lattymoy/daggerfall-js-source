@@ -1,0 +1,8 @@
+[
+  {"name":"L10N4R-catalog-reads-no-constant","file":"tools/l10nExtract.mjs","old":"  if (n.type === 'Identifier' && consts?.has(n.name)) return consts.get(n.name);\n","new":"","tests":["test/tooling/l10n4_routing.test.js"]},
+  {"name":"L10N4R-catalog-joins-nothing","file":"tools/l10nExtract.mjs","old":"    return a === null || b === null ? null : a + b;","new":"    return null;","tests":["test/tooling/l10n4_routing.test.js"]},
+  {"name":"L10N4R-catalog-key-from-a-constant","file":"tools/l10nExtract.mjs","old":"      const key = literalText(keyArg), en = literalText(enArg, consts);","new":"      const key = literalText(keyArg, consts), en = literalText(enArg, consts);","tests":["test/tooling/l10n4_routing.test.js"]},
+  {"name":"L10N4R-catalog-half-built-constant","file":"tools/l10nExtract.mjs","old":"      if (words !== null) out.set(d.id.name, words);","new":"      out.set(d.id.name, words ?? '');","tests":["test/tooling/l10n4_routing.test.js"]},
+  {"name":"L10N4R-ratchet-counts-the-routed-constant","file":"tools/l10nHardcoded.mjs","old":"      let q = quiet || routedInits.has(n);","new":"      let q = quiet;","tests":["test/tooling/l10n4_routing.test.js"]},
+  {"name":"L10N4R-ratchet-routes-every-constant","file":"tools/l10nHardcoded.mjs","old":"      for (const d of decl.declarations) if (d.id?.type === 'Identifier' && routedNames.has(d.id.name) && d.init) routedInits.add(d.init);","new":"      for (const d of decl.declarations) if (d.id?.type === 'Identifier' && d.init) routedInits.add(d.init);","tests":["test/tooling/l10n4_routing.test.js"]}
+]

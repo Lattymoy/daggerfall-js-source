@@ -77,7 +77,37 @@ export function foodName(item) {
 /** What the meal is worth at its stage. */
 export const foodSatiety = (item) => Math.trunc((foodOf(item)?.satiety ?? 0) / (foodStage(item) + 1));
 
-/** Spoil one stage. False when it was already putrid. */
+/** The mod's own icons: the spoiled faces of each food (record 0
+ *  mouldy, 1 rotten and worse), raw meat's three, the waterskin. */
+export const VENDOR_ICON_FILES = Object.freeze([
+  '532_0-0', '532_1-0', '533_0-0', '533_1-0', '534_0-0', '534_1-0', '535_0-0', '535_1-0',
+  '536_0-0', '536_1-0', '537_0-0', '537_1-0', '538_0-0', '538_1-0', '538_2-0', '539_0-0',
+]);
+/** Dress a food for its stage: the name and, past stale, the mod's own
+ *  picture (record 0 mouldy, 1 rotten and putrid) - exactly DFU's
+ *  item-level world-texture override (DaggerfallUnityItem.cs:1730), the
+ *  mod's AbstractItemFood.InventoryTextureArchive/Record. AUDIT C&C I5:
+ *  this law lived in items.js, which this module cannot import, so it ran
+ *  only where items.js spoiled a food (a mint at a stage, a corpse's
+ *  turning meat) or cooked one - never where the minute law rots the pack
+ *  (rotFoodDay -> rotRoll -> rotOnce): Bread, Raw Fish and an Apple three
+ *  desert days old were Putrid and still read "Bread", "Raw Fish" and
+ *  "Apple" in their fresh pictures. It is here now, and every stage
+ *  change is dressed by it. */
+export function dressFood(item) {
+  if (!isFood(item)) return item;
+  item.name = foodName(item);
+  const s = foodStage(item);
+  if (s >= FOOD_STAGE.Mouldy && VENDOR_ICON_FILES.includes(`${item.templateIndex}_${s === FOOD_STAGE.Mouldy ? 0 : 1}-0`)) {
+    item.worldTextureArchive = item.templateIndex;
+    item.worldTextureRecord = s === FOOD_STAGE.Mouldy ? 0 : 1;
+  } else {
+    delete item.worldTextureArchive; delete item.worldTextureRecord;   // the template's picture (items.js's copy also wrote both back as undefined, which every reader - Number.isFinite - takes as absent)
+  }
+  return item;
+}
+
+/** Spoil one stage, dressed. False when it was already putrid. */
 export function rotOnce(item) {
   const f = foodOf(item);
   if (!f || f.keeps == null) return false;
@@ -85,6 +115,7 @@ export function rotOnce(item) {
   if (s >= FOOD_STAGE.Putrid) return false;
   item.foodStage = s + 1;
   item.value = 0;
+  dressFood(item);   // AUDIT C&C I5: the mod's RotFood, which names the food as it turns it (shortName = GetFoodStatus() + name)
   return true;
 }
 

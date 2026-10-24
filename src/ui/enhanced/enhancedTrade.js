@@ -1,0 +1,1160 @@
+// ENHANCED TRADE — the shop counter (Buy / Sell / SellMagic / Repair /
+// Identify) drawn in the ENHANCED INVENTORY's own structure: the same
+// `.packcol` / `.itemrow` / `.packtabs` shape enhancedInventory.js
+// builds for the pack, the same `.px-home/.px-win` frame every other
+// enhanced screen wears, instead of nativeTrade.js's INVE00I0 canvas.
+//
+// ui/tradeDoor.js is the gate: this module mounts ONLY when the
+// player is in enhanced mode (isEnhanced()) - a host in native/classic
+// mode keeps NativeTradeWindow exactly as it was, untouched by this
+// file. Nothing here is reachable from the classic skin.
+//
+// THE LAW IS BORROWED, NOT REWRITTEN, the same standing rule
+// ui/enhanced/enhancedInventory.js states at its own head. Every number this
+// screen shows or spends comes out of systems/tradeModes.js (cost,
+// haggle price, the Yes/No decision, sell proceeds, the local-list and
+// click gates), systems/item/itemTransfer.js (the capacity-checked Buy
+// transfer), systems/repairService.js (the repair counter's own
+// clock) and systems/theft.js (the steal roll) - the SAME modules
+// nativeTrade.js reads, so the two skins cannot disagree about a
+// price or a refusal. This file positions rows and wires the click
+// each mode's click means, mirroring nativeTrade.js's own decisions
+// (_pickLocal/_pickRemote/_modeAction/_confirm/_doSteal) rather than
+// re-deriving them.
+//
+// THE HOOKS BAG IS nativeTrade.js's, UNCHANGED - see its own doc
+// comment above `NativeTradeWindow`. ui/tradeDoor.js hands both
+// windows the identical hooks object a host builds, so a host never
+// has to know or care which skin is about to read it.
+//
+// WHAT IT DOES NOT DRAW: the classic art panels (INVE00I0/SHOP00I0)
+// and the ARENA2 item icon textures those panels frame. Like
+// enhancedSpellbook.js ("this window reads no ARENA2"), a trade
+// counter reachable from a fresh install with no classic assets must
+// stand on its own - so this reads item icons the same OPTIONAL way
+// enhancedInventory's own item tile does (its linePicture door over
+// the item's texture record, or the cart's model), falling back to two
+// letters when that picture is unavailable, and never blocks on it.
+
+import { BAG_WORDS } from '../../net/bagLaw.js';   // BAG1
+import { itemLine, linePicture, markItemFrame, wearBar, showItemHover, hideItemHover } from './enhancedInventory.js';   // RF6/MW-D38: one item model, read by both packs; RARITY-UI: one frame marker; WEAR-UI: one wear bar
+import { SLOT_BOX } from '../iconFit.js';   // UI1: the row's picture box
+import { fittedImg } from '../textureCanvas.js';   // UI1: the fitted picture's element
+import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { closeOnOutsideTap } from './enhancedOverlays.js';
+import { landingTiles } from './landingTiles.js';   // TRADE-VIRT: a picture into its tile, not a repaint of the counter
+import { virtualRows } from '../virtualRows.js';   // TRADE-VIRT: a long list draws the rows on screen
+import { overlayAction } from '../input.js';
+import { audio } from '../../systems/audio.js';
+import { enhancedSoundsOn } from '../../systems/enhancedSounds.js';
+import { SOUND } from '../../systems/soundClips.js';
+import {
+  tradeCost, getTradePrice, tradeDecision, sellProceeds,
+  localListAccepts, localClickDecision, sellGuardOf, doesntNeedIdentifyText, letterOfCreditText,
+  MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID, DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID,
+} from '../../systems/tradeModes.js';
+import {
+  cannotBeRepairedText, TRANSPORT_CANNOT_BE_REPAIRED_TEXT, interruptRepairText,
+  isBeingRepaired as itemIsBeingRepaired, isRepairFinished, collectRepaired,
+  updateRepairTimes, repairCountdown, repairCountdownText,   // UXB1-K: when a job is ready
+} from '../../systems/repairService.js';
+import { planTake, applyTransfer, clearLightSourceOnLeave, cannotCarryText, HOW_MANY_ITEMS, parseSplitAmount } from '../../systems/item/itemTransfer.js';
+import { isKeptSpellbook, SPELLBOOK_KEPT_TEXT } from '../../systems/item/itemTransfer.js';   // KEEP-SPELLBOOK: never sold
+import { howManyField } from '../howManyField.js';   // DISC25-F: the counter's how-many field, the pack's own
+import { isTextEntryTarget } from '../input.js';
+import { isSummoned, carriedWeight, totalWeight, transferAll, addItem } from '../../systems/inventory.js';   // AUDIT UXB1 F4: addItem, a returning lot's merge
+import { isFurnishing } from '../../systems/decor/decorFurnish.js';   // DECOR2b: furniture is delivered, never carried
+import { lockRefuses, lockedText } from '../../systems/item/itemLock.js';   // LOCK1: a locked piece is not for sale
+import { isJunk } from '../../systems/item/itemJunk.js';   // LOOT18: Sell junk
+import { isBound, boundText } from '../../systems/item/itemBound.js';   // SS4: nor a bound one - a Sigil Stone, the Broker's wares
+import { getBool } from '../../systems/settings/settings.js';   // UXB1-K: InstantRepairs - no clock to count down
+import { dateFromClassicMinutes, dateString } from '../../systems/gameDate.js';
+import { ownTimeLeftText, ownTimeLeftShort } from '../../systems/worldTick.js';   // UXB1-K: online, the ready time in the player's own terms (LIVED1: their own clock)
+import { shopliftAttempt } from '../../systems/theft.js';
+import { markStolen } from '../../systems/stolenGoods.js';   // STOLEN-GOODS: what the Steal carries off is marked
+import { entityMaxEncumbrance } from '../../combat/formulas.js';
+import { cannotRemoveItemText } from '../../systems/createItem.js';
+import { questTransferRefused, TABS, tabAccepts } from '../native/nativeInventory.js';
+import { initialTradeTab, stealSuccessText, stealFailureText } from '../native/nativeTrade.js';
+import { expandGuildMacros } from '../../systems/guild/guildServiceActions.js';
+import { firstName } from '../../systems/talk/talkSession.js';   // MACRO-4: %pct's shop arm
+import { t } from '../../systems/textManager.js';   // L10N4: MENU-ORDER's own words in the player's language
+
+const el = (tag, cls, text) => {
+  const n = document.createElement(tag);
+  if (cls) n.className = cls;
+  if (text != null) n.textContent = text;
+  return n;
+};
+
+/** The mode label a player reads as this window's title, and the verb
+ *  its mode-action button carries - MODE_ACTION_BUTTON's letters
+ *  (nativeTrade.js) are a classic hotkey name; this is the plain word. */
+const MODE_LABEL = Object.freeze({
+  Buy: 'Buy', Sell: 'Sell', SellMagic: 'Sell', Repair: 'Repair', Identify: 'Identify',
+});
+const TAB_LABEL = Object.freeze({
+  weapons: 'Weapons & Armor', magic: 'Magic Items', clothing: 'Clothing & Misc', ingredients: 'Ingredients',
+});
+/** MENU-ORDER (2026-10-12): the counter's title says the mode whole - a counter that buys magic alone says so, where
+ *  the button's verb is plain "Sell". */
+export const TRADE_TITLE = Object.freeze({ ...MODE_LABEL, get SellMagic() { return t('trade.counter.title.sellMagic', 'Sell magic items'); } });
+/** MENU-ORDER: the player's own column, named as the shop's is ("On the shelf"). */
+export const TRADE_OWN_HEAD = 'Your pack';
+/** MENU-ORDER: the footer's two figures, each under its own name - what the lot costs (or brings, selling) and the
+ *  purse - where one span read "Cost: 0   Gold: 1840" and the spaces collapsed. */
+export const TRADE_COST_WORD = Object.freeze({
+  get Buy() { return t('trade.counter.cost.pay', 'To pay'); }, get Sell() { return t('trade.counter.cost.get', 'You get'); },
+  get SellMagic() { return t('trade.counter.cost.get', 'You get'); }, get Repair() { return t('trade.counter.cost.pay', 'To pay'); },
+  get Identify() { return t('trade.counter.cost.pay', 'To pay'); },
+});
+export const TRADE_GOLD_WORD = 'Your gold';
+/** MENU-ORDER: a figure as the footer says it. */
+export const tradeGoldText = (n) => `${Math.max(0, Math.round(Number(n) || 0)).toLocaleString('en-US')} gold`;
+/** MENU-ORDER: how many things a column lists, said under its name. */
+export const tradeCountText = (n) => `${n} item${n === 1 ? '' : 's'}`;
+/** MENU-ORDER: the counter's two ways to lay its lists, and the one chosen (kept across counters while the page stands). */
+export const TRADE_VIEW_WORDS = Object.freeze({ list: 'List', grid: 'Pictures' });
+let tradeView = 'list';
+
+let host = null;
+let deps = {};      // the hooks bag, nativeTrade.js's own shape
+let onExit = () => {};
+let mode = 'Buy';
+let tab = 'weapons';
+let basket = [];    // Buy mode's staged lot (shown in the LOCAL column)
+let staged = [];    // every other mode's staged lot (shown in the REMOTE column)
+let usingWagon = false;
+let box = null;     // { rows, buttons: 'YesNo'|null, onYes }
+let selected = null;   // { item, side: 'local'|'remote' } - a single click's tooltip, not yet transferred
+// DISC25-F (Satranath and Starempire42 on Discord: "It doesn't appear possible to split stacks ... in shops when
+// making a purchase"): the tooltip's HOW MANY field - the item it was opened on, and its live text
+let qty = { item: null, text: '' };
+let unregisterOutside = () => {};
+// A manual double-click tracker. render() below tears down and rebuilds
+// EVERY row on EVERY click (even a plain single click, just to draw the
+// tooltip) - so the row a first click lands on is already a different
+// DOM node by the time a second click arrives. Browsers only count two
+// clicks as a double click when they hit the SAME node, so the native
+// `dblclick` event never fires here once a re-render has happened in
+// between. Tracking the clicked ITEM and a timestamp, rather than
+// relying on the browser's own node-identity click counting, sidesteps
+// that entirely.
+//
+// The timestamp itself has to be the CLICK EVENT'S OWN `timeStamp`,
+// not `Date.now()` read inside the handler: a bigger shelf (General
+// Store's - it stocks from seven item groups plus a horse, a cart and
+// a provisions list, easily the largest render in the building set)
+// takes longer to rebuild, and while that rebuild from the FIRST
+// click is running, JS is single-threaded - the SECOND click's own
+// handler cannot even start until it finishes. `Date.now()` read at
+// that point measures from AFTER the render delay, not from the
+// actual click, so a real double click on a slow-to-redraw shelf can
+// read as "too far apart" purely because the shop was slow, not
+// because the player was. `event.timeStamp` is stamped by the browser
+// at the moment of the real input, before any of that queuing, so it
+// stays accurate regardless of how long the render in between took.
+let lastRowClick = { item: null, time: 0 };
+const DOUBLE_CLICK_MS = 500;
+let keyHandler = null;
+/** UXB1-K: the repair counter's estimates, one scheduler pass per paint (repairEstimatesNow). */
+let repairEst = null;
+
+const inBuy = () => mode === 'Buy';
+const selling = () => mode === 'Sell' || mode === 'SellMagic';
+
+/** remoteItems (nativeTrade.js's own getter): the in-repair collection
+ *  in Repair mode, `staged` in every other. */
+function remoteItems() { return mode === 'Repair' ? (deps.otherItems?.() ?? staged) : staged; }
+/** stagedForCost: what the cost strip totals. */
+function stagedForCost() {
+  if (inBuy()) return basket;
+  return mode === 'Repair' ? remoteList() : staged;
+}
+
+function localList() {
+  const equipped = deps.isEquipped ?? (() => false);
+  const held = new Set(remoteItems());   // TRADE-VIRT: asked once a piece of the pack - a Set, not a walk of the lot each
+  const onTab = (it) => tabAccepts(it, tab);
+  const pack = (deps.packItems?.() ?? []).filter((it) => !equipped(it) && localListAccepts(mode, it, {
+    accepts: deps.accepts, enchanted: deps.enchanted,
+  }) && onTab(it) && !held.has(it));
+  return inBuy() ? [...basket.filter((it) => !equipped(it) && onTab(it)), ...pack] : pack;
+}
+function remoteList() {
+  if (inBuy()) return deps.shelfItems?.() ?? [];
+  if (mode === 'Repair') return deps.repairItems?.() ?? remoteItems();
+  return staged;
+}
+
+function cost() {
+  return tradeCost(mode, stagedForCost(), {
+    ...(deps.priceCtx?.() ?? {}),
+    usingIdentifySpell: deps.usingIdentifySpell ?? false,
+    isBeingRepaired: deps.isBeingRepaired ?? (() => false),
+  });
+}
+
+/** A QUOTED PRICE for one item, staged or not - what the aggregate
+ *  Cost readout in the footer cannot show while nothing has been
+ *  staged yet (it is the STAGED lot's total, zero with an empty one).
+ *  The tooltip strip below reads this for whichever item is currently
+ *  selected, so previewing an item on the shelf, or one of your own
+ *  that this window's quick-sell reaches for, answers a real number
+ *  rather than the aggregate's 0. Same law, single-item pass. */
+function quotePriceFor(item, side) {
+  const ctx = deps.priceCtx?.() ?? {};
+  const quality = ctx.quality ?? 0; const skills = ctx.skills ?? {};
+  const priced = (m) => { const lot = tradeCost(m, [item], ctx); return getTradePrice(m, lot.cost, quality, skills, lot.pieces, lot.resale); };   // FB0929: the quote is the lot's own price, floor and all; LAW-3: its resale cap too
+  if (side === 'remote') {
+    // Buying: the shelf. Every other mode's remote pane is the STAGED
+    // lot already, not something new to quote.
+    if (inBuy()) return { label: 'Buy for', price: priced('Buy') };
+    return null;
+  }
+  // side === 'local': your own item, whatever this window's mode is.
+  if (inBuy()) {
+    // Nothing to BUY from your own pack - the quick-sell shortcut
+    // (footer button relabelled 'Sell') is the only thing a click here
+    // can do, so that is the price worth quoting.
+    return isQuickSellCandidate() ? { label: 'Sell for', price: priced('Sell') } : null;
+  }
+  // Sell/SellMagic/Repair/Identify: the SAME decision a click would
+  // make (localClickDecision) - a quote for an item this mode would
+  // refuse (an unrepairable trinket, an already-identified ring, a
+  // wagon in use) would just be misleading.
+  if (saleRefused(item)) return null;   // AUDIT SS: and a locked or bound piece's sale is refused - "Sell for 25000 gold" over five Sigil Stones was a price the counter never pays
+  const d = localClickDecision(mode, item, {
+    allowMagicRepairs: deps.allowMagicRepairs ?? false,
+    usingIdentifySpell: deps.usingIdentifySpell ?? false,
+    ...sellGuardOf(deps.entity),   // WAGONS1/BAG1: the wagon driven and loaded, the bag loaded (WAGONS2 FINAL AUDIT: one home)
+  });
+  if (d.kind !== 'stage') return null;
+  if (mode === 'Identify' && deps.usingIdentifySpell) return { label: 'Identify for', price: 0 };
+  return { label: `${MODE_LABEL[mode] ?? 'Trade'} for`, price: priced(mode) };
+}
+
+function rowsFor(id, amount = null) {
+  return (deps.rows?.(id) ?? []).map((r) => ({
+    ...r,
+    text: expandGuildMacros(r.text, {
+      amount, gold: deps.gold?.() ?? 0, shopName: deps.shopName ?? '',
+      cityName: deps.cityName?.() ?? '', playerName: deps.entity?.name ?? '',
+      guildTitle: deps.guildTitle?.() ?? firstName(deps.entity?.name ?? ''),   // MACRO-4: %pct (TradeMacroDataSource.GuildTitle)
+    }),
+  }));
+}
+
+function refuse(refusal) {
+  const rows = (id) => rowsFor(id);
+  const text = {
+    magic: rows(MAGIC_ITEMS_CANNOT_BE_REPAIRED_TEXT_ID),
+    undamaged: rows(DOES_NOT_NEED_TO_BE_REPAIRED_TEXT_ID),
+    notRepairable: [{ text: cannotBeRepairedText(), center: true }],
+    transport: [{ text: TRANSPORT_CANNOT_BE_REPAIRED_TEXT, center: true }],   // WAGONS4
+    identified: [{ text: doesntNeedIdentifyText(), center: true }],
+    bagLoaded: [{ text: BAG_WORDS.notEmpty, center: true }],   // BAG1: a Materials Bag holding anything
+  }[refusal] ?? [];
+  box = { rows: text.length ? text : [{ text: '...', center: true }], buttons: null };
+  render();
+}
+
+/** LOCK1, SS4: a piece this counter will not put up for SALE - locked, or bound (systems/item/itemBound.js), or the
+ *  character's spellbook (KEEP-SPELLBOOK); a repair or an identify still takes any of them, because it comes back.
+ *  AUDIT SS: one reading for the refusal, the quote and the count. */
+const saleRefused = (item) => selling() && (lockRefuses(item, 'sell') || isBound(item) || isKeptSpellbook(item));
+
+function refuseTransfer(item) {
+  // LOCK1: a locked piece is not put up for SALE - a repair or an identify still takes it, because it comes back
+  if (selling() && lockRefuses(item, 'sell')) {
+    box = { rows: [{ text: lockedText(itemLine(item, deps.entity).name), center: true }], buttons: null };
+    render();
+    return true;
+  }
+  // SS4: a BOUND piece is not put up for sale either (systems/item/itemBound.js) - a repair or an identify still takes it
+  if (selling() && isBound(item)) {
+    box = { rows: [{ text: boundText(itemLine(item, deps.entity).name, item), center: true }], buttons: null };   // AUDIT AUTO-HOLD: a piece the realm locked says so
+    render();
+    return true;
+  }
+  // KEEP-SPELLBOOK: nor the spellbook (systems/item/itemTransfer.js isKeptSpellbook) - a repair or an identify still takes it
+  if (selling() && isKeptSpellbook(item)) {
+    box = { rows: [{ text: SPELLBOOK_KEPT_TEXT, center: true }], buttons: null };
+    render();
+    return true;
+  }
+  const refused = isSummoned(item) || questTransferRefused(item, {
+    fromLocal: true, toWagon: false, getQuest: deps.getQuest ?? null, trade: true,   // QUEST-SHELF-DROP: never sold
+  });
+  if (!refused) return false;
+  box = { rows: [{ text: cannotRemoveItemText(), center: true }], buttons: null };
+  render();
+  return true;
+}
+
+/** ItemCollection.Transfer (:473-480): out of `from`, then AddItem into `to` - so a lot rejoins its own stack there,
+ *  as DFU's every click-back (TransferItem -> DoTransferItem) and ClearSelectedItems (Transfer, TransferAll) do.
+ *  BOOK-SPLIT: a `push` left a book taken back off the counter as a second row beside its own stack. A quest item goes
+ *  to the front (DoTransferItem's order, :1573-1579), as itemTransfer.applyTransfer places it. */
+function move(item, from, to) {
+  const i = from.indexOf(item);
+  if (i >= 0) from.splice(i, 1);
+  addItem(to, item, item?.questItem ? 'front' : 'dontCare');
+}
+
+/** Whether a pending local (your own pack) selection in Buy mode is a
+ *  quick-sell candidate rather than a basket item to unstage: still
+ *  really yours, and Sell mode's own law (localClickDecision) would
+ *  actually take it - not the loaded-wagon 'ignore' arm. */
+/** DISABLED: this window opens from a shelf you can interact with
+ *  directly, in a room that also has the trader NPC in it - selling
+ *  is meant to be the NPC's own Sell screen only. This used to check
+ *  localClickDecision('Sell', ...) for a pending selection and let a
+ *  Buy-mode click on your own pack item sell it on the spot; forced
+ *  to always answer `false` so every call site downstream (the
+ *  footer's primary button, the click/double-click handler, the price
+ *  quote strip) treats a pack-item click in Buy mode as a no-op, same
+ *  as clicking a pack item that Sell mode itself would refuse. Buying
+ *  off the shelf is untouched; talking to the trader and choosing
+ *  Sell still opens the real Sell-mode window exactly as before. */
+function isQuickSellCandidate() {
+  return false;
+}
+
+/** A DRY RUN of pickLocal/pickRemote's own decision, for a pending
+ *  selection - never moves anything, only answers whether the footer
+ *  button (or a double click) would actually do something if pressed.
+ *  Reads the SAME decision functions those two use, so this cannot
+ *  drift from what a click actually does. */
+function canTransferSelected() {
+  if (!selected) return false;
+  const { item, side } = selected;
+  if (side === 'local') {
+    // Buy mode's own law (tradeModes.js's localClickDecision): a pack
+    // item that is not already in the basket is 'ignore' - there is
+    // nothing to BUY from your own pack. In Buy mode specifically that
+    // is not the end of it, though - see isQuickSellCandidate below,
+    // which the footer reaches for instead when this says no.
+    const d = localClickDecision(mode, item, {
+      inBasket: (i) => basket.includes(i),
+      allowMagicRepairs: deps.allowMagicRepairs ?? false,
+      usingIdentifySpell: deps.usingIdentifySpell ?? false,
+      ...sellGuardOf(deps.entity),   // WAGONS1/BAG1: the wagon driven and loaded, the bag loaded (WAGONS2 FINAL AUDIT: one home)
+    });
+    return d.kind === 'stage' || d.kind === 'unstage' || isQuickSellCandidate();
+  }
+  // side === 'remote': in Buy mode this is the shelf, and planTake is
+  // the same capacity/carry check pickRemote itself asks before
+  // moving anything. Every other mode's remote click is "take this
+  // back" and always answers something (at worst a Yes/No interrupt
+  // box, which is still a real action, not a refusal).
+  if (inBuy()) return buyPlan(item).ok;
+  return true;
+}
+
+/** The Buy basket's carry gate: what the player walks out with, pack and basket (planTake). DECOR2b: a piece of
+ *  furniture is delivered, never carried - it needs no room, and takes none. */
+function buyPlan(item) {
+  if (isFurnishing(item)) return { ok: true, amount: item.stackCount ?? 1 };
+  return planTake(item, { bag: [...deps.packItems(), ...basket.filter((x) => !isFurnishing(x))], entity: deps.entity ?? null });
+}
+
+function pickLocal(item) {
+  const d = localClickDecision(mode, item, {
+    inBasket: (i) => basket.includes(i),
+    allowMagicRepairs: deps.allowMagicRepairs ?? false,
+    usingIdentifySpell: deps.usingIdentifySpell ?? false,
+    ...sellGuardOf(deps.entity),   // WAGONS1/BAG1: the wagon driven and loaded, the bag loaded (WAGONS2 FINAL AUDIT: one home)
+  });
+  if (d.kind === 'stage') {
+    if (refuseTransfer(item)) return;
+    const amount = chosenAmount(item, stackOf(item));   // DISC25-F: part of a stack goes on the counter
+    if (amount == null) return askAgain(item);
+    if (amount < stackOf(item)) applyTransfer(item, { amount }, deps.packItems(), remoteItems(), { entity: deps.entity, fromLocal: true });
+    else {
+      clearLightSourceOnLeave(item, deps.entity, true);
+      move(item, deps.packItems(), remoteItems());
+    }
+    qty = { item: null, text: '' };
+    playTransferSound();
+    render();
+    return;
+  }
+  if (d.kind === 'unstage') {
+    const amount = chosenAmount(item, stackOf(item));   // DISC25-F: and part of it back off the basket
+    if (amount == null) return askAgain(item);
+    if (amount < stackOf(item)) applyTransfer(item, { amount }, basket, deps.shelfItems());
+    else unstageToShelf(item);   // AUDIT UXB1 F4: the whole lot rejoins its stack
+    qty = { item: null, text: '' };
+    playTransferSound();
+    render();
+    return;
+  }
+  if (d.kind === 'refuse') refuse(d.refusal);
+}
+
+/** DISC25-F: a stack's count - DFU's stackCount, one for a thing that does not stack. */
+const stackOf = (item) => item?.stackCount ?? 1;
+
+/** DISC25-F: how many a move of `item` takes - the tooltip's field where it was opened on this item, parsed as DFU
+ *  parses the split popup (1..max, else null: nothing moves), and `max` everywhere else (a double click reaches for
+ *  the whole, as it always has). */
+function chosenAmount(item, max) {
+  return qty.item === item ? parseSplitAmount(qty.text, max) : max;
+}
+
+/** DISC25-F: a count DFU's parse refuses moves nothing; the box says the popup's own question with its max. */
+function askAgain(item) {
+  box = { rows: [{ text: HOW_MANY_ITEMS(splitMaxOf(item, selected?.side ?? 'local') || stackOf(item)), center: true }], buttons: null };
+  render();
+}
+
+/**
+ * DISC25-F: the most one move of the selected item takes, or 0 where it takes nothing or cannot split. Off the
+ * shelf, what the pack can carry (planTake's own amount - CanCarryAmount, DaggerfallTradeWindow.cs:842 - asked as a
+ * DRY RUN, since the quest rung writes); onto the counter and back off it, the whole stack (DFU passes no maxAmount
+ * there, :795/:803, so only Control splits); nothing for a repair, which takes a thing whole.
+ */
+function splitMaxOf(item, side) {
+  if (!item || mode === 'Repair') return 0;
+  if (side === 'local' && saleRefused(item)) return 0;   // AUDIT SS: no "how many" over a sale that is refused
+  if (side === 'remote') {
+    if (!inBuy()) return stackOf(item);
+    const plan = planTake(item, { bag: [...deps.packItems(), ...basket], entity: deps.entity ?? null, dryRun: true });
+    return plan.ok && !plan.map ? plan.amount : 0;
+  }
+  const d = localClickDecision(mode, item, {
+    inBasket: (i) => basket.includes(i),
+    allowMagicRepairs: deps.allowMagicRepairs ?? false,
+    usingIdentifySpell: deps.usingIdentifySpell ?? false,
+    ...sellGuardOf(deps.entity),   // WAGONS1/BAG1: the wagon driven and loaded, the bag loaded (WAGONS2 FINAL AUDIT: one home)
+  });
+  return d.kind === 'stage' || d.kind === 'unstage' ? stackOf(item) : 0;
+}
+
+/** AUDIT UXB1 F4: goods put back on the shelf rejoin their stack - ItemCollection.AddItem's merge (inventory.js
+ *  addItem), which DFU's click-back (TransferItem) and ClearSelectedItems (TransferAll) both reach. A split lot is its
+ *  own record, and `move`'s push left "Oil ×2" beside "Oil ×10" on the shelf it came from. */
+function unstageToShelf(item) {
+  const i = basket.indexOf(item);
+  if (i >= 0) basket.splice(i, 1);
+  addItem(deps.shelfItems(), item);
+}
+
+function takeItemFromRepair(item) {
+  move(item, remoteItems(), deps.packItems());
+  collectRepaired(item);
+}
+
+function pickRemote(item) {
+  if (inBuy()) {
+    const plan = buyPlan(item);
+    if (!plan.ok) {
+      box = { rows: [{ text: plan.refusal?.text ?? cannotCarryText(), center: true }], buttons: null };
+      render();
+      return;
+    }
+    const amount = chosenAmount(item, plan.amount);   // DISC25-F: part of the shelf's stack into the basket
+    if (amount == null) return askAgain(item);
+    applyTransfer(item, { ...plan, amount }, deps.shelfItems(), basket);
+    qty = { item: null, text: '' };
+    playTransferSound();
+    render();
+    return;
+  }
+  if (mode === 'Repair') {
+    const now = deps.nowMinutes?.() ?? 0;
+    if (itemIsBeingRepaired(item) && !isRepairFinished(item, now)) {
+      box = {
+        rows: [{ text: interruptRepairText(), center: true }], buttons: 'YesNo',
+        onYes: () => { takeItemFromRepair(item); render(); },
+      };
+      render();
+      return;
+    }
+    takeItemFromRepair(item);
+    render();
+    return;
+  }
+  const amount = chosenAmount(item, stackOf(item));   // DISC25-F: part of a staged stack back into the pack
+  if (amount == null) return askAgain(item);
+  if (amount < stackOf(item)) applyTransfer(item, { amount }, remoteItems(), deps.packItems());
+  else move(item, remoteItems(), deps.packItems());
+  qty = { item: null, text: '' };
+  playTransferSound();
+  render();
+}
+
+/** A single click: read the item, don't move it - the tooltip
+ *  enhancedInventory.js's own `picked` card shows, not a transfer.
+ *  Clicking the SAME item again closes it (that card's own toggle);
+ *  clicking a different one just switches the tooltip to it. */
+function selectItem(item, side) {
+  selected = (selected?.item === item) ? null : { item, side };
+  render();
+}
+
+/** The actual move selectItem() deliberately does not do - a double
+ *  click, or the footer's primary button reaching for a pending
+ *  selection (below), both land here. */
+function transferSelected() {
+  if (!selected) return;
+  const { item, side } = selected;
+  selected = null;
+  if (side === 'local') pickLocal(item); else pickRemote(item);
+}
+
+function clear() {
+  selected = null;
+  if (inBuy()) { while (basket.length) unstageToShelf(basket[0]); return; }   // AUDIT UXB1 F4: each lot rejoins its stack
+  if (mode === 'Repair') {
+    const now = deps.nowMinutes?.() ?? 0;
+    for (const it of [...remoteList()]) {
+      if (itemIsBeingRepaired(it) && !isRepairFinished(it, now)) continue;
+      takeItemFromRepair(it);
+    }
+    return;
+  }
+  const remote = remoteItems();
+  while (remote.length) move(remote[0], remote, deps.packItems());
+}
+
+function playTransferSound() {
+  // ES1/MAC-O6: the pack's own transfer cue, gated the same way.
+  if (enhancedSoundsOn()) audio.playOneShot(SOUND.ButtonClick, 1);
+}
+
+/** What Steal reaches for: the basket if anything is staged in it
+ *  (DFU's own law - stage first, then steal instead of paying) or,
+ *  with the basket still empty, whatever shelf item is currently
+ *  selected - so a single click's tooltip preview is itself enough to
+ *  steal that one item, rather than needing a double click to stage
+ *  it first only to steal it straight back out again. */
+function stealTargets() {
+  if (basket.length) return basket;
+  if (selected?.side === 'remote' && inBuy()) return [selected.item];
+  return [];
+}
+function stealCost() {
+  const items = stealTargets();
+  return items.length ? tradeCost('Buy', items, deps.priceCtx?.() ?? {}).cost : 0;
+}
+
+/** ENHANCED-ONLY UX: a click on Steal ASKS first, rather than rolling
+ *  immediately. nativeTrade.js's own `_doSteal` fires at the click -
+ *  DFU's DoSteal never confirms either - but a one-click, irrevocable
+ *  crime (guards, a Thieves Guild mark) reads as a misclick on a
+ *  screen built around Yes/No everywhere else on it. The roll and its
+ *  five effects are unchanged; only the ask in front of them is new. */
+function doSteal() {
+  if (!inBuy() || !(stealCost() > 0)) return;
+  const refused = deps.stealRefusal?.() ?? null;   // AUDIT MERCHANT-YARDS Y1: a yard's keeper never looks away
+  if (refused) { deps.say?.(refused, 2); return; }
+  box = {
+    rows: [{ text: 'Steal these goods rather than pay for them?', center: true }],
+    buttons: 'YesNo',
+    onYes: runSteal,
+  };
+  render();
+}
+
+/** DECOR2b: STOLEN FURNITURE IS DELIVERED, as bought furniture is - never carried (it was staged with no room found
+ *  for it). `list` gives up its furniture (or only `one`, when named) to the host's delivery; answers how many went. A
+ *  host with no delivery carries it as before. */
+function deliverFurniture(list, one = null) {
+  if (!deps.deliver) return 0;
+  const going = list.filter((it) => isFurnishing(it) && (one === null || it === one));
+  for (const it of going) list.splice(list.indexOf(it), 1);
+  if (going.length) deps.deliver(going);
+  return going.length;
+}
+
+function runSteal() {
+  const items = stealTargets();
+  if (!items.length || deps.stealRefusal?.()) return;   // AUDIT MERCHANT-YARDS Y1
+  const ctx = deps.priceCtx?.() ?? {};
+  const out = shopliftAttempt({ basket: items, pickpocketSkill: deps.pickpocketSkill?.() ?? 0, shopQuality: ctx.quality ?? 0 });
+  deps.tallyPickpocket?.(1);
+  if (!out.caught) {
+    deps.say?.(stealSuccessText(), 2);
+    markStolen(items);   // STOLEN-GOODS: the basket, or the one piece picked - marked before it merges into the pack's stacks
+    if (basket.length) { deliverFurniture(basket); transferAll(basket, deps.packItems()); }
+    else if (!deliverFurniture(deps.shelfItems(), items[0])) move(items[0], deps.shelfItems(), deps.packItems());
+    selected = null;
+    deps.tallyCrimeGuild?.(true, 1);
+  } else {
+    deps.say?.(stealFailureText(), 2);
+    deps.crimeTheft?.();
+    deps.spawnCityGuards?.(true);
+  }
+  close();
+}
+
+function castIdentifySpell() {
+  if (deps.commit?.(mode, [...staged], 0, null) === false) return;
+  clear();
+  render();
+}
+
+function confirmTrade(price) {
+  const isSelling = selling();
+  const proceeds = isSelling ? sellProceeds(price, deps.weight?.() ?? {}) : null;
+  const refused = deps.commit?.(mode, [...stagedForCost()], price, proceeds) === false;
+  if (inBuy()) basket.length = 0;
+  else if (isSelling) staged.length = 0;
+  // AUDIT LW-II-2 C10: a deal the counter refused (LW11's road counter, its purse spent - the host put the goods back in
+  // the pack) is none: the staging cleared, and no coin clinks nor letter of credit is told for it
+  if (refused) { render(); return; }
+  audio.playOneShot(proceeds?.kind === 'letterOfCredit' ? SOUND.ParchmentScratching : SOUND.GoldPieces, 1);
+  if (proceeds?.kind === 'letterOfCredit') {
+    box = { rows: [{ text: letterOfCreditText(), center: true }], buttons: null };
+  }
+  render();
+}
+
+/** BUY-WINDOW QUICK SELL: one of your own items, sold on the spot
+ *  through the SAME Sell-mode law (tradeCost/getTradePrice/
+ *  tradeDecision/sellProceeds/commit) a real Sell-mode window runs -
+ *  this only skips the STAGING step, because Buy and Sell are two
+ *  different window instances in DFU (a shop's Talk/Sell/Exit popup
+ *  opens Sell separately) and there is no in-place mode switch to
+ *  reach for. The window's own `mode` never changes; only this one
+ *  item's own trade is asked for as 'Sell'. `deps.commit` reads the
+ *  mode it is GIVEN, not the window's (worldModes.js's commitTrade
+ *  switches on its own `mode` parameter), so this is exactly as real
+ *  a sale as the staged-and-confirmed kind. */
+function quickSellSelected() {
+  if (!selected || !isQuickSellCandidate()) return;
+  const item = selected.item;
+  if (isBound(item) || lockRefuses(item, 'sell')) return;   // AUDIT SS: the counter's own refusals hold here too, should this path ever open (isQuickSellCandidate answers false)
+  const ctx = deps.priceCtx?.() ?? {};
+  const { cost: c, pieces, resale } = tradeCost('Sell', [item], ctx);
+  const price = getTradePrice('Sell', c, ctx.quality ?? 0, ctx.skills ?? {}, pieces, resale);   // LAW-3: a counter's piece no more than it cost
+  const d = tradeDecision('Sell', { cost: c, tradePrice: price, gold: deps.gold?.() ?? 0 });
+  box = {
+    rows: rowsFor(d.textId, price),
+    buttons: 'YesNo',
+    onYes: () => {
+      const proceeds = sellProceeds(price, deps.weight?.() ?? {});
+      deps.commit?.('Sell', [item], price, proceeds);
+      selected = null;
+      audio.playOneShot(proceeds?.kind === 'letterOfCredit' ? SOUND.ParchmentScratching : SOUND.GoldPieces, 1);
+      if (proceeds?.kind === 'letterOfCredit') {
+        box = { rows: [{ text: letterOfCreditText(), center: true }], buttons: null };
+      }
+      render();
+    },
+  };
+  render();
+}
+
+/** LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): THE JUNK THIS COUNTER WOULD TAKE NOW - every
+ *  junk piece of the pack (systems/item/itemJunk.js) the Sell list shows on any tab (not worn, a piece this shop's counter
+ *  accepts, not yet on it), whose sale is not refused (locked, bound) and that the counter's own click would stage (a
+ *  summoned piece, a quest's, the click's own refusals - AUDIT LOOT II B3: the footer counted what the press then passed
+ *  by, and a summoned robe left "Sell junk (1)" a button that did nothing). None outside a Sell. */
+function junkForCounter() {
+  if (!selling()) return [];
+  const equipped = deps.isEquipped ?? (() => false);
+  const held = remoteItems();
+  return (deps.packItems?.() ?? []).filter((it) => isJunk(it) && !equipped(it) && !held.includes(it) && !saleRefused(it)
+    && localListAccepts(mode, it, { accepts: deps.accepts, enchanted: deps.enchanted }) && junkStages(it));
+}
+/** Whether the counter's own click would stage a junk piece - its law, and its summoned and quest refusals. */
+function junkStages(item) {
+  const d = localClickDecision(mode, item, {
+    inBasket: (i) => basket.includes(i),
+    allowMagicRepairs: deps.allowMagicRepairs ?? false,
+    usingIdentifySpell: deps.usingIdentifySpell ?? false,
+    ...sellGuardOf(deps.entity),   // WAGONS2 (FINAL AUDIT): the counter's own reading (no wagon is junk - the one law all the same)
+  });
+  return d.kind === 'stage' && !isSummoned(item) && !questTransferRefused(item, { fromLocal: true, toWagon: false, getQuest: deps.getQuest ?? null, trade: true });
+}
+/** LOOT18: SELL JUNK - every such piece onto the counter in one press, whole, each by the counter's own click law, and
+ *  then the counter's own price and confirm: the footer's Sell, the YesNo box it always asks. Answers how many it laid. */
+function sellJunk() {
+  let laid = 0;
+  for (const item of junkForCounter()) {
+    clearLightSourceOnLeave(item, deps.entity, true);
+    move(item, deps.packItems(), remoteItems());
+    laid++;
+  }
+  selected = null;
+  if (!laid) { render(); return 0; }
+  playTransferSound();
+  modeAction();   // the counter's own price and its confirm
+  render();
+  return laid;
+}
+
+/** The footer's one primary button, doing whichever of its jobs the
+ *  moment calls for: a quick-sell candidate sells it outright; any
+ *  other pending selection (a single click's tooltip, not yet moved)
+ *  takes the click as "transfer this" - the same move a double click
+ *  makes - and clears the tooltip; with nothing selected it is the
+ *  ordinary Buy/Sell/Repair/Identify confirmation, unchanged. */
+function primaryAction() {
+  if (selected && isQuickSellCandidate()) { quickSellSelected(); return; }
+  if (selected) { transferSelected(); render(); return; }
+  modeAction();
+}
+
+function modeAction() {
+  const { cost: c, modeActionEnabled, pieces, resale } = cost();
+  if (!modeActionEnabled) return;
+  if (deps.usingIdentifySpell) { castIdentifySpell(); return; }
+  const ctx = deps.priceCtx?.() ?? {};
+  const price = getTradePrice(mode, c, ctx.quality ?? 0, ctx.skills ?? {}, pieces, resale);   // FB0929: a purchase asks a gold a piece at least; LAW-3: a counter's piece no more than it cost
+  const d = tradeDecision(mode, { cost: c, tradePrice: price, gold: deps.gold?.() ?? 0 });
+  if (d.kind === 'notEnoughGold') {
+    box = { rows: d.textIds.flatMap((id) => rowsFor(id, price)), buttons: null };
+    render();
+    return;
+  }
+  box = { rows: rowsFor(d.textId, price), buttons: 'YesNo', onYes: () => confirmTrade(price) };
+  render();
+}
+
+function dismissBox(yes) {
+  const b = box;
+  box = null;
+  if (yes && b?.buttons === 'YesNo') b.onYes?.();
+  render();
+}
+
+function close() {
+  hideItemHover();   // SHOP-HOVER: a card never outlives the row it was for
+  // OnPop's ClearSelectedItems (nativeTrade.js's own `_close`): every
+  // exit from this screen puts back whatever is still staged. `onExit`
+  // is ui/tradeDoor.js's own teardown - the host's `hooks.onClose` is
+  // left untouched here, as NativeTradeWindow leaves it: a window that
+  // needs cleanup on close hangs it off the host's `done` sweep instead
+  // (ui/tradeDoor.js's overlay wrapper answers `done` the same way
+  // NativeTradeWindow does).
+  clear();
+  unregisterOutside();
+  onExit();
+}
+
+function setTab(t) { tab = t; render(); }
+
+// ── UXB1-K: THE REPAIR COUNTER'S CLOCK ─────────────────────────────
+// (2026-09-25, the UX backlog: "Countdown timer/estimate for repairs when not instant.") DFU labels every item at the
+// repair counter "DONE" or "%d days" (RepairItemLabelTextHandler :282-288, the remote scroller's LabelTextHandler
+// :244); the port had the law (repairService.js repairStatusLabel) and no skin drew it, so a player who left a sword
+// had no way to know when to come back. The estimate for an item only staged is the scheduler's own pass
+// (updateRepairTimes with commit false - FilterRemoteItems' :725), run once per paint; InstantRepairs has no clock.
+
+/** One scheduler pass over the counter, or null where there is no clock to read. */
+function repairEstimatesNow() {
+  if (mode !== 'Repair' || getBool('Controls', 'InstantRepairs')) return null;
+  return updateRepairTimes(remoteList(), { commit: false, nowMinutes: deps.nowMinutes?.() ?? 0 });
+}
+/** An item's countdown and its words, or null (instant repairs, or nothing owed). */
+function repairWhen(item, now) {
+  if (!repairEst) return null;
+  const c = repairCountdown(item, now, repairEst.get(item) ?? null);
+  return c ? { ...c, text: repairRowText(c) } : null;
+}
+/** AUDIT LIVED1b U2: the row's words beside the detail line's - online both count the job down on the character's
+ *  clock in whole units FLOORED (ownTimeLeftShort, the long form's leading unit), where the row ceiled as DFU's
+ *  daysUntil does: "Ready in 2 days" stood over "Ready in 1 day of your time" for the same job. Offline the row is
+ *  UXB1-K's, DFU's unit and ceiling. */
+export function repairRowText(c) {
+  const own = !c.done ? ownTimeLeftShort(c.doneAt) : null;
+  if (!own || own === 'now') return repairCountdownText(c);
+  return c.estimate ? `About ${own}` : `Ready in ${own}`;
+}
+const pad2 = (n) => String(n).padStart(2, '0');
+/** The detail strip's line: the hour and the day it is ready. LIVED1: online the job runs on the character's own
+ *  clock (a rest or a wait spends it, time away does not), so the line says the time left in their time and in play
+ *  (the bank's due-by shape, worldModes.js dueDateText) - an hour and a date on their own clock would read as the
+ *  world's. */
+export function repairReadyLine(c) {
+  if (!c) return null;
+  if (c.done) return 'Ready to collect.';
+  const own = ownTimeLeftText(c.doneAt);
+  if (own) return `${c.estimate ? 'Ready in about' : 'Ready in'} ${own}.`;
+  const d = dateFromClassicMinutes(c.doneAt);
+  return `${c.estimate ? 'Ready about' : 'Ready by'} ${pad2(d.hour)}:${pad2(d.minute)}, ${dateString(d)}.`;
+}
+
+// ── ROWS ──────────────────────────────────────────────────────────
+
+/** TRADE-VIRT (bible/07-Rendering/Performance-Priority.md TRADE-VIRT): a row's picture is put into its tile when it lands
+ *  (ui/enhanced/landingTiles.js) - its `onReady` was `render`, and a cold counter of 300 pieces repainted itself 273
+ *  times while its pictures came in, every row each time. */
+const tiles = landingTiles((t, landed) => drawTile(t.line, t.grid, landed), { alive: () => !!host });
+function itemTile(line) {
+  return tiles.tile({ line, grid: tradeView === 'grid' });
+}
+function drawTile(line, grid, landed) {
+  const pic = grid ? linePicture(line, { box: SLOT_BOX.grid, onReady: landed })   // MENU-ORDER: a tile's picture, the pack grid's box
+    : linePicture(line, { box: SLOT_BOX.row, onReady: landed });   // DISC22-D / DISC24-B: the pack's own door - the item's dye, the cart's model; UI1: fitted to the row's box
+  if (pic) {
+    const tile = el('span', 'tile has-icon');
+    tile.append(fittedImg(pic));
+    tile.title = line.name;
+    return tile;
+  }
+  const tile = el('span', 'tile', line.name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase());
+  tile.title = line.name;
+  return tile;
+}
+
+function itemRow(item, from) {
+  const line = itemLine(item, deps.entity);
+  const row = markItemFrame(el('button', 'itemrow'), item);   // RARITY-UI / SIGIL-UI: the shelf's icons wear their tier too
+  row._tradeItem = item;   // TRADE-VIRT: the row's piece, for whoever reads the drawn rows (the probe, the pins)
+  const tile = itemTile(line);
+  const bar = wearBar(item);   // WEAR-UI: what a piece will fetch starts with how worn it is - said before the click
+  if (bar) { tile.append(bar); row.classList.add('hasbar'); }
+  row.append(tile);
+  const mid = el('span', 'itemname');
+  mid.append(el('span', null, line.name + (line.stack ? ` ×${line.stack}` : '')));
+  const sub = [line.material, line.word].filter(Boolean).join(' · ');
+  if (sub) mid.append(el('small', null, sub));
+  row.append(mid);
+  row.append(el('span', 'itemwt', `${line.weight.toFixed(2)} kg`));
+  const price = rowPrice(item, from);   // MENU-ORDER: what it costs, or brings, on its own row - not only after a click
+  if (price != null) row.append(el('span', 'itemprice', tradeGoldText(price)));
+  if (mode === 'Repair' && from === 'remote') {
+    const now = deps.nowMinutes?.() ?? 0;
+    const done = itemIsBeingRepaired(item) ? isRepairFinished(item, now) : true;
+    row.classList.add(done ? 'on' : 'ghost');
+    // UXB1-K: RepairItemLabelTextHandler's misc label (DaggerfallTradeWindow.cs:282-288), which no skin drew - when
+    // the job is ready, counted down (repairService.js repairCountdown/Text)
+    const when = repairWhen(item, now);
+    if (when) row.append(el('span', `itemrepair${when.done ? ' done' : ''}`, when.text));
+  }
+  // SHOP-HOVER: the pack's own hover card over every row of both lists - the piece's stats, its affixes, its set and
+  // what it would change against what is worn - the shelf's and my own alike (systems' one infoCard)
+  row.onmouseenter = () => { hoverRow = row; row.querySelector?.('.tile')?.removeAttribute?.('title'); showItemHover(item, { entity: deps.entity, getQuest: deps.getQuest ?? null }, row, from === 'local' ? 'local' : 'shop'); };
+  row.onmouseleave = () => { hoverRow = null; hideItemHover(); };
+  if (selected?.item === item) row.classList.add('picked');
+  // A single click reads the item (the tooltip strip below the lists);
+  // a double click - or the footer's primary button, reaching for
+  // this same pending selection - is what actually moves it.
+  //
+  // Wired as a manually-timed "second click on the same item" check
+  // (see lastRowClick's own comment above) rather than the native
+  // `dblclick` event: render() rebuilds this row into a fresh DOM node
+  // on the first click alone, which breaks the browser's own
+  // same-node double-click detection before a native `dblclick` would
+  // ever get a chance to fire.
+  row.onclick = (e) => {
+    const now = e.timeStamp;
+    if (lastRowClick.item === item && now - lastRowClick.time <= DOUBLE_CLICK_MS) {
+      lastRowClick = { item: null, time: 0 };
+      selected = null;
+      (from === 'local' ? pickLocal(item) : pickRemote(item));
+      return;
+    }
+    lastRowClick = { item, time: now };
+    selectItem(item, from);
+  };
+  return row;
+}
+
+function localCol() {
+  const col = el('section', 'packcol');
+  const items = localList();
+  // MENU-ORDER: the player's column named over its tabs, as the shop's is - the two columns read as a pair
+  const head = el('div', 'remotehead trade-ownhead');
+  const who = el('div', 'remotewho');
+  who.append(el('h3', null, t('trade.counter.ownHead', TRADE_OWN_HEAD)), el('p', 'meta', tradeCountText(items.length)));
+  head.append(who);
+  col.append(head);
+  const tabsEl = el('div', 'packtabs');
+  for (const t of TABS) {
+    const b = el('button', `packtab${t === tab ? ' on' : ''}`, TAB_LABEL[t]);
+    b.onclick = () => setTab(t);
+    tabsEl.append(b);
+  }
+  col.append(tabsEl);
+  const list = el('div', 'remotelist');
+  col.append(list);
+  if (!items.length) list.append(el('p', 'packempty', 'Nothing here fits this page.'));
+  else keepList(virtualRows(list, items, (it) => itemRow(it, 'local'), { onAim: rowsMoved, sizes: sizesOf(`local:${tradeView}`) }));   // TRADE-VIRT: a long pack draws the rows on screen
+  return col;
+}
+
+function remoteHeading() {
+  if (inBuy()) return 'On the shelf';
+  if (mode === 'Repair') return 'At the counter';
+  if (mode === 'Identify') return 'Staged';
+  return 'Staged to sell';
+}
+
+function remoteCol() {
+  const col = el('section', 'packcol packremote');
+  const head = el('div', 'remotehead');
+  const who = el('div', 'remotewho');
+  who.append(el('h3', null, remoteHeading()));
+  const items = remoteList();
+  who.append(el('p', 'meta', tradeCountText(items.length)));
+  head.append(who);
+  col.append(head);
+  const list = el('div', 'remotelist');
+  col.append(list);
+  if (!items.length) list.append(el('p', 'packempty', 'Nothing staged yet.'));
+  else keepList(virtualRows(list, items, (it) => itemRow(it, 'remote'), { onAim: rowsMoved, sizes: sizesOf(`remote:${tradeView}`) }));   // TRADE-VIRT: and a long shelf
+  return col;
+}
+
+/** TRADE-VIRT: THE LONG LISTS ON SCREEN (ui/virtualRows.js, VIRT's law for the pack): past `VIRTUAL_MIN` rows a list draws
+ *  the rows in its visible band and a margin round it. A repaint lets go of them before it builds, measures the new ones
+ *  before it gives a scroll back and aims them after; a resize repaints (the layout's columns and pitch measured again). */
+let lists = [];
+const keepList = (v) => { lists.push(v); return v; };
+const dropLists = () => { for (const v of lists) v.dispose(); lists = []; };
+const syncLists = (opts) => { for (const v of lists) v.sync(opts); };
+/** A hover card whose row the window took away goes with it (AUDIT VIRT's `rowsMoved`). */
+let hoverRow = null;
+const rowsMoved = () => { if (hoverRow && hoverRow.isConnected === false) { hoverRow = null; hideItemHover(); } };
+/** AUDIT TRADE-VIRT: each long list's rows' heights by item, kept across the window's repaints - one set a list and a
+ *  view (the grid's tiles are not the list's rows) - so a repaint's spacers are the ones it replaces (ui/virtualRows.js
+ *  `sizes`). */
+const rowSizes = new Map();
+const sizesOf = (key) => { let m = rowSizes.get(key); if (!m) rowSizes.set(key, (m = new WeakMap())); return m; };
+/** AUDIT TRADE-VIRT: a resize measures the long lists again, as the pack's does - it repainted the window, and a repaint
+ *  took the focus out of the How-many field and lost the key typed next (the old window never listened). */
+const onResize = () => { if (host) syncLists({ remeasure: true }); };
+
+/** MENU-ORDER: a row's own price - the shelf's at a counter that sells, the player's piece's where this counter buys,
+ *  repairs or identifies it (quotePriceFor's law, the strip's own figure) - or null where a press would move nothing. */
+function rowPrice(item, from) {
+  if (from === 'remote') return inBuy() ? (quotePriceFor(item, 'remote')?.price ?? null) : null;
+  if (inBuy()) return null;
+  return quotePriceFor(item, 'local')?.price ?? null;
+}
+
+/** The single-click tooltip: itemLine's own stats, the same fields
+ *  enhancedInventory.js's own detail card reads, laid out as one
+ *  compact strip rather than that card's sliding third column - this
+ *  window is two columns, not three, and a bought or sold item's
+ *  stats are a glance, not a page. */
+function detailStrip() {
+  if (!selected) return null;
+  const line = itemLine(selected.item, deps.entity);
+  const bar = el('div', 'trade-detail');
+  bar.append(itemTile(line));
+  const info = el('div', 'trade-detail-info');
+  info.append(el('h4', null, line.name + (line.stack ? ` ×${line.stack}` : '')));
+  const bits = [line.material, line.word, `${line.weight.toFixed(2)} kg`];
+  if (line.damage != null) bits.push(`Damage ${line.damage}`);
+  if (line.armour != null) bits.push(`Armour ${line.armour}`);
+  if (line.hands != null) bits.push(line.hands);
+  for (const t of line.survival ?? []) bits.push(t);
+  info.append(el('p', 'meta', bits.filter(Boolean).join(' · ')));
+  const quote = quotePriceFor(selected.item, selected.side);
+  if (quote) info.append(el('p', 'trade-quote', `${quote.label} ${quote.price} gold`));
+  // DISC25-F: a stack more than one of which would move asks how many, here where the move is made
+  const item = selected.item;
+  const max = stackOf(item) > 1 ? splitMaxOf(item, selected.side) : 0;
+  if (max > 1) {
+    if (qty.item !== item) qty = { item, text: String(max) };
+    info.append(howManyField({ max, text: qty.text, onInput: (t) => { qty.text = t; } }));
+  }
+  // UXB1-K: at the repair counter, when it is ready
+  if (mode === 'Repair' && selected.side === 'remote') {
+    const line = repairReadyLine(repairWhen(selected.item, deps.nowMinutes?.() ?? 0));
+    if (line) info.append(el('p', 'trade-quote trade-ready', line));
+  }
+  bar.append(info);
+  const closeBtn = el('button', 'act', 'Close');
+  closeBtn.onclick = () => { selected = null; render(); };
+  bar.append(closeBtn);
+  return bar;
+}
+
+function footer() {
+  const bar = el('div', 'remoteacts trade-footer');
+  const { cost: c, modeActionEnabled } = cost();
+  // MENU-ORDER: two figures, each under its name, where one span ran them together
+  const figs = el('span', 'meta trade-cost');
+  const fig = (word, value) => { const f = el('span', 'trade-fig'); f.append(el('small', null, word), el('b', null, value)); return f; };
+  figs.append(fig(TRADE_COST_WORD[mode] ?? TRADE_COST_WORD.Buy, tradeGoldText(c)), fig(t('trade.counter.gold', TRADE_GOLD_WORD), tradeGoldText(deps.gold?.() ?? 0)));
+  bar.append(figs);
+  if (inBuy() && !deps.stealRefusal?.()) {   // AUDIT MERCHANT-YARDS Y1: no Steal at a counter whose keeper never looks away
+    const steal = el('button', 'act trade-steal', 'Steal');   // MENU-ORDER: a crime, edged in blood and set apart from the sale
+    steal.disabled = !(stealCost() > 0);
+    steal.onclick = doSteal;
+    bar.append(steal);
+  }
+  const junk = junkForCounter();   // LOOT18: the pack's junk, onto the counter in one press
+  if (junk.length) {
+    const j = el('button', 'act sell-junk', `Sell junk (${junk.length})`);
+    j.onclick = sellJunk;
+    bar.append(j);
+  }
+  const clearBtn = el('button', 'act', 'Clear');
+  clearBtn.onclick = () => { clear(); render(); };
+  bar.append(clearBtn);
+  const action = el('button', 'act primary', isQuickSellCandidate() ? 'Sell' : (MODE_LABEL[mode] ?? 'Trade'));
+  // A pending selection (a single click's tooltip) makes this button
+  // reach for THAT item instead of the ordinary confirm - but only
+  // when the item is one this button could actually do something with
+  // (canTransferSelected's dry run of pickLocal/pickRemote's own
+  // decision): your own item in Buy mode, not yet in the basket, has
+  // no Buy to offer it, so the button greys out rather than reading
+  // as an action that would do nothing.
+  action.disabled = selected ? !canTransferSelected() : !modeActionEnabled;
+  action.onclick = primaryAction;
+  bar.append(action);
+  return bar;
+}
+
+function boxScrim() {
+  const scrim = el('div', 'sb-ask');
+  const ask = el('div', 'card');
+  for (const r of box.rows) ask.append(el('p', 'px-note', r.text));
+  const acts = el('div', 'sb-acts');
+  if (box.buttons === 'YesNo') {
+    const yes = el('button', 'act primary', 'Yes');
+    yes.onclick = () => dismissBox(true);
+    const no = el('button', 'act', 'No');
+    no.onclick = () => dismissBox(false);
+    acts.append(yes, no);
+  } else {
+    const ok = el('button', 'act primary', 'OK');
+    ok.onclick = () => dismissBox(false);
+    acts.append(ok);
+  }
+  ask.append(acts);
+  scrim.append(ask);
+  return scrim;
+}
+
+function render() {
+  hideItemHover();   // SHOP-HOVER: a card never outlives the row it was for
+  if (!host) return;
+  // The scroll position of each list-column, captured before the
+  // rebuild below throws them away - render() runs on EVERY state
+  // change (a single click just to preview an item included), and
+  // without this a click halfway down a long shelf snapped the view
+  // back to its top every time.
+  const prevScroll = Array.from(host.querySelectorAll('.packcol')).map((c) => c.scrollTop);
+  repairEst = repairEstimatesNow();   // UXB1-K: one scheduler pass for every row this paint draws
+  dropLists();   // TRADE-VIRT: the old DOM's windows and waiting tiles go with it
+  tiles.clear();
+  host.innerHTML = '';
+  const shell = el('div', 'px-home px-over trade-shell');
+  shell.dataset.view = tradeView;   // MENU-ORDER
+  const win = el('div', 'px-win trade-win');
+  for (const c of ['tl', 'tr', 'bl', 'br']) win.append(el('span', `px-gem px-corner px-${c}`));
+
+  const head = el('header', 'sb-top');
+  // MENU-ORDER: the lists as lines or as pictures (tiles with their prices) - the player's choice, kept
+  const views = el('span', 'sb-spacer trade-view');
+  for (const [v, word] of [['list', TRADE_VIEW_WORDS.list], ['grid', TRADE_VIEW_WORDS.grid]]) {
+    const b = el('button', `act${tradeView === v ? ' on' : ''}`, word);
+    b.setAttribute('aria-pressed', tradeView === v ? 'true' : 'false');
+    b.onclick = () => { tradeView = v; render(); };
+    views.append(b);
+  }
+  const who = el('div', 'sb-who');
+  who.append(el('h2', null, `${deps.shopName ?? 'Shop'} — ${TRADE_TITLE[mode] ?? mode}`));   // MENU-ORDER: the mode whole
+  head.append(views, who);
+  const closeBtn = el('button', 'act', 'Close');
+  closeBtn.onclick = close;
+  head.append(closeBtn);
+  win.append(head);
+
+  const body = el('div', 'px-body trade-body');
+  const lists = el('div', 'packlists');
+  lists.append(localCol(), remoteCol());
+  body.append(lists);
+  // TRADE-STEADY (2026-10-08, the owner: "when you click on an item a bar with info appears.... its super annoying when you
+  // try to sell the buttom items cause clicking them causes the bar to appear over them"): the strip's room is ALWAYS
+  // kept under the lists - empty until a click, filled after - so a click never shrinks the lists and moves the row
+  // under the pointer away (the double click that sells it then landed on another row, or on nothing)
+  const detail = detailStrip() ?? (() => { const b = el('div', 'trade-detail trade-detail-empty'); b.append(el('p', 'meta', 'Click an item to see it and its price here. Double-click to move it.')); return b; })();
+  body.append(detail);
+  win.append(body);
+  win.append(footer());
+
+  if (box) {
+    for (const b of win.querySelectorAll('button')) b.disabled = true;
+    win.append(boxScrim());
+  }
+  shell.append(win);
+  host.append(shell);
+  syncLists({ draw: false });   // TRADE-VIRT: the long lists measured and their spacers stood, so the scroll given back is the whole list's
+  host.querySelectorAll('.packcol').forEach((c, i) => { if (prevScroll[i] != null) c.scrollTop = prevScroll[i]; });
+  syncLists();   // and the rows at that scroll drawn
+  unregisterOutside();
+  unregisterOutside = closeOnOutsideTap(shell, '.px-win', () => { if (!box) close(); });
+}
+
+function onKey(e) {
+  if (e.metaKey || e.ctrlKey || e.altKey) return;
+  if (box) {
+    if (box.buttons === 'YesNo') {
+      if (e.code === 'KeyY') { e.preventDefault(); dismissBox(true); }
+      else if (e.code === 'KeyN' || overlayAction(e) === 'back') { e.preventDefault(); dismissBox(false); }
+    } else if (overlayAction(e) === 'back' || e.key === 'Enter') { e.preventDefault(); dismissBox(false); }
+    return;
+  }
+  if (overlayAction(e) === 'back') { e.preventDefault(); close(); return; }
+  // DISC25-F: Enter in the how-many field is the popup's Return - it moves the selected item with that count, not
+  // the whole lot's confirm
+  if (e.key === 'Enter' && isTextEntryTarget(e.target) && e.target.closest?.('.qtyfield') && selected) { e.preventDefault(); transferSelected(); render(); return; }
+  if (e.key === 'Enter') { e.preventDefault(); modeAction(); }
+}
+
+/**
+ * Mounts the enhanced trade counter. `hooks` is nativeTrade.js's own
+ * hooks bag (see the doc comment above `NativeTradeWindow`) - the
+ * door hands the SAME object to either skin, so a host never builds
+ * two.
+ */
+export function mountEnhancedTrade(hostEl, hooks = {}) {
+  injectEnhancedStyle();
+  injectEnhancedFonts();
+  host = hostEl;
+  deps = hooks;
+  mode = hooks.mode ?? 'Buy';
+  tab = initialTradeTab(mode);
+  basket = [];
+  staged = [];
+  usingWagon = false;
+  box = null;
+  selected = null;
+  qty = { item: null, text: '' };
+  onExit = hooks.onExit ?? (() => {});
+  render();
+  keyHandler = onKey;
+  globalThis.addEventListener('keydown', keyHandler, { capture: true });
+  globalThis.addEventListener?.('resize', onResize);   // TRADE-VIRT
+  return {
+    repaint: render,
+    unmount() {
+      // AUDIT SS: EVERY way off this screen puts back what is staged - OnPop's ClearSelectedItems. The door's own close
+      // (the QuickDial's key, a death, a building left, a load: ui/tradeDoor.js dispose) comes straight here, past this
+      // view's close(), and the staged goods - a sale's, an identify's, a basket's - went with the view
+      if (host) clear();
+      if (keyHandler) globalThis.removeEventListener('keydown', keyHandler, { capture: true });
+      keyHandler = null;
+      globalThis.removeEventListener?.('resize', onResize);
+      dropLists();   // TRADE-VIRT: the windows' scroll listeners, and the tiles that will never be drawn into
+      tiles.clear();
+      hoverRow = null;
+      unregisterOutside();
+      unregisterOutside = () => {};
+      host = null;
+      deps = {};
+      basket = [];
+      staged = [];
+      box = null;
+      selected = null;
+    },
+  };
+}
+
+/** GetCarriedWeight override, re-exported for a host that wants it
+ *  (parity with nativeTrade.js's own `_carriedWeight`). */
+export function tradeCarriedWeight(entity) {
+  return carriedWeight(entity ?? {}) + totalWeight(basket.filter((x) => !isFurnishing(x)));   // DECOR2b: delivered, not carried
+}
+export function tradeMaxEncumbrance(entity) { return entityMaxEncumbrance(entity ?? {}); }

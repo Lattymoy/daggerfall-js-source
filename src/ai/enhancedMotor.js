@@ -107,8 +107,8 @@
 // on - a broken navmesh costs a feature, never a dungeon.
 // ═══════════════════════════════════════════════════════════════════
 
-import { EnemyAI } from '../characters/enemyMotor.js';
-import { findPath } from './navmesh.js';
+import { EnemyAI } from '../characters/enemy/enemyMotor.js';
+import { findPath } from './nav/navmesh.js';
 
 // ── project-final enemyShared.js:7-12, verbatim ────────────────────
 export const REPATH_INT = 0.4;     // s between findPath refreshes toward the (moving) player
@@ -160,13 +160,14 @@ export class EnhancedEnemyAI extends EnemyAI {
     this.nav = opts.nav ?? (() => null);
     this.navWorld = opts.navWorld ?? makeNavWorld();
     this.navSeed = (opts.navSeed ?? 0) >>> 0;
+    this.navGoal = opts.navGoal ?? null;   // INDOOR-WATCH W1: (feet) => the mesh's point a route to an off-mesh goal ends at, or null (_routeOffMesh)
     // his movement scratch (enemy.js:64), re-homed
     this.path = null; this.pathI = 1; this.repathT = 0; this.pathEpoch = undefined;
     this.stuckT = 0; this.lastX = feet[0]; this.lastZ = feet[2];
     this.navBroken = false;
     this._wasFollowing = false;   // AUDIT CC-B5: the route's goal - the leader's or the foe's
     /** observational, his stuckStats pattern - probes and tests only */
-    this.navStats = { repaths: 0, fails: 0, stuckFires: 0 };
+    this.navStats = { repaths: 0, fails: 0, stuckFires: 0, offMesh: 0 };
   }
 
   /** project-final enemyShared.js:158-166 repathToward, on `this`.
@@ -179,11 +180,25 @@ export class EnhancedEnemyAI extends EnemyAI {
     if (this.path && world.navEpoch !== undefined && this.pathEpoch !== world.navEpoch) { this.path = null; this.repathT = 0; }
     if ((this.repathT -= dt) > 0) return false;
     if (world.pathBudget-- <= 0) return false;
-    const np = findPath(chf, this.feet, goal);   // AUDIT 68 S02-motor-flat-y-locate: the real heights pick each endpoint's level (AUDIT 62 F1's locate); y = 0 routed a stacked floor's foe on the level nearest 0
+    const np = findPath(chf, this.feet, goal) ?? this._routeOffMesh(chf, goal);   // AUDIT 68 S02-motor-flat-y-locate: the real heights pick each endpoint's level (AUDIT 62 F1's locate); y = 0 routed a stacked floor's foe on the level nearest 0
     this.navStats.repaths++;
     if (np) { this.path = np; this.pathI = 1; this.repathT = REPATH_INT; this.pathEpoch = world.navEpoch; }
     else { this.path = null; this.repathT = REPATH_FAIL; this.navStats.fails++; }
     return true;
+  }
+
+  /** FIELD BUGS 2026-10-16b INDOOR-WATCH, AUDIT W1: a goal findPath cannot place - off the mesh past its locate's
+   *  half-metre snap (navmesh.js:"return bestD <= 2 ? best : -1;"), a player between two shelves 0.8 m deep or in a
+   *  closet the erosion kept no floor of. The host's `navGoal` names the mesh's point a route there ends at (the room's
+   *  meshPointNear, never through a wall); the route runs to it and its last leg is the straight walk in. No hook, or
+   *  no point, or no route to it: null, the classic line. Departure from his repathToward, named: it answered null. */
+  _routeOffMesh(chf, goal) {
+    const on = this.navGoal?.(goal);
+    const p = on ? findPath(chf, this.feet, on) : null;
+    if (!p) return null;
+    this.navStats.offMesh++;
+    p.push([goal[0], goal[1], goal[2]]);
+    return p;
   }
 
   /** project-final enemyShared.js:177-187 stuckWatch, on `this`, with
@@ -214,8 +229,9 @@ export class EnhancedEnemyAI extends EnemyAI {
       const drop = this.fallDetected;
       this.obstacleDetected = od; this.foundUpwardSlope = us; this.foundDoor = fd; this.fallDetected = false;
       if (drop) continue;
-      const moveResult = this.collider.move(this.feet, nx - this.feet[0], 0, nz - this.feet[2], this.height);   // a Move like any other: isGrounded is its (FIELD BUGS 2026-09-29 sea #2)
+      const moveResult = this.collider.move(this.feet, nx - this.feet[0], 0, nz - this.feet[2], this.controllerHeight);   // a Move like any other: isGrounded is its (FIELD BUGS 2026-09-29 sea #2); DOOR-JAM: at the controller's own height
       this.isGrounded = moveResult.grounded;
+      this.collidedSides = !!moveResult.sides;   // DOOR-JAM: and its CollidedSides, for HeightAdjust
       break;
     }
     this.path = null; this.repathT = 0;
@@ -264,6 +280,12 @@ export class EnhancedEnemyAI extends EnemyAI {
     let wp = this.path[this.pathI];
     while (this.pathI < this.path.length - 1 && Math.hypot(wp[0] - this.feet[0], wp[2] - this.feet[2]) <= WP_REACH) wp = this.path[++this.pathI];
     const last = this.pathI === this.path.length - 1;
+    // INDOOR-WATCH AUDIT W1 - adaptation 1's other half: in sight, the classic stop is measured to the TARGET
+    // (EnemyMotor.cs:479-482), and a foe it stops turns to its destination - so one stopped within reach of the target
+    // with a corner still ahead (the mouth of the aisle it was walked in by) faced the corner, and the swing's 22.5
+    // degree gate (enemyAttack.js ATTACK_YAW_DEG) never opened. Stopped on the target, it faces the target.
+    const p = this.predictedTargetPos;
+    if (!last && p && this.inSight && this._dist <= this.stopDistance) { this.destination = [p[0], this._aimY(p[1]), p[2]]; return; }
     // adaptation 3: the goal's y is classic's own aim at the goal
     // (EnemyAI._aimY, the clear-path arm's vertical), a corner's is the foe's
     const y = last ? this._aimY(this.predictedTargetPos[1]) : this.feet[1];
@@ -298,6 +320,17 @@ export class EnhancedEnemyAI extends EnemyAI {
       console.warn('[enhanced-ai] follow fell back to classic:', e?.message ?? e);
       return leader;
     }
+  }
+
+  /** FIELD BUGS 2026-10-16b INDOOR-WATCH (scenes/interiorNav.js, NO ROUTE): stood at `feet` by the host, on the island
+   *  the route could not reach. The pursuit stands - its target, its give-up timer, its belief of where the player is;
+   *  what the motor held of where it stood goes - EnemyAI._standAfresh, resumeLive's own list (AUDIT W4: this kept a
+   *  shorter one, and a watchman crouched at the wall that stopped him was stood crouched) - and the route and the
+   *  stuck clocks with it. */
+  standAt(feet) {
+    this.feet[0] = feet[0]; this.feet[1] = feet[1]; this.feet[2] = feet[2];
+    this._standAfresh();
+    this.path = null; this.pathI = 1; this.repathT = 0; this.stuckT = 0; this.lastX = feet[0]; this.lastZ = feet[2];
   }
 
   /** WORLD2: the base resume, and the cached path with it - the next pursuit paths from where the puppet stood. */

@@ -1,1 +1,46 @@
-{}
+{
+  "breton": {
+    "male": {
+      "0": {
+        "head": "breton_m_head_h0423",
+        "hair": "breton_m_hair_0111"
+      },
+      "1": {
+        "head": "breton_m_head_h0423",
+        "hair": "breton_m_hair_widow"
+      },
+      "2": {
+        "head": "breton_m_head_h04",
+        "hair": "breton_m_hair_01"
+      },
+      "3": {
+        "head": "breton_m_head_h04",
+        "hair": "breton_m_hair_widow"
+      },
+      "4": {
+        "head": "breton_m_head_h0423",
+        "hair": "breton_m_hair_0111"
+      },
+      "5": {
+        "head": "breton_m_head_h04",
+        "hair": "breton_m_hair_0111"
+      },
+      "6": {
+        "head": "breton_m_head_h0411",
+        "hair": "breton_m_hair_01"
+      },
+      "7": {
+        "head": "breton_m_head_h0423",
+        "hair": "breton_m_hair_01"
+      },
+      "8": {
+        "head": "breton_m_head_h0423",
+        "hair": "breton_m_hair_widow"
+      },
+      "9": {
+        "head": "breton_m_head_h04",
+        "hair": "breton_m_hair_widow"
+      }
+    }
+  }
+}

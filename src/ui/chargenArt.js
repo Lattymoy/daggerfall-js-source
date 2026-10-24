@@ -38,23 +38,29 @@ import { FlcPlayer } from './flcPlayer.js';
 import { DFPalette } from '../formats/dfPalette.js';   // U18: CHGN00I0's own palette
 import { TextRsc } from '../formats/textRsc.js';   // U11: the race description
 import { generateBackstory } from '../systems/biography.js';   // U13
-import { bitmapToColor32 } from '../formats/color32Order.js';
-import { drawImg, drawRect, shadowText, DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR, SCREEN_DIM } from './nativePanel.js';
+import { bitmapToColor32, toScreenOrder } from '../formats/color32Order.js';   // PORTRAIT3D: toScreenOrder - a head's picture is top-down
+import { drawImg, drawRect, shadowText, DEFAULT_TEXT_COLOR, DEFAULT_SHADOW_COLOR, SCREEN_DIM } from './native/nativePanel.js';
 import { thumbSpan, drawScrollThumb } from './verticalScrollBar.js';   // ROAD-D2: the list picker's thumb, DFU's own slices
 import { drawText, measureText, makeFont } from './text.js';   // U15: the RANDOM button label; U18: the black scroll text; AUDIT 18: SmallFont
 import { FntFile } from '../formats/fntFile.js';   // AUDIT 18: FONT0002, DaggerfallUI.SmallFont
 import { layoutMessageBox, drawMessageBox, messageBoxHit, MB_BUTTONS } from './messageBox.js';   // U11
 import { FACES_PER_RACE, raceById, raceArt } from '../systems/races.js';
 import { SKILL_NAMES } from '../systems/skills.js';
+import { reviseClassDescription } from '../systems/stockClasses.js';   // CLASS-USE: the description names the revised skills
 import { daggerY, tickDaggerTrails, REP_GREEN, REP_RED, REP_EXIT, REP_BAR_TOP, REP_BAR_BOTTOM, REP_GROUPS, HELP_TOPICS } from '../systems/customClass.js';   // U20a; CG1 the trail machine
 import { labelRows, labelFor, LABEL_ORIGIN, LABEL_HIT_HEIGHT } from '../systems/specialAdvantages.js';   // U20b
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { packImgTexture } from './packArt.js';   // OVH2: the worn UI pack's picture
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { raceDisplayName } from '../systems/talk/talkSession.js';   // L10N3d: RaceTemplate.Name, read in the player's language
 
 // DaggerfallUI.cs:52-62 - the colours these windows actually use.
 /** CreateCharNameSelect.cs:79-81 - the RANDOM button's own colours. */
 export const RANDOM_BUTTON_BG = [0.5, 0.5, 0.5, 0.75];
 export const RANDOM_LABEL = 'Random';
+/** L10N3d: the button's label (CreateCharNameSelect.cs:79) and the race map's prompt (CreateCharRaceSelect.cs:64), read where they draw. */
+export const randomLabel = () => localizedText('random', RANDOM_LABEL);
+export const homeProvincePrompt = () => localizedText('pleaseSelectYourHomeProvince', 'Please select your home province...');
 
 /** DaggerfallBaseWindow.cs:40 - parentPanel.BackgroundColor = black. */
 export const MENU_BACKDROP = [0, 0, 0, 1];
@@ -253,7 +259,7 @@ const QUESTION_TEXT_COLOR = [0, 0, 0, 1];
 /** The rows a class-description box carries, or null. */
 export function classDescriptionLines(classIndex) {
   const rows = _art?.textRsc?.linesById(CLASS_DESCRIPTION_TEXT_ID + classIndex) ?? [];
-  return rows.length ? rows : null;
+  return rows.length ? reviseClassDescription(classIndex, rows) : null;
 }
 
 /** U20a: a bare TEXT.RSC record as box rows, or null - the builder's
@@ -477,10 +483,28 @@ export async function loadFaceSet(raceKey, gender) {
       }
       if (_facePending !== want) continue;   // a newer identity arrived mid-load
       _faces = set;
+      headFaces(set, wantRace, wantGender);   // PORTRAIT3D
       break;
     }
   } catch (e) { console.warn('[chargen] FACE CIF unavailable; the portrait stays bare', e); }
   finally { _facePending = null; }
+}
+
+/** PORTRAIT3D (2026-10-15, the owner: "#2 is exactly I wanted"): with Morrowind's data attached, each of the ten faces
+ *  becomes the Morrowind head the player's body would wear for it (characters/headPortraits.js playerHeadImage), drawn
+ *  in the record's own place at the record's own size - its picture that shape at four times its pixels. The records
+ *  stand until each head lands, and for good where none is drawn; a set no longer shown takes nothing. */
+async function headFaces(set, race, gender) {
+  try {
+    const { playerHeadImage } = await import('../characters/headPortraits.js');
+    for (let i = 0; i < set.tex.length; i++) {
+      if (_faces !== set) return;
+      const [w, h] = set.size[i];
+      if (!(w > 0 && h > 0)) continue;
+      const img = await playerHeadImage({ race, gender, faceIndex: i }, { px: w * 4, ph: h * 4, renderer: _deps.renderer }).catch(() => null);
+      if (img && _faces === set) set.tex[i] = _deps.renderer.uploadTexture('img', `face:mw:${set.key}:${i}`, toScreenOrder(img));
+    }
+  } catch (e) { console.warn('[chargen] the Morrowind heads would not draw; the portraits stand', e?.message ?? e); }
 }
 export const faceSetLoaded = () => !!_faces;
 
@@ -583,7 +607,7 @@ export const buildBackstory = (backstoryId, effects, ctx) =>
  *  `unchanged,Unchanged`). The port printed the signed integer, so
  *  the closing screen of every chargen read "Commoners: -5" where
  *  classic reads "Commoners: Lower". */
-export const repChangeStr = (v) => (v === 0 ? 'Unchanged' : v < 0 ? 'Lower' : 'Higher');
+export const repChangeStr = (v) => (v === 0 ? localizedText('unchanged', 'Unchanged') : v < 0 ? localizedText('lower', 'Lower') : localizedText('higher', 'Higher'));   // L10N3d: BiogFileMCP.cs:39-47
 
 /** U13: TEXT.RSC 35's rows with %r1..%r5 resolved through GetChangeStr
  *  over DigestRepChanges' totals (BiogFileMCP.cs:54-89, MacroHelper.cs
@@ -636,8 +660,9 @@ function drawName(renderer, m, font, flow) {
   // guarantees: race is the first screen.
   const [rx, ry, rw, rh] = RECTS.randomName;
   drawRect(renderer, m, rx, ry, rw, rh, RANDOM_BUTTON_BG);
-  const lw = measureText(font.fnt, RANDOM_LABEL);
-  shadowText(renderer, font, RANDOM_LABEL, m, rx + Math.round((rw - lw) / 2), ry + 2,
+  const label = randomLabel();
+  const lw = measureText(font.fnt, label);
+  shadowText(renderer, font, label, m, rx + Math.round((rw - lw) / 2), ry + 2,
     { shadow: [0, 0, 0, 1] });
   // TextBox at (80,5) 214x7 - the input colour, not the default
   const [bx, by] = RECTS.nameBox;
@@ -675,12 +700,12 @@ export function bonusPointsRows() {
 function drawRace(renderer, m, font, flow) {
   drawImg(renderer, img('TMAP00I0.IMG'), m, 0, 0);
   // promptLabel (0,16) CENTERED, default colour + default shadow
-  shadowText(renderer, font, 'Please select your home province...', m, 0, 16, { align: 'center', w: 320 });
+  shadowText(renderer, font, homeProvincePrompt(), m, 0, 16, { align: 'center', w: 320 });
   // The keyboard flow's current race, named UNDER the prompt - the
   // classic map names nothing (you click a province), but the up/down
   // seam has to be legible without a click (phone + probe drive it by
   // key). Under the prompt, not over the banner at the map's foot.
-  shadowText(renderer, font, flow.race.name, m, 0, 26, { align: 'center', w: 320, color: SELECTED_TEXT });
+  shadowText(renderer, font, raceDisplayName(flow.race.key), m, 0, 26, { align: 'center', w: 320, color: SELECTED_TEXT });
   // U11: a province click opens the race's DESCRIPTION in a Yes/No
   // box (CreateCharRaceSelect.cs:100-112) - Yes accepts the race and
   // leaves the screen, No returns to the map.

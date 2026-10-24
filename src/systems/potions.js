@@ -36,7 +36,7 @@
 //    creates a useless "Unknown Powers" potion, DFU says so and
 //    refuses. The ingredients are consumed either way.
 
-import { templateByIndex } from './itemTemplates.js';
+import { templateByIndex } from './item/itemTemplates.js';
 // PROF12 (bible/06-Systems/Professions-Arc.md 9.3, 37): THE TWENTY
 // RECIPES AND THEIR KEY moved, verbatim, to a leaf of their own
 // (systems/potionRecipes.js) - the account service runs DFU's own
@@ -46,9 +46,26 @@ import { templateByIndex } from './itemTemplates.js';
 // bundle. One home still: this file re-exports them, and every
 // reader's import stands.
 import {
-  POTION_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron,
+  POTION_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron, setPotionDisplayNames,
 } from './potionRecipes.js';
+import { localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 export { POTION_RECIPES, POTION_DEFAULT_TEXTURE_RECORD, potionRecipeKey, potionKeyFromCauldron };
+
+/** L10N3d: PotionRecipe.GetDisplayName (:225-236) is
+ *  `GetLocalizedText(DisplayNameKey)`, and each recipe's `name` IS its
+ *  DisplayNameKey - so its display name is this table's row for that
+ *  key, read each time it is shown. The leaf imports nothing (PROF12),
+ *  so it is handed the table here; the account service, which bundles
+ *  the leaf alone, reads the recipe's English. */
+const POTION_NAME_TEXT = localizedStrings({
+  resistFire: 'Resist Fire', resistFrost: 'Resist Frost', resistShock: 'Resist Shock', resistPoison: 'Resist Poison',
+  slowFalling: 'Slow Falling', waterBreathing: 'Water Breathing', chameleonForm: 'Chameleon Form',
+  invisibility: 'Invisibility', shadowForm: 'Shadow Form', cureDisease: 'Cure Disease', purification: 'Purification',
+  curePoison: 'Cure Poison', orcStrength: 'Orc Strength', freeAction: 'Free Action', stamina: 'Stamina',
+  healing: 'Healing', healTrue: 'Heal True', restorePower: 'Restore Power', levitation: 'Levitation',
+  waterWalking: 'Water Walking',
+});
+setPotionDisplayNames(POTION_NAME_TEXT);
 
 /** The broker's recipe lookup, built once. DFU keys its dictionary by
  *  the same hash the cauldron computes, which is the whole matching

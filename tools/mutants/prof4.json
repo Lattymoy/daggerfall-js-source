@@ -5,7 +5,7 @@
     "old": "export const RARE_WOOD_CHANCE = 1 / 20;",
     "new": "export const RARE_WOOD_CHANCE = 1 / 10;",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  [CLIMATES.HauntedWoodlands]: row('log:oak', 'log:cherry'),\n  [CLIMATES.Swamp]: row('log:oak'),",
     "new": "  [CLIMATES.HauntedWoodlands]: row('log:pine'),\n  [CLIMATES.Swamp]: row('log:oak'),",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -23,8 +23,8 @@
     "old": "unit('tree', x, y, day, slot, 4), confirmed ? 7 : 2);",
     "new": "unit('tree', x, y, day, slot, 4), confirmed ? 7 : 3);",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_service.test.js"
+      "test/net/prof4_law.test.js",
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "  if (confirmed && rare && unit('tree', x, y, day, slot, 5) < RARE_WOOD_CHANCE)",
     "new": "  if (rare && unit('tree', x, y, day, slot, 5) < RARE_WOOD_CHANCE)",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "  let y = roll;\n  if (march) y *= MARCH_MULT;\n  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  return Math.max(1, wholeYield(y, chance));\n}\n/**\n * A TREE'S FINDS",
     "new": "  let y = roll;\n  y *= tideMult;   // SEASON1 part two: the land's Tide on confirmed ground (tideLaw.js tideYield)\n  return Math.max(1, wholeYield(y, chance));\n}\n/**\n * A TREE'S FINDS",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -51,8 +51,8 @@
     "old": "  const resin = dice() < RESIN_CHANCE ? RESIN.key : null;",
     "new": "  const resin = dice() > RESIN_CHANCE ? RESIN.key : null;",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_service.test.js"
+      "test/net/prof4_law.test.js",
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -61,8 +61,8 @@
     "old": "  let heartwood = null;\n  if (confirmed) {",
     "new": "  let heartwood = null;\n  if (true) {",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_service.test.js"
+      "test/net/prof4_law.test.js",
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -71,8 +71,8 @@
     "old": "export const FORESTER_MULT = 2;",
     "new": "export const FORESTER_MULT = 1;",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_service.test.js"
+      "test/net/prof4_law.test.js",
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -81,8 +81,8 @@
     "old": "(tier <= 2 ? 5 : tier <= 4 ? 6 : 8) - (lumberjack ? 2 : 0));",
     "new": "(tier <= 2 ? 5 : tier <= 4 ? 6 : 8) - (lumberjack ? 1 : 0));",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_client.test.js"
+      "test/net/prof4_law.test.js",
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -91,7 +91,7 @@
     "old": "export const chopsFor = (tier, lumberjack = false) => Math.max(3,",
     "new": "export const chopsFor = (tier, lumberjack = false) => Math.max(2,",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ],
     "equivalent": true,
     "why": "the least chop count is 5 (tier 1-2), so a Lumberjack's 5 - 2 = 3 already: the floor of 3 is the record's guard against a later table and binds on no tree today"
@@ -102,8 +102,8 @@
     "old": "export const CHOP_ACT = Object.freeze({ ringS: 0.9,",
     "new": "export const CHOP_ACT = Object.freeze({ ringS: 1,",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_client.test.js"
+      "test/net/prof4_law.test.js",
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -112,7 +112,7 @@
     "old": "(CHOP_ACT.bandMaster - CHOP_ACT.bandNovice) * Math.max(0, Math.min(100, rank)) / 100) * band;",
     "new": "(CHOP_ACT.bandMaster - CHOP_ACT.bandNovice) * 0) * band;",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -121,7 +121,7 @@
     "old": "export const woodAxeBand = ({ intelligence, strength }) => actBand(Math.trunc((intelligence + strength) / 2));",
     "new": "export const woodAxeBand = ({ intelligence, strength }) => actBand(Math.trunc((intelligence + intelligence) / 2));",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -130,8 +130,8 @@
     "old": "{ more: Object.freeze({ profession: 'logging', spec: 'charcoal-burner', per: 2 }), xp: null }",
     "new": "{ more: Object.freeze({ profession: 'logging', spec: 'charcoal-burner', per: 3 }), xp: null }",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_service.test.js"
+      "test/net/prof4_law.test.js",
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -140,8 +140,8 @@
     "old": "{ station: 'workbench', per: 2, more:",
     "new": "{ station: 'workbench', per: 1, more:",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_service.test.js"
+      "test/net/prof4_law.test.js",
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "{ station: 'workbench', per: 2, more:",
     "new": "{ station: 'forge', per: 2, more:",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -159,8 +159,8 @@
     "old": "(r.more && specsAt?.[r.more.profession] === r.more.spec ? r.more.per : r.per)",
     "new": "(r.more ? r.more.per : r.per)",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_service.test.js"
+      "test/net/prof4_law.test.js",
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "export const FURNISHER_STOCK = Object.freeze([LINEN].map(stock('furnisher')));",
     "new": "export const FURNISHER_STOCK = Object.freeze([LINEN].map(stock('smith')));",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -178,8 +178,8 @@
     "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']);",
     "new": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane', 'cloth:linen']);",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_service.test.js"
+      "test/net/prof4_law.test.js",
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -188,7 +188,7 @@
     "old": ": family === 'wood' ? 'logging' : null);",
     "new": ": null);",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -197,7 +197,7 @@
     "old": "made(`log:${w.id}`, 'wood', w.tier, 635 + i,",
     "new": "made(`log:${w.id}`, 'wood', w.tier, 636 + i,",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -206,8 +206,8 @@
     "old": "`${w.name} Plank`, ICON_STAFF, 'Iron')",
     "new": "`${w.name} Plank`, ICON_STAFF, null)",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_client.test.js"
+      "test/net/prof4_law.test.js",
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -216,7 +216,7 @@
     "old": "export const HEARTWOOD = made('wood:heartwood', 'wood', 4,",
     "new": "export const HEARTWOOD = made('wood:heartwood', 'wood', 3,",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -225,7 +225,7 @@
     "old": "templateIndex: STAFF_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 3]], pattern: 'Staff' })),",
     "new": "templateIndex: STAFF_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 2]], pattern: 'Staff' })),",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -234,7 +234,7 @@
     "old": "templateIndex: SHORT_BOW_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 3], [RESIN.key, 1]], pattern: 'Short Bow' })),",
     "new": "templateIndex: SHORT_BOW_TEMPLATE, wood: w.id, material: WOOD_MATERIAL[w.id], inputs: [[plank(w.id), 3]], pattern: 'Short Bow' })),",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -243,8 +243,8 @@
     "old": "stack: ARROWS_STACK, inputs: [[PINE_PLANK.key, 1], ['ingot:iron', 1], [TWIGS_NORTH, 4]], pattern: 'Arrows', madeOf: 'northern Twigs' }),",
     "new": "stack: ARROWS_STACK, inputs: [[PINE_PLANK.key, 1], ['ingot:iron', 1], [TWIGS_NORTH, 3]], pattern: 'Arrows', madeOf: 'northern Twigs' }),",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_service.test.js"
+      "test/net/prof4_law.test.js",
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -253,9 +253,9 @@
     "old": "templateIndex: 225 + i, wood: w, inputs: [[plank(w), 3]], pattern: 'Small Table' })),",
     "new": "templateIndex: 225 + i, wood: w, inputs: [[plank(w), 4]], pattern: 'Small Table' })),",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_service.test.js",
-      "test/prof4_client.test.js"
+      "test/net/prof4_law.test.js",
+      "test/net/prof4_service.test.js",
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -264,8 +264,8 @@
     "old": "inputs: [[plank(w), 8], [LINEN.key, 2]] })),",
     "new": "inputs: [[plank(w), 8], [LINEN.key, 1]] })),",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_service.test.js"
+      "test/net/prof4_law.test.js",
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -274,7 +274,7 @@
     "old": "['bed-plain-double', 'Plain Double Bed', 219, 'oak'],",
     "new": "['bed-plain-double', 'Plain Double Bed', 219, 'pine'],",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -283,8 +283,8 @@
     "old": "teak: 3, mahogany: 5, ironwood: 6, ghostwood: 7 });",
     "new": "teak: 3, mahogany: 4, ironwood: 6, ghostwood: 7 });",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_client.test.js"
+      "test/net/prof4_law.test.js",
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -293,8 +293,8 @@
     "old": "Math.ceil(i.n / 2) : i.n }));",
     "new": "Math.floor(i.n / 2) : i.n }));",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_service.test.js"
+      "test/net/prof4_law.test.js",
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -303,8 +303,8 @@
     "old": "    p.n -= 1;\n",
     "new": "    p.n -= 0;\n",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_service.test.js"
+      "test/net/prof4_law.test.js",
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -313,7 +313,7 @@
     "old": "export const takesHeartwood = (r) => !!r && takesQuality(r) && r.inputs.some((i) => i.key.startsWith('plank:'));",
     "new": "export const takesHeartwood = (r) => !!r && r.inputs.some((i) => i.key.startsWith('plank:'));",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -322,7 +322,7 @@
     "old": "(spec50 === 'bowyer' && r.family === 'bows') || (spec50 === 'tailor'",
     "new": "(spec50 === 'bowyer' && r.family === 'staves') || (spec50 === 'tailor'",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -331,8 +331,8 @@
     "old": "  if (r.metal === WARFORGED || r.leather === HARDENED_LEATHER.key || (heartwood && takesHeartwood(r))) steps++;",
     "new": "  if (r.metal === WARFORGED || r.leather === HARDENED_LEATHER.key) steps++;\n  if (heartwood && takesHeartwood(r)) steps++;",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_service.test.js"
+      "test/net/prof4_law.test.js",
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -341,8 +341,8 @@
     "old": "r.kind !== 'kit' && r.kind !== 'arrows' && r.kind !== 'siege' && r.kind !== 'dish';",
     "new": "r.kind !== 'kit' && r.kind !== 'siege' && r.kind !== 'dish';",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_service.test.js"
+      "test/net/prof4_law.test.js",
+      "test/net/prof4_service.test.js"
     ],
     "note": "PROF9 (RE-AIMED by content): the fire's code beside it."
   },
@@ -352,8 +352,8 @@
     "old": "(r?.family === 'furniture' && spec100 === 'master-joiner');",
     "new": "(r?.family === 'furniture' && spec100 === 'joiner');",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_service.test.js"
+      "test/net/prof4_law.test.js",
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -362,7 +362,7 @@
     "old": "export const recipeOpen = (r, rank, specs = null) => !!r && !r.later && rank >= r.rank && (!r.spec || specs?.[100] === r.spec);",
     "new": "export const recipeOpen = (r, rank, specs = null) => !!r && rank >= r.rank && (!r.spec || specs?.[100] === r.spec);",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ],
     "equivalent": true,
     "why": "CRAFT3's re-judge (2026-10-07): survives on main too - no recipe has been `later` since SEAT2b part two made the Ram Kit, so `!r.later` is a guard kept for the next recipe named before its slice, not a law any recipe reads now."
@@ -373,8 +373,8 @@
     "old": "export const PLANE_ACT = Object.freeze({ tol: 0.18,",
     "new": "export const PLANE_ACT = Object.freeze({ tol: 0.25,",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_client.test.js"
+      "test/net/prof4_law.test.js",
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "export const planeBand = ({ agility, willpower }) => actBand(Math.trunc((agility + willpower) / 2));",
     "new": "export const planeBand = ({ agility, willpower }) => actBand(Math.trunc((agility + agility) / 2));",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -392,8 +392,8 @@
     "old": "PLANE_ACT.tol * band * (1 + PLANE_ACT.masterWiden * Math.max(0, Math.min(100, rank)) / 100);",
     "new": "PLANE_ACT.tol * band;",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_client.test.js"
+      "test/net/prof4_law.test.js",
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -402,7 +402,7 @@
     "old": "...(pv && mk ? { mk } : {}) };",
     "new": "...(mk ? { mk } : {}) };",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -411,7 +411,7 @@
     "old": "      if (p.confirmed && RARE_WOODS[p.climate]) keys.add(RARE_WOODS[p.climate]);",
     "new": "      if (RARE_WOODS[p.climate]) keys.add(RARE_WOODS[p.climate]);",
     "tests": [
-      "test/prof4_law.test.js"
+      "test/net/prof4_law.test.js"
     ]
   },
   {
@@ -420,8 +420,8 @@
     "old": "(!rollsQuality(r) ? c.q !== -1 : (c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))",
     "new": "(r.kind === 'kit' ? c.q !== -1 : (c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))",
     "tests": [
-      "test/prof4_law.test.js",
-      "test/prof4_service.test.js"
+      "test/net/prof4_law.test.js",
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -430,7 +430,7 @@
     "old": "  const cuts = Number.isSafeInteger(act?.cuts) ? Math.max(0, Math.min(most, act.cuts)) : 0;",
     "new": "  const cuts = Number.isSafeInteger(act?.cuts) ? Math.max(0, act.cuts) : 0;",
     "tests": [
-      "test/prof4_service.test.js"
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -439,7 +439,7 @@
     "old": "  return { cuts, clean: act?.clean === true && cuts === most };",
     "new": "  return { cuts, clean: act?.clean === true };",
     "tests": [
-      "test/prof4_service.test.js"
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -448,18 +448,18 @@
     "old": "      SELECT player, char_id, extra, 'own', extra_qty FROM node_harvests WHERE ${mine} AND extra IS NOT NULL",
     "new": "      SELECT player, char_id, extra, 'own', extra_qty FROM node_harvests WHERE ${mine} AND 0",
     "tests": [
-      "test/prof4_service.test.js"
+      "test/net/prof4_service.test.js"
     ]
   },
   {
     "name": "PROF4-saw-smithing-xp",
     "file": "server-account/src/professions.js",
-    "old": "  const cap = r.xp ? craftXpCap(r.xp, ranks) : 0;\n  const xp = r.act ? masonXp(count, rank, { clean: act }) : r.xp ? smeltXp(out.tier, count, rank) : 0;",
-    "new": "  const cap = craftXpCap(r.xp ?? 'smithing', ranks);\n  const xp = r.act ? masonXp(count, rank, { clean: act }) : smeltXp(out.tier, count, rank);",
+    "old": "  const cap = r.xp ? craftCapSql('?1', '?2', r.xp) : '0';\n  const xp = scaleXp(r.act ? masonXp(count, rank, { clean: act }) : r.xp ? smeltXp(out.tier, count, rank) : 0,",
+    "new": "  const cap = craftCapSql('?1', '?2', r.xp ?? 'smithing');\n  const xp = scaleXp(r.act ? masonXp(count, rank, { clean: act }) : smeltXp(out.tier, count, rank),",
     "tests": [
-      "test/prof4_service.test.js"
+      "test/net/prof4_service.test.js"
     ],
-    "note": "CRAFT3: re-aimed by content."
+    "note": "AUDIT FB1018f L5-1: re-aimed by content - the cap read in the statement (craftCapSql), no longer bound."
   },
   {
     "name": "PROF4-craft-as-smith",
@@ -467,7 +467,7 @@
     "old": "  const prof = r.profession;   // the discipline - a hall's steps are its (seatStepsFor)",
     "new": "  const prof = 'smithing';   // the discipline - a hall's steps are its (seatStepsFor)",
     "tests": [
-      "test/prof4_service.test.js"
+      "test/net/prof4_service.test.js"
     ],
     "note": "CRAFT3: re-aimed by content."
   },
@@ -477,7 +477,7 @@
     "old": "  if (r.later) return { error: 'prof-later' };",
     "new": "",
     "tests": [
-      "test/prof4_service.test.js"
+      "test/net/prof4_service.test.js"
     ],
     "equivalent": true,
     "why": "CRAFT3's re-judge (2026-10-07): survives on main too - no recipe is `later` since SEAT2b part two, so the service's `prof-later` is a guard kept for the next one, not a law any recipe reads now."
@@ -488,7 +488,7 @@
     "old": "  const inputs = recipeInputs(r, { heartwood: wood, joiner: specs[50] === 'joiner', cracked: crack });",
     "new": "  const inputs = recipeInputs(r, { heartwood: wood, joiner: false, cracked: crack });",
     "tests": [
-      "test/prof4_service.test.js"
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -497,7 +497,7 @@
     "old": "  const marked = carriesMark(r, quality, specs[100]) ? 1 : 0;",
     "new": "  const marked = 0;",
     "tests": [
-      "test/prof4_service.test.js"
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -506,7 +506,7 @@
     "old": "  const ours = row && row.owner === player.id && Number(row.template) === p.item.t && Number(row.listed) === 0 && !elsewhere;",
     "new": "  const ours = row && Number(row.template) === p.item.t && Number(row.listed) === 0 && !elsewhere;",
     "tests": [
-      "test/prof4_service.test.js"
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -515,7 +515,7 @@
     "old": "...(Number(row.marked) === 1 && row.maker ? { mk: row.maker } : {})",
     "new": "...(row.maker ? { mk: row.maker } : {})",
     "tests": [
-      "test/prof4_service.test.js"
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -524,8 +524,8 @@
     "old": "  const p = sent.item?.pv ? await provenOf(db, player, sent, mapId, buildingKey) : sent;",
     "new": "  const p = sent;",
     "tests": [
-      "test/prof4_service.test.js",
-      "test/prof4_client.test.js"
+      "test/net/prof4_service.test.js",
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -534,7 +534,7 @@
     "old": "  const ours = row && row.owner === player.id && Number(row.template) === p.item.t && Number(row.listed) === 0 && !elsewhere;",
     "new": "  const ours = row && row.owner === player.id && Number(row.listed) === 0 && !elsewhere;",
     "tests": [
-      "test/prof4_service.test.js"
+      "test/net/prof4_service.test.js"
     ]
   },
   {
@@ -543,7 +543,7 @@
     "old": "      const clean = this.inBand;",
     "new": "      const clean = !gentle;",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -552,7 +552,7 @@
     "old": "      st.ring = 0;   // the ring starts again after a chop\n",
     "new": "",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -561,7 +561,7 @@
     "old": "clean: !gentle && st.cuts === st.chops };",
     "new": "clean: !gentle && st.cuts > 0 };",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -570,7 +570,7 @@
     "old": "      const steady = st.seconds >= PLANE_ACT.minS && st.seconds <= PLANE_ACT.maxS;",
     "new": "      const steady = st.seconds <= PLANE_ACT.maxS;",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -579,7 +579,7 @@
     "old": "      if (st.x >= PLANE_ACT.footX) {",
     "new": "      if (st.x >= 0.5) {",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -588,16 +588,17 @@
     "old": "if (st.done || st.cancelled || st.planing || !(x <= PLANE_ACT.headX)) return false;",
     "new": "if (st.done || st.cancelled || st.planing) return false;",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
     "name": "PROF4-tree-flat-shared",
     "file": "src/scenes/treeHost.js",
-    "old": "if (claimed.has(f.id) || insideRocks(rocks, f.x, f.z)) continue;",
-    "new": "if (insideRocks(rocks, f.x, f.z)) continue;",
+    "old": "      if (claimed.has(f.id)) continue;",
+    "new": "",
+    "note": "JUNGLE-WOODS (PIN MOVED): the rock check is asked once a flat, before the trees' loop - the mutation is the claim's check gone, as it was",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -606,7 +607,7 @@
     "old": "      return [c[0], c[1] - g.size.h - 1, c[2]];",
     "new": "      return [c[0], c[1] - 1, c[2]];",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -615,7 +616,7 @@
     "old": "    if (n === 0 && had === 0) continue;",
     "new": "    if (n === 0) continue;",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -624,16 +625,16 @@
     "old": "      b.tip = [dx, dz, 0];",
     "new": "      b.tip = [-dx, -dz, 0];",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
     "name": "PROF4-logs-never-taken",
     "file": "src/scenes/treeHost.js",
-    "old": "<= LOGS_TAKE_M) { drop(lg.entry, lg.batch); logsLying.splice(i, 1); }",
-    "new": "< 0) { drop(lg.entry, lg.batch); logsLying.splice(i, 1); }",
+    "old": "<= LOGS_TAKE_M) { drop(lg.entry, lg.batch); logsLying.splice(i, 1); say?.('logs'); }",
+    "new": "< 0) { drop(lg.entry, lg.batch); logsLying.splice(i, 1); say?.('logs'); }",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -642,25 +643,25 @@
     "old": "        if (k >= 1) { drop(fl.entry, fl.batch); falls.splice(i, 1); }",
     "new": "",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
     "name": "PROF4-host-no-stump",
     "file": "src/scenes/gatherHost.js",
-    "old": "      for (const f of k.gone(n) ? (k.goneFlatsOf?.(n, entry) ?? []) : k.flatsOf(n)) {",
-    "new": "      for (const f of k.gone(n) ? [] : k.flatsOf(n)) {",
+    "old": "      for (const f of shownGone(k, n) ? (k.goneFlatsOf?.(n, entry) ?? []) : k.flatsOf(n)) {",
+    "new": "      for (const f of shownGone(k, n) ? [] : k.flatsOf(n)) {",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
     "name": "PROF4-host-never-sinks",
     "file": "src/scenes/gatherHost.js",
-    "old": "    for (const k of kinds) k.stood?.(entry, rec.nodes.filter((n) => n.kind === k.id));   // PROF4: the felled trees sunk\n",
+    "old": "    for (const k of kinds) k.stood?.(entry, rec.nodes.filter((n) => n.kind === k.id), landingOn);   // PROF4: the felled trees sunk - AUDIT GATHER-FEEL F1: never one whose felling chop is still in the air\n",
     "new": "",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -669,7 +670,7 @@
     "old": "    if (now && k.felled) {",
     "new": "    if (false) {",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ],
     "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
   },
@@ -679,7 +680,7 @@
     "old": "  if (d.extra) { const n = Number(d.extraQty) || 1; goods.push(`${n > 1 ? `${n} ` : ''}${materialCountLabel(d.extra, n)}`); }\n",
     "new": "",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ],
     "note": "GATHER-SAID (PIN MOVED): the Resin said in the goods' one line (gatherHost.js storesLine), re-aimed by content."
   },
@@ -689,7 +690,7 @@
     "old": "    item.value = Math.max(1, Math.round((base?.basePrice ?? item.value ?? 1) * QUALITY_EFFECTS[q].condition));",
     "new": "    item.value = Math.max(1, Math.round(base?.basePrice ?? item.value ?? 1));",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -698,7 +699,7 @@
     "old": "    arrows.stackCount = r.stack ?? 1;",
     "new": "    arrows.stackCount = 1;",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -707,7 +708,7 @@
     "old": "    if (marked === true && q !== MASTERWORK) item.marked = true;",
     "new": "    if (marked === true) item.marked = true;",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -716,7 +717,7 @@
     "old": "export const isCraftedFurniture = (item) => item?.group === 'Furniture';",
     "new": "export const isCraftedFurniture = (item) => item?.group === 'Furnishings';",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -725,62 +726,62 @@
     "old": "  const one = marked ? name : `",
     "new": "  const one = false ? name : `",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
     "name": "PROF4-name-no-joiner-mark",
-    "file": "src/systems/itemInfo.js",
+    "file": "src/systems/item/itemInfo.js",
     "old": "if ((item?.quality === 4 || item?.marked === true) && typeof item.maker === 'string'",
     "new": "if (item?.quality === 4 && typeof item.maker === 'string'",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
     "name": "PROF4-smithing-unpractised",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "const PRACTISED = Object.freeze(['herbalism', 'mining', 'hunting', 'fishing', 'logging', 'smithing', 'building', 'outfitting', 'provisioning', 'enchanting']);",
     "new": "const PRACTISED = Object.freeze(['herbalism', 'mining', 'hunting', 'fishing', 'logging', 'building', 'outfitting', 'provisioning', 'enchanting']);",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ],
     "note": "PROF9 (RE-AIMED by content): the fire's code beside it. PROF12 (PIN MOVED): re-aimed by content. CRAFT3: re-aimed by content."
   },
   {
     "name": "PROF4-workbench-no-linen",
-    "file": "src/ui/profPages.js",
-    "old": "      if (sale?.counter === 'furnisher' && have < inp.n && bench.kind === 'shop') counterBuy(",
-    "new": "      if (sale?.counter === 'smith' && have < inp.n && bench.kind === 'shop') counterBuy(",
+    "file": "src/ui/professions/profPages.js",
+    "old": "      if (sale?.counter === 'furnisher' && have < inp.n && bench.kind === 'shop' && !bench.yard) counterBuy(",
+    "new": "      if (sale?.counter === 'smith' && have < inp.n && bench.kind === 'shop' && !bench.yard) counterBuy(",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
     "name": "PROF4-bench-no-heartwood",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "        _bench.actRecipe = r.id; _bench.actWood = _bench.heartwood && takesHeartwood(r);",
     "new": "        _bench.actRecipe = r.id; _bench.actWood = false;",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
     "name": "PROF4-anvil-lists-basket",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "export const anvilRecipes = (family, metal = null) => RECIPES.filter((r) => r.profession === 'smithing' && r.family === family",
     "new": "export const anvilRecipes = (family, metal = null) => RECIPES.filter((r) => r.family === family",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
     "name": "PROF4-forge-no-burns",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  const burns = BURN_RECIPES.filter((r) => workOf(book, r.inputs[0].key) > 0);",
     "new": "  const burns = [];",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -789,7 +790,7 @@
     "old": "      if (isCraftedFurniture(it)) (playerEntity.furnishings ??= []).push(it);",
     "new": "      if (false) (playerEntity.furnishings ??= []).push(it);",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -798,7 +799,7 @@
     "old": "this._bbTipOn = !!tp; }",
     "new": "this._bbTipOn = false; }",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -807,7 +808,7 @@
     "old": "      if (interiorBuilding.buildingType === BUILDING_TYPES.FurnitureStore) return",
     "new": "      if (interiorBuilding.buildingType === BUILDING_TYPES.GeneralStore) return",
     "tests": [
-      "test/prof4_client.test.js"
+      "test/systems/prof4_client.test.js"
     ]
   },
   {
@@ -816,9 +817,9 @@
     "old": "export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'workbench', 'loom', 'mason', 'jeweller', 'vendor']);",
     "new": "export const DECOR_STATIONS = Object.freeze(['alchemy', 'spells', 'enchant', 'forge', 'loom', 'mason', 'jeweller', 'vendor']);",
     "tests": [
-      "test/homestations.test.js",
-      "test/prof2_client.test.js",
-      "test/audit29_client.test.js"
+      "test/ui/homestations.test.js",
+      "test/net/prof2_client.test.js",
+      "test/net/audit29_client.test.js"
     ]
   }
 ]

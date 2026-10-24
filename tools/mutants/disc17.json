@@ -5,19 +5,19 @@
     "old": "export const WISP_MAX = 120;",
     "new": "export const WISP_MAX = 240;",
     "tests": [
-      "test/disc17.test.js",
-      "test/wind4_windweather.test.js"
+      "test/ui/disc17.test.js",
+      "test/render/wind4_windweather.test.js"
     ]
   },
   {
     "name": "DISC17-A-the-alpha-of-WIND3",
     "file": "src/render/windWisps.js",
-    "old": "alpha: Object.freeze([0.20, 0.24])",
+    "old": "alpha: Object.freeze([0.09, 0.11])",
     "new": "alpha: Object.freeze([0.10, 0.12])",
     "tests": [
-      "test/disc17.test.js",
-      "test/wind3_windworld.test.js",
-      "test/weather2d_sandstorm.test.js"
+      "test/ui/disc17.test.js",
+      "test/systems/wind3_windworld.test.js",
+      "test/systems/weather/weather2d_sandstorm.test.js"
     ]
   },
   {
@@ -26,7 +26,7 @@
     "old": "    if (far) {   // DISC17-B",
     "new": "    if (false) {   // DISC17-B",
     "tests": [
-      "test/disc17.test.js"
+      "test/ui/disc17.test.js"
     ]
   },
   {
@@ -35,7 +35,7 @@
     "old": "        placeAudio(f.pan, [pos[0] + f.off[0], pos[1] + f.off[1], pos[2] + f.off[2]]);\n",
     "new": "",
     "tests": [
-      "test/disc17.test.js"
+      "test/ui/disc17.test.js"
     ]
   },
   {
@@ -44,7 +44,7 @@
     "old": "off: [pos[0] - L.x, pos[1] - L.y, pos[2] - L.z]",
     "new": "off: [pos[0], pos[1], pos[2]]",
     "tests": [
-      "test/disc17.test.js"
+      "test/ui/disc17.test.js"
     ]
   },
   {
@@ -53,7 +53,7 @@
     "old": "        if (f.until <= now) continue;\n",
     "new": "",
     "tests": [
-      "test/disc17.test.js"
+      "test/ui/disc17.test.js"
     ]
   },
   {
@@ -62,8 +62,8 @@
     "old": "maxDistance: THUNDER_SOURCE_M * 8, far: true }); }   // DISC17-B",
     "new": "maxDistance: THUNDER_SOURCE_M * 8 }); }   // DISC17-B",
     "tests": [
-      "test/disc17.test.js",
-      "test/weather3d_distantstorms.test.js"
+      "test/ui/disc17.test.js",
+      "test/systems/weather3d_distantstorms.test.js"
     ]
   },
   {
@@ -72,8 +72,8 @@
     "old": "maxDistance: THUNDER_SOURCE_M * 8, far: true });",
     "new": "maxDistance: THUNDER_SOURCE_M * 8 });",
     "tests": [
-      "test/disc17.test.js",
-      "test/weather3d_distantstorms.test.js"
+      "test/ui/disc17.test.js",
+      "test/systems/weather3d_distantstorms.test.js"
     ]
   },
   {
@@ -82,16 +82,16 @@
     "old": "      maps, mapDict, woods,\n      roads:",
     "new": "      maps, mapDict, woods,\n      weather: { on: () => true, minutes: () => playerTicker.classicMinutes },\n      roads:",
     "tests": [
-      "test/disc17.test.js"
+      "test/ui/disc17.test.js"
     ]
   },
   {
     "name": "DISC17-C-paintUnder-back-in-the-contract",
-    "file": "src/ui/mapStrip.js",
+    "file": "src/ui/map/mapStrip.js",
     "old": "  'context',       // (clientX, clientY) => boolean - the right click; true when the sheet took it (WAYPOINTS: the bay's menu)\n]);",
     "new": "  'context',       // (clientX, clientY) => boolean - the right click; true when the sheet took it (WAYPOINTS: the bay's menu)\n  'paintUnder',\n]);",
     "tests": [
-      "test/disc17.test.js"
+      "test/ui/disc17.test.js"
     ]
   }
 ]

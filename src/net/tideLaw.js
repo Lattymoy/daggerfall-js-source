@@ -2,7 +2,7 @@
 // SEASON1 part two (2026-10-01, Mac: "Finish the seats"; "Continue"; "Hurry up"): THE TIDES - the world moving under the
 // war (bible/11-Multiplayer/Seats-Arc.md 9.3). Each seat week rolls one Tide for each of the three kingdoms, one for the
 // Marches (the three regions share it) and one for the Free Lands - a pure function of the week and a salt, as the gate's
-// site is (net/gateLaw.js gateHash), so every client, the service and the relay roll the same Tide with nothing sent.
+// site is (net/gate/gateLaw.js gateHash), so every client, the service and the relay roll the same Tide with nothing sent.
 // Everyone knows the coming week's Tides at the Turning: the Seat tab says both.
 //
 // DECIDED: a Tide rolls only while a Season is counted (townSeatLaw.js seasonOf - the service's SEASON_ZERO_WEEK); with
@@ -10,7 +10,7 @@
 //
 // Pure, a leaf both ends read (the professions' yields and the market's couriers read it too). Not a DFU member:
 // Daggerfall's world has no weekly tides. Ledger A (THE WAR RUNS IN SEASONS' row).
-import { gateHash } from './gateLaw.js';
+import { gateHash } from './gate/gateLaw.js';
 import { kingdomOf, isMarch, isFreeLand, KINGDOMS } from './kingdomLaw.js';
 
 /** The Tides' own salt, beside the gate's (gateLaw.js GATE_SALT) and the nodes' (nodeLaw.js NODE_SALT). */
@@ -79,7 +79,7 @@ export const TIDE_WORDS = Object.freeze({
   harvest: 'Gathering yields a quarter more.',
   blight: 'Herbs and wood yield a quarter less.',
   plague: 'The Watch counts half, and Festivals cost double.',
-  orcs: 'Each World of Daggerfall camp cleared gives your guild 50 influence at its seat in the region (5 a day, 250 a week).',
+  orcs: 'Each World of Daggerfall camp cleared gives your guild 50 influence at its seat in the region (up to 5 camps a day, 250 influence a week).',
   daedra: 'Gate kills give double influence and double silver.',   // AUDIT SEATS-2 L7: 9.3's Marks, paid since AUDIT-SEATS (seatIncursion.js)
   wedding: 'Festivals cost half, and every held seat gains 3 Standing.',
   bandits: 'Couriers into the land take twice as long.',

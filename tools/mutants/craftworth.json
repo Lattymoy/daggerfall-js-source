@@ -2,19 +2,19 @@
   {
     "name": "CRAFT-WORTH-sell-arm-reads-the-roll",
     "file": "src/systems/tradeModes.js",
-    "old": "        cost += calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;",
-    "new": "        cost += calculateCost(itemValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;",
+    "old": "        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;",
+    "new": "        const c = calculateCost(itemValueOf(item), quality, priceAdjustment, saleConditionPercentage(item, { online })) * stack;",
     "tests": [
-      "test/craftworth.test.js"
+      "test/systems/craftworth.test.js"
     ]
   },
   {
     "name": "CRAFT-WORTH-sellmagic-reads-the-roll",
     "file": "src/systems/tradeModes.js",
-    "old": "        cost += calculateCost(counterValueOf(item), quality, priceAdjustment);",
-    "new": "        cost += calculateCost(itemValueOf(item), quality, priceAdjustment);",
+    "old": "        const c = calculateCost(counterValueOf(item), quality, priceAdjustment, fenced);",
+    "new": "        const c = calculateCost(itemValueOf(item), quality, priceAdjustment, fenced);",
     "tests": [
-      "test/craftworth.test.js"
+      "test/systems/craftworth.test.js"
     ]
   },
   {
@@ -23,25 +23,25 @@
     "old": "  return rolled > 0 ? Math.max(1, v - rolled) : v;",
     "new": "  return v;",
     "tests": [
-      "test/craftworth.test.js"
+      "test/systems/craftworth.test.js"
     ]
   },
   {
     "name": "CRAFT-WORTH-provenance-test-dropped",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  if (typeof item?.provenance !== 'string' || !ROLLED_TIERS.includes(item.rarity)) return 0;",
     "new": "  if (!ROLLED_TIERS.includes(item?.rarity)) return 0;",
     "tests": [
-      "test/craftworth.test.js"
+      "test/systems/craftworth.test.js"
     ]
   },
   {
     "name": "CRAFT-WORTH-the-rare-flavour-left-in",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  return affixesWorth(Array.isArray(item.affixes) ? item.affixes : [], item) + (item.rarity === 'rare' ? rareEnchantWorth(item) : 0);",
     "new": "  return affixesWorth(Array.isArray(item.affixes) ? item.affixes : [], item);",
     "tests": [
-      "test/craftworth.test.js"
+      "test/systems/craftworth.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (typeof item.provenance === 'string') for (const k of CRAFT_ROLLED) delete plain[k];",
     "new": "",
     "tests": [
-      "test/craftworth.test.js"
+      "test/systems/craftworth.test.js"
     ]
   },
   {
@@ -59,8 +59,8 @@
     "old": "    const lot = tradeCost('Sell', [it], { quality: b.quality, priceAdjustment: shopAdjustment(b, 'Sell') });",
     "new": "    const lot = { cost: calculateCost(itemValue(it), b.quality, regionPriceAdjustment(playerEntity, b.regionIndex ?? 0)) * (it.stackCount ?? 1), pieces: 0 };",
     "tests": [
-      "test/craftworth.test.js",
-      "test/fb0929_min_price.test.js"
+      "test/systems/craftworth.test.js",
+      "test/systems/fb0929_min_price.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": " && !lockRefuses(it, 'sell') && !isSummoned(it));",
     "new": " && !lockRefuses(it, 'sell'));",
     "tests": [
-      "test/craftworth.test.js"
+      "test/systems/craftworth.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "    if (isSummoned(it)) return 0;",
     "new": "",
     "tests": [
-      "test/craftworth.test.js"
+      "test/systems/craftworth.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "  if (typeof item.provenance === 'string') for (const k of CRAFT_ROLLED) delete plain[k];",
     "new": "  for (const k of CRAFT_ROLLED) delete plain[k];",
     "tests": [
-      "test/craftworth.test.js"
+      "test/systems/craftworth.test.js"
     ]
   },
   {
@@ -96,16 +96,16 @@
     "old": "  if (!Number.isFinite(item?.value)) return v;",
     "new": "",
     "tests": [
-      "test/craftworth.test.js"
+      "test/systems/craftworth.test.js"
     ]
   },
   {
     "name": "AUDIT-CRAFT-WORTH-line-list-unguarded",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  return affixesWorth(Array.isArray(item.affixes) ? item.affixes : [], item) + (item.rarity === 'rare' ? rareEnchantWorth(item) : 0);",
     "new": "  return affixesWorth(item.affixes, item) + (item.rarity === 'rare' ? rareEnchantWorth(item) : 0);",
     "tests": [
-      "test/craftworth.test.js"
+      "test/systems/craftworth.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "  return rolled > 0 ? Math.max(1, v - rolled) : v;",
     "new": "  return rolled > 0 ? v - rolled : v;",
     "tests": [
-      "test/craftworth.test.js"
+      "test/systems/craftworth.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "  if (usesVirtueLeveling(entity)) return Math.trunc((levelBarProgress(entity) * 100) / LEVELUP_TOTAL);\n",
     "new": "",
     "tests": [
-      "test/disc28e_levelpct.test.js"
+      "test/systems/disc28e_levelpct.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  const current = Math.fround(((entity?.currentLevelUpSkillSum ?? 0)",
     "new": "  const current = (((entity?.currentLevelUpSkillSum ?? 0)",
     "tests": [
-      "test/disc28e_levelpct.test.js"
+      "test/systems/disc28e_levelpct.test.js"
     ]
   },
   {
@@ -23,18 +23,18 @@
     "old": "  if (usesVirtueLeveling(entity)) return Math.trunc((levelBarProgress(entity) * 100) / LEVELUP_TOTAL);",
     "new": "  if (usesVirtueLeveling(entity)) return Math.trunc(levelBarProgress(entity));",
     "tests": [
-      "test/disc28e_levelpct.test.js"
+      "test/systems/disc28e_levelpct.test.js"
     ],
     "equivalent": true,
     "why": "LEVELUP_TOTAL is 100 (the mod's bar is out of a hundred), so the scale is the identity; it stays so the box reads a percent of whatever total the bar has."
   },
   {
     "name": "LEVEL-PCT-oghma-reads-the-lane",
-    "file": "src/ui/levelUpView.js",
+    "file": "src/ui/levelUp/levelUpView.js",
     "old": "  if (levelUpLane(screen) === LANE_VIRTUE || usesVirtueLeveling(e)) {",
     "new": "  if (levelUpLane(screen) === LANE_VIRTUE) {",
     "tests": [
-      "test/disc28e_levelpct.test.js"
+      "test/systems/disc28e_levelpct.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "    at(`bar ${levelBarProgress(this.entity)}/${LEVELUP_TOTAL}`",
     "new": "    at(`bar ${this.entity.levelProgress ?? 0}/${LEVELUP_TOTAL}`",
     "tests": [
-      "test/disc28e_levelpct.test.js"
+      "test/systems/disc28e_levelpct.test.js"
     ]
   },
   {
@@ -52,16 +52,16 @@
     "old": "export const levelBarProgress = (entity) => Math.max(0, Math.min(LEVELUP_TOTAL, entity?.levelProgress ?? 0));",
     "new": "export const levelBarProgress = (entity) => Math.max(0, entity?.levelProgress ?? 0);",
     "tests": [
-      "test/disc28e_levelpct.test.js"
+      "test/systems/disc28e_levelpct.test.js"
     ]
   },
   {
     "name": "LEVEL-PCT-crown-own-copy",
-    "file": "src/ui/levelUpView.js",
+    "file": "src/ui/levelUp/levelUpView.js",
     "old": "      now: levelBarProgress(e),",
     "new": "      now: e.levelProgress ?? 0,",
     "tests": [
-      "test/disc28e_levelpct.test.js"
+      "test/systems/disc28e_levelpct.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "      currentLocationMapId: () => travelOriginMapId(),",
     "new": "      currentLocationMapId: () => _musicLoc?.mapTableData?.mapId ?? null,",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "    if (from.x === here.x && from.y === here.y) return _musicLoc?.mapTableData?.mapId ?? null;",
     "new": "    if (true) return _musicLoc?.mapTableData?.mapId ?? null;",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "        if (st.opts.travelShip !== wasShip) this._refreshTrip();",
     "new": "",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "tvSeaNoWay(from, summary.pixel, means, net, 'land', summary)",
     "new": "tvSeaNoWay(from, summary.pixel, means, net, 'land')",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "    if (from.x === here.x && from.y === here.y) return _musicLoc?.mapTableData?.mapId ?? null;",
     "new": "    if (from.y === here.y) return _musicLoc?.mapTableData?.mapId ?? null;",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "    if (from.x === here.x && from.y === here.y) return _musicLoc?.mapTableData?.mapId ?? null;",
     "new": "    if (from.x === here.x) return _musicLoc?.mapTableData?.mapId ?? null;",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ],
     "equivalent": true,
     "why": "It differs only where the boarding pixel shares a deck's column but not its row. DFU boards the ship anywhere (ShipAvailiable = HasShip), but columns x=2 and x=5 are ocean in all 500 rows of the retail CLIMATE.PAK, hold no location but the two decks, and no harbour id lies on them: the real answer there (null, no place) and the mutant's (\"Your Ship\", 2002/5005) are both not-a-harbour, and isNotAtPort is the answer's only reader. Rows are shared (The Mouse and Goblin Tavern, a harbour at 222,5, on the large deck's row), so the row-only mutant dies."
@@ -126,7 +126,7 @@
     "old": "      currentLocationMapId: () => travelOriginMapId(),",
     "new": "      currentLocationMapId: () => _musicLoc?.mapTableData?.mapId ?? null, // currentLocationMapId: () => travelOriginMapId(),",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -135,7 +135,7 @@
     "old": "    return locationIndex.get(`${from.x},${from.y}`)?.mapTableData?.mapId ?? null;",
     "new": "    return null;",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -144,259 +144,259 @@
     "old": "if (st.opts.travelShip !== wasShip) this._refreshTrip();",
     "new": "if (st.opts.travelShip === wasShip) this._refreshTrip();",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-live-is-permanent",
-    "file": "src/ui/levelUpView.js",
+    "file": "src/ui/levelUp/levelUpView.js",
     "old": "  liveStat({ stats: { [key]: permanent }, activeEffects: entity?.activeEffects, _mods: entity?._mods }, key);",
     "new": "  permanent;",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-capped-never",
-    "file": "src/ui/levelUpView.js",
+    "file": "src/ui/levelUp/levelUpView.js",
     "old": "  return { live, capped: canRaise && liveAttribute(entity, key, value + 1) === live };",
     "new": "  return { live, capped: false };",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-capped-unraisable",
-    "file": "src/ui/levelUpView.js",
+    "file": "src/ui/levelUp/levelUpView.js",
     "old": "  return { live, capped: canRaise && liveAttribute(entity, key, value + 1) === live };",
     "new": "  return { live, capped: liveAttribute(entity, key, value + 1) === live };",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-classic-working-ignored",
-    "file": "src/ui/levelUpView.js",
+    "file": "src/ui/levelUp/levelUpView.js",
     "old": "      ...liveOf(screen.entity, key, value, canRaise),",
     "new": "      ...liveOf(screen.entity, key, base, canRaise),",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-virtue-delta-ignored",
-    "file": "src/ui/levelUpView.js",
+    "file": "src/ui/levelUp/levelUpView.js",
     "old": "        ...liveOf(screen.entity, key, base + delta, canRaise),",
     "new": "        ...liveOf(screen.entity, key, base, canRaise),",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-note-silent-when-capped",
-    "file": "src/ui/levelUpView.js",
-    "old": "  return row.capped ? `${said} - a point here won't show` : said;",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "  return row.capped ? t('levelup.live.capped', '{said} - a point here won\\'t show', { said }) : said;",
     "new": "  return said;",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-note-lowered-as-bonus",
-    "file": "src/ui/levelUpView.js",
-    "old": "  const said = row.live > row.value ? `${row.live} with its bonus` : `${row.live} for now`;",
-    "new": "  const said = `${row.live} with its bonus`;",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "  const said = row.live > row.value ? t('levelup.live.boosted', '{live} with its bonus', { live: row.live }) : t('levelup.live.lowered', 'Lowered to {live} for now', { live: row.live });",
+    "new": "  const said = t('levelup.live.boosted', '{live} with its bonus', { live: row.live });",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-star-permanent",
-    "file": "src/ui/enhancedLevelUp.js",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
     "old": "      s.val.textContent = String(r.live);",
     "new": "      s.val.textContent = String(r.value);",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-pick-unpainted",
-    "file": "src/ui/enhancedLevelUp.js",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
     "old": "      a.line.textContent = liveNote(r);",
     "new": "      a.line.textContent = '';",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-star-figure-kept-as-comment",
-    "file": "src/ui/enhancedLevelUp.js",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
     "old": "      s.val.textContent = String(r.live);",
     "new": "      s.val.textContent = String(r.value); // s.val.textContent = String(r.live);",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-star-boosted-kept-as-comment",
-    "file": "src/ui/enhancedLevelUp.js",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
     "old": "      s.node.classList.toggle('boosted', tint === 'boosted');",
     "new": "      s.node.classList.toggle('boosted', false); // s.node.classList.toggle('boosted', tint === 'boosted');",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-star-lowered-unpainted",
-    "file": "src/ui/enhancedLevelUp.js",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
     "old": "      s.node.classList.toggle('lowered', tint === 'lowered');",
     "new": "      s.node.classList.toggle('lowered', false);",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-pick-lowered-unpainted",
-    "file": "src/ui/enhancedLevelUp.js",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
     "old": "      a.line.classList.toggle('lowered', liveTint(r) === 'lowered');",
     "new": "      a.line.classList.toggle('lowered', false);",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-aria-built-inline-again",
-    "file": "src/ui/enhancedLevelUp.js",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
     "old": "      s.node.setAttribute('aria-label', starLabel(r));",
     "new": "      s.node.setAttribute('aria-label', `${r.label} ${r.value}`);",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-tint-lowered-never",
-    "file": "src/ui/levelUpView.js",
+    "file": "src/ui/levelUp/levelUpView.js",
     "old": ": row.live < row.value ? 'lowered' : '');",
     "new": ": '');",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-aria-own-value-dropped",
-    "file": "src/ui/levelUpView.js",
-    "old": "  return `${row.label} ${row.live}${row.live !== row.value ? ` (${row.value} of its own)` : ''}`",
-    "new": "  return `${row.label} ${row.live}`",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "  const said = [row.live !== row.value ? t('levelup.star.permanent', '{name} {live} ({value} permanent)', { name: row.label, live: row.live, value: row.value })\n    : t('levelup.star.value', '{name} {live}', { name: row.label, live: row.live })];",
+    "new": "  const said = [t('levelup.star.value', '{name} {live}', { name: row.label, live: row.live })];",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-aria-capped-dropped",
-    "file": "src/ui/levelUpView.js",
-    "old": "    + `${row.capped ? ', a point here will not show for now' : ''}`;",
-    "new": "    ;",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "  if (row.capped) said.push(t('levelup.star.capped', 'a point here won\\'t show for now'));",
+    "new": "",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-folds-dropped",
-    "file": "src/ui/levelUpView.js",
+    "file": "src/ui/levelUp/levelUpView.js",
     "old": "activeEffects: entity?.activeEffects, _mods: entity?._mods }, key);",
     "new": "activeEffects: entity?.activeEffects }, key);",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-boosted-colour-not-DFUs",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".lv-star.boosted:not(.full) .lv-val { color: rgb(178,207,255);",
     "new": ".lv-star.boosted:not(.full) .lv-val { color: rgb(255,255,255);",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-drained-line-colour-not-DFUs",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".lv-live.lowered { color: rgb(190,85,24); }",
     "new": ".lv-live.lowered { color: rgb(255,0,0); }",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-floor-unflagged",
-    "file": "src/ui/levelUpView.js",
+    "file": "src/ui/levelUp/levelUpView.js",
     "old": "  return { live, capped: canRaise && liveAttribute(entity, key, value + 1) === live };",
     "new": "  return { live, capped: canRaise && live >= MAX_STAT_VALUE };",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-floor-said-as-bonus",
-    "file": "src/ui/levelUpView.js",
-    "old": "  return row.capped ? `${said} - a point here won't show` : said;",
-    "new": "  return row.capped ? `${row.live} with its bonus - a point here won't show` : said;",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "  return row.capped ? t('levelup.live.capped', '{said} - a point here won\\'t show', { said }) : said;",
+    "new": "  return row.capped ? t('levelup.live.capped', '{said} - a point here won\\'t show', { said: t('levelup.live.boosted', '{live} with its bonus', { live: row.live }) }) : said;",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-tint-under-the-raised-gold",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".lv-star.boosted:not(.full) .lv-val {",
     "new": ".lv-star.boosted .lv-val {",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-blurbs-unstacked",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".lv-blurb > .lv-about { grid-area: 1 / 1; min-width: 0; visibility: hidden; }",
     "new": ".lv-blurb > .lv-about { min-width: 0; visibility: hidden; }",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-phone-line-beside-its-blurb",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .lv-about:has(> .lv-live:not(:empty)) > p { display: none; }\n",
     "new": "",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-short-line-wraps",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "  .lv-live { height: 1.3em; max-height: none; white-space: nowrap; }\n",
     "new": "",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-luck-the-long-one-again",
-    "file": "src/ui/levelUpView.js",
-    "old": "  luck: 'Rides every swing with agility, and tilts what the dead and dungeons hold.',",
-    "new": "  luck: 'Rides every swing beside agility - and tilts what the dead and the dungeons are carrying.',",
+    "file": "src/ui/levelUp/levelUpView.js",
+    "old": "  get luck() { return t('levelup.blurb.luck', 'Helps you hit and avoid hits, as Agility does, and improves your loot.'); },",
+    "new": "  get luck() { return t('levelup.blurb.luck', 'Helps you hit and avoid being hit, as Agility does, and improves all the loot you find.'); },",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
     "name": "ASCEND-LIVE-every-line-unwritten",
-    "file": "src/ui/enhancedLevelUp.js",
+    "file": "src/ui/enhanced/enhancedLevelUp.js",
     "old": "      a.line.textContent = liveNote(r);",
     "new": "      a.line.textContent = k === m.focus ? liveNote(r) : '';",
     "tests": [
-      "test/disc28e_ascendlive.test.js"
+      "test/systems/disc28e_ascendlive.test.js"
     ]
   },
   {
@@ -405,7 +405,7 @@
     "old": "    if (sea && place && tvOfferPassage(place)) return;",
     "new": "    if (false && sea && place && tvOfferPassage(place)) return;",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -414,7 +414,7 @@
     "old": "    if (!fare.opts.travelShip) return false;\n",
     "new": "",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -423,7 +423,7 @@
     "old": "    if (refused) { tvSay(refused); return true; }\n    if (giveOffer())",
     "new": "    if (giveOffer())",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -432,7 +432,7 @@
     "old": "    if (!fare.afford) { tvSay(`${TRAVEL_VIEW_TEXT.noWay} ${fareText(fare.computed, false, fare.coinsShort)}`); return true; }\n",
     "new": "",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -441,7 +441,7 @@
     "old": "partyTripFare(place.pixel, { ...travelMapPopUpState(), travelShip: true })",
     "new": "partyTripFare(place.pixel, travelMapPopUpState())",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -450,7 +450,7 @@
     "old": "        if (!partyTravel?.propose(pick, fare.opts, fare.computed)) partyTravelJourney(pick, fare.opts, fare.computed);",
     "new": "        partyTravelJourney(pick, fare.opts, fare.computed);",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -459,7 +459,7 @@
     "old": "    const days = travelDays(fare.computed.minutes);",
     "new": "    const days = sharedClockOn() ? 0 : travelDays(fare.computed.minutes);",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -468,7 +468,7 @@
     "old": "shipPassageRows(place.name, fareText(fare.computed), days, fare.unwell, sharedClockOn()),",
     "new": "shipPassageRows(place.name, fareText(fare.computed), days, fare.unwell),",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -477,7 +477,7 @@
     "old": "  if (unwell) rows.push('You are diseased or poisoned.');\n  return rows;\n}",
     "new": "  return rows;\n}",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -486,7 +486,7 @@
     "old": "    if (sea && place && tvOfferPassage(place)) return;",
     "new": "    if (sea && !!csaRuntime && csaOn() && place && tvOfferPassage(place)) return;",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -495,7 +495,7 @@
     "old": "    if (sea && place && tvOfferPassage(place)) return;",
     "new": "    if (place && tvOfferPassage(place)) return;",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -504,7 +504,7 @@
     "old": "    const boat = sea && !!csaRuntime && csaOn();",
     "new": "    const boat = sea;",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -513,7 +513,7 @@
     "old": "  if (days > 0) rows.push(`The voyage takes ${days} ${days === 1 ? 'day' : 'days'}${own ? ' of your time' : ''}.`);",
     "new": "  if (days > 0) rows.push(`The voyage takes ${days} days${own ? ' of your time' : ''}.`);",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -522,7 +522,7 @@
     "old": "if (!plan) { tvSeaNoWay(from, summary.pixel, means, net, 'land', summary); return false; }",
     "new": "if (!plan) { tvSeaNoWay(from, summary.pixel, means, net, 'land'); return false; } // if (!plan) { tvSeaNoWay(from, summary.pixel, means, net, 'land', summary); return false; }",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -531,16 +531,16 @@
     "old": "mapId: place.mapId, regionIndex: place.regionIndex, locationIndex: place.locationIndex };",
     "new": "mapId: place.mapId, regionIndex: 0, locationIndex: place.locationIndex };",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
     "name": "SHIP-SAIL-popup-built-unpriced",
-    "file": "src/ui/travelPopUp.js",
+    "file": "src/ui/travel/travelPopUp.js",
     "old": "      if (refusal) { this._itText = IT_TEXT[refusal]; this.top = 'itPush'; }\n    }\n    this.refresh();",
     "new": "      if (refusal) { this._itText = IT_TEXT[refusal]; this.top = 'itPush'; }\n    }",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ],
     "note": "IT1 (PIN MOVED): re-aimed by content - Immersive Travel’s arm sits beside the line this record mutates."
   },
@@ -550,7 +550,7 @@
     "old": "    pop.enforceShipRestriction();\n    pop.refresh();\n    return {",
     "new": "    pop.refresh();\n    pop.enforceShipRestriction();\n    return {",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -559,7 +559,7 @@
     "old": "        travelOptions?.clearTravelDestination();\n        if (!partyTravel?.propose(pick, fare.opts, fare.computed))",
     "new": "        if (!partyTravel?.propose(pick, fare.opts, fare.computed))",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -568,7 +568,7 @@
     "old": "    }), () => { if (viewUp && !sailed) travelView?.enter(); });",
     "new": "    }));",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -577,7 +577,7 @@
     "old": "    }), () => { if (viewUp && !sailed) travelView?.enter(); });",
     "new": "    }), () => { if (viewUp) travelView?.enter(); });",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -586,7 +586,7 @@
     "old": "    if (giveOffer()) return true;   // the map door",
     "new": "    if (false) return true;   // the map door",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -595,7 +595,7 @@
     "old": "fareText(fare.computed, false, fare.coinsShort)",
     "new": "fareText(fare.computed, false)",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -604,16 +604,16 @@
     "old": "      coinsShort: (pop.deps.gold?.() ?? 0) >= pop.trip.totalCost && (pop.deps.goldPieces?.() ?? 0) < pop.trip.piecesCost,",
     "new": "      coinsShort: false,",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
     "name": "SHIP-SAIL-coins-words-dropped",
-    "file": "src/systems/partyTravelLaw.js",
+    "file": "src/systems/party/partyTravelLaw.js",
     "old": "  if (!afford && coinsShort) return `You cannot afford the journey (${Math.max(0, Math.round(computed?.piecesCost ?? 0))} gold in coin for the inns).`;\n",
     "new": "",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -622,7 +622,7 @@
     "old": "      if (isOnShip(playerEntity, playerEntity.boardShipPosition ?? null, playerTravelPixel())) cacheExteriorScene(playerTravelPixel());\n",
     "new": "",
     "tests": [
-      "test/disc28e_shipport.test.js"
+      "test/systems/travel/disc28e_shipport.test.js"
     ]
   },
   {
@@ -631,7 +631,7 @@
     "old": "  return savedVSync(userDataRoot) ? [] : [...VSYNC_OFF_SWITCHES];",
     "new": "  return [];",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -640,7 +640,7 @@
     "old": "  return savedVSync(userDataRoot) ? [] : [...VSYNC_OFF_SWITCHES];",
     "new": "  return [...VSYNC_OFF_SWITCHES];",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -649,7 +649,7 @@
     "old": "    return String(v).trim().toLowerCase() === 'true';",
     "new": "    return String(v).trim().toLowerCase() !== 'false';",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -658,7 +658,7 @@
     "old": "  } catch {\n    return true;\n  }",
     "new": "  } catch {\n    return false;\n  }",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -667,34 +667,34 @@
     "old": "const VSYNC_OFF_SWITCHES = Object.freeze(['disable-gpu-vsync', 'disable-frame-rate-limit']);",
     "new": "const VSYNC_OFF_SWITCHES = Object.freeze(['disable-gpu-vsync']);",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
     "name": "FPS-VSYNC-browser-offered-it",
-    "file": "src/systems/settings.js",
+    "file": "src/systems/settings/settings.js",
     "old": "  if (key in SHELL_AT_LAUNCH && inDesktopShell()) return 'restart';",
     "new": "  if (key in SHELL_AT_LAUNCH) return 'restart';",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
     "name": "FPS-VSYNC-app-never-offers-it",
-    "file": "src/systems/settings.js",
+    "file": "src/systems/settings/settings.js",
     "old": "  if (key in SHELL_AT_LAUNCH && inDesktopShell()) return 'restart';",
     "new": "  if (false) return 'restart';",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
     "name": "FPS-VSYNC-screen-hides-row",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "function drawsFlat(key) { const t = tierOf(key); return t === 'live' || t === 'restart'; }",
     "new": "function drawsFlat(key) { const t = tierOf(key); return t === 'live'; }",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -703,7 +703,7 @@
     "old": "for (const s of FRAME_SWITCHES) app.commandLine.appendSwitch(s);\n",
     "new": "",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -712,34 +712,34 @@
     "old": "    if (v == null) return true;",
     "new": "    if (v === null) return true;",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
     "name": "FPS-VSYNC-restart-said-live",
-    "file": "src/ui/settingsCopy.js",
+    "file": "src/ui/settings/settingsCopy.js",
     "old": "restart: 'Takes effect the next time the app starts.',",
     "new": "restart: 'This works now.',",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
     "name": "FPS-VSYNC-drawsFlat-kept-as-comment",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "function drawsFlat(key) { const t = tierOf(key); return t === 'live' || t === 'restart'; }",
     "new": "function drawsFlat(key) { const t = tierOf(key); return t === 'live'; } // function drawsFlat(key) { const t = tierOf(key); return t === 'live' || t === 'restart'; }",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
     "name": "FPS-VSYNC-sub-rail-counts-live-only",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "if (isSettingItem(item)) { if (!featureForControl('settings', item) && drawsHere(item, ctx.pause)) n++; }",
     "new": "if (isSettingItem(item)) { if (!featureForControl('settings', item) && tierOf(item) === 'live') n++; }",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -748,16 +748,16 @@
     "old": "for (const s of FRAME_SWITCHES) app.commandLine.appendSwitch(s);\n",
     "new": "// for (const s of FRAME_SWITCHES) app.commandLine.appendSwitch(s);\n",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
     "name": "FPS-VSYNC-restart-dot-grey",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".tier.restart { background: transparent; box-shadow: inset 0 0 0 1.5px var(--verdigris); }\n",
     "new": "",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -766,7 +766,7 @@
     "old": "  installFramePacer();   // FPS-VSYNC: first",
     "new": "  // installFramePacer();   // FPS-VSYNC: first",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -775,7 +775,7 @@
     "old": "    take(stamp);   // this frame is the slot: drawn, the next one booked\n",
     "new": "",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -784,7 +784,7 @@
     "old": "    const wait = fps() > 0 ? due() - PACER_LEAD_MS - now() : 0;",
     "new": "    const wait = fps() > 0 ? due() - now() : 0;",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -793,7 +793,7 @@
     "old": "    const wait = fps() > 0 ? due() - PACER_LEAD_MS - now() : 0;",
     "new": "    const wait = due() - PACER_LEAD_MS - now();",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -802,7 +802,7 @@
     "old": "    const batch = [...queue.values()];\n    queue.clear();",
     "new": "    const [first] = queue.keys();\n    const batch = first == null ? [] : [queue.get(first)];\n    queue.delete(first);",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -811,7 +811,7 @@
     "old": "    for (const cb of batch) { try { cb(stamp); } catch (e) { report(e); } }",
     "new": "    for (const cb of batch) cb(stamp);",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -820,7 +820,7 @@
     "old": "    cancel(id) { if (!queue.delete(id)) caf(id); },",
     "new": "    cancel(id) { caf(id); },",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -829,7 +829,7 @@
     "old": "  if (!win?.daggerShell?.framesLifted || typeof win.requestAnimationFrame",
     "new": "  if (!win?.daggerShell || typeof win.requestAnimationFrame",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -838,7 +838,7 @@
     "old": "  state.due = state.due && stamp - state.due < interval ? state.due + interval : stamp + interval;\n}",
     "new": "  state.due = stamp + interval;\n}",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -847,7 +847,7 @@
     "old": "  framesLifted: ipcRenderer.sendSync('dagger:frames-lifted') === true,",
     "new": "  framesLifted: false,",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -856,7 +856,7 @@
     "old": "ipcMain.on('dagger:frames-lifted', (e) => { e.returnValue = FRAME_SWITCHES.length > 0; });",
     "new": "ipcMain.on('dagger:frames-lifted', (e) => { e.returnValue = frameRateSwitches(app.getPath('userData')).length > 0; });",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   },
   {
@@ -865,7 +865,7 @@
     "old": "    const raw = readPref(userDataRoot, SETTINGS_PREF);",
     "new": "    const raw = require('./fileStorage.cjs').createFileStorage(userDataRoot).getItem(SETTINGS_PREF);",
     "tests": [
-      "test/disc28e_vsync.test.js"
+      "test/ui/settings/disc28e_vsync.test.js"
     ]
   }
 ]

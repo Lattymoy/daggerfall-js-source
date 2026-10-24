@@ -35,67 +35,11 @@
 import { dayOfYearFromMinutes } from './gameDate.js';
 import { LOCATION_TYPES } from '../formats/mapsFile.js';   // AUDIT 64 F10: DFRegion.LocationTypes, for the town arm's filter
 
-/** DFLocation.Holidays (:286-343). The value IS the id GetHolidayId
- *  returns; None = 0 means "not a holiday today". */
-export const HOLIDAYS = Object.freeze({
-  None: 0, New_Life: 1, Scour_Day: 2, Ovanka: 3, South_Winds_Prayer: 4,
-  Day_of_Lights: 5, Waking_Day: 6, Mad_Pelagius: 7, Othroktide: 8,
-  Day_of_Release: 9, Hearts_Day: 10, Perserverance_Day: 11, Aduros_Nau: 12,
-  First_Harvest: 13, Day_of_Waiting: 14, Flower_Day: 15, Festival_of_Blades: 16,
-  Gardtide: 17, Day_of_the_Dead: 18, Day_of_Shame: 19, Jesters_Day: 20,
-  Second_Harvest: 21, Marukhs_Day: 22, Fire_Festival: 23, Fishing_Day: 24,
-  Drigh_RZimb: 25, Mid_Year: 26, Dancing_Day: 27, Tibedetha: 28,
-  Merchants_Festival: 29, Divad_Etept: 30, Suns_Rest: 31, Fiery_Night: 32,
-  Maiden_Katrica: 33, Koomu_Alazeri: 34, Feast_of_the_Tiger: 35,
-  Appreciation_Day: 36, Harvest_End: 37, Tales_and_Tallow: 38, Khurat: 39,
-  Riglametha: 40, Childrens_Day: 41, Dirij_Tereur: 42, Witches_Festival: 43,
-  Broken_Diamonds: 44, Emperors_Birthday: 45, Serpents_Dance: 46,
-  Moon_Festival: 47, Hel_Anseilak: 48, Warriors_Festival: 49,
-  North_Winds_Festival: 50, Baranth_Do: 51, Chila: 52, Saturalia: 53,
-  Old_Life_Festival: 54,   // DFU: "Not used"
-});
+import { HOLIDAYS, REGION_CELEBRATING_HOLIDAY, HOLIDAY_DAYS_OF_YEAR, HOLIDAY_SEARCH_LIMIT, HOLIDAY_LAST_DAY } from './holidayTables.js';   // WITCH1: the tables' leaf
 
-/** regionIndexCelebratingHoliday (:1823-1826). 0xFF = every region;
- *  otherwise a REGION ID, which is regionIndex + 1. */
-export const REGION_CELEBRATING_HOLIDAY = Object.freeze([
-  0xFF, 0x19, 0x01, 0xFF, 0x1D, 0x05, 0x19, 0x06, 0x3C, 0xFF, 0x29, 0x1A,
-  0xFF, 0x02, 0x19, 0x01, 0x0E, 0x12, 0x14, 0xFF, 0xFF, 0x1C, 0x21, 0x1F, 0x2C, 0xFF, 0x12,
-  0x23, 0xFF, 0x38, 0xFF, 0x01, 0x30, 0x29, 0x0B, 0x16, 0xFF, 0xFF, 0x11, 0x17, 0x14, 0x01,
-  0xFF, 0x13, 0xFF, 0x33, 0x3C, 0x2E, 0xFF, 0xFF, 0x01, 0x2D, 0x18,
-]);
+// WITCH1: the tables live in holidayTables.js (a leaf the account service can load); every name stays readable here
+export { HOLIDAYS, REGION_CELEBRATING_HOLIDAY, HOLIDAY_DAYS_OF_YEAR, holidayDayOfYear, holidayRegion, HOLIDAY_SEARCH_LIMIT, HOLIDAY_LAST_DAY } from './holidayTables.js';
 
-/** holidayDaysOfYear (:1830-1833), 1-based days. */
-export const HOLIDAY_DAYS_OF_YEAR = Object.freeze([
-  0x01, 0x02, 0x0C, 0x0F, 0x10, 0x12, 0x20, 0x23, 0x26, 0x2E, 0x39, 0x3A,
-  0x43, 0x45, 0x55, 0x56, 0x5B, 0x67, 0x6E, 0x76, 0x7F, 0x81, 0x8C, 0x96, 0x97, 0xA6, 0xAD,
-  0xAE, 0xBE, 0xC0, 0xC8, 0xD1, 0xD4, 0xDD, 0xE0, 0xE7, 0xED, 0xF3, 0xF6, 0xFC, 0x103, 0x113,
-  0x11B, 0x125, 0x12C, 0x12F, 0x134, 0x13E, 0x140, 0x159, 0x15C, 0x162, 0x163,
-]);
-
-/** THE INDEX TRAP, closed. Both tables are indexed by `holidayID`
- *  as GetHolidayId's LOOP COUNTER runs it - 0..52 - and the enum
- *  value it returns is that index PLUS ONE. So the day of
- *  HOLIDAYS.Hearts_Day (10) is row 9, not row 10; reading the table
- *  with the enum value directly is off by one and lands on the NEXT
- *  holiday's day, which is a silent wrong answer rather than an
- *  error. U39 made exactly that mistake writing the tavern's tests,
- *  so the accessor exists to make it unavailable. */
-export const holidayDayOfYear = (holidayId) =>
-  (holidayId >= 1 && holidayId <= HOLIDAY_DAYS_OF_YEAR.length
-    ? HOLIDAY_DAYS_OF_YEAR[holidayId - 1] : null);
-
-/** The region that celebrates it, same offset (0xFF = everywhere). */
-export const holidayRegion = (holidayId) =>
-  (holidayId >= 1 && holidayId <= REGION_CELEBRATING_HOLIDAY.length
-    ? REGION_CELEBRATING_HOLIDAY[holidayId - 1] : null);
-
-/** The `while (holidayID < 53)` bound. Both tables are exactly 53
- *  rows, so this covers all of them; the enum's 54th member has no row
- *  and cannot be returned. */
-export const HOLIDAY_SEARCH_LIMIT = 53;
-/** `if (dayOfYear <= 355)` - the last five days of the year are never
- *  a holiday. */
-export const HOLIDAY_LAST_DAY = 355;
 /** 360 * 1440: a whole year of minutes. */
 export const MINUTES_PER_YEAR = 518400;
 
@@ -114,6 +58,24 @@ export function getHolidayId(gameMinutes, regionIndex) {
   }
   return HOLIDAYS.None;
 }
+
+/** HOLY-DAYS (2026-10-11, a profile of a player's live client entering the world: the Living World's pilgrims asked
+ *  getHolidayId of every day of their cycle at every temple near - a day-of-year sum and the 53 rows each - ~2 s of a
+ *  single frozen frame). THE HOLIDAY ROW ON A DAY OF THE YEAR - `{ id, region }` (the id GetHolidayId returns, the region
+ *  id that keeps it, 0xFF every region) - or null. Each day of the table is one row's (no two rows share a day, every one
+ *  inside HOLIDAY_LAST_DAY), so GetHolidayId on a day is this row where `holidayKeptIn` says so, else None. Read off the
+ *  tables once. */
+let _holidayByDay = null;
+export function holidayOn(dayOfYear) {
+  if (!_holidayByDay) {
+    _holidayByDay = new Map();
+    for (let i = 0; i < HOLIDAY_SEARCH_LIMIT; i++) _holidayByDay.set(HOLIDAY_DAYS_OF_YEAR[i], Object.freeze({ id: i + 1, region: REGION_CELEBRATING_HOLIDAY[i] }));
+  }
+  return _holidayByDay.get(dayOfYear) ?? null;
+}
+/** HOLY-DAYS: GetHolidayId's own test of a row (:1844) - kept everywhere, or in this region (a region ID is the index
+ *  plus one). */
+export const holidayKeptIn = (row, regionIndex) => row.region === 0xFF || row.region === regionIndex + 1;
 
 /** The three holidays a temple cures disease FREE on, and the one that
  *  halves the price (DaggerfallGuildServiceCureDisease :60-88). */

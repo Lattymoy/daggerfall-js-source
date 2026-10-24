@@ -5,7 +5,7 @@
     "old": "  for (const k of Object.keys(p)) if (!TRAV_KEYS.includes(k)) return null;\n  const whole",
     "new": "  const whole",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A mark carrying a name of its own (or anything else) is fanned to the whole region."
   },
@@ -15,7 +15,7 @@
     "old": "  const tv = p.tv == null || p.tv === 0 ? 0 : p.tv === 1 ? 1 : null;",
     "new": "  const tv = p.tv ? 1 : 0;",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A junk journey word is read as a journey instead of refusing the mark."
   },
@@ -25,7 +25,7 @@
     "old": "    if (!hasHello) return { error: 'trav before hello' };\n    if (m.p === null)",
     "new": "    if (m.p === null)",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "An unverified socket tells a region where somebody is."
   },
@@ -35,7 +35,7 @@
     "old": "export const isRegionRoom = (key) => isChatRoom(key) && String(key).startsWith(CHAT_REGION_PREFIX);",
     "new": "export const isRegionRoom = (key) => isChatRoom(key);",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "Every mark fanned to everyone online - the Iliac Bay's whole population on every screen."
   },
@@ -45,7 +45,7 @@
     "old": "      if (!isRegionRoom(a.key)) { this._junk(ws); return; }\n      if (this._travOwed.size)",
     "new": "      if (this._travOwed.size)",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "The relay keeps and fans a mark in the world channel."
   },
@@ -55,17 +55,17 @@
     "old": "      if (m.p || !a.tm) { a = this._meterTrav(ws, a, now); if (!a) return; }\n      if (!m.p && !a.tm) return;",
     "new": "      if (!m.p && !a.tm) return;",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A client at sixty marks a second wakes the region for everyone."
   },
   {
     "name": "TV3-relay-not-kept",
     "file": "server/src/index.js",
-    "old": "      if (!this._setAttach(ws, m.p ? { ...rest, tm: { ...m.p, at: now } } : rest)) return;",
+    "old": "      if (!this._setAttach(ws, m.p ? { ...rest, tm: { ...m.p, at: now, ...(m.bd ? { bd: m.bd } : {}), ...(m.sr ? { sr: m.sr } : {}) } } : rest)) return;",
     "new": "",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A joiner's welcome names no traveller - they appear only as each one next moves."
   },
@@ -75,7 +75,7 @@
     "old": "      if (!room.pass) { if (clear) this._oweTravClear(a.id, out); return; }\n",
     "new": "",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A region full of travellers fans past the room's budget - the cost RELAY-H1 priced."
   },
@@ -85,17 +85,17 @@
     "old": "others.filter((b) => b.tm && now - b.tm.at <= TRAV_STALE_MS)",
     "new": "others.filter((b) => b.tm)",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A player whose client died mid-road stands on everyone's map for as long as the socket lingers."
   },
   {
     "name": "TV3-session-no-version-gate",
     "file": "src/net/online.js",
-    "old": "    if (!this.travOk || !isRegionRoom(this.room)) return false;\n    const mark",
-    "new": "    if (!isRegionRoom(this.room)) return false;\n    const mark",
+    "old": "    if (!this.travOk || !isRegionRoom(this.room)) return false;\n    // OW-CHASE-RANGE: the mark's chase words",
+    "new": "    if (!isRegionRoom(this.room)) return false;\n    // OW-CHASE-RANGE: the mark's chase words",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "An older relay closes the chat socket on the first mark."
   },
@@ -105,7 +105,7 @@
     "old": "    if (mark && now - this._lastTravAt < TRAV_SEND_MIN_MS) return false;\n",
     "new": "",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "The client sends a mark every frame it is asked; the hub strikes it and closes it."
   },
@@ -115,7 +115,7 @@
     "old": "      if (f && f.id !== this.id) this._deliver('travellers', () => this.onTraveller?.(f));",
     "new": "      if (f) this._deliver('travellers', () => this.onTraveller?.(f));",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "My own mark comes back and I am drawn as a stranger over my own head."
   },
@@ -125,7 +125,7 @@
     "old": "  if (alone) return null;\n",
     "new": "",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A lone traveller wakes an empty region's object for nobody (the cost law)."
   },
@@ -135,7 +135,7 @@
     "old": "  if (!shown || !mark) return st.last ? 'clear' : null;\n  if (alone) return null;",
     "new": "  if (alone) return null;\n  if (!shown || !mark) return st.last ? 'clear' : null;",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "Going indoors alone leaves the mark standing for the next joiner's welcome."
   },
@@ -145,7 +145,7 @@
     "old": "      for (const [id, m] of marks) { if (now - m.at > TRAV_STALE_MS) marks.delete(id); else out.push(m); }",
     "new": "      for (const [, m] of marks) out.push(m);",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A traveller whose client died stays on the map for ever."
   },
@@ -155,17 +155,17 @@
     "old": "  const zRow = 499 - p.py;",
     "new": "  const zRow = p.py;",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "Every traveller drawn mirrored north to south across the bay."
   },
   {
     "name": "TV3-view-behind-not-turned",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  if (!p.front) { dx = -dx; dy = -dy; }\n",
     "new": "",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "The arrow for a traveller behind the camera points the wrong way."
   },
@@ -175,17 +175,17 @@
     "old": "x: px + (fx + 0.5) / 256, y: py + 1 - (fy + 0.5) / 256,",
     "new": "x: px + (fx + 0.5) / 256, y: py + (fy + 0.5) / 256,",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A traveller at a pixel's north edge drawn at its south edge on the sheet."
   },
   {
     "name": "TV3-host-bodies-twice",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "      if (near.has(t.id) || Math.max(Math.abs(t.p.px - me.x), Math.abs(t.p.py - me.y)) <= TV_BODY_RANGE) continue;\n",
     "new": "      if (near.has(t.id)) continue;\n",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A nearby player is their body AND a mark a few metres off it."
   },
@@ -195,17 +195,17 @@
     "old": "const shown = outdoors && isEnhanced() && getPref('showToTravellers') !== false && channelOf(link.room)",
     "new": "const shown = outdoors && isEnhanced() && channelOf(link.room)",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "\"Show me to travellers\" off still tells the whole region where I am. SCALE5c (re-aimed by content): the region link on its shard (part two)"
   },
   {
     "name": "AUDIT-TV-C1-a-reconnect-is-held",
     "file": "src/scenes/world.js",
-    "old": "        link.onTravellerRoom = (list) => { travellerBook.reset(list, Date.now()); travellerSent.last = null; travellerSent.at = 0; };",
-    "new": "        link.onTravellerRoom = (list) => { travellerBook.reset(list, Date.now()); };",
+    "old": "travellerBook.reset(list, Date.now()); travellerSent.last = null; travellerSent.at = 0; regionChase.room(list);",
+    "new": "travellerBook.reset(list, Date.now()); regionChase.room(list);",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "After a blip or a relay deploy nobody re-sends: the whole region shows no travellers for two minutes."
   },
@@ -215,17 +215,17 @@
     "old": "travRoomGate(clear ? this._travClearFan : this._travFan, now)",
     "new": "travRoomGate(this._travFan, now)",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A player who hid, in a busy region, stays on every screen for five minutes."
   },
   {
     "name": "AUDIT-TV-C3-party-by-token-subject",
-    "file": "src/scenes/world.js",
-    "old": "      const kind = social?.isPartyPeer(t.id) ? 'party' : 'traveller';",
+    "file": "src/scenes/travelViewMarks.js",
+    "old": "      const kind = host.social?.isPartyPeer(t.id) ? 'party' : 'traveller';",
     "new": "      const kind = 'traveller';",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A party member is drawn as a stranger."
   },
@@ -235,7 +235,7 @@
     "old": "&& channelOf(link.room) === chatRegionRoom(_questRegionIndex()) && !concealBits(playerEntity);",
     "new": "&& !concealBits(playerEntity);",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A fast travel's arrival point is told to the region just left. SCALE5c (re-aimed by content): the region link on its shard (part two)"
   },
@@ -245,7 +245,7 @@
     "old": "    travellerBook.clear(); travellerSent.last = null;   // AUDIT TV C5",
     "new": "    travellerSent.last = null;   // AUDIT TV C5",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "Another tab took the seat, and this one still draws the region's travellers for five minutes."
   },
@@ -255,7 +255,7 @@
     "old": "      if (m.p !== null) {\n        const g = travInGate",
     "new": "      {\n        const g = travInGate",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A busy room's one frame over budget is the clear: the player who went in stays drawn."
   },
@@ -265,7 +265,7 @@
     "old": "      if (!m.p && !a.tm) return;\n",
     "new": "",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A socket that never marked floods every screen with clears."
   },
@@ -275,7 +275,7 @@
     "old": "const room = travRoomGate(clear ? this._travClearFan : this._travFan, now);\n      if (clear) this._travClearFan = room.bucket; else this._travFan = room.bucket;",
     "new": "const room = travRoomGate(this._travFan, now);\n      this._travFan = room.bucket;",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "Clears and marks starve each other."
   },
@@ -285,7 +285,7 @@
     "old": "      if (m.p || !a.tm) { a = this._meterTrav(ws, a, now); if (!a) return; }",
     "new": "      { a = this._meterTrav(ws, a, now); if (!a) return; }",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A clear right after a mark is struck and dropped."
   },
@@ -295,7 +295,7 @@
     "old": "if (mark && now - this._lastTravAt < TRAV_SEND_MIN_MS) return false;",
     "new": "if (now - this._lastTravAt < TRAV_SEND_MIN_MS) return false;",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A player who steps in stays on screen up to ten seconds."
   },
@@ -305,7 +305,7 @@
     "old": "if (typeof m.id === 'string' && m.id !== this.id && isRegionRoom(room)) this._deliver('travellers', () => this.onTravellerLeft?.(m.id));",
     "new": "",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A reconnect leaves the old socket's mark for five minutes."
   },
@@ -315,17 +315,17 @@
     "old": "        this.travOk = false;   // AUDIT DEEP T3-5",
     "new": "        // AUDIT DEEP T3-5",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A mark goes before the new socket's welcome: a rolled-back relay closes on it."
   },
   {
     "name": "AUDIT-DEEP-T3-6-relay-no-age",
     "file": "server/src/index.js",
-    "old": ", ag: Math.max(0, Math.floor((now - b.tm.at) / 1000)) }, b)",
+    "old": ", ag: Math.max(0, Math.floor((now - at) / 1000)) }, b)",
     "new": " }, b)",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A four-minute-old mark is five minutes fresh to a joiner."
   },
@@ -335,7 +335,7 @@
     "old": "ag: Number.isFinite(r?.ag) ? Math.max(0, Math.min(TRAV_STALE_MS / 1000, Math.floor(r.ag))) : 0",
     "new": "ag: 0",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "The welcome's ages are thrown away."
   },
@@ -345,7 +345,7 @@
     "old": "at: now - age });",
     "new": "at: now });",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "The book stamps every mark fresh."
   },
@@ -355,7 +355,7 @@
     "old": ".filter((t) => !social?.inMyParty(social.accountOfPeer(t.id))).map((t) => ({ id: t.id, name: t.name, ...t.p, ship: isShipMark(t.p), kin:",
     "new": ".map((t) => ({ id: t.id, name: t.name, ...t.p, ship: isShipMark(t.p), kin:",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A party member drawn twice on the map."
   },
@@ -365,7 +365,7 @@
     "old": "const shown = outdoors && isEnhanced() && getPref(",
     "new": "const shown = outdoors && getPref(",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "The classic skin shares a position it can neither show nor switch off."
   },
@@ -375,7 +375,7 @@
     "old": "      if (m.p || !a.tm) { a = this._meterTrav(ws, a, now); if (!a) return; }",
     "new": "      if (m.p) { a = this._meterTrav(ws, a, now); if (!a) return; }",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A socket floods its region with padded clears of nothing - each parsed, none struck, the region's thread spent on them."
   },
@@ -385,7 +385,7 @@
     "old": "      if (!room.pass) { if (clear) this._oweTravClear(a.id, out); return; }",
     "new": "      if (!room.pass) return;",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "Thirty players step in at once: ten are drawn where they went in for five minutes on every screen."
   },
@@ -395,7 +395,7 @@
     "old": "      if (this._travOwed.size) this._payTravOwed(now);   // AUDIT DEEP2 C2: the clears owed go first, as the budget allows\n",
     "new": "",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "The owed clears are kept and never said."
   },
@@ -405,7 +405,7 @@
     "old": "      if (!clear) this._travOwed.delete(a.id);   // a new mark says where they are - the owed clear is moot\n",
     "new": "",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A player who stepped in and out again is cleared after their new mark - gone from every screen while outdoors."
   },
@@ -415,7 +415,7 @@
     "old": "export const travInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, TRAV_IN_HZ_MAX, 2 * TRAV_IN_HZ_MAX);",
     "new": "export const travInGate = (bucket, nowMs) => tokenGate(bucket, nowMs, TRAV_IN_HZ_MAX);",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A busy room's marks, spaced by the relay and bunched by the network, are dropped - a traveller who just arrived stays unseen for two minutes."
   },
@@ -425,7 +425,7 @@
     "old": "travellerSent.at = 0; travellerBook.clear(); }",
     "new": "travellerSent.at = 0; }",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "The Region link moves and its hello is refused: the old region's travellers stay drawn for five minutes."
   },
@@ -435,7 +435,7 @@
     "old": "    this._travOwed.delete(a.id);   // AUDIT DEEP2 C2: the leave takes the mark out - an owed clear of it is said\n",
     "new": "",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A player who left with a clear still owed has it said after their leave - a stray frame for an id no longer in the room."
   },
@@ -445,7 +445,7 @@
     "old": " && !this._dead.has(other) && !this._gone.has(other)) out.push(b);",
     "new": ") out.push(b);",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "SCALE5a (re-aimed by content): the welcome's others listed by a method of its own (`_othersOf`). A joiner in the moment a socket is closing is handed its mark and holds a ghost for five minutes."
   },
@@ -455,7 +455,7 @@
     "old": ", lv: readRenown(m), gt: readGuildTag(m), rb: readRibbon(m) };",
     "new": ", lv: null, gt: null, rb: readRibbon(m) };",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A far traveller's Renown and guild tag are read off the frame and thrown away - their marker a bare name."
   },
@@ -465,27 +465,27 @@
     "old": "lv: f.lv ?? null, gt: f.gt ?? null, ",
     "new": "",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "The book forgets the Renown and the guild tag it was handed."
   },
   {
     "name": "OVERWORLD-NAMES-the-near-unnamed",
-    "file": "src/scenes/world.js",
-    "old": "      marks.push({ key: `peer:${d.id}`, at: [f[0], f[1] + h, f[2]], label: d.name ?? '', kind: `${party ? 'party' : 'traveller'}${isShipMark(t?.p) ? ' ship' : ''}${t?.p.tv ? ' journey' : ''}`, edge: party || !!t, badge: tvBadgeOf(d),\n        kin: travellerKin({ friend: !!social?.isFriendPeer(d.id), gt: d.gt }, myGt), lv: d.lv ?? null });   // OWS1: at sea (their region mark says so), a ship; OW-KIN / OW-WHO: who they are to me, and their Renown\n",
+    "file": "src/scenes/travelViewMarks.js",
+    "old": "      marks.push({ key: `peer:${d.id}`, at: [f[0], f[1] + h, f[2]], label: d.name ?? '', kind: `${party ? 'party' : 'traveller'}${isShipMark(t?.p) ? ' ship' : ''}${t?.p.tv ? ' journey' : ''}`, edge: party || !!t, badge: tvBadgeOf(d),\n        kin: travellerKin({ friend: !!host.social?.isFriendPeer(d.id), gt: d.gt }, myGt), lv: d.lv ?? null });   // OWS1: at sea (their region mark says so), a ship; OW-KIN / OW-WHO: who they are to me, and their Renown\n",
     "new": "",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "The players nearest - a party travelling together - have no name in the Overworld."
   },
   {
     "name": "OVERWORLD-NAMES-the-veiled-marked",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "      if (!d?.shown || _hiddenPeers.has(d.id) || _veils.has(d.id)) continue;",
     "new": "      if (!d?.shown || _hiddenPeers.has(d.id)) continue;",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "An invisible player is named at the edge of every screen in the Overworld."
   },
@@ -495,17 +495,17 @@
     "old": "    const namesOff = covered || !!travelView?.active;",
     "new": "    const namesOff = covered;",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A player near the traveller wears two names under the view."
   },
   {
     "name": "OVERWORLD-NAMES-the-concealed-marked",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "      if (!d?.shown || _hiddenPeers.has(d.id) || _veils.has(d.id)) continue;",
     "new": "      if (!d?.shown || _veils.has(d.id)) continue;",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A concealed player (hidden on the classic lane) is named at the edge of every screen in the Overworld."
   },
@@ -515,38 +515,38 @@
     "old": ", badge: m.badge ?? null,\n",
     "new": ",\n",
     "tests": [
-      "test/tv3_travellers.test.js",
-      "test/tv2_click_to_move.test.js"
+      "test/scenes/tv3_travellers.test.js",
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "The view's drawHud leaves the badge behind: in play every player's marker is a bare name."
   },
   {
     "name": "AUDIT-NAMES-N2-2-the-switch-ignored",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "      if (!party && !t && Math.hypot(f[0] - player.pos[0], f[2] - player.pos[2]) > NAME_RANGE) continue;\n",
     "new": "",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A stranger who turned \"Show me to travellers\" off is named kilometres off in the Overworld."
   },
   {
     "name": "AUDIT-NAMES-N2-2-every-stranger-held",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "edge: party || !!t, badge: tvBadgeOf(d),",
     "new": "edge: true, badge: tvBadgeOf(d),",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A stranger who shares nothing with the region is pinned to the screen's edge, pointing the way to them."
   },
   {
     "name": "AUDIT-NAMES-N2-2-nobody-sharing",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "    for (const t of book) sharing.set(t.id, t);\n",
     "new": "",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "The region's travellers are never known to share: nobody near but the party is named past arm's length."
   },
@@ -556,17 +556,17 @@
     "old": "chatRegionRoom(_questRegionIndex()) && !concealBits(playerEntity);",
     "new": "chatRegionRoom(_questRegionIndex());",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "An invisible player's place is told to the whole region."
   },
   {
     "name": "AUDIT-NAMES-the-near-journey-unarrowed",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "${t?.p.tv ? ' journey' : ''}",
     "new": "",
     "tests": [
-      "test/tv3_travellers.test.js"
+      "test/scenes/tv3_travellers.test.js"
     ],
     "note": "A player on a journey loses the arrow the moment they come within the pose range."
   }

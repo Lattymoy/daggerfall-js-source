@@ -1,155 +1,155 @@
 [
   {
     "name": "WODROCK-the-model-rides-the-scale",
-    "file": "src/world/wodRockUv.js",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
     "old": "  if (!cpu?.uvs || !cpu.indices?.length || !(pieceStretch(matrix) + 1e-4 >= minStretch)) return cpu;",
     "new": "  return cpu;",
     "tests": [
-      "test/fb1001_wodrock.test.js"
+      "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]
   },
   {
     "name": "WODROCK-the-threshold-itself-left-alone",
-    "file": "src/world/wodRockUv.js",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
     "old": "!(pieceStretch(matrix) + 1e-4 >= minStretch)",
     "new": "!(pieceStretch(matrix) > minStretch)",
     "tests": [
-      "test/fb1001_wodrock.test.js"
+      "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]
   },
   {
     "name": "WODROCK-a-shrine-statue-re-mapped",
-    "file": "src/world/wodRockUv.js",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
     "old": "export const WOD_ROCK_STRETCH_MIN = 4;",
     "new": "export const WOD_ROCK_STRETCH_MIN = 2;",
     "tests": [
-      "test/fb1001_wodrock.test.js"
+      "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]
   },
   {
     "name": "WODROCK-the-stretch-read-off-one-axis",
-    "file": "src/world/wodRockUv.js",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
     "old": "  return Math.max(Math.hypot(m[0], m[1], m[2]), Math.hypot(m[4], m[5], m[6]), Math.hypot(m[8], m[9], m[10]));",
     "new": "  return Math.hypot(m[0], m[1], m[2]);",
     "tests": [
-      "test/fb1001_wodrock.test.js"
+      "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]
   },
   {
     "name": "WODROCK-the-scaled-plane-read-in-the-pebble-frame",
-    "file": "src/world/wodRockUv.js",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
     "old": "        const t1 = scaled(f1, 1 / lf), b1 = cross(scaled(m1, 1 / lm), t1);",
     "new": "        const t1 = t0, b1 = b0;",
     "tests": [
-      "test/fb1001_wodrock.test.js"
+      "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]
   },
   {
     "name": "WODROCK-the-texture-mirrored-on-the-face",
-    "file": "src/world/wodRockUv.js",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
     "old": "        const t1 = scaled(f1, 1 / lf), b1 = cross(scaled(m1, 1 / lm), t1);",
     "new": "        const t1 = scaled(f1, 1 / lf), b1 = cross(t1, scaled(m1, 1 / lm));",
     "tests": [
-      "test/fb1001_wodrock.test.js"
+      "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]
   },
   {
     "name": "WODROCK-the-v-axis-dropped-from-u",
-    "file": "src/world/wodRockUv.js",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
     "old": "          return [u0 + ux * x + uy * y, v0 + vx * x + vy * y];",
     "new": "          return [u0 + ux * x, v0 + vx * x + vy * y];",
     "tests": [
-      "test/fb1001_wodrock.test.js"
+      "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]
   },
   {
     "name": "WODROCK-no-reference-triangle-ever",
-    "file": "src/world/wodRockUv.js",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
     "old": "      if (area > best && Math.abs(det) > 1e-12) { best = area; ref = t; }",
     "new": "      if (area < best && Math.abs(det) > 1e-12) { best = area; ref = t; }",
     "tests": [
-      "test/fb1001_wodrock.test.js"
+      "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]
   },
   {
     "name": "WODROCK-the-repeats-not-shifted",
-    "file": "src/world/wodRockUv.js",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
     "old": "    const su = Math.floor(minU), sv = Math.floor(minV);",
     "new": "    const su = 0, sv = 0;",
     "tests": [
-      "test/fb1001_wodrock.test.js"
+      "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]
   },
   {
     "name": "WODROCK-the-shift-rounds-below-zero",
-    "file": "src/world/wodRockUv.js",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
     "old": "    const su = Math.floor(minU), sv = Math.floor(minV);",
     "new": "    const su = Math.round(minU), sv = Math.round(minV);",
     "tests": [
-      "test/fb1001_wodrock.test.js"
+      "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]
   },
   {
     "name": "WODROCK-every-patch-one-plane",
-    "file": "src/world/wodRockUv.js",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
     "old": "      g = list.find((k) => dot(planes[k].n, n) > 1 - 1e-4 && Math.abs(dot(planes[k].n, pa) - planes[k].d) <= tol) ?? -1;",
     "new": "      g = list[0] ?? -1;",
     "tests": [
-      "test/fb1001_wodrock.test.js"
+      "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]
   },
   {
     "name": "WODROCK-the-copy-loses-its-normal",
-    "file": "src/world/wodRockUv.js",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
     "old": "          out.normals.push(cpu.normals ? cpu.normals[v * 3] : 0, cpu.normals ? cpu.normals[v * 3 + 1] : 0, cpu.normals ? cpu.normals[v * 3 + 2] : 0);",
     "new": "          out.normals.push(0, 1, 0);",
     "tests": [
-      "test/fb1001_wodrock.test.js"
+      "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]
   },
   {
     "name": "WODROCK-the-cached-model-written",
-    "file": "src/world/wodRockUv.js",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
     "old": "        if (indices === I) indices = new Uint32Array(I);\n",
     "new": "",
     "tests": [
-      "test/fb1001_wodrock.test.js"
+      "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]
   },
   {
     "name": "WODROCK-a-shared-vertex-kept-by-both",
-    "file": "src/world/wodRockUv.js",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
     "old": "        if (owner[v] < 0 || owner[v] === g) {",
     "new": "        if (true) {",
     "tests": [
-      "test/fb1001_wodrock.test.js"
+      "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]
   },
   {
     "name": "WODROCK-the-host-batches-the-model-as-it-was",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "        const cpu = wodRockUvs(cpuModels.get(m.modelId), m.matrix, m.modelId);",
     "new": "        const cpu = cpuModels.get(m.modelId);",
     "tests": [
-      "test/fb1001_wodrock.test.js"
+      "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]
   },
   {
     "name": "WODROCK-the-hold-re-mapped-too",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "          const cpu = cpuModels.get(hm.modelId);",
     "new": "          const cpu = wodRockUvs(cpuModels.get(hm.modelId), local);",
     "tests": [
-      "test/fb1001_wodrock.test.js"
+      "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]
   },
   {
     "name": "WODROCK-a-pebble-copied-whole",
-    "file": "src/world/wodRockUv.js",
+    "file": "src/world/worldOfDaggerfall/wodRockUv.js",
     "old": "  if (next === nV) return { ...cpu, uvs };",
     "new": "  if (next === nV) return { ...cpu, positions: new Float32Array(P), indices: new Uint32Array(I), uvs };",
     "tests": [
-      "test/fb1001_wodrock.test.js"
+      "test/world/worldOfDaggerfall/fb1001_wodrock.test.js"
     ]
   }
 ]

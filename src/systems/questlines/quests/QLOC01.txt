@@ -1,0 +1,110 @@
+-- QL16 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.3): THE OLD COIL, step 1 of 3.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner, never offered
+-- by a questor: the letter is the offer. Lore: canon - Satakal, the Redguards' World-Skin, who sheds the world as a
+-- snake its skin and devours himself; Tall Papa (Ruptga), who taught the spirits the Walkabout between the skins. The
+-- port's own: Sethrakul, the skin that was shed and still swims (bible/03-World/Sea-Serpent.md), Hamid al-Rasheen.
+-- AUDIT QUESTLINES LINES-26: the letter signs off on one line, its sender's name and calling - DFU's pack names a
+-- quest letter by its last line (ItemHelper.cs:335-348, itemInfo.js questLetterName), and it was
+-- "Letter: master of a Sentinel packet".
+Quest: QLOC01
+DisplayName: The Sailors’ Tale
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>        Hamid al-Rasheen's packet has sailed, and _inn_
+<ce>               has let his room to someone else.
+
+QuestComplete:  [1004]
+<ce>          "For listening to an old sailor." Hamid presses
+<ce>                   _gold_ gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ A letter came from Hamid al-Rasheen, master of a
+ Sentinel packet. He has a sailors' tale to tell
+ me, and something to ask. He is lodging at _inn_
+ in __inn_ while his packet is careened.
+
+Message:  1011
+%pcn,
+
+     They say in the harbors that you are not afraid
+ of deep water. Good. I have sailed the packet lanes
+ between Sentinel and every port of the Bay for
+ thirty years, and this last year the harbor bells
+ have rung for something that is not a storm.
+
+     I am lodging at _inn_ in __inn_ while my packet
+ is careened. Buy me a drink and I will tell you a
+ sailors' tale. You will not believe it. Nor did I.
+
+<ce>               Hamid al-Rasheen, master of a Sentinel packet
+
+Message:  1012
+<ce>         A sun-dark sailor with a Sentinel accent shoulders
+<ce>           through the crowd and hands you a letter that
+<ce>            smells of tar. "From the captain," he says.
+<ce>                     "He says bring a thirst."
+
+Message:  1013
+<ce>         "Sit, sit. You have the look of someone who has
+<ce>          stood on a deck. Let me tell it as my grandmother
+<ce>          told it to me, on the quay at Sentinel."
+<ce>
+<ce>         "Before anything, there was Satakal, the World-
+<ce>          Skin. He is everything, and he eats himself, and
+<ce>          each time he sheds his skin a world ends and the
+<ce>          next begins. Tall Papa taught the spirits to leap
+<ce>          from skin to skin - the Walkabout - or they would
+<ce>          have ended with the old ones."
+
+Message:  1014
+<ce>         "Now. A skin that is shed should lie still. But
+<ce>          the sailors of the packet lanes say not every one
+<ce>          does. They say one slid into the sea when the last
+<ce>          world ended, and it swims there still, and it
+<ce>          remembers being a god. Sethrakul, they call it.
+<ce>          The Old Coil."
+<ce>
+<ce>         "I have heard the bells ring for it. I would see
+<ce>          it once before I believe it. Keep your eyes on
+<ce>          the water for me, captain, and I will send word."
+
+Message:  1015
+Hamid al-Rasheen? A Sentinel captain. He'll tell you of a sea serpent for a drink.
+<--->
+The Redguard at _inn_? He talks of Satakal and shed skins. Superstitious lot, sailors.
+<--->
+Hamid's packet is laid up. He's waiting for someone not afraid of deep water.
+
+QBN:
+Item _letter_ letter used 1011
+Item _gold_ gold range 300 to 600
+
+Person _hamid_ faction People_of_Sentinel male anyInfo 1015
+Place _inn_ remote tavern
+
+Clock _courier_ 01:00 03:00
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _hamid_ Hamid_al-Rasheen
+	place npc _hamid_ at _inn_
+	start timer _courier_
+
+_courier_ task:
+	give pc _letter_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_met_ task:
+	clicked npc _hamid_
+	say 1013
+	say 1014
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

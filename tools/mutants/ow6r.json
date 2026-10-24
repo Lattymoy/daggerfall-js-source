@@ -5,7 +5,7 @@
     "old": "export const validRaiderWord = (raw) => validChaseWord(raw, RAIDER_ID_RE);",
     "new": "export const validRaiderWord = (raw) => validChaseWord(raw, /^[rb]-?\\d{1,4}\\.-?\\d{1,4}\\.\\d{1,9}$/);",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "A band's word read as a raider's."
   },
@@ -15,7 +15,7 @@
     "old": "  if (l !== life && l !== life - 1) return false;\n  const reach = RAIDER_REACH_PX + RAIDER_CELL_PX;",
     "new": "  if (l !== life && l !== life - 1 && l !== life - 2) return false;\n  const reach = RAIDER_REACH_PX + RAIDER_CELL_PX;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "Words about raiders two lives gone kept."
   },
@@ -25,7 +25,7 @@
     "old": "  const reach = RAIDER_REACH_PX + RAIDER_CELL_PX;\n  return Math.abs(Number(m[1]) * RAIDER_CELL_PX - at.x) <= reach",
     "new": "  const reach = RAIDER_REACH_PX + 2 * RAIDER_CELL_PX;\n  return Math.abs(Number(m[1]) * RAIDER_CELL_PX - at.x) <= reach",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "Words about raiders past my reach kept."
   },
@@ -35,7 +35,7 @@
     "old": "      if (flag === 2) { tvRaid.spent.add(id); tvRaid.chase.delete(id); tvRaid.peer.delete(id); continue; }",
     "new": "      if (flag === 2) continue;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "A raider a peer fought stands again for me."
   },
@@ -45,7 +45,7 @@
     "old": "      if (tvRaid.chase.has(id) && chaseYields(online?.id ?? '', from)) tvRaid.chase.delete(id);",
     "new": "",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "Two players chased by one sail."
   },
@@ -55,17 +55,17 @@
     "old": "        if (tvRaid.spent.has(r.id) || tvRaid.chase.has(r.id) || seaRaidPeerChase(r.id)) continue;   // OW6: never a sail a peer's chase holds",
     "new": "        if (tvRaid.spent.has(r.id) || tvRaid.chase.has(r.id)) continue;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "A sail a peer's chase holds gives chase to me too."
   },
   {
     "name": "OW6-R-peer-place-unused",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "        const at = ship ? state.worldCoords(ship.pos) : c ? c.pos : (seaRaidPeerChase(r.id) ?? r);   // OW6: one a peer's chase holds, where they say it sails",
     "new": "        const at = ship ? state.worldCoords(ship.pos) : c ? c.pos : r;",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "A peer's chase drawn where the sail would wander, not where it runs."
   },
@@ -75,7 +75,7 @@
     "old": "      tvRaid.chase.delete(id); seaRaidSpend(id);   // OW6: spent, and said to the others",
     "new": "      tvRaid.chase.delete(id); tvRaid.spent.add(id);",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "A raider that came alongside is never said spent."
   },
@@ -85,17 +85,17 @@
     "old": "    if (frame) { frame.sr = word; _seaRaidWordKey = key; }",
     "new": "    if (frame) { _seaRaidWordKey = key; }",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "The chase never rides the frame."
   },
   {
     "name": "OW6-R-stale-kept",
     "file": "src/scenes/world.js",
-    "old": "    if (performance.now() - p.at > RAIDER_WORD_MS) { tvRaid.peer.delete(id); return null; }",
+    "old": "    if (performance.now() - p.at > p.hold) { tvRaid.peer.delete(id); return null; }",
     "new": "",
     "tests": [
-      "test/ows3_raiders.test.js"
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "A peer's word believed for ever: the sail never sails its own course again."
   }

@@ -25,16 +25,26 @@
 // Unity's Random.Range(int, int) is max-EXCLUSIVE, so the two windows
 // are 2..39 and 1..4 whole seconds; `rolls` stands in - THE ENGINE-PRNG
 // RULE, Ledger A, by name.
+//
+// HORSE-WALK (the port's own, bible/06-Systems/Horse-Care.md THE WALK):
+// a horse horse care walks (the motor's rideWalking) is DFU's slow horse
+// - the slow clop and the halved volume - as a STATE, not an edge: a ride
+// that starts at a walk never crosses the half-speed line, and UpdateMode
+// mounts on the fast clop. Its sprite nods on WALK_FRAME_TIME. The gallop
+// keeps DFU's every arm: the fast clop off the edge, 1.2 pitch, 0.125 s.
 
 import { CfaFile } from '../formats/cfaFile.js';
 import { frameToColor32 } from '../combat/fpsWeapon.js';   // TR2: the same index-to-RGBA the weapon art uses
 import { TRANSPORT_MODES, isRiding } from './transport.js';
-import { recolorHorse, horseLookCode, horseLookOfCode, lookSuffix } from './horseCoats.js';   // COATS1: the horse's look, dyed as it uploads
+import { recolorHorse, horseLookCode, horseLookOfCode, lookSuffix } from './horse/horseCoats.js';   // COATS1: the horse's look, dyed as it uploads
 
 /** :148-155. */
 export const HORSE_TEXTURE = 'MRED00I0.CFA';
 export const CART_TEXTURE = 'MRED01I0.CFA';
 export const ANIM_FRAME_TIME = 0.125;
+/** HORSE-WALK: the walk's frame - twice the ride's, a nod a second: a cycle steps the ground DFU's own ride stepped in
+ *  one of its cycles (the walk's 5.1 m at Speed 50 against the ride's 5.4), where the ride's clock would nod twice. */
+export const WALK_FRAME_TIME = 2 * ANIM_FRAME_TIME;
 export const RIDING_VOLUME_SCALE = 0.6;
 export const SCALE_FACTOR_X = 0.8;
 export const NATIVE_SCREEN_HEIGHT = 200;
@@ -59,13 +69,13 @@ export const ridingLoopClip = (mode) => (mode === TRANSPORT_MODES.Cart ? RIDING_
 export const nextNeighDelay = (rolls = Math.random) => 2 + Math.floor(rolls() * 38);
 export const mountNeighDelay = (rolls = Math.random) => 1 + Math.floor(rolls() * 4);
 
-/** COATS1: the look a mount's sprite is dyed in (a look code, systems/horseCoats.js): the horse's own - the cart's
+/** COATS1: the look a mount's sprite is dyed in (a look code, systems/horse/horseCoats.js): the horse's own - the cart's
  *  never: MRED01I0 draws the cart's boards beside the horse, and their stained wood is the same warm brown as the hide. */
 export const ridingLook = (mode, look) => (mode === TRANSPORT_MODES.Horse ? horseLookCode(horseLookOfCode(look)) : 0);
 
 /** Loads one mount's CFA and uploads its frames, the same way the
  *  first-person weapon loads its CIF (fpsWeapon.loadFpsWeaponArt).
- *  COATS1: `look` the horse's (a look code, systems/horseCoats.js) - each
+ *  COATS1: `look` the horse's (a look code, systems/horse/horseCoats.js) - each
  *  frame dyed on its way up, under its own record (`~<code>`; the bay as
  *  drawn keeps the record it always was). No hoof is in the picture, so
  *  no leg is whitened (its lower edge is the neck's), and no saddle, so
@@ -136,7 +146,7 @@ export class RidingAnimator {
    *            volume:number, pitch:number, neigh:boolean}}
    */
   update(dt, { mode = TRANSPORT_MODES.Foot, standingStill = false, grounded = true,
-    paused = false, movingLessThanHalfSpeed = true, running = false,
+    paused = false, movingLessThanHalfSpeed = true, running = false, walking = false,
     soundVolume = 1, rolls = Math.random } = {}) {
     this.now += dt;
     if (!isRiding(mode)) return { frame: 0, clip: this.clip, playing: false, volume: 0, pitch: 1, neigh: false };
@@ -147,16 +157,20 @@ export class RidingAnimator {
       if (this.stopAt == null && this.playing) this.stopAt = this.now + STOP_RIDING_DELAY;
       if (this.stopAt != null && this.now >= this.stopAt) { this.playing = false; this.stopAt = null; }
     } else {
-      // :221-233 - the 0.125s frame clock, wrapping 3 -> 0.
+      // :221-233 - the 0.125s frame clock, wrapping 3 -> 0 (HORSE-WALK: a walk's WALK_FRAME_TIME).
       if (this.lastFrameTime === 0) this.lastFrameTime = this.now;
-      else if (this.now > this.lastFrameTime + ANIM_FRAME_TIME) {
+      else if (this.now > this.lastFrameTime + (walking ? WALK_FRAME_TIME : ANIM_FRAME_TIME)) {
         this.lastFrameTime = this.now;
         this.frameIndex = this.frameIndex === 3 ? 0 : this.frameIndex + 1;
       }
       if (mode === TRANSPORT_MODES.Horse) {
         // :234-248 - the clop swaps on the half-speed EDGE, not the state.
         this.stopAt = null;
-        if (!this.wasMovingLessThanHalfSpeed && movingLessThanHalfSpeed) {
+        if (walking) {
+          // HORSE-WALK: the walk's slow clop is its state, and the edge stands armed for the gallop's first frame
+          this.wasMovingLessThanHalfSpeed = true;
+          this.clip = RIDING_SOUND.horseSlow;
+        } else if (!this.wasMovingLessThanHalfSpeed && movingLessThanHalfSpeed) {
           this.wasMovingLessThanHalfSpeed = true;
           this.clip = RIDING_SOUND.horseSlow;
         } else if (this.wasMovingLessThanHalfSpeed && !movingLessThanHalfSpeed) {
@@ -166,8 +180,8 @@ export class RidingAnimator {
       }
       this.playing = true;
     }
-    // :268-273 - the volume and pitch are set every moving frame.
-    const volume = (movingLessThanHalfSpeed ? RIDING_VOLUME_SCALE * 0.5 : RIDING_VOLUME_SCALE) * soundVolume;
+    // :268-273 - the volume and pitch are set every moving frame (HORSE-WALK: a walk is the slow horse's half).
+    const volume = (movingLessThanHalfSpeed || walking ? RIDING_VOLUME_SCALE * 0.5 : RIDING_VOLUME_SCALE) * soundVolume;
     const pitch = running ? 1.2 : 1;
     // :274-278 - the neigh, OUTSIDE the horse-only arm: a cart neighs too.
     let neigh = false;

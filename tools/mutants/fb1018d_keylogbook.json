@@ -1,0 +1,172 @@
+[
+  {
+    "name": "KEY-LOGBOOK-old-words",
+    "file": "src/systems/inputActions.js",
+    "old": "['LogBook', journalKeyLabel('Quests', 'logbook')]",
+    "new": "['LogBook', 'Quest log']",
+    "tests": [
+      "test/systems/fb1018d_keylogbook.test.js"
+    ],
+    "why": "the report: L's row says Quest log over a window headed Chronicle"
+  },
+  {
+    "name": "KEY-LOGBOOK-page",
+    "file": "src/systems/inputActions.js",
+    "old": "['LogBook', journalKeyLabel('Quests', 'logbook')]",
+    "new": "['LogBook', journalKeyLabel('Quest', 'logbook')]",
+    "tests": [
+      "test/systems/fb1018d_keylogbook.test.js"
+    ],
+    "why": "one character: the row names a page the Chronicle does not have"
+  },
+  {
+    "name": "KEY-LOGBOOK-classic-half",
+    "file": "src/systems/inputActions.js",
+    "old": "['LogBook', journalKeyLabel('Quests', 'logbook')]",
+    "new": "['LogBook', journalKeyLabel('Quests', 'logboo')]",
+    "tests": [
+      "test/systems/fb1018d_keylogbook.test.js"
+    ],
+    "why": "one character: the classic skin's half no longer names the logbook L opens there"
+  },
+  {
+    "name": "KEY-NOTEBOOK-old-words",
+    "file": "src/systems/inputActions.js",
+    "old": "['NoteBook', journalKeyLabel('Notes', 'notebook')]",
+    "new": "['NoteBook', 'Notebook']",
+    "tests": [
+      "test/systems/fb1018d_keylogbook.test.js"
+    ],
+    "why": "the same fault on N: Notebook over a window headed Chronicle"
+  },
+  {
+    "name": "KEY-NOTEBOOK-page",
+    "file": "src/systems/inputActions.js",
+    "old": "['NoteBook', journalKeyLabel('Notes', 'notebook')]",
+    "new": "['NoteBook', journalKeyLabel('Note', 'notebook')]",
+    "tests": [
+      "test/systems/fb1018d_keylogbook.test.js"
+    ],
+    "why": "one character: N's row names a page the Chronicle does not have"
+  },
+  {
+    "name": "KEY-JOURNAL-skin-name",
+    "file": "src/systems/inputActions.js",
+    "old": "`Chronicle: ${page} (Enhanced Plus) / ${classic} (Classic)`",
+    "new": "`Chronicle: ${page} (Enhanced Plu) / ${classic} (Classic)`",
+    "tests": [
+      "test/systems/fb1018d_keylogbook.test.js"
+    ],
+    "why": "one character: the rows name a skin the game does not call by that name (uiSkin.js SKIN_NAMES)"
+  },
+  {
+    "name": "KEY-JOURNAL-window-name",
+    "file": "src/systems/inputActions.js",
+    "old": "`Chronicle: ${page} (Enhanced Plus) / ${classic} (Classic)`",
+    "new": "`Chronicl: ${page} (Enhanced Plus) / ${classic} (Classic)`",
+    "tests": [
+      "test/systems/fb1018d_keylogbook.test.js"
+    ],
+    "why": "one character: both rows name a window the Enhanced Plus door does not open"
+  },
+  {
+    "name": "PAD-LOGBOOK-old-word",
+    "file": "src/ui/plus/plusPad.js",
+    "old": "['LogBook', 'Chronicle: Quests']",
+    "new": "['LogBook', 'Quest log']",
+    "tests": [
+      "test/systems/fb1018d_keylogbook.test.js"
+    ],
+    "why": "the Controller bindings window's d-pad word, the same fault on the pad"
+  },
+  {
+    "name": "KEY-LOGBOOK-heading-moved",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "  who.append(el('h2', null, 'Chronicle'));",
+    "new": "  who.append(el('h2', null, 'Chronicles'));",
+    "tests": [
+      "test/systems/fb1018d_keylogbook.test.js"
+    ],
+    "why": "the window renamed and the rows not: the pin reads the heading the real door draws"
+  },
+  {
+    "name": "KEY-LOGBOOK-page-renamed",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "  ['quests', 'Quests'], ['notes', 'Notes'],",
+    "new": "  ['quests', 'Quest'], ['notes', 'Notes'],",
+    "tests": [
+      "test/systems/fb1018d_keylogbook.test.js"
+    ],
+    "why": "the Quests page renamed and the row not: the pin reads the page the door opened on"
+  },
+  {
+    "name": "KEY-LOGBOOK-world-lands-on-notes",
+    "file": "src/scenes/world.js",
+    "old": "        : (mode === 'notebook' ? 'notes' : 'quests'),",
+    "new": "        : (mode === 'notebook' ? 'notes' : 'notes'),",
+    "tests": [
+      "test/systems/fb1018d_keylogbook.test.js"
+    ],
+    "why": "MAC-K2's mapping undone in the world host (and the interior host it builds for): L lands on Notes under a row that says Quests"
+  },
+  {
+    "name": "KEY-LOGBOOK-exterior-arm",
+    "file": "src/scenes/exterior.js",
+    "old": "    toggleLogbook: () => { const w = makeJournalWindow('activeQuests');",
+    "new": "    toggleLogbook: () => { const w = makeJournalWindow('notebook');",
+    "tests": [
+      "test/systems/fb1018d_keylogbook.test.js"
+    ],
+    "why": "the fixed city's L re-aimed at the notebook: the hosts no longer agree with the row"
+  },
+  {
+    "name": "KEY-LOGBOOK-interior-arm",
+    "file": "src/scenes/worldModes.js",
+    "old": "    toggleLogbook() { mountInterior(host.makeJournal?.('activeQuests')); },",
+    "new": "    toggleLogbook() { mountInterior(host.makeJournal?.('notebook')); },",
+    "tests": [
+      "test/systems/fb1018d_keylogbook.test.js"
+    ],
+    "why": "a building's L re-aimed at the notebook - the host that builds no window is read through the outer hosts' mapping"
+  },
+  {
+    "name": "KEY-LOGBOOK-dungeon-arm",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    toggleLogbook() { this._openJournal('activeQuests'); },",
+    "new": "    toggleLogbook() { this._openJournal('notebook'); },",
+    "tests": [
+      "test/systems/fb1018d_keylogbook.test.js"
+    ],
+    "why": "the dungeon's L re-aimed at the notebook"
+  },
+  {
+    "name": "KEY-NOTEBOOK-world-arm",
+    "file": "src/scenes/world.js",
+    "old": "    toggleNotebook: () => townTalk.showOverlay(makeJournalWindow('notebook')),",
+    "new": "    toggleNotebook: () => townTalk.showOverlay(makeJournalWindow('messages')),",
+    "tests": [
+      "test/systems/fb1018d_keylogbook.test.js"
+    ],
+    "why": "the street's N re-aimed at the messages: N's row says Notes over a window opened elsewhere"
+  },
+  {
+    "name": "KEY-LOGBOOK-classic-mode-dropped",
+    "file": "src/ui/chronicleDoor.js",
+    "old": "    mode: deps.mode,",
+    "new": "    mode: 'activeQuests',",
+    "tests": [
+      "test/systems/fb1018d_keylogbook.test.js"
+    ],
+    "why": "AUDIT FB1018D L1-2: classic N opens the logbook on Active Quests - the row's \"notebook (Classic)\" false, and held as a literal alone it passed"
+  },
+  {
+    "name": "KEY-LOGBOOK-host-mode-unhanded",
+    "file": "src/scenes/exterior.js",
+    "old": "      ...questJournalHooks(),\n      mode,\n",
+    "new": "      ...questJournalHooks(),\n",
+    "tests": [
+      "test/systems/fb1018d_keylogbook.test.js"
+    ],
+    "why": "AUDIT FB1018D L1-2: the city host hands the door no mode - its classic N opens on the logbook's first page"
+  }
+]

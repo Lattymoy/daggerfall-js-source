@@ -1,0 +1,92 @@
+[
+  {
+    "name": "WET-FALL-the-level-ignored",
+    "file": "src/systems/survival/temperature.js",
+    "old": "  const k = precipitationForWeather(weather) ? Math.max(0, Math.min(1, Number.isFinite(fall) ? fall : 1)) : 1;",
+    "new": "  const k = 1;",
+    "tests": [
+      "test/systems/survival/fb1015f_wetfall.test.js"
+    ]
+  },
+  {
+    "name": "WET-FALL-fog-scaled",
+    "file": "src/systems/survival/temperature.js",
+    "old": "  const k = precipitationForWeather(weather) ? Math.max(0, Math.min(1, Number.isFinite(fall) ? fall : 1)) : 1;",
+    "new": "  const k = Math.max(0, Math.min(1, Number.isFinite(fall) ? fall : 1));",
+    "tests": [
+      "test/systems/survival/fb1015f_wetfall.test.js"
+    ]
+  },
+  {
+    "name": "WET-FALL-past-the-row",
+    "file": "src/systems/survival/temperature.js",
+    "old": "Math.max(0, Math.min(1, Number.isFinite(fall) ? fall : 1)) : 1;",
+    "new": "Math.max(0, Number.isFinite(fall) ? fall : 1) : 1;",
+    "tests": [
+      "test/systems/survival/fb1015f_wetfall.test.js"
+    ]
+  },
+  {
+    "name": "WET-FALL-the-sky-s-word-read",
+    "file": "src/systems/survival/temperature.js",
+    "old": "    wetGain: weatherWetGain(env.falling?.word ?? env.weather, {",
+    "new": "    wetGain: weatherWetGain(env.weather, {",
+    "tests": [
+      "test/systems/survival/fb1015f_wetfall.test.js"
+    ]
+  },
+  {
+    "name": "WET-FALL-the-level-never-handed",
+    "file": "src/systems/survival/temperature.js",
+    "old": "sheltered: !!env.sheltered, fall: env.falling?.level ?? 1, snow:",
+    "new": "sheltered: !!env.sheltered, snow:",
+    "tests": [
+      "test/systems/survival/fb1015f_wetfall.test.js"
+    ]
+  },
+  {
+    "name": "WET-FALL-the-fallback-the-sim-s-word",
+    "file": "src/systems/weather/weatherSim.js",
+    "old": ": { word: shown, level: 1, snow: null });",
+    "new": ": { word: currentWeather(), level: 1, snow: null });",
+    "tests": [
+      "test/systems/survival/fb1015f_wetfall.test.js"
+    ]
+  },
+  {
+    "name": "WET-FALL-heard-outlives-a-jump",
+    "file": "src/systems/weather/weatherSim.js",
+    "old": "export const fallingWeather = (shown = currentWeather()) => (_heard != null && _heardAtJump === _jumps ?",
+    "new": "export const fallingWeather = (shown = currentWeather()) => (_heard != null ?",
+    "tests": [
+      "test/systems/survival/fb1015f_wetfall.test.js"
+    ]
+  },
+  {
+    "name": "WET-FALL-the-road-keeps-the-departure-s-rain",
+    "file": "src/systems/survival/needs.js",
+    "old": "Object.assign(sky, { weather: 'sunny', falling: null, byFire: false,",
+    "new": "Object.assign(sky, { weather: 'sunny', byFire: false,",
+    "tests": [
+      "test/systems/survival/fb1015f_wetfall.test.js"
+    ]
+  },
+  {
+    "name": "WET-FALL-world-drops-it",
+    "file": "src/scenes/world.js",
+    "old": "hour, weather, falling: fallingWeather(weather),   // WET-FALL",
+    "new": "hour, weather,   // WET-FALL",
+    "tests": [
+      "test/systems/survival/fb1015f_wetfall.test.js"
+    ]
+  },
+  {
+    "name": "WET-FALL-exterior-drops-it",
+    "file": "src/scenes/exterior.js",
+    "old": "hour, weather, falling: fallingWeather(weather),   // WET-FALL",
+    "new": "hour, weather,   // WET-FALL",
+    "tests": [
+      "test/systems/survival/fb1015f_wetfall.test.js"
+    ]
+  }
+]

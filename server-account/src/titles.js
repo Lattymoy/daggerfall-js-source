@@ -58,6 +58,13 @@
 //             a Brass Remnant's receipt on its kill's first write
 //             (sds.js claimSd) is a fact that happened, laid on the row
 //             (`sd_honours`, 0087) and held for good.
+//   I LOVE LAMP (LAMP-KEEPER II, 2026-10-14) - recorded the same way: the
+//             account's first word with a lamp keeper (lamp.js claimLamp),
+//             laid on the row (`lamp_title`, 0113) and held for good.
+//   THE QUESTLINES' FIVE (QL12, 2026-10-19) - recorded the same way: a
+//             line's title, laid on the row (`ql_titles`, 0133 - a bit a
+//             line, questlineClaims.js qlTitleBit) by the claim that found
+//             its last witnessed step (questlines.js claimQl), held for good.
 //
 // WHY THAT AND NOT A `grants` TABLE. Mac asked that "all current
 // players should be granted the founder title", and the obvious
@@ -85,10 +92,16 @@
 // worn by a row nobody has looked at since.
 // ═══════════════════════════════════════════════════════════════════
 
-import { TITLES, GLYPHS, AURAS, SEAT_TITLES, CHAPTER_TITLES } from '../../src/net/identityToken.js';
+import { TITLES, GLYPHS, AURAS, ICONS, SEAT_TITLES, CHAPTER_TITLES } from '../../src/net/identityToken.js';
 import { insigniaHeld, insigniaKeys } from '../../src/net/insignia.js';   // WB9g: the Broker's insignia - a title and an aura bought
 import { patreonTitlesOf } from './patreon.js';   // PATREON-LINK: a Patreon tier's title, held by the pledge
 import { SD_HONOUR_TITLE, SD_HONOUR_AURA } from './sds.js';   // SD9b: the Hour's grants on the row
+import { SERPENT_HONOUR_TITLE, SERPENT_HONOUR_AURA } from './serpents.js';   // SERPENT5: the Old Coil's grants on the row
+import { EG_HONOUR, EG_HONOUR_TITLES, EG_HONOUR_AURA, EG_CHAMPION_TITLE, EG_FIRST_TITLE, EG_FIRST_AURA } from './egHonours.js';   // EG-E2: the Spire's honours on the row
+import { LAMP_TITLE } from './lamp.js';   // LAMP-KEEPER II: I Love Lamp on the row
+import { QL_TITLES, qlTitleBit } from '../../src/net/questlineClaims.js';   // QL12: the questlines' titles on the row
+import { festivalWaresHeld, HEARTHKEEPER_GIVEN, SOULCAKE_TAKEN } from '../../src/net/festivalLaw.js';   // WITCH1: the Witches' Festival's wares and honours on the row
+import { STAFF_GLYPHS } from '../../src/net/staffCommands.js';   // STAFF-PANEL2-FIX: the glyphs that open the staff's commands, none held while cut off
 
 /** THE FOUNDER CUTOFF, and it is a date rather than a count because
  *  "all current players" is a statement about a MOMENT. Everyone who
@@ -160,6 +173,16 @@ export const isHoursFirst = (player, env) =>
   && hoursFirstHandles(env).has(player.handle.toLowerCase());
 /** HOURS-FIRST: the aura Hour's First carries - The Turning Hour in the first dawn's light (render/auraRing.js). */
 export const HOURS_FIRST_AURA = 'firsthour';
+/** EG-E2 (2026-10-12, bible/11-Multiplayer/Elite-Gates.md section 19, THE HONOURS): FIRST OF THE SPIRE - the first company
+ *  ever to take Redoubt 10, by name, granted as Hour's First is: a list in config (wrangler.toml EG_FIRST_HANDLES - SPIRE-FIRST,
+ *  2026-10-20: the account Serveride, who took it alone - SPIRE-FIRST-NAME: shown in the room by his character's name,
+ *  Severide; this list is the account's HANDLE, never the name the herald reads), held while listed, never a guest's. The title and its aura, Firstlight. */
+export function egFirstHandles(env) {
+  return handleList(env?.EG_FIRST_HANDLES);
+}
+export const isSpireFirst = (player, env) =>
+  typeof player?.handle === 'string' && !!player.handle
+  && egFirstHandles(env).has(player.handle.toLowerCase());
 
 /** How long the sprout stays on a new account: two weeks, in seconds,
  *  spelled as the arithmetic rather than as 1209600 so a reader can
@@ -183,8 +206,9 @@ export function moderatorHandles(env) {
 }
 
 /** One reading of a comma list of handles, so the two lists cannot
- *  come to disagree about case or spaces. */
-function handleList(raw) {
+ *  come to disagree about case or spaces. PRIVATE-REPORT: exported, the
+ *  readers' list (reports.js) read the same way. */
+export function handleList(raw) {
   if (typeof raw !== 'string' || !raw) return new Set();
   return new Set(raw.split(',').map((h) => h.trim().toLowerCase()).filter(Boolean));
 }
@@ -234,13 +258,23 @@ export const TIER_LISTS = Object.freeze({
   // aura "also purple, would be a circle of tiny purple squares going up and down out of the ground"): a fifth title made
   // for one player, and a list that grants an aura with it (TIER_AURA, below).
   crystalfist: 'CRYSTAL_FIST_HANDLES',
+  // WIKIMAID (2026-10-17, for SylviaBun: "the WikiMaid title and a purple aura with bunnies would be dope as hell" - "Lets
+  // go all out for this"): a sixth title made for one player, and a list that grants an aura with it (TIER_AURA, below).
+  wikimaid: 'WIKIMAID_HANDLES',
 });
 /** The glyph each of those titles carries, in the vocabulary's words. */
-export const TIER_GLYPH = Object.freeze({ dungeonmaster: 'dm', disciple: 'disciple', apostle: 'apostle', hierophant: 'hierophant', shadowfang: 'shadowfang', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist' });
+export const TIER_GLYPH = Object.freeze({ dungeonmaster: 'dm', disciple: 'disciple', apostle: 'apostle', hierophant: 'hierophant', shadowfang: 'shadowfang', penitent: 'penitent', herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });
 /** AEGIS: THE AURA A LIST'S TITLE CARRIES, where it carries one - held while the handle is listed, exactly as its glyph
  *  is, and gone on the next token once it is not. A grant like the glyph and unlike the Broker's: derived from the
  *  config at every ask, never a sale recorded on the row. */
-export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });   // CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: "I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed"): the Holo Shadow Cloak
+export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });   // WIKIMAID: the Lilac Warren; CRYSTAL-FIST: the Crystal Resonance; PRIMARCH: the Golden Radiance; SHADOW-CLOAK (2026-10-04, the owner, for SirMcMobdon: "I want to build a new unique AURA specifically for his account. A holo shadow cloak with red accents. Extremely detailed"): the Holo Shadow Cloak
+
+/** STAFF-PANEL2-FIX (design doc, Weak spots: "Cutting off a staff member misses most doors" - "A stored suspended flag is
+ *  checked in every role path"): a staff member an owner cut off (`players.staff_suspended`, migration 0156, staff.js
+ *  /v1/staff/cut) holds no staff role while it stands - not a developer, not a moderator, and no title whose glyph opens
+ *  the staff's commands (net/staffCommands.js STAFF_GLYPHS) - so the panel, the game's /v1/mod doors, Discord and the
+ *  next token's glyphs all read it at once. @param {any} player */
+export const staffSuspended = (player) => player?.staff_suspended === 1;
 
 /** Does this player hold that list's title? A guest holds none, for the developer's reason. PATREON-LINK (2026-10-01,
  *  Mac: "having to manually hand out titles ... its really hard to keep up with it"): AND a Patreon tier's title is held
@@ -248,26 +282,36 @@ export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radia
  *  needs no line here, and the lists stay for the titles Mac grants by name. */
 export const holdsTier = (title, player, env) =>
   typeof player?.handle === 'string' && !!player.handle && Object.hasOwn(TIER_LISTS, title)
+  && !(staffSuspended(player) && STAFF_GLYPHS.includes(TIER_GLYPH[/** @type {keyof typeof TIER_GLYPH} */ (title)]))
   && (handleList(env?.[TIER_LISTS[title]]).has(player.handle.toLowerCase()) || patreonTitlesOf(player, env).includes(title));
 
 /** Is this player one of them? A handle a guest does not have cannot
  *  be in any list, so a guest is never a developer - which is right:
  *  the list names people, and a guest row is a device. */
 export const isDeveloper = (player, env) =>
-  typeof player?.handle === 'string' && !!player.handle
+  typeof player?.handle === 'string' && !!player.handle && !staffSuspended(player)
   && developerHandles(env).has(player.handle.toLowerCase());
 
 /** MOD1: is this player a moderator? A guest cannot be, for the same
- *  reason a guest cannot be a developer. */
+ *  reason a guest cannot be a developer. STAFF-PANEL1: listed, or added by an Admin from the staff panel
+ *  (`staff_mod`, migration 0144) - the account's, so a rename keeps it and a listed handle is never needed. */
 export const isModerator = (player, env) =>
-  typeof player?.handle === 'string' && !!player.handle
-  && moderatorHandles(env).has(player.handle.toLowerCase());
+  typeof player?.handle === 'string' && !!player.handle && !staffSuspended(player)
+  && (moderatorHandles(env).has(player.handle.toLowerCase()) || player.staff_mod === 1);
+
+/** SHADOW-FANG-MOD (2026-10-19, Mac: "Give the shadow fang title mod perms including ban"): THE TITLES THAT MODERATE -
+ *  their holders may do everything canModerate opens (mute, ban, unban, strikes, the reports' queue, a case's buttons),
+ *  and are protected as a moderator is. Held by the title's own list (TIER_LISTS), so taking the handle off takes the
+ *  rights with the title on the next call. The GLYPH stays the title's own: no shield, as for a developer. */
+export const MOD_TIERS = Object.freeze(['shadowfang']);
 
 /** MOD1: MAY THIS PLAYER MODERATE? A moderator may, and so may a
  *  developer - the people who can already speak as the server are not
  *  made to add themselves to a second list to mute somebody. The GLYPH
- *  stays the moderator list's alone: the dev mark already says more. */
-export const canModerate = (player, env) => isModerator(player, env) || isDeveloper(player, env);
+ *  stays the moderator list's alone: the dev mark already says more.
+ *  SHADOW-FANG-MOD: and so may a holder of a MOD_TIERS title. */
+export const canModerate = (player, env) => isModerator(player, env) || isDeveloper(player, env)
+  || MOD_TIERS.some((t) => holdsTier(t, player, env));
 
 /** FOUNDER3: WHEN THIS ACCOUNT FIRST PLAYED. Founder was read off
  *  `registered_at`, and registering is only the moment a player chose a
@@ -323,12 +367,38 @@ export function titlesHeld(player, env) {
   if (player?.arena?.grand === true) held.push('grandchampion');
   if (player?.arena?.champion === true) held.push('arenachampion');
   if (player?.iliac?.champion === true) held.push('iliacchampion');   // CARDS10: Iliac Hand's season #1 (iliac.js), while they hold the top
+  if (player?.gambit?.champion === true) held.push('grandmaster');   // KG6: The King's Gambit's season #1 (gambit.js), while they hold the top
   // SD9b: HOURBREAKER - rolled on a Brass Remnant's kill's first write and laid on the row (sds.js claimSd, `sd_honours`),
   // held for good. A guest's kill is never written, so a guest row holds none
   if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_TITLE)) held.push('hourbreaker');
   if (isHoursFirst(player, env)) held.push('hoursfirst');   // HOURS-FIRST: by name
+  // LAMP-KEEPER II: I LOVE LAMP - laid on the row by the account's first word with a lamp keeper (lamp.js claimLamp), held
+  // for good; a guest's word writes nothing, so a guest row holds none
+  if (typeof player?.handle === 'string' && player.handle && Number(player?.lamp_title) === 1) held.push(LAMP_TITLE);
+  // SERPENT5: COILBREAKER - rolled on a dealing ship's serpent kill's first write and laid on the row (serpents.js
+  // claimSerpent, `serpent_honours`), held for good; a guest's kill is never written, so a guest row holds none
+  if (typeof player?.handle === 'string' && player.handle && (Number(player?.serpent_honours) & SERPENT_HONOUR_TITLE)) held.push('coilbreaker');
+  // EG-E2: THE SPIRE'S - the honours a recorded Redoubt wrote on the row (egHonours.js, `eg_honours`), held for good; a
+  // guest's claim is never written. Spire Champion while the row says a Descent bracket's top ten held it last season
+  // (`eg`, egHonours.js withEgHonours); First of the Spire by name
+  if (typeof player?.handle === 'string' && player.handle) for (const t of EG_HONOUR_TITLES) if (Number(player?.eg_honours) & EG_HONOUR[t]) held.push(t);
+  if (player?.eg?.champion === true) held.push(EG_CHAMPION_TITLE);
+  if (isSpireFirst(player, env)) held.push(EG_FIRST_TITLE);
+  // QL12: THE QUESTLINES' - a line's title laid on the row by the claim that witnessed its last step (questlines.js
+  // claimQl, `ql_titles`), held for good; a guest's claim writes nothing, so a guest row holds none
+  if (typeof player?.handle === 'string' && player.handle) for (const t of QL_TITLES) if (Number(player?.ql_titles) & qlTitleBit(t)) held.push(t);
+  // WITCH1: THE WITCHES' FESTIVAL'S - Witchwarden bought from a Wyrd Sister (`fest_wares`), and Hearthkeeper once the
+  // account's offerings have given HEARTHKEEPER_GIVEN cakes (`fest_given`), held for good; a guest buys and gives nothing
+  if (typeof player?.handle === 'string' && player.handle) {
+    for (const t of festivalKeys(player, 'title')) if (!held.includes(t)) held.push(t);
+    if (Number(player?.fest_given) >= HEARTHKEEPER_GIVEN) held.push(HEARTHKEEPER_TITLE);
+  }
   return held;
 }
+/** WITCH1: the title an account's Hearth Offerings earn (net/identityToken.js TITLES's spelling). */
+export const HEARTHKEEPER_TITLE = 'hearthkeeper';
+/** WITCH1: the keys of one kind among the festival's account wares a row bought (festivalLaw.js FESTIVAL_WARES). */
+const festivalKeys = (/** @type {any} */ player, /** @type {string} */ kind) => festivalWaresHeld(player?.fest_wares).filter((id) => id.startsWith(`${kind}:`)).map((id) => id.slice(kind.length + 1));
 
 /** SERAPH-WINGS (2026-10-05, Mac: "I want to build an aura for the developers ... Golden Angel wings that flow"): THE
  *  DEVELOPERS' AURA - held while the handle is in DEVELOPER_HANDLES, as the developer title and glyph are, and gone on
@@ -346,8 +416,37 @@ export function aurasHeld(player, env) {
   // claimSd, `sd_honours`), held for good; a registered account's alone, as Hourbreaker is
   if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');
   if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA);   // HOURS-FIRST: with the title, by name
+  // EG-E2: the Spire's two auras with their titles' bits (Kynbane's Beaconlight, Wellhead-Walker's The Burning Stair), a
+  // registered account's alone; Firstlight with First of the Spire, by name
+  if (typeof player?.handle === 'string' && player.handle) for (const [t, a] of Object.entries(EG_HONOUR_AURA)) if ((Number(player?.eg_honours) & EG_HONOUR[t]) && !held.includes(a)) held.push(a);
+  if (isSpireFirst(player, env) && !held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);
   for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);
+  // SERPENT5: THE MAELSTROM - the Old Coil's second grant, laid on the row as Coilbreaker is, held for good
+  if (typeof player?.handle === 'string' && player.handle && (Number(player?.serpent_honours) & SERPENT_HONOUR_AURA)) held.push('maelstrom');
+  if (typeof player?.handle === 'string' && player.handle) for (const a of festivalKeys(player, 'aura')) if (!held.includes(a)) held.push(a);   // WITCH1: Witchfire, bought
   return held;
+}
+
+/** WITCH1 (bible/06-Systems/Witches-Festival.md): THE PROFILE ICONS THIS PLAYER HOLDS - the festival's bought from a Wyrd
+ *  Sister (`fest_wares`), and the Soul Cake once the account has taken SOULCAKE_TAKEN cakes from other players' offerings
+ *  (`fest_taken`). A registered account's alone. In ICONS's order. */
+export const SOULCAKE_ICON = 'soulcake';
+export function iconsHeld(/** @type {any} */ player) {
+  if (!(typeof player?.handle === 'string' && player.handle)) return [];
+  const own = new Set(festivalKeys(player, 'icon'));
+  if (Number(player?.fest_taken) >= SOULCAKE_TAKEN) own.add(SOULCAKE_ICON);
+  return ICONS.filter((i) => own.has(i));
+}
+/** WITCH1: the icon this player WEARS - the stored one, while they hold it (titleWorn's law). */
+export function iconWorn(/** @type {any} */ player) {
+  const i = player?.icon;
+  return typeof i === 'string' && i && iconsHeld(player).includes(i) ? i : undefined;
+}
+/** WITCH1: what a player may wear as their icon - the refusal word, or null; `null` (the character's face) always. */
+export function iconRefusal(/** @type {unknown} */ icon, /** @type {any} */ player) {
+  if (icon === null) return null;
+  if (typeof icon !== 'string' || !ICONS.includes(icon)) return 'no-icon';
+  return iconsHeld(player).includes(icon) ? null : 'not-held';
 }
 /** WB9g: the aura this player WEARS - the stored one, while they hold it (titleWorn's law). AEGIS: held by a list too. */
 export function auraWorn(player, env) {
@@ -428,6 +527,8 @@ export const wardrobeOf = (player, env, nowS) => ({
   auras: aurasHeld(player, env),   // AEGIS: a list's aura beside the Broker's
   aura: auraWorn(player, env) ?? null,
   insignia: insigniaHeld(player?.insignia),
+  icons: iconsHeld(player),   // WITCH1: the profile icons held, and the one worn (null: the character's face)
+  icon: iconWorn(player) ?? null,
 });
 
 export { TITLES, GLYPHS };

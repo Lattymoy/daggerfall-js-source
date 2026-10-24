@@ -85,7 +85,7 @@ export const BOUNDS_RANGE = 8192;
  * same law as boundsOf's, spelled for ranges, and it stands beside it
  * rather than inside it on purpose: boundsOf also runs every frame for
  * an animated rig (renderer.js), and cut into range helpers it measured a
- * third slower there. test/publishtail.test.js holds the two to the same
+ * third slower there. test/render/publishtail.test.js holds the two to the same
  * bytes on meshes of every shape, so neither can drift alone.
  */
 export function* boundsSteps(positions, range = BOUNDS_RANGE) {

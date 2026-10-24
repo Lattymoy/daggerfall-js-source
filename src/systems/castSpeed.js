@@ -3,7 +3,7 @@
 // along with scaling with speed"). THE PORT'S OWN LAW. Daggerfall's hands step on a fixed clock
 // (FPSSpellCasting.animSpeed) and Morrowind's spellcast group plays at speed 1; here both lanes run at ONE RATE - the
 // caster's live Speed, and the casting speed the loot they wear carries (lootRarity.js's castSpeed line, summed and
-// capped by systems/lootPowers.js). combat/weaponRig.js castSpellAnim reads it once a cast, and hands it to both the
+// capped by systems/loot/lootPowers.js). combat/weapon/weaponRig.js castSpellAnim reads it once a cast, and hands it to both the
 // classic frames (combat/fpsSpellCasting.js) and the Morrowind arm's spellcast group (combat/fpArm.js castSpell).
 //
 // A leaf: statMods alone, so combat/ and systems/ both read it with no cycle. The loot's share comes through a named

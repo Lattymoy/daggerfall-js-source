@@ -87,6 +87,17 @@ async function artPalette() {
  * @returns {Promise<HTMLCanvasElement[]>}
  */
 export async function loadFaceCanvases(raceKey, gender, { scale = 2 } = {}) {
+  const classic = await classicFaceCanvases(raceKey, gender, { scale });
+  // PORTRAIT3D: with Morrowind's data attached, each face is the Morrowind head that portrait wears - the classic
+  // record where no head is drawn, so the index still addresses the same face
+  const races = await import('../systems/races.js');
+  const set = [];
+  for (let i = 0; i < Math.max(classic.length, races.FACES_PER_RACE); i++) set.push(await headFace(raceKey, gender, scale, i, classic[i] ?? null));
+  return set;
+}
+
+/** The ten classic records of one race and gender, as canvases (loadFaceCanvases's classic half). */
+async function classicFaceCanvases(raceKey, gender, { scale = 2 } = {}) {
   const key = `${raceKey}|${gender}|${scale}`;
   const have = cache.get(key);
   if (have?.canvases) return have.canvases;
@@ -108,7 +119,7 @@ export async function loadFaceCanvases(raceKey, gender, { scale = 2 } = {}) {
     // envelope (S3c/U9) and it addresses a RECORD NUMBER in the CIF -
     // so this array is addressed by it at both ends: the chargen
     // wizard's grid walks 0..FACES_PER_RACE-1 and reads `canvases[i]`
-    // (ui/enhancedChargen.js, which already draws the number where a
+    // (ui/enhanced/enhancedChargen.js, which already draws the number where a
     // face is missing), and `loadFace` below reads `set[faceIndex]`.
     //
     // The first cut of this extraction ended `.filter(Boolean)`, which
@@ -146,21 +157,60 @@ export async function loadFaceCanvases(raceKey, gender, { scale = 2 } = {}) {
  */
 export async function loadFace(who, { scale = 2, copy = false } = {}) {
   if (!who) return null;
-  const set = await loadFaceCanvases(who.race ?? 'Breton', who.gender === 'female' ? 'female' : 'male', { scale });
+  const raceKey = who.race ?? 'Breton', gender = who.gender === 'female' ? 'female' : 'male';
+  const set = await classicFaceCanvases(raceKey, gender, { scale });
   const i = Number.isInteger(who.faceIndex) ? who.faceIndex : 0;
   // A FACE INDEX OUT OF RANGE IS NOT A CRASH. A save written by an
   // older build, or by a mod that added heads, is drawn with the first
   // face rather than with nothing.
   const art = set[i] ?? set[0] ?? null;
-  if (!art || !copy) return art;
+  // PORTRAIT3D: one face is one picture - the Morrowind head this portrait wears, the classic record where none is drawn
+  const face = await headFace(raceKey, gender, scale, set[i] ? i : 0, art);
+  if (!face || !copy) return face;
   const c = document.createElement('canvas');
-  c.width = art.width; c.height = art.height;
+  c.width = face.width; c.height = face.height;
   // Not `cloneNode`: that copies the size and NOT the pixels, which is
   // a blank portrait that looks exactly like a portrait that failed.
-  c.getContext('2d')?.drawImage(art, 0, 0);
+  c.getContext('2d')?.drawImage(face, 0, 0);
   return c;
 }
 
 /** Testing seam: the cache is module state, and a pin that drove two
  *  identities in one process would otherwise see the first one's. */
-export function _resetFacesForTests() { cache.clear(); palettePromise = null; }
+export function _resetFacesForTests() { cache.clear(); heads.clear(); palettePromise = null; }
+
+// PORTRAIT3D (2026-10-15, the owner: "can we do the other races with 3d portraits also?", then "#2 is exactly I
+// wanted"): A FACE IS THE MORROWIND HEAD IT WEARS. With Morrowind's data attached and the game's renderer handed in
+// (main.js -> render/portraitRenderer.js), each portrait is drawn as the head and hair the player's body wears for it
+// (characters/headPortraits.js playerHeadImage: the curated table, the measured match, the walk) - on a canvas the
+// classic record's own size, so every well that held the record holds the head unstretched. Cached per face and data
+// generation, the canvas reused as the classic one is (a caller wanting it twice asks for a copy); a face with no head
+// drawn is the classic record, and that answer is not kept, so a head that comes later is drawn then.
+/** race|gender|scale|index|generation -> { pending?: Promise, canvas?: HTMLCanvasElement } */
+const heads = new Map();
+
+/** Face `i` of one race and gender: the Morrowind head where one is drawn, else `classic`. */
+async function headFace(raceKey, gender, scale, i, classic) {
+  const [{ morrowindDataCount, morrowindDataGeneration }, { portraitRenderer }] = await Promise.all([
+    import('../scenes/dataSource.js'), import('../render/portraitRenderer.js'),
+  ]);
+  if (!(morrowindDataCount() > 0) || !portraitRenderer() || !globalThis.document) return classic;
+  const key = `${raceKey}|${gender}|${scale}|${i}|${morrowindDataGeneration()}`;
+  const have = heads.get(key);
+  if (have?.canvas) return have.canvas;
+  if (have?.pending) return have.pending;
+  const pending = (async () => {
+    const { playerHeadImage, headCanvas } = await import('../characters/headPortraits.js');
+    const w = classic?.width || 64 * scale, h = classic?.height || 64 * scale;
+    const img = await playerHeadImage({ race: raceKey, gender, faceIndex: i }, { px: w * 2, ph: h * 2 });   // the record's own shape, twice its pixels
+    return img ? headCanvas(img, { w, h }) : null;
+  })().catch((e) => {
+    console.warn('[face] the Morrowind head would not draw', e?.message ?? e);
+    return null;
+  }).then((canvas) => {
+    if (canvas) heads.set(key, { canvas }); else heads.delete(key);
+    return canvas ?? classic;
+  });
+  heads.set(key, { pending });
+  return pending;
+}

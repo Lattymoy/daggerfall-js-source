@@ -1,0 +1,209 @@
+[
+  {
+    "name": "CARP-YARD-the-key-a-shipyards",
+    "file": "src/systems/merchantYards.js",
+    "old": "export const YARD_KEY_SLOT = Object.freeze({ stable: 0, transport: 1, carpenter: 6 });",
+    "new": "export const YARD_KEY_SLOT = Object.freeze({ stable: 0, transport: 1, carpenter: 2 });",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-the-fee-its-own",
+    "file": "src/systems/merchantYards.js",
+    "old": "export const YARD_BENCH = Object.freeze({ kind: 'shop', fee: WORKBENCH_FEE, who: 'carpenter', yard: true });",
+    "new": "export const YARD_BENCH = Object.freeze({ kind: 'shop', fee: 25, who: 'carpenter', yard: true });",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-a-counter-row",
+    "file": "src/systems/merchantYards.js",
+    "old": "export const yardRowsFor = (kind) => (validYardKind(kind) === 'carpenter' ? [YARD_BENCH_ROW]",
+    "new": "export const yardRowsFor = (kind) => (validYardKind(kind) === 'carpenter' ? [...YARD_ROWS]",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-the-ground-not-closed",
+    "file": "src/world/merchantYards/merchantYardSites.js",
+    "old": "    out.push(s);\n    closeSite(g, s);\n  }\n  return out;\n}\n\n/**\n * The yards of a laid-out location",
+    "new": "    out.push(s);\n  }\n  return out;\n}\n\n/**\n * The yards of a laid-out location",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-placed-before-the-port",
+    "file": "src/scenes/world.js",
+    "old": "        const sites = g && yardTown ? yardSitesOn(g) : [];",
+    "new": "        const sites = g && yardTown ? [...yardSitesOn(g), ...craftYardSitesOn(g)] : [];",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-a-face-wound-in",
+    "file": "src/world/merchantYards/merchantYardModels.js",
+    "old": "    f.tri(YARD_REC.endgrain, [x, yc, z1], p(a, z1), p(b, z1), [0.5, 0.5], ua, ub);",
+    "new": "    f.tri(YARD_REC.endgrain, [x, yc, z1], p(b, z1), p(a, z1), [0.5, 0.5], ub, ua);",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-the-sign-low",
+    "file": "src/world/merchantYards/merchantYardModels.js",
+    "old": "  signboard(f, YARD_REC.signCarpenter, 0, G.beamY - 0.2 - SIGN_BOARD.h / 2, F.z1, G.beamY);",
+    "new": "  signboard(f, YARD_REC.signCarpenter, 0, 1.2, F.z1, G.beamY);",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-the-way-in-blocked",
+    "file": "src/world/merchantYards/merchantYardModels.js",
+    "old": "  fenceRun(f, F.x0, F.z1, -G.half, F.z1, { ...fence, ends: false });\n  fenceRun(f, G.half, F.z1, F.x1, F.z1, { ...fence, ends: false });\n  // the gate arch: its two posts, the beam over the way in, the JOINERY board",
+    "new": "  fenceRun(f, F.x0, F.z1, F.x1, F.z1, { ...fence, ends: false });\n  // the gate arch: its two posts, the beam over the way in, the JOINERY board",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-the-bench-in-the-street",
+    "file": "src/world/merchantYards/merchantYardModels.js",
+    "old": "  bench: Object.freeze([-1.7, 0.88, -5.6, 1.7, 0.98, -4.85]),",
+    "new": "  bench: Object.freeze([-1.7, 0.88, 1.6, 1.7, 0.98, 2.35]),",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-the-saw-over-the-word",
+    "file": "src/world/merchantYards/merchantYardArt.js",
+    "old": "export const SAW_BLADE = Object.freeze({ x0: 28, x1: 78, back: 38, heelFoot: 60, toeFoot: 51, teeth: 3 });",
+    "new": "export const SAW_BLADE = Object.freeze({ x0: 28, x1: 96, back: 38, heelFoot: 60, toeFoot: 51, teeth: 3 });",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-a-letter-lost",
+    "file": "src/world/merchantYards/merchantYardArt.js",
+    "old": "  J: ['..###', '....#', '....#', '....#', '#...#', '#...#', '.###.'],   // CARP-YARD: JOINERY's\n",
+    "new": "",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-the-stables-board",
+    "file": "src/world/merchantYards/merchantYardArt.js",
+    "old": "  if (k === 'transport') paintWheel(img); else if (k === 'carpenter') paintSaw(img); else paintHorseshoe(img);",
+    "new": "  if (k === 'transport') paintWheel(img); else paintHorseshoe(img);",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-the-benchs-box-lost",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "      if (P.bench) add('bench', P.bench);   // CARP-YARD: the joinery's workbench\n",
+    "new": "",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-a-counter-opened",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "      if (p.y.site.kind === 'carpenter') return bench(p.y.site) !== false;   // CARP-YARD: the joinery's one row - its workbench\n",
+    "new": "",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-the-stables-steal-word",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "midText(p.y.site.kind === 'carpenter' ? CARPENTER_STEAL_TEXT : YARD_TEXT.steal);",
+    "new": "midText(YARD_TEXT.steal);",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-the-reach-unread",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "          if (dx * dx + dz * dz <= YARD_REACH * YARD_REACH) return y.site;",
+    "new": "          return y.site;",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-the-rise-unread",
+    "file": "src/scenes/merchantYardsHost.js",
+    "old": "        if (!y.at || !yardPoints(y.site.kind).bench || Math.abs(f[1] - y.at[1]) > YARD_BENCH_RISE) continue;",
+    "new": "        if (!y.at || !yardPoints(y.site.kind).bench) continue;",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-the-glyph-a-horseshoe",
+    "file": "src/ui/travel/travelViewHud.js",
+    "old": "  return k === 'transport' || k === 'carpenter' || k === 'shipyard' || k === 'lighthouse' || k === 'docks' ? k : 'stable';",
+    "new": "  return k === 'transport' || k === 'shipyard' || k === 'lighthouse' || k === 'docks' ? k : 'stable';",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-the-group-lost",
+    "file": "src/systems/portPlaces.js",
+    "old": "export const FOUND_KIND_ORDER = Object.freeze([...YARD_KIND_ORDER, ...PORT_PLACE_ORDER, ...CRAFT_YARD_ORDER]);",
+    "new": "export const FOUND_KIND_ORDER = Object.freeze([...YARD_KIND_ORDER, ...PORT_PLACE_ORDER]);",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-a-call-site-still-the-modes",
+    "file": "src/scenes/world.js",
+    "old": "        workbench: () => workbenchHere(),   // CARP-YARD: and a joinery's in the street",
+    "new": "        workbench: () => modes?.workbenchHere?.() ?? null,",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-the-landing-lost",
+    "file": "src/scenes/world.js",
+    "old": "    focusStoresStation('workbench');\n    hudCtx.togglePause({ at: 'stores' });",
+    "new": "    hudCtx.togglePause({ at: 'stores' });",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-the-street-bench-none",
+    "file": "src/scenes/world.js",
+    "old": "    return merchantYards?.workbenchNear?.(walkMode && playerSpawned ? player.feetAt() : null) ? YARD_BENCH : null;",
+    "new": "    return null;",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  },
+  {
+    "name": "CARP-YARD-the-linen-at-the-joinery",
+    "file": "src/ui/professions/profPages.js",
+    "old": "bench.kind === 'shop' && !bench.yard) counterBuy(",
+    "new": "bench.kind === 'shop') counterBuy(",
+    "tests": [
+      "test/systems/carpyard1.test.js"
+    ]
+  }
+]

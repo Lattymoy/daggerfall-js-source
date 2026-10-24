@@ -1,6 +1,6 @@
 // @ts-check
 // TRADE1 (2026-09-21): THE TRADE, AS A STATE MACHINE. Pure - no DOM, no game import: everything the game owns (the pack,
-// the item law, the socket) is handed in, so test/trade_session.test.js drives two of these against each other over a
+// the item law, the socket) is handed in, so test/net/trade_session.test.js drives two of these against each other over a
 // fake wire and pins the law without a browser.
 //
 // WHAT A TRADE IS. Two players stand in one room. One asks (`ask`), the other answers (`yes`/`no`). Then each stages an
@@ -35,7 +35,7 @@ import { mintTradeSid, TRADE_FRAME_MAX, TRADE_DATA_MAX, TRADE_REV_MAX } from './
 /** How long a frame may wait for the socket (its gate, a reconnect) before the trade is called broken, ms. */
 export const OUTBOX_TTL_MS = 6000;
 /** TRADE-FIT: the words for an offer too big for one trade frame. */
-export const OFFER_TOO_BIG_TEXT = 'That is more than one trade can carry - offer fewer items.';
+export const OFFER_TOO_BIG_TEXT = 'That is too much for one trade. Offer fewer items.';
 /** TRADE-FIT: a trade frame's length as the relay reads it - the socket's own wrapper (net/online.js sendTrade). */
 export const tradeFrameBytes = (data) => JSON.stringify({ t: 'trade', data }).length;
 /** AUDIT TRADE-FIT D1: the longest data an offer's goods will ride - the COMMIT, which carries the same items and gold
@@ -49,12 +49,12 @@ export const COMMIT_WAIT_MS = 20_000;
 /** The most frames one session holds unsent. */
 export const OUTBOX_MAX = 32;
 /** REALM P2.1: A REALM TRADE'S REVISIONS START HERE (both `rev` and `theirRev`), half the wire's bound. A realm trade is
- *  settled by the service, never by a `commit` frame (net/realmTradeLaw.js); a peer that still settles hand to hand (a
+ *  settled by the service, never by a `commit` frame (net/realm/realmTradeLaw.js); a peer that still settles hand to hand (a
  *  tab open from before a deploy) numbers its revisions from 0, so each side's locks name revisions the other never
  *  holds, nothing is confirmed, and nobody's goods leave. The realm side says so at the peer's first frame. */
 export const REALM_TRADE_REV_BASE = TRADE_REV_MAX / 2;
 /** REALM P2.1: the words for that peer. */
-export const OLDER_BUILD_TRADE_TEXT = 'They are playing an older build - both must reload to trade.';
+export const OLDER_BUILD_TRADE_TEXT = 'They are playing an older version. Both of you must reload to trade.';
 
 /** HOW NEAR TWO PLAYERS MUST STAND TO TRADE, IN METRES - the world's own unit (scene units are metres: the person reach is
  *  256 * GLOBAL_SCALE = 6.4, a body is 1.8 tall). It is NOT a map pixel and NOT a relay room: a pixel is ~820 m, a cell is
@@ -84,20 +84,20 @@ export function inTradeRange(a, b, max = TRADE_RANGE_M) { return tradeDistance(a
 export function tradeWhyText(why, name = 'They') {
   switch (why) {
     case 'declined': return `${name} declined the trade`;
-    case 'left': return `${name} went away - the trade is off`;
+    case 'left': return `${name} left. The trade is off`;
     case 'busy': return `${name} is already trading`;
     case 'timeout': return 'The trade timed out';
-    case 'range': return `You are more than ${TRADE_RANGE_M} m apart - the trade is off`;
-    case 'refused': return `${name}'s offer was not valid - the trade is off`;
-    default: return `${name} cancelled the trade`;
+    case 'range': return `You are more than ${TRADE_RANGE_M} m apart. The trade is off`;
+    case 'refused': return `${name}'s offer was not valid. The trade is off`;
+    default: return `${name} canceled the trade`;
   }
 }
 
 /** AUDIT ONLINE2 F5: a peer's cancel `refused` said on MY screen - it refused the trade (my offer it could not read, a
  *  commit it would not take, or its own goods changed); "their offer was not valid" blamed the wrong player. */
-export const tradeRefusedText = (name = 'They') => `${name}'s game refused the trade - nothing was traded`;
+export const tradeRefusedText = (name = 'They') => `${name}'s game refused the trade. Nothing changed hands`;
 /** AUDIT ONLINE2 F5: an offer this build cannot read (a piece from a newer build) - said on the reader's screen. */
-export const tradeUnreadableText = (name = 'They') => `${name}'s offer holds something this game does not know - reload for the newest version. The trade is off`;
+export const tradeUnreadableText = (name = 'They') => `${name}'s offer has an item your game does not recognize. Reload for the newest version. The trade is off`;
 
 /** Stable JSON (sorted keys) - a leaf of its own since REALM P2.1 (net/canon.js), so the account Worker bundles it alone. */
 export { canon };
@@ -179,7 +179,7 @@ export class TradeSession {
     // AUDIT DROPS B1: my Confirm FREEZES my offer. A change after it unlocked both sides at home but the peer, who
     // may already have confirmed against the old revision and committed, then had their goods refused as "not
     // valid" on my side while theirs were already gone - the one loss LOOT-DUP's law exists to forbid.
-    if (this.myConfirm) return { ok: false, why: 'You have confirmed - cancel the trade to change your offer.' };
+    if (this.myConfirm) return { ok: false, why: 'You have confirmed. Cancel the trade to change your offer.' };
     const list = Array.isArray(entries) ? entries : [];
     const g = Math.floor(Number(gold));
     if (!Number.isFinite(g) || g < 0) return { ok: false, why: 'That is not an amount of gold.' };
@@ -272,7 +272,7 @@ export class TradeSession {
   _end(why, tell = true, text = null) {
     if (tell) this._trySendOnce({ k: 'cancel', why });
     // the player's own cancel is said by the window closing; every other reason is a line in the chat
-    this._finish('cancelled', text ?? (why === 'cancelled' ? 'You cancelled the trade.' : tradeWhyText(why, this.peerName)), { silent: why === 'cancelled' });
+    this._finish('cancelled', text ?? (why === 'cancelled' ? 'You canceled the trade.' : tradeWhyText(why, this.peerName)), { silent: why === 'cancelled' });
   }
 
   /** The host's word that the peer has left the room or walked out of reach. */
@@ -339,7 +339,7 @@ export class TradeSession {
     if (d.r !== this.theirRev || d.o !== this.rev || d.g !== this.theirs.gold || canon(d.items) !== canon(this._theirRaw)) {
       // the goods are not the offer that was locked: a forged commit. Nothing of mine has moved if I have not committed.
       if (this.phase === 'open') { this._end('refused'); return; }
-      this._say(`${this.peerName}'s goods were not what was offered - they were refused.`);
+      this._say(`${this.peerName}'s goods did not match the offer and were refused.`);
       this._finish('done', null); return;
     }
     this._pendingIn = d;
@@ -355,7 +355,7 @@ export class TradeSession {
     // into a loss. Both confirms were given in range; the exchange that follows them is not a range question.
     if (this._escrow) { this._settle(); return; }
     const handle = this.pack.take(this.mine.entries, this.mine.gold);
-    if (!handle) { this._end('refused'); this._say('Your goods changed - the trade is off.'); return; }
+    if (!handle) { this._end('refused'); this._say('Your goods changed. The trade is off.'); return; }
     this._handle = handle;
     this.phase = 'committing';
     this._committedAt = this._now();
@@ -365,7 +365,7 @@ export class TradeSession {
       dropped: () => {
         if (this._sentCommit || !this._handle) return;
         this.pack.restore(this._handle); this._handle = null;
-        this._finish('cancelled', 'The connection failed before the goods were sent - nothing was traded.');
+        this._finish('cancelled', 'The connection failed before the goods were sent. Nothing changed hands.');
       },
     });
   }
@@ -379,11 +379,11 @@ export class TradeSession {
     const ticket = this._escrow.hold();
     // AUDIT REALM L1-F1: the half is made against the save composed as the goods are held - a host that could not
     // compose one (a duel, the seat another tab's) trades nothing
-    if (!ticket) { this._end('refused'); this._say('The realm cannot take a trade just now - nothing was traded.'); return; }
+    if (!ticket) { this._end('refused'); this._say('The realm cannot take a trade right now. Nothing changed hands.'); return; }
     this._ticket = ticket;
     const pick = this.pack.picks?.(this.mine.entries) ?? null;   // which of that save's records these are, before any leaves
     const handle = this.pack.take(this.mine.entries, this.mine.gold);
-    if (!handle) { ticket.release?.(); this._end('refused'); this._say('Your goods changed - the trade is off.'); return; }
+    if (!handle) { ticket.release?.(); this._end('refused'); this._say('Your goods changed. The trade is off.'); return; }
     this._handle = handle;
     this.phase = 'committing';
     this._committedAt = this._now();
@@ -406,7 +406,7 @@ export class TradeSession {
         // record carrying what its offer never showed). Taking only the gold left the tab without them, and its next
         // checkpoint wrote over the record that holds them: the session ends as a lost answer does, and a join reads it.
         this._ticket?.abandon?.();
-        this._finish('done', `The realm holds ${this.peerName}'s goods, but this game could not take them - join again to see the trade as the realm holds it.`);
+        this._finish('done', `The realm has ${this.peerName}'s goods, but your game could not receive them. Rejoin to load the trade from the realm.`);
         return;
       }
       this._applied = true;
@@ -414,16 +414,16 @@ export class TradeSession {
       this._finish('done', `Trade with ${this.peerName} complete.`);
       return;
     }
-    if (r?.unknown) { this._finish('done', 'The realm did not answer - your trade is as the realm holds it.'); return; }
+    if (r?.unknown) { this._finish('done', 'The realm did not answer. Your trade stands as the realm recorded it.'); return; }
     if (handle) this.pack.restore(handle);
-    this._finish('cancelled', r?.text || 'The realm refused the trade - nothing was traded.');
+    this._finish('cancelled', r?.text || 'The realm refused the trade. Nothing changed hands.');
   }
 
   _maybeApply() {
     if (this.phase !== 'committing' || !this._sentCommit || !this._pendingIn || this._applied) return;
     const d = this._pendingIn; this._pendingIn = null;
     const items = d.items.length ? this.pack.unwire(d.items) : [];
-    if (!items) { this._say(`${this.peerName}'s goods were not valid - they were refused.`); this._finish('done', null); return; }
+    if (!items) { this._say(`${this.peerName}'s goods were not valid and were refused.`); this._finish('done', null); return; }
     this._applied = true;
     this.pack.give(items, d.g);
     this._finish('done', `Trade with ${this.peerName} complete.`);
@@ -465,7 +465,7 @@ export class TradeSession {
     if (this.phase === 'committing' && this._sentCommit && !this._applied) {
       const waited = this._now() - this._committedAt;
       if (waited > COMMIT_WAIT_MS && !this._waitSaid) { this._waitSaid = true; this._say(`Still waiting for ${this.peerName}'s goods...`); }
-      if (waited > COMMIT_WAIT_MS * 3) this._finish('done', `${this.peerName}'s goods never arrived - the trade may not have completed.`);
+      if (waited > COMMIT_WAIT_MS * 3) this._finish('done', `${this.peerName}'s goods never arrived. The trade may not have been completed.`);
     }
   }
 
@@ -585,7 +585,7 @@ export function createTradeManager({ send, pack, now = () => Date.now(), say = (
           if (incoming.size >= 4 && !incoming.has(from)) return;
           const fresh = !incoming.has(from);   // a repeated ask renews the timer and says nothing - a peer cannot fill your chat with it
           incoming.set(from, { s: d.s, at: now() });
-          if (fresh) say(`${nameOf(from)} wants to trade - press F on them to accept.`);
+          if (fresh) say(`${nameOf(from)} wants to trade. Press F on them to accept.`);
           mgr.onChange?.(null);
           return;
         }
@@ -617,7 +617,7 @@ export function createTradeManager({ send, pack, now = () => Date.now(), say = (
       if (outgoing && t - outgoing.at > ASK_TTL_MS) {
         const o = outgoing; outgoing = null;
         send({ k: 'cancel', to: o.peer, s: o.s, why: 'timeout' });
-        say(`${nameOf(o.peer)} did not accept within ${ASK_TTL_MS / 1000} seconds - the trade offer is off.`);
+        say(`${nameOf(o.peer)} did not accept within ${ASK_TTL_MS / 1000} seconds. The trade offer is withdrawn.`);
         mgr.onChange?.(null);
       }
       for (const [p, a] of incoming) if (t - a.at > ASK_TTL_MS) { incoming.delete(p); say(`${nameOf(p)}'s trade offer expired.`); mgr.onChange?.(null); }

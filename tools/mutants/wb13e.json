@@ -1,48 +1,48 @@
 [
   {
     "name": "WB13e-no-wake",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "        sound(BOSS_CUES.roar, s, t, null);\n        beat = { kind: 'wake'",
     "new": "        beat = { kind: 'wake'",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-the-wake-for-a-late-screen",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "if (t < s.openUntil + WAKE_LATE_MS && !s.fell && s.wrath == null) {",
     "new": "if (!s.fell && s.wrath == null) {",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-the-flare-never",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "if (wake >= 0 && wake < WAKE_FLARE_MS) return lit(",
     "new": "if (false) return lit(",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-the-opening-unsaid",
-    "file": "src/net/gateBrain.js",
-    "old": "    ...(Number.isSafeInteger(f.startedAt) ? { op: f.startedAt + OPENING_MS } : {}),   // WB13e: the opening's end - his wake, on every screen\n",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    ...(Number.isSafeInteger(openedAt(f)) ? { op: openedAt(f) + OPENING_MS } : {}),   // WB13e: the opening's end - his wake, on every screen (WB14c: none while his Vanguard holds)\n",
     "new": "",
     "tests": [
-      "test/wb13e_beats.test.js",
-      "test/wb3_gate_room.test.js"
+      "test/net/gate/wb13e_beats.test.js",
+      "test/net/gate/wb3_gate_room.test.js"
     ]
   },
   {
     "name": "WB13e-the-opening-unfolded",
-    "file": "src/net/gateLink.js",
+    "file": "src/net/gate/gateLink.js",
     "old": "openUntil: g.op ?? 0,",
     "new": "openUntil: 0,",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
@@ -51,170 +51,170 @@
     "old": "      if (m.op != null && !(m.op === 0 || gateMs(m.op))) return null;   // WB13e: the opening's end (none from an older relay)\n",
     "new": "",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-the-roar-over-the-bark",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "roarAt = t + ROAR_AFTER_MS;",
     "new": "roarAt = t;",
     "tests": [
-      "test/wb13e_beats.test.js",
-      "test/wb7_boss_audio.test.js"
+      "test/net/gate/wb13e_beats.test.js",
+      "test/systems/gate/wb7_boss_audio.test.js"
     ]
   },
   {
     "name": "WB13e-the-card-gone-before-he-lands",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "if (beat?.kind === 'phase' && A === ATTACKS.cross) beat.until = Math.max(",
     "new": "if (false) beat.until = Math.max(",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-the-card-never-fading",
-    "file": "src/ui/gateTitleCard.js",
+    "file": "src/ui/gate/gateTitleCard.js",
     "old": "const alpha = Math.max(0, Math.min(1, (now - beat.at) / TITLE_IN_MS, (beat.until - now) / TITLE_OUT_MS));",
     "new": "const alpha = 1;",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-the-card-over-the-veil",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "drawGateTitleCard(titleCardModel(beat, t), { hidden: hudHidden() || veiled() });",
     "new": "drawGateTitleCard(titleCardModel(beat, t), { hidden: hudHidden() });",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-the-spoils-before-the-thud",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "export const SPEW_AT_MS = 1700;",
     "new": "export const SPEW_AT_MS = 500;",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-no-column",
-    "file": "src/scenes/gateCourt.js",
-    "old": "if (since < THUD_AT_MS + columnN * COLUMN_STEP_MS + 1000) addBurst(courtToDungeon(x, 0.1, z), s.fell.at + THUD_AT_MS + columnN * COLUMN_STEP_MS, FX_KINDS.embers, emberColor(P));",
-    "new": "if (since < THUD_AT_MS + columnN * COLUMN_STEP_MS + 1000) void 0;",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "if (since < THUD_AT_MS + columnN * COLUMN_STEP_MS + FALL_NEWS_MS) addBurst(courtToDungeon(x, 0.1, z), s.fell.at + THUD_AT_MS + columnN * COLUMN_STEP_MS, FX_KINDS.embers, emberColor(P));",
+    "new": "if (since < THUD_AT_MS + columnN * COLUMN_STEP_MS + FALL_NEWS_MS) void 0;",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-no-corpse",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "    if (s.fell && act.act === 'gone') drawCorpse(s);   // WB13e: his body left where he fell\n",
     "new": "",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-the-burst-for-a-late-screen",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "if (since < FALL_CRY_LATE_MS) { addBurst(",
     "new": "if (true) { addBurst(",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-no-sink",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "const sink = since > THUD_AT_MS ? FALL_SINK_M * Math.min(1, (since - THUD_AT_MS) / (FALL_MS - THUD_AT_MS)) : 0;",
     "new": "const sink = 0;",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-the-sink-not-drawn",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "const at = courtToDungeon(x, bossHop(s, t) - (act.sink ?? 0), z);",
     "new": "const at = courtToDungeon(x, bossHop(s, t), z);",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-never-said-a-minute-out",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "{ wrathSaid |= 1; if (t < s.wrathAt - WRATH_WARN_AT_MS + 5000) say(COURT_WRATH_TEXT.minute); }",
     "new": "{ wrathSaid |= 1; }",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-said-late",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "if (t < s.wrathAt - WRATH_WARN_AT_MS + 5000) say(COURT_WRATH_TEXT.minute);",
     "new": "say(COURT_WRATH_TEXT.minute);",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-the-court-never-red",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "if (k >= 0 && k < 1) _lights.push(flash(_wrathLight, at, WRATH_RED, 3 * k * k, WRATH_LIGHT_RANGE));",
     "new": "if (k >= 0 && k < 1) void 0;",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-a-steady-ember",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "  if (s.max > 0 && s.hp / s.max < LOW_HEALTH) return lit(ember, 0.45 * sputter(now), GLOW_RANGE.ember);\n",
     "new": "",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-sparks-every-frame",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "|| t - sputterAt < SPUTTER_EVERY_MS) return;",
     "new": ") return;",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-the-bar-never-pulsing",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "low: !s.fell && frac > 0 && frac < LOW_HEALTH,",
     "new": "low: false,",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-no-sting",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "sound(BOSS_CUES.sting, s, t, atk, f);",
     "new": "void f;",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-a-sting-for-every-meteor",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "if (f && e && e.health > 0 && inAttack(atk, f[0] - COURT_CENTRE[0], f[2] - COURT_CENTRE[2], P)) sound(BOSS_CUES.sting",
     "new": "if (f && e && e.health > 0) sound(BOSS_CUES.sting",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
@@ -223,16 +223,16 @@
     "old": "say: (text) => setMidScreenText(text, courtSaySeconds(text)),",
     "new": "say: (text) => setMidScreenText(text),",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   },
   {
     "name": "WB13e-too-short-to-read",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": ".filter(Boolean).length / COURT_READ_WPS));",
     "new": ".filter(Boolean).length / 99));",
     "tests": [
-      "test/wb13e_beats.test.js"
+      "test/net/gate/wb13e_beats.test.js"
     ]
   }
 ]

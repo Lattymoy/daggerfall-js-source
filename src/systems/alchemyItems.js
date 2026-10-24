@@ -3,7 +3,7 @@
 // PROF12 (2026-10-02, Mac: "2 and 4") - A BREW'S POTIONS AS DFU'S OWN
 // ITEMS (bible/06-Systems/Professions-Arc.md 9.3, 37): the potions the
 // alchemy station's brew makes, minted into the pack as DFU's own maker
-// mints one - ItemBuilder.CreatePotion (systems/loot.js createPotion: the
+// mints one - ItemBuilder.CreatePotion (systems/loot/loot.js createPotion: the
 // Glass Bottle carrying its recipe's key, the recipe's price and its
 // bottle's picture) - so a brewed Healing IS Daggerfall's Healing: it
 // stacks, drinks (DrinkPotion's bundle, potions.js) and sells as DFU's.
@@ -20,11 +20,11 @@
 // No provenance: a potion is DFU's own consumable and stacks; it is no
 // crafted piece the market mints again (NOT YET - Professions-Arc 37).
 // ═══════════════════════════════════════════════════════════════════
-import { createPotion } from './loot.js';
+import { createPotion } from './loot/loot.js';
 import { potionById, potentOk, potentLasts, potentAble } from '../net/alchemyLaw.js';
 
 /** What the station says of a brew whose answer did not come (smithItems.js's kept words' shape). */
-export const BREW_KEPT_TEXT = 'The cauldron bubbled, but no word came back - the brew is kept, and bottled when the word comes.';
+export const BREW_KEPT_TEXT = 'The cauldron bubbled, but no word came back. The brew is kept and will be bottled when word comes.';
 /** The potions a brew's answer makes (`{ potion, count, potent }`), each DFU's own potion - or none for an answer that
  *  names no potion. */
 export function brewItems(data) {

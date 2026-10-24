@@ -6,7 +6,7 @@
 // begins). The press STOPS the turn: within the window about the light (recipeLaw facetWindow - the rank's and the
 // band's) the facet is caught; anywhere else it is lost. A stone let turn FACET_ACT.turns times round loses its facet by
 // itself, and the next is begun. Every facet caught is a clean act. Pure - a machine the bench's section of the Stores
-// page ticks and presses (ui/profPages.js), as the pan is the fire's (systems/panAct.js).
+// page ticks and presses (ui/professions/profPages.js), as the pan is the fire's (systems/panAct.js).
 //
 // The act is the client's, so it may be lied about: its report moves the service by its bounded step only (5.1's honest
 // bound - one quality step; the service reads `clean` and nothing else). Gentle acts cut plain: no window is shown, every

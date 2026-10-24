@@ -8,11 +8,15 @@
 //
 // TWO KINDS. A TENT is Camping Equipment pitched: a model, a fire in
 // front of it, and a wear counter (the gear's uses left) that comes
-// back with the gear when it is packed. A FIRE is one light off a
-// Campfire Kit: the same fire without the tent, and when it burns
-// down it is gone - the kit's use is spent at the placing, not the
-// packing. A tent's fire can be stoked (a rest stokes it); a kit's
-// cannot.
+// back with the gear when it is packed. A FIRE is a Campfire set down
+// (REST2): the same fire without the tent, placed free, its fuel spent
+// by the nights its owner sleeps at it (spendCampNight); burnt down it
+// stands cold, relit while it has fuel or picked back up with what is
+// left. A tent's fire can be stoked (a rest stokes it). AUDIT C&C I10:
+// this said a fire was one light off a kit, spent at the placing, gone
+// when it burnt down and never stoked - SURV3's kit, which REST2
+// replaced; only a fire with no fuel of its own (an Ember Jar's, an old
+// save's kit fire) goes with its embers (campExpired).
 //
 // WHERE. Not in a building (the mod's "You cannot set up camp in
 // here"), not in a town (its "It is illegal to camp in town" - and
@@ -34,9 +38,9 @@
 // stand. `validCampRecord` is the door every one of them comes in by.
 import { wrapAngle } from '../../world/mat4.js';
 import { POSE_BOUND, POSE_Y_BOUND } from '../../net/wire.js';
-import { TEMPLATE, foodOf, foodStage, isFood } from './food.js';
-import { createSurvivalItem, dressFood, isCampingEquipment, isCampfireKit, isSkillet, SURVIVAL_USE_TEXT } from './items.js';
-import { isEmberJar, EMBER_JAR_MINUTES, REST_ITEM_TEXT } from '../restItems.js';   // REST6: the Ember Jar's one-night fire
+import { TEMPLATE, foodOf, foodStage, isFood, dressFood } from './food.js';   // AUDIT C&C I5: the dress law's home
+import { createSurvivalItem, isCampingEquipment, isCampfireKit, isSkillet, SURVIVAL_USE_TEXT } from './items.js';
+import { isEmberJar, EMBER_JAR_MINUTES, REST_ITEM_TEXT } from '../rest/restItems.js';   // REST6: the Ember Jar's one-night fire
 
 /** The mod's tent (Camping.DeployTent: CreateDaggerfallMeshGameObject(41606)). */
 export const TENT_MODEL = 41606;
@@ -80,11 +84,8 @@ export const CAMP_TEXT = Object.freeze({
   // (a player reported camping kits that "don't work", and a refusal
   // with no words is indistinguishable from a broken item).
   noSpot: 'You cannot find anywhere to make camp.',
-  // AUDIT SURV-TIERS: with the arc Off a player's own camp could be
-  // neither seen nor used (scenes/camps.js `seen`, `shown`), so none is
-  // stood - and the refusal names the one thing that would change it,
-  // CAMP-SILENT's law.
-  arcOff: 'Turn Climates & Calories on to make camp.',
+  // AUDIT C&C I10: `arcOff` ("Turn Climates & Calories on to make camp.") is deleted - nothing said it once ENDLESS
+  // PROVISIONS made a camp every tier's (scenes/camps.js placeItem runs the camp law's own checks with the arc Off)
   pitched: 'You pitch your tent and light a fire.',
   lit: 'You light a campfire.',
   packed: 'You pack up your camp.',
@@ -283,8 +284,12 @@ export const hasSkillet = (items) => (items ?? []).some(isSkillet);
 /**
  * COOK one: the cooked food minted a stage nearer fresh, one raw off
  * the pack, the cooked one in. Returns { item, minutes, text } or null.
+ * FB1020c BAG-COOK: `list` is the list the raw food is in, `into` the one
+ * the cooked food joins - the pack, where the raw one came out of the
+ * Materials Bag: a cooked food is no material, and the bag holds
+ * materials alone (materialsBag.js).
  */
-export function cookFood(item, list, { skillet = false } = {}) {
+export function cookFood(item, list, { skillet = false, into = list } = {}) {
   const f = foodOf(item);
   if (!f?.cooks) return null;
   const rawName = item.name;   // AUDIT SURV E: the line names what went on the fire
@@ -294,7 +299,7 @@ export function cookFood(item, list, { skillet = false } = {}) {
   if (Array.isArray(list)) {
     if ((item.stackCount ?? 1) > 1) item.stackCount -= 1;
     else { const i = list.indexOf(item); if (i >= 0) list.splice(i, 1); }
-    list.push(cooked);
+    (Array.isArray(into) ? into : list).push(cooked);   // FB1020c BAG-COOK: into the pack, never the bag
   }
   return { item: cooked, minutes: skillet ? SKILLET_COOK_MINUTES : COOK_MINUTES, text: CAMP_TEXT.cooked(rawName) };
 }
@@ -310,6 +315,10 @@ export function nearestFire(camps, pos, now, reach = BY_FIRE_REACH) {
   return best;
 }
 export const byFire = (camps, pos, now) => !!nearestFire(camps, pos, now);
+/** AUDIT C&C I2: a TENT in the camp's reach of `pos` - its fire lit or not, anyone's: a roof over a rest (the hosts'
+ *  `sheltered`). A Campfire alone is no roof. */
+export const tentNear = (camps, pos, reach = BY_FIRE_REACH) => !!pos && (camps ?? []).some((c) => c?.kind === CAMP_KIND.Tent
+  && Math.hypot(c.pos[0] - pos[0], c.pos[1] - pos[1], c.pos[2] - pos[2]) <= reach);
 
 /** What the eye sees (Info and Talk modes). */
 export function campInfoText(camp, now, mine) {
@@ -318,12 +327,23 @@ export function campInfoText(camp, now, mine) {
   if (camp.jar) return mine ? CAMP_TEXT.seeOwnJar : CAMP_TEXT.seeJar;   // AUDIT REST III B5: an Ember Jar's is no Campfire, here as on its hover
   return mine ? CAMP_TEXT.seeOwnFire : CAMP_TEXT.seeFire;
 }
-/** The menu's rows: rest and cook at any camp; stoke a cold tent; REST2: relight your own cold Campfire while it has
- *  fuel; pack your tent, or pick your Campfire up. The keys are the plaque's action ids (REST2: the loot plaque's rows). */
+/** THE STOKE, one condition (AUDIT C&C I1): your own cold tent with wear left, or your own cold Campfire with fuel left -
+ *  never an Ember Jar's. The menu's Stoke and Relight rows are offered on it, and a rest at your own camp meets it first
+ *  (scenes/camps.js act): the rest stoked a tent alone - a burnt-down Campfire stayed cold under its sleeper, who had the
+ *  rough night beside it - and said "You stoke the fire." over a worn-through tent's cold one. */
+export const canStoke = (camp, now, mine) => !!camp && !!mine && !camp.jar && !fireLit(camp, now) && (camp.wear | 0) > 0
+  && (camp.kind === CAMP_KIND.Tent || camp.kind === CAMP_KIND.Fire);
+/** The menu's rows: rest at any camp, cook at a lit one; stoke a cold tent; REST2: relight your own cold Campfire while
+ *  it has fuel; pack your tent, or pick your Campfire up. The keys are the plaque's action ids (REST2: the loot plaque's
+ *  rows). */
 export function campMenu(camp, now, mine, { online = false } = {}) {
-  const rows = [{ key: 'rest', text: CAMP_TEXT.menuRest }, { key: 'cook', text: CAMP_TEXT.menuCook }];
-  if (camp.kind === CAMP_KIND.Tent && mine && !fireLit(camp, now) && (camp.wear | 0) > 0) rows.push({ key: 'stoke', text: CAMP_TEXT.menuStoke });   // AUDIT REST III A2: my own - a friend's tent stoked here is stoked on my screen alone (its owner publishes it, camps.js act), and the owner's next frame (2 s) puts it out under the rest it promised
-  if (camp.kind === CAMP_KIND.Fire && mine && !camp.jar && !fireLit(camp, now) && (camp.wear | 0) > 0) rows.push({ key: 'stoke', text: CAMP_TEXT.menuRelight });
+  const rows = [{ key: 'rest', text: CAMP_TEXT.menuRest }];
+  // AUDIT C&C I11: a cold fire offers no Cook - it offered one, and the cooking list only refused ("The fire has burned
+  // down to embers."); its Stoke or Relight is the row that lights it
+  if (fireLit(camp, now)) rows.push({ key: 'cook', text: CAMP_TEXT.menuCook });
+  // AUDIT REST III A2: my own - a friend's tent stoked here is stoked on my screen alone (its owner publishes it, camps.js
+  // act), and the owner's next frame (2 s) puts it out under the rest it promised
+  if (canStoke(camp, now, mine)) rows.push({ key: 'stoke', text: camp.kind === CAMP_KIND.Tent ? CAMP_TEXT.menuStoke : CAMP_TEXT.menuRelight });
   if (mine && !camp.jar && (camp.kind === CAMP_KIND.Tent || !!camp.fuel)) rows.push({ key: 'pack', text: camp.kind === CAMP_KIND.Tent ? CAMP_TEXT.menuPack : CAMP_TEXT.menuPickUp });   // AUDIT REST-PARTY B5: never an old save's kit fire (no fuel of its own: AUDIT REST F12 - it burns away as it always did; picked up, it was a second Campfire from nothing)
   // AUDIT REST II H12: online a cold camp is no rest point (restAct asks a LIT fire), so its Rest row only refused, with
   // the wrong words ("Find a fire or a bed to rest."): it goes, and the fire's own act - Relight, Stoke - leads, the row

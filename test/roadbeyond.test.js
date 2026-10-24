@@ -6,10 +6,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 
-import { pathCorners } from '../src/world/roadPainter.js';
-import { generatePixelTerrain } from '../src/world/terrainGen.js';
-import { MAP_W, MAP_H, DIR } from '../src/world/roadNetwork.js';
-import { groundWoods, tamrielHeightByte, tamrielClimateAt } from '../src/world/tamrielGround.js';
+import { pathCorners } from '../src/world/road/roadPainter.js';
+import { generatePixelTerrain } from '../src/world/terrain/terrainGen.js';
+import { MAP_W, MAP_H, DIR } from '../src/world/road/roadNetwork.js';
+import { groundWoods, tamrielHeightByte, tamrielClimateAt } from '../src/world/tamriel/tamrielGround.js';
 import { MAP_WIDTH, MAP_HEIGHT } from '../src/formats/woodsFile.js';
 import { getWorldClimateSettings, CLIMATES } from '../src/formats/mapsFile.js';
 
@@ -38,7 +38,7 @@ test('ROAD-BEYOND the corner byte: a neighbour past the mask\'s east or west edg
   assert.equal(pathCorners(m, 995, MAP_H - 1, MAP_W), DIR.SW);
 });
 
-/** A WoodsFile's reads over a flat buffer, the composition's own shape (test/tamriel2.test.js StubWoods). */
+/** A WoodsFile's reads over a flat buffer, the composition's own shape (test/world/tamriel2.test.js StubWoods). */
 class FlatWoods {
   constructor(v) { this.heightMapBuffer = new Uint8Array(MAP_WIDTH * MAP_HEIGHT).fill(v); }
   getHeightMapValue(x, y) {

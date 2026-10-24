@@ -22,6 +22,7 @@ import {
   MOD_ACTIONS, ACTION_GROUPS, codeForAction, actionsAt, shareBinding, dropBinding, clearBinding,
 } from './inputActions.js';
 import { shortcutBinding, MOD } from './dialogShortcuts.js';   // UXB1-F: the keys this page names and cannot move
+import { localizedText, formatText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** internalDupeColor / crossDupeColor (:44-45): red for a clash
  *  inside the shown dict, the blue for one across the two. */
@@ -330,12 +331,12 @@ const MOUSE_NAMES = Object.freeze({
  *  how. `mode` is Controls/WeaponSwingMode; `readyCode` is the live
  *  ReadyWeapon code (null when unbound). */
 export function swingHint(code, mode, readyCode) {
-  if (code == null) return 'Unbound - nothing can swing your weapon.';
+  if (code == null) return 'Unbound. Nothing can swing your weapon.';
   const side = { Mouse0: 'left', Mouse1: 'right', Mouse2: 'middle' }[code];
   const btn = side ? `the ${side} mouse button` : buttonText(code, true);
   const how = mode === 1 ? `Press ${btn} to swing.`
     : mode === 2 ? `Press or hold ${btn} to swing.`
-      : `Hold ${btn} and move the mouse to swing - the way you move picks the blow. A press without moving does nothing.`;
+      : `Hold ${btn} and move the mouse to swing. The direction you move picks the attack. Holding it without moving does nothing.`;
   return readyCode == null ? how : `${how} Draw your weapon first with ${buttonText(readyCode, true)} (Ready Weapon).`;
 }
 
@@ -365,7 +366,7 @@ export function floatHint(action, dict) {
 export function sharedFloatNote(action, holders, usingPrimary = true) {
   const f = FLOAT_PARTNERS[action];
   if (!f || !holders?.length || !holders.every((h) => h.action === f.partner)) return null;
-  return `${f.name} already ${f.verb} while you swim or levitate, so the key does both as it is, without ${SHARE_KEY_LABEL}: answer No to keep it on ${f.name}${usingPrimary ? '' : ' (secondary)'}.`;
+  return `${f.name} already ${f.verb} while you swim or levitate, so this key already does both without ${SHARE_KEY_LABEL}. Answer No to keep it on ${f.name}${usingPrimary ? '' : ' (secondary)'}.`;
 }
 
 /** GetButtonText + FormatButtonText. `full` skips the length cap
@@ -446,18 +447,22 @@ export function comboFromEvent(code, e) {
  *  module that will not load. This file sits in the chunk the menu and
  *  the world both import, so those players got no game at all. The
  *  captured pair says the same thing - a space between a lower and the
- *  upper after it - and test/nolookbehind.test.js holds the whole tree
+ *  upper after it - and test/systems/nolookbehind.test.js holds the whole tree
  *  to it. */
 export const splitCamel = (s) => s.replace(/([a-z])([A-Z])/g, '$1 $2').trim();
 
 /** PromptRemoveKeybindMessage's text (:298-302): the "removeKeybind"
  *  record formatted with the camel-split action name and the FULL
- *  button text of the code being removed. */
+ *  button text of the code being removed - read in the player's
+ *  language (L10N3d). DFU's box word-wraps the one line (:295's
+ *  wrapText); the port's takes rows, so the record breaks before the
+ *  word that leads into the action's name, where the English always
+ *  has, and each row is formatted. */
 export function removeKeybindPromptRows(action, code) {
-  return [
-    'Are you sure you want to remove the keybind',
-    `for ${splitCamel(action)} ('${buttonText(code, true)}')?`,
-  ];
+  const prompt = localizedText('removeKeybind', "Are you sure you want to remove the keybind for {0} ('{1}')?");
+  const at = prompt.lastIndexOf(' ', prompt.indexOf('{0}') - 2);
+  const rows = at > 0 ? [prompt.slice(0, at), prompt.slice(at + 1)] : [prompt];
+  return rows.map((row) => formatText(row, splitCamel(action), buttonText(code, true)));
 }
 
 /**
@@ -533,7 +538,7 @@ export function replacePromptRows(u, { action, code, holders }) {
  * torch/summon horse/summon cart)"): THE KEYS THE CONTROLS PAGE CANNOT MOVE, NAMED ON IT ANYWAY.
  *
  * Two kinds reach a player in play and stood on no screen at all. The HUD's own three - DaggerfallHUD.Update's
- * LargeHUDToggle and HUDToggle arms and RetroRenderer's post-processing toggle (ui/hudShortcuts.js), which DFU reads
+ * LargeHUDToggle and HUDToggle arms and RetroRenderer's post-processing toggle (ui/hud/hudShortcuts.js), which DFU reads
  * off its DaggerfallShortcut table and gives no rebinding screen either. And the Transport window's letters: in the
  * game itself (no mod) a horse or a cart is not summoned by a key of its own, it is chosen in that window - Transport,
  * then H or C. Both are read OFF the shortcut table (systems/dialogShortcuts.js shortcutBinding), so the page names

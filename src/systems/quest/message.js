@@ -30,6 +30,7 @@ export class Message {
     this.parentQuest = parentQuest;
     this.id = 0;
     this.variants = [];
+    this.ownLines = null;   // L10N5: the quest's own lines while a translation's are read in their place (localize)
     if (source) this.loadMessage(id, source);
   }
 
@@ -76,7 +77,7 @@ export class Message {
    *  GUIDE1: the fourth argument is the PORT'S, not C#'s. Message.cs
    *  passes the literal true (below), and so does every caller that
    *  leaves it off - which is every DFU caller. Its one reader is the
-   *  quest lens's quiet read (ui/questLens.js), which takes the
+   *  quest lens's quiet read (ui/quest/questLens.js), which takes the
    *  bracket without the reveal: a face that reads the journal on the
    *  player's behalf must not open talk topics the player never asked
    *  the journal for. */
@@ -116,6 +117,22 @@ export class Message {
     return tokens;
   }
 
+  /** L10N5: a translation's lines read in place of the message's own (L10N3c's ReplaceMessage), the own kept - as the
+   *  save's lines (getSaveData) and for a language with no translation of it (ownText). DFU saves the replaced lines,
+   *  so a quest begun in French stays French in English; the port saves the quest's own, and each language reads its
+   *  own words again after a load. */
+  localize(lines) {
+    if (!this.ownLines) this.ownLines = this.getSaveData().lines;
+    this.loadMessage(this.id, lines);
+  }
+  /** L10N5: the message's own lines again, where the language has no translation of it. */
+  ownText() {
+    if (!this.ownLines) return;
+    const own = this.ownLines;
+    this.ownLines = null;
+    this.loadMessage(this.id, own);
+  }
+
   /** GetSaveData (Message.cs:221-280): reconstruct SOURCE lines from
    *  the (unexpanded) variant tokens - later variants re-prefix the
    *  split token, centered lines re-prefix <ce>, and an unexpected
@@ -123,6 +140,7 @@ export class Message {
    *  Text token flushes the line and DROPS ITSELF (C#'s continue) -
    *  unreachable through loadMessage's strict alternation. */
   getSaveData() {
+    if (this.ownLines) return { id: this.id, lines: [...this.ownLines] };   // L10N5: the quest's own words, never a translation's
     const lines = [];
     for (let variant = 0; variant < this.variants.length; variant++) {
       if (variant > 0) lines.push(SPLIT_TOKEN);
@@ -161,6 +179,7 @@ export class Message {
 
   /** RestoreSaveData (Message.cs:282-285). */
   restoreSaveData(data) {
+    this.ownLines = null;
     this.loadMessage(data.id, data.lines);
   }
 }

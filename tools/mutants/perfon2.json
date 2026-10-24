@@ -5,7 +5,7 @@
     "old": "      if (cullOn && billboardOutside(b)) { if (renderer.shadowReachBatch(b)) castBatches.push(b); continue; }   // AUDIT REACH\n",
     "new": "",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  try { return /[?&]perf=cpu\\b/.test(search); } catch { return false; }",
     "new": "  try { return /[?&]perf\\b/.test(search); } catch { return false; }",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "new PerfMeter(gl, perfZones(), perfCpu())",
     "new": "new PerfMeter(gl, perfZones())",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  _cpuMark(name) {\n    this._cpuClose();\n    this.cpuOpen = [name, this._now()];\n  }",
     "new": "  _cpuMark(name) {\n    this.cpuOpen = [name, this._now()];\n  }",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (this.cpu) {\n      this._cpuClose();",
     "new": "    if (this.cpu) {\n      if (false) this._cpuClose();",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (this.cpu) return;\n    if (!this.ext || this.active || this.zones) return;",
     "new": "    if (!this.ext || this.active || this.zones) return;",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  markCpu(name) { if (this.cpu) this._cpuMark(name); }",
     "new": "  markCpu(name) { this.mark(name); }",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "        return perfZoneLine(means, counts, 'cpu');",
     "new": "        return perfZoneLine(means, counts);",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "        for (const [name, ms] of this.cpuZones) means.set(name, ms / Math.max(1, this.cpuFrames));",
     "new": "        for (const [name, ms] of this.cpuZones) means.set(name, ms);",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    meterFor(renderer.gl)?.markCpu('online');   // PERF-CPU",
     "new": "",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
@@ -95,9 +95,9 @@
     "old": "farOf[rank] = same ? heldShadowFar(sl[o + 3], L[i * 4 + 3]) : shadowFarFor(L[i * 4 + 3]);",
     "new": "farOf[rank] = L[i * 4 + 3];",
     "tests": [
-      "test/perfon2_peercull.test.js",
-      "test/el2_shadows.test.js",
-      "test/el5_field.test.js"
+      "test/render/perfon2_peercull.test.js",
+      "test/render/el2_shadows.test.js",
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "export const shadowFarFor = (far) => Math.ceil(far / SHADOW_FAR_QUANTUM) * SHADOW_FAR_QUANTUM;",
     "new": "export const shadowFarFor = (far) => Math.floor(far / SHADOW_FAR_QUANTUM) * SHADOW_FAR_QUANTUM;",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
@@ -115,34 +115,34 @@
     "old": "export const SHADOW_FAR_QUANTUM = 4;",
     "new": "export const SHADOW_FAR_QUANTUM = 0.25;",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
     "name": "PERF-LIGHTS-the-count-is-ignored-so-the-pools-stale-entries-are-selected-from",
-    "file": "src/world/cityLights.js",
+    "file": "src/world/city/cityLights.js",
     "old": "  const len = n < 0 ? lights.length : Math.min(n, lights.length);",
     "new": "  const len = lights.length;",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
     "name": "PERF-LIGHTS-the-default-stops-meaning-the-whole-array",
-    "file": "src/world/cityLights.js",
+    "file": "src/world/city/cityLights.js",
     "old": "export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE, colorOf = null, xzRange = 0, n = -1) {",
     "new": "export function nearestLights(lights, pos, max = 16, range = CITY_LIGHT_RANGE, colorOf = null, xzRange = 0, n = 0) {",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
     "name": "PERF-LIGHTS-the-host-mints-a-light-object-a-lantern-a-frame-again",
-    "file": "src/world/cityLights.js",
+    "file": "src/world/city/cityLights.js",
     "old": "      const e = pool[n] ?? (pool[n] = { x: 0, y: 0, z: 0 });",
     "new": "      const e = (pool[n] = { x: 0, y: 0, z: 0 });",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
@@ -151,7 +151,7 @@
     "old": "        if (!billboardOutside(b)) livePersonBatches[keep++] = b;",
     "new": "        livePersonBatches[keep++] = b; if (!billboardOutside(b)) {}",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
@@ -160,10 +160,10 @@
     "old": "        gl.uniform3fv(P.bb.up, recordBasis ? r.up : this._up);\n        if (!perBatchRight) gl.uniform3fv(P.bb.right, recordBasis ? r.right : this._right);",
     "new": "",
     "tests": [
-      "test/perfon2_peercull.test.js",
-      "test/el5_field.test.js",
-      "test/el2_shadows.test.js",
-      "test/audit_el.test.js"
+      "test/render/perfon2_peercull.test.js",
+      "test/render/el5_field.test.js",
+      "test/render/el2_shadows.test.js",
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -172,11 +172,11 @@
     "old": "          } else if (perBatchRight) {",
     "new": "          } else if (false) {",
     "tests": [
-      "test/perfon2_peercull.test.js",
-      "test/el5_field.test.js",
-      "test/el2_shadows.test.js",
-      "test/audit_el.test.js",
-      "test/el6_field.test.js"
+      "test/render/perfon2_peercull.test.js",
+      "test/render/el5_field.test.js",
+      "test/render/el2_shadows.test.js",
+      "test/render/audit_el.test.js",
+      "test/render/el6_field.test.js"
     ]
   },
   {
@@ -185,9 +185,9 @@
     "old": "          if (tex !== lastTex) { gl.bindTexture(gl.TEXTURE_2D, tex); lastTex = tex; }   // PERF-BASIS",
     "new": "          gl.bindTexture(gl.TEXTURE_2D, tex);",
     "tests": [
-      "test/perfon2_peercull.test.js",
-      "test/el5_field.test.js",
-      "test/el2_shadows.test.js"
+      "test/render/perfon2_peercull.test.js",
+      "test/render/el5_field.test.js",
+      "test/render/el2_shadows.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "    const bbCull = !this._bbCullOff && !!this._proj && !!this._view;",
     "new": "    const bbCull = false;",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
@@ -205,8 +205,8 @@
     "old": "    if (this._casting) this._shadows.recordBillboards(batches, this._flatWind, camRight, camUp, this._windfall);   // EL2 (EL3: with the basis); WINDFALL1: and the mod's law",
     "new": "",
     "tests": [
-      "test/perfon2_peercull.test.js",
-      "test/el2_shadows.test.js"
+      "test/render/perfon2_peercull.test.js",
+      "test/render/el2_shadows.test.js"
     ]
   },
   {
@@ -215,7 +215,7 @@
     "old": "      if (bbCull && !this._bbVisible(b)) { this.stats.bbCulled++; continue; }   // PERF-CROWD2: the ghosts and the concealed too",
     "new": "",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
@@ -224,7 +224,7 @@
     "old": "    this._bbCullOff = cullDisabled();   // the ?cull=off door, read once",
     "new": "    this._bbCullOff = false;",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
@@ -233,26 +233,26 @@
     "old": "          const key = billboardKey(b);\n          const tex = f.textures.get(key);",
     "new": "          const key = b._bbKey ?? billboardKey(b);\n          const tex = f.textures.get(key);",
     "tests": [
-      "test/perfon2_peercull.test.js",
-      "test/audit68_render_a.test.js"
+      "test/render/perfon2_peercull.test.js",
+      "test/render/audit68_render_a.test.js"
     ]
   },
   {
     "name": "AUDIT-F2-the-short-range-array-goes-back-to-a-silent-NaN",
-    "file": "src/world/cityLights.js",
-    "old": "    out[i * 4 + 3] = Number.isFinite(w) ? w : CITY_LIGHT_RANGE;",
-    "new": "    out[i * 4 + 3] = w;",
+    "file": "src/world/city/cityLights.js",
+    "old": "    packLight(out, i, l, Number.isFinite(w) ? w : CITY_LIGHT_RANGE);",
+    "new": "    packLight(out, i, l, w);",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   },
   {
     "name": "AUDIT-F2-the-guard-overwrites-a-legitimate-zero-range",
-    "file": "src/world/cityLights.js",
-    "old": "    out[i * 4 + 3] = Number.isFinite(w) ? w : CITY_LIGHT_RANGE;",
-    "new": "    out[i * 4 + 3] = w || CITY_LIGHT_RANGE;",
+    "file": "src/world/city/cityLights.js",
+    "old": "    packLight(out, i, l, Number.isFinite(w) ? w : CITY_LIGHT_RANGE);",
+    "new": "    packLight(out, i, l, w || CITY_LIGHT_RANGE);",
     "tests": [
-      "test/perfon2_peercull.test.js"
+      "test/render/perfon2_peercull.test.js"
     ]
   }
 ]

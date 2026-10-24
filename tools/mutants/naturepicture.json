@@ -5,7 +5,7 @@
     "old": "  if (far) return { key: far.record, size: far.size, plain, sib, proto, far };",
     "new": "  if (far && !sib) return { key: far.record, size: far.size, plain, sib, proto, far };",
     "tests": [
-      "test/naturepicture.test.js"
+      "test/world/naturepicture.test.js"
     ],
     "note": "a season standing over the archive takes the trees' place"
   },
@@ -15,7 +15,7 @@
     "old": "  const plain = sib ? sib.size : billboardSize(t, record);",
     "new": "  const plain = billboardSize(t, record);",
     "tests": [
-      "test/naturepicture.test.js"
+      "test/world/naturepicture.test.js"
     ],
     "note": "the flat's own size the classic record's under a season - its lean, cover and far rings' height off the wrong picture"
   },
@@ -25,7 +25,7 @@
     "old": "{ mips: false, variant: '' });   // TEX1",
     "new": "{ variant: '' });   // TEX1",
     "tests": [
-      "test/naturepicture.test.js"
+      "test/world/naturepicture.test.js"
     ],
     "note": "AUDIT 61: the mod's atlas uploaded with a mip chain it does not have"
   },
@@ -35,7 +35,7 @@
     "old": "export const seasonPictureKey = (record, installedSeason) => `${record}#season${installedSeason}`;",
     "new": "export const seasonPictureKey = (record, _installedSeason) => `${record}#season`;",
     "tests": [
-      "test/naturepicture.test.js"
+      "test/world/naturepicture.test.js"
     ],
     "note": "a later season reads an earlier one's upload"
   },
@@ -45,17 +45,17 @@
     "old": "  uploadRecord(archive, record);\n",
     "new": "",
     "tests": [
-      "test/naturepicture.test.js"
+      "test/world/naturepicture.test.js"
     ],
     "note": "the classic record batched, never uploaded"
   },
   {
     "name": "NATUREPIC-world-unwired",
-    "file": "src/scenes/world.js",
-    "old": "await naturePicture({ door: lowPolyTrees, seasons: seasonsActive ? seasons : null, renderer, uploadRecord }, t, archive, record)",
-    "new": "await naturePicture({ door: null, seasons: seasonsActive ? seasons : null, renderer, uploadRecord }, t, archive, record)",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "await naturePicture({ door: lowPolyTrees, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord: g.uploadRecord }, t, archive, record)",
+    "new": "await naturePicture({ door: null, seasons: host.seasonsActive ? seasons : null, renderer, uploadRecord: g.uploadRecord }, t, archive, record)",
     "tests": [
-      "test/naturepicture.test.js"
+      "test/world/naturepicture.test.js"
     ],
     "note": "the town's pixels hand the choice no trees"
   },
@@ -65,7 +65,7 @@
     "old": "await naturePicture({ door: lowPolyTrees, seasons, renderer, uploadRecord }, t, archive, record)",
     "new": "await naturePicture({ door: lowPolyTrees, seasons: null, renderer, uploadRecord }, t, archive, record)",
     "tests": [
-      "test/naturepicture.test.js"
+      "test/world/naturepicture.test.js"
     ],
     "note": "a location's flats hand the choice no season"
   }

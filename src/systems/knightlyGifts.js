@@ -58,6 +58,8 @@
 
 import { ARMOR_MATERIAL } from './armorMaterials.js';
 import { ARMOR_ENUM } from '../combat/enemyEquipment.js';
+import { localizedText, t } from './textManager.js';   // L10N3d: the house refusal; SEAT-WORDS: and online's
+import { SEAT_RANK } from '../net/npcChapterLaw.js';   // SEAT-WORDS (AUDIT GUILD-WORDS L3-7): the seats' ranks, the law's own
 
 /** KnightlyOrder's two flag constants (:42-43). */
 export const HOUSE_FLAG_MASK = 2;
@@ -141,6 +143,8 @@ export const RECEIVE_HOUSE_RANK = 9;           // ReceiveHouse's gate (:224)
 // paraphrased ("been given a house"); it is DFU localization rather
 // than ARENA2, so it is written here, but written EXACTLY.
 export const ALREADY_GIVEN_HOUSE = 'You have already received your house.';
+/** L10N3d: ...as the box says it (KnightlyOrder.cs:230), in the player's language. */
+export const alreadyGivenHouseText = () => localizedText('serviceReceiveHouseAlready', ALREADY_GIVEN_HOUSE);
 
 /**
  * H1 - ReceiveHouse (:222-252). SHIPPED HERE: the last of the service
@@ -168,10 +172,17 @@ export const ALREADY_GIVEN_HOUSE = 'You have already received your house.';
  */
 export function receiveHouseDecision(membership, {
   ownsHouse = false, housesForSale = [], rolls = Math.random,
-  alreadyOwnResult = null, noneForSaleResult = null,
+  alreadyOwnResult = null, noneForSaleResult = null, rankCeiling = null,
 } = {}) {
+  // SEAT-WORDS (Field-Bugs-2026-10-15g): online (`rankCeiling`, the host's - 7 while the Roll holds) the house reads the
+  // BOOK's rank, which stops at 7 (AUDIT CHAP4 E2: a seat is held, not a rank kept), so no knight is given one there -
+  // said so, where record NO_HOUSE_TEXT_ID promised a rank 9 that online never comes. A house already given says so.
+  if (Number.isInteger(rankCeiling) && rankCeiling < RECEIVE_HOUSE_RANK) {
+    return { kind: 'refuse', line: ((membership?.flags ?? 0) & HOUSE_FLAG_MASK) > 0 ? alreadyGivenHouseText()
+      : t('knight.seatHouse', 'Online, ranks {officer} and {master} are the order\'s chapter chairs, held by winning Merit. A chair brings no house.', { officer: SEAT_RANK.officer, master: SEAT_RANK.master }) };
+  }
   if ((membership?.rank ?? -1) < RECEIVE_HOUSE_RANK) return { kind: 'refuse', textId: NO_HOUSE_TEXT_ID };
-  if (((membership?.flags ?? 0) & HOUSE_FLAG_MASK) > 0) return { kind: 'refuse', line: ALREADY_GIVEN_HOUSE };
+  if (((membership?.flags ?? 0) & HOUSE_FLAG_MASK) > 0) return { kind: 'refuse', line: alreadyGivenHouseText() };
   if (ownsHouse) return { kind: 'refuse', result: alreadyOwnResult };
   if (!housesForSale.length) return { kind: 'refuse', result: noneForSaleResult };
   return {

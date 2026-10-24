@@ -1,0 +1,433 @@
+[
+  {
+    "name": "STAR1-a-fall-moved",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "Object.freeze([-900_000, -450_000, 0]);",
+    "new": "Object.freeze([-900_000, -450_001, 0]);",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-a-fall-at-noon",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "Object.freeze([-900_000, -450_000, 0]);",
+    "new": "Object.freeze([-900_000, -450_000, 1_800_000]);",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-life-lengthened",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "export const STAR_LIFE_MS = 900_000;",
+    "new": "export const STAR_LIFE_MS = 960_000;",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-omen-shortened",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "export const STAR_OMEN_MS = 90_000;",
+    "new": "export const STAR_OMEN_MS = 60_000;",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-life-left-out-of-the-night",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "Math.ceil((nowMs - STAR_LIFE_MS - STAR_FALLS_MS[STAR_PER_NIGHT - 1]) / STAR_HOUR_MS)",
+    "new": "Math.ceil((nowMs - STAR_FALLS_MS[STAR_PER_NIGHT - 1]) / STAR_HOUR_MS)",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-festival-unread",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "export const starfallRuns = (/** @type {number} */ nowMs) => festivalOpen(nowMs);",
+    "new": "export const starfallRuns = (/** @type {number} */ nowMs) => Number.isFinite(nowMs);",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-a-star-outside-the-festival",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "export const starInWindow = (n, k) => starOk(n, k) && starfallRuns(starTimes(n, k).fallAt);",
+    "new": "export const starInWindow = (n, k) => starOk(n, k);",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-heard-before-the-fall",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "return nowMs >= t.fallAt && nowMs < t.endAt + STAR_GRACE_MS;",
+    "new": "return nowMs >= t.omenAt && nowMs < t.endAt + STAR_GRACE_MS;",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-spread-doubled",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "r = Math.sqrt(unit(n, k, 2)) * GATE_SPOT_SPREAD_M;",
+    "new": "r = Math.sqrt(unit(n, k, 2)) * GATE_SPOT_SPREAD_M * 2;",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-native-north-turned",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "(499 - py) * PIXEL_UNITS + no * STAR_UNITS_PER_M",
+    "new": "(499 - py) * PIXEL_UNITS - no * STAR_UNITS_PER_M",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-reach-unchecked",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "<= STAR_REACH_M * STAR_UNITS_PER_M;",
+    "new": "<= Infinity;",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-floor-dropped",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "export const STAR_WAVE_MIN = 4;",
+    "new": "export const STAR_WAVE_MIN = 3;",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ],
+    "note": "STAR-TUNE (re-aimed by content): the floor is the base now, a lone defender's first wave - three, the old law's, moves every size"
+  },
+  {
+    "name": "STAR1-the-ceiling-raised",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "export const STAR_WAVE_MAX = 24;",
+    "new": "export const STAR_WAVE_MAX = 25;",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ],
+    "note": "STAR-TUNE (re-aimed by content): the most twenty-four, one grant of the star's kind"
+  },
+  {
+    "name": "STAR1-the-circle-unbounded",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "Math.max(2, Math.min(5, 1 + Math.ceil(",
+    "new": "Math.max(2, Math.min(6, 1 + Math.ceil(",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-heart-circle-single",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "* (heart ? 2 : 1);",
+    "new": "* (heart ? 1 : 1);",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-mean-for-the-median",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "const m = ls[(ls.length - 1) >> 1];",
+    "new": "const m = ls.reduce((a, b) => a + b, 0) / ls.length;",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-upper-middle",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "const m = ls[(ls.length - 1) >> 1];",
+    "new": "const m = ls[ls.length >> 1];",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-a-band-top-moved",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "export const STAR_BAND_TOPS = Object.freeze([8, 15]);",
+    "new": "export const STAR_BAND_TOPS = Object.freeze([8, 16]);",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-gather-skipped",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "led.p = P_GATHER; led.gatherAt = led.ec;",
+    "new": "led.p = P_GATHER; led.gatherAt = led.ec - STAR_GATHER_MS;",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-kill-bound-dropped",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "led.ec - led.ws >= starClearFloorMs(led.wz, led.nd)",
+    "new": "led.ec - led.ws >= 0",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-breath-light-dropped",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "led.lt = Math.min(STAR_LIGHT, led.lt + STAR_BREATH_LIGHT);",
+    "new": "led.lt = Math.min(STAR_LIGHT, led.lt);",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-master-bound-dropped",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "led.ec - led.ma >= STAR_MASTER_MIN_MS",
+    "new": "led.ec - led.ma >= 0",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-a-fifth-wave",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "if (led.w >= STAR_WAVES) {",
+    "new": "if (led.w > STAR_WAVES) {",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-wave-never-times-out",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "else if (led.p === P_WAVE && led.ec >= led.ws + STAR_WAVE_MAX_MS)",
+    "new": "else if (led.p === P_WAVE && led.ec >= led.ws + 10 * STAR_WAVE_MAX_MS)",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-a-non-owner-blows-credited",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "  if (led.own !== acct) return moved;\n",
+    "new": "  if (false) return moved;\n",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-burst-raised",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "export const STAR_BLOWS_BURST = 6;",
+    "new": "export const STAR_BLOWS_BURST = 7;",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-rate-raised",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "export const STAR_BLOWS_HZ = 9;",
+    "new": "export const STAR_BLOWS_HZ = 10;",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-light-never-lost",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "  if (led.lt <= 0) { lose(led, nowMs, STAR_LOST_DARK); return true; }\n  if (led.p === P_MASTER",
+    "new": "  if (led.p === P_MASTER",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-presence-bound-dropped",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "to = Math.min(nowMs, led.nearAt + STAR_PRESENT_MS);",
+    "new": "to = nowMs;",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-a-far-word-counted",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "  if (!near) return moved;   // heard, never counted",
+    "new": "  if (false) return moved;   // heard, never counted",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-deadline-ignored",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "if (nowMs >= starLostAt(led.n, led.k)) { lose(led, nowMs, STAR_LOST_DAWN); return true; }",
+    "new": "if (false) { lose(led, nowMs, STAR_LOST_DAWN); return true; }",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-orphan-bound-dropped",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "led.own && nowMs - led.ownAt <= STAR_ORPHAN_MS ? led.own : ''",
+    "new": "led.own ? led.own : ''",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-yield-ignored",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "  } else if (w.o !== 1 && led.own === acct) { led.own = ''; led.ownAt = 0; moved = true; }\n",
+    "new": "  }\n",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-accounts-unbounded",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "if (Object.keys(led.a).length >= STAR_ACCOUNTS_MAX) return moved;",
+    "new": "if (false) return moved;",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-earner-unstruck",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "r.s === 1 && r.near && led.hd - r.last <= STAR_PRESENT_MS",
+    "new": "r.near && led.hd - r.last <= STAR_PRESENT_MS",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-another-shape-field-let-through",
+    "file": "src/net/starfall/starReceipt.js",
+    "old": "Object.freeze(['sf', 's', 'c', 'l', 'i', 'e']);",
+    "new": "Object.freeze(['sf', 's', 'c', 'l', 'i', 'e', 'x']);",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-version-not-checked",
+    "file": "src/net/starfall/starReceipt.js",
+    "old": "if (v !== STAR_RECEIPT_V) return { ok: false, why: 'version' };",
+    "new": "if (false) return { ok: false, why: 'version' };",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-a-fourth-star-receipted",
+    "file": "src/net/starfall/starReceipt.js",
+    "old": "!starOk(c.sf[0], c.sf[1])",
+    "new": "!Number.isSafeInteger(c.sf[0])",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-grace-unheld",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "export const starLostAt = (n, k) => starTimes(n, k).endAt + STAR_GRACE_MS;",
+    "new": "export const starLostAt = (n, k) => starTimes(n, k).endAt;",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-a-star-made-in-the-grace",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "starHeard(n, k, nowMs) && nowMs < starTimes(n, k).endAt;",
+    "new": "starHeard(n, k, nowMs);",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR1-the-deaths-on-any-wave",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "if (led.p === P_WAVE && w.kw === led.w && w.kn > led.kn)",
+    "new": "if (led.p === P_WAVE && w.kn > led.kn)",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ]
+  },
+  {
+    "name": "STAR-TUNE-the-old-sizes",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "STAR_WAVE_MIN + 2 * (Math.max(1, n | 0) - 1) + Math.max(0, (k | 0) - 1)",
+    "new": "2 + Math.max(0, n | 0) + ((k | 0) >= 3 ? 1 : 0)",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ],
+    "note": "the first run's law: a lone defender's 3, 3, 4 and 4 - too few"
+  },
+  {
+    "name": "STAR-TUNE-a-defender-one-more",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "+ 2 * (Math.max(1, n | 0) - 1)",
+    "new": "+ (Math.max(1, n | 0) - 1)",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ],
+    "note": "a defender beside the first brings one foe, not two"
+  },
+  {
+    "name": "STAR-TUNE-the-waves-alike",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": " + Math.max(0, (k | 0) - 1));",
+    "new": ");",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ],
+    "note": "every wave the first one's size - the fight never builds"
+  },
+  {
+    "name": "STAR-TUNE-the-long-breath",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "export const STAR_BREATH_MS = 5_000;",
+    "new": "export const STAR_BREATH_MS = 12_000;",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ],
+    "note": "the first run's twelve seconds between waves"
+  },
+  {
+    "name": "STAR-TUNE-the-old-ceiling",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "export const STAR_WAVE_MAX = 24;",
+    "new": "export const STAR_WAVE_MAX = 9;",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ],
+    "note": "the camps' grant's nine again - a party of eight's waves no bigger than a pair's (\"we should go beyond the limit\")"
+  },
+  {
+    "name": "AUDIT-STAR-TUNE-F2-the-floor-unshared",
+    "file": "src/net/starfall/starfallLaw.js",
+    "old": "Math.ceil(Math.max(0, wz) / Math.max(1, nd | 0)) * STAR_KILL_MIN_MS",
+    "new": "Math.max(0, wz) * STAR_KILL_MIN_MS",
+    "tests": [
+      "test/net/starfall/star1_law.test.js"
+    ],
+    "note": "AUDIT STAR-TUNE F2: a party's wave waited out a foe's floor each - eight defenders' 21 foes 52.5 s however fast they died"
+  }
+]

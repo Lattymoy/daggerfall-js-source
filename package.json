@@ -3,6 +3,9 @@
   "private": true,
   "version": "0.0.1",
   "type": "module",
+  "engines": {
+    "node": "^20.19.0 || >=22.12.0"
+  },
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -27,6 +30,7 @@
     "peoplegate": "node tools/peopleGateProbe.mjs",
     "levelup": "node tools/levelUpProbe.mjs",
     "gunproto": "node tools/gunProtoProbe.mjs",
+    "pistolproto": "node tools/pistolProtoProbe.mjs",
     "blood": "node tools/bloodProbe.mjs",
     "account": "node tools/accountProbe.mjs",
     "load": "node tools/loadHarness.mjs",
@@ -44,11 +48,12 @@
   },
   "devDependencies": {
     "acorn": "^8.18.0",
+    "esbuild": "^0.28.1",
     "eslint": "^10.10.0",
     "playwright": "^1.56.0",
     "pngjs": "^7.0.0",
     "rollup": "^4.62.2",
     "typescript": "^7.0.2",
-    "vite": "^5.4.0"
+    "vite": "^8.3.4"
   }
 }

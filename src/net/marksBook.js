@@ -48,6 +48,7 @@
 // Pure - the door, the store and the ids are handed in - so the pins drive
 // it without a network.
 // ═══════════════════════════════════════════════════════════════════
+import { t } from '../systems/textManager.js';   // STAR7: the held star's capped line
 import { MARKS_BANK, MARKS_COMBAT, MARKS_MOVE_MAX, marksAmountOk, marksText, exchangeGold, FIND_KINDS, utcDay, MARKS_RID_RE } from './marksLaw.js';
 import { accountRefusalText } from './accountClient.js';
 import { jittered } from './backoff.js';   // SCALE1: a press's asks spread out
@@ -58,6 +59,9 @@ export const MARKS_PENDING_KEY = 'marks1.pendingSale';
  *  burnt, nothing is owed, and the kept sale may go (the switch among them: the service answers a line it finds before
  *  it asks the switch). Every other answer (the network, the service's fault, no session, a refused session, a guest)
  *  says nothing about the line, and the sale is kept. */
+/** The refusals that strike no find today and owe none: an account not yet a week registered (AUDIT 625 S1), and
+ *  INT16's - a character that is not the account's seat here, or one whose trade is held (Integrity-Arc section 7). */
+export const FIND_DROPS = Object.freeze(['marks-young', 'progress-seat', 'trade-held']);
 export const MARKS_FINAL = Object.freeze(['bad-marks', 'marks-short', 'marks-bank-cap', 'marks-rate', 'marks-rid', 'marks-closed']);
 /** How many times one press asks before the sale is left to settle later. */
 export const MARKS_TRIES = 3;
@@ -86,14 +90,16 @@ const owedFind = (/** @type {any} */ f) => !!f && typeof f === 'object' && typeo
 
 /** The words. */
 export const MARKS_TEXT = Object.freeze({
-  struck: (n, balance) => `${marksText(n)} struck to your account. You hold ${marksText(balance)}.`,
+  struck: (n, balance) => `${marksText(n)} added to your account. You now hold ${marksText(balance)}.`,
   // WB12a; WB13b: the record's own line says it is recorded; SILVER: the currency's name; SILVER-WAYS: the day's cap is
-  // the gates' and the raids' together - SERPENT-SET: and the serpents'
-  capped: `No silver for this breach. The counting-houses strike ${marksText(MARKS_COMBAT.perDay)} a day for breaches closed, towns defended and serpents slain.`,
-  cappedRaid: `No silver for this town. The counting-houses strike ${marksText(MARKS_COMBAT.perDay)} a day for breaches closed, towns defended and serpents slain.`,
-  cappedSerpent: `No silver for this serpent. The counting-houses strike ${marksText(MARKS_COMBAT.perDay)} a day for breaches closed, towns defended and serpents slain.`,
+  // the gates' and the raids' together - SERPENT-SET: and the serpents' - EG-E1: and the Spire's Redoubts'
+  capped: `No silver for this breach. You can earn at most ${marksText(MARKS_COMBAT.perDay)} a day from breaches, town defenses, serpents, Redoubts and fallen stars.`,
+  cappedRaid: `No silver for this town. You can earn at most ${marksText(MARKS_COMBAT.perDay)} a day from breaches, town defenses, serpents, Redoubts and fallen stars.`,
+  cappedSerpent: `No silver for this serpent. You can earn at most ${marksText(MARKS_COMBAT.perDay)} a day from breaches, town defenses, serpents, Redoubts and fallen stars.`,
+  cappedEg: `No silver for this Redoubt. You can earn at most ${marksText(MARKS_COMBAT.perDay)} a day from breaches, town defenses, serpents, Redoubts and fallen stars.`,   // EG-E1: a Redoubt of the Elite Breach
+  cappedStar: () => t('marks.capped.star', 'No silver for this star. You\'ve reached today\'s limit of {cap, number} silver.', { cap: MARKS_COMBAT.perDay }),   // STAR7: a held star, through the text core; AUDIT STAR (W2): the number handed in, the language's own words round it
   /** SILVER-WAYS: a guild deed this claim completed - three of the guild's accounts on one raid or gate. */
-  deed: (n, guild) => `A deed for ${guild?.name ?? 'your guild'}: three of its members stood together. ${marksText(n)} struck to its treasury.`,
+  deed: (n, guild) => `A deed for ${guild?.name ?? 'your guild'}: three of its members fought together. ${marksText(n)} added to its treasury.`,
   /** SILVER-WAYS: a guild contract's pay for a town defended. */
   contract: (pay, guild) => `${guild?.name ?? 'A guild'} pays you ${marksText(pay)} under its contract.`,
   sold: (marks, gold) => `The Bank buys ${marksText(marks)} for ${gold.toLocaleString('en-US')} gold, paid into your account here.`,
@@ -204,14 +210,15 @@ export function createMarksBook({ door, store = null, character = () => null, ri
     /** The balance a gate's strike or an account card answered. */
     set(balance) { if (Number.isSafeInteger(balance)) { state.balance = balance; state.open = true; } },
     /** The line a gate claim's `marks` says, or null for none (a service from before it, or Marks not this account's).
-     *  SILVER-WAYS: `kind` the claim's - a raid's capped line names the town; SERPENT-SET: a serpent's, the serpent. */
+     *  SILVER-WAYS: `kind` the claim's - a raid's capped line names the town; SERPENT-SET: a serpent's, the serpent; EG-E1: a
+     *  Redoubt's (`eg`), the Redoubt. */
     strikeLine(marks, kind = 'gate') {
       if (!marks || typeof marks !== 'object') return null;
       if (Number.isSafeInteger(marks.balance)) this.set(marks.balance);
       // SILVER-WAYS: the day's combat silver as the strike answered it - the Bank's card reads it
       if (Number.isSafeInteger(marks.combat?.earned)) state.today = { ...(state.today ?? {}), combat: marks.combat.earned, combatMax: marks.combat.max };
       if (marks.struck > 0) return MARKS_TEXT.struck(marks.struck, marks.balance);
-      return marks.why === 'cap' ? (kind === 'raid' ? MARKS_TEXT.cappedRaid : kind === 'serpent' ? MARKS_TEXT.cappedSerpent : MARKS_TEXT.capped) : null;
+      return marks.why === 'cap' ? (kind === 'raid' ? MARKS_TEXT.cappedRaid : kind === 'serpent' ? MARKS_TEXT.cappedSerpent : kind === 'eg' ? MARKS_TEXT.cappedEg : kind === 'star' ? MARKS_TEXT.cappedStar() : MARKS_TEXT.capped) : null;
     },
     /** SILVER-WAYS: every silver line a counted claim's answer says - its strike (strikeLine), the guild deed it
      *  completed, the contracts that paid it - in that order; none for a service from before them. */
@@ -267,23 +274,23 @@ export function createMarksBook({ door, store = null, character = () => null, ri
       let held = null;
       const owe = (/** @type {any} */ f) => { if (owed.length < FINDS_OWED_MAX) owed.push(f); };
       for (const f of asks) {
-        if (held) { if (held !== 'marks-young') owe(f); continue; }
+        if (held) { if (!FIND_DROPS.includes(held)) owe(f); continue; }
         const r = await ask(() => door.find(f.kind, f.rid, f.account));
         const error = r?.ok ? null : (r?.error ?? 'offline');
         if (!error) {
           const found = r.data ?? {};
           if (Number.isSafeInteger(found.today?.found) && found.today.found >= found.today.max) findsMet = { account: me, day };
           out.push({ kind: f.kind, found, line: this.findLine(found, f.kind) });
-        } else if (error === 'marks-young') {
+        } else if (FIND_DROPS.includes(error)) {
           findsMet = { account: me, day };   // AUDIT 625 S1: none of its finds struck today - none asked again until the day turns
-          held = error;
+          held = error;   // INT16: nor a character not seated here, nor one whose trade is held - none of these finds is owed
         } else if (error === 'marks-need-account' || error === 'marks-closed') {
           state.open = false; state.balance = null;   // not this account's: refresh's own reading, and nothing asked again
           owe(f); held = error;   // AUDIT 625 S3: this find and the rest owed, asked when silver is this account's again
         } else if (FIND_KEPT.includes(error)) {
           owe(f); held = error;   // never answered: owed
-        } else if (error === 'marks-rate') {
-          held = error;   // its hour spent: this find let go (MARKS_FINAL's law), the rest wait owed for the next hour
+        } else if (error === 'marks-rate' || error === 'progress-play') {
+          held = error;   // its hour spent (INT17: or the play that pays for it): this find let go (MARKS_FINAL's law), the rest wait owed
         }   // an id the service cannot read, a kind of none, a word this build does not know: this find let go
       }
       keepOwed();

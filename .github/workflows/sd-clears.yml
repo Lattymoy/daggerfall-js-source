@@ -51,7 +51,7 @@ jobs:
             exit 1
           fi
 
-      # The tool checks the slot - the statements are the tested ones (test/sdclears.test.js), not ones written again here.
+      # The tool checks the slot - the statements are the tested ones (test/net/superDungeon/sdclears.test.js), not ones written again here.
       - name: Write the statements
         run: |
           set -euo pipefail

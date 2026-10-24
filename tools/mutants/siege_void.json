@@ -5,7 +5,7 @@
   "old": "  if (!canModerate(mod, env)) return { error: 'not-moderator' };\n  if (!seatKeyOk(key)) return { error: 'bad-seat' };\n  const W = weekAt(nowS);",
   "new": "  if (!seatKeyOk(key)) return { error: 'bad-seat' };\n  const W = weekAt(nowS);",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "  const W = weekAt(nowS);\n  // a receipt that lands",
   "new": "  const W = weekAt(nowS) - 1;\n  // a receipt that lands",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "    if (b.state === 'void') return { ...out, repeat: true };\n",
   "new": "",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "        ...(await swordsSettled(db, W, key, nowS, { voided: true }))];   // the escrow home, as the Turning's void",
   "new": "        ...(await swordsSettled(db, W, key, nowS, { voided: false }))];   // the escrow home, as the Turning's void",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "        ...(await swordsSettled(db, W, key, nowS, { voided: true }))];   // the escrow home, as the Turning's void",
   "new": "        ];",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "      : [db.prepare(`UPDATE town_seat_battles SET state = 'void' WHERE week = ?1 AND key = ?2 AND state = 'scheduled'",
   "new": "      : [db.prepare(`UPDATE town_seat_battles SET state = 'scheduled' WHERE week = ?1 AND key = ?2 AND state = 'scheduled'",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, ${PRIOR_SQL}",
   "new": "SELECT ?1, ?2, ?3, ?4, ?5, ?6, ?7, NULL",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "FROM town_seat_legacy WHERE key = ?2 AND week >= ?1)))`;",
   "new": "FROM town_seat_legacy WHERE key = ?2 AND week > ?1)))`;",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "  '$.forts', json((SELECT json_group_object(work, tier) FROM town_seat_forts WHERE key = ?2)),",
   "new": "  '$.fortz', json((SELECT json_group_object(work, tier) FROM town_seat_forts WHERE key = ?2)),",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -86,7 +86,7 @@
   "old": "              owed = excluded.owed, at = excluded.at WHERE town_seat_holds.guild_id = ?12`)",
   "new": "              owed = excluded.owed, at = excluded.at WHERE town_seat_holds.guild_id = ?2`)",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -95,7 +95,7 @@
   "old": "num(h.since, W), num(h.standing, STANDING_START),",
   "new": "num(h.since, W), STANDING_START,",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -104,7 +104,7 @@
   "old": "num(h.since, W), num(h.standing, STANDING_START),",
   "new": "num(h.since, W - 1), num(h.standing, STANDING_START),",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -113,7 +113,7 @@
   "old": "num(h.since, W), num(h.standing, STANDING_START),",
   "new": "W, num(h.standing, STANDING_START),",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -122,7 +122,7 @@
   "old": "              num(h.truce, null), num(h.tithe, 0), num(h.titheWeek, null), num(h.owed, 0), nowS, b.attacker),\n          ...legacyBack,",
   "new": "              num(h.truce, null), 0, num(h.titheWeek, null), 0, nowS, b.attacker),\n          ...legacyBack,",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -131,7 +131,7 @@
   "old": "num(h.region, Number(seat?.region ?? 0))",
   "new": "num(h.region, 0)",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -140,7 +140,7 @@
   "old": "              num(h.truce, null), num(h.tithe, 0), num(h.titheWeek, null), num(h.owed, 0), nowS, b.attacker),\n          ...legacyBack,",
   "new": "              num(h.truce, null), num(h.tithe, 0), num(h.titheWeek, null), num(h.owed, 0), nowS, b.attacker),",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -149,7 +149,7 @@
   "old": "          for (const [work, t] of forts) stmts.push(",
   "new": "          for (const [work, t] of []) stmts.push(",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -158,7 +158,7 @@
   "old": "          ...(b.kind === 'siege' ? fortsGuildFallStatements(db, key, b.attacker) : []),\n",
   "new": "",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -167,7 +167,7 @@
   "old": "          stmts.push(db.prepare(\"UPDATE town_seat_edicts SET state = 'void' WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed'\").bind(key, W + 1, b.attacker));\n",
   "new": "",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -176,7 +176,7 @@
   "old": "          stmts.push(db.prepare('DELETE FROM town_seat_fortifier WHERE key = ? AND at = ?').bind(key, Number(r.at)));",
   "new": "",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -185,7 +185,7 @@
   "old": "        restored = back && names.has(b.defender);\n",
   "new": "",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -194,7 +194,7 @@
   "old": "          stmts.push(db.prepare('UPDATE town_seat_holds SET standing = ? WHERE key = ? AND guild_id = ?').bind(held.standing, key, b.defender));\n",
   "new": "",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -203,7 +203,7 @@
   "old": "          stmts.push(db.prepare('UPDATE town_seat_holds SET standing = ? WHERE key = ? AND guild_id = ?').bind(held.standing, key, b.defender));\n        }\n",
   "new": "          stmts.push(db.prepare('UPDATE town_seat_holds SET standing = ? WHERE key = ? AND guild_id = ?').bind(held.standing, key, b.defender));\n        } else if (b.kind === 'siege') {\n          stmts.push(db.prepare('UPDATE town_seat_holds SET standing = MAX(0, standing - ?) WHERE key = ? AND guild_id = ?').bind(siegeAftermath('siege', r.result, Number(r.raised)).standing, key, b.defender));\n        }\n",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -212,7 +212,7 @@
   "old": "              AND ((guild_id = ?3 AND what = 'bonus') OR (guild_id = ?4 AND what = 'barred'))`)",
   "new": "              AND guild_id = ?4 AND what = 'barred'`)",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -221,7 +221,7 @@
   "old": "              AND ((guild_id = ?3 AND what = 'bonus') OR (guild_id = ?4 AND what = 'barred'))`)",
   "new": "              AND guild_id = ?3 AND what = 'bonus'`)",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -230,7 +230,7 @@
   "old": "            db.prepare('UPDATE town_seat_influence SET voided = 0 WHERE week = ? AND key = ? AND guild_id = ?').bind(W, key, b.attacker),\n",
   "new": "",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -239,7 +239,7 @@
   "old": "            db.prepare('DELETE FROM town_seat_holds WHERE key = ? AND guild_id = ? AND since_week = ?').bind(key, won, W),\n",
   "new": "",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -248,7 +248,7 @@
   "old": "            db.prepare(\"UPDATE town_seat_edicts SET state = 'void' WHERE key = ? AND week = ? AND guild_id = ? AND state = 'proclaimed'\").bind(key, W + 1, won),\n",
   "new": "",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -257,7 +257,7 @@
   "old": "    stmts.push(db.prepare('INSERT INTO town_seat_history (key, week, kind, data, at) VALUES (?, ?, ?, ?, ?)').bind(key, W, 'siege-voided',",
   "new": "    stmts.push(db.prepare('INSERT INTO town_seat_history (key, week, kind, data, at) VALUES (?, ?, ?, ?, ?)').bind(key, W, 'siege-void',",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -266,7 +266,7 @@
   "old": "    WHERE r.result = 'forfeit' AND x.state <> 'void' AND x.attacker = ?",
   "new": "    WHERE r.result = 'forfeit' AND x.attacker = ?",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -275,7 +275,7 @@
   "old": "      WHERE key = ?1 AND qty > 0 AND work IN (SELECT work FROM town_seat_forts WHERE ${theirs})",
   "new": "      WHERE key = ?1 AND qty > 0 AND work IN (SELECT work FROM town_seat_forts WHERE ${theirs}) AND 0",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -284,7 +284,7 @@
   "old": "  const theirs = 'key = ?1 AND guild_id = ?2 AND building IS NOT NULL';",
   "new": "  const theirs = 'key = ?1 AND guild_id <> ?2 AND building IS NOT NULL';",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -293,7 +293,7 @@
   "old": "  '/v1/seats/siege/void',\n",
   "new": "",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -302,7 +302,7 @@
   "old": "} was voided by the Moderators${d.restored ?",
   "new": "} was voided${d.restored ?",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -311,7 +311,7 @@
   "old": "${d.battle === 'tourney' ? `the Tourney for ${seat.name}` :",
   "new": "${d.battle === 'tourney ' ? `the Tourney for ${seat.name}` :",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -320,7 +320,7 @@
   "old": "  if (String(op ?? '').toLowerCase() !== 'void' ||",
   "new": "  if (String(op ?? '').toLowerCase() === 'strike' ||",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -329,7 +329,7 @@
   "old": "!seatKeyOk(k) || more.length) return { error: SIEGE_USAGE };",
   "new": "!seatKeyOk(k)) return { error: SIEGE_USAGE };",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -338,7 +338,7 @@
   "old": "is voided${r.data?.restored ? ' - its Charter went back to the guild that held it' : ''}.` };",
   "new": "is voided.` };",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -347,7 +347,7 @@
   "old": "      if (!r?.ok) return { ok: false, text: accountRefusalText(r?.error) };\n      at = -Infinity;",
   "new": "      if (!r?.ok) return { ok: false, text: accountRefusalText('server') };\n      at = -Infinity;",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -356,7 +356,7 @@
   "old": "      stmts.push(...revoltStood(db, key, W, b.defender, nameOf(b.defender), nowS, history));\n",
   "new": "",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -365,7 +365,7 @@
   "old": "    if (!r && b.kind === 'revolt' && await db.prepare('SELECT 1 FROM town_seat_holds WHERE key = ? AND guild_id = ?').bind(key, b.defender).first()) {",
   "new": "    if (!r && b.kind === 'revolt') {",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -374,7 +374,7 @@
   "old": "    if (!r && b.kind === 'revolt' && await",
   "new": "    if (!r && b.kind !== 'tourney' && await",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -383,7 +383,7 @@
   "old": "  '$.projects', json((SELECT",
   "new": "  '$.projectz', json((SELECT",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -392,7 +392,7 @@
   "old": "  '$.held', json((SELECT",
   "new": "  '$.heldz', json((SELECT",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -401,7 +401,7 @@
   "old": "...fortsDueStatements(db, nowS, K), priorWorks(db, W, K, b.defender),\n",
   "new": "...fortsDueStatements(db, nowS, K),\n",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -410,7 +410,7 @@
   "old": "priorWorks(db, W, K, b.defender)",
   "new": "priorWorks(db, W, K)",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -419,7 +419,7 @@
   "old": "          stmts.push(...fortsRestoredStatements(db, key, b.defender, projects, stuff));\n",
   "new": "",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -428,7 +428,7 @@
   "old": "            stmts.push(db.prepare(\"UPDATE town_seat_edicts SET state = 'proclaimed' WHERE key = ? AND week = ? AND guild_id = ? AND edict = ? AND state = 'void'\").bind(key, W + 1, b.defender, p.edict));\n",
   "new": "",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -437,7 +437,7 @@
   "old": "        db.prepare(`UPDATE town_seat_stockpile SET qty = qty - MIN(?6, qty) WHERE key = ?1 AND material = ?5 AND ${again}`).bind(key, work, building, guild, material, n),\n",
   "new": "",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -446,7 +446,7 @@
   "old": "SELECT ?1, ?2, ?5, MIN(?6, qty) FROM town_seat_stockpile",
   "new": "SELECT ?1, ?2, ?5, 0 FROM town_seat_stockpile",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -455,7 +455,7 @@
   "old": "h.material = json_extract(j.value, '$[0]')), 0) < json_extract(j.value, '$[1]'))",
   "new": "h.material = json_extract(j.value, '$[0]')), 0) < 0)",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -464,7 +464,7 @@
   "old": "UPDATE town_seat_forts SET stands_at = ?5 WHERE",
   "new": "UPDATE town_seat_forts SET stands_at = NULL WHERE",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -473,7 +473,7 @@
   "old": "      WHERE key = ?1 AND work = ?2 AND building IS NULL AND tier = ?3 - 1`)",
   "new": "      WHERE key = ?1 AND work = ?2 AND building IS NULL`)",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -482,7 +482,7 @@
   "old": "        const back = held != null || kept == null;",
   "new": "        const back = true;",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -491,7 +491,7 @@
   "old": "        const back = held != null || kept == null;",
   "new": "        const back = held != null;",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -500,7 +500,7 @@
   "old": "!back ? db.prepare('DELETE FROM town_seat_holds WHERE key = ? AND guild_id = ? AND since_week = ?').bind(key, b.attacker, W)",
   "new": "!back ? db.prepare('SELECT 1').bind()",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -509,7 +509,7 @@
   "old": "    if (await db.prepare('SELECT 1 FROM town_seat_weeks WHERE week = ?').bind(W).first()) return { error: 'battle-settled' };   // AUDIT 529 V5\n",
   "new": "",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -518,7 +518,7 @@
   "old": "    const unsettled = 'NOT EXISTS (SELECT 1 FROM town_seat_weeks WHERE week = ?1)';",
   "new": "    const unsettled = '1';",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
@@ -527,16 +527,16 @@
   "old": "  'battle-settled': 409,   // AUDIT 529 V5",
   "new": "  // AUDIT 529 V5",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  },
  {
   "name": "AUDIT529-V5-words",
   "file": "src/net/townSeatLaw.js",
-  "old": "  'battle-settled': 'That battle\\'s week is settled - its Turning has reckoned it, and it can no longer be voided.',\n",
+  "old": "  'battle-settled': 'That battle\\'s week is settled and can no longer be voided.',\n",
   "new": "",
   "tests": [
-   "test/siege_void.test.js"
+   "test/net/siege_void.test.js"
   ]
  }
 ]

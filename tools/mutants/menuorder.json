@@ -1,0 +1,1227 @@
+[
+  {
+    "name": "MENUORDER-glyph-pixel-dropped",
+    "file": "src/ui/menu/menuGlyphs.js",
+    "old": "if (row[x] === '#') rects.push(",
+    "new": "if (row[x] === '#' && x > 0) rects.push(",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-glyph-mask-unnamed",
+    "file": "src/ui/menu/menuGlyphs.js",
+    "old": "`[data-dficon=\"${k}\"] { --dficon: ${dficonUrl(k)}; }`",
+    "new": "`[data-dficon=\"${k}\"] { }`",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-glyph-own-colour",
+    "file": "src/ui/menu/menuGlyphs.js",
+    "old": "  background-color: currentColor; -webkit-mask: var(--dficon)",
+    "new": "  background-color: #fff; -webkit-mask: var(--dficon)",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-decor-grid-never-laid",
+    "file": "src/ui/decorPanel.js",
+    "old": "const shape = layout === 'grid' && DECOR_GRID_MODES.includes(mode) ? 'grid' : 'list';",
+    "new": "const shape = 'list';",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-decor-model-glyph-dropped",
+    "file": "src/ui/decorPanel.js",
+    "old": "      thumb.dataset.dficon = e.kind;   // MENU-ORDER: a model's kind's glyph, until its own picture lands over it\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-decor-badges-dropped",
+    "file": "src/ui/decorPanel.js",
+    "old": "badges({ storage: !!e.storage, light: e.light != null })",
+    "new": "badges({})",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-decor-room-badges-dropped",
+    "file": "src/ui/decorPanel.js",
+    "old": "badges({ storage: !!it.piece.storage, light: !!it.piece.light, station: !!it.piece.station })",
+    "new": "badges({})",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-decor-switch-dead",
+    "file": "src/ui/decorPanel.js",
+    "old": "() => { layout = 'list'; redraw(); }",
+    "new": "() => { redraw(); }",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-decor-tab-icons-one",
+    "file": "src/ui/decorPanel.js",
+    "old": "chip(`In this room (${n})`, mode === 'room', () => setMode('room'), 'room')",
+    "new": "chip(`In this room (${n})`, mode === 'room', () => setMode('room'), 'all')",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-decor-layout-before-tabs",
+    "file": "src/ui/decorPanel.js",
+    "old": "tabLine.append(tabs, layoutChips);",
+    "new": "tabLine.append(layoutChips, tabs);",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-decor-remove-not-warned",
+    "file": "src/ui/decorPanel.js",
+    "old": "removeBtn.className += ' warn flat';",
+    "new": "removeBtn.className += ' flat';",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-decor-legend-shown",
+    "file": "src/ui/decorPanel.js",
+    "old": "root.dataset.keys = '0';   // MENU-ORDER: the legend folded",
+    "new": "root.dataset.keys = '1';   // MENU-ORDER: the legend folded",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-decor-fold-count-size",
+    "file": "src/ui/decorPanel.js",
+    "old": "(size != null ? 1 : 0)",
+    "new": "0",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-decor-kind-chips-bare",
+    "file": "src/ui/decorPanel.js",
+    "old": "      }, k)));   // MENU-ORDER: each kind its picture",
+    "new": "      })));   // MENU-ORDER: each kind its picture",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-decor-presses-bare",
+    "file": "src/ui/decorPanel.js",
+    "old": "[allBackBtn, 'put-back'], [offerBtn, 'rent'], [withdrawBtn, 'remove'], [collectBtn, 'treasure'], [ownBtn, 'back'], [paintBtn, 'paint'], [backBtn, 'back']]) b.dataset.dficon = icon;",
+    "new": "[allBackBtn, 'put-back'], [offerBtn, 'rent'], [withdrawBtn, 'remove'], [collectBtn, 'treasure'], [ownBtn, 'back'], [paintBtn, 'paint'], [backBtn, 'back']]) b.dataset.dficon = b === moveBtn ? icon : null;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-trade-row-price-dropped",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "  if (price != null) row.append(el('span', 'itemprice', tradeGoldText(price)));\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-trade-shelf-unpriced",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "if (from === 'remote') return inBuy() ? (quotePriceFor(item, 'remote')?.price ?? null) : null;",
+    "new": "if (from === 'remote') return null;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-trade-figures-together",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "figs.append(fig(TRADE_COST_WORD[mode] ?? TRADE_COST_WORD.Buy, tradeGoldText(c)), fig(t('trade.counter.gold', TRADE_GOLD_WORD), tradeGoldText(deps.gold?.() ?? 0)));",
+    "new": "figs.append(fig(TRADE_COST_WORD[mode] ?? TRADE_COST_WORD.Buy, `${tradeGoldText(c)} ${tradeGoldText(deps.gold?.() ?? 0)}`));",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-trade-switch-dead",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "b.onclick = () => { tradeView = v; render(); };",
+    "new": "b.onclick = () => { render(); };",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-trade-magic-title",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "get SellMagic() { return t('trade.counter.title.sellMagic', 'Sell magic items'); } });",
+    "new": "get SellMagic() { return t('trade.counter.title.sellMagic', 'Sell'); } });",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-trade-own-column-unnamed",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "  head.append(who);\n  col.append(head);\n  const tabsEl",
+    "new": "  col.append(head);\n  const tabsEl",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-stores-away-shown",
+    "file": "src/ui/professions/profPages.js",
+    "old": "for (const { id, box } of away) { box.hidden = _stores.awayPick !== id; notes.append(box); }",
+    "new": "for (const { box } of away) { box.hidden = false; notes.append(box); }",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-stores-press-never-folds",
+    "file": "src/ui/professions/profPages.js",
+    "old": "_stores.awayPick = _stores.awayPick === id ? null : id;",
+    "new": "_stores.awayPick = id;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-stores-button-read-as-away",
+    "file": "src/ui/professions/profPages.js",
+    "old": "if (/^(button|input|select|textarea)$/i.test(",
+    "new": "if (/^(input|select|textarea)$/i.test(",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-stores-here-unlit",
+    "file": "src/ui/professions/profPages.js",
+    "old": "`prof-stile${here ? ' here' : ''}",
+    "new": "`prof-stile${''}",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-stores-works-a-column",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const cards = el('div', 'prof-works');",
+    "new": "const cards = el('div', 'prof-works-off');",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-stores-patterns-a-column",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const grid = el('div', 'prof-recipes');",
+    "new": "const grid = el('div', 'prof-recipes-off');",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-market-picture-never-asked",
+    "file": "src/ui/marketTab.js",
+    "old": "const matPic = (key) => pictureNode(m.picture?.(key, wake) ?? null, el, 'market-pic');",
+    "new": "const matPic = (key) => (key, null);",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-market-picture-wrong-key",
+    "file": "src/ui/marketTab.js",
+    "old": "named(`${m.name(row.material)} x${row.units.toLocaleString('en-US')}`, matPic(row.material))",
+    "new": "named(`${m.name(row.material)} x${row.units.toLocaleString('en-US')}`, matPic(String(row.id)))",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-market-supplier-unpictured",
+    "file": "src/ui/marketTab.js",
+    "old": "matPic(w.key)), el('span', 'market-price', `${marksText(w.marks)} a bolt`)",
+    "new": "null), el('span', 'market-price', `${marksText(w.marks)} a bolt`)",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-market-name-unpictured",
+    "file": "src/ui/marketTab.js",
+    "old": "const named = (text, pic) => { const n = el('b', null, text); if (pic) { if (n.prepend) n.prepend(pic); else n.append(pic); } return n; };",
+    "new": "const named = (text) => el('b', null, text);",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-market-views-bare",
+    "file": "src/ui/marketTab.js",
+    "old": "        t.setAttribute('data-dficon', MARKET_VIEW_ICONS[id] ?? 'list');   // MENU-ORDER\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-market-phone-views-collapsed",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "  .market-views { flex: none; flex-wrap: nowrap;",
+    "new": "  .market-views { flex-wrap: nowrap;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-vendor-unpictured",
+    "file": "src/ui/vendor/vendorTab.js",
+    "old": "const pic = pictureNode(v.picture?.(row.item, wake) ?? null, el, 'market-pic');",
+    "new": "const pic = null;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-stores-card-unpictured",
+    "file": "src/ui/professions/profPages.js",
+    "old": "const pic = pictureNode(_provider?.picture?.(r.material, rerender) ?? null, el, 'prof-matpic');",
+    "new": "const pic = null;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-vendorpage-unpictured",
+    "file": "src/ui/vendor/vendorPage.js",
+    "old": "const pic = pictureNode(safe(() => p.picture?.(item, rerender), null), el, 'vendor-pic');",
+    "new": "const pic = null;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-market-piece-unpictured",
+    "file": "src/ui/marketTab.js",
+    "old": "const piecePic = (p) => pictureNode(m.piecePicture?.(p, wake) ?? null, el, 'market-pic');",
+    "new": "const piecePic = (p) => (p, null);",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-reforge-tabs-bare",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "    t.setAttribute('data-dficon', REFORGE_PAGE_ICONS[id] ?? 'anvil');   // MENU-ORDER: each page its picture\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-reforge-name-squeezed",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ":not(:has(> button)) { grid-template-columns: 48px minmax(0, 1fr) max-content; }",
+    "new": ":not(:has(> button)) { }",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-shipyard-tabs-bare",
+    "file": "src/ui/shipyardWindow.js",
+    "old": "      b.setAttribute('data-dficon', SHIPYARD_TAB_ICONS[t.id] ?? 'ship');   // MENU-ORDER: each page its picture\n",
+    "new": "",
+    "tests": [
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-shipyard-card-unpictured",
+    "file": "src/ui/shipyardWindow.js",
+    "old": "      card.append(pic, el('b', null, t.name),",
+    "new": "      card.append(el('b', null, t.name),",
+    "tests": [
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-shipyard-galley-small",
+    "file": "src/ui/shipyardWindow.js",
+    "old": ".dfyard-card[data-hull=\"3\"] .dfyard-pic::before { width: 50px; height: 50px; }",
+    "new": ".dfyard-card[data-hull=\"3\"] .dfyard-pic::before { width: 20px; height: 20px; }",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-navalyard-tabs-bare",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "  yardTab.setAttribute('data-dficon', 'saw'); officeTab.setAttribute('data-dficon', 'anchor'); tradeTab.setAttribute('data-dficon', 'treasure');   // MENU-ORDER: each page its picture\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-merchant-bare",
+    "file": "src/ui/enhanced/enhancedMerchantPanel.js",
+    "old": "    if (icon) btn.setAttribute('data-dficon', icon);\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-host-stores-unpictured",
+    "file": "src/scenes/world.js",
+    "old": "        picture: (k, wake) => materialPicture(k, { onReady: wake }),   // MENU-ORDER: a material card's picture\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-host-market-unpictured",
+    "file": "src/scenes/world.js",
+    "old": "      picture: (k, wake) => materialPicture(k, { onReady: wake }), itemPicture: (it, wake) => itemPicture(it, { onReady: wake }), piecePicture: marketPiecePicture,   // MENU-ORDER: a row's picture\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-host-traders-unpictured",
+    "file": "src/scenes/world.js",
+    "old": "    picture: (it, wake) => itemPicture(it, { onReady: wake }),   // MENU-ORDER: a piece's picture on its row\n    waypoint: vendorWaypointOn,",
+    "new": "    waypoint: vendorWaypointOn,",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-refused-still-disabled",
+    "file": "src/ui/brokerWindow.js",
+    "old": "  btn.setAttribute('aria-disabled', 'true');\n",
+    "new": "  btn.setAttribute('disabled', '');\n",
+    "tests": [
+      "test/ui/menuorder.test.js",
+      "test/systems/item/set7_broker.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-refused-no-title",
+    "file": "src/ui/brokerWindow.js",
+    "old": "  btn.setAttribute('title', reason);\n  // AUDIT MENU-ORDER U15",
+    "new": "  // AUDIT MENU-ORDER U15",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-refused-untold",
+    "file": "src/ui/brokerWindow.js",
+    "old": "    tell(reason);\n    if (held",
+    "new": "    if (held",
+    "tests": [
+      "test/ui/menuorder.test.js",
+      "test/systems/loot9_reforge.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-refused-row-picked",
+    "file": "src/ui/brokerWindow.js",
+    "old": "    e?.stopPropagation?.();\n    // AUDIT MENU-ORDER U4",
+    "new": "    // AUDIT MENU-ORDER U4",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-broker-refusal-unsaid",
+    "file": "src/ui/brokerWindow.js",
+    "old": "    noteLine.textContent = reason;\n    noteLine.className = 'broker-note';",
+    "new": "    noteLine.className = 'broker-note';",
+    "tests": [
+      "test/systems/item/set7_broker.test.js",
+      "test/net/wb9g_insignia.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-insignia-refusal-pressable",
+    "file": "src/ui/brokerWindow.js",
+    "old": "        if (!can && !busy && !pendingInsig) refusePress(btn, BROKER_REFUSALS.stones, refused);",
+    "new": "        if (false) refusePress(btn, BROKER_REFUSALS.stones, refused);",
+    "tests": [
+      "test/net/wb9g_insignia.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-reforge-refusal-unsaid",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "  const refused = (reason) => { const ask = asking; asking = null; say(false, reason); if (ask) render(); else drawNote(); };",
+    "new": "  const refused = (reason) => { const ask = asking; asking = null; if (ask) render(); else drawNote(); };",
+    "tests": [
+      "test/systems/loot9_reforge.test.js",
+      "test/systems/loot16_curses.test.js",
+      "test/systems/loot17_hone.test.js",
+      "test/systems/loot19_scry.test.js",
+      "test/systems/fb1012d_salvageclassic.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-reforge-refusal-undrawn",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "  const refused = (reason) => { const ask = asking; asking = null; say(false, reason); if (ask) render(); else drawNote(); };",
+    "new": "  const refused = (reason) => { const ask = asking; asking = null; say(false, reason); if (ask) render(); };",
+    "tests": [
+      "test/systems/loot9_reforge.test.js",
+      "test/systems/fb1012d_salvageclassic.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-reforge-refusal-keeps-ask",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "  const refused = (reason) => { const ask = asking; asking = null; say(false, reason); if (ask) render(); else drawNote(); };",
+    "new": "  const refused = (reason) => { const ask = asking; say(false, reason); if (ask) render(); else drawNote(); };",
+    "tests": [
+      "test/systems/fb1012d_salvageclassic.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-refused-grey-dropped",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "body .broker-shell .broker-win .act[aria-disabled=\"true\"]:active, body .broker-shell .broker-win .act[aria-disabled=\"true\"]:focus-visible {",
+    "new": "body .broker-shell .broker-win .act[aria-disabled=\"true\"]:active {",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-portrait-bar-narrow",
+    "file": "src/ui/decorPanel.js",
+    "old": "@media (orientation: portrait) { .dfdecor-bar.touch { top: calc(72px + env(safe-area-inset-top, 0px)); max-width: calc(100vw - 24px); } }",
+    "new": "@media (orientation: portrait) { .dfdecor-bar.touch { top: calc(72px + env(safe-area-inset-top, 0px)); } }",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-model-tile-never-asks",
+    "file": "src/ui/decorPanel.js",
+    "old": "      if (e.model != null) modelPicture(thumb, e, r);\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js",
+      "test/scenes/decor/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-model-tile-unwatched",
+    "file": "src/ui/decorPanel.js",
+    "old": "    else if (r && watcher) { r.decorThumb = () => askThumb(shape, img); watcher.observe(r); } else askThumb(shape, img);",
+    "new": "    else askThumb(shape, img);",
+    "tests": [
+      "test/scenes/decor/decor1d.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-placed-model-unpictured",
+    "file": "src/ui/decorPanel.js",
+    "old": "      if (shape.model != null) modelPicture(thumb, shape);   // ...and its own over that\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-base-model-unpictured",
+    "file": "src/ui/decorPanel.js",
+    "old": "      if (it.model != null) modelPicture(thumb, baseShape(it));\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-model-pic-under-glyph",
+    "file": "src/ui/decorPanel.js",
+    "old": ".dfdecor-thumb img.dfdecor-modelpic { position: absolute; inset: 0; z-index: 1;",
+    "new": ".dfdecor-thumb img.dfdecor-modelpic { position: absolute; inset: 0;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-host-model-unasked",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "        return entry.model != null ? modelPicture(entry.model) : null;   // MENU-ORDER: a model's own, drawn small",
+    "new": "        return null;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-thumbs-every-ask-at-once",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    for (let i = 0; i < thumbAsks.length && drawn < DECOR_THUMBS_A_FRAME;) {",
+    "new": "    for (let i = 0; i < thumbAsks.length;) {",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-thumb-square-off-card",
+    "file": "src/scenes/panelPicture.js",
+    "old": "x: Math.round((box.left - c.left + box.width / 2) * sx - pw / 2)",
+    "new": "x: Math.round((box.left - c.left) * sx - pw / 2)",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-thumb-copy-wrong-square",
+    "file": "src/scenes/panelPicture.js",
+    "old": "drawImage(canvas, rect.x, rect.y, rect.w, rect.h, 0, 0, rect.w, rect.h)",
+    "new": "drawImage(canvas, 0, 0, rect.w, rect.h, 0, 0, rect.w, rect.h)",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-thumb-other-room-drawn",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      if (!sameLaw(ask.remap, texRemap) || now() - ask.asked > DECOR_THUMB_WAIT_MS) { thumbAsks.splice(i, 1); ask.resolve(null); continue; }",
+    "new": "      if (now() - ask.asked > DECOR_THUMB_WAIT_MS) { thumbAsks.splice(i, 1); ask.resolve(null); continue; }",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-thumb-never-given-up",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      if (!sameLaw(ask.remap, texRemap) || now() - ask.asked > DECOR_THUMB_WAIT_MS) { thumbAsks.splice(i, 1); ask.resolve(null); continue; }",
+    "new": "      if (!sameLaw(ask.remap, texRemap)) { thumbAsks.splice(i, 1); ask.resolve(null); continue; }",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-thumb-out-of-law",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "      if (!m || !inLaw(m.gpu, texRemap)) { i++; continue; }",
+    "new": "      if (!m) { i++; continue; }",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-thumb-key-roomless",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "        if (entry.model != null && !entry.flat && !entry.icon) return `${entry.key}~${remapTag()}`;",
+    "new": "        if (entry.model != null && !entry.flat && !entry.icon) return entry.key;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-thumb-remap-unkept",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    remapNow = texRemap;\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-thumbs-undrawn",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    drawThumbs(texRemap);   // MENU-ORDER",
+    "new": "    // drawThumbs(texRemap);   // MENU-ORDER",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-thumb-camera-level",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "export const DECOR_THUMB_LOOK_DOWN = 0.35;",
+    "new": "export const DECOR_THUMB_LOOK_DOWN = 0;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-thumb-camera-uncentred",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "trs(-(x0 + x1) / 2, -(y0 + y1) / 2, -(z0 + z1) / 2, 0, 0, 0));\n  return { proj, view, model };",
+    "new": "trs(-(x0 + x1) / 2, 0, -(z0 + z1) / 2, 0, 0, 0));\n  return { proj, view, model };",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-ship-asked-each-card",
+    "file": "src/scenes/shipPortraits.js",
+    "old": "    if (!p) {\n      p = new Promise",
+    "new": "    if (true) {\n      p = new Promise",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-ship-ask-stays-under-old-window",
+    "file": "src/scenes/shipPortraits.js",
+    "old": "    for (const a of asks) if (a.hull === hull) a.where = where;",
+    "new": "    for (const a of asks) if (a.hull === -1) a.where = where;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-ship-none-kept",
+    "file": "src/scenes/shipPortraits.js",
+    "old": "      p.then((url) => { if (!url) made.delete(hull); });",
+    "new": "      p.then(() => {});",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-ship-every-ask-at-once",
+    "file": "src/scenes/shipPortraits.js",
+    "old": "    for (let i = 0; i < asks.length && drawn < SHIP_PORTRAITS_A_FRAME;) {",
+    "new": "    for (let i = 0; i < asks.length;) {",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-ship-never-given-up",
+    "file": "src/scenes/shipPortraits.js",
+    "old": "      if (now() - ask.asked > SHIP_PORTRAIT_WAIT_MS) { asks.splice(i, 1); ask.resolve(null); continue; }",
+    "new": "      if (now() - ask.asked > SHIP_PORTRAIT_WAIT_MS * 1e9) { asks.splice(i, 1); ask.resolve(null); continue; }",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-ship-one-part",
+    "file": "src/scenes/shipPortraits.js",
+    "old": "body: () => { for (const [gpu, m] of ship.parts) deps.renderer.drawMesh(gpu, m, null); },",
+    "new": "body: () => { const [gpu, m] = ship.parts[0]; deps.renderer.drawMesh(gpu, m, null); },",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-ship-camera-level",
+    "file": "src/scenes/shipPortraits.js",
+    "old": "export const SHIP_PORTRAIT_LOOK_DOWN = 0.22;",
+    "new": "export const SHIP_PORTRAIT_LOOK_DOWN = 0;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-ship-camera-end-on",
+    "file": "src/scenes/shipPortraits.js",
+    "old": "export const SHIP_PORTRAIT_TURN = 1.15;",
+    "new": "export const SHIP_PORTRAIT_TURN = 0;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-ship-camera-square",
+    "file": "src/scenes/shipPortraits.js",
+    "old": "proj: mirrorProjectionX(perspective(FOV, aspect, ",
+    "new": "proj: mirrorProjectionX(perspective(FOV, 1, ",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-ship-box-centre",
+    "file": "src/scenes/panelPicture.js",
+    "old": "y: Math.round((box.top - c.top + box.height / 2) * sy - ph / 2)",
+    "new": "y: Math.round((box.top - c.top) * sy - ph / 2)",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-portrait-sails-unbaked",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "        holderAsks.set(c, (holderAsks.get(c) ?? 0) + 1);\n        lateUpdateHolder(c, node, 1);\n",
+    "new": "        holderAsks.set(c, (holderAsks.get(c) ?? 0) + 1);\n",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-portrait-unwaited",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "      if (!gpu) { waiting = true; continue; }\n      const m = w.mats[i];",
+    "new": "      if (!gpu) continue;\n      const m = w.mats[i];",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-portrait-built-each-ask",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "      portraitBoats.set(hull, b);\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-portrait-on-the-water",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "      b = new Boat(hull, 0);\n      spawnBoat(b, ",
+    "new": "      b = new Boat(hull, 0);\n      peerBoats.push(b);\n      spawnBoat(b, ",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-world-ship-undrawn",
+    "file": "src/scenes/world.js",
+    "old": "    shipPortraits.draw();   // MENU-ORDER",
+    "new": "    // shipPortraits.draw();   // MENU-ORDER",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-world-ship-unasked",
+    "file": "src/scenes/world.js",
+    "old": "      picture: (hull, where) => shipPortraits.picture(hull, where),   // MENU-ORDER: her own picture on her card\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-card-ship-unasked",
+    "file": "src/ui/shipyardWindow.js",
+    "old": "      shipPicture(pic, s.hull);\n",
+    "new": "",
+    "tests": [
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-card-ship-unkept",
+    "file": "src/ui/shipyardWindow.js",
+    "old": "    if (url) { img.setAttribute('src', url); return; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-card-ship-unset",
+    "file": "src/ui/shipyardWindow.js",
+    "old": "      for (const i of imgs) i.setAttribute('src', u);\n",
+    "new": "",
+    "tests": [
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-card-ship-none-kept",
+    "file": "src/ui/shipyardWindow.js",
+    "old": "      if (!u || !alive) { shipPics.delete(hull); return; }",
+    "new": "      if (!u || !alive) return;",
+    "tests": [
+      "test/systems/shipyards1_host.test.js"
+    ]
+  },
+  {
+    "name": "MENUORDER-card-ship-sizeless",
+    "file": "src/ui/shipyardWindow.js",
+    "old": ".dfyard-card[data-hull=\"0\"] .dfyard-shipimg { width: 50%; }",
+    "new": ".dfyard-card[data-hull=\"0\"] .dfyard-shipimg { }",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-R1-clear-squeezed",
+    "file": "src/render/renderer.js",
+    "old": "    if (clearRGBA) {\n      this.drawScreenQuad(null, { x: rect.x, y: rect.y, w: rect.w, h: rect.h }, undefined,",
+    "new": "    if (clearRGBA) {\n      gl.viewport(Math.round(rect.x), Math.round(this.canvas.height - (rect.y + rect.h)), Math.max(0, Math.round(rect.w)), Math.max(0, Math.round(rect.h)));\n      this.drawScreenQuad(null, { x: rect.x, y: rect.y, w: rect.w, h: rect.h }, undefined,",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-R2-panels-amid-world",
+    "file": "src/scenes/world.js",
+    "old": "    townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything\n    renderer.resolveFrame();",
+    "new": "    townTalk.frame(dt);   // T3b: HUD lines + the talk overlay, above everything\n    yards?.drawPreview();\n    renderer.resolveFrame();",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-R3-encoded-at-once",
+    "file": "src/scenes/panelPicture.js",
+    "old": "      if (typeof out.toBlob !== 'function') {",
+    "new": "      if (true) {",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-R4-pinned-door",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (!deps.thumbHold) return modelFor(id);\n    const kept",
+    "new": "    return modelFor(id);\n    const kept",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-R4-never-let-go",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    thumbHold.release?.();\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-R6-lanterns-lit",
+    "file": "src/scenes/panelPicture.js",
+    "old": "  renderer.setPointLights?.(NO_POINTS, null, null);\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-R6-moonlit",
+    "file": "src/scenes/panelPicture.js",
+    "old": "  renderer.setMoonlight?.(null);\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-R7-tile-small",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "export const DECOR_THUMB_PX = 152;",
+    "new": "export const DECOR_THUMB_PX = 128;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-R7-ship-small",
+    "file": "src/scenes/shipPortraits.js",
+    "old": "export const SHIP_PORTRAIT_W = 480;",
+    "new": "export const SHIP_PORTRAIT_W = 240;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-C1-closed-panel-ages",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    if (!panel?.isOpen() || !renderer?.panelFrame) { holdThumbs(texRemap); return false; }",
+    "new": "    if (!panel?.isOpen() || !renderer?.panelFrame) return false;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-C2-section-guessed",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    const here = typeof at === 'function' ? !!at() : stationWorkable(box);",
+    "new": "    const here = stationWorkable(box);",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-C3-law-unread",
+    "file": "src/scenes/decor/decorTool.js",
+    "old": "    const law = remapLawOf(remapNow);\n    if (law) return law;\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-C3-building-unnamed",
+    "file": "src/scenes/interiorContext.js",
+    "old": "  markRemapLaw(texRemap, `climate:${climateBase}.${season}`);",
+    "new": "  // markRemapLaw(texRemap, `climate:${climateBase}.${season}`);",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-C4-none-asked-again",
+    "file": "src/ui/decorPanel.js",
+    "old": "    if (thumbs.has(k) && !inFlight.has(k)) return;   // none to be had\n",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-C5-closure-a-row",
+    "file": "src/ui/vendor/vendorTab.js",
+    "old": "v.picture?.(row.item, wake)",
+    "new": "v.picture?.(row.item, () => ui.rerender())",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U1-landscape-unfolded",
+    "file": "src/ui/decorPanel.js",
+    "old": "@media (max-height: 500px) {\n  .dfdecor-ftoggle { display: inline-block; flex: none; }",
+    "new": "@media (max-height: 1px) {\n  .dfdecor-ftoggle { display: inline-block; flex: none; }",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U11-tabs-scrolled",
+    "file": "src/ui/decorPanel.js",
+    "old": "  .dfdecor-roomsbar { flex-wrap: nowrap; overflow-x: auto; }",
+    "new": "  .dfdecor-tabs, .dfdecor-roomsbar { flex-wrap: nowrap; overflow-x: auto; }",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U2-kit-outweighs",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "body .broker-shell .broker-win .act[aria-disabled=\"true\"], body .broker-shell .broker-win .act[aria-disabled=\"true\"]:hover,",
+    "new": ".broker-shell .act[aria-disabled=\"true\"], .broker-shell .act[aria-disabled=\"true\"]:hover,",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U3-focus-unringed",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "body .broker-shell .broker-win .act[aria-disabled=\"true\"]:focus-visible { outline: 2px solid #9c937d; outline-offset: 2px; }",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U4-focus-dropped",
+    "file": "src/ui/brokerWindow.js",
+    "old": ".find((b) => b.getAttribute('aria-label') === name)?.focus?.();",
+    "new": ".find((b) => b.getAttribute('aria-label') === name);",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U5-imprint-pressable",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n      li.append(btn);",
+    "new": "      li.append(btn);",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U5-extract-pressable",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "      if (xwhy) refusePress(x, REFORGE_REFUSALS[xwhy] ?? '', refused);",
+    "new": "",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U5-unset-pressable",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n      li.append(x, btn);",
+    "new": "      li.append(x, btn);",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U5-set-pressable",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "        if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n        li.append(btn);\n        ul.append(li);",
+    "new": "        li.append(btn);\n        ul.append(li);",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U5-imprint-unsaid",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n      li.append(btn);",
+    "new": "      if (why) refusePress(btn, '', refused);\n      li.append(btn);",
+    "tests": [
+      "test/systems/loot10_codex.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U6-pic-in-flow",
+    "file": "src/ui/decorPanel.js",
+    "old": ".dfdecor-thumb img.dfdecor-modelpic { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%;",
+    "new": ".dfdecor-thumb img.dfdecor-modelpic { position: relative; z-index: 1; width: 100%; height: 100%;",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U7-title-squeezed",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  .trade-shell .sb-top { grid-template-columns: 1fr auto; grid-template-areas: \"who who\" \"view close\"; row-gap: 8px; }",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U8-glyphs-plus-only",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "   that: its tabs wore no picture */\n${DFICON_CSS}\n",
+    "new": "   that: its tabs wore no picture */\n",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U13-shipimg-room",
+    "file": "src/ui/shipyardWindow.js",
+    "old": ".dfyard-shipimg:not([src]) { display: none; }",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U13-packtabs-one-row",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "  .trade-shell .packtabs { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 4px; }",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U13-hint-escaped",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".trade-shell .trade-detail-empty .meta { margin: 0; font-size: 13px; color: var(--dim); letter-spacing: 0.04em; }",
+    "new": ".trade-shell .trade-detail-empty .meta { margin: 0; font-size: 12px; color: #7d745f; letter-spacing: 0.04em; }",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U14-switch-small",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "@media (pointer: coarse) { .trade-shell .trade-view .act { min-height: 44px; } }",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U14-views-small",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "@media (pointer: coarse) { .market-views .market-view { min-height: 44px; } }",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U15-fold-unsaid",
+    "file": "src/ui/decorPanel.js",
+    "old": "  filterToggle.setAttribute('aria-expanded', 'false');",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U15-tile-unsaid",
+    "file": "src/ui/professions/profPages.js",
+    "old": "    if (!here) t.setAttribute('aria-expanded', _stores.awayPick === id ? 'true' : 'false');",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U15-label-not-name",
+    "file": "src/ui/brokerWindow.js",
+    "old": "  if (word && !said.startsWith(word)) btn.setAttribute('aria-label', `${word} - ${said}`);",
+    "new": "",
+    "tests": [
+      "test/ui/menuorder.test.js",
+      "test/systems/item/set7_broker.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U5-extract-unsaid",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "      if (xwhy) refusePress(x, REFORGE_REFUSALS[xwhy] ?? '', refused);",
+    "new": "      if (xwhy) refusePress(x, '', refused);",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U5-unset-unsaid",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "      if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n      li.append(x, btn);",
+    "new": "      if (why) refusePress(btn, '', refused);\n      li.append(x, btn);",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  },
+  {
+    "name": "AUDITMO-U5-set-unsaid",
+    "file": "src/ui/reforgeWindow.js",
+    "old": "        if (why) refusePress(btn, REFORGE_REFUSALS[why] ?? '', refused);   // MENU-ORDER: pressed, it says why\n        li.append(btn);\n        ul.append(li);",
+    "new": "        if (why) refusePress(btn, '', refused);\n        li.append(btn);\n        ul.append(li);",
+    "tests": [
+      "test/systems/loot20_sockets.test.js"
+    ]
+  }
+]

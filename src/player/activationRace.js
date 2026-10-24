@@ -46,7 +46,7 @@
 //     other family met anything, and is never a rival. The law is
 //     player/activate.js's `firmFirst`, read here, not restated.
 
-import { firmFirst, yieldsRay } from './activate.js';
+import { firmFirst, yieldsRay, answersPress, MOBILE_NPC_ACTIVATION_DISTANCE } from './activate.js';   // FB1012d ALLY-YIELDS: what answers a press, a person's reach
 
 /**
  * ONE PICK under the ray: what the host's pickers hand over.
@@ -79,6 +79,8 @@ import { firmFirst, yieldsRay } from './activate.js';
  * @property {number} nonPersonRival
  * @property {number} rival
  * @property {number} doorDistance  TACT3d: the door / board / static-NPC set's nearest, as handed in
+ * @property {RayPick|null} next   FB1012d ALLY-YIELDS: what the press takes when the FOE arm passes - the race's winner
+ *   with the townsfolk raced in (raceWinner's own order), its reach beside it - the foe arm's `behind`
  */
 
 /**
@@ -98,15 +100,17 @@ import { firmFirst, yieldsRay } from './activate.js';
  * @param {RayPick|null} [opts.horseCart]  Horse Cart and Cargo's nearest activator (HCC: the parked wagon's box, the following team's, the standing horse's - the same 3.2; another player's `yields`, PR-WAGON1)
  * @param {RayPick|null} [opts.camp]    the nearest camp (SURV3: a tent or a fire, RegisterCustomActivation's 3.2)
  * @param {RayPick|null} [opts.water]   the nearest water source (SURV3: the mod's fountains, wells and troughs)
- * @param {RayPick|null} [opts.gate]    an Oblivion Gate's fire (WB2: scenes/gatePool.js targets)
+ * @param {RayPick|null} [opts.gate]    an Oblivion Gate's fire (WB2: scenes/gate/gatePool.js targets)
  * @param {RayPick|null} [opts.broker]  the Sigil Broker beside the gate (SET7: scenes/sigilBrokerPool.js targets)
  * @param {RayPick|null} [opts.boat]    CSA-D: the nearest of a boat's colliders under the ray - one of the seven activation boxes (RegisterCustomActivation's 3.2), or the hull or a mast, which the ray meets and nothing answers
+ * @param {RayPick|null} [opts.door]  FB1012d ALLY-YIELDS: the door / board / static-NPC set's own pick (worldModes
+ *   exteriorActivationHit), its reach beside its distance - the hosts hand this, and `doorDistance` is its distance
  * @param {number} [opts.doorDistance]  the door / board / static-NPC set's nearest, or Infinity
  * @param {number[]} [opts.personDistances]  the street's townsfolk, by the host's own cylinder pick
  * @returns {RaceResult}
  */
 export function raceActivation({
-  corpse = null, pile = null, torch = null, wagon = null, horseCart = null, camp = null, water = null, gate = null, broker = null, boat = null, doorDistance = Infinity, personDistances = [],
+  corpse = null, pile = null, torch = null, wagon = null, horseCart = null, camp = null, water = null, gate = null, broker = null, boat = null, door = null, doorDistance = door?.distance ?? Infinity, personDistances = [],
 } = {}) {
   // the body and the pile, by distance, the tie to the body
   const pileNearer = !!pile && !(corpse && corpse.distance <= pile.distance);
@@ -155,6 +159,17 @@ export function raceActivation({
   const won = raceWinner({ gate, broker, camp, water, wagon, horseCart, boat, torch, corpse: body, pile: heap, ground });
   const is = (p) => !!won && !!p && won === p;
 
+  // FB1012d ALLY-YIELDS: what the press takes if the foe arm passes a companion by - the race's winner, or a townsperson
+  // nearer than it (the person arm, below the foe arm), by raceWinner's one order. The door set's own reach comes with
+  // its pick; a person answers at MobileNPCActivationDistance, the reach the plaque's person pick carries (world.js
+  // _hoverPersonPick), so the press and the plaque ask one question of one pick.
+  const nearPerson = Math.min(Infinity, ...personDistances);
+  const next = raceWinner({
+    gate, broker, camp, water, wagon, horseCart, boat, torch, corpse: body, pile: heap,
+    ground: door ?? ground,
+    person: Number.isFinite(nearPerson) ? { key: PERSON_KEY, distance: nearPerson, reach: MOBILE_NPC_ACTIVATION_DISTANCE } : null,
+  });
+
   return {
     loot: is(body) ? body : null,
     drop: is(heap) ? heap : null,
@@ -169,6 +184,7 @@ export function raceActivation({
     nonPersonRival,
     rival,
     doorDistance,   // TACT3d: the door set's own distance, for the foe arm's peaceful pass (mobileEnemyActivate yieldsToDoor)
+    next,   // FB1012d ALLY-YIELDS: the foe arm's `behind`
   };
 }
 
@@ -177,6 +193,8 @@ export function raceActivation({
  *  it as a hit), so it needs a key to be told apart from the families
  *  that carry one. */
 export const GROUND_KEY = '__ground__';
+/** FB1012d ALLY-YIELDS: the street's townsfolk, as the press knows them - a distance - given a key inside `next`. */
+export const PERSON_KEY = '__person__';
 
 /**
  * WORLD-HOVER: THE RACE'S WINNER, AS A HIT.
@@ -249,6 +267,12 @@ export function raceWinner({
   // firmFirst) - a door behind their wagon is the press's and the plaque's, whichever pool picked it.
   // CSA-D: Come Sail Away's boats stand with the custom activations too, after Horse Cart and Cargo's (the order the
   // world host tests its arms in) - a boat's box or the hull the ray met first.
+  // FB1012d ALLY-YIELDS: a COMPANION's hit (peacefulFoePass marks it `ally`) passes to whatever the race gives without
+  // him when that answers from here (activate.js answersPress) - the press's `allyYields` over its ladder's own winner.
+  if (foe?.ally === true) {
+    const next = raceWinner({ corpse, pile, torch, wagon, horseCart, camp, water, gate, broker, boat, ground, person, peer });
+    if (answersPress(next)) return next;
+  }
   return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);
 }
 

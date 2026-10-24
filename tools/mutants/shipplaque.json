@@ -1,0 +1,488 @@
+[
+  {
+    "name": "SP-space-narrow",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "  height: 7, space: 3,",
+    "new": "  height: 7, space: 2,",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-small-unfolded",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "  lit: (code, x, y) => BLOCK[String.fromCharCode(code).toUpperCase()]?.split",
+    "new": "  lit: (code, x, y) => BLOCK[String.fromCharCode(code)]?.split",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-fnt-space-whole",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "height: fnt.fixedHeight, space: Math.max(1, fnt.fixedWidth - 1),",
+    "new": "height: fnt.fixedHeight, space: fnt.fixedWidth,",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-name-trailing-pixel",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "  return Math.max(0, w - FNT_GLYPH_SPACING);",
+    "new": "  return Math.max(0, w);",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-one-margin",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "  const width = tw * S + 2 * P,",
+    "new": "  const width = tw * S + P,",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-no-gilt",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "      put(x, y, sy === 0 || sx === 0 ? GILT_HI : GILT);",
+    "new": "      put(x, y, WOOD);",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-no-frame",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "    if (edge < f) {",
+    "new": "    if (edge < 0) {",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-flat-frame",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "edge === 0 || x === width - 1 - edge || y === height - 1 - edge ? FRAME_DARK : FRAME",
+    "new": "edge === 0 ? FRAME_DARK : FRAME",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-letters-touch",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "    pen += w + FNT_GLYPH_SPACING;",
+    "new": "    pen += w;",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-glyph-unscaled",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "        const x = P + (pen + gx) * S + sx, y = P + gy * S + sy;",
+    "new": "        const x = P + pen + gx * S + sx, y = P + gy * S + sy;",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-normal-inward",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "  const n = h.n[0] * side < 0 ? h.n.map((v) => -v) : h.n;",
+    "new": "  const n = h.n;",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-flush",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "      positions.push(at.p[0] + at.n[0] * PLAQUE_STANDOFF, at.p[1] + at.n[1] * PLAQUE_STANDOFF, at.p[2] + at.n[2] * PLAQUE_STANDOFF);",
+    "new": "      positions.push(at.p[0], at.p[1], at.p[2]);",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-read-one-way",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "      uvs.push(side > 0 ? 1 - k / cols : k / cols, 1 - j / (PLAQUE_ROWS - 1));",
+    "new": "      uvs.push(k / cols, 1 - j / (PLAQUE_ROWS - 1));",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-upside-down",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "      uvs.push(side > 0 ? 1 - k / cols : k / cols, 1 - j / (PLAQUE_ROWS - 1));",
+    "new": "      uvs.push(side > 0 ? 1 - k / cols : k / cols, j / (PLAQUE_ROWS - 1));",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-wound-one-way",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "    if (n[0] * out[0] + n[1] * out[1] + n[2] * out[2] >= 0) indices.push(a, b, c); else indices.push(a, c, b);",
+    "new": "    indices.push(a, b, c);",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-over-the-rail",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "  const yTop = rail - 0.1 * letter, yBottom = yTop - height;",
+    "new": "  const yTop = rail + 0.1 * letter, yBottom = yTop - height;",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-highest-rail",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "  for (let k = 0; k <= cols; k++) rail = Math.min(rail, railOf(m, build, side, zFore - (k / cols) * length, dy));",
+    "new": "  for (let k = 0; k <= cols; k++) rail = Math.max(-Infinity, railOf(m, build, side, zFore - (k / cols) * length, dy));",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-on-the-stem",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "    if (at && Math.abs(at.p[0]) >= PLAQUE_BREADTH * build.halfWidth) return { zFore: z, letter, dy };",
+    "new": "    if (at) return { zFore: z, letter, dy };",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-into-her-waist",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "  const zAftMost = build.aftZ + PLAQUE_AFT_SHARE * (build.bowZ - build.aftZ);\n  // the board",
+    "new": "  const zAftMost = build.aftZ;\n  // the board",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-stretched",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "  if (length > room) { length = room; height = length / aspect; }",
+    "new": "  if (length > room) { length = room; }",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-planking-any",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "  for (const [i, n] of count) if (n > most) { most = n; at = i; }",
+    "new": "  for (const [i, n] of count) if (n > 0) { most = n; at = i; }",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-planking-first",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "if (h && (!best || h.t < best.t)) best = { t: h.t, i }",
+    "new": "if (h && !best) best = { t: h.t, i }",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-rail-coarse",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "  while (hi - top > dy) {",
+    "new": "  while (false && hi - top > dy) {",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-idle-never",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "if (draws - b.seen > PLAQUE_IDLE_DRAWS) {",
+    "new": "if (draws - b.seen > 2 * PLAQUE_IDLE_DRAWS) {",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-picture-kept",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "if (r) deps.renderer.releaseTexture?.(PLAQUE_ARCHIVE, r.rec);",
+    "new": "if (false) deps.renderer.releaseTexture?.(PLAQUE_ARCHIVE, r.rec);",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-picture-each-time",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "    if (records.has(name)) return records.get(name);",
+    "new": "    if (false) return records.get(name);",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-board-each-time",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "      if (had) { had.seen = draws; return had.meshes; }",
+    "new": "      if (false) { had.seen = draws; return had.meshes; }",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-drawn-unseen",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "      if (had) { had.seen = draws; return had.meshes; }",
+    "new": "      if (had) { return had.meshes; }",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-picture-blended",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "toColor32(pic), { opaque: true });",
+    "new": "toColor32(pic), {});",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-no-wait",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "    const letters = deps.letters();\n    if (!letters) return null;\n",
+    "new": "    const letters = deps.letters() ?? BLOCK_LETTERS;\n",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "SP-meshless-renderer",
+    "file": "src/scenes/comeSailAway/shipPlaque.js",
+    "old": "      if (!name || !deps.renderer?.createMesh || !deps.renderer?.uploadTexture) return [];",
+    "new": "      if (!name) return [];",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "PL-mine-unshown",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "(mineBoats.has(boat) ? plaqueOf?.(boat) ?? null :",
+    "new": "(mineBoats.has(boat) ? null :",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "PL-sea-shown",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "peerBoats.includes(boat) ? boat.plaqueName || null : null);",
+    "new": "boat.plaqueName || null);",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "PL-peer-unshown",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "peerBoats.includes(boat) ? boat.plaqueName || null : null);",
+    "new": "null);",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "PL-wrong-frame",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "one(mesh, frame ?? worldOf(boat.MeshObject), paint);",
+    "new": "one(mesh, worldOf(boat.GameObject), paint);",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "PL-font-unread",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "plaqueLetters = fntLetters(new FntFile().load(b)); },",
+    "new": "plaqueLetters = BLOCK_LETTERS; },",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "PL-no-fallback",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "her name is cut in block letters', e); plaqueLetters = BLOCK_LETTERS; });",
+    "new": "her name is cut in block letters', e); });",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "PL-never-swept",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    plaques.sweep();\n    return n;",
+    "new": "    return n;",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "FL-unnamed-shown",
+    "file": "src/systems/fleet.js",
+    "old": "  if (!r || typeof on !== 'boolean' || (on && !r.name)) return false;",
+    "new": "  if (!r || typeof on !== 'boolean') return false;",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "FL-any-choice",
+    "file": "src/systems/fleet.js",
+    "old": "  if (!r || typeof on !== 'boolean' || (on && !r.name)) return false;",
+    "new": "  if (!r || (on && !r.name)) return false;",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "FL-rename-keeps-board",
+    "file": "src/systems/fleet.js",
+    "old": "  if (v.ok) { r.name = v.name; if (!r.name) r.plaque = false; }",
+    "new": "  if (v.ok) { r.name = v.name; }",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "FL-unsaved",
+    "file": "src/systems/fleet.js",
+    "old": ", ...(r.plaque ? { plaque: true } : {}) })),",
+    "new": ", })),",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "FL-restored-unnamed",
+    "file": "src/systems/fleet.js",
+    "old": "    r.plaque = s.plaque === true && !!r.name;",
+    "new": "    r.plaque = s.plaque === true;",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "FH-unnamed-unsaid",
+    "file": "src/scenes/fleetHost.js",
+    "old": "      if (!rec.name) return said(false, t('naval.plaque.unnamed', 'Give the ship a name first.'));\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "FH-word-unsaid",
+    "file": "src/scenes/fleetHost.js",
+    "old": "      deps.changed?.();\n      return said(true, rec.plaque ?",
+    "new": "      return said(true, rec.plaque ?",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "FH-said-backwards",
+    "file": "src/scenes/fleetHost.js",
+    "old": "return said(true, rec.plaque ? t('naval.plaque.shown'",
+    "new": "return said(true, !rec.plaque ? t('naval.plaque.shown'",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "FH-all-named",
+    "file": "src/scenes/fleetHost.js",
+    "old": "plaque: !!rec.plaque, named: !!rec.name,",
+    "new": "plaque: !!rec.plaque, named: true,",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "FH-never-shown",
+    "file": "src/scenes/fleetHost.js",
+    "old": "plaque: !!rec.plaque, named: !!rec.name,",
+    "new": "plaque: false, named: !!rec.name,",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "FP-always-show",
+    "file": "src/ui/fleetPage.js",
+    "old": "() => act('plaque', !s.plaque)));",
+    "new": "() => act('plaque', true)));",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "FP-unnamed-enabled",
+    "file": "src/ui/fleetPage.js",
+    "old": "s.named ? null : t('naval.plaque.unnamed', 'Give the ship a name first.'), () => act('plaque'",
+    "new": "null, () => act('plaque'",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "WI-unnamed-said",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "    const shows = v.plaque === true && !!(name?.ok && name.name);",
+    "new": "    const shows = v.plaque === true;",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "WI-always-said",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "...(boarded ? { p: pl } : {})",
+    "new": "p: pl",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "WI-any-length",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "Array.isArray(raw.p) && raw.p.length === raw.b.length && raw.p[boats.length] === 1",
+    "new": "Array.isArray(raw.p) && raw.p[boats.length] === 1",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  },
+  {
+    "name": "WI-unnamed-read",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "if (name && Array.isArray(raw.p) &&",
+    "new": "if (Array.isArray(raw.p) &&",
+    "tests": [
+      "test/systems/naval/shipplaque.test.js"
+    ]
+  }
+]

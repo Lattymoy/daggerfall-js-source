@@ -1,0 +1,198 @@
+[
+  {
+    "name": "EGLOOK-HALLS-teeth-off-by-default",
+    "file": "src/world/superDungeon/sdRealm.js",
+    "old": "bands = 0, teeth = true, floor = true } = {}) {",
+    "new": "bands = 0, teeth = false, floor = true } = {}) {",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-floor-laid-anyway",
+    "file": "src/world/superDungeon/sdRealm.js",
+    "old": "} else if (floor) f.tri(rec, C(0, 0, 0)",
+    "new": "} else f.tri(rec, C(0, 0, 0)",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-discs-toothed",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "realmIsland(f, spec.x0 + d.x, d.z, d.r, rec, { y: d.y, teeth: false, floor: false });",
+    "new": "realmIsland(f, spec.x0 + d.x, d.z, d.r, rec, { y: d.y, teeth: true, floor: false });",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-plates-toothed",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "realmIsland(f, spec.x0 + d.x, d.z, d.r, SD_REALM_FLOOR_RECORD, { y: d.y, teeth: false, floor: false });",
+    "new": "realmIsland(f, spec.x0 + d.x, d.z, d.r, SD_REALM_FLOOR_RECORD, { y: d.y, teeth: true, floor: false });",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-kit-left-in-the-hours-archive",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "  for (const sm of model.subMeshes) if (EG_KIT_RECORDS.includes(sm.textureRecord)) sm.textureArchive = egBandArchive(band);\n",
+    "new": "",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-wall-plane-moved",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "e = egToDungeon(spec, q.x + s * q.halfW, yHi + q.height, z1);",
+    "new": "e = egToDungeon(spec, q.x + s * (q.halfW - 0.05), yHi + q.height, z1);",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-door-posts-grown",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "export const EG_DOOR = Object.freeze({ halfW: 1.6, post: 0.5,",
+    "new": "export const EG_DOOR = Object.freeze({ halfW: 1.6, post: 0.6,",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-floor-over-its-plane",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "const D = (v) => realmToDungeon(v.xz[0], y, v.xz[1]);",
+    "new": "const D = (v) => realmToDungeon(v.xz[0], y + 0.01, v.xz[1]);",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-floor-cell-left-out",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "      if (ring.length < 3) continue;\n      const plain = ring.every((v) => v.rp);",
+    "new": "      if (ring.length < 3 || (i === 5 && j === m - 1)) continue;\n      const plain = ring.every((v) => v.rp);",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-plate-border-dropped",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "const rings = [[0, borderAt, 'plan', rec], border, [r - Bd.in, r, 'plan', rec]];",
+    "new": "const rings = [[0, borderAt, 'plan', rec], [borderAt, r - Bd.in, 'plan', rec], [r - Bd.in, r, 'plan', rec]];",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-court-border-dropped",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "border, [r - Bd.in, r, 'ring', rec]];",
+    "new": "[borderAt, r - Bd.in, 'ring', rec], [r - Bd.in, r, 'ring', rec]];",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-sigil-unlaid",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "return rr === R.arena ? rec : rr;",
+    "new": "return rr === R.arena ? rec : rec;",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-compass-turned",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "(k) => (k === 0 ? C.north : k % 2 ? C.diagonal : C.cardinal)",
+    "new": "(k) => (k === 4 ? C.north : k % 2 ? C.diagonal : C.cardinal)",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-figure-across-the-zones",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "zone + (v.xz[1] - slab) / (2 * INLAY_LINE)",
+    "new": "zone + (v.xz[1] - slab) / INLAY_LINE",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-gold-ring-moved",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "const C = L.compass, g0 = r - 1.4, g1 = r - 1.2,",
+    "new": "const C = L.compass, g0 = r - 1.6, g1 = r - 1.4,",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-wall-face-in-the-walk",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "holedFace(kit, W, R.wall, E.proud, ta, tb, own?.from ?? yb0, yTop, W.IN, hole);",
+    "new": "holedFace(kit, W, R.wall, -E.proud, ta, tb, own?.from ?? yb0, yTop, W.IN, hole);",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-cornice-under-the-ceiling",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "(top ? cornice(kit, W, ta, tb, yTop, vault, capA, capB)",
+    "new": "(top ? cornice(kit, W, ta, tb, yTop - 0.2, vault, capA, capB)",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-arcade-inside-its-ring",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "d.z + Math.cos(a1) * d.r, -Math.sin(mid), -Math.cos(mid));",
+    "new": "d.z + Math.cos(a1) * d.r, Math.sin(mid), Math.cos(mid));",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-long-wall-in-the-hall",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "const W = egWallFrame(spec, d.x + s * d.hw, 0, d.x + s * d.hw, 1, -s, 0);",
+    "new": "const W = egWallFrame(spec, d.x + s * d.hw, 0, d.x + s * d.hw, 1, s, 0);",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-pilaster-past-its-post",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "box(R.shaft, hp - O.inset, y + O.plinth + O.base, yc - O.cap, ['bottom', 'top']);",
+    "new": "box(R.shaft, hp + O.inset, y + O.plinth + O.base, yc - O.cap, ['bottom', 'top']);",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-vignette-past-its-box",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "box(R.metal, -0.3, 0, 0.55, 0.3, 0.22, 0.95);",
+    "new": "box(R.metal, -0.3, 0, 0.55, 0.3, 0.22, 1.05);",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-no-bay-broken",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "  if (n < 4) return [];\n  const h = egGroundHash(",
+    "new": "  if (n < 400) return [];\n  const h = egGroundHash(",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-rock-flat",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "let d = K.amp * noise(",
+    "new": "let d = 0 * noise(",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-rock-pushed-in",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "return [p[0] + p[2] * d, p[1] + p[3] * d];",
+    "new": "return [p[0] - p[2] * d, p[1] - p[3] * d];",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-keystone-sigil-left-off",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "for (let i = 0; i < outline.length; i++) {",
+    "new": "for (let i = 0; i < 0; i++) {",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-walls-worn-v-down",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "const uvTY = (c) => c.map((p) => [p[2] * S, p[1] * S]);",
+    "new": "const uvTY = (c) => c.map((p) => [p[2] * S, -p[1] * S]);",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-cornice-out-of-its-band",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "fq(kit, W, R.moulding, c, mix(W.OUT, UP, n[0], n[1]), [[ta * S, v0], [tb * S, v0], [tb * S, v1], [ta * S, v1]]);",
+    "new": "fq(kit, W, R.moulding, c, mix(W.OUT, UP, n[0], n[1]), [[ta * S, v0], [tb * S, v0], [tb * S, v1 + 0.5], [ta * S, v1 + 0.5]]);",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  },
+  {
+    "name": "EGLOOK-HALLS-coffers-doubled",
+    "file": "src/world/eliteGates/egGround.js",
+    "old": "coffer = (j) => j === 1 || j === V.m - 2;",
+    "new": "coffer = (j) => j >= 1 && j <= V.m - 2;",
+    "tests": ["test/world/eliteGates/eglook_halls.test.js"]
+  }
+]

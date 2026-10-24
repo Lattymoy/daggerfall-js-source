@@ -5,7 +5,7 @@
     "old": "        if (!turnOk(key) || hand.has(key) || !Number.isFinite(at?.t)) return false;",
     "new": "        if (!turnOk(key) || hand.has(key)) return false;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "        if (!turnOk(key) || hand.has(key) || !Number.isFinite(at?.t)) return false;",
     "new": "        if (!turnOk(key) || !Number.isFinite(at?.t)) return false;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  const nameOk = (who) => (typeof who === 'string' ? who.slice(0, HAND_NAME_MAX) : '');",
     "new": "  const nameOk = (who) => (typeof who === 'string' ? who : '');",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "        hand.set(key, { t: Number(at?.t), seen: !!at?.seen, who: nameOk(at?.who) });",
     "new": "        hand.set(key, { t: Number(at?.t), seen: false, who: nameOk(at?.who) });",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "        if (hand.size > TURNS_MAX) hand.delete(/** @type {string} */ (hand.keys().next().value));",
     "new": "        if (false) hand.delete(/** @type {string} */ (hand.keys().next().value));",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "        if (hand.size > TURNS_MAX) hand.delete(/** @type {string} */ (hand.keys().next().value));\n        turnsVersion++;",
     "new": "        if (hand.size > TURNS_MAX) hand.delete(/** @type {string} */ (hand.keys().next().value));",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "[key, h.t, h.seen ? 1 : 0, h.who]",
     "new": "[key, h.t, 0, h.who]",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "[key, h.t, h.seen ? 1 : 0, h.who]",
     "new": "[key, h.t, h.seen ? 1 : 0, '']",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "HAND_KINDS.filter((k) => hands[k].size).map((k) =>",
     "new": "HAND_KINDS.map((k) =>",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "        if (turnOk(key) && Number.isFinite(Number(t))) hands[k].set(key, { t: Number(t), seen: !!seen, who: nameOk(who) });",
     "new": "        if (false) hands[k].set(key, { t: Number(t), seen: !!seen, who: nameOk(who) });",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "        if (turnOk(key) && Number.isFinite(Number(t))) hands[k].set(key, { t: Number(t), seen: !!seen, who: nameOk(who) });",
     "new": "        if (turnOk(key)) hands[k].set(key, { t: Number(t), seen: !!seen, who: nameOk(who) });",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      if (tone) { if (e[tone] === day) delta = 0; else e[tone] = day; }",
     "new": "      if (tone) { e[tone] = day; }",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      const tone = kind === 'polite' ? 'polite' : kind === 'insulted' ? 'blunt' : kind === 'poached' ? 'poach' : null;",
     "new": "      const tone = kind === 'polite' ? 'polite' : kind === 'insulted' ? 'polite' : kind === 'poached' ? 'poach' : null;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "        if (e.polite != null) people[id].polite = e.polite;   // LW7: only once counted",
     "new": "        void 0;   // LW7: only once counted",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "const d = Number(/** @type {any} */ (e)[tone]); if (Number.isFinite(d)) got[tone] = d; }",
     "new": "const d = Number(/** @type {any} */ (e)[tone]); if (false) got[tone] = d; }",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  slain: -75,",
     "new": "  slain: -60,",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "  const at = turns?.slain?.get(key) ?? turns?.died?.get(key) ?? turns?.killed?.get(key) ?? null;",
     "new": "  const at = turns?.died?.get(key) ?? turns?.killed?.get(key) ?? null;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ],
     "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
@@ -159,7 +159,7 @@
     "old": "  const at = turns?.slain?.get(key) ?? turns?.died?.get(key) ?? turns?.killed?.get(key) ?? null;",
     "new": "  const at = turns?.slain?.get(key) ?? turns?.killed?.get(key) ?? null;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ],
     "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
@@ -169,7 +169,7 @@
     "old": "export const fateHits = (res, k, turns) => handDeath(res, k, turns) != null || roadHits(res, k, turns);",
     "new": "export const fateHits = (res, k, turns) => roadHits(res, k, turns);",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "  return !!turns?.fallen?.has(turnKey(res, k)) || handDeath(res, k, turns) != null || quietBefore(res, k, turns);",
     "new": "  return !!turns?.fallen?.has(turnKey(res, k)) || quietBefore(res, k, turns);",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "  return !!turns?.fallen?.has(turnKey(res, k)) || handDeath(res, k, turns) != null || quietBefore(res, k, turns);",
     "new": "  return handDeath(res, k, turns) != null || quietBefore(res, k, turns);",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "  const dies = roadHits(res, k, turns) && (",
     "new": "  const dies = fateHits(res, k, turns) && (",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "  const dies = roadHits(res, k, turns) && (!!turns?.fallen?.has(turnKey(res, k)) || quiet);",
     "new": "  const dies = roadHits(res, k, turns) && quiet;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "  return { vacant: false, holder: last, dies, diced, since: last, hand: handDeath(res, k, turns) };",
     "new": "  return { vacant: false, holder: last, dies, diced, since: last, hand: null };",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "    if (t != null && t < trip.backT1) hands.push({ res: m, t, s: 0, hand: true });",
     "new": "    if (t != null) hands.push({ res: m, t, s: 0, hand: true });",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "    if (t != null && t < trip.backT1) hands.push({ res: m, t, s: 0, hand: true });",
     "new": "    if (t != null && t < trip.backT1) hands.push({ res: m, t, s: 0, hand: false });",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "    const fell = trip.fallen?.filter((f) => !f.hand);   // LW7",
     "new": "    const fell = trip.fallen;   // LW7",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "    const fell = tr.fallen?.filter((f) => !f.hand) ?? [];",
     "new": "    const fell = tr.fallen ?? [];",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "out.push({ id: tr.id, enc: enc.id, kind:",
     "new": "out.push({ id: tr.id, enc: tr.id, kind:",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "  : item.kind === 'slain' ? SLAIN_NEWS[item.seen ? 'seen' : 'unseen']",
     "new": "  : item.kind === 'slain' ? SLAIN_NEWS.seen",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ],
     "note": "LEGACY6 (PIN MOVED): re-aimed by content - the pool asks a kinsman's news first now (KIN_NEWS), so the slain arm opens its own line."
   },
@@ -278,7 +278,7 @@
     "old": "  : item.kind === 'died' ? DIED_NEWS",
     "new": "  : item.kind === 'died' ? null",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -287,7 +287,7 @@
     "old": "    : item.helped && HELPED_NEWS[",
     "new": "    : false && HELPED_NEWS[",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -296,7 +296,7 @@
     "old": "    : item.helped && HELPED_NEWS[/** @type {keyof typeof HELPED_NEWS} */ (item.kind)] ? HELPED_NEWS",
     "new": "    : item.helped ? HELPED_NEWS",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -305,7 +305,7 @@
     "old": "player: ctx.player,   // LW7",
     "new": "player: null,   // LW7",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -314,7 +314,7 @@
     "old": "      if (Math.hypot(p[0] - at[0], p[2] - at[2]) > WITNESS_M) continue;",
     "new": "      if (Math.hypot(p[0] - at[0], p[2] - at[2]) > WITNESS_M * 3) continue;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -323,7 +323,7 @@
     "old": "      if (this.o.sees && !this.o.sees([p[0], p[1] + 1.6, p[2]], [at[0], at[1] + 1, at[2]])) continue;",
     "new": "      if (false) continue;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -332,7 +332,7 @@
     "old": "      if (this.o.sees && !this.o.sees([p[0], p[1] + 1.6, p[2]], [at[0], at[1] + 1, at[2]])) continue;",
     "new": "      if (this.o.sees && !this.o.sees([p[0], p[1], p[2]], [at[0], at[1], at[2]])) continue;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -341,7 +341,7 @@
     "old": "      if (!row.visible || !row.res || row.res.id === exceptId) continue;",
     "new": "      if (!row.visible || !row.res) continue;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -350,7 +350,7 @@
     "old": "    if (visit) return visit.trip.party.filter((m) => m.id !== res.id);",
     "new": "    if (false) return visit.trip.party.filter((m) => m.id !== res.id);",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -359,7 +359,7 @@
     "old": " && c.berth?.k === crew.berth?.k).map((c) => c.res);",
     "new": ").map((c) => c.res);",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -368,7 +368,7 @@
     "old": "    return this.peopleOf(day).filter((r) => r.id !== res.id && householdKeyOf(r) === hh);",
     "new": "    return this.peopleOf(day).filter((r) => r.id !== res.id);",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ],
     "note": "AUDIT LEGACY II (PIN MOVED): re-aimed by content."
   },
@@ -378,7 +378,7 @@
     "old": "    this.o.slay?.(res, this._now, seen.length > 0);",
     "new": "    void seen;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -387,7 +387,7 @@
     "old": "    this.o.slay?.(res, this._now, seen.length > 0);",
     "new": "    this.o.slay?.(res, this._now, true);",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -396,7 +396,7 @@
     "old": "    for (const kin of this.kinOf(res)) rel?.note(kin.id, 'slain', day);",
     "new": "    void 0;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -405,7 +405,7 @@
     "old": "    for (const w of seen) rel?.note(w.id, 'crime', day);",
     "new": "    void 0;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -414,7 +414,7 @@
     "old": "    this._lent.delete(res.id);   // WATCH-FIX: his guard cut down\n    this._take(res);",
     "new": "    this._lent.delete(res.id);   // WATCH-FIX: his guard cut down",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ],
     "note": "WATCH-DAY (re-aimed by content): WATCH-FIX set killed() between slain() and struck(), and the record's text - the take before the struck's comment - had moved onto killed()'s own take, where lw7_deeds cannot see it (it survived); aimed at slain()'s take again, and killed()'s has its own record (watchfix.json WATCH-FIX-killed-left-standing)."
   },
@@ -424,7 +424,7 @@
     "old": "    if (!res || person.living.town !== this) return null;\n    const day = this.dayOf(this._now);\n    const rel = this.o.relations?.();\n    const seen",
     "new": "    if (!res) return null;\n    const day = this.dayOf(this._now);\n    const rel = this.o.relations?.();\n    const seen",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -433,7 +433,7 @@
     "old": "    rel?.note(res.id, 'struck', day);",
     "new": "    void 0;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -442,7 +442,7 @@
     "old": "    for (const w of this.witnesses(person.pos, res.id)) rel?.note(w.id, 'crime', day);",
     "new": "    void 0;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -451,16 +451,16 @@
     "old": "    for (const w of this.witnesses(person.pos, id)) rel?.note(w.id, 'crime', day);",
     "new": "    void 0;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
     "name": "LW7-tone-swapped",
     "file": "src/systems/livingWorld/livingTown.js",
-    "old": "    const kind = tone === 0 ? 'polite' : tone === 2 ? 'insulted' : null;",
-    "new": "    const kind = tone === 2 ? 'polite' : tone === 0 ? 'insulted' : null;",
+    "old": "    const kind = taste > 0 ? 'polite' : taste < 0 ? 'insulted' : null;",
+    "new": "    const kind = taste < 0 ? 'polite' : taste > 0 ? 'insulted' : null;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -469,7 +469,7 @@
     "old": "        const known = h.t + DEED_KNOWN_MIN;",
     "new": "        const known = h.t;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -478,7 +478,7 @@
     "old": " || !(known <= t && t - known < NEWS_DAYS * DAY_MIN)) continue;",
     "new": " || !(known <= t)) continue;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -487,7 +487,7 @@
     "old": "        if (!key.startsWith(prefix) || !(known",
     "new": "        if (!(known",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -496,7 +496,7 @@
     "old": "        const who = h.who || res?.name || '';",
     "new": "        const who = h.who || '';",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ],
     "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
@@ -506,7 +506,7 @@
     "old": "    for (const kind of /** @type {const} */ (['slain', 'died', 'killed'])) {",
     "new": "    for (const kind of /** @type {const} */ (['slain', 'killed'])) {",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ],
     "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
@@ -516,7 +516,7 @@
     "old": "    return out.sort((a, b) => b.t - a.t);",
     "new": "    return out;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -525,7 +525,7 @@
     "old": "    if (deeds.length) ctx.news = [...(ctx.news ?? []), ...deeds];",
     "new": "    void deeds;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -534,7 +534,7 @@
     "old": "    ctx.player = this.o.playerName?.() ?? '';",
     "new": "    void 0;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -543,7 +543,7 @@
     "old": "      const x = h?.has(r.id) ? h.get(r.id) : (hold && r.roll !== 't' ? hold(r, day) : r);",
     "new": "      const x = h?.has(r.id) ? h.get(r.id) : r;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -552,7 +552,7 @@
     "old": "      const x = h?.has(r.id) ? h.get(r.id) : (hold && r.roll !== 't' ? hold(r, day) : r);",
     "new": "      const x = h?.has(r.id) ? h.get(r.id) : (hold ? hold(r, day) : r);",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -561,7 +561,7 @@
     "old": "    const own = h || hold ? this.residents.flatMap((r) => {",
     "new": "    const own = h ? this.residents.flatMap((r) => {",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -570,71 +570,71 @@
     "old": "if (this._taken.get(res.id) === day || this.o.deadAt?.(res, t)) {",
     "new": "if (this._taken.get(res.id) === day) {",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ],
     "note": "LW-TALK (re-aimed by content): the law in its new home."
   },
   {
     "name": "LW7-road-slay-unmade",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "      deps.slay?.(res, t, true);",
     "new": "      void 0;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
     "name": "LW7-road-unseen",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "      deps.slay?.(res, t, true);",
     "new": "      deps.slay?.(res, t, false);",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
     "name": "LW7-road-party-spared",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "      for (const m of p ? membersAt(p.trip, t) : []) if (m.id !== res.id) rel?.note(m.id, 'slain', dayOf(t));",
     "new": "      void p;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
     "name": "LW7-road-self-noted",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "      for (const m of p ? membersAt(p.trip, t) : []) if (m.id !== res.id) rel?.note(m.id, 'slain', dayOf(t));",
     "new": "      for (const m of p ? membersAt(p.trip, t) : []) rel?.note(m.id, 'slain', dayOf(t));",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
     "name": "LW7-road-no-refresh",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "      timer = ROADS_TICK_S;",
     "new": "      void 0;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
     "name": "LW7-road-tone-swapped",
-    "file": "src/scenes/livingRoads.js",
-    "old": "      const kind = tone === 0 ? 'polite' : tone === 2 ? 'insulted' : null;",
-    "new": "      const kind = tone === 2 ? 'polite' : tone === 0 ? 'insulted' : null;",
+    "file": "src/scenes/livingWorld/livingRoads.js",
+    "old": "      const kind = taste > 0 ? 'polite' : taste < 0 ? 'insulted' : null;",
+    "new": "      const kind = taste < 0 ? 'polite' : taste > 0 ? 'insulted' : null;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
     "name": "LW7-empty-mark",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "      if (!members.length) continue;   // LW7: nobody left of it on the road",
     "new": "      void 0;   // LW7: nobody left of it on the road",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -643,7 +643,7 @@
     "old": "    if (res.roll !== 't') return cycleOf(res, day, livingScale()).k;",
     "new": "    if (false) return cycleOf(res, day, livingScale()).k;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -652,7 +652,7 @@
     "old": "    return placeCycle(roster.find((r) => r.slot === res.slot) ?? res, roster, day, livingScale());",
     "new": "    return cycleOf(res, day, livingScale()).k;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -661,7 +661,7 @@
     "old": "    if (!turns.slain.size && !turns.died.size && !turns.killed.size) return false;",
     "new": "    if (!turns.slain.size) return false;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ],
     "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
@@ -671,7 +671,7 @@
     "old": "    return h != null && h <= t;",
     "new": "    return h != null;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -680,7 +680,7 @@
     "old": "{ t, seen, who: res.name });\n  };",
     "new": "{ t, seen: false, who: res.name });\n  };",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -689,7 +689,7 @@
     "old": "livingRelations.turn('slain', turnKey(res, livingCycleOf(res, Math.floor((t - 240) / 1440))),",
     "new": "livingRelations.turn('slain', turnKey(res, 0),",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -698,7 +698,7 @@
     "old": "      got = { holder, dies: !pl.vacant && pl.dies, hand: pl.hand };",
     "new": "      got = { holder, dies: !pl.vacant && pl.dies, hand: null };",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -707,7 +707,7 @@
     "old": "    dies: (res, trip) => { const pl = livingTripPlace(res, trip); return pl.dies && pl.hand == null; },   // LW7",
     "new": "    dies: (res, trip) => { const pl = livingTripPlace(res, trip); return pl.dies; },   // LW7",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -716,7 +716,7 @@
     "old": "      f = handsOn(f, (m) => livingPlaceOf(m, livingCycleOf(m, Math.floor((trip.outT0 - 240) / 1440))).hand);",
     "new": "      void handsOn;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -725,7 +725,7 @@
     "old": "helped: won.has(n.enc) })) };",
     "new": "helped: false })) };",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ],
     "note": "LW16 (re-aimed by content): the town's news at any minute (livingRoadNewsAt)."
   },
@@ -735,26 +735,26 @@
     "old": "      const res = livingPlaceOf(c.res, livingCycleOf(c.res, day)).holder;",
     "new": "      const res = c.res;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
     "name": "LW7-host-town-options",
-    "file": "src/scenes/world.js",
-    "old": "          holderOf: (res, day) => (legacyHost?.holdsResident(res.id) ? null : livingPlaceOf(res, livingCycleOf(res, day)).holder), deadAt: livingDeadAt, slay: livingSlay,",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "          holderOf: (res, day) => (host.legacyHost?.holdsResident(res.id) ? null : livingPlaceOf(res, livingCycleOf(res, day)).holder), deadAt: livingDeadAt, slay: livingSlay,",
     "new": "          deadAt: livingDeadAt, slay: livingSlay,",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ],
     "note": "LEGACY5 (PIN MOVED): re-aimed by content."
   },
   {
     "name": "LW7-host-sees-blind",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "            return !(Number.isFinite(hit) && hit < len - 0.25);",
     "new": "            return true;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -763,7 +763,7 @@
     "old": "    pos, fwdYaw: person.facingYaw, guard: person.guard, person,",
     "new": "    pos, fwdYaw: person.facingYaw, guard: person.guard,",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -772,7 +772,7 @@
     "old": "player.pos, livingStruckPool(_guardPool()),",
     "new": "player.pos, _guardPool(),",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -781,7 +781,7 @@
     "old": "disable: () => { livingDeedOf(e.person, e.pos); e.disable(); }",
     "new": "disable: () => { e.disable(); }",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -790,18 +790,18 @@
     "old": "    if (!person.guard) { town.slain(person); return; }",
     "new": "    { town.slain(person); return; }",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
     "name": "LW7-host-watch-untracked",
-    "file": "src/scenes/livingWatch.js",
+    "file": "src/scenes/livingWorld/livingWatch.js",
     "old": "    if (!g?.livingFrom || g.livingFollowed) continue;",
     "new": "    if (!g?.livingFrom || g.livingFollowed || true) continue;",
     "tests": [
-      "test/lw7_deeds.test.js",
-      "test/watchfix_watch.test.js",
-      "test/lwfix2_watch.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js",
+      "test/systems/livingWorld/watchfix_watch.test.js",
+      "test/systems/livingWorld/lwfix2_watch.test.js"
     ],
     "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
@@ -811,7 +811,7 @@
     "old": "    retire: (person) => { livingDeedOf(person); for",
     "new": "    retire: (person) => { for",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -820,7 +820,7 @@
     "old": "    if (livingWorldOn()) { livingWatchStep(); livingPeerWatchStep(); }",
     "new": "    if (livingWorldOn()) { livingPeerWatchStep(); }",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ],
     "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
@@ -830,7 +830,7 @@
     "old": "            else if (!r?.spared && livingStrikeRoad(cam.pos, lookFwd)) surfacePlayer();",
     "new": "            else if (false) surfacePlayer();",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -839,7 +839,7 @@
     "old": "    if (!near || near.distance > WEAPON_REACH) return false;",
     "new": "    if (!near) return false;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -848,7 +848,7 @@
     "old": "    if (Number.isFinite(wall) && wall < near.distance - 1e-3) return false;",
     "new": "    if (false) return false;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -857,7 +857,7 @@
     "old": "    tallyCrimeGuildRequirements(playerEntity, false, 5);\n    playerWeaponHitEntity",
     "new": "    playerWeaponHitEntity",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -866,25 +866,25 @@
     "old": "    playerWeaponHitEntity(playerEntity, { health: 0 }, { isCivilian: true });\n    return true;",
     "new": "    return true;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
     "name": "LW7-host-tone",
     "file": "src/scenes/world.js",
-    "old": "    livingTone: (person, tone) => person?.living?.town?.toned?.(person, tone),",
+    "old": "    livingTone: (person, taste) => person?.living?.town?.toned?.(person, taste),",
     "new": "    livingTone: null,",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
     "name": "LW7-host-road-tone",
     "file": "src/scenes/world.js",
-    "old": "  _livingRoadsDoor.toned = (p, tone) => livingRoads?.toned(p, tone) ?? null;",
+    "old": "  _livingRoadsDoor.toned = (p, taste) => livingRoads?.toned(p, taste) ?? null;",
     "new": "  void 0;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -893,16 +893,16 @@
     "old": "    slay: livingRoadSlay,   // LW7: a traveller struck down",
     "new": "    slay: null,   // LW7: a traveller struck down",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
     "name": "LW7-talk-tone-unheard",
     "file": "src/scenes/townTalk.js",
-    "old": "  const _toneHeard = () => { if (_toneTarget) livingTone?.(_toneTarget, tone); };",
+    "old": "  const _toneHeard = () => { if (_toneTarget) livingTone?.(_toneTarget, _toneTaste()); };",
     "new": "  const _toneHeard = () => {};",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -911,7 +911,7 @@
     "old": "    _toneTarget = _toneNext;   // LW7",
     "new": "    _toneTarget = null;   // LW7",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -920,7 +920,7 @@
     "old": "      _toneNext = target.person.living ? target.person : null;   // LW7: a resident's",
     "new": "      _toneNext = null;   // LW7: a resident's",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -929,7 +929,7 @@
     "old": "    _toneNext = null;",
     "new": "    void 0;",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -938,7 +938,7 @@
     "old": "          _toneHeard();   // LW7: the question's tone",
     "new": "          void 0;   // LW7: the question's tone",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   },
   {
@@ -947,7 +947,7 @@
     "old": "askWork: () => (_toneHeard(), eng.pipeline",
     "new": "askWork: () => (eng.pipeline",
     "tests": [
-      "test/lw7_deeds.test.js"
+      "test/systems/livingWorld/lw7_deeds.test.js"
     ]
   }
 ]

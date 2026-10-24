@@ -5,7 +5,7 @@
     "old": "      if (beast) { this._dropDoll(peer.id); continue; }\n",
     "new": "",
     "tests": [
-      "test/beastpeer.test.js"
+      "test/net/beastpeer.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      if (beast) { this._dropDoll(peer.id); continue; }",
     "new": "      if (beast) { continue; }",
     "tests": [
-      "test/beastpeer.test.js"
+      "test/net/beastpeer.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (beast) { this._dropDoll(peer.id); continue; }",
     "new": "      if (true) { this._dropDoll(peer.id); continue; }",
     "tests": [
-      "test/beastpeer.test.js"
+      "test/net/beastpeer.test.js"
     ]
   }
 ]

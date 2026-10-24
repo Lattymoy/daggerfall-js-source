@@ -47,7 +47,7 @@
 // until it has loaded, or if it never does.
 // ═══════════════════════════════════════════════════════════════════
 
-import { seededRng } from '../systems/wind.js';   // SUNBABY2: the fireballs' draws (the dread's)
+import { seededRng } from '../systems/wind/wind.js';   // SUNBABY2: the fireballs' draws (the dread's)
 import { slotHash } from './dreadSky.js';   // SUNBABY2: one slot hash for the shared clock's schedules
 
 /** The live event this file draws (net/wire.js LIVE_EVENTS). */
@@ -111,7 +111,7 @@ export const SUNBABY_CYCLE_S = SUNBABY_PHASES.reduce((a, p) => a + p.s, 0);
 export const SUNBABY_MORPH_S = 1;
 /** What a player watching is told when the face changes. */
 export const SUNBABY_FACE_LINES = Object.freeze({
-  evil: 'The sun baby stops laughing. Its eyes burn - fire rains on Daggerfall!',
+  evil: 'The sun baby stops laughing. Its eyes burn, and fire rains on Daggerfall!',
   baby: 'The sun baby giggles again.',
   todd: 'The sun baby becomes Todd Howard. Sixteen times the flowers. It just works.',
 });

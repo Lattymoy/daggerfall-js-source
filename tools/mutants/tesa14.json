@@ -1,7 +1,7 @@
 [
   {
     "name": "TESA14-the-obstacles-unread",
-    "file": "src/world/roadNetwork.js",
+    "file": "src/world/road/roadNetwork.js",
     "old": "  for (const o of obstacles ?? []) if (inMap(o)) occupied[o.y * MAP_WIDTH + o.x] = 1;   // TESA14\n",
     "new": "  void obstacles;   // TESA14\n",
     "tests": [
@@ -10,7 +10,7 @@
   },
   {
     "name": "TESA14-a-neighbour-edge-anyones",
-    "file": "src/world/roadNetwork.js",
+    "file": "src/world/road/roadNetwork.js",
     "old": "      if (owned(firstOf(roadNodes[i], roadNodes[o.j]))) addEdge(i, o.j);",
     "new": "      addEdge(i, o.j);",
     "tests": [
@@ -19,7 +19,7 @@
   },
   {
     "name": "TESA14-the-first-end-the-last",
-    "file": "src/world/roadNetwork.js",
+    "file": "src/world/road/roadNetwork.js",
     "old": "(a.y < b.y || (a.y === b.y && a.x <= b.x) ? a : b)",
     "new": "(a.y < b.y || (a.y === b.y && a.x <= b.x) ? b : a)",
     "tests": [
@@ -28,7 +28,7 @@
   },
   {
     "name": "TESA14-a-neighbour-edge-a-bridge",
-    "file": "src/world/roadNetwork.js",
+    "file": "src/world/road/roadNetwork.js",
     "old": "    if (!near.has(i < j ? `${i},${j}` : `${j},${i}`) && (owned(roadNodes[i]) || owned(roadNodes[j]))) addEdge(i, j);",
     "new": "    if (owned(roadNodes[i]) || owned(roadNodes[j])) addEdge(i, j);",
     "tests": [
@@ -37,7 +37,7 @@
   },
   {
     "name": "TESA14-a-bridge-the-first-ends",
-    "file": "src/world/roadNetwork.js",
+    "file": "src/world/road/roadNetwork.js",
     "old": "&& (owned(roadNodes[i]) || owned(roadNodes[j]))) addEdge(i, j);",
     "new": "&& owned(firstOf(roadNodes[i], roadNodes[j]))) addEdge(i, j);",
     "tests": [
@@ -46,7 +46,7 @@
   },
   {
     "name": "TESA14-a-link-anyones",
-    "file": "src/world/roadNetwork.js",
+    "file": "src/world/road/roadNetwork.js",
     "old": "if (owned(firstOf(trackNodes[i], trackNodes[o.j]))) links.push(",
     "new": "links.push(",
     "tests": [
@@ -55,7 +55,7 @@
   },
   {
     "name": "TESA14-a-spur-anyones",
-    "file": "src/world/roadNetwork.js",
+    "file": "src/world/road/roadNetwork.js",
     "old": "    if (!owned(t)) continue;   // TESA14: another region's\n",
     "new": "",
     "tests": [
@@ -64,7 +64,7 @@
   },
   {
     "name": "TESA14-the-grid-one-cell",
-    "file": "src/world/roadNetwork.js",
+    "file": "src/world/road/roadNetwork.js",
     "old": "    for (let dy = -1; dy <= 1; dy++) {\n      for (let dx = -1; dx <= 1; dx++) {\n        for (const j of grid",
     "new": "    for (let dy = 0; dy <= 0; dy++) {\n      for (let dx = 0; dx <= 0; dx++) {\n        for (const j of grid",
     "tests": [
@@ -73,7 +73,7 @@
   },
   {
     "name": "TESA14-the-cell-short-of-reach",
-    "file": "src/world/roadNetwork.js",
+    "file": "src/world/road/roadNetwork.js",
     "old": "  const cell = Math.max(1, Math.ceil(reach));",
     "new": "  const cell = Math.max(1, Math.ceil(reach / 2));",
     "tests": [
@@ -82,7 +82,7 @@
   },
   {
     "name": "TESA14-the-ties-reversed",
-    "file": "src/world/roadNetwork.js",
+    "file": "src/world/road/roadNetwork.js",
     "old": "out.sort((p, q) => p.dd - q.dd || p.j - q.j)",
     "new": "out.sort((p, q) => p.dd - q.dd || q.j - p.j)",
     "tests": [
@@ -91,7 +91,7 @@
   },
   {
     "name": "TESA14-prim-the-wrong-parent",
-    "file": "src/world/roadNetwork.js",
+    "file": "src/world/road/roadNetwork.js",
     "old": "    out.push([from[next], next]);",
     "new": "    out.push([cur, next]);",
     "tests": [
@@ -100,7 +100,7 @@
   },
   {
     "name": "TESA14-prim-the-best-unkept",
-    "file": "src/world/roadNetwork.js",
+    "file": "src/world/road/roadNetwork.js",
     "old": "      if (dd < best[j]) { best[j] = dd; from[j] = cur; }",
     "new": "      if (dd < best[j]) { from[j] = cur; }",
     "tests": [
@@ -109,7 +109,7 @@
   },
   {
     "name": "TESA14-the-bay-prim",
-    "file": "src/world/roadNetwork.js",
+    "file": "src/world/road/roadNetwork.js",
     "old": "(owns ? primEdges(roadNodes) : kruskal(roadNodes))",
     "new": "(primEdges(roadNodes))",
     "tests": [
@@ -415,7 +415,7 @@
   },
   {
     "name": "TESA14-a-capital-a-town",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPlacesHost.js",
     "old": "now.stood.filter((p) => !(p.pinned && _capitalBase) && arenaTemplateOf(_arenaTemplates, p))",
     "new": "now.stood.filter((p) => arenaTemplateOf(_arenaTemplates, p))",
     "tests": [
@@ -433,7 +433,7 @@
   },
   {
     "name": "TESA14-the-client-never-reset",
-    "file": "src/world/terrainGenClient.js",
+    "file": "src/world/terrain/terrainGenClient.js",
     "old": "    const layer = reset || !arenaRoadsLayer() ? { roads: new Map(), tracks: new Map(), join: new Map() } : arenaRoadsLayer();",
     "new": "    const layer = !arenaRoadsLayer() ? { roads: new Map(), tracks: new Map(), join: new Map() } : arenaRoadsLayer();",
     "tests": [
@@ -443,7 +443,7 @@
   },
   {
     "name": "TESA14-the-client-unlanded",
-    "file": "src/world/terrainGenClient.js",
+    "file": "src/world/terrain/terrainGenClient.js",
     "old": "    this.arenaRoadsLanded = epoch;\n    onLanded?.(epoch, add, reset);",
     "new": "    onLanded?.(epoch, add, reset);",
     "tests": [
@@ -453,7 +453,7 @@
   },
   {
     "name": "TESA14-the-client-untold",
-    "file": "src/world/terrainGenClient.js",
+    "file": "src/world/terrain/terrainGenClient.js",
     "old": "    onLanded?.(epoch, add, reset);\n    return epoch;",
     "new": "    return epoch;",
     "tests": [
@@ -463,7 +463,7 @@
   },
   {
     "name": "TESA14-the-worker-never-reset",
-    "file": "src/world/terrainGenWorker.js",
+    "file": "src/world/terrain/terrainGenWorker.js",
     "old": "  const layer = m.reset || !arenaRoadsLayer() ? { roads: new Map(), tracks: new Map(), join: new Map() } : arenaRoadsLayer();",
     "new": "  const layer = !arenaRoadsLayer() ? { roads: new Map(), tracks: new Map(), join: new Map() } : arenaRoadsLayer();",
     "tests": [
@@ -473,7 +473,7 @@
   },
   {
     "name": "TESA14-the-worker-unmerged",
-    "file": "src/world/terrainGenWorker.js",
+    "file": "src/world/terrain/terrainGenWorker.js",
     "old": "  if (m.layer) mergeArenaRoads(layer, unpackArenaRoads(m.layer));\n",
     "new": "",
     "tests": [

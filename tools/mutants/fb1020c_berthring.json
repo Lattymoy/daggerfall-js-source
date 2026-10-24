@@ -1,0 +1,70 @@
+[
+  {
+    "name": "BERTH-RING-the-ring-a-pixel",
+    "file": "src/world/portSites.js",
+    "old": "    if (Math.max(Math.abs(dx), Math.abs(dy)) > SEA_RING) continue;",
+    "new": "    if (Math.max(Math.abs(dx), Math.abs(dy)) > 1) continue;",
+    "tests": [
+      "test/systems/naval/fb1021b_voyagehold.test.js"
+    ],
+    "note": "VOYAGE-HOLD (PIN MOVED, FIELD BUGS 2026-10-21b): the ring moved from world.js's navalPortHere to the port law's boardPortAt, and its killer with it"
+  },
+  {
+    "name": "BERTH-RING-where-gates-the-port-on-the-pixel",
+    "file": "src/scenes/world.js",
+    "old": "nearPort, port: navalPortHere(), waters:",
+    "new": "nearPort, port: nearPort ? navalPortHere() : null, waters:",
+    "tests": [
+      "test/systems/naval/fb1020c_berthring.test.js"
+    ]
+  },
+  {
+    "name": "BERTH-RING-the-shipwright-reads-the-pixel-alone",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (!enabled || !boat || !inPortWaters()) return false;",
+    "new": "    if (!enabled || !boat || !where().nearPort) return false;",
+    "tests": [
+      "test/systems/naval/fb1020c_berthring.test.js"
+    ]
+  },
+  {
+    "name": "BERTH-RING-the-port-alone",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "return !!(w.nearPort || w.port); };",
+    "new": "return !!w.port; };",
+    "tests": [
+      "test/systems/naval/fb1020c_berthring.test.js",
+      "test/systems/naval/auditcrew.test.js",
+      "test/systems/naval/captcrew.test.js",
+      "test/systems/naval/navaudit_helm.test.js"
+    ]
+  },
+  {
+    "name": "BERTH-RING-the-crew-port-the-pixel",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      c.tick(d, { inPort: inPortWaters() && ",
+    "new": "      c.tick(d, { inPort: !!where().nearPort && ",
+    "tests": [
+      "test/systems/naval/fb1020c_berthring.test.js"
+    ]
+  },
+  {
+    "name": "BERTH-RING-a-cargo-port-a-pixel",
+    "file": "src/systems/naval/harbourBoard.js",
+    "old": "export const deliveryPort = (p, seaAt) => !!p && seaBears(p.px, p.py, seaAt);",
+    "new": "export const deliveryPort = (p, seaAt) => !!p && typeof seaAt === 'function' && [-1, 0, 1].some((dy) => [-1, 0, 1].some((dx) => seaAt(p.px + dx, p.py + dy)));",
+    "tests": [
+      "test/systems/naval/fb1020c_berthring.test.js",
+      "test/systems/naval/fb1013c_porttowns.test.js"
+    ]
+  },
+  {
+    "name": "BERTH-RING-a-cargo-port-the-sea-unasked",
+    "file": "src/systems/naval/harbourBoard.js",
+    "old": "export const deliveryPort = (p, seaAt) => !!p && seaBears(p.px, p.py, seaAt);",
+    "new": "export const deliveryPort = (p, seaAt) => !!p && typeof seaAt === 'function';",
+    "tests": [
+      "test/systems/naval/fb1020c_berthring.test.js"
+    ]
+  }
+]

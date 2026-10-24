@@ -1,0 +1,412 @@
+[
+  {
+    "name": "AUDIT-1019-L1-1-raiser-luck-unheld",
+    "file": "src/systems/unleveledLoot.js",
+    "old": "  _raiserLuck = luckNow; _raiserLevel = level;",
+    "new": "  _raiserLevel = level;",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "two clients raise one room body two ways"
+  },
+  {
+    "name": "AUDIT-1019-L1-2-over-max",
+    "file": "src/systems/unleveledLoot.js",
+    "old": "  if (Number.isFinite(item.maxCondition) && item.currentCondition > item.maxCondition) item.currentCondition = item.maxCondition;\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "a 135% Elven plate sells over whole"
+  },
+  {
+    "name": "AUDIT-1019-L1-3-bounty-unmarked",
+    "file": "src/systems/bounty/bountyReward.js",
+    "old": "  if (max > 0) item.foundCondition = item.currentCondition;",
+    "new": "",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "a mended bounty sells whole online"
+  },
+  {
+    "name": "AUDIT-1019-L1-4-switch-ignored",
+    "file": "src/systems/unleveledLoot.js",
+    "old": "  return materialSwitch(rampMetal(level), matSwitchList());",
+    "new": "  return rampMetal(level);",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "the Mods pane's switch never reaches the ramp"
+  },
+  {
+    "name": "AUDIT-1019-L6-8-orcish-plate-left-orcish",
+    "file": "src/systems/unleveledLoot.js",
+    "old": "  return dropArmor(loot, 0x0200 + metal, rolls);   // 520 Orcish",
+    "new": "  return dropArmor(loot, 520, rolls);   // 520 Orcish",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "a level-1 orc's armour always Orcish"
+  },
+  {
+    "name": "AUDIT-1019-L2-1-health-by-fraction",
+    "file": "src/systems/renownLayer.js",
+    "old": "  if (keepHealth && Number.isFinite(health)) entity.health = Math.min(health, entity.maxHealth);\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "a high roll costs health"
+  },
+  {
+    "name": "AUDIT-1019-L2-2-refresh-before-points",
+    "file": "src/systems/advancement.js",
+    "old": "  distribute(entity.stats, pool);\n  // LEVEL-EVEN (systems/levelEven.js): the floor over the new maximum and the Endurance just spent (AUDIT LEVEL-EVEN L2-2:\n  // after the points, not before them), current health left as it stands (L2-1)\n  refreshOnlineLayer(entity, { keepHealth: true });\n",
+    "new": "  distribute(entity.stats, pool);\n",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "the Endurance spent waits a round"
+  },
+  {
+    "name": "AUDIT-1019-L2-2-oghma-unrefreshed",
+    "file": "src/systems/advancement.js",
+    "old": "    refreshOnlineLayer(entity, { keepHealth: true });   // AUDIT LEVEL-EVEN L2-2: the book's Endurance reaches the floor now\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "the book's Endurance waits a round"
+  },
+  {
+    "name": "AUDIT-1019-L2-2-rollout-unrefreshed",
+    "file": "src/ui/charsheet.js",
+    "old": "      refreshOnlineLayer(this.entity, { keepHealth: true });   // AUDIT LEVEL-EVEN L2-2: the rollout's Endurance reaches the online floor now\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "the classic rollout's Endurance waits a round"
+  },
+  {
+    "name": "AUDIT-1019-L2-3-mentor-floor-unread",
+    "file": "src/systems/mentorMode.js",
+    "old": "  const rawMax = (entity.rawMaxHealth ?? entity.maxHealth ?? 0) + (Number.isFinite(entity.evenHp) && entity.evenHp > 0 ? entity.evenHp : 0);",
+    "new": "  const rawMax = entity.rawMaxHealth ?? entity.maxHealth ?? 0;",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "an unlucky roller tougher mentored"
+  },
+  {
+    "name": "AUDIT-1019-L3-1-gate-unread",
+    "file": "src/systems/advancement.js",
+    "old": "  if (!entity?.chargenDone || !Array.isArray(entity.skillUses) || skillCheckWait(entity, now) > 0) return 0;",
+    "new": "  if (!entity?.chargenDone || !Array.isArray(entity.skillUses)) return 0;",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "the strip says rest while a rest raises nothing"
+  },
+  {
+    "name": "AUDIT-1019-L3-1-gate-a-minute-early",
+    "file": "src/systems/advancement.js",
+    "old": "  return Math.max(0, Math.floor(entity?.lastSkillCheckTime ?? 0) + SKILL_RAISE_CHECK_INTERVAL + 1 - Math.floor(now));",
+    "new": "  return Math.max(0, Math.floor(entity?.lastSkillCheckTime ?? 0) + SKILL_RAISE_CHECK_INTERVAL - Math.floor(now));",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "exactly 6 hours read as past the gate"
+  },
+  {
+    "name": "AUDIT-1019-L3-1-later-words-dropped",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "  if (p.ready && p.wait > 0) return",
+    "new": "  if (false) return",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "a gated ready says rest now"
+  },
+  {
+    "name": "AUDIT-1019-L3-2-lock-before-pass",
+    "file": "src/systems/advancement.js",
+    "old": "    : value >= 95 && !masterSkillsActive(entity) && lockedBy(entity, i) ? 'lock' : null;",
+    "new": "    : value >= 95 && !masterSkillsActive(entity) && alreadyMasteredASkill(entity) ? 'lock' : null;",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "a skill the same pass locks reads ready and loses its uses"
+  },
+  {
+    "name": "AUDIT-1019-L3-3-open-mastery-as-cap",
+    "file": "src/systems/advancement.js",
+    "old": "  const held = value >= 100 ? (masteryRefusal(entity, i) == null ? 'master' : 'cap')",
+    "new": "  const held = value >= 100 ? 'cap'",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "a 100 that can be mastered told it is at its limit"
+  },
+  {
+    "name": "AUDIT-1019-L4-1-room-own-and-bought",
+    "file": "src/ui/socialPanel.js",
+    "old": "    const takeUnits = (k) => (unitsEmpty() ? Math.min(outMost(k), Math.max(0, STORES_MAX - roomHeld(k))) : unitsTyped());",
+    "new": "    const takeUnits = (k) => (unitsEmpty() ? Math.min(outMost(k), Math.max(0, STORES_MAX - heldOf(k))) : unitsTyped());",
+    "tests": [
+      "test/net/guild/fb1019b_guildux.test.js"
+    ],
+    "why": "an empty take out asks past the service's room"
+  },
+  {
+    "name": "AUDIT-1019-L4-2-card-left-at-close",
+    "file": "src/ui/socialPanel.js",
+    "old": "    hideCard();   // AUDIT SUGGESTIONS-1019 L4-2: nor the panel - closed, the pointer locked, no leave ever came\n",
+    "new": "",
+    "tests": [
+      "test/net/guild/fb1019b_guildux.test.js"
+    ],
+    "why": "the card hangs over the game"
+  },
+  {
+    "name": "AUDIT-1019-L4-3-touch-enter-shows",
+    "file": "src/ui/socialPanel.js",
+    "old": "    const mouse = (e) => (e?.pointerType ?? 'mouse') === 'mouse';",
+    "new": "    const mouse = () => true;",
+    "tests": [
+      "test/net/guild/fb1019b_guildux.test.js"
+    ],
+    "why": "a tap shows and takes the card at once"
+  },
+  {
+    "name": "AUDIT-1019-L4-3-second-press-shows-again",
+    "file": "src/ui/socialPanel.js",
+    "old": "      if (cardRow === r) { hideCard(); return; }\n",
+    "new": "",
+    "tests": [
+      "test/net/guild/fb1019b_guildux.test.js"
+    ],
+    "why": "a phone cannot put the card away"
+  },
+  {
+    "name": "AUDIT-1019-L4-4-classic-card",
+    "file": "src/ui/socialPanel.js",
+    "old": "  show: (rec, row, { asked = false } = {}) => { if (isEnhanced()) showItemHover(",
+    "new": "  show: (rec, row, { asked = false } = {}) => { if (true) showItemHover(",
+    "tests": [
+      "test/net/guild/fb1019b_guildux.test.js"
+    ],
+    "why": "the classic skin's card falls below the screen"
+  },
+  {
+    "name": "AUDIT-1019-L4-5-stop-unsaid",
+    "file": "src/ui/socialPanel.js",
+    "old": "        run: () => guildDo(guildPutAll(W, allMoves()).then((r) => (!r.ok && r.moved > 0 ? { ok: true, moved: r.moved, stopped: r } : r)),",
+    "new": "        run: () => guildDo(guildPutAll(W, allMoves()),",
+    "tests": [
+      "test/net/guild/fb1019b_guildux.test.js"
+    ],
+    "why": "how far the run went unsaid"
+  },
+  {
+    "name": "AUDIT-1019-L4-6-true-name",
+    "file": "src/ui/socialPanel.js",
+    "old": "?? (row?.rec?.group ? itemLongName(row.rec) : row?.name) ?? t('social.vault.anItem', 'an item'));",
+    "new": "?? row?.name ?? t('social.vault.anItem', 'an item'));",
+    "tests": [
+      "test/net/guild/fb1019b_guildux.test.js"
+    ],
+    "why": "an unidentified ring named by its powers"
+  },
+  {
+    "name": "AUDIT-1019-L4-7-note-never",
+    "file": "src/ui/socialPanel.js",
+    "old": "    if (none) none.style.display = shown.length && !seen ? '' : 'none';",
+    "new": "    if (none) none.style.display = 'none';",
+    "tests": [
+      "test/net/guild/fb1019b_guildux.test.js"
+    ],
+    "why": "a filter that hides everything says nothing"
+  },
+  {
+    "name": "AUDIT-1019-L6-7-rarity-unread",
+    "file": "src/ui/socialPanel.js",
+    "old": "  return storeFilterAccepts(rec, f?.cat ?? 'all') && storeRarityAccepts(rec, f?.rarity ?? 'all') && (!q || name.includes(q));",
+    "new": "  return storeFilterAccepts(rec, f?.cat ?? 'all') && (!q || name.includes(q));",
+    "tests": [
+      "test/net/guild/fb1019b_guildux.test.js"
+    ],
+    "why": "the rarity menu filters nothing"
+  },
+  {
+    "name": "AUDIT-1019-L5-1-hint-where-none-helps",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "  if (fam.swapOpens) head.append(",
+    "new": "  if (!fam.possible && !fam.classPossible) head.append(",
+    "tests": [
+      "test/ui/growth/fb1019b_swappage.test.js"
+    ],
+    "why": "a class no swap can help is told to pay"
+  },
+  {
+    "name": "AUDIT-1019-L5-1-opens-unread",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "    f.swapOpens = !!swap && !f.possible && swap.out.some(",
+    "new": "    f.swapOpens = !!swap && !f.possible && !swap.out.some(",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "the hint's law turned"
+  },
+  {
+    "name": "AUDIT-1019-L5-1-slots-unsaid",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "    ...(sw.slotsLeft(out) === 0 ? [t('growth.swap.noSlots',",
+    "new": "    ...(false ? [t('growth.swap.noSlots',",
+    "tests": [
+      "test/ui/growth/fb1019b_swappage.test.js"
+    ],
+    "why": "a swap into a spent group unwarned"
+  },
+  {
+    "name": "AUDIT-1019-L5-2-lock-turn-unread",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "      return before === after ? null : after ? 'on' : 'off';",
+    "new": "      return null;",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "a swap that moves the 95 lock unwarned"
+  },
+  {
+    "name": "AUDIT-1019-L5-4-unmarked",
+    "file": "src/systems/skillSwap.js",
+    "old": "entity.career[key].map((id) => (id === out ? inn : id)), swapped: true };",
+    "new": "entity.career[key].map((id) => (id === out ? inn : id)) };",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "an heir gets the shipped class"
+  },
+  {
+    "name": "AUDIT-1019-L5-4-family-name-only",
+    "file": "src/systems/legacy/family.js",
+    "old": "    career: career && (career.swapped === true || String(career.name ?? '') !== CLASS_CAREERS[idx]) ? JSON.parse(JSON.stringify(career)) : null,",
+    "new": "    career: career && String(career.name ?? '') !== CLASS_CAREERS[idx] ? JSON.parse(JSON.stringify(career)) : null,",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "the family's record drops the swap"
+  },
+  {
+    "name": "AUDIT-1019-L6-2-account-unread",
+    "file": "src/systems/skillSwap.js",
+    "old": "  payUndoable(entity, SKILL_SWAP_GOLD, entity._online === true ? accountOfSave(entity, REALM_EMPIRE_ACCOUNT) : null);",
+    "new": "  payUndoable(entity, SKILL_SWAP_GOLD, null);",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "online the account never pays"
+  },
+  {
+    "name": "AUDIT-1019-L6-2-offline-words",
+    "file": "src/systems/skillSwap.js",
+    "old": "  return entity._online === true\n    ? t('skillswap.refuse.gold',",
+    "new": "  return true\n    ? t('skillswap.refuse.gold',",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "offline told nothing of coins and letters"
+  },
+  {
+    "name": "AUDIT-1019-L6-2-group-word-fixed",
+    "file": "src/systems/skillSwap.js",
+    "old": "group: groupWord(group) }) };",
+    "new": "group: 'minor' }) };",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "a major swap said minor"
+  },
+  {
+    "name": "AUDIT-1019-L6-1-form-never",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "  if (m.swap?.out.length && m.swap.in.length) drawSkillSwap(",
+    "new": "  if (false) drawSkillSwap(",
+    "tests": [
+      "test/ui/growth/fb1019b_swappage.test.js"
+    ],
+    "why": "the page offers no swap"
+  },
+  {
+    "name": "AUDIT-1019-L6-1-press-enabled",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "  b.disabled = !!refusal;\n  b.onclick = () => {\n    if (refusal) return;",
+    "new": "  b.disabled = false;\n  b.onclick = () => {\n    if (refusal) return;",
+    "tests": [
+      "test/ui/growth/fb1019b_swappage.test.js"
+    ],
+    "why": "the press enabled short of the gold"
+  },
+  {
+    "name": "AUDIT-1019-L6-1-past-refusal",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "    if (refusal) return;\n    askCard([",
+    "new": "    askCard([",
+    "tests": [
+      "test/ui/growth/fb1019b_swappage.test.js"
+    ],
+    "why": "the press asks past its refusal"
+  },
+  {
+    "name": "AUDIT-1019-L6-1-yes-nothing",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "    ], () => { _note = sw.go(out, inn).text; _noteFresh = true; rerender(); });",
+    "new": "    ], () => { rerender(); });",
+    "tests": [
+      "test/ui/growth/fb1019b_swappage.test.js"
+    ],
+    "why": "Yes does nothing"
+  },
+  {
+    "name": "AUDIT-1019-L6-1-picks-kept",
+    "file": "src/ui/growth/specGuide.js",
+    "old": "_noteFresh = false; _swapOut = null; _swapIn = null; }",
+    "new": "_noteFresh = false; }",
+    "tests": [
+      "test/ui/growth/fb1019b_swappage.test.js"
+    ],
+    "why": "a new visit starts on the old picks"
+  },
+  {
+    "name": "AUDIT-1019-L6-13-online-pool-words",
+    "file": "src/ui/levelingChoice.js",
+    "old": "        online ? t('leveling.classic.poolOnline',",
+    "new": "        false ? t('leveling.classic.poolOnline',",
+    "tests": [
+      "test/systems/fb1019b_leveleven.test.js"
+    ],
+    "why": "the screen says 4 to 6 online"
+  },
+  {
+    "name": "AUDIT-1019-L6-4-classic-told-of-stats",
+    "file": "src/systems/tutorialCatalogue.js",
+    "old": "        isEnhanced()\n          ? t('tutorials.characterSheet.skillRaiseStats',",
+    "new": "        true\n          ? t('tutorials.characterSheet.skillRaiseStats',",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "the classic skin sent to a line it never draws"
+  },
+  {
+    "name": "AUDIT-1019-L2-4-share-of-stored",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "  const floored = baseHp + (Number.isFinite(entity.rawMaxHealth) ? evenHpOf(entity, (entity.stats?.endurance ?? NaN) + end) : 0);",
+    "new": "  const floored = baseHp;",
+    "tests": [
+      "test/systems/fb1019b_audit.test.js"
+    ],
+    "why": "two bodies of one maximum gain unalike from one star"
+  }
+]

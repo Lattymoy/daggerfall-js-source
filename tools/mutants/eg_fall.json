@@ -1,0 +1,782 @@
+[
+  {
+    "name": "EG-FALL-frozen-standing",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "return egLordFallAct(now - b.fellAt, tab('hurt'), drawn, winged);",
+    "new": "return { act: 'fall', anims: tab('hurt'), frame: Math.min(3, Math.floor(((now - b.fellAt) / FALL_MS) * 4)), loop: false, sink: 0 };",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-carried-on-its-walk",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "const [x, z] = held ?? egBodyPlace(b, t), bodyY = held ? held[2] : egBodyHeight(b, t);",
+    "new": "const [x, z] = egBodyPlace(b, t), bodyY = egBodyHeight(b, t);",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-hover-held",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "('aloft' in act ? act.aloft : 1) * (",
+    "new": "1 * (",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-sunk-at-the-wardens-size",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "egBodyAct(b, t, look.mobile, blow, look.hover, look.drawn)",
+    "new": "egBodyAct(b, t, look.mobile, blow, look.hover)",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-never-seen",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (b.fellAt > 0 && b.role === EG_ROLE.lord) lordFall.see(b, t, look, centre);",
+    "new": "if (false) lordFall.see(b, t, look, centre);",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-never-swept",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      lordFall.sweep();   // EG-FALL",
+    "new": "      void 0;   // EG-FALL",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-new-hall-keeps",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    lordFall.leave();   // EG-FALL: the last hall's fallen put away",
+    "new": "    void 0;   // EG-FALL: the last hall's fallen put away",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-pass-never-draws",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "return lordFall.draw(proj, view, eye, seconds, fog) || drew;",
+    "new": "return drew;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-fight-motion-ignored",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "motion: () => egShakeMotion(egReducedMotion(), getPref('techniqueMotion')),",
+    "new": "motion: () => 1,",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-never-gone",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "if (since >= FALL_MS) return { act: 'gone'",
+    "new": "if (since >= Infinity) return { act: 'gone'",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-sink-from-the-end",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "const sink = s > THUD_AT_MS ?",
+    "new": "const sink = s > FALL_MS ?",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-sink-ungrown",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "export const egFallSinkM = (drawn) => FALL_SINK_M * EG_FALL_PER(drawn);",
+    "new": "export const egFallSinkM = (drawn) => FALL_SINK_M;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-tall-ungrown",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "export const egFallTallM = (drawn) => BOSS_H * EG_FALL_PER(drawn);",
+    "new": "export const egFallTallM = (drawn) => BOSS_H;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-four-frames",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "Math.floor(k * 5)",
+    "new": "Math.floor(k * 4)",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-one-twins-ember",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "(key === 'twins' ? (pt === 1 ? 'frost' : 'fire')",
+    "new": "(key === 'twins' ? 'fire'",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-no-element-no-band",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "?? EG_BANDS[band]?.aspect ?? null",
+    "new": "?? null",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-cry-in-the-wardens-voice",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "clip: ENEMY_BASICS[mobile]?.barkSound ?? BOSS_CUES.fall.clip",
+    "new": "clip: BOSS_CUES.fall.clip",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-cry-while-not-news",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "if (since < FALL_CRY_LATE_MS) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-one-ember-of-the-column",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "L.column < COLUMN_BURSTS &&",
+    "new": "L.column < 1 &&",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-no-flash",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "if (t >= L.flashAt && t - L.flashAt < FALL_FLASH_MS) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-burst-floats",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "addBurst(chest, L.at, FX_KINDS.dagon, L.ember, F[1]);",
+    "new": "addBurst(chest, L.at, FX_KINDS.dagon, L.ember, NaN);",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-corpse-ungrown",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "k = egCorpseScale(L.drawn)",
+    "new": "k = CORPSE_SCALE",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-corpse-casts",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "if (L.drawn > 1) c.noShadow = true;",
+    "new": "if (L.drawn > 99) c.noShadow = true;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-corpse-made-every-frame",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "if (L.corpse || !ct || !renderer?.createBillboardBatch) return;",
+    "new": "if (!ct || !renderer?.createBillboardBatch) return;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-raised-keeps-its-corpse",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "if (L.frame !== frameNo) { putAway(L); lords.delete(i); }",
+    "new": "if (false) { putAway(L); lords.delete(i); }",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-module-leave-keeps",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "for (const L of lords.values()) putAway(L);",
+    "new": "void lords;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-shake-past-motion",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "if (m > 0) shake(FALL_SHAKE * m);",
+    "new": "shake(FALL_SHAKE);",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-leave-keeps",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      lordFall.dispose();   // EG-FALL: the fallen's bodies freed",
+    "new": "      void 0;   // EG-FALL: the fallen's bodies freed",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-flyer-never-drops",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "return 1 - k * k; };",
+    "new": "return 1; };",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-thud-while-not-news",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "if (s < THUD_AT_MS + FALL_NEWS_MS) play3(BOSS_CUES.thud",
+    "new": "if (true) play3(BOSS_CUES.thud",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-thud-never",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "if (!L.thud && s >= THUD_AT_MS) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-column-while-not-news",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "if (t < at0 + FALL_NEWS_MS) addBurst",
+    "new": "if (true) addBurst",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-no-glow",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "if (s < FALL_MS) {\n        const g = L.glow",
+    "new": "if (false) {\n        const g = L.glow",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-burst-at-the-feet",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "chest = [F[0], F[1] + L.hover + L.tall * FALL_BURST_UP, F[2]]",
+    "new": "chest = [F[0], F[1], F[2]]",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-no-corpse",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "if (s >= FALL_MS) { lay(L, look.mobile);",
+    "new": "if (false) { lay(L, look.mobile);",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-second-fall-never",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "        } else { putAway(L); L = null; }",
+    "new": "        } else { void 0; }",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "EG-FALL-no-sparks",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "pass.draw(live, null, proj, view, eye, seconds, fog, renderer?.worldViewportPx?.[3] ?? 0);",
+    "new": "void pass;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-1-moved-instant-replays",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "if (Math.abs(b.fellAt - L.at) < EG_FALL_SAME_MS) {",
+    "new": "if (false) {",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-1-flash-left-at-the-stamp",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "L.at = b.fellAt; if (Number.isFinite(L.flashAt)) L.flashAt += d;",
+    "new": "L.at = b.fellAt;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-2-relay-carries-it-on",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  egStop(F, L, now);   // AUDIT EG-FALL",
+    "new": "  void 0;   // AUDIT EG-FALL",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-2-stopped-row-unread",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "          if (!b.mv) placeAt(L, b, centre);",
+    "new": "          void 0;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-2-walking-row-read",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "          if (!b.mv) placeAt(L, b, centre);",
+    "new": "          placeAt(L, b, centre);",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-3-carried-dropped",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "    if (l.carried) H.carried[i] = 1;",
+    "new": "    void 0;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-4-beats-from-the-floor",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "F[1] + L.hover + L.tall * FALL_BURST_UP",
+    "new": "F[1] + L.tall * FALL_BURST_UP",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-4-glow-left-aloft",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "g.y = F[1] + L.hover * egFallAloft(s) + L.tall * GLOW_UP_SHARE",
+    "new": "g.y = F[1] + L.hover + L.tall * GLOW_UP_SHARE",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-5-wings-held",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "const frame = winged ? Math.floor((s / 1000) * FLY_ANIM_SPEED) :",
+    "new": "const frame = false ? Math.floor((s / 1000) * FLY_ANIM_SPEED) :",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-5-wings-unlooped",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "loop: winged, sink",
+    "new": "loop: false, sink",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-5-winged-unread",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "tab('hurt'), drawn, winged);",
+    "new": "tab('hurt'), drawn);",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-6-never-warmed",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      if (lordIds.size) lordFall.warm();",
+    "new": "      void 0;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-6-warm-empty",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "warm() { fxDoor(false); },",
+    "new": "warm() {},",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-6-never-freed",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "try { pass?.destroy(); } catch",
+    "new": "try { void pass; } catch",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-6-freed-twice",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "      if (!fxDoor.settled) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-6-programs-kept",
+    "file": "src/render/gate/gateFx.js",
+    "old": "for (const p of [this.sparks, this.meteor]) if (p) gl.deleteProgram(p);",
+    "new": "void 0;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-6-destroyed-draws",
+    "file": "src/render/gate/gateFx.js",
+    "old": "if (!any || !this.gl) return;",
+    "new": "if (!any) return;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L1-7-canvas-height",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": ", fog, renderer?.worldViewportPx?.[3] ?? 0);",
+    "new": ", fog);",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L2-9-news-second",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "export const FALL_NEWS_MS = 1000;",
+    "new": "export const FALL_NEWS_MS = 1100;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L2-9-burst-share",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "export const FALL_BURST_UP = 0.5;",
+    "new": "export const FALL_BURST_UP = 0.55;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-L2-9-glow-k",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "export const FALL_GLOW_K = 2.2;",
+    "new": "export const FALL_GLOW_K = 2.4;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X18-burst-from-first-sight",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "addBurst(chest, L.at, FX_KINDS.dagon",
+    "new": "addBurst(chest, t, FX_KINDS.dagon",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X19-flash-from-first-sight",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "L.flashAt = L.at;",
+    "new": "L.flashAt = t;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X21-feet-at-the-halls-zero",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "F[1] = centre[1] + y;",
+    "new": "F[1] = centre[1];",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X54-place-at-the-halls-zero",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "P[2] = y;",
+    "new": "P[2] = 0;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X22-place-read-now",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "egBodyPlace(b, b.fellAt), y = egBodyHeight(b, b.fellAt)",
+    "new": "egBodyPlace(b, now()), y = egBodyHeight(b, now())",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X23-band-never-handed",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "band: () => band,",
+    "new": "band: () => 0,",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X52-band-never-read",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "b.pt | 0, band())",
+    "new": "b.pt | 0, 0)",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X26-thud-at-the-floor",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "play3(BOSS_CUES.thud, [F[0], F[1] + 1, F[2]])",
+    "new": "play3(BOSS_CUES.thud, [F[0], F[1], F[2]])",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X29-glow-green",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "g.color[1] = L.ember[1] * k;",
+    "new": "g.color[1] = L.ember[0] * k;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X31-flash-green",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "f.color[1] = WHITE[1] * k;",
+    "new": "f.color[1] = WHITE[0] * k;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X30-glow-place",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "g.x = F[0]; g.y",
+    "new": "g.x = F[2]; g.y",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X32-flash-place",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "f.x = F[0]; f.y",
+    "new": "f.x = F[2]; f.y",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X34-flash-never-fades",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "k = FALL_FLASH_K * (1 - (t - L.flashAt) / FALL_FLASH_MS)",
+    "new": "k = FALL_FLASH_K",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X35-glow-casts",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "glow: { x: 0, y: 0, z: 0, range: 0, color: [0, 0, 0], carried: true }",
+    "new": "glow: { x: 0, y: 0, z: 0, range: 0, color: [0, 0, 0] }",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X36-corpse-frame-unasked",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "uploadRecordFrame?.(ct.archive, ct.record, 0);",
+    "new": "void 0;",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X40-corpse-from-the-thud",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "if (s >= FALL_MS) { lay(L, look.mobile);",
+    "new": "if (s >= THUD_AT_MS) { lay(L, look.mobile);",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X45-leave-keeps-bursts",
+    "file": "src/scenes/eliteGates/egLordFall.js",
+    "old": "lords.clear(); bursts.length = 0; live.length = 0;",
+    "new": "lords.clear();",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X47-sparks-after-the-floors",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "return lordFall.draw(proj, view, eye, seconds, fog) || drew;",
+    "new": "return drew || lordFall.draw(proj, view, eye, seconds, fog);",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X48-floors-unanswered",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "drew = drew || pass.floorDraws > 0; }",
+    "new": "void 0; }",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-EG-FALL-X51-fall-on-the-idle-table",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "return egLordFallAct(now - b.fellAt, tab('hurt'), drawn, winged);",
+    "new": "return egLordFallAct(now - b.fellAt, tab('idle'), drawn, winged);",
+    "tests": [
+      "test/net/eliteGates/eg_lordfall.test.js",
+      "test/net/eliteGates/eg_lordfall_relay.test.js"
+    ]
+  }
+]

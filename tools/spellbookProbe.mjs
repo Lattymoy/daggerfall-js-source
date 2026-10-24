@@ -1,6 +1,6 @@
 // U42: does the CLASSIC spellbook actually work in a real browser?
 //
-// The window's laws are pinned in node (test/spellbookwindow.test.js)
+// The window's laws are pinned in node (test/systems/spellbookwindow.test.js)
 // and the host wiring in source pins there too; this drives the LIVE
 // page. It has to, because U42 turned a keyed text list into ARENA2
 // art: every button is an invisible hit rect painted into SPBK00I0

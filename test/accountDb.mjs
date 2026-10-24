@@ -1,6 +1,6 @@
 // The account service over node:sqlite with every migration applied - D1's surface as the Worker uses it (prepare /
 // bind / first / all / run, and batch as ONE transaction, rolled back whole when a statement throws) - and the Worker
-// stood on it with a registered-account helper. AUDIT 28's pins (test/audit28_marks.test.js, audit28_notice.test.js)
+// stood on it with a registered-account helper. AUDIT 28's pins (test/net/audit28_marks.test.js, audit28_notice.test.js)
 // drive the real service through it; marks1 and notice1 keep their own copies, written first.
 import { readFileSync, readdirSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
@@ -8,13 +8,17 @@ import assert from 'node:assert/strict';
 
 import worker from '../server-account/src/index.js';
 import { _resetKeyForTests } from '../server-account/src/signing.js';
+import { _resetPassKeyForTests } from '../server-account/src/sessionPass.js';
 import { _resetYardsKept } from '../server-account/src/decor.js';   // YARD-SHED: a stood service is a fresh isolate - no town's yards kept
+import { _resetBusyShed } from '../server-account/src/service.js';   // BUSY-GATE: and nothing shed
+import { _resetWeeksKept } from '../server-account/src/weekKept.js';   // PRIMARY-FOLD: nor any week read settled
 import { forgetChapters } from '../server-account/src/npcHalls.js';   // AUDIT CHAP3 T4: nor any region's chapters - a test's first read is its own database's
+import { _resetTownEconForTests } from '../server-account/src/townEcon.js';   // TOWN-ECON TE2: nor the towns' shares
 import { renownXpFor } from '../src/net/renown.js';
-import { mintReceipt, importReceiptKey } from '../src/net/gateReceipt.js';
+import { mintReceipt, importReceiptKey } from '../src/net/gate/gateReceipt.js';
 import { ACCEPTED } from '../src/net/legalLaw.js';   // MERGE 2: TERMS1 - a request that makes an account carries the versions ticked
 import { r2, seatRealm } from './realmSeat.mjs';   // MERGE 2: a founding is a realm character's (AUDIT REALM2 S2)
-import { GUILD_FOUND_GOLD } from '../src/net/guildLaw.js';
+import { GUILD_FOUND_GOLD } from '../src/net/guild/guildLaw.js';
 import { ROLL_FACTIONS } from '../src/net/npcChapterLaw.js';   // AUDIT CHAP4 E3: a scene's chapters confirmed
 
 const src = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
@@ -84,12 +88,18 @@ export const d1Position = (db) => `${Number(db._raw.prepare('SELECT total_change
 
 /** A UTC day's middle. */
 export const T0 = 1_800_000_000;
+/** INT19: the routes that take a crafted piece out of its realm record (the pins' `call` names the record for them). */
+const CRAFTED_ACTS = new Set(['/v1/market/list', '/v1/market/auction', '/v1/writs/fulfil']);
 
 /** The Worker on a fresh database, with the gate's key pair - `env` extended by `extra`. */
 export async function standService(extra = {}) {
   _resetKeyForTests();
+  _resetPassKeyForTests();   // SESSION-SIGN: the pass key drawn from this service's own key
   _resetYardsKept();
+  _resetBusyShed();
   forgetChapters();
+  _resetWeeksKept();
+  _resetTownEconForTests();
   const kp = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
   const pkcs8 = Buffer.from(new Uint8Array(await subtle.exportKey('pkcs8', kp.privateKey))).toString('base64');
   const gk = await subtle.generateKey({ name: 'Ed25519' }, true, ['sign', 'verify']);
@@ -97,6 +107,15 @@ export async function standService(extra = {}) {
   const gatePub = Buffer.from(new Uint8Array(await subtle.exportKey('raw', gk.publicKey))).toString('base64url');
   const env = { DB: d1(), SAVES: r2(), IDENTITY_PRIVATE_KEY: pkcs8, ACCOUNT_VERSION: 'test1', ALLOWED_ORIGIN: '*', GATE_PUBLIC_KEY: gatePub, ...extra };   // MERGE 2: SAVES, the realm's records (R2)
   const call = async (path, body, bearer = null) => {
+    // INT19 (bible/06-Systems/Integrity-Arc.md section 7): A CRAFTED ACT NAMES WHERE ITS RECORD STANDS - a listing's, an
+    // auction's or a commission fill's piece leaves the realm record (server-account/src/craftedPiece.js), and the client's
+    // realm act names the record as it asks (net/marketBook.js realmPieceAct). A pin's act for a realm character that names
+    // none is named it here, off the row as it stands; `realm: null` asks with none (the route's own refusal).
+    if (CRAFTED_ACTS.has(path) && body && typeof body === 'object' && !('realm' in body) && typeof body.character === 'string'
+      && /^r[0-9a-f]{20}$/.test(body.character) && (path !== '/v1/market/list' || body.kind === 'piece')) {
+      const row = env.DB._raw.prepare('SELECT lease, seq FROM realm_characters WHERE id = ?').get(body.character);
+      if (row) body = { ...body, realm: { id: body.character, lease: row.lease, seq: row.seq } };
+    }
     const res = await worker.fetch(new Request(`https://accounts.invalid${path}`, {
       method: 'POST',
       headers: { ...(body !== undefined ? { 'content-type': 'application/json' } : {}), ...(bearer ? { authorization: `Bearer ${bearer}` } : {}) },
@@ -114,6 +133,17 @@ export async function standService(extra = {}) {
         .run(g.id, character, handle, renownXpFor(renown), T0, T0);
     }
     return { secret: g.secret, id: g.id, character, handle };
+  };
+  /** INT16 (bible/06-Systems/Integrity-Arc.md section 7): A REGISTERED ACCOUNT PLAYING A REALM CHARACTER - the seat every
+   *  progression claim is asked of (server-account/src/progress.js progressRefusal: Renown, a raid's cleanse, a camp, the
+   *  Watch, a silver find, a profession's XP). `registered`'s account, seated as a realm character the way the realm makes
+   *  one (test/realmSeat.mjs, the realm pins' one home); `character` is its id, `at()` where its record stands, and a
+   *  `renown` seeded on the account's own character is carried to it. `save` lays a record over its first save. */
+  const seated = async (handle, { save = null, ...opts } = {}) => {
+    const who = await registered(handle, opts);
+    const R = await seatRealm(env, who.secret, handle, save);
+    env.DB._raw.prepare('UPDATE renown_tracks SET char_id = ? WHERE player = ? AND char_id = ?').run(R.id, who.id, who.character);
+    return { ...who, character: R.id, at: R.at };
   };
   const claim = async (who, gameDay, nowS) => call('/v1/gate/claim', { receipt: await mintReceipt({ d: gameDay, b: 'ruhn', s: who.id, c: 4242, x: 'dealt' }, gatePriv, { subtle, nowS }) }, who.secret);
   /** Marks struck to an account by hand - a line, so the balances move as the ledger's triggers move them. */
@@ -138,7 +168,7 @@ export async function standService(extra = {}) {
     const R = await seatRealm(env, who.secret, who.handle, { name: who.handle, level: 9, goldPieces: 1_000_000, items: [] });
     return { ...(await call('/v1/homes/claim', { layout: null, ...home, character: R.id, realm: R.at() }, who.secret)), character: R.id };
   };
-  return { env, call, guest, registered, claim, seedMarks, fetch, found, seatHome, identityPublic: kp.publicKey, gateKey: gatePriv, gatePriv };   // ARENA4: the relay's signing half, so a bout's receipt is signed as the relay signs it   // PROF3: the identity key's public half, a product record's verifier; SEAT1b: the relay's private half, a watch receipt's signer
+  return { env, call, guest, registered, seated, claim, seedMarks, fetch, found, seatHome, identityPublic: kp.publicKey, gateKey: gatePriv, gatePriv };   // ARENA4: the relay's signing half, so a bout's receipt is signed as the relay signs it   // PROF3: the identity key's public half, a product record's verifier; SEAT1b: the relay's private half, a watch receipt's signer
 }
 
 /** A device's storage holding `who`'s session (net/accountClient.js SESSION_KEY). */

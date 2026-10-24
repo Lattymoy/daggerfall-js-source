@@ -14,7 +14,7 @@
 // gender. Not a DFU member: Daggerfall's guilds have no Seasons. Ledger A row.
 // ═══════════════════════════════════════════════════════════════════
 
-import { gateHash } from './gateLaw.js';
+import { gateHash } from './gate/gateLaw.js';
 import { chapterTitleKey, chapterSeasonOf, chapterDoctrineWords, hallPosterName, hallHidden, isRollFaction, SUCCESSION_CANDIDATES } from './npcChapterLaw.js';
 import { residentName } from '../systems/livingWorld/census.js';
 import { getNameBankOfRegion, GENDERS } from '../characters/nameHelper.js';

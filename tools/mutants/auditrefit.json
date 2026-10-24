@@ -1,0 +1,149 @@
+[
+  {
+    "name": "AR-near-sphere-tight",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "Math.hypot(t.box.h[0], t.box.h[1], t.box.h[2]) + NEAR_MISS_M) continue;",
+    "new": "Math.hypot(t.box.h[0], t.box.h[1], t.box.h[2])) continue;",
+    "tests": [
+      "test/systems/naval/auditrefit.test.js"
+    ]
+  },
+  {
+    "name": "AR-near-sphere-beam",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "Math.hypot(t.box.h[0], t.box.h[1], t.box.h[2]) + NEAR_MISS_M) continue;",
+    "new": "t.box.h[0] + NEAR_MISS_M) continue;",
+    "tests": [
+      "test/systems/naval/auditrefit.test.js"
+    ]
+  },
+  {
+    "name": "AR-near-sphere-past-its-end",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "  const u = dd > 0 ? Math.max(0, Math.min(Math.max(0, Math.min(1, upTo)), (w[0] * d[0] + w[1] * d[1] + w[2] * d[2]) / dd)) : 0;",
+    "new": "  const u = dd > 0 ? (w[0] * d[0] + w[1] * d[1] + w[2] * d[2]) / dd : 0;",
+    "tests": [
+      "test/systems/naval/auditrefit.test.js",
+      "test/systems/naval/combatfeel.test.js"
+    ],
+    "equivalent": true,
+    "why": "Unclamped, the reject measures to the segment's whole line, which is never farther from her middle than the segment itself - so it rejects less, never more, and every ball the clamped test lets through it lets through too: the passes are the same ones. The clamp is kept because it is what makes the reject tight (a ball's piece of flight is short, its line is not), which is the reject's whole purpose."
+  },
+  {
+    "name": "AR-peer-sinking-unheard",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "{ sound(NAVAL_CLASSIC.bubbles, e.ship.pos, 1); feel.sinking(e, w.seed, w.fire); }",
+    "new": "{ feel.sinking(e, w.seed, w.fire); }",
+    "tests": [
+      "test/systems/naval/auditrefit.test.js"
+    ]
+  },
+  {
+    "name": "AR-peer-magazine-unlit",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "{ sound(NAVAL_CLASSIC.bubbles, e.ship.pos, 1); feel.sinking(e, w.seed, w.fire); }",
+    "new": "{ sound(NAVAL_CLASSIC.bubbles, e.ship.pos, 1); }",
+    "tests": [
+      "test/systems/naval/auditrefit.test.js"
+    ]
+  },
+  {
+    "name": "AR-peer-fire-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "feel.sinking(e, w.seed, w.fire); }",
+    "new": "feel.sinking(e, w.seed, true); }",
+    "tests": [
+      "test/systems/naval/auditrefit.test.js"
+    ]
+  },
+  {
+    "name": "AR-flag-failure-forgotten",
+    "file": "src/render/shipFlagPass.js",
+    "old": "    if (!canvas) { this.textures.set(key, { tex: null, seen: seconds, failed: seconds }); return null; }",
+    "new": "    if (!canvas) return null;",
+    "tests": [
+      "test/systems/naval/auditrefit.test.js"
+    ]
+  },
+  {
+    "name": "AR-flag-never-repainted",
+    "file": "src/render/shipFlagPass.js",
+    "old": "if (had.tex || seconds - had.failed < FLAG_REPAINT_S) return had.tex;",
+    "new": "return had.tex;",
+    "tests": [
+      "test/systems/naval/auditrefit.test.js"
+    ]
+  },
+  {
+    "name": "AR-flag-prune-a-failure",
+    "file": "src/render/shipFlagPass.js",
+    "old": "{ if (t.tex) this.gl.deleteTexture(t.tex); this.textures.delete(key); }",
+    "new": "{ this.gl.deleteTexture(t.tex); this.textures.delete(key); }",
+    "tests": [
+      "test/systems/naval/auditrefit.test.js"
+    ]
+  },
+  {
+    "name": "AR-refit-hull-share-lost",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "      s.hull = (s.hull / s.maxHull) * h;",
+    "new": "      s.hull = Math.min(s.hull, h);",
+    "tests": [
+      "test/systems/naval/fleet.test.js"
+    ]
+  },
+  {
+    "name": "AR-refit-canvas-share-lost",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "      s.sail = s.maxSail > 0 ? (s.sail / s.maxSail) * sl : sl;",
+    "new": "      s.sail = sl;",
+    "tests": [
+      "test/systems/naval/fleet.test.js"
+    ]
+  },
+  {
+    "name": "AR-refit-whole-unmoved",
+    "file": "src/systems/naval/navalDamage.js",
+    "old": "      s.maxHull = h; s.maxSail = sl;",
+    "new": "      s.maxSail = sl;",
+    "tests": [
+      "test/systems/naval/fleet.test.js"
+    ]
+  },
+  {
+    "name": "AR-door-word-kept",
+    "file": "src/ui/fleetPage.js",
+    "old": "if (ran === false && _said?.uid === s.uid) _said = null; ",
+    "new": "",
+    "tests": [
+      "test/scenes/holddoor.test.js"
+    ]
+  },
+  {
+    "name": "AR-classic-past-its-records",
+    "file": "src/formats/derivedTexture.js",
+    "old": "  if (!t || t.vendor || !(record < t.recordCount)) return null;",
+    "new": "  if (!t || t.vendor) return null;",
+    "tests": [
+      "test/systems/naval/auditrefit.test.js"
+    ]
+  },
+  {
+    "name": "AR-classic-a-mods-own",
+    "file": "src/formats/derivedTexture.js",
+    "old": "  if (!t || t.vendor || !(record < t.recordCount)) return null;",
+    "new": "  if (!t || !(record < t.recordCount)) return null;",
+    "tests": [
+      "test/systems/naval/auditrefit.test.js"
+    ]
+  },
+  {
+    "name": "AR-classic-empty",
+    "file": "src/formats/derivedTexture.js",
+    "old": "  return bm?.width ? classicRecordRgba(bm, palette) : null;",
+    "new": "  return bm ? classicRecordRgba(bm, palette) : null;",
+    "tests": [
+      "test/systems/naval/auditrefit.test.js"
+    ]
+  }
+]

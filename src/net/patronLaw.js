@@ -14,15 +14,19 @@
 //    for each real hour it stands (an online sky day is a real hour - TIME1).
 //  - THE PRICE DECIDES. Its CAP is PATRON_PAY_SHARE of the piece's worth as the service judges it (itemLaw.js itemWorth's
 //    floor - never above it for the record's own price, the client's to write - and never above the record's own price
-//    either, nor a crafted piece's above the piece it was made as, `patronWorth`); above it no patron buys; at or under
+//    either, nor a crafted piece's above the piece it was made as, and at the condition a counter's sale reads it -
+//    AUDIT MEND-THIRD L1-4, `patronWorth`); above it no patron buys; at or under
 //    it, the hour's chance by how far under (`patronOdds`).
 //  - THE TOWN'S DEMAND IS SHARED: its traders together sell at most PATRON_TOWN_HOUR an hour, the hour's lowest draws.
 //  - THE CEILINGS: a seller PATRON_SELLER_HOUR pieces an hour, PATRON_SELLER_DAY_GOLD gold a real day; never a quest's
-//    piece, a keepsake, or a piece bought at a counter online (`patronTakes`).
+//    piece, a keepsake, a piece bought at a counter online, or a stolen one (`patronTakes`).
 //  - THE RECKONING covers the hours since the listing's last, at most PATRON_RECKON_HOURS of them.
 //
 // Pure: no clock, no network, no DOM.
 // ═══════════════════════════════════════════════════════════════════
+
+import { foundSalePercentage } from '../systems/item/foundMark.js';   // AUDIT MEND-THIRD L1-4: the condition a counter's sale reads
+import { conditionCostBase } from '../systems/roleplayRealismItems/rriRealism.js';   // AUDIT MEND-THIRD L1-4: and the mod's price for it
 
 /** A patron pays at most this share of a piece's worth. */
 export const PATRON_PAY_SHARE = 0.6;
@@ -74,12 +78,25 @@ export const patronCap = (worth) => Math.floor(Math.max(0, worth) * PATRON_PAY_S
  *  markCounterBought, the counter's Buy: every shop's shelf, a guild's, a caravan's), kept through the save, the item law
  *  (itemFields.js declares it), the market's listing, a stack's merge and split (inventory.js addItem, splitStack). */
 export const PATRON_COUNTER_MARK = 'counterBought';
+/** LAW-3 (Town-Economy-Arc 7.4): WHAT THE COUNTER WAS PAID - a whole number of gold a piece, written beside the counter's
+ *  mark (systems/tradeModes.js markCounterBought: the lot's price shared by each piece's own ask), kept through the save,
+ *  the item law, the market's listing and a stack's merge (the lower of two) and split. Online, what a counter pays for
+ *  such a piece never passes it (tradeModes.js getTradePrice). */
+export const COUNTER_PAID_MARK = 'counterPaid';
+/** AUDIT TOWN-ECON 2 PRICE-6: THE VALUE IT WAS BOUGHT AT - a piece's own value (tradeModes.js counterValueOf) when the counter
+ *  sold it, beside what was paid: a gem set, a hone or a reforge since is the player's own work, and the cap holds the
+ *  part of a sale the counter sold alone (tradeModes.js tradeCost's `resale`). */
+export const COUNTER_VALUE_MARK = 'counterValue';
 /** Whether a patron would take the piece at all: never a quest's, never a keepsake - and AUDIT LW-II-2 S1, never a piece
  *  an NPC counter sold online (PATRON_COUNTER_MARK): a patron paid more than an online counter asks for the same piece
  *  (a book three times its file price; a quality-1 counter's weapon a fifth over its ask), so a player bought at the
- *  counter, stocked a trader and printed the difference. @param {any} item */
+ *  counter, stocked a trader and printed the difference. STOLEN-GOODS AUDIT (2026-10-16, S6): and never a STOLEN piece
+ *  (`stolen`, systems/stolenGoods.js STOLEN_MARK): a town's patron is its townsfolk, and the town's counters buy a stolen
+ *  piece only to be rid of it (landSold) - a hired trader was the fence they are not, paying three fifths of the piece's
+ *  worth in the service's gold for a shut shop's shelf emptied by night. A player may still buy it from the trader; the
+ *  mark rides to them. @param {any} item */
 export const patronTakes = (item) => !!item && typeof item === 'object' && !item.questItem && !item.livingKeepsake && item.templateIndex !== PATRON_KEEPSAKE_TEMPLATE
-  && item[PATRON_COUNTER_MARK] !== true;
+  && item[PATRON_COUNTER_MARK] !== true && item.stolen !== true;
 
 /** AUDIT LW-II-2 S1: a record's own price - its `value` times its stack (tradeModes.js buyItemPrice's), 0 for no honest
  *  number. @param {any} item */
@@ -108,7 +125,7 @@ const CRAFT_ROLLED = Object.freeze(['rarity', 'affixes', 'enchantments']);
  * no worth.
  * @param {any} item @param {(item: any) => number} worthOf
  */
-export function patronWorth(item, worthOf) {
+function wholeWorth(item, worthOf) {
   const worth = Math.min(worthOf({ ...item, value: 0 }), ownPrice(item));
   if (!item || !CRAFT_MARKS.some((k) => Object.prototype.hasOwnProperty.call(item, k))) return worth;
   const plain = { ...item, value: 0 };
@@ -118,6 +135,20 @@ export function patronWorth(item, worthOf) {
   // and a found Rare tempered to Fine lost its lines to this strip - a patron's worth of 1,863 fell to 3
   if (typeof item.provenance === 'string') for (const k of CRAFT_ROLLED) delete plain[k];
   return Math.min(worth, worthOf(plain));
+}
+/**
+ * AUDIT MEND-THIRD L1-4 (2026-10-19, Mac: "Fix it here"): A PIECE'S WORTH TO A PATRON, AT THE CONDITION A COUNTER'S SALE
+ * READS IT - the whole worth above (wholeWorth) through Roleplay & Realism: Items' condition price (rriRealism.js
+ * conditionCostBase, CalculateConditionCost: the share, never under a fifth), at the condition an online counter's Sell
+ * arm reads (systems/item/foundMark.js foundSalePercentage: a found piece's mark, and a third of its owner's own mends past
+ * it). The judge's floor reads no condition, so a found Daedric cuirass at 20% was worth its whole 153,600 to a patron -
+ * a cap of 92,160 where the best counter paid 25,344 - and worn loot sold through a hired trader for several times its
+ * counter price. The mod's condition prices are the room's (systems/online/onlineLane.js), and patrons are online alone.
+ * @param {any} item @param {(item: any) => number} worthOf
+ */
+export function patronWorth(item, worthOf) {
+  const worth = wholeWorth(item, worthOf);
+  return worth > 0 ? conditionCostBase(worth, foundSalePercentage(item)) : 0;
 }
 
 /**

@@ -1,23 +1,22 @@
 // @ts-check
 // DUEL1 (2026-09-24, Mac: duels "traps both players" in a ring, and asked - "Yes: weapons, bows, spells"): THE BLOW
-// BETWEEN TWO DUELLISTS, BOTH HALVES. Pure over the game's own formula - no scene, no socket - so the pins drive a
-// strike from one sheet to another without a browser.
+// BETWEEN TWO PLAYERS. Pure over the game's own formula - no scene, no socket - so the pins drive a strike without a
+// browser.
 //
-// DEFENDER-AUTHORITATIVE, the port's law for any blow at a body (scenes/dungeonContext.js "the host decided the swing;
-// I decide the hit"; systems/onlineLane.js "a blow AT a body is mitigated where it lands"). Every input on the TARGET's
-// side of CalculateAttackDamage - the armour on each part, the enchantment channels, Dodging, luck and agility, the
-// biography's avoid-hit, the adrenaline rush, PCAAO's shield block and natural resistance - lives on the defender's
-// machine and nowhere else, and the armour a blow wears is the defender's own save. So the ATTACKER sends what its
-// sheet brings to the blow (duelAttackerOf: level, race, the eight live attributes, the four skills a blow reads, the
-// career's bitfields, health; the weapon's template, material and condition - duelWeaponOf), never a number of
-// damage; and the DEFENDER stands that sheet up as a stub attacker (duelStub) and runs the one formula
-// (resolveDuelStrike) against itself. A crafted sheet is bounded by the wire (net/wire.js validDuelData) at what the
-// strongest honest character holds.
+// THE STRIKER'S HALF ALONE (INT8, INT9, INT10 - bible/06-Systems/Integrity-Arc.md 5). Every blow and spell between
+// players - a duel's, a siege's and its works', a Royal Tourney's, the open zone's - is counted on the STRIKER's machine
+// and sent as a number, which the relay's referee clips (net/duel/duelRef.js, siegeRef.js, wildRef.js); no defender's
+// machine resolves anything, and nothing of the defender's sheet - its armour, Dodging, attributes, live effects -
+// reaches any roll. The striker's sheet is its own LIVE one (duelAttackerOf: level, race, the eight attributes by
+// liveStat - a Fortify's, a disease's, a Boons tier's - the four skills a blow reads, the career's bitfields, health;
+// the weapon's template, material and condition - duelWeaponOf), stood up as the attacker (duelStub) and rolled
+// (resolveDuelStrike) against a NEUTRAL stand-in (duelStandIn), on which a spell's harm is counted too
+// (combat/siegeCombat.js siegeSpellNumbers). AUDIT C&C H5: the stand-in was a stub of the striker's own sheet, so
+// every attribute it brought cancelled itself and PCAAO charged it for the "target's" luck, its own.
 //
-// THE SPELL, the same way: the attacker sends the spell's HARMFUL effects (duelSpellOf - the families a fight is made
-// of) and its level; the defender applies them as any caster's spell at it (duelSpellFromWire keeps those families
-// alone and the range the spell reached it by, so the save it owes is rolled), tagged as the duel's (effects.js
-// bundleDuel), so a duel's damage over time stops at the floor too, and the duel's end strips it.
+// DORMANT since INT8, DUEL1's defender-authoritative half (the defender stood the striker's sheet up and resolved the
+// blow against itself): duelSpellFromWire (a spell's families applied as a caster's at the defender, effects.js
+// bundleDuel) and duelBlowPlausible (where a blow could come from). No host calls them; they stand as DUEL1 left them.
 //
 // Not a DFU member: Daggerfall Unity has no other players. Ledger A (ONLINE).
 import { calculateAttackDamage, baseDamageMax, damageModifier, WEAPON_MATERIAL_MODIFIER } from './formulas.js';
@@ -26,8 +25,11 @@ import { SWING_MODS, WEAPON_REACH } from './playerWeapon.js';
 import { createWeapon } from './enemyEquipment.js';
 import { SKILLS, skillValue } from '../systems/skills.js';
 import { liveStat } from '../systems/statMods.js';
+import { offHandToHit, OFF_HAND_BLOW } from './twoHands/handsLaw.js';   // TWO-HANDS (AUDIT): the off hand's terms on a blow between players
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
 import { weaponSkillUsed } from '../characters/weapons.js';
+import { armorValuesOf } from '../systems/equip.js';   // AUDIT C&C H5: the stand-in's unarmoured table, DFU's own 100s
+import { clawMetalDamage, CLAW_METAL_MAX } from './clawMetal.js';   // AUDIT CLAWS A1: the beast's claws' metal rides the sheet
 import { DUEL_LEVEL_MAX, DUEL_STAT_MAX, DUEL_SKILL_MAX, DUEL_RACE_MAX, DUEL_TEMPLATE_MAX, DUEL_MATERIAL_MAX, CARD_VITAL_MAX, CAST_EFFECTS_MAX, DUEL_SWINGS } from '../net/wire.js';
 
 /** The four skills a blow reads, in the order the wire carries them (`sk`): the weapon's own (Archery for a bow, the
@@ -64,7 +66,10 @@ const u32 = (v) => { const n = Number(v); return Number.isFinite(n) ? (n >>> 0) 
 /** The skill a weapon template swings with - HandToHand for no weapon. */
 const skillForTemplate = (t) => (Number.isInteger(t) ? (weaponSkillUsed(t) ?? SKILLS.HandToHand) : SKILLS.HandToHand);
 
-/** THE ATTACKER'S SHEET, as the wire carries it (`a`), clamped at the wire's bounds so an honest frame is never refused. */
+/** THE ATTACKER'S SHEET, as the wire carries it (`a`), clamped at the wire's bounds so an honest frame is never refused.
+ *  AUDIT CLAWS A1: `cm`, the beast's claws' metal (combat/clawMetal.js) - read here off the striker's own entity, because
+ *  the stub has no equip table to read it from; the duel, the siege, the Royal Tourney, a siege work and the wild zone
+ *  all strike through this sheet. Never on the wire since INT8 (a strike carries its rolled `d`). */
 export function duelAttackerOf(entity, weapon = null) {
   const ws = skillForTemplate(weapon?.templateIndex);
   return {
@@ -74,6 +79,7 @@ export function duelAttackerOf(entity, weapon = null) {
     sk: [ws, SKILLS.HandToHand, SKILLS.CriticalStrike, SKILLS.Backstabbing].map((id) => clamp(skillValue(entity, id), 0, DUEL_SKILL_MAX)),
     cf: [clamp(entity?.career?.attackModifierFlags ?? 0, 0, 255), u32(entity?.career?.weaponArmorShieldsBitfield), u32(entity?.career?.abilityFlagsAndSpellPointsBitfield)],
     h: [clamp(entity?.health ?? 0, 0, CARD_VITAL_MAX), clamp(entity?.maxHealth ?? 1, 1, CARD_VITAL_MAX)],
+    cm: clamp(clawMetalDamage(entity), 0, CLAW_METAL_MAX),
   };
 }
 
@@ -86,10 +92,11 @@ export function duelWeaponOf(item) {
   return { t: item.templateIndex, m: clamp(item.material ?? 0, 0, DUEL_MATERIAL_MAX), c };
 }
 
-/** THE STUB the defender runs the formula with: the wire's sheet as an attacker entity the formula reads (a player -
- *  the player arm's proficiency and racial mods are the striker's - marked `peer` so the formula's HUD report stays
- *  quiet on the machine that was struck), and a FRESH weapon off the template at the condition the striker's has, so
- *  the wear the formula lands on the striker's weapon lands on nothing of the defender's. */
+/** THE STUB the formula reads: a sheet of the wire's shape as an entity - the striker's own as the attacker
+ *  (resolveDuelStrike), DUEL_STAND_IN as the body it strikes (duelStandIn). A player - the player arm's proficiency and
+ *  racial mods are the striker's - marked `peer` so the formula's HUD report stays quiet (the host says a miss, the
+ *  referee's word a hit), and a FRESH weapon off the template at the condition the striker's has, so the wear the
+ *  formula lands falls on a copy (the striker's own wears by the referee's word - duelWearDamage). */
 export function duelStub(a, w = null) {
   const stats = {};
   STAT_KEYS_ORDER.forEach((k, i) => { stats[k] = a.st[i]; });
@@ -110,21 +117,56 @@ export function duelStub(a, w = null) {
     career: { attackModifierFlags: a.cf[0], weaponArmorShieldsBitfield: a.cf[1], abilityFlagsAndSpellPointsBitfield: a.cf[2] },
     health: a.h[0], maxHealth: a.h[1],
     activeEffects: [], items: [], equipTable: {},
+    // AUDIT CLAWS A1: the claws' metal as the sheet's word, never the gauntlets themselves - the stub has no equip table
+    // to wear them from (and AUDIT C&C H5's neutral stand-in, duelStandIn, carries no `cm`: it has no claws)
+    clawMetal: clamp(a.cm ?? 0, 0, CLAW_METAL_MAX),
   };
   return { stub, weapon };
 }
 
+/** AUDIT C&C H5: THE NEUTRAL SHEET every blow and spell between players is counted on (scenes/world.js duelStrikeOut,
+ *  wildStrikeOut, siegeStrikeOut, siegeWorkHit, and siegeSpellNumbers' stand-in) - the defender's is no number the
+ *  striker has (INT8). Every attribute at the middle of the wire's own clamp (DUEL_STAT_MAX / 2: the 50 at which every
+ *  `stat - 50` term of both cores reads nought - PCAAO's luck charge, its natural resistance), the level at the clamp's
+ *  floor (PCAAO's level / 2 reads nought), no race (the wire's 0: no racial save), no skill (nothing dodges), no career
+ *  bits (no adrenaline rush), whole at the wire's vital ceiling (nothing here empties it - the referee holds the real
+ *  one, so a Disintegrate counts whole and is clipped there). It was a stub of the striker's OWN sheet: every attribute
+ *  and the rush the striker brought cancelled, PCAAO charged it for its own luck past 50, its own endurance resisted its
+ *  blow, its own willpower and race saved against its spell - Thriving LOWERED its owner's hit chance, 60.59% bare to
+ *  59.62% (200,000 seeded swings of the starting Shortsword); it lands 61.62% now, and its +5 Luck alone 60.59%. */
+export const DUEL_STAND_IN = Object.freeze({
+  lv: 1, r: 0,
+  st: Object.freeze(STAT_KEYS_ORDER.map(() => DUEL_STAT_MAX / 2)),
+  sk: Object.freeze([0, 0, 0, 0]),
+  cf: Object.freeze([0, 0, 0]),
+  h: Object.freeze([CARD_VITAL_MAX, CARD_VITAL_MAX]),
+});
+/** AUDIT C&C H5: THE STAND-IN, the one construction every host's roll and count takes - DUEL_STAND_IN stood up by the one
+ *  stub, unarmoured (equip.js armorValuesOf, DFU's 100 on every part: with no table the stock core read 0, an armour
+ *  past any armour, and a blow landed 3 in 100), and fresh each call (a spell's count writes on it). */
+export function duelStandIn() {
+  const { stub } = duelStub(DUEL_STAND_IN);
+  armorValuesOf(stub);
+  return stub;
+}
+
 /**
- * THE DEFENDER'S RESOLUTION of one strike (`d`, validDuelData's projection): the formula, the stub against my own sheet,
- * with the striker's swing mods (a bow's shaft is the release's StrikeDown - playerWeapon.js playerAttackOptions) and a
- * backstab's chance when the striker stood behind me (`backFacing`, my own facing decides). `{ hit, dmg }`; nothing is
- * taken from anyone here - the host lands the damage through the one door, with the duel's floor.
+ * ONE STRIKE ROLLED (`d`: the striker's sheet `a` - duelAttackerOf - its weapon `w`, swing `sw`, a bow's draw `at`): the
+ * one formula, the striker's stub against `target` - in every host the neutral stand-in (duelStandIn; INT8 moved the roll
+ * to the striker's machine) - with the striker's swing mods (a bow's shaft is the release's StrikeDown - playerWeapon.js
+ * playerAttackOptions) and a backstab's chance when `backFacing` (no host's: no referee backstabs a player - BAL8).
+ * `{ hit, dmg }`; nothing is taken from anyone here - the number is the referee's to clip.
  */
-export function resolveDuelStrike(d, defender, { rolls = Math.random, backFacing = false } = {}) {
+export function resolveDuelStrike(d, target, { rolls = Math.random, backFacing = false } = {}) {
   const { stub, weapon } = duelStub(d.a, d.w ?? null);
   const swing = SWING_MODS[d.sw ?? (d.by === 'arrow' ? 'StrikeDown' : '')] ?? { damage: 0, toHit: 0 };
-  const dmg = calculateAttackDamage(stub, defender, {
-    weapon, damageMod: swing.damage, toHitMod: swing.toHit,
+  // TWO-HANDS (AUDIT, bible/05-Combat/Two-Hands.md): an OFF-HAND swing between players carries the off hand's terms, as
+  // PlayerWeapon.resolveHit's does against a foe - its to-hit by the sheet's Agility, its share of the damage and its weight
+  // AUDIT PISTOLET A1: and a pair's off-hand SHOT - a Pistolet's, the one ranged weapon a pair holds
+  const off = (d.by === 'melee' || d.by === 'arrow') && d.off === true;
+  const dmg = calculateAttackDamage(stub, target, {
+    weapon, damageMod: swing.damage, toHitMod: swing.toHit + (off ? offHandToHit(stub.stats.agility) : 0),
+    ...(off ? OFF_HAND_BLOW : {}),
     backstabChance: backFacing ? stub.skillOverrides[SKILLS.Backstabbing] : 0,
     weaponAnimTime: d.at ?? 0, rolls, say: null, onInflictPoison: null,
   });

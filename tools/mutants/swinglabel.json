@@ -5,7 +5,7 @@
   "old": "  Mouse0: ['L CLICK', 'LEFT CLICK'],\n  Mouse1: ['R CLICK', 'RIGHT CLICK'],",
   "new": "  Mouse0: ['R CLICK', 'RIGHT CLICK'],\n  Mouse1: ['L CLICK', 'LEFT CLICK'],",
   "tests": [
-   "test/swinglabel.test.js"
+   "test/systems/swinglabel.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "  if (MOUSE_NAMES[code]) return MOUSE_NAMES[code][full ? 1 : 0];   // SWING-LABEL: never \"MOUSE1\"\n",
   "new": "",
   "tests": [
-   "test/swinglabel.test.js"
+   "test/systems/swinglabel.test.js"
   ]
  },
  {
@@ -23,16 +23,16 @@
   "old": "return MOUSE_NAMES[code][full ? 1 : 0];",
   "new": "return MOUSE_NAMES[code][0];",
   "tests": [
-   "test/swinglabel.test.js"
+   "test/systems/swinglabel.test.js"
   ]
  },
  {
   "name": "SWING-LABEL-the-gesture-line-stops-saying-a-click-does-nothing",
   "file": "src/systems/controlsConfig.js",
-  "old": " A press without moving does nothing.`",
+  "old": " Holding it without moving does nothing.`",
   "new": "`",
   "tests": [
-   "test/swinglabel.test.js"
+   "test/systems/swinglabel.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "const how = mode === 1 ?",
   "new": "const how = mode === 9 ?",
   "tests": [
-   "test/swinglabel.test.js"
+   "test/systems/swinglabel.test.js"
   ]
  },
  {
@@ -50,16 +50,16 @@
   "old": "return readyCode == null ? how :",
   "new": "return readyCode != null ? how :",
   "tests": [
-   "test/swinglabel.test.js"
+   "test/systems/swinglabel.test.js"
   ]
  },
  {
   "name": "SWING-LABEL-the-pane-never-shows-the-line",
-  "file": "src/ui/enhancedControls.js",
+  "file": "src/ui/enhanced/enhancedControls.js",
   "old": "if (action === 'SwingWeapon' && unsaved.usingPrimary)",
   "new": "if (action === 'SwingWeaponX' && unsaved.usingPrimary)",
   "tests": [
-   "test/swinglabel.test.js"
+   "test/systems/swinglabel.test.js"
   ]
  }
 ]

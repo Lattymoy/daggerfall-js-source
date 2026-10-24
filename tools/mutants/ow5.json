@@ -5,8 +5,8 @@
     "old": "list: travelViewFindList(), mid: (d) => d });",
     "new": "list: travelViewDungeons(), mid: (d) => d });",
     "tests": [
-      "test/ow5_audit.test.js",
-      "test/tv6_dungeons.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js",
+      "test/systems/travel/tv6_dungeons.test.js"
     ],
     "note": "The find asks the plates' capped list again: a dozen found about the traveller hide the one within a kilometre."
   },
@@ -16,7 +16,7 @@
     "old": "const list = nearDungeons({ at, range: TV_FIND_REACH, max: Infinity,",
     "new": "const list = nearDungeons({ at, range: TV_FIND_REACH, max: 12,",
     "tests": [
-      "test/ow5_audit.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "The find's own list capped, the found first."
   },
@@ -26,8 +26,8 @@
     "old": "    if (playerEntity.health <= 0 || modes?.deathUp?.() || gamePaused() || worldMoveBusy()) return;\n    const at = warmAshesOn()",
     "new": "    if (worldMoveBusy()) return;\n    const at = warmAshesOn()",
     "tests": [
-      "test/ow5_audit.test.js",
-      "test/ows3_raiders.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js",
+      "test/systems/ows3_raiders.test.js"
     ],
     "note": "A window reads as ashore for the pirates again: every chase given up, its raider spent."
   },
@@ -37,7 +37,7 @@
     "old": "    if (modEvent !== 'load' && travelOptions?.route && travelOptions.isTravelActive) travelOptions.messages.pauseTravel();\n",
     "new": "",
     "tests": [
-      "test/ow5_audit.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "A jump leaves the route journey walking at its old leg."
   },
@@ -47,7 +47,7 @@
     "old": "if (modEvent !== 'load' && travelOptions?.route",
     "new": "if (travelOptions?.route",
     "tests": [
-      "test/ow5_audit.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "A load stops the old game's journey too."
   },
@@ -57,7 +57,7 @@
     "old": "    document.addEventListener('pointerlockchange', () => { if ((_cursorActive || _cursorHolds.size) && document.pointerLockElement) releaseLook(); }, false);\n",
     "new": "",
     "tests": [
-      "test/ow5_audit.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "A lock granted after the cursor was freed lands under the view."
   },
@@ -67,7 +67,7 @@
     "old": "const useEdge = !travelView?.active && pressed(latch.edge, keys, 'Interact');",
     "new": "const useEdge = pressed(latch.edge, keys, 'Interact');",
     "tests": [
-      "test/ow5_audit.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "E under the view activates what stands before the hidden head."
   },
@@ -77,7 +77,7 @@
     "old": "if (!townTalk.overlayActive && !travelView?.active && socialMenuCanOpen() && quickLootArm(act))",
     "new": "if (!townTalk.overlayActive && socialMenuCanOpen() && quickLootArm(act))",
     "tests": [
-      "test/ow5_audit.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "The loot keys' tap under the view."
   },
@@ -87,7 +87,7 @@
     "old": "&& travelViewAllowed().ok && !csaAboard.aboard;",
     "new": "&& travelViewAllowed().ok;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "A passenger is walked off the leader's deck."
   },
@@ -97,7 +97,7 @@
     "old": "&& travelViewAllowed().ok && !csaAboard.aboard;",
     "new": "&& !csaAboard.aboard;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "A member the Overworld refuses is walked a route."
   },
@@ -107,7 +107,7 @@
     "old": "    if (means?.how !== 'moored' || !plan || plan.kinds.includes('sea')) return null;\n    return replan();",
     "new": "    return null;",
     "tests": [
-      "test/ow5_audit.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "A moored boat boards every journey begun near it."
   },
@@ -117,17 +117,17 @@
     "old": "    if (!legs.length && seaAsk?.goal === 'sea') { legs = [{ x: pix.x, y: pix.y, kind: 'sea' }]; plan = { ...plan, kinds: ['sea'] }; }\n",
     "new": "",
     "tests": [
-      "test/ow5_audit.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "An own-pixel sea spot plans no leg: the boat is landed mid-sea."
   },
   {
     "name": "OW5-J3-rung-capped",
-    "file": "src/systems/travelRoute.js",
+    "file": "src/systems/travel/travelRoute.js",
     "old": "const cap = key === `${bounds.x0},${bounds.x1},${bounds.y0},${bounds.y1}` ? Infinity : maxExpansions;",
     "new": "const cap = maxExpansions;",
     "tests": [
-      "test/ow5_audit.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "The whole map's rung cut short: a far detour is no way by land."
   },
@@ -137,8 +137,8 @@
     "old": "atSea: () => !!tvSea.means && (!!csaBoatUnderMe() || tvSea.phase === 'landing'),",
     "new": "atSea: () => (!!csaBoatUnderMe() || tvSea.phase === 'landing'),",
     "tests": [
-      "test/ow5_audit.test.js",
-      "test/ows2_crossing.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js",
+      "test/systems/travel/ows2_crossing.test.js"
     ],
     "note": "The ocean stop stood down for any journey at a helm."
   },
@@ -148,19 +148,19 @@
     "old": "      tvHeldWhy = tvHeld != null ? 'ground' : null;",
     "new": "      tvHeldWhy = tvHeld != null ? 'load' : null;",
     "tests": [
-      "test/ow_toggle.test.js",
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow_toggle.test.js",
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "The ground hold said as the load's."
   },
   {
     "name": "OW5-G1-words",
-    "file": "src/ui/enhancedTravelControl.js",
-    "old": "ground: 'until the Overworld rises'",
-    "new": "ground: 'while the land loads'",
+    "file": "src/ui/enhanced/enhancedTravelControl.js",
+    "old": "get ground() { return t('travel.held.ground', 'until the Overworld rises'); },",
+    "new": "get ground() { return t('travel.held.load', 'while the land loads'); },",
     "tests": [
-      "test/tv2_click_to_move.test.js",
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js",
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "The ground hold's own words gone."
   },
@@ -170,7 +170,7 @@
     "old": "townTalk.say(line, seconds * Math.max(1, worldTimeScale()));",
     "new": "townTalk.say(line, seconds);",
     "tests": [
-      "test/ow5_audit.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "The Overworld's lines run out at the clock's scale."
   },
@@ -180,8 +180,8 @@
     "old": "trip: () => (tvWalking ? TRAVEL_VIEW_TEXT.travelling(tvWalking, tvHeld) : tvTripLive() ? tvTrip.line : ''),",
     "new": "trip: () => (tvTripLive() ? tvTrip.line : tvWalking ? TRAVEL_VIEW_TEXT.travelling(tvWalking, tvHeld) : ''),",
     "tests": [
-      "test/tv_wasd.test.js",
-      "test/tv2_click_to_move.test.js"
+      "test/systems/travel/tv_wasd.test.js",
+      "test/systems/travel/tv2_click_to_move.test.js"
     ],
     "note": "A stopped route kept for the Resume hides the keys' speed."
   },
@@ -191,7 +191,7 @@
     "old": " && (typeof document === 'undefined' || document.hasFocus?.() !== false),",
     "new": ",",
     "tests": [
-      "test/tv_wasd.test.js"
+      "test/systems/travel/tv_wasd.test.js"
     ],
     "note": "A key held as the page lost the focus runs the clock on."
   },
@@ -201,7 +201,7 @@
     "old": "    if (!travelView?.active && !tvOwnsJourneys() && !csaHoldsTimeScale() && worldTimeScale() !== (tvHeld ?? travelAsked)) setWorldTimeScale(tvHeld ?? travelAsked);\n",
     "new": "",
     "tests": [
-      "test/ow5_audit.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "A first-person crossing left at x1 by Come Sail Away's reset."
   },
@@ -211,7 +211,7 @@
     "old": "    if (playerEntity.health <= 0 || modes?.deathUp?.() || gamePaused()) return;\n    const aboard = playerAfloat()",
     "new": "    if (playerEntity.health <= 0 || modes?.deathUp?.() || gamePaused()) { _bandClock += dt * 1000; return; }\n    const aboard = playerAfloat()",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "The chase clock runs on held frames: two and a half minutes in a window loses the chase on the first frame after (since the merge, the one fix is AUDIT OW5b B4's chase clock)."
   },
@@ -221,7 +221,7 @@
     "old": "if (l < baseCount) { _hubRows.push(loc); _bandPlacePixels.add(`${p.x},${p.y}`); }",
     "new": "{ if (l < baseCount) _hubRows.push(loc); _bandPlacePixels.add(`${p.x},${p.y}`); }",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A world-data mod's rows bar the bands on one client and not another."
   },
@@ -231,17 +231,17 @@
     "old": "const water = tw.sx != null && !there && tvWater(tw.x, tw.y);",
     "new": "const water = false;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "A member walks a sea spot as land."
   },
   {
     "name": "OW5-P4-future-stamp",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": " && /** @type {number} */ (s) <= latest) return true;",
     "new": ") return true;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "A stop stamped from the future halts every set-out."
   },
@@ -251,7 +251,7 @@
     "old": "if (next.halt) { travelOptions?.messages?.pauseTravel(); tvSay(TRAVEL_VIEW_TEXT.partyHalted); }",
     "new": "if (next.halt) { travelOptions?.messages?.pauseTravel(); }",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "The party halts without a word."
   },
@@ -261,37 +261,37 @@
     "old": "  theSpot: 'the marked spot',",
     "new": "  theSpot: 'The marked spot',",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "\"leads the party to The marked spot.\""
   },
   {
     "name": "OW5-P6-marked-twice",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "(m.peers ?? []).some((id) => near.has(id))) continue;",
     "new": "false) continue;",
     "tests": [
-      "test/ow5_audit.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "A party member drawn twice."
   },
   {
     "name": "OW5-P6-region-mark-unseen",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "      near.add(t.id);\n    }\n    // AUDIT OW5 P6:",
     "new": "    }\n    // AUDIT OW5 P6:",
     "tests": [
-      "test/ow5_audit.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "A member on the region's mark marked again from the party's pose."
   },
   {
     "name": "OW5-J4-approach-unclamped",
-    "file": "src/systems/travelDungeons.js",
+    "file": "src/systems/travel/travelDungeons.js",
     "old": "  if (!within) return { x, z };",
     "new": "  return { x, z };",
     "tests": [
-      "test/ow5_audit.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "The approach 20 m into the next pixel: the door walk never arrives."
   },
@@ -301,17 +301,17 @@
     "old": "  if (heldThird?.lane === 'eotb' && eotbCamera.transitionDecides(kind)) heldThird.changed = false;\n",
     "new": "",
     "tests": [
-      "test/ow5_audit.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "A door's POV row undone by the view's release."
   },
   {
     "name": "OW5-R3-said-every-tick",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  if (last.saidNames === names && at - (last.saidAt ?? -Infinity) < TV_SAID_DISTANCE_MS) return;\n",
     "new": "",
     "tests": [
-      "test/tv5_far_places.test.js"
+      "test/ui/travel/tv5_far_places.test.js"
     ],
     "note": "The places in words rebuilt as each distance ticks."
   }

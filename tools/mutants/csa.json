@@ -5,7 +5,7 @@
     "old": "if (prev) granule += (prev + block) / 4;",
     "new": "if (prev) granule += (prev + block) / 2;",
     "tests": [
-      "test/csa_audio.test.js"
+      "test/tooling/csa_audio.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "if (prev) granule += (prev + block) / 4;",
     "new": "granule += (prev + block) / 4;",
     "tests": [
-      "test/csa_audio.test.js"
+      "test/tooling/csa_audio.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "packets[packets.length - 1].granule = Math.min(granule, s.numSamples);",
     "new": "packets[packets.length - 1].granule = granule;",
     "tests": [
-      "test/csa_audio.test.js"
+      "test/tooling/csa_audio.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "const mode = (p[0] >> 1) & ((1 << modeBits) - 1);",
     "new": "const mode = p[0] & ((1 << modeBits) - 1);",
     "tests": [
-      "test/csa_audio.test.js"
+      "test/tooling/csa_audio.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "const block = modes[mode].blockflag ? 2048 : 256;",
     "new": "const block = modes[mode].blockflag ? 256 : 2048;",
     "tests": [
-      "test/csa_audio.test.js"
+      "test/tooling/csa_audio.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "flushAfter: (i) => i === 0 || i === 2 });",
     "new": "flushAfter: (i) => i === 2 });",
     "tests": [
-      "test/csa_audio.test.js"
+      "test/tooling/csa_audio.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "(last ? 4 : 0);",
     "new": "0;",
     "tests": [
-      "test/csa_audio.test.js"
+      "test/tooling/csa_audio.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "rate: FSB5_RATES[(lo >>> 1) & 0x0f],",
     "new": "rate: FSB5_RATES[(lo >>> 2) & 0x0f],",
     "tests": [
-      "test/csa_audio.test.js"
+      "test/tooling/csa_audio.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "numSamples: (hi >>> 2) & 0x3fffffff,",
     "new": "numSamples: hi & 0x3fffffff,",
     "tests": [
-      "test/csa_audio.test.js"
+      "test/tooling/csa_audio.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "if (r.read(1) !== 1) throw new Error('Vorbis setup: no framing bit after the modes');",
     "new": "r.read(1);",
     "tests": [
-      "test/csa_audio.test.js"
+      "test/tooling/csa_audio.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "for (let k = 0; k < 8; k++) c = (c & 0x80000000) ? ((c << 1) ^ 0x04c11db7) : (c << 1);",
     "new": "for (let k = 0; k < 8; k++) c = (c & 0x80000000) ? ((c << 1) ^ 0x04c11db6) : (c << 1);",
     "tests": [
-      "test/csa_audio.test.js"
+      "test/tooling/csa_audio.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "const row = ((y + scroll) % h + h) % h;",
     "new": "const row = ((y - scroll) % h + h) % h;",
     "tests": [
-      "test/csa_textures.test.js"
+      "test/formats/csa_textures.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    const sy = ((y + py) % src.height + src.height) % src.height;\n    const row",
     "new": "    const sy = ((y) % src.height + src.height) % src.height;\n    const row",
     "tests": [
-      "test/csa_textures.test.js"
+      "test/formats/csa_textures.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "data[d] = src.data[s]; data[d + 1] = src.data[s + 1]; data[d + 2] = src.data[s + 2]; data[d + 3] = 255;\n    }\n  }\n  return { width: w, height: h, data };\n}",
     "new": "data[d] = src.data[s]; data[d + 1] = src.data[s + 1]; data[d + 2] = src.data[s + 2];\n    }\n  }\n  return { width: w, height: h, data };\n}",
     "tests": [
-      "test/csa_textures.test.js"
+      "test/formats/csa_textures.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "      if (p[i] === k[0] && p[i + 1] === k[1] && p[i + 2] === k[2] && p[i + 3] === k[3]) throw new Error(`derived texture: the picture holds the key colour ${key} itself at ${x},${y}`);\n",
     "new": "",
     "tests": [
-      "test/csa_textures.test.js"
+      "test/formats/csa_textures.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "if (pic.data[i + 3] === 0) { block[y * w + x] = -1; continue; }",
     "new": "if (false) { block[y * w + x] = -1; continue; }",
     "tests": [
-      "test/csa_textures.test.js"
+      "test/formats/csa_textures.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    if (p.flat) flats++;\n    else prepared.get(width).push(p);",
     "new": "    prepared.get(width).push(p);",
     "tests": [
-      "test/csa_textures.test.js"
+      "test/formats/csa_textures.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "if (visible < (w * w) / 4) continue;",
     "new": "if (visible < 1) continue;",
     "tests": [
-      "test/csa_textures.test.js"
+      "test/formats/csa_textures.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "return [...set].sort((a, b) => a - b);",
     "new": "return [...set];",
     "tests": [
-      "test/csa_textures.test.js"
+      "test/formats/csa_textures.test.js"
     ]
   },
   {
@@ -176,16 +176,16 @@
     "old": "while (lastOpaque > 0 && trns[lastOpaque - 1] === 255) lastOpaque--;",
     "new": "while (lastOpaque > 1 && trns[lastOpaque - 1] !== 0) lastOpaque--;",
     "tests": [
-      "test/csa_textures.test.js"
+      "test/formats/csa_textures.test.js"
     ]
   },
   {
     "name": "CSA-A-unread-key-claimed-read",
     "file": "src/systems/modSettings.js",
-    "old": "'Handling.BadTack': Object.freeze({ default: false, description: 'Shipped with the mod; its assembly never reads it.' }),",
-    "new": "'Handling.BadTack': Object.freeze({ default: false, description: 'Tack badly.' }),",
+    "old": "'Handling.BadTack': Object.freeze({ default: false, get description() { return t('mods.comeSailAway.unread.description', 'Has no effect: the mod never uses this setting.'); } }),",
+    "new": "'Handling.BadTack': Object.freeze({ default: false, get description() { return t('mods.comeSailAway.unread.description', 'Tack badly.'); } }),",
     "tests": [
-      "test/csa_registration.test.js"
+      "test/systems/csa_registration.test.js"
     ]
   },
   {
@@ -194,16 +194,16 @@
     "old": "'Waves.Speed': Object.freeze({ default: 100, min: 0, max: 200,",
     "new": "'Waves.Speed': Object.freeze({ default: 50, min: 0, max: 200,",
     "tests": [
-      "test/csa_registration.test.js"
+      "test/systems/csa_registration.test.js"
     ]
   },
   {
     "name": "CSA-A-lane-forced",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "  'come-sail-away',         // CSA-A:",
     "new": "  // 'come-sail-away',         // CSA-A:",
     "tests": [
-      "test/csa_registration.test.js"
+      "test/systems/csa_registration.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    offset = (offset + 15) & ~15;\n  }\n  if (offset > data.length + 15)",
     "new": "  }\n  if (offset > data.length + 15)",
     "tests": [
-      "test/csa_models.test.js"
+      "test/tooling/csa_models.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "    const dim = c.dimension & 0xf;\n    if (!dim) return;",
     "new": "    const dim = c.dimension;\n    if (!dim) return;",
     "tests": [
-      "test/csa_models.test.js"
+      "test/tooling/csa_models.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "return s * (1 + f / 1024) * 2 ** (e - 15);",
     "new": "return s * (1 + f / 1024) * 2 ** (e - 16);",
     "tests": [
-      "test/csa_models.test.js"
+      "test/tooling/csa_models.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "case 4: x = dv.getUint16(p, true) / 65535; break;",
     "new": "case 4: x = dv.getUint16(p, true) / 32767; break;",
     "tests": [
-      "test/csa_models.test.js"
+      "test/tooling/csa_models.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "for (let i = s.start; i < s.start + s.count; i++) if (indices[i] + s.baseVertex >= n)",
     "new": "for (let i = s.start; i < s.start + s.count; i++) if (indices[i] >= n)",
     "tests": [
-      "test/csa_models.test.js"
+      "test/tooling/csa_models.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "return b.attribute === 2 ? 4 : (b.attribute === 1",
     "new": "return b.attribute === 2 ? 3 : (b.attribute === 1",
     "tests": [
-      "test/csa_models.test.js"
+      "test/tooling/csa_models.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "  for (let i = 0; i < dense.m_CurveCount; i++) {\n    const samples = [];\n    for (let fr = 0; fr < dense.m_FrameCount; fr++) samples.push(dense.m_SampleArray[fr * dense.m_CurveCount + i]);\n    perCurve.push({ dense: samples });\n  }\n  for (const v of constant) perCurve.push({ constant: v });",
     "new": "  for (const v of constant) perCurve.push({ constant: v });\n  for (let i = 0; i < dense.m_CurveCount; i++) {\n    const samples = [];\n    for (let fr = 0; fr < dense.m_FrameCount; fr++) samples.push(dense.m_SampleArray[fr * dense.m_CurveCount + i]);\n    perCurve.push({ dense: samples });\n  }",
     "tests": [
-      "test/csa_models.test.js"
+      "test/tooling/csa_models.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "      if (k.index < 0 || k.index >= streamedCount) continue;",
     "new": "      if (k.index < 0) continue;",
     "tests": [
-      "test/csa_models.test.js"
+      "test/tooling/csa_models.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "keys.push({ index: buf.getInt32(o, true), a: buf.getFloat32(o + 4, true), b: buf.getFloat32(o + 8, true), c: buf.getFloat32(o + 12, true), d: buf.getFloat32(o + 16, true) });",
     "new": "keys.push({ index: buf.getInt32(o, true), d: buf.getFloat32(o + 4, true), b: buf.getFloat32(o + 8, true), c: buf.getFloat32(o + 12, true), a: buf.getFloat32(o + 16, true) });",
     "tests": [
-      "test/csa_models.test.js"
+      "test/tooling/csa_models.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "export const pathHash = (path) => zlib.crc32(Buffer.from(path, 'utf8')) >>> 0;",
     "new": "export const pathHash = (path) => zlib.crc32(Buffer.from(path.toLowerCase(), 'utf8')) >>> 0;",
     "tests": [
-      "test/csa_models.test.js"
+      "test/tooling/csa_models.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "      if (components.has(k)) return { ...components.get(k) };\n",
     "new": "",
     "tests": [
-      "test/csa_models.test.js"
+      "test/tooling/csa_models.test.js"
     ]
   }
 ]

@@ -1,6 +1,6 @@
 // AUDIT WB12d - THE FAITHFUL'S CIRCLE, COMPILED, LINKED AND DRAWN IN A REAL BROWSER.
 //
-// node holds the circle's law (test/wb12d_rite_world.test.js drives the smoke's shaders through test/glsl.mjs and the
+// node holds the circle's law (test/net/gate/wb12d_rite_world.test.js drives the smoke's shaders through test/glsl.mjs and the
 // stone over fakes); what node cannot answer is whether the smoke's GLSL COMPILES and LINKS in a real WebGL2 context,
 // whether the frame's light survives as a uniform the optimiser did not drop, and what lands on the pixels: the
 // fire's glow over the altar, the plume dark on a clear sky a kilometre and a half off and on the night's, gone in
@@ -22,7 +22,7 @@ const out = []; const check = (n, ok, d = '') => { out.push(ok); console.log(`${
 
 const PAGE = `<!doctype html><html><body style="margin:0;background:#000"><canvas id=c width=640 height=480></canvas><script type=module>
 import { buildRiteModel } from '/src/world/riteModel.js';
-import { gateArt, riteArt } from '/src/world/gateArt.js';
+import { gateArt, riteArt } from '/src/world/gate/gateArt.js';
 import { RiteSmokeRenderer } from '/src/render/riteSmoke.js';
 const m = buildRiteModel(${FACING}, () => 0);
 const gl = document.getElementById('c').getContext('webgl2', { alpha: false, preserveDrawingBuffer: true });

@@ -1,0 +1,508 @@
+[
+  {
+    "name": "EGZ-the-arch-splits-nothing",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "(f.t === 'd' ? arches.find((d) => Math.abs(d.x - f.x) < 0.05 && Math.abs(d.z - f.z) < 0.05) ?? null : null)",
+    "new": "null",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-no-stair",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "edge(node(q.ax, q.az, regionIn(lo, q.az)), node(q.bx, q.bz, regionIn(hi, q.bz)), Math.hypot(q.bx - q.ax, q.bz - q.az));",
+    "new": "void lo; void hi;",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-no-walk-within-a-region",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "if (nodes[a].rg === nodes[b].rg && seesRg(view, rg, nodes[a].rg, nodes[a].x, nodes[a].z, nodes[b].x, nodes[b].z)) edge(",
+    "new": "if (false) edge(",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-walking-to-node-forgotten",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "if (wn && dist[wi] > Math.hypot(wn.x - b.x, wn.z - b.z)) dist[wi] = Math.hypot(wn.x - b.x, wn.z - b.z);",
+    "new": "void wi;",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-ledge-climbed",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "else edge(dy > 0 ? na : nb, dy > 0 ? nb : na, 0.5, false);",
+    "new": "else edge(dy > 0 ? na : nb, dy > 0 ? nb : na, 0.5);",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-rock-ignored",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "if (!A.walls.length || egAirClear(A, fx, fz, tx, tz, H)) return [tx, tz];",
+    "new": "return [tx, tz];",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-arch-never-cuts",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "if (t < bt) { bt = t; best = [ax + (bx - ax) * t, d.z]; }",
+    "new": "void t;",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-pad-off",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "    if (!holds(f, x, z, pad)) continue;\n    if (!best || (high ? fy > (best.y ?? 0) : fy < (best.y ?? 0))) best = f;",
+    "new": "    if (!holds(f, x, z, 0)) continue;\n    if (!best || (high ? fy > (best.y ?? 0) : fy < (best.y ?? 0))) best = f;",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-height-ignored",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "    if (high && !(fy <= y + EG_GROUND_UNDER_M && y - fy <= EG_GROUND_OVER_M)) continue;\n    if (!holds(f, x, z, pad)) continue;",
+    "new": "    if (!holds(f, x, z, pad)) continue;",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-view-without-islands",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "for (const d of spec.islands ?? []) extra.push(disc(d, 'island'));",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-platform-bitten",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "(hunt || !ctx.span || here.some((m) => m.sub === mark.sub))",
+    "new": "true",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-hunted-not-first",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "if (hunted.length) mark = near(a, hunted)?.m ?? null;",
+    "new": "if (false) mark = null;",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-hunt-unmarked-on-its-bite",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "if (bl && hunt) bl.hn = mark.sub;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-divers-dont-wait",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "if (ctx.span) { diverOnSpan(F, spec, a, K, now, here, out, ctx, chain, sure ? ctx.shadow ?? here : shadowAll); break; }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-dive-at-a-platform",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "const on = here.some((q) => q.sub === m.sub) && egGroundAt({ fl: [isle] }, m.x, m.y, m.z, 0.3);",
+    "new": "const on = true;",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-island-ahead-misread",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "if (a + d.r > s && (!isle || a < ia)) { isle = d; ia = a; }",
+    "new": "if (a > s && (!isle || a < ia)) { isle = d; ia = a; }",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-charge-through-the-wall",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "a.runTo = cut ? [cut[0], cut[1] - Math.sign(ez - a.z) * (K.r + 0.4), first.at + first.sp] : [ex, ez, first.at + first.sp];",
+    "new": "a.runTo = [ex, ez, first.at + first.sp];",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-ground-walkers-straight",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "[x, z, last] = egWalkNext(view, a, gx, gz, gy, a.r ?? 0.6)",
+    "new": "[x, z, last] = [gx, gz, true]",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-fliers-through-rock",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "const [tx, tz] = egAirKeep(view, gx, gz, a.y), [x, z] = egAirNext(view, a.x, a.z, tx, tz, a.y);",
+    "new": "const [tx, tz] = [gx, gz], [x, z] = [gx, gz];",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-no-span-legion",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (span) spanLegion(F, view, now, inHall, egLegionRoom(F), out);",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-cap-passed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const n = Math.min(egWaveSize(F.n), room);",
+    "new": "const n = egWaveSize(F.n);",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-first-wave-at-the-wake",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "F.waveAt = now + 4000 + still; F.packAt = now + 30_000; }",
+    "new": "F.waveAt = now; F.packAt = now + 30_000; }",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-no-divers",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const divers = F.band >= 2 && isle && F.waveNo % 2 === 1 ? Math.ceil(n / 2) : 0;",
+    "new": "const divers = 0;",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-pack-off-the-span",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (D.pack && now >= F.packAt) { F.packAt = now + (D.pack >= 2 ? 20_000 : 30_000); due++; }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-strike-rule-gone",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (egStruckOff(view, body, p.x, p.y, p.z)) return land(0);",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ],
+    "why": "PIN MOVED (FIELD BUGS 2026-10-18f TURNED-BLOW): the strike rule moved into net/eliteGates/egBodies.js egStruckOff - its call in egBlow"
+  },
+  {
+    "name": "EGZ-the-false-wall-unstruck",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "&& !(b?.role === EG_ROLE.obj && !egGroundAt(view, b.x, egFeetY(view, b.y), b.z, b.r ?? 1));",
+    "new": ";",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ],
+    "why": "PIN MOVED (FIELD BUGS 2026-10-18f TURNED-BLOW): the false wall's exception moved into net/eliteGates/egBodies.js egStruckOff"
+  },
+  {
+    "name": "EGZ-the-height-dropped",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "...(Number.isFinite(b.y) ? { y: b.y } : {})",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-relay-drops-the-height",
+    "file": "server/src/index.js",
+    "old": "return { sx, y, z }; }",
+    "new": "return { sx, z }; }",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-hunted-at-once",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (now - m.offAt <= EG_HUNT_AFTER_MS) continue;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-never-hunted",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    hunted.push(b);\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-approach-hunted",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (m.flH !== B.h) continue;   // not in the fight yet",
+    "new": "// not in the fight yet",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-mark-kept",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (egMarkOf(F, b.sub, 7)) { egUnmark(F, b.sub, 7); F.mem.mkDirty = 1; }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-no-pair-for-the-hunt",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "egLegionRaise(F, Array(Math.min(EG_HUNT_RAISE, room)).fill(EG_KIND.harrier), [egKeepOnFight(view, b.x, b.z, 1, b.y)], now, out, { wave: 0 });",
+    "new": "void room;",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-hunt-outlives-the-trial",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (B.F?.marks?.some((q) => q[1] === 7)) { B.F.marks = B.F.marks.filter((q) => q[1] !== 7); egMarksOut(B.F, out); }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-drains-uncounted",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "...judgePlace(F, view, B.hw, live, now), ...censusDrains(F, view, live, now)];",
+    "new": "...judgePlace(F, view, B.hw, live, now)];",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-wisp-binds-again-at-once",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "q.free = now + EG_WISP_AGAIN_MS;",
+    "new": "q.free = now;",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-wraith-uncounted",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  for (const t of F.tethers ?? []) {\n    const b = t[2] === 0",
+    "new": "  for (const t of []) {\n    const b = t[2] === 0",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-vestiges-uncounted",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (h.k === 0 && h.share > 0) h.share *= 1 - egCensusDr(B, F, view, h, live);",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-bastion-unbounded",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "bast[0] + EG_AURA_EXTRA * (bast.length - 1), bast[0] + EG_AURA_EXTRA_MAX)",
+    "new": "bast[0] + EG_AURA_EXTRA * (bast.length - 1), 1)",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-oath-on-every-blow",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (oath && h.o && F && egLordsOf(F).some((L) => L.i === h.o)) dr += EG_OATH_DR[oath - 1];",
+    "new": "if (oath) dr += EG_OATH_DR[oath - 1];",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-immovable-moving",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "tr.every((e) => e[0] < from[0] || e[0] > t || Math.hypot(e[1] - me[1], e[3] - me[3]) <= EG_IMMOVABLE_M)",
+    "new": "true",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-dr-uncapped",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "return Math.min(EG_DR_MAX, dr);",
+    "new": "return dr;",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-steadfast-alone",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (sf > 0 && near(EG_STEADFAST_M).length >= EG_STEADFAST_N) dr += sf;",
+    "new": "if (sf > 0) dr += sf;",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-featherstep-ignored",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "return r ? EG_FEATHER_CAST[r - 1] : EG_CAST_BACK_LOSS;",
+    "new": "return EG_CAST_BACK_LOSS;",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-catch-unkept",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (F && h.nm) { const c = ((F.cg ??= {})[h.nm] ??= []); if (!c.includes(h.sub)) c.push(h.sub); }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-fallen-cast-back-unowed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "|| egFallenAt(spec, A.hw ?? 0, x, y, z, t, A.tm ?? 0)) {",
+    "new": ") {",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-fallen-segment-holding",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "&& on(b.y) && !bandFallen(spec, b, z, hw, tS * 1000, tm)) return `b${i}`; }",
+    "new": "&& on(b.y)) return `b${i}`; }",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-tube-never-falls",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "(b.role === 'tube' && !!spec.tube && z < egTubeEdgeIn(spec, hw, tm, tMs))",
+    "new": "false",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-trail-forgets-the-wake",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "egSupportAt(spec, p.x, p.y, p.z, t / 1000, false, A.hw ?? 0, bridges, A.tm ?? 0)",
+    "new": "egSupportAt(spec, p.x, p.y, p.z, t / 1000, false, 0, bridges, A.tm ?? 0)",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-plate-beside-forgotten",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "return over && egSupportAt(spec, x, y, z, tMs / 1000, false, hw, null, tm) === EG_HOLD.none;",
+    "new": "return over;",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-span-unjudged",
+    "file": "src/net/bossRef.js",
+    "old": "if (caughtWhile(test, b.tr, from, upto, F.h, spec, ys, { free, by })) { a.bh.push(b.sub); out.push(hit); }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-span-closed-at-its-landing",
+    "file": "src/net/bossRef.js",
+    "old": "if (now >= a.at + sp + EG_POSE_WAIT_MS) a.bj = 1;",
+    "new": "if (now >= a.at + EG_POSE_WAIT_MS) a.bj = 1;",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-hn-ignored",
+    "file": "src/net/bossRef.js",
+    "old": "const free = a.hn === b.sub,",
+    "new": "const free = false,",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-burning-unjudged",
+    "file": "src/net/bossRef.js",
+    "old": "L.aim !== 'check' && L.aim !== 'trav')",
+    "new": "L.aim !== 'check')",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-a-burning-judged-at-an-instant",
+    "file": "src/net/bossRef.js",
+    "old": "      if (q.tv) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  },
+  {
+    "name": "EGZ-the-bridges-unburned",
+    "file": "src/net/eliteGates/egFeats.js",
+    "old": "test: (s, F) => (F.mem?.burnI ?? -1) >= 0 && ",
+    "new": "test: (s, F) => ",
+    "tests": [
+      "test/net/eliteGates/egz_legion.test.js"
+    ]
+  }
+]

@@ -5,7 +5,7 @@
     "old": "    return !!g?.defender && (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') || !!raidHere());",
     "new": "    return !!g?.defender && g.ai.isHostile === false && (getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') || !!raidHere());",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "(getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') || !!raidHere())",
     "new": "(true || !!raidHere())",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (guards.some((g) => !g.dead && g.defender && rayPersonDistance(eye, lookDir, g.ai.feet) < bestD)) return SWING_SPARED;\n",
     "new": "",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "rayPersonDistance(eye, lookDir, g.ai.feet) < bestD)) return SWING_SPARED;",
     "new": "rayPersonDistance(eye, lookDir, g.ai.feet) > bestD)) return SWING_SPARED;",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "guards.some((g) => !g.dead && g.defender && rayPersonDistance(",
     "new": "guards.some((g) => g.defender && rayPersonDistance(",
     "tests": [
-      "test/fb0929_raidguards.test.js"
+      "test/scenes/fb0929_raidguards.test.js"
     ]
   }
 ]

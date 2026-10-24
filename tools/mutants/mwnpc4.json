@@ -5,7 +5,7 @@
   "old": "      if (!built || !built.ok || dead || hitState) return false;",
   "new": "      if (!built || !built.ok || hitState) return false;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "      if (!built || !built.ok || dead || hitState) return false;",
   "new": "      if (!built || !built.ok || dead) return false;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "    while (anySourceHasGroup(r.sources, `${prefix}${n + 1}`)) n++;",
   "new": "    for (const k of [1, 2, 3, 4]) if (anySourceHasGroup(r.sources, `${prefix}${k}`)) n = k;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "    return `${prefix}${1 + ((((roll | 0) % n) + n) % n)}`;",
   "new": "    return `${prefix}${1 + ((roll | 0) % n)}`;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "    return `${prefix}${1 + ((((roll | 0) % n) + n) % n)}`;",
   "new": "    return `${prefix}1`;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "if (!hitState.playing) { hitState = null; hitSource = null; } }",
   "new": "} ",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "      if (hitState) { advanceClip(hitState, (hitSource || rig()).keys, dt, null); if (!hitState.playing)",
   "new": "      if (hitState) { if (!hitState.playing)",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "      if (deathState) advanceClip(deathState, (deathSource || rig()).keys, dt, null);\n",
   "new": "\n",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "      const state = deathState || actionState || hitState || movementState || jumpState || idleState;",
   "new": "      const state = deathState || actionState || movementState || jumpState || idleState || hitState;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -86,7 +86,7 @@
   "old": "      const state = deathState || actionState || hitState || movementState || jumpState || idleState;",
   "new": "      const state = actionState || hitState || deathState || movementState || jumpState || idleState;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -95,7 +95,7 @@
   "old": "      poseSource = deathState ? deathSource : actionState",
   "new": "      poseSource = actionState",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -104,7 +104,7 @@
   "old": "    if (!built || !built.ok || dead) return;   // MWNPC4: a dead actor's states are no longer refreshed",
   "new": "    if (!built || !built.ok) return;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -113,7 +113,7 @@
   "old": "      if (!built || !built.ok || sheathed || dead) return null;",
   "new": "      if (!built || !built.ok || sheathed) return null;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -122,7 +122,7 @@
   "old": "      if (dead) return false;   // MWNPC4: the dead cast nothing\n",
   "new": "",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -131,7 +131,7 @@
   "old": "      hitState = null; hitSource = null;\n      idleState = null;",
   "new": "      idleState = null;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -140,7 +140,7 @@
   "old": "      idleState = null; idleSource = null; idleGroup = null;\n      deathState = pick",
   "new": "      deathState = pick",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -149,7 +149,7 @@
   "old": "      dead = true;\n      actionState = null;",
   "new": "      dead = !!pick;\n      actionState = null;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -158,7 +158,7 @@
   "old": "{ startPoint, loopCount: 0 }",
   "new": "{ startPoint: 0, loopCount: 0 }",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -167,7 +167,7 @@
   "old": "      dead = false; deathState = null; deathSource = null; hitState = null; hitSource = null;",
   "new": "      deathState = null; deathSource = null; hitState = null; hitSource = null;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -176,88 +176,88 @@
   "old": "      dead = false; deathState = null; deathSource = null; hitState = null; hitSource = null;\n      refreshIdle(true);",
   "new": "      dead = false; deathState = null; deathSource = null; hitState = null; hitSource = null;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
   "name": "MWNPC4-peer-dead-arms",
-  "file": "src/net/peerBodies.js",
-  "old": "    if (this._react(b, shown)) { b.swing = shown.an | 0; b.cast = shown.cn | 0; b.pending = null; b.held = false; return; }",
-  "new": "    if (this._react(b, shown)) { b.swing = shown.an | 0; b.cast = shown.cn | 0; b.pending = null; b.held = false; }",
+  "file": "src/net/peer/peerBodies.js",
+  "old": "    if (this._react(b, shown)) { b.swing = shown.an | 0; b.cast = shown.cn | 0; b.pending = null; b.held = false; peerGatherSwing(b.gather ??= {}, shown); return; }",
+  "new": "    if (this._react(b, shown)) { b.swing = shown.an | 0; b.cast = shown.cn | 0; b.pending = null; b.held = false; peerGatherSwing(b.gather ??= {}, shown); }",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
   "name": "MWNPC4-peer-dead-counts-not-followed",
-  "file": "src/net/peerBodies.js",
-  "old": "    if (this._react(b, shown)) { b.swing = shown.an | 0; b.cast = shown.cn | 0; b.pending = null; b.held = false; return; }",
-  "new": "    if (this._react(b, shown)) { b.pending = null; b.held = false; return; }",
+  "file": "src/net/peer/peerBodies.js",
+  "old": "    if (this._react(b, shown)) { b.swing = shown.an | 0; b.cast = shown.cn | 0; b.pending = null; b.held = false; peerGatherSwing(b.gather ??= {}, shown); return; }",
+  "new": "    if (this._react(b, shown)) { b.pending = null; b.held = false; peerGatherSwing(b.gather ??= {}, shown); return; }",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
   "name": "MWNPC4-peer-corpse-replayed",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "if (dd) b.rig.die?.(dd - 1, { startPoint: 1 }); else b.rig.revive?.(); }",
   "new": "if (dd) b.rig.die?.(dd - 1); else b.rig.revive?.(); }",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
   "name": "MWNPC4-peer-death-roll-unshifted",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "    else if (dd !== b.dead) { b.dead = dd; b.posedAt = 0; if (dd) b.rig.die?.(dd - 1); else b.rig.revive?.(); }",
   "new": "    else if (dd !== b.dead) { b.dead = dd; b.posedAt = 0; if (dd) b.rig.die?.(dd); else b.rig.revive?.(); }",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
   "name": "MWNPC4-peer-never-revived",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "    else if (dd !== b.dead) { b.dead = dd; b.posedAt = 0; if (dd) b.rig.die?.(dd - 1); else b.rig.revive?.(); }",
   "new": "    else if (dd !== b.dead) { b.dead = dd; b.posedAt = 0; if (dd) b.rig.die?.(dd - 1); }",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
   "name": "MWNPC4-peer-dead-recoil",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "    if (b.hit == null || dd) b.hit = ht;",
   "new": "    if (b.hit == null) b.hit = ht;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
   "name": "MWNPC4-peer-born-count-recoils",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "    if (b.hit == null || dd) b.hit = ht;\n    else if (ht !== b.hit)",
   "new": "    if (dd) b.hit = ht;\n    else if (ht !== b.hit)",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
   "name": "MWNPC4-peer-linger-not-relatched",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "if (b.goneAt == null) { b.goneAt = now; b.hit = null; b.dead = null; b.swing",
   "new": "if (b.goneAt == null) { b.goneAt = now; b.swing",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
   "name": "MWNPC4-gate-ignored",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "        if (this._gate) this._queue = gateBuild(this._gate, build, this._buildInRange);",
   "new": "        if (false) this._queue = gateBuild(this._gate, build, this._buildInRange);",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -266,7 +266,7 @@
   "old": "      const limits = tiers[want] ?? null;",
   "new": "      const limits = tiers[want] ?? tiers.near;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -275,7 +275,7 @@
   "old": "    const want = Object.prototype.hasOwnProperty.call(tiers, t) ? t : NPC_BODIES_DEFAULT;",
   "new": "    const want = t;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -284,7 +284,7 @@
   "old": "    if (want !== standing) {",
   "new": "    if (standing == null) {",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -293,7 +293,7 @@
   "old": "export const npcPeerId = (lane, id) => `npc:${lane}:${id}`;",
   "new": "export const npcPeerId = (lane, id) => `npc:${id}`;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -302,7 +302,7 @@
   "old": "      if (!actor?.look || !actor.feet || npcBodiesHeld()) return;",
   "new": "      if (!actor?.feet || npcBodiesHeld()) return;",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -311,7 +311,7 @@
   "old": "limits, gate: BODY_BUILD_GATE, ",
   "new": "limits, ",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -320,7 +320,7 @@
   "old": "    ht: count(a.hits),",
   "new": "    ht: 0,",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -329,16 +329,16 @@
   "old": "    mv: a.moving ? (a.running ? 2 : 1) : 0,",
   "new": "    mv: a.moving ? 1 : 0,",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
   "name": "MWNPC4-host-peers-ungated",
   "file": "src/scenes/world.js",
-  "old": "generation: morrowindDataGeneration, collider: () => collider, gate: BODY_BUILD_GATE, horses: () => horseRigFor(renderer) });   // MWA4",
-  "new": "generation: morrowindDataGeneration, collider: () => collider, horses: () => horseRigFor(renderer) });   // MWA4",
+  "old": "generation: morrowindDataGeneration, collider: () => collider, gate: BODY_BUILD_GATE, horses: () => horseRigFor(renderer), buildOpts: playerBuildOpts });   // MW-HEADS2",
+  "new": "generation: morrowindDataGeneration, collider: () => collider, horses: () => horseRigFor(renderer), buildOpts: playerBuildOpts });   // MW-HEADS2",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  },
  {
@@ -347,7 +347,7 @@
   "old": "jumpState || idleState || hitState || deathState) && viewMode === 'third');",
   "new": "jumpState || idleState) && viewMode === 'third');",
   "tests": [
-   "test/mwnpc4_npclane.test.js"
+   "test/combat/mwnpc4_npclane.test.js"
   ]
  }
 ]

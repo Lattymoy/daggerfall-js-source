@@ -5,7 +5,7 @@
     "old": "export const CHAPTER_PATRON_BAND = 'thriving';",
     "new": "export const CHAPTER_PATRON_BAND = 'steady';",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const chapterPatronMember = (/** @type {any} */ chapter, /** @type {unknown} */ guildId) => typeof guildId === 'string' && guildId !== '' &&",
     "new": "export const chapterPatronMember = (/** @type {any} */ chapter, /** @type {unknown} */ guildId) => guildId !== '' &&",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "typeof guildId === 'string' && guildId !== '' && chapter?.patron?.id === guildId;",
     "new": "typeof guildId === 'string' && chapter?.patron?.id === guildId;",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "&& chapter?.patron?.id === guildId;",
     "new": "&& chapter?.patron != null;",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "const band = chapterPatronMember(chapter, guildId) ? Math.min(own, CHAPTER_PATRON_PRICE) : own;",
     "new": "const band = own;",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "export const CHAPTER_PATRON_RAISES = Object.freeze([500, 1000, 5000]);",
     "new": "export const CHAPTER_PATRON_RAISES = Object.freeze([500, 1000]);",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "const now = Number.isSafeInteger(bid?.marks) && bid.marks > 0 ? bid.marks : 0;",
     "new": "const now = 0;",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": ": [1, 2, 5].map((k) => k * CHAPTER_PATRON_MIN);",
     "new": ": CHAPTER_PATRON_RAISES.map((r) => CHAPTER_PATRON_MIN + r);",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  return offers.filter((m) => patronBidOk(m, now));\n",
     "new": "  return offers;\n",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "${p.tag ? ` <${p.tag}>` : ''}",
     "new": "${` <${p.tag}>`}",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  const p = chapterPatronOf(patron);\n  if (!p) return null;",
     "new": "  const p = patron;\n  if (!p) return null;",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  if (!season || !Number.isSafeInteger(bid?.marks) || bid.marks < 0) return null;",
     "new": "  if (!Number.isSafeInteger(bid?.marks) || bid.marks < 0) return null;",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  if (!season || !Number.isSafeInteger(bid?.marks) || bid.marks < 0) return null;",
     "new": "  if (!season || !Number.isSafeInteger(bid?.marks)) return null;",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  if (!season || !Number.isSafeInteger(bid?.marks) || bid.marks < 0) return null;",
     "new": "  if (!season || bid.marks < 0) return null;",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "`Your guild has not bid for its patronage in ${season}.`",
     "new": "`Your guild bids nothing for its patronage in ${season}.`",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "if (!isRollFaction(faction) || hallHidden(faction) || !name || !Number.isSafeInteger(marks)) return null;\n  return `Your guild bids",
     "new": "if (!isRollFaction(faction) || !name || !Number.isSafeInteger(marks)) return null;\n  return `Your guild bids",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "if (!isRollFaction(faction) || hallHidden(faction) || !name || !Number.isSafeInteger(marks)) return null;\n  return `Your guild bids",
     "new": "if (!isRollFaction(faction) || hallHidden(faction) || !name) return null;\n  return `Your guild bids",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "const silverOf = (/** @type {number} */ n) => `${n.toLocaleString('en-US')} silver`;",
     "new": "const silverOf = (/** @type {number} */ n) => `${n} silver`;",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "return k ? { ...k, heraldry: heraldryOf(p?.heraldry) } : null; };",
     "new": "return k ? { ...k, heraldry: p?.heraldry ?? null } : null; };",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": ", patron: sheetPatronOf(c.patron) });",
     "new": ", patron: null });",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "        patron: s.patron ? { ...s.patron } : null };",
     "new": "        patron: s.patron };",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "      if (!Number.isInteger(region)) continue;\n",
     "new": "",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "        const h = chapterOf?.(faction, region)?.patron?.heraldry ?? null;",
     "new": "        const h = chapterOf?.(faction, p.px)?.patron?.heraldry ?? null;",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "        if (!h) continue;\n        const anchors",
     "new": "        const anchors",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "        if (!anchors) continue;\n        anchors.forEach",
     "new": "        anchors?.forEach",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ],
     "equivalent": true,
     "why": "`hallBannerAnchors` answers an array of two or null: the guard's `continue` and the mutant's `?.` both hang nothing for a null and both hang the two for an array - the guard is kept as the halls' banners' own reads it."
@@ -232,7 +232,7 @@
     "old": "top[0] = t[0] + b.a.top[0]; top[1] = t[1] + b.a.top[1]; top[2] = t[2] + b.a.top[2];",
     "new": "top[0] = b.a.top[0]; top[1] = b.a.top[1]; top[2] = b.a.top[2];",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "      if (now() - at >= BANNER_REFRESH_MS) { read(); at = now(); }",
     "new": "      if (at === -Infinity) { read(); at = now(); }",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -250,34 +250,34 @@
     "old": "a, key: bannerKeyOf(h), heraldry: h,",
     "new": "a, key: 'k', heraldry: h,",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
     "name": "CHAP7B-WORLD-TYPES",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "(b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple) && b.factionId > 0)",
     "new": "(b.buildingType === TALK_BUILDING_TYPES.GuildHall) && b.factionId > 0)",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
     "name": "CHAP7B-WORLD-FACTION",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "(b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple) && b.factionId > 0)",
     "new": "(b.buildingType === TALK_BUILDING_TYPES.GuildHall || b.buildingType === TALK_BUILDING_TYPES.Temple))",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
     "name": "CHAP7B-WORLD-BUILT",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "      chapterHalls: pixelChapterHalls,   // CHAP7b (above)\n",
     "new": "",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -286,7 +286,7 @@
     "old": "    for (const b of chapterBanners?.list() ?? []) all.push(b);   // CHAP7b\n",
     "new": "",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": "until it was opened\n    guildId: () => { const g = guildBook; if (g?.stale?.()) g.refresh().catch(() => {}); return g?.guild?.id ?? null; },\n",
     "new": "until it was opened\n    guildId: () => null,\n",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ],
     "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
@@ -305,7 +305,7 @@
     "old": "      patron: hallDoor && realmSession ? (faction, marks) => hallDoor.patron(realmSession.id, faction, region, marks, mintMarksRid()) : null,\n",
     "new": "      patron: null,\n",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -314,7 +314,7 @@
     "old": "chapterHallFactor(chapterHere(), service, host.guildId?.() ?? null);",
     "new": "chapterHallFactor(chapterHere(), service, null);",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -323,7 +323,7 @@
     "old": "post('/v1/chapters/patron', { character, faction, region, marks, rid })",
     "new": "post('/v1/chapters/back', { character, faction, region, marks, rid })",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -332,7 +332,7 @@
     "old": "    if (patronLine) card.append(el('p', 'notice-chapter notice-patron', patronLine));\n",
     "new": "",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -341,7 +341,7 @@
     "old": "    const bidLine = work.patron ? chapterPatronBidLine(c.patronBid) : null;",
     "new": "    const bidLine = chapterPatronBidLine(c.patronBid);",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -350,7 +350,7 @@
     "old": "c.patronBid.marks > 0 ? 'Raise the bid to: ' : 'Bid for it: '",
     "new": "'Bid for it: '",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -359,7 +359,7 @@
     "old": "() => bidPatron(c, m)));",
     "new": "() => bidPatron(c, 0)));",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -368,7 +368,7 @@
     "old": "const said = r?.ok ? { ok: true, text: chapterPatronBidSaid(c.faction, r.data?.season ?? c.patronBid?.season, marks) ?? 'Bid made.' }",
     "new": "const said = r?.ok ? { ok: true, text: 'Bid made.' }",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -377,7 +377,7 @@
     "old": ": { ok: false, text: accountRefusalText(r?.error) };\n    if (!alive) { work.sayLate?.(said.text); return; }\n    busy = false;\n    word = said;\n    loadWrits(true);\n  }\n\n  async function setFocus",
     "new": ": { ok: false, text: 'No.' };\n    if (!alive) { work.sayLate?.(said.text); return; }\n    busy = false;\n    word = said;\n    loadWrits(true);\n  }\n\n  async function setFocus",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -386,7 +386,7 @@
     "old": "    const r = await work.patron(c.faction, marks);\n    const said",
     "new": "    const r = await work.patron(c.faction, marks);\n    if (!alive) return;\n    const said",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -395,7 +395,7 @@
     "old": "    word = said;\n    loadWrits(true);\n  }\n\n  async function setFocus",
     "new": "    word = said;\n    render();\n  }\n\n  async function setFocus",
     "tests": [
-      "test/chap7b_patrons_client.test.js"
+      "test/net/chap7b_patrons_client.test.js"
     ]
   }
 ]

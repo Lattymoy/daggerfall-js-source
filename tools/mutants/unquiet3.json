@@ -1,0 +1,256 @@
+[
+  {
+    "name": "UNQUIET3-heal-days",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "MAX: 3, RESIST: -15, HEAL_DAYS: 5 });",
+    "new": "MAX: 3, RESIST: -15, HEAL_DAYS: 4 });",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-heal-day-of-wound",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "return Number.isInteger(woundDay) && woundDay >= 0 && n > 0 && n % WOUND.HEAL_DAYS === 0;",
+    "new": "return Number.isInteger(woundDay) && woundDay >= 0 && n >= 0 && n % WOUND.HEAL_DAYS === 0;",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-heal-unknown-day",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "return Number.isInteger(woundDay) && woundDay >= 0 && n > 0",
+    "new": "return n > 0",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-heal-countdown",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "WOUND.HEAL_DAYS - (Math.max(0, day - woundDay) % WOUND.HEAL_DAYS)",
+    "new": "(Math.max(0, day - woundDay) % WOUND.HEAL_DAYS)",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-heal-never",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "      if (r.wounds?.length && healsOn(r.woundDay, d)) { r.wounds = r.wounds.slice(1); touch(r); }\n",
+    "new": "",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-heal-newest",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "{ r.wounds = r.wounds.slice(1); touch(r); }",
+    "new": "{ r.wounds = r.wounds.slice(0, -1); touch(r); }",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-heal-day-unset",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "r.woundDay = Math.floor(now / MINUTES_PER_DAY); _newWounds.set(r.id, w);",
+    "new": "_newWounds.set(r.id, w);",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-heal-day-unsaved",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "    woundDay: Number.isInteger(r.woundDay) && r.woundDay >= 0 ? r.woundDay : -1,",
+    "new": "    woundDay: -1,",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-page-heal-unsaid",
+    "file": "src/ui/revenant/revenantPage.js",
+    "old": "  return days ? `${line} ${healWords(days)}` : line;",
+    "new": "  return line;",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-page-heal-now-unread",
+    "file": "src/ui/revenant/revenantPage.js",
+    "old": "[craftLine(r), woundLine(r, now), ambitionLine(r), bloodLine(r), tearLine(r)]",
+    "new": "[craftLine(r), woundLine(r), ambitionLine(r), bloodLine(r), tearLine(r)]",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js",
+      "test/systems/revenant/unquiet.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-train-any-ambition",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "  if (!r || ambitionOf(r.personality) !== 'mastery') return null;",
+    "new": "  if (!r) return null;",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-train-past-room",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "  if (learned.length >= Math.min(r.rank | 0, ADAPT_MAX)) return null;\n  const count",
+    "new": "  const count",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-train-count-unread",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "count.get(b) - count.get(a) || last.get(b) - last.get(a)",
+    "new": "last.get(b) - last.get(a)",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-train-ties-earliest",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "count.get(b) - count.get(a) || last.get(b) - last.get(a)",
+    "new": "count.get(b) - count.get(a) || last.get(a) - last.get(b)",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-train-routed-taught",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "kinds.filter((k) => k !== 'routed' && k !== 'night')",
+    "new": "kinds.filter((k) => k !== 'night')",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-train-never",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "      if (lesson) { r.learned = withLesson(r.learned, lesson, r.rank); if (!r.notice) r.notice = 'trained'; trained.add(r.id); touch(r); }",
+    "new": "      if (false) { r.learned = withLesson(r.learned, lesson, r.rank); if (!r.notice) r.notice = 'trained'; trained.add(r.id); touch(r); }",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-train-no-notice",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "if (!r.notice) r.notice = 'trained'; trained.add(r.id); touch(r); }",
+    "new": "trained.add(r.id); touch(r); }",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-train-any-day",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "      if (!(ambitionOf(r.personality) === 'mastery' ? masteryFestersOn(dueDay, d) : festersOn(dueDay, d))) continue;   // UNQUIET: a revenant of mastery trains - it festers every two days, not three\n      // UNQUIET III",
+    "new": "      const lessonEarly = trainLesson(r); if (lessonEarly) { r.learned = withLesson(r.learned, lessonEarly, r.rank); }\n      if (!(ambitionOf(r.personality) === 'mastery' ? masteryFestersOn(dueDay, d) : festersOn(dueDay, d))) continue;   // UNQUIET: a revenant of mastery trains - it festers every two days, not three\n      // UNQUIET III",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-train-card-unsaid",
+    "file": "src/systems/revenant/revenant.js",
+    "old": " : r.notice === 'trained' ? revenantTrainedEvent(r) : null;",
+    "new": " : null;",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-train-words-how",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  const body = trainedWords(r.given, how);",
+    "new": "  const body = trainedWords(r.given, 'it');",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-train-kicker",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  get trained() { return t('rvn.kicker.trained', 'Trained'); },\n",
+    "new": "",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-train-how-blade",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "    case 'mailed': return t('rvn.unq.how.mailed', 'blade');\n",
+    "new": "",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-den-never",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  const den = deedName === 'fled' && !r.dread && here ? nearestLair(here.px, here.py, here.dungeons) : null;",
+    "new": "  const den = null;",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-den-on-a-kill",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "const den = deedName === 'fled' && !r.dread && here ?",
+    "new": "const den = !r.dread && here ?",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js",
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-den-farthest",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "    if (dist < bestD) { best = d; bestD = dist; }",
+    "new": "    if (dist <= bestD || best === null) { best = d; bestD = dist; }",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-den-euclid-free",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "const dist = Math.max(Math.abs(d.px - px), Math.abs(d.py - py));",
+    "new": "const dist = Math.abs(d.px - px);",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-den-unnamed",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "    if (!d || !Number.isInteger(d.px) || !Number.isInteger(d.py) || typeof d.name !== 'string' || !d.name) continue;",
+    "new": "    if (!d) continue;",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET3-card-trained-edge",
+    "file": "src/ui/revenant/revenantCard.js",
+    "old": "body .rvncard.is-trained { border-left-color: #8a7a3a; }",
+    "new": "body .rvncard.is-trained { border-left-color: #8a7a3b; }",
+    "tests": [
+      "test/systems/revenant/unquiet3_train.test.js"
+    ]
+  }
+]

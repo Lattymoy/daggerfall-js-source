@@ -297,7 +297,7 @@ scheduler's `musicGain()`; one setting still moves both through the
 service's resync, so the mixer cannot drift. The header that recorded
 the shared law records the split.
 
-Pins: `test/musicvolume.test.js`, 4 tests - the publish (once, the
+Pins: `test/systems/settings/musicvolume.test.js`, 4 tests - the publish (once, the
 default's string on a drop, unsubscribe, a throwing listener skipped
 with the write landing), the service re-levelling exactly its two
 players on exactly that key and stopping when torn down, each player's
@@ -368,7 +368,7 @@ now, refuses the baked constant outright, and gains a machine-level case
 the old form could not express: with the feet at 0 and the surface at
 -0.05, the crouched centre 0.45 enters the splash (0.45 - 0.57 < -0.05)
 where the standing centre 0.9 does not. Pins: 2 in
-`test/audit26_audio.test.js`. Mutant: `+ 0.9` restored in one host; 1
+`test/systems/audit26_audio.test.js`. Mutant: `+ 0.9` restored in one host; 1
 killed.
 
 ## AUDIT 64 F40 - the damage trap wounds you in silence (2026-09-08)
@@ -399,7 +399,7 @@ hears it. The roll rides the RAW damage too: PlayerFootsteps knows
 nothing of the shield pool or of death, and its `heavyDamage` test is on
 the amount the message carried.
 
-Pins: `test/audit64_audio.test.js` (the three senders and the two
+Pins: `test/systems/audit64_audio.test.js` (the three senders and the two
 receivers read out of the reference; the port's sink carrying both
 halves; `hurtPlayer` still voiceless) and the wave-46 census, whose
 dungeon cry count moves from two to three and whose "RECORDED as owed"
@@ -436,7 +436,7 @@ independently (`SongPlayer._ensureMaster`, `SongPlayer.resyncGain`, and
 `AudioSongPlayer`'s per-start `trackGain()`), so a one-shot ramp to zero
 would be undone by the next `playSong` - which is exactly what DFU's
 per-Update re-assertion prevents. The flag lives beside the two gain
-accessors in `systems/songPlayer.js` and both read it;
+accessors in `systems/song/songPlayer.js` and both read it;
 `MusicService.setMuted(v)` sets it and resyncs, so a SOUNDING song drops
 at once and a song STARTED under the video is silent too. It is
 deliberately not `music.stop()`: that clears `_current`/`_pending` and
@@ -466,7 +466,7 @@ any key/back, and the AUDIT 19 error boundary.
 The header quirk note that argued FROM `IsMuted` while the port did not
 carry the flag now says that it does.
 
-Pins: `test/audit64_audio.test.js` - the reference's five raise sites and
+Pins: `test/systems/audit64_audio.test.js` - the reference's five raise sites and
 both handler pairs read out of DFU; the accessors going to zero and back
 without a stop; a muted instance whose loop is stopped, NOT re-opened by
 two further ticks, and re-opened on unmute; two live instances both
@@ -528,7 +528,7 @@ sounds exactly once and from here - and the other consumers of the
 port's `ListPickerWindow` (guild training, the item and potion makers,
 the teleport list) stay silent, as DFU's base window is.
 
-Pins: `test/audit64_audio.test.js` - the reference's ordering, then a
+Pins: `test/systems/audit64_audio.test.js` - the reference's ordering, then a
 pick over a stubbed sink recording exactly one `ButtonClick` BEFORE the
 close and the use, plus `listPicker.js` still carrying no `playOneShot`.
 
@@ -574,7 +574,7 @@ plays the `MouseClick` clip on every slot press and a second one when
 the same index (`:222` then `:228`) is idempotent, so only the clip is
 observable.
 
-Pins: `test/audit64_audio.test.js` - the three sounded reference lines,
+Pins: `test/systems/audit64_audio.test.js` - the three sounded reference lines,
 the soundless exit button, and the two slot subscriptions read out of
 DFU; `BaseScreenComponent`'s unconditional `MouseClick` and its nested
 `MouseDoubleClick` read out of DFU beside them; then a slot click, a
@@ -601,7 +601,7 @@ the player's miss arm is `FPSWeapon.PlaySwingSound`
 (`FPSWeapon.cs:304`, `PlayOneShot(SwingWeaponSound, 0, 1.1f)`), not
 `EnemySounds.PlayMissSound`. The asymmetry is the whole finding.
 
-Pins: `test/audit64_audio.test.js` - the two reference lines and
+Pins: `test/systems/audit64_audio.test.js` - the two reference lines and
 `PlayOneShot`'s default read out of DFU, then a parried arrow ringing at
 the target at 1.1 and a whiff ringing at the attacker at 1.
 
@@ -636,7 +636,7 @@ with its single caller in the streaming host - the floating-origin
 recentre, which has no DFU counterpart because DFU's world does not move
 under the player.
 
-Pins: `test/audit64_audio.test.js` - the reference's own write census
+Pins: `test/systems/audit64_audio.test.js` - the reference's own write census
 (`lastPosition` assigned at 89, 245, 270 and at no line of the three
 early returns), then a six-stride ride whose dismount frame plays, a
 fall into water whose first swimming frame plays with `lostGrounding`
@@ -680,12 +680,12 @@ The port departs, at Mac's word (Port-Ledger A, DISC20-B):
 - **The start.** A first song, and a song after one that ended, rise in
   at once, from the MIDI.BSA path and a music pack's alike.
 
-Pins: `test/disc20.test.js` (B), `tools/mutants/disc20.json`.
+Pins: `test/systems/disc20.test.js` (B), `tools/mutants/disc20.json`.
 
 ## WB7 (2026-09-25): a song made in code - the Warden's score
 
 Mac: "Proper boss audio during the boss fight." Daggerfall has no fight music - its dungeon tracks are made to be
-walked through - so the Burning Court's is WRITTEN, as notes, in `systems/gateScore.js`: four songs in the shape an
+walked through - so the Burning Court's is WRITTEN, as notes, in `systems/gate/gateScore.js`: four songs in the shape an
 HMI song decodes to (tick-ordered events, one tempo, notes carrying their own durations), on the FM bank's own
 articulations (pizzicato strings, timpani, orchestra hit, brass, choir, church organ, tubular bells, the kit). The
 music service takes them by a door of its own, `MusicService.registerSong(name, song)`: a made song answers for its
@@ -716,16 +716,41 @@ song unpressed. The ceiling is a bound by construction: nothing leaves the curve
 carries none. The court's four carry `SCORE_PRESS` and read -15.8 / -15.4 / -14.2 dBFS at war and -15.6 at his fall
 (from -25.6 / -22.1 / -21.5 / -22.9), every peak under -1 dBFS at the highest MusicVolume - `tools/gateScoreProbe.mjs`,
 which also plays one player through the whole fight and the song after it. See `11-Multiplayer/World-Bosses.md` section
-15; `test/wb10a_gate_score.test.js`.
+15; `test/systems/gate/wb10a_gate_score.test.js`.
 
-SD13 (2026-10-07): THE SCORE OF THE HOUR (`systems/sdScore.js`) - the Hollow's and the Shattered Hour's nine songs by
+SD13 (2026-10-07): THE SCORE OF THE HOUR (`systems/superDungeon/sdScore.js`) - the Hollow's and the Shattered Hour's nine songs by
 the same door and the same law's shape: made notes registered by name, seamless, pressed (`HOUR_PRESS`, a ceiling a
 decibel under the clip), held by the world host's `hourScoreFrame` ahead of the court's and the arena's. See
-`11-Multiplayer/Super-Dungeons.md` section 7 and its SD13 record; `tools/sdScoreProbe.mjs`; `test/sd13_score.test.js`.
+`11-Multiplayer/Super-Dungeons.md` section 7 and its SD13 record; `tools/sdScoreProbe.mjs`; `test/systems/superDungeon/sd13_score.test.js`.
+
+EG-G2 (2026-10-12): THE SCORE OF THE SPIRE (`systems/eliteGates/egScore.js`) - an Elite Breach's songs by the same door: the band's
+halls (96 bars, three variants in the seed's order), a trial's fight, a set piece's cue, a lord's wake, the three Courts
+(each lord's own four bars in the bed), a Valkynaz, the Redoubt's hymn, THE COUNT's last two minutes and the end, in E
+Phrygian, made for their context (the band, the lord) and registered under their names when it changes; held by the
+world host's `hourScoreFrame` first (`createSpireScoreHost`). THE SPIRE MIX (`systems/eliteGates/egMix.js`): a personal sting for a
+blow on my feet, a critical bus that ducks the score 6 dB for 300 ms through `SongPlayer.duck` (the song's own level -
+the fader and the volume untouched), the legion's barks four a kind, nearest first. See `11-Multiplayer/Elite-Gates.md`
+section 26 and its EG-G2 record; `tools/egScoreProbe.mjs`; `test/systems/eliteGates/eglook_score.test.js`.
+
+EG-ROAR (2026-10-18, Mac: "the music and ambience of the elite breach needs to be insanely better. Its way too tame"): A
+SONG'S OWN VOICES - a port departure with no DFU member behind it (the FM bank is the port's own, A5b). The bank plays one
+oscillator pair a note and one sine or one band of noise a drum, and a made score's section was one thin player. A song
+may now carry `voices` (`songVoices`: per channel, gmSynth.js `fmSpec`'s fields over the program's own, each held to
+`VOICE_RANGE`, a field that is not a number dropped) and `kit` (`songKit`: per GM key, `percussionSpec`'s over the kit's,
+held to `KIT_RANGE`). A voice may be a UNISON - `unison` pairs (1-4) `cents` apart either side of the note
+(`unisonCents`), begun a share of a period apart, the peak over the square root of the copies so it is as loud as the
+one pair; a `spread` lays its copies in turn in two envelopes either side of the channel's place - with a SUB (`sub`, a
+sine an octave under in the note's own envelope); a bend reaches every copy with its spread kept. A drum may carry a
+CLICK (`click`, the beater's noise, 3.2 kHz, gone in 15 ms) and a BODY (`body` Hz, a skin's tone under a noise's crack).
+A song that carries voices is high-passed at `SONG_FLOOR_HZ` (30 Hz) before its press - THE FLOOR: a 1:1 FM pair's first
+lower sideband lands on 0 Hz, an offset no speaker plays that the press answers by pressing the whole song (a quarter of
+the Spire's spiccato's energy stood under 40 Hz). Every song MIDI.BSA holds carries neither and plays the bank exactly as
+it always has, through no floor. The Spire's score is the first to carry them (`SPIRE_VOICES`, `SPIRE_KIT`). See
+`11-Multiplayer/Elite-Gates.md` section 26 and its EG-ROAR record; `test/systems/eliteGates/egroar_score.test.js`.
 
 ## FIELD-WIND1 (2026-09-29): the wind was a moan - a bed the port makes
 
-The Discord through Mac: "A repetitive moaning sound in the open world." The port's wind (WIND3, `systems/windAudio.js`;
+The Discord through Mac: "A repetitive moaning sound in the open world." The port's wind (WIND3, `systems/wind/windAudio.js`;
 its record is `07-Rendering/Rendering.md` WIND3) played DAGGER.SND's AmbientWindMoan and AmbientWindBlow1 on the riding
 loop's shape (`setLoop`: a non-looping source started again each time it ends - TransportManager's `if (!isPlaying)
 Play()`, right for a hoofbeat). They are DFU's dungeon one-shots (A3: AmbientEffectsPlayer plays one every 5 to 28 s):
@@ -737,11 +762,11 @@ law means what it meant. Two doors on the engine for it: `registerSamples(key, s
 MAKES, under a string key, as `registerSound` registers a decoded WAV, so every entry point takes the key - and
 `setPitch` on `loop`'s handle (playbackRate, live, beside WX2's `setVolume`). The wind rides `loop`: one source for the
 whole blow, its gain and pitch set live. The riding loop is unchanged - its clips are made to be replayed.
-`01-Overview/Field-Bugs-2026-09-29e.md`; `test/field_wind1.test.js`.
+`01-Overview/bugs/Field-Bugs-2026-09-29e.md`; `test/systems/field_wind1.test.js`.
 
 ## AUDIT SD III, SD20d (2026-10-07): a named bed - a loop the engine runs
 
-The Hour's beds (`scenes/sdAir.js`) and the Deadlands' (`scenes/deadlandsAir.js`) rode the riding loop's shape
+The Hour's beds (`scenes/superDungeon/sdAir.js`) and the Deadlands' (`scenes/deadlandsAir.js`) rode the riding loop's shape
 (`setLoop`, `setLoop3d`: a non-looping source re-armed from its `ended` - DFU's `if (!isPlaying) Play()`, right for a
 hoofbeat's swap): at every pass of a bed a gap of the main thread's dispatch, the Hour's void every 5.8 s, its works
 every 2. Two doors on the engine (`systems/audio.js`): `setBed(name, clip, { volume, pitch })` and `setBed3d(name, clip,
@@ -749,12 +774,12 @@ pos, opts)` - a NAMED bed, one buffer looping in the engine itself (`src.loop`),
 call; the same call each frame keeps the one source; it rises from nothing as it begins and fades to nothing as it is
 let go (`clip` null) or swapped for another clip, over 0.4 s (the arena's crowd bed's `BED_FADE_S` - a bed cut at its
 level pops). `loop3d`'s handle fades as `loop`'s does (`fadeStop` - the Rift's bell was cut as its dungeon went). The
-riding loop keeps its shape. A made loop is darkened as a loop (`systems/arenaSound.js` `lowpassLoop`: the one-pole run
+riding loop keeps its shape. A made loop is darkened as a loop (`systems/arena/arenaSound.js` `lowpassLoop`: the one-pole run
 on from the state the loop's end leaves - begun from nought, it stepped at its seam each pass; FIELD-WIND1's wind ran its
 filters twice for the same reason). Two song writers merge a note laid where the same voice already strikes it into one
-note, its loudest and longest (`systems/sdScore.js`, `systems/gateScore.js`: thirty-three doubled note-ons in the Hour's
+note, its loudest and longest (`systems/superDungeon/sdScore.js`, `systems/gate/gateScore.js`: thirty-three doubled note-ons in the Hour's
 nine songs, twenty-five in the Warden's war). Every score is let go by a fade (`music.fadeOut`), never a cut: the Hour's,
-the court's and the arena's. See `11-Multiplayer/Super-Dungeons.md` section 16's SD20d; `test/sd20d_audio.test.js`.
+the court's and the arena's. See `11-Multiplayer/Super-Dungeons.md` section 16's SD20d; `test/scenes/superDungeon/sd20d_audio.test.js`.
 
 ## MIDI-OUT1 (2026-10-11): the music on a MIDI device - a recorded departure
 
@@ -812,5 +837,86 @@ taken: a song's level clamping at CC7 127 (no device has headroom past it; at th
 scores carry fits) and the cost of a switch's quiet bursts (both stops now quiet once). With (2) in, the release-slack
 of the first cut was dead code - the overlap release covers the rounded re-strike - and went, with its two mutants.
 
-Port-Ledger A: THE MUSIC ON A MIDI DEVICE. Pins: `test/midiout1.test.js`, 15 tests; `tools/mutants/midiout1.json`,
+Port-Ledger A: THE MUSIC ON A MIDI DEVICE. Pins: `test/systems/midiout1.test.js`, 15 tests; `tools/mutants/midiout1.json`,
 28 mutants, all dead.
+
+## GATHER-FEEL (2026-10-13): the gathering heard - the port's own clips, a blow as it lands
+
+Mac: "I want to improve gathering, add gathering sounds and overall make the experience more palatable." The record is
+`06-Systems/Professions-Arc.md` section 44; what it is to this page:
+
+- **Thirty-six clips the port makes**, the climb's way (CLIMB4): `tools/gatherSfx.mjs` synthesises them from noise and
+  sine on the shared kit, `tools/sfxSynth.mjs` (which now holds the climb's pieces - its eleven clips byte for byte), and
+  bakes them to DAGGER.SND's 11025 Hz unsigned 8-bit mono (`tools/sndify.mjs`) into `public/sfx/gather-*.wav`, each with
+  its row in `public/sfx/SOURCES.md`. Deterministic: every noise seeded, so the tool writes the shipped bytes. A struck
+  body is modal synthesis (damped sines - wood's few and quickly gone, stone's brief and bright, ore's long and
+  shimmering), a groan and a rip a stick-slip pulse train through resonant bands, water rising-pitch bubbles under
+  splashes whose top falls away, leaves short grains through a leaf's band. `--measure` prints each clip's attack,
+  crest, tail and brightness (`tools/sfxBake.mjs` measure).
+- **One ear** (`systems/gatherSounds.js`), registered on the bus under string keys (`registerSound`, MW-D40's door), the
+  first frame the port's own sounds are on (ES1). Positional through `play3d` at the node (a node in reach - DFU's
+  activation distance - at its full volume) or where the net landed; a hand's and a chime flat through `playOneShot`. A
+  blow is held for its machine to land it (AUDIT GATHER-FEEL F3: the machine's count of blows landed - one clock with the
+  view's kick, the chunks and the node's going; the ear's own clock keeps the rest). A node's going is kept by its key
+  while it sounds (the bus's `play3dVoice`, a positional shot whose stop fades over VOICE_FADE_S): a refused harvest's
+  tree stood again is heard falling no more (AUDIT GATHER-FEEL F7). The floating origin's shift carries the places the
+  ear holds (AUDIT GATHER-FEEL). The classic skin keeps `systems/professions/profSounds.js`'s DFU clips, said by the ear on the same
+  beats.
+- **Levels** are each clip's measured loudness (its loudest 50 ms) set against the others: a blow near -15 dB at the
+  bus, the fall near -8, the water's plip near -28 - a first mix, set on numbers; no clip here has been heard by ear.
+
+## GATHER-FEEL II (2026-10-13): another player's gathering, heard at their act
+
+Mac: "Do the not done." The record is `06-Systems/Professions-Arc.md` section 45 (PEER-ACTS); what it is to this page:
+
+- **The same clips, the same beats.** A peer's act rides their pose (RELAY_VERSION world200: the act, its beats, the
+  net's throw), and the beats the pose counts are the gatherer's own ear's law (`actBeats`) - so the others hear what
+  the gatherer hears. `net/peer/peerGather.js` PeerGatherSounds says them positional through `play3d`, with the peers' own
+  falloff (`net/remotePlayers.js` PEER_SOUND_PROFILE - full inside 6 m, silent past 30), at the act's place: a metre
+  before the body at the hands' height, the net's sounds where it landed (the throw's metres along the way the body
+  faces).
+- **On the blow's time.** A tool's swing sounds as its beat arrives; its blow is held for DFU's melee hit frame of the
+  swing (PEER_BLOW_DELAY_S - the acts' own `landsIn` at the press), as the gatherer's own lands. The water keeps its own
+  clock on the listener's side: a plip every 2.2-5.5 s while the net waits, the catch fighting every 0.5-1.1 s while it
+  hauls.
+- **The skins.** The port's clips on the enhanced skin (ES1), each at its `GATHER_SAY` volume, pitch and variety; on the
+  classic skin the DFU cue the gatherer's ear says for that beat (`systems/professions/profSounds.js`), positional too.
+- **The switch and the floor.** Behind the swings' switch (`peerAttackSounds`, "Attack sounds" - a tool's blow is a
+  swing) and the earshot; the law is told every change while silent, so turning it back on replays nothing; one cue a
+  peer every 100 ms (one pose at the pose's top rate, POSE_HZ - AUDIT GATHER-FEEL R7: no floor of the climb's); a peer
+  gone forgotten; the floating origin's shift carries a blow in the air and the net's place with the land (AUDIT
+  GATHER-FEEL W1). A blow the gatherer took back (Escape, walked off, a window, the dungeon left, the switch shut) rides
+  the pose as its `stop`, and is dropped before it lands, under the floor too (AUDIT GATHER-FEEL W2); the net's water is
+  heard at the net however its landing was missed (W1).
+- **Not heard here**: the creak, the fall, the logs, a vein's rubble and its chunks are the node's, and the node is each
+  character's own - another's tree still stands for you.
+
+## GATE-MIX (2026-10-20): the limiter - every bus to the speakers through one stage
+
+The owner: "in oblivion gates ... while performance is overall good, the game hitches, audio becomes super loud and even
+distorts". Nothing stood between the mix and the speakers: the listener's bus (DW-D) went straight to `ctx.destination`,
+and a sum past full scale was cut square by the browser. The Burning Court reaches it easily - the boss's own clips peak
+at full scale in DAGGER.SND (measured: his bark and attack, records 208 and 209, a body's fall, 15, the fire's cast, 84,
+all at 0 dBFS; the burning loop, 420, at -8.9), his cues play them at 1.3 to 2.2 (`gateBoss.js:"export const BOSS_CUES = Object.freeze({"`),
+a landing sounds two of them in one frame (the slam's land and the quake), and the court's score is pressed to a decibel
+under the clip (WB10a). At the default SoundVolume of 0.5 a single cue at 2.2 already passed 1; at a higher one, most of
+his heavy blows did. The per-target copies that made it worse, and the other players' sounds now 4 dB down in the
+court as in the Spire, are `11-Multiplayer/World-Bosses.md` section 28.
+
+- **The stage** (`audio.js:"  _limiter() {"`): the listener's bus into a DynamicsCompressorNode run as a limiter (LIMITER:
+  -3 dB, no knee, 20:1, 1 ms in, 120 ms out), a trim, and a soft ceiling - a WaveShaper whose curve (`limitAmplitude`) is
+  the signal itself up to LIMIT_LINEAR (0.75) and a tangent's shoulder over it toward LIMIT_CEILING (0.98), reaching 12 dB
+  over full scale (LIMIT_RANGE 4). The compressor holds a loud moment down cleanly; the ceiling rounds off what its attack
+  lets through, so nothing reaches the speakers past 0.98 by construction.
+- **Unity under the threshold.** The Web Audio compressor applies its own make-up gain - (1 / full-range gain)^0.6, the
+  spec's - which would have raised the whole mix 1.7 dB; `limiterTrim` takes it back out, so everything under -3 dBFS
+  plays exactly as before (the curve is straight there and the shaper is not oversampled, so it is exact).
+- **Every bus.** The effects master, the reverb's wet and the music's master all reach the listener's bus already
+  (DW-D), so all of them reach the limiter; the underwater low-pass (`setListenerLowPass`) hangs before it and comes off
+  back onto it. A context with no compressor or no shaper plays straight through, as before.
+- **Not a DFU member.** Unity's mixer clips the same way; this is the port's own stage, past DFU on purpose, and moves no
+  DFU volume - every call site's level is as it was.
+
+Pins: `test/systems/gatemix_limiter.test.js` (4: the ceiling's law; the curve as the WaveShaper reads it; the trim
+against the spec's make-up; the graph - the listener into the limiter, the low-pass before it, an old context straight
+through). `tools/mutants/gatemix.json` (with section 28's: 36 dead, one equivalent as recorded).

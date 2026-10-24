@@ -1,0 +1,618 @@
+[
+  {
+    "name": "EGA4-lords-first-fall-wins",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  if (left.length) {\n    const P = egLordsPairOf(F)",
+    "new": "  if (false) {\n    const P = egLordsPairOf(F)",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-oldmasters-word-unread",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  if (F.mem.pair || !F.mem.oldMasters) return F.mem.pair ?? null;",
+    "new": "  return F.mem.pair ?? null;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-pair-window",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "now - F.mem.twinFellAt <= P.ms) return;",
+    "new": "now - F.mem.twinFellAt <= P.ms + 60_000) return;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-vigil-beside-a-champion",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "spec.arrive && !egLordsOf(F).length) {",
+    "new": "spec.arrive) {",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-hold-rounded",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  let h = Math.floor(max * at) + 1;\n  while (h / max <= at) h++;\n  return h;",
+    "new": "  return Math.round(max * at);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-hold-at-the-line",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  while (h / max <= at) h++;\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-hold-share-rounded",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "L.hpFloor = egHoldHp(L.max, L.hold ?? L.hpFloor / max0);",
+    "new": "L.hpFloor = Math.round((L.hpFloor * L.max) / max0);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-exam-line-rounded",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "{ L.hold = PHASE_AT[1]; L.hpFloor = egHoldHp(L.max, L.hold); }   // AUDIT EG IV (lane1 #2)",
+    "new": "{ L.hold = PHASE_AT[1]; L.hpFloor = Math.round(L.max * PHASE_AT[1]); }   // AUDIT EG IV (lane1 #2)",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-asleep-struck",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (!L.up2 || L.ward > now || egHas(L, EG_FL.ward)) return 0;",
+    "new": "if (L.ward > now || egHas(L, EG_FL.ward)) return 0;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-mirror-phase",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (want > L.ph && !L.champ && !mirror) {",
+    "new": "if (want > L.ph && !L.champ) {",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-snap-names-none",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": ", ch: 1, on: [ms[0].sub, ms[j].sub] }",
+    "new": ", ch: 1 }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-snap-narrow",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "s: [shDisc(ms[0].x, ms[0].z, 2), shDisc(ms[j].x, ms[j].z, 2)]",
+    "new": "s: [shDisc(ms[0].x, ms[0].z, 1.5), shDisc(ms[j].x, ms[j].z, 1.5)]",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-burst-names-none",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "nm: 'Soul Burst', ch: 1, on: [m.sub] }",
+    "new": "nm: 'Soul Burst', ch: 1 }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-cage-names-none",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "nm: 'The Cage Closes', ch: 1, on: [m.sub] }",
+    "new": "nm: 'The Cage Closes', ch: 1 }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-blowon-by-stamps",
+    "file": "src/net/eliteGates/egShape.js",
+    "old": "(blow?.on ? sub != null && blow.on.includes(sub) : egInBlow(blow, px, pz))",
+    "new": "egInBlow(blow, px, pz)",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-blowof-drops-on",
+    "file": "src/net/eliteGates/egShape.js",
+    "old": "  if (on?.length) blow.on = [...on];\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-census-by-stamps",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "here.filter((m) => egBlowOn(blow, m.sub, m.x, m.z));",
+    "new": "here.filter((m) => egInBlow(blow, m.x, m.z));",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-wire-drops-on",
+    "file": "src/net/wire.js",
+    "old": "sp: m.sp, ...(m.on != null ? { on: [...m.on] } : {}), ...(m.ol != null ? { ol: m.ol } : {}), ...(m.y != null ? { y: m.y } : {}) };",
+    "new": "sp: m.sp, ...(m.ol != null ? { ol: m.ol } : {}), ...(m.y != null ? { y: m.y } : {}) };",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-wire-takes-any-on",
+    "file": "src/net/wire.js",
+    "old": "  if (m.on != null && !(Array.isArray(m.on) && m.on.length >= 1 && m.on.length <= 8 && m.on.every(egId))) return null;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-screen-verdict-by-stamps",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "egBlowVerdict(bl, f[0], f[1], t, 400, me())",
+    "new": "egBlowVerdict(bl, f[0], f[1], t)",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-screen-mark-left",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "if (bl.on && s[0] === 'd') { const at = targetFeet(bl.on[j] ?? bl.on[0]); if (at) { sh.origin[0] = at[0]; sh.origin[1] = at[1]; } }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-last-ring-6s",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "now + EG_LESSON_TELL_MS + (end ? EG_ZONE_FIGHT_MS : 6000), out",
+    "new": "now + EG_LESSON_TELL_MS + 6000, out",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ],
+    "note": "AUDIT EG V (h): re-aimed by content - the last ring's end named `end`"
+  },
+  {
+    "name": "EGA4-lords-gore-off-island",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "when: (F, L, t) => !egObjsOf(F, 'isle').length || (islandOf(F, L) != null && islandOf(F, L) === islandOf(F, t)), make",
+    "new": "make",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-haven-grid-dropped",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  const g = EG_HAVEN_GRID_M, k = Math.floor(f.r / g);",
+    "new": "  const g = EG_HAVEN_GRID_M, k = -1;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js",
+      "test/net/eliteGates/egaudit4_lords_page.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-haven-bound-dropped",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  return worst + g / Math.SQRT2;",
+    "new": "  return worst;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js",
+      "test/net/eliteGates/egaudit4_lords_page.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-garoth-seyths-mirrors",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const mi = stand(F, spec, L.key, x, z, egHpTeam(F, 8)",
+    "new": "const mi = stand(F, spec, 'seyth', x, z, egHpTeam(F, 8)",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-garoth-eclipse",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "S = L.key === 'seyth' ? spec.spots.shafts?.[0] ?? { x: f.x, z: f.z, r: Math.min(12, f.r - 4) } : null;",
+    "new": "S = spec.spots.shafts?.[0] ?? { x: f.x, z: f.z, r: Math.min(12, f.r - 4) };",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-garoth-chains-three",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const size = L.key === 'morvayn' && L.ph >= 3 ? 3 : 2",
+    "new": "const size = L.ph >= 3 ? 3 : 2",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-garoth-old-card",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "return { name: EG_GAROTH_SIG_CARDS[g].replace(/\\.$/, ''), order: EG_GAROTH_SIG_ORDERS[g] }; }",
+    "new": "return { name: 'The older signature', order: EG_GAROTH_SIG_ORDERS[g] }; }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-garoth-mirrors-never-return",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "mirrorDown(F, L, now, out) { KITS[F.mem.garothSig]?.mirrorDown?.(F, L, now, out); },",
+    "new": "mirrorDown() {},",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-proving-woken-with-hall",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "EG_SEAM.new({ F, spec, key, now, out, decrees: F.D, n });   // AUDIT EG IV (lane1 #11; section 8.5): asleep",
+    "new": "EG_SEAM.new({ F, spec, key, now, out, decrees: F.D, n }); egLordsWake(F, spec, now, out, { n });   // AUDIT EG IV (lane1 #11; section 8.5): asleep",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-champion-ring-unasked",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    else if (!egLordsAwake(F)) ringWake(F, spec, champRing(spec), inHall, now, out, lordCtx);",
+    "new": "    else if (!egLordsAwake(F)) egLordsWake(F, spec, now, out, lordCtx);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-ring-20s",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "(F.ringAt && now >= F.ringAt + EG_WAKE_RING_MS))) return false;",
+    "new": "(F.ringAt && now >= F.ringAt + 2 * EG_WAKE_RING_MS))) return false;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-ring-edge",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "r: Math.max(EG_CHAMP_RING_MIN_M, edge - 1) };",
+    "new": "r: Math.max(EG_CHAMP_RING_MIN_M, edge) };",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-errands-farthest",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (d < bd - 1e-9) { bd = d; best = m; }",
+    "new": "if (-d < bd - 1e-9) { bd = -d; best = m; }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-errands-never-kept",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const m = live.find((x) => x.sub === old[o.i]); if (m) {",
+    "new": "const m = live.find((x) => x.sub === old[o.i]); if (false && m) {",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-errands-no-second-round",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const least = Math.min(...live.map((m) => held[m.sub] ?? 0))",
+    "new": "const least = 0",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-errands-groups-unsplit",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const mine = gems.filter((g, j) => (j < gh ? 0 : 1) === group(m))",
+    "new": "const mine = gems",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-errands-twins-one-court",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (T && !T.one && live.length >= 3)",
+    "new": "if (T && live.length >= 1)",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-errands-numbered-by-order",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const nums = ctx.nums ?? Object.fromEntries",
+    "new": "const nums = Object.fromEntries",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-errands-director-numerals",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": ", nums: Object.fromEntries(B.co.map((c) => [c.sub, c.n])) };",
+    "new": " };",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-errands-unsaid",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (key !== JSON.stringify(F.pg.as ?? [])) { F.pg.as = as; F.stateAt = 0; }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-errands-screen-unread",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      for (const [i, n] of F.pg?.as ?? []) { let ns = given.get(i); if (!ns) given.set(i, (ns = [])); ns.push(n); }",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-errands-screen-placeless",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "const [x, z] = egBodyPlace(b, t);",
+    "new": "const [x, z] = [0, 0];",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-errands-sigil-nothing",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "  if (s?.sigil === 'given' || s?.sigil === 'stone') return",
+    "new": "  if (s?.sigil === 'given-' || s?.sigil === 'stone') return",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-errands-words-name-unread",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "(co.find((c) => c[2] === ns[0]) ?? [])[1] ?? ''",
+    "new": "''",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_errands.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-counter-census-only",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  for (const bl of F.blows) if (!bl.counted && bl.at <= now && bl.o && egLordsOf(F).some((L) => L.i === bl.o) && egBlowNear(bl, p.x, p.z) <= EG_COUNTER_M) mm.lordLandedAt = Math.max(mm.lordLandedAt ?? -Infinity, bl.at);\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-fury-held-by-champion",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (!F.mem.furyAt && furious.length && (ctx.covenant ||",
+    "new": "if (!F.mem.furyAt && furious.length && !lords.some((L) => L.champ) && (ctx.covenant ||",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-champion-fury-share",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "(L.champ ? 1 : F.mem.furyX ?? 1)",
+    "new": "(F.mem.furyX ?? 1)",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-champion-fury-chain",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "blow.ch || L.champ) return;",
+    "new": "blow.ch) return;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-champion-flagged-fury",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const furious = lords.filter((L) => !L.champ);",
+    "new": "const furious = lords;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-muster-late",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (ctx.n >= 2) { L.duelAt = now; L.hold",
+    "new": "if (ctx.n >= 2) { L.duelAt = now + 3500; L.hold",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-muster-no-hold",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": " L.hold = ph >= 3 ? 0 : PHASE_AT[1]; if (L.hp / L.max > L.hold) L.hpFloor = egHoldHp(L.max, L.hold); }",
+    "new": " }",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-muster-fall-unheld",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "L.hold = ph >= 3 ? 0 : PHASE_AT[1];",
+    "new": "L.hold = PHASE_AT[1];",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-muster-hold-kept",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  if (L.key === 'garoth') L.hpFloor = null;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-rivalry-twice",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  if (!P || (F.mem.phSaid ??= {})[k]) return;",
+    "new": "  if (!P) return;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-last-charge-20s",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "now + 5000, now + 25_000, out, { y: f.y });",
+    "new": "now + 5000, now + 20_000, out, { y: f.y });",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-crossing-fixed",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "lordBlow(F, spec, a, [shLane(w.ax, w.az, w.bx, w.bz, 6)], { nm: 'The Crossing', wu: 3000, p: 0.35, b: 10, el: 'fire' }, here, now, out)",
+    "new": "egAim(F, spec, { o: a.i, s: [shLane(w.ax, w.az, w.bx, w.bz, 6)], at: now + 3000, wu: 3000, p: 0.35, b: 10, el: 'fire', nm: 'The Crossing' }, here, now, out)",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-crossing-swap-early",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "T.swapAt = cross ? cross.at : now + 3000;",
+    "new": "T.swapAt = now + 1000;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-perch-fixed",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (W) lordBlow(F, spec, W, [shDisc(o.x, o.z, 6)], { nm: 'Burning Perch', wu: 2000, p: 0.45, b: 12, el: 'fire' }, [], now, out, { place: true });",
+    "new": "if (W) egAim(F, spec, { o: W.i, s: [shDisc(o.x, o.z, 6)], at: now + 2000, wu: 2000, p: 0.45, b: 12, el: elOf(F, 'fire'), nm: 'Burning Perch' }, [], now, out);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js",
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-twins-literal-window",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "egLordsPair(F, a, b, one ? EG_TWIN_ONE_MS : SD_ECHO_PAIR_MS);",
+    "new": "egLordsPair(F, a, b, one ? 20_000 : 15_000);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-twins-one-court-window",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "export const EG_TWIN_ONE_MS = 20_000;",
+    "new": "export const EG_TWIN_ONE_MS = 15_000;",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-covenant-tear-at-the-fall",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (spec.kind === 'court' && B.F && (egLordsFell(B.F) || egLordsAwake(B.F))) {",
+    "new": "if (spec.kind === 'court' && B.F && egLordsAwake(B.F) && !egLordsFell(B.F)) {",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-gate-no-ward",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "      for (const b of bearers) egSetFl(F, b, EG_FL.ward, held, out);\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-gate-reach",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "dist(a.x, a.z, gx, spec.gate.z) <= EG_GATE_HOLD_M);",
+    "new": "dist(a.x, a.z, gx, spec.gate.z) <= EG_GATE_HOLD_M + 1);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-gate-march-unmarked",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "      for (const a of wave(spots, k)) a.march = 1;",
+    "new": "      wave(spots, k);",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-gate-said-again",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (held && !F.gateSaid) {",
+    "new": "if (held) {",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGA4-lords-page-heard-old",
+    "file": "bible/11-Multiplayer/Elite-Gates.md",
+    "old": "ONE brain (`net/eliteGates/egLords.js`)",
+    "new": "ONE brain (`net/egLord.js`)",
+    "tests": [
+      "test/net/eliteGates/egaudit4_lords_page.test.js"
+    ]
+  }
+]

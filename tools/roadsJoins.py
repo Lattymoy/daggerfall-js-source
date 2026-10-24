@@ -5,7 +5,7 @@ PaintPathWithSubPathJoins carries seventy-six centre-join statements
 chains; the port and the oracle used to carry four of them, hand
 transliterated, and shared the omission. This script parses the C#
 block by indentation into a tree and emits it twice - as JS for
-src/world/roadPainter.js (paintPathWithSubPathJoins' centre-join body)
+src/world/road/roadPainter.js (paintPathWithSubPathJoins' centre-join body)
 and as Python for tools/roadsOracle.py - so the two are one reading of
 the source and cannot drift from each other by hand.
 
@@ -15,7 +15,7 @@ The C# is not vendored (the port cites it; the arrays are what is
 carried). Fetch it from github.com/ajrb/dfunity-mods, BasicRoads/Scripts/.
 The block is located by its comments, "// N-S path" through the close
 of the `if (pathTiles[CardOut] != null)` block. Paste the outputs over
-the bodies they replace; test/roadsParity.test.js is the check.
+the bodies they replace; test/world/road/roadsParity.test.js is the check.
 """
 import re, sys
 CS, OUT_JS, OUT_PY = sys.argv[1], sys.argv[2], sys.argv[3]

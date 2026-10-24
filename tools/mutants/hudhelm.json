@@ -1,0 +1,93 @@
+[
+  {
+    "name": "HUD-HELM-no-piece",
+    "file": "src/ui/hud/hudLayout.js",
+    "old": "  { id: 'helm', sel: '.helmpanel .helmpanel-bar', get name() { return t('menu.hud.piece.helm', 'Helm panel'); }, ghost: 'helm' },\n",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/hudhelm.test.js"
+    ]
+  },
+  {
+    "name": "HUD-HELM-the-builds-placing-dropped",
+    "file": "src/ui/enhanced/enhancedHelm.js",
+    "old": "    placeHudPieces(doc);   // HUD-HELM:",
+    "new": "    // HUD-HELM:",
+    "tests": [
+      "test/ui/enhanced/hudhelm.test.js"
+    ]
+  },
+  {
+    "name": "HUD-HELM-no-ghost",
+    "file": "src/ui/hud/hudLayout.js",
+    "old": "  } else if (kind === 'helm') {\n    try { g = ghostDeps.buildHelmPreview?.(doc) ?? null; }",
+    "new": "  } else if (kind === 'helm-none') {\n    try { g = ghostDeps.buildHelmPreview?.(doc) ?? null; }",
+    "tests": [
+      "test/ui/enhanced/hudhelm.test.js"
+    ]
+  },
+  {
+    "name": "HUD-HELM-the-preview-mounted-as-the-live-panel",
+    "file": "src/ui/enhanced/enhancedHelm.js",
+    "old": "  const p = build(doc);\n  paintHelm(doc, p, {},",
+    "new": "  const p = build(doc); p.root.id = ENHANCED_HELM_ID;\n  paintHelm(doc, p, {},",
+    "tests": [
+      "test/ui/enhanced/hudhelm.test.js"
+    ]
+  },
+  {
+    "name": "HUD-HELM-the-preview-never-a-fingers",
+    "file": "src/ui/enhanced/enhancedHelm.js",
+    "old": "touch: isTouchDevice(doc.defaultView ?? globalThis.window), mouseFree: true }, {}, new Map());",
+    "new": "touch: false, mouseFree: true }, {}, new Map());",
+    "tests": [
+      "test/ui/enhanced/hudhelm.test.js"
+    ]
+  },
+  {
+    "name": "HUD-HELM-the-card-centred-on-the-screen",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    const left = top && cx != null ? `${Math.round(cx)}px` : '';",
+    "new": "    const left = '';",
+    "tests": [
+      "test/ui/enhanced/hudhelm.test.js"
+    ]
+  },
+  {
+    "name": "HUD-HELM-the-card-kept-on-the-screen-unread",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  return Math.max(half, Math.min(W - half, c));",
+    "new": "  return c;",
+    "tests": [
+      "test/ui/enhanced/hudhelm.test.js"
+    ]
+  },
+  {
+    "name": "HUD-HELM-a-hidden-bar-still-read",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "  const helm = under && read && standing(under) ? rectOf(under) : null;",
+    "new": "  const helm = under && read ? rectOf(under) : null;",
+    "tests": [
+      "test/ui/enhanced/hudhelm.test.js"
+    ]
+  },
+  {
+    "name": "HUD-HELM-keys-from-the-sea",
+    "file": "src/ui/enhanced/enhancedHelm.js",
+    "old": "import { BOAT_ACTIONS } from '../../systems/comeSailAway/comeSailAwayActions.js';",
+    "new": "import { BOAT_ACTIONS } from '../../systems/comeSailAway/comeSailAway.js';",
+    "tests": [
+      "test/ui/enhanced/hudhelm.test.js",
+      "test/ui/quest/audit_guide.test.js"
+    ]
+  },
+  {
+    "name": "HUD-HELM-names-from-the-boat",
+    "file": "src/ui/enhanced/enhancedHelm.js",
+    "old": "import { HULL_NAMES } from '../../systems/comeSailAway/comeSailAwayHulls.js';",
+    "new": "import { HULL_NAMES } from '../../systems/comeSailAway/comeSailAwayBoat.js';",
+    "tests": [
+      "test/ui/enhanced/hudhelm.test.js"
+    ]
+  }
+]

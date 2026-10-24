@@ -5,7 +5,7 @@
     "old": "Math.max(floor, Math.min(rows - 1, (at >= 0 ? at : prev.row) + d));",
     "new": "Math.max(floor, (at >= 0 ? at : prev.row) + d);",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "Math.max(floor, Math.min(rows - 1, (at >= 0 ? at : prev.row) + d));",
     "new": "((((at >= 0 ? at : prev.row) + d) % rows) + rows) % rows;",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (prev && prev.key === frame.key) {\n    const at = prev.id",
     "new": "  if (prev) {\n    const at = prev.id",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (!frame || !rows) return null;",
     "new": "  if (!frame) return null;",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (!sel || !frame || sel.key !== frame.key) return -1;",
     "new": "  if (!sel || !frame) return -1;",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  return sel.row >= 0 && sel.row < rows ? sel.row : -1;",
     "new": "  return sel.row >= 0 ? sel.row : -1;",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  if (!Number.isInteger(row) || row < 0 || row >= max) return null;",
     "new": "  if (!Number.isInteger(row) || row < 0) return null;",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  return hoverItems(items)[row] ?? null;",
     "new": "  return (items ?? [])[row] ?? null;",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -77,9 +77,9 @@
     "old": "  if (isGoldPieces(item)) addGoldPieces(entity, item.stackCount ?? 1);",
     "new": "  if (false) addGoldPieces(entity, item.stackCount ?? 1);",
     "tests": [
-      "test/quickloot.test.js",
-      "test/nativeinventory.test.js",
-      "test/mace_corpse_window.test.js"
+      "test/systems/quickloot.test.js",
+      "test/ui/nativeinventory.test.js",
+      "test/scenes/mace_corpse_window.test.js"
     ]
   },
   {
@@ -88,8 +88,8 @@
     "old": "  fromList.splice(at, 1);",
     "new": "  ;",
     "tests": [
-      "test/quickloot.test.js",
-      "test/mace_corpse_window.test.js"
+      "test/systems/quickloot.test.js",
+      "test/scenes/mace_corpse_window.test.js"
     ]
   },
   {
@@ -98,7 +98,7 @@
     "old": "  if (at < 0) return null;",
     "new": "  if (false) return null;",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -107,7 +107,7 @@
     "old": "  const clicks = deltaY > 0 ? 1 : deltaY < 0 ? -1 : 0;",
     "new": "  const clicks = deltaY > 0 ? -1 : deltaY < 0 ? 1 : 0;",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -116,7 +116,7 @@
     "old": "  if (!_sel || !clicks || !(_actionIds || quickLootOn())) return false;",
     "new": "  if (!clicks) return false;",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -125,16 +125,16 @@
     "old": "  _lastKey = _sel ? frame.key : null;\n  _nudge = 0;",
     "new": "  _lastKey = _sel ? frame.key : null;",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
     "name": "QUICK-LOOT-the-switch-off-leaves-a-highlight-standing",
     "file": "src/systems/quickLoot.js",
-    "old": "  _sel = (verbs || quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;",
+    "old": "  _sel = (verbs || (take && quickLootOn())) ? nextSelection(_sel, frame, _nudge) : null;",
     "new": "  _sel = nextSelection(_sel, frame, _nudge);",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -143,7 +143,7 @@
     "old": "  const how = _pending;\n  _pending = null;",
     "new": "  const how = _pending;",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -152,7 +152,7 @@
     "old": "  if (how === 'open') return null;",
     "new": "  if (false) return null;",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -161,7 +161,7 @@
     "old": "    for (const it of [...items]) {\n      if (takeAllLeaves(it)) { left++; continue; }",
     "new": "    for (const it of items) {\n      if (takeAllLeaves(it)) { left++; continue; }",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ],
     "note": "LOOT18 (RE-AIMED BY CONTENT, bible/06-Systems/Loot-II-Arc.md section 10): the take-all's filter stands between the walk and its take now; the law it pins - the walk is over a copy of the list it splices - unmoved"
   },
@@ -171,7 +171,7 @@
     "old": "  if (!quickLootOn() || !hooks || !playerEntity) return null;",
     "new": "  if (!hooks || !playerEntity) return null;",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -180,7 +180,7 @@
     "old": "  if (!quickLootOn() || !_sel || _actionIds) return false;",
     "new": "  if (!quickLootOn() || _actionIds) return false;",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -189,7 +189,7 @@
     "old": "  if (!_sel || _actionIds || _sel.key !== key) return null;",
     "new": "  if (!_sel || _actionIds) return null;",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -198,7 +198,7 @@
     "old": "  const sig = `${frameSignature(frame)}|${lit}|${win.from}|${statsSide(lastX, globalThis.innerWidth ?? 0)}|${actionLayout}`;",
     "new": "  const sig = frameSignature(frame);",
     "tests": [
-      "test/worldhover.test.js"
+      "test/systems/worldhover.test.js"
     ]
   },
   {
@@ -207,7 +207,7 @@
     "old": "    if (i === sel) row.classList.add('sel');\n    if (r.rarity)",
     "new": "    ;\n    if (r.rarity)",
     "tests": [
-      "test/worldhover.test.js"
+      "test/systems/worldhover.test.js"
     ]
   },
   {
@@ -216,8 +216,8 @@
     "old": "  for (const item of [...items]) { if (takeOneInto(playerEntity, items, item)) n++; }",
     "new": "  for (const item of items) { if (takeOneInto(playerEntity, items, item)) n++; }",
     "tests": [
-      "test/mace_corpse_window.test.js",
-      "test/quickloot.test.js"
+      "test/scenes/mace_corpse_window.test.js",
+      "test/systems/quickloot.test.js"
     ]
   }
 ]

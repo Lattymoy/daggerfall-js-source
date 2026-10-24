@@ -1,0 +1,672 @@
+[
+  {
+    "name": "TOWNECON-types",
+    "file": "src/net/townEconLaw.js",
+    "old": "export const TOWN_ECON_TYPES = Object.freeze([0, 1, 2]);",
+    "new": "export const TOWN_ECON_TYPES = Object.freeze([0, 1, 2, 3]);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a farmstead counted a town"
+  },
+  {
+    "name": "TOWNECON-key",
+    "file": "src/net/townEconLaw.js",
+    "old": "export const townKeyOf = (px, py) => py * 1000 + px;",
+    "new": "export const townKeyOf = (px, py) => px * 1000 + py;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a key the receipts and the boards do not carry"
+  },
+  {
+    "name": "TOWNECON-size",
+    "file": "src/net/townEconLaw.js",
+    "old": "export const TOWN_SIZE = Object.freeze({ 0: 6, 1: 2, 2: -2 });",
+    "new": "export const TOWN_SIZE = Object.freeze({ 0: 6, 1: 2, 2: 2 });",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a village's size"
+  },
+  {
+    "name": "TOWNECON-cycle-amp",
+    "file": "src/net/townEconLaw.js",
+    "old": "Object.freeze({ amp: 12, days: 11 })",
+    "new": "Object.freeze({ amp: 13, days: 11 })",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the first wave's height"
+  },
+  {
+    "name": "TOWNECON-cycle-days",
+    "file": "src/net/townEconLaw.js",
+    "old": "Object.freeze({ amp: 6, days: 29 })",
+    "new": "Object.freeze({ amp: 6, days: 28 })",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the second wave's period"
+  },
+  {
+    "name": "TOWNECON-cycle-unphased",
+    "file": "src/net/townEconLaw.js",
+    "old": "    const wave = Math.sin(2 * Math.PI * (day / w.days + fnv(`${key}:${i}`) / 4294967296));",
+    "new": "    const wave = Math.sin(2 * Math.PI * (day / w.days));",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "every town in step"
+  },
+  {
+    "name": "TOWNECON-edict",
+    "file": "src/net/townEconLaw.js",
+    "old": "levy: -6, curfew: -4 });",
+    "new": "levy: -5, curfew: -4 });",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the Levy's weight"
+  },
+  {
+    "name": "TOWNECON-raid",
+    "file": "src/net/townEconLaw.js",
+    "old": "export const TOWN_RAID_TERM = -15;",
+    "new": "export const TOWN_RAID_TERM = -14;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a raid's weight"
+  },
+  {
+    "name": "TOWNECON-bands",
+    "file": "src/net/townEconLaw.js",
+    "old": "Object.freeze(['Thriving', 65])",
+    "new": "Object.freeze(['Thriving', 66])",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a band's edge"
+  },
+  {
+    "name": "TOWNECON-swing",
+    "file": "src/net/townEconLaw.js",
+    "old": "export const TOWN_PRICE_SWING = 0.25;",
+    "new": "export const TOWN_PRICE_SWING = 0.2;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "Mac's swing"
+  },
+  {
+    "name": "TOWNECON-standing",
+    "file": "src/net/townEconLaw.js",
+    "old": "(h.standing - 50) / TOWN_STANDING_DIV",
+    "new": "(h.standing - 40) / TOWN_STANDING_DIV",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the Standing's middle"
+  },
+  {
+    "name": "TOWNECON-players-unbounded",
+    "file": "src/net/townEconLaw.js",
+    "old": "  const share = Number.isNaN(n) ? 0 : Math.max(0, Math.min(TOWN_PLAYERS_MAX, n));",
+    "new": "  const share = Number.isNaN(n) ? 0 : Math.max(0, n);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "one zerg holds a town at the top"
+  },
+  {
+    "name": "TOWNECON-unheld-counts",
+    "file": "src/net/townEconLaw.js",
+    "old": "  if (!h) return 0;",
+    "new": "  if (!h) return -5;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "an unheld seat weighs on its town"
+  },
+  {
+    "name": "TOWNECON-unclamped",
+    "file": "src/net/townEconLaw.js",
+    "old": "const held = (p) => Math.max(0, Math.min(TOWN_PROSPERITY_MAX, Math.round(Number.isFinite(p) ? p : TOWN_BASE)));",
+    "new": "const held = (p) => Math.round(Number.isFinite(p) ? p : TOWN_BASE);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a Prosperity off the scale"
+  },
+  {
+    "name": "TOWNECON-sale-rises",
+    "file": "src/net/townEconLaw.js",
+    "old": "export const townSaleFactor = (p) => 1 - (TOWN_PRICE_SWING * Math.abs(held(p) - TOWN_BASE)) / TOWN_BASE;",
+    "new": "export const townSaleFactor = (p) => 1 - (TOWN_PRICE_SWING * (TOWN_BASE - held(p))) / TOWN_BASE;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a Booming town pays more for a sale - gold printed"
+  },
+  {
+    "name": "TOWNECON-floor-lost",
+    "file": "src/net/townEconLaw.js",
+    "old": "  const ask = Math.max(TOWN_FACTOR_FLOOR, townBuyFactor(p) * seatFactor);",
+    "new": "  const ask = townBuyFactor(p) * seatFactor;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a town's and a seat's discounts past the seats' deepest"
+  },
+  {
+    "name": "TOWNECON-floor-number",
+    "file": "src/net/townEconLaw.js",
+    "old": "export const TOWN_FACTOR_FLOOR = 0.70;",
+    "new": "export const TOWN_FACTOR_FLOOR = 0.65;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a floor below the seats' deepest"
+  },
+  {
+    "name": "TOWNECON-seat-on-sale",
+    "file": "src/net/townEconLaw.js",
+    "old": "  if (TOWN_SALE_MODES.includes(mode)) return Math.min(townSaleFactor(p), ask);",
+    "new": "  if (TOWN_SALE_MODES.includes(mode)) return Math.min(townSaleFactor(p), ask) * seatFactor;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a seat's discount taken off a sale twice (SEAT-LOOP re-aimed it: the pay falls with the ask, once)"
+  },
+  {
+    "name": "TOWNECON-mode-open",
+    "file": "src/net/townEconLaw.js",
+    "old": "  if (mode !== 'Buy' && mode !== 'Repair') return 1;",
+    "new": "",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "any mode priced as a buy"
+  },
+  {
+    "name": "TOWNECON-price-words",
+    "file": "src/net/townEconLaw.js",
+    "old": "  if (ask > 0 && askF > 1) return t('town.econ.price.moreLess', 'Shops here ask {ask}% more and pay {pay}% less than the region\\'s usual prices.', { ask, pay });",
+    "new": "  if (ask > 0 && askF > 1) return t('town.econ.price.moreLess', 'Shops here ask {ask}% more and pay {pay}% less than the region\\'s usual prices.', { ask: pay, pay: ask });",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the markup and the cut swapped"
+  },
+  {
+    "name": "TOWNECON-trend",
+    "file": "src/net/townEconLaw.js",
+    "old": "(p > prev ? 'rising' : p < prev ? 'falling' : 'flat')",
+    "new": "(p > prev ? 'falling' : p < prev ? 'rising' : 'flat')",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the trend backwards"
+  },
+  {
+    "name": "TOWNECON-reason-order",
+    "file": "src/net/townEconLaw.js",
+    "old": "  if (raided) return TOWN_REASONS.raid;",
+    "new": "  if (raided && !edict) return TOWN_REASONS.raid;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "an Edict said over a raid"
+  },
+  {
+    "name": "TOWNECON-area-dropped",
+    "file": "src/net/townEconLaw.js",
+    "old": "  else if (area !== undefined) lines.push(townAreaLine(area));",
+    "new": "  else if (area) lines.push(townAreaLine(area));",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "an area nobody holds says nothing"
+  },
+  {
+    "name": "TOWNECON-seat-lines-dropped",
+    "file": "src/net/townEconLaw.js",
+    "old": "  if (card) lines.push(...card.lines.slice(seat.holder?.guild ? 1 : 0));",
+    "new": "  if (card) lines.push(card.lines[0]);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a seat's holder and rule gone from its card"
+  },
+  {
+    "name": "TOWNECON-lines-cut",
+    "file": "src/ui/eventMapMarks.js",
+    "old": "export const TOWN_TIP_LINES_MAX = 7;",
+    "new": "export const TOWN_TIP_LINES_MAX = 5;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a seat town's card cut"
+  },
+  {
+    "name": "TOWNECON-offline-runs",
+    "file": "src/systems/town/townEcon.js",
+    "old": "  const readingOf = (mapId) => {\n    if (!host.online() || ",
+    "new": "  const readingOf = (mapId) => {\n    if (",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "offline prices moved"
+  },
+  {
+    "name": "TOWNECON-not-a-town",
+    "file": "src/systems/town/townEcon.js",
+    "old": "    if (!town || !isEconTown(town.type)) return null;",
+    "new": "    if (!town) return null;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a dungeon given an economy"
+  },
+  {
+    "name": "TOWNECON-day",
+    "file": "src/systems/town/townEcon.js",
+    "old": "    const day = townDayOf(nowMs());",
+    "new": "    const day = townDayOf(nowMs()) + 1;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "tomorrow's prices"
+  },
+  {
+    "name": "TOWNECON-tipfn-unkept",
+    "file": "src/systems/town/townEcon.js",
+    "old": "      if (!f) tipFns.set(id, (f = () => this.tipAt(id)));",
+    "new": "      if (!f) f = () => this.tipAt(id);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a new function every frame for every plate"
+  },
+  {
+    "name": "TOWNECON-counter-unwired",
+    "file": "src/scenes/worldModes.js",
+    "old": "    const f = host.townShopFactor?.(b, mode) ?? (mode === 'Buy' || mode === 'Repair' ? host.seatShopFactor?.(b) ?? 1 : mode === 'Sell' || mode === 'SellMagic' ? Math.min(1, host.seatShopFactor?.(b) ?? 1) : 1);",
+    "new": "    const f = mode === 'Buy' || mode === 'Repair' ? host.seatShopFactor?.(b) ?? 1 : mode === 'Sell' || mode === 'SellMagic' ? Math.min(1, host.seatShopFactor?.(b) ?? 1) : 1;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the counters never ask the town"
+  },
+  {
+    "name": "TOWNECON-heldmap-unwired",
+    "file": "src/scenes/world.js",
+    "old": "      townTipAt: (summary) => townEcon.tipAt(summary?.mapID ?? summary?.mapId),",
+    "new": "      townTipAt: () => null,",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the Held Map's towns with no card"
+  },
+  {
+    "name": "TOWNECON-overworld-seat-only",
+    "file": "src/scenes/travelViewMarks.js",
+    "old": "tip: placeTip(townEcon.tipFnAt(p.summary.mapId), p.summary.name, p.x, p.z) });",
+    "new": "tip: placeTip(null, p.summary.name, p.x, p.z) });",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the Overworld's near plates with no card"
+  },
+  {
+    "name": "TOWNECON-type-lost",
+    "file": "src/scenes/world.js",
+    "old": "region: r, type: loc.mapTableData.locationType, location: l });",
+    "new": "region: r, location: l });",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "no town's type: no town has an economy"
+  },
+  {
+    "name": "TOWNECON-unread-seats-empty",
+    "file": "src/scenes/world.js",
+    "old": "    seats: () => (seatBook?.open === true ? seatBook.data?.seats ?? null : null),",
+    "new": "    seats: () => (seatBook?.open === true ? seatBook.data?.seats ?? [] : null),",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the seats not yet read said as \"No guild holds this area.\""
+  },
+  {
+    "name": "TOWNECON-seat-dropped",
+    "file": "src/scenes/world.js",
+    "old": "townEcon.shopFactor(b, mode, seatEdicts.shopFactor(b))",
+    "new": "townEcon.shopFactor(b, mode, 1)",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the seat's discount and Market Day lost at every town counter"
+  },
+  {
+    "name": "TOWNECON-AUDIT-LAW1-sale-above-ask",
+    "file": "src/net/townEconLaw.js",
+    "old": "export const townSaleFactor = (p) => 1 - (TOWN_PRICE_SWING * Math.abs(held(p) - TOWN_BASE)) / TOWN_BASE;",
+    "new": "export const townSaleFactor = (p) => Math.min(1, 1 - (TOWN_PRICE_SWING * (TOWN_BASE - held(p))) / TOWN_BASE);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the shipped TE1: a Booming counter asks under what it pays - the firewood loop"
+  },
+  {
+    "name": "TOWNECON-AUDIT-LAW2-machine-clock",
+    "file": "src/scenes/world.js",
+    "old": "seatAt: seatHere, nowMs: battleNowMs,",
+    "new": "seatAt: seatHere,",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the town's day on this machine's clock"
+  },
+  {
+    "name": "TOWNECON-AUDIT-LAW5-sellmagic",
+    "file": "src/net/townEconLaw.js",
+    "old": "export const TOWN_SALE_MODES = Object.freeze(['Sell', 'SellMagic']);",
+    "new": "export const TOWN_SALE_MODES = Object.freeze(['Sell']);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a sale of magic at the region's price"
+  },
+  {
+    "name": "TOWNECON-AUDIT-LAW6-edict-proto",
+    "file": "src/net/townEconLaw.js",
+    "old": "  const edict = typeof h.edict === 'string' && Object.prototype.hasOwnProperty.call(TOWN_EDICT_TERMS, h.edict)\n    ? TOWN_EDICT_TERMS[/** @type {keyof typeof TOWN_EDICT_TERMS} */ (h.edict)] : 0;",
+    "new": "  const edict = TOWN_EDICT_TERMS[/** @type {keyof typeof TOWN_EDICT_TERMS} */ (h.edict)] ?? 0;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "an Edict named toString reads the prototype's"
+  },
+  {
+    "name": "TOWNECON-AUDIT-LAW6-infinite-share",
+    "file": "src/net/townEconLaw.js",
+    "old": "  const share = Number.isNaN(n) ? 0 : Math.max(0, Math.min(TOWN_PLAYERS_MAX, n));",
+    "new": "  const share = !Number.isFinite(n) ? 0 : Math.max(0, Math.min(TOWN_PLAYERS_MAX, n));",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "an infinite share counted nothing"
+  },
+  {
+    "name": "TOWNECON-AUDIT-CLI3-fallback-seated",
+    "file": "src/systems/town/townEcon.js",
+    "old": "      return mode === 'Buy' || mode === 'Repair' ? seatFactor : 1;",
+    "new": "      return seatFactor;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a seat's discount on a sale where its place has no economy"
+  },
+  {
+    "name": "TOWNECON-AUDIT-CLI3-seat-card-lost",
+    "file": "src/systems/town/townEcon.js",
+    "old": "        return seat ? seatTipOf(seat, nowMs()) : null;",
+    "new": "        return null;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a seat outside the town types loses its card"
+  },
+  {
+    "name": "TOWNECON-AUDIT-CLI3-overworld-seat-lost",
+    "file": "src/systems/town/townEcon.js",
+    "old": "      if (!isEconTown(host.townOf(id)?.type) && !host.seatAt(id)) return null;",
+    "new": "      if (!isEconTown(host.townOf(id)?.type)) return null;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "such a seat's Overworld plate with no card"
+  },
+  {
+    "name": "TOWNECON-AUDIT-UI1-charter-twice",
+    "file": "src/net/townEconLaw.js",
+    "old": "  if (card) lines.push(...card.lines.slice(seat.holder?.guild ? 1 : 0));",
+    "new": "  if (card) lines.push(...card.lines);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the guild named twice, the card past a landscape phone"
+  },
+  {
+    "name": "TOWNECON-AUDIT-UI1-css-unbounded",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": "  max-height: calc(100vh / var(--hm-ui, 1) - 16px); overflow: hidden;",
+    "new": "  overflow: visible;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "no height bound on the card"
+  },
+  {
+    "name": "TOWNECON-AUDIT-UI2-english-charter",
+    "file": "src/net/townEconLaw.js",
+    "old": "t('town.econ.area.held', 'Under the Charter of {town}: held by {guild}', { town: area.name, guild })",
+    "new": "t('town.econ.area.held', 'Under the Charter of {town}: held by {guild}', { town: `the Charter of ${area.name}`, guild })",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the seats' English inside the pattern"
+  },
+  {
+    "name": "TOWNECON-AUDIT-UI4-market-day-unpriced",
+    "file": "src/net/townEconLaw.js",
+    "old": "  const lines = [townEconomyLine(p, prev), townPriceLine(p, seatShopFactor(seat, null))];",
+    "new": "  const lines = [townEconomyLine(p, prev), townPriceLine(p)];",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the card's ask without Market Day"
+  },
+  {
+    "name": "TOWNECON-AUDIT-UI6-stale-card",
+    "file": "src/ui/heldMap.js",
+    "old": "    if (!gateMoved && this._tipKey && this._hoverAt) this._refreshTip();\n",
+    "new": "",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the card under a still pointer never asked again"
+  },
+  {
+    "name": "TOWNECON-AUDIT-UI7-two-roundings",
+    "file": "src/net/townEconLaw.js",
+    "old": "const pctOf = (f) => Math.round(Math.abs(1 - f) * 100 + 1e-9);",
+    "new": "const pctOf = (f) => Math.round(Math.abs(1 - f) * 100);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "one share printed as two numbers"
+  },
+  {
+    "name": "TOWNECON-AUDIT-DOC3-seat-unread",
+    "file": "src/systems/town/townEcon.js",
+    "old": "    const seat = host.seatAt(id) ?? null;",
+    "new": "    const seat = null;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a seat's Standing and Edict never reach the reading"
+  },
+  {
+    "name": "TOWNECON-AUDIT-DOC3-bailiwick-any",
+    "file": "src/systems/town/townEcon.js",
+    "old": "bailiwickOf(seats, r.town.region, [r.town.px, r.town.py])",
+    "new": "(seats[0] ?? null)",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "any seat named the area's"
+  },
+  {
+    "name": "TOWNECON-AUDIT-DOC3-players-threshold",
+    "file": "src/net/townEconLaw.js",
+    "old": "  if (players >= 1) return TOWN_REASONS.players;",
+    "new": "  if (players > 1) return TOWN_REASONS.players;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "one act unsaid"
+  },
+  {
+    "name": "TOWNECON-AUDIT-DOC3-siege-clock",
+    "file": "src/net/townEconLaw.js",
+    "old": "  const card = seat ? seatTipOf(seat, nowMs) : null;",
+    "new": "  const card = seat ? seatTipOf(seat) : null;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "the seat card on the machine's own clock"
+  },
+  {
+    "name": "TOWNECON-AUDIT-DOC3-standing-unread",
+    "file": "src/net/townEconLaw.js",
+    "old": "  const standing = Number.isFinite(h.standing) ? (h.standing - 50) / TOWN_STANDING_DIV : 0;",
+    "new": "  const standing = Number.isFinite(h.standing) ? (h.standing - 50) / TOWN_STANDING_DIV : -10;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "a Standing not read counted"
+  },
+  {
+    "name": "TOWNECON-SEATLOOP-law-unbounded",
+    "file": "src/net/townEconLaw.js",
+    "old": "  if (TOWN_SALE_MODES.includes(mode)) return Math.min(townSaleFactor(p), ask);",
+    "new": "  if (TOWN_SALE_MODES.includes(mode)) return townSaleFactor(p);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "SEAT-LOOP: a seat's discount lowers the ask and the pay stands - the essentials' round trip pays"
+  },
+  {
+    "name": "TOWNECON-SEATLOOP-fallback-unbounded",
+    "file": "src/systems/town/townEcon.js",
+    "old": "      if (TOWN_SALE_MODES.includes(mode)) return Math.min(1, seatFactor);",
+    "new": "      if (TOWN_SALE_MODES.includes(mode)) return 1;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "SEAT-LOOP: where the seat's place has no economy, the round trip pays"
+  },
+  {
+    "name": "TOWNECON-LAW3-paid-unwritten",
+    "file": "src/systems/tradeModes.js",
+    "old": "    if (paid) it[COUNTER_PAID_MARK] = base + Math.floor((rest * asks[i]) / total / stackOf(it));",
+    "new": "",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "LAW-3: the counter's Buy writes no price - the carry pays"
+  },
+  {
+    "name": "TOWNECON-LAW3-share-even",
+    "file": "src/systems/tradeModes.js",
+    "old": "  const asks = lot.map((it) => Math.max(buyItemPrice(it, { quality: 10, online, holidayId, guildFactionId }), stackOf(it)));",
+    "new": "  const asks = lot.map((it) => stackOf(it));",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "LAW-3: the lot's price shared by pieces, not by their asks"
+  },
+  {
+    "name": "TOWNECON-LAW3-cap-off",
+    "file": "src/systems/tradeModes.js",
+    "old": "      if (!(resale?.cost > 0) || calculateTradePrice(resale.cost, quality, skills, true) <= resale.paid) return whole;",
+    "new": "      return whole;",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "LAW-3: the cap read by no sale"
+  },
+  {
+    "name": "TOWNECON-LAW3-tally-offline",
+    "file": "src/systems/tradeModes.js",
+    "old": "    if (!live) return;\n    const now = counterValueOf(item);",
+    "new": "    const now = counterValueOf(item);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "LAW-3: offline the tally is kept"
+  },
+  {
+    "name": "TOWNECON-LAW3-sellmagic-untallied",
+    "file": "src/systems/tradeModes.js",
+    "old": "        sold(item, c, stack);   // LAW-3: the stack it hands over cost what it cost",
+    "new": "",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "LAW-3: a sale of magic passes the cap"
+  },
+  {
+    "name": "TOWNECON-LAW3-merge-higher",
+    "file": "src/systems/inventory.js",
+    "old": "Math.min(held[COUNTER_PAID_MARK], item[COUNTER_PAID_MARK])",
+    "new": "Math.max(held[COUNTER_PAID_MARK], item[COUNTER_PAID_MARK])",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "LAW-3: a dearer piece merged in lifts the stack's cap"
+  },
+  {
+    "name": "TOWNECON-LAW3-split-lost",
+    "file": "src/systems/inventory.js",
+    "old": "  if (Number.isInteger(stack[COUNTER_PAID_MARK])) picked[COUNTER_PAID_MARK] = stack[COUNTER_PAID_MARK];   // LAW-3: and what the counter was paid a piece",
+    "new": "",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "LAW-3: a split is a way out of the cap"
+  },
+  {
+    "name": "TOWNECON-LAW3-native-unpassed",
+    "file": "src/ui/native/nativeTrade.js",
+    "old": "ctx.skills ?? {}, pieces, resale);",
+    "new": "ctx.skills ?? {}, pieces);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "LAW-3: the classic window's sale passes the cap"
+  },
+  {
+    "name": "TOWNECON-LAW3-enhanced-unpassed",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "  const price = getTradePrice(mode, c, ctx.quality ?? 0, ctx.skills ?? {}, pieces, resale);",
+    "new": "  const price = getTradePrice(mode, c, ctx.quality ?? 0, ctx.skills ?? {}, pieces);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "LAW-3: the enhanced window's sale passes the cap"
+  },
+  {
+    "name": "TOWNECON-LAW3-quote-unpassed",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "return getTradePrice(m, lot.cost, quality, skills, lot.pieces, lot.resale);",
+    "new": "return getTradePrice(m, lot.cost, quality, skills, lot.pieces);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "LAW-3: the quote shows a price the sale will not pay"
+  },
+  {
+    "name": "TOWNECON-LAW3-keyed-unpassed",
+    "file": "src/scenes/worldModes.js",
+    "old": "    }, lot.pieces, lot.resale);   // LAW-3: a counter's piece never fetches more than it cost",
+    "new": "    }, lot.pieces);",
+    "tests": [
+      "test/systems/townecon.test.js"
+    ],
+    "note": "LAW-3: the keyed shelf's sale passes the cap"
+  }
+]

@@ -5,7 +5,7 @@
     "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
     "new": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch, corpse, pile, ground, peer, person, foe], nearestInOrder);",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
     "new": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch, corpse, pile, ground, person, foe, peer], nearestInOrder);",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch, corpse, pile, ground, person, peer, foe], nearestInOrder);",
     "new": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch, corpse, pile, ground, person, foe], nearestInOrder);",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  return { key: PEER_KEY_PREFIX + hit.peer.id, distance: hit.distance, reach };",
     "new": "  return { key: PEER_KEY_PREFIX + hit.peer.id, distance: hit.distance, reach: Infinity };",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (!hit?.peer?.id || !Number.isFinite(hit.distance)) return null;",
     "new": "  if (!hit?.peer?.id) return null;",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "export const peerIdOfKey = (key) => (typeof key === 'string' && key.startsWith(PEER_KEY_PREFIX) && key.length > PEER_KEY_PREFIX.length ? key.slice(PEER_KEY_PREFIX.length) : null);",
     "new": "export const peerIdOfKey = (key) => (typeof key === 'string' && key.startsWith(PEER_KEY_PREFIX) ? key.slice(PEER_KEY_PREFIX.length) : null);",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "export const peerIdOfKey = (key) => (typeof key === 'string' && key.startsWith(PEER_KEY_PREFIX) && key.length > PEER_KEY_PREFIX.length ? key.slice(PEER_KEY_PREFIX.length) : null);",
     "new": "export const peerIdOfKey = (key) => (String(key).startsWith(PEER_KEY_PREFIX) && String(key).length > PEER_KEY_PREFIX.length ? String(key).slice(PEER_KEY_PREFIX.length) : null);",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ],
     "equivalent": true,
     "why": "String(17) is '17' and String(null) is 'null' - neither starts with 'peer:', so the coerced form answers null for every non-string exactly as the typeof guard does; the guard is kept for AUDIT-WH2 L2-F5's stated law (no startsWith on a non-string), not for a behaviour a pin can see."
@@ -70,7 +70,7 @@
     "old": "  return socialMenuRows({ peerId, ...acts }).filter((r) => r.act)\n",
     "new": "  return socialMenuRows({ peerId, ...acts }).filter((r) => r.act && r.enabled)\n",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "label: tradeLabel || 'Trade'",
     "new": "label: 'Trade'",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "  if (acts.whyNotInvite === WHY_IN_PARTY) return 'In your party';\n  if (acts.relation === 'friend') return 'Friend';",
     "new": "  if (acts.relation === 'friend') return 'Friend';\n  if (acts.whyNotInvite === WHY_IN_PARTY) return 'In your party';",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "  if (acts.relation === 'friend') return 'Friend';\n  return null;",
     "new": "  if (acts.relation === 'friend') return 'Friend';\n  return 'Stranger';",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "            peer: _hoverPeerPick(cam.pos, _hd),   // PEER-PLAQUE1: another player, raced as the F key picks them\n",
     "new": "",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "    (key) => peerHoverName(key),\n  ];",
     "new": "  ];",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "    const hit = pickPeerInFront(eye, dir, openPeers(peersNear(), isPartyMate).filter(crowdDrawnHere), SOCIAL_REACH, rayPersonDistance);",
     "new": "    const hit = pickPeerInFront(eye, dir, openPeers(peersNear(), isPartyMate).filter(crowdDrawnHere), 40, rayPersonDistance);",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "    return { title: marks ? `${name} ${marks}` : name, renown, subs: [cast, peerRelationText(acts)].filter(Boolean),",
     "new": "    return { title: name, renown, subs: [cast, peerRelationText(acts)].filter(Boolean),",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "({ ...social.actionsFor(peerId), ...tradeActionsFor(peerId), canInspect: true, canReadPage: !!pageOffers.get(peerId), ...duelActionsFor(peerId) });",
     "new": "({ ...social.actionsFor(peerId), canInspect: true, canReadPage: !!pageOffers.get(peerId), ...duelActionsFor(peerId) });",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -151,7 +151,7 @@
     "old": "    peerHoverPick: () => _hoverPeerPick(cam.pos, socialFwd()),\n    peerHoverName: (key) => peerHoverName(key),\n",
     "new": "",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "old": "            peer: host.peerHoverPick?.() ?? null,   // PEER-PLAQUE1: another player in the room, raced as the F key picks them - off the key's own ray (AUDIT DROPS E3)\n",
     "new": "",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "    (key) => host.peerHoverName?.(key) ?? null,   // PEER-PLAQUE1: another player, by the outer host's own word - the port's own family, ungated like the corpses above\n",
     "new": "",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "          peerHoverPick: () => host.peerHoverPick?.() ?? null,   // AUDIT DROPS E3: the F key's own ray, not the dungeon's eye\n",
     "new": "",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "      ctx.addActivationNamer((key) => host.peerHoverName?.(key) ?? null);\n",
     "new": "",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "          peer: opts.peerHoverPick?.() ?? null,   // PEER-PLAQUE1: another player underground, raced as the F key picks them - off the key's own ray (AUDIT DROPS E3)\n",
     "new": "",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "    peerHoverPick: () => _hoverPeerPick(cam.pos, socialFwd()),",
     "new": "    peerHoverPick: (eye, dir) => _hoverPeerPick(eye ?? cam.pos, dir ?? socialFwd()),",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "        cursorActive: overlayHeld || !!host.pointerSurfaceUp?.(),",
     "new": "        cursorActive: overlayHeld,",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ]
   },
   {
@@ -223,8 +223,8 @@
     "old": "      cursorActive: dungeonPaused() || !!opts.pointerSurfaceUp?.(),",
     "new": "      cursorActive: dungeonPaused(),",
     "tests": [
-      "test/peerplaque.test.js",
-      "test/worldhover.test.js"
+      "test/player/peerplaque.test.js",
+      "test/systems/worldhover.test.js"
     ]
   },
   {
@@ -233,7 +233,7 @@
     "old": "export function raceWinner({",
     "new": "export function raceWinner({ peer: _peerUnused, ...rest } = {}) { return raceWinnerInner(rest); }\nfunction raceWinnerInner({",
     "tests": [
-      "test/peerplaque.test.js"
+      "test/player/peerplaque.test.js"
     ],
     "equivalent": false
   }

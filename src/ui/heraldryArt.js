@@ -141,7 +141,7 @@ export const BANNER_BORDER_W = 16;
 export const BANNER_DEVICE = Object.freeze({ x: 14, y: 84, scale: 0.72 });
 
 /** AUDIT2 GUILD2 G2: a divided field's two clip paths - `${clip}d` the division's part, `${clip}c` the rest (even-odd). */
-const partClips = (clip, divD, box) => `<clipPath id="${clip}d"><path d="${divD}"/></clipPath>`
+export const partClips = (clip, divD, box) => `<clipPath id="${clip}d"><path d="${divD}"/></clipPath>`
   + `<clipPath id="${clip}c"><path d="${divisionComplement(divD, box.w, box.h)}" clip-rule="evenodd"/></clipPath>`;
 /** A device's parts as SVG, in `fgHex` and `bgHex`. */
 function deviceSvg(device, fgHex, bgHex) {
@@ -158,8 +158,9 @@ const partSvg = (p, hex) => (p.w
  * second colour) is painted the first colour inside the first part and the second inside the division's - in the parts'
  * own order, so a pupil drawn after its socket still lies on it. AUDIT2 GUILD2 G2: each colour clipped to its own part,
  * never one over the other (divisionComplement). Plain arms draw exactly as GUILD1d's (every cached picture unmoved).
+ * SHIP-COLOURS: a ship's flag lays it too (ui/flagArt.js).
  */
-function deviceLayers(device, inkHex, fieldHex, transform, div = null) {
+export function deviceLayers(device, inkHex, fieldHex, transform, div = null) {
   if (!div) return `<g transform="${transform}">${deviceSvg(device, inkHex, fieldHex)}</g>`;
   const inPart = (id, p, hex) => `<g clip-path="url(#${id})"><g transform="${transform}">${partSvg(p, hex)}</g></g>`;
   return (DEVICE_ART[device] ?? []).map((p) => (p.bg
@@ -171,7 +172,7 @@ function deviceLayers(device, inkHex, fieldHex, transform, div = null) {
  * as deviceLayers): a divided field's hole painted in each colour inside its own part (`div` the division's Path2D in
  * the cloth's space, `comp` its complement's - AUDIT2 GUILD2 G2: even-odd - and `f2` the second colour).
  */
-function drawDevice(ctx, P, device, inkHex, fieldHex, at, div = null, f2 = null, comp = null) {
+export function drawDevice(ctx, P, device, inkHex, fieldHex, at, div = null, f2 = null, comp = null) {
   ctx.save();
   ctx.translate(at.x, at.y);
   ctx.scale(at.scale, at.scale);
@@ -299,7 +300,7 @@ export function shieldSvg(heraldry, { size = 16 } = {}) {
 }
 
 /**
- * AUDIT HERALDRY H4: THE SHIELD ON A CANVAS - the Overworld's name face (ui/travelViewHud.js badgeSprite) draws on a
+ * AUDIT HERALDRY H4: THE SHIELD ON A CANVAS - the Overworld's name face (ui/travel/travelViewHud.js badgeSprite) draws on a
  * canvas, not the DOM: shieldSvg's drawing into `ctx` at (`x`, `y`), `size` pixels wide - the field (GUILD2c: a divided
  * one's second part in `field2`), the border inside the edge, the device in its own colour (the border's unless `charge`
  * names one) on the field, its holes the field beneath in each part, the dark edge. Drawn once into a kept sprite, never

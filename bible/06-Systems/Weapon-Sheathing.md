@@ -109,7 +109,7 @@ NiBSAnimationNode over an empty sheath); twelve carry quivers of five
 to seven slots (the bows and crossbows); the three addons carry the
 same thirteen marked nodes, and `Bip01 AttachWeapon` unmarked.
 
-**Pins:** test/ws1_sheathing.test.js (12). tools/mutants/ws1.json (35).
+**Pins:** test/formats/morrowind/ws1_sheathing.test.js (12). tools/mutants/ws1.json (35).
 
 ## AUDIT-WS (2026-09-17, Mac: "Please audit this")
 
@@ -160,5 +160,6 @@ the cites. Six findings, all fixed and pinned:
   one-line chunks, a request apiece; the table is eager now, the URLs
   in the module that owns them.
 
-Unchanged and still true: third person only; the enchantment glow
-unported; not seen on a GPU here.
+Unchanged and still true: third person only; the holstered weapon's
+enchantment glow unported (WEAPON-GLOW1 draws the hand's own,
+`05-Combat/Weapon-Glow.md`); not seen on a GPU here.

@@ -1,0 +1,15 @@
+[
+  {"name": "CHAT-FIND-HUB-the-box-never-asks", "file": "src/ui/chatPanel.js", "old": "    src?.askFind?.(query);\n", "new": "", "tests": ["test/net/chat_find.test.js"]},
+  {"name": "CHAT-FIND-HUB-the-answer-unread", "file": "src/net/roster.js", "old": "'all', { value: withHubFound(_lastAll, session) });", "new": "'all', { value: _lastAll });", "tests": ["test/net/chat_find.test.js"]},
+  {"name": "CHAT-FIND-HUB-a-known-player-twice", "file": "src/net/roster.js", "old": "    if (!p || typeof p.id !== 'string' || have.has(p.id)) continue;", "new": "    if (!p || typeof p.id !== 'string') continue;", "tests": ["test/net/chat_find.test.js"]},
+  {"name": "CHAT-FIND-HUB-the-answer-unsorted", "file": "src/net/roster.js", "old": "Object.freeze(base.concat(more).sort(byNameThenTag))", "new": "Object.freeze(base.concat(more))", "tests": ["test/net/chat_find.test.js"]},
+  {"name": "CHAT-FIND-HUB-a-stale-memo", "file": "src/net/roster.js", "old": "  if (f === _hubOf && base === _hubBase) return _hubOut;", "new": "  if (_hubOf) return _hubOut;", "tests": ["test/net/chat_find.test.js"]},
+  {"name": "CHAT-FIND-HUB-asked-though-everyone-is-known", "file": "src/net/online.js", "old": "    if (this.roomCount == null || this.roomCount <= this.peers.size + this.hubOnline.size + 1) return false;", "new": "", "tests": ["test/net/scale5c.test.js"]},
+  {"name": "CHAT-FIND-HUB-no-floor", "file": "src/net/online.js", "old": "    if (now - this._boxAskAt < HUB_FIND_ASK_MS) return false;", "new": "", "tests": ["test/net/scale5c.test.js"]},
+  {"name": "CHAT-FIND-HUB-the-answer-said-as-a-line", "file": "src/net/online.js", "old": "      if (!box) this._deliver('found',", "new": "      if (box || !box) this._deliver('found',", "tests": ["test/net/scale5c.test.js"]},
+  {"name": "CHAT-FIND-HUB-a-busy-answer-kept", "file": "src/net/online.js", "old": "      if (m.busy !== 1) this.hubFound = { q: m.q, l, at: this._now() };", "new": "      this.hubFound = { q: m.q, l, at: this._now() };", "tests": ["test/net/scale5c.test.js"]},
+  {"name": "CHAT-FIND-HUB-the-answer-outliving-the-box", "file": "src/net/online.js", "old": "    if (!t) { this.hubFound = null; return false; }", "new": "    if (!t) return false;", "tests": ["test/net/scale5c.test.js"]},
+  {"name": "CHAT-FIND-HUB-a-tag-asked", "file": "src/net/online.js", "old": "    if (t.startsWith('#') || !this.findOk ||", "new": "    if (!this.findOk ||", "tests": ["test/net/scale5c.test.js"]},
+  {"name": "CHAT-FIND-HUB-twice-in-flight", "file": "src/net/online.js", "old": "    if (this._boxAsks.has(t)) return false;   // asked, the answer on its way", "new": "", "tests": ["test/net/scale5c.test.js"]},
+  {"name": "CHAT-FIND-HUB-a-find-of-the-same-query-swallowed", "file": "src/net/online.js", "old": "    this._boxAsks.delete(t);   // CHAT-FIND-HUB: a /find of the box's own query - its answer is said as a line\n", "new": "", "tests": ["test/net/scale5c.test.js"]}
+]

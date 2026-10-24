@@ -4,7 +4,7 @@
 //
 // ── WHY IT IS A SCREEN AND NOT A CHARGEN STAGE ────────────────────
 // The wizard's stages are DFU's WizardStages, in both skins
-// (ui/chargen.js's STATES, ui/enhancedChargen.js's STAGE_RAIL), and a
+// (ui/chargen.js's STATES, ui/enhanced/enhancedChargen.js's STAGE_RAIL), and a
 // port-invented stage in that list would be a stage with no DFU line
 // behind it - in two lists that have to be kept in step. So this is
 // not a stage: it is a screen the chargen DOOR puts up after the
@@ -32,7 +32,7 @@
 import { audio } from '../systems/audio.js';
 import { SOUND } from '../systems/soundClips.js';
 import { drawText, measureText } from './text.js';
-import { nativeMetrics, NATIVE_W } from './nativePanel.js';
+import { nativeMetrics, NATIVE_W } from './native/nativePanel.js';
 import {
   LEVELUP_BONUS_POOL_MIN, LEVELUP_BONUS_POOL_MAX, LEVELUP_SKILL_SUM_PER_LEVEL,
 } from '../systems/advancement.js';
@@ -40,7 +40,9 @@ import {
   LEVELING_CLASSIC, LEVELING_VIRTUE, levelingSettings, LEVELUP_TOTAL, ONLINE_LEVELING_SYSTEM,
 } from '../systems/oblivionLeveling.js';
 import { isEnhanced } from '../systems/uiSkin.js';   // LEVEL-PLUS: the Enhanced Plus face
-import { drawLevelingFace, releaseLevelingFace } from './enhancedLevelingChoice.js';
+import { drawLevelingFace, releaseLevelingFace } from './enhanced/enhancedLevelingChoice.js';
+import { ONLINE_BONUS_POOL } from '../systems/levelEven.js';   // LEVEL-EVEN: online, every level's five
+import { t } from '../systems/textManager.js';
 
 /** LEVEL-ONLINE-2: why Oblivion's option is shut on the online page (oblivionLeveling.js newCharacterLevelingSystem). */
 export const LEVELING_OFFLINE_ONLY_NOTE = 'Offline characters only';
@@ -76,7 +78,7 @@ export function levelingOptions(s = null, { online = false } = {}) {
         'Level with your skills, the classic way.',
         'Primary, major and minor skills make a sum;',
         `every ${LEVELUP_SKILL_SUM_PER_LEVEL} points of it is a level.`,
-        `Each level rolls ${LEVELUP_BONUS_POOL_MIN} to ${LEVELUP_BONUS_POOL_MAX} attribute points.`,
+        online ? t('leveling.classic.poolOnline', 'Each level gives {n} attribute points.', { n: ONLINE_BONUS_POOL }) : `Each level rolls ${LEVELUP_BONUS_POOL_MIN} to ${LEVELUP_BONUS_POOL_MAX} attribute points.`,   // LEVEL-EVEN
       ]),
     }),
     Object.freeze({
@@ -84,15 +86,15 @@ export function levelingOptions(s = null, { online = false } = {}) {
       title: 'Oblivion Remastered',
       ...gate(LEVELING_VIRTUE),
       lines: Object.freeze([
-        'Level with a bar, as Oblivion Remastered.',
+        'Level with a bar, as in Oblivion Remastered.',
         'Every skill you raise fills it, your best',
-        `fastest. At ${LEVELUP_TOTAL} you level; the rest rolls`,
+        `skills fastest. At ${LEVELUP_TOTAL} you level; the rest`,
         purse > 0
-          ? `over. Each level hands you ${virtues},`
-          : 'over. You have set the purse to nothing,',
+          ? `rolls over. Each level gives you ${virtues},`
+          : 'rolls over. Attribute points are set to 0,',
         purse > 0
-          ? `to spend on at most ${set.maxUpdatableAttribute} attributes.`
-          : 'so levelling raises only your health.',
+          ? `to spend on up to ${set.maxUpdatableAttribute} attributes.`
+          : 'so leveling raises only your health.',
       ]),
     }),
   ]);
@@ -156,7 +158,7 @@ export const LEVELING_SCREEN_TEXT = Object.freeze({ title: 'HOW WILL YOU GROW?',
 export class LevelingChoiceScreen {
   /** @param {(id: string) => void} onAnswer */
   /** LEGACY2: `options`, `text` and the Plus face's `faceText` / `faceTags` let another one-time question of a new
-   *  character (ui/legacyModelChoice.js, Project Legacy's model) wear this same screen - its cursor, its one answer,
+   *  character (ui/legacy/legacyModelChoice.js, Project Legacy's model) wear this same screen - its cursor, its one answer,
    *  its keys and clicks, and both faces - rather than a copy of it. Without them it is the leveling question. */
   constructor(onAnswer, { settings = null, online = false, options = null, text = null, faceText = null, faceTags = null, stacked = false } = {}) {
     this._onAnswer = onAnswer;
@@ -221,7 +223,7 @@ export class LevelingChoiceScreen {
    *  sends. This screen sits at the END of the chargen window, whose
    *  earlier stage IS a choice window taking raw codes, so a caller
    *  walking the whole wizard with codes must not fall off a cliff at
-   *  the last screen (test/audit17f.test.js's walk does exactly that). */
+   *  the last screen (test/systems/audit17f.test.js's walk does exactly that). */
   static ACTIONS = Object.freeze({
     // LEGACY-CHOICE: each way its own - with two options either moves between them, with three they are a direction
     up: 'up', ArrowUp: 'up', down: 'down', ArrowDown: 'down',
@@ -276,7 +278,7 @@ export class LevelingChoiceScreen {
    * mapped the pointer onto the canvas face's ROWS - which the Plus face
    * does not draw (its tiles stand side by side) - and the highlight
    * followed rows nobody could see. While the face is up its tiles own
-   * the pointer (ui/enhancedLevelingChoice.js: pointerenter and click),
+   * the pointer (ui/enhanced/enhancedLevelingChoice.js: pointerenter and click),
    * as ui/yesNoBox.js's card owns its presses.
    */
   click(vx, vy) {
@@ -317,7 +319,7 @@ export class LevelingChoiceScreen {
    * nativeMetrics of that returns ox = oy = 0.
    */
   draw(renderer, canvas, font) {
-    // LEVEL-PLUS: on the Enhanced Plus skin the question wears the Plus window (ui/enhancedLevelingChoice.js); the
+    // LEVEL-PLUS: on the Enhanced Plus skin the question wears the Plus window (ui/enhanced/enhancedLevelingChoice.js); the
     // canvas below is the classic skin's, and the fallback for a host with no document.
     this._faced = false;
     if (!this._fired && isEnhanced() && typeof document !== 'undefined' && drawLevelingFace(this)) { this._faced = true; return; }

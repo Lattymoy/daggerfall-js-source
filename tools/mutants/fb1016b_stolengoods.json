@@ -1,0 +1,542 @@
+[
+  {
+    "name": "FB1016-STOLEN-GOODS-native-steal-unmarked",
+    "file": "src/ui/native/nativeTrade.js",
+    "old": "      markStolen(this.basket);   // STOLEN-GOODS: the lot is stolen - marked before TransferAll merges it into the pack's stacks\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-enhanced-steal-unmarked",
+    "file": "src/ui/enhanced/enhancedTrade.js",
+    "old": "    markStolen(items);   // STOLEN-GOODS: the basket, or the one piece picked - marked before it merges into the pack's stacks\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-sold-stolen-shelved",
+    "file": "src/systems/stolenGoods.js",
+    "old": "  if (isStolen(item)) return false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-mark-not-true",
+    "file": "src/systems/stolenGoods.js",
+    "old": "if (it && typeof it === 'object' && !Array.isArray(it)) it[STOLEN_MARK] = true;",
+    "new": "if (it && typeof it === 'object' && !Array.isArray(it)) it[STOLEN_MARK] = 1;",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-count-a-stack-as-nothing",
+    "file": "src/systems/stolenGoods.js",
+    "old": "it.stackCount > 0 ? it.stackCount : 1), 0);",
+    "new": "it.stackCount > 0 ? it.stackCount : 0), 0);",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-take-unmarked",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "(moved) => { takenFromKeeping(stolenFrom, item, moved); returnedToKeeping(returnTo, item, moved); },",
+    "new": "(moved) => { returnedToKeeping(returnTo, item, moved); },",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ],
+    "note": "STOLEN-GOODS AUDIT S1 (re-aimed by content): the mark rides the owner's keeping now (`stolenFrom`, `returnTo`)."
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-marked-after-the-merge",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "(moved) => { takenFromKeeping(stolenFrom, item, moved); returnedToKeeping(returnTo, item, moved); },\n    (moved, held) => landedInKeeping(returnTo, item, moved, held));",
+    "new": "(moved) => { returnedToKeeping(returnTo, item, moved); },\n    (moved, held) => { landedInKeeping(returnTo, item, moved, held); takenFromKeeping(stolenFrom, item, held); });",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ],
+    "note": "STOLEN-GOODS AUDIT S1 (re-aimed by content): the mark rides the owner's keeping now (`stolenFrom`, `returnTo`)."
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-put-back-kept",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "(moved) => { takenFromKeeping(stolenFrom, item, moved); returnedToKeeping(returnTo, item, moved); },",
+    "new": "(moved) => { takenFromKeeping(stolenFrom, item, moved); },",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ],
+    "note": "STOLEN-GOODS AUDIT S1 (re-aimed by content): the mark rides the owner's keeping now (`stolenFrom`, `returnTo`)."
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-every-loot-a-theft",
+    "file": "src/systems/inventorySession.js",
+    "old": "  return remoteTargetType(deps, state) === REMOTE_TARGET_TYPES.Loot && keeping instanceof Set ? keeping : null;",
+    "new": "  return remoteTargetType(deps, state) === REMOTE_TARGET_TYPES.Loot ? (keeping instanceof Set ? keeping : new Set(deps.loot?.items?.() ?? [])) : null;",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ],
+    "note": "STOLEN-GOODS AUDIT S1 (re-aimed by content): the mark rides the owner's keeping now (`stolenFrom`, `returnTo`)."
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-the-wagon-a-theft",
+    "file": "src/systems/inventorySession.js",
+    "old": "  return remoteTargetType(deps, state) === REMOTE_TARGET_TYPES.Loot && keeping instanceof Set ? keeping : null;",
+    "new": "  return keeping instanceof Set ? keeping : null;",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ],
+    "note": "STOLEN-GOODS AUDIT S1 (re-aimed by content): the mark rides the owner's keeping now (`stolenFrom`, `returnTo`)."
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-native-take-unwired",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "          stolenFrom: theftTarget(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }) });",
+    "new": "          stolenFrom: null });",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ],
+    "note": "STOLEN-GOODS AUDIT S1 (re-aimed by content): the mark rides the owner's keeping now (`stolenFrom`, `returnTo`)."
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-native-put-back-unwired",
+    "file": "src/ui/native/nativeInventory.js",
+    "old": "          returnTo: theftTarget(this.hooks, { usingWagon: this.usingWagon, chooseOne: this.chooseOne }) });",
+    "new": "          returnTo: null });",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ],
+    "note": "STOLEN-GOODS AUDIT S1 (re-aimed by content): the mark rides the owner's keeping now (`stolenFrom`, `returnTo`)."
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-enhanced-take-unwired",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "toPlayer: true, stolenFrom: theftTarget(deps, sessionState()) });",
+    "new": "toPlayer: true, stolenFrom: null });",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ],
+    "note": "STOLEN-GOODS AUDIT S1 (re-aimed by content): the mark rides the owner's keeping now (`stolenFrom`, `returnTo`)."
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-enhanced-put-back-unwired",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "fromLocal: true, returnTo: theftTarget(deps, sessionState()) });",
+    "new": "fromLocal: true, returnTo: null });",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ],
+    "note": "STOLEN-GOODS AUDIT S1 (re-aimed by content): the mark rides the owner's keeping now (`stolenFrom`, `returnTo`)."
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-enhanced-card-silent",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (isStolen(picked)) into.append(el('p', 'boundline', stolenLine()));   // STOLEN-GOODS: what a counter and a court do with it\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-stolen-merged-into-clean",
+    "file": "src/systems/inventory.js",
+    "old": "    isStolen(a) === isStolen(b) &&",
+    "new": "    true &&",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-split-clean",
+    "file": "src/systems/inventory.js",
+    "old": "  if (isStolen(stack)) markStolen([picked]);   // STOLEN-GOODS: and the theft's (systems/stolenGoods.js) - nor is a split\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-undeclared",
+    "file": "src/systems/item/itemFields.js",
+    "old": "  stolen: bool(),\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-a-receivers-mark",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "export const RECEIVER_MARKS = Object.freeze(['equipSlot', 'questItem', 'acquired', 'wagonEntry', 'horseBond', 'horseFed']);",
+    "new": "export const RECEIVER_MARKS = Object.freeze(['equipSlot', 'questItem', 'acquired', 'wagonEntry', 'horseBond', 'horseFed', 'stolen']);",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-worn-left-in-its-slot",
+    "file": "src/systems/court.js",
+    "old": "      if (isEquipped(it)) unequipItem(player, it);\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-torch-left-lit",
+    "file": "src/systems/court.js",
+    "old": "      if (player.lightSource === it) setLightSource(player, null);\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-bag-unsearched",
+    "file": "src/systems/court.js",
+    "old": "  for (const list of [player?.items, player?.bagItems]) {",
+    "new": "  for (const list of [player?.items]) {",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-nothing-taken",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    if (trial) trial.taken = confiscateStolen(playerEntity);\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-taken-at-every-release",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    if (trial) trial.released = true;   // PLEA-LOOP: the court's last act - no step of this trial acts after it\n",
+    "new": "    if (trial) trial.released = true;   // PLEA-LOOP: the court's last act - no step of this trial acts after it\n    if (trial && !trial.taken) trial.taken = confiscateStolen(playerEntity);\n",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-line-unsaid",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    if (trial?.taken?.length) say(confiscatedText(piecesOf(trial.taken)));   // STOLEN-GOODS: what the verdict took (finish)\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-counted-by-records",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "say(confiscatedText(piecesOf(trial.taken)));",
+    "new": "say(confiscatedText(trial.taken.length));",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-said-under-the-prison-screen",
+    "file": "src/scenes/arrestFlow.js",
+    "old": "    if (trial) trial.taken = confiscateStolen(playerEntity);\n",
+    "new": "    if (trial) { trial.taken = confiscateStolen(playerEntity); if (trial.taken.length) say(confiscatedText(piecesOf(trial.taken))); trial.taken = []; }\n",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-counter-shelves-it",
+    "file": "src/scenes/worldModes.js",
+    "old": "        landSold(shelf.items, it);   // sold goods land on the open shelf - STOLEN-GOODS: an honest piece; a stolen one is gone",
+    "new": "        shelf.items.push(it);   // sold goods land on the open shelf - STOLEN-GOODS: an honest piece; a stolen one is gone",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-keyed-list-shelves-it",
+    "file": "src/scenes/worldModes.js",
+    "old": "    landSold(shelf.items, it);   // sold goods land on the open shelf (DFU's remoteItems) - STOLEN-GOODS: an honest piece; a stolen one is gone",
+    "new": "    shelf.items.push(it);   // sold goods land on the open shelf (DFU's remoteItems) - STOLEN-GOODS: an honest piece; a stolen one is gone",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-shut-shelf-unmarked",
+    "file": "src/scenes/worldModes.js",
+    "old": "loot: { items: () => shelf.items, stolenFrom: shelfBefore },",
+    "new": "loot: { items: () => shelf.items },",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ],
+    "note": "STOLEN-GOODS AUDIT S1 (re-aimed by content): the mark rides the owner's keeping now (`stolenFrom`, `returnTo`)."
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-strangers-cupboard-unmarked",
+    "file": "src/scenes/worldModes.js",
+    "old": "storage: !privateProperty, stolenFrom: before },",
+    "new": "storage: !privateProperty },",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ],
+    "note": "STOLEN-GOODS AUDIT S1 (re-aimed by content): the mark rides the owner's keeping now (`stolenFrom`, `returnTo`)."
+  },
+  {
+    "name": "FB1016-STOLEN-GOODS-own-cupboard-a-theft",
+    "file": "src/scenes/worldModes.js",
+    "old": "            const before = privateProperty ? new Set(c.items ?? []) : null;",
+    "new": "            const before = new Set(c.items ?? []);",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ],
+    "note": "STOLEN-GOODS AUDIT S1 (re-aimed by content): the mark rides the owner's keeping now (`stolenFrom`, `returnTo`)."
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S1-every-take-marked",
+    "file": "src/systems/stolenGoods.js",
+    "old": "  if (!(keeping instanceof Set) || !keeping.has(source)) return false;\n  markStolen([moved]);",
+    "new": "  if (!(keeping instanceof Set)) return false;\n  markStolen([moved]);",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S1-every-put-cleared",
+    "file": "src/systems/stolenGoods.js",
+    "old": "  if (!(keeping instanceof Set) || !keeping.has(source)) return false;\n  clearStolen(moved);",
+    "new": "  if (!(keeping instanceof Set)) return false;\n  clearStolen(moved);",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S1-the-split-outside-the-keeping",
+    "file": "src/systems/stolenGoods.js",
+    "old": "  markStolen([moved]);\n  keeping.add(moved);\n",
+    "new": "  markStolen([moved]);\n",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S1-the-split-source-unasked",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "(moved) => { takenFromKeeping(stolenFrom, item, moved);",
+    "new": "(moved) => { takenFromKeeping(stolenFrom, moved, moved);",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S1-a-merge-left-in-the-keeping",
+    "file": "src/systems/stolenGoods.js",
+    "old": "  if (held !== moved) keeping.delete(moved);\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S1-where-it-landed-unasked",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "    (moved, held) => landedInKeeping(returnTo, item, moved, held));",
+    "new": "    (moved, held) => null);",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S1-the-coin-uncounted",
+    "file": "src/systems/item/itemTransfer.js",
+    "old": "    takenFromKeeping(stolenFrom, item, coin);",
+    "new": "    void coin;",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S1-the-basket-by-the-list",
+    "file": "src/systems/theft.js",
+    "old": "  return [...(before ?? [])].filter((it) => !kept.has(it));",
+    "new": "  return Array.isArray(before) ? before.filter((it) => !kept.has(it)) : [];",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js",
+      "test/systems/theft.test.js"
+    ]
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S1-the-shelf-by-count",
+    "file": "src/systems/theft.js",
+    "old": "export const shopShelfTheft = (keeping, after) => theftBasket(keeping, after).length > 0;",
+    "new": "export const shopShelfTheft = (keeping, after) => after.length < keeping.size;",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js",
+      "test/systems/theft.test.js"
+    ]
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S1-the-host-shelf-by-count",
+    "file": "src/scenes/worldModes.js",
+    "old": "if (shopShelfTheft(shelfBefore, shelf.items)) tallyCrimeGuildRequirements(playerEntity, true, 1);",
+    "new": "if (shelf.items.length < shelfBefore.size) tallyCrimeGuildRequirements(playerEntity, true, 1);",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js",
+      "test/systems/theft.test.js"
+    ]
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S1-the-shelf-keeping-a-count",
+    "file": "src/scenes/worldModes.js",
+    "old": "      const shelfBefore = new Set(shelf.items);",
+    "new": "      const shelfBefore = new Set([...shelf.items]); shelfBefore.clear();",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S2-the-bag-goods-stranded",
+    "file": "src/systems/court.js",
+    "old": "  if (Array.isArray(player?.bagItems) && player.bagItems.length && !hasBag(player.items)) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S2-a-bag-of-ones-own-emptied",
+    "file": "src/systems/court.js",
+    "old": "  if (Array.isArray(player?.bagItems) && player.bagItems.length && !hasBag(player.items)) {",
+    "new": "  if (Array.isArray(player?.bagItems) && player.bagItems.length) {",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S3-the-rooms-word-kept",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "    for (const it of items) clearStolen(it);\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S3-the-rooms-word-said",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "r: peerHanded(t.items).map((it) => clearStolen({ ...it })),",
+    "new": "r: peerHanded(t.items).map((it) => ({ ...it })),",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S3-the-buy-kept",
+    "file": "src/systems/tradeModes.js",
+    "old": "  for (const it of items ?? []) clearStolen(it);\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S4-the-merchantman-clean",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (lawfulGoods(entry)) markStolen(entry.prize.hold);\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ],
+    "note": "RE-AIMED BY CONTENT (S4's flotsam, decided at the merge): the boarding's test now navalHost.js lawfulGoods, shared with the casks of a ship I sank."
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S4-every-prize-stolen",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  const lawfulGoods = (entry) => !entry.ether && !!NAVAL_FACTIONS[entry.ship.cls.faction]?.lawful;",
+    "new": "  const lawfulGoods = (entry) => !entry.ether;",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ],
+    "note": "RE-AIMED BY CONTENT (S4's flotsam, decided at the merge): the boarding's test now navalHost.js lawfulGoods, shared with the casks of a ship I sank."
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S4-the-veils-stolen",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  const lawfulGoods = (entry) => !entry.ether && !!NAVAL_FACTIONS[entry.ship.cls.faction]?.lawful;",
+    "new": "  const lawfulGoods = (entry) => !!NAVAL_FACTIONS[entry.ship.cls.faction]?.lawful;",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ],
+    "note": "RE-AIMED BY CONTENT (S4's flotsam, decided at the merge): the boarding's test now navalHost.js lawfulGoods, shared with the casks of a ship I sank."
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S4-the-caravan-unmarked",
+    "file": "src/scenes/world.js",
+    "old": "containerImage: () => CONTAINER_IMAGES.Chest, playerOwned: false, stolenFrom: new Set(items) } });",
+    "new": "containerImage: () => CONTAINER_IMAGES.Chest, playerOwned: false } });",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "FB1016B-SG-AUDIT-S6-the-patron-a-fence",
+    "file": "src/net/patronLaw.js",
+    "old": "  && item[PATRON_COUNTER_MARK] !== true && item.stolen !== true;",
+    "new": "  && item[PATRON_COUNTER_MARK] !== true;",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "STOLEN-AUDIT-S4-flotsam-the-casks-clean",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (by === myId() && lawfulGoods(entry)) stolenCasks.add(id);   // STOLEN-GOODS AUDIT: her lots her owner's, as boarded",
+    "new": "",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "STOLEN-AUDIT-S4-flotsam-every-cask-stolen",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (by === myId() && lawfulGoods(entry)) stolenCasks.add(id);   // STOLEN-GOODS AUDIT: her lots her owner's, as boarded",
+    "new": "      if (by === myId()) stolenCasks.add(id);   // STOLEN-GOODS AUDIT: her lots her owner's, as boarded",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "STOLEN-AUDIT-S4-flotsam-another-s-sinking-mine",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (by === myId() && lawfulGoods(entry)) stolenCasks.add(id);   // STOLEN-GOODS AUDIT: her lots her owner's, as boarded",
+    "new": "      if (lawfulGoods(entry)) stolenCasks.add(id);   // STOLEN-GOODS AUDIT: her lots her owner's, as boarded",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "STOLEN-AUDIT-S4-flotsam-hauled-clean",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (e.id != null && stolenCasks.delete(e.id)) markStolen(items);",
+    "new": "    if (e.id != null) stolenCasks.delete(e.id);",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  },
+  {
+    "name": "STOLEN-AUDIT-S4-flotsam-stowed-clean",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (stolenCasks.delete(f.id)) markStolen(got);",
+    "new": "      stolenCasks.delete(f.id);",
+    "tests": [
+      "test/systems/fb1016b_stolengoods.test.js"
+    ]
+  }
+]

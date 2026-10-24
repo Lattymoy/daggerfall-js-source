@@ -1,0 +1,38 @@
+[
+  {
+    "name": "FIRM2-attr-doubled",
+    "file": "src/net/firmament/firmamentTree.js",
+    "old": "if (ATTRS.includes(k)) put(`pct.${k}`, v);",
+    "new": "if (ATTRS.includes(k)) put(`pct.${k}`, v * 2);",
+    "tests": [
+      "test/net/firmament/firm2_balance.test.js"
+    ]
+  },
+  {
+    "name": "FIRM2-skill-doubled",
+    "file": "src/net/firmament/firmamentTree.js",
+    "old": "else if (k.startsWith('skill.')) put(`skillPct.${k.slice(6)}`, v);",
+    "new": "else if (k.startsWith('skill.')) put(`skillPct.${k.slice(6)}`, v * 2);",
+    "tests": [
+      "test/net/firmament/firm2_balance.test.js"
+    ]
+  },
+  {
+    "name": "FIRM2-keystone-over-cap",
+    "file": "src/net/firmament/firmamentTree.js",
+    "old": "K(\"Night Mother's Embrace\", { unawareDmg: 19,",
+    "new": "K(\"Night Mother's Embrace\", { unawareDmg: 30,",
+    "tests": [
+      "test/net/firmament/firm2_balance.test.js"
+    ]
+  },
+  {
+    "name": "FIRM2-life-keystone-over-cap",
+    "file": "src/net/firmament/firmamentTree.js",
+    "old": "K('Merchant Prince', { 'skill.Mercantile': 11,",
+    "new": "K('Merchant Prince', { 'skill.Mercantile': 20,",
+    "tests": [
+      "test/net/firmament/firm2_balance.test.js"
+    ]
+  }
+]

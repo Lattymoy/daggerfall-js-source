@@ -1,0 +1,760 @@
+[
+  {
+    "name": "AUDIT EG V L1-1: a duel owned by no lord (its owner's kit never ends it)",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "F.mem.challenge = { by: L.i, subs:",
+    "new": "F.mem.challenge = { by: 0, subs:",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-1: Garoth unwarded while his due duel waits on another's ring",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (ch0 && ch0.by !== L.i) { if (garoth && now >= (L.duelAt ?? Infinity)) ward(F, L, 500, now, out); return; }",
+    "new": "if (ch0 && ch0.by !== L.i) { return; }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-1: a duel ended by any lord (the Armsmaster's fall ends Garoth's)",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  if (!ch || ch.by !== L.i) return;\n  for (const s of ch.subs) egUnmark(F, s, 6);",
+    "new": "  if (!ch) return;\n  for (const s of ch.subs) egUnmark(F, s, 6);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-1: the tally any lord's (blows on the Armsmaster count to Garoth's duel)",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (ch && ch.by === L.i && ch.subs.includes(sub)) { ch.dealt += got;",
+    "new": "if (ch && ch.subs.includes(sub)) { ch.dealt += got;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-1: a fallen lord's ring left standing",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  endChallenge(F, L, now, out, false, true);   // AUDIT EG V (lane1 #1)",
+    "new": "  // AUDIT EG V (lane1 #1)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-16: braziers at n = 1",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const need = garoth || open ? 0 :",
+    "new": "const need = garoth ? 0 :",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-16: a ring at n = 1",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "    if (!open) { kitPlace(F, L, cx + 2, cz, now); F.pg.ring = [cx, cz, 6]; }",
+    "new": "    { kitPlace(F, L, cx + 2, cz, now); F.pg.ring = [cx, cz, 6]; }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-16: the open duel ended by its missing braziers",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "(ch.need > 0 && !egObjsOf(F, 'brazier').length)",
+    "new": "(!egObjsOf(F, 'brazier').length)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-16: no Challenge at n = 1 (the open duel unbuilt)",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "    const open = !garoth && ctx.n < 2, two",
+    "new": "    if (!garoth && ctx.n < 2) return;\n    const open = false, two",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-2: the last lord's aspect over every lord of the fight",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  if (asp) L.asp = asp.id;",
+    "new": "  if (asp) for (const x of [...egLordsOf(F), L]) x.asp = asp.id;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-2: a mirror's aspect not its lord's",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (mi) { mi.up2 = true; mi.nextAt = now + 2000; mi.shareX = 0.5; mi.by = L.i; mi.asp = L.asp; }",
+    "new": "if (mi) { mi.up2 = true; mi.nextAt = now + 2000; mi.shareX = 0.5; mi.by = L.i; }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-3: the law written fresh for each lord",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  const D0 = { ...(ctx.decrees ?? {}), ...(F.mem.lawD ?? {}) };",
+    "new": "  const D0 = { ...(ctx.decrees ?? {}) };",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-11: the standards stood with him asleep",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  if (asp) L.asp = asp.id;",
+    "new": "  if (asp) L.asp = asp.id;\n  if (key === 'kynmarcher') KITS.kynmarcher.wake(F, spec, L, now, out);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-4: Hearts Stilled by any lord's phase words",
+    "file": "src/net/eliteGates/egFeats.js",
+    "old": "test: (s, F) => !(s.relit > 0) && (F?.bodies ?? []).some((b) => b.key === 'colossus' && (b.kneelUntil ?? 0) > 0) }),",
+    "new": "test: (s) => !(s.relit > 0) && (s.phase ?? 0) >= 2 }),",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js",
+      "test/net/eliteGates/egeco_feats.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-5: No Ground Conceded by any object broken",
+    "file": "src/net/eliteGates/egFeats.js",
+    "old": "test: (s, F) => (F?.mem?.broke?.banner ?? 0) >= 3 }),",
+    "new": "test: (s) => (s.broken ?? 0) >= 3 }),",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-5: every break counted a banner's",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  (F.mem.broke ??= {})[o.t] = (F.mem.broke[o.t] ?? 0) + 1;",
+    "new": "  (F.mem.broke ??= {}).banner = (F.mem.broke.banner ?? 0) + 1;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-6: Together within twice the window",
+    "file": "src/net/eliteGates/egFeats.js",
+    "old": "Math.abs(T[0].fellAt - T[1].fellAt) <= EG_FEAT_TWINS_MS;",
+    "new": "Math.abs(T[0].fellAt - T[1].fellAt) <= EG_FEAT_TWINS_MS * 2;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js",
+      "test/net/eliteGates/egeco_feats.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-7: a lord's turn unsaid",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "    egFace(F, L, Math.atan2(target.x - L.x, target.z - L.z), now);",
+    "new": "    L.yaw = Math.atan2(target.x - L.x, target.z - L.z);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-7: an add's turn unsaid",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "  egFace(F, a, yaw, now);   // AUDIT EG V (lane1 #7)",
+    "new": "  a.yaw = yaw;   // AUDIT EG V (lane1 #7)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-7: a turn says no walk",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "  F.moves.push(m ? [b.i, m.x, m.z, m.tx, m.tz, m.v, m.at, m.y, m.ty, egYawOf(b)]",
+    "new": "  void (m ? [b.i, m.x, m.z, m.tx, m.tz, m.v, m.at, m.y, m.ty, egYawOf(b)]",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-7: the facing off the row",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "b.ws ?? 0, b.wsAt ?? 0, b.sz ?? 0, egYawOf(b)];",
+    "new": "b.ws ?? 0, b.wsAt ?? 0, b.sz ?? 0, 0];",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-7: a walk's facing unsaid",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "  F.moves.push([b.i, b.mv.x, b.mv.z, b.mv.tx, b.mv.tz, speed, now, y, toY, egYawOf(b)]);",
+    "new": "  F.moves.push([b.i, b.mv.x, b.mv.z, b.mv.tx, b.mv.tz, speed, now, y, toY, 0]);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-7: a stop's facing unsaid",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "  b.x = r2(b.x); b.z = r2(b.z); b.y = r2(b.y ?? 0);\n  F.moves.push([b.i, b.x, b.z, b.x, b.z, 0, now, b.y, b.y, egYawOf(b)]);",
+    "new": "  b.x = r2(b.x); b.z = r2(b.z); b.y = r2(b.y ?? 0);\n  F.moves.push([b.i, b.x, b.z, b.x, b.z, 0, now, b.y, b.y, 0]);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-7: a place's facing unsaid",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "  b.y = F.view ? egFeetAt(F.view, x, z, b.y ?? NaN, b.y ?? 0) : r2(b.y ?? 0);\n  F.moves.push([b.i, b.x, b.z, b.x, b.z, 0, now, b.y, b.y, egYawOf(b)]);",
+    "new": "  b.y = F.view ? egFeetAt(F.view, x, z, b.y ?? NaN, b.y ?? 0) : r2(b.y ?? 0);\n  F.moves.push([b.i, b.x, b.z, b.x, b.z, 0, now, b.y, b.y, 0]);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-7: a row's facing unbounded",
+    "file": "src/net/wire.js",
+    "old": "  if (!egYaw(t[18])) return null;\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-7: a walk's facing unbounded",
+    "file": "src/net/wire.js",
+    "old": "egXZ(t[7]) && egXZ(t[8]) && egYaw(t[9]) ? [...t] : null)",
+    "new": "egXZ(t[7]) && egXZ(t[8]) && t.length === 10 ? [...t] : null)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-7: the facing's bound",
+    "file": "src/net/wire.js",
+    "old": "export const EG_YAW_WIRE_MAX = 7;",
+    "new": "export const EG_YAW_WIRE_MAX = 8;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-7: the screen's row facing unread",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "yaw: Number.isFinite(t[18]) ? t[18] : had?.yaw ?? 0 };",
+    "new": "yaw: had?.yaw ?? 0 };",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-7: the screen's walk facing unread",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "yaw: Number.isFinite(t[9]) ? t[9] : b.yaw,",
+    "new": "yaw: b.yaw,",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-8: a fallen member left chained",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (up) { egLordsShare(f.F, sub, lv, !!o.admits); if (!o.admits) egUnchain(f.F, sub); }",
+    "new": "if (up) { egLordsShare(f.F, sub, lv, !!o.admits); }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-8: the three left unlinked",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  for (const c of kept) for (let j = 1; j < c.length; j++) F.tethers.push([c[0], c[j], 2, 800]);\n  F.mem.txDirty = 1; F.mem.mkDirty = 1;\n  return true;",
+    "new": "  F.mem.txDirty = 1; F.mem.mkDirty = 1;\n  return true;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-8: a broken chain's survivor left marked",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  for (const c of chains) if (c.includes(sub)) for (const q of c) if (!kept.some((k) => k.includes(q))) egUnmark(F, q, 4);\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-8: the fallen's tether kept",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  F.tethers = F.tethers.filter((t) => t[2] !== 2 || (typeof t[0] !== 'string' && t[1] !== sub));",
+    "new": "  F.tethers = F.tethers.filter((t) => t[2] !== 2 || typeof t[0] !== 'string');",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-8: the census's mates by the living alone (the old rule)",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "    const mates = c ? c.filter((s) => s !== h.sub) : [];",
+    "new": "    const mates = c ? c.filter((s) => s !== h.sub && live.some((b) => b.sub === s)) : [];",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js",
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-9: a named blow judged by its marks (the old census)",
+    "file": "src/net/bossRef.js",
+    "old": "      if (a.on) {   // AUDIT EG V (lane1 #9)",
+    "new": "      if (false) {   // AUDIT EG V (lane1 #9)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-9: a named member counted with no pose near its landing",
+    "file": "src/net/bossRef.js",
+    "old": "        if (egTrailNear(b.tr, a.at) && egTrailAt(b.tr, a.at)?.[4] === F.h) out.push(hit);",
+    "new": "        out.push(hit);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-9: a member it does not name judged by the marks",
+    "file": "src/net/bossRef.js",
+    "old": "        if (!a.on.includes(b.sub)) { a.bh.push(b.sub); continue; }",
+    "new": "        if (!a.on.includes(b.sub)) { if (egTrailReady(b.tr, a.at, now)) { a.bh.push(b.sub); if (deepShared(test, b.tr, a.at, F.h, spec, ys, free)) out.push(hit); } continue; }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-10: the burning bridge a CHECK again",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "nm: 'Burning Bridge', sp: 12_000, y: spotY(spec, b) }, [], now, out);",
+    "new": "nm: 'Burning Bridge', sp: 12_000, y: spotY(spec, b), ch: 1 }, [], now, out);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-10: the falling floor a CHECK again",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "nm: 'The Floor Falls', y: f.y }, [], now, out);",
+    "new": "nm: 'The Floor Falls', y: f.y, ch: 1 }, [], now, out);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-10: the void ground to flee to",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "const base = egFloorLess(egFloorTest(spec, H), F.zones, now, until, H);",
+    "new": "const base = egFloorTest(spec, H);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ],
+    "note": "AUDIT EG V (h): re-aimed by content - the burns joined the union floor (L1-10's limit)"
+  },
+  {
+    "name": "AUDIT EG V L1-10: the fight's zones out of the set",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": ", ...egZoneLandings(F.zones, now, until)];",
+    "new": "];",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-10: held whatever empties the set",
+    "file": "src/net/eliteGates/egFloor.js",
+    "old": "return !emptied(burns.length ? [...pending, { s: [], at: next.at }] : pending, px, pz, now, onFloor, burns);",
+    "new": "return true;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ],
+    "note": "AUDIT EG V (h): re-aimed by content - the burns joined the union floor (L1-10's limit)"
+  },
+  {
+    "name": "AUDIT EG V L1-10: a void that falls inside the window ground to flee to",
+    "file": "src/net/eliteGates/egFloor.js",
+    "old": "  const gone = (zones ?? []).filter((z) => z.kind === 'void' && z.from <= until && z.until > now && onZoneFloor(z, y));",
+    "new": "  const gone = (zones ?? []).filter((z) => z.kind === 'void' && z.from <= now && z.until > now && onZoneFloor(z, y));",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-12: the true disc's part said",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "obj(F, 'umbra', p[0], p[1], 0, now, out, { r: 2, extra: { real: j === trueAt ? 1 : 0 }, y: p[2] })",
+    "new": "obj(F, 'umbra', p[0], p[1], 0, now, out, { r: 2, extra: { real: j === trueAt ? 1 : 0 }, pt: j === trueAt ? 1 : 0, y: p[2] })",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-12: its row set on the true disc as it vanishes",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "        F.mem.riseAt = spots[trueAt];",
+    "new": "        F.mem.riseAt = spots[trueAt]; egPlace(F, L, spots[trueAt][0], spots[trueAt][1], now);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-12: the glint said at once",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "F.mem.glintAt = now + EG_UMBRA_MS - EG_UMBRA_GLINT_MS;",
+    "new": "F.mem.glintAt = now;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-12: no glint said",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (u) egObSay(u, 1, now, out); }",
+    "new": "}",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js",
+      "test/net/eliteGates/egaudit5_b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-12: the glint undrawn",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    if (key === 'umbra' && b.st === 1) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-12: no WIND from the glint",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "_barks.push({ kind: STALKER_MOBILE, at: toDungeon(b.x, 1, b.z), cue: hostCue('windup', STALKER_MOBILE), critical: true });",
+    "new": "void STALKER_MOBILE;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-13: the place's dark undrawn",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    if (darkNow > 0) {\n      const sh = (_slots[_shapes.length] ??= slot()), S = spec.lord === 'seyth'",
+    "new": "    if (false) {\n      const sh = (_slots[_shapes.length] ??= slot()), S = spec.lord === 'seyth'",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-13: the Long Night's shafts unkept",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      if (S) for (const q of moonShafts(S, t)) sh.points.push([q[0], q[1]]);\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-13: the dark past its end",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "Math.min(1, (until - t) / EG_DARK_EASE_MS, (t - from) / EG_DARK_EASE_MS)",
+    "new": "Math.min(1, (t - from) / EG_DARK_EASE_MS)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-13: the Rails undrawn",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    const C = F.rail > t ? F.bodies.find(",
+    "new": "    const C = F.rail > t + 1e12 ? F.bodies.find(",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-13: no rim in the dark",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "egRimOf(darkNow > 0 ? EG_SHADE_BAND : band, b.fl | 0, lord)",
+    "new": "egRimOf(band, b.fl | 0, lord)",
+    "tests": [
+      "test/world/eliteGates/egz_telegraph.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-14: no card on the turn",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      if (card && beat?.kind === 'phase' && t < beat.until) beatNext.push({ kind: 'phase', ...card });\n      else if (card) beat = { kind: 'phase', at: t, until: t + TITLE_HOLD_MS, ...card };",
+    "new": "      void card;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-14: the card's order dropped",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "  return P ? { kicker: PHASE_NUMERALS[ph - 1], main: P.name, sub: P.order } : null;",
+    "new": "  return P ? { kicker: PHASE_NUMERALS[ph - 1], main: P.name, sub: '' } : null;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-14: a Valkynaz's second unnamed",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  ilthys: Object.freeze([['The Conquest', 'Break her banners.'],",
+    "new": "  ilthys: Object.freeze([null,",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-14: the turn unsaid",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  say(out, 'phase', { t: `${P.name}.` });",
+    "new": "  void P;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b_client.test.js",
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-15: one clock for every chain",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "now >= ((F.mem.snaps ??= {})[`${ms[0].sub}|${ms[j].sub}`] ?? 0)",
+    "new": "now >= ((F.mem.snaps ??= {}).all ?? 0)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-17: Both Courts Burn ten minutes",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "shCone(c.x, c.z, toward, 14.2, 120), now + 3000, now + EG_ZONE_FIGHT_MS, out,",
+    "new": "shCone(c.x, c.z, toward, 14.2, 120), now + 3000, now + 600_000, out,",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-17: the Long Night ten minutes",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "out.push({ k: 'edark', until: now + EG_ZONE_FIGHT_MS }); },",
+    "new": "out.push({ k: 'edark', until: now + 600_000 }); },",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-18: fury's chained fill from the first's word",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "wu: gap, ol: blow.at - now - EG_TELL_LEAD_MS,",
+    "new": "wu: blow.at + gap - EG_TELL_LEAD_MS - now,",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js",
+      "test/net/eliteGates/egaudit5_b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-18: Chained Blows' fill from the word",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "egAim(F, spec, { ...base, s: [s], at, wu: gap, ol: at - gap - now,",
+    "new": "egAim(F, spec, { ...base, s: [s], at, wu: at - now,",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-18: the outline's lead unsaid",
+    "file": "src/net/eliteGates/egShape.js",
+    "old": "  if (ol > 0) blow.ol = Math.min(EG_OUTLINE_MAX_MS, Math.round(ol));\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js",
+      "test/net/eliteGates/egaudit5_b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-18: the outline's lead lost at a late word",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "  blow.at = Math.max(blow.at, now + blow.wu + (blow.ol ?? 0));",
+    "new": "  blow.at = Math.max(blow.at, now + blow.wu);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-18: the outline undrawn",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    if (t < from - (bl.ol ?? 0) || t > bl.at + span + LINGER_MS) return;",
+    "new": "    if (t < from || t > bl.at + span + LINGER_MS) return;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-18: the outline drawn full",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": " : t < from ? EG_OUTLINE_DIM : aimedAtMe ? 1 : 0.85;",
+    "new": " : aimedAtMe ? 1 : 0.85;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-18: the outline's bound",
+    "file": "src/net/eliteGates/egShape.js",
+    "old": "export const EG_OUTLINE_MAX_MS = 30_000;",
+    "new": "export const EG_OUTLINE_MAX_MS = 30_001;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-18: the wire's outline unbounded",
+    "file": "src/net/wire.js",
+    "old": "  if (m.ol != null && !intIn(m.ol, 1, EG_OUTLINE_WIRE_MAX)) return null;",
+    "new": "  if (m.ol != null && !intIn(m.ol, 1, 1e9)) return null;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-22: a fallen lord's bar",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "(b.fl & (EG_FL.mirror | EG_FL.friend)) === 0 && b.hp > 0).slice(0, EG_LORD_BARS_MAX)",
+    "new": "(b.fl & (EG_FL.mirror | EG_FL.friend)) === 0).slice(0, EG_LORD_BARS_MAX)",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-22: one bar alone",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "{ lord: bars[0], lord2: bars[1] ?? null }",
+    "new": "{ lord: bars[0], lord2: null }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b_client.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-23: Paired Hearts by the first lord's phase",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  if (o.t === 'heart' && egLordsOf(F).find((L) => L.key === 'colossus')?.ph >= 2) {",
+    "new": "  if (o.t === 'heart' && egLordsOf(F)[0]?.ph >= 2) {",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-25: the touch untold at the judge",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const hits = judgeShapes(f.F, bodies, now, f.spec); egLordsJudged(f.F, hits);",
+    "new": "const hits = judgeShapes(f.F, bodies, now, f.spec);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js",
+      "test/net/eliteGates/egaudit3_lords.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-25: the touch by the beat's poses",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "    if (pl) { delete F.mem.pools[bl.i]; for (const st of bl.s) zoneOut(F, 'burn', shDisc(st[1], st[2], pl[0]), bl.at, bl.at + pl[1], out, { p: pl[2], b: pl[3], el: bl.el, y: bl.y }); }",
+    "new": "    if (pl) { delete F.mem.pools[bl.i]; for (const st of bl.s) zoneOut(F, 'burn', shDisc(st[1], st[2], pl[0]), bl.at, bl.at + pl[1], out, { p: pl[2], b: pl[3], el: bl.el, y: bl.y }); }\n    { const by = egBodyById(F, bl.o); if (by?.role === EG_ROLE.lord) KITS[by.key]?.landed?.(F, by, bl, here.filter((m) => bl.s.some((s) => Math.hypot(m.x - s[1], m.z - s[2]) <= (s[3] ?? 0)))); }",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-26: the Nova measured over the first disc alone",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "        if (fl.length <= 1 && (fl[0]?.t ?? 'd') === 'd') return {",
+    "new": "        if (true) return {",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-26: no haven added over the floor",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  while (worst + g / Math.SQRT2 > aim && havens.length < EG_HAVENS_MAX && far >= 0) {",
+    "new": "  while (false && worst > aim && far >= 0) {",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-26: the route across the magma",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) if (egOnFight(spec, x0 + i * g, z0 + j * g, 0, y)) floor[j * W + i] = 1;",
+    "new": "  for (let j = 0; j < H; j++) for (let i = 0; i < W; i++) floor[j * W + i] = 1;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-26: a diagonal step a straight one",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "nd = d + (di && dj ? g * Math.SQRT2 : g);",
+    "new": "nd = d + g;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-29: every mirror counted by every lord",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "const mirrorsOf = (F, L) => egLordsOf(F).filter((x) => egHas(x, EG_FL.mirror) && x.by === L.i);",
+    "new": "const mirrorsOf = (F, L) => egLordsOf(F).filter((x) => egHas(x, EG_FL.mirror) && L);",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L1-30: a told bridge burning",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "(F.mem.burning ??= []).push({ s, from: now + 3000, until: now + 15_000 });",
+    "new": "(F.mem.burning ??= []).push({ s, from: now, until: now + 15_000 });",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L9-7: the champion's ring on no floor",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const EG_CHAMP_RING_M = 13;",
+    "new": "export const EG_CHAMP_RING_M = 14;",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js",
+      "test/net/eliteGates/egaudit4_lords.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V L9-7: the no-floor edge's metre",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const edge = !f ? EG_CHAMP_RING_M + 1 :",
+    "new": "const edge = !f ? EG_CHAMP_RING_M + 2 :",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT EG V NEW-1: a member inside its body freezes the lord",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "&& Math.max(0, dist(L.x, L.z, target.x, target.z) - L.r) >= (ctx.n === 1",
+    "new": "&& dist(L.x, L.z, target.x, target.z) - L.r >= (ctx.n === 1",
+    "tests": [
+      "test/net/eliteGates/egaudit5_b.test.js"
+    ]
+  }
+]

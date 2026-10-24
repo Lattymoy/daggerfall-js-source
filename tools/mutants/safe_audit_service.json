@@ -1,0 +1,609 @@
+[
+  {
+    "name": "AUDIT-SAFE-AI1-escape-dropped",
+    "file": "server-account/src/modAi.js",
+    "old": ".replace(/</g, '\\\\u003c').replace(/>/g, '\\\\u003e')",
+    "new": "",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI1-second-read-skipped",
+    "file": "server-account/src/safetyClock.js",
+    "old": "  if (own.length < lines.length) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/server/safe_review.test.js",
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI1-second-read-every-speaker",
+    "file": "server-account/src/safetyClock.js",
+    "old": "{ lines: own, focus: targetId, nowS: ctx.nowS }",
+    "new": "{ lines, focus: targetId, nowS: ctx.nowS }",
+    "tests": [
+      "test/server/safe_review.test.js",
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI1-own-words-rule-dropped",
+    "file": "server-account/src/modAi.js",
+    "old": "  'Judge each line by its own words.",
+    "new": "  'Judge each line.",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI8-allowance-dropped",
+    "file": "server-account/src/modAi.js",
+    "old": ", and quoting, reporting or condemning abuse someone else said.",
+    "new": ".",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI2-triage-takes-closed",
+    "file": "server-account/src/safetyClock.js",
+    "old": "SELECT id FROM mod_cases WHERE status = 'open'\n        AND (ai_state",
+    "new": "SELECT id FROM mod_cases WHERE 1\n        AND (ai_state",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI2-resolve-leaves-read-due",
+    "file": "server-account/src/safety.js",
+    "old": "    ai_state = CASE WHEN ai_state IN ('due', 'reading') THEN 'off' ELSE ai_state END,\n    discord_state = CASE WHEN discord_msg IS NULL THEN 'off' ELSE 'due' END\n  WHERE status = 'open' AND (id = ?1 OR target = ?2)",
+    "new": "    discord_state = CASE WHEN discord_msg IS NULL THEN 'off' ELSE 'due' END\n  WHERE status = 'open' AND (id = ?1 OR target = ?2)",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI3-feed-first",
+    "file": "server-account/src/safetyClock.js",
+    "old": "(await triageCases(ctx, env, fetchFn)) + (await readFeed(ctx, env, fetchFn))",
+    "new": "(await readFeed(ctx, env, fetchFn)) + (await triageCases(ctx, env, fetchFn))",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI3-share-unkept",
+    "file": "server-account/src/modAi.js",
+    "old": "const cap = feed ? Math.floor(max * (1 - AI_REPORT_SHARE)) : max;",
+    "new": "const cap = max;",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI3-a-batch-a-call",
+    "file": "server-account/src/safetyClock.js",
+    "old": "if (take.length && lines.length + ls.length > FEED_LINES_MAX) break;",
+    "new": "if (take.length) break;",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI3-failed-call-spent",
+    "file": "server-account/src/modAi.js",
+    "old": "  if (!res.ok) {\n    await unspend(db, nowS);",
+    "new": "  if (!res.ok) {",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI3-config-as-down",
+    "file": "server-account/src/modAi.js",
+    "old": "    return { error: AI_ERRORS.config };",
+    "new": "    return { error: AI_ERRORS.down };",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI4-tokens-cut",
+    "file": "server-account/src/modAi.js",
+    "old": "export const MOD_AI_MAX_TOKENS = 8192;",
+    "new": "export const MOD_AI_MAX_TOKENS = 2048;",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI4-halves-never-queued",
+    "file": "server-account/src/safetyClock.js",
+    "old": "    else if (lines.length > 1) {",
+    "new": "    else if (false) {",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI4-single-line-dropped",
+    "file": "server-account/src/safetyClock.js",
+    "old": "    } else if (await ctx.db.prepare('SELECT 1 AS y FROM players WHERE id = ?1').bind(lines[0].sub).first()) {",
+    "new": "    } else if (false) {",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI5-budget-unasked",
+    "file": "server-account/src/safetyClock.js",
+    "old": "for (let read = 0; read < FEED_READS_MAX && more(ctx); read++) {",
+    "new": "for (let read = 0; read < FEED_READS_MAX; read++) {",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI5-speakers-unbounded",
+    "file": "server-account/src/safetyClock.js",
+    "old": "for (const [sub, fs] of ranked.slice(0, FEED_SPEAKERS_MAX)) {",
+    "new": "for (const [sub, fs] of ranked) {",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI6-feed-closes-read",
+    "file": "server-account/src/safetyClock.js",
+    "old": "modAiModeOf(env), ctx.nowS, { read: false });",
+    "new": "modAiModeOf(env), ctx.nowS, { read: true });",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI7-one-page-an-hour",
+    "file": "server-account/src/safetyClock.js",
+    "old": "      if (got < SAFETY_SWEEP_ROWS || !more(ctx)) break;",
+    "new": "      break;",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI9-no-claim",
+    "file": "server-account/src/safetyClock.js",
+    "old": "        WHERE state = 'due' OR (state = 'reading' AND read_at < ?2) ORDER BY at, id LIMIT ?3)",
+    "new": "        WHERE state IN ('due', 'reading') OR read_at < ?2 ORDER BY at, id LIMIT ?3)",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI11-wait-from-touch",
+    "file": "server-account/src/safetyClock.js",
+    "old": "OR opened_at < ?1)",
+    "new": "OR updated_at < ?1)",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI12-equal-never-replaces",
+    "file": "server-account/src/safetyClock.js",
+    "old": " OR (ai_severity = ?3 AND COALESCE(ai_confidence, 0) <= ?4))",
+    "new": ")",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI12-zero-as-default",
+    "file": "server-account/src/modAi.js",
+    "old": "return Number.isSafeInteger(n) && n >= 0 ? n : MOD_AI_DAILY_DEFAULT;",
+    "new": "return Number.isSafeInteger(n) && n > 0 ? n : MOD_AI_DAILY_DEFAULT;",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI12-tokens-uncounted",
+    "file": "server-account/src/modAi.js",
+    "old": "  try { await countTokens(db, nowS, msg?.usage); } catch { /* the count never costs a verdict */ }\n",
+    "new": "",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-AI10-flag-unmarked",
+    "file": "server-account/src/discord.js",
+    "old": "`${flagged ? '!' : l.sub === c.target ? '>' : ' '}",
+    "new": "`${l.sub === c.target ? '>' : ' '}",
+    "tests": [
+      "test/server/safe_review.test.js",
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-D1-name-first",
+    "file": "server-account/src/discord.js",
+    "old": "let row = ID_RE.test(who) ? await findAccount(ctx.db, { target: who }) : { error: 'no-player' };",
+    "new": "let row = { error: 'no-player' };",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-D2-refused-breaks",
+    "file": "server-account/src/discord.js",
+    "old": "    if (!res.ok) { console.warn('[discord] the API refused a card:', res.status); return { refused: res.status }; }",
+    "new": "    if (!res.ok) { console.warn('[discord] the API refused a card:', res.status); return { down: true }; }",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-D2-gone-as-refused",
+    "file": "server-account/src/discord.js",
+    "old": "    if (res.status === 404 && messageId) return { gone: true };\n",
+    "new": "",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-D3-no-claim",
+    "file": "server-account/src/discord.js",
+    "old": "  if (!claimed?.meta?.changes) return redraw(ctx, caseId);\n",
+    "new": "  if (false) return redraw(ctx, caseId);\n",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-D4-push-awaited",
+    "file": "server-account/src/discord.js",
+    "old": "    { push: (o) => { pushAfter(io, env, o); } });",
+    "new": "    { push: (o) => pushAfter(io, env, o) });",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-D5-ban-shortened",
+    "file": "server-account/src/sanctions.js",
+    "old": "const until = keepLonger && isBanned(row, nowS) ? Math.max(asked, bannedUntil(row)) : asked;",
+    "new": "const until = asked;",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-D5-mute-shortened",
+    "file": "server-account/src/safety.js",
+    "old": "    if (ask.keepLonger && muteMinutesOk(minutes) && minutes && isMuted(row, nowS) && Number(row.muted_until) >= nowS + minutes * 60) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-D6-off-for-good",
+    "file": "server-account/src/safetyClock.js",
+    "old": "      WHERE (discord_state = 'due' OR (discord_state = 'off' AND status = 'open'))",
+    "new": "      WHERE (discord_state = 'due')",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-D7-no-nonce",
+    "file": "server-account/src/discord.js",
+    "old": "body: JSON.stringify(!messageId && nonce ? { ...card, nonce, enforce_nonce: true } : card),",
+    "new": "body: JSON.stringify(card),",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-D8-posted-regardless",
+    "file": "server-account/src/safetyClock.js",
+    "old": "discord_state = CASE WHEN updated_at = ?3 AND status = ?4 THEN 'posted' ELSE 'due' END WHERE id = ?1\")",
+    "new": "discord_state = CASE WHEN ?3 = ?3 AND ?4 = ?4 THEN 'posted' ELSE 'due' END WHERE id = ?1\")",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-D9-markdown-unescaped",
+    "file": "server-account/src/discord.js",
+    "old": "export const md = (s) => plain(s).replace(",
+    "new": "export const md = (s) => plain(s) ?? plain(s).replace(",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-D10-no-agent",
+    "file": "server-account/src/discord.js",
+    "old": "authorization: `Bot ${env.DISCORD_BOT_TOKEN}`, 'user-agent': DISCORD_USER_AGENT },",
+    "new": "authorization: `Bot ${env.DISCORD_BOT_TOKEN}` },",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-D11-mod-leaves-case",
+    "file": "server-account/src/safety.js",
+    "old": "      // the case modCase shows this actor: the chat case first, a spawn case a developer's alone\n      : db.prepare(",
+    "new": "      // the case modCase shows this actor: the chat case first, a spawn case a developer's alone\n      : false && db.prepare(",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-D11-expiry-card-kept",
+    "file": "server-account/src/safetyClock.js",
+    "old": "      discord_state = CASE WHEN discord_msg IS NULL THEN 'off' ELSE 'due' END\n    WHERE id IN (SELECT id FROM mod_cases WHERE status = 'open' AND opened_at < ?2 LIMIT ?3)",
+    "new": "      discord_state = discord_state\n    WHERE id IN (SELECT id FROM mod_cases WHERE status = 'open' AND opened_at < ?2 LIMIT ?3)",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-S1-repeat-adds",
+    "file": "server-account/src/safety.js",
+    "old": "  if (!filed?.meta?.changes) return { ok: true, case: caseId, repeat: true };\n",
+    "new": "",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-S1-evicts-own-first",
+    "file": "server-account/src/safety.js",
+    "old": "ORDER BY (sub = ?2), at LIMIT ?3",
+    "new": "ORDER BY (sub != ?2), at LIMIT ?3",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-S1-full-refuses-own",
+    "file": "server-account/src/safety.js",
+    "old": "  if (own.length > room) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-S2-once-a-case",
+    "file": "server-account/src/safety.js",
+    "old": "WHERE id = ?1 AND COALESCE(auto_at, 0) = ?3\").bind(caseId, nowS, Number(row?.auto_at ?? 0)).run();",
+    "new": "WHERE id = ?1 AND auto_at IS NULL AND ?3 = ?3\").bind(caseId, nowS, Number(row?.auto_at ?? 0)).run();",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-S2-game-mute-leaves-case",
+    "file": "server-account/src/safety.js",
+    "old": "said) => (c ? [resolveCase(db, { caseId, status: 'actioned'",
+    "new": "said) => (c && false ? [resolveCase(db, { caseId, status: 'actioned'",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-S3-uncounted-uncapped",
+    "file": "server-account/src/safety.js",
+    "old": "&& await overRate(ctx, 'safety-uncounted-cases', UNCOUNTED_CASES_HOUR, 3600)) return { error: 'rate' };",
+    "new": "&& false) return { error: 'rate' };",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-S3-oldest-first",
+    "file": "server-account/src/safetyClock.js",
+    "old": "        ORDER BY credible DESC, reports DESC, updated_at LIMIT 1)",
+    "new": "        ORDER BY updated_at LIMIT 1)",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-S6-void-counted",
+    "file": "server-account/src/sanctions.js",
+    "old": "AND at > ?2 AND void_at IS NULL\").bind(target, nowS - STRIKE_WINDOW_S).first();",
+    "new": "AND at > ?2\").bind(target, nowS - STRIKE_WINDOW_S).first();",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-S6-auto-mute-left",
+    "file": "server-account/src/sanctions.js",
+    "old": "  if (!row || !isMuted(row, nowS) || !AUTO_ACTORS.includes(row.muted_by)) return null;",
+    "new": "  return null;",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-S7-login-unchecked",
+    "file": "server-account/src/accounts.js",
+    "old": "  // session - told only once the password is right, so the word says nothing to a stranger guessing at a handle\n  if (bannedNow(player, nowS)) return",
+    "new": "  // session - told only once the password is right, so the word says nothing to a stranger guessing at a handle\n  if (false) return",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-S7-recover-unchecked",
+    "file": "server-account/src/accounts.js",
+    "old": "  // AUDIT SAFE SERVICE-7: a banned account is told so before its code is spent - it is not signed back in\n  if (bannedNow(player, nowS)) return",
+    "new": "  // AUDIT SAFE SERVICE-7: a banned account is told so before its code is spent - it is not signed back in\n  if (false) return",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-S11-unban-not-banned",
+    "file": "server-account/src/sanctions.js",
+    "old": "  if (!isBanned(row, nowS)) return { error: 'not-banned' };\n",
+    "new": "",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-DOC2-anyone-unbans",
+    "file": "server-account/src/sanctions.js",
+    "old": "  if (!canModerate(actor, env)) return { error: 'not-moderator' };\n  const row = await findAccount(db, { target, name });\n  if ('error' in row) return row;\n  if (!isBanned(row, nowS)) return { error: 'not-banned' };",
+    "new": "  const row = await findAccount(db, { target, name });\n  if ('error' in row) return row;\n  if (!isBanned(row, nowS)) return { error: 'not-banned' };",
+    "tests": [
+      "test/server/safe_audit.test.js",
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-S9-guest-index-dropped",
+    "file": "server-account/migrations/0126_chat_safety.sql",
+    "old": "CREATE INDEX IF NOT EXISTS players_guest_name ON players (guest_name) WHERE handle IS NULL;\n",
+    "new": "",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-DOC1-notes-kept",
+    "file": "server-account/src/safetyClock.js",
+    "old": "`UPDATE mod_reports SET note = NULL WHERE rowid IN",
+    "new": "`UPDATE mod_reports SET note = note WHERE rowid IN",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-DOC1-card-left-drawn",
+    "file": "server-account/src/safetyClock.js",
+    "old": "UPDATE mod_cases SET lines_kept = 0, ai_reason = NULL, discord_state = CASE WHEN discord_msg IS NULL THEN discord_state ELSE 'due' END",
+    "new": "UPDATE mod_cases SET lines_kept = 0, ai_reason = NULL, discord_state = discord_state",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-DOC13-notes-unshown",
+    "file": "server-account/src/discord.js",
+    "old": "  if (said.length) fields.push({ name: 'Reporters\\' notes'",
+    "new": "  if (false) fields.push({ name: 'Reporters\\' notes'",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-DOC8-muted-reporter-counts",
+    "file": "server-account/src/safety.js",
+    "old": "accountKind(player) === 'linked' && !isMuted(player, nowS) && Number(player?.created_at)",
+    "new": "accountKind(player) === 'linked' && Number(player?.created_at)",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-DOC8-hour-unkept",
+    "file": "server-account/src/safety.js",
+    "old": "const since = Math.max(nowS - REPORT_AUTO_WINDOW_S, Number(row?.auto_at ?? 0));",
+    "new": "const since = Number(row?.auto_at ?? 0);",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-DOC8-reports-unbounded",
+    "file": "server-account/src/safety.js",
+    "old": "  if (await overRate(ctx, `safety-report:${reporter.id}`, REPORT_RATE_MAX, REPORT_WINDOW_S)) return { error: 'rate' };\n",
+    "new": "",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-DOC8-week-shortened",
+    "file": "server-account/src/sanctions.js",
+    "old": "!canModerate(row, env) && !isMuted(row, nowS) && !isBanned(row, nowS);",
+    "new": "!canModerate(row, env) && !isBanned(row, nowS);",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-DOC17-blocks-unbounded",
+    "file": "server-account/src/safety.js",
+    "old": "  if (target === player.id) return { error: 'block-self' };\n  if (await overRate(ctx, `safety-block:${player.id}`, BLOCK_RATE_MAX, BLOCK_WINDOW_S)) return { error: 'rate' };",
+    "new": "  if (target === player.id) return { error: 'block-self' };",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-C6-context-refuses",
+    "file": "server-account/src/safety.js",
+    "old": "    else if (l.sub === shape.target) return { error: 'report-unwitnessed' };",
+    "new": "    else return { error: 'report-unwitnessed' };",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-C6-target-forged-kept",
+    "file": "server-account/src/safety.js",
+    "old": "    if (await verifyStamp(l, l.sg, key, { subtle })) lines.push(l);",
+    "new": "    if (true) lines.push(l);",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-C7-letter-delivered",
+    "file": "server-account/src/letters.js",
+    "old": "  if (await db.prepare('SELECT 1 AS y FROM blocks WHERE player = ?1 AND blocked = ?2').bind(reader.id, sender.id).first()) return",
+    "new": "  if (false) return",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-S1RELAY-binding-passed-over",
+    "file": "server-account/src/sanctions.js",
+    "old": "const res = typeof env.RELAY?.fetch === 'function' ? await env.RELAY.fetch(new Request(url, init)) : await fetchFn(url, init);",
+    "new": "const res = await fetchFn(url, init);",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-RELAY13-status-trusted",
+    "file": "server-account/src/sanctions.js",
+    "old": "    return res.ok && said?.ok !== false;",
+    "new": "    return res.ok;",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-SAFE-S5-unclaimed-mute",
+    "file": "server-account/src/safety.js",
+    "old": "    if (claimed?.meta?.changes) {\n      until = await autoMute(db, env, target, { actor: 'auto:reports'",
+    "new": "    if (true) {\n      until = await autoMute(db, env, target, { actor: 'auto:reports'",
+    "tests": [
+      "test/server/safe_audit.test.js"
+    ]
+  }
+]

@@ -7,7 +7,7 @@ readers/world/entity layers everything here needs are COMPLETE.
 
 ## S1 (items/loot foundation): SHIPPED
 
-src/systems/loot.js ports LootTables.cs + the ItemBuilder
+src/systems/loot/loot.js ports LootTables.cs + the ItemBuilder
 CreateRandom* pick rules verbatim:
 - The 21-key LootChanceMatrix table exact (incl the source's
   Chronicles-vs-FALL.EXE notes: B is plants in the EXE; tables I+ are
@@ -320,12 +320,16 @@ magic skills (Destruction/Restoration/Alteration/Thaumaturgy/
 Illusion). CONSUMERS: the cast gate, the HUD readied line, and the
 spellbook all show/spend the LIVE skill-scaled cost - a Destruction
 novice pays more for the same Shock than a master, who bottoms at
-the floor.
+the floor. SPELL-COST-PAST (2026-10-12, `01-Overview/bugs/Field-Bugs-2026-10-12c.md`):
+online, a skill past 100 prices a spell at its cost at 100 times
+100 / skill (`skillScaledCost`) - DFU's `110 - skill` went under
+nothing past 110, and a mastered school with gear cast everything
+for the floor.
 
 ## S11 (save/load - the player snapshot): SHIPPED
 
 DFU's own save system is a JSON serialization of live state - the
-faithful port shape. systems/save.js: snapshotPlayer captures the
+faithful port shape. systems/save/save.js: snapshotPlayer captures the
 entity (fields, stats, skills + uses, career data, items, known
 spells BY INDEX re-resolved against SPELLS.STD on load, active
 effects) plus the scene extras (position, the classic clock, the
@@ -528,7 +532,7 @@ EnemyEntity.cs + EnemyMotor.cs (classic AI) + EntityEffectManager:
   SPELLS.STD by classic index with missing records skipped loudly.
   assignEnemySpells = the SetEnemyCareer tail: monsters take their
   list; class enemies gate on the ENEMY_BASICS CastsMagic flag.
-- **AI** (src/characters/enemyCasting.js): the classic (non-Enhanced)
+- **AI** (src/characters/enemy/enemyCasting.js): the classic (non-Enhanced)
   decision shape. DoTouchSpell: sight + melee reach (+ rate of
   approach) + the SHARED melee timer at 0; a touch cast RESETS that
   timer; classic AI counts ByTouch AND CasterOnly as touch picks.
@@ -764,7 +768,7 @@ The fatigue consumers - the S15/S18/S19 drains now have
 consequences. Verbatim from FormulaHelper's rest rates +
 DaggerfallEntity.SetFatigue + PlayerEntity's OnExhausted handler:
 
-- **The rates** (src/systems/rest.js, per hour of rest): health =
+- **The rates** (src/systems/rest/rest.js, per hour of rest): health =
   max(floor(HealingRateModifier(liveEND) + (liveMedical + add) x
   maxHealth / 1000), 1) with add 60 -> 100 for RapidHealing Always /
   InLight (day AND outside) / InDarkness (otherwise);
@@ -786,7 +790,11 @@ DaggerfallEntity.SetFatigue + PlayerEntity's OnExhausted handler:
   rounds, as DFU's broker does under RaiseTime), each pool recovers
   one hour's rate, Medical tallies, TEXT.RSC 1071 shows
   click-to-close; enemies nearby (1072) or swimming (the watery-
-  grave line) -> SetHealth(0), the fatal collapse.
+  grave line) -> SetHealth(0), the fatal collapse. [DEPARTED: in the
+  water since SWIM-SPENT (FIELD BUGS 2026-09-30b), near enemies since
+  SPENT-ASHORE (FIELD BUGS 2026-10-13e, 2026-10-13) - each drain to
+  nothing costs a tenth of the health pool and a HUD line, no box;
+  1072 is said by no host.]
 - **Parity fix en route**: DFU applies the per-minute fatigue loss
   ONCE per minute-CHANGE (a single DecreaseFatigue behind
   lastGameMinutes != gameMinutes - no loop over elapsed minutes);
@@ -867,7 +875,7 @@ building carries its type/quality/name through the pool merge). This
 slice is the NODE-PURE foundation; the interior shelf mount + the
 buy/sell windows are E2.
 
-- ITEM TEMPLATES (systems/itemTemplates.js over the GENERATED
+- ITEM TEMPLATES (systems/item/itemTemplates.js over the GENERATED
   itemTemplatesData.js): DFU's ItemTemplates.txt baked whole - 288
   rows of [index, name, basePrice, rarity, weight, hitPoints] - plus
   the per-ItemGroup template-index arrays extracted from the C# item
@@ -1026,7 +1034,7 @@ shows on the same interim popup the info panel uses, carrying the
 record number. THE REFUSAL ITSELF is verbatim - the item does not
 equip, which is the half that changes play.
 
-Pins (test/equiprestrictions.test.js, 7), mutation-proven - dropping
+Pins (test/systems/equiprestrictions.test.js, 7), mutation-proven - dropping
 the plate-only gate, letting shields fall into the armor branch,
 turning the -1 default into 0, or reading forbiddenArmors from the
 wrong bits each fail their own. One mutation is EQUIVALENT and recorded
@@ -1099,7 +1107,7 @@ spell.
 FLAGGED: DFU pulls "Spell was absorbed." from the localised string
 table; this surface has no text source, so the literal stands.
 
-Pins (test/absorption.test.js, 9), each mutation-proven - removing the
+Pins (test/systems/absorption.test.js, 9), each mutation-proven - removing the
 Destruction gate, the headroom check, the cost floor, the skip, or the
 self-cast cap, or inverting the darkness branch, each fails its own.
 The headroom law is pinned at the boundary in both directions: exactly
@@ -1135,7 +1143,7 @@ it pushed {id, amount} onto the entity and moved on. `court.js` ran
 the legal half of a crime and left DFU's halved People-faction delta
 as a comment. Both drain here.
 
-**The store** (systems/factionRep.js, PersistentFactionData.cs's
+**The store** (systems/faction/factionRep.js, PersistentFactionData.cs's
 reputation/flag/power half): the player's live clone of FACTION.TXT.
 get/set/change, the flags, power, and ZeroAllReputations.
 
@@ -1480,7 +1488,7 @@ them, the same idiom audit17e uses for its four-host rules.
 ## S28 - THE CALENDAR: the port finally knows what day it is
 
 `src/systems/gameDate.js`, 1:1 from `Utility/DaggerfallDateTime.cs`.
-`test/gamedate.test.js`, 9 tests.
+`test/systems/gamedate.test.js`, 9 tests.
 
 **This landed because a UI slice tripped over its absence.** The port has
 had a clock since the beginning - `worldTick.js`'s `classicMinutes` - and
@@ -1530,9 +1538,9 @@ counters, one in `scenes/shared.js`'s ticker and one in
 
 ## U23 (systems half) - StaticNPCClick and the guild popup's law
 
-`src/systems/guildServiceFlow.js`, from
+`src/systems/guild/guildServiceFlow.js`, from
 `DaggerfallGuildServicePopupWindow.cs` and the routing block of
-`PlayerActivate.StaticNPCClick`. `test/guildserviceflow.test.js`, 15
+`PlayerActivate.StaticNPCClick`. `test/systems/guild/guildserviceflow.test.js`, 15
 tests. The window half is recorded in the UI arc.
 
 The split is the one G3 already made: `guildServices.js` holds WHICH
@@ -1585,9 +1593,9 @@ FACTION.TXT rather than pretending the reputation is zero.
 ## S29 - HOLIDAYS, and U24's law half
 
 `src/systems/holidays.js` from FormulaHelper.GetHolidayId (:1819-1852)
-and DFLocation.Holidays; `src/systems/guildServiceActions.js` from the
-three guild-service window classes. `test/holidays.test.js` (6) and
-`test/guildserviceactions.test.js` (16).
+and DFLocation.Holidays; `src/systems/guild/guildServiceActions.js` from the
+three guild-service window classes. `test/systems/holidays.test.js` (6) and
+`test/systems/guildserviceactions.test.js` (16).
 
 **Holidays landed because the temple charges for them.** Three of the
 53 - South Winds Prayer, First Harvest, Second Harvest - cure disease
@@ -1722,7 +1730,7 @@ shows.
 ## S31 - FAST TRAVEL: the Iliac opens up
 
 2026-08-20. The F-slice. The world host could stream the whole bay
-but the only way across it was walking. systems/travel.js now
+but the only way across it was walking. systems/travel/travel.js now
 carries TravelTimeCalculator.cs verbatim: the classic longest-axis
 stepper (the increment compares with >, kept exactly), per-pixel
 climate through CLIMATE_INDICES and the terrain movement modifiers,
@@ -1769,10 +1777,10 @@ sun-averse producers, spawn prevention - is ONE ledger row.
 
 ### S31 addendum (U41, 2026-08-24): the WINDOW paragraph above is
 history. `ui/travelMap.js` is DELETED and the keyed typeahead with
-it: the classic art window ships in `ui/travelMapWindow.js` +
-`ui/travelPopUp.js` (UI-Arc's U41), so the region-map click surface,
+it: the classic art window ships in `ui/travel/travelMapWindow.js` +
+`ui/travel/travelPopUp.js` (UI-Arc's U41), so the region-map click surface,
 the location dots, the find box and the popup's own art are all
-real. The LAW half of this slice is untouched - `systems/travel.js`
+real. The LAW half of this slice is untouched - `systems/travel/travel.js`
 still owns the calculator, the cost and the clamps, and world.js's
 arrival is still performFastTravel's order. What moved is who calls
 it: the popup hands the host the same `(pick, opts, computed)` the
@@ -1992,7 +2000,7 @@ Mutations: 4 run, 4 killed (the resurrect arm deleted; the corpse
 batch leaked on resurrect; the pile re-mint arm deleted; the
 mid-warm race guard deleted).
 
-Pins: test/sl2rewind.test.js x3 (the resurrect arm - both splices,
+Pins: test/scenes/sl2rewind.test.js x3 (the resurrect arm - both splices,
 the GL free, the key clear, health-before-reconciliation; the
 flat-follows-items pair - the empty teardown and the re-mint gated
 on the build-time size with the unrerolled record; the spawnCorpse
@@ -2043,7 +2051,7 @@ Mutations: 4 run, 4 killed (the store exclusion dropped - re-picks;
 the TG gate dropped - dry regions claim maps; the DB unconditional
 arm dropped; the locations half dropped from the envelope).
 
-Pins: test/guildreveal.test.js x4 (the candidate filter/pick/
+Pins: test/systems/guild/guildreveal.test.js x4 (the candidate filter/pick/
 picked-clean-null + the envelope round trip; the TG 6/8 gate with
 the dry fall-through and the 2/4 no-reveal spy; the DB
 three-promotions-three-reveals; the host-to-law threading sweep).
@@ -2087,7 +2095,7 @@ Mutations: 4 run, 4 killed (the self-only gate dropped; the anchor
 surviving arrival; the mode exit dropped; the anchor falling out of
 the envelope).
 
-Pins: test/teleport.test.js x3 (the marker on self-casts only with
+Pins: test/scenes/teleport.test.js x3 (the marker on self-casts only with
 the bundle still processing; the envelope round trip + the pre-TP
 null; the seam sweep - the engine route, both prompt arms, the
 4001 refusal, the consume, the forced exit's mode+collider, the
@@ -2478,9 +2486,9 @@ row in `diseases.test.js`. 18 mutations, 18 dead.
 
 `src/systems/potions.js` (the twenty recipes widened, plus
 DrinkPotion's bundle) + `src/systems/effects.js` (the one effect with
-no classic key) + `src/systems/useItem.js` + `src/ui/nativeInventory.js`
-+ the four hosts. `test/potions.test.js` (+5),
-`test/useitem.test.js` (+1), `test/nativeinventory.test.js` (+1).
+no classic key) + `src/systems/useItem.js` + `src/ui/native/nativeInventory.js`
++ the four hosts. `test/systems/potions.test.js` (+5),
+`test/systems/useitem.test.js` (+1), `test/ui/nativeinventory.test.js` (+1).
 
 **The game was lying.** `useItem`'s potion arm removed the bottle
 from the pack and answered `pending`, and the window printed "You
@@ -2564,7 +2572,7 @@ is structural rather than written.
 
 ## S40 - A BED YOU CAN SLEEP IN (2026-08-25)
 
-`src/systems/restSession.js` (CanRest, `restOpenGate`,
+`src/systems/rest/restSession.js` (CanRest, `restOpenGate`,
 `interiorRestPlace`, CheckRent, the illegal-rest confirm) +
 `src/ui/restWindow.js` (the gate on the buttons that own it, MoveToBed,
 the IsResting lifecycle) + `src/scenes/shared.js`
@@ -2573,9 +2581,9 @@ home) + `src/formats/mapsFile.js` (`isTownLocationType`) +
 `src/systems/encounters.js` (`areEnemiesNearby`) + `src/player/motor.js`
 (`startRestGroundedCheck`) + `src/systems/worldTick.js` (the
 `!isResting` fatigue gate) + `src/scenes/townTalk.js` (`closeOverlay`)
-+ `src/systems/settings.js` (IllegalRestWarning goes live) +
++ `src/systems/settings/settings.js` (IllegalRestWarning goes live) +
 `src/systems/tavern.js` (a flag retired) + all four hosts.
-`test/restlodging.test.js` (new, 51).
+`test/scenes/restlodging.test.js` (new, 51).
 
 **Rest was a dungeon feature.** `toggleRest` existed in exactly one
 host. Outside a dungeon the R key did nothing, so a character above
@@ -3064,13 +3072,13 @@ minted) has been driven only in node.
 `src/systems/worldTick.js` (`runDayChange`, and the call from
 `tickPlayerMinutes` that gives it to all four hosts) +
 `src/systems/shopStock.js` (`updateRegionalPrices`, `REGION_COUNT`,
-the two clamp bounds, a flag retired) + `src/systems/weatherSim.js`
+the two clamp bounds, a flag retired) + `src/systems/weather/weatherSim.js`
 (`rollClimateWeathersForDay`, `tickWeather` rebuilt as the drain,
-`_lastDay` deleted) + `src/systems/save.js` (the restore stamp moved
+`_lastDay` deleted) + `src/systems/save/save.js` (the restore stamp moved
 into `restoreWeather`, and `lastGameMinutes` re-anchored) +
 `src/scenes/world.js` + `src/scenes/exterior.js` (comments only - the
-mechanism under them changed). `test/daychange.test.js` (new, 19);
-`test/weathersim.test.js` grew one.
+mechanism under them changed). `test/systems/daychange.test.js` (new, 19);
+`test/systems/weather/weathersim.test.js` grew one.
 
 **Four members, and the port ran one of them.** DFU's
 `PlayerEntity.Update` closes each frame with a date check
@@ -3243,7 +3251,7 @@ READS that flag and DFU clears it at the tail (`:528-530`), so moving
 one without the other would have left the prison-skip shield reading an
 already-cleared flag and dying silently.
 
-Pins: `test/daychange.test.js` (21) covers each member against its
+Pins: `test/systems/daychange.test.js` (21) covers each member against its
 C# and, separately, the wiring - a year-long jump through
 `tickPlayerMinutes` that drifts the prices, collects an expired
 rental and defaults a loan in one tick.
@@ -3402,7 +3410,7 @@ Every other reader of the cache was swept: there are none - the `map`
 argument (Normal, Emission, Height, MetallicGloss, Mask) has no
 consumer in `src/` yet, and when one arrives it reads the same door.
 
-**Pinned** in `test/roadh_seasons_tex.test.js` against the REFERENCE's
+**Pinned** in `test/systems/roadh_seasons_tex.test.js` against the REFERENCE's
 value rather than the port's: a replacement is uploaded through a
 recording GL and its bytes must equal, byte for byte, what
 `getColor32` produces for the same picture - which is what DFU's
@@ -3412,7 +3420,7 @@ that the picture really was the other way up on the way in.
 `createDataPipeline` grew a `fetch` parameter defaulting to the one
 data seam (the shape `loadMagicRegistries` and `ensureAudio` already
 use) so the pins can drive the real arms over a texture built in the
-test - the container has no ARENA2. `test/texturereplacement.test.js`'s
+test - the container has no ARENA2. `test/systems/texturereplacement.test.js`'s
 two identity assertions were replaced with the law they could not see.
 Mutation-proven twice: storing the decoder's object unconverted, and
 removing the row reversal, each kill the pins.
@@ -3430,29 +3438,29 @@ unpinned exactly where it matters: dropping the row reversal from
 `{ width, height, colors: decoded.data }`) left all 15 tests green,
 while the recorded mutation, which removed the conversion from BOTH
 sites, was caught by the shape assertions instead. Both
-`test/roadh_seasons_tex.test.js` upload arms now register a pack file
+`test/systems/roadh_seasons_tex.test.js` upload arms now register a pack file
 with `setTextureReplacements` and decode it through
 `preloadTextureArchive`, over the four-distinct-entries picture they
 already build, and assert the door's own output equals `getColor32`'s
-before the GL ever sees it; `test/texturereplacement.test.js`'s
+before the GL ever sees it; `test/systems/texturereplacement.test.js`'s
 decode-ahead pin gets a non-uniform raster and asserts the reversed row
 order. The orientation-only mutation at line 224 now kills two pins.
 
 **R4 (low) - a stale cite the move of `toColor32Order` caused.**
-`src/formats/unityBundle.js`'s `decodeTexture2D` comment still sent the
+`src/formats/unity/unityBundle.js`'s `decodeTexture2D` comment still sent the
 reader to "`toColor32Order` in `systems/seasonsIliacBayAssets.js`",
 which now only imports it. Repointed at `formats/color32Order.js`, and
 it names both consumers rather than one.
 
 ## S42 - THE REGION CONDITION STORE (2026-08-25)
 
-`src/systems/regionConditions.js` (new: the flags enum, the group map,
+`src/systems/region/regionConditions.js` (new: the flags enum, the group map,
 both duration tables, `turnOnConditionFlag` / `turnOffConditionFlag`,
 `resetWarDataForRegion`, the store and its save halves) +
 `src/systems/shopStock.js` (S41's flagged half ships; `REGION_COUNT`
 moves to its one home) + `src/systems/worldTick.js` (the store rides
-the day block) + `src/systems/save.js` (the envelope).
-`test/regionconditions.test.js` (new, 13).
+the day block) + `src/systems/save/save.js` (the envelope).
+`test/systems/regionconditions.test.js` (new, 13).
 
 **A store two shipped writers were already waiting on.** S41 ported
 `FormulaHelper.UpdateRegionalPrices` and had to FLAG its
@@ -3510,7 +3518,7 @@ them - 4000, 1000 and 250 say nothing about 2000 and 500 themselves.
 The shipped pins land exactly ON the edge: 2041 falls to exactly 2000,
 491 rises to exactly 500.
 
-Pins: `test/regionconditions.test.js` (13). 15 mutations, 15 killed;
+Pins: `test/systems/regionconditions.test.js` (13). 15 mutations, 15 killed;
 the first round left the two boundary mutations alive and both are
 covered now. Every one of the 16 C# citations was checked by opening
 the range and confirming it contains the member named - four were wrong
@@ -3527,11 +3535,11 @@ same reason: they call the member this slice does not port.
 
 ## S43 - THE FACTION POWERS START MOVING (2026-08-25)
 
-`src/systems/regionPower.js` (new: `isFactionValidForRumorMill`,
+`src/systems/region/regionPower.js` (new: `isFactionValidForRumorMill`,
 `factionPowerStep`, `regionPowerUpdate`) + `src/systems/worldTick.js`
 (the 7-day and 38-day arms of the entity update's minute loop) +
 `src/scenes/world.js` (the rumour mill parked on the entity).
-`test/regionpower.test.js` (new, 10).
+`test/systems/regionpower.test.js` (new, 10).
 
 **Nothing in the port had ever changed a faction's power.** Every
 faction sat at its FACTION.TXT value for the life of the character.
@@ -3588,7 +3596,7 @@ and DFU says "I'm pretty sure it was supposed to be every 38 days" and
 changed it. A DFU deviation from classic, inherited deliberately
 because this port is 1:1 with DFU and DFU says why.
 
-Pins: `test/regionpower.test.js` (10). 15 mutations, 15 killed - the
+Pins: `test/systems/regionpower.test.js` (10). 15 mutations, 15 killed - the
 first round left the parent gate and the children comparison alive.
 All 12 C# citations content-verified; six were wrong on the first pass.
 
@@ -3603,10 +3611,10 @@ rides the same two arms and is unported with it, as is
 
 ## S44 - THE FACTION RELATION MUTATORS (2026-08-25)
 
-`src/systems/factionRelations.js` (new: the border table, the four
+`src/systems/faction/factionRelations.js` (new: the border table, the four
 relation questions, the four mutators, the war predicate, the two ruler
 members) + `src/scenes/world.js` (a stub retired).
-`test/factionrelations.test.js` (new, 14).
+`test/formats/factionrelations.test.js` (new, 14).
 
 **The set S43 had to flag.** `RegionPowerAndConditionsUpdate`'s
 conditions body ends and starts alliances and rivalries and decides who
@@ -3658,7 +3666,7 @@ another run of itself, which cannot see the two `rand()` draws swap.
 Both mutations survived the first round. They are pinned to exact values
 off a seeded DFRandom now.
 
-Pins: `test/factionrelations.test.js` (14). 15 mutations, 14 killed and
+Pins: `test/formats/factionrelations.test.js` (14). 15 mutations, 14 killed and
 one RECORDED EQUIVALENT rather than waved through: the shared-ancestor
 arm's two `id !=` guards only ever block a case the ancestor and
 descendant arms have already answered, because reaching that state needs
@@ -3809,7 +3817,7 @@ crime/population while transformed), the werecreature claws, sounds
 and the WOLF00I0/WERE0*I0 art; the $CUREWER quest; the cemetery
 respawn; PassiveSpecials and the artifact payloads.
 
-Pins: 12 in `test/lycanthropy.test.js`, the walk from the moons to the
+Pins: 12 in `test/systems/lycanthropy.test.js`, the walk from the moons to the
 save round-trip, every figure DFU's own constant.
 
 ## V2b - THE VAMPIRISM CURSE: the other override, and the gates go live (2026-08-27)
@@ -3853,7 +3861,7 @@ needs the IsPlayerInSunlight seam - V2c, and the entry already
 carries sunDamage/holyDamage for it), the quests, the guild swap, the
 cemetery respawn, the art and voices, the artifact payloads.
 
-Pins: 9 in `test/vampirism.test.js`; the S40 rest sweeps and the
+Pins: 9 in `test/systems/vampirism.test.js`; the S40 rest sweeps and the
 round-order sweep advance.
 
 ## V2c - PASSIVE SPECIALS + THE SUNLIGHT SEAM: one key, three doors (2026-08-27)
@@ -3902,8 +3910,8 @@ down - since VAMP-DAY the sun's only bite, and the one the player sees.
 racialSunAverse, the one hood law: under a raised hood the street's sun
 reaches the curse no more than a roof's, and the vampire has DFU's +20;
 bare-headed, the -20 stands; a hood in the pack shields nothing.
-`test/fb0929_vampirehood.test.js` (its stats pin moved),
-`test/fb1001b_vampsun.test.js` (the law's line); mutants
+`test/systems/fb0929_vampirehood.test.js` (its stats pin moved),
+`test/systems/fb1001b_vampsun.test.js` (the law's line); mutants
 `tools/mutants/vamphood.json` (three added), the vampday, fb1001b_vampsun
 and lived1 records re-aimed by content - all dead.
 
@@ -3925,7 +3933,7 @@ career arm asks careerSunAverse. A hood in the pack shields nothing;
 under a roof and by night nothing burns, as in DFU. THE FOUR HOSTS: the
 burn rides worldTick's round in every host; the door and the clamp are
 world.js's alone (exterior.js mounts no map, the interior and dungeon
-hosts are inside, where the door refuses first). `test/hoodcareer.test.js`
+hosts are inside, where the door refuses first). `test/systems/hoodcareer.test.js`
 (4); pins moved in `audit64_travel`, `auditit1`, `auditlived1`,
 `fb0929_vampirehood`, `fb1001b_vampsun` and `partyArrivalTransaction`;
 mutants `tools/mutants/hoodcareer.json` (9), and the vamphood, vampday
@@ -3963,7 +3971,7 @@ FLAGGED, each loudly: the transformed suppressions/claws/sounds/art
 both curses' hosts owe, the quests, the guild swap, the cemetery
 respawn, the artifact payloads; the dungeon host's enchant ctx mount.
 
-Pins: 11 in `test/passivespecials.test.js` - the two flags through
+Pins: 11 in `test/systems/passivespecials.test.js` - the two flags through
 the seam, the career reads off parseCareerData's own bitfields, all
 four regen flags, both burns (career arm and override arm), the
 magery SUM and the unable write's stability on the live accessor, the
@@ -4019,7 +4027,7 @@ FLAGGED, each loudly: the transformed suppressions/claws/sounds/art
 (host work), the cemetery respawn, the guild swap, the artifact
 payloads.
 
-Pins: 7 in `test/racialquests.test.js` - the headless charter, both
+Pins: 7 in `test/systems/racialquests.test.js` - the headless charter, both
 curses' rolls with the odd floor pinned to its verbatim range, the
 latch, the clan-pool ask shape, the no-second-$CUREWER law against a
 tombstoned instance, both tombstone sweeps off the real cures, the
@@ -4066,10 +4074,15 @@ lands the player INSIDE the crypt, and so does the port since CRUX1
 recorded as missing here; interior/dungeon modes still skip loudly
 where DFU tears the scene down.
 
+CURSE-CARRY (2026-10-17, `01-Overview/bugs/Field-Bugs-2026-10-17d.md`) narrows the swap by two guilds:
+the Thieves Guild and the Dark Brotherhood, joined by an invitation sent once, ride it - the one record
+moves to the book the curse reads - so a member who turns is no longer shut out for the whole curse. A
+named departure, `01-Overview/Port-Ledger.md` section A.
+
 FLAGGED, each loudly: the transformed suppressions/claws/sounds/
 paperdoll+head art (host work), the artifact payloads.
 
-Pins: 7 in `test/guildswap.test.js` - the per-read pick across curse
+Pins: 7 in `test/systems/guildswap.test.js` - the per-read pick across curse
 and cure with both books persisting, the in-place legacy migration,
 the save round-trip with copy-isolation proven by mutation, both
 clear laws, the cemetery pick's boundaries, the deploy's
@@ -4103,8 +4116,7 @@ RAISING max (the increase folds into mods.maxMagicka, so it sums with
 ExtraSpellPts and V2c's magery through the one modifier), takes 1d6
 strength from a dry target, and resets both twelve game minutes after
 the last strike - its state an activeEffects entry (kind 'artifact')
-the save carries free and liveStat reads through one added arm
-(RECORDED: DFU also moves the strength MAX; the port clamps at 100).
+the save carries free and liveStat reads through one added arm.
 The Oghma Infinium sets both level flags, opens the sheet, and is
 consumed; advancement's new oghma arm grants the fixed 30-point pool
 with NO Level++ and no health raise, both flags clearing together.
@@ -4129,7 +4141,7 @@ re-exporting, because the artifact registry sits under the
 enchantment system in the graph and importing the enum through its
 consumer would close a cycle.
 
-Pins: 9 in `test/artifacts.test.js`, every one through the REAL
+Pins: 9 in `test/systems/artifacts.test.js`, every one through the REAL
 dispatcher or the real hook site - the abort's end proven by a known
 row running PAST a Special row, the Star's release pair and both
 death-site reads, the Masque's sweep, the Razor both sides of the
@@ -4138,6 +4150,29 @@ sum, the Oghma end to end into applyLevelUp, both summons' gates with
 the unmounted door pinned ABSENT, the Wabbajack's forced reroll and
 latch with the world door's three laws, and Namira's four team arms
 plus the no-ring null.
+
+MACE-MAX (FIELD BUGS 2026-10-13e, "Molag bal mace do nothing"): the
+strength arm moves the MAX too. DFU's live effect raises its stat MAX
+mod beside its stat mod (`ChangeStatMaxMod` then `ChangeStatMod`,
+MaceOfMolagBalEffect.cs:138-139) and GetLiveStatValue clamps at
+MaxStatValue plus the merged max mods of every live effect
+(DaggerfallStats.cs:155-161, EntityEffectManager MergeStatMaxMods);
+the port had no max-mod layer, so a wielder at 100 Strength - against
+the dry foes nearly every fight is with - gained nothing. Now any live
+activeEffects entry may carry `statMaxMods` (its stat-keyed map, saved
+with it by save.js copyEffectEntry as effectData.statMaxMods is), and
+`statMods.js` liveStat's ceiling is MAX_STAT_VALUE plus their sum; the
+Mace is still DFU's only writer. The magicka arm's overflow raises the
+live max AT ONCE (`ChangeMaxMagickaModifier`, MaceOfMolagBalEffect.cs:117-123) as well as the
+tally the fold re-applies, so two strikes in one round count once
+(two 10-point drains on a full pool: 20, not 30). And taking the Mace
+off ends its live effect (UnequipHeldItem's Held-bundle sweep) through
+the type-26 row's new `unequipped` hook - the twelve-minute decay never
+ran for a Mace no longer worn, so its Strength stood for good. The
+condition bill was already DFU's (DamageEquipment's wear plus
+durabilityLoss = the blow's damage on a failed save). Pins:
+`test/systems/fb1013e_macemax.test.js` (4), `tools/mutants/fb1013e_macemax.json`
+(8, all dead).
 
 ## V4 - THE BEAST IN TOWN: the transformed host laws (2026-08-27)
 
@@ -4176,7 +4211,7 @@ FLAGGED, each loudly: the transformed paperdoll body and the vampire
 art/voices, the 4-20s real-time move-sound loop, the allied-spawn
 door.
 
-Pins: 6 in `test/beastform.test.js` - the gates' transformed-only
+Pins: 6 in `test/systems/beastform.test.js` - the gates' transformed-only
 walk through the REAL morph and cure, the crime setter both sides
 with every scene write proven routed, the promote-arm hold, the claws
 end to end (marker -> type -> swing sound -> rig consult -> silent
@@ -4222,7 +4257,7 @@ is DFU's own asymmetry.
 FLAGGED: the 4-20s real-time move-sound loop while transformed (the
 one remaining LycanthropyEffect member), the allied-spawn door.
 
-Pins: 4 in `test/curseart.test.js` - the head switch across morph and
+Pins: 4 in `test/systems/curseart.test.js` - the head switch across morph and
 cure with the birth-race law pinned against the name override, the
 background/suppression walk for all three states, the voice's
 always-a-clip law with the verbatim ids and the fire/pick split, and
@@ -4258,7 +4293,7 @@ beginFrame. RECORDED: DFU climate-swaps the preview's textures and
 lights with a 0.4 directional + hard shadows; the port draws the base
 textures under the collapsed-ambient idiom the automap records.
 
-Pins: 4 in `test/bankpreview.test.js` - the popup's own constants
+Pins: 4 in `test/ui/bankpreview.test.js` - the popup's own constants
 with the ship pairs, the negative-degree clock across mixed frame
 pacing (values off the 0.02 boundary: the accumulator is float math),
 the window's gate-and-order laws, and the host pass's bracket order
@@ -4297,7 +4332,7 @@ reads; an unreadable or unfetchable film falls back to the box chain
 texture rides the chargen release-then-upload law and the drain's
 bare dispose() releases the last frame.
 
-Pins: 5 in `test/daedrasummonwindow.test.js` - the token pairing,
+Pins: 5 in `test/ui/daedrasummonwindow.test.js` - the token pairing,
 the chunk walk with the last-offer-page click doing NOTHING (DFU
 waits on Yes/No), Yes through the real respond with paging-not-
 re-responding pinned past the answer, No's flagged spawn and the
@@ -4327,7 +4362,7 @@ live the day the Thieves Guild or Dark Brotherhood is joinable, and
 answer null (no rescue) until then, exactly as an IsMember() false
 does. The court header's FLAGGED clause is retired.
 
-Pins: 3 in `test/courtrescue.test.js`. Campaign: 7 mutants, 7 killed.
+Pins: 3 in `test/systems/courtrescue.test.js`. Campaign: 7 mutants, 7 killed.
 
 ## ES2 - THE EQUIP SOUND (2026-08-28)
 
@@ -4352,7 +4387,7 @@ StartEquippedItem - and the port does now:
   directly and never enters equipItem - the port's shape of DFU's
   playEquipSounds=false load arm, pinned.
 
-Pins: 4 in `test/equipsounds.test.js`. Campaign: 7 mutants, 7 killed.
+Pins: 4 in `test/systems/equipsounds.test.js`. Campaign: 7 mutants, 7 killed.
 
 ## EF1 - THE EFFECT LIBRARY MEASURED: no gap, and 255 phantom keys (2026-08-28)
 
@@ -4402,7 +4437,7 @@ honest answer to a key DFU has no class for.
 **A coverage claim must be measured from both sides.** "No key is
 missing" was TRUE on the broken code and would have passed forever.
 
-Pins: 4 in `test/effectcoverage.test.js` - two ungated (the
+Pins: 4 in `test/systems/effectcoverage.test.js` - two ungated (the
 discriminating-counter control, and the group-43 subgroup law, which
 catches the defect with no checkout present), two regenerating DFU's
 whole key set from the effect classes. Campaign: 5 mutants, 5 killed,
@@ -4446,7 +4481,7 @@ kind of wrong, because it sends someone to build what is already built.
 **A CLAIM USUALLY HAS MORE THAN ONE HOME.** EF1 fixed the line it was
 looking at. Grep the claim, not the line.
 
-Pins: 3 appended to `test/effectcoverage.test.js` (one subject, one
+Pins: 3 appended to `test/systems/effectcoverage.test.js` (one subject, one
 row) - the resistance law per element, the continuous-damage round
 tick, and a SOURCE SWEEP so a fifth sentence cannot land. Campaign: 4
 applicable mutants, 4 killed - and the sweep's design is the campaign's
@@ -4495,7 +4530,7 @@ recorded rather than wired: those windows have no crime path yet.
 Three things the port's own shape forced, each pinned:
 
 - **`?? 0` is load-bearing, not defensive noise.** The port mints
-  player entities lazily - `systems/save.js` reads every persistent
+  player entities lazily - `systems/save/save.js` reads every persistent
   field with its own `?? 0` - so a fresh character reaches the tally
   with these UNDEFINED where PlayerEntity.cs:90-93 declares them zero.
   DFU's gate ported literally as `=== 0` reads false against undefined
@@ -4517,7 +4552,7 @@ into it from `court.js`, which now re-exports them: `talk.js` needs them
 for the pickpocket tally and cannot import `court.js`, because
 `court.js` imports `talk.js` - a cycle its own pickpocket comment names.
 
-Pins: 10 in `test/crimeguilds.test.js`. Campaign: 12 mutants, 12
+Pins: 10 in `test/systems/crimeguilds.test.js`. Campaign: 12 mutants, 12
 killed - **after three survived the first run, all three for the same
 reason EW1 recorded a slice ago.** The delay pin asserted
 `NOW + CRIME_GUILD_LETTER_DELAY_MINUTES` and the InviteSent pin asserted
@@ -4565,13 +4600,13 @@ smash-to-black fade and EXIT's key-up deferral - stayed named, and a
 pin asserted they stayed named, so this slice could not be read as
 having closed the whole row. **WAVE D's D4 closed both** and inverted
 that pin: the fade is `src/ui/fadeLayer.js` (FadeBehaviour.cs whole)
-fired from `ui/travelPopUp.js` on the frame the counter empties, the
+fired from `ui/travel/travelPopUp.js` on the frame the counter empties, the
 deferral is travelPopUp's KeyDown-arms / KeyUp-pops
 `isCloseWindowDeferred` over the travelMapWindow keyup seam, and
-`test/travelguild.test.js` now asserts neither flag survives in that
+`test/systems/guild/travelguild.test.js` now asserts neither flag survives in that
 header.
 
-Pins: 6 in `test/travelguild.test.js`. Campaign: 9 mutants, 9 killed
+Pins: 6 in `test/systems/guild/travelguild.test.js`. Campaign: 9 mutants, 9 killed
 after two survived the first run, and the two survivors were different
 in kind:
 
@@ -4672,7 +4707,7 @@ would simply overwrite that one the moment `worldModes` builds a
 dungeon, last writer wins, silently. `opts.enchantCtx !== false` is the
 `chargen: false` shape exactly: **an outer host already owns it.**
 
-Pins: 7 in `test/flagsweep.test.js`. Campaign: 16 mutants, 16 killed.
+Pins: 7 in `test/scenes/flagsweep.test.js`. Campaign: 16 mutants, 16 killed.
 One design note from writing it: the population pin (*the guard
 measures at least two delegations*) is not decoration. Comments wrap,
 so the path routinely lands a line or two below the words -
@@ -4754,7 +4789,7 @@ The law lives in `shared.js` as two small functions rather than inline
 in the host, because it is exact and worth testing on its own: which
 pool is live, and whose sinks a record from it must go through.
 
-Pins: 9 in `test/enchantpool.test.js`, most of them behavioural
+Pins: 9 in `test/scenes/enchantpool.test.js`, most of them behavioural
 against the extracted law rather than source sweeps. Campaign: 18
 mutants, 18 killed - after two survivors, both of which were mine:
 
@@ -4831,7 +4866,7 @@ bounded 12 attempts is here because a spawn that cannot find a spot in
 a sealed corridor must not spin. Pinned as a bound, so removing it
 fails.
 
-Pins: 9 in `test/loosefoespawn.test.js`, the placement ones behavioural
+Pins: 9 in `test/scenes/loosefoespawn.test.js`, the placement ones behavioural
 against scripted rolls. Campaign: 25 mutants, 25 killed. Two of the
 first-run failures were mine and worth recording: **the side coin is
 `> 0.5 ? -angle : +angle`**, so the high roll is the MINUS side and my
@@ -4892,7 +4927,7 @@ open flag hides real work, which nobody sees at all. The bound is
 chosen to fail the first way.
 
 **One home, and the guard proved why.** The rule now lives in
-`tools/flagSites.mjs`; the tool and `test/audit18_bible_docs.test.js`
+`tools/flagSites.mjs`; the tool and `test/bible/audit18_bible_docs.test.js`
 both import it. They had carried a copy each - and the guard went red
 the moment the tool learned the new rule, which is precisely what two
 copies buys. 165 sites -> 155.
@@ -4911,7 +4946,7 @@ So it stays open, and the tool's own comment says so. **A wrong count is
 worse than a known-incomplete one** - and asserting one is exactly what
 the sentence IN1 just deleted was doing.
 
-Pins: 8 in `test/flagsites.test.js`. Campaign: 12 mutants, 12 killed -
+Pins: 8 in `test/tooling/flagsites.test.js`. Campaign: 12 mutants, 12 killed -
 including the unbounded span that swallowed a real flag, pinned with
 the `talkMacros` shape that caught it.
 
@@ -4964,7 +4999,7 @@ different placement problem from this ring. The row exists so the table
 is the whole call-site list and a reader can see what is not wired,
 rather than the row quietly not being there.
 
-Pins: 6 in `test/encounterplace.test.js`. Campaign: 22 mutants, 22
+Pins: 6 in `test/systems/wild/encounterplace.test.js`. Campaign: 22 mutants, 22
 killed, after one survivor: the dungeon host's **flier lift** had no
 pin, though the exterior one did. FinalizeFoe raises a flying foe 1.5
 above the test point, and a bat woken at rest was standing on the floor
@@ -5011,7 +5046,7 @@ all four hosts; in `worldModes` the arm sits deliberately outside the
 `if (magic)` block, because the beast makes its noise whether or not a
 cast engine was built.
 
-Pins: 8 in `test/lycanmove.test.js`. Campaign: 18 mutants, 18 killed -
+Pins: 8 in `test/systems/lycanmove.test.js`. Campaign: 18 mutants, 18 killed -
 after one survivor that was **the mutant's fault, not the pin's**, and
 is worth writing down:
 
@@ -5106,10 +5141,10 @@ DFU that drop is a `DaggerfallLoot` in the interior scene like any
 other. The fix is an interior `droppedLoot` pool, not a line in the
 feed; when it lands it joins `piles` and nothing else changes.
 
-Pins: 10 in `test/detectindoors.test.js`. Campaign: 16 mutants, 16
+Pins: 10 in `test/scenes/detectindoors.test.js`. Campaign: 16 mutants, 16
 killed — among them the F207 regression itself (drop `foes` from
 world.js's call and the pin fires), which is the point of moving a
-twice-written walk into one home. `test/nearbyobjects.test.js`'s FX1
+twice-written walk into one home. `test/systems/nearbyobjects.test.js`'s FX1
 pin was re-anchored on the law rather than the literal (F041's
 precedent): it had quoted the inline corpse map that no longer exists
 anywhere, and what it asserts is unchanged.
@@ -5182,7 +5217,7 @@ removes at the *window*, not at the last item). The caller's own
 `onClose` is **composed**, not overwritten: `...extra` last would have
 silently dropped the free, and that is the third mutant in the campaign.
 
-Pins: 10 in `test/interiordrop.test.js`, five of them behavioural
+Pins: 10 in `test/scenes/interiordrop.test.js`, five of them behavioural
 against the real pool with only the GL stubbed. The sharpest is the
 `TrackLooseObject` gate itself — a keyless drop survives `collectPixel`
 where a keyed one is swept, which is the whole bug in two lines.
@@ -5264,7 +5299,7 @@ such: three 1.25 kg trinkets give 6, one 12.5 kg breastplate gives 13.
 A pocketful of small things is caught by its count; one heavy thing by
 both.
 
-Pins: 10 in `test/theft.test.js`. Campaign: 18 mutants, 18 killed —
+Pins: 10 in `test/systems/theft.test.js`. Campaign: 18 mutants, 18 killed —
 including every *term's direction* in the chance formula, not merely its
 presence, because a formula pin that only proves a term exists is the
 proxy problem in miniature.
@@ -5341,7 +5376,7 @@ switch is inside `PresentShopQuality`, not in the door arm that calls
 it. `buildingGreetingsEnabled` is a static field defaulted true, not a
 settings key, and is a named constant here for the same reason.
 
-Pins: 12 in `test/buildinggreeting.test.js`. Campaign: 20 mutants, 20
+Pins: 12 in `test/systems/settings/buildinggreeting.test.js`. Campaign: 20 mutants, 20
 killed — after two survivors, **both real gaps in the pins**:
 
 - no test covered a **locked** building at all, so `buildingUnlocked`
@@ -5555,29 +5590,29 @@ seams, each passing every pin around it:
    refuse the T key (TR5); the fixed-city dev host has no saddle and is
    pinned so. Not proved in a browser here: no ARENA2 in this container;
    the Test Room's "Ride out" is the door to look through on a machine
-   that has it. `test/hc1_horsecart.test.js`.
+   that has it. `test/scenes/hc1_horsecart.test.js`.
 
 ### RF6 - THE ENHANCED SKIN READS THE ONE NAME RESOLVER (2026-09-14, Mac's refactor pass, the sixth)
 
-`src/systems/itemInfo.js` itemNameParts answers ResolveItemLongName's
+`src/systems/item/itemInfo.js` itemNameParts answers ResolveItemLongName's
 two parts - the material prefix and the rest - in DFU's arm order,
 once; itemLongName is their join. The enhanced inventory's line, the
 loot plaque, the wear notices and the HUD's held-weapon plaque read it
 instead of re-deriving the arms (and losing four: arrow, helm setting,
 artifact, Legendary; potion %po, plant variant, soul suffix, letter
 signoff). The record is the UI arc's: `bible/10-UI/UI-Arc.md` RF6.
-`test/rf6_itemnames.test.js` (3).
+`test/systems/rf6_itemnames.test.js` (3).
 
 ### RF5 - THE ITEM FIELD SCHEMA (2026-09-14, Mac's refactor pass, the fifth)
 
 An item record is an open shape and the knowledge of what each field
-IS lived only in its readers: the wire's validator (`src/systems/loot.js`
+IS lived only in its readers: the wire's validator (`src/systems/loot/loot.js`
 validLootItem) typed a record as "primitives, arrays and plain objects,
 bounded" and carried the exceptions by hand - the three array fields of
 AUDIT WORLD4 B1, LR4's affix check, the templateIndex bounds - so every
 field the port departs from DFU with (LR1's `rarity`, `affixes`,
 `legendary`) was another hand line there, or none and the next frozen
-tab. `src/systems/itemFields.js` now declares every field once - kind
+tab. `src/systems/item/itemFields.js` now declares every field once - kind
 (int with bounds, number, bool, bounded string, enum, array with an
 element check, object with a record check) - for DFU's own fields
 (the factories', the classic importer's, equip's slot, the repair
@@ -5591,7 +5626,7 @@ the kinds and floored at the template's (AUDIT WORLD6a B1), and the
 look's six fields on the hello keep their own clamp-not-refuse contract
 in the net leaf (`src/net/wire.js` validLookItem) - pinned as a subset
 of the declaration. Every mint the port has is run under the pin: no
-undeclared key, every value its kind. `test/rf5_itemfields.test.js` (3).
+undeclared key, every value its kind. `test/systems/rf5_itemfields.test.js` (3).
 
 ### RF4 - ONE FEATURE DECLARATION (2026-09-14, Mac's refactor pass, the fourth)
 
@@ -5600,7 +5635,7 @@ The Features row is the one declaration of the port's own switches -
 derive theirs, and the registry sits under the stores with the
 condensed rows' lanes registering themselves. The record is the
 Features arc's: `bible/10-UI/Features-Arc.md` RF4.
-`test/rf4_featuredecl.test.js` (3).
+`test/systems/rf4_featuredecl.test.js` (3).
 
 ### RF3 - THE CITE TOOL LEARNS THE THREE HAND CASES (2026-09-14, Mac's refactor pass, the third)
 
@@ -5622,7 +5657,7 @@ numbers the docs carry on struck lines only, and holds the escaped
 spelling for those (`pinned-struck`); `--struck` moves both. (3) THE
 TOOLS' OWN FIXTURES ARE NOT DOCS: the header's and the two pin files'
 synthetic cites were rewritten on every run and restored by hand;
-`SELF_DOCS` are skipped by both tools. `test/citeshift.test.js` (7);
+`SELF_DOCS` are skipped by both tools. `test/tooling/citeshift.test.js` (7);
 the citemerge pins unchanged. What it still cannot do stands in the
 header: a continuation wrapped onto the line BELOW its prose name
 (chargenSession's `overlayHover` `(:N)`, which CD8 gates), the
@@ -5645,7 +5680,7 @@ as every host passed before - no behaviour moved. The dungeon's dead
 deps-bag `generateItems` entry went with its one reader. A loot
 feature lands in the seam now, not in four hosts. AUDIT 24 wave 43's
 order pin reads the seam; the LR host pins read the calls.
-`test/rf2_spawnloot.test.js` (3).
+`test/systems/rf2_spawnloot.test.js` (3).
 
 ### RF1 - ENTITY MODIFIER CHANNELS (2026-09-14, Mac: "is there anything in the codebase that can benefit from a refactor. This is our first time going against parity with DFU ... Lets tackle each one at a time")
 
@@ -5672,7 +5707,7 @@ Loot rarity is the first fold (`affixFold`, `affixWeaponDamage`,
 registered under `LOOT_RARITY_FOLD`); its own readers are gone. Off
 is DFU exactly: no fold, or every fold empty, and every accessor
 answers the enchantment channel alone. A fold that throws is skipped
-and logged, never a frame lost. `test/rf1_entitymods.test.js` (5);
+and logged, never a frame lost. `test/systems/rf1_entitymods.test.js` (5);
 the LR pins read through the channels; AUDIT 24 wave 28's and AUDIT
 26 F122's regexes re-aimed at the one read.
 
@@ -5710,7 +5745,7 @@ mint at its source (shops and quest rewards decided out); the wire and
 the save carrying the fields, a forged affix list refused; a Test Room
 door with one of everything. The enhanced pack names through
 ResolveItemName now, which it never did (an unidentified magic item
-read its name raw there). `test/lr1_lootrarity.test.js` (15).
+read its name raw there). `test/systems/lr1_lootrarity.test.js` (15).
 
 LR4 (the same day, Mac: "Lets do an audit on this system"): an
 adversarial second read found the corpse roll running over the foe's
@@ -5802,8 +5837,8 @@ THE IDS, corrected here. The room shipped as TR1-TR3 on the day the
 transport arc above closed TR1-TR5, so two arcs claimed the same three
 ids and a grep for "TR2" answered with the riding sprite AND the
 gender bug. The room is **TSR** from now on (renumbered in
-`test/testroom.test.js` and Testing.md's row); the transport arc keeps
-TR. Source comments in `ui/enhancedMenu.js` and `combat/weaponRig.js`
+`test/systems/testroom.test.js` and Testing.md's row); the transport arc keeps
+TR. Source comments in `ui/enhanced/enhancedMenu.js` and `combat/weapon/weaponRig.js`
 still carry the old spelling, which this paragraph exists to catch.
 
 **TSR1 - ONE HOME.** `systems/testRoom.js` holds all three parts: the
@@ -5891,8 +5926,8 @@ encounter pool's - `careerIDs` is seventeen monsters and no watch,
 CreateFoe.PlaceFoeBuildingInterior (CreateFoe.cs:219-233), reached by
 both hosts that mount the mode machine. The finding, the C# and the
 pool-side laws are recorded in Characters-Arc's ROAD-G G1 section;
-pinned in `test/roadg_pools.test.js` and the rewritten EC1 pins in
-`test/enchantpool.test.js`.
+pinned in `test/scenes/roadg_pools.test.js` and the rewritten EC1 pins in
+`test/scenes/enchantpool.test.js`.
 
 **TSR4a - THE EDGE STANDS IN THE NEXT PIXEL (2026-09-04, Mac: "it
 just spawns me straight into the ground").** Audit of TSR4, shipped
@@ -5986,7 +6021,7 @@ This is the same false proposition AUDIT 62 F20 retired for the enemy
 transform, left standing over the player one. The half-capsule is
 added in `candleBase` now and the header says plainly what `feet` is;
 the port keeps the FEET as every host's player origin, so nothing else
-moves. `test/x11.test.js`'s position pin moves with the law (3.35 over
+moves. `test/scenes/x11.test.js`'s position pin moves with the law (3.35 over
 feet at 2, and 0.675 crouched) and dies when the term is dropped. The
 `LightNormal.cs` line cites in `CANDLE` were seven lines stale against
 the reference tree and are re-resolved (`:89`, `:96`).
@@ -6002,7 +6037,7 @@ FightersGuild / Temple(Arkay) / KnightlyOrder(Horn) instance and
 
 The port's slot carries the guild's NAME instead, because the key is the
 GROUP and one HolyOrder slot has to remember WHICH temple
-(`systems/guilds.js` `membershipKey` / `membershipOf`). `joinGuild`
+(`systems/guild/guilds.js` `membershipKey` / `membershipOf`). `joinGuild`
 writes the port's guild-record name; `classicGuildMemberships` wrote the
 FACTION.TXT record name - "The Fighters Guild", "Arkay", "The Host of
 the Horn" - and the two vocabularies are disjoint. Every name-keyed
@@ -6023,7 +6058,7 @@ cannot drift apart. A group with no guild is DFU's `default: return
 null`, which the port drops rather than filing a slot no consumer can
 read (DFU stores the null and NREs at `guild.Join()`).
 
-`test/classicsave.test.js`'s SAV2 pin used to assert the FACTION.TXT
+`test/systems/classicsave.test.js`'s SAV2 pin used to assert the FACTION.TXT
 string - a pin that restated the port. It asserts the guild record's
 name and then reads it back through `hasJoined`, and the fixture grew a
 second live row on a TEMPLAR ORDER's faction id (FACTION.TXT's own shape:
@@ -6062,7 +6097,7 @@ load-bearing: `ExteriorAutomap.cs:672-680`'s `!IsResidence ||
 isOverrideName` is the only thing that puts a plate on a residence, and
 the port's plate builder already implements it - it had no writer.
 
-Then the reveal itself, `systems/guildHallReveal.js`, over the FULL
+Then the reveal itself, `systems/guild/guildHallReveal.js`, over the FULL
 building set (`world/buildingSummaries.js`, which carries `factionId` and
 `buildingKey` per row - the talk directory is doors, the wrong pool), with
 the guild name READ rather than restated: `GetGuildName -> GetAffiliation`
@@ -6100,7 +6135,7 @@ all four reads are live: `:1993` (selling) and `:1999` (buying) take
 `player.Stats.LivePersonality` beside `GetLiveSkillValue(Mercantile)`.
 The port passed the live Mercantile and the permanent Personality - two
 halves of one formula at two different layers - at all seven call sites:
-the temple's cure quote (`systems/guildServiceActions.js`) and the six in
+the temple's cure quote (`systems/guild/guildServiceActions.js`) and the six in
 `scenes/worldModes.js` (the native trade window, the keyed shelf's buy and
 sell, the static-NPC service, the spellbook's buy mode, and repair).
 `systems/tavern.js` and `systems/tradeModes.js` take the object from their
@@ -6159,7 +6194,7 @@ AUDIT 26 F048 forced on the townsperson arm - before the flag is set
 and `Pickpocket(mobileEnemyBehaviour)` runs.
 
 `Pickpocket` is ONE method in DFU with an optional target (`:1611-1673`),
-so `systems/talk.js`'s `pickpocketTownsperson` became that one law,
+so `systems/talk/talk.js`'s `pickpocketTownsperson` became that one law,
 `pickpocket(player, { target })`. Exactly two things turn on the target:
 the chance takes the enemy's level, and the crime/guard pair is skipped
 (`:1655` gates it on `target == null`). Everything else - the tally
@@ -6388,7 +6423,7 @@ load-bearing here: the port's reroll runs inside
 any window this large satisfies. If the guard is ever extended to skip
 the reroll collection, that forced pass has to be added with it.
 
-**REVIEW ROUND (2026-09-08).** `test/travelguild.test.js`'s TP1 pin
+**REVIEW ROUND (2026-09-08).** `test/systems/guild/travelguild.test.js`'s TP1 pin
 owns the ORDER of the arrival clamp and `RaiseSkills`, and this lane
 weakened its clamp anchor to the bare substring
 `playerTicker.advance(clamp)` - three lines above the pin's own comment
@@ -6430,7 +6465,7 @@ instead (`null` means "do not ask", which is every non-maker caller).
 its mirror, carrying DFU's own asymmetry verbatim: an ordinary trap
 counts only when its soul is `!= None && < 43` (`:115`), while a
 filled Azura's Star is counted with no bound at all (`:121-125`).
-`ui/itemMakerWindow.js` enumerates ONCE, in its constructor, and both
+`ui/item/itemMakerWindow.js` enumerates ONCE, in its constructor, and both
 picker seams read that snapshot - see the review round below for why.
 
 That makes a comment in `enchantmentCatalogue.js` false and it is
@@ -6468,9 +6503,9 @@ registration.
 own work.
 
 *The host wiring had no pin.* The two `souls:` arguments in
-`ui/itemMakerWindow.js` were the ONLY place the filter reached the
+`ui/item/itemMakerWindow.js` were the ONLY place the filter reached the
 catalogue, and nothing in the suite constructed an `ItemMakerWindow` -
-`test/audit63_effects.test.js` drove `primaryPickerList`/`primaryPick`
+`test/systems/audit63_effects.test.js` drove `primaryPickerList`/`primaryPick`
 directly, so deleting both arguments restored the whole defect with the
 full suite byte-identical. Two window-level pins now drive the real
 window: an empty-handed maker's side-effects picker must not list the
@@ -6554,7 +6589,7 @@ the other wanted it gone for the roll order - and the reference
 settles it: DFU draws both rolls, so the line goes.
 
 **REVIEW ROUND (2026-09-08).** Moving the line left a stale cite in
-someone else's pin. `test/audit58_pins2.test.js`'s
+someone else's pin. `test/systems/audit58_pins2.test.js`'s
 "IsImmuneToDisease reads the PENDING marker" test quoted
 "`diseases.js:"FormulaHelper.InflictDisease," if (target.racialOverride || target.racialOverridePending)`"
 - the exact line this fix deleted. The pin still passes, because
@@ -6774,7 +6809,7 @@ archive's record 0 as its picture (`:891-897` - `clothingArchive, 0`
 literally, no icon roll and not the 216 archive a player's own pile
 takes) and fills it with `LootTables.GenerateLoot(loot, (int)PlayerGPS
 .CurrentLocationType)` (`:899`). The port parsed the marker type -
-`INTERIOR_MARKER.TREASURE` at `world/interiorLayout.js` - and `grep -rn
+`INTERIOR_MARKER.TREASURE` at `world/interior/interiorLayout.js` - and `grep -rn
 INTERIOR_MARKER src/` returned five readers, every one of them testing
 REST or ENTER. The constant had no reader anywhere, so every tavern and
 both guild halls were missing the free pile DFU places in them.
@@ -6912,7 +6947,7 @@ mutations were run against the pins; twelve died.
 
 F23's two re-aimed `Testing.md` rows had their new prose appended
 straight after the test count with no `|` between, so the count cell
-read `2 AUDIT 63 F23 re-aimed ...`. `test/manifest.test.js` matches a
+read `2 AUDIT 63 F23 re-aimed ...`. `test/bible/manifest.test.js` matches a
 row as `^\| <file> \| (\d+) \|` and neither row could match - a
 second, independent failure hiding behind the Suite total. The pipe is
 back and the prose is in the description cell where it belongs.
@@ -7129,7 +7164,7 @@ wagon. The port also ports the other orphan source the sweep exists
 for, `machine.js`'s "failed to load quest data - skip" arm.
 
 `removeOrphanedItems` / `removeAllOrphanedItems` live in
-`systems/save.js` and run inside `restoreSessionState`, the ONE
+`systems/save/save.js` and run inside `restoreSessionState`, the ONE
 composer both save hosts call. THE PLACE IS THE POINT. `restorePlayer`
 runs BEFORE that composer at both seams, so a sweep there would ask
 the OUTGOING session's quest machine - or, on a boot load, an empty
@@ -7201,7 +7236,7 @@ template-backed mint in DFU gets a `shortName` at construction -
 item whose TEMPLATE did not resolve.
 
 The port's `name` is not that. It is an OPTIONAL override:
-`resolveItemName` (`systems/itemInfo.js`) reads
+`resolveItemName` (`systems/item/itemInfo.js`) reads
 `templateByIndex(item.templateIndex)?.name` and the item's own `name`
 only refines it, and `loot.js`'s `named()` adds one on the
 `generateItems` path alone. Three ordinary production factories mint
@@ -7345,10 +7380,10 @@ dungeon arms carry their three siblings' pair now.
 runs its zero-magnitude test only inside `if (grounded)` and is false
 whenever airborne, which is what `player.standing` already answers.
 
-Pins: 1 new and 1 rewritten in `test/audit23_hosts.test.js` (the tally
+Pins: 1 new and 1 rewritten in `test/systems/audit23_hosts.test.js` (the tally
 gate and the fatigue gate proven to be different conditions - the
 standing runner tallies AND pays the default band; the moving one pays
-88), plus `test/tr1_transport.test.js`'s dungeon-host pin rewritten from
+88), plus `test/systems/tr1_transport.test.js`'s dungeon-host pin rewritten from
 the raw-key shape to the latched pair. Mutants: the tally gate reverted
 to `activity.running`, a dungeon host reverted to the raw key; 2 killed.
 
@@ -7424,7 +7459,7 @@ port's `ClickAnywhereToClose`); the mcp at DFU's call site is the
 default `null` (`DaggerfallMessageBox.cs:443-450`), so this is the
 null-mcp door.
 
-Pinned in `test/audit64_time_weather.test.js`: the id arithmetic and
+Pinned in `test/systems/audit64_time_weather.test.js`: the id arithmetic and
 its zero, the type gate over all fifteen location types, the 2.5 s
 delay, the cancel on leaving, the deferral under an open window, the
 ten-second re-arm on a NON-holiday day, and both hosts' wiring.
@@ -7501,7 +7536,7 @@ The port's `fastTravelTo` passed `{ arriveMinutes }` and nothing else, so
 came out null, and the arrival fell to the last resort in the core -
 `[TERRAIN_SIZE / 2, dest.centerHeight + compensation + 2, TERRAIN_SIZE / 2]`.
 `TerrainHelper.GetLocationTerrainTileOrigin` centres a location in its
-terrain tile (`world/terrainTiles.js` carries it verbatim), so the tile
+terrain tile (`world/terrain/terrainTiles.js` carries it verbatim), so the tile
 centre IS the town centre: the ordinary way to move in this game put the
 player down inside the block grid, keeping the departure facing, with
 `floorLanding`'s downward ray free to take a rooftop as the first hit -
@@ -7546,12 +7581,12 @@ moment either half of the pair is null (DFU's
   `_teleportToPixel`. The guard is DFU's own -
   `if (autoReposition == RepositionMethods.DirectionFromStartMarker)`
   caches the pair for that method ALONE (`:1078-1083`) - so it is a law and
-  is pinned as one, in `test/audit64_travel.test.js`'s host test.
+  is pinned as one, in `test/systems/audit64_travel.test.js`'s host test.
 - `worldPos: travelStart ? mapPixelToWorldCoords(px, py) : null` ->
   `worldPos: null` in `locationLandingFor`. This half is
   `LocalPlayerGPS.WorldX/WorldZ` as `PositionPlayerToLocation` reads them
   (`:1491-1492`), which `TeleportToMapPixel` has already moved to the
-  DESTINATION pixel (`:1085-1086`). `test/prisonrelease.test.js`'s pin over
+  DESTINATION pixel (`:1085-1086`). `test/systems/prisonrelease.test.js`'s pin over
   the same call had been TRIMMED to stop at `startMarkers,` when the two
   arguments were added, so the fix's own wiring was matched by nothing in
   the tree; it is grown back to the whole argument object, and
@@ -7596,7 +7631,7 @@ the ship's boarding, the guild teleport and the fast-travel arrival.
 
 The G5 comment block above `teleportTo` used to summarise TeleportAway as
 "the two calls DFU makes" and never named the third argument of the
-second one; `test/teleportpopup.test.js` then pinned the port's
+second one; `test/scenes/teleportpopup.test.js` then pinned the port's
 two-argument call as if it were the law. Both now read the reference.
 
 ## AUDIT 64 F20 - THE ARRIVAL CLAMP HAD ONLY ONE OF ITS TWO ARMS (2026-09-08)
@@ -7779,7 +7814,7 @@ MultipleChoiceKey. Bug for bug: `ModifyFoundLootItems` is registered
 and read by nothing (DFU 1.1.1 has no such hook), the dungeon exit does
 not clear the mod's dungeon, the armour drop's condition comes from the
 random piece's max. Off by default. Pins: 8 in
-`test/unleveledLoot.test.js`. The page: `06-Systems/Unleveled-Loot.md`.
+`test/systems/unleveledLoot.test.js`. The page: `06-Systems/Unleveled-Loot.md`.
 
 ### JAIL1 (2026-09-15) - RELEASED FROM JAIL INDOORS, INTO THE VOID
 
@@ -7886,7 +7921,7 @@ crosses the wire. Offline, or alone, always this player. The fixed city
 has no peers and no guard. Off by the enhanced pane's `wilderness-camps`
 row (prefs `wildernessCamps`, per player online).
 
-`test/camp1_groups.test.js` - 5 pins; AUDIT 62 F15 re-aimed (the
+`test/systems/camp1_groups.test.js` - 5 pins; AUDIT 62 F15 re-aimed (the
 anchor is the third street-wide occupancy ask). Mutants in
 `tools/mutants/restx2camp.json`. Not seen in a browser: the placement
 rides the same law RE1 proved.
@@ -7980,7 +8015,7 @@ At 150 m every spot is on built ground on a crossing: the entered pixel
 and its lateral neighbours were in range of the pixel just left, at any
 terrain distance.
 
-`test/camp1_groups.test.js` - the band, the bearing (never inside the
+`test/systems/camp1_groups.test.js` - the band, the bearing (never inside the
 view, never past the slack), both ends of the distance roll, the floor
 from the sampler, null off the ground; the two hosts pinned by source
 on the new call and the absence of the ring on the anchor.
@@ -8024,7 +8059,7 @@ preferred when any exist.
 The roll, the salt, the id, the clone and the TTL are untouched: a
 dungeon is on a pixel or it is not, for every client alike.
 
-`test/spawneddungeons.test.js` - the clearance table, the centre, the
+`test/world/spawneddungeons.test.js` - the clearance table, the centre, the
 edge-midpoint proof for every admitted shape (and that a 3x3 breaks
 it), the gate refusing three blocks with nothing else on offer, the
 line's rounding, the compass pair; the host pinned by source on the
@@ -8051,9 +8086,9 @@ civilians) and said nothing about it - the line's own comment above it
 ("nobody walks away mid-talk", audit 2026-08-17) was left contradicting
 the code. That law was never about enemies and is not what Mac asked
 for; the civilians still freeze under the talk overlay, and the pin
-says so. `test/winfoe1_foes_under_windows.test.js` - 1 pin; ROAD-G G2's
+says so. `test/scenes/winfoe1_foes_under_windows.test.js` - 1 pin; ROAD-G G2's
 review pin, the interior-foes pin and ROAD-B's indoor-watch pin
-re-aimed. **QUEST-POPUP-PAUSE (2026-09-26, Mac: "Pause them offline"):** offline, a quest's message box on top holds the pools again, as DFU's does; every other window keeps this law, and online nothing is held (`01-Overview/Field-Bugs-2026-09-26c.md`).
+re-aimed. **QUEST-POPUP-PAUSE (2026-09-26, Mac: "Pause them offline"):** offline, a quest's message box on top holds the pools again, as DFU's does; every other window keeps this law, and online nothing is held (`01-Overview/bugs/Field-Bugs-2026-09-26c.md`).
 
 **JAIL-HIT (2026-09-27): the trial is the one window the watch waits
 out.** Discord: *"Guards will still chase you down and kill you, even
@@ -8085,11 +8120,11 @@ bad name in a region is hunted there after the sentence in Daggerfall
 too. [SUPERSEDED by the reputation overhaul, REP1-REP6 (2026-09-29, Mac: "Something just much better and not as
 punishing, but still punishing"; `06-Systems/Standing-Arc.md`): a sentence gives the charge back less a violent crime's
 mark, the per-minute roll is retired for a guard who sees a known criminal stopping them, and a banishment is timed or
-pardoned.] Pinned in `test/jailhit.test.js` (3); `arrestshield.test.js`'s
+pardoned.] Pinned in `test/systems/jailhit.test.js` (3); `arrestshield.test.js`'s
 source pin and `audit39_worldlegaltalk.test.js`'s fixture (which never
 answered its surrender box) re-aimed. Mutants
 `tools/mutants/jail_hit.json` (6, all dead).
-`01-Overview/Field-Bugs-2026-09-27.md`.
+`01-Overview/bugs/Field-Bugs-2026-09-27.md`.
 
 ## SURV1-SURV7 - CLIMATES & CALORIES, OVERHAULED WITH PERMISSION (2026-09-18) - SHIPPED
 
@@ -8129,7 +8164,7 @@ line.
   rough - half the hour's recovery, the resting roll asked twice, a
   stiff morning; the felt temperature can refuse the sleep. 7 tests.
 - SURV5 what the player is told (`survival/status.js`,
-  `tavernMenu.js`, `ui/enhancedHud.js`, `ui/tavernWindow.js`): the
+  `tavernMenu.js`, `ui/enhanced/enhancedHud.js`, `ui/tavernWindow.js`): the
   HUD's needs strip, the status page's third box, the items' info box,
   the mod's regional tavern menus keyed by climate with the meal, the
   drink and the blackout. 6 tests.
@@ -8153,14 +8188,15 @@ formulas in. ONE SWITCH (`survival/switch.js`, the enhanced pane's
 mod off, and off it every seam is DFU's own: the bed's hour, the
 eleven-line tavern list, no chips, no gate, no roll.
 **SUPERSEDED IN PART BY SURV-TIERS (2026-09-23, Mac: "Off, Casual,
-Hard")**: the switch is three tiers on the same key - Off (as above,
+Hard")**: the switch is tiers on the same key - Off (as above,
 the classic game, though it keeps the camps and the rest's place, and
-sees another player's camp - SURV-OFFSIGHT),
-Casual (the default: the same world, costing stamina alone, lent down to
+sees another player's camp - SURV-OFFSIGHT), Boons (SURV-BOONS,
+2026-10-12: nothing taken, and a need met earns a boon - the default since
+BOONS-DEFAULT, 2026-10-13), Casual (the same world, costing stamina alone, lent down to
 half the pool at most and repaid when the need is met) and Hard (the arc
 as recorded here). The design, the table, the stored values and the
-audit are in `06-Systems/Climates-Calories.md`, sections SURV-TIERS and
-AUDIT SURV-TIERS.
+audit are in `06-Systems/Climates-Calories.md`, sections SURV-TIERS,
+AUDIT SURV-TIERS and SURV-BOONS.
 
 AUDIT SURV (2026-09-18, Mac: "Let's audit everything so far"): five
 opus lenses over the arc - laws, wiring, surfaces, records, a Chromium
@@ -8169,7 +8205,7 @@ hours and a legal rough rest took 480 health a night; the kit never
 reached a chargen character; a dungeon rest paid its night awake), the
 rest gate's handler leak, four camp doors, nine law bugs and a dozen
 surface faults - all fixed, recorded in `06-Systems/Climates-Calories.md`
-"The audit", pinned by `test/auditsurv.test.js` (8; 7 since HUNT-OUT took the hunt window's) and
+"The audit", pinned by `test/systems/survival/auditsurv.test.js` (8; 7 since HUNT-OUT took the hunt window's) and
 `tools/mutants/auditsurv.json`.
 
 ## CHARID1 - A CHARACTER IS AN ID, NOT A NAME (2026-09-21)
@@ -8243,7 +8279,17 @@ exactly that). A ruin minted then is PROVISIONAL (`_spawnUnroaded`), and
 `sweepRoadless` first takes back every provisional ruin a path crosses - its index
 entry and its TTL clock, never the one the player is standing in (TTL1's own
 exception) - then rebuilds the pixels, which ask again. Pinned in
-`test/spawnroads.test.js`, mutants in `tools/mutants/spawnroads.json`.
+`test/world/spawnroads.test.js`, mutants in `tools/mutants/spawnroads.json`.
+
+### SPAWN-THIN - A QUARTER FEWER RUINS (2026-10-19)
+
+The owner: "Reduce the density of spawning dungeons by 25%." The band is unchanged - 30% normal and 10% elite
+(`world/spawnedDungeons.js:"export const SPAWN_CHANCE = 0.30;"`, `world/spawnedDungeons.js:"export const ELITE_CHANCE = 0.10;"`).
+A second roll keeps three quarters of the pixels that band already chose
+(`world/spawnedDungeons.js:"export const SPAWN_KEEP = 0.75;"`), on its own hash lane, so a dungeon that remains is the
+same kind on the same pixel and one the keep drops is absent. The salt is not changed: changing it would move every
+dungeon. The relay's copy of the roll carries the same keep (`net/overworldLaw.js:"export const OW_SPAWN_KEEP = 0.75;"`).
+A character standing in a dropped dungeon does not find it on the next load. Authored dungeons are not this roll.
 
 ### DISC29-F - a mode change stops the riding loop, as UpdateMode does (2026-09-28, Skibbster)
 
@@ -8260,8 +8306,8 @@ dismount, the ship, and a horse swapped for the cart, which now stops at once ra
 
 The fixed-city host (`?exterior`, `?region`, `?loc`) never handed worldModes its `setTransportMode` seam, so a rider
 walked through a door still mounted there; it hands it the rig's `setMode` as the world host does.
-`test/disc29_gallop.test.js` (4: the real AudioEngine, and every host that makes a mount rig);
-`tools/mutants/disc29.json` (DISC29-F, 3). `01-Overview/Field-Bugs-2026-09-28f.md` DISC29-F.
+`test/systems/disc29_gallop.test.js` (4: the real AudioEngine, and every host that makes a mount rig);
+`tools/mutants/disc29.json` (DISC29-F, 3). `01-Overview/bugs/Field-Bugs-2026-09-28f.md` DISC29-F.
 
 ### FEATHERWEIGHT - THE MARK THAT READ "ERROR" (2026-09-29)
 
@@ -8280,7 +8326,7 @@ It reads the SPELLS.STD registry now - the one G4's value sum already
 read for the same slot - and, until that lands, the catalogue's three
 CastWhen* lists as one table of names by id. Nothing to migrate: a saved
 Mark carries the same `{0, 37}` and reads right on load. Pinned in
-`test/fb0929_featherweight.test.js` (5; the fifth over the real files);
+`test/systems/item/fb0929_featherweight.test.js` (5; the fifth over the real files);
 `tools/mutants/fb0929_featherweight.json`, 4 mutants, 4 dead.
 
 ### FB0929 - A PURCHASE IS NEVER FREE (2026-09-29)
@@ -8297,7 +8343,7 @@ through it, so what a counter shows is what it takes; only worldModes owns a cou
 is the Identify spell's, paid in magicka, and both exterior hosts hand a shop's door to it). The sale is not floored:
 online P0.4 pays half the ask at most, and half a gold is nothing. The floor only raises an ask - and it shut a loop
 Daggerfall had, a quality-1 counter in a cheap province asking nothing for a bandage and paying a gold for it back.
-`test/fb0929_min_price.test.js`, `tools/mutants/fb0929.json`.
+`test/systems/fb0929_min_price.test.js`, `tools/mutants/fb0929.json`.
 
 ### BOOK-SPLIT - A BOOK SPLIT OFF A STACK IS THAT BOOK (2026-09-29)
 
@@ -8316,8 +8362,8 @@ ItemCollection.Transfer -> AddItem (:473-480), which merges a lot into its own s
 `nativeTrade.js` `_move` add it now, so a book taken back is the third of its stack again, not a second row. AddItem
 also gained FindExistingStack's first term, `checkItem != item`: a record already held is never its own stack-mate.
 A2's and ROAD-Ar R5's pins flipped to the new law (the R5 re-merge now on a potion the producer mints).
-`test/fb0929d_booksplit.test.js` (4); `tools/mutants/fb0929d_booksplit.json`, 11 mutants, 11 dead.
-`01-Overview/Field-Bugs-2026-09-29d.md` BOOK-SPLIT.
+`test/systems/fb0929d_booksplit.test.js` (4); `tools/mutants/fb0929d_booksplit.json`, 11 mutants, 11 dead.
+`01-Overview/bugs/Field-Bugs-2026-09-29d.md` BOOK-SPLIT.
 
 ### WERE-FRIGHT - THE BEAST CANNOT SURRENDER; IT ROARS (2026-09-29)
 
@@ -8343,7 +8389,7 @@ bark is heard (the clip its landed blows roll 20% for), and one roll is made: 50
 beast's level against the level of the guard whose blow opened the halt - the watch pool hands it on the hit
 (`onPlayerHurt(dmg, wpn, { guardLevel })`), both hosts and a building's watch pass it through - held to 10-90, and a
 guard of unknown level taken at the beast's own. SAID PLAINLY: the watch is minted three to six levels above the player
-(DFU's Range(3, 7) on Knight_CityWatch, `characters/enemyEntity.js makeEnemyEntity`), so against the real watch the roar
+(DFU's Range(3, 7) on Knight_CityWatch, `characters/enemy/enemyEntity.js makeEnemyEntity`), so against the real watch the roar
 works 20-35% of the time, never 50. That is Mac's formula as picked; `FRIGHTEN_BASE_CHANCE` is the one number to move if
 the street should feel different, and the pins hold the street's range beside the formula's so a change to either
 shows.
@@ -8361,7 +8407,7 @@ the beast again), selects no target (so no swing and no blow), and calls no "Hal
 hostility, only 16 m). **Unafraid**, the watch stands its ground, the blow the question withheld lands, and the crime
 stands - N's outcome with a roar before it.
 
-**The run** (`characters/enemyMotor.js flee`, `_fleeStep`). No DFU motor ever runs from anything, so the run is the
+**The run** (`characters/enemy/enemyMotor.js flee`, `_fleeStep`). No DFU motor ever runs from anything, so the run is the
 pursuit's own laws turned round, not a new walker: per classic tick (the motor's one `_classicTimer`) it turns in place by
 TurnToTarget's 20 degrees until the way away is inside the 5.625-degree move gate, then walks through `_walkStep` -
 `_step`'s grounded tail, EXTRACTED so both call the one copy: the rest fast path, gravity, AttemptMove's obstacle and
@@ -8377,7 +8423,7 @@ squeeze1).
 the cell's stream (WATCH1), and a retired fleer leaves the pool as any walk-away does - so a peer should see him run and
 go. No two-client run has looked at it.
 
-Pins: 12 in `test/werefright.test.js`, through the real flow, pool and motor on a real collider;
+Pins: 12 in `test/systems/werefright.test.js`, through the real flow, pool and motor on a real collider;
 `tools/mutants/werefright.json`, 29 mutants, 29 dead. The seven records in six files that the change moved under
 (auditdisc19, auditdisc28_arrest's AR1 and AR3, disc19, disc28, and the two SURVTIERS cites the cite shift moved) are
 re-aimed by content, and those six files' 356 mutants re-run: 355 dead and the one recorded equivalent.
@@ -8387,7 +8433,7 @@ re-aimed by content, and those six files' 356 mutants re-run: 355 dead and the o
 Mac: "Audit this" - PR #459 whole, WERE-FRIGHT and MW-BRIG3, in six lenses: the arrest flow and its laws, the watch
 pool, the enemy motor, the hosts' seams (online and every input path to the box), MW-BRIG3's fit, and the records.
 Four findings - the fourth met where the merge of #464 (REP1-REP6, the reputation overhaul) brought a new surrender
-in - each verified by a pin that failed on the code before its fix (`test/auditwerefright.test.js`), and six mutants,
+in - each verified by a pin that failed on the code before its fix (`test/scenes/auditwerefright.test.js`), and six mutants,
 six dead (`tools/mutants/auditwerefright.json`).
 
 **F1 - THE EXTERIOR HOST SENT ITS STREET ALONE.** Both exterior hosts build the mode machine, and with it a watch that
@@ -8440,3 +8486,45 @@ branch moved, but for three synthetic examples in citeShift's own header and pin
 **Said, not changed.** Since REP1 the passive levy on a hated name (WERE-LEVY's) has no caller: the watch stops a known
 criminal only by sight, and never a beast, so a fright is not undone by a levy the next minute. A man asked the question
 who turns beast afterwards does not get a roar for that watch - the question is once a watch, and it was asked.
+
+### HELD-CONCEAL - A WORN CONCEALMENT A BLOW BROKE COMES BACK (2026-10-19)
+
+A player's private report: an item that makes its wearer invisible while worn (Cast When Held) stopped working after
+Overworld travel, and worked again only once it was taken off and put on again. TRAVEL WAS NOT IT - the worn pin rode
+37 hours of travel rounds and the six-hour reroll untouched. ONE LANDED BLOW WAS, wherever it landed (a journey's
+ambush is the likely one). Wave 31's break (`concealment.js` breakNormalPowerConcealment, at the attack formula's tail
+and every FromSource damage door) removed every normal-power concealment entry, the worn item's with the spells' - and
+the item's pin went with it, and the reroll (`enchantments.js` enchantmentMagicRound) visits only an item that still
+holds one. So the piece stood worn and inert for as long as it was worn. DFU's EndIncumbentEffect<T>
+(EntityEffectManager.cs:759-766) ENDS the effect - `RoundsRemaining = 0; End()` - and removes nothing: a spell's bundle,
+no rounds left, goes at the next DoMagicRound, but a worn item's is kept "alive until item breaks or is unequipped"
+(EntityEffectManager.cs:1739-1742), its ended effect sets no flag (DoConstantEffects skips HasEnded,
+EntityEffectManager.cs:1693), and the item stays scheduled for RerollItemEffects, which strips the bundle and recasts it.
+
+THE FIX, at the one door every breaker goes through - the blow (WeaponManager's and EnemyAttack's two lines, at the
+formula's tail), the FromSource damage of a spell (HandleAttackFromSource) and Silence's aggro. A spell's entry is
+removed, as before: DFU's end, a round sooner. An item-pinned one is ENDED in place - `ended`, its rounds 0 - and keeps
+its pin. `effects.js` hasActiveEffect reads an ended entry as absent (DFU's HasEnded skip), so IsInvisible, IsBlending
+and IsAShade, the senses' closures and the pose's concealment bits all read it broken, and `mysticism.js` liveBundles
+already skipped an ended entry, so the HUD's icon goes with it. The reroll recasts it once the item's six hours since
+its last roll are out (REROLL_MINIMUM_HOURS, E2's cadence, unchanged); taking the piece off sweeps the ended entry with
+its item, and putting it on again casts it at once. The TRUE powers are untouched, as ever. The other readers of an
+ended entry, checked: the HUD's status rows skip it; effectsAlreadyOnTarget counts it, as EnemyMotor's own does (no
+HasEnded test there); the arena's sand strip reads hasActiveEffect and takes a recast off on the next frame; the save
+never carries a pin.
+
+**Said, not changed.** Two places this leaves DFU (Port-Ledger A), and two left as they were:
+- every LIVE normal power ends on a break. EndIncumbentEffect<T> ends the first effect of its type FindIncumbentEffect<T>
+  meets (EntityEffectManager.cs:666-678), an ended one included - so a worn and a spell's Invisibility both live took a
+  blow each, and a worn one already ended shielded a spell's from every blow until the reroll;
+- DFU's HUD keeps an equipped item's bundle icon up whatever its effects (HUDActiveSpells.ShowIcon,
+  `|| bundle.fromEquippedItem != null`); the port's shows no concealment that is not there;
+- as it was: a load recasts every worn piece's spells fresh (ENCHANT-LOAD's restartHeldEnchantments - the save carries
+  no pin), a broken concealment included, where DFU's save keeps `effectEnded`. Re-wearing the piece does the same in
+  both, and HELD-REWEAR makes it free inside the six hours, so a load gives nothing a re-wear does not;
+- as it was: DFU recasts at a sleep's end or a synthetic time jump's end (RerollItemEffects' only two callers,
+  EntityEffectManager.cs:2170-2178), for an item DoMagicRound flagged at six hours; the port's reroll runs at the round
+  that finds the six hours out (E2's, unchanged - AUDIT 63 F13 above).
+
+Pinned in `test/systems/fb1019f_heldconceal.test.js` (5, on the real equip door, a real blow, a real spell's damage, the
+real magic-round pump and the HUD's icon row); `tools/mutants/fb1019f_heldconceal.json`, 9 mutants, 9 dead.

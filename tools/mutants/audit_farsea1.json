@@ -5,8 +5,8 @@
     "old": "    gl.drawElements(gl.TRIANGLES, this.ringCount + 6 * fill, gl.UNSIGNED_INT, 0);",
     "new": "    gl.drawElements(gl.TRIANGLES, this.indexCount, gl.UNSIGNED_INT, 0);",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "  const bound = Math.sqrt(Math.max(0, far * far - h * h)) - offset;",
     "new": "  const bound = Math.sqrt(Math.max(0, far * far - h * h));",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "  const bound = Math.sqrt(Math.max(0, far * far - h * h)) - offset;",
     "new": "  const bound = far - offset;",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
@@ -35,8 +35,8 @@
     "old": "  return cells.sort((a, b) => b[0] - a[0]);",
     "new": "  return cells.sort((a, b) => a[0] - b[0]);",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
@@ -45,8 +45,8 @@
     "old": "      const ax = Math.max(Math.abs(px - holeX), Math.abs(px + 1 - holeX));",
     "new": "      const ax = Math.min(Math.abs(px - holeX), Math.abs(px + 1 - holeX));",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
@@ -55,8 +55,8 @@
     "old": "        far: perspectiveFar(worldProj) * 0.99,",
     "new": "        far: perspectiveFar(worldProj) * 1.01,",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
@@ -65,8 +65,8 @@
     "old": "    gl.depthRange(1, 1);   // AUDIT FAR-SEA1 P1",
     "new": "    gl.depthRange(0, 1);   // AUDIT FAR-SEA1 P1",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
@@ -75,8 +75,8 @@
     "old": "    gl.bindVertexArray(null);\n    gl.depthRange(0, 1);",
     "new": "    gl.bindVertexArray(null);",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
@@ -85,8 +85,8 @@
     "old": "  return ambient + sunColor * (sunDiff * 0.6) + moonColor * moonDiff;",
     "new": "  return ambient + sunColor * sunDiff + moonColor * moonDiff;",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
@@ -95,8 +95,8 @@
     "old": "  vSeaBody = textureLod(uSeaTiles, vec3(0.5, 0.5, 0.0), 8.0).rgb * uSeaTint;",
     "new": "  vSeaBody = textureLod(uSeaTiles, vec3(0.5, 0.5, 0.0), 8.0).rgb;",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
@@ -105,18 +105,18 @@
     "old": "    for (let c = 0; c < 3; c++) this._seaTint[c] = WATER_TINT[c] * t[c];",
     "new": "    for (let c = 0; c < 3; c++) this._seaTint[c] = WATER_TINT[c];",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
     "name": "AUDIT-FAR-SEA1-L1-the-lane-sea-through-the-tonemap",
     "file": "src/render/enhancedLighting.js",
-    "old": "  if (sea > 0.0) shown = mix(shown, ringSea(uSeaAmbient, uSeaSunColor, uSeaMoonColor), sea);",
-    "new": "  if (sea > 0.0) shown = mix(shown, elEncode(elTonemapRGB(ringSea(uAmbient, uSunColor, uMoonColor) * ex)), sea);",
+    "old": "  if (sea > 0.0) shown = mix(shown, ringSea(uSeaAmbient, uSeaSunColor, uSeaMoonColor, sun), sea);",
+    "new": "  if (sea > 0.0) shown = mix(shown, elEncode(elTonemapRGB(ringSea(uAmbient, uSunColor, uMoonColor, sun) * ex)), sea);",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
@@ -125,8 +125,8 @@
     "old": "  return seaSky(lit, V.y, uSkyZenith, uSkyHorizon, uSeaF0) + seaGlints(",
     "new": "  return seaSky(lit, V.y, uSkyZenith, uSkyHorizon, uSeaF0) + 0.0 * seaGlints(",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
@@ -135,8 +135,8 @@
     "old": "  vec3 V = normalize(uEye - vWorld);",
     "new": "  vec3 V = normalize(vWorld - uEye);",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
@@ -145,8 +145,8 @@
     "old": "    float seaW = 1.0 - smoothstep(${(SEA_HAZE_BAND * 0.5).toFixed(2)}, ${SEA_HAZE_BAND.toFixed(2)}, abs(vWorldPos.y - uSeaHaze.y));",
     "new": "    float seaW = abs(vWorldPos.y - uSeaHaze.y) < ${SEA_HAZE_BAND.toFixed(2)} ? 1.0 : 0.0;",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
@@ -155,8 +155,8 @@
     "old": "    fw = mix(fw, max(fw, 1.0 - uSeaHaze.x), seaW);",
     "new": "    fw = mix(fw, 1.0 - uSeaHaze.x, seaW);",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
@@ -165,7 +165,7 @@
     "old": "    this._seaHaze.set(s.seaHaze);   // AUDIT FAR-SEA1 H1",
     "new": "",
     "tests": [
-      "test/roadc_panelframe.test.js"
+      "test/ui/automap/roadc_panelframe.test.js"
     ]
   },
   {
@@ -174,8 +174,8 @@
     "old": "    const waterSkyNow = waterOn ? sky.waterSky() : null;",
     "new": "    const waterSkyNow = (farRing || waterOn) ? sky.waterSky() : null;",
     "tests": [
-      "test/water.test.js",
-      "test/farsea1.test.js"
+      "test/world/terrain/water.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
@@ -184,8 +184,8 @@
     "old": "    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, out.subarray(0, ringN + fillN), gl.DYNAMIC_DRAW);",
     "new": "    gl.bufferData(gl.ELEMENT_ARRAY_BUFFER, Uint32Array.from(out.subarray(0, ringN + fillN)), gl.DYNAMIC_DRAW);",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   },
   {
@@ -194,8 +194,8 @@
     "old": "  float F = seaFresnel(NdV, uF0);",
     "new": "  float F = uF0 + (0.85 - uF0) * pow(1.0 - NdV, 5.0);",
     "tests": [
-      "test/audit_farsea1.test.js",
-      "test/farsea1.test.js"
+      "test/render/audit_farsea1.test.js",
+      "test/render/farsea1.test.js"
     ]
   }
 ]

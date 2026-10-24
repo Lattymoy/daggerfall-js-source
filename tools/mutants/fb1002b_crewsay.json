@@ -1,134 +1,134 @@
 [
   {
     "name": "SAY-talk-together",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    const together = p.kind === 'sing' || p.kind === 'shout';",
     "new": "    const together = true;",
     "tests": [
-      "test/fb1002b_crewsay.test.js",
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-shout-each",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    const together = p.kind === 'sing' || p.kind === 'shout';",
     "new": "    const together = p.kind === 'sing';",
     "tests": [
-      "test/fb1002b_crewsay.test.js",
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-sing-each",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    const together = p.kind === 'sing' || p.kind === 'shout';",
     "new": "    const together = p.kind === 'shout';",
     "tests": [
-      "test/fb1002b_crewsay.test.js",
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-who-unread",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "`${p.who ?? p.name ?? ''}|${p.text}`",
     "new": "`${p.text}`",
     "tests": [
-      "test/fb1002b_crewsay.test.js",
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-order-by-distance",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "g.born = memory?.bubbles.get(g.key)?.born ?? (memory ? ++memory.seq : g.at);",
     "new": "g.born = g.at;",
     "tests": [
-      "test/fb1002b_crewsay.test.js",
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-memory-unfed",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    memory.bubbles = keep;",
     "new": "    void keep;",
     "tests": [
-      "test/fb1002b_crewsay.test.js",
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-ease-at-once",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "(dt > 0 ? Math.max(1, Math.floor(CREW_SAY_EASE * scale * dt)) : 0)",
     "new": "Infinity",
     "tests": [
-      "test/fb1002b_crewsay.test.js",
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-ease-through",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "      if (clear(eased)) lift = eased;\n      else if (clear(was.lift)) lift = was.lift;",
     "new": "      lift = eased;",
     "tests": [
-      "test/fb1002b_crewsay.test.js",
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-ease-unheld",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "      else if (clear(was.lift)) lift = was.lift;",
     "new": "",
     "tests": [
-      "test/fb1002b_crewsay.test.js",
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-top-unread",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    if (lift > 0 && foot - lift - h < top) continue;   // over the screen's top: not drawn",
     "new": "",
     "tests": [
-      "test/fb1002b_crewsay.test.js",
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-top-own-head-too",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    if (lift > 0 && foot - lift - h < top) continue;",
     "new": "    if (foot - lift - h < top) continue;",
     "tests": [
-      "test/fb1002b_crewsay.test.js",
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
     "name": "SAY-draw-forgets",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "layoutCrewLines(points, { scale, memory: sayMemory, dt, top: 0 });",
     "new": "layoutCrewLines(points, { scale, memory: null, dt, top: 0 });",
     "tests": [
-      "test/fb1002b_crewsay.test.js",
-      "test/fb1002_crewsay.test.js",
-      "test/livingcrew.test.js"
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js",
+      "test/systems/naval/livingcrew.test.js"
     ]
   },
   {
     "name": "SAY-draw-off-the-top",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "layoutCrewLines(points, { scale, memory: sayMemory, dt, top: 0 });",
     "new": "layoutCrewLines(points, { scale, memory: sayMemory, dt });",
     "tests": [
-      "test/fb1002b_crewsay.test.js",
-      "test/fb1002_crewsay.test.js",
-      "test/livingcrew.test.js"
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js",
+      "test/systems/naval/livingcrew.test.js"
     ]
   },
   {
@@ -137,8 +137,8 @@
     "old": "    drawCrewLines(points, { covered, scale: enhancedHudScale(), dt: gamePaused() ? 0 : dt });",
     "new": "    drawCrewLines(points, { covered, scale: enhancedHudScale() });",
     "tests": [
-      "test/fb1002b_crewsay.test.js",
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   },
   {
@@ -147,8 +147,8 @@
     "old": "name: name ? name.split(' ')[0] : null, who: key, kind: l.kind, distance: d });",
     "new": "name: name ? name.split(' ')[0] : null, kind: l.kind, distance: d });",
     "tests": [
-      "test/fb1002b_crewsay.test.js",
-      "test/fb1002_crewsay.test.js"
+      "test/systems/naval/fb1002b_crewsay.test.js",
+      "test/systems/naval/fb1002_crewsay.test.js"
     ]
   }
 ]

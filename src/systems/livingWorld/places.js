@@ -1,7 +1,7 @@
 // @ts-check
 // LW1 (2026-10-04, bible/06-Systems/Living-World.md): THE TOWN'S PLACES - where a resident can go, read off the town as
 // it is built: its buildings' doors (the host hands each in the location frame with its outward normal), its navgrid
-// (world/cityNavigation.js) and its buildings' types.
+// (world/city/cityNavigation.js) and its buildings' types.
 //
 //  - A DOOR is the walkable cell just before it: out along the door's normal until the ground takes a foot (the other
 //    way where the model's normal faces in - a footprint is never street), else the nearest walkable cell about it - and
@@ -23,7 +23,7 @@
 //    reaches no edge at all, the farthest it reaches toward it.
 //
 // PURE: the doors, the grid and the types in; plain records out.
-import { NAV_CELL, HALF_CELL } from '../../world/cityNavigation.js';
+import { NAV_CELL, HALF_CELL } from '../../world/city/cityNavigation.js';
 import { BUILDING_TYPES } from '../../world/buildingNames.js';
 import { hasShopJob } from './census.js';
 
@@ -48,7 +48,7 @@ export const SQUARE_POINTS = 5;
 export const CORNER_MARGIN = 6;
 export const CORNER_OPEN = 0.6;
 export const CORNER_GAP = 16;
-/** The grid's cells to a block's side (world/cityNavigation.js NAV_CELLS_PER_BLOCK). */
+/** The grid's cells to a block's side (world/city/cityNavigation.js NAV_CELLS_PER_BLOCK). */
 const BLOCK_CELLS = 64;
 
 /** The buildings before which a town gathers to talk. @type {Set<number>} */
@@ -214,7 +214,7 @@ const STREET_SLACK = 1e-6;
 /**
  * LW-STAND (field, 2026-10-05, Mac: "NPCs will get stuck over bodies of water, or be stuck running into walls"): THE
  * STREET A PERSON STANDS AND WALKS ON - the street net's cells (the grid's own walkable cells: a building's footprint
- * and the water are none - world/cityNavigation.js - nor is the grid's outside), and a body the square of `reach`
+ * and the water are none - world/city/cityNavigation.js - nor is the grid's outside), and a body the square of `reach`
  * about its middle. AUDIT LW-STAND: EXACT. A body stands where the square overlaps no cell off the net (`holds`) - its
  * corners too: four probes on its axes stood a body over a building's corner - and a straight way holds it where the
  * square swept along it overlaps none: the off-net cells grown by `reach`, against the way (the slab test). So any part

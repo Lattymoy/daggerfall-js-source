@@ -11,19 +11,19 @@ import { WORLD_FRAME } from '../render/renderer.js';   // AUDIT-EL F5
 import { INTERIOR_CLEAR } from '../render/renderer.js';
 import { PITCH_LIMIT } from '../player/mwCamera.js';   // MW-D30: camera.cpp:323-331's own clamp
 import { requestLook, makeLookGate } from '../player/pointerLock.js';   // AUDIT-AMAP H8: the lock gate the other hosts run
-import { attachTouch } from '../ui/touch.js';
+import { attachTouch } from '../ui/touch/touch.js';
 import { attachGamepad } from '../ui/gamepadInput.js';   // GP1: the pad speaks the same hooks
 import { isEnhanced } from '../systems/uiSkin.js';   // AUDIT FONT F5: the touch layer's face gate (the skin cannot change without a reload, so the boot-time read is exact)
 import { BlocksFile } from '../formats/blocksFile.js';
-import { bindWorldDataBlocks } from '../formats/worldDataReplacement.js';   // RR3b
+import { bindWorldDataBlocks } from '../formats/worldData/worldDataReplacement.js';   // RR3b
 import { loadModWorldData } from './modWorldData.js';   // RR3b
 import { DFPalette } from '../formats/dfPalette.js';
-import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interiorLights.js';
+import { INTERIOR_AMBIENT, INTERIOR_NIGHT_AMBIENT, INTERIOR_LIGHT_DIR } from '../world/interior/interiorLights.js';
 import { isNight } from '../world/worldClock.js';   // AUDIT 23 (C12)
 import { skyMinutes } from '../systems/worldTick.js';   // AUDIT 23 (C12); TIME1: the sky's night
-import { nearestLights } from '../world/cityLights.js';
+import { nearestLights } from '../world/city/cityLights.js';
 import { syncLightingLane, interiorLightColor, interiorGrade } from '../render/enhancedLighting.js';   // EL1; INTERIOR-DIM: a room's lamps and its grade
-import { INTERIOR_MARKER } from '../world/interiorLayout.js';
+import { INTERIOR_MARKER } from '../world/interior/interiorLayout.js';
 import { lookAt, perspective, mirrorProjectionX, UP_Y } from '../world/mat4.js';   // HANDEDNESS: the one mirror (mat4's law)
 import { fetchBytes, seasonOverride, ensureAudio } from './shared.js';
 import { INTERIOR_SEASON } from '../world/climateSwaps.js';   // A1: DaggerfallInterior.cs:51 - an interior is summer-skinned, always
@@ -35,15 +35,15 @@ import { lookScale, lookInvert, keyboardLookRate } from '../ui/lookSettings.js';
 import { LookFilter } from '../player/lookFilter.js';   // AUDIT 28 W7: MouseLookSmoothingFactor
 import { fieldOfView } from '../ui/viewSettings.js';   // MENU: Video/FieldOfView, one home for five hosts
 import { windowEmissionRGB } from '../render/windowEmission.js';   // AUDIT 26 F001/F002: WindowStyle per host (DaggerfallInterior.cs:473/:517/:1270 vs GetMaterial's Day default)
-import { createAutomapWindow, preloadAutomapArt, automapDoorReady } from '../ui/automapDoor.js';   // ROAD-C c2/S9 + EM3: the second interior host's M window, behind the skin fork
-import { nativeMetrics, pointToNative } from '../ui/nativePanel.js';   // ROAD-C c2/S9
+import { createAutomapWindow, preloadAutomapArt, automapDoorReady } from '../ui/automap/automapDoor.js';   // ROAD-C c2/S9 + EM3: the second interior host's M window, behind the skin fork
+import { nativeMetrics, pointToNative } from '../ui/native/nativePanel.js';   // ROAD-C c2/S9
 import { makeFont } from '../ui/text.js';   // ROAD-C c2/S9: the map's status/hover labels
 import { FntFile } from '../formats/fntFile.js';   // ROAD-C c2/S9
 import { makeWindowStack, pauseWhileOpen } from '../ui/windowStack.js';   // ROAD-tail: UserInterfaceManager's stack, and its PAUSE, for the fourth host
 import { installConsoleProbe } from '../systems/consoleCommands.js';   // E3: the console's door
 import { swallowBrowserKey, actionsOf, keyboardLook } from '../ui/input.js';   // U47: F5/F6/F11 - one list, in ui/input.js; FIX-F: the automap through the registry, and the look keys off the same registry
-import { worldViewportRect, largeHudWorldAspect } from '../ui/hudLarge.js';   // AUDIT RETRO1 A8/C4: the lens and the world rect the other hosts take - the docked bar's, and retro mode's texture aspect and pillarbox
-import { hudShortcutKey } from '../ui/hudShortcuts.js';   // AUDIT RETRO1 C4: DaggerfallHUD's shortcuts, Shift-F11 among them, as in the other hosts
+import { worldViewportRect, largeHudWorldAspect } from '../ui/hud/hudLarge.js';   // AUDIT RETRO1 A8/C4: the lens and the world rect the other hosts take - the docked bar's, and retro mode's texture aspect and pillarbox
+import { hudShortcutKey } from '../ui/hud/hudShortcuts.js';   // AUDIT RETRO1 C4: DaggerfallHUD's shortcuts, Shift-F11 among them, as in the other hosts
 import { frameCapSkip } from '../systems/frameCap.js';   // FPS-CAP1: DFU's TargetFrameRate, the fourth host's
 import { deliverOwedShots } from '../ui/screenshot.js';   // SHOT1: every drawn foot pays the shots owed (this host routes no PrintScreen of its own)
 

@@ -5,7 +5,7 @@
     "old": "  stretch: 2,\n",
     "new": "  stretch: 1,\n",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "const n = Math.min(1, Math.max(0, (n0 - 0.5) * ECOTONE.stretch + 0.5));",
     "new": "const n = n0;",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "const p = Math.min(1, Math.max(0, 0.5 + d / (2 * ECOTONE.band)));",
     "new": "const p = Math.min(1, Math.max(0, 0.5 + d / ECOTONE.band));",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "h = Math.imul(h, 0x7feb352d) >>> 0;",
     "new": "h = Math.imul(h, 0x7feb352f) >>> 0;",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "const ix = origin[0] / cell + fx0, iz = origin[1] / cell + fz0;",
     "new": "const ix = fx0, iz = fz0;",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "export const ecoOrigin = (px, py) => [px * 128, (ECOTONE.row0 - py) * 128];",
     "new": "export const ecoOrigin = (px, py) => [px * 128, (ECOTONE.row0 + py) * 128];",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (askX) { const s = ecoShare(origin, ux, tx, tz, ECOTONE.saltX); ox = sx < 0 ? s : 1 - s; }",
     "new": "if (askX) { const s = ecoShare(origin, ux, tx, tz, ECOTONE.saltX); ox = sx < 0 ? 1 - s : s; }",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "const askX = (axes & 1) && Math.abs(ux) < ECOTONE_REACH, askZ = (axes & 2) && Math.abs(uz) < ECOTONE_REACH;",
     "new": "const askX = (axes & 1) && Math.abs(ux) < ECOTONE_REACH / 2, askZ = (axes & 2) && Math.abs(uz) < ECOTONE_REACH / 2;",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "const axes = (kx === k0 && kd === kz ? 0 : 1) | (kz === k0 && kd === kx ? 0 : 2);",
     "new": "const axes = (kx === k0 && kd === kz ? 0 : 2) | (kz === k0 && kd === kx ? 0 : 1);",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "for (const [k, w] of sums) if (w > bestW) { best = k; bestW = w; }",
     "new": "for (const [k, w] of sums) if (w >= bestW) { best = k; bestW = w; }",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ],
     "equivalent": true,
     "why": "a tie is two climates' summed shares EXACTLY equal short of a half: the shares are smoothstepped value noise, whole (0 or 1) or strictly between, so an exact tie needs a share of exactly a half off the noise - no point the pins (or the world) can name has one; the tie's rule is the pixel's own, as documented"
@@ -97,7 +97,7 @@
     "old": "float n = clamp((n0 - 0.5) * ${f(ECOTONE.stretch)} + 0.5, 0.0, 1.0);",
     "new": "float n = n0;",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "  ecoAdd(w, nx, (1.0 - ox) * oz);\n  ecoAdd(w, nz, ox * (1.0 - oz));",
     "new": "  ecoAdd(w, nz, (1.0 - ox) * oz);\n  ecoAdd(w, nx, ox * (1.0 - oz));",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -115,16 +115,16 @@
     "old": "if (abs(ux) < ${f(ECOTONE_REACH)} && !(nx == 0 && nd == nz))",
     "new": "if (abs(ux) < ${f(ECOTONE_REACH)} && !(nx == 0))",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
     "name": "ECOTONE1-glsl-switch-ignored",
     "file": "src/render/ecotoneGlsl.js",
-    "old": "  if (uEcoOrigin.z == 0) return own;\n",
+    "old": "  if (uEcoOrigin.z == 0) return vec4(1.0, 0.0, 0.0, 0.0);   // every neighbour wears the pixel's own set\n",
     "new": "",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -133,25 +133,25 @@
     "old": "  if (w.y > 0.0) c += w.y * ${decode}(textureGrad(uEcoArr1, tl, gx, gy).rgb);",
     "new": "  if (w.y > 0.0) c += w.y * (textureGrad(uEcoArr1, tl, gx, gy).rgb);",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
     "name": "ECOTONE1-classic-call-dropped",
     "file": "src/render/renderer.js",
-    "old": "  tex = ecotone(tex, vLocalXZ, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n  ${waterBedMix()}",
-    "new": "  ${waterBedMix()}",
+    "old": "  tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n",
+    "new": "",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
     "name": "ECOTONE1-lane-call-dropped",
     "file": "src/render/enhancedLighting.js",
-    "old": "  tex = ecotone(tex, vLocalXZ, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n",
+    "old": "  tex = ecotone(tex, ew, vec3(tuv, float(layer)), gx, gy);   // ECOTONE1: a border's ground, its neighbours' share\n",
     "new": "",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "old": "if (!tex || shadow[k] === tex) continue;",
     "new": "if (!tex) continue;",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "} else if (this._tEcoOn !== false) {",
     "new": "} else if (false) {",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -178,25 +178,25 @@
     "old": "    this._tEcoOn = null;   // ECOTONE1: and the border switch, a frame's like the tile size\n",
     "new": "",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
     "name": "ECOTONE1-world-slots-W-E",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "side: Int32Array.of(slot(3), slot(5), slot(1), slot(7)),",
     "new": "side: Int32Array.of(slot(5), slot(3), slot(1), slot(7)),",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
     "name": "ECOTONE1-world-neighbour-unheld",
-    "file": "src/scenes/world.js",
-    "old": "      for (const a of archives) await loadGroundSet(a, pipeline);\n",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      for (const a of archives) await loadGroundSet(a, pipeline, snowCover?.winterOf(near[groundNear.indexOf(a)]) ?? null);   // PRECIP4: the neighbours' twins\n",
     "new": "",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -205,53 +205,53 @@
     "old": "const ga = p.ecoGround ? borderGround(p, lx, lz) : p.groundArchive;",
     "new": "const ga = p.groundArchive;",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
     "name": "ECOTONE1-archive-not-carried",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "    if (f) out.push({ ...f, archive });",
     "new": "    if (f) out.push(f);",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
     "name": "ECOTONE1-desert-scale-dropped",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "const chance = base * elevationScale * (climateType === CLIMATE_TYPE_DESERT ? 0.25 : 1.0);",
     "new": "const chance = base * elevationScale;",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
     "name": "ECOTONE1-desert-inset",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "return { record: 1 + Math.floor(tileDraw(wx, wz, 5) * 31), x: x * scale, y: heightAt(x, y) - steepness / SLOPE_SINK_RATIO, z: y * scale };",
     "new": "return { record: 1 + Math.floor(tileDraw(wx, wz, 5) * 31), x: (x + 0.5) * scale, y: heightAt(x, y) - steepness / SLOPE_SINK_RATIO, z: y * scale };",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
     "name": "ECOTONE1-woods-dice-the-climate's",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "    const roll = tileDraw(wx, wz, 0);",
     "new": "    const roll = tileDraw(wx + trees.length, wz, 0);",
     "tests": [
-      "test/ecotone1.test.js",
-      "test/forest1.test.js"
+      "test/systems/ecotone1.test.js",
+      "test/systems/forest1.test.js"
     ]
   },
   {
     "name": "ECOTONE1-sway-set-ignored",
-    "file": "src/systems/windDrive.js",
+    "file": "src/systems/wind/windDrive.js",
     "old": "if (natureArchive instanceof Set ? !natureArchive.has(archive) : archive !== natureArchive) return 0;",
     "new": "if (natureArchive instanceof Set ? true : archive !== natureArchive) return 0;",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -260,7 +260,7 @@
     "old": "const base = n.flat?.base ?? f.base, archive = n.flat?.archive ?? f.archive;",
     "new": "const base = f.base, archive = f.archive;",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -269,7 +269,7 @@
     "old": "if (pageParam('ecotone', search) === 'off' && !isOnlinePage(search)) return false;",
     "new": "if (pageParam('ecotone', search) === 'off') return false;",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -278,7 +278,7 @@
     "old": "uniform highp ivec3 uEcoOrigin;",
     "new": "uniform ivec3 uEcoOrigin;",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   },
   {
@@ -287,7 +287,7 @@
     "old": "  highp uint h = (uint(c.x) * 0x8da6b343u)",
     "new": "  uint h = (uint(c.x) * 0x8da6b343u)",
     "tests": [
-      "test/ecotone1.test.js"
+      "test/systems/ecotone1.test.js"
     ]
   }
 ]

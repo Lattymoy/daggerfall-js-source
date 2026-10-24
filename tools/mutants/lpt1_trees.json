@@ -2,19 +2,19 @@
   {
     "name": "LPT1-cut-any-picture",
     "file": "src/render/renderer.js",
-    "old": "const lc = b.lptProto && this._lpt?.cut.has(b.lptProto) ? 1 : 0;",
-    "new": "const lc = b.lptProto && this._lpt ? 1 : 0;",
+    "old": "const lc = b.lptProto ? this._lptFrameOf(b.lptProto) : null;",
+    "new": "const lc = b.lptProto ? (this._lptSlots.find((f) => f) ?? null) : null;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
     "name": "LPT1-frame-not-spent",
     "file": "src/render/renderer.js",
-    "old": "    }\n    this._lpt = null;",
+    "old": "    }\n    if (slots) slots.fill(null);",
     "new": "    }",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    gone = vFade <= 0.0;",
     "new": "    gone = false;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "float tc = cos(aInst.w), tsn = sin(aInst.w);",
     "new": "float tc = 1.0, tsn = 0.0;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "vec3 p = aCenter * uMeshScale * aScale;",
     "new": "vec3 p = aCenter * uMeshScale;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "verts[o + 3] = bbCornerX(corners[c][0], fs);",
     "new": "verts[o + 3] = corners[c][0];",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "verts[o + 3] = bbCornerX(BB_CORNERS[k][0], fs);",
     "new": "verts[o + 3] = BB_CORNERS[k][0];",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    push *= fs;   // LPT1: a smaller tree leans less",
     "new": "    // LPT1: a smaller tree leans less",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    float up = (cn.y + 0.5) * uSize.y;",
     "new": "    float up = (aCorner.y + 0.5) * uSize.y;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    vBBBase = aInst.xyz;",
     "new": "    vBBBase = world;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "(vFade > 1.5 && vFade < 3.0 &&",
     "new": "(vFade < 3.0 &&",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "+ 0.03125 < 3.0 - vFade)) discard;",
     "new": "+ 0.03125 < vFade - 2.0)) discard;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      if (lastFlash !== 0) { gl.uniform1f(this.bbUHitFlash, 0); lastFlash = 0; }\n",
     "new": "",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      if (lastGlow !== 0) { gl.uniform1f(this.bbUEliteGlow, 0); lastGlow = 0; }\n",
     "new": "",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "      if (this._bbPadOn) { gl.uniform4f(this.bbUElitePad, 0, 0, 0, 0); this._bbPadOn = false; }\n",
     "new": "",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -140,16 +140,16 @@
     "old": "      if (this._bbDissolveOn) { gl.uniform4f(this.bbUDissolve, 0, 0, 0, 0); this._bbDissolveOn = false; }\n",
     "new": "",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
     "name": "LPT1-A1-wash-kept",
     "file": "src/render/renderer.js",
-    "old": "      if (this._bbTintOn) { gl.uniform3f(this.bbUBatchTint, 1, 1, 1); this._bbTintOn = false; }\n",
+    "old": "      if (this._bbTintOn) { gl.uniform3f(this.bbUBatchTint, 1, 1, 1); gl.uniform1f(this.bbUBatchDye, 0); this._bbTintOn = false; }\n",
     "new": "",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "vShade = uMeshColor * mix(faceEye, faceSun, uLptSun.w);",
     "new": "vShade = uMeshColor * faceSun;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "vec2 fe = length(toEye) > 1e-4 ? normalize(toEye) * 0.8 : vec2(0.0, 0.8);",
     "new": "vec2 fe = vec2(0.0, -0.8);",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "const sun = this._clockLit ? Math.min(1, Math.max(0, (this._sunScale ?? 0) / LPT_SUN_FULL)) : 0;",
     "new": "const sun = this._clockLit ? 1 : 0;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "float lean = clamp(p.y / max(uSize.y * aScale, 1e-3), 0.0, 1.0);",
     "new": "float lean = clamp(p.y / max(uSize.y, 1e-3), 0.0, 1.0);",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "    vAlpha = uMeshAlpha;",
     "new": "    vAlpha = 1.0;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "if (r !== lr || g !== lg || b !== lb) { gl.uniform3f(L.uMeshColor, r, g, b); lr = r; lg = g; lb = b; }",
     "new": "if (r !== lr || g !== lg || b !== lb) { gl.uniform3f(L.uMeshColor, 1, 1, 1); lr = r; lg = g; lb = b; }",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_NEAREST);\n    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);\n    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, this._retroMips",
     "new": "    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST_MIPMAP_LINEAR);\n    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);\n    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAX_LEVEL, this._retroMips",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "export const lptAlphaOf = (sub) => (sub.opaque ? 0 : 0.5 / Math.max(1e-3, sub.cutoff ?? 0.5));",
     "new": "export const lptAlphaOf = (sub) => (sub.opaque ? 0 : 1);",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "const cut = Math.round((sub.cutoff ?? 0.5) * 255), [cr, cg, cb] = sub.color ?? [1, 1, 1];",
     "new": "const cut = 128, [cr, cg, cb] = sub.color ?? [1, 1, 1];",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "data[i * 4] = Math.round(pic.data[s] * sh * cr);",
     "new": "data[i * 4] = Math.round(pic.data[s] * sh);",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "this._retroMips ? levels - 1 : 0);   // RETRO1: no chain read while retro mode says so",
     "new": "levels - 1);   // RETRO1: no chain read while retro mode says so",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "...this.emissionTextures.values(), ...(this.lptAtlases ?? [])]",
     "new": "...this.emissionTextures.values()]",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "if (sub.cull !== lastCull) { if (sub.cull === 2) gl.enable(gl.CULL_FACE); else gl.disable(gl.CULL_FACE); lastCull = sub.cull; }",
     "new": "lastCull = 0;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "      if (sub.cull === 2 && area < 0) continue;",
     "new": "      if (false) continue;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "  if (vFade > 1.5) tex = lptTexel;\n",
     "new": "",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -293,16 +293,16 @@
     "old": "farFlatVisibleAt(ring, b.farH ?? b.size?.h ?? 0,",
     "new": "farFlatVisibleAt(ring, b.size?.h ?? 0,",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
     "name": "LPT1-B1-no-flat-height",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "        batch.farH = plain.h;",
     "new": "        batch.farH = undefined;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "const sourceOf = (proto) => seasonal?.key?.(proto.archive) ?? '';",
     "new": "const sourceOf = (proto) => seasonal?.key?.(504) ?? '';",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "const sib = source && frame === 0 ? seasonal?.picture?.(archive, record) : null;",
     "new": "const sib = frame === 0 ? seasonal?.picture?.(archive, record) : null;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -329,16 +329,16 @@
     "old": "if (source && generation() !== gen) return null;",
     "new": "if (false) return null;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
     "name": "LPT1-B3-mid-install-paint",
-    "file": "src/scenes/world.js",
-    "old": "seasonsActive && !seasons.installing && seasons.lookup(a, 1)",
-    "new": "seasonsActive && seasons.lookup(a, 1)",
+    "file": "src/scenes/treesHost.js",
+    "old": "seasonsActive() && !seasons.installing && seasons.lookup(a, 1)",
+    "new": "seasonsActive() && seasons.lookup(a, 1)",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "get installing() { return !!this._applying; }",
     "new": "get installing() { return false; }",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "const visible = cullNear(gathered, planes, vis);",
     "new": "const visible = cullNear(gathered, null, vis);",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "+ planes[p + 3] < -rad) { inside = false; break; }",
     "new": "+ planes[p + 3] < 0) { inside = false; break; }",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -374,16 +374,16 @@
     "old": "const x = g[o], y = g[o + 1] + mid * s, z = g[o + 2], rad = k * s;",
     "new": "const x = g[o], y = g[o + 1] + mid * s, z = g[o + 2], rad = k;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
     "name": "LPT1-B4-the-host-culls-nothing",
     "file": "src/scenes/world.js",
-    "old": "if (lowPolyTrees) lowPolyTreesFrame(cullOn ? _planes : null);",
-    "new": "if (lowPolyTrees) lowPolyTreesFrame(null);",
+    "old": "trees.frame(_pixelOrder, cam.pos, cullOn ? _planes : null);",
+    "new": "trees.frame(_pixelOrder, cam.pos, null);",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "if (h && h.refs <= 0 && t - h.idleAt > LPT_IDLE_S * 1000)",
     "new": "if (h && t - h.idleAt > LPT_IDLE_S * 1000)",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": "{ freeHandle(key, entry); continue; }",
     "new": "{ continue; }",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "if (entry.pic && !entry.painting && t - entry.picAt > LPT_PIC_IDLE_S * 1000) entry.pic = null;",
     "new": "if (false) entry.pic = null;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "if (t - entry.lastLive > LPT_IDLE_S * 1000 && !entry.painting) freeAtlas(entry);",
     "new": "if (false) freeAtlas(entry);",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -428,34 +428,34 @@
     "old": "release(handle) { if (handle && --handle.refs <= 0) { handle.refs = 0; handle.idleAt = now(); } },",
     "new": "release(handle) { if (handle && --handle.refs <= 0) { handle.refs = 0; } },",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
     "name": "LPT1-B5-pixel-keeps-its-handles",
-    "file": "src/scenes/world.js",
-    "old": "    if (p.lowPolyTrees) for (const h of p.lowPolyTrees.handles) lowPolyTrees?.release(h);",
-    "new": "    // gone",
+    "file": "src/scenes/treesHost.js",
+    "old": "      if (p.lowPolyTrees) for (const h of p.lowPolyTrees.handles) lowPolyTrees?.release(h);",
+    "new": "      // gone",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
     "name": "LPT1-B5-failed-build-keeps-its-handles",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/treesHost.js",
     "old": "      for (const h of m.lptHandles ?? []) lowPolyTrees?.release(h);",
     "new": "      // gone",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
     "name": "LPT1-B5-handles-never-held",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "        lowPolyTrees.acquire(far); lptHandles.push(far);",
     "new": "        lptHandles.push(far);",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -464,7 +464,7 @@
     "old": "if (atlases.get(key) !== e) return e;   // given back while it painted: nothing uploaded",
     "new": "if (false) return e;   // given back while it painted: nothing uploaded",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -473,7 +473,7 @@
     "old": "  return trimImpostor({ width: W, height: H, data });",
     "new": "  return { width: W, height: H, data, shareW: 1, shareH: 1 };",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -482,7 +482,7 @@
     "old": "    side = Math.min(side, x, W - 1 - x);",
     "new": "    side = Math.min(side, x);",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -491,7 +491,7 @@
     "old": "if (texels >= LPT_IMPOSTOR_TEXELS || tris >= LPT_IMPOSTOR_TRIS) { texels = 0; tris = 0; yield; }",
     "new": "if (texels >= LPT_IMPOSTOR_TEXELS) { texels = 0; tris = 0; yield; }",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -500,7 +500,7 @@
     "old": "if (texels >= LPT_IMPOSTOR_TEXELS || tris >= LPT_IMPOSTOR_TRIS) { texels = 0; tris = 0; yield; }",
     "new": "if (tris >= LPT_IMPOSTOR_TRIS) { texels = 0; tris = 0; yield; }",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -509,7 +509,7 @@
     "old": "const rows = Math.max(1, Math.floor(LPT_MIP_TEXELS / w));",
     "new": "const rows = 64;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -518,7 +518,7 @@
     "old": "const y1 = Math.min(h, y0 + LPT_ATLAS_BAND), n = (y1 - y0) * row;",
     "new": "const y1 = h, n = (y1 - y0) * row;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -527,7 +527,7 @@
     "old": "band.set(d.subarray(y * row, (y + 1) * row), (y1 - 1 - y) * row);",
     "new": "band.set(d.subarray(y * row, (y + 1) * row), (y - y0) * row);",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -536,7 +536,7 @@
     "old": "rot === 1 ? [0, 0, 1, h - 1, -1, 0] : rot === 2",
     "new": "rot === 1 ? [w - 1, 0, -1, 0, 1, 0] : rot === 2",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -545,7 +545,7 @@
     "old": "    if (!src) { missing++; continue; }\n    const erase",
     "new": "    if (!src) { continue; }\n    const erase",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -554,16 +554,16 @@
     "old": "if (a.missing || !a.tex) return null;",
     "new": "if (!a.tex && !a.missing) return null;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
     "name": "LPT1-B10-set-never-let-go",
-    "file": "src/scenes/world.js",
-    "old": "if (p._dist2 > 8 && set.trees) { set.trees = null; set.centers = null; }",
-    "new": "if (false) { set.trees = null; set.centers = null; }",
+    "file": "src/scenes/treesHost.js",
+    "old": "if (p._dist2 > 8) { drop(a); drop(b); }",
+    "new": "if (false) { drop(a); drop(b); }",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -572,7 +572,7 @@
     "old": "|| l[4] !== s.trees) return false;",
     "new": ") return false;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -581,7 +581,7 @@
     "old": "LPT_SCALE_MIN + (LPT_SCALE_MAX - LPT_SCALE_MIN) * unit(qx, qz, k, 2)",
     "new": "LPT_SCALE_MIN + (1 - LPT_SCALE_MIN) * unit(qx, qz, k, 2)",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -590,7 +590,7 @@
     "old": "if (location) return { scale: 1, yaw };",
     "new": "if (location) return { scale: 1.2, yaw };",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -599,7 +599,7 @@
     "old": "if (img?.width) return nearestRgba(topDownOf(img), bm.width, bm.height);",
     "new": "if (img?.width && 0) return nearestRgba(topDownOf(img), bm.width, bm.height);",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -608,7 +608,7 @@
     "old": "color: mat?.color ?? [1, 1, 1] };",
     "new": "color: [1, 1, 1] };",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -617,7 +617,7 @@
     "old": "cutoff: mat?.cutoff ?? 0.5, cull:",
     "new": "cutoff: 0.5, cull:",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -626,7 +626,7 @@
     "old": "cull: mat?.cull ?? 0, color:",
     "new": "cull: 0, color:",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -635,7 +635,7 @@
     "old": "toY = (y) => (1 - (y * sy) / h) * H;",
     "new": "toY = (y) => ((y * sy) / h) * H;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -644,7 +644,7 @@
     "old": "const toX = (x) => ((x * sx) / w + 0.5) * W,",
     "new": "const toX = (x) => ((x * sx) / w + 0.4) * W,",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -653,7 +653,7 @@
     "old": "Math.floor((1 - (vv - Math.floor(vv))) * pic.height)",
     "new": "Math.floor((vv - Math.floor(vv)) * pic.height)",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -662,7 +662,7 @@
     "old": "return Math.min(1, Math.max(0.5, 0.72 + 0.28 *",
     "new": "return Math.min(1, Math.max(0.5, 0.72 - 0.28 *",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -671,7 +671,7 @@
     "old": "          if (z >= depth[i]) continue;",
     "new": "          if (false) continue;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -680,7 +680,7 @@
     "old": "  const [sx, sy, sz] = proto.scale;\n  const toX",
     "new": "  const [sx, sy, sz] = [1, 1, 1];\n  const toX",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -689,7 +689,7 @@
     "old": "h: Math.max(0.5, m.max[1] * sy) } });",
     "new": "h: Math.max(0.5, m.max[1]) } });",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -698,7 +698,7 @@
     "old": "if (!sub.opaque && pic.data[s + 3] < cut) continue;",
     "new": "if (!sub.opaque && pic.data[s + 3] < 0) continue;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -707,7 +707,7 @@
     "old": "out.runs.push({ run: r, scale: p.scale,",
     "new": "out.runs.push({ run: r, scale: [1, 1, 1],",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -716,7 +716,7 @@
     "old": "sway: swayOf ? swayOf(p) : 0, windfall: windfallOf ? windfallOf(p) : 0, subs, drawStart: 0, drawCount: 0 });",
     "new": "sway: 0, windfall: windfallOf ? windfallOf(p) : 0, subs, drawStart: 0, drawCount: 0 });",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -725,7 +725,7 @@
     "old": "subs.push({ offset: at[0], count: at[1], tex, alpha: lptAlphaOf(s), color: s.color, cull: s.cull });",
     "new": "subs.push({ offset: at[0], count: at[1], tex, alpha: 1, color: [1, 1, 1], cull: 0 });",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -734,7 +734,7 @@
     "old": "        this._bindTex0(sub.tex);   // PERF-TEX3",
     "new": "        // PERF-TEX3",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -743,7 +743,7 @@
     "old": "f.gpu.pointInstances(run.drawStart);",
     "new": "f.gpu.pointInstances(0);",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -752,7 +752,7 @@
     "old": "    gl.uniform3f(this.bbUOrigin, 0, 0, 0);\n    if (this._bbTipOn)",
     "new": "    if (this._bbTipOn)",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -761,7 +761,7 @@
     "old": "    this._bindVao(f.gpu.vao);",
     "new": "    // the trees' vertex array",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -770,7 +770,7 @@
     "old": "LPT_NEAR_M, LPT_BAND_M + LPT_REGATHER_M, data, skip)",
     "new": "LPT_NEAR_M, LPT_BAND_M, data, skip)",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -779,7 +779,7 @@
     "old": "const moved = !lastEye || Math.hypot(ex - lastEye[0], ez - lastEye[2]) > LPT_REGATHER_M;",
     "new": "const moved = true;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -788,7 +788,7 @@
     "old": "if (moved || stamp !== lastStamp || !sameSets(sets) || !gathered) {",
     "new": "if (moved || !sameSets(sets) || !gathered) {",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -797,7 +797,7 @@
     "old": "if (l[0] !== s || l[1] !== s.ox || l[2] !== s.oy || l[3] !== s.oz ||",
     "new": "if (l[0] !== s ||",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -806,7 +806,7 @@
     "old": "if (out.from !== gathered || out.readyGen !== readyGen) {",
     "new": "if (true) {",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -815,7 +815,7 @@
     "old": "if (s.atlas && !tex) ok = false;",
     "new": "if (false) ok = false;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ],
     "equivalent": true,
     "why": "Unreachable today: a handle exists only once its atlases are uploaded, a set holds only handles a standing pixel holds, and a held handle's atlases are live - the sweep never frees them. The check is kept because a run whose atlas were gone would be CUT with no tree drawn: a hole at the player's feet, not a missing texture."
@@ -826,7 +826,7 @@
     "old": "if (atlases.get(key) !== e) { renderer.releaseAtlasTexture(e.tex); e.tex = null; return e; }",
     "new": "if (false) { renderer.releaseAtlasTexture(e.tex); e.tex = null; return e; }",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -835,7 +835,7 @@
     "old": "if (data[d + 3] || erased[i]) continue;",
     "new": "if (erased[i]) continue;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -844,7 +844,7 @@
     "old": "if (erase) for (let i = 0; i < erase.length; i += 3) erased.fill(1,",
     "new": "if (false) for (let i = 0; i < erase.length; i += 3) erased.fill(1,",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -853,7 +853,7 @@
     "old": "if (cells && !cells[Math.floor(y / LPT_FILL_CELL) * cols + Math.floor(x / LPT_FILL_CELL)]) continue;",
     "new": "if (false) continue;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -862,7 +862,7 @@
     "old": "x0 + (mirror ? bw - 1 - fx : fx)) * 4;",
     "new": "x0 + fx) * 4;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -871,7 +871,7 @@
     "old": "const sy = cy + (ty & 1 ? ch - 1 - my : my);",
     "new": "const sy = cy + my;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -880,7 +880,7 @@
     "old": "data[d] = Math.round((src[s0] * a0 + src[s1] * a1 + src[s2] * a2 + src[s3] * a3) / a);",
     "new": "data[d] = Math.round((src[s0] + src[s1] + src[s2] + src[s3]) / 4);",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -889,7 +889,7 @@
     "old": "if (skip && skip(set, i / F)) continue;",
     "new": "if (false) continue;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -898,7 +898,7 @@
     "old": "    FOREST_STAMP.n++;   // LPT1",
     "new": "    // LPT1",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -907,53 +907,53 @@
     "old": "[c], g.scales ? { scales: [g.scales[n.flat.i]] } : undefined);",
     "new": "[c]);",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
     "name": "LPT1-felled-tree-stands",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/treesHost.js",
     "old": "skip: (set, i) => FELLED.has(set.centers[i]),",
     "new": "skip: null,",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
     "name": "LPT1-every-flat-wild",
-    "file": "src/scenes/world.js",
-    "old": "wild[i] = wildFlats.has(`${k}#${i}`) ? 1 : 0;",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "wild[i] = g.wild.has(`${k}#${i}`) ? 1 : 0;",
     "new": "wild[i] = 0;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
     "name": "LPT1-flats-unscaled",
-    "file": "src/scenes/world.js",
-    "old": "          const v = lptVariety(px, py, c[0], c[2], !wild[i]).scale;",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "          const v = lptVariety(g.px, g.py, c[0], c[2], !wild[i]).scale;",
     "new": "          const v = LPT_SCALE_MAX;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ],
     "note": "LPT-FIT (2026-10-07, PIN MOVED): the variety is read into `v` and the far picture takes the lesser of it and the tree's fit; the mutant still drops DFU's variety."
   },
   {
     "name": "LPT1-set-at-pixel-local",
-    "file": "src/scenes/world.js",
-    "old": "set.ox = p._t[0]; set.oy = p._t[1]; set.oz = p._t[2];",
+    "file": "src/scenes/treesHost.js",
+    "old": "set.ox = t[0]; set.oy = t[1]; set.oz = t[2];",
     "new": "set.ox = 0; set.oy = 0; set.oz = 0;",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
     "name": "LPT1-stamp-not-handed",
-    "file": "src/scenes/world.js",
-    "old": "    _lptOpts.stamp = FOREST_STAMP.n;",
-    "new": "    // the stamp",
+    "file": "src/scenes/treesHost.js",
+    "old": "      opts.stamp = FOREST_STAMP.n;",
+    "new": "      // the stamp",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -962,7 +962,7 @@
     "old": "{ scales: centers.map(() => 1 / LPT_SCALE_MAX) }",
     "new": "{ scales: centers.map(() => 1) }",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -971,26 +971,26 @@
     "old": "lowPolyTrees.frame(lptSets, cam.pos[0], cam.pos[1], cam.pos[2], lptOpts);",
     "new": "lowPolyTrees.frame(lptSets, 0, cam.pos[1], 0, lptOpts);",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
     "name": "LPT1-cover-at-the-tree",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, plain,",
     "new": "if (isCoverFlat(archive, record, plain)) for (const c of centers) coverItems.push(...coverProxies(c, far.size,",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js",
-      "test/tact1.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js",
+      "test/scenes/tact1.test.js"
     ]
   },
   {
     "name": "LPT1-sway-of-the-tree",
-    "file": "src/scenes/world.js",
-    "old": "        batch.sway = floraSwayOf(archive, natureSet, plain.h);\n        _lptSway",
-    "new": "        batch.sway = floraSwayOf(archive, natureSet, far.size.h);\n        _lptSway",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "        batch.sway = floraSwayOf(archive, g.natureSet, plain.h);\n        _lptSway",
+    "new": "        batch.sway = floraSwayOf(archive, g.natureSet, far.size.h);\n        _lptSway",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   },
   {
@@ -999,7 +999,7 @@
     "old": "gl.vertexAttribPointer(4, 1, gl.FLOAT, false, stride, at + 16);",
     "new": "gl.vertexAttribPointer(4, 2, gl.FLOAT, false, stride, at + 16);",
     "tests": [
-      "test/lpt1_lowpolytrees.test.js"
+      "test/systems/lpt1_lowpolytrees.test.js"
     ]
   }
 ]

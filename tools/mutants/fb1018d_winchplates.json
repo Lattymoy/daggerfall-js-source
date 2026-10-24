@@ -1,0 +1,52 @@
+[
+  {
+    "name": "WINCH-PLATES-never-drawn",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      winchPlates(F, t);",
+    "new": "",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_winchplates.test.js"
+    ],
+    "why": "the bug: the objective names the plates and nothing marks them"
+  },
+  {
+    "name": "WINCH-PLATES-cut-away",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      sh.y = Number.isFinite(q.y) ? q.y / 100 : 0;",
+    "new": "      sh.y = NaN;",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_winchplates.test.js"
+    ],
+    "why": "drawn on the fight floors it covers - none, so the floor plan cuts it away"
+  },
+  {
+    "name": "WINCH-PLATES-short-reach",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "sh.origin[1] = q.z; sh.r = EG_TOUCH_M;",
+    "new": "sh.origin[1] = q.z; sh.r = 1.5;",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_winchplates.test.js"
+    ],
+    "why": "a mark smaller than the reach the room counts a member on it within"
+  },
+  {
+    "name": "WINCH-PLATES-past-the-trial",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    if (stageNow !== 'trial') return;\n    for (const q of spec.spots?.winch ?? []) {",
+    "new": "    if (false) return;\n    for (const q of spec.spots?.winch ?? []) {",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_winchplates.test.js"
+    ],
+    "why": "the plates still marked once the portcullis is up"
+  },
+  {
+    "name": "WINCH-PLATES-before-the-trial",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    if (stageNow !== 'trial') return;",
+    "new": "    if (stageNow !== 'trial' && stageNow !== 'arrive') return;",
+    "tests": [
+      "test/scenes/eliteGates/fb1018d_winchplates.test.js"
+    ],
+    "why": "AUDIT FB1018D L3-M3: the plates marked while the company gathers, before the trial that asks for them"
+  }
+]

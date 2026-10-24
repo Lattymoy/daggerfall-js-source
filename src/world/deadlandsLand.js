@@ -13,16 +13,16 @@
 // already keep (render/deadlands.js DEAD_CLOCK_PERIOD: every period a whole number of bobs and turns, so the clock can
 // wrap).
 //
-// The court's own frame (world/gateArena.js courtToDungeon): the floor at y 0, the sea at LAVA_Y, the arrival at +z
+// The court's own frame (world/gate/gateArena.js courtToDungeon): the floor at y 0, the sea at LAVA_Y, the arrival at +z
 // facing -z. All of it the gate's basalt and the court's flagstones - no new art. Seeded and pure: the same land on
 // every screen. The tower's azimuth and the clock's period are read from render/deadlands.js - the one world/ module that
 // reads a render/ one, for two numbers the sky and the land must share.
 // Not a DFU member. Ledger A (WB).
-import { faces, spike, GATE_ARCHIVE, GATE_STONE_RECORD } from './gateModel.js';
-import { courtToDungeon, courtSpireAxes, SPIRE_BASE_W, COURT_ARCHIVE, COURT_FLOOR_RECORD, LAVA_Y } from './gateArena.js';
-import { seededRng } from '../systems/wind.js';
+import { faces, spike, GATE_ARCHIVE, GATE_STONE_RECORD } from './gate/gateModel.js';
+import { courtToDungeon, courtSpireAxes, SPIRE_BASE_W, COURT_ARCHIVE, COURT_FLOOR_RECORD, LAVA_Y } from './gate/gateArena.js';
+import { seededRng } from '../systems/wind/wind.js';
 import { SIGIL_TOWER, DEAD_CLOCK_PERIOD } from '../render/deadlands.js';
-import { COURT_R, COURTS, WALKS, WALK_HALF_W } from '../net/gateBrain.js';   // WB9b: the three courts and the walkways the land keeps clear of
+import { COURT_R, COURTS, COURTS_HIS, WALKS, WALK_HALF_W } from '../net/gate/gateBrain.js';   // WB9b: the three courts and the walkways the land keeps clear of
 
 /** The islands: how many, how near and how far (metres from the court's centre). */
 export const ISLAND_COUNT = 12;
@@ -194,7 +194,7 @@ export function deadlandsShards() {
   }
   // WB9b: and SHARD_COUNT_FAR round each court past the first - the same stone hanging over the fire about the Burning
   // Court and Dagon's Champion's, clear of every floor and walkway
-  for (let k = 1; k < COURTS.length; k++) {
+  for (let k = 1; k < COURTS_HIS; k++) {   // WB14b: about his courts alone - a portent's platforms stand only on its night
     const far = seededRng((LAND_SEED ^ 0x0b0b ^ (k * 0x9e37)) >>> 0), [cx, cz] = COURTS[k];
     for (let i = 0; i < SHARD_COUNT_FAR; i++) {
       let az = ((i + 0.5) / SHARD_COUNT_FAR) * Math.PI * 2 + (far() - 0.5) * 0.6;

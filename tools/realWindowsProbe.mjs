@@ -92,6 +92,15 @@ try {
         q([-2.5, 3, -2.5], [2.5, 3, -2.5], [2.5, 3, 2.5], [-2.5, 3, 2.5], [0, -1, 0], 2, 2);
       });
     });
+    // PANE-CLIP (FIELD BUGS 2026-10-12g, "Wall missing through window"): the building's own other wing, past the glass
+    // and inside what was its model box (red), and a wall of it between the eye and the glass - a room that reaches past
+    // its shell (green). Through the pane the wing shows; the near wall never does
+    r.uploadTexture(3004, 0, paint(() => [200, 40, 40]), { opaque: true });
+    r.uploadTexture(3005, 0, paint(() => [40, 200, 40]), { opaque: true });
+    const wing = build((sub) => {
+      sub(3004, 0, (q) => frontZ(q, -2.5, -3.1, 2, 1.2));
+      sub(3005, 0, (q) => frontZ(q, -1.5, -1.5, 0.6, 1.2));
+    });
     const I = identity();
     const proj = mirrorProjectionX(perspective(Math.PI / 3, W / H, 0.05, 500));
     const DAY = { ambient: [0.9, 0.9, 0.9], sun: 0.6, style: 'day', clear: [0.53, 0.7, 0.92, 1], fog: [0.6, 0.7, 0.85] };
@@ -119,7 +128,7 @@ try {
         return { gl: gl.getError(), px: Array.from(px) };
       },
       // the street from inside the room: the view out's pass, then the room over it
-      inside(time, lane, mode = 'full') {
+      inside(time, lane, mode = 'full', wingToo = false) {
         r.setLightingLane(lane ? EL_LANE : null);
         r.setAir?.(!!lane);
         if (r.air) r.air._now = () => 1000;
@@ -132,8 +141,8 @@ try {
         r.drawMesh(street, I, null);
         if (lane) r.resolveFrame();
         const state = createViewOut();
-        const scene = { clip: [-3.3, -0.3, -3.3, 3.3, 3.6, 3.3], draw: ({ renderer }) => renderer.drawMesh(street, I, null) };
-        let px = null, vo = null, now = 0;
+        const scene = { draw: ({ renderer }) => { renderer.drawMesh(street, I, null); if (wingToo) renderer.drawMesh(wing, I, null); } };
+        let px = null, vo = null, now = 0, viewDraws = 0;
         for (let f = 0; f < 3; f++) {
           now += 16;
           vo = viewOutFrame(state, { renderer: r, mode, proj, view, now, scene });
@@ -143,11 +152,12 @@ try {
           r.setClearColor([0, 0, 0, 1]);
           r.beginFrame(proj, view, new Float32Array([0, 1, 0]), WORLD_FRAME);
           r.setGlassView(vo);
+          viewDraws = Math.max(viewDraws, r.stats.viewDraws ?? 0);   // PASS-COUNT (AUDIT FB1018 L2-1): the room's frame takes the view out's count, and a kept picture draws none
           r.drawMesh(room, I, null);
           if (lane) r.resolveFrame();
           px = read();
         }
-        return { gl: gl.getError(), px: Array.from(px), vo, viewDraws: r._rwViewDraws ?? 0 };
+        return { gl: gl.getError(), px: Array.from(px), vo, viewDraws };
       },
     };
   }, { W, H });
@@ -160,11 +170,19 @@ try {
     await shot(name);
     results[name] = { gl: res.gl, centre: mean(res.px, W / 2 - 160, H / 2 - 40, W / 2 + 160, H / 2 + 120) };
   }
-  for (const [name, args] of [['inside-day', ['day', false]], ['inside-night', ['night', false]], ['inside-day-lane', ['day', true]], ['inside-day-rooms-only', ['day', false, 'rooms']]]) {
+  const count = (px, f) => { let k = 0; for (let i = 0; i < px.length; i += 4) if (f(px[i], px[i + 1], px[i + 2])) k++; return k; };
+  for (const [name, args] of [['inside-day', ['day', false]], ['inside-night', ['night', false]], ['inside-day-lane', ['day', true]], ['inside-day-rooms-only', ['day', false, 'rooms']], ['inside-wing', ['day', false, 'full', true]]]) {
     const res = await page.evaluate((a) => window.__rw.inside(...a), args);
     await shot(name);
     results[name] = { gl: res.gl, vo: res.vo, viewDraws: res.viewDraws, pane: mean(res.px, W / 2 - 120, H / 2 - 20, W / 2 + 60, H / 2 + 80) };
+    if (name === 'inside-wing') {
+      results[name].wing = count(res.px, (r, g, b) => r > 120 && g < 70 && b < 70);
+      results[name].near = count(res.px, (r, g, b) => g > 120 && r < 70 && b < 70);
+    }
   }
+  // PANE-CLIP: the wing past the glass is seen through it, the wall before the glass never is
+  if (!(results['inside-wing'].wing > 2000)) { console.log('inside-wing: the building\'s own wing past the glass is not seen through it'); failed = true; }
+  if (results['inside-wing'].near !== 0) { console.log('inside-wing: a wall on the room\'s side of the glass is drawn in the view out'); failed = true; }
   console.log(JSON.stringify(results, null, 1));
   // The lane's GL_INVALID_OPERATION "Must have element array buffer bound" is the air pass's emission replay, and it
   // stands at HEAD without RW1 (any emission-mapped mesh drawn last before the resolve): airPass.js _replayEmission binds

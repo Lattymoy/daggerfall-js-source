@@ -2,7 +2,7 @@
 // LW3 (2026-10-04, bible/06-Systems/Living-World.md): THE ROADS - where a town's travellers go, when, by which way, and
 // where on it they are at any minute of the sky's clock. Pure, like the rest of the living world (LW0 decision 2): the
 // towns near (the MAPS rows the host hands, the game's own rows alone so every client reads the same), the way (the
-// Travel Options planner's on Hazelnut's roads - `systems/travelRoute.js planRoute` - asked through the host, cached
+// Travel Options planner's on Hazelnut's roads - `systems/travel/travelRoute.js planRoute` - asked through the host, cached
 // there), a seed and the clock in; a party's place out.
 //
 // A TRAVELLER'S CYCLES. Each traveller (census.js travellerRoster: merchants, adventurers, pilgrims, couriers, the
@@ -28,10 +28,10 @@
 // pixel's centre to its edge or corner, travelRoute.js / roadClearance.js), trimmed at each end by the town's own
 // half-width so a party walks out of the town's edge, not its middle.
 import { lwSeed, lwRng, rollInt, pickWeighted } from './seed.js';
-import { seededRng } from '../wind.js';
+import { seededRng } from '../wind/wind.js';
 import { DAY_MIN, DAY_START_MIN } from './dayPlan.js';
 import { WORLD_MAP_TERRAIN_DIM as NATIVE_PIXEL } from '../../formats/mapsFile.js';
-import { NATIVE_PER_M } from '../travelDungeons.js';
+import { NATIVE_PER_M } from '../travel/travelDungeons.js';
 import { CITY_COURT_BLOCKS } from './census.js';
 import { companiesOf, companyOfPlace, namedIn, COMPANY_DIVE_CHANCE, holyDayOf, holyDepartMin, holyDraw } from './companies.js';   // LW13: the companies, the pilgrims' holy day
 
@@ -88,6 +88,14 @@ export const PATROL_COVER_DAYS = 2;
 export const PATROL_RISK = 0.5;
 /** The farthest a traveller's home can be from a town and still be read for visitors or the roads (map pixels). */
 export const TRIP_REACH_PX = 18;
+/** OW-HITCH (2026-10-21, the owner: "Theres still a lot of hitching in the overworld"): the key a host keeps a
+ *  `townsNear(px, py, r)` answer by - a number, one a pixel and a reach (any reach, and a pixel up to half a map past
+ *  its 1000 x 500 either way),
+ *  where it was a template string a call: a way's inns ask it at every pixel of the way (innsAlong) - and how many the
+ *  host keeps. 512 was fewer than one long way's pixels, so the book was cleared inside a single trip's inns and asked
+ *  again cold; a journey on the Overworld brings a town's roads in every few seconds. */
+export const livingNearKey = (px, py, r) => (r * 1024 + (py + 256)) * 2048 + (px + 512);
+export const LIVING_NEAR_KEPT = 8192;
 /** LW6: the share of an adventurer's trips that are DIVES - into a dungeon in reach, when one is - and the reach
  *  (map pixels, nearest and farthest), and the hours inside (the clock's minutes, fewest and most). */
 export const DIVE_CHANCE = 0.55;
@@ -125,6 +133,7 @@ export const DRY_STEP_N = 80;
  *   fate?: (trip: Trip) => (Trip | undefined),
  *   lanesFrom?: (town: LwTown) => ({ to: LwTown, len: number, key: string }[] | undefined),
  *   dryAt?: (nx: number, nz: number) => boolean,
+ *   marketBandOf?: (town: LwTown, day: number) => (string | null),
  * }} TripWorld - the host's: towns near a pixel (the game's own rows, populated); the planner's way between two towns
  *   (undefined while it is being asked, null for none); a town's travellers (census.js travellerRoster). LW4: who holds
  *   a traveller's place in a cycle (lives.js - null while it stands empty; unasked, the census's own), whether its
@@ -304,6 +313,48 @@ export function laneAt(way, s, side) {
 /** A town's half-width on the ground (native), for the trim at each end of a way: its blocks' side, halved, and a margin. @param {LwTown} town */
 export const townTrim = (town) => (Math.ceil(Math.sqrt(Math.max(1, town.blocks | 0))) * NATIVE_BLOCK) / 2 + NATIVE_BLOCK / 2;
 
+/**
+ * WALL-WAY (FIELD BUGS 2026-10-12b, "Caravan I'm supposed to be guarding walk through the city walls"): HOW FAR ALONG `way`
+ * IT LEAVES `town`'s GROUND - its RMB grid's box (`w` blocks east, `h` north, centred on the way's end in its pixel) grown
+ * by half a block, measured from the way's first point (`fromEnd`: from its last). townTrim was a radius, and a town's
+ * walls stand on its grid's square edge: a way leaving on a diagonal set its party down inside the walls (an 8 x 8 city:
+ * 18432 along a 45-degree way is 13033 each way, its walls at 16384), and a long town's on its long axis. Along an axis a
+ * square town's is townTrim's own. A town with no shape (`w`, `h` unknown) is townTrim's.
+ * @param {LwTown} town @param {Way} way @param {boolean} [fromEnd]
+ */
+export function townExit(town, way, fromEnd = false) {
+  const w = town?.w ?? 0, h = town?.h ?? 0;
+  const pts = way?.pts ?? [];
+  if (!(w > 0 && h > 0) || pts.length < 2) return townTrim(town);
+  const ex = (w * NATIVE_BLOCK) / 2 + NATIVE_BLOCK / 2, ez = (h * NATIVE_BLOCK) / 2 + NATIVE_BLOCK / 2;
+  const at = (i) => pts[fromEnd ? pts.length - 1 - i : i];
+  const [cx, cz] = at(0);
+  let run = 0;
+  for (let i = 1; i < pts.length; i++) {
+    const a = at(i - 1), b = at(i);
+    const dx = b[0] - a[0], dz = b[1] - a[1], seg = Math.hypot(dx, dz);
+    if (Math.abs(b[0] - cx) > ex || Math.abs(b[1] - cz) > ez) {   // it leaves on this leg: where it crosses the box's edge
+      let t = 1;
+      if (dx) t = Math.min(t, ((dx > 0 ? ex : -ex) - (a[0] - cx)) / dx);
+      if (dz) t = Math.min(t, ((dz > 0 ? ez : -ez) - (a[1] - cz)) / dz);
+      return run + Math.max(0, t) * seg;
+    }
+    run += seg;
+  }
+  return run;
+}
+/**
+ * WALL-WAY: THE TRIMS AT EACH END of a road party's `way` from `home` to `to` (null: a way that ends in the wild) - each
+ * where the way leaves its town's ground (townExit). Only where the two would meet are they held to 0.4 of the way each,
+ * as every trim was (a walk left between two towns whose grounds all but touch).
+ * @param {LwTown} home @param {LwTown | null} to @param {Way} way @returns {[number, number]}
+ */
+export function wayTrims(home, to, way) {
+  const t0 = townExit(home, way), t1 = to ? townExit(to, way, true) : 0;
+  if (t0 + t1 < way.len) return [t0, t1];
+  return [Math.min(t0, way.len * 0.4), to ? Math.min(t1, way.len * 0.4) : 0];
+}
+
 /** A traveller's cycle holding `day`: its number, its first day and its length (days). @param {Resident} res @param {number} day @param {number} scale */
 export function cycleOf(res, day, scale) {
   const len = Math.max(2, Math.round((rowOf(CYCLE_DAYS, ROAD_CYCLE_DAYS, res.job) ?? 8) * scale));
@@ -350,8 +401,20 @@ export function leaderOf(res, roster) {
   return null;
 }
 
-/** LW9: a market town's market day - one day in seven, by its map id: true on `day`. @param {LwTown} town @param {number} day */
-export const marketDay = (town, day) => ((day + (lwSeed(town.mapId >>> 0, 0x6d6b74) % 7)) % 7) === 0;   // 'mkt'
+/** TOWN-ECON TE3 (bible/06-Systems/Town-Economy-Arc.md 5): a Booming town holds a second market day a week,
+ *  MARKET_BOOM_DAY after its own; a Destitute town holds its own one week in MARKET_DESTITUTE_WEEKS. AUDIT TOWN-ECON 2
+ *  LIV-14: a carter never misses a Destitute town's market because the online window is exactly fourteen sky days
+ *  (paceScale at TimeScale 24) - a longer fortnight, or a shorter window, would leave a cycle without one. */
+export const MARKET_BOOM_DAY = 4;
+export const MARKET_DESTITUTE_WEEKS = 2;
+/** LW9: a market town's market day - one day in seven, by its map id: true on `day`. TOWN-ECON TE3: `band` its economy
+ *  that day (net/townEconLaw.js townBandOf) - Booming two days in seven, Destitute one in fourteen; any other, or none
+ *  (offline: the world LW9 made), one in seven. @param {LwTown} town @param {number} day @param {string|null} [band] */
+export const marketDay = (town, day, band = null) => {
+  const s = day + (lwSeed(town.mapId >>> 0, 0x6d6b74) % 7);   // 'mkt'
+  if (band === 'Destitute') return s % 7 === 0 && Math.floor(s / 7) % MARKET_DESTITUTE_WEEKS === 0;
+  return s % 7 === 0 || (band === 'Booming' && s % 7 === MARKET_BOOM_DAY);
+};
 
 /**
  * LW9: A CARTER'S DAY TO MARKET - the nearest town within reach that keeps a market (a city or a village of
@@ -371,13 +434,13 @@ export function marketTrip(res, home, k, world, { start, len, pace, rng }) {
   const leave = Math.floor((5 + rng()) * 60);
   for (const to of near) {
     let day = -1;
-    for (let d = start; d < start + len; d++) if (marketDay(to, d)) { day = d; break; }
+    for (let d = start; d < start + len; d++) if (marketDay(to, d, world.marketBandOf?.(to, d) ?? null)) { day = d; break; }   // TOWN-ECON TE3: its band kept for that day (AUDIT TOWN-ECON 2 LIV-9: read at its first asking)
     if (day < 0) continue;
     const plan = world.routeOf(home, to);
     if (plan === undefined) return undefined;
     if (!plan || !(plan.pixels?.length >= 2)) continue;
     const way = wayOf(plan, world.dryAt);
-    const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(to), way.len * 0.4);
+    const [trim0, trim1] = wayTrims(home, to, way);   // WALL-WAY: past each town's walls
     const walk = Math.max(0, way.len - trim0 - trim1) / pace;
     const outT0 = day * DAY_MIN + leave;
     const outT1 = whenWalked(outT0, walk);
@@ -417,7 +480,7 @@ export function wildTrip(res, home, k, world, { start, len, pace, rng }) {
     /** @type {Way} */
     const way = { pts: [[hx, hz], [wx, wz]], cum: [0, d], len: d, kinds: ['open'] };
     if (world.dryAt) way.dry = world.dryAt;
-    const trim0 = Math.min(townTrim(home), d * 0.4), trim1 = 0;
+    const [trim0, trim1] = wayTrims(home, null, way);   // WALL-WAY: past the town's walls
     const walk = Math.max(0, d - trim0) / pace;
     const estDays = 3;
     if (estDays > len - 1) return null;
@@ -529,28 +592,8 @@ export function ownTrip(res, home, k, world, { mpm }) {
       if (sea !== null) return sea;   // undefined (the map unread) or the passage; none that fits, the road's trip
     }
   }
-  const [rMin, rMax] = rowOf(TRIP_RANGE_PX, ROAD_RANGE_PX, res.job) ?? [3, 12];
-  const near = world.townsNear(home.px ?? 0, home.py ?? 0, rMax)
-    .filter((t) => t.mapId !== home.mapId && Math.max(Math.abs((t.px ?? 0) - (home.px ?? 0)), Math.abs((t.py ?? 0) - (home.py ?? 0))) >= rMin)
-    .filter((t) => roadBound(res.job, home, t));   // LW9: a patrol keeps its region, a noble goes to a court, a minstrel to a tavern's town
-  if (!near.length) return null;
-  /** @type {Record<string, number>} */
-  const weights = {};
-  for (const t of near) {
-    const d = Math.hypot((t.px ?? 0) - (home.px ?? 0), (t.py ?? 0) - (home.py ?? 0));
-    const size = Math.pow(Math.max(1, t.blocks | 0), 0.7);
-    let w = res.job === 'merchant' ? size / (1 + d / 8) : res.job === 'pilgrim' ? ((world.templeTown?.(t) ? 6 : 0.2) * size) / (1 + d / 12) : 1 / (1 + d / 10);
-    if (res.job === 'adventurer') w = size / (1 + d / 6);
-    else if (res.job === 'patrol' || res.job === 'noble' || res.job === 'minstrel') w = size / (1 + d / 8);   // LW9
-    weights[String(t.mapId)] = w;
-  }
-  // the pick, then the towns nearer than it, the farthest of them first - the trip most like the one chosen that fits
-  const pick = pickWeighted(rng, weights);
-  const first = near.find((t) => String(t.mapId) === pick);
-  if (!first) return null;
-  const dist = (t) => Math.hypot((t.px ?? 0) - (home.px ?? 0), (t.py ?? 0) - (home.py ?? 0));
-  const nearer = near.filter((t) => t !== first && dist(t) < dist(first)).sort((a, b) => dist(b) - dist(a) || a.mapId - b.mapId);
-  const order = [first, ...nearer];
+  const order = roadOrder(rng, home, res.job, world);
+  if (!order) return null;
   const [sLo, sHi] = rowOf(STAY_DAYS, ROAD_STAY_DAYS, res.job) ?? [1, 1];
   const stay = rollInt(rng, sLo, sHi);
   const departH = res.job === 'adventurer' ? 6 + rng() * 2 : 7 + rng() * 2;
@@ -560,7 +603,7 @@ export function ownTrip(res, home, k, world, { mpm }) {
     if (plan === undefined) return undefined;
     if (!plan || !(plan.pixels?.length >= 2)) continue;
     const way = innsAlong(wayOf(plan, world.dryAt), plan, world, home, to);   // LW9: the inns on its road
-    const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(/** @type {LwTown} */ (to)), way.len * 0.4);
+    const [trim0, trim1] = wayTrims(home, /** @type {LwTown} */ (to), way);   // WALL-WAY: past each town's walls
     const walk = Math.max(0, way.len - trim0 - trim1) / pace;   // minutes of daylight walking, each way
     const estDays = 2 * Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60)) + stay + 1;
     if (estDays > len - 1) continue;
@@ -579,8 +622,114 @@ export function ownTrip(res, home, k, world, { mpm }) {
   return null;
 }
 
+/** TRIP-PICKS (2026-10-12, a profile of a player's live client from launch into the world: the first world frame froze
+ *  2.7 s and the frames after it 2.8 s more, the Living World planning its roads' day): A TRAVELLER'S ROAD CHOICES FROM
+ *  ITS TOWN - the towns in its job's ring it may go to (`roadBound`), each one's weight, in the order `pickWeighted` reads
+ *  a `{ mapId: weight }` object (its keys' own), and the towns the farther first (then the lower map id). The same for
+ *  every traveller of the job and every cycle (the trip world's towns are the map's), so kept by the world, the town and
+ *  the job: made again for each trip, it was a filter of the towns near, their weights, a walk of the weights' keys and a
+ *  sort by distance, every traveller of every town the roads asked, in one frozen frame. Null: no town in reach.
+ *  AUDIT TRIP-PICKS (2026-10-20): KEPT AS THE HOST'S OTHER LIVING WORLD MEMORIES ARE, BOUNDED - ROAD_CHOICES_KEPT towns'
+ *  worth, the longest unasked let go first (a town's choices are pure: asked again, made again the same). Unbounded, a
+ *  session that roamed the Bay held every town's: 21.6 KB a town and job, 200 MB at the map's whole (the audit's
+ *  measure). Each is leaner too: a town's distance is asked of the town (roadOrder), not kept in a map beside it.
+ *  @param {LwTown} home @param {string} job @param {TripWorld} world
+ *  @returns {{ picks: { town: LwTown, w: number }[], total: number, farFirst: { town: LwTown, d: number }[] } | null} */
+const _roadChoices = new WeakMap();
+/** AUDIT TRIP-PICKS: the towns' choices a trip world keeps - a stop asks about fifty towns (the median within its reach)
+ *  for each of the four jobs that choose a road, so some ten stops' worth; past it the longest unasked quarter goes. */
+export const ROAD_CHOICES_KEPT = 2048;
+export function roadChoices(home, job, world) {
+  let byHome = _roadChoices.get(world);
+  if (!byHome) _roadChoices.set(world, (byHome = new Map()));
+  const key = `${home.mapId}:${job}`;
+  const kept = byHome.get(key);
+  if (kept !== undefined) { byHome.delete(key); byHome.set(key, kept); return kept; }   // the newest asked
+  const [rMin, rMax] = rowOf(TRIP_RANGE_PX, ROAD_RANGE_PX, job) ?? [3, 12];
+  const near = world.townsNear(home.px ?? 0, home.py ?? 0, rMax)
+    .filter((t) => t.mapId !== home.mapId && Math.max(Math.abs((t.px ?? 0) - (home.px ?? 0)), Math.abs((t.py ?? 0) - (home.py ?? 0))) >= rMin)
+    .filter((t) => roadBound(job, home, t));   // LW9: a patrol keeps its region, a noble goes to a court, a minstrel to a tavern's town
+  if (!near.length) { keepChoices(byHome, key, null); return null; }
+  const dist = new Map(near.map((t) => [t, Math.hypot((t.px ?? 0) - (home.px ?? 0), (t.py ?? 0) - (home.py ?? 0))]));
+  /** @type {Record<string, number>} */
+  const weights = {};
+  /** @type {Map<string, LwTown>} the first town of each key, as `near.find` answers a picked key */
+  const townOf = new Map();
+  for (const t of near) {
+    const d = /** @type {number} */ (dist.get(t));
+    const size = Math.pow(Math.max(1, t.blocks | 0), 0.7);
+    let w = job === 'merchant' ? size / (1 + d / 8) : job === 'pilgrim' ? ((world.templeTown?.(t) ? 6 : 0.2) * size) / (1 + d / 12) : 1 / (1 + d / 10);
+    if (job === 'adventurer') w = size / (1 + d / 6);
+    else if (job === 'patrol' || job === 'noble' || job === 'minstrel') w = size / (1 + d / 8);   // LW9
+    const k = String(t.mapId);
+    weights[k] = w;
+    if (!townOf.has(k)) townOf.set(k, t);
+  }
+  const picks = [];
+  let total = 0;
+  for (const k in weights) if (weights[k] > 0) { total += weights[k]; picks.push({ town: /** @type {LwTown} */ (townOf.get(k)), w: weights[k] }); }
+  const farFirst = near.map((t) => ({ town: t, d: /** @type {number} */ (dist.get(t)) })).sort((a, b) => b.d - a.d || a.town.mapId - b.town.mapId);
+  const choices = { picks, total, farFirst };
+  keepChoices(byHome, key, choices);
+  return choices;
+}
+/** AUDIT TRIP-PICKS: a town's choices kept, and past ROAD_CHOICES_KEPT the quarter longest unasked let go (a Map walks its
+ *  keys in the order they were last set - roadChoices sets a kept one again when it is asked). */
+function keepChoices(byHome, key, choices) {
+  byHome.set(key, choices);
+  if (byHome.size <= ROAD_CHOICES_KEPT) return;
+  for (const k of byHome.keys()) { byHome.delete(k); if (byHome.size <= ROAD_CHOICES_KEPT * 0.75) break; }
+}
+
+/** TRIP-PICKS: `pickWeighted` over a town's kept choices - the same draw (none when no weight is above zero, and then
+ *  no draw taken) answering the town where it answered the key. @param {() => number} rng
+ *  @param {{ picks: { town: LwTown, w: number }[], total: number }} choices @returns {LwTown|null} */
+function pickChoice(rng, { picks, total }) {
+  if (!(total > 0)) return null;
+  let r = rng() * total;
+  let last = null;
+  for (const p of picks) {
+    last = p.town;
+    r -= p.w;
+    if (r < 0) return p.town;
+  }
+  return last;
+}
+
+/** TRIP-PICKS: a traveller's towns to try in a cycle - the pick, then the towns nearer than it, the farthest of them
+ *  first (the trip most like the one chosen that fits); null for none (no town in reach, or no weight above zero).
+ *  @param {() => number} rng @param {LwTown} home @param {string} job @param {TripWorld} world @returns {LwTown[]|null} */
+export function roadOrder(rng, home, job, world) {
+  const choices = roadChoices(home, job, world);
+  if (!choices) return null;
+  const first = pickChoice(rng, choices);
+  if (!first) return null;
+  const d0 = Math.hypot((first.px ?? 0) - (home.px ?? 0), (first.py ?? 0) - (home.py ?? 0));   // the choices' own distance (roadChoices), asked of the town
+  return [first, ...choices.farFirst.filter((c) => c.town !== first && c.d < d0).map((c) => c.town)];
+}
+
 /** LW5b: the way of a trip with no road under it - a passage by sea. */
 const noWay = () => ({ pts: [], cum: [0], len: 0, kinds: [] });
+
+/** HOLY-DAYS (2026-10-11, a profile of a player's live client entering the world): A TOWN'S TEMPLES IN A PILGRIM'S
+ *  REACH, the nearer first (then the lower map id) - the same for every pilgrim of the town and every cycle (the trip
+ *  world's towns and their temples are the map's), so kept by the world and the town: made again for each pilgrim, it was
+ *  a filter and a sort of the towns near a pilgrim, every pilgrim of every town the roads asked, in one frozen frame.
+ *  @param {LwTown} home @param {TripWorld} world @returns {LwTown[]} */
+const _templesNear = new WeakMap();
+export function templesNear(home, world) {
+  let byHome = _templesNear.get(world);
+  if (!byHome) _templesNear.set(world, (byHome = new Map()));
+  const kept = byHome.get(home.mapId);
+  if (kept) return kept;
+  const [rMin, rMax] = TRIP_RANGE_PX.pilgrim;
+  const dist = (t) => Math.hypot((t.px ?? 0) - (home.px ?? 0), (t.py ?? 0) - (home.py ?? 0));
+  const temples = world.townsNear(home.px ?? 0, home.py ?? 0, rMax)
+    .filter((t) => t.mapId !== home.mapId && Math.max(Math.abs((t.px ?? 0) - (home.px ?? 0)), Math.abs((t.py ?? 0) - (home.py ?? 0))) >= rMin && !!world.templeTown?.(t))
+    .sort((a, b) => dist(a) - dist(b) || a.mapId - b.mapId);
+  byHome.set(home.mapId, temples);
+  return temples;
+}
 
 /** LW13: a pilgrim's holy day is reached by this hour of its morning (in for the day's rites). */
 export const HOLY_IN_H = 10;
@@ -595,19 +744,14 @@ export const HOLY_IN_H = 10;
  */
 export function holyTrip(res, home, k, world, { start, len, pace }) {
   if (!holyDraw(res, k)) return null;
-  const [rMin, rMax] = TRIP_RANGE_PX.pilgrim;
-  const dist = (t) => Math.hypot((t.px ?? 0) - (home.px ?? 0), (t.py ?? 0) - (home.py ?? 0));
-  const temples = world.townsNear(home.px ?? 0, home.py ?? 0, rMax)
-    .filter((t) => t.mapId !== home.mapId && Math.max(Math.abs((t.px ?? 0) - (home.px ?? 0)), Math.abs((t.py ?? 0) - (home.py ?? 0))) >= rMin && !!world.templeTown?.(t))
-    .sort((a, b) => dist(a) - dist(b) || a.mapId - b.mapId);
-  const holy = holyDayOf(temples, start, len);
+  const holy = holyDayOf(templesNear(home, world), start, len);
   if (!holy) return null;
   const plan = world.routeOf(home, holy.town);
   if (plan === undefined) return undefined;
   if (!plan || !(plan.pixels?.length >= 2)) return null;
   const to = /** @type {LwTown} */ (holy.town);
   const way = innsAlong(wayOf(plan, world.dryAt), plan, world, home, to);
-  const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(to), way.len * 0.4);
+  const [trim0, trim1] = wayTrims(home, to, way);   // WALL-WAY: past each town's walls
   const walk = Math.max(0, way.len - trim0 - trim1) / pace;
   const by = holy.day * DAY_MIN + HOLY_IN_H * 60;
   let outDay = holy.day - Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60));
@@ -695,7 +839,7 @@ export function diveTrip(res, home, k, world, { start, len, pace, rng }) {
     if (plan === undefined) return undefined;
     if (!plan || !(plan.pixels?.length >= 2)) continue;
     const way = wayOf(plan, world.dryAt);
-    const trim0 = Math.min(townTrim(home), way.len * 0.4), trim1 = Math.min(townTrim(to), way.len * 0.4);
+    const [trim0, trim1] = wayTrims(home, to, way);   // WALL-WAY: past each town's walls
     const walk = Math.max(0, way.len - trim0 - trim1) / pace;
     const estDays = 2 * Math.ceil(walk / ((WALK_TO_H - WALK_FROM_H) * 60)) + Math.ceil(inside / DAY_MIN) + 1;
     if (estDays > len - 1) continue;

@@ -8,7 +8,7 @@
 // GetCompleteBuildingData's pool merge, blockBuildingCount is DFU's
 // `SubRecords.Length` bound, and makeBuildingKey is
 // BuildingDirectory.MakeBuildingKey - all three from
-// systems/talkTopics.js, all three already pinned there. What is NEW
+// systems/talk/talkTopics.js, all three already pinned there. What is NEW
 // is exactly what RMBLayout.cs:570-571 sets and nothing else:
 //
 //   Position = new Vector3(subRecord.XPos, 0, RMBDimension - subRecord.ZPos) * GlobalScale
@@ -31,10 +31,10 @@
 // R10 - rmbLayout's enhanced windmill appends a subrecord without
 // bumping numBlockDataRecords, which is why the bound exists at all).
 
-import { mergeNamedBuildings, blockBuildingCount, makeBuildingKey } from '../systems/talkTopics.js';
+import { mergeNamedBuildings, blockBuildingCount, makeBuildingKey } from '../systems/talk/talkTopics.js';
 import { generateBuildingName, isResidence } from './buildingNames.js';
 import { GLOBAL_SCALE } from './meshReader.js';
-import { hasInteriorModels } from './interiorLayout.js';   // AUDIT FB1005 C2: the arena's move asks it too
+import { hasInteriorModels } from './interior/interiorLayout.js';   // AUDIT FB1005 C2: the arena's move asks it too
 // ONE HOME (the audit24 ratchet): BlocksFile.RMBDimension and
 // BlocksFile.RotationDivisor already live with the format that defines
 // them - this module reads them, it does not redeclare them.

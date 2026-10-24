@@ -1,0 +1,65 @@
+[
+  {
+    "name": "SUMMON-OFFER-no-step-is-still-a-quest",
+    "file": "src/systems/daedraSummoning.js",
+    "old": "  if (!offered) return { kind: 'noQuest', daedra: called, cost, quest: called.quest };\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1014_summonoffer.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-OFFER-the-quest-of-the-prince-called-not-the-one-who-came",
+    "file": "src/systems/daedraSummoning.js",
+    "old": "  const offered = offerQuest(called.quest);",
+    "new": "  const offered = offerQuest(daedra.quest);",
+    "tests": [
+      "test/systems/fb1014_summonoffer.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-OFFER-a-quest-made-for-a-missed-roll",
+    "file": "src/systems/daedraSummoning.js",
+    "old": "  if (roll > chance) {\n",
+    "new": "  offerQuest(called.quest);\n  if (roll > chance) {\n",
+    "tests": [
+      "test/systems/fb1014_summonoffer.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-OFFER-the-word-says-the-gold-went",
+    "file": "src/systems/daedraSummoning.js",
+    "old": "'{prince} answers, but has no task for you in this region. You keep your gold. Try summoning in another region.'",
+    "new": "'{prince} answers, but has no task for you in this region.'",
+    "tests": [
+      "test/systems/fb1014_summonoffer.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-OFFER-the-offer-flow-closes-silently-again",
+    "file": "src/systems/quest/offerFlow.js",
+    "old": "    if (!this.offeredQuest) return null;\n    return this._offerQuest();",
+    "new": "    if (!this.offeredQuest) return { kind: 'close' };\n    return this._offerQuest();",
+    "tests": [
+      "test/systems/fb1014_summonoffer.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-OFFER-the-host-pays-before-it-asks",
+    "file": "src/scenes/worldModes.js",
+    "old": "        if (r.kind === 'noQuest') return { rows: [{ text: noQuestText(r.daedra), center: true }] };\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1014_summonoffer.test.js"
+    ]
+  },
+  {
+    "name": "SUMMON-OFFER-the-host-makes-the-quest-after-the-gold",
+    "file": "src/scenes/worldModes.js",
+    "old": "        const offered = r.offered;   // SUMMON-OFFER: made before the gold went",
+    "new": "        const offered = questBridge?.offerDaedricQuest?.(r.quest, summonerId) ?? null;",
+    "tests": [
+      "test/systems/fb1014_summonoffer.test.js"
+    ]
+  }
+]

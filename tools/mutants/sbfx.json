@@ -1,0 +1,93 @@
+[
+ {
+  "name": "SB-FX-a-duration-the-effect-does-not-support",
+  "file": "src/ui/enhanced/enhancedSpellbook.js",
+  "old": "  if (template.duration) {",
+  "new": "  if (true) {",
+  "tests": ["test/ui/enhanced/enhancedSpellbook.test.js"]
+ },
+ {
+  "name": "SB-FX-a-chance-the-effect-does-not-support",
+  "file": "src/ui/enhanced/enhancedSpellbook.js",
+  "old": "  if (template.chance) {",
+  "new": "  if (true) {",
+  "tests": ["test/ui/enhanced/enhancedSpellbook.test.js"]
+ },
+ {
+  "name": "SB-FX-a-magnitude-the-effect-does-not-support",
+  "file": "src/ui/enhanced/enhancedSpellbook.js",
+  "old": "  if (template.magnitude) {",
+  "new": "  if (true) {",
+  "tests": ["test/ui/enhanced/enhancedSpellbook.test.js"]
+ },
+ {
+  "name": "SB-FX-a-supported-component-left-out",
+  "file": "src/ui/enhanced/enhancedSpellbook.js",
+  "old": "  if (template.duration) {",
+  "new": "  if (false) {",
+  "tests": ["test/ui/enhanced/enhancedSpellbook.test.js"]
+ },
+ {
+  "name": "SB-FX-the-raw-record-with-no-per-level-floor",
+  "file": "src/ui/enhanced/enhancedSpellbook.js",
+  "old": "  const s = classicEffectSettings(effect);",
+  "new": "  const s = { ...effect, durationPlus: effect.durationMod, chancePlus: effect.chanceMod, magnitudeBaseMin: effect.magnitudeBaseLow, magnitudeBaseMax: effect.magnitudeBaseHigh, magnitudePlusMin: effect.magnitudeLevelBase, magnitudePlusMax: effect.magnitudeLevelHigh };",
+  "tests": ["test/ui/enhanced/enhancedSpellbook.test.js"]
+ },
+ {
+  "name": "SB-FX-plus-min-read-as-the-base",
+  "file": "src/ui/enhanced/enhancedSpellbook.js",
+  "old": "plusMin: s.magnitudePlusMin,",
+  "new": "plusMin: s.magnitudeBaseMin,",
+  "tests": ["test/ui/enhanced/enhancedSpellbook.test.js"]
+ },
+ {
+  "name": "SB-FX-plus-max-dropped",
+  "file": "src/ui/enhanced/enhancedSpellbook.js",
+  "old": "plusMax: s.magnitudePlusMax,",
+  "new": "plusMax: s.magnitudePlusMin,",
+  "tests": ["test/ui/enhanced/enhancedSpellbook.test.js"]
+ },
+ {
+  "name": "SB-FX-magnitude-per-level-divisor-dropped",
+  "file": "src/ui/enhanced/enhancedSpellbook.js",
+  "old": "per: s.magnitudePerLevel }",
+  "new": "per: 1 }",
+  "tests": ["test/ui/enhanced/enhancedSpellbook.test.js"]
+ },
+ {
+  "name": "SB-FX-duration-per-level-divisor-dropped",
+  "file": "src/ui/enhanced/enhancedSpellbook.js",
+  "old": "per: s.durationPerLevel }",
+  "new": "per: 1 }",
+  "tests": ["test/ui/enhanced/enhancedSpellbook.test.js"]
+ },
+ {
+  "name": "SB-FX-chance-per-level-divisor-dropped",
+  "file": "src/ui/enhanced/enhancedSpellbook.js",
+  "old": "per: s.chancePerLevel }",
+  "new": "per: 1 }",
+  "tests": ["test/ui/enhanced/enhancedSpellbook.test.js"]
+ },
+ {
+  "name": "SB-FX-duration-plus-read-as-the-per-level-step",
+  "file": "src/ui/enhanced/enhancedSpellbook.js",
+  "old": "plus: s.durationPlus,",
+  "new": "plus: s.durationPerLevel,",
+  "tests": ["test/ui/enhanced/enhancedSpellbook.test.js"]
+ },
+ {
+  "name": "SB-FX-chance-plus-read-as-the-per-level-step",
+  "file": "src/ui/enhanced/enhancedSpellbook.js",
+  "old": "plus: s.chancePlus,",
+  "new": "plus: s.chancePerLevel,",
+  "tests": ["test/ui/enhanced/enhancedSpellbook.test.js"]
+ },
+ {
+  "name": "SB-FX-the-shop-reads-its-own-words",
+  "file": "src/ui/enhanced/enhancedPorts.js",
+  "old": "    const wd = effectWords(e);",
+  "new": "    const wd = { group: 'Damage', subgroup: 'Health', parts: [`${e.magnitudeBaseLow}-${e.magnitudeBaseHigh}`] };",
+  "tests": ["test/ui/shopplus_spellshop.test.js"]
+ }
+]

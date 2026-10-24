@@ -1,0 +1,222 @@
+[
+  {
+    "name": "SPELL-SCROLL-book-drawn-straight",
+    "file": "src/ui/enhanced/enhancedSpellbook.js",
+    "old": "  if (host) repaintKeepingScroll(host, paint);",
+    "new": "  if (host) paint();",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "the report itself: every pick draws the book from nothing and the list stands at its top"
+  },
+  {
+    "name": "SPELL-SCROLL-page-unnamed",
+    "file": "src/ui/enhanced/enhancedSpellbook.js",
+    "old": "  detail.setAttribute('data-scroll-key', `spell ${sel.spell?.index}`);",
+    "new": "  void 0;",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "another spell's page opens at the last spell's offset"
+  },
+  {
+    "name": "SPELL-SCROLL-page-keyed-by-nothing",
+    "file": "src/ui/enhanced/enhancedSpellbook.js",
+    "old": "  detail.setAttribute('data-scroll-key', `spell ${sel.spell?.index}`);",
+    "new": "  detail.setAttribute('data-scroll-key', 'page');",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "a key that never changes is no key: the next spell's page keeps the last one's place"
+  },
+  {
+    "name": "SPELL-SCROLL-page-keyed-by-row",
+    "file": "src/ui/enhanced/enhancedSpellbook.js",
+    "old": "  detail.setAttribute('data-scroll-key', `spell ${sel.spell?.index}`);",
+    "new": "  detail.setAttribute('data-scroll-key', String(picked));",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "AUDIT FB1018f L2-2, the fault itself: a delete keeps `picked`, so the spell that takes a deleted one's row opens at its offset"
+  },
+  {
+    "name": "SPELL-SCROLL-page-keyed-by-name",
+    "file": "src/ui/enhanced/enhancedSpellbook.js",
+    "old": "  detail.setAttribute('data-scroll-key', `spell ${sel.spell?.index}`);",
+    "new": "  detail.setAttribute('data-scroll-key', sel.name);",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "AUDIT FB1018f L2-2: a key that is not the spell's identity - a rename throws the same spell's page to its top"
+  },
+  {
+    "name": "SPELL-SCROLL-chronicle-drawn-straight",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "  repaintKeepingScroll(host, paint);",
+    "new": "  paint();",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "the sibling's fault: a card folded or a note removed throws the Chronicle's page to its top"
+  },
+  {
+    "name": "SPELL-SCROLL-section-unnamed",
+    "file": "src/ui/enhanced/enhancedChronicle.js",
+    "old": "  body.setAttribute('data-scroll-key', section);",
+    "new": "  void 0;",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "another section opens at the last section's offset"
+  },
+  {
+    "name": "SPELL-SCROLL-key-out-of-the-path",
+    "file": "src/ui/domRepaint.js",
+    "old": "${key != null ? `#${key}` : ''}",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "the helper reads no key: a pane that shows another thing keeps the old thing's place"
+  },
+  {
+    "name": "SPELL-SCROLL-nothing-recorded",
+    "file": "src/ui/domRepaint.js",
+    "old": "      if (el.scrollTop > 0 || el.scrollLeft > 0) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "the helper records no scroll: every repaint through it stands its panes at the top (the survivor Testing.md gave tools/enhancedScrollProbe.mjs to kill, now killed in the suite)"
+  },
+  {
+    "name": "SPELL-SCROLL-nothing-given-back",
+    "file": "src/ui/domRepaint.js",
+    "old": "    if (top) el.scrollTop = top;",
+    "new": "",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "the offsets read and never put back"
+  },
+  {
+    "name": "SPELL-SCROLL-key-own-step-only",
+    "file": "src/ui/domRepaint.js",
+    "old": "    const key = n.getAttribute?.('data-scroll-key');",
+    "new": "    const key = n === el ? n.getAttribute?.('data-scroll-key') : null;",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "AUDIT FB1018f L2-1: a key names only the pane that carries it, never the panes inside it - the grimoire dress's Chronicle scrolls its .px-qdetail inside the keyed .px-body, and another section kept the last one's place"
+  },
+  {
+    "name": "SPELL-SCROLL-found-unchecked",
+    "file": "src/ui/domRepaint.js",
+    "old": "  return pathOf(host, n).path === path ? n : null;",
+    "new": "  return n;",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "AUDIT FB1018f L2-4: the element at the saved indices taken whatever it is - a pane that names another thing, or another tag or class in the same place, given the old offset"
+  },
+  {
+    "name": "SPELL-SCROLL-tree-mapped",
+    "file": "src/ui/domRepaint.js",
+    "old": "    const el = findPath(host, path);",
+    "new": "    const el = new Map([...host.querySelectorAll('*')].map((x) => [pathOf(host, x).path, x])).get(path.path) ?? null;",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "AUDIT FB1018f L2-4, the fault itself: the rebuilt tree mapped whole to find one pane - every element's path, each step a sibling list (~400 ms a fold in a Chronicle of 500 notes, scrolled); the same panes restored, so only the count of steps read kills it"
+  },
+  {
+    "name": "SPELL-SCROLL-tree-searched-in-order",
+    "file": "src/ui/domRepaint.js",
+    "old": "    const el = findPath(host, path);",
+    "new": "    const el = [...host.querySelectorAll('*')].find((x) => pathOf(host, x).path === path.path) ?? null;",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "AUDIT FB1018f L2-4: the tree searched element by element until the path is met - as cheap as the walk for a pane at the tree's head, the whole tree's paths for one after a long list"
+  },
+  {
+    "name": "SPELL-SCROLL-the-body-scrolls-the-book",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".sb-shell .px-body { display: flex; flex-direction: column; overflow: hidden; }",
+    "new": ".sb-shell .px-body { display: flex; flex-direction: column; }",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "the body's own overflow-y: auto back: one scroll for the list and the page"
+  },
+  {
+    "name": "SPELL-SCROLL-the-journal-grows",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".sb-shell .px-journal { flex: 1 1 auto; min-height: 0; }",
+    "new": ".sb-shell .px-journal { flex: 1 1 auto; }",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "the journal's min-height: 100% back: it grows with its rows past the body, and neither column scrolls"
+  },
+  {
+    "name": "SPELL-SCROLL-the-columns-do-not-scroll",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".sb-shell .px-qrail, .sb-shell .px-qdetail { min-height: 0; overflow-y: auto; }",
+    "new": ".sb-shell .px-qrail, .sb-shell .px-qdetail { min-height: 0; }",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "the page beside the list loses its own scroll (the rail keeps the journal's)"
+  },
+  {
+    "name": "SPELL-SCROLL-body-overridden-after",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".sb-shell .px-body { display: flex; flex-direction: column; overflow: hidden; }",
+    "new": ".sb-shell .px-body { display: flex; flex-direction: column; overflow: hidden; } .sb-shell .px-body { overflow-y: auto; }",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "AUDIT FB1018f L2-3: a later rule gives the body its one scroll back - the layout pin read the first rule, not the cascade"
+  },
+  {
+    "name": "SPELL-SCROLL-journal-overridden-after",
+    "file": "src/ui/enhanced/enhancedStyle.js",
+    "old": ".sb-shell .px-journal { flex: 1 1 auto; min-height: 0; }",
+    "new": ".sb-shell .px-journal { flex: 1 1 auto; min-height: 0; } .sb-shell .px-journal { min-height: 100%; }",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "AUDIT FB1018f L2-3: a later rule grows the journal with its rows again"
+  },
+  {
+    "name": "SPELL-SCROLL-page-overridden-by-plus",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": "export const PLUS_CSS = `${VITALS_CSS}",
+    "new": "export const PLUS_CSS = `${VITALS_CSS} .sb-shell .px-qdetail { overflow: visible; }",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "AUDIT FB1018f L2-3: Enhanced Plus's sheet, laid after the enhanced one, takes the page's own scroll away"
+  },
+  {
+    "name": "SPELL-SCROLL-list-overridden-by-calm",
+    "file": "src/ui/uiCalmStyle.js",
+    "old": "export const UI_CALM_CSS = `/* UI-CALM (ui/uiCalmStyle.js) - laid after Enhanced Plus's sheet */",
+    "new": "export const UI_CALM_CSS = `/* UI-CALM (ui/uiCalmStyle.js) - laid after Enhanced Plus's sheet */ .sb-shell .px-qrail { overflow: visible; }",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "AUDIT FB1018f L2-3: UI-calm's sheet, laid last, takes the list's own scroll away"
+  },
+  {
+    "name": "SPELL-SCROLL-classic-click-scrolls",
+    "file": "src/ui/spellbookWindow.js",
+    "old": "        this.selectedIndex = index;          // MouseClick",
+    "new": "        this.selectedIndex = index; this.scrollIndex = index;          // MouseClick",
+    "tests": [
+      "test/ui/enhanced/fb1018f_spellscroll.test.js"
+    ],
+    "why": "the classic book departing from ListBox.MouseClick: a pick moves the list"
+  }
+]

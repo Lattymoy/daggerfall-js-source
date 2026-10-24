@@ -41,6 +41,16 @@ export function potionRecipeKey(ingredientIds) {
 export const potionKeyFromCauldron = (templateIndices) =>
   potionRecipeKey([...templateIndices].sort((a, b) => a - b));
 
+/** L10N3d: PotionRecipe.GetDisplayName (:225-236) is GetLocalizedText(DisplayNameKey), read each time a name is
+ *  shown. This leaf imports nothing, so potions.js hands it the text core's table (setPotionDisplayNames); a reader
+ *  of the leaf alone (the account service) reads each recipe's English, as before. */
+let _displayNames = null;
+export function setPotionDisplayNames(table) { _displayNames = table; }
+const withDisplayName = (r) => {
+  const en = r.displayName;
+  return Object.defineProperty(r, 'displayName', { enumerable: true, get: () => _displayNames?.[r.name] ?? en });
+};
+
 /** The twenty recipes, gathered from the fifteen effect classes that
  *  register them. `price` is the potion's gold value; `ingredients`
  *  are TEMPLATE indices, pre-sorted so the key is stable.
@@ -98,7 +108,7 @@ export const POTION_RECIPES = Object.freeze([
   { name: 'restorePower', price: 75, ingredients: [33, 54, 63, 73], effect: HEAL_SPELL_POINTS_KEY, displayName: 'Restore Power', textureRecord: 12, settings: { magnitudeBaseLow: 5, magnitudeBaseHigh: 5, magnitudeLevelBase: 4, magnitudeLevelHigh: 4 } },   // Werewolf's Blood, Saint's Hair, Nectar, Silver; icon HealSpellPoints.cs:49
   { name: 'levitation', price: 125, ingredients: [39, 59, 63], effect: '14,255', displayName: 'Levitation' },   // Ectoplasm, Pure Water, Nectar
   { name: 'waterWalking', price: 50, ingredients: [20, 29, 59, 69], effect: '31,255', displayName: 'Water Walking', textureRecord: 32 },   // Yellow Rose, Palm, Pure Water, Sulphur; icon WaterWalking.cs:52
-].map(Object.freeze));
+].map((r) => Object.freeze(withDisplayName(r))));
 
 /** PotionRecipe.cs:34 `int textureRecord = 11` - the field's own
  *  initialiser, which is what a recipe that never sets one keeps. */

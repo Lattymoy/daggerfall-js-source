@@ -1,0 +1,1202 @@
+[
+  {
+    "name": "AUF-L1H1-attr-apart",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "const attributeGain = (entity, a, read) => capAt(a, read(a) + pctOf(entity.stats?.[a], read(`pct.${a}`)));",
+    "new": "const attributeGain = (entity, a, read) => read(a) + pctOf(entity.stats?.[a], read(`pct.${a}`));",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L1H1-skill-apart",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "const v = capAt(`skill.${n}`, read(`skill.${n}`) + (share ? pctOf(permanentSkillValue(entity, id), share) : 0));",
+    "new": "const v = read(`skill.${n}`) + (share ? pctOf(permanentSkillValue(entity, id), share) : 0);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L1H1-hp-apart",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "hp: capAt('hp', (c.hp ?? 0) + pctOf(floored, c.hpPct ?? 0))",
+    "new": "hp: (c.hp ?? 0) + pctOf(floored, c.hpPct ?? 0)",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L1M2-price-in-the-cap",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "    const v = Math.max(d.min, Math.min(d.max, g + (prices[k] ?? 0)));",
+    "new": "    const v = Math.max(d.min, Math.min(d.max, (gains[k] ?? 0) + (prices[k] ?? 0)));",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L1M2-blow-price-in-the-group",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "  let pct = Math.max(BLOW_FLOOR, Math.min(BLOW_CAP, gain) + price);",
+    "new": "  let pct = Math.max(BLOW_FLOOR, Math.min(BLOW_CAP, gain + price));",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L1M2-blow-total-uncapped",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "  return Math.min(BLOW_TOTAL_CAP, pct);",
+    "new": "  return pct;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L1M2-castcost-uncapped",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "  return Math.min(CAST_COST_CAP, gain) + price;   // the gains capped, then the price paid (AUDIT UICALM-FIRM1 L1 M2)",
+    "new": "  return gain + price;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L1M4-one-carry",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "  const exact = (dmg * pct) / 100 + _takenOwed[ch];",
+    "new": "  const exact = (dmg * pct) / 100 + _takenOwed.blow;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L1L1-classic-unboosted",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    const num17 = f(f(GetSailPower() * vMagnitude(state.windVectorCurrent)) * f(firmSail()));",
+    "new": "    const num17 = f(GetSailPower() * vMagnitude(state.windVectorCurrent));",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L1L1-sail-tenfold",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  const firmSail = () => 1 + firmStat('sailSpeed') / 100;",
+    "new": "  const firmSail = () => 1 + firmStat('sailSpeed') / 10;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L1L2-mentor-awake",
+    "file": "src/systems/firmamentLive.js",
+    "old": "export const firmStat = (key) => (firmamentInForce() && !_mentoring ? _stats[key] ?? 0 : 0);",
+    "new": "export const firmStat = (key) => (firmamentInForce() ? _stats[key] ?? 0 : 0);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L1L2-mentor-untold",
+    "file": "src/systems/firmamentLive.js",
+    "old": "  _mentoring = !!on;\n  tell();",
+    "new": "  _mentoring = !!on;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L1L4-orphans-kept",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "  return { start, keys: keys.filter((k) => reached.has(k)) };",
+    "new": "  return { start, keys };",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L2M1-commit-during-respec",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "      if (respecking) return { ok: false, error: 'firm-busy' };\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L2M1-accept-during-respec",
+    "file": "src/ui/firmamentWindow.js",
+    "old": "    goBtn.disabled = !n || !online || respecking;",
+    "new": "    goBtn.disabled = !n || !online;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L2M2-book-kept-id-any-tree",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "    const id = left?.rid && left.tree === packTree(tree) ? left.rid : rid();",
+    "new": "    const id = left?.rid ?? rid();",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L2M2-service-repeat-any-tree",
+    "file": "server-account/src/firmament.js",
+    "old": "    if (typeof body.tree !== 'string' || packTree(unpackTree(body.tree)) !== String(prior.tree ?? '')) return { error: 'firm-rid' };\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L2M3-rate-dropped",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "const UNHEARD = new Set(['offline', 'server', 'no-session', 'firm-rate', 'rate', 'maintenance']);",
+    "new": "const UNHEARD = new Set(['offline', 'server', 'no-session', 'firm-rate']);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L2M4-switch-not-on-trades",
+    "file": "server-account/src/firmament.js",
+    "old": "export const firmStatsFrom = (row, player, env) => (firmamentOpenFor(player, env) ? treeStats(unpackTree(row?.tree ?? '')) : {});",
+    "new": "export const firmStatsFrom = (row, player, env) => treeStats(unpackTree(row?.tree ?? ''));",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L2M4-shut-tree-kept",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "      if (state.error === 'firm-closed') state.tree = { start: null, keys: [] };",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L2M5-shut-to-players",
+    "file": "server-account/wrangler.toml",
+    "old": "FIRMAMENT_OPEN = \"on\"",
+    "new": "FIRMAMENT_OPEN = \"dev\"",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L2L1-respec-free",
+    "file": "server-account/src/firmament.js",
+    "old": "  if (!side.at) return { error: 'realm-needed' };\n",
+    "new": "  if (!side.at) return view({ start: null, keys: [] }, await pursesOf(ctx, player.id, character), { respec: true, gold: FIRM_RESPEC_GOLD });\n",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L2L1-book-no-realm",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "      if (!realm) return { ok: false, error: 'realm-needed' };   // AUDIT UICALM-FIRM1 L2 L1: the gold is a realm record's, paid on the service\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L2L2-delete-keeps-sky",
+    "file": "server-account/src/realm.js",
+    "old": "    db.prepare('DELETE FROM firmament WHERE player = ? AND char_id = ?').bind(playerId, id),",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L2L3-temper-plain",
+    "file": "server-account/src/professions.js",
+    "old": "  const xp = scaleXp(temperXp(r, rank), xpPct(await firmStatsOf(db, player, env, character), craft));",
+    "new": "  const xp = temperXp(r, rank);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L2L4-kept-refusal-silent",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "      if (r?.ok) { apply(r.data); if (refused) state.error = refused; tell(); return true; }",
+    "new": "      if (r?.ok) { apply(r.data); tell(); return true; }",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H1-set-ignores-switch",
+    "file": "server-account/src/firmament.js",
+    "old": "  const closed = shut(player, env);\n  if (closed) return closed;\n  if (typeof body.tree !== 'string'",
+    "new": "  if (typeof body.tree !== 'string'",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H1-respec-ignores-switch",
+    "file": "server-account/src/firmament.js",
+    "old": "  const closed = shut(player, env);\n  if (closed) return closed;\n  // AUDIT UICALM-FIRM1 L2 L1",
+    "new": "  // AUDIT UICALM-FIRM1 L2 L1",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M11-set-no-rate",
+    "file": "server-account/src/firmament.js",
+    "old": "  if (await overRate(ctx, `firm:${player.id}`, FIRM_OPS_MAX, FIRM_OPS_WINDOW_S)) return { error: 'firm-rate' };\n  const [row, purses] = await Promise.all([firmStatement(db, player.id, character).first(), pursesOf(ctx, player.id, character)]);\n  const fault",
+    "new": "  const [row, purses] = await Promise.all([firmStatement(db, player.id, character).first(), pursesOf(ctx, player.id, character)]);\n  const fault",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M11-set-no-size-cap",
+    "file": "server-account/src/firmament.js",
+    "old": "if (typeof body.tree !== 'string' || body.tree.length > FIRM_PACKED_MAX) return { error: 'firm-key' };",
+    "new": "if (typeof body.tree !== 'string') return { error: 'firm-key' };",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M11-marks-closed-unchecked",
+    "file": "server-account/src/firmament.js",
+    "old": "  if (silver > 0 && !marksOpenFor(player, env)) return { error: 'marks-closed' };\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M11-set-stale-lands",
+    "file": "server-account/src/firmament.js",
+    "old": "      WHERE ${stillPrev}\n        AND (?6 = 0 OR",
+    "new": "      WHERE 1\n        AND (?6 = 0 OR",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M11-respec-no-guard",
+    "file": "server-account/src/firmament.js",
+    "old": "      mustChange(db),\n      db.prepare(\"UPDATE firmament SET tree = ''",
+    "new": "      db.prepare(\"UPDATE firmament SET tree = ''",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M11-respec-other-char",
+    "file": "server-account/src/firmament.js",
+    "old": "  if (prior) {\n    if (prior.char_id !== character) return { error: 'firm-rid' };\n    const now = await",
+    "new": "  if (prior) {\n    const now = await",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H4-yield-dropped",
+    "file": "server-account/src/professions.js",
+    "old": "  if (firmYield) qty = scaleQty(qty, firmYield, dice(rand));",
+    "new": "  void scaleQty;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H4-yield-tripled",
+    "file": "server-account/src/professions.js",
+    "old": "  if (firmYield) qty = scaleQty(qty, firmYield, dice(rand));",
+    "new": "  if (firmYield) qty = scaleQty(qty, firmYield * 3, dice(rand));",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H4-smelt-xp-plain",
+    "file": "server-account/src/professions.js",
+    "old": "    r.xp ? xpPct(await firmStatsOf(db, player, env, character), trackOf(r.xp)) : 0);",
+    "new": "    0);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H4-craft-xp-tenfold",
+    "file": "server-account/src/professions.js",
+    "old": "    xpPct(await firmStatsOf(db, player, env, character), craft));",
+    "new": "    10 * xpPct(await firmStatsOf(db, player, env, character), craft));",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H4-brew-xp-plain",
+    "file": "server-account/src/alchemy.js",
+    "old": "  const xp = scaleXp(brewXp(potion, rank, false), xpPct(await firmStatsOf(db, player, env, character), trackOf('alchemy')));",
+    "new": "  const xp = scaleXp(brewXp(potion, rank, false), 0);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H4-disenchant-xp-plain",
+    "file": "server-account/src/alchemy.js",
+    "old": "  const xp = scaleXp(disenchantXp(r, rank, base), xpPct(await firmStatsOf(db, player, env, character), 'enchanting'));",
+    "new": "  const xp = scaleXp(disenchantXp(r, rank, base), 0);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H4-scaleqty-floor-dropped",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "  return Math.max(1, whole + (roll < exact - whole ? 1 : 0));",
+    "new": "  return whole + (roll < exact - whole ? 1 : 0);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M3-refund-free-through-10",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "export const REFUND_FREE_BELOW_RENOWN = 10;",
+    "new": "export const REFUND_FREE_BELOW_RENOWN = 11;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M3-stars-cap-51",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "export const FIRM_RENOWN_MAX = 50;",
+    "new": "export const FIRM_RENOWN_MAX = 51;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M3-hp-cap-150",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "  hp: def('combat', 75, (v) => `${signed(v)} maximum Health`, 0),",
+    "new": "  hp: def('combat', 150, (v) => `${signed(v)} maximum Health`, 0),",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M3-evade-cap-50",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "  evade: def('combat', 10, (v) => `${v}% chance to avoid a blow entirely`, 0),",
+    "new": "  evade: def('combat', 50, (v) => `${v}% chance to avoid a blow entirely`, 0),",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M3-spellpower-cap-60",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "  spellPower: def('combat', 30, (v) => `${signed(v)}% damage from your spells`, -20),",
+    "new": "  spellPower: def('combat', 60, (v) => `${signed(v)}% damage from your spells`, -20),",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M3-respec-gold-1000",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "export const FIRM_RESPEC_GOLD = 10_000;",
+    "new": "export const FIRM_RESPEC_GOLD = 1_000;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M3-pact-price-30",
+    "file": "src/net/firmament/firmamentTree.js",
+    "old": "{ spellPower: 12, castCost: 8, blowTaken: 7 }",
+    "new": "{ spellPower: 12, castCost: 8, blowTaken: 30 }",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M3-charge-spell-price-30",
+    "file": "src/net/firmament/firmamentTree.js",
+    "old": "{ meleeDmg: 9, speed: 3, blowTaken: 5 }",
+    "new": "{ meleeDmg: 9, speed: 3, spellTaken: 30 }",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M4-lines-cross-stars",
+    "file": "src/net/firmament/firmamentTree.js",
+    "old": "    const first = anchorFor(s, from, centre, false, flip);\n    if (!first.cluster) return first;",
+    "new": "    const first = anchorFor(s, from, centre, false, flip);\n    return first;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H5-evade-always",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "  return _rand() * 100 < c.evade;",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H5-killheal-tenfold",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "  if (c.killHeal) healMine(m, (m.maxHealth * c.killHeal) / 100);",
+    "new": "  if (c.killHeal) healMine(m, (m.maxHealth * c.killHeal) / 10);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H5-player-kill-counts",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "const neverCounts = (e) => !!e?.isPlayer || !!e?.peer ||",
+    "new": "const neverCounts = (e) =>",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H5-regen-tenfold",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "healMine(entity, (entity.maxHealth * c.hpRegen) / 1000);",
+    "new": "healMine(entity, (entity.maxHealth * c.hpRegen) / 100);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H5-blow-through-wards",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "  if (!(damage > 0) || !target || target.isPlayer || target.warded) return damage;",
+    "new": "  if (!(damage > 0) || !target || target.isPlayer) return damage;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H5-layer-off-the-layer",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "  const baseMp = (entity.maxMagicka ?? 0) - renownMpOf(entity);",
+    "new": "  const baseMp = (entity.maxMagicka ?? 0);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H5-absorb-awake-in-duels",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "export const firmamentAbsorb = (target) => fight(target).absorb ?? 0;",
+    "new": "export const firmamentAbsorb = (target) => firmamentStats().absorb ?? 0;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H5-pierce-awake-in-duels",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "export const firmamentSpellPierce = (caster) => fight(caster).spellPierce ?? 0;",
+    "new": "export const firmamentSpellPierce = (caster) => firmamentStats().spellPierce ?? 0;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H5-quiet-ignored-by-life",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "const life = (e) => (!_quiet && mine(e) && !e?._mentor ? firmamentStats() : NONE);",
+    "new": "const life = (e) => (mine(e) && !e?._mentor ? firmamentStats() : NONE);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H5-peer-gets-my-sky",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "const mine = (e) => !!e?.isPlayer && !e.peer;",
+    "new": "const mine = (e) => !!e?.isPlayer;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H5-glint-unwidened",
+    "file": "src/systems/herbAct.js",
+    "old": "  const glint = (master ? BASKET_ACT.masterGlintS : BASKET_ACT.glintS) * band * sky;",
+    "new": "  const glint = (master ? BASKET_ACT.masterGlintS : BASKET_ACT.glintS) * band;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H3-offline-sky-on",
+    "file": "src/scenes/world.js",
+    "old": "  setFirmamentOnline(params.has('online'));",
+    "new": "  setFirmamentOnline(true);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H3-leave-seat-sky-stays",
+    "file": "src/scenes/world.js",
+    "old": "    setFirmamentOnline(false);   // FIRM1: the sky sleeps offline, as the sigils do\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H3-tree-never-in-force",
+    "file": "src/scenes/world.js",
+    "old": "  firmBook?.onChange((st) => setFirmamentTree(st.tree));",
+    "new": "  void setFirmamentTree;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H3-renown-stars-said-wrong",
+    "file": "src/scenes/world.js",
+    "old": "announceRenownRise(level, { stars: starsFor(level) - starsFor(was),",
+    "new": "announceRenownRise(level, { stars: starsFor(level),",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L1L3-seat-unread",
+    "file": "src/scenes/world.js",
+    "old": "    firmBook?.read().catch(() => {});   // AUDIT UICALM-FIRM1 L1 L3",
+    "new": "    // AUDIT UICALM-FIRM1 L1 L3",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L1L2-partyframe-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "    setFirmamentMentoring(!!playerEntity._mentor);",
+    "new": "    void setFirmamentMentoring;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5H2-wild-strike-with-sky",
+    "file": "src/scenes/world.js",
+    "old": "    if (!wildFair(to)) return false;\n    const a = withoutFirmament(playerEntity, () => duelAttackerOf(playerEntity, weapon)),",
+    "new": "    if (!wildFair(to)) return false;\n    const a = duelAttackerOf(playerEntity, weapon),",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M5-saddle-dom-always",
+    "file": "src/ui/enhanced/enhancedSaddle.js",
+    "old": "  const mode = state.panel ?? saddlePanelMode();",
+    "new": "  const mode = 'always';",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M5-saddle-dom-ignores-show",
+    "file": "src/ui/enhanced/enhancedSaddle.js",
+    "old": "  if (show === 'none') return;\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ],
+    "equivalent": true,
+    "why": "the early return is work saved while hidden: data-show stays 'none', and the sheet's .saddlepanel[data-show=\"none\"] { display: none } hides whatever is drawn under it"
+  },
+  {
+    "name": "AUF-L5M5-saddle-dataset-full",
+    "file": "src/ui/enhanced/enhancedSaddle.js",
+    "old": "parts.root.dataset.show = show;",
+    "new": "parts.root.dataset.show = 'full';",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M5-toggle-not-kept",
+    "file": "src/ui/enhanced/enhancedSaddle.js",
+    "old": "  setPref(SADDLE_OPEN_PREF, { open: next, mode });\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M5-open-default-up",
+    "file": "src/ui/enhanced/enhancedSaddle.js",
+    "old": "typeof v.open === 'boolean' ? v.open : mode === 'always';",
+    "new": "typeof v.open === 'boolean' ? v.open : true;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M5-off-touch-no-chip",
+    "file": "src/ui/enhanced/enhancedSaddle.js",
+    "old": "  if (mode === 'off') return state.touch ? 'chip' : 'none';",
+    "new": "  if (mode === 'off') return 'none';",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M5-hello-hours",
+    "file": "src/ui/enhanced/enhancedSaddle.js",
+    "old": "export const SADDLE_HELLO_MS = 6000;",
+    "new": "export const SADDLE_HELLO_MS = 600000;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M5-hello-no-key-name",
+    "file": "src/ui/enhanced/enhancedSaddle.js",
+    "old": "saddleHello(s, state.keyOf?.(SADDLE_PANEL_ACTION) ?? '')",
+    "new": "saddleHello(s, '')",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L4M1-press-outlives-choice",
+    "file": "src/ui/enhanced/enhancedSaddle.js",
+    "old": "v && typeof v === 'object' && v.mode === mode && typeof v.open === 'boolean'",
+    "new": "v && typeof v === 'object' && typeof v.open === 'boolean'",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L4M2-finger-on-the-compass",
+    "file": "src/ui/enhanced/enhancedSaddle.js",
+    "old": "  if (last.place === 0) { if (state.touch) placeTouch(doc, parts, last); else placeBar(doc, parts, last); }",
+    "new": "  if (last.place === 0 && !state.touch) placeBar(doc, parts, last);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M7-calm-ignores-pref",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "  const calm = getPref(HUD_CALM_PREF) !== false && !hudArranging() && allFull &&",
+    "new": "  const calm = !hudArranging() && allFull &&",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M7-calm-ignores-foe",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": " && allFull && !parts.foe?.classList?.contains?.('on');",
+    "new": " && allFull;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M7-rest-at-once",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "export const VITALS_REST_S = 4;",
+    "new": "export const VITALS_REST_S = 0;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M7-rest-toggle-dropped",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "parts.bars?.classList?.toggle?.('rest', rest);",
+    "new": "void rest;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L4M3-rest-while-arranged",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "  const calm = getPref(HUD_CALM_PREF) !== false && !hudArranging() && allFull &&",
+    "new": "  const calm = getPref(HUD_CALM_PREF) !== false && allFull &&",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L4N1-a-share-of-the-maximum",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "|| now > max - 1);",
+    "new": "|| now >= max * 0.995);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L4H1-bar-half-the-screen",
+    "file": "src/ui/firmamentWindow.js",
+    "old": ".fmt-bar { position: absolute; left: 16px; right: 16px; margin-inline: auto; width: fit-content; top: 10px;",
+    "new": ".fmt-bar { position: absolute; left: 50%; top: 10px; transform: translateX(-50%);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L4H1-say-takes-taps",
+    "file": "src/ui/firmamentWindow.js",
+    "old": "transform: translateX(-50%); pointer-events: none; padding: 7px 16px;",
+    "new": "transform: translateX(-50%); padding: 7px 16px;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L4H1-finger-learns-at-once",
+    "file": "src/ui/firmamentWindow.js",
+    "old": "    if (e.pointerType === 'touch' && d.button !== 2 && hover !== key) { setHover(key, p.x, p.y); return; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L4H1-sky-under-the-bar",
+    "file": "src/ui/firmamentWindow.js",
+    "old": "    view.y = Math.max(40, barFoot() / 2);",
+    "new": "    view.y = 40;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L4M4-overlay-close-unasked",
+    "file": "src/ui/firmamentWindow.js",
+    "old": "    if (!dead && unaccepted() && !armedClose) {\n      arm();",
+    "new": "    if (false) {\n      arm();",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L4M5-sign-not-a-change",
+    "file": "src/ui/firmamentWindow.js",
+    "old": "  function unaccepted() { const c = changes(); return !!(c.added || c.removed || (c.startChanged && pending.start)); }",
+    "new": "  function unaccepted() { const c = changes(); return !!(c.added || c.removed); }",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L4L1-arrow-unheld",
+    "file": "src/ui/firmamentWindow.js",
+    "old": "      case 'ArrowLeft': view.x += 60; hold(); dirty = true; break;",
+    "new": "      case 'ArrowLeft': view.x += 60; dirty = true; break;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L4L2-enter-hijacks",
+    "file": "src/ui/firmamentWindow.js",
+    "old": "      case 'Enter': if (e.target?.tagName === 'BUTTON') { used = false; break; } click();",
+    "new": "      case 'Enter': click();",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L4L4-refusal-raw",
+    "file": "src/ui/firmamentWindow.js",
+    "old": "    return /** @type {Record<string, string>} */ (REFUSALS)[error] ?? accountRefusalText(error);",
+    "new": "    return /** @type {Record<string, string>} */ (REFUSALS)[error] ?? 'The stars refused.';",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5-readfail-closed-silent",
+    "file": "src/ui/firmamentWindow.js",
+    "old": "    if (st.error === 'firm-closed') return t('firm.readFail.closed',",
+    "new": "    if (st.error === 'firm-closed') return null; void t('firm.readFail.closed',",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M8-window-floor",
+    "file": "src/ui/firmamentWindow.js",
+    "old": ".fmt-tip .kd { font-size: 12px;",
+    "new": ".fmt-tip .kd { font-size: 10px;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L4M6-tabs-held-to-one-row",
+    "file": "src/ui/uiCalmStyle.js",
+    "old": "  ${P} .px-win > .px-tabs { gap: 2px; }",
+    "new": "  ${P} .px-win > .px-tabs { flex-wrap: nowrap; gap: 2px; }",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L4L5-key-wood-ink",
+    "file": "src/ui/grimoireDress.js",
+    "old": "${G} [data-grim-on=\"page\"] [class$=\"-key\"] { color: ${T.inkSoft} !important; text-shadow: none !important; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L4L6-stepper-spills",
+    "file": "src/ui/holdingsPages.js",
+    "old": ".px-sys .hld-pick:has(.hld-step) { grid-template-columns: auto minmax(0, 1fr) auto; }",
+    "new": ".px-sys .hld-pick:has(.hld-step) { grid-template-columns: auto auto 1fr auto; }",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3H1-foot-unmeasured",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "if (h > 0) home.style?.setProperty?.('--px-foot-h', `${h}px`); };",
+    "new": "if (h > 0) void h; };",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3H1-foot-unwatched",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "footObs = new globalThis.ResizeObserver(reserve); footObs.observe(foot);",
+    "new": "footObs = null;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3H1-stage-fixed-reserve",
+    "file": "src/ui/uiCalmStyle.js",
+    "old": ".px-home:not(.px-over)[style*=\"--px-foot-h\"] > .px-stage:not(.px-acctstage) { height: calc(100% - var(--px-foot-h)); padding-bottom: 12px; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3H1-plaques-stand-four-high",
+    "file": "src/ui/uiCalmStyle.js",
+    "old": "  .px-home:not(.px-over) .px-footright, .px-home:not(.px-over) .px-footleft { display: contents; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3M1-book-at-any-height",
+    "file": "src/ui/grimoireDress.js",
+    "old": " and (min-height: 561px)';",
+    "new": "';",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3M2-double-click-two-doors",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "b.onclick = (e) => { if (e?.detail > 1) return; onClick(e); };",
+    "new": "b.onclick = onClick;",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3M3-way-by-shown-name",
+    "file": "src/ui/enhanced/enhancedChargen.js",
+    "old": "const w = custom ? 'Your own' : classWayOf(flow.careers[i]?.name);",
+    "new": "const w = custom ? 'Your own' : classWayOf(name);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3M3-picked-way-by-shown-name",
+    "file": "src/ui/enhanced/enhancedChargen.js",
+    "old": "null : classWayOf(flow.careers[flow.classListIndex]?.name);",
+    "new": "null : classWayOf(picked);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3M4-bar-runs-off",
+    "file": "src/ui/uiCalmStyle.js",
+    "old": "  .wizard .actionbar { flex-wrap: wrap; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3M4-way-on-floor",
+    "file": "src/ui/uiCalmStyle.js",
+    "old": "  .wizard .actionbar .act.primary { min-width: 0; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3M5-waiting-way-faded",
+    "file": "src/ui/uiCalmStyle.js",
+    "old": "${P} .wizard .act.primary[disabled] { opacity: 1; color: #bdb4a0; }",
+    "new": "${P} .wizard .act.primary[disabled] { opacity: 0.72; }",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3M5-grim-waiting-way-faded",
+    "file": "src/ui/grimoireDress.js",
+    "old": "${G} .wizard :is(.actionbar, .choose .acts, .skillpane .acts) .act.primary:disabled { opacity: 0.85 !important; }",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3M6-plates-unwatched",
+    "file": "src/ui/enhanced/enhancedChargen.js",
+    "old": "    for (const q of plates) ro.observe(q.tag);\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3M7-sheet-unbounded",
+    "file": "src/ui/uiCalmStyle.js",
+    "old": "  .wizard .stagebody > .detail.wizsheet:has(> .dcard.confirm) { display: flex; flex-direction: column; overflow: hidden; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3M7-card-runs-on",
+    "file": "src/ui/uiCalmStyle.js",
+    "old": "  .wizard .stagebody > .detail.wizsheet > .dcard.confirm { flex: 1 1 auto; min-height: 0; max-height: none; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3M8-phone-rail-dark",
+    "file": "src/ui/grimoireDress.js",
+    "old": "@media (max-width: 860px), (pointer: coarse) { ${G} .shell:not(.wizard) .rail { background: ${PAGE} !important; } }\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3M8-rail-head-faded",
+    "file": "src/ui/grimoireDress.js",
+    "old": "color: ${T.redDeep}; border-bottom: 1px solid rgba(43,26,12,0.25);",
+    "new": "color: ${T.redDeep}; opacity: 0.85; border-bottom: 1px solid rgba(43,26,12,0.25);",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3L1-section-focus-lost",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "go('home'); if (mode !== 'pause') focusDoor(from); }",
+    "new": "go('home'); void from; }",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3L1-level-focus-lost",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "homeLevel = 'top'; render(); focusDoor(from); }",
+    "new": "homeLevel = 'top'; render(); void from; }",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3L2-health-up-to",
+    "file": "src/ui/enhanced/enhancedChargen.js",
+    "old": "`${Math.trunc(career.hitPointsPerLevel / 2)}-${career.hitPointsPerLevel} a level, more with Endurance`",
+    "new": "`up to ${career.hitPointsPerLevel} a level`",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3L3-tools-under-floor",
+    "file": "src/ui/uiCalmStyle.js",
+    "old": ".opt-tools .act, .wizard .poolk { font-size: 12px; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3L3-maplabel-under-floor",
+    "file": "src/ui/uiCalmStyle.js",
+    "old": "  .wizard .maplabel { font-size: 12px; padding: 2px 5px; }",
+    "new": "  .wizard .maplabel { font-size: 11px; padding: 2px 5px; }",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3L4-rail-head-in-a-slot",
+    "file": "src/ui/uiCalmStyle.js",
+    "old": "@media (max-width: 860px), (pointer: coarse) { .shell:not(.wizard) .rail .railgroup { flex: 0 0 100%; margin: 8px 12px 0; } }\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3N1-links-reset-level",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "else if (section === 'online') homeLevel = 'top';",
+    "new": "else if (section === 'online' || HOME_LINKS.some((l) => idOf(l) === section)) homeLevel = 'top';",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M9-offline-doors-untranslated",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "games.append(doorBtn(idOf(label), railLabel(label), ''",
+    "new": "games.append(doorBtn(idOf(label), label, ''",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5M9-elsewhere-doors-untranslated",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "more.append(doorBtn(idOf(label), railLabel(label), ''",
+    "new": "more.append(doorBtn(idOf(label), label, ''",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3N3-tutorials-english",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "'px-about px-tuts door-tutorials', RAIL_TEXT.tutorials());",
+    "new": "'px-about px-tuts door-tutorials', 'Tutorials');",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3N3-screenshots-english",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "'px-about px-shots', RAIL_TEXT.screenshots());",
+    "new": "'px-about px-shots', 'Screenshots');",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5L3-bar-dark-for-both",
+    "file": "src/ui/uiCalmStyle.js",
+    "old": ".wizard .cprof-bar { position: relative; height: 8px; box-sizing: border-box; border: 1px solid transparent; }",
+    "new": ".wizard .cprof-bar { position: relative; height: 8px; box-sizing: border-box; border: 1px solid #050608; background: rgba(5,6,8,0.6); }",
+    "tests": [
+      "test/ui/enhanced/uicalm.test.js",
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5L3-fill-amber-for-both",
+    "file": "src/ui/uiCalmStyle.js",
+    "old": ".wizard .cprof-fill { position: absolute; left: 0; top: 0; bottom: 0; }",
+    "new": ".wizard .cprof-fill { position: absolute; left: 0; top: 0; bottom: 0; background: #c08a3e; }",
+    "tests": [
+      "test/ui/enhanced/uicalm.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5L3-way-rule-for-both",
+    "file": "src/ui/uiCalmStyle.js",
+    "old": "text-transform: uppercase; border-bottom: 1px solid transparent; }",
+    "new": "text-transform: uppercase; border-bottom: 1px solid rgba(192,138,62,0.45); }",
+    "tests": [
+      "test/ui/enhanced/uicalm.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5L3-grim-bar-unlined",
+    "file": "src/ui/grimoireDress.js",
+    "old": "${G} .wizard .cprof-bar { border-color: rgba(43,26,12,0.55); background: rgba(43,26,12,0.12); }\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L5L3-grim-fill-unfilled",
+    "file": "src/ui/grimoireDress.js",
+    "old": "${G} .wizard .cprof-fill { background: ${T.redDeep}; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3N2-a-acrobat",
+    "file": "src/ui/enhanced/enhancedChargen.js",
+    "old": "`Play as ${/^[aeiou]/i.test(named) ? 'an' : 'a'} ${named}`",
+    "new": "`Play as a ${named}`",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  },
+  {
+    "name": "AUF-L3N2-a-archer",
+    "file": "src/ui/enhanced/enhancedChargen.js",
+    "old": "`Play as ${/^[aeiou]/i.test(picked) ? 'an' : 'a'} ${picked}`",
+    "new": "`Play as a ${picked}`",
+    "tests": [
+      "test/systems/audit_uicalm_firm1.test.js"
+    ]
+  }
+]

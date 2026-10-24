@@ -1,0 +1,8 @@
+[
+  { "name": "HORSE-POV-the-sprite-in-third-person", "file": "src/player/mwView.js",
+    "old": "  if (!eotbLane() && mwCamera.thirdPerson()) return { ...hides, horse: true };\n", "new": "",
+    "tests": ["test/player/horsepov.test.js"] },
+  { "name": "HORSE-POV-the-sprite-hidden-in-first-person", "file": "src/player/mwView.js",
+    "old": "  if (!eotbLane() && mwCamera.thirdPerson()) return { ...hides, horse: true };", "new": "  if (!eotbLane()) return { ...hides, horse: true };",
+    "tests": ["test/player/horsepov.test.js"] }
+]

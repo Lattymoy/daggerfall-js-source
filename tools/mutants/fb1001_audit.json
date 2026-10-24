@@ -5,7 +5,7 @@
     "old": "        target = null;   // NODE-SHUT",
     "new": "        void 0;   // NODE-SHUT",
     "tests": [
-      "test/fb1001_audit.test.js"
+      "test/systems/fb1001_audit.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      if (gatherHost?.acting() && !opts?.lockOnly) { gatherHost.strike(true);",
     "new": "      if (gatherHost?.acting()) { gatherHost.strike(true);",
     "tests": [
-      "test/fb1001_audit.test.js"
+      "test/systems/fb1001_audit.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      const taken = clickHeld || (!!down && !!act);",
     "new": "      const taken = !!down && !!act;",
     "tests": [
-      "test/fb1001_audit.test.js"
+      "test/systems/fb1001_audit.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      clickHeld = !!down && taken;",
     "new": "      clickHeld = taken;",
     "tests": [
-      "test/fb1001_audit.test.js"
+      "test/systems/fb1001_audit.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "(_act.activate && !gatherHost?.acting() && !_actClick && !nodeClicked)",
     "new": "(_act.activate && !gatherHost?.acting() && !nodeClicked)",
     "tests": [
-      "test/fb1001_audit.test.js"
+      "test/systems/fb1001_audit.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (!interact && (actClick || host.profActing?.())) return true;\n    // QG1: the quest-resource click arm runs FIRST and does not",
     "new": "    if (!interact && host.profActing?.()) return true;\n    // QG1: the quest-resource click arm runs FIRST and does not",
     "tests": [
-      "test/fb1001_audit.test.js"
+      "test/systems/fb1001_audit.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    profClickTaken: (down) => gatherHost?.clickTaken(down) ?? false,",
     "new": "",
     "tests": [
-      "test/fb1001_audit.test.js"
+      "test/systems/fb1001_audit.test.js"
     ]
   },
   {
@@ -68,35 +68,35 @@
     "old": "      if (!ndcFromScreen(x, y, canvas.clientWidth, canvas.clientHeight, worldViewportRect(canvas.clientWidth, canvas.clientHeight))) return;\n      if (gatherHost?.acting() && !opts?.lockOnly) { gatherHost.strike(true); gatherHost.strike(false); return; }",
     "new": "      if (gatherHost?.acting() && !opts?.lockOnly) { gatherHost.strike(true); gatherHost.strike(false); return; }\n      if (!ndcFromScreen(x, y, canvas.clientWidth, canvas.clientHeight, worldViewportRect(canvas.clientWidth, canvas.clientHeight))) return;",
     "tests": [
-      "test/fb1001_audit.test.js"
+      "test/systems/fb1001_audit.test.js"
     ]
   },
   {
     "name": "CURE-ENDS-the-cure-leaves-it",
-    "file": "src/systems/guildServiceFlow.js",
+    "file": "src/systems/guild/guildServiceFlow.js",
     "old": "      if ((a.magnitude ?? 0) > 0) { a.magnitude = 0; n++; }\n      a.ended = true;\n",
     "new": "      if ((a.magnitude ?? 0) > 0) { a.magnitude = 0; n++; }\n",
     "tests": [
-      "test/fb1001_audit.test.js",
-      "test/fb1001_regen.test.js"
+      "test/systems/fb1001_audit.test.js",
+      "test/systems/fb1001_regen.test.js"
     ]
   },
   {
     "name": "CURE-ENDS-the-load-door-keeps-it",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "&& !(a.magnitude > 0)) a.ended = true;",
     "new": "&& false) a.ended = true;",
     "tests": [
-      "test/fb1001_audit.test.js"
+      "test/systems/fb1001_audit.test.js"
     ]
   },
   {
     "name": "CURE-ENDS-it-ends-a-live-drain",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "&& !(a.magnitude > 0)) a.ended = true;",
     "new": ") a.ended = true;",
     "tests": [
-      "test/fb1001_audit.test.js"
+      "test/systems/fb1001_audit.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "  cureAllPoisons(entity);\n  cureAllDiseases(entity);\n  cureAllAttributes(entity);\n  fillVitalSigns(entity);\n}",
     "new": "  fillVitalSigns(entity);\n  cureAllPoisons(entity);\n  cureAllDiseases(entity);\n  cureAllAttributes(entity);\n}",
     "tests": [
-      "test/fb1001_audit.test.js"
+      "test/systems/fb1001_audit.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "      const edge = !!held && !strikeHeld && !repeat;",
     "new": "      const edge = !!held && !strikeHeld;",
     "tests": [
-      "test/fb1001_audit.test.js"
+      "test/systems/fb1001_audit.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "hooks.attack?.(dx, dy, true, first ? null : { repeat: true });",
     "new": "hooks.attack?.(dx, dy, true);",
     "tests": [
-      "test/fb1001_audit.test.js"
+      "test/systems/fb1001_audit.test.js"
     ]
   },
   {
@@ -132,16 +132,16 @@
     "old": "      gatherHost?.strike(held, o?.repeat === true);",
     "new": "      gatherHost?.strike(held);",
     "tests": [
-      "test/fb1001_mining.test.js"
+      "test/scenes/fb1001_mining.test.js"
     ]
   },
   {
     "name": "TOUCH-RETAP-the-stale-lift-swallows-the-press",
-    "file": "src/ui/touch.js",
+    "file": "src/ui/touch/touch.js",
     "old": "if (attacking === b) hooks.attack(0, 0, false); ",
     "new": "",
     "tests": [
-      "test/touchbuttons.test.js"
+      "test/ui/touch/touchbuttons.test.js"
     ]
   }
 ]

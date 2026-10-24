@@ -9,12 +9,12 @@
 // crowns' charges, their royals, their seals), the back the Bay's medallion, the edge plain card stock, each chip value
 // its own colour with a stock-white edge band.
 //
-// THE LAYOUT AND THE MESHES ARE PURE (atlasCell, cardModel, chipModel, cardMatrix): pinned by test/cards3_draw.test.js;
+// THE LAYOUT AND THE MESHES ARE PURE (atlasCell, cardModel, chipModel, cardMatrix): pinned by test/net/card/cards3_draw.test.js;
 // only the painting needs a page.
 //
 // Not a DFU member: Daggerfall Unity has no card games. Ledger A row (TAVERN CARDS).
-import { rankOf, suitOf, isCard } from '../net/cardLaw.js';
-import { CARD_W, CARD_L, CARD_T, CHIP_R, CHIP_T, CHIP_VALUES } from '../world/cardMotion.js';
+import { rankOf, suitOf, isCard } from '../net/card/cardLaw.js';
+import { CARD_W, CARD_L, CARD_T, CHIP_R, CHIP_T, CHIP_VALUES } from '../world/card/cardMotion.js';
 import { trs } from '../world/mat4.js';
 import { toColor32 } from '../formats/color32Order.js';
 import { paintFace, paintBack, STOCK } from './cardFaces.js';   // the suits' one home - the panel's and the cloth's alike
@@ -151,7 +151,7 @@ export function paintAtlas(ctx) {
 }
 
 /**
- * The table's bodies on this renderer. `draw(poses)` draws `{cards, chips}` (world/cardScene.js poses); `destroy()`
+ * The table's bodies on this renderer. `draw(poses)` draws `{cards, chips}` (world/card/cardScene.js poses); `destroy()`
  * frees every mesh and the atlas, once. A renderer without the path (a test's) draws nothing and throws nothing.
  * @param {any} renderer
  * @param {{doc?: any}} [opts]

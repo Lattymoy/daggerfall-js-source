@@ -1,0 +1,11 @@
+[
+  {
+    "name": "INN-BEDS-the-bed-gated-on-the-prop",
+    "file": "src/scenes/interiorContext.js",
+    "old": "      if (isBedModel(classicModelIdOf(p.modelIdNum))) beds.push({ cpu, matrix });\n      continue;",
+    "new": "      continue;",
+    "tests": [
+      "test/scenes/fb1014_innbeds.test.js"
+    ]
+  }
+]

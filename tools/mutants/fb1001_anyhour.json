@@ -1,11 +1,11 @@
 [
   {
     "name": "ANY-HOUR-the-act-asks-the-daylight",
-    "file": "src/systems/foragingInstall.js",
+    "file": "src/systems/foraging/foragingInstall.js",
     "old": "skip ? [...skip, ...ACT_KEEPS_NO_HOURS] : ACT_KEEPS_NO_HOURS);",
     "new": "skip);",
     "tests": [
-      "test/fb1001_anyhour.test.js"
+      "test/scenes/fb1001_anyhour.test.js"
     ]
   },
   {
@@ -14,8 +14,8 @@
     "old": "export const NET_WHERE = Object.freeze(['inside', 'town']);\nexport const NET_WHERE_WORDS = Object.freeze({ inside: 'not in here', town: 'not in a settlement' });",
     "new": "export const NET_WHERE = Object.freeze(['inside', 'town', 'daylight']);\nexport const NET_WHERE_WORDS = Object.freeze({ inside: 'not in here', town: 'not in a settlement', daylight: 'the fish bite by daylight (07:00-17:59)' });",
     "tests": [
-      "test/fb1001_anyhour.test.js",
-      "test/prof8_client.test.js"
+      "test/scenes/fb1001_anyhour.test.js",
+      "test/world/terrain/prof8_client.test.js"
     ]
   },
   {
@@ -24,30 +24,30 @@
     "old": "  // Hunting never kept any\n",
     "new": "  // Hunting never kept any\n  if (!deep && !isBody) { const { sharedClassicMinutes: m } = await import('../../src/net/wire.js'); const h = Math.floor((((Math.floor(m(at * 1000)) % 1440) + 1440) % 1440) / 60); if (h <= 6 || h >= 18) return { error: 'prof-night' }; }\n",
     "tests": [
-      "test/fb1001_anyhour.test.js",
-      "test/prof1_service.test.js",
-      "test/prof2_service.test.js",
-      "test/prof4_service.test.js",
-      "test/prof8_service.test.js"
+      "test/scenes/fb1001_anyhour.test.js",
+      "test/net/prof1_service.test.js",
+      "test/net/prof2_service.test.js",
+      "test/net/prof4_service.test.js",
+      "test/net/prof8_service.test.js"
     ]
   },
   {
     "name": "ANY-HOUR-the-net-line-by-daylight",
-    "file": "src/systems/foragingInstall.js",
-    "old": "`Fishing is done in water: stand in it,",
-    "new": "`Fishing is done in water by daylight: stand in it,",
+    "file": "src/systems/foraging/foragingInstall.js",
+    "old": "`Fishing is done in water: stand or swim in it,",
+    "new": "`Fishing is done in water by daylight: stand or swim in it,",
     "tests": [
-      "test/fb1001_anyhour.test.js",
-      "test/fb0930b_toolsaid.test.js"
+      "test/scenes/fb1001_anyhour.test.js",
+      "test/systems/fb0930b_toolsaid.test.js"
     ]
   },
   {
     "name": "ANY-HOUR-the-page-by-daylight",
-    "file": "src/ui/profPages.js",
-    "old": "stand at sea, at any hour. Hold",
-    "new": "stand at sea, by daylight. Hold",
+    "file": "src/ui/professions/profPages.js",
+    "old": "or aboard a ship, at any hour. Hold",
+    "new": "or aboard a ship, by daylight. Hold",
     "tests": [
-      "test/fb1001_anyhour.test.js"
+      "test/scenes/fb1001_anyhour.test.js"
     ]
   }
 ]

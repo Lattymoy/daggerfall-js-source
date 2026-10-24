@@ -1,0 +1,254 @@
+[
+ {
+  "name": "STAR4-the-art-made-each-time",
+  "file": "src/world/starfall/starArt.js",
+  "old": "_art ??= [",
+  "new": "_art = [",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-the-cracks-dark",
+  "file": "src/world/starfall/starArt.js",
+  "old": "if (c < 0.035) return [ramp(R.char, 0.1, x, y), ramp(R.crack, 1 - c / 0.035, x, y)];",
+  "new": "if (c < 0.035) return [ramp(R.char, 0.1, x, y), BLACK];",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-held-glass-violet",
+  "file": "src/world/starfall/starArt.js",
+  "old": "[STAR_GOLD_RECORD, glassArt(0x5e00, R.gold, R.goldGlow, true)],",
+  "new": "[STAR_GOLD_RECORD, glassArt(0x5e00, R.gold, R.vein, true)],",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-the-archive-number",
+  "file": "src/world/starfall/starArt.js",
+  "old": "export const STAR_ARCHIVE = 38301;",
+  "new": "export const STAR_ARCHIVE = 38302;",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-the-rim-foot",
+  "file": "src/world/starfall/starModel.js",
+  "old": "const foot = STAR_CRATER_R * 0.55, out = STAR_CRATER_R + STAR_RIM_OUT;",
+  "new": "const foot = STAR_CRATER_R * 0.3, out = STAR_CRATER_R + STAR_RIM_OUT;",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-the-rim-no-fall",
+  "file": "src/world/starfall/starModel.js",
+  "old": "  const t = (out - r) / STAR_RIM_OUT;\n  return STAR_RIM_H * t * t;",
+  "new": "  return STAR_RIM_H;",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-no-lift",
+  "file": "src/world/starfall/starModel.js",
+  "old": "row.push({ p: [x, ride(x, z) + STAR_FLOOR_LIFT + rimAt(r), z]",
+  "new": "row.push({ p: [x, ride(x, z) + rimAt(r), z]",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-no-drape",
+  "file": "src/world/starfall/starModel.js",
+  "old": "const ride = (x, z) => Math.max(h(x, z), h(x + K, z), h(x - K, z), h(x, z + K), h(x, z - K), h(x + D, z + D), h(x - D, z + D), h(x + D, z - D), h(x - D, z - D));",
+  "new": "const ride = (x, z) => h(x, z);",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-no-nan-guard",
+  "file": "src/world/starfall/starModel.js",
+  "old": "const h = (x, z) => { const v = heightAt(x, z); return Number.isFinite(v) ? v : 0; };",
+  "new": "const h = (x, z) => heightAt(x, z);",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-no-sink",
+  "file": "src/world/starfall/starModel.js",
+  "old": "const bottom = gy - STAR_STONE_SINK, waist",
+  "new": "const bottom = gy, waist",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-the-thread-short",
+  "file": "src/world/starfall/starModel.js",
+  "old": "pts.push([last[0] * 0.5, gy + STAR_STONE_H + 6, last[2] * 0.5], [0, gy + STAR_THREAD_H, 0]);",
+  "new": "pts.push([last[0] * 0.5, gy + STAR_STONE_H + 6, last[2] * 0.5]);",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-wound-inward",
+  "file": "src/world/starfall/starModel.js",
+  "old": "if (dot(cross(sub(b, a), sub(c, a)), mid) >= 0) f.tri(rec, a, b, c, ua, ub, uc);",
+  "new": "if (dot(cross(sub(b, a), sub(c, a)), mid) < 0) f.tri(rec, a, b, c, ua, ub, uc);",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-the-floor-down",
+  "file": "src/world/starfall/starModel.js",
+  "old": "if (ri === 0) f.tri(rec, a.p, d.p, c.p, a.uv, d.uv, c.uv);",
+  "new": "if (ri === 0) f.tri(rec, a.p, c.p, d.p, a.uv, c.uv, d.uv);",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-the-thread-always",
+  "file": "src/world/starfall/starModel.js",
+  "old": "  if (thread) {",
+  "new": "  if (true) {",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-the-streak-linear",
+  "file": "src/render/starfall/starfallPass.js",
+  "old": "d = 1 - Math.min(1, Math.max(0, k)) ** 2;",
+  "new": "d = 1 - Math.min(1, Math.max(0, k));",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-no-clamp",
+  "file": "src/render/starfall/starfallPass.js",
+  "old": "const s = d > STAR_SKY_R ? STAR_SKY_R / d : 1;",
+  "new": "const s = 1;",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-the-ring-unfaded",
+  "file": "src/render/starfall/starfallPass.js",
+  "old": "return { r: STAR_RING_M * (1 - (1 - k) ** 2), fade: (1 - k) ** 1.5 };",
+  "new": "return { r: STAR_RING_M * (1 - (1 - k) ** 2), fade: 1 };",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-the-int-mediump",
+  "file": "src/render/starfall/starfallPass.js",
+  "old": "precision highp float;\nprecision highp int;\n`;",
+  "new": "precision highp float;\n`;",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-the-omen-near",
+  "file": "src/systems/starfall/starSounds.js",
+  "old": "omen: cue(SOUND.AmbientWindMoan, 1.7, 0.55),",
+  "new": "omen: cue(SOUND.AmbientWindMoan, 1.7, 0.55, 20, 400),",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "STAR4-a-reach-unplaced",
+  "file": "src/systems/starfall/starSounds.js",
+  "old": "if (!c.maxDistance || !pos) {",
+  "new": "if (!c.maxDistance) {",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R2-the-column-unscaled",
+  "file": "src/render/starfall/starfallPass.js",
+  "old": "const s = b.scale > 0 && b.scale <= 1 ? b.scale : 1;",
+  "new": "const s = 1;",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R3-the-ring-flat",
+  "file": "src/render/starfall/starfallPass.js",
+  "old": "uGround[i * 2 + j] + ${STAR_RING_LIFT_M.toFixed(2)}",
+  "new": "${STAR_RING_LIFT_M.toFixed(2)}",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R3-one-edge-in-the-shader",
+  "file": "src/render/starfall/starfallPass.js",
+  "old": "float r = j == 0 ? max(0.0, uR - uWidth) : uR + uWidth;",
+  "new": "float r = uR;",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R3-no-ground-handed",
+  "file": "src/render/starfall/starfallPass.js",
+  "old": "gl.uniform1fv(U.uGround, r.ground?.length === STAR_RING_SEGS * 2 ? r.ground : FLAT_RING);",
+  "new": "gl.uniform1fv(U.uGround, FLAT_RING);",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R5-the-sky-no-focus",
+  "file": "src/render/starfall/starfallPass.js",
+  "old": "'uLight', 'uTime', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']);",
+  "new": "'uLight', 'uTime', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']);",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R5-the-ring-no-focus",
+  "file": "src/render/starfall/starfallPass.js",
+  "old": "'uGround', 'uFade', 'uColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']);",
+  "new": "'uGround', 'uFade', 'uColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos']);",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R6-the-stone-on-its-middle",
+  "file": "src/world/starfall/starModel.js",
+  "old": "const y0 = Math.min(...base.map(([x, z]) => earth(x, z))) - s.s * 0.4;",
+  "new": "const y0 = earth(s.x, s.z) - s.s * 0.4;",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STARFALL-R7-heard-at-once",
+  "file": "src/systems/starfall/starSounds.js",
+  "old": "(Math.max(0, Number.isFinite(d) ? d : 0) / SPEED_OF_SOUND) * 1000;",
+  "new": "0 * SPEED_OF_SOUND;",
+  "tests": [
+   "test/systems/starfall/star4_world.test.js"
+  ]
+ }
+]

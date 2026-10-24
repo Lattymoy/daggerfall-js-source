@@ -2,55 +2,57 @@
   {
     "name": "CLOTHES-BREATHE-the-heat-never-halves",
     "file": "src/systems/survival/temperature.js",
-    "old": "  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.trunc(warmth / 2);   // CLOTHES-BREATHE: half in the heat, the dry reading with it\n",
+    "old": "  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.max(Math.trunc(warmth / 2) - shade, warmth - (natural - CLOTHES_BREATHE_ABOVE));\n",
     "new": "",
     "tests": [
-      "test/fb0930_cc_breathe.test.js"
+      "test/systems/survival/fb0930_cc_breathe.test.js"
     ]
   },
   {
     "name": "CLOTHES-BREATHE-the-threshold-at-ten",
     "file": "src/systems/survival/temperature.js",
-    "old": "  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.trunc(warmth / 2);   // CLOTHES-BREATHE: half in the heat, the dry reading with it\n",
-    "new": "  if (natural >= CLOTHES_BREATHE_ABOVE) warmth = Math.trunc(warmth / 2);   // CLOTHES-BREATHE: half in the heat, the dry reading with it\n",
+    "old": "  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.max(Math.trunc(warmth / 2) - shade, warmth - (natural - CLOTHES_BREATHE_ABOVE));\n",
+    "new": "  if (natural >= CLOTHES_BREATHE_ABOVE) warmth = Math.max(Math.trunc(warmth / 2) - shade, warmth - (natural - CLOTHES_BREATHE_ABOVE));\n",
     "tests": [
-      "test/fb0930_cc_breathe.test.js"
-    ]
+      "test/systems/survival/fb0930_cc_breathe.test.js"
+    ],
+    "equivalent": true,
+    "why": "EQUIVALENT since AUDIT TEMP-UI E7: the half eases in from the line (warmth less the degrees past ten), so at ten itself it gives up nothing whether the test is > or >= - the threshold is continuous now, which is what E7 was for"
   },
   {
     "name": "CLOTHES-BREATHE-the-half-rounds-up",
     "file": "src/systems/survival/temperature.js",
-    "old": "  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.trunc(warmth / 2);   // CLOTHES-BREATHE: half in the heat, the dry reading with it\n",
-    "new": "  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.ceil(warmth / 2);   // CLOTHES-BREATHE: half in the heat, the dry reading with it\n",
+    "old": "  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.max(Math.trunc(warmth / 2) - shade, warmth - (natural - CLOTHES_BREATHE_ABOVE));\n",
+    "new": "  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.max(Math.ceil(warmth / 2) - shade, warmth - (natural - CLOTHES_BREATHE_ABOVE));\n",
     "tests": [
-      "test/fb0930_cc_breathe.test.js"
+      "test/systems/survival/fb0930_cc_breathe.test.js"
     ]
   },
   {
     "name": "CLOTHES-BREATHE-the-cold-halves-too",
     "file": "src/systems/survival/temperature.js",
-    "old": "  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.trunc(warmth / 2);   // CLOTHES-BREATHE: half in the heat, the dry reading with it\n",
-    "new": "  if (Math.abs(natural) > CLOTHES_BREATHE_ABOVE) warmth = Math.trunc(warmth / 2);   // CLOTHES-BREATHE: half in the heat, the dry reading with it\n",
+    "old": "  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.max(Math.trunc(warmth / 2) - shade, warmth - (natural - CLOTHES_BREATHE_ABOVE));\n",
+    "new": "  if (Math.abs(natural) > CLOTHES_BREATHE_ABOVE) warmth = Math.max(Math.trunc(warmth / 2) - shade, warmth - (natural - CLOTHES_BREATHE_ABOVE));\n",
     "tests": [
-      "test/fb0930_cc_breathe.test.js"
+      "test/systems/survival/fb0930_cc_breathe.test.js"
     ]
   },
   {
     "name": "CLOTHES-BREATHE-the-wet-before-the-half",
     "file": "src/systems/survival/temperature.js",
-    "old": "  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.trunc(warmth / 2);   // CLOTHES-BREATHE: half in the heat, the dry reading with it\n  const pure = warmth;\n  warmth = Math.max(0, warmth - Math.min(wet, WET_MAX));\n",
-    "new": "  const pure = warmth;\n  warmth = Math.max(0, warmth - Math.min(wet, WET_MAX));\n  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.trunc(warmth / 2);   // CLOTHES-BREATHE: half in the heat, the dry reading with it\n",
+    "old": "  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.max(Math.trunc(warmth / 2) - shade, warmth - (natural - CLOTHES_BREATHE_ABOVE));\n  const pure = Math.max(0, warmth);   // AUDIT SURV D: never below nothing, as the law says\n  warmth = Math.max(0, pure - Math.min(wet, WET_MAX));\n",
+    "new": "  warmth = Math.max(0, warmth - Math.min(wet, WET_MAX));\n  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.max(Math.trunc(warmth / 2) - shade, warmth - (natural - CLOTHES_BREATHE_ABOVE));\n  const pure = Math.max(0, warmth);   // AUDIT SURV D: never below nothing, as the law says\n  warmth = pure;\n",
     "tests": [
-      "test/fb0930_cc_breathe.test.js"
+      "test/systems/survival/fb0930_cc_breathe.test.js"
     ]
   },
   {
     "name": "CLOTHES-BREATHE-the-dry-reading-unhalved",
     "file": "src/systems/survival/temperature.js",
-    "old": "  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.trunc(warmth / 2);   // CLOTHES-BREATHE: half in the heat, the dry reading with it\n  const pure = warmth;\n",
-    "new": "  const pure = warmth;\n  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.trunc(warmth / 2);   // CLOTHES-BREATHE: half in the heat, the dry reading with it\n",
+    "old": "  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.max(Math.trunc(warmth / 2) - shade, warmth - (natural - CLOTHES_BREATHE_ABOVE));\n  const pure = Math.max(0, warmth);   // AUDIT SURV D: never below nothing, as the law says\n  warmth = Math.max(0, pure - Math.min(wet, WET_MAX));\n",
+    "new": "  const pure = Math.max(0, warmth);   // AUDIT SURV D: never below nothing, as the law says\n  if (natural > CLOTHES_BREATHE_ABOVE) warmth = Math.max(Math.trunc(warmth / 2) - shade, warmth - (natural - CLOTHES_BREATHE_ABOVE));\n  warmth = Math.max(0, Math.max(0, warmth) - Math.min(wet, WET_MAX));\n",
     "tests": [
-      "test/fb0930_cc_breathe.test.js"
+      "test/systems/survival/fb0930_cc_breathe.test.js"
     ]
   },
   {
@@ -59,7 +61,7 @@
     "old": "  const warmth = warm > 0 ? Math.max(0, warm - Math.min(wet, WET_MAX)) : 0;",
     "new": "  const warmth = warm > 0 ? Math.max(0, (natural > CLOTHES_BREATHE_ABOVE ? Math.trunc(warm / 2) : warm) - Math.min(wet, WET_MAX)) : 0;",
     "tests": [
-      "test/fb0930_cc_breathe.test.js"
+      "test/systems/survival/fb0930_cc_breathe.test.js"
     ]
   }
 ]

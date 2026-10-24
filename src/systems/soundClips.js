@@ -42,7 +42,7 @@ export const SOUND = {
   // WIND3: the wind's clips by name - DFU draws these only as dungeon
   // one-shots (AMBIENT_SOUNDS.dungeon, SoundClips.cs:94-103). The port's
   // wind loop played the moan and the blow end to end until FIELD-WIND1
-  // (systems/windAudio.js makes its own bed); the Deadlands' air and the
+  // (systems/wind/windAudio.js makes its own bed); the Deadlands' air and the
   // gate's veil play the deep moan.
   AmbientWindMoan: 65,
   AmbientWindMoanDeep: 66,
@@ -112,6 +112,23 @@ export const SOUND = {
   ParchmentScratching: 363, // letter-of-credit deal
   SelectClassDrums: 374,    // CreateCharClassSelect confirm
   OpenBook: 384,            // spellbook OnPush
+  // ---- KG4b (Kings-Gambit.md 5.6, 17.4): The King's Gambit's table - the mod's clips its IL plays by number, named
+  //      from SoundClips.cs (Daggerfall Unity, master 2343305d) ----
+  SpookyMid: 1,             // HazardTick: a new warning pair laid
+  ArrowHit: 4,              // an archer's shot landing (ArrowShoot, above, its loose)
+  CastSpell1: 81,           // a mage's shot - the mod's SpellSounds, one of CastSpell1..CastSpell5 (81..85)
+  CastSpell2: 82,
+  CastSpell3: 83,
+  CastSpell4: 84,
+  CastSpell5: 85,
+  SpellImpactMagic: 86,     // a mage's shot landing
+  SpellImpactPoison: 87,    // HazardSoundOf: poison
+  SpellImpactFire: 89,      // HazardSoundOf: fire
+  Hit3: 110,                // HazardSoundOf: spikes (and one of the blows' Hit1..Hit5)
+  Hit4: 111,
+  Hit5: 112,
+  PainSound: 299,           // a calling struck and standing
+  Groan: 458,               // FinishMatch: the loss
 };
 
 // ---- A2 ambient sources, verbatim data ----

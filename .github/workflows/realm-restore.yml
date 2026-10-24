@@ -4,7 +4,7 @@ name: Realm restore (what a deleted customs character took with it)
 # it: "To the offline character"). From CUSTOMS-CARRY's arrival on main (2026-09-29 03:09:50 UTC) until HOUSE-LOSS, the
 # Online door's Delete on a customs character whose first save never landed took its online home - every piece, the
 # hidden furniture - its guild place and its track with it, and left the census spent
-# (bible/01-Overview/Field-Bugs-2026-09-29.md). Those rows are gone from the database; D1 Time Travel still holds them.
+# (bible/01-Overview/bugs/Field-Bugs-2026-09-29.md). Those rows are gone from the database; D1 Time Travel still holds them.
 #
 # RUN BY HAND from the Actions tab, on main, at a quiet hour:
 #   1. with apply off (the default): a DRY RUN. The run's summary lists who gets what back, who is held for you (an
@@ -18,7 +18,7 @@ name: Realm restore (what a deleted customs character took with it)
 #   - the present is KEPT (its Time Travel bookmark and its row counts) and EXPORTED;
 #   - the database is REWOUND to `before`, in place - the only way D1 reads its own past - and proven there; what stood
 #     then is exported; and the present is PUT BACK by its bookmark, ALWAYS, and proven by its counts;
-#   - tools/realmRestore.mjs plans the restore from the two exports (test/realm_restore.test.js), and apply writes it;
+#   - tools/realmRestore.mjs plans the restore from the two exports (test/net/realm_restore.test.js), and apply writes it;
 #   - the maintenance is lifted by deploying the Worker as this branch has it - but NEVER over a rewound database: if
 #     the present could not be put back, the service stays held and the run says exactly what to type.
 # No player row is ever exported: handles are asked for by name, and nothing else of an account.
@@ -143,7 +143,7 @@ jobs:
           echo "NOW_BOOKMARK=$b" >> "$GITHUB_ENV"
           echo "NOW_COUNTS=$c" >> "$GITHUB_ENV"
           echo "the present: bookmark $b, $c"
-          { echo "The present's bookmark, should it ever need putting back by hand:"; echo ""; echo "    npx wrangler d1 time-travel restore $DB_NAME --bookmark $b"; echo ""; } >> "$GITHUB_STEP_SUMMARY"
+          { echo "The present's bookmark, should it ever need putting back by hand:"; echo ""; echo "    npx wrangler d1 time-travel restore $DB_NAME --bookmark $b"; echo ""; echo "then redeploy the Worker (its isolates keep the weeks they read settled - server-account/src/weekKept.js)."; echo ""; } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Export the present
         working-directory: server-account

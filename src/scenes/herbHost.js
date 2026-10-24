@@ -24,15 +24,16 @@
 // ═══════════════════════════════════════════════════════════════════
 import { herbPatches, nodeKey, HERB_TABLES } from '../net/nodeLaw.js';
 import { tierOpen, TIER_RANKS, actBand, PROF_RANK_MAX, herbKey, storesFullIn, goneIn, fullWordsIn, GROUND_WHERE, GROUND_WHERE_WORDS } from '../net/professionLaw.js';
-import { natureStandsAt, insideRocks } from '../world/terrainNature.js';
+import { natureStandsAt, insideRocks } from '../world/terrain/terrainNature.js';
 import { createHerbAct } from '../systems/herbAct.js';
-import { FT } from '../systems/foragingLaw.js';
-import { foragingActRefusal, foragingToolIn, actChecksRefusal } from '../systems/foragingInstall.js';
-import { materialLabel } from '../systems/profItems.js';
-import { templateByIndex } from '../systems/itemTemplates.js';
+import { FT } from '../systems/foraging/foragingLaw.js';
+import { foragingActRefusal, foragingToolIn, actChecksRefusal } from '../systems/foraging/foragingInstall.js';
+import { materialLabel } from '../systems/professions/profItems.js';
+import { templateByIndex } from '../systems/item/itemTemplates.js';
 import { liveStat } from '../systems/statMods.js';
 import { getPref } from '../systems/uiPrefs.js';
-import { WORLD_MAP_TILE_DIM } from '../world/terrainTiles.js';
+import { WORLD_MAP_TILE_DIM } from '../world/terrain/terrainTiles.js';
+import { noteAct } from '../systems/questlines/qlActs.js';   // QL11: the features' acts, heard by the running quests
 
 /** The item flats' archive - every plant's world picture is in it (its template's worldTextureRecord). */
 export const HERB_FLAT_ARCHIVE = 254;
@@ -48,7 +49,7 @@ export const PATCH_MARK = Object.freeze({ w: 2.2, h: 1.3 });
  * where DFU's nature would stand there - `{ key, slot, herb, tier, offSeason, local }`, `local` pixel-local metres.
  * NODE-CLEAR (AUDIT 2026-10-01 part four): never inside a rock piece (`rocks`, the pixel's) - one stood there, on the compass
  * and glowing, and no look reached it; it stands nowhere, as VEIN-CLEAR's last vein does.
- * VERGE1: `verge` (`(x, z, reach) => boolean`, the pixel's - world/roadVerge.js vergeClear), when handed, keeps a patch's
+ * VERGE1: `verge` (`(x, z, reach) => boolean`, the pixel's - world/road/roadVerge.js vergeClear), when handed, keeps a patch's
  * glow off the roads: a patch whose ring (PATCH_MARK's width) would reach one stands nowhere that day.
  * @param {{ px: number, py: number, day: number, climate: number, confirmed?: boolean, seasonalEye?: boolean,
  *   samples: Float32Array, tilemap: Uint8Array, locationRect?: any, rocks?: number[][],
@@ -187,6 +188,9 @@ export function herbKind({ book }) {
       };
     },
     cleanNote: (a) => (a.harvest === 'food' ? ' (every find)' : ' (unbruised)'),
+    /** QL11: a harvest the service answered - its herbs or the Basket's food, in the Stores or the bag (the host's one
+     *  answer to it: the act's own, or a kept one's through the pump). */
+    answered() { noteAct('herb-gathered'); },   // QL11: a plant gathered
     title: () => 'Herbalist',
   };
 }

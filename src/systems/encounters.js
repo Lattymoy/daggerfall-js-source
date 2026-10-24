@@ -10,9 +10,11 @@
 // needs the exterior mobile-foe mount (the ledger row); the dungeon
 // REST arm is live through the alert state.
 
-import { mobileTeamOf } from '../characters/enemyTargets.js';   // MT-ii: :709's MobileEnemy.Team read
+import { mobileTeamOf } from '../characters/enemy/enemyTargets.js';   // MT-ii: :709's MobileEnemy.Team read
 import { CLIMATES } from '../formats/mapsFile.js';
 import { ENCOUNTER_TABLES } from '../characters/encounterTables.js';
+import { encounterTable } from '../characters/encounterTableDoor.js';   // DEX3: the table a mod's write left, DFU's otherwise
+import { readPlayerGps } from '../world/playerGps.js';   // DEX3: the player's reading raises PlayerGPS's events
 import { dice100 } from '../combat/formulas.js';   // Dice100.SuccessRoll, one home
 
 // AUDIT 24 (wave 23): this module used to carry its OWN copy of the
@@ -25,7 +27,7 @@ export { ENCOUNTER_TABLES };
 
 // The climate-band table indexes (ChooseRandomEnemy:1370-1467):
 // [inRect-night, wild-day, wild-night] per climate family.
-const CLIMATE_TABLE = new Map([
+export const CLIMATE_TABLE = new Map([
   [CLIMATES.Desert, [20, 21, 22]], [CLIMATES.Desert2, [20, 21, 22]],
   [CLIMATES.Mountain, [23, 24, 25]],
   [CLIMATES.Rainforest, [26, 27, 28]],
@@ -123,12 +125,17 @@ export function resolveEncounterTableIndex(ctx) {
 
 /** RandomEncounters.ChooseRandomEnemy (:1334-1516), verbatim. ctx:
  *  { underwater, dungeonType, buildingType, climateIndex, inLocationRect,
- *    isDay, playerLevel }. rolls() feeds Dice100 + the final pick.
+ *    isDay, playerLevel } and DEX3's { local, table }. rolls() feeds Dice100 + the final pick.
  *  Returns a mobile id, or -1 (MobileTypes.None) when the place has
  *  no encounters (a location rect by day, an unknown climate). */
 export function chooseRandomEnemy(ctx, rolls = Math.random) {
   const idx = resolveEncounterTableIndex(ctx);
   if (idx == null) return -1;
+  // DEX3: THE TABLE, as the door reads it for this roll (characters/encounterTableDoor.js): the player's own (`ctx.local`)
+  // as a mod's events wrote it, any other - a roll every machine must agree on - one of the mod's by this roll's die, read
+  // first (no draw where there is one table: DFU's stream unchanged). A caller may hand it in (`ctx.table` - the camps'
+  // one table for a group's seed and its mates)
+  const table = ctx.table ?? encounterTable(idx, ctx, rolls);
 
   // the level band (:1471-1507) - "assume enemy lists of length 20"
   const roll = Math.floor(rolls() * 100) + 1;   // Dice100.Roll 1..100
@@ -143,7 +150,6 @@ export function chooseRandomEnemy(ctx, rolls = Math.random) {
   if (min < 0) { min = 0; max = 5; }
   if (max > 19) { min = 14; max = 19; }
 
-  const table = ENCOUNTER_TABLES[idx];
   if (!table) return -1;
   // DFU's short-list guard (not classic) survives for table edits
   if (max + 1 > table.length) {
@@ -184,13 +190,24 @@ export function quietNights(fn) {
   try { return fn(); } finally { _quiet--; }
 }
 
-/** IntermittentEnemySpawn (:547-618) as a pure decision: null, or
+/** DEX3: A ROLL OF THE PLAYER'S OWN, where the player stands (this decision's, and the camps' - systems/campEncounters.js):
+ *  out of doors its place is PlayerGPS's reading, so it raises the GPS's events a mod listens to (world/playerGps.js -
+ *  every minute the roll runs, whether or not it spawns), and its table is read as the mod's events wrote it (`local`).
+ *  AUDIT DEX C7: the GPS is handed PlayerGPS's own reading - `gps`, where a roll's place gates it by another rect (the
+ *  chunk-load camps' any-town ring, campEncounters.js) - so one tracker never edges between two readings of the rect. */
+export function playerReading(ctx, gps = ctx) {
+  if (!ctx.inside) readPlayerGps(gps);
+  return { ...ctx, local: true };
+}
+
+/** IntermittentEnemySpawn (:547-618) as a decision, pure but for the GPS reading its place is (DEX3 playerReading): null, or
  *  { mobileType, minDistance }. ctx adds { inside, inDungeon,
  *  isResting, enemyAlertActive, gameMinutes, preventEnemySpawns } to
  *  chooseRandomEnemy's. The caller runs it per elapsed game minute
  *  (the catch-up loop) and stops on the first spawn, exactly as
  *  PlayerEntity.Update. */
 export function intermittentEnemySpawn(ctx, rolls = Math.random) {
+  ctx = playerReading(ctx);
   if (_quiet > 0) return null;   // REST5: a night carried for a party member wakes to no ambush (quietNights)
   // SURV4: a ROUGH rest (survival/rest.js - the window opened on bare ground, no bed and no fire) doubles the
   // minute's chance: the same decision asked twice, the first spawn taken. SURV-TIERS: how many asks a rest
@@ -355,7 +372,7 @@ export function areEnemiesNearby(foes, { resting = false, includingPacified = fa
   return false;
 }
 
-/** :709's hostility and team gate - one home, for the sweep above and OW6's slowing journey (systems/travelThreat.js):
+/** :709's hostility and team gate - one home, for the sweep above and OW6's slowing journey (systems/travel/travelThreat.js):
  *  a live foe, unpacified, not of the player's team. `isHostile ?? true`: EnemyMotor.IsHostile is initialised TRUE
  *  (:79) and only pacification clears it, so an ai without the field - a headless stub, a pool that predates the
  *  C-slice - reads hostile, which is the charter's "absent member idles the arm" for a flag whose absence means "no
@@ -368,7 +385,7 @@ export function foeHostile(f) {
  *  enemies do not slowdown or bother the player"): A FOE ALERTED TO ME - hostile (the gate above), its target me (the
  *  motor's own latch, `targetIsLocalPlayer`; a peer's puppet, its stream's), and seeing me or still hunting me blind
  *  (EnemyMotor.GiveUpTimer, the pursuit that outlives a lost sight). What holds a fast traveller's clock (OW6) and wears
- *  the "!" (systems/wildAlert.js); a foe that has not noticed me is neither. */
+ *  the "!" (systems/wild/wildAlert.js); a foe that has not noticed me is neither. */
 export function foeAlerted(f) {
   return foeHostile(f) && f.ai.targetIsLocalPlayer === true && (!!f.ai.detected || (f.ai.giveUpTimer ?? 0) > 0);
 }

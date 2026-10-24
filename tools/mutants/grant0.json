@@ -1,0 +1,172 @@
+[
+  {
+    "name": "GRANT0-street-signature-ungated",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "entity: f.entity, collider, sig: f.entity.revenant ? SIG : null });   // GRANT0 (Spawn-Grants.md section 8)",
+    "new": "entity: f.entity, collider, sig: SIG });   // GRANT0 (Spawn-Grants.md section 8)",
+    "why": "any puppet's wind-up strikes at the signature's x2 again",
+    "tests": [
+      "test/scenes/grant0_reader.test.js"
+    ]
+  },
+  {
+    "name": "GRANT0-dungeon-signature-ungated",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "collider, sig: f.entity.revenant ? SIG : null });   // GRANT0: a signature is a revenant's",
+    "new": "collider, sig: SIG });   // GRANT0: a signature is a revenant's",
+    "why": "a dungeon copy's signature believed on any foe",
+    "tests": [
+      "test/scenes/grant0_reader.test.js"
+    ]
+  },
+  {
+    "name": "GRANT0-champion-cap-off",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "const cp = Number.isInteger(r.cp) && championsOf(from) < PEER_CHAMPION_PUPPETS_MAX ? r.cp : null;   // GRANT0: no more champions",
+    "new": "const cp = Number.isInteger(r.cp) ? r.cp : null;   // GRANT0: no more champions",
+    "why": "every record's trait believed - thirty-two champions",
+    "tests": [
+      "test/scenes/grant0_reader.test.js"
+    ]
+  },
+  {
+    "name": "GRANT0-champion-cap-off-by-one",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "championsOf(from) < PEER_CHAMPION_PUPPETS_MAX ? r.cp : null;   // GRANT0: no more champions",
+    "new": "championsOf(from) <= PEER_CHAMPION_PUPPETS_MAX ? r.cp : null;   // GRANT0: no more champions",
+    "why": "one past the bound stands",
+    "tests": [
+      "test/scenes/grant0_reader.test.js"
+    ]
+  },
+  {
+    "name": "GRANT0-champion-bound-doubled",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "export const PEER_CHAMPION_PUPPETS_MAX = PEER_ELITE_PUPPETS_MAX + PEER_REVENANT_PUPPETS_MAX;",
+    "new": "export const PEER_CHAMPION_PUPPETS_MAX = (PEER_ELITE_PUPPETS_MAX + PEER_REVENANT_PUPPETS_MAX) * 2;",
+    "why": "a bound past what an owner rolls and its revenants wear",
+    "tests": [
+      "test/scenes/grant0_reader.test.js"
+    ]
+  },
+  {
+    "name": "GRANT0-champion-builds-uncounted",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "    for (const [k, r] of _pupPending) if (r._cp && k.startsWith(from + ':')) n++;",
+    "new": "    void 0;",
+    "why": "the builds in flight uncounted - one frame stands every trait (a trait is stood before the puppet is indexed)",
+    "tests": [
+      "test/scenes/grant0_reader.test.js"
+    ]
+  },
+  {
+    "name": "GRANT0-champion-build-unmarked",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "_camp: campTags.get(r.i) ?? null, _cp: cp != null });",
+    "new": "_camp: campTags.get(r.i) ?? null });",
+    "why": "a believed trait's build never counted",
+    "tests": [
+      "test/scenes/grant0_reader.test.js"
+    ]
+  },
+  {
+    "name": "GRANT0-champion-later-word-drops-mark",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "_camp: campTags.get(r.i) ?? _pupPending.get(key)._camp, _cp: _pupPending.get(key)._cp }); continue; }",
+    "new": "_camp: campTags.get(r.i) ?? _pupPending.get(key)._camp }); continue; }",
+    "why": "a later word for a build in flight forgets its trait was counted",
+    "tests": [
+      "test/scenes/grant0_reader.test.js"
+    ]
+  },
+  {
+    "name": "GRANT0-orphan-champion-uncapped",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "const cp = Number.isInteger(r.cp) && championsOf(from) < PEER_CHAMPION_PUPPETS_MAX ? r.cp : null;   // GRANT0: the stand's own law",
+    "new": "const cp = Number.isInteger(r.cp) ? r.cp : null;   // GRANT0: the stand's own law",
+    "why": "a kept orphan's stand believes any trait",
+    "tests": [
+      "test/scenes/grant0_reader.test.js"
+    ]
+  },
+  {
+    "name": "GRANT0-dungeon-cast-any-spell",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "const sp = f._pupMine && !entityIsParalyzed(f.entity) && enemySpellIndices(f.entity, f.streamedLevel ?? f.entity.level).includes(p.cast) ? (",
+    "new": "const sp = f._pupMine ? (",
+    "why": "a peer's cast from the whole spell table again",
+    "tests": [
+      "test/scenes/grant0_reader.test.js"
+    ]
+  },
+  {
+    "name": "GRANT0-dungeon-cast-paralysed",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "f._pupMine && !entityIsParalyzed(f.entity) && enemySpellIndices",
+    "new": "f._pupMine && enemySpellIndices",
+    "why": "a paralysed copy casts",
+    "tests": [
+      "test/scenes/grant0_reader.test.js"
+    ]
+  },
+  {
+    "name": "GRANT0-dungeon-cast-at-my-level",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "enemySpellIndices(f.entity, f.streamedLevel ?? f.entity.level).includes(p.cast)",
+    "new": "enemySpellIndices(f.entity).includes(p.cast)",
+    "why": "the copy's own list (built at MY level) refuses an honest owner's spell",
+    "tests": [
+      "test/scenes/grant0_reader.test.js"
+    ]
+  },
+  {
+    "name": "GRANT0-dungeon-feud-ungated",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "if (_feudOk && _fw !== (f._feudWire ?? null))",
+    "new": "if (_fw !== (f._feudWire ?? null))",
+    "why": "every record's revenant fields believed - rb and p2 without a count",
+    "tests": [
+      "test/scenes/grant0_reader.test.js"
+    ]
+  },
+  {
+    "name": "GRANT0-dungeon-feud-any-owner",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "&& (x._ownFrom ?? null) === (f._ownFrom ?? null)).length < PEER_REVENANT_PUPPETS_MAX",
+    "new": ").length < PEER_REVENANT_PUPPETS_MAX",
+    "why": "one owner's revenants count against every other's",
+    "tests": [
+      "test/scenes/grant0_reader.test.js"
+    ]
+  },
+  {
+    "name": "GRANT0-spells-level-ignored",
+    "file": "src/systems/enemySpells.js",
+    "old": "return ENEMY_CLASS_SPELLS[Math.min(6, Math.trunc(level / 3))] ?? [];",
+    "new": "return ENEMY_CLASS_SPELLS[Math.min(6, Math.trunc(entity.level / 3))] ?? [];",
+    "why": "the level asked is ignored - a copy's own level again",
+    "tests": [
+      "test/scenes/grant0_reader.test.js"
+    ]
+  },
+  {
+    "name": "GRANT0-spells-noncaster-casts",
+    "file": "src/systems/enemySpells.js",
+    "old": "  if (!entity.basics?.castsMagic) return [];\n  return ENEMY_CLASS_SPELLS",
+    "new": "  return ENEMY_CLASS_SPELLS",
+    "why": "a class that casts nothing given a caster's list",
+    "tests": [
+      "test/scenes/grant0_reader.test.js"
+    ]
+  },
+  {
+    "name": "GRANT0-spells-past-the-table",
+    "file": "src/systems/enemySpells.js",
+    "old": "Math.min(6, Math.trunc(level / 3))",
+    "new": "Math.trunc(level / 3)",
+    "why": "a level past 18 reads past EnemyClassSpells",
+    "tests": [
+      "test/scenes/grant0_reader.test.js"
+    ]
+  }
+]

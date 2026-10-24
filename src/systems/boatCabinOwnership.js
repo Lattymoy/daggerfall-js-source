@@ -2,9 +2,9 @@
 // record is a link, never another deed, boat, cargo list or copy of stored items.
 import { cabinUid, cabinShipType, cabinSceneName } from './sailingCabin.js';
 import { SHIP_INTERIOR_MAP_IDS } from './banking.js';
-import { BUILDING_KEY_0 } from './talkTopics.js';
+import { BUILDING_KEY_0 } from './talk/talkTopics.js';
 import { interiorSceneName } from './sceneCache.js';
-import { BOAT_DEED_TEMPLATE, BOAT_PARTS_TEMPLATE } from './comeSailAwayItems.js';
+import { BOAT_DEED_TEMPLATE, BOAT_PARTS_TEMPLATE } from './comeSailAway/comeSailAwayItems.js';
 
 export { readBankCabinLink } from '../net/boatIdentity.js';
 import { readBankCabinLink } from '../net/boatIdentity.js';
@@ -17,7 +17,7 @@ export function bankCabinCandidates(type, boats = [], items = []) {
     if (byUid.has(uid) && byUid.get(uid).hull !== hull) conflicts.add(uid);
     byUid.set(uid, { uid, hull });
   };
-  for (const b of boats) if (!b.inside) add(b.uid, b.hull);
+  for (const b of boats) if (!b.inside && !b.charter) add(b.uid, b.hull);   // AUDIT PASSAGE B1: a booked ship is her master's - the bank cabin moved into her was lost when she sailed on
   for (const it of items) if ([BOAT_DEED_TEMPLATE, BOAT_PARTS_TEMPLATE].includes(it?.templateIndex)
     && Number.isInteger(it.message)) add(it.UID, Math.floor(it.message / 10));
   return [...byUid.values()].filter((b) => !conflicts.has(b.uid) && cabinShipType(b.hull) === type);

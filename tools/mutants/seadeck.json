@@ -1,0 +1,128 @@
+[
+  {
+    "name": "SEADECK-no-carry",
+    "file": "src/scenes/naval/seaDecks.js",
+    "old": "          if (delta[0] || delta[1] || delta[2] || yaw) me.carry(delta, yaw);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/naval/seadeck.test.js"
+    ]
+  },
+  {
+    "name": "SEADECK-carried-by-her-root-alone",
+    "file": "src/scenes/naval/seaDecks.js",
+    "old": "        const after = deckPose(e.boat);\n",
+    "new": "        const after = { position: e.boat.GameObject.position, rotation: e.boat.GameObject.rotation };\n",
+    "tests": [
+      "test/scenes/naval/seadeck.test.js"
+    ]
+  },
+  {
+    "name": "SEADECK-the-jump-carried",
+    "file": "src/scenes/naval/seaDecks.js",
+    "old": "> SEA_DECK_JUMP_M) leave();",
+    "new": "> SEA_DECK_JUMP_M * 1000) leave();",
+    "tests": [
+      "test/scenes/naval/seadeck.test.js"
+    ]
+  },
+  {
+    "name": "SEADECK-the-swim-unasked",
+    "file": "src/scenes/naval/seaDecks.js",
+    "old": "          if (swimming() || !on(e.boat, me)) leave();",
+    "new": "          if (!on(e.boat, me)) leave();",
+    "tests": [
+      "test/scenes/naval/seadeck.test.js"
+    ]
+  },
+  {
+    "name": "SEADECK-the-gate-unasked",
+    "file": "src/scenes/naval/seaDecks.js",
+    "old": "    if (!me || !me.allowed()) { leave(); held.clear(); return null; }",
+    "new": "    if (!me) { leave(); held.clear(); return null; }",
+    "tests": [
+      "test/scenes/naval/seadeck.test.js"
+    ]
+  },
+  {
+    "name": "SEADECK-the-ground-unasked",
+    "file": "src/scenes/naval/seaDecks.js",
+    "old": "const on = (boat, me) => { const g = me.ground(boat);",
+    "new": "const on = (boat, me) => { const g = me.ground(boat) === 'other' ? null : me.ground(boat);",
+    "tests": [
+      "test/scenes/naval/seadeck.test.js"
+    ]
+  },
+  {
+    "name": "SEADECK-key-without-her-class",
+    "file": "src/scenes/naval/seaDecks.js",
+    "old": "export const seaDeckKey = (e) => `~sea:${(e?.ship?.seed ?? 0) >>> 0}:${e?.ship?.cls?.id ?? ''}`;",
+    "new": "export const seaDeckKey = (e) => `~sea:${(e?.ship?.seed ?? 0) >>> 0}`;",
+    "tests": [
+      "test/scenes/naval/seadeck.test.js"
+    ]
+  },
+  {
+    "name": "SEADECK-her-way-unled",
+    "file": "src/scenes/naval/seaDecks.js",
+    "old": "way = (Number(e.ship?.speed) || 0) * Math.max(0, Number(dt) || 0) * rate,",
+    "new": "way = 0 * Math.max(0, Number(dt) || 0) * rate,",
+    "tests": [
+      "test/scenes/naval/seadeck.test.js"
+    ]
+  },
+  {
+    "name": "SEADECK-the-hold-after-the-poses",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    shipDecks.hold(sea.values());   // SEA-DECK: each deck as it stood, before she is posed\n    for (const e of sea.values()) poseShip(e, total, seaY, eye);\n",
+    "new": "    for (const e of sea.values()) poseShip(e, total, seaY, eye);\n    shipDecks.hold(sea.values());   // SEA-DECK: each deck as it stood, before she is posed\n",
+    "tests": [
+      "test/scenes/naval/seadeck.test.js"
+    ]
+  },
+  {
+    "name": "SEADECK-the-door-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    deck: { allowed: deckMayCarry, ground: deckGround, carry: (d, yawDeg) => { deckCarry(d, yawDeg); cam.pos = player.eyeAt(); } },\n",
+    "new": "",
+    "tests": [
+      "test/scenes/naval/seadeck.test.js"
+    ]
+  },
+  {
+    "name": "SEADECK-the-eye-not-taken-again",
+    "file": "src/scenes/world.js",
+    "old": "carry: (d, yawDeg) => { deckCarry(d, yawDeg); cam.pos = player.eyeAt(); } },",
+    "new": "carry: (d, yawDeg) => { deckCarry(d, yawDeg); } },",
+    "tests": [
+      "test/scenes/naval/seadeck.test.js"
+    ]
+  },
+  {
+    "name": "SEADECK-the-word-unasked",
+    "file": "src/scenes/world.js",
+    "old": "csaHelmWord() ?? naval?.deckWord?.(player.pos) ?? null) : null);",
+    "new": "csaHelmWord() ?? null) : null);",
+    "tests": [
+      "test/scenes/naval/seadeck.test.js"
+    ]
+  },
+  {
+    "name": "SEADECK-the-reader-unasked",
+    "file": "src/scenes/world.js",
+    "old": "poseOf: (o, i) => csaPoseAhead(o, i, dt) ?? naval?.deckAhead?.(o, gamePaused() ? 0 : dt * worldTimeScale()) ?? null,",
+    "new": "poseOf: (o, i) => csaPoseAhead(o, i, dt) ?? null,",
+    "tests": [
+      "test/scenes/naval/seadeck.test.js"
+    ]
+  },
+  {
+    "name": "SEADECK-the-carrier-unasked",
+    "file": "src/scenes/world.js",
+    "old": "csaRuntime.state.CurrentBoat : null) ?? naval?.deckBoat?.() ?? null) : null;",
+    "new": "csaRuntime.state.CurrentBoat : null) ?? null) : null;",
+    "tests": [
+      "test/scenes/naval/seadeck.test.js"
+    ]
+  }
+]

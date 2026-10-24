@@ -25,7 +25,7 @@ export const SEAT_TOP_STEP = 0.05;
 /** A table's top when the wire names none (an older relay's pose has no `st` at all; this is never sent). */
 export const SEAT_TOP_DEFAULT = 0.8;
 
-/** MEASURED (CARDS2b) on retail's biped (Weapon Sheathing's vendored xbase_anim_sh.nif, test/cards2b_seated.test.js):
+/** MEASURED (CARDS2b) on retail's biped (Weapon Sheathing's vendored xbase_anim_sh.nif, test/net/peer/cards2b_seated.test.js):
  *  its pelvis stands at 1.09 m, its thigh is 0.46 m and its shin 0.53 m, so a drop of 0.48 m puts the hips level with
  *  the knees over shins standing straight - a chair's sitter. Scaled by the race's height. */
 export const SEAT_HIP_DROP = 0.48;
@@ -39,11 +39,11 @@ export const SEATED_HIP_HEIGHT = SEAT_PELVIS_HEIGHT - SEAT_HIP_DROP;
 export const SEATED_EYE_HEIGHT = EYE_HEIGHT - SEAT_HIP_DROP;
 /** MEASURED (CARDS2b, AUDIT CARDS D3): how far from a table's edge the sitter's hips are - close enough that the
  *  biped's seated arms lay its hands SEAT_HAND_ON past the edge, the knees under the table's lip. A world distance (the
- *  table's), read by world/cardTables.js where it stands the seats. */
+ *  table's), read by world/card/cardTables.js where it stands the seats. */
 export const SEAT_OUT = 0.35;
 /** MEASURED (CARDS2b, AUDIT CARDS D3): how far past the edge the hands lie on the top. On the measured biped they land
  *  to the unit; a race the table does not scale with reaches as far as its arms do - at build 0.9 and height 1.1 the
- *  wrists stop 5 cm short and 4 cm over their marks (test/cards2b_seated.test.js). */
+ *  wrists stop 5 cm short and 4 cm over their marks (test/net/peer/cards2b_seated.test.js). */
 export const SEAT_HAND_ON = 0.1;
 /** MEASURED (CARDS2b, the same biped): the feet a thigh's length before the hips (the shins straight down), either side
  *  of the body's middle, the ankle off the floor. The body is drawn with its build (`weight`) across and its height up,

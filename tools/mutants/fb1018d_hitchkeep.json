@@ -1,0 +1,272 @@
+[
+  {
+    "name": "HITCH-KEEP-threshold-exclusive",
+    "file": "src/ui/fpsCounter.js",
+    "old": "if (stamps[i] - stamps[i - 1] >= HITCH_MS) n++;",
+    "new": "if (stamps[i] - stamps[i - 1] > HITCH_MS) n++;",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "a frame of exactly HITCH_MS is no hitch"
+  },
+  {
+    "name": "HITCH-KEEP-threshold-moved",
+    "file": "src/ui/fpsCounter.js",
+    "old": "export const HITCH_MS = 50;",
+    "new": "export const HITCH_MS = 51;",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "the hitch's length moved"
+  },
+  {
+    "name": "HITCH-KEEP-window-unpruned",
+    "file": "src/ui/fpsCounter.js",
+    "old": "        while (kept.length && now - kept[0].at > HITCH_KEEP_MS) kept.shift();\n",
+    "new": "",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "a hitch is said for the rest of the session, and the kept seconds grow without bound"
+  },
+  {
+    "name": "HITCH-KEEP-window-short",
+    "file": "src/ui/fpsCounter.js",
+    "old": "export const HITCH_KEEP_MS = 60_000;",
+    "new": "export const HITCH_KEEP_MS = 6_000;",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "the hitch gone before the player looks"
+  },
+  {
+    "name": "HITCH-KEEP-worst-not-chosen",
+    "file": "src/ui/fpsCounter.js",
+    "old": "if (!worst || s.worstMs > worst.worstMs) worst = s;",
+    "new": "if (!worst || s.worstMs < worst.worstMs) worst = s;",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "the minute's mildest hitch said as its worst"
+  },
+  {
+    "name": "HITCH-KEEP-count-unsummed",
+    "file": "src/ui/fpsCounter.js",
+    "old": "count += s.hitches;",
+    "new": "count = s.hitches;",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "the minute's count is its last second's"
+  },
+  {
+    "name": "HITCH-KEEP-age-unscaled",
+    "file": "src/ui/fpsCounter.js",
+    "old": "agoS: Math.round((now - worst.at) / 1000)",
+    "new": "agoS: Math.round((now - worst.at) / 100)",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "the hitch's age in tenths, said as seconds"
+  },
+  {
+    "name": "HITCH-KEEP-line-unprinted",
+    "file": "src/ui/fpsCounter.js",
+    "old": "          + hitchLine(hitch)   // FB1018D HITCH-KEEP\n",
+    "new": "",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "the counter keeps the hitch and never says it"
+  },
+  {
+    "name": "HITCH-KEEP-second-unkept",
+    "file": "src/ui/fpsCounter.js",
+    "old": "        if (hitches) kept.push({ at: now, worstMs, hitches, cpu: gapCpu });\n",
+    "new": "",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "a hitch gone with its second, as before"
+  },
+  {
+    "name": "HITCH-KEEP-before-mislabelled",
+    "file": "src/ui/fpsCounter.js",
+    "old": "before ${h.beforeMs.toFixed(0)}",
+    "new": "before ${h.inFrameMs.toFixed(0)}",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "the time before the callback said as the callback's"
+  },
+  {
+    "name": "HITCH-KEEP-script-without-clock",
+    "file": "src/ui/fpsCounter.js",
+    "old": "(h.scriptMs != null ? `",
+    "new": "(true ? `",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "a script line where no host stamps a frame (the menu) - it throws"
+  },
+  {
+    "name": "HITCH-KEEP-probe-without-it",
+    "file": "src/ui/fpsCounter.js",
+    "old": "          hitch };   // FB1018D HITCH-KEEP",
+    "new": "          hitch: null };   // FB1018D HITCH-KEEP",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "the probe (window.__fpsStats, tools/perfProbe.mjs) never sees the hitch"
+  },
+  {
+    "name": "HITCH-KEEP-hidden-gap-counted",
+    "file": "src/ui/fpsCounter.js",
+    "old": "    if (hid) { hid = false; stamps = []; sumDraws = 0; sumBinds = 0; samples = 0; sumView = 0; sumShadow = 0; gapMs = 0; gapCpu = null; }",
+    "new": "    if (hid) { hid = false; }",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "a page put away reads as 0 fps and the minute's hitch on its return"
+  },
+  {
+    "name": "HITCH-KEEP-hide-unheard",
+    "file": "src/ui/fpsCounter.js",
+    "old": "const onVisibility = () => { hid = true; };",
+    "new": "const onVisibility = () => { hid = false; };",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "the hide heard and dropped"
+  },
+  {
+    "name": "HITCH-KEEP-hide-unlistened",
+    "file": "src/ui/fpsCounter.js",
+    "old": "if (typeof document.addEventListener === 'function') document.addEventListener('visibilitychange', onVisibility);",
+    "new": "",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "the counter never hears the page put away"
+  },
+  {
+    "name": "HITCH-KEEP-listener-kept",
+    "file": "src/ui/fpsCounter.js",
+    "old": "      if (typeof document.removeEventListener === 'function') document.removeEventListener('visibilitychange', onVisibility);   // FB1018D HITCH-KEEP\n",
+    "new": "",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "a disposed counter still listens"
+  },
+  {
+    "name": "HITCH-KEEP-second-worst-sample",
+    "file": "src/ui/fpsCounter.js",
+    "old": "        if (hitches) kept.push({ at: now, worstMs, hitches, cpu: gapCpu });",
+    "new": "        if (hitches) kept.push({ at: now, worstMs, hitches, cpu: cpu && { ms: cpu.worstMs, inFrameMs: cpu.inFrameMs, beforeMs: cpu.beforeMs, streamMs: cpu.streamMs } });",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "AUDIT FB1018D L2-1: the second's worst sample read as the hitch's - another frame's whenever a heavy frame shared the second"
+  },
+  {
+    "name": "HITCH-KEEP-gap-stamp-unasked",
+    "file": "src/ui/fpsCounter.js",
+    "old": "gapCpu = frameSampleAt(prev);",
+    "new": "gapCpu = frameSampleAt(now);",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "AUDIT FB1018D L2-1: the frame after the gap asked, not the one that opened it"
+  },
+  {
+    "name": "HITCH-KEEP-gap-not-the-longest",
+    "file": "src/ui/fpsCounter.js",
+    "old": "now - prev >= HITCH_MS && now - prev > gapMs",
+    "new": "now - prev >= HITCH_MS",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "AUDIT FB1018D L2-1: the second's last hitch's script said beside its longest"
+  },
+  {
+    "name": "HITCH-KEEP-gap-unreset",
+    "file": "src/ui/fpsCounter.js",
+    "old": "      gapMs = 0; gapCpu = null;   // FB1018D HITCH-KEEP\n",
+    "new": "",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "AUDIT FB1018D L2-1: a second's hitch's frame carried into the next"
+  },
+  {
+    "name": "HITCH-KEEP-under-twice-unkept",
+    "file": "src/ui/fpsCounter.js",
+    "old": "        if (hitches) kept.push(",
+    "new": "        if (hitches && worstMs >= 2 * HITCH_MS) kept.push(",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "AUDIT FB1018D L2-4: a hitch under twice HITCH_MS never kept"
+  },
+  {
+    "name": "HITCH-KEEP-minute-shortened",
+    "file": "src/ui/fpsCounter.js",
+    "old": "now - kept[0].at > HITCH_KEEP_MS)",
+    "new": "now - kept[0].at > HITCH_KEEP_MS - 5000)",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "AUDIT FB1018D L2-4: the minute five seconds short"
+  },
+  {
+    "name": "HITCH-KEEP-hide-keeps-draws",
+    "file": "src/ui/fpsCounter.js",
+    "old": "    if (hid) { hid = false; stamps = []; sumDraws = 0; sumBinds = 0; samples = 0;",
+    "new": "    if (hid) { hid = false; stamps = []; samples = 0;",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "AUDIT FB1018D L2-4: the draws before the hide summed into the frames after it"
+  },
+  {
+    "name": "HITCH-KEEP-age-floored",
+    "file": "src/ui/fpsCounter.js",
+    "old": "agoS: Math.round(",
+    "new": "agoS: Math.floor(",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "AUDIT FB1018D L2-4: the age floored, not rounded"
+  },
+  {
+    "name": "HITCH-KEEP-clock-sample-unstamped",
+    "file": "src/systems/frameClock.js",
+    "old": "samples.push([now, busy, inFrame, before, stream, stamp]);",
+    "new": "samples.push([now, busy, inFrame, before, stream]);",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "AUDIT FB1018D L2-1: no frame found by its stamp - no hitch says its script"
+  },
+  {
+    "name": "HITCH-KEEP-clock-sample-misread",
+    "file": "src/systems/frameClock.js",
+    "old": "return { ms: b, inFrameMs: f, beforeMs: w, streamMs: l };",
+    "new": "return { ms: b, inFrameMs: f, beforeMs: f, streamMs: l };",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "AUDIT FB1018D L2-1: a frame's time before its callback read as its callback's"
+  },
+  {
+    "name": "HITCH-KEEP-clock-oldest-first",
+    "file": "src/systems/frameClock.js",
+    "old": "if (at === stamp) return",
+    "new": "if (at !== stamp) return",
+    "tests": [
+      "test/ui/fb1018d_hitchkeep.test.js"
+    ],
+    "why": "AUDIT FB1018D L2-1: the stamp's frame not the one answered"
+  }
+]

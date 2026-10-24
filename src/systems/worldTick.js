@@ -13,7 +13,7 @@
 // It lives here rather than in a scene because a scene cannot be tested -
 // the four hosts have zero execution coverage, which is exactly why the
 // gap survived. Everything the tick needs arrives as arguments, so the
-// whole law is exercised by test/audit18.test.js against plain objects.
+// whole law is exercised by test/scenes/audit18.test.js against plain objects.
 //
 // The FOE half stays in the dungeon host: it walks that host's live foe
 // list, and no other host has one.
@@ -110,16 +110,18 @@ installSurvivalLoot({ enabled: corpseFoodOn });   // SURV2: an animal's corpse c
 // import, the same wire SURV2's icons come in by - AFTER the survival
 // pair, whose adjacency that mod's own pin holds.
 installThunderlockIcons();   // THUNDERLOCK: the templates, the find and the legendary register at its import; the icons here
+installPistoletIcons();   // PISTOLET: the second gun, the same wire - its row and its find register at its import
 import { normalizeReputations, NORMALIZE_INTERVAL_MINUTES, RECOVERY_INTERVAL_MINUTES } from './court.js';   // AUDIT 23 (C4); REP4: the week's recovery
 // S43: the entity update's 7-day and 38-day arms (PlayerEntity.cs:460-472).
-import { regionPowerUpdate } from './regionPower.js';
+import { regionPowerUpdate } from './region/regionPower.js';
 import { runSurvivalMinutes, clearSurvivalMods, pauseSurvival } from './survival/needs.js';   // SURV1: the needs, a world minute at a time; AUDIT SURV A: and the drains dropped when the feed stops; AUDIT SURV-TIERS: and paused while Off
 import { installSurvivalIcons } from './survival/items.js';   // SURV2: the templates register at its import; the icons here
 import { installThunderlockIcons } from './thunderlock.js';   // THUNDERLOCK: same wire - the import IS the registration (AUDIT-THUNDERLOCK F1)
+import { installPistoletIcons } from './pistolet.js';   // PISTOLET: the same wire
 import './ayleidStones.js';   // LOOT21: the Ayleid stones - their rows, their late finds and their uses register at its import
 import './gems.js';   // GEM2: the graded gems - their rows and the world's gem find register at its import
 import { installSurvivalLoot } from './survival/loot.js';
-import './cardSources.js';   // CARDS9: where cards come from - a foe's card at its death, the pack's Use and template, registered at its import (the Ayleid stones' wire: AUDIT-THUNDERLOCK F1)   // SURV2: the corpse's food
+import './card/cardSources.js';   // CARDS9: where cards come from - a foe's card at its death, the pack's Use and template, registered at its import (the Ayleid stones' wire: AUDIT-THUNDERLOCK F1)   // SURV2: the corpse's food
 import { survivalOn, corpseFoodOn } from './survival/switch.js';   // SURV2: the one switch; CORPSE-FOOD: and the body's food, the room's online
 /** :462 - `% 10080`, seven days of game minutes. */
 export const FACTION_POWER_INTERVAL_MINUTES = 10080;
@@ -142,21 +144,22 @@ import { passiveSpecialsMagicRound } from './passiveSpecials.js';   // V2c: care
 // systems; this file is only the ONE PLACE that runs them on a day
 // boundary, which is where PlayerEntity.Update runs them.
 import { updateRegionalPrices, setWorldPriceSource, initialRegionPrice, priceWalkStep, applyPriceConditionFlags } from './shopStock.js';
-import { findFactionByTypeAndRegion } from './talk.js';   // AUDIT ALL E8: the online flag arm skips a region with no Province faction, as DFU's walk does
+import { findFactionByTypeAndRegion } from './talk/talk.js';   // AUDIT ALL E8: the online flag arm skips a region with no Province faction, as DFU's walk does
 import { FACTION_TYPES } from '../formats/factionFile.js';
-import { MERCHANTS_FACTION_ID } from './guilds.js';   // AUDIT ALL E8: no Merchants, no walk, no flags (DFU's own gate)            // FormulaHelper.UpdateRegionalPrices (:2053); ECON1: the world's price seam and the walk's one-home pieces
-import { REGION_COUNT } from './regionConditions.js';   // ECON1: the world's walk is region-major, as DFU's
+import { MERCHANTS_FACTION_ID } from './guild/guilds.js';   // AUDIT ALL E8: no Merchants, no walk, no flags (DFU's own gate)            // FormulaHelper.UpdateRegionalPrices (:2053); ECON1: the world's price seam and the walk's one-home pieces
+import { REGION_COUNT } from './region/regionConditions.js';   // ECON1: the world's walk is region-major, as DFU's
 import { ONLINE_EPOCH_MINUTES, ONLINE_MINUTES_PER_MS } from '../net/wire.js';   // ECON1: the world's economy begins the day the online world stood at the classic start
-import { rollClimateWeathersForDay, evolveClimateWeathers } from './weatherSim.js';
+import { rollClimateWeathersForDay, evolveClimateWeathers } from './weather/weatherSim.js';
 import { setSkyCalendar } from './skyCalendar.js';   // TIME1: the weather's season and hour are the sky's, switched on with the sky      // WeatherManager.SetClimateWeathers (:419); CLK2: the enhanced lane's hourly evolution
-import { seededRng } from './wind.js';   // WORLD6b: the shared day's own generator for the region's walk
+import { seededRng } from './wind/wind.js';   // WORLD6b: the shared day's own generator for the region's walk
 import { removeExpiredRooms } from './tavern.js';                 // PlayerEntity.RemoveExpiredRentedRooms (:257)
 import { removeExpiredItems } from './createItem.js';             // X11b: ItemCollection.RemoveExpiredItems (:125), the per-minute sweep
 import { tickPlayerTorch } from './playerTorch.js';               // T1: EnablePlayerTorch.Update, on the REAL clock
 import { checkOverdueLoans, settleOverdueLoan, callInEmpireDebt, empireCallInLines, calculateMaxBankLoan, bankedGold, empireDrawLines } from './banking.js';   // LoanChecker.CheckOverdueLoans (:17); REALM P0.3: the Empire's call at the join; EMPIRE-ACCOUNT: what it draws, said
-import { isOnlinePage } from './onlineLane.js';   // EMPIRE-ACCOUNT: the Empire's draw is said online
+import { isOnlinePage } from './online/onlineLane.js';   // EMPIRE-ACCOUNT: the Empire's draw is said online
 import { lowerRepForCrime, deductGold } from './court.js';                    // OverdueLoan's LowerRepForCrime (:70); REALM P0.3: the call's purse
 import { REGION_NAMES } from '../formats/mapsFile.js';            // loanReminder2's %s
+import { localizedText, formatText, getLocalizedRegionName } from './textManager.js';      // L10N3d: the two lines in the player's language; L10N3e: the region shown
 
 import { handleStartingCrimeGuildQuests } from './crimeGuilds.js';   // CG2: PlayerEntity.Update:531
 
@@ -553,9 +556,10 @@ export function runDayChange({ entity, lastMinutes, nowMinutes, rolls = Math.ran
     for (const r of reminders) {
       // Internal_Strings.csv:861-862, both lines, verbatim - DFU
       // AddHUDTexts them one after the other and the second carries
-      // the region name.
-      say(`You have a loan of ${r.owed} gold pieces due in`, LOAN_REMINDER_HUD_DELAY);
-      say(`less than ${r.months} months in ${REGION_NAMES[r.regionIndex] ?? ''}`, LOAN_REMINDER_HUD_DELAY);
+      // the region name, as shown (GetLocalizedRegionName, LoanChecker.cs:45).
+      say(formatText(localizedText('loanReminder', 'You have a loan of {0} gold pieces due in'), r.owed), LOAN_REMINDER_HUD_DELAY);
+      say(formatText(localizedText('loanReminder2', 'less than {0} months in {1}'), r.months,
+        getLocalizedRegionName(r.regionIndex, (i) => REGION_NAMES[i] ?? '')), LOAN_REMINDER_HUD_DELAY);
       loanReminders.push(r);
     }
     for (const regionIndex of overdue) {
@@ -935,7 +939,7 @@ function tickPlayerMinutesOnce({
   // for the HUD.
   let felt = null;
   if (survival && nowMinutes > lastMinutes) {
-    felt = runSurvivalMinutes(entity, lastMinutes, nowMinutes, survival.env ?? {}, { ...(survival.deps ?? {}), sinks: survival.deps?.sinks ?? sinks, rolls });
+    felt = runSurvivalMinutes(entity, lastMinutes, nowMinutes, survival.env ?? {}, { ...(survival.deps ?? {}), sinks: survival.deps?.sinks ?? sinks, rolls, skyFollows: !_sharedClock });   // AUDIT C&C E5: offline the sky is this clock, and a jump's minutes are felt at their own hour
   } else if (!survival) {
     clearSurvivalMods(entity);   // AUDIT SURV A: the mod off (or a host with no reader) leaves no drain behind
     if (!survivalOn() && nowMinutes > lastMinutes) pauseSurvival(entity, lastMinutes, nowMinutes);   // AUDIT SURV-TIERS: Off's minutes are nobody's needs (needs.js pauseSurvival) - a host with no reader while the arc is ON keeps WORLD5's clocks
@@ -1209,11 +1213,21 @@ function settleAbsence() {
   _absenceWaiting = null;
   if (waiting) waiting.pay(worldMinutes());
 }
+/** AUDIT FB1021 L3-1: THE RELAY'S CLOCK AS LAST HEARD - the world's minute at the welcome that heard it and this
+ *  machine's MONOTONIC clock then (`perf`, performance.now's ms; `n` the hearing's count this session), null before it. The
+ *  world's reading after it is the machine's wall clock run through the relay's offset (world.js's source), so a machine
+ *  clock set forward after the welcome moves it - an errand abroad reads it no further than the monotonic time since
+ *  (revenantErrands.js errandWorldMinute). */
+let _heardMark = null;
+export const sharedClockHeardMark = () => _heardMark;
+const monotonicMs = () => (typeof globalThis.performance?.now === 'function' ? globalThis.performance.now() : Date.now());
 /** AUDIT LIVED1b P4: the host has heard the relay's clock (its offset is in the source) - the waiting absence is paid on
- *  it. Answers whether a shared clock stands to hear. */
-export function hearSharedClock() {
+ *  it. Answers whether a shared clock stands to hear. AUDIT FB1021 L3-1: the hearing marked (`perf`, the monotonic clock
+ *  at it; tests hand their own). */
+export function hearSharedClock(perf = monotonicMs()) {
   if (!_sharedClock) return false;
   _sharedClockHeard = true;
+  _heardMark = Object.freeze({ world: worldMinutes(), perf, n: (_heardMark?.n ?? 0) + 1 });
   settleAbsence();
   return true;
 }
@@ -1238,6 +1252,7 @@ export function setSharedClock(source, wallOf = null, { sky = null, skyWall = nu
   _sharedLastTick = null;
   _worldWalked = [];   // AUDIT LIVED1 I, LIVED1b P3: a new session's world arms start at its first reading
   _sharedClockHeard = false;   // AUDIT LIVED1b P4: and it has not heard the relay's clock yet
+  _heardMark = null;   // AUDIT FB1021 L3-1: nor marked it
   _absenceWaiting = null;
   _ownMinutes = null;   // LIVED1: a clock installed or removed is a new session - the character's own time comes from its load
   _raisedMinutes = 0;   // TIME3: ...and its raises are counted from nought
@@ -1335,7 +1350,7 @@ export function worldNightfallText() {
   const dusk = Math.floor(now / MINUTES_PER_DAY) * MINUTES_PER_DAY + DUSK_HOUR * 60;
   const ms = _skyWall ? _skyWall(dusk) - _skyWall(sky) : (dusk - sky) / ONLINE_MINUTES_PER_MS;
   const real = Math.max(1, Math.ceil(ms / 60000));
-  return `The sun is the world's - night falls in about ${real} minute${real === 1 ? '' : 's'}.`;
+  return `Online, resting does not move the sun. Night falls in about ${real} minute${real === 1 ? '' : 's'}.`;
 }
 /** LIVED1: a deadline on the CHARACTER's own clock (a room's end, a loan's due day, a repair's ready minute), said as
  *  what it is online - the time left on their clock, and what that is in play: their clock runs with the world's
@@ -1530,7 +1545,7 @@ export function resetMagicRoundMarker(v = null) {
  *
  * The contract is not changed here, because every caller reads the
  * answer as "the clock now" and that is still true. What is added is a
- * way to ASK, and a pin (test/clockrefusal.test.js) that requires
+ * way to ASK, and a pin (test/systems/clockrefusal.test.js) that requires
  * every caller either to consult it or to be listed with the reason it
  * does not need to. A silent refusal is fine; an unnoticed one is not.
  */

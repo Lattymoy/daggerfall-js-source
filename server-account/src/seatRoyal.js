@@ -9,8 +9,8 @@
 // good.
 //
 // bible/11-Multiplayer/Seats-Arc.md 7.6. The bouts are the relay's
-// (net/siegeRef.js royal*); a winner's `t1` receipt is its word that one
-// was won (net/siegeReceipt.js). FACT, as for a siege: the relay has no
+// (net/siege/siegeRef.js royal*); a winner's `t1` receipt is its word that one
+// was won (net/siege/siegeReceipt.js). FACT, as for a siege: the relay has no
 // door to this service, so each receipt rides its winner's own client.
 //
 // ONE STATEMENT DECIDES: a bout's row is keyed on its room's number, so a
@@ -24,7 +24,7 @@ import { accountKind, overRate } from './accounts.js';
 import { seatsOpenFor, confirmedSeats } from './townSeats.js';
 import { utcDay, MARKS_MAX } from '../../src/net/marksLaw.js';
 import { mintSiegeOrder, siegeFieldValid } from '../../src/net/identityToken.js';
-import { verifyRoyalReceipt } from '../../src/net/siegeReceipt.js';
+import { verifyRoyalReceipt } from '../../src/net/siege/siegeReceipt.js';
 import {
   seatWeekOf, seatWeekStartMs, seatKeyOk, SEAT_WEEK_MS, ROYAL_PAIR_DAY, ROYAL_LADDER_ROWS, settleRing, royalStandings, CROWN_SEAT_REGIONS, seasonOf,
 } from '../../src/net/townSeatLaw.js';

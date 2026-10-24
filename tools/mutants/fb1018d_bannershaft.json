@@ -1,0 +1,44 @@
+[
+  {
+    "name": "BANNER-SHAFT-every-kind-held",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "  return !egOneStorey(sm, sb) && (melee || egStacked(view, x, sm, z, bx, sb, bz));",
+    "new": "  return !egOneStorey(sm, sb) && (true || egStacked(view, x, sm, z, bx, sb, bz));",
+    "tests": [
+      "test/net/eliteGates/fb1018d_bannershaft.test.js"
+    ],
+    "why": "the bug: a shaft or a spell from the court never lands on a banner a storey up",
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f, AUDIT FB1018f L3-6, at the merge): the storey rule is one law, net/eliteGates/egBodies.js egStoreyApart, which egHitBody and every screen ask - its `melee` the blow's kind."
+  },
+  {
+    "name": "BANNER-SHAFT-swing-let-up",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "  return !egOneStorey(sm, sb) && (melee || egStacked(view, x, sm, z, bx, sb, bz));",
+    "new": "  return !egOneStorey(sm, sb) && (egStacked(view, x, sm, z, bx, sb, bz));",
+    "tests": [
+      "test/net/eliteGates/fb1018d_bannershaft.test.js"
+    ],
+    "why": "a sword reaches a banner 4 m over the court",
+    "note": "PIN MOVED (FIELD BUGS 2026-10-18f, AUDIT FB1018f L3-6, at the merge): the storey rule is one law, net/eliteGates/egBodies.js egStoreyApart, which egHitBody and every screen ask - its `melee` the blow's kind."
+  },
+  {
+    "name": "BANNER-SHAFT-stack-off-the-higher",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "(ay <= by ? egFloorBetween(view, ax, az, ay, by) :",
+    "new": "(ay <= by ? egFloorBetween(view, bx, bz, ay, by) :",
+    "tests": [
+      "test/net/eliteGates/fb1018d_bannershaft.test.js"
+    ],
+    "why": "the higher one's own floor always over its own plan: every shot up a storey refused again"
+  },
+  {
+    "name": "BANNER-SHAFT-lower-and-higher-swapped",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "(ay <= by ? egFloorBetween",
+    "new": "(ay >= by ? egFloorBetween",
+    "tests": [
+      "test/net/eliteGates/fb1018d_bannershaft.test.js"
+    ],
+    "why": "a shot from under the balcony's rim, through its deck, lands"
+  }
+]

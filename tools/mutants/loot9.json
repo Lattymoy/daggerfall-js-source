@@ -1,56 +1,56 @@
 [
   {
     "name": "LOOT9-shard-unbound",
-    "file": "src/systems/gateSpoils.js",
+    "file": "src/systems/gate/gateSpoils.js",
     "old": "  bound: true,\n  stackable: true,\n}]);",
     "new": "  stackable: true,\n}]);",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-shard-unstacked",
-    "file": "src/systems/gateSpoils.js",
+    "file": "src/systems/gate/gateSpoils.js",
     "old": "  bound: true,\n  stackable: true,\n}]);",
     "new": "  bound: true,\n}]);",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-shard-another-index",
-    "file": "src/systems/gateSpoils.js",
+    "file": "src/systems/gate/gateSpoils.js",
     "old": "export const WELKYND_SHARD_TEMPLATE = 571;",
     "new": "export const WELKYND_SHARD_TEMPLATE = 572;",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-shard-unregistered",
-    "file": "src/systems/gateSpoils.js",
+    "file": "src/systems/gate/gateSpoils.js",
     "old": "registerCustomTemplates(WELKYND_SHARD_TEMPLATES);",
     "new": "void WELKYND_SHARD_TEMPLATES;",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-shards-below-one",
-    "file": "src/systems/gateSpoils.js",
+    "file": "src/systems/gate/gateSpoils.js",
     "old": "{ stackCount: Math.max(1, Math.trunc(Number(n) || 1)) }",
     "new": "{ stackCount: Math.trunc(Number(n) || 1) }",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-shard-unlisted",
-    "file": "src/net/realmTradeLaw.js",
-    "old": "Object.freeze([570, 571, 572, 580, 582]);",
-    "new": "Object.freeze([570, 572, 580, 582]);",
+    "file": "src/net/realm/realmTradeLaw.js",
+    "old": "Object.freeze([570, 571, 572, 575, 580, 582, 2000, 2001]);",
+    "new": "Object.freeze([570, 572, 575, 580, 582, 2000, 2001]);",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ],
     "note": "WALLET1 (PIN MOVED): re-aimed by content - the list names the Wallet's 580 too (systems/walletItem.js)."
   },
@@ -60,7 +60,7 @@
     "old": "magic: 1, rare: 3, legendary: 8, exalted: 15",
     "new": "magic: 2, rare: 3, legendary: 8, exalted: 15",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "return item.exalted === true ? SALVAGE_SHARDS.exalted : SALVAGE_SHARDS.legendary;",
     "new": "return SALVAGE_SHARDS.legendary;",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "  const t = item?.rarity;\n  if (t === 'legendary')",
     "new": "  const t = item?.rarity ?? (item?.magic ? 'magic' : undefined);\n  if (t === 'legendary')",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "  if (!lootRarityOn()) return 'off';\n  if (!item) return 'not';",
     "new": "  if (!item) return 'not';",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "  if (item.rarity === 'aetheric') return 'aetheric';\n",
     "new": "\n",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "  if (item.artifact || item.rarity === 'artifact') return 'artifact';",
     "new": "  if (item.rarity === 'artifact') return 'artifact';",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "  if (item.questItem) return 'quest';\n",
     "new": "\n",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "  if (isBound(item)) return 'bound';\n",
     "new": "\n",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "  if (isEquipped(item)) return 'worn';\n  if (isLocked(item)) return 'locked';",
     "new": "  if (isLocked(item)) return 'locked';",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "  if (isEquipped(item)) return 'worn';\n  if (isLocked(item)) return 'locked';",
     "new": "  if (isEquipped(item)) return 'worn';",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "  items.splice(items.indexOf(item), 1);\n  addItem(items, welkyndShards(shards));",
     "new": "  addItem(items, welkyndShards(shards));",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "  items.splice(items.indexOf(item), 1);\n  addItem(items, welkyndShards(shards));",
     "new": "  items.splice(items.indexOf(item), 1);",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "const spendable = (it) => isWelkyndShard(it) && !isLocked(it) && !isEquipped(it);",
     "new": "const spendable = (it) => isWelkyndShard(it) && !isEquipped(it);",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "  if (shardsHeld(items) < n) return false;\n",
     "new": "\n",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "    if (!spendable(it)) continue;",
     "new": "    if (!isWelkyndShard(it)) continue;",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "if (have <= owed) { items.splice(i, 1); owed -= have; }",
     "new": "if (have <= owed) { it.stackCount = 0; owed -= have; }",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "  magic: Object.freeze({ shards: 2, gold: 100 }),",
     "new": "  magic: Object.freeze({ shards: 1, gold: 100 }),",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "  if (item?.rarity === 'legendary' && item.exalted === true) return REFORGE_PRICE.exalted;",
     "new": "  if (item?.rarity === 'legendary') return REFORGE_PRICE.exalted;",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "  if (!itemIsIdentified(item)) return 'unknown';\n",
     "new": "\n",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -231,7 +231,7 @@
     "old": "  if (isEquipped(item)) return 'worn';\n  if (!lines.includes(index)) return 'line';",
     "new": "  if (!lines.includes(index)) return 'line';",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -240,7 +240,7 @@
     "old": "  if (!lines.includes(index)) return 'line';\n",
     "new": "\n",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -249,7 +249,7 @@
     "old": "  if (shardsHeld(player?.items) < price.shards) return 'shards';\n",
     "new": "\n",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -258,7 +258,7 @@
     "old": "  if (totalGoldAmount(player) < price.gold) return 'gold';\n",
     "new": "\n",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -267,7 +267,7 @@
     "old": "  spendShards(player.items, price.shards);\n  deductGold(player, price.gold);",
     "new": "  deductGold(player, price.gold);",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -276,7 +276,7 @@
     "old": "  spendShards(player.items, price.shards);\n  deductGold(player, price.gold);",
     "new": "  spendShards(player.items, price.shards);",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -285,108 +285,108 @@
     "old": "  if (!lootRarityOn()) return 'off';\n  const price = reforgePrice(item);",
     "new": "  const price = reforgePrice(item);",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-exalted-every-line",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "&& item.exalted === true && list.length) lines = [list.filter((a) => a?.gem == null).length - 1];",
     "new": "&& item.exalted === true && list.length) lines = list.map((_, i) => i);",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-plain-legendary-reforged",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  else if (item?.rarity === 'legendary' && item.exalted === true && list.length)",
     "new": "  else if (item?.rarity === 'legendary' && list.length)",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-reforged-ignored",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  return Number.isInteger(item?.reforged) ? lines.filter((i) => i === item.reforged) : lines;",
     "new": "  return lines;",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-proc-to-number",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "    if (!k.groups.includes(item.group) || !!k.proc !== !!was.proc) return false;",
     "new": "    if (!k.groups.includes(item.group)) return false;",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-rare-loses-its-slot",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "    if (tier === 'rare' && k.slot !== was.slot) return false;\n",
     "new": "\n",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-carried-kind-again",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "    return k.params ? freeParams(id).length > 0 : !others.some((a) => a?.id === id);",
     "new": "    return k.params ? freeParams(id).length > 0 : true;",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-exalted-line-any-value",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "rangeInt(tier === 'legendary' ? Math.ceil((lo + hi) / 2) : lo, hi, rolls)",
     "new": "rangeInt(lo, hi, rolls)",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-name-stays",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  if (tier !== 'legendary') item.name = rarityName(item, tier, item.affixes.filter((a) => a?.gem == null));",
     "new": "",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ],
     "note": "AUDIT BAL/GEM (PIN MOVED, 2026-10-10): its line changed with the audit's fix; re-aimed by content."
   },
   {
     "name": "LOOT9-price-stays",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) - affixesWorth([old], item) + affixesWorth([line], item);\n",
     "new": "\n",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ],
     "note": "LOOT14 (RE-AIMED BY CONTENT): the price line reads a garment's half (bible/06-Systems/Loot-II-Arc.md section 6) - the law it pins unmoved."
   },
   {
     "name": "LOOT9-line-unmarked",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  item.reforged = index;\n",
     "new": "\n",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-field-undeclared",
-    "file": "src/systems/itemFields.js",
+    "file": "src/systems/item/itemFields.js",
     "old": "  reforged: int({ min: 0, max: 15 }),",
     "new": "  reforgedX: int({ min: 0, max: 15 }),",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -395,7 +395,7 @@
     "old": "          if (asking !== it) { asking = it; say(false, BREAK_ASK(nameOf(it), n)); render(); return; }\n",
     "new": "\n",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -404,7 +404,7 @@
     "old": "    if (!itemIsIdentified(it)) {   // its lines",
     "new": "    if (false) {   // its lines",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -413,7 +413,7 @@
     "old": "    if (this.hooks.reforge && inRect(REFORGE_RECT, vx, vy)) {",
     "new": "    if (inRect(REFORGE_RECT, vx, vy)) {",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -422,16 +422,16 @@
     "old": "    const reforgeKey = !!this.hooks.reforge && code === REFORGE_KEY;",
     "new": "    const reforgeKey = !!this.hooks.reforge && code === 'KeyQ';",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-plus-face-no-row",
-    "file": "src/ui/enhancedPorts.js",
+    "file": "src/ui/enhanced/enhancedPorts.js",
     "old": "        ...(w.hooks.reforge ? [{ label: REFORGE_ROW, act: () => w._reforge() }] : []),",
     "new": "        ...([]),",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
@@ -440,34 +440,34 @@
     "old": "reforge: route.guildGroup === GUILD_GROUPS.MagesGuild && service === 'Identify' && lootRarityOn() ?",
     "new": "reforge: service === 'Identify' && lootRarityOn() ?",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-card-salvages-the-worn",
-    "file": "src/ui/enhancedInventory.js",
-    "old": "if (side === 'local' && !line.equipped && salvageShards(picked) > 0 &&",
-    "new": "if (side === 'local' && salvageShards(picked) > 0 &&",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "if (side === 'local' && !line.equipped && (salvageShards(picked) > 0 ||",
+    "new": "if (side === 'local' && (salvageShards(picked) > 0 ||",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-card-breaks-unasked",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    v.onclick = () => askSalvage(picked);",
     "new": "    v.onclick = () => { salvagePiece(picked, { items: deps.items?.() ?? [] }); refresh(); render(); };",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   },
   {
     "name": "LOOT9-keep-breaks-it",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  no.onclick = (e) => { e?.stopPropagation?.(); closeDismantle(); };   // the piece kept",
     "new": "  no.onclick = (e) => { e?.stopPropagation?.(); closeDismantle(); salvagePiece(item, { items: deps.items?.() ?? [] }); };",
     "tests": [
-      "test/loot9_reforge.test.js"
+      "test/systems/loot9_reforge.test.js"
     ]
   }
 ]

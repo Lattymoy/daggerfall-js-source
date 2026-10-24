@@ -1,0 +1,74 @@
+[
+  {
+    "name": "LEGIBLE1-a-loop-head-counted",
+    "file": "tools/hostScope.mjs",
+    "old": "    const isLoopHeadDeclaration = type === 'VariableDeclaration' && FOR_HEAD.test(parent.type) && key !== 'body';",
+    "new": "    const isLoopHeadDeclaration = false;",
+    "tests": [
+      "test/scenes/hostceiling.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE1-a-destructuring-entry-counted",
+    "file": "tools/hostScope.mjs",
+    "old": "  if (type === 'Property') return parent.type === 'ObjectExpression';",
+    "new": "  if (type === 'Property') return true;",
+    "tests": [
+      "test/scenes/hostceiling.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE1-object-entries-not-counted",
+    "file": "tools/hostScope.mjs",
+    "old": "  if (type === 'Property') return parent.type === 'ObjectExpression';",
+    "new": "  if (type === 'Property') return false;",
+    "tests": [
+      "test/scenes/hostceiling.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE1-class-members-not-counted",
+    "file": "tools/hostScope.mjs",
+    "old": "  if (type === 'MethodDefinition' || type === 'PropertyDefinition' || type === 'StaticBlock' || type === 'SwitchCase') return true;",
+    "new": "  if (type === 'SwitchCase') return true;",
+    "tests": [
+      "test/scenes/hostceiling.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE1-switch-cases-not-counted",
+    "file": "tools/hostScope.mjs",
+    "old": "  if (type === 'MethodDefinition' || type === 'PropertyDefinition' || type === 'StaticBlock' || type === 'SwitchCase') return true;",
+    "new": "  if (type === 'MethodDefinition' || type === 'PropertyDefinition' || type === 'StaticBlock') return true;",
+    "tests": [
+      "test/scenes/hostceiling.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE1-expression-arrows-not-counted",
+    "file": "tools/hostScope.mjs",
+    "old": "  return type === 'ArrowFunctionExpression' && node.expression;",
+    "new": "  return false;",
+    "tests": [
+      "test/scenes/hostceiling.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE1-braces-counted",
+    "file": "tools/hostScope.mjs",
+    "old": "  if (type === 'BlockStatement' || type === 'EmptyStatement') return false;",
+    "new": "  if (type === 'EmptyStatement') return false;",
+    "tests": [
+      "test/scenes/hostceiling.test.js"
+    ]
+  },
+  {
+    "name": "LEGIBLE1-a-crowded-file-skipped-by-its-line-count",
+    "file": "test/scenes/hostceiling.test.js",
+    "old": "  if (src.length < 2 * KNOT) return [];",
+    "new": "  if (src.split('\\n').length < KNOT) return [];",
+    "tests": [
+      "test/scenes/hostceiling.test.js"
+    ]
+  }
+]

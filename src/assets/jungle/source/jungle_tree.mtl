@@ -1,0 +1,10 @@
+# Material for jungle_tree
+newmtl Material.002
+Ns 0.000000
+Ka 1.000000 1.000000 1.000000
+Ks 0.000000 0.000000 0.000000
+Ke 0.000000 0.000000 0.000000
+Ni 1.500000
+illum 1
+map_Kd jungle_tree_252w.png
+map_d jungle_tree_252w.png

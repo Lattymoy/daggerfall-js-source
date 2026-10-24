@@ -1,0 +1,790 @@
+[
+  {
+    "name": "EGECO2-feats-replaced",
+    "file": "server-account/src/egHonours.js",
+    "old": "ON CONFLICT (account, lord) DO UPDATE SET bits = bits | excluded.bits",
+    "new": "ON CONFLICT (account, lord) DO UPDATE SET bits = excluded.bits",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-feats-a-rehearsals",
+    "file": "server-account/src/egHonours.js",
+    "old": "    if (c.rh === 1 || typeof c.lk !== 'string' || !Number.isSafeInteger(c.ft)) return [];",
+    "new": "    if (typeof c.lk !== 'string' || !Number.isSafeInteger(c.ft)) return [];",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-master-never",
+    "file": "server-account/src/egHonours.js",
+    "old": "if (egBandMastered(held, b)) bits |= EG_HONOUR[EG_BAND_MASTERS[b]];",
+    "new": "if (false) bits |= EG_HONOUR[EG_BAND_MASTERS[b]];",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-master-of-the-wrong-band",
+    "file": "server-account/src/egHonours.js",
+    "old": "if (egBandMastered(held, b)) bits |= EG_HONOUR[EG_BAND_MASTERS[b]];",
+    "new": "if (egBandMastered(held, b)) bits |= EG_HONOUR[EG_BAND_MASTERS[0]];",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-redoubt-off-by-one",
+    "file": "server-account/src/egHonours.js",
+    "old": "for (const [r, t] of EG_REDOUBT_HONOURS) if (c.w >= r) bits |= EG_HONOUR[t];",
+    "new": "for (const [r, t] of EG_REDOUBT_HONOURS) if (c.w > r) bits |= EG_HONOUR[t];",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-honours-from-a-rehearsal",
+    "file": "server-account/src/egHonours.js",
+    "old": "if (!c || c.q !== 'w' || c.rh === 1 || !Number.isSafeInteger(c.w)) return 0;",
+    "new": "if (!c || c.q !== 'w' || !Number.isSafeInteger(c.w)) return 0;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-honours-from-an-end",
+    "file": "server-account/src/egHonours.js",
+    "old": "if (!c || c.q !== 'w' || c.rh === 1 || !Number.isSafeInteger(c.w)) return 0;",
+    "new": "if (!c || c.rh === 1 || !Number.isSafeInteger(c.w)) return 0;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-unfallen-fall-unread",
+    "file": "server-account/src/egHonours.js",
+    "old": "if (c.w >= EG_UNFALLEN_REDOUBT && c.fl === 0 && c.ew === 0)",
+    "new": "if (c.w >= EG_UNFALLEN_REDOUBT && c.ew === 0)",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-unfallen-start-unread",
+    "file": "server-account/src/egHonours.js",
+    "old": "if (c.w >= EG_UNFALLEN_REDOUBT && c.fl === 0 && c.ew === 0)",
+    "new": "if (c.w >= EG_UNFALLEN_REDOUBT && c.fl === 0)",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-unfallen-no-fl-a-fall",
+    "file": "server-account/src/egHonours.js",
+    "old": "if (c.w >= EG_UNFALLEN_REDOUBT && c.fl === 0 && c.ew === 0)",
+    "new": "if (c.w >= EG_UNFALLEN_REDOUBT && !c.fl && c.ew === 0)",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-lone-beacon-unread",
+    "file": "server-account/src/egHonours.js",
+    "old": "if (c.lb === 1) bits |= EG_HONOUR.lonebeacon;",
+    "new": "if (c.lb !== 1) bits |= EG_HONOUR.lonebeacon;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-every-honour-said-again",
+    "file": "server-account/src/egHonours.js",
+    "old": "const fresh = bits & ~int(row?.h);",
+    "new": "const fresh = bits;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-honours-never-written",
+    "file": "server-account/src/egHonours.js",
+    "old": "const set = await db.prepare('UPDATE players SET eg_honours = eg_honours | ?2 WHERE id = ?1 AND EXISTS",
+    "new": "const set = await db.prepare('UPDATE players SET eg_honours = eg_honours | 0 * ?2 WHERE id = ?1 AND EXISTS",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-annals-replaced",
+    "file": "server-account/src/egHonours.js",
+    "old": "UPDATE players SET eg_annals = eg_annals | ?2 WHERE id = ?1",
+    "new": "UPDATE players SET eg_annals = ?2 WHERE id = ?1",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-annals-on-a-redoubt",
+    "file": "src/net/eliteGates/egReceipt.js",
+    "old": "if (c.an !== undefined && (c.q !== 'x' || !int(c.an, 0, EG_ANNALS_BITS_MAX))) return false;",
+    "new": "if (c.an !== undefined && !int(c.an, 0, EG_ANNALS_BITS_MAX)) return false;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-annals-past-thirty-bits",
+    "file": "src/net/eliteGates/egReceipt.js",
+    "old": "export const EG_ANNALS_BITS_MAX = 2 ** 30 - 1;",
+    "new": "export const EG_ANNALS_BITS_MAX = 2 ** 30;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-runs-unwagered",
+    "file": "server-account/src/egHonours.js",
+    "old": "int(c.n), int(c.ew), wagered(c) ? 1 : 0, int(c.fl)",
+    "new": "int(c.n), int(c.ew), 0, int(c.fl)",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-runs-wager-a-list-unread",
+    "file": "server-account/src/egHonours.js",
+    "old": "const wagered = (c) => (Array.isArray(c?.wg) ? c.wg.length > 0 : !!c?.wg);",
+    "new": "const wagered = (c) => (Array.isArray(c?.wg) ? false : !!c?.wg);",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-runs-start-unread",
+    "file": "server-account/src/egHonours.js",
+    "old": "int(c.n), int(c.ew), wagered(c) ? 1 : 0, int(c.fl)",
+    "new": "int(c.n), 0, wagered(c) ? 1 : 0, int(c.fl)",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-runs-td-unread",
+    "file": "server-account/src/egHonours.js",
+    "old": "SELECT b, account, h, COALESCE(td, t) AS secs, n, fl, at, co_n, co_h FROM eg_runs",
+    "new": "SELECT b, account, h, t AS secs, n, fl, at, co_n, co_h FROM eg_runs",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-descent-takes-a-rehearsal",
+    "file": "server-account/src/egHonours.js",
+    "old": "WHERE season = ?1 AND rh = 0 AND ew = 0 AND wg = 0 AND h >= 1",
+    "new": "WHERE season = ?1 AND ew = 0 AND wg = 0 AND h >= 1",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-descent-takes-last-season",
+    "file": "server-account/src/egHonours.js",
+    "old": "WHERE season = ?1 AND rh = 0 AND ew = 0 AND wg = 0 AND h >= 1",
+    "new": "WHERE season <= ?1 AND rh = 0 AND ew = 0 AND wg = 0 AND h >= 1",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-depths-takes-last-season",
+    "file": "server-account/src/egHonours.js",
+    "old": "FROM eg_runs WHERE season = ?1 AND rh = 0 AND h >= 1)",
+    "new": "FROM eg_runs WHERE season <= ?1 AND rh = 0 AND h >= 1)",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-depths-takes-a-rehearsal",
+    "file": "server-account/src/egHonours.js",
+    "old": "FROM eg_runs WHERE season = ?1 AND rh = 0 AND h >= 1)",
+    "new": "FROM eg_runs WHERE season = ?1 AND h >= 1)",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-deepest-the-shallowest",
+    "file": "server-account/src/egHonours.js",
+    "old": "ROW_NUMBER() OVER (PARTITION BY account ORDER BY w DESC, at ASC) AS rn FROM eg_redoubts",
+    "new": "ROW_NUMBER() OVER (PARTITION BY account ORDER BY w ASC, at ASC) AS rn FROM eg_redoubts",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-descent-seconds-the-wrong-way",
+    "file": "server-account/src/egHonours.js",
+    "old": "const descentOrder = (a, b) => b.h - a.h || a.t - b.t || a.at - b.at",
+    "new": "const descentOrder = (a, b) => b.h - a.h || b.t - a.t || a.at - b.at",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-descent-ties-the-last-there",
+    "file": "server-account/src/egHonours.js",
+    "old": "const descentOrder = (a, b) => b.h - a.h || a.t - b.t || a.at - b.at",
+    "new": "const descentOrder = (a, b) => b.h - a.h || a.t - b.t || b.at - a.at",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-company-keyed-by-order",
+    "file": "server-account/src/egHonours.js",
+    "old": "`co:${c.co}` : [...c.players].sort().join(','));",
+    "new": "`co:${c.co}` : c.players.join(','));",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-company-the-slowest-seconds",
+    "file": "server-account/src/egHonours.js",
+    "old": "else if (h === c.h) c.t = Math.min(c.t, secs);",
+    "new": "else if (h === c.h) c.t = Math.max(c.t, secs);",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-company-size-the-receipts-alone",
+    "file": "server-account/src/egHonours.js",
+    "old": "n: Math.max(c.n, c.players.length)",
+    "new": "n: c.n",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-flame-with-a-fall",
+    "file": "server-account/src/egHonours.js",
+    "old": "flame: c.fell === 0",
+    "new": "flame: true",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-company-its-worst-breach",
+    "file": "server-account/src/egHonours.js",
+    "old": "if (!had || descentOrder(row, had) < 0) best.set(key, row);",
+    "new": "if (!had || descentOrder(row, had) > 0) best.set(key, row);",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-bracket-bound-off-by-one",
+    "file": "server-account/src/egHonours.js",
+    "old": "export const egBracketOf = (n) => (n >= 5 ? 'company' : n >= 2 ? 'few' : 'alone');",
+    "new": "export const egBracketOf = (n) => (n >= 4 ? 'company' : n >= 2 ? 'few' : 'alone');",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-company-row-never-yours",
+    "file": "server-account/src/arena.js",
+    "old": "r.rank = i + 1; r.you = typeof me === 'function' ? !!me(r) : r.player === me;",
+    "new": "r.rank = i + 1; r.you = typeof me === 'function' ? false : r.player === me;",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-best-the-boards-top",
+    "file": "server-account/src/egHonours.js",
+    "old": "const best = companies.find(mine) ?? null;",
+    "new": "const best = companies[0] ?? null;",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-proclamation-another-week",
+    "file": "server-account/src/egHonours.js",
+    "old": "const week = arenaWeekOf(nowS), key = egProclamationOf(week)",
+    "new": "const week = arenaWeekOf(nowS), key = egProclamationOf(week + 1)",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-champions-the-top-eleven",
+    "file": "server-account/src/egHonours.js",
+    "old": "for (const c of brackets[k].slice(0, EG_CHAMPIONS_TOP))",
+    "new": "for (const c of brackets[k].slice(0, EG_CHAMPIONS_TOP + 1))",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-champions-this-season",
+    "file": "server-account/src/egHonours.js",
+    "old": "  const last = season - 1;\n",
+    "new": "  const last = season;\n",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-champions-never-kept",
+    "file": "server-account/src/egHonours.js",
+    "old": "if (!ids.size && (await recordEgChampions(ctx, last)) > 0) ids = await read();",
+    "new": "if (!ids.size && false) ids = await read();",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-champion-off-the-mint",
+    "file": "server-account/src/index.js",
+    "old": "who.player = await withEgHonours(honoursCtx, await withHonours(honoursCtx, who.player, nowS), nowS);",
+    "new": "who.player = await withHonours(honoursCtx, who.player, nowS);",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ],
+    "note": "AUDIT EG V (the merge of main): re-aimed by content - one line lays the Spire Champion, then the Grandmaster; the mutant drops the Spire's. The fifth merge of main (re-aimed by content): SIGN-BATCH's one batch of the three games' honours, the Spire Champions read beside it; the mutant drops the Spire's."
+  },
+  {
+    "name": "EGECO2-spire-titles-a-guests",
+    "file": "server-account/src/titles.js",
+    "old": "  if (typeof player?.handle === 'string' && player.handle) for (const t of EG_HONOUR_TITLES)",
+    "new": "  for (const t of EG_HONOUR_TITLES)",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-spire-aura-without-its-bit",
+    "file": "server-account/src/titles.js",
+    "old": "for (const [t, a] of Object.entries(EG_HONOUR_AURA)) if ((Number(player?.eg_honours) & EG_HONOUR[t]) && !held.includes(a)) held.push(a);",
+    "new": "for (const [, a] of Object.entries(EG_HONOUR_AURA)) if (!held.includes(a)) held.push(a);",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-spire-first-case-kept",
+    "file": "server-account/src/titles.js",
+    "old": "  && egFirstHandles(env).has(player.handle.toLowerCase());",
+    "new": "  && egFirstHandles(env).has(player.handle);",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-spire-first-aura-without-the-list",
+    "file": "server-account/src/titles.js",
+    "old": "if (isSpireFirst(player, env) && !held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);",
+    "new": "if (!held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-serveride-not-granted",
+    "file": "server-account/wrangler.toml",
+    "old": "EG_FIRST_HANDLES = \"Serveride\"",
+    "new": "EG_FIRST_HANDLES = \"\"",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ],
+    "note": "SPIRE-FIRST (the owner: \"Since hes world first. He should get this title plus a custom aura\"): Serveride left off the list holds neither First of the Spire nor Firstlight."
+  },
+  {
+    "name": "SPIRE-FIRST-NAME-the-character-listed",
+    "file": "server-account/wrangler.toml",
+    "old": "EG_FIRST_HANDLES = \"Serveride\"",
+    "new": "EG_FIRST_HANDLES = \"Severide\"",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ],
+    "note": "SPIRE-FIRST-NAME (the owner: \"Its Serveride. You did the wrong name\"): the list naming his character's name, as the herald read it, grants the account nothing."
+  },
+  {
+    "name": "SPIRE-FIRST-law-taken-at-once",
+    "file": "src/render/auraRing.js",
+    "old": "const c = (((t * DAWN_HZ.climb) % 1) + 1) % 1, at = DAWN_CLIMB.at + k * DAWN_CLIMB.step;",
+    "new": "const c = (((t * DAWN_HZ.climb) % 1) + 1) % 1, at = DAWN_CLIMB.at;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-law-never-down",
+    "file": "src/render/auraRing.js",
+    "old": "  const down = 1 - ss(DAWN_CLIMB.hold, DAWN_CLIMB.down, c);",
+    "new": "  const down = 1;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-law-flare-held",
+    "file": "src/render/auraRing.js",
+    "old": "flare: c >= at ? Math.exp(-(c - at) * DAWN_CLIMB.flare) * down : 0",
+    "new": "flare: c >= at ? down : 0",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-law-a-whole-spire-before",
+    "file": "src/render/auraRing.js",
+    "old": "* (0.3 + 0.7 * dawnClimb(k, t).taken);",
+    "new": "* (1 + 0 * dawnClimb(k, t).taken);",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-taken-at-once",
+    "file": "src/render/auraRing.js",
+    "old": "float dawnAt(float k) { return ${g3(DAWN_CLIMB.at)} + k * ${g3(DAWN_CLIMB.step)}; }",
+    "new": "float dawnAt(float k) { return ${g3(DAWN_CLIMB.at)}; }",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-order-reversed",
+    "file": "src/render/auraRing.js",
+    "old": "float dawnRound(float turn) { return fract(turn + ${g3(DAWN_START)}); }",
+    "new": "float dawnRound(float turn) { return fract(-turn - ${g3(DAWN_START)}); }",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-never-down",
+    "file": "src/render/auraRing.js",
+    "old": "float dawnDown(float c) { return 1.0 - smoothstep(",
+    "new": "float dawnDown(float c) { return 1.0 + 0.0 * smoothstep(",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-lane-unlit",
+    "file": "src/render/auraRing.js",
+    "old": "col += (SP_DAWN_GOLD * 0.26 * smoothstep(-0.006, 0.006, behind)",
+    "new": "col += (SP_DAWN_GOLD * 0.0 * smoothstep(-0.006, 0.006, behind)",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-lane-lit-whole",
+    "file": "src/render/auraRing.js",
+    "old": "SP_DAWN_GOLD * 0.26 * smoothstep(-0.006, 0.006, behind)",
+    "new": "SP_DAWN_GOLD * 0.26 * 1.0",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-faces-never-filled",
+    "file": "src/render/auraRing.js",
+    "old": "* face * tk * 0.9",
+    "new": "* face * 0.0 * 0.9",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-star-always",
+    "file": "src/render/auraRing.js",
+    "old": "col += SP_WHITE * star * dawn * step(",
+    "new": "col += SP_WHITE * star * 1.0 * step(",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-rays-flat",
+    "file": "src/render/auraRing.js",
+    "old": "((0.12 + 0.3 * dawn) * breath + wave * 1.2)",
+    "new": "((0.42) * breath + wave * 1.2)",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-rays-all-long",
+    "file": "src/render/auraRing.js",
+    "old": "1.0 - mod(j, 2.0));",
+    "new": "1.0);",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-wave-gone",
+    "file": "src/render/auraRing.js",
+    "old": "float wave = since >= 0.0 ? exp(",
+    "new": "float wave = since >= 9.0 ? exp(",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-spires-one-height",
+    "file": "src/render/auraRing.js",
+    "old": "* k / ${g1(DAWN_REDOUBTS - 1)}) * (0.3 + 0.7 * tk), yt = y / h;",
+    "new": "* 0.0) * (0.3 + 0.7 * tk), yt = y / h;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-spires-never-rise",
+    "file": "src/render/auraRing.js",
+    "old": "* (0.3 + 0.7 * tk), yt = y / h;",
+    "new": "* (1.0), yt = y / h;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-shaft-from-inside",
+    "file": "src/render/auraRing.js",
+    "old": "float outside = smoothstep(0.5 * uRingR, 0.8 * uRingR, length(uCamPos.xz - uAt.xz));",
+    "new": "float outside = 1.0;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-shaft-never",
+    "file": "src/render/auraRing.js",
+    "old": "float shaft = since >= 0.0 && k >",
+    "new": "float shaft = since >= 9.0 && k >",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-veil-past-the-shin",
+    "file": "src/render/auraRing.js",
+    "old": "float yv = y / ${g3(DAWN_VEIL_H)}, fv = max(1.0 - yv, 0.0);",
+    "new": "float yv = y / ${g3(DAWN_VEIL_H)}, fv = abs(1.0 - yv);",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-wall-kindled-at-once",
+    "file": "src/render/auraRing.js",
+    "old": "  // kindled UP: the light rising from the feet\n  return col * clamp(uKindle * 1.25 - v, 0.0, 0.15) / 0.15;\n}\n`;",
+    "new": "  // kindled UP: the light rising from the feet\n  return col * uKindle;\n}\n`;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-rays-seam",
+    "file": "src/render/auraRing.js",
+    "old": "fract(a / TAU + uTime ${hzGlsl(DAWN_HZ.rays)}) * ${g1(DAWN_RAYS)}",
+    "new": "fract(a / TAU + uTime ${hzGlsl(DAWN_HZ.rays)}) * ${g1(DAWN_RAYS + 0.5)}",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "SPIRE-FIRST-wall-seam",
+    "file": "src/render/auraRing.js",
+    "old": "float sk = dawnRound(u) * ",
+    "new": "float sk = dawnRound(u * 0.98) * ",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-spire-champion-ignored",
+    "file": "server-account/src/titles.js",
+    "old": "  if (player?.eg?.champion === true) held.push(EG_CHAMPION_TITLE);",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-title-dropped",
+    "file": "src/net/identityToken.js",
+    "old": "'masterwellhead', 'spirechampion', 'spirefirst', 'wikimaid', 'doorwarden',",
+    "new": "'masterwellhead', 'spirefirst', 'wikimaid', 'doorwarden',",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ],
+    "note": "QL12 (re-aimed by content: the questlines' five after the WikiMaid). WIKIMAID (re-aimed by content)."
+  },
+  {
+    "name": "EGECO2-colour-shared",
+    "file": "src/ui/playerBadge.js",
+    "old": "  spirechampion: Object.freeze([0.275, 0.839, 0.549, 1]),   // #46d68c",
+    "new": "  spirechampion: SPIRE_KYN,",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-aura-in-anothers-paint",
+    "file": "src/ui/playerBadge.js",
+    "old": "beaconlight: 'kynbane', burningstair: 'wellheadwalker'",
+    "new": "beaconlight: 'founder', burningstair: 'wellheadwalker'",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-kind-shared",
+    "file": "src/render/auraRing.js",
+    "old": "beaconlight: Object.freeze({ kind: 9,",
+    "new": "beaconlight: Object.freeze({ kind: 8,",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ],
+    "note": "The fifth merge of main (re-aimed by content): SERPENT5's Maelstrom took kind 8, the Spire's three 9 to 11; the mutant shares the Maelstrom's."
+  },
+  {
+    "name": "EGECO2-motes-falling",
+    "file": "src/render/auraRing.js",
+    "old": "float mv = fract(uTime ${hzGlsl(BEACON_HZ.mote)}",
+    "new": "float mv = 1.0 - fract(uTime ${hzGlsl(BEACON_HZ.mote)}",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-embers-rising",
+    "file": "src/render/auraRing.js",
+    "old": "float mv = 1.0 - fract(uTime ${hzGlsl(STAIR_HZ.ember)}",
+    "new": "float mv = fract(uTime ${hzGlsl(STAIR_HZ.ember)}",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-stair-heat-flat",
+    "file": "src/render/auraRing.js",
+    "old": "heat = (k + 1.0) / ${STAIR_STEPS.toFixed(1)};",
+    "new": "heat = 1.0;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-stair-never-turns",
+    "file": "src/render/auraRing.js",
+    "old": "float s = fract(a / TAU - uTime ${hzGlsl(STAIR_HZ.descend)})",
+    "new": "float s = fract(a / TAU)",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-beacons-lit-at-once",
+    "file": "src/render/auraRing.js",
+    "old": "float age = fract(uTime ${hzGlsl(BEACON_HZ.kindle)} - k / ${BEACON_LIGHTS.toFixed(1)});",
+    "new": "float age = fract(uTime ${hzGlsl(BEACON_HZ.kindle)});",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-stair-kindled-up",
+    "file": "src/render/auraRing.js",
+    "old": "return col * clamp(uKindle * 1.25 - (1.0 - v), 0.0, 0.15) / 0.15;",
+    "new": "return col * clamp(uKindle * 1.25 - v, 0.0, 0.15) / 0.15;",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-dawn-ring-gone",
+    "file": "src/render/auraRing.js",
+    "old": "float ring = turnBand(r, uRingR - ",
+    "new": "float ring = 0.0 * turnBand(r, uRingR - ",
+    "tests": [
+      "test/net/eliteGates/egeco_honours.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-window-pin-dropped",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "  if (b?.pinned) out.push('...', row(b.pinned));",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-window-clock-no-hours",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "return h ? `${h}:${two(m)}:${two(x)}` : `${m}:${two(x)}`;",
+    "new": "return `${m}:${two(x)}`;",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-window-flame-unread",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "${r.flame ? ` - ${EG_BOARD_TEXT.unfallen}` : ''}",
+    "new": "${''}",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-window-short-count",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "`${names[0]} +${names.length - 1}`",
+    "new": "`${names[0]} +${names.length}`",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-window-old-left-in-the-slot",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "    if (prev) closeWindow?.(prev);\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-window-close-told-twice",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "    if (!open) return;\n    open = false;",
+    "new": "    open = false;",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  },
+  {
+    "name": "EGECO2-window-tabs-never-back",
+    "file": "src/ui/eliteGates/egBoardWindow.js",
+    "old": "onPick: () => showTabs(), onCancel: () => showTabs() }));",
+    "new": "onPick: () => showTabs(), onCancel: close }));",
+    "tests": [
+      "test/net/eliteGates/egeco_board.test.js"
+    ]
+  }
+]

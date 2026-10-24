@@ -5,7 +5,7 @@
     "old": "  return pageParam('cull') === 'off';",
     "new": "  return /[?&]cull=off\\b/.test(globalThis.location?.search ?? '');",
     "tests": [
-      "test/perfurl_doors.test.js"
+      "test/systems/perfurl_doors.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  return pageParam('air', search) !== 'off';   // PERF-URL",
     "new": "  return new URL(`http://x/${search}`).searchParams.get('air') !== 'off';",
     "tests": [
-      "test/perfurl_doors.test.js"
+      "test/systems/perfurl_doors.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  return pageParam('volumetrics', search) !== 'off';   // PERF-URL",
     "new": "  const P = globalThis.URLSearchParams; return new P(search).get('volumetrics') !== 'off';",
     "tests": [
-      "test/perfurl_doors.test.js"
+      "test/systems/perfurl_doors.test.js"
     ]
   },
   {
@@ -32,26 +32,26 @@
     "old": "  return pageParam('haze', search) !== 'off';   // PERF-URL",
     "new": "  return new\n    URLSearchParams(search).get('haze') !== 'off';",
     "tests": [
-      "test/perfurl_doors.test.js"
+      "test/systems/perfurl_doors.test.js"
     ]
   },
   {
     "name": "AUDIT-PERFURL-A4-sway-parses-again",
-    "file": "src/systems/windDrive.js",
+    "file": "src/systems/wind/windDrive.js",
     "old": "  return pageParam('sway', search) === 'off';",
     "new": "  return new URLSearchParams(search).get('sway') === 'off';",
     "tests": [
-      "test/perfurl_doors.test.js",
-      "test/perfsun_fragment.test.js"
+      "test/systems/perfurl_doors.test.js",
+      "test/render/perfsun_fragment.test.js"
     ]
   },
   {
     "name": "AUDIT-PERFURL-A5-latched-key-published",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "old": "export const BOOT_DOOR_KEYS = Object.freeze(['load', 'online',",
     "new": "export const BOOT_DOOR_KEYS = Object.freeze(['renderscale', 'load', 'online',",
     "tests": [
-      "test/perfurl_doors.test.js"
+      "test/systems/perfurl_doors.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "grassDensity > 0 && pageParam('grass') !== 'off'",
     "new": "grassDensity > 0 && !pageHas('grass')",
     "tests": [
-      "test/doctrine.test.js"
+      "test/tooling/doctrine.test.js"
     ]
   }
 ]

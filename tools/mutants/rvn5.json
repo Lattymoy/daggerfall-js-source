@@ -1,245 +1,245 @@
 [
   {
     "name": "RVN5-mult-moved",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "  MULT: 2.0,",
     "new": "  MULT: 1.75,",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-cooldown-moved",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "  COOLDOWN: Object.freeze([12, 18]),",
     "new": "  COOLDOWN: Object.freeze([12, 12]),",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-iron-rank-moved",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "  IRON_RANK: 3,",
     "new": "  IRON_RANK: 2,",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-ember-amber",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "  COLOR: Object.freeze([0.95, 0.25, 0.04]),",
     "new": "  COLOR: Object.freeze([1.0, 0.42, 0.12]),",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-wind-moved",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "  WIND_PITCH: 0.7,",
     "new": "  WIND_PITCH: 0.85,",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-pyre-base-moved",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "  PYRE_BASE: Object.freeze([3, 6]),",
     "new": "  PYRE_BASE: Object.freeze([3, 5]),",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-pyre-per-moved",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "  PYRE_PER: 1,",
     "new": "  PYRE_PER: 2,",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-bank-noun-dropped",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "'Bonebreaker', 'Mountainfall']",
     "new": "'Bonebreaker']",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-pyre-nouns-swapped",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "['Pyre', 'Rimefall', 'Blight', 'Stormcall', 'Unmaking']",
     "new": "['Pyre', 'Rimefall', 'Stormcall', 'Blight', 'Unmaking']",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-imp-not-fire",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "[M.FireAtronach, 0], [M.Imp, 0],",
     "new": "[M.FireAtronach, 0],",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-lich-not-frost",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "[M.IceAtronach, 1], [M.Lich, 1], [M.AncientLich, 1],",
     "new": "[M.IceAtronach, 1], [M.AncientLich, 1],",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-rat-not-poison",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "[M.Rat, 2], [M.GiantBat, 2],",
     "new": "[M.GiantBat, 2],",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-harpy-not-shock",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "  [M.Harpy, 3],\n",
     "new": "",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-default-fire",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "PYRE_ELEMENT.get(mobileType) ?? 4;",
     "new": "PYRE_ELEMENT.get(mobileType) ?? 0;",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-draw-off-id",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "idStream(r.id, 'signame')",
     "new": "idStream('rvn5', 'signame')",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-last-noun-unreachable",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "Math.floor(idStream(r.id, 'signame')() * bank.length)",
     "new": "Math.floor(idStream(r.id, 'signame')() * (bank.length - 1))",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-no-possessive",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "return r.given ? `${possessive(r.given)} ${noun}` : noun;",
     "new": "return r.given ? `${r.given} ${noun}` : noun;",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-stamp-rank-floor",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "if (!r || (r.rank | 0) < SIG_RANK || !isSignature(r.sig)) return null;",
     "new": "if (!r || (r.rank | 0) < 1 || !isSignature(r.sig)) return null;",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-stamp-any-shape",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "if (!r || (r.rank | 0) < SIG_RANK || !isSignature(r.sig)) return null;",
     "new": "if (!r || (r.rank | 0) < SIG_RANK || !r.sig) return null;",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-stamp-iron-off-by-one",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "iron: (r.rank | 0) >= SIG.IRON_RANK,",
     "new": "iron: (r.rank | 0) > SIG.IRON_RANK,",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-stamp-unfrozen",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "  return Object.freeze({ kind: r.sig, iron:",
     "new": "  return ({ kind: r.sig, iron:",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-stamp-name-dropped",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "windPitch: SIG.WIND_PITCH, name: signatureName(r), noun: signatureNoun(r), element:",
     "new": "windPitch: SIG.WIND_PITCH, name: null, noun: signatureNoun(r), element:",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-stamp-noun-dropped",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "name: signatureName(r), noun: signatureNoun(r), element:",
     "new": "name: signatureName(r), noun: null, element:",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-spell-mult-unread",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "  const m = mult > 0 ? mult : 1;",
     "new": "  const m = 1;",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-spell-caster-only",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "element: Number.isInteger(element) ? element : 4, rangeType: 2, icon: 0,",
     "new": "element: Number.isInteger(element) ? element : 4, rangeType: 0, icon: 0,",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-spell-continuous",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "effects: [e(4, 0, {",
     "new": "effects: [e(1, 0, {",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-spell-element-default",
-    "file": "src/systems/revenantFeud.js",
+    "file": "src/systems/revenant/revenantFeud.js",
     "old": "element: Number.isInteger(element) ? element : 4, rangeType",
     "new": "element: Number.isInteger(element) ? element : 0, rangeType",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "pyre: Object.freeze({ windup: 1.2, r: 2.2, mult: 1, range: 12 }),",
     "new": "pyre: Object.freeze({ windup: 1.0, r: 2.2, mult: 1, range: 12 }),",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "pyre: Object.freeze({ windup: 1.2, r: 2.2, mult: 1, range: 12 }),",
     "new": "pyre: Object.freeze({ windup: 1.2, r: 1.8, mult: 1, range: 12 }),",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "pyre: Object.freeze({ windup: 1.2, r: 2.2, mult: 1, range: 12 }),",
     "new": "pyre: Object.freeze({ windup: 1.2, r: 2.2, mult: 1, range: 9 }),",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "if (b.kind === 'pyre') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.pyre.r;",
     "new": "if (b.kind === 'pyre') return Math.hypot(along, across) <= BLOW.pyre.r;",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ],
     "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): inBlow lives in the leaf ai/blowShapes.js since AUDIT ARENA-LADDER - the same line, its new file."
   },
@@ -285,7 +285,7 @@
     "old": "if (b.kind === 'pyre') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.pyre.r;",
     "new": "if (b.kind === 'pyre') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.leap.r;",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ],
     "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): inBlow lives in the leaf ai/blowShapes.js since AUDIT ARENA-LADDER - the same line, its new file."
   },
@@ -295,7 +295,7 @@
     "old": "  if (b.kind === 'pyre') return Math.hypot(along - (b.ahead ?? 0), across) <= BLOW.pyre.r;   // RVN5: a disc at its target's feet\n",
     "new": "",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ],
     "note": "FEUD's MERGE of main's #586-#622 (PIN MOVED): inBlow lives in the leaf ai/blowShapes.js since AUDIT ARENA-LADDER - the same line, its new file."
   },
@@ -305,7 +305,7 @@
     "old": "aimed: 0, pyre: 2 });",
     "new": "aimed: 0, pyre: 0 });",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -314,7 +314,7 @@
     "old": "aimed: 0, pyre: BLOW.pyre.range + BLOW.pyre.r });",
     "new": "aimed: 0, pyre: 0 });",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -323,7 +323,7 @@
     "old": "(kind === 'leap' || kind === 'aimed' || kind === 'pyre') ? ahead",
     "new": "(kind === 'leap' || kind === 'aimed') ? ahead",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -332,7 +332,7 @@
     "old": "kind === 'pyre' ? BLOW.pyre.r : 0)",
     "new": "kind === 'pyre' ? BLOW.leap.r : 0)",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -341,7 +341,7 @@
     "old": "    const r = BLOW[kind].r, d = Math.hypot(across, along - ahead);",
     "new": "    const r = BLOW.leap.r, d = Math.hypot(across, along - ahead);",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -350,7 +350,7 @@
     "old": "      else if (b.kind === 'leap' || b.kind === 'pyre') gl.uniform4f(U.uP, P.r, b.ahead ?? 0, 0, 0);",
     "new": "      else if (b.kind === 'leap') gl.uniform4f(U.uP, P.r, b.ahead ?? 0, 0, 0);",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -359,7 +359,7 @@
     "old": "    if (sig && now >= (s.sigReady ?? 0) && !windupNear(tf, now, ai)",
     "new": "    if (false && sig && now >= (s.sigReady ?? 0) && !windupNear(tf, now, ai)",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -368,7 +368,7 @@
     "old": "    if (sig && now >= (s.sigReady ?? 0) && !windupNear(tf, now, ai)",
     "new": "    if (sig && !windupNear(tf, now, ai)",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -377,7 +377,7 @@
     "old": "signatureReaches(ai, ent, sig.kind, dist, near, tdx, tdz) && Math.random() < BLOW_CHANCE) {",
     "new": "signatureReaches(ai, ent, sig.kind, dist, near, tdx, tdz)) {",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -386,7 +386,7 @@
     "old": "    if (has && sig?.kind === 'pyre' && _me",
     "new": "    if (false && has && sig?.kind === 'pyre' && _me",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -395,7 +395,7 @@
     "old": "    if (has && sig?.kind === 'pyre' && _me",
     "new": "    if (sig?.kind === 'pyre' && _me",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -404,7 +404,7 @@
     "old": "now >= (s.blowReady ?? 0) && now >= (s.sigReady ?? 0) && !windupNear(_me.feet, now, ai)",
     "new": "now >= (s.blowReady ?? 0) && !windupNear(_me.feet, now, ai)",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -413,7 +413,7 @@
     "old": "  const guard = sig?.iron ? 'iron' : blowGuard(",
     "new": "  const guard = blowGuard(",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -422,7 +422,7 @@
     "old": "now, sig ? sig.color : guard === 'iron' ? IRON_COLOR : BLOW_COLOR,",
     "new": "now, guard === 'iron' ? IRON_COLOR : BLOW_COLOR,",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -431,7 +431,7 @@
     "old": "  if (shape === 'pyre') b.ahead = Math.min(BLOW.pyre.range, Math.hypot(dx, dz));",
     "new": "  if (shape === 'pyre') b.ahead = 0;",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -440,7 +440,7 @@
     "old": "b.sig = true; b.mult = sig.mult; b.windPitch = sig.windPitch;",
     "new": "b.sig = true; b.windPitch = sig.windPitch;",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -449,7 +449,7 @@
     "old": "b.sig = true; b.mult = sig.mult; b.windPitch = sig.windPitch;",
     "new": "b.sig = true; b.mult = sig.mult;",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -458,7 +458,7 @@
     "old": "    s.sigReady = now + lo + (hi - lo) * Math.random();",
     "new": "    s.sigReady = now + lo;",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -467,7 +467,7 @@
     "old": "    s.sigReady = now + lo + (hi - lo) * Math.random();\n",
     "new": "",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -476,7 +476,7 @@
     "old": "    ai._sigCall = now;\n",
     "new": "",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -485,7 +485,7 @@
     "old": "if (chain === 0 && !sig && shape !== 'aimed'",
     "new": "if (chain === 0 && shape !== 'aimed'",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -494,7 +494,7 @@
     "old": "  const swings = shape !== 'aimed' && shape !== 'pyre';",
     "new": "  const swings = shape !== 'aimed';",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -503,7 +503,7 @@
     "old": "    if (atMe && hit) ai._blowPyre = { at: now, mult: b0.mult };",
     "new": "    if (atMe) ai._blowPyre = { at: now, mult: b0.mult };",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -512,7 +512,7 @@
     "old": "    if (atMe && hit) ai._blowPyre = { at: now, mult: b0.mult };",
     "new": "    if (atMe && hit) ai._blowPyre = { at: now, mult: 1 };",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -521,7 +521,7 @@
     "old": "    if (tf && !hit) { beginOverreach(ai, s, b0, now, b0.lateIn === true, atMe); return true; }   // TELL4: missed - it stands spent\n    s.state = 'wait';",
     "new": "    s.state = 'wait';",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -530,7 +530,7 @@
     "old": "    s.state = 'wait';   // the aimed shot's law",
     "new": "    s.state = 'engage'; ai._tacStrike = true; ai._blowSwing = true;   // the aimed shot's law",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -539,7 +539,7 @@
     "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;",
     "new": "  if (kind === 'pyre') return !!ai.inSight && targetKey(ai) === LOCAL;",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -548,7 +548,7 @@
     "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;",
     "new": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && targetKey(ai) === LOCAL;",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -557,7 +557,7 @@
     "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;",
     "new": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight;",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -566,7 +566,7 @@
     "old": "  if (GAP_CLOSERS.includes(kind)) return !near && gapCloses(ai, kind, dist, dx, dz, ent);",
     "new": "  if (GAP_CLOSERS.includes(kind)) return gapCloses(ai, kind, dist, dx, dz, ent);",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -575,7 +575,7 @@
     "old": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;   // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)\n  return near;",
     "new": "  if (kind === 'pyre') return dist <= BLOW.pyre.range && !!ai.inSight && targetKey(ai) === LOCAL;   // its blast is mine alone: a peer's or a foe's is RVN13's (off the wire)\n  return true;",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -584,7 +584,7 @@
     "old": "      else play(row?.barkSound, b.windPitch ?? TELL.WIND_PITCH);",
     "new": "      else play(row?.barkSound, TELL.WIND_PITCH);",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -593,7 +593,7 @@
     "old": "play(SOUND.SwingMediumPitch, b.windPitch ? TELL.WIND_CLASS_PITCH * (b.windPitch / TELL.WIND_PITCH) : TELL.WIND_CLASS_PITCH,",
     "new": "play(SOUND.SwingMediumPitch, TELL.WIND_CLASS_PITCH,",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -602,7 +602,7 @@
     "old": "c.blow.kind !== 'aimed' && c.blow.kind !== 'pyre' && (ai._blowHold",
     "new": "c.blow.kind !== 'aimed' && (ai._blowHold",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -611,7 +611,7 @@
     "old": "      if (f.ai._sigCall || f.ai._blowPyre) signatureFrame(f);   // RVN5: its signature called, its pyre's blast\n",
     "new": "",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -620,7 +620,7 @@
     "old": "      const r = sb && !f._sigCalled ? revenantById(f.entity.revenant.id) : null;\n      if (r) { f._sigCalled = true; revenantSay(revenantSignatureEvent(r, sb.noun, { archive: f.archive, playerName: playerEntity?.name }), say); }",
     "new": "      const r = sb ? revenantById(f.entity.revenant.id) : null;\n      if (r) { f._sigCalled = true; revenantSay(revenantSignatureEvent(r, sb.noun, { archive: f.archive, playerName: playerEntity?.name }), say); }",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -629,7 +629,7 @@
     "old": "    if (f.ai._sigCall) {\n      f.ai._sigCall = null;\n      const r = sb && !f._sigCalled",
     "new": "    if (f.ai._sigCall) {\n      const r = sb && !f._sigCalled",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -638,7 +638,7 @@
     "old": "      if (r) { f._sigCalled = true; revenantSay(revenantSignatureEvent(r, sb.noun, { archive: f.archive, playerName: playerEntity?.name }), say); }",
     "new": "      if (r) { f._sigCalled = true; }",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -647,7 +647,7 @@
     "old": "revenantSignatureEvent(r, sb.noun, { archive: f.archive, playerName: playerEntity?.name })",
     "new": "revenantSignatureEvent(r, sb.name, { archive: f.archive, playerName: playerEntity?.name })",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -656,7 +656,7 @@
     "old": "        magicHooks?.strikePlayer?.(pyreSpell(sb.name, sb.element, p.mult), f.entity.level ?? 1, f);\n",
     "new": "",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -665,7 +665,7 @@
     "old": "magicHooks?.strikePlayer?.(pyreSpell(sb.name, sb.element, p.mult), f.entity.level ?? 1, f);",
     "new": "magicHooks?.strikePlayer?.(pyreSpell(sb.name, sb.element, 1), f.entity.level ?? 1, f);",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -674,7 +674,7 @@
     "old": "        audio?.play3dId?.(SPELL_CAST_SOUND[sb.element] ?? SPELL_CAST_SOUND[4], [f.ai.feet[0]",
     "new": "        audio?.play3dId?.(SPELL_CAST_SOUND[4], [f.ai.feet[0]",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -683,7 +683,7 @@
     "old": "      f.ai._blowPyre = null;\n      if (sb?.kind === 'pyre') {\n        audio?.play3dId",
     "new": "      f.ai._blowPyre = null;\n      if (sb) {\n        audio?.play3dId",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -692,7 +692,7 @@
     "old": "      if (f.ai._sigCall || f.ai._blowPyre) signatureDungeonFrame(f);   // RVN5: its signature called, its pyre's blast\n",
     "new": "",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -701,7 +701,7 @@
     "old": "        magic.strikePlayerFrom(pyreSpell(sb.name, sb.element, p.mult), f.entity.level ?? 1, f);",
     "new": "        magic.applySpellToPlayer(pyreSpell(sb.name, sb.element, p.mult), f.entity.level ?? 1, null);",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -710,7 +710,7 @@
     "old": "applySpellToPlayer(spell, casterLevel, foe?.entity ? { entity: foe.entity, sinks: foeSinks(foe), foe } : null),",
     "new": "applySpellToPlayer(spell, casterLevel, foe?.entity ? { entity: foe.entity } : null),",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -719,7 +719,7 @@
     "old": "{ if (walkMode && playerSpawned) magic.strikePlayerFrom(spell, casterLevel, foe); },",
     "new": "{ },",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -728,7 +728,7 @@
     "old": "{ if (walkMode) magic.strikePlayerFrom(spell, casterLevel, foe); },",
     "new": "{ },",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -737,79 +737,79 @@
     "old": "strikePlayer: (spell, casterLevel, foe) => magic.strikePlayerFrom(spell, casterLevel, foe),",
     "new": "strikePlayer: () => {},",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-stand-unstamped",
-    "file": "src/systems/revenant.js",
-    "old": "edge: adaptEdge(r.learned, r.weak), sigBlow: signatureStamp(r) });",
-    "new": "edge: adaptEdge(r.learned, r.weak), sigBlow: null });",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "sigBlow: signatureStamp(r), person: revenantPerson(r), dread",
+    "new": "sigBlow: null, person: revenantPerson(r), dread",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-kicker-dropped",
-    "file": "src/systems/revenant.js",
+    "file": "src/systems/revenant/revenant.js",
     "old": "  signature: 'Signature', lair: 'Its lair',",
     "new": "  lair: 'Its lair',",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-call-words-moved",
-    "file": "src/systems/revenant.js",
+    "file": "src/systems/revenant/revenant.js",
     "old": "  const body = `${r.given} readies ${noun ?? 'its signature'}!`;",
     "new": "  const body = `${r.given} winds up ${noun ?? 'its signature'}!`;",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-page-rank-1",
-    "file": "src/ui/revenantPage.js",
+    "file": "src/ui/revenant/revenantPage.js",
     "old": "  const sig = signatureStamp(r);\n  if (!sig?.name) return '';",
     "new": "  const sig = signatureStamp({ ...r, rank: Math.max(2, r?.rank | 0) });\n  if (!sig?.name) return '';",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-page-switch-unread",
-    "file": "src/ui/revenantPage.js",
+    "file": "src/ui/revenant/revenantPage.js",
     "old": "${enhanced ? '' : ' (with Enhanced AI)'}.`;",
     "new": ".`;",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-page-iron-unsaid",
-    "file": "src/ui/revenantPage.js",
+    "file": "src/ui/revenant/revenantPage.js",
     "old": "${sig.iron ? ', unstoppable' : ''}",
     "new": "",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-page-shape-unsaid",
-    "file": "src/ui/revenantPage.js",
+    "file": "src/ui/revenant/revenantPage.js",
     "old": "${what ? ` - ${what}` : ''}",
     "new": "",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
     "name": "RVN5-page-row-unwired",
-    "file": "src/ui/revenantPage.js",
+    "file": "src/ui/revenant/revenantPage.js",
     "old": "  if (sig) text.append(el('span', 'rvn-will', sig));\n",
     "new": "",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   },
   {
@@ -818,7 +818,7 @@
     "old": "export const WIRE_KINDS = Object.freeze(['lunge', 'sweep', 'slam', 'ring', 'charge', 'leap', 'aimed']);",
     "new": "export const WIRE_KINDS = Object.freeze(['lunge', 'sweep', 'slam', 'ring', 'charge', 'leap', 'aimed', 'pyre']);",
     "tests": [
-      "test/rvn5_sig.test.js"
+      "test/systems/rvn5_sig.test.js"
     ]
   }
 ]

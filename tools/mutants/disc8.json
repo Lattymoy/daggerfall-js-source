@@ -5,7 +5,7 @@
     "old": "  holdFrame() {\n    this.jumped = false;\n    this.parkoured = null;\n    this.landedFallDistance = 0;\n",
     "new": "  holdFrame() {\n",
     "tests": [
-      "test/disc8.test.js"
+      "test/systems/disc8.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "        if (_overlayHeld || _seasonHeld || _rideHeld) player.holdFrame();",
     "new": "",
     "tests": [
-      "test/disc8.test.js"
+      "test/systems/disc8.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (_overlayHeld) player.holdFrame();",
     "new": "",
     "tests": [
-      "test/disc8.test.js"
+      "test/systems/disc8.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    this.holdFrame();   // DISC8-G: a landing reported before the warp is not the arrival's\n",
     "new": "",
     "tests": [
-      "test/disc8.test.js"
+      "test/systems/disc8.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    isCloseWindowDeferred = false;\n    win.done = true;   // CloseWindow",
     "new": "    isCloseWindowDeferred = false;",
     "tests": [
-      "test/disc8.test.js"
+      "test/systems/disc8.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (!isCloseWindowDeferred || !closesIt(code, e)) return;",
     "new": "    if (!closesIt(code, e)) return;",
     "tests": [
-      "test/disc8.test.js"
+      "test/systems/disc8.test.js"
     ]
   },
   {
@@ -59,25 +59,25 @@
     "old": "    return c === 'Escape' || codeMeans(bindings(), c, 'UseMagicItem');",
     "new": "    return codeMeans(bindings(), c, 'UseMagicItem');",
     "tests": [
-      "test/disc8.test.js"
+      "test/systems/disc8.test.js"
     ]
   },
   {
     "name": "DISC8C-plan-y-with-z",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "(frame?.origin[1] ?? 0) - z];",
     "new": "z - (frame?.origin[1] ?? 0)];",
     "tests": [
-      "test/disc8.test.js"
+      "test/systems/disc8.test.js"
     ]
   },
   {
     "name": "DISC8C-wash-in-world-units",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "    if (tint) tint.occupancy = occToPlan(tint.occupancy, f.bounds);\n",
     "new": "",
     "tests": [
-      "test/disc8.test.js"
+      "test/systems/disc8.test.js"
     ]
   },
   {
@@ -86,34 +86,34 @@
     "old": "    if (dy < 0 && out.grounded && ((feet[0] - vx0) ** 2",
     "new": "    if (false && dy < 0 && out.grounded && ((feet[0] - vx0) ** 2",
     "tests": [
-      "test/disc8.test.js"
+      "test/systems/disc8.test.js"
     ]
   },
   {
     "name": "DISC9-the-ear-reads-the-sim",
-    "file": "src/systems/weatherSim.js",
+    "file": "src/systems/weather/weatherSim.js",
     "old": "export const heardWeather = () => (_heard != null && _heardAtJump === _jumps ? _heard : currentWeather());",
     "new": "export const heardWeather = () => currentWeather();",
     "tests": [
-      "test/disc8.test.js"
+      "test/systems/disc8.test.js"
     ]
   },
   {
     "name": "DISC9-heard-outlives-a-jump",
-    "file": "src/systems/weatherSim.js",
+    "file": "src/systems/weather/weatherSim.js",
     "old": "export const heardWeather = () => (_heard != null && _heardAtJump === _jumps ? _heard",
     "new": "export const heardWeather = () => (_heard != null ? _heard",
     "tests": [
-      "test/disc8.test.js"
+      "test/systems/disc8.test.js"
     ]
   },
   {
     "name": "DISC9-world-never-writes-the-ear",
     "file": "src/scenes/world.js",
-    "old": "    setHeardWeather(ambientWord, enhancedFront ? fx.intensity : 1);   // DISC9",
+    "old": "    setHeardWeather(ambientWord, enhancedFront ? fx.rain ?? fx.intensity : 1, enhancedFront ? fx : null);   // DISC9/DISC11: what the street hears - word AND level - is what every indoor ear hears through the walls; AUDIT PRECIP FALL-4: the drops' level, and the whole fall at its share for the skin",
     "new": "    // DISC9",
     "tests": [
-      "test/disc8.test.js"
+      "test/systems/disc8.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    setHeardWeather(ambientWord, enhancedFront ? fx.intensity : 1);   // DISC9",
     "new": "    // DISC9",
     "tests": [
-      "test/disc8.test.js"
+      "test/systems/disc8.test.js"
     ]
   }
 ]

@@ -1,0 +1,236 @@
+[
+  {
+    "name": "CRAFT-PROCS-the-pass-removed",
+    "file": "src/systems/smithItems.js",
+    "old": "      if (Number.isSafeInteger(version) && version >= MINT_V_LAST_PASS) lastPass([item], rolls, { on: true });\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-pass-on-a-fresh-stream",
+    "file": "src/systems/smithItems.js",
+    "old": "lastPass([item], rolls, { on: true })",
+    "new": "lastPass([item], seededRng(seed >>> 0), { on: true })",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-pass-on-Math.random",
+    "file": "src/systems/smithItems.js",
+    "old": "lastPass([item], rolls, { on: true })",
+    "new": "lastPass([item], Math.random, { on: true })",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-roll-on-a-stream-of-its-own",
+    "file": "src/systems/smithItems.js",
+    "old": "      applyRarity(item, eff.rarity, rolls, null, { fits });\n",
+    "new": "      applyRarity(item, eff.rarity, seededRng(seed >>> 0), null, { fits });\n",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-gate-inverted",
+    "file": "src/systems/smithItems.js",
+    "old": "version >= MINT_V_LAST_PASS) lastPass",
+    "new": "version < MINT_V_LAST_PASS) lastPass",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-gate-removed",
+    "file": "src/systems/smithItems.js",
+    "old": "if (Number.isSafeInteger(version) && version >= MINT_V_LAST_PASS) lastPass",
+    "new": "lastPass",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-craft-pass-asks-the-switch",
+    "file": "src/systems/smithItems.js",
+    "old": "lastPass([item], rolls, { on: true })",
+    "new": "lastPass([item], rolls)",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-pass-hands-the-proc-roll-no-switch",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "rollProcLine(it, rolls, on);",
+    "new": "rollProcLine(it, rolls);",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-proc-roll-asks-the-switch-itself",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "  if (!on || (item?.rarity !== 'magic' && item?.rarity !== 'rare') || !Array.isArray(item.affixes)) return null;",
+    "new": "  if (!lootRarityOn() || (item?.rarity !== 'magic' && item?.rarity !== 'rare') || !Array.isArray(item.affixes)) return null;",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-answer-mints-at-no-record",
+    "file": "src/systems/smithItems.js",
+    "old": "mintPiece({ ...data, version: mintVersionOf(p.record) }, p.provenance)",
+    "new": "mintPiece(data, p.provenance)",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-temper-mints-at-the-old-law",
+    "file": "src/systems/smithItems.js",
+    "old": "hand: c.f ?? null, version: c.v ?? 0 }, c.p)",
+    "new": "hand: c.f ?? null, version: 0 }, c.p)",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-record-names-no-version",
+    "file": "src/net/productRecord.js",
+    "old": "export const mintVersionOf = (rec) => readProductRecord(rec)?.v ?? 0;",
+    "new": "export const mintVersionOf = (rec) => (readProductRecord(rec) ? 0 : 0);",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-record-takes-any-version",
+    "file": "src/net/productRecord.js",
+    "old": "  if (c.v !== undefined && !(Number.isSafeInteger(c.v) && c.v >= MINT_V_LAST_PASS)) return false;   // CRAFT-PROCS: the mint's version\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-record-takes-version-0",
+    "file": "src/net/productRecord.js",
+    "old": "Number.isSafeInteger(c.v) && c.v >= MINT_V_LAST_PASS",
+    "new": "Number.isSafeInteger(c.v) && c.v >= 0",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-record-drops-its-version",
+    "file": "src/net/productRecord.js",
+    "old": ", ...(v == null ? {} : { v }) };",
+    "new": " };",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-service-stamps-nothing",
+    "file": "server-account/src/professions.js",
+    "old": "u, f: hand, v: MINT_VERSION }",
+    "new": "u, f: hand }",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-temper-drops-the-stamp",
+    "file": "server-account/src/professions.js",
+    "old": "f: c.f ?? null, v: c.v ?? null }",
+    "new": "f: c.f ?? null }",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-temper-stamps-the-new-law-on-an-old-piece",
+    "file": "server-account/src/professions.js",
+    "old": "f: c.f ?? null, v: c.v ?? null }",
+    "new": "f: c.f ?? null, v: MINT_VERSION }",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-market-piece-has-no-version",
+    "file": "server-account/src/market.js",
+    "old": "  ...mintVersionView(p.record),   // CRAFT-PROCS: a piece made before mints as it was\n",
+    "new": "",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-market-piece-version-any",
+    "file": "server-account/src/market.js",
+    "old": "return v ? { version: v } : {};",
+    "new": "return { version: 1 };",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-road-reads-no-record",
+    "file": "server-account/src/market.js",
+    "old": "p.dye, p.hand, p.record,\n    p.template, p.material, p.provenance FROM market_deliveries d",
+    "new": "p.dye, p.hand,\n    p.template, p.material, p.provenance FROM market_deliveries d",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-crafted-view-reads-no-record",
+    "file": "server-account/src/market.js",
+    "old": "p.hand, p.record, p.template, p.material AS dfu_material\n      ${from}",
+    "new": "p.hand, p.template, p.material AS dfu_material\n      ${from}",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-auctions-view-reads-no-record",
+    "file": "server-account/src/market.js",
+    "old": "SELECT a.*, p.recipe, p.quality, p.seed, p.maker, p.marked, p.dye, p.hand, p.record, p.template",
+    "new": "SELECT a.*, p.recipe, p.quality, p.seed, p.maker, p.marked, p.dye, p.hand, p.template",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-sellers-listings-read-no-record",
+    "file": "server-account/src/market.js",
+    "old": "p.hand, p.record, p.template, p.material AS dfu_material\n      FROM market_listings l LEFT JOIN products p",
+    "new": "p.hand, p.template, p.material AS dfu_material\n      FROM market_listings l LEFT JOIN products p",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-sellers-auctions-read-no-record",
+    "file": "server-account/src/market.js",
+    "old": "SELECT a.*, ${GONE_RECIPE_SQL}, p.quality, p.seed, p.maker, p.marked, p.dye, p.hand, p.record, p.template",
+    "new": "SELECT a.*, ${GONE_RECIPE_SQL}, p.quality, p.seed, p.maker, p.marked, p.dye, p.hand, p.template",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  },
+  {
+    "name": "CRAFT-PROCS-the-bids-read-no-record",
+    "file": "server-account/src/market.js",
+    "old": "a.wear, ${GONE_RECIPE_SQL}, p.quality, p.seed, p.maker, p.marked, p.dye, p.hand, p.record, p.template",
+    "new": "a.wear, ${GONE_RECIPE_SQL}, p.quality, p.seed, p.maker, p.marked, p.dye, p.hand, p.template",
+    "tests": [
+      "test/systems/fb1013e_craftprocs.test.js"
+    ]
+  }
+]

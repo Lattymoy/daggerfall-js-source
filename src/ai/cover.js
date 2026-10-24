@@ -9,7 +9,10 @@
 // and the foes', arrow and spell bolt) ask the index after the collider. With the switch off nothing reads it.
 //
 // The index rides its collider (`collider.cover`) and its sets are keyed like the collider's buckets, so a pixel, a
-// building or a dungeon that leaves takes its cover with it (Collider.removeBucket). A set's points are the flats'
+// building or a dungeon that leaves takes its cover with it (Collider.removeBucket). PROP-BODIES: a set holds a flat's
+// BODY beside its cover - a proxy marked `body` (world/propBodies.js), filed in a grid of its own that no sight ray or
+// missile reads and only the player's clamp asks (`near`, player/bodyClamp.js) - so a body rides every set's lifecycle
+// as its cover does, whatever the Enhanced AI switch. A set's points are the flats'
 // own [x, y, z] base arrays, by reference, in the set's own frame; `t()` is the frame's translation (a streaming
 // pixel's), so a recentre moves the cover as it moves the meshes, and a felled tree sunk in its batch sinks its
 // cover with it.
@@ -28,6 +31,11 @@ export const COVER_HEIGHT_FRAC = 0.9;
 export const NOT_COVER_ARCHIVES = Object.freeze(new Set([199, 201, 210, 216]));
 /** The broad phase's cell, metres. */
 export const COVER_CELL = 4;
+/** AUDIT BANTHA1 TREE-1: a proxy wider than a cell (a jungle tree's crown, up to 15 m) is filed ONCE, under its centre's
+ *  cell of this wide grid, beside the fine one - filed in every 4 m cell it touched, a jungle pixel's 10,500 proxies
+ *  were 148,000 references in 43,000 cells, 26-99 ms of the main thread and 11 MB a pixel - and a ray searches the wide
+ *  cells within its set's widest such radius of it. Metres. */
+export const COVER_WIDE = 32;
 
 /** Is this flat cover? `size` is its drawn { w, h } (rmbFlats billboardSize). */
 export function isCoverFlat(archive, record, size) {
@@ -38,7 +46,7 @@ export function isCoverFlat(archive, record, size) {
 
 /** The proxy of one flat: `base` its [x, y, z] (the billboard's BASE, bottom-anchored), by reference. */
 export function coverProxy(base, size) {
-  return { c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0 };
+  return { c: base, r: size.w * COVER_RADIUS_FRAC, h: size.h * COVER_HEIGHT_FRAC, lift: 0, _mark: 0 };   // MEM-AUDIT: born with the index's mark (fileIn, below)
 }
 /** AUDIT TACT B2: a TREE is its trunk and its crown, not one fat column - the design's "a tree: its trunk's width to
  *  its crown's height". The trunk a body's width (COVER_TRUNK_R) up to where the crown starts, the crown the drawn
@@ -49,8 +57,8 @@ export function coverProxies(base, size, { tree = false } = {}) {
   if (!tree) return [coverProxy(base, size)];
   const h = size.h * COVER_HEIGHT_FRAC, from = size.h * COVER_CROWN_FROM;
   return [
-    { c: base, r: Math.min(size.w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h: from, lift: 0 },
-    { c: base, r: size.w * COVER_RADIUS_FRAC, h: h - from, lift: from },
+    { c: base, r: Math.min(size.w * COVER_RADIUS_FRAC, COVER_TRUNK_R), h: from, lift: 0, _mark: 0 },
+    { c: base, r: size.w * COVER_RADIUS_FRAC, h: h - from, lift: from, _mark: 0 },
   ];
 }
 
@@ -104,6 +112,21 @@ const _lo = [0, 0, 0];   // AUDIT TACT D11: the ray in a set's frame - one scrat
 /** AUDIT TACT D11: a broad-phase cell's key as a number (no string a cell a ray); cells within +-32768 of the frame's
  *  origin - 131 km at 4 m, past any pixel or room. */
 const cellKey = (gx, gz) => (gx + 32768) * 65536 + (gz + 32768);
+/** MEM-AUDIT (2026-10-23): A CELL IS HELD AT ITS SIZE WHILE IT IS SMALL. The index was the largest thing a streamed world
+ *  kept - ~290 MB of the 1.16 GB live heap at Knightstale's 121 pixels (V8's sampling profile, `fill` and the proxies) -
+ *  and most of it air: a cell grown by push from [] has seventeen slots from its first (AUDIT C4), and most cells hold
+ *  one to three proxies. Below CELL_EXACT a cell is copied one longer, in the same order, so it holds exactly its own; past it, pushed.
+ *  A ray, a body's query and the probes read the same proxies in the same order. */
+export const CELL_EXACT = 16;
+function fileIn(grid, k, it) {
+  const cell = grid.get(k);
+  if (!cell) { grid.set(k, [it]); return; }
+  if (cell.length >= CELL_EXACT) { cell.push(it); return; }
+  grid.set(k, cell.concat([it]));   // AUDIT MEM-AUDIT C3: packed and exact - one array shape, as the pushed cells were (a holey copy made the ray's loop polymorphic)
+}
+// MEM-AUDIT: and every proxy's maker gives it the index's `_mark` at birth, last of its keys (coverProxy, coverProxies,
+// propBodies.js, the jungle's) - added first by `fill` (which still zeroes it: a proxy may be filed in two indexes), it was
+// a map transition and an out-of-line property array a proxy (AUDIT C4), a million and a half of them at Knightstale.
 
 /** TACT1: cover is read with the Enhanced AI switch on - this module is the switch's one reader for it, so a host
  *  stands its index without seeing the switch (enhancedAI4's AUDIT 55 holds who may). */
@@ -114,38 +137,80 @@ export const coverSwitchOn = () => getPref('enhancedAI') === true;
  * @param {{ enabled?: () => boolean }} [opts] `enabled` - is cover read at all (by default the Enhanced AI switch)
  */
 export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
-  /** @type {Map<any, { items: any[], t: () => number[], grid: Map<string, any[]>, min: number[], max: number[] }>} */
+  /** @type {Map<any, { items: any[], t: () => number[], grid: Map<number, any[]>, wide: Map<number, any[]>, wideR: number, min: number[], max: number[], bodies: Map<number, any[]>, bodyN: number }>} */
   const sets = new Map();
   let stamp = 0;
 
+  /** A set of no proxies yet, `t` its frame's translation - in the index once placed (add, place). */
+  const fresh = (t) => ({ items: [], t: t || (() => ZERO3), grid: new Map(), wide: new Map(), wideR: 0, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity], bodies: new Map(), bodyN: 0 });
   /** Add proxies to the set `key` (appended to what it holds); `t` its frame's translation. */
   function add(key, items, t = null) {
     let set = sets.get(key);
-    if (!set) {
-      set = { items: [], t: t || (() => ZERO3), grid: new Map(), min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };
-      sets.set(key, set);
-    }
+    if (!set) sets.set(key, (set = fresh(t)));
+    return fill(set, items);
+  }
+  /** Proxies into a set, placed or not. */
+  function fill(set, items) {
     for (const it of items) {
       if (!(it?.r > 0) || !(it.h > 0) || !it.c || it.c.noCover) continue;   // AUDIT TACT B3: a person is no cover
       it._mark = 0;
+      if (it.body) { fileBody(set, it); continue; }   // PROP-BODIES: a body, never cover
       set.items.push(it);
       const [x, y, z] = it.c;
       set.min[0] = Math.min(set.min[0], x - it.r); set.max[0] = Math.max(set.max[0], x + it.r);
       set.min[1] = Math.min(set.min[1], y - 64); set.max[1] = Math.max(set.max[1], y + (it.lift ?? 0) + it.h + 64);   // slack, not a bound
       set.min[2] = Math.min(set.min[2], z - it.r); set.max[2] = Math.max(set.max[2], z + it.r);
+      if (it.r > COVER_CELL) {   // TREE-1: a wide proxy, once, under its centre
+        fileIn(set.wide, cellKey(Math.floor(x / COVER_WIDE), Math.floor(z / COVER_WIDE)), it);
+        if (it.r > set.wideR) set.wideR = it.r;
+        continue;
+      }
       for (let gx = Math.floor((x - it.r) / COVER_CELL); gx <= Math.floor((x + it.r) / COVER_CELL); gx++) {
-        for (let gz = Math.floor((z - it.r) / COVER_CELL); gz <= Math.floor((z + it.r) / COVER_CELL); gz++) {
-          const k = cellKey(gx, gz);
-          let cell = set.grid.get(k);
-          if (!cell) set.grid.set(k, cell = []);
-          cell.push(it);
-        }
+        for (let gz = Math.floor((z - it.r) / COVER_CELL); gz <= Math.floor((z + it.r) / COVER_CELL); gz++) fileIn(set.grid, cellKey(gx, gz), it);
       }
     }
     return set.items.length;
   }
 
+  /** PROP-BODIES: a body into its set's own grid - every cell its foot circle touches, so a query reaching the circle
+   *  meets one of them. */
+  function fileBody(set, it) {
+    const [x, , z] = it.c;
+    set.bodyN += 1;
+    for (let gx = Math.floor((x - it.r) / COVER_CELL); gx <= Math.floor((x + it.r) / COVER_CELL); gx++) {
+      for (let gz = Math.floor((z - it.r) / COVER_CELL); gz <= Math.floor((z + it.r) / COVER_CELL); gz++) fileIn(set.bodies, cellKey(gx, gz), it);
+    }
+  }
+
+  /** PROP-BODIES: every body whose foot circle, widened by `reach`, holds the point `p` (x and z), handed to `visit`
+   *  with its foot in the world's frame (x, the bottom of its span, z) - once each; a felled tree's and a person's none. */
+  function near(p, reach, visit) {
+    for (const set of sets.values()) {
+      if (!set.bodyN) continue;
+      const t = set.t(), x = p[0] - t[0], z = p[2] - t[2];
+      stamp += 1;
+      for (let gx = Math.floor((x - reach) / COVER_CELL); gx <= Math.floor((x + reach) / COVER_CELL); gx++) {
+        for (let gz = Math.floor((z - reach) / COVER_CELL); gz <= Math.floor((z + reach) / COVER_CELL); gz++) {
+          const cell = set.bodies.get(cellKey(gx, gz));
+          if (!cell) continue;
+          for (const it of cell) {
+            if (it._mark === stamp) continue;
+            it._mark = stamp;
+            const c = it.c;
+            if (FELLED.has(c) || c.noCover) continue;
+            const dx = x - c[0], dz = z - c[2], R = it.r + reach;
+            if (dx * dx + dz * dz < R * R) visit(it, c[0] + t[0], c[1] + t[1] + (it.lift ?? 0), c[2] + t[2]);
+          }
+        }
+      }
+    }
+  }
+
   function remove(key) { sets.delete(key); }
+  /** AUDIT PRECIP HOST-7: a set built aside (`staged`, filled a slice at a time with `fill`) put in for `key` in one
+   *  step, whatever it held before - a pixel re-skinned in place trades its cover as it trades its flats, never a frame
+   *  with neither or both. */
+  function place(key, set) { sets.set(key, set); }
 
   /** The nearest cover along the unit ray `dir` from `origin` within `maxDist`; Infinity for none. `sight`: the ray
    *  is a line of sight to a target at `maxDist`, which a proxy holding that end does not hide (AUDIT TACT B2). */
@@ -176,17 +241,38 @@ export function createCoverIndex({ enabled = coverSwitchOn } = {}) {
           }
         }
       }
+      if (set.wideR > 0) {   // TREE-1: the wide proxies whose centre stands within the widest radius of the ray's box
+        const R = set.wideR;
+        const wx0 = Math.floor((Math.min(lo[0], ex) - R) / COVER_WIDE), wx1 = Math.floor((Math.max(lo[0], ex) + R) / COVER_WIDE);
+        const wz0 = Math.floor((Math.min(lo[2], ez) - R) / COVER_WIDE), wz1 = Math.floor((Math.max(lo[2], ez) + R) / COVER_WIDE);
+        for (let gx = wx0; gx <= wx1; gx++) {
+          for (let gz = wz0; gz <= wz1; gz++) {
+            const cell = set.wide.get(cellKey(gx, gz));
+            if (!cell) continue;
+            for (const it of cell) {
+              const s = rayCylinder(lo, dir, it, Math.min(maxDist, best), endAt);
+              if (s < best) best = s;
+            }
+          }
+        }
+      }
     }
     return best;
   }
 
   return {
-    add, remove, hit,
+    add, remove, hit, fill, place, near,
+    /** AUDIT PRECIP HOST-7: a set of no proxies, outside the index until it is placed. */
+    staged: (t = null) => fresh(t),
     /** Is cover read at all (the Enhanced AI switch). */
     on: () => !!enabled(),
     /** How many proxies, over every set (tests, probes). */
     size: () => { let n = 0; for (const s of sets.values()) n += s.items.length; return n; },
+    /** AUDIT BANTHA1 TREE-1: how many references the grids hold, over every set (tests, probes) - a wide proxy is one. */
+    refs: () => { let n = 0; for (const s of sets.values()) for (const g of [s.grid, s.wide]) for (const cell of g.values()) n += cell.length; return n; },
     has: (key) => sets.has(key),
+    /** PROP-BODIES: how many bodies, over every set (tests, probes). */
+    bodies: () => { let n = 0; for (const s of sets.values()) n += s.bodyN; return n; },
   };
 }
 

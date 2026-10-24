@@ -1,0 +1,1060 @@
+[
+  {
+    "name": "EGZS-storm-fifth",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_STORM_N = 5;",
+    "new": "export const EG_STORM_N = 6;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "Bladestorm every sixth"
+  },
+  {
+    "name": "EGZS-storm-reach",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_STORM_M = 3;",
+    "new": "export const EG_STORM_M = 3.1;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "Bladestorm within 3.1 m"
+  },
+  {
+    "name": "EGZS-weave-fourth",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_WEAVE_N = 4;",
+    "new": "export const EG_WEAVE_N = 5;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "Spellweave every fifth"
+  },
+  {
+    "name": "EGZS-far-reach",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_FAR_M = 12;",
+    "new": "export const EG_FAR_M = 11;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "beyond 11 m"
+  },
+  {
+    "name": "EGZS-hammer-share",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_HAMMER_X = 0.08;",
+    "new": "export const EG_HAMMER_X = 0.09;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js",
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "Hammer and Anvil 9%"
+  },
+  {
+    "name": "EGZS-ambush-share",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_AMBUSH_X = 0.15;",
+    "new": "export const EG_AMBUSH_X = 0.16;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js",
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "Ambush 16%"
+  },
+  {
+    "name": "EGZS-wall-share",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_WALL_X = 0.1;",
+    "new": "export const EG_WALL_X = 0.12;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js",
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "Living Wall 12%"
+  },
+  {
+    "name": "EGZS-kindled-reach",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "export const EG_KINDLED_M = 2;",
+    "new": "export const EG_KINDLED_M = 2.1;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js",
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "Kindled Steel 2.1 m"
+  },
+  {
+    "name": "EGZS-pair-reach",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "Math.hypot(o.x - m.x, o.z - m.z) <= EG_ACCORD_M).map((o) => o.sub);",
+    "new": "Math.hypot(o.x - m.x, o.z - m.z) < EG_ACCORD_M).map((o) => o.sub);",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "an Accord short of 10 m"
+  },
+  {
+    "name": "EGZS-pair-one-member",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "return ms.filter((o) => o.sub !== me && egRankOf(o.vs, other) > 0",
+    "new": "return ms.filter((o) => egRankOf(o.vs, other) > 0",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "one member holding both a pair"
+  },
+  {
+    "name": "EGZS-pair-side-unread",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "if (!A || !m || !(egRankOf(m.vs, A[as]) > 0)) return [];",
+    "new": "if (!A || !m) return [];",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "my side of the Accord unread"
+  },
+  {
+    "name": "EGZS-pair-mate-half-unread",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "o.sub !== me && egRankOf(o.vs, other) > 0 && Math.hypot",
+    "new": "o.sub !== me && Math.hypot",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the mate's half unread"
+  },
+  {
+    "name": "EGZS-pair-other-side",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "const other = as === 'a' ? A.b : A.a;",
+    "new": "const other = A.b;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "side b's other half read as side a's"
+  },
+  {
+    "name": "EGZS-card-held-takes",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "if (!V || egRankOf(vs, V.key) > 0) return [];",
+    "new": "if (!V) return [];",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a Vestige held already takes an Accord"
+  },
+  {
+    "name": "EGZS-card-mastery-takes",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "const V = card < 100 ? EG_VESTIGES[card] : null;",
+    "new": "const V = EG_VESTIGES[card % 100];",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a Mastery takes an Accord"
+  },
+  {
+    "name": "EGZS-card-side-b-unread",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "const other = A.a === V.key ? A.b : A.b === V.key ? A.a : null;",
+    "new": "const other = A.a === V.key ? A.b : null;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a card on an Accord's second side takes none"
+  },
+  {
+    "name": "EGZS-longsight-literal",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "if (r !== HIT_KINDS.Melee && d > EG_FAR_M) x *= 1 + egVOf(vs, 'longsight');",
+    "new": "if (r !== HIT_KINDS.Melee && d > 11) x *= 1 + egVOf(vs, 'longsight');",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "Long Sight off the law's reach"
+  },
+  {
+    "name": "EGZS-hammer-unapplied",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "if (mk && body.marked.by && egAccordMates(ms, sub, 'hammer', 'a').includes(body.marked.by)) x *= 1 + EG_HAMMER_X;",
+    "new": "void EG_HAMMER_X;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "Hammer and Anvil never applied"
+  },
+  {
+    "name": "EGZS-hammer-any-mark",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "egAccordMates(ms, sub, 'hammer', 'a').includes(body.marked.by)) x *=",
+    "new": "egAccordMates(ms, sub, 'hammer', 'a').length) x *=",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "any mark taken for the mate's"
+  },
+  {
+    "name": "EGZS-mark-layer-unkept",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "until: now + EG_MARK_MS, by: hm ? by : cur?.by ?? by,",
+    "new": "until: now + EG_MARK_MS, by: '',",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "Hunter's Mark keeps no layer"
+  },
+  {
+    "name": "EGZS-mark-layer-unsaid",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (egMarkFoe(mm, body, m.r, now, sub, far)) egSpotted(",
+    "new": "if (egMarkFoe(mm, body, m.r, now, '', far)) egSpotted(",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "the director names no layer"
+  },
+  {
+    "name": "EGZS-ambush-unarmed-read",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "if (m.amb && egAccordMates(ms, sub, 'ambush', 'a').length) x *= 1 + EG_AMBUSH_X;",
+    "new": "if (egAccordMates(ms, sub, 'ambush', 'a').length) x *= 1 + EG_AMBUSH_X;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "Ambush on every blow"
+  },
+  {
+    "name": "EGZS-ambush-never-armed",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "  m.amb = 1;\n",
+    "new": "\n",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "a Fade arms no Ambush"
+  },
+  {
+    "name": "EGZS-ambush-never-spent",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  mm.amb = 0;   // EG-ZS",
+    "new": "  void 0;   // EG-ZS",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "Ambush never spent"
+  },
+  {
+    "name": "EGZS-company-striker-missing",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "return pose ? [{ sub, vs: B.mem[sub]?.vs ?? [], x: pose.x, z: pose.z }, ...ms] : ms;",
+    "new": "return ms;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "the striker missing from the company"
+  },
+  {
+    "name": "EGZS-echo-share-whole",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "'warchorus', 'a').length ? 1 : EG_ECHO_SHARE);",
+    "new": "'warchorus', 'a').length ? 1 : 1);",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "an Echo whole without War-Chorus"
+  },
+  {
+    "name": "EGZS-warchorus-unread",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "'warchorus', 'a').length ? 1 : EG_ECHO_SHARE);",
+    "new": "'warchorus', 'a').length ? EG_ECHO_SHARE : EG_ECHO_SHARE);",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "War-Chorus unread"
+  },
+  {
+    "name": "EGZS-warchorus-key",
+    "file": "src/net/eliteGates/egRun.js",
+    "old": "sub, 'warchorus', 'a')",
+    "new": "sub, 'ambush', 'a')",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "War-Chorus read as Ambush's pair"
+  },
+  {
+    "name": "EGZS-echo-unknown",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const dm = m.q >= EG_ECHO_Q && m.q < 2 * EG_ECHO_Q ? m.d * egEchoShare(B, sub, p, here) : m.d;",
+    "new": "const dm = m.q >= 0 && m.q < 2 * EG_ECHO_Q ? m.d * egEchoShare(B, sub, p, here) : m.d;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "every blow taken as an Echo"
+  },
+  {
+    "name": "EGZS-echo-share-on-adds-dropped",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "egHitBody(F, spec, mm, m.i, dm, m.r, p, now, m.q, mult, vx.bx);",
+    "new": "egHitBody(F, spec, mm, m.i, m.d, m.r, p, now, m.q, mult, vx.bx);",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "an Echo on an add whole"
+  },
+  {
+    "name": "EGZS-echo-share-on-lords-dropped",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "EG_SEAM.hit(lf, sub, dm, m.r,",
+    "new": "EG_SEAM.hit(lf, sub, m.d, m.r,",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "an Echo on a lord whole"
+  },
+  {
+    "name": "EGZS-echo-binder-whole",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "(b.cast.dmg += got)",
+    "new": "(b.cast.dmg += m.d)",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "a Binder's raise fed an Echo's whole claim"
+  },
+  {
+    "name": "EGZS-host-hits-never",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  hostHits(B, F, spec, sub, mm, { r: m.r, q: m.q, bx: vx.bx, d: dm * mult }, b, got, p, now, here, out);   // EG-ZS",
+    "new": "  void hostHits;   // EG-ZS",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js",
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "the room strikes nothing itself"
+  },
+  {
+    "name": "EGZS-storm-count",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "(mm.storm = (mm.storm ?? 0) + 1) % EG_STORM_N === 0) {",
+    "new": "(mm.storm = (mm.storm ?? 0) + 1) % EG_STORM_N === 1) {",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the storm at the first and the sixth"
+  },
+  {
+    "name": "EGZS-storm-family",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "egResonance(mm.vs).includes('blade') &&",
+    "new": "egResonance(mm.vs).includes('stone') &&",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "Bladestorm on Stone's resonance"
+  },
+  {
+    "name": "EGZS-storm-arrow-counted",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (r === HIT_KINDS.Melee && egResonance(mm.vs).includes('blade') &&",
+    "new": "if (egResonance(mm.vs).includes('blade') &&",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "an arrow counted toward the storm"
+  },
+  {
+    "name": "EGZS-storm-count-unresonant",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (r === HIT_KINDS.Melee && egResonance(mm.vs).includes('blade') && (mm.storm = (mm.storm ?? 0) + 1) % EG_STORM_N === 0) {",
+    "new": "if (r === HIT_KINDS.Melee && (mm.storm = (mm.storm ?? 0) + 1) % EG_STORM_N === 0 && egResonance(mm.vs).includes('blade')) {",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the storm counted without the resonance"
+  },
+  {
+    "name": "EGZS-storm-about-target",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (dist(ax, az, p.x, p.z) <= EG_STORM_M) n += hostStrike(",
+    "new": "if (dist(ax, az, b.x, b.z) <= EG_STORM_M) n += hostStrike(",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the storm about the target",
+    "note": "AUDIT EG III: re-aimed by content - the storm counts what it struck"
+  },
+  {
+    "name": "EGZS-storm-target-again",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "foes = () => F.bodies.filter((a) => a !== b && (a.role === EG_ROLE.add || a.role === EG_ROLE.lord));",
+    "new": "foes = () => F.bodies.filter((a) => a.role === EG_ROLE.add || a.role === EG_ROLE.lord);",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the target struck again"
+  },
+  {
+    "name": "EGZS-storm-objects-struck",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "foes = () => F.bodies.filter((a) => a !== b && (a.role === EG_ROLE.add || a.role === EG_ROLE.lord));",
+    "new": "foes = () => F.bodies.filter((a) => a !== b);",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "an errand's object let in among the foes still takes nothing: a host hit on anything but an add goes through the boss seam's one hit, which refuses every body that is no lord (net/eliteGates/egLords.js EG_SEAM.hit). Kept so the foes say what a foe is, and so no object ever reaches the seam.",
+    "equivalent": true
+  },
+  {
+    "name": "EGZS-strike-add-half",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (a.role === EG_ROLE.add) { got = Math.min(n, a.hp); a.hp -= n; egShieldSoak(F, a, got, out); }",
+    "new": "if (a.role === EG_ROLE.add) { got = Math.min(n, a.hp); a.hp -= n / 2; egShieldSoak(F, a, got, out); }",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a host hit at half"
+  },
+  {
+    "name": "EGZS-strike-ward",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (!(n > 0) || !(a.hp > 0) || egHas(a, EG_FL.friend) || egHas(a, EG_FL.ward) || egHas(a, EG_FL.hidden)) return 0;",
+    "new": "if (!(n > 0) || !(a.hp > 0) || egHas(a, EG_FL.friend) || egHas(a, EG_FL.hidden)) return 0;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a ward struck"
+  },
+  {
+    "name": "EGZS-strike-friend",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (!(n > 0) || !(a.hp > 0) || egHas(a, EG_FL.friend) || egHas(a, EG_FL.ward) || egHas(a, EG_FL.hidden)) return 0;",
+    "new": "if (!(n > 0) || !(a.hp > 0) || egHas(a, EG_FL.ward) || egHas(a, EG_FL.hidden)) return 0;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a friend struck"
+  },
+  {
+    "name": "EGZS-strike-hidden",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (!(n > 0) || !(a.hp > 0) || egHas(a, EG_FL.friend) || egHas(a, EG_FL.ward) || egHas(a, EG_FL.hidden)) return 0;",
+    "new": "if (!(n > 0) || !(a.hp > 0) || egHas(a, EG_FL.friend) || egHas(a, EG_FL.ward)) return 0;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a hidden body struck"
+  },
+  {
+    "name": "EGZS-strike-lord-as-add",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  else got = EG_SEAM.hit(egLordsFight(F, spec, {}, now), sub, n, w.r,",
+    "new": "  else { a.hp -= n; got = n; } void EG_SEAM.hit(egLordsFight(F, spec, {}, now), sub, n, w.r,",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a lord struck as an add - past the seam, its weight and its threat"
+  },
+  {
+    "name": "EGZS-strike-lord-factor",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "{ i: a.i, p: mm, x: 1, bx: w.bx,",
+    "new": "{ i: a.i, p: mm, x: 2, bx: w.bx,",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a host hit on a lord taken at twice its points"
+  },
+  {
+    "name": "EGZS-deadeye-reach",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "a = dist(bx, bz, p.x, p.z) > EG_FAR_M ?",
+    "new": "a = dist(bx, bz, p.x, p.z) >= EG_FAR_M ?",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "Deadeye from 12 m"
+  },
+  {
+    "name": "EGZS-deadeye-spell",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (r === HIT_KINDS.Shaft && egResonance(mm.vs).includes('hunt')) {",
+    "new": "if (r !== HIT_KINDS.Melee && egResonance(mm.vs).includes('hunt')) {",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a spell piercing"
+  },
+  {
+    "name": "EGZS-deadeye-family",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "egResonance(mm.vs).includes('hunt')",
+    "new": "egResonance(mm.vs).includes('arcana')",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "Deadeye on Arcana's resonance"
+  },
+  {
+    "name": "EGZS-behind-before",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (t > L && off <= (a.r ?? 0.6) && t < bestT)",
+    "new": "if (t > 0 && off <= (a.r ?? 0.6) && t < bestT)",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "an add before the target pierced"
+  },
+  {
+    "name": "EGZS-behind-width",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (t > L && off <= (a.r ?? 0.6) && t < bestT)",
+    "new": "if (t > L && off <= 1 && t < bestT)",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the line a metre wide"
+  },
+  {
+    "name": "EGZS-behind-second",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (t > L && off <= (a.r ?? 0.6) && t < bestT)",
+    "new": "if (t > L && off <= (a.r ?? 0.6) && true)",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the last on the line pierced, not the first"
+  },
+  {
+    "name": "EGZS-behind-ward",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "a.role !== EG_ROLE.add || !(a.hp > 0) || egHas(a, EG_FL.friend) || egHas(a, EG_FL.ward) || egHas(a, EG_FL.hidden)) continue;",
+    "new": "a.role !== EG_ROLE.add || !(a.hp > 0) || egHas(a, EG_FL.friend) || egHas(a, EG_FL.hidden)) continue;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a ward pierced"
+  },
+  {
+    "name": "EGZS-behind-friend",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "a.role !== EG_ROLE.add || !(a.hp > 0) || egHas(a, EG_FL.friend) || egHas(a, EG_FL.ward) || egHas(a, EG_FL.hidden)) continue;",
+    "new": "a.role !== EG_ROLE.add || !(a.hp > 0) || egHas(a, EG_FL.ward) || egHas(a, EG_FL.hidden)) continue;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a friend pierced"
+  },
+  {
+    "name": "EGZS-behind-hidden",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "a.role !== EG_ROLE.add || !(a.hp > 0) || egHas(a, EG_FL.friend) || egHas(a, EG_FL.ward) || egHas(a, EG_FL.hidden)) continue;",
+    "new": "a.role !== EG_ROLE.add || !(a.hp > 0) || egHas(a, EG_FL.friend) || egHas(a, EG_FL.ward)) continue;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a hidden body pierced"
+  },
+  {
+    "name": "EGZS-kindled-about-me",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "if (dist(ax, az, bx, bz) <= EG_KINDLED_M) hostStrike(",
+    "new": "if (dist(ax, az, p.x, p.z) <= EG_KINDLED_M) hostStrike(",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "the splash about me"
+  },
+  {
+    "name": "EGZS-kindled-arrow",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const fire = r === HIT_KINDS.Melee ? egVOf(mm.vs, 'searing') : 0;",
+    "new": "const fire = egVOf(mm.vs, 'searing');",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "an arrow splashing"
+  },
+  {
+    "name": "EGZS-kindled-points",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "hostStrike(B, F, spec, a, fire, w, sub, mm, p, now, here, out); }",
+    "new": "hostStrike(B, F, spec, a, got, w, sub, mm, p, now, here, out); }",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "the splash the blow, not its fire"
+  },
+  {
+    "name": "EGZS-kindled-side",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "sub, 'kindled', 'a').length) {",
+    "new": "sub, 'kindled', 'b').length) {",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "the Overcharge holder's blows splash"
+  },
+  {
+    "name": "EGZS-whole-unwidened",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "export const egCountWhole = (vs) => 1 + egVOf(vs, 'stoneskin');",
+    "new": "export const egCountWhole = (vs) => 1 + 0 * egVOf(vs, 'stoneskin');",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the count's whole the plain body"
+  },
+  {
+    "name": "EGZS-whole-blow-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "!bodyStruck(m, h.share / egCountWhole(m.vs), now, line)",
+    "new": "!bodyStruck(m, h.share, now, line)",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a blow off the plain body's count"
+  },
+  {
+    "name": "EGZS-whole-void-floor",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "Math.max(0, (m.bd?.v ?? 1) * egCountWhole(m.vs) - EG_CAST_BACK_FLOOR)",
+    "new": "Math.max(0, (m.bd?.v ?? 1) - EG_CAST_BACK_FLOOR)",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the void's floor of the whole"
+  },
+  {
+    "name": "EGZS-whole-toll-floor",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "Math.max(0, (m.bd?.v ?? 1) * W - 0.01));",
+    "new": "Math.max(0, (m.bd?.v ?? 1) - 0.01));",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the toll's last hundredth of the whole"
+  },
+  {
+    "name": "EGZS-whole-toll-struck",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "      bodyStruck(m, share / W, now, line);",
+    "new": "      bodyStruck(m, share, now, line);",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the toll off the plain body's count"
+  },
+  {
+    "name": "EGZS-whole-lash",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "m.bd.v = Math.max(0.01, m.bd.v + f.p / egCountWhole(m.vs));",
+    "new": "m.bd.v = Math.max(0.01, m.bd.v + f.p);",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the lash off the plain body's count"
+  },
+  {
+    "name": "EGZS-whole-ally-heal",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "backed / healRef(B.mem[sub].lv) / egCountWhole(B.mem[sub].vs)",
+    "new": "backed / healRef(B.mem[sub].lv)",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "an ally's heal of the plain body"
+  },
+  {
+    "name": "EGZS-wall-census-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "bodyHealed(m, f.p * (egWallOf(B, sub) ? 1 + EG_WALL_X : 1), now, line, { enforce });",
+    "new": "bodyHealed(m, f.p, now, line, { enforce });",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "Living Wall unread by the census"
+  },
+  {
+    "name": "EGZS-wall-census-other-hall",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "living(B).filter(([, q]) => q.pose?.h === B.h)",
+    "new": "living(B).filter(([, q]) => q.pose)",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "a place of another hall read"
+  },
+  {
+    "name": "EGZS-wall-census-side",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "return egAccordMates(ms, sub, 'livingwall', 'a').length > 0;",
+    "new": "return egAccordMates(ms, sub, 'livingwall', 'b').length > 0;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "the Mender walled"
+  },
+  {
+    "name": "EGZS-wall-screen-unread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (p > 0 && wall()) p *= 1 + EG_WALL_X;\n",
+    "new": "\n",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "Living Wall unread by the screen's room heal"
+  },
+  {
+    "name": "EGZS-wall-screen-lash",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (p > 0 && wall()) p *= 1 + EG_WALL_X;",
+    "new": "if (wall()) p *= 1 + EG_WALL_X;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "a lash walled"
+  },
+  {
+    "name": "EGZS-wall-screen-side",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "const wall = () => (fight?.accordMates?.('livingwall', 'a')?.length ?? 0) > 0;",
+    "new": "const wall = () => (fight?.accordMates?.('livingwall', 'b')?.length ?? 0) > 0;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "the Mender's screen walled"
+  },
+  {
+    "name": "EGZS-wall-mine-walled",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "const k = who && who !== me() && wall() ?",
+    "new": "const k = wall() ?",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "my own heal walled"
+  },
+  {
+    "name": "EGZS-wall-spell-additive",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "(1 + v) * (1 + EG_WALL_X) - 1 : v;",
+    "new": "v + EG_WALL_X : v;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "the wall's share of the heal before Mender's Grace"
+  },
+  {
+    "name": "EGZS-screen-mates-none",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "accordMates(key, as = 'a') { return centre ? egAccordMates(companyHere(), me() ?? '', key, as) : []; },",
+    "new": "accordMates(key, as = 'a') { void key; void as; return []; },",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "the screen's pair law unread"
+  },
+  {
+    "name": "EGZS-weave-number",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "_woven % EG_WEAVE_N === EG_WEAVE_N - 1;",
+    "new": "_woven % EG_WEAVE_N === 0;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the first, fifth... free"
+  },
+  {
+    "name": "EGZS-weave-any-spell",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "const damageSpell = (spell) => Array.isArray(spell?.effects) && spell.effects.some(isDamageHealthEffect);",
+    "new": "const damageSpell = (spell) => Array.isArray(spell?.effects);",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "every spell a damage spell"
+  },
+  {
+    "name": "EGZS-weave-uncounted",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "  _woven++;\n",
+    "new": "\n",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the casts uncounted"
+  },
+  {
+    "name": "EGZS-weave-count-kept",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "if (_weaveB !== _held?.b) { _weaveB = _held?.b ?? ''; _woven = 0; }",
+    "new": "if (_weaveB !== _held?.b) { _weaveB = _held?.b ?? ''; }",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the count kept across breaches"
+  },
+  {
+    "name": "EGZS-weave-breach-unread",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "damageSpell(spell) && _weaveB === _held?.b && _woven",
+    "new": "damageSpell(spell) && _woven",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "another breach's count prices mine"
+  },
+  {
+    "name": "EGZS-weave-family",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "egResonance(_held.vs).includes('arcana')",
+    "new": "egResonance(_held.vs).includes('hunt')",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "Spellweave on Hunt's resonance"
+  },
+  {
+    "name": "EGZS-weave-another-entity",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "const weaves = (entity) => !!_held && entity === _held.entity && egResonance",
+    "new": "const weaves = (entity) => !!_held && egResonance",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "another entity's spell free"
+  },
+  {
+    "name": "EGZS-free-door-foe",
+    "file": "src/systems/spellcost.js",
+    "old": "if (portMods && casterEntity?.isPlayer) for (const fn of _freeCasts.values())",
+    "new": "if (casterEntity?.isPlayer) for (const fn of _freeCasts.values())",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a foe's pricing reads the free door"
+  },
+  {
+    "name": "EGZS-free-door-one",
+    "file": "src/systems/spellcost.js",
+    "old": "if (fn(casterEntity, spell) === true) { sp = 0; break; }",
+    "new": "if (fn(casterEntity, spell) === true) { sp = 1; break; }",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a free cast costs one"
+  },
+  {
+    "name": "EGZS-cry-unread",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "if (_held && holder?.cry === true && holder.dn > 0 &&",
+    "new": "if (_held && holder.dn > 0 &&",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the Cry unread"
+  },
+  {
+    "name": "EGZS-cry-door-unread",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "if (_held && holder?.cry === true && holder.dn > 0 &&",
+    "new": "if (_held && holder?.cry === true &&",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "refreshed with no door"
+  },
+  {
+    "name": "EGZS-cry-every-frame",
+    "file": "src/systems/eliteGates/spireVestiges.js",
+    "old": "holder.dn > 0 && _cried !== `${_held.b}:${_held.h}:${holder.dn}`) {",
+    "new": "holder.dn > 0) {",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "refreshed every frame of a door"
+  },
+  {
+    "name": "EGZS-cry-family",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "egResonance(egRunOfMember(E, c[0]).vs).includes('fellowship')",
+    "new": "egResonance(egRunOfMember(E, c[0]).vs).includes('stone')",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the Cry on Stone's resonance"
+  },
+  {
+    "name": "EGZS-cry-fallen",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "return !!q?.in && q.alive && !q.home && egResonance",
+    "new": "return !!q?.in && !q.home && egResonance",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a fallen holder cries"
+  },
+  {
+    "name": "EGZS-cry-door-unhanded",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "h: E.h | 0, dn: E.dn ?? 0, cry, ls: longStepOn(E) });",
+    "new": "h: E.h | 0, dn: 0, cry, ls: longStepOn(E) });",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the door's instant never handed"
+  },
+  {
+    "name": "EGZS-rooted-unread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "return fight?.immovable?.() || egResonance(vs).includes('stone') ? 1 :",
+    "new": "return fight?.immovable?.() ? 1 :",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "Rooted unread"
+  },
+  {
+    "name": "EGZS-rooted-family",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "egResonance(vs).includes('stone') ? 1 :",
+    "new": "egResonance(vs).includes('blade') ? 1 :",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "Rooted on Blade's resonance"
+  },
+  {
+    "name": "EGZS-markynaz-any-champion",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "if (spec?.champ !== 'markynaz') return '';",
+    "new": "if (!spec?.champ) return '';",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "every champion's card names a decree"
+  },
+  {
+    "name": "EGZS-markynaz-ranks-unread",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": ".map(([id, rank]) => [EG_DECREES[id]?.key, rank]).filter(([k]) => k));",
+    "new": ".map(([id]) => [EG_DECREES[id]?.key, 0]).filter(([k]) => k));",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the decrees in force unread"
+  },
+  {
+    "name": "EGZS-markynaz-hall-unread",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "const key = egMarkynazDecree(D, E.h)",
+    "new": "const key = egMarkynazDecree(D, 0)",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the hall's number unread"
+  },
+  {
+    "name": "EGZS-markynaz-node-unwritten",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "for (const k of ['kicker', 'main', 'sub', 'lays', 'twist', 'dec', 'band'])",
+    "new": "for (const k of ['kicker', 'main', 'sub', 'twist', 'dec', 'band'])",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the card's node never written"
+  },
+  {
+    "name": "EGZS-markynaz-unsaid",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "${card.lays ? ` ${card.lays}.` : ''}",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the decree dropped from the live line"
+  },
+  {
+    "name": "EGZS-markynaz-live-unread",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (pres.card) pres.live = egArrivalLive(pres.card); }",
+    "new": "if (pres.card) pres.live = `${pres.card.main}. ${pres.card.sub}`; }",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the screen reader hears no decree"
+  },
+  {
+    "name": "EGZS-offer-fallen",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": ".filter(([m]) => m?.in && m.alive && !m.home)",
+    "new": ".filter(([m]) => m?.in && !m.home)",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "a fallen companion takes an Accord"
+  },
+  {
+    "name": "EGZS-offer-unsaid",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "...egCardText(c, run?.vs ?? []), accord: accord(c),",
+    "new": "...egCardText(c, run?.vs ?? []), accord: '',",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "no card names its Accord",
+    "note": "AUDIT EG III: re-aimed by content - the card says the capstone it completes beside it"
+  },
+  {
+    "name": "EGZS-offer-undrawn",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "      if (c.accord) b.append(",
+    "new": "      if (false) b.append(",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "the Accord's line never drawn"
+  },
+  {
+    "name": "EGZS-offer-words",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "takesAccord: (name, vestige) => `Takes an Accord with ${name}'s ${vestige}.`,",
+    "new": "takesAccord: (name, vestige) => `Takes an Accord with ${vestige}.`,",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "the companion unnamed"
+  },
+  {
+    "name": "EGZS-decree-words",
+    "file": "src/ui/eliteGates/egBeats.js",
+    "old": "champDecree: (title, decree) => `${title}: ${decree}`,",
+    "new": "champDecree: (title, decree) => `${decree}`,",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "the signature unnamed"
+  },
+  {
+    "name": "EGZS-strike-lord-threat",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "here, out, threatX: egThreatX(mm) }).got;",
+    "new": "here, out, threatX: 1 }).got;",
+    "tests": [
+      "test/net/eliteGates/egz_mastery.test.js"
+    ],
+    "why": "a lord's host hit threatens without the Oath"
+  },
+  {
+    "name": "EGZS-echo-unbounded",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const dm = m.q >= EG_ECHO_Q && m.q < 2 * EG_ECHO_Q ? m.d",
+    "new": "const dm = m.q >= EG_ECHO_Q ? m.d",
+    "tests": [
+      "test/net/eliteGates/egz_mastery_accords.test.js"
+    ],
+    "why": "a blow numbered past twice EG_ECHO_Q taken as an Echo"
+  }
+]

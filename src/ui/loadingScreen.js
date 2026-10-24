@@ -34,7 +34,7 @@
 // ASIDE, NEVER OVER (AUDIT LOAD1 2): a window the player must act on - the chargen at a new game's boot, a pause, a
 // level-up box - and a full-screen film own the screen while they stand; the loading screen hides under them, its
 // holds untouched, and comes back only if the load is still going when they close.
-import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
+import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedStyle.js';
 import { drawPixelGround } from './pixelGround.js';
 import { isEnhanced } from '../systems/uiSkin.js';
 import { pageHas } from '../systems/pageQuery.js';
@@ -60,7 +60,7 @@ export const HOLD_MAX_MS = 180_000;
 /** Lines for the corner when no screenshot stands there - each one a thing this game does, none naming a key (keys
  *  are the player's to rebind, and a tip naming the default would lie to anyone who did). */
 export const LOADING_TIPS = Object.freeze([
-  `Up to ${GALLERY_MAX} of the screenshots you take are kept under Screenshots in the menu, and can stand on this screen while the world loads.`,
+  `Up to ${GALLERY_MAX} of your screenshots are kept under Screenshots in the menu, and can appear on this screen while the world loads.`,
   'Banks keep your gold, write letters of credit for the road and lend to those in good standing.',
   'Members of the Mages Guild can make spells of their own at the guild’s spellmaker.',
   'Ask anyone in town where a place is, and they may mark it on your map.',
@@ -284,7 +284,7 @@ function groundFor(w, h) {
   const c = el('canvas', 'px-ground ld-ground');
   if (!groundKept || groundKept.w !== w || groundKept.h !== h) {
     const kept = el('canvas');
-    drawPixelGround(kept, w, h, 0);
+    drawPixelGround(kept, w, h, 0, { keep: false });   // AUDIT MEM-AUDIT P9: a still drawn once a size - no image kept beside it
     groundDraws++;
     groundKept = { w, h, canvas: kept };
   }
@@ -359,7 +359,7 @@ function injectLoadingStyle(doc = document) {
   doc.head.append(s);
 }
 
-// The menu's pixel idiom (ui/enhancedStyle.js .px-*): whole-pixel rules, 2px shadows, the brass gem, the pixel face.
+// The menu's pixel idiom (ui/enhanced/enhancedStyle.js .px-*): whole-pixel rules, 2px shadows, the brass gem, the pixel face.
 export const LOADING_CSS = `
 .ld { position: fixed; inset: 0; z-index: ${LOADING_Z}; overflow: hidden; background: var(--ink, #0e1013);
   color: #d8cfae; font-family: var(--data); pointer-events: auto; cursor: progress; user-select: none;

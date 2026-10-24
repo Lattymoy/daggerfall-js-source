@@ -1,173 +1,173 @@
 [
   {
     "name": "WB3b-the-marker-says-water",
-    "file": "src/world/gateArena.js",
+    "file": "src/world/gate/gateArena.js",
     "old": "flags: 0, magnitude: 0, soundIndex: 0, factionOrMobileId: 0,",
     "new": "flags: 0, magnitude: 0, soundIndex: 1, factionOrMobileId: 0,",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-the-marker-says-castle",
-    "file": "src/world/gateArena.js",
+    "file": "src/world/gate/gateArena.js",
     "old": "flags: 0, magnitude: 0, soundIndex: 0, factionOrMobileId: 0,",
     "new": "flags: 0, magnitude: 1, soundIndex: 0, factionOrMobileId: 0,",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-the-made-name-missed",
-    "file": "src/world/gateArena.js",
+    "file": "src/world/gate/gateArena.js",
     "old": "getBlockIndex: (name) => (name === GATE_ARENA_BLOCK ? GATE_ARENA_BLOCK_INDEX",
     "new": "getBlockIndex: (name) => (name === 'X' ? GATE_ARENA_BLOCK_INDEX",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-the-marker-off-the-arrival",
-    "file": "src/world/gateArena.js",
-    "old": "  const [x, , z] = courtToDungeon(0, 0, ARRIVE_Z);",
+    "file": "src/world/gate/gateArena.js",
+    "old": "  const [x, , z] = courtToDungeon(a[0], 0, a[1]);",
     "new": "  const [x, , z] = courtToDungeon(0, 0, 0);",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-a-real-location-read-as-the-court",
-    "file": "src/world/gateArena.js",
+    "file": "src/world/gate/gateArena.js",
     "old": "export const isGateArena = (loc) => Number.isSafeInteger(loc?.gate) && loc?.dungeon?.recordElement?.header?.locationId === GATE_ARENA_LOCATION_ID;",
     "new": "export const isGateArena = (loc) => Number.isSafeInteger(loc?.gate);",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-a-flagstone-wound-down",
-    "file": "src/world/gateArena.js",
+    "file": "src/world/gate/gateArena.js",
     "old": "    f.tri(COURT_FLOOR_RECORD, c, p1, p0, uvFloor(c), uvFloor(p1), uvFloor(p0));",
     "new": "    f.tri(COURT_FLOOR_RECORD, c, p0, p1, uvFloor(c), uvFloor(p0), uvFloor(p1));",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-a-spire-on-the-floor",
-    "file": "src/world/gateArena.js",
+    "file": "src/world/gate/gateArena.js",
     "old": "    const r = RIM_OUT + 1.5 + (i % 3) * 0.8;",
     "new": "    const r = 10 + (i % 3) * 0.8;",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-the-ring-off-his-reach",
-    "file": "src/world/gateArena.js",
-    "old": "  const RING_SIDES = 96, rr0 = BOSS_REACH_R - RUNE_HALF_W, rr1 = BOSS_REACH_R + RUNE_HALF_W, y = 0.02;",
-    "new": "  const RING_SIDES = 96, rr0 = COURT_R - 3 - RUNE_HALF_W, rr1 = COURT_R - 3 + RUNE_HALF_W, y = 0.02;",
+    "file": "src/world/gate/gateArena.js",
+    "old": "const RING_SIDES = k < COURTS_HIS ? 96 : 0, rr0 = BOSS_REACH_R - RUNE_HALF_W, rr1 = BOSS_REACH_R + RUNE_HALF_W, y = 0.02;",
+    "new": "const RING_SIDES = k < COURTS_HIS ? 96 : 0, rr0 = COURT_R - 3 - RUNE_HALF_W, rr1 = COURT_R - 3 + RUNE_HALF_W, y = 0.02;",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-a-brazier-in-the-bridge",
-    "file": "src/world/gateArena.js",
-    "old": "    if (!clearOf(k, a, BRAZIER_CLEAR)) continue;\n    out.push(",
+    "file": "src/world/gate/gateArena.js",
+    "old": "    if (!clearOf(k, a, BRAZIER_CLEAR, plan)) continue;\n    out.push(",
     "new": "    out.push(",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-the-collider-half-a-disc",
-    "file": "src/world/gateArena.js",
+    "file": "src/world/gate/gateArena.js",
     "old": "    for (let k = 0; k < FLOOR_SIDES; k++) {\n      const a0 = (k / FLOOR_SIDES) * Math.PI * 2, a1 = ((k + 1) / FLOOR_SIDES) * Math.PI * 2;\n      out.push(",
     "new": "    for (let k = 0; k < FLOOR_SIDES / 2; k++) {\n      const a0 = (k / FLOOR_SIDES) * Math.PI * 2, a1 = ((k + 1) / FLOOR_SIDES) * Math.PI * 2;\n      out.push(",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-the-landing-behind-the-gate",
-    "file": "src/world/gateArena.js",
+    "file": "src/world/gate/gateArena.js",
     "old": "  const x = t[0] + g.spot[0] + dx * out, z = t[2] + g.spot[1] + dz * out;",
     "new": "  const x = t[0] + g.spot[0] - dx * out, z = t[2] + g.spot[1] - dz * out;",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-the-landing-off-the-ground-kept",
-    "file": "src/world/gateArena.js",
+    "file": "src/world/gate/gateArena.js",
     "old": "  return Number.isFinite(y) ? { pos: [x, y, z], normal: [dx, 0, dz] } : null;",
     "new": "  return { pos: [x, y, z], normal: [dx, 0, dz] };",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-every-joint-burning",
-    "file": "src/world/gateArt.js",
+    "file": "src/world/gate/gateArt.js",
     "old": "      const hot = tone(x, y) > 0.7;",
     "new": "      const hot = tone(x, y) > 0;",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-a-word-before-the-state-starts-a-fight",
-    "file": "src/net/gateLink.js",
+    "file": "src/net/gate/gateLink.js",
     "old": "  if (s.day === null) return s;   // nothing but a whole state starts a fight",
     "new": "  if (s.day === undefined) return s;   // nothing but a whole state starts a fight",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-the-attack-does-not-supersede",
-    "file": "src/net/gateLink.js",
+    "file": "src/net/gate/gateLink.js",
     "old": "    case 'atk': return { ...s, atk: { i: g.i,",
     "new": "    case 'atk': return s.atk ? s : { ...s, atk: { i: g.i,",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-a-kill-said-twice",
-    "file": "src/net/gateLink.js",
+    "file": "src/net/gate/gateLink.js",
     "old": "        if (Number.isSafeInteger(day) && !falls.has(day)) {",
     "new": "        if (Number.isSafeInteger(day)) {",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-another-days-kill-taken",
-    "file": "src/net/gateLink.js",
+    "file": "src/net/gate/gateLink.js",
     "old": "      if (g.d !== undefined && g.d !== s.day) return s;",
     "new": "      if (false) return s;",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-the-walk-past-its-goal",
-    "file": "src/net/gateLink.js",
+    "file": "src/net/gate/gateLink.js",
     "old": "  const along = Math.min(len, (Math.max(0, now - m.at) / 1000) * m.v);\n  return [",
     "new": "  const along = (Math.max(0, now - m.at) / 1000) * m.v;\n  return [",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-the-court-stood-after-the-marker",
     "file": "src/scenes/worldModes.js",
-    "old": "      if (hit.gateArena) standCourt(ctx);   // WB3b: the court, before the start marker is read and before any namer\n",
+    "old": "      if (hit.gateArena) gateStand.standCourt(ctx, hit.gateArena.day);   // WB3b: the court, before the start marker is read and before any namer - WB14b: its night's (scenes/gate/gateStand.js)\n",
     "new": "\n",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "  const returnLanding = () => (dungeonReturn.gate ? host.gateLanding?.(dungeonReturn.gate) ?? null : dungeonReturn.arena",
     "new": "  const returnLanding = () => (false ? host.gateLanding?.(dungeonReturn.gate) ?? null : dungeonReturn.arena",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
@@ -185,34 +185,34 @@
     "old": "    roomIdentity: () => (mode === 'dungeon' ? (isGateArena(dungeonLoc) ? { kind: 'gate', day: dungeonLoc.gate } :",
     "new": "    roomIdentity: () => (mode === 'dungeon' ? (false ? { kind: 'gate', day: dungeonLoc.gate } :",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-the-map-in-the-court",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "      if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noMap); return; }",
-    "new": "      void COURT_TEXT;",
+    "file": "src/systems/madeLevel.js",
+    "old": "court: row({ save: 'refused', rest: 'refused', automap: 'off', mark",
+    "new": "court: row({ save: 'refused', rest: 'refused', automap: null, mark",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-rest-in-the-court",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "      if (isGateArena(dfLocation)) { hudText.add(COURT_TEXT.noRest); return; }",
-    "new": "      void 0;",
+    "file": "src/systems/madeLevel.js",
+    "old": "court: row({ save: 'refused', rest: 'refused',",
+    "new": "court: row({ save: 'refused', rest: null,",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-a-save-in-the-court",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "      if (isGateArena(dfLocation)) { if (!quiet) hudText.add(COURT_TEXT.noSave); return false; }",
-    "new": "      void 0;",
+    "file": "src/systems/madeLevel.js",
+    "old": "court: row({ save: 'refused',",
+    "new": "court: row({ save: null,",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
@@ -221,25 +221,26 @@
     "old": "    ready: () => !!online?.gateOk,",
     "new": "    ready: () => false,",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-no-level-claim",
     "file": "src/scenes/world.js",
-    "old": "online.welcomes !== _gateInFor && online.sendGate({ k: 'in',",
-    "new": "online.welcomes !== _gateInFor && false && online.sendGate({ k: 'in',",
+    "old": "(online.welcomes !== _gateInFor || gateCourt?.askAgain()) && online.sendGate({ k: 'in',",
+    "new": "(online.welcomes !== _gateInFor || gateCourt?.askAgain()) && false && online.sendGate({ k: 'in',",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
-    ]
+      "test/net/gate/wb3b_gate_arena.test.js"
+    ],
+    "note": "PIN MOVED (COURT-WATCH / CHECKPOINT-5): re-aimed by content."
   },
   {
     "name": "WB3b-no-ring-in-the-court",
     "file": "src/scenes/world.js",
-    "old": "    if (!player.arena && modes?.gateArenaDay?.() != null) { _courtArena.xa",
-    "new": "    if (!player.arena && false) { _courtArena.xa",
+    "old": "    if (!player.arena && modes?.gateArenaDay?.() != null) player.arena = courtArenaAt(",
+    "new": "    if (!player.arena && false) player.arena = courtArenaAt(",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
@@ -248,16 +249,16 @@
     "old": "    const courtGate = modes?.gateArenaGate?.() ?? null;",
     "new": "    const courtGate = null;",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-a-mark-in-the-court",
-    "file": "src/scenes/world.js",
-    "old": "    if (modes?.gateArenaDay?.() != null) { setMidScreenText(COURT_TEXT.noMark); return; }",
-    "new": "    void COURT_TEXT;",
+    "file": "src/systems/madeLevel.js",
+    "old": "automap: 'off', mark: 'refused', portalStone",
+    "new": "automap: 'off', mark: null, portalStone",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
@@ -266,7 +267,7 @@
     "old": "    if (courtDay != null && Date.now() + _sharedOffsetMs >= gateTimes(courtDay).wrathAt + GATE_COLLAPSE_MS) {",
     "new": "    if (courtDay != null && false) {",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
@@ -275,34 +276,34 @@
     "old": "    fellAt: (day) => gateLink?.fellAt(day) ?? null,   // WB3b: the relay's word of the kill",
     "new": "    fellAt: () => null,   // WB3b: the relay's word of the kill",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-the-fall-line-drops-the-last",
-    "file": "src/systems/gateOmen.js",
+    "file": "src/systems/gate/gateOmen.js",
     "old": "`${top.slice(0, -1).join(', ')} and ${top[top.length - 1]}`",
     "new": "`${top.slice(0, -1).join(', ')}`",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-the-braziers-carried",
-    "file": "src/world/gateArena.js",
-    "old": "  lights.forEach((l, i) => { data.set([l.x, l.y, l.z, l.range], (n + i) * 4); colors.set(l.color, (n + i) * 3); });",
-    "new": "  lights.forEach((l, i) => { data.set([l.x, l.y, l.z, l.range], (n + i) * 4); colors.set(l.color, (n + i) * 3); carried[n + i] = 1; });",
+    "file": "src/world/gate/gateArena.js",
+    "old": "  lights.forEach((l, i) => { packLight(data, n + i, l); colors.set(l.color, (n + i) * 3); if (l.carried) carried[n + i] = 1; });   // GATE-MIX: a flash's mask - no shadow caster",
+    "new": "  lights.forEach((l, i) => { packLight(data, n + i, l); colors.set(l.color, (n + i) * 3); carried[n + i] = 1; });",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   },
   {
     "name": "WB3b-the-torchs-mask-dropped",
-    "file": "src/world/gateArena.js",
+    "file": "src/world/gate/gateArena.js",
     "old": "  if (lit.data.carried) carried.set(lit.data.carried.subarray(0, n));",
     "new": "  if (false) carried.set(lit.data.carried.subarray(0, n));",
     "tests": [
-      "test/wb3b_gate_arena.test.js"
+      "test/net/gate/wb3b_gate_arena.test.js"
     ]
   }
 ]

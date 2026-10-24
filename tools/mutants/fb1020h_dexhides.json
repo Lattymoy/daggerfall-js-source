@@ -1,0 +1,149 @@
+[
+  {
+    "name": "DEX-HIDES-the-bat-no-body",
+    "file": "src/net/professionLaw.js",
+    "old": "[MOB.GiantBat, DEX.Bat]",
+    "new": "[MOB.GiantBat]",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-the-mountain-lion-no-body",
+    "file": "src/net/professionLaw.js",
+    "old": "[MOB.SabertoothTiger, DEX.MountainLion]",
+    "new": "[MOB.SabertoothTiger]",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-the-blood-spider-no-body",
+    "file": "src/net/professionLaw.js",
+    "old": "[MOB.Spider, DEX.BloodSpider]",
+    "new": "[MOB.Spider]",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-the-land-dreugh-no-body",
+    "file": "src/net/professionLaw.js",
+    "old": "[MOB.Dreugh, DEX.LandDreugh]",
+    "new": "[MOB.Dreugh]",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-the-dog-no-pelt",
+    "file": "src/net/professionLaw.js",
+    "old": "[DEX.Wolf, DEX.SnowWolf, DEX.Dog]",
+    "new": "[DEX.Wolf, DEX.SnowWolf]",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-the-snow-wolf-no-pelt",
+    "file": "src/net/professionLaw.js",
+    "old": "[DEX.Wolf, DEX.SnowWolf, DEX.Dog]",
+    "new": "[DEX.Wolf, DEX.Dog]",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-the-hell-hound-skinned",
+    "file": "src/net/professionLaw.js",
+    "old": "[DEX.Wolf, DEX.SnowWolf, DEX.Dog]",
+    "new": "[DEX.Wolf, DEX.SnowWolf, DEX.Dog, 264]",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-an-id-off-by-one",
+    "file": "src/net/professionLaw.js",
+    "old": "MountainLion: 280, Mudcrab: 281,",
+    "new": "MountainLion: 280, Mudcrab: 282,",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-the-wolf-pelt-tier-3",
+    "file": "src/net/professionLaw.js",
+    "old": "'Wolf Pelt', 2,",
+    "new": "'Wolf Pelt', 3,",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-the-wolf-pelt-another-template",
+    "file": "src/net/professionLaw.js",
+    "old": "hide('hide:wolf', 681,",
+    "new": "hide('hide:wolf', 667,",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-the-wolf-no-tooth",
+    "file": "src/net/professionLaw.js",
+    "old": "[DEX.Wolf, DEX.SnowWolf, DEX.Dog], 'part:tooth',",
+    "new": "[DEX.Wolf, DEX.SnowWolf, DEX.Dog], null,",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-the-boar-no-tusk",
+    "file": "src/net/professionLaw.js",
+    "old": "[DEX.Boar], 'part:tooth',",
+    "new": "[DEX.Boar], null,",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-the-boar-hide-hardened",
+    "file": "src/net/professionLaw.js",
+    "old": "[DEX.Boar], 'part:tooth', 'food:meat', 'leather:cured'",
+    "new": "[DEX.Boar], 'part:tooth', 'food:meat', 'leather:hardened'",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-the-mudcrab-tier-2",
+    "file": "src/net/professionLaw.js",
+    "old": "'Mudcrab Chitin', 1,",
+    "new": "'Mudcrab Chitin', 2,",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-the-mudcrab-no-meat",
+    "file": "src/net/professionLaw.js",
+    "old": "[DEX.Mudcrab], null, 'food:meat',",
+    "new": "[DEX.Mudcrab], null, null,",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-the-mudcrab-a-pelt",
+    "file": "src/net/professionLaw.js",
+    "old": "'Mudcrab Chitin', 1, ICON_SCALES,",
+    "new": "'Mudcrab Chitin', 1, ICON_HAIR,",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-the-cures-unsorted",
+    "file": "src/net/professionLaw.js",
+    "old": "HIDES.filter((h) => h.cures).sort((a, b) => a.tier - b.tier || Number(a === BEAR_HIDE) - Number(b === BEAR_HIDE)).map(",
+    "new": "HIDES.filter((h) => h.cures).map(",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-no-boar-skins",
+    "file": "src/net/recipeLaw.js",
+    "old": "'hide:wolf', 'hide:boar']);",
+    "new": "'hide:wolf']);",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "DEX-HIDES-no-wolf-skins",
+    "file": "src/net/recipeLaw.js",
+    "old": "'hide:wolf', 'hide:boar']);",
+    "new": "'hide:boar']);",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  },
+  {
+    "name": "AUDIT-FB1021-L2-1-the-bear-hide-in-the-table-s-place",
+    "file": "src/net/professionLaw.js",
+    "old": ".sort((a, b) => a.tier - b.tier || Number(a === BEAR_HIDE) - Number(b === BEAR_HIDE))",
+    "new": ".sort((a, b) => a.tier - b.tier)",
+    "tests": ["test/net/fb1020h_dexhides.test.js", "test/net/craft1_chain.test.js", "test/net/prof7_law.test.js"]
+  },
+  {
+    "name": "AUDIT-FB1021-the-mudcrab-s-chitin-counted",
+    "file": "src/systems/professions/profItems.js",
+    "old": "  'Mudcrab Chitin',   // DEX-HIDES",
+    "new": "  'Mudcrab Chitins',   // DEX-HIDES",
+    "tests": ["test/net/fb1020h_dexhides.test.js"]
+  }
+]

@@ -1,10 +1,10 @@
 // The scripted Come Sail Away scene - csa_wind.test.js's (csa_sailing's, with the wind's seams), one harness: the
 // vendored hulls through the real SpawnBoat and runtime, Time.deltaTime a quarter second, every seam a stand-in.
-// HELM-WAY's suite (test/helmway.test.js) drives the same runtime through it.
+// HELM-WAY's suite (test/systems/naval/helmway.test.js) drives the same runtime through it.
 import { readFileSync } from 'node:fs';
-import { comeSailAwayModels } from '../src/systems/comeSailAwayModels.js';
-import { spawnBoat } from '../src/systems/comeSailAwayBoat.js';
-import { createComeSailAwayRuntime, NO_WATER_LEVEL, WEATHER_TYPE } from '../src/systems/comeSailAway.js';
+import { comeSailAwayModels } from '../src/systems/comeSailAway/comeSailAwayModels.js';
+import { spawnBoat } from '../src/systems/comeSailAway/comeSailAwayBoat.js';
+import { createComeSailAwayRuntime, NO_WATER_LEVEL, WEATHER_TYPE } from '../src/systems/comeSailAway/comeSailAway.js';
 
 const DIR = new URL('../vendor/come-sail-away/Models/', import.meta.url);
 const json = (f) => JSON.parse(readFileSync(new URL(f, DIR), 'utf8'));
@@ -88,7 +88,7 @@ export function scene(opts = {}) {
   const rt = createComeSailAwayRuntime(deps);
   rt.on('OnUpdateWind', (v) => out.wind.push(v));
   // HELM-LADDER: a key that goes down is a press that frame (the world's latch edge) - and one held as the helm is taken
-  // is pressed at the helm, so a held W puts her oars to pulling ahead, one rung (test/csa_sailing.test.js's own)
+  // is pressed at the helm, so a held W puts her oars to pulling ahead, one rung (test/systems/comeSailAway/csa_sailing.test.js's own)
   let downBefore = new Set();
   const frame = ({ press = [] } = {}) => {
     started.clear();

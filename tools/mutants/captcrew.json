@@ -5,7 +5,7 @@
     "old": "+ 2 * Math.max(0, (h?.boardings ?? 0) | 0) + Math.max(0, (h?.prior ?? 0) | 0);",
     "new": "+ 1 * Math.max(0, (h?.boardings ?? 0) | 0) + Math.max(0, (h?.prior ?? 0) | 0);",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ],
     "note": "a boarding no harder school than a fight"
   },
@@ -15,7 +15,7 @@
     "old": "Object.freeze({ tier: 1, at: 4, key: 'seasoned'",
     "new": "Object.freeze({ tier: 1, at: 5, key: 'seasoned'",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "Object.freeze({ tier: 2, at: 12, key: 'veteran'",
     "new": "Object.freeze({ tier: 2, at: 10, key: 'veteran'",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "Object.freeze({ tier: 3, at: 30, key: 'oldsalt'",
     "new": "Object.freeze({ tier: 3, at: 25, key: 'oldsalt'",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "for (const r of VETERANCY) if (s >= r.at) v = r;",
     "new": "for (const r of VETERANCY) if (s > r.at) v = r;",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "Gunner: Object.freeze({ kind: 'reload', base: 0.04, per: 0.03 }),",
     "new": "Gunner: Object.freeze({ kind: 'reload', base: 0.05, per: 0.03 }),",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "Gunner: Object.freeze({ kind: 'reload', base: 0.04, per: 0.03 }),",
     "new": "Gunner: Object.freeze({ kind: 'reload', base: 0.04, per: 0.02 }),",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "Carpenter: Object.freeze({ kind: 'mend', base: 0.15, per: 0.1 }),",
     "new": "Carpenter: Object.freeze({ kind: 'mend', base: 0.1, per: 0.1 }),",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "Lookout: Object.freeze({ kind: 'sight', base: 0.1, per: 0.1 }),",
     "new": "Lookout: Object.freeze({ kind: 'sight', base: 0.1, per: 0.05 }),",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "Cook: Object.freeze({ kind: 'wear', base: 0.25, per: 0.25 }),",
     "new": "Cook: Object.freeze({ kind: 'wear', base: 0, per: 0.25 }),",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "Bosun: Object.freeze({ kind: 'way', base: 0.01, per: 0.01 }),",
     "new": "Bosun: Object.freeze({ kind: 'way', base: 0.01, per: 0.02 }),",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "hands: Object.freeze([0, 0, 1, 2]) }),",
     "new": "hands: Object.freeze([0, 1, 1, 2]) }),",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "if (!out[h.role] || v.tier > out[h.role].tier) out[h.role]",
     "new": "if (!out[h.role] || v.tier >= out[h.role].tier) out[h.role]",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ],
     "note": "a later hand of the same rank takes the post"
   },
@@ -124,7 +124,7 @@
     "old": "if (!h || !POST_WORTH[h.role] || away?.has(h.name)) continue;",
     "new": "if (!h || !POST_WORTH[h.role]) continue;",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "reload: 1 - w('Gunner'), mend: 1 + w('Carpenter')",
     "new": "reload: 1 + w('Gunner'), mend: 1 + w('Carpenter')",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "reload: 1 - w('Gunner'), mend: 1 + w('Carpenter')",
     "new": "reload: 1 - w('Gunner'), mend: 1",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -151,7 +151,7 @@
     "old": "sight: 1 + w('Lookout'), wear: 1 + w('Cook')",
     "new": "sight: 1, wear: 1 + w('Cook')",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "old": "way: 1 + w('Bosun'),",
     "new": "way: 1,",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "seaT += dt / (Number(wear) > 1 ? Number(wear) : 1);",
     "new": "seaT += dt;",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "seaT += dt / (Number(wear) > 1 ? Number(wear) : 1);",
     "new": "seaT += dt / (Number(wear) > 0 ? Number(wear) : 1);",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "fights: 0, boardings: 0, prior: start };",
     "new": "fights: 0, boardings: 0, prior: 0 };",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "const start = Math.max(0, Math.min(VETERANCY[VETERANCY.length - 1].at, service | 0));",
     "new": "const start = Math.max(0, service | 0);",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "${v.tier > 0 ? ` - ${v.label}` : ''}",
     "new": "${''}",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "if (role === 'Gunner') return `the guns reload ${pc(w)} quicker`;",
     "new": "if (role === 'Gunner') return `the guns reload quicker`;",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -223,79 +223,79 @@
     "old": "const worth = holds ? postWords(h.role, v.tier) : '';",
     "new": "const worth = postWords(h.role, v.tier);",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
     "name": "CC-host-gunner",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "reloadScaleOf(st.crew.morale, st.crew.order) * st.worth.reload : 1) });",
     "new": "reloadScaleOf(st.crew.morale, st.crew.order) : 1) });",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
     "name": "CC-host-posts-unread",
-    "file": "src/scenes/navalHost.js",
-    "old": "s.worth = b.crewed ? crewWorth(c.hands, ashoreNames(b)) : NO_WORTH;",
-    "new": "s.worth = NO_WORTH;",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "s.worth = captainWorth(b.crewed ? crewWorth(c.hands, ashoreNames(b)) : NO_WORTH, deps.captain?.stats?.());",
+    "new": "s.worth = captainWorth(NO_WORTH, deps.captain?.stats?.());",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
     "name": "CC-host-cook",
-    "file": "src/scenes/navalHost.js",
-    "old": "atSea: !where().nearPort, wear: s.worth.wear });",
-    "new": "atSea: !where().nearPort });",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "atSea: !inPortWaters(), wear: s.worth.wear });",
+    "new": "atSea: !inPortWaters() });",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
     "name": "CC-host-carpenter-repair",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "mendScaleOf(s.crew.morale) * (s.worth?.mend ?? 1) : 1) * (underFire",
     "new": "mendScaleOf(s.crew.morale) : 1) * (underFire",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
     "name": "CC-host-carpenter-mend",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "scale: b.crewed ? mendScaleOf(s.crew.morale) * (s.worth?.mend ?? 1) : 1 });",
     "new": "scale: b.crewed ? mendScaleOf(s.crew.morale) : 1 });",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
     "name": "CC-host-mate",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "return Math.max(1, Math.min(base + 1 + mate, base + handsBonusOf(st.crew.morale, st.crew.order) + mate, Math.max(base + 1, men)));",
     "new": "return Math.max(1, Math.min(base + 1, base + handsBonusOf(st.crew.morale, st.crew.order), Math.max(base + 1, men)));",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
     "name": "CC-host-lookout",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "nightSight(SAIL_HO_RANGE * sight, { night, lit: showsLight(e) })",
     "new": "nightSight(SAIL_HO_RANGE, { night, lit: showsLight(e) })",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
     "name": "CC-host-postsway-crewless",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (!enabled || !boat?.crewed) return 1;\n    const st = boat.uid",
     "new": "if (!enabled) return 1;\n    const st = boat.uid",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   },
   {
@@ -304,7 +304,7 @@
     "old": "speed: (Number(r?.speed) || 1) * k }; },",
     "new": "speed: (Number(r?.speed) || 1) }; },",
     "tests": [
-      "test/captcrew.test.js"
+      "test/systems/naval/captcrew.test.js"
     ]
   }
 ]

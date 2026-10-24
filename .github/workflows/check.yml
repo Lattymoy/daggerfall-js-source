@@ -1,7 +1,7 @@
 name: check
 
 # FLOW1 (2026-09-26): the PR's check is verify.yml's parallel jobs - lint
-# and the types, four balanced test shards, the build - and then `check`,
+# and the types, the balanced test shards (eight - CI-FAST), the build - and then `check`,
 # which passes only when every one of them did. `check` keeps the name the
 # single job had, so a branch rule that requires it still means the whole
 # verification. It runs whatever happened above it (`always()`): a required
@@ -22,6 +22,15 @@ concurrency:
 jobs:
   verify:
     uses: ./.github/workflows/verify.yml
+
+  # CI-TIMES (2026-10-19): the shards' times this green run recorded, saved
+  # for the next run's split (test-times.yml) - beside `check`, which never
+  # waits on it
+  times:
+    needs: [verify]
+    uses: ./.github/workflows/test-times.yml
+    with:
+      planned: ${{ needs.verify.outputs.times }}
 
   check:
     if: ${{ always() }}

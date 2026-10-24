@@ -5,7 +5,7 @@
     "old": "  if (kind === 'cart' && !role.startsWith('wheel')) {",
     "new": "  if (false) {",
     "tests": [
-      "test/wagonuv1.test.js"
+      "test/world/wagonuv1.test.js"
     ],
     "note": "The report itself: the cart's pictures laid planar on its faces as Mac drew them, tipped 10.1 degrees on the axle - borne level, its sideboards run 10 degrees off the rail and its stakes lean."
   },
@@ -15,7 +15,7 @@
     "old": "  if (kind === 'cart' && !role.startsWith('wheel')) {",
     "new": "  if (kind === 'cart') {",
     "tests": [
-      "test/wagonuv1.test.js"
+      "test/world/wagonuv1.test.js"
     ],
     "note": "The wheels handed to the level law: their faces lose their own hub (wheelUv's pivot and radius) and the picture slides off the wheel."
   },
@@ -25,7 +25,7 @@
     "old": "const CART_LEVEL = quatAngleAxis(-CART_REST_PITCH_DEG, [1, 0, 0]);",
     "new": "const CART_LEVEL = quatAngleAxis(CART_REST_PITCH_DEG, [1, 0, 0]);",
     "tests": [
-      "test/wagonuv1.test.js"
+      "test/world/wagonuv1.test.js"
     ],
     "note": "fromLevel's turn instead of its undoing: the boards twice as far off the rail as before the fix."
   },
@@ -35,7 +35,7 @@
     "old": "  return planarUv([p[0], p[1], p[2] - mid], n, [tile, 1])[0] + 0.5 + CARAVAN_SIDE_WINDOW_U;",
     "new": "  return planarUv(p, n, [tile, 1])[0];",
     "tests": [
-      "test/wagonuv1.test.js"
+      "test/world/wagonuv1.test.js"
     ],
     "note": "The report itself: planarUv's run from the rear axle - the front window 0.3 m from the body's front end, the rear one 1.7 m from its rear."
   },
@@ -45,7 +45,7 @@
     "old": "+ 0.5 + CARAVAN_SIDE_WINDOW_U;",
     "new": "+ 0.5 + 0.5;",
     "tests": [
-      "test/wagonuv1.test.js"
+      "test/world/wagonuv1.test.js"
     ],
     "note": "The picture's middle taken for the window's: the window is 21 texels, 22 to 42, its middle half a texel past 32 - each window 2.3 cm off, the two sides opposite ways."
   },
@@ -55,7 +55,7 @@
     "old": "return [caravanSideU(b, out, WAGON_TILE.roomSide[0]),",
     "new": "return [planarUv(b, out, [WAGON_TILE.roomSide[0], 1])[0],",
     "tests": [
-      "test/wagons2.test.js"
+      "test/systems/wagon/wagons2.test.js"
     ],
     "note": "The side moved and the room did not: its windows' glass no longer the side's, so from inside a window looks onto the boards and from outside onto the room's wall."
   },
@@ -65,7 +65,7 @@
     "old": "  y0: sideRow((CARAVAN_SKIRT_Y + CARAVAN_CORNICE_Y + 0.84) / 2), y1: sideRow((CARAVAN_SKIRT_Y + CARAVAN_CORNICE_Y - 0.84) / 2), x0: 22, x1: 42,",
     "new": "  y0: sideRow(2.62), y1: sideRow(1.78), x0: 22, x1: 42,",
     "tests": [
-      "test/wagonuv1.test.js"
+      "test/world/wagonuv1.test.js"
     ],
     "note": "WAGONS1's rows: six under the cornice, thirteen over the skirt."
   }

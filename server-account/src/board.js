@@ -42,10 +42,12 @@
 import { mintId, accountKind, displayName, isMuted, overRate } from './accounts.js';
 import { isDeveloper, canModerate, titleWorn, glyphsShown, SPROUT_S } from './titles.js';
 import { withIliacHonoursAll } from './iliac.js';   // CARDS10: and Iliac Hand's season #1's title
+import { withGambitHonoursAll } from './gambit.js';   // KG6: and The King's Gambit's GRANDMASTER
 import { withArenaHonoursAll } from './arena.js';   // AUDIT PRE-MERGE 1003 S8: the arena's honours on an author's badge
+import { withEgHonoursAll } from './egHonours.js';   // EG-E2: and the Spire Champions
 import { guildActorOf } from './guilds.js';
 import { heraldryOfRow } from './halls.js';   // GUILD1e: a recruitment note's guild's banner
-import { guildMay } from '../../src/net/guildLaw.js';
+import { guildMay } from '../../src/net/guild/guildLaw.js';
 import { maskText } from '../../src/net/nameFilter.js';   // TEXT-F1: a note kept before the filter, starred as it is read
 import {
   NOTES_LIVE_MAX, NOTE_DAY_S, BOARD_NOTES_SHOWN, BOARD_NOTICES_SHOWN, NOTES_PINNED_MAX, BOARD_OPS_MAX, BOARD_WINDOW_S,
@@ -81,7 +83,10 @@ function noteView(n, row, env, nowS, { mine = false, mod = false, reports = 0 } 
   const guildOk = recruits(n);
   return {
     // TEXT-F1: the words starred as they are read - a note pinned before the filter reads as one pinned after it
-    id: n.id, from: n.author_name, ...badgeOf(row, env, nowS), subject: maskText(n.subject), body: maskText(n.body),
+    // NAME-AS: and its author's ACCOUNT (`by`) beside the name it was signed with - the room may know them by their
+    // character's name, so a note's duel finds its author among the players here by account (the relay's `sub`), never
+    // by name (scenes/world.js answerNote); an account id is what every chat line already carries
+    id: n.id, from: n.author_name, by: n.author, ...badgeOf(row, env, nowS), subject: maskText(n.subject), body: maskText(n.body),
     // a recruitment note whose guild is gone - or whose author can no longer invite to it - keeps its words and loses
     // its button and its seal (0026_board.sql)
     button: n.button === 'guild' && !guildOk ? null : (n.button ?? null),
@@ -126,6 +131,8 @@ export async function readBoard({ db, nowS, primary = db }, reader, env, map) { 
     // SCALE4g: ON THE BINDING - a #1 found stale is counted again and STORED (arena.js championNow), never off a replica
     // (AUDIT SCALE4d A1's law, where the heartbeat's session reads the rest)
     for (const p of await withIliacHonoursAll({ db: primary }, await withArenaHonoursAll({ db: primary }, found, nowS), nowS)) rows.set(p.id, p);   // AUDIT PRE-MERGE 1003 S8: the Grand Champion's title, the #1's laurel
+    for (const p of await withEgHonoursAll({ db: primary }, [...rows.values()], nowS)) rows.set(p.id, p);   // EG-E2: and Spire Champion (egHonours.js)
+    for (const p of await withGambitHonoursAll({ db: primary }, [...rows.values()], nowS)) rows.set(p.id, p);   // KG6: and The King's Gambit's GRANDMASTER
   }
   const live = await liveCount(db, reader.id, nowS);
   return {

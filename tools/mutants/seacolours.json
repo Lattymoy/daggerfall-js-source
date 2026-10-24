@@ -1,0 +1,236 @@
+[
+  {
+    "name": "SEA-navy-paint-lost",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "    : f === 'navy' ? CROWN_COLOURS[who.crown ?? '']?.livery ?? null\n",
+    "new": "    : f === 'navy' ? null\n",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-merchant-unpainted",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "    : f === 'merchant' ? houseOf(who).livery\n",
+    "new": "    : f === 'merchant' ? null\n",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-disguise-crew-paint",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "    : f === 'pirate' ? (who.disguise ? houseOf(who).livery : crewOf(who).livery)\n",
+    "new": "    : f === 'pirate' ? crewOf(who).livery\n",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-legend-ignored",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "  const raw = legend ? legend.livery\n",
+    "new": "  const raw = false ? legend.livery\n",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-hull-parts-unread",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "  return raw ? liveryOf(raw, who.cls.hull) : null;",
+    "new": "  return raw ? liveryOf(raw) : null;",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-merchant-shape",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "  return c ? fitFlag({ shape: 'swallowtail', field: c.field,",
+    "new": "  return c ? fitFlag({ shape: 'flag', field: c.field,",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-merchant-unparted",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "field: c.field, division: house.division, field2: house.colour,",
+    "new": "field: c.field, division: 'plain', field2: house.colour,",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-false-unflown",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "  if (colours === 'false') return who.disguise ? merchantFlag(who.disguise, houseOf(who)) : null;",
+    "new": "  if (colours === 'false') return null;",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-colours-never-down",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "  if (colours !== 'hers') return null;\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-navy-unflagged",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "    return c ? fitFlag({ shape: 'flag', field: c.field, division: 'plain', border: c.border, device: c.device, charge: c.charge }) : null;",
+    "new": "    return null;",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-navy-device-lost",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "border: c.border, device: c.device, charge: c.charge })",
+    "new": "border: c.border, device: null, charge: null })",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-pirate-unflagged",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "  if (f === 'pirate') return fitFlag({ division: 'plain', border: null, ...crewOf(who).flag });",
+    "new": "  if (f === 'pirate') return null;",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-legend-flag-ignored",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "  if (legend) return fitFlag({ division: 'plain', border: null, ...legend.flag });",
+    "new": "",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-one-stream",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "export const CREW_SALT = 0xc7e3;",
+    "new": "export const CREW_SALT = 0x5ea1;",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-pick-unsalted",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "  let h = Math.imul(((seed >>> 0) ^ salt) >>> 0, 0x9e3779b1) >>> 0;",
+    "new": "  let h = Math.imul((seed >>> 0) >>> 0, 0x9e3779b1) >>> 0;",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-reach-ignored",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "    if (!(d <= SEA_FLAG_M)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-unsorted",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "  out.sort((a, b) => a.d - b.d);\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-inactive-flown",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "    if (!b || b.GameObject?.activeSelf === false) continue;",
+    "new": "    if (!b) continue;",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-phase-unseeded",
+    "file": "src/systems/naval/seaColours.js",
+    "old": "    if (flag) out.push({ boat: b, flag, phase: e.ship?.seed ?? 0, d });",
+    "new": "    if (flag) out.push({ boat: b, flag, phase: 0, d });",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-host-unpainted",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "          e.boat.livery = liveryCode(seaLiveryOf(seaWho(e)));   // SEA-COLOURS: her own paint - the pool draws it as a peer's\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-host-flags-unsaid",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    seaFlags: () => seaFlagsOf(sea.values(), deps.feet(), seaWho),",
+    "new": "    seaFlags: () => [],",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-host-crown-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "crown: e.ship.flag ?? null, legend: e.legend ?? null, disguise: falseFlagFor(e) });",
+    "new": "crown: null, legend: e.legend ?? null, disguise: falseFlagFor(e) });",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-flags-uncapped",
+    "file": "src/scenes/shipFlagHost.js",
+    "old": "{ if (list.length >= FLAGS_MAX) break; take(p.boat, p.flag, p.phase); }",
+    "new": "{ take(p.boat, p.flag, p.phase); }",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-flags-phase-lost",
+    "file": "src/scenes/shipFlagHost.js",
+    "old": "    for (const p of deps.seaFlags?.() ?? []) { if (list.length >= FLAGS_MAX) break; take(p.boat, p.flag, p.phase); }",
+    "new": "    for (const p of deps.seaFlags?.() ?? []) { if (list.length >= FLAGS_MAX) break; take(p.boat, p.flag); }",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-flags-unread",
+    "file": "src/scenes/shipFlagHost.js",
+    "old": "    for (const p of deps.seaFlags?.() ?? []) { if (list.length >= FLAGS_MAX) break; take(p.boat, p.flag, p.phase); }",
+    "new": "",
+    "tests": [
+      "test/systems/naval/seacolours.test.js"
+    ]
+  },
+  {
+    "name": "SEA-world-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    seaFlags: () => (shipFlagPass && navalOn() ? naval?.seaFlags?.() ?? [] : []),   // SEA-COLOURS: the sea's ships' own\n",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shipcolours.test.js"
+    ]
+  }
+]

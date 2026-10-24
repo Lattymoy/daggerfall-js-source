@@ -40,102 +40,57 @@
 // a white page die is the thing you want a slider on.
 
 // THE SHEET'S LAWS ARE THE GAME'S NOW. They were written here, when
-// this page was the only thing that had them; combat/gunSheet.js is
+// this page was the only thing that had them; combat/gun/gunSheet.js is
 // their home since the Thunderlock became a real weapon, and the lab
 // reads them from there.
 export {
   SHEET_GRID, FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox, unionDrawRect,
-} from '../combat/gunSheet.js';
-import { SHEET_GRID, FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox, unionDrawRect } from '../combat/gunSheet.js';
+} from '../combat/gun/gunSheet.js';
+import { SHEET_GRID, FIRE_FRAMES, cellRect, keyBackground, contentBox, unionBox, unionDrawRect } from '../combat/gun/gunSheet.js';
 
 // ONE HOME: the alignment enum is FPSWeapon's own, imported rather
 // than restated, so an offset tuned in the lab means in the lab
 // exactly what it means in the game. From the LEAF it lives in
-// (combat/weaponAlign.js, which fpsWeapon.js re-exports), because
+// (combat/weapon/weaponAlign.js, which fpsWeapon.js re-exports), because
 // three integers are not worth this lab's build pulling the CIF
 // reader, the inventory and a mod's mesh folder in behind them. The
 // arrow points ONE WAY - the lab reads the port's law and the port
-// does not know the lab exists (test/gunLab.test.js fails if that
+// does not know the lab exists (test/combat/weapon/gunLab.test.js fails if that
 // ever stops being true).
 // FIELD-GUN12: THE LAB NOW RUNS THE GAME'S MODULE.
 // `createWidgetRig`, `widgetRigStep`, `labMotion` and the settings
-// reader moved to combat/gunViewmodel.js with the placement, because
+// reader moved to combat/gun/gunViewmodel.js with the placement, because
 // the game needs the SAME frame and five rounds of "it still isn't
 // 1:1" is what two copies of it cost. The lab is no longer a thing
 // the game resembles - it is a thing the game runs.
-export { placeSprite } from '../combat/gunPlacement.js';
+export { placeSprite } from '../combat/gun/gunPlacement.js';
 export {
   createGunRig as createWidgetRig, gunRigStep as widgetRigStep,
   gunMotion as labMotion, gunWidgetSettings as labWidgetSettings,
   widgetDefaults, gunFrameRect,
-} from '../combat/gunViewmodel.js';
-export { ALIGN } from '../combat/weaponAlign.js';
-import { ALIGN } from '../combat/weaponAlign.js';
-import { placeSprite } from '../combat/gunPlacement.js';
+} from '../combat/gun/gunViewmodel.js';
+export { ALIGN } from '../combat/weapon/weaponAlign.js';
+import { ALIGN } from '../combat/weapon/weaponAlign.js';
+import { placeSprite } from '../combat/gun/gunPlacement.js';
 
 // THE MOD'S OWN MODULES (WW1's 1:1 port of FPSWeaponClone) - run, not
 // imitated. The arrow points one way, as it does for ALIGN.
 import {
   WEAPON_WIDGET_VENDOR, readWidgetSettings, offsetStep, bobStep, inertiaStep, widgetTransformRect,
-} from '../combat/weaponWidgetMotion.js';
+} from '../combat/weapon/weaponWidgetMotion.js';
 import { MOD_SETTINGS } from '../systems/modSettings.js';
 import { walkSpeed, runSpeed } from '../player/motor.js';   // GetBaseSpeed's walk arm, the bob's baseSpeed
-export { createRecoil, createScreenShake, shakeNoise, GUN_FEEL } from '../combat/gunFeel.js';   // FIELD-GUN6: the one home
-export { MUZZLE_CURVE, muzzleGlow } from '../combat/gunFeel.js';   // FIELD-GUN13: the flash's curve, the same way
-import { muzzleGlow } from '../combat/gunFeel.js';
+export { createRecoil, createScreenShake, shakeNoise, GUN_FEEL } from '../combat/gun/gunFeel.js';   // FIELD-GUN6: the one home
+export { MUZZLE_CURVE, muzzleGlow } from '../combat/gun/gunFeel.js';   // FIELD-GUN13: the flash's curve, the same way
+import { muzzleGlow } from '../combat/gun/gunFeel.js';
 export { widgetTransformRect };
 
-// FIELD-GUN12: placeSprite moved to combat/gunPlacement.js, which
+// FIELD-GUN12: placeSprite moved to combat/gun/gunPlacement.js, which
 // the game reads too - see that file's header.
 
-/**
- * THE CYCLE. A gun is not a sword: WeaponManager's six directional
- * strikes and the drag-to-swing gesture have nothing to say here, so
- * the lab runs the smallest machine that can be judged -
- *
- *   Idle -> Firing (frames 0..5 at `fps`) -> Cooling (`cooldownMs`,
- *   the pump) -> Idle
- *
- * - and keeps the two things the classic machine DOES have that
- * matter: a hit frame the damage would land on (FPSWeapon.GetHitFrame,
- * 2 for melee) and a one-shot that cannot be interrupted
- * (FPSWeapon.OnAttackDirection's rule). `auto` holds the trigger.
- */
-export function createGunMachine({ fps = 14, cooldownMs = 1700, hitFrame = 1 } = {}) {
-  const m = {
-    state: 'Idle', frame: 0, fps, cooldownMs, hitFrame,
-    trigger: false, shots: 0,
-    _t: 0, _cool: 0, _hitThisShot: false,
-    /** How far into the pump we are, in ms - what a caller needs to
-     *  land a sound or a second animation ON the reload rather than
-     *  after it. Zero outside Cooling. */
-    get cooledMs() { return m.state === 'Cooling' ? m._cool : 0; },
-  };
-  m.fire = () => {
-    if (m.state !== 'Idle') return false;   // the one-shot cannot be replaced
-    m.state = 'Firing'; m.frame = 0; m._t = 0; m._hitThisShot = false; m.shots++;
-    return true;
-  };
-  /** Answers the event this step produced: 'hit' on the hit frame,
-   *  'ready' when the pump finishes, null otherwise. */
-  m.step = (dt) => {
-    let event = null;
-    if (m.state === 'Firing') {
-      m._t += dt;
-      const adv = Math.floor(m._t * m.fps);
-      m.frame = Math.min(adv, FIRE_FRAMES - 1);
-      if (!m._hitThisShot && m.frame >= m.hitFrame) { m._hitThisShot = true; event = 'hit'; }
-      if (adv >= FIRE_FRAMES) { m.state = 'Cooling'; m._cool = 0; m.frame = 0; }
-    } else if (m.state === 'Cooling') {
-      m._cool += dt * 1000;
-      if (m._cool >= m.cooldownMs) { m.state = 'Idle'; event = 'ready'; }
-    } else if (m.trigger) {
-      m.fire();
-    }
-    return event;
-  };
-  return m;
-}
+// PISTOL-PORT: THE MACHINE IS THE GAME'S NOW (combat/gun/gunMachine.js) - the Dwarven Pistolet fires on it - and this lab
+// reads it back, gunSheet.js's arrow.
+export { createGunMachine } from '../combat/gun/gunMachine.js';
 
 /**
  * The muzzle light. The flash is on frames 1-2 of the sheet
@@ -144,7 +99,7 @@ export function createGunMachine({ fps = 14, cooldownMs = 1700, hitFrame = 1 } =
  *
  * FIELD-GUN13: THE CURVE MOVED, this signature did not. The game
  * paints the flash and throws its light now, so the six numbers live
- * in combat/gunFeel.js with the rest of the feel and this is the
+ * in combat/gun/gunFeel.js with the rest of the feel and this is the
  * lab's own reading of them - `state` is this page's machine
  * ('Firing'), which the game's machine does not have. One home, two
  * spellings of the same question.
@@ -178,7 +133,7 @@ export function muzzleLight(state, frame) {
  * not the obvious setting - a big slow kick is what a first pass
  * reaches for, and it fights the 1.7s reload for the frame.
  */
-// FIELD-GUN6: createRecoil moved to combat/gunFeel.js - see above.
+// FIELD-GUN6: createRecoil moved to combat/gun/gunFeel.js - see above.
 
 /**
  * THE SOUND, and the slots it fills.
@@ -208,7 +163,7 @@ export function muzzleLight(state, frame) {
  * sounds" over a screenshot of the three dropdowns). The heads moved,
  * and THAT SENTENCE ABOVE IS NOW ENFORCED rather than merely written:
  * `SFX_FILES` in the weapon's home has to name the head of each list
- * (test/thunderlock.test.js). It was true by nobody's doing before -
+ * (test/systems/thunderlock.test.js). It was true by nobody's doing before -
  * two places holding one decision, agreeing because the same person
  * typed both - which is the drift class this weapon has paid for at
  * every round since FIELD-GUN6.
@@ -328,7 +283,7 @@ export function createSfxPlayer({ base = 'sfx/', vary = 0.06, volume = 0.7 } = {
  * it rattles.
  */
 // FIELD-GUN6: THE MACHINE MOVED. `createScreenShake` and its noise
-// live in combat/gunFeel.js now, with `createRecoil`, because the GAME
+// live in combat/gun/gunFeel.js now, with `createRecoil`, because the GAME
 // needs them - the lab settled these numbers and then kept them, so
 // the weapon fired dead still in all four hosts while the prototype
 // kicked. The lab reads the one home, so tuning here tunes there.
@@ -338,7 +293,7 @@ export function createSfxPlayer({ base = 'sfx/', vary = 0.06, volume = 0.7 } = {
  *
  * Mac: "all the idle, bob enhancements from our in-game weapon mods
  * need to be applied". They are - by RUNNING them, not by imitating
- * them. Offset, Bob and Inertia are imported from combat/weaponWidget.js,
+ * them. Offset, Bob and Inertia are imported from combat/weapon/weaponWidget.js,
  * which is the 1:1 port of FPSWeaponClone's own modules, and the
  * settings come from the mod's own declared defaults through
  * readWidgetSettings, so the multipliers the mod applies (Offset.Speed
@@ -382,4 +337,4 @@ export const WIDGET_VENDOR = WEAPON_WIDGET_VENDOR;
  * The gun lands where you aligned it and the flash overflows around
  * it, which is what it does in the art.
  */
-// FIELD-GUN11: moved to combat/gunSheet.js, which the game reads too.
+// FIELD-GUN11: moved to combat/gun/gunSheet.js, which the game reads too.

@@ -27,7 +27,7 @@
 // SERPENT_STOOD_RENOWN of it.
 //
 // A SERPENT'S HOARD IS THIS FILE'S WORD TOO (the raids' AUDIT RAID R4):
-// the receipt's seed rolls it on the device (src/systems/serpentSpoils.js)
+// the receipt's seed rolls it on the device (src/systems/serpent/serpentSpoils.js)
 // - and the relay hands an account's receipt to every socket of it, so the
 // first claim of a (day, account), a guest's too, writes the hoard's row
 // with its device's claim id (`cid`), and a claim is answered
@@ -37,13 +37,27 @@
 // stamped with this claim's own NONCE; the track is credited only where
 // THAT row exists - so a receipt claimed twice at once credits once.
 //
+// ═══ THE OLD COIL'S GRANTS, ON THE FIRST WRITE ALONE ═══════════════
+//
+// SERPENT5 (2026-10-15, Mac: "A gilded weapon to the serpent + a rare
+// chance of a title/aura drop"; Sea-Serpent.md section 17): the title
+// COILBREAKER one dealing ship's kill in twenty, the aura THE MAELSTROM
+// one in fifty - the Hour's grants' law (sds.js claimSd) rung for rung:
+// rolled HERE, off a draw this service makes (never the receipt's seed,
+// which the page holds - AUDIT SD III R4), for a REGISTERED account whose
+// ship DEALT (a receipt earned by standing is paid none), and laid on the
+// account's `serpent_honours` (migration 0119) by THIS claim's row alone,
+// in the row's own batch - so a receipt claimed twice at once rolls once.
+// Once held, held for good (titles.js reads it off the row).
+//
 // EVERY CLOCK IS AN ARGUMENT, as in accounts.js.
 // ═══════════════════════════════════════════════════════════════════
 
-import { verifySerpentReceipt } from '../../src/net/serpentReceipt.js';
-import { SERPENT_EMBERS } from '../../src/net/serpentHoardLaw.js';   // SERPENT-SET: the embers a receipt's hoard pays
+import { verifySerpentReceipt } from '../../src/net/serpent/serpentReceipt.js';
+import { SERPENT_EMBERS } from '../../src/net/serpent/serpentHoardLaw.js';   // SERPENT-SET: the embers a receipt's hoard pays
 import { renownForXp, renownSerpentXp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, RENOWN_TRACKS_MAX } from '../../src/net/renown.js';
 import { renownCharacterOk, renownNameOf, renownTrackOf, renownHeldSql } from './renownTracks.js';
+import { seededRng } from '../../src/systems/wind/wind.js';   // SERPENT5: the honours' own stream
 
 /** A device's claim id - the key a serpent's hoard is given under (the raids' RAID_CID_RE). */
 export const SERPENT_CID_RE = /^[0-9a-f]{16}$/;
@@ -51,6 +65,20 @@ export const SERPENT_CID_RE = /^[0-9a-f]{16}$/;
  *  waters) is paid of a serpent's Renown - half; one whose guns dealt their share is paid it whole. */
 export const SERPENT_STOOD_RENOWN = 0.5;
 const HOUR_S = 3600;
+/** SERPENT5: the account's grants on its row (`players.serpent_honours`, migration 0119), bit by bit. */
+export const SERPENT_HONOUR_TITLE = 1;
+export const SERPENT_HONOUR_AURA = 2;
+/** SERPENT5: how often a dealing ship's kill's first write grants each - Coilbreaker one in twenty, The Maelstrom one in
+ *  fifty (a serpent rises every four hours, where the Hour's grants are one in four and one in eight a few times a week). */
+export const SERPENT_TITLE_CHANCE = 1 / 20;
+export const SERPENT_AURA_CHANCE = 1 / 50;
+/** SERPENT5: the honours' own stream ('COIL') off the claim's draw. */
+export const SERPENT_HONOURS_SALT = 0x434f494c;
+/** SERPENT5: what a draw grants on a kill's first write - `{ title, aura }`. Pure. The claim's own draw feeds it. */
+export function serpentHonoursRoll(seed) {
+  const r = seededRng((seed ^ SERPENT_HONOURS_SALT) >>> 0);
+  return { title: r() < SERPENT_TITLE_CHANCE, aura: r() < SERPENT_AURA_CHANCE };
+}
 
 /** The statements that write a (day, account)'s hoard row for `cid` if none is yet, and read whose it is. */
 const hoardOf = (db, day, account, cid, nowS) => [
@@ -77,9 +105,10 @@ export async function serpentRecordOf({ db }, playerId) {
  * and the insignia's purse would have counted it) - and `strike(day, nonce, earned)` - marks.js
  * serpentStrikeStatement, null where Marks are not this account's - strikes its silver in the row's own batch, by THIS
  * claim's row alone. Answers, each with `spoils` (whether THIS claim is given the serpent's hoard):
- *   `{ recorded: true, slain, renown: { character, xp, level, credited, rose }, spoils, stones, day, struck? }` (`day`
- *   and `struck` the service's own - the route answers the strike as `marks`; AUDIT 625 P4: `stones` the row's embers,
- *   as the gate's claim says its own - AUDIT WB12d A1),
+ *   `{ recorded: true, slain, renown: { character, xp, level, credited, rose }, spoils, stones, day, struck?, title, aura,
+ *   titleNew, auraNew }` (`day` and `struck` the service's own - the route answers the strike as `marks`; AUDIT 625 P4:
+ *   `stones` the row's embers, as the gate's claim says its own - AUDIT WB12d A1; SERPENT5: `title`/`aura` what THIS
+ *   kill granted, `titleNew`/`auraNew` whether it was not held before - the session's row, read before the write),
  *   `{ recorded: false, why: 'claimed', slain, spoils, stones }` (the row's), `{ recorded: false, why: 'guest', slain,
  *   spoils }`, or
  *   `{ error }` - `no-gate-key`, `receipt` (`why` says which rung), `not-yours`, `renown-character`.
@@ -105,6 +134,11 @@ export async function claimSerpent({ db, nowS, subtle, rand }, player, { receipt
   // AUDIT SERPENT (the books): a hand who stood the fight out is paid SERPENT_STOOD_RENOWN of what a ship that dealt is
   const xp = Math.floor(renownSerpentXp(before?.level ?? 1) * (c.x === 'stood' ? SERPENT_STOOD_RENOWN : 1));
   const nonce = hex(rand(new Uint8Array(8)));
+  // SERPENT5: THE OLD COIL'S GRANTS - a dealing ship's alone, rolled off this claim's own draw
+  const draw = c.x === 'stood' ? null : rand(new Uint8Array(4));
+  const { title, aura } = draw ? serpentHonoursRoll(((draw[0] << 24) | (draw[1] << 16) | (draw[2] << 8) | draw[3]) >>> 0) : { title: false, aura: false };
+  const bits = (title ? SERPENT_HONOUR_TITLE : 0) | (aura ? SERPENT_HONOUR_AURA : 0);
+  const prior = Number(player.serpent_honours) || 0;   // what the account held before this claim, off the session's row
   // AUDIT 625 P4: the embers the claim says its build's hoard mints, never past the law's - none from a build before them
   const embers = Number.isSafeInteger(stones) && stones > 0 ? Math.min(stones, SERPENT_EMBERS) : 0;
   const stmt = strike?.(c.d, nonce, c.x) ?? null;   // SERPENT-SET: the serpent's silver, in this batch
@@ -117,19 +151,20 @@ export async function claimSerpent({ db, nowS, subtle, rand }, player, { receipt
   const res = await db.batch([
     // THE ROW, stamped with this claim's nonce - RETURNING it only when it was written
     db.prepare(
-      `INSERT OR IGNORE INTO serpent_kills (day, account, boss, hull, char_id, xp, nonce, at, stones, body)
-       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10)
+      `INSERT OR IGNORE INTO serpent_kills (day, account, boss, hull, char_id, xp, nonce, at, stones, body, title, aura)
+       VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12)
        RETURNING nonce`,
-    ).bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, embers, c.m ? JSON.stringify(c.m) : null),   // INT14: the relay's count, kept
+    ).bind(c.d, player.id, c.b, c.h, character, xp, nonce, nowS, embers, c.m ? JSON.stringify(c.m) : null, title ? 1 : 0, aura ? 1 : 0),   // INT14: the relay's count, kept; SERPENT5: its grants
     // THE HOUR SPENT and THE CREDIT DECIDED - by THIS claim's row alone (raids.js's statement)
     db.prepare(
       `UPDATE players SET
          renown_last_credit = ${credit},
          renown_hour_xp = CASE WHEN ${mine} THEN (CASE WHEN renown_hour >= ?8 THEN renown_hour_xp + ${credit} ELSE ${credit} END) ELSE renown_hour_xp END,
-         renown_hour = CASE WHEN ${mine} THEN MAX(renown_hour, ?8) ELSE renown_hour END
+         renown_hour = CASE WHEN ${mine} THEN MAX(renown_hour, ?8) ELSE renown_hour END,
+         serpent_honours = CASE WHEN ${mine} THEN serpent_honours | ?10 ELSE serpent_honours END
        WHERE id = ?1
        RETURNING renown_last_credit AS credit`,
-    ).bind(player.id, character, c.d, nonce, xp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, hour, RENOWN_TRACKS_MAX),
+    ).bind(player.id, character, c.d, nonce, xp, RENOWN_XP_MAX, RENOWN_XP_HOUR_MAX, hour, RENOWN_TRACKS_MAX, bits),   // SERPENT5: THE GRANTS, by THIS claim's row alone - held for good
     // THE TRACK THAT EXISTS grows by the credit (never past the cap's total) - by THIS claim's row alone
     db.prepare(
       `UPDATE renown_tracks SET xp = MIN(?5, xp + (SELECT renown_last_credit FROM players WHERE id = ?1)), name = COALESCE(?6, name), updated_at = ?7
@@ -166,6 +201,7 @@ export async function claimSerpent({ db, nowS, subtle, rand }, player, { receipt
   const was = before?.xp ?? 0;
   return {
     recorded: true, slain, spoils, stones: embers, day: c.d, ...(stmt ? { struck } : {}),
+    title, aura, titleNew: title && !(prior & SERPENT_HONOUR_TITLE), auraNew: aura && !(prior & SERPENT_HONOUR_AURA),   // SERPENT5
     renown: total === null
       ? { character, xp: null, level: null, credited: 0, rose: false }   // no place for a new track: counted, paid nothing
       : { character, xp: total, level: renownForXp(total), credited: Math.max(0, int(decided?.results?.[0]?.credit)), rose: renownForXp(total) > renownForXp(was) },

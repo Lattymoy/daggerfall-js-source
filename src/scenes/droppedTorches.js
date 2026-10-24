@@ -53,8 +53,9 @@
 // Bloodfall's GUID (no such mod); the Custom Tooltips names.
 
 import { GLOBAL_SCALE, pickFoeHit, RAY_DISTANCE, DEFAULT_ACTIVATION_DISTANCE } from '../player/activate.js';
-import { templateByIndex } from '../systems/itemTemplates.js';
+import { templateByIndex } from '../systems/item/itemTemplates.js';
 import { TEMPLATES } from '../systems/useItem.js';
+import { adoptLight } from '../render/lightId.js';   // LIGHT-ID: a light named by what burns, so the shadow pass knows one that moved
 import { applySpell, renewRounds } from '../systems/effects.js';
 import { calculateSuccessfulHit, calculateStruckBodyPart } from '../combat/formulas.js';
 import { liveStat } from '../systems/statMods.js';
@@ -400,12 +401,12 @@ export function createDroppedTorches({
       // (playerTorch.js:"this lane ships that": "it is a 0..1 BRIGHTNESS ... mapping a
       // brightness slider onto a radius would be a worse lie"). One
       // decision, one place; the dep the hosts never passed is gone.
-      out.push({ x: d.pos[0], y: d.pos[1] + Math.abs(d.size?.h ?? 0) / 2 + LIGHT_ABOVE_BILLBOARD, z: d.pos[2], range: 1 + (t?.capacityOrTarget ?? 0) * (d.time / full) });
+      out.push(adoptLight({ x: d.pos[0], y: d.pos[1] + Math.abs(d.size?.h ?? 0) / 2 + LIGHT_ABOVE_BILLBOARD, z: d.pos[2], range: 1 + (t?.capacityOrTarget ?? 0) * (d.time / full) }, d));   // LIGHT-ID: each light the torch's own, frame to frame
     }
     // the thrown torch's light hangs over its quad's own centre (0x3ad0-0x3aea), and its range is the template's, flat (0x3b41)
-    for (const p of projectiles) if (lit(p)) out.push({ x: p.pos[0], y: p.pos[1] + LIGHT_ABOVE_BILLBOARD, z: p.pos[2], range: templateByIndex(p.template)?.capacityOrTarget ?? 0 });
+    for (const p of projectiles) if (lit(p)) out.push(adoptLight({ x: p.pos[0], y: p.pos[1] + LIGHT_ABOVE_BILLBOARD, z: p.pos[2], range: templateByIndex(p.template)?.capacityOrTarget ?? 0 }, p));   // LIGHT-ID: one light in flight
     const playerRange = entity?.lightSource ? torchRange(entity.lightSource) : (templateByIndex(TEMPLATES.Torch)?.capacityOrTarget ?? 14);
-    for (const [f, fl] of flames) if (!f.dead) out.push({ x: fl.pos[0], y: fl.pos[1], z: fl.pos[2], range: playerRange });
+    for (const [f, fl] of flames) if (!f.dead) out.push(adoptLight({ x: fl.pos[0], y: fl.pos[1], z: fl.pos[2], range: playerRange }, fl));   // LIGHT-ID: a burning foe's, as it walks
     return out;
   }
   const batches = () => [...dropped.map((d) => d.batch), ...projectiles.map((p) => p.batch), ...[...flames.values()].map((fl) => fl.batch)].filter(Boolean);

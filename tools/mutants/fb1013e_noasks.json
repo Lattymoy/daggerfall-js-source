@@ -1,0 +1,110 @@
+[
+  {
+    "name": "NO-ASKS-the-reader-check-removed",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "  return timesNamed(quest, no.symbol.name) === 1 ? no : null;   // the prompt's own `no`, and nothing else",
+    "new": "  return no;",
+    "tests": [
+      "test/systems/quest/fb1013e_noasks.test.js"
+    ]
+  },
+  {
+    "name": "NO-ASKS-the-action-check-removed",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "  if (no.actions.length > 0) return null;   // a `_x_ task:` merged into the variable does something\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/fb1013e_noasks.test.js"
+    ]
+  },
+  {
+    "name": "NO-ASKS-the-asking-read-as-anything-but-a-click",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "  if (!triggers.length || !triggers.every((/** @type {any} */ a) => CLICK_TRIGGERS.includes(a.typeName))) return false;\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/fb1013e_noasks.test.js"
+    ]
+  },
+  {
+    "name": "NO-ASKS-the-asking-task-read-elsewhere-cleared-anyway",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "  return timesNamed(quest, task.symbol.name) === named;",
+    "new": "  return true;",
+    "tests": [
+      "test/systems/quest/fb1013e_noasks.test.js"
+    ]
+  },
+  {
+    "name": "NO-ASKS-a-global-task-cleared",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "  if (task.type !== TaskType.Standard) return false;   // a `_x_ task:` - a global's is every quest's (SAVEVARS)\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/fb1013e_noasks.test.js"
+    ]
+  },
+  {
+    "name": "NO-ASKS-re-armed-before-the-answer",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "      if (!no.getTriggerValue()) continue;   // not answered No (yet)\n",
+    "new": "",
+    "tests": [
+      "test/systems/quest/fb1013e_noasks.test.js"
+    ]
+  },
+  {
+    "name": "NO-ASKS-every-task-read-a-global-written-at-load",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "  for (const task of quest.tasks.values()) {\n    for (const prompt of task.actions) {\n      if (prompt.typeName !== 'Prompt' || !prompt.isComplete) continue;\n",
+    "new": "  for (const task of quest.tasks.values()) {\n    if (!task.getTriggerValue()) continue;\n    for (const prompt of task.actions) {\n      if (prompt.typeName !== 'Prompt' || !prompt.isComplete) continue;\n",
+    "tests": [
+      "test/systems/quest/questsave.test.js"
+    ]
+  },
+  {
+    "name": "NO-ASKS-the-asking-task-left-set",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "      task.clear();                 // its click listens again",
+    "new": "      //",
+    "tests": [
+      "test/systems/quest/fb1013e_noasks.test.js"
+    ]
+  },
+  {
+    "name": "NO-ASKS-the-prompt-left-complete",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "      prompt.isComplete = false;    // the one action",
+    "new": "      //",
+    "tests": [
+      "test/systems/quest/fb1013e_noasks.test.js"
+    ]
+  },
+  {
+    "name": "NO-ASKS-the-no-left-set",
+    "file": "src/systems/quest/noAsksAgain.js",
+    "old": "      no.clear();                   // the No forgotten",
+    "new": "      //",
+    "tests": [
+      "test/systems/quest/fb1013e_noasks.test.js"
+    ]
+  },
+  {
+    "name": "NO-ASKS-no-tick-door",
+    "file": "src/systems/quest/quest.js",
+    "old": "    // nowhere, is asked again on the next click\n    askAgain(this);",
+    "new": "    // nowhere, is asked again on the next click",
+    "tests": [
+      "test/systems/quest/fb1013e_noasks.test.js"
+    ]
+  },
+  {
+    "name": "NO-ASKS-no-repair-at-restore",
+    "file": "src/systems/quest/quest.js",
+    "old": "under DFU's law, loads asking again\n    askAgain(this);",
+    "new": "under DFU's law, loads asking again",
+    "tests": [
+      "test/systems/quest/fb1013e_noasks.test.js"
+    ]
+  }
+]

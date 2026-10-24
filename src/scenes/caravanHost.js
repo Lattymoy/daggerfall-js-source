@@ -27,7 +27,7 @@ import { CRIMES } from '../systems/crimes.js';
 
 /** The words of the door and the deeds. */
 export const CARAVAN_LINES = Object.freeze({
-  ask: (name) => `${name}: "What'll it be, traveller?"`,
+  ask: (name) => `${name}: "What'll it be, traveler?"`,
   hired: (name, pay) => `${name}: "Good. ${pay} gold when we're in, more for every fight we win. Keep up."`,
   noCoin: (name) => `${name}: "I've no more coin this trip."`,
   bandTook: (name) => `${name}: "Coin? The outlaws took every septim we had, and half the goods besides."`,   // LW12

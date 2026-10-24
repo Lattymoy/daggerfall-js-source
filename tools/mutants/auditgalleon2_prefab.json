@@ -1,72 +1,73 @@
 [
   {
     "name": "AUDIT-GN2-PF3-her-pictures-at-her-first-draw",
-    "file": "src/scenes/comeSailAwayPool.js",
-    "old": "        try { await pipeline.getTexture(art.archive); for (const r of art.glowRecs) art.glow(r); }",
-    "new": "        try { for (const r of art.glowRecs) art.glow(r); }",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "        try { await pipeline.getTexture(art.archive); for (const n of Object.values(art.night)) art.glow(n); }",
+    "new": "        try { for (const n of Object.values(art.night)) art.glow(n); }",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "her archive not asked at the preload: her twenty-three pictures painted at her first mesh's ask, mid-voyage"
   },
   {
     "name": "AUDIT-GN2-PF3-her-glow-at-her-first-draw",
-    "file": "src/scenes/comeSailAwayPool.js",
-    "old": "await pipeline.getTexture(art.archive); for (const r of art.glowRecs) art.glow(r); }",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "await pipeline.getTexture(art.archive); for (const n of Object.values(art.night)) art.glow(n); }",
     "new": "await pipeline.getTexture(art.archive); }",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
-    "why": "her glow cut at her first stern mesh's upload, not at the preload"
+    "why": "her glow cut at her first stern mesh's upload, not at the preload - EQUIVALENT since DF-LOOK: each stern slice's build cuts its glass by its glow (galleonArt.js shipStandIns, cutGlass), so the preload's getTexture cuts the glow already and the loop is belt-and-braces. It is kept for a loose pack's picture over a stern slice, whose stand-in build never runs - with one, the glow would be cut at the first draw (uploadFace).",
+    "equivalent": true
   },
   {
     "name": "AUDIT-GN2-PF4-her-model-after-the-five",
-    "file": "src/systems/comeSailAwayModels.js",
+    "file": "src/systems/comeSailAway/comeSailAwayModels.js",
     "old": "    const own = (url) => (url ? get(url, false).then(",
     "new": "    const own = (url) => (url ? new Promise((r) => setTimeout(r, 60)).then(() => get(url, false)).then(",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "her model asked a fetch later than the mod's five files"
   },
   {
     "name": "AUDIT-GN2-PF4-built-every-time",
-    "file": "src/systems/comeSailAwayModels.js",
+    "file": "src/systems/comeSailAway/comeSailAwayModels.js",
     "old": "  if (was && was.sha256 === json.sha256 && was.bake === bake && was.base === base && was.old === old) return was.built;\n",
     "new": "",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "her prefab rebuilt by every world scene's loader: a 150-340 ms long task each time"
   },
   {
     "name": "AUDIT-GN2-PF4-keyed-by-the-hash-alone",
-    "file": "src/systems/comeSailAwayModels.js",
+    "file": "src/systems/comeSailAway/comeSailAwayModels.js",
     "old": "was.sha256 === json.sha256 && was.bake === bake && ",
     "new": "was.sha256 === json.sha256 && ",
     "tests": [
-      "test/auditgalleon2_prefab.test.js",
-      "test/galleon_model.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js",
+      "test/world/ships/galleon_model.test.js"
     ],
     "why": "a bake edited under the same source hash served the cached prefab: a broken model stood as the good one"
   },
   {
     "name": "AUDIT-GN2-PF4-another-table-its-components",
-    "file": "src/systems/comeSailAwayModels.js",
+    "file": "src/systems/comeSailAway/comeSailAwayModels.js",
     "old": " && was.base === base && was.old === old) return",
     "new": " && was.old === old) return",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "a mod table of another length served her prefab built over the old one: her component indices off"
   },
   {
     "name": "AUDIT-GN2-PF4-another-table-its-galleon",
-    "file": "src/systems/comeSailAwayModels.js",
+    "file": "src/systems/comeSailAway/comeSailAwayModels.js",
     "old": " && was.old === old) return",
     "new": ") return",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "the mod's galleon changed under her, her small things served as the old one had them"
   },
@@ -76,158 +77,158 @@
     "old": "    const replacement = !!swap && !classicArt.has(Number(archive));",
     "new": "    const replacement = !!swap;",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "her pictures uploaded as TryImportTexture's: Retro Mode's no-mip cap never reached her"
   },
   {
     "name": "AUDIT-GN2-PF5-her-archive-never-marked",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "        pipeline?.markClassicArt?.(art.archive);\n",
     "new": "",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "the pool never says her stand-ins are classic art: her pictures and glow mip-mapped under Retro Mode"
   },
   {
     "name": "AUDIT-GN2-PF5-her-glow-a-replacement",
-    "file": "src/scenes/comeSailAwayPool.js",
-    "old": "{ replacement: !pipeline.isClassicArt?.(sm.textureArchive) }",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "{ replacement: !pipeline.isClassicArt?.(archive) }",
     "new": "{ replacement: true }",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "her glow uncapped under Retro Mode while her picture is capped: the shader's two samples off different levels"
   },
   {
     "name": "AUDIT-GN2-PF7-the-trigger-at-the-hub",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "export const DRIVE_TRIGGER_AT = Object.freeze([HELM.hub[0], HELM.hub[1], HELM.hub[2] + 0.25]);",
     "new": "export const DRIVE_TRIGGER_AT = Object.freeze([HELM.hub[0], HELM.hub[1], HELM.hub[2]]);",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "the trigger's cube at the hub: the pedestal's collider out of its fore face, the helm not taken from forward of the wheel"
   },
   {
     "name": "AUDIT-GN2-PF7-the-trigger-off-the-wheel",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "export const DRIVE_TRIGGER_AT = Object.freeze([HELM.hub[0], HELM.hub[1], HELM.hub[2] + 0.25]);",
     "new": "export const DRIVE_TRIGGER_AT = Object.freeze([HELM.hub[0], HELM.hub[1], HELM.hub[2] + 0.4]);",
     "tests": [
-      "test/auditgalleon2_prefab.test.js",
-      "test/galleon_model.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js",
+      "test/world/ships/galleon_model.test.js"
     ],
     "why": "the cube carried off the wheel: its hub at the cube's after face"
   },
   {
     "name": "AUDIT-GN2-PF8-hinged-mid-leaf",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "  box(bench, TEX.door, [w / 2, h / 2, t / 2], [w / 2, h / 2, t / 2], { uvFace: (fi, k) => {",
     "new": "  box(bench, TEX.door, [w / 2, h / 2, 0], [w / 2, h / 2, t / 2], { uvFace: (fi, k) => {",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "the leaf hinged at the middle of its thickness: open, 2 cm into its jamb over its whole height"
   },
   {
     "name": "AUDIT-GN2-PF8-the-castle-foot-in-the-deck",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "    const foot = Math.max(d.y0, floor) + 0.01;",
     "new": "    const foot = d.y0 + 0.01;",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "the castle's leaf from its doorway's foot: 1.4 cm inside her main deck"
   },
   {
     "name": "AUDIT-GN2-PF8-the-shut-leaf-off-the-middle",
-    "file": "src/world/galleonModel.js",
+    "file": "src/world/ships/galleonModel.js",
     "old": "p: [-d.halfX + 0.02, foot, d.z - DOOR_THICK / 2]",
     "new": "p: [-d.halfX + 0.02, foot, d.z]",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "the shut leaf moved forward with its hinge, off its doorway's middle"
   },
   {
     "name": "AUDIT-GN2-TS7-the-whole-stern-glows",
-    "file": "src/world/galleonArt.js",
+    "file": "src/world/ships/galleonArt.js",
     "old": "put(out, x, y, glassy ? [255, 186, 96] : [0, 0, 0]);",
     "new": "put(out, x, y, [255, 186, 96]);",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "both stern slices glowing on every pixel - the old check (some pixel over nothing) let it stand"
   },
   {
     "name": "AUDIT-GN2-TS7-the-glint-dark",
-    "file": "src/world/galleonArt.js",
+    "file": "src/world/ships/galleonArt.js",
     "old": " || (c[0] === C.glassLit[0] && c[1] === C.glassLit[1]);",
     "new": ";",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "the glass's glint left out of the glow"
   },
   {
     "name": "AUDIT-GN2-TS8-the-foot-cap-inward",
-    "file": "src/world/galleonMesh.js",
+    "file": "src/world/ships/galleonMesh.js",
     "old": "  if (caps[0] && r0 > 0) cap(p0, r0, scl(w, -1));",
     "new": "  if (caps[0] && r0 > 0) cap(p0, r0, w);",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "a prism's first end cap facing in: 119 caps of hers (trucks, breeches, the wheel's hub, deadeyes, the gaff's heel)"
   },
   {
     "name": "AUDIT-GN2-TS8-the-head-cap-inward",
-    "file": "src/world/galleonMesh.js",
+    "file": "src/world/ships/galleonMesh.js",
     "old": "  if (caps[1] && r1 > 0) cap(p1, r1, w);",
     "new": "  if (caps[1] && r1 > 0) cap(p1, r1, scl(w, -1));",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "a prism's second end cap facing in"
   },
   {
     "name": "AUDIT-GN2-TS8-a-box-side-inward",
-    "file": "src/world/galleonMesh.js",
+    "file": "src/world/ships/galleonMesh.js",
     "old": "[scl(X, -1), [[-1, -1, 1], [-1, 1, 1], [-1, 1, -1], [-1, -1, -1]]]",
     "new": "[X, [[-1, -1, 1], [-1, 1, 1], [-1, 1, -1], [-1, -1, -1]]]",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "a box's -x face facing in"
   },
   {
     "name": "AUDIT-GN2-TS12-corner-normals-left-behind",
-    "file": "src/world/galleonMesh.js",
+    "file": "src/world/ships/galleonMesh.js",
     "old": "if (normals) normals = [normals[0], normals[2], normals[1]]; ",
     "new": "",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "a flipped triangle's corners turned and their normals not: each of two corners lit by the other's normal"
   },
   {
     "name": "AUDIT-GN2-TS12-port-side-mirrored",
-    "file": "src/world/galleonMesh.js",
+    "file": "src/world/ships/galleonMesh.js",
     "old": "u = n[0] >= 0 ? p[2] : -p[2];",
     "new": "u = p[2];",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "her port side's livery and planking read mirrored from outside (1687 corners)"
   },
   {
     "name": "AUDIT-GN2-TS12-stern-mirrored",
-    "file": "src/world/galleonMesh.js",
+    "file": "src/world/ships/galleonMesh.js",
     "old": "u = n[2] >= 0 ? -p[0] : p[0];",
     "new": "u = -p[0];",
     "tests": [
-      "test/auditgalleon2_prefab.test.js"
+      "test/world/ships/auditgalleon2_prefab.test.js"
     ],
     "why": "her stern's livery read mirrored from astern"
   }

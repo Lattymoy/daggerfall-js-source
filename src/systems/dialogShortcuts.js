@@ -19,6 +19,8 @@
 // CheckSetModifiers' masking law only ever consults the virtual bits
 // so the shipped table resolves exactly.
 
+import { textDatabase, hasText, getText } from './textDatabases.js';   // L10N3f: a translation pack's DialogShortcuts.txt
+
 /** HotkeySequence.KeyModifiers (:10-24) - the [Flags] values verbatim. */
 export const MOD = Object.freeze({
   None: 0,
@@ -453,13 +455,30 @@ export const SHORTCUT_TEXT = Object.freeze({
   ExtAutomapMinZoom2: 'Ctrl-KeypadPlus', ExtAutomapMaxZoom2: 'Ctrl-KeypadMinus',
 });
 
+/** The text database CheckLoaded reads (DaggerfallShortcut.cs:9, `textDatabase`). */
+export const SHORTCUT_DATABASE = 'DialogShortcuts';
+
 // CheckLoaded's lazy dictionary (:307-326) - built once, on first read.
+// L10N3f: ONCE PER DATABASE. DFU builds it once because its one
+// database never changes; a translation pack installs its own
+// DialogShortcuts.txt over DFU's, and in French the letters move (Yes
+// is O, Oui). So the dictionary is built from the current language's
+// database - the pack's file, which REPLACES the table whole, as DFU's
+// install overwrites it: a button its file lacks has no hotkey, never
+// the English letter, which could fall on a key the pack gave another
+// button of the same window. English (and a pack without the file, or
+// with one that will not parse - no database, so the game's own) reads
+// SHORTCUT_TEXT, byte for byte. Rebuilt only when that source changes.
 let _keys = null;
+let _keysFrom;
 function checkLoaded() {
-  if (_keys) return _keys;
+  const table = textDatabase(SHORTCUT_DATABASE);
+  if (_keys && _keysFrom === table) return _keys;
   _keys = new Map();
+  _keysFrom = table;
   for (const button of BUTTONS) {
-    const text = SHORTCUT_TEXT[button];
+    // HasText / GetText (:318-320): the pack's row by the button's enum name, or SHORTCUT_TEXT's.
+    const text = table ? (hasText(SHORTCUT_DATABASE, button) ? getText(SHORTCUT_DATABASE, button) : undefined) : SHORTCUT_TEXT[button];
     if (text === undefined) continue;   // DFU's "no <button> entry" log
     _keys.set(button, fromString(text));
   }

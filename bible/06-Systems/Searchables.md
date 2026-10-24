@@ -1,4 +1,4 @@
-# SEARCHABLES AND THE PLAIN FOE'S LOOT (SEARCH1, SEARCH1-PARTY, FOE-CAP - 2026-10-03)
+# SEARCHABLES AND THE PLAIN FOE'S LOOT (SEARCH1, SEARCH1-PARTY, FOE-CAP - 2026-10-03; GRAVE-PARTY - 2026-10-16)
 
 The port's own; classic Daggerfall searches none of these objects and caps no drop.
 
@@ -25,16 +25,21 @@ the texture archive each wears and where it stands; the ids are DFU's model numb
 
 41003/41004 (TEXTURE.090 8-11) are cupboards, not shelves, and are not searched.
 
-- Reach: `SEARCH_REACH`, half of DoorActivationDistance (64 classic units, 1.6 m).
+- Reach: `SEARCH_REACH`, half of DoorActivationDistance (64 classic units, 1.6 m) - since GRAVE-PARTY (below) measured
+  from the BODY to the nearest point of the object's box (`searchReachFor`), not from the eye to where the ray meets it.
 - The roll: a third each underground; at a Graveyard location's headstone two in three nothing, a sixth each.
 - Foe: a grave, a coffin or a shelf wakes an undead by the player's level; a chest or a crate draws from the
-  dungeon's own layout roster. The named foe is an elite half the time (systems/eliteFoes.js) - offline too, as asked.
+  dungeon's own layout roster, less its water species (SLAUGHTER-BOX, `01-Overview/bugs/Field-Bugs-2026-10-15c.md`: the
+  foe stands on the dry floor beside the box; RDBLayout's Slaughterfish, Dreugh and Lamia stand in the roster only for
+  a marker under water - `characters/dungeonEnemies.js` WATER_SPECIES, the one home). The named foe is an elite half the
+  time (systems/eliteFoes.js) - offline too, as asked.
 - Find: one to four items, the first always gold, from the kind's goods, then the rarity ladder at the place's pile tier.
 - The message: a parchment box the player clicks away; the foes stand, or the find opens, only from its `onClose`
   (ui/actionText.js - deferred past the dismissal, once, never for a replaced box).
 - Locks: one chest or crate in three, lock 1..15, a hash of where it stands; picked in Steal mode by the interior door
   formula, Lockpicking tallied. A picked lock stays picked.
-- Five game hours (`SEARCH_COOLDOWN_MINUTES`) per object, on the save (`modSaveData` vendor `Searchables`).
+- Five game hours (`SEARCH_COOLDOWN_MINUTES`) per object, on the save (`modSaveData` vendor `Searchables`) - with the
+  searcher's name when it was a partymate's (GRAVE-PARTY), the later search holding the hours.
 
 ## SEARCH1-PARTY
 
@@ -46,9 +51,83 @@ looter sees".
 - Underground they stand in a ring about the object with a clear line from it; what the room cannot hold stands on
   the floor beyond the nearest action door, on the side away from the object.
 - A dungeon search is said to the room as a WORLD4 container, `srch:<i>` (the layout's searchables order, the same on
-  every client): every search, whatever it rolled, so the room's word starts everyone's five hours from its stamp, and a
-  find is the room's list - a partymate opening the object inside the five hours opens the same items, less what was
-  taken. An older build ignores the key.
+  every client): every search, whatever it rolled, and a find is the list - a partymate opening the object inside the
+  five hours opens the same items, less what was taken. (AMENDED 2026-10-17, OUTDOOR-LOOT: the word is not the list any more -
+  a find is a CARRIED PARTY-LOOT container, minted once at the search, its word the takes against it, every take a claim the
+  dungeon's host judges; `06-Systems/Online-Arc.md` OUTDOOR-LOOT.) ~~An older build ignores the key.~~ (AUDIT OUTDOOR-LOOT L6, 2026-10-18: an
+  older build reads a new find word as a newer version's - unreadable, "Reload to open it" - and its own whole list is landed
+  here as a birth or that peer's diff; Online-Arc's mixed builds.) A rival party's find of the same object is that party's own
+  list, judged by the dungeon's host apart (AUDIT OUTDOOR-LOOT D1). GRAVE-PARTY (below): the word
+  names its searcher and starts the five hours, and lands the find, in the searcher's PARTY alone - no longer everyone's
+  in the room.
+
+## GRAVE-PARTY - the search is the party's, above ground and below (FIELD BUGS 2026-10-16b)
+
+The Discord's "A few things": "graveyard loot on headstones are able to be looted by others, objects in tombs are un
+lootable (have not tried dungeons yet)" (`01-Overview/bugs/Field-Bugs-2026-10-16b.md`). A "tomb" is the Graveyard's Cemetery
+dungeon (dungeonType 18, the M0000000-8 crypt blocks), its room `dungeon:m<id>`.
+
+- **ABOVE GROUND THE STONE IS THE PARTY'S.** A headstone's search was its searcher's game's alone (the act channel is a
+  world room's, and a street cell is not one), so every partymate searched it again and found again. The cell keeps it
+  now - the overworld ledger's third kind, `gr` (`net/overworldLaw.js` `owFoldGraves`, the relay's `_owGraves`,
+  world212): the searcher's game says `[px, py, n]` (the stone's pixel and its number in the build,
+  `world.js` graveTargets' `loc`/`key`), the relay stamps it with its own minute, the searcher's VERIFIED account (the
+  token's subject, never the word's) and the searching character's name (the token's - AUDIT GRAVE-PARTY G5, below) -
+  `[px, py, n, minute, acct, name]` - and keeps it the search's five hours (`OW_GRAVE_KEEP_MIN`, pinned to
+  `SEARCH_COOLDOWN_MINUTES`), says it to everyone in the cell and in every later welcome. The relay knows no party: each
+  game lands the rows of its own party (and its own account's - another tab, an earlier visit, another character) on the
+  ledger's five hours, by the searcher's name (`scenes/searchPartyHost.js`, `searchToldBy`), and keeps every row in a
+  small book read again at the stone - so a partymate who searched before the party was made, or before the hub's picture
+  came, locks it too. A stranger's row locks nothing of mine, and mine nothing of theirs. A relay before world212 is told
+  nothing (`relaySupportsOwGraves`, `OW_GRAVE_RELAY_MIN` 211 - it would close the socket on the word: main's INSTANCES
+  world208, WEAPON-GLOW1 world209 and HUB-PULL + DO-ASK world210 among them, AUDIT GRAVE-PARTY G1); there each game keeps
+  its own five hours, as before. A LAYER keeps its own graves (a party plays in one layer), where the spent and the spawns
+  are the place's. BOUNDED BY ITS SEARCHER (AUDIT GRAVE-PARTY G3): a cell keeps at most `OW_GRAVE_ACCT_ROWS_MAX` (32,
+  pinned to the stones a game owes, `GRAVE_OWED_MAX`) rows of one account, its own oldest out past it, and past
+  `OW_CELL_GRAVES_MAX` (128) the oldest of whichever searcher holds the most - never another's row for a flooder's; the
+  word rides a bucket of its own (`owGraveGate`, a word a second, four deep - the honest game's own pace, kept at home in
+  `sendOverworld`), and a word that takes nothing writes nothing. A row's key is its stone and its searcher, and a stone's
+  number runs to 4,095, so before it one account saying fresh numbers at the `ow` frames' four a second wrote the whole
+  ledger 241 times a minute (3.3 MB) and evicted every honest row.
+- **BELOW, THE ROOM'S WORD IS THE SEARCHER'S PARTY'S.** SEARCH1-PARTY's `srch:<i>` started the five hours of EVERYONE in
+  the room, whatever it rolled - in a Cemetery every coffin a stranger had touched answered "You have already searched
+  here." for five game hours to a player who had never seen it. The word names its searcher now (`by`, the account), and
+  a client lands it (its hours, its find) only when the searcher is itself or of its party (`scenes/searchRoom.js`, the
+  one home for whose a word is; a word with no `by` - an older build's - is its live speaker's, through the hub's map of a
+  partymate's tabs). A stranger's word is KEPT, unlanded: read again at the object (a party made since locks it), and
+  carried on in the room's memory this client publishes, so the stranger's own partymates who walk in later still hear
+  their party's search - bounded hard, since it rides that memory (512 KB a dungeon): an honest find's alone
+  (`SEARCH_LOOT_MAX` pieces through the wire's projection, its own four fields, under `SEARCH_FOREIGN_BYTES`),
+  `SEARCH_FOREIGN_PER_OBJECT` an object and `SEARCH_FOREIGN_MAX` in all, the newest kept, each let go at the room's hour -
+  its stamp kept NEVER AHEAD OF NOW, an unstamped word's now (AUDIT GRAVE-PARTY G4, the WORLD7/8 C2 law applyLoot keeps
+  for a landed word: a forged far-future stamp was kept as said, never let go, and filled the 24 slots in the room's
+  memory for good). Each party's find is its own list; a stranger in the same crypt rolls their own. The word names the
+  searching character too (`bn`, the session's issued name - G5).
+- **"Already searched by <name>."** (`searchedText`, `t('search.searchedBy')`) for an object a partymate searched; my own
+  answers SEARCHED_TEXT as before. The ledger keeps the name through the save (`[key, minute, picked, name]`), and the
+  LATER search holds the hours - a memory or a welcome about an earlier one never winds a search back.
+- **THE FIVE HOURS ARE THE ACCOUNT'S, AND ITS CHARACTER IS NAMED** (AUDIT GRAVE-PARTY G5, chosen). The lock is per
+  account - one player, whichever character: an alt searching the stone or the coffin again is the same player's second
+  find, which is what Mac's "no one else can again for 5 hours" closes. But a search on character A answered character B
+  of the same account "You have already searched here." of an object B never touched. A row (the relay's, from the
+  token's name) and a word (`bn`) carry the searching character's name, and `searchToldBy` answers it: a search of my
+  account by ANOTHER character is told by that character's name ("Already searched by Ann."); this character's own, or
+  one whose name nobody said, the old words. Two characters of one account wearing one name - an account that wears its
+  own name (NAME-AS 'account'), or a character's name the service refused (`accounts.js` wornNameOf) - are told the old
+  words: they are one name to everyone in the room too.
+- **THE REACH IS THE BODY'S.** From the eye, SEARCH_REACH met a coffin's lid a metre and more below it: a coffin on the
+  floor answered "You are too far away." unless the player stood within ~0.9 m of its side. The distance is now from the
+  upright segment the player stands as (the feet to the capsule's top - the frame's `lastPlayerFeet`/`lastPlayerHeight`
+  underground, `player.pos`/`player.eye` on the street) to the nearest point of the object's box; within SEARCH_REACH the
+  target's reach is the ray's own, past it SEARCH_REACH (which the eye's ray then already exceeds, so the refusal is
+  spoken as ever). The bound is Mac's 1.6 m, half a door's - DEPARTURE from SEARCH1's "half of the interact range as
+  doors" measured as a door's is (from the eye), named here.
+- **DEPARTURE, named:** SEARCH1-PARTY's "the room's word starts everyone's five hours" (above) is struck - Mac's ask was
+  the PARTY's ("When one player in the party interacted with it no one else can again for 5 hours"), and a stranger is
+  no one of the party.
+- **NOT SHARED, above ground: the find.** The headstone's find is still the searcher's pile at their feet; a partymate is
+  told who searched the stone, not handed its pile (a cell keeps no container - the find would be a container protocol on
+  the street cell, a slice of its own).
 
 ## FOE-CAP
 
@@ -90,9 +169,13 @@ elite's extra drop is unchanged: two Magic pieces, one common, a 6% Legendary, g
 
 ## The four hosts
 
-- `scenes/dungeonContext.js` - WIRED (both dungeon hosts route `search:` - worldModes.js and dungeon.js).
+- `scenes/dungeonContext.js` - WIRED (both dungeon hosts route `search:` - worldModes.js and dungeon.js); GRAVE-PARTY's
+  search room (`scenes/searchRoom.js`) and the body's reach are its own, so both have them. dungeon.js's standalone
+  dungeon has no room and no party lens: every word there is its own.
 - `scenes/world.js` + `scenes/worldModes.js` - WIRED for a Graveyard location's headstones (`grave:`): the roll, the
-  two-per-player ring, the find, the five hours. NOT shared with the party above ground: the act channel is a world
-  room's (`online.sendAct`) and a street cell is not one, so each player's headstones keep their own five hours and finds.
+  two-per-player ring, the find, the five hours - the search itself `scenes/searchPartyHost.js` (GRAVE-PARTY, moved out of
+  bootWorld), which says the stone to the cell and hears the cell's (world.js routes its `gr` word there and ticks it
+  every online frame) and registers the party lens the dungeon reads too; worldModes stands the stones at the body's
+  reach. The five hours are the party's above ground now; the find is still the searcher's own (GRAVE-PARTY, above).
 - `scenes/exterior.js` (the one-city bench) - stands no headstone: it registers no `graveTargets`.
 - `scenes/worldModes.js` interiors - none: searching is dungeons and graveyards only, as asked.

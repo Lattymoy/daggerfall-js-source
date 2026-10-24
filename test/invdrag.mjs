@@ -33,6 +33,19 @@ export function fakeDom({ w = 1280, h = 800 } = {}) {
       replaceChildren(...cs) { for (const c of n.children) c.parent = null; n.children.length = 0; n.append(...cs); },
       after(...cs) { const p = n.parent; if (!p) return; let i = p.children.indexOf(n); for (const c of cs) { if (c == null) continue; c.parent = p; p.children.splice(++i, 0, c); } },   // AUDIT BAL: the enhanced death face hangs its zone block after its line
       remove() { const i = n.parent?.children.indexOf(n) ?? -1; if (i >= 0) n.parent.children.splice(i, 1); n.parent = null; },
+      // VIRT: a landed picture takes its tile's place. AUDIT VIRT: as the DOM's own does it - a node given is MOVED (taken
+      // from where it stood first), and a node given itself stays; the fake has no text nodes, so null and strings are
+      // not given (the DOM would write them as text)
+      replaceWith(...cs) {
+        const p = n.parent;
+        if (!p) return;
+        const nodes = cs.filter((c) => c != null && typeof c === 'object');
+        for (const c of nodes) if (c !== n) c.remove?.();
+        const i = p.children.indexOf(n);
+        n.parent = null;
+        p.children.splice(i, 1, ...nodes);
+        for (const c of nodes) c.parent = p;
+      },
       setAttribute(k, v) { n.attrs[k] = String(v); },
       getAttribute(k) { return n.attrs[k] ?? null; },
       removeAttribute(k) { delete n.attrs[k]; },   // HB-LYCFREE: the hotbar is up by default, and its icon ladder takes a picture's `src` off
@@ -49,12 +62,19 @@ export function fakeDom({ w = 1280, h = 800 } = {}) {
     return n;
   };
   const all = (n) => { const out = []; const walk = (x) => { for (const c of x.children) { out.push(c); walk(c); } }; walk(n); return out; };
-  /** One selector, the shapes this pane actually writes: `.a`, `.a.b`, `tag`, and a comma list. */
+  /** One selector, the shapes this pane actually writes: `.a`, `.a.b`, `tag`, and a comma list - and an id and an
+   *  attribute (`#a`, `[b]`, `[b="v"]`), as a browser reads them. HUD-SADDLE (FIELD BUGS 2026-10-14): this read them
+   *  as nothing at all, so `#fps-counter` was every node and `closest('[data-hm-ghost]')` answered every node it was
+   *  asked about - the HUD editor's sweep, which the notice stack's builder runs, took the whole page for its stand-ins
+   *  and took it down. A fake that lies makes a pin pass that production would fail (AUDIT WORLD D10's lesson). */
   const matches = (n, sel) => String(sel).split(',').some((one) => {
     const s = one.trim();
     if (!s) return false;
     const tag = /^[a-zA-Z]+/.exec(s)?.[0];
     if (tag && n.tagName !== tag.toUpperCase()) return false;
+    const id = /#([\w-]+)/.exec(s)?.[1];
+    if (id && n.id !== id) return false;
+    for (const [, k, v] of s.matchAll(/\[([\w-]+)(?:="([^"]*)")?\]/g)) if (!(k in n.attrs) || (v != null && n.attrs[k] !== v)) return false;
     const cls = [...s.matchAll(/\.([\w-]+)/g)].map((m) => m[1]);
     return cls.every((c) => n.classList.contains(c));
   });

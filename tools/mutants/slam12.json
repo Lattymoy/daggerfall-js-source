@@ -5,14 +5,14 @@
     "old": "    const span = Math.max(BACKOFF_MIN_MS, this._backoff - BACKOFF_MIN_MS);",
     "new": "    const span = Math.max(0, this._backoff - BACKOFF_MIN_MS);",
     "tests": [
-      "test/slam12.test.js",
-      "test/slam2.test.js",
-      "test/slam4.test.js",
-      "test/slam7.test.js",
-      "test/online.test.js",
-      "test/chat1.test.js",
-      "test/mwbody1.test.js",
-      "test/auditworld6biiib.test.js"
+      "test/net/slam12.test.js",
+      "test/net/slam2.test.js",
+      "test/net/slam4.test.js",
+      "test/net/slam7.test.js",
+      "test/net/online.test.js",
+      "test/net/chat1.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/auditworld6biiib.test.js"
     ]
   },
   {
@@ -21,14 +21,14 @@
     "old": "h.retryAt = this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(BACKOFF_MIN_MS, h.backoff - BACKOFF_MIN_MS);",
     "new": "h.retryAt = this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(0, h.backoff - BACKOFF_MIN_MS);",
     "tests": [
-      "test/slam12.test.js",
-      "test/slam2.test.js",
-      "test/slam4.test.js",
-      "test/slam7.test.js",
-      "test/online.test.js",
-      "test/chat1.test.js",
-      "test/mwbody1.test.js",
-      "test/auditworld6biiib.test.js"
+      "test/net/slam12.test.js",
+      "test/net/slam2.test.js",
+      "test/net/slam4.test.js",
+      "test/net/slam7.test.js",
+      "test/net/online.test.js",
+      "test/net/chat1.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/auditworld6biiib.test.js"
     ]
   },
   {
@@ -37,14 +37,14 @@
     "old": "        this.status = 'open'; this.error = null;   // SLAM12",
     "new": "        this.status = 'open'; this.error = null; this._backoff = BACKOFF_MIN_MS;   // SLAM12",
     "tests": [
-      "test/slam12.test.js",
-      "test/slam2.test.js",
-      "test/slam4.test.js",
-      "test/slam7.test.js",
-      "test/online.test.js",
-      "test/chat1.test.js",
-      "test/mwbody1.test.js",
-      "test/auditworld6biiib.test.js"
+      "test/net/slam12.test.js",
+      "test/net/slam2.test.js",
+      "test/net/slam4.test.js",
+      "test/net/slam7.test.js",
+      "test/net/online.test.js",
+      "test/net/chat1.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/auditworld6biiib.test.js"
     ]
   },
   {
@@ -53,30 +53,30 @@
     "old": "      if (primary) this._backoff = BACKOFF_MIN_MS; else { const h = this._halo.get(room); if (h) h.backoff = BACKOFF_MIN_MS; }",
     "new": "      void primary;",
     "tests": [
-      "test/slam12.test.js",
-      "test/slam2.test.js",
-      "test/slam4.test.js",
-      "test/slam7.test.js",
-      "test/online.test.js",
-      "test/chat1.test.js",
-      "test/mwbody1.test.js",
-      "test/auditworld6biiib.test.js"
+      "test/net/slam12.test.js",
+      "test/net/slam2.test.js",
+      "test/net/slam4.test.js",
+      "test/net/slam7.test.js",
+      "test/net/online.test.js",
+      "test/net/chat1.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/auditworld6biiib.test.js"
     ]
   },
   {
     "name": "V5-terminal-keeps-ghosts",
     "file": "src/net/online.js",
-    "old": "this.error = SEAT_TEXT; this._endHalo(); this._forgetRoom(this.room); this._deliver('superseded', () => this.onSuperseded?.()); return; }",
-    "new": "this.error = SEAT_TEXT; this._endHalo(); this._deliver('superseded', () => this.onSuperseded?.()); return; }",
+    "old": "this.error = seatText(); this._endHalo(); this._forgetRoom(this.room); this._deliver('superseded', () => this.onSuperseded?.()); return; }",
+    "new": "this.error = seatText(); this._endHalo(); this._deliver('superseded', () => this.onSuperseded?.()); return; }",
     "tests": [
-      "test/slam12.test.js",
-      "test/slam2.test.js",
-      "test/slam4.test.js",
-      "test/slam7.test.js",
-      "test/online.test.js",
-      "test/chat1.test.js",
-      "test/mwbody1.test.js",
-      "test/auditworld6biiib.test.js"
+      "test/net/slam12.test.js",
+      "test/net/slam2.test.js",
+      "test/net/slam4.test.js",
+      "test/net/slam7.test.js",
+      "test/net/online.test.js",
+      "test/net/chat1.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/auditworld6biiib.test.js"
     ]
   },
   {
@@ -85,14 +85,14 @@
     "old": "      this._ws = null;\n      this._setHost(null);",
     "new": "      this._ws = null; this._forgetRoom(this.room);\n      this._setHost(null);",
     "tests": [
-      "test/slam12.test.js",
-      "test/slam2.test.js",
-      "test/slam4.test.js",
-      "test/slam7.test.js",
-      "test/online.test.js",
-      "test/chat1.test.js",
-      "test/mwbody1.test.js",
-      "test/auditworld6biiib.test.js"
+      "test/net/slam12.test.js",
+      "test/net/slam2.test.js",
+      "test/net/slam4.test.js",
+      "test/net/slam7.test.js",
+      "test/net/online.test.js",
+      "test/net/chat1.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/auditworld6biiib.test.js"
     ]
   },
   {
@@ -101,14 +101,14 @@
     "old": "  let k = _keyOf.get(look);\n  if (k === undefined) { k = _computeLookKey(look); _keyOf.set(look, k); }\n  return k;",
     "new": "  return _computeLookKey(look);",
     "tests": [
-      "test/slam12.test.js",
-      "test/slam2.test.js",
-      "test/slam4.test.js",
-      "test/slam7.test.js",
-      "test/online.test.js",
-      "test/chat1.test.js",
-      "test/mwbody1.test.js",
-      "test/auditworld6biiib.test.js"
+      "test/net/slam12.test.js",
+      "test/net/slam2.test.js",
+      "test/net/slam4.test.js",
+      "test/net/slam7.test.js",
+      "test/net/online.test.js",
+      "test/net/chat1.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/auditworld6biiib.test.js"
     ]
   },
   {
@@ -117,14 +117,14 @@
     "old": "      if (this._dolls.get(key) !== p) { if (doll && typeof doll.rec === 'string') this.renderer.releaseTexture?.(PEER_ARCHIVE, doll.rec); return; }",
     "new": "      if (this._dolls.get(key) !== p) return;",
     "tests": [
-      "test/slam12.test.js",
-      "test/slam2.test.js",
-      "test/slam4.test.js",
-      "test/slam7.test.js",
-      "test/online.test.js",
-      "test/chat1.test.js",
-      "test/mwbody1.test.js",
-      "test/auditworld6biiib.test.js"
+      "test/net/slam12.test.js",
+      "test/net/slam2.test.js",
+      "test/net/slam4.test.js",
+      "test/net/slam7.test.js",
+      "test/net/online.test.js",
+      "test/net/chat1.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/auditworld6biiib.test.js"
     ]
   },
   {
@@ -133,14 +133,14 @@
     "old": "h.retryAt = now + BACKOFF_MIN_MS + this._rand() * Math.max(BACKOFF_MIN_MS, h.backoff - BACKOFF_MIN_MS);",
     "new": "h.retryAt = now + BACKOFF_MIN_MS + this._rand() * Math.max(0, h.backoff - BACKOFF_MIN_MS);",
     "tests": [
-      "test/slam12.test.js",
-      "test/slam2.test.js",
-      "test/slam4.test.js",
-      "test/slam7.test.js",
-      "test/online.test.js",
-      "test/chat1.test.js",
-      "test/mwbody1.test.js",
-      "test/auditworld6biiib.test.js"
+      "test/net/slam12.test.js",
+      "test/net/slam2.test.js",
+      "test/net/slam4.test.js",
+      "test/net/slam7.test.js",
+      "test/net/online.test.js",
+      "test/net/chat1.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/auditworld6biiib.test.js"
     ]
   },
   {
@@ -149,14 +149,14 @@
     "old": "retryAt: this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(BACKOFF_MIN_MS, backoff - BACKOFF_MIN_MS)",
     "new": "retryAt: this._now() + BACKOFF_MIN_MS + this._rand() * Math.max(0, backoff - BACKOFF_MIN_MS)",
     "tests": [
-      "test/slam12.test.js",
-      "test/slam2.test.js",
-      "test/slam4.test.js",
-      "test/slam7.test.js",
-      "test/online.test.js",
-      "test/chat1.test.js",
-      "test/mwbody1.test.js",
-      "test/auditworld6biiib.test.js"
+      "test/net/slam12.test.js",
+      "test/net/slam2.test.js",
+      "test/net/slam4.test.js",
+      "test/net/slam7.test.js",
+      "test/net/online.test.js",
+      "test/net/chat1.test.js",
+      "test/net/peer/mwbody1.test.js",
+      "test/net/auditworld6biiib.test.js"
     ]
   }
 ]

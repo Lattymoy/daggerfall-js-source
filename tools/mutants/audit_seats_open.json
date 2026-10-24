@@ -5,7 +5,7 @@
   "old": "if (declined?.meta?.changes) return { ok: true, declined: true };",
   "new": "if (false) return { ok: true, declined: true };",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "WHERE state = 'offered' AND offered_by = ?2\n",
   "new": "WHERE state = 'offered' AND offered_by IS NOT NULL\n",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ],
   "equivalent": true,
   "why": "breakFealty withdraws the guild's own offer to that tag first and returns (offered_by = ?1 between the pair); an 'offered' row left between the two was offered by the other, so offered_by = ?2 is that row's only value - the clause states the decline's meaning, it never narrows the delete"
@@ -25,8 +25,8 @@
   "old": "minutes: siegeMinutes(Number(b.starts_at), Number(c.i)) }),",
   "new": "minutes: null }),",
   "tests": [
-   "test/seats_finish.test.js",
-   "test/seat2a_siege_service.test.js"
+   "test/net/seats_finish.test.js",
+   "test/net/seat2a_siege_service.test.js"
   ]
  },
  {
@@ -35,7 +35,7 @@
   "old": "Math.max(1, Math.round((endS - startS) / 60))",
   "new": "Math.max(0, Math.round((endS - startS) / 60))",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -44,7 +44,7 @@
   "old": "Number.isFinite(endS) && endS >= startS ?",
   "new": "Number.isFinite(endS) ?",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -53,7 +53,7 @@
   "old": "if (n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? `-${ONES[n % 10]}` : '');",
   "new": "if (n < 100) return TENS[Math.floor(n / 10)] + (n % 10 ? ` ${ONES[n % 10]}` : '');",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -62,7 +62,7 @@
   "old": "  if (n < 20) return ONES[n];\n",
   "new": "  if (n < 10) return ONES[n];\n",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -71,7 +71,7 @@
   "old": "after ${countWords(d.minutes)} ${d.minutes === 1 ? 'minute' : 'minutes'}.`",
   "new": "after ${countWords(d.minutes)} minutes.`",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -80,7 +80,7 @@
   "old": "delete b.gm; delete b.rb; return b; }",
   "new": "delete b.gm; return b; }",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -89,7 +89,7 @@
   "old": "        if (was !== gt) this.rb = null;\n",
   "new": "",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -98,7 +98,7 @@
   "old": "      if (p) { if ((p.gt ?? null) !== gt) p.rb = null; p.gt = gt; }",
   "new": "      if (p) { p.gt = gt; }",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -107,44 +107,44 @@
   "old": "gt: readGuildTag(m), rb: readRibbon(m) };",
   "new": "gt: readGuildTag(m) };",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
   "name": "ASO-tv-ribbon-h",
-  "file": "src/ui/travelViewHud.js",
+  "file": "src/ui/travel/travelViewHud.js",
   "old": "const ribbonH = P.rb ? TRAVEL_VIEW_RIBBON.gap + TRAVEL_VIEW_RIBBON.band + TRAVEL_VIEW_RIBBON.edge : 0;",
   "new": "const ribbonH = 0;",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
   "name": "ASO-tv-badge-rb",
-  "file": "src/ui/travelViewHud.js",
+  "file": "src/ui/travel/travelViewHud.js",
   "old": "glyphs: glyphBadges(b), rb: ribbonColours(b?.rb), arms: badgeArms(b) };",
   "new": "glyphs: glyphBadges(b), rb: null, arms: badgeArms(b) };",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
   "name": "ASO-tv-badgekey",
-  "file": "src/ui/travelViewHud.js",
+  "file": "src/ui/travel/travelViewHud.js",
   "old": "|${(Array.isArray(b.rb) ? b.rb : []).join('/')}|${h ?",
   "new": "|${h ?",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
   "name": "ASO-tvbadgeof",
-  "file": "src/scenes/world.js",
+  "file": "src/scenes/travelViewMarks.js",
   "old": "gt: p.gt ?? null, rb: p.rb ?? null });",
   "new": "gt: p.gt ?? null });",
   "tests": [
-   "test/seats_finish.test.js",
-   "test/tv3_travellers.test.js"
+   "test/net/seats_finish.test.js",
+   "test/scenes/tv3_travellers.test.js"
   ]
  },
  {
@@ -153,7 +153,7 @@
   "old": "...(deps.seatRecords ? { readRecords: deps.seatRecords } : {})",
   "new": "...{}",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -162,7 +162,7 @@
   "old": "      if (host.readRecords) {\n",
   "new": "      if (false) {\n",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -171,7 +171,7 @@
   "old": "for (const k of lever ? [r.act, r.alt] : []) {",
   "new": "for (const k of lever ? [r.act] : []) {",
   "tests": [
-   "test/crown2_client.test.js"
+   "test/net/crown2_client.test.js"
   ]
  },
  {
@@ -180,7 +180,7 @@
   "old": "act: 'pact-accept', alt: 'pact-decline', tag: c.with.tag });",
   "new": "act: 'pact-accept', tag: c.with.tag });",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -189,7 +189,7 @@
   "old": "(d) => (d.declined ? `The offer of fealty from <${tag}> is declined.` :",
   "new": "(d) => (false ? `The offer of fealty from <${tag}> is declined.` :",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -198,7 +198,7 @@
   "old": "if (b.layout.castleBlock && isShopShelfModel(p.modelIdNum)) castleShelves.push({ aabb });",
   "new": "if (isShopShelfModel(p.modelIdNum)) castleShelves.push({ aabb });",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -207,7 +207,7 @@
   "old": "    if (key.startsWith('records:')) { openCastleRecords(); return true; }",
   "new": "    if (key.startsWith('records:')) { return true; }",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -216,7 +216,7 @@
   "old": "seatRecords: (st) => openRecordsFromBoard(st),",
   "new": "seatRecords: (st) => false,",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -225,7 +225,7 @@
   "old": "FROM marks_ledger WHERE actor = 'seats' AND rid = ?6`)",
   "new": "FROM marks_ledger WHERE rid = ?6`)",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -234,7 +234,7 @@
   "old": "json_set(?4, '$.marks', amount), ?5 FROM marks_ledger",
   "new": "json_set(?4, '$.marks', 0), ?5 FROM marks_ledger",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -243,7 +243,7 @@
   "old": "export const SIEGE_SPOILS = Object.freeze(['ingot:warforged', 'cloth:standard', 'gem:siege']);",
   "new": "export const SIEGE_SPOILS = Object.freeze(['ingot:warforged', 'cloth:standard']);",
   "tests": [
-   "test/seat2a_siege_client.test.js"
+   "test/net/seat2a_siege_client.test.js"
   ]
  },
  {
@@ -252,16 +252,16 @@
   "old": "...STONES, ...GEMS, SIEGE_GEM, PEARL,",
   "new": "...STONES, ...GEMS, PEARL,",
   "tests": [
-   "test/audit30_service.test.js"
+   "test/net/audit30_service.test.js"
   ]
  },
  {
   "name": "ASO-gem-template",
-  "file": "src/systems/profTemplates.js",
+  "file": "src/systems/professions/profTemplates.js",
   "old": "registerCustomTemplates([SIEGE_GEM_ROW]);",
   "new": "",
   "tests": [
-   "test/seats_finish.test.js"
+   "test/net/seats_finish.test.js"
   ]
  },
  {
@@ -270,17 +270,17 @@
   "old": "export const UNYIELDED = Object.freeze(['ingot:daedric']);",
   "new": "export const UNYIELDED = Object.freeze(['ingot:daedric', 'cloth:standard']);",
   "tests": [
-   "test/audit30_laws.test.js",
-   "test/audit31_law.test.js"
+   "test/net/audit30_laws.test.js",
+   "test/net/audit31_law.test.js"
   ]
  },
  {
   "name": "ASO-loom-note",
-  "file": "src/ui/profPages.js",
+  "file": "src/ui/professions/profPages.js",
   "old": "if (r.cloth === STANDARD_SILK.key) box.append(",
   "new": "if (r.cloth === 'nothing') box.append(",
   "tests": [
-   "test/audit32_pages.test.js"
+   "test/ui/audit32_pages.test.js"
   ]
  }
 ]

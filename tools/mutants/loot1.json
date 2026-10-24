@@ -1,101 +1,101 @@
 [
   {
     "name": "LOOT1-the-own-skill-never-first",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "export const SKILL_OWN_SHARE = 0.5;",
     "new": "export const SKILL_OWN_SHARE = 0;",
     "tests": [
-      "test/loot1_kin.test.js"
+      "test/systems/loot1_kin.test.js"
     ]
   },
   {
     "name": "LOOT1-the-kin-share-a-half",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "export const SKILL_KIN_SHARE = 0.85;",
     "new": "export const SKILL_KIN_SHARE = 0.5;",
     "tests": [
-      "test/loot1_kin.test.js"
+      "test/systems/loot1_kin.test.js"
     ]
   },
   {
     "name": "LOOT1-the-own-skill-even-when-taken",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  const ownFree = own != null && free.includes(own);",
     "new": "  const ownFree = own != null;",
     "tests": [
-      "test/loot1_kin.test.js"
+      "test/systems/loot1_kin.test.js"
     ]
   },
   {
     "name": "LOOT1-the-lean-bypassed",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "const param = id === 'skill' ? pickSkill(item, free, rolls) : pick(free, rolls);",
     "new": "const param = pick(free, rolls);",
     "tests": [
-      "test/loot1_kin.test.js"
+      "test/systems/loot1_kin.test.js"
     ]
   },
   {
     "name": "LOOT1-the-body-without-swimming",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  S.Dodging, S.Running, S.Jumping, S.Climbing, S.Swimming]);",
     "new": "  S.Dodging, S.Running, S.Jumping, S.Climbing]);",
     "tests": [
-      "test/loot1_kin.test.js"
+      "test/systems/loot1_kin.test.js"
     ]
   },
   {
     "name": "LOOT1-the-mind-without-the-schools",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "const MIND_KIN = Object.freeze([...MAGIC_SKILLS, S.Etiquette,",
     "new": "const MIND_KIN = Object.freeze([S.Etiquette,",
     "tests": [
-      "test/loot1_kin.test.js"
+      "test/systems/loot1_kin.test.js"
     ]
   },
   {
     "name": "LOOT1-a-weapon-swings-nothing",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "if (item?.group === 'Weapons') return { own: weaponSkillUsed(item.templateIndex), kin: STRIKE_KIN };",
     "new": "if (item?.group === 'Weapons') return { own: null, kin: STRIKE_KIN };",
     "tests": [
-      "test/loot1_kin.test.js"
+      "test/systems/loot1_kin.test.js"
     ]
   },
   {
     "name": "LOOT1-a-fence-not-a-weighting",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  if (near.length && r < SKILL_KIN_SHARE) return within(near, lo, SKILL_KIN_SHARE);",
     "new": "  if (near.length) return within(near, lo, SKILL_KIN_SHARE);",
     "tests": [
-      "test/loot1_kin.test.js"
+      "test/systems/loot1_kin.test.js"
     ]
   },
   {
     "name": "LOOT1-the-kin-from-nothing",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  const lo = ownFree ? SKILL_OWN_SHARE : 0;   // where the kin's interval starts",
     "new": "  const lo = 0;   // where the kin's interval starts",
     "tests": [
-      "test/loot1_kin.test.js"
+      "test/systems/loot1_kin.test.js"
     ]
   },
   {
     "name": "LOOT1-the-open-draw-from-nothing",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  return within(free, near.length ? SKILL_KIN_SHARE : lo, 1);",
     "new": "  return within(free, 0, 1);",
     "tests": [
-      "test/loot1_kin.test.js"
+      "test/systems/loot1_kin.test.js"
     ]
   },
   {
     "name": "LOOT1-a-second-roll",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  const within = (list, from, to) => list[Math.min(list.length - 1, Math.floor(((r - from) / (to - from)) * list.length))];",
     "new": "  const within = (list) => pick(list, rolls);",
     "tests": [
-      "test/loot1_kin.test.js"
+      "test/systems/loot1_kin.test.js"
     ]
   }
 ]

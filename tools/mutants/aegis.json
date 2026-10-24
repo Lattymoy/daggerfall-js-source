@@ -5,7 +5,7 @@
     "old": "  aegis: Object.freeze([OBLIVION_VOID, OBLIVION_VIOLET, OBLIVION_LILAC]),",
     "new": "  aegis: Object.freeze([OBLIVION_LILAC, OBLIVION_VIOLET, OBLIVION_VOID]),",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "Light into the void: the reverse read as a bare name over a night sky and was lost on snow."
   },
@@ -15,7 +15,7 @@
     "old": "  aegis: TITLE_RGBA.aegis,             // AEGIS:",
     "new": "  aegis: TITLE_RGBA.apostle,             // AEGIS:",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The pillars and the ring in the Apostle's periwinkle: the two halves of one grant drift apart."
   },
@@ -25,7 +25,7 @@
     "old": "  aegis: Object.freeze([0, 0, 0, 1]),   // AEGIS: its lilac end is bright",
     "new": "  // aegis: its lilac end is bright",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "No edge: the lilac end edged in its own violet."
   },
@@ -35,19 +35,19 @@
     "old": "  aegis: 'O',         // AEGIS:",
     "new": "  aegis: '@',         // AEGIS:",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The classic face would draw the Arena Champion's laurel beside Sureme's name."
   },
   {
     "name": "AEGIS-the-glyph-filled",
     "file": "src/ui/playerBadge.js",
-    "old": "laurel: true, aegis: true, primarch: false, crystalfist: false });",
-    "new": "laurel: true, aegis: false, primarch: false, crystalfist: false });",
+    "old": "laurel: true, aegis: true, primarch: false, crystalfist: false, wikimaid: false });",
+    "new": "laurel: true, aegis: false, primarch: false, crystalfist: false, wikimaid: false });",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
-    "note": "Filled, the pillars and the ring are one blot. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "Filled, the pillars and the ring are one blot. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "AEGIS-the-middle-pillar-short",
@@ -55,7 +55,7 @@
     "old": "aegis: 'M8 0.9V10.9M3",
     "new": "aegis: 'M8 7.2V10.9M3",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The middle pillar no taller than the sides: the reference's risen middle gone."
   },
@@ -65,7 +65,7 @@
     "old": "M3 10.2A5 2.6 0 1 0 13 10.2A5 2.6 0 1 0 3 10.2",
     "new": "M4 10.2A4 2.6 0 1 0 12 10.2A4 2.6 0 1 0 4 10.2",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The side pillars no longer stand at the ring's ends."
   },
@@ -75,19 +75,19 @@
     "old": "'M4.4 12.9Q2.2 13.2 0.3 14.6",
     "new": "'M4.4 9.9Q2.2 13.2 0.3 14.6",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The void's mass climbing over the aegis it should hang beneath."
   },
   {
     "name": "AEGIS-the-wards-button-in-the-fire",
     "file": "src/ui/playerBadge.js",
-    "old": "oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst' });",
-    "new": "oblivionward: 'gatebreaker', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst' });",
+    "old": "oblivionward: 'aegis', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden' });",
+    "new": "oblivionward: 'gatebreaker', radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden' });",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
-    "note": "The Oblivion Ward's button on the card painted in Dagon's fire. PRIMARCH (re-aimed by content): the line gained the radiance's paint. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "The Oblivion Ward's button on the card painted in Dagon's fire. PRIMARCH (re-aimed by content): the line gained the radiance's paint. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "AEGIS-the-list-renamed",
@@ -95,27 +95,27 @@
     "old": "  aegis: 'AEGIS_HANDLES',",
     "new": "  aegis: 'HERALD_HANDLES',",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The title read off the Herald's list: Sureme holds nothing."
   },
   {
     "name": "AEGIS-the-ward-without-the-list",
     "file": "server-account/src/titles.js",
-    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
-    "new": "export const TIER_AURA = Object.freeze({ primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
+    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
+    "new": "export const TIER_AURA = Object.freeze({ primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
-    "note": "The list grants the title and the glyph and no aura. PRIMARCH (re-aimed by content): the line gained GA00250's radiance, which stays. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "The list grants the title and the glyph and no aura. PRIMARCH (re-aimed by content): the line gained GA00250's radiance, which stays. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "AEGIS-the-brokers-first",
     "file": "server-account/src/titles.js",
-    "old": "  for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);\n  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);\n  // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js\n  // claimSd, `sd_honours`), held for good; a registered account's alone, as Hourbreaker is\n  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');\n  if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA);   // HOURS-FIRST: with the title, by name\n  for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);",
-    "new": "  for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);\n  for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);\n  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);\n  // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js\n  // claimSd, `sd_honours`), held for good; a registered account's alone, as Hourbreaker is\n  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');\n  if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA);   // HOURS-FIRST: with the title, by name",
+    "old": "  for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);\n  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);\n  // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js\n  // claimSd, `sd_honours`), held for good; a registered account's alone, as Hourbreaker is\n  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');\n  if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA);   // HOURS-FIRST: with the title, by name\n  // EG-E2: the Spire's two auras with their titles' bits (Kynbane's Beaconlight, Wellhead-Walker's The Burning Stair), a\n  // registered account's alone; Firstlight with First of the Spire, by name\n  if (typeof player?.handle === 'string' && player.handle) for (const [t, a] of Object.entries(EG_HONOUR_AURA)) if ((Number(player?.eg_honours) & EG_HONOUR[t]) && !held.includes(a)) held.push(a);\n  if (isSpireFirst(player, env) && !held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);\n  for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);",
+    "new": "  for (const a of insigniaKeys(player?.insignia, 'aura')) if (!held.includes(a)) held.push(a);\n  for (const [t, a] of Object.entries(TIER_AURA)) if (holdsTier(t, player, env) && !held.includes(a)) held.push(a);\n  if (isDeveloper(player, env) && !held.includes(DEVELOPER_AURA)) held.push(DEVELOPER_AURA);\n  // SD9c: THE TURNING HOUR - the Brass Remnant's second grant, rolled on a kill's first write and laid on the row (sds.js\n  // claimSd, `sd_honours`), held for good; a registered account's alone, as Hourbreaker is\n  if (typeof player?.handle === 'string' && player.handle && (Number(player?.sd_honours) & SD_HONOUR_AURA)) held.push('turninghour');\n  if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA);   // HOURS-FIRST: with the title, by name\n  // EG-E2: the Spire's two auras with their titles' bits (Kynbane's Beaconlight, Wellhead-Walker's The Burning Stair), a\n  // registered account's alone; Firstlight with First of the Spire, by name\n  if (typeof player?.handle === 'string' && player.handle) for (const [t, a] of Object.entries(EG_HONOUR_AURA)) if ((Number(player?.eg_honours) & EG_HONOUR[t]) && !held.includes(a)) held.push(a);\n  if (isSpireFirst(player, env) && !held.includes(EG_FIRST_AURA)) held.push(EG_FIRST_AURA);",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The Broker's auras offered before the list's. SERAPH-WINGS (re-aimed by content): the wings joined the list."
   },
@@ -125,7 +125,7 @@
     "old": "  auras: aurasHeld(player, env),   // AEGIS:",
     "new": "  auras: aurasHeld(player),   // AEGIS:",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The account card's answer never lists the ward."
   },
@@ -135,7 +135,7 @@
     "old": "AEGIS_HANDLES = \"Sureme\"",
     "new": "AEGIS_HANDLES = \"Diggleborf\"",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "Granted to the wrong player."
   },
@@ -145,7 +145,7 @@
     "old": "          au: auraWorn(who.player, env),",
     "new": "          au: auraWorn(who.player),",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The token never signs the ward: Sureme wears it on the card and nobody sees it."
   },
@@ -155,19 +155,19 @@
     "old": "  const why = auraRefusal(aura, player, env);",
     "new": "  const why = auraRefusal(aura, player);",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The aura door refuses Sureme the ward they hold."
   },
   {
     "name": "AEGIS-the-vocabulary-without-the-ward",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour']);",
+    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire']);   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
+    "new": "export const AURAS = Object.freeze(['dagonfire', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire']);   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
-    "note": "The relay refuses Sureme's token. PRIMARCH (re-aimed by content): the list gained the radiance, which stays. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's Crystal Resonance."
+    "note": "The relay refuses Sureme's token. PRIMARCH (re-aimed by content): the list gained the radiance, which stays. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's Crystal Resonance. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "AEGIS-a-gap-in-the-ring",
@@ -175,7 +175,7 @@
     "old": "  vec3 col = inked(dr, 0.016) * (breath + 0.8 * scribe)",
     "new": "  vec3 col = inked(dr, 0.016) * (breath + 0.8 * scribe) * step(0.05, fract(a / TAU))",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "A broken ring: Sureme asked for a full circle."
   },
@@ -185,7 +185,7 @@
     "old": "  float su = a / TAU * ${WARD_SIGILS.toFixed(1)};",
     "new": "  float su = (a - TAU / 8.0) / TAU * ${WARD_SIGILS.toFixed(1)};",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The claws off the diagonals, where the first reference has its marks."
   },
@@ -195,7 +195,7 @@
     "old": "mist * 0.55 * smoothstep(0.08, 0.38, r) * ",
     "new": "mist * 0.55 * ",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The polar mist drawn to the centre, where it pinches into spokes."
   },
@@ -205,7 +205,7 @@
     "old": "  return col * wardDrawn(fract(a / TAU + 0.5)) * (1.0 - smoothstep",
     "new": "  return col * (1.0 - smoothstep",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "Kindling only brightens: the ward is no longer drawn round."
   },
@@ -215,7 +215,7 @@
     "old": "const hzGlsl = (hz) => { const per = Math.round(1 / hz); return Math.abs(per * hz - 1) < 1e-12 ? `/ ${per.toFixed(1)}` : `* ${hz}`; };",
     "new": "const hzGlsl = (hz) => `* ${hz.toFixed(4)}`;",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "Rates written rounded: the ward steps at the clock's wrap."
   },
@@ -225,19 +225,19 @@
     "old": "  if (uAura == 1) {",
     "new": "  if (uAura == 2) {",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The ward's wearers burn with Dagon's fire."
   },
   {
     "name": "AEGIS-the-kind-never-set",
     "file": "src/render/auraRing.js",
-    "old": "      gl.uniform1i(U.uAura, look.kind);\n",
-    "new": "",
+    "old": "        if (P !== bound) { this._bind(P, eye, seconds, fog); bound = P; }",
+    "new": "        if (!bound) { this._bind(P, eye, seconds, fog); bound = P; }",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
-    "note": "Every wearer drawn in whatever look the last one left."
+    "note": "Every wearer drawn in whatever look the last one left. Re-aimed by content (AURA-SPLIT, #1143): a look is its own program now, so every wearer drawn in the first one's."
   },
   {
     "name": "AEGIS-the-fires-ring-for-all",
@@ -245,7 +245,7 @@
     "old": "      gl.uniform1f(U.uRingR, look.ringR); gl.uniform1f(U.uFlameH, look.flameH);",
     "new": "      gl.uniform1f(U.uRingR, AURA_RING_R); gl.uniform1f(U.uFlameH, look.flameH);",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The ward drawn at the fire's narrower ring."
   },
@@ -255,7 +255,7 @@
     "old": "violet: Object.freeze([0.698, 0.302, 1])",
     "new": "violet: Object.freeze([0.616, 0.486, 0.941])",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The ward in the Apostle's periwinkle, not the title's violet."
   },
@@ -265,7 +265,7 @@
     "old": "export const WARD_SCRIPT = Object.freeze([25, 38, 51, 12, 19, 40, 61, 18, 33, 15, 52, 10]);",
     "new": "export const WARD_SCRIPT = Object.freeze([25, 38, 25, 38, 25, 38, 25, 38, 25, 38, 25, 38]);",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "A pattern, not writing."
   },
@@ -275,7 +275,7 @@
     "old": "export const WARD_WALL_H = 0.42;",
     "new": "export const WARD_WALL_H = 0.8;",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "A wall higher than the fire's flames: a cage, not a ward."
   },
@@ -285,7 +285,7 @@
     "old": "Object.hasOwn(AURA_LOOK, aura) ? AURA_LOOK[aura]",
     "new": "aura in AURA_LOOK ? AURA_LOOK[aura]",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "A word off the prototype ('constructor') drawn with no look."
   },
@@ -295,7 +295,7 @@
     "old": "          if (look.glyphs && !closed) {",
     "new": "          if (false) {",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The ward with no floating symbols."
   },
@@ -305,7 +305,7 @@
     "old": "  return mod(floor(t / life + fract(k * 0.618034)), ${AURA_CLOCK_PERIOD.toFixed(1)} / life);",
     "new": "  return floor(t / life + fract(k * 0.618034));",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "Which flight it is runs on past the clock: every symbol jumps somewhere else at the wrap."
   },
@@ -315,7 +315,7 @@
     "old": "float h = fract(sin((k * 17.0 + wardFlightOf(k, t)) * 12.9898 + 4.1) * 43758.5453);",
     "new": "float h = fract(sin((k * 17.0) * 12.9898 + 4.1) * 43758.5453);",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "Each symbol lifts off the same spot every flight: nine fountains, not a ward."
   },
@@ -325,7 +325,7 @@
     "old": "float y = uLift + 0.06 + (1.0 - (1.0 - age) * (1.0 - age)) *",
     "new": "float y = uLift + 0.06 + ((1.0 - age) * (1.0 - age)) *",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The symbols fall into the ring instead of floating up out of it."
   },
@@ -335,7 +335,7 @@
     "old": "w = c + vec3(d.y, 0.0, -d.x) * o.x",
     "new": "w = c + vec3(1.0, 0.0, 0.0) * o.x",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The cards all face one way: seen edge-on from the side, the runes vanish."
   },
@@ -345,7 +345,7 @@
     "old": "vS = vec3(f.w, mod(k * 5.0 + wardFlightOf(k, uTime), ",
     "new": "vS = vec3(f.w, mod(k * 5.0, ",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "Each symbol lifts the same rune every flight."
   },
@@ -355,7 +355,7 @@
     "old": "  float fade = smoothstep(0.0, 0.1, age) * (1.0 - age * age);",
     "new": "  float fade = 1.0;",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The symbols pop in whole and vanish whole: nothing dissipates."
   },
@@ -365,7 +365,7 @@
     "old": "  float whole = smoothstep(age * 1.25 - 0.3, age * 1.25 - 0.1, n);",
     "new": "  float whole = 1.0;",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The runes only dim: they never break into dust."
   },
@@ -375,7 +375,7 @@
     "old": "  float edge = smoothstep(0.0, 0.12, min(min(uv.x, 1.0 - uv.x), min(uv.y, 1.0 - uv.y)));",
     "new": "  float edge = 1.0;",
     "tests": [
-      "test/aegis.test.js"
+      "test/net/aegis.test.js"
     ],
     "note": "The glow cut off square at the card's edge: a lit rectangle round each rune."
   }

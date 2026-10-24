@@ -1,0 +1,84 @@
+[
+  {
+    "name": "RAIN-HOURS-rain-all-day",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "export const WET_HOURS = Object.freeze({ rain: 0.5, thunder: 0.5 });",
+    "new": "export const WET_HOURS = Object.freeze({ rain: 1, thunder: 0.5 });",
+    "tests": [
+      "test/systems/weather/rainhours.test.js"
+    ]
+  },
+  {
+    "name": "RAIN-HOURS-storms-all-day",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "export const WET_HOURS = Object.freeze({ rain: 0.5, thunder: 0.5 });",
+    "new": "export const WET_HOURS = Object.freeze({ rain: 0.5, thunder: 1 });",
+    "tests": [
+      "test/systems/weather/rainhours.test.js"
+    ]
+  },
+  {
+    "name": "RAIN-HOURS-the-hours-handed-to-clear-air-alone",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "  if (dry > 0) for (const w of DRY_WORDS) t[w] *= 1 + freed / dry;\n",
+    "new": "",
+    "tests": [
+      "test/systems/weather/rainhours.test.js"
+    ]
+  },
+  {
+    "name": "RAIN-HOURS-fog-left-out-of-the-dry-words",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "const DRY_WORDS = Object.freeze(['cloudy', 'overcast', 'fog', 'sandstorm']);",
+    "new": "const DRY_WORDS = Object.freeze(['cloudy', 'overcast', 'sandstorm']);",
+    "tests": [
+      "test/systems/weather/rainhours.test.js"
+    ]
+  },
+  {
+    "name": "RAIN-HOURS-the-sand-left-out-of-the-dry-words",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "const DRY_WORDS = Object.freeze(['cloudy', 'overcast', 'fog', 'sandstorm']);",
+    "new": "const DRY_WORDS = Object.freeze(['cloudy', 'overcast', 'fog']);",
+    "tests": [
+      "test/systems/weather/rainhours.test.js"
+    ]
+  },
+  {
+    "name": "RAIN-HEART-every-front-pours",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "export const STRENGTH = Object.freeze({ rain: Object.freeze([EDGE_INTENSITY, 1]) });",
+    "new": "export const STRENGTH = Object.freeze({});",
+    "tests": [
+      "test/systems/weather/rainhours.test.js"
+    ]
+  },
+  {
+    "name": "RAIN-HEART-the-floor-at-nothing",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "export const STRENGTH = Object.freeze({ rain: Object.freeze([EDGE_INTENSITY, 1]) });",
+    "new": "export const STRENGTH = Object.freeze({ rain: Object.freeze([0, 1]) });",
+    "tests": [
+      "test/systems/weather/rainhours.test.js"
+    ]
+  },
+  {
+    "name": "RAIN-HEART-the-strength-unread",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "  return (s.strength ?? 1) * s.env * (1 - (1 - EDGE_INTENSITY) * f * f);",
+    "new": "  return s.env * (1 - (1 - EDGE_INTENSITY) * f * f);",
+    "tests": [
+      "test/systems/weather/rainhours.test.js"
+    ]
+  },
+  {
+    "name": "RAIN-HEART-drawn-from-the-node-moves-every-birth-after-it",
+    "file": "src/systems/weather/weatherMap.js",
+    "old": "      strength: systemStrength(type, id),   // RAIN-HEART: drawn from the id, never from `r` - no candidate's draws move\n",
+    "new": "      strength: STRENGTH[type] ? STRENGTH[type][0] + (STRENGTH[type][1] - STRENGTH[type][0]) * r() : 1,\n",
+    "tests": [
+      "test/systems/weather/rainhours.test.js",
+      "test/systems/flow2_fast_tests.test.js"
+    ]
+  }
+]

@@ -1,0 +1,443 @@
+[
+  {
+    "name": "SEA-VAULTS-lattice-wide",
+    "file": "src/net/wire.js",
+    "old": "export const WDUN_SEA_CELLS_W = 806;",
+    "new": "export const WDUN_SEA_CELLS_W = 807;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-cell-unbounded",
+    "file": "src/net/wire.js",
+    "old": "  return cx < WDUN_SEA_CELLS_W && cy < WDUN_SEA_CELLS_H ? [cx, cy] : null;",
+    "new": "  return [cx, cy];",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-cell-last-lost",
+    "file": "src/net/wire.js",
+    "old": "  return cx < WDUN_SEA_CELLS_W && cy < WDUN_SEA_CELLS_H ? [cx, cy] : null;",
+    "new": "  return cx < WDUN_SEA_CELLS_W - 1 && cy < WDUN_SEA_CELLS_H ? [cx, cy] : null;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-hall-mountains-only",
+    "file": "src/net/wire.js",
+    "old": "  if (sea) return seaVaultKey(sea[0], sea[1]);",
+    "new": "  if (false) return seaVaultKey(sea[0], sea[1]);",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-room-a-mountain-halls",
+    "file": "src/net/wire.js",
+    "old": "  if (sea) return `dungeon:m${seaVaultRoomMapId(sea[0], sea[1])}`;",
+    "new": "  if (false) return `dungeon:m${seaVaultRoomMapId(sea[0], sea[1])}`;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-mapid-salt",
+    "file": "src/net/wire.js",
+    "old": "export const seaVaultMapId = (cx, cy) => (((0xe7 << 20) | (500000 + cy * WDUN_SEA_CELLS_W + cx)) >>> 0);",
+    "new": "export const seaVaultMapId = (cx, cy) => (((0xe6 << 20) | (500000 + cy * WDUN_SEA_CELLS_W + cx)) >>> 0);",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-mapid-rows",
+    "file": "src/net/wire.js",
+    "old": "export const seaVaultMapId = (cx, cy) => (((0xe7 << 20) | (500000 + cy * WDUN_SEA_CELLS_W + cx)) >>> 0);",
+    "new": "export const seaVaultMapId = (cx, cy) => (((0xe7 << 20) | (500000 + cx * WDUN_SEA_CELLS_H + cy)) >>> 0);",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-relay-min",
+    "file": "src/net/wire.js",
+    "old": "export const WDUN_SEA_RELAY_MIN = 246;",
+    "new": "export const WDUN_SEA_RELAY_MIN = 245;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-room-cell-any-salt",
+    "file": "src/net/wire.js",
+    "old": "  if (!Number.isSafeInteger(id) || id <= 0 || id > 0xffffffff || (id >>> 20 !== 0xe7 && id >>> 20 !== SEA_VAULT_LANE)) return null;",
+    "new": "  if (!Number.isSafeInteger(id) || id <= 0 || id > 0xffffffff) return null;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-room-cell-unbounded",
+    "file": "src/net/wire.js",
+    "old": "  return n >= 0 && cy < WDUN_SEA_CELLS_H ? [n % WDUN_SEA_CELLS_W, cy] : null;",
+    "new": "  return [n % WDUN_SEA_CELLS_W, cy];",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-room-cell-row-past",
+    "file": "src/net/wire.js",
+    "old": "  return n >= 0 && cy < WDUN_SEA_CELLS_H ? [n % WDUN_SEA_CELLS_W, cy] : null;",
+    "new": "  return n >= 0 && cy <= WDUN_SEA_CELLS_H ? [n % WDUN_SEA_CELLS_W, cy] : null;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-relay-keeps-instances",
+    "file": "server/src/index.js",
+    "old": "    if (wdunHallOfRoom(instanceOf(key)?.base) || seaRoomCell(instanceOf(key)?.base)) return { no: INSTANCE_DOOR_WORD };",
+    "new": "    if (wdunHallOfRoom(instanceOf(key)?.base)) return { no: INSTANCE_DOOR_WORD };",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-door-keys-instances",
+    "file": "src/scenes/instanceDoor.js",
+    "old": "wdunHallOfRoom(base) != null || seaRoomCell(base) != null; };",
+    "new": "wdunHallOfRoom(base) != null; };",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-online-asks-any-hub",
+    "file": "src/net/online.js",
+    "old": "if ((seaVaultCell(w.h) || w.k === 'fk') && !this.wdunSeaOk) return false;",
+    "new": "if (false) return false;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-online-older-relay",
+    "file": "src/net/online.js",
+    "old": "this.wdunSeaOk = relaySupportsWdunSea(relayV);",
+    "new": "this.wdunSeaOk = true;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-three-deep",
+    "file": "src/systems/sea/seaVaults.js",
+    "old": "export const SEA_VAULTS = Object.freeze({ deep: 4, abyss: 3 });",
+    "new": "export const SEA_VAULTS = Object.freeze({ deep: 3, abyss: 3 });",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-any-isle",
+    "file": "src/systems/sea/seaVaults.js",
+    "old": "        if (!isle || isle.kind !== 'ruin' || etherBandAt(isle.px).id !== band) continue;",
+    "new": "        if (!isle || etherBandAt(isle.px).id !== band) continue;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-any-band",
+    "file": "src/systems/sea/seaVaults.js",
+    "old": "        if (!isle || isle.kind !== 'ruin' || etherBandAt(isle.px).id !== band) continue;",
+    "new": "        if (!isle || isle.kind !== 'ruin') continue;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-no-spacing",
+    "file": "src/systems/sea/seaVaults.js",
+    "old": "        if (taken.some((t) => Math.max(Math.abs(t.cx - cx), Math.abs(t.cy - cy)) < SEA_VAULT_SPACING_CELLS)) continue;",
+    "new": "        if (taken.some((t) => t.cx === cx && t.cy === cy)) continue;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-ring-shallows",
+    "file": "src/systems/sea/seaVaults.js",
+    "old": "        if (v) { out.push({ ...v, ring: bi + 1 }); break; }",
+    "new": "        if (v) { out.push({ ...v, ring: bi }); break; }",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-every-day-alike",
+    "file": "src/systems/sea/seaVaults.js",
+    "old": "        const r = etherRng(etherHash(SEA_VAULT_SALT, d, bi, slot, tryN));",
+    "new": "        const r = etherRng(etherHash(SEA_VAULT_SALT, 0, bi, slot, tryN));",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-not-kept",
+    "file": "src/systems/sea/seaVaults.js",
+    "old": "  if (had) return had;",
+    "new": "  if (false) return had;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-abyss-deeper",
+    "file": "src/systems/sea/seaVaults.js",
+    "old": "  const from = BANDS[i].from, to = BANDS[i + 1]?.from ?? from + ABYSS_HAUNT_LEAGUES;",
+    "new": "  const from = BANDS[i].from, to = BANDS[i + 1]?.from ?? from + 2 * ABYSS_HAUNT_LEAGUES;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-corridor-wide",
+    "file": "src/systems/sea/seaVaults.js",
+    "old": "  const row = veilhaven().py, spread = HAUNT_SPREAD[band] ?? HAUNT_SPREAD.deep;",
+    "new": "  const row = veilhaven().py, spread = 2 * (HAUNT_SPREAD[band] ?? HAUNT_SPREAD.deep);",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-at-a-column",
+    "file": "src/systems/sea/seaVaults.js",
+    "old": "export const seaVaultAt = (vaults, x, y) => (vaults ?? []).find((v) => v.x === x && v.y === y) ?? null;",
+    "new": "export const seaVaultAt = (vaults, x, y) => (vaults ?? []).find((v) => v.y === y) ?? null;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-host-never-live",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "  const vaultsNow = () => (live() ? seaVaultPicks(deps.day()) : []);",
+    "new": "  const vaultsNow = () => seaVaultPicks(deps.day());",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-host-lock-past-way-back",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "        locked: (deps.locks?.get(v.key) ?? 0) > now && !myWayBack(v.key, now), crows: !!deps.crows?.has(v.key),",
+    "new": "        locked: (deps.locks?.get(v.key) ?? 0) > now, crows: !!deps.crows?.has(v.key),",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-host-lock-forever",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "        locked: (deps.locks?.get(v.key) ?? 0) > now && !myWayBack(v.key, now), crows: !!deps.crows?.has(v.key),",
+    "new": "        locked: deps.locks?.has(v.key) && !myWayBack(v.key, now), crows: !!deps.crows?.has(v.key),",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-host-way-back-anywhere",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "return !!m && m.dungeon === key && m.until > now; };",
+    "new": "return !!m && m.until > now; };",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-host-way-back-forever",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "return !!m && m.dungeon === key && m.until > now; };",
+    "new": "return !!m && m.dungeon === key; };",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-host-no-crows",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "crows: !!deps.crows?.has(v.key),",
+    "new": "crows: false,",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-host-crows-mountains",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "    if (!seaVaultCell(h)) return null;",
+    "new": "    if (false) return null;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-host-crows-forget-yesterday",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "?? (live() ? seaVaultByKey(seaVaultPicks(d - 1), h) : null);",
+    "new": "?? null;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-host-name-lower",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "{ name: capFirst(v.name), band: etherRingName(v.ring) }",
+    "new": "{ name: v.name, band: etherRingName(v.ring) }",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-host-open-sea-peace",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "  const openSeaAt = (p) => live() && !!p && etherWildRingAt(p.x, p.y) > 0;",
+    "new": "  const openSeaAt = (p) => live() && !!p && inEther(p.x, p.y);",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-host-open-sea-offline",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "  const openSeaAt = (p) => live() && !!p && etherWildRingAt(p.x, p.y) > 0;",
+    "new": "  const openSeaAt = (p) => !!p && etherWildRingAt(p.x, p.y) > 0;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-world-host-builds-dark",
+    "file": "src/scenes/world.js",
+    "old": "    live: () => etherSea && _onlineWorldSession() && !!online?.wildOk, day: wdunDayNow,",
+    "new": "    live: () => etherSea && _onlineWorldSession(), day: wdunDayNow,",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-world-hall-mountains-only",
+    "file": "src/scenes/world.js",
+    "old": "return seaVentures.vaultHere() ?? (a && p ? wildHallAt(a, p.x, p.y) : null); };",
+    "new": "return (a && p ? wildHallAt(a, p.x, p.y) : null); };",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-world-gate-open",
+    "file": "src/scenes/world.js",
+    "old": "    if (!wildInside(mask, p.x, p.y) && !seaVentures.vaultHere()) return true;",
+    "new": "    if (!wildInside(mask, p.x, p.y)) return true;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-world-crows-everywhere",
+    "file": "src/scenes/world.js",
+    "old": "    if (!wildHere() || !!sea !== (wildZoneKind() === ETHER_KIND)) return;",
+    "new": "    if (!wildHere()) return;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-world-chart-no-vaults",
+    "file": "src/scenes/world.js",
+    "old": "return { ...etherHost.chart(p.x, p.y, heading()), ...seaVentures.chartWord() }; };",
+    "new": "return { ...etherHost.chart(p.x, p.y, heading()), pvp: _onlineWorldSession() && !!online?.wildOk }; };",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-world-sea-instances",
+    "file": "src/scenes/world.js",
+    "old": "return (!!m && wildInside(m, p.x, p.y)) || seaVentures.openSeaAt(p); },",
+    "new": "return (!!m && wildInside(m, p.x, p.y)); },",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-chart-name-zoom",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "export const VAULT_NAME_ZOOM = 2;",
+    "new": "export const VAULT_NAME_ZOOM = 3;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-chart-name-past",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "named: v.zoom >= VAULT_NAME_ZOOM }; })",
+    "new": "named: v.zoom > VAULT_NAME_ZOOM }; })",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-chart-paper-view",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  const paperView = { ox: v.cx - w / (2 * k), oy: v.cy - h / (2 * k), scale: k };",
+    "new": "  const paperView = { ox: v.cx - w / 2, oy: v.cy - h / 2, scale: k };",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-chart-no-door",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  for (const t of m.vaults ?? []) paintVault(g, t.sx, t.sy, t.icon);",
+    "new": "  for (const t of []) paintVault(g, t.sx, t.sy, t.icon);",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-chart-no-locks",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "    paintWildLocks(g, m.paperView, m.vaults.filter((t) => t.locked), { paperW: w, paperH: h });",
+    "new": "    paintWildLocks(g, m.paperView, [], { paperW: w, paperH: h });",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-chart-key-always",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "    vaultItem.hidden = !word.vaults?.length;",
+    "new": "    vaultItem.hidden = false;",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  },
+  {
+    "name": "SEA-VAULTS-world-death-key-pixel",
+    "file": "src/scenes/world.js",
+    "old": "return seaVentures.vaultHere()?.key ?? `${p.x},${p.y}`; };",
+    "new": "return `${p.x},${p.y}`; };",
+    "tests": [
+      "test/systems/sea/seavaults.test.js"
+    ]
+  }
+]

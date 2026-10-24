@@ -1,56 +1,56 @@
 [
   {
     "name": "SPAMTAKE-card-stays",
-    "file": "src/ui/bountyWindow.js",
+    "file": "src/ui/bounty/bountyWindow.js",
     "old": "landed = next === picked ? p.slotKey : null; picked = next; }",
     "new": "landed = next === picked ? p.slotKey : null; }",
     "tests": [
-      "test/fb1010_spamtake.test.js"
+      "test/ui/fb1010_spamtake.test.js"
     ]
   },
   {
     "name": "SPAMTAKE-next-not-open",
-    "file": "src/ui/bountyWindow.js",
+    "file": "src/ui/bounty/bountyWindow.js",
     "old": "    if (rows[i]?.state === 'open') return i;",
     "new": "    if (rows[i]) return i;",
     "tests": [
-      "test/fb1010_spamtake.test.js"
+      "test/ui/fb1010_spamtake.test.js"
     ]
   },
   {
     "name": "SPAMTAKE-next-no-wrap",
-    "file": "src/ui/bountyWindow.js",
+    "file": "src/ui/bounty/bountyWindow.js",
     "old": "    const i = (from + k) % rows.length;",
     "new": "    const i = from + k;",
     "tests": [
-      "test/fb1010_spamtake.test.js"
+      "test/ui/fb1010_spamtake.test.js"
     ]
   },
   {
     "name": "SPAMTAKE-give-up-once",
-    "file": "src/ui/bountyWindow.js",
+    "file": "src/ui/bounty/bountyWindow.js",
     "old": "        if (armed !== heldId) { armed = heldId; render(); return; }",
     "new": "",
     "tests": [
-      "test/fb1010_spamtake.test.js"
+      "test/ui/fb1010_spamtake.test.js"
     ]
   },
   {
     "name": "SPAMTAKE-pick-keeps-arm",
-    "file": "src/ui/bountyWindow.js",
+    "file": "src/ui/bounty/bountyWindow.js",
     "old": "      const pick = () => { picked = i; word = null; armed = null; landed = null; render(); };",
     "new": "      const pick = () => { picked = i; word = null; landed = null; render(); };",
     "tests": [
-      "test/fb1010_spamtake.test.js"
+      "test/ui/fb1010_spamtake.test.js"
     ]
   },
   {
     "name": "SPAMTAKE-give-up-under-take",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": ".bounty-acts .bounty-drop { margin-right: auto; }",
     "new": "",
     "tests": [
-      "test/fb1010_spamtake.test.js"
+      "test/ui/fb1010_spamtake.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "            else if (this._findsMeFirst()) this._findMe();   // FIND-FIRST: the world map opens as Find me",
     "new": "",
     "tests": [
-      "test/fb1010_findfirst.test.js"
+      "test/systems/fb1010_findfirst.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    return this._findMeFirst && !this._zoneMap",
     "new": "    return !this._zoneMap",
     "tests": [
-      "test/fb1010_findfirst.test.js"
+      "test/systems/fb1010_findfirst.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "this._gotoPlace = null; this._openedOnPlace = true; }",
     "new": "this._gotoPlace = null; }",
     "tests": [
-      "test/fb1010_findfirst.test.js"
+      "test/systems/fb1010_findfirst.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      && !this.teleportationTravel && !this._it",
     "new": "      && !this._it",
     "tests": [
-      "test/fb1010_findfirst.test.js"
+      "test/systems/fb1010_findfirst.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": " && !this._to?.isTravelActive && this._top !== 'resume';",
     "new": " && this._top !== 'resume';",
     "tests": [
-      "test/fb1010_findfirst.test.js"
+      "test/systems/fb1010_findfirst.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": " && !this._to?.isTravelActive && this._top !== 'resume';",
     "new": " && !this._to?.isTravelActive;",
     "tests": [
-      "test/fb1010_findfirst.test.js"
+      "test/systems/fb1010_findfirst.test.js"
     ]
   },
   {
@@ -113,25 +113,25 @@
     "old": "    _travelMap.openOnMe?.();",
     "new": "   ",
     "tests": [
-      "test/fb1010_findfirst.test.js"
+      "test/systems/fb1010_findfirst.test.js"
     ]
   },
   {
     "name": "RFOLK-climate-only",
-    "file": "src/characters/mobilePerson.js",
+    "file": "src/characters/mobile/mobilePerson.js",
     "old": "export const walkerRace = (people, region) => (redguardRegion(region) ? 'Redguard' : raceOfPeople(people));",
     "new": "export const walkerRace = (people, region) => raceOfPeople(people);",
     "tests": [
-      "test/fb1010_regionalfolk.test.js"
+      "test/systems/livingWorld/fb1010_regionalfolk.test.js"
     ]
   },
   {
     "name": "RFOLK-breton-regions",
-    "file": "src/characters/mobilePerson.js",
+    "file": "src/characters/mobile/mobilePerson.js",
     "old": "REGION_RACES[/** @type {number} */ (region)] === 1;",
     "new": "REGION_RACES[/** @type {number} */ (region)] === 0;",
     "tests": [
-      "test/fb1010_regionalfolk.test.js"
+      "test/systems/livingWorld/fb1010_regionalfolk.test.js"
     ]
   },
   {
@@ -140,16 +140,16 @@
     "old": "  const race = walkerRace(town.people, town.region);",
     "new": "  const race = walkerRace(town.people, null);",
     "tests": [
-      "test/fb1010_regionalfolk.test.js"
+      "test/systems/livingWorld/fb1010_regionalfolk.test.js"
     ]
   },
   {
     "name": "RFOLK-world-host-climate",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "race: walkerRace(climate?.people, dfLocation.regionIndex),",
     "new": "race: walkerRace(climate?.people, null),",
     "tests": [
-      "test/fb1010_regionalfolk.test.js"
+      "test/systems/livingWorld/fb1010_regionalfolk.test.js"
     ]
   },
   {
@@ -158,16 +158,16 @@
     "old": "const populationRace = walkerRace(dfLocation.climate?.people, dfLocation.regionIndex);",
     "new": "const populationRace = walkerRace(dfLocation.climate?.people, null);",
     "tests": [
-      "test/fb1010_regionalfolk.test.js"
+      "test/systems/livingWorld/fb1010_regionalfolk.test.js"
     ]
   },
   {
     "name": "RFOLK-rr-climate",
-    "file": "src/systems/rrVariants.js",
+    "file": "src/systems/roleplayRealism/rrVariants.js",
     "old": "walkerRace(getWorldClimateSettings(worldClimate)?.people, region));   // AUDIT FB1010 C3: the street's own rule",
     "new": "rrClimateRace(worldClimate));",
     "tests": [
-      "test/fb1010_regionalfolk.test.js"
+      "test/systems/livingWorld/fb1010_regionalfolk.test.js"
     ]
   },
   {
@@ -176,88 +176,88 @@
     "old": "            region: hit.dfLocation?.regionIndex ?? null,   // REGIONAL-FOLK: a Redguard region's residents are Redguards\n",
     "new": "",
     "tests": [
-      "test/fb1010_regionalfolk.test.js"
+      "test/systems/livingWorld/fb1010_regionalfolk.test.js"
     ]
   },
   {
     "name": "DAMNED-never",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "    if (rolls() * DAMNED_IN >= DAMNED_IN - 1 && damnPiece(it)) damned.push(it);",
     "new": "    if (false) damned.push(it);",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
     "name": "DAMNED-half",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "rolls() * DAMNED_IN >= DAMNED_IN - 1 && damnPiece(it)",
     "new": "rolls() * DAMNED_IN >= DAMNED_IN - 2 && damnPiece(it)",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
     "name": "DAMNED-one-in-three",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "export const DAMNED_IN = 4;",
     "new": "export const DAMNED_IN = 3;",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
     "name": "DAMNED-not-top",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  const line = { ...old, value: AFFIX_RANGES[old.id].legendary[1] };",
     "new": "  const line = { ...old };",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
     "name": "DAMNED-any-legendary",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "const damnable = (item) => item?.rarity === 'legendary' && item.group === 'Weapons';",
     "new": "const damnable = (item) => item?.rarity === 'legendary';",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
     "name": "DAMNED-law-unknown",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  if (isDamned(item)) return damnable(item) && carried;   // TRUE-CURSE: a Legendary weapon's alone\n",
     "new": "",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
     "name": "DAMNED-law-unbitten",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  if (isDamned(item)) return damnable(item) && carried;",
     "new": "  if (isDamned(item)) return damnable(item);",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
     "name": "DAMNED-said-cursed",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "(isDamned(item) ? DAMNED_WORD : CURSED_WORD)",
     "new": "CURSED_WORD",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
     "name": "DAMNED-liftable",
-    "file": "src/systems/lootCurse.js",
+    "file": "src/systems/loot/lootCurse.js",
     "old": "  if (isDamned(item)) return 'damned';\n",
     "new": "",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "  if (why === 'damned') return 'Damned';   // TRUE-CURSE\n",
     "new": "",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "cursePiece(it, rolls, { damned: true }); put(it);",
     "new": "cursePiece(it, rolls, { damned: false }); put(it);",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
@@ -284,43 +284,43 @@
     "old": "cursePiece(l, rolls); put(l);",
     "new": "cursePiece(l, rolls, { damned: true }); put(l);",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
     "name": "DAMNED-worth-unmoved",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  item.value = (Number.isFinite(item.value) ? item.value : itemBaseValue(item)) + affixesWorth([line], item) - affixesWorth([old], item);",
     "new": "  item.value = Number.isFinite(item.value) ? item.value : itemBaseValue(item);",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
     "name": "DAMNED-drawback-added",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  item.enchantments = list.map((e, i) => (i === at ? { ...DAMNED_DRAWBACK } : e));",
     "new": "  item.enchantments = [...list, { ...DAMNED_DRAWBACK }];",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
     "name": "DAMNED-curse-damns",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  if (damned) damnPiece(item);",
     "new": "  if (true) damnPiece(item);",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
     "name": "DAMNED-door-unpassed",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  damnPass(minted, rolls);   // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the door made, the gem's too (law 9)\n",
     "new": "",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "  damnPass(kit, opts.rolls ?? Math.random);   // TRUE-CURSE: a cursed Legendary weapon damned, after every draw the kit made (law 9)\n",
     "new": "",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "hurtPlayer(playerEntity, n, arenaBouts.playerSpare() ?? {}); },",
     "new": "hurtPlayer(playerEntity, n); },",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "hurtPlayer(playerEntity, n, arenaBouts.playerSpare() ?? {}); },",
     "new": "hurtPlayer(playerEntity, n); },",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
@@ -356,61 +356,61 @@
     "old": "why === 'damned' ? '-' : `${price} gold`",
     "new": "`${price} gold`",
     "tests": [
-      "test/fb1010_truecurse.test.js"
+      "test/systems/fb1010_truecurse.test.js"
     ]
   },
   {
     "name": "AUDIT-A1-landed-presses",
-    "file": "src/ui/bountyWindow.js",
+    "file": "src/ui/bounty/bountyWindow.js",
     "old": "    } else if (r.state === 'held' && landed === p.slotKey) {",
     "new": "    } else if (false) {",
     "tests": [
-      "test/fb1010_spamtake.test.js"
+      "test/ui/fb1010_spamtake.test.js"
     ]
   },
   {
     "name": "AUDIT-A1-never-landed",
-    "file": "src/ui/bountyWindow.js",
+    "file": "src/ui/bounty/bountyWindow.js",
     "old": "landed = next === picked ? p.slotKey : null;",
     "new": "landed = null;",
     "tests": [
-      "test/fb1010_spamtake.test.js"
+      "test/ui/fb1010_spamtake.test.js"
     ]
   },
   {
     "name": "AUDIT-A1-pick-keeps-landed",
-    "file": "src/ui/bountyWindow.js",
+    "file": "src/ui/bounty/bountyWindow.js",
     "old": "      const pick = () => { picked = i; word = null; armed = null; landed = null; render(); };",
     "new": "      const pick = () => { picked = i; word = null; armed = null; render(); };",
     "tests": [
-      "test/fb1010_spamtake.test.js"
+      "test/ui/fb1010_spamtake.test.js"
     ]
   },
   {
     "name": "AUDIT-A2-focus-dropped",
-    "file": "src/ui/bountyWindow.js",
+    "file": "src/ui/bounty/bountyWindow.js",
     "old": "        armed = null;\n        render(keep);",
     "new": "        armed = null;\n        render();",
     "tests": [
-      "test/fb1010_spamtake.test.js"
+      "test/ui/fb1010_spamtake.test.js"
     ]
   },
   {
     "name": "AUDIT-A3-window-grows",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": ".bounty-win:not(.bounty-noticewin) { height: min(600px, 92vh); }\n",
     "new": "",
     "tests": [
-      "test/fb1010_spamtake.test.js"
+      "test/ui/fb1010_spamtake.test.js"
     ]
   },
   {
     "name": "AUDIT-A3-no-page",
-    "file": "src/ui/bountyWindow.js",
+    "file": "src/ui/bounty/bountyWindow.js",
     "old": "    const page = el('div', 'bounty-cardpage');",
     "new": "    const page = card;",
     "tests": [
-      "test/fb1010_spamtake.test.js"
+      "test/ui/fb1010_spamtake.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "      this._goal = clampView(keep(this._goal), this._limits());",
     "new": "      this._goal = clampView(this._goal, this._limits());",
     "tests": [
-      "test/fb1010_findfirst.test.js"
+      "test/systems/fb1010_findfirst.test.js"
     ]
   },
   {
@@ -428,7 +428,7 @@
     "old": "      && !this.teleportationTravel && !this._it && !this._to?.isTravelActive",
     "new": "      && !this.teleportationTravel && !this._to?.isTravelActive",
     "tests": [
-      "test/fb1010_findfirst.test.js"
+      "test/systems/fb1010_findfirst.test.js"
     ]
   },
   {
@@ -437,7 +437,7 @@
     "old": "    const now = deps.residentNow?.(rid) ?? null;",
     "new": "    const now = null;",
     "tests": [
-      "test/fb1010_regionalfolk.test.js"
+      "test/systems/livingWorld/fb1010_regionalfolk.test.js"
     ]
   },
   {
@@ -446,7 +446,7 @@
     "old": "    residentNow: (id) => residentOfId(id, livingTownOfId),   // AUDIT FB1010 C1: the betrothed as the census mints them now, for the wedding\n",
     "new": "",
     "tests": [
-      "test/fb1010_regionalfolk.test.js"
+      "test/systems/livingWorld/fb1010_regionalfolk.test.js"
     ]
   }
 ]

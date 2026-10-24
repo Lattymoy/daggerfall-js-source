@@ -1,11 +1,11 @@
 [
   {
     "name": "SD26-R6-the-rifts-red-renumbered",
-    "file": "src/world/sdRiftArt.js",
+    "file": "src/world/superDungeon/sdRiftArt.js",
     "old": "export const SD_RIFT_RECORD = Object.freeze({ lit: 33, cold: 34, red: 35 });",
     "new": "export const SD_RIFT_RECORD = Object.freeze({ lit: 33, cold: 34, red: 36 });",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "23-24 the Echoes, 25-30 the\nEndings' lights, 31-32",
     "new": "23-24 the Echoes, 31-32",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (sdEnd && !_sdEndAsked) { _sdEndAsked = true; standSdEnd(); }\n  return api;",
     "new": "  return api;",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      if (_sdLate.on && dungeonCtx.uiOverlayActive) host.drawSdTelegraph?.(_sdLate);",
     "new": "      if (_sdLate.on) host.drawSdTelegraph?.(_sdLate);",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "lateWorldDraw: () => { host.drawVeiledPeerBodies?.(); if (_sdLate.on) host.drawSdTelegraph?.(_sdLate); },",
     "new": "lateWorldDraw: () => { host.drawVeiledPeerBodies?.(); },",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
@@ -50,97 +50,97 @@
     "old": "      if (_sdLate.on && dungeonCtx.uiOverlayActive) host.drawSdTelegraph?.(_sdLate);",
     "new": "",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
     "name": "SD26-R3-the-edge-never-handed",
-    "file": "src/render/gateFx.js",
+    "file": "src/render/gate/gateFx.js",
     "old": "      gl.uniform3f(S.uEdge, b.edge ? b.edge[0] : 0, b.edge ? b.edge[1] : 0, b.edge ? b.edge[2] : 0);",
     "new": "      gl.uniform3f(S.uEdge, 0, 0, 0);",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
     "name": "SD26-R3-the-shader-rests-past-it",
-    "file": "src/render/gateFx.js",
+    "file": "src/render/gate/gateFx.js",
     "old": "  if (uEdge.z > 0.0) {",
     "new": "  if (false) {",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
     "name": "SD26-R3-slid-off-on-air",
-    "file": "src/render/gateFx.js",
+    "file": "src/render/gate/gateFx.js",
     "old": "upv * t - g * t * t : rest - g * (t - tc) * (t - tc));",
     "new": "upv * t - g * t * t : rest);",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
     "name": "SD26-R3-the-mirror-edgeless",
-    "file": "src/render/gateFx.js",
+    "file": "src/render/gate/gateFx.js",
     "old": "  if (edge && edge[2] > 0) {",
     "new": "  if (false) {",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
     "name": "SD26-R3-dust-past-the-rim-kept",
-    "file": "src/scenes/sdFx.js",
+    "file": "src/scenes/superDungeon/sdFx.js",
     "old": "        if (Math.hypot(x, z) <= SD_ARENA.r) add(where(x, 0.1, z),",
     "new": "        add(where(x, 0.1, z),",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
     "name": "SD26-R3-the-hours-bursts-edgeless",
-    "file": "src/scenes/sdFx.js",
+    "file": "src/scenes/superDungeon/sdFx.js",
     "old": "floor: NaN, edge: SD_FX_EDGE };",
     "new": "floor: NaN, edge: null };",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
     "name": "SD26-R4-the-heads-underside-dropped",
-    "file": "src/world/sdRealm.js",
+    "file": "src/world/superDungeon/sdRealm.js",
     "old": "SD_LAMP_H + SD_LAMP_HEAD, true).forEach((q) => f.quad(SD_HALL_GLOW_RECORD.brass,",
     "new": "SD_LAMP_H + SD_LAMP_HEAD).forEach((q) => f.quad(SD_HALL_GLOW_RECORD.brass,",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
     "name": "SD26-R4-the-caps-underside-dropped",
-    "file": "src/world/sdHall.js",
+    "file": "src/world/superDungeon/sdHall.js",
     "old": "d / 2 + 0.05, 0.12, true)],",
     "new": "d / 2 + 0.05, 0.12)],",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
     "name": "SD26-R4-the-heads-underside-wound-in",
-    "file": "src/world/sdRealm.js",
+    "file": "src/world/superDungeon/sdRealm.js",
     "old": "  if (under) out.push([C(-w, y0, -w), C(w, y0, -w), C(w, y0, w), C(-w, y0, w)]);",
     "new": "  if (under) out.push([C(-w, y0, -w), C(-w, y0, w), C(w, y0, w), C(w, y0, -w)]);",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
     "name": "SD26-R4-the-caps-underside-wound-in",
-    "file": "src/world/sdHall.js",
+    "file": "src/world/superDungeon/sdHall.js",
     "old": "out.push([q(-1, -1), q(-1, 1), q(1, 1), q(1, -1)]); }",
     "new": "out.push([q(-1, -1), q(1, -1), q(1, 1), q(-1, 1)]); }",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "SD_REALM_FOG, _hourFog), _hourFogColor);",
     "new": "SD_REALM_FOG, _hourFog));",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "SD_REALM_FOG, _hourFog), _hourFogColor);",
     "new": "SD_REALM_FOG), _hourFogColor);",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "dungeonTrilight(!!renderer.lightingLane, _rl.tri, _hourTri);",
     "new": "dungeonTrilight(!!renderer.lightingLane, _rl.tri);",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "  const _sdCityRows = params.has('online') ? _classicRows.filter(",
     "new": "  const _sdCityRows = params.has('online') ? _hubRows.filter(",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
@@ -185,16 +185,16 @@
     "old": "sdTemplates(_classicRows, isMainStoryDungeon)",
     "new": "sdTemplates(_hubRows, isMainStoryDungeon)",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   },
   {
     "name": "SD26-R6-the-boat-on-the-hours-archive",
-    "file": "src/world/largeBoatArt.js",
+    "file": "src/world/ships/largeBoatArt.js",
     "old": "export const LARGE_BOAT_ARCHIVE = 38171;",
     "new": "export const LARGE_BOAT_ARCHIVE = 38151;",
     "tests": [
-      "test/sd26_render.test.js"
+      "test/world/superDungeon/sd26_render.test.js"
     ]
   }
 ]

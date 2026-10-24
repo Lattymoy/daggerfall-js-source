@@ -49,6 +49,9 @@ contextBridge.exposeInMainWorld('daggerShell', {
   onUpdateReady: (cb) => {
     updateListeners.push(cb);
     if (updateHeard) cb(updateHeard);
+    // DA13: the game's boot subscribes once its entry, its language and two of its own lazily loaded modules ran (src/main.js)
+    // - the word that it came up, which proves a version on trial (app/main.cjs dagger:game-up, gameStore.bootDone)
+    ipcRenderer.send('dagger:game-up');
   },
   // FPS-VSYNC (AUDIT 28e): this launch lifted Chromium's wait (VSync off when it started) - the page paces its frames
   framesLifted: ipcRenderer.sendSync('dagger:frames-lifted') === true,

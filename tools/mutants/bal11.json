@@ -1,0 +1,315 @@
+[
+  {
+    "name": "BAL11-a-level-hits-8-percent",
+    "file": "src/systems/heroThreat.js",
+    "old": "  level: Object.freeze({ from: 10, to: 30, damage: 1.07, health: 1.04 }),",
+    "new": "  level: Object.freeze({ from: 10, to: 30, damage: 1.08, health: 1.04 }),",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-a-level-stands-3-percent",
+    "file": "src/systems/heroThreat.js",
+    "old": "  level: Object.freeze({ from: 10, to: 30, damage: 1.07, health: 1.04 }),",
+    "new": "  level: Object.freeze({ from: 10, to: 30, damage: 1.07, health: 1.03 }),",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-the-threat-from-level-9",
+    "file": "src/systems/heroThreat.js",
+    "old": "  level: Object.freeze({ from: 10, to: 30, damage: 1.07, health: 1.04 }),",
+    "new": "  level: Object.freeze({ from: 9, to: 30, damage: 1.07, health: 1.04 }),",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-the-top-at-level-31",
+    "file": "src/systems/heroThreat.js",
+    "old": "  level: Object.freeze({ from: 10, to: 30, damage: 1.07, health: 1.04 }),",
+    "new": "  level: Object.freeze({ from: 10, to: 31, damage: 1.07, health: 1.04 }),",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-a-renown-hits-2-percent",
+    "file": "src/systems/heroThreat.js",
+    "old": "  renown: Object.freeze({ from: 15, to: 50, damage: 1.01, health: 1.005 }),",
+    "new": "  renown: Object.freeze({ from: 15, to: 50, damage: 1.02, health: 1.005 }),",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-a-renown-stands-1-percent",
+    "file": "src/systems/heroThreat.js",
+    "old": "  renown: Object.freeze({ from: 15, to: 50, damage: 1.01, health: 1.005 }),",
+    "new": "  renown: Object.freeze({ from: 15, to: 50, damage: 1.01, health: 1.01 }),",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-the-threat-from-renown-14",
+    "file": "src/systems/heroThreat.js",
+    "old": "  renown: Object.freeze({ from: 15, to: 50, damage: 1.01, health: 1.005 }),",
+    "new": "  renown: Object.freeze({ from: 14, to: 50, damage: 1.01, health: 1.005 }),",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-the-top-at-renown-49",
+    "file": "src/systems/heroThreat.js",
+    "old": "  renown: Object.freeze({ from: 15, to: 50, damage: 1.01, health: 1.005 }),",
+    "new": "  renown: Object.freeze({ from: 15, to: 49, damage: 1.01, health: 1.005 }),",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-under-the-foot-pays-back",
+    "file": "src/systems/heroThreat.js",
+    "old": "const stepsOf = (v, { from, to }) => (Number.isFinite(v) ? Math.max(0, Math.min(to, Math.trunc(/** @type {number} */ (v))) - from) : 0);",
+    "new": "const stepsOf = (v, { from, to }) => (Number.isFinite(v) ? Math.min(to, Math.trunc(/** @type {number} */ (v))) - from : 0);",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-a-fraction-of-a-level-pays",
+    "file": "src/systems/heroThreat.js",
+    "old": "const stepsOf = (v, { from, to }) => (Number.isFinite(v) ? Math.max(0, Math.min(to, Math.trunc(/** @type {number} */ (v))) - from) : 0);",
+    "new": "const stepsOf = (v, { from, to }) => (Number.isFinite(v) ? Math.max(0, Math.min(to, /** @type {number} */ (v)) - from) : 0);",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-the-blows-read-the-health-rate",
+    "file": "src/systems/heroThreat.js",
+    "old": "    damage: HERO_THREAT.level.damage ** L * HERO_THREAT.renown.damage ** R,",
+    "new": "    damage: HERO_THREAT.level.health ** L * HERO_THREAT.renown.damage ** R,",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-the-health-forgets-renown",
+    "file": "src/systems/heroThreat.js",
+    "old": "    health: HERO_THREAT.level.health ** L * HERO_THREAT.renown.health ** R,",
+    "new": "    health: HERO_THREAT.level.health ** L,",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-the-ladder-not-asked",
+    "file": "src/systems/heroThreat.js",
+    "old": "  if (!player || !lootRarityOn()) return null;",
+    "new": "  if (!player) return null;",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-a-mentor-keeps-his-renown",
+    "file": "src/systems/heroThreat.js",
+    "old": "  const t = heroThreat(effectiveLevel(player), player._mentor ? null : sigilRenown());",
+    "new": "  const t = heroThreat(effectiveLevel(player), sigilRenown());",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-a-mentor-at-his-own-level",
+    "file": "src/systems/heroThreat.js",
+    "old": "  const t = heroThreat(effectiveLevel(player), player._mentor ? null : sigilRenown());",
+    "new": "  const t = heroThreat(player.level, player._mentor ? null : sigilRenown());",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-a-puppet-takes-my-health",
+    "file": "src/systems/heroThreat.js",
+    "old": "  return puppet ? { ...t, health: 1 } : t;",
+    "new": "  return t;",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-nothing-to-pay-still-a-threat",
+    "file": "src/systems/heroThreat.js",
+    "old": "  if (!(t.damage > 1 || t.health > 1)) return null;",
+    "new": "",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-a-threat-under-one-taken",
+    "file": "src/systems/skillSoftcap.js",
+    "old": "  const hd = hero?.damage > 1 ? hero.damage : 1, hh = hero?.health > 1 ? hero.health : 1;   // BAL11: never under 1",
+    "new": "  const hd = hero?.damage ?? 1, hh = hero?.health ?? 1;   // BAL11: never under 1",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-the-hero-alone-is-none",
+    "file": "src/systems/skillSoftcap.js",
+    "old": "  if (!(vet > 0 || over > 0 || hd > 1 || hh > 1)) return null;",
+    "new": "  if (!(vet > 0 || over > 0)) return null;",
+    "tests": [
+      "test/systems/bal11_hero.test.js",
+      "test/systems/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-the-health-without-the-hero",
+    "file": "src/systems/skillSoftcap.js",
+    "old": "    healthMult: (1 + V.health * vet + O.health * over) * hh,",
+    "new": "    healthMult: (1 + V.health * vet + O.health * over),",
+    "tests": [
+      "test/systems/bal11_hero.test.js",
+      "test/systems/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-the-blows-without-the-hero",
+    "file": "src/systems/skillSoftcap.js",
+    "old": "    damageMult: (1 + V.damage * vet + O.damage * over) * hd,",
+    "new": "    damageMult: (1 + V.damage * vet + O.damage * over),",
+    "tests": [
+      "test/systems/bal11_hero.test.js",
+      "test/systems/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-the-hero-added-not-multiplied",
+    "file": "src/systems/skillSoftcap.js",
+    "old": "    healthMult: (1 + V.health * vet + O.health * over) * hh,",
+    "new": "    healthMult: (V.health * vet + O.health * over) + hh,",
+    "tests": [
+      "test/systems/bal11_hero.test.js",
+      "test/systems/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-the-poise-takes-the-hero",
+    "file": "src/characters/enemy/enemyEntity.js",
+    "old": "  if (scaling.heroHealth > 1) entity.healthMult = (entity.healthMult ?? 1) * scaling.heroHealth;   // BAL11: TELL1's poise reads the kind's own health",
+    "new": "",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-an-ally-answers-the-hero",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const hero = ally || _heroStage ? null : heroThreatOf(foeDeps.playerEntity, { puppet });",
+    "new": "    const hero = _heroStage ? null : heroThreatOf(foeDeps.playerEntity, { puppet });",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-a-dungeon-puppet-takes-my-health",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    const hero = ally || _heroStage ? null : heroThreatOf(foeDeps.playerEntity, { puppet });",
+    "new": "    const hero = ally || _heroStage ? null : heroThreatOf(foeDeps.playerEntity);",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-a-made-level-answers-the-hero",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  const _heroStage = _made != null || isArenaFloor(dfLocation);",
+    "new": "  const _heroStage = isArenaFloor(dfLocation);",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-the-arena-floor-answers-the-hero",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  const _heroStage = _made != null || isArenaFloor(dfLocation);",
+    "new": "  const _heroStage = _made != null;",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-the-cave-ignores-the-hero",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (!(share > 0) && !(place > 0) && !hero) return;",
+    "new": "    if (!(share > 0) && !(place > 0)) return;",
+    "tests": [
+      "test/systems/bal11_hero.test.js",
+      "test/systems/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-the-dungeon-hands-no-hero",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "entity.isClass), place, hero);",
+    "new": "entity.isClass), place);",
+    "tests": [
+      "test/systems/bal11_hero.test.js",
+      "test/systems/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-a-class-foe-ally-unsaid",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      if (!puppet && e.level == null) applyProgressionScalingTo(entity, basics, { ally: !!e.allied });   // SOFTCAP1: tougher high-tier foes against skills past 100 (a puppet is its owner's build); ARENA2: never a bout fighter (the ladder is a fixed mountain)",
+    "new": "      if (!puppet && e.level == null) applyProgressionScalingTo(entity, basics);   // SOFTCAP1: tougher high-tier foes against skills past 100 (a puppet is its owner's build); ARENA2: never a bout fighter (the ladder is a fixed mountain)",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-the-wilds-hand-no-hero",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "placeVeteran(wildernessThreat(night)) : 0, heroThreatOf(playerEntity)));",
+    "new": "placeVeteran(wildernessThreat(night)) : 0));",
+    "tests": [
+      "test/systems/bal11_hero.test.js",
+      "test/systems/bal_arc.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-a-wilds-puppet-strikes-unscaled",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        applyProgressionScaling(entity, progressionScaling(null, 0, 0, 0, heroThreatOf(playerEntity, { puppet: true })));",
+    "new": "        applyProgressionScaling(entity, progressionScaling(null, 0, 0, 0, null));",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-a-wilds-puppet-takes-my-health",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        applyProgressionScaling(entity, progressionScaling(null, 0, 0, 0, heroThreatOf(playerEntity, { puppet: true })));",
+    "new": "        applyProgressionScaling(entity, progressionScaling(null, 0, 0, 0, heroThreatOf(playerEntity)));",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  },
+  {
+    "name": "BAL11-the-town-answers-a-puppet",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      } else if (puppet && !allied && !inLocation()) {",
+    "new": "      } else if (puppet && !allied) {",
+    "tests": [
+      "test/systems/bal11_hero.test.js"
+    ]
+  }
+]

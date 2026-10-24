@@ -4,69 +4,69 @@
     "file": "src/systems/shopStock.js",
     "old": "  if (online) {   // MERC-CAP: the haggle's own range\n    mercantile = Math.min(Math.max(mercantile, 0), ONLINE_HAGGLE_MAX);\n    personality = Math.min(Math.max(personality, 0), ONLINE_HAGGLE_MAX);\n  }\n",
     "new": "",
-    "tests": ["test/fb0929f_mercantile.test.js", "test/fb0929d_mercantile.test.js", "test/realm0.test.js"]
+    "tests": ["test/systems/fb0929f_mercantile.test.js", "test/systems/fb0929d_mercantile.test.js", "test/systems/realm0.test.js"]
   },
   {
     "name": "MERC-CAP-offline-too",
     "file": "src/systems/shopStock.js",
     "old": "  if (online) {   // MERC-CAP: the haggle's own range",
     "new": "  if (true) {   // MERC-CAP: the haggle's own range",
-    "tests": ["test/fb0929f_mercantile.test.js", "test/fb0929d_mercantile.test.js", "test/realm0.test.js"]
+    "tests": ["test/systems/fb0929f_mercantile.test.js", "test/systems/fb0929d_mercantile.test.js", "test/systems/realm0.test.js"]
   },
   {
     "name": "MERC-CAP-only-a-sale-reads-the-range",
     "file": "src/systems/shopStock.js",
     "old": "  if (online) {   // MERC-CAP: the haggle's own range",
     "new": "  if (online && selling) {   // MERC-CAP: the haggle's own range",
-    "tests": ["test/fb0929f_mercantile.test.js", "test/fb0929d_mercantile.test.js", "test/realm0.test.js"]
+    "tests": ["test/systems/fb0929f_mercantile.test.js", "test/systems/fb0929d_mercantile.test.js", "test/systems/realm0.test.js"]
   },
   {
     "name": "MERC-CAP-only-a-purchase-reads-the-range",
     "file": "src/systems/shopStock.js",
     "old": "  if (online) {   // MERC-CAP: the haggle's own range",
     "new": "  if (online && !selling) {   // MERC-CAP: the haggle's own range",
-    "tests": ["test/fb0929f_mercantile.test.js", "test/fb0929d_mercantile.test.js", "test/realm0.test.js"]
+    "tests": ["test/systems/fb0929f_mercantile.test.js", "test/systems/fb0929d_mercantile.test.js", "test/systems/realm0.test.js"]
   },
   {
     "name": "MERC-CAP-mercantile-past-100-is-read",
     "file": "src/systems/shopStock.js",
     "old": "    mercantile = Math.min(Math.max(mercantile, 0), ONLINE_HAGGLE_MAX);",
     "new": "    mercantile = Math.max(mercantile, 0);",
-    "tests": ["test/fb0929f_mercantile.test.js", "test/fb0929d_mercantile.test.js", "test/realm0.test.js"]
+    "tests": ["test/systems/fb0929f_mercantile.test.js", "test/systems/fb0929d_mercantile.test.js", "test/systems/realm0.test.js"]
   },
   {
     "name": "MERC-CAP-mercantile-under-0-is-read",
     "file": "src/systems/shopStock.js",
     "old": "    mercantile = Math.min(Math.max(mercantile, 0), ONLINE_HAGGLE_MAX);",
     "new": "    mercantile = Math.min(mercantile, ONLINE_HAGGLE_MAX);",
-    "tests": ["test/fb0929f_mercantile.test.js", "test/fb0929d_mercantile.test.js", "test/realm0.test.js"]
+    "tests": ["test/systems/fb0929f_mercantile.test.js", "test/systems/fb0929d_mercantile.test.js", "test/systems/realm0.test.js"]
   },
   {
     "name": "MERC-CAP-personality-past-100-is-read",
     "file": "src/systems/shopStock.js",
     "old": "    personality = Math.min(Math.max(personality, 0), ONLINE_HAGGLE_MAX);",
     "new": "    personality = Math.max(personality, 0);",
-    "tests": ["test/fb0929f_mercantile.test.js", "test/fb0929d_mercantile.test.js", "test/realm0.test.js"]
+    "tests": ["test/systems/fb0929f_mercantile.test.js", "test/systems/fb0929d_mercantile.test.js", "test/systems/realm0.test.js"]
   },
   {
     "name": "MERC-CAP-personality-under-0-is-read",
     "file": "src/systems/shopStock.js",
     "old": "    personality = Math.min(Math.max(personality, 0), ONLINE_HAGGLE_MAX);",
     "new": "    personality = Math.min(personality, ONLINE_HAGGLE_MAX);",
-    "tests": ["test/fb0929f_mercantile.test.js", "test/fb0929d_mercantile.test.js", "test/realm0.test.js"]
+    "tests": ["test/systems/fb0929f_mercantile.test.js", "test/systems/fb0929d_mercantile.test.js", "test/systems/realm0.test.js"]
   },
   {
     "name": "MERC-CAP-the-range-tops-one-past-100",
     "file": "src/systems/shopStock.js",
     "old": "export const ONLINE_HAGGLE_MAX = 100;",
     "new": "export const ONLINE_HAGGLE_MAX = 101;",
-    "tests": ["test/fb0929f_mercantile.test.js", "test/fb0929d_mercantile.test.js", "test/realm0.test.js"]
+    "tests": ["test/systems/fb0929f_mercantile.test.js", "test/systems/fb0929d_mercantile.test.js", "test/systems/realm0.test.js"]
   },
   {
     "name": "MERC-CAP-the-range-tops-one-under-100",
     "file": "src/systems/shopStock.js",
     "old": "export const ONLINE_HAGGLE_MAX = 100;",
     "new": "export const ONLINE_HAGGLE_MAX = 99;",
-    "tests": ["test/fb0929f_mercantile.test.js", "test/fb0929d_mercantile.test.js", "test/realm0.test.js"]
+    "tests": ["test/systems/fb0929f_mercantile.test.js", "test/systems/fb0929d_mercantile.test.js", "test/systems/realm0.test.js"]
   }
 ]

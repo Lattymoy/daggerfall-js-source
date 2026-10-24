@@ -1,6 +1,6 @@
 // @ts-check
 // TACT4 - THE SHAPES (three at TACT4, bible/12-Enhanced-AI/Tactics-Arc.md; four more since TELL6), a LEAF: the ground's pass (render/foeTelegraph.js) is
-// on the renderer's boot graph and must not bring the brain with it (test/boot2.test.js holds the entry's reach), so the
+// on the renderer's boot graph and must not bring the brain with it (test/render/boot2.test.js holds the entry's reach), so the
 // numbers both read live here, importing nothing. ai/foeBlows.js re-exports them.
 
 /** The shapes, and every number they carry. Metres, seconds, damage multipliers on the foe's own blow. */
@@ -39,9 +39,9 @@ export const TELL_IRON_EXTRA = 0.2;
 export const TELL_FEINT_FADE = 0.15;
 
 /** AUDIT ARENA-LADDER: THE FAMILIES AND THE VERDICT, MOVED HERE FROM ai/foeBlows.js - the relay runs the arena's ladder
- *  (net/arenaBrain.js) and its fighters telegraph too, and the relay's import graph reaches a leaf and never the brain
- *  (characters/mobileTypes.js, the tactics clock). So the shapes a kind may throw are kept here by the MobileTypes number
- *  (test/arenaladder_audit.test.js pins every number against characters/mobileTypes.js), and ai/foeBlows.js hands both
+ *  (net/arena/arenaBrain.js) and its fighters telegraph too, and the relay's import graph reaches a leaf and never the brain
+ *  (characters/mobile/mobileTypes.js, the tactics clock). So the shapes a kind may throw are kept here by the MobileTypes number
+ *  (test/systems/arenaladder_audit.test.js pins every number against characters/mobile/mobileTypes.js), and ai/foeBlows.js hands both
  *  on: one home, two readers. Not here: no telegraphed blow (the casters, the spectral, the small and the flying). */
 const BEAST = Object.freeze(['lunge']);
 const BRUTE = Object.freeze(['slam', 'sweep']);
@@ -62,7 +62,7 @@ const NONE = 65535;
 /** The kind's family's own shapes (TACT4's one or two). */
 function familyShapes(mobileType) {
   if (BLOW_FAMILY.has(mobileType)) return BLOW_FAMILY.get(mobileType);
-  if (mobileType >= 128 && mobileType !== NONE) return BLOW_CASTERS.has(mobileType) ? [] : BLADE;   // the classes and the watch
+  if ((mobileType & 128) !== 0 && mobileType !== NONE) return BLOW_CASTERS.has(mobileType) ? [] : BLADE;   // the classes and the watch - DaggerfallEntity.IsClassEnemyId's 128 bit, written here because a leaf imports nothing (enemy/enemyBasics.js isClassEnemyId is the export); DEX1: so a mod's monster past 255 is no class (it throws no telegraphed blow, as an unnamed kind throws none)
   return [];
 }
 /** TELL5 (bible/12-Enhanced-AI/Feud-Arc.md 7): the kind's family - 'beast', 'brute' or 'blade' (null: none throws a
@@ -78,7 +78,7 @@ export const isElite = (ent) => ent?.eliteFoe === true || ent?.elite === true;
  *  it on). */
 export const wholeSet = (ent) => isElite(ent) || !!ent?.champion || !!ent?.revenant;
 /** TELL7 (Feud-Arc.md section 9): what an elite, a champion or a revenant adds to its family's, by the MobileTypes number
- *  as the families are (test/tell7_tier.test.js and the shapes' own pins hold each by its name) - the ring (the massive
+ *  as the families are (test/characters/enemy/tell7_tier.test.js and the shapes' own pins hold each by its name) - the ring (the massive
  *  brute, the atronachs, the Daedra Lord: Giant 16, IronAtronach 36, FleshAtronach 37, DaedraLord 31), the charge (the
  *  chargers: GrizzlyBear 4, SabertoothTiger 5, Wereboar 14, Centaur 8, OrcWarlord 24), the leap (the leapers: Spider 6,
  *  Werewolf 9, SabertoothTiger 5, Vampire 28). A shape joins only once it exists (TELL6 brings them; `BLOW` is their one

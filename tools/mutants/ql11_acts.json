@@ -1,0 +1,317 @@
+[
+  {
+    "name": "AUDIT-QL-ACTS-M7-navalHost-a-peer-s-guns-count",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (by === myId()) struckToMe();   // SHIP-CREW: she struck to us",
+    "new": "struckToMe();   // SHIP-CREW: she struck to us",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-F-basket-an-empty-basket-counts",
+    "file": "src/systems/foraging/foragingInstall.js",
+    "old": "if (find.count > 0 && find.templateIndex !== FT.Egg) noteAct('herb-gathered');",
+    "new": "if (find.templateIndex !== FT.Egg) noteAct('herb-gathered');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M1-egClient-valkynaz-felled-on-every-Redoubt",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "  if (egValkRedoubt(c.w)) noteAct('valkynaz-felled');",
+    "new": "  noteAct('valkynaz-felled');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M1b-egClient-a-Rehearsal-counted",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "a.data.q !== 'w' || c?.rh === 1) return;",
+    "new": "a.data.q !== 'w') return;",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M1c-egClient-a-re-claim-counted",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "if (!a?.ok || !a.data?.recorded || a.data.q",
+    "new": "if (!a?.ok || a.data.q",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M4-qlEliteFoe-any-dungeon-s-elite-a-Super-dungeon-s-six",
+    "file": "src/systems/questlines/qlEliteFoe.js",
+    "old": "&& !!entity.elite && dungeonTier(loc) === 'elite';",
+    "new": "&& !!entity.elite && dungeonTier(loc) != null;",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M4b-qlEliteFoe-the-elite-mark-unread",
+    "file": "src/systems/questlines/qlEliteFoe.js",
+    "old": "!!entity?.eliteFoe && !!entity.elite && ",
+    "new": "!!entity?.eliteFoe && ",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M4c-qlEliteFoe-the-eliteFoe-mark-unread",
+    "file": "src/systems/questlines/qlEliteFoe.js",
+    "old": "!!entity?.eliteFoe && !!entity.elite && ",
+    "new": "!!entity?.elite && ",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M5-arenaBouts-a-relay-bout-lost-counts",
+    "file": "src/scenes/arena/arenaBouts.js",
+    "old": "if (won && C.relay.kind === 'pve') noteAct('arena-won');",
+    "new": "if (mine && C.relay.kind === 'pve') noteAct('arena-won');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-ACTS-6-arenaBouts-a-players-bout-counts-the-old-gate",
+    "file": "src/scenes/arena/arenaBouts.js",
+    "old": "if (won && C.relay.kind === 'pve') noteAct('arena-won');",
+    "new": "if (won) noteAct('arena-won');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-A-w-arenaBouts-a-watcher-s-counted",
+    "file": "src/scenes/arena/arenaBouts.js",
+    "old": "if (won && C.relay.kind === 'pve') noteAct('arena-won');",
+    "new": "if ((won || (!mine && r.side === 0)) && C.relay.kind === 'pve') noteAct('arena-won');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-A-721a-arenaBouts-the-act-on-any-ladder-verdict",
+    "file": "src/scenes/arena/arenaBouts.js",
+    "old": "      if (won) noteAct('arena-won');   // QL11: a bout won in the Arena - a ladder bout of mine",
+    "new": "      noteAct('arena-won');   // QL11: a bout won in the Arena - a ladder bout of mine",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-A-721b-arenaBouts-the-pit-s-practice-counted",
+    "file": "src/scenes/arena/arenaBouts.js",
+    "old": "    if (C.practice) {\n",
+    "new": "    if (C.practice) {\n      if (r.side === 0) noteAct('arena-won');\n",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M6-profBook-a-craft-another-tab-minted-counts-here",
+    "file": "src/net/profBook.js",
+    "old": "      if (!had) return { ok: true, data: r.data, elsewhere: true };",
+    "new": "      if (!had) { if (w.brew !== true) noteAct('piece-crafted'); return { ok: true, data: r.data, elsewhere: true }; }",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-ACTS-4-profBook-a-dish-counted-the-old-gate",
+    "file": "src/net/profBook.js",
+    "old": "if (w.brew !== true && recipeById(w.recipe)?.kind !== 'dish') noteAct",
+    "new": "if (w.brew !== true) noteAct",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M8-gambitTableGame-a-watcher-s-board-counts",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "if (s.over.winner === 0 && !watching()) noteAct('gambit-won');",
+    "new": "if (s.over.winner === 0) noteAct('gambit-won');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M8b-gambitTableGame-the-winner-unread",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "if (s.over.winner === 0 && !watching()) noteAct('gambit-won');",
+    "new": "if (!watching()) noteAct('gambit-won');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M9-deepWatersFish-a-fish-that-swam-off-despawned-its-loot-wh",
+    "file": "src/scenes/deepWater/deepWatersFish.js",
+    "old": "if (!o.gone && o.loot.items.length === 0) noteAct('fish-caught');",
+    "new": "if (!o.gone) noteAct('fish-caught');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M9b-deepWatersFish-counted-at-every-remove",
+    "file": "src/scenes/deepWater/deepWatersFish.js",
+    "old": "if (!o.gone && o.loot.items.length === 0) noteAct('fish-caught');",
+    "new": "if (o.loot.items.length === 0) noteAct('fish-caught');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M10b-raidingParties-the-pixel-unread",
+    "file": "src/systems/raidingParties.js",
+    "old": "  if (raid.struck && px && px.x === raid.px && px.y === raid.py) {",
+    "new": "  if (raid.struck && px) {",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M11-iliacTableSession-a-lost-game-counts",
+    "file": "src/systems/iliac/iliacTableSession.js",
+    "old": "if (r.winner === 0) noteAct('cards-won');",
+    "new": "if (r.winner !== null) noteAct('cards-won');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M11b-iliacTableSession-a-draw-counts",
+    "file": "src/systems/iliac/iliacTableSession.js",
+    "old": "if (r.winner === 0) noteAct('cards-won');",
+    "new": "if (r.winner !== 1) noteAct('cards-won');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M12-cardTableSession-any-showdown-counts",
+    "file": "src/systems/card/cardTableSession.js",
+    "old": "if (this.playerInHand >= 0 && h.result.pots[0]?.winners.includes(this.playerInHand)) noteAct('cards-won');",
+    "new": "if (this.playerInHand >= 0) noteAct('cards-won');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M13-fishHost-only-a-trophy-haul-counts",
+    "file": "src/scenes/fishHost.js",
+    "old": "      noteAct('fish-caught');   // QL11: a fish caught - the net's haul, in the Stores or the bag\n      if (!d?.trophy || trophied.has(d.node)) return;",
+    "new": "      if (!d?.trophy || trophied.has(d.node)) return;\n      noteAct('fish-caught');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M14-foragingInstall-an-empty-net-counts",
+    "file": "src/systems/foraging/foragingInstall.js",
+    "old": "if (n > 0) noteAct('fish-caught');",
+    "new": "noteAct('fish-caught');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-F-axe-foragingInstall-an-axe-that-gathered-nothing-counts",
+    "file": "src/systems/foraging/foragingInstall.js",
+    "old": "if (n > 0) noteAct('wood-chopped');",
+    "new": "noteAct('wood-chopped');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-M15-revenantFate-noted-before-the-record-answers",
+    "file": "src/systems/revenant/revenantFate.js",
+    "old": "  if (!r) return null;\n  noteAct('revenant-knelt');",
+    "new": "  noteAct('revenant-knelt');\n  if (!r) return null;",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-ACTS-5a-firmamentBook-the-toggle-counted-again-the-old-diff-",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "      keep(null);\n      apply(r.data);\n      held(state.tree.keys, true);",
+    "new": "      keep(null);\n      const had = new Set(state.tree?.keys ?? []);\n      apply(r.data);\n      held(state.tree.keys);\n      noteAct('star-taken', state.tree.keys.filter((k) => !had.has(k)).length);",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-ACTS-5b-firmamentBook-the-kept-change-uncounted",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "        if (r?.ok) held(unpackTree(left.tree).keys, true);",
+    "new": "",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-ACTS-5c-firmamentBook-the-stars-unkept-across-a-reload",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "      storage?.setItem?.(FIRM_TAKEN_KEY, JSON.stringify(o));",
+    "new": "      void o;",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-ACTS-5d-firmamentBook-the-sky-read-counted",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "      if (r?.ok) held(unpackTree(r.data?.tree ?? '').keys);",
+    "new": "      if (r?.ok) held(unpackTree(r.data?.tree ?? '').keys, true);",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-ACTS-8a-dungeonContext-the-elite-foe-s-condition-back-in-the",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "  hearEliteFoesIn(dfLocation);",
+    "new": "  registerPlayerKillListener('ql11-elite-foe', (en) => { if (en?.eliteFoe && en.elite && dungeonTier(dfLocation) === 'elite') noteAct('elite-foe-slain'); });",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-ACTS-8b-egClient-the-Redoubt-s-acts-back-in-createEgClient",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "        redoubtActs(a, c);",
+    "new": "        if (a?.ok && a.data?.recorded && a.data.q === 'w' && c.rh !== 1) noteAct('redoubt-taken');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-10-an-egg-a-plant",
+    "file": "src/systems/foraging/foragingInstall.js",
+    "old": "if (find.count > 0 && find.templateIndex !== FT.Egg) noteAct('herb-gathered');",
+    "new": "if (find.count > 0) noteAct('herb-gathered');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  },
+  {
+    "name": "AUDIT-QL-ACTS-11-the-word-arm-unsaid",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "<= SINK_CREDIT_S) struckToMe();",
+    "new": "<= SINK_CREDIT_S) crewEvent(boatInPlay() ?? myBoat(), 'win');",
+    "tests": [
+      "test/systems/questlines/ql11_acts.test.js"
+    ]
+  }
+]

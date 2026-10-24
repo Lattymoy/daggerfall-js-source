@@ -1,911 +1,911 @@
 [
   {
     "name": "CSA-E-wind-indoors-kept",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      state.windVectorTarget = [0, 0, 0];\n      state.windVectorCurrent = [0, 0, 0];\n      return;",
     "new": "      state.windVectorTarget = [0, 0, 0];\n      return;",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-wind-fog-rain-swapped",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (weather === WEATHER_TYPE.Fog) num = f(num * f(0.1));",
     "new": "    if (weather === WEATHER_TYPE.Rain) num = f(num * f(0.1));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-wind-storm-once",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    else if (weather === WEATHER_TYPE.Thunder) num = f(num * 2);",
     "new": "    else if (weather === WEATHER_TYPE.Thunder) num = f(num * 1);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-wind-rain-weak",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    else if (weather === WEATHER_TYPE.Rain) num = f(num * f(1.5));",
     "new": "    else if (weather === WEATHER_TYPE.Rain) num = f(num * f(1.25));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-wind-night-edge",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    let right = hour <= 6 || hour >= 18 ? vAdd(V_RIGHT, V_FORWARD) : vAdd(V_RIGHT, V_BACK);",
     "new": "    let right = hour < 6 || hour >= 18 ? vAdd(V_RIGHT, V_FORWARD) : vAdd(V_RIGHT, V_BACK);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-wind-evening-edge",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    let right = hour <= 6 || hour >= 18 ? vAdd(V_RIGHT, V_FORWARD) : vAdd(V_RIGHT, V_BACK);",
     "new": "    let right = hour <= 6 || hour > 18 ? vAdd(V_RIGHT, V_FORWARD) : vAdd(V_RIGHT, V_BACK);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-wind-day-night-swapped",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    let right = hour <= 6 || hour >= 18 ? vAdd(V_RIGHT, V_FORWARD) : vAdd(V_RIGHT, V_BACK);",
     "new": "    let right = hour <= 6 || hour >= 18 ? vAdd(V_RIGHT, V_BACK) : vAdd(V_RIGHT, V_FORWARD);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-wind-south-row",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (deps.currentMapPixel().Y > 250) right = vScale(right, -1);",
     "new": "    if (deps.currentMapPixel().Y >= 250) right = vScale(right, -1);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-wind-never-flipped",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (deps.currentMapPixel().Y > 250) right = vScale(right, -1);",
     "new": "    if (false) right = vScale(right, -1);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-wind-steps-ten",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    const num2 = f(15 * random.range(-4, 4));",
     "new": "    const num2 = f(10 * random.range(-4, 4));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-wind-turn-reversed",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    const val = quatRotate(quatAngleAxis(num2, V_UP), right).map(f);",
     "new": "    const val = quatRotate(quatAngleAxis(-num2, V_UP), right).map(f);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-wind-not-normalised",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    state.windVectorTarget = vScale(vNormalized(val), num);",
     "new": "    state.windVectorTarget = vScale(val, num);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-wind-no-rotation",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    startCoroutine(RotateWind);\n  }",
     "new": "  }",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-rotatewind-rate",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "state.windVectorCurrent = vRotateTowards(state.windVectorCurrent, state.windVectorTarget, f(f(0.1) * dt()), 1);",
     "new": "state.windVectorCurrent = vRotateTowards(state.windVectorCurrent, state.windVectorTarget, f(f(0.2) * dt()), 1);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-rotatewind-no-event",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    raise('OnUpdateWind', [...state.windVectorCurrent]);\n    return false;",
     "new": "    return false;",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-coroutine-not-at-once",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (step()) endOfFrameQueue.push(step);",
     "new": "    endOfFrameQueue.push(step);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-newhour-sunny",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  function OnNewHour() { UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny); }",
     "new": "  function OnNewHour() { UpdateWind(WEATHER_TYPE.Sunny); }",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-weatherchange-current",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  function OnWeatherChange(next) { UpdateWind(next); }",
     "new": "  function OnWeatherChange(next) { UpdateWind(deps.weatherType?.() ?? next); }",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-transition-no-reset",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  function OnTransition() {\n    ResetTimeScale(false);",
     "new": "  function OnTransition() {",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-transition-reset-said",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  function OnTransition() {\n    ResetTimeScale(false);",
     "new": "  function OnTransition() {\n    ResetTimeScale(true);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-transition-no-wind",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    UpdateWind(deps.weatherType?.() ?? WEATHER_TYPE.Sunny);\n    UpdateWaveMesh();",
     "new": "    UpdateWaveMesh();",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-angle-eps",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  if (num < 1e-15) return 0;\n  const num2 = mathfClamp(f(vDot(from, to) / num), -1, 1);",
     "new": "  if (num < 1e-7) return 0;\n  const num2 = mathfClamp(f(vDot(from, to) / num), -1, 1);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-signedangle-zero-negative",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  return f(num * (s >= 0 ? 1 : -1));",
     "new": "  return f(num * (s > 0 ? 1 : -1));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-rotatetowards-along-rotates",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (num3 > f(1 - K_EPSILON)) return vMoveTowards(current, target, maxMagnitudeDelta);",
     "new": "    if (num3 > f(1 + K_EPSILON)) return vMoveTowards(current, target, maxMagnitudeDelta);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-rotatetowards-full-turn",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    return turned(vNormalized(vCross(from, to)), Math.min(f(maxRadiansDelta), f(Math.acos(num3))));",
     "new": "    return turned(vNormalized(vCross(from, to)), f(Math.acos(num3)));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-rotatetowards-opposite-axis",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (num3 < f(-1 + K_EPSILON)) return turned(orthoNormalVectorFast(from), maxRadiansDelta);",
     "new": "    if (num3 < f(-1 + K_EPSILON)) return turned([0, 1, 0], maxRadiansDelta);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-clampedmove-free",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  return delta > 0 ? f(lhs + Math.min(delta, f(clampedDelta))) : f(lhs - Math.min(f(-delta), f(clampedDelta)));",
     "new": "  return delta > 0 ? f(lhs + delta) : f(lhs - Math.min(f(-delta), f(clampedDelta)));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-orthonormal-plane",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  if (Math.abs(n[2]) > f(Math.SQRT1_2)) {",
     "new": "  if (Math.abs(n[0]) > f(Math.SQRT1_2)) {",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-quatangle-eps",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  return dot > f(1 - 0.000001) ? 0 : f(f(f(Math.acos(Math.min(Math.abs(dot), 1))) * 2) * RAD2DEG);",
     "new": "  return dot > f(1 - 0.001) ? 0 : f(f(f(Math.acos(Math.min(Math.abs(dot), 1))) * 2) * RAD2DEG);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-quatrotatetowards-whole",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  return quatSlerp(from, to, Math.min(1, f(maxDegreesDelta / num)));",
     "new": "  return quatSlerp(from, to, 1);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-lerp-unclamped",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "export const mathfLerp = (a, b, t) => f(f(a) + f(f(f(b) - f(a)) * mathfClamp(f(t), 0, 1)));",
     "new": "export const mathfLerp = (a, b, t) => f(f(a) + f(f(f(b) - f(a)) * f(t)));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-power-stowed-counts",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (!all && animatorOf(sail).GetBool('Stowed')) continue;",
     "new": "      if (false) continue;",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-power-lateen-135",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        num2 = num3 <= 135 ? f(mathfLerp(50, 100, f(num3 / 135)) / 100) : !(num3 <= 165) ? 0 : f(mathfLerp(100, 50, f(f(num3 - 135) / 30)) / 100);",
     "new": "        num2 = num3 <= 135 ? f(mathfLerp(50, 100, f(num3 / 135)) / 100) : !(num3 <= 165) ? 0 : f(mathfLerp(100, 50, f(f(num3 - 135) / 15)) / 100);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-power-lateen-bad-tack",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (!at && vSignedAngle(forwardOf(sail), state.windVectorCurrent, V_UP) > 0) num2 = f(num2 * f(0.85));",
     "new": "        if (!at && vSignedAngle(forwardOf(sail), state.windVectorCurrent, V_UP) < 0) num2 = f(num2 * f(0.85));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-power-gaff-150",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        num2 = !(num3 <= 135) ? f(mathfLerpUnclamped(100, 0, f(f(num3 - 135) / 15)) / 100) : f(mathfLerpUnclamped(50, 100, f(num3 / 135)) / 100);",
     "new": "        num2 = !(num3 <= 135) ? f(mathfLerpUnclamped(100, 0, f(f(num3 - 135) / 30)) / 100) : f(mathfLerpUnclamped(50, 100, f(num3 / 135)) / 100);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-power-gaff-backing-full",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (num2 < 0) num2 = f(num2 * f(0.25));\n      } else if (b.SailsStay.includes(sail)) {",
     "new": "        if (num2 < 0) num2 = f(num2 * 1);\n      } else if (b.SailsStay.includes(sail)) {",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-power-stay-floor",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "f(mathfLerpUnclamped(20, 80, f(num3 / 135)) / 100);",
     "new": "f(mathfLerpUnclamped(50, 80, f(num3 / 135)) / 100);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-power-square-backing-once",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (num2 < 0) num2 = f(num2 * 2);",
     "new": "        if (num2 < 0) num2 = f(num2 * 1);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-power-small-square",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "!b.SailsStay.includes(sail) ? f(num2 * f(0.4)) : f(num2 * f(0.3));",
     "new": "!b.SailsStay.includes(sail) ? f(num2 * f(0.5)) : f(num2 * f(0.3));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-power-small-stay",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "!b.SailsStay.includes(sail) ? f(num2 * f(0.4)) : f(num2 * f(0.3));",
     "new": "!b.SailsStay.includes(sail) ? f(num2 * f(0.4)) : f(num2 * f(0.4));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-power-small-gaff",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (b.SailsSmall.includes(sail)) num2 = b.SailsGaff.includes(sail) ? f(num2 * f(0.5))",
     "new": "      if (b.SailsSmall.includes(sail)) num2 = b.SailsGaff.includes(sail) ? f(num2 * f(0.4))",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-power-large-plain",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      else if (b.SailsLarge.includes(sail)) num2 = f(num2 * f(1.5));",
     "new": "      else if (b.SailsLarge.includes(sail)) num2 = f(num2 * f(1));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-raise-obstructed-anyway",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (!CanSail(b)) {\n      deps.hudText('Unable to raise sail. Boat is obstructed.');\n      return;\n    }",
     "new": "    if (!CanSail(b)) {\n      deps.hudText('Unable to raise sail. Boat is obstructed.');\n    }",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-raise-upwind-90",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    const flag = Math.abs(vSignedAngle(flat(forwardOf(b.GameObject)), flat(state.windVectorCurrent), V_UP)) > 90;",
     "new": "    const flag = Math.abs(vSignedAngle(flat(forwardOf(b.GameObject)), flat(state.windVectorCurrent), V_UP)) > 135;",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-raise-square-always",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (!b.SailsSquare.includes(sail) || !trimAutoSquareUpwind() || !flag || responsive()) {",
     "new": "        if (true) {",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-raise-assist-ignored",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (!b.SailsSquare.includes(sail) || !trimAutoSquareUpwind() || !flag || responsive()) {",
     "new": "        if (!b.SailsSquare.includes(sail) || !flag || responsive()) {",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-raise-position-kept",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    state.sailPosition = 1;\n    state.oarThrottle = 0;",
     "new": "    state.oarThrottle = 0;",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-raise-rudder-kept",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    rudderOf(b)?.SetBool('Sailing', true);",
     "new": "    rudderOf(b)?.SetBool('Sailing', false);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-lower-position-kept",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    state.sailPosition = 0;\n    deps.audio?.dfOneShot?.(nodeOf(b.GameObject, b.DFAudioSource), 381",
     "new": "    deps.audio?.dfOneShot?.(nodeOf(b.GameObject, b.DFAudioSource), 381",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-lower-rudder-kept",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    rudderOf(b)?.SetBool('Sailing', false);",
     "new": "    rudderOf(b)?.SetBool('Sailing', true);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-stow-bool-inverted",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  component.SetBool('Stowed', stowed);",
     "new": "  component.SetBool('Stowed', !stowed);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-stow-speed",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  component.CrossFade(stowed ? 'Stowed' : 'Unstowed', SAIL_ANIMATION_SPEED);",
     "new": "  component.CrossFade(stowed ? 'Stowed' : 'Unstowed', 1);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-toggle-no-sails-raises",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (state.CurrentBoat.Sails.length < 1) deps.hudText('Boat does not have any sail.');",
     "new": "    if (state.CurrentBoat.Sails.length < 0) deps.hudText('Boat does not have any sail.');",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-squareonly-gaffless",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (flag) return boat.SailsGaff.length > 0;",
     "new": "    if (flag) return true;",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-squareonly-small-counts",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (!boat.SailsSmall.includes(item)) { flag = true; break; }",
     "new": "        { flag = true; break; }",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-toggle-square-by-first",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (animatorOf(b.SailsSquare[0]).GetBool('Stowed')) {",
     "new": "    if (!animatorOf(b.SailsSquare[0]).GetBool('Stowed')) {",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-key-square-modifier-ignored",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (state.sailPosition > 0 && boat.SailsSquare.length > 0 && !trimAutoSquareUpwind() && has(BOAT_ACTIONS.trimModifier)",
     "new": "      if (state.sailPosition > 0 && boat.SailsSquare.length > 0 && !trimAutoSquareUpwind()",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-key-square-down-too",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (state.sailPosition > 0 && boat.SailsSquare.length > 0 && !trimAutoSquareUpwind() && has(BOAT_ACTIONS.trimModifier)",
     "new": "      if (boat.SailsSquare.length > 0 && !trimAutoSquareUpwind() && has(BOAT_ACTIONS.trimModifier)",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-key-toggle-dead",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (deps.input?.started?.(BOAT_ACTIONS.toggleSail)) {",
     "new": "    if (false) {",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-stop-sails-left-up",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (state.sailPosition > 0) LowerSails();\n    boat.WakeEmitter.stop();",
     "new": "    boat.WakeEmitter.stop();",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-restore-no-raise",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (data.sailPosition > 0) RaiseSails();",
     "new": "",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-arm-obstruction-ignored",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (!CanSail(boat)) {\n      LowerSails();\n      state.MoveVectorCurrent = [0, 0, 0];",
     "new": "    if (false) {\n      LowerSails();\n      state.MoveVectorCurrent = [0, 0, 0];",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-arm-wind-rate",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "            wind = mathfMoveTowards(wind, num10, dt());",
     "new": "            wind = mathfMoveTowards(wind, num10, 1);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-arm-flap-phase",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "            const num10 = f(f(Math.sin(f(f(f(deps.time()) + num7) * 2))) * f(0.25));",
     "new": "            const num10 = f(f(Math.sin(f(f(f(deps.time()) + 0) * 2))) * f(0.25));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-arm-flap-lateen-150",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "(!lateen && (num9 > 150 || num9 < -150)) || (lateen && (num9 > 165 || num9 < -165))",
     "new": "(!lateen && (num9 > 170 || num9 < -170)) || (lateen && (num9 > 165 || num9 < -165))",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-arm-pull-sign",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "            const num11 = f((num8 >= 0 ? 1 : -1) * vMagnitude(state.windVectorCurrent));",
     "new": "            const num11 = f(vMagnitude(state.windVectorCurrent));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-arm-pull-unit",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "            const num11 = f((num8 >= 0 ? 1 : -1) * vMagnitude(state.windVectorCurrent));",
     "new": "            const num11 = f(num8 >= 0 ? 1 : -1);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-arm-autostow-never",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "          if (flag && !bool) stow(component, true);",
     "new": "          if (false) stow(component, true);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-arm-autounstow-never",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "          else if (!flag && bool) stow(component, false);",
     "new": "          else if (false) stow(component, false);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-arm-lateen-sail-wind",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (num9 > 0 && num9 <= 90) return between(0, -1, f(num9 / 90));",
     "new": "      if (num9 > 0 && num9 <= 90) return between(0, 1, f(num9 / 90));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-arm-lateen-left-wind",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (num9 <= 0 && num9 > -90) return between(0, 1, f(num9 / -90));\n      if (num9 <= -90 && num9 > -180) return between(1, 0, f(f(num9 + 90) / -90));\n    } else if (boat.SailsGaff.includes(sail)) {",
     "new": "      if (num9 <= 0 && num9 > -90) return between(0, -1, f(num9 / -90));\n      if (num9 <= -90 && num9 > -180) return between(1, 0, f(f(num9 + 90) / -90));\n    } else if (boat.SailsGaff.includes(sail)) {",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-arm-power-no-wind",
-    "file": "src/systems/comeSailAway.js",
-    "old": "    const num17 = f(GetSailPower() * vMagnitude(state.windVectorCurrent));",
-    "new": "    const num17 = f(GetSailPower());",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    const num17 = f(f(GetSailPower() * vMagnitude(state.windVectorCurrent)) * f(firmSail()));",
+    "new": "    const num17 = f(f(GetSailPower()) * f(firmSail()));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-arm-rudder-mod",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    state.TurnTarget = f(num18 * f(f(f(responsive() ? steerage(way / sailFreeGain(boat)) : way) * f(boat.modifierRudder)) / 10));",
     "new": "    state.TurnTarget = f(num18 * f(f(f(responsive() ? steerage(way / sailFreeGain(boat)) : way) * f(boat.modifierRudder)) / 5));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-arm-rudder-left",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    else if (has('MoveLeft')) num18 = -1;\n    // HELM-WAY: the responsive rudder",
     "new": "    else if (has('MoveLeft')) num18 = 1;\n    // HELM-WAY: the responsive rudder",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-arm-turnangle-z",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    rudderOf(boat)?.SetFloat('TurnAngle', state.inputCurrent[0]);",
     "new": "    rudderOf(boat)?.SetFloat('TurnAngle', state.inputCurrent[1]);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-autotrim-rate",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    const step = f(100 * dt());",
     "new": "    const step = f(50 * dt());",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-autotrim-lateen-side",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (num6 > 0 && num6 <= 90) { num14 = mathfLerp(-90, -45, f(num6 / 90)); num13 = num14; }",
     "new": "    if (num6 > 0 && num6 <= 90) { num14 = mathfLerp(90, 45, f(num6 / 90)); num13 = num14; }",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-autotrim-off",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (trimAuto()) autoTrim(boat, num6);",
     "new": "",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-manualtrim-rate",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (state.trimAngleSquare < 45) state.trimAngleSquare = f(state.trimAngleSquare + f(15 * dt()));",
     "new": "        if (state.trimAngleSquare < 45) state.trimAngleSquare = f(state.trimAngleSquare + f(30 * dt()));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-manualtrim-square-cap",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (state.trimAngleSquare < 45) state.trimAngleSquare = f(state.trimAngleSquare + f(15 * dt()));",
     "new": "        if (state.trimAngleSquare < 90) state.trimAngleSquare = f(state.trimAngleSquare + f(15 * dt()));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-manualtrim-modifier-ignored",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (has(BOAT_ACTIONS.trimRight)) {\n      if (has(BOAT_ACTIONS.trimModifier) || squareOnly) {",
     "new": "    if (has(BOAT_ACTIONS.trimRight)) {\n      if (squareOnly) {",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-manualtrim-left-rate",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (state.trimAngleSquare > -45) state.trimAngleSquare = f(state.trimAngleSquare - f(15 * dt()));",
     "new": "        if (state.trimAngleSquare > -45) state.trimAngleSquare = f(state.trimAngleSquare - f(7.5 * dt()));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-manualtrim-booms-swapped",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "boom.localRotation = quatAngleAxis(boom.name.includes('Square') ? state.trimAngleSquare : state.trimAngle, V_UP);",
     "new": "boom.localRotation = quatAngleAxis(boom.name.includes('Square') ? state.trimAngle : state.trimAngleSquare, V_UP);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-manualtrim-with-auto",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (!trimAuto()) manualTrim(boat);",
     "new": "    manualTrim(boat);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-widget-count-down",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    let num = Math.trunc(f(f(360 - f(f(num2 / interval) * interval)) / interval));",
     "new": "    let num = Math.trunc(f(f(f(f(num2 / interval) * interval)) / interval));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-widget-left-arm",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (num2 < 0) num = Math.trunc(f(f(f(f(0 - num2) / interval) * interval) / interval));",
     "new": "    if (num2 < 0) num = Math.trunc(f(f(360 + num2) / interval));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-widget-zero-last",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (num === 0) num = count;\n    return count - num;",
     "new": "    return count - num;",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-widget-paused-draws",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (paused || loading || !isSailing() || !windDirectionWidget()) return null;",
     "new": "    if (loading || !isSailing() || !windDirectionWidget()) return null;",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-widget-height-mode-x",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    else if (mode === 1) { screenScaleY = f(screenRect.height / WIND_WIDGET.nativeHeight); screenScaleX = screenScaleY; }",
     "new": "    else if (mode === 1) { screenScaleY = f(screenRect.height / WIND_WIDGET.nativeHeight); screenScaleX = 1; }",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-widget-lift-down",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "f(f(f(screenRect.y ?? 0) + f(screenRect.height * f(offset[1]))) - largeHudHeight)",
     "new": "f(f(f(screenRect.y ?? 0) + f(screenRect.height * f(offset[1]))) + largeHudHeight)",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-widget-not-centred",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "return { frame: state.windWidgetFrame, rect: { x: f(at[0] - f(size[0] * f(0.5))), y: f(at[1] - f(size[1] * f(0.5)))",
     "new": "return { frame: state.windWidgetFrame, rect: { x: at[0], y: at[1]",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-widget-own-scale",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    const size = [f(f(f(textureSize[0]) * screenScaleX) * scale), f(f(f(textureSize[1]) * screenScaleY) * scale)];",
     "new": "    const size = [f(f(textureSize[0]) * screenScaleX), f(f(textureSize[1]) * screenScaleY)];",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-widget-frame-stale",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (windDirectionWidget()) state.windWidgetFrame = windWidgetFrameOf(vSignedAngle(playerForward(), state.windVectorCurrent, V_UP));",
     "new": "",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-rudder-no-rowing",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    rudderOf(state.CurrentBoat)?.CrossFade('Rowing', 1);",
     "new": "",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-rudder-no-disembark",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    rudderOf(boat)?.CrossFade('Disembarked', 1);",
     "new": "",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-rudder-rowz-x",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        rudder.SetFloat('RowZ', state.inputCurrent[1]);",
     "new": "        rudder.SetFloat('RowZ', state.inputCurrent[0]);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-rudder-rowspeed-floor",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        rudder.SetFloat('RowSpeed', mathfClamp(f(vMagnitude(state.MoveVectorCurrent) / 20), f(0.2), 2));",
     "new": "        rudder.SetFloat('RowSpeed', mathfClamp(f(vMagnitude(state.MoveVectorCurrent) / 20), 0, 2));",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-door-not-toggled",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      component.SetBool('Opened', !bool);",
     "new": "      component.SetBool('Opened', true);",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-door-any-root",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  function TriggerDoor(hit) {\n    const boat = boatOfHit(hit);\n    if (boat == null) return;",
     "new": "  function TriggerDoor(hit) {",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-door-unrouted",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      case 'TriggerDoor': TriggerDoor(hit); break;",
     "new": "",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
     "name": "CSA-E-animate-never",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    animate();   // the Animators, after every Update and before every LateUpdate, as Unity steps them",
     "new": "",
     "tests": [
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   },
   {
@@ -914,7 +914,7 @@
     "old": "    if (a === 0 && b === 0 && c === 0) return d;   // a flat segment (Unity's sentinel at -infinity among them)",
     "new": "    if (a === 0 && b === 0) return d;",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -923,7 +923,7 @@
     "old": "    return f(f(f(f(f(f(a * dt) + b) * dt) + c) * dt) + d);",
     "new": "    return f(f(f(f(f(f(b * dt) + a) * dt) + c) * dt) + d);",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -932,7 +932,7 @@
     "old": "    while (lo <= hi) { const mid = (lo + hi) >> 1; if (keys[mid][0] <= t) { k = mid; lo = mid + 1; } else hi = mid - 1; }",
     "new": "    while (lo <= hi) { const mid = (lo + hi) >> 1; if (keys[mid][0] < t) { k = mid; lo = mid + 1; } else hi = mid - 1; }",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -941,7 +941,7 @@
     "old": "  return f(s[i] + f(f(s[i + 1] - s[i]) * u));",
     "new": "  return f(s[i]);",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -950,7 +950,7 @@
     "old": "  if (clip.loop) u -= Math.floor(u);",
     "new": "  if (clip.loop) u = Math.min(1, u);",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -959,7 +959,7 @@
     "old": "  return quatMultiply(quatAngleAxis(y, [0, 1, 0]), quatMultiply(quatAngleAxis(x, [1, 0, 0]), quatAngleAxis(z, [0, 0, 1])));",
     "new": "  return quatMultiply(quatAngleAxis(z, [0, 0, 1]), quatMultiply(quatAngleAxis(x, [1, 0, 0]), quatAngleAxis(y, [0, 1, 0])));",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -968,7 +968,7 @@
     "old": "        const s = (ref[0] * q[0] + ref[1] * q[1] + ref[2] * q[2] + ref[3] * q[3]) < 0 ? -wt : wt;",
     "new": "        const s = wt;",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -977,7 +977,7 @@
     "old": "  if (n === 1 || v <= thresholds[0]) { w[0] = 1; return w; }",
     "new": "  if (n === 1) { w[0] = 1; return w; }",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -986,7 +986,7 @@
     "old": "      w[i] = 1 - u; w[i + 1] = u;",
     "new": "      w[i] = u; w[i + 1] = 1 - u;",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -995,7 +995,7 @@
     "old": "  w[A.i] = a; w[B.i] = b; w[centre] = 1 - sum;",
     "new": "  w[A.i] = a / (sum || 1); w[B.i] = b / (sum || 1);",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -1004,7 +1004,7 @@
     "old": "  if (sum > 1 || centre < 0) { w[A.i] = a / (sum || 1); w[B.i] = b / (sum || 1); return w; }",
     "new": "  if (centre < 0) { w[A.i] = a / (sum || 1); w[B.i] = b / (sum || 1); return w; }",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -1013,7 +1013,7 @@
     "old": "  const clipOf = (name) => (name == null ? null : animation.clips?.[swap.get(name) ?? name] ?? null);",
     "new": "  const clipOf = (name) => (name == null ? null : animation.clips?.[name] ?? null);",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -1022,7 +1022,7 @@
     "old": "        if (propIndex.has(key)) continue;\n        propIndex.set(key, props.length);",
     "new": "        if (props.length > 0) continue;\n        propIndex.set(key, props.length);",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -1031,7 +1031,7 @@
     "old": "    else if (state !== playing) {",
     "new": "    else if (true) {",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -1040,7 +1040,7 @@
     "old": "      const srcLen = I.motionLength(a.current.state);\n      const snapshot",
     "new": "      const srcLen = I.motionLength(state);\n      const snapshot",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -1049,7 +1049,7 @@
     "old": "      const snapshot = a.transition ? (a.lastPose ?? I.statePose(a.current)) : null;",
     "new": "      const snapshot = null;",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -1058,7 +1058,7 @@
     "old": "      if (at <= before) at += 1;\n      return at <= after;",
     "new": "      return at > before && at <= after;",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -1067,7 +1067,7 @@
     "old": "      if (t.hasExitTime && !I.exitCrossed(t.exitTime, before, a.current.time)) continue;",
     "new": "",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -1076,7 +1076,7 @@
     "old": "      if (!I.conditionsHold(t)) continue;\n      if (t.hasExitTime",
     "new": "      if (t.hasExitTime",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -1085,7 +1085,7 @@
     "old": "      a.transition = { duration: t.hasFixedDuration ? t.duration : t.duration * srcLen, elapsed: 0, snapshot: null };",
     "new": "      a.transition = { duration: t.duration * srcLen, elapsed: 0, snapshot: null };",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -1094,7 +1094,7 @@
     "old": "  const speedOf = (state) => (state.speed ?? 1) * (state.speedParam ? a.GetFloat(state.speedParam) : 1);",
     "new": "  const speedOf = (state) => (state.speed ?? 1);",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -1103,7 +1103,7 @@
     "old": "    a.current = def ? { state: def, time: 0, fresh: true } : null;\n    a.next = null; a.transition = null;\n    if (a.lastPose) I.resetParams();",
     "new": "    if (!a.current) a.current = def ? { state: def, time: 0, fresh: true } : null;",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -1112,7 +1112,7 @@
     "old": "  if (!on) { a.wasEnabled = false; a.pending = null; return; }",
     "new": "  if (!on) { a.wasEnabled = false; return; }",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -1121,7 +1121,7 @@
     "old": "    const w = Math.min(1, a.transition.elapsed / a.transition.duration);",
     "new": "    const w = Math.min(1, (a.transition.elapsed / a.transition.duration) ** 2);",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
@@ -1130,18 +1130,18 @@
     "old": "    SetBool(name, v) { const p = params.get(name); if (p) p.value = !!v; },",
     "new": "    SetBool(name, v) { const p = params.get(name) ?? { type: 'Bool' }; params.set(name, p); p.value = !!v; },",
     "tests": [
-      "test/csa_animator.test.js"
+      "test/systems/comeSailAway/csa_animator.test.js"
     ]
   },
   {
     "name": "CSA-E-boat-no-animators",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "    for (const c of n.getComponents('Animator')) c.animator = createAnimator(n, c, ctx.models.animation ?? {});",
     "new": "",
     "tests": [
-      "test/csa_boats.test.js",
-      "test/csa_animator.test.js",
-      "test/csa_wind.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js",
+      "test/systems/comeSailAway/csa_animator.test.js",
+      "test/systems/comeSailAway/csa_wind.test.js"
     ]
   }
 ]

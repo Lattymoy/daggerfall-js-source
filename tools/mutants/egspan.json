@@ -1,0 +1,173 @@
+[
+  {
+    "name": "EGSPAN-a-generous-reach",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "const flat = run * ((2 * EG_JUMP_MPS) / EG_JUMP_G) + 2 * EG_BODY_R, reach = run * air + 2 * EG_BODY_R;",
+    "new": "const flat = run * ((2 * EG_JUMP_MPS) / EG_JUMP_G) + 4 * EG_BODY_R, reach = run * air + 4 * EG_BODY_R;",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-a-drop-flies-far",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "h < 0 ? Math.min(reach, flat - EG_DROP_GAIN * h) : reach",
+    "new": "h < 0 ? reach * 1.2 : reach",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-a-rail-across",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "else if (s.kind === 'rail' && s.period > 0) out.dz =",
+    "new": "else if (s.kind === 'rail' && s.period > 0) out.dx =",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-a-beat-always-there",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "out.solid = egBeatAt(s, t) < EG_BEAT_SOLID_S;",
+    "new": "out.solid = true;",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-a-vent-untold",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "  if (u >= fireAt - EG_VENT_TELL_S) return { tell: (u - (fireAt - EG_VENT_TELL_S)) / EG_VENT_TELL_S, fire: false };\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-the-solver-skipped",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "  while (spec.steps.length && !egSpanProof(spec).ok && tries < EG_RELAY_MAX) spec =",
+    "new": "  while (false && spec.steps.length && !egSpanProof(spec).ok && tries < EG_RELAY_MAX) spec =",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-a-wait-unbounded",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "    else if (w.wait > EG_WAIT_MAX / k) why.push(",
+    "new": "    else if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-a-pendulum-never-checked",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "    if (pair.b?.kind === 'pend' && w.clearRun < EG_PEND_CLEAR_MIN)",
+    "new": "    if (false && w.clearRun < EG_PEND_CLEAR_MIN)",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-a-rail-unbounded",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "      if (s.amp > Math.min(s.gap ?? 0, moving ? Infinity : after) - EG_RAIL_CLEAR) why.push(",
+    "new": "      if (false) why.push(",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-a-harmless-pendulum",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "          if (egPendHits(st.s, t, rx - st.spec.x0, ry, rz, body.height) && safe)",
+    "new": "          if (false && safe)",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-a-gust-unweighed",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "_gust.push * (1 - footing) * Math.min(dt, EG_GUST_DT_MAX)",
+    "new": "_gust.push * Math.min(dt, EG_GUST_DT_MAX)",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-a-rider-left-behind",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "        if (dx || dy || dz) body.carryBy?.(dx, dy, dz);",
+    "new": "        if (dx || dy) body.carryBy?.(dx, dy, 0);",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-a-vent-every-frame",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "        if (st.fire && !ventJudged.has(cycle) && standing",
+    "new": "        if (st.fire && standing",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-a-vent-everywhere",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "Math.abs(fy - s.y) < 1.5 && egInVentDisc(s, f[0], f[1])",
+    "new": "Math.abs(fy - s.y) < 1.5",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-a-low-drop-wall",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "export function egDropTris(w, d, H = EG_DROP_WALL_H) {",
+    "new": "export function egDropTris(w, d, H = EG_DROP_WALL_H / 2) {",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-the-wall-stands",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "const edge = fallenOf(g.spec, t), gone = g.z1 <= edge;",
+    "new": "const edge = fallenOf(g.spec, t), gone = false && g.z1 <= edge;",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-cast-onto-fallen-ground",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "    if (rz > edge + 0.5) return p;\n",
+    "new": "    return p;\n",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-the-belt-runs-on",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "body.collider?.move?.(body.pos, 0, 0, -EG_BELT_MPS * Math.min(dt, EG_GUST_DT_MAX), body.height, true);",
+    "new": "body.collider?.move?.(body.pos, 0, 0, EG_BELT_MPS * Math.min(dt, EG_GUST_DT_MAX), body.height, true);",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  },
+  {
+    "name": "EGSPAN-a-floor-under-the-wall",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "    for (const b of spec.bands) if (!egWallBand(spec, b) && !egTubeBand(b)) quad(",
+    "new": "    for (const b of spec.bands) if (!egTubeBand(b)) quad(",
+    "tests": [
+      "test/net/eliteGates/egfull_span.test.js"
+    ]
+  }
+]

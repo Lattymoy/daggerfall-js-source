@@ -5,7 +5,7 @@
     "old": "  herald: TITLE_RGBA.herald,           // HERALD: the trumpet in the title's azure",
     "new": "  herald: TITLE_RGBA.apostle,           // HERALD: the trumpet in the title's azure",
     "tests": [
-      "test/herald.test.js"
+      "test/net/herald.test.js"
     ],
     "note": "The trumpet in the Apostle's violet: the two halves of one grant drift apart."
   },
@@ -15,7 +15,7 @@
     "old": "  herald: '<',        // HERALD: the trumpet's bell, flaring the way the glyph's does",
     "new": "  herald: '|',        // HERALD: the trumpet's bell, flaring the way the glyph's does",
     "tests": [
-      "test/herald.test.js"
+      "test/net/herald.test.js"
     ],
     "note": "The classic face would draw Penitent's blade beside a Herald's name."
   },
@@ -25,7 +25,7 @@
     "old": "  herald: Object.freeze([0.31, 0.49, 1, 1]),          // #4f7dff",
     "new": "  herald: Object.freeze([0.29, 0.565, 0.886, 1]),          // #4f7dff",
     "tests": [
-      "test/herald.test.js"
+      "test/net/herald.test.js"
     ],
     "note": "The moderator's shield blue: a Herald read as staff."
   },
@@ -35,7 +35,7 @@
     "old": "M8.6 5L14.8 1.8V8.2Z",
     "new": "M8.6 5L2.4 1.8V8.2Z",
     "tests": [
-      "test/herald.test.js"
+      "test/net/herald.test.js"
     ],
     "note": "The bell turned back over the mouthpiece."
   },
@@ -45,7 +45,7 @@
     "old": "M3 5V13.6L5.2 11.6L7.4 13.6V5",
     "new": "M3 5V1.6L5.2 3.6L7.4 1.6V5",
     "tests": [
-      "test/herald.test.js"
+      "test/net/herald.test.js"
     ],
     "note": "A pennant flown above the tube, not a herald's banner hanging from it."
   },
@@ -55,29 +55,29 @@
     "old": "L5.2 11.6L7.4 13.6V5'",
     "new": "L5.2 13.6L7.4 13.6V5'",
     "tests": [
-      "test/herald.test.js"
+      "test/net/herald.test.js"
     ],
     "note": "A plain flag: the swallowtail is what reads as a banner at a name's size."
   },
   {
     "name": "HERALD-the-glyph-without-the-title",
     "file": "server-account/src/titles.js",
-    "old": "herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist' });",
-    "new": "herald: 'penitent', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist' });",
+    "old": "herald: 'herald', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });",
+    "new": "herald: 'penitent', aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });",
     "tests": [
-      "test/herald.test.js"
+      "test/net/herald.test.js"
     ],
-    "note": "A Herald drawn with Penitent's sword. AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "A Herald drawn with Penitent's sword. AEGIS (re-aimed by content): the line gained Sureme's aegis. PRIMARCH (re-aimed by content): the line gained GA00250's primarch. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "HERALD-the-tier-unmapped",
     "file": "server-account/wrangler.toml",
-    "old": "PATREON_TIERS = \"29666211:disciple,29666234:herald\"\n",
-    "new": "PATREON_TIERS = \"29666211:disciple\"\n",
+    "old": "PATREON_TIERS = \"29666211:disciple,29666234:herald,29666221:hierophant\"\n",
+    "new": "PATREON_TIERS = \"29666211:disciple,29666221:hierophant\"\n",
     "tests": [
-      "test/herald.test.js"
+      "test/net/herald.test.js"
     ],
-    "note": "Mac's Herald patrons hold nothing by their pledge."
+    "note": "Mac's Herald patrons hold nothing by their pledge. HIEROPHANT-TIER (re-aimed by content): the line gained the Hierophant tier."
   },
   {
     "name": "HERALD-the-list-crossed-with-penitents",
@@ -85,7 +85,7 @@
     "old": "  herald: 'HERALD_HANDLES',",
     "new": "  herald: 'PENITENT_HANDLES',",
     "tests": [
-      "test/herald.test.js"
+      "test/net/herald.test.js"
     ],
     "note": "Diggleborf a Herald by the Penitent's line."
   },
@@ -95,7 +95,7 @@
     "old": "'gatebreaker', 'herald', 'warden',",
     "new": "'gatebreaker', 'warden',",
     "tests": [
-      "test/herald.test.js"
+      "test/net/herald.test.js"
     ],
     "note": "A title the token cannot carry: every Herald's mint throws, and the relay refuses the hello. THE SEATS ARC'S MERGE (PIN MOVED): re-aimed by content - herald stands after the Gatebreaker now, the seats' after it."
   },
@@ -105,7 +105,7 @@
     "old": "penitent: true, herald: true, tower: false,",
     "new": "penitent: true, herald: false, tower: false,",
     "tests": [
-      "test/herald.test.js"
+      "test/net/herald.test.js"
     ],
     "note": "The trumpet filled: a solid blot at a name's size. THE SEATS ARC'S MERGE (PIN MOVED): re-aimed by content - herald stands after the Gatebreaker now, the seats' after it."
   },
@@ -115,7 +115,7 @@
     "old": "  herald: '<',        // HERALD: the trumpet's bell, flaring the way the glyph's does",
     "new": "  herald: '',        // HERALD: the trumpet's bell, flaring the way the glyph's does",
     "tests": [
-      "test/herald.test.js"
+      "test/net/herald.test.js"
     ],
     "note": "The classic face draws nothing beside a Herald's name."
   }

@@ -2,40 +2,40 @@
   {
     "name": "SPAWN-PLATE-built-ground-read-as-standing",
     "file": "src/scenes/world.js",
-    "old": "return _spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key) && built.get(key)?.location == null; };",
-    "new": "return _spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key) && !built.has(key); };",
+    "old": "return b ? b.location == null : _spawnLedger.expired(key, _spawnClock()); };",
+    "new": "return b ? false : _spawnLedger.expired(key, _spawnClock()); };",
     "tests": [
-      "test/fb0929h_spawnplate.test.js",
-      "test/tv6_dungeons.test.js"
+      "test/world/fb0929h_spawnplate.test.js",
+      "test/systems/travel/tv6_dungeons.test.js"
     ]
   },
   {
     "name": "SPAWN-PLATE-the-ground-never-asked",
     "file": "src/scenes/world.js",
-    "old": "return _spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key) && built.get(key)?.location == null; };",
-    "new": "return _spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key); };",
+    "old": "return b ? b.location == null : _spawnLedger.expired(key, _spawnClock()); };",
+    "new": "return _spawnLedger.expired(key, _spawnClock()); };",
     "tests": [
-      "test/fb0929h_spawnplate.test.js",
-      "test/tv6_dungeons.test.js"
+      "test/world/fb0929h_spawnplate.test.js",
+      "test/systems/travel/tv6_dungeons.test.js"
     ]
   },
   {
     "name": "SPAWN-PLATE-the-player-inside-forgotten",
     "file": "src/scenes/world.js",
-    "old": "return _spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key) && built.get(key)?.location == null; };",
-    "new": "return _spawnLedger.expired(key, _spawnClock()) && built.get(key)?.location == null; };",
+    "old": "if (_insideSpawn(key)) return false; const b = built.get(key);",
+    "new": "const b = built.get(key);",
     "tests": [
-      "test/fb0929h_spawnplate.test.js",
-      "test/tv6_dungeons.test.js"
+      "test/world/fb0929h_spawnplate.test.js",
+      "test/systems/travel/tv6_dungeons.test.js"
     ]
   },
   {
     "name": "SPAWN-PLATE-a-name-read-for-a-place",
     "file": "src/scenes/world.js",
-    "old": "return _spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key) && built.get(key)?.location == null; };",
-    "new": "return _spawnLedger.expired(key, _spawnClock()) && !_insideSpawn(key) && !built.get(key)?.location; };",
+    "old": "return b ? b.location == null :",
+    "new": "return b ? !b.location :",
     "tests": [
-      "test/fb0929h_spawnplate.test.js"
+      "test/world/fb0929h_spawnplate.test.js"
     ]
   }
 ]

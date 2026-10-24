@@ -1,6 +1,6 @@
 // @ts-check
 // WB12d (2026-10-01, Mac: "faithful and a Summoner"): THE FAITHFUL'S CIRCLE, MADE - cut from the gate's own stone
-// (world/gateModel.js faces, GATE_ARCHIVE): Dagon's sigil burned into the earth (its own art, world/gateArt.js
+// (world/gate/gateModel.js faces, GATE_ARCHIVE): Dagon's sigil burned into the earth (its own art, world/gate/gateArt.js
 // riteSigilArt, laid on the ground's own heights), a ring of braziers, an altar stone and the faithful's casket - and
 // where their tents, their fire and the faithful themselves stand. Design: bible/11-Multiplayer/World-Bosses.md
 // section 19 D.
@@ -10,7 +10,7 @@
 // the altar's face and the opening in the faithful's ring are toward it, their camp behind. Pure.
 //
 // Not a DFU member. Ledger A (WB).
-import { faces, GATE_ARCHIVE, GATE_STONE_RECORD, RITE_SIGIL_RECORD } from './gateModel.js';
+import { faces, GATE_ARCHIVE, GATE_STONE_RECORD, RITE_SIGIL_RECORD } from './gate/gateModel.js';
 
 /** The sigil burned into the earth: its radius, and how far over the ground it lies (no fighting the terrain). */
 export const RITE_SIGIL_R = 6.5;

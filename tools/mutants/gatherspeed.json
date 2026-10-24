@@ -5,17 +5,17 @@
   "old": "  const rows = await readAll(db, [...decided, ...answer.map(([, st]) => st)]);",
   "new": "  const rows = [...await readAll(db, decided), ...await Promise.all(answer.map(async ([, st]) => (await st.all()).results ?? []))];",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "a harvest's answer read one round trip each again"
  },
  {
   "name": "GATHER-SPEED-ground-track-apart",
   "file": "server-account/src/professions.js",
-  "old": "    readAll(db, [...(key === null ? [] : [factsStatement(db, [key], wkind)]), trackStatement(db, player.id, character, profession)])",
-  "new": "    Promise.all([...(key === null ? [] : [factsStatement(db, [key], wkind)]), trackStatement(db, player.id, character, profession)].map(async (st) => (await st.all()).results ?? []))",
+  "old": "    readAll(db, [...(key === null ? [] : [factsStatement(db, [key], wkind)]), trackStatement(db, player.id, character, profession), firmStatement(db, player.id, character)])",
+  "new": "    Promise.all([...(key === null ? [] : [factsStatement(db, [key], wkind)]), trackStatement(db, player.id, character, profession), firmStatement(db, player.id, character)].map(async (st) => (await st.all()).results ?? []))",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "the ground and the track a trip each"
  },
@@ -25,7 +25,7 @@
   "old": "    db.prepare('SELECT * FROM node_harvests WHERE player = ?1 AND rid = ?2').bind(player.id, rid),\n  ];\n  const rows = await readAll(db, [...decided, ...answer.map(([, st]) => st)]);\n  const made = rows[decided.length - 1][0] ?? null;",
   "new": "  ];\n  const rows = await readAll(db, [...decided, ...answer.map(([, st]) => st)]);\n  const made = await db.prepare('SELECT * FROM node_harvests WHERE player = ?1 AND rid = ?2').bind(player.id, rid).first();",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "the harvest's row read back in a trip of its own"
  },
@@ -35,7 +35,7 @@
   "old": "  return answerOf(row, readsBy(q, await readAll(db, q.map(([, st]) => st))), nowS, extra, rankBefore);",
   "new": "  return answerOf(row, readsBy(q, await Promise.all(q.map(async ([, st]) => (await st.all()).results ?? []))), nowS, extra, rankBefore);",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "a repeat's answer read one trip each"
  },
@@ -45,7 +45,7 @@
   "old": "    q.push(['carried', carriedStatement(db, p, c, spec.material)]);",
   "new": "    q.push(['carriedOwn', carriedStatement(db, p, c, spec.material)]);",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "the carried count read under a name the answer never reads"
  },
@@ -55,7 +55,7 @@
   "old": "  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls] = await readAll(db, [",
   "new": "  const [rows, stores, taken, carriedRows, today, writs, hunt, hauls] = await ((sts) => Promise.all(sts.map(async (st) => (await st.all()).results ?? [])))([",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "the professions' state read one trip each"
  },
@@ -65,7 +65,7 @@
   "old": "  const [prows = [], drows = []] = await readAll(db, [...(keys.length ? [factsStatement(db, keys, 'pixel')] : []), ...(dkeys.length ? [factsStatement(db, dkeys, 'dungeon')] : [])])",
   "new": "  const [prows = [], drows = []] = await Promise.all([...(keys.length ? [factsStatement(db, keys, 'pixel')] : []), ...(dkeys.length ? [factsStatement(db, dkeys, 'dungeon')] : [])].map(async (st) => (await st.all()).results ?? []))",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "the pixels' and the dungeons' witnesses a trip each"
  },
@@ -75,7 +75,7 @@
   "old": "  const seat = bailiwickOf((await confirmedSeats(db, nowS)).values(), region, pixel);\n  return seat && results",
   "new": "  const seat = bailiwickOf((await confirmedSeats(db, nowS, { fresh: true })).values(), region, pixel);\n  return seat && results",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "a Levy's seat read off every seat row again"
  },
@@ -85,7 +85,7 @@
   "old": "  const seat = bailiwickOf((await confirmedSeats(db, nowS)).values(), region, pixel);\n  const h = seat",
   "new": "  const seat = bailiwickOf((await confirmedSeats(db, nowS, { fresh: true })).values(), region, pixel);\n  const h = seat",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "a Tithe's seat read off every seat row again"
  },
@@ -95,7 +95,7 @@
   "old": "  const seat = [...(await confirmedSeats(db, nowS)).values()]",
   "new": "  const seat = [...(await confirmedSeats(db, nowS, { fresh: true })).values()]",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "a board's Market Hall read off every seat row again"
  },
@@ -105,7 +105,7 @@
   "old": "  const first = await readAll(db, [...settleReads(db, me, nowS), auctionsDueRead(db, nowS)]);",
   "new": "  const first = await Promise.all([...settleReads(db, me, nowS), auctionsDueRead(db, nowS)].map(async (st) => (await st.all()).results ?? []));",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "the settle's reads and the auctions due a trip each"
  },
@@ -115,7 +115,7 @@
   "old": "  const first = await readAll(db, [...settleReads(db, me, nowS), auctionsDueRead(db, nowS)]);",
   "new": "  const first = [...await readAll(db, settleReads(db, me, nowS)), (await auctionsDueRead(db, nowS).all()).results ?? []];",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "the auctions due asked apart"
  },
@@ -125,7 +125,7 @@
   "old": "    const [all, listingsMax] = await Promise.all([readAll(db, [...reads, ...own0]), listingsCapAt(db, nowS, boardOf(board))]);",
   "new": "    const [all, listingsMax] = await Promise.all([readAll(db, reads).then(async (v) => [...v, ...await Promise.all(own0.map(async (st) => (await st.all()).results ?? []))]), listingsCapAt(db, nowS, boardOf(board))]);",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "the account's own read a trip each"
  },
@@ -135,7 +135,7 @@
   "old": "    const got = await readAll(db, q.map(([, st]) => st));",
   "new": "    const got = await Promise.all(q.map(async ([, st]) => (await st.all()).results ?? []));",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "the couriers, the medians and the reports a trip each"
  },
@@ -145,7 +145,7 @@
   "old": "  if (work.length) await db.batch(work);",
   "new": "  for (const st of work) await st.run();",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "a settle's rows written a statement a trip"
  },
@@ -155,19 +155,19 @@
   "old": "    gone(node, kind) { return this.taken(node, kind) || this.counting(node, kind); },",
   "new": "    gone(node, kind) { return this.taken(node, kind); },",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "a node stands until the service answers"
  },
  {
   "name": "GATHER-SPEED-act-end-stands-nothing",
   "file": "src/scenes/gatherHost.js",
-  "old": "    fallNow(a);\n  }",
-  "new": "  }",
+  "old": "    if (a.landing) { a.landing = false; fallNow(a); }",
+  "new": "    if (a.landing) { a.landing = false; }",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
-  "note": "the node goes on the answer, not the act's end"
+  "note": "the node goes on the answer, not the act's end (GATHER-FEEL: the act's end is its last blow landing - its swing's hit frame)"
  },
  {
   "name": "GATHER-SPEED-refusal-left-down",
@@ -175,7 +175,7 @@
   "old": "    if (a && !a.loose && (r?.error === 'node-taken' || a.fell)) restandOf(a);",
   "new": "    if (a && !a.loose && r?.error === 'node-taken') restandOf(a);",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "a refused node left gone"
  },
@@ -185,7 +185,7 @@
   "old": "      if (!a && nodeKeyOf) {\n        restandNode(nodeKeyOf);\n",
   "new": "      if (!a && nodeKeyOf) {\n",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "a lapsed harvest's node left gone"
  },
@@ -195,7 +195,7 @@
   "old": "      if (_pumpIdle.key === key && _pumpIdle.wrote === _wrote && now() < _pumpIdle.until) return null;\n",
   "new": "",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "the pump reads the kept table every frame"
  },
@@ -205,7 +205,7 @@
   "old": "    _wrote += 1;   // GATHER-SPEED: the pump's idle read is stale\n",
   "new": "",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "the pump idles past a write"
  },
@@ -215,7 +215,7 @@
   "old": "    if (raw !== _peek.raw) _peek = { raw, table: parseKept(raw) };",
   "new": "    _peek = { raw, table: parseKept(raw) };",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "every look parses the table"
  },
@@ -225,7 +225,7 @@
   "old": "return !!hit && now() - hit.at < MARKET_CACHE_MS; },",
   "new": "return !!hit; },",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "the cache fresh past its minute"
  },
@@ -235,7 +235,7 @@
   "old": "    if (!quick && !(underAct && ui.busy())) ui.rerender();",
   "new": "    if (!(underAct && ui.busy())) ui.rerender();",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "a cached view drawn twice"
  },
@@ -245,7 +245,7 @@
   "old": "    counting(node, kind) { return countingSet().has(`${node}|${kind}`); },",
   "new": "    counting(node, kind) { return peekHarvests().some((h) => h.node === node && h.kind === kind); },",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "the storage read for every node near the player, every frame"
  },
@@ -255,7 +255,7 @@
   "old": "    if (_counting.key !== key || _counting.wrote !== _wrote || ",
   "new": "    if (_counting.key !== key || ",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "a harvest this book kept not counted until the next second"
  },
@@ -265,7 +265,7 @@
   "old": "!(t >= _counting.at && t - _counting.at < PUMP_IDLE_MAX_MS)",
   "new": "false",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "another tab's harvest never counted"
  },
@@ -275,7 +275,7 @@
   "old": "      for (let i = falls.length - 1; i >= 0; i--) if (falls[i].key === key) { drop(falls[i].entry, falls[i].batch); falls.splice(i, 1); fell = true; }",
   "new": "      for (let i = falls.length - 1; i >= 0; i--) if (falls[i].key === key) { fell = true; }",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "a refused tree's fall left falling"
  },
@@ -285,7 +285,7 @@
   "old": "      for (let i = logsLying.length - 1; i >= 0; i--) if (logsLying[i].key === key) { drop(logsLying[i].entry, logsLying[i].batch); logsLying.splice(i, 1); laid = true; }",
   "new": "      for (let i = logsLying.length - 1; i >= 0; i--) if (logsLying[i].key === key) { laid = true; }",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "a refused tree's logs left lying"
  },
@@ -295,7 +295,7 @@
   "old": "        if (unlaid.delete(n.key)) { drop(entry, logs); return; }",
   "new": "        unlaid.delete(n.key);",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "logs laid after their tree's refusal"
  },
@@ -305,7 +305,7 @@
   "old": "  if (marks) findLineStatements(",
   "new": "  if (marks || true) findLineStatements(",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "the find's reads asked of every harvest"
  },
@@ -315,7 +315,7 @@
   "old": "    if (!quick && !(underAct && ui.busy())) ui.rerender();",
   "new": "    if (!quick && !ui.busy()) ui.rerender();",
   "tests": [
-   "test/gatherspeed.test.js"
+   "test/net/gatherspeed.test.js"
   ],
   "note": "a view chosen under another act draws no wait"
  }

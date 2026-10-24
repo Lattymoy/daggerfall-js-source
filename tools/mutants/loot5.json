@@ -1,335 +1,335 @@
 [
   {
     "name": "LOOT5-awake-in-a-duel",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  if (!mine(entity) || !lootRarityOn() || setsDueling()) return [];",
     "new": "  if (!mine(entity) || !lootRarityOn()) return [];",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-a-power-twice",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "      if (typeof id !== 'string' || seen.has(id)) continue;",
     "new": "      if (typeof id !== 'string') continue;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-any-tier-wakes-it",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "const powerIds = (it) => [it?.rarity === 'legendary' ? it.legendary : null, it?.rarity === 'rare' ? it.imprint : null, it?.rarity === 'gilded' ? it.gilded : null];",
     "new": "const powerIds = (it) => [it?.legendary, it?.rarity === 'rare' ? it.imprint : null, it?.rarity === 'gilded' ? it.gilded : null];",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-a-weapons-power-on-every-blow",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "const blowPowers = (entity, weapon) => wornPowers(entity).filter((p) => !isWeapon(p.item) || p.item === weapon || (!!weapon && powerIds(weapon).includes(p.id)));",
     "new": "const blowPowers = (entity, weapon) => wornPowers(entity);",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-a-class-foe-a-giant",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "      case 'bane': if (target.affinity !== 'Human' && p.foes.includes(target.careerIndex)) pct += p.pct; break;",
     "new": "      case 'bane': if (p.foes.includes(target.careerIndex)) pct += p.pct; break;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-silent-death-on-every-foe",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "      case 'unaware': if (info?.unaware) pct += p.pct; break;",
     "new": "      case 'unaware': pct += p.pct; break;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-venom-never-doubled",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "      case 'venom': flat += Math.floor(p.flat * (share(target) < 0.5 ? 2 : 1) * elementShare(target, 'poison')); break;",
     "new": "      case 'venom': flat += Math.floor(p.flat * elementShare(target, 'poison')); break;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-moon-at-noon",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "      case 'moon': if (isNight(skyMinutes())) pct += p.pct + (group === 'animal' ? p.beast : 0); break;",
     "new": "      case 'moon': pct += p.pct + (group === 'animal' ? p.beast : 0); break;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-rage-always",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "      case 'rage': if (share(attacker) < p.below / 100) pct += p.pct; break;",
     "new": "      case 'rage': pct += p.pct; break;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-kiss-on-the-whole",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "      case 'execute': if (share(target) < p.below / 100) pct += p.pct; break;",
     "new": "      case 'execute': pct += p.pct; break;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-first-blood-forever",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  _struck.add(target);   // First Blood: the foe's first landed blow was this one",
     "new": "  // First Blood: the foe's first landed blow was this one",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-flow-past-five",
-    "file": "src/systems/lootPowers.js",
-    "old": "      case 'flow': _s.flow = Math.min(p.max, flowStacks(now) + 1); _s.flowUntil = now + p.seconds; break;",
-    "new": "      case 'flow': _s.flow = flowStacks(now) + 1; _s.flowUntil = now + p.seconds; break;",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "      case 'flow': if (whole) { _s.flow = Math.min(p.max, flowStacks(now) + 1); _s.flowUntil = now + p.seconds; } break;",
+    "new": "      case 'flow': if (whole) { _s.flow = flowStacks(now) + 1; _s.flowUntil = now + p.seconds; } break;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-arc-through-the-shock-proof",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  const n = best ? Math.floor(amount * elementShare(best.entity, 'shock')) : 0;",
     "new": "  const n = best ? Math.floor(amount) : 0;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-quake-everywhere",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "    && rise(f.ai.feet, feet) <= REACH_RISE_M && flat2(f.ai.feet, feet) <= metres && (!door.clear || door.clear(feet, f.ai.feet)));",
     "new": "    && rise(f.ai.feet, feet) <= REACH_RISE_M && (!door.clear || door.clear(feet, f.ai.feet)));",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-echo-nine-in-ten",
-    "file": "src/systems/lootPowers.js",
-    "old": "      case 'echo': if (_rand() * 100 < p.chance) again(target, damage); break;",
-    "new": "      case 'echo': if (_rand() * 100 >= p.chance) again(target, damage); break;",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "      case 'echo': if (_rand() * 100 < p.chance) again(target, damage, p.name); break;",
+    "new": "      case 'echo': if (_rand() * 100 >= p.chance) again(target, damage, p.name); break;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-open-hand-on-a-sword",
-    "file": "src/systems/lootPowers.js",
-    "old": "      case 'fists': if (!weapon) again(target, damage); break;",
-    "new": "      case 'fists': again(target, damage); break;",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "      case 'fists': if (!weapon) again(target, (damage * p.share) / 100, p.name); break;   // BAL7: for half (the record's share)",
+    "new": "      case 'fists': again(target, (damage * p.share) / 100, p.name); break;   // BAL7: for half (the record's share)",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-conduit-dry",
-    "file": "src/systems/lootPowers.js",
-    "old": "      case 'conduit': gainMana(attacker, p.mana); break;",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "      case 'conduit': if (whole) gainMana(attacker, p.mana); break;",
     "new": "      case 'conduit': break;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-dawnward-at-once",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "    if (dawn && _s.charges >= dawn.charges) { _s.charges = 0; say('Dawnward turns the blow aside.'); return 0; }",
     "new": "    if (dawn && _s.charges >= 1) { _s.charges = 0; say('Dawnward turns the blow aside.'); return 0; }",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-raven-on-a-fall",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  if (blow) {\n    const dawn = kind('dawnward');",
     "new": "  if (true) {\n    const dawn = kind('dawnward');",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-hex-forever",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "const hexed = (foe, now = _now()) => !!foe && now < (_hexed.get(foe) ?? 0);",
     "new": "const hexed = (foe) => !!foe && _hexed.has(foe);",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-bedrock-one-stack",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "    else if (p.kind === 'bedrock') { _s.bedrock = Math.min(p.max, bedrockStacks(now) + 1); _s.bedrockUntil = now + p.seconds; }",
     "new": "    else if (p.kind === 'bedrock') { _s.bedrock = 1; _s.bedrockUntil = now + p.seconds; }",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-bulwark-to-nothing",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  if (blow && wall) d = Math.max(1, d - wall.less);",
     "new": "  if (blow && wall) d = Math.max(0, d - wall.less);",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-last-stand-always",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  if (last && share(entity) < last.below / 100) d *= 1 - last.less / 100;",
     "new": "  if (last) d *= 1 - last.less / 100;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-unyielding-unmet",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  if (titan && entity.maxHealth > 0) d = Math.min(d, Math.max(1, Math.ceil((entity.maxHealth * titan.most) / 100)));",
     "new": "  if (titan && entity.maxHealth > 0) d = Math.min(d, entity.maxHealth);",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-grace-never-recovers",
-    "file": "src/systems/lootPowers.js",
-    "old": "  if (now < _s.graceReady) return false;\n  _s.graceReady = now + p.recover;",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  if (now < _s.graceReady || lootSpireHeld('grace')) return false;   // EG-ZH: and in the Spire, not before its next Redoubt\n  _s.graceReady = now + p.recover;",
     "new": "  _s.graceReady = now + p.recover;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-grace-without-its-heal",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  if (_s.graceHeal > 0) { healMine(entity, (max * _s.graceHeal) / 100); _s.graceHeal = 0; }",
     "new": "  _s.graceHeal = 0;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-vigil-every-hurt",
-    "file": "src/systems/lootPowers.js",
-    "old": "  if (now < _s.vigilReady) return;\n  _s.vigilReady = now + v.recover;",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  if (now < _s.vigilReady || lootSpireHeld('vigil')) return;   // EG-ZH: and in the Spire, not before its next Redoubt\n  _s.vigilReady = now + v.recover;",
     "new": "  _s.vigilReady = now + v.recover;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-watch-pays",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "  if (!foe || neverCounts(foe)) return;",
     "new": "  if (!foe) return;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-tribute-flat",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "      case 'tribute': { const g = p.gold * Math.max(1, foe.level | 0); addGoldPieces(me, g); say(`Tribute: ${g} gold.`); break; }",
     "new": "      case 'tribute': { const g = p.gold; addGoldPieces(me, g); say(`Tribute: ${g} gold.`); break; }",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-haste-every-kill",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "        if (now >= _s.hasteReady && door?.castOnPlayer) { _s.hasteReady = now + p.recover; _s.recovering.add('haste'); door.castOnPlayer(hasteBundle(p)); }",
     "new": "        if (door?.castOnPlayer) { _s.hasteReady = now + p.recover; _s.recovering.add('haste'); door.castOnPlayer(hasteBundle(p)); }",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-sap-the-same-when-low",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "    healMine(entity, (entity.maxHealth * (share(entity) < 0.5 ? hist.low : hist.pct)) / 100);",
     "new": "    healMine(entity, (entity.maxHealth * hist.pct) / 100);",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-mastery-never-low",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "    else if (p.kind === 'mastery') pct += Number.isFinite(entity.magicka) && entity.maxMagicka > 0 && entity.magicka < entity.maxMagicka / 2 ? p.low : p.less;",
     "new": "    else if (p.kind === 'mastery') pct += p.less;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-find-unregistered",
-    "file": "src/systems/lootPowers.js",
+    "file": "src/systems/loot/lootPowers.js",
     "old": "registerLegendaryFind(LOOT_POWERS, lootFind);\n",
     "new": "\n",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-find-ignored",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  const legendary = Math.min(rare, legAt(W.legendary) * (Number.isFinite(find) && find > 0 ? find : 1));",
     "new": "  const legendary = Math.min(rare, legAt(W.legendary));",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-find-past-the-rare",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  const legendary = Math.min(rare, legAt(W.legendary) * (Number.isFinite(find) && find > 0 ? find : 1));",
     "new": "  const legendary = legAt(W.legendary) * (Number.isFinite(find) && find > 0 ? find : 1);",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-card-silent",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  { const p = item.legendary ? powerOf(item.legendary) : item.gilded ? powerOf(item.gilded) : null; if (p) out.push(powerLine(p)); }   // LOOT5: its power, by name and brief - GILDED1: a Gilded record's too\n",
     "new": "\n",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
     "name": "LOOT5-the-chip-uncoloured",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "    const colour = set?.colour ?? (t.set === 'legendary' ? RARITIES.legendary.colour : undefined);",
     "new": "    const colour = set?.colour;",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "  setHudSetChips((e) => [...setHudChips(e), ...lootHudChips(e)]);",
     "new": "  setHudSetChips((e) => [...setHudChips(e)]);",
     "tests": [
-      "test/loot5_powers.test.js"
+      "test/systems/loot5_powers.test.js"
     ]
   }
 ]

@@ -8,17 +8,17 @@ needs to be comprehensive."*
 ## What it replaced
 
 A new character started DFU's `_TUTOR__` quest (`vendor/dfu-quests/Quests/_TUTOR__.txt`, through
-`scenes/questBridge.js` GAME_START_QUESTS - StartGameBehaviour.cs:445-447): a Yes/No prompt and seventeen pages on quest
+`scenes/quest/questBridge.js` GAME_START_QUESTS - StartGameBehaviour.cs:445-447): a Yes/No prompt and seventeen pages on quest
 clocks, in Privateer's Hold and the first city, about DFU's own controls and nothing the port has added since. It named
 the old game on its first page.
 
 It is no longer started. What it did besides its pages is kept: every way out of it - finished, or No on any page - ran
-its `_no_` task, `start quest 977 977`, the curse on the old capital's streets (a world quest, `scenes/questFoeHost.js`
+its `_no_` task, `start quest 977 977`, the curse on the old capital's streets (a world quest, `scenes/quest/questFoeHost.js`
 WORLD_QUESTS). So GAME_START_QUESTS is now `['S0000977', '_BRISIEN']`: the curse starts where the tutorial stood, as it
 did for a player who said No to its first page. A save from before TUT1 still inside `_TUTOR__` leaves it at the load
 (`retireDfuTutorial`, called after the machine is restored): the quest is removed - no notebook entry, it had nothing to
 file - and the curse starts unless the save already holds it. The vendored file stays: it is DFU's data, and the
-curse's pins (`test/cursesync.test.js`) read its `_no_` task. Port-Ledger section A carries the departure.
+curse's pins (`test/systems/quest/cursesync.test.js`) read its `_no_` task. Port-Ledger section A carries the departure.
 
 ## The three parts
 
@@ -36,8 +36,21 @@ curse's pins (`test/cursesync.test.js`) read its `_no_` task. Port-Ledger sectio
   at most two paragraphs, three points and sixty words (the first cut averaged 49 words and ran to 113; now 33 and
   60), no asides, no flourish, the words a player uses. The popup lost its foot (the welcome page says where every
   page is read again), a last line is never one word, and a key is named as the keyboard prints it (`keyWord`: `1`,
-  `BACKSPACE`, `NUMPAD /` - never the Controls page's `A1`, `BCKSPC`, `KPADDIVIDE`). `test/tut1_tutorials.test.js`
+  `BACKSPACE`, `NUMPAD /` - never the Controls page's `A1`, `BCKSPC`, `KPADDIVIDE`). `test/ui/tut1_tutorials.test.js`
   holds every page to the limits.
+  CRAFT-HOWTO (FIELD BUGS 2026-10-18d; MoonGeneral, the Discord's #bug-reports: "Write a bit more detailed piece about
+  crafting in the tutorial ... something that helps new players know where to look") added a **Crafting** page to
+  Professions & Survival, after Professions: crafting is done at a station, worked from the Stores page - {Professions}, then Holdings > Stores (AUDIT FB1018D L1-6: "Menu > Holdings" is the Enhanced menu's alone);
+  each station's shops as the interior host's station questions answer them (a forge at Weaponsmiths and Armorers, a
+  loom at Clothing Stores, a workbench at Furniture Stores and joineries, a jeweller's bench at Pawn Shops and Gem
+  Stores, a mason's bench at General Stores, Alchemy at Alchemists, Enchanting at Mages Guild halls), a home's own
+  stations, cooking at any fire, and each crafting profession's own page (`ui/professions/profPages.js` `CRAFT_HOW`)
+  for the rest. Its words are routed through the text core (`tutorials.crafting.*`, drafted in the thirteen whole
+  languages). It pops with the first gather, after Gathering and Professions (`scenes/gatherHost.js`'s press, the one
+  seam of the three). The Professions page's key had been said to open "them and your Stores": since HOLDINGS the key
+  lands on the Professions page and the Stores page is Holdings', so the page says that now. With it the book holds
+  seventy-two pages (it held seventy-one before - the count above is the first cut's). Pinned by
+  `test/ui/professions/fb1018d_crafthowto.test.js`.
 - **The law** - `src/systems/tutorials.js`. The read list and the popups' switch live on the port's prefs shelf
   (`tutorialsSeen`, `tutorialPopups` in `systems/uiPrefs.js` PREF_DEFAULTS) - the PLAYER's, not the character's: a
   second character does not need the inventory explained again. `noteFirstUse(id, { after })` is the trigger every
@@ -97,10 +110,10 @@ One shared door is one seam for every host. The trigger stands in:
 
 A trigger is never put inside a host closure a test lifts and `eval`s (the card table's, the succession's - the first
 cut did, and those pins named `noteFirstUse` undefined): it goes in the module that closure calls. And no module the
-account Worker bundles imports `systems/tutorials.js` (`test/accountdeploy.test.js` walks that graph - the wallet's
+account Worker bundles imports `systems/tutorials.js` (`test/server/accountdeploy.test.js` walks that graph - the wallet's
 ledger is in it, so its page pops from the two views that show the ledger instead).
 
-`test/tut1_tutorials.test.js` sweeps src/ both ways: every page that says it pops has a seam, every seam names a page,
+`test/ui/tut1_tutorials.test.js` sweeps src/ both ways: every page that says it pops has a seam, every seam names a page,
 and a MENU_ONLY page has none.
 
 ## AUDIT TUT1 (2026-10-11, Mac: "Audit and ensure perfection")
@@ -134,6 +147,19 @@ local player's alone; the per-frame seams call only with something to show (and 
 list is the same array - 0.3 microseconds a call); the L and N keys reach the quests and notebook pages; the pane
 writes text only through textContent; the welcome tour starts only for a new character (an heir, the Test Room, a
 headless `?class=`, a new online character), never a loaded save.
+
+## PLEA-LOOP: a page over a decision (FIELD BUGS 2026-10-13b)
+
+A page is pushed over the window that reached its system, and the keys go to the page alone - which is DFU's law: the
+top window takes the input. The court broke it on the enhanced skin. The Crime page's seam is the courtroom's
+constructor, so a beat after the court opens the page stands over the plea; the plea, the enhanced keyed menu's DOM
+dialog, answered its own buttons wherever it stood, and its scrim took the click the page's "click or press any key"
+asked for. A Guilty pressed under the page pleaded, the prison screen replaced the PAGE, and the answered plea stayed in
+the stack, painted with live buttons - a loop of pleas (`01-Overview/bugs/Field-Bugs-2026-10-13b.md` PLEA-LOOP). A covered
+keyed menu now takes no pointer and answers nothing (`ui/windowStack.js` windowCovered, `ui/enhanced/enhancedDialog.js`): the
+click falls through to the canvas and puts the page away, as a key does. A buttoned box (`ui/messageBox.js`'s, DLG1)
+always replayed its press on the canvas, so its host handed that to the top window; the keyed menu was the one
+dialog that reached its window directly.
 
 ## The menu
 

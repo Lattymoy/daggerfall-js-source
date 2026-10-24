@@ -52,6 +52,7 @@
 import { ActionTextBox } from './actionText.js';
 import { statusInfoRows, healthStatusRows } from '../systems/healthStatus.js';
 import { survivalStatusRows } from '../systems/survival/status.js';
+import { survivalRules } from '../systems/survival/switch.js';   // AUDIT C&C S11: the page reads the live tier
 import { statusReadoutHint, holdStatusReadout, forgetStatusReadout, closeStatusReadout } from '../systems/statusReadout.js';
 
 /** DisplayStatusInfo's box, minus the pause and minus the chain. */
@@ -86,7 +87,10 @@ export class StatusReadout extends ActionTextBox {
  * statusInfoRows' own note describes - plain strings underground,
  * `{ text, center }` records elsewhere); `survival` is SURV5's
  * `{ minutes, vampire, endurance }`, or null when Climates & Calories
- * is off.
+ * is off. AUDIT C&C S11: the survival page reads the LIVE tier here,
+ * once, for all four hosts - none handed it in, so a turn from Boons to
+ * Casual under the pause still said "You are not tired." and "Well fed:"
+ * until a game minute ran.
  */
 export function statusReadoutRows({ lines, macroContext = null, entity, survival = null }) {
   const rows = [
@@ -94,7 +98,7 @@ export function statusReadoutRows({ lines, macroContext = null, entity, survival
     '',
     ...healthStatusRows(entity, lines),
   ];
-  if (survival) rows.push('', ...survivalStatusRows(entity, survival.minutes, survival));
+  if (survival) rows.push('', ...survivalStatusRows(entity, survival.minutes, { rules: survivalRules(), ...survival }));
   return rows;
 }
 

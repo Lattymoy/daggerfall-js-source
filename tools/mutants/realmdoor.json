@@ -5,7 +5,7 @@
     "old": "  if (!row || row.dead_at != null || row.lease == null) return none;",
     "new": "  if (!row) return { ...none, rc: 1 };",
     "tests": [
-      "test/realmdoor.test.js"
+      "test/net/realmdoor.test.js"
     ],
     "note": "LEGACY7 (PIN MOVED): re-aimed by content - the door refuses a tombstone too. SCALE4f (2026-10-10) re-aimed it by content: the four reads of the realm row are one (realm.js realmMintFacts)."
   },
@@ -15,7 +15,7 @@
     "old": "WHERE r.id = ? AND r.player = ?').bind(id, playerId).first();",
     "new": "WHERE r.id = ? AND ? IS NOT NULL').bind(id, playerId).first();",
     "tests": [
-      "test/realmdoor.test.js"
+      "test/net/realmdoor.test.js"
     ],
     "note": "LEGACY7 (PIN MOVED): re-aimed by content - the door refuses a tombstone too. SCALE4f (2026-10-10) re-aimed it by content: the four reads of the realm row are one (realm.js realmMintFacts)."
   },
@@ -25,7 +25,7 @@
     "old": "...wardrobe, mu, lv, ...(guild ?? {}), rc, ...(rc ? { ci: body.character } : {}), ...(ar",
     "new": "...wardrobe, mu, lv, ...(guild ?? {}), ...(rc ? { ci: body.character } : {}), ...(ar",
     "tests": [
-      "test/realmdoor.test.js"
+      "test/net/realmdoor.test.js"
     ]
   },
   {
@@ -34,7 +34,7 @@
     "old": "    if (r.claims.rc === 0) return { error: REALM_DOOR_WORD };\n",
     "new": "",
     "tests": [
-      "test/realmdoor.test.js"
+      "test/net/realmdoor.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "    if (r.claims.rc === 0) return { error: REALM_DOOR_WORD };",
     "new": "    if (r.claims.rc !== 1) return { error: REALM_DOOR_WORD };",
     "tests": [
-      "test/realmdoor.test.js"
+      "test/net/realmdoor.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "      const who = await this._named(m, now);\n",
     "new": "      await this.state.storage.put(secretKey(m.id), m.secret); const who = await this._named(m, now);\n",
     "tests": [
-      "test/realmdoor.test.js"
+      "test/net/realmdoor.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "  if (c.rc !== undefined && c.rc !== 0 && c.rc !== 1) return false;\n",
     "new": "",
     "tests": [
-      "test/realmdoor.test.js"
+      "test/net/realmdoor.test.js"
     ]
   },
   {
@@ -70,16 +70,16 @@
     "old": "  if (who?.rc !== undefined) claims.rc = who.rc;",
     "new": "  if (who?.rc) claims.rc = who.rc;",
     "tests": [
-      "test/realmdoor.test.js"
+      "test/net/realmdoor.test.js"
     ]
   },
   {
     "name": "REALM-DOOR-words-past-a-close-reason",
     "file": "src/net/wire.js",
-    "old": "export const REALM_DOOR_WORD = 'this game is out of date - update it to play online (restart the app, or reload the page)';",
+    "old": "export const REALM_DOOR_WORD = 'this game is out of date. Update it to play online (restart the app, or reload the page)';",
     "new": "export const REALM_DOOR_WORD = 'this game is out of date - update it to play online (restart the app, or reload the page, or download the newest build from the website and install it again)';",
     "tests": [
-      "test/realmdoor.test.js"
+      "test/net/realmdoor.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "export const realmDoorShut = (/** @type {any} */ session) => !!session?.terminal && session.error === REALM_DOOR_WORD;",
     "new": "export const realmDoorShut = (/** @type {any} */ session) => !!session?.terminal;",
     "tests": [
-      "test/realmdoor.test.js"
+      "test/net/realmdoor.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "    character: () => (onlineOn ? realmSession?.id ?? null : null) });",
     "new": "    character: () => (onlineOn ? characterIdOf(playerEntity) : null) });",
     "tests": [
-      "test/realmdoor.test.js"
+      "test/net/realmdoor.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "    if (realmSession && !realmSession.lost && realmDoorShut(online)) { realmLost('no-realm-character'); return; }\n",
     "new": "",
     "tests": [
-      "test/realmdoor.test.js"
+      "test/net/realmdoor.test.js"
     ]
   }
 ]

@@ -7,7 +7,7 @@
 
 import { stepAsideLoading, syncLoading } from '../ui/loadingScreen.js';   // LOAD1: a full-screen film's hold takes the loading screen aside; a claimed loop lets its hold go
 import { DFPalette } from '../formats/dfPalette.js';
-import '../systems/itemLaw.js';   // INT1 (bible/06-Systems/Integrity-Arc.md): the item law, installed on the wire's door (systems/loot.js setItemLaw) in every host
+import '../systems/item/itemLaw.js';   // INT1 (bible/06-Systems/Integrity-Arc.md): the item law, installed on the wire's door (systems/loot/loot.js setItemLaw) in every host
 import { NetRandom } from '../formats/netRuntime.js';   // HAZE1: System.Random's one port (the stars' generator)
 import { swingHeld } from '../ui/input.js';   // FIX-F: the swing button through the registry
 import { ImgFile } from '../formats/imgFile.js';
@@ -15,26 +15,28 @@ import { SkyFile } from '../formats/skyFile.js';
 import { SkyRenderer, buildDaySkyPanorama, buildNightSkyPanorama, buildFallbackSkyPanorama, nightSkyImageName } from '../render/skyRenderer.js';
 import { SEASON } from '../world/climateSwaps.js';
 import { skyFrameForTime, isNight, setLightCurve, daylightScale } from '../world/worldClock.js';   // DS1: isNight for the mod's moonlight, setLightCurve for the mod's own curve; CLK3 review: daylightScale for its moonlight's ramp
-import { createWindModel } from '../systems/wind.js';   // WIND1; WEATHER2b: the lead is the front's own (leadMinutes)
+import { createWindModel } from '../systems/wind/wind.js';   // WIND1; WEATHER2b: the lead is the front's own (leadMinutes)
+import { systemWordOf } from '../systems/weather/weatherSim.js';   // AUDIT PRECIP FALL-2: a weather is its system on the precipitation law's lane
 import { releaseUnloadGuard } from '../systems/unloadGuard.js';   // MAC-L3: a door the game opened is not a door to warn about
 import { EnhancedSkyRenderer, skyState, easeWeather, weatherRow, CLOUD_SHADOW, moonlightTerm, WEATHER_EASE_MINUTES, WIND_SECONDS_PER_MINUTE } from '../render/enhancedSky.js';   // ES1: the enhanced sky, behind the skin; EV5: its moons light the world
 import { meterFor } from '../render/perfMeter.js';   // VC6d: `?perf=zones` - the sky's own span
 import { dreadGrade, DREAD_SKY_WORD } from '../world/dreadSky.js';   // EVENT1: the live event's grade and the sky it wears
 import { sunbabyHaze, sunbabyWaterSky } from '../world/sunbabySky.js';   // SUNBABY1: the sun baby's haze and the sky the water mirrors under it
-import { sdBrassGrade } from '../systems/sdOmen.js';   // SD19: the brass air near a standing Hollow
+import { sdBrassGrade } from '../systems/superDungeon/sdOmen.js';   // SD19: the brass air near a standing Hollow
 import { SunbabySkyRenderer } from '../render/sunbabySkyRenderer.js';   // SUNBABY1: its flower sky, over every sky
 import { VolumetricClouds, QUALITY as CLOUD_QUALITY } from '../render/volumetricClouds.js';   // VC3: the clouds over the dome
 import { cloudsStateUnderMod, dynamicMoonState, dynamicMoonlight } from '../render/dynamicSkiesBridge.js';   // DS1/DS2: the mod's state in the port's shapes - the moons, the clouds, and the moons' own term (AUDIT 65 MC-3: the bridge's third export had no caller and this file carried its body inline)
 import { isEnhanced } from '../systems/uiSkin.js';
 import { getPref } from '../systems/uiPrefs.js';   // RA1: the Enhanced pane's sky switch
 import { pageParam } from '../systems/pageQuery.js';   // CLIMB1: `?parkour=off`, the enhanced climb's kill door
-import { isOnlinePage, onlineForcedPref } from '../systems/onlineLane.js';   // CLIMB1: online the skin is not asked, and the row is the lane's
+import { isOnlinePage, onlineForcedPref } from '../systems/online/onlineLane.js';   // CLIMB1: online the skin is not asked, and the row is the lane's
+import { madeRuleHere } from '../systems/madeLevel.js';   // EG-PERFECT: the made level's law refuses the running leap on its proven ways
 import { carriedWeight } from '../systems/inventory.js';   // CLIMB2: a heavy pack cuts the enhanced climb's reach
 import { entityMaxEncumbrance } from '../combat/formulas.js';   // CLIMB2: ...over what the body can carry
 import { DynamicSkiesRenderer } from '../render/dynamicSkiesRenderer.js';   // DS1: Dynamic Skies' skybox, the mod's own pass
-import { DynamicSkies } from '../systems/dynamicSkiesRuntime.js';   // DS1: BLBSkybox's instance
-import { MAX_DELTA_SECONDS } from '../systems/dynamicSkies.js';   // Time.maximumDeltaTime, the mod's frame clamp
-import { dynamicSkiesAssets, loadDynamicSkiesTexture, dynamicSkiesTextureUrl, DYNAMIC_SKIES_TEXTURES } from '../systems/dynamicSkiesAssets.js';   // DS1: the vendored files
+import { DynamicSkies } from '../systems/dynamicSkies/dynamicSkiesRuntime.js';   // DS1: BLBSkybox's instance
+import { MAX_DELTA_SECONDS } from '../systems/dynamicSkies/dynamicSkies.js';   // Time.maximumDeltaTime, the mod's frame clamp
+import { dynamicSkiesAssets, loadDynamicSkiesTexture, dynamicSkiesTextureUrl, DYNAMIC_SKIES_TEXTURES } from '../systems/dynamicSkies/dynamicSkiesAssets.js';   // DS1: the vendored files
 import { modSetting, modSettingsOf } from '../systems/modSettings.js';   // DS1: the mod's own switches
 import { weatherSunlightScale } from '../world/weather.js';   // DS1: WeatherManager's ScaleFactor, for the skybox's _LightColor0
 import { seasonValue, SEASONS, dateFromClassicMinutes } from '../systems/gameDate.js';   // DS1: the winter arm of that scale
@@ -44,8 +46,11 @@ import { expandRowValues } from '../systems/quest/questMacros.js';   // MACRO-3:
 // LV2: the level-up notification's seams. The CLASSIC lane's line and
 // box are still this file's - the seam takes them and uses them - so
 // nothing about the old skin is decided in a UI module.
-import { announceSkillRaise, announceMastery, announceSkillMilestone } from '../ui/levelNotice.js';
+import { announceSkillRaise, announceMastery, announceSkillMilestone } from '../ui/levelUp/levelNotice.js';
 import { masterSkillsBoxDue, setMasterSkills, MASTER_SKILLS_OFFER_ROWS, MASTER_SKILLS_INFO_ROWS, MASTER_SKILLS_DECLINED_TEXT, MASTER_SKILLS_INTRO_ROWS, nextMasteryChoice, masteryChoiceRows, masterSkill } from '../systems/masterSkills.js';   // SOFTCAP3/4
+import { nextPathChoice, pathChoices, pathChoiceRows, pathsOpenRows, choosePath, pathDeclinedText, pathDeclinedGrowthText } from '../systems/arcanePaths.js';   // SCHOOLS1: the specialisation's one ask - GROWTH4: its words, the Growth tab's where it stands
+import { nextMartialChoice, martialChoices, martialChoiceRows, martialOpenRows, chooseMartialPath, martialDeclinedText, martialDeclinedGrowthText } from '../systems/martialPaths.js';   // MARTIAL1: the martial specialisation's one ask
+import { computeEntityMods } from '../systems/entityMods.js';   // AUDIT SPEC-RESET L1-3: a chosen path's stats now, not at the next round
 import { DOOR_SPELL_TEXT, castBySkeletonKey } from '../systems/mysticism.js';   // X1: the door-spell alert lines; D9: Open.CheckCastByItem
 import { raiseSkills } from '../systems/advancement.js';   // AUDIT 23 (entity-1): the rest-end raise
 import { tickPlayerMinutes, runMagicRoundsFor, worldMinutes, skyMinutes, setWorldMinutes, ownMinutes, advanceOwnMinutes, tickInFlight, MINUTES_PER_DAY, CLASSIC_MINUTES_PER_SECOND, sharedClockOn } from '../systems/worldTick.js';
@@ -54,53 +59,56 @@ import { survivalRules } from '../systems/survival/switch.js';   // SURV-TIERS: 
 import { sleepStage } from '../systems/survival/needs.js';   // AUDIT SURV-TIERS (the third pass): the rough night's lesser sleep, said
 import { setSyntheticTimeIncrease } from '../systems/effectBroker.js';   // AUDIT 63 F13: VampirismInfection.cs:161-162
 import { setInfectionHost, vampireClanForFaction } from '../systems/infection.js';   // V1: the host seam for the dream/death videos and the turn's clock raise
-import { findFactions } from '../systems/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
+import { findFactions } from '../systems/talk/talk.js';   // V1: GetRegionFaction's FindFactions(Province, region)
 import { FACTION_TYPES } from '../formats/factionFile.js';
 import { killIfAnyLiveStatZero } from '../systems/statMods.js';   // AUDIT 24 (wave 32): the per-entity laws a foe pool owes
-import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate, restIgnoresNoRegen } from '../systems/rest.js';
+import { hasSpecialAbility, SPECIAL_ABILITY, healthRecoveryRate, fatigueRecoveryRate, spellPointRecoveryRate, restIgnoresNoRegen } from '../systems/rest/rest.js';
 import { entityImprovedAthleticism } from '../systems/enchantments.js';   // AUDIT 26 F044: the ImprovesTalents fatigue arm   // the rested hour's three rates, one home for every host (V5 + S40, same line from two lanes)
-import { getPreventedRestMessage } from '../systems/restSession.js';
-import { nightDue, nightRealMinutesLeft, stampNight, runRestNight, topUpRest, sleepShortRest, spendRoomNight, roomNightsLeft, heardNight, REST_CHANNEL_SECONDS, REST_ACT_TEXT, NIGHT_HOURS, openChannelHeal, stepChannelHeal } from '../systems/restAct.js';   // REST1: the rest act online
-import { registerPreventRestCondition } from '../systems/restSession.js';   // SURV7: the survival rest gate's seam
+import { getPreventedRestMessage } from '../systems/rest/restSession.js';
+import { nightDue, nightRealMinutesLeft, stampNight, runRestNight, topUpRest, sleepShortRest, spendRoomNight, roomNightsLeft, heardNight, REST_CHANNEL_SECONDS, REST_ACT_TEXT, NIGHT_HOURS, openChannelHeal, stepChannelHeal } from '../systems/rest/restAct.js';   // REST1: the rest act online
+import { registerPreventRestCondition } from '../systems/rest/restSession.js';   // SURV7: the survival rest gate's seam
 import { quietNights } from '../systems/encounters.js';   // CAMP-ROLL: a camp mate's night rolls nothing of mine
-import { carriedRestKind } from '../systems/partyRestLaw.js';   // CAMP-ROLL: and is slept at the better of their spot and mine
+import { carriedRestKind } from '../systems/party/partyRestLaw.js';   // CAMP-ROLL: and is slept at the better of their spot and mine
 import { survivalFeed, installSurvivalGate } from '../systems/survival/env.js';   // SURV7: the needs' feed and the gate, composed from the entity   // ROAD-B B5: TickRest's per-frame poll (:357-360, :407-410)
 import { createNearbyScan, updateNearbyObjects, detectedMarkers, hasLiveDetector } from '../systems/nearbyObjects.js';   // X4: the Detect scan
-import { liveStat, maxFatigue } from '../systems/statMods.js';
+import { liveStat, maxFatigue, clampFatigue } from '../systems/statMods.js';
 import { FALL_DAMAGE_THRESHOLD, FALL_HP_PER_METRE, CAPSULE_HEIGHT } from '../player/motor.js';   // AUDIT 62 F23: the standing capsule, the senses context's headless default
 import { FOOTSTEP_VOLUME } from '../systems/footsteps.js';   // AUDIT 58: PlayerFootsteps.FootstepVolumeScale (:30), which its one-shots carry too
 import { flashPlayerDamage } from '../ui/damageFlash.js';   // AUDIT 24 (wave 39): ShowPlayerDamage
 import { SOUND } from '../systems/soundClips.js';
 import { surfacePlayer, hurtPlayer, duelSpare, staffFly, levitateWarded, freeFlight } from '../characters/playerEntity.js';   // DUEL1: the duel's floor, for its damage over time   // AUDIT-SEATS G5: a siege's ward on Levitate   // AUDIT-SEATS G4: a spectator's flight
-import { readSpellsStd, spellsByIndexMap } from '../formats/spellsStd.js';   // G4: the two magic registries, one home
+import { standardSpellsByIndex } from '../systems/spell/standardSpells.js';   // G4: the two magic registries, one home; DEX4a: a mod's SpellRecords.json merged, as RebuildClassicSpellsDict merges it
 import { readMagicDef } from '../formats/magicDef.js';
-import { setMagicItemTemplates, setSpellRecordsByIndex } from '../systems/loot.js';
+import { setMagicItemTemplates, setSpellRecordsByIndex } from '../systems/loot/loot.js';
 import { PaintFile } from '../formats/paintFile.js';   // F156: PAINT.DAT, the painting descriptions' file
-import { setPaintFile } from '../systems/itemInfo.js';
+import { setPaintFile } from '../systems/item/itemInfo.js';
 import { music } from '../systems/music.js';
 import { setMusicReplacements } from '../systems/musicReplacement.js';   // M-EXT: SoundReplacement's registry
 import { setSoundReplacements } from '../systems/soundReplacer.js';   // SNDREP1: the player's sound pack, on the same seam
-import { installDiverseWeaponsIcons } from '../combat/diverseWeaponsIcons.js';
-import { installRoleplayRealismItems } from '../systems/rriInstall.js';
+import { installDiverseWeaponsIcons } from '../combat/diverseWeapons/diverseWeaponsIcons.js';
+import { installRoleplayRealismItems } from '../systems/roleplayRealismItems/rriInstall.js';
 import { installDetailedShipsArt } from '../systems/detailedShips.js';   // DS1: Detailed Ships' pictures and xml scales
+import { installStudioArt } from '../systems/studioArt/studioArt.js';   // STUDIO1: the game's artists' own pictures
 import { installWarmAshesShips } from '../systems/warmAshesShips.js';   // WA1: Warm Ashes - Ships' quest list and save slot
-import { installRestItemLoot, litCandle, meditate, snuffCandle, draughtTaken, spendDraught, DRAUGHT_SPENT_MINUTES } from '../systems/restItems.js';   // REST6: the seven that fill the gaps
-import { installForaging } from '../systems/foragingInstall.js';   // FORAGE1: Foraging's quest list, tools, foods, pictures and console command
+import { installRestItemLoot, litCandle, meditate, snuffCandle, draughtTaken, spendDraught, DRAUGHT_SPENT_MINUTES } from '../systems/rest/restItems.js';   // REST6: the seven that fill the gaps
+import { installForaging } from '../systems/foraging/foragingInstall.js';   // FORAGE1: Foraging's quest list, tools, foods, pictures and console command
 import { installSmithing } from '../systems/smithItems.js';   // PROF3: the Repair Kit's use
 import { installCooking, dishStaminaFactor } from '../systems/cookItems.js';   // PROF9: a dish eaten, and the Tart's stamina
 import { installHealingSupply } from '../systems/healingSupply.js';   // POTION-COMMON: Potions of Healing in the loot
 import { installRaidingParties } from '../systems/raidingParties.js';   // RAID1: World Events - Raiding Parties' save slot
-import '../systems/gateSpoils.js'; import '../systems/portalStone.js'; import '../systems/gems.js';   // WB5: the Sigil Stone's own template (570) registers in every host, so a save carrying one loads it in any of the four; PORTAL1: and the Portal Stone's Use (572)
-import '../systems/sigilBroker.js';   // SET7: the Broker's record (what this character bought today) registers its save slot in every host, so a save made anywhere carries it
+import '../systems/gate/gateSpoils.js'; import '../systems/portalStone.js'; import '../systems/gems.js'; import '../systems/eliteGates/weirKey.js'; import '../systems/festival/soulCake.js';   // WITCH1: and the Witches' Festival's two (2000, 2001); EG-PLAY: and the Weir Key's (575) - its Use the world host's opener, every other host's 'cold'
+   // WB5: the Sigil Stone's own template (570) registers in every host, so a save carrying one loads it in any of the four; PORTAL1: and the Portal Stone's Use (572)
+import '../systems/sigil/sigilBroker.js';   // SET7: the Broker's record (what this character bought today) registers its save slot in every host, so a save made anywhere carries it
 import { installImmersiveTravel } from '../systems/immersiveTravel.js';   // IT1: Immersive Travel's Init - the drivers' and sailors' factions, their Fast Travel services
-import { installRoleplayRealism } from '../systems/rrInstall.js';   // RR1: Roleplay & Realism's InitMod - after Items', as DFU loads them (Items is the one it looks up)   // RRI1: the templates, the patches, the art - the same seam, the same reason   // DW3: its icons, on the replacement door - here and not at worldTick's module scope, where the mod's law sits in an import cycle (a TDZ)
-import { getBool, getInt } from '../systems/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term
-import { SongManager, musicEnvironment, holdEnvironment } from '../systems/songManager.js';
+import { installRoleplayRealism } from '../systems/roleplayRealism/rrInstall.js';   // RR1: Roleplay & Realism's InitMod - after Items', as DFU loads them (Items is the one it looks up)   // RRI1: the templates, the patches, the art - the same seam, the same reason   // DW3: its icons, on the replacement door - here and not at worldTick's module scope, where the mod's law sits in an import cycle (a TDZ)
+import { installEnemyExpansion } from '../systems/enemyExpansion/dexInstall.js';   // DEX1: Daggerfall Enemy Expansion's fifty enemies, their careers and the classic edits, once at boot
+import { getBool, getInt } from '../systems/settings/settings.js';   // M-FM: Audio/AlternateMusic, read once for all three hosts; MAC-O4: Controls/WeaponSwingMode, the drag route's own missing term
+import { SongManager, musicEnvironment, holdEnvironment } from '../systems/song/songManager.js';
 import { festivalEnvironment } from './seatFestival.js';   // FESTIVAL-STAGE: a Festival town's streets hear the tavern
 import { audio } from '../systems/audio.js';
 import { messageBox } from '../systems/notify.js';   // ENH-NOTICE3: the one door every DaggerfallUI.MessageBox goes through - the infection's popup names the KIND, never the host's window
 
-import { getBytes, storedMusicNames, loadMusicFile, registerTextureStore, registerMorrowindData } from './dataSource.js';   // M-EXT/M-TEX: the player's own packs
+import { getBytes, forgetBytes, storedMusicNames, loadMusicFile, registerTextureStore, registerMorrowindData } from './dataSource.js';   // M-EXT/M-TEX: the player's own packs
 
 
 /** The data seam every scene uses - delegates to the ARENA2 data
@@ -144,7 +152,7 @@ export async function loadMagicRegistries(fetch = fetchBytes) {
   let spellsByIndex = null;
   let magicItemTemplates = null;
   try {
-    const byIndex = spellsByIndexMap(readSpellsStd(await fetch('SPELLS.STD')));   // AUDIT 68 S12-spellsstd-dup: the one first-wins fold
+    const byIndex = standardSpellsByIndex(await fetch('SPELLS.STD'));   // AUDIT 68 S12-spellsstd-dup: the one first-wins fold (DEX4a: after the mods' merge)
     spellsByIndex = byIndex;
     setSpellRecordsByIndex(byIndex);
   } catch { /* data absent: casts no-op, and a CastWhen* slot prices at 0 - DFU's own answer */ }
@@ -307,6 +315,9 @@ export function createSkyController(gl, params) {
   let dynamicMoons = null;   // DS1: the moons' places for the world's moonlight, from the mod's own orbits
   const t0 = (typeof performance !== 'undefined' ? performance.now() : 0);
   let weatherRowNow = null;   // ES1c: the eased weather, walked toward the sim's row
+  /** VC4: the sun past the clouds' shadow map - the row's cover on the slab's own coverage law (cover^1.6: a sunny 0.32
+   *  loses a tenth of its sun, an overcast 0.94 two thirds). The far ring's dim, and (OW-HORIZON) the deck's `far`. */
+  const farCoverSun = () => 1 - 0.7 * Math.pow(weatherRowNow?.cover ?? 0, 1.6);
   const windModel = createWindModel({ seed: Number(params.get('wseed')) || 7 });   // WIND1: the wind, a state of its own (enhanced only - the classic sky never reaches it); WX2a: ?wseed replays its rolls too
   const driftXZ = [0, 0];   // WIND2: the clouds' integrated offset, in the row's units x seconds (CLK1: game minutes x WIND_SECONDS_PER_MINUTE)
   let weatherAt = null;     // the mod's real-second clock (DS1, 1:1 - BLBSkybox reads Time.deltaTime)
@@ -327,7 +338,12 @@ export function createSkyController(gl, params) {
   // immediate neighbours and the night/day toggle.
   const PANORAMA_CACHE_MAX = 4;
   const panoramas = new Map();
+  // MEM-AUDIT (2026-10-23): AND THE SKY FILES THEMSELVES, the two last asked. Each SKY??.DAT is 7.8 MB, a sky index is a
+  // climate's sky and its season or weather, and the parsed files and their bytes stood for the session - up to 248 MB
+  // past the heap. One asked again is read again: the same bytes, the same panorama.
+  const SKY_FILES_KEPT = 2;
   const skyFiles = new Map();
+  const skyMissing = new Set();   // AUDIT MEM-AUDIT M2: the sky indices with no file (the lean diet) - kept apart, never let go: asked again, each was fetched again and warned again
   let activeKey = '';
   let pending = null;
   // DaggerfallSky.cs:74 - ONE System.Random(0) for the component's
@@ -360,6 +376,7 @@ export function createSkyController(gl, params) {
       }
     }
     if (!skyFiles.has(skyIndex)) {
+      if (skyMissing.has(skyIndex)) return buildFallbackSkyPanorama();
       const name = SkyFile.indexToFileName(skyIndex);
       try {
         const f = new SkyFile();
@@ -370,10 +387,16 @@ export function createSkyController(gl, params) {
         // SKY??.DAT degrades to the gradient, never to a crash
         // (2026-08-14; full desktop sets never hit this).
         console.warn(`${name} unavailable - gradient sky fallback`);
-        skyFiles.set(skyIndex, null);
+        skyMissing.add(skyIndex);
       }
     }
     const sf = skyFiles.get(skyIndex);
+    if (sf) { skyFiles.delete(skyIndex); skyFiles.set(skyIndex, sf); }   // MEM-AUDIT: the newest last
+    while (skyFiles.size > SKY_FILES_KEPT) {
+      const [old] = skyFiles.keys();
+      skyFiles.delete(old);
+      forgetBytes(SkyFile.indexToFileName(old));
+    }
     return sf ? buildDaySkyPanorama(sf, frame) : buildFallbackSkyPanorama();
   }
 
@@ -410,12 +433,22 @@ export function createSkyController(gl, params) {
       dreadGlow = dreadW > 0 ? Math.max(0, Math.min(1, Number(glow) || 0)) : 0;
       for (const r of [sky, enhancedSky, dynamicSky, clouds]) if (r) r.dread = dreadW;
     },
-    /** SD19: the brass air's weight this frame near a standing Hollow, 0..1 (systems/sdOmen.js sdAirWeight) - the fog and
+    /** SD19: the brass air's weight this frame near a standing Hollow, 0..1 (systems/superDungeon/sdOmen.js sdAirWeight) - the fog and
      *  the water's sky lean to it, and (AUDIT SD III, V8) every pass that draws the sky grades by it as the haze is graded:
      *  the fogged land met the sky a step apart at the skyline. 0 is exactly the sky there was. */
     setBrass(w) {
       brassW = Math.max(0, Math.min(1, Number(w) || 0));
       for (const r of [sky, enhancedSky, dynamicSky, clouds]) if (r) r.brass = brassW;
+    },
+    /** BANTHA1 (bible/03-World/Bantha-Jungle.md): the jungle's haze over the sky this frame - [r, g, b, depth], its colour
+     *  and its optical depth straight up from the eye (world/jungle/jungleHaze.js hazeSkyUniform; render/hazeGlsl.js
+     *  uHazeSky) - every pass that draws the sky closes into it toward the horizon, as the ground does; null or a depth
+     *  of 0 is exactly the sky there was. */
+    setHazeSky(v) {
+      for (const r of [sky, enhancedSky, dynamicSky, clouds]) {
+        if (!r?.hazeSky) continue;
+        if (v) r.hazeSky.set(v); else r.hazeSky[3] = 0;
+      }
     },
     /** SUNBABY1: the sun baby's weight this frame, 0..1 (world/sunbabySky.js createSunbaby) - its flower sky is drawn over
      *  the sky and its clouds by it, the fog and the water's sky lean to it - and `on`, whether it is staged now: while
@@ -525,7 +558,7 @@ export function createSkyController(gl, params) {
      *  the dome's own occlusion when the clouds are off. */
     farSunFactor() {
       if (!clouds) return this.sunFactor();
-      return 1 - 0.7 * Math.pow(weatherRowNow?.cover ?? 0, 1.6);
+      return farCoverSun();
     },
     offsetOrigin(offset) { clouds?.offsetOrigin(offset); },
     /** WEATHER3d: a distant storm's strike lights its own cloud - `{ x, z, r, strength }` in the host's world metres,
@@ -583,7 +616,7 @@ export function createSkyController(gl, params) {
         // EVENT1: under the dread the SKY wears the storm (DREAD_SKY_WORD) - its row, its clouds, the mod's preset - and
         // walks back to the sim's own word as the dread lifts; the wind below keeps the sim's word, so the grass, the
         // rain and the wind's voice are the weather's as they were
-        const skyWord = dreadW > 0 ? DREAD_SKY_WORD : weatherName;
+        const skyWord = dreadW > 0 ? DREAD_SKY_WORD : systemWordOf(weatherName);   // AUDIT PRECIP FALL-2: the deck is its system's - a storm falling as snow is a storm's sky (and the mod's preset, its strikes)
         const want = weatherRow(skyWord);
         // CLK1 (2026-09-08, Mac: "in sync with the world clock"): ONE
         // CLOCK. The presentation walks on GAME MINUTES - the host's
@@ -620,7 +653,7 @@ export function createSkyController(gl, params) {
         // gets up first and the sky darkens behind it - the storm
         // rolling in. `dt` is stretched or shrunk to make the ease's
         // own walk land on the front's clock.
-        windModel.tick(extra?.classicMinutes ?? 0, weatherName, extra?.violence ?? weatherName, extra?.approach ?? 0);   // WEATHER2a: the violence word rides beside the worn one; WEATHER3c: the storms drawing near
+        windModel.tick(extra?.classicMinutes ?? 0, systemWordOf(weatherName), extra?.violence ?? weatherName, extra?.approach ?? 0);   // WEATHER2a: the violence word rides beside the worn one; WEATHER3c: the storms drawing near; AUDIT PRECIP FALL-2: a front is a new system, never its phase turning
         // WIND2 (AUDIT 56): the ease stretches for the WHOLE lead, from
         // the change itself. WIND1 stretched it only while the front's
         // factor was strictly between 0 and 1 - and at the change the
@@ -667,7 +700,7 @@ export function createSkyController(gl, params) {
           // the MOD's horizon; and the ground's deck takes their shadow.
           if (clouds) {
             const cb = dreadW > 0 ? { word: skyWord, row: weatherRowNow } : cloudBaseOf(extra, weatherName, weatherRowNow);   // WEATHER3c; EVENT1: the dread's deck over the map's clear air
-            clouds.setState(cloudsStateUnderMod(st, dynamicMoons, { minuteOfDay, weather: cb.word, classicMinutes: nowMinutes, skyMinutes: skyNow, seconds, drift: driftXZ, row: cb.row }),
+            clouds.setState(cloudsStateUnderMod(st, dynamicMoons, { minuteOfDay, weather: cb.word, classicMinutes: nowMinutes, skyMinutes: skyNow, seconds, drift: driftXZ, row: cb.row, skyRow: weatherRowNow }),   // SKY-HZN: the far fade the sky's
               cb.row, cb.word, easeDt, driftXZ, (extra?.flash ?? 0) + dreadGlow, extra?.pos ?? null, extra?.cells ?? null);   // WEATHER2c: the field's cells; EVENT1: the red strikes' glow
             if (clouds.shadow) Object.assign(dynamicDeck, clouds.shadow);
           }
@@ -691,11 +724,14 @@ export function createSkyController(gl, params) {
           // far cumulus is lit white while the storm overhead is dark by its own grey. The dome, the fog and the sun
           // keep the worn word, eased on the front. Off the lane the clouds take the dome's own state, as before.
           const cb = dreadW > 0 ? { word: skyWord, row: weatherRowNow } : cloudBaseOf(extra, weatherName, weatherRowNow);   // EVENT1: as above
-          const cloudSky = cb.row === weatherRowNow ? enhancedSky.state : skyState({ minuteOfDay, weather: cb.word, classicMinutes: extra?.classicMinutes ?? 0, skyMinutes: skyNow, seconds, drift: driftXZ, row: cb.row });
+          // SKY-HZN: the clear air's colours, but the far fade is the dome's own horizon - the colour the fog and the dome
+          // wear at the horizon, greyed by the worn row (the base's ungreyed palette painted the lid's bottom rows bright)
+          const cloudSky = cb.row === weatherRowNow ? enhancedSky.state : { ...skyState({ minuteOfDay, weather: cb.word, classicMinutes: extra?.classicMinutes ?? 0, skyMinutes: skyNow, seconds, drift: driftXZ, row: cb.row }), horizon: enhancedSky.state.horizon };
           clouds.setState(cloudSky, cb.row, cb.word, easeDt, driftXZ, (extra?.flash ?? 0) + dreadGlow, extra?.pos ?? null, extra?.cells ?? null);   // WEATHER2c: the field's cells; EVENT1: the red strikes' glow
         }
-        // VC4: the ground's deck carries the slab's own shadow map and its square
-        if (clouds?.shadow) Object.assign(enhancedSky.cloudShadow, clouds.shadow);
+        // VC4: the ground's deck carries the slab's own shadow map and its square; OW-HORIZON: and the ground past the
+        // square, the far ring's own dim (farCoverSun), so the streamed ground beyond the map is lit as the ring is
+        if (clouds?.shadow) Object.assign(enhancedSky.cloudShadow, clouds.shadow, { far: farCoverSun() });
         return;
       }
       let frame = params.has('window')
@@ -755,7 +791,7 @@ export function createSkyController(gl, params) {
 // (?dungeon) and worldModes.js (the modal machine both exterior hosts
 // mount) are parallel motor hosts. Every law below used to live in ONE
 // of them; each omission was a live bug. They are extracted so a host
-// cannot half-apply them again - test/audit18_hosts_outer.test.js
+// cannot half-apply them again - test/scenes/audit18_hosts_outer.test.js
 // source-sweeps the hosts for each call by name.
 // =====================================================================
 
@@ -843,6 +879,21 @@ export function realForestsOn(search) {
   const row = onlineForcedPref('realForests', search) ?? getPref('realForests');
   return !!row && (isOnlinePage(search) || isEnhanced(search));
 }
+/** BANTHA1 (bible/03-World/Bantha-Jungle.md): THE JUNGLE'S SWITCH - the Features row (`banthaJungle`) on the enhanced
+ *  skin, and on for everyone online whatever their skin: the jungle's trees are where Logging's trees stand in Bantha (the
+ *  owner's area, BANTHA2 - world/jungle/banthaArea.js), and the room agrees on its ground (realForestsOn's shape).
+ *  `?jungle=off` the kill door, offline. The world host reads it once, at its mount (a flip reaches the next world). Off -
+ *  and on the classic skin - the shore wears DFU's own rainforest. */
+export function jungleOn(search) {
+  if (pageParam('jungle', search) === 'off' && !isOnlinePage(search)) return false;
+  const row = onlineForcedPref('banthaJungle', search) ?? getPref('banthaJungle');
+  return !!row && (isOnlinePage(search) || isEnhanced(search));
+}
+/** BANTHA1: THE JUNGLE'S HAZE'S KILL DOOR - `?junglehaze=off` stands the jungle under clear air (a probe's door, and a
+ *  day the haze reads a scene wrong). No row: the haze is the jungle's own air. */
+export function jungleHazeOn(search) {
+  return pageParam('junglehaze', search) !== 'off';
+}
 /** LANDFORM1-3: THE LANDFORMS' SWITCH - the Features row (`landforms`) on the enhanced skin, and on for everyone online
  *  whatever their skin: it is the ground itself, and a room agrees on its ground (realForestsOn's shape). `?landforms=off`
  *  the kill door, offline. The world host reads it once, at its mount (a flip reaches the next world). Off - and on the
@@ -856,7 +907,7 @@ export function landformsOn(search) {
 /** TAMRIEL2: THE LAND BEYOND THE BAY'S SWITCH - the Features row (`tamrielLand`) on the enhanced skin, and online as
  *  the player's own (TV-BEYOND: the relay carries a pose past the map - net/wire.js WORLD_PIXEL_BOUND - and a player
  *  there is seen by whoever stands near, the ground under each the player's own, as every other enhanced ground is):
- *  the streamed world goes on past the Bay's edge over the authored continent (world/tamrielGround.js). `?tamrielland=off`
+ *  the streamed world goes on past the Bay's edge over the authored continent (world/tamriel/tamrielGround.js). `?tamrielland=off`
  *  the kill door. The world host reads it once, at its mount (a flip reaches the next world). Off - and on the classic
  *  skin - the edge of the world is DFU's: empty. */
 export function tamrielLandOn(search) {
@@ -864,7 +915,7 @@ export function tamrielLandOn(search) {
   return !!getPref('tamrielLand') && (isOnlinePage(search) || isEnhanced(search));
 }
 
-/** ETHER-SEA (bible/03-World/Etheric-Sea.md): THE ETHERIC SEA STANDS - its ground streamed in the world's far box
+/** ETHER-SEA (bible/03-World/Eltheric-Ocean.md): THE ELTHERIC OCEAN STANDS - its ground streamed in the world's far box
  *  (world/ethericSea.js), its places, its ships and its way home through the Veil - in every game. AUDIT CAPTAIN'S SEA
  *  G2: a save made past the Veil threw on its load under the classic skin, where the sea did not stand; it stands there
  *  now, and its captain sails home. `?ether=off` the kill door (a save past the Veil then lands at the way home). No
@@ -940,9 +991,14 @@ export const FOREST_HIDDEN_LOCATION_TYPES = Object.freeze(new Set([4, 7, 9, 10, 
  *  climb takes at the classic climb's cadence (climbingDeps' own). */
 /** CLIMB-NODE (FIELD BUGS 2026-10-01, Mac: "Hold it at nodes"): `hold` - whether the free climb's walk-in start is held
  *  (the world host's: a profession's node under the look, or an act playing - player/motor.js _freeStart). */
+/** EG-PERFECT (2026-10-18; bible/11-Multiplayer/Elite-Gates.md section 10.5): `leap` - whether the running leap may fly here
+ *  (player/motor.js _pkMayLeap, the leap at an edge and its late press): the made level's law (systems/madeLevel.js `runLeap`)
+ *  refuses it on the Spire's spans and the Hour's Steps, whose every gap is proven with the plain jump. One home for the four
+ *  hosts' motors (THE ONE CONSTRUCTION SEAM): the world host's made level answers, every other host's none. */
 export function parkourDeps(entity, say = null, { hold = null } = {}) {
   return {
     enabled: () => parkourSwitchOn(),
+    leap: () => madeRuleHere('runLeap') !== 'refused',
     inputs: () => {
       const most = maxFatigue(entity), cap = entityMaxEncumbrance(entity);
       return {
@@ -1201,18 +1257,6 @@ export function applyMotorEffectFlags(player, entity, { waterSurfaceY = null, sw
   player.slowFalling = hasActiveEffect(entity, 'slowfall');
 }
 
-/** Platform riding (DFU's MoveWithMovingPlatform shape): standing on a
- *  mover applies its frame delta through the resolver BEFORE the
- *  player's own move. Was wired only into the standalone ?dungeon
- *  scene, so a world/exterior-hosted dungeon dropped the delta and the
- *  lift penetrated the capsule (the out-of-bounds ejection report). */
-export function ridePlatform(player, actions) {
-  const gk = player.groundKey;
-  if (!gk || gk === 'dungeon') return;
-  const d = actions?.objects?.get(gk)?.frameDelta;
-  if (d && (d[0] || d[1] || d[2])) player.collider.move(player.pos, d[0], d[1], d[2], player.height);   // PH1: the rider's own stance, not the standing default
-}
-
 /** AcrobatMotor.AdjustFallStart (:231-237), called by
  *  FloatingOrigin.OffsetPlayerController (:176-181) in the same breath
  *  as the position shift: "Call this when floating origin ticks on Y
@@ -1391,11 +1435,16 @@ export function ensureAudio(fetch = fetchBytes) {
   installDiverseWeaponsIcons();   // DW3: before the archives load, so 233/234's preload carries the mod's icons
   installRoleplayRealismItems();
   installRoleplayRealism();   // RR1: the formula overrides, the guild classes, the hooks - once, in InitMod's order   // RRI1: the fourteen rows and the twenty patches before anything mints, the 280 sprites on the door
+  installEnemyExpansion();   // DEX1: BestiaryMod.Start - after every Init above (RR's enemy appearance among them), as DFU runs a MonoBehaviour's Start
   // AUDIT VE R2: the texture store's ONE registration (dataSource.js registerTextureStore) - the loose pack, Seasons of
   // the Iliac Bay (SIB1), Weapon Widget (WW1), Diverse Weapons (DW1) and every attached .dfmod from its stored index
   // (DFMOD1/DFMOD2), the shipped mods first (VE4), before the first archive loads (the hosts await it), warmed. This
   // seam kept a copy of it with a `?nomods` rule of its own; the rule is the door's now (dfmodTextures.js noModsPage).
   const textures = registerTextureStore().catch(() => 0);
+  // STUDIO1: the studio's pictures (public/art/studio/) on the texture door's vendor tier - this answers at their
+  // registration; an archive's first load waits for it (a bounded while), and the port's own decode after it, a picture
+  // that lands after its host painted handed in late (systems/studioArt/studioArt.js wearPainted).
+  const studio = installStudioArt().catch(() => 0);
   installRaidingParties();   // RAID1: the mod's save record, in every host - a save made in a dungeon carries the day's raids too
   installSmithing();   // PROF3: the Repair Kit's use on the item-use door, in every host (a kit is the pack's, offline too)
   installHealingSupply();   // POTION-COMMON: Potions of Healing in the loot - after the smithing install, its field kit's roll first
@@ -1404,7 +1453,7 @@ export function ensureAudio(fetch = fetchBytes) {
   // MW-IMPORT: same seam, same never-traps rule - no data means the
   // opt-in layer stays inert, which is its resting state anyway.
   const morrowind = registerMorrowindData().catch(() => 0);
-  return Promise.all([sound, songs, replacements, textures, morrowind]);
+  return Promise.all([sound, songs, replacements, textures, studio, morrowind]);
 }
 
 // --- The outdoor fog COLOUR (DaggerfallSky.SetSkyFogColor) -----------
@@ -1495,7 +1544,7 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
   // two skills reads in the source's order.
   // LV2 - THE RISING (Mac, 2026-09-19: the enhanced level-up
   // notification, "all of the above"): on the ENHANCED skin the two
-  // presentations below move to the notice strip (ui/levelNotice.js).
+  // presentations below move to the notice strip (ui/levelUp/levelNotice.js).
   // The raise leaves the popup column - a skill going up is a change
   // to the CHARACTER, not another thing the world said - and the
   // mastery leaves its click-anywhere box, which carries news and no
@@ -1553,6 +1602,40 @@ export function raisePlayerSkills(entity, { say = () => {}, onLevelUp = null, ro
     ask([...MASTER_SKILLS_OFFER_ROWS],
       () => { say(setMasterSkills(entity, true).text); audio.playOneShot(SOUND.ArenaFanfareLevelUp, 1); },
       () => say(MASTER_SKILLS_DECLINED_TEXT));
+  } else {
+    // SCHOOLS1 (bible/06-Systems/Arcane-Specialisations.md section 3): THE SPECIALISATION - two schools mastered and no
+    // path yet, on a pass that put no other box up (a mastery's own choice comes first): asked ONCE a character,
+    // decided by Yes (given up only for gold - SPEC-RESET, systems/specReset.js); No leaves it to the skill screen, which
+    // offers every open path.
+    // AUDIT SCHOOLS L4 M1: ONE path open is asked about (Yes chooses it); SEVERAL are named in an OK box that sends the
+    // player to the skill screen, where each is offered - a permanent Yes on whichever stood first in the table was no
+    // choice at all
+    const path = ask && !windowed ? nextPathChoice(entity) : null;
+    if (path) {
+      entity.pathPrompted = true;
+      const open = pathChoices(entity);
+      if (open.length > 1) ask(pathsOpenRows(open, { growth: isEnhanced() }), null, null, { okOnly: true });   // GROWTH4: the enhanced skin's guide is the Growth tab's
+      else {
+        ask(pathChoiceRows(entity, path.id),
+          () => { const r = choosePath(entity, path.id); say(r.text); if (r.ok) { computeEntityMods(entity); audio.playOneShot(SOUND.ArenaFanfareLevelUp, 1); } },
+          () => say(isEnhanced() ? pathDeclinedGrowthText() : pathDeclinedText()));
+      }
+    } else {
+      // MARTIAL1 (bible/05-Combat/Martial-Specialisations.md section 3): THE MARTIAL SPECIALISATION - two weapon skills
+      // mastered and none chosen, the arcane path's own law on a pass that put no other box up: ONE open asked about,
+      // SEVERAL named and sent to the skill screen
+      const martial = ask && !windowed ? nextMartialChoice(entity) : null;
+      if (martial) {
+        entity.martialPrompted = true;
+        const open = martialChoices(entity);
+        if (open.length > 1) ask(martialOpenRows(open, { growth: isEnhanced() }), null, null, { okOnly: true });
+        else {
+          ask(martialChoiceRows(entity, martial.id),
+            () => { const r = chooseMartialPath(entity, martial.id); say(r.text); if (r.ok) { computeEntityMods(entity); audio.playOneShot(SOUND.ArenaFanfareLevelUp, 1); } },
+            () => say(isEnhanced() ? martialDeclinedGrowthText() : martialDeclinedText()));
+        }
+      }
+    }
   }
   return raised;
 }
@@ -1617,11 +1700,12 @@ export function createPlayerTicker(entity, { say = () => {}, onLevelUp = null, o
     drainFatigue: (n, a = null) => {
       if (a?.bundleDuel) n = Math.min(n, Math.max(0, (entity.fatigue ?? 0) - 1));   // AUDIT DUEL1 B3: a duel opponent's fatigue damage over time leaves 1 - the collapse at 0 can kill
       if (n <= 0) return;
-      entity.fatigue = Math.max(0, (entity.fatigue ?? 0) - n);
+      entity.fatigue = clampFatigue(entity, (entity.fatigue ?? 0) - n);   // AUDIT C&C N5: SetFatigue's clamp, the ceiling too
       // AUDIT 23 (C5: hosts-5 = entity-3) - DaggerfallEntity.cs:360-366:
       // EVERY fatigue write clamps and, at 0 with health left, raises
       // OnExhausted - the collapse was dungeon-only; the host passes
-      // its presenter (rest-hour-or-death via exhaustionOutcome).
+      // its presenter (the rest hour, or a tenth of the health in the
+      // water or with foes about, via exhaustionOutcome - SPENT-ASHORE).
       if (entity.fatigue <= 0 && (entity.health ?? 0) > 0) onExhausted?.();
     },
     restoreFatigue: (n) => { if (n > 0) entity.fatigue = Math.min(maxFatigue(entity), (entity.fatigue ?? 0) + n); },   // C5: the MaxFatigue clamp
@@ -1747,6 +1831,7 @@ export function subscribeFoePools(ticker, pools, sinksFor) {
   return ticker.subscribe((from, to, dt) => {
     for (const pool of pools) {
       for (const f of pool() ?? []) {
+        if (f?.dead && !f.puppet) f.corpsePrefab?.rounds?.(from, to);   // DEX5: a prefab's body has an effect manager of its own (scenes/corpseMarker.js)
         if (!f || f.dead || !f.entity || f.puppet) continue;   // AUDIT WORLD6b B1: a PUPPET's entity is its owner's simulation - no round of mine ticks it (a poison put on it locally reached the divert as my blow)
         const sinks = sinksFor(f, false);   // AUDIT 68 review (R-scenes-round-tick-provenance-three-hosts): a round is nobody's blow unless its tick says so - the dungeon's law (foeSinks(f, false)), all four hosts
         runMagicRoundsFor(f.entity, from, to, { sinks });
@@ -1796,6 +1881,7 @@ export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = t
     playerBlending: isBlending(entity),
     playerInvisible: isInvisible(entity),
     playerShade: isAShade(entity),
+    playerUnseen: entity.staffHidden === true,   // STAFF-UNSEEN: a hidden staff member (scenes/staffFollowHost.js staffFollowOnPage) - no foe senses them
     sharedStealth: entity.stealthCheckBox,
     tallyStealth: () => tallySkill(entity, SKILLS.Stealth),
     // MT-ii: the target-machine seam. A host that owns a pool passes
@@ -1830,7 +1916,7 @@ export function sensesContext(entity, gameMinutes, { movingLessThanHalfSpeed = t
     // the SWIM case (PlayerHeightChanger.cs:54-57), and a swimming
     // player draws no dip.
     playerCrouching,
-    // WILD-ALERT (systems/wildAlert.js): a host's answer to "has this foe NOT noticed a fast traveller yet?" - the pools
+    // WILD-ALERT (systems/wild/wildAlert.js): a host's answer to "has this foe NOT noticed a fast traveller yet?" - the pools
     // leave the player off such a foe's candidate list (the target machine's own noTargetMode, CAMP-REST's switch)
     // until it has. Absent: no traveller, no gate - every other host and every headless caller as before.
     wildUnaware,
@@ -2515,7 +2601,7 @@ export function createRestDeps(entity, opts = {}) {
     endLines: (id) => plainLines(rest.endLines?.(id)),
   };
   // REST1 (bible/06-Systems/Rest-Arc.md): THE ACT ONLINE, composed here beside the window's deps so the four hosts
-  // share one law (systems/restAct.js). `restAct` answers the plan the window opens on - null offline, where the
+  // share one law (systems/rest/restAct.js). `restAct` answers the plan the window opens on - null offline, where the
   // window is DFU's own; `restNight` runs the night through THIS bag (the timed rest's own session, its sub-ticks,
   // quest ticks, hourly checks and vitals, in one call), stamps it, tops the yield up and spends a rented room's
   // night; `restShort` is the rest inside the night interval - the yield's healing and the sleep need paid as a night

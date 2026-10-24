@@ -3,13 +3,13 @@
 // multiple animations, they should navigate the deck, talk with each other, blurb, sing chantys, etc") - ONE SHIP'S
 // CREW AT THEIR WORK: who stands on her deck, where each walks, who talks to whom, the lines over their heads and the
 // chanty they sing, and - her guns out or a boarding at hand - the rail they muster at. Stepped by its host
-// (scenes/navalCrew.js draws them) on her deck (navalDeck.js), in her deck's frame. Pure: a draw seeded by the ship
+// (scenes/naval/navalCrew.js draws them) on her deck (navalDeck.js), in her deck's frame. Pure: a draw seeded by the ship
 // (her `seed` - a player's boat by whose and which, AUDIT NAV2 F9), so every player in a room sees the same crew at the
 // same kind of work, and no world.
 //
 // WHO THEY ARE. A ship of the sea's crew is her muster (navalBoarding.js musterOf, by what her crew has left): her
 // captain and her men, the first CREW_SHOWN of them standing - and in a boarding the ones standing are the ones who
-// fight, where they stand (scenes/navalHost.js takes them). A crewed boat of a player's is a hand's mix (PLAYER_CREW,
+// fight, where they stand (scenes/naval/navalHost.js takes them). A crewed boat of a player's is a hand's mix (PLAYER_CREW,
 // a Bard among them to lead the song), CREW_PER_HAND of her crew a man.
 //
 // WHERE THEY STAND. The mod's own people flats are where a hull's crew stood (their places at rest, handed in as
@@ -31,7 +31,7 @@
 // hauling; the guns or her colours end it.
 
 import { musterOf, MOBILE, CREW_PER_HAND, MUSTER_MIN, MUSTER_MAX } from './navalBoarding.js';
-import { seededRng } from '../wind.js';
+import { seededRng } from '../wind/wind.js';
 import { mainLevel, DECK_STEP, FLIGHT_OVER } from './navalDeck.js';
 import { watchCount } from './shipWatch.js';
 
@@ -133,26 +133,28 @@ export function crewRoster({ hull, seed, shipClass = null, crewShare = 1, crew =
 /** A man's own words, by what the ship is about, and by her trade where it colours them. */
 export const CREW_BLURBS = Object.freeze({
   calm: Object.freeze([
-    'Fair wind today.', 'Mind that line!', 'Smell the salt on her.', 'Another day on the Iliac Bay.', 'Steady as she goes.',
+    'Fair wind today.', 'Mind that line!', 'Smell that salt air.', 'Another day on the Iliac Bay.', 'Steady as we go.',
     'Anyone seen my pipe?', 'Wind\'s backing westerly.', 'Coil it proper, or the bosun\'ll have you.', 'Land\'s near. I can smell it.',
     'Gulls off the bow!', 'Sentinel spice fetches a fine price.', 'Wayrest by week\'s end, mark me.', 'My back\'s not what it was.',
     'Who\'s on the next watch?', 'Swab that, you lubber.', 'Calm as a Wayrest pond.', 'I\'d trade my ration for a dry bunk.',
-    'Ever seen the lights of Daggerfall from the water?', 'Haul away!', 'She\'s a good ship, this one.',
+    'Ever seen the lights of Daggerfall from the water?', 'Haul away!', 'Good ship, this one.',
   ]),
   battle: Object.freeze([
-    'Run out the guns!', 'Fire as she bears!', 'Reload! Reload!', 'Keep your heads down!', 'Hold fast!',
-    'She\'s coming about!', 'Powder, more powder!', 'Mind the rigging!', 'Put the fire out!', 'Steady, lads, steady!',
+    'Run out the guns!', 'Fire when ready!', 'Reload! Reload!', 'Keep your heads down!', 'Hold fast!',
+    'Coming about!', 'Powder, more powder!', 'Mind the rigging!', 'Put the fire out!', 'Steady, lads, steady!',
   ]),
-  muster: Object.freeze([
-    'Stand by to repel boarders!', 'Blades out, lads!', 'Here they come!', 'Over the rail!', 'For the ship!',
-    'Grapples - make ready!', 'Hold the rail!', 'Nobody sets foot on our deck!',
-  ]),
+  // CREW-MUSTER (FIELD BUGS 2026-10-14, "Crew Attacking Me"; Mac's call, 2026-10-14: "Both"): A MUSTER'S WORDS ARE ITS
+  // SIDE OF THE BOARDING (`ctx.way`, step) - the crew going over the rail cries the boarding's, the crew being boarded
+  // the repel's. One list said both, so a crew mustered to board a struck ship cried "Here they come!" and "Nobody sets
+  // foot on our deck!" at nobody - the player, at her helm, the only one there to come
+  board: Object.freeze(['Grapples - make ready!', 'Over the rail!', 'Blades out, lads!', 'For the ship!']),
+  repel: Object.freeze(['Stand by to repel boarders!', 'Here they come!', 'Hold the rail!', 'Nobody sets foot on our deck!']),
   pirate: Object.freeze([
     'Plunder waits for no one.', 'A fat merchant\'d suit me fine.', 'The captain\'s share, the captain\'s share...',
     'Keep a weather eye for the navy.', 'Gold, lads. Think of the gold.',
   ]),
   navy: Object.freeze([
-    'For the crown.', 'Eyes sharp. Pirates about.', 'The captain wants her shipshape.', 'Steady, men.',
+    'For the crown.', 'Eyes sharp. Pirates about.', 'The captain wants everything shipshape.', 'Steady, men.',
   ]),
   merchant: Object.freeze([
     'Mind the cargo!', 'Every crate counted.', 'Pray we meet no pirates.', 'Wine for Sentinel, wool for Wayrest.',
@@ -164,11 +166,11 @@ export const CREW_BLURBS = Object.freeze({
   ]),
   work: Object.freeze([
     'Swab that deck!', 'Splice that line.', 'Hand me the mallet.', 'Plug that hole, quick!', 'Mind the splinters.',
-    'Haul away!', 'Fresh canvas here!', 'Pump her dry, lads.', 'Who\'s got the tar?', 'Coil it proper.',
+    'Haul away!', 'Fresh canvas here!', 'Keep the pumps going, lads.', 'Who\'s got the tar?', 'Coil it proper.',
   ]),
   chore: Object.freeze([
     'Swab that deck!', 'Haul away!', 'Coil it proper.', 'Mind that line!', 'Tar\'s gone thin on this rail.',
-    'Bosun wants her shipshape.',
+    'Bosun wants it shipshape.',
   ]),
   // AUDIT NAV2 F46: her colours struck, or her going down - a surrender's few words, never a calm day's
   struck: Object.freeze([
@@ -201,7 +203,7 @@ export const CHANTIES = Object.freeze([
     name: 'The Iliac Bay',
     chorus: 'Heave away, haul away, bound for the Iliac Bay!',
     verses: Object.freeze([
-      'Oh, we sailed out of Daggerfall under a grey sky,',
+      'Oh, we sailed out of Daggerfall under a gray sky,',
       'With a hold full of wool and a keg running dry,',
       'The bosun he swore by Stendarr and by Kyne,',
       'We\'d be drinking in Sentinel ere the next bell\'s chime!',
@@ -589,7 +591,10 @@ export function createCrewLife({ deck, roster, seed, places = [], faction = null
    * The crew's step. `ctx.battle` - her guns out: no song, no talk, the battle's words and a hurry; `ctx.struck` - her
    * colours down (or her going down): no song, no talk, a surrender's few words; `ctx.muster` - a boarding at hand (a
    * grapple thrown, or a ship closing to board): the side of her deck (her frame's x sign, +1 or -1) the other ship lies
-   * on, every man to that rail, facing out; `ctx.avoid` - a point (her frame) no walker steps within 0.8 m of (the
+   * on, every man to that rail, facing out; `ctx.way` - CREW-MUSTER: which side of that boarding she is on, the
+   * boarding's own `kind` as her deck reads it (navalBoarding.js createBoarding): 'board' her men go over the other's
+   * rail, 'repel' the other's come over hers - the muster's words (CREW_BLURBS.board, .repel), none but the battle's
+   * without one (her captain's rail order, no boarding at hand); `ctx.avoid` - a point (her frame) no walker steps within 0.8 m of (the
    * player on her deck). SHIP-CREW (a player's crew): `ctx.order` her captain's standing order - 'guns' her crew at the
    * guns as in a fight, 'rail' every man to the rail (the side a boarding lies on, else her starboard), 'repair' and
    * 'stand' their own work; `ctx.sings` false - their spirits too low for a song; `ctx.line()` a line of theirs by
@@ -599,7 +604,7 @@ export function createCrewLife({ deck, roster, seed, places = [], faction = null
    * names Lookout (shipCrew.js ROLES), who keeps her bow whenever he can. HOLDINGS: `ctx.roles` her hands' roles by roster
    * place (shipCrew.js CREW_ROLES) - each keeps his role's post (ROLE_POSTS), her Gunners their guns under fire.
    * @param {number} dt
-   * @param {{ battle?: boolean, struck?: boolean, muster?: number, avoid?: number[] | null, order?: string | null, sings?: boolean, line?: (() => string | null) | null, asleep?: boolean, work?: number, call?: string | null, lookout?: number, roles?: readonly (string | null)[] | null }} [ctx]
+   * @param {{ battle?: boolean, struck?: boolean, muster?: number, way?: 'board' | 'repel' | null, avoid?: number[] | null, order?: string | null, sings?: boolean, line?: (() => string | null) | null, asleep?: boolean, work?: number, call?: string | null, lookout?: number, roles?: readonly (string | null)[] | null }} [ctx]
    */
   function step(dt, ctx = {}) {
     // AUDIT WK-W7: her first step is taken in a frame of no time too (stood under a pause or a window) - nothing moves in
@@ -608,6 +613,8 @@ export function createCrewLife({ deck, roster, seed, places = [], faction = null
     const fresh = !stood;
     stood = true;
     const muster = ctx.muster === 1 || ctx.muster === -1 ? ctx.muster : ctx.order === 'rail' ? 1 : 0;
+    // CREW-MUSTER: her side of the boarding at hand, read with its muster (the host names none for a rail order alone)
+    const way = muster && (ctx.way === 'board' || ctx.way === 'repel') ? ctx.way : null;
     const battle = !!ctx.battle || !!muster || ctx.order === 'guns';
     const struck = !!ctx.struck && !muster;
     // AUDIT NAV2 F46: the guns out, or her colours down - every talk ends at once (5 to 13 talk lines a run were said
@@ -759,7 +766,7 @@ export function createCrewLife({ deck, roster, seed, places = [], faction = null
           // SHIP-WATCH: a man at a job says his work's words, the night watch its own, low
           const job = m.state === 'work' ? (work > 0 ? CREW_BLURBS.work : CREW_BLURBS.chore) : null;
           if (theirs && !asleep) say(m, theirs, muster || battle ? 'shout' : 'talk');
-          else say(m, pick(rng, job ?? own ?? (muster ? CREW_BLURBS.muster : battle ? CREW_BLURBS.battle : struck ? CREW_BLURBS.struck : asleep ? CREW_BLURBS.night : CREW_BLURBS.calm)), muster || battle ? 'shout' : 'talk');
+          else say(m, pick(rng, job ?? own ?? (way ? CREW_BLURBS[way] : battle ? CREW_BLURBS.battle : struck ? CREW_BLURBS.struck : asleep ? CREW_BLURBS.night : CREW_BLURBS.calm)), muster || battle ? 'shout' : 'talk');
         }
       }
       // turn toward his face (a walker faces his way)

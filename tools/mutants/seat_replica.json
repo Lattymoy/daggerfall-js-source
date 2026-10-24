@@ -1,0 +1,122 @@
+[
+ {
+  "name": "SEATREPLICA-read-binding",
+  "file": "server-account/src/townSeats.js",
+  "old": "const ask = judgedSeatRows(session, nowS).then((rows) => {",
+  "new": "const ask = judgedSeatRows(db, nowS).then((rows) => {",
+  "tests": [
+   "test/server/seat_replica.test.js"
+  ],
+  "note": "the kept read on the request's database - the primary's queue again (LEAN-READS: re-aimed by content at the code the slice moved)"
+ },
+ {
+  "name": "SEATREPLICA-first-primary",
+  "file": "server-account/src/townSeats.js",
+  "old": "export const SEAT_ROWS_FROM = 'first-unconstrained';",
+  "new": "export const SEAT_ROWS_FROM = 'first-primary';",
+  "tests": [
+   "test/server/seat_replica.test.js"
+  ],
+  "note": "the first read the primary's"
+ },
+ {
+  "name": "SEATREPLICA-mark-unkept",
+  "file": "server-account/src/townSeats.js",
+  "old": "      if (mark) seatRowsMark.set(root, mark);\n",
+  "new": "",
+  "tests": [
+   "test/server/seat_replica.test.js"
+  ],
+  "note": "the bookmark a kept read ended at thrown away - a replica behind it may answer"
+ },
+ {
+  "name": "SEATREPLICA-write-unmarked",
+  "file": "server-account/src/townSeats.js",
+  "old": "  seatRowsWritten.add(root);\n",
+  "new": "",
+  "tests": [
+   "test/server/seat_replica.test.js"
+  ],
+  "note": "a write here not marked - the next read any instance's, which may not have it"
+ },
+ {
+  "name": "SEATREPLICA-primary-skipped",
+  "file": "server-account/src/townSeats.js",
+  "old": "const from = wrote ? 'first-primary' : (seatRowsMark.get(root) ?? SEAT_ROWS_FROM);",
+  "new": "const from = seatRowsMark.get(root) ?? SEAT_ROWS_FROM;",
+  "tests": [
+   "test/server/seat_replica.test.js"
+  ],
+  "note": "the read after a write here from the old bookmark, not the primary"
+ },
+ {
+  "name": "SEATREPLICA-mark-uncleared",
+  "file": "server-account/src/townSeats.js",
+  "old": "      if (wrote) seatRowsWritten.delete(root);\n",
+  "new": "",
+  "tests": [
+   "test/server/seat_replica.test.js"
+  ],
+  "note": "a write read back never done with - every read after it the primary's"
+ },
+ {
+  "name": "SEATREPLICA-every-report-forgets",
+  "file": "server-account/src/townSeats.js",
+  "old": "if (Number(put?.meta?.changes) !== 0) forgetSeatRows(db, nowS);",
+  "new": "forgetSeatRows(db, nowS);",
+  "tests": [
+   "test/server/seat_replica.test.js"
+  ],
+  "note": "a report the table already held lets the kept rows go"
+ },
+ {
+  "name": "SEATREPLICA-no-report-forgets",
+  "file": "server-account/src/townSeats.js",
+  "old": "if (Number(put?.meta?.changes) !== 0) forgetSeatRows(db, nowS);",
+  "new": "if (false && put) forgetSeatRows(db, nowS);",
+  "tests": [
+   "test/server/seat_replica.test.js"
+  ],
+  "note": "a new report written here never lets them go"
+ },
+ {
+  "name": "SEATREPLICA-failed-mark-kept",
+  "file": "server-account/src/townSeats.js",
+  "old": "}, (e) => { if (seatRowsMark.get(root) === from) seatRowsMark.delete(root); throw e; })",
+  "new": "}, (e) => { throw e; })",
+  "tests": [
+   "test/server/seat_replica.test.js"
+  ],
+  "note": "a bookmark whose read failed kept for the next"
+ },
+ {
+  "name": "SEATREPLICA-newer-mark-dropped",
+  "file": "server-account/src/townSeats.js",
+  "old": "if (seatRowsMark.get(root) === from) seatRowsMark.delete(root);",
+  "new": "if (from) seatRowsMark.delete(root);",
+  "tests": [
+   "test/server/seat_replica.test.js"
+  ],
+  "note": "an older read's failure lets a newer read's bookmark go"
+ },
+ {
+  "name": "SEATREPLICA-open-unguarded",
+  "file": "server-account/src/townSeats.js",
+  "old": "  try { session = replicaDb(opener, from); } catch { /* a bookmark D1 refuses: the request's database */ }",
+  "new": "  session = replicaDb(opener, from);",
+  "tests": [
+   "test/server/seat_replica.test.js"
+  ],
+  "note": "a session D1 refuses to open throws past the read"
+ },
+ {
+  "name": "SEATREPLICA-uncounted",
+  "file": "server-account/src/townSeats.js",
+  "old": "const opener = typeof db?.withSession === 'function' ? db : root;",
+  "new": "const opener = root;",
+  "tests": [
+   "test/server/seat_replica.test.js"
+  ],
+  "note": "the session opened on the binding, past the request's count"
+ }
+]

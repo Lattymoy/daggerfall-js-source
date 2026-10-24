@@ -5,7 +5,7 @@
     "old": "  input() {}",
     "new": "  input(code) { if (code === 'Escape' || code === 'back') this._end(false); }",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (this._interruptWhen?.()) { this._end(false); return; }   // a foe near ends it, the rest forgiven\n",
     "new": "",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if (this._elapsed >= this.seconds) this._end(true);\n",
     "new": "",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  extend(seconds) { if (!this.done && seconds > 0) this.seconds += seconds; }",
     "new": "  extend(seconds) { void seconds; }",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    const real = waitRealSeconds(gameSeconds / 60);",
     "new": "    const real = waitRealSeconds(gameSeconds / 3600);",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (pending()) return overlayActive() ? null : open();",
     "new": "    if (pending()) return open();",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      if (!_win.done && record()) record().seconds = _win.remaining;\n",
     "new": "",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (pending()) return overlayActive() ? null : open();\n    release();\n    return null;",
     "new": "    if (pending()) return overlayActive() ? null : open();\n    return null;",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    holds: () => !_releasing && (pending() || !!_win || _held.length > 0),",
     "new": "    holds: () => !_releasing && (!!_win || _held.length > 0),",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ],
     "note": "CHOP-WAIT (FIELD BUGS 2026-09-30, PIN MOVED): re-aimed BY CONTENT - `holds` answers false while the release is showing a box now (`!_releasing && (...)`); the pending term it drops is the same law, same killer."
   },
@@ -87,7 +87,7 @@
     "old": "      if (pending()) write(0);\n",
     "new": "",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "  const seconds = Number.isFinite(r.seconds) && r.seconds > 0 ? Math.min(FORAGING_WAIT_MAX_SECONDS, r.seconds) : 0;",
     "new": "  const seconds = Number.isFinite(r.seconds) && r.seconds > 0 ? r.seconds : 0;",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "      if (hooks?.sharedClock?.()) hooks?.waitOnline?.(seconds, this.parentQuest);",
     "new": "      if (false) hooks?.waitOnline?.(seconds, this.parentQuest);",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -114,16 +114,16 @@
     "old": "    if (foragingWait.holds()) { foragingWait.hold(() => showQuestBox(box), keptBox(box)); return; }   // AUDIT 28 F6: a box of words rides the save\n",
     "new": "",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
     "name": "FORAGE4-15-the-wait-not-saved",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "  'foragingWait',   // FORAGE4:",
     "new": "  'foragingWaitX',   // FORAGE4:",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "      _win?.extend(real);\n",
     "new": "",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "    enemiesNear: () => duelEnemyNear() || areEnemiesNearby(exteriorFoePool(), { resting: true }),\n    online: () => sharedClockOn(),",
     "new": "    enemiesNear: () => areEnemiesNearby(exteriorFoePool(), { resting: true }),\n    online: () => sharedClockOn(),",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "      own({ seconds: real, label: label ?? null, held: r?.held ?? [] });",
     "new": "      own({ seconds: real, label: null, held: r?.held ?? [] });",
     "tests": [
-      "test/forage4_wait.test.js"
+      "test/systems/quest/forage4_wait.test.js"
     ]
   }
 ]

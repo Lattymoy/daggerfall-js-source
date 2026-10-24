@@ -3,7 +3,7 @@
 *2026-09-25. Two players via Mac: "fps issues in the exterior but fine
 in the interior", and a second, "me too my friend.. don't know why. I got
 a RX6600" (the first on an RTX 4060 Ti). PERF-SCALE answered the
-per-pixel half the same morning (`01-Overview/Field-Bugs-2026-09-25.md`:
+per-pixel half the same morning (`01-Overview/bugs/Field-Bugs-2026-09-25.md`:
 a render scale, and a counter that names the GPU). Mac, on the rest:
 "Why are you so avoidant when it comes to addressing performance issues?
 I am not getting another player to do the work that youre suppose to
@@ -101,7 +101,7 @@ runs: 1.284 -> 1.242 by day, 1.497 -> 1.547 at night; `ab.sh` on the
 hunter's town, 9 runs: 1.252 -> 1.287 and 1.465 -> 1.460); the point is
 the garbage.
 
-**Pinned** (`test/perfextb.test.js`, every one failing on the base):
+**Pinned** (`test/render/perfextb.test.js`, every one failing on the base):
 a batch of every producer - a tree, a town flat, a walker, a loot pile,
 the player's card, a gib, a cast-only batch and a freed one, dressed as
 their hosts dress them - carries the birth key list through four night
@@ -167,7 +167,7 @@ claimed, which came from 20,000 back-to-back calls throttled by
 SwiftShader's full command ring. Node's no-op GL shows no time change,
 which is expected.
 
-**Pinned** (`test/perfextb.test.js`, each failing on the base): twenty
+**Pinned** (`test/render/perfextb.test.js`, each failing on the base): twenty
 batches of one record from five pixels upload ONE size and FIVE origins
 (the base: twenty of each) with every flat still drawn; twenty flats of
 one pixel, recorded and replayed into the sun's three cascades, upload one
@@ -216,13 +216,13 @@ The prover's run on the same harness: 1,228 against 1,003-1,013
 scavenges, the batches zone 0.392 -> 0.353 ms. About 0.02-0.04 ms of CPU
 a frame; the point is the garbage.
 
-**Pinned** (`test/perfextb.test.js`, both failing on the base): the pixel
+**Pinned** (`test/render/perfextb.test.js`, both failing on the base): the pixel
 walk's call is positional and nothing in `src/` builds an object to ask
 the rule; and over rings 0-6, six heights and `animated` false, true and
 left out, `farFlatVisibleAt` answers what `farFlatVisible({...})` answers
 (86 of 126 draw), with the object form nothing but a call to it. MAC1's
-wire pin (`test/mac1_playreport.test.js`) and SHADOW-REACH's gate pin
-(`test/shadowreach.test.js`) read the positional call now. Mutants 19-24,
+wire pin (`test/scenes/mac1_playreport.test.js`) and SHADOW-REACH's gate pin
+(`test/render/shadowreach.test.js`) read the positional call now. Mutants 19-24,
 one of them run against the MAC1 pins alone: the tree line moved in the
 one home is seen through the object form.
 
@@ -279,7 +279,7 @@ main thread; on a real GPU the portable part is ~2,100 fewer commands a
 frame for the GPU process in a coastal city, and about 5-250 fewer where
 there is less water.
 
-**Pinned** (`test/perfextb.test.js`, both failing on the base): ten water
+**Pinned** (`test/render/perfextb.test.js`, both failing on the base): ten water
 pixels through the list upload uView, uProj, uTime, uLift, uSunScale and
 uOpacity once each, set the offset once, a model matrix a pixel, the
 ground array once a RUN (six for none / A A / B B B / A A / B / A) and a
@@ -290,7 +290,7 @@ identical, draw for draw, to the same pixels drawn one by one, the state
 it leaves identical and absolutely what the old draw left, and the
 one-row door holding no surface after. The equivalence against the BASE
 is `equivX.mjs` above - in the suite both paths run this tree's code.
-`test/water.test.js` reads the block off the list's body now and the host's
+`test/world/terrain/water.test.js` reads the block off the list's body now and the host's
 collection and call. Mutants 25-33, all dead.
 
 **PERF-EXT10-13 together, against the base.** The same two-tree
@@ -412,7 +412,7 @@ lamp's range, where it lights nothing) is not painted, as calm weather
 does not paint it today. The shadow lens's layer differential counted
 both: 2 of 7,152 windy layer states among trees, 0 of 7,599 calm.
 
-**Pinned** (`test/perfexta.test.js`, every one failing on the base): a
+**Pinned** (`test/render/perfexta.test.js`, every one failing on the base): a
 lantern beside a swaying wood whose 41 trees stand 150+ units off redraws
 no face, blits nothing and binds none of it (the base: twelve faces), and
 redraws for one tree moved to its foot and for a 1 x 3 quad in a face's
@@ -434,7 +434,7 @@ distant wood with a walker leaving is the same, frame for frame, in wind
 and in calm. The provers' own pins pass on the tree and fail on the base
 (`pins.test.mjs` 1-2); their guards pass on both (`pins2.test.mjs`'s
 corner, `gibpin.test.mjs`). Mutants `tools/mutants/perfexta.json` 1-16,
-all dead. `test/hard3_types.test.js`: the literal mints 35.
+all dead. `test/systems/save/hard3_types.test.js`: the literal mints 35.
 
 ## PERF-EXT2 - a run of sub-meshes is one depth draw
 
@@ -479,7 +479,7 @@ mesh replay drew with the per-sub-mesh base's: identical in 7,802 replays
 over six runs, no mismatch. The draw lens's prover read the three
 cascade layers back bit-identical on SwiftShader.
 
-**Pinned** (`test/perfexta.test.js`, both failing on the base): a pixel
+**Pinned** (`test/render/perfexta.test.js`, both failing on the base): a pixel
 of thirty texture groups built by the real `StaticBatchBuilder` and
 `createMesh` is one draw a cascade over its whole range from 0, and with
 its middle group's sphere out of the cascade, two draws at exactly
@@ -488,9 +488,9 @@ empty groups, spheres in and out - replayed into the sun's cascades and
 eight lanterns' caches, every replay's triangles are, as a multiset,
 its visible sub-meshes', in 380 draws for 529 visible sub-meshes (the
 base: 529). The count pins the merge moves by design are restated with
-their reason: `test/sc1_shadowcache.test.js` (five tests - the room's two
-sub-meshes meet, one run), `test/audit_lighting.test.js` (ONE MESH AT
-TWO PLACES), `test/el2_shadows.test.js` (the renderer builds the pass:
+their reason: `test/render/sc1_shadowcache.test.js` (five tests - the room's two
+sub-meshes meet, one run), `test/render/audit_lighting.test.js` (ONE MESH AT
+TWO PLACES), `test/render/el2_shadows.test.js` (the renderer builds the pass:
 3 x 3 sun draws, 6 x 2 face draws). Mutants `perfexta.json` 17-21, all
 dead; `perfextb.json`'s PERF-EXT11-9 re-aimed by content again.
 
@@ -541,7 +541,7 @@ frames against the per-caster walk, 0 differing; the suite does the same
 (below) and replays a scripted night through a twin that walks per
 lantern.
 
-**Pinned** (`test/perfexta.test.js`, every one failing on the base): on
+**Pinned** (`test/render/perfexta.test.js`, every one failing on the base): on
 a still night with every cache valid, the pass reads each still flat's
 bounds as often under eight lanterns as under one (the base: once a
 lantern); over 200 random frames of records - still, moving, swaying,
@@ -589,7 +589,7 @@ shadow reach.
 **The picture.** Unchanged, bit for bit: the same spheres, so the same
 culls.
 
-**Pinned** (`test/perfexta.test.js`, failing on the base): a mesh of
+**Pinned** (`test/render/perfexta.test.js`, failing on the base): a mesh of
 forty bounded sub-meshes and one without, recorded under a rotated,
 non-uniformly scaled (the y column the longest), translated matrix,
 takes exactly three `Math.hypot` (the base: 123), and its sphere and
@@ -649,15 +649,15 @@ the repo's `perfSunShaderProbe`): the five lane FS and the five lane
 programs, and the water FS with and without the block, all ok, no GL
 error.
 
-**Pinned** (`test/perfexta.test.js`, failing on the base):
+**Pinned** (`test/render/perfexta.test.js`, failing on the base):
 `sunShadowTap` fetches the map five times (the far cascade's one, the
 kernel's four; the base: a loop of nine), has no loop, takes the four at
 the positions and weights the twin proves, and names no local like a
 uniform; and the twin - its lines tied to the shader's - on random
 depth maps (straight edges and noise, clamped, LEQUAL): the four equal
 the nine to 1e-12 with exact weights, within a 255th with 8-bit ones.
-`test/el2_shadows.test.js` ('a 3x3 PCF') and
-`test/perfsun_fragment.test.js` (PERF-SUN1, the kernel after the cheap
+`test/render/el2_shadows.test.js` ('a 3x3 PCF') and
+`test/render/perfsun_fragment.test.js` (PERF-SUN1, the kernel after the cheap
 tap) restated on the four-tap text. Mutants `perfexta.json` 37-41, all
 dead; `perfsun.json`'s PERF-SUN1 cheap-tap mutant re-aimed by content.
 
@@ -824,7 +824,7 @@ queries, `createBillboardBatch`'s sphere, `moveBillboardBatch`'s and
 `placementRadius` take them. The same arithmetic on the same values, so
 every sphere and radius keeps its bits (the suite, and VERIFY above).
 
-**Pinned** (`test/perfexta.test.js`, 16 -> 20): a still hall of twenty
+**Pinned** (`test/render/perfexta.test.js`, 16 -> 20): a still hall of twenty
 lamps and twenty batches of six flats under `everyLightCasts` reads no
 batch's placement grid in three frames while every lamp keeps its lo
 map (the first cut: 10,806 reads), the same hall not drawn whole still
@@ -839,7 +839,7 @@ pad and the lean by |h|, as above; and ONE HOME EACH, by source over
 their homes, and every caller calling them. All four fail on the base;
 the room's, the half-diagonal's and the one home's on the first cut too,
 and the margins' pass there - they hold what it had.
-`test/blood1_decals.test.js`'s and `test/perfon2_peercull.test.js`'s
+`test/combat/blood1_decals.test.js`'s and `test/render/perfon2_peercull.test.js`'s
 by-source pins read the lift and the half-diagonal at their homes.
 Mutants: `perfexta.json` 42-54 (PERF-EXT-R1 to R13: the eight or the lo
 tier asking the quads in a room, the flag ignored, a street asked by the
@@ -854,7 +854,7 @@ records and `el5.json`'s bb-bounds-no-flat. 68 run, 68 dead.
 
 *2026-09-25. Two players, relayed by Mac: "fps issues in the exterior but
 fine in the interior" (an RTX 4060 Ti), and "me too my friend.. don't know
-why. I got a RX6600". PERF-SCALE (`01-Overview/Field-Bugs-2026-09-25.md`)
+why. I got a RX6600". PERF-SCALE (`01-Overview/bugs/Field-Bugs-2026-09-25.md`)
 gave them a render scale and a counter that names the GPU; Mac then:
 "Why are you so avoidant when it comes to addressing performance issues? I
 am not getting another player to do the work that youre suppose to do".*
@@ -902,7 +902,7 @@ force.
 | `discSlot.mjs` - discSlotCount(315), three calls | 22.2 / 12.3 / 11.5 ms | 28.1 (the one sweep - the world pays it at mount) / 0.01 / 0.00 ms |
 | `crossingFrame.mjs` - createGrassField on the crossing frame, six crossings | 10.6 / 11.0 / 8.2 / 7.8 / 7.6 / 7.7 ms | 0.1 ms each |
 
-Pins: `test/grassshift.test.js` PERF-EXT20 (the sweep counter: two fields, at most
+Pins: `test/world/terrain/grassshift.test.js` PERF-EXT20 (the sweep counter: two fields, at most
 one sweep; four distinct questions, four sweeps; the world's warm).
 Mutants: `tools/mutants/perfextc.json` PERF-EXT20 x4, all dead.
 
@@ -956,7 +956,7 @@ gust's wave reads `dot(root, wdir)` (the lab's): both jumped by the offset
 on the crossing frame, and the meadow's cards turned and flipped by the
 same hash. The tuft's seed is its place in its cell now (`hash(aPA.xy *
 64)`, the packed lane no shift touches), and the world host hands the wave
-a clock that carries the shift's phase (`systems/windDrive.js`
+a clock that carries the shift's phase (`systems/wind/windDrive.js`
 `gustClock`) - the flats' wave with it, so the trees stand still under a
 crossing too (`07-Rendering/Rendering.md`, AUDIT MEADOW1). The vanish, the
 three-second regrow and the reshuffle were gone already.
@@ -974,7 +974,7 @@ nothing to wire, flagged here by name.
 | `grassCrossing.mjs` (all-grass ring) - the refill a crossing paid | 177 frames, 1,171.9 ms, median 6.46 ms a frame, 34.6 MB re-uploaded | not paid: the crossing builds no field (the harness scripts the old rebuild; `shiftProof.mjs` runs the new path) |
 | `walkEquiv.mjs` - a crossed field walking a world path against one that never moved | - | 368/368 the same cell keys; 354/354 drawn slots have a twin within 1 mm (worst 1.71e-4 m) |
 
-Pins: `test/grassshift.test.js` PERF-EXT21 x4 - the crossing (three offsets: east,
+Pins: `test/world/terrain/grassshift.test.js` PERF-EXT21 x4 - the crossing (three offsets: east,
 a vertical recentre, south) re-specifies nothing, uploads nothing and
 draws every slot moved by the offset; a crossed field grows the same
 world, cell for cell and tint for tint, as one that never moved;
@@ -1034,7 +1034,7 @@ filter). It was not proven, so it is not built.
 | `slicedTree.mjs` - 200 cells | whole cell median 1.59 ms | slices of 1 / 1,500 / whole byte-identical 20/20, 200/200, 200/200; a 1,500 slice median 0.33, p90 0.49, p99 0.81 ms |
 | `cellCost.mjs` - a whole cell (the boot's path) | 2.01-2.05 ms median | 2.02-2.03 ms |
 
-Pins: `test/grassshift.test.js` PERF-EXT22 x3 - the slice/whole byte identity at
+Pins: `test/world/terrain/grassshift.test.js` PERF-EXT22 x3 - the slice/whole byte identity at
 1, 777, 1,500 and the whole cell on a crossed field; a walk on a crossed
 field asks keep() at most a slice a frame, writes every rim cell with the
 bytes a whole placement makes, and ends holding a whole fill's cells plus
@@ -1046,6 +1046,11 @@ and a cell no bigger than a slice is never left half placed. Re-stated on
 purpose: `labGrass.test.js` GRASS6's order pin reads stepGrassCell (the
 loop's home) and GR5's five-metre step is given the frames its rim takes.
 Mutants: `perfextc.json` PERF-EXT22 x15, all dead.
+
+**FB1021B (2026-10-21) moved the catch-up.** The count switch above - more than `GRASS_CATCH_UP` waiting, every cell
+whole, two a frame - is gone: a slice a frame paced the rim by the frame rate, and at 20-30 fps an ordinary ride fell
+into it on the move. The rim is paced to the eye's step now and a birth to a share of the frame - `# THE GRASS ON THE
+MOVE (FB1021B)` at the foot of this page, where eight of these fifteen mutants were re-aimed by content.
 
 ### PERF-EXT23 — a pixel's publish tail breathes
 
@@ -1079,7 +1084,7 @@ call that is per FRAME - an animated rig's sphere (`renderer.js`, stride
 9: 29 -> 40-50 us). So the sliced sphere is its own loop beside it: the
 same two passes (a min and a max, then a max from the float32-rounded
 centre), which no cut can change, held to boundsOf's bytes on meshes of
-every shape by `test/publishtail.test.js` - neither can drift alone.
+every shape by `test/render/publishtail.test.js` - neither can drift alone.
 
 **Not done: the chunked upload.** The prover's step (d) - a 22.8 MB
 `bufferData` split into ~2 MB `bufferSubData` a breath - was left for a
@@ -1094,7 +1099,7 @@ Chrome profile to justify; SwiftShader numbers are relative only.
 | `unitDist.mjs` - city, every unit | - | p99 0.16-0.21 ms; the odd 1-2 ms unit is a collection or the first, uncompiled range |
 | `boundsBench.mjs` - boundsOf itself | rig 29-36 us, mesh 192-220 us | unchanged (boundsOf is byte for byte what it was) |
 
-Pins: `test/publishtail.test.js` (4) - boundsSteps is boundsOf's bytes on
+Pins: `test/render/publishtail.test.js` (4) - boundsSteps is boundsOf's bytes on
 empty, single, large and extreme-at-either-end meshes at ranges of 1, 7,
 256, BOUNDS_RANGE and whole, with a yield per range; finishSliced gives
 finish()'s arrays and groups (mirrored placements among them) and
@@ -1148,13 +1153,18 @@ unbuilt pixel stays open that much longer. That is visible, and it is
 not claimed away. `BUILD_SLICE_FLOOR_MS` and `BUILD_STREAM_AGE_MS`
 (`systems/buildBreather.js`) are the two knobs.
 
+OW-BUILD (2026-10-18, the owner; `06-Systems/Travel-View.md` OW-BUILD): while the Overworld is up the trade goes the
+other way. A slice is what a frame of 30 a second leaves (`BUILD_OVERWORLD_FRAME_MS`), up to 20 ms
+(`BUILD_SLICE_OVERWORLD_MS`) and never under 6, so a light frame drops to 30 a second while ground is owed and the
+stream builds up to three times as fast. The ground under a sky-high view is what holds the journey's clock.
+
 | `sliceTree.mjs` (headless Chromium, relative only) | frame JS 9 ms | 12 ms | 14 ms | 18 ms |
 |---|---|---|---|---|
 | no build | 60 fps | 60 | 59.7 | 55.0 |
 | before: the flat 6 ms slice | 60 (4.9 ms built a frame) | 54.9 (4.97) | 49.5 (4.96) | 41.4 (4.99) |
 | after: what the frame left | 59.4 (4.3) | 60 (2.48) | 57.7 (2.48) | 47.0 (2.50) |
 
-Pins: `test/buildslice.test.js` (7) - frameFitBudget's arithmetic, its
+Pins: `test/systems/buildslice.test.js` (7) - frameFitBudget's arithmetic, its
 floor, its ceiling, 144 and 30 Hz, the age guard at 1,999/2,001 ms, the
 awaited build and a NaN; the breather asks once a slice, yields at the
 budget and not before, reports a slice its resume began, and without a
@@ -1200,7 +1210,7 @@ built.
 | the same - GC during the insert | 60-61 collections, 395-432 ms | 51-52 collections, 419-428 ms (the pauses are noise) |
 | `tools/guardCostProbe.mjs 5 1200 12` - five guards, three runs | mean 0.891-1.005 ms, median 0.662-0.702 | mean 0.823-0.929 ms, median 0.588-0.653 (the query side, ~7-10% - the prover read no change) |
 
-Pins: `test/colliderkeys.test.js` (3) - every bucket of a scene with fine,
+Pins: `test/player/colliderkeys.test.js` (3) - every bucket of a scene with fine,
 coarse-filed and short-listed triangles, at positive and negative cells,
 holds cell for cell (decoded) the triangle lists of the OLD string-keyed
 filing, kept verbatim in the test with collider.js's constants read from
@@ -1251,7 +1261,7 @@ same heightfield, 819 m or more away.
 The GPU upload of the new surface (`createTerrainSurface`, 390 KB) is on
 the landing frame either way; node cannot time it.
 
-Pins: `test/restrideworker.test.js` (4) - restrideGrid is buildTerrainGrid
+Pins: `test/world/terrain/restrideworker.test.js` (4) - restrideGrid is buildTerrainGrid
 with the woods' ghost rows at strides 1 and 4 and the kernel builds with
 it; the REAL worker shell, initialised with a synthetic WOODS.WLD the real
 reader loads, answers a grid job by id with the main thread's bytes and
@@ -1338,7 +1348,7 @@ rewritten - so the map is here: C1 -> 20 (the slot count), C2 -> 21 (the
 origin shift), C3 -> 22 (the rim), C4 -> 23 (the publish tail), C5 -> 24
 (the slice), C6 -> 25 (the collider key), C7 -> 26 (the promotions).
 
-Pins: `test/buildslice.test.js` +2 - the lend (the reviewer's repro on the
+Pins: `test/systems/buildslice.test.js` +2 - the lend (the reviewer's repro on the
 real modules; a resume's slice lent whole into the next sample; a slice a
 frame ran inside, and a reset's with no worker, not lent) and the awaited
 build (the host's own `awaitedBuild` and budget run at 144 Hz beside a
@@ -1432,7 +1442,7 @@ On the cards: about 25-30 us a frame on a 4060 Ti and 40-45 us on an RX
 6600 for the default sky at 1080p with 40% of the screen sky; the dome
 tier about 55 and 140 us.
 
-**Pinned** (`test/perfextd.test.js`, the shaders RUN in float32 by
+**Pinned** (`test/render/perfextd.test.js`, the shaders RUN in float32 by
 `test/glsl.mjs`): the mod's sheets - their own text between `// Clouds`
 and `// REDUCE_COLOR` - on the uniforms the real runtime and the real
 renderer upload for four weathers and hours, against the same text with
@@ -1512,7 +1522,7 @@ bright pass -27%, 0 pixels. On the cards: about 2 million taps and 12
 million transcendental ops a frame at 1080p by day, some 15 us on a 4060
 Ti and 25 us on an RX 6600, and a tap a pixel more at night.
 
-**Pinned** (`test/perfextd.test.js`, two more): the six fragment sources
+**Pinned** (`test/render/perfextd.test.js`, two more): the six fragment sources
 as the renderer links them - each variant is the full pass less exactly
 its reads, the full pass carries both - RUN in float32 over every frame
 the pass can make (each image drawn or black): a variant reads the glow
@@ -1589,7 +1599,7 @@ affected player, each a minute: Render scale 50% (PERF-SCALE - if the
 fps roughly doubles or more, the cost is the world's pixels), the
 `Compositing` and `WebGL` lines of `chrome://gpu` (a software
 compositor reads every WebGL frame back on this thread), and a counter
-screenshot with this line. Pins `test/scriptsplit.test.js` (3); mutants
+screenshot with this line. Pins `test/systems/scriptsplit.test.js` (3); mutants
 `tools/mutants/scriptsplit.json` (7 dead).
 
 **AUDIT (2026-09-26): the three claims above, checked.** The stamp:
@@ -1604,3 +1614,317 @@ WebGL context, the page's own. `isEnabled(CULL_FACE)`: Blink hands it to
 `GLES2Implementation::IsEnabled`, which answers from
 `ClientContextState::GetEnabled` - `GL_CULL_FACE` is one of its cached
 capabilities - with no round trip (Chromium main, read 2026-09-26).
+
+
+# THE GRASS ON THE MOVE (FB1021B, 2026-10-21)
+
+*FIELD BUGS 2026-10-21c row 6 (`01-Overview/bugs/Field-Bugs-2026-10-21c.md`): a player's CPU profile of the online
+client, relayed by the owner, had "grass streaming" at 11-24% of the main thread. The slice before this one found the
+walk under its budget (PERF-EXT22) and left the catch-up mode unmeasured on the move.*
+
+## How it was measured
+
+`tools/grassMoveProbe.mjs` drives the real `createGrassField` and `LabGrassRenderer` (its packs written into a GL that
+answers and counts, as `grassshift.test.js`'s does) under the real `StreamingWorldState` - its floating origin, a
+shift at every pixel crossing - over Daggerfall's own ground: WOODS.WLD's woodlands round map pixel 200,200, each pixel
+built by the world's own `generatePixelTerrain`, TEXTURE.302's grass records (`grassRecordsOf`), and world.js's
+`frameGrass` keep/ground/slope (the near ring's pieces, the record, the water corners, the drawn surface, the sea).
+Every path runs at DFU's own speeds (PlayerSpeedChanger through `player/motor.js` and `systems/transport.js`): a walk
+4.43 m/s and a run 7.59 at chargen's SPD 50 / Running 30, a strong run 11.71 (SPD 100, Running 100), HORSE-WALK's walk
+5.06, DFU's ride 10.76, its gallop 16.14 and a strong gallop 22.25, the cart 7.59 - each straight and wandering (a turn
+every 6 s), for a minute, at 60, 30 and 20 frames a second; and the field's births - a boot, a teleport, a fast
+travel's arrival, the jungle floor's re-made meadow - standing and on the move, for 30 s. Per frame: the candidates
+placed (keep() asks), the cells written, the CPU time of `update()` (`process.cpuUsage` - the container is shared, at
+a load of 12-33 on its four cores during the runs, and the wall clock read 2-5x the CPU time; the counts are exact),
+the cells inside 0.9 of the range standing unplaced (holes); per cell, whether it was placed again, let go unseen by
+a forward eye, or never placed at all. `--compare` runs every path twice, the base's placer and this one's, one after
+the other.
+
+What a cell costs here (CPU time, `placeLabGrassCell` and `writeSlot` on this ground): a 1,500-candidate slice
+0.67-0.71 ms, a whole cell 2.58-2.63 ms, its pack 2.32-2.39 ms. PERF-EXT22's prover read 0.33, 2.0 and ~0.9 ms: the
+pack has grown since (MEADOW1's card bounds, GRASS-LIT2's slope word) and is now as dear as the placement.
+
+## What it found
+
+The walk is what PERF-EXT22 said: a slice a frame, a cell every five frames, never a whole one. And that is the
+defect: the rim's pace was the FRAME RATE's - a fifth of a cell a frame - while its arrivals are the eye's, ~0.7 cells
+a metre (186 cells in a 266 m walk). Past ~fps/3.5 m/s (17 m/s at 60 fps, 8.6 at 30, 5.7 at 20) the rim fell behind,
+eight cells waiting tripped `GRASS_CATCH_UP`, and every waiting cell came whole, two a frame - 12,244 candidates and
+two packs - until it was eight again. Frames in that catch-up, of the frames moving (exact; the straight path):
+
+| fps | DFU speed, m/s | frames in catch-up |
+|---|---|---|
+| 60 | walk 4.43, run 7.59, run (SPD 100, Running 100) 11.71, horse walk 5.06, ride 10.76, gallop 16.14, cart 7.59 | 0 of 3,600 (the gallop 1-2 on the diagonal, the circle and the wander) |
+| 60 | gallop (SPD 100, Running 100) 22.25 | 140 of 3,600 (3.9%) |
+| 30 | walk, run, horse walk, cart | 0 of 1,800 |
+| 30 | ride / strong run / gallop / strong gallop | 63 (3.5%) / 108 (6.0%) / 240 (13.3%) / 395 (21.9%) |
+| 20 | walk, horse walk | 0 of 1,200 |
+| 20 | run and cart / ride / strong run / gallop / strong gallop | 59 (4.9%) / 156 (13.0%) / 182 (15.2%) / 298 (24.8%) / 439 (36.6%) |
+
+So the slowest machines - the ones a profile names - hit it at ordinary speeds: a 20 fps ride on 13% of its frames, a
+gallop on 25%, a run and a cart on 5%. Those frames are the base's p99 in the table below.
+
+Births: two whole cells a frame for ~174 frames, the inner disc first - 12-17 ms of CPU a frame here (p99) - settled
+at frame 214 standing (3.6 s at 60 fps, 10.7 s at 20). On the move a third of what a gallop's birth placed was behind
+the rider and let go before a forward eye ever had it in view (176 of 542).
+
+Wasted work otherwise, and why it stays:
+- **Cells placed and let go unseen** on a straight ride: 1-136 a minute, every one a flank cell placed between 270 and
+  300 m and passed abeam - where a blade draws 12.6% of itself at most. The field is view-free on purpose (a turn of
+  the head must find grass); kept.
+- **Cells placed again** under a wanderer: 34-400 a minute, PERF10's 15 m hysteresis churning at the rim. A wider one
+  is more slots on the GPU (38.6 MB for 394): the owner's call, not this slice's.
+- **Half-placed cells dropped**: at a shift, by walking out of reach - a few slices a minute. A shift's half-placed cell
+  holds the old frame's float32 positions, and moving them would not be the bytes a whole placement makes; kept.
+
+## What changed
+
+`render/labGrass.js` `createGrassField.update`:
+
+- **A cell's deadline is the eye's own step.** The frames the eye, coming straight at a cell at this frame's step,
+  would take to bring its nearest point inside `GRASS_DUE_AT` (0.9) of the range - where the shader's fade leaves a
+  blade 12.6% of itself - counted in the updates left before that step (a deadline of 6.2 frames leaves 7). 0 for a cell
+  inside already (a birth's, an invalidate's: due now); never while the eye stands, nor for a cell past the fade's
+  start whose nearest point the step moves away from. The step is measured between updates on the field's own scene,
+  and a shift moves the last eye with the scene - a crossing is no step.
+- **A cell inside the fade's start still comes whole** - the frame's first always (a hole the eye sees is closed on the
+  frame it is missed), the next while it fits the frame's time at the cost of the whole cell just placed.
+- **The rim takes one slice a frame, as it did** - none on a frame a whole cell took - **and past it what the deadlines
+  ask**: the least pace that has every rim cell placed by its own (earliest deadline first: nearest first), uncapped,
+  because the work is the eye's speed's and a cap below it stands holes; `GRASS_STEP` (250) candidates at a time.
+  AUDIT FB1021B F1 (below): the pace is counted without the cells due now, and spent first - the rim cells it reaches
+  this frame come before them.
+- **The cells due now take a share of the frame** past that pace: `GRASS_FRAME_MS` (3) of a 60 Hz frame, and that share
+  (`GRASS_FRAME_SHARE`, 0.18) of a longer one measured on the field's clock between its updates, up to a 20 fps frame
+  (`GRASS_FRAME_GAP_MS`, 50) - so a birth fills in the same seconds at any frame rate, and a hitch grants no more.
+- **What the step leaves behind waits for the rest**: past the fade's start, a cell behind the step sorts after every
+  other and is never due past `GRASS_DUE_AT` (inside it, due now - a hole a turn of the head finds - and still last),
+  so a birth on the move fills the way the eye is going and the hysteresis takes most of what it leaves (before:
+  placed nearest-first, and let go).
+- **No slice is spent on a cell no slot takes** (AUDIT PERF10 F1's starved field): the slot is asked before a cell is
+  begun as well as when it is written.
+- `GRASS_CATCH_UP` and the count switch are gone; `perFrame` (2) still caps the cells written a frame, so no frame
+  writes more than the base's catch-up did. `frameMs` and `clock` are the field's seams - the game passes neither.
+
+The placer is untouched: every cell is the bytes `placeLabGrassCell` makes (grassshift's PERF-EXT22 pins).
+
+## After
+
+The same paths, paired - the frames past one slice, the most candidates a frame, the CPU ms of `update()` a frame (p99 /
+mean), the holes (frames with a cell inside 0.9 of the range unplaced) and the cells never placed. Re-run at AUDIT
+FB1021B (below) on the merged, fixed field, the before main's placer at the merge (OW-HITCH's, `e394529e85`), at a
+load of 6-20 on the container's four cores: every count of every straight and wandering path is the slice's run's to
+the frame - on a ride no cell is due now, and the audit's change is in what a cell due now does - and the times are
+this run's:
+
+| fps | DFU speed, m/s | path | before: frames past a slice | most a frame | cpu ms p99 / mean | after: frames past a slice | most a frame | cpu ms p99 / mean | holes | never placed (nearest) |
+|---|---|---|---|---|---|---|---|---|---|---|
+| 60 | walk 4.4 | straight | 0 | 1,500 | 3.24 / 0.346 | 0 | 1,500 | 3.08 / 0.325 | 0 | 0 |
+| 60 | run 7.6 | straight | 0 | 1,500 | 3.09 / 0.505 | 0 | 1,500 | 3.17 / 0.514 | 0 | 0 |
+| 60 | run (SPD 100, Running 100) 11.7 | straight | 0 | 1,500 | 3.29 / 0.762 | 0 | 1,500 | 3.26 / 0.772 | 0 | 0 |
+| 60 | horse walk (HORSE-WALK) 5.1 | straight | 0 | 1,500 | 3.05 / 0.347 | 0 | 1,500 | 3.04 / 0.353 | 0 | 0 |
+| 60 | horse (DFU ride) 10.8 | straight | 0 | 1,500 | 3.28 / 0.699 | 0 | 1,500 | 3.24 / 0.704 | 0 | 0 |
+| 60 | gallop 16.1 | straight | 0 | 1,500 | 3.42 / 1.034 | 0 | 1,500 | 3.68 / 1.054 | 0 | 0 |
+| 60 | gallop (SPD 100, Running 100) 22.2 | straight | 140 (3.9%) | 12,244 | 9.91 / 1.372 | 980 (27.2%) | 1,705 | 4.01 / 1.327 | 0 | 36 (290 m) |
+| 60 | cart 7.6 | straight | 0 | 1,500 | 3.08 / 0.495 | 0 | 1,500 | 3.53 / 0.540 | 0 | 0 |
+| 30 | walk 4.4 | straight | 0 | 1,500 | 3.29 / 0.604 | 0 | 1,500 | 3.18 / 0.582 | 0 | 0 |
+| 30 | run 7.6 | straight | 0 | 1,500 | 3.57 / 1.022 | 0 | 1,500 | 3.56 / 0.998 | 0 | 0 |
+| 30 | run (SPD 100, Running 100) 11.7 | straight | 108 (6.0%) | 10,744 | 9.78 / 1.498 | 1300 (72.2%) | 1,787 | 4.29 / 1.413 | 0 | 16 (290 m) |
+| 30 | horse walk (HORSE-WALK) 5.1 | straight | 0 | 1,500 | 3.43 / 0.704 | 0 | 1,500 | 3.14 / 0.662 | 0 | 0 |
+| 30 | horse (DFU ride) 10.8 | straight | 63 (3.5%) | 10,744 | 9.95 / 1.399 | 37 (2.1%) | 1,519 | 3.96 / 1.290 | 0 | 12 (290 m) |
+| 30 | gallop 16.1 | straight | 240 (13.3%) | 12,244 | 11.00 / 2.049 | 1708 (94.9%) | 2,470 | 5.11 / 1.993 | 0 | 26 (290 m) |
+| 30 | gallop (SPD 100, Running 100) 22.2 | straight | 395 (21.9%) | 12,244 | 13.85 / 2.866 | 1768 (98.2%) | 3,432 | 4.84 / 2.553 | 0 | 38 (290 m) |
+| 30 | cart 7.6 | straight | 0 | 1,500 | 3.54 / 1.028 | 0 | 1,500 | 3.63 / 1.024 | 0 | 0 |
+| 20 | walk 4.4 | straight | 0 | 1,500 | 3.36 / 0.885 | 0 | 1,500 | 3.53 / 0.888 | 0 | 0 |
+| 20 | run 7.6 | straight | 59 (4.9%) | 10,744 | 9.63 / 1.464 | 502 (41.8%) | 1,721 | 4.16 / 1.358 | 0 | 8 (290 m) |
+| 20 | run (SPD 100, Running 100) 11.7 | straight | 182 (15.2%) | 12,244 | 10.71 / 2.149 | 1141 (95.1%) | 2,699 | 5.14 / 2.115 | 0 | 17 (290 m) |
+| 20 | horse walk (HORSE-WALK) 5.1 | straight | 0 | 1,500 | 3.48 / 1.000 | 0 | 1,500 | 3.66 / 1.015 | 0 | 0 |
+| 20 | horse (DFU ride) 10.8 | straight | 156 (13.0%) | 12,244 | 12.59 / 2.092 | 1108 (92.3%) | 2,470 | 4.79 / 1.913 | 0 | 15 (290 m) |
+| 20 | gallop 16.1 | straight | 298 (24.8%) | 12,244 | 13.23 / 3.095 | 1176 (98.0%) | 3,750 | 5.21 / 2.822 | 0 | 26 (290 m) |
+| 20 | gallop (SPD 100, Running 100) 22.2 | straight | 439 (36.6%) | 12,244 | 15.50 / 4.137 | 1186 (98.8%) | 5,181 | 7.23 / 4.014 | 0 | 38 (290 m) |
+| 20 | cart 7.6 | straight | 59 (4.9%) | 10,744 | 9.63 / 1.457 | 502 (41.8%) | 1,721 | 4.47 / 1.365 | 0 | 8 (290 m) |
+
+"Past a slice" before is the catch-up; after it is the deadlines' pace - most frames of a fast ride now, at a fifth to
+a half of what one catch-up frame asked. The mean is the same work: spread, not saved. The wander rows say the same
+(before 13-387 catch-up frames of 12,244 candidates at 20-30 fps; after at most 1,500-5,460 a frame, p99 halved),
+with one difference: a turn leaves behind cells the step was reaching, and those are never due again - 1-120 cells a
+minute never placed, none nearer than 278 m (a blade there draws 7% of itself at most).
+
+| birth (30 s) | before: frames with a hole / settled / cpu ms p99, max / never placed (nearest) | after: the same |
+|---|---|---|
+| 60 fps standing | 145 / frame 214 / 11.11, 19.69 / 0 | 337 / frame 662 / 8.43, 15.96 / 0 |
+| 60 fps walk 4.43 | 146 / 203 / 11.89, 22.05 / 11 (285 m) | 364 / 515 / 7.03, 18.47 / 27 (264 m) |
+| 60 fps run 7.59 | 145 / 220 / 11.85, 16.64 / 17 (277 m) | 354 / 529 / 7.89, 16.08 / 46 (238 m) |
+| 60 fps gallop 16.14 | 146 / 388 / 11.77, 16.65 / 36 (255 m) | 338 / 493 / 7.63, 12.04 / 86 (193 m) |
+| 60 fps gallop 22.25 | 145 / - / 13.16, 17.96 / 48 (236 m) | 339 / - / 8.69, 12.63 / 120 (165 m) |
+| 30 fps standing | 145 / 214 / 13.70, 19.93 / 0 | 243 / 569 / 8.47, 8.99 / 0 |
+| 30 fps run 7.59 | 145 / 288 / 15.45, 17.09 / 36 (255 m) | 275 / 404 / 9.33, 12.20 / 69 (210 m) |
+| 30 fps gallop 16.14 | 145 / - / 13.98, 16.59 / 67 (211 m) | 246 / - / 10.44, 18.93 / 123 (144 m) |
+| 20 fps standing | 145 / 214 / 11.69, 16.91 / 0 | 152 / 478 / 11.46, 12.62 / 0 |
+| 20 fps run 7.59 | 146 / - / 15.38, 16.25 / 49 (236 m) | 171 / - / 11.46, 21.25 / 66 (219 m) |
+| 20 fps gallop 16.14 | 145 / - / 15.13, 18.02 / 101 (165 m) | 176 / - / 11.53, 11.94 / 131 (135 m) |
+
+A birth's frames are lighter (p99 of CPU here, the table's rows: 11-13 ms to 7-9 at 60 fps, 14-15 to 8-10 at 30, and at
+20 fps, where the share is 9 ms, 12-15 to 11-12), and longer: the near band (inside 0.9 of the range) stands whole after
+337 frames standing at 60 fps (5.6 s) where it did after 145 (2.4 s), after 243 at 30 fps (8.1 s, was 4.8) and 152 at 20
+(7.6 s, was 7.3) - the share keeps the seconds from growing at a low frame rate. The last band, past 0.9, comes a slice
+a frame while the eye stands (a cell every five frames): settled at frame 662 at 60 fps, 569 at 30 and 478 at 20. A
+birth is timed on the field's clock, which is the page's wall clock, so its frames move with the machine's load: the
+slice's own run, at a load of 12-33, read 453, 332 and 302 frames where this one reads 337, 243 and 152 (the standing
+birth's code is the slice's to the candidate). On a machine where a cell and its pack cost under 1.5 ms, two fit the 3
+ms and a birth is the base's pace exactly - `perFrame` caps it there. On the move the eye's own pace is paid on a
+birth's frames too (AUDIT FB1021B F1), so a birth on the move is whole in about a standing one's frames.
+
+**THE TRADE-OFF, stated - the owner should weigh it.** A ride, a run, a cart: the work is the same and spread - no frame
+of the move places a whole cell again, and none stands a hole. A birth is lighter a frame and slower to finish: on this
+container the band that draws stands whole in up to two and a half times the seconds (5.6 s for 2.4 at 60 fps, 8.1 for
+4.8 at 30, 7.6 for 7.3 at 20), and on the move the cells it reaches last - those the eye leaves behind - can recede past
+the fade's start unplaced and wait for the hysteresis: a gallop's birth leaves 86-131 cells never placed, the nearest
+135-193 m behind the rider, where the base left 36-101 and 165-255 m. And a cell that comes into range only at the flank
+and never inside 0.9 of it can go unplaced while the deadlines keep the slice busy - up to 38 a minute on a straight
+ride, never nearer than 290 m (a blade there draws 1.6% of itself), and up to 120 under a wanderer's turns, never nearer
+than 278 m (7%) - where the base placed it, by catching up. Both are what the brief asked of it: what will be seen first
+placed first, and no cell placed that the hysteresis will drop.
+
+**Daggerfall Unity.** DFU's own terrain draws no blade field (its grass is a mod's - Real Grass, the toggle
+`06-Systems/Travel-Options.md` reads), so there is no DFU member this paces or departs from; the field is the port's
+own (LAB-GRASS). What DFU gave this slice is the eye's speeds: every path ran at PlayerSpeedChanger's.
+
+**The four hosts.** The grass field lives in `scenes/world.js` alone (the jungle floor's field, `jungleFloorHost.js`, is
+the same `createGrassField` and is paced by the same law - each field its own share and its own first whole cell, so in
+the jungle a frame pays two: AUDIT FB1021B F3 below) - wired by being the field it already calls. `scenes/exterior.js`,
+`scenes/worldModes.js` and `scenes/dungeonContext.js` hold no grass field: nothing to wire, flagged here by name. No
+host changed.
+
+## Left
+
+- **The pack.** `writeSlot` is 2.3 ms a cell here, as dear as the placement, and still one piece on the frame a cell
+  ends - the p99 of a walk is that frame. Slicing it, or making it cheaper with its bytes kept, is the next step.
+- **A teleport's loading frames** (read on the code, not measured): the field is born while the arrival's first pixel
+  is still building, so its first cells stand over no ground - every candidate refused, each cell's empty lanes still
+  uploaded - and the publish re-reads them.
+- **The worker** PERF-EXT22 did not build: still not proven, still not built.
+
+Pins: `test/render/fb1021b_grass.test.js` (11) - on the real field (and the real renderer's packs for the ride), the
+clock the field's own seam counting candidates: the values and the count switch gone; a 20 fps DFU ride across two
+crossings never places a whole cell's candidates, and every cell stands placed before the step brings it inside 0.9
+of the range (read before each update), where the slice alone could not have kept up; the pace counts the cell in
+progress and is the least that lands them in time (three cells 8 m from their deadline, on a slow machine's clock:
+their candidates over the 7 updates left, to the candidate); a walk is PERF-EXT22's walk to the candidate; a birth is
+timed (the first whole cell always, the next while it fits at its measured cost, the band GRASS_STEP at a time to the
+frame's time, the default frame GRASS_FRAME_MS, the page's clock - each candidate holding it 2 us there, so no load
+fits a second cell); its share of a 30 fps frame and a hitch's cap; a frame a whole cell took runs no slice; a birth
+on the move fills the way the eye goes and leaves most of what is behind unplaced; what a walk leaves behind is never
+due; a crossing is no step; a starved field begins nothing it cannot write. Re-stated on purpose:
+`grassshift.test.js` (two fields compared on one clock that stands still, and the cell under the eye re-read after the
+crossing - the path's own cells come by slices now, so PERF-EXT21's whole placer at the field's origin is read there;
+an unbounded update; the boot's pace to GRASS_DUE_AT, its band a slice a frame), `grasspath.test.js` (the starved walk
+rests before its law is read; the slot bound's walk on a clock that stands still, every cell due now on its frame as
+the whole fill had it; the eviction's source pin) and `labGrass.test.js` GR5 (its unbounded fields on a clock that
+stands still). Mutants:
+`tools/mutants/fb1021b_grass.json` 46 - 44 dead, 2 equivalent as recorded (the deadline's pace stepped GRASS_STEP at a
+time or whole: the ask met either way, no clock read; a starved field's cell whose slot went, held or begun again: the
+same bytes, the field at rest the same). And every record, in every list, that mutates the field or is judged by a test
+this slice changed - 102 in eleven lists (`perfextc`, `grasspath`, `grass2`, `grass5`, `grass6`, `waterdraw2`,
+`fastsuite_roads`, `verge1`, `bantha2`, `grasslit2`, `meadow1`): 101 dead, 1 equivalent as recorded (GRASS-PATH1's
+bare-water join). Re-aimed on the way: `perfextc.json`'s PERF-EXT22 records by content (eight; the one for two slices
+a frame aimed at the first slice's flag, as its old aim at the deadline's stop hung - a step of 0 past the need - and
+the one for a cell inside the fade sliced judged by `fb1021b_grass` too, whose ticking clock is what tells a whole cell
+from a sliced one); PERF-EXT21's origin record dies on the crossing pin re-stated above; `grasspath.json`'s two
+eviction records, and its GRASS-PATH1 mask record, which had stopped parsing when JUNGLE-TRAILS lengthened its line's
+comment (not this slice's change).
+
+## AUDIT FB1021B (2026-10-21) - the deadlines kept while a cell is due now
+
+The slice read cold, every finding verified on the code and measured before it was fixed (the owner: "no band aids
+and true improvements"). FIELD BUGS 2026-10-21c (`01-Overview/bugs/Field-Bugs-2026-10-21c.md`) row 6.
+
+**F1 (should-fix) - one cell due now turned the deadlines off, and a slow machine never recovered.** The rim stopped at
+`now ? clock() - t0 >= budgetMs : done >= need`: with one rim cell missing inside `GRASS_DUE_AT`, the frame's share
+REPLACED the deadlines' pace, and the cells due now - nearest first - took it before the cells it was owed to. Where
+the share placed less than the eye brought in, the cells ahead missed their deadlines, came due now in their turn, and
+`now` never cleared: the rim came in only as its cells crossed 165 m, whole, by the inner loop - the spike the slice
+set out to remove. In the game: a birth on the move (the jungle floor's `onArrive` re-making the meadow on a ride; an
+Overworld journey's end - TV1 skips the field's updates while the travel view stands; a publish over the disc,
+PERF-EXT21; a standing birth ridden off from), and a band cell re-read behind the step (it sorted last and held `now`
+until the ride left it past 0.9). Measured on `fb1021b_grass.test.js`'s bench at its slow machine - a candidate 1/256
+ms, no pack: the 20 fps frame's 9 ms is 2,304 candidates, about what a DFU ride brings in; holes read before each
+update, a crossing a cell seen unplaced past 0.9 and then unplaced inside it - and on WOODS.WLD's ground with the
+field's clock running K times the process's CPU time (a machine K times slower, as the share sees it; the ground's
+runs move by a tenth from run to run with the container's load, the bench's not at all):
+
+| 20 fps | before: frames with a hole inside 0.9 / last / crossed unplaced | the audit's proposal | after |
+|---|---|---|---|
+| bench, a standing birth | 563 / 562 / 0 | the same | the same |
+| bench, DFU ride 10.76 m/s born on the move | 1,007 / 1,006 / 342 | 425 / 424 / 57 | 598 / 597 / 0 |
+| bench, gallop 16.14 born on the move | 1,200 of 1,200 (never whole) | 283 | 435 / 434 / 0 |
+| bench, gallop 22.25 (SPD 100, Running 100), a band cell re-read 200 m behind | 1,200 of 1,200, 801 crossed | 89 / 88 / 0 | 89 / 88 / 0: the cell itself, until the gallop leaves it past 0.9 |
+| ground, K 1, DFU ride born on the move | 202 | 175 | 199 |
+| ground, K 2, gallop born on the move | 408 | 240 | 279 |
+| ground, K 4, DFU ride born on the move | 613 | 356 | 440 |
+| ground, K 4, gallop 22.25 born on the move | 1,200 of 1,200 (never whole) | 236 | 320 |
+
+The audit's proposal - the share a floor under the deadlines' pace, the pace counted over the cells with a deadline -
+recovers soonest, and by two means this fix does not take: it lets the arrivals cross (57 on the bench's ride), and
+its pace, owed to cells the backlog keeps it from, climbs as their deadlines close and is spent on the backlog. On the
+bench at a normal machine's cost (1/1024 ms), a minute's birth on the move, the most candidates a frame and the frames
+of two whole cells (12,244, `perFrame`'s cap): the slice 6,122 / 0 at 60 fps (a gallop), 6,372 / 0 at 30 and 9,372 / 0
+at 20 (a DFU ride, both); the proposal 12,244 / 28, 12,244 / 29 and 12,244 / 37; this fix 8,372 / 0, 9,372 / 0 and
+12,244 / 15 - the eye's own pace paid on a birth's frame as on a ride's, which the slice had dropped. What changed
+instead, `createGrassField.update`:
+
+- **The pace is spent where it is owed.** The rim's order is the cell in progress, then the rim cells the deadlines'
+  pace reaches this frame (its candidates counted in whole cells from the cell in progress's rest), then the cells due
+  now, nearest first, then the rest by deadline, what the step leaves behind last. The pace is counted without the cells
+  due now - a birth's band before the first deadline would ask the whole band of one frame, the base's catch-up - and it
+  is spent first, so no cell with a deadline is let cross 0.9 unplaced for a backlog's sake: 0 on every run above.
+- **The cells due now take the frame's share past that pace.** The pace's steps past the frame's slice are timed and
+  are not the share's; the slice is the share's as it was, so a standing birth is FB1021B's to the candidate. A birth
+  on the move fills in the frames a standing one does (the bench: 597 for 562), at any machine's speed.
+- A band cell the step leaves behind is still due now - a hole a turn of the head finds - and still last: the share
+  past the pace reaches it once what stands ahead is placed (behind a strong gallop at 20 fps on the bench at 1/1024 ms,
+  61 frames on, at 238 m - the pace alone never would: the rim ahead always has a cell waiting its deadline), and on a
+  machine whose share is spent ahead it goes past 0.9 unplaced, the only hole (the table's gallop).
+
+**F2 (nit) - the cell in progress was never an inner cell.** `want` left out the cell in progress
+(`key !== pending?.key`), so a rim cell the eye had brought inside the fade's start waited as the rim's while cells
+farther out came whole - the audit measured one 22 frames inside 165 m, as near as 141 m, behind a starved rim. A cell
+in progress inside the fade's start is let go now, before `want` is built, and the inner loop places it whole, nearest
+first, the first always. OW-HITCH's reuse holds: the cell let go held the rim's arrays (`rimSpare`), a whole cell is
+placed into the whole cell's (`wholeSpare`), and a rim cell is begun into `rimSpare` only when none is in progress.
+With F1's order the audit's own case no longer arises (its cell waits 1-3 frames, never nearer than 276 m); the cell
+comes inside 165 m still where the eye outruns the rim in one update - the frames the travel view skips.
+
+**F3 (nit, the record) - in the jungle a frame pays two shares.** `scenes/world.js` updates the meadow's field and then
+the jungle floor's, each its own `createGrassField` with its own share and its own first whole cell, and `onArrive`
+re-makes both at once. Decided: the share is PER FIELD, and the four hosts paragraph above says so. One budget for the
+pair would need a frame both read and one of them opens: the host would open it (bootWorld grows - HOST-SPLIT) or the
+field would guess which update came first in a frame off its clock. And the floor's cells are holes as much as the
+meadow's: a shared share halves each field's fill. The cost, stated: while both fill, the jungle's frames pay up to two
+shares (6 ms at 60 fps, 18 at 20) and two first whole cells; each field's pace is its own cells' and is not a share.
+
+**F4 (nit, pin gap) - a whole cell's cost unpinned.** `wholeMs` is read after `writeSlot` - the cell placed AND packed,
+as the pack is as dear as the placement - but every birth-timing pin ran with no pack, so reading it before the pack
+survived. A packed bench now pins it: two cells' time less one pack fits one packed cell.
+
+**F5 (nit, pin gap) - the cell in progress's `behind` unread.** Pinned: a cell in progress 2 m past 0.9 that a strong
+gallop leaves behind gets its slice and no more, where read as ahead it would owe a third of its rest that frame.
+
+Pins, `test/render/fb1021b_grass.test.js` (19 now): on the bench's slow machine a 20 fps DFU ride born on the move lets
+no cell cross 0.9 unplaced and stands whole inside it within a standing birth's frames and 3 s; a strong gallop with a
+band cell re-read behind it has that cell for its only hole and no crossing; with a cell due now on the move a frame
+takes the slice, the deadlines' pace past it and the frame's time past that, to the candidate (3,000 + 1,250); the cells
+a step from their deadline stand placed before a cell due now is begun; a band cell behind a gallop is placed by the
+time past the pace while still inside 0.9; a cell in progress brought inside the fade's start comes whole, nearest
+first, on its frame; one the step leaves behind gets its slice and no more; a whole cell's cost is its pack too; and a
+cell inside the fade's start re-read behind a gallop comes back whole on its frame (for FB1021B's own mutant of the
+fade's start in `behind`: the birth-on-the-move pin that had killed it no longer did once F1 was in).
+Mutants: `tools/mutants/fb1021b_grass.json` 63 - 60 dead, 3 equivalent as recorded (the two of FB1021B's, and the pace's
+steps timed without a cell due now: `paced` read by nothing then). Seventeen are the audit's own - every line it wrote,
+mutated; four of the slice's, and three of `perfextc.json`'s PERF-EXT22, were re-aimed at the text they mutate now
+(`mutantdrift`). The lists the field's tests judge, run whole beside it with `--jobs 2`: `owhitch.json` 27, all dead;
+`grasspath.json` 21, 20 dead and its equivalent as recorded; `perfextc.json` 103, 102 dead and PERF-EXT24's
+flat-slice record no verdict - its `perf7.test.js` fails here with no mutant, the pin #1109 broke and main's OW-HITCH
+follow-up 2 (`27636a695d`) mended after this branch's base; and the one record of another list inside the field,
+`grasslit2.json`'s AUDIT-GRASSLIT2-C-ask-no-slope, dead. With `fb1021b_grass.json`, one run: 215 records, 210 dead,
+4 equivalent, 1 no verdict.

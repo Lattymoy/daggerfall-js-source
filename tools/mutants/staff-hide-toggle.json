@@ -1,0 +1,192 @@
+[
+  {
+    "name": "STAFF-HIDE-TOGGLE-default-on",
+    "file": "server-account/migrations/0165_staff_hide_off.sql",
+    "old": "ADD COLUMN staff_hide_on INTEGER NOT NULL DEFAULT 0;",
+    "new": "ADD COLUMN staff_hide_on INTEGER NOT NULL DEFAULT 1;",
+    "why": "Hide me on by default again (mob: \"need hide to be a toggle\")",
+    "tests": [
+      "test/server/staffpanel5hidden.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-carry-dropped",
+    "file": "server-account/migrations/0165_staff_hide_off.sql",
+    "old": "UPDATE players SET staff_hide_on = 1 WHERE id IN (",
+    "new": "UPDATE players SET staff_hide_on = staff_hide_on WHERE id IN (",
+    "why": "a Hide me pressed since 0159 lost at the move",
+    "tests": [
+      "test/server/staffpanel5hidden.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-carry-any-press",
+    "file": "server-account/migrations/0165_staff_hide_off.sql",
+    "old": "WHERE a.detail = '{\"on\":true}'",
+    "new": "WHERE a.detail IS NOT NULL",
+    "why": "a Show myself pressed last read as Hide me",
+    "tests": [
+      "test/server/staffpanel5hidden.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-carry-oldest",
+    "file": "server-account/migrations/0165_staff_hide_off.sql",
+    "old": "SELECT MAX(b.id) FROM staff_audit b",
+    "new": "SELECT MIN(b.id) FROM staff_audit b",
+    "why": "the first press read, not the newest",
+    "tests": [
+      "test/server/staffpanel5hidden.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-carry-any-act",
+    "file": "server-account/migrations/0165_staff_hide_off.sql",
+    "old": "b.actor = a.actor AND b.act = 'hide'));",
+    "new": "b.actor = a.actor));",
+    "why": "the account's newest audit row of any act read as its press",
+    "tests": [
+      "test/server/staffpanel5hidden.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-mint-reads-0159",
+    "file": "server-account/src/staffHidden.js",
+    "old": "SELECT p.staff_hide_on, s.token_hash",
+    "new": "SELECT p.staff_hide AS staff_hide_on, s.token_hash",
+    "why": "the mint reads 0159's column, 1 on every row: every staff member hidden again",
+    "tests": [
+      "test/server/staffpanel5hidden.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-route-reads-0159",
+    "file": "server-account/src/staffHidden.js",
+    "old": "return { hidden: me.staff_hide_on === 1 };",
+    "new": "return { hidden: me.staff_hide !== 0 };",
+    "why": "the panel told Hide me is on when it is off",
+    "tests": [
+      "test/server/staffpanel5hidden.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-press-to-0159",
+    "file": "server-account/src/staffHidden.js",
+    "old": "db.prepare('UPDATE players SET staff_hide_on = ?1 WHERE id = ?2')",
+    "new": "db.prepare('UPDATE players SET staff_hide = ?1 WHERE id = ?2')",
+    "why": "the press written to the column the mint no longer reads",
+    "tests": [
+      "test/server/staffpanel5hidden.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-lapse-off-the-log-alone",
+    "file": "server-account/src/staffHidden.js",
+    "old": "WHERE (SELECT staff_hide_on FROM players WHERE id = ?1) = 1 AND NOT EXISTS (",
+    "new": "WHERE NOT EXISTS (",
+    "why": "a game hidden before 0165 turned its switch off is minted no token at all once its session idles",
+    "tests": [
+      "test/server/staffpanel5hidden.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-door-word-unread",
+    "file": "src/net/staffHook.js",
+    "old": "else if (m.dfoStaff === 'relink' && relink && !relinkWait) {",
+    "new": "else if (false) {",
+    "why": "the panel's relink ignored: Hide me waits for the game's next connection again",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-door-gap-unread",
+    "file": "src/net/staffHook.js",
+    "old": "if (wait > 0) relinkWait = setTimer(relinkNow, wait); else relinkNow();",
+    "new": "relinkNow();",
+    "why": "a relink storm from any page script",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-door-two-waiting",
+    "file": "src/net/staffHook.js",
+    "old": "&& relink && !relinkWait) {",
+    "new": "&& relink) {",
+    "why": "every relink asked inside the gap queued",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-relink-token-kept",
+    "file": "src/scenes/staffFollowHost.js",
+    "old": "  minter?.forget?.();\n  if (main?.room) main.leave();",
+    "new": "  if (main?.room) main.leave();",
+    "why": "a room opened within TOKEN_REUSE_MS handed the token from before the press",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-relink-presence-kept",
+    "file": "src/scenes/staffFollowHost.js",
+    "old": "  if (main?.room) main.leave();\n",
+    "new": "",
+    "why": "the presence room keeps its socket as it was until the player changes room",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-relink-left-not-opened",
+    "file": "src/scenes/staffFollowHost.js",
+    "old": "{ link.leave(); link.join(room); }",
+    "new": "{ link.leave(); }",
+    "why": "a chat link left and waiting for chatFrame's rejoin",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-relink-no-room-left",
+    "file": "src/scenes/staffFollowHost.js",
+    "old": "const room = link.room; if (room) {",
+    "new": "const room = link.room; if (true) {",
+    "why": "a link out of the seat (or banned) left again: its word on screen overwritten",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-page-no-relink",
+    "file": "src/scenes/staffFollowHost.js",
+    "old": "const door = staffHookDoor(win, () => hook, { relink: relink ? () => { relink(); map.relink(); } : relink, mapOf: () => map });",
+    "new": "const door = staffHookDoor(win, () => hook, { mapOf: () => map });",
+    "why": "the page's door handed no relink",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-minter-flight-held",
+    "file": "src/net/accountClient.js",
+    "old": "if (era === forgets) held = { token,",
+    "new": "held = { token,",
+    "why": "a mint on its way across forget() held: a token from before the press opens the next room",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-HIDE-TOGGLE-minter-forget-no-era",
+    "file": "src/net/accountClient.js",
+    "old": "forget: () => { held = null; forgets++; },",
+    "new": "forget: () => { held = null; },",
+    "why": "forget() lets go of the held token alone, not the one on its way",
+    "tests": [
+      "test/net/staffpanel5hook.test.js"
+    ]
+  }
+]

@@ -5,7 +5,7 @@
     "old": "    if (raiseMinutes > 0) _raisedMinutes += raiseMinutes;   // TIME3: the raise, counted - a quest charges it whole\n",
     "new": "",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (d > 0) _raisedMinutes += d;   // TIME3: the raise, counted\n",
     "new": "",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (d > 0) _raisedMinutes += d;   // TIME3: the raise, counted",
     "new": "  _raisedMinutes += d;   // TIME3: the raise, counted",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  _raisedMinutes = 0;   // TIME3: ...and its raises are counted from nought\n",
     "new": "",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -41,10 +41,10 @@
     "old": "    const raised = raisedSince(caller.raisedSeconds?.(), this._lastRaisedSample);",
     "new": "    const raised = 0;",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/world7.test.js",
-      "test/auditworld78.test.js",
-      "test/qtlive1.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/quest/world7.test.js",
+      "test/systems/quest/auditworld78.test.js",
+      "test/ui/enhanced/qtlive1.test.js"
     ],
     "note": "QCLOCK-WORLD (PIN MOVED): TIME3's raise-forgiven mutant is the law now; inverted - a raise read as lived time charges one step of it"
   },
@@ -54,10 +54,10 @@
     "old": "Math.min(Math.max(raw - raised, 0), step));   // QCLOCK-WORLD",
     "new": "Math.max(raw - raised, 0));   // QCLOCK-WORLD",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/world7.test.js",
-      "test/auditworld78.test.js",
-      "test/qtlive1.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/quest/world7.test.js",
+      "test/systems/quest/auditworld78.test.js",
+      "test/ui/enhanced/qtlive1.test.js"
     ],
     "note": "QCLOCK-WORLD (PIN MOVED): re-aimed by content"
   },
@@ -67,10 +67,10 @@
     "old": "Math.min(Math.max(raw - raised, 0), step));   // QCLOCK-WORLD",
     "new": "Math.min(Math.max(raw - raised, 0), step) + raised);   // QCLOCK-WORLD",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/world7.test.js",
-      "test/auditworld78.test.js",
-      "test/qtlive1.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/quest/world7.test.js",
+      "test/systems/quest/auditworld78.test.js",
+      "test/ui/enhanced/qtlive1.test.js"
     ],
     "note": "QCLOCK-WORLD: TIME3's law back - a rest spends a quest's days online"
   },
@@ -80,10 +80,10 @@
     "old": "    this._lastRaisedSample = caller.raisedSeconds?.() ?? null;   // TIME3\n",
     "new": "",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/world7.test.js",
-      "test/auditworld78.test.js",
-      "test/qtlive1.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/quest/world7.test.js",
+      "test/systems/quest/auditworld78.test.js",
+      "test/ui/enhanced/qtlive1.test.js"
     ]
   },
   {
@@ -92,10 +92,10 @@
     "old": "      this._lastRaisedSample = this.parentQuest.raisedSeconds?.() ?? null;   // TIME3\n",
     "new": "",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/world7.test.js",
-      "test/auditworld78.test.js",
-      "test/qtlive1.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/quest/world7.test.js",
+      "test/systems/quest/auditworld78.test.js",
+      "test/ui/enhanced/qtlive1.test.js"
     ]
   },
   {
@@ -104,10 +104,10 @@
     "old": "    this._lastRaisedSample = this.parentQuest?.raisedSeconds?.() ?? null;   // TIME3: a restore (a load, a party member's copy) is a resume - no raise counted ACROSS it (AUDIT TIME: the count now, so a raise after it, before the first tick, is a raise - QCLOCK-WORLD: charged nothing)\n",
     "new": "",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/world7.test.js",
-      "test/auditworld78.test.js",
-      "test/qtlive1.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/quest/world7.test.js",
+      "test/systems/quest/auditworld78.test.js",
+      "test/ui/enhanced/qtlive1.test.js"
     ]
   },
   {
@@ -116,10 +116,10 @@
     "old": "const wholeSeconds = (caller) => Math.floor(caller?.nowSeconds?.() ?? 0);",
     "new": "const wholeSeconds = (caller) => caller?.nowSeconds?.() ?? 0;",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/world7.test.js",
-      "test/auditworld78.test.js",
-      "test/qtlive1.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/quest/world7.test.js",
+      "test/systems/quest/auditworld78.test.js",
+      "test/ui/enhanced/qtlive1.test.js"
     ]
   },
   {
@@ -128,8 +128,8 @@
     "old": "const raised = Number.isFinite(step) ? Math.min(raisedSince(raisedNow, this._lastRaised), gameSeconds - this._lastTick) : 0;",
     "new": "const raised = 0;",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/auditworld78.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/quest/auditworld78.test.js"
     ]
   },
   {
@@ -138,8 +138,8 @@
     "old": "    this._lastRaised = raisedNow;\n",
     "new": "",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/auditworld78.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/quest/auditworld78.test.js"
     ]
   },
   {
@@ -148,7 +148,7 @@
     "old": "const skySecondsOf = (quest) => (quest?.skySeconds ?? quest?.nowSeconds)?.() ?? 0;",
     "new": "const skySecondsOf = (quest) => quest?.nowSeconds?.() ?? 0;",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -157,7 +157,7 @@
     "old": "const now = dateFromSeconds(skySecondsOf(this.parentQuest));   // TIME3: the hour is the sky's",
     "new": "const now = dateFromSeconds(this.parentQuest.nowSeconds?.() ?? 0);   // TIME3: the hour is the sky's",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -166,7 +166,7 @@
     "old": "const now = dateFromSeconds(skySecondsOf(this.parentQuest));   // TIME3: daytime is the sky's",
     "new": "const now = dateFromSeconds(this.parentQuest.nowSeconds?.() ?? 0);",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -175,7 +175,7 @@
     "old": "const sec = (hooks?.skySeconds ?? hooks?.nowSeconds)?.();   // TIME3: the season is the sky's",
     "new": "const sec = hooks?.nowSeconds?.();",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -184,7 +184,7 @@
     "old": "const now = Math.floor(((hooks?.skySeconds ?? hooks?.nowSeconds)?.() ?? 0) / 60);",
     "new": "const now = Math.floor((hooks?.nowSeconds?.() ?? 0) / 60);",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -193,7 +193,7 @@
     "old": "  const sec = (hooks?.skySeconds ?? hooks?.nowSeconds)?.();",
     "new": "  const sec = hooks?.nowSeconds?.();",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -202,7 +202,7 @@
     "old": "return dateString(dateFromSeconds(skySecondsOfEvent(quest.getCurrentLogMessageTime())));",
     "new": "return dateString(dateFromSeconds(quest.getCurrentLogMessageTime()));",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -211,7 +211,7 @@
     "old": "(_on && Number.isFinite(eventSeconds) ? skyClassicMinutes(",
     "new": "(Number.isFinite(eventSeconds) ? skyClassicMinutes(",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -220,7 +220,7 @@
     "old": "    this.questStartTime = this.worldSeconds?.() ?? 0;",
     "new": "    this.questStartTime = this.nowSeconds?.() ?? 0;",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -229,7 +229,7 @@
     "old": "time: this.worldSeconds?.() ?? 0 });",
     "new": "time: this.nowSeconds?.() ?? 0 });",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -238,7 +238,7 @@
     "old": "      ownSecondsAt: Number.isFinite(this.nowSeconds?.()) ? Math.floor(this.nowSeconds()) : null,",
     "new": "      ownSecondsAt: null,",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -247,7 +247,7 @@
     "old": "    this.skySeconds = skySeconds ?? nowSeconds;",
     "new": "    this.skySeconds = nowSeconds;",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -256,7 +256,7 @@
     "old": "    this.worldSeconds = worldSeconds ?? nowSeconds;",
     "new": "    this.worldSeconds = nowSeconds;",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -265,7 +265,7 @@
     "old": "      skySeconds: () => this.deps.skySeconds?.() ?? nowSeconds(),",
     "new": "      skySeconds: nowSeconds,",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -274,7 +274,7 @@
     "old": "      raisedSeconds: () => this.deps.raisedSeconds?.() ?? null,",
     "new": "      raisedSeconds: () => null,",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -283,16 +283,16 @@
     "old": "      skySeconds: () => this.deps.skySeconds?.() ?? this.deps.nowSeconds?.() ?? null,",
     "new": "      skySeconds: () => this.deps.nowSeconds?.() ?? null,",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
     "name": "TIME3-a-copy-on-the-senders-clock",
     "file": "src/systems/quest/machine.js",
-    "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF };   // TIME3: the sender's countdowns, on this character's clock\n    const quest = this._newQuest();",
-    "new": "    questData = { ...questData, ...NO_SHELF };\n    const quest = this._newQuest();",
+    "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF, ...NO_INSTANCE, ql: receivedState(questData.ql) };   // TIME3: the sender's countdowns, on this character's clock; QL1: the party's progress, this holder's reward unpaid\n    const quest = this._newQuest();",
+    "new": "    questData = { ...questData, ...NO_SHELF, ...NO_INSTANCE, ql: receivedState(questData.ql) };\n    const quest = this._newQuest();",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -301,7 +301,7 @@
     "old": "    questData = { ...this._onThisClock(questData), ...NO_SHELF };   // TIME3: the sender's countdowns, on this character's clock\n    const scratch = this._newQuest();",
     "new": "    questData = { ...questData, ...NO_SHELF };\n    const scratch = this._newQuest();",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -310,7 +310,7 @@
     "old": "      r.remainingTimeInSeconds = was.remaining;\n",
     "new": "",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -319,7 +319,7 @@
     "old": "      r._lastWorldTimeSample = was.sample;\n",
     "new": "",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -328,16 +328,16 @@
     "old": "      r._lastRaisedSample = was.raised;\n",
     "new": "",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
     "name": "TIME3-the-load-moves-nothing",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "quest: questBlockOnOwnClock(snap) ?? null,",
     "new": "quest: snap.quest ?? null,",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -346,9 +346,9 @@
     "old": "const ownBelow = own === 'legacy' ? ownHere && !isOwnMarked(n) : ownHere;",
     "new": "const ownBelow = ownHere;",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/auditlived1.test.js",
-      "test/auditlived1b.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/auditlived1.test.js",
+      "test/systems/auditlived1b.test.js"
     ]
   },
   {
@@ -357,9 +357,9 @@
     "old": "{ if (ownBelow && Number.isFinite(v) && v !== 0) n[k] = v + deltaSeconds; }",
     "new": "{ if (Number.isFinite(v) && v !== 0) n[k] = v + deltaSeconds; }",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/auditlived1.test.js",
-      "test/auditlived1b.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/auditlived1.test.js",
+      "test/systems/auditlived1b.test.js"
     ]
   },
   {
@@ -368,9 +368,9 @@
     "old": "{ if (world && Number.isFinite(v) && v !== 0) n[k] = v + deltaSeconds; }",
     "new": "{ if (Number.isFinite(v) && v !== 0) n[k] = v + deltaSeconds; }",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/auditlived1.test.js",
-      "test/auditlived1b.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/auditlived1.test.js",
+      "test/systems/auditlived1b.test.js"
     ]
   },
   {
@@ -379,9 +379,9 @@
     "old": "        if (world) for (const m of v)",
     "new": "        for (const m of v)",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/auditlived1.test.js",
-      "test/auditlived1b.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/auditlived1.test.js",
+      "test/systems/auditlived1b.test.js"
     ]
   },
   {
@@ -390,9 +390,9 @@
     "old": "if ('questName' in n && 'questStartTime' in n && !isOwnMarked(n)) n.ownSecondsAt = ownSeconds;",
     "new": "if ('questName' in n && 'questStartTime' in n) n.ownSecondsAt = ownSeconds;",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/auditlived1.test.js",
-      "test/auditlived1b.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/auditlived1.test.js",
+      "test/systems/auditlived1b.test.js"
     ]
   },
   {
@@ -401,9 +401,9 @@
     "old": "(Math.floor(Number(own)) - Math.floor(Number(world))) * 60",
     "new": "(Math.floor(Number(world)) - Math.floor(Number(own))) * 60",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/auditlived1.test.js",
-      "test/auditlived1b.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/auditlived1.test.js",
+      "test/systems/auditlived1b.test.js"
     ]
   },
   {
@@ -412,9 +412,9 @@
     "old": "* 60, { own: 'legacy' });\n  return markOwnClock(copy, Math.floor(Number(own)) * 60);",
     "new": "* 60, { own: true });\n  return markOwnClock(copy, Math.floor(Number(own)) * 60);",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/auditlived1.test.js",
-      "test/auditlived1b.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/auditlived1.test.js",
+      "test/systems/auditlived1b.test.js"
     ]
   },
   {
@@ -423,9 +423,9 @@
     "old": "const from = isOwnMarked(copy) ? copy.ownSecondsAt : Math.floor(worldSeconds);",
     "new": "const from = isOwnMarked(copy) ? copy.ownSecondsAt : now;",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/auditlived1.test.js",
-      "test/auditlived1b.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/auditlived1.test.js",
+      "test/systems/auditlived1b.test.js"
     ]
   },
   {
@@ -434,9 +434,9 @@
     "old": "  copy.ownSecondsAt = now;\n",
     "new": "",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/auditlived1.test.js",
-      "test/auditlived1b.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/auditlived1.test.js",
+      "test/systems/auditlived1b.test.js"
     ]
   },
   {
@@ -445,9 +445,9 @@
     "old": "Number.isFinite(sample) && now >= sample ? now - sample : 0",
     "new": "Number.isFinite(sample) ? now - sample : 0",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/auditlived1.test.js",
-      "test/auditlived1b.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/auditlived1.test.js",
+      "test/systems/auditlived1b.test.js"
     ]
   },
   {
@@ -456,9 +456,9 @@
     "old": "  if (copy.quest) markOwnClock(copy.quest, Math.floor(own) * 60);\n  return copy;\n}",
     "new": "  return copy;\n}",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/auditlived1.test.js",
-      "test/auditlived1b.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/auditlived1.test.js",
+      "test/systems/auditlived1b.test.js"
     ]
   },
   {
@@ -467,9 +467,9 @@
     "old": "rebaseWorldStamps(copy, Math.floor(worldNow) - Math.floor(own), daysBetween(worldNow, own));",
     "new": "rebaseWorldStamps(copy, Math.floor(worldNow) - Math.floor(own), daysBetween(worldNow, own), { questOwn: true });",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/auditlived1.test.js",
-      "test/auditlived1b.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/auditlived1.test.js",
+      "test/systems/auditlived1b.test.js"
     ]
   },
   {
@@ -478,8 +478,8 @@
     "old": "    classicSeconds: () => playerTicker.ownMinutes * 60,",
     "new": "    classicSeconds: () => playerTicker.classicMinutes * 60,",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/time1_census.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/scenes/time1_census.test.js"
     ]
   },
   {
@@ -488,8 +488,8 @@
     "old": "    classicSeconds: () => playerTicker.ownMinutes * 60,",
     "new": "    classicSeconds: () => playerTicker.classicMinutes * 60,",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/time1_census.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/scenes/time1_census.test.js"
     ]
   },
   {
@@ -498,7 +498,7 @@
     "old": "    raisedSeconds: () => raisedMinutes() * 60,",
     "new": "    raisedSeconds: () => 0,",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -507,8 +507,8 @@
     "old": "    skySeconds: () => skyMinutes() * 60,",
     "new": "    skySeconds: () => playerTicker.classicMinutes * 60,",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/time1_census.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/scenes/time1_census.test.js"
     ]
   },
   {
@@ -517,26 +517,26 @@
     "old": "    advanceOwnMinutes(n);   // TIME3: a RaiseTime",
     "new": "    setOwnMinutes(ownMinutes() + n);   // TIME3: a RaiseTime",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/clockrefusal.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/clockrefusal.test.js"
     ]
   },
   {
     "name": "TIME3-the-bridge-drops-the-sky",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "    skySeconds: () => ctx.skySeconds?.() ?? null,",
     "new": "    skySeconds: () => null,",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
     "name": "TIME3-the-lens-rereads-on-one-hour",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "|${Math.floor((ctx.skySeconds?.() ?? 0) / 3600)}`;",
     "new": "`;",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -545,7 +545,7 @@
     "old": "    this._lastRaisedSample = this.parentQuest?.raisedSeconds?.() ?? null;   // TIME3: a restore",
     "new": "    this._lastRaisedSample = null;   // TIME3: a restore",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -554,7 +554,7 @@
     "old": "      if (r.isClock && !r.clockFinished && finishedBefore.has(r.symbol?.name)) {",
     "new": "      if (false) {",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -563,7 +563,7 @@
     "old": "        if (task && was?.triggered) { task.triggered = true; task.prevTriggered = was.prev; }",
     "new": "        void task; void was;",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -572,7 +572,7 @@
     "old": "if (w && w.last) { action.lastSpawnTime = w.last;",
     "new": "if (w && w.last) { void w.last;",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -581,8 +581,8 @@
     "old": "return guardWindowStep(this, !!place?.isPlayerHere?.(), this.parentQuest.nowSeconds?.() ?? 0, win);",
     "new": "return guardWindowStep(this, !!place?.isPlayerHere?.(), skySecondsOf(this.parentQuest), win);",
     "tests": [
-      "test/time3_quests.test.js",
-      "test/guardonline.test.js"
+      "test/systems/quest/time3_quests.test.js",
+      "test/systems/quest/guardonline.test.js"
     ]
   },
   {
@@ -591,7 +591,7 @@
     "old": "{ task.triggered = true; task.prevTriggered = was.prev; }",
     "new": "{ task.triggered = true; }",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   },
   {
@@ -600,7 +600,7 @@
     "old": "action.spawnCounter = w.count | 0; }",
     "new": "}",
     "tests": [
-      "test/time3_quests.test.js"
+      "test/systems/quest/time3_quests.test.js"
     ]
   }
 ]

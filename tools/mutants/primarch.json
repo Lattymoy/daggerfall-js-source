@@ -5,7 +5,7 @@
     "old": "const PRIMARCH_GOLD = Object.freeze([0.847, 0.812, 0.682, 1]);",
     "new": "const PRIMARCH_GOLD = Object.freeze([1, 0.784, 0.29, 1]);",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "The Founder's gold, not the menu's: GA00250 asked for the light gold the menu draws in, and two titles would share a colour."
   },
@@ -15,7 +15,7 @@
     "old": "const PRIMARCH_GOLD = Object.freeze([0.847, 0.812, 0.682, 1]);",
     "new": "const PRIMARCH_GOLD = Object.freeze([0.914, 0.894, 0.851, 1]);",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "The name's bone (#e9e4d9) and not the menu's gold: the pin holds it to the pause menu's own rule."
   },
@@ -25,7 +25,7 @@
     "old": "  primarch: TITLE_RGBA.primarch,       // PRIMARCH:",
     "new": "  primarch: TITLE_RGBA.crowned,       // PRIMARCH:",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "The cross in the Crowned's gold: GA00250 asked for it in the name's colour, and the two halves of one grant drift apart."
   },
@@ -35,19 +35,19 @@
     "old": "  primarch: 't',      // PRIMARCH:",
     "new": "  primarch: 'O',      // PRIMARCH:",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "The classic face would draw the Aegis of Oblivion's ring beside GA00250's name."
   },
   {
     "name": "PRIMARCH-the-glyph-stroked",
     "file": "src/ui/playerBadge.js",
-    "old": "aegis: true, primarch: false, crystalfist: false });",
-    "new": "aegis: true, primarch: true, crystalfist: false });",
+    "old": "aegis: true, primarch: false, crystalfist: false, wikimaid: false });",
+    "new": "aegis: true, primarch: true, crystalfist: false, wikimaid: false });",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
-    "note": "Stroked, the filled outline is a tangle of edges. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "Stroked, the filled outline is a tangle of edges. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "PRIMARCH-the-slant-turned",
@@ -55,7 +55,7 @@
     "old": "M6 9.6L10 12.9V14.5L6 11.2Z",
     "new": "M6 12.9L10 9.6V11.2L6 14.5Z",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "The footrest slanting down to the LEFT: not the cross GA00250 drew."
   },
@@ -65,7 +65,7 @@
     "old": "M6 1.4H10V2.9H6Z",
     "new": "M2.9 1.4H13.1V2.9H2.9Z",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "The head bar as long as the crossbar: a double cross, not the reference's."
   },
@@ -75,7 +75,7 @@
     "old": "primarch: 'M7.2 0.4H8.8V15.6H7.2Z",
     "new": "primarch: 'M7.6 0.4H9.2V15.6H7.6Z",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "The shaft off the middle, the bars no longer centred on it."
   },
@@ -85,7 +85,7 @@
     "old": "M2.9 3.8H13.1V5.4H2.9Z",
     "new": "M2.9 3.8V5.4H13.1V3.8Z",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "The crossbar wound against the shaft: under the nonzero rule a hole where they cross."
   },
@@ -95,19 +95,19 @@
     "old": "V5.4H2.9ZM6 9.6L10 12.9V14.5L6 11.2Z'",
     "new": "V5.4H2.9Z'",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "A two-barred cross: the reference's slanted footrest gone."
   },
   {
     "name": "PRIMARCH-the-radiances-button-in-violet",
     "file": "src/ui/playerBadge.js",
-    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst' });",
-    "new": "radiance: 'aegis', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst' });",
+    "old": "radiance: 'primarch', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden' });",
+    "new": "radiance: 'aegis', shadowcloak: 'shadowfang', seraphwings: 'founder', resonance: 'crystalfist', turninghour: 'hourbreaker', firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden' });",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
-    "note": "The Golden Radiance's button on the card painted in the Aegis of Oblivion's violets. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "The Golden Radiance's button on the card painted in the Aegis of Oblivion's violets. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "PRIMARCH-the-title-misspelt",
@@ -115,7 +115,7 @@
     "old": "  primarch: 'Primarch',              // PRIMARCH",
     "new": "  primarch: 'Primarck',              // PRIMARCH",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "The word GA00250 asked for, wrong."
   },
@@ -125,17 +125,17 @@
     "old": "  radiance: 'Golden Radiance',",
     "new": "  radiance: '',",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "An aura with no word: a blank button on the card."
   },
   {
     "name": "PRIMARCH-the-card-label-dropped",
-    "file": "src/ui/enhancedAccount.js",
-    "old": "  primarch: 'Primarch',   // PRIMARCH:",
-    "new": "  // primarch: 'Primarch',   // PRIMARCH:",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "  primarch: () => t('account.glyph.primarch', 'Primarch'),   // PRIMARCH:",
+    "new": "  // primarch: () => t('account.glyph.primarch', 'Primarch'),   // PRIMARCH:",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "The glyph unnamed on the account card."
   },
@@ -145,7 +145,7 @@
     "old": "PRIMARCH_HANDLES = \"GA00250\"",
     "new": "PRIMARCH_HANDLES = \"GA0025\"",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "Another handle: GA00250 holds nothing."
   },
@@ -155,49 +155,49 @@
     "old": "  primarch: 'PRIMARCH_HANDLES',",
     "new": "  primarch: 'AEGIS_HANDLES',",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "Sureme's list: GA00250 holds nothing and Sureme holds the Primarch."
   },
   {
     "name": "PRIMARCH-the-glyphs-word",
     "file": "server-account/src/titles.js",
-    "old": "aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist' });",
-    "new": "aegis: 'aegis', primarch: 'aegis', crystalfist: 'crystalfist' });",
+    "old": "aegis: 'aegis', primarch: 'primarch', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });",
+    "new": "aegis: 'aegis', primarch: 'aegis', crystalfist: 'crystalfist', wikimaid: 'wikimaid' });",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
-    "note": "The list grants the aegis glyph, not its own. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "The list grants the aegis glyph, not its own. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "PRIMARCH-the-aura-not-granted",
     "file": "server-account/src/titles.js",
-    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
-    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
+    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
+    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
-    "note": "The title and glyph without the aura GA00250 asked for. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "The title and glyph without the aura GA00250 asked for. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "PRIMARCH-the-ward-granted",
     "file": "server-account/src/titles.js",
-    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
-    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance' });",
+    "old": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'radiance', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
+    "new": "export const TIER_AURA = Object.freeze({ aegis: 'oblivionward', primarch: 'oblivionward', shadowfang: 'shadowcloak', crystalfist: 'resonance', wikimaid: 'lilacwarren' });",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
-    "note": "GA00250 granted Sureme's ward instead of the radiance. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist."
+    "note": "GA00250 granted Sureme's ward instead of the radiance. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's crystalfist. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "PRIMARCH-the-vocabularys-aura",
     "file": "src/net/identityToken.js",
-    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour']);",
-    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour']);",
+    "old": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'radiance', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire']);   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
+    "new": "export const AURAS = Object.freeze(['dagonfire', 'oblivionward', 'shadowcloak', 'seraphwings', 'resonance', 'turninghour', 'firsthour', 'maelstrom', 'beaconlight', 'burningstair', 'firstlight', 'lilacwarren', 'witchfire']);   // WITCH1 (2026-10-20, bible/06-Systems/Witches-Festival.md): WITCHFIRE last - a coven's green fire licking round the feet, tallow candles burning in its ring and their motes rising violet; bought from a Wyrd Sister for Soul Cakes (server-account/src/titles.js, `fest_wares`), held for good;   // WIKIMAID (2026-10-17, for SylviaBun: \"a purple aura with bunnies\"): THE LILAC WARREN last - rabbits hopping round the feet on a ring of lilac light, their prints fading behind them; the WikiMaid's own, granted with its title by name, never sold;",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
-    "note": "A token carrying the radiance refused: the aura never reaches a screen. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's Crystal Resonance."
+    "note": "A token carrying the radiance refused: the aura never reaches a screen. SHADOW-CLOAK (PIN MOVED): re-aimed by content - the Holo Shadow Cloak joined the line. SERAPH-WINGS (re-aimed by content): the wings joined the list. CRYSTAL-FIST (re-aimed by content): the line gained Flylighter's Crystal Resonance. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "PRIMARCH-the-looks-kind",
@@ -205,7 +205,7 @@
     "old": "  radiance: Object.freeze({ kind: 2, ringR: RADIANCE_R,",
     "new": "  radiance: Object.freeze({ kind: 1, ringR: RADIANCE_R,",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "The radiance drawn as the ward: violet runes at GA00250's feet."
   },
@@ -215,7 +215,7 @@
     "old": "export const RADIANCE_R = 0.6;",
     "new": "export const RADIANCE_R = 0.9;",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "The column wider than the fire's ring: a pillar standing off the body, not light about it."
   },
@@ -225,7 +225,7 @@
     "old": "export const RADIANCE_H = 2.2;",
     "new": "export const RADIANCE_H = 1.6;",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "The column ending at the neck: the head stands out of the light."
   },
@@ -235,7 +235,7 @@
     "old": "export const RADIANCE_HZ = Object.freeze({ pulse: 1 / 4, rays: 1 / 30,",
     "new": "export const RADIANCE_HZ = Object.freeze({ pulse: 1 / 4, rays: 1 / 7,",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "The rays' turn not whole over the clock: they jump at every wrap."
   },
@@ -245,7 +245,7 @@
     "old": "heart: Object.freeze([0.847, 0.812, 0.682]) });",
     "new": "heart: Object.freeze([1, 0.95, 0.8]) });",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "The ring's heart a gold of its own: the aura and the title it is granted with drift apart."
   },
@@ -255,7 +255,7 @@
     "old": "  float rim = 0.14 + 0.86 * pow(1.0 - facing, 2.0);",
     "new": "  float rim = 0.14 + 0.86 * pow(facing, 2.0);",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "Brightest across the body and faint at its edges: a gold wash over the wearer, not light round them."
   },
@@ -265,7 +265,7 @@
     "old": "* 0.75 * radianceBreath() * outside;",
     "new": "* 0.75 * radianceBreath();",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "From inside the column the wearer's own first person is veiled in gold."
   },
@@ -275,7 +275,7 @@
     "old": "  return col * clamp((uKindle * 1.25 - v) / 0.15, 0.0, 1.0);",
     "new": "  return col;",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "The column stands whole the instant it kindles, never rising from the feet."
   },
@@ -285,7 +285,7 @@
     "old": "    sparks += exp(-dot(dm, dm) / 0.0005)",
     "new": "    sparks += 0.0 * exp(-dot(dm, dm) / 0.0005)",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "No motes rising: the elite's embers GA00250 saw, gone."
   },
@@ -295,7 +295,7 @@
     "old": "  float rise = (1.0 - smoothstep(0.4, 1.0, v)) * (0.7 + 0.3 * (1.0 - v));",
     "new": "  float rise = 0.7 + 0.3 * (1.0 - v);",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "The column cut off hard at its top - a lit tube, not light."
   },
@@ -305,7 +305,7 @@
     "old": "  col += RAD_GOLD * ray * 0.3 * breath",
     "new": "  col += RAD_GOLD * ray * 0.0 * breath",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "No rays across the pool."
   },
@@ -315,7 +315,7 @@
     "old": "cos(${RADIANCE_RAYS.toFixed(1)} * (a - uTime",
     "new": "cos(${(RADIANCE_RAYS + 0.5).toFixed(1)} * (a - uTime",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "A ray count that is not whole round the ring: a seam behind the wearer."
   },
@@ -325,7 +325,7 @@
     "old": "  col += RAD_GOLD * exp(-dr * dr / 0.0016) * 0.55 * breath + RAD_HEART * exp(-dr * dr / 0.00018) * 0.7;",
     "new": "  col += vec3(0.0);",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "No ring at the column's foot."
   },
@@ -335,7 +335,7 @@
     "old": "      gl.uniform3f(U.uAt, w.at[0], w.at[1], w.at[2]);",
     "new": "      gl.uniform3f(U.uAt, 0, 0, 0);",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "Every wearer drawn at the world's origin, and the column's axis lost."
   },
@@ -345,7 +345,7 @@
     "old": "length(vec2(length(uCamPos.xz - uAt.xz), max(max(uAt.y - uCamPos.y, uCamPos.y - uAt.y - uFlameH), 0.0)))",
     "new": "length(uCamPos.xz - uAt.xz)",
     "tests": [
-      "test/primarch.test.js"
+      "test/net/primarch.test.js"
     ],
     "note": "AUDIT 3 (SERAPH-WINGS round): the column's inside fade read the distance across the ground alone - a camera high over a wearer saw no column."
   }

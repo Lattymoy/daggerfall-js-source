@@ -6,14 +6,14 @@
 // a door for pictures from the player's own files, and the key's own switch - whether a shot is also saved as a PNG.
 //
 // ONE PANE, BOTH DOORS: the front door's shell and the pause window's System page draw this same function (the
-// menu's own law - ui/enhancedMenu.js SYSTEM_PANES), so the gallery a player opens at boot is the one they open mid-game.
+// menu's own law - ui/enhanced/enhancedMenu.js SYSTEM_PANES), so the gallery a player opens at boot is the one they open mid-game.
 //
 // IT DRAWS AT ONCE AND FILLS WHEN THE GALLERY ANSWERS. The menu repaints synchronously; IndexedDB answers later. The
 // pane stands with a line saying it is reading, and fills its own nodes in place - a repaint of the menu builds a new
 // pane and the old one's answer, finding its root gone, draws nothing.
 //
 // EVERY ALLOCATION HAS AN OWNER: each picture is an object URL, let go when the pane fills again and when the menu
-// unmounts (releaseShotsPane, ui/enhancedMenu.js unmount); the gallery's change listener goes with them.
+// unmounts (releaseShotsPane, ui/enhanced/enhancedMenu.js unmount); the gallery's change listener goes with them.
 import { listShots, deleteShot, setShotLoading, keepShot, onGalleryChange, shotCaption, GALLERY_MAX } from '../systems/shotGallery.js';
 import { getPref, setPref } from '../systems/uiPrefs.js';
 import { SHOT_DOWNLOAD_PREF, REVOKE_AFTER_MS } from './screenshot.js';
@@ -22,7 +22,7 @@ import { isEnhanced } from '../systems/uiSkin.js';
 import { bindings } from './input.js';
 import { codeForAction } from '../systems/inputActions.js';
 import { buttonText } from '../systems/controlsConfig.js';
-import { optionPath } from './settingsMap.js';   // ORG2
+import { optionPath } from './settings/settingsMap.js';   // ORG2
 
 const el = (t, cls, txt) => {
   const n = document.createElement(t);
@@ -80,9 +80,9 @@ export function shotKeyName(store = bindings()) {
 
 export const LOADING_WORDS = Object.freeze({
   shots: 'Loading screens show the screenshots marked for them below.',
-  art: `Loading screens show the night sky - choose Your screenshots on Loading screens (${optionPath('feat:loading-screen')}) to show these.`,   // ORG2
-  off: `Loading screens are off - turn them on in ${optionPath('feat:loading-screen')}.`,
-  classic: 'Loading screens are drawn under the enhanced UI - the classic UI keeps the original game\u2019s loads.',
+  art: `Loading screens show the night sky. Choose Your screenshots under Loading screens (${optionPath('feat:loading-screen')}) to show these.`,   // ORG2
+  off: `Loading screens are off. Turn them on in ${optionPath('feat:loading-screen')}.`,
+  classic: 'Loading screens only appear with the enhanced UI. The classic UI keeps the original loading screens.',
 });
 /** Which of the words above stands: the skin first (the classic UI draws no loading screen), then the row. */
 export const loadingWordsKey = () => (isEnhanced() ? loadingMode() : 'classic');
@@ -125,8 +125,8 @@ async function fill(root) {
 function topCard(root, count) {
   const c = el('div', 'card shots-top');   // no title of its own: the pane's head says Screenshots
   const key = shotKeyName();
-  c.append(el('p', 'meta', `${count} of ${GALLERY_MAX} kept in this browser - never uploaded. `
-    + (key ? `Press ${key} in the world to take one.` : 'The Screenshot action is bound to no key - bind one under Settings, Controls.')));
+  c.append(el('p', 'meta', `${count} of ${GALLERY_MAX} saved in this browser, never uploaded. `
+    + (key ? `Press ${key} in the world to take one.` : 'The Screenshot action has no key. Bind one under Settings, Controls.')));
   c.append(el('p', 'meta', LOADING_WORDS[loadingWordsKey()] ?? LOADING_WORDS.shots));
   const row = el('div', 'acts');
   const pick = el('input');
@@ -159,7 +159,7 @@ export async function addPictures(root, files) {
   }
   const words = [];
   if (unread) words.push(`${unread === 1 ? 'One picture' : `${unread} pictures`} could not be read.`);
-  if (full) words.push(`The gallery is full at ${GALLERY_MAX} - delete some to add more.`);
+  if (full) words.push(`The gallery is full at ${GALLERY_MAX}. Delete some to add more.`);
   if (words.length) say(root, words.join(' '));
   return { kept, unread, full };
 }
@@ -176,7 +176,7 @@ function emptyCard() {
   e.append(el('h3', null, 'No screenshots yet'));
   const key = shotKeyName();
   e.append(el('p', null, key
-    ? `Press ${key} anywhere in the world. Up to ${GALLERY_MAX} shots are kept here, and can stand on the loading screens.`
+    ? `Press ${key} anywhere in the world. Up to ${GALLERY_MAX} shots are kept here and can be shown on loading screens.`
     : 'Bind the Screenshot action under Settings, Controls, then take one anywhere in the world.'));
   return e;
 }

@@ -39,7 +39,7 @@ export const HOME_ENTRY_DEFAULT = 'private';
 // to HOME_PRICE_MIN..HOME_PRICE_MAX.
 // Offline Daggerfall's own price stands (the bank's market and its buy-back). Online the bank buys a deed back at
 // this price too (AUDIT HOME-PRICE C1: a knightly order's free house); customs counts every deed at its own constant
-// (net/realmGoldLaw.js CUSTOMS_HOUSE_PRICE), never either price.
+// (net/realm/realmGoldLaw.js CUSTOMS_HOUSE_PRICE), never either price.
 //
 // THE SERVICE HOLDS THE RANGE (homePriceOk): it bundles no ARENA2, so it cannot measure a building, but no claim names
 // a price outside the range or off its hundreds - a build from before it, which still asks Daggerfall's, is asked to
@@ -90,7 +90,7 @@ export const homeEntryOk = (v) => typeof v === 'string' && HOME_ENTRIES.includes
 /** REALM P2.2b: the share of what a home cost that selling it pays back - Daggerfall's deed share (systems/banking.js
  *  DEED_SELL_MULT, pinned equal) - so the service credits a realm character's record the sum its client credits. */
 export const HOME_SALE_SHARE = 0.85;
-/** What selling a home bought for `price` pays back (systems/onlineHomes.js homeRefund, pinned equal). */
+/** What selling a home bought for `price` pays back (systems/online/onlineHomes.js homeRefund, pinned equal). */
 export const homeSaleRefund = (price) => Math.trunc((Number.isSafeInteger(price) && price > 0 ? price : 0) * HOME_SALE_SHARE);
 
 /**
@@ -138,7 +138,7 @@ export function homeMayEnter(home, { partyNames = [], nowS = Math.floor(Date.now
 // housing customization)". Beautiful Villages and Beautiful Cities lay
 // Daggerfall's towns out again, and a home is a building KEY - which names
 // a building only in one layout of its town. Online the two mods are the
-// room's (systems/onlineLane.js ONLINE_ROOM_MOD_KEYS), and every home
+// room's (systems/online/onlineLane.js ONLINE_ROOM_MOD_KEYS), and every home
 // bought before them was bought in Daggerfall's own towns. So a home keeps
 // the layout its town was bought in, server-wide: NULL - Daggerfall's,
 // every home from before WD3 - or the stamp its first buyer's client sent
@@ -153,6 +153,23 @@ export const HOME_LAYOUT_MODS = Object.freeze(['beautiful-villages', 'beautiful-
 export const HOME_LAYOUT_MAX = 96;
 /** The most towns the layouts read answers (a town per home at the very most). */
 export const HOME_LAYOUTS_MAX = 20000;
+/** FIELD BUGS 2026-10-14 QUEST-HOME: the most homes the layouts read names by building (`homes`) - three a town at the
+ *  towns' own bound. A home past it is known where its town is asked, as every home was before. */
+export const HOME_KEYS_MAX = 3 * HOME_LAYOUTS_MAX;
+/**
+ * FIELD BUGS 2026-10-14 QUEST-HOME (Mac, 2026-10-15: "Close both"): WHAT AN ACT MOVED, for every page online - town
+ * `mapId`'s buildings `on` homes now and `off` homes no more, as one act's answer says it (`moved`). The route signs it
+ * into a home order (server-account/src/index.js homeOrdersOf), which the acting client carries to the hub and the hub fans to everyone, so
+ * a page that read every town's homes at its boot (homeLayouts) hears a house bought after it - a quest's residence is
+ * never picked in it, and one already picked there and not yet reached is chosen again (src/systems/quest/place.js
+ * repickHomedSite).
+ * @param {number} mapId @param {number[]} [on] @param {number[]} [off]
+ */
+export const homeMoved = (mapId, on = [], off = []) => [{ mapId, on, off }];
+/** QUEST-HOME: the most buildings one home order (and one home word) names - a character holds three homes, and a
+ *  deletion is one order a town (src/net/identityToken.js homeOrderValid, src/net/wire.js validHomeWord). */
+export const HOME_ORDER_KEYS_MAX = 16;
+
 /** A home's layout stamp: null (Daggerfall's own town) or `vendor@version` of the layout mods, joined by '+', each
  *  named once. */
 export function homeLayoutOk(v) {
@@ -179,9 +196,9 @@ export function homeLayoutsMatch(a, b) {
 //
 // Mac (ARENA1): "Move them to a new house". The Arena of Daggerfall
 // stands in Daggerfall's cell (4,3) in every layout of the city
-// (world/arenaCity.js), so no building has a key there: an online home
+// (world/arena/arenaCity.js), so no building has a key there: an online home
 // keyed there names nothing. The OWNER'S CLIENT picks its new house by
-// the offline move's own rule (systems/arenaMove.js arenaHomeFor - the
+// the offline move's own rule (systems/arena/arenaMove.js arenaHomeFor - the
 // service holds no town's records) and posts it; the service checks the
 // keys by the law below and carries the home's row whole to the new key
 // (server-account/src/homes.js arenaMoveHome). And no build may buy a
@@ -190,10 +207,10 @@ export function homeLayoutsMatch(a, b) {
 
 /** Daggerfall's map id, unsigned (world/actionSystem.js CASTLE_DAGGERFALL_MAP_ID - the city's, pinned equal). */
 export const HOME_ARENA_MAP_ID = 1291010263;
-/** The arena's cell of Daggerfall's grid (world/arenaCity.js ARENA_CELL, pinned equal): `[blockX, blockY]`. */
+/** The arena's cell of Daggerfall's grid (world/arena/arenaCity.js ARENA_CELL, pinned equal): `[blockX, blockY]`. */
 export const HOME_ARENA_CELL = Object.freeze([4, 3]);
 /** Whether a building key of a town names a building of the arena's cell - read off the RAW key, as the tables keep it
- *  and as world/arenaCity.js inArenaCell reads it (`key >> 16` the block's x, `(key >> 8) & 255` its y). */
+ *  and as world/arena/arenaCity.js inArenaCell reads it (`key >> 16` the block's x, `(key >> 8) & 255` its y). */
 export const homeInArenaCell = (mapId, key) => mapId === HOME_ARENA_MAP_ID && homeBuildingKeyOk(key)
   && (key >> 16) === HOME_ARENA_CELL[0] && ((key >> 8) & 0xff) === HOME_ARENA_CELL[1];
 /** A ROOM'S POINT CARRIED BY THE MOVE: the anchor column's text for a running tenancy the move carried to the new house
@@ -208,7 +225,7 @@ export const RENT_ANCHOR_MOVED = 'null';
 // Asked: "For houses with multiple rooms, the owner can choose to rent out
 // to other players and adjust the price as needed". An owner OFFERS a room
 // of their online home - one of the rooms its own walls part it into
-// (systems/decorRooms.js), named by its number and a point in it (`anchor`,
+// (systems/decor/decorRooms.js), named by its number and a point in it (`anchor`,
 // the building frame's, as a piece of decor stands - net/decorLaw.js), and
 // priced in gold a day, changed whenever the owner likes (a tenancy already
 // paid keeps what it paid). Another player RENTS it at the door, for a few

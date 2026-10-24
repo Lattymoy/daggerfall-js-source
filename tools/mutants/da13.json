@@ -1,0 +1,513 @@
+[
+  {
+    "name": "DA13-1-a-path-may-climb",
+    "file": "app/lib/gameChannel.cjs",
+    "old": "  return p.split('/').every((s) => s !== '' && !/[. ]$/.test(s) && !RESERVED_SEGMENT.test(s));",
+    "new": "  return p.split('/').every((s) => s !== '' && !RESERVED_SEGMENT.test(s));",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "'..' climbs out of the store (and a name ending in a dot or a space is one Windows cannot hold)."
+  },
+  {
+    "name": "DA13-2-a-file-twice-in-another-case",
+    "file": "app/lib/gameChannel.cjs",
+    "old": "    const key = f.path.toLowerCase();\n",
+    "new": "    const key = f.path;\n",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "Windows and macOS hold a.js and A.js as one file: the second write is the first's."
+  },
+  {
+    "name": "DA13-3-another-generation-read",
+    "file": "app/lib/gameChannel.cjs",
+    "old": "  if (m.channel !== GAME_CHANNEL) fail('channel'",
+    "new": "  if (false) fail('channel'",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A shell reads a manifest of a shape it does not know."
+  },
+  {
+    "name": "DA13-4-another-release-read",
+    "file": "app/lib/gameChannel.cjs",
+    "old": "  if (version != null && m.version !== version) fail(",
+    "new": "  if (false) fail(",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A stale or misnamed asset is played as the release."
+  },
+  {
+    "name": "DA13-5-a-file-past-the-pack",
+    "file": "app/lib/gameChannel.cjs",
+    "old": "      if (f.offset + f.length > pack.size) fail(",
+    "new": "      if (false) fail(",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A range the pack does not have."
+  },
+  {
+    "name": "DA13-6-bytes-unhashed",
+    "file": "app/lib/gameChannel.cjs",
+    "old": "  if (bytes.length !== entry.size || sha256(bytes) !== entry.sha256) fail('hash'",
+    "new": "  if (bytes.length !== entry.size) fail('hash'",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A corrupted range is played."
+  },
+  {
+    "name": "DA13-7-a-file-depends-on-its-place",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "      const { encoding, data } = encodeFile(p, bytes);\n",
+    "new": "      const { encoding, data } = encodeFile(p, Buffer.concat([Buffer.from(String(offset)), bytes]));\n",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A file's bytes in the pack that move with what stands before it - DA11's failure, in the pack."
+  },
+  {
+    "name": "DA13-8-noise-made-bigger",
+    "file": "app/lib/gameChannel.cjs",
+    "old": "  return br.length < bytes.length ? { encoding: 'br', data: br } : { encoding: 'raw', data: Buffer.from(bytes) };",
+    "new": "  return { encoding: 'br', data: br };",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "Media brotli cannot shrink, made bigger."
+  },
+  {
+    "name": "DA13-9-a-changed-file-served-from-the-install",
+    "file": "app/lib/gameChannel.cjs",
+    "old": "    if (seed.get(e.path) === e.sha256) plan.seed.push(e);",
+    "new": "    if (seed.has(e.path)) plan.seed.push(e);",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A file changed in place never fetched: the old one plays."
+  },
+  {
+    "name": "DA13-10-what-it-fetched-fetched-again",
+    "file": "app/lib/gameChannel.cjs",
+    "old": "    else if (ownBySha.has(e.sha256))",
+    "new": "    else if (false)",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "Every version re-fetches what the one before it brought."
+  },
+  {
+    "name": "DA13-11-the-install-never-copied",
+    "file": "app/lib/gameChannel.cjs",
+    "old": "    else if (seedBySha.has(e.sha256))",
+    "new": "    else if (false)",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "Bytes the install holds under another name fetched again."
+  },
+  {
+    "name": "DA13-12-the-gap-off-by-one",
+    "file": "app/lib/gameChannel.cjs",
+    "old": "    if (cur && e.offset - cur.end <= gap && end - cur.start <= max) {",
+    "new": "    if (cur && e.offset - cur.end < gap && end - cur.start <= max) {",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "The gap's own law: RANGE_GAP itself joins."
+  },
+  {
+    "name": "DA13-13-a-range-past-max",
+    "file": "app/lib/gameChannel.cjs",
+    "old": "    if (cur && e.offset - cur.end <= gap && end - cur.start <= max) {",
+    "new": "    if (cur && e.offset - cur.end <= gap) {",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "One request could be the whole pack."
+  },
+  {
+    "name": "DA13-14-a-200-sliced",
+    "file": "app/lib/gameChannel.cjs",
+    "old": "  if (status !== 206) fail('range'",
+    "new": "  if (false) fail('range'",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A 200 sliced as if it were the range."
+  },
+  {
+    "name": "DA13-15-another-shell-carried",
+    "file": "app/lib/gameChannel.cjs",
+    "old": "  if (manifest.shell !== seed.shell) return",
+    "new": "  if (false) return",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A game built for another shell played on this one."
+  },
+  {
+    "name": "DA13-16-a-failed-version-retried",
+    "file": "app/lib/gameChannel.cjs",
+    "old": "  if (failed.includes(manifest.version)) return",
+    "new": "  if (false) return",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A version that failed here is tried for ever, never the installer's."
+  },
+  {
+    "name": "DA13-17-the-delta-counts-the-unchanged",
+    "file": "app/lib/gameChannel.cjs",
+    "old": "  for (const f of next.files) if (!had.has(f.sha256)) { files++; bytes += f.length; }",
+    "new": "  for (const f of next.files) if (had.has(f.sha256)) { files++; bytes += f.length; }",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "The publish step measures the wrong half."
+  },
+  {
+    "name": "DA13-18-a-new-install-keeps-old-versions",
+    "file": "app/lib/gameStore.cjs",
+    "old": "  if (!state || state.channel !== GAME_CHANNEL || state.seed !== seed.version) {",
+    "new": "  if (!state || state.channel !== GAME_CHANNEL) {",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "An installer's new seed under versions fetched against the old one."
+  },
+  {
+    "name": "DA13-19-a-failed-stage-left-behind",
+    "file": "app/lib/gameStore.cjs",
+    "old": "        stop = true;\n        fs.rmSync(dir, { recursive: true, force: true });\n        throw e;",
+    "new": "        stop = true;\n        throw e;",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "Half a version left on disk."
+  },
+  {
+    "name": "DA13-20-the-version-before-not-kept",
+    "file": "app/lib/gameStore.cjs",
+    "old": "      let previous = replaced;\n",
+    "new": "      let previous = null;\n",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "Nothing to roll back to."
+  },
+  {
+    "name": "DA13-21-a-trial-never-given-up",
+    "file": "app/lib/gameStore.cjs",
+    "old": "      if (state.trial && state.tries >= 1) did.rolledBack = store.rollback();",
+    "new": "      if (false) did.rolledBack = store.rollback();",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A version that never booted plays for ever."
+  },
+  {
+    "name": "DA13-22-the-bad-version-forgotten",
+    "file": "app/lib/gameStore.cjs",
+    "old": "        failed: [...state.failed.filter((v) => v !== bad), bad].slice(-FAILED_KEEP),\n",
+    "new": "        failed: state.failed,\n",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A version that never booted is fetched and tried again, never the installer's."
+  },
+  {
+    "name": "DA13-23-a-proved-trial-keeps-everything",
+    "file": "app/lib/gameStore.cjs",
+    "old": "      save();\n      sweep([state.current, state.ready]);\n      return true;",
+    "new": "      save();\n      return true;",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "Every version ever fetched kept on disk."
+  },
+  {
+    "name": "DA13-24-a-removed-file-served",
+    "file": "app/lib/gameStore.cjs",
+    "old": "      const e = index?.byPath.get(rel);\n      if (!e) return null;",
+    "new": "      const e = index?.byPath.get(rel);\n      if (!e) return index ? path.join(dist, rel) : null;",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A file the release removed still served from the install."
+  },
+  {
+    "name": "DA13-25-a-missing-file-unnoticed",
+    "file": "app/lib/gameStore.cjs",
+    "old": "        if (f.own) {\n          if (fs.statSync(path.join(versionDir(v), 'files', f.path)).size !== f.size) return null;\n        } else if",
+    "new": "        if (f.own) {\n        } else if",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A version with a file gone behind its back is played."
+  },
+  {
+    "name": "DA13-26-the-ready-version-never-played",
+    "file": "app/lib/gameStore.cjs",
+    "old": "      const r = state.ready;\n      if (r) {",
+    "new": "      const r = state.ready;\n      if (false) {",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A version readied while the game ran is never played."
+  },
+  {
+    "name": "DA13-27-the-game-download-holds-nothing",
+    "file": "app/lib/launcherState.cjs",
+    "old": "      u.status = 'downloading';\n      u.percent = 0; u.transferred = 0; u.total = Number(ev.total) || 0;\n      break;\n    case 'game-applied':",
+    "new": "      u.status = 'current';\n      u.percent = 0; u.transferred = 0; u.total = Number(ev.total) || 0;\n      break;\n    case 'game-applied':",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "Play goes in on the old version while the new one downloads."
+  },
+  {
+    "name": "DA13-28-a-game-found-after-play-hijacks",
+    "file": "app/lib/launcherState.cjs",
+    "old": "      if (s.launch || !MAY_FIND.has(u.status)) break;\n      u.kind = 'game';",
+    "new": "      if (!MAY_FIND.has(u.status)) break;\n      u.kind = 'game';",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "The launcher takes a download after Play."
+  },
+  {
+    "name": "DA13-29-the-version-played-never-moves",
+    "file": "app/lib/launcherState.cjs",
+    "old": "      s.current = String(ev.version).trim();\n",
+    "new": "",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "The launcher says v-old after the game updated."
+  },
+  {
+    "name": "DA13-30-a-failure-strands-the-launcher",
+    "file": "app/lib/launcherState.cjs",
+    "old": "{ u.status = 'checking'; u.kind = null; u.version = null; }",
+    "new": "{ u.status = 'failed'; u.kind = null; u.version = null; }",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "The release is not handed to the installer's path from a check."
+  },
+  {
+    "name": "DA13-31-the-game-download-installs",
+    "file": "app/lib/launcherState.cjs",
+    "old": "      if (u.status === 'downloading' && u.kind !== 'game') {",
+    "new": "      if (u.status === 'downloading') {",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "An updater event turns the game's download into an install."
+  },
+  {
+    "name": "DA13-32-a-failure-not-remembered",
+    "file": "app/main.cjs",
+    "old": "    if (version) gameStore.fail(version);\n",
+    "new": "",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A manifest that never reads is asked for again for ever, the installer never asked."
+  },
+  {
+    "name": "DA13-33-a-failed-download-asks-nobody",
+    "file": "app/main.cjs",
+    "old": "{ launcherDispatch({ type: 'game-failed' }); startLaunchCheck(); return; }",
+    "new": "{ launcherDispatch({ type: 'game-failed' }); return; }",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "The fallback: no installer's path after a failed download."
+  },
+  {
+    "name": "DA13-34-the-install-always-served",
+    "file": "app/main.cjs",
+    "old": "  if (gameStore?.active()) {\n",
+    "new": "  if (false) {\n",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "The version the channel brought is never played."
+  },
+  {
+    "name": "DA13-35-never-proved",
+    "file": "app/main.cjs",
+    "old": "e.sender === gameWindow.webContents) gameStore?.bootDone();",
+    "new": "e.sender === gameWindow.webContents) {}",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "Every version stays on trial and is rolled back at the next launch."
+  },
+  {
+    "name": "DA13-36-the-boot-never-says",
+    "file": "app/preload.cjs",
+    "old": "    ipcRenderer.send('dagger:game-up');\n",
+    "new": "",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "The game never says it came up."
+  },
+  {
+    "name": "DA13-37-any-url",
+    "file": "app/main.cjs",
+    "old": "  if (typeof url !== 'string' || !url.startsWith(`${RELEASES_URL}/download/`)) return Promise.reject(",
+    "new": "  if (typeof url !== 'string') return Promise.reject(",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js",
+      "test/tooling/updatecheck.test.js"
+    ],
+    "note": "The channel fetches whatever a release JSON names."
+  },
+  {
+    "name": "DA13-38-the-launch-check-skips-the-channel",
+    "file": "app/main.cjs",
+    "old": "  // DA13: the game's own channel first - only the files that changed; the installer's path answers what it cannot carry\n  askGame().then((g) => {",
+    "new": "  // DA13: the game's own channel first - only the files that changed; the installer's path answers what it cannot carry\n  Promise.resolve('installer').then((g) => {",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "Every launch update is the installer's again."
+  },
+  {
+    "name": "DA13-39-a-game-ahead-asks-the-installer",
+    "file": "app/main.cjs",
+    "old": "    if (!latest) return gameStore.active() ? 'offline' : 'installer';",
+    "new": "    if (!latest) return 'installer';",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "With the API down, the updater downloads the installer of a version the game already plays."
+  },
+  {
+    "name": "DA13-40-compared-to-the-installer",
+    "file": "app/main.cjs",
+    "old": "    if (!isNewerRelease(gameVersion(), latest.tag)) return 'current';",
+    "new": "    if (!isNewerRelease(app.getVersion(), latest.tag)) return 'current';",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A version the channel already brought is fetched again and again."
+  },
+  {
+    "name": "DA13-41-switched-under-a-running-page",
+    "file": "app/main.cjs",
+    "old": "    if (!gameWindow || gameWindow.isDestroyed()) {\n      gameStore.activate(version);",
+    "new": "    if (true) {\n      gameStore.activate(version);",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A running page's lazy chunks swapped from under it."
+  },
+  {
+    "name": "DA13-42-a-200-read-whole",
+    "file": "app/main.cjs",
+    "old": "    if (res.status !== 206 || !res.body) { stop.abort();",
+    "new": "    if (!res.body) { stop.abort();",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A host that ignores Range is read whole - the full pack - before it is refused."
+  },
+  {
+    "name": "DA13-43-the-release-without-its-game",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "  GAME_FILES.manifest, GAME_FILES.pack,\n]);",
+    "new": "]);",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A release with no game published: every copy takes the installer."
+  },
+  {
+    "name": "DA13-44-the-ceiling-lifted",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "export const MAX_UPDATE_SHARE = 0.5;",
+    "new": "export const MAX_UPDATE_SHARE = 1;",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A DA11-sized regression publishes."
+  },
+  {
+    "name": "DA13-45-a-moved-id-passes",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "  if (!sameShell && shellChanged === false) problems.push(",
+    "new": "  if (false) problems.push(",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A shell id that moves with nothing changed sends every update to the installer, unseen."
+  },
+  {
+    "name": "DA13-46-the-icon-not-the-shell",
+    "file": "scripts/desktopRelease.mjs",
+    "old": "  if (typeof pkg.build?.icon === 'string') out.push(fromApp(pkg.build.icon));\n",
+    "new": "",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A file the shell packs from outside app/ changes nothing in its id."
+  },
+  {
+    "name": "DA13-47-the-game-in-the-shell-id",
+    "file": "scripts/desktopRelease.mjs",
+    "old": " || f.from === '../dist') continue;",
+    "new": ") continue;",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "Every release changes the shell's id: the installer every time."
+  },
+  {
+    "name": "DA13-48-no-seed-in-the-installers",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "        run: node scripts/desktopRelease.mjs seed dist app/game-seed.json\n",
+    "new": "        run: echo no seed\n",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "No copy knows what it holds: the channel never runs."
+  },
+  {
+    "name": "DA13-49-a-pack-per-leg",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "        if: needs.version.outputs.tag != '' && matrix.os == 'ubuntu-latest'\n",
+    "new": "        if: needs.version.outputs.tag != ''\n",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "Three packs, one name - the last leg's wins over the manifest of another."
+  },
+  {
+    "name": "DA13-50-not-measured",
+    "file": ".github/workflows/release-desktop.yml",
+    "old": "            node scripts/desktopRelease.mjs delta previous/DFO-Online-game.json.gz release/DFO-Online-game.json.gz \"$PREV\"\n",
+    "new": "",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "A regressed update publishes."
+  },
+  {
+    "name": "DA13-51-the-seed-not-packed",
+    "file": "app/package.json",
+    "old": "      \"game-seed.json\",\n",
+    "new": "",
+    "tests": [
+      "test/tooling/da13_gamechannel.test.js"
+    ],
+    "note": "electron-builder leaves the index out of the shell."
+  }
+]

@@ -1,0 +1,282 @@
+[
+  {
+    "name": "RELAY-SHARE-the-placeholder-read-again",
+    "file": "src/combat/healthShare.js",
+    "old": "  if (e?.relayHealth) {",
+    "new": "  if (false) {",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "a stand-in's 1e9 of 1e9 read as whole: no 'under its health' power fires on any body the relay runs"
+  },
+  {
+    "name": "RELAY-SHARE-the-reader-never-asked",
+    "file": "src/combat/healthShare.js",
+    "old": "try { s = typeof e.relayShare === 'function' ? e.relayShare() : null; } catch { s = null; }",
+    "new": "try { s = null; } catch { s = null; }",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "the relay's word handed to the stand-in and never read"
+  },
+  {
+    "name": "RELAY-SHARE-a-throw-let-through",
+    "file": "src/combat/healthShare.js",
+    "old": "    try { s = typeof e.relayShare === 'function' ? e.relayShare() : null; } catch { s = null; }",
+    "new": "    s = typeof e.relayShare === 'function' ? e.relayShare() : null;",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "a reader that throws aborts the blow that asked"
+  },
+  {
+    "name": "RELAY-SHARE-the-clamp-dropped",
+    "file": "src/combat/healthShare.js",
+    "old": "Math.max(0, Math.min(1, s))",
+    "new": "s",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "a share outside 0..1 passed on"
+  },
+  {
+    "name": "RELAY-SHARE-a-NaN-passed",
+    "file": "src/combat/healthShare.js",
+    "old": "typeof s === 'number' && Number.isFinite(s) ? ",
+    "new": "typeof s === 'number' ? ",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "a word that says no number read as a share"
+  },
+  {
+    "name": "RELAY-SHARE-a-zero-whole-divided",
+    "file": "src/combat/healthShare.js",
+    "old": "&& max > 0 ? hp / max : null",
+    "new": "&& max >= 0 ? hp / max : null",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "a body with no whole read as a share"
+  },
+  {
+    "name": "RELAY-SHARE-the-stand-in-keeps-no-reader",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "  e.relayShare = typeof share === 'function' ? share : null;",
+    "new": "  e.relayShare = null;",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "every owner's reader dropped at the stand-in"
+  },
+  {
+    "name": "RELAY-SHARE-a-crystal-stand-in-unhanded",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "  const e = bossStandIn(look, CRYSTAL_NAME, share, blowX);",
+    "new": "  const e = bossStandIn(look, CRYSTAL_NAME, null, blowX);",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "a crystal's (and a Heart's, an Elite Breach object's) reader never reaches its stand-in"
+  },
+  {
+    "name": "RELAY-SHARE-a-host-stand-in-unhanded",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "  const e = bossStandIn({ mobile: look.mobile }, look.name, share, blowX);",
+    "new": "  const e = bossStandIn({ mobile: look.mobile }, look.name, null, blowX);",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "a host body's (an Echo's, an Elite Breach lord's and add's) reader never reaches its stand-in"
+  },
+  {
+    "name": "RELAY-SHARE-the-Warden-unread",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "      standIn ??= bossStandIn(bossLookOf(s.boss), bossOf(s).name, () => { const q = link.state(); return wordShare(q?.hp, q?.max); });",
+    "new": "      standIn ??= bossStandIn(bossLookOf(s.boss), bossOf(s).name);",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "the report's own fight: the Warden under a quarter, no +50%"
+  },
+  {
+    "name": "RELAY-SHARE-the-Warden-at-his-first-sight",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "() => { const q = link.state(); return wordShare(q?.hp, q?.max); }",
+    "new": "() => { const q = s; return wordShare(q?.hp, q?.max); }",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "his health read as it stood when the stand-in was made, never as it falls"
+  },
+  {
+    "name": "RELAY-SHARE-the-crystals-unread",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "crystalStandIn(bossLookOf(s.boss), q.c, crystalShare(q.c))",
+    "new": "crystalStandIn(bossLookOf(s.boss), q.c)",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "a Reckoning's crystals read as whole"
+  },
+  {
+    "name": "RELAY-SHARE-the-host-unread",
+    "file": "src/scenes/gate/gateHost.js",
+    "old": "entity: hostStandIn(b.look, a.i, () => wordShare(b.hp, b.target?.m)),",
+    "new": "entity: hostStandIn(b.look, a.i),",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "his host's bodies read as whole"
+  },
+  {
+    "name": "RELAY-SHARE-the-host-whole-for-its-health",
+    "file": "src/scenes/gate/gateHost.js",
+    "old": "wordShare(b.hp, b.target?.m)",
+    "new": "wordShare(b.target?.m, b.target?.m)",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "a host body's whole read where its health is"
+  },
+  {
+    "name": "RELAY-SHARE-the-breach-unread",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "hostStandIn({ mobile: look.mobile, name: look.name }, b.i, () => wordShare(d.target?.hp, d.target?.m), myBlowX)",
+    "new": "hostStandIn({ mobile: look.mobile, name: look.name }, b.i, null, myBlowX)",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "every lord and add of an Elite Breach read as whole"
+  },
+  {
+    "name": "RELAY-SHARE-the-breach-never-refilled",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": " d.target.m = b.max; d.target.hp = b.hp;",
+    "new": " d.target.m = b.max;",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "a body's health frozen at its first frame"
+  },
+  {
+    "name": "RELAY-SHARE-the-breach-objects-unread",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "crystalStandIn({ mobile: 31, scale: 1 }, b.i, () => c.hp, myBlowX)",
+    "new": "crystalStandIn({ mobile: 31, scale: 1 }, b.i, null, myBlowX)",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "an Elite Breach's struck objects read as whole"
+  },
+  {
+    "name": "RELAY-SHARE-the-Remnant-unread",
+    "file": "src/scenes/superDungeon/sdRemnant.js",
+    "old": "SD_REMNANT_NAMES.remnant, () => { const { s } = read(); return wordShare(s.h, s.m); });",
+    "new": "SD_REMNANT_NAMES.remnant);",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "the Remnant read as whole"
+  },
+  {
+    "name": "RELAY-SHARE-the-Echoes-unread",
+    "file": "src/scenes/superDungeon/sdRemnant.js",
+    "old": "}, e, () => { const E = read().s.ec?.[e]; return wordShare(E?.h, E?.m); }));",
+    "new": "}, e));",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "the Dragon Break's Echoes read as whole"
+  },
+  {
+    "name": "RELAY-SHARE-the-Hearts-unread",
+    "file": "src/scenes/superDungeon/sdRemnant.js",
+    "old": "crystalStandIn({ mobile: SD_REMNANT_MOBILE }, c, () => { const { s } = read(); return wordShare(s.cx?.c?.[c]?.[2], s.cx?.m); });",
+    "new": "crystalStandIn({ mobile: SD_REMNANT_MOBILE }, c);",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "the Reset's Hearts read as whole"
+  },
+  {
+    "name": "RELAY-SHARE-the-serpent-says-nothing",
+    "file": "src/scenes/serpentHost.js",
+    "old": "      return live && s.day === live.day ? wordShare(s.hp, s.max) : null;",
+    "new": "      return null;",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "the serpent's word never handed on"
+  },
+  {
+    "name": "RELAY-SHARE-the-serpent-stand-in-unread",
+    "file": "src/scenes/world.js",
+    "old": "'the sea serpent', () => serpentHost?.healthShare() ?? null);",
+    "new": "'the sea serpent');",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "the serpent read as whole (bootWorld's one line, pinned by source)"
+  },
+  {
+    "name": "RELAY-SHARE-the-loot-keeps-its-own-copy",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "const share = (e) => healthShare(e) ?? 1;",
+    "new": "const share = (e) => (Number.isFinite(e?.health) && e.maxHealth > 0 ? e.health / e.maxHealth : 1);",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "the report itself: Sweet Mother's Kiss and Serpent's Kiss read the placeholder again"
+  },
+  {
+    "name": "RELAY-SHARE-the-loot-reads-no-word-as-under",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "const share = (e) => healthShare(e) ?? 1;",
+    "new": "const share = (e) => healthShare(e) ?? 0;",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "a body whose word is unheard read as at death's door: +50% on every blow"
+  },
+  {
+    "name": "RELAY-SHARE-the-masteries-keep-their-own-copy",
+    "file": "src/systems/weaponMastery.js",
+    "old": "const shareOf = healthShare;",
+    "new": "const shareOf = (e) => (e?.relayHealth ? null : Number.isFinite(e?.health) && e.maxHealth > 0 ? e.health / e.maxHealth : 1);",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "the Axe and the hammer past 100 pay the halves' mean where the relay's word says the half"
+  },
+  {
+    "name": "RELAY-SHARE-the-martial-paths-keep-their-own-copy",
+    "file": "src/systems/martialPowers.js",
+    "old": "const share = (e) => healthShare(e) ?? 1;",
+    "new": "const share = (e) => (Number.isFinite(e?.health) && e.maxHealth > 0 ? e.health / e.maxHealth : 1);",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "Gutting Lunge never strikes again on a body the relay runs"
+  },
+  {
+    "name": "RELAY-SHARE-the-martial-paths-read-no-word-as-under",
+    "file": "src/systems/martialPowers.js",
+    "old": "const share = (e) => healthShare(e) ?? 1;",
+    "new": "const share = (e) => healthShare(e) ?? 0;",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "Gutting Lunge strikes again on every body whose word is unheard"
+  },
+  {
+    "name": "RELAY-SHARE-the-arcane-paths-keep-their-own-copy",
+    "file": "src/systems/arcanePowers.js",
+    "old": "const share = (e) => healthShare(e) ?? 1;",
+    "new": "const share = (e) => (Number.isFinite(e?.health) && e.maxHealth > 0 ? e.health / e.maxHealth : 1);",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "a second share law back beside the one (killed by the sweep: Blood Boil's second burn has no record to land on at a stand-in)"
+  },
+  {
+    "name": "RELAY-SHARE-the-sets-keep-their-own-copy",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "const belowHalf = (e) => (healthShare(e) ?? 1) < 0.5;",
+    "new": "const belowHalf = (e) => Number.isFinite(e?.health) && e.maxHealth > 0 && e.health < e.maxHealth / 2;",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "Run Them Down never fires on a body the relay runs"
+  },
+  {
+    "name": "RELAY-SHARE-the-sets-read-no-word-as-under",
+    "file": "src/systems/sigil/sigilSetPowers.js",
+    "old": "const belowHalf = (e) => (healthShare(e) ?? 1) < 0.5;",
+    "new": "const belowHalf = (e) => (healthShare(e) ?? 0) < 0.5;",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "Run Them Down on every body whose word is unheard"
+  },
+  {
+    "name": "RELAY-SHARE-the-breach-object-reader-stale",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "() => c.hp, myBlowX)",
+    "new": "((s0) => () => s0)(b.max > 0 ? b.hp / b.max : 0), myBlowX)",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "lane L3's survivor (L3-breach-object-reader-stale): a struck object's stand-in reads the share it was first drawn at, never its word as it falls"
+  },
+  {
+    "name": "RELAY-SHARE-the-serpent-reads-any-fight",
+    "file": "src/scenes/serpentHost.js",
+    "old": "return live && s.day === live.day ? wordShare(s.hp, s.max) : null;",
+    "new": "return wordShare(s?.hp, s?.max);",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "lane L3's survivor (L3-serpent-reader-any-fight): the serpent's host reads whatever fight its link holds"
+  },
+  {
+    "name": "RELAY-SHARE-the-serpent-reads-any-day",
+    "file": "src/scenes/serpentHost.js",
+    "old": "return live && s.day === live.day ? wordShare(s.hp, s.max) : null;",
+    "new": "return live ? wordShare(s.hp, s.max) : null;",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "lane L3's survivor (L3-serpent-reader-any-day): another day's serpent read for today's"
+  },
+  {
+    "name": "RELAY-SHARE-the-Chop-keeps-its-own-copy",
+    "file": "src/combat/technique/techniqueBlow.js",
+    "old": "  if (blow?.wounded > 0) m += blow.wounded * Math.max(0, Math.min(1, 1 - (healthShare(foe?.entity) ?? 1)));",
+    "new": "  if (blow?.wounded > 0) { const e = foe?.entity, max = e?.maxHealth; if (max > 0) m += blow.wounded * Math.max(0, Math.min(1, 1 - (Number.isFinite(e.health) ? e.health : max) / max)); }",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "AUDIT FB1018f L3-5: Headsman's Chop's own share again - a relay body's 1e9 placeholder read whole, the Chop nothing on any of them"
+  },
+  {
+    "name": "RELAY-SHARE-the-Chop-reads-no-word-as-under",
+    "file": "src/combat/technique/techniqueBlow.js",
+    "old": "(healthShare(foe?.entity) ?? 1)",
+    "new": "(healthShare(foe?.entity) ?? 0)",
+    "tests": ["test/systems/loot/fb1018f_relayshare.test.js"],
+    "why": "AUDIT FB1018f L3-5: a body with no word heard read as at nothing - the Chop's whole weight on it"
+  }
+]

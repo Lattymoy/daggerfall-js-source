@@ -6,7 +6,7 @@
 // altogether."
 //
 // Both halves were one bug and it is a LAYOUT bug, which is why no
-// pin in `test/chat1.test.js` could see it: node has no layout engine,
+// pin in `test/net/chat1.test.js` could see it: node has no layout engine,
 // so the whole suite drives a fake DOM whose boxes are whatever the
 // fake says they are. `.dfchat-list` is a fixed-height flex COLUMN
 // (`height: min(220px, 34vh)`) and `.dfchat-line` carried

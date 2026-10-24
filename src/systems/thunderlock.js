@@ -30,18 +30,18 @@
 // registerCustomTemplates takes them and the frozen DFU table stays
 // what it is. Nothing here writes to itemTemplates.json.
 
-import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields, registerAmmunition, registerOwnItemImage } from './itemTemplates.js';
+import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields, registerAmmunition, registerOwnItemImage } from './item/itemTemplates.js';
 import { addVendorTextures, vendorTextureCount } from './textureReplacement.js';
-import { registerUniqueFind, registerLegendary, FOE_FAMILIES } from './lootRarity.js';
+import { registerUniqueFind, registerLegendary, FOE_FAMILIES } from './loot/lootRarity.js';
 import { SKILLS } from './skills.js';
 import { APP_ROOT } from './appRoot.js';   // AUDIT-THUNDERLOCK F7
-import { GUN_FEEL } from '../combat/gunFeel.js';   // FIELD-GUN13: the flash's reach, from the one home the feel lives in (a leaf - no imports of its own)
+import { GUN_FEEL } from '../combat/gun/gunFeel.js';   // FIELD-GUN13: the flash's reach, from the one home the feel lives in (a leaf - no imports of its own)
 // The indices live in a LEAF (characters/thunderlockIds.js) because
 // characters/weapons.js needs them too and importing this file from
-// there would close a cycle through systems/itemTemplates.js. Said out
+// there would close a cycle through systems/item/itemTemplates.js. Said out
 // loud on the leaf itself.
 import {
-  THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE, THUNDERLOCK_ARCHIVE, PELLET_ARCHIVE,
+  THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE, THUNDERLOCK_ARCHIVE, PELLET_ARCHIVE, PISTOLET_TEMPLATE,
   orbColour,   // FIELD-GUN17: the muzzle light wears the orb's own colour, sampled rather than named
 } from '../characters/thunderlockIds.js';
 
@@ -49,7 +49,7 @@ import {
  *  this file is still the weapon's one front door. NOT wrapped in a
  *  `TEMPLATE` object: systems/survival/food.js already exports that
  *  name with other numbers in it, and one name meaning two things is
- *  what test/audit24_onehome.test.js's ratchet is for. */
+ *  what test/systems/talk/audit24_onehome.test.js's ratchet is for. */
 export { THUNDERLOCK_TEMPLATE, PELLET_TEMPLATE };
 
 /** The group a weapon must be in for equip, the paperdoll and the
@@ -60,7 +60,7 @@ export const WEAPON_GROUP = 'Weapons';
  *  A classic weapon's paperdoll art lives in TEXTURE.234 (233 for
  *  female characters, ApplyWeaponMaterial's tail); this one has no
  *  entry there and no female variant to be off by one from, which is
- *  why characters/paperdollArt.js exempts a custom template from that
+ *  why characters/paperdoll/paperdollArt.js exempts a custom template from that
  *  subtraction rather than this file pretending to be classic. */
 export const ART = Object.freeze({ weaponArchive: THUNDERLOCK_ARCHIVE, ammoArchive: PELLET_ARCHIVE });
 
@@ -187,7 +187,7 @@ export function spendPellet(items) {
 /** The art: our own PNGs, through the same vendor-texture door the
  *  survival mod's icons come in by. Record 0 of each archive.
  *
- *  ONE SPRITE, TWO JOBS (characters/paperdollArt.js): the paperdoll
+ *  ONE SPRITE, TWO JOBS (characters/paperdoll/paperdollArt.js): the paperdoll
  *  layer and the inventory icon are the same record, which is why
  *  gun-paperdoll.png carries the hand gap and why the icon has a notch
  *  in it - it is a doll layer being shown in a list. */
@@ -287,9 +287,9 @@ export function installThunderlockIcons({ fetchBytes = null } = {}) {
 // GROUP_TEMPLATE_INDICES, which is DFU's own enum table, and a custom
 // template is not in it. The survival mod had to ADD its provisions to
 // the shelves deliberately; this one simply never appears there.
-// test/thunderlock.test.js pins that as a law rather than an accident.
+// test/systems/thunderlock.test.js pins that as a law rather than an accident.
 //
-// FOUND, THEN, and by the port's own loot ladder (systems/lootRarity.js
+// FOUND, THEN, and by the port's own loot ladder (systems/loot/lootRarity.js
 // LR1-LR5). It registers as a UNIQUE FIND, which is a different
 // question from a rarity tier: a tier decorates an item DFU's loot
 // roll already produced, and no DFU roll can produce this weapon at
@@ -304,6 +304,21 @@ export function installThunderlockIcons({ fetchBytes = null } = {}) {
 // with it - few enough that the weapon still sends you looking.
 export const FIND_MIN_TIER = 4;
 export const FIND_PELLETS = Object.freeze({ min: 6, max: 18 });
+// PISTOLET (2026-10-21, the owner: "make the thunderlock in general more rare along with the new hand cannon" - each
+// "Half as often"): ONE GUN FIND, the Thunderlock's own at its old weight, and the gun it mints is either gun, each
+// GUN_SHARE of the time. AUDIT PISTOLET (A5, A8, C2, C3, D6, D29): two finds at half weight were neither half nor stable
+// - the 6 per mille cap and Luck's nudge are each find's, unscaled by the weight (a tier-14 boss turned up a gun TWICE
+// as often, the Thunderlock no rarer at all), and the second find's roll moved every later draw of every seeded loot
+// list (Loot-II-Arc law 9: seed 43 grew a Welkynd Stone). One find draws what the Thunderlock's always drew - its roll,
+// then ONE draw in the mint, which picks the gun and counts the Pellets both - so every seed is its seed, and each gun
+// is exactly half the old chance at every source, cap and Luck included.
+//
+// GUNS-UNFOUND (2026-10-23, the owner: "remove the thunderlock and pistolet from the loot pool ... Dont remove them from
+// players who have them, but it should no longer be able to drop. Ammo should still drop"): THE FIND MINTS THE PELLETS
+// ALONE. It stays registered, at its weight, its tier and its place in the finds, and its mint still takes its ONE draw
+// - so every draw before it, and every list it does not fire on, is what it was (Loot-II-Arc law 9) - and that draw
+// counts the Pellets, FIND_PELLETS as ever; no gun comes with them (a list it fires on loses only the gun's own tier
+// roll, as the gun is lost). A gun already held is the player's still: its templates, its art and its laws stay.
 
 // The pellet is AMMUNITION: never rarity-promoted, for the Arrow's own
 // reason - promoting a stack enchants it, and an enchanted item does
@@ -311,12 +326,12 @@ export const FIND_PELLETS = Object.freeze({ min: 6, max: 18 });
 registerAmmunition(PELLET_TEMPLATE);
 
 registerUniqueFind({
-  id: 'dwarven-thunderlock',
+  id: 'dwarven-thunderlock',   // its id kept: the find's place, not its prize (GUNS-UNFOUND)
   minTier: FIND_MIN_TIER,
-  weight: 1,
   mint: (rolls = Math.random) => {
-    const n = FIND_PELLETS.min + Math.floor(rolls() * (FIND_PELLETS.max - FIND_PELLETS.min + 1));
-    return [createThunderlock(), createPellets(n)];
+    // ONE draw, counting the Pellets - so the mint draws exactly what it always drew; GUNS-UNFOUND: and no gun
+    const n = FIND_PELLETS.min + Math.min(FIND_PELLETS.max - FIND_PELLETS.min, Math.floor(rolls() * (FIND_PELLETS.max - FIND_PELLETS.min + 1)));
+    return [createPellets(n)];
   },
 });
 
@@ -325,7 +340,9 @@ registerUniqueFind({
  *  own case - it is already the hardest hitter, so its signature is
  *  what it does to the user rather than more damage. */
 registerLegendary({
-  id: 'the-last-lock', name: 'The Last Lock', group: WEAPON_GROUP, templates: [THUNDERLOCK_TEMPLATE],
+  // AUDIT PISTOLET C5: both guns - a Pistolet claimed by no exclusive record rolled up every time as Wyrmbane, "Forged
+  // for a dragon hunt" with Fire Storm (824 of 824), exactly what `exclusive` is for
+  id: 'the-last-lock', name: 'The Last Lock', group: WEAPON_GROUP, templates: [THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE],
   exclusive: true,   // a gun does not roll up as a blade forged for a dragon hunt
   affixes: [
     { id: 'damage', value: 20 },
@@ -335,11 +352,11 @@ registerLegendary({
   enchantment: { type: 3, param: 20 },   // CastWhenStrikes - the shot carries a spell
   lore: 'The Dwemer left no instructions and no second one.',
   // AUDIT LOOT F8 (the Loot arc, bible/06-Systems/Loot-Arc.md section 7 - "every Legendary a power"): its POWER, the
-  // Dwemer's own quarrel - they knelt to no god and no daedra (systems/lootPowers.js's bane, on its own shots) - and,
+  // Dwemer's own quarrel - they knelt to no god and no daedra (systems/loot/lootPowers.js's bane, on its own shots) - and,
   // a unique find of no family, where its codex row says it is found
   power: Object.freeze({ name: 'Dwemer Defiance', kind: 'bane', foes: FOE_FAMILIES.daedra, pct: 50,
-    brief: '+50% vs daedra and atronachs', text: 'Its shots deal +50% damage to the daedra, the atronachs, imps and gargoyles - the Dwemer knelt to none of them' }),
-  hint: 'Said to turn up anywhere, once in a great while',
+    brief: '+50% vs daedra and atronachs', text: 'Its shots deal 50% more damage to daedra, atronachs, imps and gargoyles. The Dwemer knelt to none of them' }),
+  hint: 'No longer found',   // GUNS-UNFOUND: no gun drops, so none rolls up as it - a held one keeps it
 });
 
 // ── THE SOUND ───────────────────────────────────────────────────────
@@ -403,7 +420,7 @@ export function installThunderlockSounds(audio, { fetchBytes = null } = {}) {
 //
 // TWO ASKS IN ONE SENTENCE, and they are opposite ends of the same
 // fact. The flash is the brightest thing in the room for two frames,
-// so (a) it cannot be DARKENED by the room - combat/weaponRig.js's
+// so (a) it cannot be DARKENED by the room - combat/weapon/weaponRig.js's
 // `drawThunderlock` lifts the sprite's tint to white on the curve -
 // and (b) it must LIGHT the room, which is this.
 //
@@ -460,11 +477,15 @@ export function thunderlockMuzzleLight(entity, feet, yaw = 0) {
   const f = [sy, 0, cy];              // forward
   const r = [cy, 0, -sy];             // right
   const o = MUZZLE_OFFSET;
+  // PISTOLET: the side the flash is on - a pair's left pistol fires from the left hand - and the gun's own reach (the
+  // Pistolet's PISTOLET_FEEL.flashRange), both parked by the rig beside the glow
+  const side = entity._thunderlockFlashSide === -1 ? -1 : 1;
+  const reach = entity._thunderlockFlashRange ?? GUN_FEEL.flashRange;
   return {
-    x: feet[0] + r[0] * o.right + f[0] * o.forward,
+    x: feet[0] + r[0] * o.right * side + f[0] * o.forward,
     y: feet[1] + o.up,
-    z: feet[2] + r[2] * o.right + f[2] * o.forward,
-    range: GUN_FEEL.flashRange * glow,
+    z: feet[2] + r[2] * o.right * side + f[2] * o.forward,
+    range: reach * glow,
     color: orbColour(),   // FIELD-GUN17: `withPlayerLights` takes a light's own colour where it has one
     // MAC-T1: a flash in your own hand gets no bloom glare either -
     // the same exemption the carried torch takes, for the same reason

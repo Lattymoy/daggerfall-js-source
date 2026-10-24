@@ -4,20 +4,20 @@
     "file": "src/scenes/world.js",
     "old": "    overlayActive: () => townTalk.overlayActive || !!travelView?.active || !!modes?.overlayHeld,",
     "new": "    overlayActive: () => townTalk.overlayActive || !!travelView?.active,",
-    "tests": ["test/fb0929h_touchheld.test.js", "test/tv1_travel_view.test.js"]
+    "tests": ["test/ui/fb0929h_touchheld.test.js", "test/render/tv1_travel_view.test.js"]
   },
   {
     "name": "TOUCH-HELD-the-modes-read-before-they-exist",
     "file": "src/scenes/world.js",
     "old": "    overlayActive: () => townTalk.overlayActive || !!travelView?.active || !!modes?.overlayHeld,",
     "new": "    overlayActive: () => townTalk.overlayActive || !!travelView?.active || !!modes.overlayHeld,",
-    "tests": ["test/fb0929h_touchheld.test.js", "test/tv1_travel_view.test.js"]
+    "tests": ["test/ui/fb0929h_touchheld.test.js", "test/render/tv1_travel_view.test.js"]
   },
   {
     "name": "TOUCH-HELD-the-nav-row-deaf-to-the-hook",
-    "file": "src/ui/touch.js",
+    "file": "src/ui/touch/touch.js",
     "old": "    const classicUp = !!hooks.overlayActive?.() && !overlayOpen();",
     "new": "    const classicUp = false && !overlayOpen();",
-    "tests": ["test/fb0929h_touchheld.test.js"]
+    "tests": ["test/ui/fb0929h_touchheld.test.js"]
   }
 ]

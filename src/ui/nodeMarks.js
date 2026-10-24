@@ -4,8 +4,8 @@
 // appear on the compass. The node itself should also stand out with a
 // detailed slight glow or something"): A PROFESSION'S NODES, IN ITS
 // OWN COLOUR - every herb patch, vein, boulder, tree, school and body
-// standing near the player on the compass (both skins: ui/hud.js
-// drawNodeCompassMarks, ui/enhancedHud.js) and lit in the world by its
+// standing near the player on the compass (both skins: ui/hud/hud.js
+// drawNodeCompassMarks, ui/enhanced/enhancedHud.js) and lit in the world by its
 // glow (render/nodeGlow.js), one colour a profession in both, so a mark
 // and the light it points at read as one thing. The nodes themselves
 // are the gathering host's (scenes/gatherHost.js marks).
@@ -14,7 +14,7 @@
 // green, the Detect markers' blood red, the gate's ember and the ships'
 // red, bone and grey - and of each other (AUDIT NODE-MARKS: Logging's
 // pale heartwood was a ship's bone and Hunting's coral a hostile ship's
-// red; test/nodemarks.test.js holds the distances). Mining keeps the
+// red; test/scenes/nodemarks.test.js holds the distances). Mining keeps the
 // copper PROF2's Prospector's veins were drawn in, near the quest's gold,
 // the gate's ember and a hostile ship's red - told apart by shape alone:
 // theirs are diamonds on the strip's middle and a ship's triangle points
@@ -36,18 +36,23 @@ const FALLBACK = 'mining';
  *  more than the 75 the nodes keep from each other (the quest's gold, the nearest, by 91). Not a profession: its own
  *  mark word, 'fire'. */
 export const FIRE_MARK_CSS = '#ffd000';
+/** FIELD BUGS 2026-10-12g LODE-MARK ("Motherlodes don't show up on compass"): a Motherlode's far mark, in an aqua clear of
+ *  every other mark on the strip by more than the 75 the nodes keep (a Fisher's blue, the nearest, by 113) - it was
+ *  Mining's copper, beside every vein and boulder in reach. Its own mark word, 'motherlode'. */
+export const MOTHERLODE_MARK_CSS = '#00e5c8';
 /** How far a campfire stands on the strip. */
 export const FIRE_MARK_REACH = 120;
 
 /** The mark's CSS colour for a profession (or REST3's 'fire'). Pure. */
-export const nodeMarkCss = (profession) => (profession === 'fire' ? FIRE_MARK_CSS : NODE_MARK_CSS[profession] ?? NODE_MARK_CSS[FALLBACK]);
+export const nodeMarkCss = (profession) => (profession === 'fire' ? FIRE_MARK_CSS : profession === 'motherlode' ? MOTHERLODE_MARK_CSS : NODE_MARK_CSS[profession] ?? NODE_MARK_CSS[FALLBACK]);
 /** The mark's colour as display-encoded floats [r, g, b], one frozen triple a profession. Pure. */
 const RGB = Object.freeze(Object.fromEntries(Object.entries(NODE_MARK_CSS).map(([k, hex]) => {
   const n = parseInt(hex.slice(1), 16);
   return [k, Object.freeze([((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255])];
 })));
 const FIRE_RGB = Object.freeze([0xff / 255, 0xd0 / 255, 0]);
-export const nodeMarkRgb = (profession) => (profession === 'fire' ? FIRE_RGB : RGB[profession] ?? RGB[FALLBACK]);
+const LODE_RGB = Object.freeze([0, 0xe5 / 255, 0xc8 / 255]);
+export const nodeMarkRgb = (profession) => (profession === 'fire' ? FIRE_RGB : profession === 'motherlode' ? LODE_RGB : RGB[profession] ?? RGB[FALLBACK]);
 
 /** How dim a mark at the edge of its reach stands beside one at the player's feet: nearer reads brighter. */
 export const NODE_MARK_FAR_DIM = 0.45;

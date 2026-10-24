@@ -5,18 +5,18 @@
     "old": "  vec3 col = mix(uFogColor, elEncode(tm), fogFactorAt(wp));",
     "new": "  vec3 col = elEncode(mix(elDecode(uFogColor), tm, fogFactorAt(wp)));",
     "tests": [
-      "test/perffog_uniform.test.js",
-      "test/el1_enhancedlighting.test.js"
+      "test/render/perffog_uniform.test.js",
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
     "name": "EL-DISTANCE-the-far-ring-blends-the-fog-in-linear-again",
     "file": "src/render/enhancedLighting.js",
-    "old": "  vec3 col = mix(shown, uFogColor, horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold));",
-    "new": "  vec3 col = elEncode(mix(elDecode(shown), elDecode(uFogColor), horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold)));",
+    "old": "  vec3 col = mix(shown, uFogColor, ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold)));",
+    "new": "  vec3 col = elEncode(mix(elDecode(shown), elDecode(uFogColor), ringHaze(horizonHaze(vDist, uFogStart, uFogEnd, uRimStart, uRimEnd, uHazeHold))));",
     "tests": [
-      "test/perffog_uniform.test.js",
-      "test/el1_enhancedlighting.test.js"
+      "test/render/perffog_uniform.test.js",
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "  if (glow.r + glow.g + glow.b > 0.0) col = elEncode(elDecode(col) + glow);\n",
     "new": "",
     "tests": [
-      "test/perffog_uniform.test.js",
-      "test/el1_enhancedlighting.test.js"
+      "test/render/perffog_uniform.test.js",
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -35,8 +35,8 @@
     "old": "  if (glow.r + glow.g + glow.b > 0.0) col = elEncode(elDecode(col) + glow);",
     "new": "  col += glow;",
     "tests": [
-      "test/perffog_uniform.test.js",
-      "test/el1_enhancedlighting.test.js"
+      "test/render/perffog_uniform.test.js",
+      "test/render/el1_enhancedlighting.test.js"
     ]
   },
   {
@@ -45,8 +45,8 @@
     "old": "    gl.uniform3fv(prog.fogColor, this._fogColor);",
     "new": "    gl.uniform3fv(prog.fogColor, this._fogColor); this._fogLin = this._c3(this._fogColor, this._decA);",
     "tests": [
-      "test/perffog_uniform.test.js",
-      "test/el1_enhancedlighting.test.js"
+      "test/render/perffog_uniform.test.js",
+      "test/render/el1_enhancedlighting.test.js"
     ]
   }
 ]

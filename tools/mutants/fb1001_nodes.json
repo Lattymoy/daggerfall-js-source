@@ -5,7 +5,7 @@
     "old": "        const top = Math.max(lift, k.mark?.(n, markCtx)?.h ?? 0);",
     "new": "        const top = lift;",
     "tests": [
-      "test/fb1001_nodes.test.js"
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
@@ -14,16 +14,17 @@
     "old": "    if (!base || insideRocks(rocks, base.x, base.z)) continue;   // NODE-CLEAR",
     "new": "    if (!base) continue;   // NODE-CLEAR",
     "tests": [
-      "test/fb1001_nodes.test.js"
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
     "name": "NODE-CLEAR-the-tree-inside-taken",
     "file": "src/scenes/treeHost.js",
-    "old": "      if (claimed.has(f.id) || insideRocks(rocks, f.x, f.z)) continue;",
-    "new": "      if (claimed.has(f.id)) continue;",
+    "old": "(woods.length ? woods : all).filter((f) => !insideRocks(rocks, f.x, f.z))",
+    "new": "(woods.length ? woods : all)",
+    "note": "JUNGLE-WOODS (PIN MOVED): the rock check is asked once a flat, before the trees' loop - the mutation is the rock check gone, as it was",
     "tests": [
-      "test/fb1001_nodes.test.js"
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
@@ -32,7 +33,7 @@
     "old": "        rocks: [...(entry.rocks ?? []), ...(near ?? [])],   // NODE-CLEAR: and never inside a rock piece; ROCK-NEAR: a neighbour's reaching in too\n",
     "new": "",
     "tests": [
-      "test/fb1001_nodes.test.js"
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
@@ -41,7 +42,7 @@
     "old": "forest: entry.forest ?? null, rocks: [...(entry.rocks ?? []), ...(near ?? [])] });",
     "new": "forest: entry.forest ?? null });",
     "tests": [
-      "test/fb1001_nodes.test.js"
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
@@ -50,16 +51,16 @@
     "old": "label: plan.harvest === 'food' ? 'click the glint' : kind === 'steady' && !used ? keyLabel('Interact') : '',",
     "new": "label: plan.harvest === 'food' ? 'click the glint' : '',",
     "tests": [
-      "test/fb1001_nodes.test.js"
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
     "name": "STEADY-SAID-the-meter-names-none",
-    "file": "src/ui/profReticle.js",
-    "old": "`${label ? `hold ${label} and ` : ''}keep still (",
-    "new": "`keep still (",
+    "file": "src/ui/professions/profReticle.js",
+    "old": "label ? t('prof.reticle.steady.stillKey', 'hold {key} and keep still ({deg} degrees)', { key: label, deg }) : ",
+    "new": "",
     "tests": [
-      "test/fb1001_nodes.test.js"
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
@@ -68,7 +69,7 @@
     "old": "      if (eye !== standSpecs) { if (standSpecs !== undefined) restandAll(); standSpecs = eye; }",
     "new": "      if (eye !== standSpecs) { standSpecs = eye; }",
     "tests": [
-      "test/fb1001_nodes.test.js"
+      "test/scenes/fb1001_nodes.test.js"
     ]
   },
   {
@@ -77,7 +78,7 @@
     "old": "!naval?.takesActivate?.() && (gatherHost?.press() ?? false);",
     "new": "(gatherHost?.press() ?? false);",
     "tests": [
-      "test/fb1001_nodes.test.js"
+      "test/scenes/fb1001_nodes.test.js"
     ]
   }
 ]

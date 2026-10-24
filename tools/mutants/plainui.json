@@ -1,0 +1,182 @@
+[
+  {
+    "name": "PLAINUI-next-step-pledge-power",
+    "file": "src/ui/seatTab.js",
+    "old": "    return seatMay(mine.rank, 'pledge')\n",
+    "new": "    return seatMay(mine.rank, 'tribute')\n",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-next-step-region-as-seat",
+    "file": "src/ui/seatTab.js",
+    "old": "  const here = (mine.pledges ?? []).find((/** @type {any} */ p) => p.region === seat.region) ?? null;\n  if (!here) {",
+    "new": "  const here = (mine.pledges ?? []).find((/** @type {any} */ p) => p.key === seat.key) ?? null;\n  if (!here) {",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-guide-open-backwards",
+    "file": "src/ui/seatTab.js",
+    "old": "export const seatGuideOpen = (seat, data) => !(data?.mine",
+    "new": "export const seatGuideOpen = (seat, data) => (data?.mine",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-guide-fold-not-kept",
+    "file": "src/ui/seatTab.js",
+    "old": "SEAT_PANELS.guide, guideOpen ?? seatGuideOpen(seat, data), (o) => { guideOpen = o; });",
+    "new": "SEAT_PANELS.guide, seatGuideOpen(seat, data), (o) => { guideOpen = o; });",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-words-crown-line",
+    "file": "src/ui/seatTab.js",
+    "old": "(and at least ${CLAIM_THRESHOLD[t].toLocaleString('en-US')} influence)",
+    "new": "(and at least ${CLAIM_THRESHOLD.palace.toLocaleString('en-US')} influence)",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-words-unrest-bonus",
+    "file": "src/ui/seatTab.js",
+    "old": "challengers earn ${Math.round(UNREST_BONUS * 100)}% more influence",
+    "new": "challengers earn 20% more influence",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-words-tribute-rate",
+    "file": "src/ui/seatTab.js",
+    "old": "1 for every ${TRIBUTE_MARKS_PER_INFLUENCE} silver",
+    "new": "1 for every 7 silver",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-about-panel-undrawn",
+    "file": "src/ui/seatTab.js",
+    "old": "          const next = el('p', 'seat-next', seatNextStep(seat, data, { nameOf, nowS: ui.nowS() }));",
+    "new": "          const next = el('p', 'seat-next', '');",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-chapter-guide-open-backwards",
+    "file": "src/ui/noticeWindow.js",
+    "old": "chapterGuideOpen ?? !(writs?.merit ?? []).some((m) => Number(m?.merit) > 0)",
+    "new": "chapterGuideOpen ?? (writs?.merit ?? []).some((m) => Number(m?.merit) > 0)",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-chapter-guide-merit-typed",
+    "file": "src/ui/noticeWindow.js",
+    "old": "at most ${n(MERIT_CAP_WEEK)} an account a week",
+    "new": "at most 500 an account a week",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-chapter-guide-strength-typed",
+    "file": "src/ui/noticeWindow.js",
+    "old": "Strength rises 1 for each mark its members' Merit reached that week, up to ${STRENGTH_STEP_MAX}.",
+    "new": "Strength rises 1 for each mark its members' Merit reached that week, up to 5.",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-chapter-guide-everywhere",
+    "file": "src/ui/noticeWindow.js",
+    "old": "    if (writs?.chapters?.length) {\n      const guide",
+    "new": "    if (writs) {\n      const guide",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-family-models-swapped",
+    "file": "src/ui/familyPages.js",
+    "old": "  const death = model === MODELS.bloodline ? bloodline : model === MODELS.enduring ? enduring :",
+    "new": "  const death = model === MODELS.enduring ? bloodline : model === MODELS.bloodline ? enduring :",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-family-toll-typed",
+    "file": "src/ui/familyPages.js",
+    "old": "Arkay's toll takes ${pct(tollShare)} of your race's lifespan",
+    "new": "Arkay's toll takes 6% of your race's lifespan",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-family-page-undrawn",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "hall: drawHallPage, guide: drawGuidePage })[famSec]",
+    "new": "hall: drawHallPage, guide: drawHallPage })[famSec]",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-badge-share",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "share: (r + REGARD_MAX) / (2 * REGARD_MAX),",
+    "new": "share: r / REGARD_MAX,",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-badge-neutral-name",
+    "file": "src/systems/livingWorld/people.js",
+    "old": "neutral: 'Known',",
+    "new": "neutral: 'Neutral',",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-hook-unwired",
+    "file": "src/scenes/townTalk.js",
+    "old": "        regard: () => (_toneTarget ? livingTalk?.regard?.(_toneTarget) ?? null : null),\n",
+    "new": "",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-card-standing-elsewhere",
+    "file": "src/systems/livingWorld/livingTown.js",
+    "old": "    return { regard: rel.regard(id, day), standing: rel.standing(id, day) };",
+    "new": "    return { regard: rel.regard(id, day), standing: rel.standing(id, day + 1) };",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  },
+  {
+    "name": "PLAINUI-panel-size-back",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".notice-panel { margin: 0 0 12px; padding: 12px 14px; font-size: 15px;",
+    "new": ".notice-panel { margin: 0 0 12px; padding: 12px 14px; font-size: 13px;",
+    "tests": [
+      "test/systems/legacy/plainui.test.js"
+    ]
+  }
+]

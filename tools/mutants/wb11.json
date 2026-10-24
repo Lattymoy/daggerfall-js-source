@@ -1,182 +1,182 @@
 [
   {
     "name": "WB11-host-without-the-trial",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  if (!P.legion || f.fell || f.wrath) return;",
     "new": "  if (f.fell || f.wrath) return;",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-legion-on-every-profile",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "    legion: !!T('legion')?.legion,",
     "new": "    legion: true,",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-harriers-at-the-nearest",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "if (!mark || dist(b.x, b.z, f.pos[0], f.pos[1]) > dist(mark.x, mark.z, f.pos[0], f.pos[1])) mark = b;",
     "new": "if (!mark || dist(b.x, b.z, f.pos[0], f.pos[1]) < dist(mark.x, mark.z, f.pos[0], f.pos[1])) mark = b;",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-the-rise-skipped",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "    if (now < (a.up ?? 0)) continue;   // still rising out of the fire",
     "new": "    if (false) continue;   // still rising out of the fire",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-a-wave-on-a-challenger",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "if (live.some((b) => dist(b.x, b.z, x, z) < HOST_SPAWN_CLEAR) || ",
     "new": "if (",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-sappers-anywhere",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "rimSpots(C, n, here, rng, away, SAP_SPREAD, clear)",
     "new": "rimSpots(C, n, here, rng)",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-drunk-past-the-feedings",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "    if (H.fed < SAP_FEEDS_MAX && f.max > 0) {",
     "new": "    if (f.max > 0) {",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-the-heal-unsaid",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "      out.push({ k: 'adie', is: [a.i], w: HOST_GONE.fed, h, m, at: now });",
     "new": "      out.push({ k: 'adie', is: [a.i], w: HOST_GONE.fed, at: now });",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-the-ward-never-waits-on-them",
-    "file": "src/net/gateBrain.js",
-    "old": "    if (bearersStand(f) && now < f.waitUntil) return heldBeat(f, now, out);",
-    "new": "    if (false) return heldBeat(f, now, out);",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (bearersStand(f) && now < f.waitUntil) return;",
+    "new": "    if (false) return;",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-their-cap-ignored",
-    "file": "src/net/gateBrain.js",
-    "old": "    if (bearersStand(f) && now < f.waitUntil) return heldBeat(f, now, out);",
-    "new": "    if (bearersStand(f)) return heldBeat(f, now, out);",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    if (bearersStand(f) && now < f.waitUntil) return;",
+    "new": "    if (bearersStand(f)) return;",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-a-pulse-at-nobody",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  if (now < a.next || !here.some((b) => dist(b.x, b.z, a.x, a.z) <= BEARER_PULSE_NEAR)) return;",
     "new": "  if (now < a.next) return;",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-bearers-twice-a-court",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  if (H.wardCt === f.court) return;\n",
     "new": "",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-host-outlives-its-phase",
-    "file": "src/net/gateBrain.js",
-    "old": "    hostGone(f, now, out, HOST_GONE.crumbled);   // WB11b: his host crumbles at every turn - each kind is its phase's or its court's\n",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "    hostGone(f, now, out, HOST_GONE.crumbled, notGaoler);   // WB11b: his host crumbles at every turn - each kind is its phase's or its court's (WB14f: the Captive's gaolers are the Pen's)\n",
     "new": "",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-host-through-the-wrath",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "    // crumbling first read it as the Ward-Bearers' cap and said his ward broke - it stands through the wind-up)\n    hostGone(f, now, out, HOST_GONE.crumbled);\n",
     "new": "    // crumbling first read it as the Ward-Bearers' cap and said his ward broke - it stands through the wind-up)\n",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-host-outlives-the-kill",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "    if (f.lg) f.lg.ads = [];   // WB11b: and his host goes with him (the fall's word says so - no word of its own)\n",
     "new": "",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-a-blow-from-another-court",
-    "file": "src/net/gateBrain.js",
-    "old": "  if (!inCourt(pose.x, pose.z, f.court, POSE_SLACK)) return out;\n  const [ax, az] = hostAt(a, now);",
+    "file": "src/net/gate/gateBrain.js",
+    "old": "  const [ax, az] = hostAt(a, now);\n  if (!inCourt(pose.x, pose.z, nearestCourt(ax, az), POSE_SLACK)) return out;",
     "new": "  const [ax, az] = hostAt(a, now);",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-a-swing-from-across-the-court",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  if (r === HIT_KINDS.Melee && dist(pose.x, pose.z, ax, az) - HOST_KINDS[a.k].r > MELEE_REACH + POSE_SLACK) return out;\n",
     "new": "",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-the-share-uncounted",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  p.hd = (p.hd ?? 0) + got;\n",
     "new": "",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-his-threat",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "  p.hd = (p.hd ?? 0) + got;\n",
     "new": "  p.hd = (p.hd ?? 0) + got;\n  f.threat[sub] = (f.threat[sub] ?? 0) + got;\n",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-the-state-drops-the-host",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "    ...(f.lg ? { lg: hostStateOf(f.lg) } : {}),",
     "new": "    ...{},",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "const hostId = (i) => Number.isSafeInteger(i) && i >= 1 && i <= GATE_SEQ_MAX;",
     "new": "const hostId = (i) => Number.isSafeInteger(i) && i >= 0 && i <= GATE_SEQ_MAX;",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "if (fed && !(gateHp(m.h) && gateHp(m.m) && m.h <= m.m)) return null;",
     "new": "if (fed && !(gateHp(m.h) && gateHp(m.m))) return null;",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
@@ -203,135 +203,136 @@
     "old": "v.length >= min && v.length <= GATE_HOST_MAX &&",
     "new": "v.length >= min && v.length <= GATE_HOST_MAX + 1 &&",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-the-gone-forgotten",
-    "file": "src/net/gateLink.js",
+    "file": "src/net/gate/gateLink.js",
     "old": "      const gone = [...H.gone, ...out].slice(-HOST_GONE_KEPT);",
     "new": "      const gone = H.gone;",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-a-walk-dropped",
-    "file": "src/net/gateLink.js",
+    "file": "src/net/gate/gateLink.js",
     "old": "    case 'ad': case 'amv': case 'aatk': case 'ah': case 'adie': return foldHost(s, g, now);",
     "new": "    case 'ad': case 'aatk': case 'ah': case 'adie': return foldHost(s, g, now);",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-judged-before-its-landing",
-    "file": "src/net/gateStrike.js",
+    "file": "src/net/gate/gateStrike.js",
     "old": "  if (!(now >= atk.at)) return 'wait';   // (spelled apart from strikeVerdict's - a mutant record aims at that one alone)\n  if (now > atk.at + Math.max(B.active, 1) + STRIKE_LATE_MS) return 'miss';",
     "new": "  if (now > atk.at + Math.max(B.active, 1) + STRIKE_LATE_MS) return 'miss';",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-a-stale-wave-said",
-    "file": "src/scenes/gateHost.js",
+    "file": "src/scenes/gate/gateHost.js",
     "old": "if (Number.isFinite(a.rose) && t - a.rose <= HOST_LATE_MS && !s.fell && s.wrath == null) {",
     "new": "if (!s.fell && s.wrath == null) {",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-a-blow-landed-outside-its-disc",
-    "file": "src/scenes/gateHost.js",
+    "file": "src/scenes/gate/gateHost.js",
     "old": "if (v !== 'wait') { b.judged = at; if (v === 'hit') land(hostBlowUnder(a.k, P)); }",
     "new": "if (v !== 'wait') { b.judged = at; land(hostBlowUnder(a.k, P)); }",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-a-body-never-put-away",
-    "file": "src/scenes/gateHost.js",
+    "file": "src/scenes/gate/gateHost.js",
     "old": "if (act.act === 'gone') { destroyBatch(b); falling.delete(key); continue; }",
     "new": "if (act.act === 'gone') { falling.delete(key); continue; }",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-the-tether-after-the-ward",
-    "file": "src/scenes/gateHost.js",
+    "file": "src/scenes/gate/gateHost.js",
     "old": "  if (now < s.shieldUntil) for (const a of ads) {",
     "new": "  if (true) for (const a of ads) {",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-targets-from-anywhere",
-    "file": "src/scenes/gateCourt.js",
-    "old": "!s.lg || !fromHisCourt(s, t) ? NONE : host.targets();",
-    "new": "!s.lg ? NONE : host.targets();",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "if (k >= 0 && s.lg) for (const T of host.targets()) if (nearestCourt(T.feet[0] - COURT_CENTRE[0], T.feet[2] - COURT_CENTRE[2]) === k) _hostMine.push(T);",
+    "new": "if (k >= 0 && s.lg) for (const T of host.targets()) _hostMine.push(T);",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js",
+      "test/net/gate/wb14f_captive.test.js"
     ]
   },
   {
     "name": "WB11-the-rise-drawn-standing",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "  if (since < riseMs) return { act: 'rise',",
     "new": "  if (false) return { act: 'rise',",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-a-sapper-of-the-wrong-element",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "  sapper: Object.freeze({ burning: 35, rime: 38, storm: 36, venom: 37 }),",
     "new": "  sapper: Object.freeze({ burning: 35, rime: 35, storm: 36, venom: 37 }),",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-the-bearers-uncounted",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "&& bearers > 0 && now < s.shieldUntil && !callout) callout =",
     "new": "&& bearers > 99 && now < s.shieldUntil && !callout) callout =",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-the-column-for-every-court",
-    "file": "src/ui/gateDamageChart.js",
+    "file": "src/ui/gate/gateDamageChart.js",
     "old": "  const hosted = dm.some((r) => r.a !== undefined);",
     "new": "  const hosted = true;",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-the-bye-a-gate",
-    "file": "src/net/gateLaw.js",
+    "file": "src/net/gate/gateLaw.js",
     "old": "return pairs.filter((q) => q[0] < nT && q[1] < nT).map(",
     "new": "return pairs.filter((q) => q[0] < nT - 1 && q[1] < nT - 1).map(",
     "tests": [
-      "test/wb8b_gate_marks.test.js",
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb8b_gate_marks.test.js",
+      "test/net/gate/wb11_gate_host.test.js"
     ]
   },
   {
     "name": "WB11-the-blow-judged-on-him",
     "file": "server/src/index.js",
-    "old": "else if (m.k === 'ahit') this._gateFan(applyHostHit(f, a.sub, m.i, m.d, m.r, at, now, m.q));",
+    "old": "else if (m.k === 'ahit') await this._gateFanKept(f, applyHostHit(f, a.sub, m.i, m.d, m.r, at, now, m.q, rand01), now);",
     "new": "else if (m.k === 'ahit') applyHit(f, a.sub, m.d, m.r, at, now, m.q);",
     "tests": [
-      "test/wb11_gate_host.test.js"
+      "test/net/gate/wb11_gate_host.test.js"
     ],
-    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
+    "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. AUDIT WB14 (WIRE-2): re-aimed at the fan kept before it is said."
   }
 ]

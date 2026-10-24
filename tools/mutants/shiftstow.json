@@ -1,47 +1,47 @@
 [
   {
     "name": "SHIFT-STOW-enhanced-arm-gone",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    if (from === 'local' && e?.shiftKey && remote && STORE_FILTER_KINDS.has(remote.kind)) {",
     "new": "    if (false) {",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "SHIFT-STOW-enhanced-arm-on-the-ground",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    if (from === 'local' && e?.shiftKey && remote && STORE_FILTER_KINDS.has(remote.kind)) {",
     "new": "    if (from === 'local' && e?.shiftKey && remote) {",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "SHIFT-STOW-enhanced-double-click-first",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    if (from === 'local' && e?.shiftKey && remote && STORE_FILTER_KINDS.has(remote.kind)) {",
     "new": "    if (from === 'local' && e?.shiftKey && remote && STORE_FILTER_KINDS.has(remote.kind) && !equipByDoubleClick(secondClick(item, item, e))) {",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "WAGON-FILTER-rows-unfiltered",
-    "file": "src/ui/enhancedInventory.js",
-    "old": "  const shown = filtering ? filterStore(remote.items, storeFilter, storeNameOf) : remote.items;",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  const shown = filtering ? filterStore(remote.items, shownFilter(), storeNameOf) : remote.items;",
     "new": "  const shown = remote.items;",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "WAGON-FILTER-bar-on-every-remote",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  const store = STORE_FILTER_KINDS.has(remote.kind);",
     "new": "  const store = true;",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "cat === 'materials' ? isMaterialItem(it) : pageOf(it) === cat",
     "new": "pageOf(it) === cat",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
@@ -59,88 +59,88 @@
     "old": "String(nameOf(it) ?? '').toLowerCase().includes(q)",
     "new": "String(nameOf(it) ?? '').includes(q)",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "SHIFT-STOW-classic-latch-never-raised",
-    "file": "src/ui/nativeInventory.js",
+    "file": "src/ui/native/nativeInventory.js",
     "old": "      this._shiftKeys.add(shiftSide(code, e)); this._shiftSeen = _focusLosses;",
     "new": "      this._shiftSeen = _focusLosses;",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "SHIFT-STOW-classic-hover-unread",
-    "file": "src/ui/nativeInventory.js",
+    "file": "src/ui/native/nativeInventory.js",
     "old": "      if (!e.shiftKey) this._shiftKeys.clear();\n      else if (!this._shiftKeys.size) this._shiftKeys.add('L');",
     "new": "",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "SHIFT-STOW-classic-popup-kept",
-    "file": "src/ui/nativeInventory.js",
+    "file": "src/ui/native/nativeInventory.js",
     "old": "      if (!whole && this._splitRequired(it, plan)) { this._openSplit(it, plan.amount, perform); return; }",
     "new": "      if (this._splitRequired(it, plan)) { this._openSplit(it, plan.amount, perform); return; }",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "SHIFT-STOW-classic-arm-on-the-ground",
-    "file": "src/ui/nativeInventory.js",
+    "file": "src/ui/native/nativeInventory.js",
     "old": "    return t === REMOTE_TARGET_TYPES.Wagon || (t === REMOTE_TARGET_TYPES.Loot && this.hooks.loot?.storage === true);",
     "new": "    return true;",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-FILTER-C2-the-toggle-keeps-it",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (plan.usingWagon) session.usingBag = false;   // BAG1: one second list at a time\n  storeFilter = freshStoreFilter();",
     "new": "  if (plan.usingWagon) session.usingBag = false;   // BAG1: one second list at a time\n  void 0;",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-FILTER-C2-the-emptied-store-keeps-it",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  if (store && (storeFilter.kind !== remote.kind || !remote.items.length)) storeFilter = freshStoreFilter(remote.kind);",
     "new": "  if (store && storeFilter.kind !== remote.kind) storeFilter = freshStoreFilter(remote.kind);",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-FILTER-C2-the-mount-keeps-it",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  storeFilter = freshStoreFilter();   // WAGON-FILTER\n",
     "new": "",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-FILTER-the-menu-rebuilds-the-window",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "  menu.onchange = () => { storeFilter.cat = menu.value; fillRemoteList(list, true); };",
     "new": "  menu.onchange = () => { storeFilter.cat = menu.value; picked = null; render(); };",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-FILTER-S8-the-search-on-item-name",
-    "file": "src/ui/enhancedInventory.js",
-    "old": "const storeNameOf = (it) => itemLine(it, deps.entity).name;",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "const storeNameOf = (it) => lineOf(it).name;",
     "new": "const storeNameOf = (it) => it.name;",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
@@ -149,61 +149,61 @@
     "old": "export const storeQuery = (q) => String(q ?? '').trim().toLowerCase().slice(0, 40);",
     "new": "export const storeQuery = (q) => String(q ?? '').trim().toLowerCase();",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "AUDIT-WAGON-FILTER-back-does-not-clear",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "    if (search.value) { search.value = ''; storeFilter.query = ''; fillRemoteList(list, true); } else search.blur?.();",
     "new": "    search.blur?.();",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "AUDIT-SHIFT-STOW-C3-the-repeat-answers-the-box",
-    "file": "src/ui/nativeInventory.js",
+    "file": "src/ui/native/nativeInventory.js",
     "old": "      if (e?.repeat) return;   // AUDIT SHIFT-STOW C3: a HELD Shift repeats its down edge (Windows) - never a key that answers a box",
     "new": "",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "AUDIT-SHIFT-STOW-C4-the-focus-loss-ignored",
-    "file": "src/ui/nativeInventory.js",
+    "file": "src/ui/native/nativeInventory.js",
     "old": "  get _shiftDown() { return this._shiftKeys.size > 0 && this._shiftSeen === _focusLosses; }",
     "new": "  get _shiftDown() { return this._shiftKeys.size > 0; }",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "AUDIT-SHIFT-STOW-one-key-s-up-clears-both",
-    "file": "src/ui/nativeInventory.js",
+    "file": "src/ui/native/nativeInventory.js",
     "old": "    if (isShiftCode(code, e)) this._shiftKeys.delete(shiftSide(code, e));   // SHIFT-STOW",
     "new": "    if (isShiftCode(code, e)) this._shiftKeys.clear();   // SHIFT-STOW",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "AUDIT-SHIFT-STOW-S1-the-storage-refused",
-    "file": "src/ui/nativeInventory.js",
+    "file": "src/ui/native/nativeInventory.js",
     "old": "    return t === REMOTE_TARGET_TYPES.Wagon || (t === REMOTE_TARGET_TYPES.Loot && this.hooks.loot?.storage === true);",
     "new": "    return t === REMOTE_TARGET_TYPES.Wagon;",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   },
   {
     "name": "AUDIT-SHIFT-STOW-S3-the-how-many-left-standing",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "old": "      if (qty.item === item) qty = { item: null, text: '' };\n      stow(item);",
     "new": "      stow(item);",
     "tests": [
-      "test/shiftstow.test.js"
+      "test/systems/shiftstow.test.js"
     ]
   }
 ]

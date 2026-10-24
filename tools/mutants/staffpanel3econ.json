@@ -1,0 +1,633 @@
+[
+  {
+    "name": "STAFF-PANEL3-ECON-role-check-gone",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "  if (who.role !== 'admin') {\n    await audit('refused'",
+    "new": "  if (who.role === 'nobody') {\n    await audit('refused'",
+    "why": "a Moderator reads the economy",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-refusal-unwritten",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "    await audit('refused', null, { path, need: 'admin' }, { outcome: 'denied' }).run();",
+    "new": "    void 0;",
+    "why": "a Moderator's try leaves no trace",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-refusal-word",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "    return { error: 'staff-admin' };",
+    "new": "    return { error: 'not-found' };",
+    "why": "a Moderator told 404, not 403",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-wiring-gone",
+    "file": "server-account/src/staff.js",
+    "old": "  if (ECON_ROUTES.includes(path)) return staffEconomy(ctx, env, path, body, who, audit);",
+    "new": "  if (ECON_ROUTES.includes('nothing')) return staffEconomy(ctx, env, path, body, who, audit);",
+    "why": "the routes fall to the owners' door",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-home-role-gone",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "    if (who?.role !== 'admin') return { items: [], high: 0, total: 0 };",
+    "new": "    if (who?.role === 'nobody') return { items: [], high: 0, total: 0 };",
+    "why": "a Moderator's Home shows the economy watch",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-cursor-repeats",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "where.push(`(${s.at} < ? OR (${s.at} = ? AND ${s.key} < ?))`)",
+    "new": "where.push(`(${s.at} < ? OR (${s.at} = ? AND ${s.key} <= ?))`)",
+    "why": "a page repeats the row the cursor names",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-span-uncapped",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "const since = Math.max(int(body.since, 0, until) ?? 0, until - STREAM_SPAN_DAYS * DAY_S);",
+    "new": "const since = Math.max(int(body.since, 0, until) ?? 0, 0);",
+    "why": "the stream walks past its span",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-refused-trades-shown",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "where: \"t.state = 'done'\",",
+    "new": "where: \"t.state != 'x'\",",
+    "why": "a refused trade shows as one",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-vault-by-id",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "args.push(s.byName ? displayName(v.player) : v.player.id)",
+    "new": "args.push(v.player.id)",
+    "why": "a player's vault moves missed (the log keeps a name)",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-auction-seller-side-gone",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "sides: ['d.auction IN (SELECT id FROM market_auctions WHERE seller = ?)', 'd.bidder = ?'],",
+    "new": "sides: ['d.bidder = ?'],",
+    "why": "bids on a player's own auctions missed",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-trade-sides-swapped",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "      const aGave = tradeSideOf(res.b), bGave = tradeSideOf(res.a);\n      row.from.charName",
+    "new": "      const aGave = tradeSideOf(res.a), bGave = tradeSideOf(res.b);\n      row.from.charName",
+    "why": "a side shown as giving what it received",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-fill-region-poster",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "item: 'f.material = ?', price: 'f.price', region: 'o.region = ?',",
+    "new": "item: 'f.material = ?', price: 'f.price', region: 'f.units = ?',",
+    "why": "a fill's region is not its order's",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-stream-audit-every-page",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "      since: int(body.since, 0, nowS), until: int(body.until, 1, nowS),\n    }, { onceIn: READ_ROW_S }).run()]);",
+    "new": "      since: int(body.since, 0, nowS), until: int(body.until, 1, nowS),\n    }).run()]);",
+    "why": "every page of a view a row",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-pairs-weighted-by-units",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "price: num(r.paid) / num(r.units), units: 1 }));",
+    "new": "price: num(r.paid) / num(r.units), units: num(r.units) }));",
+    "why": "two accounts washing make their price the usual one",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-self-sales-counted",
+    "file": "server-account/src/staffEconomy.js",
+    "old": ") WHERE buyer != seller GROUP BY material, x, y`)",
+    "new": ") GROUP BY material, x, y`)",
+    "why": "an account's sale to itself sets the usual price",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-currency-mixed",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "AND at >= ?2 AND kind = 'material' AND currency = ?3",
+    "new": "AND at >= ?2 AND kind = 'material'",
+    "why": "gold's sales set a Drakes price",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-fills-in-gold",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "SELECT material, poster, filler, units, price FROM market_fills WHERE ?3 = 'marks' AND",
+    "new": "SELECT material, poster, filler, units, price FROM market_fills WHERE",
+    "why": "a Drakes fill sets a gold price",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-few-pairs-priced",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "usual: pairs.length >= ECON_LIMITS.price.pairs ? medianOf(pairs) : null",
+    "new": "usual: pairs.length >= 2 ? medianOf(pairs) : null",
+    "why": "two pairs make a usual price",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-price-ratio-loose",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "if (ratio >= L.price.ratio || ratio <= 1 / L.price.ratio) {",
+    "new": "if (ratio > L.price.ratio * 2 || ratio <= 1 / L.price.ratio) {",
+    "why": "five times over is not flagged",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-price-under-unflagged",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "if (ratio >= L.price.ratio || ratio <= 1 / L.price.ratio) {",
+    "new": "if (ratio >= L.price.ratio) {",
+    "why": "five times under is not flagged",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-price-never-far",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "const far = ratio >= L.price.high || ratio <= 1 / L.price.high;",
+    "new": "const far = false;",
+    "why": "twenty times over reads medium",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-seller-over-buyer-under",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "for (const [side, net] of [[row.from, over], [row.to, -over]]) {",
+    "new": "for (const [side, net] of [[row.from, over], [row.to, over]]) {",
+    "why": "a fresh buyer's cheap take unseen",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-fresh-sale-never-high",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "why: `a new account took ${fmt(net)} gold past the usual price`, high: net >= L.fresh.high });",
+    "new": "why: `a new account took ${fmt(net)} gold past the usual price`, high: false });",
+    "why": "a fresh account's far take by sale reads medium",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-fresh-trade-line",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "if (fresh(side.id) && net >= L.fresh.gold) flags.push({ flag: 'new', why: `a new account took ${fmt(net)} gold more than it gave`",
+    "new": "if (fresh(side.id) && net > L.fresh.gold) flags.push({ flag: 'new', why: `a new account took ${fmt(net)} gold more than it gave`",
+    "why": "a fresh account taking the line itself unflagged",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-fresh-trade-never-high",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "why: `a new account took ${fmt(net)} gold more than it gave`, high: net >= L.fresh.high });",
+    "new": "why: `a new account took ${fmt(net)} gold more than it gave`, high: false });",
+    "why": "a fresh account's far take by trade reads medium",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-fresh-reversed",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "num(people.get(id).created_at) >= nowS - L.fresh.days * DAY_S;",
+    "new": "num(people.get(id).created_at) <= nowS - L.fresh.days * DAY_S;",
+    "why": "old accounts read as fresh",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-one-sided-line",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "if (giver && taker && giver.value >= L.oneSided.gold) {",
+    "new": "if (giver && taker && giver.value > L.oneSided.gold) {",
+    "why": "a gift at the line unflagged",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-one-sided-never-high",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "gold of goods`, high: giver.value >= L.oneSided.high });",
+    "new": "gold of goods`, high: false });",
+    "why": "a far gift reads medium",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-letter-not-worth",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "n + (liquidWorthOf(it) || itemWorth(it)), 0);",
+    "new": "n + itemWorth(it), 0);",
+    "why": "a letter of credit read at a piece's worth",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-repeat-line",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "if (n >= L.repeat.n) flags.push({ flag: 'repeat'",
+    "new": "if (n > L.repeat.n) flags.push({ flag: 'repeat'",
+    "why": "the n-th deal unflagged",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-repeat-window-gone",
+    "file": "server-account/src/staffEconomy.js",
+    "old": ") WHERE a != b GROUP BY x, y`).bind(ids(accounts), nowS - L.repeat.days * DAY_S),",
+    "new": ") WHERE a != b GROUP BY x, y`).bind(ids(accounts), 0),",
+    "why": "deals past the window counted",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-two-flags-medium",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "flags.length >= 2 || flags.some((f) => f.high) ? 'high' : 'medium'",
+    "new": "flags.length >= 3 || flags.some((f) => f.high) ? 'high' : 'medium'",
+    "why": "two flags read medium",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-break-ignored",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "SUM(CASE WHEN gap IS NULL OR gap > ?4 THEN 1 ELSE 0 END)",
+    "new": "SUM(CASE WHEN gap IS NULL OR gap > ?4 * 100 THEN 1 ELSE 0 END)",
+    "why": "a break never ends a run",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-run-high-hours",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "if (run.hours >= H.runHigh && even <= H.evenHigh && run.nodes >= H.nodesHigh) rank = 2;",
+    "new": "if (run.hours > H.runHigh && even <= H.evenHigh && run.nodes >= H.nodesHigh) rank = 2;",
+    "why": "a run of exactly the high hours reads medium",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-run-high-even",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "if (run.hours >= H.runHigh && even <= H.evenHigh && run.nodes >= H.nodesHigh) rank = 2;",
+    "new": "if (run.hours >= H.runHigh && even < H.evenHigh && run.nodes >= H.nodesHigh) rank = 2;",
+    "why": "gaps exactly at the even line read uneven",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-run-high-nodes",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "if (run.hours >= H.runHigh && even <= H.evenHigh && run.nodes >= H.nodesHigh) rank = 2;",
+    "new": "if (run.hours >= H.runHigh && even <= H.evenHigh) rank = 2;",
+    "why": "a short route reads as a loop",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-run-medium",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "else if (run.hours >= H.runMedium && even <= H.evenMedium) rank = 1;",
+    "new": "else if (run.hours > H.runMedium && even <= H.evenMedium) rank = 1;",
+    "why": "a run at the medium hours reads low",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-run-medium-even",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "else if (run.hours >= H.runMedium && even <= H.evenMedium) rank = 1;",
+    "new": "else if (run.hours >= H.runMedium) rank = 1;",
+    "why": "an uneven run reads medium",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-week-high",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "if (streak >= H.weekHigh) rank = 2;",
+    "new": "if (streak > H.weekHigh) rank = 2;",
+    "why": "a week streak at the high line reads medium",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-week-medium",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "else if (streak >= H.weekMedium) rank = Math.max(rank, 1);",
+    "new": "else if (streak > H.weekMedium) rank = Math.max(rank, 1);",
+    "why": "a week streak at the medium line reads low",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-streak-summed",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "m AS (SELECT player, MAX(hours) AS streak FROM s GROUP BY player)",
+    "new": "m AS (SELECT player, SUM(hours) AS streak FROM s GROUP BY player)",
+    "why": "every hour of the week read as one streak",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-score-reversed",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "LEVELS.indexOf(b.level) - LEVELS.indexOf(a.level) || b.score - a.score",
+    "new": "LEVELS.indexOf(b.level) - LEVELS.indexOf(a.level) || a.score - b.score",
+    "why": "the evenest loop sorts last in its level",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-harvest-audit-target",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "await audit('harvests-read', row.id, { name: displayName(row) }",
+    "new": "await audit('harvests-read', null, { name: displayName(row) }",
+    "why": "a player's harvests read without naming the player",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-harvest-day-index",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "GROUP BY +player ORDER BY n DESC LIMIT ?3",
+    "new": "GROUP BY player ORDER BY n DESC LIMIT ?3",
+    "why": "the candidates walk the whole table",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-days-uncapped",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "Math.min(int(body.days, 1, Number.MAX_SAFE_INTEGER) ?? ECON_DAYS_DEFAULT, ECON_DAYS_MAX)",
+    "new": "Math.min(int(body.days, 1, Number.MAX_SAFE_INTEGER) ?? ECON_DAYS_DEFAULT, 99)",
+    "why": "the economy's reach uncapped",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-escrow-added",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "- COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s",
+    "new": "+ COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s",
+    "why": "Marks out of escrow counted as in",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-legacy-whole",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "(SELECT COALESCE(SUM(MAX(treasury - realm_gold, 0)), 0) FROM guilds) AS guild_legacy",
+    "new": "(SELECT COALESCE(SUM(treasury), 0) FROM guilds) AS guild_legacy",
+    "why": "realm gold counted as unverified",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-burn-takes-moves",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "WHERE day >= ?1 AND (src_kind = 'mint' OR dst_kind = 'burn') GROUP BY day, kind, minted",
+    "new": "WHERE day >= ?1 AND (src_kind = 'mint' OR dst_kind != 'x') GROUP BY day, kind, minted",
+    "why": "an escrow move counted as burnt",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-gold-sinks-any-currency",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "WHERE day >= ?1 AND currency = 'gold' GROUP BY day",
+    "new": "WHERE day >= ?1 AND currency != 'x' GROUP BY day",
+    "why": "a Drakes sale's tax counted as gold",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-rich-off-index",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "WHERE c.wealth >= ${RICH_FLOOR} AND c.dead_at IS NULL",
+    "new": "WHERE c.wealth >= 0 AND c.dead_at IS NULL",
+    "why": "the richest read off the whole table",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-dead-rich",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "WHERE c.wealth >= ${RICH_FLOOR} AND c.dead_at IS NULL",
+    "new": "WHERE c.wealth >= ${RICH_FLOOR}",
+    "why": "a tombstoned character among the richest",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-kept-never",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "  if (k && k.until > nowS) return k.value;\n  const value = make();",
+    "new": "  if (k && k.until > nowS + 10_000_000) return k.value;\n  const value = make();",
+    "why": "every open reads again",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-economy-one-key",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "kept(db, `economy:${days}`, nowS, ECON_KEEP_S,",
+    "new": "kept(db, 'economy', nowS, ECON_KEEP_S,",
+    "why": "one reach's answer given for another",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-harvests-kept-long",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "kept(db, 'harvests', nowS, HARVEST_KEEP_S,",
+    "new": "kept(db, 'harvests', nowS, ECON_KEEP_S,",
+    "why": "node activity kept past its minutes",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-guild-sort-ignored",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "const sort = Object.hasOwn(GUILD_SORTS, body.sort) ? body.sort : 'gold';",
+    "new": "const sort = 'gold';",
+    "why": "the guilds sorted one way only",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-watch-fresh-not-high",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "level: g.value >= L.oneSided.high || (fresh && g.value >= L.fresh.gold) ? 'high' : 'medium'",
+    "new": "level: g.value >= L.oneSided.high ? 'high' : 'medium'",
+    "why": "a gift to a fresh account reads medium on Home",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-watch-yesterday",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "WHERE t.state = 'done' AND t.created_at >= ?1 AND (${nothing('a')}",
+    "new": "WHERE t.state = 'done' AND t.created_at >= ?1 - 86400 AND (${nothing('a')}",
+    "why": "yesterday's gifts on today's Home",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-watch-repeat-line",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "HAVING COUNT(*) >= ?2 ORDER BY n DESC LIMIT 50",
+    "new": "HAVING COUNT(*) > ?2 ORDER BY n DESC LIMIT 50",
+    "why": "the n-th deal of a day not on Home",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-watch-unsliced",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "items: all.slice(0, Math.max(0, Number(n) || 0))",
+    "new": "items: all.slice(0)",
+    "why": "Home given more than it asked",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-index-trades-b-gone",
+    "file": "server-account/migrations/0151_staff_players.sql",
+    "old": "CREATE INDEX IF NOT EXISTS realm_trades_b_player ON realm_trades (b_player, created_at) WHERE b_player IS NOT NULL;",
+    "new": "-- gone",
+    "why": "a trade's second side walks the table",
+    "tests": [
+      "test/server/staffpanel3econ.test.js",
+      "test/server/staffpanel3players.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-index-escrow-order",
+    "file": "server-account/migrations/0153_staff_economy.sql",
+    "old": "WHERE dst_kind = 'escrow' OR src_kind = 'escrow';",
+    "new": "WHERE src_kind = 'escrow' OR dst_kind = 'escrow';",
+    "why": "the escrow's sum walks the ledger (a partial index's WHERE must be the statement's own)",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-index-rich-floor",
+    "file": "server-account/migrations/0153_staff_economy.sql",
+    "old": "WHERE wealth >= 250000;",
+    "new": "WHERE wealth >= 200000;",
+    "why": "the index's floor is not the module's",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL3-ECON-index-vault-who-gone",
+    "file": "server-account/migrations/0153_staff_economy.sql",
+    "old": "CREATE INDEX IF NOT EXISTS idx_guild_vault_log_who ON guild_vault_log (who, at);",
+    "new": "-- gone",
+    "why": "a player's vault moves walk the log",
+    "tests": [
+      "test/server/staffpanel3econ.test.js"
+    ]
+  }
+]

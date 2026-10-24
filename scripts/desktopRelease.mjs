@@ -39,16 +39,29 @@
 // heading (.github/pull_request_template.md), and `notes` reads that
 // section off every pull request merged since the previous release. The
 // published release is the archive; nothing is read from the working
-// tree, and test/rel4_release.test.js fails any patch-notes file
+// tree, and test/tooling/rel4_release.test.js fails any patch-notes file
 // committed to it (PATCH_NOTES_PATH_RE).
+//
+// DA13 (2026-10-14, Mac: "B only: per-file channel"): THE GAME RIDES BESIDE THE INSTALLERS, A FILE AT A TIME. The
+// installers carried the whole built site in one archive, and an update re-downloaded most of it (~130 MB of a 240 MB
+// installer, measured off the published blockmaps). Every release now also carries the game as one pack of files each
+// compressed on its own, and a manifest of where each stands (`pack`, app/lib/gameChannel.cjs), and every installer
+// carries the index of the copy it bundles (`seed`) - so a copy fetches only the files that changed. Both name the shell
+// they were built for (`shell`, a digest of the shell's sources at the commit): a release that changes the shell goes
+// out by the installer. And the publish job measures the update a player of the release before takes (`delta`).
 //
 //   node scripts/desktopRelease.mjs alias <dir>           each download copied under its name from before BR5
 //   node scripts/desktopRelease.mjs check <dir>           exit 1 naming any file missing
 //   node scripts/desktopRelease.mjs notes <tag>           the release body, markdown, to stdout (gh api: GH_TOKEN)
 //   node scripts/desktopRelease.mjs renotes <tag> <body>  a published release's body, its notes read again (REL7)
 //   node scripts/desktopRelease.mjs latest <tag> [<cur>]  "true" when <tag> should be marked latest
-import { copyFileSync, readdirSync, readFileSync } from 'node:fs';
+//   node scripts/desktopRelease.mjs shell                 DA13: the shell's id at HEAD, to stdout
+//   node scripts/desktopRelease.mjs seed <dist> <file>    DA13: the bundled copy's index (VERSION, DFO_SHELL)
+//   node scripts/desktopRelease.mjs pack <dist> <dir>     DA13: the game's pack and manifest (VERSION, DFO_UPDATE, DFO_SHELL)
+//   node scripts/desktopRelease.mjs delta <prev> <next> [<prev-tag>]  DA13: exit 1 on an update that is no longer per file
+import { closeSync, copyFileSync, mkdirSync, openSync, readdirSync, readFileSync, statSync, writeFileSync, writeSync } from 'node:fs';
 import { join } from 'node:path';
+import { gzipSync } from 'node:zlib';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
 import { isMain } from '../tools/lib/isMain.mjs';
@@ -56,6 +69,7 @@ import { isMain } from '../tools/lib/isMain.mjs';
 const require = createRequire(import.meta.url);
 const { DOWNLOAD_FILES, LEGACY_DOWNLOAD_FILES, RELEASES_URL } = require('../app/lib/downloads.cjs');
 const { parseReleaseTag } = require('../app/lib/updateCheck.cjs');
+const { GAME_CHANNEL, GAME_FILES, sha256, encodeFile, readManifest, readSeed, parseManifestFile, deltaOf } = require('../app/lib/gameChannel.cjs');
 
 /** BR5: each download and the name a copy from before the rename asks for
  *  it by (app/lib/downloads.cjs LEGACY_DOWNLOAD_FILES) - [from, to] pairs,
@@ -75,6 +89,8 @@ export const EXPECTED_RELEASE_FILES = Object.freeze([
   DOWNLOAD_FILES.linux,
   'latest.yml', 'latest-mac.yml', 'latest-linux.yml',
   ...ALIAS_COPIES.map(([, to]) => to),
+  // DA13: the game a file at a time - the manifest every copy reads first, and the pack it fetches ranges of
+  GAME_FILES.manifest, GAME_FILES.pack,
 ]);
 
 /** The expected files a list of names does not have. */
@@ -310,8 +326,155 @@ export function pullRequestNotesSince(from, { run = git, api = githubApi, repo =
   return notes;
 }
 
+// ---- DA13: the game a file at a time ----------------------------------------
+
+/**
+ * What the shell is made of, as paths from the repository's root: app/ whole, and every file its build takes from
+ * outside it (app/package.json's `build.icon`, and each `build.files` set copied in from `../` - its filter's names),
+ * the game's own `../dist` excepted: that is what the channel carries. Derived from the build config, so a file the
+ * shell starts to pack from elsewhere is part of its id without anyone remembering to say so.
+ */
+export function shellInputs(pkg = JSON.parse(readFileSync(new URL('../app/package.json', import.meta.url), 'utf8'))) {
+  const out = ['app'];
+  const fromApp = (p) => join('app', p).split('\\').join('/');
+  if (typeof pkg.build?.icon === 'string') out.push(fromApp(pkg.build.icon));
+  for (const f of pkg.build?.files ?? []) {
+    if (typeof f !== 'object' || !f.from?.startsWith('../') || f.from === '../dist') continue;
+    for (const name of f.filter ?? []) out.push(fromApp(join(f.from, name)));
+  }
+  return out;
+}
+
+/**
+ * The shell's id at `at`: the sha256 of each input's git object id there - app/'s tree and each outside file's blob.
+ * The same commit gives the same id on every runner (git objects, not checked-out bytes: a Windows checkout's line
+ * endings are not the commit's), and any change to the shell gives another - which sends that release out by the
+ * installer (app/lib/gameChannel.cjs routeFor).
+ */
+export function shellId(run = git, at = 'HEAD', inputs = shellInputs()) {
+  return sha256(Buffer.from(inputs.map((p) => `${p} ${run(['rev-parse', `${at}:${p}`])}\n`).join('')));
+}
+
+/** Did any of the shell's inputs change between two commits? (git diff --quiet: exit 1 is a difference.) */
+export function shellChangedSince(from, run = execFileSync, to = 'HEAD', inputs = shellInputs()) {
+  try {
+    run('git', ['diff', '--quiet', from, to, '--', ...inputs], { stdio: 'ignore' });
+    return false;
+  } catch (e) {
+    if (e?.status === 1) return true;
+    throw e;
+  }
+}
+
+/** Every file under `dir`, by its path from it ('/'-separated), in path order. */
+export function gameFilesOf(dir) {
+  const out = [];
+  const walk = (rel) => {
+    for (const name of readdirSync(join(dir, rel)).sort()) {
+      const p = rel ? `${rel}/${name}` : name;
+      if (statSync(join(dir, p)).isDirectory()) walk(p);
+      else out.push(p);
+    }
+  };
+  walk('');
+  return out.sort();
+}
+
+/** The env a release step hands the game's two writers: its version, update number and shell id, held to their shapes. */
+function releaseEnv({ update = false } = {}) {
+  const version = process.env.VERSION ?? '';
+  const shell = process.env.DFO_SHELL ?? '';
+  if (!/^\d+\.\d+\.\d+$/.test(version)) throw new Error(`VERSION must be <major>.<minor>.<patch> (${version})`);
+  if (!/^[0-9a-f]{64}$/.test(shell)) throw new Error('DFO_SHELL must be the shell id (desktopRelease.mjs shell)');
+  const u = process.env.DFO_UPDATE ?? '';
+  return { version, shell, update: update && /^\d+\.\d+\.\d+$/.test(u) ? u : null };
+}
+
+/**
+ * The bundled copy's index - every file of `dir`, its size and sha256 - for an installer of `version` built for
+ * `shell` (app/game-seed.json, read by app/lib/gameStore.cjs loadSeed).
+ */
+export function gameSeed(dir, { version, shell }) {
+  const files = gameFilesOf(dir).map((p) => {
+    const bytes = readFileSync(join(dir, p));
+    return { path: p, size: bytes.length, sha256: sha256(bytes) };
+  });
+  return readSeed({ channel: GAME_CHANNEL, version, shell, files });
+}
+
+/**
+ * The game's pack and manifest for `dir`, written into `outDir` (GAME_FILES): each file encoded on its own
+ * (gameChannel.cjs encodeFile) and laid end to end in path order, its place recorded. Answers the manifest, held to
+ * gameChannel.cjs readManifest - the law every copy reads it by.
+ */
+export function packGame(dir, outDir, { version, update = null, shell }) {
+  mkdirSync(outDir, { recursive: true });
+  const fd = openSync(join(outDir, GAME_FILES.pack), 'w');
+  const files = [];
+  let offset = 0;
+  try {
+    for (const p of gameFilesOf(dir)) {
+      const bytes = readFileSync(join(dir, p));
+      const { encoding, data } = encodeFile(p, bytes);
+      writeSync(fd, data);
+      files.push({ path: p, size: bytes.length, sha256: sha256(bytes), offset, length: data.length, encoding });
+      offset += data.length;
+    }
+  } finally { closeSync(fd); }
+  const manifest = readManifest({ channel: GAME_CHANNEL, version, update, shell, pack: { file: GAME_FILES.pack, size: offset }, files }, { version });
+  writeFileSync(join(outDir, GAME_FILES.manifest), gzipSync(Buffer.from(JSON.stringify(manifest)), { level: 9 }));
+  return manifest;
+}
+
+/** The most of the game one update the channel carries may re-download: past it, the update is no longer the files
+ *  that changed (DA11's regression re-downloaded 53-56% of the installer). A release that truly replaces most of the
+ *  game goes out by the installer - raise GAME_CHANNEL, a change to the shell. */
+export const MAX_UPDATE_SHARE = 0.5;
+
+/**
+ * DA13's publish-step check: the update a player of `prev` takes to `next`, measured, and why it fails if it does -
+ * the shell's id moved with no shell file changed (every update would be the installer's again), or the channel would
+ * re-download more than MAX_UPDATE_SHARE of the game. A release that changes the shell is the installer's: measured,
+ * never failed.
+ */
+export function judgeDelta(prev, next, { shellChanged = null } = {}) {
+  const d = deltaOf(prev, next);
+  const sameShell = prev.shell === next.shell;
+  const problems = [];
+  if (!sameShell && shellChanged === false) problems.push('the shell id moved with no shell file changed - every update would be the installer\'s');
+  if (sameShell && d.share > MAX_UPDATE_SHARE) problems.push(`the update re-downloads ${(100 * d.share).toFixed(1)}% of the game (more than ${100 * MAX_UPDATE_SHARE}%) - it is no longer the files that changed`);
+  const said = `v${prev.version} -> v${next.version}: ${d.files} files, ${(d.bytes / 1e6).toFixed(2)} MB of ${(d.total / 1e6).toFixed(1)} MB (${(100 * d.share).toFixed(2)}%)${sameShell ? '' : ' - the shell changed: this release goes out by the installer'}`;
+  return { ...d, sameShell, problems, said };
+}
+
 function main(argv) {
   const [cmd, a, b] = argv;
+  if (cmd === 'shell') {
+    console.log(shellId());
+    return 0;
+  }
+  if (cmd === 'seed') {
+    writeFileSync(b, JSON.stringify(gameSeed(a, releaseEnv())));
+    console.log(`the bundled game indexed into ${b}`);
+    return 0;
+  }
+  if (cmd === 'pack') {
+    const m = packGame(a, b, releaseEnv({ update: true }));
+    console.log(`${m.files.length} files packed: ${(m.pack.size / 1e6).toFixed(1)} MB`);
+    return 0;
+  }
+  if (cmd === 'delta') {
+    const prevTag = argv[3] ?? null;
+    const prev = parseManifestFile(readFileSync(a));
+    const next = parseManifestFile(readFileSync(b));
+    const j = judgeDelta(prev, next, { shellChanged: prevTag && prev.shell !== next.shell ? shellChangedSince(prevTag) : null });
+    console.log(j.said);
+    if (j.problems.length) {
+      console.error(`the game's update has regressed - nothing is published: ${j.problems.join('; ')}`);
+      return 1;
+    }
+    return 0;
+  }
   if (cmd === 'alias') {
     const have = new Set(readdirSync(a));
     const absent = ALIAS_COPIES.filter(([from]) => !have.has(from)).map(([from]) => from);
@@ -362,7 +525,7 @@ function main(argv) {
     console.log(String(shouldMarkLatest(a, b)));
     return 0;
   }
-  console.error('usage: desktopRelease.mjs alias <dir> | check <dir> | notes <tag> | renotes <tag> <body-file> | latest <tag> [<current>]');
+  console.error('usage: desktopRelease.mjs alias <dir> | check <dir> | notes <tag> | renotes <tag> <body-file> | latest <tag> [<current>] | shell | seed <dist> <file> | pack <dist> <dir> | delta <prev> <next> [<prev-tag>]');
   return 2;
 }
 

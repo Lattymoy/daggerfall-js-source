@@ -1,29 +1,35 @@
 {
- "_": "TIME1 (bible/06-Systems/Online-Time-Arc.md section 8): every line in src/ that reads a shared clock, the clock it means and why. test/time1_census.test.js holds src/ to it both ways.",
+ "_": "TIME1 (bible/06-Systems/Online-Time-Arc.md section 8): every line in src/ that reads a shared clock, the clock it means and why. test/scenes/time1_census.test.js holds src/ to it both ways.",
  "rows": [
   {
-   "file": "src/net/gateLaw.js",
+   "file": "src/net/gate/gateLaw.js",
    "has": "export const gameDayAt = (nowMs) => Math.floor(sharedClassicMinutes(nowMs) / GATE_DAY_MINUTES);",
    "clock": "event",
    "why": "the gate's day - its number, its room, its marks"
   },
   {
-   "file": "src/net/gateLaw.js",
+   "file": "src/net/gate/gateLaw.js",
    "has": "const at = (minute) => Math.round(wallMsForClassicMinutes(base + minute));",
    "clock": "event",
    "why": "the gate's phases as relay ms"
   },
   {
-   "file": "src/net/serpentLaw.js",
+   "file": "src/net/serpent/serpentLaw.js",
    "has": "export const serpentDayAt = (nowMs) => Math.floor(sharedClassicMinutes(nowMs) / SERPENT_DAY_MINUTES);",
    "clock": "event",
    "why": "the sea serpent's day - the gate's own, which days hold a serpent"
   },
   {
-   "file": "src/net/serpentLaw.js",
+   "file": "src/net/serpent/serpentLaw.js",
    "has": "const at = (minute) => Math.round(wallMsForClassicMinutes(base + minute));",
    "clock": "event",
    "why": "the serpent's sighting, rising, storm and sounding as relay ms"
+  },
+  {
+   "file": "src/systems/starfall/starfallNight.js",
+   "has": "export const nightDayOfYear = (n) => dayOfYearFromMinutes(Math.floor(skyClassicMinutes(",
+   "clock": "sky",
+   "why": "the Starfall's Witches' Night - a star night whose dusk lands on the sky calendar's Witches Festival, the Heart-Star's (STAR1)"
   },
   {
    "file": "src/net/nodeLaw.js",
@@ -246,6 +252,12 @@
    "why": "the weather's pace"
   },
   {
+   "file": "src/scenes/world.js",
+   "has": "now: () => (_snowArrival !== null && worldMinutes() < _snowArrival ? _snowArrival : ((_snowArrival = null), worldMinutes()))",
+   "clock": "event",
+   "why": "PRECIP4 / AUDIT PRECIP HOST-2: the snow's one clock - the snowpack's event minute for the frames, a build's settle and the feet, a trip's arrival minute until its own time has run"
+  },
+  {
    "file": "src/scenes/exterior.js",
    "has": "nowMinutes: playerTicker.classicMinutes, tsec",
    "clock": "event",
@@ -428,16 +440,16 @@
    "why": "a banishment's term"
   },
   {
-   "file": "src/scenes/world.js",
+   "file": "src/scenes/pixelBuild.js",
    "has": "known: knownCriminal(playerEntity, region, { ownNow: ownMinutes(), worldNow: trustedWorldMinutes() })",
    "clock": "event",
    "why": "a banishment's term - the living watch's word (WATCH-KNOWS)"
   },
   {
    "file": "src/scenes/world.js",
-   "has": "knownCriminal(playerEntity, trip.from.region, { ownNow: ownMinutes(), worldNow: trustedWorldMinutes() })",
+   "has": "patrolHalts(playerEntity, trip.from.region, { ownNow: ownMinutes(), worldNow: trustedWorldMinutes() })",
    "clock": "event",
-   "why": "a banishment's term - a patrol's halt of a wanted player on the road (LW9)"
+   "why": "a banishment's term - a patrol's halt of a wanted player on the road (LW9), outside the grace an answered law gives (FIELD BUGS 2026-10-21d PATROL-GRACE)"
   },
   {
    "file": "src/scenes/world.js",
@@ -513,6 +525,12 @@
    "has": "raidState().raids, worldMinutes(), { regionName",
    "clock": "event",
    "why": "the raids' schedule"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "raidActive(r, worldMinutes())",
+   "clock": "event",
+   "why": "TOWN-ECON: a raid at a town's gates, on the raids' schedule"
   },
   {
    "file": "src/scenes/world.js",
@@ -607,6 +625,12 @@
   },
   {
    "file": "src/scenes/world.js",
+   "has": "const owForecast = createOverworldForecast({ climateAt, ground: mapGroundHere, minuteNow: () => playerTicker.classicMinutes,",
+   "clock": "event",
+   "why": "OW-FORECAST: the weather ahead read at the minute the sky's weather is sampled at (sampleWeatherField's) - the weather's pace"
+  },
+  {
+   "file": "src/scenes/world.js",
    "has": "nowMinutes: playerTicker.classicMinutes, tsec",
    "clock": "event",
    "why": "the weather's pace"
@@ -646,6 +670,13 @@
    "has": "holidayId: getHolidayId(Math.floor(skyMinutes()), b.regionIndex ?? 0),",
    "clock": "sky",
    "why": "a shop's holiday prices"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "commitTrade(shelf, m, staged, price, proceeds, identifySpell, { holidayId: getHolidayId(Math.floor(skyMinutes()), b.regionIndex ?? 0), guildFactionId }",
+   "clock": "sky",
+   "why": "the purchase's holiday its LAW-3 share is reckoned by, as its price was (AUDIT TOWN-ECON 2 PRICE-1)",
+   "count": 2
   },
   {
    "file": "src/scenes/worldModes.js",
@@ -774,37 +805,37 @@
    "why": "the timers window's next game day (TIMERS1) - the gate's day turning over, as relay ms"
   },
   {
-   "file": "src/systems/lootCodex.js",
+   "file": "src/systems/loot/lootCodex.js",
    "has": "const _day = () => Math.max(0, Math.floor((Number(worldMinutes()) || 0) / 1440));",
    "clock": "event",
    "why": "the day a find is dated"
   },
   {
-   "file": "src/systems/lootPowers.js",
+   "file": "src/systems/loot/lootPowers.js",
    "has": "case 'moon': if (isNight(skyMinutes())) pct += p.pct + (group === 'animal' ? p.beast : 0); break;",
    "clock": "sky",
    "why": "a moon power's night"
   },
   {
-   "file": "src/systems/revenant.js",
+   "file": "src/systems/revenant/revenant.js",
    "has": "const skyIsNight = () => { try { return isNight(skyMinutes()); }",
    "clock": "sky",
    "why": "RVN1/RVN2: whether a fight with a revenant began by night (its ledger's night scar), and a Night-stalker's night - its return and its blows"
   },
   {
-   "file": "src/systems/revenant.js",
+   "file": "src/systems/revenant/revenant.js",
    "has": "const skyIsDay = () => { try { return !isNight(skyMinutes()); }",
    "clock": "sky",
    "why": "RVN3: whether the sky reads day - a daylight weakness bites"
   },
   {
-   "file": "src/systems/save.js",
+   "file": "src/systems/save/save.js",
    "has": "? Math.floor(worldMinutes()), worldMinutes",
    "clock": "event",
    "why": "a save without a clock of its own"
   },
   {
-   "file": "src/systems/save.js",
+   "file": "src/systems/save/save.js",
    "has": "const own = Math.floor(snap.classicMinutes ?? 0), at = worldMinutes();",
    "clock": "event",
    "why": "an absence measured on the event clock"
@@ -832,6 +863,18 @@
    "has": "export const eventOfSkyLaw = (skyMinutes) => sharedClassicMinutes(wallMsForSkyMinutes(skyMinutes));",
    "clock": "law",
    "why": "BANISH-SKY: the event minute at a sky minute - a banishment's thirty days of the sky's calendar, stamped on the event clock"
+  },
+  {
+   "file": "src/systems/revenant/revenantCompanions.js",
+   "has": "export const errandWorldNow = () => errandWorldMinute(trustedWorldMinutes(), sharedClockHeardMark(), _monotonic());",
+   "clock": "event",
+   "why": "OFFLINE-ROAD: a sworn one abroad keeps the world's time, held to the session's monotonic time since the welcome (AUDIT FB1021 L3-1)"
+  },
+  {
+   "file": "src/systems/worldTick.js",
+   "has": "_heardMark = Object.freeze({ world: worldMinutes(), perf, n: (_heardMark?.n ?? 0) + 1 });",
+   "clock": "law",
+   "why": "the event minute a welcome is heard at, marked with the session's monotonic time (AUDIT FB1021 L3-1)"
   },
   {
    "file": "src/systems/worldTick.js",
@@ -882,25 +925,25 @@
    "why": "the nightfall words"
   },
   {
-   "file": "src/ui/enhancedMenu.js",
+   "file": "src/ui/enhanced/enhancedMenu.js",
    "has": "const copy = onlineCopyOf(snap, sharedClassicMinutes(Date.now()));",
    "clock": "event",
    "why": "the event minute a character joins at"
   },
   {
-   "file": "src/ui/enhancedMenu.js",
+   "file": "src/ui/enhanced/enhancedMenu.js",
    "has": "const d = dateFromClassicMinutes(Math.floor(skyMinutes()));",
    "clock": "sky",
    "why": "the menu's date and time"
   },
   {
-   "file": "src/ui/enhancedMenu.js",
+   "file": "src/ui/enhanced/enhancedMenu.js",
    "has": "export function statsLaw(detail, entity, { worldNow = trustedWorldMinutes() } = {}) {",
    "clock": "event",
    "why": "a banishment's term"
   },
   {
-   "file": "src/ui/enhancedMenu.js",
+   "file": "src/ui/enhanced/enhancedMenu.js",
    "has": "const midnight = wallMsForSkyMinutes(Math.ceil(skyClassicMinutes(turn) / 1440) * 1440);",
    "clock": "sky",
    "why": "the Online pane's sentence: the sky's first midnight after its switch, said in local minutes (TIME4)"
@@ -915,7 +958,7 @@
    "file": "src/scenes/exterior.js",
    "has": "playerEntity, gameMinutes: () => worldMinutes(), showOverlay",
    "clock": "event",
-   "why": "ARENA3: the gate's hour - the bookmaker's book and the Herald's doors; ARENA4b: and, through the gate, the Herald's choice at the hour and the banner the pause window's door reads (scenes/arenaGate.js heraldChoice / joined)"
+   "why": "ARENA3: the gate's hour - the bookmaker's book and the Herald's doors; ARENA4b: and, through the gate, the Herald's choice at the hour and the banner the pause window's door reads (scenes/arena/arenaGate.js heraldChoice / joined)"
   },
   {
    "file": "src/scenes/exterior.js",
@@ -934,7 +977,7 @@
    "file": "src/scenes/world.js",
    "has": "playerEntity, gameMinutes: () => worldMinutes(), showOverlay",
    "clock": "event",
-   "why": "ARENA3: the gate's hour - the bookmaker's book and the Herald's doors; ARENA4b: and, through the gate, the Herald's choice at the hour and the banner the pause window's door reads (scenes/arenaGate.js heraldChoice / joined)"
+   "why": "ARENA3: the gate's hour - the bookmaker's book and the Herald's doors; ARENA4b: and, through the gate, the Herald's choice at the hour and the banner the pause window's door reads (scenes/arena/arenaGate.js heraldChoice / joined)"
   },
   {
    "file": "src/scenes/world.js",
@@ -963,9 +1006,16 @@
   },
   {
    "file": "src/scenes/dungeonContext.js",
-   "has": "markSearched(searchKey(searchLocationKey(), sb.key), Math.min(at, worldMinutes()));",
+   "has": "markSearched(searchKey(searchLocationKey(), sb.key), Math.min(at, worldMinutes()), w?.who ?? null);",
    "clock": "event",
-   "why": "a searchable's five hours, never from ahead of now (SEARCH1-PARTY)"
+   "why": "a searchable's five hours, never from ahead of now (SEARCH1-PARTY) - GRAVE-PARTY: and its searcher's name"
+  },
+  {
+   "file": "src/scenes/searchPartyHost.js",
+   "has": "const now = worldMinutes();",
+   "count": 3,
+   "clock": "event",
+   "why": "a headstone's five hours - at the search, a partymate's stamp landed, the stone read again (GRAVE-PARTY; activateGrave's own, moved out of world.js)"
   },
   {
    "file": "src/scenes/dungeonContext.js",
@@ -980,12 +1030,6 @@
    "why": "a headstone's five hours (SEARCH1)"
   },
   {
-   "file": "src/scenes/world.js",
-   "has": "const now = worldMinutes();",
-   "clock": "event",
-   "why": "a headstone's five hours, at the search (SEARCH1)"
-  },
-  {
    "file": "src/scenes/worldModes.js",
    "has": "rosterGrandChampions(playerEntity.arenaLeague, Math.floor(worldMinutes()))",
    "clock": "event",
@@ -998,16 +1042,16 @@
    "why": "LW5: a visiting crew's stay - her dwell on the ships' clock turned into the sky's minutes the living world lives by"
   },
   {
-   "file": "src/scenes/world.js",
-   "has": "day: () => Math.floor((skyMinutes() - 240) / 1440),",
+   "file": "src/systems/livingWorld/regardClock.js",
+   "has": "export function characterRelations(record, own, online = false, sky = () => skyMinutes()) {",
    "clock": "sky",
-   "why": "LW6: the living day a regard is noted on, met in the deep"
+   "why": "REGARD-OWN, AUDIT FB1021d RO-3: a sky-stamped record's grudges eased as the old sky law had eased them, read once at its load - no stamp is taken on the sky"
   },
   {
    "file": "src/scenes/world.js",
-   "has": "const livingRegardDay = () => Math.floor((skyMinutes() - 240) / 1440);",
+   "has": "day: () => Math.floor((skyMinutes() - 240) / 1440),",
    "clock": "sky",
-   "why": "LEGACY5/LEGACY6: the living day a regard is read and handed down on - the Living World's own day of the sky's minute"
+   "why": "LW6: the living day the dives are read on (FIELD BUGS 2026-10-21d REGARD-OWN: a regard noted there is counted in the character's own day - systems/livingWorld/regardClock.js)"
   },
   {
    "file": "src/scenes/world.js",
@@ -1046,7 +1090,7 @@
    "why": "LW12: a band's hideout stood - its people by day or night, its chest's take and its rout on the living world's clock"
   },
   {
-   "file": "src/scenes/world.js",
+   "file": "src/scenes/travelViewMarks.js",
    "has": "livingHideoutsHostOf().marks(hereN.x, hereN.z, skyMinutes())",
    "clock": "sky",
    "why": "LW12: the Overworld's rumoured hideouts - the band standing at the living world's minute"
@@ -1080,12 +1124,6 @@
    "has": "livingDivers.frame(_livingDiversList, skyMinutes());",
    "clock": "sky",
    "why": "LW6: the companies met read at the sky's minute - their hours done"
-  },
-  {
-   "file": "src/scenes/world.js",
-   "has": "people: livingWorldOn() ? () => peoplePage(livingRelations, Math.floor((skyMinutes() - 240) / 1440), livingTownOfId) : undefined,",
-   "clock": "sky",
-   "why": "LW7c: the People page reads each regard on the living day - the sky's"
   },
   {
    "file": "src/scenes/world.js",
@@ -1140,6 +1178,60 @@
    "has": "day: Math.floor(worldMinutes() / 1440)",
    "clock": "event",
    "why": "STEED1: the Stable's horses of the day - stood by the world's day, so every client in the town that day sees the same three"
+  },
+  {
+   "file": "src/scenes/world.js",
+   "has": "noteMinutes: () => skyMinutes(),",
+   "clock": "sky",
+   "why": "L10N5: the minute a notebook header records, so a load draws its date in its own language - the sky's, as the header's own date line reads"
+  },
+  {
+   "file": "src/scenes/exterior.js",
+   "has": "noteMinutes: () => skyMinutes(),",
+   "clock": "sky",
+   "why": "L10N5: the minute a notebook header records, as the streaming host's"
+  },
+  {
+   "file": "src/scenes/roomLootHost.js",
+   "has": "Math.floor(sharedClassicMinutes(stamp) / SEARCH_COOLDOWN_MINUTES)",
+   "clock": "event",
+   "why": "an older build's find word: the search period (SEARCH1's five hours, the find's generation) its relay stamp falls in"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "mapId: hit.dfLocation?.mapTableData?.mapId ?? 0, day: Math.floor(worldMinutes() / MINUTES_PER_DAY),",
+   "clock": "event",
+   "why": "the lamp keeper's day - which shop's keeper stands as the lamp (LAMP-KEEPER II)"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "wallNow: () => (sharedClockOn() ? wallMsForClassicMinutes(worldMinutes()) : null)",
+   "clock": "event",
+   "why": "a cupboard's first-open instant - two first-opens in one breath keep the earlier mint by the relay's clock on every client, never a machine's own (OUTDOOR-LOOT R-3)"
+  },
+  {
+   "file": "src/scenes/worldModes.js",
+   "has": "const lines = lampLines(Math.floor(worldMinutes() / MINUTES_PER_DAY));",
+   "clock": "event",
+   "why": "the lamp's words for the day (LAMP-KEEPER II)"
+  },
+  {
+   "file": "src/scenes/witchesHost.js",
+   "has": "const day = dayOfYearFromMinutes(Math.floor(skyMinutes())), night = deadWalk(day, nowMs()) ? day : -1;",
+   "clock": "sky",
+   "why": "WITCH1: a night the dead walk - the sky's 13 Frostfall or 3 Hearthfire (the day the service's own find reads, skyDayAt) or the festival's own eve on the relay's clock"
+  },
+  {
+   "file": "src/scenes/witchesHost.js",
+   "has": "night: () => deadWalk(dayOfYearFromMinutes(Math.floor(skyMinutes())), nowMs()),",
+   "clock": "sky",
+   "why": "WITCH1: the Wyrd Sister's window says the night the dead walk"
+  },
+  {
+   "file": "src/net/sea/seaSeasonLaw.js",
+   "has": "arenaSeasonOf(Math.floor(wallMsForClassicMinutes(",
+   "clock": "event",
+   "why": "a voyage's game day as the realm's wall time - the season of the realm's eight weeks it falls in (SEA-SEASON, the arena's)"
   }
  ]
 }

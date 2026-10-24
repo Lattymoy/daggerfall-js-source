@@ -5,7 +5,7 @@
     "old": "export const DRAW_M = 45;",
     "new": "export const DRAW_M = 50;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const HELP_M = 70;",
     "new": "export const HELP_M = 80;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const KEEP_M = 200;",
     "new": "export const KEEP_M = 260;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "export const CALM_S = 8;",
     "new": "export const CALM_S = 4;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "export const FIGHT_NEAR_M = 30;",
     "new": "export const FIGHT_NEAR_M = 40;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "          if ((standing === 'hostile' || halt) && distM <= DRAW_M) stand(c, 'foe', halt);",
     "new": "          if ((standing === 'hostile' || halt) && distM <= DRAW_M * 2) stand(c, 'foe', halt);",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "          if ((standing === 'hostile' || halt) && distM <= DRAW_M) stand(c, 'foe', halt);",
     "new": "          if ((standing === 'hostile' || standing === 'enemy' || halt) && distM <= DRAW_M) stand(c, 'foe', halt);",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "          if (c.res?.cls == null || stands.has(c.res.id)) continue;",
     "new": "          if (stands.has(c.res.id)) continue;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "          if (c.res?.cls == null || stands.has(c.res.id)) continue;",
     "new": "          if (c.res?.cls == null) continue;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "          else if (standing === 'friend' && fight && distM <= HELP_M) stand(c, 'friend');",
     "new": "          else if (standing === 'friend' && distM <= HELP_M) stand(c, 'friend');",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "          else if (standing === 'friend' && fight && distM <= HELP_M) stand(c, 'friend');",
     "new": "          else if (standing === 'friend' && fight && distM <= HELP_M * 2) stand(c, 'friend');",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      const can = !!here && ground && deps.ready();",
     "new": "      const can = !!here && deps.ready();",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      const can = !!here && ground && deps.ready();",
     "new": "      const can = !!here && ground;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "allied: kind === 'friend', gender: c.res.sex ?? 'male' }",
     "new": "allied: true, gender: c.res.sex ?? 'male' }",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "Promise.resolve(deps.spawn(c.res.cls, deps.sceneOf(c.x, c.z),",
     "new": "Promise.resolve(deps.spawn(c.res.cls, deps.sceneOf(c.z, c.x),",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "        if (rec.entity) rec.entity.name = c.res.name;",
     "new": "        void 0;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "        rec.living = { id: c.res.id, res: c.res, town: deps.door ?? null };",
     "new": "        void 0;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "          rec.shipmate = true;",
     "new": "          void 0;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "          if (rec.entity) { rec.entity.team = 'PlayerAlly'; rec.entity.mobileTeam = 'PlayerAlly'; }",
     "new": "          void 0;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "            deps.slay(s.res, t, true);   // struck down before their party",
     "new": "            void 0;   // struck down before their party",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "            deps.slay(s.res, t, true);   // struck down before their party",
     "new": "            deps.slay(s.res, t, false);   // struck down before their party",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "            for (const m of membersAt(s.trip, t)) if (m.id !== s.res.id) rel?.note(m.id, 'slain', day);",
     "new": "            void membersAt;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "          } else deps.died(s.res, t);   // fallen at the player's side",
     "new": "          } else void 0;   // fallen at the player's side",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    if (!s.rec?.dead) takeOut(s.rec);   // the dead are the pool's own",
     "new": "    takeOut(s.rec);   // the dead are the pool's own",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "        const far = !here || Math.hypot(s.at.x - here.x, s.at.z - here.z) / NATIVE_PER_M > KEEP_M;",
     "new": "        const far = !here || Math.hypot(s.at.x - here.x, s.at.z - here.z) / NATIVE_PER_M > KEEP_M * 2;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "        if (s.kind === 'friend') s.calm = deps.fighting() ? 0 : s.calm + dt;",
     "new": "        if (s.kind === 'friend') s.calm = s.calm + dt;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "        if (far || !can || (s.kind === 'friend' && s.calm >= CALM_S)) letGo(id);",
     "new": "        if (far || !can) letGo(id);",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "        if (far || !can || (s.kind === 'friend' && s.calm >= CALM_S)) letGo(id);",
     "new": "        if (far || (s.kind === 'friend' && s.calm >= CALM_S)) letGo(id);",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "    stood: (id) => { const s = stands.get(id); return !!s && !s.failed; },",
     "new": "    stood: (id) => stands.has(id),",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "        if (!rec) { fail(); return; }",
     "new": "        if (!rec) { stands.delete(c.res.id); return; }",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "    deps.say?.(halt ? `${first}: \"${halt}\"` : kind === 'foe' ? `${first} draws on you!` : `${first} comes to your side.`);",
     "new": "    deps.say?.('');",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -284,61 +284,61 @@
     "old": "    clear() { for (const id of [...stands.keys()]) letGo(id); },",
     "new": "    clear() {},",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
     "name": "LW7b-roads-skip",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "          if (deps.stands?.stood(m.res.id)) continue;   // LW7b",
     "new": "          void 0;   // LW7b",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
     "name": "LW7b-roads-unarmed",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "if (m.res.cls != null) cands.push(",
     "new": "if (true) cands.push(",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
     "name": "LW7b-roads-fight",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "          if (d.fight) continue;   // LW4b: at its fight - the fights'",
     "new": "          // LW4b: at its fight - the fights'",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
     "name": "LW7b-roads-sky",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "      if (here && !overworld) {\n        for (const d of drawn) {",
     "new": "      if (here) {\n        for (const d of drawn) {",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
     "name": "LW7b-roads-ground",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "      deps.stands.frame(cands, here, t, { dt, ground: !overworld });",
     "new": "      deps.stands.frame(cands, here, t, { dt, ground: true });",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
     "name": "LW7b-roads-clear",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": " deps.fights?.clear(); deps.stands?.clear();",
     "new": " deps.fights?.clear();",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "      if (standing === 'enemy' || standing === 'hostile') return;   // LW7b",
     "new": "      void standing;   // LW7b",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "    const hostile = deps.spawnFoe ? armed.filter((m) => standing(m) === 'hostile') : [];",
     "new": "    const hostile = [];",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "          if (rec.entity) rec.entity.name = m.name;",
     "new": "          void 0;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "          rec.living = { id: m.id, res: m, town: deps.door ?? null };\n          if (rec.entity) rec.entity.name = m.name;",
     "new": "          if (rec.entity) rec.entity.name = m.name;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -383,25 +383,25 @@
     "old": "deps.spot(L.feet, Math.sin(L.yaw) * DIVER_STAND_M + Math.cos(L.yaw) * side, Math.cos(L.yaw) * DIVER_STAND_M - Math.sin(L.yaw) * side);",
     "new": "deps.spot(L.feet, -Math.sin(L.yaw) * DIVER_STAND_M + Math.cos(L.yaw) * side, -Math.cos(L.yaw) * DIVER_STAND_M - Math.sin(L.yaw) * side);",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
     "name": "LW7b-deep-rest-stood",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "      deps.say?.(`${trip.leader.name}'s company - and ${firstNameOf(hostile[0].name)} draws on you!`);\n      return;",
-    "new": "      deps.say?.(`${trip.leader.name}'s company - and ${firstNameOf(hostile[0].name)} draws on you!`);",
+    "old": "      deps.say?.(`${trip.leader.name}'s company, and ${firstNameOf(hostile[0].name)} draws on you!`);\n      return;",
+    "new": "      deps.say?.(`${trip.leader.name}'s company, and ${firstNameOf(hostile[0].name)} draws on you!`);",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
     "name": "LW7b-deep-line",
     "file": "src/scenes/dungeonDivers.js",
-    "old": "      deps.say?.(`${trip.leader.name}'s company - and ${firstNameOf(hostile[0].name)} draws on you!`);",
+    "old": "      deps.say?.(`${trip.leader.name}'s company, and ${firstNameOf(hostile[0].name)} draws on you!`);",
     "new": "      deps.say?.('');",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "    deps.slay?.(rec.living.res, t, true);",
     "new": "    void 0;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "    deps.slay?.(rec.living.res, t, true);",
     "new": "    deps.slay?.(rec.living.res, t, false);",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -428,7 +428,7 @@
     "old": "    for (const m of membersAt(c.trip, t)) if (m.id !== mid) rel?.note(m.id, 'slain', deps.day());",
     "new": "    void rel;",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -437,7 +437,7 @@
     "old": "        for (const [mid, rec] of c.foes) if (rec.dead && !c.fell.has(mid)) slain(c, mid, rec, t);   // LW7b",
     "new": "        for (const [mid, rec] of c.foes) if (rec.dead) slain(c, mid, rec, t);   // LW7b",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -446,7 +446,7 @@
     "old": "    for (const rec of c.foes.values()) if (!rec.dead) takeOut(rec);",
     "new": "    for (const rec of c.foes.values()) takeOut(rec);",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -455,7 +455,7 @@
     "old": "    for (const rec of c.foes.values()) if (!rec.dead) takeOut(rec);",
     "new": "    for (const rec of c.foes.values()) if (false) takeOut(rec);",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -464,7 +464,7 @@
     "old": "(standing(m) !== 'enemy' && standing(m) !== 'hostile'));   // LW7b",
     "new": "(standing(m) !== 'hostile'));   // LW7b",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -473,7 +473,7 @@
     "old": "    if (!stand.some((m) => m.cls != null)) { deps.say?.(`${trip.leader.name}'s company passes you by.`); return; }",
     "new": "    if (false) { deps.say?.(`${trip.leader.name}'s company passes you by.`); return; }",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -482,7 +482,7 @@
     "old": "    stands: createRoadStands({",
     "new": "    stands: null && createRoadStands({",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -491,7 +491,7 @@
     "old": "exteriorFoes.spawnFoe(type, feet, { allied: o.allied, yaw: o.yaw,",
     "new": "exteriorFoes.spawnFoe(type, feet, { allied: false, yaw: o.yaw,",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -500,7 +500,7 @@
     "old": "      slay: livingRoadSlay, died: livingDied,",
     "new": "      slay: livingRoadSlay, died: () => {},",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -509,7 +509,7 @@
     "old": "<= FIGHT_NEAR_M),",
     "new": "<= FIGHT_NEAR_M * 9),",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -518,7 +518,7 @@
     "old": "      say: (text) => townTalk.say(text),",
     "new": "      say: () => {},",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -527,7 +527,7 @@
     "old": "  const livingDied = (res, t) => { legacyHost?.residentDied(res.id); livingRelations.turn('died',",
     "new": "  const livingDied = (res, t) => { legacyHost?.residentDied(res.id); livingRelations.turn('slain',",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ],
     "note": "LEGACY5 (PIN MOVED): re-aimed by content."
   },
@@ -537,7 +537,7 @@
     "old": "d.spawnLooseFoe(type, feet, { yawRad: o.yaw, allied: false, gender: o.gender, level: o.level }),   // LW7b",
     "new": "d.spawnLooseFoe(type, feet, { yawRad: o.yaw, allied: true, gender: o.gender, level: o.level }),   // LW7b",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -546,7 +546,7 @@
     "old": "        slay: livingSlay,\n        died: livingDied,   // AUDIT-C3",
     "new": "        slay: null,\n        died: livingDied,   // AUDIT-C3",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   }
 ]

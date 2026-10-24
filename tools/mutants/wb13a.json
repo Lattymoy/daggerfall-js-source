@@ -1,202 +1,204 @@
 [
   {
     "name": "WB13a-a-full-group-dropping-the-rest",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "    if (!g || g.pts.length >= TELEGRAPH_POINTS_MAX) { g = { r: p.r, court, pts: [], alpha: 0, from: p.from }; byR.set(key, g); groups.push(g); }\n    g.pts.push([p.x, p.z]);",
     "new": "    if (!g) { g = { r: p.r, court, pts: [], alpha: 0, from: p.from }; byR.set(key, g); groups.push(g); }\n    if (g.pts.length < TELEGRAPH_POINTS_MAX) g.pts.push([p.x, p.z]);",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-the-ring-back-to-30",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "shape: 'ring', r0: 4, r1: 16,",
     "new": "shape: 'ring', r0: 4, r1: 30,",
     "tests": [
-      "test/wb13a_telegraphs.test.js",
-      "test/wb4_gate_boss.test.js",
-      "test/wb8b_gate_marks.test.js"
+      "test/scenes/wb13a_telegraphs.test.js",
+      "test/net/gate/wb4_gate_boss.test.js",
+      "test/net/gate/wb8b_gate_marks.test.js"
     ]
   },
   {
     "name": "WB13a-the-spoke-filled-to-its-length",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "if (ld < best) { best = ld; bh = Math.max(0, Math.min(1, h / Math.min(sh.r, rimDist(sh.origin[0], sh.origin[1], dx, dz, C[0], C[1])))); }",
     "new": "if (ld < best) { best = ld; bh = h / sh.r; }",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-the-ring-filled-past-the-rim",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "    float far = min(uR1, rimDist(uOrigin, rel / max(d, 1e-4), uCourt, uFloorR));",
     "new": "    float far = uR1;",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-the-line-faded-in",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "  float pop = 1.0 + 0.8 * exp(-uSince / ${POP_S});",
     "new": "  float pop = smoothstep(0.0, ${FILL_S}, uSince);",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-the-last-moment-flooding-the-shape",
-    "file": "src/render/gateTelegraph.js",
-    "old": "  float inner = (fin * 0.10 + filled * (0.20 + 0.55 * T2) + lip * 0.35 + fin * (0.05 + 0.07 * uT) * g) * inFade;",
-    "new": "  float inner = (fin * 0.10 + filled * (0.20 + 0.55 * T2) + lip * 0.35 + fin * (0.05 + 0.07 * uT) * g) * inFade + 0.8 * fin * now;",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "  float inner = (fin * 0.10 + filled * (0.20 + 0.55 * T2) + lip * 0.35 + fin * (0.05 + 0.07 * uT) * g) * inFade;\n  // THE THROB, on the line alone",
+    "new": "  float inner = (fin * 0.10 + filled * (0.20 + 0.55 * T2) + lip * 0.35 + fin * (0.05 + 0.07 * uT) * g) * inFade + 0.8 * fin * now;\n  // THE THROB, on the line alone",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-the-landing-held-flat",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "    float k = exp(-uAfter / ${TAU_S});",
     "new": "    float k = 1.0;",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-the-charge-flash-unled",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "    if (uKind == 3 && uRunS > 0.0) { float passed = uAfter - s * uRunS; k = passed >= 0.0 ? exp(-passed / ${TAU_S}) : 0.75; }\n",
     "new": "",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-the-edge-his-aspect-s",
-    "file": "src/render/gateTelegraph.js",
-    "old": "color: attackColor(A, P), edge: telegraphEdge(A),",
-    "new": "color: attackColor(A, P), edge: attackColor(A, P),",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "edge: torment ? TORMENT_EDGE : telegraphEdge(A),",
+    "new": "edge: torment ? TORMENT_EDGE : attackColor(A, P),",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-the-heart-edge-hot",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "  vec3 lineCol = mix(edgeCol, ${vec3Of(TELEGRAPH_EDGE_SAFE)}, safe);",
     "new": "  vec3 lineCol = edgeCol;",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-the-crackle-at-twelve",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "vnoise(p * 1.3 + vec2(floor(t * 4.0) * 3.1))",
     "new": "vnoise(p * 1.3 + vec2(floor(t * 12.0) * 3.1))",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-the-wave-unsized",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "    float rw = min(uAfter * ${TELEGRAPH_WAVE_MPS}.0, clamp(0.5 * size, 1.0, ${TELEGRAPH_WAVE_MAX_M.toFixed(1)}));",
     "new": "    float rw = uAfter * ${TELEGRAPH_WAVE_MPS}.0;",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-the-ground-lit-as-a-blow",
-    "file": "src/render/gateTelegraph.js",
+    "file": "src/render/gate/gateTelegraph.js",
     "old": "    vec3 lit = tint * (fin * (0.10 + 0.20 * g) * seethe + 0.32 * core * dash);",
     "new": "    vec3 lit = uColor * (fin * (0.28 + 0.42 * g) + 0.75 * core);",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-a-tether-burning",
-    "file": "src/scenes/gateHost.js",
+    "file": "src/scenes/gate/gateHost.js",
     "old": "sh.runS = 0; sh.pool = TELEGRAPH_POOL.path;",
     "new": "sh.runS = 0; sh.pool = TELEGRAPH_POOL.ground;",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-a-quad-short-of-its-shape",
-    "file": "src/render/gateTelegraph.js",
-    "old": "case TELEGRAPH_KIND.cone: case TELEGRAPH_KIND.disc: return box(sh.origin[0], sh.origin[1], sh.origin[0], sh.origin[1], sh.r + M);",
-    "new": "case TELEGRAPH_KIND.cone: case TELEGRAPH_KIND.disc: return box(sh.origin[0], sh.origin[1], sh.origin[0], sh.origin[1], sh.r);",
+    "file": "src/render/gate/gateTelegraph.js",
+    "old": "case TELEGRAPH_KIND.cone: case TELEGRAPH_KIND.disc: return boxInto(b, sh.origin[0], sh.origin[1], sh.origin[0], sh.origin[1], sh.r + (sh.kind === TELEGRAPH_KIND.disc && sh.pool === TELEGRAPH_POOL_SPIRE.ring ? TELEGRAPH_RING_REACH : M));",
+    "new": "case TELEGRAPH_KIND.cone: case TELEGRAPH_KIND.disc: return boxInto(b, sh.origin[0], sh.origin[1], sh.origin[0], sh.origin[1], sh.r);",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-the-peril-never-said",
-    "file": "src/scenes/gateCourt.js",
-    "old": "      const on = head && end ? segmentDistance(fx, fz, head[0], head[1], end[0], end[1]) <= Math.max(ATTACKS.charge.width / 2, P.bossR) : inAttack(atk, fx, fz, P);",
-    "new": "      const on = head && end ? segmentDistance(fx, fz, head[0], head[1], end[0], end[1]) <= Math.max(ATTACKS.charge.width / 2, P.bossR) : false;",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "head && end ? segmentDistance(fx, fz, head[0], head[1], end[0], end[1]) <= Math.max(ATTACKS.charge.width / 2, P.bossR) : inAttack(atk, fx, fz, P);",
+    "new": "head && end ? segmentDistance(fx, fz, head[0], head[1], end[0], end[1]) <= Math.max(ATTACKS.charge.width / 2, P.bossR) : false;",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
-    ]
+      "test/scenes/wb13a_telegraphs.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
   },
   {
     "name": "WB13a-the-charge-behind-him-a-peril",
-    "file": "src/scenes/gateCourt.js",
-    "old": "      const on = head && end ? segmentDistance(fx, fz, head[0], head[1], end[0], end[1]) <= Math.max(ATTACKS.charge.width / 2, P.bossR) : inAttack(atk, fx, fz, P);",
-    "new": "      const on = inAttack(atk, fx, fz, P);",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "      const on = A === ATTACKS.wheel ? soon(fx, fz) : head && end ? segmentDistance(fx, fz, head[0], head[1], end[0], end[1]) <= Math.max(ATTACKS.charge.width / 2, P.bossR) : inAttack(atk, fx, fz, P);",
+    "new": "      const on = A === ATTACKS.wheel ? soon(fx, fz) : inAttack(atk, fx, fz, P);",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
-    ]
+      "test/scenes/wb13a_telegraphs.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
   },
   {
     "name": "WB13a-the-way-out-turned-the-wrong-way",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "Math.atan2(dir[0] * Math.cos(yaw) - dir[1] * Math.sin(yaw), dir[0] * Math.sin(yaw) + dir[1] * Math.cos(yaw))",
     "new": "Math.atan2(dir[1] * Math.sin(yaw) - dir[0] * Math.cos(yaw), dir[0] * Math.sin(yaw) + dir[1] * Math.cos(yaw))",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-the-way-out-off-the-floor",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": "      if (Math.hypot(x - C[0], z - C[1]) > R) break;\n",
     "new": "",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-the-soonest-not-first",
-    "file": "src/scenes/gateCourt.js",
+    "file": "src/scenes/gate/gateCourt.js",
     "old": " || (best && best.at <= h.at)) continue;",
     "new": ") continue;",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-the-grounds-warning-over-a-blow",
-    "file": "src/ui/gateGroundView.js",
-    "old": "warn: peril ? GROUND_VIEW_TEXT.peril(peril.name) : inside ? GROUND_VIEW_TEXT.warn(ground) : null",
-    "new": "warn: inside ? GROUND_VIEW_TEXT.warn(ground) : peril ? GROUND_VIEW_TEXT.peril(peril.name) : null",
+    "file": "src/ui/gate/gateGroundView.js",
+    "old": "warn: peril ? peril.order ?? GROUND_VIEW_TEXT.peril(peril.name) : inside ? GROUND_VIEW_TEXT.warn(ground) : null",
+    "new": "warn: inside ? GROUND_VIEW_TEXT.warn(ground) : peril ? peril.order ?? GROUND_VIEW_TEXT.peril(peril.name) : null",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   },
   {
     "name": "WB13a-the-rim-flat-through-the-wind-up",
-    "file": "src/ui/gateGroundView.js",
+    "file": "src/ui/gate/gateGroundView.js",
     "old": "PERIL_EDGE[0] + (PERIL_EDGE[1] - PERIL_EDGE[0]) * t * t",
     "new": "PERIL_EDGE[0]",
     "tests": [
-      "test/wb13a_telegraphs.test.js"
+      "test/scenes/wb13a_telegraphs.test.js"
     ]
   }
 ]

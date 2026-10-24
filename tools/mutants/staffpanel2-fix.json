@@ -1,0 +1,943 @@
+[
+  {
+    "name": "STAFF-PANEL2-FIX-take-twice",
+    "file": "server-account/src/safety.js",
+    "old": "AND status = 'open' AND (act_click IS NULL OR act_at < ?3 - ${CASE_ACT_S})",
+    "new": "AND status = 'open'",
+    "why": "a case another act took is taken again - two strikes on one case",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-repeat-unread",
+    "file": "server-account/src/safety.js",
+    "old": "    click ? db.prepare('SELECT 1 AS y FROM mod_actions WHERE click = ?1')",
+    "new": "    false ? db.prepare('SELECT 1 AS y FROM mod_actions WHERE click = ?1')",
+    "why": "a press sent twice is not known for the first",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-no-give-back",
+    "file": "server-account/src/safety.js",
+    "old": "  if (r.error && at.take) await giveBack();",
+    "new": "  if (false) await giveBack();",
+    "why": "a refused act keeps the case from every later one",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-click-any-shape",
+    "file": "server-account/src/safety.js",
+    "old": "  if (click !== null && !(typeof click === 'string' && CLICK_RE.test(click))) return { error: 'bad-click' };",
+    "new": "  if (false) return { error: 'bad-click' };",
+    "why": "a one-time id of any shape",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-panel-press-no-click",
+    "file": "server-account/src/staffCases.js",
+    "old": "(act === 'mute' || act === 'ban') && typeof body.click !== 'string' ? ''",
+    "new": "false ? ''",
+    "why": "a panel Mute or Ban with no one-time id",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-case-of-another",
+    "file": "server-account/src/safety.js",
+    "old": "'SELECT * FROM mod_cases WHERE id = ?1 AND target = ?2'",
+    "new": "'SELECT * FROM mod_cases WHERE id = ?1 AND ?2 IS NOT NULL'",
+    "why": "a case named that is another account's",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-reread-words",
+    "file": "server-account/src/safety.js",
+    "old": "now?.status === 'open' ? 'case-acted' : 'case-closed'",
+    "new": "now?.status === 'open' ? 'case-closed' : 'case-acted'",
+    "why": "an act in flight said as done, a done case as in flight",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-discord-press-no-click",
+    "file": "server-account/src/discord.js",
+    "old": "  const click = typeof body?.id === 'string' && CLICK_RE.test(body.id) ? body.id : null;",
+    "new": "  const click = null;",
+    "why": "a Discord press sent twice is two acts",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-holder-refused",
+    "file": "server-account/src/safety.js",
+    "old": "      AND (claimed_by IS ?4 OR NOT ${claimHeldSql('mod_cases', 3)})`)",
+    "new": "      AND (claimed_by IS NULL OR NOT ${claimHeldSql('mod_cases', 3)})`)",
+    "why": "the claim's own holder refused at the game's door",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-open-case-one-kind",
+    "file": "server-account/src/safety.js",
+    "old": "discordOn(env) ? 'due' : 'off', kind).run();",
+    "new": "discordOn(env) ? 'due' : 'off', 'chat').run();",
+    "why": "a spawn case opened as a chat case",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-act-on-spawn",
+    "file": "server-account/src/safety.js",
+    "old": "    if (c.kind !== 'chat' && !isDeveloper(actor, env)) return { error: 'not-developer' };",
+    "new": "    if (false) return { error: 'not-developer' };",
+    "why": "a Moderator acts on a spawn case",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-game-list-spawn",
+    "file": "server-account/src/safety.js",
+    "old": "    AND (c.kind = 'chat' OR ?2 = 1) ORDER BY c.credible DESC",
+    "new": "    AND (1 OR ?2 = 1) ORDER BY c.credible DESC",
+    "why": "a Moderator's list in the game shows spawn cases",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-game-case-spawn",
+    "file": "server-account/src/safety.js",
+    "old": "AND (?2 IS NULL OR id = ?2) AND (kind = 'chat' OR ?3 = 1)",
+    "new": "AND (?2 IS NULL OR id = ?2) AND (1 OR ?3 = 1)",
+    "why": "a Moderator reads a spawn case in the game",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-fallback-spawn",
+    "file": "server-account/src/safety.js",
+    "old": "WHERE target = ?1 AND status = 'open' AND (kind = 'chat' OR ?2 = 1)\n      ORDER BY",
+    "new": "WHERE target = ?1 AND status = 'open' AND (1 OR ?2 = 1)\n      ORDER BY",
+    "why": "a Moderator's act that names no case takes a spawn case",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-fallback-no-dev",
+    "file": "server-account/src/safety.js",
+    "old": "      ORDER BY kind = 'chat' DESC LIMIT 1`).bind(row.id, isDeveloper(actor, env) ? 1 : 0).first(),",
+    "new": "      ORDER BY kind = 'chat' DESC LIMIT 1`).bind(row.id, 0).first(),",
+    "why": "an Admin's act in the game misses the spawn case it was shown",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-panel-list-spawn",
+    "file": "server-account/src/staffCases.js",
+    "old": "WHERE c.status = 'open' AND (c.kind = 'chat' OR ?3 = 1)",
+    "new": "WHERE c.status = 'open' AND (1 OR ?3 = 1)",
+    "why": "a Moderator's panel list shows spawn cases",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-panel-open-spawn",
+    "file": "server-account/src/staffCases.js",
+    "old": "AND (?3 IS NULL OR id = ?3) AND (kind = 'chat' OR ?4 = 1)",
+    "new": "AND (?3 IS NULL OR id = ?3) AND (1 OR ?4 = 1)",
+    "why": "a Moderator claims a spawn case in the panel",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-mute-admin-unguarded",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (adminHeld && !admin && (until ?? 0) < Number(row.muted_until)) return { error: 'admin-sanction' };",
+    "new": "  if (false) return { error: 'admin-sanction' };",
+    "why": "a Moderator lifts or shortens an Admin's mute",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-mute-admin-lost",
+    "file": "server-account/src/accounts.js",
+    "old": "until ? (admin || adminHeld ? 1 : 0) : null",
+    "new": "until ? (admin ? 1 : 0) : null",
+    "why": "an Admin's mute a Moderator lengthened is the Moderator's",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-ban-admin-unguarded",
+    "file": "server-account/src/sanctions.js",
+    "old": "  if (adminHeld && !admin && until < bannedUntil(row)) return { error: 'admin-sanction' };",
+    "new": "  if (false) return { error: 'admin-sanction' };",
+    "why": "a Moderator shortens an Admin's ban",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-unban-admin-unguarded",
+    "file": "server-account/src/sanctions.js",
+    "old": "  if (row.ban_admin === 1 && !isDeveloper(actor, env)) return { error: 'admin-sanction' };",
+    "new": "  if (false) return { error: 'admin-sanction' };",
+    "why": "a Moderator lifts an Admin's ban",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-ban-setter-unwritten",
+    "file": "server-account/src/sanctions.js",
+    "old": "banned_by = CASE WHEN ?5 = 1 THEN banned_by ELSE ?4 END",
+    "new": "banned_by = CASE WHEN ?5 = 1 THEN banned_by ELSE 'x' || ?4 END",
+    "why": "who set the ban not kept",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-ban-admin-unwritten",
+    "file": "server-account/src/sanctions.js",
+    "old": "keptOld ? 1 : 0, admin || adminHeld ? 1 : 0)",
+    "new": "keptOld ? 1 : 0, adminHeld ? 1 : 0)",
+    "why": "an Admin's ban not marked an Admin's",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-unban-leaves-admin",
+    "file": "server-account/src/sanctions.js",
+    "old": "banned_by = NULL, ban_admin = NULL WHERE id = ?1",
+    "new": "banned_by = NULL WHERE id = ?1",
+    "why": "a lifted ban still an Admin's",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-one-threat-high",
+    "file": "server-account/src/staffCases.js",
+    "old": "raise(threats >= THREAT_HIGH ? 2 : 1, 'reported as a threat')",
+    "new": "raise(2, 'reported as a threat')",
+    "why": "one reporter's own threat makes a case high",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-idle-never",
+    "file": "server-account/src/staffCases.js",
+    "old": "nowS - (Number(c.claim_until) - CLAIM_S) >= HIGH_IDLE_S }",
+    "new": "nowS - (Number(c.claim_until) - CLAIM_S) >= HIGH_IDLE_S * 2 }",
+    "why": "a claimed high case left five minutes stays below",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-idle-any-level",
+    "file": "server-account/src/staffCases.js",
+    "old": "idle: u.level === 'high' && nowS",
+    "new": "idle: nowS",
+    "why": "a lower case left idle goes up",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-idle-unsorted",
+    "file": "server-account/src/staffCases.js",
+    "old": "(a.claim && !a.claim.idle ? 1 : 0) - (b.claim && !b.claim.idle ? 1 : 0)",
+    "new": "(a.claim ? 1 : 0) - (b.claim ? 1 : 0)",
+    "why": "an idle claim sorts as held",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-claim-outlives-session",
+    "file": "server-account/src/safety.js",
+    "old": "\n  AND EXISTS (SELECT 1 FROM staff_sessions cs WHERE cs.token_hash = ${t}.claim_session AND cs.expires_at > ?${n} AND cs.last_act + ${STAFF_IDLE_S} > ?${n}))`;",
+    "new": ")`;",
+    "why": "a claim stands after its session ended",
+    "tests": [
+      "test/server/staffpanel2fix.test.js",
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-claim-outlives-idle",
+    "file": "server-account/src/safety.js",
+    "old": " AND cs.last_act + ${STAFF_IDLE_S} > ?${n}))`;",
+    "new": "))`;",
+    "why": "a claim stands while its session is idle past STAFF_IDLE_S",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-claim-outlives-life",
+    "file": "server-account/src/safety.js",
+    "old": "cs.token_hash = ${t}.claim_session AND cs.expires_at > ?${n} AND",
+    "new": "cs.token_hash = ${t}.claim_session AND",
+    "why": "a claim stands past its session's whole life",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-claim-no-session",
+    "file": "server-account/src/staffCases.js",
+    "old": "claim_from = NULL, claimed_by = ?2, claim_until = ?4, claim_session = ?5",
+    "new": "claim_from = NULL, claimed_by = ?2, claim_until = ?4, claim_session = 'x' || ?5",
+    "why": "a Moderator's claim names no live session",
+    "tests": [
+      "test/server/staffpanel2.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-market-pull-moderator",
+    "file": "server-account/src/market.js",
+    "old": "  if (!isDeveloper(player, env)) return { error: 'not-developer' };",
+    "new": "  if (!canModerate(player, env)) return { error: 'not-developer' };",
+    "why": "a Moderator pulls a listing",
+    "tests": [
+      "test/net/prof5_service.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-dev-while-cut",
+    "file": "server-account/src/titles.js",
+    "old": "!!player.handle && !staffSuspended(player)\n  && developerHandles",
+    "new": "!!player.handle\n  && developerHandles",
+    "why": "an Admin cut off is still a developer",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-mod-while-cut",
+    "file": "server-account/src/titles.js",
+    "old": "!!player.handle && !staffSuspended(player)\n  && (moderatorHandles",
+    "new": "!!player.handle\n  && (moderatorHandles",
+    "why": "a Moderator cut off still moderates",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-tier-while-cut",
+    "file": "server-account/src/titles.js",
+    "old": "  && !(staffSuspended(player) && STAFF_GLYPHS.includes(TIER_GLYPH[/** @type {keyof typeof TIER_GLYPH} */ (title)]))\n",
+    "new": "",
+    "why": "the title that moderates held while cut off",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-cut-unstored",
+    "file": "server-account/src/staff.js",
+    "old": "db.prepare('UPDATE players SET staff_suspended = 1 WHERE id = ?').bind(target.id),",
+    "new": "db.prepare('UPDATE players SET staff_suspended = 0 WHERE id = ?').bind(target.id),",
+    "why": "the cut never stored",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-cut-keeps-game",
+    "file": "server-account/src/staff.js",
+    "old": "['staff_sessions', 'staff_invites', 'sessions']",
+    "new": "['staff_sessions', 'staff_invites']",
+    "why": "the cut leaves the game sessions",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-cut-relay-untold",
+    "file": "server-account/src/staff.js",
+    "old": "[await staffCutOrder(env, subtle, at, playerId)]",
+    "new": "[null]",
+    "why": "the relay never told of the cut",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-cut-not-lifted",
+    "file": "server-account/src/staff.js",
+    "old": "      db.prepare('UPDATE players SET staff_suspended = 0 WHERE id = ?').bind(target.id),\n",
+    "new": "",
+    "why": "an invite leaves the cut standing",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-cut-not-invitable",
+    "file": "server-account/src/staff.js",
+    "old": "const role = staffRole(cutOff ? { ...target, staff_suspended: 0 } : target, env);",
+    "new": "const role = staffRole(target, env);",
+    "why": "a member cut off can never be invited back",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-cut-added-back",
+    "file": "server-account/src/staff.js",
+    "old": "      if (staffSuspended(target)) return { error: 'staff-suspended' };",
+    "new": "      if (false) return { error: 'staff-suspended' };",
+    "why": "a member cut off added back as a Moderator past the owner",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-cut-unshown",
+    "file": "server-account/src/staff.js",
+    "old": "        suspended: staffSuspended(p),",
+    "new": "        suspended: false,",
+    "why": "the team list hides the cut",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-password-keeps-panel",
+    "file": "server-account/src/accounts.js",
+    "old": "  await closeStaffSessions({ db }, player.id);   // STAFF-PANEL2-FIX: and every staff panel session\n",
+    "new": "",
+    "why": "a new password leaves the panel signed in",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-recover-keeps-panel",
+    "file": "server-account/src/accounts.js",
+    "old": "  await closeStaffSessions({ db }, player.id);   // STAFF-PANEL2-FIX: a new password ends the staff panel's sessions too\n",
+    "new": "",
+    "why": "a recovery leaves the panel signed in",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-relay-door-refuses-cut",
+    "file": "server/src/index.js",
+    "old": " && kind !== 'staffcut' && kind !== 'hide' && !STAFF_ORDER_KINDS.includes(kind)) return json({ error: 'bad law' }, 403);",
+    "new": " && kind !== 'hide' && !STAFF_ORDER_KINDS.includes(kind)) return json({ error: 'bad law' }, 403);",
+    "why": "the relay's door refuses the cut",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-relay-hub-refuses-cut",
+    "file": "server/src/index.js",
+    "old": "['ban', 'mute', 'staffcut'], true);",
+    "new": "['ban', 'mute'], true);",
+    "why": "the hub takes no cut",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-relay-cut-closes-nothing",
+    "file": "server/src/index.js",
+    "old": "    if (c.o === 'staffcut') return this._staffCut(c, hand ? order : null);",
+    "new": "    if (c.o === 'staffcut') return true;",
+    "why": "the cut closes nothing",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-relay-cut-closes-newer",
+    "file": "server/src/index.js",
+    "old": "if (b.sub === c.s && !(b.gio > c.i)) { if (law) this._send(ws, law); this._banClose(ws, 'staff-cut'); }",
+    "new": "if (b.sub === c.s) { if (law) this._send(ws, law); this._banClose(ws, 'staff-cut'); }",
+    "why": "a socket on a token newer than the cut closed",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-relay-cut-said-banned",
+    "file": "server/src/index.js",
+    "old": "if (law) this._send(ws, law); this._banClose(ws, 'staff-cut');",
+    "new": "if (law) this._send(ws, law); this._banClose(ws);",
+    "why": "a cut closed as a ban",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-cut-order-any-fields",
+    "file": "src/net/identityToken.js",
+    "old": "  if (c.o === 'staffcut' && (c.mu !== undefined ||",
+    "new": "  if (false && (c.mu !== undefined ||",
+    "why": "a cut order carrying another kind's fields",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R1-throw-keeps-case",
+    "file": "server-account/src/safety.js",
+    "old": "    if (at.take) await giveBack().catch(() => {});",
+    "new": "    if (false) await giveBack().catch(() => {});",
+    "why": "a throw after the take keeps the case from every door until the 90-day sweep (review finding 1)",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R1-lease-never-lapses",
+    "file": "server-account/src/safety.js",
+    "old": "(act_click IS NULL OR act_at < ?3 - ${CASE_ACT_S})",
+    "new": "(act_click IS NULL)",
+    "why": "a take nobody gave back holds the case for good (review finding 1)",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R1-lease-lapses-at-once",
+    "file": "server-account/src/safety.js",
+    "old": "act_at < ?3 - ${CASE_ACT_S}",
+    "new": "act_at <= ?3",
+    "why": "an act in flight loses its case to the next press",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R1-throw-unwritten",
+    "file": "server-account/src/safety.js",
+    "old": "      await write(ask.act, at.target, detail(null, {",
+    "new": "      if (false) await write(ask.act, at.target, detail(null, {",
+    "why": "an act that threw leaves no row",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R2-click-not-unique",
+    "file": "server-account/migrations/0156_staff_cases_fix.sql",
+    "old": "CREATE UNIQUE INDEX IF NOT EXISTS mod_actions_click",
+    "new": "CREATE INDEX IF NOT EXISTS mod_actions_click",
+    "why": "the same press sent twice at once writes two strikes (review finding 2)",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R2-refused-not-first",
+    "file": "server-account/src/safety.js",
+    "old": "const first = !at.landed && at.click ?",
+    "new": "const first = false && at.click ?",
+    "why": "the second of two same presses throws instead of being answered as the first",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R3-doors-unwritten",
+    "file": "server-account/src/safety.js",
+    "old": "  await write(ask.act, at.target, detail(r), {",
+    "new": "  if (audit) await write(ask.act, at.target, detail(r), {",
+    "why": "the game's and Discord's acts never reach the audit log (review finding 3)",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R3-door-unnamed",
+    "file": "server-account/src/safety.js",
+    "old": "door: ask.from ?? null",
+    "new": "door: null",
+    "why": "a row that does not say which door acted",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R3-denied-as-failed",
+    "file": "server-account/src/safety.js",
+    "old": "ACT_DENIED.includes(r.error) ? 'denied' : 'failed'",
+    "new": "'failed'",
+    "why": "a role's or a claim's refusal written as a failure",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R3-claimed-not-denied",
+    "file": "server-account/src/safety.js",
+    "old": "Object.freeze(['staff-claimed', 'not-developer', 'admin-sanction'])",
+    "new": "Object.freeze(['not-developer', 'admin-sanction'])",
+    "why": "a claim's refusal written as a failure",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R3-spawn-not-denied",
+    "file": "server-account/src/safety.js",
+    "old": "Object.freeze(['staff-claimed', 'not-developer', 'admin-sanction'])",
+    "new": "Object.freeze(['staff-claimed', 'admin-sanction'])",
+    "why": "a kind's refusal written as a failure",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R3-admin-not-denied",
+    "file": "server-account/src/safety.js",
+    "old": "Object.freeze(['staff-claimed', 'not-developer', 'admin-sanction'])",
+    "new": "Object.freeze(['staff-claimed', 'not-developer'])",
+    "why": "an Admin's sanction's refusal written as a failure",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R3-repeat-unsaid",
+    "file": "server-account/src/safety.js",
+    "old": "...(r?.repeat ? { repeat: true } : {})",
+    "new": "...({})",
+    "why": "a press sent again reads as a second act",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R3-no-moderator-written",
+    "file": "server-account/src/safety.js",
+    "old": "  if (!canModerate(actor, env)) return { error: 'not-moderator' };\n  const { db, nowS } = ctx;",
+    "new": "  const { db, nowS } = ctx;",
+    "why": "every player's knock at the game's /v1/mod doors is a row in the staff audit log",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R3-panel-writer-unused",
+    "file": "server-account/src/staffCases.js",
+    "old": "  }, { audit });",
+    "new": "  });",
+    "why": "the panel's act written without its session's role and key (or twice, were the panel to write its own)",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R3-press-door",
+    "file": "server-account/src/discord.js",
+    "old": "(Discord)`, from: 'Discord', keepLonger: true",
+    "new": "(Discord)`, keepLonger: true",
+    "why": "a Discord press's row names no door",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R3-mod-mute-door",
+    "file": "server-account/src/discord.js",
+    "old": "actorName: by, from: 'Discord', resolution: () =>",
+    "new": "actorName: by, resolution: () =>",
+    "why": "a /mod mute's row names no door",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R3-mod-ban-door",
+    "file": "server-account/src/discord.js",
+    "old": "{ act: 'ban', target: row.id, days, reason, actorName: by, from: 'Discord',",
+    "new": "{ act: 'ban', target: row.id, days, reason, actorName: by,",
+    "why": "a /mod ban's row names no door",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R3-mod-unban-door",
+    "file": "server-account/src/discord.js",
+    "old": "{ act: 'unban', target: row.id, actorName: by, from: 'Discord' }",
+    "new": "{ act: 'unban', target: row.id, actorName: by }",
+    "why": "a /mod unban's row names no door",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R3-game-unban-door",
+    "file": "server-account/src/index.js",
+    "old": "{ act: 'unban', ...who2, from: 'in the game' }",
+    "new": "{ act: 'unban', ...who2 }",
+    "why": "the game's unban's row names no door",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-R3-game-dismiss-door",
+    "file": "server-account/src/safety.js",
+    "old": "caseId, from: 'in the game' }, { push: (o) => pushLaw(env, fetchFn, o) }",
+    "new": "caseId }, { push: (o) => pushLaw(env, fetchFn, o) }",
+    "why": "the game's dismiss's row names no door",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-B1-mute-apart",
+    "file": "server-account/src/accounts.js",
+    "old": "  await (also ? db.batch([write, ...also(done)]) : write.run());",
+    "new": "  await write.run(); if (also) for (const st of also(done)) await st.run();",
+    "why": "a mute, its strike and its case's close written one by one - a throw between leaves a struck case open",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-B2-ban-apart",
+    "file": "server-account/src/sanctions.js",
+    "old": "    ...(also ? also(done) : []),\n  ]);",
+    "new": "  ]);\n  if (also) for (const st of also(done)) await st.run();",
+    "why": "a ban's case closed after its batch - a throw between leaves a struck case open",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-B3-kept-apart",
+    "file": "server-account/src/safety.js",
+    "old": "await db.batch([actionStatement(db, { target: row.id, kind: 'mute', until: r.until, reason: reasonOf(ask.reason), actor: actor.id, actorName: by, caseId, click, at: nowS }), ...closing(r, mutedTill(r))]);",
+    "new": "await actionStatement(db, { target: row.id, kind: 'mute', until: r.until, reason: reasonOf(ask.reason), actor: actor.id, actorName: by, caseId, click, at: nowS }).run(); await db.batch(closing(r, mutedTill(r)));",
+    "why": "a button's kept mute recorded apart from its case's close",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-B4-dismiss-apart",
+    "file": "server-account/src/safety.js",
+    "old": "    await db.batch([resolveCase(db, { caseId, status: 'dismissed', by: displayName(actor), resolution: 'no action', nowS }),\n      actionStatement(db, { target: row.id, kind: 'dismiss', actor: actor.id, actorName: by, caseId, click, at: nowS })]);",
+    "new": "    await resolveCase(db, { caseId, status: 'dismissed', by: displayName(actor), resolution: 'no action', nowS }).run();\n    await actionStatement(db, { target: row.id, kind: 'dismiss', actor: actor.id, actorName: by, caseId, click, at: nowS }).run();",
+    "why": "a dismiss closes its case apart from its record",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-FIX-B5-ban-unclosed",
+    "file": "server-account/src/safety.js",
+    "old": "also: (x) => closing(x, 'banned') })",
+    "new": "also: () => [] })",
+    "why": "a ban leaves its case open",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-room-takes-no-cut",
+    "file": "server/src/index.js",
+    "old": "['ban', 'staffcut'], false);",
+    "new": "['ban'], false);",
+    "why": "finding 27: a room takes no cut carried in, so its sockets keep their staff glyphs",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-nothing-handed",
+    "file": "server/src/index.js",
+    "old": "    const law = order ? JSON.stringify({ t: 'law', order }) : null;",
+    "new": "    const law = null;",
+    "why": "finding 27: the hub hands the cut to nobody to carry",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-hello-unrefused",
+    "file": "server/src/index.js",
+    "old": "    if (this._bans.get(`cut:${sub}`)?.i >= (",
+    "new": "    if (false && this._bans.get(`cut:${sub}`)?.i >= (",
+    "why": "finding 27: a token from before the cut opens the hub again",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-hello-own-second",
+    "file": "server/src/index.js",
+    "old": "`cut:${sub}`)?.i >= (Number.isSafeInteger(ti) ? ti : 0))",
+    "new": "`cut:${sub}`)?.i > (Number.isSafeInteger(ti) ? ti : 0))",
+    "why": "finding 27: a token of the cut's own second let in",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-book-unkept",
+    "file": "server/src/index.js",
+    "old": "    if (kept) this._bans.set(`cut:${c.s}`, { i: c.i, bn: 0, sig: '' });",
+    "new": "    if (false) this._bans.set(`cut:${c.s}`, { i: c.i, bn: 0, sig: '' });",
+    "why": "finding 27: the cut never kept, so nothing is refused at a hello",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-book-unsaved",
+    "file": "server/src/index.js",
+    "old": "    if (kept) await this._saveBans(nowS);",
+    "new": "    void kept;",
+    "why": "finding 27: the cut kept in memory alone - a wake forgets it",
+    "tests": [
+      "test/net/safety/safe_staffcut.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-kind-unread",
+    "file": "src/net/safety/safetyLaw.js",
+    "old": "return o === 'mute' || o === 'ban' || o === 'staffcut' ? o : null;",
+    "new": "return o === 'mute' || o === 'ban' ? o : null;",
+    "why": "finding 27: the client carries no cut",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-mute-door",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "kind === 'mute' ? l?.sendMuteOrder?.(order) : l?.sendBanOrder?.(order)",
+    "new": "kind === 'ban' ? l?.sendBanOrder?.(order) : l?.sendMuteOrder?.(order)",
+    "why": "finding 27: the cut carried by the mute's door, which takes none",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-token-kept",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "if (kind === 'staffcut') try { minter()?.forget?.(); }",
+    "new": "if (false) try { minter()?.forget?.(); }",
+    "why": "finding 27: the token held from before the cut opens the next room with its glyphs",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-audit-unread",
+    "file": "server-account/src/staff.js",
+    "old": ", ...minted.map((r) => r.sub)])]",
+    "new": "])]",
+    "why": "finding 28: a session deleted before the cut leaves its hidden sockets open",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-sessions-unread",
+    "file": "server-account/src/staff.js",
+    "old": "...(await Promise.all(hashes.map((h) => hiddenSubOf(h, subtle)))), ",
+    "new": "",
+    "why": "finding 28: a live session's subject (no token minted yet) left without a hide order",
+    "tests": [
+      "test/server/staffpanel5hidden.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-outcome-unwritten",
+    "file": "server-account/src/staff.js",
+    "old": "      await audit('cut-relay', target.id, pushed, { outcome: relay ? 'ok' : 'failed' }).run();",
+    "new": "",
+    "why": "finding 29: the relay's answer never in the log",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-outcome-always-ok",
+    "file": "server-account/src/staff.js",
+    "old": "{ outcome: relay ? 'ok' : 'failed' }",
+    "new": "{ outcome: 'ok' }",
+    "why": "finding 29: a failed push written as done",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-relay-any",
+    "file": "server-account/src/staff.js",
+    "old": "const relay = pushed.took === pushed.orders;",
+    "new": "const relay = pushed.took > 0;",
+    "why": "finding 29: a staffcut refused read as taken because its hide orders were",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-second-cut-refused",
+    "file": "server-account/src/staff.js",
+    "old": "const role = staffRole(cutOff ? { ...target, staff_suspended: 0 } : target, env);",
+    "new": "const role = staffRole(restore ? { ...target, staff_suspended: 0 } : target, env);",
+    "why": "finding 29: a cut pressed again on a member already cut answers no-staff and pushes nothing",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-request-clock",
+    "file": "server-account/src/staff.js",
+    "old": "  const at = Math.max(ctx.nowS, Math.floor(Date.now() / 1000));",
+    "new": "  const at = ctx.nowS;",
+    "why": "finding 31: the orders stamped with the request's start",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-CUT-FIX-hides-request-clock",
+    "file": "server-account/src/staff.js",
+    "old": "mintHideOrder({ s: x }, key, { subtle, nowS: at })",
+    "new": "mintHideOrder({ s: x }, key, { subtle, nowS: ctx.nowS })",
+    "why": "finding 31: the hide orders stamped with the request's start",
+    "tests": [
+      "test/server/staffpanel2fix.test.js"
+    ]
+  }
+]

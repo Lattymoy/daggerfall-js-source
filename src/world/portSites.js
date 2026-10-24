@@ -2,23 +2,31 @@
 // SHIPYARDS (2026-10-11; asked where the shipyard and the lighthouse stand, Mac chose "Town's seaward edge - both on the
 // town's own open ground at the edge nearest the sea, placed off the town's layout like the Stables"): WHERE A PORT
 // TOWN'S SHIPYARD AND LIGHTHOUSE STAND - read off its layout and the map's own data alone, so every client stands each
-// on one spot (world/merchantYardSites.js's law for the Stable and the Wagon Yard, which this places after, on what they
+// on one spot (world/merchantYards/merchantYardSites.js's law for the Stable and the Wagon Yard, which this places after, on what they
 // left).
 //
 // THE GROUND is the yards' (merchantYardSites.js townGroundOf: the town's navgrid on the enhanced lane's water table, its
 // buildings kept BUILDING_CLEAR_M off - HOME-YARD's lot margin - its props, flats, palace blocks and the monument), with
 // the Stable and the Wagon Yard already closed on it, YARD_GAP_M round each.
 //
+// WHICH TOWNS (FIELD BUGS 2026-10-14 INLAND-PORTS, a player: "Shipyard & light house near pond" - Ilessan Hills, a
+// region capital in the hills, stood both at its middle beside a pond in its own blocks). A port by its own data
+// (systems/portPlaces.js portTownByData) that THE OPEN SEA bears on (`portTownOnSea`): a pixel of it within SEA_RING of
+// the town's, the ring its bearing is read off - so every port town has a seaward edge. The open sea is the map's water
+// that reaches the map's border (`openSeaOf` - the flood Deep Waters' bake makes of the sea, every inland lake left
+// out): the data alone is no coast, since PortTownAndUnknown's 0x10 is the region capitals' mark and Hazelnut's table
+// copied the byte's list, and a lake or a one-pixel pond the map draws inland is no sea.
+//
 // THE SEA. Where the town's own blocks hold the sea - water cells (the navgrid's water family) in a body that reaches the
 // edge of its block grid, SEA_CELLS_MIN of them at least (a puddle, a fountain's pool or an inland pond is never the
 // sea) - each cell's distance to it is walked (four-way, in whole cells, `seaField`). Where they hold none, the sea's
-// BEARING off the map pixels round the town's (`seaBearing`: each pixel of sea within two - CLIMATE.PAK's ocean or
-// WOODS.WLD's height at sea level, overworldModel.js isWaterPixel, the one water law - weighted two near and one far),
-// and a cell's distance is how far it stands in from the town's seaward edge along it, and a quarter of its distance off
-// that edge's middle. No sea either way (the bearing's sum nought): the town's middle, as the yards'. A body of the
-// town's own water lying against the map's bearing - its middle on the far side of the town's from the sea the map
-// shows - is a lake or a river's reach inland, never the sea (AUDIT SHIPYARDS U2: the shipyard turned its back on the
-// sea to face it).
+// BEARING off the map pixels round the town's (`seaBearing`: each pixel of the open sea within two - the one water law,
+// CLIMATE.PAK's ocean or WOODS.WLD's height at sea level, overworldModel.js isWaterPixel, flooded from the map's border -
+// weighted two near and one far), and a cell's distance is how far it stands in from the town's seaward edge along it,
+// and a quarter of its distance off that edge's middle. The bearing's sum nought (the sea all round evenly): the town's
+// middle, as the yards'. A body of the town's own water lying against the map's bearing - its middle on the far side of
+// the town's from the sea the map shows - is a lake or a river's reach inland, never the sea (AUDIT SHIPYARDS U2: the
+// shipyard turned its back on the sea to face it).
 //
 // THE PLACE: a rectangle (PORT_FOOT, its front - its gate's side - along its +z), turned to one of the four axes; its
 // own ground open and off every road, a ring of YARD_PAD_M round it open (a road allowed). Each BACKS ONTO THE SEA: a
@@ -35,9 +43,29 @@
 // A town with no room for one stands none of it - said once, in the console - never over a house, a road or a lot.
 //
 // Pure: no renderer, no GL, no clock. Not a DFU member. Ledger A (SHIPYARDS).
-import { NAV_CELL, NAV_CELLS_PER_BLOCK, tileWeight } from './cityNavigation.js';
-import { summed, frontStrip, closeSite, YARD_PAD_M, YARD_TURNS, NO_ROAD_COST } from './merchantYardSites.js';
-import { PORT_SITE_ORDER, portPlaceName } from '../systems/portPlaces.js';
+import { NAV_CELL, NAV_CELLS_PER_BLOCK, tileWeight } from './city/cityNavigation.js';
+import { summed, frontStrip, closeSite, YARD_PAD_M, YARD_TURNS, NO_ROAD_COST } from './merchantYards/merchantYardSites.js';
+import { PORT_SITE_ORDER, portPlaceName, portTownByData } from '../systems/portPlaces.js';
+import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
+import { SEA_RING, seaBears } from '../net/fortLaw.js';   // FB1020c BERTH-RING: the ring and the sea's bearing, the coast law's own
+
+export { SEA_RING, seaBears };
+
+/** FIELD BUGS 2026-10-21b VOYAGE-HOLD: the board port whose waters map pixel (x, y) lies in - the nearest of `ports` within
+ *  SEA_RING by the crow's flight (the squared pixels, exact on every engine), or null outside every ring. By the ring's
+ *  squares alone (BERTH-RING's reading) a tie went to the list's first, and every pixel of Pencart's water tied it with
+ *  Longham's: no berth ever named Pencart. Inside a ring of two the crow's flight differs from the squares on a tie alone.
+ *  @template {{ px: number, py: number }} P @param {ReadonlyArray<P>} ports @param {number} x @param {number} y @returns {P|null} */
+export function boardPortAt(ports, x, y) {
+  let port = null, best = Infinity;
+  for (const q of ports) {
+    const dx = q.px - x, dy = q.py - y;
+    if (Math.max(Math.abs(dx), Math.abs(dy)) > SEA_RING) continue;
+    const e = dx * dx + dy * dy;
+    if (e < best) { best = e; port = q; }
+  }
+  return port;
+}
 
 /** Each place's ground, metres: half its width (x) and half its depth (z) - its fence or wall and the apron before its
  *  gate (world/shipyardModel.js, world/lighthouseModel.js lay both out inside it). */
@@ -47,8 +75,8 @@ export const PORT_FOOT = Object.freeze({
 });
 /** The least body of water, cells, that is the sea (never a puddle or a pond) - a body reaching the block grid's edge. */
 export const SEA_CELLS_MIN = 48;
-/** How far the map pixels round the town's are asked for the sea, and each ring's weight (the nearest the heavier). */
-export const SEA_RING = 2;
+/** How far the map pixels round the town's are asked for the sea (SEA_RING, net/fortLaw.js - FB1020c BERTH-RING: the coast's
+ *  law's home, which the account Worker bundles), and each ring's weight (the nearest the heavier). */
 export const SEA_RING_WEIGHT = Object.freeze([0, 2, 1]);
 /** Off the seaward edge's middle: a cell of distance for every LATERAL_K^-1 cells along it. */
 export const LATERAL_K = 0.25;
@@ -153,11 +181,58 @@ export function seaBearing(px, py, isSea) {
 }
 
 /**
+ * THE OPEN SEA (FIELD BUGS 2026-10-14 INLAND-PORTS): the map's water that reaches the map's border - every pixel the one
+ * water law calls water (`isWater(x, y)`: overworldModel.js isWaterPixel) flooded eight-way from those on the map's edge,
+ * the flood Deep Waters' bake makes of the sea (world/deepWater/deepWatersBake.js COARSE: "the 8-connected flood of candidates
+ * from the map's border - one component in the file, every inland lake left out"), a map pixel at a time. On the real map
+ * it is one body of 179,926 pixels; the 81 lakes and ponds the map draws inland (one pixel to 54) are none of it - no
+ * ship of the Bay's reaches them. Answers a mask over the map's pixels (`y * width + x`), 1 the open sea. Pure.
+ * @param {(x: number, y: number) => boolean} isWater @param {number} width @param {number} height
+ * @returns {Uint8Array}
+ */
+export function openSeaOf(isWater, width, height) {
+  const W = width | 0, H = height | 0, n = W > 0 && H > 0 ? W * H : 0;
+  const wet = new Uint8Array(n), sea = new Uint8Array(n), stack = new Int32Array(n);
+  if (!n) return sea;
+  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) if (isWater(x, y)) wet[y * W + x] = 1;
+  let top = 0;
+  const reach = (i) => { if (wet[i] && !sea[i]) { sea[i] = 1; stack[top++] = i; } };
+  for (let x = 0; x < W; x++) { reach(x); reach((H - 1) * W + x); }
+  for (let y = 0; y < H; y++) { reach(y * W); reach(y * W + W - 1); }
+  while (top > 0) {
+    const c = stack[--top], cx = c % W, cy = (c - cx) / W;
+    for (let dy = -1; dy <= 1; dy++) {
+      for (let dx = -1; dx <= 1; dx++) {
+        const nx = cx + dx, ny = cy + dy;
+        if (nx >= 0 && ny >= 0 && nx < W && ny < H) reach(ny * W + nx);
+      }
+    }
+  }
+  return sea;
+}
+
+/**
+ * WHETHER A LOCATION STANDS THE PORT'S PLACES (FIELD BUGS 2026-10-14 INLAND-PORTS; systems/portPlaces.js isPortTown's
+ * `isPort`): a port by its own data (portPlaces.js portTownByData - Travel Options' harbours or Daggerfall's
+ * PortTownAndUnknown byte) that the open sea bears on (`seaBears` at its map pixel, over `isSea` - the host's open sea,
+ * `openSeaOf`'s). The data alone is no coast: the byte's 0x10 is the region capitals' mark, and 36 of the 39 capitals it
+ * marks - Ilessan Hills in its hills among them - have no open sea within SEA_RING; its low four bits name the sides
+ * water lies on, a lake's or a pond's as the sea's. Pure.
+ * @param {any} loc @param {(mapId: number) => boolean} hasPort @param {(x: number, y: number) => boolean} isSea
+ */
+export function portTownOnSea(loc, hasPort, isSea) {
+  const t = loc?.mapTableData;
+  if (!t || !portTownByData(loc, hasPort)) return false;
+  const p = longitudeLatitudeToMapPixel(t.longitude, t.latitude);
+  return seaBears(p.x, p.y, isSea);
+}
+
+/**
  * EACH CELL'S DISTANCE TO THE SEA (cells): from the town's own sea where it holds one (`townSea`, a four-way walk over
  * every cell - through a house as over a street: it is a distance, not a way); else along the bearing (`bearing`), in
- * from the seaward edge, and LATERAL_K of its distance off that edge's middle; else from the grid's middle (the yards'
- * law). Answers `{ at(gx, gy), kind: 'water'|'bearing'|'middle' }` - `at` a cell's, a half cell's point read by its
- * floor. Pure.
+ * from the seaward edge, and LATERAL_K of its distance off that edge's middle; else (the sea all round evenly - a port
+ * town always has the sea within SEA_RING, `portTownOnSea`) from the grid's middle (the yards' law). Answers
+ * `{ at(gx, gy), kind: 'water'|'bearing'|'middle' }` - `at` a cell's, a half cell's point read by its floor. Pure.
  * @param {number} W @param {number} H @param {{ sea: Uint8Array, cells: number }|null} townSea @param {number[]} bearing
  */
 export function seaField(W, H, townSea, bearing) {

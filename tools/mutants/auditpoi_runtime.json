@@ -1,0 +1,354 @@
+[
+  {
+    "name": "AUDITPOI-R1-every-document-placed-again",
+    "file": "src/scenes/poiHost.js",
+    "old": "if (!sameStand(s.doc, e.doc)) s.place = null;",
+    "new": "s.place = null;",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R1-the-height-compared-exactly",
+    "file": "src/scenes/poiHost.js",
+    "old": "if (!s.place || !(Math.abs(y - s.y) <= POI_Y_EPS)) {",
+    "new": "if (!s.place || y !== s.y) {",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R1-the-carry-unread",
+    "file": "src/scenes/poiHost.js",
+    "old": "(p.carry || !inside(p.localBox, f, t))",
+    "new": "!inside(p.localBox, f, t)",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R2-the-parts-made-left-alive",
+    "file": "src/scenes/poiHost.js",
+    "old": "if (!made) for (const p of parts) freePart(p);",
+    "new": "void made;",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R2-a-job-given-up-never-closed",
+    "file": "src/scenes/poiHost.js",
+    "old": "try { job.it.return(undefined); }",
+    "new": "try { void 0; }",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R3-the-failed-look-kept",
+    "file": "src/scenes/poiHost.js",
+    "old": "      if (looks.get(l.look) === l) looks.delete(l.look);\n      throw e;",
+    "new": "      throw e;",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R3-its-record-released",
+    "file": "src/scenes/poiHost.js",
+    "old": "if (looks.get(l.look) !== l) return;   // AUDIT POI R3",
+    "new": "if (false) return;   // AUDIT POI R3",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R4-the-glass-before-the-grass",
+    "file": "src/scenes/world.js",
+    "old": "    frameGrass();\n",
+    "new": "    poiHost?.drawTranslucent(renderer, mwv.eye, yardCull);\n    frameGrass();\n",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R14-sorted-from-the-travellers-head",
+    "file": "src/scenes/world.js",
+    "old": "poiHost?.drawTranslucent(renderer, mwv.eye, yardCull);",
+    "new": "poiHost?.drawTranslucent(renderer, cam.pos, yardCull);",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js",
+      "test/poi/poi3b_panel.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R14-the-front-faces-first",
+    "file": "src/poi/poiRuntime.js",
+    "old": "backFirst = m.twoSided && m.alpha === 'blend';",
+    "new": "backFirst = false;",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R14-a-shadow-only-verdict-drawn",
+    "file": "src/scenes/poiHost.js",
+    "old": "(cull && cull(p.box) !== DECOR_DRAW)",
+    "new": "(cull && cull(p.box) === 2)",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R5-the-scale-unbaked",
+    "file": "src/scenes/poiHost.js",
+    "old": "poiPartModelSteps(mesh, materials, recordOf, { scale });",
+    "new": "poiPartModelSteps(mesh, materials, recordOf, { scale: null });",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R5-the-normal-through-the-scale",
+    "file": "src/poi/poiRuntime.js",
+    "old": "nx /= sx; ny /= sy; nz /= sz;",
+    "new": "nx *= sx; ny *= sy; nz *= sz;",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R5-drawn-through-the-whole-scale",
+    "file": "src/scenes/poiHost.js",
+    "old": "const k = 1 / sk[c];",
+    "new": "const k = 1;",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R5-a-moved-scale-never-modelled-again",
+    "file": "src/scenes/poiHost.js",
+    "old": "p.remodel = spawn(remodelSteps(p));",
+    "new": "void 0;",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R5-the-swap-drawn-through-the-last-scale",
+    "file": "src/scenes/poiHost.js",
+    "old": "      drawnOf(p);   // drawn this frame through the scale it now carries, never the last model's\n",
+    "new": "",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R6-drawn-inside-out",
+    "file": "src/scenes/poiHost.js",
+    "old": "p.wound = mirrors(p.part.s) === mirrors(sk);",
+    "new": "p.wound = true;",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R6-the-hand-not-the-scales",
+    "file": "src/poi/poiRuntime.js",
+    "old": "mirrored = !!scale && scale[0] * scale[1] * scale[2] < 0 }",
+    "new": "mirrored = false }",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R7-the-cap-unread",
+    "file": "src/ui/bounty/bountyMapMark.js",
+    "old": "    if (out.length >= max) break;",
+    "new": "    if (out.length >= BOUNTY_MARKS_MAX) break;",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R7-the-held-map-under-the-bountys-cap",
+    "file": "src/ui/heldMap.js",
+    "old": "poiLegendText(), POI_MARKS_MAX);   // AUDIT POI R7",
+    "new": "poiLegendText());   // AUDIT POI R7",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R7-the-region-page-under-the-bountys-cap",
+    "file": "src/ui/travel/travelMapWindow.js",
+    "old": "poiLegendText(), POI_MARKS_MAX);   // AUDIT POI R7",
+    "new": "poiLegendText());   // AUDIT POI R7",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R8-the-budget-unread",
+    "file": "src/scenes/poiHost.js",
+    "old": "if (units > 0 && clock() >= until) return false;",
+    "new": "if (false) return false;",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R8-standDown-a-take-down",
+    "file": "src/scenes/poiHost.js",
+    "old": "    standDown() {\n      const col = collider();",
+    "new": "    standDown() {\n      for (const s of [...standing.values()]) takeDown(s);\n      const col = collider();",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R8-the-filings-unbudgeted",
+    "file": "src/scenes/poiHost.js",
+    "old": "if (p.carry || turn()) {",
+    "new": "if (true) {",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R8-a-carried-filing-waits-its-turn",
+    "file": "src/scenes/poiHost.js",
+    "old": "if (p.carry || turn()) {",
+    "new": "if (turn()) {",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R8-the-street-left-destroys",
+    "file": "src/scenes/world.js",
+    "old": "if (_torchesMode === 'exterior') poiHost?.standDown();",
+    "new": "if (_torchesMode === 'exterior') poiHost?.destroyAll();",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R8-the-readback-in-one-band",
+    "file": "src/poi/poiImageDecode.js",
+    "old": "      yield null;\n      gl.readPixels(",
+    "new": "      gl.readPixels(",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R9-the-bleed-skipped",
+    "file": "src/poi/poiRuntime.js",
+    "old": "if (m.alpha === 'blend' || cut !== null) yield* bleedClearSteps(out, w, h);",
+    "new": "void bleedClearSteps;",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R9-a-ring-reads-itself",
+    "file": "src/poi/poiRuntime.js",
+    "old": "for (let q = start; q < stop; q++) state[ring[q]] = 2;",
+    "new": "void stop;",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R9-the-2d-canvas-read",
+    "file": "src/poi/poiImageDecode.js",
+    "old": "if (gl) { try { read = yield* readThroughGl(gl, bmp); } catch { read = null; } }",
+    "new": "void readThroughGl;",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R9-the-bitmap-premultiplied",
+    "file": "src/poi/poiImageDecode.js",
+    "old": "{ premultiplyAlpha: 'none', colorSpaceConversion: 'none' }",
+    "new": "{ premultiplyAlpha: 'default', colorSpaceConversion: 'none' }",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R11-kept-past-the-budget",
+    "file": "src/scenes/poiHost.js",
+    "old": "if (decodedBytes <= keepDecodedBytes) break;",
+    "new": "break;",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R12-an-array-a-pixel",
+    "file": "src/poi/poiFeed.js",
+    "old": "return byPixel.get(py * 1000 + px) ?? NONE;",
+    "new": "return byPixel.get(py * 1000 + px) ?? [];",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R12-a-box-a-frame",
+    "file": "src/scenes/poiHost.js",
+    "old": "bx = p.box ??= [0, 0, 0, 0, 0, 0];",
+    "new": "bx = p.box = [0, 0, 0, 0, 0, 0];",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R12-a-row-a-frame",
+    "file": "src/scenes/poiHost.js",
+    "old": "          out.push(row);",
+    "new": "          out.push({ ...row });",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R13-the-refresh-dropped",
+    "file": "src/poi/poiFeed.js",
+    "old": "      again = true;\n      return asking.then(",
+    "new": "      return asking.then(",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R15-the-tag-kept-across-services",
+    "file": "src/poi/poiFeed.js",
+    "old": "if (b !== heldBase) { heldBase = b; etag = null; version = -1; floor = -1; }",
+    "new": "if (b !== heldBase) { heldBase = b; }",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-R15-a-kept-copy-read-under-any",
+    "file": "src/poi/poiFeed.js",
+    "old": "if (!b || kept.base !== b) return false;",
+    "new": "if (!b) return false;",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  },
+  {
+    "name": "AUDITPOI-S11-any-answer-taken",
+    "file": "src/poi/poiFeed.js",
+    "old": "if (Number.isInteger(body?.v) && body.v < floor)",
+    "new": "if (false)",
+    "tests": [
+      "test/poi/auditpoi_runtime.test.js"
+    ]
+  }
+]

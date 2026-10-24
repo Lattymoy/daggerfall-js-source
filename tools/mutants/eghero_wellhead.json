@@ -1,0 +1,227 @@
+[
+  {
+    "name": "EGHERO-WELLHEAD-the-slag-crust-a-gap-past-the-envelope",
+    "file": "tools/egHeroForgeGutScene.mjs",
+    "old": "crust: Object.freeze([21.2, 24.2])",
+    "new": "crust: Object.freeze([21.6, 24.2])",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-the-conveyors-on-a-shorter-cycle",
+    "file": "tools/egHeroForgeGutScene.mjs",
+    "old": "railAmp: 2, railPer: 6000,",
+    "new": "railAmp: 2, railPer: 5000,",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-the-near-lip-without-its-edge-line",
+    "file": "tools/egHeroForgeGutScene.mjs",
+    "old": "[[0, 0.12], [F.zA - 0.12, F.zA], [F.zB, F.zB + 0.12], [L - 0.12, L]]",
+    "new": "[[0, 0.12], [F.zB, F.zB + 0.12], [L - 0.12, L]]",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-a-rib-inside-the-walls-line",
+    "file": "tools/egHeroForgeGutScene.mjs",
+    "old": "F.river - 0.2, a = 4.24;",
+    "new": "F.river - 0.2, a = 4.1;",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-a-hammer-under-the-clamps-ceiling",
+    "file": "tools/egHeroForgeGutScene.mjs",
+    "old": "const z0 = F.ceil + 0.2;",
+    "new": "const z0 = F.ceil - 0.3;",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-a-roller-into-a-rails-slab",
+    "file": "tools/egHeroForgeGutScene.mjs",
+    "old": "sweep(belts, [[-1.62, yc - 2.4 + 0.6 * i, -0.95], [1.62, yc - 2.4 + 0.6 * i, -0.95]], oct, IRON);",
+    "new": "sweep(belts, [[-1.62, yc - 2.4 + 0.6 * i, -0.55], [1.62, yc - 2.4 + 0.6 * i, -0.55]], oct, IRON);",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-the-east-spout-not-half-a-cycle-behind",
+    "file": "tools/egHeroForgeGutScene.mjs",
+    "old": "'hazard.slag.east.ph10000'",
+    "new": "'hazard.slag.east.ph9000'",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-a-hammer-spot-off-its-landing",
+    "file": "tools/egHeroForgeGutScene.mjs",
+    "old": "spots('hazard.hammer.near', [[-1.8, 3.4], [1.8, 3.4]]);",
+    "new": "spots('hazard.hammer.near', [[-1.8, 7.4], [1.8, 3.4]]);",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-a-walk-edge-over-the-chasm",
+    "file": "tools/egHeroForgeGutScene.mjs",
+    "old": "['fwe', 'farw', 'fare']",
+    "new": "['fwe', 'farw', 'nearw']",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-the-dais-under-three-metres",
+    "file": "tools/egHeroClanPitScene.mjs",
+    "old": "daisR: 12, daisBack: 19, daisH: 3.2,",
+    "new": "daisR: 12, daisBack: 19, daisH: 2.8,",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-the-honour-ring-not-at-six-metres",
+    "file": "tools/egHeroClanPitScene.mjs",
+    "old": "ringBand(floor, 0, C.cy, 5.85, 6.15, 0, 32, 0, 32, IRON);",
+    "new": "ringBand(floor, 0, C.cy, 5.45, 5.75, 0, 32, 0, 32, IRON);",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-the-dais-front-half-lined",
+    "file": "tools/egHeroClanPitScene.mjs",
+    "old": "ringBand(edges, 0, C.cy, C.daisR, C.daisR + 0.12, HD + 0.012, 32, 31, 33, EDGE);",
+    "new": "ringBand(edges, 0, C.cy, C.daisR, C.daisR + 0.12, HD + 0.012, 32, 31, 32, EDGE);",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-the-crowd-stepping-into-the-pit",
+    "file": "tools/egHeroClanPitScene.mjs",
+    "old": "p = at(d, tierR(k) + 0.62);",
+    "new": "p = at(d, tierR(k) - 0.62);",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-a-chamber-naming-no-play",
+    "file": "tools/bakeEgHeroClanPit.mjs",
+    "old": "play: Object.freeze(['balcony'])",
+    "new": "play: Object.freeze([])",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-the-tide-short-of-the-rim",
+    "file": "tools/egHeroDeepCavernsScene.mjs",
+    "old": "levelDisc(add(refFragMesh('hazard.tide.pool.ph12000')), 0, C.cy, 0, R, 32);",
+    "new": "levelDisc(add(refFragMesh('hazard.tide.pool.ph12000')), 0, C.cy, 0, R - 2, 32);",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-the-ledges-two-metres-up",
+    "file": "tools/egHeroDeepCavernsScene.mjs",
+    "old": "ledgeR: 13, ledgeBack: 19.5, ledgeH: 2.5,",
+    "new": "ledgeR: 13, ledgeBack: 19.5, ledgeH: 2.0,",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-the-caverns-clamp-under-a-chambers-headroom",
+    "file": "tools/egHeroDeepCavernsScene.mjs",
+    "old": "lake: -0.8, ceil: 9,",
+    "new": "lake: -0.8, ceil: 8.4,",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-the-gold-on-the-stairs-not-the-falls",
+    "file": "tools/egHeroDeepCavernsScene.mjs",
+    "old": "    if (kind !== 'o') return;",
+    "new": "    if (kind !== 'r') return;",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-the-stairs-run-long",
+    "file": "tools/egHeroDeepCavernsScene.mjs",
+    "old": "ledgeH: 2.5, stair: 4.6,",
+    "new": "ledgeH: 2.5, stair: 6.6,",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-a-ring-wall-facing-out-when-asked-in",
+    "file": "tools/egHeroKit.mjs",
+    "old": "sg = inward ? -1 : 1,",
+    "new": "sg = 1,",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-the-hulls-coursed-stone-shifted",
+    "file": "tools/egHeroKit.mjs",
+    "old": "0.94 - (0.5 * (p[2] - cz)) / up",
+    "new": "0.9 - (0.5 * (p[2] - cz)) / up",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-the-deep-law-unregistered",
+    "file": "src/net/eliteGates/egHeroFrags.js",
+    "old": "import EG_HERO_DEEP_CAVERNS_LAW from '../../assets/egfrags/egheroDeepCaverns.law.json' with { type: 'json' };",
+    "new": "import EG_HERO_DEEP_CAVERNS_LAW from '../../assets/egfrags/egheroClanPit.law.json' with { type: 'json' };",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-the-clan-pit-mesh-unregistered",
+    "file": "src/world/eliteGates/egHeroFragModel.js",
+    "old": "import EG_HERO_CLAN_PIT_MESH from '../../assets/egfrags/egheroClanPit.mesh.json' with { type: 'json' };",
+    "new": "import EG_HERO_CLAN_PIT_MESH from '../../assets/egfrags/egheroDeepCaverns.mesh.json' with { type: 'json' };",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-the-forge-gut-as-the-reference",
+    "file": "tools/bakeEgHeroForgeGut.mjs",
+    "old": "variant: 'forgegut'",
+    "new": "variant: 'reference'",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  },
+  {
+    "name": "EGHERO-WELLHEAD-the-deep-caverns-a-passage",
+    "file": "tools/bakeEgHeroDeepCaverns.mjs",
+    "old": "kit: 'deep', class: 'chamber'",
+    "new": "kit: 'deep', class: 'passage'",
+    "tests": [
+      "test/tooling/eghero_wellhead.test.js"
+    ]
+  }
+]

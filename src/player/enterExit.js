@@ -14,6 +14,7 @@
 // gate only without re-scaling).
 
 import { CAPSULE_RADIUS, CAPSULE_HEIGHT } from '../player/motor.js';
+import { t } from '../systems/textManager.js';   // VOID-DUNGEON: the failsafe's line underground, in the player's language
 
 export const ENTER_DOOR_OFFSET = CAPSULE_RADIUS + 0.4; // 0.75
 export const EXIT_DOOR_OFFSET = CAPSULE_RADIUS * 3; // 1.05
@@ -95,8 +96,12 @@ export const NOTHING_OF_VALUE_TEXT = 'This house has nothing of value.';
  *  below everything a building stands on is stood again at the door it came in by. */
 export const INTERIOR_VOID_TEXT = 'There was no floor beneath you. You are back at the door.';
 /** FIELD BUGS 2026-10-04d VOID-ENTRY: how far under the lowest triangle a building has a body may be before it is in
- *  the void - nothing can stand it there, and a room's collider has no ground of its own to catch it. */
+ *  the void - nothing can stand it there, and a room's collider has no ground of its own to catch it. A dungeon's
+ *  collider has none either (VOID-DUNGEON, dungeonVoidRescue). */
 export const INTERIOR_VOID_DROP = 10;
+/** FIELD BUGS 2026-10-19f VOID-DUNGEON: the failsafe's line underground (the port's - DFU has no failsafe). */
+export const DUNGEON_VOID_TEXT = 'There was no floor beneath you. You are back at the entrance.';
+export const dungeonVoidText = () => t('player.dungeonVoid', DUNGEON_VOID_TEXT);
 
 /**
  * Verbatim TransitionInterior landing: exterior door world pos ->
@@ -409,9 +414,10 @@ export function openGroundNear(collider, x, z, { rings = OPEN_GROUND_RINGS, step
   }
   return null;
 }
-/** UNSTUCK-OUT: whether a body standing with its feet at `feet` is held by a static solid (its feet or its head). */
-export function heldInSolid(collider, feet) {
-  return collider.insideSolid([feet[0], feet[1] + CAPSULE_RADIUS, feet[2]]) || collider.insideSolid([feet[0], feet[1] + CAPSULE_HEIGHT - CAPSULE_RADIUS, feet[2]]);
+/** UNSTUCK-OUT: whether a body standing with its feet at `feet` is held by a static solid (its feet or its head).
+ *  DECOR-CLEAR (player/lateSolid.js): `height`, the body's own - a crouched one's head is lower. */
+export function heldInSolid(collider, feet, height = CAPSULE_HEIGHT) {
+  return collider.insideSolid([feet[0], feet[1] + CAPSULE_RADIUS, feet[2]]) || collider.insideSolid([feet[0], feet[1] + height - CAPSULE_RADIUS, feet[2]]);
 }
 
 /** floorLanding's footprint sweep: the highest floor its five rays (the centre and a ring at ~half the capsule's
@@ -441,6 +447,23 @@ export function standsOnFloor(collider, pos, maxDist = 10) {
 export function interiorVoidRescue(collider, at) {
   const box = collider.bounds();
   return box ? { at, belowY: box.min[1] - INTERIOR_VOID_DROP } : null;
+}
+
+/** FIELD BUGS 2026-10-19f VOID-DUNGEON: VOID-ENTRY's record for a dungeon, as its context keeps it - a function that
+ *  answers it, made the first time a frame asks (so every floor a host stands into the dungeon after its build, the
+ *  court's, is under it) and kept: `at()`, where the dungeon stands a body it places (the context's startSpawn - the
+ *  start marker's landing, by the way in, else the enter marker's), and `belowY` INTERIOR_VOID_DROP under its lowest
+ *  triangle. A dungeon had no failsafe: its collider has no ground (heightAt -Infinity), so a body out of its floor - a
+ *  mover's work before MOVER-BODY, a swimmer under the floor, a save made there - fell or swam on for good, and
+ *  /unstuck, the one way out, waits out its cooldown. Null with no such spot or a collider with nothing in it - and in
+ *  a realm that casts its own void back (`ownsVoid`: the Hour's Unmoored Steps, SD7b; an Elite Breach's spans, EG
+ *  section 8), whose fall costs what its own law says. */
+export function dungeonVoidRescue(collider, at, ownsVoid = false) {
+  let rescue;
+  return () => {
+    if (rescue === undefined) { const spot = ownsVoid ? null : at(); rescue = spot ? interiorVoidRescue(collider, spot) : null; }
+    return rescue;
+  };
 }
 
 /** FIELD BUGS 2026-10-04d VOID-ENTRY: THE FAILSAFE. A body below `rescue.belowY` is under everything the building

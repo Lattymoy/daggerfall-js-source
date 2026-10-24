@@ -1,0 +1,32 @@
+[
+  {
+    "name": "TWIN-REKINDLE-fallen-fed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "feeds = !!L && L.hp > 0 && (F.mem.fed ?? 0) < SAP_FEEDS_MAX;",
+    "new": "feeds = !!L && (F.mem.fed ?? 0) < SAP_FEEDS_MAX;",
+    "tests": [
+      "test/net/eliteGates/fb1018d_twinrekindle.test.js"
+    ],
+    "why": "the field bug back: a Sapper stood for a Twin before its fall feeds the body - a lord on the relay that no screen's blow meets, and the pair's raise never comes"
+  },
+  {
+    "name": "TWIN-REKINDLE-nought-fed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "feeds = !!L && L.hp > 0 && (F.mem.fed ?? 0) < SAP_FEEDS_MAX;",
+    "new": "feeds = !!L && L.hp >= 0 && (F.mem.fed ?? 0) < SAP_FEEDS_MAX;",
+    "tests": [
+      "test/net/eliteGates/fb1018d_twinrekindle.test.js"
+    ],
+    "why": "one character: a lord at nought (fallen) counted as standing - its corpse fed"
+  },
+  {
+    "name": "TWIN-REKINDLE-none-fed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "feeds = !!L && L.hp > 0 && (F.mem.fed ?? 0) < SAP_FEEDS_MAX;",
+    "new": "feeds = !!L && L.hp < 0 && (F.mem.fed ?? 0) < SAP_FEEDS_MAX;",
+    "tests": [
+      "test/net/eliteGates/fb1018d_twinrekindle.test.js"
+    ],
+    "why": "one character: no lord standing is fed - the gate's Sapper law (section 12) lost"
+  }
+]

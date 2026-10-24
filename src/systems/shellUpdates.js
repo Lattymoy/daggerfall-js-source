@@ -9,9 +9,11 @@
 // host-less producer uses (systems/notify.js hudTextWhenShown), so a line
 // that arrives during the boot waits for the first scene that can speak.
 //
-// What it says is what the player can DO: an installed copy's update is
-// already downloaded and installs at quit (or now, from the File menu);
-// a copy that updates by hand (macOS, the portable exe) is told where the
+// What it says is what the player can DO: an update that is here plays
+// from the next start - an installed copy's installer runs at quit, and
+// (DA13) a version of the game the shell's own channel brought, every
+// copy's, loads with the page - or now, from the File menu; a copy that
+// updates the app by hand (macOS, the portable exe) is told where the
 // download is. Neither reloads or restarts anything by itself - that is
 // the player's call, as SRV-N's build notice decided for the website.
 //
@@ -25,9 +27,11 @@ const versionOf = (info) => (typeof info?.version === 'string' && /^\d+\.\d+\.\d
 export function updateReadyText(info) {
   const v = versionOf(info);
   const name = v ? `DFO Online ${v}` : 'A new version of DFO Online';
+  // DA13: "the next time you start" is true of both kinds of update - an installer's, installed at quit, and a version of
+  // the game the shell's own channel brought, which the page loads at its next start
   return info?.manual
-    ? `${name} is out. Download it from the File menu when you are ready - your saves stay where they are.`
-    : `${name} is ready. It installs when you quit, or now from File > Restart to Update - save first.`;
+    ? `${name} is out. Download it from the File menu when you are ready. Your saves stay where they are.`
+    : `${name} is ready. It runs the next time you start, or now from File > Restart to Update. Save first.`;
 }
 
 /**

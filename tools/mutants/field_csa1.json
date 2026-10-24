@@ -1,65 +1,65 @@
 [
   {
     "name": "FIELD-CSA1-seabed-kept",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (!(hit.point[1] < top)) return [...hit.point];",
     "new": "    return [...hit.point];",
     "tests": [
-      "test/csa_placing.test.js"
+      "test/systems/comeSailAway/csa_placing.test.js"
     ]
   },
   {
     "name": "FIELD-CSA1-no-look-crossing",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    return t != null && t <= hit.distance ? alongRay(origin, direction, t) : [hit.point[0], top, hit.point[2]];",
     "new": "    return [hit.point[0], top, hit.point[2]];",
     "tests": [
-      "test/csa_placing.test.js"
+      "test/systems/comeSailAway/csa_placing.test.js"
     ]
   },
   {
     "name": "FIELD-CSA1-sea-top-bare",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  const seaTop = () => f(WATER_LEVEL + f(deps.worldCompensation?.()?.[1] ?? 0));",
     "new": "  const seaTop = () => f(WATER_LEVEL);",
     "tests": [
-      "test/csa_placing.test.js"
+      "test/systems/comeSailAway/csa_placing.test.js"
     ]
   },
   {
     "name": "FIELD-CSA1-plane-unbounded",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (num3 != null && num3 > PLACE_RAY_DISTANCE) {",
     "new": "      if (false) {",
     "tests": [
-      "test/csa_placing.test.js"
+      "test/systems/comeSailAway/csa_placing.test.js"
     ]
   },
   {
     "name": "FIELD-CSA1-kept-bug-back",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (ridesTheWorld(allBoat)) OnPositionUpdateBoat(allBoat, offset);\n      UpdateBoatVisibilityOf(allBoat);",
     "new": "      if (allBoat.GameObject.activeSelf) { OnPositionUpdateBoat(allBoat, offset); UpdateBoatVisibilityOf(allBoat); continue; }\n      UpdateBoatVisibilityOf(allBoat);\n      if (allBoat.GameObject.activeSelf) OnPositionUpdateBoat(allBoat, offset);",
     "tests": [
-      "test/csa_placing.test.js"
+      "test/systems/comeSailAway/csa_placing.test.js"
     ]
   },
   {
     "name": "FIELD-CSA1-reanchor-asks-the-helm",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (ridesTheWorld(boat)) shiftBoat(boat, offset);",
     "new": "      if (ridesTheWorld(boat)) OnPositionUpdateBoat(boat, offset);",
     "tests": [
-      "test/csa_placing.test.js"
+      "test/systems/comeSailAway/csa_placing.test.js"
     ]
   },
   {
     "name": "FIELD-CSA1-reanchor-no-visibility",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (ridesTheWorld(boat)) shiftBoat(boat, offset);\n      UpdateBoatVisibilityOf(boat);",
     "new": "      if (ridesTheWorld(boat)) shiftBoat(boat, offset);",
     "tests": [
-      "test/csa_placing.test.js"
+      "test/systems/comeSailAway/csa_placing.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    csaReanchor(state.initOffset);   // FIELD-CSA1: and every placed boat with it\n",
     "new": "",
     "tests": [
-      "test/field_csa1.test.js"
+      "test/world/field_csa1.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    if (csaRuntime) csaCall(() => csaRuntime.OnWorldReanchored(offset)); else csa.offsetAll(offset);",
     "new": "    if (!csaRuntime) csa.offsetAll(offset);",
     "tests": [
-      "test/field_csa1.test.js"
+      "test/world/field_csa1.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    this.initOffset = [ox, 0, oz];",
     "new": "    this.initOffset = [0, 0, 0];",
     "tests": [
-      "test/field_csa1.test.js"
+      "test/world/field_csa1.test.js"
     ]
   },
   {
@@ -95,34 +95,34 @@
     "old": "    const was = this.worldCoords([0, 0, 0]);\n    this.mapOrigin = { x: mapPixelX, y: mapPixelY };",
     "new": "    this.mapOrigin = { x: mapPixelX, y: mapPixelY };\n    const was = this.worldCoords([0, 0, 0]);",
     "tests": [
-      "test/field_csa1.test.js"
+      "test/world/field_csa1.test.js"
     ]
   },
   {
     "name": "FIELD-CSA1-too-far-unsaid",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        log(`COME SAIL AWAY - INTERSECTION WITH WATER PLANE IS TOO FAR AT ${num3}`);\n        deps.hudText('Placement aborted!', 3);",
     "new": "        log(`COME SAIL AWAY - INTERSECTION WITH WATER PLANE IS TOO FAR AT ${num3}`);",
     "tests": [
-      "test/csa_placing.test.js"
+      "test/systems/comeSailAway/csa_placing.test.js"
     ]
   },
   {
     "name": "FIELD-CSA1-dungeon-boat-rides-the-world",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "  const ridesTheWorld = (boat) => !boat.inside || boat.GameObject.activeSelf;",
     "new": "  const ridesTheWorld = (boat) => true;",
     "tests": [
-      "test/csa_placing.test.js"
+      "test/systems/comeSailAway/csa_placing.test.js"
     ]
   },
   {
     "name": "FIELD-CSA1-reanchor-moves-the-dungeon",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (ridesTheWorld(boat)) shiftBoat(boat, offset);",
     "new": "      shiftBoat(boat, offset);",
     "tests": [
-      "test/csa_placing.test.js"
+      "test/systems/comeSailAway/csa_placing.test.js"
     ]
   }
 ]

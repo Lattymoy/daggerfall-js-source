@@ -5,7 +5,7 @@
     "old": "      for (const o of all) if (o > y + 1e-3 && o < y + DECK_HEADROOM) { clear = false; break; }",
     "new": "      for (const o of all) if (o > y + 1e-3 && o < y) { clear = false; break; }",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      if (!clear || rises(walls[j], y)) continue;",
     "new": "      if (!clear) continue;",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "if (Math.abs(nY) < WALL_NY * len) { wallFace(moves ? leaves : walls, ax, ay, az, bx, by, bz, cx, cy, cz); continue; }",
     "new": "if (Math.abs(nY) < WALL_NY * len) continue;",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "if (live[a] && Math.abs(lv[a] - h) <= DECK_JOIN) return a;",
     "new": "if (live[a]) return a;",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    for (let pass = 0; pass < passes; pass++) {",
     "new": "    for (let pass = 0; pass < 0; pass++) {",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  for (let a = 0; a < M; a++) if (s.live[a] && s.piece[a] === s.open) { y[nodeCell[a]] = lv[a]; top[nodeCell[a]] = a; }",
     "new": "  for (let a = 0; a < M; a++) if (s.live[a]) { y[nodeCell[a]] = lv[a]; top[nodeCell[a]] = a; }",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (n > most || (n === most && mainBin != null && b > mainBin)) { most = n; mainBin = b; }",
     "new": "if (mainBin == null || b > mainBin) { most = n; mainBin = b; }",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    out[0] = Math.min(x0 + cell - e, Math.max(x0 + e, x));",
     "new": "    out[0] = x0 + cell / 2;",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      if (ringBest >= 0 && ringD <= (r * cell) ** 2) break;",
     "new": "      if (ringBest >= 0) break;",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    const dx = qx < x0 ? x0 - qx : qx > x0 + cell ? qx - x0 - cell : 0;",
     "new": "    const dx = qx - x0 - cell / 2;",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "          if (far[q] > bestD) { bestD = far[q]; best = q; }",
     "new": "          if (bestD < 0) { bestD = far[q]; best = q; }",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "          if (di && dk && !(steps(j, k * nx + ii) && steps(j, kk * nx + i))) continue;   // no corner cut past the edge (AUDIT NAV2 F34: nor past a drop - a stair's tread beside the deck it climbs from)\n",
     "new": "",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "        for (let q = at + 2; q < cells.length && lineOnDeck(p0, centre(cells[q])); q++) next = q;",
     "new": "        for (let q = at + 2; q < cells.length; q++) next = q;",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "        if (!on(i + si, k) || !on(i, k + sk)) return false;\n",
     "new": "",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "!Number.isNaN(y[kk * nx + ii]) && steps(was, kk * nx + ii);",
     "new": "!Number.isNaN(y[kk * nx + ii]);",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "          if (seen[n] !== stamp || c < cost[n]) {",
     "new": "          if (c < cost[n] || cost[n] === 0) {",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "  const x = p[0] - m[12], y = p[1] - m[13], z = p[2] - m[14];",
     "new": "  const x = p[0], y = p[1], z = p[2];",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -158,16 +158,16 @@
     "old": "  out[1] = (c01 * x + (a00 * a22 - a02 * a20) * y + (a02 * a10 - a00 * a12) * z) * k;",
     "new": "  out[1] = (c02 * x + (a01 * a20 - a00 * a21) * y + (a00 * a11 - a01 * a10) * z) * k;",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
     "name": "DECK-WALK-bake-root-frame",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "      const m = frame ? multiply(frame, world, new Float32Array(16)) : world;",
     "new": "      const m = world;",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "  const navalWorldToDeck = (boat, p, out) => intoDeck(boat.MeshObject.worldMatrix(), p, out);",
     "new": "  const navalWorldToDeck = (boat, p, out) => intoDeck(boat.GameObject.worldMatrix(), p, out);",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "      if (j >= 0) { const h = ringH; squareOf(j, x, z, out, 0); out[1] = h; return out; }",
     "new": "      if (j >= 0) { const h = ringH, c = centre(j); out[0] = c[0]; out[1] = h; out[2] = c[2]; return out; }",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "      if (!(Math.abs(local[1] - floor) <= DECK_STEP) && !(Math.abs(local[1] - deck.ajarAt(local[0], local[2], local[1])) <= DECK_STEP)) {",
     "new": "      if (Number.isNaN(floor) && !(Math.abs(local[1] - deck.ajarAt(local[0], local[2], local[1])) <= DECK_STEP)) {",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "      if (f.dead) { if (!f.corpse) { f.deckBoat = f.deckLocal = null; _deckBodies.delete(f); } continue; }",
     "new": "      if (f.dead) continue;",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "      if (_deckBodies.size) navalCarry();   // DECK-WALK: the bodies on a ship's deck carried by her - after the ships moved, before the foes do\n",
     "new": "",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "      navalDeckToWorld(boat, kept, feet);\n",
     "new": "      if (!boat) navalDeckToWorld(boat, kept, feet);\n",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "      const kept = f.deckLocal ??= [0, 0, 0];   // where the carry takes it from next frame\n      kept[0] = local[0]; kept[1] = local[1]; kept[2] = local[2];",
     "new": "      const kept = f.deckLocal ??= [0, 0, 0];   // where the carry takes it from next frame\n      kept[0] = feet[0]; kept[1] = feet[1]; kept[2] = feet[2];",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "        navalDeckBody(f, boat);\n        if (name && f.entity)",
     "new": "        if (name && f.entity)",
     "tests": [
-      "test/navaudit_boarding.test.js"
+      "test/systems/naval/navaudit_boarding.test.js"
     ]
   },
   {
@@ -248,61 +248,61 @@
     "old": "team: side === 'ally' ? null : team, ...(gender ? { gender } : {}) })",
     "new": "team, ...(gender ? { gender } : {}) })",
     "tests": [
-      "test/navaudit_boarding.test.js"
+      "test/systems/naval/navaudit_boarding.test.js"
     ]
   },
   {
     "name": "DECK-WALK-muster-team-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "{}), team: crewTeamOf(entry.ship.cls), boat: entry.boat, ...(c ? { gender: c.gender } : {}) };",
     "new": "{}), boat: entry.boat, ...(c ? { gender: c.gender } : {}) };",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
     "name": "DECK-WALK-muster-deck-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "{}), team: crewTeamOf(entry.ship.cls), boat: entry.boat, ...(c ? { gender: c.gender } : {}) };",
     "new": "{}), team: crewTeamOf(entry.ship.cls), ...(c ? { gender: c.gender } : {}) };",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
     "name": "DECK-WALK-hands-deck-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "'ally', { boat: entry.boat, ...(mine[i] ? { gender: mine[i].gender } : {}) });",
     "new": "'ally', { ...(mine[i] ? { gender: mine[i].gender } : {}) });",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
     "name": "DECK-WALK-repel-team-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "'enemy', { team: crewTeamOf(entry.ship.cls), boat, ...(party[i] ? { gender: party[i].gender } : {}) });",
     "new": "'enemy', { boat, ...(party[i] ? { gender: party[i].gender } : {}) });",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
     "name": "DECK-WALK-repel-deck-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "'enemy', { team: crewTeamOf(entry.ship.cls), boat, ...(party[i] ? { gender: party[i].gender } : {}) });",
     "new": "'enemy', { team: crewTeamOf(entry.ship.cls), ...(party[i] ? { gender: party[i].gender } : {}) });",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
     "name": "DECK-WALK-repel-hands-off-deck",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "'ally', { boat, ...(mine[i] ? { gender: mine[i].gender } : {}) });",
     "new": "'ally', { ...(mine[i] ? { gender: mine[i].gender } : {}) });",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "(t.deckBoat != null || t.shipmate === true)",
     "new": "(true || t.shipmate === true)",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "(t.deckBoat != null || t.shipmate === true)",
     "new": "(t.deckBoat != null)",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": " && !t.dead && t.entity?.team === 'PlayerAlly';",
     "new": " && !t.dead;",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": " && !t.dead && t.entity?.team === 'PlayerAlly';",
     "new": " && t.entity?.team === 'PlayerAlly';",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "    const live = dropFateHeld(foes.filter((f) => !f.dead && !isShipmate(f)));",
     "new": "    const live = dropFateHeld(foes.filter((f) => !f.dead));",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "if (m.fromPlayer && sparedByPlayer(t.ref)) continue;",
     "new": "if (m.fromPlayer && t.ref?.defender === true) continue;",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "  const sparedFromPlayer = (t) => sparedByPlayer(t);",
     "new": "  const sparedFromPlayer = (t) => t?.defender === true;",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "      if (crewBlast && isShipmate(t)) continue;\n",
     "new": "",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "if (playerFeet && !crewBlast && sphereOverlapsCapsule(",
     "new": "if (playerFeet && sphereOverlapsCapsule(",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "if (playerFeet && !isShipmate(m.casterFoe)) {",
     "new": "if (playerFeet) {",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -401,8 +401,8 @@
     "old": "...exteriorFoes.foes.filter((f) => !sparedByPlayer(f))], foeSinks",
     "new": "...exteriorFoes.foes], foeSinks",
     "tests": [
-      "test/deckwalk.test.js",
-      "test/auditdisc19.test.js"
+      "test/systems/naval/deckwalk.test.js",
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -411,61 +411,61 @@
     "old": "foes: () => exteriorFoes.foes.filter((f) => !sparedByPlayer(f)), guards:",
     "new": "foes: () => exteriorFoes.foes, guards:",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
     "name": "SHIPMATES-bars-another-green",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "export const CREW_GREEN = PARTY_GREEN_CSS;",
     "new": "export const CREW_GREEN = '#73ff74';",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
     "name": "SHIPMATES-bars-rebuilt",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  while (crewSlots.length < want.length) {",
     "new": "  if (want.length) crewSlots = [];\n  while (crewSlots.length < want.length) {",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
     "name": "SHIPMATES-bars-never-hidden",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const want = covered ? [] : points ?? [];\n  if (!tagRoot) {\n    if (!want.length || !doc?.createElement) return;\n    injectSheets(doc);\n    tagRoot = el(doc, 'div', 'dfnaval-tags');\n    tagRoot.setAttribute?.('aria-hidden', 'true');\n    (doc.body ?? doc.documentElement)?.append(tagRoot);\n  }\n  while (crewSlots",
     "new": "  const want = points ?? [];\n  if (!tagRoot) {\n    if (!want.length || !doc?.createElement) return;\n    injectSheets(doc);\n    tagRoot = el(doc, 'div', 'dfnaval-tags');\n    tagRoot.setAttribute?.('aria-hidden', 'true');\n    (doc.body ?? doc.documentElement)?.append(tagRoot);\n  }\n  while (crewSlots",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
     "name": "SHIPMATES-bars-fade-reversed",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "tagAlpha(p.distance, CREW_BAR_RANGE, CREW_FADE_FROM)",
     "new": "tagAlpha(CREW_BAR_RANGE - p.distance, CREW_BAR_RANGE, CREW_FADE_FROM)",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
     "name": "SHIPMATES-bars-the-ships-fade",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "tagAlpha(p.distance, CREW_BAR_RANGE, CREW_FADE_FROM)",
     "new": "tagAlpha(p.distance, CREW_BAR_RANGE)",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
     "name": "SHIPMATES-bars-fill-unread",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "set('share', pct(p.share), (v) => { slot.fill.style.width",
     "new": "set('share', pct(1), (v) => { slot.fill.style.width",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -474,7 +474,7 @@
     "old": "drawNavalTags([]); drawCrewBars([]); drawCrewLines([]); lowerGlass(); };",
     "new": "drawNavalTags([]); drawCrewLines([]); lowerGlass(); };",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -483,7 +483,7 @@
     "old": "      navalCrewBars(proj, view, mwv.eye);   // SHIPMATES: the crew's green bars\n",
     "new": "",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -492,7 +492,7 @@
     "old": "        if (crewSight.blocked(player.collider, eye, key, head)) continue;\n",
     "new": "",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -501,7 +501,7 @@
     "old": "        if (!isShipmate(f) || !feet || !f.entity) continue;",
     "new": "        if (!feet || !f.entity) continue;",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -510,16 +510,16 @@
     "old": "    const cw = out.filter((r) => r.d !== 1 && isShipmate(src.get(r))).map((r) => r.i);",
     "new": "    const cw = [];",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
     "name": "SHIPMATES-cw-build-ignored",
     "file": "src/scenes/exteriorFoes.js",
-    "old": "allied: (r.t === KNIGHT_CITYWATCH_ID && allied.has(r.i)) || shipmate, champion: r.cp ?? null })",
-    "new": "allied: r.t === KNIGHT_CITYWATCH_ID && allied.has(r.i), champion: r.cp ?? null })",
+    "old": "allied: (r.t === KNIGHT_CITYWATCH_ID && allied.has(r.i)) || shipmate, champion: cp })",
+    "new": "allied: r.t === KNIGHT_CITYWATCH_ID && allied.has(r.i), champion: cp })",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -528,7 +528,7 @@
     "old": "          if (shipmate) nf.shipmate = true;\n",
     "new": "",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ]
   },
   {
@@ -537,7 +537,7 @@
     "old": "alliedWatchPuppet(f, allied.has(r.i)); crewPuppet(f, crew.has(r.i), comp.has(r.i)); f.companionName = compNames.get(r.i) ?? null; continue; }",
     "new": "alliedWatchPuppet(f, allied.has(r.i)); f.companionName = compNames.get(r.i) ?? null; continue; }",
     "tests": [
-      "test/deckwalk.test.js"
+      "test/systems/naval/deckwalk.test.js"
     ],
     "note": "AUDIT CREW (PIN MOVED): re-aimed by content at the line the co-op change extended."
   }

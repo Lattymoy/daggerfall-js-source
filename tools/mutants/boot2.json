@@ -3,38 +3,47 @@
     "name": "BOOT2-the-cursor-takes-the-helper-from-the-hud-again",
     "file": "src/ui/cursor.js",
     "old": "import { APP_ROOT } from '../systems/appRoot.js';",
-    "new": "import { APP_ROOT } from '../systems/appRoot.js';\nimport { drawHud } from './hud.js';",
+    "new": "import { APP_ROOT } from '../systems/appRoot.js';\nimport { drawHud } from './hud/hud.js';",
     "tests": [
-      "test/boot2.test.js"
+      "test/render/boot2.test.js"
     ]
   },
   {
     "name": "BOOT2-the-hud-re-exports-the-helper",
-    "file": "src/ui/hud.js",
-    "old": "import { bitmapToColor32 } from '../formats/color32Order.js';",
-    "new": "import { bitmapToColor32 } from '../formats/color32Order.js';\nexport { bitmapToColor32 };",
+    "file": "src/ui/hud/hud.js",
+    "old": "import { bitmapToColor32 } from '../../formats/color32Order.js';",
+    "new": "import { bitmapToColor32 } from '../../formats/color32Order.js';\nexport { bitmapToColor32 };",
     "tests": [
-      "test/boot2.test.js"
+      "test/render/boot2.test.js"
     ]
   },
   {
     "name": "BOOT2-a-second-definition-in-the-hud",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "export const hudScale = (canvasWidth, canvasHeight) =>",
     "new": "export const bitmapToColor32 = () => null;\nexport const hudScale = (canvasWidth, canvasHeight) =>",
     "syntax": true,
     "why": "A second definition cannot sit beside the import without breaking the module; boot2.test.js reads source, never imports hud.js, so it still dies of the ONE HOME scan.",
     "tests": [
-      "test/boot2.test.js"
+      "test/render/boot2.test.js"
+    ]
+  },
+  {
+    "name": "LIGHT-ID-the-seam-imports-on-the-boot-path",
+    "file": "src/render/lightId.js",
+    "old": "const LIGHT_ID = Symbol('lightId');",
+    "new": "import { MAP_W } from '../world/road/roadNetwork.js'; void MAP_W;\nconst LIGHT_ID = Symbol('lightId');",
+    "tests": [
+      "test/render/boot2.test.js"
     ]
   },
   {
     "name": "ECOTONE1-the-border-law-imports-on-the-boot-path",
     "file": "src/world/ecotone.js",
     "old": "export const ECOTONE = Object.freeze({",
-    "new": "import { MAP_W } from './roadNetwork.js'; void MAP_W;\nexport const ECOTONE = Object.freeze({",
+    "new": "import { MAP_W } from './road/roadNetwork.js'; void MAP_W;\nexport const ECOTONE = Object.freeze({",
     "tests": [
-      "test/boot2.test.js"
+      "test/render/boot2.test.js"
     ]
   }
 ]

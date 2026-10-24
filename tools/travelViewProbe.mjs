@@ -209,14 +209,14 @@ try {
   await page2.goto('http://localhost:5231/play/');
   await page2.evaluate(async () => {
     const { createTravelView } = await import('/src/scenes/travelView.js');
-    const hud = await import('/src/ui/travelViewHud.js');
+    const hud = await import('/src/ui/travel/travelViewHud.js');
     const { forwardOf } = await import('/src/player/travelCamera.js');
     document.body.innerHTML = '';
     const canvas = document.createElement('canvas');
     canvas.style.cssText = 'position:fixed;inset:0;width:100vw;height:100vh;background:#223';
     document.body.append(canvas);
     // AUDIT DEEP2 E1: the game HUD's own vitals stand, as they do under the view in the game
-    const { drawEnhancedHud } = await import('/src/ui/enhancedHud.js');
+    const { drawEnhancedHud } = await import('/src/ui/enhanced/enhancedHud.js');
     const vitals = { health: 96, maxHealth: 118, fatigue: 104 * 64, maxFatigue: 120 * 64, magicka: 40, maxMagicka: 80, currentBreath: 0 };
     for (let i = 0; i < 3; i++) drawEnhancedHud(vitals, 0.1, 16, { hidden: false, reticleHidden: true });
     // the page's own title screen boots behind this set-up (the awaited import gives it time) - never under the view
@@ -307,7 +307,7 @@ try {
   const phone = await browser.newPage({ viewport: { width: 390, height: 844 }, isMobile: true, hasTouch: true });
   await phone.goto('http://localhost:5231/play/');
   await phone.evaluate(async () => {
-    const hud = await import('/src/ui/travelViewHud.js');
+    const hud = await import('/src/ui/travel/travelViewHud.js');
     document.body.innerHTML = '';
     hud.showTravelViewHud({});
     hud.updateTravelViewHud({ feet: { x: 195, y: 420, front: true }, heading: 30, yaw: 0.5, where: 'The wilds of the Wrothgarian Mountains', touch: true });
@@ -315,7 +315,7 @@ try {
   const pb = await phone.locator('.tview-bar').boundingBox();
   // TV2: the travel panel says when the governor holds the clock under the spinner
   const held = await phone.evaluate(async () => {
-    const { drawEnhancedTravelControl, hideEnhancedTravelControl } = await import('/src/ui/enhancedTravelControl.js');
+    const { drawEnhancedTravelControl, hideEnhancedTravelControl } = await import('/src/ui/enhanced/enhancedTravelControl.js');
     drawEnhancedTravelControl({ showing: true, destination: 'Ripwych', accel: 40, held: 20 });
     const a = document.querySelector('.travelpanel-accel');
     const out = { text: a?.textContent, cls: a?.className };

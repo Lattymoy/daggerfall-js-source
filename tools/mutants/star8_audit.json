@@ -1,0 +1,326 @@
+[
+ {
+  "name": "AUDIT-STAR8-S2-the-running-steps-needs-unread",
+  "file": "src/systems/questlines/qlLineRunner.js",
+  "old": "        if (stepQuest) keepSeason(l, rec, stepQuest);",
+  "new": "        if (false) keepSeason(l, rec, stepQuest);",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S2-never-reclaimed",
+  "file": "src/systems/questlines/qlLineRunner.js",
+  "old": "    if (!rec.aside || (q.shelvedAt != null && !machine.reclaimQuest?.(q.uid)?.ok)) return;",
+  "new": "    return;",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S2-the-players-reclaimed",
+  "file": "src/systems/questlines/qlLineRunner.js",
+  "old": "    if (!rec.aside || (q.shelvedAt != null && !machine.reclaimQuest?.(q.uid)?.ok)) return;",
+  "new": "    if (q.shelvedAt != null && !machine.reclaimQuest?.(q.uid)?.ok) return;",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S2-aside-unsaved",
+  "file": "src/systems/questlines/qlLineRunner.js",
+  "old": "retry: !!r.retry, aside: !!r.aside,",
+  "new": "retry: !!r.retry, aside: false,",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S2-the-row-shelved",
+  "file": "src/systems/questlines/qlLineRunner.js",
+  "old": "running ? 'running' : shelved && !aside ? 'shelved'",
+  "new": "running ? 'running' : shelved ? 'shelved'",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S1-gone-on-the-first-alone",
+  "file": "src/systems/questlines/qlActions.js",
+  "old": "    if (foes.some((f) => stands(quest, f))) { this.seen = true; return false; }",
+  "new": "    if (stands(quest, foes[0])) { this.seen = true; return false; }",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S1-the-kill-unread",
+  "file": "src/systems/questlines/qlActions.js",
+  "old": "    if (!this.seen || foes[0].killCount >= Math.max(1, foes[0].spawnCount)) return false;",
+  "new": "    if (!this.seen) return false;",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S1-seen-unsaved",
+  "file": "src/systems/questlines/qlActions.js",
+  "old": "  get saveShape() { return [['foeSymbols', 'symArray'], ['seen']]; }",
+  "new": "  get saveShape() { return [['foeSymbols', 'symArray']]; }",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S1-the-pattern-any-count",
+  "file": "src/systems/questlines/qlActions.js",
+  "old": "  get pattern() { return /^\\s*ql gone((?: _[a-zA-Z0-9_.]+_){1,4})\\s*$/; }",
+  "new": "  get pattern() { return /^\\s*ql gone((?: _[a-zA-Z0-9_.]+_)*)\\s*$/; }",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S1-the-fallen-standing",
+  "file": "src/systems/quest/machine.js",
+  "old": "b.targetSymbol?.name === foe?.symbol?.name && !b.isFoeDead && this.beat",
+  "new": "b.targetSymbol?.name === foe?.symbol?.name && this.beat",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S1-the-beat-unread",
+  "file": "src/systems/quest/machine.js",
+  "old": " && !b.isFoeDead && this.beat - (b.beat ?? 0) <= FOE_STANDS_TICKS),",
+  "new": " && !b.isFoeDead),",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S1-the-machine-unbeaten",
+  "file": "src/systems/quest/machine.js",
+  "old": "    this.beat++;   // AUDIT STAR8 S1 (questFoeStands)",
+  "new": "    // AUDIT STAR8 S1 (questFoeStands)",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S1-a-driven-body-unbeaten",
+  "file": "src/systems/quest/resourceBehaviour.js",
+  "old": "    this.beat = this.machine?.beat ?? this.beat;   // AUDIT STAR8 S1: driven - its body stands",
+  "new": "    // AUDIT STAR8 S1: driven - its body stands",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S1-the-rearm-unscripted",
+  "file": "src/systems/questlines/quests/QLTF02.txt",
+  "old": "\tclear _arrived_ _ambush_ _lost_",
+  "new": "\tclear _lost_",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S1-the-rearm-after-the-ambush",
+  "file": "src/systems/questlines/quests/QLTF02.txt",
+  "old": "_lost_ task:\n\tql gone _spinner_ _sisters_\n\tclear _arrived_ _ambush_ _lost_\n\n_ambush_ task:\n\tcreate foe _spinner_ every 0 minutes 1 times with 100% success msg 1019\n\tcreate foe _sisters_ every 0 minutes 1 times with 100% success\n",
+  "new": "_ambush_ task:\n\tcreate foe _spinner_ every 0 minutes 1 times with 100% success msg 1019\n\tcreate foe _sisters_ every 0 minutes 1 times with 100% success\n\n_lost_ task:\n\tql gone _spinner_ _sisters_\n\tclear _arrived_ _ambush_ _lost_\n",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S1-the-spindle-never-handed-over",
+  "file": "src/systems/questlines/quests/QLTF02.txt",
+  "old": "\tkilled 1 _spinner_ saying 1013\n\tget item _spindle_\n",
+  "new": "\tkilled 1 _spinner_ saying 1013\n",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S8-the-sisters-favour",
+  "file": "src/systems/questlines/quests/QLTF02.txt",
+  "old": "\tchange repute with _bluffsister_ by -10",
+  "new": "\tchange repute with _bluffsister_ by -1",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S5-the-clock-run-on",
+  "file": "src/systems/questlines/quests/QLTF02.txt",
+  "old": "_hasspindle_ task:\n\tstop timer _wait_\n",
+  "new": "_hasspindle_ task:\n",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-T1-the-sister-unread",
+  "file": "src/systems/questlines/quests/QLTF01.txt",
+  "old": "\tql act wyrd-met 1",
+  "new": "\tql act wyrd-meet 1",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-T1-both-ways",
+  "file": "src/systems/questlines/quests/QLTF01.txt",
+  "old": "\twhen _held_ and not _sister_",
+  "new": "\twhen _held_",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-T1-the-window-a-find",
+  "file": "src/systems/festival/festivalClient.js",
+  "old": "const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain', 'wyrd-met']);",
+  "new": "const ACT_NOT_FOUND = Object.freeze(['elite-foe-slain']);",
+  "tests": [
+   "test/systems/festival/witch1_client.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-T1-the-act-unsaid",
+  "file": "src/scenes/witchesHost.js",
+  "old": "    noteAct('wyrd-met');   // AUDIT STAR8 T1: her window opened - a questline's letter waits on it, never a find\n",
+  "new": "",
+  "tests": [
+   "test/scenes/witch1_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-T1-said-with-no-window",
+  "file": "src/scenes/witchesHost.js",
+  "old": "    if (!win) return false;\n    townTalk?.showOverlay?.(win);",
+  "new": "    noteAct('wyrd-met');\n    if (!win) return false;\n    townTalk?.showOverlay?.(win);",
+  "tests": [
+   "test/scenes/witch1_host.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-T2-its-act-unread",
+  "file": "src/systems/questlines/quests/QLTF03.txt",
+  "old": "\tql act heart-star-held 1",
+  "new": "\tql act heart-star-taken 1",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-T2-the-heart-pays-standard",
+  "file": "src/systems/questlines/sheets/questlines.json",
+  "old": "\"pay\":\"greater\",\"named\":{\"name\":\"Heart-Star Ring\"",
+  "new": "\"pay\":\"standard\",\"named\":{\"name\":\"Heart-Star Ring\"",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-T2-the-heart-a-gate",
+  "file": "src/systems/questlines/sheets/questlines.json",
+  "old": "\"done\":{\"task\":\"_heart_\"},\"optional\":true}",
+  "new": "\"done\":{\"task\":\"_heart_\"}}",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-T3-the-row-left-out",
+  "file": "src/ui/wyrdWindow.js",
+  "old": "    gift('title', 'starwarden', worn?.titles?.includes('starwarden') ? 1 : 0, 1, t('festival.window.earnStarwarden', 'Earned on The Thirteenth of Frostfall.'), false),   // AUDIT STAR8 T3\n",
+  "new": "",
+  "tests": [
+   "test/systems/festival/witch1_wares.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-T3-held-off-the-wrong-title",
+  "file": "src/ui/wyrdWindow.js",
+  "old": "worn?.titles?.includes('starwarden') ? 1 : 0",
+  "new": "worn?.titles?.includes('hearthkeeper') ? 1 : 0",
+  "tests": [
+   "test/systems/festival/witch1_wares.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-T3-its-count-shown",
+  "file": "src/ui/wyrdWindow.js",
+  "old": "'Earned on The Thirteenth of Frostfall.'), false),",
+  "new": "'Earned on The Thirteenth of Frostfall.'), true),",
+  "tests": [
+   "test/systems/festival/witch1_wares.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S4-the-temples-faction-unread",
+  "file": "src/systems/quest/place.js",
+  "old": "const FACTION_HELD = Object.freeze([BT_GUILDHALL, BT_TEMPLE]);",
+  "new": "const FACTION_HELD = Object.freeze([BT_GUILDHALL]);",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S4-the-rows-god",
+  "file": "src/systems/questlines/qlActions.js",
+  "old": "export const QL_PLACE_ROWS = Object.freeze(['templeArkay,        0, 14, 21']);",
+  "new": "export const QL_PLACE_ROWS = Object.freeze(['templeArkay,        0, 14, 22']);",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S4-any-gods-temple",
+  "file": "src/systems/questlines/quests/QLTF04.txt",
+  "old": "Place _temple_ remote templeArkay",
+  "new": "Place _temple_ remote temple",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S5-the-hall",
+  "file": "src/systems/questlines/quests/QLTF04.txt",
+  "old": "<ce>         clearing is as bright as noon. Then it is only",
+  "new": "<ce>         hall is as bright as noon. Then it is only",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S5-every-coven",
+  "file": "src/systems/questlines/quests/QLTF01.txt",
+  "old": "<ce>         \"The covens take turns at the same rite, a",
+  "new": "<ce>         \"The covens all work the same rite, a",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-S5-the-cut-twice",
+  "file": "src/systems/questlines/quests/QLTF04.txt",
+  "old": "keeps vigil at _temple_ in __temple_. Let him see",
+  "new": "keeps vigil at _temple_ in __temple_. His order cuts what holds a thing past its time. Let him see",
+  "tests": [
+   "test/systems/questlines/star8_frostfall.test.js"
+  ]
+ },
+ {
+  "name": "AUDIT-STAR8-T1-the-kind",
+  "file": "src/systems/questlines/qlActs.js",
+  "old": "  'wyrd-met': 'world',",
+  "new": "  'wyrd-mett': 'world',",
+  "tests": [
+   "test/systems/questlines/ql11_acts.test.js"
+  ]
+ }
+]

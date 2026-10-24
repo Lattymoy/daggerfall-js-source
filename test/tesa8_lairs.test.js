@@ -13,10 +13,11 @@ import {
 } from '../src/world/tamrielDungeons.js';
 import { COUNTRY_GRID, LAIR_LANE, COUNTRY_LANE, COUNTRY_LANES, isCountryPlaceId, countryPlaceId, countryOrdinal, COUNTRY_INDEX_BASE, countryRates } from '../src/world/tamrielCountry.js';
 import { hash32, spawnTemplates } from '../src/world/spawnedDungeons.js';
-import { automapKeyOf, automapDungeonKey } from '../src/systems/automap.js';
+import { automapKeyOf, automapDungeonKey } from '../src/systems/automap/automap.js';
 import { LOCATION_TYPES, DUNGEON_TYPES, mapPixelToLongitudeLatitude } from '../src/formats/mapsFile.js';
 import { BANK_TYPES, monsterName } from '../src/characters/nameHelper.js';
 import { srand, rand, getSeed } from '../src/formats/dfRandom.js';
+import { hostText } from './hostText.mjs';   // HOST-SPLIT (at the merge of main): the world host read whole - its pixel build stands in scenes/pixelBuild.js
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 const T = LOCATION_TYPES, D = DUNGEON_TYPES;
@@ -240,7 +241,7 @@ test('TESA8 never cloned again and its own map: no spawn clones a lair (spawnTem
 
 // ── THE HOST ────────────────────────────────────────────────────
 
-const W = read('src/scenes/world.js');
+const W = hostText('src/scenes/world.js');
 const lift = (head) => { const i = W.indexOf(head); assert.ok(i > 0, head); return W.slice(i, W.indexOf('\n  }\n', i) + 4); };
 
 test('TESA8 the host by source: the lairs\' templates, count and pools off the game\'s rows before they go, under the countryside\'s door; their rates over the same Bay land; past the Bay Arena\'s place, else the country\'s, else the lair\'s', () => {
@@ -248,9 +249,9 @@ test('TESA8 the host by source: the lairs\' templates, count and pools off the g
   assert.match(W, /const _lairCounts = _lairTemplates \? countryCounts\(_lairTemplates, \(x, y\) => maps\.getClimateIndex\(x, y\)\) : null;/);
   assert.match(W, /const _lairPools = _lairTemplates \? lairPools\(_lairTemplates\) : null;/);
   assert.ok(W.indexOf('const _lairPools = ') < W.indexOf('  _classicRows = null;   // read, let go'));
-  assert.match(W, /const bayLandNow = \(\) => \(_bayLand \?\?= bayLand\(/);
-  assert.match(W, /const countryRatesNow = \(\) => \(_countryRates \?\?= countryRates\(_countryCounts, bayLandNow\(\)\)\);/);
-  assert.match(W, /const lairRatesNow = \(\) => \(_lairRates \?\?= countryRates\(_lairCounts, bayLandNow\(\), LAIR_TYPES\)\);/);
+  assert.match(W, /const bayLandNow = \(\) => \(_pastBay\.bayLand \?\?= bayLand\(/);
+  assert.match(W, /const countryRatesNow = \(\) => \(_pastBay\.countryRates \?\?= countryRates\(_countryCounts, bayLandNow\(\)\)\);/);
+  assert.match(W, /const lairRatesNow = \(\) => \(_pastBay\.lairRates \?\?= countryRates\(_lairCounts, bayLandNow\(\), LAIR_TYPES\)\);/);
   assert.match(W, /return capitalLocationAt\(px, py\) \|\| \(_arenaTemplates && arenaLocationAt\(px, py\)\) \|\| countryLocationAt\(px, py\) \|\| lairLocationAt\(px, py\);/);   // PIN MOVED (TESA10): a capital first
   assert.match(W, /if \(had\?\.country && !had\.country\.dungeon\) \{/, 'the countryside leaves a lair to its own');
 });
@@ -268,14 +269,14 @@ function host({ roads = new Set(), water = new Set() } = {}) {
     const _countryGround = () => true;
     // TESA14: the world the roll reads, as the host hands it - no road among it
     const _pastBayAt = { climateAt: (x, y) => maps.getClimateIndex(x, y), heightAt: (x, y) => woods.getHeightMapValue(x, y), ground: (x, y) => _countryGround(x, y) };
-    let _lairRoll = null;
+    const _pastBay = { lairRoll: null };   // PIN MOVED (HOST-SPLIT, at the merge of main): the place law is scenes/tamrielPlacesHost.js's, its live names through host
     const provinceKeyBeyondBay = () => 'skyrim', provinceNameBank = () => 2, getNameBankOfRegion = () => 0;
     const REGION_NAMES = { 23: 'Wrothgarian Mountains' }, getWorldClimateSettings = (c) => ({ worldClimate: c });
-    let _locIndexGen = 0;
+    const host = { _locIndexGen: 0 };
     ${lift('  function lairRollAt(px, py) {')}
     ${W.slice(W.indexOf('  const lairBlocksOf = '), W.indexOf('\n', W.indexOf('  const lairBlocksOf = ')))}
     ${lift('  function lairLocationAt(px, py) {')}
-    return { lairLocationAt, gen: () => _locIndexGen };`);   // PIN MOVED (TESA13): the roll and the plan their own functions, the map's read of them too
+    return { lairLocationAt, gen: () => host._locIndexGen };`);   // PIN MOVED (TESA13): the roll and the plan their own functions, the map's read of them too
   return { d, ...make(d, lairStandsAt, lairBlockCount, lairName, lairNameSeed, lairLayout, lairPlaceId, synthesizeLairLocation, templates, lairPools(templates), roads, water) };
 }
 

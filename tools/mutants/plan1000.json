@@ -1,0 +1,299 @@
+[
+ {
+  "name": "COURTWATCH-seat-unsaid",
+  "file": "server/src/index.js",
+  "old": "...GATE_SEAM.stateOf(f), me: 1 }));",
+  "new": "...GATE_SEAM.stateOf(f) }));",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ]
+ },
+ {
+  "name": "COURTWATCH-wire-drops-seat",
+  "file": "src/net/wire.js",
+  "old": "...(m.me === 1 ? { me: 1 } : {}) };",
+  "new": "};",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ]
+ },
+ {
+  "name": "COURTWATCH-full-a-refusal-again",
+  "file": "src/net/gate/gateLink.js",
+  "old": "      if (g.k === 'no' && WATCHED_NO[g.m] === true && watches()) { if (!watching) say(courtWatchText()); watching = true; return; }   // AUDIT PLAN-1000 G3: a relay that says `me` (relaySupportsCourtWatch)\n",
+  "new": "",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ]
+ },
+ {
+  "name": "COURTWATCH-said-every-time",
+  "file": "src/net/gate/gateLink.js",
+  "old": "{ if (!watching) say(courtWatchText()); watching = true; return; }",
+  "new": "{ say(courtWatchText()); watching = true; return; }",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ]
+ },
+ {
+  "name": "COURTWATCH-seat-never-taken",
+  "file": "src/net/gate/gateLink.js",
+  "old": "      if (g.k === 'st' && g.me === 1) watching = false;",
+  "new": "      if (g.k === 'st' && g.me === 2) watching = false;",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ]
+ },
+ {
+  "name": "COURTWATCH-kept-past-the-court",
+  "file": "src/net/gate/gateLink.js",
+  "old": "leave() { state = GATE_STATE_EMPTY; watching = false; },",
+  "new": "leave() { state = GATE_STATE_EMPTY; },",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ]
+ },
+ {
+  "name": "COURTWATCH-watcher-blow-sent",
+  "file": "src/scenes/gate/gateCourt.js",
+  "old": "      if (watching()) return false;   // COURT-WATCH: a watcher strikes nothing\n",
+  "new": "",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ]
+ },
+ {
+  "name": "COURTWATCH-watcher-struck",
+  "file": "src/scenes/gate/gateCourt.js",
+  "old": "    if (watching()) return;   // COURT-WATCH: he strikes his fighters, never the court's watchers\n",
+  "new": "",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ]
+ },
+ {
+  "name": "COURTWATCH-ask-never",
+  "file": "src/scenes/gate/gateCourt.js",
+  "old": "      watchAskedAt = t;\n      return true;",
+  "new": "      watchAskedAt = t;\n      return false;",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ]
+ },
+ {
+  "name": "COURTWATCH-ask-every-frame",
+  "file": "src/scenes/gate/gateCourt.js",
+  "old": "      if (t - watchAskedAt < COURT_WATCH_ASK_MS) return false;\n",
+  "new": "",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ]
+ },
+ {
+  "name": "COURTWATCH-ask-at-once",
+  "file": "src/scenes/gate/gateCourt.js",
+  "old": "      if (watchAskedAt === -Infinity) { watchAskedAt = t; return false; }\n",
+  "new": "",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ]
+ },
+ {
+  "name": "COURTWATCH-host-unwired",
+  "file": "src/scenes/world.js",
+  "old": "(online.welcomes !== _gateInFor || gateCourt?.askAgain()) && online.sendGate",
+  "new": "online.welcomes !== _gateInFor && online.sendGate",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ]
+ },
+ {
+  "name": "CHECKPOINT5-two-minutes-again",
+  "file": "src/systems/online/onlineCheckpoint.js",
+  "old": "export const ONLINE_CHECKPOINT_MS = 300_000;",
+  "new": "export const ONLINE_CHECKPOINT_MS = 120_000;",
+  "tests": [
+   "test/systems/realm0.test.js"
+  ]
+ },
+ {
+  "name": "COURTWATCH-watcher-heals-sent",
+  "file": "src/scenes/gate/gateCourt.js",
+  "old": "if (!h.length || watching() || !sendHeal({ h })) return;",
+  "new": "if (!h.length || !sendHeal({ h })) return;",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ],
+  "equivalent": true,
+  "why": "AUDIT PLAN-1000 G6: a watcher is owed no heal (healedBy refuses it), so what sendOwed holds was owed while it fought - and a seated fighter is never made a watcher again (the relay's join answers a known fighter's `in` with its seat). Kept: the relay junks a watcher's heal besides."
+ },
+ {
+  "name": "COURTWATCH-watcher-body-said",
+  "file": "src/scenes/gate/gateCourt.js",
+  "old": "const sayBody = bodySayer((v) => !watching() && sendBody(v));",
+  "new": "const sayBody = bodySayer((v) => sendBody(v));",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ]
+ },
+ {
+  "name": "COURTWATCH-watcher-host-blow-sent",
+  "file": "src/scenes/gate/gateCourt.js",
+  "old": "send: (x) => !watching() && sendHost(x),",
+  "new": "send: (x) => sendHost(x),",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ]
+ },
+ {
+  "name": "COURTWATCH-ground-bites-watchers",
+  "file": "src/scenes/gate/gateCourt.js",
+  "old": "|| s.fell || s.wrath != null || watching()) { inFire = false; return; }",
+  "new": "|| s.fell || s.wrath != null) { inFire = false; return; }",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: G1 - his burning ground bites his fighters alone."
+ },
+ {
+  "name": "COURTWATCH-crystal-broken",
+  "file": "src/scenes/gate/gateCourt.js",
+  "old": "      if (watching()) return false;   // COURT-WATCH: a watcher breaks nothing\n",
+  "new": "",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: G11 - a watcher breaks no crystal."
+ },
+ {
+  "name": "COURTWATCH-heal-owed",
+  "file": "src/scenes/gate/gateCourt.js",
+  "old": "|| !id || watching()) return false;",
+  "new": "|| !id) return false;",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: G6 - a watcher is owed no heal."
+ },
+ {
+  "name": "COURTWATCH-ask-after-fall",
+  "file": "src/scenes/gate/gateCourt.js",
+  "old": "      if (st.fell || st.wrath != null) return false;\n",
+  "new": "",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: G4 - no seat is asked for once he has fallen or the Wrath is on."
+ },
+ {
+  "name": "COURTWATCH-ask-every-second",
+  "file": "src/net/gate/gateBrain.js",
+  "old": "export const COURT_WATCH_ASK_MS = 15_000;",
+  "new": "export const COURT_WATCH_ASK_MS = 1_000;",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: G11 - the cadence is fifteen seconds."
+ },
+ {
+  "name": "COURTWATCH-ask-clock-kept",
+  "file": "src/scenes/gate/gateCourt.js",
+  "old": "      if (!watching()) { watchAskedAt = -Infinity; return false; }",
+  "new": "      if (!watching()) return false;",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: G11 - a seat lets the ask clock go; watching again starts it again."
+ },
+ {
+  "name": "COURTWATCH-old-relay-watched",
+  "file": "src/net/gate/gateLink.js",
+  "old": "WATCHED_NO[g.m] === true && watches())",
+  "new": "WATCHED_NO[g.m] === true)",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: G3 - a full court keeps a watcher only on a relay that says me."
+ },
+ {
+  "name": "COURTWATCH-relay-min-early",
+  "file": "src/net/wire.js",
+  "old": "export const COURT_WATCH_RELAY_MIN = 222;",
+  "new": "export const COURT_WATCH_RELAY_MIN = 221;",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: G3 - world222 first says me."
+ },
+ {
+  "name": "COURTWATCH-host-unwatched",
+  "file": "src/scenes/world.js",
+  "old": "watches: () => !!online?.courtWatchOk,",
+  "new": "watches: () => true,",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: G3 - the host hands the link the welcome's word."
+ },
+ {
+  "name": "COURTWATCH-welcome-unread",
+  "file": "src/net/online.js",
+  "old": "if (primary) this.courtWatchOk = relaySupportsCourtWatch(relayV);",
+  "new": "if (primary) this.courtWatchOk = true;",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: G3 - read off the welcome's version."
+ },
+ {
+  "name": "COURTWATCH-line-key",
+  "file": "src/net/gate/gateLink.js",
+  "old": "t('net.gate.courtWatch',",
+  "new": "t('net.gate.courtwatch',",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: F4 - the line in the player's language."
+ },
+ {
+  "name": "COURTWATCH-state-not-handed",
+  "file": "server/src/index.js",
+  "old": "this._send(ws, JSON.stringify({ t: 'gate', ...GATE_SEAM.stateOf(f) })); }",
+  "new": "}",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: G8 - a full court hands its watcher the fight before the word."
+ },
+ {
+  "name": "COURTWATCH-floor-unread",
+  "file": "server/src/index.js",
+  "old": "if (full && now - (asked.get(ws) ?? -Infinity) < COURT_WATCH_ASK_MS - BRAIN_TICK_MS)",
+  "new": "if (false)",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: G7 - a socket asks a full court no sooner than its cadence."
+ },
+ {
+  "name": "COURTWATCH-me-on-every-beat",
+  "file": "src/net/gate/gateBrain.js",
+  "old": "  out.push(stateOf(f));",
+  "new": "  out.push({ ...stateOf(f), me: 1 });",
+  "tests": [
+   "test/net/gate/courtwatch.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: G11 - me answers its own in alone, never a beat."
+ },
+ {
+  "name": "COURTWATCH-idle-seat-never-walked",
+  "file": "server/src/index.js",
+  "old": "if (full && Object.values(f.players).some((p) => !hasPart(p))) for",
+  "new": "if (false) for",
+  "tests": [
+   "test/net/gate/courtwatch.test.js",
+   "test/net/gate/auditwb_relay.test.js"
+  ],
+  "note": "AUDIT PLAN-1000: G7 - the court walked when a newcomer meets a full fight with an idle seat: freeSeat asks who is present."
+ }
+]

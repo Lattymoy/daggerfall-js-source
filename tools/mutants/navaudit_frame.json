@@ -5,7 +5,7 @@
     "old": "  if (!R) { out[0] = px; out[1] = py; out[2] = pz; return out; }",
     "new": "  if (!R || true) { out[0] = px; out[1] = py; out[2] = pz; return out; }",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "        dir = intoBucket(dirW[0], dirW[1], dirW[2], ZERO3, R, LOCAL_DIR);",
     "new": "        dir = dirW;",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (bestR) {   // AUDIT NAV1 (#12): a mover's face, turned as it stands",
     "new": "      if (false) {   // AUDIT NAV1 (#12): a mover's face, turned as it stands",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "            if (R) { px = R[0] * TMP[0]",
     "new": "            if (false) { px = R[0] * TMP[0]",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "   // AUDIT NAV1 (#12): a mover's - its box as it stands turned, the start turned back\n      let apart = false;\n      if (R) {\n        const b = turnedBox(bucket, t, R, TURNED_BOX);\n        for (let i = 0; i < 3; i++) if (hi[i]",
     "new": "   // AUDIT NAV1 (#12): a mover's - its box as it stands turned, the start turned back\n      let apart = false;\n      if (false) {\n        const b = turnedBox(bucket, t, R, TURNED_BOX);\n        for (let i = 0; i < 3; i++) if (hi[i]",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "          if (R) { const wx = R[0] * dx + R[3] * dy + R[6] * dz, wy = R[1] * dx + R[4] * dy + R[7] * dz, wz = R[2] * dx + R[5] * dy + R[8] * dz; dx = wx; dy = wy; dz = wz; }\n          const d2 = dx * dx + dy * dy + dz * dz;\n          // Ground/contact",
     "new": "          const d2 = dx * dx + dy * dy + dz * dz;\n          // Ground/contact",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "            const cy = R ? center[1] - dy : t[1] + (ly - dy);",
     "new": "            const cy = t[1] + (ly - dy);",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "            && (R ? faceNyTurned(tri, R) : faceNy(tri)) >= GROUND_NY;",
     "new": "            && faceNy(tri) >= GROUND_NY;",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -77,16 +77,16 @@
     "old": "      if (R) {\n        const b = turnedBox(bucket, t, R, TURNED_BOX);\n        for (let k = 0; k < 3; k++)",
     "new": "      if (false) {\n        const b = turnedBox(bucket, t, R, TURNED_BOX);\n        for (let k = 0; k < 3; k++)",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
     "name": "NAVF-navsoup-unturned",
-    "file": "src/ai/navBake.js",
+    "file": "src/ai/nav/navBake.js",
     "old": "    const R = bucket.r ? bucket.r() : null;   // AUDIT NAV1 (#12): a mover's bucket, its triangles turned as they stand",
     "new": "    const R = null;",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    b = Math.sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]) + maxAbs3(n.localScale) * b;",
     "new": "    b = maxAbs3(n.localScale) * b;",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    b = Math.sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]) + maxAbs3(n.localScale) * b;",
     "new": "    b = Math.sqrt(p[0] * p[0] + p[1] * p[1] + p[2] * p[2]) + b;",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "+ REACH_SLACK < off) continue;",
     "new": "+ REACH_SLACK > off) continue;",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      if (!segmentMeetsBox(o, d, shape.min, shape.max, maxDistance)) continue;",
     "new": "      if (segmentMeetsBox(o, d, shape.min, shape.max, maxDistance)) continue;",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  for (const k of gr.wide) ask(k);\n",
     "new": "",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "walked <= tOut && (best == null || walked <= best)) {",
     "new": "walked <= tOut && (best == null || walked < best - 1)) {",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "  if (had && had.stamp === stamp) return had;\n  const found = [];",
     "new": "  if (had) return had;\n  const found = [];",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -158,25 +158,25 @@
     "old": "  if (ix.invOf[i] !== w) { ix.inv[i] = invertAffine(w); ix.invOf[i] = w; }",
     "new": "  if (!ix.inv[i]) { ix.inv[i] = invertAffine(w); ix.invOf[i] = w; }",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
     "name": "NAVF-stamp-setParent",
     "file": "src/world/prefabNode.js",
-    "old": "    if (parent) parent.children.push(this);\n    _shapeStamp++;\n",
-    "new": "    if (parent) parent.children.push(this);\n",
+    "old": "reshaped(left); reshaped(this);",
+    "new": "",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
     "name": "NAVF-stamp-addComponent",
     "file": "src/world/prefabNode.js",
-    "old": "  addComponent(c) { this.components.push(c); _shapeStamp++; return c; }",
+    "old": "  addComponent(c) { this.components.push(c); reshaped(this); return c; }",
     "new": "  addComponent(c) { this.components.push(c); return c; }",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "      && k[4] === t[0] && k[5] === t[1] && k[6] === t[2] && k[7] === s[0]",
     "new": "      && k[4] === t[0] && k[5] === t[1] && k[7] === s[0]",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "    if (k && this._wParent === p && this._wParentM === pw && k[0] === q[0]",
     "new": "    if (k && this._wParent === p && k[0] === q[0]",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "    return [...this._r];\n",
     "new": "    return this._r;\n",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    if (!(k && this._rParent === p && this._rParentQ === pr && k[0] === q[0]",
     "new": "    if (!(k && this._rParent === p && k[0] === q[0]",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "        if (Math.abs(g - (i === j ? 1 : 0)) > CSA_RIGID_EPS) return false;\n",
     "new": "",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "    if (!(det > 0)) return false;\n    let turned = false;",
     "new": "    let turned = false;",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "    b.R = turned ? R : null;   // a pure translation walks the plain bucket's path",
     "new": "    b.R = R;",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "if (had && had.col === col && had.c === c && had.shape === shape && csaCarry(had, m)) continue;",
     "new": "if (had && had.col === col && had.c === c && csaCarry(had, m)) continue;",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "    if (naval.collidable().length) csaSyncColliders();\n",
     "new": "",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -266,88 +266,88 @@
     "old": "    if (_navalWordMade?.at !== _foesSentAt) {",
     "new": "    if (true) {",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
     "name": "NAVF-cull-frustum-unasked",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "        if (!sphereInPlanes(_cullPlanes, sp[0], sp[1], sp[2], sp[3])) {",
     "new": "        if (false) {",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
     "name": "NAVF-cull-shadow-dropped",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "          if (r.shadowReach?.(box)) r.recordShadowMesh?.(gpu, m, texRemap);\n",
     "new": "",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
     "name": "NAVF-cull-pixel-turned",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "        if (pxPerM > 0 && 2 * sp[3] * pxPerM < CULL_DETAIL_PX * Math.hypot(",
     "new": "        if (pxPerM > 0 && 2 * sp[3] * pxPerM > CULL_DETAIL_PX * Math.hypot(",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
     "name": "NAVF-still-merged-early",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "      if (rec.calm >= STILL_FRAMES) calm.push(c);",
     "new": "      calm.push(c);",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
     "name": "NAVF-still-mover-kept",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "      else { rec.snap = chainSnap(c.chain); rec.calm = 0; }",
     "new": "      else { rec.snap = chainSnap(c.chain); }",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
     "name": "NAVF-still-batch-at-part",
-    "file": "src/scenes/comeSailAwayPool.js",
-    "old": "      if (batch && frame) one(batch.mesh, frame);",
-    "new": "      if (batch && frame) one(batch.mesh, still[0].m);",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "      if (batch && frame) one(batch.mesh, frame, paint);",
+    "new": "      if (batch && frame) one(batch.mesh, still[0].m, paint);",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
     "name": "NAVF-still-drawn-twice",
-    "file": "src/scenes/comeSailAwayPool.js",
-    "old": "      for (const c of still) if (!batch || !frame || !batch.nodes.has(c.node)) one(c.gpu, made(c.rec));",
-    "new": "      for (const c of still) one(c.gpu, made(c.rec));",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "      for (const c of still) if (!batch || !frame || !batch.nodes.has(c.node)) one(c.gpu, placed(c.rec), paint);",
+    "new": "      for (const c of still) one(c.gpu, placed(c.rec), paint);",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
     "name": "NAVF-still-left-behind",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "    if (st?.mesh) renderer?.destroyMesh?.(st.mesh);\n    stills.delete(boat);",
     "new": "    stills.delete(boat);",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
     "name": "NAVF-still-wrong-frame",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "      for (const node of c.chain) rel = multiply(rel, mat4FromQuatPosScale(node.localRotation, node.localPosition, node.localScale, _local));\n",
     "new": "",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "export const NAVAL_SHEET_GUTTER = 1;",
     "new": "export const NAVAL_SHEET_GUTTER = 0;",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "  const x0 = col * SHEET_CELL + NAVAL_SHEET_GUTTER, y0 = row * SHEET_CELL + NAVAL_SHEET_GUTTER;\n  return {",
     "new": "  const x0 = col * SHEET_CELL + NAVAL_SHEET_GUTTER, y0 = col * SHEET_CELL + NAVAL_SHEET_GUTTER;\n  return {",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "        const uv = SHEET_UV[pictureOf(p)];",
     "new": "        const uv = SHEET_UV.soft;",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "      if (last && last[0] === tex && last[2] === start) last[2] = v; else list.push([tex, start, v]);",
     "new": "      list.push([tex, start, v]);",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "    for (const idx of byRank) {",
     "new": "    for (const idx of byRank.reverse()) {",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": "idx.sort((a, b) => list[b].age / list[b].life - list[a].age / list[a].life);",
     "new": "idx.sort((a, b) => list[a].age / list[a].life - list[b].age / list[b].life);",
     "tests": [
-      "test/navaudit_frame.test.js"
+      "test/world/navaudit_frame.test.js"
     ]
   },
   {
@@ -410,8 +410,8 @@
     "old": "    parts = keep.length > PARTICLE_BUDGET ? evict(keep, keep.length - PARTICLE_BUDGET) : keep;",
     "new": "    parts = keep.length > PARTICLE_BUDGET ? keep.slice(keep.length - PARTICLE_BUDGET) : keep;",
     "tests": [
-      "test/navaudit_frame.test.js",
-      "test/nav_b_picture.test.js"
+      "test/world/navaudit_frame.test.js",
+      "test/systems/naval/nav_b_picture.test.js"
     ]
   }
 ]

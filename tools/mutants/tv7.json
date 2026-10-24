@@ -1,91 +1,91 @@
 [
   {
     "name": "TV7-births-unseeded",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "  const seed = seedOf(cx, cy, life);\n  const r = seededRng(seed);",
     "new": "  const seed = seedOf(cx, cy, life);\n  const r = Math.random;",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "Every player sees different bands - nothing shared."
   },
   {
     "name": "TV7-night-no-busier",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "  if (r() >= (night ? BAND_CHANCE_NIGHT : BAND_CHANCE_DAY)) return null;",
     "new": "  if (r() >= BAND_CHANCE_DAY) return null;",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "The night is no busier than the day."
   },
   {
     "name": "TV7-born-in-the-sea",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "  if (!ok(x, z)) return null;   // born in the water or a town: no band this life",
     "new": "  // (the land never asked)",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A band is born in the sea or in a town."
   },
   {
     "name": "TV7-wander-through-walls",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "    if (!go) { heading += Math.PI;",
     "new": "    if (!go && false) { heading += Math.PI;",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A band wanders into the sea and through towns."
   },
   {
     "name": "TV7-wander-forever",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "  let t = Math.max(0, Math.min(BAND_LIFE_MS, ms - band.bornMs));",
     "new": "  let t = Math.max(0, ms - band.bornMs);",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A band walks on past its life."
   },
   {
     "name": "TV7-chase-no-scale",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "  const step = Math.min(Math.max(0, dist - contact), BAND_CHASE_MPS * dt * Math.max(1, scale));",
     "new": "  const step = Math.min(Math.max(0, dist - contact), BAND_CHASE_MPS * dt);",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "On a fast journey no band can ever catch anyone."
   },
   {
     "name": "TV7-no-leash",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "  if (left > BAND_LEASH_M || now - at > BAND_GIVE_UP_MS) return",
     "new": "  if (now - at > BAND_GIVE_UP_MS) return",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A band chases across the map forever."
   },
   {
     "name": "TV7-never-gives-up",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "  if (left > BAND_LEASH_M || now - at > BAND_GIVE_UP_MS) return",
     "new": "  if (left > BAND_LEASH_M) return",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A band that cannot close runs on forever."
   },
   {
     "name": "TV7-night-sight",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "export const bandSight = (night) => (night ? BAND_SIGHT_NIGHT_M : BAND_SIGHT_DAY_M);",
     "new": "export const bandSight = (night) => BAND_SIGHT_DAY_M;",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "Bands see as far by night as by day."
   },
@@ -95,7 +95,7 @@
     "old": "      if (!up || _bandChase.size >= 2 || bandPeerChase(b.id)) continue;",
     "new": "      if (_bandChase.size >= 2 || bandPeerChase(b.id)) continue;",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "Bands start chases while the Overworld is down, unseen."
   },
@@ -105,7 +105,7 @@
     "old": "        if (bandStand(mk, c.yaw, c.dist) || ++c.tries >= BAND_STAND_TRIES) { _bandChase.delete(id); bandSpend(id); }",
     "new": "        if (true || ++c.tries >= BAND_STAND_TRIES) { _bandChase.delete(id); bandSpend(id); }",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A band reaches the traveller and nothing happens."
   },
@@ -115,7 +115,7 @@
     "old": "      if (s.what === 'lost') { _bandChase.delete(id); bandSpend(id); }",
     "new": "      if (s.what === 'lost') { _bandChase.delete(id); }",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A band that lost the trail picks it up again at once."
   },
@@ -125,7 +125,7 @@
     "old": "    if (!isEnhanced() || (modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned || getPref('wildernessCamps') === false",
     "new": "    if ((modes?.mode ?? 'exterior') !== 'exterior' || !walkMode || !playerSpawned || getPref('wildernessCamps') === false",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "The classic skin gets bands DFU never had."
   },
@@ -135,7 +135,7 @@
     "old": "gameMinutes: b.night ? 0 : 720, size: bandSizeOf(b) * (wildBornHere(px, py) ? WILD_PACK_MULT : 1) }, seededRng(bandMakeSeed(b)));",
     "new": "gameMinutes: b.night ? 0 : 720, size: bandSizeOf(b) * (wildBornHere(px, py) ? WILD_PACK_MULT : 1) }, Math.random);",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A band's make changes each time it is asked - what is seen is not what comes."
   },
@@ -145,27 +145,27 @@
     "old": "minDistance, maxDistance, bearingDegrees: 0, yawRad: yaw + turn }, fx);",
     "new": "minDistance, maxDistance, bearingDegrees: 0, yawRad: cam.yaw + turn }, fx);",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "The band that came from the north stands to the traveller's side."
   },
   {
     "name": "TV7-unseen",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "      marks.push({ key: `band:${b.id}`,",
     "new": "      if (false) marks.push({ key: `band:${b.id}`,",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "No band is seen from the Overworld."
   },
   {
     "name": "TV7-chaser-lost-off-screen",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "kind: chasing ? 'band chase' : 'band', edge: chasing, pick: true });",
     "new": "kind: chasing ? 'band chase' : 'band', edge: false, pick: true });",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A band chasing from behind is never shown."
   },
@@ -175,77 +175,77 @@
     "old": "    tvBandSeen = { at: null, life: -1, list: [] }; _bandChase.clear(); _bandSpent.clear(); _bandMake.clear(); _bandPos.clear(); _bandPeer.clear(); _bandSpentAt.length = 0; wildBands.prune(() => false);   // TV7: nor the bands - AUDIT-F3: nor what they had noticed (a band that chased the abandoned run chased again on the first frame, from wherever it stood)\n",
     "new": "",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A loaded character is chased by the last one's bands."
   },
   {
     "name": "TV7-band-a-traveller",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "k === 'party' || k === 'lair' || k === 'band' || k === 'raider' || k === 'camp' ? k : 'traveller';",
     "new": "k === 'party' || k === 'lair' || k === 'raider' || k === 'camp' ? k : 'traveller';",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A band looks like another player."
   },
   {
     "name": "TV7b-word-uncapped",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "  for (const [id, c] of chases ?? []) { if (out.length >= BANDS_WIRE_MAX) break;",
     "new": "  for (const [id, c] of chases ?? []) {",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A chaser's word grows past the frame's allowance."
   },
   {
     "name": "TV7b-spent-unsaid",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "  for (const id of spent ?? []) { if (out.length >= BANDS_WIRE_MAX) break; out.push([id, 0, 0, 2]); }\n",
     "new": "",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A band that fought here is stood again by everyone else."
   },
   {
     "name": "TV7b-any-id",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "    if (typeof id !== 'string' || !idRe.test(id) || seen.has(id)) continue;",
     "new": "    if (typeof id !== 'string' || seen.has(id)) continue;",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "Any string a peer sends is taken for a band."
   },
   {
     "name": "TV7b-off-the-map",
-    "file": "src/systems/travelBands.js",
-    "old": "    if (flag === 1 && !(Number.isInteger(x) && Number.isInteger(z) && x >= 0 && z >= 0 && x <= WORLD_NATIVE_W && z <= WORLD_NATIVE_H)) continue;",
+    "file": "src/systems/travel/travelBands.js",
+    "old": "    if (flag === 1 && !chaserPlaceOk(x, z)) continue;",
     "new": "    if (flag === 1 && !(Number.isFinite(x) && Number.isFinite(z))) continue;",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
-    "note": "A peer's word can place a band off the world."
+    "note": "A peer's word can place a band off the world. RE-AIMED (ETHER-OW): the place's law is the world's pixels (chaserPlaceOk, net/wire.js worldPixelOk)."
   },
   {
     "name": "TV7b-twice",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "    if (typeof id !== 'string' || !idRe.test(id) || seen.has(id)) continue;",
     "new": "    if (typeof id !== 'string' || !idRe.test(id)) continue;",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "One band named twice in a frame."
   },
   {
     "name": "TV7b-both-keep-it",
-    "file": "src/systems/travelBands.js",
+    "file": "src/systems/travel/travelBands.js",
     "old": "export const chaseYields = (mine, theirs) => String(theirs) < String(mine);",
     "new": "export const chaseYields = (mine, theirs) => false;",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "Two players chasing one band both keep it - two copies stand."
   },
@@ -255,7 +255,7 @@
     "old": "    if (data.bd !== undefined) _onBands?.(from, data.bd, _now());",
     "new": "    // (unread)",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A peer's chase is never heard."
   },
@@ -265,7 +265,7 @@
     "old": "if (cell) csaAboardWord(frame, full); if (cell) bandWord(frame, full);",
     "new": "if (cell) csaAboardWord(frame, full);",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "My chase is never said."
   },
@@ -275,7 +275,7 @@
     "old": "const bandMoved = cell && bandWord(null, full);",
     "new": "const bandMoved = false;",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A chase on an empty sea asks for no frame - the others see it only on the full ones."
   },
@@ -285,7 +285,7 @@
     "old": "      if (flag === 2) { _bandSpent.add(id); _bandChase.delete(id); _bandPeer.delete(id); continue; }",
     "new": "      if (flag === 2) continue;",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A band a peer fought is stood again here."
   },
@@ -295,7 +295,7 @@
     "old": "      if (_bandChase.has(id) && chaseYields(online?.id ?? '', from)) { _bandChase.delete(id); wildBands.forget(id); }",
     "new": "      // (both keep it)",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "Two players chase one band and each stands a copy."
   },
@@ -305,17 +305,17 @@
     "old": "    const pc = bandPeerChase(b.id);\n    if (pc) return pc;\n",
     "new": "",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A band chasing a peer is seen wandering on elsewhere."
   },
   {
     "name": "TV7b-stale-forever",
     "file": "src/scenes/world.js",
-    "old": "    if (performance.now() - p.at > BAND_WORD_MS) { _bandPeer.delete(id); return null; }",
+    "old": "    if (performance.now() - p.at > p.hold) { _bandPeer.delete(id); return null; }",
     "new": "    // (never stale)",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "A chaser who left leaves the band frozen where they last said."
   },
@@ -325,7 +325,7 @@
     "old": "      if (!up || _bandChase.size >= 2 || bandPeerChase(b.id)) continue;",
     "new": "      if (!up || _bandChase.size >= 2) continue;",
     "tests": [
-      "test/tv7_bands.test.js"
+      "test/systems/travel/tv7_bands.test.js"
     ],
     "note": "I start chasing a band a peer's chase already holds."
   }

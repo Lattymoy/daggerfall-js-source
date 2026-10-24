@@ -7,7 +7,7 @@ true visual overhaul with no performance loss."** SquidKamer's (Kamer's)
 **LowpolyTrees 5** for Daggerfall Unity: "Adds low poly trees to the
 wilderness." Ledger row LPT1; the registry row and the permission line
 (still to be recorded - `RECORD OPEN`) are `vendor/low-poly-trees/`'s.
-Audited the same day (`01-Overview/Audit-Low-Poly-Trees.md`, AUDIT LPT).
+Audited the same day (`01-Overview/audits/Audit-Low-Poly-Trees.md`, AUDIT LPT).
 
 ## What the mod is
 
@@ -152,7 +152,7 @@ FLAGGED: they stand no terrain nature, and a dungeon block's rare nature
 flat stays the flat (DFU stands the mod there too: S0000041.RDB, 15 of
 its 21 nature flats - AUDIT LPT C8).
 
-**A yard's placed trees** (DECOR-LPT, `01-Overview/Field-Bugs-2026-10-05b.md`).
+**A yard's placed trees** (DECOR-LPT, `01-Overview/bugs/Field-Bugs-2026-10-05b.md`).
 An online home's yard stands its climate's trees and plants (DECOR-OUTDOOR,
 `scenes/yardNature.js`); one the mod has a tree for stands as the world's
 do. Its far picture is a batch of the yard's - sized for the tallest tree,
@@ -169,7 +169,7 @@ recorded for its prototype as a pixel's is. The decorator's ghost asks the
 same door (`yardNature.js picture`): the tree placed is the tree that
 stands. The yards stand in `world.js` alone.
 
-**Online.** The player's own (`systems/onlineLane.js
+**Online.** The player's own (`systems/online/onlineLane.js
 ONLINE_PLAYERS_OWN_MODS`): how a tree is drawn, where the same flat
 stands.
 
@@ -182,6 +182,13 @@ roads: where a tree stands still never hangs on the switch. LPT-FIT
 (2026-10-07, `03-World/Roads.md`) draws every tree - a location's too - no
 wider than the room its root has from the roads, tracks and streets: a
 scale under the tree's own variety, never a move.
+FB1020c TRUNK-FIT (2026-10-20, `03-World/Roads.md`) draws a location's
+tree no wider than the room its TRUNK has from the town's own solid things -
+a fountain, a well, a crate, PROP-BODIES' bodies - by each prototype's trunk
+where it meets the ground (`world/lptCrowns.js` LPT_TRUNKS, its one-sided
+sub-meshes cut by the root's plane, baked beside the crowns): the mod's 504_12
+stands a trunk 3.42 m about its root, and Crossleigh's fountain, 1.58 m from
+one, stood inside it.
 
 ## Performance
 
@@ -234,12 +241,12 @@ TREES=off npm run perf` and again without `TREES=off`
   block's column alike (`Random.InitState((int)position.x)`).
 - The 3D trees take Seasons of the Iliac Bay's season, as their flats
   do; in DFU they never do.
-- The fills (above) are near the author's, not his: of each larger atlas's drawn texels, 75.5-90.9% are copies (the five small pictures 100%), 8.4-22.0% fills - a fill's texel on average 155-290 of 765 off his colour - and 1.3-7.6% left clear; in the far pictures 25 of 253 trees differ from his past 50/765 or 5% of their texels (`01-Overview/Audit-Low-Poly-Trees.md`).
+- The fills (above) are near the author's, not his: of each larger atlas's drawn texels, 75.5-90.9% are copies (the five small pictures 100%), 8.4-22.0% fills - a fill's texel on average 155-290 of 765 off his colour - and 1.3-7.6% left clear; in the far pictures 25 of 253 trees differ from his past 50/765 or 5% of their texels (`01-Overview/audits/Audit-Low-Poly-Trees.md`).
 
 ## Verification
 
-`test/lpt1_lowpolytrees.test.js` (the pure module, the vendored data,
+`test/systems/lpt1_lowpolytrees.test.js` (the pure module, the vendored data,
 the far picture texel for texel, the shader's mesh mode, light, sway and
 handover run in the GLSL evaluator, the draw on a recording GL, the door
 with its ownership and its seasons, the hosts' wiring); TACT1's cover
-sites; `tools/mutants/lpt1_trees.json`. The audit: `01-Overview/Audit-Low-Poly-Trees.md`.
+sites; `tools/mutants/lpt1_trees.json`. The audit: `01-Overview/audits/Audit-Low-Poly-Trees.md`.

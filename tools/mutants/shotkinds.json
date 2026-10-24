@@ -1,0 +1,596 @@
+[
+  {
+    "name": "SHOT-grape-no-men",
+    "file": "src/systems/naval/shotKinds.js",
+    "old": "grape: Object.freeze({ speed: 0.82, spread: 2.4, sweep: 0.45, hull: 0.2, sail: 0.6, crew: 4,",
+    "new": "grape: Object.freeze({ speed: 0.82, spread: 2.4, sweep: 0.45, hull: 0.2, sail: 0.6, crew: 1,",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-chasers-round",
+    "file": "src/systems/naval/shotKinds.js",
+    "old": "export const naturalShot = (gunKind) => (gunKind === 'chain' ? 'chain' : 'round');",
+    "new": "export const naturalShot = (gunKind) => 'round';",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-own-load-a-copy",
+    "file": "src/systems/naval/shotKinds.js",
+    "old": "  if (!gun || gunKind === 'barrel' || s === own) return gun;",
+    "new": "  if (!gun || gunKind === 'barrel') return gun;",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-none-said-round",
+    "file": "src/systems/naval/shotKinds.js",
+    "old": "  const s = shot == null ? own : shotId(shot);",
+    "new": "  const s = shotId(shot);",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-sweep-unswept",
+    "file": "src/systems/naval/shotKinds.js",
+    "old": "radius: gun.radius + Math.max(0, a.sweep - o.sweep),",
+    "new": "radius: gun.radius,",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-reach-never-spent",
+    "file": "src/systems/naval/shotKinds.js",
+    "old": "  return 1 - 0.5 * Math.min(1, (t - GRAPE_FULL_S) / (GRAPE_SPENT_S - GRAPE_FULL_S));",
+    "new": "  return 1;",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-reach-floor",
+    "file": "src/systems/naval/shotKinds.js",
+    "old": "  return 1 - 0.5 * Math.min(1, (t - GRAPE_FULL_S) / (GRAPE_SPENT_S - GRAPE_FULL_S));",
+    "new": "  return 1 - 0.5 * ((t - GRAPE_FULL_S) / (GRAPE_SPENT_S - GRAPE_FULL_S));",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-cycle-back-forward",
+    "file": "src/systems/naval/shotKinds.js",
+    "old": "(dir < 0 ? SHOT_ORDER.length - 1 : 1)",
+    "new": "1",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-heated-cold",
+    "file": "src/systems/naval/shotKinds.js",
+    "old": "  const c = shot == null ? fireChance : SHOT[shotId(shot)].fire ?? fireChance;",
+    "new": "  const c = fireChance;",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-aim-unloaded",
+    "file": "src/systems/naval/navalGunnery.js",
+    "old": "  const gun = shotGun(battery.gun, GUNS[battery.gun], load);",
+    "new": "  const gun = GUNS[battery.gun];",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-solution-unsaid",
+    "file": "src/systems/naval/navalGunnery.js",
+    "old": "barrel: false, shot: load, elevation,",
+    "new": "barrel: false, shot: null, elevation,",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-volley-unloaded",
+    "file": "src/systems/naval/navalGunnery.js",
+    "old": "  const gun = shotGun(solution.gun, GUNS[solution.gun], shot);",
+    "new": "  const gun = GUNS[solution.gun];",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-reload-unloaded",
+    "file": "src/systems/naval/navalGunnery.js",
+    "old": "  const g = shotGun(gunKind, GUNS[gunKind], loadOf(gunKind, shot));",
+    "new": "  const g = GUNS[gunKind];",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-one-broadside",
+    "file": "src/systems/naval/navalGunnery.js",
+    "old": "      const sides = group === 'broadside' ? ['starboard', 'port'] : [group];\n      const armed",
+    "new": "      const sides = [side];\n      const armed",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-switch-whole",
+    "file": "src/systems/naval/navalGunnery.js",
+    "old": "        else { const t = SHOT_SWITCH * now * scaleNow(); clocks[x] = t; length[x] = t || 1; }",
+    "new": "        else { const t = now * scaleNow(); clocks[x] = t; length[x] = t || 1; }",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-switch-free",
+    "file": "src/systems/naval/navalGunnery.js",
+    "old": "        else { const t = SHOT_SWITCH * now * scaleNow(); clocks[x] = t; length[x] = t || 1; }",
+    "new": "        else { const t = 0; clocks[x] = t; length[x] = t || 1; }",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-switch-unscaled",
+    "file": "src/systems/naval/navalGunnery.js",
+    "old": "        else { const t = SHOT_SWITCH * now * scaleNow(); clocks[x] = t; length[x] = t || 1; }",
+    "new": "        else { const t = SHOT_SWITCH * now; clocks[x] = t; length[x] = t || 1; }",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-reloading-unscaled",
+    "file": "src/systems/naval/navalGunnery.js",
+    "old": "        if (clocks[x] > 0) { const k = now / (was || 1); clocks[x] *= k; length[x] *= k; }",
+    "new": "        if (clocks[x] > 0) { const k = 1; clocks[x] *= k; length[x] *= k; }",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-natural-said",
+    "file": "src/systems/naval/navalGunnery.js",
+    "old": "      loads[group] = armed.every((x) => naturalShot(batteryOf(hull, x).gun) === next) ? null : next;",
+    "new": "      loads[group] = next;",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-restore-dropped",
+    "file": "src/systems/naval/navalGunnery.js",
+    "old": "        loads[g] = want && !guns.every((k) => naturalShot(k) === want) ? want : null;",
+    "new": "        loads[g] = null;",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-barrels-loaded",
+    "file": "src/systems/naval/navalGunnery.js",
+    "old": "      const armed = sides.filter((x) => { const b = batteryOf(hull, x); return b && b.gun !== 'barrel'; });",
+    "new": "      const armed = sides.filter((x) => !!batteryOf(hull, x));",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-ball-sweep-bore",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "    const radius = (b.radius ??= shotGun(b.gun, GUNS[b.gun], b.shot)?.radius ?? 0.1);",
+    "new": "    const radius = (b.radius ??= GUNS[b.gun]?.radius ?? 0.1);",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-hit-unsaid",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "target: ship.t.id, gun: b.gun, shot: b.shot, t: flight(ship.e.t),",
+    "new": "target: ship.t.id, gun: b.gun, shot: null, t: flight(ship.e.t),",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-hit-untimed",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "target: ship.t.id, gun: b.gun, shot: b.shot, t: flight(ship.e.t),",
+    "new": "target: ship.t.id, gun: b.gun, shot: b.shot, t: 0,",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-ball-launch-unread",
+    "file": "src/systems/naval/navalShots.js",
+    "old": "gun: l.gun, shot: l.shot ?? null,",
+    "new": "gun: l.gun, shot: null,",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-host-reach-unread",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "  return reach < 1 ? { ...g, crew: g.crew * reach } : g;",
+    "new": "  return g;",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-host-gun-unloaded",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const gun = e.type === 'blast' ? GUNS.barrel : struckGun(e.gun, GUNS[e.gun], e.shot, e.t, isMine(e.shooter) ? deps.captain?.stats?.() : null);",
+    "new": "    const gun = e.type === 'blast' ? GUNS.barrel : GUNS[e.gun];",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-host-rig-cold",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "(zone === 'hull' || (zone === 'rig' && shotRigFire(e.shot))) && random()",
+    "new": "zone === 'hull' && random()",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-host-natural-said",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      shot: solution.shot && solution.shot !== naturalShot(solution.gun) ? solution.shot : null });",
+    "new": "      shot: solution.shot });",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-host-aim-unloaded",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "deps.seaY(), { shot: myBoatState(boat).guns.load(side) });   // SHOT-KINDS",
+    "new": "deps.seaY(), {});   // SHOT-KINDS",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-host-loads-unsaved",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  return { barrels: st.guns.barrels, mates: st.crew.snapshot(), ...(Object.values(loads).some(Boolean) ? { loads } : {}) };",
+    "new": "  return { barrels: st.guns.barrels, mates: st.crew.snapshot() };",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-host-loads-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": " st.guns.restoreLoads(saved.loads ?? null); pendingBoats.delete(boat.uid); }",
+    "new": " pendingBoats.delete(boat.uid); }",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-host-hud-unsaid",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "barrels: b.gun === 'barrel' ? st.guns.barrels : null, shot: st.guns.load(side), left:",
+    "new": "barrels: b.gun === 'barrel' ? st.guns.barrels : null, shot: null, left:",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-wire-unsaid",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "    if (vo.shot != null && SHOT_CODES[vo.shot] != null) o.push([vo.id >>> 0, SHOT_CODES[vo.shot]]);   // SHOT-KINDS",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-wire-unread",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "  for (const vo of volleys) { const w = loaded.find((x) => x[0] === vo.id); if (w) vo.shot = SHOT_ORDER[w[1]]; }",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-wire-door-open",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "!int(w[1], 0, SHOT_ORDER.length - 1)) return null;",
+    "new": "!int(w[1], 0, 9)) return null;",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-wire-door-long",
+    "file": "src/systems/naval/navalWire.js",
+    "old": "  if (!Array.isArray(loaded) || loaded.length > NAVAL_WIRE_VOLLEYS) return null;",
+    "new": "  if (!Array.isArray(loaded)) return null;",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-loads-look-unread",
+    "file": "src/scenes/naval/navalLoads.js",
+    "old": "    const group = look && gunSideOf(boat.hull, look) ? look : LOAD_GROUPS",
+    "new": "    const group = LOAD_GROUPS",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-loads-wheel-unlatched",
+    "file": "src/scenes/naval/navalLoads.js",
+    "old": "      if (quiet) cycle(deltaY > 0 ? 1 : -1);",
+    "new": "      cycle(deltaY > 0 ? 1 : -1);",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-loads-wheel-always",
+    "file": "src/scenes/naval/navalLoads.js",
+    "old": "      if (!deps.aiming() || !deltaY || !deps.boat()) return false;",
+    "new": "      if (!deltaY || !deps.boat()) return false;",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-loads-wheel-one-way",
+    "file": "src/scenes/naval/navalLoads.js",
+    "old": "if (quiet) cycle(deltaY > 0 ? 1 : -1);",
+    "new": "if (quiet) cycle(1);",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-loads-unsaid",
+    "file": "src/scenes/naval/navalLoads.js",
+    "old": "    deps.say?.(t('naval.shot.loading', '{guns}: {shot} - loading', { guns: groupName(at.group), shot: shotName(shot) }), 1.6);",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-ai-every-captain",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const boards = ship.cls.faction === 'pirate' && ship.mode === 'board';",
+    "new": "  const boards = ship.mode === 'board';",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-ai-no-hysteresis",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const done = !(ship.mode === 'engage' || ship.mode === 'board') || (ship.mode === 'engage' && d > GRAPE_CLOSE_M * GRAPE_KEEP);",
+    "new": "  const done = true;",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-ai-grape-held",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "{ broadsides: boarderBroadsides(ship) });",
+    "new": "{ broadsides: ship.mode !== 'board' });",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-ai-lay-unloaded",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "targetY: aimY, shot });",
+    "new": "targetY: aimY });",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-ai-lead-unloaded",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "    const g = shotGun(bat.gun, GUNS[bat.gun], shot);",
+    "new": "    const g = GUNS[bat.gun];",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-hud-load-unsaid",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "    load: b.gun === 'barrel' ? '' : shotChipWord(b.shot),",
+    "new": "    load: '',",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-hud-aim-unsaid",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "${a.shot ? `, ${shotLineWord(a.shot)}` : ''} - `,",
+    "new": " - `,",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-hud-chasers-chain",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "heavy: 'great guns', chain: 'chasers', barrel:",
+    "new": "heavy: 'great guns', chain: 'chain shot', barrel:",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-draw-grape-ball",
+    "file": "src/render/navalRender.js",
+    "old": "  if (b.shot === 'grape') {\n    const open",
+    "new": "  if (false) {\n    const open",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-draw-chain-ball",
+    "file": "src/render/navalRender.js",
+    "old": "  if (b.shot === 'chain') {\n    const u = across",
+    "new": "  if (false) {\n    const u = across",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-draw-heated-untrailed",
+    "file": "src/render/navalRender.js",
+    "old": "      ...[1, 2, 3].map((k) => glow(at(back, k * 0.7)",
+    "new": "      ...[].map((k) => glow(at(back, k * 0.7)",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-draw-trail-ahead",
+    "file": "src/render/navalRender.js",
+    "old": "    const back = [-v[0] / l, -v[1] / l, -v[2] / l];",
+    "new": "    const back = [v[0] / l, v[1] / l, v[2] / l];",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-fx-grape-one-spout",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "    if (shot === 'grape') {\n      for (let i = 0; i < 6; i++) {",
+    "new": "    if (shot === 'grape') {\n      for (let i = 0; i < 1; i++) {",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-fx-chain-once",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "    if (shot === 'chain') {\n      tear(pos, dir);",
+    "new": "    if (shot === 'chain') {\n      void 0;",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-fx-heated-no-embers",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "      for (let i = 0; i < 10; i++) push({ kind: 'ember'",
+    "new": "      for (let i = 0; i < 0; i++) push({ kind: 'ember'",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-fx-heated-no-steam",
+    "file": "src/systems/naval/navalEffects.js",
+    "old": "    if (shot === 'heated') {\n      for (let i = 0; i < 4; i++) push({ kind: 'smoke'",
+    "new": "    if (false) {\n      for (let i = 0; i < 4; i++) push({ kind: 'smoke'",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-world-wheel-unwired",
+    "file": "src/scenes/world.js",
+    "old": "spyglassWheel(e.deltaY) || shotWheel(e.deltaY) || mwViewWheel(e.deltaY)",
+    "new": "spyglassWheel(e.deltaY) || mwViewWheel(e.deltaY)",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-world-key-unread",
+    "file": "src/scenes/world.js",
+    "old": "    if (navalOn() && hccActionPressed('ShotCycle')) naval?.cycleShot?.(1);",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-world-button-unhooked",
+    "file": "src/scenes/world.js",
+    "old": "    shot: () => { naval?.cycleShot?.(1); },",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-world-label-unsaid",
+    "file": "src/scenes/world.js",
+    "old": ", shot: navalOn() ? naval?.shotLabel?.() ?? null : null };",
+    "new": ", shot: null };",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-helm-no-button",
+    "file": "src/ui/enhanced/enhancedHelm.js",
+    "old": "  if (h.shot) out.push({ act: 'shot', label: h.shot, kind: 'hook' });",
+    "new": "",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-ai-opened-kept",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "  const done = !(ship.mode === 'engage' || ship.mode === 'board') || (ship.mode === 'engage' && d > GRAPE_CLOSE_M * GRAPE_KEEP);",
+    "new": "  const done = !(ship.mode === 'engage' || ship.mode === 'board');",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-ai-chasers-unloaded",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "const CAPTAIN_GROUPS = Object.freeze(['starboard', 'bow']);",
+    "new": "const CAPTAIN_GROUPS = Object.freeze(['starboard']);",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  },
+  {
+    "name": "SHOT-ai-round-into-prize",
+    "file": "src/systems/naval/navalAI.js",
+    "old": "export const boarderBroadsides = (ship) => ship.mode !== 'board' || ship.guns.load('starboard') === 'grape';",
+    "new": "export const boarderBroadsides = (ship) => ship.mode !== 'board';",
+    "tests": [
+      "test/systems/naval/shotkinds.test.js"
+    ]
+  }
+]

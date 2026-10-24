@@ -12,10 +12,12 @@
 // you - the flip animation plays only on the press.
 import { computeCombatStats, signed } from '../combat/combatStats.js';
 import { dollArmour, overallArmour, tenth, PART_NAMES } from './armourCard.js';
-import { SKILL_NAMES } from '../systems/skills.js';
-import { itemLongName } from '../systems/itemInfo.js';
-import { PIXEL_STACK } from './pixelifyFive.js';
-import { savingChance, elementalResistanceChance, ELEMENTS, EFFECT_FLAGS } from '../systems/spellcast.js';   // STATS-RESIST: the saving throw's own law   // the Enhanced Plus face: Pixelify Sans, its 5 from Silkscreen
+import { SKILL_NAMES, SKILLS } from '../systems/skills.js';
+import { itemLongName } from '../systems/item/itemInfo.js';
+import { PIXEL_STACK } from './pixelifyFive.js';   // the Enhanced Plus face: Pixelify Sans, its 5 from Silkscreen
+import { temperatureStatRows, boonStatRows } from './temperatureCard.js';   // TEMP-UI: the felt temperature's parts; AUDIT SURV-BOONS C13: and the boons
+import { savingChance, elementalResistanceChance, ELEMENTS, EFFECT_FLAGS } from '../systems/spellcast.js';   // STATS-RESIST: the saving throw's own law
+import { t, localizedText } from '../systems/textManager.js';   // L10N4: the card's words in the player's language; the attributes are DFU's own
 
 const FLIP_MS = 900;
 // THE TURN, one set of numbers for the keyframes and for FIREFOX-FLIP's face swap below: the first leg runs to FLIP_MID
@@ -76,27 +78,27 @@ export function buildStatsPage(entity, repaint, opts = {}) {
   let s;
   try { s = computeCombatStats(entity, opts); } catch (e) {
     console.warn('[statsCard] the numbers could not be computed', e);
-    page.append(el('p', 'sf-err', 'The stats could not be worked out for this character.'));
+    page.append(el('p', 'sf-err', t('stats.error', 'The stats could not be calculated for this character.')));
     return page;
   }
   foeIdx = Math.min(foeIdx, s.foes.length - 1);
   const foe = s.foes[foeIdx];
   const head = s.head.byFoe[foeIdx];
   const d = head.dmg;
-  const skillName = SKILL_NAMES[s.skillId] ?? 'Skill';
+  const skillName = SKILL_NAMES[s.skillId] ?? t('stats.skill', 'Skill');
 
   // header: what is in the hand
   const hd = el('header', 'sf-head sf-rise');
   hd.style.setProperty('--i', '0');
-  hd.append(el('h3', null, 'Combat Stats'));
-  const weaponLine = s.weapon ? (safeName(s.weapon) || 'Weapon') : 'Bare hands';
-  hd.append(el('p', null, `${weaponLine} \u00b7 ${skillName} ${s.skill}% \u00b7 Level ${s.level}`));
+  hd.append(el('h3', null, t('stats.title', 'Combat Stats')));
+  const weaponLine = s.weapon ? (safeName(s.weapon) || t('stats.weapon', 'Weapon')) : t('stats.bareHands', 'Bare hands');
+  hd.append(el('p', null, t('stats.head', '{weapon} \u00b7 {skill} {pct}% \u00b7 Level {level}', { weapon: weaponLine, skill: skillName, pct: s.skill, level: s.level })));
   page.append(hd);
 
   // the foe chips
   const chips = el('div', 'sf-chips sf-rise');
   chips.style.setProperty('--i', '1');
-  chips.append(el('span', 'sf-chips-k', 'Against a level-' + s.level + ':'));
+  chips.append(el('span', 'sf-chips-k', t('stats.foes.against', 'Against a level-{level}:', { level: s.level })));
   s.foes.forEach((f, i) => {
     const b = el('button', `sf-chip${i === foeIdx ? ' on' : ''}`, f.label);
     b.type = 'button';
@@ -108,35 +110,38 @@ export function buildStatsPage(entity, repaint, opts = {}) {
 
   // the five headline tiles
   const tiles = el('div', 'sf-tiles');
-  const dmgSub = s.crit.kind === 'damage' ? `avg ${one(d.avg)} \u00b7 crit ${d.critMin}\u2013${d.critMax}` : `average ${one(d.avg)}`;
+  const dmgSub = s.crit.kind === 'damage' ? t('stats.damage.subCrit', 'avg {avg} \u00b7 crit {min}\u2013{max}', { avg: one(d.avg), min: d.critMin, max: d.critMax })
+    : t('stats.damage.sub', 'average {avg}', { avg: one(d.avg) });
   tiles.append(
-    tile('Damage', d.min === d.max ? String(d.min) : `${d.min}\u2013${d.max}`, dmgSub,
-      'Per hit, before the foe\u2019s armour takes its share. Sideways swing; the table below has the others.', 2),
-    tile('Hit chance', pct(head.hit), `vs ${foe.label.toLowerCase()}`,
-      'The chance a swing lands, averaged over where it strikes the foe and over your critical roll.', 3),
-    tile('Critical', pct(s.crit.chance), s.crit.kind === 'damage'
-      ? `+${s.crit.hitBonus} hit \u00b7 \u00d7${s.crit.damageMult.toFixed(2)} dmg` : `+${s.crit.hitBonus} to hit`,
+    tile(t('stats.damage', 'Damage'), d.min === d.max ? String(d.min) : `${d.min}\u2013${d.max}`, dmgSub,
+      t('stats.damage.tip', 'Damage per hit with a sideways swing, before the foe\u2019s armor. The table below shows the other swings.'), 2),
+    tile(t('stats.hitChance', 'Hit chance'), pct(head.hit), t('stats.hitChance.vs', 'vs {foe}', { foe: foe.label.toLowerCase() }),
+      t('stats.hitChance.tip', 'The chance a swing lands, averaged over where it hits and your chance of a critical.'), 3),
+    tile(t('stats.critical', 'Critical'), pct(s.crit.chance), s.crit.kind === 'damage'
+      ? t('stats.critical.subDamage', '+{hit} hit \u00b7 \u00d7{mult} dmg', { hit: s.crit.hitBonus, mult: s.crit.damageMult.toFixed(2) })
+      : t('stats.critical.sub', '+{hit} to hit', { hit: s.crit.hitBonus }),
     s.crit.kind === 'damage'
-      ? 'Critical Strike roll: a success adds to your chance to hit and multiplies the blow.'
-      : 'Critical Strike roll: a success adds to your chance to hit (the original game\u2019s own critical).', 4),
-    tile('Backstab', pct(s.backstab.chance), s.backstab.chance ? `\u00d7${s.backstab.multiplier} from behind` : 'needs skill 2+',
-      'When the foe faces away: your Backstabbing skill is the chance the blow does triple damage, and it adds to your chance to hit.', 5),
-    tile('Per swing', one(head.perSwing), 'expected damage',
-      'Hit chance times damage, criticals included: what an average swing is worth.', 6),
+      ? t('stats.critical.tipDamage', 'Critical Strike roll: a success adds to your chance to hit and multiplies the damage.')
+      : t('stats.critical.tip', 'Critical Strike roll: a success adds to your chance to hit.'), 4),
+    tile(t('stats.backstab', 'Backstab'), pct(s.backstab.chance), s.backstab.chance
+      ? t('stats.backstab.sub', '\u00d7{mult} from behind', { mult: s.backstab.multiplier }) : t('stats.backstab.needsSkill', 'needs skill 2+'),
+    t('stats.backstab.tip', 'When the foe faces away, your Backstabbing skill is your chance to deal triple damage. It also adds to your chance to hit.'), 5),
+    tile(t('stats.perSwing', 'Per swing'), one(head.perSwing), t('stats.perSwing.sub', 'expected damage'),
+      t('stats.perSwing.tip', 'Hit chance times damage, criticals included: what an average swing is worth.'), 6),
   );
   page.append(tiles);
 
   // swings
-  const sw = section(s.isBow ? 'The shot' : 'Swing directions', 7);
+  const sw = section(s.isBow ? t('stats.swings.shot', 'The shot') : t('stats.swings.title', 'Swing directions'), 7);
   const tbl = el('div', 'sf-tbl');
   const th = el('div', 'sf-tr sf-th');
-  ['', 'Damage', 'Hit', 'Per swing'].forEach((t) => th.append(el('span', null, t)));
+  ['', t('stats.damage', 'Damage'), t('stats.swings.hit', 'Hit'), t('stats.perSwing', 'Per swing')].forEach((w) => th.append(el('span', null, w)));
   tbl.append(th);
   s.swings.forEach((w) => {
     const m = w.byFoe[foeIdx];
     const tr = el('div', `sf-tr${w.key === s.headlineKey ? ' on' : ''}`);
-    const mods = `${signed(w.mods.damage)} dmg, ${signed(w.mods.toHit)}% hit`;
-    tr.title = `${w.label}: ${mods}`;
+    const mods = t('stats.swings.mods', '{dmg} dmg, {hit}% hit', { dmg: signed(w.mods.damage), hit: signed(w.mods.toHit) });
+    tr.title = t('stats.swings.rowTip', '{swing}: {mods}', { swing: w.label, mods });
     tr.append(el('span', 'sf-name', w.label), el('span', null, `${m.dmg.min}\u2013${m.dmg.max}`), el('span', null, pct(m.hit)), el('span', null, one(m.perSwing)));
     tbl.append(tr);
   });
@@ -144,36 +149,36 @@ export function buildStatsPage(entity, repaint, opts = {}) {
   page.append(sw);
 
   // how the damage and the hit are built
-  const build = section('Breakdown', 8);
+  const build = section(t('stats.breakdown', 'Breakdown'), 8);
   const p = d.parts;
-  build.append(row(s.weapon ? 'Weapon roll' : 'Fists', `${p.roll[0]}\u2013${p.roll[1]}`, 'The span the weapon (or your Hand-to-Hand) rolls in, with its own modifiers.'));
-  if (p.matMod) build.append(row('Material', signed(p.matMod)));
-  build.append(row('Strength', signed(p.strMod) + (p.twoHanded && s.core === 'overhaul' ? ' (two-handed)' : ''), 'Your Strength\u2019s damage modifier.'));
-  if (p.prof) build.append(row('Proficiency', signed(p.prof), 'Your career\u2019s expertise with this weapon.'));
-  if (p.racial) build.append(row('Race', signed(p.racial), 'Your race\u2019s bonus with this kind of attack.'));
-  const t = head.terms;
-  build.append(row('Attack (skill, gear, swing)', signedPct(t.base), 'Your weapon skill and everything that adds to the chance before the foe is counted.'));
-  build.append(row('Foe\u2019s armour', signedPct(Math.round(t.armour)), 'Its armour value on the part you strike, averaged over where blows land.'));
-  build.append(row('Foe\u2019s dodging', signedPct(-t.dodge)));
-  build.append(row('Attributes & adjustments', signedPct(t.other + t.dodge), 'Agility, luck (and speed) against the foe\u2019s, enchantments, adrenaline, and the flat adjustments the core applies.'));
-  build.append(row('= Hit chance', pct(head.hit), 'The four lines above added together, then kept between 3% and 97%.'));
+  build.append(row(s.weapon ? t('stats.breakdown.weaponRoll', 'Weapon roll') : t('stats.breakdown.fists', 'Fists'), `${p.roll[0]}\u2013${p.roll[1]}`, t('stats.breakdown.rollTip', 'The damage range your weapon (or Hand-to-Hand) rolls, with its own modifiers.')));
+  if (p.matMod) build.append(row(t('stats.breakdown.material', 'Material'), signed(p.matMod)));
+  build.append(row(localizedText('strength', 'Strength'), p.twoHanded && s.core === 'overhaul' ? t('stats.breakdown.twoHanded', '{mod} (two-handed)', { mod: signed(p.strMod) }) : signed(p.strMod), t('stats.breakdown.strengthTip', 'Your Strength\u2019s damage modifier.')));
+  if (p.prof) build.append(row(t('stats.breakdown.proficiency', 'Proficiency'), signed(p.prof), t('stats.breakdown.proficiencyTip', 'Your career\u2019s expertise with this weapon.')));
+  if (p.racial) build.append(row(t('stats.breakdown.race', 'Race'), signed(p.racial), t('stats.breakdown.raceTip', 'Your race\u2019s bonus with this kind of attack.')));
+  const terms = head.terms;
+  build.append(row(t('stats.breakdown.attack', 'Attack (skill, gear, swing)'), signedPct(terms.base), t('stats.breakdown.attackTip', 'Your weapon skill and every bonus to hit, before the foe is counted.')));
+  build.append(row(t('stats.breakdown.foeArmour', 'Foe\u2019s armour'), signedPct(Math.round(terms.armour)), t('stats.breakdown.foeArmourTip', 'Its armor value on the part you strike, averaged over where blows land.')));
+  build.append(row(t('stats.breakdown.foeDodging', 'Foe\u2019s dodging'), signedPct(-terms.dodge)));
+  build.append(row(t('stats.breakdown.adjustments', 'Attributes & adjustments'), signedPct(terms.other + terms.dodge), t('stats.breakdown.adjustmentsTip', 'Your Agility and Luck (and Speed) against the foe\u2019s, plus enchantments, adrenaline and fixed adjustments.')));
+  build.append(row(t('stats.breakdown.total', '= Hit chance'), pct(head.hit), t('stats.breakdown.totalTip', 'The four lines above added together, then kept between 3% and 97%.')));
   page.append(build);
 
   // defence
-  const def = section('Defence', 9);
+  const def = section(t('stats.defence', 'Defence'), 9);
   const parts = dollArmour(entity);
-  def.append(row('Armour', one(tenth(overallArmour(parts))), 'The armour a blow meets on average (the plaque on the doll).'));
+  def.append(row(t('stats.defence.armour', 'Armour'), one(tenth(overallArmour(parts))), t('stats.defence.armourTip', 'The armor a blow meets on average (the number on the paperdoll).')));
   const pills = el('div', 'sf-pills');
   parts.forEach((v, i) => {
     const pl = el('span', `sf-pill${v ? '' : ' nil'}`);
     pl.append(el('i', null, PART_NAMES[i].replace(/^(Left|Right) /, (m) => m[0] + '. ')), el('b', null, String(v)));
-    pl.title = `${PART_NAMES[i]}: armour ${v}`;
+    pl.title = t('stats.defence.partTip', '{part}: armour {value}', { part: PART_NAMES[i], value: v });
     pills.append(pl);
   });
   def.append(pills);
-  def.append(row('Dodging', `${s.dodging}%`, s.core === 'overhaul' ? 'Takes half its value off an attacker\u2019s chance to hit you.' : 'Takes a quarter of its value off an attacker\u2019s chance to hit you.'));
-  if (s.avoidHit) def.append(row('Biography', signed(-s.avoidHit) + ' to be hit', 'Your biography\u2019s answer to "Fighting without magic" and its kin.'));
-  def.append(row('Health', `${Math.round(s.derived.health)} / ${Math.round(s.derived.maxHealth)}`));
+  def.append(row(SKILL_NAMES[SKILLS.Dodging], `${s.dodging}%`, s.core === 'overhaul' ? t('stats.defence.dodgeTipOverhaul', 'Takes half its value off an attacker\u2019s chance to hit you.') : t('stats.defence.dodgeTip', 'Takes a quarter of its value off an attacker\u2019s chance to hit you.')));
+  if (s.avoidHit) def.append(row(t('stats.defence.biography', 'Biography'), t('stats.defence.toBeHit', '{mod} to be hit', { mod: signed(-s.avoidHit) }), t('stats.defence.biographyTip', 'From your biography answers, such as "Fighting without magic".')));
+  def.append(row(localizedText('health', 'Health'), `${Math.round(s.derived.health)} / ${Math.round(s.derived.maxHealth)}`));
   page.append(def);
 
   // STATS-RESIST (the owner: "Resistances on the stat screen please"): each kind of harm's chance to be shrugged off -
@@ -184,36 +189,56 @@ export function buildStatsPage(entity, repaint, opts = {}) {
   for (const r of resistanceRows(entity)) {
     const pl = el('span', `sf-pill${r.immune ? ' imm' : r.total >= 60 ? ' up' : r.total <= 25 ? ' down' : ''}`);
     pl.append(el('i', null, r.label), el('b', null, r.immune ? 'Immune' : `${r.total}%`));
-    pl.title = r.immune ? `${r.label}: immune` : `${r.label}: ${r.save}% to resist${r.ward ? `, and a ${r.ward}% ward that turns it away whole first` : ''}`;
+    pl.title = r.immune ? `${r.label}: immune` : `${r.label}: ${r.save}% to resist${r.ward ? `, and a ${r.ward}% chance to block it outright first` : ''}`;
     pillsR.append(pl);
   }
   rs.append(pillsR);
-  rs.title = 'Your chance to shrug each harm off: race, career, biography, what you wear and your Willpower (one point a ten).';
+  rs.title = 'Your chance to resist each kind of harm, from your race, class, biography, gear and Willpower (1 point per 10).';
   page.append(rs);
 
   // attributes
-  const at = section('Attributes', 11);
+  const at = section(t('stats.attributes', 'Attributes'), 11);
   const grid = el('div', 'sf-attrs');
   s.attributes.forEach((a) => {
     const c = el('div', 'sf-attr');
     const shown = a.value === a.base ? String(a.value) : `${a.value} (${a.base})`;
-    c.append(el('span', 'sf-ak', cap(a.key)), el('span', `sf-av${a.value > a.base ? ' up' : a.value < a.base ? ' down' : ''}`, shown));
+    c.append(el('span', 'sf-ak', localizedText(a.key, cap(a.key))), el('span', `sf-av${a.value > a.base ? ' up' : a.value < a.base ? ' down' : ''}`, shown));
     if (a.effect) c.append(el('span', 'sf-ae', a.effect));
     grid.append(c);
   });
   at.append(grid);
-  at.append(row('Carry limit', `${s.derived.carry} kg`));
+  at.append(row(t('stats.carryLimit', 'Carry limit'), t('stats.carryLimit.value', '{kg} kg', { kg: s.derived.carry })));
   page.append(at);
 
   // skills
-  const sk = section('Skills in play', 12);
-  sk.append(row(skillName, `${s.skill}%`), row('Critical Strike', `${s.crit.skill}%`), row('Backstabbing', `${s.backstab.skill}%`), row('Dodging', `${s.dodging}%`));
+  const sk = section(t('stats.skills', 'Skills in play'), 12);
+  sk.append(row(skillName, `${s.skill}%`), row(SKILL_NAMES[SKILLS.CriticalStrike], `${s.crit.skill}%`), row(SKILL_NAMES[SKILLS.Backstabbing], `${s.backstab.skill}%`), row(SKILL_NAMES[SKILLS.Dodging], `${s.dodging}%`));
   page.append(sk);
 
+  // TEMP-UI (2026-10-12, the owner: "allowing players to see their personal temperature in their inventory"): THE FELT
+  // TEMPERATURE, part by part - the land, the season, the hour, the weather, a roof or the ground, the resistances, the
+  // race, the clothing, the armour, a fire, the wet, the bare skin, a drink to hand, a garment's degrees - adding up to
+  // the number (ui/temperatureCard.js temperatureStatRows; none with Climates & Calories Off)
+  const tempRows = temperatureStatRows(entity);
+  if (tempRows.length) {
+    const tp = section('Temperature', 13);
+    for (const [k, v, title] of tempRows) tp.append(row(k, v, title));
+    tp.title = 'The temperature you feel here: the world\u2019s temperature, then everything that warms or cools you.';
+    page.append(tp);
+  }
+  // AUDIT SURV-BOONS C13: the boons a Boons body has earned - the raised attributes above, explained
+  const boonRows = boonStatRows(entity);
+  if (boonRows.length) {
+    const bn = section('Boons', 14);
+    for (const [k, v] of boonRows) bn.append(row(k, v));
+    bn.title = 'With Climates & Calories set to Boons: what staying fed, watered and rested has earned you.';
+    page.append(bn);
+  }
+
   const foot = el('p', 'sf-foot sf-rise', s.core === 'overhaul'
-    ? 'Rules: Physical Combat And Armor Overhaul. Damage is before the foe\u2019s armour reduces it.'
-    : 'Rules: the original game\u2019s combat formulas. Damage is before any armour effects.');
-  foot.style.setProperty('--i', '13');
+    ? t('stats.rules.overhaul', 'Rules: Physical Combat And Armor Overhaul. Damage is before the foe\u2019s armor reduces it.')
+    : t('stats.rules.classic', 'Rules: the original game\u2019s combat formulas. Damage is before any armor effects.'));
+  foot.style.setProperty('--i', '15');   // TEMP-UI: after the Temperature and Boons sections
   page.append(foot);
   return page;
 }
@@ -262,8 +287,8 @@ export function statFlip(front, entity, usingRightHand = () => true) {
     const setFaces = () => {
       fFace.inert = flipped; bFace.inert = !flipped;
       fFace.setAttribute('aria-hidden', String(flipped)); bFace.setAttribute('aria-hidden', String(!flipped));
-      btn.textContent = flipped ? 'Paperdoll' : 'Stats';
-      btn.setAttribute('aria-label', flipped ? 'Turn the card back to the paperdoll' : 'Turn the card over to show your combat stats');
+      btn.textContent = flipped ? t('stats.flip.paperdoll', 'Paperdoll') : t('stats.flip.stats', 'Stats');
+      btn.setAttribute('aria-label', flipped ? t('stats.flip.toFront', 'Turn the card back to the paperdoll') : t('stats.flip.toBack', 'Turn the card over to show your combat stats'));
       btn.setAttribute('aria-pressed', String(flipped));
     };
     if (flipped) paintBack();
@@ -296,7 +321,7 @@ export const STATS_CARD_CSS = `
 .sf-res .sf-pill.imm b { color: #8fd18a; }
 .sf-res .sf-pill.up b { color: #d9c27a; }
 .sf-res .sf-pill.down b { color: #e08a72; }
-/* STATS-CARD, dressed as Enhanced Plus. PAINT is the stone-and-brass kit's: every part has a ROLE in ui/enhancedFrame.js
+/* STATS-CARD, dressed as Enhanced Plus. PAINT is the stone-and-brass kit's: every part has a ROLE in ui/enhanced/enhancedFrame.js
    (the back is a panel, Stats / Paperdoll a button, the headline tiles and the armour pills chips, the foe chips tiles,
    each section a well with an engraved head, each line a rule), so all six Plus themes - Stone's grit and marble
    included - dress it, as they dress the pack beside it. This sheet is injected AFTER the kit, so it writes only what a

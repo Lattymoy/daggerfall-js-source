@@ -1,49 +1,49 @@
 [
   {
     "name": "AH-F1-a-packed-ship-keeps-her-title",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      if (deed) removeExact(inBook(deed) ? deps.items.titles() : deps.items.player(), deed);",
     "new": "      if (deed && !inBook(deed)) removeExact(deps.items.player(), deed);",
     "tests": [
-      "test/auditholdings.test.js",
-      "test/fleet.test.js"
+      "test/systems/naval/auditholdings.test.js",
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "AH-F1-parts-placed-while-she-stands",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (item?.templateIndex !== BOAT_PARTS_TEMPLATE || partsStanding(item)) return null;   // AUDIT HOLDINGS F1",
     "new": "    if (item?.templateIndex !== BOAT_PARTS_TEMPLATE) return null;   // AUDIT HOLDINGS F1",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-F1-a-placing-started-from-standing-parts",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (partsStanding(item)) { deps.midScreenText(PARTS_STANDING_TEXT, 3); return; }",
     "new": "    if (false) { deps.midScreenText(PARTS_STANDING_TEXT, 3); return; }",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-F6-a-summoned-boat-kept-inside",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      boat.inside = false;   // AUDIT HOLDINGS F6",
     "new": "      boat.inside = boat.inside;   // AUDIT HOLDINGS F6",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-T5-the-deed-unread-in-the-book",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    ?? (deps.items?.titles?.() ?? []).find((it) => it?.templateIndex === BOAT_DEED_TEMPLATE && it.UID === uid) ?? null;",
     "new": "    ?? null;",
     "tests": [
-      "test/auditholdings.test.js",
-      "test/fleet.test.js"
+      "test/systems/naval/auditholdings.test.js",
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "        const list = title ? fleetBook() : [t];",
     "new": "        const list = title ? fleetBook() : (titleDeed(t), fleetBook());",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "    titleDeedsIn(pack(), { except: csa()?.state?.placeItem ?? null });",
     "new": "    titleDeedsIn(pack());",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "    for (const b of placed()) knowShip(b.uid, b.hull, b.variant, b.itemValue);",
     "new": "    for (const b of []) knowShip(b.uid, b.hull, b.variant, b.itemValue);",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "      knowShip(uid, at.boat.hull, at.boat.variant, at.boat.itemValue);   // AUDIT HOLDINGS F3",
     "new": "      // AUDIT HOLDINGS F3",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "    settleCredit(deps.accounts?.());",
     "new": "    settleCredit(null);",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "      setShipPort(uid, null);   // AUDIT HOLDINGS Q8",
     "new": "      // AUDIT HOLDINGS Q8",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "  if (r.hull === hull && variantOk(hull, variant) && r.variant !== variant) {",
     "new": "  if (false) {",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -115,8 +115,8 @@
     "old": "const variantOk = (hull, v) => Number.isInteger(v) && v >= 0 && v < Math.max(1, HULL_VARIANT_COUNTS[hull] ?? 0);",
     "new": "const variantOk = (hull, v) => Number.isInteger(v) && v >= 0 && v < 10;",
     "tests": [
-      "test/auditholdings.test.js",
-      "test/fleet.test.js"
+      "test/systems/naval/auditholdings.test.js",
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -125,7 +125,7 @@
     "old": "  if (!a || !(a.loanTotal > 0)) return null;",
     "new": "  if (!a || !(a.loanTotal > 0) || a.loanDueDate !== c.due) return null;",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -134,8 +134,8 @@
     "old": "  for (const r of _ships.values()) if (r.credit && !(accounts[r.credit.region]?.loanTotal > 0)) { r.credit = null; n++; }",
     "new": "  for (const r of _ships.values()) if (r.credit) { r.credit = null; n++; }",
     "tests": [
-      "test/auditholdings.test.js",
-      "test/fleet.test.js"
+      "test/systems/naval/auditholdings.test.js",
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -144,7 +144,7 @@
     "old": "    if (!s || !isUid(s.uid) || !hullOk(s.hull) || _ships.has(s.uid)) continue;",
     "new": "    if (!s || !isUid(s.uid) || !hullOk(s.hull)) continue;",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -153,7 +153,7 @@
     "old": "Number.isFinite(s.value) ? Math.max(0, Math.min(SHIP_VALUE_MAX, s.value)) : undefined);",
     "new": "Number.isFinite(s.value) ? s.value : undefined);",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -162,7 +162,7 @@
     "old": "  for (const s of (Array.isArray(data?.ships) ? data.ships : []).slice(0, FLEET_MAX)) {",
     "new": "  for (const s of (Array.isArray(data?.ships) ? data.ships : [])) {",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -171,7 +171,7 @@
     "old": "    const port = typeof s.port?.name === 'string' ? printable(s.port.name).slice(0, 64) : '';",
     "new": "    const port = typeof s.port?.name === 'string' ? s.port.name.slice(0, 64) : '';",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -180,7 +180,7 @@
     "old": "if (c >= 32 && c <= 126) t += ch; else if (/\\s/.test(ch)) t += ' '; }",
     "new": "if (c >= 32 && c <= 126) t += ch; }",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -189,7 +189,7 @@
     "old": "export function forgetShip(uid) {\n  _ships.delete(uid);",
     "new": "export function forgetShip(uid) {\n  void uid;",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -198,16 +198,16 @@
     "old": "    else if (!(it?.templateIndex === FLEET_DEED_TEMPLATE && titleDeed(it, { port:",
     "new": "    else if (!(false && titleDeed(it, { port:",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-F8-the-failed-claim-record-kept",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": " if (i >= 0) list.splice(i, 1); deps.board?.forgetDeed?.(deed); return false; }",
     "new": " if (i >= 0) list.splice(i, 1); return false; }",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -216,163 +216,163 @@
     "old": "    if (!h) { if (near.ready?.() !== false) book.set(",
     "new": "    if (!h) { if (true) book.set(",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-Q1-the-plank-to-her-innermost-rail",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const head = outOfDeck(m, [side * sx, sy, 0]);",
     "new": "    const head = outOfDeck(m, [side * (sx - 3), sy, 0]);",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-Q2-a-galley-brought-round-to-a-quay",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!f || DOCK_REFUSED.includes(hull)) return null;",
     "new": "    if (!f) return null;",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-Q4-the-gangway-over-her-own-trigger",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!e) { const g = boatTrigger ? null : gangwayInReach(); return g ? takeGangway(g) : false; }",
     "new": "    if (!e) { const g = gangwayInReach(); return g ? takeGangway(g) : false; }",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-Q4-takes-over-her-own-trigger",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    return !!(boardableOnFoot() || (!boatTrigger && gangwayInReach()));",
     "new": "    return !!(boardableOnFoot() || gangwayInReach());",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-Q4-ashore-from-anywhere-aboard",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (Math.hypot(g.deckAt[0] - feet[0], g.deckAt[2] - feet[2]) <= GANGWAY_ASHORE && facing(g.landward)) return { ...g, way: 'ashore' };",
     "new": "        if (Math.hypot(g.head[0] - feet[0], g.head[2] - feet[2]) <= GANGWAY_REACH + 1 && facing(g.landward)) return { ...g, way: 'ashore' };",
     "tests": [
-      "test/auditholdings.test.js",
-      "test/quays.test.js"
+      "test/systems/naval/auditholdings.test.js",
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "AH-Q5-the-warp-berth-free-to-the-roll",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (warping?.k === `${key}#${i}`) return false;",
     "new": "    if (false) return false;",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-Q5-an-arriving-ship-sees-herself",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    for (const e of sea.values()) { const r = e.ship.errand; if (e.ship !== except && r && r.harbour === key",
     "new": "    for (const e of sea.values()) { const r = e.ship.errand; if (r && r.harbour === key",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-Q8-nowhere-where-unknown",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (known || Math.hypot(v[0], v[2]) > DOCK_WAY) deps.dockedPort(b, null);",
     "new": "      deps.dockedPort(b, null);",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-Q8-under-way-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (known || Math.hypot(v[0], v[2]) > DOCK_WAY) deps.dockedPort(b, null);",
     "new": "      if (known) deps.dockedPort(b, null);",
     "tests": [
-      "test/auditholdings.test.js",
-      "test/quays.test.js"
+      "test/systems/naval/auditholdings.test.js",
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "AH-Q9-a-gangway-onto-no-quay",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (deps.quayLaid && !deps.quayLaid(d.key, d.index)) return null;",
     "new": "    if (false) return null;",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-Q9-the-warp-carried-across",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    warping = null; gangwaySaid = null;   // AUDIT HOLDINGS Q9",
     "new": "    // AUDIT HOLDINGS Q9",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-Q9-the-word-with-the-look",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const g = gangwayInReach(false);",
     "new": "    const g = gangwayInReach();",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-Q1-ashore-under-the-plank",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const [ax, az] = quayToScene(frame, f.x > x0 ? Math.min(f.x + 0.6, x1 - 0.4) : x0 + 1.6, hz);",
     "new": "    const [ax, az] = quayToScene(frame, x0 + 1.6, hz);",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "AH-T5-a-peer-at-a-berth-unseen",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    for (const m of deps.pool?.peerBoats ?? []) if (m !== except && m.GameObject && Math.hypot(",
     "new": "    for (const m of []) if (m !== except && m.GameObject && Math.hypot(",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ],
     "note": "BERTH-HIDDEN (PIN MOVED): re-aimed by content - the peer's boat asked shown or not (`m.GameObject`)."
   },
   {
     "name": "AH-T5-warped-in-under-fire",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "|| Math.hypot(pose.velocity[0], pose.velocity[2]) > DOCK_WAY || hostileNearMe()) { warping = null; return null; }",
     "new": "|| Math.hypot(pose.velocity[0], pose.velocity[2]) > DOCK_WAY) { warping = null; return null; }",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-T1-the-guns-refit-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (Number.isFinite(hurt.hull)) hurt.hull *= k;",
     "new": "    if (Number.isFinite(hurt.hull)) hurt.hull *= 1;",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-T1-every-boat-refitted-alike",
-    "file": "src/scenes/navalHost.js",
-    "old": "    const k = Number(uid > 0 ? deps.refit?.({ uid })?.guns : 1);",
-    "new": "    const k = Number(deps.refit?.({ uid: 42 })?.guns ?? 1);",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const refit = Number(uid > 0 ? deps.refit?.({ uid })?.guns : 1);",
+    "new": "    const refit = Number(deps.refit?.({ uid: 42 })?.guns ?? 1);",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -381,8 +381,8 @@
     "old": "  return { x: Math.min(x1 - GANGWAY_BACK, Math.max(x0 + GANGWAY_CLEAR, headX + run)), y: QUAY_DECK_UP };",
     "new": "  return { x: x0 + 0.4, y: QUAY_DECK_UP };",
     "tests": [
-      "test/auditholdings.test.js",
-      "test/quays.test.js"
+      "test/systems/naval/auditholdings.test.js",
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -391,7 +391,7 @@
     "old": "  if (headY <= QUAY_DECK_UP + QUAY_KERB_H) return { x: x0, y: QUAY_DECK_UP + QUAY_KERB_H };",
     "new": "  if (headY <= QUAY_DECK_UP + QUAY_KERB_H) return { x: x0 + 0.4, y: QUAY_DECK_UP };",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -400,7 +400,7 @@
     "old": "  Object.freeze([6.21, 8.31]),   // 4 Carrack",
     "new": "  Object.freeze([5.86, 7.6]),   // 4 Carrack",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -409,7 +409,7 @@
     "old": "  Object.freeze([0.95, 0.7]),    // 0 Rowboat",
     "new": "  Object.freeze([0.95, 0.5]),    // 0 Rowboat",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -418,7 +418,7 @@
     "old": " || Math.abs(lz) < GANGWAY_LANE ||",
     "new": " ||",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -427,7 +427,7 @@
     "old": "  if (DOCK_REFUSED.includes(ship.hull)) return null;   // AUDIT HOLDINGS Q2",
     "new": "  // AUDIT HOLDINGS Q2",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -436,7 +436,7 @@
     "old": "export const GANGWAY_ASHORE = 1.5;",
     "new": "export const GANGWAY_ASHORE = 4;",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -445,7 +445,7 @@
     "old": "export const GANGWAY_FACING = 0.7;",
     "new": "export const GANGWAY_FACING = 0.5;",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -454,7 +454,7 @@
     "old": "x1 + t + (g <= deck + 2 * STEP_M ? JETTY_LAND : 0)",
     "new": "x1 + t + JETTY_LAND",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -463,7 +463,7 @@
     "old": "trs(b.berth.pos[0], deps.seaY(), b.berth.pos[1], 0, b.plan.frame.theta * DEG, 0));\n    b.stood = true;",
     "new": "trs(b.berth.pos[0], deps.seaY(), b.berth.pos[1], 0, b.plan.frame.theta * DEG, 0), () => [b.berth.pos[0], deps.seaY(), b.berth.pos[1]]);\n    b.stood = true;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -472,7 +472,7 @@
     "old": "  function offsetAll() { for (const q of quays.values()) for (const b of q.berths) if (b.stood && !b.dead) standCollider(b); }",
     "new": "  function offsetAll() { }",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -481,7 +481,7 @@
     "old": "        lay(q, b).catch(() => layFailed(b));",
     "new": "        lay(q, b).catch(() => {});",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -490,7 +490,7 @@
     "old": "        try { gangwayGpu = r.createMesh(model); } catch { gangwayGpu = null; }",
     "new": "        try { gangwayGpu = r.createMesh(model); } catch { /* left */ }",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -499,7 +499,7 @@
     "old": "    if (gangwayGpu && !gangwayGpu.pending) { try { deps.renderer?.destroyMesh?.(gangwayGpu); } catch { /* the context went first */ } }",
     "new": "    void 0;",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -508,8 +508,8 @@
     "old": "  const laid = (key, index) => !!quays.get(key)?.berths[index]?.stood;",
     "new": "  const laid = (key, index) => !!quays.get(key)?.berths[index];",
     "tests": [
-      "test/auditholdings.test.js",
-      "test/quays.test.js"
+      "test/systems/naval/auditholdings.test.js",
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -518,7 +518,7 @@
     "old": "      if (ctx.free && !ctx.free(e.harbour, e.berth, ship)) {",
     "new": "      if (false) {",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -527,7 +527,7 @@
     "old": "      if (r < bestRank) { best = m; bestRank = r; if (r < 0) break; }",
     "new": "      if (!best) { best = m; bestRank = r; }",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -536,7 +536,7 @@
     "old": "      const r = role === 'First Mate' ? LOOKOUT_YIELD.length : rank < 0 ? -1 : rank;",
     "new": "      const r = rank < 0 ? -1 : rank;",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -545,7 +545,7 @@
     "old": "export const LOOKOUT_YIELD = Object.freeze(['Gunner', 'Cook', 'Carpenter', 'Bosun']);",
     "new": "export const LOOKOUT_YIELD = Object.freeze(['Bosun', 'Cook', 'Carpenter', 'Gunner']);",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -554,7 +554,7 @@
     "old": "    for (const o of members) { if (o === m) break; if (roles[o.i] === role && !o.station && o !== lookout && !o.gone) n++; }",
     "new": "    for (const o of members) { if (o === m) break; if (roles[o.i] === role && !o.station && o !== lookout) n++; }",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -563,7 +563,7 @@
     "old": "      return gun.more[k] ?? gun;",
     "new": "      return gun;",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -572,7 +572,7 @@
     "old": "      if (role === LOOKOUT_ROLE && h.mobile === MOBILE.Bard) return { ok: false,",
     "new": "      if (false) return { ok: false,",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -581,34 +581,34 @@
     "old": "    for (const role of [...CREW_ROLES.filter((r) => !(h.bard && r === 'Lookout')), ...(h.bard ? ['Bard'] : [])]) {",
     "new": "    for (const role of [...CREW_ROLES, ...(h.bard ? ['Bard'] : [])]) {",
     "tests": [
-      "test/crewroles.test.js"
+      "test/systems/naval/crewroles.test.js"
     ]
   },
   {
     "name": "AH-Q9-an-unnamed-quay-afloat",
     "file": "src/ui/fleetPage.js",
-    "old": "      if (s.docked != null) return { state: 'Made fast', tone: 'is-away',",
-    "new": "      if (s.docked) return { state: 'Made fast', tone: 'is-away',",
+    "old": "      if (s.docked != null) return { state: 'Moored', tone: 'is-away',",
+    "new": "      if (s.docked) return { state: 'Moored', tone: 'is-away',",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-C1-a-note-mid-line",
-    "file": "src/ui/enhancedFrame.js",
+    "file": "src/ui/enhanced/enhancedFrame.js",
     "old": "'.px-sys .cmp-rank', '.px-sys .cmp-mood', '.hud-qspell',",
     "new": "'.px-sys .cmp-rank',   // a note '.px-sys .cmp-mood', '.hud-qspell',",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
     "name": "AH-C4-the-tabs-never-wrap",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": ".px-tabs { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px;",
     "new": ".px-tabs { display: flex; justify-content: center; gap: 4px;",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -617,16 +617,7 @@
     "old": "const n = runtime.renameHorse(arg); return n == null ?",
     "new": "const n = runtime.renameHorse(arg); return !n ?",
     "tests": [
-      "test/auditholdings.test.js"
-    ]
-  },
-  {
-    "name": "AH-C6-the-stable-on-an-empty-rail",
-    "file": "src/ui/enhancedMenu.js",
-    "old": "  if (!secs.length) {\n    detail.append(el('div', 'px-qverdict', 'Nothing here to hold')",
-    "new": "  if (false) {\n    detail.append(el('div', 'px-qverdict', 'Nothing here to hold')",
-    "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -635,7 +626,7 @@
     "old": "    nearPort: () => !!csaRuntime.IsNearPort(csaPortRange()),",
     "new": "    nearPort: () => !!csaRuntime.IsNearPort(),",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -644,7 +635,7 @@
     "old": "naval?.activate({ boatTrigger: !!_race.boatWins })",
     "new": "naval?.activate()",
     "tests": [
-      "test/auditholdings.test.js"
+      "test/systems/naval/auditholdings.test.js"
     ]
   },
   {
@@ -653,7 +644,7 @@
     "old": "knowShip(boat.uid, boat.hull, boat.variant, parts?.value); setShipPort(boat.uid, null); return !!retitle(boat.uid); } },",
     "new": "knowShip(boat.uid, boat.hull, boat.variant, parts?.value); return !!retitle(boat.uid); } },",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -662,7 +653,7 @@
     "old": "    quayLaid: (key, index) => quays?.laid(key, index) ?? true,",
     "new": "    quayLaid: () => true,",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -671,7 +662,7 @@
     "old": "if (lightsOnAt(minute)) for (const l of quays?.lights() ?? []) csaLit.push(",
     "new": "if (false) for (const l of quays?.lights() ?? []) csaLit.push(",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -680,7 +671,7 @@
     "old": "return p && (p._stride ?? 1) === 1 ? surfaceAt(x, z) : NaN; },",
     "new": "return p ? surfaceAt(x, z) : NaN; },",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
@@ -689,25 +680,25 @@
     "old": "    quays?.offsetAll();",
     "new": "    void 0;",
     "tests": [
-      "test/quays.test.js"
+      "test/systems/naval/quays.test.js"
     ]
   },
   {
     "name": "AH-T5-a-names-length-uncapped",
-    "file": "src/systems/comeSailAwayWire.js",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
     "old": "  if (typeof raw !== 'string' || raw.length > SHIP_NAME_MAX * 4) return '';",
     "new": "  if (typeof raw !== 'string') return '';",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "AH-C7-the-stores-key-misnamed",
     "file": "src/scenes/gatherHost.js",
-    "old": "the pause menu's Holdings > Stores${key ? ` (${key} opens your Professions)` : ''}.`);",
-    "new": "${key ? `${key} opens your Stores page` : 'the pause menu\\'s Stores page'}.`);",
+    "old": "under Holdings in the pause menu.${key ? ` ${key} opens your Professions.` : ''}`);",
+    "new": "under Holdings in the pause menu.${key ? ` ${key} opens your Stores page.` : ''}`);",
     "tests": [
-      "test/classicpages.test.js"
+      "test/systems/classicpages.test.js"
     ]
   }
 ]

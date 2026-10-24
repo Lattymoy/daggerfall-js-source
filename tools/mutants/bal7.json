@@ -1,0 +1,56 @@
+[
+  {
+    "name": "BAL7-vampiric-drawn",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "    { type: T.VampiricEffect, param: 1, retired: true },     // when strikes",
+    "new": "    { type: T.VampiricEffect, param: 1 },     // when strikes",
+    "tests": [
+      "test/systems/bal7_loot.test.js"
+    ]
+  },
+  {
+    "name": "BAL7-the-leech-cap-at-17",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "export const LEECH_CAP = 10;",
+    "new": "export const LEECH_CAP = 17;",
+    "tests": [
+      "test/systems/bal7_loot.test.js"
+    ]
+  },
+  {
+    "name": "BAL7-the-leech-uncapped",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "  pct = Math.min(LEECH_CAP, pct);   // BAL7",
+    "new": "  // BAL7",
+    "tests": [
+      "test/systems/bal7_loot.test.js"
+    ]
+  },
+  {
+    "name": "BAL7-hist-sap-at-two-and-four",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "kind: 'regen', pct: 1, low: 2,",
+    "new": "kind: 'regen', pct: 2, low: 4,",
+    "tests": [
+      "test/systems/bal7_loot.test.js"
+    ]
+  },
+  {
+    "name": "BAL7-open-hand-whole",
+    "file": "src/systems/loot/lootPowers.js",
+    "old": "      case 'fists': if (!weapon) again(target, (damage * p.share) / 100, p.name); break;",
+    "new": "      case 'fists': if (!weapon) again(target, damage, p.name); break;",
+    "tests": [
+      "test/systems/bal7_loot.test.js"
+    ]
+  },
+  {
+    "name": "BAL7-open-hand-share-whole",
+    "file": "src/systems/loot/lootRarity.js",
+    "old": "name: 'Open Hand', kind: 'fists', share: 50,",
+    "new": "name: 'Open Hand', kind: 'fists', share: 100,",
+    "tests": [
+      "test/systems/bal7_loot.test.js"
+    ]
+  }
+]

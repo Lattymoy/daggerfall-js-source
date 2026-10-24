@@ -1,45 +1,45 @@
 [
   {
     "name": "D22A-port-default-dropped",
-    "file": "src/systems/settings.js",
+    "file": "src/systems/settings/settings.js",
     "tests": [
-      "test/disc22a_magic_repairs.test.js"
+      "test/systems/settings/disc22a_magic_repairs.test.js"
     ],
     "old": "  Controls: Object.freeze({ WeaponSwingMode: '2', AllowMagicRepairs: 'True', InstantRepairs: 'True' }),",
     "new": "  Controls: Object.freeze({ WeaponSwingMode: '2', InstantRepairs: 'True' }),"
   },
   {
     "name": "D22A-getData-ignores-the-room",
-    "file": "src/systems/settings.js",
+    "file": "src/systems/settings/settings.js",
     "tests": [
-      "test/disc22a_magic_repairs.test.js"
+      "test/systems/settings/disc22a_magic_repairs.test.js"
     ],
     "old": "  if (forced !== undefined) return forced;\n  if (_values === null) loadSettings();",
     "new": "  if (_values === null) loadSettings();"
   },
   {
     "name": "D22A-screen-shows-the-store",
-    "file": "src/systems/settings.js",
+    "file": "src/systems/settings/settings.js",
     "tests": [
-      "test/disc22a_magic_repairs.test.js"
+      "test/systems/settings/disc22a_magic_repairs.test.js"
     ],
     "old": "      if (forced !== undefined) out[s][k] = forced;",
     "new": "      void forced;"
   },
   {
     "name": "D22A-forced-offline-too",
-    "file": "src/systems/onlineLane.js",
+    "file": "src/systems/online/onlineLane.js",
     "tests": [
-      "test/disc22a_magic_repairs.test.js"
+      "test/systems/settings/disc22a_magic_repairs.test.js"
     ],
     "old": "  return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key) && isOnlinePage(search)",
     "new": "  return Object.hasOwn(ONLINE_FORCED_SETTINGS[section] ?? {}, key)"
   },
   {
     "name": "D22A-row-not-locked",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "tests": [
-      "test/disc22a_magic_repairs.test.js"
+      "test/systems/settings/disc22a_magic_repairs.test.js"
     ],
     "old": "    if (onlineForcedSetting(_sec, _k) !== undefined) lockOnline(b, null, { note: ONLINE_SETTING_NOTE, value: raw === 'True' });",
     "new": ""
@@ -48,7 +48,7 @@
     "name": "D22B-classic-controls-grid-kept",
     "file": "src/ui/pauseDoor.js",
     "tests": [
-      "test/disc22b_pause_settings.test.js"
+      "test/systems/disc22b_pause_settings.test.js"
     ],
     "old": "  return classicPauseWithSettings(show, hooks);",
     "new": "  return openClassicPauseFlow(show, hooks);"
@@ -57,7 +57,7 @@
     "name": "D22B-window-ignores-openSettings",
     "file": "src/ui/pauseWindow.js",
     "tests": [
-      "test/disc22b_pause_settings.test.js"
+      "test/systems/disc22b_pause_settings.test.js"
     ],
     "old": "    openControls: hooks.openSettings ?? (controlsArtLoaded()",
     "new": "    openControls: (controlsArtLoaded()"
@@ -66,43 +66,43 @@
     "name": "D22B-resume-relocks",
     "file": "src/ui/pauseDoor.js",
     "tests": [
-      "test/disc22b_pause_settings.test.js"
+      "test/systems/disc22b_pause_settings.test.js"
     ],
     "old": "    if (action === 'resume' && typeof hooks.onResume === 'function') { hooks.onResume(); return; }\n",
     "new": ""
   },
   {
     "name": "D22B-landing-ignores-sections",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "tests": [
-      "test/disc22b_pause_settings.test.js"
+      "test/systems/disc22b_pause_settings.test.js"
     ],
     "old": "  else if (at && sections.some((l) => idOf(l) === at)) section = at;",
     "new": ""
   },
   {
     "name": "D22F-finished-by-name",
-    "file": "src/systems/questShare.js",
+    "file": "src/systems/quest/questShare.js",
     "tests": [
-      "test/disc22f_share_copy.test.js"
+      "test/systems/quest/disc22f_share_copy.test.js"
     ],
     "old": "  if (shareId !== undefined ? machine.hasFinishedSharedCopy?.(questName, shareId) : machine.hasFinishedSharedQuestNamed?.(questName)) return",
     "new": "  if (machine.hasFinishedSharedQuestNamed?.(questName)) return"
   },
   {
     "name": "D22F-envelope-id-not-passed",
-    "file": "src/systems/questShare.js",
+    "file": "src/systems/quest/questShare.js",
     "tests": [
-      "test/disc22f_share_copy.test.js"
+      "test/systems/quest/disc22f_share_copy.test.js"
     ],
-    "old": "{ ...ctx, shareId: data?.shareId ?? null }",
-    "new": "{ ...ctx, shareId: null }"
+    "old": "{ ...ctx, shareId: data?.shareId ?? null, factionId",
+    "new": "{ ...ctx, shareId: null, factionId"
   },
   {
     "name": "D22F-never-stamped",
     "file": "src/systems/quest/machine.js",
     "tests": [
-      "test/disc22f_share_copy.test.js"
+      "test/systems/quest/disc22f_share_copy.test.js"
     ],
     "old": "    quest.shareId ??= mintShareId();",
     "new": ""
@@ -111,7 +111,7 @@
     "name": "D22F-restamped-each-share",
     "file": "src/systems/quest/machine.js",
     "tests": [
-      "test/disc22f_share_copy.test.js"
+      "test/systems/quest/disc22f_share_copy.test.js"
     ],
     "old": "    quest.shareId ??= mintShareId();",
     "new": "    quest.shareId = mintShareId();"
@@ -120,7 +120,7 @@
     "name": "D22F-tombstone-forgets-the-copy",
     "file": "src/systems/quest/machine.js",
     "tests": [
-      "test/disc22f_share_copy.test.js"
+      "test/systems/quest/disc22f_share_copy.test.js"
     ],
     "old": "    if (quest.shareId) this.finishedShareIds.add(quest.shareId);",
     "new": ""
@@ -129,7 +129,7 @@
     "name": "D22F-id-not-restored",
     "file": "src/systems/quest/quest.js",
     "tests": [
-      "test/disc22f_share_copy.test.js"
+      "test/systems/quest/disc22f_share_copy.test.js"
     ],
     "old": "    this.shareId = typeof data.shareId === 'string' && data.shareId ? data.shareId : null;",
     "new": "    this.shareId = null;"
@@ -138,7 +138,7 @@
     "name": "D22F-id-not-saved",
     "file": "src/systems/quest/quest.js",
     "tests": [
-      "test/disc22f_share_copy.test.js"
+      "test/systems/quest/disc22f_share_copy.test.js"
     ],
     "old": "      shareId: this.shareId ?? null,",
     "new": ""
@@ -147,34 +147,34 @@
     "name": "D22F-load-keeps-memory",
     "file": "src/systems/quest/machine.js",
     "tests": [
-      "test/disc22f_share_copy.test.js"
+      "test/systems/quest/disc22f_share_copy.test.js"
     ],
     "old": "    this.finishedShareIds.clear();\n",
     "new": ""
   },
   {
     "name": "D22F-third-person",
-    "file": "src/systems/questShare.js",
+    "file": "src/systems/quest/questShare.js",
     "tests": [
-      "test/disc22f_share_copy.test.js"
+      "test/systems/quest/disc22f_share_copy.test.js"
     ],
-    "old": "  active: 'already have this quest.',",
-    "new": "  active: 'already has this quest.',"
+    "old": "  get active() { return t('quest.share.active', 'already have this quest.'); },",
+    "new": "  get active() { return t('quest.share.active', 'already has this quest.'); },"
   },
   {
     "name": "D22D-drawer-decodes-only-with-the-hook",
-    "file": "src/ui/itemScroller.js",
+    "file": "src/ui/item/itemScroller.js",
     "tests": [
-      "test/disc22d_flail_icon.test.js"
+      "test/ui/enhanced/disc22d_flail_icon.test.js"
     ],
     "old": "  const ask = icons?.preloadRecord ?? ((archive, record, dye) => preloadTextureRecord(archive, record, 0, 'Albedo', dye).catch(() => null));",
     "new": "  const ask = icons?.preloadRecord ?? (async () => null);"
   },
   {
     "name": "D22D-accessory-drawer-skips-the-decode",
-    "file": "src/ui/nativeInventory.js",
+    "file": "src/ui/native/nativeInventory.js",
     "tests": [
-      "test/auditdw.test.js"
+      "test/combat/weapon/auditdw.test.js"
     ],
     "old": "          await preloadIconRecord(icons, img);",
     "new": ""
@@ -183,16 +183,16 @@
     "name": "D22D-enhanced-reads-the-undyed-name",
     "file": "src/ui/textureCanvas.js",
     "tests": [
-      "test/disc22d_flail_icon.test.js"
+      "test/ui/enhanced/disc22d_flail_icon.test.js"
     ],
     "old": "    preloadTextureRecord(archive, record, 0, 'Albedo', dye).then((img) => {",
     "new": "    preloadTextureRecord(archive, record, 0, 'Albedo', null).then((img) => {"
   },
   {
     "name": "D22D-trade-drops-the-metal",
-    "file": "src/ui/enhancedInventory.js",
+    "file": "src/ui/enhanced/enhancedInventory.js",
     "tests": [
-      "test/disc22d_flail_icon.test.js"
+      "test/ui/enhanced/disc22d_flail_icon.test.js"
     ],
     "old": "{ scale, dye: line.image.dye, dyeTarget: line.image.dyeTarget, onReady }",
     "new": "{ scale, dyeTarget: line.image.dyeTarget, onReady }"
@@ -201,25 +201,25 @@
     "name": "D22E-flag-gate-back",
     "file": "src/scenes/world.js",
     "tests": [
-      "test/disc22e_travel_click.test.js"
+      "test/ui/travel/disc22e_travel_click.test.js"
     ],
     "old": "locked: document.pointerLockElement === canvas,\n      button: e.button,",
     "new": "locked: !cursorActive(),\n      button: e.button,"
   },
   {
     "name": "D22E-locked-click-taken",
-    "file": "src/ui/travelControlUI.js",
+    "file": "src/ui/travel/travelControlUI.js",
     "tests": [
-      "test/disc22e_travel_click.test.js"
+      "test/ui/travel/disc22e_travel_click.test.js"
     ],
     "old": "  return !!showing && !paused && !locked && button === 0 && !enhancedDom;",
     "new": "  return !!showing && !paused && button === 0 && !enhancedDom;"
   },
   {
     "name": "D22E-any-button",
-    "file": "src/ui/travelControlUI.js",
+    "file": "src/ui/travel/travelControlUI.js",
     "tests": [
-      "test/disc22e_travel_click.test.js"
+      "test/ui/travel/disc22e_travel_click.test.js"
     ],
     "old": "  return !!showing && !paused && !locked && button === 0 && !enhancedDom;",
     "new": "  return !!showing && !paused && !locked && !enhancedDom;"

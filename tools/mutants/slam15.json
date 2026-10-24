@@ -5,7 +5,7 @@
     "old": "const still = (unmoved || stopped) && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS;",
     "new": "const still = unmoved && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS;",
     "tests": [
-      "test/slam15.test.js"
+      "test/net/slam15.test.js"
     ]
   },
   {
@@ -14,8 +14,8 @@
     "old": "const still = (unmoved || stopped) && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS;",
     "new": "const still = stopped || (unmoved && now - (a.kept ?? 0) >= KEEPALIVE_FAN_MS);",
     "tests": [
-      "test/slam15.test.js",
-      "test/slam13.test.js"
+      "test/net/slam15.test.js",
+      "test/net/slam13.test.js"
     ]
   },
   {
@@ -24,9 +24,9 @@
     "old": "const stopped = posed && !!a.pose && (a.pose.mv | 0) !== 0 && (m.p.mv | 0) === 0;",
     "new": "const stopped = posed && !!a.pose && (a.pose.mv | 0) !== (m.p.mv | 0);",
     "tests": [
-      "test/slam15.test.js",
-      "test/slam13.test.js",
-      "test/slam8.test.js"
+      "test/net/slam15.test.js",
+      "test/net/slam13.test.js",
+      "test/net/slam8.test.js"
     ]
   },
   {
@@ -35,18 +35,19 @@
     "old": "    this._wanted = new Set();   // SLAM7: rebuilt every frame",
     "new": "    this._wanted = this._wanted ?? new Set();   // SLAM7: rebuilt every frame",
     "tests": [
-      "test/slam15.test.js",
-      "test/slam7.test.js"
+      "test/net/slam15.test.js",
+      "test/net/slam7.test.js"
     ]
   },
   {
     "name": "Z5-body-peer-wanted",
     "file": "src/net/remotePlayers.js",
-    "old": "      if (bodyH > 0) { if (!veil) this._shown.push({ peer, height: bodyH }); continue; }",
-    "new": "      if (bodyH > 0) { this._wanted.add(lookKey(peer.look)); if (!veil) this._shown.push({ peer, height: bodyH }); continue; }",
+    "old": "if (bodyH > 0) { if (!veil || /** @type {any} */ (veil).named) this._shown.push({ peer, height: bodyH }); continue; }",
+    "new": "if (bodyH > 0) { this._wanted.add(lookKey(peer.look)); if (!veil || /** @type {any} */ (veil).named) this._shown.push({ peer, height: bodyH }); continue; }",
     "tests": [
-      "test/slam15.test.js"
-    ]
+      "test/net/slam15.test.js"
+    ],
+    "note": "AUDIT EG V (h): re-aimed by content - a veil that keeps the name shows it"
   },
   {
     "name": "Z6-unshown-peer-wanted",
@@ -54,7 +55,7 @@
     "old": "      if (!peer?.shown) continue;\n      seen.add(peer.id);",
     "new": "      if (!peer?.shown) { if (peer) this._wanted.add(lookKey(peer.look)); continue; }\n      seen.add(peer.id);",
     "tests": [
-      "test/slam15.test.js"
+      "test/net/slam15.test.js"
     ]
   },
   {
@@ -63,8 +64,8 @@
     "old": "    for (const [id, entry] of this._batches) {\n      if (live.has(id)) continue;\n      this.renderer.destroyBillboardBatch?.(entry.batch);\n      this._batches.delete(id);\n      this._footsteps?.delete(id);   // PEER-FS1: a departed peer's stride machine goes with everything else\n      this._attackAn?.delete(id);   // PEER-FS2: and their swing-edge tracker\n    }\n",
     "new": "",
     "tests": [
-      "test/slam15.test.js",
-      "test/slam7.test.js"
+      "test/net/slam15.test.js",
+      "test/net/slam7.test.js"
     ]
   },
   {
@@ -73,8 +74,8 @@
     "old": "  _needed() { return this._wanted; }",
     "new": "  _needed() { const out = new Set(this._wanted); for (const e of this._batches.values()) out.add(e.key); return out; }",
     "tests": [
-      "test/slam15.test.js",
-      "test/slam7.test.js"
+      "test/net/slam15.test.js",
+      "test/net/slam7.test.js"
     ],
     "equivalent": true,
     "why": "the worn keys are a subset of the wanted set after every sync (the pinned invariant), so the union adds nothing - this is the redundancy B4 names, kept in the list as the proof of it"

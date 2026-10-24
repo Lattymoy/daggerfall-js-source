@@ -19,7 +19,7 @@
 // soup is already in world space (each bucket's translation applied), so
 // the vertices are read as they are and cells are indexed from 0.
 
-import { AGENT } from './navmesh.js';
+import { AGENT } from './nav/navmesh.js';
 
 /** Triangle t of the soup into a, b, c; answers its face normal's |y| over
  *  its length (sign-free: a floor seen from below is still a floor), or

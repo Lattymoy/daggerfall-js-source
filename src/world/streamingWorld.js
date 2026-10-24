@@ -22,11 +22,16 @@
 //   - Init matches ResetStreamingWorld: compensation zeroed on x/z,
 //     mapOrigin = the player's current pixel.
 
-import { TERRAIN_SIZE } from './terrainSampler.js';
+import { TERRAIN_SIZE } from './terrain/terrainSampler.js';
 import { GLOBAL_SCALE } from './meshReader.js';
-import { WORLD_MAP_TILE_DIM, getLocationTerrainTileOrigin } from './terrainTiles.js';
+import { WORLD_MAP_TILE_DIM, getLocationTerrainTileOrigin } from './terrain/terrainTiles.js';
 
 export const TERRAIN_DISTANCE = 3;   // DFU's default (StreamingWorld.cs:56); D1: the world host passes the LIVE Experimental/TerrainDistance (1..4) into the constructor
+/** BUILD-RETRY (bible/06-Systems/Travel-View.md LOAD-OWED, the port's own - DFU's builds do not fail): the stream's own
+ *  re-asks of a pixel whose build THREW, real milliseconds after each failure - five, doubling from two seconds, a
+ *  minute in all. Past the last the pixel waits for the next crossing that lists it, as every failed pixel waited
+ *  before (the load list's law). */
+export const BUILD_RETRY_MS = Object.freeze([2000, 4000, 8000, 16000, 32000]);
 const VERTICAL_THRESHOLD = 500;
 // MapsFile.MinMapPixelX/Y and MaxMapPixelX/Y - max EXCLUSIVE, so the
 // world map is 0..999 by 0..499 (terrainSampler keeps its own copy of
@@ -113,6 +118,7 @@ export class StreamingWorldState {
     this.compensation = [0, 0, 0];
     this.current = { x: 0, y: 0 };
     this.loaded = new Map(); // key -> {px, py}, built or building
+    this.failed = new Map();   // BUILD-RETRY: key -> {px, py, tries, at} - a pixel whose build threw, and when the stream asks again
     this.initOffset = [0, 0, 0];   // FIELD-CSA1: the last init's move of the scene (init)
   }
 
@@ -134,6 +140,7 @@ export class StreamingWorldState {
     this.compensation = [0, this.compensation[1], 0];
     this.current = { x: mapPixelX, y: mapPixelY };
     this.loaded.clear();
+    this.failed.clear();   // BUILD-RETRY: the new grid asks for every pixel afresh
     const [ox, oz] = this.localFromWorld(was.x, was.z);
     this.initOffset = [ox, 0, oz];
     return this._loadList();
@@ -183,12 +190,12 @@ export class StreamingWorldState {
   }
 
   /** TAMRIEL2 (2026-10-08, Mac: "only implement the land mass"): THE FRAME THE WORLD STREAMS OVER, past the map - the
-   *  continent's box in the map's own coordinates (world/tamrielFrame.js tamrielFrameInBay), set by the world host
+   *  continent's box in the map's own coordinates (world/tamriel/tamrielFrame.js tamrielFrameInBay), set by the world host
    *  when the land beyond the Bay is on, null for DFU's own edge of the world. `onMap` stays the MAP's law (World of
    *  Daggerfall's slots and every reader of the data ask it); `streams` is what the load list and the range ask. */
   static frame = null;
-  /** ETHER-SEA (bible/03-World/Etheric-Sea.md): THE OTHER BOXES the world streams over - each `{ x0, y0, w, h }` in the
-   *  map's own coordinates (the Etheric Sea's, world/ethericSea.js etherFrame), set by the world host apart from the
+  /** ETHER-SEA (bible/03-World/Eltheric-Ocean.md): THE OTHER BOXES the world streams over - each `{ x0, y0, w, h }` in the
+   *  map's own coordinates (the Eltheric Ocean's, world/ethericSea.js etherFrame), set by the world host apart from the
    *  continent's `frame` (which the picture's fit resets as it lands). */
   static frames = [];
   static streams(px, py) {
@@ -223,6 +230,49 @@ export class StreamingWorldState {
   /** Drop a pixel from the loaded set (after the scene destroys it). */
   release(px, py) {
     this.loaded.delete(StreamingWorldState.key(px, py));
+  }
+
+  /** BUILD-RETRY: A PIXEL WHOSE BUILD THREW - let go, as `release` lets go, and asked for again by the stream itself
+   *  (`retryDue`) the next of BUILD_RETRY_MS after this failure while it is still in the grid. It was asked again only
+   *  by the next crossing that listed it, and a failure the next read would not have had (a fetch dropped, a store read
+   *  that failed) stood as a hole in the grid until then. `now` is real milliseconds. */
+  fail(px, py, now) {
+    const key = StreamingWorldState.key(px, py);
+    this.loaded.delete(key);
+    const tries = (this.failed.get(key)?.tries ?? 0) + 1;
+    this.failed.set(key, { px, py, tries, at: tries <= BUILD_RETRY_MS.length ? now + BUILD_RETRY_MS[tries - 1] : Infinity });
+  }
+
+  /** BUILD-RETRY: a pixel that stood - its failures forgotten. */
+  stood(px, py) {
+    this.failed.delete(StreamingWorldState.key(px, py));
+  }
+
+  /** BUILD-RETRY: the failed pixels whose wait is over, still in the grid and still let go - taken back on the books (as
+   *  the load list takes a pixel) and handed back, nearest first, for the queue. A pixel out of the grid is forgotten
+   *  (a crossing that lists it again asks afresh); one a crossing has listed already waits on that ask. */
+  retryDue(now) {
+    const out = [];
+    for (const [key, f] of this.failed) {
+      if (!this.inRange(f.px, f.py)) { this.failed.delete(key); continue; }
+      if (f.at > now || this.loaded.has(key)) continue;
+      f.at = Infinity;   // asked: its next failure sets the next wait, its standing forgets it
+      const p = { px: f.px, py: f.py };
+      this.loaded.set(key, p);
+      out.push(p);
+    }
+    return out.sort(nearestFirstFrom(this.current));
+  }
+
+  /** QUEUE-OWED (bible/06-Systems/Travel-View.md QUEUE-OWED): whether the host's build queue holds a pixel the stream
+   *  still owes next - the ones at its head the stream let go while they waited (left the grid behind a crossing) are
+   *  dropped unbuilt, so what stands at the head is the next to build. DFU's UpdateTerrains collects first and builds
+   *  only the terrains still active (StreamingWorld.cs:654-657); the pump built every entry and threw the ones let go
+   *  away after, so a fast journey's road spent the stream's time on ground nobody would see while the grid round the
+   *  traveller waited. */
+  owes(queue) {
+    while (queue.length && !this.loaded.has(StreamingWorldState.key(queue[0].px, queue[0].py))) queue.shift();
+    return queue.length > 0;
   }
 
   /**

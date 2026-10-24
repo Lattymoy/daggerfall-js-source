@@ -5,16 +5,22 @@
 // stood there in one heap, every one of them swinging. Once a frame each pool pushes apart every two of its bodies
 // whose capsules overlap: softly (each takes half the overlap, at most FOE_SPACING_SPEED a second), through the
 // collider (no wall is crossed), and never off an edge (a walker the push would leave with no ground under its centre
-// stays where it was - the drop the motor's own fall check refuses, EnemyMotor's FallCheck, characters/enemyMotor.js
+// stays where it was - the drop the motor's own fall check refuses, EnemyMotor's FallCheck, characters/enemy/enemyMotor.js
 // _fallCheck). A departure: DFU's controllers block, the port's pools push.
 import { worldAabb } from '../player/activate.js';   // AUDIT TACT C6: an action door's box
 import { CAPSULE_HEIGHT, CAPSULE_RADIUS, STEP_OFFSET } from '../player/motor.js';   // FIELD BUGS 2026-10-04d CRATE-FREE: a freed body keeps its own floor, a step at most
-import { FALL_CHECK_DROP } from './enemyMotor.js';
+import { FALL_CHECK_DROP } from './enemy/enemyMotor.js';
 
 /** How fast a body is pushed out of another, metres a second. */
 export const FOE_SPACING_SPEED = 3;
 /** Two capsules' centres closer than this overlap. */
 export const FOE_SPACING_GAP = 2 * CAPSULE_RADIUS;
+
+/** DOOR-JAM (FIELD BUGS 2026-10-14b): the height a body's controller sweeps at - its motor's own (`controllerHeight`,
+ *  EnemyMotor.HeightAdjust's crouch under a doorway's lintel, characters/enemy/enemyMotor.js _heightAdjust), else its capsule.
+ *  Two controllers meet at their live heights, and a push at the full height would shove a crouched body back out from
+ *  under the lintel it is passing. The ground check under a push keeps the body's own height (FallCheck's, `supported`). */
+export const sweepHeight = (ai) => ai.controllerHeight ?? ai.height ?? CAPSULE_HEIGHT;
 
 /** The default skip: the dead, and a puppet (another client poses it - its owner keeps it apart). */
 export const spacingSkips = (f) => !!f?.dead || !!f?.puppet || !f?.ai?.feet;
@@ -50,10 +56,10 @@ export function spaceFoes(foes, collider, dt, skip = spacingSkips) {
   let touched = false;
   for (let i = 0; i < n; i++) {
     if (!_live[i]) continue;
-    const a = foes[i].ai.feet, ha = foes[i].ai.height ?? CAPSULE_HEIGHT;
+    const a = foes[i].ai.feet, ha = sweepHeight(foes[i].ai);
     for (let j = i + 1; j < n; j++) {
       if (!_live[j]) continue;
-      const b = foes[j].ai.feet, hb = foes[j].ai.height ?? CAPSULE_HEIGHT;
+      const b = foes[j].ai.feet, hb = sweepHeight(foes[j].ai);
       if (!(a[1] < b[1] + hb && b[1] < a[1] + ha)) continue;   // one above the other: no contact
       const dx = b[0] - a[0], dz = b[2] - a[2];
       const d2 = dx * dx + dz * dz;
@@ -79,7 +85,7 @@ export function spaceFoes(foes, collider, dt, skip = spacingSkips) {
     const ai = foes[i].ai, feet = ai.feet;
     const airborne = !!(ai.flies || ai.swims || ai.levitating);
     _was[0] = feet[0]; _was[1] = feet[1]; _was[2] = feet[2];
-    const r = collider.move(feet, px, 0, pz, ai.height ?? CAPSULE_HEIGHT, !airborne);
+    const r = collider.move(feet, px, 0, pz, sweepHeight(ai), !airborne);
     if (!airborne && ((r && !r.grounded) || !supported(collider, ai, feet))) { feet[0] = _was[0]; feet[1] = _was[1]; feet[2] = _was[2]; continue; }   // never off an edge
     moved++;
   }
@@ -103,10 +109,10 @@ export function spaceAcross(pools, collider, dt, skip = spacingSkips) {
   const push = new Float64Array(n * 2);
   let touched = false;
   for (let i = 0; i < n; i++) {
-    const a = bodies[i].ai.feet, ha = bodies[i].ai.height ?? CAPSULE_HEIGHT;
+    const a = bodies[i].ai.feet, ha = sweepHeight(bodies[i].ai);
     for (let j = i + 1; j < n; j++) {
       if (group[i] === group[j]) continue;   // the pool's own spaceFoes has the pair
-      const b = bodies[j].ai.feet, hb = bodies[j].ai.height ?? CAPSULE_HEIGHT;
+      const b = bodies[j].ai.feet, hb = sweepHeight(bodies[j].ai);
       if (!(a[1] < b[1] + hb && b[1] < a[1] + ha)) continue;
       const dx = b[0] - a[0], dz = b[2] - a[2], d2 = dx * dx + dz * dz;
       if (d2 >= FOE_SPACING_GAP * FOE_SPACING_GAP) continue;
@@ -132,7 +138,7 @@ function nudge(ai, px, pz, cap, collider) {
   if (len > cap) { px *= cap / len; pz *= cap / len; }
   const feet = ai.feet, airborne = !!(ai.flies || ai.swims || ai.levitating);
   _was[0] = feet[0]; _was[1] = feet[1]; _was[2] = feet[2];
-  const r = collider.move(feet, px, 0, pz, ai.height ?? CAPSULE_HEIGHT, !airborne);
+  const r = collider.move(feet, px, 0, pz, sweepHeight(ai), !airborne);
   if (!airborne && ((r && !r.grounded) || !supported(collider, ai, feet))) { feet[0] = _was[0]; feet[1] = _was[1]; feet[2] = _was[2]; return false; }
   return true;
 }
@@ -275,19 +281,21 @@ export function bodyFits(collider, feet, height = CAPSULE_HEIGHT) {
  * meets the room's two walls first; under a table or a walkway with no underside the room is open round it). A room's
  * own shell looks in at it, and a model whose faces look both ways holds it in DFU too. Whatever its height: a body in a
  * crate taller than itself (41833, a 2.1 m cube) is held by its walls all the same. A collider that cannot answer - no
- * raycastHit to read a face's side by, no sphereOverlaps for the free's fit (bodyFits) - holds nobody.
+ * raycastHit to read a face's side by, no sphereOverlaps for the free's fit (bodyFits) - holds nobody. QUEST-FOE-WALL
+ * (FIELD BUGS 2026-10-15c, "Quest enemy spawned inside object"): and a COLUMN - a pillar to the ceiling has no lid in
+ * reach (no cap, or one past LODGE_REACH), so without one a body is held only when every bearing meets a face's back.
  */
 export function lodgedIn(collider, feet) {
   if (!feet || typeof collider?.raycastHit !== 'function' || typeof collider.sphereOverlaps !== 'function') return false;
   _knee[0] = feet[0]; _knee[1] = feet[1] + LODGE_KNEE; _knee[2] = feet[2];
   const lid = collider.raycastHit(_knee, UP, LODGE_REACH);
-  if (lid?.back !== true || !Number.isFinite(lid.dist)) return false;
+  const lidded = lid?.back === true && Number.isFinite(lid.dist);
   let walls = 0;
   for (const dir of KNEE_BEARINGS) {
     const h = collider.raycastHit(_knee, dir, LODGE_REACH);
     if (h?.back === true && Number.isFinite(h.dist)) walls++;
   }
-  return walls >= 2;
+  return walls >= (lidded ? 2 : KNEE_BEARINGS.length);   // QUEST-FOE-WALL: a column to the ceiling - no lid, every bearing in its skin
 }
 
 /** CRATE-FREE: does the line from `from` along the unit `dir` run `dist` meeting no face that looks at it? The faces it

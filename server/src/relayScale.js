@@ -58,8 +58,28 @@ export class Bounded extends Map {
  *  | double8/9  | frames sent, their bytes                                     |
  *  | double10/11| storage reads (get, list), storage writes (put, delete)      |
  *  | double12   | sockets refused (closed with a reason)                       |
+ *  | double13   | sockets refused 'room full' (SCALE5b, as all to double20)    |
+ *  | double14   | frames the byte budgets dropped (foes and own)               |
+ *  | double15   | the most sockets the room held in the window                 |
+ *  | double16/17| foes frames (and own), blows                                 |
+ *  | double18   | chat lines                                                   |
+ *  | double19/20| items the second wire batched, the batches that carried them |
+ *  | blob3      | blows the destination's funnels dropped (FOES-FIRST)         |
+ *  | blob4/5    | full foes frames the budget dropped, full foes frames asked  |
+ *  | blob6/7    | foes frames held for their turn (FOES-HOLD), held frames sent |
+ *  | blob8      | held frames that left the hold unsent (stale, sender gone)   |
+ *  | blob9      | the held frames' waits summed, ms (blob9 / blob7: the mean)  |
+ *  | blob10     | beats: empty frames said for a held sender (FOES-HOLD)       |
  *
- *  Per kind, sends a pose: SUM(double8) / SUM(double7); storage a hello: SUM(double10 + double11) / SUM(double3). */
+ *  Per kind, sends a pose: SUM(double8) / SUM(double7); storage a hello: SUM(double10 + double11) / SUM(double3).
+ *
+ *  FOES-FIRST (2026-10-21, bible/11-Multiplayer/Scale-Arc.md FOES-FIRST): the twenty doubles are all spoken for, so the
+ *  counts past them are BLOBS, each its count in decimal (a five-minute window's count, well inside 32 bits), read back
+ *  as numbers by the SQL API's `toUInt32` - the blows dropped `SUM(_sample_interval * toUInt32(blob3))`, blob4 and blob5
+ *  the same way, and a kind's full frames' drop rate their quotient - over `WHERE blob3 != ''`: a point from a relay
+ *  before FOES-FIRST has the empty string there, which the reference does not say `toUInt32` reads. (ClickHouse's
+ *  `toUInt64OrZero` would read it as 0, but the SQL API's reference lists `toUInt8` and `toUInt32` alone - checked
+ *  2026-10-21; RELAY-LOAD met a 422 for less.) */
 export const METRICS_WINDOW_MS = 5 * 60 * 1000;
 /** SCALE2b: a room key's kind for a metric - its prefix, at most 16 characters (never an id or a place's name). */
 export const roomKindOf = (key) => { const k = String(key ?? ''); const i = k.indexOf(':'); return ((i > 0 ? k.slice(0, i) : k).replace(/[^a-z0-9_-]/gi, '').slice(0, 16)) || 'none'; };
@@ -67,7 +87,7 @@ export class RoomMetrics {
   constructor(now = Date.now()) { this.reset(now); }
   reset(now) {
     this.since = now;
-    this.c = { hellos: 0, busy: 0, frames: 0, bytesIn: 0, poses: 0, sends: 0, bytesOut: 0, reads: 0, writes: 0, refusals: 0, full: 0, drops: 0, peak: 0, foes: 0, hits: 0, chats: 0, owed: 0, batches: 0 };   // SCALE5b: from `full` on
+    this.c = { hellos: 0, busy: 0, frames: 0, bytesIn: 0, poses: 0, sends: 0, bytesOut: 0, reads: 0, writes: 0, refusals: 0, full: 0, drops: 0, peak: 0, foes: 0, hits: 0, chats: 0, owed: 0, batches: 0, hitDrops: 0, fullDrops: 0, fulls: 0, held: 0, heldSent: 0, heldGone: 0, heldMs: 0, beats: 0 };   // SCALE5b: from `full` on; FOES-FIRST: from `hitDrops` on, the blobs; FOES-HOLD: from `held` on
   }
   /** Anything to say? */
   get busy() { const c = this.c; return c.hellos + c.busy + c.frames + c.sends + c.reads + c.writes + c.refusals + c.full > 0; }   // SCALE5b: a room that only refused a socket for being full has that to say
@@ -78,7 +98,7 @@ export class RoomMetrics {
     if (wrote) {
       try {
         sink.writeDataPoint({
-          indexes: [kind], blobs: [kind, String(version)],
+          indexes: [kind], blobs: [kind, String(version), String(c.hitDrops), String(c.fullDrops), String(c.fulls), String(c.held), String(c.heldSent), String(c.heldGone), String(Math.round(c.heldMs)), String(c.beats)],   // FOES-FIRST: blob3 to 5, counts - the doubles are all spoken for; FOES-HOLD: blob6 to 10
           // SCALE5b (2026-10-10; bible/11-Multiplayer/Scale-Arc.md SCALE5b): WHAT SAYS A ROOM'S LIMIT IS NEAR, from double13 -
           // the sockets refused 'room full' (the Worker's door, which counted nothing - AUDIT SCALE II R1-5: a refusal the
           // walk could not get past, its last try's or a room's that does not layer, never a full layer it walked on from),
@@ -120,13 +140,30 @@ export function countedState(state, metrics) {
   });
 }
 
+/** DO-ASK (2026-10-16): THE WORKER'S ASK OF A ROOM, ONCE MORE WHERE THE RUNTIME SAYS IT MAY BE. A Durable Object stub's
+ *  error carries `retryable` where the object was reset or its connection lost before it ran anything, and `overloaded`
+ *  where its queue ran too long - the live relay showed both (a region channel's storage reset, a crowded cell's queue).
+ *  Every ask the Worker makes is a socket's upgrade, which nothing has run yet, so a retryable one is asked once more on
+ *  a fresh stub; an overloaded one never (that only lengthens the queue). What is left is a 503 the page's backoff
+ *  answers (online.js BACKOFF_MIN_MS..BACKOFF_MAX_MS) - never an exception thrown out of the Worker. */
+export async function askRoom(rooms, name, request) {
+  for (let i = 0; ; i++) {
+    try { return await rooms.get(rooms.idFromName(name)).fetch(request); } catch (e) {
+      const err = /** @type {{ retryable?: boolean, overloaded?: boolean, message?: string }} */ (e ?? {});
+      if (i === 0 && err.retryable && !err.overloaded) continue;
+      console.warn('[worker] a room did not answer', name, err.message ?? e);
+      return new Response(JSON.stringify({ error: err.overloaded ? 'busy' : 'unavailable' }), { status: 503, headers: { 'content-type': 'application/json', 'access-control-allow-origin': '*', 'retry-after': '2' } });
+    }
+  }
+}
+
 /** SCALE5d: the Worker's walk of a crowded place's layers - `start` first, then each after it, round to LAYERS_MAX; the
  *  first object that is not full answers (its socket, or its own refusal), and only a full room's refusal
  *  (LAYER_FULL_HEADER) sends the walk on. Every layer full: the last refusal, `room full`, as one room's was - the last
  *  try marked so (LAYER_LAST_HEADER, AUDIT SCALE II R1-5), and an asked layer that holds nobody walked from the place
  *  (LAYER_ASK_HEADER, AUDIT SCALE II R3-3). Here, not
  *  in index.js: the entrypoint's every named export is read as an entrypoint, and a function there stops workerd
- *  starting (test/accountdeploy.test.js AUDIT-ACC F2 caught it). */
+ *  starting (test/server/accountdeploy.test.js AUDIT-ACC F2 caught it). */
 export async function layerWalk(rooms, key, request, start) {
   // the page's own word of the walk's headers is never passed on: its layer is overwritten below, its ask and its last
   // dropped (a Headers lower-cases its names, as these are)
@@ -144,7 +181,7 @@ export async function layerWalk(rooms, key, request, start) {
     const headers = { ...page, [LAYER_HEADER]: String(ly) };
     if (ask) headers[LAYER_ASK_HEADER] = '1';
     else if (i === LAYERS_MAX - 1) headers[LAYER_LAST_HEADER] = '1';   // AUDIT SCALE II R1-5: the refusal nothing walks past - the one a room counts (double13)
-    res = await rooms.get(rooms.idFromName(layerName(key, ly))).fetch(new Request(request, { headers }));
+    res = await askRoom(rooms, layerName(key, ly), new Request(request, { headers }));   // DO-ASK: a layer that did not answer is asked once more, or its 503
     if (ask) { ask = false; if (res.status === 503 && res.headers.get(LAYER_EMPTY_HEADER) === '1') { start = 0; i = -1; continue; } }
     if (res.status !== 503 || res.headers.get(LAYER_FULL_HEADER) !== '1') return res;
   }

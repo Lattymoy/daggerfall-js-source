@@ -51,7 +51,7 @@ its `modsettings.json`:
 | `CalculateStruckBodyPart` | twenty slots, feet likelier than the head | `PCAAO_BODY_PARTS`, `pcaaoStruckBodyPart` |
 | `CriticalStrikeHandler` | luck's `Mathf.Floor((luck-50)/25f)` term (clamp discarded) bending the divisor | `pcaaoCriticalStrike` |
 | `GetBonusOrPenaltyByEnemyType` | willpower's `Random.Range(0, n)` bonus and the level penalty on the career's Bonus/Phobia bits, the Humanoid arm on GetEnemyGroup | `pcaaoBonusOrPenaltyByEnemyType` |
-| `CalculateHandToHandAttackDamage` / `CalculateWeaponAttackDamage` | the strength term, the Skeletal Warrior's halving and the silver six's doubling, a two-handed non-bow doubling the strength term | `pcaaoHandToHandAttackDamage`, `pcaaoWeaponAttackDamage`, `SILVER_DOUBLED_CAREERS` |
+| `CalculateHandToHandAttackDamage` / `CalculateWeaponAttackDamage` | the strength term, the Skeletal Warrior's halving and the silver six's doubling, a two-handed non-bow doubling the strength term (and the beast's claws their gauntlets' metal since BAL6-GAUNTLETS, the fifth departure) | `pcaaoHandToHandAttackDamage`, `pcaaoWeaponAttackDamage`, `SILVER_DOUBLED_CAREERS` |
 | `AdjustWeaponHitChanceMod` / `AdjustWeaponAttackDamage` | Roleplay Realism's archery: the bow's draw time in ms bends hit and damage; registered on FormulaHelper whatever the armour module says (AUDIT PCO1) | Roleplay Realism's own `rrAdjustWeaponHitChanceMod`, `rrAdjustWeaponAttackDamage` (rrRealism.js - one export, AUDIT 68), registered on `formulas.adjustWeaponHitChanceMod` / `adjustWeaponAttackDamage` - DFU's two no-op hooks, grown into the stock core at the C#'s two sites (AUDIT PCO1); the draw timer is `playerWeapon.lastDrawMs` (below) |
 | `AlterDamageBasedOnWepCondition` / `AlterArmorReducBasedOnItemCondition` | the condition bands | `pcaaoAlterDamageBasedOnWepCondition`, `pcaaoAlterArmorReducBasedOnItemCondition` |
 | `ArmorMaterialIdentifier` / `ArmorMaterialModifierFinder` / `EqualizeMaterialConditions` / `SpecificWeaponConditionDamage` | the four material ladders | the four `pcaao*` of the same names |
@@ -77,7 +77,7 @@ bug as shipped, or both mods off by default, Mac chose the clamp.
 the stock core applies and the mod's author wrote - in both directions:
 every blow lands at least 3 in 100 (55 of 2000 on that Vampire, 51 on the
 Lich) and misses at least 3 in 100, a monster's on the player included.
-Ledger A's PCO1 row records it; `test/pcaao.test.js` pins it.
+Ledger A's PCO1 row records it; `test/systems/pcaao.test.js` pins it.
 
 ## The second departure: the wear modules ship off (WEAR-VANILLA, 2026-10-01)
 
@@ -105,7 +105,7 @@ online the room reads the port's defaults. Measured through `calculateAttackDama
 skills 70, level-10 foes, a quality-10 smith; repair prices unchanged): a
 Daedric longsword's repair 17.5-25.2 gold a landed hit -> 4.8-6.9, a
 Daedric cuirass's 6.4-10.6 a monster's blow -> 0 and an armed foe's 6.4 ->
-0.9; Ebony 4.4-6.7 -> 1.3-2.0 and 2.0-3.5 -> 0-0.3. Ledger A, WEAR-VANILLA; `test/wear_vanilla.test.js`.
+0.9; Ebony 4.4-6.7 -> 1.3-2.0 and 2.0-3.5 -> 0-0.3. Ledger A, WEAR-VANILLA; `test/systems/wear_vanilla.test.js`.
 
 **Below the reduction (AUDIT ECON W1, 2026-10-01).** DFU's member is handed
 the damage the blow DEALT - after the overhaul's armour reduction, as the
@@ -159,7 +159,7 @@ blows or none: Worm's Tooth (a Dagger or a Tanto) its strike for five,
 Nightwhisper on a Dagger or a Tanto its held Chameleon not past the equip. Every weapon type now mints from the Warhammer's
 1,600, the deepest row, so no type has less than it had
 (`characters/weapons.js` `WEAPON_CONDITION_POOL`, read by
-`systems/itemTemplates.js` `mintCondition` in the row's place), and the
+`systems/item/itemTemplates.js` `mintCondition` in the row's place), and the
 ladder over it as before: 1,600 iron, 2,400 steel and silver, 3,200
 elven, 4,800 dwarven, 6,400 mithril, 8,000 adamantium, 9,600 ebony,
 11,200 orcish, 12,800 Daedric. The rows stay Daggerfall's and every cost
@@ -170,7 +170,7 @@ item and an artifact their uses. A save's weapons move to the pool at the
 same share - a broken piece stays broken - on load, and any piece the load
 does not reach before its first wear (`systems/conditionRepair.js`
 `repoolWeapon`, `systems/equip.js` `lowerCondition`; AUDIT WEAPON-POOL,
-below). Ledger A, WEAPON-POOL; `test/weaponpool.test.js`.
+below). Ledger A, WEAPON-POOL; `test/systems/weaponpool.test.js`.
 
 A soft weapon still wears by what it deals: an iron blade on a Ghost does
 nothing in DFU and wears nothing, and does a little under the soft-material
@@ -221,6 +221,55 @@ mod's premise: armour reduces damage and never the chance to be hit. The
 fight against a foe at the 97% clamp moves through the crit (damage taken
 about 14% more), and against a lower foe through the to-hit.
 
+## The fifth departure: the beast's claws take its gauntlets' metal (BAL6-GAUNTLETS, 2026-10-12)
+
+The owner, 2026-10-12: "based on your equipped gauntlets it would affect
+your attacks as a wereboar/werewolf. Like scaling without being
+overpowered" (`05-Combat/Balance-Arc.md` section 12). The mod's
+`CalculateHandToHandAttackDamage` rolls the fist, adds the swing's and
+the career's modifiers and its own strength term, and reads no item. A
+transformed lycanthrope's plate gauntlets now add their metal's
+GetWeaponMaterialModifier (Elven +1 to Daedric +6, never below 0) there,
+after the strength term and before the `< 1` floor, where
+`CalculateWeaponAttackDamage` adds a weapon's. `pcaaoHandToHandAttackDamage`
+reads `combat/clawMetal.js` clawMetalDamage, the one law DFU's core, the
+refereed lanes' stand-in and the stats card's model read too. The hit
+chance is untouched, the condition bands never read it, and a fist that
+is not the beast's is the mod's as written.
+
+## The sixth departure: the left hand's shield is a shield (TWO-HANDS-SHIELD, 2026-10-17)
+
+Found reading a player's report of a vanished off-hand weapon (the report
+itself is wear - `05-Combat/Two-Hands.md`; this is what the reading turned
+up beside it). The mod's `CalculateAttackDamage` takes whatever the left
+hand holds (`ItemEquipTable.GetItem(EquipSlots.LeftHand)`) and never asks
+IsShield before `ShieldBlockChanceCalculation`, `CompareShieldToUnderArmor`
+and the shield reductions read it. Port-side this was carried bug for bug
+(the line it retires stood in the list below), and it was rare: a weapon
+sat in the left hand only while it waited for H. TWO-HANDS (2026-10-16)
+made it every pair. A weapon covers no part, so it rolled the weak spot -
+the C#'s default, 40/0, bent by the six stats: 0 at all-50, 13% of blows
+for a defender of Agility 70, Speed 65, Strength and Endurance 60, 27% at
+90, 85, 70 and 70 with Luck 60. An iron one then blocked as a LEATHER
+SHIELD: `ArmorMaterialIdentifier` reads a non-shield by
+GetMaterialArmorValue, which reads the iron's material 0 as leather's 3
+(`/ 2` = row 1). Measured over 50,000 seeded blows of a steel
+longsword on bare skin, the defaults: an iron off-hand dagger took 4.9%
+and 8.1% off the damage at those two builds; any other metal blocked for
+nothing, but still set the block that routes the mod's wear.
+
+A shield now is DaggerfallUnityItem.GetIsShield - ItemGroup Armor and one
+of the four shield templates (`combat/pcaao.js` `isShield`, the test its
+reductions already used). `leftHandShield` answers the left hand's shield
+or null, and every read of the hand in the module goes through it: the
+overhaul's block roll, the plain DamageEquipment cover test, the wear's
+struck piece and the reductions. The C#'s 40/0 default case is kept as
+written and is handed a shield alone. DFU's own `DamageEquipment` already
+read the hand through the shield's cover (`SHIELD_PARTS`), so the stock
+lane is unchanged; a dual wielder gives up the shield's block under both.
+Pinned in `test/systems/pcaao.test.js` on the builder's own pieces;
+`tools/mutants/twohandsshield.json`, 2 mutants, both dead.
+
 ## What is kept bug for bug
 
 - `Mathf.Round` rounds half to EVEN (`unityRound`), and every float the
@@ -246,10 +295,7 @@ about 14% more), and against a lower foe through the to-hit.
   is 1 since WEAR-VANILLA (above), which turned the mod's wear off instead;
   BALANCE1's 0.6 had softened that wear (~2.8x DFU's on a weapon per landed
   hit and ~15x on armour, measured first) without undoing it. Ledger A,
-  `01-Overview/Field-Bugs-2026-09-27-phone-backup-drains.md`.
-- A left-hand item that is not a shield still goes through the shield
-  roll (the C# never asks IsShield there); `GetShieldProtectedBodyParts`
-  answers nothing for it, so it rolls the weak spot.
+  `01-Overview/bugs/Field-Bugs-2026-09-27-phone-backup-drains.md`.
 - A CLASS enemy's bare fists deal NOTHING (AUDIT PCO1). The mod's
   `CalculateHandToHandAttackDamage` rolls the fist only for `player`;
   a non-player gets its `damageModifier` alone, and the mod's
@@ -292,7 +338,7 @@ about 14% more), and against a lower foe through the to-hit.
   the switch** - DFU rewrites the table at Awake; the port overlays the
   row at mint.
 
-## Pinned (`test/pcaao.test.js`, 26)
+## Pinned (`test/systems/pcaao.test.js`, 27)
 
 The ladder; the half-to-even round through a float32 half; DamageModifier
 and the material hit bonus; every hit helper against a hand-worked cell;
@@ -303,7 +349,8 @@ condition bands; the four material ladders; the material-difference
 arithmetic; the wear (weapon, piece, shield, a fist, the fading removal,
 the warnings' words and delays); the reduction cells with the cap and
 the natural resistance; the monsters' hides and their weapons; the
-shield roll and the under-armour comparison; the natural resistance's
+shield roll and the under-armour comparison; a weapon in the left hand
+blocking nothing (TWO-HANDS-SHIELD); the natural resistance's
 extremes; the proficiency and racial ladders; a whole blow through each
 branch (a sword, the soft material's line, a monster's assigned axe
 wearing the player's cuirass); the registry declining and accepting;
@@ -362,7 +409,7 @@ player's in the C# (`playerEntity.Reflexes`); the port's core reads the
 same `playerReflexes`-or-target fallback its stock core does, which
 hands the player's in every fight the player is in. The break message
 on a foe's gear follows the stock port (DFU's ItemBreaks pops it for
-any owner). Pins: 24 in `test/pcaao.test.js`.
+any owner). Pins: 24 in `test/systems/pcaao.test.js`.
 
 ## AUDIT WEAPON-POOL (2026-10-06, Mac: "Audit this") - WEAPON-POOL read again before it merges
 
@@ -370,7 +417,7 @@ Three independent lanes, each a cold read of the PR (#656) against its committed
 reads a weapon's condition (every producer, every reader in points); the migration's reach (every place a save, the
 relay or the account service keeps a weapon, every load path, the boot order, the fingerprint); and what the change
 says and pins (every claim computed, every page it left, its pins mutated past their 23 records). Every finding was
-reproduced before it was fixed. FOUND, each fixed and pinned (`test/auditweaponpool.test.js` 4, `test/weaponpool.test.js`
+reproduced before it was fixed. FOUND, each fixed and pinned (`test/systems/auditweaponpool.test.js` 4, `test/systems/weaponpool.test.js`
 4; `tools/mutants/auditweaponpool.json` 6 of 6 dead, `weaponpool.json` re-aimed by content, 23 of 23):
 
 - **MEDIUM - P1: SELL-AS-FOUND's mark stayed on the row's pool.** Roleplay & Realism: Items marks a found piece's
@@ -440,7 +487,7 @@ can't keep the numbers as is"), and what is left for another pass:
   cannot be told from a classic piece the player enchanted.
 - **Not this change's, for its own pass:** the load's other repairs (DISC21-A's mint, DISC29-B's names, RARITY-WEAR)
   walk the same lists, so they miss the stores P2 names - a piece is repaired at a later load once it is back in the
-  pack, or never; and customs' walk (`net/realmGoldLaw.js` stashedItemLists) misses a revenant companion's pack. DONE
+  pack, or never; and customs' walk (`net/realm/realmGoldLaw.js` stashedItemLists) misses a revenant companion's pack. DONE
   in the same pull request, on Mac's word: ITEM-WALK, below.
 
 Checked and found sound: every weapon mint runs through mintCondition (the loot factories, shops, enemies and Roleplay
@@ -457,14 +504,14 @@ alone; a guild's shelf holds no weapon a mint gives.
 
 AUDIT WEAPON-POOL left two gaps it did not cause for their own pass: the load's other repairs walked the lists the
 weapon migration walked, and customs did not count a sworn revenant's pack. Mac asked for both in this pull request.
-`test/itemwalk.test.js` (5), `tools/mutants/itemwalk.json` (25 of 25 dead).
+`test/systems/itemwalk.test.js` (5), `tools/mutants/itemwalk.json` (25 of 25 dead).
 
-- **A - one walk of every list a save holds** (`systems/save.js` savedItemLists, heldItemLists). The load's one-time
+- **A - one walk of every list a save holds** (`systems/save/save.js` savedItemLists, heldItemLists). The load's one-time
   item repairs (DISC21-A's mint, WEAPON-POOL's move, DISC29-B's names, WB12a's Embers, RARITY-WEAR's bases) ran over
   the pack's lists and customs' walk, and nowhere else. A piece kept anywhere else was repaired only once it was back
   in the pack and the game loaded again: a weapon by P2's door at its first wear, the others never. Now one walk holds
   every list: the character's own five (the pack, the wagon, the Materials Bag, the furnisher's deliveries and the
-  repairer's shelf), every list customs reads (`net/realmGoldLaw.js` stashedItemLists), and every other one
+  repairer's shelf), every list customs reads (`net/realm/realmGoldLaw.js` stashedItemLists), and every other one
   (heldItemLists):
   - in each cached scene, the owner's own things set out in a room (`decorOwn`; never a weapon or armour) and a guild's
     day's Buy shelves (`guildShelves`);
@@ -487,7 +534,7 @@ weapon migration walked, and customs did not count a sworn revenant's pack. Mac 
   its heir at birth, with no load at all, and the remains open where they lie. The runner now runs on each bequest
   piece as it is paid (`payEstateOf`) and on a remains list as it opens, before the claim's mark is taken, so opening
   a list still claims nothing.
-- **C - customs counts a sworn revenant's pack** (`net/realmGoldLaw.js` stashedItemLists). The player stores into a
+- **C - customs counts a sworn revenant's pack** (`net/realm/realmGoldLaw.js` stashedItemLists). The player stores into a
   sworn revenant's pack as into a crew hand's (`revenantCompanions.js` packOf), and AUDIT WK-P1 counted the crew's alone:
   a million gold in the revenant's pack crossed whole. Each sworn, undefeated record's `companion.items` is now counted
   and taken from as the crew's are, and the account service's first-save gate reads the same walk. A record the load
@@ -504,7 +551,7 @@ Recorded, not changed:
   Foe by the same object in the Foe's `itemQueue`, and a load restores the two as separate copies. After a load, the
   quest repair (`repairActiveQuests`) can place such an item at its marker again, while the foe still carries it.
 
-Re-aimed: `test/disc21.test.js`'s pin on the load's repair line (the walk and the runner), and
+Re-aimed: `test/systems/disc21.test.js`'s pin on the load's repair line (the walk and the runner), and
 `tools/mutants/audit0929_actions.json`'s D3 record (customs' walk dropped from savedItemLists).
 
 ## MEND-WORN (2026-10-07, Mac: "Now we just gotta fix the 'repairs objects' not working") - Repairs Objects mends what is worn
@@ -525,32 +572,46 @@ equip order enumeration". The port ran the 2022 law verbatim, and three things i
 - **The pool.** WEAPON-POOL's pools (1,600 to 12,800) left a weapon one point a tick, a 32nd of a dagger's old share: an
   iron blade 1% about every five real minutes, a Daedric one every 43.
 
-The law now (`systems/enchantments.js` `repairsObjectsTarget`, `POOL_WEAPON_MEND`; `systems/itemTemplates.js`
+The law now (`systems/enchantments.js` `repairsObjectsTarget`, `repairsObjectsMend`; `systems/item/itemTemplates.js`
 `mendOrder`):
 
 - **Which piece.** What is worn first, the most worn first (the lowest share of its condition left), then the pack's most
   worn; two at one share keep the pack's order. That is MEND-AIM's order for a repair kit (kurkku: "always repairing the
   most worn piece of equipment means fixing arrows or random loot you picked up most of the time"). It is one export now,
-  `mendOrder`, read by the kit's `repairKitTargets` and by Repairs Objects.
+  `mendOrder`, read by the kit's `repairKitTargets` and by Repairs Objects. MEND-TIERS (FIELD BUGS 2026-10-15d, Mac's
+  call): Repairs Objects reads it within three tiers (`mendTier`) - what is worn; then a worn piece that wears itself on
+  the tick's own round (Cast When Held's degrade, Item Deteriorates; `wearsItself`), which took every tick at +1 and -1
+  when it was the most worn and which MEND-STARVE (2026-10-14) had put behind the pack; then the pack. The kit keeps
+  the two. While such a piece is below its condition the pack waits, and Cast When Held wears on every tick's round
+  out of rest and an all-the-time Item Deteriorates on every one, so while one is worn nothing carried is mended
+  (`01-Overview/bugs/Field-Bugs-2026-10-15d.md`).
 - **Never what a smith refuses** as not repairable (the template's `isNotRepairable`, `repairService.js`
   repairRefusal's). An enchanted piece mends only under AllowMagicRepairs, which is DFU's gate (on by default and online,
   DISC22-A).
-- **How much.** A weapon on the pool mends 32 a tick (Mac, asked: "Weapons as a classic dagger"). That is the classic
-  Dagger's point of its 50, on the pool: iron 2% a tick, Daedric 0.25%. DFU's own yardstick, a Dwarven dagger battered
-  to new in eight or nine hours, now holds for every weapon type: 123 ticks, about 8.2 game hours. A magic item's or an
-  artifact's condition is its uses, not the pool (`loot.js`), so it keeps DFU's point, and so do armour and everything
-  else.
+- **How much.** A tick mends a fiftieth of the piece's own condition, never less than DFU's point (`repairsObjectsMend`):
+  the classic Dagger's point of its 50 (Mac, asked: "Weapons as a classic dagger"), every piece's alike since
+  MEND-ARMOUR (FIELD BUGS 2026-10-16b) - a weapon, armour of any material, clothing. A magic item's or an artifact's
+  USES keep DFU's point (MEND-ARMOUR's audit: the round runs through every rest and fast travel too, and a fiftieth gave a
+  spent Cast When Used piece all 1,000 uses back in one 8-hour rest - 100 casts, where the point gives 12; a charge is
+  not wear). Every other piece's share climbs 2% a tick, whatever its kind, its material or its size; an iron weapon's tick is 32,
+  MEND-WORN's own, and any piece's whole condition is 50 ticks' mending (about 3.3 game hours), as a classic iron
+  dagger's was. MEND-WORN gave the share to a weapon on the pool alone, on the pool (32: Daedric 0.25% a tick), and
+  left everything else DFU's point (`RepairsObjects.cs:26`, conditionAmount): beside a blade that climbed, a steel
+  cuirass (6,144) went 1% every 61 ticks and a Daedric one (32,768) every 328, and a player read it as "no other worn
+  items are repairing" (`01-Overview/bugs/Field-Bugs-2026-10-16b.md` MEND-ARMOUR). The owner, 2026-10-16: "Stop trying to
+  match DFU." A blade in steel plate battered to 50%, the plate to 70%, is whole in 164 ticks, about 55 real minutes -
+  it was 8,408 ticks at the point, 47 real hours. The departure from DFU's point is Port-Ledger A's MEND-WORN row.
 - **Unchanged from DFU:** the cadence (every fourth round), the player alone, one piece a tick, and no synthetic-time
   gate. A weapon still on its row's pool moves to the one pool first (`repoolWeapon`), as `lowerCondition` does before a
   wear (AUDIT WEAPON-POOL P2).
 
 Recorded, not changed:
-- **A pool weapon now mends about as fast as a fight wears it.** It gets 32 a tick, every twenty real seconds, against a
-  point or two a landed blow (WEAR-ONE). A classic dagger had the same share per tick and wore 32 times as fast.
-- **Armour keeps the point:** an iron cuirass (4,096) mends 1% every 41 ticks, about 14 real minutes. The most worn
-  piece takes every tick, so a blade waits behind a cuirass worn further than it: Roleplay & Realism's kit at 53% holds
-  a blade at 69% back upwards of 630 ticks, 42 game hours. In play the blade is usually the most worn: it wears on every
-  blow the player lands, a piece of armour only on the blows that strike it, and its pool is the smaller.
+- **A worn piece now mends faster than a fight wears it.** An iron weapon gets 32 a tick, every twenty real seconds,
+  against a point or two a landed blow (WEAR-ONE), and since MEND-ARMOUR a Daedric one 256 and a piece of armour its
+  fiftieth (an iron cuirass 82). A classic dagger had the same share per tick and wore 32 times as fast.
+- **The most worn piece takes every tick**, so a blade waits behind a cuirass worn further than it - since MEND-ARMOUR
+  a short wait, every share climbing 2% a tick: a cuirass at 53% passes a blade at 69% in eight or nine ticks (at the
+  point it was upwards of 630).
 - **Camping Equipment** keeps its uses in its condition and a smith mends it, so it is mended once nothing worn wants
   it, as a smith would.
 - **Item Deteriorates** still wears a point every four rounds (AUDIT WEAPON-POOL's recorded line, above).
@@ -558,6 +619,11 @@ Recorded, not changed:
 Four hosts: none changed. The law runs in the one round pump (`systems/worldTick.js` runMagicRoundsFor, then
 enchantmentMagicRound) that every host's ticker feeds: exterior.js, world.js and worldModes.js through
 `scenes/shared.js` createPlayerTicker, and dungeonContext.js through tickPlayerMinutes. Deploy: none, since neither
-service's bundle reaches these files. `test/mend_worn.test.js` (8); `tools/mutants/mend_worn.json` (15 of 15 dead, the
+service's bundle reaches these files. `test/systems/mend_worn.test.js` (8); `tools/mutants/mend_worn.json` (15 of 15 dead, the
 old walk restored among them). Re-aimed by content, because the kit's comparator moved into `mendOrder`:
 `tools/mutants/mend_aim.json` MEND-AIM-loot-before-worn and `tools/mutants/prof3.json` PROF3-kit-least-worn (both dead).
+MEND-ARMOUR (FIELD BUGS 2026-10-16b): `test/systems/fb1016b_mendarmour.test.js` (3); `tools/mutants/fb1016b_mendarmour.json` (7, all
+dead). Its pins moved where they said a point: `test/systems/mend_worn.test.js` (the rate, uses, the setting, the pump),
+`test/systems/fb1014_mendstarve.test.js` and `test/systems/fb1015_mendtiers.test.js` (a self-wearing piece is mended past its wear now,
+not held), `test/systems/enchantments.test.js` (E1's one item); `tools/mutants/mend_worn.json`'s six records on the old law
+re-aimed by content (uses and an artifact now on the point), all dead.

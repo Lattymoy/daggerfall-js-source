@@ -1,6 +1,6 @@
 // INT1 (the INTEGRITY arc - bible/06-Systems/Integrity-Arc.md): THE HONEST PRODUCERS, SWEPT. Not a .test.js on
 // purpose (the manifest counts suites, and this is a fixture): every item home this tree has, called the way the game
-// calls it, on seeded rolls - so the item law (src/systems/itemLaw.js itemFindings) can be pinned against what an
+// calls it, on seeded rolls - so the item law (src/systems/item/itemLaw.js itemFindings) can be pinned against what an
 // honest client really mints, never against hand-written literals.
 //
 //   honestItems({ seeds }) -> [{ source, item }]   each item a deep copy taken the moment its producer handed it over
@@ -30,42 +30,42 @@ async function load(path) {
   try { return await import(new URL(path, import.meta.url)); } catch (e) { IMPORT_FAILS.push({ source: `import ${path}`, error: errText(e) }); return null; }
 }
 
-const LOOT = await load('../src/systems/loot.js');
-const LR = await load('../src/systems/lootRarity.js');
-const TECH_ROSTER = await load('../src/combat/techniqueRoster.js');   // TECH1: a piece's technique family
+const LOOT = await load('../src/systems/loot/loot.js');
+const LR = await load('../src/systems/loot/lootRarity.js');
+const TECH_ROSTER = await load('../src/combat/technique/techniqueRoster.js');   // TECH1: a piece's technique family
 const PREFS = await load('../src/systems/uiPrefs.js');
-const SIGIL = await load('../src/systems/sigil.js');
+const SIGIL = await load('../src/systems/sigil/sigil.js');
 const MODS = await load('../src/systems/modSettings.js');
 const INV = await load('../src/systems/inventory.js');
 const EQUIP = await load('../src/systems/equip.js');
-const TPL = await load('../src/systems/itemTemplates.js');
+const TPL = await load('../src/systems/item/itemTemplates.js');
 const ENEMY_EQ = await load('../src/combat/enemyEquipment.js');
-const BASICS = await load('../src/characters/enemyBasics.js');
-const ENEMY = await load('../src/characters/enemyEntity.js');
+const BASICS = await load('../src/characters/enemy/enemyBasics.js');
+const ENEMY = await load('../src/characters/enemy/enemyEntity.js');
 const HOST_COMBAT = await load('../src/scenes/hostCombat.js');
 const CORPSE = await load('../src/scenes/corpseMarker.js');
 const CHAMP = await load('../src/systems/champions.js');
 const ELITE = await load('../src/systems/eliteFoes.js');
-const GATE = await load('../src/systems/gateSpoils.js');
+const GATE = await load('../src/systems/gate/gateSpoils.js');
 const SPOILS_POOL = await load('../src/scenes/spoilsPool.js');
 const RAID = await load('../src/systems/raidSpoils.js');
-const SERPENT = await load('../src/systems/serpentSpoils.js');
-const SD = await load('../src/systems/sdSpoils.js');
-const BROKER = await load('../src/systems/sigilBroker.js');
+const SERPENT = await load('../src/systems/serpent/serpentSpoils.js');
+const SD = await load('../src/systems/superDungeon/sdSpoils.js');
+const BROKER = await load('../src/systems/sigil/sigilBroker.js');
 const AETH = await load('../src/systems/aetheric.js');
 const GILD = await load('../src/systems/gilded.js');
 const REFORGE = await load('../src/systems/reforge.js');
-const CODEX = await load('../src/systems/lootCodex.js');
+const CODEX = await load('../src/systems/loot/lootCodex.js');
 const MAGIC_DEF = await load('../src/formats/magicDef.js');
 const { DFU_MAGIC_ITEMS } = await load('./dfuMagicItems.mjs');
 const SHOP = await load('../src/systems/shopStock.js');
 const CONTAINER = await load('../src/systems/containerLoot.js');
 const SCENE_CACHE = await load('../src/systems/sceneCache.js');
 const START = await load('../src/systems/startingGear.js');
-const RRI_KITS = await load('../src/systems/rriKits.js');
-const RRI_INSTALL = await load('../src/systems/rriInstall.js');
-const ILIAC = await load('../src/systems/iliacItems.js');
-const CARDS = await load('../src/net/iliacCards.js');
+const RRI_KITS = await load('../src/systems/roleplayRealismItems/rriKits.js');
+const RRI_INSTALL = await load('../src/systems/roleplayRealismItems/rriInstall.js');
+const ILIAC = await load('../src/systems/iliac/iliacItems.js');
+const CARDS = await load('../src/net/iliac/iliacCards.js');
 const RECIPES = await load('../src/net/recipeLaw.js');
 const SMITH = await load('../src/systems/smithItems.js');
 const COOK = await load('../src/systems/cookItems.js');
@@ -79,45 +79,46 @@ const ENCH = await load('../src/systems/enchanting.js');
 const CAT = await load('../src/systems/enchantmentCatalogue.js');
 const CREATE = await load('../src/systems/createItem.js');
 const CREATE_ROWS = await load('../src/systems/createItemRows.js');
-const REST = await load('../src/systems/restItems.js');
-const REST_ROWS = await load('../src/systems/restItemRows.js');
+const REST = await load('../src/systems/rest/restItems.js');
+const REST_ROWS = await load('../src/systems/rest/restItemRows.js');
 const SURV_ITEMS = await load('../src/systems/survival/items.js');
 const SURV_LOOT = await load('../src/systems/survival/loot.js');
 const SURV_SWITCH = await load('../src/systems/survival/switch.js');
-const FORAGE = await load('../src/systems/foragingInstall.js');
-const FORAGE_LAW = await load('../src/systems/foragingLaw.js');
+const FORAGE = await load('../src/systems/foraging/foragingInstall.js');
+const FORAGE_LAW = await load('../src/systems/foraging/foragingLaw.js');
 const THUNDER = await load('../src/systems/thunderlock.js');
 const AYLEID = await load('../src/systems/ayleidStones.js');
 const WALLET = await load('../src/systems/walletItem.js');
 const KEEPSAKE = await load('../src/systems/livingWorld/keepsake.js');
 const HEIRLOOM = await load('../src/systems/legacy/heirloom.js');
-const CSA = await load('../src/systems/comeSailAwayItems.js');
+const CSA = await load('../src/systems/comeSailAway/comeSailAwayItems.js');
 const NAVAL = await load('../src/systems/naval/navalStores.js');
 const GOODS = await load('../src/systems/naval/tradeGoods.js');   // AUDIT CAPTAIN'S SEA B12: the exchange's goods
 const CHARTS = await load('../src/systems/naval/treasureCharts.js');   // AUDIT CAPTAIN'S SEA B12: the treasure chart
-const FISH = await load('../src/systems/deepWatersFishItems.js');
-const FISH_ROWS = await load('../src/systems/deepWatersFishRows.js');
+const WEIR = await load('../src/systems/eliteGates/weirKey.js');   // KEY-LAW (FIELD BUGS 2026-10-17): the Weir Key
+const FISH = await load('../src/systems/deepWater/deepWatersFishItems.js');
+const FISH_ROWS = await load('../src/systems/deepWater/deepWatersFishRows.js');
 const BOOKS = await load('../src/systems/books.js');
 const HEALING = await load('../src/systems/healingSupply.js');
 const UNLEVELED = await load('../src/systems/unleveledLoot.js');
 const SEARCH = await load('../src/systems/searchables.js');
-const BOUNTY = await load('../src/systems/bountyReward.js');
+const BOUNTY = await load('../src/systems/bounty/bountyReward.js');
 const RITE = await load('../src/systems/riteChest.js');
-const TROPHY = await load('../src/systems/revenantTrophy.js');
+const TROPHY = await load('../src/systems/revenant/revenantTrophy.js');
 const BIOG = await load('../src/systems/biography.js');
 const REPAIR = await load('../src/systems/repairService.js');
 const TRADE = await load('../src/systems/tradeModes.js');
-const LOCK = await load('../src/systems/itemLock.js');
+const LOCK = await load('../src/systems/item/itemLock.js');
 const DFR = await load('../src/formats/dfRandom.js');
-const LOOT_POWERS = await load('../src/systems/lootPowers.js');
-const ITEM_IDS = await load('../src/systems/itemIds.js');
-const TRANSFER = await load('../src/systems/itemTransfer.js');
-const WILD_DEATH = await load('../src/systems/wildDeath.js');
-const TALK = await load('../src/systems/talkTopics.js');
+const LOOT_POWERS = await load('../src/systems/loot/lootPowers.js');
+const ITEM_IDS = await load('../src/systems/item/itemIds.js');
+const TRANSFER = await load('../src/systems/item/itemTransfer.js');
+const WILD_DEATH = await load('../src/systems/wild/wildDeath.js');
+const TALK = await load('../src/systems/talk/talkTopics.js');
 const KNIGHT = await load('../src/systems/knightlyGifts.js');
 const BAG_LAW = await load('../src/net/bagLaw.js');
 const OCEAN = await load('../src/world/oceanHoles.js');
-const MAKER_UI = await load('../src/ui/itemMakerWindow.js');
+const MAKER_UI = await load('../src/ui/item/itemMakerWindow.js');
 const RACES = await load('../src/systems/races.js');
 
 // ── the seeded streams ───────────────────────────────────────────────
@@ -187,7 +188,7 @@ function withMods(on, fn) {
   try { return fn(); } finally { for (const [vendor, v] of was) MODS.setModSetting(vendor, 'Enabled', v); }
 }
 
-/** The page an online session plays on (systems/onlineLane.js isOnlinePage reads `?online`), for `fn`, put back. */
+/** The page an online session plays on (systems/online/onlineLane.js isOnlinePage reads `?online`), for `fn`, put back. */
 function withOnlinePage(fn) {
   const had = Object.hasOwn(globalThis, 'location');
   const was = globalThis.location;
@@ -466,10 +467,13 @@ function sweep({ seeds, run, skip }) {
       for (const s of seedsOf()) {
         const rolls = seeded(s);
         for (const it of [AETH.rollRegalia(rolls), AETH.rollRaidSetPiece(s % 3, rolls), AETH.rollSerpentSetPiece(rolls), AETH.rollNumidiumPiece(rolls)]) one(it);
+        one(AETH.mintPanoplyPiece(rolls));   // EG15: the Battlemage's Panoply's pick (a Redoubt's spoils decide whether)
       }
+      for (const id of AETH.PANOPLY_SET_PIECES.map((r) => r.id)) one(AETH.panoplyPieceById(id));   // EG15: and the Broker's weekly sink, by id
     });
     run('gilded.mintGilded / mintHourlock', (one) => {
       for (const r of GILD.GILDED_RECORDS) one(GILD.mintGilded(r));
+      for (const r of GILD.GILDED_ERAS) one(GILD.mintGilded(r));   // GUNS-UNFOUND: the guns minted before, as a save holds them
       one(GILD.mintHourlock());
       for (const s of seedsOf(S * 4)) one(GILD.rollHourlock(seeded(s)));   // one draw in fifty
     });
@@ -483,6 +487,7 @@ function sweep({ seeds, run, skip }) {
     runItemMaker(run, seedsOf, S, crafted, minted);
     runHomes(run, seedsOf, S, minted);
     runQuestItems(run, seedsOf);
+    runQuestRewards(run, seedsOf);   // AUDIT QUESTLINES REWARD-9: a quest's choice of three
     runPackActs(run, seedsOf, minted);
   });
 }
@@ -546,7 +551,10 @@ function runReforge(run, minted, seedsOf) {
     for (const base of tiered(600)) {
       n++;
       const item = copyItem(base);
-      if (item.rarity === 'legendary' && !item.exalted) { LR.exaltLegendary(item, seeded(n)); one(item); }
+      // GUNS-UNFOUND: never a cursed base - every door exalts before it curses (lootRarity.js rollLootRarity, foeLootCap.js) and
+      // the law holds the two apart (validCurse), as the technique's branch below already asks; a cursed Legendary reached
+      // this spread once the gun find stopped drawing its gun's tier
+      if (item.rarity === 'legendary' && !item.exalted && !LR.isCursed(item)) { LR.exaltLegendary(item, seeded(n)); one(item); }
       if ((item.rarity === 'rare' || item.rarity === 'legendary') && !LR.isCursed(item)) { const c = copyItem(base); if (LR.cursePiece(c, seeded(n ^ 5))) one(c); }
     }
   });
@@ -756,6 +764,13 @@ function runCrafts(run, seedsOf, S, minted) {
           if (!item) continue;
           one(item);
           crafted.push({ item, claims: { p: prov, s: 'acct_honest', h: 'char_honest', r: r.id, q: quality, m: maker, c: seed, i: 1_760_000_000, ...(marked ? { a: 1 } : {}), ...(dye == null ? {} : { u: dye }), ...(hand == null ? {} : { f: hand }) } });
+          // CRAFT-PROCS (FIELD BUGS 2026-10-13e): a quality the ladder rolls mints at both laws - the record made before
+          // (above, no `v`) and the one a craft stamps now, its last pass taken - each its own provenance
+          if (!R.QUALITY_EFFECTS[quality]?.rarity) continue;
+          const now = provenanceOf(50_000 + n);
+          const stamped = SMITH.mintPiece({ recipe: r.id, quality, seed, maker, marked, dye, hand, version: PRODUCT.MINT_VERSION }, now);
+          one(stamped);
+          crafted.push({ item: stamped, claims: { ...crafted.at(-1).claims, p: now, v: PRODUCT.MINT_VERSION } });
         }
       }
     }
@@ -844,7 +859,7 @@ function runCrafts(run, seedsOf, S, minted) {
 
 // ── 10. the item maker ───────────────────────────────────────────────
 
-/** ui/itemMakerWindow.js itemMakerFilter's predicate, any tab: what the window lists at all. */
+/** ui/item/itemMakerWindow.js itemMakerFilter's predicate, any tab: what the window lists at all. */
 function makerTakes(item) {
   if (MAKER_UI?.itemMakerFilter) return ['WeaponsAndArmor', 'Ingredients', 'ClothingAndMisc'].some((tab) => MAKER_UI.itemMakerFilter(item, tab, null));
   if (!ENCH.keptEnchantments(item) || item.group === 'UselessItems2' || ENCH.itemMakerRefuses(item)) return false;
@@ -852,7 +867,7 @@ function makerTakes(item) {
 }
 
 /**
- * ONE HONEST SESSION AT THE ITEM MAKER over `item`, as ui/itemMakerWindow.js drives it: the picker's guard
+ * ONE HONEST SESSION AT THE ITEM MAKER over `item`, as ui/item/itemMakerWindow.js drives it: the picker's guard
  * (openPickerDecision), its primary list (primaryPickerList, the pack's souls among it), the secondary (primaryPick) and
  * the room check (pickEnchantment - a bound soul's forced set beside it), a row the budget cannot hold taken back off
  * (removeEnchantment, the list's own remove), and the Enchant button only when enchantDecision says 'enchant' -
@@ -970,11 +985,11 @@ function runItemMaker(run, seedsOf, S, crafted, minted) {
 // ── 11. every other home ─────────────────────────────────────────────
 
 const FOOD = await load('../src/systems/survival/food.js');
-const BOAT = await load('../src/systems/comeSailAwayBoat.js');
+const BOAT = await load('../src/systems/comeSailAway/comeSailAwayBoat.js');
 const BOOKS_DATA = await load('../src/systems/booksData.js');
-const REVENANT = await load('../src/systems/revenant.js');
-const RR_QUEST = await load('../src/systems/rrQuestLine.js');
-const RRI_ITEMS = await load('../src/systems/rriItems.js');
+const REVENANT = await load('../src/systems/revenant/revenant.js');
+const RR_QUEST = await load('../src/systems/roleplayRealism/rrQuestLine.js');
+const RRI_ITEMS = await load('../src/systems/roleplayRealismItems/rriItems.js');
 
 function runHomes(run, seedsOf, S, minted) {
   run('createItem.createTempItem (every row, both genders)', (one) => {
@@ -1056,7 +1071,7 @@ function runHomes(run, seedsOf, S, minted) {
       for (let g = 0; g < 3; g++) { HEIRLOOM.attuneHeirloom(h); one(h); }
       one(HEIRLOOM.mintRemainsItem({ line: `line${s % 9}`, of: s % 50, name: 'Ysolde Hlaalu' }));
     }
-    // the remains' piece as legacyHost.js layDeathRemains takes it: pickHeirloom over what the fallen wore - found pieces
+    // the remains' piece as legacyHost.js remainsOf takes it: pickHeirloom over what the fallen wore - found pieces
     const wearable = spread(minted.filter((it) => (it.group === 'Weapons' || it.group === 'Armor') && EQUIP.wearableItem(it) && !TPL.isAmmunition(it)), 300);
     for (let i = 0; i < wearable.length; i += 6) {
       const e = newPlayer();
@@ -1079,6 +1094,11 @@ function runHomes(run, seedsOf, S, minted) {
   // AUDIT CAPTAIN'S SEA B12: the exchange's every good at a cask, a day's stock and a hold's worth, and a chart at its seeds' ends
   run('naval/tradeGoods.mintGood (every good)', (one) => { for (const g of GOODS.GOODS) for (const n of [1, 30, 500]) one(GOODS.mintGood(g.id, n)); });
   run('naval/treasureCharts.mintChart', (one) => { for (const seed of [0, 2 ** 31 + 1, 2 ** 32 - 1]) one(CHARTS.mintChart(seed)); });
+  // KEY-LAW (FIELD BUGS 2026-10-17): the Weir Key, as a find throws it and as the balance restacks the pack
+  run('eliteGates/weirKey.weirKeys / restackWeirKeys', (one) => {
+    for (const n of [1, 2, 40]) one(WEIR.weirKeys(n));
+    const pack = []; WEIR.restackWeirKeys(pack, 7); for (const it of pack) one(it);
+  });
   run('deepWatersFishItems.createFishItem (every species)', (one) => {
     for (const t of FISH_ROWS.DEEP_WATERS_FISH_TEMPLATES) one(FISH.createFishItem({ templateIndex: t.index }));
   });
@@ -1272,7 +1292,7 @@ const QUEST_TABLES = await load('../src/systems/quest/tables.js');
 const QUEST_MACHINE = await load('../src/systems/quest/machine.js');
 const QUEST_DIR = new URL('../vendor/dfu-quests/', import.meta.url);
 
-/** The quest machine's host, as test/questitems.test.js stands it: no world, the player at `level`. */
+/** The quest machine's host, as test/systems/quest/questitems.test.js stands it: no world, the player at `level`. */
 function questMachine(level) {
   const none = () => undefined;
   const m = new QUEST_MACHINE.QuestMachine({
@@ -1329,3 +1349,29 @@ function runQuestItems(run, seedsOf) {
 }
 const QUEST_ITEM = await load('../src/systems/quest/item.js');
 const QUEST = await load('../src/systems/quest/quest.js');
+const QL_REWARDS = await load('../src/systems/questlines/qlRewards.js');
+const QL_SHEETS = await load('../src/systems/questlines/qlSheets.js');
+const SKILLS_MOD = await load('../src/systems/skills.js');
+
+/** QL3 (bible/06-Systems/Questlines-Arc.md section 5.2; AUDIT QUESTLINES REWARD-9): A QUEST'S CHOICE OF THREE - the layer's
+ *  roll (systems/questlines/qlLayer.js ending) at every tier and three levels, for a fighter, an archer, a mage (chain,
+ *  plate and every shield barred) and a class barred from every weapon, plain and with each questline ending's named
+ *  piece in turn (made from its sheet's base and named), so the item law reads a quest's piece as it reads every other. */
+function runQuestRewards(run, seedsOf) {
+  run('qlRewards.rollRewardChoice (tiers 1-4, four classes, each named piece)', (one) => {
+    const { SKILLS } = SKILLS_MOD;
+    const skills = (best) => { const sk = new Array(35).fill(20); for (const [k, v] of Object.entries(best)) sk[SKILLS[k]] = v; return sk; };
+    const entities = [
+      { career: { weaponArmorShieldsBitfield: 0, forbiddenMaterialsFlags: 0 }, skills: skills({ LongBlade: 70, Axe: 50 }) },
+      { career: { weaponArmorShieldsBitfield: 0, forbiddenMaterialsFlags: 0 }, skills: skills({ Archery: 70, ShortBlade: 50 }) },
+      { career: { weaponArmorShieldsBitfield: (6 << 6) | (0xf << 9), forbiddenMaterialsFlags: 0 }, skills: skills({ ShortBlade: 40, BluntWeapon: 35 }) },
+      { career: { weaponArmorShieldsBitfield: 0x3f, forbiddenMaterialsFlags: 0 }, skills: skills({ LongBlade: 70 }) },
+    ];
+    const named = [null];
+    for (const fam of QL_SHEETS.SHEET_FAMILIES) for (const sheet of fam.sheets) for (const o of sheet.outcomes ?? []) if (o.named) named.push(o.named);
+    let n = 0;
+    for (const s of seedsOf()) for (const level of [1, 10, 30]) for (let tier = 1; tier <= 4; tier++) for (const e of entities) {
+      for (const p of QL_REWARDS.rollRewardChoice({ seed: s ^ hashOf(`${level}:${tier}`), level, tier, entity: { ...e, level }, named: named[n++ % named.length] })) one(p.item);
+    }
+  });
+}

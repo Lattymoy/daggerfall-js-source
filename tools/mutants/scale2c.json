@@ -5,7 +5,7 @@
     "old": "export const WAVE_MINTS_PER_S = CHAT_HELLO_HZ_MAX;",
     "new": "export const WAVE_MINTS_PER_S = 500;",
     "tests": [
-      "test/scale2c.test.js"
+      "test/net/scale2c.test.js"
     ],
     "note": "the spread a tenth of the hub's own admission - the mints back inside a second or two"
   },
@@ -15,7 +15,7 @@
     "old": "  return Math.min(WAVE_SPREAD_MAX_MS, Math.round((n / WAVE_MINTS_PER_S) * 1000));",
     "new": "  return Math.round((n / WAVE_MINTS_PER_S) * 1000);",
     "tests": [
-      "test/scale2c.test.js"
+      "test/net/scale2c.test.js"
     ],
     "note": "no cap: past the token's reuse a page's sockets no longer share one mint"
   },
@@ -25,7 +25,7 @@
     "old": "export const WAVE_DROPS = 2;",
     "new": "export const WAVE_DROPS = 1;",
     "tests": [
-      "test/scale2c.test.js"
+      "test/net/scale2c.test.js"
     ],
     "note": "every lone drop held - a player's blip waits out a wave that never came"
   },
@@ -35,7 +35,7 @@
     "old": "      if (!wave || droppedAt == null || Math.abs(droppedAt - wave.at) > WAVE_WINDOW_MS) return null;",
     "new": "      if (!wave || droppedAt == null) return null;",
     "tests": [
-      "test/scale2c.test.js"
+      "test/net/scale2c.test.js"
     ],
     "note": "any drop held by a wave long past"
   },
@@ -45,7 +45,7 @@
     "old": "      if (!online()) return t;   // the browser lost its network - a blip, not the relay's wave\n",
     "new": "",
     "tests": [
-      "test/scale2c.test.js"
+      "test/net/scale2c.test.js"
     ],
     "note": "a player whose network went held as if the relay had restarted"
   },
@@ -55,7 +55,7 @@
     "old": "      if (drops.length >= WAVE_DROPS && !(wave && t - wave.at <= WAVE_WINDOW_MS)) wave = { at: drops[0], offset: rand() * waveSpreadMs(count) };",
     "new": "      if (drops.length >= WAVE_DROPS) wave = { at: drops[0], offset: rand() * waveSpreadMs(count) };",
     "tests": [
-      "test/scale2c.test.js"
+      "test/net/scale2c.test.js"
     ],
     "note": "a fresh offset at every drop of one wave - the page's sockets scattered, each minting"
   },
@@ -65,7 +65,7 @@
     "old": "      const hold = this._dropAt != null ? this._wave.holdUntil(this._dropAt, now) : null;",
     "new": "      const hold = null;",
     "tests": [
-      "test/scale2c.test.js"
+      "test/net/scale2c.test.js"
     ],
     "note": "the primary back at the old retry - the wave's mints at once again"
   },
@@ -75,7 +75,7 @@
     "old": "        const hold = h.dropAt != null ? this._wave.holdUntil(h.dropAt, now) : null;   // SCALE2c: the halo waits for the same slot, so the page mints once",
     "new": "        const hold = null;",
     "tests": [
-      "test/scale2c.test.js"
+      "test/net/scale2c.test.js"
     ],
     "note": "the halo back before the page's slot - it mints, and the cell mints again at the slot"
   },
@@ -85,7 +85,7 @@
     "old": "    if (this.status === 'open' && isSocialRoom(this.room)) this._wave.noteOnline(this.othersHere + 1);   // SCALE2c: the hub's count sizes a wave's spread\n",
     "new": "",
     "tests": [
-      "test/scale2c.test.js"
+      "test/net/scale2c.test.js"
     ],
     "note": "no count: every wave spread over nothing"
   },
@@ -95,7 +95,7 @@
     "old": "        h.dropAt = wasOpen && code !== CLOSE_BUSY && !noToken ? this._wave.dropped(this._now()) : null;",
     "new": "        h.dropAt = wasOpen ? this._wave.dropped(this._now()) : null;",
     "tests": [
-      "test/scale2c.test.js"
+      "test/net/scale2c.test.js"
     ],
     "note": "a gate's busy word counted as a drop - two refusals make a wave of nothing"
   },
@@ -105,7 +105,7 @@
     "old": "presence: false, wave: pageWave, wire2: true });   // SCALE2c: the page's one wave; SCALE5b: the second wire\n      link.onChat",
     "new": "presence: false, wire2: true });\n      link.onChat",
     "tests": [
-      "test/scale2c.test.js"
+      "test/net/scale2c.test.js"
     ],
     "note": "the chat links on waves of their own - the hub's count never reaches the cell's session SCALE5b (re-aimed by content): the link also asks the second wire."
   },
@@ -115,7 +115,7 @@
     "old": "    if (v == null || (Array.isArray(v) && v.length === 0)) continue;",
     "new": "    if (v == null || !v || (Array.isArray(v) && v.length === 0)) continue;",
     "tests": [
-      "test/scale2c.test.js"
+      "test/net/scale2c.test.js"
     ],
     "note": "a zero read as nothing - a word this does not know, left unsaid"
   },
@@ -125,7 +125,7 @@
     "old": "    if (v == null || (Array.isArray(v) && v.length === 0)) continue;",
     "new": "    if (v == null || typeof v === 'object') continue;",
     "tests": [
-      "test/scale2c.test.js"
+      "test/net/scale2c.test.js"
     ],
     "note": "a foe, a camp or a horse read as nothing"
   },
@@ -135,7 +135,7 @@
     "old": "    if (FOES_FRAME_OWN.includes(key)) continue;",
     "new": "",
     "tests": [
-      "test/scale2c.test.js"
+      "test/net/scale2c.test.js"
     ],
     "note": "the frame's own bookkeeping counted as news - no frame is ever quiet"
   },
@@ -145,7 +145,7 @@
     "old": "    skip(frame, { full, cell, room }) { return !!(cell && full && room != null && saidIn === room && quietFoesFrame(frame)); },",
     "new": "    skip(frame, { full, cell, room }) { return !!(cell && full && room != null && quietFoesFrame(frame)); },",
     "tests": [
-      "test/scale2c.test.js"
+      "test/net/scale2c.test.js"
     ],
     "note": "'none' never said - a reader keeps the owner's last foe until its staleness sweep"
   },
@@ -155,7 +155,7 @@
     "old": "    sent(frame, { full, room }, ok = true) { saidIn = ok && full && room != null && quietFoesFrame(frame) ? room : null; },   // a world room's quiet frame is remembered too - `skip` alone asks for a cell",
     "new": "    sent(frame, { full, room }) { saidIn = full && room != null && quietFoesFrame(frame) ? room : null; },",
     "tests": [
-      "test/scale2c.test.js"
+      "test/net/scale2c.test.js"
     ],
     "note": "a refused send remembered as said - 'none' never reaches the room"
   },
@@ -165,7 +165,7 @@
     "old": "    if (_foesQuiet.skip(frame, said)) { _foesFullAt = now; return false; }\n",
     "new": "",
     "tests": [
-      "test/scale2c.test.js"
+      "test/net/scale2c.test.js"
     ],
     "note": "every quiet full frame sent, as before"
   }

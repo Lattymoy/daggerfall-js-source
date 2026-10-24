@@ -1,137 +1,137 @@
 [
   {
     "name": "SD9A-another-boss-believed",
-    "file": "src/net/sdReceipt.js",
+    "file": "src/net/superDungeon/sdReceipt.js",
     "old": "  if (c.b !== SD_RECEIPT_BOSS) return false;",
     "new": "  if (typeof c.b !== 'string') return false;",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
     "name": "SD9A-a-serpents-hull-let-through",
-    "file": "src/net/sdReceipt.js",
+    "file": "src/net/superDungeon/sdReceipt.js",
     "old": " || c.r !== undefined || c.h !== undefined) return false;",
     "new": " || c.r !== undefined) return false;",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
     "name": "SD9A-a-gates-rite-let-through",
-    "file": "src/net/sdReceipt.js",
+    "file": "src/net/superDungeon/sdReceipt.js",
     "old": " || c.y !== undefined || c.r !== undefined",
     "new": " || c.y !== undefined",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
     "name": "SD9A-anyones-account",
-    "file": "src/net/sdReceipt.js",
+    "file": "src/net/superDungeon/sdReceipt.js",
     "old": "  if (typeof c.s !== 'string' || !ID_RE.test(c.s)) return false;",
     "new": "  if (typeof c.s !== 'string') return false;",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
     "name": "SD9A-the-slot-unbounded",
-    "file": "src/net/sdReceipt.js",
+    "file": "src/net/superDungeon/sdReceipt.js",
     "old": "  if (!Number.isSafeInteger(c.d) || c.d < 1 || c.d > SD_RECEIPT_SLOT_MAX) return false;",
     "new": "  if (!Number.isSafeInteger(c.d) || c.d < 1) return false;",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
     "name": "SD9A-the-seed-unbounded",
-    "file": "src/net/sdReceipt.js",
+    "file": "src/net/superDungeon/sdReceipt.js",
     "old": "  if (!Number.isSafeInteger(c.c) || c.c < 0 || c.c > 0xffffffff) return false;",
     "new": "  if (!Number.isSafeInteger(c.c) || c.c < 0) return false;",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
     "name": "SD9A-the-level-unbounded",
-    "file": "src/net/sdReceipt.js",
+    "file": "src/net/superDungeon/sdReceipt.js",
     "old": "  if (!Number.isSafeInteger(c.l) || c.l < 1 || c.l > SD_RECEIPT_LV_MAX) return false;",
     "new": "  if (!Number.isSafeInteger(c.l) || c.l < 1) return false;",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
     "name": "SD9A-the-week-unbounded",
-    "file": "src/net/sdReceipt.js",
+    "file": "src/net/superDungeon/sdReceipt.js",
     "old": "  if (c.e <= c.i || c.e - c.i > SD_RECEIPT_TTL_S) return false;",
     "new": "  if (c.e <= c.i) return false;",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
     "name": "SD9A-minted-unchecked",
-    "file": "src/net/sdReceipt.js",
+    "file": "src/net/superDungeon/sdReceipt.js",
     "old": "  if (!sdReceiptValid(claims)) throw new TypeError('mintSdReceipt refused a claim set it could not verify');\n",
     "new": "",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
     "name": "SD9A-read-ignores-the-version",
-    "file": "src/net/sdReceipt.js",
+    "file": "src/net/superDungeon/sdReceipt.js",
     "old": "  if (parts.length !== 3 || parts[0] !== SD_RECEIPT_V) return null;",
     "new": "  if (parts.length !== 3) return null;",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
     "name": "SD9A-unsigned-read-as-signed",
-    "file": "src/net/sdReceipt.js",
+    "file": "src/net/superDungeon/sdReceipt.js",
     "old": "{ ...c, signed: parts[2].length > 0 }",
     "new": "{ ...c, signed: true }",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
     "name": "SD9A-the-version-unread",
-    "file": "src/net/sdReceipt.js",
+    "file": "src/net/superDungeon/sdReceipt.js",
     "old": "  if (v !== SD_RECEIPT_V) return { ok: false, why: 'version' };\n",
     "new": "",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
     "name": "SD9A-the-signature-unread",
-    "file": "src/net/sdReceipt.js",
+    "file": "src/net/superDungeon/sdReceipt.js",
     "old": "  if (!good) return { ok: false, why: 'signature' };\n",
     "new": "",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
     "name": "SD9A-an-expired-one-good",
-    "file": "src/net/sdReceipt.js",
+    "file": "src/net/superDungeon/sdReceipt.js",
     "old": "  if (nowS >= claims.e) return { ok: false, why: 'expired' };",
     "new": "  if (nowS > claims.e) return { ok: false, why: 'expired' };",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
     "name": "SD9A-the-future-believed",
-    "file": "src/net/sdReceipt.js",
+    "file": "src/net/superDungeon/sdReceipt.js",
     "old": "  if (claims.i > nowS + skewS) return { ok: false, why: 'future' };\n",
     "new": "",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "'ehit', 'xhit', 'spent', 'vt']);",
     "new": "'ehit', 'xhit', 'vt']);",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ],
     "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   },
@@ -150,7 +150,7 @@
     "old": "'lost', 'no', 'rcpt', 'bd']);",
     "new": "'lost', 'no', 'bd']);",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ],
     "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   },
@@ -160,7 +160,7 @@
     "old": "  if (m.k === 'spent') return intIn(m.s, 1, SD_SLOT_MAX) ? { k: 'spent', s: m.s } : null;",
     "new": "  if (m.k === 'spent') return { k: 'spent', s: m.s };",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "const SD_RECEIPT_RE = /^h1\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]*$/;",
     "new": "const SD_RECEIPT_RE = /^[a-z]\\d\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]*$/;",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "case 'rcpt': return typeof m.r === 'string' && m.r.length <= SD_RECEIPT_WIRE_MAX && SD_RECEIPT_RE.test(m.r)",
     "new": "case 'rcpt': return typeof m.r === 'string' && SD_RECEIPT_RE.test(m.r)",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "  for (const e of Array.isArray(b.rc) ? b.rc.slice(0, SD_FIGHTERS_MAX) : []) {",
     "new": "  for (const e of Array.isArray(b.rc) ? b.rc : []) {",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "if (Array.isArray(e) && typeof e[0] === 'string' && ID_RE.test(e[0]) && typeof e[1] === 'string'",
     "new": "if (Array.isArray(e) && typeof e[0] === 'string' && typeof e[1] === 'string'",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": " && e[1].length <= SD_RECEIPT_WIRE_MAX && SD_RECEIPT_RE.test(e[1])) rc.push([e[0], e[1]]);",
     "new": ") rc.push([e[0], e[1]]);",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -214,25 +214,25 @@
     "old": "b.here.filter((x) => typeof x === 'string' && ID_RE.test(x))",
     "new": "b.here.filter((x) => typeof x === 'string')",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
     "name": "SD9A-a-receipt-to-one-who-earned-nothing",
     "file": "server/src/index.js",
-    "old": "    for (const sub of Object.keys(f.players).filter((x) => earned(f, x))) {",
+    "old": "    for (const sub of Object.keys(f.players).filter((x) => SD_SEAM.earned(f, x))) {",
     "new": "    for (const sub of Object.keys(f.players)) {",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
     "name": "SD9A-minted-after-the-fall-was-said",
     "file": "server/src/index.js",
-    "old": "    for (const sub of Object.keys(f.players).filter((x) => earned(f, x))) {\n      try { f.rc[sub] = await mintSdReceipt({ d: f.s, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv, ...this._bodyMeasureOf(f, sub, earned) }, key, { subtle: crypto.subtle, nowS }); }   // INT14: the count's measure\n      catch (e) { console.warn('[sd] receipt refused', e?.message ?? e); }\n    }\n    f.said = true;   // kept before it is said\n    // who stood in the realm at the kill - their spoils are its floor's, so the hub hands their other tabs nothing first\n    f.here = [...new Set([...this._all()].filter(([, b]) => b.id && b.sub && f.rc[b.sub]).map(([, b]) => b.sub))].slice(0, SD_FIGHTERS_MAX);\n    await this._sdFightSave(f, now, true);\n    this._sdFightFan([{ k: 'fell', ...f.fell }]);   // its moment, its best three, its count, its chart\n",
-    "new": "    f.said = true;   // kept before it is said\n    await this._sdFightSave(f, now, true);\n    this._sdFightFan([{ k: 'fell', ...f.fell }]);   // its moment, its best three, its count, its chart\n    for (const sub of Object.keys(f.players).filter((x) => earned(f, x))) {\n      try { f.rc[sub] = await mintSdReceipt({ d: f.s, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv, ...this._bodyMeasureOf(f, sub, earned) }, key, { subtle: crypto.subtle, nowS }); }   // INT14: the count's measure\n      catch (e) { console.warn('[sd] receipt refused', e?.message ?? e); }\n    }\n    f.here = [...new Set([...this._all()].filter(([, b]) => b.id && b.sub && f.rc[b.sub]).map(([, b]) => b.sub))].slice(0, SD_FIGHTERS_MAX);\n",
+    "old": "    for (const sub of Object.keys(f.players).filter((x) => SD_SEAM.earned(f, x))) {\n      try { f.rc[sub] = await mintSdReceipt({ d: f.s, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv, ...this._bodyMeasureOf(f, sub, SD_SEAM.earned) }, key, { subtle: crypto.subtle, nowS }); }   // INT14: the count's measure\n      catch (e) { console.warn('[sd] receipt refused', e?.message ?? e); }\n    }\n    f.said = true;   // kept before it is said\n    // who stood in the realm at the kill - their spoils are its floor's, so the hub hands their other tabs nothing first\n    f.here = [...new Set([...this._all()].filter(([, b]) => b.id && b.sub && f.rc[b.sub]).map(([, b]) => b.sub))].slice(0, SD_FIGHTERS_MAX);\n    await this._sdFightSave(f, now, true);\n    this._sdFightFan([{ k: 'fell', ...f.fell }]);   // its moment, its best three, its count, its chart\n",
+    "new": "    f.said = true;   // kept before it is said\n    await this._sdFightSave(f, now, true);\n    this._sdFightFan([{ k: 'fell', ...f.fell }]);   // its moment, its best three, its count, its chart\n    for (const sub of Object.keys(f.players).filter((x) => SD_SEAM.earned(f, x))) {\n      try { f.rc[sub] = await mintSdReceipt({ d: f.s, s: sub, c: rand32(), x: earnedBy(f, sub), l: f.players[sub].lv, ...this._bodyMeasureOf(f, sub, SD_SEAM.earned) }, key, { subtle: crypto.subtle, nowS }); }   // INT14: the count's measure\n      catch (e) { console.warn('[sd] receipt refused', e?.message ?? e); }\n    }\n    f.here = [...new Set([...this._all()].filter(([, b]) => b.id && b.sub && f.rc[b.sub]).map(([, b]) => b.sub))].slice(0, SD_FIGHTERS_MAX);\n",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ],
     "note": "INT11-INT14 (PIN MOVED): re-aimed by content at the lane's own change of this text. "
   },
@@ -242,7 +242,7 @@
     "old": ".filter(([, b]) => b.id && b.sub && f.rc[b.sub]).map(([, b]) => b.sub))].slice(0, SD_FIGHTERS_MAX);",
     "new": ".filter(([, b]) => b.id && b.sub).map(([, b]) => b.sub))].slice(0, SD_FIGHTERS_MAX);",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -251,7 +251,7 @@
     "old": "    for (const [ws, b] of [...this._all()]) { const r = b.id && b.sub ? f.rc[b.sub] : null; if (r) this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r })); }\n",
     "new": "",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -260,7 +260,7 @@
     "old": "const r = b.id && b.sub ? f.rc[b.sub] : null; if (r) this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r }));",
     "new": "const r = Object.values(f.rc)[0]; if (r) this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r }));",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -269,7 +269,7 @@
     "old": " if (f.rc?.[a.sub]) this._send(ws, JSON.stringify({ t: 'sd', k: 'rcpt', r: f.rc[a.sub] })); return; }",
     "new": " return; }",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -278,7 +278,7 @@
     "old": ", rc: Object.entries(f.rc ?? {}), here: f.here ?? [] }), signal: AbortSignal.timeout(SD_TELL_RETRY_MS)",
     "new": " }), signal: AbortSignal.timeout(SD_TELL_RETRY_MS)",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -287,7 +287,7 @@
     "old": ", here: f.here ?? [] }), signal: AbortSignal.timeout(SD_TELL_RETRY_MS)",
     "new": ", here: [] }), signal: AbortSignal.timeout(SD_TELL_RETRY_MS)",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -296,7 +296,7 @@
     "old": "    await this._sdKeepReceipts(c, Date.now());   // SD9a\n",
     "new": "",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -305,7 +305,7 @@
     "old": "if (cl && cl.s === sub && cl.d === c.s) keep.push(",
     "new": "if (cl && cl.d === c.s) keep.push(",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -314,7 +314,7 @@
     "old": "if (cl && cl.s === sub && cl.d === c.s) keep.push(",
     "new": "if (cl && cl.s === sub) keep.push(",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -323,7 +323,7 @@
     "old": "...(here.has(sub) ? { hold: now + SD_HERE_HOLD_MS } : {})",
     "new": "...{}",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -332,7 +332,7 @@
     "old": "    this._noSdRcpt.clear();   // receipts are being written - nobody's 'none' stands\n",
     "new": "",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -341,7 +341,7 @@
     "old": "(v.s > c.s || (v.s === c.s && v.spent))",
     "new": "v.s > c.s",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -350,7 +350,7 @@
     "old": "(v.s > c.s || (v.s === c.s && v.spent))",
     "new": "(v.s === c.s && v.spent)",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -359,7 +359,7 @@
     "old": "    const owed = new Map(fresh.filter(([sub]) => !here.has(sub)));",
     "new": "    const owed = new Map(fresh);",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -368,7 +368,7 @@
     "old": "    if (sub) { try { await this._sdReceiptTo(ws, sub, now); }",
     "new": "    if (false) { try { await this._sdReceiptTo(ws, sub, now); }",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ],
     "note": "SCALE5c (re-aimed by content): the hub hello words moved into _hubHelloWords"
   },
@@ -378,7 +378,7 @@
     "old": "    if (!(Number.isFinite(v.e) && now < v.e * 1000) || (!v.spent && typeof v.r !== 'string')) { await this.state.storage.delete(k); return; }",
     "new": "    if (!v.spent && typeof v.r !== 'string') { await this.state.storage.delete(k); return; }",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -387,7 +387,7 @@
     "old": "    if (v.spent === true || (Number.isFinite(v.hold) && now < v.hold)) return;",
     "new": "    if (Number.isFinite(v.hold) && now < v.hold) return;",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -396,7 +396,7 @@
     "old": "    if (v.spent === true || (Number.isFinite(v.hold) && now < v.hold)) return;",
     "new": "    if (v.spent === true) return;",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -405,7 +405,7 @@
     "old": "    if (at !== null && (at > slot || (at === slot && v.spent === true))) return;",
     "new": "    if (at !== null && at === slot && v.spent === true) return;",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -414,7 +414,7 @@
     "old": "    await this.state.storage.put(k, { s: slot, spent: true, e: Math.floor(now / 1000) + SD_RECEIPT_TTL_S });\n",
     "new": "",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -423,7 +423,7 @@
     "old": "        if (!isSocialRoom(a.key) || typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }\n        try { await this._sdSpent(",
     "new": "        if (typeof a.sub !== 'string' || !a.sub) { this._junk(ws); return; }\n        try { await this._sdSpent(",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -432,7 +432,7 @@
     "old": "    for (const [k, v] of drc) { dlast = k; if (!v || typeof v !== 'object' || !(Number.isFinite(v.e) && now < v.e * 1000)) dead.push(k); }",
     "new": "    for (const [k] of drc) { dlast = k; }",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -441,7 +441,7 @@
     "old": "else if (r?.k === 'rcpt') { if ((room === this.room && isSdRoom(room)) || isSocialRoom(room)) this._deliver(",
     "new": "else if (r?.k === 'rcpt') { if (true) this._deliver(",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -450,7 +450,7 @@
     "old": "else if (r?.k === 'rcpt') { if ((room === this.room && isSdRoom(room)) || isSocialRoom(room)) this._deliver(",
     "new": "else if (r?.k === 'rcpt') { if (room === this.room && isSdRoom(room)) this._deliver(",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -459,7 +459,7 @@
     "old": "      else if (r?.k === 'rcpt') { if ((room === this.room && isSdRoom(room)) || isSocialRoom(room)) this._deliver('sd', () => this.onSdReceipt?.(r.r, room)); }   // SD9a: my receipt - my own realm's, or the hub's\n",
     "new": "",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -468,7 +468,7 @@
     "old": "    if (!w || !this.acct || !this.sdOk || !isSocialRoom(this.room)",
     "new": "    if (!w || !this.sdOk || !isSocialRoom(this.room)",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -477,7 +477,7 @@
     "old": "    if (!w || !this.acct || !this.sdOk || !isSocialRoom(this.room)",
     "new": "    if (!w || !this.acct || !isSocialRoom(this.room)",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -486,7 +486,7 @@
     "old": "    if (!w || !this.acct || !this.sdOk || !isSocialRoom(this.room)",
     "new": "    if (!w || !this.acct || !this.sdOk",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   },
   {
@@ -495,7 +495,7 @@
     "old": "    const toll = sdGate(this._sdBucket, this._now());   // the sd words' own bucket, a find's\n    if (!toll.pass) return false;\n",
     "new": "    const toll = sdGate(this._sdBucket, this._now());   // the sd words' own bucket, a find's\n",
     "tests": [
-      "test/sd9a_receipt.test.js"
+      "test/net/superDungeon/sd9a_receipt.test.js"
     ]
   }
 ]

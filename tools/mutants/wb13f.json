@@ -1,100 +1,100 @@
 [
   {
     "name": "WB13f-the-cap-gone",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "return fresh.length ? fresh : run >= REPEAT_MAX ? [] : out;",
     "new": "return fresh.length ? fresh : out;",
-    "tests": ["test/wb13f_rhythm.test.js"]
+    "tests": ["test/net/gate/wb13f_rhythm.test.js"]
   },
   {
     "name": "WB13f-the-cap-at-one",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "run >= REPEAT_MAX ? [] : out;",
     "new": "run >= REPEAT_MAX - 1 ? [] : out;",
-    "tests": ["test/wb13f_rhythm.test.js"]
+    "tests": ["test/net/gate/wb13f_rhythm.test.js"]
   },
   {
     "name": "WB13f-the-run-never-counted",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "f.runA = f.atk.a === f.lastA ? (f.runA ?? 0) + 1 : 1;",
     "new": "f.runA = 1;",
-    "tests": ["test/wb13f_rhythm.test.js"]
+    "tests": ["test/net/gate/wb13f_rhythm.test.js"]
   },
   {
     "name": "WB13f-the-run-never-passed",
-    "file": "src/net/gateBrain.js",
-    "old": "attacksFor(f.phase, gap, near, f.lastA, P, f.runA);",
-    "new": "attacksFor(f.phase, gap, near, f.lastA, P);",
-    "tests": ["test/wb13f_rhythm.test.js"]
+    "file": "src/net/gate/gateBrain.js",
+    "old": "attacksFor(f.phase, gap, near, f.lastA, P, f.runA, {",
+    "new": "attacksFor(f.phase, gap, near, f.lastA, P, 1, {",
+    "tests": ["test/net/gate/wb13f_rhythm.test.js"]
   },
   {
     "name": "WB13f-the-walk-in-without-end",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "      if (now - (f.freeAt ?? 0) >= REPEAT_WALK_MS) f.runA = 0;   // WB13f: a walk-in that long breaks the run\n",
     "new": "",
-    "tests": ["test/wb13f_rhythm.test.js"]
+    "tests": ["test/net/gate/wb13f_rhythm.test.js"]
   },
   {
     "name": "WB13f-the-walk-in-never-timed",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "    f.freeAt = now;\n",
     "new": "",
-    "tests": ["test/wb13f_rhythm.test.js"]
+    "tests": ["test/net/gate/wb13f_rhythm.test.js"]
   },
   {
     "name": "WB13f-the-old-slam",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "name: 'Ground Slam', windup: 1600, active: 200, recover: 1700,",
     "new": "name: 'Ground Slam', windup: 1600, active: 200, recover: 1100,",
-    "tests": ["test/wb13f_rhythm.test.js"]
+    "tests": ["test/net/gate/wb13f_rhythm.test.js"]
   },
   {
     "name": "WB13f-the-old-leap",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "name: 'Crushing Leap', windup: 1500, active: 300, recover: 1500,",
     "new": "name: 'Crushing Leap', windup: 1500, active: 300, recover: 900,",
-    "tests": ["test/wb13f_rhythm.test.js"]
+    "tests": ["test/net/gate/wb13f_rhythm.test.js"]
   },
   {
     "name": "WB13f-the-old-nova",
-    "file": "src/net/gateBrain.js",
+    "file": "src/net/gate/gateBrain.js",
     "old": "name: 'Flame Nova', windup: 2200, active: 300, recover: 1900,",
     "new": "name: 'Flame Nova', windup: 2200, active: 300, recover: 1300,",
-    "tests": ["test/wb13f_rhythm.test.js"]
+    "tests": ["test/net/gate/wb13f_rhythm.test.js"]
   },
   {
     "name": "WB13f-never-spent",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "    if (SPENT_ON.includes(A.key) && now < atk.at + A.active + A.recover) return { act: 'spent',",
     "new": "    if (false) return { act: 'spent',",
-    "tests": ["test/wb13f_rhythm.test.js", "test/wb4_gate_boss.test.js"]
+    "tests": ["test/net/gate/wb13f_rhythm.test.js", "test/net/gate/wb4_gate_boss.test.js"]
   },
   {
     "name": "WB13f-spent-for-ever",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "if (SPENT_ON.includes(A.key) && now < atk.at + A.active + A.recover) return",
     "new": "if (SPENT_ON.includes(A.key)) return",
-    "tests": ["test/wb13f_rhythm.test.js", "test/wb4_gate_boss.test.js"]
+    "tests": ["test/net/gate/wb13f_rhythm.test.js", "test/net/gate/wb4_gate_boss.test.js"]
   },
   {
     "name": "WB13f-spent-on-every-blow",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "if (SPENT_ON.includes(A.key) && now < atk.at + A.active + A.recover) return",
     "new": "if (now < atk.at + A.active + A.recover) return",
-    "tests": ["test/wb13f_rhythm.test.js"]
+    "tests": ["test/net/gate/wb13f_rhythm.test.js"]
   },
   {
     "name": "WB13f-the-fire-swung",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "act: 'spent', anims: PRIMARY_ATTACK_ANIMS, frame: cast ? CAST_LOOSE_FRAME : SPENT_FRAME,",
     "new": "act: 'spent', anims: PRIMARY_ATTACK_ANIMS, frame: SPENT_FRAME,",
-    "tests": ["test/wb13f_rhythm.test.js"]
+    "tests": ["test/net/gate/wb13f_rhythm.test.js"]
   },
   {
     "name": "WB13f-the-frame-not-the-swing-s-last",
-    "file": "src/world/gateBoss.js",
+    "file": "src/world/gate/gateBoss.js",
     "old": "export const SPENT_FRAME = 4;",
     "new": "export const SPENT_FRAME = 3;",
-    "tests": ["test/wb13f_rhythm.test.js"]
+    "tests": ["test/net/gate/wb13f_rhythm.test.js"]
   }
 ]

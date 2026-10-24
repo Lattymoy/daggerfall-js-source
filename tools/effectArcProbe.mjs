@@ -43,7 +43,7 @@ const check = (name, ok, detail) => {
 // A custom spell record built by the SHIPPED maker, in the page, so
 // the probe cannot drift from the real packing.
 const mkSpell = (slots, rangeType) => page.evaluate(async ([s, rt]) => {
-  const { buildCustomSpell, blankEffectSettings } = await import('/src/systems/spellMaker.js');
+  const { buildCustomSpell, blankEffectSettings } = await import('/src/systems/spell/spellMaker.js');
   return buildCustomSpell({
     slots: s.map((x) => ({ type: x.type, subType: x.subType,
       settings: { ...blankEffectSettings(), ...x.settings } })),

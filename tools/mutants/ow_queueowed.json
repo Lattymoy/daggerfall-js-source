@@ -1,0 +1,42 @@
+[
+  {
+    "name": "QUEUE-OWED-pump-builds-the-head",
+    "file": "src/scenes/world.js",
+    "old": "    if (building || !state.owes(queue)) return;   // QUEUE-OWED: a pixel the stream let go while it waited is never built",
+    "new": "    if (building || queue.length === 0) return;",
+    "tests": [
+      "test/systems/travel/ow_queueowed.test.js"
+    ],
+    "note": "The pump starts on the queue's head whatever the stream holds: a pixel let go by the frame's crossing before the pump's turn is built whole and thrown away, while the grid round the traveller waits - the report."
+  },
+  {
+    "name": "QUEUE-OWED-books-unread",
+    "file": "src/world/streamingWorld.js",
+    "old": "    while (queue.length && !this.loaded.has(StreamingWorldState.key(queue[0].px, queue[0].py))) queue.shift();",
+    "new": "    while (queue.length && false) queue.shift();",
+    "tests": [
+      "test/systems/travel/ow_queueowed.test.js"
+    ],
+    "note": "owes() drops nothing: every queued pixel is built, let go or not (the pump as it was)."
+  },
+  {
+    "name": "QUEUE-OWED-the-whole-queue-dropped",
+    "file": "src/world/streamingWorld.js",
+    "old": "    while (queue.length && !this.loaded.has(StreamingWorldState.key(queue[0].px, queue[0].py))) queue.shift();",
+    "new": "    if (queue.length && !this.loaded.has(StreamingWorldState.key(queue[0].px, queue[0].py))) queue.length = 0;",
+    "tests": [
+      "test/systems/travel/ow_queueowed.test.js"
+    ],
+    "note": "A let-go head takes the owed pixels behind it with it: the grid's new edge is never built."
+  },
+  {
+    "name": "QUEUE-OWED-one-let-go-dropped-a-turn",
+    "file": "src/world/streamingWorld.js",
+    "old": "    while (queue.length && !this.loaded.has(StreamingWorldState.key(queue[0].px, queue[0].py))) queue.shift();",
+    "new": "    if (queue.length && !this.loaded.has(StreamingWorldState.key(queue[0].px, queue[0].py))) queue.shift();",
+    "tests": [
+      "test/systems/travel/ow_queueowed.test.js"
+    ],
+    "note": "One let-go pixel dropped a call: a second one behind it answers owed and is built."
+  }
+]

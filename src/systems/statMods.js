@@ -20,29 +20,41 @@ export const STAT_KEYS_ORDER = Object.freeze([
   'endurance', 'personality', 'speed', 'luck',
 ]);
 
-/** FormulaHelper.MaxStatValue(), verbatim. DaggerfallStats' maxMods
- *  layer (the only writer is the unported Mace of Molag Bal effect)
- *  stays at 0, so the live ceiling is this flat 100. */
+/** FormulaHelper.MaxStatValue(), verbatim - the live ceiling before
+ *  DaggerfallStats' maxMods, which liveStat adds below. */
 export const MAX_STAT_VALUE = 100;
 
 /** The live value of a stat: base + every active mod on it (fortify
  *  adds, drain/transfer subtracts, disease entries carry an
  *  accumulated NEGATIVE per-stat statMods map - S18), CLAMPED to
- *  0..MaxStatValue exactly as DaggerfallStats.GetLiveStatValue does
- *  (:157-163 - `value = Mathf.Clamp(permanent + mods, 0, maxValue)`).
+ *  0..maxValue exactly as DaggerfallStats.GetLiveStatValue does
+ *  (:155-161 - `maxValue = FormulaHelper.MaxStatValue() + maxMods[stat]`,
+ *  then `value = Mathf.Clamp(permanent + mods, 0, maxValue)`).
  *  The clamp is on the READ only: the producers (poison/disease
  *  per-minute and per-day damage, fortify magnitudes) accumulate
  *  unbounded, as DFU's do. Combat and advancement read THIS, never
- *  the raw base. */
+ *  the raw base.
+ *
+ *  MACE-MAX (FIELD BUGS 2026-10-13e): THE MAX MODS. maxMods is
+ *  EntityEffectManager.MergeStatMaxMods (:1878-1883) - the sum of
+ *  every live effect's StatMaxMods, assigned beside the stat mods
+ *  (AssignMods, DaggerfallStats.cs:225-229) and saved with the effect
+ *  (effectData.statMaxMods, EntityEffectManager.cs:2269). Here a live
+ *  entry carries them as `statMaxMods`, the stat-keyed map `statMods`
+ *  is, whatever its kind; an ended entry's are not live. DFU's one
+ *  writer is the Mace of Molag Bal (MaceOfMolagBalEffect.cs:138), and
+ *  without the layer its strength arm could not lift a 100 at all. */
 export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TIERS: `skipKind` leaves one entry kind out - the survival law caps its own entry against the stat WITHOUT it
   const base = mentoredStat(entity, statName, entity.stats?.[statName] ?? 0);   // SOFTCAP1: mentor mode's attribute overlay (a no-op outside it)
   let mod = 0;
+  let maxMod = 0;   // MACE-MAX: MergeStatMaxMods
   let survival = 0;   // AUDIT SURV-TIERS: the needs' entry, capped below against everything else
   let curse = 0;   // VAMP-DAY: a racial override's PENALTY (the vampire's day), capped below so it never zeroes a stat
   const list = entity.activeEffects;
   if (list) {
     for (const a of list) {
       if (skipKind != null && a?.kind === skipKind) continue;
+      if (a?.statMaxMods && !a.ended) maxMod += a.statMaxMods[statName] ?? 0;   // MACE-MAX: every live effect's, whatever its kind
       // disease/poison entries carry a signed per-stat statMods map
       // (poison drugs push POSITIVE mods - S19b)
       if (a.kind === 'disease' || a.kind === 'poison') { mod += a.statMods?.[statName] ?? 0; continue; }
@@ -59,8 +71,7 @@ export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TI
       // ordinary drainAttribute channel, where DFU's own DrainStrength
       // incumbent puts it) rides an entry of this kind,
       // reset by the effect's own 12-minute decay rather than a
-      // duration. RECORDED: DFU also moves the MAX (ChangeStatMaxMod);
-      // the port's clamp holds at MAX_STAT_VALUE.
+      // duration. Its MAX rides the same entry (statMaxMods, above).
       if (a.kind === 'artifact') { if (!a.ended) mod += a.statMods?.[statName] ?? 0; continue; }
       // SURV1: the needs' one entry - hunger, thirst, sleep, exposure and
       // drink as a signed map rewritten every world minute
@@ -76,6 +87,7 @@ export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TI
   // every equip change and every magic round) - a field read, so this
   // leaf stays import-free; empty with every switch off.
   mod += entity._mods?.stats?.[statName] ?? 0;
+  maxMod += entity._mods?.statMax?.[statName] ?? 0;   // FIRM-MAX: a channel's lift of the ceiling (entityMods.js statMax)
   // VAMP-DAY: THE CURSE'S DAY NEVER KILLS. A live 0 is death (killIfAnyLiveStatZero below), and a vampire's -20 by
   // day on a stat of twenty or less would have killed at dawn - so its penalty stops at a live 1, against the stat
   // without it, here where every read sees it (as DFU's DrainEffect stops at 1).
@@ -88,7 +100,7 @@ export function liveStat(entity, statName, skipKind = null) {   // AUDIT SURV-TI
   // past the permanent stat's five), whatever lands between the minutes.
   if (survival < 0) survival = -Math.min(-survival, Math.max(0, Math.min(base, Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE)) - 5));
   mod += survival;
-  return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE);
+  return Math.min(Math.max(base + mod, 0), MAX_STAT_VALUE + maxMod);   // MACE-MAX: GetLiveStatValue's maxValue, the max mods in it
 }
 
 /** DrainEffect.IncreaseMagnitude, verbatim: the drain never reduces
@@ -169,6 +181,10 @@ export const FATIGUE_MULTIPLIER = 64;
 export function maxFatigue(entity) {
   return (liveStat(entity, 'strength') + liveStat(entity, 'endurance')) * FATIGUE_MULTIPLIER;
 }
+/** DaggerfallEntity.SetFatigue's clamp, the one every fatigue write takes: [0, MaxFatigue]. AUDIT C&C N5: the hosts'
+ *  drains clamped at nought alone, so a pool a lapsed boon or a Fortify's end had left over its new ceiling (8,320 in
+ *  7,680) stayed over it through every drain. */
+export const clampFatigue = (entity, v) => Math.max(0, Math.min(maxFatigue(entity), v));
 
 /** DaggerfallEntity.FillVitalSigns (:442-447), verbatim: all three
  *  pools to their maxima. AUDIT 26 F038 gave it one home - DFU calls

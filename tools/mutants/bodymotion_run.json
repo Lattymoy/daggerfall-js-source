@@ -1,0 +1,156 @@
+[
+  {
+    "name": "RUN-STIFF-the-swing-kicks",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "    lift: 0.18, liftFast: 0.29, land: 0.35,",
+    "new": "    lift: 0.24, liftFast: 0.4, land: 0.35,",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_run.test.js"
+    ]
+  },
+  {
+    "name": "RUN-STIFF-the-run-sinks",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "    height: 0.925, heightFast: 0.9, bob: 0.035, sway: 0.012,",
+    "new": "    height: 0.9, heightFast: 0.87, bob: 0.042, sway: 0.012,",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_run.test.js"
+    ]
+  },
+  {
+    "name": "RUN-WIDE-the-forearm-turned-in",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    run: { R: row(8, 18, 0, -4, 1, { gaitElbow: 1 }), L: row(8, 18, 0, -4, 1, { gaitElbow: 1 }) },",
+    "new": "    run: { R: row(8, 18, 0, 22, 1, { gaitElbow: 1 }), L: row(8, 18, 0, 22, 1, { gaitElbow: 1 }) },",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_run.test.js"
+    ]
+  },
+  {
+    "name": "RUN-WIDE-the-fists-turned-in",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    run: { R: row(14, 18, 20, -4, 1, { fist: true, gaitElbow: 1 }), L: row(14, 18, 20, -4, 1, { fist: true, gaitElbow: 1 }) },",
+    "new": "    run: { R: row(14, 12, 20, 24, 1, { fist: true, gaitElbow: 1 }), L: row(14, 12, 20, 24, 1, { fist: true, gaitElbow: 1 }) },",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_run.test.js"
+    ]
+  },
+  {
+    "name": "RUN-WIDE-the-arm-held-in",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "elbow: Object.freeze([74, 96]), abduct: 18 }),",
+    "new": "elbow: Object.freeze([74, 96]), abduct: 10 }),",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_run.test.js"
+    ]
+  },
+  {
+    "name": "RUN-WIDE-the-first-person-fists-in",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  TOP: Object.freeze({ x: 0.6, y: -0.62, d: 0.42 }),",
+    "new": "  TOP: Object.freeze({ x: 0.36, y: -0.62, d: 0.42 }),",
+    "tests": [
+      "test/combat/twohands_mw.test.js"
+    ]
+  },
+  {
+    "name": "TWO-RUN-the-left-lets-go",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    run: { R: row(43, 10, 0, -31, 0, { blade: dir(0.8, -0.23, -0.55), edge: dir(-0.31, 0.62, -0.72) }), L: row(0, 0, 0, 0, 0, { grip: true }) },",
+    "new": "    run: { R: row(43, 10, 0, -31, 0, { blade: dir(0.8, -0.23, -0.55), edge: dir(-0.31, 0.62, -0.72) }), L: row(8, 18, 0, -4, 1, { gaitElbow: 1 }) },",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js",
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "TWO-RUN-the-arms-swing",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    run: { R: row(43, 10, 0, -31, 0,",
+    "new": "    run: { R: row(43, 10, 0, -31, 0.12,",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "TWO-RUN-the-chest-square",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    runTurn: -32, runLean: 10,",
+    "new": "    runTurn: 0, runLean: 10,",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "TWO-RUN-the-turn-never-laid",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "gp.chest.wave.yaw * (1 - wave) + runTurn) * (1 - k)",
+    "new": "gp.chest.wave.yaw * (1 - wave)) * (1 - k)",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "RUN-STIFF-the-fade-a-tenth",
+    "file": "src/characters/bodyMotion/gait.js",
+    "old": "    const inReach = f.stance || leaving ? 1 : smooth(clamp01((Math.sqrt(Math.max(0, reach * reach - (HIP_FLOOR * L) ** 2)) - dxy) / (0.2 * L)));",
+    "new": "    const inReach = f.stance || leaving ? 1 : smooth(clamp01((Math.sqrt(Math.max(0, reach * reach - (HIP_FLOOR * L) ** 2)) - dxy) / (0.1 * L)));",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_audit.test.js"
+    ]
+  },
+  {
+    "name": "TWO-RUN-held-against-the-hip",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "row(43, 10, 0, -31, 0, { blade: dir(0.8, -0.23, -0.55), edge: dir(-0.31, 0.62, -0.72) })",
+    "new": "row(11, -5, 28, -44, 0, { blade: dir(0.52, -0.66, -0.54), edge: dir(0.65, 0.72, -0.25) })",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "TWO-RUN-the-chest-upright",
+    "file": "src/characters/bodyMotion/carry.js",
+    "old": "    runTurn: -32, runLean: 10,",
+    "new": "    runTurn: -32, runLean: 0,",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "SHIELD-RUN-the-shield-pumped",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "      const shieldArm = !!input.shield && (cls === 'one' || cls === 'free');",
+    "new": "      const shieldArm = false;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "SHIELD-RUN-fists-lose-the-guard",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "      const shieldArm = !!input.shield && (cls === 'one' || cls === 'free');",
+    "new": "      const shieldArm = !!input.shield;",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "SHIELD-RUN-no-shield-seen",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "    shield: !!rig?.arm?.pieces?.some((p) => /^shield\\b/.test(p.slot ?? '')),",
+    "new": "    shield: false,",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  },
+  {
+    "name": "SHIELD-RUN-the-slot-read-whole",
+    "file": "src/characters/bodyMotion/bodyMotion.js",
+    "old": "    shield: !!rig?.arm?.pieces?.some((p) => /^shield\\b/.test(p.slot ?? '')),",
+    "new": "    shield: !!rig?.arm?.pieces?.some((p) => p.slot === 'shield'),",
+    "tests": [
+      "test/characters/bodyMotion/bodymotion_carry.test.js"
+    ]
+  }
+]

@@ -4,7 +4,7 @@
     "file": "src/world/townStandIns.js",
     "old": "export const CITY_WALL_FILL = Object.freeze({ x: 128, z: 128, length: 128, lift: 1 });",
     "new": "export const CITY_WALL_FILL = Object.freeze({ x: 127, z: 128, length: 128, lift: 1 });",
-    "tests": ["test/fb1004d_citywalls.test.js"],
+    "tests": ["test/world/fb1004d_citywalls.test.js"],
     "note": "The corner piece a unit off its gap: a seam at every concave corner of every city."
   },
   {
@@ -12,7 +12,7 @@
     "file": "src/world/townStandIns.js",
     "old": "export const CITY_WALL_FILL = Object.freeze({ x: 128, z: 128, length: 128, lift: 1 });",
     "new": "export const CITY_WALL_FILL = Object.freeze({ x: 128, z: 128, length: 120, lift: 1 });",
-    "tests": ["test/fb1004d_citywalls.test.js"],
+    "tests": ["test/world/fb1004d_citywalls.test.js"],
     "note": "Eight units short of the gap."
   },
   {
@@ -20,7 +20,7 @@
     "file": "src/world/townStandIns.js",
     "old": "export const CITY_WALL_FILL = Object.freeze({ x: 128, z: 128, length: 128, lift: 1 });",
     "new": "export const CITY_WALL_FILL = Object.freeze({ x: 128, z: 0, length: 128, lift: 1 });",
-    "tests": ["test/fb1004d_citywalls.test.js"],
+    "tests": ["test/world/fb1004d_citywalls.test.js"],
     "note": "The piece three metres beside its wall's line: every corner open again."
   },
   {
@@ -28,7 +28,7 @@
     "file": "src/world/rmbLayout.js",
     "old": "-subRecord.yRotation / ROTATION_DIVISOR,",
     "new": "subRecord.yRotation / ROTATION_DIVISOR,",
-    "tests": ["test/fb1004d_citywalls.test.js"],
+    "tests": ["test/world/fb1004d_citywalls.test.js"],
     "note": "RMBLayout's subrecord turn mirrored: a wall turned a quarter stands on the wrong side of its subrecord."
   },
   {
@@ -36,7 +36,7 @@
     "file": "src/world/rmbLayout.js",
     "old": "(RMB_DIMENSION - subRecord.zPos) * GLOBAL_SCALE,",
     "new": "(RMB_DIMENSION - subRecord.zPos + 1) * GLOBAL_SCALE,",
-    "tests": ["test/fb1004d_citywalls.test.js"],
+    "tests": ["test/world/fb1004d_citywalls.test.js"],
     "note": "Every subrecord a unit off along z: the walls no longer meet the block's edges."
   }
 ]

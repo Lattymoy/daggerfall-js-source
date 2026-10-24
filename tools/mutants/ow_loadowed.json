@@ -1,0 +1,43 @@
+[
+  {
+    "name": "LOAD-OWED-streams-alone",
+    "file": "src/scenes/world.js",
+    "old": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`), uc.owed);",
+    "new": "      uc.n = unbuiltAround(px, radius, (x, y) => !StreamingWorldState.streams(x, y) || built.has(`${x},${y}`), uc.owed);",
+    "tests": [
+      "test/systems/travel/ow_loadowed.test.js"
+    ],
+    "note": "The count asks only whether the world streams there (ETHER-OW's line): a pixel whose build threw reads loading to the end, and the journey is held at x1 until the next pixel crossed - the report."
+  },
+  {
+    "name": "LOAD-OWED-books-unread",
+    "file": "src/scenes/world.js",
+    "old": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`), uc.owed);",
+    "new": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`), uc.owed);",
+    "tests": [
+      "test/systems/travel/ow_loadowed.test.js",
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "Every pixel not built is owed: the failed one holds the clock, and where the world streams nothing the land is waited on for ever."
+  },
+  {
+    "name": "LOAD-OWED-nothing-owed",
+    "file": "src/scenes/world.js",
+    "old": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`), uc.owed);",
+    "new": "      uc.n = unbuiltAround(px, radius, (x, y) => true, uc.owed);",
+    "tests": [
+      "test/systems/travel/ow_loadowed.test.js"
+    ],
+    "note": "The land never holds the clock: the journey outruns a grid still building (TV2's hole in the world)."
+  },
+  {
+    "name": "LOAD-OWED-failed-kept-on-the-books",
+    "file": "src/scenes/world.js",
+    "old": "      state.fail(next.px, next.py, performance.now());",
+    "new": "      state.failed.set(`${next.px},${next.py}`, { px: next.px, py: next.py, tries: 1, at: Infinity });",
+    "tests": [
+      "test/systems/travel/ow_loadowed.test.js"
+    ],
+    "note": "The pump keeps a pixel whose build threw on the stream's books: owed by nobody building it, the hold never lets go."
+  }
+]

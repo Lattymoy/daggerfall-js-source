@@ -5,16 +5,16 @@
     "old": "  return collider.insideSolid([feet[0], feet[1] + CAPSULE_RADIUS, feet[2]]) || collider.insideSolid(",
     "new": "  return false || collider.insideSolid(",
     "tests": [
-      "test/unstuckout.test.js"
+      "test/player/unstuckout.test.js"
     ]
   },
   {
     "name": "UO-held-by-the-head-unasked",
     "file": "src/player/enterExit.js",
-    "old": " || collider.insideSolid([feet[0], feet[1] + CAPSULE_HEIGHT - CAPSULE_RADIUS, feet[2]]);",
+    "old": " || collider.insideSolid([feet[0], feet[1] + height - CAPSULE_RADIUS, feet[2]]);",
     "new": " || false;",
     "tests": [
-      "test/unstuckout.test.js"
+      "test/player/unstuckout.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (heldInSolid(collider, [px, h, pz])) continue;\n",
     "new": "",
     "tests": [
-      "test/unstuckout.test.js"
+      "test/player/unstuckout.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      if (collider.sphereOverlaps([px, h + CAPSULE_HEIGHT / 2, pz], CAPSULE_RADIUS)) continue;\n",
     "new": "",
     "tests": [
-      "test/unstuckout.test.js"
+      "test/player/unstuckout.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      return [px, h, pz];\n",
     "new": "      return [px, 0, pz];\n",
     "tests": [
-      "test/unstuckout.test.js"
+      "test/player/unstuckout.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      if (!Number.isFinite(h) || (dry && !dry(h))) continue;\n",
     "new": "      if (!Number.isFinite(h)) continue;\n",
     "tests": [
-      "test/unstuckout.test.js"
+      "test/player/unstuckout.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    if (walkMode && (!local || ground) && heldInSolid(collider, pos)) {",
     "new": "    if (false) {",
     "tests": [
-      "test/unstuckout.test.js"
+      "test/player/unstuckout.test.js"
     ]
   }
 ]

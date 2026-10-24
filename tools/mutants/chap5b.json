@@ -5,7 +5,7 @@
     "old": "export const GUILD_DAY_OFFSETS = Object.freeze([0, 3, 5]);",
     "new": "export const GUILD_DAY_OFFSETS = Object.freeze([0, 3, 4]);",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const GUILD_DAY_OFFSETS = Object.freeze([0, 3, 5]);",
     "new": "export const GUILD_DAY_OFFSETS = Object.freeze([3, 0, 5]);",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "return GUILD_DAY_OFFSETS.slice(0, days).some(",
     "new": "return GUILD_DAY_OFFSETS.slice(0, 2).some(",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "export function guildDay(res, day, days = GUILD_DAYS) {",
     "new": "export function guildDay(res, day, days = 3) {",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "export const GUILD_DAYS = 2;",
     "new": "export const GUILD_DAYS = 3;",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "Object.freeze({ failing: 1, steady: 2, thriving: 3, ascendant: 3 });",
     "new": "Object.freeze({ failing: 2, steady: 2, thriving: 3, ascendant: 3 });",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "Object.freeze({ failing: 1, steady: 2, thriving: 3, ascendant: 3 });",
     "new": "Object.freeze({ failing: 1, steady: 2, thriving: 2, ascendant: 3 });",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "Object.freeze({ failing: 1, steady: 2, thriving: 3, ascendant: 3 });",
     "new": "Object.freeze({ failing: 1, steady: 2, thriving: 3, ascendant: 2 });",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "if (!bandOf || hall?.building == null) return GUILD_DAYS;",
     "new": "if (hall?.building == null) return GUILD_DAYS;",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "if (!bandOf || hall?.building == null) return GUILD_DAYS;",
     "new": "if (!bandOf) return GUILD_DAYS;",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "const band = bandOf(places.factions?.get(hall.building) ?? 0);",
     "new": "const band = bandOf(hall.building);",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "(GUILD_DAYS_BY_BAND)[band ?? ''] ?? GUILD_DAYS;",
     "new": "(GUILD_DAYS_BY_BAND)[band ?? ''] ?? 1;",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "if (fav.guild && job !== 'guildsman' && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf)))",
     "new": "if (fav.guild && job !== 'guildsman' && guildDay(res, day))",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "if (fav.guild && guildDay(res, day, hallGuildDays(places, fav.guild, bandOf))) I('guild', fav.guild, h(16.5)",
     "new": "if (fav.guild && guildDay(res, day)) I('guild', fav.guild, h(16.5)",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "e.home !== res.home || (e.sheet ?? '') !== sheet ||",
     "new": "e.home !== res.home ||",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -140,8 +140,8 @@
     "old": "e.home !== res.home || (e.sheet ?? '') !== sheet ||",
     "new": "e.home !== res.home || e.sheet !== sheet ||",
     "tests": [
-      "test/chap5b_people.test.js",
-      "test/lwspace_street.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js",
+      "test/systems/livingWorld/lwspace_street.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "watch: this._watchSize, bandOf: this._bandOf, ...this._patronsFor(res, day) });",
     "new": "watch: this._watchSize, ...this._patronsFor(res, day) });",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ],
     "note": "LW15 (re-aimed by content at the merge): the patrons' errands beside it."
   },
@@ -160,7 +160,7 @@
     "old": "    if (this._stamp?.t !== t) {\n      /** @type {Map<number, string>} */",
     "new": "    if (!this._stamp) {\n      /** @type {Map<number, string>} */",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "if (b) bands.set(f, b); }",
     "new": "if (b) bands.set(f, 'steady'); }",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "s: [...bands].map(([f, b]) => `${f}:${b}`).join() };",
     "new": "s: String(bands.size) };",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "this._bandOf = o.chapterOf ? (/** @type {number} */ f) => this._chapterRead().bands.get(f) ?? null : null;",
     "new": "this._bandOf = o.chapterOf ? (/** @type {number} */ f) => o.chapterOf?.(f)?.band ?? null : null;",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "if (t !== BUILDING_TYPES.GuildHall && !(temples && t === BUILDING_TYPES.Temple)) continue;",
     "new": "if (t !== BUILDING_TYPES.GuildHall) continue;",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "if (t !== BUILDING_TYPES.GuildHall && !(temples && t === BUILDING_TYPES.Temple)) continue;",
     "new": "if (t !== BUILDING_TYPES.GuildHall && t !== BUILDING_TYPES.Temple) continue;",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "    if (f) out.add(f);\n",
     "new": "    out.add(f);\n",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "  return [...out].sort((a, b) => a - b);\n}",
     "new": "  return [...out];\n}",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "if (!GUILD_DAY_OFFSETS.slice(0, CHAPTER_NEWS_DAYS).some(",
     "new": "if (!GUILD_DAY_OFFSETS.some(",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "const w = lwSeed(this.o.town.mapId, f, 0x63686170) % 7;",
     "new": "const w = lwSeed(this.o.town.mapId, 0x63686170) % 7;",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "return c && kind && (/** @type {Record<string, unknown>} */ (CHAPTER_EVENT_NEWS)[kind] || /** @type {Record<string, unknown>} */ (CHAPTER_NEWS)[kind]) ? [",
     "new": "return c && kind ? [",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ],
     "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
   },
@@ -260,7 +260,7 @@
     "old": "chapter: true, guild: c.name, who: ''",
     "new": "chapter: true, guild: '', who: ''",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -269,7 +269,7 @@
     "old": "    if (chapters.length) ctx.news = [...(ctx.news ?? []), ...chapters];\n",
     "new": "",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -278,7 +278,7 @@
     "old": "  : item.chapter ? (/** @type {Record<string, any>} */ (CHAPTER_EVENT_NEWS)[item.kind] ?? CHAPTER_NEWS[/** @type {keyof typeof CHAPTER_NEWS} */ (item.kind)])   // CHAP5b: a chapter's standing; CHAP6c: its Season\n",
     "new": "",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ],
     "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
   },
@@ -288,7 +288,7 @@
     "old": "hour: 'The hour', guild: 'the guild', from:",
     "new": "hour: 'The hour', guild: 'a guild', from:",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ],
     "note": "LW16 (re-aimed by content at the merge): {from} beside it."
   },
@@ -298,7 +298,7 @@
     "old": "export const CHAPTER_NEWS_DAYS = 2;",
     "new": "export const CHAPTER_NEWS_DAYS = 1;",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -307,16 +307,16 @@
     "old": "    guild: told?.item.guild ?? null,   // CHAP5b",
     "new": "    guild: null,   // CHAP5b",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
     "name": "CHAP5B-HOST-OFFLINE",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "chapterOf: chapterSheet ? (faction) => livingChapterOf(faction, px, py) : undefined,",
     "new": "chapterOf: (faction) => livingChapterOf(faction, px, py),",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ]
   },
   {
@@ -325,7 +325,7 @@
     "old": "return c == null ? null : { band: chapterBandOf(c.strength).band, name:",
     "new": "return c == null ? null : { band: 'steady', name:",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ],
     "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
   },
@@ -335,7 +335,7 @@
     "old": "name: `the ${hallPosterName(f)}`, event: c.event ?? null",
     "new": "name: hallPosterName(f), event: c.event ?? null",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ],
     "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
   },
@@ -345,7 +345,7 @@
     "old": "const c = Number.isInteger(region) ? chapterSheet?.chapterOf(f, region) ?? null : null;",
     "new": "const c = chapterSheet?.chapterOf(f, 0) ?? null;",
     "tests": [
-      "test/chap5b_people.test.js"
+      "test/systems/livingWorld/chap5b_people.test.js"
     ],
     "note": "CHAP6c: re-aimed by content (the chapter's Season beside it)."
   }

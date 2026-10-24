@@ -1,0 +1,264 @@
+[
+  {
+    "name": "UNQUIET2-trail-minutes",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "export const HUNT = Object.freeze({ MINUTES: 720,",
+    "new": "export const HUNT = Object.freeze({ MINUTES: 1440,",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-trail-health",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "MINUTES: 720, HEALTH: 0.6 });",
+    "new": "MINUTES: 720, HEALTH: 0.5 });",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-trail-dread-warm",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "=> !!r && !r.dread && Number.isFinite(r.trail) && r.trail > 0 && r.trail > now;",
+    "new": "=> !!r && Number.isFinite(r.trail) && r.trail > 0 && r.trail > now;",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-trail-none-warm",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "&& r.trail > 0 && r.trail > now;",
+    "new": "&& r.trail > now;",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-trail-hours-down",
+    "file": "src/systems/revenant/revenantUnquiet.js",
+    "old": "Math.ceil(Math.min(HUNT.MINUTES, r.trail - now) / 60)",
+    "new": "Math.floor(Math.min(HUNT.MINUTES, r.trail - now) / 60)",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-trail-unsaved",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "trail: sanitizeTrail(r.trail), omen:",
+    "new": "trail: 0, omen:",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-omen-unsaved",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "omen: sanitizeTrail(r.omen === undefined ? r.dueAt : r.omen),",
+    "new": "omen: 0,",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-trail-unset",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (den && !r.dread) { r.trail = now + HUNT.MINUTES; r.lairKnown = true; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-trail-lair-unknown",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "{ r.trail = now + HUNT.MINUTES; r.lairKnown = true; }",
+    "new": "{ r.trail = now + HUNT.MINUTES; }",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-trail-on-a-kill",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (den && !r.dread) {",
+    "new": "  if (deedName !== 'returned' && r.lair && !r.dread) {",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-trail-no-lair",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (den && !r.dread) {",
+    "new": "  if (deedName === 'fled' && !r.dread) {",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-trail-dread",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (den && !r.dread) {",
+    "new": "  if (den) {",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-stand-health-unread",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (trailWarm(r, now)) entity.health = Math.max(1, Math.round(entity.maxHealth * HUNT.HEALTH));\n",
+    "new": "",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-stand-trail-kept",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  r.trail = 0;\n  r.out = true; r.outAt = Date.now();",
+    "new": "  r.out = true; r.outAt = Date.now();",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-card-trail-unsaid",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "const trail = r?.history?.at(-1)?.deed === 'fled' && trailWarm(r, nowMinutes()) && r.lair ?",
+    "new": "const trail = false ?",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-card-trail-cold",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "&& trailWarm(r, nowMinutes()) && r.lair ?",
+    "new": "&& r.lair ?",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-hunt-line-unsaid",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "    if (trailWarm(r, now)) lines.push(",
+    "new": "    if (false) lines.push(",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-omen-never",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (!r) return revenantOmen(now);",
+    "new": "  if (!r) return null;",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-omen-every-tick",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "&& x.dueAt <= now && x.omen !== x.dueAt && (night",
+    "new": "&& x.dueAt <= now && (night",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-omen-not-due",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "&& x.dueAt <= now && x.omen !== x.dueAt && (night",
+    "new": "&& x.omen !== x.dueAt && (night",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-omen-out",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "livingRevenants().find((x) => !x.out && !x.dread && x.dueAt <= now",
+    "new": "livingRevenants().find((x) => !x.dread && x.dueAt <= now",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-omen-dread",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "livingRevenants().find((x) => !x.out && !x.dread && x.dueAt <= now",
+    "new": "livingRevenants().find((x) => !x.out && x.dueAt <= now",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-omen-held",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (!revenantOn() || revenantHeld()) return null;\n  const night = skyIsNight();",
+    "new": "  if (!revenantOn()) return null;\n  const night = skyIsNight();",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js",
+      "test/systems/revenant/auditunquiet.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-omen-unremembered",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  r.omen = r.dueAt;\n  touch(r);",
+    "new": "  touch(r);",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-omen-ambition-unread",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "const body = omenWords(ambitionOf(r.personality), r.given);",
+    "new": "const body = omenWords('vengeance', r.given);",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-omen-kicker",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "get omen() { return t('rvn.kicker.omen', 'An omen'); },",
+    "new": "",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-page-wounded-unsaid",
+    "file": "src/ui/revenant/revenantPage.js",
+    "old": "  if (trailWarm(r, now)) return { tag:",
+    "new": "  if (false) return { tag:",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-trophy-dread-unread",
+    "file": "src/systems/revenant/revenantTrophy.js",
+    "old": "applyRarity(item, r?.dread ? 'legendary' : tier, rolls);",
+    "new": "applyRarity(item, tier, rolls);",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  },
+  {
+    "name": "UNQUIET2-card-omen-edge",
+    "file": "src/ui/revenant/revenantCard.js",
+    "old": "body .rvncard.is-omen { border-left-color: #5c6f94; }",
+    "new": "body .rvncard.is-omen { border-left-color: #5c6f95; }",
+    "tests": [
+      "test/systems/revenant/unquiet2_hunt.test.js"
+    ]
+  }
+]

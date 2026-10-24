@@ -5,7 +5,7 @@
     "old": "  const plan = planTake(item, { bag: playerEntity.items ?? [], entity: playerEntity, getQuest });",
     "new": "  const plan = planTake(item, { bag: playerEntity.items ?? [], entity: playerEntity, getQuest: null });",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      if (!pileKeys && quickLootTake(key, { items: () => source }, playerEntity, setMidScreenText, { getQuest: (uid) => opts.questBridge?.machine?.getQuest?.(uid) ?? null, took: showPickups })) {",
     "new": "      if (!pileKeys && quickLootTake(key, { items: () => source }, playerEntity, setMidScreenText, { took: showPickups })) {",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    else if (n) say((n === 1 ? 'You take 1 item.' : `You take ${n} items.`) + (refusal?.text ? ` ${refusal.text}` : ''));",
     "new": "    else if (n) say(n === 1 ? 'You take 1 item.' : `You take ${n} items.`);",
     "tests": [
-      "test/quickloot.test.js"
+      "test/systems/quickloot.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (!s) {\n      inst.push(",
     "new": "    if (!s) {\n      if (inst.length >= 1) return true;\n      inst.push(",
     "tests": [
-      "test/audit_lighting.test.js"
+      "test/render/audit_lighting.test.js"
     ]
   },
   {
@@ -41,8 +41,8 @@
     "old": "    if (!same) { m.set(matrix); s.at = this.frameNo; }\n    return s.at != null",
     "new": "    if (!same) { m.set(matrix); }\n    return s.at != null",
     "tests": [
-      "test/audit_lighting.test.js",
-      "test/sc1_shadowcache.test.js"
+      "test/render/audit_lighting.test.js",
+      "test/render/sc1_shadowcache.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "    a[0] += offset[0]; a[1] += offset[1]; a[2] += offset[2];\n    this._shiftGen++;",
     "new": "    this._shiftGen++;",
     "tests": [
-      "test/audit_lighting.test.js"
+      "test/render/audit_lighting.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "      if (b._shSeen === true && b._shGen !== this._shiftGen) { const d = this._shiftDelta(b); b._shOx += d[0]; b._shOy += d[1]; b._shOz += d[2]; }",
     "new": "",
     "tests": [
-      "test/audit_lighting.test.js"
+      "test/render/audit_lighting.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "      const moving = b._dyn === true || b.selfCard === true || b._shIdler === true || (b._shMovedAt != null",
     "new": "      const moving = b.selfCard === true || b._shIdler === true || (b._shMovedAt != null",
     "tests": [
-      "test/audit_lighting.test.js"
+      "test/render/audit_lighting.test.js"
     ]
   },
   {
@@ -78,16 +78,16 @@
     "old": "const lookChanged = b._shSeen === true && !(b._shFrame === fr && b._shRec === rec && b._shFlip === flip);",
     "new": "const lookChanged = b._shSeen === true && !(b._shRec === rec && b._shFlip === flip);",
     "tests": [
-      "test/audit_lighting.test.js"
+      "test/render/audit_lighting.test.js"
     ]
   },
   {
     "name": "sc1-dynamicnear-counts-flames",
     "file": "src/render/shadowPass.js",
-    "old": "          if (b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < SHADOW_FLAT_MIN_HEIGHT) || isSpectral(b.archive)) continue;\n",
+    "old": "          if (b.archive === SHADOW_LIGHT_FLATS || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < SHADOW_FLAT_MIN_HEIGHT) || isSpectral(b.archive) || b.ghost) continue;\n",
     "new": "",
     "tests": [
-      "test/audit_lighting.test.js"
+      "test/render/audit_lighting.test.js"
     ]
   },
   {
@@ -96,8 +96,8 @@
     "old": "    if (this.cacheOn && casters.length) this._ensureCache();   // AUDIT SC1",
     "new": "    this._ensureCache();",
     "tests": [
-      "test/audit_lighting.test.js",
-      "test/el2_shadows.test.js"
+      "test/render/audit_lighting.test.js",
+      "test/render/el2_shadows.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "    this._pointCarried = s.pointCarried ?? null;   // AUDIT LIGHT-NEAR1: setPointLights read the mask off the array, and a snapshot's has none\n",
     "new": "",
     "tests": [
-      "test/audit_lighting.test.js"
+      "test/render/audit_lighting.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "  vec2 uv = texelUV(uvIn);",
     "new": "  vec2 uv = uvIn;",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "    if (dot(s, n) > bias) h = max(h, c);",
     "new": "    if (d > bias) h = max(h, c);",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "    vec2 dir = vec2(cos(a), sin(a) * abs(uProjInfo.y / uProjInfo.x));",
     "new": "    vec2 dir = vec2(cos(a), sin(a) * abs(uProjInfo.x / uProjInfo.y));",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "    vec3 sliceDir = normalize(vec3(dir.x / uProjInfo.x, dir.y / uProjInfo.y, 0.0));",
     "new": "    vec3 sliceDir = normalize(vec3(dir.x, dir.y, 0.0));",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -151,7 +151,7 @@
     "old": "    if (npl < 1e-4) continue;",
     "new": "    if (npl < 1e-4) { vis += 1.0; continue; }",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -160,7 +160,7 @@
     "old": "  float ang = bayer4(gl_FragCoord.xy) * 1.5707963;",
     "new": "  float ang = bayer4(gl_FragCoord.xy) * 6.2831853;",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "  box[at + 6] = nearFull ? 1 : 0;",
     "new": "  box[at + 6] = 0;",
     "tests": [
-      "test/lc1_clusters.test.js"
+      "test/render/lc1_clusters.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "  return [r * k + (tr - r * k) * w(tr), g * k + (tg - g * k) * w(tg), b * k + (tb - b * k) * w(tb)];",
     "new": "  return [tr, tg, tb];",
     "tests": [
-      "test/audit_lighting.test.js"
+      "test/render/audit_lighting.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "  outColor = vec4(vec3(vis / ${AIR_AO_DIRECTIONS}.0 * ${AIR_AO_STORE}), 1.0);",
     "new": "  outColor = vec4(vec3(clamp(vis / ${AIR_AO_DIRECTIONS}.0, 0.0, 1.0) * ${AIR_AO_STORE}), 1.0);",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "  ao = 1.0 - (1.0 - ao) * uStrength;\n",
     "new": "",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   }
 ]

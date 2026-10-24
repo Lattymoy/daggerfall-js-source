@@ -42,26 +42,26 @@
 import { dice100 } from '../combat/formulas.js';
 import { rand } from '../formats/dfRandom.js';   // F209: StockHouseContainer's one classic-stream draw
 import { randomMaterial, randomArmorMaterial, createWeapon } from '../combat/enemyEquipment.js';
-import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition, rollPaintingMessage, setItemFields, templateByIndex, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from './itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
-import { customItemsForGroup } from './itemTemplates.js';   // AUDIT-RR F3: GetCustomItemsForGroup - the shelf's second loop (DaggerfallLoot.cs:255-287); FORAGE1: every mod's, from its one home
+import { groupTemplates, GROUP_TEMPLATE_INDICES, itemBaseValue, ITEM_TEMPLATES, mintCondition, rollPaintingMessage, setItemFields, templateByIndex, TRANSPORT_HORSE, TRANSPORT_SMALL_CART } from './item/itemTemplates.js';   // MAC-N1: SetItem's name + value, the one export
+import { customItemsForGroup } from './item/itemTemplates.js';   // AUDIT-RR F3: GetCustomItemsForGroup - the shelf's second loop (DaggerfallLoot.cs:255-287); FORAGE1: every mod's, from its one home
 import { createRandomBook, createShelfBook } from './books.js';   // B1; A2: CreateRandomBook whole, priced off the book FILE
 import { isLeather, isPlate } from './armorMaterials.js';
 import { CLOTHING_DYES } from '../characters/dyes.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { MINUTES_PER_DAY, dayOfYear } from './gameDate.js';   // X6: the soul-gem stock's daily seed; A2: CreateStockedDate's day term
 import { SOUL_TRAP_TEMPLATE } from './mysticism.js';   // X6: one home for the template id (X5 put it there with fillEmptyTrap)
-import { ILIAC_CARD_TEMPLATE, CARD_PACK_TEMPLATE } from './iliacItems.js';   // AUDIT CARDS-5 C2: the collectible card, which no shop buys; CARDS9: nor its pack
+import { ILIAC_CARD_TEMPLATE, CARD_PACK_TEMPLATE } from './iliac/iliacItems.js';   // AUDIT CARDS-5 C2: the collectible card, which no shop buys; CARDS9: nor its pack
 import { goodOfTemplate } from './naval/tradeGoods.js';   // AUDIT CAPTAIN'S SEA B2: the exchange's goods, which no shop buys
 import { OIL_TEMPLATE, ARROW_TEMPLATE, addItem } from './inventory.js';   // SHOP-ARROWS: the counter's quiver   // AUDIT-RR2 G10: the shelf's AddItem   // AUDIT 58: UselessItems2.Oil (ItemEnums.cs:357) - one home for the id
-import { getBool } from './settings.js';   // AUDIT 58: DaggerfallUnity.Settings.PlayerTorchFromItems, read where DFU reads it
+import { getBool } from './settings/settings.js';   // AUDIT 58: DaggerfallUnity.Settings.PlayerTorchFromItems, read where DFU reads it
 import { FACTION_TYPES } from '../formats/factionFile.js';        // S41: UpdateRegionalPrices' type-7 region walk
-import { findFactionByTypeAndRegion } from './talk.js';           // S41: PersistentFactionData.FindFactionByTypeAndRegion, one home
-import { MERCHANTS_FACTION_ID } from './guilds.js';               // S41: FactionIDs.The_Merchants, one home
-import { turnOnConditionFlag, turnOffConditionFlag, REGION_FLAGS, REGION_COUNT } from './regionConditions.js';   // S42: the store S41's flag was waiting on
-import { isOnlinePage } from './onlineLane.js';   // REALM P0.4: online, a shop pays at most half what it asks
+import { findFactionByTypeAndRegion } from './talk/talk.js';           // S41: PersistentFactionData.FindFactionByTypeAndRegion, one home
+import { MERCHANTS_FACTION_ID } from './guild/guilds.js';               // S41: FactionIDs.The_Merchants, one home
+import { turnOnConditionFlag, turnOffConditionFlag, REGION_FLAGS, REGION_COUNT } from './region/regionConditions.js';   // S42: the store S41's flag was waiting on
+import { isOnlinePage } from './online/onlineLane.js';   // REALM P0.4: online, a shop pays at most half what it asks
 import { BAG_TEMPLATE, isBagItem } from '../net/bagLaw.js';   // BAG1: the Materials Bag, at every General Store online
 import { createPellets } from './thunderlock.js';   // SHOP-PELLETS: the gun's shot on the counter - the shot alone, never the gun
-import { BOAT_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE } from './comeSailAwayItems.js';   // SHIPYARDS: a ship's parts and deed, which no shop buys - a port's shipyard does
+import { BOAT_PARTS_TEMPLATE, BOAT_DEED_TEMPLATE } from './comeSailAway/comeSailAwayItems.js';   // SHIPYARDS: a ship's parts and deed, which no shop buys - a port's shipyard does
 
 // ItemGroups ids used by the shelf tables (DaggerfallUnityEnums).
 const GROUP_NAMES = Object.freeze({
@@ -77,7 +77,7 @@ const GROUP_NAMES = Object.freeze({
 /**
  * DECOR2b: THE FURNISHER'S CHANCE. Daggerfall's stock law takes a (group, chance) pair for each kind of shop, and DFU's
  * furniture store has no pair it ever reads (the Furniture group is skipped for every shop), so this one is the port's:
- * fifty, the clothier's - a well-stocked store whose better pieces still wait on a better shop (systems/decorFurnish.js).
+ * fifty, the clothier's - a well-stocked store whose better pieces still wait on a better shop (systems/decor/decorFurnish.js).
  */
 export const FURNISHER_CHANCE = 0x32;
 
@@ -100,7 +100,7 @@ export const SHOP_ITEM_GROUPS = Object.freeze({
   [BUILDING_TYPES.WeaponSmith]: [0x02, 0x1E, 0x03, 0x46],
   // DECOR2b: THE FURNISHER. Daggerfall's Furniture Stores stand with empty shelves - DFU's stock loop skips the
   // Furniture group for every shop - and here they sell it, by the same law, at the port's own chance (a departure:
-  // systems/decorFurnish.js, delivered and never carried).
+  // systems/decor/decorFurnish.js, delivered and never carried).
   [BUILDING_TYPES.FurnitureStore]: [0x08, FURNISHER_CHANCE],
 });
 
@@ -208,14 +208,14 @@ export { TRANSPORT_HORSE, TRANSPORT_SMALL_CART };
 export const MAGIC_ITEMS_ENUM_TEMPLATE = 0;
 // AUDIT 24 (wave 24): Books.Book0..Book3 all resolve to 277 - one
 // constant, declared here and in loot.js.
-import { BOOK_TEMPLATE, createRegularMagicItem, createRandomPotion, randomlyAddPotionRecipe, getMagicItemTemplates, createRandomWeapon, createRandomArmor, createRandomClothing } from './loot.js';   // G4: the guild shelves' two minters (AUDIT 26 F129/F130: + the recipe arm and the registry)
-import { SPELLBOOK_TEMPLATE_INDEX } from './spellMaker.js';   // G4: one home for MiscItems 132
-import { restItemsStock } from './restItems.js';   // REST6: the Bedroll, the Ember Jar, Firewood and the draughts
+import { BOOK_TEMPLATE, createRegularMagicItem, createRandomPotion, randomlyAddPotionRecipe, getMagicItemTemplates, createRandomWeapon, createRandomArmor, createRandomClothing } from './loot/loot.js';   // G4: the guild shelves' two minters (AUDIT 26 F129/F130: + the recipe arm and the registry)
+import { SPELLBOOK_TEMPLATE_INDEX } from './spell/spellMaker.js';   // G4: one home for MiscItems 132
+import { restItemsStock } from './rest/restItems.js';   // REST6: the Bedroll, the Ember Jar, Firewood and the draughts
 import { provisionsStock, campfireStock, createSurvivalItem, isSurvivalItem, isCampfireKit, TEMPLATE as SURVIVAL_TEMPLATE, ensureEndlessProvisions, ENDLESS_RATIONS_STACK } from './survival/items.js';   // SURV2: the general store's provisions shelf   // REST2: and online the Campfire alone, the arc Off
 import { sharedClockOn } from './worldTick.js';
 import { healingShelfCount, mintHealingPotion } from './healingSupply.js';   // POTION-COMMON: the shelf's Potions of Healing
 import { survivalOn } from './survival/switch.js';   // SURV2: the one switch
-import { conditionBasedPricesOn, conditionCostBase } from './rriRealism.js';   // RRI2: the CalculateCost override's condition arm
+import { conditionBasedPricesOn, conditionCostBase } from './roleplayRealismItems/rriRealism.js';   // RRI2: the CalculateCost override's condition arm
 
 export { BOOK_TEMPLATE };
 
@@ -730,7 +730,7 @@ export function applyPriceConditionFlags(conditions, regionIndex, adjusted, roll
 // length (:99), so S42 took it into regionConditions.js beside the rest
 // of that record. S41 declared it here first and the two collided; the
 // re-export keeps this file's readers working off the one home.
-export { REGION_COUNT } from './regionConditions.js';
+export { REGION_COUNT } from './region/regionConditions.js';
 
 /** Mathf.Clamp(PriceAdjustment, 250, 4000) (FormulaHelper.cs:2074). */
 export const PRICE_ADJUSTMENT_MIN = 250;
@@ -770,7 +770,7 @@ export const PRICE_ADJUSTMENT_MAX = 4000;
  *
  * THE CONDITION-FLAG HALF SHIPS (:2075-2087). S41 had to flag this
  * because the port had no RegionDataFlags store to write into; S42
- * built one (systems/regionConditions.js), so the three arms land
+ * built one (systems/region/regionConditions.js), so the three arms land
  * here now, in DFU's own shape: at or under 2000 and at or over 500
  * turns BOTH flags off, under 500 turns PricesLow on, and over 2000
  * turns PricesHigh on. Note the asymmetry DFU has and this keeps -
@@ -840,7 +840,7 @@ export const ONLINE_SALE_SHARE = 0.5;
  *  the pile's gold divided by level) and left what they PAY where DFU put it, so a bed, a meal, a cure, a fare and a
  *  potion ate a far bigger share of a far smaller purse. The essentials - a tavern room and its food and drink
  *  (tavern.js, survival/tavernMenu.js), a temple's disease cure (guildServiceActions.js cureDiseaseOffer), a travel
- *  fare (ui/travelPopUp.js scaleTripCost, both map skins) and a POTION bought at any counter (tradeModes.js
+ *  fare (ui/travel/travelPopUp.js scaleTripCost, both map skins) and a POTION bought at any counter (tradeModes.js
  *  buyItemPrice, which every shelf's Buy walks - the guild shelves' too) - cost ONLINE_ESSENTIALS_PRICE_SCALE of
  *  their price online. Nothing else moves: repairs, training, spells, enchanting, houses and ships keep theirs.
  *  The half ROUNDS UP and a priced essential asks at least a gold - a free one (a holiday's, a knight's room) stays
@@ -895,7 +895,13 @@ export const ONLINE_SALE_SKILL_WEIGHT = 0.5;
 /** FormulaHelper.CalculateTradePrice, verbatim offline - the classic
  *  fixed-point haggle over the merchant's quality-derived levels vs
  *  the player's Mercantile + Personality. selling=false is the BUY
- *  price of a shelf item (applied over CalculateCost's cost). */
+ *  price of a shelf item (applied over CalculateCost's cost).
+ *  TRADE-WRAP (FIELD BUGS 2026-10-18b; Port-Ledger A): the last step,
+ *  the haggle's factor times the lot's whole cost, then `>> 8`, was
+ *  C#'s int and JS's int32 - a lot past about 9.6 to 18 million of
+ *  cost wrapped, and a sale of a few dozen Daedric pieces paid about
+ *  -8,400,000 gold into the purse (a purchase as large paid the buyer).
+ *  It divides now: the same number for every lot that never wrapped. */
 export function calculateTradePrice(cost, shopQuality, { mercantile = 0, personality = 50 } = {}, selling = false, { online = isOnlinePage() } = {}) {
   if (online) {   // MERC-CAP: the haggle's own range
     mercantile = Math.min(Math.max(mercantile, 0), ONLINE_HAGGLE_MAX);
@@ -906,7 +912,7 @@ export function calculateTradePrice(cost, shopQuality, { mercantile = 0, persona
   if (selling) {
     dm = ((Math.trunc(((100 - merchantLevel) << 8) / 200) + 128) * (Math.trunc((mercantile << 8) / 200) + 128)) >> 8;
     dp = ((Math.trunc(((100 - merchantLevel) << 8) / 200) + 128) * (Math.trunc((personality << 8) / 200) + 128)) >> 8;
-    const sale = ((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) >> 8;
+    const sale = Math.floor(((((179 * dm) >> 8) + ((51 * dp) >> 8)) * cost) / 256);   // TRADE-WRAP: never int32's wrap
     if (!online) return sale;
     const best = { mercantile: ONLINE_HAGGLE_MAX, personality: ONLINE_HAGGLE_MAX };   // MERC-RISE: the best haggler this counter can meet
     const half = Math.floor(calculateTradePrice(cost, shopQuality, best, false) * ONLINE_SALE_SHARE);   // REALM P0.4; MERC-RISE: half the least it asks
@@ -920,7 +926,7 @@ export function calculateTradePrice(cost, shopQuality, { mercantile = 0, persona
   }
   dm = ((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - mercantile) << 8) / 200) + 128)) >> 8;
   dp = (((Math.trunc((merchantLevel << 8) / 200) + 128) * (Math.trunc(((100 - personality) << 8) / 200) + 128)) >> 8) << 6;
-  return ((((192 * dm) >> 8) + (dp >> 8)) * cost) >> 8;
+  return Math.floor(((((192 * dm) >> 8) + (dp >> 8)) * cost) / 256);   // TRADE-WRAP: never int32's wrap
 }
 
 

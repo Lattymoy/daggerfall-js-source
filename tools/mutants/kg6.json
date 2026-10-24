@@ -1,0 +1,401 @@
+[
+  {
+    "name": "KG6-S-stakes",
+    "file": "src/net/gambit/gambitStakes.js",
+    "old": "export const GAMBIT_ONLINE_STAKES = Object.freeze([10, 50, 200, 1000, 5000]);",
+    "new": "export const GAMBIT_ONLINE_STAKES = Object.freeze([10, 50, 200, 1000]);",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-S-bb",
+    "file": "src/net/gambit/gambitStakes.js",
+    "old": "export const GAMBIT_STAKE_BB = 1;",
+    "new": "export const GAMBIT_STAKE_BB = 2;",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-T-stake-needed",
+    "file": "src/net/gambit/gambitTable.js",
+    "old": "  if (t.gold && stake == null) return 'stake needed';\n",
+    "new": "",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js",
+      "test/net/kg5_relay.test.js"
+    ]
+  },
+  {
+    "name": "KG6-T-friendly",
+    "file": "src/net/gambit/gambitTable.js",
+    "old": "  if (!t.gold && stake != null) return 'friendly table';\n",
+    "new": "",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-T-differs",
+    "file": "src/net/gambit/gambitTable.js",
+    "old": "  if (stake != null && other?.stake && other.stake.amount !== stake) return 'stake differs';\n",
+    "new": "",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-T-ready-once",
+    "file": "src/net/gambit/gambitTable.js",
+    "old": "  if (t.seats[p].ready) return 'ready';\n",
+    "new": "",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-T-unready-refund",
+    "file": "src/net/gambit/gambitTable.js",
+    "old": "  stakeBack(t, s, 'stood');\n  return [room(t, [{ t: 'unready', seat: p, at: now }])];",
+    "new": "  return [room(t, [{ t: 'unready', seat: p, at: now }])];",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-T-stand-refund",
+    "file": "src/net/gambit/gambitTable.js",
+    "old": "  else stakeBack(t, t.seats[p], 'stood');",
+    "new": "  // the refund",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-T-pot-winner",
+    "file": "src/net/gambit/gambitTable.js",
+    "old": "owe(t, ids[k], x, k === winner ? potOf(t.pot) : 0,",
+    "new": "owe(t, ids[k], x, k === winner ? x.amount : 0,",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-T-pot-loser",
+    "file": "src/net/gambit/gambitTable.js",
+    "old": "k === winner ? potOf(t.pot) : 0, k === winner",
+    "new": "k === winner ? potOf(t.pot) : x.amount, k === winner",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-T-void",
+    "file": "src/net/gambit/gambitTable.js",
+    "old": "      if (winner === null) owe(t, ids[k], x, x.amount, 'void');",
+    "new": "      if (winner === null) continue;",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-T-rated",
+    "file": "src/net/gambit/gambitTable.js",
+    "old": "if (winner !== null && ratedOf(t) && t.id) t.results.push(",
+    "new": "if (winner !== null && t.id) t.results.push(",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-T-rated-distinct",
+    "file": "src/net/gambit/gambitTable.js",
+    "old": " && t.subs[0] !== t.subs[1];",
+    "new": "",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-T-pot-deal",
+    "file": "src/net/gambit/gambitTable.js",
+    "old": "  t.pot = t.gold ? t.seats.map((/** @type {any} */ s) => s.stake) : null;",
+    "new": "  t.pot = null;",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-T-view-stake",
+    "file": "src/net/gambit/gambitTable.js",
+    "old": ", ...(s.stake ? { stake: s.stake.amount } : {}) } : null);",
+    "new": " } : null);",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-T-valid-pot",
+    "file": "src/net/gambit/gambitTable.js",
+    "old": " && t.pot.every(stakeOk) && t.pot[0].amount === t.pot[1].amount)) return false;",
+    "new": " && t.pot.every(stakeOk))) return false;",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-R-order-account",
+    "file": "server/src/index.js",
+    "old": "    if (!v.ok || v.claims.s !== a.sub) return 'stake refused';",
+    "new": "    if (!v.ok) return 'stake refused';",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-R-order-table",
+    "file": "server/src/index.js",
+    "old": "    if (c.cr !== a.key || c.ct !== m.table || c.cb !== GAMBIT_STAKE_BB) return 'stake elsewhere';",
+    "new": "    if (c.cr !== a.key) return 'stake elsewhere';",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-R-refusal-first",
+    "file": "server/src/index.js",
+    "old": "    const no = gambitReadyRefusal(t, { id: a.id, army: m.army, crown: m.crown, stake: c.ca });\n    if (no) return no;\n",
+    "new": "",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-R-spend",
+    "file": "server/src/index.js",
+    "old": "    await this.state.storage.put(stakeKeyOf(c.cj), Math.floor(now / 1000));\n    const r = gambitReady(",
+    "new": "    const r = gambitReady(",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-R-cashouts",
+    "file": "server/src/index.js",
+    "old": "        try { done = !!(await this._holdemReceipt(k, t.cashouts[0].to, t.cashouts[0])); }",
+    "new": "        try { done = true; }",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-R-results-keep",
+    "file": "server/src/index.js",
+    "old": "        try { for (const sub of res.f) await this._gambitKeep(sub, k, res.j, receipt, nowS); }",
+    "new": "        try { /* kept */ }",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-R-ack",
+    "file": "server/src/index.js",
+    "old": "    const key = gambitOwedKeyOf(a.sub);\n    const owed = (await this.state.storage.get(key)) ?? [];\n    if (!owed.some((x) => x?.j === j)) return;",
+    "new": "    const key = gambitOwedKeyOf(a.sub);\n    const owed = (await this.state.storage.get(key)) ?? [];\n    return;",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-R-owed-look",
+    "file": "server/src/index.js",
+    "old": "    if (m.op === 'look') { msgs = t ? gambitLook(t, a.id) : []; await this._gambitOwed(ws, a, m.table); }",
+    "new": "    if (m.op === 'look') { msgs = t ? gambitLook(t, a.id) : []; }",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-R-gold-flag",
+    "file": "server/src/index.js",
+    "old": "newGambitTable({ chairs: m.chairs, gold: holdemGoldTable(m.table) })",
+    "new": "newGambitTable({ chairs: m.chairs, gold: false })",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js",
+      "test/net/kg5_relay.test.js"
+    ]
+  },
+  {
+    "name": "KG6-A-arm-table",
+    "file": "server-account/src/cards.js",
+    "old": "    if (!holdemGoldTable(table)) return { error: 'bad-table' };\n",
+    "new": "",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-A-arm-stake",
+    "file": "server-account/src/cards.js",
+    "old": "    if (topup === true || !gambitStakeOk(amount)) return { error: 'bad-buy-in' };",
+    "new": "    if (topup === true) return { error: 'bad-buy-in' };",
+    "tests": [
+      "test/net/gambit/kg6_gold.test.js"
+    ]
+  },
+  {
+    "name": "KG6-A-claim-account",
+    "file": "server-account/src/gambit.js",
+    "old": "  if (!c.f.includes(player.id)) return { error: 'not-yours' };\n",
+    "new": "",
+    "tests": [
+      "test/net/gambit/kg6_season.test.js"
+    ]
+  },
+  {
+    "name": "KG6-A-pair-day",
+    "file": "server-account/src/gambit.js",
+    "old": "    const rated = !dayFull && !seasonFull;",
+    "new": "    const rated = true;",
+    "tests": [
+      "test/net/gambit/kg6_season.test.js"
+    ]
+  },
+  {
+    "name": "KG6-A-elo",
+    "file": "server-account/src/gambit.js",
+    "old": "eloAfter(ra.rating, rb.rating, c.r === 0 ? 1 : 0)",
+    "new": "eloAfter(ra.rating, rb.rating, c.r === 0 ? 0 : 1)",
+    "tests": [
+      "test/net/gambit/kg6_season.test.js"
+    ]
+  },
+  {
+    "name": "KG6-A-title-floor",
+    "file": "server-account/src/gambit.js",
+    "old": "Number(r.games) >= GAMBIT_CHAMPION_MIN_GAMES && Number(r.foes ?? 0) >= GAMBIT_CHAMPION_MIN_FOES;",
+    "new": "Number(r.games) >= GAMBIT_CHAMPION_MIN_GAMES;",
+    "tests": [
+      "test/net/gambit/kg6_season.test.js"
+    ]
+  },
+  {
+    "name": "KG6-A-first-row",
+    "file": "server-account/src/gambit.js",
+    "old": "export const gambitChampionOfBoard = (rows) => (gambitTitleWorthy(rows?.[0]) ? rows[0].player : null);",
+    "new": "export const gambitChampionOfBoard = (rows) => rows?.find(gambitTitleWorthy)?.player ?? null;",
+    "tests": [
+      "test/net/gambit/kg6_season.test.js"
+    ]
+  },
+  {
+    "name": "KG6-A-title-held",
+    "file": "server-account/src/titles.js",
+    "old": "  if (player?.gambit?.champion === true) held.push('grandmaster');",
+    "new": "  // the Grandmaster",
+    "tests": [
+      "test/net/gambit/kg6_season.test.js"
+    ]
+  },
+  {
+    "name": "KG6-A-clock",
+    "file": "server-account/src/cron.js",
+    "old": "  ['gambit-champion', async (ctx) => gambitChampionClock(ctx)],",
+    "new": "  ['gambit-champion', async () => 0],",
+    "tests": [
+      "test/net/gambit/kg6_season.test.js"
+    ]
+  },
+  {
+    "name": "KG6-A-honours",
+    "file": "server-account/src/honours.js",
+    "old": "iliac: answers[1], gambit: answers[2] };",
+    "new": "iliac: answers[1] };",
+    "tests": [
+      "test/net/gambit/kg6_season.test.js"
+    ],
+    "note": "PRIMARY-TRIPS (re-aimed by content): the Gambit's honours left off withHonours"
+  },
+  {
+    "name": "KG6-G-draw",
+    "file": "src/net/gambit/gambitReceipt.js",
+    "old": "  if (c.r !== 0 && c.r !== 1) return false;",
+    "new": "  if (c.r !== 0 && c.r !== 1 && c.r !== 2) return false;",
+    "tests": [
+      "test/net/gambit/kg6_season.test.js"
+    ]
+  },
+  {
+    "name": "KG6-G-accounts",
+    "file": "src/net/gambit/gambitReceipt.js",
+    "old": " || c.f[0] === c.f[1]) return false;",
+    "new": ") return false;",
+    "tests": [
+      "test/net/gambit/kg6_season.test.js"
+    ]
+  },
+  {
+    "name": "KG6-G-version",
+    "file": "src/net/gambit/gambitReceipt.js",
+    "old": "export const GAMBIT_RECEIPT_V = 'g1';",
+    "new": "export const GAMBIT_RECEIPT_V = 'i1';",
+    "tests": [
+      "test/net/gambit/kg6_season.test.js"
+    ]
+  },
+  {
+    "name": "KG6-C-carrier-read",
+    "file": "src/net/gambit/gambitClaims.js",
+    "old": "createIliacClaims({ ...deps, read: readGambitReceipt, key: GAMBIT_CLAIMS_KEY })",
+    "new": "createIliacClaims({ ...deps, key: GAMBIT_CLAIMS_KEY })",
+    "tests": [
+      "test/net/gambit/kg6_season.test.js"
+    ]
+  },
+  {
+    "name": "KG6-C-carrier-key",
+    "file": "src/net/gambit/gambitClaims.js",
+    "old": "read: readGambitReceipt, key: GAMBIT_CLAIMS_KEY })",
+    "new": "read: readGambitReceipt })",
+    "tests": [
+      "test/net/gambit/kg6_season.test.js"
+    ]
+  },
+  {
+    "name": "KG6-H-pick-bounds",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "const why = theirs !== null && theirs !== n ? stakeDiffers(other?.name ?? '', theirs) : (purse ?? 0) < n ? stakeShort(purse ?? 0) : null;",
+    "new": "const why = null;",
+    "tests": [
+      "test/net/gambit/kg6_season.test.js"
+    ]
+  },
+  {
+    "name": "KG6-H-order-sent",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "crown: crownIndex(g.crown), stake: r.stake })",
+    "new": "crown: crownIndex(g.crown) })",
+    "tests": [
+      "test/net/gambit/kg6_season.test.js"
+    ]
+  },
+  {
+    "name": "KG6-H-book",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "    if (g.stakeId && me >= 0 && st?.seats?.[me]?.stake) { d.online.seated?.(g.stakeId); g.stakeId = null; }",
+    "new": "    // the book",
+    "tests": [
+      "test/net/gambit/kg6_season.test.js"
+    ]
+  },
+  {
+    "name": "KG6-H-board",
+    "file": "src/scenes/gambitTableGame.js",
+    "old": "    g.board = b?.ok ? (b.data ?? b) : 'failed';",
+    "new": "    g.board = 'failed';",
+    "tests": [
+      "test/net/gambit/kg6_season.test.js"
+    ]
+  }
+]

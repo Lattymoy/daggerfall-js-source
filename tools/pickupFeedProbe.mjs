@@ -12,7 +12,7 @@
 // THE ICONS ARE STAND-INS. This container has no ARENA2, so the cached icon door (textureCanvas.requestFittedIcon) has
 // no archive to read; the page hands the feed's icon seam small pixel pictures of its own so the card's picture slot is
 // seen at its real size. The address the real door is asked for is the pack's own (inventoryItemImage) and is pinned in
-// test/pickupfeed.test.js.
+// test/systems/pickupfeed.test.js.
 //
 // HAUL-CARDS (2026-10-03): four scenes more - a vein's card bumped and its gem, a raid's three silver cards, the day's
 // cap beside a pickup, a Motherlode's one card - built from answers through ui/haulCards.js and drawn by `showHaul`,
@@ -48,17 +48,17 @@ const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewp
 </style></head><body>
 <div class="world"></div><div class="cross" id="cv"></div><div class="cross h" id="ch"></div>
 <script type="module">
-import { drawEnhancedHud } from '/src/ui/enhancedHud.js';
+import { drawEnhancedHud } from '/src/ui/enhanced/enhancedHud.js';
 import { showWorldPlaque, destroyWorldPlaque, plaqueAnchor } from '/src/ui/worldPlaque.js';
 import { hoverLines } from '/src/systems/worldHover.js';
 import { foldQuickLoot, resetQuickLoot, quickLootWheel } from '/src/systems/quickLoot.js';
 import { setPref } from '/src/systems/uiPrefs.js';
-import { LOOT_RARITY_KEY } from '/src/systems/lootRarity.js';
+import { LOOT_RARITY_KEY } from '/src/systems/loot/lootRarity.js';
 import { GOLD_TEMPLATE } from '/src/systems/inventory.js';
 import { showPickups, showHaul, destroyPickupFeed, _setPickupFeedForTests } from '/src/ui/pickupFeed.js';
 import { harvestHauls, claimHauls } from '/src/ui/haulCards.js';   // HAUL-CARDS: a gather's, a strike's and a claim's cards
-import { drawEnhancedMidText, midTextTopPx } from '/src/ui/enhancedHudText.js';
-import { crosshairCentreY } from '/src/ui/hudCrosshair.js';
+import { drawEnhancedMidText, midTextTopPx } from '/src/ui/enhanced/enhancedHudText.js';
+import { crosshairCentreY } from '/src/ui/hud/hudCrosshair.js';
 
 setPref('quickLoot', true);
 setPref(LOOT_RARITY_KEY, true);

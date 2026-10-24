@@ -1,9 +1,10 @@
 # DFO Online
 
 **DFO Online** - an open-source reimplementation of a classic 1996 RPG,
-played from your own copy of The Elder Scrolls II: Daggerfall. Data layer and
-game logic translated from Daggerfall Unity (MIT, Interkarma and
-contributors); presentation rebuilt on hand-rolled WebGL2. MIT licensed, with
+played from your own copy of The Elder Scrolls II: Daggerfall. It began as a
+1:1 port of Daggerfall Unity (MIT, Interkarma and contributors) and is now its
+own game: Daggerfall Unity is the reference for its data layer and logic, not a
+target to match. Presentation rebuilt on hand-rolled WebGL2. MIT licensed, with
 Daggerfall Unity's notice alongside (LICENSE). DFO Online is an independent,
 unofficial project, not affiliated with or endorsed by Bethesda Softworks or
 ZeniMax Media. The Elder Scrolls and Daggerfall are trademarks of ZeniMax
@@ -44,7 +45,15 @@ The monthly goal, suggested support levels, and funding breakdown are in
 [`SUPPORT.md`](SUPPORT.md). Sponsorship does not lock gameplay, source code,
 or normal releases behind a paywall.
 
+## Reporting exploits and security issues
+
+Privately, please: type `/bug` in the game, or see [`SECURITY.md`](SECURITY.md)
+for the other ways in and what to include. Please don't post exploits in public until
+they are fixed.
+
 ## Scripts
+
+Node 20.19+ or 22.12+ (Vite 8's floor; CI runs 22).
 
 - `npm run dev` - Vite dev server
 - `npm test` - Node test runner
@@ -73,9 +82,10 @@ npm run build && cd app && npm install && npm start
 The app opens on a **launcher** (`app/launcher/`), the game's front
 door: the latest patch notes (what came since you last played marked
 NEW), your game files, saves and update settings, and a big **Play**. It
-checks for an update and installs it before you play (the Windows
-`-setup` install and the Linux AppImage replace themselves; macOS and
-the portable exe are offered their own download), and on first run finds
+checks for an update and brings it before you play - the game's own
+files, only those that changed, on every platform; a release that changes
+the app itself is installed by the Windows `-setup` install and the Linux
+AppImage, and offered as a download on macOS and the portable exe - and on first run finds
 Daggerfall - on Steam, GOG, in Daggerfall Unity's settings, or an
 unpacked DaggerfallGameFiles.zip. An update that lands mid-session is
 told in the game and waits under File > Restart to Update (on macOS and

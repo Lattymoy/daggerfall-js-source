@@ -1,74 +1,74 @@
 [
   {
     "name": "HOLD-send-away-nothing-out-sent",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    if (!transportOut()) return { ok: false, text: HCC_TEXT.alreadyAway };",
     "new": "    if (false) return { ok: false, text: HCC_TEXT.alreadyAway };",
     "tests": [
-      "test/holdings.test.js"
+      "test/systems/horse/holdings.test.js"
     ]
   },
   {
     "name": "HOLD-send-away-from-the-saddle",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    if (tm().get() !== TRANSPORT.Foot) return { ok: false, text: HCC_TEXT.sendAwayDismount };",
     "new": "    if (false) return { ok: false, text: HCC_TEXT.sendAwayDismount };",
     "tests": [
-      "test/holdings.test.js"
+      "test/systems/horse/holdings.test.js"
     ]
   },
   {
     "name": "HOLD-send-away-the-hitched-record",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    const r = resolvePersistenceEnabledState(TRANSPORT.Foot, hasCart, hasHorse);",
     "new": "    const r = resolvePersistenceEnabledState(TRANSPORT.Cart, hasCart, hasHorse);",
     "tests": [
-      "test/holdings.test.js"
+      "test/systems/horse/holdings.test.js"
     ]
   },
   {
     "name": "HOLD-send-away-indoors",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    if (pee().isPlayerInside() || tm().isOnShip()) return { ok: false, text: HCC_TEXT.sendAwayOutdoorsOnly };",
     "new": "    if (tm().isOnShip()) return { ok: false, text: HCC_TEXT.sendAwayOutdoorsOnly };",
     "tests": [
-      "test/holdings.test.js"
+      "test/systems/horse/holdings.test.js"
     ]
   },
   {
     "name": "HOLD-the-hotkey-says-nothing",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "  function handleSummonTransport() { say(summonTransport().text); }",
     "new": "  function handleSummonTransport() { summonTransport(); }",
     "tests": [
-      "test/holdings.test.js"
+      "test/systems/horse/holdings.test.js"
     ]
   },
   {
     "name": "HOLD-rename-keeps-nothing",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    wagonState.HorseName = resolveHorseNameInput(horseName(), input);",
     "new": "    wagonState.HorseName = String(input ?? '');",
     "tests": [
-      "test/holdings.test.js"
+      "test/systems/horse/holdings.test.js"
     ]
   },
   {
     "name": "HOLD-stores-landing-on-stats",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "  else if (PROF_HOLD_SECTIONS.some(([id]) => id === at)) { pauseTab = 'holdings'; holdSec = at; }",
     "new": "  else if (PROF_HOLD_SECTIONS.some(([id]) => id === at)) { pauseTab = 'stats'; holdSec = at; }",
     "tests": [
-      "test/holdings.test.js"
+      "test/systems/horse/holdings.test.js"
     ]
   },
   {
     "name": "HOLD-stats-rail-keeps-the-stores",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "...(profPagesShown() ? PROF_STATS_SECTIONS : []), ...(vendorPageShown()",
     "new": "...(profPagesShown() ? PROF_PAGE_SECTIONS : []), ...(vendorPageShown()",
     "tests": [
-      "test/holdings.test.js"
+      "test/systems/horse/holdings.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    else horse = { state: 'Stabled', tone: 'is-away',",
     "new": "    else horse = { state: 'With you', tone: 'is-away',",
     "tests": [
-      "test/holdings.test.js"
+      "test/systems/horse/holdings.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  return v.ok ? { ok: true, name: s, reason: null } : { ok: false, name: '', reason: v.reason ?? 'That name will not do.' };",
     "new": "  return { ok: true, name: s, reason: null };",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -95,16 +95,16 @@
     "old": "  s = s.replace(/\\s+/g, ' ').trim().slice(0, SHIP_NAME_MAX).trim();",
     "new": "  s = s.replace(/\\s+/g, ' ').trim().slice(0, SHIP_NAME_MAX + 8).trim();",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "FLEET-refit-one-tier",
     "file": "src/systems/fleet.js",
-    "old": "  const at = (id) => Math.round((1 + tierOf(rec, id) * (lineOf(id)?.per ?? 0)) * 10000) / 10000;",
-    "new": "  const at = (id) => Math.round((1 + Math.min(1, tierOf(rec, id)) * (lineOf(id)?.per ?? 0)) * 10000) / 10000;",
+    "old": "  return Math.min(t, BASE_TIERS) * per + Math.max(0, t - BASE_TIERS) * per * ORE_PER;",
+    "new": "  return Math.min(t, 1) * per + Math.max(0, t - BASE_TIERS) * per * ORE_PER;",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  const k = HULL_UPGRADE_SCALE[hull] ?? 1;",
     "new": "  const k = 1;",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  if (materialCount(lists, kind) < n) return false;",
     "new": "  if (materialCount(lists, kind) < 0) return false;",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "  for (const r of _ships.values()) if (r.credit && !(accounts[r.credit.region]?.loanTotal > 0)) { r.credit = null; n++; }",
     "new": "  for (const r of _ships.values()) if (false) { r.credit = null; n++; }",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   },
@@ -141,7 +141,7 @@
     "old": "  if (!a || !(a.loanTotal > 0)) return null;",
     "new": "  if (!a) return null;",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   },
@@ -151,143 +151,143 @@
     "old": "  if (from) { const i = from.indexOf(deed); if (i >= 0) from.splice(i, 1); }",
     "new": "  if (false) { const i = from.indexOf(deed); if (i >= 0) from.splice(i, 1); }",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "FLEET-parts-swap-for-a-pack-deed",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "        if (deps.items?.retitle?.(boat, state.placeItem)) removeExact(state.placeItemCollection, state.placeItem);",
     "new": "        if (false) removeExact(state.placeItemCollection, state.placeItem);",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "FLEET-summon-never-moves",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    const boat = GetPlacedBoatWithUID(uid);\n    if (boat) {\n      if (boat === state.CurrentBoat",
     "new": "    const boat = GetPlacedBoatWithUID(uid);\n    if (false) {\n      if (boat === state.CurrentBoat",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "FLEET-laid-up-hold-lost",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "      transferAll(boat.Cargo.Items, kept);   // onto what a pick-up left under her number",
     "new": "      boat.Cargo.Items.length = 0;   // onto what a pick-up left under her number",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "FLEET-laid-up-hold-not-kept",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (!state.PackedCargoes.has(key)) state.PackedCargoes.set(key, []);",
     "new": "    if (!state.PackedCargoes.has(key)) return [];",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "FLEET-rigging-unread",
-    "file": "src/systems/comeSailAway.js",
-    "old": "f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b));",
-    "new": "f(b.modifierMoveSpeedSail)) * hurt));",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "f(b.modifierMoveSpeedSail)) * hurt) * rigOf(b)) * peace());",
+    "new": "f(b.modifierMoveSpeedSail)) * hurt)) * peace());",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "FLEET-hold-unread",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "(Number.isFinite(holdK) && holdK > 0 ? f(holdK) : 1)",
     "new": "1",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "FLEET-wire-n-always",
-    "file": "src/systems/comeSailAwayWire.js",
-    "old": "...(named ? { n } : {}) };",
-    "new": "n };",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
+    "old": "...(named ? { n } : {}), ...(flagged",
+    "new": "n, ...(flagged",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ],
     "note": "TOUGHER-SHIPS + HOLDINGS' merge of main's #574 (PIN MOVED): re-aimed by content - the record's names beside main's uids (`u`)."
   },
   {
     "name": "FLEET-wire-name-unread-by-law",
-    "file": "src/systems/comeSailAwayWire.js",
+    "file": "src/systems/comeSailAway/comeSailAwayWire.js",
     "old": "  const v = shipNameVerdict(raw);\n  return v.ok ? v.name : '';",
     "new": "  return raw;",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "FLEET-hull-refit-unread",
-    "file": "src/scenes/navalHost.js",
-    "old": "    return Number.isFinite(k) && k > 1 ? { ...b, hullHp: Math.round(b.hullHp * k), sailHp: Math.round(b.sailHp * k) } : b;",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    return Number.isFinite(k) && k > 0 && k !== 1 ? { ...b, hullHp: Math.round(b.hullHp * k), sailHp: Math.round(b.sailHp * k) } : b;",
     "new": "    return b;",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "FLEET-guns-refit-on-barrels",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (byMe && e.type !== 'blast') gunsRefit(hurt, e.shooter);",
     "new": "    if (byMe) gunsRefit(hurt, e.shooter);",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "FLEET-away-no-free-mending",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    d.repair({ hull: free.hull, sail: free.sail, crew: 0 }, { refloat: FIELD_REFLOAT });",
     "new": "    void free;",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "FLEET-away-unpaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const r = seaRepair(d, 1e9, { crewed: true, crewShare: 1, budget: st.credit + stores * STORE_POINTS });",
     "new": "    const r = seaRepair(d, 1e9, { crewed: true, crewShare: 1, budget: Infinity });",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "FLEET-refit-heals-her",
-    "file": "src/scenes/navalHost.js",
-    "old": "    pendingBoats.set(boat.uid, { ...savedRecord(st.damage, st.hull, 0), barrels: st.guns.barrels, mates: st.crew.snapshot() });",
-    "new": "    void savedRecord;",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (st) st.damage.rewhole(refitBuild(boat));",
+    "new": "    if (st) st.damage.repair();",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "FLEET-berth-taken-by-mine",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        if (!berthFree(h.key, i) || myBoats().some(",
     "new": "        if (!berthFree(h.key, i) || [].some(",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "FLEET-refit-on-a-loan",
     "file": "src/scenes/fleetHost.js",
-    "old": "    const refit = loan ? `She was bought",
-    "new": "    const refit = false ? `She was bought",
+    "old": "    const refit = loan ? `This ship was bought on credit",
+    "new": "    const refit = false ? `This ship was bought on credit",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -296,7 +296,7 @@
     "old": "      : !atPort ? 'Ships are refitted at a port.'",
     "new": "      : false ? 'Ships are refitted at a port.'",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -305,25 +305,25 @@
     "old": "      deps.pay?.(row.next.gold);",
     "new": "      void row;",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "FLEET-summon-from-anywhere",
     "file": "src/scenes/fleetHost.js",
-    "old": "      : !atPort ? 'Your ships are brought round to a port - go to one.'",
-    "new": "      : false ? 'Your ships are brought round to a port - go to one.'",
+    "old": "      : !atPort ? 'Ships can only be summoned to a port. Go to one first.'",
+    "new": "      : false ? 'Ships can only be summoned to a port. Go to one first.'",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
     "name": "FLEET-a-small-boat-sails-alone",
     "file": "src/scenes/fleetHost.js",
-    "old": "      : !crewed && at.where !== 'here' ? 'She has no crew to sail her to a port - go to her.'",
-    "new": "      : false ? 'She has no crew to sail her to a port - go to her.'",
+    "old": "      : !crewed && at.where !== 'here' ? 'This ship has no crew to sail it to port. Go to it yourself.'",
+    "new": "      : false ? 'This ship has no crew to sail it to port. Go to it yourself.'",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -332,7 +332,7 @@
     "old": "      retitle(uid);   // a small boat's title, spent on her placing, made again",
     "new": "      void uid;   // a small boat's title, spent on her placing, made again",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -341,7 +341,7 @@
     "old": "titleDeed(it, { from: playerEntity.items, port: town",
     "new": "titleDeed(it, { from: null, port: town",
     "tests": [
-      "test/fleet.test.js"
+      "test/systems/naval/fleet.test.js"
     ]
   },
   {
@@ -350,7 +350,7 @@
     "old": "      if (role === FIRST_MATE) for (const o of hands) if (o !== h && o.role === FIRST_MATE) o.role = 'Deckhand';",
     "new": "      if (false) for (const o of hands) if (o !== h && o.role === FIRST_MATE) o.role = 'Deckhand';",
     "tests": [
-      "test/crewroles.test.js"
+      "test/systems/naval/crewroles.test.js"
     ]
   },
   {
@@ -359,7 +359,7 @@
     "old": "      const bard = role === 'Bard' && h.mobile === MOBILE.Bard;",
     "new": "      const bard = role === 'Bard';",
     "tests": [
-      "test/crewroles.test.js"
+      "test/systems/naval/crewroles.test.js"
     ]
   },
   {
@@ -368,7 +368,7 @@
     "old": "    if (post && rng() < POST_SHARE) {",
     "new": "    if (post && rng() < 0) {",
     "tests": [
-      "test/crewroles.test.js"
+      "test/systems/naval/crewroles.test.js"
     ]
   },
   {
@@ -377,7 +377,7 @@
     "old": "      if (Math.hypot(m.pos[0] - post.at[0], m.pos[2] - post.at[2]) > POST_REACH && walkTo(m, post.at)) return;",
     "new": "      if (Math.hypot(m.pos[0] - post.at[0], m.pos[2] - post.at[2]) > POST_REACH * 30 && walkTo(m, post.at)) return;",
     "tests": [
-      "test/crewroles.test.js"
+      "test/systems/naval/crewroles.test.js"
     ]
   },
   {
@@ -386,7 +386,7 @@
     "old": "            const gun = roles[m.i] === 'Gunner' ? postOf(m) : null;",
     "new": "            const gun = null;",
     "tests": [
-      "test/crewroles.test.js"
+      "test/systems/naval/crewroles.test.js"
     ]
   },
   {
@@ -395,25 +395,25 @@
     "old": "        if (q && !taken.some((t) => Math.hypot(t[0] - q[0], t[2] - q[2]) < POST_APART)) { taken.push(q); return q; }",
     "new": "        if (q) { taken.push(q); return q; }",
     "tests": [
-      "test/crewroles.test.js"
+      "test/systems/naval/crewroles.test.js"
     ]
   },
   {
     "name": "CR-mate-the-first-aboard",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    return (aboard.find((h) => h.role === FIRST_MATE) ?? aboard[0])?.name ?? null;",
     "new": "    return aboard[0]?.name ?? null;",
     "tests": [
-      "test/crewroles.test.js"
+      "test/systems/naval/crewroles.test.js"
     ]
   },
   {
     "name": "CR-roles-unsent",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const roles = boat.crewed ? st.crew.hands.map((h) => h.role) : null;",
     "new": "      const roles = null;",
     "tests": [
-      "test/crewroles.test.js"
+      "test/systems/naval/crewroles.test.js"
     ]
   },
   {
@@ -422,7 +422,7 @@
     "old": "      _crewCtx.roles = ship.mine?.roles ?? null;",
     "new": "      _crewCtx.roles = null;",
     "tests": [
-      "test/crewroles.test.js"
+      "test/systems/naval/crewroles.test.js"
     ]
   },
   {
@@ -431,7 +431,7 @@
     "old": "    for (const role of [...CREW_ROLES.filter((r) => !(h.bard && r === 'Lookout')), ...(h.bard ? ['Bard'] : [])]) {",
     "new": "    for (const role of [...CREW_ROLES.filter((r) => !(h.bard && r === 'Lookout')), 'Bard']) {",
     "tests": [
-      "test/crewroles.test.js"
+      "test/systems/naval/crewroles.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   }

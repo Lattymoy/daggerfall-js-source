@@ -1,38 +1,38 @@
 [
   {
     "name": "ARENA4b-BLOW-SEQ-IGNORED",
-    "file": "src/net/arenaBrain.js",
+    "file": "src/net/arena/arenaBrain.js",
     "old": "const same = q != null && q === M.q && now - M.qAt < 250;",
     "new": "const same = false;",
     "tests": [
-      "test/arena4b_blows.test.js"
+      "test/net/arena/arena4b_blows.test.js"
     ]
   },
   {
     "name": "ARENA4b-BLOW-SEQ-UNKEPT",
-    "file": "src/net/arenaBrain.js",
+    "file": "src/net/arena/arenaBrain.js",
     "old": "M.hits.push(now); M.q = q ?? -1; M.qAt = now;",
     "new": "M.hits.push(now); M.q = -1; M.qAt = now;",
     "tests": [
-      "test/arena4b_blows.test.js"
+      "test/net/arena/arena4b_blows.test.js"
     ]
   },
   {
     "name": "ARENA4b-BLOW-FOURTH-CAST",
-    "file": "src/net/arenaBrain.js",
+    "file": "src/net/arena/arenaBrain.js",
     "old": "      if (M.spells.length >= ARENA_SPELLS_IN) return out;\n",
     "new": "",
     "tests": [
-      "test/arena4b_blows.test.js"
+      "test/net/arena/arena4b_blows.test.js"
     ]
   },
   {
     "name": "ARENA4b-BLOW-RIVAL-NO-SEQ",
     "file": "src/scenes/dungeonContext.js",
-    "old": "m: playerWeapon.strikingWeapon?.material ?? 0, q: _arenaQ });",
-    "new": "m: playerWeapon.strikingWeapon?.material ?? 0 });",
+    "old": "m: playerWeapon.strikingWeapon?.material ?? 0, q: _arenaQ }));",
+    "new": "m: playerWeapon.strikingWeapon?.material ?? 0 }));",
     "tests": [
-      "test/arena4b_blows.test.js"
+      "test/net/arena/arena4b_blows.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    nextArenaQ();   // ARENA4b: this swing is one blow to the referee, every body it meets\n",
     "new": "",
     "tests": [
-      "test/arena4b_blows.test.js"
+      "test/net/arena/arena4b_blows.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "            nextArenaQ();   // ARENA4b: each shaft its own blow\n",
     "new": "",
     "tests": [
-      "test/arena4b_blows.test.js"
+      "test/net/arena/arena4b_blows.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "q: cast ? arenaSpellQ() : _arenaQ });",
     "new": "q: undefined });",
     "tests": [
-      "test/arena4b_blows.test.js"
+      "test/net/arena/arena4b_blows.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      const cast = kind === 'spell' || !!spell;",
     "new": "      const cast = !!spell;",
     "tests": [
-      "test/arena4b_blows.test.js"
+      "test/net/arena/arena4b_blows.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    if (_arenaSpellQ == null) { _arenaSpellQ = nextArenaQ(); void Promise.resolve().then(() => { _arenaSpellQ = null; }); }",
     "new": "    _arenaSpellQ = nextArenaQ();",
     "tests": [
-      "test/arena4b_blows.test.js"
+      "test/net/arena/arena4b_blows.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": " void Promise.resolve().then(() => { _arenaSpellQ = null; }); }",
     "new": " }",
     "tests": [
-      "test/arena4b_blows.test.js"
+      "test/net/arena/arena4b_blows.test.js"
     ]
   },
   {
@@ -95,34 +95,34 @@
     "old": "    castAtDuel: opts.arenaRival ? (_id, sp) => spellOnRival(sp) : (opts.wildSpellOut",
     "new": "    castAtDuel: opts.arenaRival ? null : (opts.wildSpellOut",
     "tests": [
-      "test/arena4b_blows.test.js"
+      "test/net/arena/arena4b_blows.test.js"
     ]
   },
   {
     "name": "ARENA4b-BLOW-SPELL-AS-SWING",
-    "file": "src/scenes/dungeonContext.js",
-    "old": "    return landOnRival(rb, dealt, 'spell');",
-    "new": "    return landOnRival(rb, dealt, 'melee');",
+    "file": "src/scenes/gate/standInSpell.js",
+    "old": "    return host.landOnRival(rb, dealt, 'spell');",
+    "new": "    return host.landOnRival(rb, dealt, 'melee');",
     "tests": [
-      "test/arena4b_blows.test.js"
+      "test/net/arena/arena4b_blows.test.js"
     ]
   },
   {
     "name": "ARENA4b-BLOW-CLAIM-NO-SEQ",
-    "file": "src/scenes/arenaOnline.js",
+    "file": "src/scenes/arena/arenaOnline.js",
     "old": "...(Number.isInteger(q) ? { q } : {}) });",
     "new": "...({}) });",
     "tests": [
-      "test/arena4b_blows.test.js"
+      "test/net/arena/arena4b_blows.test.js"
     ]
   },
   {
     "name": "ARENA4b-BLOW-STANDS-STRIKE",
-    "file": "src/scenes/arenaOnline.js",
+    "file": "src/scenes/arena/arenaOnline.js",
     "old": "    if (bout?.kind === 'watch') return false;   // ARENA4b: the stands strike nobody - the relay would junk the word\n",
     "new": "",
     "tests": [
-      "test/arena4b_blows.test.js"
+      "test/net/arena/arena4b_blows.test.js"
     ]
   }
 ]

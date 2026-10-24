@@ -1,0 +1,248 @@
+[
+  {
+    "name": "EOW-door-never-shown",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "    overBtn.hidden = !overworldShown();   // ETHER-OW",
+    "new": "    overBtn.hidden = true;   // ETHER-OW",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "The chart's Overworld door never stands: no captain past the Veil can rise."
+  },
+  {
+    "name": "EOW-door-key-unheard",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "    if (e.code === 'KeyO' && overworldShown()) { e.preventDefault(); e.stopPropagation(); exit('overworld'); return; }",
+    "new": "",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "The door's key, O, is no key of the chart's."
+  },
+  {
+    "name": "EOW-door-plain-close",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  overBtn.addEventListener('click', () => { if (overworldShown()) exit('overworld'); });",
+    "new": "  overBtn.addEventListener('click', () => { if (overworldShown()) exit('close'); });",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "The door shuts the chart as a plain close: the host never lifts the view."
+  },
+  {
+    "name": "EOW-door-shown-anywhere",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  const overworldShown = () => typeof deps.overworld === 'function' && !!deps.overworld();",
+    "new": "  const overworldShown = () => typeof deps.overworld === 'function';",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "The door stands where the view cannot rise."
+  },
+  {
+    "name": "EOW-host-door-unhanded",
+    "file": "src/scenes/world.js",
+    "old": "    const win = createEtherChartOverlay({ word, overworld: () => !!travelView && travelViewAllowed().ok, onClose: (reason) => { why = reason; } });",
+    "new": "    const win = createEtherChartOverlay({ word, onClose: (reason) => { why = reason; } });",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "The host never hands the chart its door."
+  },
+  {
+    "name": "EOW-host-never-lifted",
+    "file": "src/scenes/world.js",
+    "old": "    townTalk.showOverlay(win, () => { if (why === 'overworld') travelView?.enter(); });",
+    "new": "    townTalk.showOverlay(win);",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "The chart shut for the Overworld, and the view never rises."
+  },
+  {
+    "name": "EOW-host-every-close",
+    "file": "src/scenes/world.js",
+    "old": "    townTalk.showOverlay(win, () => { if (why === 'overworld') travelView?.enter(); });",
+    "new": "    townTalk.showOverlay(win, () => { travelView?.enter(); });",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "Every close of the chart lifts the view."
+  },
+  {
+    "name": "EOW-governor-off-map-built",
+    "file": "src/scenes/world.js",
+    "old": "      uc.n = unbuiltAround(px, radius, (x, y) => built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`), uc.owed);",
+    "new": "      uc.n = unbuiltAround(px, radius, (x, y) => x < 0 || y < 0 || x >= 1000 || y >= 500 || built.has(`${x},${y}`) || !state.loaded.has(`${x},${y}`), uc.owed);",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js",
+      "test/systems/travel/tv2_click_to_move.test.js"
+    ],
+    "note": "The governor's ground is the map again: past the Veil every pixel reads built and the clock is never held for the land."
+  },
+  {
+    "name": "EOW-places-bay-alone",
+    "file": "src/scenes/world.js",
+    "old": "    if (etherSea && inEther(px, py)) {\n      const loc = tvEtherPlace(px, py);",
+    "new": "    if (false) {\n      const loc = tvEtherPlace(px, py);",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "Past the Veil the view reads the Bay's dictionary alone: an isle's port and ruin are bare ground."
+  },
+  {
+    "name": "EOW-places-known-always",
+    "file": "src/scenes/world.js",
+    "old": "  const tvEtherKnown = (loc) => captainLedger.isCharted(loc.ether) || hasDiscoveredLocationId(loc.mapTableData.mapId);",
+    "new": "  const tvEtherKnown = (loc) => !!loc;",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "Every isle's place is known, charted or not."
+  },
+  {
+    "name": "EOW-places-found-unread",
+    "file": "src/scenes/world.js",
+    "old": "  const tvEtherKnown = (loc) => captainLedger.isCharted(loc.ether) || hasDiscoveredLocationId(loc.mapTableData.mapId);",
+    "new": "  const tvEtherKnown = (loc) => captainLedger.isCharted(loc.ether);",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "A place found (its door entered, met on approach) is unknown while its isle is uncharted."
+  },
+  {
+    "name": "EOW-places-index-unread",
+    "file": "src/scenes/world.js",
+    "old": "return isle ? (locationIndex.get(`${px},${py}`) ?? etherPlaceClone(isle)) : null; };",
+    "new": "return isle ? etherPlaceClone(isle) : null; };",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "The index's stood place never read: the view's place a second clone beside the one the build stood."
+  },
+  {
+    "name": "EOW-far-ports-unread",
+    "file": "src/scenes/world.js",
+    "old": "[...settlements, ...etherPlaceRows(at, TV_FAR_RANGE, 'port')] : settlements",
+    "new": "settlements : settlements",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "Past the Veil the edge speaks for no port."
+  },
+  {
+    "name": "EOW-far-ruins-unread",
+    "file": "src/scenes/world.js",
+    "old": "    return etherSea && inEther(at.x, at.y) ? [...bay, ...etherPlaceRows(at, range, 'ruin')] : bay;",
+    "new": "    return bay;",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "Past the Veil TV6 knows no ruin."
+  },
+  {
+    "name": "EOW-far-ruins-as-ports",
+    "file": "src/scenes/world.js",
+    "old": "[...bay, ...etherPlaceRows(at, range, 'ruin')]",
+    "new": "[...bay, ...etherPlaceRows(at, range, 'port')]",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "TV6's dungeons the ports' isles."
+  },
+  {
+    "name": "EOW-settlements-isles",
+    "file": "src/scenes/world.js",
+    "old": "    const settlements = (_tvSettlements ??= settlementPixels(locationIndex).filter((t) => !t.loc.ether));",
+    "new": "    const settlements = (_tvSettlements ??= settlementPixels(locationIndex));",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "The once-gathered settlements keep an isle's place the index held at the first ask."
+  },
+  {
+    "name": "EOW-bands-bay-alone",
+    "file": "src/scenes/world.js",
+    "old": "    return onBayOrEther(px, py) && !tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);",
+    "new": "    return px >= 0 && py >= 0 && px < 1000 && py < 500 && !tvWater(px, py) && !_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "The bands are born on the Bay's map alone."
+  },
+  {
+    "name": "EOW-bands-on-places",
+    "file": "src/scenes/world.js",
+    "old": "!_bandPlacePixels.has(`${px},${py}`) && !etherPlaceIsle(px, py);",
+    "new": "!_bandPlacePixels.has(`${px},${py}`);",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "A band stands on an isle's town or ruin."
+  },
+  {
+    "name": "EOW-raiders-bay-alone",
+    "file": "src/scenes/world.js",
+    "old": "    if (!onBayOrEther(px, py) || maps.getClimateIndex(px, py) !== CLIMATES.Ocean) return false;",
+    "new": "    if (px < 0 || py < 0 || px >= 1000 || py >= 500 || maps.getClimateIndex(px, py) !== CLIMATES.Ocean) return false;",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js"
+    ],
+    "note": "The raiders are born on the Bay's map alone."
+  },
+  {
+    "name": "EOW-raid-sea-truncated",
+    "file": "src/scenes/world.js",
+    "old": "    const px = Math.floor(x / RAID_NATIVE_PIXEL), py = 499 - Math.floor(z / RAID_NATIVE_PIXEL);",
+    "new": "    const px = Math.trunc(x / RAID_NATIVE_PIXEL), py = 499 - Math.trunc(z / RAID_NATIVE_PIXEL);",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js",
+      "test/systems/ows3_raiders.test.js"
+    ],
+    "note": "The pixel law's truncation: the strip past the Bay's west and south edges the edge's own water again (AUDIT OW5b S5)."
+  },
+  {
+    "name": "EOW-raider-level-bay",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    const level = (deps.level?.() ?? 1) + (w.ether ? BANDS.find((b) => b.id === w.ether.band)?.level ?? 0 : 0);",
+    "new": "    const level = (deps.level?.() ?? 1);",
+    "tests": [
+      "test/systems/naval/nav_r_raiders.test.js"
+    ],
+    "note": "A raider past the Veil drawn at the captain's own level, below every corsair of the sea's."
+  },
+  {
+    "name": "EOW-word-bay-extent",
+    "file": "src/systems/travel/travelBands.js",
+    "old": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && worldPixelOk(Math.floor(x / PIXEL_NATIVE)) && worldPixelOk(499 - Math.floor(z / PIXEL_NATIVE));",
+    "new": "const chaserPlaceOk = (x, z) => Number.isInteger(x) && Number.isInteger(z) && x >= 0 && z >= 0 && x <= 1000 * PIXEL_NATIVE && z <= 500 * PIXEL_NATIVE;",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js",
+      "test/systems/travel/tv7_bands.test.js",
+      "test/systems/ows3_raiders.test.js"
+    ],
+    "note": "A chase said past the Veil dropped by every peer who hears it."
+  },
+  {
+    "name": "EOW-ground-bay-alone",
+    "file": "src/world/ethericSea.js",
+    "old": "export const onBayOrEther = (x, y) => (x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y) || inEther(x, y);",
+    "new": "export const onBayOrEther = (x, y) => (x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y);",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js",
+      "test/net/ether_nodes.test.js"
+    ],
+    "note": "The seeded ground the Bay's map alone: no band, raider or node past the Veil."
+  },
+  {
+    "name": "EOW-door-words",
+    "file": "src/scenes/travelView.js",
+    "old": "export const TRAVEL_VIEW_BUTTON = 'Overworld (O)';",
+    "new": "export const TRAVEL_VIEW_BUTTON = 'Overworld';",
+    "tests": [
+      "test/systems/travel/ether_ow.test.js",
+      "test/ui/heldmap.test.js"
+    ],
+    "note": "The door's words, its key unsaid."
+  }
+]

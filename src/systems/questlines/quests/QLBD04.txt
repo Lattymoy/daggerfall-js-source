@@ -1,0 +1,111 @@
+-- QL12 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.1): THE BURNING DOORS, step 4 of 5.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner: Ysolde's words
+-- are in the journal at once, and she waits at her hall. WITNESSED (net/questlineClaims.js, `breach`): the step waits on
+-- a Dagon's Breach closed (`ql act breach-closed 1`, said by net/gate/gateClaims.js - a kill, never the rite alone).
+-- A visit before the door is shut is answered and cleared, as DFU's guild quests clear an early click (M0B30Y04's
+-- `_clearclick_`). Lore: the Warden's will holds the door ("On the Burning Doors", systems/portBooks.js).
+Quest: QLBD04
+DisplayName: Through the Burning Door
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>        Ysolde Marnhel has stopped waiting for word of
+<ce>                       a closed door.
+
+QuestComplete:  [1004]
+<ce>       "For a door shut," Ysolde says, and counts _gold_
+<ce>                   gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ Ysolde Marnhel wants a breach closed - not
+ weakened, closed. The Warden's will holds the
+ door: fell Valkynaz Ruhn, and it fails at once.
+ She will wait for me at _hall_ in __hall_.
+
+Message:  1011
+%qdt:
+ I have closed a Dagon's Breach. Ysolde Marnhel is
+ waiting to hear of it at _hall_ in __hall_.
+
+Message:  1013
+<ce>       Ysolde looks at the ember-burns on your hands and
+<ce>                does not ask if they hurt.
+<ce>
+<ce>       "Closed. Not stopped, not weakened - closed. Do
+<ce>        you know how few can say that? The Guild will
+<ce>        put your name in my next book, like it or not."
+<ce>
+<ce>       "Keep the embers you carried out. All of them.
+<ce>        Soon I will ask you where they ought to go,
+<ce>        and I want you to have thought about it."
+
+Message:  1014
+Ysolde Marnhel? The conjurer who wrote the book on the breaches.
+<--->
+The Master Conjurer from Wayrest has not slept, they say. She is waiting on news.
+<--->
+Marnhel says the burning doors can be shut. Most folk would rather she were right.
+
+Message:  1015
+<ce>         "The door is still open somewhere, %pcf. Come
+<ce>                   back when it is shut."
+
+Message:  1020
+<ce>        The door shudders and folds in on itself, and
+<ce>         the Deadlands' heat goes out of the air. The
+<ce>                Covenant has its door back.
+
+-- Symbols used in the QRC file:
+--
+--               %pcf occurs 1 time.
+--               %qdt occurs 2 times.
+--             _gold_ occurs 1 time.
+--             _hall_ occurs 2 times.
+--            __hall_ occurs 2 times.
+
+QBN:
+Item _gold_ gold range 300 to 600
+
+Person _ysolde_ faction The_Mages_Guild female anyInfo 1014
+
+Place _hall_ remote magery
+
+Clock _wait_ 60.00:00 0 flag 1 range 0 1
+Clock _meet_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	ql name _ysolde_ Ysolde_Marnhel
+	place npc _ysolde_ at _hall_
+	log 1010 step 0
+	start timer _wait_
+
+_closed_ task:
+	ql act breach-closed 1
+	say 1020
+	log 1011 step 1
+	stop timer _wait_
+	start timer _meet_
+
+_clicked_ task:
+	clicked npc _ysolde_
+
+_notyet_ task:
+	when _clicked_ and not _closed_
+	say 1015
+	clear _clicked_ _notyet_
+
+_paid_ task:
+	when _clicked_ and _closed_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest
+
+_meet_ task:
+	say 1003
+	end quest

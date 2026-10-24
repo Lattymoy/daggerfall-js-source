@@ -5,7 +5,7 @@
     "old": "if (!r || !raidActive(r, nowMinutes) || !Number.isInteger(r.px)",
     "new": "if (!r || !Number.isInteger(r.px)",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "if (killed > 0 && target > 0) lines.push",
     "new": "if (target > 0) lines.push",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "`${Math.min(killed, target)} of ${target} driven off`",
     "new": "`${killed} of ${target} driven off`",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "lines.push(local ? `Withdraws at ${local} your time` : `Withdraws at ${clockText(r.endMinute)}`);",
     "new": "lines.push(local ? `Withdraws at ${local} your time` : `Withdraws at ${clockText(r.startMinute)}`);",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "const m = ((Math.floor(minute) % 1440) + 1440) % 1440;",
     "new": "const m = Math.floor(minute);",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -50,16 +50,16 @@
     "old": "px < 0 || py < 0 || px >= size.width || py >= size.height) continue;",
     "new": "px < 0 || py < 0) continue;",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
     "name": "EVENT-TIP-a-card-without-bounds",
     "file": "src/ui/eventMapMarks.js",
-    "old": "(Array.isArray(tip.lines) ? tip.lines : []).slice(0, TIP_LINES_MAX).map(",
+    "old": "(Array.isArray(tip.lines) ? tip.lines : []).slice(0, linesMax).map(",
     "new": "(Array.isArray(tip.lines) ? tip.lines : []).map(",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "  if (left + w > vw - edge) left = x - gap - w;\n",
     "new": "",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  return { left: Math.max(edge, Math.min(left, vw - edge - w)), top: Math.max(edge, Math.min(top, vh - edge - h)) };",
     "new": "  return { left, top };",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "`${m.key}@${m.px},${m.py}|${m.label}|${tipKey(m.tip)}`",
     "new": "`${m.key}@${m.px},${m.py}|${m.label}`",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    if (raid) return { label: raid.label, cursor: m ? 'pointer' : '', tip: raid.tip };\n",
     "new": "",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    if (g) return { label: g.label, cursor: '', tip: g.tip };\n",
     "new": "",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    if (gateMoved) this._refreshTip();\n",
     "new": "",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    const raids = readRaidMarks(this.deps.raids, this._size);",
     "new": "    const raids = [];",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    if (this._raids.length) {   // EVENT-TIP: and a raided town",
     "new": "    if (false) {   // EVENT-TIP: and a raided town",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    this._hoverAt = null; this._showTip(null);   // EVENT-TIP: no card rides the sheet down\n",
     "new": "",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "          raids: this._raids,   // EVENT-TIP: the towns under attack\n",
     "new": "",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "      const d = Math.min((x - sx) ** 2 + (y - sy) ** 2, (x - sx) ** 2 + (y - 18 - sy) ** 2);",
     "new": "      const d = (x - sx) ** 2 + (y - sy) ** 2;",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -167,61 +167,61 @@
     "old": "if (g && Math.hypot(mx - g.cx, my - g.cy) <= Math.max(g.r, least)) return g;",
     "new": "if (g && Math.max(Math.abs(mx - g.cx), Math.abs(my - g.cy)) <= Math.max(g.r, least)) return g;",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
     "name": "EVENT-TIP-the-fall-never-said",
-    "file": "src/systems/gateOmen.js",
-    "old": "...(Number.isFinite(fell) ? [`${boss.name} has fallen`] : [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day)])",
-    "new": "...([`${boss.name}, ${boss.title}`, marksLineOf(c.t.day)])",
+    "file": "src/systems/gate/gateOmen.js",
+    "old": "...(Number.isFinite(fell) ? [`${boss.name} has fallen`] : [`${boss.name}, ${boss.title}`, marksLineOf(c.t.day), ...(pt ? [pt] : [])])",
+    "new": "...([`${boss.name}, ${boss.title}`, marksLineOf(c.t.day), ...(pt ? [pt] : [])])",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
     "name": "EVENT-TIP-the-sealed-hours-said-as-open",
-    "file": "src/systems/gateOmen.js",
-    "old": ": `Sealed - collapses in ${countdownText(cd.ms)}`)",
+    "file": "src/systems/gate/gateOmen.js",
+    "old": ": `Sealed. Collapses in ${countdownText(cd.ms)}`)",
     "new": ": `Open - seals in ${countdownText(cd.ms)}`)",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
     "name": "EVENT-TIP-the-omen's-mark-carries-no-card",
-    "file": "src/systems/gateOmen.js",
+    "file": "src/systems/gate/gateOmen.js",
     "old": ", tip: gateTip(c, cd, fellAt(c.t.day)) };",
     "new": ", };",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
     "name": "EVENT-TIP-the-map-drops-the-ring's-card",
-    "file": "src/ui/gateMapMark.js",
+    "file": "src/ui/gate/gateMapMark.js",
     "old": ", phase: String(m.phase ?? ''), tip: readTip(m.tip) };",
     "new": ", phase: String(m.phase ?? '') };",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
     "name": "EVENT-TIP-the-overlay-paints-no-raids",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  for (const m of opts.raids ?? []) if (visible(m.x, m.y)) paintRaidMark(ctx, view, m, pulse);\n",
     "new": "",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
     "name": "EVENT-TIP-the-blades-on-the-town",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "  const cy = y - 18, s = 5, g = 2, h = s * 0.55;",
     "new": "  const cy = y, s = 5, g = 2, h = s * 0.55;",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "      raids: () => (raidingPartiesOn() ? raidMapMarks(raidState().raids, worldMinutes(), { regionName: (r) => REGION_NAMES[r] ?? '', localTime: sharedClockOn() ? eventLocalTime : null, relay: raidRelayState }) : []),   // TIME1: online the withdrawal in local time\n",
     "new": "",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "raids: () => (raidingPartiesOn() ? raidMapMarks(raidState().raids, worldMinutes(), { regionName: (r) => REGION_NAMES[r] ?? '', localTime: sharedClockOn() ? eventLocalTime : null, relay: raidRelayState }) : []),",
     "new": "raids: () => raidMapMarks(raidState().raids, worldMinutes(), { regionName: (r) => REGION_NAMES[r] ?? '', localTime: sharedClockOn() ? eventLocalTime : null, relay: raidRelayState }),",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   }
 ]

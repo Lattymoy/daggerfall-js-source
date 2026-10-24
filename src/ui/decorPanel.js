@@ -35,7 +35,7 @@
 // choose it (the LOOK view), free.
 //
 // The surfaces decide nothing: what may be placed, what it costs and
-// where it goes are the host's (scenes/decorTool.js). Handed the
+// where it goes are the host's (scenes/decor/decorTool.js). Handed the
 // document and the window so the pins drive them headless.
 //
 // Not a DFU member: Daggerfall Unity has no decorator. Ledger A.
@@ -43,17 +43,19 @@
 
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from './pixelifyFive.js';
 import { isTextEntryTarget } from './input.js';
-import { registerOverlay } from './enhancedOverlays.js';   // PX28b: Tab puts it away, as it puts away every enhanced window
-import { DECOR_KINDS, DECOR_SIZES, decorSize, filterDecor } from '../systems/decorCatalogue.js';
+import { registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28b: Tab puts it away, as it puts away every enhanced window
+import { DECOR_KINDS, DECOR_SIZES, decorSize, filterDecor } from '../systems/decor/decorCatalogue.js';
 import { decorRefund, DECOR_FURNITURE_GROUP, DECOR_STATIONS, DECOR_STATION_FEES, DECOR_STATION_NAMES } from '../net/decorLaw.js';
-import { forgeOffered, PROF_STATIONS } from './profPages.js';
+import { forgeOffered, PROF_STATIONS } from './professions/profPages.js';
 import { VENDOR_STATION } from '../net/vendorLaw.js';   // HOME-VENDOR: a hired trader
 import { rentRowSub, rentPriceStep, RENT_PRICE_STEPS, RENT_PRICE_FIRST } from '../systems/homeRent.js';   // HOME-RENT: the owner's rooms
 import {
   HOME_LOOK_PARTS, HOME_LOOK_PART_NAMES, HOME_LOOK_CLIMATES, HOME_LOOK_CLIMATE_NAMES, HOME_LOOK_SETS, HOME_LOOK_SET_NAMES, HOME_LOOK_DOOR_KEPT, homeLookOf, homeLookSig,
 } from '../net/homeLaw.js';   // HOME-LOOK: the house outside, painted
 import { homeLookSwatch } from '../world/homeLook.js';
-import { decorIsDoor } from '../systems/decorDoorways.js';   // HOME-DOORS (AUDIT): a door's controls
+import { decorIsDoor } from '../systems/decor/decorDoorways.js';   // HOME-DOORS (AUDIT): a door's controls
+import { DFICON_CSS } from './menu/menuGlyphs.js';   // MENU-ORDER: a kind and a press each wear a picture
+import { t } from '../systems/textManager.js';   // L10N4: MENU-ORDER's own words in the player's language
 /** The crafts a piece may be made here: every station, the Forge only where it works (AUDIT 29 B2). HOME-VENDOR: and a
  *  trader only where the market trades - online, the trades open (its stock is market listings). */
 /** WAGONS2 (FINAL AUDIT): `trader` - whether the room is a home, where a hired trader trades (the view's `trader`); a
@@ -63,6 +65,7 @@ export const stationsOffered = (trader = true) => DECOR_STATIONS.filter((k) => (
 export const DECOR_STYLE_ID = 'dagger-decor-style';
 export const DECOR_CSS = `
 ${PIXELIFY_FIVE_FACE}
+${DFICON_CSS}
 .dfdecor-open { position: fixed; right: calc(12px + env(safe-area-inset-right, 0px)); top: 50%; transform: translateY(-50%);
   z-index: 6; display: none; pointer-events: auto; min-height: 32px; padding: 6px 12px; border-radius: 3px;
   border: 1px solid var(--iron, #2b323b); background: rgba(14, 16, 19, .9); color: var(--bone, #e9e4d9);
@@ -73,44 +76,55 @@ ${PIXELIFY_FIVE_FACE}
 .dfdecor { position: fixed; inset: 0; z-index: 13; display: none; align-items: center; justify-content: center;
   pointer-events: none; ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }
 .dfdecor[data-state="open"] { display: flex; }
-.dfdecor-card { pointer-events: auto; width: min(920px, calc(100vw - 24px)); height: min(620px, calc(100vh - 24px));
-  display: grid; grid-template-rows: auto auto auto minmax(0, 1fr) auto; gap: 8px; box-sizing: border-box; padding: 12px 14px;
+.dfdecor-card { pointer-events: auto; width: min(960px, calc(100vw - 24px)); height: min(720px, calc(100vh - 24px));
+  display: flex; flex-direction: column; gap: 8px; box-sizing: border-box; padding: 12px 14px;   /* MENU-ORDER: a column - a hidden row takes no place */
   background: rgba(14, 16, 19, .95); border: 1px solid var(--iron, #2b323b); border-radius: 6px; }
-.dfdecor-card[data-mode="room"] { grid-template-rows: auto auto minmax(0, 1fr) auto; }
+.dfdecor-card > * { flex: none; }   /* MENU-ORDER: only the body gives way to a short screen */
 .dfdecor-card[data-mode="room"] .dfdecor-filters, .dfdecor-card[data-mode="room"] .dfdecor-place { display: none; }
 .dfdecor-card[data-mode="catalogue"] .dfdecor-room-actions { display: none; }
-.dfdecor-card[data-mode="own"] { grid-template-rows: auto auto minmax(0, 1fr) auto; }
 .dfdecor-card[data-mode="own"] .dfdecor-filters, .dfdecor-card[data-mode="own"] .dfdecor-room-actions { display: none; }
-.dfdecor-card[data-mode="base"] { grid-template-rows: auto auto minmax(0, 1fr) auto; }
 .dfdecor-card[data-mode="base"] .dfdecor-filters, .dfdecor-card[data-mode="base"] .dfdecor-place,
 .dfdecor-card[data-mode="base"] .dfdecor-room-actions, .dfdecor-card:not([data-mode="base"]) .dfdecor-base-actions { display: none; }
-.dfdecor-base-actions { display: flex; flex-wrap: wrap; gap: 6px; }
-.dfdecor-card[data-mode="rent"] { grid-template-rows: auto auto minmax(0, 1fr) auto; }   /* HOME-RENT */
-.dfdecor-card[data-mode="rent"] .dfdecor-filters, .dfdecor-card[data-mode="rent"] .dfdecor-place,
+.dfdecor-base-actions { display: flex; flex-direction: column; gap: 10px; }
+.dfdecor-card[data-mode="rent"] .dfdecor-filters, .dfdecor-card[data-mode="rent"] .dfdecor-place,   /* HOME-RENT */
 .dfdecor-card[data-mode="rent"] .dfdecor-room-actions, .dfdecor-card[data-mode="rent"] .dfdecor-base-actions,
 .dfdecor-card[data-mode="rent"] .dfdecor-preview, .dfdecor-card:not([data-mode="rent"]) .dfdecor-rent-actions { display: none; }
-.dfdecor-rent-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.dfdecor-rent-actions { display: flex; flex-direction: column; gap: 10px; }
 .dfdecor-card[data-yard="1"] .dfdecor-yardless { display: none; }   /* HOME-YARD: nothing held, no light, no craft outside */
-.dfdecor-card[data-mode="paint"] { grid-template-rows: auto auto minmax(0, 1fr) auto; }   /* HOME-LOOK */
-.dfdecor-card[data-mode="paint"] .dfdecor-filters, .dfdecor-card[data-mode="paint"] .dfdecor-place,
+.dfdecor-card[data-mode="paint"] .dfdecor-filters, .dfdecor-card[data-mode="paint"] .dfdecor-place,   /* HOME-LOOK */
 .dfdecor-card[data-mode="paint"] .dfdecor-room-actions, .dfdecor-card[data-mode="paint"] .dfdecor-base-actions,
 .dfdecor-card[data-mode="paint"] .dfdecor-rent-actions, .dfdecor-card:not([data-mode="paint"]) .dfdecor-paint-actions { display: none; }
-.dfdecor-paint-actions { display: flex; flex-direction: column; gap: 6px; }
+.dfdecor-paint-actions { display: flex; flex-direction: column; gap: 10px; }
 .dfdecor-paint-btns { display: flex; flex-wrap: wrap; gap: 4px; }   /* FB1001 LOOK-BUTTONS: the painter's own row, never the rent's */
-.dfdecor-card[data-mode="look"] .dfdecor-room-actions, .dfdecor-card[data-mode="look"] .dfdecor-kinds,
-.dfdecor-card[data-mode="look"] .dfdecor-has { display: none; }
-.dfdecor-room-actions { display: flex; flex-wrap: wrap; gap: 4px; }
+.dfdecor-paint-btns[hidden] { display: none; }   /* MENU-ORDER: WAGONS2's caravan hid it by the attribute, which display: flex outweighs */
+.dfdecor-card[data-mode="look"] .dfdecor-room-actions, .dfdecor-card[data-mode="look"] .dfdecor-fg-kinds,
+.dfdecor-card[data-mode="look"] .dfdecor-fg-has { display: none; }
+.dfdecor-room-actions { display: flex; flex-direction: column; gap: 10px; }
 .dfdecor-head { display: flex; align-items: baseline; gap: 10px; border-bottom: 1px solid var(--iron, #2b323b); padding-bottom: 6px; }
-.dfdecor-title { font-size: 18px; }
-.dfdecor-where { font-size: 13px; color: var(--dim, #9a9486); flex: 1; min-width: 0; overflow-wrap: anywhere; }
-.dfdecor-filters { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
-.dfdecor-search { flex: 1 1 180px; min-width: 0; min-height: 28px; padding: 3px 8px; box-sizing: border-box; border-radius: 3px;
-  border: 1px solid var(--iron, #2b323b); background: #0b0d10; color: var(--bone, #e9e4d9); font: inherit; font-size: 14px; }
+.dfdecor-title { font-size: 20px; }
+.dfdecor-where { font-size: 14px; color: var(--dim, #9a9486); flex: 1; min-width: 0; overflow-wrap: anywhere; }
+/* MENU-ORDER: the views are a tab bar of their own - never one more row of filters */
+.dfdecor-tabs { gap: 4px; padding-bottom: 6px; border-bottom: 1px solid var(--iron, #2b323b); }
+body .dfdecor-tabs .dfdecor-chip { min-height: 34px; padding: 4px 14px; font-size: 14px; }
+body .dfdecor-tabs .dfdecor-chip[aria-pressed="true"] { color: #f2c46b; box-shadow: inset 0 -3px 0 #c08a3e; }
+.dfdecor-roomsbar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px; }
+.dfdecor-roomsbar:empty { display: none; }
+/* MENU-ORDER: every row of choices says what it chooses */
+.dfdecor-filters { display: flex; flex-direction: column; gap: 6px; }
+.dfdecor-fline { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 18px; }
+.dfdecor-fgroup { display: flex; align-items: flex-start; gap: 8px; min-width: 0; }
+.dfdecor-fg-search { flex: 1 1 220px; align-items: center; }
+.dfdecor-fg-kinds { flex: 1 1 100%; }
+.dfdecor-flabel, .dfdecor-rooms-label { flex: none; min-width: 4.5em; padding-top: 6px; font-size: 12px; letter-spacing: .06em;
+  text-transform: uppercase; color: var(--dim, #9a9486); }
+.dfdecor-ftoggle { display: none; }
+.dfdecor-search { flex: 1 1 180px; min-width: 0; min-height: 32px; padding: 3px 8px; box-sizing: border-box; border-radius: 3px;
+  border: 1px solid var(--iron, #2b323b); background: #0b0d10; color: var(--bone, #e9e4d9); font: inherit; font-size: 15px; }
 .dfdecor-chips { display: flex; flex-wrap: wrap; gap: 4px; }
-.dfdecor-chip { min-height: 26px; padding: 2px 8px; border-radius: 3px; border: 1px solid var(--iron, #2b323b);
-  background: transparent; color: var(--dim, #9a9486); font: inherit; font-size: 12px; cursor: pointer; }
+.dfdecor-chip { min-height: 28px; padding: 2px 10px; border-radius: 3px; border: 1px solid var(--iron, #2b323b);
+  background: transparent; color: var(--dim, #9a9486); font: inherit; font-size: 13px; cursor: pointer; }
 .dfdecor-chip[aria-pressed="true"] { color: #f2c46b; border-color: #b8943f; background: rgba(242, 196, 107, .08); }
-.dfdecor-rooms-label { align-self: center; margin-left: 10px; font-size: 12px; color: var(--dim, #9a9486); }   /* DECOR-ROOMS */
+.dfdecor-card > .dfdecor-body { flex: 1 1 auto; }
 .dfdecor-body { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr); gap: 12px; min-height: 0; }
 .dfdecor-list { overflow-y: auto; min-height: 0; border: 1px solid var(--iron, #2b323b); border-radius: 3px; }
 .dfdecor-row { display: grid; grid-template-columns: 34px minmax(0, 1fr) auto; gap: 8px; align-items: center;
@@ -121,10 +135,10 @@ ${PIXELIFY_FIVE_FACE}
 .dfdecor-thumb { width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; overflow: hidden;
   font-size: 11px; color: var(--dim, #9a9486); border: 1px solid rgba(43, 50, 59, .7); border-radius: 2px; }
 .dfdecor-thumb img { max-width: 32px; max-height: 32px; image-rendering: pixelated; }
-.dfdecor-row-name { font-size: 14px; line-height: 1.3; overflow-wrap: anywhere; }
-.dfdecor-row-sub { font-size: 11px; color: var(--dim, #9a9486); line-height: 1.3; }
-.dfdecor-row-price { font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
-.dfdecor-empty { padding: 16px; font-size: 13px; color: var(--dim, #9a9486); text-align: center; }
+.dfdecor-row-name { font-size: 15px; line-height: 1.3; overflow-wrap: anywhere; }
+.dfdecor-row-sub { font-size: 12px; color: var(--dim, #9a9486); line-height: 1.35; }
+.dfdecor-row-price { font-size: 14px; font-variant-numeric: tabular-nums; white-space: nowrap; color: #f2c46b; }
+.dfdecor-empty { padding: 16px; font-size: 14px; color: var(--dim, #9a9486); text-align: center; }
 .dfdecor-side { display: flex; flex-direction: column; gap: 6px; min-height: 0; overflow-y: auto; }   /* AUDIT HOME-STATIONS S5: six acts on a short screen */
 .dfdecor-preview { flex: 1 1 auto; min-height: 140px; border: 1px solid var(--iron, #2b323b); border-radius: 3px;
   background: transparent; display: flex; align-items: center; justify-content: center; }
@@ -132,38 +146,153 @@ ${PIXELIFY_FIVE_FACE}
 .dfdecor-preview canvas { display: none; width: 100%; height: 100%; }
 .dfdecor-preview[data-model="1"] canvas { display: block; }
 .dfdecor-preview[data-model="1"] img { display: none; }
-.dfdecor-pick-name { font-size: 16px; overflow-wrap: anywhere; }
-.dfdecor-pick-line, .dfdecor-pick-why { font-size: 12px; color: var(--dim, #9a9486); line-height: 1.4; }
+.dfdecor-pick-name { font-size: 18px; overflow-wrap: anywhere; }
+.dfdecor-pick-line, .dfdecor-pick-why { font-size: 13px; color: var(--dim, #9a9486); line-height: 1.4; }
+.dfdecor-pick-line:empty, .dfdecor-pick-price:empty, .dfdecor-pick-why:empty { display: none; }
 .dfdecor-pick-why { color: #d9a441; }
-.dfdecor-pick-price { font-size: 15px; font-variant-numeric: tabular-nums; }
+.dfdecor-pick-price { font-size: 15px; font-variant-numeric: tabular-nums; color: #f2c46b; }
+/* MENU-ORDER: a side's presses in groups, each named - what it moves, what it switches, what it costs */
+.dfdecor-acts { display: flex; flex-direction: column; gap: 4px; }
+.dfdecor-acts-label { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--dim, #9a9486);
+  padding-bottom: 3px; border-bottom: 1px solid rgba(43, 50, 59, .8); }
+.dfdecor-acts-label:empty { display: none; }
+.dfdecor-acts-btns { display: flex; flex-wrap: wrap; gap: 4px; }
+.dfdecor-acts-btns:empty { display: none; }
+.dfdecor-acts-btns > .dfdecor-btn { flex: 1 1 auto; }
 .dfdecor-btn { min-height: 32px; padding: 4px 14px; border-radius: 3px; border: 1px solid #b8943f; background: #2c2412;
   color: var(--bone, #e9e4d9); font: inherit; font-size: 14px; cursor: pointer; }
 .dfdecor-btn:hover { background: #b8943f; color: #0e1013; }
 .dfdecor-btn[disabled] { opacity: .45; cursor: default; background: #2c2412; color: var(--bone, #e9e4d9); }
+.dfdecor-btn.warn:not([disabled]) { border-color: #b83a2e; }
 .dfdecor-close { margin-left: auto; border-color: var(--iron, #2b323b); background: transparent; }
-.dfdecor-foot { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 12px; color: var(--dim, #9a9486); }
+.dfdecor-foot { display: flex; flex-wrap: wrap; gap: 6px 22px; font-size: 13px; color: var(--dim, #9a9486);
+  padding-top: 6px; border-top: 1px solid var(--iron, #2b323b); }
+.dfdecor-foot > span:empty { display: none; }
 .dfdecor-bar { position: fixed; left: 50%; transform: translateX(-50%); bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-  z-index: 8; display: none; flex-direction: column; gap: 6px; padding: 8px 12px; max-width: calc(100vw - 24px);
+  z-index: 8; display: none; flex-direction: column; gap: 6px; padding: 8px 12px; width: max-content; max-width: min(1120px, calc(100vw - 24px));
   box-sizing: border-box; background: rgba(14, 16, 19, .92); border: 1px solid #b8943f; border-radius: 6px;
   pointer-events: none; ${PIXEL_FONT_CSS} color: var(--bone, #e9e4d9); }
 .dfdecor-bar[data-up="1"] { display: flex; }
-.dfdecor-bar-what { font-size: 14px; }
-.dfdecor-bar-keys { font-size: 12px; color: var(--dim, #9a9486); line-height: 1.4; }
-.dfdecor-bar-why { font-size: 12px; color: #d9a441; }
+.dfdecor-bar-what { font-size: 15px; }
+/* MENU-ORDER: the keys a legend - a key's name, then what presses it - never one run-on line */
+.dfdecor-bar-keys { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 2px 16px;
+  font-size: 13px; color: var(--dim, #9a9486); line-height: 1.4; }
+.dfdecor-key b { font-weight: normal; color: var(--bone, #e9e4d9); }
+.dfdecor-bar[data-keys="0"] .dfdecor-bar-keys { display: none; }
+.dfdecor-bar-why { font-size: 13px; color: #d9a441; }
 .dfdecor-bar-why:empty { display: none; }
 .dfdecor-bar-btns { display: flex; flex-wrap: wrap; gap: 4px; }
+.dfdecor-bar-sep { flex: none; width: 1px; align-self: stretch; margin: 2px 4px; background: rgba(154, 148, 134, .35); }
 .dfdecor-bar .dfdecor-chip, .dfdecor-bar .dfdecor-btn { pointer-events: auto; }
 .dfdecor-bar.touch .dfdecor-chip, .dfdecor-bar.touch .dfdecor-btn { min-height: 44px; min-width: 44px; touch-action: none; }
 .dfdecor-bar.touch { bottom: auto; top: calc(8px + env(safe-area-inset-top, 0px)); max-width: calc(100vw - 272px); }
+/* MENU-ORDER: a portrait phone's bar. Clear of the touch layer's top-left presses beside it, a 390px screen gave it 118px -
+   a word a line; under them (16px down, 48px tall, ui/touch/touch.js) it has the screen's width */
+@media (orientation: portrait) { .dfdecor-bar.touch { top: calc(72px + env(safe-area-inset-top, 0px)); max-width: calc(100vw - 24px); } }
+/* MENU-ORDER: PICTURES BEFORE WORDS. A model has no picture until it turns in the preview: its kind's glyph stands in its
+   tile over the letters, which stay for a reader. */
+.dfdecor-thumb { position: relative; }
+.dfdecor-thumb[data-dficon] { color: transparent; }
+.dfdecor-thumb[data-dficon]::before { position: absolute; inset: 0; margin: auto; width: 62%; height: 62%; color: #c9bba1; }
+/* ...and the model's own picture over it once the host has turned it small (decorTool.js modelPicture) */
+.dfdecor-thumb img.dfdecor-modelpic { position: absolute; inset: 0; z-index: 1; width: 100%; height: 100%; max-width: none; max-height: none;
+  object-fit: contain; image-rendering: auto; }   /* AUDIT MENU-ORDER U6: over the whole tile - in its flow, the letters it keeps pushed it 7px right and cut it */
+.dfdecor-thumb img.dfdecor-modelpic:not([src]) { display: none; }
+.dfdecor-row-main { min-width: 0; }
+.dfdecor-badges { display: flex; gap: 6px; color: #c9bba1; }
+.dfdecor-badges:empty, .dfdecor-card:not([data-view="grid"]) .dfdecor-badges { display: none; }
+.dfdecor-badge::before { margin: 0; }
+.dfdecor-tabline { display: flex; align-items: flex-end; gap: 10px; padding-bottom: 6px; border-bottom: 1px solid var(--iron, #2b323b); }
+.dfdecor-tabline > .dfdecor-tabs { flex: 1 1 auto; min-width: 0; padding-bottom: 0; border-bottom: 0; }
+.dfdecor-layout { flex: none; }
+/* the lists as tiles: a picture, its name, its price, its badges */
+.dfdecor-card[data-view="grid"] .dfdecor-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(116px, 1fr));
+  grid-auto-rows: max-content; gap: 6px; padding: 6px; align-content: start; }
+.dfdecor-card[data-view="grid"] .dfdecor-row { display: flex; flex-direction: column; align-items: center; justify-content: flex-start;
+  gap: 5px; min-height: 148px; padding: 8px 6px 6px; text-align: center; box-sizing: border-box;
+  border: 1px solid rgba(43, 50, 59, .9); background: rgba(10, 12, 15, .55); }
+.dfdecor-card[data-view="grid"] .dfdecor-row[aria-selected="true"] { border-color: #b8943f; background: rgba(242, 196, 107, .12); }
+.dfdecor-card[data-view="grid"] .dfdecor-thumb { flex: none; width: 76px; height: 76px; border-color: rgba(43, 50, 59, .5); background: rgba(0, 0, 0, .25); }
+.dfdecor-card[data-view="grid"] .dfdecor-thumb img { width: 76px; height: 76px; max-width: none; max-height: none; object-fit: contain; }
+.dfdecor-card[data-view="grid"] .dfdecor-thumb[data-dficon]::before { width: 46%; height: 46%; }
+.dfdecor-card[data-view="grid"] .dfdecor-row-main { display: flex; flex-direction: column; align-items: center; gap: 4px; width: 100%; }
+.dfdecor-card[data-view="grid"] .dfdecor-row-name { font-size: 13px; line-height: 1.25; overflow: hidden;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; }
+.dfdecor-card[data-view="grid"] .dfdecor-row-sub { display: none; }
+.dfdecor-card[data-view="grid"] .dfdecor-row-price { font-size: 13px; }
+.dfdecor-card[data-view="grid"] .dfdecor-empty { grid-column: 1 / -1; }
+/* a side's presses as picture tiles - the glyph over its word */
+.dfdecor-acts-btns > .dfdecor-btn[data-dficon] { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+  min-height: 52px; min-width: 76px; padding: 5px 8px; font-size: 13px; line-height: 1.2; text-align: center; }
+.dfdecor-acts-btns > .dfdecor-btn[data-dficon]::before { width: 20px; height: 20px; margin: 0; }
+.dfdecor-acts-btns > .dfdecor-btn.flat[data-dficon] { flex-direction: row; min-height: 36px; gap: 8px; }
+.dfdecor-acts-btns > .dfdecor-btn.flat[data-dficon]::before { width: 16px; height: 16px; }
+.dfdecor-place[data-dficon]::before { width: 16px; height: 16px; }
+.dfdecor-bar [data-dficon]::before { width: 14px; height: 14px; margin-right: 5px; }
+.dfdecor-open[data-dficon]::before { width: 16px; height: 16px; }
 @media (max-height: 480px) { .dfdecor-preview { min-height: 60px; } }   /* AUDIT HOME-STATIONS S5: a landscape phone keeps the acts on the card */
+/* MENU-ORDER: a piece's own presses leave its picture smaller - the groups stand on the card, not below it */
+.dfdecor-card:not([data-mode="catalogue"]):not([data-mode="look"]):not([data-mode="own"]) .dfdecor-preview { flex: none; min-height: 0; height: 92px; }
 @media (max-width: 640px) {
   .dfdecor-body { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
   .dfdecor-preview { min-height: 90px; max-height: 120px; }
+  /* MENU-ORDER: the list keeps a hand's height; the side below gives way and scrolls */
+  .dfdecor-body { display: flex; flex-direction: column; gap: 8px; }
+  .dfdecor-list { flex: 1 1 180px; min-height: 150px; }
+  .dfdecor-side { flex: 0 1 auto; }
+  .dfdecor-preview, .dfdecor-card:not([data-mode="catalogue"]):not([data-mode="look"]):not([data-mode="own"]) .dfdecor-preview { flex: none; min-height: 0; height: 72px; }
+  .dfdecor-fgroup > .dfdecor-chips { flex-wrap: nowrap; overflow-x: auto; min-width: 0; }
+  .dfdecor-fgroup > .dfdecor-chips > .dfdecor-chip { flex: none; }
+  /* MENU-ORDER: a phone's rooms scroll sideways, and its filters fold behind one press, so the list keeps the screen. AUDIT
+     MENU-ORDER U11: its views' tabs wrap, as they always did - scrolled, "Your things" and "Built in" stood off the screen */
+  .dfdecor-roomsbar { flex-wrap: nowrap; overflow-x: auto; }
+  .dfdecor-roomsbar > .dfdecor-chip { flex: none; }
+  .dfdecor-ftoggle { display: inline-block; flex: none; }
+  .dfdecor-filters:not([data-open="1"]) .dfdecor-fline-more { display: none; }
+  .dfdecor-bar-keys { grid-template-columns: minmax(0, 1fr); }
+  .dfdecor-card[data-view="grid"] .dfdecor-list { grid-template-columns: repeat(auto-fill, minmax(92px, 1fr)); }
+  .dfdecor-card[data-view="grid"] .dfdecor-row { min-height: 120px; }
+  .dfdecor-card[data-view="grid"] .dfdecor-thumb, .dfdecor-card[data-view="grid"] .dfdecor-thumb img { width: 56px; height: 56px; }
+  .dfdecor-layout { display: none; }
+}
+/* AUDIT MENU-ORDER U1: a short screen - a phone held landscape, as the touch layer asks - folds the filters as a narrow one
+   does: every line open left a 390px-high screen's catalogue 36px, and the side's Place below its edge */
+@media (max-height: 500px) {
+  .dfdecor-ftoggle { display: inline-block; flex: none; }
+  .dfdecor-filters:not([data-open="1"]) .dfdecor-fline-more { display: none; }
+  .dfdecor-fgroup > .dfdecor-chips { flex-wrap: nowrap; overflow-x: auto; min-width: 0; }
+  .dfdecor-fgroup > .dfdecor-chips > .dfdecor-chip { flex: none; }
 }
 `;
 
-/** The sorts the panel offers (systems/decorCatalogue.js filterDecor's). */
+/** The sorts the panel offers (systems/decor/decorCatalogue.js filterDecor's). */
 export const DECOR_SORTS = Object.freeze({ common: 'Most common', price: 'Cheapest', name: 'By name' });
+/** MENU-ORDER: the two ways the lists are laid - pictures (tiles) or lines - and the views that tile (a room to rent and
+ *  a part of the house to paint are words, never pictures). */
+export const DECOR_LAYOUT_WORDS = Object.freeze({ grid: 'Pictures', list: 'List' });
+export const DECOR_GRID_MODES = Object.freeze(['catalogue', 'look', 'own', 'room', 'base']);
+/** MENU-ORDER: the names over the panel's rows of choices - its rooms, and each group of a side's presses. */
+export const DECOR_ROOMS_WORD = 'Room';
+export const DECOR_FILTERS_WORD = 'Filters';
+export const DECOR_ACT_GROUPS = Object.freeze({
+  get arrange() { return t('decor.panel.group.arrange', 'Arrange'); }, get use() { return t('decor.panel.group.use', 'Light and storage'); },   // a placed piece
+  get station() { return t('decor.panel.group.station', 'Crafting station'); },
+  get piece() { return t('decor.panel.group.piece', 'This piece'); }, get whole() { return t('decor.panel.group.whole', 'The whole room'); },   // BASE-HIDE: the room's own furniture
+  get price() { return t('decor.panel.group.price', 'Price a day'); }, get offer() { return t('decor.panel.group.offer', 'Offer this room'); },   // HOME-RENT
+  get rent() { return t('decor.panel.group.rent', 'Rent held'); },
+});
+/** MENU-ORDER: the painter's rows - a part's climate, then its building's style (walls, windows) or its own (a roof, a
+ *  door); a caravan's part, its paint. */
+export const DECOR_PAINT_WORDS = Object.freeze({
+  get climate() { return t('decor.panel.paint.climate', 'Climate'); }, get set() { return t('decor.panel.paint.set', 'Building style'); },
+  get style() { return t('decor.panel.paint.style', 'Style'); }, get paint() { return t('decor.panel.paint.paint', 'Paint'); },
+});
+/** MENU-ORDER: the phone's filter fold, and how many filters it hides that are chosen (a kind each, a size, holding,
+ *  light) - "Filters" with none. */
+export function decorFiltersText({ kinds, size, storage, light }) {
+  const n = (kinds?.size ?? 0) + (size != null ? 1 : 0) + (storage != null ? 1 : 0) + (light != null ? 1 : 0);
+  return n ? `${DECOR_FILTERS_WORD} (${n})` : DECOR_FILTERS_WORD;
+}
 
 /** A price as the surfaces say it; a piece whose size is still being read has none yet. */
 export const decorPriceText = (price) => (price == null ? '...' : `${price} gold`);
@@ -181,7 +310,7 @@ export function decorWhyNot({ price, ready, gold, count, cap, yard = false, hall
 }
 
 /** WHY A PLACED PIECE CANNOT BE REMOVED, or stop holding things: what it holds would go with it. */
-export const DECOR_HOLDS_LINE = 'It holds things - empty it first.';
+export const DECOR_HOLDS_LINE = 'It holds things. Empty it first.';
 /** BASE-HIDE: what a built-in piece's row says under its name - in the room or taken out, and how far it stands. */
 export const decorBaseSub = ({ hidden, dist }) => `${hidden ? 'Taken out' : 'In the room'}${Number.isFinite(dist) ? ` - ${Math.max(0, Math.round(dist))} m away` : ''}`;
 /** BASE-HIDE: the built-in view's line when the room has no furniture of its own to take out. */
@@ -195,7 +324,7 @@ export const decorBackTo = (piece) => (piece?.item?.g === DECOR_FURNITURE_GROUP 
 /** What one placed piece's row says under its name. DECOR2a: one's own item says so - it cost nothing and goes back
  *  to the pack (DECOR2b: or, furniture, to "Your things"). */
 export function decorPlacedSub({ piece, holds }) {
-  const first = piece.item ? `yours - back to ${decorBackTo(piece)} when taken down` : `placed for ${piece.paid} gold`;
+  const first = piece.item ? `yours, back to ${decorBackTo(piece)} when taken down` : `placed for ${piece.paid} gold`;
   return [first, piece.storage ? (holds ? 'holds things (not empty)' : 'holds things') : null, piece.light ? 'gives light' : null,
     piece.station ? DECOR_STATION_NAMES[piece.station].toLowerCase() : null]   // HOME-STATIONS
     .filter(Boolean).join(' - ');
@@ -208,30 +337,30 @@ export function decorStationWords(piece, offered, armed = false) {
   const gold = `${DECOR_STATION_FEES[kind].toLocaleString('en-US')} gold`;
   // AUDIT HOME-STATIONS S4: unmaking is asked twice - the one button flips in place, and a double click that made a
   // station unmade it on the next frame, the licence gone
-  if (piece?.station === kind) return armed ? { pick, act: 'Press again to unmake - nothing back', what: 'station:none' } : { pick, act: 'Unmake station (nothing back)', what: 'arm' };
+  if (piece?.station === kind) return armed ? { pick, act: 'Press again to destroy it. Nothing is returned', what: 'station:none' } : { pick, act: 'Unmake station (nothing back)', what: 'arm' };
   // AUDIT HOME-STATIONS S6: a change of craft names that the old licence goes
   if (piece?.station) return { pick, act: `Change station - ${gold} (no refund)`, what: `station:${kind}` };
   return { pick, act: `Make station - ${gold}`, what: `station:${kind}` };
 }
 /** DECOR2a: what an item in the pack says under its name in the "Your things" list. */
-export const DECOR_OWN_LINE = 'yours - free to set down, and back to your pack when taken down';
+export const DECOR_OWN_LINE = 'yours, free to set down, and back to your pack when taken down';
 /** DECOR2c: and a weapon or a piece of armour there (ARMOR-MOUNT) - it hangs on a wall. */
-export const DECOR_MOUNT_LINE = 'yours - free to hang on a wall, and back to your pack when taken down';
+export const DECOR_MOUNT_LINE = 'yours, free to hang on a wall, and back to your pack when taken down';
 /** The line an own entry says - a delivered piece's, a mount's, or a thing's from the pack. */
 const ownLine = (e) => (e.furnishing ? decorFurnishLine(e) : e.mount ? DECOR_MOUNT_LINE : DECOR_OWN_LINE);
 /** DECOR2b: what a piece of delivered furniture says there - never carried; set down free as the piece of its kinds the
  *  owner chooses (or, a pillow, as itself), and back here when taken down. */
 export function decorFurnishLine(e) {
   const as = e?.looks ? ` as any of the ${e.looks.map((k) => DECOR_KINDS[k].toLowerCase()).join(' or ')} you choose` : '';
-  return `delivered - free to set down${as}, and back here when taken down`;
+  return `delivered, free to set down${as}, and back here when taken down`;
 }
 /** DECOR2b: the look view's words - its button in "Your things", and its line while no look is chosen. */
 export const DECOR_LOOK_BUTTON = 'Choose its look';
-export const DECOR_LOOK_LINE = 'Choose how it looks - any of these, free.';
+export const DECOR_LOOK_LINE = 'Choose how it looks. Any of these costs nothing.';
 
 /** HOME-DOORS: what a door says beside its line - it hangs in a doorway, and how many this house has free (null: still
  *  being found). */
-export const decorDoorLine = (n) => (n == null ? 'hangs in a doorway - finding them...' : n === 0 ? 'hangs in a doorway - this house has none free'
+export const decorDoorLine = (n) => (n == null ? 'hangs in a doorway. Finding the doorways...' : n === 0 ? 'hangs in a doorway. This house has none free'
   : `hangs in a doorway - ${n} free here, marked while you place it`);
 /** HOME-LOOK: what a part's choice reads as - its set and climate, its climate and its number, or the town's own. */
 export function decorLookText(part, choice) {
@@ -245,7 +374,7 @@ export const decorLookStart = (part) => (part === 'walls' || part === 'windows' 
  *  (the painter's door's `records`). */
 export const DECOR_LOOK_STYLES = 6;
 /** HOME-RENT: what the rooms view says with no room to offer - a house of one room, or rooms still being found. */
-export const DECOR_RENT_ONE_ROOM = 'A house of one room has none to rent out. Hang a door in a doorway to part it into two.';
+export const DECOR_RENT_ONE_ROOM = 'A one-room house has no room to rent out. Hang a door in a doorway to split it into two.';
 export const DECOR_RENT_FINDING = 'Finding the rooms of your house...';
 /** HOME-RENT: the rent waiting to be collected, as the rooms view says it. */
 export const decorRentDueText = (due) => (due > 0 ? `Collect rent: ${due} gold` : 'No rent to collect');
@@ -284,6 +413,7 @@ export function createDecorButton({ onPress, touch = false, doc = document }) {
   const el = maker(doc);
   const btn = el('button', `dfdecor-open${touch ? ' touch' : ''}`, 'Decorate');
   btn.type = 'button';
+  btn.dataset.dficon = 'decorate';   // MENU-ORDER
   btn.dataset.up = '0';
   swallowPresses(btn);
   btn.addEventListener('click', () => { if (btn.dataset.up === '1') onPress(); });
@@ -300,7 +430,7 @@ export function createDecorButton({ onPress, touch = false, doc = document }) {
 /**
  * THE PANEL. `open(view)` shows it; the host's frame calls `update(view)` while it is open. A view is:
  *   where     - whose room it is, as a line ("Your home", "Your house", "Your ship")
- *   entries   - the catalogue (systems/decorScan.js), or null while the blocks are read
+ *   entries   - the catalogue (systems/decor/decorScan.js), or null while the blocks are read
  *   progress  - 0..1, while the scan runs; ready - whether every size has been read
  *   radiusOf(entry), priceOf(entry) - the scan's measure and the law's price (null: not yet, or never)
  *   gold      - what the player can pay with (the purse and the bank); count, cap - the room's pieces and its limit
@@ -346,20 +476,40 @@ export function createDecorPanel({
   const where = el('div', 'dfdecor-where');
   const close = el('button', 'dfdecor-btn dfdecor-close', 'Close');
   close.type = 'button';
+  // MENU-ORDER: the lists as pictures (tiles) or as lines - the player's choice, kept while the panel stands
+  const layoutChips = el('div', 'dfdecor-chips dfdecor-layout');
   head.append(el('div', 'dfdecor-title', 'Decorate'), where, close);
 
   // DECOR1e: the two views - the catalogue to place from, and the pieces already in the room to change
   const tabs = el('div', 'dfdecor-chips dfdecor-tabs');
+  tabs.setAttribute('role', 'tablist');
+  // MENU-ORDER: a house's rooms are a row of their own under the views (DECOR-ROOMS drew them among the tabs)
+  const roomsBar = el('div', 'dfdecor-roomsbar');
   const filters = el('div', 'dfdecor-filters');
   const search = el('input', 'dfdecor-search');
   search.type = 'search';
-  search.setAttribute('placeholder', 'Search');
-  search.setAttribute('aria-label', 'Search the catalogue');
+  search.setAttribute('placeholder', t('decor.panel.search', 'Search by name'));
+  search.setAttribute('aria-label', 'Search the catalog');
   const kindChips = el('div', 'dfdecor-chips dfdecor-kinds');
   const sizeChips = el('div', 'dfdecor-chips');
   const hasChips = el('div', 'dfdecor-chips dfdecor-has');
   const sortChips = el('div', 'dfdecor-chips');
-  filters.append(search, kindChips, sizeChips, hasChips, sortChips);
+  // MENU-ORDER: each row of chips stands under its name - Type, Size, Show only, Sort - and a phone folds all but the
+  // search and the sort behind one press, which says how many are chosen
+  const group = (label, chips, cls) => { const g = el('div', `dfdecor-fgroup ${cls}`); g.append(el('span', 'dfdecor-flabel', label), chips); return g; };
+  const filterToggle = el('button', 'dfdecor-chip dfdecor-ftoggle', DECOR_FILTERS_WORD);
+  filterToggle.type = 'button';
+  filterToggle.setAttribute('aria-expanded', 'false');   // AUDIT MENU-ORDER U15: folded, said from the first
+  filterToggle.addEventListener('click', () => { filters.dataset.open = filters.dataset.open === '1' ? '0' : '1'; filterToggle.setAttribute('aria-expanded', filters.dataset.open === '1' ? 'true' : 'false'); });
+  const searchGroup = el('div', 'dfdecor-fgroup dfdecor-fg-search');
+  searchGroup.append(search, filterToggle);
+  const lineOne = el('div', 'dfdecor-fline');
+  lineOne.append(searchGroup, group(t('decor.panel.filter.sort', 'Sort'), sortChips, 'dfdecor-fg-sort'));
+  const lineTwo = el('div', 'dfdecor-fline dfdecor-fline-more');
+  lineTwo.append(group(t('decor.panel.filter.type', 'Type'), kindChips, 'dfdecor-fg-kinds'));
+  const lineThree = el('div', 'dfdecor-fline dfdecor-fline-more');
+  lineThree.append(group(t('decor.panel.filter.size', 'Size'), sizeChips, 'dfdecor-fg-size'), group(t('decor.panel.filter.has', 'Show only'), hasChips, 'dfdecor-fg-has'));
+  filters.append(lineOne, lineTwo, lineThree);
 
   const body = el('div', 'dfdecor-body');
   const list = el('div', 'dfdecor-list');
@@ -377,6 +527,14 @@ export function createDecorPanel({
   place.type = 'button';
   const roomActions = el('div', 'dfdecor-room-actions');
   const act = (label, fn) => { const b = el('button', 'dfdecor-btn', label); b.type = 'button'; b.addEventListener('click', fn); return b; };
+  /** MENU-ORDER: a group of a side's presses under its name (none: a row set apart). */
+  const actGroup = (label, btns, cls = '') => {
+    const g = el('div', cls ? `dfdecor-acts ${cls}` : 'dfdecor-acts');
+    const row = el('div', 'dfdecor-acts-btns');
+    row.append(...btns);
+    g.append(el('div', 'dfdecor-acts-label', label), row);
+    return g;
+  };
   const moveBtn = act('Move', () => { const it = placedSelected(); if (it && !moveBtn.disabled) { hide(); onMove(it.piece); } });
   // DECOR-TURN (Mac: "the ability to rotate objects on the ground"): the chosen piece turned where it stands, the panel up
   const turnBtn = (label, dir) => { const b = act(label, () => { const it = placedSelected(); if (it && !b.disabled) onTurn(it.piece, dir); }); return b; };
@@ -397,21 +555,29 @@ export function createDecorPanel({
     if (what) onToggle(it.piece, what);
   });
   for (const b of [lightBtn, storeBtn, stationPick, stationBtn]) b.className += ' dfdecor-yardless';   // HOME-YARD
-  roomActions.append(moveBtn, turnLeftBtn, turnRightBtn, lightBtn, storeBtn, stationPick, stationBtn, removeBtn);
+  for (const b of [stationPick, stationBtn]) b.className += ' flat';   // MENU-ORDER: a long word lies beside its picture
+  removeBtn.className += ' warn flat';   // MENU-ORDER: a press that costs something, edged in blood (enhancedFrame.js FRAME_ROLES.warn)
+  // MENU-ORDER: the eight presses in four named groups, not one wrapping row - where it stands, what it does, the craft it
+  // serves, and taking it away (its own row, last); the yard's three a group of their own, hidden with it
+  roomActions.append(actGroup(DECOR_ACT_GROUPS.arrange, [moveBtn, turnLeftBtn, turnRightBtn]),
+    actGroup(DECOR_ACT_GROUPS.use, [lightBtn, storeBtn], 'dfdecor-yardless'),
+    actGroup(DECOR_ACT_GROUPS.station, [stationPick, stationBtn], 'dfdecor-yardless'),
+    actGroup('', [removeBtn]));
   // BASE-HIDE: the room's own furniture - the chosen piece out or back, and the whole room at once
   const baseActions = el('div', 'dfdecor-base-actions');
   const baseBtn = act('Take out', () => { const it = baseSelected(); if (it && !baseBtn.disabled) onBase([it.key], !it.hidden); });
   // DECOR-ROOMS: "all" is the chosen room's all, where the house has rooms to choose between
   const allOutBtn = act('Take all out', () => { const ks = roomed(view?.base ?? []).filter((it) => !it.hidden && !it.holds).map((it) => it.key); if (ks.length) onBase(ks, true); });
   const allBackBtn = act('Put all back', () => { const ks = roomed(view?.base ?? []).filter((it) => it.hidden).map((it) => it.key); if (ks.length) onBase(ks, false); });
-  baseActions.append(baseBtn, allOutBtn, allBackBtn);
+  baseActions.append(actGroup(DECOR_ACT_GROUPS.piece, [baseBtn]), actGroup(DECOR_ACT_GROUPS.whole, [allOutBtn, allBackBtn]));
   // HOME-RENT: the chosen room's price moved, offered or withdrawn - and the rent held, collected
   const rentActions = el('div', 'dfdecor-rent-actions');
   const priceBtns = RENT_PRICE_STEPS.map((step) => act(`${step > 0 ? '+' : ''}${step}`, () => { const it = rentSelected(); if (!it) return; rentPrices.set(rentKeyOf(it), rentPriceStep(rentPriceOf(it), step)); paintRentSide(); }));
   const offerBtn = act('Offer to rent', () => { const it = rentSelected(); if (it && !offerBtn.disabled) onRent('offer', it, rentPriceOf(it)); });
   const withdrawBtn = act('Stop offering', () => { const it = rentSelected(); if (it && !withdrawBtn.disabled) onRent('withdraw', it, null); });
   const collectBtn = act('Collect rent', () => { if (!collectBtn.disabled) onRent('collect', null, null); });
-  rentActions.append(...priceBtns, offerBtn, withdrawBtn, collectBtn);
+  rentActions.append(actGroup(DECOR_ACT_GROUPS.price, priceBtns), actGroup(DECOR_ACT_GROUPS.offer, [offerBtn, withdrawBtn]),
+    actGroup(DECOR_ACT_GROUPS.rent, [collectBtn]));
   // HOME-LOOK: the chosen part's climates and its sets or styles, the town's own, and the look painted or put back
   const paintActions = el('div', 'dfdecor-paint-actions');
   const paintClimates = el('div', 'dfdecor-chips');
@@ -423,9 +589,22 @@ export function createDecorPanel({
   const paintBtn = act('Paint it', () => { if (!paintBtn.disabled) onPaint('commit', homeLookOf(paintLook)); });
   const backBtn = act('Put back', () => { paintLook = { ...(view?.paint?.current ?? {}) }; tryLook(); });
   paintBtns.append(ownBtn, paintBtn, backBtn);
-  paintActions.append(paintClimates, paintKinds, paintBtns);
+  // MENU-ORDER: the painter's two rows of choices under their names (the caravan's one, its paints)
+  const climateLabel = el('div', 'dfdecor-acts-label');
+  const paintKindsLabel = el('div', 'dfdecor-acts-label');
+  const climateGroup = el('div', 'dfdecor-acts');
+  climateGroup.append(climateLabel, paintClimates);
+  const paintKindsGroup = el('div', 'dfdecor-acts');
+  paintKindsGroup.append(paintKindsLabel, paintKinds);
+  paintActions.append(climateGroup, paintKindsGroup, paintBtns);
   const pickWhy = el('div', 'dfdecor-pick-why');
-  side.append(preview, pickName, pickLine, pickPrice, place, roomActions, baseActions, rentActions, paintActions, pickWhy);
+  // MENU-ORDER: why it cannot be done stands with what it costs, above the press it stops - never under every group
+  side.append(preview, pickName, pickLine, pickPrice, pickWhy, place, roomActions, baseActions, rentActions, paintActions);
+  // MENU-ORDER: each press its picture, beside its word
+  for (const b of [offerBtn, withdrawBtn, collectBtn]) b.className += ' flat';
+  for (const [b, icon] of [[place, 'place'], [moveBtn, 'move'], [turnLeftBtn, 'turn-left'], [turnRightBtn, 'turn-right'], [lightBtn, 'light'],
+    [storeBtn, 'storage'], [stationPick, 'list'], [stationBtn, 'station'], [removeBtn, 'remove'], [baseBtn, 'take-out'], [allOutBtn, 'take-out'],
+    [allBackBtn, 'put-back'], [offerBtn, 'rent'], [withdrawBtn, 'remove'], [collectBtn, 'treasure'], [ownBtn, 'back'], [paintBtn, 'paint'], [backBtn, 'back']]) b.dataset.dficon = icon;
   body.append(list, side);
 
   const foot = el('div', 'dfdecor-foot');
@@ -434,7 +613,9 @@ export function createDecorPanel({
   const footStatus = el('span', '');
   foot.append(footCount, footGold, footStatus);
 
-  card.append(head, tabs, filters, body, foot);
+  const tabLine = el('div', 'dfdecor-tabline');   // MENU-ORDER: the views, and how their lists are laid, on one line
+  tabLine.append(tabs, layoutChips);
+  card.append(head, tabLine, roomsBar, filters, body, foot);
   doc.body?.append(root);
 
   // ── state ────────────────────────────────────────────────────────
@@ -446,6 +627,7 @@ export function createDecorPanel({
   const f = { kinds: new Set(), text: '', size: null, storage: null, light: null, sort: 'common' };
   let selectedKey = null;
   let hoverKey = null;
+  let layout = 'grid';        // MENU-ORDER: 'grid' (pictures) or 'list'
   let mode = 'catalogue';     // DECOR1e: or 'room'; DECOR2a: or 'own'; DECOR2b: or 'look'; BASE-HIDE: or 'base'; HOME-RENT: or 'rent'
   let rentKey = null;         // HOME-RENT: the room chosen in the rooms view
   let paintPart = null;       // HOME-LOOK: the part chosen in the painter
@@ -466,23 +648,32 @@ export function createDecorPanel({
   // at once, the moment an archive lands, is a hitch the panel must not cost. Without an observer (a headless pin), at
   // once.
   /** @type {Map<string, any[]>} */
-  const waiting = new Map();  // key -> the images waiting on its picture
-  /** Ask for a flat's picture once; every image waiting on it gets it, and the preview if it shows that piece. */
+  const waiting = new Map();  // key -> the images waiting on its picture (the rows drawn since it was asked)
+  /** @type {Set<string>} the pictures asked and not yet answered */
+  const inFlight = new Set();
+  /** Ask for a flat's picture once; every image waiting on it gets it, and the preview if it shows that piece. AUDIT
+   *  MENU-ORDER C4: an image waits only on a picture in flight - one known to be none to be had keeps its glyph and is
+   *  never listed (a list never emptied grew by every tile at every redraw), and a refusal empties the list as an
+   *  answer does. */
   function askThumb(e, img = null) {
     const k = thumbKeyOf(e);
     const known = thumbs.get(k);
     if (known) { img?.setAttribute('src', known); return; }
+    if (thumbs.has(k) && !inFlight.has(k)) return;   // none to be had
     if (img) waiting.set(k, [...(waiting.get(k) ?? []), img]);
-    if (thumbs.has(k)) return;   // in flight, or none to be had
+    if (inFlight.has(k)) return;
     thumbs.set(k, null);
-    Promise.resolve(thumbOf(e)).then((url) => {
+    inFlight.add(k);
+    const settle = (url) => {
+      inFlight.delete(k);
       thumbs.set(k, url ?? null);
       const imgs = waiting.get(k) ?? [];
       waiting.delete(k);
       if (!url || !alive) return;
       for (const i of imgs) i.setAttribute('src', url);
       if ((hoverKey ?? selectedKey) === e.key) paintSide();
-    }, () => {});
+    };
+    Promise.resolve(thumbOf(e)).then(settle, () => settle(null));
   }
   const Watch = win?.IntersectionObserver;
   const watcher = typeof Watch === 'function'
@@ -494,6 +685,17 @@ export function createDecorPanel({
       }
     }, { root: list })
     : null;
+
+  /** MENU-ORDER: A MODEL'S OWN PICTURE IN ITS TILE - asked as a flat's is (when its row comes into view, if `r` is one the
+   *  observer can watch), drawn over the kind's glyph, which stands until it lands and wherever the host draws none. */
+  function modelPicture(thumb, shape, r = null) {
+    const img = el('img', 'dfdecor-modelpic');
+    img.setAttribute('alt', '');
+    thumb.append(img);
+    const known = thumbs.get(thumbKeyOf(shape));
+    if (known) img.setAttribute('src', known);
+    else if (r && watcher) { r.decorThumb = () => askThumb(shape, img); watcher.observe(r); } else askThumb(shape, img);
+  }
 
   const placedSelected = () => (view?.placed ?? []).find((it) => it.piece.id === placedId) ?? null;
   /** HOME-RENT: a room row's own key (a found room by its number, an offer whose walls changed by the offer's), the row
@@ -530,36 +732,48 @@ export function createDecorPanel({
   const priceOf = (e) => (e && view?.priceOf ? view.priceOf(e) : null);
   const radiusOf = (e) => (e && view?.radiusOf ? view.radiusOf(e) : null);
 
-  function chip(label, pressed, onClick) {
+  function chip(label, pressed, onClick, icon = null) {
     const c = el('button', 'dfdecor-chip', label);
     c.type = 'button';
+    if (icon) c.dataset.dficon = icon;   // MENU-ORDER
     c.setAttribute('aria-pressed', pressed ? 'true' : 'false');
     c.addEventListener('click', onClick);
     return c;
   }
+  /** MENU-ORDER: a row's badges - a picture each for what the piece does (holds things, gives light, serves a craft),
+   *  each named on the hover and to a reader; drawn where the tiles hide the row's words. */
+  function badges({ storage = false, light = false, station = false }) {
+    const b = el('span', 'dfdecor-badges');
+    const one = (icon, word) => { const x = el('span', 'dfdecor-badge'); x.dataset.dficon = icon; x.title = word; x.setAttribute('aria-label', word); return x; };
+    if (storage) b.append(one('storage', t('decor.panel.badge.storage', 'Holds things')));
+    if (light) b.append(one('light', t('decor.panel.badge.light', 'Gives light')));
+    if (station) b.append(one('station', t('decor.panel.badge.station', 'A crafting station')));
+    return b;
+  }
   function drawTabs() {
     if (card.dataset.yard !== (view?.yard ? '1' : '0')) card.dataset.yard = view?.yard ? '1' : '0';
     if (view?.yard) {   // HOME-YARD: the catalogue, the yard's pieces, and (HOME-LOOK) the house outside
-      tabs.replaceChildren(chip('Catalogue', mode === 'catalogue', () => setMode('catalogue')), chip(`In this yard (${(view.placed ?? []).length})`, mode === 'room', () => setMode('room')),
-        ...(view.paint ? [chip('Exterior', mode === 'paint', () => setMode('paint'))] : []));
+      tabs.replaceChildren(chip('Catalog', mode === 'catalogue', () => setMode('catalogue'), 'all'), chip(`In this yard (${(view.placed ?? []).length})`, mode === 'room', () => setMode('room'), 'nature'),
+        ...(view.paint ? [chip('Exterior', mode === 'paint', () => setMode('paint'), 'paint')] : []));   // MENU-ORDER: each view's tab its picture
+      roomsBar.replaceChildren();
       return;
     }
     const n = roomed(view?.placed ?? []).length;
     const m = view?.own?.length ?? 0;
     const k = roomed(view?.base ?? []).length;
-    tabs.replaceChildren(chip('Catalogue', mode === 'catalogue', () => setMode('catalogue')), chip(`In this room (${n})`, mode === 'room', () => setMode('room')),
-      chip(`Your things (${m})`, mode === 'own' || mode === 'look', () => setMode('own')),   // DECOR2b: a look is chosen within them
-      chip(`Built in (${k})`, mode === 'base', () => setMode('base')),   // BASE-HIDE: the room's own furniture
-      ...(view?.rent ? [chip(`Rooms to rent (${(view.rent.rows ?? []).filter((r) => r.offer).length})`, mode === 'rent', () => setMode('rent'))] : []),   // HOME-RENT
-      ...(view?.paint?.caravan ? [chip('Paint', mode === 'paint', () => setMode('paint'))] : []),   // WAGONS2: a caravan's inside, painted
-      ...roomChips());   // DECOR-ROOMS
+    tabs.replaceChildren(chip('Catalog', mode === 'catalogue', () => setMode('catalogue'), 'all'), chip(`In this room (${n})`, mode === 'room', () => setMode('room'), 'room'),
+      chip(`Your things (${m})`, mode === 'own' || mode === 'look', () => setMode('own'), 'own'),   // DECOR2b: a look is chosen within them
+      chip(`Built in (${k})`, mode === 'base', () => setMode('base'), 'furniture'),   // BASE-HIDE: the room's own furniture
+      ...(view?.rent ? [chip(`Rooms to rent (${(view.rent.rows ?? []).filter((r) => r.offer).length})`, mode === 'rent', () => setMode('rent'), 'rent')] : []),   // HOME-RENT
+      ...(view?.paint?.caravan ? [chip('Paint', mode === 'paint', () => setMode('paint'), 'paint')] : []));   // WAGONS2: a caravan's inside, painted; MENU-ORDER: each tab its picture
+    roomsBar.replaceChildren(...roomChips());   // DECOR-ROOMS; MENU-ORDER: a row of their own
   }
   /** DECOR-ROOMS: THE ROOM TABS - one a room, the chosen one pressed, each saying how many pieces stand in it. Choosing
    *  one is the host's (where the next flight begins); the lists follow on the next view. */
   function roomChips() {
     if (!roomsUp()) return [];
     const placed = view.placed ?? [];
-    return [el('span', 'dfdecor-rooms-label', 'Rooms:'), ...view.rooms.map((r) => {
+    return [el('span', 'dfdecor-flabel dfdecor-rooms-label', DECOR_ROOMS_WORD), ...view.rooms.map((r) => {
       const c = el('button', 'dfdecor-chip dfdecor-room', `${r.name} (${placed.filter((it) => it.room === r.id).length})`);
       c.type = 'button';
       c.dataset.room = String(r.id);
@@ -597,9 +811,12 @@ export function createDecorPanel({
       if (known) img.setAttribute('src', known); else askThumb(shape, img);
     } else {
       thumb.textContent = (DECOR_KINDS[shape.kind] ?? 'Decorations').slice(0, 2);
+      thumb.dataset.dficon = DECOR_KINDS[shape.kind] ? shape.kind : 'decor';   // MENU-ORDER: its kind's picture over the letters
+      if (shape.model != null) modelPicture(thumb, shape);   // ...and its own over that
     }
-    const main = el('span', '');
-    main.append(el('div', 'dfdecor-row-name', it.name), el('div', 'dfdecor-row-sub', decorPlacedSub(it)));
+    const main = el('span', 'dfdecor-row-main');
+    main.append(el('div', 'dfdecor-row-name', it.name), el('div', 'dfdecor-row-sub', decorPlacedSub(it)),
+      badges({ storage: !!it.piece.storage, light: !!it.piece.light, station: !!it.piece.station }));   // MENU-ORDER: what it does, as pictures
     r.append(thumb, main, el('span', 'dfdecor-row-price', it.piece.item ? 'yours' : `${decorRefundText(it.piece.paid)} back${view?.hall ? ' to the guild' : ''}`));   // AUDIT GUILD1d A9: a hall's half is the guild's
     r.addEventListener('click', () => { placedId = it.piece.id; redraw(); });
     return r;
@@ -620,8 +837,10 @@ export function createDecorPanel({
       if (known) img.setAttribute('src', known); else askThumb(shape, img);
     } else {
       thumb.textContent = (DECOR_KINDS[it.kind] ?? DECOR_KINDS.furniture).slice(0, 2);
+      thumb.dataset.dficon = DECOR_KINDS[it.kind] ? it.kind : 'furniture';   // MENU-ORDER
+      if (it.model != null) modelPicture(thumb, baseShape(it));
     }
-    const main = el('span', '');
+    const main = el('span', 'dfdecor-row-main');
     main.append(el('div', 'dfdecor-row-name', it.name), el('div', 'dfdecor-row-sub', decorBaseSub(it)));
     r.append(thumb, main, el('span', 'dfdecor-row-price', it.hidden ? 'out' : 'free'));
     r.addEventListener('click', () => { baseKey = it.key; redraw(); });
@@ -633,7 +852,7 @@ export function createDecorPanel({
     r.setAttribute('role', 'option');
     r.dataset.key = part;
     r.setAttribute('aria-selected', part === paintPart ? 'true' : 'false');
-    const main = el('span', '');
+    const main = el('span', 'dfdecor-row-main');
     const was = homeLookSig(view?.paint?.current?.[part] ? { [part]: view.paint.current[part] } : null) !== homeLookSig(paintLook?.[part] ? { [part]: paintLook[part] } : null);
     main.append(el('div', 'dfdecor-row-name', HOME_LOOK_PART_NAMES[part]), el('div', 'dfdecor-row-sub', decorLookText(part, paintLook?.[part] ?? null)));
     r.append(el('span', 'dfdecor-thumb', HOME_LOOK_PART_NAMES[part].slice(0, 2)), main, el('span', 'dfdecor-row-price', was ? 'changed' : ''));
@@ -655,7 +874,7 @@ export function createDecorPanel({
     r.setAttribute('role', 'option');
     r.dataset.key = row.part;
     r.setAttribute('aria-selected', row.part === paintPart ? 'true' : 'false');
-    const main = el('span', '');
+    const main = el('span', 'dfdecor-row-main');
     main.append(el('div', 'dfdecor-row-name', row.name), el('div', 'dfdecor-row-sub', row.choices[row.current] ?? ''));
     r.append(el('span', 'dfdecor-thumb', row.name.slice(0, 2)), main, el('span', 'dfdecor-row-price', 'Free'));
     r.addEventListener('click', () => { paintPart = row.part; redraw(); });
@@ -665,9 +884,11 @@ export function createDecorPanel({
   function paintCaravanSide() {
     const row = view.paint.caravan.find((x) => x.part === paintPart) ?? null;
     pickName.textContent = row ? row.name : 'Choose a part of your caravan';
-    pickLine.textContent = row ? row.choices[row.current] ?? '' : 'Walls, floor and ceiling - each can wear another paint.';
+    pickLine.textContent = row ? row.choices[row.current] ?? '' : 'Walls, floor and ceiling can each be painted.';
     pickPrice.textContent = 'Free';
     paintClimates.replaceChildren();
+    climateLabel.textContent = '';
+    paintKindsLabel.textContent = row ? DECOR_PAINT_WORDS.paint : '';
     paintKinds.replaceChildren(...(row ? row.choices.map((name, i) => chip(name, i === row.current, () => onPaint('caravan', { part: row.part, i }))) : []));
     paintBtns.hidden = true;   // nothing to try on and paint: a chip pressed is painted
     previewImg.removeAttribute?.('src');
@@ -679,11 +900,13 @@ export function createDecorPanel({
     const part = paintPart;
     const choice = part ? paintLook?.[part] ?? null : null;
     pickName.textContent = part ? HOME_LOOK_PART_NAMES[part] : 'Choose a part of your house';
-    pickLine.textContent = part ? decorLookText(part, choice) : 'Walls, windows, roof and door - each can wear another of the original game\'s own looks.';
+    pickLine.textContent = part ? decorLookText(part, choice) : 'Walls, windows, roof and door can each take another look from the original game.';
     pickPrice.textContent = 'Free';
     const set = (next) => { paintLook = { ...paintLook, [part]: next }; tryLook(); };
     const start = () => choice ?? decorLookStart(part);
     paintClimates.replaceChildren(...(part ? Object.keys(HOME_LOOK_CLIMATES).map((c) => chip(HOME_LOOK_CLIMATE_NAMES[c], choice?.climate === c, () => set({ ...start(), climate: c }))) : []));
+    climateLabel.textContent = part ? DECOR_PAINT_WORDS.climate : '';   // MENU-ORDER
+    paintKindsLabel.textContent = !part ? '' : part === 'walls' || part === 'windows' ? DECOR_PAINT_WORDS.set : DECOR_PAINT_WORDS.style;
     if (part === 'walls' || part === 'windows') {
       paintKinds.replaceChildren(...Object.keys(HOME_LOOK_SETS).map((k) => chip(HOME_LOOK_SET_NAMES[k], choice?.set === k, () => set({ ...start(), set: k }))));
     } else if (part) {
@@ -705,7 +928,7 @@ export function createDecorPanel({
     const url = shape ? thumbs.get(thumbKeyOf(shape)) : null;
     if (url) previewImg.setAttribute('src', url); else previewImg.removeAttribute?.('src');
     if (preview.dataset.model !== '0') preview.dataset.model = '0';
-    pickWhy.textContent = differs ? 'Tried on your house - paint it to keep it, for everyone to see.' : '';
+    pickWhy.textContent = differs ? 'Shown on your house. Paint it to keep it, for everyone to see.' : '';
   }
   /** HOME-RENT: one of the house's rooms - its name, what it is offered at or who rents it, its price. */
   function rentRow(it) {
@@ -713,7 +936,7 @@ export function createDecorPanel({
     r.setAttribute('role', 'option');
     r.dataset.key = rentKeyOf(it);
     r.setAttribute('aria-selected', rentKeyOf(it) === rentKey ? 'true' : 'false');
-    const main = el('span', '');
+    const main = el('span', 'dfdecor-row-main');
     main.append(el('div', 'dfdecor-row-name', it.name), el('div', 'dfdecor-row-sub', rentRowSub(it, view?.rent?.now ?? 0)));
     r.append(el('span', 'dfdecor-thumb', String(it.id ?? it.offer?.room ?? '')), main, el('span', 'dfdecor-row-price', it.offer ? `${it.offer.price} a day` : '-'));
     r.addEventListener('click', () => { rentKey = rentKeyOf(it); redraw(); });
@@ -721,17 +944,19 @@ export function createDecorPanel({
   }
   function drawChips() {
     const present = new Set((view?.entries ?? []).map((e) => e.kind));
-    kindChips.replaceChildren(chip('All', f.kinds.size === 0, () => { f.kinds.clear(); redraw(); }),
+    kindChips.replaceChildren(chip('All', f.kinds.size === 0, () => { f.kinds.clear(); redraw(); }, 'all'),
       ...Object.keys(DECOR_KINDS).filter((k) => present.has(k)).map((k) => chip(DECOR_KINDS[k], f.kinds.has(k), () => {
         if (f.kinds.has(k)) f.kinds.delete(k); else f.kinds.add(k);
         redraw();
-      })));
+      }, k)));   // MENU-ORDER: each kind its picture
     sizeChips.replaceChildren(chip('Any size', f.size === null, () => { f.size = null; redraw(); }),
-      ...Object.keys(DECOR_SIZES).map((k) => chip(DECOR_SIZES[k], f.size === k, () => { f.size = f.size === k ? null : k; redraw(); })));
+      ...Object.keys(DECOR_SIZES).map((k) => chip(DECOR_SIZES[k], f.size === k, () => { f.size = f.size === k ? null : k; redraw(); }, `size-${k[0]}`)));
     hasChips.replaceChildren(
-      chip('Holds things', f.storage === true, () => { f.storage = f.storage ? null : true; redraw(); }),
-      chip('Gives light', f.light === true, () => { f.light = f.light ? null : true; redraw(); }));
+      chip('Holds things', f.storage === true, () => { f.storage = f.storage ? null : true; redraw(); }, 'storage'),
+      chip('Gives light', f.light === true, () => { f.light = f.light ? null : true; redraw(); }, 'light'));
     sortChips.replaceChildren(...Object.keys(DECOR_SORTS).map((k) => chip(DECOR_SORTS[k], f.sort === k, () => { f.sort = k; redraw(); })));
+    const words = decorFiltersText(f);   // MENU-ORDER: the phone's fold says how many it hides
+    if (filterToggle.textContent !== words) filterToggle.textContent = words;
   }
 
   /** One catalogue row - or, `look` (DECOR2b), one look for one's furniture: free. */
@@ -752,9 +977,12 @@ export function createDecorPanel({
       else if (watcher) { r.decorThumb = () => askThumb(e, img); watcher.observe(r); } else askThumb(e, img);
     } else {
       thumb.textContent = DECOR_KINDS[e.kind].slice(0, 2);
+      thumb.dataset.dficon = e.kind;   // MENU-ORDER: a model's kind's glyph, until its own picture lands over it
+      if (e.model != null) modelPicture(thumb, e, r);
     }
-    const main = el('span', '');
-    main.append(el('div', 'dfdecor-row-name', e.name), el('div', 'dfdecor-row-sub', decorRowSub(e, radiusOf(e))));
+    const main = el('span', 'dfdecor-row-main');
+    main.append(el('div', 'dfdecor-row-name', e.name), el('div', 'dfdecor-row-sub', decorRowSub(e, radiusOf(e))),
+      badges({ storage: !!e.storage, light: e.light != null }));   // MENU-ORDER
     r.append(thumb, main, el('span', 'dfdecor-row-price', look ? 'free' : decorPriceText(price)));
     r.addEventListener('click', () => { if (look) lookKey = e.key; else selectedKey = e.key; redraw(); });
     r.addEventListener('mouseenter', () => { hoverKey = e.key; paintSide(); });
@@ -778,8 +1006,9 @@ export function createDecorPanel({
       if (known) img.setAttribute('src', known); else askThumb(e, img);
     } else {
       thumb.textContent = (DECOR_KINDS[e.looks?.[0]] ?? DECOR_KINDS.furniture).slice(0, 2);
+      thumb.dataset.dficon = DECOR_KINDS[e.looks?.[0]] ? e.looks[0] : 'furniture';   // MENU-ORDER
     }
-    const main = el('span', '');
+    const main = el('span', 'dfdecor-row-main');
     const count = (e.count ?? 1) > 1 ? ` (${e.count})` : '';
     main.append(el('div', 'dfdecor-row-name', `${e.name}${count}`), el('div', 'dfdecor-row-sub', ownLine(e)));
     r.append(thumb, main, el('span', 'dfdecor-row-price', 'free'));
@@ -793,6 +1022,10 @@ export function createDecorPanel({
   function redraw() {
     if (!view) return;
     drawTabs();
+    layoutChips.replaceChildren(chip(DECOR_LAYOUT_WORDS.grid, layout === 'grid', () => { layout = 'grid'; redraw(); }, 'all'),
+      chip(DECOR_LAYOUT_WORDS.list, layout === 'list', () => { layout = 'list'; redraw(); }, 'list'));
+    const shape = layout === 'grid' && DECOR_GRID_MODES.includes(mode) ? 'grid' : 'list';   // MENU-ORDER: the rooms and the painter are lines
+    if (card.dataset.view !== shape) card.dataset.view = shape;
     drawChips();
     const entries = view.entries;
     watcher?.disconnect();   // the rows it watched are gone
@@ -835,7 +1068,7 @@ export function createDecorPanel({
       redraw();
       return;
     } else if (!entries) {
-      list.replaceChildren(el('div', 'dfdecor-empty', 'Reading the catalogue...'));
+      list.replaceChildren(el('div', 'dfdecor-empty', 'Reading the catalog...'));
     } else {
       const look = mode === 'look';   // DECOR2b: the furniture's kinds alone, and neither holding nor light asked
       const shownEntries = look
@@ -921,7 +1154,7 @@ export function createDecorPanel({
     } else {
       pickName.textContent = it.name;
       pickLine.textContent = decorPlacedSub(it);
-      pickPrice.textContent = it.piece.item ? `Take down: back to ${decorBackTo(it.piece)}` : `Remove: ${decorRefundText(it.piece.paid)} back${view?.hall ? " to the guild's treasury" : ''}${it.piece.station ? ' (the station licence is not)' : ''}`;   // AUDIT HOME-STATIONS S6
+      pickPrice.textContent = it.piece.item ? `Take down: back to ${decorBackTo(it.piece)}` : `Remove: ${decorRefundText(it.piece.paid)} back${view?.hall ? " to the guild's treasury" : ''}${it.piece.station ? ' (the station license is not)' : ''}`;   // AUDIT HOME-STATIONS S6
     }
     lightBtn.textContent = it?.piece.light ? 'Light: on' : 'Light: off';
     storeBtn.textContent = it?.piece.storage ? 'Holds things: yes' : 'Holds things: no';
@@ -971,8 +1204,9 @@ export function createDecorPanel({
     const rows = roomed(view?.base ?? []);   // DECOR-ROOMS
     pickName.textContent = it ? it.name : rows.length ? 'Choose a piece of this room\'s own furniture' : DECOR_BASE_EMPTY;
     pickLine.textContent = it ? decorBaseSub(it) : '';
-    pickPrice.textContent = it || rows.length ? 'Free - taken out or put back' : '';
+    pickPrice.textContent = it || rows.length ? 'Free to take out or put back' : '';
     baseBtn.textContent = it?.hidden ? 'Put back' : 'Take out';
+    baseBtn.dataset.dficon = it?.hidden ? 'put-back' : 'take-out';   // MENU-ORDER
     baseBtn.disabled = !it || (!it.hidden && it.holds);
     allOutBtn.disabled = !rows.some((r) => !r.hidden && !r.holds);
     allBackBtn.disabled = !rows.some((r) => r.hidden);
@@ -985,7 +1219,7 @@ export function createDecorPanel({
     if (footCount.textContent !== c) footCount.textContent = c;
     const g = `${view.gold} gold to spend (purse and bank)`;
     if (footGold.textContent !== g) footGold.textContent = g;
-    const s = view.ready ? '' : `Reading the catalogue - ${Math.floor((view.progress ?? 0) * 100)}%`;
+    const s = view.ready ? '' : `Reading the catalog - ${Math.floor((view.progress ?? 0) * 100)}%`;
     if (footStatus.textContent !== s) footStatus.textContent = s;
     const w = view.where ?? '';
     if (where.textContent !== w) where.textContent = w;
@@ -1064,6 +1298,8 @@ export function createDecorPanel({
     previewRect: () => (open && preview.getBoundingClientRect ? preview.getBoundingClientRect() : null),
     /** The canvas the host copies the turning model into. */
     previewCanvas: () => previewGl,
+    /** MENU-ORDER: the card's box on the page - the host draws a model's tile picture in the game canvas under it. */
+    cardRect: () => (open && card.getBoundingClientRect ? card.getBoundingClientRect() : null),
     /** Choose a piece by its key (the host's reopen after a placement keeps the choice). */
     select(key) { selectedKey = key; if (open) redraw(); },
     /** HOME-RENT: the rooms view. */
@@ -1088,6 +1324,20 @@ export function createDecorPanel({
   };
 }
 
+/** MENU-ORDER: the bar's press that unfolds its keys' legend. */
+export const DECOR_KEYS_WORD = 'Keys';
+/** MENU-ORDER: each of the bar's presses its picture. */
+const DECOR_BAR_ICONS = Object.freeze({ place: 'place', turnLeft: 'turn-left', turnRight: 'turn-right', raise: 'up', lower: 'down',
+  smaller: 'smaller', bigger: 'bigger', grid: 'grid', back: 'back' });
+/** MENU-ORDER: THE BAR'S LEGEND - each key's name and what presses it, a pair a line (a finger's two: the stick and
+ *  Fly, and the look). DECOR-FIGURE: `sized` false tells no Size key. */
+export function decorBarKeys(touch, sized = true) {
+  if (touch) return [['Fly', t('decor.bar.keys.flyTouch', 'the stick, and hold Fly up or Fly down')], ['Look', t('decor.bar.keys.lookTouch', 'drag: the piece stands where you look')]];
+  return [['Fly', t('decor.bar.keys.fly', 'walk keys, Jump up, Crouch down, Run faster')], ['Look', t('decor.bar.keys.look', 'mouse')],
+    ['Turn', t('decor.bar.keys.turn', 'wheel or Turn Left/Right (Shift for fine turns; turn a picture half round to flip it)')], ['Raise/lower', t('decor.bar.keys.raise', 'Float Up/Down')],
+    ...(sized ? [['Size', '- and =']] : []), ['Grid', '/'], ['Place', t('decor.bar.keys.place', 'click or Interact')], ['Back', t('decor.bar.keys.back', 'right click or Escape')]];
+}
+
 /**
  * THE BAR, while a piece is being placed. `show(info)` / `hide()`; `info` is { name, price, why, snap, sized } (DECOR-FIGURE:
  * `sized` false hides Smaller and Bigger - a figure stands at its own size) and, for a move
@@ -1102,16 +1352,23 @@ export function createDecorBar({ on, touch = false, doc = document }) {
   const el = maker(doc);
   const root = el('div', `dfdecor-bar${touch ? ' touch' : ''}`);
   root.dataset.up = '0';
+  root.dataset.keys = '0';   // MENU-ORDER: the legend folded
   const what = el('div', 'dfdecor-bar-what');
-  // DECOR-FIGURE: a piece that takes no size step (one of Daggerfall's people) is told no Size key
-  const keysText = (sized) => (touch ? 'Fly: the stick, and hold Fly up or Fly down - Look: drag - the piece stands where you look.'
-    : `Fly: walk keys, Jump up, Crouch down, Run faster - Look: mouse - Turn: wheel or Turn Left/Right (Shift: fine; a picture turned half round faces the other way) - Raise/lower: Float Up/Down - ${sized ? 'Size: - and = - ' : ''}Grid: / - Place: click or Interact - Back: right click or Escape`);
-  const keys = el('div', 'dfdecor-bar-keys', keysText(true));
+  // DECOR-FIGURE: a piece that takes no size step (one of Daggerfall's people) is told no Size key. MENU-ORDER: a legend,
+  // a key's name and then what presses it
+  const keys = el('div', 'dfdecor-bar-keys');
+  const drawKeys = (sized) => keys.replaceChildren(...decorBarKeys(touch, sized).map(([name, how]) => {
+    const k = el('span', 'dfdecor-key');
+    k.append(el('b', '', `${name}:`), el('span', '', ` ${how}`));
+    return k;
+  }));
+  drawKeys(true);
   const why = el('div', 'dfdecor-bar-why');
   const btns = el('div', 'dfdecor-bar-btns');
   const b = (label, key, cls = 'dfdecor-chip') => {
     const n = el('button', cls, label);
     n.type = 'button';
+    if (DECOR_BAR_ICONS[key]) n.dataset.dficon = DECOR_BAR_ICONS[key];   // MENU-ORDER
     n.addEventListener('click', () => on[key]?.());
     return n;
   };
@@ -1123,16 +1380,26 @@ export function createDecorBar({ on, touch = false, doc = document }) {
   const hold = (label, dir) => {
     const n = el('button', 'dfdecor-chip', label);
     n.type = 'button';
+    n.dataset.dficon = dir > 0 ? 'up' : 'down';   // MENU-ORDER
     n.addEventListener('pointerdown', (e) => { try { n.setPointerCapture?.(e.pointerId); } catch { /* a pointer gone already */ } flyTo(dir); });
     for (const t of ['pointerup', 'pointercancel', 'lostpointercapture']) n.addEventListener(t, () => { if (flyDir === dir) flyTo(0); });
     return n;
   };
   const smaller = b('Smaller', 'smaller'), bigger = b('Bigger', 'bigger');   // DECOR-FIGURE: hidden for a figure (show's `sized`)
-  btns.append(b('Place', 'place', 'dfdecor-btn'), b('Turn left', 'turnLeft'), b('Turn right', 'turnRight'), b('Raise', 'raise'),
-    b('Lower', 'lower'), smaller, bigger, grid);
+  // MENU-ORDER: the presses in the legend's groups, a rule between - place; turn; raise and lower; size; the grid (and a
+  // finger's fly); back
+  const sep = () => el('span', 'dfdecor-bar-sep');
+  btns.append(b('Place', 'place', 'dfdecor-btn'), sep(), b('Turn left', 'turnLeft'), b('Turn right', 'turnRight'), sep(), b('Raise', 'raise'),
+    b('Lower', 'lower'), sep(), smaller, bigger, grid);
   if (touch) btns.append(hold('Fly up', 1), hold('Fly down', -1));
-  btns.append(b('Back', 'back'));
-  root.append(what, keys, why, btns);
+  // MENU-ORDER: the keys' legend folded behind one press - the pictured buttons are the bar; the words wait to be asked
+  const keysChip = el('button', 'dfdecor-chip dfdecor-keys-toggle', DECOR_KEYS_WORD);
+  keysChip.type = 'button';
+  keysChip.dataset.dficon = 'list';
+  keysChip.setAttribute('aria-pressed', 'false');
+  keysChip.addEventListener('click', () => { const on = root.dataset.keys !== '1'; root.dataset.keys = on ? '1' : '0'; keysChip.setAttribute('aria-pressed', on ? 'true' : 'false'); });
+  btns.append(sep(), b('Back', 'back'), keysChip);
+  root.append(what, why, btns, keys);   // MENU-ORDER: the presses first, the legend under them when asked
   swallowPresses(root);
   doc.body?.append(root);
   let alive = true;
@@ -1143,7 +1410,7 @@ export function createDecorBar({ on, touch = false, doc = document }) {
       const w = `${name} - ${priceText ?? decorPriceText(price)}`;
       if (what.textContent !== w) what.textContent = w;
       // DECOR-FIGURE: one of Daggerfall's people stands at its own size - no Smaller, no Bigger, no Size key told
-      if (!!smaller.hidden === sized) { smaller.hidden = !sized; bigger.hidden = !sized; keys.textContent = keysText(sized); }
+      if (!!smaller.hidden === sized) { smaller.hidden = !sized; bigger.hidden = !sized; drawKeys(sized); }
       const y = whyText ?? '';
       if (why.textContent !== y) why.textContent = y;
       grid.setAttribute('aria-pressed', snap ? 'true' : 'false');

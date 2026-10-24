@@ -5,7 +5,7 @@
     "old": "export const LEVELUP_TOTAL = 100;",
     "new": "export const LEVELUP_TOTAL = 90;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const ATTRIBUTE_INCREASE_LIMIT = 5;",
     "new": "export const ATTRIBUTE_INCREASE_LIMIT = 6;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (newProgress > LEVELUP_TOTAL) {",
     "new": "  if (newProgress >= LEVELUP_TOTAL) {",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ],
     "equivalent": true,
     "why": "EQUIVALENT, AND THE MOD'S `>` IS KEPT FOR SHAPE NOT BEHAVIOUR. At the boundary the two agree: newProgress == 100 gives rollUp 0, so `added` is the whole value either way and nothing carries. The Lua writes `>` (helper.lua:132) and the port restates it, but no reachable state tells them apart - the only difference is whether `levelRollUp` is written a 0, which every reader takes through `?? 0`."
@@ -34,7 +34,7 @@
     "old": "  if (!(MAX_SKILL_VALUE > (entity.skills?.[skillId] ?? 0))) return 0;",
     "new": "  if (false) return 0;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "    entity.levelRollUp = (entity.levelRollUp ?? 0) + rollUp;",
     "new": "    entity.levelRollUp = (entity.levelRollUp ?? 0);",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "    added = value - rollUp;",
     "new": "    added = value;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "  if (tier === 'primary') return s.primarySkillsImpact;",
     "new": "  if (tier === 'primary') return s.majorSkillsImpact;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "  if (tier === 'minor') return s.minorSkillsImpact;",
     "new": "  if (tier === 'minor') return s.miscSkillsImpact;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "  return s.miscSkillsImpact > 0 ? s.miscSkillsImpact : 0;",
     "new": "  return s.miscSkillsImpact;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ],
     "equivalent": true,
     "why": "the gate is the mod's SHAPE, not a distinct behaviour - `miscSkillsImpact` has min 0 and a 0 impact adds 0 either way. It is kept because it is how player.lua:43 is written (an `elseif miscSkillsImpact > 0`), and the port's law table cites that line."
@@ -90,7 +90,7 @@
     "old": "  if (c.primarySkills?.includes(skillId)) return 'primary';",
     "new": "  if (false) return 'primary';",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -99,7 +99,7 @@
     "old": "  if (c.minorSkills?.includes(skillId)) return 'minor';\n  return 'misc';",
     "new": "  return 'minor';",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -108,7 +108,7 @@
     "old": "  if ((entity.levelProgress ?? 0) < LEVELUP_TOTAL) return false;",
     "new": "  if ((entity.levelProgress ?? 0) < LEVELUP_TOTAL - 1) return false;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -117,7 +117,7 @@
     "old": "  entity.pendingLevel = entity.level + 1;",
     "new": "  entity.pendingLevel = entity.level;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -126,7 +126,7 @@
     "old": "  if (rollUp >= LEVELUP_TOTAL) {\n    entity.levelProgress = LEVELUP_TOTAL;",
     "new": "  if (rollUp >= LEVELUP_TOTAL) {\n    entity.levelProgress = 0;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -135,7 +135,7 @@
     "old": "  if (rollUp >= LEVELUP_TOTAL) {",
     "new": "  if (rollUp > LEVELUP_TOTAL) {",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ],
     "equivalent": true,
     "why": "EQUIVALENT at the only value that separates them. rollUp exactly 100 takes the `>=` arm to progress 100 / rollUp 0, and the `>` arm's else to progress = rollUp = 100 / rollUp 0 - the same state by two routes. The Lua writes `>=` (helper.lua:148) and the port restates it."
@@ -146,7 +146,7 @@
     "old": "  return (attrKey === LUCK && s.allowLuckIncrease) ? s.luckIncreaseCost : 1;",
     "new": "  return 1;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -155,7 +155,7 @@
     "old": "  return (attrKey === LUCK && !s.allowLuckIncrease) ? 1 : ATTRIBUTE_INCREASE_LIMIT;",
     "new": "  return ATTRIBUTE_INCREASE_LIMIT;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -164,7 +164,7 @@
     "old": "  if (headroom > limit) return limit * offset;",
     "new": "  if (headroom > limit) return headroom * offset;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -173,7 +173,7 @@
     "old": "  if (total < purse) return total;",
     "new": "  if (false) return total;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -182,7 +182,7 @@
     "old": "  if (purse > others) purse = others + Math.floor((purse - others) / luckOffset) * luckOffset;",
     "new": "  if (purse > others) purse = others + (purse - others);",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -191,7 +191,7 @@
     "old": "  if (purse === 0) return false;",
     "new": "  if (false) return false;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ],
     "equivalent": true,
     "why": "EQUIVALENT because the NEXT line subsumes it: an offset is always at least 1 (attributeOffset returns 1, or luckIncreaseCost whose minimum is 1), so `purse - offset < 0` already refuses an empty purse. Both lines are kept because both are in the Lua's own condition (player.lua:599-600) and the port's law table cites it."
@@ -202,7 +202,7 @@
     "old": "  if (purse - attributeOffset(attrKey, s) < 0) return false;",
     "new": "  if (purse - 1 < 0) return false;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -211,7 +211,7 @@
     "old": "  if (delta === attributeIncreaseLimit(attrKey, s)) return false;",
     "new": "  if (false) return false;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -220,7 +220,7 @@
     "old": "  if (stats[attrKey] + delta === MAX_ATTRIBUTE_VALUE) return false;",
     "new": "  if (stats[attrKey] === MAX_ATTRIBUTE_VALUE) return false;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -229,7 +229,7 @@
     "old": "  if (s.maxUpdatableAttribute <= raised && delta === 0) return false;",
     "new": "  if (false) return false;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -238,7 +238,7 @@
     "old": "  if (s.maxUpdatableAttribute <= raised && delta === 0) return false;",
     "new": "  if (s.maxUpdatableAttribute <= raised) return false;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -247,7 +247,7 @@
     "old": "  return (deltas[attrKey] ?? 0) > 0;",
     "new": "  return (deltas[attrKey] ?? 0) >= 0;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -256,7 +256,7 @@
     "old": "  if (purse !== 0) return false;",
     "new": "  if (false) return false;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -265,7 +265,7 @@
     "old": "  if (!entity.readyToLevelUp) return false;\n  if (purse !== 0) return false;",
     "new": "  if (purse !== 0) return false;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -274,16 +274,16 @@
     "old": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter",
     "new": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + 0;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
     "name": "commit-jumps-the-level",
     "file": "src/systems/oblivionLeveling.js",
-    "old": "  entity.level += 1;\n  rollOverLevelProgress(entity);",
-    "new": "  entity.level += 2;\n  rollOverLevelProgress(entity);",
+    "old": "  entity.level += 1;\n  refreshOnlineLayer(entity, { keepHealth: true });",
+    "new": "  entity.level += 2;\n  refreshOnlineLayer(entity, { keepHealth: true });",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -292,7 +292,7 @@
     "old": "  entity.readyToLevelUp = false;\n  entity.pendingLevel = null;\n  return true;\n}",
     "new": "  entity.pendingLevel = null;\n  return true;\n}",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -301,7 +301,7 @@
     "old": "  return entity?.levelingSystem === LEVELING_VIRTUE;",
     "new": "  return entity?.levelingSystem !== LEVELING_CLASSIC;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -310,7 +310,7 @@
     "old": "      if (virtue) addSkillProgress(entity, i, virtueSettings);",
     "new": "      addSkillProgress(entity, i, virtueSettings ?? levelingSettings());",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -319,7 +319,7 @@
     "old": "      if (virtue) addSkillProgress(entity, i, virtueSettings);\n      entity.skills[i] += 1;",
     "new": "      entity.skills[i] += 1;\n      if (virtue) addSkillProgress(entity, i, virtueSettings);",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -328,7 +328,7 @@
     "old": "  if (virtue ? checkForVirtueLevelUp(entity) : checkForLevelUp(entity)) {",
     "new": "  if (checkForLevelUp(entity)) {",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -337,7 +337,7 @@
     "old": "      if (virtue) virtueLevelUpHeadless(entity, virtueSettings, rolls);\n      else applyLevelUp",
     "new": "      if (false) virtueLevelUpHeadless(entity, virtueSettings, rolls);\n      else applyLevelUp",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -346,7 +346,7 @@
     "old": "    if (!e.oghmaLevelUp && usesVirtueLeveling(e)) return;",
     "new": "    if (false) return;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -355,7 +355,7 @@
     "old": "    const virtue = !deps.entity?.oghmaLevelUp && usesVirtueLeveling(deps.entity);",
     "new": "    const virtue = usesVirtueLeveling(deps.entity);",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ],
     "why": "LV1 re-aimed BY CONTENT: the door's fork is one block now (the enhanced skin needs the same answer to build its window with), so the Oghma exclusion lives on this line."
   },
@@ -365,7 +365,7 @@
     "old": "    if (this.purse !== 0) { this.refused = true; return false; }",
     "new": "    if (false) { this.refused = true; return false; }",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "    if (!canRaiseAttribute(key, this.entity.stats, this.deltas, this.purse, this.s)) return false;",
     "new": "    if (false) return false;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "    this.purse -= attributeOffset(key, this.s);",
     "new": "    this.purse -= 1;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "    else if (action === 'minus' || action === 'char:-') {",
     "new": "    else if (action === 'minus') {",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": "      id: LEVELING_CLASSIC,\n      title: 'Classic',",
     "new": "      id: LEVELING_VIRTUE,\n      title: 'Classic',",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ],
     "note": "BR5 (re-aimed by content): the name, its file form and the legal date moved."
   },
@@ -411,7 +411,7 @@
     "old": "  answer(id) {\n    if (this._fired) return false;",
     "new": "  answer(id) {\n    if (false) return false;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -420,8 +420,8 @@
     "old": "    confirm: 'confirm', Enter: 'confirm', NumpadEnter: 'confirm', KeyE: 'confirm',",
     "new": "    confirm: 'confirm',",
     "tests": [
-      "test/orl1_leveling.test.js",
-      "test/audit17f.test.js"
+      "test/systems/orl1_leveling.test.js",
+      "test/systems/audit17f.test.js"
     ]
   },
   {
@@ -430,7 +430,7 @@
     "old": "      default: break;   // every other key is inert: this screen has no way out but an answer",
     "new": "      default: this.answer(this.options[this.cursor].id); break;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -439,7 +439,7 @@
     "old": "  initVirtueLeveling(playerEntity, newCharacterLevelingSystem(result.levelingSystem ?? LEVELING_CLASSIC, { online: isOnlinePage() }));",
     "new": "  initVirtueLeveling(playerEntity, newCharacterLevelingSystem(LEVELING_CLASSIC, { online: isOnlinePage() }));",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -448,8 +448,8 @@
     "old": "    get done() { return fired; },\n    get levelingPrompt() { return prompt; },",
     "new": "    get done() { return fired || !!prompt; },\n    get levelingPrompt() { return prompt; },",
     "tests": [
-      "test/orl1_leveling.test.js",
-      "test/audit17f.test.js"
+      "test/systems/orl1_leveling.test.js",
+      "test/systems/audit17f.test.js"
     ]
   },
   {
@@ -458,16 +458,16 @@
     "old": "  if (oblivionLevelingEnabled() || online) asks.push((answer) => new LevelingChoiceScreen((id) => answer({ levelingSystem: id }), { online }));",
     "new": "  if (true) asks.push((answer) => new LevelingChoiceScreen((id) => answer({ levelingSystem: id }), { online }));",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
     "name": "the-save-drops-the-choice",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "  'levelingSystem', 'levelProgress', 'levelRollUp',",
     "new": "  'levelProgress', 'levelRollUp',",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -476,7 +476,7 @@
     "old": "    levelingSystem: newCharacterLevelingSystem(LEVELING_CLASSIC, { online }), levelProgress: 0, levelRollUp: 0,",
     "new": "    levelingSystem: 'virtue', levelProgress: 0, levelRollUp: 0,",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -485,7 +485,7 @@
     "old": "      plus: canRaiseAttribute(key, this.entity.stats, this.deltas, this.purse, this.s),",
     "new": "      plus: true,",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -494,7 +494,7 @@
     "old": "      minus: canLowerAttribute(key, this.deltas),",
     "new": "      minus: true,",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -503,7 +503,7 @@
     "old": "    if (action === 'up') this.cursor = (this.cursor + 7) % 8;",
     "new": "    if (action === 'up') this.cursor = (this.cursor + 6) % 8;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -512,7 +512,7 @@
     "old": "    this.deltas[key] += 1;\n    this.purse -= attributeOffset(key, this.s);\n    this.refused = false;",
     "new": "    this.deltas[key] += 1;\n    this.purse -= attributeOffset(key, this.s);",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -521,7 +521,7 @@
     "old": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter",
     "new": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.strength, rolls);   // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -530,7 +530,7 @@
     "old": "        interiorOverlay = host.makeCharSheet?.(interiorSheetDoors()) ?? createCharSheetWindow({ entity: playerEntity });",
     "new": "        interiorOverlay = host.makeCharSheet?.();",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ],
     "why": "LV1 re-aimed BY CONTENT. The arm no longer answers the mod's question itself - it asks the door, which answers lane AND skin - so the law to kill is that it asks at all: without the door a host that hands no builder levels a player with NOTHING on screen. AUDIT 68 S23-levelup-closure-dup: the two identical interior arms are ONE (onInteriorLevelUp), so this record names the one site."
   },
@@ -540,7 +540,7 @@
     "old": "        else if (activeOverlay?.isVirtueLevelUp) {",
     "new": "        else if (false) {",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -549,7 +549,7 @@
     "old": "    click(vx, vy) { if (prompt) prompt.click(vx, vy); else inner.click?.(vx, vy); },",
     "new": "    click(vx, vy) { if (!prompt) inner.click?.(vx, vy); },",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -558,18 +558,18 @@
     "old": "    up: 'up', ArrowUp: 'up', down: 'down', ArrowDown: 'down',",
     "new": "    down: 'down', ArrowDown: 'down',",
     "tests": [
-      "test/orl1_leveling.test.js",
-      "test/legacychoice.test.js"
+      "test/systems/orl1_leveling.test.js",
+      "test/systems/legacychoice.test.js"
     ],
     "note": "LEGACY-CHOICE (PIN MOVED): up and down are each a direction now (three answers online); re-aimed by content."
   },
   {
     "name": "the-tile-ships-a-placeholder-note",
     "file": "src/systems/modSettings.js",
-    "old": "        description: 'Level up like Oblivion Remastered: every skill you raise fills a 100-point bar, and each level gives '\n          + 'you virtues to spend on the attributes you choose. New characters are asked which system they want.',",
-    "new": "        description: 'TODO',",
+    "old": "        get description() {\n          return t('mods.oblivionRemasterLeveling.Enabled.description', 'Level up like Oblivion Remastered: every skill you raise fills a 100-point bar, and each level gives '\n            + 'you virtues to spend on the attributes you choose. New characters are asked which system they want.');\n        },",
+    "new": "        get description() { return t('mods.oblivionRemasterLeveling.Enabled.description', 'TODO'); },",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -578,7 +578,7 @@
     "old": "  for (let c = B; c >= 0; c--) {",
     "new": "  for (let c = 0; c <= B; c++) {",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -587,7 +587,7 @@
     "old": "        if (n2 > slots) continue;",
     "new": "        if (false) continue;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -596,7 +596,7 @@
     "old": "      slot: taken > 0 ? 0 : 1,   // an already-open row costs no new slot",
     "new": "      slot: 1,   // an already-open row costs no new slot",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -605,7 +605,7 @@
     "old": "      room: Math.max(0, Math.min(attributeIncreaseLimit(k, s) - taken, headroom)),",
     "new": "      room: Math.max(0, headroom),",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -614,7 +614,7 @@
     "old": "    const headroom = MAX_ATTRIBUTE_VALUE - stats[k] - taken;",
     "new": "    const headroom = MAX_ATTRIBUTE_VALUE;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -623,7 +623,7 @@
     "old": "          const cc = c + d * row.off;",
     "new": "          const cc = c + d;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -632,7 +632,7 @@
     "old": "    if (d > 0) { plan[rows[i].k] = d; c -= d * rows[i].off; n -= rows[i].slot; }",
     "new": "    if (d > 0) { plan[rows[i].k] = d; c -= d * rows[i].off; }",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -641,7 +641,7 @@
     "old": "  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter\n  entity.health = Math.min(entity.health, entity.maxHealth);\n  for (const key of STAT_KEYS_ORDER) {\n    const d = deltas[key] ?? 0;\n    if (d > 0) entity.stats[key] = entity.stats[key] + d;\n  }",
     "new": "  for (const key of STAT_KEYS_ORDER) {\n    const d = deltas[key] ?? 0;\n    if (d > 0) entity.stats[key] = entity.stats[key] + d;\n  }\n  entity.maxHealth = (entity.rawMaxHealth ?? entity.maxHealth) + hitPointsPerLevelUp(entity.career, entity.stats.endurance, rolls);   // DISC10-E L4: onto the RAW maximum, never through the lycanthrope's limiter\n  entity.health = Math.min(entity.health, entity.maxHealth);",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -650,7 +650,7 @@
     "old": "      while (prompt && !fired) prompt.answer(prompt.defaultId);",
     "new": "",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -659,7 +659,7 @@
     "old": "    const { cost, plan } = virtueSpendPlan(this.entity.stats, this.s, this.fullPurse);",
     "new": "    const { cost, plan } = virtueSpendPlan(this.entity.stats, this.s, this.purse, this.deltas);",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ],
     "why": "NOT EQUIVALENT, and it was recorded as though it were. The escape assigns the plan WHOLESALE (`this.deltas = plan`) and sets `purse = fullPurse - cost`, so re-planning against the REMAINING purse over the live deltas leaves the purse non-zero, `confirm` refuses, and the window never closes - the host drops it anyway and the level-up is lost with everything already spent. The first record called that an equivalence because no pin drove the escape from a PARTLY SPENT window; one does now (ORL1's deep audit)."
   },
@@ -669,7 +669,7 @@
     "old": "    onLevelUp: onInteriorLevelUp,   // AUDIT 68 S23-levelup-closure-dup: the walk and the rest level up through ONE arm\n    day: () => false, inside: () => true,",
     "new": "    day: () => false, inside: () => true,",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ],
     "why": "LV2 re-aimed BY CONTENT: the arm is inside announceLevelUp's `open` thunk now (the enhanced skin does not call it until the player asks), and the trailing context still names the SECOND of the two. AUDIT 68 S23-levelup-closure-dup re-aimed it BY CONTENT again: the two copies are one arm, so the rest bag's law is that it hands that arm at all - without it the rest session's level-up takes the headless auto-spend."
   },
@@ -679,7 +679,7 @@
     "old": "          if (have + d > nb[n2][cc]) { nb[n2][cc] = have + d; nt[n2][cc] = d; }",
     "new": "          if (nb[n2][cc] < 0) { nb[n2][cc] = have + d; nt[n2][cc] = d; }",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -688,7 +688,7 @@
     "old": "    for (let i = 0; i <= slots; i++) if (best[i][c] > pts) { pts = best[i][c]; n = i; }",
     "new": "    for (let i = 0; i <= slots; i++) if (best[i][c] >= 0) { pts = best[i][c]; n = i; break; }",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -697,7 +697,7 @@
     "old": "      drawText(renderer, font, text, m.ox + x * s, m.oy + y * s, s, colour);",
     "new": "      drawText(renderer, font, text, x * s, y * s, s, colour);",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -706,7 +706,7 @@
     "old": "      at(text, (NATIVE_W - measureText(font.fnt, text)) / 2, y, colour);",
     "new": "      at(text, (canvas.width - measureText(font.fnt, text)) / 2, y, colour);",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -715,7 +715,7 @@
     "old": "  CHOICE_TITLE_H + (opt?.lines?.length ?? 0) * CHOICE_LINE_H;",
     "new": "  CHOICE_TITLE_H + 4 * CHOICE_LINE_H;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -724,8 +724,8 @@
     "old": "    const i = choiceAtNative(vx, vy, this.options, this.tops);\n    if (i < 0) return false;",
     "new": "    const i = -1;\n    if (i < 0) return false;",
     "tests": [
-      "test/orl1_leveling.test.js",
-      "test/legacychoice.test.js"
+      "test/systems/orl1_leveling.test.js",
+      "test/systems/legacychoice.test.js"
     ],
     "note": "LEGACY-CHOICE (PIN MOVED): the hit test reads the screen's own tops (a stacked screen's); re-aimed by content."
   },
@@ -735,7 +735,7 @@
     "old": "      case 'two': this.pickIndex(1, false); break;",
     "new": "      case 'two': this.pickIndex(0, false); break;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -744,7 +744,7 @@
     "old": "      drawText(renderer, font, text, m.ox + x * s, m.oy + y * s, s, colour);",
     "new": "      drawText(renderer, font, text, x * s, y * s, s, colour);",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -753,7 +753,7 @@
     "old": "    const hit = levelUpHitNative(vx, vy);\n    if (!hit) return false;",
     "new": "    const hit = null;\n    if (!hit) return false;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -762,7 +762,7 @@
     "old": "    if (hit.press === 'ok') this.confirm();",
     "new": "    if (hit.press === 'ok') { this.done = true; }",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -771,7 +771,7 @@
     "old": "    return `${selected ? '>' : ' '} ${label(key).padEnd(13)}${String(this.entity.stats[key] + d).padStart(3)}`",
     "new": "    return `${selected ? '>' : ' '} ${label(key).padEnd(12)}${String(this.entity.stats[key] + d).padStart(3)}`",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -780,7 +780,7 @@
     "old": "    return this.purse > 0 && !STAT_KEYS_ORDER.some((k) => this.rowMarkers(k).plus);",
     "new": "    return true;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -789,7 +789,7 @@
     "old": "export const LEVELUP_SKILL_SUM_PER_LEVEL = 15;",
     "new": "export const LEVELUP_SKILL_SUM_PER_LEVEL = 14;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -798,7 +798,7 @@
     "old": "  if ((entity.levelProgress ?? 0) < LEVELUP_TOTAL) return false;\n  entity.readyToLevelUp = true;",
     "new": "  if (entity.readyToLevelUp) return false;\n  if ((entity.levelProgress ?? 0) < LEVELUP_TOTAL) return false;\n  entity.readyToLevelUp = true;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -807,7 +807,7 @@
     "old": "    const headroom = MAX_ATTRIBUTE_VALUE - stats[k] - taken;",
     "new": "    const headroom = MAX_ATTRIBUTE_VALUE - stats[k];",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -816,7 +816,7 @@
     "old": "      room: Math.max(0, Math.min(attributeIncreaseLimit(k, s) - taken, headroom)),",
     "new": "      room: Math.max(0, Math.min(attributeIncreaseLimit(k, s), headroom)),",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -825,7 +825,7 @@
     "old": "  const B = Math.min(reachable, Math.max(0, budget | 0));",
     "new": "  const B = Math.max(0, budget | 0);",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -834,7 +834,7 @@
     "old": "    this.isVirtueLevelUp = true;",
     "new": "    this.isVirtueLevelUp = false;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -843,7 +843,7 @@
     "old": "    if (virtue) return new VirtueLevelUpScreen(deps.entity);",
     "new": "    if (false) return new VirtueLevelUpScreen(deps.entity);",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ],
     "why": "LV1 re-aimed BY CONTENT: same law, on the line that now carries it."
   },
@@ -853,7 +853,7 @@
     "old": "  if (entity.oghmaLevelUp) return false;",
     "new": "  if (false) return false;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   },
   {
@@ -862,7 +862,7 @@
     "old": "  click(vx, vy) {\n    if (this.done) return false;",
     "new": "  hover(vx, vy) { const h = levelUpHitNative(vx, vy); if (h?.row != null) this.cursor = h.row; }\n\n  click(vx, vy) {\n    if (this.done) return false;",
     "tests": [
-      "test/orl1_leveling.test.js"
+      "test/systems/orl1_leveling.test.js"
     ]
   }
 ]

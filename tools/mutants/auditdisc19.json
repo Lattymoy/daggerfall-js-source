@@ -1,137 +1,137 @@
 [
   {
     "name": "AUDIT-DISC19-W1-fight-with-defender-is-quiet",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "  if (!isPlayerTarget(t) && !(t?.defender === true && !t.dead) && !(t?.companion",
     "new": "  if (!isPlayerTarget(t) && !(t?.companion",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-W1-dead-defender-still-a-fight",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "!(t?.defender === true && !t.dead)",
     "new": "!(t?.defender === true)",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-W3-no-wave-cap",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "        if (waves >= TOWN_WATCH_MAX_WAVES) return null;   // the town has sent all it will this incident\n",
     "new": "",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-W3-waves-never-counted",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "          waves++;\n",
     "new": "",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-W3-incident-never-ends",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "      else if ((quiet += dt) >= TOWN_WATCH_STAND_DOWN_SECONDS) waves = 0;   // the incident is over",
     "new": "      else quiet += dt;",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-W3-quiet-cumulative",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "      if (threats > 0) quiet = 0;\n      else if ((quiet += dt) >= TOWN_WATCH_STAND_DOWN_SECONDS) waves = 0;",
     "new": "      if ((quiet += dt) >= TOWN_WATCH_STAND_DOWN_SECONDS) waves = 0;",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-W3-cap-moved",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "export const TOWN_WATCH_MAX_WAVES = 3;",
     "new": "export const TOWN_WATCH_MAX_WAVES = 4;",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-span-seven",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "export const TOWN_WATCH_ARRIVAL_SPAN = 6;",
     "new": "export const TOWN_WATCH_ARRIVAL_SPAN = 7;",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-standing-squad-summoned-again",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "        if (defenders > 0) return null;\n",
     "new": "",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-calm-cumulative",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "      if (threats > 0) {\n        calm = 0;\n",
     "new": "      if (threats > 0) {\n",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-W6-threats-outside-town",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "  const threats = inTown ? foes.filter((f) => isTownThreat(f, { inTownRect })) : [];",
     "new": "  const threats = foes.filter((f) => isTownThreat(f, { inTownRect }));",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-W6-defenders-unread",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "threats: threats.length, defenders: guards.defenderCount(), locationKey,",
     "new": "threats: threats.length, defenders: 0, locationKey,",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-W6-summon-without-threats",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "pool: pool(), threats })",
     "new": "pool: pool(), threats: [] })",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-W6-dismissal-dropped",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "  else if (act === 'dismiss') guards.dismissDefenders();\n",
     "new": "",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-W6-pool-read-every-frame",
-    "file": "src/systems/townWatch.js",
+    "file": "src/systems/town/townWatch.js",
     "old": "  if (act === 'summon') guards.summonDefenders({ playerFeet, playerFwd, pool: pool(), threats })",
     "new": "  const _p = pool();\n  if (act === 'summon') guards.summonDefenders({ playerFeet, playerFwd, pool: _p, threats })",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "      inTown: _isPlayerInTownStrict(), crime:",
     "new": "      inTown: true, crime:",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "locationKey: `${px.x},${px.y}`,\n      foes: exteriorFoes.foes",
     "new": "locationKey: null,\n      foes: exteriorFoes.foes",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    if (!_musicLoc || !f?.ai?.feet) return false;\n    const px = playerTravelPixel();\n    const wc = state.worldCoords(f.ai.feet);",
     "new": "    if (!_musicLoc || !f?.ai?.feet) return true;\n    const px = playerTravelPixel();\n    const wc = state.worldCoords(f.ai.feet);",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    if (g.defender) {\n      if (!playerEntity.crimeCommitted)",
     "new": "    if (false) {\n      if (!playerEntity.crimeCommitted)",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "      if (!playerEntity.crimeCommitted) setCrimeCommitted(playerEntity, CRIME_ASSAULT);   // V4: through the one setter (SuppressCrime)\n      for (const d of guards)",
     "new": "      setCrimeCommitted(playerEntity, CRIME_ASSAULT);\n      for (const d of guards)",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "      for (const d of guards) if (!d.dead && d.defender) enlistDefender(d, playerFeet);\n    }",
     "new": "      enlistDefender(g, playerFeet);\n    }",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "    return !g.dead && !g.defender && !g.fleeing && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly';",
     "new": "    return !g.dead && !g.fleeing && g.ai?.isHostile && g.entity?.team !== 'PlayerAlly';",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "    g.ai.isHostile = true;\n    g.ai.makeHostileToPlayer(600, playerFeet ?? null);",
     "new": "    g.ai.makeHostileToPlayer(600, playerFeet ?? null);",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    g.ai.isHostile = true;\n    g.ai.makeHostileToPlayer(600, playerFeet ?? null);",
     "new": "    g.ai.isHostile = true;",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "      else if (g.defender && !fromPlayer) g.entity.items = [];",
     "new": "      else if (false) g.entity.items = [];",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "      else if (g.defender && !fromPlayer) g.entity.items = [];",
     "new": "      else if (!fromPlayer) g.entity.items = [];",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": " + spawning.filter((p) => p.defender).length + _summonsWaiting;",
     "new": " + _summonsWaiting;",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "pos[2]], defender: !!defender };",
     "new": "pos[2]], defender: false };",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "      if (!p.guard || room() <= 0) continue;",
     "new": "      if (room() <= 0) continue;",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "      if (Math.hypot(p.pos[0] - playerFeet[0], p.pos[1] - playerFeet[1], p.pos[2] - playerFeet[2]) > GUARD_NPC_SPAWN_RANGE) continue;\n      const g = await turnNpc(p, null, { defender: true",
     "new": "      const g = await turnNpc(p, null, { defender: true",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ],
     "note": "WATCH-FIX (re-aimed by content): the law in its new home."
   },
@@ -276,7 +276,7 @@
     "old": "    const count = Math.min(room(), 2 + Math.floor(rand() * 4));   // Random.Range(2, 6)",
     "new": "    const count = Math.min(room(), 3 + Math.floor(rand() * 4));   // Random.Range(2, 6)",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -285,7 +285,7 @@
     "old": "    if (came > 0) return came;\n    const count = Math.min(room(), 2 +",
     "new": "    return came;\n    const count = Math.min(room(), 2 +",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -294,7 +294,7 @@
     "old": "(getBool('MeleeAttacks', 'MeleeAttackFriendlyProtection') || !!raidHere())",
     "new": "true",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -303,7 +303,7 @@
     "old": "    if (!swing?.voiced) {\n      if (swing) swing.voiced = true;\n      const grunt = playerAttackGrunt(playerEntity, false, rand);",
     "new": "    if (true) {\n      if (swing) swing.voiced = true;\n      const grunt = playerAttackGrunt(playerEntity, false, rand);",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -312,7 +312,7 @@
     "old": "      if (swing) swing.voiced = true;\n      const grunt = playerAttackGrunt(playerEntity, false, rand);",
     "new": "      const grunt = playerAttackGrunt(playerEntity, false, rand);",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -321,7 +321,7 @@
     "old": "    if (!swing?.voiced) {\n      if (swing) swing.voiced = true;",
     "new": "    if (true) {\n      if (swing) swing.voiced = true;",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -330,7 +330,7 @@
     "old": "      if (swing) swing.voiced = true;\n",
     "new": "",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -339,7 +339,7 @@
     "old": "guardHitSound, { swing })) {\n          // X-slice: encounter foes resolve after the watch, before civilians",
     "new": "guardHitSound, {})) {\n          // X-slice: encounter foes resolve after the watch, before civilians",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -348,7 +348,7 @@
     "old": "inViewFn ?? _lastInView, onHitSound, { swing });",
     "new": "inViewFn ?? _lastInView, onHitSound);",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -357,7 +357,7 @@
     "old": "          if (m.fromPlayer && sparedByPlayer(t.ref)) continue;",
     "new": "          if (m.fromPlayer && sparedByPlayer(t.ref) && t.ref?.defender !== true) continue;",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -366,7 +366,7 @@
     "old": "          if (m.fromPlayer && sparedByPlayer(t.ref)) continue;",
     "new": "          if (sparedByPlayer(t.ref)) continue;",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -375,7 +375,7 @@
     "old": "      if (caster?.entity === playerEntity && sparedFromPlayer(t)) continue;",
     "new": "      if (false) continue;",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -384,7 +384,7 @@
     "old": "marks.length ? [...playerTargets(), ...marks] : playerTargets()",
     "new": "marks.length ? [...foes(), ...marks] : foes()",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -393,7 +393,7 @@
     "old": "sweepFoes(eye, EXPLOSION_RADIUS, playerTargets())",
     "new": "sweepFoes(eye, EXPLOSION_RADIUS, foes())",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -402,7 +402,7 @@
     "old": "      for (const f of playerTargets()) {",
     "new": "      for (const f of foes()) {",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -411,7 +411,7 @@
     "old": "  const sparedFromPlayer = (t) => sparedByPlayer(t);",
     "new": "  const sparedFromPlayer = (t) => t?.defender === 'never';",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -420,52 +420,52 @@
     "old": "foes: () => [...cityGuards.guards.filter((g) => !g.defender), ...exteriorFoes.foes.filter((f) => !sparedByPlayer(f))], foeSinks",
     "new": "foes: () => [...cityGuards.guards, ...exteriorFoes.foes.filter((f) => !sparedByPlayer(f))], foeSinks",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-S2-death-video-stranded",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "  for (const a of entity.activeEffects) if (a.infection && !a.deployed) a.deathScheduled = false;\n",
     "new": "",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-old-infection-not-repaired",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "if ((a.kind === 'racialOverride' || a.infection) && !a.permanent) a.permanent = true;",
     "new": "if ((a.kind === 'racialOverride') && !a.permanent) a.permanent = true;",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-S3-namesake-slots",
-    "file": "src/systems/saveSlots.js",
+    "file": "src/systems/save/saveSlots.js",
     "old": "(!id || info.characterId === id)",
     "new": "true",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-S3-legacy-names-nothing",
-    "file": "src/systems/saveSlots.js",
+    "file": "src/systems/save/saveSlots.js",
     "old": "(!id || info.characterId === id)",
     "new": "(info.characterId === id)",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-S3-no-quicksave",
-    "file": "src/systems/saveSlots.js",
+    "file": "src/systems/save/saveSlots.js",
     "old": "[...new Set([QUICK_SAVE_NAME, ...own.map((info) => info.saveName)])]",
     "new": "[...new Set(own.map((info) => info.saveName))]",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -474,7 +474,7 @@
     "old": "  if (dead || force) entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));\n",
     "new": "",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -483,7 +483,7 @@
     "old": "  if (dead || force) entity.fatigue = Math.max(",
     "new": "  if (true) entity.fatigue = Math.max(",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -492,7 +492,7 @@
     "old": "  if (dead || force) entity.fatigue = Math.max(",
     "new": "  if (dead) entity.fatigue = Math.max(",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -501,16 +501,16 @@
     "old": "  if (dead || force) entity.fatigue = Math.max(entity.fatigue > 0 ? entity.fatigue : 0, respawnHealth(maxFatigue(entity)));",
     "new": "  if (dead || force) entity.fatigue = respawnHealth(maxFatigue(entity));",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-E1-cast-cut-at-reach",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "      first ??= collider.raycastHit(eye, lookDir, RAY_DISTANCE);",
     "new": "      first ??= collider.raycastHit(eye, lookDir, WEAPON_REACH);",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -519,16 +519,16 @@
     "old": "      if (firstHit.key != null && firstHit.key !== target.key) {",
     "new": "      if (firstHit.key != null) {",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-E2-swing-skips-own-mesh",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "      if (first.key != null && first.key !== o.key && actions.objects.has(first.key)) continue;",
     "new": "      if (first.key != null && actions.objects.has(first.key)) continue;",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -537,7 +537,7 @@
     "old": "  || (o.kind === 'door' && o.special === true)\n",
     "new": "",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -546,7 +546,7 @@
     "old": "  || ((o.kind === 'relay' || o.kind === 'effect') && o.modelIdNum != null));",
     "new": "  || (o.kind === 'relay' || o.kind === 'effect'));",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -555,7 +555,7 @@
     "old": "export const hasMeshCollider = (o) => !!o && (o.kind === 'action'\n",
     "new": "export const hasMeshCollider = (o) => !!o && (o.kind === 'mover'\n",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -564,7 +564,7 @@
     "old": "((o.kind === 'relay' || o.kind === 'effect') && o.modelIdNum != null)",
     "new": "((o.kind === 'relay') && o.modelIdNum != null)",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -573,7 +573,7 @@
     "old": "     if (isStaleChunk(err)) _staleChunkNotice = true;",
     "new": "     if (isStaleChunk(err)) _staleChunkNotice = false;",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -582,7 +582,7 @@
     "old": "    if (_staleChunkNotice) { _staleChunkNotice = false; setMidScreenText(STALE_CHUNK_IN_PLAY_TEXT, STALE_CHUNK_IN_PLAY_SECONDS); }\n",
     "new": "",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -591,16 +591,16 @@
     "old": "export const STALE_CHUNK_IN_PLAY_SECONDS = 12;",
     "new": "export const STALE_CHUNK_IN_PLAY_SECONDS = 1.5;",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
     "name": "AUDIT-DISC19-D1-notice-long",
     "file": "src/systems/staleChunk.js",
-    "old": "export const STALE_CHUNK_IN_PLAY_TEXT = 'Game updated - reload the page for enemies.';",
+    "old": "export const STALE_CHUNK_IN_PLAY_TEXT = 'The game was updated. Reload to see the enemies.';",
     "new": "export const STALE_CHUNK_IN_PLAY_TEXT = 'This page is from an older version of the game that has since been replaced, so the enemies here could not be built. Reload the page to fix it.';",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -609,7 +609,7 @@
     "old": "        abyssCandle(dungeonCtx.candleLight(), _abyss), _abyss?.torchOff",
     "new": "        abyssCandle(_dgTint(dungeonCtx.candleLight()), _abyss), _abyss?.torchOff",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   },
   {
@@ -618,7 +618,7 @@
     "old": "renderer.setPointLights(_dgLit.data, null, (_dgFade && capFadePairs(_dgLit.data, _dgLit.data.length / 4 - _dgNear.data.length / 4, cam.pos, renderer.maxPointLights, _dgLit.colors)) || _dgLit.colors);",
     "new": "renderer.setPointLights(_dgLit.data, _dgColor);",
     "tests": [
-      "test/auditdisc19.test.js"
+      "test/systems/auditdisc19.test.js"
     ]
   }
 ]

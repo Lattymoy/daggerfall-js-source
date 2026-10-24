@@ -4,69 +4,69 @@
     "file": "src/scenes/fishHost.js",
     "old": "export const NET_TIRED_SHARE = 0.25;",
     "new": "export const NET_TIRED_SHARE = 0;",
-    "tests": ["test/fb0930b_fishtired.test.js"]
+    "tests": ["test/systems/fb0930b_fishtired.test.js"]
   },
   {
     "name": "FISH-TIRED-the-line-read-as-fatigue-points",
     "file": "src/scenes/fishHost.js",
     "old": "  return (entity.fatigue ?? 0) < maxFatigue(entity) * NET_TIRED_SHARE;",
     "new": "  return (entity.fatigue ?? 0) < NET_TIRED_SHARE;",
-    "tests": ["test/fb0930b_fishtired.test.js"]
+    "tests": ["test/systems/fb0930b_fishtired.test.js"]
   },
   {
     "name": "FISH-TIRED-the-line-refuses-over-it",
     "file": "src/scenes/fishHost.js",
     "old": "  return (entity.fatigue ?? 0) < maxFatigue(entity) * NET_TIRED_SHARE;",
     "new": "  return (entity.fatigue ?? 0) > maxFatigue(entity) * NET_TIRED_SHARE;",
-    "tests": ["test/fb0930b_fishtired.test.js"]
+    "tests": ["test/systems/fb0930b_fishtired.test.js"]
   },
   {
     "name": "FISH-TIRED-a-pier-asks-the-bar-too",
     "file": "src/scenes/fishHost.js",
     "old": "  if (!entity || !foragingHost()?.world?.()?.swimming) return false;",
     "new": "  if (!entity) return false;",
-    "tests": ["test/fb0930b_fishtired.test.js"]
+    "tests": ["test/systems/fb0930b_fishtired.test.js"]
   },
   {
     "name": "FISH-TIRED-the-cast-never-refused",
     "file": "src/scenes/fishHost.js",
     "old": "where: actChecksRefusal(NET_WHERE, NET_WHERE_WORDS) ?? (tooTiredForTheWater(entity) ? NET_TIRED_WORDS : null),",
     "new": "where: actChecksRefusal(NET_WHERE, NET_WHERE_WORDS),",
-    "tests": ["test/fb0930b_fishtired.test.js"]
+    "tests": ["test/systems/fb0930b_fishtired.test.js"]
   },
   {
     "name": "FISH-TIRED-the-plan-asks-no-angler",
     "file": "src/scenes/fishHost.js",
     "old": "    plan(n, { rank, entity }) {",
     "new": "    plan(n, { rank }) { const entity = null;",
-    "tests": ["test/fb0930b_fishtired.test.js"]
+    "tests": ["test/systems/fb0930b_fishtired.test.js"]
   },
   {
     "name": "FISH-TIRED-the-refusal-says-nothing",
     "file": "src/scenes/fishHost.js",
-    "old": "export const NET_TIRED_WORDS = 'too tired to fish in the water - get out and rest';",
+    "old": "export const NET_TIRED_WORDS = 'too tired to fish in the water: get out and rest';",
     "new": "export const NET_TIRED_WORDS = '';",
-    "tests": ["test/fb0930b_fishtired.test.js"]
+    "tests": ["test/systems/fb0930b_fishtired.test.js"]
   },
   {
     "name": "FISH-TIRED-an-act-under-way-never-ended",
     "file": "src/scenes/fishHost.js",
     "old": "      if (live && !live.act.state.done && tooTiredForTheWater(live.entity)) { live.act.cancel(); live = null; }   // FISH-TIRED\n",
     "new": "",
-    "tests": ["test/fb0930b_fishtired.test.js"]
+    "tests": ["test/systems/fb0930b_fishtired.test.js"]
   },
   {
     "name": "FISH-TIRED-no-act-remembered",
     "file": "src/scenes/fishHost.js",
     "old": "      live = { act, entity };   // FISH-TIRED\n",
     "new": "",
-    "tests": ["test/fb0930b_fishtired.test.js"]
+    "tests": ["test/systems/fb0930b_fishtired.test.js"]
   },
   {
     "name": "FISH-TIRED-an-act-on-a-pier-ended-too",
     "file": "src/scenes/fishHost.js",
     "old": "if (live && !live.act.state.done && tooTiredForTheWater(live.entity)) {",
     "new": "if (live && !live.act.state.done && (live.entity.fatigue ?? 0) < maxFatigue(live.entity) * NET_TIRED_SHARE) {",
-    "tests": ["test/fb0930b_fishtired.test.js"]
+    "tests": ["test/systems/fb0930b_fishtired.test.js"]
   }
 ]

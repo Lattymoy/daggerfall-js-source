@@ -1,110 +1,110 @@
 [
   {
     "name": "STANCE-friendly-though-provoked",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    return { hostile: isHostile, friendly: afloat && !isHostile && !!NAVAL_FACTIONS[s.cls.faction]?.lawful };",
     "new": "    return { hostile: isHostile, friendly: afloat && !!NAVAL_FACTIONS[s.cls.faction]?.lawful };",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "STANCE-friendly-though-struck",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    return { hostile: isHostile, friendly: afloat && !isHostile && !!NAVAL_FACTIONS[s.cls.faction]?.lawful };",
     "new": "    return { hostile: isHostile, friendly: !isHostile && !!NAVAL_FACTIONS[s.cls.faction]?.lawful };",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "STANCE-pirates-friendly",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    return { hostile: isHostile, friendly: afloat && !isHostile && !!NAVAL_FACTIONS[s.cls.faction]?.lawful };",
     "new": "    return { hostile: isHostile, friendly: afloat && !isHostile };",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "STANCE-hostile-though-struck",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const isHostile = afloat && hostile(s, me, law);",
     "new": "    const isHostile = hostile(s, me, law);",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "STANCE-tag-unfriendly",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        hostile: !hid && stance.hostile, friendly: hid || stance.friendly, line:",
     "new": "        hostile: !hid && stance.hostile, friendly: hid, line:",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "STANCE-card-as-before",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "hid ? { hostile: false, friendly: true } : stanceOf(s);",
     "new": "hid ? { hostile: false, friendly: true } : { hostile: hostile(s, meContact(), { notoriety: (c) => notoriety.get(c), now: clock }), friendly: false };",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "STANCE-card-hostile-though-struck",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "hid ? { hostile: false, friendly: true } : stanceOf(s);",
     "new": "hid ? { hostile: false, friendly: true } : { ...stanceOf(s), hostile: hostile(s, meContact(), { notoriety: (c) => notoriety.get(c), now: clock }) };",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "TAGS-line-no-crown",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (disguisedOf(e)) return disguiseOf(e).line;\n    return classLine(e.ship.cls, e.ship.names?.crown);",
     "new": "    if (disguisedOf(e)) return disguiseOf(e).line;\n    return e.ship.cls.title;",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "TAGS-tag-bound-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "line: shownLine(e), bound: hid ? '' : boundOf(e),",
     "new": "line: shownLine(e), bound: '',",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "TAGS-card-bound-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      ...stance, bound: known < KNOW.colours || hid ? '' : boundOf(e),",
     "new": "      ...stance, bound: '',",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "TAGS-bound-while-fighting",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (s.mode !== 'cruise') return '';\n    const r = s.errand;\n    const port = (k) =>",
     "new": "    const r = s.errand;\n    const port = (k) =>",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "TAGS-bound-though-struck",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (s.damage.state !== SHIP_STATES.afloat) return '';\n    if (s.mode === 'answer')",
     "new": "    if (s.mode === 'answer')",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
@@ -113,242 +113,242 @@
     "old": "book.set(near.key, { key: near.key, name: near.name ?? null, harbour: sound(), at: clock });",
     "new": "book.set(near.key, { key: near.key, name: null, harbour: sound(), at: clock });",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "TAGS-moored-unnamed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (r?.kind === 'moored') return port(r.harbour) ? `moored at ${port(r.harbour)}` : 'moored';",
     "new": "    if (r?.kind === 'moored') return 'moored';",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "TAGS-leaving-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (r?.kind === 'depart' && port(r.harbour)) return `leaving ${port(r.harbour)}`;",
     "new": "    if (r?.kind === 'depart' && port(r.harbour)) return '';",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "TAGS-patrol-unnamed",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (r?.kind === 'patrol') return port(r.harbour) ? `patrolling off ${port(r.harbour)}` : 'on patrol';",
     "new": "    if (r?.kind === 'patrol') return 'on patrol';",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "TAGS-patrol-unknown-named",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (r?.kind === 'patrol') return port(r.harbour) ? `patrolling off ${port(r.harbour)}` : 'on patrol';",
     "new": "    if (r?.kind === 'patrol') return `patrolling off ${port(r.harbour)}`;",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "TAGS-arrive-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (r && (r.kind === 'arrive' || r.kind === 'voyage') && port(r.harbour)) return `bound for ${port(r.harbour)}`;",
     "new": "    if (r && r.kind === 'voyage' && port(r.harbour)) return `bound for ${port(r.harbour)}`;",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "TAGS-voyage-to-a-port-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (r && (r.kind === 'arrive' || r.kind === 'voyage') && port(r.harbour)) return `bound for ${port(r.harbour)}`;",
     "new": "    if (r && r.kind === 'arrive' && port(r.harbour)) return `bound for ${port(r.harbour)}`;",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "TAGS-dwell-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "<= LINER_PORT_M) ? `lying off ${at.name}` : `bound for ${at.name}`;",
     "new": "<= LINER_PORT_M) ? '' : `bound for ${at.name}`;",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "TAGS-liner-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "<= LINER_PORT_M) ? `lying off ${at.name}` : `bound for ${at.name}`;",
     "new": "<= LINER_PORT_M) ? `lying off ${at.name}` : '';",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "TAGS-relief-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (e.relief) return 'coming to your aid';",
     "new": "    if (e.relief) return '';",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "TAGS-out-to-sea-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (r?.kind === 'voyage') return 'bound out to sea';",
     "new": "    if (r?.kind === 'voyage') return '';",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "HUD-card-no-stance-word",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const stance = t.hostile ? 'Hostile' : t.friendly ? 'Friendly' : '';",
     "new": "  const stance = t.hostile ? 'Hostile' : '';",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "HUD-card-no-bound",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  return { text: [stance, t.bound].filter(Boolean).join(' - '), kind: t.hostile ? 'hostile' : t.friendly ? 'friendly' : '' };",
     "new": "  return { text: stance, kind: t.hostile ? 'hostile' : t.friendly ? 'friendly' : '' };",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "HUD-card-state-unkinded",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  return { text: [stance, t.bound].filter(Boolean).join(' - '), kind: t.hostile ? 'hostile' : t.friendly ? 'friendly' : '' };",
     "new": "  return { text: [stance, t.bound].filter(Boolean).join(' - '), kind: '' };",
     "tests": [
-      "test/shipstance.test.js",
-      "test/nav_f_ui.test.js"
+      "test/systems/naval/shipstance.test.js",
+      "test/ui/naval/nav_f_ui.test.js"
     ]
   },
   {
     "name": "HUD-card-friendly-hostile",
-    "file": "src/ui/navalHud.js",
-    "old": "friendly: !!t.friendly && !t.hostile,",
-    "new": "friendly: !!t.friendly,",
+    "file": "src/ui/naval/navalHud.js",
+    "old": "friendly: !!tgt.friendly && !tgt.hostile,",
+    "new": "friendly: !!tgt.friendly,",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "HUD-card-class-unfriendly",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "${t.card.hostile ? ' hostile' : ''}${t.card.friendly ? ' friendly' : ''}${hit}",
     "new": "${t.card.hostile ? ' hostile' : ''}${hit}",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "HUD-tag-friendly-hostile",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "${t.friendly && !t.hostile ? ' friendly' : ''}",
     "new": "${t.friendly ? ' friendly' : ''}",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "HUD-tag-class-unfriendly",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "${t.friendly && !t.hostile ? ' friendly' : ''}",
     "new": "",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "HUD-green-bar-gone",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": ".dfnaval-tag.friendly .dfnaval-tag-bar > i { background: linear-gradient(180deg, #b8ffb8 0 1px, ${CREW_GREEN} 1px); }\n",
     "new": "",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "HUD-green-hull-gone",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": ".dfnaval-card.friendly .dfnaval-track.hull .dfnaval-fill { background: linear-gradient(180deg, #b9f0c4 0 2px, #5fc27c 2px 4px, #2f9152 4px 8px, #216b3b 8px 10px, #134526 10px); }\n",
     "new": "",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "HUD-card-state-green-gone",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": ".dfnaval-card-state.friendly { color: #9fe0a8; }\n",
     "new": "",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "HUD-tag-line-far",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  if (!((t.distance ?? Infinity) <= TAG_DETAIL_M)) return '';",
     "new": "  if (!((t.distance ?? Infinity) < TAG_DETAIL_M)) return '';",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "HUD-tag-line-always",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  if (!((t.distance ?? Infinity) <= TAG_DETAIL_M)) return '';",
     "new": "  if (false) return '';",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "HUD-tag-line-no-bound",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  return [t.line, t.bound].filter(Boolean).join(' - ');",
     "new": "  return t.line ?? '';",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "HUD-tag-line-out-of-place",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    n.append(name, line, bar, state);",
     "new": "    n.append(name, bar, line, state);",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "HUD-tag-line-unwritten",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "    set('line', t.detail ? tagLine(t) : '', (v) => { slot.line.textContent = v; });",
     "new": "    set('line', t.detail ? tagLine(t) : '', () => {});",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   },
   {
     "name": "HUD-tag-line-empty-shown",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": ".dfnaval-tag-line:empty { display: none; }\n",
     "new": "",
     "tests": [
-      "test/shipstance.test.js"
+      "test/systems/naval/shipstance.test.js"
     ]
   }
 ]

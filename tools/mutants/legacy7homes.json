@@ -5,44 +5,35 @@
     "old": "    const held = deps.heldHouses?.() ?? null;",
     "new": "    const held = deps.online() ? null : deps.heldHouses?.() ?? null;",
     "tests": [
-      "test/legacy7_homes.test.js"
+      "test/systems/legacy/legacy7_homes.test.js"
     ]
   },
   {
     "name": "LEGACY7H-unread-drops",
     "file": "src/scenes/legacyHost.js",
-    "old": "    if (held == null) return false;\n    return syncHouses(family, p.id, held, p.deedsTaken ?? []);",
-    "new": "    return syncHouses(family, p.id, held ?? [], p.deedsTaken ?? []);",
+    "old": "    if (held == null) return false;\n    return syncHouses(family, p.id, held, p.deedsTaken ?? [], { whole: deps.heldHousesWhole?.() === true });",
+    "new": "    return syncHouses(family, p.id, held ?? [], p.deedsTaken ?? [], { whole: deps.heldHousesWhole?.() === true });",
     "tests": [
-      "test/legacy7_homes.test.js"
+      "test/systems/legacy/legacy7_homes.test.js"
     ],
-    "note": "PERMADEATH-HOUSES (PIN MOVED): re-aimed by content - the law it guards now stands at this line."
+    "note": "PERMADEATH-HOUSES (PIN MOVED): re-aimed by content - the law it guards now stands at this line. ACCOUNT-HOMES (PIN MOVED): re-aimed by content."
   },
   {
     "name": "LEGACY7H-registry-silent",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "    try { onWrote?.(id, buildingKey); } catch { /* a listener's fault is never the registry's */ }\n",
     "new": "",
     "tests": [
-      "test/legacy7_homes.test.js"
+      "test/systems/legacy/legacy7_homes.test.js"
     ]
   },
   {
     "name": "LEGACY7H-listener-breaks-claim",
-    "file": "src/systems/onlineHomes.js",
+    "file": "src/systems/online/onlineHomes.js",
     "old": "    try { onWrote?.(id, buildingKey); } catch { /* a listener's fault is never the registry's */ }",
     "new": "    onWrote?.(id, buildingKey);",
     "tests": [
-      "test/legacy7_homes.test.js"
-    ]
-  },
-  {
-    "name": "LEGACY7H-world-any-characters-homes",
-    "file": "src/scenes/world.js",
-    "old": ".filter((h) => h?.character === me).map((h) => ({",
-    "new": ".map((h) => ({",
-    "tests": [
-      "test/legacy7_homes.test.js"
+      "test/systems/legacy/legacy7_homes.test.js"
     ]
   },
   {
@@ -51,7 +42,7 @@
     "old": "        location: _townOfMapId.get(h.mapId >>> 0)?.name ?? '',",
     "new": "        location: '',",
     "tests": [
-      "test/legacy7_homes.test.js"
+      "test/systems/legacy/legacy7_homes.test.js"
     ]
   },
   {
@@ -60,7 +51,7 @@
     "old": "heldHouses: () => (isOnlinePage() ? (realmSession ? _legacyOnlineHomes : null) : (playerEntity.houses",
     "new": "heldHouses: () => ((playerEntity.houses",
     "tests": [
-      "test/legacy7_homes.test.js"
+      "test/systems/legacy/legacy7_homes.test.js"
     ]
   },
   {
@@ -69,16 +60,16 @@
     "old": "  if (legacyRealmLine) legacyOnlineHomesRead();   // LEGACY7 part five",
     "new": "  // LEGACY7 part five",
     "tests": [
-      "test/legacy7_homes.test.js"
+      "test/systems/legacy/legacy7_homes.test.js"
     ]
   },
   {
     "name": "LEGACY7H-world-not-told",
     "file": "src/scenes/world.js",
-    "old": ", onWrote: () => legacyOnlineHomesRead() }) : null;",
-    "new": " }) : null;",
+    "old": ", onWrote: () => legacyOnlineHomesRead(), onHomes: () => homesLearned() }) : null;",
+    "new": ", onHomes: () => homesLearned() }) : null;",
     "tests": [
-      "test/legacy7_homes.test.js"
+      "test/systems/legacy/legacy7_homes.test.js"
     ]
   }
 ]

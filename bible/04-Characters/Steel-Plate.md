@@ -1,8 +1,8 @@
 # The Steel Plate - the port's own steel armour set
 
 `tools/fbxStrip.mjs` + `tools/bakeSteelPlate.mjs` (the bake, the bind, the rig) + `tools/skinWeights.mjs` (jointWeights) +
-`tools/nifWrite.mjs` (skinnedMeshesToNif) + `src/characters/ownArmorModels.js` (the steel plate's rows) +
-`src/formats/mwItemMap.js` (composeWornArmor) + `src/systems/features.js` (the Steel Helm row)
+`tools/nifWrite.mjs` (skinnedMeshesToNif) + `src/characters/ownModels/ownArmorModels.js` (the steel plate's rows) +
+`src/formats/morrowind/mwItemMap.js` (composeWornArmor) + `src/systems/features.js` (the Steel Helm row)
 (MW-STEEL1, Mac, 2026-10-06; MW-STEEL2, the skirt, 2026-10-07; MW-STEEL4, rigged as retail's armour is, 2026-10-07 -
 it retired the runtime rig MW-STEEL1 to MW-STEEL3 built, recorded below; MW-STEEL5, Mac's update and the helm on the
 game's head, 2026-10-09; MW-FIT1, what the plate covers - the upper arms under the pauldrons, the head under the closed
@@ -94,7 +94,7 @@ sharing one. The closed helm is ONE part of TWO shapes - a shell in the helm's p
 and so is the cuirass since MW-STEEL5, the breastplate and its waist band, both in the breastplate's. The open helm is
 raised `HELM_LIFT` onto the game's head (MW-STEEL5, below); the closed helm stands where Mac's export puts it, the head
 hidden under it (MW-FIT1, below).
-`test/mwsteel1.test.js` re-makes every file from the committed sources and the vendored skeleton byte for byte and
+`test/tooling/mwsteel1.test.js` re-makes every file from the committed sources and the vendored skeleton byte for byte and
 decodes each DDS back to its painting pixel for pixel.
 
 ## The rig: skinned at bake time, as retail's armour is
@@ -184,7 +184,7 @@ Mac's answers: a Features switch beside Weapon Sheathing, **closed by default**.
 group Combat, the port's own): pref `mwSteelHelm`, `closed` or `open` (ownArmorModels.js STEEL_HELM_STYLES - the
 switch's values ARE the helm's styles). It is the VIEWER's, as the sheathing is: read where the worn set is composed
 (fpArm.js, beside Show Nudity's weld), it is how this machine draws a steel helm - the player's and every peer's - and
-it never reaches the wire. Thrown, the tile rebuilds the standing body at once (ui/enhancedMenu.js TILE_AFTER, whose
+it never reaches the wire. Thrown, the tile rebuilds the standing body at once (ui/enhanced/enhancedMenu.js TILE_AFTER, whose
 after-step a choice's write takes as a switch's does); a peer's body takes it at its next build.
 
 ## Not done here
@@ -253,7 +253,7 @@ and the Steel Helm switch are untouched.
 
 **How it was proven.** On retail's own skeleton (`test/fixtures/mw/retailRig.mjs`: the vendored hierarchy and its Tri
 Shadow verbatim, with the part nodes base_anim carries; the bind pose built from the Tri Shadow's records by hand, not by
-the bake) through the binder the game uses. `test/mwsteel4.test.js`: the bind undoes every inverse bind and is a
+the bake) through the binder the game uses. `test/formats/morrowind/mwsteel4.test.js`: the bind undoes every inverse bind and is a
 T-pose; the scene stands on it (the cuffs on the forearm line to 0.75, the neck and head bones inside the scene's neck
 and head, the ankles 6.8 over the soles); every NIF a shape per painting named for its slot (and no other), over its
 own side's bones, each inverse bind the bind undone, every vertex's weights summing to one, the skirt's hang law on
@@ -313,7 +313,7 @@ hung on it; what shows between is the game's own neck - and if the screenshot's 
 Breton wearer's helm sits that much higher than it needs to, a band of neck under it. The probe holds the fix: with
 the head raised across its whole span and a unit past it, no scalp shows in the shipped helm at any of the three eyes.
 
-**How it was proven.** `test/mwsteel5.test.js`: the set's source is Mac's export byte for byte (the import with no
+**How it was proven.** `test/tooling/mwsteel5.test.js`: the set's source is Mac's export byte for byte (the import with no
 body to strip is the file) and the open helm's is that helm alone; the wrong file, or one short a piece, is refused by
 name, a piece past its box before anything is written, and a reference object the export carries is measured and
 stripped, the rest byte for byte, and what no piece reads said; the open helm's strip, aimed at the set's closed
@@ -323,7 +323,7 @@ one place, the crown at MW-STEEL1's 131.82 raised `HELM_LIFT` (Mac's 2.62 over t
 game's), the head inside the shell across and behind; every NIF its objects in the scene's placement, the helms
 lifted; and the evidence re-run - the probe reads the screenshot's scalp at each eye between 2.5 and 5.5, `HELM_LIFT`
 inside their span, no scalp with the scene's head in MW-STEEL1's helm nor with the game's in the shipped one.
-`test/mwsteel1.test.js` re-makes every file byte for byte from the two sources; `test/mwsteel4.test.js` draws the
+`test/tooling/mwsteel1.test.js` re-makes every file byte for byte from the two sources; `test/formats/morrowind/mwsteel4.test.js` draws the
 cuirass's two shapes. `tools/mutants/mwsteel5.json` (19, all dead). The screenshot is not committed: it is the game's
 head drawn, a render of the player's own data; what is kept of it is the ratio the probe reads against. The command
 line writes nothing until the bake has run on what it takes (AUDIT MW-STEEL5: it saved the new source first, and a
@@ -371,11 +371,11 @@ At Mac's fit the steel closed helm leaves a little neck at the sides (26 to 29 o
 - his model's own, not the lift's. And it is read on the vendored retail skeleton and the scene's own measures, not
 seen in game: the paperdoll is the check.
 
-**How it was proven.** `test/mwfit1.test.js`: the sleeve on the shipped meshes, both sets, both sides; each pauldron's
+**How it was proven.** `test/formats/morrowind/mwfit1.test.js`: the sleeve on the shipped meshes, both sets, both sides; each pauldron's
 shadow in the third person and none in the first, the gauntlet's in both, a robe's reserve over a pauldron in both,
 and the two skins' shadows read where `fpArm.js` reads them; the closed steel helm (default and asked) and the ebony
 helm over the head and the hair, the open helm the hair alone, each one add, the hair's; and in retail's idle the neck
-under the shipped helms covered, and bare under both raised as they were. `test/mwsteel5.test.js`, `mwsteel1` and
+under the shipped helms covered, and bare under both raised as they were. `test/tooling/mwsteel5.test.js`, `mwsteel1` and
 `mwebony1` re-read for the closed helms unlifted and the new shadows; the bake re-made two files, the closed steel helm
 and the ebony helm, and nothing else. `tools/mutants/mwfit1.json` (13: 12 dead, 1 recorded equivalent - a robe over a
 pauldron's hide keeping its first-person pass, which the slotlist walk cannot reach); seven records re-aimed by content

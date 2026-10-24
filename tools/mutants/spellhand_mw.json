@@ -1,0 +1,200 @@
+[
+  {
+    "name": "SPELLHANDMW-arms-swapped",
+    "file": "src/combat/twoHands/spellHandArm.js",
+    "old": "export const SPELL_HAND_ARM = Object.freeze({ spell: 'L', weapon: 'R' });",
+    "new": "export const SPELL_HAND_ARM = Object.freeze({ spell: 'R', weapon: 'L' });",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "SPELLHANDMW-spell-arm-mirrored",
+    "file": "src/combat/twoHands/spellHandArm.js",
+    "old": "{ [SPELL_HAND_ARM.spell]: { clip: spellIdle, side: SPELL_HAND_ARM.spell, mirror: false } }",
+    "new": "{ [SPELL_HAND_ARM.spell]: { clip: spellIdle, side: SPELL_HAND_ARM.weapon, mirror: true } }",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "SPELLHANDMW-clock-frozen",
+    "file": "src/combat/twoHands/spellHandArm.js",
+    "old": "      if (dt > 0) step(p.state, p.source.keys, dt);",
+    "new": "      if (false) step(p.state, p.source.keys, dt);",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "SPELLHANDMW-ready-door",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (spellHand) return spellHandReady(want);",
+    "new": "      if (false) return spellHandReady(want);",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "SPELLHANDMW-weapon-out-of-hand",
+    "file": "src/combat/fpArm.js",
+    "old": "  const weaponInHand = () => weaponShown && (!spellStance() || spellHand);",
+    "new": "  const weaponInHand = () => weaponShown && !spellStance();",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "SPELLHANDMW-latch-kept",
+    "file": "src/combat/fpArm.js",
+    "old": "    if (step === 'afterCast') unreadyAfterCast = true;\n",
+    "new": "",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "SPELLHANDMW-stance-latched",
+    "file": "src/combat/fpArm.js",
+    "old": "    spellReady = false; refreshWeaponGroup(); resetIdle(); resetMovement();\n    return true;\n  }",
+    "new": "    return true;\n  }",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "SPELLHANDMW-no-composition",
+    "file": "src/combat/fpArm.js",
+    "old": "    if (sh) { req.limbs = sh.limbs; req.carry.key = sh.key; return req; }",
+    "new": "    if (false) { req.limbs = sh.limbs; req.carry.key = sh.key; return req; }",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "SPELLHANDMW-hand-word-sticks",
+    "file": "src/combat/fpArm.js",
+    "old": "    setSpellHand(on) { spellHand = !!on; if (!spellHand) spellInHand = false; },",
+    "new": "    setSpellHand(on) { if (on) spellHand = true; },",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDMW-gun-arm-swapped",
+    "file": "src/combat/twoHands/mixedArm.js",
+    "old": "  return r === l ? null : r ? 'R' : 'L';",
+    "new": "  return r === l ? null : r ? 'L' : 'R';",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDMW-blow-type-any-hand",
+    "file": "src/combat/twoHands/mixedArm.js",
+    "old": "(gunArm && hand === 'L' && Number.isFinite(offType) ? offType : null)",
+    "new": "(gunArm && Number.isFinite(offType) ? offType : null)",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDMW-hold-left-gun-never",
+    "file": "src/combat/twoHands/mixedArm.js",
+    "old": "  if (gunArm === 'L') return { row: offWeapon, pair: false, only: 'L', lone: false };",
+    "new": "  if (gunArm === 'L') return null;",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDMW-hold-right-gun-free-hand",
+    "file": "src/combat/twoHands/mixedArm.js",
+    "old": "  if (gunArm === 'R') return { row: weapon, pair: false, only: 'R', lone: false };",
+    "new": "  if (gunArm === 'R') return { row: weapon, pair: false, only: null, lone: true };",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDMW-hold-spell-hand-placed",
+    "file": "src/combat/twoHands/mixedArm.js",
+    "old": "  return { row: weapon, pair, only: !pair && spellHand ? 'R' : null, lone: !pair };",
+    "new": "  return { row: weapon, pair, only: null, lone: !pair };",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDMW-stance-one-hand-unread",
+    "file": "src/combat/gun/pistolStance.js",
+    "old": "  const needR = only !== 'L', needL = pair || only === 'L';",
+    "new": "  const needR = true, needL = pair;",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDMW-only-not-handed-on",
+    "file": "src/combat/fpArm.js",
+    "old": "pair: g.pair, only: g.lone ? 'R' : g.only,",
+    "new": "pair: g.pair, only: g.lone ? 'R' : null,",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDMW-blow-in-the-right-group",
+    "file": "src/combat/fpArm.js",
+    "old": "      if (bt !== blowType) { blowType = bt; refreshWeaponGroup(); }",
+    "new": "      if (false) { blowType = bt; refreshWeaponGroup(); }",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDMW-group-kept-after",
+    "file": "src/combat/fpArm.js",
+    "old": "    if (blowType != null) { blowType = null; refreshWeaponGroup(); }   // MIXED-PAIR: the arm's own group again",
+    "new": "    // MIXED-PAIR: the arm's own group again (kept)",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDMW-off-arm-the-rights-mirror",
+    "file": "src/combat/fpArm.js",
+    "old": "      const offIdle = offType != null ? heldClips.clip(r, stanceIdle(r, offType), dt) : null;",
+    "new": "      const offIdle = null;",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDMW-sheathe-keeps-the-blow",
+    "file": "src/combat/fpArm.js",
+    "old": "        dropBlowType();   // MIXED-PAIR: a wind-up put away unequips in the arm's own group\n",
+    "new": "",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDMW-death-keeps-the-blow",
+    "file": "src/combat/fpArm.js",
+    "old": "      dropBlowType();   // MIXED-PAIR\n",
+    "new": "",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDMW-swap-keeps-the-blow",
+    "file": "src/combat/fpArm.js",
+    "old": "          blowType = null;   // MIXED-PAIR: and the blow's group with it (both branches below re-resolve the group)\n",
+    "new": "",
+    "tests": [
+      "test/combat/spellhand_mw.test.js"
+    ]
+  }
+]

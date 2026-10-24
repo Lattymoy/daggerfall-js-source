@@ -1,7 +1,7 @@
 [
   {
     "name": "AUDIT-TESA-A1-1-key-names",
-    "file": "src/systems/automap.js",
+    "file": "src/systems/automap/automap.js",
     "old": "export const automapKeyOf = (loc, name = loc?.name ?? '') => (loc?.arena && !loc.capital",
     "new": "export const automapKeyOf = (loc, name = loc?.name ?? '') => (false",
     "tests": [
@@ -19,7 +19,7 @@
   },
   {
     "name": "AUDIT-TESA-A1-2-reveal-names",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/questWorld.js",
     "old": "locationName: loc.arena && !loc.capital ? '' : loc.name });",
     "new": "locationName: loc.name });",
     "tests": [
@@ -37,7 +37,7 @@
   },
   {
     "name": "AUDIT-TESA-A2-1-respawn-bay-only",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/questWorld.js",
     "old": "      const loc = placeByName(sd.regionName, sd.locationName);",
     "new": "      const loc = maps.getLocationByName(sd.regionName, sd.locationName);",
     "tests": [
@@ -73,7 +73,7 @@
   },
   {
     "name": "AUDIT-TESA-A2-5-streets-region",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "nameBank: provinceNameBank(provinceAt(px, py)?.key) ?? getNameBankOfRegion(dfLocation.regionIndex),",
     "new": "nameBank: getNameBankOfRegion(dfLocation.regionIndex),",
     "tests": [
@@ -164,7 +164,7 @@
   },
   {
     "name": "AUDIT-TESA-A6-2-eager-door",
-    "file": "src/formats/worldDataReplacement.js",
+    "file": "src/formats/worldData/worldDataReplacement.js",
     "old": "b.block ??= blockFromJson(typeof b.json === 'function' ? b.json() : b.json, b.index);",
     "new": "b.block ??= blockFromJson(b.json, b.index);",
     "tests": [
@@ -272,7 +272,7 @@
   },
   {
     "name": "AUDIT-TESA-A4-F2-capital-cloned-over",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPlacesHost.js",
     "old": "    if (had?.capital) return capitalLocationAt(px, py);",
     "new": "    if (false) return capitalLocationAt(px, py);",
     "tests": [
@@ -299,7 +299,7 @@
   },
   {
     "name": "AUDIT-TESA-A2-3-living-alias",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const livingTown = (onTheBay(px, py) ? livingTownsIndex().get(py * 1000 + px) : null) ??",
     "new": "const livingTown = livingTownsIndex().get(py * 1000 + px) ??",
     "tests": [

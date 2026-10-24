@@ -1,0 +1,327 @@
+[
+  {
+    "name": "SEAT-LIVE-walk-seniority",
+    "file": "server/src/index.js",
+    "old": "    return seatOf(list, Date.now(), { live: live && seatStreams(list[0]?.key) });",
+    "new": "    return seatOf(list, Date.now(), { live: false });",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js",
+      "test/scenes/fb1018d_seatloop.test.js"
+    ],
+    "why": "the relay names the silent host for as long as its tab lives: the report's loop, 2280 -> 4560 -> 6840"
+  },
+  {
+    "name": "SEAT-LIVE-memo-never-asked",
+    "file": "server/src/index.js",
+    "old": "    if (this._hostMemo === undefined || this._seatStale(this._hostMemo)) this._hostMemo = this._hostWalk(null);",
+    "new": "    if (this._hostMemo === undefined) this._hostMemo = this._hostWalk(null);",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js",
+      "test/scenes/fb1018d_seatloop.test.js"
+    ],
+    "why": "SCALE5b's kept host keeps answering a host gone quiet"
+  },
+  {
+    "name": "SEAT-LIVE-leave-by-seniority",
+    "file": "server/src/index.js",
+    "old": "    return seatOf(list, Date.now(), { live: seatStreams(a.key) }) === a.id;",
+    "new": "    return seatOf(list, Date.now(), { live: false }) === a.id;",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js"
+    ],
+    "why": "a seat named by silence leaves and nobody is told the next"
+  },
+  {
+    "name": "SEAT-LIVE-returner-keeps-stamp",
+    "file": "server/src/index.js",
+    "old": "      const since = back ? this._seatAfter(a, now) : a.since;",
+    "new": "      const since = a.since;",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js"
+    ],
+    "why": "the host back from hiding takes the seat back on its first frame, its frozen world with it"
+  },
+  {
+    "name": "SEAT-LIVE-change-unsaid",
+    "file": "server/src/index.js",
+    "old": "{ this._sayHost(); said = true; }",
+    "new": "{ said = true; }",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js"
+    ],
+    "why": "the room is never told the host went quiet"
+  },
+  {
+    "name": "SEAT-LIVE-returner-untold",
+    "file": "server/src/index.js",
+    "old": "    if (back && host && !said) this._send(ws, JSON.stringify({ t: 'host', id: host }));",
+    "new": "",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js"
+    ],
+    "why": "a page back from silence is not told whose the seat is"
+  },
+  {
+    "name": "SEAT-LIVE-said-unkept",
+    "file": "server/src/index.js",
+    "old": "    this._seatSaid = host;\n    if (!host) return;",
+    "new": "    if (!host) return;",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js"
+    ],
+    "why": "the change said again at every frame"
+  },
+  {
+    "name": "SEAT-LIVE-reconnect-keeps",
+    "file": "server/src/index.js",
+    "old": "    return seatSilent(replaced, othersIn, now) ? this._seatAfter(replaced, now) : (replaced.since ?? now);",
+    "new": "    return replaced.since ?? now;",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js"
+    ],
+    "why": "a reconnect after silence keeps the old stamp and the seat"
+  },
+  {
+    "name": "SEAT-LIVE-elder-tie",
+    "file": "server/src/index.js",
+    "old": "    return sa && seatElder(a, sa) ? Math.max(now, (sa.since ?? 0) + 1) : (a.since ?? now);",
+    "new": "    return sa && seatElder(a, sa) ? now : (a.since ?? now);",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js"
+    ],
+    "why": "a returner stamped in the same millisecond as the seat wins the tie by its id"
+  },
+  {
+    "name": "SEAT-LIVE-bound",
+    "file": "src/net/seatLive.js",
+    "old": "now - Math.max(seatHeardAt(a), othersIn) > FOES_STALE_MS;",
+    "new": "now - Math.max(seatHeardAt(a), othersIn) >= FOES_STALE_MS;",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js"
+    ],
+    "why": "a host heard exactly FOES_STALE_MS ago is still the seat"
+  },
+  {
+    "name": "SEAT-LIVE-not-owed",
+    "file": "src/net/seatLive.js",
+    "old": "now - Math.max(seatHeardAt(a), othersIn) > FOES_STALE_MS;",
+    "new": "now - seatHeardAt(a) > FOES_STALE_MS;",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js"
+    ],
+    "why": "a host alone and still loses the seat the moment anyone walks in"
+  },
+  {
+    "name": "SEAT-LIVE-every-room",
+    "file": "src/net/seatLive.js",
+    "old": "isWorldRoom(key) && String(key).startsWith('dungeon:');",
+    "new": "isWorldRoom(key);",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js"
+    ],
+    "why": "a building's host, which streams nothing, loses its seat by standing still"
+  },
+  {
+    "name": "SEAT-LIVE-no-ask",
+    "file": "src/net/online.js",
+    "old": "    this._askSeat(now);   // SEAT-LIVE",
+    "new": "    // SEAT-LIVE",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js"
+    ],
+    "why": "a joiner standing still is never heard, and the relay names nobody"
+  },
+  {
+    "name": "SEAT-LIVE-ask-every-frame",
+    "file": "src/net/seatLive.js",
+    "old": "s.now - s.askedAt >= FOES_FULL_MS",
+    "new": "s.now - s.askedAt >= 0",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js"
+    ],
+    "why": "a pose every frame"
+  },
+  {
+    "name": "SEAT-LIVE-stream-no-word",
+    "file": "src/net/online.js",
+    "old": "{ if (primary && m.id === this.host) this._seatHeardAt = now; if (m.g === 1) this._grantSender(m.id); this._deliver",
+    "new": "{ if (m.g === 1) this._grantSender(m.id); this._deliver",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js"
+    ],
+    "why": "a live host's stream read as silence: asks for ever"
+  },
+  {
+    "name": "SEAT-LIVE-old-relay-asked",
+    "file": "src/net/online.js",
+    "old": "this.seatLiveOk = relaySupportsSeatLive(relayV);",
+    "new": "this.seatLiveOk = true;",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js"
+    ],
+    "why": "an older relay asked for what it cannot give"
+  },
+  {
+    "name": "SEAT-LIVE-gap-unread",
+    "file": "src/net/seatLive.js",
+    "old": "if (frameAt != null && now - frameAt >= staleMs) heardAt = Math.max(heardAt, now);",
+    "new": "",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js"
+    ],
+    "why": "a page back from hiding takes the foes on its first frame"
+  },
+  {
+    "name": "SEAT-LIVE-gap-bound",
+    "file": "src/net/seatLive.js",
+    "old": "if (frameAt != null && now - frameAt >= staleMs)",
+    "new": "if (frameAt != null && now - frameAt > staleMs)",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js"
+    ],
+    "why": "a gap of exactly FOES_STALE_MS read as no absence"
+  },
+  {
+    "name": "SEAT-LIVE-frame-unwired",
+    "file": "src/scenes/world.js",
+    "old": "    seatClock.frame(now); modes?.setDungeonAuthority?.(dungeonAuthority(now));",
+    "new": "    modes?.setDungeonAuthority?.(dungeonAuthority(now));",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js"
+    ],
+    "why": "the clock never told of the page's frames"
+  },
+  {
+    "name": "SEAT-LIVE-leave-live-law-alone",
+    "file": "server/src/index.js",
+    "old": "    return this._leads(a, ws) || (seatStreams(a.key) && a.id != null && a.id === this._seatSaid);",
+    "new": "    return this._leads(a, ws);",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js",
+      "test/scenes/fb1018d_seatloop.test.js"
+    ],
+    "why": "AUDIT FB1018D L4-2: a silent host gone with no farewell leaves the seat unsaid - the new host never streams nor writes"
+  },
+  {
+    "name": "SEAT-LIVE-told-host-absence-unasked",
+    "file": "server/src/index.js",
+    "old": "if (this._seatSaid != null && this._byId().has(this._seatSaid)) { this._sayHost(); said = true; }",
+    "new": "if (this._seatSaid != null) { this._sayHost(); said = true; }",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js",
+      "test/scenes/fb1018d_seatloop.test.js"
+    ],
+    "why": "AUDIT FB1018D L4-2: unreachable since the leave's fix - the host the room was told can leave its index only through _leave, which now says the seat when the leaver was the told host (_leaveMovesSeat); a reconnect keeps its id and a wake re-reads the eldest present. The guard stays as the wake's safety; nothing reaches it",
+    "equivalent": true
+  },
+  {
+    "name": "SEAT-LIVE-foes-unheard",
+    "file": "src/net/seatLive.js",
+    "old": " || message.startsWith(FOES_PREFIX) ||",
+    "new": " ||",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js",
+      "test/scenes/fb1018d_seatloop.test.js"
+    ],
+    "why": "AUDIT FB1018D L4-3 / L5-2: a host standing still, streaming its foes, loses the seat"
+  },
+  {
+    "name": "SEAT-LIVE-own-lane-unheard",
+    "file": "src/net/seatLive.js",
+    "old": " || message.startsWith(OWN_PREFIX) ||",
+    "new": " ||",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js",
+      "test/scenes/fb1018d_seatloop.test.js"
+    ],
+    "why": "AUDIT FB1018D L4-3: a joiner heard on its own lane alone read as silent"
+  },
+  {
+    "name": "SEAT-LIVE-any-frame-heard",
+    "file": "src/net/seatLive.js",
+    "old": "export const seatTraffic = (/** @type {any} */ message) => typeof message === 'string'\n  && (",
+    "new": "export const seatTraffic = (/** @type {any} */ message) => typeof message === 'string'\n  || (",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js",
+      "test/scenes/fb1018d_seatloop.test.js"
+    ],
+    "why": "AUDIT FB1018D L4-3: a hidden host's ping, act or chat line keeps its seat"
+  },
+  {
+    "name": "SEAT-LIVE-relay-min-low",
+    "file": "src/net/seatLive.js",
+    "old": "export const SEAT_RELAY_MIN = 220;",
+    "new": "export const SEAT_RELAY_MIN = 219;",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js",
+      "test/scenes/fb1018d_seatloop.test.js"
+    ],
+    "why": "AUDIT FB1018D L4-1 / L5-1: EG-PERFECT's world219, which keeps the eldest, asked for the seat"
+  },
+  {
+    "name": "SEAT-LIVE-host-named-unheard",
+    "file": "src/net/online.js",
+    "old": "    this._seatHeardAt = this._now();   // SEAT-LIVE: a host named is a host heard\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js",
+      "test/scenes/fb1018d_seatloop.test.js"
+    ],
+    "why": "AUDIT FB1018D L4-3 / L5-4: a page asks for the seat on the heels of a host frame"
+  },
+  {
+    "name": "SEAT-LIVE-walk-every-room",
+    "file": "server/src/index.js",
+    "old": "    return seatOf(list, Date.now(), { live: live && seatStreams(list[0]?.key) });",
+    "new": "    return seatOf(list, Date.now(), { live });",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js",
+      "test/scenes/fb1018d_seatloop.test.js"
+    ],
+    "why": "AUDIT FB1018D L5-3: a building's quiet host loses its seat to a newcomer"
+  },
+  {
+    "name": "SEAT-LIVE-leads-every-room",
+    "file": "server/src/index.js",
+    "old": "    return seatOf(list, Date.now(), { live: seatStreams(a.key) }) === a.id;",
+    "new": "    return seatOf(list, Date.now(), { live: true }) === a.id;",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js",
+      "test/scenes/fb1018d_seatloop.test.js"
+    ],
+    "why": "AUDIT FB1018D L5-3: a building host's leave unsaid"
+  },
+  {
+    "name": "SEAT-LIVE-keep-building-judged",
+    "file": "server/src/index.js",
+    "old": "    if (!seatStreams(replaced.key)) return replaced.since ?? now;\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js",
+      "test/scenes/fb1018d_seatloop.test.js"
+    ],
+    "why": "AUDIT FB1018D L5-3: a building host whose connection blips loses its seat (AUDIT WORLD A4)"
+  },
+  {
+    "name": "SEAT-LIVE-ask-every-room",
+    "file": "src/net/seatLive.js",
+    "old": "  !!(s.streams && s.ok && s.open",
+    "new": "  !!(s.ok && s.open",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js",
+      "test/scenes/fb1018d_seatloop.test.js"
+    ],
+    "why": "AUDIT FB1018D L5-3: a pose every FOES_FULL_MS, for ever, in every building"
+  },
+  {
+    "name": "SEAT-LIVE-returner-not-now",
+    "file": "server/src/index.js",
+    "old": "Math.max(now, (sa.since ?? 0) + 1)",
+    "new": "((sa.since ?? 0) + 1)",
+    "tests": [
+      "test/net/fb1018d_seatlive.test.js",
+      "test/scenes/fb1018d_seatloop.test.js"
+    ],
+    "why": "AUDIT FB1018D L5-4: a socket back from silence outranks a joiner who came in while it was away"
+  }
+]

@@ -5,19 +5,19 @@
   "old": "levelBonus: () => seatEdicts.guardLevelBonus(Math.floor(skyMinutes())),",
   "new": "levelBonus: () => seatEdicts.guardLevelBonus(Math.floor(playerTicker.ownMinutes)),",
   "tests": [
-   "test/seat1d_client.test.js",
-   "test/time1_census.test.js"
+   "test/systems/seat1d_client.test.js",
+   "test/scenes/time1_census.test.js"
   ]
  },
  {
   "name": "F-seat1a-anchors-boards-dropped",
-  "file": "src/scenes/world.js",
+  "file": "src/scenes/pixelBuild.js",
   "old": "gates: pixelGates.map((g) => ({ local: g.local, box: g.entry?._box })), boards: pixelBoards, bounty: pixelBoardSplit,",
   "new": "gates: pixelGates.map((g) => ({ local: g.local, box: g.entry?._box })),",
   "tests": [
-   "test/seat1a_client.test.js",
-   "test/audit_seats_client.test.js",
-   "test/bulletinboard.test.js"
+   "test/net/seat1a_client.test.js",
+   "test/net/audit_seats_client.test.js",
+   "test/systems/bulletinboard.test.js"
   ]
  },
  {
@@ -26,11 +26,11 @@
   "old": "    minutes: () => worldMinutes(),\n    regionAt: (px, py) => maps.getRegionIndexAt(px, py),",
   "new": "    minutes: () => worldMinutes(),\n    regionAt: () => null,",
   "tests": [
-   "test/seat1d_client.test.js",
-   "test/seat1b_client.test.js",
-   "test/tide_orcs.test.js",
-   "test/rep4_recovery.test.js",
-   "test/regionlive.test.js"
+   "test/systems/seat1d_client.test.js",
+   "test/net/seat1b_client.test.js",
+   "test/net/tide_orcs.test.js",
+   "test/systems/rep4_recovery.test.js",
+   "test/scenes/regionlive.test.js"
   ]
  },
  {
@@ -39,8 +39,8 @@
   "old": "    const battle = royalSession?.active() ? royalSession : siegeSession;\n    if (!to ||",
   "new": "    const battle = siegeSession;\n    if (!to ||",
   "tests": [
-   "test/crown1_royal_client.test.js",
-   "test/audit_seats_client.test.js"
+   "test/net/crown1_royal_client.test.js",
+   "test/net/audit_seats_client.test.js"
   ]
  },
  {
@@ -49,7 +49,7 @@
   "old": "const battle = royalSession?.active() ? royalSession : siegeSession;   // CROWN1 part two",
   "new": "const battle = siegeSession;   // CROWN1 part two",
   "tests": [
-   "test/crown1_royal_client.test.js"
+   "test/net/crown1_royal_client.test.js"
   ]
  }
 ]

@@ -5,7 +5,7 @@
     "old": "c.faction === 'pirate' && !c.flagship && c.minLevel <= Math.max(1, level | 0)",
     "new": "c.faction === 'pirate' && c.minLevel <= Math.max(1, level | 0)",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "c.faction === 'pirate' && !c.flagship && c.minLevel <= Math.max(1, level | 0)",
     "new": "c.faction === 'pirate' && !c.flagship",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "let x = seededRng((seed ^ CLASS_SALT) >>> 0)() * total;",
     "new": "let x = seededRng(CLASS_SALT)() * total;",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    .filter((r) => !stood.has(r.id) && !spent.has(r.id) && !held.has(r.id) && !peers.has(r.seed) && flat(r.pos, me) <= RAIDER_STAND_M)",
     "new": "    .filter((r) => !stood.has(r.id) && !spent.has(r.id) && !held.has(r.id) && !peers.has(r.seed))",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "const stand = candidates.slice(0, Math.max(0, RAIDER_SHIPS_MAX - keep.length)).map((r) => r.id);",
     "new": "const stand = candidates.map((r) => r.id);",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    .filter((r) => !stood.has(r.id) && !spent.has(r.id) && !held.has(r.id) && !peers.has(r.seed) && flat(r.pos, me) <= RAIDER_STAND_M)",
     "new": "    .filter((r) => !stood.has(r.id) && !held.has(r.id) && !peers.has(r.seed) && flat(r.pos, me) <= RAIDER_STAND_M)",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (!s.engaged && flat(s.pos, me) > RAIDER_DROP_M) drop.push(id);",
     "new": "if (flat(s.pos, me) > RAIDER_DROP_M) drop.push(id);",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (owner !== undefined && !s.boarding && chaseYields(myId, owner)) { drop.push(id); continue; }",
     "new": "    if (owner !== undefined && !s.boarding && chaseYields(owner, myId)) { drop.push(id); continue; }",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    .filter((r) => !stood.has(r.id) && !spent.has(r.id) && !held.has(r.id) && !peers.has(r.seed) && flat(r.pos, me) <= RAIDER_STAND_M)",
     "new": "    .filter((r) => !stood.has(r.id) && !spent.has(r.id) && !held.has(r.id) && flat(r.pos, me) <= RAIDER_STAND_M)",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  if (ship.course) return Math.atan2(ship.course[0] - ship.pos[0], ship.course[1] - ship.pos[2]);\n",
     "new": "",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -95,61 +95,61 @@
     "old": "export const lookoutOf = (ship) => ship.sight ?? ENGAGE_RANGE;",
     "new": "export const lookoutOf = () => ENGAGE_RANGE;",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
     "name": "NAV-R-the-chase-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      return { pos: e.ship.pos, chase: chasesMe(e) };",
     "new": "      return { pos: e.ship.pos, chase: false };",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
     "name": "NAV-R-the-slip-unspent",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const slipped = e.raider.chased && e.ship.mode === 'cruise';",
     "new": "const slipped = false;",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
     "name": "NAV-R-no-sheering-off",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (sheer) sheerOff(e);\n",
     "new": "",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
     "name": "NAV-R-the-sinking-unspent",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (slipped || e.ship.boarded || boarding?.shipId === e.id || e.ship.damage.state !== SHIP_STATES.afloat) spendRaider(e, slipped);",
     "new": "if (slipped || e.ship.boarded || boarding?.shipId === e.id) spendRaider(e, slipped);",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
     "name": "NAV-R-the-director-takes-her",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "boarding?.shipId === e.id || !!e.raider || !!e.liner || !!e.takenBy",
     "new": "boarding?.shipId === e.id || !!e.liner || !!e.takenBy",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
     "name": "NAV-R-a-second-copy-stood",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (!e.owner && e.raider) stood.set(e.raider.id, { pos: e.ship.pos, engaged: raiderBusy(e), boarding: boarding?.shipId === e.id });",
     "new": "      if (!e.owner && e.raider) { /* unread */ }",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    if (navalRaidersOn()) { tvRaid.chase.clear(); raidShips(!!at); return; }\n",
     "new": "",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -167,16 +167,16 @@
     "old": "yaw: Math.atan2(ax - x, az - z), ahead: [ax, 0, az] });",
     "new": "yaw: Math.atan2(ax - x, az - z), ahead: null });",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
     "name": "NAV-R-the-marks-at-the-seeded-place",
-    "file": "src/scenes/world.js",
-    "old": "const ship = navalRaidersOn() ? naval.raiderShipOf(r.seed) : null;   // NAV-R: stood as a ship of the sea - drawn where she sails",
+    "file": "src/scenes/travelViewMarks.js",
+    "old": "const ship = host.navalRaidersOn() ? host.naval.raiderShipOf(r.seed) : null;   // NAV-R: stood as a ship of the sea - drawn where she sails",
     "new": "const ship = null;   // NAV-R: stood as a ship of the sea - drawn where she sails",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    raiderSpent: (id) => { seaRaidSpend(id); tvRaid.chase.delete(id); },   // NAV-R: the Overworld's law - spent for its life; THE MERGE (OW6): and said to the cell\n",
     "new": "",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "    .filter((r) => !stood.has(r.id) && !spent.has(r.id) && !held.has(r.id) && !peers.has(r.seed) && flat(r.pos, me) <= RAIDER_STAND_M)",
     "new": "    .filter((r) => !stood.has(r.id) && !spent.has(r.id) && !peers.has(r.seed) && flat(r.pos, me) <= RAIDER_STAND_M)",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -203,25 +203,25 @@
     "old": "    const owner = held.get(id);",
     "new": "    const owner = undefined;",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
     "name": "MERGE-OW6-the-hold-unpassed-to-the-plan",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const plan = raiderPlan({ raiders: list, me, myId: myId(), stood, peers, spent, held });",
     "new": "const plan = raiderPlan({ raiders: list, me, myId: myId(), stood, peers, spent });",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
     "name": "MERGE-OW6-a-spent-one-held",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "if (!e.owner && e.raider && !e.raider.spent) out.push({ id: e.raider.id, pos: e.ship.pos });",
     "new": "if (!e.owner && e.raider) out.push({ id: e.raider.id, pos: e.ship.pos });",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "    if (!navalRaidersOn()) return tvRaid.chase;\n    const out = new Map();\n    for (const h of naval.raiderHeld())",
     "new": "    return tvRaid.chase;\n    const out = new Map();\n    for (const h of naval.raiderHeld())",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "raiderSpent: (id) => { seaRaidSpend(id); tvRaid.chase.delete(id); },",
     "new": "raiderSpent: (id) => { tvRaid.spent.add(id); tvRaid.chase.delete(id); },",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "        if (p) held.set(r.id, p.from);\n",
     "new": "",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
@@ -257,8 +257,8 @@
     "old": "        if (navalRaidersOn() && naval.raiderShipOf(r.seed)) continue;   // THE MERGE (NAV-R): stood as a ship of the sea - the sea's own threat, below\n",
     "new": "",
     "tests": [
-      "test/nav_r_raiders.test.js",
-      "test/ow6_slowdown.test.js"
+      "test/systems/naval/nav_r_raiders.test.js",
+      "test/systems/travel/ow6_slowdown.test.js"
     ]
   },
   {
@@ -267,45 +267,45 @@
     "old": "    for (const t of naval?.threats() ?? []) out.push(",
     "new": "    for (const t of []) out.push(",
     "tests": [
-      "test/nav_r_raiders.test.js",
-      "test/ow6_slowdown.test.js"
+      "test/systems/naval/nav_r_raiders.test.js",
+      "test/systems/travel/ow6_slowdown.test.js"
     ]
   },
   {
     "name": "MERGE-NAVH-her-closing-unsaid",
     "file": "src/scenes/world.js",
-    "old": "reach: t.reach, ...(t.chasing ? { chasing: true, mps: t.mps } : {}) });",
-    "new": "reach: t.reach });",
+    "old": "reach: t.reach, holds: t.holds, ...(t.chasing ? { chasing: true, mps: t.mps } : {}) });",
+    "new": "reach: t.reach, holds: t.holds });",
     "tests": [
-      "test/nav_r_raiders.test.js",
-      "test/ow6_slowdown.test.js"
+      "test/systems/naval/nav_r_raiders.test.js",
+      "test/systems/travel/ow6_slowdown.test.js"
     ]
   },
   {
     "name": "MERGE-NAVH-the-lookout-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "reach: chasing ? HOSTILE_NEAR_M : Math.max(HOSTILE_NEAR_M, lookoutOf(e.ship)), chasing,",
     "new": "reach: HOSTILE_NEAR_M, chasing,",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
     "name": "MERGE-NAVH-a-friend-a-threat",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (!hostileToMe(e, me)) continue;\n      const chasing = chasesMe(e);\n",
     "new": "      const chasing = chasesMe(e);\n",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   },
   {
     "name": "MERGE-NAVH-the-chase-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const chasing = chasesMe(e);\n      out.push({ pos: e.ship.pos, reach:",
     "new": "      const chasing = false;\n      out.push({ pos: e.ship.pos, reach:",
     "tests": [
-      "test/nav_r_raiders.test.js"
+      "test/systems/naval/nav_r_raiders.test.js"
     ]
   }
 ]

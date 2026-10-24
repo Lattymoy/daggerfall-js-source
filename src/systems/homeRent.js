@@ -7,7 +7,7 @@
 // ends read is net/homeLaw.js (RENT_*), the service's writes
 // server-account/src/rent.js; this is what the door and the decorator do
 // with them. Pure but for the doors handed in: `api` (net/accountClient.js
-// accountHomes), `homes` (systems/onlineHomes.js - told to read the town
+// accountHomes), `homes` (systems/online/onlineHomes.js - told to read the town
 // again once a tenancy changes who may walk in), `realm` (the host's
 // realm act - systems/realmSaves.js realmGoldAct) and `wallet` (the
 // purse and the home's region's account, as a home is paid).
@@ -24,9 +24,9 @@
 import {
   RENT_DAYS, RENT_DAYS_MAX, RENT_ROOMS_MAX, rentCost, rentPriceOk, rentRoomOk, rentAnchorOf, rentDaysLeft, rentUntil, RENT_PRICE_MIN, RENT_PRICE_MAX,
 } from '../net/homeLaw.js';
-import { ARENA_TEXT } from './arenaText.js';   // ARENA4b: a room the arena's move carried, named
+import { ARENA_TEXT } from './arena/arenaText.js';   // ARENA4b: a room the arena's move carried, named
 import { goldSum, EMPIRE_ACCOUNT_WORDS } from './homeWords.js';   // AUDIT HOME-PRICE E4: the door's sums and account, as the home's own lines say them
-import { walletReserve } from '../net/realmGoldLaw.js';   // MARKET-AUDIT: a refusal gives back exactly what the payment took
+import { walletReserve } from '../net/realm/realmGoldLaw.js';   // MARKET-AUDIT: a refusal gives back exactly what the payment took
 
 /** The door's verb for a home with a room free to rent (onlineHomes.js HOME_VERB's own row). */
 export const RENT_VERB = 'home-rent';
@@ -38,13 +38,13 @@ export const RENT_PRICE_FIRST = 50;
 /** The door's row for a home with rooms free: the cheapest of them a day. */
 export const rentRowLabel = (from) => `Rent a room: from ${goldSum(from)} gold a day`;
 /** A tenant's row at the door: their own room, and how long it has left. */
-export const rentTenantLabel = (daysLeft) => `Your room: ${daysLeft} day${daysLeft === 1 ? '' : 's'} left - renew it`;
+export const rentTenantLabel = (daysLeft) => `Renew your room: ${daysLeft} day${daysLeft === 1 ? '' : 's'} left`;
 /** What a tenant hears walking in. */
-export const rentWelcomeLine = (daysLeft) => `You rent a room here - ${daysLeft} day${daysLeft === 1 ? '' : 's'} left. You may rest here.`;
+export const rentWelcomeLine = (daysLeft) => `You rent a room here, with ${daysLeft} day${daysLeft === 1 ? '' : 's'} left. You can rest here.`;
 /** The rent window's lines: the rooms to choose from. */
 export const rentPickLines = (owner) => [`Rooms to rent in ${owner}'s home.`, `The rent is paid now, from your purse and ${EMPIRE_ACCOUNT_WORDS}.`];
 /** The rent window's lines: how many days, at a room's price. */
-export const rentDaysLines = (room, price) => [`Room ${room} - ${goldSum(price)} gold a day.`, 'For how many days? A day is a real day.'];
+export const rentDaysLines = (room, price) => [`Room ${room} - ${goldSum(price)} gold a day.`, 'For how many days? These are real days.'];
 /** The rent window's lines: the price asked, before it is paid. */
 export const rentConfirmLines = (room, days, price) => [`Rent room ${room} for ${days} day${days === 1 ? '' : 's'}?`, `It costs ${goldSum(rentCost(price, days))} gold.`];
 /** A room rented, said. */
@@ -54,12 +54,12 @@ export const rentShortLine = (cost) => `You need ${goldSum(cost)} gold, in your 
 /** No room free to rent, said at the door. */
 export const RENT_NONE_FREE = 'No room here is free to rent right now.';
 /** Renting asks an online character of the realm - said where there is none. */
-export const RENT_REALM_ONLY = 'Only an online character of the realm can rent a room.';
+export const RENT_REALM_ONLY = 'Only an online character can rent a room.';
 
 /**
  * RENT-REST (FIELD BUGS 2026-10-01, "Room renting is buggy"): WHETHER AN ONLINE HOME'S BED IS THE PLAYER'S - its owner's,
  * or its tenant's while the tenancy runs (`home` the town answer's row, as onlineHomes.js homeAt gives it; `nowS` the
- * clock the tenancy's end is read on). The interior host hands it to the rest's bag (systems/restSession.js
+ * clock the tenancy's end is read on). The interior host hands it to the rest's bag (systems/rest/restSession.js
  * interiorRestPlace `homeBed`), where a tenant's bed was asked as DFU asks a house it sold - inside a permanent scene,
  * which a tenant's visit never is - and refused ("You have not rented a room here.").
  */
@@ -73,7 +73,7 @@ export const homeBedIsMine = (home, nowS) => !!home && (home.own === true || !!(
  */
 export const rentDayRows = (room, nowS) => RENT_DAYS.filter((d) => rentUntil(nowS, room?.yours ? room.until : 0, d) != null);
 /** RENT-RENEW: one's own room paid as far ahead as a tenancy may run - no day is left to add. */
-export const RENT_FULL_LINE = `Your room is paid for ${RENT_DAYS_MAX} days ahead, the most a room can be. Renew it once some of them have passed.`;
+export const RENT_FULL_LINE = `Your room is paid for ${RENT_DAYS_MAX} days ahead, the most allowed. Renew it once some of those days have passed.`;
 /**
  * RENT-RENEW: WHAT THE DOOR SAYS WITH NO ROOM TO RENT - the tenant's own room taken off the offer (their row says "renew
  * it"; a room off the offer runs out and is never renewed - rent.js), else none free.
@@ -151,7 +151,7 @@ export async function collectHomeRent({ api, realm = null, wallet, mapId, buildi
 export const rentPriceStep = (price, step) => Math.min(RENT_PRICE_MAX, Math.max(RENT_PRICE_MIN, (rentPriceOk(price) ? price : RENT_PRICE_FIRST) + step));
 
 /**
- * THE OWNER'S ROOMS: each room the house's walls part it into (systems/decorRooms.js - `found`, `{ id, name, eye }`)
+ * THE OWNER'S ROOMS: each room the house's walls part it into (systems/decor/decorRooms.js - `found`, `{ id, name, eye }`)
  * beside the service's offer for it (`offered`: the room whose point stands in it - `roomOf(point)` the finder's), and
  * every offer whose room the walls no longer make (a room a door once parted), so it can still be withdrawn. `number` is
  * the room number an offer is written under; once RENT_ROOMS_MAX are held, a room not offered cannot be.
@@ -185,7 +185,7 @@ export function rentRoomsView(found, offers, roomOf, origin) {
 export function rentRowSub(row, nowS) {
   const o = row.offer;
   if (!o) return row.offerable ? 'Not offered to rent' : `Only ${RENT_ROOMS_MAX} rooms can be offered`;
-  if (o.taken) return `Rented by ${o.tenant ?? 'a tenant'} - ${rentDaysLeft(o.until, nowS)} day${rentDaysLeft(o.until, nowS) === 1 ? '' : 's'} left${o.listed ? '' : ' - offered to nobody after'}`;
+  if (o.taken) return `Rented by ${o.tenant ?? 'a tenant'} - ${rentDaysLeft(o.until, nowS)} day${rentDaysLeft(o.until, nowS) === 1 ? '' : 's'} left${o.listed ? '' : ', then no longer offered'}`;
   if (!o.listed) return 'No longer offered to rent';   // AUDIT: a room taken off the offer whose tenancy ran out (it said "Offered")
   return `Offered at ${goldSum(o.price)} gold a day`;
 }

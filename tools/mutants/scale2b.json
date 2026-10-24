@@ -5,13 +5,13 @@
     "old": "    if (this._idx && now - this._idxAt < IDX_TRUST_MS) return this._idx;",
     "new": "    if (false) return this._idx;",
     "tests": [
-      "test/scale2b.test.js",
-      "test/online_relay.test.js",
-      "test/auditwb_relay.test.js",
-      "test/chat1.test.js",
-      "test/world1.test.js",
-      "test/soc1_hub.test.js",
-      "test/auditsoc.test.js"
+      "test/net/scale2b.test.js",
+      "test/server/online_relay.test.js",
+      "test/net/gate/auditwb_relay.test.js",
+      "test/net/chat1.test.js",
+      "test/net/world1.test.js",
+      "test/net/soc1_hub.test.js",
+      "test/net/auditsoc.test.js"
     ],
     "note": "The runtime's whole socket list walked on every call - three times a pose, nine a hello."
   },
@@ -21,13 +21,13 @@
     "old": "  _adopt(ws, att) { if (!this._idx) return; const was = this._idx.get(ws); if (!was) this._enter(ws); this._idx.set(ws, att); this._reindex(ws, was, att); if (this._idx.size > this._metrics.c.peak) this._metrics.c.peak = this._idx.size; }",
     "new": "  _adopt(ws, att) { void ws; void att; }",
     "tests": [
-      "test/scale2b.test.js",
-      "test/online_relay.test.js",
-      "test/auditwb_relay.test.js",
-      "test/chat1.test.js",
-      "test/world1.test.js",
-      "test/soc1_hub.test.js",
-      "test/auditsoc.test.js"
+      "test/net/scale2b.test.js",
+      "test/server/online_relay.test.js",
+      "test/net/gate/auditwb_relay.test.js",
+      "test/net/chat1.test.js",
+      "test/net/world1.test.js",
+      "test/net/soc1_hub.test.js",
+      "test/net/auditsoc.test.js"
     ],
     "note": "SCALE5a (re-aimed by content): a socket adopted takes its place in the index's order (`_enter`). A socket opened since the last walk is unknown to the index - a room full of silent sockets is never given back. SCALE5b (re-aimed by content): the adopt now also reindexes. SCALE5b (re-aimed by content): the adopt also notes the peak."
   },
@@ -37,29 +37,29 @@
     "old": "    if (this._idx.size) { const live = new Set(sockets); for (const ws of [...this._idx.keys()]) if (!live.has(ws) && !ws.virtual) { this._idx.delete(ws); moved = true; } }",
     "new": "",
     "tests": [
-      "test/scale2b.test.js",
-      "test/online_relay.test.js",
-      "test/auditwb_relay.test.js",
-      "test/chat1.test.js",
-      "test/world1.test.js",
-      "test/soc1_hub.test.js",
-      "test/auditsoc.test.js"
+      "test/net/scale2b.test.js",
+      "test/server/online_relay.test.js",
+      "test/net/gate/auditwb_relay.test.js",
+      "test/net/chat1.test.js",
+      "test/net/world1.test.js",
+      "test/net/soc1_hub.test.js",
+      "test/net/auditsoc.test.js"
     ],
     "note": "A socket the runtime no longer holds stays in the index for ever. SCALE5c (re-aimed by content): the walk keeps a ShardSocket"
   },
   {
     "name": "SCALE2b-hello-bucket-stored-again",
     "file": "server/src/index.js",
-    "old": "        gate = tokenGate(this._hellos, now, chat ? CHAT_HELLO_HZ_MAX : HELLO_HZ_MAX);   // SCALE2b: in memory - see `_hellos`\n        this._hellos = gate.bucket;",
-    "new": "        gate = tokenGate(this._hellos, now, chat ? CHAT_HELLO_HZ_MAX : HELLO_HZ_MAX);   // SCALE2b: in memory - see `_hellos`\n        this._hellos = gate.bucket; await this.state.storage.put('hellos', gate.bucket);",
+    "old": "        gate = tokenGate(this._hellos, now, this._helloHz(a.key));   // SCALE2b: in memory - see `_hellos`; GATE-DOOR: a court's (and its copies') door is its opening's\n        this._hellos = gate.bucket;",
+    "new": "        gate = tokenGate(this._hellos, now, this._helloHz(a.key));   // SCALE2b: in memory - see `_hellos`; GATE-DOOR: a court's (and its copies') door is its opening's\n        this._hellos = gate.bucket; await this.state.storage.put('hellos', gate.bucket);",
     "tests": [
-      "test/scale2b.test.js",
-      "test/online_relay.test.js",
-      "test/auditwb_relay.test.js",
-      "test/chat1.test.js",
-      "test/world1.test.js",
-      "test/soc1_hub.test.js",
-      "test/auditsoc.test.js"
+      "test/net/scale2b.test.js",
+      "test/server/online_relay.test.js",
+      "test/net/gate/auditwb_relay.test.js",
+      "test/net/chat1.test.js",
+      "test/net/world1.test.js",
+      "test/net/soc1_hub.test.js",
+      "test/net/auditsoc.test.js"
     ],
     "note": "The hello bucket written to storage on every hello, as it was."
   },
@@ -69,13 +69,13 @@
     "old": "      if (held !== m.secret || !this._secrets.has(m.id)) {",
     "new": "      if (true) {",
     "tests": [
-      "test/scale2b.test.js",
-      "test/online_relay.test.js",
-      "test/auditwb_relay.test.js",
-      "test/chat1.test.js",
-      "test/world1.test.js",
-      "test/soc1_hub.test.js",
-      "test/auditsoc.test.js"
+      "test/net/scale2b.test.js",
+      "test/server/online_relay.test.js",
+      "test/net/gate/auditwb_relay.test.js",
+      "test/net/chat1.test.js",
+      "test/net/world1.test.js",
+      "test/net/soc1_hub.test.js",
+      "test/net/auditsoc.test.js"
     ],
     "note": "A reconnect writes the id's secret it already holds."
   },
@@ -85,13 +85,13 @@
     "old": "      if (!chat && (!this._looks.has(m.id) || JSON.stringify(this._looks.get(m.id)) !== JSON.stringify(m.look))) {",
     "new": "      if (!chat) {",
     "tests": [
-      "test/scale2b.test.js",
-      "test/online_relay.test.js",
-      "test/auditwb_relay.test.js",
-      "test/chat1.test.js",
-      "test/world1.test.js",
-      "test/soc1_hub.test.js",
-      "test/auditsoc.test.js"
+      "test/net/scale2b.test.js",
+      "test/server/online_relay.test.js",
+      "test/net/gate/auditwb_relay.test.js",
+      "test/net/chat1.test.js",
+      "test/net/world1.test.js",
+      "test/net/soc1_hub.test.js",
+      "test/net/auditsoc.test.js"
     ],
     "note": "A reconnect writes the look it already holds."
   },
@@ -101,13 +101,13 @@
     "old": "    const v = await this.state.storage.get(secretKey(id));",
     "new": "    const v = null; void secretKey;",
     "tests": [
-      "test/scale2b.test.js",
-      "test/online_relay.test.js",
-      "test/auditwb_relay.test.js",
-      "test/chat1.test.js",
-      "test/world1.test.js",
-      "test/soc1_hub.test.js",
-      "test/auditsoc.test.js"
+      "test/net/scale2b.test.js",
+      "test/server/online_relay.test.js",
+      "test/net/gate/auditwb_relay.test.js",
+      "test/net/chat1.test.js",
+      "test/net/world1.test.js",
+      "test/net/soc1_hub.test.js",
+      "test/net/auditsoc.test.js"
     ],
     "note": "After a wake no secret guards an id - a thief takes it."
   },
@@ -117,8 +117,8 @@
     "old": "    if (this._worldMemo !== undefined) return this._worldMemo;   // SCALE2b: read once a wake, kept, and set by every write",
     "new": "",
     "tests": [
-      "test/scale2b.test.js",
-      "test/world1.test.js"
+      "test/net/scale2b.test.js",
+      "test/net/world1.test.js"
     ],
     "note": "Every hello reads the room's whole memory from storage again."
   },
@@ -128,8 +128,8 @@
     "old": "      this._worldMemo = raw;   // SCALE2b: the welcome's copy is the one just stored",
     "new": "",
     "tests": [
-      "test/scale2b.test.js",
-      "test/world1.test.js"
+      "test/net/scale2b.test.js",
+      "test/net/world1.test.js"
     ],
     "note": "A publish stores the memory and the welcome goes on handing out the copy from before it."
   },
@@ -139,13 +139,13 @@
     "old": "    if (!lazy || !(now - (this._attachedAt.get(ws) ?? -Infinity) < ATTACH_LAZY_MS)) {",
     "new": "    if (true) {",
     "tests": [
-      "test/scale2b.test.js",
-      "test/online_relay.test.js",
-      "test/auditwb_relay.test.js",
-      "test/chat1.test.js",
-      "test/world1.test.js",
-      "test/soc1_hub.test.js",
-      "test/auditsoc.test.js"
+      "test/net/scale2b.test.js",
+      "test/server/online_relay.test.js",
+      "test/net/gate/auditwb_relay.test.js",
+      "test/net/chat1.test.js",
+      "test/net/world1.test.js",
+      "test/net/soc1_hub.test.js",
+      "test/net/auditsoc.test.js"
     ],
     "note": "Every pose rewrites the socket's whole attachment."
   },
@@ -155,13 +155,13 @@
     "old": "{ pose: posed ? m.p : a.pose }, turned, posed && !stopped);",
     "new": "{ pose: posed ? m.p : a.pose }, turned, posed);",
     "tests": [
-      "test/scale2b.test.js",
-      "test/online_relay.test.js",
-      "test/auditwb_relay.test.js",
-      "test/chat1.test.js",
-      "test/world1.test.js",
-      "test/soc1_hub.test.js",
-      "test/auditsoc.test.js"
+      "test/net/scale2b.test.js",
+      "test/server/online_relay.test.js",
+      "test/net/gate/auditwb_relay.test.js",
+      "test/net/chat1.test.js",
+      "test/net/world1.test.js",
+      "test/net/soc1_hub.test.js",
+      "test/net/auditsoc.test.js"
     ],
     "note": "A stop's pose waits for the lazy write - a wake stands the player short of where they stopped."
   },
@@ -171,7 +171,7 @@
     "old": "    this._parks ??= this.state.storage.list({ prefix: 'park:' }).then((got) => new Map(got));",
     "new": "    this._parks = this.state.storage.list({ prefix: 'park:' }).then((got) => new Map(got));",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "Every cell hello lists the parked teams from storage again."
   },
@@ -181,7 +181,7 @@
     "old": "    else while (this.size >= this.max) this.delete(this.keys().next().value);",
     "new": "    else if (this.size >= this.max) this.clear();",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "Past the bound the whole map goes - the thrash _recs and _cool had."
   },
@@ -191,7 +191,7 @@
     "old": "    if (this.has(k)) this.delete(k);",
     "new": "    if (this.has(k)) return super.set(k, v);",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "A key set again keeps its old place - the warmest entry goes first."
   },
@@ -201,7 +201,7 @@
     "old": "fetch(new Request(`https://relay.internal${GATE_INTERNAL_FELL}`, { method: 'POST', body: JSON.stringify(body), signal: AbortSignal.timeout(ROOM_CALL_MS) }))",
     "new": "fetch(new Request(`https://relay.internal${GATE_INTERNAL_FELL}`, { method: 'POST', body: JSON.stringify(body) }))",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "A hung hub holds every gate's kill for as long as it hangs."
   },
@@ -211,7 +211,7 @@
     "old": "    if (!force && now - this.since < METRICS_WINDOW_MS) return false;",
     "new": "",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "A point written on every frame - millions a day."
   },
@@ -221,7 +221,7 @@
     "old": " this._metricsTick(true); }   // SCALE2b: a drained room says its last window",
     "new": " }",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "A room that drains loses its last window's counts."
   },
@@ -231,7 +231,7 @@
     "old": "      if (k === 'get' || k === 'list') return (...args) => { metrics.c.reads++; return v.apply(t, args); };",
     "new": "      if (k === 'get' || k === 'list') return (...args) => v.apply(t, args);",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "The metrics never see a storage read."
   },
@@ -241,7 +241,7 @@
     "old": "    ...(Number.isInteger(ts) && ts >= 0 && ts < POSE_TS_MOD ? { ts } : {}),",
     "new": "    ...(Number.isInteger(ts) && ts >= 0 ? { ts: Math.min(ts, POSE_TS_MOD - 1) } : {}),",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "An out-of-range time clamped - every later pose ordered behind it."
   },
@@ -251,7 +251,7 @@
     "old": "    ...(Number.isInteger(ts) && ts >= 0 && ts < POSE_TS_MOD ? { ts } : {}),",
     "new": "    ...({}),",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "The relay strips the send time - no listener can order anything."
   },
@@ -261,7 +261,7 @@
     "old": "return d > POSE_TS_MOD / 2 ? d - POSE_TS_MOD : d; };",
     "new": "return d; };",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "Across the wrap an older pose reads newer."
   },
@@ -271,9 +271,9 @@
     "old": "  for (let i = 0; i < n; i++) if (d[i] < cut) nearIdx.push(i);",
     "new": "  for (let i = 0; i < n; i++) if (d[i] <= cut) nearIdx.push(i);",
     "tests": [
-      "test/scale2b.test.js",
-      "test/slam6.test.js",
-      "test/slam10.test.js"
+      "test/net/scale2b.test.js",
+      "test/net/slam6.test.js",
+      "test/net/slam10.test.js"
     ],
     "note": "Every listener AT the bound is taken into the near set - more than POSE_FAN_MAX at a tie, and the ones past the bound hear every pose instead of their far turn."
   },
@@ -283,7 +283,7 @@
     "old": "  for (let i = 0; i < n && nearIdx.length < max; i++) if (d[i] === cut) nearIdx.push(i);",
     "new": "  for (let i = n - 1; i >= 0 && nearIdx.length < max; i--) if (d[i] === cut) nearIdx.push(i);",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "Ties at the bound taken from the end of the list - not the near set the sort gave."
   },
@@ -293,7 +293,7 @@
     "old": "    if (Number.isInteger(pose.ts)) return this._arriveTimed(p, pose, now, room, intro);   // SCALE2b: a pose that says when it was said",
     "new": "    if (false) return this._arriveTimed(p, pose, now, room, intro);   // SCALE2b: a pose that says when it was said",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "A timed pose heard through one room at a time - the quicker room's newer pose waits for the slower one's."
   },
@@ -303,7 +303,7 @@
     "old": "      else if (now - (p.tsAt ?? -Infinity) <= TS_RESYNC_MS) { p.seenAt = now; return; }   // a late copy, or the same one again",
     "new": "      else if (false) { p.seenAt = now; return; }   // a late copy, or the same one again",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "An older copy restarts the stream - the peer walks back."
   },
@@ -313,7 +313,7 @@
     "old": "      else { u = pose.ts; p.path = null; p.cadence = []; p.offs = []; p.movedU = null; }   // the sender's clock started over",
     "new": "      else { p.seenAt = now; return; }   // the sender's clock started over",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "A sender whose clock went back is never heard again."
   },
@@ -323,7 +323,7 @@
     "old": "    const target = now - (fastest + cadence + Math.min(cadence, Math.max(...offs) - fastest));",
     "new": "    const target = now - (fastest + cadence);",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "No cushion for the late pose - the peer stops on a jittering line."
   },
@@ -333,7 +333,7 @@
     "old": "    const longest = wasMoving ? Math.max(GAP_MAX_MS, cadence) : cadence;",
     "new": "    const longest = Math.max(GAP_MAX_MS, cadence);",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "A step after standing still is walked over a second of the standing. AUDIT 637 (re-aimed by content): C2 walks a moving peer's own interval whole (`Math.max(GAP_MAX_MS, cadence)`); the mutant still hands the still arm the moving one's."
   },
@@ -343,7 +343,7 @@
     "old": "    if (p.cur >= end && !wasMoving) p.cur = Math.max(p.cur, Math.min(target, startsAt));   // waiting at the end: the standing is skipped",
     "new": "",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "The cursor races across the standing before the step - the step comes late."
   },
@@ -353,7 +353,7 @@
     "old": "h.ws.send(s ??= JSON.stringify({ t: 'pose', p: out }));",
     "new": "h.ws.send(JSON.stringify({ t: 'pose', p: { ...pose, ts: this._stampTs() } }));",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "Each room's copy stamped apart - a listener cannot tell them for one pose."
   },
@@ -363,7 +363,7 @@
     "old": "    this._tsLast = Math.max((this._tsLast ?? -Infinity) + 1, Math.floor(this._now()));",
     "new": "    this._tsLast = Math.floor(this._now());",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "Two poses in one millisecond share a time - the second is a repeat."
   },
@@ -373,8 +373,8 @@
     "old": "    if (!(this._ws && this.status === 'open') && ![...this._halo.values()].some((h) => h.status === 'open' && h.ws)) return false;   // nowhere to say it: nothing stamped\n",
     "new": "",
     "tests": [
-      "test/scale2b.test.js",
-      "test/online.test.js"
+      "test/net/scale2b.test.js",
+      "test/net/online.test.js"
     ],
     "note": "A pose that went nowhere spends a stamp."
   },
@@ -384,7 +384,7 @@
     "old": "    if (online.othersHere === 0) { _foesFullAt = -Infinity; return false; }",
     "new": "",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "A full foes frame every two seconds to a room with nobody else in it - the room never sleeps."
   },
@@ -394,7 +394,7 @@
     "old": "    if (online.othersHere === 0) { _foesFullAt = -Infinity; return false; }",
     "new": "    if (online.othersHere === 0) { return false; }",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "The first frame after a joiner arrives is a delta - the foes standing still are never said to them."
   },
@@ -404,7 +404,7 @@
     "old": "    if (!force && said === _worldSaid && key === _worldSaidKey && now - _worldSaidAt < WORLD_REPUBLISH_MS) return false;   // SCALE2b: the room holds it already\n",
     "new": "",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "An unchanged memory is written to the room's storage every fifteen seconds."
   },
@@ -414,7 +414,7 @@
     "old": "!hidden() && now() - landedAt < REALM_IDLE_CHECKPOINT_MS && idleKeyOf(text, summary) === landedKey",
     "new": "!hidden() && idleKeyOf(text, summary) === landedKey",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "An idle player's clock never reaches the service."
   },
@@ -424,7 +424,7 @@
     "old": "  const { classicMinutes, worldMinutes, ...rest } = s;",
     "new": "  const rest = { ...s };",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "The clock moves every checkpoint - nothing is ever skipped."
   },
@@ -434,7 +434,7 @@
     "old": "!pending && !running && !missed && !hidden() && now()",
     "new": "!pending && !running && !missed && now()",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "A page going away answers its save without sending it."
   },
@@ -444,8 +444,8 @@
     "old": "      if (idleOk && landedKey != null",
     "new": "      if (landedKey != null",
     "tests": [
-      "test/scale2b.test.js",
-      "test/realm5.test.js"
+      "test/net/scale2b.test.js",
+      "test/net/realm5.test.js"
     ],
     "note": "An act's checkpoint is skipped too - the act runs over a record that does not hold its gold."
   },
@@ -455,7 +455,7 @@
     "old": "      if (link.othersHere === 0) { sentAt = -Infinity; welcome = -1; }",
     "new": "      if (false) { sentAt = -Infinity; welcome = -1; }",
     "tests": [
-      "test/scale2b.test.js"
+      "test/net/scale2b.test.js"
     ],
     "note": "The boat's full record every second to an empty cell."
   }

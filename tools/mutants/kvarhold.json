@@ -5,7 +5,7 @@
     "old": "      if (isMainStoryDungeon(regionData.mapTable[i].mapId)) continue;\n",
     "new": "",
     "tests": [
-      "test/kvarhold.test.js"
+      "test/systems/quest/kvarhold.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (sd?.siteType === SITE_TYPES.Dungeon) return this._reseatStoryDungeon(world);   // KVAR-HOLD\n",
     "new": "",
     "tests": [
-      "test/kvarhold.test.js"
+      "test/systems/quest/kvarhold.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
     "new": "    if (this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
     "tests": [
-      "test/kvarhold.test.js"
+      "test/systems/quest/kvarhold.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
     "new": "    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1) return false;",
     "tests": [
-      "test/kvarhold.test.js"
+      "test/systems/quest/kvarhold.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    const next = site ? this._carryAssignments(sd, site) : null;\n    if (!next) return false;\n    this.siteDetails = { ...next,",
     "new": "    const next = site;\n    if (!next) return false;\n    this.siteDetails = { ...next,",
     "tests": [
-      "test/kvarhold.test.js"
+      "test/systems/quest/kvarhold.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "        try { world.discoverLocation?.(next.regionName, next.locationName); } catch { /* the Settings' repair files it again */ }",
     "new": "        try { void world; } catch { /* the Settings' repair files it again */ }",
     "tests": [
-      "test/kvarhold.test.js"
+      "test/systems/quest/kvarhold.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    const site = this._remoteDungeonSite(world, sd.regionIndex, p2, { origin }) ?? this._remoteDungeonSite(world, sd.regionIndex, -1, { origin });",
     "new": "    const site = this._remoteDungeonSite(world, sd.regionIndex + 1, p2, { origin }) ?? this._remoteDungeonSite(world, sd.regionIndex + 1, -1, { origin });",
     "tests": [
-      "test/kvarhold.test.js"
+      "test/systems/quest/kvarhold.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if ((this.scope !== Scopes.Remote && this.scope !== Scopes.Local) || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
     "new": "    if (this.scope !== Scopes.Remote || this.p1 !== 1 || !isMainStoryDungeon(sd.mapId)) return false;",
     "tests": [
-      "test/kvarhold.test.js"
+      "test/systems/quest/kvarhold.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    const reach = origin ? { origin, pixels: 0 } : this._questReach(world);",
     "new": "    const reach = this._questReach(world);",
     "tests": [
-      "test/kvarhold.test.js"
+      "test/systems/quest/kvarhold.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      resource.fitSiteToBuild?.(world);   // KVAR-HOLD's audit: a dungeon drawn again, fitted to the size its link now builds\n",
     "new": "",
     "tests": [
-      "test/kvarhold.test.js"
+      "test/systems/quest/kvarhold.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    const next = this._carryAssignments(sd, { ...sd, questSpawnMarkers, questItemMarkers });",
     "new": "    const next = { ...sd, questSpawnMarkers, questItemMarkers, selectedMarker: { targetResources: null } };",
     "tests": [
-      "test/kvarhold.test.js"
+      "test/systems/quest/kvarhold.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "        try { world.discoverLocation?.(next.regionName, next.locationName); } catch { /* the Settings' repair files it again */ }",
     "new": "        world.discoverLocation?.(next.regionName, next.locationName);",
     "tests": [
-      "test/kvarhold.test.js"
+      "test/systems/quest/kvarhold.test.js"
     ]
   }
 ]

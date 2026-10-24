@@ -20,7 +20,7 @@ rig's frame and draw, the HUD's preparation.
 The Morrowind rig's whole geometry pipeline, on the CPU, once per body
 per frame:
 
-1. `poseAssembly` (formats/mwFirstPerson.js) poses the skeleton, then
+1. `poseAssembly` (formats/morrowind/mwFirstPerson.js) poses the skeleton, then
    **skins every vertex** of every skinned piece (`mwSkin.skinBatch`) and
    places every rigid piece, then walks every vertex again for bounds.
 2. `packFpArm` (combat/fpArm.js) **de-indexes every triangle** into the
@@ -31,7 +31,7 @@ per frame:
 
 That runs for the first-person arm every frame, for the third-person
 body when you are in it, and for **every peer's body in view**
-(net/peerBodies.js draws each through the same `drawThird`). So the
+(net/peer/peerBodies.js draws each through the same `drawThird`). So the
 zone scales with the number of players standing near you, which is
 exactly the shape of a swing nobody could pin to one place.
 
@@ -100,7 +100,7 @@ it was.
 
 ## What is pinned, and what deliberately is not
 
-`test/perfrig1.test.js` (7): the skin loop bit-identical to the old
+`test/formats/morrowind/perfrig1.test.js` (7): the skin loop bit-identical to the old
 loop at several poses and across repeated calls; the accumulators the
 batch's, zeroed, and the second call constructing nothing sized to the
 mesh (a typed-array constructor count, which is how the 156 KB was
@@ -215,7 +215,7 @@ third-person frame stops short of the skin, the upload and the particle
 step. Nothing else about the rig moved; a caller that never heard of
 the flag poses every frame as before, and the first-person arm never
 takes it (its held sheet reads the posed camera node every frame).
-`net/peerBodies.js` decides which frames, by distance - `POSE_CADENCE`
+`net/peer/peerBodies.js` decides which frames, by distance - `POSE_CADENCE`
 `[[10, 1], [25, 2], [Infinity, 3]]`: every frame within 10 m, where a
 swing's arc is read; every second frame to 25 m; every third beyond,
 which at 60 fps is still twice the wire's rate and under the block. The
@@ -225,6 +225,11 @@ skipped its first frame would stand as the doll for a frame), bodies
 take a phase each so eight far bodies do not all skin on the same
 frame, and the skipped frames' dt is banked and handed to the particle
 step on the frame that poses, so a puff keeps wall time.
+
+HORSE-VIEW's audit (2026-10-21, `07-Rendering/Performance-Priority.md` HORSE-VIEW): the distance the cadence reads is
+the camera's that drew the last pass, over its lens (`net/peer/peerBodies.js` `cadenceD2` and `lensOf`) - the
+zoomed-out third-person camera stands 11.4 m behind the head, and the spyglass draws a body 80 m off as large as one
+10 m off. Before any pass, the distance from `near`, as written here.
 
 **Measured** by `tools/peerBodiesProbe.mjs`: the real PeerBodies over
 the real rig on the arm fixtures (`test/fixtures/mw/bodyRig.mjs`, the
@@ -236,7 +241,7 @@ pieces, so the probe's milliseconds understate a retail body by an
 order of magnitude and are not reported as a saving; the counts are
 exact and the skin is what PERF-RIG1 costed.
 
-**Pinned** in test/peercadence.test.js (7): the cadence's rows and its
+**Pinned** in test/net/peer/peercadence.test.js (7): the cadence's rows and its
 inclusive edges; PeerBodies stepping a stub rig every frame and posing
 near ones every frame and far ones one in three, evenly; the first step
 of a standing body posed whatever its phase; three bodies at one
@@ -350,7 +355,7 @@ that made it thrown away. That churn is the stutter: the skin and the
 sprite pass are paid every frame, but a build is a long task in the
 middle of one.
 
-**Four laws now** (`net/peerBodies.js`):
+**Four laws now** (`net/peer/peerBodies.js`):
 
 - **THE VIEW.** The last body pass's frustum is kept (`viewPlanes`: the
   left, right, bottom, top and near sides off `proj x view`, normalised -
@@ -405,7 +410,7 @@ the first fill. The fixture rig is four small pieces, so the probe reports
 counts, not milliseconds - and a retail body's skin is PERF-RIG1's ~0.3 ms
 at 3,000 vertices and more clothed, its build seconds.
 
-**Pinned** in `test/wb9h_crowd_bodies.test.js` (7): the view's sides off
+**Pinned** in `test/net/peer/wb9h_crowd_bodies.test.js` (7): the view's sides off
 the game's own mirrored lens; a body behind the eye neither drawn nor
 skinned while its clocks run, one just past the edge skinned inside the
 margin and not drawn, and one the view swings onto posed at no dt with
@@ -436,7 +441,7 @@ was kept (`_keepSpare` now keeps the spare a hand-over is for); a queued
 build read its peer's look when the queue reached it, keyed on the look
 asked for (it is built from the look its key names); and a concealed peer
 who took a spare was drawn open for its first frame (its veil is set as it
-stands). Pinned in `test/audit_wb9.test.js`; mutants in
+stands). Pinned in `test/net/gate/audit_wb9.test.js`; mutants in
 `tools/mutants/audit_wb9.json`.
 
 **Still open.** The sprite render is still one a SEEN body a frame (the
@@ -450,7 +455,7 @@ still a long task on the main thread when it comes.
 "Culling performance issues when using the morrowind model and around a large
 group of players." Read on the code after WB9h (no GPU here to measure): the
 crowd's skins were budgeted, but four costs were left, each fixed with the
-picture unchanged (`test/fb1001_mwcrowd.test.js`, `tools/mutants/fb1001_mwcrowd.json`):
+picture unchanged (`test/net/peer/fb1001_mwcrowd.test.js`, `tools/mutants/fb1001_mwcrowd.json`):
 
 - THE TURN. The skins are decided on the last body pass's view with
   CULL_MARGIN_M (2 m), about 11 degrees of lead at 10 m - and a body the view
@@ -538,7 +543,7 @@ world frame's `frame()`, and nothing closed it until the next world
 frame's first mark - the rAF wait counted as `air`. (`?perf=cpu` folded the
 menu frame's resolve into the world frames' `air` mean the same way.) The
 mark is a world frame's only now - `_perfOpen`, AUDIT 68 S16's flag -
-pinned in `test/auditretro2.test.js`.
+pinned in `test/ui/auditretro2.test.js`.
 
 ## GROUND-LAST - the ground is drawn after the meshes (2026-09-21)
 
@@ -596,3 +601,99 @@ a real page, 0 texels apart) are `04-Characters/Morrowind-NPCs.md` section 6, th
 open from this page: the build is a long main-thread task - MWNPC3 (section 8 there) shares its parse across bodies and drops a
 peer's reach sweep; a build gate across lanes is MWNPC4's. MWNPC2 (section 7 there) closed the other: every
 seen body's picture is taken in ONE bind of the sprite target now, a tile each, where each body took its own pass.
+
+## AOE-PERF - the boss's circles laid over their own ground; the crowd measured (FIELD BUGS 2026-10-13e, 2026-10-13)
+
+HellRay on Discord, `01-Overview/bugs/Field-Bugs-2026-10-13e.md`: *"massive FPS drops when the boss performs AoE attacks and
+circles appear on the ground ... Player sprites also cause severe performance drops, especially when more than 10 players
+are gathered in one area."* Measured first, by `tools/fb1013ePerfProbe.mjs`: the real Renderer in Chromium on SwiftShader
+(software GL - its time grows with the fragments and vertices it shades, so it measures overdraw; it is no GPU and its
+milliseconds are relative), 960x540, the enhanced lane on, the Burning Court's own mesh, art, lights and fog, the GL synced
+by a 1x1 read-back before and after the part measured, every case once a round and the median of five rounds. The
+numbers below were taken with the machine at a load average of 8-10 on four cores (other work running beside it); a first
+pass at a load of 40-50 gave the same ratios at four times the milliseconds and is not quoted.
+
+**What a frame costs.** The court alone: about 2.0 s a frame. The telegraph pass, at a fighter's eye (the third-person
+camera 8 m from him):
+
+| | fragments rasterised | its ms, before | after |
+|---|---|---|---|
+| his mark (every frame of the fight) | 0.39 of a screen -> 0.05 | 60 | 9 |
+| a blow alone (Slam, Hellfire, Nova, Spokes, Wrath) | 0.45-0.51, unchanged | 64-122 | the same, within the noise |
+| his burning ground, two groups | 0.96, unchanged | 207 | 174 (noise) |
+| his host's eight (bites, pulses, tethers, paths) | 1.51 -> 0.54 | 303 | 100 |
+| AoE: mark, Nova, ground, host - 12 passes | 3.37 -> 2.06 | 575 | 430 |
+| AoE: mark, Spokes, ground, host | 3.37 -> 2.06 | 572 | 407 |
+| the same from the first-person eye | 3.71 -> 2.15 | 575-582 | 300-373 |
+
+The crowd, the same eye: 8 Morrowind bodies (the committed 3D horse through the same skinned pass and sprite batch - a
+person's needs the player's own Data Files - 5,934 corners each) 157 ms; 12 players (8 bodies, 4 Eye Of The Beholder
+walkers past the cap) 226; 24 266; 40 265. Walkers alone (the sprite lane, one billboard a player): 8 66 ms, 12 81, 24
+142, 40 190. CPU a frame for any of it under 5 ms on this machine.
+
+**What dominated.** The telegraph: an AoE frame laid twelve blended passes over 3.4-3.7 screens of its fragment stage -
+in SwiftShader terms a quarter of the court's own frame on top of it, more than forty players. And SwiftShader pays for
+every fragment a quad rasterises, whether it discards it or not (his mark, nearly all discards, cost what the Wrath's
+whole floor does). Two kinds were laid over ground they never draw on at any pixel's size: his mark (TELEGRAPH_REACH past
+its chevron's tip, for a ring, the floor inside it and a chevron - no glow, no keyline, no wave) and his host's paths and
+tethers (the box about a lane's whole run from the rim, for a lane 0.7 m wide that writes nothing past itself).
+
+**What changed** (`render/gate/gateTelegraph.js`): his mark's quad is its own ground (`telegraphMarkReach`: its ring's reach,
+its chevron's base and its tip, a hair past), and a path's or a tether's is its own strip (`telegraphStrip`, the
+walkways' quad laid along it by the vertex stage, `uStrip`). Every other shape keeps TELEGRAPH_REACH: a blow's glow,
+keyline and wave reach as far as the pixel is large (at a far grazing pixel past 4 m), and burning ground's rim as far
+as its line - tighter quads there would cut what the old quads drew. The fragment stage is the one it was, byte for
+byte. THE LOOK, on the classic lane read back whole: the AoE frames drawn now and before differ in 675-885 texels, 18-94
+of them by more than 3/255 - all where the quads' moved corners land the floor's interpolated point a millimetre
+elsewhere on a hard edge (the chevron, a dash's end); the old pass against itself with the camera moved a millimetre
+differs in 15,500-16,600 (1,750-2,080 by more than 3/255).
+
+**Tried and not shipped: one pass a court.** Every shape of a court in one draw - a quad over the ground they covered
+between them, the fragment stage looping over the set (each shape's uniforms in a vec4 array) and compositing each as
+its blend did. It rasterised half a screen where the passes laid 3.4, and on SwiftShader it was slower by every
+measure: his mark alone 214 -> 720 ms, his host's eight 862 -> 2,774, the AoE frame 1,411 -> 6,743 (that pass at a load
+of 40) - a software rasteriser runs the loop's every shape at every fragment of the union, and the shape's kind read out
+of an array no longer branches as a uniform does. A GPU might have gained on the blending; nothing here could show it.
+
+**The crowd, read and not changed.** A Morrowind body's picture is taken every frame it is seen (MWNPC2's tile), at most
+BODIES_MAX (8) of them, about 20 ms each here; a player past the cap is one billboard. A body's tile kept across frames
+would be redrawn every frame anyway - a standing body breathes (PEER-CADENCE poses a near body every frame) and the
+court's braziers flicker its light - so keeping it would change what it looks like; the cost scales with the players
+drawn and their size on the screen, and nothing in it is drawn for nothing. NOT SEEN: the classic class sprite and the
+paperdoll (they need ARENA2), the name layer and the auras (not drawn by the probe), and any of this on a GPU.
+
+Pinned: `test/net/gate/fb1013e_aoeperf.test.js` (4) - his mark's quad holds every fragment the shader draws for it at four
+pixel sizes under each term of its reach and is a third of the box it was; a path's strip, as the vertex stage lays it,
+holds every fragment the shader draws for it, the pass laying it on the walkways' quad and putting the court's back;
+every other shape keeps TELEGRAPH_REACH; and the count at a fighter's eye at 960x540 and 1920x1080 (the AoE frame under
+0.65 of what it rasterised, his mark and his host's a third). `tools/mutants/fb1013e_aoeperf.json`: 11 mutants, all dead.
+
+**What its probe did not time: the shadow pass** (counted 2026-10-14). The rounds above time the telegraph and the crowd's
+draws after `beginFrame`; the shadow maps are drawn inside it (renderer.js `_renderPasses`), from the last frame's records
+under this frame's lights, so the court's own lights never entered them. `tools/courtShadowProbe.mjs` counts that pass:
+the real Renderer and ShadowPass on a counting GL, the court's own mesh, its light composition (`world/gate/gateArena.js`
+withCourtLights over courtLightsNear, under everyLightCasts, as the dungeon arm composes it), Steady shadows, eight
+Morrowind bodies recorded about him with a new pose every frame (5,934 corners each). A frame, mean (worst), before
+LIGHT-ID and after it:
+
+| | 512 faces | lo faces | blits | depth draws | body corners in the maps |
+|---|---|---|---|---|---|
+| a still court | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 | 0 / 0 |
+| the crowd posed, he stands | 6 / 6 | 0 / 0 | 5 / 5 | 19 / 19 | 0.11M / 0.11M |
+| he walks among them | 12 / 6 | 6 / 0 | 6 / 0 | 25 / 19 | 0.08M / 0.08M |
+| a Hellfire lands on five (its 27 lit frames and the 2 after) | 36 (66) / 36 (66) | 4 (126) / 2 (54) | 24 (35) / 24 (35) | 79 (238) / 76 (164) | 0.43M / 0.43M |
+
+All of it is his. withCourtLights marks no light carried, so his glow (it moves with him) and each landing flash
+(gateFx.js FX_KINDS' `light`, for FX_LIGHT_MS) take a 512 caster slot as a brazier does and replay every body in their
+reach six faces a frame; the braziers' maps are cached and none reaches a crowd standing about him. Composed carried -
+as a spell's impact light, the wings' and a peer's torch are - they would cost nothing and cast no shadow: a look Mac
+was asked about and kept (2026-10-14, "Engine fix (Recommended)"). What the pass spent on them for nothing was its own:
+a moving light was found by its position, so his glow was a new light every frame - its static cache redrawn and copied
+into the live layers under the movers, six faces of each - and DISC15 drew a lo map for every light holding a 512 slot,
+which no shader reads while it holds it. LIGHT-ID (`07-Rendering/Enhanced-Lighting-Arc.md` LIGHT-ID) names each light
+by its producer's record: his glow moving draws its cube whole, straight into its layers (six faces, no copy, the same
+casters), and a light in the twelve draws no lo map - the landing's worst lo frame is the session's first landing
+growing the lo array, now the lamps past the twelve alone. The flashes stand still, so their cubes are what they were.
+`test/render/lightid.test.js` pins the walk's and the landing's counts both ways. On SwiftShader the pass was a few per cent of
+the court's frame (the lit court dominates there); on a GPU it is framebuffer switches and the bodies' corners, not
+measured here.

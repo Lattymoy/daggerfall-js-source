@@ -24,6 +24,13 @@ export const ARMOR_MATERIAL = Object.freeze({
 export const isLeather = (m) => m === ARMOR_MATERIAL.Leather;
 export const isChain = (m) => m === ARMOR_MATERIAL.Chain || m === ARMOR_MATERIAL.Chain2;
 export const isPlate = (m) => m >= ARMOR_MATERIAL.Iron;
+/** A plate piece's metal as WeaponMaterialTypes (Iron 0 .. Daedric 9): FormulaHelper.RandomArmorMaterial mints plate
+ *  as `0x0200 + RandomMaterial(...)` (combat/enemyEquipment.js randomArmorMaterial), so the low byte IS the metal - the
+ *  index ItemBuilder's per-material tables take for a plate piece, and every one of them reads it here (AUDIT CLAWS B2):
+ *  its value (itemTemplates.js itemBaseValue), weight (inventory.js unitWeightInKg), condition (itemTemplates.js
+ *  mintCondition) and armour value (materialArmorValue below), and the claws' metal (combat/clawMetal.js). Null for
+ *  leather, chain, or a value past Daedric - which every table's own fallback reads as it read an index past 9. */
+export const plateMetal = (m) => (isPlate(m) && m <= ARMOR_MATERIAL.Daedric ? m - ARMOR_MATERIAL.Iron : null);
 
 /** BodyParts (ItemEnums.cs:140-150). */
 export const BODY_PARTS = Object.freeze({ Head: 0, RightArm: 1, LeftArm: 2, Chest: 3, Hands: 4, Legs: 5, Feet: 6 });
@@ -38,7 +45,7 @@ const PLATE_ARMOR_VALUES = [7, 9, 9, 11, 13, 15, 15, 17, 19, 21];
 export function materialArmorValue(material) {
   if (isLeather(material)) return 3;
   if (isChain(material)) return 6;
-  if (isPlate(material)) return PLATE_ARMOR_VALUES[material - ARMOR_MATERIAL.Iron] ?? 0;
+  if (isPlate(material)) return PLATE_ARMOR_VALUES[plateMetal(material)] ?? 0;
   return 0;
 }
 
@@ -77,7 +84,7 @@ export const isShieldTemplate = (templateIndex) => SHIELD_VALUES.has(templateInd
  *    FOOTWEAR window (MensClothing/WomensClothing), and C# excludes it.
  *
  *  `item.artifact` is IsArtifact, the flags word's artifactMask bit
- *  (:308-311), written by createArtifact (systems/loot.js) where DFU
+ *  (:308-311), written by createArtifact (systems/loot/loot.js) where DFU
  *  writes the word (SetArtifact :617) and read back out of the classic
  *  flags on import (systems/classicSave.js).
  *

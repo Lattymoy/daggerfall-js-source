@@ -1,0 +1,299 @@
+[
+  {
+    "name": "SCR-shown-without-the-dev-glyph",
+    "file": "src/net/chatVoice.js",
+    "old": "return Array.isArray(g) && g.includes('dev');",
+    "new": "return Array.isArray(g);",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-shown-on-every-tab",
+    "file": "src/net/chatVoice.js",
+    "old": "shown: (tabId) => admin() && PUBLIC_TABS.includes(tabId),",
+    "new": "shown: (tabId) => admin(),",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-red-not-wrapped",
+    "file": "src/net/chatVoice.js",
+    "old": "return onSend?.(tabId, `/red ${text.trim()}`);",
+    "new": "return onSend?.(tabId, text);",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-command-wrapped",
+    "file": "src/net/chatVoice.js",
+    "old": "if (!voice.shown(tabId) || isCommandLine(text)) return",
+    "new": "if (!voice.shown(tabId)) return",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-red-not-kept",
+    "file": "src/net/chatVoice.js",
+    "old": "setPref(VOICE_PREF, want === 'red' ? 'red' : 'me'); return; }",
+    "new": "setPref(VOICE_PREF, 'me'); return; }",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-default-red",
+    "file": "src/systems/uiPrefs.js",
+    "old": "  chatAs: 'me',",
+    "new": "  chatAs: 'red',",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-hidden-me-not-asked",
+    "file": "src/net/chatVoice.js",
+    "old": "if (want === 'red' || !hidden) {",
+    "new": "if (want === 'red' || true) {",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-yes-never-asks-the-panel",
+    "file": "src/net/chatVoice.js",
+    "old": "void showMe().catch(() => false).then(",
+    "new": "void Promise.resolve(true).then(",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-panel-no-said-as-yes",
+    "file": "src/net/chatVoice.js",
+    "old": "ok ? voiceShownText() : voiceOpenPanelText()",
+    "new": "voiceShownText()",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-failed-ask-said-as-yes",
+    "file": "src/net/chatVoice.js",
+    "old": "void showMe().catch(() => false).then(",
+    "new": "void showMe().catch(() => true).then(",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-ask-never-lapses",
+    "file": "src/net/chatVoice.js",
+    "old": "asking: () => now() - askedAt <= VOICE_ASK_MS,",
+    "new": "asking: () => askedAt > -Infinity,",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-hidden-me-line-sent",
+    "file": "src/net/chatVoice.js",
+    "old": "if (hidden) { say(tabId, voiceHiddenText()); return false; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-hidden-me-line-cleared",
+    "file": "src/net/chatVoice.js",
+    "old": "say(tabId, voiceHiddenText()); return false; }",
+    "new": "say(tabId, voiceHiddenText()); return true; }",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-door-ask-to-any-origin",
+    "file": "src/net/staffHook.js",
+    "old": "win.postMessage({ dfoStaff: 'hide', on: want }, origin);",
+    "new": "win.postMessage({ dfoStaff: 'hide', on: want }, '*');",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-door-another-sender",
+    "file": "src/net/staffHook.js",
+    "old": "if (e?.source === win && e?.origin === origin && m?.dfoStaff === 'hide'",
+    "new": "if (e?.origin === origin && m?.dfoStaff === 'hide'",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-door-another-origin",
+    "file": "src/net/staffHook.js",
+    "old": "if (e?.source === win && e?.origin === origin && m?.dfoStaff === 'hide'",
+    "new": "if (e?.source === win && m?.dfoStaff === 'hide'",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-door-ask-its-own-answer",
+    "file": "src/net/staffHook.js",
+    "old": "m?.dfoStaff === 'hide' && m.on === want && 'ok' in m) done(m.ok === true);",
+    "new": "m?.dfoStaff === 'hide' && m.on === want) done(m.ok === true);",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-door-no-timeout",
+    "file": "src/net/staffHook.js",
+    "old": "const timer = setTimer(() => done(false), STAFF_TOKEN_WAIT_MS);",
+    "new": "const timer = 0;",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-door-listener-kept",
+    "file": "src/net/staffHook.js",
+    "old": "clearTimer(timer); win.removeEventListener?.('message', heard); resolve(ok);",
+    "new": "clearTimer(timer); resolve(ok);",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-mint-hidden-dropped",
+    "file": "src/net/accountClient.js",
+    "old": "...(answer.data.hidden === 1 ? { hidden: true } : {}) };",
+    "new": "};",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-host-not-forwarding",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "      host.voice.adopt(issued);   // STAFF-CHAT-RED",
+    "new": "      void issued;   // STAFF-CHAT-RED",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-switch-after-the-field",
+    "file": "src/ui/chatPanel.js",
+    "old": "form.append(...(voiceBox ? [voiceBox] : []), input, emojiBtn, send, hide, close);",
+    "new": "form.append(input, ...(voiceBox ? [voiceBox] : []), emojiBtn, send, hide, close);",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-panel-sends-past-the-voice",
+    "file": "src/ui/chatPanel.js",
+    "old": "(voice ? voice.send(log.active, text, onSend) : onSend?.(log.active, text))",
+    "new": "onSend?.(log.active, text)",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-switch-always-drawn",
+    "file": "src/ui/chatPanel.js",
+    "old": "voiceBox.style.display = shown ? '' : 'none';",
+    "new": "voiceBox.style.display = '';",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-switch-not-painted",
+    "file": "src/ui/chatPanel.js",
+    "old": "      paintVoice();   // STAFF-CHAT-RED: every frame",
+    "new": "      // STAFF-CHAT-RED: every frame",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-pressed-side-wrong",
+    "file": "src/ui/chatPanel.js",
+    "old": "b.setAttribute('aria-pressed', want === mode ? 'true' : 'false');",
+    "new": "b.setAttribute('aria-pressed', want === 'me' ? 'true' : 'false');",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-ask-not-drawn",
+    "file": "src/ui/chatPanel.js",
+    "old": "voiceBtns.me.textContent = asking ? t('net.chat.voiceMeAsk', 'Me?') : voiceMeText();",
+    "new": "voiceBtns.me.textContent = voiceMeText();",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-caret-not-back",
+    "file": "src/ui/chatPanel.js",
+    "old": "voice.pick(want, log.active); paintVoice(); input.focus?.(); });",
+    "new": "voice.pick(want, log.active); paintVoice(); });",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-switch-key-reaches-the-game",
+    "file": "src/ui/chatPanel.js",
+    "old": "voiceTab(e.target, e.shiftKey).focus?.(); } else swallowBrowserKey(e);\n      e.stopPropagation();\n      return;",
+    "new": "voiceTab(e.target, e.shiftKey).focus?.(); } else swallowBrowserKey(e);\n      return;",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-tab-never-reaches-the-switch",
+    "file": "src/ui/chatPanel.js",
+    "old": "      else if (e.code === 'Tab' && voice?.shown(log.active)) { e.preventDefault(); voiceTab(input, e.shiftKey).focus?.(); }",
+    "new": "      else if (e.code === 'Tab' && voice?.shown(log.active)) { e.preventDefault(); }",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-tab-walk-one-way",
+    "file": "src/ui/chatPanel.js",
+    "old": "return ring[(ring.indexOf(from) + (back ? 2 : 1)) % 3];",
+    "new": "return ring[(ring.indexOf(from) + 1) % 3];",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-escape-not-back-to-the-field",
+    "file": "src/ui/chatPanel.js",
+    "old": "e.stopImmediatePropagation(); input.focus?.(); return; }",
+    "new": "e.stopImmediatePropagation(); return; }",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  },
+  {
+    "name": "SCR-panel-built-without-it",
+    "file": "src/scenes/world.js",
+    "old": "      voice: chatSafety.voice,   // STAFF-CHAT-RED",
+    "new": "      // STAFF-CHAT-RED",
+    "tests": [
+      "test/ui/staffchatred.test.js"
+    ]
+  }
+]

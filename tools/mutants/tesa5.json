@@ -110,7 +110,7 @@
   },
   {
     "name": "TESA5-the-painter-blind-to-it",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "    const join = arena ? 0 : arenaJoinByte(px, py);",
     "new": "    const join = 0;",
     "tests": [
@@ -119,7 +119,7 @@
   },
   {
     "name": "TESA5-the-flag-blind-to-it",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "    arenaPainted = !!(join || (arena &&",
     "new": "    arenaPainted = !!(false || (arena &&",
     "tests": [
@@ -128,7 +128,7 @@
   },
   {
     "name": "TESA5-the-verge-blind-to-it",
-    "file": "src/world/roadVerge.js",
+    "file": "src/world/road/roadBand.js",
     "old": "pathsDataPoint(net, mx, my) | arenaJoinByte(mx, my) :",
     "new": "pathsDataPoint(net, mx, my) :",
     "tests": [
@@ -147,9 +147,9 @@
   },
   {
     "name": "TESA5-the-bay-by-heights",
-    "file": "src/scenes/world.js",
-    "old": "(onTheBay(x, y) ? !isWaterPixel(maps.getClimateIndex(x, y), woods.getHeightMapValue(x, y)) :",
-    "new": "(onTheBay(x, y) ? woods.getHeightMapValue(x, y) > WATER_BYTE :",
+    "file": "src/scenes/tamrielSweepsHost.js",
+    "old": "(onTheBay(x, y) ? !isWaterPixel(maps.getClimateIndex(x, y), host.woods.getHeightMapValue(x, y)) :",
+    "new": "(onTheBay(x, y) ? host.woods.getHeightMapValue(x, y) > WATER_BYTE :",
     "tests": [
       "test/tesa5_join.test.js"
     ]
@@ -166,7 +166,7 @@
   },
   {
     "name": "TESA5-the-bay-never-stale",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielSweepsHost.js",
     "old": "  const arenaRoadsStale = (p, epoch, layer, reset = true) => p.arenaRoadsEpoch < epoch",
     "new": "  const arenaRoadsStale = (p, epoch, layer, reset = true) => !onTheBay(p.px, p.py) && p.arenaRoadsEpoch < epoch",
     "tests": [

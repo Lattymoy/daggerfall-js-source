@@ -20,6 +20,7 @@
 // albedo goes into the ground's own fragment program in place of the tile (snowTerrainFs), so the snow takes every
 // light the ground takes - the sun and its shadow map, the moon, the clouds' shadow, the lanterns, the fog - on either
 // lane. Port-Ledger A, SNOWFALL1.
+import { snowCoreGlsl, SNOW_TILE_M } from './snowCoverGlsl.js';   // AUDIT PRECIP GROUND-9: the ground's own snow, where the mod's lies
 
 /** The attribute locations of a snow mesh: the mod's mesh channels (POSITION, NORMAL, TEXCOORD0..4, TANGENT). */
 export const SNOW_ATTR = Object.freeze({ pos: 0, normal: 1, uv: 2, ctxA: 3, blanket: 4, ctxB: 5, ctxC: 6, blanketNormal: 7 });
@@ -38,6 +39,12 @@ export const SNOW_LAYER = Object.freeze({ factor: -0.25, units: -0.25 });
  *  multiplier and the tracks only lessen it), and the surface offset over that. A foe's telegraph lies this far over
  *  its ground while the snow is drawn (render/foeTelegraph.js telegraphLift), so the snow cannot bury it. */
 export const snowSurfaceRise = (u) => Math.max(0, u.depths[0], u.depths[1]) + Math.max(0, u.limits[0]) + Math.max(0, u.radius[2]);
+
+/** AUDIT PRECIP GROUND-9: the frame the ground's own snow is read in on the mod's surface - the scene point of the snow
+ *  window's first world tile (renderer.js setSnowFrame's `anchor`; the tile itself is uEcoOrigin: the terrain program
+ *  declares it in its ecotone, the vertex program beside this). */
+const SNOW_LAID_DECL = 'uniform vec2 uSnowAnchor;';
+const f = (v) => (Number.isInteger(v) ? `${v}.0` : `${v}`);
 
 /** The law both programs share: Resolve, one bounded read of a track mask, and what a track and a body leave. */
 const SNOW_COMMON_GLSL = `
@@ -112,6 +119,9 @@ uniform mat4 uModel;
 uniform vec4 uSnowDynTexel;   // _DynamicMask_TexelSize
 uniform float uSnowBoundaryFade;   // _BoundaryDepthFade
 ${SNOW_COMMON_GLSL}
+${SNOW_LAID_DECL}
+uniform highp ivec3 uEcoOrigin;   // the snow window's first world tile (the terrain's ecotone frame), z unread
+${snowCoreGlsl()}
 vec2 snowDynAt(vec2 uv) { return snowBounded(textureLod(uSnowDynamic, uv, 0.0).rg, uv, uSnowDynMap.w); }
 out vec3 vNormal;
 out vec3 vWorldPos;
@@ -126,7 +136,12 @@ void main() {
     vDepth = dot(w3, vec3(vDepth, snowResolve(aCtxB), snowResolve(aCtxC)));
     pathW = clamp(dot(w3, vec3(aCtxA.z, aCtxB.z, aCtxC.z)), 0.0, 1.0);
   }
-  vec2 xz = (uModel * vec4(aPos, 1.0)).xz;
+  vec4 ground = uModel * vec4(aPos, 1.0);
+  vec2 xz = ground.xz;
+  // AUDIT PRECIP GROUND-9: laid only where the ground wears snow - its own cover at the vertex (snowLaid: 1 off the snow
+  // lane) taken as the static mask's coverage is: the depth by its square (staticSnowMultiplier's), the offset by it
+  float laid = snowLaid(xz - uSnowAnchor, ground.y, vec2(0.0), vec2(0.0));
+  vDepth *= laid * laid;
   vec2 dynUV = (xz - uSnowDynMap.xy) * uSnowDynMap.z;
   vec2 statUV = (xz - uSnowStatMap.xy) * uSnowStatMap.z;
   vec4 st = textureLod(uSnowStatic, statUV, 0.0);
@@ -144,7 +159,7 @@ void main() {
       }
       remain = 1.0 + uSnowFlags.x * (snowRemain(dyn, depth) - 1.0);
     }
-    lifted = depth * clamp(st.r * 2.0, 0.0, 1.0) * remain;
+    lifted = depth * clamp(st.r * 2.0, 0.0, 1.0) * laid * laid * remain;
   }
   float fade = 1.0;
   if (uSnowRadius.y > 0.0) {   // the edge fade: the grid's own border
@@ -162,6 +177,7 @@ void main() {
   fade = 1.0 + uSnowBoundaryFade * (fade * outerFade - 1.0);
   float cover = st.g;   // AUDIT ENVIRONS G9: the coverage the surface offset stands on - on the blanket, a painted track edge's too (the fragment's test)
   if (blanket && st.b != 0.0) cover = max(cover, snowOnPath(st.b, statUV));
+  cover *= laid;
   float offset = cover * uSnowRadius.z * st.a * fade;
   float y = aPos.y + (blanket ? vDepth : fade * lifted) + offset;
   vec3 n = aNormal;
@@ -187,6 +203,9 @@ const snowFragment = (decode) => `  // SNOWFALL1: THE MOD'S SNOW IN PLACE OF THE
   // is undefined in GLSL ES 3.00 - the CLIP_AFTER law): its mip is the one its whole quad picks, as the mod's pass reads it
   vec2 albedoUV = vWorldPos.xz / max(uSnowRadius.w, 0.001);
   vec2 albedoDx = dFdx(albedoUV), albedoDy = dFdy(albedoUV);
+  // AUDIT PRECIP GROUND-9: the ground's own cover's frame and footprint (tiles a pixel), taken with the albedo's
+  vec2 snowAt = vWorldPos.xz - uSnowAnchor;
+  vec2 snowGx = dFdx(snowAt / ${f(SNOW_TILE_M)}), snowGy = dFdy(snowAt / ${f(SNOW_TILE_M)});
   if (uSnowRadius.y > 0.0) {
     vec2 e2 = min(sn.xy, 1.0 - sn.xy);
     if (snowStep(clamp(2.0 * uSnowRadius.x * min(e2.x, e2.y) / uSnowRadius.y, 0.0, 1.0)) - 0.001 < 0.0) discard;
@@ -204,6 +223,7 @@ const snowFragment = (decode) => `  // SNOWFALL1: THE MOD'S SNOW IN PLACE OF THE
   vec4 st = textureLod(uSnowStatic, statUV, 0.0);
   float coverage = st.g;
   if (blanket && st.b != 0.0) coverage = max(coverage, snowOnPath(st.b, statUV));
+  coverage *= snowLaid(snowAt, vWorldPos.y, snowGx, snowGy);   // AUDIT PRECIP GROUND-9: where the ground wears it
   if (coverage - 0.005 < 0.0) discard;
   vec4 ctx = blanket ? vec4(0.0) : textureLod(uSnowContext, statUV, 0.0);   // the blanket's depth and path are its vertices'
   float pathW = blanket ? sn.w : ctx.b;
@@ -229,6 +249,7 @@ const snowFragment = (decode) => `  // SNOWFALL1: THE MOD'S SNOW IN PLACE OF THE
 /** The fragment's own declarations: the law (the blanket's path test with it), the far mask and the albedo. */
 const SNOW_FS_DECL = `precision highp sampler2D;   // the vertex program's samplers are the same uniforms, at its precision
 in vec4 vSnow;
+${SNOW_LAID_DECL}
 uniform vec4 uSnowFarMap;     // _FarTrackMapping
 uniform float uSnowDarkening; // _CompressionDarkening
 uniform sampler2D uSnowFar;

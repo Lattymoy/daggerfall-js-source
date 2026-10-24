@@ -1,0 +1,65 @@
+[
+  {
+    "name": "BO-lines-unawaited",
+    "file": "src/scenes/world.js",
+    "old": "    await legacyRealmRead;\n",
+    "new": "",
+    "tests": [
+      "test/systems/online/bootoverlap.test.js"
+    ]
+  },
+  {
+    "name": "BO-layouts-at-the-first-build",
+    "file": "src/scenes/world.js",
+    "old": "  let _homeLayoutsAsk = bootHomeLayoutsAsk;",
+    "new": "  let _homeLayoutsAsk = homesApi ? homesApi.layouts().catch(() => null) : null;",
+    "tests": [
+      "test/systems/online/bootoverlap.test.js"
+    ]
+  },
+  {
+    "name": "BO-towns-unasked",
+    "file": "src/scenes/world.js",
+    "old": "if (loc?.mapTableData) onlineHomes.ensure(loc.mapTableData.mapId, { character: as }).catch(() => {});",
+    "new": "if (loc?.mapTableData) void loc;",
+    "tests": [
+      "test/systems/online/bootoverlap.test.js"
+    ]
+  },
+  {
+    "name": "BO-save-town-unread",
+    "file": "src/scenes/world.js",
+    "old": "    const saved = at ? locationIndex.get(`${at.x},${at.y}`) : null;",
+    "new": "    const saved = null;",
+    "tests": [
+      "test/systems/online/bootoverlap.test.js"
+    ]
+  },
+  {
+    "name": "BO-character-unnamed",
+    "file": "src/scenes/world.js",
+    "old": "onlineHomes.ensure(loc.mapTableData.mapId, { character: as })",
+    "new": "onlineHomes.ensure(loc.mapTableData.mapId, {})",
+    "tests": [
+      "test/systems/online/bootoverlap.test.js"
+    ]
+  },
+  {
+    "name": "BO-named-character-ignored",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "api.town(id, as === undefined ? character() : as)",
+    "new": "api.town(id, character())",
+    "tests": [
+      "test/systems/online/bootoverlap.test.js"
+    ]
+  },
+  {
+    "name": "BO-playing-never-asked",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "api.town(id, as === undefined ? character() : as)",
+    "new": "api.town(id, as)",
+    "tests": [
+      "test/systems/online/bootoverlap.test.js"
+    ]
+  }
+]

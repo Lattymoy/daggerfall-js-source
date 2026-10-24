@@ -1,0 +1,232 @@
+[
+  {
+    "name": "STAFF-PANEL-SPEED-realm-trade-holds-batch-apart",
+    "file": "server-account/src/staffRealm.js",
+    "old": "const [read] = await db.batch([db.prepare(`SELECT c.id, c.name, c.player, p.handle",
+    "new": "const [read] = await (async (l) => { const o = []; for (const st of l) o.push((await db.batch([st]))[0]); return o; })([db.prepare(`SELECT c.id, c.name, c.player, p.handle",
+    "why": "the trade holds' read and its audit row awaited one after another instead of in one batch",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-trade-holds-index-ascending",
+    "file": "server-account/migrations/0162_staff_holds_speed.sql",
+    "old": "ON realm_characters (held_at DESC) WHERE",
+    "new": "ON realm_characters (held_at) WHERE",
+    "why": "the index ascending, walked backwards for the newest first: two holds of one second listed in the reverse of the order the old scan gave them",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-trade-holds-index-gone",
+    "file": "server-account/migrations/0162_staff_holds_speed.sql",
+    "old": "CREATE INDEX IF NOT EXISTS realm_characters_holds ON realm_characters (held_at DESC) WHERE held IS NOT NULL OR review IS NOT NULL;",
+    "new": "",
+    "why": "no index of the holds' own: the read walks every realm character again",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-gains-configs-first",
+    "file": "server-account/src/staffRealm.js",
+    "old": "await Promise.all([budgetConfig(db), progressConfig(db), db.prepare(`SELECT f.char_id AS id",
+    "new": "await Promise.all([await budgetConfig(db), await progressConfig(db), db.prepare(`SELECT f.char_id AS id",
+    "why": "the gains' two configs read one after another, and its reads after them",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-gains-chars-then-xp",
+    "file": "server-account/src/staffRealm.js",
+    "old": "progressConfig(db), db.prepare(`SELECT f.char_id AS id",
+    "new": "progressConfig(db), await db.prepare(`SELECT f.char_id AS id",
+    "why": "the accounts' XP asked only once the characters answered",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-gains-audit-after",
+    "file": "server-account/src/staffRealm.js",
+    "old": "Promise.all([gainsRanked(db, nowS, days), audit('gains-read'",
+    "new": "Promise.all([await gainsRanked(db, nowS, days), audit('gains-read'",
+    "why": "the gains' audit row a trip of its own after the reads",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-stream-flags-then-prices",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "const [[who, pairs], marks, gold] = await Promise.all([accounts.size ? readAll(db, [",
+    "new": "const [[who, pairs], marks, gold] = await Promise.all([accounts.size ? await readAll(db, [",
+    "why": "the stream's usual prices asked only once the accounts and the pairs answered",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-stream-marks-then-gold",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "]) : [[], []], usualOf('marks'), usualOf('gold')]);",
+    "new": "]) : [[], []], await usualOf('marks'), usualOf('gold')]);",
+    "why": "gold's usual prices asked only once the Drakes' answered",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-stream-audit-after",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "const [page] = await Promise.all([streamPage(db, v, nowS), audit('market-read'",
+    "new": "const [page] = await Promise.all([await streamPage(db, v, nowS), audit('market-read'",
+    "why": "the stream's audit row a trip of its own after the page",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-economy-guilds-after",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "rich], ranked] = await Promise.all([readAll(db, [",
+    "new": "rich], ranked] = await Promise.all([await readAll(db, [",
+    "why": "the richest guilds' list read only after the economy's batch",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-economy-audit-after",
+    "file": "server-account/src/staffEconomy.js",
+    "old": "Promise.all([economy(db, nowS, days), audit('economy-read'",
+    "new": "Promise.all([await economy(db, nowS, days), audit('economy-read'",
+    "why": "the economy's audit row a trip of its own after the reads",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-census-then-trend",
+    "file": "server-account/src/staffCensus.js",
+    "old": "Promise.all([keptRead(`census:${kind}`, nowS, () => censusNow(db, kind)), trendOf(",
+    "new": "Promise.all([await keptRead(`census:${kind}`, nowS, () => censusNow(db, kind)), trendOf(",
+    "why": "the census's trend and audit row asked only once its totals answered",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-census-audit-after",
+    "file": "server-account/src/staffCensus.js",
+    "old": "trendOf(db, kind, utcDay(nowS) - days + 1),\n      audit('census-read'",
+    "new": "await trendOf(db, kind, utcDay(nowS) - days + 1),\n      audit('census-read'",
+    "why": "the census's audit row a trip of its own after the trend",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-census-jumps-audit-after",
+    "file": "server-account/src/staffCensus.js",
+    "old": "Promise.all([keptRead(`jumps:",
+    "new": "Promise.all([await keptRead(`jumps:",
+    "why": "the jumps' audit row a trip of its own after the read",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-contested-audit-after",
+    "file": "server-account/src/staffCensus.js",
+    "old": "Promise.all([contestedPage(db, { sort, before, char, open: body.open === true }), audit(",
+    "new": "Promise.all([await contestedPage(db, { sort, before, char, open: body.open === true }), audit(",
+    "why": "the contested pieces' audit row a trip of its own after the page",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-home-audit-after",
+    "file": "server-account/src/staffStatus.js",
+    "old": "Promise.all([homeOf(ctx, env, who, n), audit('home-read'",
+    "new": "Promise.all([await homeOf(ctx, env, who, n), audit('home-read'",
+    "why": "Home's audit row a trip of its own after every watch",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-monsters-batches-first",
+    "file": "server-account/src/staffMonsters.js",
+    "old": "const [b, foeRead, askRead] = await Promise.all([\n    db.prepare('SELECT MAX(at) AS at, MAX(ms) AS ms",
+    "new": "const [b, foeRead, askRead] = await Promise.all([\n    await db.prepare('SELECT MAX(at) AS at, MAX(ms) AS ms",
+    "why": "the foe rows and the asks read only once the batches answered",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-monsters-refused-then-names",
+    "file": "server-account/src/staffMonsters.js",
+    "old": "const [refused, names] = await Promise.all([\n    chunked(ids,",
+    "new": "const [refused, names] = await Promise.all([\n    await chunked(ids,",
+    "why": "the names asked only once the other games' refusals answered",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-monsters-chunks-apart",
+    "file": "server-account/src/staffMonsters.js",
+    "old": "chunks.push(ask(ids.slice(i, i + IN_MAX)));",
+    "new": "chunks.push(await ask(ids.slice(i, i + IN_MAX)));",
+    "why": "past 80 ids, each chunk asked only once the one before answered",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-monsters-audit-after",
+    "file": "server-account/src/staffMonsters.js",
+    "old": "Promise.all([monstersRanked(db, nowS), audit('monsters-read'",
+    "new": "Promise.all([await monstersRanked(db, nowS), audit('monsters-read'",
+    "why": "Monster watch's audit row a trip of its own after the reads",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-reactions-audit-after",
+    "file": "server-account/src/staffReactions.js",
+    "old": "    population(db, nowS),\n    audit('reactions-read'",
+    "new": "    await population(db, nowS),\n    audit('reactions-read'",
+    "why": "the bot check's audit row a trip of its own after the reads",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-net-rows-then-asof",
+    "file": "server-account/src/staffNet.js",
+    "old": "const [read, last] = await Promise.all([db.prepare(`SELECT r.*, p.handle",
+    "new": "const [read, last] = await Promise.all([await db.prepare(`SELECT r.*, p.handle",
+    "why": "the last window's time asked only once the rows answered",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL-SPEED-realm-net-audit-after",
+    "file": "server-account/src/staffNet.js",
+    "old": "Promise.all([netRanked(ctx.db, ctx.nowS, { window, kind, sort }), audit('net-read'",
+    "new": "Promise.all([await netRanked(ctx.db, ctx.nowS, { window, kind, sort }), audit('net-read'",
+    "why": "Network bursts' audit row a trip of its own after the reads",
+    "tests": [
+      "test/server/staffpanelspeedrealm.test.js"
+    ]
+  }
+]

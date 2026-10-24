@@ -5,25 +5,25 @@
     "old": "export const HEALING_RECIPE_KEY = CLASSIC_RECIPE_KEYS[2];",
     "new": "export const HEALING_RECIPE_KEY = CLASSIC_RECIPE_KEYS[3];",
     "tests": [
-      "test/potion_common.test.js"
+      "test/systems/potion_common.test.js"
     ]
   },
   {
     "name": "POTION-COMMON-foe-chance-zero",
     "file": "src/systems/healingSupply.js",
-    "old": "export const HEALING_ENEMY_CHANCE = 10;",
+    "old": "export const HEALING_ENEMY_CHANCE = 4;",
     "new": "export const HEALING_ENEMY_CHANCE = 0;",
     "tests": [
-      "test/potion_common.test.js"
+      "test/systems/potion_common.test.js"
     ]
   },
   {
     "name": "POTION-COMMON-pile-chance-zero",
     "file": "src/systems/healingSupply.js",
-    "old": "export const HEALING_PILE_CHANCE = 18;",
+    "old": "export const HEALING_PILE_CHANCE = 8;",
     "new": "export const HEALING_PILE_CHANCE = 0;",
     "tests": [
-      "test/potion_common.test.js"
+      "test/systems/potion_common.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (buildingType === BUILDING_TYPES.Alchemist) return 2 + Math.trunc(q / 5);",
     "new": "  if (buildingType === BUILDING_TYPES.Alchemist) return 0;",
     "tests": [
-      "test/potion_common.test.js"
+      "test/systems/potion_common.test.js"
     ]
   },
   {
@@ -41,16 +41,16 @@
     "old": "  if (buildingType === BUILDING_TYPES.GeneralStore) return 1 + Math.trunc(q / 10);",
     "new": "  if (buildingType === BUILDING_TYPES.GeneralStore) return 0;",
     "tests": [
-      "test/potion_common.test.js"
+      "test/systems/potion_common.test.js"
     ]
   },
   {
     "name": "POTION-COMMON-every-pile",
     "file": "src/systems/healingSupply.js",
-    "old": "    if (i >= 10 && i <= 15) { const { pile } = healingSupplyChances();",
-    "new": "    { const { pile } = healingSupplyChances();",
+    "old": "    if (i >= 10 && i <= 15) { const { pile } = healingSupplyChances(quarters);",
+    "new": "    { const { pile } = healingSupplyChances(quarters);",
     "tests": [
-      "test/potion_common.test.js"
+      "test/systems/potion_common.test.js"
     ],
     "note": "RENOWN-LOOT (PIN MOVED): re-aimed by content - the line reads its knob at the roller's Renown now."
   },
@@ -60,8 +60,8 @@
     "old": "  if (shelfIndex === 0) for (let n = healingShelfCount(buildingType, quality); n > 0; n--) add(mintHealingPotion());\n",
     "new": "",
     "tests": [
-      "test/potion_common.test.js",
-      "test/shopstock.test.js"
+      "test/systems/potion_common.test.js",
+      "test/systems/shopstock.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "  installHealingSupply();   // POTION-COMMON: Potions of Healing in the loot - after the smithing install, its field kit's roll first\n",
     "new": "",
     "tests": [
-      "test/potion_common.test.js"
+      "test/systems/potion_common.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "  if (shelfIndex === 0) for (let n = healingShelfCount(buildingType, quality); n > 0; n--) add(mintHealingPotion());",
     "new": "  for (let n = healingShelfCount(buildingType, quality); n > 0; n--) add(mintHealingPotion());",
     "tests": [
-      "test/potion_common.test.js"
+      "test/systems/potion_common.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity, { shelfIndex: i })",
     "new": "stockShopShelf({ buildingType: b.buildingType, quality: b.quality }, playerEntity)",
     "tests": [
-      "test/potion_common.test.js"
+      "test/systems/potion_common.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "return 2 + Math.trunc(q / 5);",
     "new": "return 2 + Math.round(q / 5);",
     "tests": [
-      "test/potion_common.test.js"
+      "test/systems/potion_common.test.js"
     ]
   },
   {
@@ -106,16 +106,16 @@
     "old": "return 1 + Math.trunc(q / 10);",
     "new": "return 1 + Math.round(q / 10);",
     "tests": [
-      "test/potion_common.test.js"
+      "test/systems/potion_common.test.js"
     ]
   },
   {
     "name": "POTION-COMMON-I-to-P",
     "file": "src/systems/healingSupply.js",
-    "old": "    if (i >= 10 && i <= 15) { const { pile } = healingSupplyChances(); maybeAddHealingPotion(",
-    "new": "    if (i >= 9 && i <= 16) { const { pile } = healingSupplyChances(); maybeAddHealingPotion(",
+    "old": "    if (i >= 10 && i <= 15) { const { pile } = healingSupplyChances(quarters); maybeAddHealingPotion(",
+    "new": "    if (i >= 9 && i <= 16) { const { pile } = healingSupplyChances(quarters); maybeAddHealingPotion(",
     "tests": [
-      "test/potion_common.test.js"
+      "test/systems/potion_common.test.js"
     ],
     "note": "RENOWN-LOOT (PIN MOVED): re-aimed by content - the line reads its knob at the roller's Renown now."
   },
@@ -125,7 +125,7 @@
     "old": "  registerTabledLootHandler('healing-potion',",
     "new": "  registerTabledLootHandler('field-repair-kit',",
     "tests": [
-      "test/potion_common.test.js"
+      "test/systems/potion_common.test.js"
     ]
   }
 ]

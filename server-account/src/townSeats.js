@@ -6,7 +6,7 @@
 //
 // bible/11-Multiplayer/Seats-Arc.md 3.2 (Mac: "Figure it out"): the
 // servers never hold ARENA2, so they learn the seats from the clients
-// that derived them (src/systems/townSeats.js), and trust a seat only
+// that derived them (src/systems/town/townSeats.js), and trust a seat only
 // when enough agree. ONE TABLE, ONE LAW: a seat is witnessed as the
 // professions' pixels are - `world_witness`, the kind `seat`, keyed by
 // its map id, its report the seat's canonical bytes
@@ -49,7 +49,8 @@ import {
 } from '../../src/net/townSeatLaw.js';
 import { utcDay, MARKS_MAX } from '../../src/net/marksLaw.js';   // AUDIT-SEATS S4: a struck Charter's fee refunded
 import { fortsLapsedStatements } from './seatForts.js';   // AUDIT SEATS-2 S5: a struck Charter's building projects fall with it
-import { DB_ROOT } from './service.js';   // STORM-SHED: the binding a request's counted Proxy wraps
+import { DB_ROOT, replicaDb, d1Overloaded, bookmarkOf } from './service.js';   // STORM-SHED: the binding a request's counted Proxy wraps; SEAT-REPLICA: the kept read's session
+import { exactRows, witnessRow, strikeWitness, LEAN_ROWS } from './leanWitness.js';   // LEAN-WITNESS
 
 /** Whether the seats are open to this account: the switch, and at `dev` the developers alone. */
 export function seatsOpenFor(player, env) {
@@ -100,9 +101,23 @@ export function seatFacts(rows, nowS) {
   return { seats: out, ignored };
 }
 
+/** Every seat row's read, and (LEAN-WITNESS) the read of the rows that are not late, by their index whatever the
+ *  statistics (AUDIT LEAN-READS 2 A3) - one text each, the pins' too. */
+export const SEAT_ROWS_SQL = "SELECT key, account, report, at FROM world_witness WHERE kind = 'seat'";
+export const SEAT_JUDGED_SQL = `SELECT key, account, report, at FROM world_witness INDEXED BY idx_world_witness_lean_key WHERE kind = 'seat' AND ${LEAN_ROWS}`;
+/** Every seat row - LEAN-WITNESS: a developer's list alone, whose audit counts every witness. */
 async function allSeatRows(db) {
-  const { results = [] } = await db.prepare("SELECT key, account, report, at FROM world_witness WHERE kind = 'seat'").all();
-  return results.map((r) => ({ key: String(r.key), account: r.account, report: r.report, at: Number(r.at) }));
+  const { results = [] } = await db.prepare(SEAT_ROWS_SQL).all();
+  return results.map(witnessRow);
+}
+/** LEAN-WITNESS (2026-10-19, migration 0135; bible/11-Multiplayer/Scale-Arc.md LEAN-WITNESS): THE SEAT ROWS THE LAW
+ *  JUDGES BY - the rows that are not late (idx_world_witness_lean_key), a seat an ignored account answered read whole
+ *  (leanWitness.js exactRows). seatFacts' facts and ignored over them are its facts over every row; its witnesses' counts
+ *  and audit are not, and nothing but a developer's list reads those. 32,775 rows a read on the day, one seat in 27
+ *  late's worth. */
+export async function judgedSeatRows(db, nowS) {
+  const { results = [] } = await db.prepare(SEAT_JUDGED_SQL).all();
+  return exactRows(db, 'seat', results.map(witnessRow), (rows) => seatFacts(rows, nowS).ignored);
 }
 
 /** STORM-SHED (2026-10-06 evening, the second overload - "D1 DB is overloaded"): HOW LONG ONE ISOLATE KEEPS THE SEATS'
@@ -112,12 +127,23 @@ async function allSeatRows(db) {
  *  was asked the faster for it. A seat's facts move with a witness's report and by the week (seatIgnoredAccounts), so a
  *  minute is nothing to them; a report or a strike written here lets them go at once. */
 export const SEAT_ROWS_KEPT_S = 60;
-/** The database binding -> what this isolate last read of it, and the read asked now, and its writes counted. */
+/** SEAT-REPLICA (2026-10-13, the account database overloaded from 14:11 UTC; bible/11-Multiplayer/Scale-Arc.md
+ *  SEAT-REPLICA): WHERE THE KEPT READ IS ASKED - a read replica, never the primary's queue. The rows were 15,899 a read
+ *  on the day, and the isolates many enough that two lists in three missed their isolate's kept copy; in the outage the
+ *  read was more than half the primary's statement time and nine in ten of the rows it answered. A read after this
+ *  isolate's own write starts at the primary ('first-primary', so it sees the write), and every read after a kept one
+ *  starts from the bookmark that one ended at, so a replica behind what this isolate already read never answers it
+ *  (D1's Sessions API); the first, with neither, is any instance's. */
+export const SEAT_ROWS_FROM = 'first-unconstrained';
+/** The database binding -> what this isolate last read of it, and the read asked now, and its writes counted; and
+ *  (SEAT-REPLICA) the bookmark its last kept read ended at, and whether it has written since. */
 const seatRowsKept = new WeakMap(), seatRowsAsking = new WeakMap(), seatRowWrites = new WeakMap();
+const seatRowsMark = new WeakMap(), seatRowsWritten = new WeakSet();
 const seatRowsRoot = (/** @type {any} */ db) => db?.[DB_ROOT] ?? db;
 
 /** STORM-SHED: the seats' witness rows as this isolate keeps them - read at most once in SEAT_ROWS_KEPT_S, every ask of
- *  one moment answered by one read, and a read begun before a write here never kept. */
+ *  one moment answered by one read, and a read begun before a write here never kept. SEAT-REPLICA: each read on a
+ *  session of its own (SEAT_ROWS_FROM); a session D1 will not open is the database as the request holds it. */
 async function seatRowsOf(db, nowS) {
   const root = seatRowsRoot(db);
   const kept = seatRowsKept.get(root);
@@ -125,19 +151,114 @@ async function seatRowsOf(db, nowS) {
   const asking = seatRowsAsking.get(root);
   if (asking) return asking;
   const gen = seatRowWrites.get(root) ?? 0;
-  const ask = allSeatRows(db).then((rows) => {
-    if ((seatRowWrites.get(root) ?? 0) === gen) seatRowsKept.set(root, { at: nowS, rows });
+  const wrote = seatRowsWritten.has(root);
+  const from = wrote ? 'first-primary' : (seatRowsMark.get(root) ?? SEAT_ROWS_FROM);
+  let session = db;
+  // DISPLAY-REPLICA: a request already on a session (a replica route's - a market's or a pixel's read asking a seat) has
+  // none of its own to open; the binding opens this read's, so the read after a write here is still the primary's
+  const opener = typeof db?.withSession === 'function' ? db : root;
+  try { session = replicaDb(opener, from); } catch { /* a bookmark D1 refuses: the request's database */ }
+  const ask = judgedSeatRows(session, nowS).then((rows) => {   // LEAN-WITNESS
+    if ((seatRowWrites.get(root) ?? 0) === gen) {
+      seatRowsKept.set(root, { at: nowS, rows });
+      const mark = bookmarkOf(session);
+      if (mark) seatRowsMark.set(root, mark);
+      if (wrote) seatRowsWritten.delete(root);
+    }
     return rows;
-  }).finally(() => { if (seatRowsAsking.get(root) === ask) seatRowsAsking.delete(root); });
+  }, (e) => { if (seatRowsMark.get(root) === from) seatRowsMark.delete(root); throw e; })   // a read that failed from a bookmark: the next starts from none (never a newer read's)
+    .finally(() => { if (seatRowsAsking.get(root) === ask) seatRowsAsking.delete(root); });
   seatRowsAsking.set(root, ask);
   return ask;
 }
-/** STORM-SHED: the kept rows let go - a witness's report or a strike written here. */
-function forgetSeatRows(db) {
+/** STORM-SHED: the kept rows let go - a witness's report or a strike written here. SEAT-REPLICA: and the next read the
+ *  primary's, which has the write. SEAT-FACTS: and the service's kept facts too, until the clock keeps them after it. */
+function forgetSeatRows(db, nowS) {
   const root = seatRowsRoot(db);
   seatRowsKept.delete(root);
   seatRowsAsking.delete(root);
   seatRowWrites.set(root, (seatRowWrites.get(root) ?? 0) + 1);
+  seatRowsWritten.add(root);
+  seatWroteAt.set(root, nowS);   // SEAT-FACTS: no kept row from before it answers here again (keptSeatFacts)
+}
+
+/** SEAT-FACTS (2026-10-13, after SEAT-REPLICA; the owner: "1, 2 and 3"; bible/11-Multiplayer/Scale-Arc.md SEAT-FACTS):
+ *  THE SEATS AS THE WITNESSES SAY THEY ARE, KEPT ONCE FOR THE WHOLE SERVICE. Each isolate read every seat row a minute
+ *  and counted the facts over them on every ask - after SEAT-REPLICA some 100 reads of 15,899 rows a minute on the one
+ *  replica, whose p99 went from 2 ms to some 60 ms with them. Now the minute's clock (cron.js `seat-facts`) reads the
+ *  rows once and keeps what they say in one row - the seats that stand (a disputed one too) by their reports, and the
+ *  accounts ignored - and every isolate reads that row instead, kept SEAT_ROWS_KEPT_S as the rows were. A row older
+ *  than SEAT_FACTS_FRESH_S (the clock stopped) is no answer: the rows are read as before. And an isolate that wrote a
+ *  report or a strike reads the rows until the clock has kept the facts after its write. */
+export const SEAT_FACTS_FRESH_S = 180;
+const SEAT_FACTS_SQL = 'SELECT at, facts FROM seat_facts_kept WHERE id = 1';
+/** SEAT-FACTS: the database binding -> the kept facts this isolate read (or that none fit, a minute), the read asked
+ *  now, and its last write's clock. A row is an answer only while it is fresh and newer than that write. */
+const seatFactsKept = new WeakMap(), seatFactsAsking = new WeakMap(), seatWroteAt = new WeakMap();
+
+/** SEAT-FACTS: the facts as the clock keeps them - the seats that stand by key, state and report, and the ignored. */
+export function seatFactsText(/** @type {{ seats: any[], ignored: Set<string> }} */ { seats, ignored }) {
+  return JSON.stringify({ seats: seats.filter((x) => factConfirmed(x.fact)).map((x) => [x.key, x.fact.state, seatReportText(x.fact.seat)]), ignored: [...ignored].sort() });
+}
+/** SEAT-FACTS: the kept text read back as seatFacts answers - `{ seats: [{ key, fact }], ignored }` - or null for any
+ *  text that is not the clock's. */
+export function seatFactsOfText(/** @type {unknown} */ text) {
+  let o;
+  try { o = JSON.parse(String(text)); } catch { return null; }
+  if (!o || !Array.isArray(o.seats) || !Array.isArray(o.ignored)) return null;
+  const seats = [];
+  for (const e of o.seats) {
+    if (!Array.isArray(e) || e.length !== 3) return null;
+    const [key, state, report] = e;
+    const read = parseSeatReport(report);
+    if (!Number.isSafeInteger(key) || (state !== 'confirmed' && state !== 'disputed') || !read) return null;
+    seats.push({ key, fact: { state, ...read } });
+  }
+  return { seats, ignored: new Set(o.ignored.filter((/** @type {unknown} */ a) => typeof a === 'string')) };
+}
+/** SEAT-FACTS: THE CLOCK'S MINUTE - every seat row read on the binding (the primary: the facts no older than any write
+ *  before them) and what they say kept in the one row. 1, the facts kept. */
+export async function keepSeatFacts(/** @type {any} */ db, /** @type {number} */ nowS) {
+  const facts = seatFacts(await judgedSeatRows(db, nowS), nowS);   // LEAN-WITNESS
+  await db.prepare('INSERT INTO seat_facts_kept (id, at, facts) VALUES (1, ?1, ?2) ON CONFLICT (id) DO UPDATE SET at = excluded.at, facts = excluded.facts')
+    .bind(nowS, seatFactsText(facts)).run();
+  return 1;
+}
+/** SEAT-FACTS: the kept row, read on a session of its own (any instance's: the row says how old it is), or null - none,
+ *  another shape, or a table not there. An overload is the overload's, as every read's is. */
+async function seatFactsRow(db, root) {
+  let session = db;
+  try { session = replicaDb(typeof db?.withSession === 'function' ? db : root, SEAT_ROWS_FROM); } catch { /* the request's database */ }
+  let row;
+  try { row = await session.prepare(SEAT_FACTS_SQL).first(); } catch (e) { if (d1Overloaded(e)) throw e; return null; }
+  const of = Number(row?.at);
+  if (!Number.isSafeInteger(of)) return null;
+  const facts = seatFactsOfText(row.facts);
+  return facts ? { of, facts } : null;
+}
+/** SEAT-FACTS: THE SEATS' FACTS AS AN ISOLATE ANSWERS THEM - the clock's kept row while it is fresh and newer than this
+ *  isolate's last write, read at most once in SEAT_ROWS_KEPT_S and once for every ask of one moment; else counted from
+ *  the rows (seatRowsOf), as before. */
+async function keptSeatFacts(db, nowS) {
+  const root = seatRowsRoot(db);
+  const fresh = (/** @type {{ of: number }} */ k) => k.of > (seatWroteAt.get(root) ?? -Infinity) && nowS - k.of <= SEAT_FACTS_FRESH_S;
+  const kept = seatFactsKept.get(root);
+  if (kept && nowS - kept.at < SEAT_ROWS_KEPT_S) {
+    if (kept.facts && fresh(kept)) return kept.facts;
+    if (!kept.facts) return seatFacts(await seatRowsOf(db, nowS), nowS);   // no fit row a moment ago: the rows, not another ask
+  }
+  let asking = seatFactsAsking.get(root);
+  if (!asking) {
+    asking = seatFactsRow(db, root).finally(() => { if (seatFactsAsking.get(root) === asking) seatFactsAsking.delete(root); });
+    seatFactsAsking.set(root, asking);
+  }
+  const row = await asking;
+  if (row && fresh(row)) {
+    seatFactsKept.set(root, { at: nowS, of: row.of, facts: row.facts });
+    return row.facts;
+  }
+  seatFactsKept.set(root, { at: nowS, of: -Infinity, facts: null });   // none fit to answer: the rows a minute, and asked again after
+  return seatFacts(await seatRowsOf(db, nowS), nowS);
 }
 
 /**
@@ -151,7 +272,7 @@ export async function listSeats({ db, nowS }, player, env) {
   const dev = isDeveloper(player, env);
   // STORM-SHED: a player's list is the isolate's kept rows; a developer's reads the table as it stands - the audit names a
   // disputed seat at once (AUDIT-SEATS T2), whichever isolate took its reports
-  const { seats, ignored } = seatFacts(await (dev ? allSeatRows(db) : seatRowsOf(db, nowS)), nowS);
+  const { seats, ignored } = dev ? seatFacts(await allSeatRows(db), nowS) : await keptSeatFacts(db, nowS);   // SEAT-FACTS: the service's kept facts
   const view = (s) => ({ ...s.fact.seat, state: s.fact.state });
   return {
     seats: seats.filter((s) => factConfirmed(s.fact)).map(view).sort((a, b) => a.key - b.key),
@@ -180,7 +301,7 @@ export async function listSeats({ db, nowS }, player, env) {
  * @param {{ fresh?: boolean }} [opts]
  */
 export async function confirmedSeats(db, nowS, { fresh = false } = {}) {
-  const { seats } = seatFacts(await (fresh ? allSeatRows(db) : seatRowsOf(db, nowS)), nowS);
+  const { seats } = fresh ? seatFacts(await judgedSeatRows(db, nowS), nowS) : await keptSeatFacts(db, nowS);   // SEAT-FACTS: the service's kept facts
   return new Map(seats.filter((s) => factConfirmed(s.fact)).map((s) => [s.key, { ...s.fact.seat, state: s.fact.state }]));
 }
 
@@ -198,11 +319,14 @@ export async function witnessSeat({ db, nowS }, player, env, { seat } = {}) {
   if (await overRate({ db, nowS }, `seat-witness:${player.id}`, SEAT_WITNESS_REPORTS_HOUR, 3600)) return { error: 'seats-rate' };
   if (await struck(db, s.key)) return { error: 'seat-struck' };
   if (!witnessOf(player, nowS)) return { ok: true, counted: false, why: 'young' };
-  const { ignored } = seatFacts(await seatRowsOf(db, nowS), nowS);   // STORM-SHED: the isolate's kept rows
+  const { ignored } = await keptSeatFacts(db, nowS);   // STORM-SHED: the isolate's kept rows; SEAT-FACTS: the service's kept facts
   if (ignored.has(player.id)) return { ok: true, counted: false, why: 'ignored' };
-  await db.prepare("INSERT OR IGNORE INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)")
+  const put = await db.prepare("INSERT OR IGNORE INTO world_witness (kind, key, account, report, region, at) VALUES ('seat', ?, ?, ?, ?, ?)")
     .bind(String(s.key), player.id, seatReportText(s), s.region, nowS).run();
-  forgetSeatRows(db);   // STORM-SHED: this report is the rows' news - asked afresh here
+  // STORM-SHED: this report is the rows' news - asked afresh here. SEAT-REPLICA: unless the table already held it (a
+  // witness's first answer stands, so the same witness's report again writes nothing, and cost the next ask a whole
+  // read of the rows all the same)
+  if (Number(put?.meta?.changes) !== 0) forgetSeatRows(db, nowS);
   return { ok: true, counted: true };
 }
 
@@ -224,7 +348,7 @@ export async function strikeSeat({ db, nowS }, dev, env, { key } = {}) {
   // through it, and the guild may pledge in the region again
   const h = await db.prepare('SELECT h.guild_id, g.name, g.tag FROM town_seat_holds h LEFT JOIN guilds g ON g.id = h.guild_id WHERE h.key = ?').bind(key).first();
   const rid = `strike-${key}`;
-  const [, , , , gone] = await db.batch([
+  const [, , , , late, , rest] = await db.batch([
     db.prepare(`INSERT INTO marks_ledger (src_kind, src_id, dst_kind, dst_id, kind, amount, day, at, actor, who, rid)
       SELECT 'mint', NULL, 'guild', h.guild_id, 'seat-strike-refund', MIN(l.amount, ${MARKS_MAX} - COALESCE((SELECT balance FROM guild_marks WHERE guild_id = h.guild_id), 0)),
         ?2, ?3, 'seats', 'The registry', ?4
@@ -236,12 +360,12 @@ export async function strikeSeat({ db, nowS }, dev, env, { key } = {}) {
     db.prepare("UPDATE town_seat_edicts SET state = 'void' WHERE key = ? AND state = 'proclaimed'").bind(key),
     db.prepare("UPDATE town_seat_battles SET state = 'void' WHERE key = ? AND week >= ? AND state = 'scheduled'").bind(key, week),
     db.prepare('DELETE FROM town_seat_holds WHERE key = ?').bind(key),
-    db.prepare("DELETE FROM world_witness WHERE kind = 'seat' AND key = ?").bind(String(key)),
+    ...strikeWitness(db, 'seat', 'key = ?1', String(key)),   // LEAN-WITNESS: its rows and its confirmation (0135's triggers take the key's row with its last answer)
     db.prepare(`INSERT INTO town_seat_history (key, week, kind, data, at)
       SELECT ?1, ?2, 'strike', json_set(?3, '$.refund', COALESCE((SELECT amount FROM marks_ledger WHERE actor = 'seats' AND rid = ?5), 0)), ?4`)
       .bind(key, week, JSON.stringify({ by: dev.handle ?? null, ...(h ? { guild: { name: h.name ?? '', tag: h.tag ?? '' } } : {}) }), nowS, rid),
     ...fortsLapsedStatements(db, key, nowS),   // AUDIT SEATS-2 S5: a building project falls with the Charter
   ]);
-  forgetSeatRows(db);   // STORM-SHED: the struck seat's reports are gone - asked afresh here
-  return { ok: true, key, reports: Number(gone?.meta?.changes ?? 0) };
+  forgetSeatRows(db, nowS);   // STORM-SHED: the struck seat's reports are gone - asked afresh here
+  return { ok: true, key, reports: Number(late?.meta?.changes ?? 0) + Number(rest?.meta?.changes ?? 0) };
 }

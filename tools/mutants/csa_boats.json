@@ -5,7 +5,7 @@
     "old": "    if (!ch.activeSelf) continue;\n    const found = findActive(ch, type);",
     "new": "    const found = findActive(ch, type);",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "for (const ch of n.children) if (ch.activeSelf) collectActive(ch, type, out);",
     "new": "for (const ch of n.children) collectActive(ch, type, out);",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "this.localScale = [m[0], m[4], m[8]];",
     "new": "this.localScale = [m[0], m[0], m[0]];",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
@@ -32,8 +32,8 @@
     "old": "    this.localScale = [1, 1, 1];\n    const m = mul3(",
     "new": "    const m = mul3(",
     "tests": [
-      "test/csa_boats.test.js",
-      "test/csa_sails.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js",
+      "test/world/csa_sails.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "for (let n = /** @type {PrefabNode|null} */ (this); n; n = n.parent) if (!n.activeSelf) return false;",
     "new": "if (!this.activeSelf) return false;",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "components: t.components.map((i) => copy(components[i])),",
     "new": "components: t.components.map((i) => components[i]),",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
@@ -60,301 +60,301 @@
     "old": "if (!byPath.has(path)) byPath.set(path, node);",
     "new": "byPath.set(path, node);",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-basevertex-dropped",
-    "file": "src/systems/comeSailAwayModels.js",
+    "file": "src/systems/comeSailAway/comeSailAwayModels.js",
     "old": "indices[i] = raw[i] + s.baseVertex;",
     "new": "indices[i] = raw[i];",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-normal-stride-ignored",
-    "file": "src/systems/comeSailAwayModels.js",
+    "file": "src/systems/comeSailAway/comeSailAwayModels.js",
     "old": "normals[v * 3 + d] = rawNormals[v * nd + d];",
     "new": "normals[v * 3 + d] = rawNormals[v * 3 + d];",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-bindpose-not-transposed",
-    "file": "src/systems/comeSailAwayModels.js",
+    "file": "src/systems/comeSailAway/comeSailAwayModels.js",
     "old": "out[c * 4 + r] = m[r * 4 + c];",
     "new": "out[r * 4 + c] = m[r * 4 + c];",
     "tests": [
-      "test/csa_boats.test.js",
-      "test/csa_sails.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js",
+      "test/world/csa_sails.test.js"
     ]
   },
   {
     "name": "CSA-B-runtime-materials-bad-index-skips",
-    "file": "src/systems/comeSailAwayModels.js",
+    "file": "src/systems/comeSailAway/comeSailAwayModels.js",
     "old": "      if (!(m.Index >= 0 && m.Index < materials.length)) { inRange = false; break; }",
     "new": "      if (!(m.Index >= 0 && m.Index < materials.length)) continue;",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-runtime-materials-first-wins",
-    "file": "src/systems/comeSailAwayModels.js",
+    "file": "src/systems/comeSailAway/comeSailAwayModels.js",
     "old": "      materials[m.Index] = dfMaterial(m.Archive, m.Record);",
     "new": "      if (!materials[m.Index]?.archive && materials[m.Index]?.archive !== 0) materials[m.Index] = dfMaterial(m.Archive, m.Record);",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-texture-name-no-spaces",
-    "file": "src/systems/comeSailAwayModels.js",
+    "file": "src/systems/comeSailAway/comeSailAwayModels.js",
     "old": "const toInt = (/** @type {string} */ s) => (/^\\s*[+-]?\\d+\\s*$/.test(s)",
     "new": "const toInt = (/** @type {string} */ s) => (/^[+-]?\\d+$/.test(s)",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-extra-material-own-submesh",
-    "file": "src/systems/comeSailAwayModels.js",
+    "file": "src/systems/comeSailAway/comeSailAwayModels.js",
     "old": "const sm = g.subMeshes[Math.min(k, g.subMeshes.length - 1)];",
     "new": "const sm = g.subMeshes[k];\n    if (!sm) continue;",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-bundle-slot-drawn",
-    "file": "src/systems/comeSailAwayModels.js",
+    "file": "src/systems/comeSailAway/comeSailAwayModels.js",
     "old": "    if (!isDfMaterial(s)) continue;\n    const sm",
     "new": "    if (!s) continue;\n    const sm",
     "tests": [
-      "test/csa_boats.test.js",
-      "test/csa_pool.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js",
+      "test/systems/comeSailAway/csa_pool.test.js"
     ]
   },
   {
     "name": "CSA-B-node-fore-aft-swapped",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "node(1, 'Fore', [c[0], c[1], c[2] + e[2]]);",
     "new": "node(1, 'Fore', [c[0], c[1], c[2] - e[2]]);",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-node-starboard-wrong-side",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "node(3, 'Starboard', [c[0] + e[0], c[1], c[2]]);",
     "new": "node(3, 'Starboard', [c[0] - e[0], c[1], c[2]]);",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-walk-enters-inactive",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "    if (!child.activeSelf) continue;\n    const name = child.name;",
     "new": "    const name = child.name;",
     "tests": [
-      "test/csa_boats.test.js",
-      "test/csa_sails.test.js",
-      "test/csa_pool.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js",
+      "test/world/csa_sails.test.js",
+      "test/systems/comeSailAway/csa_pool.test.js"
     ]
   },
   {
     "name": "CSA-B-oar-turn-off-position",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "        boat.modifierTurnSpeedOar = child.localScale[0];",
     "new": "        boat.modifierTurnSpeedOar = child.localPosition[0];",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-audio-volume-off-node",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "      boat.modifierAudioVolume = 1;",
     "new": "      boat.modifierAudioVolume = child.localPosition[0];",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-handling-ifs-exclusive",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "      if (name.includes('Sail')) {\n        boat.modifierMoveSpeedSail",
     "new": "      else if (name.includes('Sail')) {\n        boat.modifierMoveSpeedSail",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-sails-take-meshes",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "!name.includes('Skelly') && !name.includes('Mesh') && !name.includes('Bones')",
     "new": "!name.includes('Skelly') && !name.includes('Bones')",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-small-sails-filed-large",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "if (name.includes('Small')) boat.SailsSmall.push(child);",
     "new": "if (name.includes('Small')) boat.SailsLarge.push(child);",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-door-under-its-trigger",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "const val2 = importCustomGameobject(ctx, TRIGGER_MODEL.door, child.parent);",
     "new": "const val2 = importCustomGameobject(ctx, TRIGGER_MODEL.door, child);",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-door-box-margin",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "x: Math.fround(b.size[0] + 0.01)",
     "new": "x: Math.fround(b.size[0] + 0.1)",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-board-scale-kept",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "      val.localRotation = [0, 0, 0, 1];\n      val.localScale = [1, 1, 1];\n      boat.BoardTriggers.push(val);",
     "new": "      val.localRotation = [0, 0, 0, 1];\n      boat.BoardTriggers.push(val);",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-variant-trigger-unturned",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "      boat.VariantTrigger.localPosition = [0, 0, 0];",
     "new": "      boat.VariantTrigger.localPosition = [0, 0, 0];\n      boat.VariantTrigger.localRotation = [0, 0, 0, 1];",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-fire-full-scale",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "boat.FireObject.localScale = [0.5, 0.5, 0.5];",
     "new": "boat.FireObject.localScale = [1, 1, 1];",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-bed-zero-test-inverted",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "      if (name.includes('0')) {\n        boat.BedObject",
     "new": "      if (!name.includes('0')) {\n        boat.BedObject",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-billboard-stand-hangs",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "if (num3 === 1) val.localPosition = add3(val.localPosition, scale3(V_UP, Math.fround(component.Summary.Size[1] / 2)));",
     "new": "if (num3 === 1) val.localPosition = sub3(val.localPosition, scale3(V_UP, Math.fround(component.Summary.Size[1] / 2)));",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-light-for-every-flat",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "if (num === LIGHT_ARCHIVE) boat.Lights.push(",
     "new": "if (num !== -1) boat.Lights.push(",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-setlights-records-without-lanterns",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "  if (boat.Lights.length < 1) return;\n  boat.LightOn = value;",
     "new": "  boat.LightOn = value;",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-setlights-emission-inverted",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "component.emissionColor = value ? [1, 1, 1, 1] : [0, 0, 0, 1];",
     "new": "component.emissionColor = value ? [0, 0, 0, 1] : [1, 1, 1, 1];",
     "tests": [
-      "test/csa_boats.test.js",
-      "test/csa_pool.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js",
+      "test/systems/comeSailAway/csa_pool.test.js"
     ]
   },
   {
     "name": "CSA-B-game-textures-bad-name-skipped",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "      if (!m) return false;\n      shared[i] = m;",
     "new": "      if (!m) continue;\n      shared[i] = m;",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-skinned-renderer-left-on",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "  skinned.m_Enabled = false;\n",
     "new": "",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-holder-parented-local",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "      val3.setParentKeepWorld(child);",
     "new": "      val3.setParent(child);",
     "tests": [
-      "test/csa_boats.test.js",
-      "test/csa_sails.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js",
+      "test/world/csa_sails.test.js"
     ]
   },
   {
     "name": "CSA-B-audio-distance-off-width",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "src.minDistance = Math.fround(meshBounds.extent[2] * 0.5);",
     "new": "src.minDistance = Math.fround(meshBounds.extent[0] * 0.5);",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-sails-not-stowed",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "component.SetBool('Stowed', true);",
     "new": "component.SetBool('Stowed', false);",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
     "name": "CSA-B-walk-count-read-once",
-    "file": "src/systems/comeSailAwayBoat.js",
+    "file": "src/systems/comeSailAway/comeSailAwayBoat.js",
     "old": "  for (let i = 0; i < parent.childCount; i++) {\n    const child = parent.getChild(i);\n    if (!child.activeSelf) continue;",
     "new": "  const childCount = parent.childCount;\n  for (let i = 0; i < childCount; i++) {\n    const child = parent.getChild(i);\n    if (!child.activeSelf) continue;",
     "tests": [
-      "test/csa_boats.test.js"
+      "test/systems/comeSailAway/csa_boats.test.js"
     ]
   },
   {
@@ -363,7 +363,7 @@
     "old": "if (Math.fround(script.timer) > interval) { script.timer = 0; return true; }",
     "new": "if (Math.fround(script.timer) >= interval) { script.timer = 0; return true; }",
     "tests": [
-      "test/csa_sails.test.js"
+      "test/world/csa_sails.test.js"
     ]
   },
   {
@@ -372,8 +372,8 @@
     "old": "if (Math.fround(script.timer) > interval) { script.timer = 0; return true; }",
     "new": "if (Math.fround(script.timer) > interval) { return true; }",
     "tests": [
-      "test/csa_sails.test.js",
-      "test/csa_pool.test.js"
+      "test/world/csa_sails.test.js",
+      "test/systems/comeSailAway/csa_pool.test.js"
     ]
   },
   {
@@ -382,7 +382,7 @@
     "old": "const toLocal = invertRigid(mat4FromQuatPos(renderer.rotation, renderer.position));",
     "new": "const toLocal = mat4FromQuatPos([0, 0, 0, 1], [0, 0, 0]);",
     "tests": [
-      "test/csa_sails.test.js"
+      "test/world/csa_sails.test.js"
     ]
   },
   {
@@ -391,7 +391,7 @@
     "old": "const nx = uy * vz - uz * vy, ny = uz * vx - ux * vz, nz = ux * vy - uy * vx;",
     "new": "const nx = uz * vy - uy * vz, ny = ux * vz - uz * vx, nz = uy * vx - ux * vy;",
     "tests": [
-      "test/csa_sails.test.js"
+      "test/world/csa_sails.test.js"
     ]
   },
   {
@@ -400,79 +400,79 @@
     "old": "for (const i of [i0, i1, i2]) { acc[i * 3] += nx; acc[i * 3 + 1] += ny; acc[i * 3 + 2] += nz; }",
     "new": "const fl = Math.hypot(nx, ny, nz) || 1; for (const i of [i0, i1, i2]) { acc[i * 3] += nx / fl; acc[i * 3 + 1] += ny / fl; acc[i * 3 + 2] += nz / fl; }",
     "tests": [
-      "test/csa_sails.test.js"
+      "test/world/csa_sails.test.js"
     ]
   },
   {
     "name": "CSA-B-pool-walks-inactive",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "      if (c.activeSelf) stack.push([c, multiply(m, c.localMatrix(), new Float32Array(16))]);",
     "new": "      stack.push([c, multiply(m, c.localMatrix(), new Float32Array(16))]);",
     "tests": [
-      "test/csa_pool.test.js"
+      "test/systems/comeSailAway/csa_pool.test.js"
     ]
   },
   {
     "name": "CSA-B-daggerfall-light-first-frame-silent",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "if (dl.lastCityLightsFlag == null) dl.lastCityLightsFlag = !cityLightsOn;",
     "new": "if (dl.lastCityLightsFlag == null) dl.lastCityLightsFlag = cityLightsOn;",
     "tests": [
-      "test/csa_pool.test.js"
+      "test/systems/comeSailAway/csa_pool.test.js"
     ]
   },
   {
     "name": "CSA-B-handler-reach-counts-height",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "light.enabled = !(Math.hypot(p[0] - playerPosition[0], p[2] - playerPosition[2]) > LANTERN_HANDLER_REACH);",
     "new": "light.enabled = !(Math.hypot(p[0] - playerPosition[0], p[1] - playerPosition[1], p[2] - playerPosition[2]) > LANTERN_HANDLER_REACH);",
     "tests": [
-      "test/csa_pool.test.js"
+      "test/systems/comeSailAway/csa_pool.test.js"
     ]
   },
   {
     "name": "CSA-B-flat-emission-never-off",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "b.emissionOff = !!(r.emissionColor && r.emissionColor[0] === 0 && r.emissionColor[1] === 0 && r.emissionColor[2] === 0);",
     "new": "b.emissionOff = false;",
     "tests": [
-      "test/csa_pool.test.js"
+      "test/systems/comeSailAway/csa_pool.test.js"
     ]
   },
   {
     "name": "CSA-B-flat-stood-on-its-centre",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "b.origin[0] = m[12]; b.origin[1] = m[13] - b.size.h / 2; b.origin[2] = m[14];",
     "new": "b.origin[0] = m[12]; b.origin[1] = m[13]; b.origin[2] = m[14];",
     "tests": [
-      "test/csa_pool.test.js"
+      "test/systems/comeSailAway/csa_pool.test.js"
     ]
   },
   {
     "name": "CSA-B-mesh-textures-cutout",
-    "file": "src/scenes/comeSailAwayPool.js",
-    "old": "try { await pipeline.getTexture(sm.textureArchive); pipeline.uploadRecord(sm.textureArchive, sm.textureRecord, { opaque: true }); }\n          catch (e) { warnOnce(`tex:",
-    "new": "try { await pipeline.getTexture(sm.textureArchive); pipeline.uploadRecord(sm.textureArchive, sm.textureRecord); }\n          catch (e) { warnOnce(`tex:",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "    pipeline.uploadRecord(archive, record, { opaque: true, cutout: cutOf(archive, record) });",
+    "new": "    pipeline.uploadRecord(archive, record, { cutout: cutOf(archive, record) });",
     "tests": [
-      "test/csa_pool.test.js"
+      "test/systems/comeSailAway/csa_pool.test.js"
     ]
   },
   {
     "name": "CSA-B-lights-uncapped",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "return out.slice(0, CSA_LIGHTS_MAX).map(",
     "new": "return out.map(",
     "tests": [
-      "test/csa_pool.test.js"
+      "test/systems/comeSailAway/csa_pool.test.js"
     ]
   },
   {
     "name": "CSA-B-lights-unsorted",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "  out.sort((a, b) => a._d - b._d);\n",
     "new": "",
     "tests": [
-      "test/csa_pool.test.js"
+      "test/systems/comeSailAway/csa_pool.test.js"
     ]
   },
   {
@@ -481,7 +481,7 @@
     "old": "gl.bindTexture(gl.TEXTURE_2D, (!b.emissionOff && this.emissionTextures.get(key)) || this._blackTex);",
     "new": "gl.bindTexture(gl.TEXTURE_2D, this.emissionTextures.get(key) || this._blackTex);",
     "tests": [
-      "test/csa_pool.test.js"
+      "test/systems/comeSailAway/csa_pool.test.js"
     ]
   },
   {
@@ -490,7 +490,7 @@
     "old": "if (!!b.emissionOff !== lastDark) { lastDark = !!b.emissionOff; lastKey = null; }",
     "new": "if (!!b.emissionOff !== lastDark) { lastDark = !!b.emissionOff; }",
     "tests": [
-      "test/csa_pool.test.js"
+      "test/systems/comeSailAway/csa_pool.test.js"
     ]
   },
   {
@@ -499,7 +499,7 @@
     "old": "    boundsOf(positions).forEach((v, i) => { mesh.bounds[i] = v; });\n    for (const sm of mesh.subMeshes)",
     "new": "    for (const sm of mesh.subMeshes)",
     "tests": [
-      "test/csa_pool.test.js"
+      "test/systems/comeSailAway/csa_pool.test.js"
     ]
   }
 ]

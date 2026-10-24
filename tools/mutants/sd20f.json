@@ -1,74 +1,74 @@
 [
   {
     "name": "SD20F-H1-the-devices-key",
-    "file": "src/scenes/world.js",
-    "old": "const keyNow = () => { const me = _accountSds.me(); return me ? `${key}:${me}` : key; };",
+    "file": "src/systems/superDungeon/sdSlots.js",
+    "old": "const keyNow = () => { const id = me(); return id ? `${key}:${id}` : key; };",
     "new": "const keyNow = () => key;",
     "tests": [
-      "test/sd20f_hosts.test.js"
+      "test/scenes/superDungeon/sd20f_hosts.test.js"
     ]
   },
   {
     "name": "SD20F-H1-read-once",
-    "file": "src/scenes/world.js",
+    "file": "src/systems/superDungeon/sdSlots.js",
     "old": "if (!r || r.raw !== raw) {",
     "new": "if (!r) {",
     "tests": [
-      "test/sd20f_hosts.test.js"
+      "test/scenes/superDungeon/sd20f_hosts.test.js"
     ]
   },
   {
     "name": "SD20F-H1-the-session-forgets",
-    "file": "src/scenes/world.js",
+    "file": "src/systems/superDungeon/sdSlots.js",
     "old": "has: (s) => { const k = keyNow(); return stored(k).has(s) || !!own.get(k)?.has(s); },",
     "new": "has: (s) => { const k = keyNow(); return stored(k).has(s); },",
     "tests": [
-      "test/sd20f_hosts.test.js"
+      "test/scenes/superDungeon/sd20f_hosts.test.js"
     ]
   },
   {
     "name": "SD20F-H4-once-a-slot",
-    "file": "src/scenes/sdHost.js",
+    "file": "src/scenes/superDungeon/sdHost.js",
     "old": "const again = (s) => castOutS !== s || t - castOutAt >= SD_CAST_OUT_AGAIN_MS;",
     "new": "const again = (s) => castOutS !== s;",
     "tests": [
-      "test/sd20f_hosts.test.js"
+      "test/scenes/superDungeon/sd20f_hosts.test.js"
     ]
   },
   {
     "name": "SD20F-H4-every-frame",
-    "file": "src/scenes/sdHost.js",
+    "file": "src/scenes/superDungeon/sdHost.js",
     "old": "const again = (s) => castOutS !== s || t - castOutAt >= SD_CAST_OUT_AGAIN_MS;",
     "new": "const again = (s) => s === s;",
     "tests": [
-      "test/sd20f_hosts.test.js"
+      "test/scenes/superDungeon/sd20f_hosts.test.js"
     ]
   },
   {
     "name": "SD20F-H4-the-stay-never-over",
-    "file": "src/scenes/sdHost.js",
+    "file": "src/scenes/superDungeon/sdHost.js",
     "old": "    if (at == null && !(stood && inside(stood.loc))) castOutS = 0;   // AUDIT SD III (H4): the stay over\n",
     "new": "",
     "tests": [
-      "test/sd20f_hosts.test.js"
+      "test/scenes/superDungeon/sd20f_hosts.test.js"
     ]
   },
   {
     "name": "SD20F-H5-the-turns-let-go",
-    "file": "src/scenes/sdVoice.js",
+    "file": "src/scenes/superDungeon/sdVoice.js",
     "old": "if (waiting[i].rank !== SD_VOICE_RANK.turn) waiting.splice(i, 1);",
     "new": "waiting.splice(i, 1);",
     "tests": [
-      "test/sd20f_hosts.test.js"
+      "test/scenes/superDungeon/sd20f_hosts.test.js"
     ]
   },
   {
     "name": "SD20F-H5-the-readouts-kept",
-    "file": "src/scenes/sdVoice.js",
+    "file": "src/scenes/superDungeon/sdVoice.js",
     "old": "if (waiting[i].rank !== SD_VOICE_RANK.turn) waiting.splice(i, 1);",
     "new": "if (waiting[i].rank === SD_VOICE_RANK.note) waiting.splice(i, 1);",
     "tests": [
-      "test/sd20f_hosts.test.js"
+      "test/scenes/superDungeon/sd20f_hosts.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "if (_sdVoiceIn && !inHour) sdVoice.leave();",
     "new": "if (_sdVoiceIn && !inHour) sdVoice.clear();",
     "tests": [
-      "test/sd20f_hosts.test.js"
+      "test/scenes/superDungeon/sd20f_hosts.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    if (modes?.stepping) return null;   // audit24 wave37's law: guarded on the object (this runs above `var modes`)\n    const hollow = {",
     "new": "    const hollow = {",
     "tests": [
-      "test/sd20f_hosts.test.js"
+      "test/scenes/superDungeon/sd20f_hosts.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    if (modes?.stepping) return null;\n    const back = loc.sdHollow;",
     "new": "    const back = loc.sdHollow;",
     "tests": [
-      "test/sd20f_hosts.test.js"
+      "test/scenes/superDungeon/sd20f_hosts.test.js"
     ]
   },
   {
@@ -104,16 +104,16 @@
     "old": "      if (went === null) return false;   // AUDIT SD III (H6): a step under way - not refused: asked again (sdEnd keeps its walk-in)\n",
     "new": "",
     "tests": [
-      "test/sd20f_hosts.test.js"
+      "test/scenes/superDungeon/sd20f_hosts.test.js"
     ]
   },
   {
     "name": "SD20F-H6-the-walk-in-spent",
-    "file": "src/scenes/sdEnd.js",
+    "file": "src/scenes/superDungeon/sdEnd.js",
     "old": "if (enteredRift) { const took = onRift(); if (took === false) wasRift = false; seen(took); return 'rift'; }",
     "new": "if (enteredRift) { const took = onRift(); seen(took); return 'rift'; }",
     "tests": [
-      "test/sd20f_hosts.test.js"
+      "test/scenes/superDungeon/sd20f_hosts.test.js"
     ]
   },
   {
@@ -122,16 +122,16 @@
     "old": "_sdLate.add(key); warmGateVeil(); },",
     "new": "_sdLate.add(key); },",
     "tests": [
-      "test/sd20f_hosts.test.js"
+      "test/scenes/superDungeon/sd20f_hosts.test.js"
     ]
   },
   {
     "name": "SD20F-H10-the-dungeons-door",
     "file": "src/scenes/world.js",
-    "old": "if (modes?.sdRealmSlot?.() != null) { if (sdWayHome()) say(",
-    "new": "if (modes?.sdRealmSlot?.() != null) { if (modes?.unstuck?.()) say(",
+    "old": "if (madeUnstuck === 'wayHome') { if (sdWayHome()) say(",
+    "new": "if (madeUnstuck === 'wayHome') { if (modes?.unstuck?.()) say(",
     "tests": [
-      "test/sd20f_hosts.test.js"
+      "test/scenes/superDungeon/sd20f_hosts.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "{ if (sdWayHome()) say('You find your way back outside.'); return true; }",
     "new": "{ say(sdWayHome() ? 'You find your way back outside.' : 'There is nowhere to send you from out here.'); return true; }",
     "tests": [
-      "test/sd20f_hosts.test.js"
+      "test/scenes/superDungeon/sd20f_hosts.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "      src.buffer = buf;\n      src.playbackRate.value = ch.rate;",
     "new": "      src.buffer = buf;\n      src.loop = true;\n      src.playbackRate.value = ch.rate;",
     "tests": [
-      "test/tr2_riding.test.js"
+      "test/systems/tr2_riding.test.js"
     ]
   }
 ]

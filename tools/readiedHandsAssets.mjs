@@ -11,11 +11,11 @@
 //   node tools/readiedHandsAssets.mjs <path-to>/"readied spellcasting hands.dfmod" [outDir]
 //
 // Default outDir is vendor/readied-spellcasting-hands. It prints each asset's size and sha256, which is what
-// test/rsh1_readiedhands.test.js pins.
+// test/systems/rsh1_readiedhands.test.js pins.
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
-import { readUnityBundle } from '../src/formats/unityBundle.js';
+import { readUnityBundle } from '../src/formats/unity/unityBundle.js';
 import { isMain } from './lib/isMain.mjs';
 
 /** The bundle's three text assets, by the name they carry inside it, mapped to the path this tree keeps them at. */

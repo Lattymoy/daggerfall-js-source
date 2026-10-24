@@ -12,7 +12,7 @@
 // (byte - 128) / 128) and cache by index.
 
 import { SndFile, SAMPLE_RATE } from '../formats/sndFile.js';
-import { getFloat } from './settings.js';   // SETT: SoundVolume
+import { getFloat } from './settings/settings.js';   // SETT: SoundVolume
 import { REVERB_PRESET, reverbImpulse } from './reverbPresets.js';   // BA1: AudioReverbZone's presets and the impulse built from them
 import { setEquipSoundSink } from './equip.js';   // ES2: the equip moment's one audio door
 import { SOUND_REPLACEMENTS, soundBufferKey, fetchReplacement, soundSilenced, soundReplacementGen } from './soundReplacer.js';   // SNDREP1: a player's loose WAVs over classic clips, and the two night-sound switches
@@ -54,17 +54,62 @@ export function placeAudio(pan, p) {
   const [x, y, z] = audioFrame(p);
   pan.positionX.value = x; pan.positionY.value = y; pan.positionZ.value = z;
 }
+/** RAIN-LEAK: a stopped loop lets go of EVERY node it built - its source, gain, panner and low-pass. Disconnecting the
+ *  source alone left the rest wired into the bus, which a browser may keep alive for the page's life: a gain and a
+ *  filter per rain shower. Null nodes are skipped; a node already gone is no fault. */
+export function releaseNodes(...nodes) {
+  for (const n of nodes) { if (n) { try { n.disconnect(); } catch { /* gone */ } } }
+}
 /** The panning model every positional source takes (see AudioEngine._panner). */
 export const PANNING_MODEL = 'HRTF';
+/** AUDIT GATHER-FEEL F7: how long a voice taken back (play3dVoice's `stop`) takes to fade to nothing (s) - a stop at its
+ *  level pops. */
+export const VOICE_FADE_S = 0.08;
 
 /** PEERFX1: one observer of every one-shot (index, volume) - the online layer hears "a blow landed on me" here
- *  (net/peerFx.js isHurtClip). Null offline. */
+ *  (net/peer/peerFx.js isHurtClip). Null offline. */
 let _oneShotObserver = null;
 export function setOneShotObserver(fn) { _oneShotObserver = typeof fn === 'function' ? fn : null; }
 
 /** AUDIT SD III (A3): how long a named bed (AudioEngine.setBed) takes to rise as it begins and to fade as it is let go
- *  (s) - the arena's crowd bed's (systems/arenaSound.js BED_FADE_S). */
+ *  (s) - the arena's crowd bed's (systems/arena/arenaSound.js BED_FADE_S). */
 const BED_FADE_S = 0.4;
+
+/** GATE-MIX (2026-10-20, the owner: "in oblivion gates ... the game hitches, audio becomes super loud and even
+ *  distorts"): THE LIMITER - the last stage before the speakers, every bus through it. Nothing stood there: the boss's
+ *  clips peak at full scale in DAGGER.SND (his bark, his attack, a body's fall, the fire's cast - measured), his cues
+ *  play them at up to 2.2 times that, several land in one frame, and the court's score is pressed to a decibel under
+ *  the clip - so the sum went past 1 and the browser cut it square. Unity's mixer clips the same way; this is the
+ *  port's own stage, not a DFU member. A compressor run as a limiter (a hard ratio over LIMITER.threshold, fast to take
+ *  hold, quick to let go) holds a loud moment down cleanly, and a soft ceiling after it (`limiterCurve`) rounds off
+ *  what its attack lets through, so nothing reaches past LIMIT_CEILING by construction. Below the threshold the stage
+ *  is unity: the compressor's own make-up gain (the Web Audio spec's, `limiterTrim`) is taken back out. */
+export const LIMITER = Object.freeze({ threshold: -3, knee: 0, ratio: 20, attack: 0.001, release: 0.12 });
+/** The soft ceiling: straight up to LIMIT_LINEAR, then a tangent's shoulder to LIMIT_CEILING (both full-scale
+ *  amplitudes); the curve reaches LIMIT_RANGE times full scale (12 dB over it) - past that, its end. */
+export const LIMIT_LINEAR = 0.75;
+export const LIMIT_CEILING = 0.98;
+export const LIMIT_RANGE = 4;
+/** The ceiling at a signal amplitude `s`: itself to LIMIT_LINEAR, then bent to approach LIMIT_CEILING (its slope 1
+ *  where the bend begins, so the knee is not heard). Odd. Pure. */
+export function limitAmplitude(s) {
+  const a = Math.abs(s);
+  if (a <= LIMIT_LINEAR) return s;
+  const room = LIMIT_CEILING - LIMIT_LINEAR;
+  return Math.sign(s) * (LIMIT_LINEAR + room * Math.tanh((a - LIMIT_LINEAR) / room));
+}
+let _limiterCurve = null;
+/** The ceiling over the WaveShaper's [-1, 1] - its input is the signal over LIMIT_RANGE (the trim's gain carries it
+ *  there), its output the signal's own amplitude. Made once. */
+export function limiterCurve(n = 4097) {
+  if (_limiterCurve && _limiterCurve.length === n) return _limiterCurve;
+  const c = new Float32Array(n);
+  for (let i = 0; i < n; i++) c[i] = limitAmplitude(LIMIT_RANGE * ((2 * i) / (n - 1) - 1));
+  return (_limiterCurve = c);
+}
+/** The gain that takes a DynamicsCompressorNode's make-up back out: the spec's make-up is (1 / full-range gain)^0.6,
+ *  the full-range gain the curve's answer at full scale - with no knee, threshold + (0 - threshold) / ratio dB. */
+export const limiterTrim = ({ threshold, ratio } = LIMITER) => 10 ** ((0.6 * threshold * (1 - 1 / ratio)) / 20);
 
 export class AudioEngine {
   constructor() {
@@ -77,6 +122,13 @@ export class AudioEngine {
     this._booted = null;
     this._listener = { x: 0, y: 0, z: 0, fx: 0, fy: 0, fz: -1 };
     this._master = null;   // SETT: the SoundVolume bus (see _out)
+    // EG-ZH (Elite-Gates.md section 26, THE SPIRE MIX): the gain every one-shot made inside `scaled` is played at (1 out of it)
+    this._scale = 1;
+    // EG-ZH (section 11.9): THE HELD ZONE - who holds the reverb (null: nobody, and Better Ambience's setReverb rules), its
+    // two convolvers, and each preset's impulse made once for the hold
+    this._reverbOwner = null;
+    this._zone = null;
+    this._reverbBuffers = null;
   }
 
   /** SETT-slice: the master bus. DFU scales every clip by
@@ -92,13 +144,14 @@ export class AudioEngine {
       // DW-D: THE LISTENER - the last node before the speakers, every bus through it (this master, the reverb's
       // wet, the music's master): what Unity hangs on the AudioListener takes the whole mix (setListenerLowPass)
       this._listenerIn = this.ctx.createGain();
-      this._listenerIn.connect(this.ctx.destination);
+      this._sink = this._limiter();   // GATE-MIX: the limiter's input - the speakers themselves on a context without one
+      this._listenerIn.connect(this._sink);
       this._listenerFilter = null; this._listenerCut = 0;
       this._master = this.ctx.createGain();
       this._master.connect(this._listenerIn);
       // BA1 / AUDIT-BA F4: THE REVERB SEND. Unity's zone takes every AudioSource the listener stands near at its
       // reverbZoneMix (1 by default) - the music's included. The port's music runs its own master on the same
-      // context (systems/songPlayer.js), so the zone is a SEND node both masters feed; setReverb hangs the
+      // context (systems/song/songPlayer.js), so the zone is a SEND node both masters feed; setReverb hangs the
       // convolver off it, and nothing is downstream of it while no zone is on.
       this._reverbIn = this.ctx.createGain();
       this._master.connect(this._reverbIn);
@@ -106,6 +159,24 @@ export class AudioEngine {
     }
     this._master.gain.value = getFloat('Controls', 'SoundVolume', 0, 1);
     return this._master;
+  }
+
+  /** GATE-MIX: the limiter (LIMITER, limiterCurve) built on this context and wired to the speakers - its compressor
+   *  answered as the stage's input. A context with no compressor or no shaper (an old engine, a test's) answers the
+   *  speakers: the mix plays as it did. */
+  _limiter() {
+    const ctx = this.ctx;
+    if (typeof ctx.createDynamicsCompressor !== 'function' || typeof ctx.createWaveShaper !== 'function') return ctx.destination;
+    const comp = ctx.createDynamicsCompressor(), trim = ctx.createGain(), ceiling = ctx.createWaveShaper();
+    for (const k of ['threshold', 'knee', 'ratio', 'attack', 'release']) comp[k].value = LIMITER[k];
+    trim.gain.value = limiterTrim() / LIMIT_RANGE;   // the make-up taken back out, and the signal into the curve's [-1, 1]
+    ceiling.curve = limiterCurve();
+    ceiling.oversample = 'none';   // a straight curve under the shoulder is exact unsampled: the everyday mix untouched
+    comp.connect(trim);
+    trim.connect(ceiling);
+    ceiling.connect(ctx.destination);
+    this._limiterNodes = { comp, trim, ceiling };
+    return comp;
   }
 
   /** BA1: AudioLowPassFilter - a biquad low-pass at `cutoffHz` (Unity's default resonance Q 1). DW-D: a Web Audio
@@ -127,6 +198,7 @@ export class AudioEngine {
    *  high-frequency ratio, the reflections and reverb levels and delays - not FMOD's algorithm; the shape is
    *  the preset's, the exact tail is not. `preset` null takes the zone off. */
   setReverb(preset) {
+    if (this._reverbOwner != null) return false;   // EG-ZH: the zone is held (holdReverb) - its holder's alone until it lets go
     this._ensureCtx();
     if (!this.ctx) return false;
     this._out();
@@ -145,6 +217,112 @@ export class AudioEngine {
     return true;
   }
   get reverbPreset() { return this._reverb?.preset ?? null; }
+
+  /** EG-ZH (2026-10-12, Mac: "I said I want everything"; bible/11-Multiplayer/Elite-Gates.md section 11.9): THE HALL'S
+   *  REVERB, HELD. setReverb builds a new ConvolverNode and synthesises its impulse on every call (Cave: 25-41 ms on a
+   *  desktop, AUDIT EG II L4-21), so a place that changes its reverb as the player walks HOLDS the zone instead: Better
+   *  Ambience (whose own wish re-asserts its preset against its `reverbOn` cache) yields while it is held, and its cache is
+   *  forgotten, so its next frame after the release asserts its preset again. Holding takes whatever zone stood off the
+   *  send; releasing frees the held zone's convolvers and every impulse made for the hold. Answers whether it holds. */
+  holdReverb(owner) {
+    if (owner == null) return false;
+    if (this._reverbOwner === owner) return true;
+    if (this._reverb) { try { this._reverbIn?.disconnect(); this._reverb.wet.disconnect(); } catch { /* gone */ } this._reverb = null; }
+    this._reverbOwner = owner;
+    return true;
+  }
+  /** EG-ZH: the hold let go by its holder (another's word lets nothing go) - the held zone off the send, its impulses freed.
+   *  Answers whether it let go. */
+  releaseReverb(owner) {
+    if (owner == null || this._reverbOwner !== owner) return false;
+    this._reverbOwner = null;
+    this._dropZone();
+    this._reverbBuffers = null;
+    return true;
+  }
+  /** EG-ZH: who holds the zone, or null. */
+  reverbHeld() { return this._reverbOwner; }
+  /** EG-ZH: a preset's impulse, made once for the hold (`name` one of systems/reverbPresets.js REVERB_PRESET's). */
+  _heldImpulse(name) {
+    const p = REVERB_PRESET[name];
+    if (!p) return null;
+    this._reverbBuffers ??= new Map();
+    if (!this._reverbBuffers.has(name)) this._reverbBuffers.set(name, reverbImpulse(this.ctx, p));
+    return this._reverbBuffers.get(name);
+  }
+  /** EG-ZH: one slot of the held zone - its convolver off the send and its wet gain into the listener, `gain` at once. */
+  _zoneSlot(name, gain) {
+    const buf = name ? this._heldImpulse(name) : null;
+    if (!buf) return { preset: null, conv: null, wet: null };
+    const conv = this.ctx.createConvolver();
+    conv.normalize = false;
+    conv.buffer = buf;
+    const wet = this.ctx.createGain();
+    wet.gain.value = gain;
+    this._reverbIn.connect(conv);
+    conv.connect(wet).connect(this._listenerIn);
+    return { preset: name, conv, wet };
+  }
+  _dropSlot(slot) {
+    if (!slot?.conv) return;
+    try { this._reverbIn?.disconnect(slot.conv); } catch { /* gone */ }
+    try { slot.conv.disconnect(); slot.wet.disconnect(); } catch { /* gone */ }
+  }
+  _dropZone() {
+    if (!this._zone) return;
+    for (const slot of this._zone.slots) this._dropSlot(slot);
+    this._zone = null;
+  }
+  /** EG-ZH: THE HELD ZONE MADE (at a hall's swap or pull, behind the veil): two convolvers off the send - `live` heard whole,
+   *  `idle` at nothing, ready for the crossfade - each preset's impulse made once for the hold, and a slot already holding
+   *  its preset kept as it is. Only while held. Answers whether the zone stands. */
+  reverbZone(live, idle = null) {
+    if (this._reverbOwner == null) return false;
+    this._ensureCtx();
+    if (!this.ctx || !this._out()) return false;
+    const was = this._zone?.slots ?? [];
+    const keep = (name, gain) => {
+      const i = was.findIndex((q) => q && q.preset === name && name != null);
+      if (i < 0) return this._zoneSlot(name, gain);
+      const slot = was[i];
+      was[i] = null;
+      try { slot.wet.gain.cancelScheduledValues?.(this.ctx.currentTime); } catch { /* none */ }
+      slot.wet.gain.value = gain;
+      return slot;
+    };
+    const a = keep(live, 1), b = idle != null && idle !== live ? keep(idle, 0) : { preset: null, conv: null, wet: null };
+    for (const slot of was) this._dropSlot(slot);
+    this._zone = { slots: [a, b], live: 0 };
+    return true;
+  }
+  /** EG-ZH: THE CROSSFADE (within a hall, at a fragment's mouth): the zone turned to `preset` over `seconds` - the idle
+   *  convolver rising as the live one falls. A preset neither slot holds takes the idle slot (a new convolver on the
+   *  hold's impulse - nothing synthesised). Answers whether it turned. */
+  reverbFade(preset, seconds = 0.4) {
+    const z = this._zone;
+    if (!z || !preset) return false;
+    if (z.slots[z.live].preset === preset) return false;
+    const to = 1 - z.live;
+    if (z.slots[to].preset !== preset) { this._dropSlot(z.slots[to]); z.slots[to] = this._zoneSlot(preset, 0); }
+    if (!z.slots[to].wet) return false;
+    const t = this.ctx.currentTime, s = Math.max(0, seconds);
+    const ramp = (g, v) => { try { g.cancelScheduledValues(t); g.setValueAtTime(g.value, t); g.linearRampToValueAtTime(v, t + s); } catch { g.value = v; } };
+    ramp(z.slots[to].wet.gain, 1);
+    if (z.slots[z.live].wet) ramp(z.slots[z.live].wet.gain, 0);
+    z.live = to;
+    return true;
+  }
+  /** EG-ZH: the held zone as it stands (tests, the lab): each slot's preset, and which is heard. */
+  reverbZoneState() { return this._zone ? { presets: this._zone.slots.map((q) => q.preset), live: this._zone.live } : null; }
+
+  /** EG-ZH (Elite-Gates.md section 26, THE SPIRE MIX): every one-shot `fn` makes (playOneShot, play3d) at `gain` times its
+   *  own volume - the peers' sounds 4 dB down in the Spire (net/peer/peerFx.js peerHeard). Synchronous, and nested scopes
+   *  multiply. Answers what `fn` answers. */
+  scaled(gain, fn) {
+    const was = this._scale;
+    this._scale = was * (Number.isFinite(gain) && gain >= 0 ? gain : 1);
+    try { return fn(); } finally { this._scale = was; }
+  }
   /** AUDIT-BA F4: the zone's send, for a bus that is not this master (the music's). Null with no context. */
   reverbSend() { return this._out() ? this._reverbIn : null; }
   /** DW-D: the listener's input, for a bus that is not this master (the music's). Null with no context. */
@@ -160,8 +338,9 @@ export class AudioEngine {
     const bus = this._listenerIn;
     try { bus.disconnect(); } catch { /* none */ }
     if (this._listenerFilter) { try { this._listenerFilter.disconnect(); } catch { /* gone */ } this._listenerFilter = null; }
-    if (want) { this._listenerFilter = this._lowpass(want); bus.connect(this._listenerFilter).connect(this.ctx.destination); }
-    else bus.connect(this.ctx.destination);
+    const sink = this._sink ?? this.ctx.destination;   // GATE-MIX: the limiter is still the last stage
+    if (want) { this._listenerFilter = this._lowpass(want); bus.connect(this._listenerFilter).connect(sink); }
+    else bus.connect(sink);
     this._listenerCut = want;
   }
   get listenerLowPass() { return this._listenerCut ?? 0; }
@@ -353,7 +532,7 @@ export class AudioEngine {
   }
 
   /** ARENA2: a DAGGER.SND record's samples (mono, SAMPLE_RATE) - the raw voices a made sound is built from
-   *  (systems/arenaSound.js: the crowd's cheer and boo out of AmbientPeople1-10). Read off the player's own archive,
+   *  (systems/arena/arenaSound.js: the crowd's cheer and boo out of AmbientPeople1-10). Read off the player's own archive,
    *  no context needed; null with no archive or no such record. Never a replacement's: the made sound is Daggerfall's. */
   samplesOf(index) {
     const rec = this.snd?.getSound?.(index);
@@ -393,7 +572,7 @@ export class AudioEngine {
     src.buffer = buf;
     src.playbackRate.value = pitch;
     const gain = this.ctx.createGain();
-    gain.gain.value = volume;
+    gain.gain.value = volume * this._scale;   // EG-ZH: a scope's gain (scaled) - 1 outside one
     src.connect(gain).connect(this._out());
     src.start();
     return buf.duration;
@@ -451,10 +630,11 @@ export class AudioEngine {
     const tail = lowpass > 0 ? this._lowpass(lowpass) : null;
     if (tail) src.connect(gain).connect(tail).connect(this._out()); else src.connect(gain).connect(this._out());
     src.start();
+    const release = () => releaseNodes(src, gain, tail);   // RAIN-LEAK: the whole chain, not the source alone
     return {
       stop() {
         try { src.stop(); } catch { /* already stopped */ }
-        src.disconnect();
+        release();
       },
       /** WX2: the loop's gain, live - the rain loop fades with the front. */
       setVolume(v) { gain.gain.value = Math.max(0, Math.min(1, v)); },
@@ -467,10 +647,10 @@ export class AudioEngine {
           gain.gain.setValueAtTime(gain.gain.value, t);
           gain.gain.linearRampToValueAtTime(0, t + seconds);
           src.stop(t + seconds + 0.05);
-          src.onended = () => { try { src.disconnect(); } catch { /* gone */ } };
+          src.onended = release;
         } catch {
           try { src.stop(); } catch { /* already stopped */ }
-          try { src.disconnect(); } catch { /* gone */ }
+          release();
         }
       },
       /** FIELD-WIND1: the loop's pitch, live (Unity's AudioSource.pitch, WebAudio's playbackRate) - the wind's bed
@@ -629,7 +809,7 @@ export class AudioEngine {
     src.playbackRate.value = pitch;
     const pan = this._panner(pos, { refDistance, maxDistance, distanceModel });
     const gain = this.ctx.createGain();
-    gain.gain.value = volume;
+    gain.gain.value = volume * this._scale;   // EG-ZH: a scope's gain (scaled) - 1 outside one
     src.connect(gain).connect(pan).connect(this._out());
     src.start();
     if (far) {   // DISC17-B: its offset from the ear, held until the clip has run out
@@ -637,6 +817,43 @@ export class AudioEngine {
       (this._far ??= []).push({ pan, off: [pos[0] - L.x, pos[1] - L.y, pos[2] - L.z], until: this.ctx.currentTime + buf.duration / pitch, src, gain, tag: far === true ? null : far });
     }
     return buf.duration;   // A3: the ambient channel's busy clock
+  }
+
+  /** AUDIT GATHER-FEEL F7: A POSITIONAL SHOT A SCENE CAN TAKE BACK - play3d's own, answering a handle (null where it
+   *  plays nothing): `stop(seconds)` fades it to nothing over `seconds` (a stop at its level pops) and lets its chain go;
+   *  `onEnd` is told when it has ended, run out or stopped. A felled tree a refused harvest stands again was heard
+   *  falling on for two seconds and more, its ground struck under it standing (systems/gatherSounds.js `hush`).
+   *  @param {number|string} index @param {number[]} pos @param {number} [volume]
+   *  @param {{ refDistance?: number, maxDistance?: number, distanceModel?: string, pitch?: number, onEnd?: () => void }} [opts] */
+  play3dVoice(index, pos, volume = 1, { refDistance = 1, maxDistance = 500, distanceModel = 'inverse', pitch = 1, onEnd = null } = {}) {
+    if (!this._ready()) return null;
+    const buf = this._buffer(index);
+    if (!buf) return null;
+    const ctx = this.ctx;
+    const src = ctx.createBufferSource();
+    src.buffer = buf;
+    src.playbackRate.value = pitch;
+    const pan = this._panner(pos, { refDistance, maxDistance, distanceModel });
+    const gain = ctx.createGain();
+    gain.gain.value = volume;
+    src.connect(gain).connect(pan).connect(this._out());
+    let ended = false;
+    src.onended = () => { if (ended) return; ended = true; releaseNodes(src, gain, pan); onEnd?.(); };
+    src.start();
+    return {
+      stop(seconds = VOICE_FADE_S) {
+        if (ended) return;
+        try {
+          const t = ctx.currentTime;
+          gain.gain.cancelScheduledValues(t);
+          gain.gain.setValueAtTime(gain.gain.value, t);
+          gain.gain.linearRampToValueAtTime(0, t + seconds);
+          src.stop(t + seconds + 0.02);
+        } catch {
+          try { src.stop(); } catch { /* already stopped */ }
+        }
+      },
+    };
   }
 
   /** AUDIT SD IV (A5): A PLACE'S FAR SHOTS LET GO WITH IT - each `far` one-shot played under `tag` and still sounding
@@ -691,13 +908,14 @@ export class AudioEngine {
     const tail = lowpass > 0 ? this._lowpass(lowpass) : null;   // BA1: AudioLowPassFilter, as loop() has it
     if (tail) src.connect(gain).connect(pan).connect(tail).connect(this._out()); else src.connect(gain).connect(pan).connect(this._out());
     src.start();
+    const release = () => releaseNodes(src, gain, pan, tail);   // RAIN-LEAK: loop()'s
     return {
       move(p) { placeAudio(pan, p); },
       /** CSA-G: the loop's gain, live (a Unity AudioSource's `volume`). */
       setVolume(v) { gain.gain.value = Math.max(0, v); },
       stop() {
         try { src.stop(); } catch { /* already stopped */ }
-        src.disconnect();
+        release();
       },
       /** AUDIT SD III (A7): an ending, not a cut - `loop`'s (HOTFIX 1003): the gain to nothing over `seconds`, then the
        *  source stopped. The Rift's bell was cut at its level as its dungeon was left. */
@@ -708,10 +926,10 @@ export class AudioEngine {
           gain.gain.setValueAtTime(gain.gain.value, t);
           gain.gain.linearRampToValueAtTime(0, t + seconds);
           src.stop(t + seconds + 0.05);
-          src.onended = () => { try { src.disconnect(); } catch { /* gone */ } };
+          src.onended = release;
         } catch {
           try { src.stop(); } catch { /* already stopped */ }
-          try { src.disconnect(); } catch { /* gone */ }
+          release();
         }
       },
     };

@@ -2,19 +2,19 @@
   {
     "name": "FIELD-GUN14-1-the-gun-fires-arrows-again",
     "file": "src/characters/thunderlockIds.js",
-    "old": "export const orbArchiveFor = (item) =>\n  (item?.templateIndex === THUNDERLOCK_TEMPLATE ? ORB_ARCHIVE : null);",
+    "old": "export const orbArchiveFor = (item) =>\n  (isGunTemplate(item?.templateIndex) ? ORB_ARCHIVE : null);",
     "new": "export const orbArchiveFor = () => null;",
     "tests": [
-      "test/arrowflight.test.js"
+      "test/systems/arrowflight.test.js"
     ]
   },
   {
     "name": "FIELD-GUN14-2-every-weapon-fires-an-orb",
     "file": "src/characters/thunderlockIds.js",
-    "old": "  (item?.templateIndex === THUNDERLOCK_TEMPLATE ? ORB_ARCHIVE : null);",
+    "old": "  (isGunTemplate(item?.templateIndex) ? ORB_ARCHIVE : null);",
     "new": "  (item ? ORB_ARCHIVE : null);",
     "tests": [
-      "test/arrowflight.test.js"
+      "test/systems/arrowflight.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (!m.dead && !m.orb && m.gpu) renderer.drawMesh(m.gpu, arrowMatrix(m.pos, m.dir), texRemap);",
     "new": "      if (!m.dead && m.gpu) renderer.drawMesh(m.gpu, arrowMatrix(m.pos, m.dir), texRemap);",
     "tests": [
-      "test/arrowflight.test.js"
+      "test/systems/arrowflight.test.js"
     ],
     "equivalent": true,
     "why": "BELT AND BRACES, and recorded as such rather than dressed up as a kill. An orb record never takes the mesh lane's lazy fetch at all (`update`'s `else if (m.gpu === null)`), so `m.gpu` stays null for its whole flight and the draw's own `m.gpu` test already declines it. The `!m.orb` beside it is the SENTENCE - it says which lane this pass is - and it becomes load-bearing the moment anything else ever sets `gpu` on an orb."
@@ -34,7 +34,7 @@
     "old": "      if (m.orbFlat) m.orbFlat.move(m.pos);\n      // X2-slice: an enemy arrow tests the player mid-capsule per",
     "new": "      // X2-slice: an enemy arrow tests the player mid-capsule per",
     "tests": [
-      "test/arrowflight.test.js"
+      "test/systems/arrowflight.test.js"
     ]
   },
   {
@@ -43,7 +43,7 @@
     "old": "      if (m.dead) { this._releaseOrb(m); continue; }",
     "new": "      if (m.dead) { continue; }",
     "tests": [
-      "test/arrowflight.test.js"
+      "test/systems/arrowflight.test.js"
     ]
   },
   {
@@ -52,7 +52,7 @@
     "old": "  if (foe.entity?.items && !orbArchiveFor(m.weapon) && !m.summoned",
     "new": "  if (foe.entity?.items && !m.summoned",
     "tests": [
-      "test/arrowflight.test.js"
+      "test/systems/arrowflight.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "collider: () => interiorCtx?.collider, effects: interiorHitEffects, loot: interiorDropped })",
     "new": "collider: () => interiorCtx?.collider, loot: interiorDropped })",
     "tests": [
-      "test/arrowflight.test.js"
+      "test/systems/arrowflight.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "        if (!m.flatArchive) ensureArrowModel(m);",
     "new": "        ensureArrowModel(m);",
     "tests": [
-      "test/arrowflight.test.js"
+      "test/systems/arrowflight.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "      if (!m.arrow || m.flatArchive) ensureMissileBatch(m);",
     "new": "      if (!m.arrow) ensureMissileBatch(m);",
     "tests": [
-      "test/arrowflight.test.js"
+      "test/systems/arrowflight.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "      if ((!m.arrow || m.flatArchive) && m.batch) m.batch.origin =",
     "new": "      if (!m.arrow && m.batch) m.batch.origin =",
     "tests": [
-      "test/arrowflight.test.js"
+      "test/systems/arrowflight.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "        if (!e.anim) { if (!e.tracked) retire(e); continue; }",
     "new": "        if (!e.anim) { retire(e); continue; }",
     "tests": [
-      "test/arrowflight.test.js"
+      "test/systems/arrowflight.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "        ? new FlatAnim(archive, frameCount, !tracked, fps)",
     "new": "        ? new FlatAnim(archive, frameCount, true, fps)",
     "tests": [
-      "test/arrowflight.test.js"
+      "test/systems/arrowflight.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "        if (e.tracked) e.batch.origin = [e.at[0] - e.pos[0], e.at[1] - e.pos[1], e.at[2] - e.pos[2]];",
     "new": "        if (false) e.batch.origin = [e.at[0] - e.pos[0], e.at[1] - e.pos[1], e.at[2] - e.pos[2]];",
     "tests": [
-      "test/arrowflight.test.js"
+      "test/systems/arrowflight.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "    if (_arrowsCtx !== interiorCtx) { interiorArrows.clear(); _arrowsCtx = interiorCtx; }",
     "new": "    if (_arrowsCtx !== interiorCtx) { interiorArrows.arrows.length = 0; _arrowsCtx = interiorCtx; }",
     "tests": [
-      "test/arrowflight.test.js"
+      "test/systems/arrowflight.test.js"
     ]
   }
 ]

@@ -1,0 +1,497 @@
+[
+  {
+    "name": "EGA3-law-six-not-the-law",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_SPEC = 10;",
+    "new": "export const EG_SPEC = 6;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-decree-law-never",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const EG_DECREE_LAW = 6;",
+    "new": "export const EG_DECREE_LAW = 7;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-law-six-not-kept",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
+    "new": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 5: '2026-10-12', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-law-five-forgotten",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 5: '2026-10-12', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
+    "new": "export const EG_LAWS = Object.freeze({ 4: '2026-10-11', 6: '2026-10-13', 7: '2026-10-13', 8: '2026-10-15', 9: '2026-10-16', 10: '2026-10-18' });",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-law-six-moves-plain-ground",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    const extra = L6 ? gale + crumbling : 0;",
+    "new": "    const extra = L6 ? gale + crumbling + 1 : 0;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-the-low-road-untouched",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    if (L6 && extra > 0) decreeSections();\n",
+    "new": "    if (false) decreeSections();\n",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-the-proving-walk-untouched",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    if (extra > 0) decreeSections();   // LAW 6",
+    "new": "    if (extra < 0) decreeSections();   // LAW 6",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-rank-two-one-gust-section",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    for (let k = 0; k < gale; k++) {",
+    "new": "    for (let k = 0; k < Math.min(1, gale); k++) {",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-gust-section-no-island",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (edge !== isleEdge) island(gap(), X + xRoad);",
+    "new": "if (edge !== isleEdge && k < 0) island(gap(), X + xRoad);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-gust-section-beside-an-island",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "if (edge !== isleEdge) island(gap(), X + xRoad);",
+    "new": "island(gap(), X + xRoad);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-crumble-section-on-its-island",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    if (crumbling > 0) run('crumble', sectionOf(crumbling));",
+    "new": "    if (crumbling > 0) { island(); run('crumble', sectionOf(crumbling)); }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-rank-two-one-crumble-section",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "  const crumbleTwo = () => { if (L6 && crumbling >= 2) run('crumble', 2); };",
+    "new": "  const crumbleTwo = () => { if (L6 && crumbling >= 3) run('crumble', 2); };",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-proving-second-crumble-unlaid",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    if (extra > 0) crumbleTwo();\n",
+    "new": "    if (extra < 0) crumbleTwo();\n",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-rank-two-sections-long",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "  const sectionOf = (rank) => (rank >= 2 ? 2 :",
+    "new": "  const sectionOf = (rank) => (rank >= 2 ? 3 :",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-set-piece-runs-kept",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "      if (!(L6 && set && extra >= 2)) run(two[0],",
+    "new": "      if (true) run(two[0],",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-runs-keep-their-room",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "      const runN = L6 && extra >= 2 ? 2 : 3;",
+    "new": "      const runN = 3;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-proving-first-span-long",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "extra >= 2 ? 3 : extra > 0 ? 4 : between(r, 5, 7));",
+    "new": "extra >= 2 ? 4 : extra > 0 ? 4 : between(r, 5, 7));",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-span-island-taken-again",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "      if (L6) { crumbleTwo(); island(); }",
+    "new": "      if (L6) { crumbleTwo(); if (crumbling < 1 || set) island(); }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-no-holder-check",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "m.home || m.mast !== EG_SPIREBRIDGE_ID || !spec",
+    "new": "m.home || !spec",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-once-a-span-unread",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "(B.sg !== 'trial' && B.sg !== 'closing') || m.sbH === B.h) return null;",
+    "new": "(B.sg !== 'trial' && B.sg !== 'closing')) return null;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-any-stage",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "(B.sg !== 'trial' && B.sg !== 'closing') || m.sbH === B.h) return null;",
+    "new": "m.sbH === B.h) return null;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-the-fallen-ask",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "  if (!m || !m.in || !m.alive || m.home ||",
+    "new": "  if (!m || !m.in || m.home ||",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-a-minute",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "export const EG_SB_MS = 6000;",
+    "new": "export const EG_SB_MS = 60000;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-spent-plank-kept",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "  B.sb = [...(B.sb ?? []).filter((o) => o.h === B.h && o.until > now), q];",
+    "new": "  B.sb = [...(B.sb ?? []), q];",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-the-gap-behind",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "if (far <= z + EG_BODY_R || near < z - EG_SB_BEHIND_M || near > z + EG_SB_AHEAD_M) continue;",
+    "new": "if (far <= z + EG_BODY_R || near > z + EG_SB_AHEAD_M) continue;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-reach-unbounded",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "if (far <= z + EG_BODY_R || near < z - EG_SB_BEHIND_M || near > z + EG_SB_AHEAD_M) continue;",
+    "new": "if (far <= z + EG_BODY_R || near < z - EG_SB_BEHIND_M) continue;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-line-unread",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "    if (!br || Math.abs(x - br.x) > EG_SB_SIDE_M) continue;",
+    "new": "    if (!br) continue;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-a-drop-spanned",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "  if (Math.abs(y1 - y0) * 100 > EG_SB_RISE_CM + 1e-6) return null;",
+    "new": "  if (Math.abs(y1 - y0) * 100 > 2000) return null;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-laps-dropped",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "z0: za - EG_SB_LAP_M, z1: zb + EG_SB_LAP_M, y0, y1 };",
+    "new": "z0: za, z1: zb, y0, y1 };",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-near-side-wrong-height",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "  const y0 = a ? a.y : floorAt(spec, b.x, za - EG_SB_LAP_M) ?? b.y,",
+    "new": "  const y0 = b ? b.y : a.y,",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-never-ground",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "P)) return EG_HOLD.piece;\n",
+    "new": "P)) return EG_HOLD.none;\n",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-end-unread",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "    if (!q || q.h !== spec?.h || !(tMs >= q.from && tMs < q.until)) continue;",
+    "new": "    if (!q || q.h !== spec?.h || !(tMs >= q.from)) continue;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-hall-unread",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "    if (!q || q.h !== spec?.h || !(tMs >= q.from && tMs < q.until)) continue;",
+    "new": "    if (!q || !(tMs >= q.from && tMs < q.until)) continue;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-trail-not-handed",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    egFairPose(A, spec, { x, y, z, ride, cl: !!p.cl }, t, B.sb);",
+    "new": "    egFairPose(A, spec, { x, y, z, ride, cl: !!p.cl }, t);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-word-unsaid",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "const w = egSpirebridge(B, sub, spec, p, now); if (w) out.push(w); break;",
+    "new": "const w = egSpirebridge(B, sub, spec, p, now); if (w) void w; break;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-ask-unheard",
+    "file": "src/net/wire.js",
+    "old": "    case 'mast': return { k: 'mast' };",
+    "new": "    case 'mast': return null;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-wire-a-minute",
+    "file": "src/net/wire.js",
+    "old": "m.until > m.at && m.until - m.at <= EG_SB_WIRE_MS && egId(m.s)",
+    "new": "m.until > m.at && m.until - m.at <= 60_000 && egId(m.s)",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-fold-lost",
+    "file": "src/net/eliteGates/egLink.js",
+    "old": "bridges: (f.bridges ?? []).filter((q) => q.h === w.h) };",
+    "new": "bridges: [] };",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-never-collided",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "    try { col?.addMesh?.(key, positions, indices, identity(), () => P.T); }",
+    "new": "    try { col?.addMesh?.(key, positions, indices, identity(), () => [0, EG_STEP_GONE_Y, 0]); }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-holds-past-its-end",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "  const stand = ms >= q.from && ms < q.until,",
+    "new": "  const stand = ms >= q.from,",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-plank-never-let-go",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "      if (!(ms < q.until)) continue;\n      const key = `eg:bridge:",
+    "new": "      const key = `eg:bridge:",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-mesh-kept",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "    if (P.gpu) { try { renderer?.destroyMesh?.(P.gpu); } catch { /* gone */ } }",
+    "new": "    if (P.gpu) { /* kept */ }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-bucket-kept",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "    try { col?.removeBucket?.(P.key); } catch { /* gone */ }",
+    "new": "    /* kept */",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-reduced-motion-unread",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "      const L = egBridgeLook(P.q, ms, access.still);",
+    "new": "      const L = egBridgeLook(P.q, ms, false);",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-no-falter",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "  const falter = !still && left <= EG_SB_LAST_S &&",
+    "new": "  const falter = false && left <= EG_SB_LAST_S &&",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-B-always-taken",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (code === 'KeyB' && bridgeGap() >= 0) return bridgeAsk();",
+    "new": "      if (code === 'KeyB') return bridgeAsk();",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-asked-with-no-gap",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (bridgeGap() < 0) { say(EG_PRES_TEXT.bridgeNone); return true; }",
+    "new": "    if (bridgeGap() < -1) { say(EG_PRES_TEXT.bridgeNone); return true; }",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-client-word-unsaid",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (w.k === 'ebridge') say(",
+    "new": "      if (w.k === 'ebridge!') say(",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-plank-not-handed-on",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      const br = here ? (F?.bridges ?? []).filter((q) => q.h === E.h).map((q) => ({ g: q.g, from: q.at, until: q.until })) : [];",
+    "new": "      const br = [];",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-mine-never-spent",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if ((E.fight?.bridges ?? []).some((q) => q.h === E.h && q.s === me())) return EG_PRES_TEXT.bridgeSpent;",
+    "new": "    if ((E.fight?.bridges ?? []).some((q) => q.h === E.h && q.s === 'nobody')) return EG_PRES_TEXT.bridgeSpent;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-a-companion-spends-mine",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if ((E.fight?.bridges ?? []).some((q) => q.h === E.h && q.s === me())) return EG_PRES_TEXT.bridgeSpent;",
+    "new": "    if ((E.fight?.bridges ?? []).some((q) => q.h === E.h)) return EG_PRES_TEXT.bridgeSpent;",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-pad-up-unread",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "  if (bridge && !panel && !witness && kind === 'tap' && dir === 'up') return { k: 'bridge' };",
+    "new": "  if (bridge && !panel && !witness && kind === 'hold' && dir === 'up') return { k: 'bridge' };",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-touch-button-missing",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "  if (bridge) return [{ id: 'bridge', label: T.bridge }];",
+    "new": "  if (bridge && rest) return [{ id: 'bridge', label: T.bridge }];",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-stage-line-silent",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "  return [...stand, ready ? EG_PRES_TEXT.bridgeReady : ''].filter(Boolean).join(' ');",
+    "new": "  return [...stand].filter(Boolean).join(' ');",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  },
+  {
+    "name": "EGA3-sb-never-offered",
+    "file": "src/net/eliteGates/egVestige.js",
+    "old": "const pool = EG_MASTERIES.filter((M) => M.id !== mast && egCardActs(M.key, n, kinds));",
+    "new": "const pool = EG_MASTERIES.filter((M) => M.id !== mast && M.key !== 'spirebridge' && egCardActs(M.key, n, kinds));",
+    "tests": [
+      "test/net/eliteGates/egaudit3_law_bridge.test.js"
+    ]
+  }
+]

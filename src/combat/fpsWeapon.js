@@ -23,15 +23,15 @@
 // symmetric states, as FPSWeapon :378-388 and :459-464 have them.
 
 import { CifRciFile } from '../formats/cifRciFile.js';
-import { getInt } from '../systems/settings.js';   // AUDIT 28 W13: Controls/Handedness
+import { getInt } from '../systems/settings/settings.js';   // AUDIT 28 W13: Controls/Handedness
 import { getPref } from '../systems/uiPrefs.js';   // MAC-I: the first-person lighting switch
 import { isEnchanted } from '../systems/inventory.js';   // AUDIT 17e C2
 import { WEAPONS, WEAPON_MATERIALS, weaponDyeColor } from '../characters/weapons.js';
-import { atlasFileName } from './diverseWeapons.js';   // DW1: FPSWeapon.cs:637-644 - the per-template name under Diverse Weapons' flag
-import { customWeaponImage } from './diverseWeaponsAssets.js';   // DW1: TryImportCifRci's answer, off the player's own bundles
-import { MATERIAL_NAMES } from '../systems/itemInfo.js';   // MetalTypes' names, for GetNameCifRci's suffix
-import { customItemClass } from '../systems/rriItems.js';   // RRI1: GetWeaponType is a virtual a custom class answers
-import { THUNDERLOCK_TEMPLATE } from '../characters/thunderlockIds.js';   // the port's own weapon (a leaf - see the file)
+import { atlasFileName } from './diverseWeapons/diverseWeapons.js';   // DW1: FPSWeapon.cs:637-644 - the per-template name under Diverse Weapons' flag
+import { customWeaponImage } from './diverseWeapons/diverseWeaponsAssets.js';   // DW1: TryImportCifRci's answer, off the player's own bundles
+import { MATERIAL_NAMES } from '../systems/item/itemInfo.js';   // MetalTypes' names, for GetNameCifRci's suffix
+import { customItemClass } from '../systems/roleplayRealismItems/rriItems.js';   // RRI1: GetWeaponType is a virtual a custom class answers
+import { THUNDERLOCK_TEMPLATE, PISTOLET_TEMPLATE } from '../characters/thunderlockIds.js';   // the port's own weapon (a leaf - see the file)
 import { applyDyeToIndex, DYE_TARGETS } from '../characters/dyes.js';
 
 // WeaponTypes (DaggerfallUnityEnums), the animation-set ids.
@@ -51,7 +51,17 @@ export const WEAPON_TYPES = Object.freeze({
   // WEAPON_FILE below has no row for it and combat/thunderlockArt.js
   // loads it instead.
   Thunderlock: 17, Thunderlock_Magic: 18,
+  // PISTOLET (2026-10-21): the Dwarven Pistolet, the second gun, on the same terms - its frames off one strip
+  // (combat/gun/pistoletArt.js), no WEAPON*.CIF.
+  Pistolet: 19, Pistolet_Magic: 20,
 });
+
+/** PISTOLET: is this weapon type one of the port's own guns - the Thunderlock or the Pistolet, plain or enchanted? The one
+ *  question the machine, the rig and the arm ask of a gun that is not about which gun. */
+export const isGunType = (t) => t === WEAPON_TYPES.Thunderlock || t === WEAPON_TYPES.Thunderlock_Magic
+  || t === WEAPON_TYPES.Pistolet || t === WEAPON_TYPES.Pistolet_Magic;
+/** PISTOLET: the Pistolet's types, plain or enchanted. */
+export const isPistoletType = (t) => t === WEAPON_TYPES.Pistolet || t === WEAPON_TYPES.Pistolet_Magic;
 
 // GetWeaponFilename, verbatim.
 export const WEAPON_FILE = Object.freeze({
@@ -67,17 +77,17 @@ export const WEAPON_FILE = Object.freeze({
   [WEAPON_TYPES.Werecreature]: 'WEAPON11.CIF',
 });
 
-// WeaponBasics' Alignment - a leaf now (combat/weaponAlign.js), so a
+// WeaponBasics' Alignment - a leaf now (combat/weapon/weaponAlign.js), so a
 // reader that wants only the enum does not take this module's world
 // with it. Re-exported here: this is still the enum's front door.
-export { ALIGN } from './weaponAlign.js';
-import { ALIGN } from './weaponAlign.js';
+export { ALIGN } from './weapon/weaponAlign.js';
+import { ALIGN } from './weapon/weaponAlign.js';
 
 // The classic 320x200 design surface every weapon image overlays.
 // AUDIT 24 (wave 24): the classic 320x200 panel has one home in
-// ui/nativePanel.js.
-import { NATIVE_W, NATIVE_H } from '../ui/nativePanel.js';
-import { weaponOffsetHeight } from '../ui/hudLarge.js';   // ROAD-D D10: LargeHUDUndockedOffsetWeapon / the docked force
+// ui/native/nativePanel.js.
+import { NATIVE_W, NATIVE_H } from '../ui/native/nativePanel.js';
+import { weaponOffsetHeight } from '../ui/hud/hudLarge.js';   // ROAD-D D10: LargeHUDUndockedOffsetWeapon / the docked force
 import { pageParam } from '../systems/pageQuery.js';   // PERF-URL: the page's query, parsed once a search
 
 export { NATIVE_W, NATIVE_H };
@@ -181,6 +191,7 @@ export const THUNDERLOCK_ANIMS = Object.freeze([
 export function getWeaponAnims(weaponType) {
   const T = WEAPON_TYPES;
   if (weaponType === T.Thunderlock || weaponType === T.Thunderlock_Magic) return THUNDERLOCK_ANIMS;   // the port's own, ahead of the verbatim routing
+  if (weaponType === T.Pistolet || weaponType === T.Pistolet_Magic) return THUNDERLOCK_ANIMS;   // PISTOLET: the same table - an idle and six fire frames, AlignRight, every direction alike
   if (weaponType === T.Melee) return MELEE_ANIMS;
   if (weaponType === T.Dagger || weaponType === T.Dagger_Magic) return DAGGER_ANIMS;
   if (weaponType === T.Staff || weaponType === T.Staff_Magic) return STAFF_ANIMS;
@@ -188,6 +199,26 @@ export function getWeaponAnims(weaponType) {
   if (weaponType === T.Bow) return BOW_ANIMS;
   if (weaponType === T.Werecreature) return WERECREATURE_ANIMS;
   return GENERAL_ANIMS;
+}
+
+/** WEAPON-GLOW1 (bible/05-Combat/Weapon-Glow.md): the enchanted promotion UNDONE - the plain set a *_Magic type swings
+ *  while its weapon's element shows (systems/weaponGlow.js spriteGlow): the element's outline is drawn over the plain
+ *  frames, never over the WEAPO1xx sheet's painted glow. Every other type is itself. A departure from
+ *  ConvertItemToAPIWeaponType, named: DFU has no element to show. */
+export function plainWeaponType(type) {
+  const T = WEAPON_TYPES;
+  switch (type) {
+    case T.LongBlade_Magic: return T.LongBlade;
+    case T.Staff_Magic: return T.Staff;
+    case T.Dagger_Magic: return T.Dagger;
+    case T.Mace_Magic: return T.Mace;
+    case T.Flail_Magic: return T.Flail;
+    case T.Warhammer_Magic: return T.Warhammer;
+    case T.Battleaxe_Magic: return T.Battleaxe;
+    case T.Thunderlock_Magic: return T.Thunderlock;
+    case T.Pistolet_Magic: return T.Pistolet;
+    default: return type;
+  }
 }
 
 /** ConvertItemToAPIWeaponType, verbatim: template index -> animation
@@ -207,6 +238,7 @@ export function weaponTypeForItem(item) {
   if (item.templateIndex === THUNDERLOCK_TEMPLATE) {
     return isEnchanted(item) ? T.Thunderlock_Magic : T.Thunderlock;
   }
+  if (item.templateIndex === PISTOLET_TEMPLATE) return isEnchanted(item) ? T.Pistolet_Magic : T.Pistolet;   // PISTOLET: the same arm
   const cls = customItemClass(item.templateIndex);   // RRI1: an Archer's Axe swings the battleaxe sheet, a Light Flail the flail's
   if (cls?.weaponType) return T[cls.weaponType(isEnchanted(item))];
   let result;
@@ -268,7 +300,7 @@ export function frameToColor32(bmp, palette, dye) {
  *   { weaponType, anims, records: [{ width, height, frames: [tex] }] }
  * Cache by `${weaponType}:${material}` at the call site.
  */
-export async function loadFpsWeaponArt(getBytes, palette, renderer, weaponType, material = WEAPON_MATERIALS.Iron, item = null, { customImage = customWeaponImage } = {}) {
+export async function loadFpsWeaponArt(getBytes, palette, renderer, weaponType, material = WEAPON_MATERIALS.Iron, item = null, { customImage = customWeaponImage, plain = false } = {}) {   // WEAPON-GLOW1: `plain` - the item's element shows, and Diverse Weapons is asked its plain set too
   const fileName = WEAPON_FILE[weaponType];
   if (!fileName) return null;
   const cif = new CifRciFile();
@@ -283,7 +315,7 @@ export async function loadFpsWeaponArt(getBytes, palette, renderer, weaponType, 
   // Weapons' flag is on and a weapon is in hand, else this file's own -
   // and the ask is TryImportCifRci's spelling, `<FILE>_<record>-<frame>
   // _<Metal>` (TextureReplacement.cs:795-801; None has no suffix).
-  const askName = atlasFileName(item, fileName);
+  const askName = atlasFileName(item, fileName, undefined, plain ? false : undefined);
   const metal = material != null && material !== WEAPON_MATERIALS.None ? MATERIAL_NAMES[material] : null;
   // AUDIT-DW F2: every frame's ask leaves TOGETHER. Asked one after the
   // other, a longsword's 26 frames were 26 round trips in a row before
@@ -365,21 +397,41 @@ export function drawFpsWeapon(renderer, canvas, art, state, frame, {
   // ROAD-D D10: weaponOffsetHeight (FPSWeapon.cs:146-155). Read
   // through the ONE home for the large HUD's laws rather than
   // recomputed - and DEFAULTED here, so the single caller
-  // (combat/weaponRig.js) does not have to know the bar exists.
+  // (combat/weapon/weaponRig.js) does not have to know the bar exists.
   offsetHeight = weaponOffsetHeight(),
   // MAC-I: FPSWeapon.Tint (FPSWeapon.cs:108), which DFU passes to its
   // own draw (:182) and never writes - the port writes it from the
   // light the room's flats take (render/renderer.js flatLightAt). null
   // is Color.white, byte for byte, which is every caller before this.
   tint = null,
+  // WEAPON-GLOW1: the element's outline over the frame (systems/weaponGlow.js spriteGlow; render/renderer.js
+  // drawScreenQuadGlow) - null draws none, which is every weapon without one.
+  glow = null,
 } = {}) {
-  if (!art) return;
+  const q = fpsWeaponQuad(canvas, art, state, frame, { flipHorizontal, offsetHeight });
+  if (!q) return;
+  const { tex, rect: { x, y, w, h }, uv: src, rec } = q;
+  renderer.drawScreenQuad(tex, { x, y, w, h }, src, tint ?? undefined);   // MAC-I: Tint
+  if (glow) renderer.drawScreenQuadGlow?.(tex, { x, y, w, h }, src, glow, { art: [rec.width, rec.height], view: [canvas.width, canvas.height] });   // WEAPON-GLOW1: emissive - the room's light never dims it; measured in the record's own pixels (an HD frame's texels are finer)
+}
+
+/**
+ * TWO-HANDS: drawFpsWeapon's placement without the draw - the frame's texture, its rect on the canvas, its source
+ * rect (undefined unflipped) and its record (WEAPON-GLOW1's outline is measured in the record's own pixels) - so the
+ * second hand of a pair (combat/twoHands/twoHands.js) is placed by the very arithmetic the first is, and then mirrored whole.
+ * Null when the art has no such record.
+ */
+export function fpsWeaponQuad(canvas, art, state, frame, {
+  flipHorizontal = getInt('Controls', 'Handedness', 0, 3) === 1,
+  offsetHeight = weaponOffsetHeight(),
+} = {}) {
+  if (!art) return null;
   const flip = flipHorizontal && FLIP_STATES.includes(state);
   const stateIdx = STATE_INDEX[state] ?? 0;
   const anim = art.anims[stateIdx];
   const recordIdx = art.weaponType === WEAPON_TYPES.Bow ? 0 : anim.Record;
   const rec = art.records[recordIdx];
-  if (!rec) return;
+  if (!rec) return null;
   const f = Math.min(frame, rec.frames.length - 1);
   const tex = rec.frames[f];
   const scaleX = canvas.width / NATIVE_W;
@@ -397,5 +449,5 @@ export function drawFpsWeapon(renderer, canvas, art, state, frame, {
   const y = canvas.height - h - offsetHeight;
   // The mirror: rect.xMax .. -width (:388), i.e. u from 1 to 0.
   const src = flip ? { u0: 1, v0: 0, u1: 0, v1: 1 } : undefined;
-  renderer.drawScreenQuad(tex, { x, y, w, h }, src, tint ?? undefined);   // MAC-I: Tint
+  return { tex, rect: { x, y, w, h }, uv: src, rec };
 }

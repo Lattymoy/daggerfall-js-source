@@ -5,9 +5,9 @@
     "old": "      if (repairUnloseableBindings(store).length) saveKeyBinds(store);\n",
     "new": "",
     "tests": [
-      "test/inputactions.test.js",
-      "test/audit63_items_loot.test.js",
-      "test/donline1_respawn.test.js"
+      "test/systems/inputactions.test.js",
+      "test/systems/audit63_items_loot.test.js",
+      "test/scenes/donline1_respawn.test.js"
     ]
   },
   {
@@ -16,9 +16,9 @@
     "old": "export const actionIsReachable = (store, action) => codesForAction(store, action).some((c) => !isPadCode(c));",
     "new": "export const actionIsReachable = (store, action) => codesForAction(store, action).length > 0;",
     "tests": [
-      "test/inputactions.test.js",
-      "test/audit63_items_loot.test.js",
-      "test/donline1_respawn.test.js"
+      "test/systems/inputactions.test.js",
+      "test/systems/audit63_items_loot.test.js",
+      "test/scenes/donline1_respawn.test.js"
     ]
   },
   {
@@ -27,20 +27,20 @@
     "old": "export const UNLOSEABLE_ACTIONS = Object.freeze(['SwingWeapon',",
     "new": "export const UNLOSEABLE_ACTIONS = Object.freeze([",
     "tests": [
-      "test/inputactions.test.js",
-      "test/audit63_items_loot.test.js",
-      "test/donline1_respawn.test.js"
+      "test/systems/inputactions.test.js",
+      "test/systems/audit63_items_loot.test.js",
+      "test/scenes/donline1_respawn.test.js"
     ]
   },
   {
     "name": "MACD2-transportation-draws-its-junk-icon-address-again",
-    "file": "src/systems/itemTemplates.js",
+    "file": "src/systems/item/itemTemplates.js",
     "old": "  if (BORROWED_ART_INDICES.has(item.templateIndex)) return null;\n",
     "new": "",
     "tests": [
-      "test/inputactions.test.js",
-      "test/audit63_items_loot.test.js",
-      "test/donline1_respawn.test.js"
+      "test/systems/inputactions.test.js",
+      "test/systems/audit63_items_loot.test.js",
+      "test/scenes/donline1_respawn.test.js"
     ]
   },
   {
@@ -49,20 +49,20 @@
     "old": "  const m = Number.isFinite(maxHealth) ? maxHealth : 0;\n  return Math.max(1, Math.floor(m * RESPAWN_HEALTH_FRACTION));",
     "new": "  return Math.max(1, Math.floor((maxHealth ?? 0) * RESPAWN_HEALTH_FRACTION));",
     "tests": [
-      "test/inputactions.test.js",
-      "test/audit63_items_loot.test.js",
-      "test/donline1_respawn.test.js"
+      "test/systems/inputactions.test.js",
+      "test/systems/audit63_items_loot.test.js",
+      "test/scenes/donline1_respawn.test.js"
     ]
   },
   {
     "name": "MACD3-the-heal-goes-back-to-the-end-after-the-teleport-the-death-loop",
     "file": "src/scenes/world.js",
-    "old": "    reviveForPlay(playerEntity, { force: true });\n    surfacePlayer();\n    player.stopAutorun();   // SEA-RISE: a player raised from death does not come up running - the latch walked them back into the sea\n    const goldLost = wildRise ? 0 : applyDeathPenalty(playerEntity);",
-    "new": "    player.stopAutorun();   // SEA-RISE: a player raised from death does not come up running - the latch walked them back into the sea\n    const goldLost = wildRise ? 0 : applyDeathPenalty(playerEntity);",
+    "old": "    reviveForPlay(playerEntity, { force: true });\n    surfacePlayer();\n    player.stopAutorun();   // SEA-RISE: a player raised from death does not come up running - the latch walked them back into the sea\n    const goldLost = wildRise || madeRuleHere('deathPenalty') === 'none' ? 0 : applyDeathPenalty(playerEntity);",
+    "new": "    player.stopAutorun();   // SEA-RISE: a player raised from death does not come up running - the latch walked them back into the sea\n    const goldLost = wildRise || madeRuleHere('deathPenalty') === 'none' ? 0 : applyDeathPenalty(playerEntity);",
     "tests": [
-      "test/inputactions.test.js",
-      "test/audit63_items_loot.test.js",
-      "test/donline1_respawn.test.js"
+      "test/systems/inputactions.test.js",
+      "test/systems/audit63_items_loot.test.js",
+      "test/scenes/donline1_respawn.test.js"
     ]
   },
   {
@@ -71,9 +71,9 @@
     "old": "    if (_respawning) return;   // and a second death mid-flight cannot start a second respawn\n",
     "new": "",
     "tests": [
-      "test/inputactions.test.js",
-      "test/audit63_items_loot.test.js",
-      "test/donline1_respawn.test.js"
+      "test/systems/inputactions.test.js",
+      "test/systems/audit63_items_loot.test.js",
+      "test/scenes/donline1_respawn.test.js"
     ]
   },
   {
@@ -82,9 +82,9 @@
     "old": "    }).finally(() => { _respawning = false; });",
     "new": "    });",
     "tests": [
-      "test/inputactions.test.js",
-      "test/audit63_items_loot.test.js",
-      "test/donline1_respawn.test.js"
+      "test/systems/inputactions.test.js",
+      "test/systems/audit63_items_loot.test.js",
+      "test/scenes/donline1_respawn.test.js"
     ]
   }
 ]

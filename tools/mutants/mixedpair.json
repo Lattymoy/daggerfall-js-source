@@ -1,0 +1,317 @@
+[
+  {
+    "name": "MIXEDPAIR-two-of-a-kind",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  if (dualEligible(right) && dualEligible(left)) return HANDS_MODE.Dual;",
+    "new": "  if (dualEligible(right) && dualEligible(left) && dualGun(right) === dualGun(left)) return HANDS_MODE.Dual;",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-gun-hand-swapped",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  return r === l ? null : r ? 'R' : 'L';",
+    "new": "  return r === l ? null : r ? 'L' : 'R';",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-blade-read-as-gun",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  if (!dualEligible(right) || !dualEligible(left)) return null;\n  const r = dualGun(right), l = dualGun(left);",
+    "new": "  if (!dualEligible(right) || !dualEligible(left)) return null;\n  const r = dualGun(right), l = true;",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-no-fall",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  if (!gunHand || strike.hand !== gunHand || gunReady) return strike;",
+    "new": "  if (!gunHand || strike.hand !== gunHand || gunReady || true) return strike;",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-fall-a-flurry",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  return { hand, flurry: false, off: hand !== (lead === 'L' ? 'L' : 'R') };",
+    "new": "  return { hand, flurry: strike.flurry, off: hand !== (lead === 'L' ? 'L' : 'R') };",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-fall-off-of-the-gun",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  return { hand, flurry: false, off: hand !== (lead === 'L' ? 'L' : 'R') };",
+    "new": "  return { hand, flurry: false, off: strike.off };",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-reload-free",
+    "file": "src/combat/twoHands/handsLaw.js",
+    "old": "  RELOAD: 2,",
+    "new": "  RELOAD: 1,",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-overlap",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    if (this.machine.state !== 'Idle' || this._gunStriking()) return false;",
+    "new": "    if (this._gunStriking()) return false;",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-blade-waits-the-reload",
+    "file": "src/combat/playerWeapon.js",
+    "old": "m.cooldownUntil = this.mixedPair ? Math.max(m.now, this._classicCooldown) : m.now + Math.min(",
+    "new": "m.cooldownUntil = m.now + Math.min(",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-clock-blind-to-the-shot",
+    "file": "src/combat/playerWeapon.js",
+    "old": "      if (this.mixedPair) { this._lastHand = this.strike.hand; this._lastEnd = m.now; }",
+    "new": "      if (false) { this._lastHand = this.strike.hand; this._lastEnd = m.now; }",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-reload-on-both",
+    "file": "src/combat/playerWeapon.js",
+    "old": "ms = PISTOLET_FEEL.reloadMs * (h === gh ? MIXED.RELOAD : 1);",
+    "new": "ms = PISTOLET_FEEL.reloadMs * (gh ? MIXED.RELOAD : 1);",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-reload-never-reset",
+    "file": "src/combat/playerWeapon.js",
+    "old": "ms = PISTOLET_FEEL.reloadMs * (h === gh ? MIXED.RELOAD : 1);",
+    "new": "ms = h === gh ? PISTOLET_FEEL.reloadMs * MIXED.RELOAD : g.cooldownMs;",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-no-fall-in-the-machine",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    const s = lead ? named : mixedStrike(named, { gunHand: gh, gunReady, lead: this.leadHand });",
+    "new": "    const s = named;",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-technique-falls",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    const s = lead ? named : mixedStrike(named, { gunHand: gh, gunReady, lead: this.leadHand });",
+    "new": "    const s = mixedStrike(named, { gunHand: gh, gunReady, lead: this.leadHand });",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-gun-ready-unread",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    const gunReady = !!p && p[gh].state === 'Idle' && this.gunReady() !== false;",
+    "new": "    const gunReady = !!p && p[gh].state === 'Idle';",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-blade-on-the-pistol-clock",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    this._tuneClassic(weaponTypeForItem(this.handItem(s.hand)));   // the blade's law",
+    "new": "    // this._tuneClassic(weaponTypeForItem(this.handItem(s.hand)));   // the blade's law",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-blade-on-the-gun-type",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    const blade = this.mixedPair && !this._gunStriking() ? this.handItem(otherHand(this.gunHand)) : null;",
+    "new": "    const blade = this.mixedPair && !this._gunStriking() ? this.handItem(this.gunHand) : null;",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-not-in-pair",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    this.pistols.inPair = !!gh;",
+    "new": "    this.pistols.inPair = false;",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-flip-the-lone-side",
+    "file": "src/combat/gun/pistolLane.js",
+    "old": "(pistols.hands().length === 2 || pistols.inPair ? handOnLeft(h, leftHanded) : leftHanded)",
+    "new": "(pistols.hands().length === 2 ? handOnLeft(h, leftHanded) : leftHanded)",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-gun-guard-never",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "lowered: (h) => (playerWeapon.mixedPair && playerWeapon.strikeInFlight?.hand === otherHand(h)) ||",
+    "new": "lowered: (h) => (false && playerWeapon.strikeInFlight?.hand === otherHand(h)) ||",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-guard-unread",
+    "file": "src/combat/gun/pistolViewmodel.js",
+    "old": " || (m.state !== 'Firing' && !!lowered(h)), dt);",
+    "new": ", dt);",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-the-melee-branch",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "      if (c && pistolsUp() && playerWeapon.mixedPair && pairUp() &&",
+    "new": "      if (c && pistolsUp() && playerWeapon.mixedPair && false &&",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-fixed-order",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "        for (const h of twoHands.drawOrder()) {\n          if (h !== gh)",
+    "new": "        for (const h of ['L', 'R']) {\n          if (h !== gh)",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-sheathed-for-pellets",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "    if (playerWeapon.mixedPair) {   // MIXED-PAIR: a pair's blade still fights",
+    "new": "    if (false) {   // MIXED-PAIR: a pair's blade still fights",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-blade-held-for-pellets",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "(!pelletsOwed() || playerWeapon.mixedPair);",
+    "new": "!pelletsOwed();",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-gun-fires-dry",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "  playerWeapon.gunReady = () => !pelletsOwed();",
+    "new": "  playerWeapon.gunReady = () => true;",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-pellets-of-the-blade",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "    const gun = playerWeapon.gunHand ? playerWeapon.handItem(playerWeapon.gunHand) : playerWeapon.weapon;",
+    "new": "    const gun = playerWeapon.weapon;",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-gun-clone-swings",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "        const gunClone = (hand) => (pair && playerWeapon.gunHand === hand ? { machine: STILL_MACHINE, shown: false } : {});",
+    "new": "        const gunClone = (hand) => (false ? { machine: STILL_MACHINE, shown: false } : {});",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-drawpair-draws-both",
+    "file": "src/combat/twoHands/twoHands.js",
+    "old": "      if ((running && hand !== st.strikeHand) || (only && hand !== only)) continue;",
+    "new": "      if (running && hand !== st.strikeHand) continue;",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-held-shot-unread",
+    "file": "src/combat/playerWeapon.js",
+    "old": "  _gunStriking() { return !!this.gunHand && (this._shotMirror || this.shotHeld() === true); }",
+    "new": "  _gunStriking() { return !!this.gunHand && this._shotMirror; }",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-held-shot-never-told",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "  playerWeapon.shotHeld = () => _heldHit;",
+    "new": "  playerWeapon.shotHeld = () => false;",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-putby-cuts-the-blow",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    if (this._bladeTurn) { m.cooldownUntil",
+    "new": "    if (false) { m.cooldownUntil",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-blade-turn-never-kept",
+    "file": "src/combat/playerWeapon.js",
+    "old": "    this._bladeTurn = !!blade;\n",
+    "new": "",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-touch-door-dry",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "(pelletsOwed() && !playerWeapon.mixedPair)) return;",
+    "new": "pelletsOwed()) return;",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  },
+  {
+    "name": "MIXEDPAIR-arm-turns-unread",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "    if (playerWeapon.mixedPair && (fpArm.active() || fpArm.thirdActive()) && fpArm.shotBusy()) return true;",
+    "new": "",
+    "tests": [
+      "test/combat/mixedpair.test.js"
+    ]
+  }
+]

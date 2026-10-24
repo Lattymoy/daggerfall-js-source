@@ -5,7 +5,7 @@
     "old": "    peersInTown: () => (peersNear() ?? []).filter(",
     "new": "    peersInTown: () => peersNear().filter(",
     "tests": [
-      "test/field_raid_ft.test.js"
+      "test/scenes/field_raid_ft.test.js"
     ]
   }
 ]

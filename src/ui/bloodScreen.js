@@ -14,7 +14,7 @@
 // NO RENDERER OF ITS OWN: a pure list of drops the HUD's one
 // host-agnostic call ticks and draws (hud.js drawHud, beside the damage
 // flash), through the renderer's screen quad with the atlas texture.
-import { BLOOD_BASE, pickCell } from '../combat/bloodArt.js';
+import { BLOOD_BASE, pickCell } from '../combat/blood/bloodArt.js';
 
 /** The share of max health lost in one frame that throws blood on the
  *  lens - a tenth: a real blow, never the tick of a poison. */

@@ -5,7 +5,7 @@
     "old": "if (f.entity?.team === 'PlayerAlly' || f.managed || f.deckBoat != null) return null;",
     "new": "if (f.entity?.team === 'PlayerAlly' || f.deckBoat != null) return null;",
     "tests": [
-      "test/deepshare.test.js"
+      "test/scenes/deepshare.test.js"
     ]
   },
   {
@@ -14,16 +14,16 @@
     "old": "|| f.managed || f.deckBoat != null) return null; const at = f.ai?.feet; if (!at) return null; let id = null, best = f.site ? CAMP_CULL_DISTANCE : Infinity; for (const q of near) { if ((isPrivateQuestFoe(f) || f._keptTag) &&",
     "new": "|| f.managed || f.deckBoat != null) return null; const at = f.ai?.feet; if (!at) return null; let id = null, best = f.site ? CAMP_CULL_DISTANCE : Infinity; for (const q of near) { if ((isPrivateQuestFoe(f)) &&",
     "tests": [
-      "test/questparty2.test.js"
+      "test/scenes/questparty2.test.js"
     ]
   },
   {
     "name": "APACE-P2-no-hysteresis",
-    "file": "src/scenes/deepWatersHost.js",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
     "old": "standing ? DEEP_SHARE_RADIUS : DEEP_SHARE_RADIUS * DEEP_SHARE_HYSTERESIS",
     "new": "DEEP_SHARE_RADIUS",
     "tests": [
-      "test/deepshare.test.js"
+      "test/scenes/deepshare.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    const now = standsTheDeep(online?.id ?? null, player.feetAt(), peersNear(), _deepStanding);",
     "new": "    const now = standsTheDeep(online?.id ?? null, player.feetAt(), peersNear());",
     "tests": [
-      "test/deepshare.test.js"
+      "test/scenes/deepshare.test.js"
     ]
   },
   {
@@ -41,16 +41,16 @@
     "old": "    if (_deepStanding && !now) dwEnemies?.dropPending?.();\n",
     "new": "\n",
     "tests": [
-      "test/deepshare.test.js"
+      "test/scenes/deepshare.test.js"
     ]
   },
   {
     "name": "APACE-P2-drop-keeps-the-counts",
-    "file": "src/scenes/deepWatersEncounters.js",
+    "file": "src/scenes/deepWater/deepWatersEncounters.js",
     "old": "      for (const r of pending) if (r.group?.active) { r.group.liveOrPending = Math.max(0, r.group.liveOrPending - 1); liveCount = Math.max(0, liveCount - 1); }\n      pending.length = 0;",
     "new": "      pending.length = 0;",
     "tests": [
-      "test/deepshare.test.js"
+      "test/scenes/deepshare.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      if (anchor && _overDeepWater(anchor.x, anchor.z)) anchor = null;",
     "new": "      if (anchor && false) anchor = null;",
     "tests": [
-      "test/deepshare.test.js"
+      "test/scenes/deepshare.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "        if (spot && _overDeepWater(spot.x, spot.z)) spot = null;",
     "new": "        if (spot && false) spot = null;",
     "tests": [
-      "test/deepshare.test.js"
+      "test/scenes/deepshare.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "f.attack.update(foeFrameDt(dt), f.ai, _tgt, _fPaused);   // MT-ii",
     "new": "f.attack.update(dt, f.ai, _tgt, _fPaused);   // MT-ii",
     "tests": [
-      "test/foecatchup.test.js"
+      "test/scenes/foecatchup.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "f.caster.update(foeFrameDt(dt), f.ai, f.attack, _tgt, _castTargetEntity)",
     "new": "f.caster.update(dt, f.ai, f.attack, _tgt, _castTargetEntity)",
     "tests": [
-      "test/foecatchup.test.js"
+      "test/scenes/foecatchup.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "g.attack.update(foeFrameDt(dt), g.ai, _tgt);",
     "new": "g.attack.update(dt, g.ai, _tgt);",
     "tests": [
-      "test/foecatchup.test.js"
+      "test/scenes/foecatchup.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "f.attack.update(foeFrameDt(dt), f.ai, _tgt, _fPaused);   // MT-iv",
     "new": "f.attack.update(dt, f.ai, _tgt, _fPaused);   // MT-iv",
     "tests": [
-      "test/foecatchup.test.js"
+      "test/scenes/foecatchup.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "f.seducer?.update(foeFrameDt(dt), !foeDeps",
     "new": "f.seducer?.update(dt, !foeDeps",
     "tests": [
-      "test/foecatchup.test.js"
+      "test/scenes/foecatchup.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    arrows.update(foeDt, {",
     "new": "    arrows.update(dt, {",
     "tests": [
-      "test/foecatchup.test.js"
+      "test/scenes/foecatchup.test.js"
     ]
   }
 ]

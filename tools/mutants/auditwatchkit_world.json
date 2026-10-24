@@ -5,7 +5,7 @@
     "old": "...(cp.length ? { cp, cn } : {})",
     "new": "...(cp.length ? { cp } : {})",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "const compNames = companionNames(data.cp, data.cn);   // AUDIT WK-U3: and their names",
     "new": "const compNames = new Map();   // AUDIT WK-U3: and their names",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "f.companionName = compNames.get(r.i) ?? null; continue; }",
     "new": "continue; }",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "nf.companionName = compNames.get(r.i) ?? null; }",
     "new": "}",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (name) out.set(i, name);",
     "new": "    if (name) out.set(cp[0], name);",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": ".trim().slice(0, COMPANION_NAME_MAX);",
     "new": ".trim();",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "n.replace(/[\\u0000-\\u001f\\u007f]/g, '').trim()",
     "new": "n.trim()",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "(f.puppet ? { name: f.companionName || 'Companion', fx: [] }",
     "new": "(f.puppet ? { name: f.companionName || 'Companion', hp: f.entity.health, hpMax: max, fx: [] }",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "(f.puppet ? { name: f.companionName || 'Companion', fx: [] }",
     "new": "(f.puppet ? { name: f.entity.name || 'Companion', fx: [] }",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "{ cp.push(i); cn.push(f.entity?.name ?? ''); }",
     "new": "{ cp.push(i); }",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "companionPuppet(f, lo && comp.has(r.i), compNames.get(r.i))",
     "new": "companionPuppet(f, lo && comp.has(r.i))",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "f.shipmate = true; f.companionName = name ?? null;",
     "new": "f.shipmate = true;",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "const party = navalOn() && !csaRuntime?.isSailing?.() ? naval",
     "new": "const party = navalOn() ? naval",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    if (chatLinks && social) return;",
     "new": "    if (chatLinks) return;",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "items: () => naval?.companionPack?.(key)?.items ?? (orphan ??= []),",
     "new": "items: () => naval?.companionPack?.(key)?.items ?? [],",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
@@ -140,43 +140,43 @@
     "old": "modStartLoad: () => { crewAshore.clear(); clearSworn(); if (csaRuntime)",
     "new": "modStartLoad: () => { if (csaRuntime)",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
     "name": "WK-P5-force-unasked",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "giveItems?.(rest, null, { force: true })",
     "new": "giveItems?.(rest, null)",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
     "name": "WK-P5-leftovers-dropped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const mine = rest.length ? deps.board?.giveItems?.(rest, null, { force: true }) ?? null : null;",
     "new": "const mine = null;",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
     "name": "WK-P5-said-hold",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const where = !rest.length ? 'in the hold' : rest.length === items.length ? 'in your pack' : 'in the hold and your pack';",
     "new": "const where = 'in the hold';",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
     "name": "WK-P5-over-unsaid",
-    "file": "src/scenes/navalHost.js",
-    "old": "${mine?.over ? ' - more than you can carry' : ''}",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "${mine?.over ? ' (more than you can carry)' : ''}",
     "new": "${''}",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    if (isGoldPieces(item)) { addGoldPieces(entity, item.stackCount ?? 1); continue; }\n",
     "new": "",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "if (force && (!plan.ok || plan.amount < (item.stackCount ?? 1)))",
     "new": "if (false)",
     "tests": [
-      "test/auditwatchkit_world.test.js"
+      "test/scenes/auditwatchkit_world.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "{ this._stick(m, [m.pos[0] + unit[0] * cs.stop, m.pos[1] + unit[1] * cs.stop, m.pos[2] + unit[2] * cs.stop], unit); m.dead = true; continue; }",
     "new": "{ m.dead = true; continue; }",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "this._stick(m, [m.pos[0] + unit[0] * cs.stop, m.pos[1] + unit[1] * cs.stop, m.pos[2] + unit[2] * cs.stop], unit)",
     "new": "this._stick(m, [m.pos[0], m.pos[1], m.pos[2]], unit)",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "[at[0], at[1] - STUCK_ARROW_LIFT, at[2]]",
     "new": "[at[0], at[1], at[2]]",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  pile.label = STUCK_ARROW_LABEL;\n",
     "new": "",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  pile.noStore = STUCK_ARROW_NO_STORE;\n",
     "new": "",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "{ unsaved: true, drawn: false, owner: STUCK_ARROW_OWNER }",
     "new": "{ unsaved: false, drawn: false, owner: STUCK_ARROW_OWNER }",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "&& p.owner !== 'wild' && !p.unsaved).map",
     "new": "&& p.owner !== 'wild').map",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "{ if (from) this._stick(m, groundEntry(from, m.pos, c), m.dir); m.dead = true; }",
     "new": "{ m.dead = true; }",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "this._stick(m, groundEntry(from, m.pos, c), m.dir)",
     "new": "this._stick(m, [m.pos[0], c.heightAt(m.pos[0], m.pos[2]), m.pos[2]], m.dir)",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "const t = da > 0 && da - db > 0 ? Math.min(1, da / (da - db)) : 0;",
     "new": "const t = da > 0 && da - db > 0 ? 1 : 0;",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "return !!m?.fromPlayer && !m.visual",
     "new": "return !!m && !m.visual",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "&& !m.visual && !m.summoned",
     "new": "&& !m.summoned",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "&& !m.summoned && !orbArchiveFor(m.weapon) && !shotTallyOpen()",
     "new": "&& !orbArchiveFor(m.weapon) && !shotTallyOpen()",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "&& !orbArchiveFor(m.weapon) && !shotTallyOpen()",
     "new": "&& !shotTallyOpen()",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": " && !shotTallyOpen();\n}",
     "new": ";\n}",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "  for (let i = 0; i < all.length - STUCK_ARROWS_MAX; i++) loot.removePile(all[i]);\n",
     "new": "",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "loot.removePile(all[i]);",
     "new": "loot.removePile(all[all.length - 1 - i]);",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "if (p.inactive || !p.items.length) loot.removePile(p);",
     "new": "if (false) loot.removePile(p);",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "if (p.inactive || !p.items.length) loot.removePile(p);",
     "new": "if (p.inactive) loot.removePile(p);",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "if (gpu) for (const p of stuck) renderer.drawMesh(",
     "new": "if (gpu && false) for (const p of stuck) renderer.drawMesh(",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "const d = pile.stuckDir, back = stuckArrowSetBack(bounds);",
     "new": "const d = pile.stuckDir, back = 0;",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "return bounds[2] + bounds[3] - STUCK_ARROW_EMBED",
     "new": "return bounds[2] - bounds[3] - STUCK_ARROW_EMBED",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "    if (i >= 0) draws.splice(i, 1);\n",
     "new": "",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    if (held.has(p)) continue;\n",
     "new": "",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "effects: hitEffects, loot: droppedLoot });",
     "new": "effects: hitEffects });",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "loot: droppedLoot, pixelKeyAt: () => `${playerTravelPixel().x},${playerTravelPixel().y}` });",
     "new": "loot: droppedLoot });",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "effects: interiorHitEffects, loot: interiorDropped });",
     "new": "effects: interiorHitEffects });",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "        if (m.arrow && stickable(m)) stickArrow(droppedLoot, impact, _unit);",
     "new": "        if (false) stickArrow(droppedLoot, impact, _unit);",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "droppedLoot: droppedLoot._piles.filter((p) => !p.unsaved).map(",
     "new": "droppedLoot: droppedLoot._piles.map(",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "muzzle: weaponRig.thunderlockMuzzle(fieldOfView()), summoned: shot.summoned });",
     "new": "muzzle: weaponRig.thunderlockMuzzle(fieldOfView()) });",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "...(o?.summoned ? { summoned: true } : {}) }),",
     "new": "}),",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "weaponRig.thunderlockMuzzle(fieldOfView()), shot.summoned ? { summoned: true } : null);",
     "new": "weaponRig.thunderlockMuzzle(fieldOfView()));",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "  if (shot) shot.summoned = !real;",
     "new": "",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "if (shot) shot.summoned = !real;",
     "new": "if (shot) shot.summoned = real;",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "&& !m.summoned && rolls() < ARROW_LODGE_CHANCE) {",
     "new": "&& !m.summoned) {",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "rolls() < ARROW_LODGE_CHANCE) {",
     "new": "rolls() < 0) {",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "&& !m.summoned && rolls() < ARROW_LODGE_CHANCE) {",
     "new": "&& rolls() < ARROW_LODGE_CHANCE) {",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "const keep = [...(gold ? [gold] : []), ...quest];",
     "new": "const keep = [...(gold ? [gold] : []), ...quest, ...quiver];",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "const kept = new Set([...keep, ...quiver]);",
     "new": "const kept = new Set(keep);",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": " && !it.questItem && !isQuiverArrow(it))",
     "new": " && !it.questItem)",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "export const SHOP_ARROWS_MAX = 100;",
     "new": "export const SHOP_ARROWS_MAX = 60;",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": "shopAmmoStack(buildingType, quality, SHOP_ARROWS_MAX);",
     "new": "shopAmmoStack(buildingType, quality, SHOP_PELLETS_MAX);",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "if (shelfIndex === 0) { const n = shopArrowStack(buildingType, quality);",
     "new": "if (shelfIndex >= 0) { const n = shopArrowStack(buildingType, quality);",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); }",
     "new": "add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n + Math.floor(rolls() * 0) }); }",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": "if (n > 0) add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); }",
     "new": "if (n > 0) items.push({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); }",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "add({ ...createWeapon(ARROW_TEMPLATE, 0, () => 0), stackCount: n }); }",
     "new": "add({ group: 'Weapons', templateIndex: ARROW_TEMPLATE, stackCount: n }); }",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "Math.floor(wood / arrow + 1e-9) : 0;",
     "new": "2 : 0;",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -428,7 +428,7 @@
     "old": "if ((item.stackCount ?? 1) > 1) item.stackCount -= 1;",
     "new": "if ((item.stackCount ?? 1) > 1) item.stackCount = 1;",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -437,7 +437,7 @@
     "old": "const pack = ctx?.localItems ?? list;",
     "new": "const pack = list;",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -446,7 +446,7 @@
     "old": "if (!n || item.questItem) return null;",
     "new": "if (!n) return null;",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
     ]
   },
   {
@@ -455,7 +455,16 @@
     "old": "for (const t of FLETCH_TEMPLATES) registerItemUseHandler(t, fletch);",
     "new": "for (const t of []) registerItemUseHandler(t, fletch);",
     "tests": [
-      "test/arrowsupply.test.js"
+      "test/systems/arrowsupply.test.js"
+    ]
+  },
+  {
+    "name": "BENCH-ARROWS-the-patched-arrow",
+    "file": "src/systems/fletching.js",
+    "old": "  const arrow = ITEM_TEMPLATES[ARROW_TEMPLATE]?.baseWeight ?? 0;",
+    "new": "  const arrow = templateByIndex(ARROW_TEMPLATE)?.baseWeight ?? 0;",
+    "tests": [
+      "test/systems/arrowsupply.test.js"
     ]
   }
 ]

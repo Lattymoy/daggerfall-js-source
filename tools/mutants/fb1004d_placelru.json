@@ -5,7 +5,7 @@
     "old": "    if (n > 0) m.set(key, n);",
     "new": "    if (n > 1) m.set(key, n);",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a key held by two places, one dropped, is freed under the other (the settle in KEPT AND SETTLED)"
   },
@@ -15,7 +15,7 @@
     "old": "        shelf.set(key, h);\n        trim(kind);",
     "new": "        shelf.set(key, h);",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the shelf grows with every place gone - THE BOUND"
   },
@@ -25,7 +25,7 @@
     "old": "    const limit = keep[kind] ?? 0;",
     "new": "    const limit = Infinity;",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "nothing ever dropped - THE BOUND"
   },
@@ -35,7 +35,7 @@
     "old": "      if (held.mesh.has(key) || pinned.mesh.has(key) || !free.mesh(key)) continue;",
     "new": "      if (held.mesh.has(key) || !free.mesh(key)) continue;",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a model pinned AND held by a place gone is freed (SHARED AND PINNED: the asker)"
   },
@@ -45,7 +45,7 @@
     "old": "      for (const key of loose[what]) if (!held[what].has(key) && !pinned[what].has(key)) free[what](key);",
     "new": "      for (const key of loose[what]) if (!held[what].has(key)) free[what](key);",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the UI picture a place also asked for is freed (SHARED AND PINNED)"
   },
@@ -55,7 +55,7 @@
     "old": "      for (const t of pictures ?? []) sub('tex', t);",
     "new": "",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a freed model keeps its pictures for good - THE BOUND"
   },
@@ -65,7 +65,7 @@
     "old": "        if (!older || older === h) return;",
     "new": "        return;",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the last visit's keep and its old flat outlive the new visit (KEPT AND SETTLED)"
   },
@@ -75,7 +75,7 @@
     "old": "        if (older) { shelf.delete(key); drop(older); }",
     "new": "",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the older visit is overwritten on the shelf and its holds leak (ONE KEEP A PLACE)"
   },
@@ -85,7 +85,7 @@
     "old": "        if (h.state === 'dropped') { if (!held[what].has(k) && !pinned[what].has(k)) loose[what].add(k); return; }",
     "new": "",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a build's late answer for a place gone is held for good (ONE KEEP A PLACE: the late upload)"
   },
@@ -95,7 +95,7 @@
     "old": "      for (const key of h.holds[what]) sub(what, key);",
     "new": "",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a place dropped from the shelf frees nothing - THE BOUND"
   },
@@ -105,7 +105,7 @@
     "old": "        gpu.vao = null;",
     "new": "",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a holder that outlived its place binds a deleted VAO (A REVISIT: the old model inert)"
   },
@@ -115,7 +115,7 @@
     "old": "        renderer.destroyMesh?.(gpu);",
     "new": "",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the VAO and buffers live on - THE BOUND"
   },
@@ -125,7 +125,7 @@
     "old": "        gpuMeshes.delete(key);\n        cpuModels.delete(key);",
     "new": "        cpuModels.delete(key);",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the destroyed model is still the cache's answer - a revisit gets a dead mesh (A REVISIT)"
   },
@@ -135,7 +135,7 @@
     "old": "  const pinnedGpuMesh = (modelIdNum, breathe = null) => { holds.pin('mesh', modelIdNum); return getGpuMesh(modelIdNum, breathe); };",
     "new": "  const pinnedGpuMesh = (modelIdNum, breathe = null) => getGpuMesh(modelIdNum, breathe);",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "an arrow's or a wagon's model is freed under it (SHARED AND PINNED)"
   },
@@ -145,7 +145,7 @@
     "old": "    for (const k of keys) holds.pin('tex', k);\n    return value;   // DW3",
     "new": "    return value;   // DW3",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the UI's picture freed with a place that also asked for it (SHARED AND PINNED)"
   },
@@ -155,7 +155,7 @@
     "old": "      getGpuMesh: (modelIdNum, breathe = null) => { h.hold('mesh', modelIdNum); return getGpuMesh(modelIdNum, breathe); },",
     "new": "      getGpuMesh: (modelIdNum, breathe = null) => getGpuMesh(modelIdNum, breathe),",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a standing place's model is loose from birth and freed (NEVER WHAT A LIVE PLACE DRAWS)"
   },
@@ -165,7 +165,7 @@
     "old": "        for (const k of keys) h.hold('tex', k);\n        learnRemake(keys, [archive, record, opts]);",
     "new": "        learnRemake(keys, [archive, record, opts]);",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a place's flats and swaps are never let go - THE BOUND"
   },
@@ -175,7 +175,7 @@
     "old": "    pictures.push(...heard);",
     "new": "",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a model's own pictures are nobody's and never freed - THE BOUND"
   },
@@ -185,7 +185,7 @@
     "old": "    if (r) {\n      remakes.delete(`t:${key}`);",
     "new": "    if (false) {\n      remakes.delete(`t:${key}`);",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a picture let go that a foe outdoors still draws stays gone (THE MISS DOOR)"
   },
@@ -195,7 +195,7 @@
     "old": "        for (const k of keys) holds.pin('tex', k);\n      } catch (e) {",
     "new": "      } catch (e) {",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "made again, it is freed again by the next place that asks for it and goes (THE MISS DOOR)"
   },
@@ -205,7 +205,7 @@
     "old": "      tileArray: (archive) => h.hold('tile', archive),",
     "new": "      tileArray: () => {},",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the grounds are never let go - THE BOUND"
   },
@@ -215,7 +215,7 @@
     "old": "    if (this._tex0Bound === tex) this._tex0Bound = null;\n    this._texGen++;",
     "new": "    if (this._tex0Bound === tex) this._tex0Bound = null;",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a sub-mesh keeps binding the deleted texture it stamped (THE MISS DOOR: the mesh)"
   },
@@ -225,7 +225,7 @@
     "old": "    this.textures.delete(key);\n    this._placeholders?.delete(key);",
     "new": "    this._placeholders?.delete(key);",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the cache names a deleted texture - THE BOUND"
   },
@@ -235,17 +235,17 @@
     "old": "    if (tex) this.gl.deleteTexture(tex);\n    if (this._tex0Bound === tex) this._tex0Bound = null;",
     "new": "    if (this._tex0Bound === tex) this._tex0Bound = null;",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the GL texture outlives its key - THE BOUND"
   },
   {
     "name": "PLACE-LRU-a-tile-array-kept-in-the-cache",
     "file": "src/render/renderer.js",
-    "old": "    this.tileArrays.delete(archive);\n    if (tex) this.gl.deleteTexture(tex);",
-    "new": "    if (tex) this.gl.deleteTexture(tex);",
+    "old": "    this.tileArrays.delete(archive);\n    this._tileDims.delete(archive);   // PRECIP4",
+    "new": "    this._tileDims.delete(archive);   // PRECIP4",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the map keeps a deleted array - THE BOUND"
   },
@@ -255,7 +255,7 @@
     "old": "      const tex = this.textures.get(key) ?? this._textureMissed(key);   // FIELD BUGS",
     "new": "      const tex = this.textures.get(key);   // FIELD BUGS",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the billboard draws nothing (THE MISS DOOR)"
   },
@@ -265,7 +265,7 @@
     "old": "tex = this.textures.get(resolved + '#opaque') ?? this._textureMissed(resolved + '#opaque') ?? this.textures.get(resolved)",
     "new": "tex = this.textures.get(resolved + '#opaque') ?? this.textures.get(resolved)",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the swap is not made again for the mesh (THE MISS DOOR)"
   },
@@ -275,7 +275,7 @@
     "old": "    this._uploadSink?.(false, key);   // FIELD BUGS",
     "new": "    // FIELD BUGS",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "no place learns what it holds - THE BOUND"
   },
@@ -285,37 +285,37 @@
     "old": "    built.delete(key); p.placeHold?.release();",
     "new": "    built.delete(key);",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a pixel gone never lets its shared art go"
   },
   {
     "name": "PLACE-LRU-world-ground-held-after-the-ask",
-    "file": "src/scenes/world.js",
-    "old": "    hold.tileArray(groundArchive); const groundTex",
+    "file": "src/scenes/groundSets.js",
+    "old": "    hold.tileArray(key); const groundTex",
     "new": "    const groundTex",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the ground is nobody's"
   },
   {
     "name": "PLACE-LRU-world-publish-never-settles",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "    const entry = built.get(key); pipeline.settle();",
     "new": "    const entry = built.get(key);",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a re-skinned pixel keeps its last season"
   },
   {
     "name": "PLACE-LRU-world-the-entry-carries-no-hold",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "      placeHold: pipeline,\n      location: dfLocation",
     "new": "      location: dfLocation",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "destroyPixel finds no hold to release"
   },
@@ -325,17 +325,17 @@
     "old": "    if (m) {   m.placeHold?.release();",
     "new": "    if (m) {",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a build that threw holds its art for good"
   },
   {
     "name": "PLACE-LRU-world-the-build-asks-through-the-host",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "const key = `${px},${py}`, pipeline = holdPixel(key), { getGpuMesh, uploadRecord, uploadRecordFrame } = pipeline;",
     "new": "const key = `${px},${py}`;",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the build pins everything it asks for, as before"
   },
@@ -345,7 +345,7 @@
     "old": " pipeline.keepPlaces('pixel', (2 * state.terrainDistance + 1) ** 2);",
     "new": "",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the default keep, not the view"
   },
@@ -355,7 +355,7 @@
     "old": "      (entry.placeHold ?? pipeline).uploadRecord(archive, record);",
     "new": "      uploadRecord(archive, record);",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the street's people are never let go"
   },
@@ -365,7 +365,7 @@
     "old": "palette, getMachineryParts, placeHold: buildingHold },",
     "new": "palette, getMachineryParts },",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the interior context is handed no hold to settle or release"
   },
@@ -375,7 +375,7 @@
     "old": "{ renderer, getGpuMesh: buildingHold.getGpuMesh, cpuModels, getTexture, uploadRecord: buildingHold.uploadRecord, uploadRecordFrame: buildingHold.uploadRecordFrame,",
     "new": "{ renderer, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame,",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the building pins what it asks for"
   },
@@ -385,7 +385,7 @@
     "old": "}).catch((e) => { buildingHold.release(); if (live()) say(NOTHING_OF_VALUE_TEXT); throw e; });",
     "new": "}).catch((e) => { if (live()) say(NOTHING_OF_VALUE_TEXT); throw e; });",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a throwing build keeps its hold. INTEGRATION (FIELD BUGS 2026-10-04d, PIN MOVED): PLACE-LRU and VOID-ENTRY wrote this one catch line on two branches; merged as one line, each mutant re-aimed by content at its own half."
   },
@@ -395,7 +395,7 @@
     "old": "palette, placeHold: dungeonHold },",
     "new": "palette },",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the dungeon context is handed no hold"
   },
@@ -405,7 +405,7 @@
     "old": "{ renderer, arch, getGpuMesh: dungeonHold.getGpuMesh, cpuModels, getTexture, uploadRecord: dungeonHold.uploadRecord, uploadRecordFrame: dungeonHold.uploadRecordFrame,",
     "new": "{ renderer, arch, getGpuMesh, cpuModels, getTexture, uploadRecord, uploadRecordFrame,",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the dungeon pins what it asks for"
   },
@@ -415,7 +415,7 @@
     "old": "}).catch((e) => { dungeonHold.release(); throw e; });",
     "new": "});",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a throwing build keeps its hold"
   },
@@ -425,7 +425,7 @@
     "old": "      _raceMeshes?.clear?.(); placeHold?.release();",
     "new": "      _raceMeshes?.clear?.();",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a building left never lets its art go"
   },
@@ -435,7 +435,7 @@
     "old": "  placeHold?.settle();   // FIELD BUGS",
     "new": "  // FIELD BUGS",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the last visit's keep outlives the new one"
   },
@@ -445,7 +445,7 @@
     "old": "      peopleBuilt = false;   // AUDIT 68 S21-late-stand-after-destroy",
     "new": "      placeHold?.release(); peopleBuilt = false;   // AUDIT 68 S21-late-stand-after-destroy",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the hold goes while the room still draws (the order in the interior pin)"
   },
@@ -455,7 +455,7 @@
     "old": "      hudText.dispose(); placeHold?.release();",
     "new": "      hudText.dispose();",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "a dungeon left never lets its art go"
   },
@@ -465,7 +465,7 @@
     "old": "  }; placeHold?.settle();",
     "new": "  };",
     "tests": [
-      "test/fb1004d_placelru.test.js"
+      "test/scenes/fb1004d_placelru.test.js"
     ],
     "note": "the last visit's keep outlives the new one"
   }

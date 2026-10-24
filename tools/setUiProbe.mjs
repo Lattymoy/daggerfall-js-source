@@ -4,7 +4,7 @@
 // A pin can say the card appends a set block and the sheet has a rule for it; only a layout engine can say the block
 // reads, the doll's strip fits its column beside the worn map, the rune in a tile's corner took its set's colour, and
 // the HUD's chips burn in the set's hue. So the REAL pack (ui/inventoryDoor.js createInventoryWindow, the enhanced skin
-// - Plus is its only dress) and the REAL HUD (ui/enhancedHud.js drawEnhancedHud) are drawn here over the real sheets,
+// - Plus is its only dress) and the REAL HUD (ui/enhanced/enhancedHud.js drawEnhancedHud) are drawn here over the real sheets,
 // with a kit worn through the game's own equip (systems/equip.js): six pieces of Dagon's Brand and its sword, two of
 // Ruhn's Regalia (the Cinder-Boots and the Gate-Shield), a Mora helm and a Nocturnal cuirass in the pack - online at
 // Renown 12, the Dagon pieces grown to Kindled. At a desktop, a laptop and a phone it reads:
@@ -38,12 +38,12 @@ const OUT = process.env.SHOT_DIR ?? join(ROOT, 'tools/shots');
 const PAGE = `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>SET5 probe</title>
 <style>html,body{margin:0;height:100%;overflow:hidden;background:repeating-linear-gradient(45deg,#3b4a3a 0 14px,#324031 14px 28px)}</style></head><body>
 <script type="module">
-import { setSigilOnline, setSigilRenown } from '/src/systems/sigil.js';
-import { setSetsWearer, SIGIL_SETS } from '/src/systems/sigilSets.js';
-import { setHudChips, setStruck, _resetSetPowersForTests } from '/src/systems/sigilSetPowers.js';
+import { setSigilOnline, setSigilRenown } from '/src/systems/sigil/sigil.js';
+import { setSetsWearer, SIGIL_SETS } from '/src/systems/sigil/sigilSets.js';
+import { setHudChips, setStruck, _resetSetPowersForTests } from '/src/systems/sigil/sigilSetPowers.js';
 import { REGALIA, mintAetheric } from '/src/systems/aetheric.js';
 import { equipItem, unequipItem } from '/src/systems/equip.js';
-import { setItemFields, mintCondition } from '/src/systems/itemTemplates.js';
+import { setItemFields, mintCondition } from '/src/systems/item/itemTemplates.js';
 import { createWeapon } from '/src/combat/enemyEquipment.js';
 import { ARMOR_MATERIAL } from '/src/systems/armorMaterials.js';
 import { setPref } from '/src/systems/uiPrefs.js';
@@ -51,7 +51,7 @@ import { setPlayerDoor } from '/src/systems/playerDoor.js';
 import { reportPlayerKill } from '/src/systems/playerKills.js';
 import { hurtPlayer } from '/src/characters/playerEntity.js';
 import { createInventoryWindow } from '/src/ui/inventoryDoor.js';
-import { drawEnhancedHud, setHudSetChips } from '/src/ui/enhancedHud.js';
+import { drawEnhancedHud, setHudSetChips } from '/src/ui/enhanced/enhancedHud.js';
 
 setPref('lootRarity', true);
 const armour = (templateIndex, set, xp, rarity = 'rare') => {

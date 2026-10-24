@@ -44,8 +44,8 @@
 // raises the rose again.
 // ═══════════════════════════════════════════════════════════════════
 
-import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { closeTopOverlay, registerOverlay } from './enhancedOverlays.js';   // PX28; AUDIT CHAT C1: the dial is on the stack like every other enhanced overlay
+import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedStyle.js';
+import { closeTopOverlay, registerOverlay } from './enhanced/enhancedOverlays.js';   // PX28; AUDIT CHAT C1: the dial is on the stack like every other enhanced overlay
 import { isEnhanced } from '../systems/uiSkin.js';
 import { requestLook } from '../player/pointerLock.js';   // PL3: the dial gives the pointer back when it goes
 import { eventMeans } from './input.js';   // KB1: the key that opened it is the registry's QuickDial
@@ -180,6 +180,10 @@ export function mountPixelDial(hostEl, { entries = [], onClose = () => {} } = {}
 // dial is a pointer surface - and the hosts' own click-to-relock
 // covers the way back, exactly as it does for the pause door.
 let _open = null;
+let _onOpen = null;
+/** DIAL-CLASSIC: a host's word, asked each time the dial rises (ui/dialClassicArt.js refreshClassicDial - the doors'
+ *  art read off the player's own data). */
+export function setDialOpenHook(fn) { _onOpen = typeof fn === 'function' ? fn : null; }
 
 export function openPixelDial(entries) {
   if (!isEnhanced() || typeof document === 'undefined') return false;
@@ -192,6 +196,7 @@ export function openPixelDial(entries) {
   // Tab now means PUT THIS AWAY first, and only raises the dial when
   // there is nothing to put away.
   if (closeTopOverlay()) return true;
+  try { _onOpen?.(); } catch (e) { console.warn('[dial] open hook:', e?.message ?? e); }   // DIAL-CLASSIC: never in the dial's way
   // PL3: the dial drops the lock to be clicked and never gave it back -
   // the host's look gate never saw the dial as a window, so there was
   // no closing edge to relock on, and the pointer stayed free until a

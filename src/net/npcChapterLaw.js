@@ -6,11 +6,11 @@
 // make the best decisions") — THE ROLL: a realm character's standing with
 // Daggerfall's own guilds, kept by the account service. The record is
 // bible/11-Multiplayer/Chapters-Arc.md, section 3 (CHAP0), and its audit
-// bible/01-Overview/Audit-Chapters.md (AUDIT CHAP).
+// bible/01-Overview/audits/Audit-Chapters.md (AUDIT CHAP).
 //
 // WHAT IT HOLDS. A realm character's reputation with the twenty-two guild
 // factions - the four guilds, the eight temples, the ten knightly orders
-// (systems/guildFactions.js, the leaf) - and the guilds it is a member of,
+// (systems/guild/guildFactions.js, the leaf) - and the guilds it is a member of,
 // with its rank (as its client reports it, never past what the Roll's own
 // reputation allows) and the moment the service first saw it a member.
 // Every other faction stays the save's (CALL 1). Offline is DFU,
@@ -60,17 +60,17 @@
 // book's key and bound in npcHallBook.js) live with them.
 // ═══════════════════════════════════════════════════════════════════
 
-import { GUILD_FACTION_IDS, DIVINES, ORDERS, MIN_REPUTATION, MAX_REPUTATION, RANK_REQ_REPUTATION } from '../systems/guildFactions.js';
-import { MARKS_RID_RE } from './marksLaw.js';
-import { gateHash } from './gateLaw.js';   // CHAP2a: a hall writ's own dice
+import { GUILD_FACTION_IDS, DIVINES, ORDERS, MIN_REPUTATION, MAX_REPUTATION, RANK_REQ_REPUTATION } from '../systems/guild/guildFactions.js';
+import { MARKS_RID_RE, utcDay } from './marksLaw.js';   // ROLL-PACE: the Roll's day, the claims' own
+import { gateHash } from './gate/gateLaw.js';   // CHAP2a: a hall writ's own dice
 import { courtWrits, material, regionOk } from './nodeLaw.js';   // CHAP2a: the Court's writ law, the material families, a region
 import { REGION_NAMES } from '../formats/mapsTables.js';   // CHAP4b: a seat's region, named
 import { seatWeekOf, chronicleWhen, seatSeasonName } from './townSeatLaw.js';   // CHAP3a: Merit's week is the seats' (the Turning settles both); CHAP4d: the Chronicle's when; CHAP6a: a Season's name
-import { GUILD_ID_RE, GUILD_NAME_MAX, GUILD_TAG_RE } from './guildLaw.js';   // CHAP7a: a patron is a player guild
+import { GUILD_ID_RE, GUILD_NAME_MAX, GUILD_TAG_RE } from './guild/guildLaw.js';   // CHAP7a: a patron is a player guild
 import { MARKS_MAX } from './marksLaw.js';   // CHAP7a: a bid held under the one cap every treasury keeps
 import { REALM_CHARACTER_RE } from './identityToken.js';   // CHAP3a: a member's own writ is drawn over its realm id
 
-/** The membership books a character holds (systems/guilds.js: the mortal's and the vampire's), each one temple and one
+/** The membership books a character holds (systems/guild/guilds.js: the mortal's and the vampire's), each one temple and one
  *  order at most. */
 export const ROLL_BOOKS = 2;
 const DIVINE_SET = /** @type {Set<number>} */ (new Set(Object.values(DIVINES)));
@@ -265,6 +265,40 @@ export function rollKeptOf(/** @type {unknown} */ rec) {
   return { seq, factions: out };
 }
 
+/** STANDING-WORDS (AUDIT GUILD-WORDS L2-2, L2-4; II B-4, B-5): WHAT THE ROLL'S WORD MOVED since its last - each of the
+ *  twenty-two whose standing or owed moved, against the last word's `last`/`lastOwed`, with what the service says this
+ *  answer paid of what was owed (`paid`, `{ [faction]: n }` - readRoll's and claimRoll's): `delta` the move of the two
+ *  together (a quest's whole reward, though the day's room owes part; a loss the owed absorbed) - or, where the two
+ *  together stand still, the standing's own move past what was paid (a hall writ the owed's room trimmed beside it);
+ *  `paid` that payment; `now` the Roll's standing, `owed` what it still owes. Both where both moved. A faction either
+ *  word lacks is not read. With no last word (a page's first) only what was paid is said - never a move an earlier page
+ *  said. With no `paid` at all (a service before it) a standing that moved alone is taken as paid. */
+export function rollMovesOf(/** @type {Record<string, number> | null} */ last, /** @type {Record<string, number>} */ lastOwed,
+  /** @type {Record<string, number>} */ next, /** @type {Record<string, number>} */ nextOwed, /** @type {Record<string, number> | null} */ paid = null) {
+  const out = [];
+  for (const f of ROLL_FACTIONS) {
+    if (!Object.hasOwn(next ?? {}, f)) continue;
+    const now = rollRep(next[f]), owed = Math.max(0, whole(nextOwed?.[f]));
+    const p = paid ? Math.max(0, whole(paid[f])) : 0;
+    if (!last) {
+      if (p > 0) out.push({ f, paid: p, now, owed });
+      continue;
+    }
+    if (!Object.hasOwn(last, f)) continue;
+    const was = rollRep(last[f]);
+    const owedWas = Math.max(0, whole(lastOwed?.[f]));
+    const together = (now + owed) - (was + owedWas);
+    if (!paid) {
+      if (together !== 0) out.push({ f, delta: together, now, owed });
+      else if (now !== was) out.push({ f, paid: now - was, now, owed });
+      continue;
+    }
+    const delta = together !== 0 ? together : now - was - p;
+    if (delta !== 0 || p > 0) out.push({ f, ...(delta !== 0 ? { delta } : {}), ...(p > 0 ? { paid: p } : {}), now, owed });
+  }
+  return out;
+}
+
 /** The faction a membership record names (guilds.js joinGuild's `guild`: a guild's name, `Temple:<divine>` or
  *  `Order:<order>`), or null. */
 export function rollFactionOfGuild(/** @type {unknown} */ name) {
@@ -333,10 +367,8 @@ export function rollMembersOk(/** @type {unknown} */ v) {
 /** The memberships as one comparable word - a claim is due when it changes; null (no book) is never a change. */
 export const rollMembersKey = (/** @type {{ f: number, rank: number, d?: number }[] | null} */ list) => (list ? list.map((m) => `${m.f}:${m.rank}${m.d === 1 ? 'd' : ''}`).join(',') : null);   // AUDIT CHAP4 D1: a book's swap moves it
 
-/** A faction's name as a sentence carries it: FACTION.TXT's "The Mages Guild" mid-sentence is "the Mages Guild". */
-export const rollFactionName = (/** @type {unknown} */ raw) => (typeof raw === 'string' && raw ? raw.replace(/^The /, 'the ') : 'the guild');
-/** THE PACE SAID (AUDIT CHAP D2): a gain the day's room cut is owed, not lost - the line says the rest will follow. */
-export const rollCeilingLine = (/** @type {unknown} */ raw) => `Your standing with ${rollFactionName(raw)} rises no further today. The rest will follow in the days to come.`;
+// THE PACE SAID (AUDIT CHAP D2) is the streaming host's module's now, in the player's language and with what is owed
+// (scenes/rollNoticeHost.js rollNoticeDoors' onCeiling and onFull - AUDIT GUILD-WORDS II B-3, C-4)
 
 // ═══ CHAP2a - THE HALLS AND THEIR WRITS (Chapters-Arc section 4) ═════
 //
@@ -780,6 +812,38 @@ export const SEAT_RANK = Object.freeze({ master: 9, officer: 8 });
 export const ROLL_BOOK_RANK_MAX = 7;
 /** The rank the Roll records for a member: the book's, bounded by its own reputation (3.2), and never a seat's. */
 export const rollBookRankOf = (/** @type {unknown} */ reported, /** @type {unknown} */ rep) => Math.max(0, Math.min(whole(reported), rollRankCapOf(rep), ROLL_BOOK_RANK_MAX));
+
+// ROLL-PACE (FIELD BUGS 2026-10-15f, a Discord report: "exploit where you do easy quests for a guild and then ask to join
+// it to farm 100 rep in 1 minute"; Mac, asked of four shapes: "Pace ranks from joining"). PROMO-NOW took DFU's 28 days
+// off an online promotion on the word that the Roll's paced reputation paces the ranks - it paces the REPUTATION, and a
+// stranger's quests (DFU's +5 to the guild's faction, a member or not: Quest.cs EndQuest, GuildManager.GetGuildFactionId)
+// banked it before the membership began, so the hall's first review turned a week's standing into seven ranks at once.
+// So a review online promotes no further than the Roll's day could have paid SINCE THE ROLL SAW THE MEMBERSHIP BEGIN:
+// ROLL_GAIN_DAY_MAX a UTC day, the first day counted - what a member who joined with nothing could have earned. The
+// stranger's standing still counts (it joins, and it is the rank's), at the pace; a rank already held is never taken.
+
+/** The Roll's days of a membership at `nowS`: its UTC day of beginning counted, and today. `sinceS` the Roll's own record
+ *  of it (its view's `members[].since`); one the Roll has not yet seen begins today. */
+export const rollPaceDays = (/** @type {unknown} */ sinceS, /** @type {number} */ nowS) => (typeof sinceS === 'number' && Number.isFinite(sinceS) ? Math.max(0, utcDay(nowS) - utcDay(sinceS)) : 0) + 1;
+
+/** THE HIGHEST RANK A REVIEW MAY PROMOTE TO, online: what the Roll's own reputation allows (never the page's unclaimed
+ *  number - AUDIT CHAP S5's bound, read on the page), no more than its pace has paid since the membership began, and
+ *  never a seat's. `standing` the Roll's `{ rep, since }` for the guild's faction - null before its first word, when no
+ *  review promotes. */
+export function rollPromoteCeiling(/** @type {{ rep: unknown, since: unknown } | null} */ standing, /** @type {number} */ nowS) {
+  if (!standing) return 0;
+  const paid = rollPaceDays(standing.since, nowS) * ROLL_GAIN_DAY_MAX;
+  return Math.min(ROLL_BOOK_RANK_MAX, rollRankCapOf(Math.min(rollRep(standing.rep), paid)));
+}
+
+/** The UTC days until the Roll's pace pays `rank`'s line (0: it has), or null where the pace is not what holds it - no
+ *  standing yet, a rank past the book's, or the Roll's own reputation short of the line (the hall says that one). */
+export function rollPaceWait(/** @type {{ rep: unknown, since: unknown } | null} */ standing, /** @type {number} */ nowS, /** @type {number} */ rank) {
+  if (!standing || !(rank >= 0 && rank <= ROLL_BOOK_RANK_MAX)) return null;
+  const need = RANK_REQ_REPUTATION[rank];
+  if (rollRep(standing.rep) < need) return null;
+  return Math.max(0, Math.ceil(need / ROLL_GAIN_DAY_MAX) - rollPaceDays(standing.since, nowS));
+}
 /** Eligible's tenure on the Roll, and its account's age. */
 export const SEAT_TENURE_S = 14 * 86_400;
 export const SEAT_ACCOUNT_AGE_S = 7 * 86_400;
@@ -859,7 +923,7 @@ export function seatChangesOf(/** @type {Iterable<any>} */ before, /** @type {It
 
 // ─── CHAP4b: THE SEATS ON THE PAGE (Chapters-Arc 3.5, 6) ────────────
 // What the tab does with the Roll's word on ranks 8 and 9, online: the book's own rank held at 7 - at the Roll's adoption
-// (rollBookCap) and at DFU's review (systems/guilds.js updateRank's ceiling, the host's while the Roll holds) - and a
+// (rollBookCap) and at DFU's review (systems/guild/guilds.js updateRank's ceiling, the host's while the Roll holds) - and a
 // seat's rank at its own chapter's halls alone: the hall's service window reads the book seated (seatedBook). Offline,
 // and wherever the Roll does not hold, every rank is DFU's.
 
@@ -874,7 +938,7 @@ export function seatRankAt(/** @type {unknown} */ seats, /** @type {unknown} */ 
   const s = rollSeatsOf(seats).find((x) => x.f === faction && x.region === region);
   return s ? SEAT_RANK[/** @type {'master' | 'officer'} */ (s.seat)] : null;
 }
-/** A BOOK SEATED: a membership book (systems/guilds.js) whose row under `key` reads `rank` where its own is lower -
+/** A BOOK SEATED: a membership book (systems/guild/guilds.js) whose row under `key` reads `rank` where its own is lower -
  *  every other read and every write (a knightly order's gifts, a probation) the row's own. The book itself where it has
  *  no such row or the seat gives no higher rank. AUDIT CHAP5 D1: and only a row DFU's own review holds at 7
  *  (ROLL_BOOK_RANK_MAX) - a seat is Eligible at a reputation of 80 alone, and lifted a rank-2 member past every skill
@@ -929,7 +993,7 @@ export function bookCappedLine(/** @type {unknown} */ factions) {
   const names = [...new Set(Array.isArray(factions) ? factions : [])].map(hallPosterName).filter(Boolean).map((n) => `the ${n}`);
   if (!names.length) return null;
   const one = names.length === 1, said = listed(names);
-  return `${said.charAt(0).toUpperCase()}${said.slice(1)} ${one ? 'keeps' : 'keep'} ranks 8 and 9 for ${one ? 'its' : 'their'} chapters' Masters and councils, won by Merit - your rank there is 7.`;
+  return `${said.charAt(0).toUpperCase()}${said.slice(1)} ${one ? 'keeps' : 'keep'} ranks 8 and 9 for ${one ? 'its' : 'their'} chapters' Masters and councils, won by Merit. Your rank there is 7.`;
 }
 
 // ─── CHAP4c: THE CHAPTERS' TITLES (Chapters-Arc 6) ──────────────────

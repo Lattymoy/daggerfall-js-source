@@ -1,0 +1,546 @@
+// T3c: the Where-is topics (DFU TalkManager + RMBLayout.
+// GetCompleteBuildingData, MIT Daggerfall Workshop).
+//
+// - THE NAMED-BUILDING POOL (verbatim): the location's exterior
+//   building list is a pool; scanning blocks y->x and subrecords in
+//   order, each NAMED-type block building draws the first unused pool
+//   entry OF ITS TYPE and takes its nameSeed/factionId/quality (the
+//   block's own values are placeholders). Names then ride
+//   generateBuildingName(seed).
+// - THE COMPASS HINT (DirectionVector2DirectionHintString, verbatim):
+//   the 8-way angle bands over (east, north) = our (dx, dz).
+// - THE ANSWER (GetAnswerWhereIs): the 30-record answersToDirections
+//   table - 15 "doesn't know" + 15 "knows" by socialGroup x the
+//   0/1/2 reaction tier; mobile townsfolk are Commoners (0). The
+//   tier (GetReactionToPlayer_0_1_2, ALL THREE TONES - T3f):
+//   Personality/5 + questionTypeReactionMods[qIndex] + the tone mods
+//   (etiquette/streetwise tables + the Dice100 skill roll -10/+5) vs
+//   a 0..20 NPC-seeded roll; tier 1 band +20 (DFU's lowering of
+//   classic's +30, doctrine-kept); reactions cache per tone per talk
+//   session with a first-use skill tally.
+// - THE KNOWLEDGE ROLL (GetNPCKnowledgeAboutItem, verbatim): seed =
+//   NPC hash + buildingKey (the per-person seed stands in for the
+//   hash, Ledger A); rollToBeat = knowledgeModifiers[qIndex*5 +
+//   socialGroup] + 10 (local building qIndex 0, Commoners -> 15);
+//   random_range_inclusive(1,20) <= rollToBeat KNOWS. Doesn't-know
+//   answers draw the FIRST 15 table records. The DFU-only
+//   short-circuits (same-building statics, spymaster,
+//   NPCsKnowEverything debug) don't apply to street mobiles.
+
+import { generateBuildingName, isNamedBuildingType, BUILDING_TYPES } from '../../world/buildingNames.js';
+import { worldDataDoor } from '../../formats/worldData/worldDataDoor.js';   // RR3b: RMBLayout.cs:662-672's replacement arm
+import { randomRangeInclusive, srand } from '../../formats/dfRandom.js';
+import { RMB_SIDE } from '../../world/locationLayout.js';
+import { directionHintString } from './talk.js';   // wave 27: one compass law
+import { staticNpcData, isChildNPCData } from '../../characters/staticNpc.js';   // QP1: the one SetLayoutData law
+import { collectInteriorPeople } from '../../characters/interiorPeople.js';   // QP1: the one people mapper
+import { hasInteriorModels } from '../../world/interior/interiorLayout.js';   // FIELD BUGS 2026-10-05 CRYPT-SALE: a room that cannot be laid out is not for sale
+import { buildingSummaries } from '../../world/buildingSummaries.js';   // D9: GetBuildingList's own per-block building walk (RMBLayout.GetBuildingData)
+import { localizedTable } from '../textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+
+// TalkManager.knowledgeModifiers (verbatim, 8 question rows x 5
+// social groups).
+export const KNOWLEDGE_MODIFIERS = Object.freeze([
+  5, 7, 0, 0, 4, 1, 2, -2, 3, 7, -3, 0, 7, 2, 4, 4, 3, -2, -4, -3,
+  0, 3, 5, 2, 0, -4, -3, -6, -3, 4, -7, -5, 7, 0, 1, -1, 1, 6, 4, 2,
+]);
+
+// BuildingDirectory.MakeBuildingKey, verbatim (key 0 maps to the
+// 1<<24 sentinel so block 0,0 record 0 stays distinct from "none").
+export const BUILDING_KEY_0 = 1 << 24;
+export function makeBuildingKey(layoutX, layoutY, recordIndex) {
+  const key = (layoutX << 16) + (layoutY << 8) + recordIndex;
+  return key === 0 ? BUILDING_KEY_0 : key;
+}
+
+/** GetNPCKnowledgeAboutItem's roll, verbatim: seeded by NPC hash +
+ *  buildingKey so the SAME NPC always gives the same answer about
+ *  the SAME building. questionIndex 0 = Where-is Location. */
+export function npcKnowsAboutItem(npcSeed, buildingKey, socialGroup = 0, questionIndex = 0) {
+  srand((((npcSeed >>> 0) + (buildingKey >>> 0)) >>> 0));
+  const rollToBeat = KNOWLEDGE_MODIFIERS[questionIndex * 5 + socialGroup] + 10;
+  return randomRangeInclusive(1, 20) <= rollToBeat;
+}
+
+// AUDIT 17e F20 - the Where-is category list, verbatim.
+// CheckBuildingTypeInSkipList (TalkManager.cs:2919-2938) drops
+// AllValid, FurnitureStore, House1-6, HouseForSale, PALACE, Ship,
+// Special1-4, Town23 and Town4 - the port listed Palaces and
+// Furniture stores, which classic never offers. The list is built in
+// BUILDING_TYPES enum order (DFU walks the enum), and three captions
+// were paraphrased rather than taken from DFU's strings. PROF-FOUND
+// (2026-10-12): the Furniture Store, Carpentry's workbench, is asked
+// after again under its own group AFTER these (world/buildingNames.js
+// OPENED_SHOP_TYPES; scenes/townTalk.js, systems/topicTree.js) - this
+// list stays DFU's.
+const SKIPPED_BUILDING_TYPES = new Set([
+  BUILDING_TYPES.HouseForSale, BUILDING_TYPES.Town4, BUILDING_TYPES.FurnitureStore,
+  BUILDING_TYPES.Palace, BUILDING_TYPES.House1, BUILDING_TYPES.House2,
+  BUILDING_TYPES.House3, BUILDING_TYPES.House4, BUILDING_TYPES.House5,
+  BUILDING_TYPES.House6, BUILDING_TYPES.Town23, BUILDING_TYPES.Ship,
+]);
+export const isBuildingTypeSkipped = (t) => SKIPPED_BUILDING_TYPES.has(t);
+
+// L10N3d: each caption is read by its DFU key (BuildingTypeToGroupString's) when the list is drawn.
+const CAPTION_BY_TYPE = localizedTable({
+  [BUILDING_TYPES.Alchemist]: ['Alchemists', 'Alchemists'],
+  [BUILDING_TYPES.Armorer]: ['Armorers', 'Armorers'],
+  [BUILDING_TYPES.Bank]: ['Banks', 'Banks'],
+  [BUILDING_TYPES.Bookseller]: ['Bookstores', 'Bookstores'],
+  [BUILDING_TYPES.ClothingStore]: ['Clothingstores', 'Clothing stores'],
+  [BUILDING_TYPES.GemStore]: ['Gemstores', 'Gem stores'],
+  [BUILDING_TYPES.GeneralStore]: ['Generalstores', 'General stores'],
+  [BUILDING_TYPES.Library]: ['Libraries', 'Libraries'],
+  [BUILDING_TYPES.GuildHall]: ['Guilds', 'Guilds'],
+  [BUILDING_TYPES.PawnShop]: ['Pawnshops', 'Pawn shops'],
+  [BUILDING_TYPES.WeaponSmith]: ['Weaponsmiths', 'Weapon smiths'],
+  [BUILDING_TYPES.Temple]: ['Localtemples', 'Local temples'],
+  [BUILDING_TYPES.Tavern]: ['Taverns', 'Taverns'],
+});
+export const TOPIC_CATEGORIES = Object.freeze(
+  Object.keys(CAPTION_BY_TYPE)
+    .map(Number)
+    .sort((a, b) => a - b)   // DFU walks the enum in numeric order
+    .filter((t) => !isBuildingTypeSkipped(t))
+    .map((t) => Object.freeze({ type: t, get caption() { return CAPTION_BY_TYPE[t]; } })));
+
+// TalkManager.answersToDirections (TalkManager.cs:107-108): 15
+// doesn't-know + 15 knows, 3 reaction tiers x 5 social groups.
+// AUDIT 17e F5: the KNOWS half was DFU's answersToNonDirections
+// table (7261..7294) - EVERY successful Where-is answer drew the
+// wrong TEXT.RSC record, and the test pinned the wrong value so it
+// certified the bug. The non-directions table is kept as its own
+// export for the pending Tell-me-about slice, which is what DFU
+// uses it for (TalkManager.cs:109-110).
+export const ANSWERS_TO_DIRECTIONS = Object.freeze([
+  7251, 7266, 7281, 7250, 7265, 7280, 7252, 7267, 7282, 7253, 7268, 7283, 7304, 7269, 7284,
+  7256, 7271, 7286, 7255, 7270, 7285, 7257, 7272, 7287, 7258, 7273, 7288, 7259, 7274, 7289,
+]);
+export const ANSWERS_TO_NON_DIRECTIONS = Object.freeze([
+  7251, 7266, 7281, 7250, 7265, 7280, 7252, 7267, 7282, 7253, 7268, 7283, 7304, 7269, 7284,
+  7261, 7276, 7291, 7260, 7275, 7290, 7262, 7277, 7292, 7263, 7278, 7293, 7264, 7279, 7294,
+]);
+
+/**
+ * DFU's building count for a block: SubRecords.Length, scanned over the
+ * fixed 32-slot BuildingDataList (RMBLayout.cs:553 and :642).
+ *
+ * AUDIT 39 (#18): read the PARSED record count where it is available,
+ * not the live array's length. The enhanced skin APPENDS a synthetic
+ * subrecord to the parsed block (the windmill's interior), and a bound
+ * that widened with it would hand the first garbage 32-slot entry a
+ * name-pool draw and misalign every named building after it.
+ * numBlockDataRecords is what blocksFile sized subRecords from, so on
+ * an untouched block the two are equal by construction.
+ */
+export function blockBuildingCount(dfBlock) {
+  const rmb = dfBlock?.rmbBlock;
+  if (!rmb) return null;
+  return rmb.fldHeader?.numBlockDataRecords ?? rmb.subRecords?.length ?? null;
+}
+
+/** GetCompleteBuildingData's pool merge over OUR layout shapes.
+ *  @param exteriorBuildings dfLocation.exterior.buildings
+ *  @param blocks layoutLocation().blocks (y->x order preserved)
+ *  @returns per-block arrays of merged buildingDataList copies */
+/** WD3 (AUDIT WD3 G4): guild factions a mod's location files name that this game carries no guild for - 1000 is the
+ *  Archaeologists Guild's (its own mod's faction), which Beautiful Villages writes on a guild hall entry of four
+ *  villages. DFU, without that mod, hands the entry to the first guild hall of the grid: Bubandanis' Mages Guild and
+ *  Tulaedax's Fighters Guild answered "You get no response", and Tulaedax's Mages hall took the Fighters' faction.
+ *  An entry naming no guild of this game draws for no hall - each hall takes its own guild's entry. */
+export const UNCARRIED_GUILD_FACTIONS = Object.freeze(new Set([1000]));
+export function mergeNamedBuildings(exteriorBuildings, blocks, { locationIndex = 0 } = {}) {
+  return drawNamedBuildings(exteriorBuildings, blocks, { locationIndex }).out;
+}
+/** ARENA1: the same draw, answering besides each block instance's merged list the location entries it DREW and kept
+ *  (a draw a building replacement handed back is not among them) - world/arena/arenaCity.js strips exactly the entries the
+ *  cell the arena takes drew, so every other building keeps the entry it always drew. */
+export function drawNamedBuildings(exteriorBuildings, blocks, { locationIndex = 0 } = {}) {
+  const drawnBy = new Map();   // block -> [the location's BuildingData objects it drew]
+  const pool = exteriorBuildings
+    .filter((b) => isNamedBuildingType(b.buildingType))
+    .filter((b) => !(b.buildingType === BUILDING_TYPES.GuildHall && UNCARRIED_GUILD_FACTIONS.has(b.factionId)))
+    .map((b) => ({ data: b, used: false }));
+  const next = (type) => {
+    for (const it of pool) {
+      if (!it.used && it.data.buildingType === type) { it.used = true; return it; }
+    }
+    return null;
+  };
+  const out = new Map();   // block -> merged buildingDataList copy
+  for (const b of blocks) {
+    const list = b.dfBlock.rmbBlock.fldHeader.buildingDataList.map((d) => ({ ...d }));
+    // AUDIT 2026-08-17c: DFU scans SubRecords.Length entries, NOT the
+    // full 32-slot header - garbage entries past the subrecord count
+    // must never steal pool draws (they misalign every later name).
+    const count = Math.min(list.length, blockBuildingCount(b.dfBlock) ?? list.length);
+    for (let i = 0; i < count; i++) {
+      if (!isNamedBuildingType(list[i].buildingType)) continue;
+      const drawn = next(list[i].buildingType);
+      const item = drawn?.data ?? null;
+      // AUDIT 17e F40: this comment claimed DFU "keeps block data" on
+      // pool exhaustion; DFU actually copies a ZEROED pool item. The
+      // branch is unreachable on classic data (the pool balances
+      // exactly - 39256 draws against 39256 entries across all 15251
+      // locations), and DFU only reaches it via WorldDataReplacement -
+      // which RR3b took up (the arm below); a mod's block can still
+      // exhaust the pool, and the zeroed copy is what DFU hands it.
+      // Doc-corrected, not implemented - the port keeps the block's
+      // own entry where DFU would zero it (recorded).
+      if (item) {
+        list[i].nameSeed = item.nameSeed;
+        list[i].factionId = item.factionId;
+        list[i].sector = item.sector;
+        list[i].locationId = item.locationId;
+        list[i].quality = item.quality;
+      }
+      // RMBLayout.cs:662-672 (RR3b): a building the world-data door
+      // replaces takes the replacement's values - and hands its pool
+      // draw back when the replacement names a faction (the item is not
+      // used up), the seed varied by the location; the type is always
+      // the replacement's.
+      const replacement = worldDataDoor()?.getBuildingReplacementData(b.dfBlock.name, b.dfBlock.index, i);
+      if (replacement) {
+        if (replacement.factionId !== 0) {
+          if (drawn) drawn.used = false;
+          list[i].factionId = replacement.factionId;
+          list[i].quality = replacement.quality;
+          list[i].nameSeed = (replacement.nameSeed + locationIndex) & 0xffff;
+        }
+        list[i].buildingType = replacement.buildingType;
+      }
+      // RMBLayout.cs:677-683, "Matched to classic: special handling for
+      // some Order of the Raven buildings" - still inside the
+      // IsNamedBuilding branch and AFTER the pool merge, so it overrides
+      // whatever type/faction the pool supplied:
+      //   if (FldHeader.OtherNames != null && OtherNames[i] == "KRAVE01.HS2")
+      //     { building.BuildingType = GuildHall; building.FactionId = 414; }
+      // DFU runs it even when the pool draw failed (its item is a zeroed
+      // struct, not a skip), which is why it sits outside the merge above.
+      const otherNames = b.dfBlock.rmbBlock.fldHeader.otherNames;
+      if (otherNames && otherNames[i] === 'KRAVE01.HS2') {
+        list[i].buildingType = BUILDING_TYPES.GuildHall;
+        list[i].factionId = 414;
+      }
+      if (drawn?.used) drawnBy.set(b, [...(drawnBy.get(b) ?? []), drawn.data]);
+    }
+    out.set(b, list);
+  }
+  return { out, drawn: drawnBy };
+}
+
+/** Build the location's named-building directory.
+ *  @param doors [{ dfBlock, recordIndex, position: [x,y,z] }] - one
+ *         entry per building exterior door (position = the door)
+ *  @param nameOpts generateBuildingName opts (location/region/bank/
+ *         ruler/faction resolvers) */
+// Repeated block NAMES share one parsed dfBlock object (our cache;
+// DFU's C# structs copy per instance) - resolve a door to its block
+// INSTANCE by position, dfBlock as the tie filter.
+function blockInstanceOf(blocks, d) {
+  const cands = blocks.filter((b) => b.dfBlock === d.dfBlock);
+  if (cands.length === 1) return cands[0];
+  return cands.find((b) =>
+    d.position[0] >= b.originX - 1 && d.position[0] < b.originX + RMB_SIDE + 1 &&
+    d.position[2] >= b.originZ - 1 && d.position[2] < b.originZ + RMB_SIDE + 1) ?? cands[0];
+}
+
+/** E2: one exterior door -> its MERGED building data + buildingKey
+ *  (the interior host's shop identity: type/quality/seed/faction).
+ *  HOME1: and the building's MODEL (`modelIdNum`, locationBuildings'
+ *  own read below - the first 3D object of its subrecord), because a
+ *  house bought at its own door is priced off that model (HOME-PRICE:
+ *  the ground its ARCH3D box stands on, net/homeLaw.js
+ *  homeOnlinePrice - the bank's radius x 1280 is offline's); the block's
+ *  building data carries no model, so the door's record had none and
+ *  every house read as unpriceable. */
+export function buildingDataForDoor(exteriorBuildings, blocks, door, { locationIndex = 0 } = {}) {
+  const merged = mergeNamedBuildings(exteriorBuildings, blocks, { locationIndex });
+  const inst = blockInstanceOf(blocks, door);
+  const data = inst ? merged.get(inst)?.[door.recordIndex] : null;
+  if (!data) return null;
+  const sub = inst.dfBlock?.rmbBlock?.subRecords?.[door.recordIndex];
+  const model = sub?.exterior?.block3dObjectRecords?.[0] ?? null;
+  // FIELD BUGS 2026-10-05 CRYPT-SALE: whether the room can be laid out at all - a graveyard's crypt cannot
+  return { ...data, buildingKey: makeBuildingKey(inst.x ?? 0, inst.y ?? 0, door.recordIndex), modelIdNum: model?.modelIdNum ?? null, hasInterior: hasInteriorModels(sub) };
+}
+
+/**
+ * H2 - EVERY building in a location, each carrying its buildingKey.
+ *
+ * buildBuildingDirectory is the talk directory and walks DOORS (AUDIT
+ * 39 #110 retired its named-only gate, so it now carries residences
+ * too, but only where an exterior door put them in reach). Nothing in
+ * the port could enumerate every house - and H1's houses-for-sale roll
+ * was written against `location.exterior.buildings`, the raw
+ * DFLocation.BuildingData array, whose records carry
+ * nameSeed/factionId/quality/buildingType
+ * and NO KEY AT ALL. The roll therefore handed out houses with
+ * `buildingKey: undefined`, allocateHouseToPlayer wrote it into the
+ * registry, and `ownsHouse` tests `> 0` - so the house you were just
+ * given was not yours. H1's own tests passed because their fixtures
+ * set the key by hand, which is the vacuous-fixture shape this repo
+ * keeps catching, self-inflicted.
+ *
+ * The correlation is mergeNamedBuildings' own: the block instance's
+ * buildingDataList, indexed by record, keyed by
+ * MakeBuildingKey(block.x, block.y, recordIndex). Same rule, same
+ * subRecords.length bound - a garbage entry past the subrecord count
+ * is not a building.
+ */
+export function locationBuildings(exteriorBuildings, blocks, { locationIndex = 0 } = {}) {
+  const merged = mergeNamedBuildings(exteriorBuildings, blocks, { locationIndex });
+  const out = [];
+  for (const b of blocks) {
+    const list = merged.get(b) ?? [];
+    const count = Math.min(list.length, blockBuildingCount(b.dfBlock) ?? list.length);
+    for (let i = 0; i < count; i++) {
+      if (!list[i]) continue;
+      // H2: BuildingSummary.ModelID (RMBLayout.cs:577) - the FIRST 3D
+      // object of the building's own subrecord. It is what the house
+      // price is measured from (GetHousePrice reads that model's mesh
+      // radius) and what the purchase window would render.
+      const sub = b.dfBlock.rmbBlock.subRecords?.[i];
+      const model = sub?.exterior?.block3dObjectRecords?.[0] ?? null;
+      out.push({
+        ...list[i],
+        buildingKey: makeBuildingKey(b.x ?? 0, b.y ?? 0, i),
+        recordIndex: i,
+        modelId: model?.modelId ?? null,
+        modelIdNum: model?.modelIdNum ?? null,
+        hasInterior: hasInteriorModels(sub),   // FIELD BUGS 2026-10-05 CRYPT-SALE
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * QP1 - GetBuildingList's QUESTOR half (TalkManager.cs:2807-2874): the
+ * per-building people records the "any work" pool is built from.
+ * AUDIT 24 found npcSession.buildQuestorPool dead - the policy shipped
+ * and nothing could feed it, because the host's building seam carried
+ * no per-building NPC records. This walk is that feed, pure:
+ *
+ * - the SAME correlation locationBuildings rides (mergeNamedBuildings,
+ *   indexed by subrecord, keyed by MakeBuildingKey) - C# walks
+ *   RMBLayout.GetBuildingData per block and reads
+ *   `SubRecords[i].Interior.BlockPeopleRecords` (:2810);
+ * - each person through the ONE SetLayoutData law (staticNpcData -
+ *   nameSeed = position ^ (buildingKey + locationIndex), the flags&32
+ *   gender, the faction race fold) plus the IsChildNPCData verdict the
+ *   pool's child gate reads (:2842);
+ * - buildingName through the same generateBuildingName the directory
+ *   uses (:2853-2860 calls BuildingNames.GetName again for the entry);
+ *   an unnamed building's is null and the pool drops the candidate at
+ *   its isNamedBuilding gate, exactly as C# does at :2862.
+ *
+ * The 25% roll, the social-group filter and the spent-roll ordering
+ * all stay in npcSession.buildQuestorPool - policy there, data here.
+ */
+export function questorCandidateBuildings(exteriorBuildings, blocks, {
+  locationIndex = 0, mapId = 0, nameOpts = {}, getFaction = null, raceOfCurrentRegion = null,
+} = {}) {
+  const merged = mergeNamedBuildings(exteriorBuildings, blocks, { locationIndex });
+  const out = [];
+  for (const b of blocks) {
+    const list = merged.get(b) ?? [];
+    const count = Math.min(list.length, blockBuildingCount(b.dfBlock) ?? list.length);
+    for (let i = 0; i < count; i++) {
+      const data = list[i];
+      if (!data) continue;
+      const buildingKey = makeBuildingKey(b.x ?? 0, b.y ?? 0, i);
+      const sub = b.dfBlock.rmbBlock.subRecords?.[i];
+      const npcs = (sub?.interior?.blockPeopleRecords ? collectInteriorPeople(sub) : []).map((p) => {
+        const d = staticNpcData(p, {
+          mapId, locationIndex, buildingKey, getFaction, raceOfCurrentRegion,
+        });
+        return { ...d, isChild: isChildNPCData(d) };
+      });
+      out.push({
+        buildingType: data.buildingType,
+        buildingKey,
+        isNamedBuilding: isNamedBuildingType(data.buildingType),
+        buildingName: generateBuildingName(data.nameSeed, data.buildingType,
+          { ...nameOpts, factionId: data.factionId }),
+        factionId: data.factionId,   // AUDIT QA2: the hall's own faction - a questor's guild rung asks it (person.js reseatMovedQuestor)
+        npcs,
+      });
+    }
+  }
+  return out;
+}
+
+/**
+ * AUDIT 39 (#110): THE NAMED-ONLY GATES ARE GONE. This list is
+ * TalkManager's listBuildings (GetBuildingList :2778-2797), whose only
+ * gate is `buildingKey != 0` - BuildingNames.GetName answers the EMPTY
+ * STRING for a residence and DFU adds it anyway, because
+ * GetBuildingTypeForBuildingKey has to resolve a quest residence's key
+ * for the Where-is "General" section. Dropping only named types made
+ * that section unreachable by construction: its next gate is
+ * isResidence(), and residences were exactly what this walk removed.
+ * The per-type groups stay clean regardless - House1..6, HouseForSale,
+ * Ship, Special1-4 and Town23/Town4 all sit in AssembleTopicList-
+ * Location's own skip list, and every named-type consumer here filters
+ * by type or by name.
+ *
+ * AUDIT 39r (R10): dropping the named-type gate dropped this walk's
+ * ONLY per-record bound. DFU's loop is
+ * `for (i = 0; i < buildingsInBlock.Length; ++i)` over
+ * RMBLayout.GetBuildingData, sized `SubRecords.Length`
+ * (RMBLayout.cs:552-553) - the record count IS DFU law, and the same
+ * wave gave it to the three sibling walks. `merged.get(inst)` is the
+ * full 32-slot header copy, so an out-of-range recordIndex reads
+ * whatever bytes follow the declared records: rmbLayout's enhanced
+ * windmill APPENDS a subrecord without bumping numBlockDataRecords and
+ * hands its recordIndex to a door, which is a phantom shop in every
+ * consumer of this directory. Bounded here like everywhere else.
+ *
+ * D9: THE WALK IS OVER BUILDINGS NOW, not doors - which is what DFU
+ * does and what the port could not do when this stood open. C#'s
+ * loop is `blocks[index]` -> `RMBLayout.GetBuildingData(block, x, y)`
+ * -> `for i < buildingsInBlock.Length`; a door is never consulted, so
+ * a building with no exterior door (or with its door on a subrecord
+ * the port never spawned) IS in DFU's list and used to be missing
+ * here. world/buildingSummaries.js is exactly that walk - same
+ * merged pool, same blockBuildingCount bound, plus the Position half
+ * (RMBLayout.cs:570-571) that the door used to supply - so this
+ * function is now its projection into BuildingInfo's four columns
+ * and the multi-door dedupe goes with the doors that needed it.
+ *
+ * THE POSITION IS THE BUILDING'S, block-origin included. DFU's
+ * BuildingInfo.position is an ExteriorAutomap MAP coordinate (block
+ * rect + scaled Position - half the location), and its player term is
+ * converted into that same space at :1215-1223; the port has always
+ * answered the compass hint in LOCATION-LOCAL world units instead
+ * (whereIsAnswer subtracts playerPos in the same space), which is the
+ * same direction under a positive scale. Block origin + the
+ * subrecord's Position keeps that convention exactly where the door's
+ * own world position left it.
+ *
+ * `buildingKey != 0` (:2794) needs no arm here: makeBuildingKey maps
+ * the 0 case to its sentinel, so every merged record is a row.
+ */
+export function buildBuildingDirectory(exteriorBuildings, blocks, nameOpts) {
+  const blockAt = new Map((blocks ?? []).map((b) => [`${b.x ?? 0},${b.y ?? 0}`, b]));
+  return buildingSummaries(exteriorBuildings, blocks, nameOpts).map((s) => {
+    const b = blockAt.get(`${s.blockX},${s.blockY}`);
+    return {
+      name: s.name,
+      buildingType: s.buildingType,
+      factionId: s.factionId,
+      quality: s.quality,
+      position: [(b?.originX ?? 0) + s.position[0], s.position[1], (b?.originZ ?? 0) + s.position[2]],
+      buildingKey: s.buildingKey,   // the knowledge roll's per-building term
+    };
+  });
+}
+
+/** DirectionVector2DirectionHintString over (east, north).
+ *
+ *  AUDIT 24 (wave 27): this was a SECOND implementation of
+ *  TalkManager.cs:1163-1187, and wave 26 walked straight past it and
+ *  wrote a THIRD in systems/talk/talk.js - two waves after wave 24 built a
+ *  gate against exactly this. The gate keys on the exported NAME, and
+ *  `compassHint` and `directionHintString` are different names for the
+ *  same DFU member, so it saw nothing.
+ *
+ *  This copy was also WRONG in the one place the two differ. C# divides
+ *  by the raw magnitude, so a coincident target gives 0/0 = NaN, every
+ *  band comparison fails and the chain falls to its `else` -
+ *  '...never mind...'. This one guarded the magnitude with `|| 1e-9`,
+ *  turning that into acos(0) = 90 = NORTH, and its final `else`
+ *  answered 'east' rather than the never-mind. So "where is the shop
+ *  I am standing in?" got a confident wrong direction.
+ *
+ *  One implementation now, in talk.js beside the rest of TalkManager. */
+export { directionHintString as compassHint } from './talk.js';
+
+// T3f: the tone tables (TalkManager, verbatim; sgroup >= 5 folds to
+// Merchants before indexing).
+export const QUESTION_TYPE_REACTION_MODS = Object.freeze([5, 0, 0, 0, 5, 0, 0, 0]);
+export const ETIQUETTE_REACTION_MODS = Object.freeze([-10, 5, 10, 15, -15]);
+export const STREETWISE_REACTION_MODS = Object.freeze([10, 5, -10, -15, 15]);
+
+/** TONE-TASTE (2026-10-15, Mac: "someone who didnt like etiquette still went up"): how the one spoken to takes a
+ *  tone - 1 a tone their group takes kindly (its row in the tables above over nought: Polite with Merchants, Scholars
+ *  and Nobles, Blunt with Commoners, Merchants and the Underworld), -1 one it takes ill, 0 the Normal tone. The
+ *  reaction's own fold (sgroup 5 and above is a Merchant's); a group off the tables takes nothing. The port's, read
+ *  off DFU's tables: what a Living World resident's regard and a courtship hear of a question's tone. */
+export function toneTaste(toneIndex, socialGroup = 0) {
+  const group = socialGroup >= 5 ? 1 : socialGroup;
+  const mod = toneIndex === 0 ? ETIQUETTE_REACTION_MODS[group] : toneIndex === 2 ? STREETWISE_REACTION_MODS[group] : 0;
+  return Math.sign(mod ?? 0);
+}
+
+/** GetReactionToPlayer_0_1_2, verbatim - all three tones.
+ *  toneIndex: 0 Polite (Etiquette) / 1 Normal / 2 Blunt (Streetwise).
+ *  session is the per-talk-session reaction cache ([0,0,0], DFU's
+ *  toneReactionForTalkSession): a tone's reaction value computes ONCE
+ *  per session (skill roll included) and re-banding on a revisit uses
+ *  the cached value; onTally fires with 'Etiquette'/'Streetwise' on
+ *  the FIRST use of that tone this session (the cache-empty gate).
+ *  The NPC-seeded 0..20 roll keeps the band stable per partner. */
+export function reactionTier012({ personality, npcSeed, socialGroup = 0, questionIndex = 0, toneIndex = 1, skillValue = 0, session = null, rolls = Math.random, onTally = null }) {
+  const sg = socialGroup >= 5 ? 1 : socialGroup;   // Merchants fold
+  let toneModifier = 0;
+  if (toneIndex === 0) {
+    toneModifier += ETIQUETTE_REACTION_MODS[sg];
+    if (!session || session[0] === 0) onTally?.('Etiquette');
+  } else if (toneIndex === 2) {
+    toneModifier += STREETWISE_REACTION_MODS[sg];
+    if (!session || session[2] === 0) onTally?.('Streetwise');
+  }
+  if (toneIndex !== 1) toneModifier += Math.floor(rolls() * 100) >= skillValue ? -10 : 5;   // Dice100.FailedRoll
+  let reaction = Math.trunc(personality / 5) + QUESTION_TYPE_REACTION_MODS[questionIndex] + toneModifier;
+  srand(npcSeed >>> 0);
+  const rollToBeat = randomRangeInclusive(0, 20);
+  if (session && session[toneIndex] !== 0) reaction = session[toneIndex];
+  else if (session) session[toneIndex] = reaction;
+  if (reaction < rollToBeat) return 0;
+  if (reaction < rollToBeat + 20) return 1;   // DFU's +20 (classic +30), doctrine-kept
+  return 2;
+}
+
+/** The NEUTRAL-tone tier (the T3c shape, now a thin wrapper). */
+export function reactionTier(personality, npcSeed) {
+  return reactionTier012({ personality, npcSeed });
+}
+
+/** GetAnswerWhereIs for a mobile townsperson (Commoners): the
+ *  knowledge roll picks the table half - a doesn't-know NPC draws
+ *  the FIRST 15 records, a knowing one the LAST 15 (verbatim).
+ *  Returns { textId, direction, tier, knows } - the caller expands
+ *  the record and replaces %di/%key. */
+export function whereIsAnswer(playerPos, building, personality, npcSeed, socialGroup = 0, opts = {}) {
+  const tier = opts.tier ?? reactionTier(personality, npcSeed);   // T3f: the host passes the toned tier
+  const knows = npcKnowsAboutItem(npcSeed, building.buildingKey ?? 0, socialGroup, 0);
+  const textId = ANSWERS_TO_DIRECTIONS[(knows ? 15 : 0) + 3 * socialGroup + tier];
+  const direction = directionHintString(building.position[0] - playerPos[0], building.position[2] - playerPos[2]);
+  return { textId, direction, tier, knows };
+}
+
+// T4: the %hnt fork. TalkManager.cs:123 - DFU's own comment on the
+// constant is "Chances unknown".
+export const CHANCE_TO_REVEAL_LOCATION_ON_MAP = 0.35;
+export const DIRECTION_TEXT_ID = 7333;   // GetKeySubjectBuildingDirection (:1693-1696)
+export const MAP_REVEAL_TEXT_ID = 7332;  // GetKeySubjectBuildingOnMap (:1698-1705)
+
+/** GetKeySubjectBuildingHint (TalkManager.cs:1707-1723): %hnt resolves
+ *  to EITHER the 7333 directional hint or the 7332 map reveal - the
+ *  reveal only when the roll lands AT or under the chance (DFU tests
+ *  `randomFloat > Chance` for the direction arm) and NEVER while the
+ *  player is inside. The draw is UnityEngine.Random.Range(0f, 1f) -
+ *  per THE ENGINE-PRNG RULE (Ledger A) it rides an injectable uniform
+ *  roll, pinned for distribution, never for sequence. The caller runs
+ *  this only when the answer record actually carries %hnt (the macro
+ *  is where DFU rolls), and performs the DiscoverBuilding side effect
+ *  on reveal - MacroHelper's %loc handler does it there
+ *  (MacroHelper.cs:1085-1090). */
+export function buildingHint(roll = Math.random, isInside = false) {
+  if (roll() > CHANCE_TO_REVEAL_LOCATION_ON_MAP || isInside) {
+    return { reveal: false, textId: DIRECTION_TEXT_ID };
+  }
+  return { reveal: true, textId: MAP_REVEAL_TEXT_ID };
+}

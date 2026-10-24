@@ -45,10 +45,10 @@
 // Abecean - are the captain's choice of risk: pirates DEEP_PIRATE_K times as likely and the trade's ships fewer, their
 // classes drawn DEEP_LEVEL levels above the captain's own (brigantines and galleys sooner, a flagship possible), a pirate
 // bold DEEP_BOLD of the time where the coast's are bold BOLD_SHARE, and every hold rolled DEEP_TIER rarity tiers richer
-// (navalHost.js launch, drawHold). The plate says the waters (ui/navalHud.js).
+// (navalHost.js launch, drawHold). The plate says the waters (ui/naval/navalHud.js).
 
 //
-// ETHER-SEA (2026-10-11, the owner: "deadly legendary ships"; bible/03-World/Etheric-Sea.md ETHER-SHIPS) - PAST THE VEIL
+// ETHER-SEA (2026-10-11, the owner: "deadly legendary ships"; bible/03-World/Eltheric-Ocean.md ETHER-SHIPS) - PAST THE VEIL
 // (`ctx.ether`: the waters' band, and the legend whose haunt they are when she sails): no crown's navy - corsairs and
 // the isles' traders by the band's weights (systems/naval/etherShips.js etherFactionWeights), every class drawn the band's
 // `level` levels up, a pair at it only a corsair on a trader, and no relief to call. A LEGEND in her haunt, while no
@@ -59,11 +59,11 @@
 // too.
 
 import { hash32 } from '../../world/spawnedDungeons.js';
-import { mulberry32 } from '../../combat/bloodArt.js';
+import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { classFor, HULL, SHIP_CLASSES } from './navalShips.js';
-import { HULL_VARIANT_COUNTS } from '../comeSailAwayBoat.js';
+import { HULL_VARIANT_COUNTS } from '../comeSailAway/comeSailAwayBoat.js';
 import { classPower, odds, WARY_ODDS } from './navalAI.js';   // SEA-PEACE: a plunder's merchantman is one her pirate outguns
-import { etherFactionWeights, LEGEND_CHANCE, LEGEND_SALT } from './etherShips.js';   // ETHER-SEA: the Etheric Sea's traffic and its legends
+import { etherFactionWeights, LEGEND_CHANCE, LEGEND_SALT } from './etherShips.js';   // ETHER-SEA: the Eltheric Ocean's traffic and its legends
 
 /** How many ships the density keeps at sea near a player. SEA-EASE: one, two or four (they were two, three and five). */
 export const DENSITY = Object.freeze({ off: 0, few: 1, some: 2, many: 4 });
@@ -189,7 +189,7 @@ export function createNavalDirector({ random = Math.random } = {}) {
       if (nearest(hunterPos) < SPAWN_CLEAR || nearest(quarryPos) < SPAWN_CLEAR) continue;
       if (!ctx.isOpenWater(hunterPos[0], hunterPos[2], pair.hunter.hull) || !ctx.isOpenWater(quarryPos[0], quarryPos[2], pair.quarry.hull)) continue;
       const variantOf = (cls) => { const n = HULL_VARIANT_COUNTS[cls.hull] ?? 0; return cls.hull === HULL.LargeBoat && n > 0 ? Math.floor(r() * n) : 0; };
-      const etherOf = ctx.ether ? { ether: ctx.ether.band.id } : deep ? { deep: true } : {};   // ETHER-SEA: launched of the Etheric Sea; CAPT-WATERS: of the deep
+      const etherOf = ctx.ether ? { ether: ctx.ether.band.id } : deep ? { deep: true } : {};   // ETHER-SEA: launched of the Eltheric Ocean; CAPT-WATERS: of the deep
       const company = { seed: hash32(ctx.seedBase >>> 0, count++), classId: pair.quarry.id, variant: variantOf(pair.quarry), pos: quarryPos, yaw, hunter: false, ...etherOf };
       return { seed, classId: pair.hunter.id, variant: variantOf(pair.hunter), pos: hunterPos, yaw, hunter: false, encounter: kind, company, ...etherOf };
     }
@@ -283,7 +283,7 @@ export function createNavalDirector({ random = Math.random } = {}) {
         const yaw = hunter ? toPlayer : toPlayer + (rng() < 0.5 ? 1 : -1) * (0.6 + rng() * 0.9);
         const variants = HULL_VARIANT_COUNTS[cls.hull] ?? 0;
         const variant = cls.hull === HULL.LargeBoat && variants > 0 ? Math.floor(rng() * variants) : 0;
-        out.spawn = { seed, classId: cls.id, variant, pos, yaw, hunter, ...(deep ? { deep: true } : {}), ...(ether ? { ether: ether.band.id } : {}) };   // CAPT-WATERS: launched of the deep; ETHER-SEA: of the Etheric Sea
+        out.spawn = { seed, classId: cls.id, variant, pos, yaw, hunter, ...(deep ? { deep: true } : {}), ...(ether ? { ether: ether.band.id } : {}) };   // CAPT-WATERS: launched of the deep; ETHER-SEA: of the Eltheric Ocean
         break;
       }
       return out;

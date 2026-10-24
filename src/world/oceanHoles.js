@@ -21,14 +21,15 @@
 // read off the IL), and IsPitPixel's buckets are the IL's u8/r8 mix.
 // ═══════════════════════════════════════════════════════════════════
 
-import { MOBILE_TYPES } from '../characters/mobileTypes.js';
-import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
+import { ENEMY_BASICS, MOBILE_BEHAVIOUR } from '../characters/enemy/enemyBasics.js';
 import { longitudeLatitudeToMapPixel, mapPixelToWorldCoord, getMapPixelID, WORLD_MAP_TILE_DIM, WORLD_MAP_RMB_DIM } from '../formats/mapsFile.js';
-import { getLocationTerrainTileOrigin } from './terrainTiles.js';
+import { getLocationTerrainTileOrigin } from './terrain/terrainTiles.js';
 import { TORCH_ARCHIVE, TORCH_RECORDS } from '../systems/soundClips.js';   // RDBLayout.IsTorchFlat
-import { scaledSliderValue } from './deepWaterLook.js';   // GetScaledSliderValue: the same member Iliac Puddle No More ships, one home
+import { scaledSliderValue } from './deepWater/deepWaterLook.js';   // GetScaledSliderValue: the same member Iliac Puddle No More ships, one home
 import { colorLerp } from '../systems/mathf.js';          // Color.Lerp
 import { dice100 } from '../combat/formulas.js';   // Dice100.SuccessRoll, one home
+import { dropFoundMark } from '../systems/item/foundMark.js';   // AUDIT MEND-THIRD L3-4: a re-mint is handed over whole
 import { clampArmorVariant } from '../systems/armorMaterials.js';   // ItemBuilder.SetVariant's clamps: CurrentVariant
 
 const f32 = Math.fround;
@@ -221,15 +222,15 @@ export function isFlameEnemy(type) {
   return type === MOBILE_TYPES.FireDaedra || type === MOBILE_TYPES.FireAtronach || type === MOBILE_TYPES.Dragonling || type === MOBILE_TYPES.Dragonling_Alternate;
 }
 
-/** MobileBehaviour and MobileTeams, as DaggerfallUnityEnums.cs numbers them (the C# compares the ints). */
-const BEHAVIOUR = Object.freeze({ General: 0, Flying: 1, Aquatic: 2, Spectral: 3, Guard: 4 });
+/** MobileBehaviour (enemyBasics.js MOBILE_BEHAVIOUR, the C#'s ints) and MobileTeams' Undead. */
+const BEHAVIOUR = MOBILE_BEHAVIOUR;
 const TEAM_UNDEAD = 'Undead';
 /** GameObjectHelper.EnemyDict's row for a type: its behaviour's number, its team, its level - or null where the table has none. */
 export function enemyRow(type) {
   const b = ENEMY_BASICS[type];
   return b ? { id: type, behaviour: BEHAVIOUR[b.behaviour] ?? 0, team: b.team, level: b.level ?? 0, noShadow: !!b.noShadow, glowColor: b.glowColor ?? null, lootTableKey: b.lootTableKey ?? null } : null;
 }
-export const MOBILE_BEHAVIOUR = BEHAVIOUR;
+export { MOBILE_BEHAVIOUR };
 
 /** IsEligibleUnderwaterReplacement: never a flame enemy; the aquatic arm wants Aquatic behaviour; the undead arm the Undead team less the two ancients. */
 export function isEligibleUnderwaterReplacement(type, undeadOnly, aquaticOnly, rowOf = enemyRow) {
@@ -338,6 +339,9 @@ export function upgradeLoot(items, { remintWeapon, remintArmor, isCustom = () =>
     Object.assign(item, fresh, { flags: 0, stackCount: 1 });   // SetItem (DaggerfallUnityItem.cs:565, :572), then the material pass
     delete item.isIdentified;
     if (enchanted) for (const [k, v] of Object.entries(kept)) { if (v === undefined) delete item[k]; else item[k] = v; }
+    // AUDIT MEND-THIRD L3-4: a re-minted piece is handed over whole - Roleplay & Realism: Items' roll ran first, and its mark
+    // stood on the whole piece, so an Ebony longsword marked at 31% became a whole Orcish one that sold at 51% online
+    if (!enchanted) dropFoundMark(item);
   }
 }
 

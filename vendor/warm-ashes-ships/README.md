@@ -69,7 +69,7 @@ and `SHIPAA01.RMB`, the large) each in three variants.
   tool refuses to write one that does not rebuild it.
 - **Not here:** the six shipped world-data files - the port rebuilds them
   at load from the player's own `BLOCKS.BSA` and serves them under their
-  own names through the world-data door (`src/formats/worldDataPatch.js`,
+  own names through the world-data door (`src/formats/worldData/worldDataPatch.js`,
   `src/scenes/modWorldData.js`), where DFU's `WorldDataVariants` finds
   them - and the C# sources, which the bundle does not carry.
 

@@ -5,7 +5,7 @@
   "old": "    wb: a.look?.wolf ? 1 : 0,",
   "new": "    wb: 0,",
   "tests": [
-   "test/mwnpc15_werewolf.test.js"
+   "test/characters/mwnpc15_werewolf.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "    wb: a.look?.wolf ? 1 : 0,",
   "new": "    wb: 1,",
   "tests": [
-   "test/mwnpc15_werewolf.test.js"
+   "test/characters/mwnpc15_werewolf.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": " || f?.mobileType === WOLF_MOBILE;",
   "new": ";",
   "tests": [
-   "test/mwnpc15_werewolf.test.js"
+   "test/characters/mwnpc15_werewolf.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": ", ...(f.mobileType === WOLF_MOBILE ? { wolf: true } : {}) });",
   "new": " });",
   "tests": [
-   "test/mwnpc15_werewolf.test.js"
+   "test/characters/mwnpc15_werewolf.test.js"
   ]
  },
  {
@@ -41,16 +41,16 @@
   "old": "  const wolf = mobileType === WOLF_MOBILE;   // MWNPC15",
   "new": "  const wolf = false;   // MWNPC15",
   "tests": [
-   "test/mwnpc15_werewolf.test.js"
+   "test/characters/mwnpc15_werewolf.test.js"
   ]
  },
  {
   "name": "MWNPC15-roster-wolf-armed",
   "file": "src/characters/foeBodies.js",
-  "old": ": vampire || wolf ? [] : [rosterBlade(h)]);",
-  "new": ": vampire ? [] : [rosterBlade(h)]);",
+  "old": ": vampire || wolf || (mod && !isClassEnemyId(mobileType)) ? [] : [rosterBlade(h)]);",
+  "new": ": vampire || (mod && !isClassEnemyId(mobileType)) ? [] : [rosterBlade(h)]);",
   "tests": [
-   "test/mwnpc15_werewolf.test.js"
+   "test/characters/mwnpc15_werewolf.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": ", ...(wolf ? { wolf: true } : {}) });",
   "new": " });",
   "tests": [
-   "test/mwnpc15_werewolf.test.js"
+   "test/characters/mwnpc15_werewolf.test.js"
   ]
  }
 ]

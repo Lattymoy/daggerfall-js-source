@@ -4,7 +4,7 @@ import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { TITLE_IMPACT_TIME, CLOUD_REVEAL_TIME } from '../src/ui/introCue.js';
+import { TITLE_IMPACT_TIME, CLOUD_REVEAL_TIME } from '../src/ui/intro/introCue.js';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
 const track = `${root}src/assets/intro/theme.mp3`;

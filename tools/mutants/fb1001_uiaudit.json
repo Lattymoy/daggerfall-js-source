@@ -5,7 +5,7 @@
     "old": "  lay(SCROLLBAR_STYLE_ID, CURSOR_SCROLLBAR_CSS);\n",
     "new": "",
     "tests": [
-      "test/fb1001_uiaudit.test.js"
+      "test/ui/fb1001_uiaudit.test.js"
     ]
   },
   {
@@ -14,16 +14,16 @@
     "old": "    if (doc.getElementById?.(id)) return;",
     "new": "    if (false) return;",
     "tests": [
-      "test/fb1001_uiaudit.test.js"
+      "test/ui/fb1001_uiaudit.test.js"
     ]
   },
   {
     "name": "UI2-the-media-gate-dropped",
-    "file": "src/ui/enhancedStyle.js",
+    "file": "src/ui/enhanced/enhancedStyle.js",
     "old": "@media (any-pointer: fine) {   /* AUDIT part five UI2: a touch screen keeps its overlay scrollbar - no cursor to keep */\n::-webkit-scrollbar { width: 10px; height: 10px; } }",
     "new": "::-webkit-scrollbar { width: 10px; height: 10px; }",
     "tests": [
-      "test/fb1001_uiaudit.test.js"
+      "test/ui/fb1001_uiaudit.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  const arrow = `url(\"${url}\") ${DFU_CURSOR_HOTSPOT[0]} ${DFU_CURSOR_HOTSPOT[1]}, auto`;",
     "new": "  const arrow = `image-set(url(\"${url}\") 2x) ${DFU_CURSOR_HOTSPOT[0]} ${DFU_CURSOR_HOTSPOT[1]}, auto`;",
     "tests": [
-      "test/fb1001_uiaudit.test.js"
+      "test/ui/fb1001_uiaudit.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "export const DFU_CURSOR_HOTSPOT = Object.freeze([0, 0]);",
     "new": "export const DFU_CURSOR_HOTSPOT = Object.freeze([4, 4]);",
     "tests": [
-      "test/fb1001_uiaudit.test.js"
+      "test/ui/fb1001_uiaudit.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "const on = Math.abs(tilt ? dy : dx), off",
     "new": "const on = (tilt ? dy : dx), off",
     "tests": [
-      "test/fb1001_uiaudit.test.js"
+      "test/ui/fb1001_uiaudit.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "this._sheet?.orbitBy?.(tilt ? held : dx, tilt ? dy : held);",
     "new": "this._sheet?.orbitBy?.(tilt ? held : 0, tilt ? 0 : held);",
     "tests": [
-      "test/fb1001_uiaudit.test.js"
+      "test/ui/fb1001_uiaudit.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
     "old": "export const summonsByName = ({ factionId = 0, factionType = null, online = false } = {}) => !!online\n  && factionId",
     "new": "export const summonsByName = ({ factionId = 0, factionType = null, online = false } = {}) => !!(online || true)\n  && factionId",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  && factionId !== GLENMORIL_WITCHES && factionType !== WITCHES_COVEN_TYPE;",
     "new": "  && factionId !== GLENMORIL_WITCHES;",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  && factionId !== GLENMORIL_WITCHES && factionType !== WITCHES_COVEN_TYPE;",
     "new": "  && factionType !== WITCHES_COVEN_TYPE;",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "export const PRINCES_BY_NAME = Object.freeze([...DAEDRA].sort((a, b) => a.name.localeCompare(b.name)));",
     "new": "export const PRINCES_BY_NAME = Object.freeze([...DAEDRA]);",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  Object.freeze({ text: 'Do you, %pcn, wish', center: true }),",
     "new": "  Object.freeze({ text: 'for %dae. Do you, %pcn, wish', center: true }),",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      onYes: () => { const next = summon(PRINCES_BY_NAME[i]); return next ? [next] : null; },",
     "new": "      onYes: () => { const next = summon(PRINCES_BY_NAME[0]); return next ? [next] : null; },",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      onYes: () => { const next = summon(PRINCES_BY_NAME[i]); return next ? [next] : null; },",
     "new": "      onYes: () => { summon(PRINCES_BY_NAME[i]); return null; },",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      rows: ask(PRINCES_BY_NAME[i]),",
     "new": "      rows: ask(PRINCES_BY_NAME[0]),",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "factionType: (summoner?.type ?? null), online: sharedClockOn() });",
     "new": "factionType: null, online: sharedClockOn() });",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      if (!daedra && !byName) return { rows: box(SUMMON_TEXT.notToday, null, 'This is not a summoning day.') };",
     "new": "      if (!daedra) return { rows: box(SUMMON_TEXT.notToday, null, 'This is not a summoning day.') };",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "        const r = attemptSummoning({\n          daedra: called,",
     "new": "        const r = attemptSummoning({\n          daedra,",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    return tail.length ? tail : SUMMON_BY_NAME_ROWS;",
     "new": "    return SUMMON_BY_NAME_ROWS;",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    const rest = text.slice(end.index + end[0].length);",
     "new": "    const rest = text;",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    const end = /[.!?](?:\\s+|$)/.exec(text);",
     "new": "    const end = /[.!?]\\s+/.exec(text);",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "[typeof row === 'string' ? rest : { ...row, text: rest }]",
     "new": "[typeof row === 'string' ? rest : { text: rest }]",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    return tail.length ? tail : SUMMON_BY_NAME_ROWS;",
     "new": "    return tail;",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "      rows: ask(PRINCES_BY_NAME[i]),",
     "new": "      rows: SUMMON_BY_NAME_ROWS,",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "(d) => say(SUMMON_TEXT.areYouSure, d, summonQuestionRows)), {",
     "new": "(d) => say(SUMMON_TEXT.areYouSure, d)), {",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "      const summon = (called) => {\n        // WeatherManager.IsRaining / IsStorming - thunder is a STORM\n        // and not rain, which is what makes Sheogorath's day distinct\n        // from Sanguine's four.\n        //\n        // AUDIT AT F3: through `world/weather.js` weatherFlags, which is\n        // the ONE derivation of WeatherManager's four public flags from\n        // SetWeather's own switch. This arm used to spell two of them\n        // inline off the weather enum - correct, and a second reading of\n        // a DFU member (ONE DFU MEMBER, ONE EXPORT). AT1 wrote the shared\n        // one for Ambient Text's WeatherKey and its record said this copy\n        // had been folded into it; it had not. It is now.\n        //\n        // AUDIT WAITS S1: read at the Yes, the sky the summoning is made\n        // under - SUMMON-NAME's list can stand open while it turns.\n        const weather = weatherFlags(currentWeather());\n",
     "new": "      const weather = weatherFlags(currentWeather());\n      const summon = (called) => {\n        // WeatherManager.IsRaining / IsStorming - thunder is a STORM\n        // and not rain, which is what makes Sheogorath's day distinct\n        // from Sanguine's four.\n        //\n        // AUDIT AT F3: through `world/weather.js` weatherFlags, which is\n        // the ONE derivation of WeatherManager's four public flags from\n        // SetWeather's own switch. This arm used to spell two of them\n        // inline off the weather enum - correct, and a second reading of\n        // a DFU member (ONE DFU MEMBER, ONE EXPORT). AT1 wrote the shared\n        // one for Ambient Text's WeatherKey and its record said this copy\n        // had been folded into it; it had not. It is now.\n        //\n        // AUDIT WAITS S1: read at the Yes, the sky the summoning is made\n        // under - SUMMON-NAME's list can stand open while it turns.\n",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "expandRowValues(part(rows?.(id) ?? []), summonMacroValues(d), null);",
     "new": "expandRowValues(rows?.(id) ?? [], summonMacroValues(d), null);",
     "tests": [
-      "test/summonname_online.test.js"
+      "test/systems/summonname_online.test.js"
     ]
   }
 ]

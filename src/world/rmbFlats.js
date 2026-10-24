@@ -14,7 +14,9 @@
 //     flagged in World-Arc.md.
 //   - Ground scenery reads GroundScenery[x][15 - y], skips records < 1
 //     (0 is a marker), places at (x*256, natureFlatsOffsetY, y*256+256)*scale
-//     with the climate nature archive.
+//     with the climate nature archive. HOUSE-BUSH (FIELD BUGS 2026-10-18f, a
+//     departure from AddNatureFlats): a cell whose foot the block's own
+//     automap draws inside a building is not stood (sceneryUnderRoof).
 //   - Editor flats (archive 199) are two DIFFERENT laws. A SUBRECORD
 //     exterior flat is never spawned at all (RMBLayout.cs:409-410's
 //     `continue`). A MISC block flat IS spawned - AddMiscBlockFlats
@@ -35,13 +37,14 @@
 
 import { RMB_DIMENSION, SCALE_DIVISOR } from '../formats/blocksFile.js';
 import { GLOBAL_SCALE } from './meshReader.js';
-import { applyBillboardXml } from './billboardXml.js';   // MM1: the xml scale registry (a leaf)
+import { applyBillboardXml, billboardXmlScaleOf, billboardXmlGeneration } from './billboardXml.js';   // MM1: the xml scale registry (a leaf)
 import { textureReplacementEnabled, hasTextureReplacement } from '../systems/textureReplacement.js';   // AUDIT MM1: DFU's two gates on the xml scale
 import { flatFieldFor, sowField } from './flatFields.js';   // WD3: a scene model that is a field of flats (the town mods' crops)
 import { PROPS_OFFSET_Y } from './rmbLayout.js';   // FIELD BUGS 2026-10-04d CROPS: a field's batch stands where its misc model does
+import { quarterOf } from '../ui/town/townQuarters.js';   // HOUSE-BUSH: an automap byte's building, by the town map's own ladder
 
 /** RMBLayout's blockFlatsOffsetY: a block's flats stand this far (native units) below their records - and their lights
- *  do not (AddLight hangs at the record's -YPos plus the picture's height - world/cityLights.js). AUDIT YARD-LIGHT: so a
+ *  do not (AddLight hangs at the record's -YPos plus the picture's height - world/city/cityLights.js). AUDIT YARD-LIGHT: so a
  *  yard's lamp hangs the town's distance above its picture (scenes/homeYards.js yardLampOf). */
 export const BLOCK_FLATS_OFFSET_Y = -6;
 const NATURE_FLATS_OFFSET_Y = -2;
@@ -56,6 +59,76 @@ export const isNatureArchive = (archive) => archive >= NATURE_ARCHIVE_MIN && arc
 /** TREES-SEATED: where a nature flat stands on the location's plane - AddNatureFlats' `natureFlatsOffsetY`, scaled
  *  (the ground scenery's y below). */
 export const NATURE_FLATS_Y = NATURE_FLATS_OFFSET_Y * GLOBAL_SCALE;
+
+/** HOUSE-BUSH: an RMB block's automap is AUTOMAP_SIDE pixels a side, AUTOMAP_SIDE / 16 to a ground tile. */
+const AUTOMAP_SIDE = 64, AUTOMAP_PER_TILE = AUTOMAP_SIDE / 16;
+/**
+ * HOUSE-BUSH (FIELD BUGS 2026-10-18f, æther on the Discord: "Small bush in a house wall, near east gate of Penwall
+ * Derry"). WHETHER A GROUND-SCENERY CELL'S FOOT STANDS INSIDE A BUILDING, as the block's own automap draws it.
+ *
+ * AddNatureFlats (RMBLayout.cs, the walk below) stands every scenery record a block names and reads no building, so a
+ * cell its author left under a house stands in the house - a billboard through its wall. Beautiful Cities' composite
+ * blocks were made so: Penwall Derry's east gate (WALLAA09.TVRNAS01) stands its record 4 inside a House2, and the two
+ * town packs between them hold 18 such cells (AUDIT FB1018f L4-1: 26 counted by the automap alone, 8 of them under
+ * footprints no building of the block stands on). The author took the same class out by hand elsewhere (TVRNAL01's edit
+ * sets two classic cells to -1, both on a House2). DFU stands them as written; the port does not (Port-Ledger A).
+ *
+ * The automap (FLD header, AUTOMAP_SIDE x AUTOMAP_SIDE, row 0 the block's north edge, a byte BuildingType + 1 where a
+ * building's footprint covers it) is what the town map draws a building from, and its rows and columns are the
+ * scenery's own: cell (x, y) of the walk stands its foot at (256x, 256y + 256) units, the corner of automap columns
+ * 4x - 1 and 4x and rows 59 - 4y and 60 - 4y. INSIDE is all four of them architecture by the town map's ladder
+ * (ui/town/townQuarters.js quarterOf - not street, a ground flat's mark, a ship or a special); a foot on a footprint's
+ * edge or corner is left as authored, and so is one on the block's rim, whose far cells are the next block's.
+ * AUDIT FB1018f L4-1: AND THE FOOTPRINT IS A BUILDING'S. Two Beautiful Villages blocks (TEMPBSE0, TEMPBSC0) draw houses
+ * on their automaps that the blocks do not have, and their authors planted scenery on that open ground; a footprint no
+ * subrecord of the block stands on is no roof (`held`, heldFootprints below). Without `held` nothing is taken.
+ * @param {?ArrayLike<number>} autoMap the block's fldHeader.autoMapData
+ * @param {number} x the walk's tile column (0 west)
+ * @param {number} y the walk's tile row (0 south)
+ * @param {?(i: number) => boolean} held whether automap index `i` lies in a footprint a building of the block stands on
+ */
+export function sceneryUnderRoof(autoMap, x, y, held) {
+  if (!autoMap || autoMap.length < AUTOMAP_SIDE * AUTOMAP_SIDE || !held) return false;
+  const col = AUTOMAP_PER_TILE * x, row = AUTOMAP_SIDE - AUTOMAP_PER_TILE * (y + 1);
+  if (col < 1 || row < 1 || col >= AUTOMAP_SIDE || row >= AUTOMAP_SIDE) return false;
+  for (const r of [row - 1, row]) for (const c of [col - 1, col]) if (quarterOf(autoMap[r * AUTOMAP_SIDE + c]) === null) return false;
+  return held(row * AUTOMAP_SIDE + col);   // the four are one footprint: architecture, side by side
+}
+
+/**
+ * HOUSE-BUSH (AUDIT FB1018f L4-1): THE FOOTPRINTS THE BLOCK'S OWN BUILDINGS STAND ON. A footprint is a 4-connected run
+ * of architecture on the automap (quarterOf's ladder, as sceneryUnderRoof reads it); it is held when a subrecord's
+ * origin falls in it - automap column xPos / 64, row zPos / 64, which puts 817 of Beautiful Cities' 884 buildings and 502
+ * of Beautiful Villages' 557 on their own footprint. Answers the test sceneryUnderRoof takes, or null without an automap.
+ * @param {?ArrayLike<number>} autoMap the block's fldHeader.autoMapData
+ * @param {?Array<{xPos: number, zPos: number}>} subRecords the block's buildings
+ * @returns {?(i: number) => boolean}
+ */
+export function heldFootprints(autoMap, subRecords) {
+  if (!autoMap || autoMap.length < AUTOMAP_SIDE * AUTOMAP_SIDE) return null;
+  const run = new Int32Array(AUTOMAP_SIDE * AUTOMAP_SIDE).fill(-1);
+  let runs = 0;
+  for (let i = 0; i < run.length; i++) {
+    if (run[i] >= 0 || quarterOf(autoMap[i]) === null) continue;
+    const open = [i];
+    run[i] = runs;
+    while (open.length) {
+      const k = open.pop(), r = Math.floor(k / AUTOMAP_SIDE), c = k % AUTOMAP_SIDE;
+      for (const [rr, cc] of [[r + 1, c], [r - 1, c], [r, c + 1], [r, c - 1]]) {
+        if (rr < 0 || cc < 0 || rr >= AUTOMAP_SIDE || cc >= AUTOMAP_SIDE) continue;
+        const kk = rr * AUTOMAP_SIDE + cc;
+        if (run[kk] < 0 && quarterOf(autoMap[kk]) !== null) { run[kk] = runs; open.push(kk); }
+      }
+    }
+    runs++;
+  }
+  const held = new Set();
+  for (const s of subRecords ?? []) {
+    const c = Math.floor(s.xPos / 64), r = Math.floor(s.zPos / 64);
+    if (r >= 0 && c >= 0 && r < AUTOMAP_SIDE && c < AUTOMAP_SIDE && run[r * AUTOMAP_SIDE + c] >= 0) held.add(run[r * AUTOMAP_SIDE + c]);
+  }
+  return (i) => run[i] >= 0 && held.has(run[i]);
+}
 
 /**
  * World-unit billboard size for a texture record, verbatim
@@ -100,20 +173,41 @@ export const NATURE_FLATS_Y = NATURE_FLATS_OFFSET_Y * GLOBAL_SCALE;
  * and gets a different entry, so there is no staleness to invalidate
  * and no table to grow. Archive numbers would have needed both.
  *
- * The XML scale is NOT cached and deliberately: `applyBillboardXml`
- * reads a LIVE predicate per registered vendor (billboardXml's own
- * `isOn`), so a mod toggled in the settings menu has to be seen on the
- * next frame. It is also the cheap half - a registry walk over one or
- * two entries, against three allocations and two record reads.
+ * The XML scale is read at every ask and deliberately: billboardXml
+ * reads a LIVE predicate per registered vendor (its own `isOn`), so a
+ * mod toggled in the settings menu has to be seen on the next frame. The
+ * walk is the cheap half - one or two entries.
+ *
+ * AUDIT DEX B7: but the PRODUCT was minted at every ask - `applyBillboardXml`
+ * answers a new `{ w, h }` (and `billboardXmlScale` a new `{ x, y }` under
+ * it), two objects per foe per frame for every stand-in archive the xml
+ * names (Daggerfall Enemy Expansion's every sprite), behind a door its
+ * hosts read as "a shared, cached object". The xml-applied size is cached
+ * beside the classic one now, per texture and record, and kept while the
+ * same live table entry answers (its array, by identity - a switch turned
+ * moves it) under the same registrations (billboardXmlGeneration - a table
+ * registered again moves it).
  */
 const _mobileSize = new WeakMap();   // texture -> size by record
+const _mobileXml = new WeakMap();    // AUDIT DEX B7: texture -> by record { s, gen, size } - the xml-applied size
 
 export function mobileBillboardSize(t, record) {
   let byRecord = _mobileSize.get(t);
   if (!byRecord) { byRecord = []; _mobileSize.set(t, byRecord); }
   let size = byRecord[record];
   if (!size) { size = scaledBillboardSize(t.getSize(record), t.getScale(record)); byRecord[record] = size; }
-  return textureReplacementEnabled() ? applyBillboardXml(t?.archive, record, size) : size;
+  // DEX2: and a stand-in's whatever the switch - a mod-only archive's pictures ARE the port's vendored art, drawn
+  // ungated (systems/textureReplacement.js SURV2), so the xml that sizes them goes with them (Daggerfall Enemy
+  // Expansion's riders at 1.3, its centurion at 0.7); DFU draws a mod's enemy only under AssetInjection, scale and all
+  if (!(textureReplacementEnabled() || t?.vendor === true)) return size;
+  const s = billboardXmlScaleOf(t?.archive, record);
+  if (!s) return size;
+  let byXml = _mobileXml.get(t);
+  if (!byXml) { byXml = []; _mobileXml.set(t, byXml); }
+  const gen = billboardXmlGeneration();
+  let x = byXml[record];
+  if (!x || x.s !== s || x.gen !== gen) { x = { s, gen, size: { w: size.w * s[0], h: size.h * s[1] } }; byXml[record] = x; }   // applyBillboardXml's product
+  return x.size;
 }
 export function billboardSize(t, record) {
   const size = scaledBillboardSize(t.getSize(record), t.getScale(record));
@@ -163,26 +257,15 @@ export function scaledBillboardSize(size, scale) {
 }
 
 /**
- * Collect every flat of one RMB block as {archive, record, x, y, z} with the
- * position at the billboard BASE (AlignToBase handled by the renderer via
- * the scaled size).
- * @param {object} dfBlock - BlocksFile.getBlock output (type Rmb).
- * @param {number} natureArchive - climate nature archive
- *   (dfLocation.climate.natureArchive).
- * @param {{climateIndex?:?number, solid?:?Function}} [fields] - FIELD BUGS
- *   2026-10-04d CROPS: for a crop field's batch, the raw climate it reads and
- *   the block's solids it keeps a metre off (world/flatFields.js
- *   blockSolids); a caller with neither sows every plant of the climate's
- *   nature archive.
- * @returns {Array<{archive:number,record:number,x:number,y:number,z:number,
- *   editor?:boolean}>}
+ * The block's misc flats alone - collectBlockFlats' first pass, its own export (HOLD-MONUMENT, 2026-10-14: the monument
+ * outside Privateer's Hold reads the block's start markers off them, world/lefayMonument.js lefaySpotOf, with no
+ * scenery sown and no climate asked).
+ * @param {{rmbBlock: {miscFlatObjectRecords: any[]}}} dfBlock
+ * @returns {Array<{archive:number,record:number,x:number,y:number,z:number,editor:boolean}>}
  */
-export function collectBlockFlats(dfBlock, natureArchive, { climateIndex = null, solid = null } = {}) {
-  const rmb = dfBlock.rmbBlock;
+export function collectMiscFlats(dfBlock) {
   const flats = [];
-
-  // Misc block flats (lights included - AddLights uses the same position).
-  for (const obj of rmb.miscFlatObjectRecords) {
+  for (const obj of dfBlock.rmbBlock.miscFlatObjectRecords) {
     flats.push({
       archive: obj.textureArchive,
       record: obj.textureRecord,
@@ -204,6 +287,30 @@ export function collectBlockFlats(dfBlock, natureArchive, { climateIndex = null,
       rawX: obj.xPos, rawY: obj.yPos, rawZ: obj.zPos,
     });
   }
+  return flats;
+}
+
+/**
+ * Collect every flat of one RMB block as {archive, record, x, y, z} with the
+ * position at the billboard BASE (AlignToBase handled by the renderer via
+ * the scaled size).
+ * @param {object} dfBlock - BlocksFile.getBlock output (type Rmb).
+ * @param {number} natureArchive - climate nature archive
+ *   (dfLocation.climate.natureArchive).
+ * @param {{climateIndex?:?number, solid?:?Function}} [fields] - FIELD BUGS
+ *   2026-10-04d CROPS: for a crop field's batch, the raw climate it reads and
+ *   the block's solids it keeps a metre off (world/flatFields.js
+ *   blockSolids); a caller with neither sows every plant of the climate's
+ *   nature archive.
+ * @returns {Array<{archive:number,record:number,x:number,y:number,z:number,
+ *   editor?:boolean}>}
+ */
+export function collectBlockFlats(dfBlock, natureArchive, { climateIndex = null, solid = null } = {}) {
+  const rmb = dfBlock.rmbBlock;
+  const flats = [];
+
+  // Misc block flats (lights included - AddLights uses the same position) - their own export (HOLD-MONUMENT).
+  for (const f of collectMiscFlats(dfBlock)) flats.push(f);
 
   // WD3: a scene model that is a FIELD OF FLATS (world/flatFields.js - the RMB Resource Pack's crop batches, which
   // Beautiful Cities lays over its farmland): the plants it sows, the climate's, round the spot the block places it.
@@ -243,10 +350,13 @@ export function collectBlockFlats(dfBlock, natureArchive, { climateIndex = null,
 
   // Ground scenery -> climate nature flats.
   const scenery = rmb.fldHeader.groundData.groundScenery;
+  const autoMap = rmb.fldHeader.autoMapData;   // HOUSE-BUSH
+  const held = heldFootprints(autoMap, rmb.subRecords);   // AUDIT FB1018f L4-1: the footprints a building of the block stands on
   for (let y = 0; y < 16; y++) {
     for (let x = 0; x < 16; x++) {
       const item = scenery[x][15 - y];
       if (item.textureRecord < 1) continue;
+      if (sceneryUnderRoof(autoMap, x, y, held)) continue;   // HOUSE-BUSH: a cell its author left under a house
       flats.push({
         archive: natureArchive,
         record: item.textureRecord,

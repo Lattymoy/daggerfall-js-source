@@ -71,7 +71,7 @@
 // ES1c gave the enhanced sky a per-weather wind vector (dome units a
 // second) and the controller's `wind()` is the ONE door every consumer
 // reads it through. Since WIND1 the vector behind that door is the
-// wind MODEL's (systems/wind.js): a day's calm, rolled and breathing,
+// wind MODEL's (systems/wind/wind.js): a day's calm, rolled and breathing,
 // with a weather change as a FRONT the wind leads - so this module
 // anchors its fair-weather rate to the model's own fair day
 // (WIND_ROW_FAIR) and its stall to the model's floor (WIND_ROW_CALM),
@@ -105,7 +105,7 @@ import { WINDMILLS_KEY } from '../systems/features.js';   // WM3: declared with 
 export const windmillsOn = () => !!getPref(WINDMILLS_KEY);
 
 import { BODY, CLIMATE_SKINS, SKIN_SLOTS } from './windmillMesh.js';
-import { WIND_ROW_CALM, WIND_ROW_FAIR } from '../systems/wind.js';
+import { WIND_ROW_CALM, WIND_ROW_FAIR } from '../systems/wind/wind.js';
 import { multiply, trs, quatToMat4, transformPoint } from './mat4.js';
 import { SOUND } from '../systems/soundClips.js';
 

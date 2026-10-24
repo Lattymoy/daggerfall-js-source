@@ -1,22 +1,22 @@
 [
   {
     "name": "SELL-AS-FOUND-a-pile-or-body-unmarked",
-    "file": "src/systems/rriRealism.js",
+    "file": "src/systems/roleplayRealismItems/rriRealism.js",
     "old": "      item.currentCondition = Math.trunc((item.maxCondition ?? 0) * conditionMod);\n      item.foundCondition = item.currentCondition;   // SELL-AS-FOUND\n    }\n  }\n  return items;\n}\n/** CalculateConditionCost",
     "new": "      item.currentCondition = Math.trunc((item.maxCondition ?? 0) * conditionMod);\n    }\n  }\n  return items;\n}\n/** CalculateConditionCost",
     "tests": [
-      "test/sell_as_found.test.js",
-      "test/rri2_realism.test.js"
+      "test/systems/sell_as_found.test.js",
+      "test/systems/rri2_realism.test.js"
     ]
   },
   {
     "name": "SELL-AS-FOUND-a-shelf-unmarked",
-    "file": "src/systems/rriRealism.js",
+    "file": "src/systems/roleplayRealismItems/rriRealism.js",
     "old": "      item.currentCondition = Math.trunc((item.maxCondition ?? 0) * conditionMod);\n      item.foundCondition = item.currentCondition;   // SELL-AS-FOUND\n    }\n  }\n  return items;\n}\nexport const storeQualityOn",
     "new": "      item.currentCondition = Math.trunc((item.maxCondition ?? 0) * conditionMod);\n    }\n  }\n  return items;\n}\nexport const storeQualityOn",
     "tests": [
-      "test/sell_as_found.test.js",
-      "test/rri2_realism.test.js"
+      "test/systems/sell_as_found.test.js",
+      "test/systems/rri2_realism.test.js"
     ]
   },
   {
@@ -25,38 +25,38 @@
     "old": "saleConditionPercentage(item, { online })) * stack;",
     "new": "conditionPercentage(item)) * stack;",
     "tests": [
-      "test/sell_as_found.test.js",
-      "test/rri2_realism.test.js"
+      "test/systems/sell_as_found.test.js",
+      "test/systems/rri2_realism.test.js"
     ]
   },
   {
     "name": "SELL-AS-FOUND-read-past-the-mark",
-    "file": "src/systems/tradeModes.js",
-    "old": "  if (!online || !Number.isInteger(found) || !(found < (item?.currentCondition ?? 0))) return conditionPercentage(item);",
-    "new": "  if (!online || !Number.isInteger(found)) return conditionPercentage(item);",
+    "file": "src/systems/item/foundMark.js",
+    "old": "  if (!Number.isInteger(found) || !(found < current)) return conditionPercentage(item);",
+    "new": "  if (!Number.isInteger(found)) return conditionPercentage(item);",
     "tests": [
-      "test/sell_as_found.test.js",
-      "test/rri2_realism.test.js"
+      "test/systems/sell_as_found.test.js",
+      "test/systems/rri2_realism.test.js"
     ]
   },
   {
     "name": "SELL-AS-FOUND-offline-too",
     "file": "src/systems/tradeModes.js",
-    "old": "  if (!online || !Number.isInteger(found) || !(found < (item?.currentCondition ?? 0))) return conditionPercentage(item);",
-    "new": "  if (!Number.isInteger(found) || !(found < (item?.currentCondition ?? 0))) return conditionPercentage(item);",
+    "old": "  if (!online) return conditionPercentage(item);\n  return foundSalePercentage(item);",
+    "new": "  return foundSalePercentage(item);",
     "tests": [
-      "test/sell_as_found.test.js",
-      "test/rri2_realism.test.js"
+      "test/systems/sell_as_found.test.js",
+      "test/systems/rri2_realism.test.js"
     ]
   },
   {
     "name": "SELL-AS-FOUND-undeclared",
-    "file": "src/systems/itemFields.js",
+    "file": "src/systems/item/itemFields.js",
     "old": "  foundCondition: int({ min: 0 }),\n",
     "new": "",
     "tests": [
-      "test/sell_as_found.test.js",
-      "test/rri2_realism.test.js"
+      "test/systems/sell_as_found.test.js",
+      "test/systems/rri2_realism.test.js"
     ]
   }
 ]

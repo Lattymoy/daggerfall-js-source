@@ -1,211 +1,211 @@
 [
   {
     "name": "NAV-H-the-release-never-fires",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    fire({ shooter: myBoatId(boat), wireShooter: -1, hull: boat.hull, pose, solution, skill: crewSkill(boat, st) });\n    st.guns.fired(side);",
     "new": "    st.guns.fired(side);",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-the-reload-skipped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    st.guns.fired(side);   // AUDIT NAV1 (the presentation): each gun kicks as it goes (onShot), not the release once\n",
     "new": "",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-the-brace-ignored",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      s.guns.braced = b === boat && braceHeld;",
     "new": "      s.guns.braced = false;",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-the-swing-eaten-at-a-rowboat",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!armed(boat)) { aiming = false; return false; }",
     "new": "    if (!armed(boat)) { aiming = false; return true; }",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-guns-where-none-are",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    get atGuns() { return enabled && armed(myBoat()); },",
     "new": "    get atGuns() { return enabled && !!myBoat(); },",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-every-ball-a-charge",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (entry.charged.has(act)) return;\n",
     "new": "",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-the-sink-never-charged",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (!down(was) && down(dmg.state) && clock - (e.myBlowAt ?? -Infinity) <= SINK_CREDIT_S) chargePlayer('sink', e);",
     "new": "",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-the-sink-charged-forever",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "clock - (e.myBlowAt ?? -Infinity) <= SINK_CREDIT_S) chargePlayer('sink', e);",
     "new": "e.myBlowAt > -Infinity) chargePlayer('sink', e);",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-my-blow-landed-twice",
-    "file": "src/scenes/navalHost.js",
-    "old": "      return;\n    }\n    strike(target, hurt, byMe ? myId() : e.shooter, undefined, stray);",
-    "new": "    }\n    strike(target, hurt, byMe ? myId() : e.shooter, undefined, stray);",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      return;\n    }\n    const men = target.ship.damage.crew;\n    strike(target, hurt, byMe ? myId() : e.shooter, undefined, stray);",
+    "new": "    }\n    const men = target.ship.damage.crew;\n    strike(target, hurt, byMe ? myId() : e.shooter, undefined, stray);",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-the-haul-skipped",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (!boat) boarding.t = Infinity;",
     "new": "    boarding.t = Infinity;",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-the-captain-last",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const all = [muster.captain, ...muster.men];",
     "new": "      const all = [...muster.men, muster.captain];",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-the-prize-never-offered",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    endBoarding();   // the hands go home over the rail; her dead lie on her deck (entry.deck)\n    openPrize(entry);",
     "new": "    endBoarding();   // the hands go home over the rail; her dead lie on her deck (entry.deck)",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-the-raid-never-started",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      const quest = deps.board?.startRaid?.(raidQuestOf(entry.ship.cls));",
     "new": "      const quest = null;",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-the-gate-sailing-home",
-    "file": "src/scenes/navalHost.js",
-    "old": "      if (entry) winBoarding(b, entry); else endBoarding();\n      return 'naval';",
-    "new": "      if (entry) winBoarding(b, entry); else endBoarding();\n      return 'proceed';",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "      if (entry) winBoarding(b, entry); else { endBoarding(); wonRaid(quest); }   // her ship gone: won all the same\n      return 'naval';",
+    "new": "      if (entry) winBoarding(b, entry); else { endBoarding(); wonRaid(quest); }   // her ship gone: won all the same\n      return 'proceed';",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-the-voyage-never-waiting",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (prizeRaid?.quest === quest) return prizeRaid.state === 'done' ? 'proceed' : 'wait';",
     "new": "    if (prizeRaid?.quest === quest) return 'proceed';",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-the-raids-forgotten",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "day: lastDecayDay, raids: [...raidUids], party:",
     "new": "day: lastDecayDay, raids: [], party:",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ],
     "note": "CREW-COMPANIONS (PIN MOVED): re-aimed by content at the line the companions' change moved."
   },
   {
     "name": "NAV-H-a-boat-keyed-by-nothing",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (!Number.isSafeInteger(key) || key <= 0 || !rec || typeof rec !== 'object') continue;",
     "new": "      if (!rec || typeof rec !== 'object') continue;",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-the-traffic-on-land",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    const onWater = !!boat || deps.isWater(deps.feet()[0], deps.feet()[2], 0);",
     "new": "    const onWater = true;",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-the-build-never-done",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    buildOne();\n    const eye = deps.look?.()?.origin ?? deps.feet();",
     "new": "    const eye = deps.look?.()?.origin ?? deps.feet();",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-a-peers-blow-ignored",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    strike(entry, hurt, from, true, strayOnAlly(entry, hurt, from));   // a player's blow - SEA-EASE: a stray on an aid weighed as mine",
     "new": "",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-a-departed-owner-stays",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (!alive?.has?.(o) || clock - last > staleS) releaseOwner(o);",
     "new": "      if (clock - last > staleS) releaseOwner(o);",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-a-volley-seen-twice",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (seen.has(v.id)) continue;",
     "new": "",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-the-stander-launching-for-all",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    standing = amGroupRollOwner(id, deps.feet(), near, HARBOUR_STAND * 2);",
     "new": "    standing = true;",
     "tests": [
-      "test/nav_h_host.test.js",
-      "test/auditshiplife_host.test.js"
+      "test/systems/naval/nav_h_host.test.js",
+      "test/scenes/naval/auditshiplife_host.test.js"
     ],
     "note": "AUDIT PR478 (PIN MOVED): re-aimed at the audited line."
   },
@@ -215,7 +215,7 @@
     "old": "    const drag = routed === 'swing' && naval?.atGuns ? 'look' : routed;",
     "new": "    const drag = routed;",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
@@ -224,8 +224,8 @@
     "old": "&& walkMode && modeNow() === 'exterior' && !naval?.atGuns) lookFilter.settle();",
     "new": "&& walkMode && modeNow() === 'exterior') lookFilter.settle();",
     "tests": [
-      "test/nav_h_host.test.js",
-      "test/audit28_looksmoothing.test.js"
+      "test/systems/naval/nav_h_host.test.js",
+      "test/scenes/audit28_looksmoothing.test.js"
     ]
   },
   {
@@ -234,8 +234,8 @@
     "old": "if (magic.interceptAttack(true)) return; if (naval?.attackInput(true)) return; weaponRig.attackInput(0, 0, true); }",
     "new": "if (naval?.attackInput(true)) return; if (magic.interceptAttack(true)) return; weaponRig.attackInput(0, 0, true); }",
     "tests": [
-      "test/nav_h_host.test.js",
-      "test/hostmagic_wiring.test.js"
+      "test/systems/naval/nav_h_host.test.js",
+      "test/tree/hostmagic_wiring.test.js"
     ]
   },
   {
@@ -244,16 +244,16 @@
     "old": " && !getBool('Controls', 'BowDrawback') && !hooks.aimHold?.();",
     "new": " && !getBool('Controls', 'BowDrawback');",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-the-finger-swings-at-the-guns",
-    "file": "src/ui/touch.js",
+    "file": "src/ui/touch/touch.js",
     "old": "          if (swiping && hooks.aimHold?.()) { hooks.look?.(ev.dx * TOUCH_LOOK_GAIN * lookNorm(), ev.dy * TOUCH_LOOK_GAIN * lookNorm()); continue; }\n",
     "new": "",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
@@ -262,7 +262,7 @@
     "old": "  const navalHostileNear = () => !!naval?.hostileNear();",
     "new": "  const navalHostileNear = () => false;",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
@@ -271,16 +271,16 @@
     "old": "    if (duelEnemyNear() || areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes]) || navalHostileNear()) {   // NAV-H: a hostile ship in reach too",
     "new": "    if (duelEnemyNear() || areEnemiesNearby([...cityGuards.guards, ...exteriorFoes.foes])) {",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
     "name": "NAV-H-a-party-trip-past-a-pirate",
     "file": "src/scenes/world.js",
-    "old": "...exteriorFoes.foes]) || navalHostileNear()) return CANNOT_TRAVEL_ENEMIES_TEXT;",
-    "new": "...exteriorFoes.foes])) return CANNOT_TRAVEL_ENEMIES_TEXT;",
+    "old": "...exteriorFoes.foes]) || navalHostileNear()) return localizedText('cannotTravelWithEnemiesNearby', CANNOT_TRAVEL_ENEMIES_TEXT);",
+    "new": "...exteriorFoes.foes])) return localizedText('cannotTravelWithEnemiesNearby', CANNOT_TRAVEL_ENEMIES_TEXT);",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
@@ -289,7 +289,7 @@
     "old": "    enemiesNearby: () => duelEnemyNear() || areEnemiesNearby([...cityGuards.guards, ...wildSeen(exteriorFoes.foes)]) || navalHostileNear(),",
     "new": "    enemiesNearby: () => duelEnemyNear() || areEnemiesNearby([...cityGuards.guards, ...wildSeen(exteriorFoes.foes)]),",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   },
   {
@@ -298,7 +298,7 @@
     "old": "      [...cityGuards.guards, ...exteriorFoes.foes], { resting: true }) || navalHostileNear(),",
     "new": "      [...cityGuards.guards, ...exteriorFoes.foes], { resting: true }),",
     "tests": [
-      "test/nav_h_host.test.js"
+      "test/systems/naval/nav_h_host.test.js"
     ]
   }
 ]

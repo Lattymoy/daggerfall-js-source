@@ -1,0 +1,62 @@
+[
+  {
+    "name": "SIDE-ONCE-user-takes-damage-given-back-dfus-flag",
+    "file": "src/systems/enchantmentCatalogue.js",
+    "old": "  UserTakesDamage: 1,   // SIDE-ONCE: DFU's 1 | 2 - a setting once\n",
+    "new": "  UserTakesDamage: 1 | 2,\n",
+    "tests": [
+      "test/systems/fb1019f_sideonce.test.js",
+      "test/systems/enchantmentcatalogue.test.js"
+    ]
+  },
+  {
+    "name": "SIDE-ONCE-item-deteriorates-given-back-dfus-flag",
+    "file": "src/systems/enchantmentCatalogue.js",
+    "old": "  ItemDeteriorates: 1,   // SIDE-ONCE: DFU's 1 | 2 - a setting once\n",
+    "new": "  ItemDeteriorates: 1 | 2,\n",
+    "tests": [
+      "test/systems/fb1019f_sideonce.test.js",
+      "test/systems/enchantmentcatalogue.test.js"
+    ]
+  },
+  {
+    "name": "SIDE-ONCE-the-empty-chooser-listed-again",
+    "file": "src/systems/enchantmentCatalogue.js",
+    "old": "    return !(pick?.kind === 'choose' && pick.options.length === 0);\n",
+    "new": "    return true;\n",
+    "tests": [
+      "test/systems/fb1019f_sideonce.test.js",
+      "test/systems/enchantmentcatalogue.test.js"
+    ]
+  },
+  {
+    "name": "SIDE-ONCE-the-last-setting-read-as-none",
+    "file": "src/systems/enchantmentCatalogue.js",
+    "old": "    return !(pick?.kind === 'choose' && pick.options.length === 0);\n",
+    "new": "    return !(pick?.kind === 'choose' && pick.options.length === 1);\n",
+    "tests": [
+      "test/systems/fb1019f_sideonce.test.js",
+      "test/systems/enchantmentcatalogue.test.js"
+    ]
+  },
+  {
+    "name": "SIDE-ONCE-the-law-counting-by-the-secondary-flag",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "    const many = hasItemMakerFlag(c.key, ITEM_MAKER_FLAGS.AllowMultiplePrimaryInstances) || hasItemMakerFlag(c.key, ITEM_MAKER_FLAGS.AllowMultipleSecondaryInstances);\n",
+    "new": "    const many = hasItemMakerFlag(c.key, ITEM_MAKER_FLAGS.AllowMultipleSecondaryInstances);\n",
+    "tests": [
+      "test/systems/fb1019f_sideonce.test.js",
+      "test/systems/item/fb1016c_makerkept.test.js"
+    ]
+  },
+  {
+    "name": "SIDE-ONCE-the-law-tightened-to-one-copy-per-setting",
+    "file": "src/systems/item/itemLaw.js",
+    "old": "    if (counts.get(c.key) > 1 && !many) return ['enchantments'];\n",
+    "new": "    if (counts.get(c.key) > 1 && !many) return ['enchantments'];\n    if (chosen.filter((d) => d.key === c.key && d.param === c.param).length > 1) return ['enchantments'];\n",
+    "tests": [
+      "test/systems/fb1019f_sideonce.test.js",
+      "test/systems/item/fb1016c_makerkept.test.js"
+    ]
+  }
+]

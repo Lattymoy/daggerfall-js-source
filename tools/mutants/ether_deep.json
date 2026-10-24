@@ -1,0 +1,209 @@
+[
+  {
+    "name": "ED-raw-bytes-inherited",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "  const raw = Object.prototype.hasOwnProperty.call(woods, '_bytes') || isValidMapPixel(mapPixelX, mapPixelY);",
+    "new": "  const raw = !!woods._bytes || isValidMapPixel(mapPixelX, mapPixelY);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-frame-x0",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "    const num = f32(f32(f32((mapPixelX - this.frame.x0) * this.subX) + f32(clamp01(f32(fracX)) * this.subX)) - 0.5);   // ETHER-DEEP",
+    "new": "    const num = f32(f32(f32((mapPixelX) * this.subX) + f32(clamp01(f32(fracX)) * this.subX)) - 0.5);   // ETHER-DEEP",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-carved-frame",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "    const num = f32(f32(f32((mapPixelX - this.frame.x0) * this.subFine) + f32(clamp01(f32(fracX)) * this.subFine)) - 0.5);",
+    "new": "    const num = f32(f32(f32((mapPixelX) * this.subFine) + f32(clamp01(f32(fracX)) * this.subFine)) - 0.5);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-byte-frame",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "    const px = (x >> 3) + this.frame.x0, py = (y >> 3) + this.frame.y0;   // ETHER-DEEP: a cell is the frame's own",
+    "new": "    const px = (x >> 3), py = (y >> 3);   // ETHER-DEEP: a cell is the frame's own",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-candidates-for-sea",
+    "file": "src/world/etherWatersBake.js",
+    "old": "      const bits = s === 1 ? ALL8 : s === 2 ? partial.get(k) : NONE8;",
+    "new": "      const qx = x0 + (k % w), qy = y0 + Math.floor(k / w), c = this._class(i, qx, qy); const bits = c === PIXEL_SEA ? ALL8 : c === PIXEL_LAND ? NONE8 : coarseCandidateBits(pixelWaterSampler(this.woods, qx, qy, this.locationRectAt(qx, qy)));",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-flood-wrong-cell",
+    "file": "src/world/etherWatersBake.js",
+    "old": "    const x0 = ETHER_BOX.x0 + cx * ISLE_CELL_PX, y0 = ETHER_BOX.y0 + cy * ISLE_CELL_PX;",
+    "new": "    const x0 = ETHER_BOX.x0 + cx * ISLE_CELL_PX + 1, y0 = ETHER_BOX.y0 + cy * ISLE_CELL_PX;",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-rows-misrouted",
+    "file": "src/world/etherWatersBake.js",
+    "old": "    this.bay.adoptPlanes(list.filter((r) => r?.f !== ETHER_ROW));",
+    "new": "    this.bay.adoptPlanes(list);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-rows-no-sea",
+    "file": "src/world/etherWatersBake.js",
+    "old": "    return { ...row, f: ETHER_ROW, sea: sea ? sea.slice() : null, cls: cls ?? null };",
+    "new": "    return { ...row, f: ETHER_ROW, sea: null, cls: cls ?? null };",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-kept-forever",
+    "file": "src/world/deepWater/deepWatersBake.js",
+    "old": "    if (this._caches().some((c) => c.size > PLANE_KEEP_MAX)) this.evictOutside(px, py, PLANE_KEEP_RADIUS);",
+    "new": "    void px; void py;",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-no-rect",
+    "file": "src/world/etherWatersBake.js",
+    "old": "    return r ? { xMin: r[0], xMax: r[1], yMin: r[2], yMax: r[3] } : null;",
+    "new": "    return null;",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-bay-alone",
+    "file": "src/world/etherWatersBake.js",
+    "old": "  if (!bay || !ether) return bay;",
+    "new": "  return bay;",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-routing-bay",
+    "file": "src/world/etherWatersBake.js",
+    "old": "  of(px, py) { return waterFrameOf(px, py, true) === ETHER_FRAME ? this.ether : this.bay; }",
+    "new": "  of(px, py) { return this.bay; }",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-tile-bay-frame",
+    "file": "src/world/deepWater/deepWaterTileData.js",
+    "old": "    this.frame = this.bake?.frameOf?.(mapPixelX, mapPixelY) ?? BAY_FRAME;",
+    "new": "    this.frame = BAY_FRAME;",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-client-unsaid",
+    "file": "src/world/deepWater/deepWatersClient.js",
+    "old": "          worker.postMessage({ t: 'build', woodsBytes: bytes, rects, ether }, [bytes.buffer]);",
+    "new": "          worker.postMessage({ t: 'build', woodsBytes: bytes, rects }, [bytes.buffer]);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-client-no-ether",
+    "file": "src/world/deepWater/deepWatersClient.js",
+    "old": "    bake = worldBakes(new DeepWatersBake({ woods, global: record, locationRectAt: rectsLookup(rects) }), { woods: ether ? etherGround(woods) : woods, ether });",
+    "new": "    bake = new DeepWatersBake({ woods, global: record, locationRectAt: rectsLookup(rects) });",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-worker-raw",
+    "file": "src/world/deepWater/deepWatersWorker.js",
+    "old": "{ woods: m.ether ? etherWoods(woods) : woods, ether: m.ether ?? null }",
+    "new": "{ woods, ether: m.ether ?? null }",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-host-bay-gate",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "    if (!inFrame(waterFrameOf(pixel.px, pixel.py, ether), pixel.px, pixel.py) || isDry(pixel)) return Promise.resolve(null);",
+    "new": "    if (!inFrame(waterFrameOf(pixel.px, pixel.py, null), pixel.px, pixel.py) || isDry(pixel)) return Promise.resolve(null);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-host-any-pixel",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "    if (!inFrame(waterFrameOf(pixel.px, pixel.py, ether), pixel.px, pixel.py) || isDry(pixel)) return Promise.resolve(null);",
+    "new": "    if (isDry(pixel)) return Promise.resolve(null);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-host-bay-climates",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "  const climateIn = (px, py) => { const f = waterFrameOf(px, py, ether);",
+    "new": "  const climateIn = (px, py) => { const f = waterFrameOf(px, py, null);",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-host-unsaid",
+    "file": "src/scenes/deepWater/deepWatersHost.js",
+    "old": "rects: deepWatersLocationRects(woods, locations, maps, blocks), ether });",
+    "new": "rects: deepWatersLocationRects(woods, locations, maps, blocks) });",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-pits-everywhere",
+    "file": "src/scenes/oceanHolesHost.js",
+    "old": "    if (!isValidMapPixel(st.mapX, st.mapY)) { markTerrainProcessed(st, v, 'rejected:off-the-map'); return; }",
+    "new": "",
+    "tests": [
+      "test/scenes/oh_host.test.js"
+    ]
+  },
+  {
+    "name": "ED-world-unsaid",
+    "file": "src/scenes/world.js",
+    "old": "    ether: etherSea ? etherPlaceRects(_etherTemplates, locationRectReader(maps, blocks, { regionIndex: ETHER_REGION, locationIndex: -1000 })) : null,",
+    "new": "    ether: null,",
+    "tests": [
+      "test/world/deepWater/ether_deep.test.js"
+    ]
+  },
+  {
+    "name": "ED-world-near-held",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "    const dwNear = deepWaters ? deepWaters.promoteNear({ px, py, samples, tilemap, tilemapBytes }) : null;",
+    "new": "    const dwNear = deepWaters && onTheBay(px, py) ? deepWaters.promoteNear({ px, py, samples, tilemap, tilemapBytes }) : null;",
+    "tests": [
+      "test/world/tamriel2.test.js"
+    ]
+  }
+]

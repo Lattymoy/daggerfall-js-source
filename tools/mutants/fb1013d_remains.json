@@ -1,0 +1,600 @@
+[
+  {
+    "name": "FB1013d-REMAINS-STAND-no-body",
+    "file": "src/scenes/legacyRemainsStand.js",
+    "old": "        if (stood.has(id)) continue;",
+    "new": "        continue;",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-the-body-not-the-record-s-list",
+    "file": "src/scenes/legacyRemainsStand.js",
+    "old": "        const pile = p.seedPile(r.items, feet, icon, null, pixelKeyOf(r.place), { unsaved: true, owner: REMAINS_STAND_OWNER });",
+    "new": "        const pile = p.seedPile([...r.items], feet, icon, null, pixelKeyOf(r.place), { unsaved: true, owner: REMAINS_STAND_OWNER });",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-saved",
+    "file": "src/scenes/legacyRemainsStand.js",
+    "old": "        const pile = p.seedPile(r.items, feet, icon, null, pixelKeyOf(r.place), { unsaved: true, owner: REMAINS_STAND_OWNER });",
+    "new": "        const pile = p.seedPile(r.items, feet, icon, null, pixelKeyOf(r.place), { owner: REMAINS_STAND_OWNER });",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-kept-when-left",
+    "file": "src/scenes/legacyRemainsStand.js",
+    "old": "        if (!w || s.pool !== p || s.pile.dead || s.pile.inactive || s.pile.items !== w.r.items) unstand(id);",
+    "new": "        if (w && (s.pool !== p || s.pile.dead || s.pile.inactive || s.pile.items !== w.r.items)) unstand(id);",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-kept-in-the-old-pool",
+    "file": "src/scenes/legacyRemainsStand.js",
+    "old": "        if (!w || s.pool !== p || s.pile.dead || s.pile.inactive || s.pile.items !== w.r.items) unstand(id);",
+    "new": "        if (!w || s.pile.dead || s.pile.inactive || s.pile.items !== w.r.items) unstand(id);",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-a-dead-pile-kept",
+    "file": "src/scenes/legacyRemainsStand.js",
+    "old": "        if (!w || s.pool !== p || s.pile.dead || s.pile.inactive || s.pile.items !== w.r.items) unstand(id);",
+    "new": "        if (!w || s.pool !== p || s.pile.inactive || s.pile.items !== w.r.items) unstand(id);",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-a-put-away-pile-kept",
+    "file": "src/scenes/legacyRemainsStand.js",
+    "old": "        if (!w || s.pool !== p || s.pile.dead || s.pile.inactive || s.pile.items !== w.r.items) unstand(id);",
+    "new": "        if (!w || s.pool !== p || s.pile.dead || s.pile.items !== w.r.items) unstand(id);",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-a-replaced-list-kept",
+    "file": "src/scenes/legacyRemainsStand.js",
+    "old": "        if (!w || s.pool !== p || s.pile.dead || s.pile.inactive || s.pile.items !== w.r.items) unstand(id);",
+    "new": "        if (!w || s.pool !== p || s.pile.dead || s.pile.inactive) unstand(id);",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-unnamed",
+    "file": "src/scenes/legacyRemainsStand.js",
+    "old": "        pile.label = label(r);",
+    "new": "        pile.label = null;",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-the-plaque-not-the-ring-s-name",
+    "file": "src/scenes/world.js",
+    "old": "    label: (r) => LEGACY_TEXT.remainsName(r.name),",
+    "new": "    label: (r) => r.name,",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-the-ring-not-the-plaque-s-name",
+    "file": "src/scenes/legacyHost.js",
+    "old": "label: LEGACY_TEXT.remainsName(r.name), id:",
+    "new": "label: `Where ${r.name} fell`, id:",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-no-line",
+    "file": "src/scenes/legacyRemainsStand.js",
+    "old": "        pile.mark = REMAINS_MARK;",
+    "new": "        pile.mark = null;",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-a-find-in-the-remains",
+    "file": "src/scenes/legacyRemainsStand.js",
+    "old": "        pile.noFind = true;",
+    "new": "        pile.noFind = false;",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-the-mark-dropped-from-lootFinds",
+    "file": "src/scenes/droppedLoot.js",
+    "old": " : p.mark ? { root: lootCrown(p.pos, p.size), items: p.items, mark: p.mark } : ",
+    "new": " : ",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-one-word-for-every-kind",
+    "file": "src/scenes/lootLines.js",
+    "old": "export const setLootMarksLive = (on, by = 'wild') => { if (on) _marksLive.add(by); else _marksLive.delete(by); };",
+    "new": "export const setLootMarksLive = (on) => { if (on) _marksLive.add('wild'); else _marksLive.delete('wild'); };",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-the-find-rolled",
+    "file": "src/systems/silverFinds.js",
+    "old": "  if (typeof container === 'object' && /** @type {any} */ (container).noFind === true) return false;",
+    "new": "",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-stood-for-a-waiting-succession",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!family || !deps.on() || past || family.pending || !deps.entity?.chargenDone) return [];",
+    "new": "    if (!family || !deps.on() || past || !deps.entity?.chargenDone) return [];",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-stood-with-the-switch-off",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!family || !deps.on() || past || family.pending || !deps.entity?.chargenDone) return [];",
+    "new": "    if (!family || past || family.pending || !deps.entity?.chargenDone) return [];",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-stood-on-a-page-not-theirs",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!p || !isAlive(p) || !playedHere(p)) return [];",
+    "new": "    if (!p || !isAlive(p)) return [];",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-the-list-not-made-ready",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    return remainsLying().map((r) => { readyList(r); return r; });",
+    "new": "    return remainsLying();",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-the-height-dropped",
+    "file": "src/scenes/world.js",
+    "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
+    "new": "      world: mode === 'exterior' ? state.worldCoords(pos) : null,",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-the-height-unread",
+    "file": "src/scenes/world.js",
+    "old": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: place.world.terrainScale })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
+    "new": "    const y = ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-the-height-in-the-landforms-frame",
+    "file": "src/scenes/world.js",
+    "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
+    "new": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: pos[1] - state.compensation[1], terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-the-height-stood-raw",
+    "file": "src/scenes/world.js",
+    "old": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: place.world.terrainScale })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
+    "new": "    const y = Number.isFinite(place.world.y) ? place.world.y + state.compensation[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-the-stamp-dropped",
+    "file": "src/scenes/world.js",
+    "old": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: place.world.terrainScale })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
+    "new": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: undefined })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-stood-on-an-unbuilt-pixel",
+    "file": "src/scenes/world.js",
+    "old": "    if (!Number.isFinite(ground)) return null;   // its pixel not built yet - stood once it is",
+    "new": "",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-a-street-body-indoors",
+    "file": "src/scenes/world.js",
+    "old": "    if (mode !== 'exterior' || place.mode !== 'exterior' || !place.world) return null;",
+    "new": "    if (place.mode !== 'exterior' || !place.world) return null;",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-stood-in-any-dungeon",
+    "file": "src/scenes/world.js",
+    "old": "      if (mode !== 'dungeon' || !Array.isArray(place.pos) || !legacyInDungeonOf(legacyHere(), place)) return null;",
+    "new": "      if (mode !== 'dungeon' || !Array.isArray(place.pos)) return null;",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-in-the-air-not-on-the-floor",
+    "file": "src/scenes/world.js",
+    "old": "      return modes?.dungeonCtx?.floorAt?.(place.pos[0], place.pos[1], place.pos[2]) ?? [place.pos[0], place.pos[1], place.pos[2]];",
+    "new": "      return [place.pos[0], place.pos[1], place.pos[2]];",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-the-street-s-pool-everywhere",
+    "file": "src/scenes/world.js",
+    "old": "    pool: () => ((modes?.mode ?? 'exterior') === 'exterior' ? droppedLoot : (modes?.droppedPool?.() ?? null)),",
+    "new": "    pool: () => droppedLoot,",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-dies-with-no-pixel",
+    "file": "src/scenes/world.js",
+    "old": "    pixelKeyOf: (place) => (place?.mode === 'exterior' && place.pixel ? `${place.pixel.x},${place.pixel.y}` : null),",
+    "new": "    pixelKeyOf: () => null,",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-REMAINS-STAND-never-framed",
+    "file": "src/scenes/world.js",
+    "old": "    setLootMarksLive(legacyRemainsStand.frame(legacyHost.remainsToStand()) > 0, 'legacy');",
+    "new": "",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-LIVE-FIGHT-the-street-s-pools-underground",
+    "file": "src/scenes/world.js",
+    "old": "    inFight: () => duelEnemyNear() || areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoePool() : (modes?.insideFoes?.() ?? [])) || navalHostileNear(),",
+    "new": "    inFight: () => duelEnemyNear() || areEnemiesNearby([...(cityGuards?.guards ?? []), ...(exteriorFoes?.foes ?? []), ...(modes?.dungeonCtx?.foes ?? [])]) || navalHostileNear(),",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-LIVE-FIGHT-the-place-s-own-unread",
+    "file": "src/scenes/world.js",
+    "old": "    inFight: () => duelEnemyNear() || areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoePool() : (modes?.insideFoes?.() ?? [])) || navalHostileNear(),",
+    "new": "    inFight: () => duelEnemyNear() || areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoePool() : []) || navalHostileNear(),",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-O1-a-made-dungeon-by-its-row-alone",
+    "file": "src/scenes/world.js",
+    "old": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
+    "new": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-O1-the-pixel-s-x-unread",
+    "file": "src/scenes/world.js",
+    "old": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
+    "new": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-O1-the-pixel-s-y-unread",
+    "file": "src/scenes/world.js",
+    "old": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
+    "new": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-O1-the-row-s-index-unread",
+    "file": "src/scenes/world.js",
+    "old": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
+    "new": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-B1-the-key-unkept",
+    "file": "src/scenes/world.js",
+    "old": "      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, key: modes?.dungeonCtx?.locationKey?.() ?? null, size: builtDungeonSize(modes?.dungeonLocation) } : null,",
+    "new": "      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, size: builtDungeonSize(modes?.dungeonLocation) } : null,",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-B1-the-key-unread",
+    "file": "src/scenes/world.js",
+    "old": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
+    "new": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-B1-the-size-unkept",
+    "file": "src/scenes/world.js",
+    "old": "      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, key: modes?.dungeonCtx?.locationKey?.() ?? null, size: builtDungeonSize(modes?.dungeonLocation) } : null,",
+    "new": "      dungeon: dl ? { regionIndex: dl.regionIndex, locationIndex: dl.locationIndex, key: modes?.dungeonCtx?.locationKey?.() ?? null } : null,",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-B1-the-size-unread",
+    "file": "src/scenes/world.js",
+    "old": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
+    "new": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key);",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-B1-a-row-without-them-read-as-none",
+    "file": "src/scenes/world.js",
+    "old": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
+    "new": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-B2-the-lift-on-every-read",
+    "file": "src/scenes/world.js",
+    "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
+    "new": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(true ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-B2-the-death-s-height-unasked",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    const d = { at: deps.now(), place: deps.here({ height: true }), gold: deps.gold(), by: deps.killer?.() ?? null, cause: 'fell' };   // AUDIT FB1013d B2: the remains' place keeps the height it was stood at - asked here alone",
+    "new": "    const d = { at: deps.now(), place: deps.here(), gold: deps.gold(), by: deps.killer?.() ?? null, cause: 'fell' };   // AUDIT FB1013d B2: the remains' place keeps the height it was stood at - asked here alone",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-B3-the-duel-unread",
+    "file": "src/scenes/world.js",
+    "old": "    inFight: () => duelEnemyNear() || areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoePool() : (modes?.insideFoes?.() ?? [])) || navalHostileNear(),",
+    "new": "    inFight: () => areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoePool() : (modes?.insideFoes?.() ?? [])) || navalHostileNear(),",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-B3-the-ship-unread",
+    "file": "src/scenes/world.js",
+    "old": "    inFight: () => duelEnemyNear() || areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoePool() : (modes?.insideFoes?.() ?? [])) || navalHostileNear(),",
+    "new": "    inFight: () => duelEnemyNear() || areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoePool() : (modes?.insideFoes?.() ?? [])),",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-A1-the-lapse-lays-no-bones",
+    "file": "src/scenes/legacyHost.js",
+    "old": "        if (!r.items.some(bonesOf(r)) && !carriedNow().some(bonesOf(r))) r.items.unshift(mintRemainsItem({ line: family.id, of: r.of, name: r.name }));",
+    "new": "        ;",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-A2-the-bodies-kept-over-a-load",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    deps.letGoRemains?.();   // AUDIT FB1013d A2: every row's list is replaced below - a body stood over an old one goes now",
+    "new": "    ;   // AUDIT FB1013d A2: every row's list is replaced below - a body stood over an old one goes now",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-A2-the-host-lets-nothing-go",
+    "file": "src/scenes/world.js",
+    "old": "    letGoRemains: () => legacyRemainsStand.clear(),   // AUDIT FB1013d A2: a load's adopt replaced every list - the bodies over the old ones go",
+    "new": "    letGoRemains: () => {},   // AUDIT FB1013d A2: a load's adopt replaced every list - the bodies over the old ones go",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-A2-the-tick-run-while-the-world-is-moved",
+    "file": "src/scenes/world.js",
+    "old": "    // outlived them: a take from it was a take from no record\n    if (worldMoveBusy()) return;\n",
+    "new": "    // outlived them: a take from it was a take from no record\n",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-A3-a-taken-row-with-its-bones-back-stays-taken",
+    "file": "src/scenes/legacyHost.js",
+    "old": "      } else if (r.state === 'taken' && inList && !kept) {",
+    "new": "      } else if (false) {",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-C1-the-ground-read-at-native-coords",
+    "file": "src/scenes/world.js",
+    "old": "    const ground = heightAt(x, z);",
+    "new": "    const ground = heightAt(place.world.x, place.world.z);",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-C1-the-height-read-in-the-scene-frame",
+    "file": "src/scenes/world.js",
+    "old": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: place.world.x, nativeZ: place.world.z, y: place.world.y, terrainScale: place.world.terrainScale })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
+    "new": "    const y = Number.isFinite(place.world.y) ? anchorLanding({ nativeX: x, nativeZ: z, y: place.world.y, terrainScale: place.world.terrainScale })[1] : ground;   // a record's height stood again: the Recall anchor's own read, one home (AUDIT FB1013d C14)",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-C1-the-lift-at-x-and-z-swapped",
+    "file": "src/scenes/world.js",
+    "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
+    "new": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[2], pos[0]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-C1-the-lift-at-no-spot",
+    "file": "src/scenes/world.js",
+    "old": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], pos[0], pos[2]), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
+    "new": "      world: mode === 'exterior' ? { ...state.worldCoords(pos), ...(height ? { y: groundFrameHeight(pos[1] - state.compensation[1], 0, 0), terrainScale: STREAMING_TERRAIN_SCALE } : {}) } : null,",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-C6-in-the-air-outdoors",
+    "file": "src/scenes/world.js",
+    "old": "    return floorLanding(collider, [x, Math.max(y, ground) + 0.5, z]);",
+    "new": "    return [x, Math.max(y, ground), z];",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-C6-the-floor-under-another-height",
+    "file": "src/scenes/world.js",
+    "old": "      return modes?.dungeonCtx?.floorAt?.(place.pos[0], place.pos[1], place.pos[2]) ?? [place.pos[0], place.pos[1], place.pos[2]];",
+    "new": "      return modes?.dungeonCtx?.floorAt?.(place.pos[0], place.pos[1] + 3, place.pos[2]) ?? [place.pos[0], place.pos[1], place.pos[2]];",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-C5-the-watch-unread-outdoors",
+    "file": "src/scenes/world.js",
+    "old": "    inFight: () => duelEnemyNear() || areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoePool() : (modes?.insideFoes?.() ?? [])) || navalHostileNear(),",
+    "new": "    inFight: () => duelEnemyNear() || areEnemiesNearby((modes?.mode ?? 'exterior') === 'exterior' ? exteriorFoes.foes : (modes?.insideFoes?.() ?? [])) || navalHostileNear(),",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-C3-every-row-stood",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    return openRemains().filter((r) => r.state === 'lying' && r.place);",
+    "new": "    return (family.remains ?? []).filter((r) => r.state === 'lying' && r.place);",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-C4-the-list-noted-again",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (r.by == null && !openedSig.has(r.id)) openedSig.set(r.id, itemsSig(r.items));",
+    "new": "    if (r.by == null) openedSig.set(r.id, itemsSig(r.items));",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-C7-stood-before-chargen",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!family || !deps.on() || past || family.pending || !deps.entity?.chargenDone) return [];",
+    "new": "    if (!family || !deps.on() || past || family.pending) return [];",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-C7-stood-for-the-dead",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!p || !isAlive(p) || !playedHere(p)) return [];",
+    "new": "    if (!p || !playedHere(p)) return [];",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-C8-the-line-short",
+    "file": "src/scenes/legacyRemainsStand.js",
+    "old": "export const REMAINS_MARK = Object.freeze({ colour: Object.freeze([0.93, 0.88, 0.7]), h: 7, pulse: false, reach: 60 });",
+    "new": "export const REMAINS_MARK = Object.freeze({ colour: Object.freeze([0.93, 0.88, 0.7]), h: 7, pulse: false, reach: 4 });",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ]
+  },
+  {
+    "name": "FB1013d-AUDIT-C2-the-region-unread",
+    "file": "src/scenes/world.js",
+    "old": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.regionIndex === place.dungeon.regionIndex && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
+    "new": "  const legacyInDungeonOf = (h, place) => h.mode === 'dungeon' && !!place?.dungeon && h.pixel?.x === place.pixel?.x && h.pixel?.y === place.pixel?.y && h.dungeon?.locationIndex === place.dungeon.locationIndex && (place.dungeon.key == null || h.dungeon?.key === place.dungeon.key) && (place.dungeon.size == null || h.dungeon?.size === place.dungeon.size);",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ],
+    "equivalent": true,
+    "why": "A region is its pixels': the pixel compared beside it names the region of every dungeon a place can name - a table row's and a spawn's or a hall's (maps.getRegionIndexAt), the Arena's floor's (its city's), the Court's and the Hour's (the site they are entered at, under the GPS's pixel) - so no two dungeons on one pixel with one row and one key differ by region. Kept as LEGACY4 wrote it."
+  },
+  {
+    "name": "FB1013d-AUDIT-C7-stood-for-the-past",
+    "file": "src/scenes/legacyHost.js",
+    "old": "    if (!family || !deps.on() || past || family.pending || !deps.entity?.chargenDone) return [];",
+    "new": "    if (!family || !deps.on() || family.pending || !deps.entity?.chargenDone) return [];",
+    "tests": [
+      "test/systems/fb1013d_remains.test.js"
+    ],
+    "equivalent": true,
+    "why": "A past played back is never the line's current: adopt keeps the line's current where it stood (`past = me; return`), so current() is another member and playedHere refuses a page whose character is not theirs. The tick's own guard, kept beside it."
+  }
+]

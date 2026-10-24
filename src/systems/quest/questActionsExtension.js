@@ -28,7 +28,7 @@ import { ActionTemplate } from './actions.js';
 import { ITEM_GROUPS } from '../../characters/equipRules.js';
 import { isSummoned } from '../inventory.js';
 import { maxFatigue } from '../statMods.js';
-import { raiseTimeSeconds, reduceFatigueBy } from '../foragingLaw.js';
+import { raiseTimeSeconds, reduceFatigueBy } from '../foraging/foragingLaw.js';
 
 /** ItemGroups' number -> the port's group name. */
 const GROUP_NAME_OF = Object.freeze(Object.fromEntries(Object.entries(ITEM_GROUPS).map(([name, n]) => [n, name])));

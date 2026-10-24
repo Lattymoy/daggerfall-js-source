@@ -1,56 +1,56 @@
 [
  {
   "name": "AUDITMWNPC-A1-veiled-unbatched",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "    if (own) r.beginCharacterSpriteBatch();\n",
   "new": "",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC-A1-host-batch-reopened",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "own = !!r?.beginCharacterSpriteBatch && !r.characterSpriteBatchOpen;",
   "new": "own = !!r?.beginCharacterSpriteBatch;",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC-A2-node-clock-always",
-  "file": "src/formats/mwFirstPerson.js",
+  "file": "src/formats/morrowind/mwFirstPerson.js",
   "old": "      if (t === null || t === p._clockAt) continue;",
   "new": "      if (t === null) continue;",
   "tests": [
-   "test/mwnpc_mainmerge.test.js"
+   "test/formats/morrowind/mwnpc_mainmerge.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC-A2-part-clock-always",
-  "file": "src/formats/mwFirstPerson.js",
+  "file": "src/formats/morrowind/mwFirstPerson.js",
   "old": "      if (t === p._clockAt) continue;\n",
   "new": "",
   "tests": [
-   "test/mwnpc_mainmerge.test.js"
+   "test/formats/morrowind/mwnpc_mainmerge.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC-A3-creature-skinned-normals-lost",
-  "file": "src/formats/mwFirstPerson.js",
+  "file": "src/formats/morrowind/mwFirstPerson.js",
   "old": "      positions: new Float32Array(batch.positions.length), indices: batch.indices, normals: posedNormals(batch) });",
   "new": "      positions: new Float32Array(batch.positions.length), indices: batch.indices });",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC-A3-creature-rigid-normals-lost",
-  "file": "src/formats/mwFirstPerson.js",
+  "file": "src/formats/morrowind/mwFirstPerson.js",
   "old": "      sourceNormals: normals ? applyPreNormals(batch.normals, pre) : null, normals });",
   "new": "      sourceNormals: null, normals });",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "npcLane.stand('foe', foeActor(f, idOf(f), { scale: szG })",
   "new": "npcLane.stand('foe', foeActor(f, f.seq, { scale: szG })",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "if (b) b.castOnly = lane.has('foe', idOf(f)); }",
   "new": "if (b) b.castOnly = lane.has('foe', f.seq); }",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "      const d2 = (dx * dx + dz * dz) / (b.holds(p.id) ? h2 : 1);",
   "new": "      const d2 = (dx * dx + (p.shown.y - eye[1]) ** 2 + dz * dz) / (b.holds(p.id) ? h2 : 1);",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
@@ -86,43 +86,43 @@
   "old": "      r.inCut = 0;   // AUDIT MW-NPC B2",
   "new": "      // AUDIT MW-NPC B2",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC-B3-far-keeps-slot",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "      if (b.goneAt != null || (this._buildInRange && b.far)) { victim = b; break; }",
   "new": "      if (b.goneAt != null) { victim = b; break; }",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC-B3-far-needs-margin",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "    const unseen = victim.goneAt != null || (this._buildInRange && victim.far);",
   "new": "    const unseen = victim.goneAt != null;",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC-B3-far-waits-dwell",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "for (const b of this._bodies.values()) if (b.goneAt != null || (this._buildInRange && b.far)) return true;",
   "new": "for (const b of this._bodies.values()) if (b.goneAt != null) return true;",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC-B4-far-built",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "    if (this._buildInRange && b.far) { this._release(b.id); return; }\n",
   "new": "",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
@@ -131,8 +131,8 @@
   "old": "      if (r.round === round) round++;\n",
   "new": "",
   "tests": [
-   "test/mwnpc11_budget.test.js",
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc11_budget.test.js",
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
@@ -141,8 +141,8 @@
   "old": "if (r.round >= round - NPC_BUDGET_ROUNDS && r.n > 0) live.push(r);",
   "new": "if (r.round >= round && r.n > 0) live.push(r);",
   "tests": [
-   "test/mwnpc11_budget.test.js",
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc11_budget.test.js",
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
@@ -151,7 +151,7 @@
   "old": "      for (const b of shown) if (b.batch) b.batch.castOnly = false;\n",
   "new": "",
   "tests": [
-   "test/mwnpc10c_roads.test.js"
+   "test/characters/mwnpc10c_roads.test.js"
   ]
  },
  {
@@ -160,7 +160,7 @@
   "old": "const a = person.living?.res ? residentWalkerActor(person, batch.origin) : folkActor(",
   "new": "const a = person.living?.res ? folkActor(person, batch.origin, p.population.race) : folkActor(",
   "tests": [
-   "test/mwnpc7_folk.test.js"
+   "test/characters/mwnpc7_folk.test.js"
   ]
  },
  {
@@ -169,7 +169,7 @@
   "old": "  return rosterActor(k, { id: `res:${res.id}`,",
   "new": "  return rosterActor(k, { id: `res:${person._mwShell ?? 0}`,",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
@@ -178,7 +178,7 @@
   "old": "  if (!k || k.res !== res || k.cls !== cls || k.guard !== guard || k.still !== still) k = person._mwRes = { res, look: null, cls, guard, still };",
   "new": "  if (!k || k.cls !== cls || k.guard !== guard || k.still !== still) k = person._mwRes = { res, look: null, cls, guard, still };",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
@@ -187,8 +187,8 @@
   "old": "  if (f._mwSeed != null) return f._mwSeed;",
   "new": "  if (false) return f._mwSeed;",
   "tests": [
-   "test/mwnpc_audit.test.js",
-   "test/mwnpc6_watch.test.js"
+   "test/characters/mwnpc_audit.test.js",
+   "test/characters/mwnpc6_watch.test.js"
   ]
  },
  {
@@ -197,16 +197,16 @@
   "old": "held.length === slots.length && f._mwLookSeed === h) {",
   "new": "held.length === slots.length) {",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC-C6-flats-left-cast-only",
-  "file": "src/scenes/dungeonContext.js",
-  "old": "    showBodyFlats: () => { for (const f of foes) if (f.corpseBatch) f.corpseBatch.castOnly = false; },",
-  "new": "    showBodyFlats: () => {},",
+  "file": "src/characters/foeBodies.js",
+  "old": "  for (const f of foes) { const b = corpseFlat(f); if (b) b.castOnly = false; }\n",
+  "new": "\n",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
@@ -215,7 +215,7 @@
   "old": "    feet: f.dead ? (f.corpsePos ?? f.corpseMarker?.pos ?? f.ai.feet) : f.ai.feet,",
   "new": "    feet: f.ai.feet,",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
@@ -224,7 +224,7 @@
   "old": "  if (f?.mobileType === M.DaedraSeducer && f.mobile && !f.mobile.specialTransformationCompleted) return null;\n",
   "new": "",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
@@ -233,7 +233,7 @@
   "old": "    scale: scale > 0 ? scale : 1,",
   "new": "    scale: 1,",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
@@ -242,7 +242,7 @@
   "old": "foeActor(f, idOf(f), { scale: szG })",
   "new": "foeActor(f, idOf(f))",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
@@ -251,7 +251,7 @@
   "old": "  [M.Imp]: { miss: 'a flyer - Morrowind\\'s scamp walks, and no imp flies there' },",
   "new": "  [M.Imp]: { creature: ['scamp'] },",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
@@ -260,7 +260,7 @@
   "old": "  [M.Dreugh]: { miss: 'a water creature - the swimming groups are not driven yet' },",
   "new": "  [M.Dreugh]: { creature: ['dreugh'] },",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
@@ -269,7 +269,7 @@
   "old": "  return names.map((n, i) => [n, i]).sort((a, b) => rank(a[0]) - rank(b[0]) || a[1] - b[1]).map(([n]) => n);",
   "new": "  return names;",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  },
  {
@@ -278,7 +278,7 @@
   "old": "    const esmNames = esmLoadOrder((await d.storedMorrowindNames()).filter((n) => /\\.esm$/i.test(n)));   // AUDIT MW-NPC D6",
   "new": "    const esmNames = (await d.storedMorrowindNames()).filter((n) => /\\.esm$/i.test(n));   // AUDIT MW-NPC D6",
   "tests": [
-   "test/mwnpc_audit.test.js"
+   "test/characters/mwnpc_audit.test.js"
   ]
  }
 ]

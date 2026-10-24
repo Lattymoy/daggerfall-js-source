@@ -1,8 +1,8 @@
 // @ts-check
 // SHIPYARDS (2026-10-11, Mac: "A new highly detailed shipmaster vendor and crew recruitment station within it. All
 // detailed functions including ship upgrading should be present here, along with ship buying, etc."): THE SHIPMASTER'S
-// WINDOW - every ship a port does business in, one window, in the sea fight's stone-and-brass kit (ui/navalYardWindow.js's
-// sheet and door, ui/navalPlunderDoor.js). Five pages, a tab each:
+// WINDOW - every ship a port does business in, one window, in the sea fight's stone-and-brass kit (ui/naval/navalYardWindow.js's
+// sheet and door, ui/naval/navalPlunderDoor.js). Five pages, a tab each:
 //   SHIPS FOR SALE - a card a hull: her figures, what she is, what the shipmaster asks of you, and Buy;
 //   YOUR FLEET     - every ship you hold: where she lies, her worth and the shipmaster's offer, Sell (pressed twice - a
 //                    sale is for good), Bring her here, Lay her up, and her name;
@@ -18,14 +18,14 @@
 // onDoor(door) - a summons' placing to run once the window is down, onExit(reason) - 'close', or 'door' after onDoor }.
 //
 // Not a DFU member. Ledger A (SHIPYARDS).
-import { closeOnOutsideTap } from './enhancedOverlays.js';
+import { closeOnOutsideTap } from './enhanced/enhancedOverlays.js';
 import { overlayAction } from './input.js';
-import { injectEnhancedStyle, injectEnhancedFonts } from './enhancedStyle.js';
-import { injectNavalKit } from './navalHud.js';
-import { injectNavalWindowStyle } from './navalPlunderWindow.js';
-import { yardText, yardNote } from './navalYardWindow.js';
-import { whereWords, refitLine } from './fleetPage.js';
-import { SHIP_NAME_MAX } from '../systems/fleet.js';
+import { injectEnhancedStyle, injectEnhancedFonts } from './enhanced/enhancedStyle.js';
+import { injectNavalKit } from './naval/navalHud.js';
+import { injectNavalWindowStyle } from './naval/navalPlunderWindow.js';
+import { yardText, yardNote } from './naval/navalYardWindow.js';
+import { whereWords, refitLine, refitRowWords } from './fleetPage.js';
+import { SHIP_NAME_MAX, REFIT_NUMERALS } from '../systems/fleet.js';
 import { CREW_ROLES } from '../systems/naval/shipCrew.js';
 
 export const SHIPYARD_STYLE_ID = 'dagger-shipyard-style';
@@ -37,7 +37,25 @@ export const SHIPYARD_TABS = Object.freeze([
   Object.freeze({ id: 'refits', label: 'Refits' }),
   Object.freeze({ id: 'crew', label: 'Crew Hall' }),
 ]);
+/** MENU-ORDER (2026-10-12): each page's picture (ui/menu/menuGlyphs.js). */
+export const SHIPYARD_TAB_ICONS = Object.freeze({ ships: 'ship', fleet: 'anchor', yard: 'saw', refits: 'anvil', crew: 'people' });
 export const SHIPYARD_CSS = `
+.dfyard-pic { display: block; color: #c9bba1; } .dfyard-card .dfyard-pic::before { width: 40px; height: 40px; margin: 0 0 4px; }
+.dfyard-card[data-hull="0"] .dfyard-pic::before { width: 24px; height: 24px; }   /* MENU-ORDER: her picture her size - a rowboat small, a galley great */
+.dfyard-card[data-hull="1"] .dfyard-pic::before { width: 30px; height: 30px; }
+.dfyard-card[data-hull="2"] .dfyard-pic::before { width: 38px; height: 38px; }
+.dfyard-card[data-hull="4"] .dfyard-pic::before { width: 44px; height: 44px; }
+.dfyard-card[data-hull="3"] .dfyard-pic::before { width: 50px; height: 50px; }
+/* MENU-ORDER: and her own picture over the glyph once the host has drawn her (scenes/shipPortraits.js) - at her size
+   still, a rowboat's the card's half and a galley's its width */
+.dfyard-shipimg { display: block; width: 100%; height: auto; aspect-ratio: 2 / 1; margin: 0 0 4px; border: 1px solid rgba(125,116,96,0.35); }
+.dfyard-shipimg:not([src]) { display: none; }
+.dfyard-pic:has(> .dfyard-shipimg[src])::before { display: none; }
+.dfyard-card[data-hull="0"] .dfyard-shipimg { width: 50%; }
+.dfyard-card[data-hull="1"] .dfyard-shipimg { width: 62%; }
+.dfyard-card[data-hull="2"] .dfyard-shipimg { width: 76%; }
+.dfyard-card[data-hull="4"] .dfyard-shipimg { width: 88%; }
+.dfyard-tab[data-dficon] { display: inline-flex; align-items: center; justify-content: center; gap: 2px; }
 .dfyard-tabs { display: flex; flex-wrap: wrap; gap: 6px; padding: 8px 16px 0; }
 .dfyard-tab { flex: 1 1 auto; padding: 5px 10px; font: inherit; font-size: 13px; letter-spacing: 0.06em; color: #d8cfae; border: 2px solid; cursor: pointer;
   background: rgba(4,5,7,0.4); text-shadow: 1px 1px 0 #050608; }
@@ -46,15 +64,21 @@ export const SHIPYARD_CSS = `
 .dfyard-card { display: flex; flex-direction: column; gap: 5px; padding: 10px 11px; border: 2px solid; background: rgba(4,5,7,0.5); white-space: normal; }
 .dfyard-card b { font-weight: normal; font-size: 15px; letter-spacing: 0.08em; text-transform: uppercase; color: #efe8d6; text-shadow: 1px 1px 0 #050608; }
 .dfyard-card .dfyard-line { font-size: 12px; color: #c9bfa4; }
-.dfyard-card .dfyard-figs { font-size: 11px; color: #b3a684; }
-.dfyard-card .dfyard-why { font-size: 11px; color: #e59a8e; }
+.dfyard-card .dfyard-figs { font-size: 12px; color: #b3a684; }   /* MENU-ORDER: a step larger */
+.dfyard-card .dfyard-why { font-size: 12px; color: #e59a8e; }
 .dfyard-card .dfnaval-btn { min-width: 0; margin-top: 4px; font-size: 13px; padding: 5px 10px; }
-.dfyard-row { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(0, 1.6fr) auto; align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(5,6,8,0.6); white-space: normal; }
+.dfyard-row { display: grid; grid-template-columns: minmax(110px, 1fr) minmax(0, 1.6fr) fit-content(40%); align-items: center; gap: 10px; padding: 6px 0; border-bottom: 1px solid rgba(5,6,8,0.6); white-space: normal; }
 .dfyard-row:last-child { border-bottom-color: transparent; }
 .dfyard-row b { font-weight: normal; letter-spacing: 0.06em; text-transform: uppercase; color: #efe8d6; font-size: 13px; }
 .dfyard-row span { font-size: 12px; color: #b9ab93; }
 .dfyard-row .dfyard-acts { display: flex; flex-wrap: wrap; gap: 6px; justify-content: flex-end; }
 .dfyard-row .dfnaval-btn { min-width: 0; font-size: 12px; padding: 4px 9px; }
+/* FIELD BUGS 2026-10-16b YARD-ROWS ("Shipyard formatting is cooked"): an \`auto\` acts track took its every press on one
+   line before the fr tracks had a pixel, so a ship's words stood a word a line; the acts' track is held to fit-content,
+   and a ship of the fleet carries hers on a line of their own under her words, as the Holdings card does
+   (ui/fleetPage.js shipCard's hld-acts) */
+.dfyard-fleetrow { grid-template-columns: minmax(110px, 1fr) minmax(0, 1.6fr); }
+.dfyard-fleetrow .dfyard-acts { grid-column: 1 / -1; }
 .dfyard-choose { display: flex; flex-wrap: wrap; gap: 6px; }
 .dfyard-choose .dfnaval-btn { min-width: 0; font-size: 12px; padding: 4px 10px; }
 .dfyard-choose .dfnaval-btn[aria-pressed="true"] { color: #f3d58a; }
@@ -62,6 +86,7 @@ export const SHIPYARD_CSS = `
 .dfyard-name input { flex: 1 1 auto; min-width: 0; font: inherit; font-size: 13px; padding: 4px 6px; color: #efe8d6; background: rgba(4,5,7,0.6); border: 2px solid; }
 .dfyard-quote { font-style: italic; }
 .dfyard-post { font: inherit; font-size: 12px; color: #efe8d6; background: rgba(4,5,7,0.6); border: 2px solid; }
+.dfyard-acts .dfyard-post { min-width: 0; max-width: 12em; text-overflow: ellipsis; }   /* YARD-ROWS' audit: a long hand's name in the swap picker never holds the presses' track past its fit-content cap */
 @media (max-width: 560px) {
   .dfyard-cards { grid-template-columns: 1fr; }
   .dfyard-row { grid-template-columns: 1fr; gap: 4px; }
@@ -70,21 +95,20 @@ export const SHIPYARD_CSS = `
 `;
 
 const gold = (n) => `${Math.round(n).toLocaleString('en-US')} gold`;
-const NUMERALS = Object.freeze(['-', 'I', 'II', 'III']);
 
 /** A ship for sale's card words. Pure - the pins' reading. */
 export function shipCardText(s) {
   const figs = [`${s.length} m long, ${s.beam} m in the beam`];
-  if (s.crew > 0) figs.push(`a crew of ${s.crew}, ${s.hands} named on her deck`);
-  else figs.push('no crew - she sails with you alone');
+  if (s.crew > 0) figs.push(`a crew of ${s.crew}, ${s.hands} named on deck`);
+  else figs.push('no crew (you sail it alone)');
   if (s.guns > 0) figs.push(`${s.guns} ${s.guns === 1 ? 'gun' : 'guns'}${s.barrels ? ' and fire barrels' : ''}`);
   else if (s.barrels) figs.push('fire barrels');
   if (s.ram) figs.push('a ram');
   figs.push(`hull ${s.hullHp}${s.sailHp > 0 ? `, canvas ${s.sailHp}` : ''}`);
   return {
     name: s.name, line: s.line, figs: figs.join(' - '),
-    note: s.docks ? null : 'No quay takes her - she lies off the harbour.',
-    press: s.why ? `Buy - ${gold(s.asked)}` : `Buy her - ${gold(s.asked)}`,
+    note: s.docks ? null : 'Too big for the quay. It anchors off the harbor.',
+    press: `Buy - ${gold(s.asked)}`,
     why: s.why, can: !s.why,
   };
 }
@@ -94,7 +118,7 @@ export function fleetRowText(r) {
   const fits = refitLine(r.upgrades);
   return {
     name: r.label, sub: `${r.hullName} - ${w.state}`, where: w.line,
-    worth: `Worth ${gold(r.worth)} - the shipmaster offers ${gold(r.offer)}.${fits ? ` Refits: ${fits}.` : ''}`,
+    worth: `Worth ${gold(r.worth)}. The shipmaster offers ${gold(r.offer)}.${fits ? ` Refits: ${fits}.` : ''}`,
     sell: r.sell, canSell: !r.sell, summon: r.can?.summon ?? null, away: r.can?.away ?? null,
   };
 }
@@ -135,7 +159,8 @@ function injectStyle(doc = document) {
 /**
  * Mount the window in the door's host.
  * @param {HTMLElement} host
- * @param {{ model: (view: any) => any, act: (verb: string, a?: any, b?: any) => any, page?: string, onDoor?: ((door: any) => void) | null, onExit?: ((reason?: string) => void) | null, now?: () => number }} deps
+ * @param {{ model: (view: any) => any, act: (verb: string, a?: any, b?: any) => any, page?: string, onDoor?: ((door: any) => void) | null, onExit?: ((reason?: string) => void) | null, now?: () => number, picture?: ((hull: number, where: () => any) => Promise<string|null> | null) | null }} deps
+ *   MENU-ORDER: `picture` a hull's own picture as the host draws her (scenes/shipPortraits.js), under the box `where` reads.
  * @returns {{ repaint: () => void, unmount: () => void }}
  */
 export function mountShipyardWindow(host, deps) {
@@ -177,6 +202,30 @@ export function mountShipyardWindow(host, deps) {
   win.append(head, tabs, body);
 
   let alive = true;
+  /** MENU-ORDER: her own picture on her card - asked once a hull, set on every image waiting on it, over her glyph */
+  /** @type {Map<number, string|null>} */
+  const shipPics = new Map();
+  /** @type {Map<number, any[]>} */
+  const shipWaiting = new Map();
+  const shipPicture = (pic, hull) => {
+    const img = el('img', 'dfyard-shipimg');
+    img.setAttribute('alt', '');
+    pic.append(img);
+    const url = shipPics.get(hull);
+    if (url) { img.setAttribute('src', url); return; }
+    if (!deps.picture) return;   // AUDIT MENU-ORDER C4: no host to ask, nothing to wait on - her glyph
+    shipWaiting.set(hull, [...(shipWaiting.get(hull) ?? []), img]);
+    if (shipPics.has(hull)) return;   // in flight
+    shipPics.set(hull, null);
+    const settle = (u) => {
+      const imgs = shipWaiting.get(hull) ?? [];
+      shipWaiting.delete(hull);
+      if (!u || !alive) { shipPics.delete(hull); return; }
+      shipPics.set(hull, u);
+      for (const i of imgs) i.setAttribute('src', u);
+    };
+    Promise.resolve(deps.picture(hull, () => (alive ? win.getBoundingClientRect?.() ?? null : null))).then(settle, () => settle(null));
+  };
   const said = (r) => { if (r && typeof r.text === 'string' && r.text) note = { text: r.text, warn: !r.ok }; };
   const press = (verb, a, b) => {
     confirm = null;
@@ -219,12 +268,15 @@ export function mountShipyardWindow(host, deps) {
       const t = shipCardText(s);
       const card = el('div', 'dfyard-card');
       card.setAttribute('data-hull', String(s.hull));
-      card.append(el('b', null, t.name), el('span', 'dfyard-line', t.line), el('span', 'dfyard-figs', t.figs));
+      const pic = el('span', 'dfyard-pic');   // MENU-ORDER: a ship's card leads with a ship
+      pic.setAttribute('data-dficon', 'ship');
+      shipPicture(pic, s.hull);
+      card.append(pic, el('b', null, t.name), el('span', 'dfyard-line', t.line), el('span', 'dfyard-figs', t.figs));
       if (t.note) card.append(el('span', 'dfyard-figs', t.note));
       if (t.why) card.append(el('span', 'dfyard-why', t.why));
       const key = `buy:${s.hull}`;
-      card.append(button(confirm === key ? `Yes - buy her for ${gold(s.asked)}` : t.press, 'dfnaval-btn dfnaval-take',
-        () => twoPress(key, `Buy the ${t.name} for ${gold(s.asked)}? Press again to buy her.`, () => press('buy', s.hull)), t.can, t.why));
+      card.append(button(confirm === key ? `Yes - buy for ${gold(s.asked)}` : t.press, 'dfnaval-btn dfnaval-take',
+        () => twoPress(key, `Buy the ${t.name} for ${gold(s.asked)}? Press again to confirm.`, () => press('buy', s.hull)), t.can, t.why));
       cards.append(card);
     }
     sec.append(cards);
@@ -232,10 +284,10 @@ export function mountShipyardWindow(host, deps) {
   }
   function fleetPage(m) {
     const sec = section('Your fleet', m.fleet.length ? `${m.fleet.length} ${m.fleet.length === 1 ? 'ship' : 'ships'}` : 'none');
-    if (!m.fleet.length) sec.append(el('p', 'dfnaval-lede', 'You hold no ship. The shipmaster has a few on his slips.'));
+    if (!m.fleet.length) sec.append(el('p', 'dfnaval-lede', 'You don\'t own a ship. The shipmaster has a few for sale.'));
     for (const r of m.fleet) {
       const t = fleetRowText(r);
-      const row = el('div', 'dfyard-row');
+      const row = el('div', 'dfyard-row dfyard-fleetrow');   // YARD-ROWS: her acts under her words
       row.setAttribute('data-uid', String(r.uid));
       const left = el('div');
       left.append(el('b', null, t.name), el('br'), el('span', null, t.sub));
@@ -244,18 +296,18 @@ export function mountShipyardWindow(host, deps) {
       if (t.sell) mid.append(el('br'), el('span', null, t.sell));
       const acts = el('div', 'dfyard-acts');
       const key = `sell:${r.uid}`;
-      acts.append(button(confirm === key ? `Yes - sell for ${gold(r.offer)}` : 'Sell her', 'dfnaval-btn',
-        () => twoPress(key, `Sell ${t.name} for ${gold(r.offer)}? Press again to sell her - for good.`, () => press('sell', r.uid)), t.canSell, t.sell));
-      acts.append(button('Bring her here', 'dfnaval-btn', () => press('summon', r.uid), !t.summon, t.summon));
-      acts.append(button('Lay her up', 'dfnaval-btn', () => press('away', r.uid), !t.away, t.away));
+      acts.append(button(confirm === key ? `Yes - sell for ${gold(r.offer)}` : 'Sell', 'dfnaval-btn',
+        () => twoPress(key, `Sell ${t.name} for ${gold(r.offer)}? This can't be undone. Press again to confirm.`, () => press('sell', r.uid)), t.canSell, t.sell));
+      acts.append(button('Bring here', 'dfnaval-btn', () => press('summon', r.uid), !t.summon, t.summon));
+      acts.append(button('Lay up', 'dfnaval-btn', () => press('away', r.uid), !t.away, t.away));
       const named = el('div', 'dfyard-name');
       const input = /** @type {HTMLInputElement} */ (el('input'));
       input.maxLength = SHIP_NAME_MAX;
-      input.placeholder = 'Her name';
+      input.placeholder = 'Ship name';
       input.value = draft?.uid === r.uid ? draft.text : (r.name ?? '');
       input.oninput = () => { draft = { uid: r.uid, text: input.value }; };
       input.onkeydown = (e) => { e.stopPropagation(); if (e.key === 'Enter') { press('rename', r.uid, input.value); draft = null; } };
-      named.append(input, button('Name her', 'dfnaval-btn', () => { press('rename', r.uid, input.value); draft = null; }));
+      named.append(input, button('Rename', 'dfnaval-btn', () => { press('rename', r.uid, input.value); draft = null; }));
       acts.append(named);
       row.append(left, mid, acts);
       sec.append(row);
@@ -295,11 +347,12 @@ export function mountShipyardWindow(host, deps) {
     for (const r of o.rows) {
       const row = el('div', 'dfyard-row');
       row.setAttribute('data-line', r.id);
+      const w = refitRowWords(r);   // REFIT-ORES: the Fleet page's words - a metal's melt and its captain's level said
       const left = el('div');
-      left.append(el('b', null, r.tier ? `${r.label} ${NUMERALS[r.tier]}` : r.label), el('br'), el('span', null, `${r.what}: +${Math.round(r.per * 100)}% a refit`));
-      const mid = el('span', null, r.next ? `Next: ${gold(r.next.gold)}, ${r.next.mats.map((x) => `${x.n} ${x.label} (you hold ${x.have})`).join(', ')}.` : 'Every refit of this line is done.');
+      left.append(el('b', null, w.name), el('br'), el('span', null, w.gain));
+      const mid = el('span', null, r.next ? [w.asks, w.melt, w.lock].filter(Boolean).join(' ') : 'This upgrade line is complete.');
       const acts = el('div', 'dfyard-acts');
-      acts.append(button(r.next ? `Refit - ${NUMERALS[r.tier + 1]}` : 'Done', 'dfnaval-btn', () => press('refit', m.uid, r.id), !!r.next && r.afford && !o.why, o.why));
+      acts.append(button(r.next ? `Refit - ${REFIT_NUMERALS[r.tier + 1]}` : 'Done', 'dfnaval-btn', () => press('refit', m.uid, r.id), !!r.next && r.afford && !o.why, o.why ?? w.lock));
       row.append(left, mid, acts);
       sec.append(row);
     }
@@ -312,7 +365,7 @@ export function mountShipyardWindow(host, deps) {
     if (m.why) sec.append(el('p', 'dfnaval-lede', m.why));
     body.append(sec);   // AUDIT SHIPYARDS L2-7: the hall's header and the ship chooser first, her hands under them
     if (m.ship) {
-      const crew = section(`${m.ship.label}'s hands`, m.room?.ok ? 'a place for another' : m.room?.full ? 'her deck is full' : 'no place');
+      const crew = section(`${m.ship.label}'s hands`, m.room?.ok ? 'a place for another' : m.room?.full ? 'the deck is full' : 'no place');
       for (const h of m.hands) {
         const row = el('div', 'dfyard-row');
         const left = el('div');
@@ -339,7 +392,7 @@ export function mountShipyardWindow(host, deps) {
       body.append(crew);
     }
     const hall = section('Looking for a berth', m.recruits.length ? `${m.recruits.length} at the table` : 'none');
-    hall.append(el('p', 'dfnaval-lede', m.recruits.length ? 'Sailors at the crewmaster\'s table, looking for a berth today:' : 'Nobody is looking for a berth today - come back tomorrow.'));
+    hall.append(el('p', 'dfnaval-lede', m.recruits.length ? 'Sailors at the crewmaster\'s table, looking for a berth today:' : 'No one is looking for a berth today. Come back tomorrow.'));
     const free = m.hands.filter((h) => !h.ashore);
     for (const r of m.recruits) {
       const t = recruitText(r);
@@ -387,6 +440,7 @@ export function mountShipyardWindow(host, deps) {
       b.setAttribute('role', 'tab');
       b.setAttribute('aria-selected', String(t.id === m.page));
       b.setAttribute('data-tab', t.id);
+      b.setAttribute('data-dficon', SHIPYARD_TAB_ICONS[t.id] ?? 'ship');   // MENU-ORDER: each page its picture
       tabs.append(b);
     }
     for (const c of [...body.children]) c.remove();

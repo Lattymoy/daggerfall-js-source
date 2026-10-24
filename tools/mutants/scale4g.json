@@ -5,27 +5,27 @@
     "old": "  if (REPLICA_ROUTES.get(path) !== method) return db;",
     "new": "  if (!REPLICA_ROUTES.has(path)) return db;",
     "tests": [
-      "test/scale4g.test.js"
+      "test/server/scale4g.test.js"
     ],
     "note": "a listed route by any method on a session - the account view's POST writes included"
   },
   {
     "name": "SCALE4g-bookmark-unread",
     "file": "server-account/src/service.js",
-    "old": "  if (bookmark && !PRIMARY_FIRST_ROUTES.has(path)) { try { return replicaDb(db, bookmark); } catch { /* a bookmark D1 refuses: the primary, below */ } }\n",
+    "old": "  if (bookmark && !PRIMARY_FIRST_ROUTES.has(path)) { try { return replicaDb(db, bookmark); } catch { /* a bookmark D1 refuses: as with none, below */ } }\n",
     "new": "",
     "tests": [
-      "test/scale4g.test.js"
+      "test/server/scale4g.test.js"
     ],
     "note": "every session at the primary - the bookmark carried for nothing"
   },
   {
     "name": "SCALE4g-refusal-thrown",
     "file": "server-account/src/service.js",
-    "old": "try { return replicaDb(db, bookmark); } catch { /* a bookmark D1 refuses: the primary, below */ }",
+    "old": "try { return replicaDb(db, bookmark); } catch { /* a bookmark D1 refuses: as with none, below */ }",
     "new": "return replicaDb(db, bookmark);",
     "tests": [
-      "test/scale4g.test.js"
+      "test/server/scale4g.test.js"
     ],
     "note": "a bookmark D1 refuses fails the request instead of starting at the primary"
   },
@@ -35,7 +35,7 @@
     "old": "  return typeof b === 'string' && D1_BOOKMARK_RE.test(b) ? b : null;",
     "new": "  return typeof b === 'string' && b ? b : null;",
     "tests": [
-      "test/scale4g.test.js"
+      "test/server/scale4g.test.js"
     ],
     "note": "anything a page sends handed to D1 as a bookmark"
   },
@@ -45,27 +45,27 @@
     "old": "    if (db !== env.DB) held.session = db;\n",
     "new": "",
     "tests": [
-      "test/scale4g.test.js"
+      "test/server/scale4g.test.js"
     ],
     "note": "no bookmark ever answered - the tab never carries one"
   },
   {
     "name": "SCALE4g-unexposed",
     "file": "server-account/src/index.js",
-    "old": "    out.headers.append('access-control-expose-headers', 'x-d1-bookmark');\n",
-    "new": "",
+    "old": " out.headers.append('access-control-expose-headers', 'x-d1-bookmark'); }",
+    "new": " }",
     "tests": [
-      "test/scale4g.test.js"
+      "test/server/scale4g.test.js"
     ],
     "note": "the answer's bookmark hidden from the page by CORS"
   },
   {
     "name": "SCALE4g-preflight-refuses",
     "file": "server-account/src/index.js",
-    "old": "x-realm-summary, x-d1-bookmark',",
-    "new": "x-realm-summary',",
+    "old": "x-realm-summary, x-d1-bookmark, if-none-match, x-session-pass, x-staff-session',",
+    "new": "x-realm-summary, if-none-match, x-session-pass, x-staff-session',",
     "tests": [
-      "test/scale4g.test.js"
+      "test/server/scale4g.test.js"
     ],
     "note": "the browser's preflight refuses every call that carries a bookmark"
   },
@@ -75,7 +75,7 @@
     "old": "    for (const p of await withIliacHonoursAll({ db: primary }, await withArenaHonoursAll({ db: primary }, found, nowS), nowS)) rows.set(p.id, p);",
     "new": "    for (const p of await withIliacHonoursAll({ db }, await withArenaHonoursAll({ db }, found, nowS), nowS)) rows.set(p.id, p);",
     "tests": [
-      "test/scale4g.test.js"
+      "test/server/scale4g.test.js"
     ],
     "note": "a stale #1 counted off a replica and stored (AUDIT SCALE4d A1)"
   },
@@ -85,7 +85,7 @@
     "old": "    for (const p of await withIliacHonoursAll({ db: primary }, await withArenaHonoursAll({ db: primary }, found, nowS), nowS)) rows.set(p.id, p);",
     "new": "    for (const p of await withIliacHonoursAll({ db }, await withArenaHonoursAll({ db }, found, nowS), nowS)) rows.set(p.id, p);",
     "tests": [
-      "test/scale4g.test.js"
+      "test/server/scale4g.test.js"
     ],
     "note": "the board's authors' #1 counted off a replica and stored"
   },
@@ -95,7 +95,7 @@
     "old": "export function d1BookmarkFor(/** @type {string|null} */ secret) { return secret && _d1Mark.secret === secret ? _d1Mark.mark : null; }",
     "new": "export function d1BookmarkFor(/** @type {string|null} */ secret) { return _d1Mark.mark; }",
     "tests": [
-      "test/scale4g.test.js"
+      "test/server/scale4g.test.js"
     ],
     "note": "another session's bookmark sent - a new guest looked for on a replica that has not heard of it"
   },
@@ -105,7 +105,7 @@
     "old": "const newerMark = (/** @type {string} */ a, /** @type {string} */ b) => !(D1_POSITION_RE.test(a) && D1_POSITION_RE.test(b)) || a.slice(0, 26) >= b.slice(0, 26);",
     "new": "const newerMark = (/** @type {string} */ a, /** @type {string} */ b) => true;",
     "tests": [
-      "test/scale4g.test.js"
+      "test/server/scale4g.test.js"
     ],
     "note": "an answer out of order takes the newer bookmark's place"
   },
@@ -115,7 +115,7 @@
     "old": "  if (!secret || typeof mark !== 'string' || !D1_BOOKMARK_RE.test(mark)) return;",
     "new": "  if (!secret || typeof mark !== 'string') return;",
     "tests": [
-      "test/scale4g.test.js"
+      "test/server/scale4g.test.js"
     ],
     "note": "any header kept and sent on"
   },
@@ -125,7 +125,7 @@
     "old": "  if (mark) headers['x-d1-bookmark'] = mark;\n",
     "new": "",
     "tests": [
-      "test/scale4g.test.js"
+      "test/server/scale4g.test.js"
     ],
     "note": "the bookmark kept and never sent"
   }

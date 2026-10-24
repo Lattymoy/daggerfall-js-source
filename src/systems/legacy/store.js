@@ -14,6 +14,7 @@
 // write is shielded, because storage throws under some privacy modes and a family must never cost the player a game.
 import { readFamily, FAMILY_VERSION, nameAtSeat, nameHouse, leanRecord } from './family.js';
 import { mergeNews, mergeHeard } from './influence.js';   // LEGACY6; AUDIT LEGACY III A8: a reader's heard news
+import { takeRevived } from './revived.js';   // REVIVE: a death taken back is a fact as a death is
 
 export const FAMILY_KEY_PREFIX = 'dagger.legacy.family.';
 export const BIRTH_KEY = 'dagger.legacy.birth';
@@ -186,6 +187,9 @@ export function mergeFacts(mine, other) {
   if (!mine.home && other.home) mine.home = { ...other.home };
   mine.news = mergeNews(mine.news, other.news);   // LEGACY6: what the towns heard is never unheard
   mine.nextId = Math.max(mine.nextId | 0, other.nextId | 0, ...mine.people.map((p) => p.id + 1));
+  // REVIVE: and a death either copy says was TAKEN BACK goes, with its remains and its Succession - taken in above from
+  // a stale copy (a device that never heard of the revival), it would have killed the revived member again
+  takeRevived(mine, other);
   return mine;
 }
 
@@ -239,7 +243,7 @@ function birthOf(b, personId, now) {
 }
 
 /** A played member's newest save: the key whose card names their character id and was written last
- *  (systems/saveSlots.js enumerateSaves' `info`, key -> card). -1 when they have none. */
+ *  (systems/save/saveSlots.js enumerateSaves' `info`, key -> card). -1 when they have none. */
 export function newestSaveOf(info, characterId) {
   let best = -1;
   let bestT = -Infinity;

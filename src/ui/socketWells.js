@@ -8,11 +8,11 @@
 // grade's colour; and on every tile of a socketed piece, one pip a socket in the top edge (the corners are the key's,
 // the tier's, the count's and the rune's), filled where a gem is set. A graded gem's own tile wears its grade's ring.
 //
-// The wells are the pack's to press (ui/enhancedInventory.js hands `onWell` on its own piece's detail card): an empty
+// The wells are the pack's to press (ui/enhanced/enhancedInventory.js hands `onWell` on its own piece's detail card): an empty
 // one opens the gems the pack holds, a set one asks first and shatters its gem. The facts and the presses are
-// systems/lootRarity.js's and systems/reforge.js's; this file draws them, and owns its sheet (one style tag, both
+// systems/loot/lootRarity.js's and systems/reforge.js's; this file draws them, and owns its sheet (one style tag, both
 // skins), so no other dress has to know a socket exists.
-import { socketsOf, gemLine, affixLabel, GEM_NAMES, SOCKET_EMPTY, gemGrade, gemKindOf, lootRarityOn } from '../systems/lootRarity.js';
+import { socketsOf, gemLine, affixLabel, GEM_NAMES, SOCKET_EMPTY, gemGrade, gemKindOf, lootRarityOn } from '../systems/loot/lootRarity.js';
 import { noteFirstUse } from '../systems/tutorials.js';   // TUT1: the first touch of a system pops its tutorial page
 
 /** @param {string} tag @param {string|null} [cls] @param {string|null} [text] */
@@ -95,7 +95,7 @@ export function socketWells(item, { picture = null, onWell = null, asking = null
       const pic = picture?.(v) ?? null;
       if (pic) w.append(pic);
     }
-    const said = asking === at && v !== SOCKET_EMPTY ? `${wellText(item, v)} - press again to shatter it` : wellText(item, v);
+    const said = asking === at && v !== SOCKET_EMPTY ? `${wellText(item, v)}. Click again to shatter it` : wellText(item, v);
     w.setAttribute('title', said);
     w.setAttribute('aria-label', said);
     if (asking === at && v !== SOCKET_EMPTY) w.dataset.asking = '';
@@ -117,7 +117,7 @@ export function socketWells(item, { picture = null, onWell = null, asking = null
 export function socketChooser(item, choices, onPick) {
   noteFirstUse('gem-sockets');   // TUT1
   ensureStyle(globalThis.document);
-  if (!choices.length) return el('p', 'sock-none', 'No gem in your pack to set - any grade of Ruby, Emerald, Sapphire, Diamond, Jade, Turquoise, Malachite or Amber.');
+  if (!choices.length) return el('p', 'sock-none', 'No gem in your pack to set. Any grade of Ruby, Emerald, Sapphire, Diamond, Jade, Turquoise, Malachite or Amber will do.');
   const ul = el('ul', 'sock-choose');
   for (const { id, count } of choices) {
     const li = el('li');

@@ -1,0 +1,51 @@
+[
+  {
+    "name": "FB1018E-hold-weighed-again",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "        state.PackedCargoes.set(key, val3);   // PARTS-WEIGHT: its weight never on her parts (the C#'s `val.weightInKg += weight`)",
+    "new": "        val.weightInKg = f(val.weightInKg + f(deps.cargoWeight(val3)));\n        state.PackedCargoes.set(key, val3);",
+    "tests": [
+      "test/systems/comeSailAway/fb1018e_partsweight.test.js",
+      "test/systems/comeSailAway/fb1005c_holdweight.test.js",
+      "test/systems/comeSailAway/shippack.test.js",
+      "test/systems/csa_items.test.js",
+      "test/scenes/holddoor.test.js"
+    ]
+  },
+  {
+    "name": "FB1018E-gate-weighs-hold",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    return canHoldAmount(1, packedHullWeight(boat.hull), most, 0) <= 0;",
+    "new": "    return canHoldAmount(1, packedHullWeight(boat.hull) + (boat?.Cargo?.Items?.length ? deps.cargoWeight(boat.Cargo.Items) : 0), most, 0) <= 0;",
+    "tests": [
+      "test/systems/comeSailAway/fb1018e_partsweight.test.js"
+    ]
+  },
+  {
+    "name": "FB1018E-repair-unrun",
+    "file": "src/systems/save/save.js",
+    "old": "    const n = repairPartsWeights(list);",
+    "new": "    const n = 0;",
+    "tests": [
+      "test/systems/comeSailAway/fb1018e_partsweight.test.js"
+    ]
+  },
+  {
+    "name": "FB1018E-repair-hull-unread",
+    "file": "src/systems/comeSailAway/comeSailAwayItems.js",
+    "old": "    const kg = packedHullWeight(hullFromMessage(item.message | 0));",
+    "new": "    const kg = packedHullWeight(0);",
+    "tests": [
+      "test/systems/comeSailAway/fb1018e_partsweight.test.js"
+    ]
+  },
+  {
+    "name": "FB1018E-repair-uncounted",
+    "file": "src/systems/comeSailAway/comeSailAwayItems.js",
+    "old": "    if (Number.isFinite(kg) && item.weightInKg !== kg) { item.weightInKg = kg; n++; }",
+    "new": "    if (Number.isFinite(kg)) { item.weightInKg = kg; n++; }",
+    "tests": [
+      "test/systems/comeSailAway/fb1018e_partsweight.test.js"
+    ]
+  }
+]

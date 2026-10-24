@@ -5,7 +5,7 @@
     "old": "deck.keep(local[0], local[2], was ? was[1] : local[1], piece, local);",
     "new": "deck.keep(local[0], local[2], local[1], piece, local);",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "the leash measured off the body's height of the moment again: one fallen through her deck under the Carrack's forecastle lifted onto it"
   },
@@ -15,7 +15,7 @@
     "old": "      if (Math.abs(own - ref) <= FLIGHT_JOIN) { out[0] = x; out[1] = own; out[2] = z; return out; }",
     "new": "      if (!Number.isNaN(own)) { out[0] = x; out[1] = own; out[2] = z; return out; }",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "its piece's floor in the cell at any distance again: the Carrack's walks set 2-3 m between her main deck and her forecastle"
   },
@@ -25,7 +25,7 @@
     "old": "own = c < 0 ? NaN : floorNear(c, p, ref);",
     "new": "own = c < 0 ? NaN : floorNear(c, -1, ref);",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "any piece's floor in the cell within a flight's rise of the last: a body stepped up or down a ledge onto another piece's floor (AUDIT GN-D1's law, held by the piece alone once the leash keeps to FLIGHT_JOIN)"
   },
@@ -35,7 +35,7 @@
     "old": "      const j = nearestCell(x, z, p, ref, FLIGHT_JOIN, true);",
     "new": "      const j = -1;",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "its piece's edge at any level: a body under her forecastle lifted onto it"
   },
@@ -45,7 +45,7 @@
     "old": "      if (p >= 0 && more.piece[n] !== p) continue;\n",
     "new": "      if (p >= 0 && (p === 0 || more.piece[n] !== p)) continue;\n",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "her open piece's floors under its top floor unread (her deck under her forecastle): a body there slid out to her waist or lifted"
   },
@@ -55,7 +55,7 @@
     "old": "    const h = ringNear ? floorNear(j, ringPiece, ringLevel) : ringPiece ? levelOf(j, ringPiece) : y[j];",
     "new": "    const h = ringPiece > 0 ? levelOf(j, ringPiece) : y[j];",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "the leash's search at a level reads her open deck's top floor alone: a body under her forecastle slid out to her waist"
   },
@@ -65,7 +65,7 @@
     "old": "          if (ajar) for (let n = ajar.at[j]; n < ajar.at[j + 1]; n++) if (ajar.y[n] >= lo && ajar.y[n] <= hi) return true;",
     "new": "",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "a shut cover no floor to standing aboard: 600 of the 1575 points on the Carrack's cargo doors ashore"
   },
@@ -75,7 +75,7 @@
     "old": " && !(Math.abs(local[1] - deck.ajarAt(local[0], local[2], local[1])) <= DECK_STEP)) {",
     "new": ") {",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "a body on a shut cover set off it by the leash: a boarder held 2.48 m off a player on the Carrack's cargo doors"
   },
@@ -85,7 +85,7 @@
     "old": "          if (moves) { lids[k * nx + i].push(y); continue; }",
     "new": "          if (moves) continue;",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "a part's faces looking up never baked: her covers no floor to aboard or the leash"
   },
@@ -95,7 +95,7 @@
     "old": "deck.ajarAt(local[0], local[2], local[1])) <= DECK_STEP)) {",
     "new": "deck.ajarAt(local[0], local[2], local[1])) <= 1)) {",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "a body a metre under a cover let be: one gone down her open hatchway held on the air"
   },
@@ -105,7 +105,7 @@
     "old": "    for (let pass = 0; pass < inset && front.length; pass++) {",
     "new": "    for (let pass = 0; pass < 0 && front.length; pass++) {",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "the margin her inset kept off a cover and a doorway no floor to the leash: a boarder held at the cargo hatch's edge, every door shut to him"
   },
@@ -115,7 +115,7 @@
     "old": "      for (const h of doors[j]) if (h >= main - LEVEL_BIN && add(j, h)) front.push(j, h);\n",
     "new": "",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "a doorway no floor to the leash: no boarder through a door of hers"
   },
@@ -125,7 +125,7 @@
     "old": "wallFace(moves ? leaves : walls, ax, ay, az, bx, by, bz, cx, cy, cz)",
     "new": "wallFace(walls, ax, ay, az, bx, by, bz, cx, cy, cz)",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "a door's leaf a wall like any other: no doorway found, no boarder through a door"
   },
@@ -135,7 +135,7 @@
     "old": "      if (rises(leaves[j], y)) { if (upFlat[j].some((u) => Math.abs(u - y) < 1e-3) && !doors[j].some((q) => Math.abs(q - y) < 1e-3)) doors[j].push(y); continue; }",
     "new": "      if (rises(leaves[j], y)) { if (upFlat[j].some((u) => Math.abs(u - y) < 1e-3) && !doors[j].some((q) => Math.abs(q - y) < 1e-3)) doors[j].push(y); }",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "a door's leaf no wall to her deck: her great cabin joined to her open deck through its doorway, her doorway deck"
   },
@@ -145,7 +145,7 @@
     "old": "piece = was ? deck.pieceAt(was[0], was[2], was[1], DECK_STEP) : 0;",
     "new": "piece = was ? Math.max(0, deck.pieceAt(was[0], was[2], was[1], DECK_STEP)) : 0;",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "a body that stood on no floor of hers (a doorway) taken for her open deck's: one pressed into her castle's front from her cabin side put out on her main deck through the wall"
   },
@@ -155,7 +155,7 @@
     "old": "      return d <= band ? best : -1;",
     "new": "      return best;",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "pieceAt's band unread: a body in her doorway taken for the piece of a floor far over it (her castle's roof) - put out through the wall"
   },
@@ -165,7 +165,7 @@
     "old": "the mod's galleon 690 -> 727",
     "new": "the mod's galleon 714 -> 750",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "the D-wall comment's count for the mod's galleon measured over the new galleon's extent again"
   },
@@ -175,7 +175,7 @@
     "old": ": n - j === nx ? (flights[j] & 2) !== 0 : j - n === nx ? (flights[n] & 2) !== 0 : false;",
     "new": ": n - j === nx ? (flights[j] & 2) !== 0 : j - n === nx ? (flights[n] & 2) !== 0 : true;",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "a walk steps across a riser at a corner - a diagonal over a flight's rise past the motors' step (survived every suite at the second audit)"
   },
@@ -185,7 +185,7 @@
     "old": "!Number.isNaN(y[kk * nx + ii]) && steps(was, kk * nx + ii);",
     "new": "!Number.isNaN(y[kk * nx + ii]) && Math.abs(y[kk * nx + ii] - y[was]) <= DECK_JOIN;",
     "tests": [
-      "test/auditgalleon2_deck.test.js"
+      "test/systems/naval/auditgalleon2_deck.test.js"
     ],
     "why": "the corners cut blind to a flight: a straight walk up one a leg a row (survived every suite at the second audit)"
   }

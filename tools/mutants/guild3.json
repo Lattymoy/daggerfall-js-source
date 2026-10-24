@@ -5,9 +5,9 @@
     "old": "const SEAT_WORDS = Object.freeze({ master: 'the Master\\'s chair',",
     "new": "const SEAT_WORDS = Object.freeze({ master: 'the Master\\'s seat',",
     "tests": [
-      "test/guild3_plain.test.js",
-      "test/chap4b_seats.test.js",
-      "test/chap4d_focus.test.js"
+      "test/net/guild3_plain.test.js",
+      "test/systems/guild/chap4b_seats.test.js",
+      "test/net/chap4d_focus.test.js"
     ]
   },
   {
@@ -16,8 +16,8 @@
     "old": "chapterofficer: 'Councillor',",
     "new": "chapterofficer: 'Officer',",
     "tests": [
-      "test/guild3_plain.test.js",
-      "test/chap4c_titles.test.js"
+      "test/net/guild3_plain.test.js",
+      "test/net/chap4c_titles.test.js"
     ]
   },
   {
@@ -26,8 +26,8 @@
     "old": "officers.length ? `Its council: ${namesListed(officers)}.`",
     "new": "officers.length ? `Its officers: ${namesListed(officers)}.`",
     "tests": [
-      "test/guild3_plain.test.js",
-      "test/chap5a_roll.test.js"
+      "test/net/guild3_plain.test.js",
+      "test/net/chap5a_roll.test.js"
     ]
   },
   {
@@ -36,18 +36,18 @@
     "old": "ranks 8 and 9 for ${one ? 'its' : 'their'} chapters' Masters and councils",
     "new": "ranks 8 and 9 as ${one ? 'its' : 'their'} chapters' seats",
     "tests": [
-      "test/guild3_plain.test.js",
-      "test/chap4b_seats.test.js"
+      "test/net/guild3_plain.test.js",
+      "test/systems/guild/chap4b_seats.test.js"
     ]
   },
   {
     "name": "GUILD3a-honour-in-marks",
-    "file": "src/net/siegeLink.js",
-    "old": "`Your Honour: ${marksText(Number(honours.marks))},",
-    "new": "`Your Honour: ${honours.marks} Marks,",
+    "file": "src/net/siege/siegeLink.js",
+    "old": "`Your Honor: ${marksText(Number(honours.marks))},",
+    "new": "`Your Honor: ${honours.marks} Marks,",
     "tests": [
-      "test/guild3_plain.test.js",
-      "test/seat2a_siege_play.test.js"
+      "test/net/guild3_plain.test.js",
+      "test/net/siege/seat2a_siege_play.test.js"
     ]
   },
   {
@@ -56,18 +56,18 @@
     "old": "its claim fee of ${marksText(Number(d.refund))} refunded",
     "new": "its claim fee of ${Number(d.refund).toLocaleString('en-US')} Marks refunded",
     "tests": [
-      "test/guild3_plain.test.js",
-      "test/audit_seats_service.test.js"
+      "test/net/guild3_plain.test.js",
+      "test/net/audit_seats_service.test.js"
     ]
   },
   {
     "name": "GUILD3a-your-writ-again",
     "file": "src/ui/noticeWindow.js",
-    "old": "own ? 'Your chapter writ' : poster",
-    "new": "own ? 'Your writ' : poster",
+    "old": "'member' ? 'Your chapter writ' : isChapterWrit",
+    "new": "'member' ? 'Your writ' : isChapterWrit",
     "tests": [
-      "test/guild3_plain.test.js",
-      "test/chap3a_merit.test.js"
+      "test/net/guild3_plain.test.js",
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -76,7 +76,7 @@
     "old": "w[l.out === true ? 'out' : 'in']",
     "new": "w['in']",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -85,7 +85,7 @@
     "old": "l.out === true ? 'paid' : 'received'",
     "new": "'received'",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -94,7 +94,7 @@
     "old": "tribute: 'paid Tribute of',",
     "new": "tribute: 'put in',",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -103,7 +103,7 @@
     "old": "if (typeof l?.raw !== 'string') return",
     "new": "if (false) return",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -112,7 +112,7 @@
     "old": "out: l.src_kind === 'guild' && String(l.src_id) === String(guildId),",
     "new": "out: false,",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -121,52 +121,52 @@
     "old": "raw: String(l.kind),",
     "new": "raw: 'guild-deposit',",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
     "name": "GUILD3c-a-table-unread",
-    "file": "src/net/guildPowers.js",
+    "file": "src/net/guild/guildPowers.js",
     "old": "return Object.hasOwn(table, row?.power) ? [...table[row.power]] : [];",
     "new": "return [GUILD_RANK_MASTER];",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
     "name": "GUILD3c-the-levers-unread",
-    "file": "src/net/guildPowers.js",
+    "file": "src/net/guild/guildPowers.js",
     "old": "if (row?.table === 'levers') return [...SEAT_LEVER_RANKS];",
     "new": "if (row?.table === 'levers') return [GUILD_RANK_MASTER];",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
     "name": "GUILD3c-a-power-unworded",
-    "file": "src/net/guildPowers.js",
+    "file": "src/net/guild/guildPowers.js",
     "old": "  Object.freeze({ table: 'hall', power: 'heraldry', words: 'choose the guild\\'s arms' }),\n",
     "new": "",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
     "name": "GUILD3c-the-vault-limit-unsaid",
-    "file": "src/net/guildPowers.js",
+    "file": "src/net/guild/guildPowers.js",
     "old": "const takeWords = (/** @type {number} */ limit) => (limit > 0 ? `${limit} a day` : 'any number');",
     "new": "const takeWords = (/** @type {number} */ limit) => '';",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
     "name": "GUILD3c-the-same-never-said",
-    "file": "src/net/guildPowers.js",
+    "file": "src/net/guild/guildPowers.js",
     "old": "text = more.length ? `Everything ${them} may, and: ${more.join('; ')}.` : `The same as ${them}.`;",
     "new": "text = `Everything ${them} may, and: ${more.join('; ')}.`;",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -175,7 +175,7 @@
     "old": "  ['guild-stores', (/** @type {string} */ p) =>",
     "new": "  ['guild-treasury', (/** @type {string} */ p) =>",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -184,7 +184,7 @@
     "old": "const notGone = (/** @type {string[]} */ keeps) => ({ error: keeps[0], keeps });",
     "new": "const notGone = (/** @type {string[]} */ keeps) => ({ error: keeps[0], keeps: keeps.slice(0, 1) });",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -193,7 +193,7 @@
     "old": "if (Array.isArray(r.keeps)) return json({ error: r.error, keeps: r.keeps }",
     "new": "if (false) return json({ error: r.error, keeps: r.keeps }",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -202,7 +202,7 @@
     "old": "...(Array.isArray(data?.keeps) ? { keeps: data.keeps.filter((k) => typeof k === 'string').slice(0, 16) } : {}),",
     "new": "",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -211,16 +211,16 @@
     "old": "data.keeps.filter((k) => typeof k === 'string')",
     "new": "data.keeps",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
     "name": "GUILD3c-the-book-drops-the-list",
-    "file": "src/net/guildBook.js",
+    "file": "src/net/guild/guildBook.js",
     "old": "...(Array.isArray(r?.keeps) ? { keeps: [...r.keeps] } : {}) };",
     "new": "};",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -229,7 +229,7 @@
     "old": "(known.has(k) ? known.get(k) : true)",
     "new": "true",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -238,7 +238,7 @@
     "old": "    ['guild-hall', !!v?.hall],\n",
     "new": "",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -247,7 +247,7 @@
     "old": "guildUi.keeps = r?.ok ? null : (Array.isArray(r?.keeps) ? r.keeps : null);",
     "new": "guildUi.keeps = null;",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -256,7 +256,7 @@
     "old": "const holding = guildMay(me, 'disband') ? guildKeepsOf(",
     "new": "const holding = true ? guildKeepsOf(",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -265,7 +265,7 @@
     "old": "    if (realm) out.push(el('div', 'dfsocial-note', realm));\n",
     "new": "",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -274,7 +274,7 @@
     "old": "    for (const line of GUILD_PRIMER_LINES) out.push(el('div', 'dfsocial-note', line));",
     "new": "",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -283,7 +283,7 @@
     "old": "    out.push(el('div', 'dfsocial-sec', 'Elsewhere'), el('div', 'dfsocial-empty', GUILD_ELSEWHERE_TEXT));",
     "new": "",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -292,7 +292,7 @@
     "old": "guildRankLines(Array.isArray(v.ranks) ? v.ranks : GUILD_RANK_NAMES)",
     "new": "guildRankLines(GUILD_RANK_NAMES)",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -301,7 +301,7 @@
     "old": "sells && b.price !== 1 ? `${sells} ${priceWords(b.price)}` : null,",
     "new": "null,",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -310,7 +310,7 @@
     "old": "faction === GUILD_FACTION_IDS.MagesGuild || faction === DIVINES.Kynareth ? 'training and spells'",
     "new": "faction === GUILD_FACTION_IDS.MagesGuild ? 'training and spells'",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -319,7 +319,7 @@
     "old": "sold.includes('shelf') && b.shelf !== 0 ?",
     "new": "b.shelf !== 0 ?",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -328,7 +328,7 @@
     "old": "b.band === 'ascendant' && isRollFaction(faction) && !hallHidden(faction) ?",
     "new": "b.band === 'ascendant' ?",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -337,7 +337,7 @@
     "old": "10: 'a tenth cheaper', 20: 'a fifth cheaper',",
     "new": "10: 'a tenth cheaper', 20: 'a tenth cheaper',",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -346,8 +346,8 @@
     "old": "const member = mine.some((a) => a.member === true);",
     "new": "const member = mine.length > 0;",
     "tests": [
-      "test/guild3_plain.test.js",
-      "test/chap2b_receipts.test.js"
+      "test/net/guild3_plain.test.js",
+      "test/net/chap2b_receipts.test.js"
     ]
   },
   {
@@ -356,8 +356,8 @@
     "old": "    if (band) card.append(el('p', 'notice-chapter notice-band', band));\n",
     "new": "",
     "tests": [
-      "test/guild3_plain.test.js",
-      "test/chap3b_strength.test.js"
+      "test/net/guild3_plain.test.js",
+      "test/net/chap3b_strength.test.js"
     ]
   },
   {
@@ -366,8 +366,8 @@
     "old": "    if (duties) card.append(el('p', 'notice-chapter notice-duties', duties));\n",
     "new": "",
     "tests": [
-      "test/guild3_plain.test.js",
-      "test/chap2b_receipts.test.js"
+      "test/net/guild3_plain.test.js",
+      "test/net/chap2b_receipts.test.js"
     ]
   },
   {
@@ -376,8 +376,8 @@
     "old": "for (const m of writs?.merit ?? []) if (!carded.has(m.faction)) body.append(",
     "new": "for (const m of writs?.merit ?? []) body.append(",
     "tests": [
-      "test/guild3_plain.test.js",
-      "test/chap3a_merit.test.js"
+      "test/net/guild3_plain.test.js",
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -386,7 +386,7 @@
     "old": "    card.append(el('h3', null, `${hallPosterName(c.faction) ?? 'Guild'} - ${chapterBandOf(c.strength).name}`));\n",
     "new": "",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -395,9 +395,9 @@
     "old": "Object.freeze({ band: 'ascendant', name: 'Ascendant', from: 90, price: 0.8,",
     "new": "Object.freeze({ band: 'ascendant', name: 'Ascendant', from: 90, price: 0.9,",
     "tests": [
-      "test/guild3_plain.test.js",
-      "test/chap3b_strength.test.js",
-      "test/chap3c_halls.test.js"
+      "test/net/guild3_plain.test.js",
+      "test/net/chap3b_strength.test.js",
+      "test/systems/guild/chap3c_halls.test.js"
     ]
   },
   {
@@ -406,8 +406,8 @@
     "old": "const band = chapterPatronMember(chapter, guildId) ? Math.min(own, CHAPTER_PATRON_PRICE) : own;",
     "new": "const band = chapterPatronMember(chapter, guildId) ? CHAPTER_PATRON_PRICE : own;",
     "tests": [
-      "test/guild3_plain.test.js",
-      "test/chap7b_patrons_client.test.js"
+      "test/net/guild3_plain.test.js",
+      "test/net/chap7b_patrons_client.test.js"
     ]
   },
   {
@@ -416,7 +416,7 @@
     "old": "    Object.freeze(['They say the chapter of {guild} here is in decline.', 'It needs its members, and soon.']),   // GUILD3e: a Decline's, the band's now\n",
     "new": "",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -425,7 +425,7 @@
     "old": "    Object.freeze(['The chapter of {guild} here is in its ascendancy, they say.', 'Everyone wants to be seen in that hall.']),   // GUILD3e: an Ascendancy's, the band's now\n",
     "new": "",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -434,7 +434,7 @@
     "old": "    ['guild-master-leaves', false],",
     "new": "    ['guild-master-leaves', (v?.members?.length ?? 1) > 1],",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -443,7 +443,7 @@
     "old": "    ...(me.rank === GUILD_RANK_MASTER ? { keeps: (await guildHolds(db, guildId, me.player)) ?? [] } : {}),\n",
     "new": "",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -452,7 +452,7 @@
     "old": "...(me.rank === GUILD_RANK_MASTER ? { keeps:",
     "new": "...(true ? { keeps:",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -461,8 +461,8 @@
     "old": "`EXISTS (SELECT 1 FROM town_seat_rights WHERE (guild_id = ${p} OR against = ${p}) AND ${SEAT_BATTLE_PENDING})`",
     "new": "`0`",
     "tests": [
-      "test/guild3_plain.test.js",
-      "test/seat1c_service.test.js"
+      "test/net/guild3_plain.test.js",
+      "test/net/seat1c_service.test.js"
     ]
   },
   {
@@ -471,7 +471,7 @@
     "old": "const viewed = Array.isArray(v?.keeps) ? v.keeps : null;",
     "new": "const viewed = null;",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -480,7 +480,7 @@
     "old": "      const can = !busy && !listed;",
     "new": "      const can = !busy;",
     "tests": [
-      "test/guild3_plain.test.js"
+      "test/net/guild3_plain.test.js"
     ]
   }
 ]

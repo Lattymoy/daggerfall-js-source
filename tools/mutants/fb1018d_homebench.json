@@ -1,0 +1,172 @@
+[
+  {
+    "name": "HOME-BENCH-law-asks-own",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "export const homeStationsServe = (home) => home?.mine === true;",
+    "new": "export const homeStationsServe = (home) => home?.own === true;",
+    "tests": [
+      "test/scenes/fb1018d_homebench.test.js"
+    ],
+    "why": "the report: the station asks whether THIS character owns the home while the door asks whether the account does"
+  },
+  {
+    "name": "HOME-BENCH-law-turned",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "export const homeStationsServe = (home) => home?.mine === true;",
+    "new": "export const homeStationsServe = (home) => home?.mine !== true;",
+    "tests": [
+      "test/scenes/fb1018d_homebench.test.js"
+    ],
+    "why": "every visitor served and the owner's account refused"
+  },
+  {
+    "name": "HOME-BENCH-host-asks-decor-owner",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const stationOwnerHere = () => decorOwnerHere() || (!privateVisitRoom && homeStationsServe(interiorHome));",
+    "new": "  const stationOwnerHere = () => decorOwnerHere();",
+    "tests": [
+      "test/scenes/fb1018d_homebench.test.js"
+    ],
+    "why": "the host's station gate as it shipped: the pieces' owner alone"
+  },
+  {
+    "name": "HOME-BENCH-account-anded",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const stationOwnerHere = () => decorOwnerHere() || (!privateVisitRoom && homeStationsServe(interiorHome));",
+    "new": "  const stationOwnerHere = () => decorOwnerHere() && (!privateVisitRoom && homeStationsServe(interiorHome));",
+    "tests": [
+      "test/scenes/fb1018d_homebench.test.js"
+    ],
+    "why": "the account's clause narrows the owner's instead of widening it"
+  },
+  {
+    "name": "HOME-BENCH-private-visit-unread",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const stationOwnerHere = () => decorOwnerHere() || (!privateVisitRoom && homeStationsServe(interiorHome));",
+    "new": "  const stationOwnerHere = () => decorOwnerHere() || (homeStationsServe(interiorHome));",
+    "tests": [
+      "test/scenes/fb1018d_homebench.test.js"
+    ],
+    "why": "a private visit served the stations decorOwnerHere refuses it"
+  },
+  {
+    "name": "HOME-BENCH-private-visit-turned",
+    "file": "src/scenes/worldModes.js",
+    "old": "  const stationOwnerHere = () => decorOwnerHere() || (!privateVisitRoom && homeStationsServe(interiorHome));",
+    "new": "  const stationOwnerHere = () => decorOwnerHere() || (privateVisitRoom && homeStationsServe(interiorHome));",
+    "tests": [
+      "test/scenes/fb1018d_homebench.test.js"
+    ],
+    "why": "the account's other character refused everywhere but a private visit"
+  },
+  {
+    "name": "HOME-BENCH-press-asks-decor-owner",
+    "file": "src/scenes/worldModes.js",
+    "old": "  function useDecorStation(piece) {\n    if (!stationOwnerHere()) {",
+    "new": "  function useDecorStation(piece) {\n    if (!decorOwnerHere()) {",
+    "tests": [
+      "test/scenes/fb1018d_homebench.test.js"
+    ],
+    "why": "the press refuses the account's other character in its own handle's name"
+  },
+  {
+    "name": "HOME-BENCH-forge-asks-decor-owner",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (stationOwnerHere() && interiorDecor.list().some((p) => p?.station === 'forge')) return { kind: 'home', fee: 0 };",
+    "new": "      if (decorOwnerHere() && interiorDecor.list().some((p) => p?.station === 'forge')) return { kind: 'home', fee: 0 };",
+    "tests": [
+      "test/scenes/fb1018d_homebench.test.js"
+    ],
+    "why": "the Stores page finds no forge in the account's home"
+  },
+  {
+    "name": "HOME-BENCH-workbench-asks-decor-owner",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (stationOwnerHere() && interiorDecor.list().some((p) => p?.station === 'workbench')) return { kind: 'home', fee: 0 };",
+    "new": "      if (decorOwnerHere() && interiorDecor.list().some((p) => p?.station === 'workbench')) return { kind: 'home', fee: 0 };",
+    "tests": [
+      "test/scenes/fb1018d_homebench.test.js"
+    ],
+    "why": "no workbench"
+  },
+  {
+    "name": "HOME-BENCH-loom-asks-decor-owner",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (stationOwnerHere() && interiorDecor.list().some((p) => p?.station === 'loom')) return { kind: 'home', fee: 0 };",
+    "new": "      if (decorOwnerHere() && interiorDecor.list().some((p) => p?.station === 'loom')) return { kind: 'home', fee: 0 };",
+    "tests": [
+      "test/scenes/fb1018d_homebench.test.js"
+    ],
+    "why": "no loom"
+  },
+  {
+    "name": "HOME-BENCH-mason-asks-decor-owner",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (stationOwnerHere() && interiorDecor.list().some((p) => p?.station === 'mason')) return { kind: 'home', fee: 0 };",
+    "new": "      if (decorOwnerHere() && interiorDecor.list().some((p) => p?.station === 'mason')) return { kind: 'home', fee: 0 };",
+    "tests": [
+      "test/scenes/fb1018d_homebench.test.js"
+    ],
+    "why": "no mason's bench"
+  },
+  {
+    "name": "HOME-BENCH-jeweller-asks-decor-owner",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (stationOwnerHere() && interiorDecor.list().some((p) => p?.station === 'jeweller')) return { kind: 'home', fee: 0 };",
+    "new": "      if (decorOwnerHere() && interiorDecor.list().some((p) => p?.station === 'jeweller')) return { kind: 'home', fee: 0 };",
+    "tests": [
+      "test/scenes/fb1018d_homebench.test.js"
+    ],
+    "why": "no jeweller's bench"
+  },
+  {
+    "name": "HOME-BENCH-alchemy-asks-decor-owner",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (stationOwnerHere() && interiorDecor.list().some((p) => p?.station === 'alchemy')) return { kind: 'home', fee: 0 };",
+    "new": "      if (decorOwnerHere() && interiorDecor.list().some((p) => p?.station === 'alchemy')) return { kind: 'home', fee: 0 };",
+    "tests": [
+      "test/scenes/fb1018d_homebench.test.js"
+    ],
+    "why": "no alchemy station"
+  },
+  {
+    "name": "HOME-BENCH-enchant-asks-decor-owner",
+    "file": "src/scenes/worldModes.js",
+    "old": "      if (stationOwnerHere() && interiorDecor.list().some((p) => p?.station === 'enchant')) return { kind: 'home', fee: 0 };",
+    "new": "      if (decorOwnerHere() && interiorDecor.list().some((p) => p?.station === 'enchant')) return { kind: 'home', fee: 0 };",
+    "tests": [
+      "test/scenes/fb1018d_homebench.test.js"
+    ],
+    "why": "the report's own: \"I wanna enchant thingies\" - no Disenchant at the account's enchanting station"
+  },
+  {
+    "name": "HOME-BENCH-storage-shared",
+    "file": "src/scenes/worldModes.js",
+    "old": "    if (interiorHome) return interiorHome.own;\n    const b = interiorBuilding;",
+    "new": "    if (interiorHome) return interiorHome.mine;\n    const b = interiorBuilding;",
+    "tests": [
+      "test/scenes/fb1018d_homebench.test.js"
+    ],
+    "why": "the wrong fix: decorOwnerHere widened, so the account's other character opens a cupboard whose things live in the owning character's save"
+  },
+  {
+    "name": "HOME-BENCH-guildmate-served",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "export const homeStationsServe = (home) => home?.mine === true;",
+    "new": "export const homeStationsServe = (home) => home?.mine === true || home?.guildmate === true;",
+    "tests": [
+      "test/scenes/fb1018d_homebench.test.js"
+    ],
+    "why": "AUDIT FB1018D L1-3: a guildmate the door lets in crafts at the owner's stations - survived every suite before this pin"
+  },
+  {
+    "name": "HOME-BENCH-tenant-served",
+    "file": "src/systems/online/onlineHomes.js",
+    "old": "export const homeStationsServe = (home) => home?.mine === true;",
+    "new": "export const homeStationsServe = (home) => home?.mine === true || home?.tenant > 0;",
+    "tests": [
+      "test/scenes/fb1018d_homebench.test.js"
+    ],
+    "why": "AUDIT FB1018D L1-3: a tenant crafts at the landlord's stations"
+  }
+]

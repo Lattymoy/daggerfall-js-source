@@ -10,7 +10,7 @@
 // DaggerfallBankManager.ReadNativeBankData, Guild.ImportLastRankChange
 // and the classic pitch/yaw/weather conversion laws - reshaped into
 // ONE pure producer: classicSaveToSnapshot builds the port's own
-// SAVE_VERSION envelope (systems/save.js) from an opened SaveGames,
+// SAVE_VERSION envelope (systems/save/save.js) from an opened SaveGames,
 // so the EXISTING restore seam (restorePlayer + the hosts' quickload
 // path) is the only consumer a load-classic entry will ever need.
 // DFU mutates live singletons instead; the envelope is the recorded
@@ -42,15 +42,15 @@ import { SKILLS } from './skills.js';
 import { mintCharacterId } from './characterId.js';   // CHARID1
 import { VAMPIRE_CLANS, LYCANTHROPY_TYPES } from './infection.js';
 import { raceById } from './races.js';
-import { RECORD_TYPES, ENVIRONMENTS, isWagonRecord } from '../formats/saveTreeFile.js';
-import { readMapSaveDiscovery } from '../formats/saveGames.js';
+import { RECORD_TYPES, ENVIRONMENTS, isWagonRecord } from '../formats/save/saveTreeFile.js';
+import { readMapSaveDiscovery } from '../formats/save/saveGames.js';
 import { SHIP_TYPES } from './banking.js';
-import { SAVE_VERSION } from './save.js';
+import { SAVE_VERSION } from './save/save.js';
 import { LEVELING_CLASSIC, newCharacterLevelingSystem } from './oblivionLeveling.js';   // ORL1: a classic save is a classic character
 import { STAT_KEYS_ORDER } from './statMods.js';
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';
 import { ITEM_GROUP_BY_ID } from './biography.js';
-import { GROUP_TEMPLATE_INDICES, templateFor } from './itemTemplates.js';
+import { GROUP_TEMPLATE_INDICES, templateFor } from './item/itemTemplates.js';
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';   // the None sentinel FromItemRecord tests
 import { isPotion, isPotionRecipe } from './useItem.js';
 import {
@@ -58,10 +58,10 @@ import {
   // A4: the flag masks and the legacy artifact-index recovery, at
   // their one home beside createArtifact.
   ITEM_ARTIFACT_MASK, ITEM_IDENTIFIED_MASK, legacyArtifactIndexBitfieldCheck,
-} from './loot.js';
+} from './loot/loot.js';
 import { equipItem } from './equip.js';
-import { guildGroupOfFaction, membershipKey, daySinceZero } from './guilds.js';
-import { createGuildForGroup } from './guildVariants.js';   // GuildManager.CreateGuildObj (:167-213)
+import { guildGroupOfFaction, membershipKey, daySinceZero } from './guild/guilds.js';
+import { createGuildForGroup } from './guild/guildVariants.js';   // GuildManager.CreateGuildObj (:167-213)
 import { dateFromClassicMinutes } from './gameDate.js';
 import { createVampirismCurse } from './vampirism.js';
 import { createLycanthropyCurse } from './lycanthropy.js';
@@ -258,7 +258,7 @@ export function classicGlobalVars(saveVars) {
  *  `position + 13 < RecordLength`, so the LAST 13-byte row - the one
  *  that ends exactly at the record's end - is never read; and an
  *  over-long record stops at the region count with DFU's error arm.
- *  @param {import('../formats/saveTreeFile.js').SaveTreeRecord|null} bankRecord - the SaveTree BankAccount record.
+ *  @param {import('../formats/save/saveTreeFile.js').SaveTreeRecord|null} bankRecord - the SaveTree BankAccount record.
  *  @param {number} regionCount */
 export function classicBankAccounts(bankRecord, regionCount = 62) {
   const accounts = Array.from({ length: regionCount }, (_, regionIndex) => ({
@@ -441,7 +441,7 @@ export function classicItemsAndSpells(saveTree, { spellsByIndex = null } = {}) {
   // production caller throws on a tree without exactly one Character
   // record before it ever gets here, so the path is unreachable THERE;
   // it is reachable from any direct caller, and a pin already is one
-  // (test/audit63_items_loot.test.js). A returned shape that one arm does
+  // (test/systems/audit63_items_loot.test.js). A returned shape that one arm does
   // not honour is the measured failure mode of this codebase - a correct
   // law with a broken seam - whichever arm happens to be cold today.
   if (!character) return { items: [], wagonItems: [], spells: [], goldPieces: 0, scratch };
@@ -530,7 +530,7 @@ export function classicGuildMemberships(saveTree, factionDict, vampire = false) 
       // Temple(Arkay) / KnightlyOrder(Horn) instance and IsMember
       // answers true. The port's slot carries the guild's NAME to say
       // which temple or order fills the shared group slot
-      // (systems/guilds.js:"export function membershipOf"), and that name has to be the
+      // (systems/guild/guilds.js:"export function membershipOf"), and that name has to be the
       // PORT's guild-record name - the one joinGuild writes - not the
       // FACTION.TXT record name ("The Fighters Guild", "Arkay"), which
       // no consumer matches. `createGuildForGroup` is CreateGuildObj,
@@ -648,7 +648,7 @@ export function restoreOldClassSpecials(saveTree, career, classicTransformedRace
  * applies beside it (weather array, quest globals, discovery, and the
  * classic world position, which is a host-frame decision).
  *
- * @param {import('../formats/saveGames.js').SaveGames} saveGames - with openSave() done.
+ * @param {import('../formats/save/saveGames.js').SaveGames} saveGames - with openSave() done.
  * @param {object} [deps]
  * @param {Map} [deps.spellsByIndex] - the SPELLS.STD index (stock-spell dedup).
  * @param {{dict?: object}|null} [deps.factionStore] - the live FACTION.TXT store ({dict}).
@@ -730,7 +730,7 @@ export function classicSaveToSnapshot(saveGames, {
       // AUDIT 63 F31: StartGameBehaviour.StartFromClassicSave :605-606
       // `// Assign weapon hand being used` /
       // `weaponManager.UsingRightHand = !saveVars.UsingLeftHandWeapon;`.
-      // The byte has been parsed since SAV2 (formats/saveVarsFile.js
+      // The byte has been parsed since SAV2 (formats/save/saveVarsFile.js
       // :183, offset 0x3D9) and the conversion has sat in
       // combat/playerWeapon.js with no production caller; this is the
       // caller. world.js's applyPose consumes it beside weaponDrawn.

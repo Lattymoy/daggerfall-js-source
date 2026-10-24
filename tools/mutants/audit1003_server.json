@@ -5,7 +5,7 @@
     "old": "      const j = again ? { role: 's' } : joinBout(st, a.sub, m.r, now);",
     "new": "      const j = joinBout(st, a.sub, m.r, now);",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      const j = again ? { role: 's' } : joinBout(st, a.sub, m.r, now);",
     "new": "      if (again) return;\n      const j = joinBout(st, a.sub, m.r, now);",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "this._fanFrames(words.map((w) => JSON.stringify({ t: 'arena', ...w })), (b) => b.id && (b.af || b.asp));",
     "new": "this._fanFrames(words.map((w) => JSON.stringify({ t: 'arena', ...w })), (b) => b.id);",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ],
     "note": "SCALE5b (re-aimed by content): the bout's words by `_fanFrames`."
   },
@@ -33,7 +33,7 @@
     "old": "_boutFanState(st) { for (const [ws, b] of [...this._all()]) if (b.id && (b.af || b.asp)) this._arenaSend(",
     "new": "_boutFanState(st) { for (const [ws, b] of [...this._all()]) if (b.id) this._arenaSend(",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -42,28 +42,28 @@
     "old": "this._fanFrames(words.map((w) => JSON.stringify({ t: 'arena', ...w })), (b) => b.id && (b.af || b.asp));",
     "new": "this._fanFrames(words.map((w) => JSON.stringify({ t: 'arena', ...w })), (b) => b.id && b.af);",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ],
     "note": "SCALE5b (re-aimed by content): the bout's words by `_fanFrames`."
   },
   {
     "name": "AUDIT1003-S2-the-signed-level-uncapped",
-    "file": "src/net/arenaLaw.js",
+    "file": "src/net/arena/arenaLaw.js",
     "old": "cl <= ARENA_CL_MAX ? cl : arenaLv(lv);\n  return ladderVitalityAt(Math.min(level, ladderLevelCap(tier)));",
     "new": "cl <= ARENA_CL_MAX ? cl : Math.min(arenaLv(lv), ladderLevelCap(tier));\n  return ladderVitalityAt(level);",
     "tests": [
-      "test/audit1003_server.test.js",
-      "test/arena4b_trust.test.js"
+      "test/net/arena/audit1003_server.test.js",
+      "test/net/arena/arena4b_trust.test.js"
     ]
   },
   {
     "name": "AUDIT1003-S2-the-cap-off-another-tier",
-    "file": "src/net/arenaLaw.js",
+    "file": "src/net/arena/arenaLaw.js",
     "old": "return ladderVitalityAt(Math.min(level, ladderLevelCap(tier)));",
     "new": "return ladderVitalityAt(Math.min(level, ladderLevelCap(9)));",
     "tests": [
-      "test/audit1003_server.test.js",
-      "test/arena4b_trust.test.js"
+      "test/net/arena/audit1003_server.test.js",
+      "test/net/arena/arena4b_trust.test.js"
     ]
   },
   {
@@ -72,8 +72,8 @@
     "old": "title: a.title ?? null, lv: a.lv ?? 1, banner: bannerClaim(m.b), casual: m.u === 1, at: now });",
     "new": "title: a.title ?? null, lv: m.lv ?? a.lv ?? 1, banner: bannerClaim(m.b), casual: m.u === 1, at: now });",
     "tests": [
-      "test/audit1003_server.test.js",
-      "test/arena4_relay.test.js"
+      "test/net/arena/audit1003_server.test.js",
+      "test/net/arena/arena4_relay.test.js"
     ]
   },
   {
@@ -82,7 +82,7 @@
     "old": "const mine = !!kept && kept.player === player.id && Number(kept.tier) === c.q && Number(kept.step) === c.u && Number(kept.won) === (won ? 1 : 0);",
     "new": "const mine = !!kept;",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -91,7 +91,7 @@
     "old": "const mine = !!kept && kept.player === player.id && Number(kept.tier)",
     "new": "const mine = !!kept && Number(kept.tier)",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -100,7 +100,7 @@
     "old": "kept.player === player.id && Number(kept.tier) === c.q && Number(kept.step)",
     "new": "kept.player === player.id && Number(kept.step)",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -109,7 +109,7 @@
     "old": "Number(kept.tier) === c.q && Number(kept.step) === c.u && Number(kept.won)",
     "new": "Number(kept.tier) === c.q && Number(kept.won)",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -118,25 +118,25 @@
     "old": " && Number(kept.won) === (won ? 1 : 0);",
     "new": ";",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
     "name": "AUDIT1003-S4-reused-unsaid-on-the-client",
-    "file": "src/scenes/arenaOnline.js",
+    "file": "src/scenes/arena/arenaOnline.js",
     "old": "if (d?.recorded === false && (d.why === 'order' || d.why === 'reused' || d.why === 'forfeit')) say(O[d.why]);",
     "new": "if (d?.recorded === false && (d.why === 'order' || d.why === 'forfeit')) say(O[d.why]);",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
     "name": "AUDIT1003-S4-reused-paid-as-claimed-on-the-client",
-    "file": "src/scenes/arenaOnline.js",
+    "file": "src/scenes/arena/arenaOnline.js",
     "old": "else if (d?.why === 'claimed') won = c.r === 1;",
     "new": "else if (d?.why === 'claimed' || d?.why === 'reused') won = c.r === 1;",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -145,7 +145,7 @@
     "old": "} else if (boutFinished(st) && (exRoom || fighterOfSub(st, a.sub))) {",
     "new": "} else if (exRoom && boutFinished(st)) {",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -154,7 +154,7 @@
     "old": "} else if (boutFinished(st) && (exRoom || fighterOfSub(st, a.sub))) {",
     "new": "} else if (boutFinished(st)) {",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -163,7 +163,7 @@
     "old": "const r = me ? st.rc?.[a.sub] : null;",
     "new": "const r = null;",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -172,7 +172,7 @@
     "old": "this._arenaSend(ws, stateWord(st, me?.id ?? ''));",
     "new": "this._arenaSend(ws, stateWord(st, ''));",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -181,7 +181,7 @@
     "old": "WHERE ${RATING_NOW_SQL('?3')} = ?7 AND ${RATING_NOW_SQL('?4')} = ?8`)",
     "new": "WHERE 1`)",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -190,7 +190,7 @@
     "old": "WHERE ${RATING_NOW_SQL('?3')} = ?7 AND ${RATING_NOW_SQL('?4')} = ?8`)",
     "new": "WHERE ${RATING_NOW_SQL('?4')} = ?8`)",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -199,7 +199,7 @@
     "old": "WHERE ${RATING_NOW_SQL('?3')} = ?7 AND ${RATING_NOW_SQL('?4')} = ?8`)",
     "new": "WHERE ${RATING_NOW_SQL('?3')} = ?7`)",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -208,7 +208,7 @@
     "old": "export const ARENA_RATE_TRIES = 4;",
     "new": "export const ARENA_RATE_TRIES = 1;",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -217,7 +217,7 @@
     "old": "    if (row) return { recorded: false, why: 'claimed', ...(await pvpAnswer(ctx, player.id, row)) };\n  }\n  return { error: 'busy' };",
     "new": "    return { recorded: false, why: 'claimed', ...(row ? await pvpAnswer(ctx, player.id, row) : {}) };\n  }\n  return { error: 'busy' };",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -226,8 +226,8 @@
     "old": "    const o = arenaId();\n    const fighters = [f.a, f.b]",
     "new": "    const o = f.o;\n    const fighters = [f.a, f.b]",
     "tests": [
-      "test/audit1003_server.test.js",
-      "test/arena4_relay.test.js"
+      "test/net/arena/audit1003_server.test.js",
+      "test/net/arena/arena4_relay.test.js"
     ]
   },
   {
@@ -236,7 +236,7 @@
     "old": "    for (const p of await withIliacHonoursAll({ db: primary }, await withArenaHonoursAll({ db: primary }, found, nowS), nowS)) rows.set(p.id, p);",
     "new": "    for (const p of await withIliacHonoursAll({ db: primary }, found, nowS)) rows.set(p.id, p);",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ],
     "note": "SCALE4g (2026-10-10) re-aimed it by content."
   },
@@ -246,7 +246,7 @@
     "old": "const row = await withIliacHonours({ db }, await withArenaHonours({ db }, await db.prepare('SELECT * FROM players WHERE id = ?').bind(l.from_id).first(), nowS), nowS);",
     "new": "const row = await withIliacHonours({ db }, await db.prepare('SELECT * FROM players WHERE id = ?').bind(l.from_id).first(), nowS);",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -255,7 +255,7 @@
     "old": "    for (const p of await withIliacHonoursAll({ db: primary }, await withArenaHonoursAll({ db: primary }, found, nowS), nowS)) rows.set(p.id, p);",
     "new": "    for (const p of await withIliacHonoursAll({ db: primary }, found, nowS)) rows.set(p.id, p);",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ],
     "note": "SCALE4g (2026-10-10) re-aimed it by content."
   },
@@ -265,7 +265,7 @@
     "old": "arena: { grand: grands.has(r.id), champion: champion === r.id } } : r));",
     "new": "arena: { grand: false, champion: champion === r.id } } : r));",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   },
   {
@@ -274,7 +274,7 @@
     "old": "arena: { grand: grands.has(r.id), champion: champion === r.id } } : r));",
     "new": "arena: { grand: grands.has(r.id), champion: false } } : r));",
     "tests": [
-      "test/audit1003_server.test.js"
+      "test/net/arena/audit1003_server.test.js"
     ]
   }
 ]

@@ -5,7 +5,7 @@
   "old": "      if (f.puppet) f._mwWire = 'kit';",
   "new": "      if (false) f._mwWire = 'kit';",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "    applyWireLook(f, r);   // AUDIT MW-NPC II K2-K4",
   "new": "    // AUDIT MW-NPC II K2-K4",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "if (full || f._lkSent !== lk.key) { r.ls = lk.seed;",
   "new": "if (false) { r.ls = lk.seed;",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "if (f) f._lkSent = f._lkPend; }",
   "new": "if (f) f._lkSent = undefined; }",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "{ ...r, ls: r.ls ?? _pupPending.get(key).ls, lw: r.lw ?? _pupPending.get(key).lw, t:",
   "new": "{ ...r, t:",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "  const worn = f._mwWire === 'kit' ? f._mwWornWire : composeLook(e, { eotbSet: null }).items;",
   "new": "  const worn = composeLook(e, { eotbSet: null }).items;",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "  if (f._mwWire && (f._mwSeedWire == null || (f._mwWire === 'kit' && f._mwWornWire == null))) return null;",
   "new": "",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "if (!Number.isInteger(r.ls) || r.ls < 0 || r.ls > 0xffffffff) return null; out.ls = r.ls; }",
   "new": "if (!Number.isInteger(r.ls) || r.ls < 0 || r.ls > 0xffffffff) return null; }",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "if (slot < 0 || slot >= WORN_PIECES_MAX ||",
   "new": "if (slot < 0 || slot > WORN_PIECES_MAX ||",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -86,7 +86,7 @@
   "old": "g < 0 || g >= LOOK_GROUPS.length ||",
   "new": "g < 0 ||",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -95,7 +95,7 @@
   "old": "  if (f._mwSeed != null) return f._mwSeed;\n",
   "new": "",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -104,7 +104,7 @@
   "old": "    if (p) for (const v of [p[0], p[2]]) h = mix(h ^ (Math.round((v || 0) * 10) | 0));   // AUDIT MW-NPC II K4",
   "new": "    // AUDIT MW-NPC II K4",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -113,7 +113,7 @@
   "old": "  if (f._mwSeedWire != null) return f._mwSeedWire;\n",
   "new": "",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -122,7 +122,7 @@
   "old": "    if (f._mwWornWireRaw) worn = f._mwWornWireRaw;",
   "new": "    if (false) worn = f._mwWornWireRaw;",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -131,7 +131,7 @@
   "old": "if (seeded && (full || f._lsSent === undefined)) { r.ls = foeSeed(f); f._lsSent = r.ls; }",
   "new": "",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -140,7 +140,7 @@
   "old": "    f._encId = r.i;\n    f._mwWire = 'seed'; applyWireLook(f, newest);",
   "new": "    f._encId = r.i;\n    applyWireLook(f, newest);",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -149,7 +149,7 @@
   "old": "  const cls = person.stillLook ? null : (person.cls ?? null);",
   "new": "  const cls = person.stillLook ? null : (res.cls ?? null);",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -158,7 +158,7 @@
   "old": "  const guard = !!person.guard;",
   "new": "  const guard = false;",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -167,7 +167,7 @@
   "old": "  if (role === 'beggar') return null;\n",
   "new": "",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -176,7 +176,7 @@
   "old": "  if (!k || k.res !== res || k.cls !== cls || k.guard !== guard || k.still !== still) k = person._mwRes = { res, look: null, cls, guard, still };",
   "new": "  if (!k || k.res !== res) k = person._mwRes = { res, look: null, cls, guard, still };",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -185,7 +185,7 @@
   "old": "personFaceRecordId: res.face ?? 0, gender: res.gender ?? 0, guard }, res.race ?? 'Breton', seed);",
   "new": "personFaceRecordId: res.face ?? 0, gender: res.gender ?? 0, guard: false }, res.race ?? 'Breton', seed);",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ],
   "equivalent": true,
   "why": "census.js mints every watchman's on-duty archive as GUARD_TEXTURE, and folkLookOf (folkBodies.js) reads that archive as the watch's uniform whatever `guard` says - the flag keeps the law said where the look is chosen, for a guard's archive that is not the stock one"
@@ -196,7 +196,7 @@
   "old": "  k.look ??= residentLook(k, res, { still, cls, guard });",
   "new": "  k.look ??= residentLook(k, res, { cls, guard });",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -205,7 +205,7 @@
   "old": "        offer(personActor(y, y._mwLook, b.origin, eyeAt, dt), b);",
   "new": "",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -214,7 +214,7 @@
   "old": "    if (merchantYards && _mode() === 'exterior') merchantYards.offerBodies(offerStreetPerson,",
   "new": "    if (false) merchantYards.offerBodies(offerStreetPerson,",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -223,7 +223,7 @@
   "old": "    if (flies && (rec.flags & CREA_FLAG.Flies) === 0) return",
   "new": "    if (false) return",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -232,52 +232,52 @@
   "old": "  if (creature) return buildCreatureBody({ creature, flies, deps });",
   "new": "  if (creature) return buildCreatureBody({ creature, deps });",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC2-K5-opts-drop-flies",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": ", ...(look.flies ? { flies: true } : {}) };",
   "new": " };",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC2-K5-key-one-body",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "`crea|${look.creature}${look.flies ? '|flies' : ''}`",
   "new": "`crea|${look.creature}`",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC2-K5-look-no-flies",
   "file": "src/characters/creatureBodies.js",
-  "old": ", ...(m.flies ? { flies: true } : {}) })]));",
-  "new": " })]));",
+  "old": ", ...(m.flies ? { flies: true } : {}) });",
+  "new": " });",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC2-G1-blended-not-collapsed",
-  "file": "src/formats/mwGpuSkin.js",
+  "file": "src/formats/morrowind/mwGpuSkin.js",
   "old": "        if (fill[v] === 0 || !(wsum[v] > 0)) {",
   "new": "        if (fill[v] === 0) {",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC2-G1-weights-kept",
-  "file": "src/formats/mwGpuSkin.js",
+  "file": "src/formats/morrowind/mwGpuSkin.js",
   "old": "          for (let s = 0; s < fill[v]; s++) infW[v * SKIN_MAX_INFLUENCES + s] = 0;\n",
   "new": "",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -286,7 +286,7 @@
   "old": "const i = ESM_MASTERS.indexOf(String(n).split(/[\\\\/]/).pop().toLowerCase()); return i < 0 ? ESM_MASTERS.length : i;",
   "new": "const l = String(n).toLowerCase(); const i = ESM_MASTERS.findIndex((x) => l.startsWith(x.slice(0, -4))); return i < 0 ? ESM_MASTERS.length : i;",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -295,7 +295,7 @@
   "old": "      if (!actor?.look || !actor.feet || npcBodiesHeld()) return;",
   "new": "      if (!actor?.look || !actor.feet) return;",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -304,7 +304,7 @@
   "old": "export const npcBodiesHeld = (now = performance.now()) => now < _heldUntil;",
   "new": "export const npcBodiesHeld = (now = performance.now()) => _heldUntil > -Infinity;",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -313,7 +313,7 @@
   "old": "    holdNpcBodies(!!tvf);",
   "new": "    holdNpcBodies(false);",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -322,7 +322,7 @@
   "old": "    batch.castOnly = !!_npcLane?.has('foe', foeId(f));",
   "new": "",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -331,88 +331,88 @@
   "old": "    if (_corpseLate.length) renderer.drawBillboards(_corpseLate,",
   "new": "    if (false) renderer.drawBillboards(_corpseLate,",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC2-H4-falling-unnumbered",
-  "file": "src/scenes/gateHost.js",
+  "file": "src/scenes/gate/gateHost.js",
   "old": "?? { i: g.i, look: hostLookOf(g.k, P.aspect.id),",
   "new": "?? { look: hostLookOf(g.k, P.aspect.id),",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC2-H5-host-unflashed",
-  "file": "src/scenes/gateHost.js",
+  "file": "src/scenes/gate/gateHost.js",
   "old": "        null, b.batch.hitFlash || 0);",
   "new": "        null, 0);",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC2-H5-boss-unflashed",
-  "file": "src/scenes/gateCourt.js",
+  "file": "src/scenes/gate/gateCourt.js",
   "old": "}), shown, null, shown.hitFlash || 0);",
   "new": "}), shown, null, 0);",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC2-L1-one-line",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "    (low ? gate.low : gate.high).push(",
   "new": "    gate.low.push(",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC2-L1-low-first",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "  const next = gate.high.shift() ?? gate.low.shift();",
   "new": "  const next = gate.low.shift() ?? gate.high.shift();",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC2-L1-wedged-holds-all",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "  const stall = setTimeout(release, BODY_GATE_STALL_MS);",
   "new": "  const stall = setTimeout(() => {}, BODY_GATE_STALL_MS);",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC2-L1-npc-builds-high",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "gateBuild(this._gate, build, this._buildInRange);",
   "new": "gateBuild(this._gate, build, false);",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC2-L2-frozen-forgets",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "        if (b.far || dt > 0 || !this._buildInRange) { b.posed = false;",
   "new": "        if (true) { b.posed = false;",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
   "name": "AUDITMWNPC2-L3-corpse-before-far",
-  "file": "src/net/peerBodies.js",
+  "file": "src/net/peer/peerBodies.js",
   "old": "    if (pri && stranger && !unseen) {",
   "new": "    if (pri && stranger && victim.goneAt == null) {",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -421,7 +421,7 @@
   "old": "    if (b.open) { b.depth++; return; }\n",
   "new": "",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -430,7 +430,7 @@
   "old": "    if (b.depth > 0) { b.depth--; return 0; }",
   "new": "",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -439,7 +439,7 @@
   "old": "gl.vertexAttribPointer(6, 4, gl.FLOAT, false, stride, 72);",
   "new": "gl.vertexAttribPointer(6, 4, gl.FLOAT, false, stride, 76);",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -448,7 +448,7 @@
   "old": "    gl.texSubImage2D(gl.TEXTURE_2D, 0, 0, 0, skin.width, skin.height, gl.RGBA, gl.FLOAT, data);\n",
   "new": "",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -457,7 +457,7 @@
   "old": "    gl.bufferSubData(gl.ARRAY_BUFFER, offset * 4, data);",
   "new": "    gl.bufferSubData(gl.ARRAY_BUFFER, offset, data);",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -466,7 +466,7 @@
   "old": "    if (this._skinUnitHolds === skin.tex) {",
   "new": "    if (false) {",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  },
  {
@@ -475,7 +475,7 @@
   "old": "      gl.enableVertexAttribArray(7); gl.vertexAttribPointer(7, 4, gl.FLOAT, false, stride, 88);\n",
   "new": "",
   "tests": [
-   "test/mwnpc_audit2.test.js"
+   "test/characters/mwnpc_audit2.test.js"
   ]
  }
 ]

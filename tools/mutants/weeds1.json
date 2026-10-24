@@ -5,7 +5,7 @@
   "old": "    const minFlatH = texel > 0 ? Math.max(SHADOW_FLAT_MIN_HEIGHT, texel * SHADOW_FLAT_MIN_TEXELS) : SHADOW_FLAT_MIN_HEIGHT;",
   "new": "    const minFlatH = SHADOW_FLAT_MIN_HEIGHT;",
   "tests": [
-   "test/weeds1_flatcasters.test.js"
+   "test/render/weeds1_flatcasters.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "export const SHADOW_FLAT_MIN_TEXELS = 4;",
   "new": "export const SHADOW_FLAT_MIN_TEXELS = 60;",
   "tests": [
-   "test/weeds1_flatcasters.test.js"
+   "test/render/weeds1_flatcasters.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "export const SHADOW_FLAT_MIN_TEXELS = 4;",
   "new": "export const SHADOW_FLAT_MIN_TEXELS = 1;",
   "tests": [
-   "test/weeds1_flatcasters.test.js"
+   "test/render/weeds1_flatcasters.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "const minFlatH = texel > 0 ? Math.max(SHADOW_FLAT_MIN_HEIGHT, texel * SHADOW_FLAT_MIN_TEXELS) : SHADOW_FLAT_MIN_HEIGHT;",
   "new": "const minFlatH = texel * SHADOW_FLAT_MIN_TEXELS;",
   "tests": [
-   "test/weeds1_flatcasters.test.js"
+   "test/render/weeds1_flatcasters.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c, k), sunTexelWorld(c, k), REPLAY_ALL",
   "new": "SHADOW_CASCADE_MIN_RADIUS_TEXELS * sunTexelWorld(c, k), 0, REPLAY_ALL",
   "tests": [
-   "test/weeds1_flatcasters.test.js"
+   "test/render/weeds1_flatcasters.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "this.replay(f, this.faceVP[face], pos, false, 0, 0, REPLAY_ALL, selfNear, cand);",
   "new": "this.replay(f, this.faceVP[face], pos, false, 0, 0.5, REPLAY_ALL, selfNear, cand);",
   "tests": [
-   "test/weeds1_flatcasters.test.js"
+   "test/render/weeds1_flatcasters.test.js"
   ],
   "note": "PERF-SHADOW1 (re-aimed by content): the lantern replay hands on its candidates (`cand`) after `selfNear`; the mutant still passes the lantern a texel."
  },
@@ -60,7 +60,7 @@
   "old": "(b.size && b.size.h < minFlatH)",
   "new": "(b.size && Math.abs(b.size.h) < minFlatH)",
   "tests": [
-   "test/weeds1_flatcasters.test.js"
+   "test/render/weeds1_flatcasters.test.js"
   ]
  },
  {
@@ -69,8 +69,8 @@
   "old": "          if (b.noShadow || b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive) || (b.size && b.size.h < minFlatH)) { this.stats.culled++; continue; }",
   "new": "          if (b.noShadow || b.castOnly || SHADOW_NO_CAST_ARCHIVES.has(b.archive)) { this.stats.culled++; continue; }",
   "tests": [
-   "test/weeds1_flatcasters.test.js",
-   "test/bugs5_field.test.js"
+   "test/render/weeds1_flatcasters.test.js",
+   "test/render/bugs5_field.test.js"
   ]
  }
 ]

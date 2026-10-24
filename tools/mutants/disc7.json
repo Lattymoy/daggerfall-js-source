@@ -5,16 +5,16 @@
     "old": "  if (acts.length) {\n    const f = frame(key, 'actions'",
     "new": "  if (false) {\n    const f = frame(key, 'actions'",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
     "name": "ACT-MENU-loot-switch-gates-the-verbs",
     "file": "src/systems/quickLoot.js",
-    "old": "  _sel = (verbs || quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;",
-    "new": "  _sel = quickLootOn() ? nextSelection(_sel, frame, _nudge) : null;",
+    "old": "  _sel = (verbs || (take && quickLootOn())) ? nextSelection(_sel, frame, _nudge) : null;",
+    "new": "  _sel = (take && quickLootOn()) ? nextSelection(_sel, frame, _nudge) : null;",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (!_sel || !clicks || !(_actionIds || quickLootOn())) return false;",
     "new": "  if (!_sel || !clicks || !quickLootOn()) return false;",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (!_actionIds || !_sel || key == null || _sel.key !== key) return null;",
     "new": "  if (!_actionIds || !_sel || key == null) return null;",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  if (!quickLootOn() || !_sel || _actionIds) return false;",
     "new": "  if (!quickLootOn() || !_sel) return false;",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  foldQuickLoot(null);   // AUDIT DISC7 A8: a plaque taken down by any door takes its highlight with it\n",
     "new": "",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -59,61 +59,61 @@
     "old": "  if (f.kind === 'actions') {\n",
     "new": "  if (false) {\n",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
     "name": "ACT-MENU-horse-command-it-cannot-take-listed",
-    "file": "src/systems/horseCartLaw.js",
+    "file": "src/systems/horse/horseCartLaw.js",
     "old": "  if (cmdLabel) rows.push({ id: ACTIVATE_MODE.Talk, label: cmdLabel });",
     "new": "  rows.push({ id: ACTIVATE_MODE.Talk, label: cmdLabel ?? HCC_ACTION_TEXT.follow });",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
     "name": "ACT-MENU-drive-called-a-ride",
-    "file": "src/systems/horseCartLaw.js",
+    "file": "src/systems/horse/horseCartLaw.js",
     "old": "label: ride === HORSE_ACTIVATION.MountHitchedTeam ? HCC_ACTION_TEXT.drive : HCC_ACTION_TEXT.ride });",
     "new": "label: HCC_ACTION_TEXT.ride });",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
     "name": "ACT-MENU-wait-called-follow",
-    "file": "src/systems/horseCartLaw.js",
+    "file": "src/systems/horse/horseCartLaw.js",
     "old": "      : cmd === HORSE_ACTIVATION.Wait ? HCC_ACTION_TEXT.wait : null;",
     "new": "      : cmd === HORSE_ACTIVATION.Wait ? HCC_ACTION_TEXT.follow : null;",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
     "name": "ACT-MENU-wagon-pack-not-listed",
-    "file": "src/systems/horseCartLaw.js",
+    "file": "src/systems/horse/horseCartLaw.js",
     "old": ", { id: ACTIVATE_MODE.Steal, label: HCC_ACTION_TEXT.openWagon }];\n  if (target === 'followingWagon')",
     "new": "];\n  if (target === 'followingWagon')",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
     "name": "ACT-MENU-horse-verb-ignored",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    const activate = mode ?? deps.activateMode();",
     "new": "    const activate = deps.activateMode();",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
     "name": "ACT-MENU-wagon-verb-ignored",
-    "file": "src/systems/horseCart.js",
+    "file": "src/systems/horse/horseCart.js",
     "old": "    if ((mode ?? deps.activateMode()) === ACTIVATE_MODE.Steal) { openWagonInventoryFromPhysicalActivation(); return true; }\n    if (!tm().hasHorse())",
     "new": "    if (deps.activateMode() === ACTIVATE_MODE.Steal) { openWagonInventoryFromPhysicalActivation(); return true; }\n    if (!tm().hasHorse())",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    if (key === KEY_HORSE) return runtime.handleStationaryHorseActivation(distance, mode);",
     "new": "    if (key === KEY_HORSE) return runtime.handleStationaryHorseActivation(distance);",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    if (key === KEY_HORSE) return withActions({ title: runtime ? runtime.horseTargetLabel : horseTargetLabel('') }, 'horse');",
     "new": "    if (key === KEY_HORSE) return { title: runtime ? runtime.horseTargetLabel : horseTargetLabel('') };",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    .map((r) => (r.enabled ? { id: r.key, label: r.label } : { id: r.key, label: r.label, disabled: true, why: r.why ?? null }));",
     "new": "    .map((r) => ({ id: r.key, label: r.label }));",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "  return r.enabled ? { act: r.act, refusal: null } : { act: null, refusal:",
     "new": "  return true ? { act: r.act, refusal: null } : { act: null, refusal:",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "          else if (!_act.pressCast && plaquePeerAct(cam.pos, useFwd)) {",
     "new": "          else if (false) {",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "      if (plaquePeerAct()) return true;\n",
     "new": "",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -176,16 +176,16 @@
     "old": "(A1: a touch heal on a party mate is the heal alone). The host re-picks them on this ray (A9) and walls block it.\n    if (!pressCast && host.plaquePeerAct?.(eye, dir)) return true;",
     "new": "(A1: a touch heal on a party mate is the heal alone). The host re-picks them on this ray (A9) and walls block it.\n    ;",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
     "name": "ACT-MENU-street-horse-press-without-the-verb",
     "file": "src/scenes/world.js",
-    "old": "() => setMidScreenText(TOO_FAR_AWAY_TEXT), plaqueActionFor(_hccPick.key)); }",
-    "new": "() => setMidScreenText(TOO_FAR_AWAY_TEXT)); }",
+    "old": "() => setMidScreenText(tooFarAwayText()), plaqueActionFor(_hccPick.key)); }",
+    "new": "() => setMidScreenText(tooFarAwayText())); }",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "rv: uint(rv, POSE_RIDE_SPRITES - 1) ?? 0, ...(uint(hs, 1) ? { hs: 1 } : {}), ...(c ? { rc: c } : {}) } : {};",
     "new": "rv: uint(rv, POSE_RIDE_SPRITES - 1) ?? 0, ...(c ? { rc: c } : {}) } : {};",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "...(uint(hs, 1) ? { hs: 1 } : {}), ...(c ? { rc: c } : {}) } : {};",
     "new": "hs: uint(hs, 1) ? 1 : 0, ...(c ? { rc: c } : {}) } : {};",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "    || (a.hs | 0) !== (b.hs | 0)   // DISC7: and the clop's swap, as the rider's own swaps on its edge",
     "new": "    || false   // DISC7: and the clop's swap, as the rider's own swaps on its edge",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -221,16 +221,16 @@
     "old": "rv: to.rv ?? 0, ...(to.hs ? { hs: 1 } : {}), ...(to.rc ? { rc: to.rc } : {}) } : {}),",
     "new": "rv: to.rv ?? 0, ...(to.rc ? { rc: to.rc } : {}) } : {}),",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
     "name": "DISC7-peer-clop-ignores-the-bit",
     "file": "src/net/remotePlayers.js",
-    "old": "movingLessThanHalfSpeed: !moving || !!peer.shown.hs });",
-    "new": "movingLessThanHalfSpeed: !moving });",
+    "old": "walking: !!peer.shown.hs, running: peer.shown.mv === 2 });",
+    "new": "walking: false, running: peer.shown.mv === 2 });",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "      hs: riding && moved && _hsLatch ? 1 : undefined,",
     "new": "      hs: undefined,",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "    w.loop.stop?.(); w.loop = null;\n  };\n  let offLight = null;",
     "new": "  };\n  let offLight = null;",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "  function dispose() { offLight?.(); offLight = null; w.loop",
     "new": "  function dispose() { offLight = null; w.loop",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "  if (was === now) return;\n  for",
     "new": "  return;\n  for",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "  if (was === now) return;\n",
     "new": "",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "    try { f(entity, now, was); } catch (e) {",
     "new": "    { f(entity, now, was); } if (0) { const e = null;",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "      setLightSource(entity, null);   // DISC7: the one door, which says so",
     "new": "      entity.lightSource = null;",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "vec2 prevDepthUV(vec2 wuv) { return uPrevRect.xy + wuv * uPrevRect.zw; }",
     "new": "vec2 prevDepthUV(vec2 wuv) { return wuv; }",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "out[1] = rect[1] / H;",
     "new": "out[1] = rect[1] / W;",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "this.prevValid = !!this.frame && !this._cut && !jumped; holdPrevRect(this.prevRect, this.rect, this.canvas); }",
     "new": "this.prevValid = !!this.frame && !this._cut && !jumped; }",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "    gl.uniform4fv(loc.prevRect, this.prevRect);   // DISC7\n",
     "new": "",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "      row.className = 'wplaque-row wplaque-act';\n      if (i === sel) row.classList.add('sel');",
     "new": "      row.className = 'wplaque-row wplaque-act';",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "    // ACT-MENU (AUDIT DISC7 A11): the player the plaque lit - tryExit's arm, in the same place\n    if (!pressCast && host.plaquePeerAct?.(eye, dir)) return true;",
     "new": "    // ACT-MENU (AUDIT DISC7 A11): the player the plaque lit - tryExit's arm, in the same place\n    ;",
     "tests": [
-      "test/disc7.test.js"
+      "test/systems/disc7.test.js"
     ]
   }
 ]

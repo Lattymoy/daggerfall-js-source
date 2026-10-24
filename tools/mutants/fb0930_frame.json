@@ -4,69 +4,69 @@
     "file": "src/player/collider.js",
     "old": "    if (!sorted) {   // back into the walk's order",
     "new": "    if (false) {   // back into the walk's order",
-    "tests": ["test/fb0930_frame.test.js"]
+    "tests": ["test/player/fb0930_frame.test.js"]
   },
   {
     "name": "FB0930-FRAME-addMesh-keeps-the-stale-filing",
     "file": "src/player/collider.js",
     "old": "    // FB0930-FRAME: a new bucket, or a box that grows, is filed again before the next query. PERF-COL2 (AUDIT): into the\n    // standing filing, where its frames stand where they were filed - a new bucket at the walk's end, a grown one under\n    // the cells it gained; else the whole filing is made again at the next query, as it was for every mesh.\n    const broad = this._broad;\n    if (broad !== null) {",
     "new": "    const broad = this._broad;\n    if (false) {",
-    "tests": ["test/fb0930_frame.test.js"]
+    "tests": ["test/player/fb0930_frame.test.js"]
   },
   {
     "name": "FB0930-FRAME-removeBucket-keeps-the-stale-filing",
     "file": "src/player/collider.js",
     "old": "if (this._buckets.delete(bucketKey)) this._broad = null;",
     "new": "this._buckets.delete(bucketKey);",
-    "tests": ["test/fb0930_frame.test.js"]
+    "tests": ["test/player/fb0930_frame.test.js"]
   },
   {
     "name": "FB0930-FRAME-a-pushed-sphere-never-gathers-again",
     "file": "src/player/collider.js",
     "old": "      if (Math.abs(center[0] - gx) > BROAD_PAD || Math.abs(center[2] - gz) > BROAD_PAD) {\n        gx = center[0];",
     "new": "      if (false) {\n        gx = center[0];",
-    "tests": ["test/fb0930_frame.test.js"]
+    "tests": ["test/player/fb0930_frame.test.js"]
   },
   {
     "name": "FB0930-FRAME-the-sphere-Y-reject-drops-the-skin",
     "file": "src/player/collider.js",
     "old": "yReach = reach + SPHERE_Y_SLACK;",
     "new": "yReach = radius;",
-    "tests": ["test/fb0930_frame.test.js"]
+    "tests": ["test/player/fb0930_frame.test.js"]
   },
   {
     "name": "FB0930-FRAME-a-wrap-zeroes-only-the-bucket-walked",
     "file": "src/player/collider.js",
     "old": "  if (bucket.markEpoch !== MARK_EPOCH) { m.fill(0); bucket.markEpoch = MARK_EPOCH; }",
     "new": "  // mut",
-    "tests": ["test/fb0930_frame.test.js"]
+    "tests": ["test/player/fb0930_frame.test.js"]
   },
   {
     "name": "FB0930-FRAME-a-capsule-with-no-axis-casts-three-samples",
     "file": "src/player/collider.js",
     "old": "const n = ax === 0 && ay === 0 && az === 0 ? 1 : Math.max(1, axisSamples);",
     "new": "const n = Math.max(1, axisSamples);",
-    "tests": ["test/fb0930_frame.test.js"]
+    "tests": ["test/player/fb0930_frame.test.js"]
   },
   {
     "name": "FB0930-FRAME-the-ray-box-forgets-its-reach",
     "file": "src/player/collider.js",
     "old": "const ex = origin[0] + dirW[0] * maxDist, ez = origin[2] + dirW[2] * maxDist;",
     "new": "const ex = origin[0], ez = origin[2];",
-    "tests": ["test/fb0930_frame.test.js"]
+    "tests": ["test/player/fb0930_frame.test.js"]
   },
   {
     "name": "FB0930-FRAME-the-sphere-box-has-no-reach",
     "file": "src/player/collider.js",
     "old": "g = reach + BROAD_PAD + 2 * BOX_SKIN;",
     "new": "g = 0;",
-    "tests": ["test/fb0930_frame.test.js"]
+    "tests": ["test/player/fb0930_frame.test.js"]
   },
   {
     "name": "FB0930-FRAME-a-bucket-is-filed-short-of-its-box",
     "file": "src/player/collider.js",
     "old": "const x0 = Math.floor((mn[0] + ox - BOX_SKIN) / size), x1 = Math.floor((mx[0] + ox + BOX_SKIN) / size);",
     "new": "const x0 = Math.floor((mn[0] + ox) / size) + 1, x1 = Math.floor((mx[0] + ox) / size);",
-    "tests": ["test/fb0930_frame.test.js"]
+    "tests": ["test/player/fb0930_frame.test.js"]
   }
 ]

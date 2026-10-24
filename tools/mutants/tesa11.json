@@ -292,7 +292,7 @@
   },
   {
     "name": "TESA11-flatten-ignored",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "    avg = flat ? flat.avg : calcAvgMaxHeight(samples)[0];",
     "new": "    avg = calcAvgMaxHeight(samples)[0];",
     "tests": [
@@ -301,7 +301,7 @@
   },
   {
     "name": "TESA11-flatten-cache-any",
-    "file": "src/world/terrainGen.js",
+    "file": "src/world/terrain/terrainGen.js",
     "old": "  if (had && had.woods === inputs.woods && had.roads === inputs.roads && had.sites === inputs.sites && had.climates === inputs.climates) return had;",
     "new": "  if (had) return had;",
     "tests": [
@@ -310,7 +310,7 @@
   },
   {
     "name": "TESA11-host-flatten-unsent",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "      flattenAt: dfLocation?.capital?.flattenAt ?? null,",
     "new": "      flattenAt: null,",
     "tests": [
@@ -319,7 +319,7 @@
   },
   {
     "name": "TESA11-host-slice-reused",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPlacesHost.js",
     "old": "had.capital.k === at.k && had.capital.s === at.s &&",
     "new": "had.capital.k === at.k &&",
     "tests": [

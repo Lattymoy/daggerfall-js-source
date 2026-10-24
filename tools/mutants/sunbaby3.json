@@ -4,69 +4,69 @@
     "file": "src/world/sunbabySky.js",
     "old": "export const SUNBABY_MORPH_S = 1;",
     "new": "export const SUNBABY_MORPH_S = 6;",
-    "tests": ["test/sunbaby2_phases.test.js"]
+    "tests": ["test/world/sunbaby2_phases.test.js"]
   },
   {
     "name": "SUNBABY3-photo-upside-down",
     "file": "src/world/sunbabySky.js",
     "old": "    vec2 k = vec2(${f(0.5 / SUNBABY_TODD_PHOTO_FIT)}, -${f(0.5 / SUNBABY_TODD_PHOTO_FIT)});",
     "new": "    vec2 k = vec2(${f(0.5 / SUNBABY_TODD_PHOTO_FIT)}, ${f(0.5 / SUNBABY_TODD_PHOTO_FIT)});",
-    "tests": ["test/sunbaby3_todd_photo.test.js"]
+    "tests": ["test/world/sunbaby3_todd_photo.test.js"]
   },
   {
     "name": "SUNBABY3-photo-not-drawn",
     "file": "src/world/sunbabySky.js",
     "old": "    col = mix(col, ph, todd * photoOn * sbFill(",
     "new": "    col = mix(col, ph, 0.0 * sbFill(",
-    "tests": ["test/sunbaby3_todd_photo.test.js"]
+    "tests": ["test/world/sunbaby3_todd_photo.test.js"]
   },
   {
     "name": "SUNBABY3-cartoon-over-photo",
     "file": "src/world/sunbabySky.js",
     "old": "  float cart = todd * (1.0 - photoOn);",
     "new": "  float cart = todd;",
-    "tests": ["test/sunbaby3_todd_photo.test.js"]
+    "tests": ["test/world/sunbaby3_todd_photo.test.js"]
   },
   {
     "name": "SUNBABY3-pass-never-uploaded",
     "file": "src/render/sunbabySkyRenderer.js",
     "old": "    if (this._photo) this._uploadPhoto();",
     "new": "    void 0;",
-    "tests": ["test/sunbaby3_todd_photo.test.js"]
+    "tests": ["test/world/sunbaby3_todd_photo.test.js"]
   },
   {
     "name": "SUNBABY3-pass-never-on",
     "file": "src/render/sunbabySkyRenderer.js",
     "old": "    this.photoOn = 1;",
     "new": "    this.photoOn = 0;",
-    "tests": ["test/sunbaby3_todd_photo.test.js"]
+    "tests": ["test/world/sunbaby3_todd_photo.test.js"]
   },
   {
     "name": "SUNBABY3-pass-on-unsaid",
     "file": "src/render/sunbabySkyRenderer.js",
     "old": "    gl.uniform1f(u.uToddPhotoOn, this.photoOn);",
     "new": "    gl.uniform1f(u.uToddPhotoOn, 0);",
-    "tests": ["test/sunbaby3_todd_photo.test.js"]
+    "tests": ["test/world/sunbaby3_todd_photo.test.js"]
   },
   {
     "name": "SUNBABY3-pass-reuploaded",
     "file": "src/render/sunbabySkyRenderer.js",
     "old": "    const gl = this.gl, img = this._photo;\n    this._photo = null;",
     "new": "    const gl = this.gl, img = this._photo;\n    void 0;",
-    "tests": ["test/sunbaby3_todd_photo.test.js"]
+    "tests": ["test/world/sunbaby3_todd_photo.test.js"]
   },
   {
     "name": "SUNBABY3-pass-flip-unguarded",
     "file": "src/render/sunbabySkyRenderer.js",
     "old": "    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);",
     "new": "    void 0;",
-    "tests": ["test/sunbaby3_todd_photo.test.js"]
+    "tests": ["test/world/sunbaby3_todd_photo.test.js"]
   },
   {
     "name": "SUNBABY3-pass-photo-leaked",
     "file": "src/render/sunbabySkyRenderer.js",
     "old": "    gl.deleteTexture(this.photoTex);",
     "new": "    void 0;",
-    "tests": ["test/sunbaby1_event.test.js"]
+    "tests": ["test/net/sunbaby1_event.test.js"]
   }
 ]

@@ -15,9 +15,9 @@ import { buildManePalace, buildTwoMoonsTemple, buildTorvalQuay, buildTorvalWall,
 import { buildXanmeer, buildHist, buildHelstromWalks, buildPalisade, helstromCorners, helstromOpenings } from '../src/world/capitalHelstrom.js';
 import { CAPITAL_ARCHIVE, CAPITAL_ART, capitalArt, installCapitals, _resetCapitals } from '../src/world/capitalModels.js';
 import { customModelFor } from '../src/world/customModels.js';
-import { CITIES } from '../src/world/tamrielGeography.js';
-import { provinceKeyBeyondBay } from '../src/world/tamrielLand.js';
-import { setTamrielFit, inBay } from '../src/world/tamrielFrame.js';
+import { CITIES } from '../src/world/tamriel/tamrielGeography.js';
+import { provinceKeyBeyondBay } from '../src/world/tamriel/tamrielLand.js';
+import { setTamrielFit, inBay } from '../src/world/tamriel/tamrielFrame.js';
 
 afterEach(() => setTamrielFit(null));
 

@@ -1,58 +1,58 @@
 [
   {
     "name": "REVENANT-VOICE-the-id-unread",
-    "file": "src/systems/revenantPersonality.js",
+    "file": "src/systems/revenant/revenantPersonality.js",
     "old": "  return pool[hashStr(`voice:${id ?? ''}`) % pool.length];",
     "new": "  return pool[0];",
-    "tests": ["test/revenant_voice.test.js"]
+    "tests": ["test/systems/revenant/revenant_voice.test.js"]
   },
   {
     "name": "REVENANT-VOICE-the-lean-ignored",
-    "file": "src/systems/revenantPersonality.js",
+    "file": "src/systems/revenant/revenantPersonality.js",
     "old": "  const pool = LEANS[leanOf(mobileType | 0)];",
     "new": "  const pool = LEANS.person;",
-    "tests": ["test/revenant_voice.test.js"]
+    "tests": ["test/systems/revenant/revenant_voice.test.js"]
   },
   {
     "name": "REVENANT-VOICE-the-name-unfilled",
-    "file": "src/systems/revenantPersonality.js",
+    "file": "src/systems/revenant/revenantPersonality.js",
     "old": "const fill = (s, vars) => s.replace(PLACEHOLDER, (_, k) => String(vars[k]));",
     "new": "const fill = (s, vars) => s;",
-    "tests": ["test/revenant_voice.test.js"]
+    "tests": ["test/systems/revenant/revenant_voice.test.js"]
   },
   {
     "name": "REVENANT-VOICE-the-manner-lost",
-    "file": "src/systems/revenantPersonality.js",
+    "file": "src/systems/revenant/revenantPersonality.js",
     "old": ".replace('{manner}', manner);",
     "new": ".replace('{manner}', '');",
-    "tests": ["test/revenant_voice.test.js"]
+    "tests": ["test/systems/revenant/revenant_voice.test.js"]
   },
   {
     "name": "REVENANT-VOICE-a-moment-emptied",
-    "file": "src/systems/revenantPersonality.js",
+    "file": "src/systems/revenant/revenantPersonality.js",
     "old": ", 'Weakness. Fine. Point me at something to kill.'],",
     "new": "],",
-    "tests": ["test/revenant_voice.test.js"]
+    "tests": ["test/systems/revenant/revenant_voice.test.js"]
   },
   {
     "name": "REVENANT-VOICE-a-record-without",
-    "file": "src/systems/revenant.js",
+    "file": "src/systems/revenant/revenant.js",
     "old": "      personality: personalityFor(id, mobileType),   // REVENANT-VOICE: who it is - one per id",
     "new": "      personality: '',",
-    "tests": ["test/revenant_voice.test.js"]
+    "tests": ["test/systems/revenant/revenant_voice.test.js"]
   },
   {
     "name": "REVENANT-VOICE-an-older-record-without",
-    "file": "src/systems/revenant.js",
+    "file": "src/systems/revenant/revenant.js",
     "old": "  const personality = isPersonality(r.personality) ? r.personality : personalityFor(r.id, r.mobileType);   // REVENANT-VOICE: an older record's, drawn from its id as a new one's is",
     "new": "  const personality = r.personality;",
-    "tests": ["test/revenant_voice.test.js"]
+    "tests": ["test/systems/revenant/revenant_voice.test.js"]
   },
   {
     "name": "REVENANT-VOICE-the-flee-voice-lost-at-the-deed",
-    "file": "src/systems/revenant.js",
+    "file": "src/systems/revenant/revenant.js",
     "old": "    const id = voiceIdOf(entity);",
     "new": "    const id = mintCharacterId();",
-    "tests": ["test/revenant_voice.test.js"]
+    "tests": ["test/systems/revenant/revenant_voice.test.js"]
   }
 ]

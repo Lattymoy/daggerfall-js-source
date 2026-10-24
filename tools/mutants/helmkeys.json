@@ -1,83 +1,83 @@
 [
   {
     "name": "HELMKEYS-more-sail-lowering",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (state.sailPosition === 0) { RaiseSails(); return; }",
     "new": "    if (state.sailPosition === 0) { LowerSails(); return; }",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELMKEYS-less-sail-raising",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (squareHandled(b) && !squareStowed(b)) { ToggleSquareSails(); return; }\n    LowerSails();",
     "new": "    if (squareHandled(b) && !squareStowed(b)) { ToggleSquareSails(); return; }\n    RaiseSails();",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELMKEYS-the-refusal-unsaid",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    deps.hudText('All sail is set.');",
     "new": "",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELMKEYS-the-square-step-skipped",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (squareHandled(b) && squareStowed(b)) { ToggleSquareSails(); return; }\n    deps.hudText('All sail is set.');",
     "new": "    deps.hudText('All sail is set.');",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELMKEYS-the-order-reversed",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "    if (squareHandled(b) && !squareStowed(b)) { ToggleSquareSails(); return; }\n    LowerSails();",
     "new": "    LowerSails();",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELMKEYS-told-every-frame",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "if (state.ironsFor >= IRONS_TELL_S && !state.ironsTold) {",
     "new": "if (state.ironsFor >= IRONS_TELL_S) {",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELMKEYS-told-at-once",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "state.ironsFor = irons ? f(state.ironsFor + dt()) : 0;",
     "new": "state.ironsFor = irons ? IRONS_TELL_S : 0;",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELMKEYS-the-wind-sense-reversed",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": "return toWind >= 180 - IRONS_TELL_DEG && ",
     "new": "return toWind <= IRONS_TELL_DEG && ",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
     "name": "HELMKEYS-the-way-unread",
-    "file": "src/systems/comeSailAway.js",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
     "old": " && state.MoveVectorCurrent[2] < IRONS_TELL_WAY;",
     "new": ";",
     "tests": [
-      "test/csa_sailing.test.js"
+      "test/systems/comeSailAway/csa_sailing.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": " || (!!HELM_RUDDER_ACTIONS[action] && helmTurnKeys() && held(keys, HELM_RUDDER_ACTIONS[action])),",
     "new": ",",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "(!!HELM_RUDDER_ACTIONS[action] && helmTurnKeys() && held(keys, HELM_RUDDER_ACTIONS[action]))",
     "new": "(!!HELM_RUDDER_ACTIONS[action] && held(keys, HELM_RUDDER_ACTIONS[action]))",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      if (helmTurnKeys()) kb.x = 0;",
     "new": "",
     "tests": [
-      "test/fixf_keybinds.test.js"
+      "test/scenes/fixf_keybinds.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    if (owner === partner) shareBinding(store, code, action, true);",
     "new": "    if (owner === partner) void 0;",
     "tests": [
-      "test/inputactions.test.js"
+      "test/systems/inputactions.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    if (owner === partner) shareBinding(store, code, action, true);",
     "new": "    if (owner != null) shareBinding(store, code, action, true);",
     "tests": [
-      "test/inputactions.test.js"
+      "test/systems/inputactions.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": " || getBinding(store, action, false) != null || store.removedPrimary.has(action))) continue;",
     "new": " || getBinding(store, action, false) != null)) continue;",
     "tests": [
-      "test/inputactions.test.js"
+      "test/systems/inputactions.test.js"
     ]
   },
   {
@@ -140,16 +140,16 @@
     "old": "choice: !csaRuntime?.isSailing() && pressed(latch.edge, keys, 'ActChoice')",
     "new": "choice: pressed(latch.edge, keys, 'ActChoice')",
     "tests": [
-      "test/inputactions.test.js"
+      "test/systems/inputactions.test.js"
     ]
   },
   {
     "name": "HELMKEYS-the-legend-gone",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "  const parts = [keys(h.hasSails ? 'Oars & sails' : 'Oars', 'MoveForwards', 'MoveBackwards', A.more, A.less), keys('Steer', 'MoveLeft', 'MoveRight', 'TurnLeft', 'TurnRight')];",
     "new": "  const parts = [];",
     "tests": [
-      "test/csa_together.test.js"
+      "test/systems/csa_together.test.js"
     ]
   }
 ]

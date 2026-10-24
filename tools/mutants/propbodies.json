@@ -1,0 +1,236 @@
+[
+  {
+    "name": "PROP-BODIES-the-motor-s-call-gone",
+    "file": "src/player/motor.js",
+    "old": "      keepOffBodies(this, CAPSULE_RADIUS);   // PROP-BODIES: a tree's trunk, a rock, a barrel - walked round, never through\n",
+    "new": "",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-clamp-s-reach-without-the-capsule",
+    "file": "src/player/bodyClamp.js",
+    "old": "const R = it.r + radius, dx",
+    "new": "const R = it.r, dx",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-from-inside-out-to-the-edge-at-once",
+    "file": "src/player/bodyClamp.js",
+    "old": "const to = pd >= R ? R : Math.max(d, pd);",
+    "new": "const to = R;",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-momentum-kept",
+    "file": "src/player/bodyClamp.js",
+    "old": "    if (into < 0) { m._airVelX -= into * nx; m._airVelZ -= into * nz; }\n",
+    "new": "",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-span-unread",
+    "file": "src/player/bodyClamp.js",
+    "old": "    if (cy >= top || cy + it.h <= feet) return;",
+    "new": "    if (cy >= Infinity) return;",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-journey-held",
+    "file": "src/player/bodyClamp.js",
+    "old": "|| m._pkMove || m.travelling?.()) return;",
+    "new": "|| m._pkMove) return;",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-a-climb-held",
+    "file": "src/player/bodyClamp.js",
+    "old": "m.freezeMotor > 0 || m.climb?.isClimbing || m._wall",
+    "new": "m.freezeMotor > 0 || m._wall",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-felled-tree-a-body",
+    "file": "src/ai/cover.js",
+    "old": "if (FELLED.has(c) || c.noCover) continue;",
+    "new": "if (c.noCover) continue;",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-set-s-frame-unread",
+    "file": "src/ai/cover.js",
+    "old": "const t = set.t(), x = p[0] - t[0], z = p[2] - t[2];",
+    "new": "const t = [0, 0, 0], x = p[0], z = p[2];",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-a-body-filed-as-cover",
+    "file": "src/ai/cover.js",
+    "old": "      if (it.body) { fileBody(set, it); continue; }   // PROP-BODIES: a body, never cover\n",
+    "new": "",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-near-without-the-reach",
+    "file": "src/ai/cover.js",
+    "old": "const dx = x - c[0], dz = z - c[2], R = it.r + reach;",
+    "new": "const dx = x - c[0], dz = z - c[2], R = it.r;",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-full-tier-flora",
+    "file": "src/world/propBodies.js",
+    "old": "if (tree || sway === RESPONSE.full) return body(",
+    "new": "if (tree) return body(",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-flora-solid",
+    "file": "src/world/propBodies.js",
+    "old": "  if (sway !== 0) return null;   // the flora, Low and Medium\n",
+    "new": "",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-flora-unasked",
+    "file": "src/world/propBodies.js",
+    "old": "const sway = isNatureArchive(archive) ? responseByte(archive, record) : 0;",
+    "new": "const sway = 0;",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-step-unasked",
+    "file": "src/world/propBodies.js",
+    "old": "(r > 0 && h >= STEP_OFFSET ? ",
+    "new": "(r > 0 ? ",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-never-cover-archives-a-body",
+    "file": "src/world/propBodies.js",
+    "old": "if (NOT_COVER_ARCHIVES.has(archive) || c?.noCover) return null;",
+    "new": "if (c?.noCover) return null;",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-step-s-rows-read",
+    "file": "src/world/propBodies.js",
+    "old": "hi = bmp.height - 1 - Math.round(STEP_OFFSET / perRow);",
+    "new": "hi = bmp.height - 1;",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-rows-over-the-head-read",
+    "file": "src/world/propBodies.js",
+    "old": "Math.min(size.h, CAPSULE_HEIGHT) / perRow",
+    "new": "size.h / perRow",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-widest-row",
+    "file": "src/world/propBodies.js",
+    "old": "share = spans[spans.length >> 1];",
+    "new": "share = spans[spans.length - 1];",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-extent-not-the-picture",
+    "file": "src/world/propBodies.js",
+    "old": "      let n = 0;\n      for (let x = 0; x < bmp.width; x++) if (solid(y * bmp.width + x)) n++;",
+    "new": "      let a = -1, n = 0;\n      for (let x = 0; x < bmp.width; x++) if (solid(y * bmp.width + x)) { if (a < 0) a = x; n = x - a + 1; }",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-stream-s-groups-unbodied",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      coverItems.push(...flatBodies(t, archive, record, plain, centers, { tree: g.natureSet.has(archive) && isTreeRecord(g.natureBase(archive), record) }));   // PROP-BODIES: the record's own, whichever picture stands\n",
+    "new": "",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-jungle-s-trunks-unbodied",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      g.centers.forEach((c, i) => coverItems.push(jungleBody(c, species, g.own[i])));   // PROP-BODIES: its trunk, whichever picture stands\n",
+    "new": "",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-scaled-flats-unbodied",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "      coverItems.push(...flatBodies(t, archive, record, size, centers, { tree: natureSet.has(archive) && isTreeRecord(natureBase(archive), record) }));   // PROP-BODIES\n",
+    "new": "",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-city-unbodied",
+    "file": "src/scenes/exterior.js",
+    "old": "    collider.cover.add('prop-bodies', flatBodies(t, archive, record, plain, centers, { tree: archive === natureArchive && isTreeRecord(natureArchive, record) }));   // PROP-BODIES: the record's own\n",
+    "new": "",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-rooms-unbodied",
+    "file": "src/scenes/interiorContext.js",
+    "old": "    collider.cover.add('prop-bodies', flatBodies(t, archive, record, size, centers));   // PROP-BODIES\n",
+    "new": "",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  },
+  {
+    "name": "PROP-BODIES-the-dungeon-unbodied",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    coverItems.push(...flatBodies(t, archive, record, size, based));   // PROP-BODIES (a person's none: its noCover)\n",
+    "new": "",
+    "tests": [
+      "test/player/propbodies.test.js"
+    ]
+  }
+]

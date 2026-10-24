@@ -141,6 +141,12 @@ export class FlatAnimator {
     }
   }
 
+  /** FIELD BUGS 2026-10-18 LOOT-FLATS: a batch rebuilt in place (its centres baked into a buffer a recentre or a moved
+   *  ground has to remint) keeps its entry and its clock - the old batch's entry points at the new one. */
+  rebind(from, to) {
+    for (const e of this.entries) if (e.batch === from) { e.batch = to; to.frame = e.anim.frame; }
+  }
+
   clear() { this.entries.length = 0; }
 
   tick(dt) {

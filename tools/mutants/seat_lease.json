@@ -5,8 +5,8 @@
   "old": "DO UPDATE SET holder = ?1, until = ?2 WHERE until <= ?3`",
   "new": "DO UPDATE SET holder = ?1, until = ?2 WHERE until >= 0 OR ?3`",
   "tests": [
-   "test/seat1c_service.test.js",
-   "test/d1load.test.js"
+   "test/net/seat1c_service.test.js",
+   "test/server/d1load.test.js"
   ]
  },
  {
@@ -15,8 +15,8 @@
   "old": "if (!Number(took?.meta?.changes)) return { settled: 0, pending: true };",
   "new": "if (!Number(took?.meta?.changes)) return { settled: 0, pending: false };",
   "tests": [
-   "test/seat1c_service.test.js",
-   "test/d1load.test.js"
+   "test/net/seat1c_service.test.js",
+   "test/server/d1load.test.js"
   ]
  },
  {
@@ -25,7 +25,7 @@
   "old": ".pending && !SEAT_READS.has(path)) return no('seats-settling', 503, origin);",
   "new": ".pending) return no('seats-settling', 503, origin);",
   "tests": [
-   "test/seat1c_service.test.js"
+   "test/net/seat1c_service.test.js"
   ]
  },
  {
@@ -34,16 +34,17 @@
   "old": "try { await db.prepare('DELETE FROM town_seat_settling WHERE id = 1 AND holder = ?').bind(holder).run(); } catch { /* it runs out */ }",
   "new": "/* never freed */",
   "tests": [
-   "test/seat1c_service.test.js"
+   "test/net/seat1c_service.test.js"
   ]
  },
  {
   "name": "SEATLEASE-nothing-due",
   "file": "server-account/src/seatTurning.js",
-  "old": "if (last != null && Number(last) + 1 >= weekAt(nowS)) return { settled: 0, pending: false };",
-  "new": "if (last != null && Number(last) + 1 > weekAt(nowS)) return { settled: 0, pending: false };",
+  "old": "if (last != null && Number(last) + 1 >= weekAt(nowS)) { keepWeekSettled",
+  "new": "if (last != null && Number(last) + 1 > weekAt(nowS)) { keepWeekSettled",
   "tests": [
-   "test/seat1c_service.test.js"
-  ]
+   "test/net/seat1c_service.test.js"
+  ],
+  "note": "PIN MOVED (PRIMARY-FOLD part two): re-aimed by content - the chapters' sheet reads in one batch, a week read settled kept (weekKept.js)."
  }
 ]

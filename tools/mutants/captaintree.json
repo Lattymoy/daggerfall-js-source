@@ -1,0 +1,802 @@
+[
+  {
+    "name": "CT-xp-sunk-unweighed",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "for (const [trade, w] of Object.entries(CAPTAIN_XP.sunk)) xp += n0(log.sunk?.[trade]) * w;",
+    "new": "",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-xp-contracts-unweighed",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "for (const v of Object.values(log.contracts ?? {})) xp += n0(v) * CAPTAIN_XP.contract;",
+    "new": "",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-xp-leagues-whole",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "xp += Math.floor(n0(log.sailed) / LEAGUE_M) * CAPTAIN_XP.league;",
+    "new": "xp += n0(log.sailed) / LEAGUE_M * CAPTAIN_XP.league;",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-xp-traded-unread",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "xp += Math.floor(n0(log.traded) / TRADED_GOLD) * CAPTAIN_XP.traded;",
+    "new": "",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-xp-negative-counted",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "const n0 = (v) => (Number.isFinite(v) && v > 0 ? v : 0);",
+    "new": "const n0 = (v) => (Number.isFinite(v) ? v : 0);",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-curve-linear",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "(L <= 1 ? 0 : Math.round(100 * (L - 1) ** 1.6))",
+    "new": "(L <= 1 ? 0 : Math.round(100 * (L - 1)))",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-level-uncapped",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "while (L < CAPTAIN_LEVEL_MAX && n0(xp) >= xpForLevel(L + 1)) L++;",
+    "new": "while (L < 99 && n0(xp) >= xpForLevel(L + 1)) L++;",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-points-a-level",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "export const starPoints = (level) => Math.max(0, Math.min(CAPTAIN_LEVEL_MAX, level | 0) - 1);",
+    "new": "export const starPoints = (level) => Math.max(0, Math.min(CAPTAIN_LEVEL_MAX, level | 0));",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-held-unjoined",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "      if (seen.has(id) || !neighboursOf(id).some((n) => seen.has(n))) continue;",
+    "new": "      if (seen.has(id)) continue;",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-held-one-pass",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "      seen.add(id); out.push(id); grew = true;",
+    "new": "      seen.add(id); out.push(id);",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-held-uncapped",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "      if (out.length - 1 >= points) break;\n      if (seen.has(id)",
+    "new": "      if (seen.has(id)",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-take-no-points",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "&& neighboursOf(id).some((n) => h.has(n)) && h.size - 1 < points;",
+    "new": "&& neighboursOf(id).some((n) => h.has(n));",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-back-no-cascade",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "  return [id, ...[...h].filter((x) => !reach.has(x))];",
+    "new": "  return [id];",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-way-not-shortest",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "    const cur = queue.shift();",
+    "new": "    const cur = queue.pop();",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-stats-last-only",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "out[k] = Math.round((out[k] + v) * 10000) / 10000;",
+    "new": "out[k] = v;",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-scale-no-floor",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "export const statScale = (stats, key) => Math.max(0.1, 1 + (Number(stats?.[key]) || 0));",
+    "new": "export const statScale = (stats, key) => 1 + (Number(stats?.[key]) || 0);",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-refit-way-unread",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "speed: refit.speed * statScale(stats, 'way')",
+    "new": "speed: refit.speed",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-refit-harm-unread",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "guns: refit.guns * statScale(stats, 'harm')",
+    "new": "guns: refit.guns",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-refit-oars-unread",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "oars: statScale(stats, 'oars'), turn: statScale(stats, 'turn'),",
+    "new": "oars: 1, turn: statScale(stats, 'turn'),",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-refit-turn-unread",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "oars: statScale(stats, 'oars'), turn: statScale(stats, 'turn'),",
+    "new": "oars: statScale(stats, 'oars'), turn: 1,",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-worth-reload-unfloored",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "reload: Math.max(RELOAD_LEAST, worth.reload * (1 - n('reload')))",
+    "new": "reload: worth.reload * (1 - n('reload'))",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-worth-mend-unread",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "mend: worth.mend * statScale(stats, 'repair')",
+    "new": "mend: worth.mend",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-worth-hands-unread",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "hands: Math.max(0, worth.hands + Math.round(n('boarders')))",
+    "new": "hands: worth.hands",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-shot-grape-unread",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "if (s === 'grape' && stats.grape) return { ...gun, crew: gun.crew * statScale(stats, 'grape') };",
+    "new": "",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-shot-chain-natural-missed",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "const s = shot == null ? naturalShot(gunKind) : shotId(shot);",
+    "new": "const s = shotId(shot);",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-shot-heated-unread",
+    "file": "src/systems/naval/captainTree.js",
+    "old": "if (s === 'heated' && stats.heated) return { ...gun, fireK: statScale(stats, 'heated') };",
+    "new": "",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-fire-uncapped",
+    "file": "src/systems/naval/shotKinds.js",
+    "old": "return k === 1 ? c : Math.min(FIRE_MOST, c * k);",
+    "new": "return c * k;",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-fire-k-unread",
+    "file": "src/systems/naval/shotKinds.js",
+    "old": "return k === 1 ? c : Math.min(FIRE_MOST, c * k);",
+    "new": "return c;",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-foul-more-unread",
+    "file": "src/systems/naval/navalFoul.js",
+    "old": "until: now + FOUL_S + Math.max(0, Number(more) || 0) };",
+    "new": "until: now + FOUL_S };",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-foul-more-negative",
+    "file": "src/systems/naval/navalFoul.js",
+    "old": "until: now + FOUL_S + Math.max(0, Number(more) || 0) };",
+    "new": "until: now + FOUL_S + (Number(more) || 0) };",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-trade-edge-unread",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "  const k = SPREAD * (1 - Math.max(0, Math.min(TRADE_MOST, Number(edge) || 0)));",
+    "new": "  const k = SPREAD;",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-trade-edge-uncapped",
+    "file": "src/systems/naval/tradeGoods.js",
+    "old": "  const k = SPREAD * (1 - Math.max(0, Math.min(TRADE_MOST, Number(edge) || 0)));",
+    "new": "  const k = SPREAD * (1 - Math.max(0, Number(edge) || 0));",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-trade-office-unread",
+    "file": "src/scenes/harbourOffice.js",
+    "old": "const rows = exchangeOf(port, day, L.dealtAt(port.key, day), L.stats?.().trade, townAt(port))",
+    "new": "const rows = exchangeOf(port, day, L.dealtAt(port.key, day), 0, townAt(port))",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-host-worth-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "s.worth = captainWorth(b.crewed ? crewWorth(c.hands, ashoreNames(b)) : NO_WORTH, deps.captain?.stats?.());",
+    "new": "s.worth = b.crewed ? crewWorth(c.hands, ashoreNames(b)) : NO_WORTH;",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-host-aim-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": " * statScale(deps.captain?.stats?.(), 'aim'));   // CAPTAIN-TREE: her captain's aim",
+    "new": ");",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-host-shot-anyones",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "e.shot, e.t, isMine(e.shooter) ? deps.captain?.stats?.() : null);",
+    "new": "e.shot, e.t, deps.captain?.stats?.());",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-host-fire-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "random() < shotFireChance(e.shot, FIRE_CHANCE, gun.fireK);",
+    "new": "random() < shotFireChance(e.shot, FIRE_CHANCE);",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-host-ram-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": " * statScale(deps.captain?.stats?.(), 'ram'));   // CAPTAIN-TREE: her captain's ram",
+    "new": ");",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-host-foul-unread",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "foul(e.ship, myId(), clock, deps.captain?.stats?.().foul);",
+    "new": "foul(e.ship, myId(), clock);",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-csa-oars-unread",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "* hurt) * rigOf(b, 'oars')) * peace());",
+    "new": "* hurt) * 1) * peace());",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-csa-turn-sail-unread",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "* galeTurn()) * rigOf(b, 'turn'));",
+    "new": "* galeTurn()) * 1);",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-csa-key-unread",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "const k = Number(refitOf(b)?.[key]);",
+    "new": "const k = Number(refitOf(b)?.speed);",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-fleet-stars-unread",
+    "file": "src/scenes/fleetHost.js",
+    "old": "return rec ? captainRefit(refitOf(rec), deps.captain?.()?.stats?.() ?? null) : refitOf(null);",
+    "new": "return refitOf(rec);",
+    "tests": [
+      "test/systems/naval/fleet.test.js"
+    ]
+  },
+  {
+    "name": "CT-fleet-stars-on-strangers",
+    "file": "src/scenes/fleetHost.js",
+    "old": "return rec ? captainRefit(refitOf(rec), deps.captain?.()?.stats?.() ?? null) : refitOf(null);",
+    "new": "return captainRefit(refitOf(rec), deps.captain?.()?.stats?.() ?? null);",
+    "tests": [
+      "test/systems/naval/fleet.test.js"
+    ]
+  },
+  {
+    "name": "CT-fleet-restat-none",
+    "file": "src/scenes/fleetHost.js",
+    "old": "    for (const rec of fleetShips()) n?.refitBoat?.(standing.get(rec.uid) ?? { uid: rec.uid, hull: rec.hull });",
+    "new": "",
+    "tests": [
+      "test/systems/naval/fleet.test.js"
+    ]
+  },
+  {
+    "name": "RO-fleet-lock-unread",
+    "file": "src/scenes/fleetHost.js",
+    "old": "const locked = !!cost && cost.level > level;",
+    "new": "const locked = false;",
+    "tests": [
+      "test/systems/naval/fleet.test.js"
+    ]
+  },
+  {
+    "name": "RO-fleet-lock-act",
+    "file": "src/scenes/fleetHost.js",
+    "old": "      if (row.next.locked) return said(false,",
+    "new": "      if (false) return said(false,",
+    "tests": [
+      "test/systems/naval/fleet.test.js"
+    ]
+  },
+  {
+    "name": "RO-fleet-afford-per-kind",
+    "file": "src/scenes/fleetHost.js",
+    "old": "&& gold >= cost.gold && materialsFor(lists, cost.mats);",
+    "new": "&& gold >= cost.gold && mats.every((m) => m.have >= m.n);",
+    "tests": [
+      "test/systems/naval/fleet.test.js"
+    ]
+  },
+  {
+    "name": "RO-fleet-act-joint-unchecked",
+    "file": "src/scenes/fleetHost.js",
+    "old": "      if (!materialsFor(lists, row.next.mats)) return said(false,",
+    "new": "      if (false) return said(false,",
+    "tests": [
+      "test/systems/naval/fleet.test.js"
+    ]
+  },
+  {
+    "name": "RO-fleet-melt-unsaid",
+    "file": "src/scenes/fleetHost.js",
+    "old": "melt: melts[i] }",
+    "new": "melt: 0 }",
+    "tests": [
+      "test/systems/naval/fleet.test.js"
+    ]
+  },
+  {
+    "name": "RO-metal-plate-unread",
+    "file": "src/systems/fleet.js",
+    "old": "  return item.group === 'Armor' ? plateMetal(m) : null;",
+    "new": "  return null;",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-metal-arrow-melted",
+    "file": "src/systems/fleet.js",
+    "old": "return item.templateIndex !== WEAPONS.Arrow && m >= 0 && m <= 9 ? m : null;",
+    "new": "return m >= 0 && m <= 9 ? m : null;",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-melt-worn",
+    "file": "src/systems/fleet.js",
+    "old": "!!item && item.equipSlot == null && !isLocked(item)",
+    "new": "!!item && !isLocked(item)",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-melt-enchanted",
+    "file": "src/systems/fleet.js",
+    "old": "  && !listed(item.enchantments) && !listed(item.customEnchantments)",
+    "new": "  && !listed(item.customEnchantments)",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-melt-artifact",
+    "file": "src/systems/fleet.js",
+    "old": "  && !item.artifact && !item.sigil && typeof",
+    "new": "  && !item.sigil && typeof",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-melt-sigil",
+    "file": "src/systems/fleet.js",
+    "old": "  && !item.artifact && !item.sigil && typeof",
+    "new": "  && !item.artifact && typeof",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-ingots-not-first",
+    "file": "src/systems/fleet.js",
+    "old": "for (const take of [...ingots, (it) => isOf(it, kind)]) for (const list of lists) {",
+    "new": "for (const take of [(it) => isOf(it, kind)]) for (const list of lists) {",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-meltcount-unread",
+    "file": "src/systems/fleet.js",
+    "old": "  return Math.max(0, Math.min(n, materialCount(lists, kind)) - ingots);",
+    "new": "  return 0;",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-joint-on-originals",
+    "file": "src/systems/fleet.js",
+    "old": "  const copy = lists.map((l) => (l ?? []).map((it) => (it ? { ...it } : it)));\n  return takeOrder(mats).every",
+    "new": "  const copy = lists;\n  return takeOrder(mats).every",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-ore-per-whole",
+    "file": "src/systems/fleet.js",
+    "old": "  return Math.min(t, BASE_TIERS) * per + Math.max(0, t - BASE_TIERS) * per * ORE_PER;",
+    "new": "  return t * per;",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-ore-level-free",
+    "file": "src/systems/fleet.js",
+    "old": "mats: [{ kind: ore.ore, n: n(ore.n) }, { kind: line.mats[0], n: n(TIER_MATS[BASE_TIERS - 1]) }], level: ore.level };",
+    "new": "mats: [{ kind: ore.ore, n: n(ore.n) }, { kind: line.mats[0], n: n(TIER_MATS[BASE_TIERS - 1]) }], level: 1 };",
+    "tests": [
+      "test/systems/naval/captaintree.test.js",
+      "test/systems/naval/fleet.test.js"
+    ]
+  },
+  {
+    "name": "RO-ore-no-line-store",
+    "file": "src/systems/fleet.js",
+    "old": "mats: [{ kind: ore.ore, n: n(ore.n) }, { kind: line.mats[0], n: n(TIER_MATS[BASE_TIERS - 1]) }], level: ore.level };",
+    "new": "mats: [{ kind: ore.ore, n: n(ore.n) }], level: ore.level };",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-ore-tier-short",
+    "file": "src/systems/fleet.js",
+    "old": "export const UPGRADE_TIERS = BASE_TIERS + ORE_TIERS.length;",
+    "new": "export const UPGRADE_TIERS = BASE_TIERS + ORE_TIERS.length - 1;",
+    "tests": [
+      "test/systems/naval/captaintree.test.js",
+      "test/systems/naval/fleet.test.js"
+    ]
+  },
+  {
+    "name": "RO-words-next-share",
+    "file": "src/ui/fleetPage.js",
+    "old": "next: pc(r.next.share) }",
+    "new": "next: pc(r.share) }",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-words-lock-unsaid",
+    "file": "src/ui/fleetPage.js",
+    "old": "    lock: r.next.locked ? t('naval.refit.locked',",
+    "new": "    lock: false ? t('naval.refit.locked',",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-page-meter-floor",
+    "file": "src/ui/captainPage.js",
+    "old": "  return { now: Math.max(0, stars.xp - floor), max: Math.max(1, stars.next - floor),",
+    "new": "  return { now: Math.max(0, stars.xp), max: Math.max(1, stars.next),",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-page-door-skipped",
+    "file": "src/ui/captainPage.js",
+    "old": ": door ? door(() => open()) : open());",
+    "new": ": open());",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ],
+    "note": "GROWTH (PIN MOVED, bible/10-UI/Growth.md): re-aimed by content - with no Growth tab the stars still open through the sea's window door, the pause put down first"
+  },
+  {
+    "name": "CT-win-way-one",
+    "file": "src/ui/skyWindow.js",
+    "old": "    pending = sky.held([...pending, ...w], sky.points());",
+    "new": "    pending = sky.held([...pending, id], sky.points());",
+    "tests": [
+      "test/systems/naval/captaintree.test.js",
+      "test/systems/revenant/rvnstars.test.js"
+    ]
+  },
+  {
+    "name": "CT-win-points-unchecked",
+    "file": "src/ui/captainTreeWindow.js",
+    "old": "  if (way.length > left) return t('captain.no.points',",
+    "new": "  if (false) return t('captain.no.points',",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-win-back-no-cascade",
+    "file": "src/ui/skyWindow.js",
+    "old": "    const gone = new Set(sky.takesBack(pending, id));",
+    "new": "    const gone = new Set(sky.takesBack(pending, id).slice(0, 1));",
+    "tests": [
+      "test/systems/naval/captaintree.test.js",
+      "test/systems/revenant/rvnstars.test.js"
+    ]
+  },
+  {
+    "name": "CT-win-accept-unkept",
+    "file": "src/ui/skyWindow.js",
+    "old": "    const got = sky.commit(pending);",
+    "new": "    const got = pending;",
+    "tests": [
+      "test/systems/naval/captaintree.test.js",
+      "test/systems/revenant/rvnstars.test.js"
+    ]
+  },
+  {
+    "name": "CT-win-close-unasked",
+    "file": "src/ui/skyWindow.js",
+    "old": "    if (unaccepted() && !armedClose) { arm(); say(W.unaccepted, true); return false; }",
+    "new": "    if (false) { arm(); say(W.unaccepted, true); return false; }",
+    "tests": [
+      "test/systems/naval/captaintree.test.js",
+      "test/systems/revenant/rvnstars.test.js"
+    ]
+  },
+  {
+    "name": "CT-win-save-untold",
+    "file": "src/ui/skyWindow.js",
+    "old": "    try { changed(); } catch { /* the save's word is the host's */ }",
+    "new": "",
+    "tests": [
+      "test/systems/naval/captaintree.test.js",
+      "test/systems/revenant/rvnstars.test.js"
+    ]
+  },
+  {
+    "name": "CT-ledger-tree-unsaved",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "raised: raised.slice(), ether: JSON.parse(JSON.stringify(ether)), tree: tree.slice() }),",
+    "new": "raised: raised.slice(), ether: JSON.parse(JSON.stringify(ether)) }),",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-ledger-restore-uncapped",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "      tree = heldStars(r.tree, captainOf(log).points);",
+    "new": "      tree = heldStars(r.tree);",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-ledger-set-uncapped",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "    setTree(ids) { tree = heldStars(ids, captainOf(log).points); stats = starStats(tree); return tree.slice(); },",
+    "new": "    setTree(ids) { tree = heldStars(ids); stats = starStats(tree); return tree.slice(); },",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "CT-ledger-stats-stale",
+    "file": "src/systems/naval/captainLedger.js",
+    "old": "    setTree(ids) { tree = heldStars(ids, captainOf(log).points); stats = starStats(tree); return tree.slice(); },",
+    "new": "    setTree(ids) { tree = heldStars(ids, captainOf(log).points); return tree.slice(); },",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-melt-locked",
+    "file": "src/systems/fleet.js",
+    "old": "item.equipSlot == null && !isLocked(item) && !isBound(item)",
+    "new": "item.equipSlot == null && !isBound(item)",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-melt-bound",
+    "file": "src/systems/fleet.js",
+    "old": "!isLocked(item) && !isBound(item) && !isSummoned(item) && !item.questItem",
+    "new": "!isLocked(item) && !isSummoned(item) && !item.questItem",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-melt-made",
+    "file": "src/systems/fleet.js",
+    "old": "!item.sigil && typeof item.provenance !== 'string'",
+    "new": "!item.sigil",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-melt-custom",
+    "file": "src/systems/fleet.js",
+    "old": "  && !listed(item.enchantments) && !listed(item.customEnchantments)",
+    "new": "  && !listed(item.enchantments)",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-melt-graded",
+    "file": "src/systems/fleet.js",
+    "old": "(item.rarity == null || item.rarity === 'common')",
+    "new": "true",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-melt-affixed",
+    "file": "src/systems/fleet.js",
+    "old": "&& !listed(item.affixes) && !item.legendary",
+    "new": "&& !item.legendary",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-melt-legendary",
+    "file": "src/systems/fleet.js",
+    "old": "&& !listed(item.affixes) && !item.legendary",
+    "new": "&& !listed(item.affixes)",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-melt-magic",
+    "file": "src/systems/fleet.js",
+    "old": "  && !item.magic && (item.rarity",
+    "new": "  && (item.rarity",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-melt-socket",
+    "file": "src/systems/fleet.js",
+    "old": "  && item.socket == null && !listed(item.sockets);",
+    "new": "  && !listed(item.sockets);",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-melt-sockets",
+    "file": "src/systems/fleet.js",
+    "old": "  && item.socket == null && !listed(item.sockets);",
+    "new": "  && item.socket == null;",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  },
+  {
+    "name": "RO-melt-empty-lists",
+    "file": "src/systems/fleet.js",
+    "old": "const listed = (v) => Array.isArray(v) && v.length > 0;",
+    "new": "const listed = (v) => Array.isArray(v);",
+    "tests": [
+      "test/systems/naval/captaintree.test.js"
+    ]
+  }
+]

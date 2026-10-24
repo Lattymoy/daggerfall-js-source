@@ -5,7 +5,7 @@
     "old": "        missed = true;   // RESCUE-SAVE, AUDIT A6/A8: on the device now, marked - the join says so\n        keepNow();\n",
     "new": "        missed = true;   // RESCUE-SAVE, AUDIT A6/A8: on the device now, marked - the join says so\n",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "if (hidden()) keepNow(); else if (!unkeptTimer)",
     "new": "if (!unkeptTimer)",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      keepNow();   // RESCUE-SAVE: whatever never landed is on the device before the lease goes\n",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "if (kept && kept.seq === seq) {",
     "new": "if (kept && false) {",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "if (kept && kept.seq === seq) {",
     "new": "if (kept && kept.seq <= seq) {",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  if (kept) forgetUnsent(io.storage, id);\n",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (pending) rebaseCopy(); else dropCopy();",
     "new": "if (pending) rebaseCopy();",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "if (pending) rebaseCopy(); else dropCopy();",
     "new": "if (!pending) dropCopy();",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "revise({ missed: true }); } else dropCopy();",
     "new": "revise({ missed: true }); }",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "const UNSENT_KEPT_ON = Object.freeze(['lease', 'auth', 'signed-out']);",
     "new": "const UNSENT_KEPT_ON = Object.freeze(['auth', 'signed-out']);",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  if (r.ok) dropUnsent(io?.storage, id);\n",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      if (holding) return Promise.resolve({ ok: false, error: 'held' });\n      // SCALE2b: A SAVE THAT SAYS NOTHING NEW IS NOT SENT.",
     "new": "      if (holding) { unkept = text; return Promise.resolve({ ok: false, error: 'held' }); }\n      // SCALE2b: A SAVE THAT SAYS NOTHING NEW IS NOT SENT.",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  if (realmBoot?.restored && realmBoot.missed) townTalk.say(REALM_RESTORED_TEXT);",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "realmSaveWithHeld(snap, holding)",
     "new": "realmSaveWithHeld(snap, null)",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    if (rec.v === SPOILS_RECORD_V && inSave?.includes(rec.id)) { left.push(rec); onHanded?.(rec); continue; }\n",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "let _spoilsInSave = realmBoot?.held ?? null;",
     "new": "let _spoilsInSave = null;",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "  const held = heldList(r.snap[REALM_HELD_FIELD]);",
     "new": "  const held = [];",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "  delete r.snap[REALM_HELD_FIELD];\n",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": ".slice(-REALM_HELD_MAX)",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "  delete copy.realmHeld;",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    if (joined.error === 'no-realm-character') dropUnsent(io.storage, id);",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "  claimUnsent(io.storage, id, lease);   // AUDIT RESCUE-SAVE A4: this join is the device's last",
     "new": "  // AUDIT RESCUE-SAVE A4: this join is the device's last",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "    if (lease && owner && owner !== lease) return false;\n",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "      claimUnsent(storage, id, lease);   // AUDIT RESCUE-SAVE A4: this tab's join is the device's last again\n",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "try { if (prev != null) storage.setItem(unsentAtKey(id), prev); else forgetUnsent(storage, id); } catch { forgetUnsent(storage, id); }",
     "new": "forgetUnsent(storage, id);",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "    forgetUnsent(storage, id);   // the text went in and its record would not: nothing half-kept\n",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "if (hidden()) keepNow(); else if (!unkeptTimer) unkeptTimer = later(keepNow, REALM_UNSENT_GRACE_MS);",
     "new": "keepNow();",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -248,16 +248,16 @@
     "old": "unkeptTimer = later(keepNow, REALM_UNSENT_GRACE_MS);",
     "new": "unkeptTimer = later(() => {}, REALM_UNSENT_GRACE_MS);",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
     "name": "AUDIT-RESCUE-SAVE-A7-the-door-never-sweeps",
-    "file": "src/ui/enhancedMenu.js",
+    "file": "src/ui/enhanced/enhancedMenu.js",
     "old": "      if (r.ok) sweepUnsent(appStorage(), r.characters, storedSession(appStorage())?.id ?? null);",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -266,7 +266,7 @@
     "old": "    if (kept && kept.seq !== row.seq) { forgetUnsent(storage, row.id); n++; }",
     "new": "    if (kept) { forgetUnsent(storage, row.id); n++; }",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -275,7 +275,7 @@
     "old": "if (realmBoot?.restored && realmBoot.missed) townTalk.say",
     "new": "if (realmBoot?.restored) townTalk.say",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "missed: at.missed === true,",
     "new": "missed: false,",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "restored: true, missed: kept.missed, gzip: joined.data?.gzip === true };",
     "new": "restored: true, missed: kept.missed };",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "if (ownsUnsent(storage, id, lease)) forgetUnsent(storage, id);   // AUDIT 2 B1",
     "new": "forgetUnsent(storage, id);   // AUDIT 2 B1",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "=> { if (ownsUnsent(storage, id, lease)) reviseUnsent(storage, id, patch); };",
     "new": "=> { reviseUnsent(storage, id, patch); };",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "  watchHidden(() => { keepNow(); });\n",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "if (pending) rebaseCopy(); else dropCopy();",
     "new": "if (pending) reviseUnsent(storage, id, { seq: current, missed: false }); else dropCopy();",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "    if (ownsUnsent(storage, id, lease)) forgetUnsent(storage, id);\n    unkept = latest;\n",
     "new": "    unkept = latest;\n",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "          rebaseCopy();\n          r = await realmPut(",
     "new": "          reviseUnsent(storage, id, { seq: current });\n          r = await realmPut(",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "      if (moved) rebaseCopy();",
     "new": "      if (moved) reviseUnsent(storage, id, { seq: current });",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "      latest = text;\n",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -374,7 +374,7 @@
     "old": ".slice(-REALM_HELD_MAX)",
     "new": ".slice(0, REALM_HELD_MAX)",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "  for (const cid of orphans) { dropUnsent(storage, cid); n++; }\n",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -392,7 +392,7 @@
     "old": "      if (at?.player === player) orphans.push(cid);",
     "new": "      orphans.push(cid);",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -401,7 +401,7 @@
     "old": ", ...(player ? { player } : {}) }));",
     "new": " }));",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -410,7 +410,7 @@
     "old": "    if (row.playing) continue;",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -419,7 +419,7 @@
     "old": "    try { storage?.removeItem?.(unsentOwnerKey(id)); } catch { /* storage away */ }\n  }",
     "new": "  }",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -428,7 +428,7 @@
     "old": "if (text.length <= REALM_UNSENT_PACK_OVER) { keepUnsent(",
     "new": "if (true) { keepUnsent(",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -437,7 +437,7 @@
     "old": "    if (hidden() && keepUnsent(storage, id, at, text, how)) return;\n",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -446,7 +446,7 @@
     "old": "if (packed && gen === copyGen) keepUnsent(",
     "new": "if (packed) keepUnsent(",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -455,7 +455,7 @@
     "old": "    copyGen++;   // RESCUE-PACK: a packing still out lands nowhere\n",
     "new": "",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -464,7 +464,7 @@
     "old": "parseSave(kept.packed ? await unpackUnsent(kept.packed) : kept.text)",
     "new": "parseSave(kept.text)",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   },
   {
@@ -473,7 +473,7 @@
     "old": "    const packed = text.startsWith(REALM_UNSENT_PACKED);",
     "new": "    const packed = false;",
     "tests": [
-      "test/rescuesave.test.js"
+      "test/server/rescuesave.test.js"
     ]
   }
 ]

@@ -14,7 +14,7 @@
 //
 // Pure: no clock, no DOM, no network. The account service
 // (server-account/src/townSeats.js), the client's derivation
-// (systems/townSeats.js) and its book (net/townSeatBook.js) read it.
+// (systems/town/townSeats.js) and its book (net/townSeatBook.js) read it.
 // ═══════════════════════════════════════════════════════════════════
 import { ONLINE_EPOCH_MS } from './wire.js';
 import { KINGDOMS, MARCHES, kingdomOf, isMarch, isFreeLand } from './kingdomLaw.js';
@@ -393,7 +393,7 @@ export const SEAT_PLEDGE_WORDS = Object.freeze({
 /** Tribute's line for the guildmaster: its room in silver. BOARD-UI: in plain words. */
 export const seatTributeLine = (room) => (room > 0
   ? `Tribute: up to ${room.toLocaleString('en-US')} silver more this week, 1 influence per ${TRIBUTE_MARKS_PER_INFLUENCE} silver (the silver is spent).`
-  : 'Tribute: no room left this week - it is at most a fifth of your guild\'s influence here.');
+  : 'Tribute: no room left this week. It may be no more than a fifth of your guild\'s influence here.');
 
 // ═══ SEAT1c: THE TURNING (SEAT0 5.2, Appendix B) ════════════════════
 // The week settles the first time anything asks about any seat after its boundary - never a job that runs - in one
@@ -701,7 +701,7 @@ export const seatHolderLine = (holder) => (holder
 /** This week's battle at a seat, in words - a Contested seat's Tourney, or a Right of Siege - or null. */
 export function seatBattleLine(battle) {
   if (!battle) return null;
-  if (battle.kind === 'revolt') return `The town rises against ${guildWords(battle.against)} this week - a Rebel Captain holds the palace door.`;   // SEAT2b part two (c)
+  if (battle.kind === 'revolt') return `The town rises against ${guildWords(battle.against)} this week. A Rebel Captain holds the palace door.`;   // SEAT2b part two (c)
   if (battle.kind === 'tourney') return `${GuildWords(battle.guild)} and ${guildWords(battle.against)} meet in a Tourney for the Charter this week.`;
   return `${GuildWords(battle.guild)} has won a Right of Siege against ${guildWords(battle.against)} this week.`;
 }
@@ -730,7 +730,7 @@ export const SEAT_RELINQUISH_WORDS = Object.freeze({ arm: 'Give up the Charter',
 /** The claim line under the standings: the threshold an unheld seat's claimant must pass, or the holder's defence. */
 export const seatClaimLine = (seat, defence = null) => (defence == null
   ? `To claim it at the Turning: ${CLAIM_THRESHOLD[seat.tier].toLocaleString('en-US')} influence, and ${CLAIM_FEE[seat.tier].toLocaleString('en-US')} silver from the guild's treasury.`
-  : `To win a Right of Siege: more than the holder's defence of ${defence.toLocaleString('en-US')}, and at least ${CLAIM_THRESHOLD[seat.tier].toLocaleString('en-US')} influence.`);
+  : `To win a Right of Siege: more than the holder's defense of ${defence.toLocaleString('en-US')}, and at least ${CLAIM_THRESHOLD[seat.tier].toLocaleString('en-US')} influence.`);
 
 // ─── SEAT1c: THE TITLES AND GLYPHS A CHARTER GIVES (SEAT0 7.4) ─────
 // Derived, as every title is: held while the Charter is, gone from the next token when it is not. The token carries a
@@ -925,8 +925,8 @@ export const seatHallOf = (seat, guildId) => !!seat && !!guildId && seat.holder?
 /** The Charter Room's words. */
 export const SEAT_HALL_TEXT = Object.freeze({
   where: 'The Charter Room',
-  clear: 'Too near someone of the court - keep two metres from every person and every quest mark.',
-  room: 'The Charter Room is the palace\'s largest room - set the piece down there.',
+  clear: 'Too close to someone of the court. Keep two meters from every person and every quest mark.',
+  room: 'The Charter Room is the palace\'s largest room. Set the piece down there.',
 });
 
 /**
@@ -1024,7 +1024,7 @@ export function seatArrivalNews(seat) {
   return parts.length ? parts.join(' ') : null;
 }
 
-/** A World of Daggerfall camp's id (src/world/wodShared.js wodSiteId: "px,py:objectID[.n]", or Privateer's Hold's
+/** A World of Daggerfall camp's id (src/world/worldOfDaggerfall/wodShared.js wodSiteId: "px,py:objectID[.n]", or Privateer's Hold's
  *  "px,py:hold") - its map pixel, or null. */
 export function bountySitePixel(site) {
   const m = /^(\d{1,3}),(\d{1,3}):(?:\d{1,10}(?:\.\d{1,3})?|hold)$/.exec(typeof site === 'string' ? site : '');
@@ -1043,7 +1043,7 @@ export const levyOf = (qty, roll) => {
 
 // ═══ SEAT2a: THE BATTLES' WEEK - WINDOWS, THE SCHEDULE, THE SIDES (SEAT0 6.3-6.5) ═══
 // The Turning names a Right of Siege (or a Tourney at a Contested seat) for the coming week; SEAT2a places each in the
-// week and signs its two sides. The battle itself is the relay's (net/siegeRef.js, SEAT2a's next half).
+// week and signs its two sides. The battle itself is the relay's (net/siege/siegeRef.js, SEAT2a's next half).
 
 /** THE HOLDER'S WINDOW (6.3, Mac: "Yes"): a day Wednesday to Saturday (0-3) and a start hour 16:00 to 02:00 UTC, two
  *  hours long - a start from 00:00 to 02:00 belongs to the night after its day ("Wednesday 01:00" is Thursday 01:00). */
@@ -1171,7 +1171,7 @@ export const SIGN_WHY = Object.freeze({
 });
 
 // ─── SEAT2a (part three): THE PASS, THE FIELD, THE RESULT AND HONOURS (SEAT0 6.2, 6.5-6.8) ───
-// The relay fights the battle (net/siegeRef.js); the service signs who may enter it and settles what it gave.
+// The relay fights the battle (net/siege/siegeRef.js); the service signs who may enter it and settles what it gave.
 
 /** The field a client derives from the town, settled for a battle (DECIDED, part three): the first one an attacker and a
  *  defender submitted alike (two sides whose interests differ agreeing on it), else - once the battle is joined, a side
@@ -1194,7 +1194,7 @@ export function settleField(rows, joined, kind = 'siege') {
 }
 /** The room's window on a pass (`se`): the battle's block - two hours, a crown siege's one (battleSpanMs). */
 export const passWindowEnds = (b) => b.starts_at + battleSpanMs({ kind: b.kind, tier: b.tier }) / 1000;
-/** The pass's door opens as the rosters close (SIGN_CLOSES_MS before the start - net/siegeRef.js SIEGE_OPENS_MS). */
+/** The pass's door opens as the rosters close (SIGN_CLOSES_MS before the start - net/siege/siegeRef.js SIEGE_OPENS_MS). */
 export const passOpens = (b) => b.starts_at - SIGN_CLOSES_MS / 1000;
 
 /** WHAT A SIEGE GIVES (6.8): the holder's Standing for a held siege (only where a banner was raised) and for a forfeit,
@@ -1243,15 +1243,15 @@ export function siegeAftermath(kind, result, raised, { forfeitPaid = false, thro
 export const SIEGE_WHY = Object.freeze({
   'pass-early': 'The field opens ten minutes before the battle.',
   'pass-late': 'The battle\'s window has closed.',
-  'field-bad': 'Your game could not work out this town\'s field.',
-  'field-unsettled': 'Waiting for the other side\'s scouts to agree on the field - try again in a moment.',
-  'honours-character': 'Honours go to the character who signed for this battle - play them to claim it.',   // AUDIT SEATS-3 A3
-  'honours-twice': 'Your Honours from this battle are claimed already.',
+  'field-bad': 'Your game could not load this town\'s battlefield.',
+  'field-unsettled': 'Waiting for the other side\'s scouts to agree on the field. Try again in a moment.',
+  'honours-character': 'Honors go to the character who signed for this battle. Play that character to claim them.',   // AUDIT SEATS-3 A3
+  'honours-twice': 'Your Honors from this battle are claimed already.',
   // AUDIT-SEATS S3 (17: a void siege): a receipt that reached the service after its week's Turning, which voided the battle;
   // VOID (18): or after the Moderators voided it (`/siege void`)
-  'battle-void': 'That battle is void - at its Turning, or by the Moderators - and its result does not count.',   // VOID: a moderator's too
+  'battle-void': 'That battle is void, at its Turning or by the Moderators, and its result does not count.',   // VOID: a moderator's too
   // AUDIT 529 V5: a moderator's `/siege void` that reached the service after the battle's week was reckoned
-  'battle-settled': 'That battle\'s week is settled - its Turning has reckoned it, and it can no longer be voided.',
+  'battle-settled': 'That battle\'s week is settled and can no longer be voided.',
   // AUDIT-SEATS S10 (8.1: "changing either ... is refused in a siege week")
   'heraldry-siege': 'Your guild fights a battle for a seat this week. Its heraldry may change after the Turning.',
 });
@@ -1306,10 +1306,10 @@ export function conscriptionDue({ kingdom, crownGuild, holds, tithes, vassals = 
 
 
 // ═══ CROWN1 part two: THE ROYAL TOURNEY (SEAT0 7.6) - the service's half ═══════════════════════════════════════════
-// The bouts are the relay's (net/siegeRef.js royal*); the service counts each winner's receipt by the room's own rule
+// The bouts are the relay's (net/siege/siegeRef.js royal*); the service counts each winner's receipt by the room's own rule
 // and names the week's champion at the Turning.
 
-/** The same two contenders' bouts counted a UTC day (net/siegeRef.js ROYAL_PAIR_DAY_MAX, pinned equal). */
+/** The same two contenders' bouts counted a UTC day (net/siege/siegeRef.js ROYAL_PAIR_DAY_MAX, pinned equal). */
 export const ROYAL_PAIR_DAY = 3;
 /** The ladder's rows the Seat tab shows. */
 export const ROYAL_LADDER_ROWS = 10;
@@ -1317,7 +1317,7 @@ export const ROYAL_LADDER_ROWS = 10;
 export const ROYAL_WHY = Object.freeze({
   'royal-none': 'No Royal Tourney is proclaimed here this week.',
   'royal-over': 'That week\'s Royal Tourney has its champion already.',
-  'ring-unsettled': 'Waiting for another contender\'s scouts to agree on the ring - try again in a moment.',
+  'ring-unsettled': 'Waiting for another contender\'s scouts to agree on the ring. Try again in a moment.',
 });
 /**
  * THE RING SETTLED - DECIDED (CROWN1 part two): a Royal Tourney has no sides, so where a siege's field waits on an

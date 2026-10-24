@@ -1,0 +1,93 @@
+[
+  {
+    "name": "REMAINS-GOLD-the-coin-through-the-strangers-projection",
+    "file": "src/net/wild/wildRemains.js",
+    "old": "    if (!isGoldPieces(r)) return mint([r])?.[0] ?? null;",
+    "new": "    return mint([r])?.[0] ?? null;",
+    "tests": [
+      "test/net/fb1020h_remains.test.js"
+    ]
+  },
+  {
+    "name": "REMAINS-GOLD-the-coin-held-to-the-wires-bound",
+    "file": "src/net/wild/wildRemains.js",
+    "old": "Number.isSafeInteger(n) && n >= 1 && n <= GOLD_INT_MAX ? goldStack(n) : null;",
+    "new": "Number.isSafeInteger(n) && n >= 1 && n <= 65535 ? goldStack(n) : null;",
+    "tests": [
+      "test/net/fb1020h_remains.test.js"
+    ]
+  },
+  {
+    "name": "REMAINS-GOLD-the-grant-through-the-strangers-projection",
+    "file": "src/net/wild/wildRemains.js",
+    "old": "        const item = mintOne(w.it);   // REMAINS-GOLD: a coin pile by its count",
+    "new": "        const item = mint([w.it])?.[0] ?? null;",
+    "tests": [
+      "test/net/fb1020h_remains.test.js"
+    ]
+  },
+  {
+    "name": "REMAINS-TAKE-an-answer-never-ends-the-take",
+    "file": "src/net/wild/wildRemains.js",
+    "old": "      answered(`${w.r}:${w.i}`);\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1020h_remains.test.js"
+    ]
+  },
+  {
+    "name": "REMAINS-TAKE-the-take-not-counted-in-flight",
+    "file": "src/net/wild/wildRemains.js",
+    "old": "      ask(`${rec.r}:${info.i}`, k);\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1020h_remains.test.js"
+    ]
+  },
+  {
+    "name": "REMAINS-TAKE-the-word-moves-the-pile-without-my-takes-in-flight",
+    "file": "src/net/wild/wildRemains.js",
+    "old": "    const want = (rec.items[i] ? countOf(rec.items[i]) : 0) - inFlight(rec.r, i);",
+    "new": "    const want = (rec.items[i] ? countOf(rec.items[i]) : 0);",
+    "tests": [
+      "test/net/fb1020h_remains.test.js"
+    ]
+  },
+  {
+    "name": "REMAINS-TAKE-the-word-over-a-take-unasked",
+    "file": "src/net/wild/wildRemains.js",
+    "old": "        settle(rec);   // REMAINS-TAKE: what the window took since the frame's look, asked before the room's word moves the pile\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1020h_remains.test.js"
+    ]
+  },
+  {
+    "name": "REMAINS-TAKE-the-old-skip-every-word-while-a-take-is-in-flight",
+    "file": "src/net/wild/wildRemains.js",
+    "old": "        follow(rec, w.i);\n        return;",
+    "new": "        if (!asked.has(`${w.r}:${w.i}`)) follow(rec, w.i);\n        return;",
+    "tests": [
+      "test/net/fb1020h_remains.test.js",
+      "test/net/wild1_fight.test.js"
+    ]
+  },
+  {
+    "name": "REMAINS-TAKE-a-pile-said-again-over-a-take-unasked",
+    "file": "src/net/wild/wildRemains.js",
+    "old": "    settle(rec);   // REMAINS-TAKE: a take the window made off the pile standing now is asked before it goes\n",
+    "new": "",
+    "tests": [
+      "test/net/fb1020h_remains.test.js"
+    ]
+  },
+  {
+    "name": "REMAINS-TAKE-a-pile-stood-again-with-my-takes-in-flight",
+    "file": "src/net/wild/wildRemains.js",
+    "old": "      const n = countOf(r) - inFlight(rec.r, i);",
+    "new": "      const n = countOf(r);",
+    "tests": [
+      "test/net/fb1020h_remains.test.js"
+    ]
+  }
+]

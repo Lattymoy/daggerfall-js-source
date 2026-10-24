@@ -1,0 +1,44 @@
+[
+  {
+    "name": "BANKFLUSH-no-shelf",
+    "file": "src/world/water/waterBed.js",
+    "old": "bedProfile(Math.min(d - SHELF_CHAMFER, 1e9) * unit / BED_RAMP);",
+    "new": "bedProfile(Math.min(d, 1e9) * unit / BED_RAMP);",
+    "tests": ["test/world/water/bankflush.test.js"]
+  },
+  {
+    "name": "BANKFLUSH-shelf-edge-only",
+    "file": "src/world/water/waterBed.js",
+    "old": "export const SHELF_CHAMFER = 4;",
+    "new": "export const SHELF_CHAMFER = 3;",
+    "tests": ["test/world/water/bankflush.test.js"]
+  },
+  {
+    "name": "BANKFLUSH-puddles-carved",
+    "file": "src/world/water/waterBed.js",
+    "old": "  flushPuddles(carve, bytes, tileDim, width, height, stride, gx, gz, 0);",
+    "new": "  void 0;",
+    "tests": ["test/world/water/bankflush.test.js"]
+  },
+  {
+    "name": "BANKFLUSH-ground-by-the-sheet",
+    "file": "src/world/water/waterBed.js",
+    "old": "  const ground = carveBed(grid.positions, grid.normals, fields.carve, gx, gz);",
+    "new": "  const ground = carveBed(grid.positions, grid.normals, fields.depths, gx, gz);",
+    "tests": ["test/world/water/bankflush.test.js"]
+  },
+  {
+    "name": "BANKFLUSH-sheet-by-the-carve",
+    "file": "src/world/water/waterBed.js",
+    "old": "sheetDepths: sheetDepthsOf(fields.depths, gx, gz)",
+    "new": "sheetDepths: sheetDepthsOf(fields.carve, gx, gz)",
+    "tests": ["test/world/water/bankflush.test.js"]
+  },
+  {
+    "name": "BANKFLUSH-swell-on-the-shelf",
+    "file": "src/render/waterSurface.js",
+    "old": "smoothstep(${SHELF_SHEET_DEPTH.toFixed(3)}, ${(SHELF_SHEET_DEPTH + SWELL_DEPTH).toFixed(3)}, aDepth));",
+    "new": "smoothstep(0.0, ${SWELL_DEPTH.toFixed(2)}, aDepth));",
+    "tests": ["test/world/water/bankflush.test.js"]
+  }
+]

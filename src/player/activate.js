@@ -14,14 +14,15 @@
 import { GLOBAL_SCALE } from '../world/meshReader.js';
 import { isActionDoorObject } from '../world/actionSystem.js';   // MC-2: ActionDoorCheck's own classifier (PlayerActivate.cs:374 vs :380)
 import { noteBodyStack } from './lootStack.js';   // LOOT-STACK: the ray notes the pile of bodies its winner stands at the front of
+import { localizedText } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 /** The pick's pardon (m): a surface met this far outside a target's box is still that target's own face (the box is
- *  the mesh's, rounded). AUDIT DELVE C8: one home - the dungeon's look round reads it (systems/dungeonSense.js). */
+ *  the mesh's, rounded). AUDIT DELVE C8: one home - the dungeon's look round reads it (systems/dungeon/dungeonSense.js). */
 export const PICK_PARDON_M = 0.15;
 
 export { GLOBAL_SCALE };
 
 // PlayerActivate.cs:76-88, the WHOLE set. Three of these used to live
-// in systems/talk.js instead, and wave 22 of this audit added a fourth
+// in systems/talk/talk.js instead, and wave 22 of this audit added a fourth
 // there without noticing the first three - which is how a duplicate
 // set gets built one honest commit at a time. talk.js re-exports these
 // now.
@@ -43,6 +44,8 @@ export const MOBILE_NPC_ACTIVATION_DISTANCE = 256 * GLOBAL_SCALE;
  *  'You are too far away.' with a full stop, so one localized key was
  *  shipping as two different sentences in one session. */
 export const TOO_FAR_AWAY_TEXT = 'You are too far away...';
+/** The refusal as the player reads it, for every reach that speaks it. */
+export const tooFarAwayText = () => localizedText('youAreTooFarAway', TOO_FAR_AWAY_TEXT);
 /** AUDIT 58 (talk lane): TextManager 'youSee'
  *  (Internal_Strings.csv:53 - `youSee,You see %s.`), the WHOLE of
  *  PresentNPCInfo (PlayerActivate.cs:1484-1486): one HUD line naming
@@ -51,7 +54,7 @@ export const TOO_FAR_AWAY_TEXT = 'You are too far away...';
  *  (:755-757) - the other three modes fall to StaticNPCClick. */
 export const YOU_SEE_TEXT = 'You see %s.';
 /** PresentNPCInfo's one line, macro-replaced (:1486). */
-export const presentNpcInfoText = (displayName) => YOU_SEE_TEXT.replace('%s', displayName ?? '');
+export const presentNpcInfoText = (displayName) => localizedText('youSee', YOU_SEE_TEXT).replaceAll('%s', displayName ?? '');
 // PlayerActivate.cs:85 - corpses reach FURTHER than everything else
 // (150 classic units, not 128). It is deliberate, not incidental:
 // ActivateLootContainer (:866-874) exempts CorpseMarker from the
@@ -86,6 +89,16 @@ export function boxContains(aabb, p, skin = 0) {
 }
 
 const boxVolume = (b) => (b.max[0] - b.min[0]) * (b.max[1] - b.min[1]) * (b.max[2] - b.min[2]);
+
+/**
+ * FB1020e OFFERING-RAY: THE RAY'S BOX - world corners as `{ min, max }`, which rayAabb, boxContains and the pick read.
+ * Not the culling box's 6-array (render/frustum.js flatBatchAabb, a batch's `_box`): a producer holding one converts
+ * it, as the streaming host's boards and graves do. A Hearth Offering handed the ray its 6-array, and every press in
+ * the street it stood in threw out of rayAabb (bible/01-Overview/bugs/Field-Bugs-2026-10-20e.md).
+ * @typedef {{ min: number[], max: number[] }} RayBox
+ */
+/** ...and one entrant of the pick: its key, its box, the distance it wins at and the reach it answers within (MC-2).
+ *  @typedef {{ key: string | number, aabb: RayBox, distance?: number, reach?: number }} RayTarget */
 
 /** Slab ray-AABB; distance along unit dir or null. */
 export function rayAabb(origin, dir, aabb) {
@@ -298,6 +311,7 @@ export function liveFoeTargets(foes, keyPrefix, { idOf = null } = {}) {
       distance: RAY_DISTANCE,
       reach: MOBILE_NPC_ACTIVATION_DISTANCE,
       ...(f.ai && !(f.puppet ? f._pupMine : f.ai.isHostile) && f.companion == null ? { peaceful: true } : {}),   // TACT3d: passes a door click (peacefulFoePass); AUDIT TACT C1/C5: hostile to ME (a puppet on me), never my companion
+      ...(isCompanion(f) ? { ally: true } : {}),   // FB1012d ALLY-YIELDS: he yields to what answers behind him (peacefulFoePass marks his hit, raceWinner reads it)
     });
   }
   return targets;
@@ -312,8 +326,11 @@ export function doorDistanceOf(eye, dir, targets, collider) {
 
 /** TACT3d: the plaque's half of mobileEnemyActivate's `yieldsToDoor` - a foe hit on a PEACEFUL foe (liveFoeTargets'
  *  `peaceful`) with a door, or the ladder's other winner, within the door's reach behind it is no hit, so the plaque
- *  names what the press opens. */
+ *  names what the press opens. FB1012d ALLY-YIELDS: and the one seam every plaque's foe passes through, so a hit on a
+ *  COMPANION (liveFoeTargets' `ally`) leaves it marked - the race (activationRace.js raceWinner) passes him by for what
+ *  answers behind him, as the press's `allyYields` does, in every mode. */
 export function peacefulFoePass(foeHit, targets, doorBehind, mode = null) {
+  if (foeHit && targets.find((t) => t.key === foeHit.key)?.ally === true) return { ...foeHit, ally: true };   // FB1012d ALLY-YIELDS
   if (!foeHit || mode === 'steal' || !(Number.isFinite(doorBehind) && doorBehind <= DOOR_ACTIVATION_DISTANCE)) return foeHit;   // AUDIT TACT C5: a pickpocket is asked of him
   return targets.find((t) => t.key === foeHit.key)?.peaceful ? null : foeHit;
 }
@@ -451,6 +468,31 @@ export function firmFirst(entrants, nearest) {
   if (!entrants.some(yieldsRay)) return nearest(entrants);
   return nearest(entrants.filter((e) => !yieldsRay(e))) ?? nearest(entrants.filter(yieldsRay));
 }
+
+/**
+ * FB1012d ALLY-YIELDS (Discord bug-reports, 2026-10-12, "Companion Inventory prioritized over looting, taking helm, and
+ * other context options": "you need to get them to move before you can loot an item since it keeps opening their
+ * inventory instead"). A COMPANION - the companion layer's body (scenes/crewAshore.js `companion`: a crew hand ashore, a
+ * sworn revenant) or another player's (`peer:`) - is a foe the ray strikes like any other, so one standing at the
+ * player's heel between the crosshair and a body, a pile, a boat's helm, a door or a shelf was the nearest hit and
+ * took the press: his pack, every time. He walks where the player walks, so he stood there every time.
+ *
+ * He YIELDS: whatever the press would take were he not there - the ladder's own winner behind him - takes it when it
+ * ANSWERS from where the player stands, a firm pick inside its own reach. Not anything the ray meets (PR-WAGON1's law,
+ * `firmFirst`): his pack is storage the player reaches every day, and indoors a shelf, a door or a bed stands on the
+ * ray behind him on nearly every look, so "anything else" made him unreachable and answered "You are too far away"
+ * from a shelf across the room. A thing behind him out of its reach would only refuse, so he takes the press - and with
+ * nothing behind him, he is the hit as ever. Another player's team, which yields itself, is no rival (`answersPress`).
+ * The press asks `allyYields` (mobileEnemyActivate.js tryMobileEnemyActivate, each host handing its ladder's winner as
+ * `behind`); the plaque asks the same `answersPress` of the race's other winner (activationRace.js raceWinner, the
+ * foe's hit marked `ally` by `peacefulFoePass` off `liveFoeTargets`), so it names what the press takes.
+ */
+export const isCompanion = (f) => !!f && f.companion != null;
+/** FB1012d ALLY-YIELDS: a pick the press would ACT on from here - firm (PR-WAGON1: a pick that yields is never a
+ *  rival), and inside its own reach (MC-2: past it, its handler only refuses). A pick with no reach answers nothing. */
+export const answersPress = (p) => !!p && !yieldsRay(p) && p.distance <= p.reach;
+/** FB1012d ALLY-YIELDS: a companion under the ray passes the press to what answers behind him. */
+export const allyYields = (foe, behind) => isCompanion(foe) && answersPress(behind);
 
 /** The ray's nearest hit - DFU's one raycast, as the port spells it (the
  *  law documented above). LOOT-STACK's stack walks it too, over the bodies

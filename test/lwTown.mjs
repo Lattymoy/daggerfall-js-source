@@ -2,7 +2,7 @@
 // inputs on a town with no game data: a CityNavigation grid of streets and building footprints, the buildings'
 // summaries' columns (world/buildingSummaries.js), the doors' location-frame centres and normals (the streaming host's
 // own mapping of its static doors).
-import { CityNavigation, NAV_CELL } from '../src/world/cityNavigation.js';
+import { CityNavigation, NAV_CELL } from '../src/world/city/cityNavigation.js';
 import { BUILDING_TYPES } from '../src/world/buildingNames.js';
 
 /** A town of 3x3 blocks: streets every 24 cells, a 12x12 building in each street block, its door on its south wall

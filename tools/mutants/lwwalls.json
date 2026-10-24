@@ -5,7 +5,7 @@
     "old": "  if (!opens.size) return streets.id;",
     "new": "  return streets.id;",
     "tests": [
-      "test/lwwalls_city.test.js"
+      "test/systems/livingWorld/lwwalls_city.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (!opens.size) return streets.id;",
     "new": "  if (!opens.size) return 0;",
     "tests": [
-      "test/lwwalls_city.test.js"
+      "test/systems/livingWorld/lwwalls_city.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    keys.add(d.key);",
     "new": "    keys.add(keys.size);",
     "tests": [
-      "test/lwwalls_city.test.js"
+      "test/systems/livingWorld/lwwalls_city.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "(keys.size === bestKeys && n > bestSize)",
     "new": "(keys.size === bestKeys && n < bestSize)",
     "tests": [
-      "test/lwwalls_city.test.js"
+      "test/systems/livingWorld/lwwalls_city.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "if (keys.size > bestKeys ||",
     "new": "if (keys.size >= bestKeys ||",
     "tests": [
-      "test/lwwalls_city.test.js"
+      "test/systems/livingWorld/lwwalls_city.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    const at = doorCell(nav, d, (i) => label[i] > 0);",
     "new": "    const at = doorCell(nav, d, (i) => label[i] === streets.id);",
     "tests": [
-      "test/lwwalls_city.test.js"
+      "test/systems/livingWorld/lwwalls_city.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "const at = doorCell(nav, d, (i) => net[i] === netId);",
     "new": "const at = doorCell(nav, d, (i) => net[i] > 0);",
     "tests": [
-      "test/lwwalls_city.test.js"
+      "test/systems/livingWorld/lwwalls_city.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "return { cell: [cx, cy], nx: nx * sign, nz: nz * sign };",
     "new": "return { cell: [cx, cy], nx, nz };",
     "tests": [
-      "test/lw1_livingWorld.test.js"
+      "test/systems/livingWorld/lw1_livingWorld.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "const open = (/** @type {LwBuilding} */ b) => !opens || opens.has(b.key);",
     "new": "const open = (/** @type {LwBuilding} */ b) => !!b;",
     "tests": [
-      "test/lwwalls_city.test.js"
+      "test/systems/livingWorld/lwwalls_city.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "find((b) => b?.type === BUILDING_TYPES.Palace && open(b))",
     "new": "find((b) => b?.type === BUILDING_TYPES.Palace)",
     "tests": [
-      "test/lwwalls_city.test.js"
+      "test/systems/livingWorld/lwwalls_city.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "isHome(b.type) && open(b))",
     "new": "isHome(b.type))",
     "tests": [
-      "test/lwwalls_city.test.js"
+      "test/systems/livingWorld/lwwalls_city.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "b?.type === BUILDING_TYPES.Tavern && open(b))",
     "new": "b?.type === BUILDING_TYPES.Tavern)",
     "tests": [
-      "test/lwwalls_city.test.js"
+      "test/systems/livingWorld/lwwalls_city.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "townCensus(o.town, o.buildings, new Set(this.places.doors.keys()))",
     "new": "townCensus(o.town, o.buildings)",
     "tests": [
-      "test/lwwalls_city.test.js"
+      "test/systems/livingWorld/lwwalls_city.test.js"
     ]
   }
 ]

@@ -1,0 +1,983 @@
+[
+  {
+    "name": "SEA-BOUNTY-receipt-short",
+    "file": "src/net/wild/wildReceipt.js",
+    "old": "export const WILD_RECEIPT_MAX = 512;",
+    "new": "export const WILD_RECEIPT_MAX = 400;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-room-unchecked",
+    "file": "src/net/wild/wildReceipt.js",
+    "old": "  if (c.m !== undefined && !(typeof c.m === 'string' && WILD_ROOM_RE.test(c.m))) return false;   // SEA-BOUNTY: the room\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-room-any-type",
+    "file": "src/net/wild/wildReceipt.js",
+    "old": "  if (c.m !== undefined && !(typeof c.m === 'string' && WILD_ROOM_RE.test(c.m))) return false;",
+    "new": "  if (c.m !== undefined && !(WILD_ROOM_RE.test(c.m))) return false;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-killer-char-unchecked",
+    "file": "src/net/wild/wildReceipt.js",
+    "old": "  if (c.kc !== undefined && !(typeof c.kc === 'string' && REALM_CHARACTER_RE.test(c.kc))) return false;   // SEA-BOUNTY: the killer's character\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-room-any-case",
+    "file": "src/net/wild/wildReceipt.js",
+    "old": "export const WILD_ROOM_RE = /^[a-z]{1,12}:[\\x21-\\x7e]{1,80}$/;",
+    "new": "export const WILD_ROOM_RE = /^[a-zA-Z]{1,12}:[\\x21-\\x7e]{1,80}$/;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-room-spaced",
+    "file": "src/net/wild/wildReceipt.js",
+    "old": "export const WILD_ROOM_RE = /^[a-z]{1,12}:[\\x21-\\x7e]{1,80}$/;",
+    "new": "export const WILD_ROOM_RE = /^[a-z]{1,12}:[\\x20-\\x7e]{1,80}$/;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-room-long",
+    "file": "src/net/wild/wildReceipt.js",
+    "old": "export const WILD_ROOM_RE = /^[a-z]{1,12}:[\\x21-\\x7e]{1,80}$/;",
+    "new": "export const WILD_ROOM_RE = /^[a-z]{1,12}:[\\x21-\\x7e]{1,81}$/;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-room-empty",
+    "file": "src/net/wild/wildReceipt.js",
+    "old": "export const WILD_ROOM_RE = /^[a-z]{1,12}:[\\x21-\\x7e]{1,80}$/;",
+    "new": "export const WILD_ROOM_RE = /^[a-z]{0,12}:?[\\x21-\\x7e]{0,80}$/;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-collect-carries-room",
+    "file": "src/net/wild/wildReceipt.js",
+    "old": "const COLLECT_FOREIGN = [...WILD_FOREIGN, 'f', 'w', 'wt', 'm', 'kc'];",
+    "new": "const COLLECT_FOREIGN = [...WILD_FOREIGN, 'f', 'w', 'wt', 'kc'];",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-collect-carries-killer-char",
+    "file": "src/net/wild/wildReceipt.js",
+    "old": "const COLLECT_FOREIGN = [...WILD_FOREIGN, 'f', 'w', 'wt', 'm', 'kc'];",
+    "new": "const COLLECT_FOREIGN = [...WILD_FOREIGN, 'f', 'w', 'wt', 'm'];",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-mint-no-room",
+    "file": "src/net/wild/wildReceipt.js",
+    "old": "...(m ? { m } : {}), ...(kc ? { kc } : {}), i: nowS",
+    "new": "...(kc ? { kc } : {}), i: nowS",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-mint-no-killer-char",
+    "file": "src/net/wild/wildReceipt.js",
+    "old": "...(m ? { m } : {}), ...(kc ? { kc } : {}), i: nowS",
+    "new": "...(m ? { m } : {}), i: nowS",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-mint-always",
+    "file": "src/net/wild/wildReceipt.js",
+    "old": "...(m ? { m } : {}), ...(kc ? { kc } : {}), i: nowS",
+    "new": "m: m || 'world:0,0', kc: kc || 'r00000000000000000000', i: nowS",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-fall-no-killer-char",
+    "file": "src/net/wild/wildRef.js",
+    "old": "killerId: a.id, kc: a.ci || '', m: typeof room === 'string' ? room : '',",
+    "new": "killerId: a.id, kc: '', m: typeof room === 'string' ? room : '',",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-fall-no-room",
+    "file": "src/net/wild/wildRef.js",
+    "old": "killerId: a.id, kc: a.ci || '', m: typeof room === 'string' ? room : '',",
+    "new": "killerId: a.id, kc: a.ci || '', m: '',",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-fall-read-back-unkept",
+    "file": "src/net/wild/wildRef.js",
+    "old": "kc: typeof v.kc === 'string' ? v.kc : '', m: typeof v.m === 'string' ? v.m : '',",
+    "new": "kc: '', m: '',",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-relay-room-unpassed",
+    "file": "server/src/index.js",
+    "old": "{ d: d.d, r, held, wa: a.wa ?? null, kin, rid, room: a.key }, now)",
+    "new": "{ d: d.d, r, held, wa: a.wa ?? null, kin, rid }, now)",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-relay-unsigned",
+    "file": "server/src/index.js",
+    "old": "w: fall.w, wt: fall.wt, m: fall.m, kc: fall.kc }",
+    "new": "w: fall.w, wt: fall.wt }",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-box-wide",
+    "file": "src/net/wire.js",
+    "old": "export const WILD_SEA_BOX = Object.freeze({ x0: 64, x1: 8128, y0: -7680, y1: -2688 });",
+    "new": "export const WILD_SEA_BOX = Object.freeze({ x0: 64, x1: 8144, y0: -7680, y1: -2688 });",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-box-no-north-south",
+    "file": "src/net/wire.js",
+    "old": "    return x >= WILD_SEA_BOX.x0 && x < WILD_SEA_BOX.x1 && y >= WILD_SEA_BOX.y0 && y < WILD_SEA_BOX.y1;",
+    "new": "    return x >= WILD_SEA_BOX.x0 && x < WILD_SEA_BOX.x1;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-box-no-west-east",
+    "file": "src/net/wire.js",
+    "old": "    return x >= WILD_SEA_BOX.x0 && x < WILD_SEA_BOX.x1 && y >= WILD_SEA_BOX.y0 && y < WILD_SEA_BOX.y1;",
+    "new": "    return y >= WILD_SEA_BOX.y0 && y < WILD_SEA_BOX.y1;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-box-east-shut",
+    "file": "src/net/wire.js",
+    "old": "    return x >= WILD_SEA_BOX.x0 && x < WILD_SEA_BOX.x1 && y >= WILD_SEA_BOX.y0 && y < WILD_SEA_BOX.y1;",
+    "new": "    return x >= WILD_SEA_BOX.x0 && x <= WILD_SEA_BOX.x1 + WORLD_CELL && y >= WILD_SEA_BOX.y0 && y < WILD_SEA_BOX.y1;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-box-south-shut",
+    "file": "src/net/wire.js",
+    "old": "    return x >= WILD_SEA_BOX.x0 && x < WILD_SEA_BOX.x1 && y >= WILD_SEA_BOX.y0 && y < WILD_SEA_BOX.y1;",
+    "new": "    return x >= WILD_SEA_BOX.x0 && x < WILD_SEA_BOX.x1 && y >= WILD_SEA_BOX.y0 && y < WILD_SEA_BOX.y1 + WORLD_CELL;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-room-any-place",
+    "file": "src/net/wire.js",
+    "old": "  const p = /^(?:dungeon|interior):m([1-9]\\d{0,9})(?:\\.|$)/.exec(key);",
+    "new": "  const p = /^(?:dungeon|interior|town):m([1-9]\\d{0,9})(?:\\.|$)/.exec(key);",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-room-unanchored",
+    "file": "src/net/wire.js",
+    "old": "  const p = /^(?:dungeon|interior):m([1-9]\\d{0,9})(?:\\.|$)/.exec(key);",
+    "new": "  const p = /^(?:dungeon|interior):m([1-9]\\d{0,9})/.exec(key);",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-room-no-interior",
+    "file": "src/net/wire.js",
+    "old": "  const p = /^(?:dungeon|interior):m([1-9]\\d{0,9})(?:\\.|$)/.exec(key);",
+    "new": "  const p = /^(?:dungeon):m([1-9]\\d{0,9})(?:\\.|$)/.exec(key);",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-room-any-lane",
+    "file": "src/net/wire.js",
+    "old": "  return !!p && seaPlaceCell(Number(p[1])) != null;",
+    "new": "  return !!p;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-room-cell-unshaped",
+    "file": "src/net/wire.js",
+    "old": "  const w = /^world:(-?\\d{1,4}),(-?\\d{1,4})$/.exec(key);",
+    "new": "  const w = /^world:(-?\\d{1,4}),(-?\\d{1,4})/.exec(key);",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-kill-anywhere",
+    "file": "server-account/src/seaBounty.js",
+    "old": "if (!k || !c || typeof kc !== 'string' || !REALM_CHARACTER_RE.test(kc) || !seaRoomOf(m)) return [];",
+    "new": "if (!k || !c || typeof kc !== 'string' || !REALM_CHARACTER_RE.test(kc)) return [];",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-kill-unnamed",
+    "file": "server-account/src/seaBounty.js",
+    "old": "if (!k || !c || typeof kc !== 'string' || !REALM_CHARACTER_RE.test(kc) || !seaRoomOf(m)) return [];",
+    "new": "if (!k || !c || !seaRoomOf(m)) return [];",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-claim-again",
+    "file": "server-account/src/seaBounty.js",
+    "old": " AND NOT EXISTS (SELECT 1 FROM sea_kills WHERE r = ?1)').bind(r, c),",
+    "new": "').bind(r, c),",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-kill-twice",
+    "file": "server-account/src/seaBounty.js",
+    "old": "db.prepare('INSERT OR IGNORE INTO sea_kills",
+    "new": "db.prepare('INSERT INTO sea_kills",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-owed-twice",
+    "file": "server-account/src/seaBounty.js",
+    "old": "db.prepare('INSERT OR IGNORE INTO sea_bounty_owed",
+    "new": "db.prepare('INSERT INTO sea_bounty_owed",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-owed-every-claim",
+    "file": "server-account/src/seaBounty.js",
+    "old": "FROM sea_bounties WHERE claimed_r = ?1 HAVING SUM(gold) > 0')",
+    "new": "FROM sea_bounties WHERE claimed_r IS NOT NULL HAVING SUM(gold) > 0')",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-owed-nothing",
+    "file": "server-account/src/seaBounty.js",
+    "old": "FROM sea_bounties WHERE claimed_r = ?1 HAVING SUM(gold) > 0')",
+    "new": "FROM sea_bounties WHERE claimed_r = ?1 HAVING SUM(gold) > 0 AND 0')",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-claim-none",
+    "file": "server-account/src/seaBounty.js",
+    "old": "UPDATE sea_bounties SET claimed_r = ?1 WHERE target_char = ?2 AND claimed_r IS NULL",
+    "new": "UPDATE sea_bounties SET claimed_r = ?1 WHERE target_char = ?2 AND claimed_r IS NULL AND 0",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-claim-every-head",
+    "file": "server-account/src/seaBounty.js",
+    "old": "UPDATE sea_bounties SET claimed_r = ?1 WHERE target_char = ?2 AND claimed_r IS NULL",
+    "new": "UPDATE sea_bounties SET claimed_r = ?1 WHERE ?2 = ?2 AND claimed_r IS NULL",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-wanted-forever",
+    "file": "server-account/src/seaBounty.js",
+    "old": "  const since = nowS - SEA_WANTED_DAYS * DAY_S;",
+    "new": "  const since = 0;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-wanted-dead",
+    "file": "server-account/src/seaBounty.js",
+    "old": "    JOIN realm_characters rc ON rc.id = w.ch AND rc.dead_at IS NULL",
+    "new": "    JOIN realm_characters rc ON rc.id = w.ch",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-board-smallest-first",
+    "file": "server-account/src/seaBounty.js",
+    "old": "    ORDER BY bounty DESC, kills DESC, rc.name LIMIT ?2",
+    "new": "    ORDER BY bounty ASC, kills DESC, rc.name LIMIT ?2",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-board-fewest-kills",
+    "file": "server-account/src/seaBounty.js",
+    "old": "    ORDER BY bounty DESC, kills DESC, rc.name LIMIT ?2",
+    "new": "    ORDER BY bounty DESC, kills ASC, rc.name LIMIT ?2",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-board-no-standing-heads",
+    "file": "server-account/src/seaBounty.js",
+    "old": "SELECT killer_char AS ch FROM sea_kills WHERE at >= ?1 UNION SELECT target_char FROM sea_bounties WHERE claimed_r IS NULL",
+    "new": "SELECT killer_char AS ch FROM sea_kills WHERE at >= ?1",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-board-claimed-standing",
+    "file": "server-account/src/seaBounty.js",
+    "old": "LEFT JOIN (SELECT target_char, SUM(gold) AS gold FROM sea_bounties WHERE claimed_r IS NULL GROUP BY target_char)",
+    "new": "LEFT JOIN (SELECT target_char, SUM(gold) AS gold FROM sea_bounties GROUP BY target_char)",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-board-owed-paid",
+    "file": "server-account/src/seaBounty.js",
+    "old": "FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2 AND paid_at IS NULL').bind(player.id, character).first()",
+    "new": "FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2').bind(player.id, character).first()",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-board-owed-anyone",
+    "file": "server-account/src/seaBounty.js",
+    "old": "FROM sea_bounty_owed WHERE killer = ?1 AND killer_char = ?2 AND paid_at IS NULL').bind(player.id, character).first()",
+    "new": "FROM sea_bounty_owed WHERE paid_at IS NULL').bind(player.id, character).first()",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-board-mine-none",
+    "file": "server-account/src/seaBounty.js",
+    "old": "    owed, refund, mine: character ? await standing(db, character) : 0,",
+    "new": "    owed, refund, mine: 0,",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-post-no-realm",
+    "file": "server-account/src/seaBounty.js",
+    "old": "  if (!side.at) return { error: 'sea-bounty-realm' };\n  if (typeof rid",
+    "new": "  if (typeof rid",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-post-no-rid",
+    "file": "server-account/src/seaBounty.js",
+    "old": "  if (typeof rid !== 'string' || !SEA_BOUNTY_RID_RE.test(rid)) return { error: 'bad-rid' };",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-post-twice",
+    "file": "server-account/src/seaBounty.js",
+    "old": "  if (prior) return { ok: true, repeat: true,",
+    "new": "  if (false) return { ok: true, repeat: true,",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-post-any-region",
+    "file": "server-account/src/seaBounty.js",
+    "old": "  if (!regionOk(region)) return { error: 'bad-region' };\n  if (!seaBountyGoldOk(gold))",
+    "new": "  if (!seaBountyGoldOk(gold))",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-post-any-gold",
+    "file": "server-account/src/seaBounty.js",
+    "old": "  if (!seaBountyGoldOk(gold)) return { error: 'sea-bounty-gold' };",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-post-any-target",
+    "file": "server-account/src/seaBounty.js",
+    "old": "  if (typeof target !== 'string' || !REALM_CHARACTER_RE.test(target)) return { error: 'sea-bounty-target' };",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-post-dead-wanted",
+    "file": "server-account/src/seaBounty.js",
+    "old": "  const wanted = await db.prepare(`SELECT player FROM realm_characters WHERE id = ?1 AND dead_at IS NULL AND (",
+    "new": "  const wanted = await db.prepare(`SELECT player FROM realm_characters WHERE id = ?1 AND (",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-post-old-kills",
+    "file": "server-account/src/seaBounty.js",
+    "old": "      EXISTS (SELECT 1 FROM sea_kills WHERE killer_char = ?1 AND at >= ?2) OR",
+    "new": "      EXISTS (SELECT 1 FROM sea_kills WHERE killer_char = ?1) OR",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-post-bounty-not-wanted",
+    "file": "server-account/src/seaBounty.js",
+    "old": " OR EXISTS (SELECT 1 FROM sea_bounties WHERE target_char = ?1 AND claimed_r IS NULL))`)",
+    "new": ")`)",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-post-anyone",
+    "file": "server-account/src/seaBounty.js",
+    "old": "  if (!wanted) return { error: 'sea-bounty-not-wanted' };",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-post-own-head",
+    "file": "server-account/src/seaBounty.js",
+    "old": "  if (wanted.player === player.id) return { error: 'sea-bounty-self' };",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-post-free",
+    "file": "server-account/src/seaBounty.js",
+    "old": "(save) => (payFromSave(save, gold, region) ? null : 'realm-gold'), { outbound: true });",
+    "new": "() => null, { outbound: true });",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-post-held",
+    "file": "server-account/src/seaBounty.js",
+    "old": "(save) => (payFromSave(save, gold, region) ? null : 'realm-gold'), { outbound: true });",
+    "new": "(save) => (payFromSave(save, gold, region) ? null : 'realm-gold'));",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-post-unwritten",
+    "file": "server-account/src/seaBounty.js",
+    "old": "      db.prepare('INSERT INTO sea_bounties (id, poster, poster_char, rid, target_char, gold, at) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)').bind(id, player.id, character, rid, target, gold, nowS),\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-collect-no-realm",
+    "file": "server-account/src/seaBounty.js",
+    "old": "  if (!side.at) return { error: 'sea-bounty-realm' };\n  if (!regionOk(region)) return { error: 'bad-region' };\n  await db.batch(seaRefundSteps",
+    "new": "  if (!regionOk(region)) return { error: 'bad-region' };\n  await db.batch(seaRefundSteps",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-collect-paid-again",
+    "file": "server-account/src/seaBounty.js",
+    "old": "WHERE killer = ?1 AND killer_char = ?2 AND paid_at IS NULL ORDER BY at, r LIMIT ?3",
+    "new": "WHERE killer = ?1 AND killer_char = ?2 ORDER BY at, r LIMIT ?3",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-collect-purse",
+    "file": "server-account/src/seaBounty.js",
+    "old": "(save) => (creditSave(save, gold, { bank: region }) ? null : 'bad-gold')",
+    "new": "(save) => (creditSave(save, gold) ? null : 'bad-gold')",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-collect-unpaid",
+    "file": "server-account/src/seaBounty.js",
+    "old": "(save) => (creditSave(save, gold, { bank: region }) ? null : 'bad-gold')",
+    "new": "() => null",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-collect-unsettled",
+    "file": "server-account/src/seaBounty.js",
+    "old": "    await db.batch([...prep.steps, settle, mustChange(db, rs.length)]);",
+    "new": "    await db.batch([...prep.steps]);",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-min",
+    "file": "src/net/sea/seaBountyLaw.js",
+    "old": "export const SEA_BOUNTY_MIN = 100;",
+    "new": "export const SEA_BOUNTY_MIN = 99;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-max",
+    "file": "src/net/sea/seaBountyLaw.js",
+    "old": "export const SEA_BOUNTY_MAX = 50_000;",
+    "new": "export const SEA_BOUNTY_MAX = 50_001;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-posts",
+    "file": "src/net/sea/seaBountyLaw.js",
+    "old": "export const SEA_BOUNTY_POSTS = Object.freeze([500, 2000, 10_000]);",
+    "new": "export const SEA_BOUNTY_POSTS = Object.freeze([500, 2000, 10_001]);",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-wanted-days",
+    "file": "src/net/sea/seaBountyLaw.js",
+    "old": "export const SEA_WANTED_DAYS = 14;",
+    "new": "export const SEA_WANTED_DAYS = 15;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-board-max",
+    "file": "src/net/sea/seaBountyLaw.js",
+    "old": "export const SEA_BOARD_MAX = 12;",
+    "new": "export const SEA_BOARD_MAX = 13;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-gold-fractional",
+    "file": "src/net/sea/seaBountyLaw.js",
+    "old": "export const seaBountyGoldOk = (n) => Number.isSafeInteger(n) && n >= SEA_BOUNTY_MIN",
+    "new": "export const seaBountyGoldOk = (n) => Number.isFinite(n) && n >= SEA_BOUNTY_MIN",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-read-any-length",
+    "file": "src/net/sea/seaBountyLaw.js",
+    "old": "  const wanted = v.wanted.slice(0, SEA_BOARD_MAX)",
+    "new": "  const wanted = v.wanted",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-read-unnamed",
+    "file": "src/net/sea/seaBountyLaw.js",
+    "old": "typeof w.name === 'string' && w.name.length > 0 && w.name.length <= 64)",
+    "new": "typeof w.name === 'string' && w.name.length <= 64)",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-read-negative",
+    "file": "src/net/sea/seaBountyLaw.js",
+    "old": "  const gold = (n) => (Number.isSafeInteger(n) && n >= 0 ? n : 0);",
+    "new": "  const gold = (n) => (Number.isFinite(n) ? n : 0);",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-read-any-body",
+    "file": "src/net/sea/seaBountyLaw.js",
+    "old": "  if (!v || typeof v !== 'object' || !Array.isArray(v.wanted)) return null;",
+    "new": "  if (!v || typeof v !== 'object') return null;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-page-offline",
+    "file": "src/scenes/seaBountyHost.js",
+    "old": "  const on = () => !!deps.live?.() && !!deps.session;",
+    "new": "  const on = () => true;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-page-read-twice",
+    "file": "src/scenes/seaBountyHost.js",
+    "old": "    if (reading || !on()) return;",
+    "new": "    if (!on()) return;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-page-stale-late",
+    "file": "src/scenes/seaBountyHost.js",
+    "old": "    if (!reading && now() >= nextAt) void read();",
+    "new": "    if (!reading && now() > nextAt) void read();",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-page-fresh",
+    "file": "src/scenes/seaBountyHost.js",
+    "old": "export const SEA_BOARD_FRESH_MS = 30_000;",
+    "new": "export const SEA_BOARD_FRESH_MS = 60_000;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-page-not-reread",
+    "file": "src/scenes/seaBountyHost.js",
+    "old": "    } finally { busy = false; nextAt = -Infinity; await read(); }",
+    "new": "    } finally { busy = false; }",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-page-press-twice",
+    "file": "src/scenes/seaBountyHost.js",
+    "old": "    if (!on() || busy || !row) return;",
+    "new": "    if (!on() || !row) return;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-page-unreserved",
+    "file": "src/scenes/seaBountyHost.js",
+    "old": "      reserve: () => deps.wallet?.(region)?.pay(n),\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-page-unbanked",
+    "file": "src/scenes/seaBountyHost.js",
+    "old": "if (Number.isSafeInteger(g) && g > 0) deps.wallet?.(region)?.bank(g); },",
+    "new": "},",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-page-posted-words",
+    "file": "src/scenes/seaBountyHost.js",
+    "old": "bounty: gold(d.bounty) })));",
+    "new": "bounty: gold(n) })));",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-page-not-busy",
+    "file": "src/scenes/seaBountyHost.js",
+    "old": "busy: busy || reading, line: actLine ?? readLine,",
+    "new": "busy: reading, line: actLine ?? readLine,",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-page-refusal-unsaid",
+    "file": "src/scenes/seaBountyHost.js",
+    "old": "      actLine = r?.ok ? { text: said(r.data ?? {}), warn: false } : { text: accountRefusalText(r?.error), warn: true };",
+    "new": "      actLine = r?.ok ? { text: said(r.data ?? {}), warn: false } : null;",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-tab-pressable-busy",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "can: !w.busy && !(w.purse < n), n })),",
+    "new": "can: !(w.purse < n), n })),",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-tab-collect-busy",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "{ gold: g(w.owed) }), press: t('sea.bounty.collect', 'Collect'), can: !w.busy } : null,",
+    "new": "{ gold: g(w.owed) }), press: t('sea.bounty.collect', 'Collect'), can: true } : null,",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-tab-owed-nothing",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "    owed: w.owed > 0 ? {",
+    "new": "    owed: w.owed >= 0 ? {",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-tab-mine-nothing",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "    mine: w.mine > 0 ? t(",
+    "new": "    mine: w.mine >= 0 ? t(",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-tab-asking-unsaid",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "    lede: w.asking ? t('sea.bounty.asking',",
+    "new": "    lede: false ? t('sea.bounty.asking',",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-tab-no-section",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "wanted: o.wanted ? wantedText(o.wanted) : null, season:",
+    "new": "wanted: null, season:",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-win-always-shown",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "    wantedSec.style.display = wt ? '' : 'none';",
+    "new": "    wantedSec.style.display = '';",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-win-press-greyed",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "() => w.post({ char: r.id, name: r.title }, p.n)); able(b, p.can);",
+    "new": "() => w.post({ char: r.id, name: r.title }, p.n)); able(b, false);",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-win-press-wrong-sum",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "() => w.post({ char: r.id, name: r.title }, p.n)); able(b, p.can);",
+    "new": "() => w.post({ char: r.id, name: r.title }, r.presses[0].n)); able(b, p.can);",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-win-line-plain",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "    wantedLine.className = `dfnaval-note${wt.line?.warn ? ' warn' : ''}`;",
+    "new": "    wantedLine.className = 'dfnaval-note';",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-win-office-hides",
+    "file": "src/ui/naval/navalYardWindow.js",
+    "old": "    for (const n of [oLede, boardSec, heldSec, lettersSec, wantedSec, seasonSec]) n.style.display = tab === 'office' ? '' : 'none';",
+    "new": "    for (const n of [oLede, boardSec, heldSec, lettersSec, seasonSec]) n.style.display = tab === 'office' ? '' : 'none';",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-door-board",
+    "file": "src/net/accountClient.js",
+    "old": "    board: (req) => post('/v1/sea/bounty/board', req),",
+    "new": "    board: (req) => post('/v1/sea/bounty/boards', req),",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-refusal-unsaid",
+    "file": "src/net/accountClient.js",
+    "old": "  'sea-bounty-not-wanted': () => t('account.refusal.seaBountyNotWanted', 'That captain is no longer wanted.'),\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-fall-no-kill",
+    "file": "server-account/src/wild.js",
+    "old": "    ...seaKillSteps(ctx.db, sea, ctx.nowS),\n",
+    "new": "",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-fall-sea-unread",
+    "file": "server-account/src/wild.js",
+    "old": "    sea = c;   // SEA-BOUNTY",
+    "new": "    // sea = c;   // SEA-BOUNTY",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-route-post",
+    "file": "server-account/src/index.js",
+    "old": "'/v1/sea/bounty/post': async () => seaBountyPost(sctx, who.player, body),",
+    "new": "'/v1/sea/bounty/post': async () => seaBountyBoard(sctx, who.player, body),",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-host-no-wallet",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "checkpoint: deps.checkpoint, wallet: deps.wallet, character",
+    "new": "checkpoint: deps.checkpoint, wallet: null, character",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-world-no-section",
+    "file": "src/scenes/world.js",
+    "old": "...seaVentures.office(), buyChart:",
+    "new": "buyChart:",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-world-no-session",
+    "file": "src/scenes/world.js",
+    "old": "session: realmSession, checkpoint: onlineCheckpoint, wallet: realmWallet,",
+    "new": "session: null, checkpoint: onlineCheckpoint, wallet: realmWallet,",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-door-post",
+    "file": "src/net/accountClient.js",
+    "old": "    post: (req) => post('/v1/sea/bounty/post', req),\n    collect: (req) => post('/v1/sea/bounty/collect', req),",
+    "new": "    post: (req) => post('/v1/sea/bounty/post', { ...req, gold: 0 }),\n    collect: (req) => post('/v1/sea/bounty/collect', req),",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-door-collect",
+    "file": "src/net/accountClient.js",
+    "old": "    collect: (req) => post('/v1/sea/bounty/collect', req),\n  };\n}\n\n/** SHIP-PVP: A WRECK AT SEA'S DOOR",
+    "new": "    collect: (req) => post('/v1/sea/bounty/board', req),\n  };\n}\n\n/** SHIP-PVP: A WRECK AT SEA'S DOOR",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-refusal-gold-plain",
+    "file": "src/net/accountClient.js",
+    "old": "{ min: SEA_BOUNTY_MIN.toLocaleString('en-US'), max: SEA_BOUNTY_MAX.toLocaleString('en-US') }",
+    "new": "{ min: SEA_BOUNTY_MIN, max: SEA_BOUNTY_MAX }",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  },
+  {
+    "name": "SEA-BOUNTY-sea-character-none",
+    "file": "src/scenes/seaVenturesHost.js",
+    "old": "  const character = deps.character ?? (() => characterIdOf(playerEntity));",
+    "new": "  const character = deps.character ?? (() => null);",
+    "tests": [
+      "test/systems/sea/seabounty.test.js"
+    ]
+  }
+]

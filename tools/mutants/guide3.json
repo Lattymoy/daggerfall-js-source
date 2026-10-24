@@ -1,382 +1,382 @@
 [
   {
     "name": "GUIDE3-word-started",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "  started: 'New quest',",
     "new": "  started: 'Quest started',",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-word-updated",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "  updated: 'Journal updated',",
     "new": "  updated: 'Journal changed',",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-word-urgent",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "  urgent: 'Under a day left',",
     "new": "  urgent: 'Hurry',",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-time-left-words",
-    "file": "src/ui/questRail.js",
-    "old": "export const timeLeftWords = (s) => `${remainWords(s)} left`;",
+    "file": "src/ui/quest/questRail.js",
+    "old": "export const timeLeftWords = (s) => t('quest.remain.left', '{time} left', { time: remainWords(s) });",
     "new": "export const timeLeftWords = (s) => `${Math.round(s / 3600)} hours left`;",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-rank-inverted",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "      const keeps = was && RANK[was.type] > RANK[event.type] &&",
     "new": "      const keeps = was && RANK[was.type] < RANK[event.type] &&",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-rank-ending-routine",
-    "file": "src/ui/questHerald.js",
-    "old": "const RANK = Object.freeze({ updated: 0, urgent: 1, started: 2, completed: 3, ended: 3 });",
-    "new": "const RANK = Object.freeze({ updated: 0, urgent: 1, started: 2, completed: 0, ended: 3 });",
+    "file": "src/ui/quest/questHerald.js",
+    "old": "const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 1, started: 2, completed: 3, ended: 3 });",
+    "new": "const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 1, started: 2, completed: 0, ended: 3 });",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-rank-deadline-over-new",
-    "file": "src/ui/questHerald.js",
-    "old": "const RANK = Object.freeze({ updated: 0, urgent: 1, started: 2, completed: 3, ended: 3 });",
-    "new": "const RANK = Object.freeze({ updated: 0, urgent: 2, started: 1, completed: 3, ended: 3 });",
+    "file": "src/ui/quest/questHerald.js",
+    "old": "const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 1, started: 2, completed: 3, ended: 3 });",
+    "new": "const RANK = Object.freeze({ updated: 0, objective: 0.5, urgent: 2, started: 1, completed: 3, ended: 3 });",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-notice-per-event",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "      const at = this.rows.findIndex((r) => r.id === event.id);",
     "new": "      const at = -1;",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-clock-not-restarted",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "        left: HERALD_SECONDS,",
     "new": "        left: was?.left ?? HERALD_SECONDS,",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-cap-off-by-one",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "    while (this.rows.length > HERALD_MAX) {",
     "new": "    while (this.rows.length >= HERALD_MAX) {",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-newest-dropped",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "      this.rows.splice(out, 1);",
     "new": "      this.rows.splice(this.rows.length - 1, 1);",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-tick-ignores-dt",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "    if (!(dt > 0)) return;",
     "new": "    if (!(dt > 0)) dt = 1;",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-line-off-the-first-entry",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "  if (type === 'started' || type === 'updated') return entryOpening(view?.latest?.lines);",
     "new": "  if (type === 'started' || type === 'updated') return entryOpening(view?.entries?.[0]?.lines);",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-urgent-time-stale",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "    const s = event.type === 'urgent' ? event.clockSeconds : view?.clockSeconds;",
     "new": "    const s = event.type === 'urgent' ? event.clockSeconds : null;",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-unknown-news-said",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "      if (!Object.hasOwn(HERALD_WORDS, event?.type)) continue;",
     "new": "      if (!event?.type) continue;",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-main-mark-dropped",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "        { text: r.title, cls: r.main ? 'herald-title main' : 'herald-title' },",
     "new": "        { text: r.title, cls: 'herald-title' },",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-ending-says-a-line",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "  return '';\n}\n",
     "new": "  return entryOpening(view?.latest?.lines) || 'The journal is closed.';\n}\n",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-on-the-classic-skin",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "export const heraldOn = () => isEnhanced() && !!getPref(HERALD_PREF) && typeof document !== 'undefined';",
     "new": "export const heraldOn = () => !!getPref(HERALD_PREF) && typeof document !== 'undefined';",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-on-without-a-page",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "export const heraldOn = () => isEnhanced() && !!getPref(HERALD_PREF) && typeof document !== 'undefined';",
     "new": "export const heraldOn = () => isEnhanced() && !!getPref(HERALD_PREF);",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-switch-ignored",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "export const heraldOn = () => isEnhanced() && !!getPref(HERALD_PREF) && typeof document !== 'undefined';",
     "new": "export const heraldOn = () => isEnhanced() && typeof document !== 'undefined';",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-clock-runs-hidden",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "  if (!hidden) {\n    if (wasHidden) questHerald.refresh();   // AUDIT GUIDE H6: back from under a window - the count as it stands now\n    questHerald.tick(dt);",
     "new": "  questHerald.tick(dt);\n  if (!hidden) {\n    if (wasHidden) questHerald.refresh();   // AUDIT GUIDE H6: back from under a window - the count as it stands now",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-hide-door-skipped",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "    releaseEnhancedToasts(HERALD_OWNER);\n    dropLive();\n    return [];",
     "new": "    dropLive();\n    return [];",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-queue-kept-off",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "    if (questHerald.rows.length) questHerald.clear();\n",
     "new": "",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-shown-while-hidden",
-    "file": "src/ui/questHerald.js",
+    "file": "src/ui/quest/questHerald.js",
     "old": "visible: !hidden, silent: true }, doc, HERALD_OWNER);",
     "new": "visible: true, silent: true }, doc, HERALD_OWNER);",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-news-before-the-tick",
-    "file": "src/scenes/questBridge.js",
-    "old": "    machine.tick();\n    updateTimer = 0;\n    news();",
-    "new": "    news();\n    machine.tick();\n    updateTimer = 0;",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "    machine.tick();\n    updateTimer = 0;\n    questlines.look();   // QL1: what each stamped quest's state has shown, latched\n    news();",
+    "new": "    news();\n    machine.tick();\n    updateTimer = 0;\n    questlines.look();   // QL1: what each stamped quest's state has shown, latched",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-look-between-ticks",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "    if (updateTimer < 1 / TICKS_PER_SECOND) return false;\n    machine.tick();",
     "new": "    if (updateTimer < 1 / TICKS_PER_SECOND) { news(); return false; }\n    machine.tick();",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-baseline-heard",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "    if (!lookedLast) lens.reset();",
     "new": "    /* the backlog heard */",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-look-before-the-gate",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "    if (!herald && !follow) { lookedLast = false; return; }",
     "new": "    lens.look();\n    if (!herald && !follow) { lookedLast = false; return; }",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-listening-kept-off",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "    if (!herald && !follow) { lookedLast = false; return; }",
     "new": "    if (!herald && !follow) return;",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-catch-dropped",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "    } catch (err) { warnNewsOnce(err); }\n  }",
     "new": "    } catch (err) { throw err; }\n  }",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-warning-a-tick",
-    "file": "src/scenes/questBridge.js",
+    "file": "src/scenes/quest/questBridge.js",
     "old": "    if (newsWarned) return;\n",
     "new": "",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-draw-inside-the-gate",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  drawQuestHerald({ hidden: cursorActive || !hudRenderEnabled(), dt });\n",
     "new": "  if (isEnhanced() && typeof document !== 'undefined') drawQuestHerald({ hidden: cursorActive || !hudRenderEnabled(), dt });\n",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-hud-gate-loose",
-    "file": "src/ui/hud.js",
+    "file": "src/ui/hud/hud.js",
     "old": "  drawQuestHerald({ hidden: cursorActive || !hudRenderEnabled(), dt });",
     "new": "  drawQuestHerald({ hidden: !hudRenderEnabled(), dt });",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-header-kept",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "  const body = all.filter((l, i) => !(i === head && DATE_HEADER.test(l)));",
     "new": "  const body = all.filter(() => true);",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-header-any-line",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "  const body = all.filter((l, i) => !(i === head && DATE_HEADER.test(l)));",
     "new": "  const body = all.filter((l) => !DATE_HEADER.test(l));",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-cap-off",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "  if (first.length <= max) return first;",
     "new": "  if (first.length <= max + 20) return first;",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-sentence-any-stop",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "(?=\\s+[\"'\\u201c\\u2018(\\[]*\\p{Lu}|$)/gu;",
     "new": "(?=\\s|$)/gu;",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-whole-entry",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "  for (const m of text.matchAll(SENTENCE_END)) {",
     "new": "  for (const m of [].values()) {",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-ellipsis-dropped",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "  return `${kept}\\u2026`;",
     "new": "  return kept;",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-comma-kept",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "  const edge = (t) => t.replace(/[\\s,;:-]+$/, '');",
     "new": "  const edge = (t) => t;",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   },
   {
     "name": "GUIDE3-toast-rows-flattened",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "    const host = drawEnhancedNotice({ rows: Array.isArray(rows[i]) ? rows[i] : [rows[i] ?? ''], visible, toast: true }, doc, toastKey(key, ids[i]));",
     "new": "    const host = drawEnhancedNotice({ rows: [rows[i] ?? ''], visible, toast: true }, doc, toastKey(key, ids[i]));",
     "tests": [
-      "test/guide3_herald.test.js",
-      "test/enhancedNotice.test.js"
+      "test/ui/quest/guide3_herald.test.js",
+      "test/ui/enhancedNotice.test.js"
     ]
   },
   {
     "name": "GUIDE3-row-class-dropped",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "${Array.isArray(rec.cells) ? ' cells' : ''}${rec.cls ? ` ${rec.cls}` : ''}`;",
     "new": "${Array.isArray(rec.cells) ? ' cells' : ''}`;",
     "tests": [
-      "test/guide3_herald.test.js",
-      "test/enhancedNotice.test.js"
+      "test/ui/quest/guide3_herald.test.js",
+      "test/ui/enhancedNotice.test.js"
     ]
   },
   {
@@ -385,8 +385,8 @@
     "old": "    control: Object.freeze({ store: 'prefs', key: 'questHerald', initial: true, online: 'player' }),",
     "new": "    control: Object.freeze({ store: 'prefs', key: 'questHerald', initial: false, online: 'player' }),",
     "tests": [
-      "test/guide3_herald.test.js",
-      "test/features.test.js"
+      "test/ui/quest/guide3_herald.test.js",
+      "test/systems/features.test.js"
     ]
   },
   {
@@ -395,17 +395,17 @@
     "old": "    control: Object.freeze({ store: 'prefs', key: 'questHerald', initial: true, online: 'player' }),",
     "new": "    control: Object.freeze({ store: 'prefs', key: 'questHerald', initial: true, online: true }),",
     "tests": [
-      "test/guide3_herald.test.js",
-      "test/features.test.js"
+      "test/ui/quest/guide3_herald.test.js",
+      "test/systems/features.test.js"
     ]
   },
   {
     "name": "GUIDE3-small-word-kept",
-    "file": "src/ui/questRail.js",
+    "file": "src/ui/quest/questRail.js",
     "old": "  while (TRAILING_SMALL_WORD.test(kept)) kept = edge(kept.replace(TRAILING_SMALL_WORD, ''));\n",
     "new": "",
     "tests": [
-      "test/guide3_herald.test.js"
+      "test/ui/quest/guide3_herald.test.js"
     ]
   }
 ]

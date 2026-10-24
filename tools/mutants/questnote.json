@@ -1,0 +1,29 @@
+[
+  {
+    "name": "QN-hook-never-called",
+    "file": "src/systems/quest/foe.js",
+    "old": "    this.parentQuest?.hooks?.questFoeKilled?.(this.parentQuest, this, amount);",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questnote.test.js"
+    ]
+  },
+  {
+    "name": "QN-grace-never-read",
+    "file": "src/ui/guildServiceWindows.js",
+    "old": "  _inGrace() { return this.graceMs > 0 && graceNow() - this._shownAt < this.graceMs; }",
+    "new": "  _inGrace() { return false; }",
+    "tests": [
+      "test/systems/quest/questnote.test.js"
+    ]
+  },
+  {
+    "name": "QN-click-let-through",
+    "file": "src/ui/guildServiceWindows.js",
+    "old": "    if (this._inGrace()) return true;   // QUEST-NOTE: the swing that raised it does not close it",
+    "new": "",
+    "tests": [
+      "test/systems/quest/questnote.test.js"
+    ]
+  }
+]

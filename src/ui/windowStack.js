@@ -95,6 +95,20 @@ export const hidesHud = (win) => !!win && win.hidesHud === true;
  *  death screen goes. */
 export const holdsTop = (win) => !!win && win.holdsTop === true;
 
+/** PLEA-LOOP (FIELD BUGS 2026-10-13b): the stack that holds each window - a window in no stack has no entry. Weak, so an
+ *  entry dies with its window: nothing here outlives what it names. */
+const HELD_BY = new WeakMap();
+
+/** PLEA-LOOP: TopWindow is the only window that receives input (the header above) - a window a stack holds UNDER
+ *  another is COVERED, and answers nothing until it is the top again. The keys and the canvas reach the top alone
+ *  through their host; a door that reaches a window directly - the enhanced keyed menu's buttons
+ *  (ui/enhanced/enhancedDialog.js drawEnhancedChoice) - asks this first. A window no stack holds (the boot menu's, chargen's) is
+ *  nobody's to cover. */
+export function windowCovered(win) {
+  const stack = win ? HELD_BY.get(win) : null;
+  return !!stack && stack.topWindow() !== win;
+}
+
 /**
  * Build a stack.
  *
@@ -122,6 +136,9 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
 
   const isHud = (w) => !!hud && w === hud;
   const top = () => (windows.length > 0 ? windows[windows.length - 1] : null);
+  /** PLEA-LOOP: every door in and out of `windows` says so here, so windowCovered answers for this stack. */
+  const hold = (w) => { if (w && typeof w === 'object') HELD_BY.set(w, api); };
+  const unhold = (w) => { if (w && typeof w === 'object' && HELD_BY.get(w) === api) HELD_BY.delete(w); };
 
   let lastTop = top();
   const publishTop = () => {
@@ -135,6 +152,7 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
    *  but for a window slipped beneath one that holds it. */
   function addWindow(win, at = windows.length) {
     windows.splice(at, 0, win);
+    hold(win);
     win.onPush?.();
     if (pauseWhileOpen(win)) gamePaused = true;
   }
@@ -145,6 +163,7 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
     const oldWindow = top();
     if (oldWindow && !isHud(oldWindow)) {
       windows.pop();
+      unhold(oldWindow);
       oldWindow.onPop?.();
       const t = top();
       if (t) t.onReturn?.();
@@ -181,7 +200,7 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
      *  no longer the hosts' pause question - counting it to decide
      *  whether the world is stopped was the per-host arithmetic
      *  `paused()` replaced, and no host does it now
-     *  (test/roadb_host_pause.test.js sweeps for it). */
+     *  (test/scenes/roadb_host_pause.test.js sweeps for it). */
     depth: () => windows.length - (hud ? 1 : 0),
 
     /** PushWindow (:79-91). RISE-STUCK: over a window that holds the
@@ -306,6 +325,7 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
         const w = windows[i];
         if (isHud(w) || w === keep) continue;
         windows.splice(i, 1);
+        unhold(w);
         onDrop?.(w);
         w.onPop?.();
       }
@@ -403,6 +423,8 @@ export function makeWindowStack({ hud = null, onTop = null, onWindowChange = nul
       // Replace the top in place: the window beneath is still suspended
       // and still returns when this one closes.
       windows[windows.length - 1] = live;
+      unhold(t);
+      hold(live);
       if (pauseWhileOpen(live)) gamePaused = true;
       lastTop = live;
       onWindowChange?.();

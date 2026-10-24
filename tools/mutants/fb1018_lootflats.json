@@ -1,0 +1,92 @@
+[
+  {
+    "name": "LOOT-FLATS-free-keeps-the-clock",
+    "file": "src/scenes/droppedLoot.js",
+    "old": "    if (!p.batch) return;\n    flatAnims.remove(p.batch);\n",
+    "new": "    if (!p.batch) return;\n",
+    "tests": [
+      "test/scenes/fb1018_lootflats.test.js"
+    ],
+    "why": "the leak itself: a freed batch ticked for the rest of the pool's life"
+  },
+  {
+    "name": "LOOT-FLATS-restore-by-hand",
+    "file": "src/scenes/droppedLoot.js",
+    "old": "    for (const p of piles) { p.dead = true; freeBatch(p); }   // AUDIT 24: mark first - an in-flight mount reads it\n    piles.length = 0;\n    physical.clear();   // PI1: a load is a new world",
+    "new": "    for (const p of piles) { p.dead = true; if (p.batch) renderer.destroyBillboardBatch(p.batch); }   // AUDIT 24: mark first - an in-flight mount reads it\n    piles.length = 0;\n    physical.clear();   // PI1: a load is a new world",
+    "tests": [
+      "test/scenes/fb1018_lootflats.test.js"
+    ],
+    "why": "a load's restore freeing as it did - its piles' clocks left running"
+  },
+  {
+    "name": "LOOT-FLATS-sweep-by-hand",
+    "file": "src/scenes/droppedLoot.js",
+    "old": "      p.dead = true;   // AUDIT 24: an in-flight mount must not publish onto this\n      freeBatch(p);\n      piles.splice(i, 1);\n    }\n  }",
+    "new": "      p.dead = true;   // AUDIT 24: an in-flight mount must not publish onto this\n      if (p.batch) renderer.destroyBillboardBatch(p.batch);\n      piles.splice(i, 1);\n    }\n  }",
+    "tests": [
+      "test/scenes/fb1018_lootflats.test.js"
+    ],
+    "why": "the emptied piles' sweep leaving their clocks"
+  },
+  {
+    "name": "LOOT-FLATS-rebind-unwired",
+    "file": "src/scenes/droppedLoot.js",
+    "old": "    flatAnims.rebind(was, p.batch);",
+    "new": "",
+    "tests": [
+      "test/scenes/fb1018_lootflats.test.js"
+    ],
+    "why": "a reminted pile stands still from its first recentre, its entry on the dead batch"
+  },
+  {
+    "name": "LOOT-FLATS-rebind-restarts",
+    "file": "src/render/flatAnimation.js",
+    "old": "if (e.batch === from) { e.batch = to; to.frame = e.anim.frame; }",
+    "new": "if (e.batch === from) { e.batch = to; }",
+    "tests": [
+      "test/scenes/fb1018_lootflats.test.js"
+    ],
+    "why": "the new batch drawn at frame 0 until the next advance - a flicker at every recentre"
+  },
+  {
+    "name": "LOOT-FLATS-dungeon-teardown-by-hand",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "      droppedLoot.restorePiles(null);",
+    "new": "      for (const p of droppedLoot._piles) { if (p.batch) renderer.destroyBillboardBatch(p.batch); p.dead = true; }\n      droppedLoot._piles.length = 0;",
+    "tests": [
+      "test/systems/resourcesafety.test.js"
+    ],
+    "why": "AUDIT FB1018 L3-2: the dungeon frees its piles by hand again - past the animator, and free before dead"
+  },
+  {
+    "name": "LOOT-FLATS-remint-frame-unset",
+    "file": "src/scenes/droppedLoot.js",
+    "old": "    p.batch.frame = 0;\n    flatAnims.rebind(was, p.batch);",
+    "new": "    flatAnims.rebind(was, p.batch);",
+    "tests": [
+      "test/scenes/fb1018_lootflats.test.js"
+    ],
+    "why": "AUDIT FB1018 L4-4: a still pile reminted with no frame"
+  },
+  {
+    "name": "LOOT-FLATS-remove-unfreed",
+    "file": "src/scenes/droppedLoot.js",
+    "old": "    pile.dead = true;   // AUDIT 24: an in-flight mount must not publish onto this\n    freeBatch(pile);",
+    "new": "    pile.dead = true;   // AUDIT 24: an in-flight mount must not publish onto this\n",
+    "tests": [
+      "test/scenes/fb1018_lootflats.test.js"
+    ],
+    "why": "AUDIT FB1018 L4-4: a removed pile's batch left on the GPU and in the animator"
+  },
+  {
+    "name": "LOOT-FLATS-rebind-first-only",
+    "file": "src/render/flatAnimation.js",
+    "old": "for (const e of this.entries) if (e.batch === from) { e.batch = to; to.frame = e.anim.frame; }",
+    "new": "for (const e of this.entries.slice(0, 1)) if (e.batch === from) { e.batch = to; to.frame = e.anim.frame; }",
+    "tests": [
+      "test/scenes/fb1018_lootflats.test.js"
+    ],
+    "why": "AUDIT FB1018 L4-4: only the first animated pile follows its remint"
+  }
+]

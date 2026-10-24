@@ -3,7 +3,7 @@
 // ETHER-SEA (2026-10-11, the owner: "A brand new open sea map that allows you to traverse to the etheric sea. Sail far
 // enough and you are prompted to travel into the open sea. The etheric sea is a infinite procedural oceanscape with
 // procedural islands with towns, dungeons, exotic resources, deadly legendary ships, and whatever more you can add to
-// give meaning to the etheric sea."; bible/03-World/Etheric-Sea.md) - THE ETHERIC SEA'S LAW: where it lies, the isles
+// give meaning to the etheric sea."; bible/03-World/Eltheric-Ocean.md) - THE ELTHERIC OCEAN'S LAW: where it lies, the isles
 // that stand in it, how deep a captain has gone into it, and the ground the terrain kernel grows there.
 //
 // WHERE IT LIES. A box of the Bay's own pixel grid (ETHER_BOX - 819.2 m a pixel, as every pixel) far north of anything
@@ -13,11 +13,11 @@
 // VEIL (VEIL_PX wide), the way home; from the Veil the sea runs west for more than a thousand leagues and north and
 // south for eight hundred, isle after isle, and no captain has found its end. DEPTH is leagues west of the Veil, and its
 // BANDS - the Shallows, the Reaches, the Deep Aether, the Abyss - are the sea's law: each deadlier and richer than the
-// last (the naval director's, scenes/navalHost.js; the isles' kinds and heights, here).
+// last (the naval director's, scenes/naval/navalHost.js; the isles' kinds and heights, here).
 //
 // THE ISLES. The box is a lattice of ISLE_CELL_PX cells; a cell holds an isle on its band's `chance` of its own hash
 // (`isleOfCell`), of a KIND drawn by the band's weights - a PORT (a town at its quay: the harbourmaster, the exchange
-// and the shipwright of the Etheric Sea), a RUIN (a dungeon), a WILD isle (one of the Etheric goods, gathered off its
+// and the shipwright of the Eltheric Ocean), a RUIN (a dungeon), a WILD isle (one of the Eltheric goods, gathered off its
 // strand), a ROCK - its size and peak the kind's (the deeper, the higher), its centre jittered inside the cell so its
 // shore never leaves it (one cell answers any pixel). Its climate, its name and a wild isle's good are its own. No isle
 // stands in the Veil or in the box's outer cells. VEILHAVEN, the port the crossing makes landfall at, stands in its
@@ -34,20 +34,26 @@
 // Pure and deterministic, and worker-safe (TAMRIEL2-WORKER: it imports formats/ alone): every client and the terrain
 // worker grow the same isles.
 // ═══════════════════════════════════════════════════════════════════
-import { CLIMATES } from '../formats/mapsTables.js';
+import { CLIMATES, MAX_MAP_PIXEL_X, MAX_MAP_PIXEL_Y } from '../formats/mapsTables.js';
 
-/** The Etheric Sea's box on the Bay's own pixel grid: x from x0 up to x1, y from y0 up to y1. Inside the wire's world
+/** The Eltheric Ocean's box on the Bay's own pixel grid: x from x0 up to x1, y from y0 up to y1. Inside the wire's world
  *  (net/wire.js WORLD_PIXEL_BOUND and POSE_BOUND: a pose's z, (499 - y) pixels, within 8192 of them - so y over -7693)
  *  and in positive world units on both axes (world/streamingWorld.js worldCoordToMapPixel truncates). */
 export const ETHER_BOX = Object.freeze({ x0: 64, x1: 8128, y0: -7680, y1: -2688 });
-/** What the world calls it - the loading screen, the Overworld's line, the chart. */
-export const ETHER_SEA_NAME = 'the Etheric Sea';
+/** ELTHERIC (2026-10-12, the owner: "Apparently the ocean is suppose to be eltheric not etheric"): THE SEA'S WORD, one
+ *  home for every word a player reads of it - the lore's Eltheric Ocean, the name the world already gave the waters west
+ *  of the Bay (world/tamriel/tamrielGeography.js SEAS, the intro map's; pinned the same, test/world/eltheric.test.js). It was the
+ *  "Etheric Sea", in fourteen literals across eight modules. */
+export const ETHER_WORD = 'Eltheric';
+/** What the world calls it - the loading screen, the Overworld's line, the chart; at a sentence's head, ETHER_SEA_TITLE. */
+export const ETHER_SEA_NAME = `the ${ETHER_WORD} Ocean`;
+export const ETHER_SEA_TITLE = `The ${ETHER_WORD} Ocean`;
 /** The law answers its open sea this many pixels round the box: the far ring's reach from a ship in the box
  *  (render/farRing.js RING_RADIUS and its rebuild's drift - 60 pixels) and every kernel window (two past a pixel, the
  *  cliffs' fade six) inside it. AUDIT CAPTAIN'S SEA G1: four drew the Bay's clamped row 0 on the Veil's horizon. */
 export const ETHER_MARGIN = 64;
-/** A map pixel's side (metres) - MapsFile's 32768 world units at 40 a metre (world/tamrielFrame.js KM_PER_PIXEL): net/gateLaw.js
- *  PIXEL_M's, held here rather than imported so the terrain worker reads no net law (test/ethersea.test.js pins them equal). */
+/** A map pixel's side (metres) - MapsFile's 32768 world units at 40 a metre (world/tamriel/tamrielFrame.js KM_PER_PIXEL): net/gate/gateLaw.js
+ *  PIXEL_M's, held here rather than imported so the terrain worker reads no net law (test/world/ethersea.test.js pins them equal). */
 const PIXEL_M = 819.2;
 /** A league: three miles, the sea's own measure (metres) - the captain's log's too (captainLedger.js reads it here). */
 export const LEAGUE_M = 4828;
@@ -56,10 +62,14 @@ export const LEAGUE_PX = LEAGUE_M / PIXEL_M;
 /** THE VEIL: the box's eastmost pixels, the way home - the crossing offered there. */
 export const VEIL_PX = 16;
 export const VEIL_X = ETHER_BOX.x1 - VEIL_PX;
-/** Is the pixel (any number: the scene's own is fine) in the Etheric Sea's box? */
+/** Is the pixel (any number: the scene's own is fine) in the Eltheric Ocean's box? */
 export const inEther = (x, y) => x >= ETHER_BOX.x0 && x < ETHER_BOX.x1 && y >= ETHER_BOX.y0 && y < ETHER_BOX.y1;
 /** ...in the box or its margin - where the law answers the ground. */
 export const inEtherLaw = (x, y) => x >= ETHER_BOX.x0 - ETHER_MARGIN && x < ETHER_BOX.x1 + ETHER_MARGIN && y >= ETHER_BOX.y0 - ETHER_MARGIN && y < ETHER_BOX.y1 + ETHER_MARGIN;
+/** ETHER-OW (2026-10-13): THE GROUND THE WORLD'S SEEDED THINGS STAND ON - the Bay's map, or the Eltheric Ocean's box: the
+ *  professions' nodes (net/nodeLaw.js pixelOk - ETHER-NODES) and the Overworld's roaming bands and raiders
+ *  (scenes/world.js bandOk, tvRaidOpen, tvRaidSea). Past both, the world streams nothing these are born of. */
+export const onBayOrEther = (x, y) => (x >= 0 && y >= 0 && x < MAX_MAP_PIXEL_X && y < MAX_MAP_PIXEL_Y) || inEther(x, y);
 /** ...in the Veil. */
 export const inVeil = (x, y) => inEther(x, y) && x >= VEIL_X;
 /** The box as the stream's frames hold one (world/streamingWorld.js StreamingWorldState.frames): `{ x0, y0, w, h }`. */
@@ -130,7 +140,7 @@ export const ISLE_KINDS = Object.freeze({
   rock: Object.freeze({ r: Object.freeze([0.6, 1.1]), peak: Object.freeze([8, 18]), fall: 1.5, climates: Object.freeze([CLIMATES.Mountain, CLIMATES.Desert]) }),
 });
 export const KIND_IDS = Object.freeze(Object.keys(ISLE_KINDS));
-/** The Etheric goods a wild isle may bear (systems/naval/tradeGoods.js GOODS' `ether` rows - pinned equal). */
+/** The Eltheric goods a wild isle may bear (systems/naval/tradeGoods.js GOODS' `ether` rows - pinned equal). */
 export const ETHER_GOODS = Object.freeze(['etheramber', 'starglass', 'voidsilk']);
 /** The lattice hash's reach on an isle's land (bytes either way). */
 export const HEIGHT_NOISE = 2;
@@ -141,7 +151,7 @@ export const EDGE_CELLS = 1;
 /** AUDIT CAPTAIN'S SEA H1/P2: a port isle's shore stands about this far from its town's middle (m: its pixel's half and
  *  the kernel's fall past it), and its harbour is sounded this far past the town's footprint (shipLife.js findHarbour's
  *  `reach` - the Bay's ports' HARBOUR_REACH is 420 m from a coastal town). Measured through the kernel over every kind of
- *  town a port stands (test/auditcaptsea.test.js). */
+ *  town a port stands (test/systems/naval/auditcaptsea.test.js). */
 export const ETHER_PORT_SHORE_M = 900;
 export const ETHER_HARBOUR_REACH = 900;
 /** Where an isle's land is centred, in its own pixels' bytes: a port's on its town's pixel's middle (the kernel lays a
@@ -333,8 +343,8 @@ export function etherClimateAt(x, y) {
 }
 
 /**
- * THE COMPOSITION: a WoodsFile with the Etheric Sea in it - a prototype child of the reader it is handed (the Bay's,
- * or the Bay's with the continent round it - world/tamrielGround.js groundWoods), so the range reads WoodsFile builds
+ * THE COMPOSITION: a WoodsFile with the Eltheric Ocean in it - a prototype child of the reader it is handed (the Bay's,
+ * or the Bay's with the continent round it - world/tamriel/tamrielGround.js groundWoods), so the range reads WoodsFile builds
  * on these two answer the sea too and nothing else about the reader changes. Inside the law's box the sea's own; else
  * the reader's.
  * @param {any} woods
@@ -349,11 +359,11 @@ export function etherWoods(woods) {
   return ground;
 }
 
-/** The climate read with the Etheric Sea in it: the sea's own in the law's box, the read it is handed else. */
+/** The climate read with the Eltheric Ocean in it: the sea's own in the law's box, the read it is handed else. */
 export function etherClimateIndex(climateIndex) {
   return (x, y) => (inEtherLaw(x, y) ? etherClimateAt(x, y) : climateIndex(x, y));
 }
-/** The politic read with the Etheric Sea in it: the region it answers for (`region`, world/etherPlaces.js ETHER_REGION -
+/** The politic read with the Eltheric Ocean in it: the region it answers for (`region`, world/etherPlaces.js ETHER_REGION -
  *  POLITIC.PAK's own law, a region's politic its index and 128) in the law's box, the read it is handed else. Past the
  *  map POLITIC.PAK answers -1, which MapsFile.getRegionIndexAt clamps to the Alik'r Desert's 0. */
 export function etherPoliticIndex(politicIndex, region) {

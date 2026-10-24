@@ -7,7 +7,7 @@
 //
 // THE SPLIT IS THE PROJECT'S OWN, not an invention: `ChargenFlow` does
 // the wizard's thinking and `enhancedChargen.js` draws it, and
-// test/enhancedChargen.test.js says why - "node cannot draw them; what
+// test/ui/enhanced/enhancedChargen.test.js says why - "node cannot draw them; what
 // IS testable is the part that does arithmetic". Everything a player
 // can get WRONG about an account is arithmetic: which stage they are
 // on, whether two passwords match, what a refusal means, whether the
@@ -21,6 +21,10 @@
 // exactly once, and if the player closes the card without writing it
 // down it is gone - along with the account and the cloud saves behind
 // it, which are the only reason the account exists.
+//
+// RECOVERY-SET: a SET of eight now, each spent alone, and the profile
+// can mint a new set behind the password (the `codes` stage) - still
+// shown once, because the service keeps only their hashes.
 //
 // So `code` is a STAGE rather than a line in a corner. It is the only
 // stage with no way back to the game except an explicit "I have
@@ -39,13 +43,17 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import {
-  openGuest, register, login, recover, readAccount, changePassword, logout, equipTitle, equipAura, equipGlyph, adoptIdentity, unlinkPatreon,
+  openGuest, register, login, recover, readAccount, changePassword, logout, equipTitle, equipAura, equipIcon, equipGlyph, adoptIdentity, unlinkPatreon,
+  newRecoveryCodes,   // RECOVERY-SET: a new set of recovery codes, from the profile
+  chooseNameAs,   // NAME-AS: which name the room reads
   storedSession, keepSession, forgetSession, accountRefusalText, handleShapeOk,
   PASSWORD_MIN_LEN,
 } from '../net/accountClient.js';
 import { handleLooksLikeEmail } from '../net/handleShape.js';   // HANDLE-EMAIL: a new username is never an address
 import { ACCEPTED, TERMS_URL, PRIVACY_URL } from '../net/legalLaw.js';   // TERMS1: the documents a new account agrees to
-import { AURA_TEXT } from './playerBadge.js';   // SHADOW-CLOAK (AUDIT): an aura's name in the card's note
+import { t, localizedTable } from '../systems/textManager.js';   // L10N4: the card's words in the player's language, read when they are drawn
+import { AURA_TEXT, TITLE_TEXT } from './playerBadge.js';   // SHADOW-CLOAK (AUDIT): an aura's name in the card's note - COLLECTIONS-II: and a title's
+import { ICON_TEXT } from './profileIcons.js';   // WITCH1: an icon's name in the card's note
 
 /** Every stage this card can be on. Exported because a pin that
  *  enumerates them by hand is a pin that stops covering the one added
@@ -59,6 +67,7 @@ export const STAGES = Object.freeze([
   'code',       // THE CODE, readable once, and the only way on is to acknowledge it
   'in',         // signed in
   'password',   // changing the password from inside a session
+  'codes',      // RECOVERY-SET: a new set of recovery codes, behind the password
 ]);
 
 /** The fields each stage asks for, in the order they are asked. The
@@ -69,17 +78,18 @@ export const FIELDS = Object.freeze({
   login: ['handle', 'password'],
   recover: ['handle', 'code', 'password', 'confirm'],
   password: ['oldPassword', 'password', 'confirm'],
+  codes: ['oldPassword', 'code'],   // RECOVERY-SET: the password, as changing it asks - AUDIT RECOVERY-SET A1: and a code the new set replaces
 });
 
 /** What each field is called and how it behaves. `secret: true` is the
  *  difference between `type=password` and `type=text`, which is not a
  *  cosmetic choice: a recovery code read off a shoulder is the account. */
-export const FIELD_SPEC = Object.freeze({
-  handle: { label: 'Username', secret: false, max: 24, hint: 'One word, 3 to 24 characters, starting with a letter.' },
-  password: { label: 'Password', secret: true, max: 200, hint: `At least ${PASSWORD_MIN_LEN} characters.` },
-  confirm: { label: 'Repeat password', secret: true, max: 200, hint: '' },
-  oldPassword: { label: 'Current password', secret: true, max: 200, hint: '' },
-  code: { label: 'Recovery code', secret: false, max: 40, hint: 'The code shown once when you registered.' },
+export const FIELD_SPEC = Object.freeze({   // L10N4: the words are getters, read when the field is drawn
+  handle: { get label() { return t('account.field.handle', 'Username'); }, secret: false, max: 24, get hint() { return t('account.field.handleHint', 'One word, 3 to 24 characters, starting with a letter.'); } },
+  password: { get label() { return t('account.field.password', 'Password'); }, secret: true, max: 200, get hint() { return t('account.field.passwordHint', 'At least {min} characters.', { min: PASSWORD_MIN_LEN }); } },
+  confirm: { get label() { return t('account.field.confirm', 'Repeat password'); }, secret: true, max: 200, hint: '' },
+  oldPassword: { get label() { return t('account.field.oldPassword', 'Current password'); }, secret: true, max: 200, hint: '' },
+  code: { get label() { return t('account.field.code', 'Recovery code'); }, secret: false, max: 40, get hint() { return t('account.field.codeHint', 'One of the recovery codes you wrote down.'); } },   // RECOVERY-SET: one of a set
 });
 
 /** TERMS1 — WHAT EACH STAGE ASKS A PLAYER TO AGREE TO, in the order it
@@ -99,23 +109,51 @@ export const AGREEMENTS = Object.freeze({
 
 /** What each box agrees to, and where that document is read. */
 export const AGREEMENT_SPEC = Object.freeze({
-  terms: { label: 'Terms of Service', url: TERMS_URL },
-  privacy: { label: 'Privacy Policy', url: PRIVACY_URL },
+  terms: { get label() { return t('account.agree.terms', 'Terms of Service'); }, url: TERMS_URL },
+  privacy: { get label() { return t('account.agree.privacy', 'Privacy Policy'); }, url: PRIVACY_URL },
 });
 
 /** THE CLIENT'S OWN REFUSALS - the ones the service cannot make,
  *  because it never sees them. `confirm` is not sent anywhere: the
  *  service takes one password and has no idea a second box existed. */
-export const LOCAL_REFUSALS = Object.freeze({
-  'confirm-mismatch': 'Those two passwords are not the same.',
-  'handle-shape': 'A username is one word, 3 to 24 characters, starting with a letter, and no spaces.',
-  'password-short': `A password is at least ${PASSWORD_MIN_LEN} characters.`,
-  'code-empty': 'Type the recovery code you were given.',
-  'password-empty': 'Type your password.',
-  'handle-empty': 'Type your username.',
+export const LOCAL_REFUSALS = localizedTable({   // L10N4: each a getter, read when it is said
+  'confirm-mismatch': () => t('account.local.confirmMismatch', 'Those two passwords are not the same.'),
+  'handle-shape': () => t('account.local.handleShape', 'A username is one word, 3 to 24 characters, starting with a letter, and no spaces.'),
+  'password-short': () => t('account.local.passwordShort', 'A password is at least {min} characters.', { min: PASSWORD_MIN_LEN }),
+  'code-empty': () => t('account.local.codeEmpty', 'Type the recovery code you were given.'),
+  'password-empty': () => t('account.local.passwordEmpty', 'Type your password.'),
+  'handle-empty': () => t('account.local.handleEmpty', 'Type your username.'),
   // TERMS1: one sentence a box, naming the document - "tick the boxes" under two boxes says nothing about which
-  'terms-unticked': 'Read and agree to the Terms of Service to create an account.',
-  'privacy-unticked': 'Read and agree to the Privacy Policy to create an account.',
+  'terms-unticked': () => t('account.local.termsUnticked', 'Read and agree to the Terms of Service to create an account.'),
+  'privacy-unticked': () => t('account.local.privacyUnticked', 'Read and agree to the Privacy Policy to create an account.'),
+});
+
+/** RECOVERY-SET: the codes an answer carries, as the card shows them - a set (`recoveryCodes`), or the one a service from
+ *  before the set answers (`recoveryCode`), or none (a recovery that left the set's others standing). */
+export function codesOf(d) {
+  if (Array.isArray(d?.recoveryCodes)) return d.recoveryCodes.filter((c) => typeof c === 'string' && c);
+  return typeof d?.recoveryCode === 'string' && d.recoveryCode ? [d.recoveryCode] : [];
+}
+
+/** RECOVERY-SET: the codes as a file the player keeps - "Save as a file" on the card. Plain text, a code a line,
+ *  numbered as the card numbers them. */
+export function recoveryCodesText(handle, codes) {
+  return [
+    t('account.codes.fileHead', 'DFO Online recovery codes for {name}', { name: handle || '?' }),
+    t('account.codes.fileNote', 'Each code works once, if you forget your password. Keep this file somewhere safe.'),
+    '',
+    ...codes.map((c, i) => `${i + 1}. ${c}`),
+    '',
+  ].join('\n');
+}
+
+/** RECOVERY-SET: the file's name - the account's username in it, so two accounts' files never overwrite each other. */
+export const recoveryCodesFileName = (handle) => `dfo-recovery-codes-${String(handle || 'account').replace(/[^\w-]+/g, '').toLowerCase() || 'account'}.txt`;
+
+/** NAME-AS: what the card says once the service has taken a choice of name - which name the room reads from now. */
+export const NAME_AS_NOTE = Object.freeze({
+  account: 'Others now see your account name.',
+  character: 'Others now see the name of the character you play online.',
 });
 
 /**
@@ -126,8 +164,9 @@ export const LOCAL_REFUSALS = Object.freeze({
  * @param {object} deps.storage     appStorage, or anything with get/set/removeItem
  * @param {() => void} [deps.onChange]  called after every state change, so the
  *                                      renderer repaints without polling
+ * @param {() => number} [deps.now]  the epoch clock, ms - NAME-AS's stamp
  */
-export function AccountFlow({ io, storage, onChange = () => {} }) {
+export function AccountFlow({ io, storage, onChange = () => {}, now = () => Date.now() }) {
   const self = {
     stage: /** @type {string} */ ('loading'),
     /** the account view from /v1/account, when signed in */
@@ -147,8 +186,10 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
     error: '',
     /** a sentence that is NOT a failure - "your password was changed" */
     note: '',
-    /** readable once, held in memory only, never given to storage */
-    recoveryCode: /** @type {string|null} */ (null),
+    /** readable once, held in memory only, never given to storage - RECOVERY-SET: the set shown, a code each */
+    recoveryCodes: /** @type {string[]|null} */ (null),
+    /** RECOVERY-SET: whose they are - the username the saved file names */
+    codesFor: '',
     /** a submission is in flight; nothing else may start */
     busy: false,
     /** what the player has typed */
@@ -175,7 +216,7 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
     self.note = note;
     self.values = {};
     self.agreed = {};
-    if (stage !== 'code') self.recoveryCode = null;
+    if (stage !== 'code') { self.recoveryCodes = null; self.codesFor = ''; }
     changed();
   }
 
@@ -259,7 +300,7 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
     // top-right button reads the stored session. This is the next answer
     // that states the name after a registration (acknowledging the code
     // lands here), and it is the service's own word, so it is adopted.
-    adoptIdentity(storage, { name: r.data.account?.name, kind: r.data.account?.kind, glyphs: r.data.wardrobe?.glyphs, glyphsOff: r.data.wardrobe?.glyphsOff, aura: auraStated(r.data.wardrobe), secret: asked });   // SHADOW-FANG: and what is true of the account; AUDIT B4: into the session that asked; WB9g: and the aura worn
+    adoptIdentity(storage, { name: r.data.account?.name, kind: r.data.account?.kind, glyphs: r.data.wardrobe?.glyphs, glyphsOff: r.data.wardrobe?.glyphsOff, aura: auraStated(r.data.wardrobe), icon: iconStated(r.data.wardrobe), secret: asked });   // SHADOW-FANG: and what is true of the account; AUDIT B4: into the session that asked; WB9g: and the aura worn
     // ACC3c: THE WARDROBE IS ITS OWN FIELD, exactly as the service
     // answers it - what this account HOLDS, what it WEARS, and what is
     // true of it. Held beside `account` rather than folded into it,
@@ -281,7 +322,7 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
     if (self.stage !== 'in') return;
     self.patreonWaiting = true;
     self.error = '';
-    self.note = 'Finish on Patreon, then come back here.';
+    self.note = t('account.flow.patreonFinish', 'Finish on Patreon, then come back here.');
     changed();
   };
 
@@ -299,12 +340,12 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
     const was = self.patreon;
     const d = r.data;
     self.account = d.account;
-    adoptIdentity(storage, { name: d.account?.name, kind: d.account?.kind, glyphs: d.wardrobe?.glyphs, glyphsOff: d.wardrobe?.glyphsOff, aura: auraStated(d.wardrobe), secret: asked });   // `start`'s word, adopted as it adopts it
+    adoptIdentity(storage, { name: d.account?.name, kind: d.account?.kind, glyphs: d.wardrobe?.glyphs, glyphsOff: d.wardrobe?.glyphsOff, aura: auraStated(d.wardrobe), icon: iconStated(d.wardrobe), secret: asked });   // `start`'s word, adopted as it adopts it
     self.wardrobe = d.wardrobe ?? null;
     self.patreon = d.patreon ?? null;
     if (self.patreonWaiting && self.patreon?.linked && (!was?.linked || String(was.titles) !== String(self.patreon.titles))) {
       self.patreonWaiting = false;
-      self.note = self.patreon.titles?.length ? 'Patreon linked. Wear your title under Title.' : 'Patreon linked. Your title arrives when your pledge holds one.';
+      self.note = self.patreon.titles?.length ? t('account.flow.patreonLinkedTitle', 'Patreon linked. Wear your title under Title.') : t('account.flow.patreonLinked', 'Patreon linked. Your title arrives when your pledge holds one.');
     }
     changed();
     return true;
@@ -324,8 +365,8 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
       self.patreon = r.data.patreon ?? null;
       self.patreonWaiting = false;
       self.busy = false;
-      self.note = 'Patreon unlinked.';
-      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), secret: asked });   // a lapsed tier's glyph off my own screen at once
+      self.note = t('account.flow.patreonUnlinked', 'Patreon unlinked.');
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), icon: iconStated(r.data), secret: asked });   // a lapsed tier's glyph off my own screen at once
       changed();
       return true;
     } catch {
@@ -365,8 +406,8 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
       // in the same breath as the refusal would have.
       self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };   // WB9g: the auras ride the same answer
       self.busy = false;
-      self.note = want ? `Wearing ${want}.` : 'Title removed.';
-      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), secret: asked });   // WB9g: my own screen's word, from the answer (AUDIT B4: into the session that asked)
+      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: TITLE_TEXT[want] ?? want }) : t('account.flow.titleRemoved', 'Title removed.');   // COLLECTIONS-II: the title's name, never its key (the Collections page says this note)
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), icon: iconStated(r.data), secret: asked });   // WB9g: my own screen's word, from the answer (AUDIT B4: into the session that asked)
       changed();
       return true;
     } catch {
@@ -391,8 +432,8 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
       if (!r.ok) return refuse(accountRefusalText(r.error));
       self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff ?? [], ...auraHalf(r.data) };   // absent is none
       self.busy = false;
-      self.note = on ? 'Glyph shown.' : 'Glyph hidden.';
-      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), secret: asked });   // my own screen's word: the shown glyphs dress my werewolf
+      self.note = on ? t('account.flow.glyphShown', 'Glyph shown.') : t('account.flow.glyphHidden', 'Glyph hidden.');
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), icon: iconStated(r.data), secret: asked });   // my own screen's word: the shown glyphs dress my werewolf
       changed();
       return true;
     } catch {
@@ -404,9 +445,14 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
   const glyphHalf = (d) => (Array.isArray(d?.glyphsOff) ? { glyphsOff: d.glyphsOff } : {});
   /** WB9g: the aura half of a wardrobe answer - what a service since acct38 says (its auras held, the one worn, the
    *  Broker's insignia owned), or nothing from one before it. */
-  const auraHalf = (d) => (Array.isArray(d?.auras) ? { auras: d.auras, aura: d.aura ?? null, insignia: Array.isArray(d.insignia) ? d.insignia : [] } : {});
+  const auraHalf = (d) => (Array.isArray(d?.auras) ? { auras: d.auras, aura: d.aura ?? null, insignia: Array.isArray(d.insignia) ? d.insignia : [], ...iconHalf(d) } : {});
+  /** WITCH1: the icon half of a wardrobe answer - the profile icons held and the one worn, or nothing from a service
+   *  before acct162. */
+  const iconHalf = (d) => (Array.isArray(d?.icons) ? { icons: d.icons, icon: d.icon ?? null } : {});
   /** WB9g: the aura a wardrobe answer says is worn (null for none), or undefined from a service before acct38. */
   function auraStated(d) { return Array.isArray(d?.auras) ? (d.aura ?? null) : undefined; }
+  /** WITCH1: the icon a wardrobe answer says is worn (null for the face), or undefined from a service before acct162. */
+  function iconStated(d) { return Array.isArray(d?.icons) ? (d.icon ?? null) : undefined; }
   /**
    * WB9g - WEAR ONE AURA, OR NONE: `equip`'s law at the feet (Mac: "an animated burning ground aura that circles the
    * ground where your character stands"). It asks; the service decides what is held; the answer replaces the wardrobe;
@@ -424,8 +470,65 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
       if (!r.ok) return refuse(accountRefusalText(r.error));
       self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };
       self.busy = false;
-      self.note = want ? `Wearing ${AURA_TEXT[want] ?? want}.` : 'Aura removed.';   // SHADOW-CLOAK (AUDIT): the aura's name, never its key
-      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), secret: asked });
+      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: AURA_TEXT[want] ?? want }) : t('account.flow.auraRemoved', 'Aura removed.');   // SHADOW-CLOAK (AUDIT): the aura's name, never its key
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), icon: iconStated(r.data), secret: asked });
+      changed();
+      return true;
+    } catch {
+      return refuse(accountRefusalText('offline'));
+    }
+  };
+
+  /**
+   * WITCH1 (bible/06-Systems/Witches-Festival.md) - WEAR ONE PROFILE ICON, OR NONE: the aura's law, in the portrait well.
+   * It asks; the service decides what is held; the answer replaces the wardrobe; pressing the one worn takes it off (the
+   * character's face again). The stored session learns it (adoptIdentity), so the corner mark and the card show it at
+   * once; another player's Inspect card from the next hello, as a title.
+   */
+  self.wearIcon = async (icon) => {
+    if (self.busy || self.stage !== 'in') return false;
+    const want = self.wardrobe?.icon === icon ? null : (icon ?? null);
+    const asked = secret();
+    self.busy = true; self.error = ''; self.note = ''; changed();
+    try {
+      const r = await ask(() => equipIcon(door(), want));
+      if (!r) return false;
+      if (!r.ok) return refuse(accountRefusalText(r.error));
+      self.wardrobe = { ...(self.wardrobe ?? {}), titles: r.data.titles, title: r.data.title, glyphs: r.data.glyphs, ...glyphHalf(r.data), ...auraHalf(r.data) };
+      self.busy = false;
+      self.note = want ? t('account.flow.wearing', 'Wearing {what}.', { what: ICON_TEXT[want] ?? want }) : t('account.flow.iconRemoved', 'Icon removed.');
+      adoptIdentity(storage, { glyphs: r.data.glyphs, glyphsOff: r.data.glyphsOff, aura: auraStated(r.data), icon: iconStated(r.data), secret: asked });
+      changed();
+      return true;
+    } catch {
+      return refuse(accountRefusalText('offline'));
+    }
+  };
+
+  /**
+   * NAME-AS (2026-10-12, Mac: "I want to add an option to the profile menu where players can toggle to use their account
+   * name or character name for ingame use") - WHICH NAME THE ROOM READS: the account's, or the character's being played.
+   * It asks, as a wear does; the service keeps the choice and every later mint signs it - a character's name only where it
+   * can be worn, the mint saying why where it cannot (the game says it once: scenes/world.js adoptIssued). Pressing the
+   * one already chosen asks nothing. A choice the service took STAMPS the stored session (`nameAsAt`, forward only), and
+   * the world host, seeing its stamp move, says hello again on fresh tokens - the room reads the new name now
+   * (scenes/world.js nameAsFrame), whichever host mode the player stands in.
+   */
+  self.chooseName = async (as) => {
+    if (self.busy || self.stage !== 'in' || !self.account) return false;
+    if ((self.account.nameAs ?? 'account') === as) return false;
+    const asked = secret();
+    self.busy = true; self.error = ''; self.note = ''; changed();
+    try {
+      const r = await ask(() => chooseNameAs(door(), as));
+      if (!r) return false;                 // `auth` already landed on `out`
+      if (!r.ok) return refuse(accountRefusalText(r.error));
+      const nameAs = r.data?.nameAs === 'character' ? 'character' : 'account';   // the service's word, as a wear's answer is
+      self.account = { ...self.account, nameAs };
+      self.busy = false;
+      self.note = NAME_AS_NOTE[nameAs];
+      const was = storedSession(storage)?.nameAsAt;
+      adoptIdentity(storage, { nameAsAt: Math.max(now(), Number.isSafeInteger(was) ? was + 1 : 0), secret: asked });   // AUDIT B4: into the session that asked
       changed();
       return true;
     } catch {
@@ -443,6 +546,7 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
       if (self.stage === 'login') return await doLogin();
       if (self.stage === 'recover') return await doRecover();
       if (self.stage === 'password') return await doPassword();
+      if (self.stage === 'codes') return await doNewCodes();
       return refuse('');
     } finally {
       // Whatever happened, the card is pressable again. A `busy` left
@@ -509,8 +613,9 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
     if (!r) return false;
     if (!r.ok) return refuse(accountRefusalText(r.error));
 
-    // THE ONE MOMENT THE CODE IS READABLE.
-    self.recoveryCode = r.data.recoveryCode;
+    // THE ONE MOMENT THE CODES ARE READABLE.
+    self.recoveryCodes = codesOf(r.data);
+    self.codesFor = typeof r.data.handle === 'string' ? r.data.handle : v('handle');
     self.stage = 'code';
     self.values = {};
     self.agreed = {};
@@ -534,8 +639,13 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
    * RECOVERY SIGNS EVERY DEVICE OUT, including this one - the reason
    * somebody is recovering may be that another person has their
    * password. The service opens a fresh session for the device that
-   * recovered and mints a NEW recovery code, because a player left
-   * with no way back in has had the same cliff moved one step.
+   * recovered.
+   *
+   * RECOVERY-SET: the code typed is spent and the set's others still
+   * work, so the card lands signed in and says how many are left. A
+   * single code from before the set, or the last of one, comes back as
+   * a NEW set - shown on `code`, because a player left with no way back
+   * in has had the same cliff moved one step.
    */
   async function doRecover() {
     const bad = localRefusal(FIELDS.recover);
@@ -544,7 +654,42 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
     if (!r) return false;
     if (!r.ok) return refuse(accountRefusalText(r.error));
     keepSession(storage, r.data);
-    self.recoveryCode = r.data.recoveryCode;
+    const codes = codesOf(r.data);
+    if (!codes.length) {
+      await self.start();
+      if (self.stage === 'in' && !self.error && Number.isSafeInteger(r.data.codesLeft)) {
+        self.note = t('account.flow.recoveredLeft', 'Your password was set. {n, plural, one {# recovery code is} other {# recovery codes are}} left.', { n: r.data.codesLeft });
+        changed();
+      }
+      return true;
+    }
+    self.recoveryCodes = codes;
+    self.codesFor = typeof r.data.handle === 'string' ? r.data.handle : v('handle');   // AUDIT RECOVERY-SET B6: the row's own casing
+    self.stage = 'code';
+    self.values = {};
+    self.error = '';
+    changed();
+    return true;
+  }
+
+  /**
+   * RECOVERY-SET - A NEW SET, FROM THE PROFILE. The request: players
+   * "click and see their account recovery code in their profile". The
+   * service keeps only hashes, so what is shown is a NEW set, once, on
+   * `code` - the password asked first, as changing it asks, and (AUDIT
+   * RECOVERY-SET A1) one of the codes it replaces, so a stolen password
+   * alone cannot kill them; the old set dead with the answer.
+   */
+  async function doNewCodes() {
+    const bad = localRefusal(FIELDS.codes);
+    if (bad) return refuse(bad);
+    const r = await ask(() => newRecoveryCodes(door(), pw('oldPassword'), v('code')));
+    if (!r) return false;
+    if (!r.ok) return refuse(accountRefusalText(r.error));
+    const codes = codesOf(r.data);
+    if (!codes.length) return refuse(accountRefusalText('server'));
+    self.recoveryCodes = codes;
+    self.codesFor = self.account?.handle ?? '';
     self.stage = 'code';
     self.values = {};
     self.error = '';
@@ -561,7 +706,7 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
     const r = await ask(() => changePassword(door(), pw('oldPassword'), pw('password')));
     if (!r) return false;
     if (!r.ok) return refuse(accountRefusalText(r.error));
-    go('in', { note: 'Your password was changed. Every other device has been signed out.' });
+    go('in', { note: t('account.flow.passwordChanged', 'Your password was changed. Every other device has been signed out.') });
     return true;
   }
 
@@ -569,8 +714,20 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
    *  the code is dropped here and nothing anywhere can print it again. */
   self.acknowledgeCode = async () => {
     if (self.stage !== 'code') return;
-    self.recoveryCode = null;
+    self.recoveryCodes = null;
+    self.codesFor = '';
+    self.note = ''; self.error = '';   // AUDIT RECOVERY-SET B4: "Copied." belonged to the codes, not to the card after them
     await self.start();
+  };
+
+  /** RECOVERY-SET: a sentence the card says of its own act - the codes copied, or saved as a file, or why not. AUDIT
+   *  RECOVERY-SET B4: said only while the codes are up - a clipboard that answers after "I have written it down" says
+   *  nothing on the card that follows. */
+  self.say = (sentence, bad = false) => {
+    if (self.stage !== 'code') return;
+    self.error = bad ? sentence : '';
+    self.note = bad ? '' : sentence;
+    changed();
   };
 
   /** THIS device by default. `all` is separate and explicit, because
@@ -590,7 +747,7 @@ export function AccountFlow({ io, storage, onChange = () => {} }) {
       self.wardrobe = null;
       self.patreon = null; self.patreonWaiting = false;   // PATREON-LINK
       self.busy = false;
-      go('out', { note: all ? 'Signed out everywhere.' : 'Signed out.' });
+      go('out', { note: all ? t('account.flow.signedOutAll', 'Signed out everywhere.') : t('account.flow.signedOut', 'Signed out.') });
     }
   };
 

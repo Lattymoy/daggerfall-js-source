@@ -5,7 +5,7 @@
     "old": "if (!small(g, 63) || !small(m, 0xffff)",
     "new": "if (!small(m, 0xffff)",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "if (!Number.isSafeInteger(t) || t < 0 || t > DECOR_TEMPLATE_MAX) return null;",
     "new": "if (!Number.isSafeInteger(t)) return null;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "return own && own.g === DECOR_FURNITURE_GROUP ? { model, flat: null, item: own } : null;",
     "new": "return own ? { model, flat: null, item: own } : null;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "return own ? { model: null, flat: [flat[0], flat[1]], item: own } : null;",
     "new": "return own ? { model: null, flat: [flat[0], flat[1]], item: own } : { model: null, flat: [flat[0], flat[1]] };",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -41,8 +41,8 @@
     "old": "(what.item && (place.paid !== 0 || place.storage || place.station))",
     "new": "(what.item && (place.storage || place.station))",
     "tests": [
-      "test/decor2a.test.js",
-      "test/decor1.test.js"
+      "test/systems/decor2a.test.js",
+      "test/server/decor1.test.js"
     ]
   },
   {
@@ -51,8 +51,8 @@
     "old": "(what.item && (place.paid !== 0 || place.storage || place.station))",
     "new": "(what.item && (place.paid !== 0 || place.station))",
     "tests": [
-      "test/decor2a.test.js",
-      "test/decor1.test.js"
+      "test/systems/decor2a.test.js",
+      "test/server/decor1.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "p.item ? JSON.stringify(p.item) : null,",
     "new": "null,",
     "tests": [
-      "test/decor1.test.js"
+      "test/server/decor1.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "  if (row.item != null) {",
     "new": "  if (false) {",
     "tests": [
-      "test/decor1.test.js"
+      "test/server/decor1.test.js"
     ]
   },
   {
@@ -79,34 +79,34 @@
     "old": "if (!was || !decorPieceOf({ ...was, ...pl })) return { error: 'bad-decor' };",
     "new": "if (!was) return { error: 'bad-decor' };",
     "tests": [
-      "test/decor1.test.js"
+      "test/server/decor1.test.js"
     ]
   },
   {
     "name": "DECOR2a-a-worn-item-listed",
-    "file": "src/systems/decorItems.js",
+    "file": "src/systems/decor/decorItems.js",
     "old": "if (!item || item.questItem || item.equipSlot != null || isSummoned(item) || isMap(item)) return null;",
     "new": "if (!item || item.questItem || isSummoned(item) || isMap(item)) return null;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-a-quest-item-listed",
-    "file": "src/systems/decorItems.js",
+    "file": "src/systems/decor/decorItems.js",
     "old": "if (!item || item.questItem || item.equipSlot != null || isSummoned(item) || isMap(item)) return null;",
     "new": "if (!item || item.equipSlot != null || isSummoned(item) || isMap(item)) return null;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-a-weapon-stood",
-    "file": "src/systems/decorItems.js",
+    "file": "src/systems/decor/decorItems.js",
     "old": "new Set(['Weapons', 'Armor', 'Transportation'",
     "new": "new Set(['Armor', 'Transportation'",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -115,133 +115,133 @@
     "old": "new Set([TEMPLATES.Spellbook, TEMPLATES.Letter_of_credit,",
     "new": "new Set([TEMPLATES.Letter_of_credit,",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-the-templates-archive-over-the-items",
-    "file": "src/systems/decorItems.js",
+    "file": "src/systems/decor/decorItems.js",
     "old": "  const archive = own ? item.worldTextureArchive : t.worldTextureArchive;",
     "new": "  const archive = t.worldTextureArchive;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-the-templates-record-over-the-items",
-    "file": "src/systems/decorItems.js",
+    "file": "src/systems/decor/decorItems.js",
     "old": "  const record = own ? item.worldTextureRecord : t.worldTextureRecord;",
     "new": "  const record = t.worldTextureRecord;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-the-group-dropped",
-    "file": "src/systems/decorItems.js",
+    "file": "src/systems/decor/decorItems.js",
     "old": "t: item.templateIndex, g: g >= 0 ? g : null,",
     "new": "t: item.templateIndex, g: null,",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-the-artifact-index-misread",
-    "file": "src/systems/decorItems.js",
+    "file": "src/systems/decor/decorItems.js",
     "old": "const a = item.artifact ? ((bits & 1) ? bits >> 1 : DECOR_ARTIFACT_UNKNOWN) : null;",
     "new": "const a = item.artifact ? bits >> 1 : null;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-a-message-kept-on-a-statue",
-    "file": "src/systems/decorItems.js",
+    "file": "src/systems/decor/decorItems.js",
     "old": "const p = (item.group === 'Paintings' || item.group === 'Books') && Number.isSafeInteger(item.message) ? item.message : null;",
     "new": "const p = Number.isSafeInteger(item.message) ? item.message : null;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-the-artifact-name-unread",
-    "file": "src/systems/decorItems.js",
-    "old": "    const name = artifacts[own.a]?.name;",
-    "new": "    const name = null;",
+    "file": "src/systems/decor/decorItems.js",
+    "old": "    const m = artifacts[own.a];",
+    "new": "    const m = null;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-counted-among-all-magic-items",
-    "file": "src/systems/decorItems.js",
+    "file": "src/systems/decor/decorItems.js",
     "old": ".filter((m) => m.type === 1 || m.type === 2);",
     "new": ".filter(() => true);",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-the-plant-unplaced",
-    "file": "src/systems/decorItems.js",
+    "file": "src/systems/decor/decorItems.js",
     "old": "  const group = own.g != null ? ITEM_GROUP_NAME_BY_CLASS[own.g] ?? null : null;\n  // the list's own naming",
     "new": "  const group = null;\n  // the list's own naming",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-the-pack-picture-lost",
-    "file": "src/systems/decorItems.js",
+    "file": "src/systems/decor/decorItems.js",
     "old": "icon: pic && (pic.archive > 0 || pic.record > 0) ? pic : {",
     "new": "icon: false ? pic : {",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-own-light-dark",
-    "file": "src/systems/decorItems.js",
+    "file": "src/systems/decor/decorItems.js",
     "old": "return { flat, light: decorFlatLight(flat), item: descriptor };",
     "new": "return { flat, light: null, item: descriptor };",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-the-record-shared",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "for (const [id, item] of own) out[id] = { ...item };",
     "new": "for (const [id, item] of own) out[id] = item;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-taken-twice",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "    const item = own.get(id) ?? null;\n    own.delete(id);",
     "new": "    const item = own.get(id) ?? null;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-the-teardown-keeps-them",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "  function destroyAll() { set([]); held = new Map(); own = new Map(); kept = []; }",
     "new": "  function destroyAll() { set([]); held = new Map(); kept = []; }",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-a-bad-record-kept",
-    "file": "src/scenes/decorRoom.js",
+    "file": "src/scenes/decor/decorRoom.js",
     "old": "if (item && typeof item === 'object') own.set(id, { ...item });",
     "new": "own.set(id, item);",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "decorOwn: Object.fromEntries(Object.entries(d.decorOwn ?? {}).map(([id, item]) => [id, { ...item }])),",
     "new": "decorOwn: d.decorOwn ?? {},",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "  if (d) d.decorOwn = {};",
     "new": "  if (d) void 0;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "chip(`Your things (${m})`,",
     "new": "chip(`Your things`,",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "r.append(thumb, main, el('span', 'dfdecor-row-price', 'free'));",
     "new": "r.append(thumb, main, el('span', 'dfdecor-row-price', '1 gold'));",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -286,16 +286,16 @@
     "old": "const free = sel?.kind === 'own' || mode === 'look';",
     "new": "const free = mode === 'look';",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-the-rooms-words-a-cost",
     "file": "src/ui/decorPanel.js",
-    "old": "pickPrice.textContent = it.piece.item ? `Take down: back to ${decorBackTo(it.piece)}` : `Remove: ${decorRefundText(it.piece.paid)} back${view?.hall ? \" to the guild's treasury\" : ''}${it.piece.station ? ' (the station licence is not)' : ''}`;",
-    "new": "pickPrice.textContent = `Remove: ${decorRefundText(it.piece.paid)} back${view?.hall ? \" to the guild's treasury\" : ''}${it.piece.station ? ' (the station licence is not)' : ''}`;",
+    "old": "pickPrice.textContent = it.piece.item ? `Take down: back to ${decorBackTo(it.piece)}` : `Remove: ${decorRefundText(it.piece.paid)} back${view?.hall ? \" to the guild's treasury\" : ''}${it.piece.station ? ' (the station license is not)' : ''}`;",
+    "new": "pickPrice.textContent = `Remove: ${decorRefundText(it.piece.paid)} back${view?.hall ? \" to the guild's treasury\" : ''}${it.piece.station ? ' (the station license is not)' : ''}`;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -304,7 +304,7 @@
     "old": "    storeBtn.disabled = !it || !!it.piece.item || (it.piece.storage && it.holds) || !!it.piece.station || door;",
     "new": "    storeBtn.disabled = !it || (it.piece.storage && it.holds) || !!it.piece.station || door;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -313,7 +313,7 @@
     "old": "removeBtn.textContent = it?.piece.item ? 'Take down' : 'Remove';",
     "new": "removeBtn.textContent = 'Remove';",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -322,7 +322,7 @@
     "old": "showOwn(key = null) { ownKey = key ?? ownKey;",
     "new": "showOwn(key = null) {",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -331,124 +331,124 @@
     "old": "r.addEventListener('click', () => { ownKey = e.key; redraw(); });",
     "new": "r.addEventListener('click', () => { redraw(); });",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-a-free-piece-priced",
-    "file": "src/systems/decorPlacer.js",
+    "file": "src/systems/decor/decorPlacer.js",
     "old": "      if (free) return 0;\n",
     "new": "",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-the-descriptor-left-off",
-    "file": "src/systems/decorPlacer.js",
+    "file": "src/systems/decor/decorPlacer.js",
     "old": "id, model: entry.model ?? null, flat: entry.flat ? [entry.flat[0], entry.flat[1]] : null, item: entry.item ?? null,",
     "new": "id, model: entry.model ?? null, flat: entry.flat ? [entry.flat[0], entry.flat[1]] : null, item: null,",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-gold-asked-for-ones-own",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    const free = entry.kind === 'own';",
     "new": "    const free = false;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-the-item-left-in-the-pack",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "      const moved = deps.packTake?.(item);\n      if (!moved) { await undo(); return false; }",
     "new": "      const moved = item;\n      if (!moved) { await undo(); return false; }",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-the-record-unkept",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "      pool.keepOwn(stood.id, moved);",
     "new": "      void moved;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-the-thing-not-given-back",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    if (item) deps.packGive?.(item);",
     "new": "    void item;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-a-resize-charged",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "  if (was?.item) return { pay: 0, refund: 0, paid: 0 };\n",
     "new": "",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-the-bar-not-free",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": ": p.free ? 'free' : null,",
     "new": ": null,",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-its-going-unsaid",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "    if (p.free && !deps.packHas?.(p.entry.own)) return p.entry.furnishing ? 'It is no longer among your things.' : 'It is no longer in your pack.';   // DECOR2a (DECOR2b: furniture)\n",
     "new": "",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-the-undo-skipped",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "if (deps.visit?.() !== visit || !deps.packHas?.(item)) { await undo(); return false; }",
     "new": "if (deps.visit?.() !== visit || !deps.packHas?.(item)) { return false; }",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-a-refusal-taking-it",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "?? 'It could not be set down.', at: now() }; return false; }",
     "new": "?? 'It could not be set down.', at: now() }; }",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-a-refused-taking-down-given-back",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "?? 'It could not be taken down.'); return false; }",
     "new": "?? 'It could not be taken down.'); }",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-a-name-unkept",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "return (kept ? itemLongName(kept) : null) || decorItemName(piece.item) || DECOR_KINDS.decor;",
     "new": "return decorItemName(piece.item) || DECOR_KINDS.decor;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -457,7 +457,7 @@
     "old": "    return applyTransfer(item, { ok: true, amount: 1 }, pack, [], { entity: playerEntity, fromLocal: true }) ?? null;",
     "new": "    pack.splice(pack.indexOf(item), 1);\n    return item;",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -466,7 +466,7 @@
     "old": "    const decorOwn = interiorDecor.ownSnapshot();",
     "new": "    const decorOwn = {};",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -475,7 +475,7 @@
     "old": "    interiorDecor.setOwn(data.decorOwn);   // DECOR2a",
     "new": "    interiorDecor.setOwn(null);   // DECOR2a",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -484,7 +484,7 @@
     "old": "      if (interiorHome?.own) decorReturnStrays(pieces);",
     "new": "      decorReturnStrays(pieces);",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -493,7 +493,7 @@
     "old": "    const own = takeSceneOwn(sceneCache(), sceneName);   // DECOR2a: Mac - \"Back to pack\"\n    for (const item of own) decorPackGive(item);",
     "new": "    const own = takeSceneOwn(sceneCache(), sceneName);   // DECOR2a: Mac - \"Back to pack\"",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -502,7 +502,7 @@
     "old": "        own = takeSceneOwn(sceneCache(), homeSceneName(mapId, bd.buildingKey));   // DECOR2a: the owner's own things - \"Back to pack\"\n        for (const item of own) decorPackGive(item);",
     "new": "        own = takeSceneOwn(sceneCache(), homeSceneName(mapId, bd.buildingKey));   // DECOR2a: the owner's own things - \"Back to pack\"",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -511,7 +511,7 @@
     "old": "const n = (kept ? itemLongName(kept) : null) || decorItemName(piece.item);",
     "new": "const n = decorItemName(piece.item);",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
@@ -520,16 +520,16 @@
     "old": "iconUrl: (a, r, dye = null, dyeTarget = null) => loadIcon(a, r, { scale: 1, dye, dyeTarget }),",
     "new": "iconUrl: (a, r, dye = null, dyeTarget = null) => loadIcon(a, r, { scale: 1, dyeTarget }),",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   },
   {
     "name": "DECOR2a-rows-keyed-by-place",
-    "file": "src/scenes/decorTool.js",
+    "file": "src/scenes/decor/decorTool.js",
     "old": "if (c.entry) out.push({ ...c.entry, key: `own:${c.id}`, count: n });",
     "new": "if (c.entry) out.push({ ...c.entry, key: `own:${i}`, count: n });",
     "tests": [
-      "test/decor2a.test.js"
+      "test/systems/decor2a.test.js"
     ]
   }
 ]

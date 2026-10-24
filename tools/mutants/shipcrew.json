@@ -5,7 +5,7 @@
     "old": "(i === 0 ? FIRST_MATE : mobile === MOBILE.Bard ? 'Bard' : ROLES.reduce(",
     "new": "(mobile === MOBILE.Bard ? 'Bard' : ROLES.reduce(",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "      while (hands.length > roster.length) fell.push(hands.pop());",
     "new": "      while (hands.length > roster.length) fell.push(hands.shift());",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "name: handName(seed, hires++, gender, regionIndex)",
     "new": "name: handName(seed, i, gender, regionIndex)",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "        const d = Math.max(LOSSES_CAP - losses, MORALE_EVENT.handLost * Math.max(0, n));",
     "new": "        const d = MORALE_EVENT.handLost * Math.max(0, n);",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    fightOver() { losses = 0; },",
     "new": "    fightOver() {},",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      if (kind === 'win') for (const h of hands) h.fights++;",
     "new": "",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "        if (morale < PORT_CAP) { portT += dt; const k = Math.floor(portT / PORT_RISE_S); if (k > 0) { portT -= k * PORT_RISE_S; morale = Math.min(PORT_CAP, morale + k); } } else portT = 0;",
     "new": "        { portT += dt; const k = Math.floor(portT / PORT_RISE_S); if (k > 0) { portT -= k * PORT_RISE_S; morale = Math.min(MORALE_MAX, morale + k); } }",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ],
     "note": "AUDIT CREW (PIN MOVED): re-aimed by content at the line the audit changed."
   },
@@ -69,7 +69,7 @@
     "old": "if (k > 0) { seaT -= k * SEA_DECAY_S; bump(-k); }",
     "new": "if (k > 0) { seaT = 0; bump(-k); }",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ],
     "note": "AUDIT CREW (PIN MOVED): re-aimed by content at the line the audit changed."
   },
@@ -79,7 +79,7 @@
     "old": "export const reloadScaleOf = (m, order = null) => (1 - MORALE_RELOAD * moraleFactor(m)) * (order === CREW_ORDERS.guns ? GUNS_RELOAD : 1);",
     "new": "export const reloadScaleOf = (m, order = null) => (order === CREW_ORDERS.guns ? GUNS_RELOAD : 1);",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "(order === CREW_ORDERS.guns ? GUNS_RELOAD : 1);",
     "new": "1;",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "export const mendScaleOf = (m) => 1 + MORALE_MEND * moraleFactor(m);",
     "new": "export const mendScaleOf = (m) => 1;",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": " + (order === CREW_ORDERS.rail ? 1 : 0);",
     "new": ";",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "    sings: () => morale >= SING_MIN,",
     "new": "    sings: () => true,",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "    if (Array.isArray(record.hands)) {",
     "new": "    if (false) {",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -133,7 +133,7 @@
     "old": "  const ids = crewed ? [CREW_ORDERS.guns, CREW_ORDERS.rail, CREW_ORDERS.repair, CREW_ORDERS.stand] : [CREW_ORDERS.repair, CREW_ORDERS.stand];",
     "new": "  const ids = [CREW_ORDERS.guns, CREW_ORDERS.rail, CREW_ORDERS.repair, CREW_ORDERS.stand];",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -142,7 +142,7 @@
     "old": "  const h = Math.min(hullGap, left);",
     "new": "  const h = Math.min(hullGap, left * 0);",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -151,7 +151,7 @@
     "old": "  if (out.work > cap) {",
     "new": "  if (false) {",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ],
     "note": "AUDIT CREW (PIN MOVED): re-aimed by content at the line the audit changed."
   },
@@ -161,7 +161,7 @@
     "old": "  const share = crewed && crewShare > 0 ? Math.min(1, crewShare) : SEA_REPAIR_ALONE;   // AUDIT CC-D2",
     "new": "  const share = crewed && crewShare > 0 ? Math.min(1, crewShare) : 1;   // AUDIT CC-D2",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ],
     "note": "AUDIT CREW (PIN MOVED): re-aimed by content at the line the audit changed."
   },
@@ -171,7 +171,7 @@
     "old": "  if (crewed && morale != null) {",
     "new": "  if (morale != null || !crewed) {",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -180,118 +180,118 @@
     "old": "  if ((it.stackCount | 0) > 1) it.stackCount--;\n  else items.splice(i, 1);",
     "new": "  items.splice(i, 1);",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "SR-reload-scale-unread",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "reloadSeconds(b.gun, crewShare(), crewed) * (b.gun === 'barrel' ? 1 : Math.max(0.5, Math.min(1.5, Number(reloadScale()) || 1)));",
-    "new": "reloadSeconds(b.gun, crewShare(), crewed);",
+    "old": "reloadSeconds(b.gun, crewShare(), crewed, loadAt(side)) * (b.gun === 'barrel' ? 1 : scaleNow());",
+    "new": "reloadSeconds(b.gun, crewShare(), crewed, loadAt(side));",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "SCH-fallen-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "        for (const h of fell) deps.say?.(`${h.name}, ${h.role}, has fallen.`, 4);",
     "new": "",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "SCH-loss-unfelt",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "    if (lost > 1e-9 && b.crewed) c.event('handLost', lost / CREW_PER_HAND);",
     "new": "",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "SCH-win-unfelt",
-    "file": "src/scenes/navalHost.js",
-    "old": "      if (by === myId()) crewEvent(boatInPlay() ?? myBoat(), 'win');   // SHIP-CREW: she struck to us",
-    "new": "",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (by === myId()) struckToMe();   // SHIP-CREW: she struck to us",
+    "new": "if (by === myId()) noteAct('ship-struck');   // SHIP-CREW: she struck to us",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "SCH-grog-unfelt",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      if (id === 'grog') { st.crew.event('grog'); st.crew.drankGrog(where().day ?? null); }",
     "new": "      if (id === 'grog') { st.crew.drankGrog(where().day ?? null); }",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ],
     "note": "AUDIT CREW (PIN MOVED): re-aimed by content at the line the audit changed."
   },
   {
     "name": "SCH-stores-unspent",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      while (s.credit < -1e-9 && deps.stores?.spend?.(b)) s.credit += STORE_POINTS;",
     "new": "      while (s.credit < -1e-9) s.credit += STORE_POINTS;",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ],
     "note": "AUDIT CREW (PIN MOVED): re-aimed by content at the line the audit changed."
   },
   {
     "name": "SCH-the-pace-under-fire-unread",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "(underFire ? SEA_REPAIR_UNDER_FIRE : 1)",
     "new": "1",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "SCH-refusal-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "      else if (st.credit <= 1e-9 && (deps.stores?.count?.(boat) ?? 0) <= 0) said = `${who}We've no carpenter's stores aboard, Captain.`;",
     "new": "",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "SCH-done-unsaid",
-    "file": "src/scenes/navalHost.js",
-    "old": "    if (!wantsRepair(s.damage)) { s.crew.give(CREW_ORDERS.stand); deps.say?.(`${mate ? `${mate}: ` : ''}Repairs done, Captain. She's sound.`, 4); }",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (!wantsRepair(s.damage)) { s.crew.give(CREW_ORDERS.stand); deps.say?.(`${mate ? `${mate}: ` : ''}Repairs done, Captain.`, 4); }",
     "new": "    if (!wantsRepair(s.damage)) { s.crew.give(CREW_ORDERS.stand); }",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "SCH-spent-unsaid",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "else if (spent) { s.crew.give(CREW_ORDERS.stand); deps.say?.(`${mate ? `${mate}: ` : ''}The carpenter's stores are spent, Captain.`, 4); }",
     "new": "else if (spent) { s.crew.give(CREW_ORDERS.stand); }",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "SCH-save-mates-dropped",
-    "file": "src/scenes/navalHost.js",
-    "old": "{ ...savedRecord(st.damage, st.hull, st.credit), barrels: st.guns.barrels, mates: st.crew.snapshot() };",
-    "new": "{ ...savedRecord(st.damage, st.hull, st.credit), barrels: st.guns.barrels };",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "  return { barrels: st.guns.barrels, mates: st.crew.snapshot(), ...(Object",
+    "new": "  return { barrels: st.guns.barrels, ...(Object",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "SCH-mend-unscaled",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "scale: b.crewed ? mendScaleOf(s.crew.morale) * (s.worth?.mend ?? 1) : 1 });",
     "new": "scale: b.crewed ? 1 * (s.worth?.mend ?? 1) : 1 });",
     "tests": [
-      "test/shipcrew.test.js",
-      "test/navaudit_helm.test.js"
+      "test/systems/naval/shipcrew.test.js",
+      "test/systems/naval/navaudit_helm.test.js"
     ]
   },
   {
@@ -300,7 +300,7 @@
     "old": "ctx.muster : ctx.order === 'rail' ? 1 : 0;",
     "new": "ctx.muster : 0;",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -309,7 +309,7 @@
     "old": "    const battle = !!ctx.battle || !!muster || ctx.order === 'guns';",
     "new": "    const battle = !!ctx.battle || !!muster;",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -318,7 +318,7 @@
     "old": "        if (crew.length >= 2 && ctx.sings !== false) {",
     "new": "        if (crew.length >= 2) {",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -327,7 +327,7 @@
     "old": "          const theirs = !struck && !ctx.battle && !ctx.muster ? ctx.line?.() ?? null : null;",
     "new": "          const theirs = null;",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -336,7 +336,7 @@
     "old": "      count: (boat) => storesIn(boat?.Cargo?.Items),",
     "new": "      count: (boat) => 0,",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
@@ -345,25 +345,25 @@
     "old": "    orders: () => { const b = csaRuntime?.state?.CurrentBoat; if (b) navalOrders(b); },",
     "new": "",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "SCW-panel-orders-off",
-    "file": "src/ui/enhancedHelm.js",
+    "file": "src/ui/enhanced/enhancedHelm.js",
     "old": "  if (h.orders) out.push({ act: 'orders', label: 'Orders', kind: 'hook' });",
     "new": "",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   },
   {
     "name": "SCW-menu-orders-cut",
-    "file": "src/systems/csaBoatMenu.js",
+    "file": "src/systems/comeSailAway/csaBoatMenu.js",
     "old": "    rows.push({ id: BOAT_VERB.orders, label: BOAT_MENU_TEXT.orders });",
     "new": "",
     "tests": [
-      "test/shipcrew.test.js"
+      "test/systems/naval/shipcrew.test.js"
     ]
   }
 ]

@@ -6,7 +6,7 @@
 // Numeric note: C# mixes float/double here; JS computes in doubles
 // throughout. (Int32) casts are preserved as Math.trunc. Divergence is only
 // possible where C# float rounding would flip a truncation boundary; the
-// full-corpus decode gate in test/arch3d.test.js pins the observed output.
+// full-corpus decode gate in test/formats/arch3d.test.js pins the observed output.
 
 function dot(ax, ay, az, bx, by, bz) {
   return ax * bx + ay * by + az * bz;

@@ -1,82 +1,83 @@
 [
   {
     "name": "PERF-SAILS1-parent-making-not-asked",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "        if (!localSame(r, c) || r.pend || pr.pend || r.pver !== pr.ver) { r.pend = true; r.under = pr; }",
     "new": "        if (!localSame(r, c) || r.pend || pr.pend) { r.pend = true; r.under = pr; }",
     "tests": [
-      "test/perfcrowd1.test.js",
-      "test/audit0928_online.test.js"
+      "test/net/perfcrowd1.test.js",
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "PERF-SAILS1-local-not-asked",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "        if (!localSame(r, c) || r.pend || pr.pend || r.pver !== pr.ver) { r.pend = true; r.under = pr; }",
     "new": "        if (r.pend || pr.pend || r.pver !== pr.ver) { r.pend = true; r.under = pr; }",
     "tests": [
-      "test/perfcrowd1.test.js",
-      "test/audit0928_online.test.js"
+      "test/net/perfcrowd1.test.js",
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "PERF-SAILS1-makings-counted-per-node",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "    r.ver = ++_makings; r.pend = false;",
     "new": "    r.ver++; r.pend = false;",
     "tests": [
-      "test/perfcrowd1.test.js",
-      "test/audit0928_online.test.js"
+      "test/net/perfcrowd1.test.js",
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "PERF-SAILS1-root-made-once",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "    if (!localSame(rr, root) || rr.pend || rr.pver !== ROOT_MADE) { rr.pend = true; rr.under = null; }",
     "new": "    if (rr.pend || rr.pver !== ROOT_MADE) { rr.pend = true; rr.under = null; }",
     "tests": [
-      "test/perfcrowd1.test.js",
-      "test/audit0928_online.test.js"
+      "test/net/perfcrowd1.test.js",
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "PERF-SAILS2-a-due-parent-not-asked",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "        if (!localSame(r, c) || r.pend || pr.pend || r.pver !== pr.ver) { r.pend = true; r.under = pr; }",
     "new": "        if (!localSame(r, c) || r.pend || r.pver !== pr.ver) { r.pend = true; r.under = pr; }",
     "tests": [
-      "test/perfcrowd1.test.js",
-      "test/audit0928_online.test.js"
+      "test/net/perfcrowd1.test.js",
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "PERF-SAILS2-never-made",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "    if (!r.pend) return r.m;",
     "new": "    return r.m;",
     "tests": [
-      "test/perfcrowd1.test.js",
-      "test/audit0928_online.test.js"
+      "test/net/perfcrowd1.test.js",
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "PERF-SAILS2-made-from-the-node-now",
-    "file": "src/scenes/comeSailAwayPool.js",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
     "old": "    else { multiply(made(p), mat4FromQuatPosScale(r.lq, r.lt, r.ls, _local), r.m); r.pver = p.ver; }",
     "new": "    else { multiply(p.m, mat4FromQuatPosScale(r.lq, r.lt, r.ls, _local), r.m); r.pver = p.ver; }",
     "tests": [
-      "test/perfcrowd1.test.js",
-      "test/audit0928_online.test.js"
+      "test/net/perfcrowd1.test.js",
+      "test/scenes/audit0928_online.test.js"
     ]
   },
   {
     "name": "PERF-SAILS2-the-draw-reads-unmade",
-    "file": "src/scenes/comeSailAwayPool.js",
-    "old": "        one(gpu, made(rec));",
-    "new": "        one(gpu, rec.m);",
+    "file": "src/scenes/comeSailAway/comeSailAwayPool.js",
+    "old": "        one(gpu, placed(rec), paint);",
+    "new": "        one(gpu, rec.m, paint);",
     "tests": [
-      "test/perfcrowd1.test.js",
-      "test/audit0928_online.test.js"
+      "test/net/perfcrowd1.test.js",
+      "test/scenes/audit0928_online.test.js",
+      "test/systems/comeSailAway/fb1021b_ownboats.test.js"
     ]
   }
 ]

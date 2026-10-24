@@ -1,0 +1,455 @@
+[
+  {
+    "name": "TEMPUI-the-roof-always",
+    "file": "src/systems/survival/temperature.js",
+    "old": "  if (natural === climate + season + day + sky) return { climate, season, hour: day, weather: sky, roof: 0, natural };",
+    "new": "  if (true) return { climate, season, hour: day, weather: sky, roof: 0, natural };",
+    "why": "the roof's share never said - the parts miss the law indoors",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-evening-an-hour-short",
+    "file": "src/systems/survival/temperature.js",
+    "old": "  if (h >= 16 && h <= 19) return 'evening';",
+    "new": "  if (h >= 16 && h <= 18) return 'evening';",
+    "why": "the band named apart from hourTemperature's",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-dawn-from-three",
+    "file": "src/systems/survival/temperature.js",
+    "old": "  if (h >= 4 && h <= 7) return 'dawn';",
+    "new": "  if (h >= 3 && h <= 7) return 'dawn';",
+    "why": "the band named apart from hourTemperature's",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-resistance-unsaid",
+    "file": "src/systems/survival/temperature.js",
+    "old": "worldResist: natTemp - air,",
+    "new": "worldResist: 0,",
+    "why": "the resistance missing from the sum",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-ground-unsaid",
+    "file": "src/systems/survival/temperature.js",
+    "old": "dungeon: air - natural,",
+    "new": "dungeon: 0,",
+    "why": "the dungeon's correction missing from the sum",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-drink-unsaid",
+    "file": "src/systems/survival/temperature.js",
+    "old": "waterCools: watered - unwatered,",
+    "new": "waterCools: 0,",
+    "why": "the drink to hand missing from the sum",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-garment-unsaid",
+    "file": "src/systems/survival/temperature.js",
+    "old": "degrees: felt - watered,",
+    "new": "degrees: 0,",
+    "why": "a Legendary's degrees missing from the sum",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-wet-unsaid",
+    "file": "src/systems/survival/temperature.js",
+    "old": "  add('wet', 'Wet through', -temp.water);",
+    "new": "  add('wet', 'Wet through', 0);",
+    "why": "the wet's chill missing from the sum",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-mountains-misnamed",
+    "file": "src/systems/survival/temperature.js",
+    "old": "[CLIMATES.Mountain]: 'Mountains',",
+    "new": "[CLIMATES.Mountain]: 'Mountain',",
+    "why": "the land named otherwise",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-no-dry-note",
+    "file": "src/systems/survival/temperature.js",
+    "old": "temp.clothesDry > temp.clothes && temp.wet > 0 ? `${signedDegrees(temp.clothesDry)} dry` : null",
+    "new": "null",
+    "why": "the clothing's dry warmth unsaid",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-no-metal-note",
+    "file": "src/systems/survival/temperature.js",
+    "old": "temp.metal > 0 ? 'hot metal' : temp.metal < 0 ? 'cold metal' : null",
+    "new": "null",
+    "why": "the armour's metal unsaid",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-no-plus-sign",
+    "file": "src/systems/survival/temperature.js",
+    "old": "return `${v > 0 ? '+' : v < 0 ? '-' : ''}${Math.abs(v)}\\u00b0`;",
+    "new": "return `${v < 0 ? '-' : ''}${Math.abs(v)}\\u00b0`;",
+    "why": "a warm reading unsigned",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-E1-the-body-resisted-again",
+    "file": "src/systems/survival/temperature.js",
+    "old": "  const own = race + clothes.warmth + armour.warmth + fire - water + NAKED_OFFSET;",
+    "new": "  const own = resistTemperature(race + clothes.warmth + armour.warmth + fire - water, ctx) + NAKED_OFFSET;",
+    "why": "AUDIT TEMP-UI E1: a Resist Fire makes the blizzard colder",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-E3-the-surface-under-ground",
+    "file": "src/systems/survival/temperature.js",
+    "old": "  const air = env.insideDungeon ? dungeonTemperature(natural) : natural;",
+    "new": "  const air = natural;",
+    "why": "AUDIT TEMP-UI E3: a desert dungeon's clothes breathe for the sand above",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-E3-the-food-reads-the-surface",
+    "file": "src/systems/survival/needs.js",
+    "old": "  s.rotMinutes += rotWeight(temp.air);",
+    "new": "  s.rotMinutes += rotWeight(temp.natural);",
+    "why": "AUDIT TEMP-UI E3: food spoils at the surface's pace underground",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-E8-the-drink-drops-to-nothing",
+    "file": "src/systems/survival/temperature.js",
+    "old": "felt = Math.max(felt - WATER_COOLS, 9);",
+    "new": "felt = Math.max(felt - WATER_COOLS, 0);",
+    "why": "AUDIT TEMP-UI E8: a warmer day read cooler",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-E2-a-swim-stays-dry",
+    "file": "src/systems/survival/env.js",
+    "old": "  if (full.swimming && !full.submerged && !Object.hasOwn(env, 'wading')) full.wading = true;\n",
+    "new": "",
+    "why": "AUDIT TEMP-UI E2: thirty minutes' swim left the body dry",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-E2-the-dungeon-never-swims",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "swimming: !!_activity.swimming, transport: false,",
+    "new": "swimming: false, transport: false,",
+    "why": "AUDIT TEMP-UI E2: the dungeon's swim a hard-coded false",
+    "tests": [
+      "test/systems/survival/tempui.test.js",
+      "test/systems/surv7_feed.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-E6-the-landing-kills-again",
+    "file": "src/systems/survival/needs.js",
+    "old": "    walk.landing = !walk.replay && jump;",
+    "new": "    walk.landing = false;",
+    "why": "AUDIT TEMP-UI E6: one landing in ten on a harm tick kills",
+    "tests": [
+      "test/systems/survival/surv1_model.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-E11-the-sim-s-rain",
+    "file": "src/scenes/world.js",
+    "old": "    const weather = shownWeather();",
+    "new": "    const weather = currentWeather();",
+    "why": "AUDIT TEMP-UI E11: soaked under the Sun Baby's clear sky",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-E12-a-record-left-NaN",
+    "file": "src/systems/survival/needs.js",
+    "old": "    for (const [k, v] of Object.entries(newSurvival(now))) if (typeof v === 'number' && !Number.isFinite(s[k])) s[k] = v;\n",
+    "new": "",
+    "why": "AUDIT TEMP-UI E12: a missing counter read NaN for the session",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-no-feed-kept",
+    "file": "src/systems/survival/env.js",
+    "old": "  LAST_FEED.set(entity, { env: full, ctx: deps.ctx });",
+    "new": "",
+    "why": "the pack and the HUD have no live reading",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-seam-forgets-the-water",
+    "file": "src/systems/survival/needs.js",
+    "old": "hasWater: !!findDrink(entity?.items ?? [])",
+    "new": "hasWater: false",
+    "why": "the drink to hand dropped from the one context",
+    "tests": [
+      "test/systems/survival/tempui.test.js",
+      "test/systems/survival/surv1_model.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-fire-s-cold-red",
+    "file": "src/systems/survival/status.js",
+    "old": "  const level = label ? needLevel('temp', word, { rules: tier, felt, warmed }) : 'ok';",
+    "new": "  const level = label ? needLevel('temp', word, { rules: tier, felt }) : 'ok';",
+    "why": "the plate red beside a fire that answers the cold",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-scale-from-fifty",
+    "file": "src/systems/survival/status.js",
+    "old": "export const TEMP_SCALE = Object.freeze({ min: -60, max: 60 });",
+    "new": "export const TEMP_SCALE = Object.freeze({ min: -50, max: 60 });",
+    "why": "the scale's cold end moved",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-page-without-the-number",
+    "file": "src/systems/survival/status.js",
+    "old": "STATUS_TEXT.temp(word), STATUS_TEXT.felt(s.felt)); }",
+    "new": "STATUS_TEXT.temp(word)); }",
+    "why": "the status page says no number",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-degree-sign-on-the-page",
+    "file": "src/systems/survival/status.js",
+    "old": "${signedDegrees(felt).replace('\\u00b0', '')} (comfortable",
+    "new": "${signedDegrees(felt)} (comfortable",
+    "why": "a degree sign the classic faces cannot draw",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-plate-reads-the-record",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "  const live = survivalOn() ? feltNow(vitals) : null;",
+    "new": "  const live = null;",
+    "why": "AUDIT TEMP-UI E9: a door read the street's for five seconds",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-part-ignored",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "  const on = survivalOn() && getPref(TEMP_HUD_PREF) !== false;",
+    "new": "  const on = survivalOn();",
+    "why": "the plate's part cannot hide it",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-comfortable-in-the-sun",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "const TEMP_GLYPHS = Object.freeze({ cold: 'cold', hot: 'hot', mild: 'thermo' });",
+    "new": "const TEMP_GLYPHS = Object.freeze({ cold: 'cold', hot: 'hot', mild: 'hot' });",
+    "why": "comfortable drawn as the sun",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-written-every-frame",
+    "file": "src/ui/enhanced/enhancedHud.js",
+    "old": "  if (last.temp !== k) {\n    last.temp = k;",
+    "new": "  if (true) {\n    last.temp = k;",
+    "why": "the plate rewritten sixty times a second",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-plate-off-the-kit",
+    "file": "src/ui/enhanced/enhancedFrame.js",
+    "old": "'.hud-qspell', '.hud-temp', '.pack-shell .sf-tile',",
+    "new": "'.hud-qspell', '.pack-shell .sf-tile',",
+    "why": "the plate undressed by every dress",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-no-part",
+    "file": "src/systems/features.js",
+    "old": "      parts: Object.freeze([Object.freeze({ key: 'survivalTempHud', get label() { return t('features.mod.climatesCalories.tempHud', 'Temperature on the HUD'); } })]),\n",
+    "new": "",
+    "why": "the plate has no part in the drawer",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-wear-table-unsaid",
+    "file": "src/ui/armourCard.js",
+    "old": "    worn: slotsThen,",
+    "new": "",
+    "why": "the card cannot read the wear's table",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-a-ring-says-a-temperature",
+    "file": "src/ui/temperatureCard.js",
+    "old": "  if (!after || Math.round(after.felt) === Math.round(before.felt)) return null;",
+    "new": "  if (!after) return null;",
+    "why": "a wear that moves nothing says a temperature",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-worn-as-unworn",
+    "file": "src/ui/temperatureCard.js",
+    "old": "  if (isEquipped(item)) {",
+    "new": "  if (false) {",
+    "why": "a worn cloak's card says nothing",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-warmer-always-better",
+    "file": "src/ui/temperatureCard.js",
+    "old": "const better = discomfort(w.after.felt) < discomfort(w.before.felt), worse = discomfort(w.after.felt) > discomfort(w.before.felt);",
+    "new": "const better = w.after.felt > w.before.felt, worse = w.after.felt < w.before.felt;",
+    "why": "off in the desert noon called worse",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-plaque-on-the-record",
+    "file": "src/ui/temperatureCard.js",
+    "old": "  const t = feltNow(entity);\n  if (t) {",
+    "new": "  const t = null;\n  if (t) {",
+    "why": "the pack waits for the next minute",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-plaque-says-no-sum",
+    "file": "src/ui/temperatureCard.js",
+    "old": "${sum.length ? `\\n${sum.join('\\n')}` : ''}",
+    "new": "",
+    "why": "the plaque's title without its parts",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-plaque-not-mounted",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "  if (temp) plaques.append(temp);\n",
+    "new": "",
+    "why": "the plaque never stands on the figure",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-card-without-it",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "    const tc = temperatureCompareBlock(deps.entity, picked, wear); if (tc) into.append(tc);",
+    "new": "",
+    "why": "the card says no temperature",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-stats-side-without-it",
+    "file": "src/ui/statsCard.js",
+    "old": "  const tempRows = temperatureStatRows(entity);",
+    "new": "  const tempRows = [];",
+    "why": "the Stats side says no temperature",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-plaque-undressed",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
+    "old": ".pack-shell .wornmap .wornplaques { position: absolute; left: 4px;",
+    "new": ".pack-shell .wornmap .wornplaques { position: static; left: 4px;",
+    "why": "the plaque out of its corner",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-grimoire-forgets-the-plaque",
+    "file": "src/ui/grimoireDress.js",
+    "old": "${G} .statflip-btn, ${G} .wornac-total, ${G} .worntemp-total { background:",
+    "new": "${G} .statflip-btn, ${G} .wornac-total { background:",
+    "why": "the Grimoire dress leaves the plaque on Plus's stone",
+    "tests": [
+      "test/systems/survival/tempui.test.js"
+    ]
+  },
+  {
+    "name": "TEMPUI-the-thermometer-gone",
+    "file": "src/ui/hud/hudStatus.js",
+    "old": "  thermo: Object.freeze({",
+    "new": "  thermoX: Object.freeze({",
+    "why": "no thermometer to draw",
+    "tests": [
+      "test/systems/survival/tempui.test.js",
+      "test/ui/enhanced/ui3_status.test.js"
+    ]
+  }
+]

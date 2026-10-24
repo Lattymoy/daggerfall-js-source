@@ -87,10 +87,10 @@ and the rise lifted out of `scenes/world.js` and run, the start markers read bac
 town routed, the gardens' names and indices, the footprint on made faces and on every capital's models, the gates open,
 the markers off the walls, every block's closed cells and trees, the ring walk against the square's, every landmark
 vertex clear of a house's block, the dry kinds, the closed byte's quarter) and by source where it is a host's wiring.
-`tools/mutants/audittesa.json` (56, all dead; 54 since TESA11, which retired the 8 x 8 Imperial City's two - its wall at 317 m is the nine-pixel city's wall at 900 m now, `03-World/Arena-Provinces.md` TESA11). PIN MOVED, each by its finding: `test/audit23_hosts.test.js`,
-`test/audit26_talk.test.js`, `test/auditrr2.test.js`, `test/sd2d_castout.test.js`, `test/seat2b_peace_client.test.js`, `test/audit28_smallerdungeons.test.js`, `test/auditcaptsea.test.js`,
-`test/auditdisc28_quests.test.js`, `test/citedrift.test.js`, `test/disc28e_shipport.test.js`,
-`test/etherplaces.test.js`, `test/portal1_stone.test.js`, `test/qrepair.test.js`, `test/tesa1_arena.test.js` (DELETED by TESA12),
+`tools/mutants/audittesa.json` (56, all dead; 54 since TESA11, which retired the 8 x 8 Imperial City's two - its wall at 317 m is the nine-pixel city's wall at 900 m now, `03-World/Arena-Provinces.md` TESA11). PIN MOVED, each by its finding: `test/systems/audit23_hosts.test.js`,
+`test/systems/audit26_talk.test.js`, `test/systems/auditrr2.test.js`, `test/systems/superDungeon/sd2d_castout.test.js`, `test/ui/seat2b_peace_client.test.js`, `test/systems/quest/audit28_smallerdungeons.test.js`, `test/systems/naval/auditcaptsea.test.js`,
+`test/systems/quest/auditdisc28_quests.test.js`, `test/scenes/citedrift.test.js`, `test/systems/travel/disc28e_shipport.test.js`,
+`test/world/etherplaces.test.js`, `test/systems/portal1_stone.test.js`, `test/systems/quest/qrepair.test.js`, `test/tesa1_arena.test.js` (DELETED by TESA12),
 `test/tesa2_arena.test.js`, `test/tesa6_ports.test.js`, `test/tesa10_capitals.test.js`, `test/tesa10c_capitals.test.js`.
 Re-aimed by content, each judged dead again: seventeen records in `auditcaptsea`, `auditdisc28_quests`, `etherplaces`,
 `portal1`, `tesa1`, `tesa6`, `tesa7`, `tesa10` and `tesa10c`.

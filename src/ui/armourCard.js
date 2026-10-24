@@ -2,7 +2,7 @@
 // inventory we should be able to see the total AC of equipped items on our characters. Hovering our cursor over an item
 // ... should also allow us to see comparative stats ... a straight up + or - stat next to the items stats in green and
 // red so we can quickly see what is better or worse"): THE CHARACTER'S ARMOUR, READ AT A GLANCE, AND WHAT A WEAR WOULD
-// CHANGE. The enhanced pack only (ui/enhancedInventory.js composes all three drawings below); the classic window keeps
+// CHANGE. The enhanced pack only (ui/enhanced/enhancedInventory.js composes all three drawings below); the classic window keeps
 // DFU's doll and its seven labels, untouched.
 //
 // NOTHING HERE IS A NEW LAW. Every number is one the port already computes, read through the member that computes it:
@@ -24,10 +24,10 @@ import {
 import { createEquipTable } from '../characters/equipTable.js';
 import { computeEntityMods, entityArmorDisplayMod } from '../systems/entityMods.js';
 import { struckBodyPartTable } from '../combat/formulas.js';
-import { itemDamageLine, weaponDamageRange } from '../systems/itemInfo.js';
+import { itemDamageLine, weaponDamageRange } from '../systems/item/itemInfo.js';
 import { itemIsIdentified } from '../systems/tradeModes.js';
-import { armorLabelValue } from './nativeInventory.js';
-import { lineComparison, lootRarityOn } from '../systems/lootRarity.js';   // LOOT18: the lines against what a wear replaces
+import { armorLabelValue } from './native/nativeInventory.js';
+import { lineComparison, lootRarityOn } from '../systems/loot/lootRarity.js';   // LOOT18: the lines against what a wear replaces
 
 /** The seven parts in DFU's BodyParts order (ItemEnums.cs:140-150), named off the enum's own members ("RightArm" says
  *  "Right arm"), so no second list of them stands anywhere. No lookbehind in the split (SAFARI1: a Safari before 16.4
@@ -74,11 +74,23 @@ export const tenth = (x) => Math.round(x * 10) / 10;
  *  wearer read through (its career, its stats, its Renown's sets), the table its own - so the sum lands on the
  *  stand-in and the wearer's own `_mods` is never written. */
 function foldedPoints(entity, slots) {
+  return modsForSlots(entity, slots).armorParts;
+}
+/** AUDIT C&C S6 (decision D4): A PIECE AS ITS CARD KNOWS IT. An unidentified piece's card says "Unidentified" and names
+ *  no line and no power, so the stand-in a comparison wears carries neither: no affixes and no power ids (a Legendary's
+ *  record, a Rare's imprint, a Gilded's - systems/loot/lootPowers.js reads them). The copy had dropped the lines and kept the
+ *  ids, so the unidentified Wrothgar Pass Mantle's card counted its hidden Mountain-Born and not its hidden lining (a
+ *  mountain night read -85 to -53, where the cloak it shows is -85 to -73). An identified piece is itself. */
+export const asKnown = (item) => (itemIsIdentified(item) ? item : { ...item, affixes: [], legendary: null, imprint: null, gilded: null });
+/** The entity's folded channels (systems/entityMods.js computeEntityMods) as they WOULD stand over another slot table -
+ *  a stand-in wearing `slots`, the entity untouched. TEMP-UI: ONE CONSTRUCTION SEAM - the armour's points above and the
+ *  wardrobe's warmth (ui/temperatureCard.js) read a wear that has not happened through this one fold. */
+export function modsForSlots(entity, slots) {
   const eq = createEquipTable();
   slots.forEach((it, i) => { eq.slots[i] = it ?? null; });
   const standIn = Object.create(entity);
   standIn.equip = eq;
-  return computeEntityMods(standIn).armorParts;
+  return computeEntityMods(standIn);
 }
 
 /**
@@ -89,9 +101,9 @@ function foldedPoints(entity, slots) {
  *   replaces  what the wear would take off, in EquipItem's own order (wearLeavers), each piece once
  *   parts     every part the piece covers (armorBodyParts) and every part the wear moves, as the doll's number now and
  *             after: DFU's table with each leaver given back and the piece taken off (UpdateEquippedArmorValues), and the
- *             folds' points over the table it would leave. AN UNIDENTIFIED PIECE'S AFFIXES ARE LEFT OUT: its card says
- *             "Unidentified" and no affix, so its comparison says no more (the affixes work once worn, and the doll
- *             shows them then, as DFU's doll shows an unidentified item's powers).
+ *             folds' points over the table it would leave. AN UNIDENTIFIED PIECE'S AFFIXES AND POWERS ARE LEFT OUT
+ *             (asKnown): its card says "Unidentified" and no affix, so its comparison says no more (they work once
+ *             worn, and the doll shows them then, as DFU's doll shows an unidentified item's powers).
  *   overall   the overall figure now and after, where any part is listed
  *   damage    a weapon against the weapon it would replace - the one in its own slot, else one it takes off with it (a
  *             two-hander's other hand) - by the card's own Damage row; null with no weapon to set it against
@@ -116,7 +128,7 @@ export function wearComparison(entity, item) {
   // the port's points, over the table as it stands and over the table the wear would leave
   const slotsThen = [...table];
   for (const s of leavers) slotsThen[s] = null;
-  slotsThen[slot] = itemIsIdentified(item) ? item : { ...item, affixes: [] };
+  slotsThen[slot] = asKnown(item);   // AUDIT C&C S6: an unidentified piece's stand-in as its card knows it
   const pointsNow = foldedPoints(entity, table);
   const pointsThen = foldedPoints(entity, slotsThen);
   const before = dollArmour(entity);
@@ -140,6 +152,7 @@ export function wearComparison(entity, item) {
   const tableNow = struckBodyPartTable();
   return {
     slot, replaces, parts, damage, hands,
+    worn: slotsThen,   // TEMP-UI: the table the wear would leave - the card's temperature reads it (ui/temperatureCard.js)
     overall: parts.length ? { before: overallArmour(before, tableNow), after: overallArmour(after, tableNow) } : null,
   };
 }
@@ -159,12 +172,12 @@ function delta(d, digits = 0) {
 }
 
 /** THE PART'S NUMBER ON ITS PANEL - the classic doll's label standing where the enhanced pack draws that body part (the
- *  worn map's panel for the part's own slot: ui/enhancedInventory.js wornPanel, through equip.js bodyPartForSlot). A
+ *  worn map's panel for the part's own slot: ui/enhanced/enhancedInventory.js wornPanel, through equip.js bodyPartForSlot). A
  *  panel shows it filled or empty, as the doll labels every part. */
 export function armourBadge(entity, part) {
   const v = dollArmour(entity)[part];
   const b = el('span', `wornac${v ? '' : ' nil'}`, String(v));
-  b.title = `${PART_NAMES[part]}: armour ${v}`;
+  b.title = `${PART_NAMES[part]}: armor ${v}`;
   b.setAttribute('aria-label', b.title);
   return b;
 }
@@ -178,24 +191,24 @@ export function armourPlaque(entity) {
   n.append(el('span', 'k', 'Armour'), el('span', 'v', fig));
   const counts = struckCounts(table);
   const weights = PART_NAMES.map((name, p) => `${name.toLowerCase()} ${counts[p]}`).join(', ');
-  n.title = `Armour ${fig}: the armour a blow meets on average - each part's number weighed by how often a blow lands there (${weights} in ${table.length})`;
-  n.setAttribute('aria-label', `Armour ${fig}`);
+  n.title = `Armor ${fig}: the average armor a blow meets, with each part weighted by how often it is hit (${weights} in ${table.length})`;
+  n.setAttribute('aria-label', `Armor ${fig}`);
   return n;
 }
 
 /**
- * THE CARD'S COMPARISON - what wearing the piece would change, beside its own stats (ui/enhancedInventory.js infoCard,
+ * THE CARD'S COMPARISON - what wearing the piece would change, beside its own stats (ui/enhanced/enhancedInventory.js infoCard,
  * the hover card and the picked one alike): the pieces it would take off, then a weapon's damage against the one it
  * would replace, the overall figure, and each part (the doll's number now and after, and the difference - green better,
  * red worse). Null where wearComparison is, and for a piece that is neither armour nor a weapon and moves no part (a
  * ring, a shirt): there is no stat to set against another. `nameOf` names a piece (the pack hands itemLongName).
  */
 /** LOOT18 (the Loot arc II, bible/06-Systems/Loot-II-Arc.md section 10): THE LINES A WEAR WOULD CHANGE, under the
- *  numbers - each of the piece's lines against the same line on what it replaces (systems/lootRarity.js
+ *  numbers - each of the piece's lines against the same line on what it replaces (systems/loot/lootRarity.js
  *  lineComparison): up or down by how much, `new` where they have none, and their lines it would lose; a resistance
  *  line with what of its element the rolled gear counts, now and after (LOOT12's cap). Only a wear that replaces a known
  *  piece, and only a piece whose lines are known. */
-export const LINES_HEAD = 'Its lines against what it replaces';
+export const LINES_HEAD = 'Compared with what it replaces';
 export function lineCompareBlock(entity, item, wear = undefined) {
   // AUDIT LOOT II B6: the card's comparison handed in (`wear`, compareBlock's) - a hover folded the entity twice for it -
   // and none at all with the ladder off, where there are no lines to set

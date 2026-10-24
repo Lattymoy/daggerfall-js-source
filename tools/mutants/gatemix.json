@@ -1,0 +1,373 @@
+[
+  {
+    "name": "GATE-MIX-listener-past-the-limiter",
+    "file": "src/systems/audio.js",
+    "old": "      this._listenerIn.connect(this._sink);",
+    "new": "      this._listenerIn.connect(this.ctx.destination);",
+    "tests": [
+      "test/systems/gatemix_limiter.test.js"
+    ],
+    "why": "the bug: every bus straight to the speakers, the sum cut square"
+  },
+  {
+    "name": "GATE-MIX-lowpass-past-the-limiter",
+    "file": "src/systems/audio.js",
+    "old": "    const sink = this._sink ?? this.ctx.destination;",
+    "new": "    const sink = this.ctx.destination;",
+    "tests": [
+      "test/systems/gatemix_limiter.test.js"
+    ],
+    "why": "underwater, the muffled mix around the limiter"
+  },
+  {
+    "name": "GATE-MIX-a-setting-unread",
+    "file": "src/systems/audio.js",
+    "old": "    for (const k of ['threshold', 'knee', 'ratio', 'attack', 'release']) comp[k].value = LIMITER[k];",
+    "new": "    for (const k of ['threshold', 'knee', 'ratio', 'attack']) comp[k].value = LIMITER[k];",
+    "tests": [
+      "test/systems/gatemix_limiter.test.js"
+    ],
+    "why": "the compressor's own release left at its default"
+  },
+  {
+    "name": "GATE-MIX-makeup-left-in",
+    "file": "src/systems/audio.js",
+    "old": "    trim.gain.value = limiterTrim() / LIMIT_RANGE;",
+    "new": "    trim.gain.value = 1 / LIMIT_RANGE;",
+    "tests": [
+      "test/systems/gatemix_limiter.test.js"
+    ],
+    "why": "the compressor's make-up gain raises the whole mix"
+  },
+  {
+    "name": "GATE-MIX-trim-power",
+    "file": "src/systems/audio.js",
+    "old": "export const limiterTrim = ({ threshold, ratio } = LIMITER) => 10 ** ((0.6 * threshold * (1 - 1 / ratio)) / 20);",
+    "new": "export const limiterTrim = ({ threshold, ratio } = LIMITER) => 10 ** ((threshold * (1 - 1 / ratio)) / 20);",
+    "tests": [
+      "test/systems/gatemix_limiter.test.js"
+    ],
+    "why": "the spec's 0.6 power forgotten"
+  },
+  {
+    "name": "GATE-MIX-shoulder-from-zero",
+    "file": "src/systems/audio.js",
+    "old": "  if (a <= LIMIT_LINEAR) return s;",
+    "new": "  if (a <= 0) return s;",
+    "tests": [
+      "test/systems/gatemix_limiter.test.js"
+    ],
+    "why": "the whole mix bent, not only its peaks"
+  },
+  {
+    "name": "GATE-MIX-hard-clip",
+    "file": "src/systems/audio.js",
+    "old": "  return Math.sign(s) * (LIMIT_LINEAR + room * Math.tanh((a - LIMIT_LINEAR) / room));",
+    "new": "  return Math.sign(s) * Math.min(a, LIMIT_CEILING);",
+    "tests": [
+      "test/systems/gatemix_limiter.test.js"
+    ],
+    "why": "a square cut at the ceiling, the distortion the stage is for"
+  },
+  {
+    "name": "GATE-MIX-range-unread",
+    "file": "src/systems/audio.js",
+    "old": "  for (let i = 0; i < n; i++) c[i] = limitAmplitude(LIMIT_RANGE * ((2 * i) / (n - 1) - 1));",
+    "new": "  for (let i = 0; i < n; i++) c[i] = limitAmplitude((2 * i) / (n - 1) - 1);",
+    "tests": [
+      "test/systems/gatemix_limiter.test.js"
+    ],
+    "why": "the curve over full scale alone - a signal over it lands on its end"
+  },
+  {
+    "name": "GATE-MIX-every-target-again",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "cueTargetPlaces(atk.tg.map((p) => courtToDungeon(p[0], 0.5, p[1])), audio.listenerPosition?.())",
+    "new": "atk.tg.map((p) => courtToDungeon(p[0], 0.5, p[1]))",
+    "tests": [
+      "test/net/gate/gatemix_targets.test.js"
+    ],
+    "why": "the bug: a Hellfire's ten copies in one frame"
+  },
+  {
+    "name": "GATE-MIX-ear-unread",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "audio.listenerPosition?.())   // GATE-MIX",
+    "new": "undefined)   // GATE-MIX",
+    "tests": [
+      "test/net/gate/gatemix_targets.test.js"
+    ],
+    "why": "the copies in the attack's order, not mine first"
+  },
+  {
+    "name": "GATE-MIX-nearest-not-first",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "  const order = Array.isArray(ear) ? points.slice().sort((p, q) => d2(p, ear) - d2(q, ear)) : points;",
+    "new": "  const order = points;",
+    "tests": [
+      "test/net/gate/gatemix_targets.test.js"
+    ],
+    "why": "the mark at my feet not the one heard"
+  },
+  {
+    "name": "GATE-MIX-spacing-unread",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "    if (kept.every((k) => d2(k, p) >= apart)) kept.push(p);",
+    "new": "    kept.push(p);",
+    "tests": [
+      "test/net/gate/gatemix_targets.test.js"
+    ],
+    "why": "two copies of one clip on one spot"
+  },
+  {
+    "name": "GATE-MIX-cap-unread",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "    if (kept.length >= CUE_TARGET_COPIES) break;",
+    "new": "    if (kept.length >= 99) break;",
+    "tests": [
+      "test/net/gate/gatemix_targets.test.js"
+    ],
+    "why": "every spread target a copy"
+  },
+  {
+    "name": "GATE-MIX-sort-mutates",
+    "file": "src/world/gate/gateBoss.js",
+    "old": "points.slice().sort(",
+    "new": "points.sort(",
+    "tests": [
+      "test/net/gate/gatemix_targets.test.js"
+    ],
+    "why": "the attack's own list reordered under the court"
+  },
+  {
+    "name": "GATE-MIX-warm-unwired",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "      warmPasses();   // GATE-MIX",
+    "new": "      // warmPasses();   // GATE-MIX",
+    "tests": [
+      "test/net/gate/gatemix_targets.test.js"
+    ],
+    "why": "the bug: each pass compiled at its first draw, mid-fight"
+  },
+  {
+    "name": "GATE-MIX-warm-all-at-once",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    if (!parallelCompile(gl)) { warmDoors[warmed++](); return; }",
+    "new": "    if (!parallelCompile(gl)) { for (const door of warmDoors) door(); warmed = warmDoors.length; return; }",
+    "tests": [
+      "test/net/gate/gatemix_targets.test.js"
+    ],
+    "why": "three passes' compiles in one frame, where the driver cannot compile beside the frames (SHADER-STALL: where it can, they start together and block none)"
+  },
+  {
+    "name": "GATE-MIX-warm-outside-court",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    if (!gl || !feet()) return;",
+    "new": "    if (!gl) return;",
+    "tests": [
+      "test/net/gate/gatemix_targets.test.js"
+    ],
+    "why": "compiled before I am in the court - out on the road"
+  },
+  {
+    "name": "GATE-MIX-sprites-host-every-night",
+    "file": "src/scenes/gate/gateSpriteWarm.js",
+    "old": "  if (P?.legion) for (const k of [HOST.harrier, HOST.sapper, HOST.bearer])",
+    "new": "  if (true) for (const k of [HOST.harrier, HOST.sapper, HOST.bearer])",
+    "tests": [
+      "test/net/gate/gatemix_sprites.test.js"
+    ],
+    "why": "a night with no host warms one"
+  },
+  {
+    "name": "GATE-MIX-sprites-sunder-unread",
+    "file": "src/scenes/gate/gateSpriteWarm.js",
+    "old": "  if (hasPortent(s.pt, 'sunder')) m.add(flameLookOf(a).mobile);",
+    "new": "",
+    "tests": [
+      "test/net/gate/gatemix_sprites.test.js"
+    ],
+    "why": "his Flame's sprite fetched at the Sundering again"
+  },
+  {
+    "name": "GATE-MIX-sprites-no-budget",
+    "file": "src/scenes/gate/gateSpriteWarm.js",
+    "old": "        while (up < SPRITE_WARM_UPLOADS && looked < SPRITE_WARM_LOOKS) {",
+    "new": "        while (looked < SPRITE_WARM_LOOKS) {",
+    "tests": [
+      "test/net/gate/gatemix_sprites.test.js"
+    ],
+    "why": "every frame of an archive in one frame"
+  },
+  {
+    "name": "GATE-MIX-sprites-look-unbounded",
+    "file": "src/scenes/gate/gateSpriteWarm.js",
+    "old": "        while (up < SPRITE_WARM_UPLOADS && looked < SPRITE_WARM_LOOKS) {",
+    "new": "        while (up < SPRITE_WARM_UPLOADS) {",
+    "tests": [
+      "test/net/gate/gatemix_sprites.test.js"
+    ],
+    "why": "a night all standing walked whole each frame"
+  },
+  {
+    "name": "GATE-MIX-sprites-standing-uploaded",
+    "file": "src/scenes/gate/gateSpriteWarm.js",
+    "old": "          if (!has(archive, `${e.r}#${e.f}`)) {",
+    "new": "          if (true) {",
+    "tests": [
+      "test/net/gate/gatemix_sprites.test.js"
+    ],
+    "why": "a frame already standing uploaded again"
+  },
+  {
+    "name": "GATE-MIX-sprites-night-every-frame",
+    "file": "src/scenes/gate/gateSpriteWarm.js",
+    "old": "      if (key === night) return;",
+    "new": "",
+    "tests": [
+      "test/net/gate/gatemix_sprites.test.js"
+    ],
+    "why": "kept alive on purpose: the archives' own map already asks each once - the night's key spares the frame its walk of nightMobiles, a cost and not a law",
+    "equivalent": true
+  },
+  {
+    "name": "GATE-MIX-sprites-unwired",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "      if (feet()) { sprites.want(s, P); sprites.step(); }",
+    "new": "",
+    "tests": [
+      "test/net/gate/gatemix_sprites.test.js"
+    ],
+    "why": "the bug: each body's sprite at its first draw"
+  },
+  {
+    "name": "GATE-MIX-sprites-off-court",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "      if (feet()) { sprites.want(s, P); sprites.step(); }",
+    "new": "      { sprites.want(s, P); sprites.step(); }",
+    "tests": [
+      "test/net/gate/gatemix_sprites.test.js"
+    ],
+    "why": "warmed on the road, out of the court"
+  },
+  {
+    "name": "GATE-MIX-held-placeholder-real",
+    "file": "src/render/renderer.js",
+    "old": "    if (!this.textures.has(key) || this._placeholders?.has(key)) return false;\n    this._uploadSink?.(false, key);\n    return true;",
+    "new": "    if (!this.textures.has(key)) return false;\n    this._uploadSink?.(false, key);\n    return true;",
+    "tests": [
+      "test/scenes/gatemix_frames.test.js"
+    ],
+    "why": "a stand-in's placeholder taken for the picture"
+  },
+  {
+    "name": "GATE-MIX-held-not-held",
+    "file": "src/render/renderer.js",
+    "old": "    if (!this.textures.has(key) || this._placeholders?.has(key)) return false;\n    this._uploadSink?.(false, key);\n    return true;",
+    "new": "    if (!this.textures.has(key) || this._placeholders?.has(key)) return false;\n    return true;",
+    "tests": [
+      "test/scenes/gatemix_frames.test.js"
+    ],
+    "why": "a hit not held for the place asking - PLACE-LRU lets it go under a live draw"
+  },
+  {
+    "name": "GATE-MIX-frame-check-unasked",
+    "file": "src/scenes/dataPipeline.js",
+    "old": "    if (!TextureFile.isSpectralArchive(archive) && !isEmissive(archive, record) && renderer.heldTexture?.(archive, key)) return;",
+    "new": "",
+    "tests": [
+      "test/scenes/gatemix_frames.test.js"
+    ],
+    "why": "the bug: a splash's frames decoded again every hit"
+  },
+  {
+    "name": "GATE-MIX-lights-mask-unread",
+    "file": "src/world/gate/gateArena.js",
+    "old": " if (l.carried) carried[n + i] = 1; });",
+    "new": " });",
+    "tests": [
+      "test/world/gatemix_lights.test.js"
+    ],
+    "why": "the bug: a flash takes a shadow caster's slot"
+  },
+  {
+    "name": "GATE-MIX-lights-all-masked",
+    "file": "src/world/gate/gateArena.js",
+    "old": " if (l.carried) carried[n + i] = 1; });",
+    "new": " carried[n + i] = 1; });",
+    "tests": [
+      "test/world/gatemix_lights.test.js"
+    ],
+    "why": "the braziers and his glow cast no shadow either"
+  },
+  {
+    "name": "GATE-MIX-lights-burst-unmasked",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "color: [0, 0, 0], carried: true }), kk = L0[0]",
+    "new": "color: [0, 0, 0] }), kk = L0[0]",
+    "tests": [
+      "test/world/gatemix_lights.test.js"
+    ],
+    "why": "a landing's light casts again"
+  },
+  {
+    "name": "GATE-MIX-peers-never-in",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    if (inCourt && held === null) setPeerSoundScope(peersDown);",
+    "new": "    if (false) setPeerSoundScope(peersDown);",
+    "tests": [
+      "test/net/gate/gatemix_peers.test.js"
+    ],
+    "why": "the court's crowd at full level"
+  },
+  {
+    "name": "GATE-MIX-peers-never-out",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    else if (!inCourt && held === peersDown) setPeerSoundScope(null);",
+    "new": "",
+    "tests": [
+      "test/net/gate/gatemix_peers.test.js"
+    ],
+    "why": "the street heard 4 dB down after the court"
+  },
+  {
+    "name": "GATE-MIX-peers-taken-over",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    if (inCourt && held === null) setPeerSoundScope(peersDown);",
+    "new": "    if (inCourt) setPeerSoundScope(peersDown);",
+    "tests": [
+      "test/net/gate/gatemix_peers.test.js"
+    ],
+    "why": "the Spire's scope taken over"
+  },
+  {
+    "name": "GATE-MIX-peers-other-cleared",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "    else if (!inCourt && held === peersDown) setPeerSoundScope(null);",
+    "new": "    else if (!inCourt) setPeerSoundScope(null);",
+    "tests": [
+      "test/net/gate/gatemix_peers.test.js"
+    ],
+    "why": "another place's scope cleared"
+  },
+  {
+    "name": "GATE-MIX-peers-level",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "audio.scaled(egDbGain(EG_MIX.peerDb), run)",
+    "new": "audio.scaled(egDbGain(-6), run)",
+    "tests": [
+      "test/net/gate/gatemix_peers.test.js"
+    ],
+    "why": "not the Spire's level"
+  },
+  {
+    "name": "GATE-MIX-peers-unwired",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "      peersHeard(!!feet());   // GATE-MIX",
+    "new": "      // peersHeard(!!feet());   // GATE-MIX",
+    "tests": [
+      "test/net/gate/gatemix_peers.test.js"
+    ],
+    "why": "never handed in"
+  }
+]

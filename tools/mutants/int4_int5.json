@@ -1,29 +1,29 @@
 [
   {
     "name": "INT4-a-stack-earns-an-id",
-    "file": "src/systems/itemIds.js",
+    "file": "src/systems/item/itemIds.js",
     "old": "  if (Number.isInteger(it.stackCount) && it.stackCount > 1) return false;\n",
     "new": "",
     "tests": [
-      "test/int4_itemids.test.js"
+      "test/systems/item/int4_itemids.test.js"
     ]
   },
   {
     "name": "INT4-a-bound-piece-earns-an-id",
-    "file": "src/systems/itemIds.js",
+    "file": "src/systems/item/itemIds.js",
     "old": "  if (!it || typeof it !== 'object' || it.bound === true || it.questItem === true) return false;",
     "new": "  if (!it || typeof it !== 'object' || it.questItem === true) return false;",
     "tests": [
-      "test/int4_itemids.test.js"
+      "test/systems/item/int4_itemids.test.js"
     ]
   },
   {
     "name": "INT4-an-id-stamped-again",
-    "file": "src/systems/itemIds.js",
+    "file": "src/systems/item/itemIds.js",
     "old": "      if (!valuablePiece(it) || (typeof it.uid === 'string' && ITEM_UID_RE.test(it.uid)) || !Object.isExtensible(it)) continue;",
     "new": "      if (!valuablePiece(it) || !Object.isExtensible(it)) continue;",
     "tests": [
-      "test/int4_itemids.test.js"
+      "test/systems/item/int4_itemids.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (r.claim_char == null) claim.push(key);   // another's, or the service's: claimed - one claim at a time\n",
     "new": "",
     "tests": [
-      "test/int4_itemids.test.js"
+      "test/systems/item/int4_itemids.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      if (r.claim_char && r.claim_char !== char && nowS - r.claim_at >= DUPE_GRACE_S) proven.set(r.claim_char, [...(proven.get(r.claim_char) ?? []), key]);\n",
     "new": "",
     "tests": [
-      "test/int4_itemids.test.js"
+      "test/systems/item/int4_itemids.test.js"
     ]
   },
   {
@@ -50,34 +50,25 @@
     "old": "    if (n > 1) { copies.push(key); if (!r) fresh.push([key, fp]); continue; }   // one piece twice in one record\n",
     "new": "",
     "tests": [
-      "test/int4_itemids.test.js"
+      "test/systems/item/int4_itemids.test.js"
     ]
   },
   {
     "name": "INT4-the-dupe-moves",
     "file": "server-account/src/realm.js",
-    "old": "  const why = leaving.length ? await piecesRefusal(db, at.id, leaving) : null;\n  if (why) return { error: why };\n",
-    "new": "  const why = leaving.length ? await piecesRefusal(db, at.id, leaving) : null;\n  void why;\n",
+    "old": "  const why = take ? null : twice.length ? 'piece-dupe' : leaving.length ? await piecesRefusal(db, at.id, leaving) : null;\n  if (why) return { error: why };\n",
+    "new": "  const why = take ? null : twice.length ? 'piece-dupe' : leaving.length ? await piecesRefusal(db, at.id, leaving) : null;\n  void why;\n",
     "tests": [
-      "test/int4_itemids.test.js"
-    ]
-  },
-  {
-    "name": "INT4-dupes-never-hold",
-    "file": "server-account/src/verdict.js",
-    "old": "  if (prev === 'dupe' || (fresh > 0 && dupes >= DUPES_FOR_HOLD)) return 'dupe';",
-    "new": "  if (prev === 'dupe') return 'dupe';",
-    "tests": [
-      "test/int4_itemids.test.js"
+      "test/systems/item/int4_itemids.test.js"
     ]
   },
   {
     "name": "INT3-the-lift-unsaid",
-    "file": "src/systems/itemIds.js",
+    "file": "src/systems/item/itemIds.js",
     "old": "  if (now == null) return prev ? TRADE_OPEN_NOTICE : null;",
     "new": "  if (now == null) return null;",
     "tests": [
-      "test/int4_itemids.test.js"
+      "test/systems/item/int4_itemids.test.js"
     ]
   },
   {
@@ -86,7 +77,7 @@
     "old": "  const left = filled - Math.max(0, gain);",
     "new": "  const left = filled - (allowance == null ? 0 : Math.max(0, gain));",
     "tests": [
-      "test/int5_budget.test.js"
+      "test/server/int5_budget.test.js"
     ]
   },
   {
@@ -95,7 +86,7 @@
     "old": "  const filled = start >= band.cap ? start : Math.min(band.cap, start + fill);",
     "new": "  const filled = start + fill;",
     "tests": [
-      "test/int5_budget.test.js"
+      "test/server/int5_budget.test.js"
     ]
   },
   {
@@ -104,7 +95,7 @@
     "old": "  const left = filled - Math.max(0, gain);",
     "new": "  const left = filled - gain;",
     "tests": [
-      "test/int5_budget.test.js"
+      "test/server/int5_budget.test.js"
     ]
   },
   {
@@ -113,7 +104,7 @@
     "old": "  if (enforce && over > 0) return 'budget';",
     "new": "",
     "tests": [
-      "test/int5_budget.test.js"
+      "test/server/int5_budget.test.js"
     ]
   },
   {
@@ -122,7 +113,7 @@
     "old": "  if (enforce && over > 0) return 'budget';",
     "new": "  if (over > 0) return 'budget';",
     "tests": [
-      "test/int5_budget.test.js"
+      "test/server/int5_budget.test.js"
     ]
   },
   {
@@ -131,16 +122,17 @@
     "old": "  if (budget.over > 0 && gain > 0) finding(",
     "new": "  if (budget.over > 0) finding(",
     "tests": [
-      "test/int5_budget.test.js"
+      "test/server/int5_budget.test.js"
     ]
   },
   {
     "name": "INT5-the-spoils-unfilled",
     "file": "server-account/src/budget.js",
-    "old": "    'UPDATE realm_characters SET allowance = allowance + ?2 + ?3 * MAX(1, COALESCE(level_seen, 1))'",
-    "new": "    'UPDATE realm_characters SET allowance = allowance + 0 * ?2 + 0 * ?3 * MAX(1, COALESCE(level_seen, 1))'",
+    "old": "    'UPDATE realm_characters SET allowance = allowance + ?2 + ?3 * MAX(1, COALESCE(level_seen, 1)) + ?4'",
+    "new": "    'UPDATE realm_characters SET allowance = allowance + 0 * ?2 + 0 * ?3 * MAX(1, COALESCE(level_seen, 1)) + 0 * ?4'",
     "tests": [
-      "test/int5_budget.test.js"
-    ]
+      "test/server/int5_budget.test.js"
+    ],
+    "note": "AUDIT WB14 (PIN MOVED): re-aimed by content at the audit's change of this text."
   }
 ]

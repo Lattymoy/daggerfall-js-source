@@ -1,0 +1,702 @@
+[
+  {
+    "name": "LAW9H-gate-at-8",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "export const EG_HEIGHT_LAW = 9;",
+    "new": "export const EG_HEIGHT_LAW = 8;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the laws before judged by height"
+  },
+  {
+    "name": "LAW9H-gate-never",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "export const egByHeight = (/** @type {any} */ spec) => (spec?.law ?? spec?.v ?? 0) >= EG_HEIGHT_LAW;",
+    "new": "export const egByHeight = (/** @type {any} */ spec) => (spec?.law ?? spec?.v ?? 0) > EG_HEIGHT_LAW;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "LAW 9 judged in plan"
+  },
+  {
+    "name": "LAW9H-band-under-widened",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "y) => !Number.isFinite(y) || (fy <= y + EG_GROUND_UNDER_M &&",
+    "new": "y) => !Number.isFinite(y) || (fy <= y + EG_GROUND_UNDER_M + 1 &&",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a floor a metre over the feet bears them"
+  },
+  {
+    "name": "LAW9H-band-over-widened",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "(fy <= y + EG_GROUND_UNDER_M && y - fy <= EG_GROUND_OVER_M);",
+    "new": "(fy <= y + EG_GROUND_UNDER_M && y - fy <= EG_GROUND_OVER_M + 2);",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a floor five metres under the feet bears them"
+  },
+  {
+    "name": "LAW9H-stack-bound",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "Math.abs(a - b) < EG_STACK_M;",
+    "new": "Math.abs(a - b) <= EG_STACK_M;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "floors 4 m apart one storey"
+  },
+  {
+    "name": "LAW9H-storey-off-the-feet",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "  return f ? f.y ?? 0 : y;",
+    "new": "  return y;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a storey read off the feet on a floor (a jump's apex a storey up)"
+  },
+  {
+    "name": "LAW9H-drop-at-the-overlap",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "    if (byH && Math.abs(dy) > EG_LEVEL_M) {",
+    "new": "    if (false && byH && Math.abs(dy) > EG_LEVEL_M) {",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the drop through the higher floor again"
+  },
+  {
+    "name": "LAW9H-drop-off-a-wall",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "      if (open && !open.has(e)) continue;",
+    "new": "      if (false) continue;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a hero's closed edges stepped off"
+  },
+  {
+    "name": "LAW9H-drop-through-a-ceiling",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "    for (const c of q.ceil ?? []) if (c.y > y0 && c.y < y1 && egPolyIn(c.poly, x, z)) return true;",
+    "new": "    for (const c of q.ceil ?? []) if (false) return true;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the ceiling between ignored"
+  },
+  {
+    "name": "LAW9H-drop-through-a-floor",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "  for (const b of view?.bands ?? []) if (mid(b.y ?? 0) &&",
+    "new": "  for (const b of view?.bands ?? []) if (false &&",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a floor between ignored"
+  },
+  {
+    "name": "LAW9H-drop-across-a-wall",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "    if (air.walls.some((w) => w.length > 4 &&",
+    "new": "    if (false && air.walls.some((w) => w.length > 4 &&",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the wall ignored"
+  },
+  {
+    "name": "LAW9H-drop-landing-inward",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "    const lx = x + nx * EG_DROP_OUT_M, lz = z + nz * EG_DROP_OUT_M;",
+    "new": "    const lx = x - nx * EG_DROP_OUT_M, lz = z - nz * EG_DROP_OUT_M;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the landing on the higher floor"
+  },
+  {
+    "name": "LAW9H-drop-onto-the-floor-itself",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "  const lo = y0 + EG_LEVEL_M, hi = y1 + EG_LEVEL_M, mid",
+    "new": "  const lo = y0 + EG_LEVEL_M, hi = y1, mid",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a step across a slot of the higher floor read as a fall"
+  },
+  {
+    "name": "LAW9H-drop-landing-anywhere",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "    if (!holds(B, lx, lz)) continue;   // it lands on the lower piece",
+    "new": "    // it lands on the lower piece",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a drop off the rim beyond the lower floor"
+  },
+  {
+    "name": "LAW9H-air-heights-dropped",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "walls.push(byH ? [...w, y0, y1] : w);",
+    "new": "walls.push(w);",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the walls say no heights"
+  },
+  {
+    "name": "LAW9H-air-every-height",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "(w.length < 6 || !Number.isFinite(y) || (y + EG_AIR_BODY_M > w[4] && y < w[5]))",
+    "new": "(true)",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a wall bars every height"
+  },
+  {
+    "name": "LAW9H-air-body-ignored",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "(y + EG_AIR_BODY_M > w[4] && y < w[5])",
+    "new": "(y > w[4] && y < w[5])",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a flier's head under a wall's foot"
+  },
+  {
+    "name": "LAW9H-air-sight-in-plan",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "const A = egAirOf(spec), H = egFeetY(spec, y), sees = seesAt(A, H);",
+    "new": "const A = egAirOf(spec), H = egFeetY(spec, y), sees = A.sees;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the ways' sight not reckoned at the height"
+  },
+  {
+    "name": "LAW9H-rock-every-height",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "    if (Number.isFinite(H) && !(H + EG_AIR_BODY_M > Math.min(q.y, q.yB) && H < Math.max(q.y, q.yB) + q.height)) continue;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a passage's rock kept at every height"
+  },
+  {
+    "name": "LAW9H-arch-every-storey",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "    if (Number.isFinite(H) && !(H + EG_AIR_BODY_M > (d.y ?? 0) && H < (d.y ?? 0) + (d.h ?? 0))) continue;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "an arch cutting every storey"
+  },
+  {
+    "name": "LAW9H-onfight-in-plan",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "  for (const f of spec.fl ?? []) if (egBears(f.y ?? 0, H) && onPiece(f, x, z, pad)) return true;",
+    "new": "  for (const f of spec.fl ?? []) if (onPiece(f, x, z, pad)) return true;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the fight floor in plan"
+  },
+  {
+    "name": "LAW9H-piece-not-highest",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "  for (const f of spec.fl ?? []) if (egBears(f.y ?? 0, H) && onPiece(f, x, z, pad) && (!best || (f.y ?? 0) > (best.y ?? 0))) best = f;",
+    "new": "  for (const f of spec.fl ?? []) if (egBears(f.y ?? 0, H) && onPiece(f, x, z, pad) && !best) best = f;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the first piece, not the highest"
+  },
+  {
+    "name": "LAW9H-keep-off-its-storey",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "fl = Number.isFinite(H) && spec.fl.some((f) => egBears(f.y ?? 0, H)) ? spec.fl.filter((f) => egBears(f.y ?? 0, H)) : spec.fl;",
+    "new": "fl = spec.fl;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a spot kept on a floor of another storey"
+  },
+  {
+    "name": "LAW9H-keep-height-dropped",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    if (on) return [x, z, on.y ?? 0];",
+    "new": "    if (on) return [x, z];",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a kept spot without its floor's height"
+  },
+  {
+    "name": "LAW9H-arrive-in-plan",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "<= spec.arrive.r + pad && egBears(spec.arrive.y ?? 0, egFeetY(spec, y));",
+    "new": "<= spec.arrive.r + pad;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the arrival plate in plan"
+  },
+  {
+    "name": "LAW9H-door-in-plan",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "<= EG_DOOR_REACH_M + pad && egBears(spec.end.y ?? 0, egFeetY(spec, y));",
+    "new": "<= EG_DOOR_REACH_M + pad;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the door in plan"
+  },
+  {
+    "name": "LAW9H-onfloor-in-plan",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "const H = egFeetY(spec, y), on = (fy) => egBears(fy ?? 0, H);",
+    "new": "const H = NaN, on = (fy) => egBears(fy ?? 0, H);",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the support floors in plan"
+  },
+  {
+    "name": "LAW9H-floortest-in-plan",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "export const egFloorTest = (spec, y = NaN) => (x, z) => egOnFight(spec, x, z, 0, y);",
+    "new": "export const egFloorTest = (spec, y = NaN) => (x, z) => egOnFight(spec, x, z, 0);",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the union floor's test in plan"
+  },
+  {
+    "name": "LAW9H-rim-way-another-storey",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "      if (byH && !egBears(f.y ?? 0, ey)) continue;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a causeway from a bridge a storey over the rim"
+  },
+  {
+    "name": "LAW9H-rim-castback-any-floor",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    if (Number.isFinite(q.y) && !egBears(q.y, y)) continue;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a zone casts back feet a storey over it"
+  },
+  {
+    "name": "LAW9H-stamp-floors-every-storey",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "(spec?.fl ?? []).filter((f) => egOneStorey(f.y ?? 0, H) && onPiece(f, s[1], s[2], pad))",
+    "new": "(spec?.fl ?? []).filter((f) => onPiece(f, s[1], s[2], pad))",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a stamp lands on every floor under its anchor"
+  },
+  {
+    "name": "LAW9H-judge-storey-unasked",
+    "file": "src/net/bossRef.js",
+    "old": "  if (!inStorey(spec, p0, by) || !inStorey(spec, p1, by)) return false;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the struck body's storey never asked"
+  },
+  {
+    "name": "LAW9H-judge-field-storey-unasked",
+    "file": "src/net/bossRef.js",
+    "old": "    if (!inStorey(spec, e, by)) continue;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a lingering field's storey never asked"
+  },
+  {
+    "name": "LAW9H-judge-blow-height-unread",
+    "file": "src/net/bossRef.js",
+    "old": "    const by = egFeetY(spec, a.y), share",
+    "new": "    const by = NaN, share",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the blow's height unread"
+  },
+  {
+    "name": "LAW9H-wire-blow-height-dropped",
+    "file": "src/net/wire.js",
+    "old": "...(m.ol != null ? { ol: m.ol } : {}), ...(m.y != null ? { y: m.y } : {}) };",
+    "new": "...(m.ol != null ? { ol: m.ol } : {}) };",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the wire drops a blow's height"
+  },
+  {
+    "name": "LAW9H-wire-zone-height-dropped",
+    "file": "src/net/wire.js",
+    "old": "el: m.el ?? null, ...(m.y != null ? { y: m.y } : {}) };",
+    "new": "el: m.el ?? null };",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the wire drops a zone's height"
+  },
+  {
+    "name": "LAW9H-wire-height-unbounded",
+    "file": "src/net/wire.js",
+    "old": "  if (m.y != null && !egXZ(m.y)) return null;   // THE ASCENT: the height it lands at",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a height past the bound heard"
+  },
+  {
+    "name": "LAW9H-screen-storey-unasked",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  if (!egOneStorey(f ? f.y ?? 0 : H, by)) return false;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a screen struck by a blow a storey away"
+  },
+  {
+    "name": "LAW9H-screen-floors-unasked",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  return !ys || ys.includes(f.y ?? 0);",
+    "new": "  return true;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a screen struck on a floor not under the anchor"
+  },
+  {
+    "name": "LAW9H-aim-no-height",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "  if (egByHeight(spec)) { const y = Number.isFinite(o.y) ? o.y",
+    "new": "  if (false) { const y = Number.isFinite(o.y) ? o.y",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a blow says no height"
+  },
+  {
+    "name": "LAW9H-aim-thrower-unread",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "o.o ? egBodyById(F, o.o)?.y : NaN;",
+    "new": "NaN;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the thrower's feet unread"
+  },
+  {
+    "name": "LAW9H-union-floor-in-plan",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "const base = egFloorLess(egFloorTest(spec, H), F.zones, now, until, H);",
+    "new": "const base = egFloorLess(egFloorTest(spec), F.zones, now, until, H);",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a member's union floor in plan"
+  },
+  {
+    "name": "LAW9H-union-other-storey",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "    if (Number.isFinite(st) && !egOneStorey(st, blow.y)) continue;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a blow of another storey held for a member"
+  },
+  {
+    "name": "LAW9H-hit-storey-unasked",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "  if (egStoreyApart(F.view ?? spec, pose.x, pose.y, pose.z, bx, b.y, bz, r === HIT_KINDS.Melee)) return { got: 0, b: null };",
+    "new": "  if (false) return { got: 0, b: null };",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a body a storey up struck - PIN MOVED (AUDIT FB1018f L3-6): the storey rule moved into net/eliteGates/egBodies.js egStoreyApart, the one law every screen asks too - its call in egHitBody"
+  },
+  {
+    "name": "LAW9H-hit-floor-in-plan",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "!egOnFight(spec, x, z, POSE_SLACK + 6, y)",
+    "new": "!egOnFight(spec, x, z, POSE_SLACK + 6)",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a blow from a bridge over the floor read as from the floor - PIN MOVED (AUDIT FB1018f, the merge with FB1018D): the reach off the floor is egBodies.js egOutOfReach, the one law egHitBody and every screen ask"
+  },
+  {
+    "name": "LAW9H-zones-any-floor",
+    "file": "src/net/eliteGates/egFloor.js",
+    "old": "const onZoneFloor = (z, y) => !Number.isFinite(z.y) || egBears(z.y, y);",
+    "new": "const onZoneFloor = (z, y) => true;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a zone burns every storey"
+  },
+  {
+    "name": "LAW9H-run-kept-in-plan",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "a.z + Math.cos(yaw) * L, K.r, a.y);",
+    "new": "a.z + Math.cos(yaw) * L, K.r);",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a Breaker's run kept in plan"
+  },
+  {
+    "name": "LAW9H-legion-storey-unasked",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "export const egSameStorey = (spec, a, m) => !egByHeight(spec) ||",
+    "new": "export const egSameStorey = (spec, a, m) => true ||",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "an add's blow at another storey"
+  },
+  {
+    "name": "LAW9H-flier-air-in-plan",
+    "file": "src/net/eliteGates/egLegion.js",
+    "old": "egAirNext(view, a.x, a.z, tx, tz, a.y);",
+    "new": "egAirNext(view, a.x, a.z, tx, tz);",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a flier's air in plan"
+  },
+  {
+    "name": "LAW9H-lord-stood-lowest",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  const fy = egFeetY(spec, ctx.at?.[2] ?? spec.foe?.y);",
+    "new": "  const fy = NaN;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the lord stood on the lowest floor"
+  },
+  {
+    "name": "LAW9H-lord-blow-other-storey",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": " && (b.ch || egSameStorey(view, L, target))",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a lord's blow at another storey"
+  },
+  {
+    "name": "LAW9H-lord-charge-in-plan",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "ATTACKS.charge.len, L.r, L.y); return",
+    "new": "ATTACKS.charge.len, L.r); return",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a Charge's end kept in plan"
+  },
+  {
+    "name": "LAW9H-haven-grid-in-plan",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "if (egOnFight(spec, x0 + i * g, z0 + j * g, 0, y)) floor[j * W + i] = 1;",
+    "new": "if (egOnFight(spec, x0 + i * g, z0 + j * g)) floor[j * W + i] = 1;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the haven grid in plan"
+  },
+  {
+    "name": "LAW9H-zone-height-dropped",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  if (Number.isFinite(o.y) && egByHeight(F.view)) z.y = r2(o.y);",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a zone says no floor"
+  },
+  {
+    "name": "LAW9H-traverse-in-plan",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      return !egOnFight(spec, egLocalX(spec, at.sx), at.z, 0, at.y);",
+    "new": "      return !egOnFight(spec, egLocalX(spec, at.sx), at.z);",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the traversal ground read in plan"
+  },
+  {
+    "name": "LAW9H-standing-no-feet",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    return { slot: egSlotAt(sx), sx, y, z };",
+    "new": "    return { slot: egSlotAt(sx), sx, z };",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "my feet's height never kept"
+  },
+  {
+    "name": "LAW9H-telegraph-storey-unasked",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "if (!anchorOn(floors[k], sh) || !egOneStorey(floors[k].y, by)) continue;",
+    "new": "if (!anchorOn(floors[k], sh)) continue;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "an anchor off its storey's floors drawn on none"
+  },
+  {
+    "name": "LAW9H-telegraph-every-storey",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "  if (!egOneStorey(y, by)) return false;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a shape drawn on every storey"
+  },
+  {
+    "name": "LAW9H-screen-verdict-in-plan",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "onStorey(egBlowVerdict(bl, f[0], f[1], t, 400, me()), bl, f[0], fy, f[1], t)",
+    "new": "egBlowVerdict(bl, f[0], f[1], t, 400, me())",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "my screen's verdict in plan"
+  },
+  {
+    "name": "LAW9H-screen-zone-any-floor",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": " || (Number.isFinite(z.y) && !egBears(z.y, egFeetY(spec, fy)))) continue;",
+    "new": ") continue;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "my screen burnt by a zone a storey away"
+  },
+  {
+    "name": "LAW9H-screen-telegraph-no-height",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      sh.by = Number.isFinite(bl.y) ? bl.y : NaN;   // THE ASCENT",
+    "new": "      sh.by = NaN;   // THE ASCENT",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a blow's shape drawn on every storey"
+  },
+  {
+    "name": "LAW9H-walk-goal-lowest",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "Number.isFinite(gy) ? gy : egFeetY(view, b.y))[0];",
+    "new": "gy)[0];",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a goal of no height read on the lowest floor"
+  },
+  {
+    "name": "LAW9H-brain-vault-from-below",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": " && (!egByHeight(spec) || egBears(o.y ?? 0, egFeetY(spec, b.y)))",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the Reliquary Vault taken from the floor under it"
+  },
+  {
+    "name": "LAW9H-brain-cache-from-below",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "return !Number.isFinite(oy) || egBears(oy, egFeetY(spec, b.y));",
+    "new": "return true;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a ledge's cache taken from the floor under it"
+  },
+  {
+    "name": "LAW9H-peril-any-storey",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": " || !egOneStorey(fl.y ?? 0, Number.isFinite(b.y) ? b.y : NaN)) continue;",
+    "new": ") continue;",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the peril arrow warns of a blow a storey over my plan"
+  },
+  {
+    "name": "LAW9H-screen-mine-any-storey",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "!!f && egOneStorey(st, bl.y) && bl.s.some",
+    "new": "!!f && bl.s.some",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a blow a storey over my plan stung as mine"
+  },
+  {
+    "name": "LAW9H-brain-here-in-plan",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "egOnFight(view, b.x, b.z, 4, b.y)",
+    "new": "egOnFight(view, b.x, b.z, 4)",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "who is here read in plan"
+  },
+  {
+    "name": "LAW9H-brain-door-in-plan",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "egAtDoor(spec, b.x, b.z, b.y) && B.mem[b.sub]?.hereH === B.h",
+    "new": "egAtDoor(spec, b.x, b.z) && B.mem[b.sub]?.hereH === B.h",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the door's opener read in plan"
+  },
+  {
+    "name": "LAW9H-brain-ring-in-plan",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": " && (!Number.isFinite(H) || egBears(H, egFeetY(spec, b.y))));",
+    "new": ");",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "a wake ring stood in from another storey"
+  },
+  {
+    "name": "LAW9H-brain-rim-unfloored",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "whole: true, y: ys?.[j] }",
+    "new": "whole: true }",
+    "tests": [
+      "test/net/eliteGates/law9_height.test.js"
+    ],
+    "note": "the Molten Rim's zones say no floor"
+  }
+]

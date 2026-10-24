@@ -154,10 +154,10 @@ export class OceanHolesRenderer {
     gl.bindTexture(gl.TEXTURE_2D, null);
     this.dw.renderer.markForeignPass?.();
     this._res = {
-      disc: { p: disc, u: locs(gl, disc, ['uProj', 'uView', 'uCentre', 'uRadius', 'uColor', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus',
+      disc: { p: disc, u: locs(gl, disc, ['uProj', 'uView', 'uCentre', 'uRadius', 'uColor', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus', 'uJungleHaze',
         'uSurfaceTex', 'uDwCamFwd', 'uColumnOn', 'uSeaY', 'uTopColor', 'uTopVision', 'uSurfaceScroll', 'uPixelOrigin']) },
       miasma: { p: miasma, u: locs(gl, miasma, ['uProj', 'uView', 'uCamRight', 'uCamUp', 'uCamPos', 'uMaxSize', 'uPuff', 'uColor', 'uEmission',
-        'uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus']) },   // TV1: the travel view's focus - Deep Waters' _frameUniforms sends it
+        'uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus', 'uJungleHaze']) },   // TV1: the travel view's focus - Deep Waters' _frameUniforms sends it
       vao, vbo, ebo, count: mesh.indices.length, tex,
     };
     return this._res;

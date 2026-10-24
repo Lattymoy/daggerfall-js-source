@@ -5,7 +5,7 @@
     "old": "      if (rated) { try { await storeArenaChampion(ctx, season, nowS); } catch { /* the bout is recorded; the #1 is counted again by its age */ } }\n",
     "new": "",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "a rated bout lands and the kept #1 is not counted"
   },
@@ -15,7 +15,7 @@
     "old": "      if (rated) { try { await storeArenaChampion(ctx, season, nowS); } catch { /* the bout is recorded; the #1 is counted again by its age */ } }",
     "new": "      if (rated) await storeArenaChampion(ctx, season, nowS);",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "a board count that failed fails a bout already recorded"
   },
@@ -25,7 +25,7 @@
     "old": "  const id = kept && nowS - Number(kept.at) < ARENA_CHAMPION_STORED_S ? kept.player ?? null : await storeArenaChampion(ctx, season, nowS);",
     "new": "  const id = await storeArenaChampion(ctx, season, nowS);",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "every Worker counts the board again each minute"
   },
@@ -35,7 +35,7 @@
     "old": "kept && nowS - Number(kept.at) < ARENA_CHAMPION_STORED_S ? kept.player",
     "new": "kept ? kept.player",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "the kept #1 is never counted again (an account deleted holds the laurel from nobody for good)"
   },
@@ -45,7 +45,7 @@
     "old": "    ON CONFLICT (season) DO UPDATE SET player = excluded.player, at = excluded.at`).bind(season, id, nowS).run();",
     "new": "    ON CONFLICT (season) DO NOTHING`).bind(season, id, nowS).run();",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "the season's first count stands for good"
   },
@@ -55,10 +55,10 @@
     "old": "      FROM arena_pvp WHERE b = ${p} AND season = ${s} AND rated = 1 AND a IS NOT ${p}`;",
     "new": "      FROM arena_pvp WHERE 0`;",
     "tests": [
-      "test/stormshed2.test.js",
-      "test/arena4_service.test.js",
-      "test/audit1003_server.test.js",
-      "test/arenaladder_audit.test.js"
+      "test/systems/legacy/stormshed2.test.js",
+      "test/net/arena/arena4_service.test.js",
+      "test/net/arena/audit1003_server.test.js",
+      "test/systems/arenaladder_audit.test.js"
     ],
     "note": "a bout fought as side 1 never counted"
   },
@@ -68,10 +68,10 @@
     "old": "      FROM arena_pvp WHERE a = ${p} AND season = ${s} AND rated = 1\n",
     "new": "      FROM arena_pvp WHERE 0\n",
     "tests": [
-      "test/stormshed2.test.js",
-      "test/arena4_service.test.js",
-      "test/audit1003_server.test.js",
-      "test/arenaladder_audit.test.js"
+      "test/systems/legacy/stormshed2.test.js",
+      "test/net/arena/arena4_service.test.js",
+      "test/net/arena/audit1003_server.test.js",
+      "test/systems/arenaladder_audit.test.js"
     ],
     "note": "a bout fought as side 0 never counted"
   },
@@ -81,7 +81,7 @@
     "old": "      FROM arena_pvp WHERE a = ${p} AND season = ${s} AND rated = 1\n",
     "new": "      FROM arena_pvp WHERE +a = ${p} AND season = ${s} AND rated = 1\n",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "side 0's bouts walked off the season's every bout"
   },
@@ -91,7 +91,7 @@
     "old": " AND rated = 1 AND a IS NOT ${p}`;",
     "new": " AND rated = 1`;",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "a row whose two sides are one account counted twice"
   },
@@ -101,10 +101,10 @@
     "old": "  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_BOUTS_SQL('?2', '?1')}) ORDER BY k DESC LIMIT 1) AS last,",
     "new": "  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_BOUTS_SQL('?2', '?1')}) ORDER BY k ASC LIMIT 1) AS last,",
     "tests": [
-      "test/stormshed2.test.js",
-      "test/arena4_service.test.js",
-      "test/audit1003_server.test.js",
-      "test/arenaladder_audit.test.js"
+      "test/systems/legacy/stormshed2.test.js",
+      "test/net/arena/arena4_service.test.js",
+      "test/net/arena/audit1003_server.test.js",
+      "test/systems/arenaladder_audit.test.js"
     ],
     "note": "the rating read is the season's first bout's, not its last"
   },
@@ -114,8 +114,8 @@
     "old": "  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_BOUTS_SQL('?2', '?1')}) ORDER BY k DESC LIMIT 1) AS last,",
     "new": "  const t = await db.prepare(`SELECT (SELECT r FROM (${MY_BOUTS_SQL('?2', '?1')}) ORDER BY at DESC, k DESC LIMIT 1) AS last,",
     "tests": [
-      "test/stormshed2.test.js",
-      "test/auditcards6_d.test.js"
+      "test/systems/legacy/stormshed2.test.js",
+      "test/net/iliac/auditcards6_d.test.js"
     ],
     "note": "re-aimed at AUDIT CARDS-6 D1: the last row the one whose claim began in the latest second - of two bouts of one second the last written still, but a claim landing after one begun a second later reads that one's rating"
   },
@@ -125,10 +125,10 @@
     "old": "    FROM (SELECT r FROM (${MY_BOUTS_SQL(p, '?2')}) ORDER BY k DESC LIMIT 1)), ${ARENA_ELO_START})`;",
     "new": "    FROM (SELECT r FROM (${MY_BOUTS_SQL(p, '?2')}) ORDER BY k ASC LIMIT 1)), ${ARENA_ELO_START})`;",
     "tests": [
-      "test/stormshed2.test.js",
-      "test/arena4_service.test.js",
-      "test/audit1003_server.test.js",
-      "test/arenaladder_audit.test.js"
+      "test/systems/legacy/stormshed2.test.js",
+      "test/net/arena/arena4_service.test.js",
+      "test/net/arena/audit1003_server.test.js",
+      "test/systems/arenaladder_audit.test.js"
     ],
     "note": "the claim's own WHERE compares the season's first rating: every claim after an account's first is busy"
   },
@@ -138,7 +138,7 @@
     "old": "CREATE INDEX IF NOT EXISTS idx_arena_pve_player_grand ON arena_pve (player, tier, step, won);\n",
     "new": "",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "a Grand Champion's row walked through every ladder bout of the account"
   },
@@ -148,9 +148,9 @@
     "old": "  if (kept && kept.gen === gen) return kept.answer;",
     "new": "  if (kept) return kept.answer;",
     "tests": [
-      "test/stormshed2.test.js",
-      "test/audit1003_wd.test.js",
-      "test/wd3_online.test.js"
+      "test/systems/legacy/stormshed2.test.js",
+      "test/systems/quest/audit1003_wd.test.js",
+      "test/net/wd3_online.test.js"
     ],
     "note": "the layouts read once an isolate, a home claimed never seen"
   },
@@ -160,7 +160,7 @@
     "old": "  if (asking && asking.gen === gen) return asking.ask;\n",
     "new": "",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "every boot of one moment scans the homes"
   },
@@ -170,7 +170,7 @@
     "old": "  if (asking && asking.gen === gen) return asking.ask;",
     "new": "  if (asking) return asking.ask;",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "an ask of a newer generation answered by an older one's read"
   },
@@ -180,8 +180,8 @@
     "old": "CREATE TRIGGER IF NOT EXISTS homes_gen_made AFTER INSERT ON homes\nBEGIN",
     "new": "CREATE TRIGGER IF NOT EXISTS homes_gen_made AFTER INSERT ON homes WHEN 0\nBEGIN",
     "tests": [
-      "test/stormshed2.test.js",
-      "test/audit1003_wd.test.js"
+      "test/systems/legacy/stormshed2.test.js",
+      "test/systems/quest/audit1003_wd.test.js"
     ],
     "note": "a home claimed: the towns' layouts never read again"
   },
@@ -191,7 +191,7 @@
     "old": "CREATE TRIGGER IF NOT EXISTS homes_gen_gone AFTER DELETE ON homes\nBEGIN",
     "new": "CREATE TRIGGER IF NOT EXISTS homes_gen_gone AFTER DELETE ON homes WHEN 0\nBEGIN",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "a town's last home gone: the town still told its layout"
   },
@@ -201,7 +201,7 @@
     "old": "AFTER UPDATE OF map_id, building_key, bought_at, layout ON homes",
     "new": "AFTER UPDATE OF map_id, building_key, bought_at ON homes",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "a home moved to another layout: the town told the old one"
   },
@@ -211,7 +211,7 @@
     "old": "AFTER UPDATE OF map_id, building_key, bought_at, layout ON homes",
     "new": "AFTER UPDATE ON homes",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "a door opened or a rent moved reads every home again"
   },
@@ -221,7 +221,7 @@
     "old": "        if (path === '/v1/homes/layouts') return json(await homeLayoutsKept(ctx), 200, origin);",
     "new": "        if (path === '/v1/homes/layouts') return json(await (await import('./homes.js')).homeLayouts(ctx), 200, origin);",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "the route scans every home at every boot"
   },
@@ -231,7 +231,7 @@
     "old": "  const root = ctx.db?.[DB_ROOT] ?? ctx.db;\n  const gen = Number(",
     "new": "  const root = ctx.db;\n  const gen = Number(",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "kept per request's database wrapper - every request reads afresh"
   },
@@ -241,7 +241,7 @@
     "old": "      if (storedBody != null && lineBody() === storedBody && loadFamily(",
     "new": "      if (false && storedBody != null && lineBody() === storedBody && loadFamily(",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "every checkpoint writes the line to the realm and is never idle"
   },
@@ -251,7 +251,7 @@
     "old": "        if (was && stamps) for (const k of /** @type {const} */ (['savedAt', 'lived'])) { if (stamps[k] === undefined) delete was[k]; else was[k] = stamps[k]; }\n",
     "new": "",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "an idle save's record moves by the clock's stamps"
   },
@@ -261,10 +261,10 @@
     "old": " && lineBody() === storedBody && loadFamily(deps.storage(), family.id)?.rev === seenRevOf(family)) {",
     "new": " && lineBody() === storedBody) {",
     "tests": [
-      "test/stormshed2.test.js",
-      "test/legacyhome.test.js",
-      "test/legacy7_online.test.js",
-      "test/auditlegacy3.test.js"
+      "test/systems/legacy/stormshed2.test.js",
+      "test/systems/legacyhome.test.js",
+      "test/systems/legacy/legacy7_online.test.js",
+      "test/systems/legacy/auditlegacy3.test.js"
     ],
     "note": "another tab's write since never taken in by an idle save"
   },
@@ -274,10 +274,10 @@
     "old": "storedBody = ok ? lineBody() : null; }",
     "new": "storedBody = lineBody(); }",
     "tests": [
-      "test/stormshed2.test.js",
-      "test/legacyhome.test.js",
-      "test/legacy7_online.test.js",
-      "test/auditlegacy3.test.js"
+      "test/systems/legacy/stormshed2.test.js",
+      "test/systems/legacyhome.test.js",
+      "test/systems/legacy/legacy7_online.test.js",
+      "test/systems/legacy/auditlegacy3.test.js"
     ],
     "note": "a write the storage refused counted as stored: the next idle save makes none"
   },
@@ -287,10 +287,10 @@
     "old": "        deps.stored?.(family);\n        return JSON.parse(JSON.stringify(family));\n      }",
     "new": "        return JSON.parse(JSON.stringify(family));\n      }",
     "tests": [
-      "test/stormshed2.test.js",
-      "test/legacyhome.test.js",
-      "test/legacy7_online.test.js",
-      "test/auditlegacy3.test.js"
+      "test/systems/legacy/stormshed2.test.js",
+      "test/systems/legacyhome.test.js",
+      "test/systems/legacy/legacy7_online.test.js",
+      "test/systems/legacy/auditlegacy3.test.js"
     ],
     "note": "a realm write the network dropped waits for the next change"
   },
@@ -300,7 +300,7 @@
     "old": "    return JSON.stringify(family, function (k, v) { return (this === family && k === 'rev') || (p && this === p && (k === 'savedAt' || k === 'lived')) ? undefined : v; });",
     "new": "    return JSON.stringify(family);",
     "tests": [
-      "test/stormshed2.test.js"
+      "test/systems/legacy/stormshed2.test.js"
     ],
     "note": "the body measured with the clock's stamps in it - every save stored"
   }

@@ -5,7 +5,7 @@
     "old": "      if (isCellRoom(a.key) && this._refereesPoses() !== this._rfSaid) this._rfSay();\n",
     "new": "",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a referee begun before a hello waits for the next pose to be said"
   },
@@ -15,7 +15,7 @@
     "old": "      if (!this._send(ws, welcome)) return;\n      // AUDIT SCALE II R1-1:",
     "new": "      if (isCellRoom(a.key)) this._rfSaid = !!rf;\n      if (!this._send(ws, welcome)) return;\n      // AUDIT SCALE II R1-1:",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the finding as it stood: the welcome's word written over the cell's record, the halos never told"
   },
@@ -25,7 +25,7 @@
     "old": "    void this._relayCfgFresh(now);   // SCALE5b: the line the count runs by, as the hub holds it - AUDIT SCALE II R1-2: asked ahead, never awaited by the beat\n    const end = gateTimes",
     "new": "    await this._relayCfgFresh(now);   // SCALE5b: the line the count runs by, as the hub holds it - AUDIT SCALE II R1-2: asked ahead, never awaited by the beat\n    const end = gateTimes",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the gate's beat awaits the hub"
   },
@@ -35,7 +35,7 @@
     "old": "    void this._relayCfgFresh(now);   // SCALE5b: the line the count runs by, as the hub holds it - AUDIT SCALE II R1-2: asked ahead, never awaited by the beat\n    try {\n      // INT12",
     "new": "    await this._relayCfgFresh(now);   // SCALE5b: the line the count runs by, as the hub holds it - AUDIT SCALE II R1-2: asked ahead, never awaited by the beat\n    try {\n      // INT12",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a Remnant's beat awaits the hub"
   },
@@ -45,7 +45,7 @@
     "old": "    void this._relayCfgFresh(now);   // SCALE5b: the line the count runs by, as the hub holds it - AUDIT SCALE II R1-2: asked ahead, never awaited by the beat\n    let at = Infinity, live = false;",
     "new": "    await this._relayCfgFresh(now);   // SCALE5b: the line the count runs by, as the hub holds it - AUDIT SCALE II R1-2: asked ahead, never awaited by the beat\n    let at = Infinity, live = false;",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a serpent's beat awaits the hub"
   },
@@ -55,7 +55,7 @@
     "old": "    out[k] = Number.isFinite(r) ? r : v;",
     "new": "    out[k] = r;",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the finding as it stood: an admitted pitch past 1.8e304 slims to null"
   },
@@ -65,7 +65,7 @@
     "old": "      if (no) { this._send(ws, JSON.stringify({ t: 'cfg', k: m.k, error: no })); return; }\n",
     "new": "",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "every setting kept and said in force, as before"
   },
@@ -75,7 +75,7 @@
     "old": "  if (k !== 'bossBody') return heraldRole(v) === null ?",
     "new": "  if (k !== 'bossBody') return false ?",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a role's mention taken - the herald pings nobody"
   },
@@ -85,7 +85,7 @@
     "old": "  const ok = known(o, BODY_KEYS) &&",
     "new": "  const ok = !!o && typeof o === 'object' &&",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a misspelt enforce taken and ignored"
   },
@@ -95,7 +95,7 @@
     "old": "o[part] === undefined || known(o[part], BODY_LINE_KEYS))",
     "new": "o[part] === undefined || true)",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a part's unknown key taken and ignored"
   },
@@ -105,7 +105,7 @@
     "old": " && bodyConfig(v) !== BODY_DEFAULT;",
     "new": ";",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a line bodyConfig reads as its default whole taken - enforcement off"
   },
@@ -115,7 +115,7 @@
     "old": "if (!walked || request.headers.get(LAYER_LAST_HEADER) === '1') this._metrics.c.full++;",
     "new": "this._metrics.c.full++;",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the finding as it stood: a full layer walked past counted"
   },
@@ -125,7 +125,7 @@
     "old": "if (!walked || request.headers.get(LAYER_LAST_HEADER) === '1') this._metrics.c.full++;",
     "new": "if (!walked) this._metrics.c.full++;",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a refusal every layer made never counted"
   },
@@ -135,7 +135,7 @@
     "old": "    else if (i === LAYERS_MAX - 1) headers[LAYER_LAST_HEADER] = '1';",
     "new": "",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the walk never marks its last try"
   },
@@ -145,27 +145,27 @@
     "old": "  delete page[LAYER_ASK_HEADER]; delete page[LAYER_LAST_HEADER];",
     "new": "  delete page[LAYER_ASK_HEADER];",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the page's own last-try header passed on"
   },
   {
     "name": "AS2-R3-3-empty-admitted",
     "file": "server/src/index.js",
-    "old": "    if (walked && layerOf(request.headers.get(LAYER_HEADER)) > 0 && request.headers.get(LAYER_ASK_HEADER) === '1' && !this.state.getWebSockets().length) {",
+    "old": "    if (walked && layerOf(request.headers.get(LAYER_HEADER)) > 0 && request.headers.get(LAYER_ASK_HEADER) === '1' && this.state.getWebSockets().length === hiddenSeats(this)) {",
     "new": "    if (false) {",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the finding as it stood: an asked empty layer opened for any page"
   },
   {
     "name": "AS2-R3-3-held-layer-empty",
     "file": "server/src/index.js",
-    "old": "request.headers.get(LAYER_ASK_HEADER) === '1' && !this.state.getWebSockets().length) {",
+    "old": "request.headers.get(LAYER_ASK_HEADER) === '1' && this.state.getWebSockets().length === hiddenSeats(this)) {",
     "new": "request.headers.get(LAYER_ASK_HEADER) === '1') {",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a party's layer refused as empty"
   },
@@ -175,7 +175,7 @@
     "old": "    if (ask) headers[LAYER_ASK_HEADER] = '1';",
     "new": "    if (false) headers[LAYER_ASK_HEADER] = '1';",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the Worker never says the page asked"
   },
@@ -185,7 +185,7 @@
     "old": "{ start = 0; i = -1; continue; }",
     "new": "{ return res; }",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the empty layer's refusal handed to the page"
   },
@@ -195,7 +195,7 @@
     "old": "{ start = 0; i = -1; continue; }",
     "new": "{ i = -1; continue; }",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the walk again from the asked layer - admitted there"
   },
@@ -205,7 +205,7 @@
     "old": "  delete page[LAYER_ASK_HEADER]; delete page[LAYER_LAST_HEADER];",
     "new": "  delete page[LAYER_LAST_HEADER];",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the page's own ask passed on to every try"
   },
@@ -215,7 +215,7 @@
     "old": "    if (a.ly) { if (m.k === 'in') this._send(ws, JSON.stringify({ t: 'serpent', k: 'no', m: 'the waters are full' })); return; }\n",
     "new": "",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the finding as it stood: a layer stands its own serpent"
   },
@@ -225,17 +225,17 @@
     "old": "{ if (m.k === 'in') this._send(ws, JSON.stringify({ t: 'serpent', k: 'no', m: 'the waters are full' })); return; }",
     "new": "{ return; }",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a layer's `in` answered nothing"
   },
   {
     "name": "AS2-R3-3-layer-raid",
     "file": "server/src/index.js",
-    "old": "    if (a.ly) return;\n",
-    "new": "",
+    "old": "    if (a.ly) return;\n    if (!raidWordFits(",
+    "new": "    if (!raidWordFits(",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the finding as it stood: a layer keeps its own raid ledger"
   },
@@ -245,7 +245,7 @@
     "old": "at, ...(ly !== undefined ? { ly } : {}) }), signal",
     "new": "at }), signal",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the registry never told the layer"
   },
@@ -255,7 +255,7 @@
     "old": "m.data.r && cell === here ? a.ly | 0 : undefined",
     "new": "undefined",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the park arm names no layer"
   },
@@ -265,7 +265,7 @@
     "old": "    await this.state.storage.put('reg', { cell, at, ...(ly ? { ly } : {}) });",
     "new": "    await this.state.storage.put('reg', { cell, at });",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the registry forgets the layer"
   },
@@ -275,7 +275,7 @@
     "old": "body.ly !== undefined ? layerOf(body.ly) :",
     "new": "false ? layerOf(body.ly) :",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the registry ignores the layer said"
   },
@@ -285,7 +285,7 @@
     "old": "was = prev?.cell ? layerName(prev.cell, prev.ly | 0) : null;",
     "new": "was = prev?.cell ?? null;",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the finding as it stood: the drop reaches the place alone"
   },
@@ -295,7 +295,7 @@
     "old": "    if (was && was !== where) await this._parkTellDrop(was, k, at);",
     "new": "    if (was && prev.cell !== cell) await this._parkTellDrop(was, k, at);",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a layer's record outlives a re-park in the same cell's place"
   },
@@ -305,27 +305,27 @@
     "old": "prev?.cell === cell ? prev.ly | 0 : 0;",
     "new": "0;",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a word naming a cell it does not hold drops that cell's layer's real record"
   },
   {
     "name": "AS2-R3-9-place-alone",
     "file": "server/src/index.js",
-    "old": "Array.from({ length: LAYERS_MAX }, (_, ly) => wipe(ly))",
-    "new": "[wipe(0)]",
+    "old": "sized.flatMap((room) => Array.from({ length: LAYERS_MAX }, (_, ly) => wipe(room, ly)))",
+    "new": "sized.flatMap((room) => [wipe(room, 0)])",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the finding as it stood: the place alone wiped"
   },
   {
     "name": "AS2-R3-9-occupied-wiped",
     "file": "server/src/index.js",
-    "old": "(_, ly) => wipe(ly)))).every(Boolean);",
-    "new": "(_, ly) => wipe(ly)))).some(Boolean);",
+    "old": "(_, ly) => wipe(room, ly))))).every(Boolean);",
+    "new": "(_, ly) => wipe(room, ly))))).some(Boolean);",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "an occupied layer answered as a hall wiped"
   },
@@ -335,7 +335,7 @@
     "old": "    if (a.ly) return;   // the place's circle alone\n",
     "new": "",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the finding as it stood: a layer keeps its own circle and tells the hub the rite broken"
   },
@@ -345,7 +345,7 @@
     "old": "    if (a.ly) return;   // the place's ledger alone\n",
     "new": "",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the finding as it stood: a layer keeps its own overworld ledger"
   },
@@ -355,7 +355,7 @@
     "old": "      if (a.ly) { refuse(m.stake !== undefined ? 'stakes closed' : 'bad table'); return; }\n",
     "new": "",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the finding as it stood: a layer seats and spends a stake the place never hears of"
   },
@@ -365,7 +365,7 @@
     "old": "      if (a.ly) { refuse(m.stake !== undefined ? 'stakes closed' : 'bad table'); return; }",
     "new": "      if (a.ly && m.stake !== undefined) { refuse('stakes closed'); return; }",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a chips table opened in a layer"
   },
@@ -375,7 +375,7 @@
     "old": "refuse(m.stake !== undefined ? 'stakes closed' : 'bad table'); return; }",
     "new": "refuse('bad table'); return; }",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a staked sit refused in words that are not the stake's"
   },
@@ -385,7 +385,7 @@
     "old": "    if (a.ly) { refuse('stakes closed'); return; }   // AUDIT SCALE II R3-3 (c): no table in a layer - its order unspent, the device voids it\n",
     "new": "",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a layer's top-up read as another table's stake"
   },
@@ -395,7 +395,7 @@
     "old": "      if (a.ly) { refuse(m.order !== undefined ? 'ranked closed' : 'busy'); return; }\n",
     "new": "",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a layer deals a ranked Iliac game whose results only it owes"
   },
@@ -405,7 +405,7 @@
     "old": "    if (a.ly) {\n      const back = await this._holdemVoidAtPlace(",
     "new": "    if (false) {\n      const back = await this._holdemVoidAtPlace(",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "the finding as it stood: a layer spends an order the place may have seated"
   },
@@ -415,7 +415,7 @@
     "old": "    if (await this.state.storage.get(stakeKeyOf(c.cj))) return 'stake spent';\n",
     "new": "",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a void spent twice - a layer's void after the place's seat hands the stake back again"
   },
@@ -425,7 +425,7 @@
     "old": "export const POSE_BATCH_MS = 50;",
     "new": "export const POSE_BATCH_MS = 100;",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "poses ten times a second, not the record's twenty"
   },
@@ -435,7 +435,7 @@
     "old": "export const ROSTER_BATCH_MS = 1000;",
     "new": "export const ROSTER_BATCH_MS = 2000;",
     "tests": [
-      "test/auditscale2_relay.test.js"
+      "test/net/auditscale2_relay.test.js"
     ],
     "note": "a roster every two seconds, not the record's one"
   }

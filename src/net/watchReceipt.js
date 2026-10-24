@@ -1,6 +1,6 @@
 // @ts-check
 // SEAT1b (2026-09-30, Mac: "Finish the seats"): THE WATCH'S RECEIPT - the relay's third signature, the gate's and the
-// raid's receipts' twin (net/gateReceipt.js, net/raidReceipt.js). Design: bible/11-Multiplayer/Seats-Arc.md 4.2, "The
+// raid's receipts' twin (net/gate/gateReceipt.js, net/raid/raidReceipt.js). Design: bible/11-Multiplayer/Seats-Arc.md 4.2, "The
 // Watch": "Relay-witnessed socket; the position is the client's own claim, so it is bounded ... 1 per 2 minutes,
 // capped 60 an account a day".
 //
@@ -45,6 +45,11 @@ export const WATCH_MOVED_MS = 300_000;
  * @param {number} now
  */
 export const watchDue = (w, now) => now - w.moved <= WATCH_MOVED_MS && now - w.at >= WATCH_TICK_MS;
+/** THE WATCH'S GROUND (AUDIT ETHER-OW C2-1): the map pixels a receipt can name - the Bay's map, where the relay mints
+ *  them (server/src/index.js `_watchTick`) and the account service takes them (watchReceiptValid). One home: a
+ *  Motherlode's site must be a pixel a Watch can vouch for (net/motherlodeLaw.js motherlodeSites), or nobody can strike
+ *  it - ETHER-NODES' isles were witnessed and confirmed past the Veil, where no receipt is ever minted. */
+export const watchPixelOk = (x, y) => Number.isSafeInteger(x) && Number.isSafeInteger(y) && x >= 0 && x < 1000 && y >= 0 && y < 500;
 
 const enc = new TextEncoder();
 const dec = new TextDecoder();
@@ -58,7 +63,7 @@ export function watchReceiptValid(c) {
   if (!c || typeof c !== 'object' || Array.isArray(c)) return false;
   if (c.n !== undefined || c.k !== undefined || c.t !== undefined || c.o !== undefined || c.d !== undefined || c.b !== undefined || c.w !== undefined) return false;
   if (typeof c.s !== 'string' || !ID_RE.test(c.s)) return false;
-  if (!Number.isSafeInteger(c.x) || c.x < 0 || c.x >= 1000 || !Number.isSafeInteger(c.y) || c.y < 0 || c.y >= 500) return false;
+  if (!watchPixelOk(c.x, c.y)) return false;
   if (!Number.isSafeInteger(c.c) || c.c < 0 || c.c > 0xffffffff) return false;
   if (!Number.isSafeInteger(c.i) || !Number.isSafeInteger(c.e)) return false;
   if (c.e <= c.i || c.e - c.i > WATCH_RECEIPT_TTL_S) return false;
@@ -68,7 +73,7 @@ export function watchReceiptValid(c) {
 /**
  * MINT - the relay's half. With no key the receipt goes out unsigned (`k1.<body>.`).
  * @param {{s: string, x: number, y: number, c: number}} what
- * @param {CryptoKey|null} privateKey an Ed25519 private key (net/gateReceipt.js importReceiptKey), or null for none
+ * @param {CryptoKey|null} privateKey an Ed25519 private key (net/gate/gateReceipt.js importReceiptKey), or null for none
  * @param {{subtle: SubtleCrypto, nowS: number}} env
  * @returns {Promise<string>}
  */

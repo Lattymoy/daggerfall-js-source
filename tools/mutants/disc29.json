@@ -1,74 +1,74 @@
 [
   {
     "name": "DISC29-B-rarity-name-bare-template",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "return nameAround(template != null ? rriVariantWord(item) + template : (item.name ?? ''), tier, affixes);",
     "new": "return nameAround(template != null ? template : (item.name ?? ''), tier, affixes);",
     "tests": [
-      "test/disc29_rarity.test.js"
+      "test/systems/disc29_rarity.test.js"
     ]
   },
   {
     "name": "DISC29-B-light-word-before-fold-only",
-    "file": "src/systems/rriItems.js",
+    "file": "src/systems/roleplayRealismItems/rriItems.js",
     "old": "raw(item) === ARMOR_MATERIAL.Chain || (raw(item) === ARMOR_MATERIAL.Leather && msg(item) === 1)",
     "new": "raw(item) === ARMOR_MATERIAL.Chain",
     "tests": [
-      "test/disc29_rarity.test.js"
+      "test/systems/disc29_rarity.test.js"
     ]
   },
   {
     "name": "DISC29-B-light-class-no-word",
-    "file": "src/systems/rriItems.js",
+    "file": "src/systems/roleplayRealismItems/rriItems.js",
     "old": "  variantWord: lightWord,",
     "new": "  variantWord: null,",
     "tests": [
-      "test/disc29_rarity.test.js"
+      "test/systems/disc29_rarity.test.js"
     ]
   },
   {
     "name": "DISC29-B-chain-class-no-word",
-    "file": "src/systems/rriItems.js",
+    "file": "src/systems/roleplayRealismItems/rriItems.js",
     "old": "  variantWord: mailWord,",
     "new": "  variantWord: null,",
     "tests": [
-      "test/disc29_rarity.test.js"
+      "test/systems/disc29_rarity.test.js"
     ]
   },
   {
     "name": "DISC29-B-repair-any-name",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "if (!word || template == null || it.name !== nameAround(template, it.rarity, it.affixes)) continue;",
     "new": "if (!word || template == null) continue;",
     "tests": [
-      "test/disc29_rarity.test.js"
+      "test/systems/disc29_rarity.test.js"
     ]
   },
   {
     "name": "DISC29-B-repair-keeps-old-name",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "    it.name = nameAround(word + template, it.rarity, it.affixes);",
     "new": "    it.name = nameAround(template, it.rarity, it.affixes);",
     "tests": [
-      "test/disc29_rarity.test.js"
+      "test/systems/disc29_rarity.test.js"
     ]
   },
   {
     "name": "DISC29-B-repair-unguarded-affix",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  const names = (a, slot) => AFFIX_KINDS[a?.id]?.slot === slot && !AFFIX_KINDS[a.id].proc;",
     "new": "  const names = (a, slot) => AFFIX_KINDS[a.id].slot === slot && !AFFIX_KINDS[a.id].proc;",
     "tests": [
-      "test/disc29_rarity.test.js"
+      "test/systems/disc29_rarity.test.js"
     ]
   },
   {
     "name": "DISC29-B-repair-not-on-load",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "    const n = repairRarityNames(list);",
     "new": "    const n = 0;",
     "tests": [
-      "test/disc29_rarity.test.js"
+      "test/systems/disc29_rarity.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "(item ? rriNativeMaterialValue(item) : -1)",
     "new": "(item ? (item.material ?? ARMOR_MATERIAL.Leather) : -1)",
     "tests": [
-      "test/if1_immersivefootsteps.test.js"
+      "test/systems/if1_immersivefootsteps.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  if (chest && rriNativeMaterialValue(chest) !== ARMOR_MATERIAL.Leather) return true;",
     "new": "  if (chest && (chest.material ?? ARMOR_MATERIAL.Leather) !== ARMOR_MATERIAL.Leather) return true;",
     "tests": [
-      "test/disc29_rarity.test.js"
+      "test/systems/disc29_rarity.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "  if (legs && rriNativeMaterialValue(legs) !== ARMOR_MATERIAL.Leather) return true;",
     "new": "  if (legs && (legs.material ?? ARMOR_MATERIAL.Leather) !== ARMOR_MATERIAL.Leather) return true;",
     "tests": [
-      "test/disc29_rarity.test.js"
+      "test/systems/disc29_rarity.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "  return o?.triggerFlag === TRIGGER_FLAGS.Collision01 && ownSurfaceUnderFeet(surfaces, o.key, feet);",
     "new": "  return false;",
     "tests": [
-      "test/disc29_throne.test.js"
+      "test/world/disc29_throne.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  return o?.triggerFlag === TRIGGER_FLAGS.Collision01 && ownSurfaceUnderFeet(surfaces, o.key, feet);",
     "new": "  return ownSurfaceUnderFeet(surfaces, o.key, feet);",
     "tests": [
-      "test/disc29_throne.test.js"
+      "test/world/disc29_throne.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "  const origin = [feet[0], feet[1] + TRIGGER_RAY_LIFT, feet[2]];",
     "new": "  const origin = [feet[0], feet[1], feet[2]];",
     "tests": [
-      "test/disc29_throne.test.js"
+      "test/world/disc29_throne.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "skin + TRIGGER_RAY_LIFT, { only: [key] }));",
     "new": "skin + TRIGGER_RAY_LIFT, null));",
     "tests": [
-      "test/disc29_throne.test.js"
+      "test/world/disc29_throne.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "export const TRIGGER_SKIN_WIDTH = 0.08;",
     "new": "export const TRIGGER_SKIN_WIDTH = 0.02;",
     "tests": [
-      "test/disc29_throne.test.js"
+      "test/world/disc29_throne.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "      if (standable && hasActionCollision(standable)) triggerSurfaces.addMesh(standable.key, cpu.positions, cpu.indices, matrix);   // DISC29-A; AUDIT PRE-MERGE 0929 D1/D2: every collision-trigger model's, for its contact\n",
     "new": "",
     "tests": [
-      "test/disc29_throne.test.js"
+      "test/world/disc29_throne.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "        : actionContact(o, playerFeet, playerHeight, o.kind === 'effect' || o.kind === 'relay' ? triggerSurfaces : collider, wish);",
     "new": "        : (playerFeet[1] >= a.max[1] - 0.15 ? 'WalkOn' : 'WalkInto');",
     "tests": [
-      "test/disc29_throne.test.js"
+      "test/world/disc29_throne.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    audio.setLoop('riding', null);\n    animator.mount(mode);",
     "new": "    animator.mount(mode);",
     "tests": [
-      "test/disc29_gallop.test.js"
+      "test/systems/disc29_gallop.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "    audio.setLoop('riding', null);\n    animator.mount(mode);",
     "new": "    animator.mount(mode);\n    audio.setLoop('riding', null);",
     "tests": [
-      "test/disc29_gallop.test.js"
+      "test/systems/disc29_gallop.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "    setTransportMode: (mode) => mountRig.setMode(mode),\n",
     "new": "",
     "tests": [
-      "test/disc29_gallop.test.js"
+      "test/systems/disc29_gallop.test.js"
     ]
   },
   {
@@ -194,25 +194,25 @@
     "old": "    if (getInteractionMode() === 'info') {\n      if (questBridge && person?.isPerson) {",
     "new": "    if (false) {\n      if (questBridge && person?.isPerson) {",
     "tests": [
-      "test/disc29_questinfo.test.js"
+      "test/player/disc29_questinfo.test.js"
     ]
   },
   {
     "name": "DISC29-H-info-falls-through-to-the-click",
     "file": "src/scenes/worldModes.js",
-    "old": "          .then(() => townTalk?.say?.(presentNpcInfoText(npcDisplayName(data)))).catch(() => {});\n      }\n      return;\n    }",
-    "new": "          .then(() => townTalk?.say?.(presentNpcInfoText(npcDisplayName(data)))).catch(() => {});\n      }\n    }",
+    "old": "          .then(() => townTalk?.say?.(presentNpcInfoText(npcShownName(data)))).catch(() => {});   // L10N3e: the name as shown\n      }\n      return;\n    }",
+    "new": "          .then(() => townTalk?.say?.(presentNpcInfoText(npcShownName(data)))).catch(() => {});   // L10N3e: the name as shown\n      }\n    }",
     "tests": [
-      "test/disc29_questinfo.test.js"
+      "test/player/disc29_questinfo.test.js"
     ]
   },
   {
     "name": "DISC29-H-info-names-the-resource",
     "file": "src/scenes/worldModes.js",
-    "old": "presentNpcInfoText(npcDisplayName(data))",
+    "old": "presentNpcInfoText(npcShownName(data))",
     "new": "presentNpcInfoText(person.displayName)",
     "tests": [
-      "test/disc29_questinfo.test.js"
+      "test/player/disc29_questinfo.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "    if (ticks - h.mark >= DRAW_FRAMES_UNDRAWN || wall() - h.at >= DRAW_STALL_MS) {",
     "new": "    if (true) {",
     "tests": [
-      "test/disc29_watchdog.test.js"
+      "test/ui/enhanced/disc29_watchdog.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "export const DRAW_FRAMES_UNDRAWN = 2;",
     "new": "export const DRAW_FRAMES_UNDRAWN = 1;",
     "tests": [
-      "test/disc29_watchdog.test.js"
+      "test/ui/enhanced/disc29_watchdog.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "    if (ticks - h.mark >= DRAW_FRAMES_UNDRAWN || wall() - h.at >= DRAW_STALL_MS) {",
     "new": "    if (ticks - h.mark >= DRAW_FRAMES_UNDRAWN) {",
     "tests": [
-      "test/disc29_watchdog.test.js"
+      "test/ui/enhanced/disc29_watchdog.test.js"
     ]
   },
   {
@@ -248,7 +248,7 @@
     "old": "  if (armed > 0 && raf(tick) != null) return;",
     "new": "  if (raf(tick) != null) return;",
     "tests": [
-      "test/disc29_watchdog.test.js"
+      "test/ui/enhanced/disc29_watchdog.test.js"
     ]
   },
   {
@@ -257,7 +257,7 @@
     "old": "  h.live = false;\n  armed--;",
     "new": "  h.live = false;",
     "tests": [
-      "test/disc29_watchdog.test.js"
+      "test/ui/enhanced/disc29_watchdog.test.js"
     ]
   },
   {
@@ -266,16 +266,16 @@
     "old": "  armed++;\n  startTicking();",
     "new": "  armed++;",
     "tests": [
-      "test/disc29_watchdog.test.js"
+      "test/ui/enhanced/disc29_watchdog.test.js"
     ]
   },
   {
     "name": "DISC29-D-notice-wall-clock",
-    "file": "src/ui/enhancedNotice.js",
+    "file": "src/ui/enhanced/enhancedNotice.js",
     "old": "armDrawWatchdog(NOTICE_WATCHDOG_MS, () => { if (panels.get(key) === p) releaseEnhancedNotice(key); }, { schedule, cancel });",
     "new": "schedule(() => { if (panels.get(key) === p) releaseEnhancedNotice(key); }, NOTICE_WATCHDOG_MS);",
     "tests": [
-      "test/enhancedNotice.test.js"
+      "test/ui/enhancedNotice.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "armDrawWatchdog(PLAQUE_WATCHDOG_MS, () => { _watchdog = null; hideWorldPlaque(); }, { schedule: _schedule, cancel: _cancel });",
     "new": "_schedule(() => { _watchdog = null; hideWorldPlaque(); }, PLAQUE_WATCHDOG_MS);",
     "tests": [
-      "test/worldhover.test.js"
+      "test/systems/worldhover.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "armDrawWatchdog(YES_NO_WATCHDOG_MS, () => { if (face?.owner === owner) releaseYesNoFace(owner); }, { schedule, cancel });",
     "new": "schedule(() => { if (face?.owner === owner) releaseYesNoFace(owner); }, YES_NO_WATCHDOG_MS);",
     "tests": [
-      "test/uxb1m_privateproperty.test.js"
+      "test/ui/uxb1m_privateproperty.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "      frameEnd();\n      requestAnimationFrame(frame);\n      return;",
     "new": "      frameAbort();\n      requestAnimationFrame(frame);\n      return;",
     "tests": [
-      "test/worldhover.test.js"
+      "test/systems/worldhover.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "          const face = perBatchRight && !b.selfCard;",
     "new": "          const face = false;",
     "tests": [
-      "test/disc29_lamps.test.js"
+      "test/render/disc29_lamps.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "          const face = perBatchRight && !b.selfCard;",
     "new": "          const face = perBatchRight;",
     "tests": [
-      "test/disc29_lamps.test.js"
+      "test/render/disc29_lamps.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "    if (lampDist > 1e-4) right = vec3(toLamp.y, 0.0, -toLamp.x) / lampDist;",
     "new": "    if (lampDist > 1e-4) right = uRight;",
     "tests": [
-      "test/disc29_lamps.test.js"
+      "test/render/disc29_lamps.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "this.replay(f, this.faceVP[face], pos, false, 0, 0, REPLAY_LO);",
     "new": "this.replay(f, this.faceVP[face], pos, false, 0, 0, REPLAY_STATIC);",
     "tests": [
-      "test/disc29_lamps.test.js"
+      "test/render/disc29_lamps.test.js"
     ]
   },
   {
@@ -347,7 +347,7 @@
     "old": "if (filter === REPLAY_LO ? (b._shDyn && !b._shAnim) :",
     "new": "if (filter === REPLAY_LO ? b._shDyn :",
     "tests": [
-      "test/disc29_lamps.test.js"
+      "test/render/disc29_lamps.test.js"
     ]
   },
   {
@@ -356,7 +356,7 @@
     "old": "this._staticSignatures(cp, 1, this._sigOneOut, false, true);",
     "new": "this._staticSignatures(cp, 1, this._sigOneOut, false, false);",
     "tests": [
-      "test/disc29_lamps.test.js"
+      "test/render/disc29_lamps.test.js"
     ]
   },
   {
@@ -365,7 +365,7 @@
     "old": "      const anim = moving && !swaying && b._dyn !== true && b.selfCard !== true && o == null;",
     "new": "      const anim = moving && !swaying && b._dyn !== true && b.selfCard !== true;",
     "tests": [
-      "test/disc29_lamps.test.js"
+      "test/render/disc29_lamps.test.js"
     ]
   },
   {
@@ -374,9 +374,9 @@
     "old": "const anim = moving && !swaying && b._dyn !== true && b.selfCard !== true &&",
     "new": "const anim = moving && !swaying && b._dyn !== true &&",
     "equivalent": true,
-    "why": "AUDIT PRE-MERGE 0929 E1 made in-place a flat with no origin, and the player's card always has one (player/eotbBody.js mints it with `origin = [0, 0, 0]` and places it by that origin every frame), so `o == null` already keeps the card out of the lo tier. The clause stays as DISC24-C's law said where the class is decided - the card casts only into the maps redrawn every frame - for the day a card is made without an origin.",
+    "why": "AUDIT PRE-MERGE 0929 E1 made in-place a flat with no origin, and the player's card always has one (player/eyeOfTheBeholder/eotbBody.js mints it with `origin = [0, 0, 0]` and places it by that origin every frame), so `o == null` already keeps the card out of the lo tier. The clause stays as DISC24-C's law said where the class is decided - the card casts only into the maps redrawn every frame - for the day a card is made without an origin.",
     "tests": [
-      "test/disc29_lamps.test.js"
+      "test/render/disc29_lamps.test.js"
     ]
   },
   {
@@ -385,7 +385,7 @@
     "old": "      const selfNear = selfAt ? (nearestRank(casters, L, selfAt, rank, this._selfHeld, this._selfHeldN) < selfLamps) : near;",
     "new": "      const selfNear = near;",
     "tests": [
-      "test/disc29_lamps.test.js"
+      "test/render/disc29_lamps.test.js"
     ]
   },
   {
@@ -394,7 +394,7 @@
     "old": "      const due = SHADOW_TUNING.steady || near || selfNear || (this.frameNo + k) % SHADOW_FAR_CASTER_EVERY === 0;",
     "new": "      const due = SHADOW_TUNING.steady || near || (this.frameNo + k) % SHADOW_FAR_CASTER_EVERY === 0;",
     "tests": [
-      "test/disc29_lamps.test.js"
+      "test/render/disc29_lamps.test.js"
     ]
   },
   {
@@ -403,7 +403,7 @@
     "old": "        let faced = null;   // DISC29-E: the face uniform's state for this record (set at its first flat)",
     "new": "        let faced = false;   // DISC29-E: the face uniform's state for this record (set at its first flat)",
     "tests": [
-      "test/disc29_lamps.test.js"
+      "test/render/disc29_lamps.test.js"
     ]
   }
 ]

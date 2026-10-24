@@ -5,7 +5,7 @@
     "old": "WHEN played_at IS NOT NULL AND ?1 > played_at AND ?1 - played_at <= ?2 THEN ?1 - played_at",
     "new": "WHEN played_at IS NOT NULL AND ?1 > played_at THEN ?1 - played_at",
     "tests": [
-      "test/acc4played.test.js"
+      "test/server/acc4played.test.js"
     ],
     "note": "No grace: a tab closed overnight and reopened credits the whole night."
   },
@@ -15,7 +15,7 @@
     "old": "?1 - played_at <= ?2 THEN",
     "new": "?1 - played_at < ?2 THEN",
     "tests": [
-      "test/acc4played.test.js"
+      "test/server/acc4played.test.js"
     ],
     "note": "The grace boundary drifts by a second - a beat exactly one grace late is dropped."
   },
@@ -25,7 +25,7 @@
     "old": "played_at = MAX(COALESCE(played_at, ?1), ?1)",
     "new": "played_at = ?1",
     "tests": [
-      "test/acc4played.test.js"
+      "test/server/acc4played.test.js"
     ],
     "note": "A late, out-of-order beat drags the clock back and the next beat credits the same minutes twice."
   },
@@ -35,17 +35,17 @@
     "old": "WHEN played_at IS NOT NULL AND ?1 > played_at AND",
     "new": "WHEN played_at IS NOT NULL AND",
     "tests": [
-      "test/acc4played.test.js"
+      "test/server/acc4played.test.js"
     ],
     "note": "A beat stamped before the last one credits a NEGATIVE gap - time played goes down."
   },
   {
     "name": "ACC4-5-read-then-write",
     "file": "server-account/src/accounts.js",
-    "old": "export async function creditPlay({ db, nowS }, playerId) {\n",
-    "new": "export async function creditPlay({ db, nowS }, playerId) {\n  const was = await db.prepare('SELECT played_at FROM players WHERE id = ?').bind(playerId).first();\n  const gap = Number.isSafeInteger(was?.played_at) ? nowS - was.played_at : -1;\n  await db.prepare('UPDATE players SET played_s = played_s + ?, played_at = MAX(COALESCE(played_at, 0), ?) WHERE id = ?').bind(gap > 0 && gap <= PLAY_GRACE_S ? gap : 0, nowS, playerId).run();\n  if (playerId) return { playedS: (await db.prepare('SELECT played_s FROM players WHERE id = ?').bind(playerId).first()).played_s };\n",
+    "old": "export async function creditPlay({ db, nowS }, playerId, sessionId = null) {\n",
+    "new": "export async function creditPlay({ db, nowS }, playerId, sessionId = null) {\n  const was = await db.prepare('SELECT played_at FROM players WHERE id = ?').bind(playerId).first();\n  const gap = Number.isSafeInteger(was?.played_at) ? nowS - was.played_at : -1;\n  await db.prepare('UPDATE players SET played_s = played_s + ?, played_at = MAX(COALESCE(played_at, 0), ?) WHERE id = ?').bind(gap > 0 && gap <= PLAY_GRACE_S ? gap : 0, nowS, playerId).run();\n  if (playerId) return { playedS: (await db.prepare('SELECT played_s FROM players WHERE id = ?').bind(playerId).first()).played_s };\n",
     "tests": [
-      "test/acc4played.test.js"
+      "test/server/acc4played.test.js"
     ],
     "note": "The obvious build: read the last beat, work out the gap, add it. Sequentially it is right; two tabs whose beats land together both read the same last beat and both add the gap from it."
   },
@@ -55,17 +55,17 @@
     "old": "WHEN played_at IS NOT NULL AND ?1 > played_at AND ?1 - played_at <= ?2 THEN ?1 - played_at",
     "new": "WHEN ?1 > COALESCE(played_at, ?1 - ?2) AND ?1 - COALESCE(played_at, ?1 - ?2) <= ?2 THEN ?1 - COALESCE(played_at, ?1 - ?2)",
     "tests": [
-      "test/acc4played.test.js"
+      "test/server/acc4played.test.js"
     ],
     "note": "The first beat of a sitting credits a whole grace nobody measured."
   },
   {
     "name": "ACC4-7-the-route-believes-the-body",
     "file": "server-account/src/index.js",
-    "old": "        return json(await creditPlay(ctx, who.player.id), 200, origin);",
-    "new": "        if (Number.isSafeInteger(body.playedS)) { await db.prepare('UPDATE players SET played_s = ? WHERE id = ?').bind(body.playedS, who.player.id).run(); return json({ playedS: body.playedS }, 200, origin); }\n        return json(await creditPlay(ctx, who.player.id), 200, origin);",
+    "old": "        return json(await creditPlay(ctx, who.player.id, who.session?.id ?? null), 200, origin);",
+    "new": "        if (Number.isSafeInteger(body.playedS)) { await db.prepare('UPDATE players SET played_s = ? WHERE id = ?').bind(body.playedS, who.player.id).run(); return json({ playedS: body.playedS }, 200, origin); }\n        return json(await creditPlay(ctx, who.player.id, who.session?.id ?? null), 200, origin);",
     "tests": [
-      "test/acc4played.test.js"
+      "test/server/acc4played.test.js"
     ],
     "note": "The build this slice refuses: a client posts a number and the service writes it."
   },
@@ -75,7 +75,7 @@
     "old": "    if (!visible()) return;\n",
     "new": "",
     "tests": [
-      "test/acc4played.test.js"
+      "test/server/acc4played.test.js"
     ],
     "note": "A background tab counts as time played."
   },
@@ -85,7 +85,7 @@
     "old": "  knock();\n  const id",
     "new": "  const id",
     "tests": [
-      "test/acc4played.test.js"
+      "test/server/acc4played.test.js"
     ],
     "note": "The sitting opens a beat late, so the first five minutes of every sitting are lost."
   },
@@ -95,7 +95,7 @@
     "old": "    try { Promise.resolve(beat()).catch(() => {}); } catch { /* next beat */ }",
     "new": "    beat();",
     "tests": [
-      "test/acc4played.test.js"
+      "test/server/acc4played.test.js"
     ],
     "note": "A service blip throws out of a timer in the world host."
   },
@@ -105,27 +105,27 @@
     "old": "    if (!session) return null;\n    return beatPlay(",
     "new": "    return beatPlay(",
     "tests": [
-      "test/acc4played.test.js"
+      "test/server/acc4played.test.js"
     ],
     "note": "A signed-out device knocks with no credential on every beat."
   },
   {
     "name": "ACC4-12-guest-date-is-1970",
-    "file": "src/ui/enhancedAccount.js",
+    "file": "src/ui/enhanced/enhancedAccount.js",
     "old": "  if (!Number.isSafeInteger(s) || s <= 0) return null;",
     "new": "  if (!Number.isSafeInteger(s)) return null;",
     "tests": [
-      "test/acc4played.test.js"
+      "test/server/acc4played.test.js"
     ],
     "note": "A zero date prints as Jan 1, 1970."
   },
   {
     "name": "ACC4-13-guest-gets-a-date-row",
-    "file": "src/ui/enhancedAccount.js",
-    "old": "      if (joined) row('Registered', joined);",
-    "new": "      row('Registered', joined ?? '-');",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "      if (joined) row(t('account.card.registered', 'Registered'), joined);",
+    "new": "      row(t('account.card.registered', 'Registered'), joined ?? '-');",
     "tests": [
-      "test/acc4played.test.js"
+      "test/server/acc4played.test.js"
     ],
     "note": "A guest is shown a Registered row for something they never did."
   },
@@ -135,7 +135,7 @@
     "old": "    registeredAt: Number.isSafeInteger(player.registered_at) ? player.registered_at : null,",
     "new": "",
     "tests": [
-      "test/acc4played.test.js"
+      "test/server/acc4played.test.js"
     ],
     "note": "The card never learns the date."
   },
@@ -145,7 +145,7 @@
     "old": "      - \"src/net/playClock.js\"\n",
     "new": "",
     "tests": [
-      "test/accountdeploy.test.js"
+      "test/server/accountdeploy.test.js"
     ],
     "note": "The hole this slice found: a file the Worker bundles whose change deploys nothing."
   }

@@ -1,48 +1,48 @@
 [
   {
     "name": "AUDIT0929-S1-a-clip-on-the-attacking-state",
-    "file": "src/player/eotbBody.js",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
     "old": "        const fresh = last.swingN == null || last.swingN !== clipSwing;",
     "new": "        const fresh = true;",
     "tests": [
-      "test/audit0929_swing.test.js"
+      "test/systems/audit0929_swing.test.js"
     ]
   },
   {
     "name": "AUDIT0929-S1-the-count-unsaid",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "    swingN: swing.n,",
     "new": "    /* no count */",
     "tests": [
-      "test/audit0929_swing.test.js"
+      "test/systems/audit0929_swing.test.js"
     ]
   },
   {
     "name": "AUDIT0929-S1-a-new-rig-keeps-the-old-count",
-    "file": "src/player/eotbBody.js",
+    "file": "src/player/eyeOfTheBeholder/eotbBody.js",
     "old": "      clipSwing = null;   // AUDIT PRE-MERGE 0929 S1",
     "new": "      /* kept */   // AUDIT PRE-MERGE 0929 S1",
     "tests": [
-      "test/audit0929_swing.test.js"
+      "test/systems/audit0929_swing.test.js"
     ]
   },
   {
     "name": "AUDIT0929-S3-rr-weightless",
-    "file": "src/systems/rrRealism.js",
+    "file": "src/systems/roleplayRealism/rrRealism.js",
     "old": "  return swingFrameSeconds(blend, { heft: swingHeft(weight, liveStrength), handling",
     "new": "  return swingFrameSeconds(blend, { handling",
     "tests": [
-      "test/rr1_realism.test.js",
-      "test/swinglaw.test.js"
+      "test/systems/rr1_realism.test.js",
+      "test/systems/swinglaw.test.js"
     ]
   },
   {
     "name": "AUDIT0929-S3-rr-weight-unread",
-    "file": "src/systems/rrInstall.js",
-    "old": "    const weight = readSwing(ctx)?.weight ?? 0;",
+    "file": "src/systems/roleplayRealism/rrInstall.js",
+    "old": "    const weight = w?.weight ?? 0;",
     "new": "    const weight = 0;",
     "tests": [
-      "test/rr1_realism.test.js"
+      "test/systems/rr1_realism.test.js"
     ]
   },
   {
@@ -51,28 +51,28 @@
     "old": "export function installSwingLaw() { registerSwingReader(readSwing); }\ninstallSwingLaw();",
     "new": "export function installSwingLaw() { registerSwingReader(readSwing); }",
     "tests": [
-      "test/audit0929_swing.test.js",
-      "test/swinglaw.test.js"
+      "test/systems/audit0929_swing.test.js",
+      "test/systems/swinglaw.test.js"
     ]
   },
   {
     "name": "AUDIT0929-S5-the-rig-without-the-reader",
-    "file": "src/combat/weaponRig.js",
-    "old": "import './swingLaw.js';",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "import '../swingLaw.js';",
     "new": "// no reader",
     "tests": [
-      "test/audit0929_swing.test.js",
-      "test/swinglaw.test.js"
+      "test/systems/audit0929_swing.test.js",
+      "test/systems/swinglaw.test.js"
     ]
   },
   {
     "name": "AUDIT0929-S6-the-reader-grows-the-table",
     "file": "src/combat/swingLaw.js",
-    "old": "  const slots = entity.equip?.slots;",
-    "new": "  const slots = (entity.equip ??= { slots: {} }).slots;",
+    "old": "const handItem = (entity, ctx) => entity.equip?.slots?.[",
+    "new": "const handItem = (entity, ctx) => (entity.equip ??= { slots: {} }).slots?.[",
     "tests": [
-      "test/audit0929_swing.test.js",
-      "test/weaponrig.test.js"
+      "test/systems/audit0929_swing.test.js",
+      "test/combat/weapon/weaponrig.test.js"
     ]
   }
 ]

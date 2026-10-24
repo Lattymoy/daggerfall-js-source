@@ -1,0 +1,532 @@
+[
+  {
+    "name": "STAFF-PANEL5-MESSAGE-by-name",
+    "file": "server-account/src/staffMessage.js",
+    "old": "if (typeof body.target !== 'string' || !ID_RE.test(body.target)) return { error: 'body' };",
+    "new": "if (false) return { error: 'body' };",
+    "why": "a send with no account id reaches the lookup (a name is no target)",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-empty-text",
+    "file": "server-account/src/staffMessage.js",
+    "old": "  if (!text) return { error: 'body' };",
+    "new": "  if (false) return { error: 'body' };",
+    "why": "an empty message stored and sent",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-bound-off-by-one",
+    "file": "server-account/src/staffMessage.js",
+    "old": "if (detail.chars > STAFF_MESSAGE_MAX) {",
+    "new": "if (detail.chars >= STAFF_MESSAGE_MAX) {",
+    "why": "a 200-character message refused",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-units-not-chars",
+    "file": "server-account/src/staffMessage.js",
+    "old": "chars: [...text].length };",
+    "new": "chars: text.length };",
+    "why": "a message counted in UTF-16 units: 200 faces refused",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-long-unaudited",
+    "file": "server-account/src/staffMessage.js",
+    "old": "    await audit('message', row.id, { ...detail, error: 'staff-message-long' }, { outcome: 'failed' }).run();\n",
+    "new": "",
+    "why": "a refused long message leaves no audit row",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-gap-unasked",
+    "file": "server-account/src/staffMessage.js",
+    "old": "if (last && last.at > nowS - STAFF_MESSAGE_GAP_S) {",
+    "new": "if (false) {",
+    "why": "the 5-second gap asked only by the store: its refusal audited with no error word",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-gap-off-by-one",
+    "file": "server-account/src/staffMessage.js",
+    "old": "if (last && last.at > nowS - STAFF_MESSAGE_GAP_S) {",
+    "new": "if (last && last.at >= nowS - STAFF_MESSAGE_GAP_S) {",
+    "why": "a message 5 seconds on still held",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-gap-everyones",
+    "file": "server-account/src/staffMessage.js",
+    "old": "'SELECT at FROM staff_messages WHERE staff_id = ? ORDER BY rowid DESC LIMIT 1').bind(me.id)",
+    "new": "'SELECT at FROM staff_messages WHERE staff_id IS NOT ? ORDER BY rowid DESC LIMIT 1').bind('')",
+    "why": "one staff member's message holds every other member's",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-store-race",
+    "file": "server-account/src/staffMessage.js",
+    "old": "      WHERE NOT EXISTS (SELECT 1 FROM (SELECT at FROM staff_messages WHERE staff_id = ?3 ORDER BY rowid DESC LIMIT 1) WHERE at > ?7)`)",
+    "new": "      WHERE ?7 IS NOT NULL`)",
+    "why": "two sends at once both stored",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-audit-always-ok",
+    "file": "server-account/src/staffMessage.js",
+    "old": "{ okIf: { sql: 'EXISTS (SELECT 1 FROM staff_messages WHERE id = ?)', args: [id] } }",
+    "new": "{ outcome: 'ok' }",
+    "why": "a send that stored nothing audited as done",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-order-names-account",
+    "file": "server-account/src/staffMessage.js",
+    "old": "mintStaffMessageOrder({ s: row.id, mi: id }",
+    "new": "mintStaffMessageOrder({ s: row.id, mi: row.id }",
+    "why": "the order names the account, not the message",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-state-ok-dropped",
+    "file": "server-account/src/staffMessage.js",
+    "old": "  if (m.ok_at) return 'ok';\n",
+    "new": "",
+    "why": "an OK never read as \"they pressed OK\"",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-state-delivered-zero",
+    "file": "server-account/src/staffMessage.js",
+    "old": "  if (m.sockets > 0) return 'delivered';",
+    "new": "  if (m.sockets >= 0) return 'delivered';",
+    "why": "no socket read as Delivered",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-state-old-dropped",
+    "file": "server-account/src/staffMessage.js",
+    "old": "  if (m.old > 0) return 'old-game';\n",
+    "new": "",
+    "why": "an old build never reported",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-state-refused-sent",
+    "file": "server-account/src/staffMessage.js",
+    "old": "return m.pushed === 0 || (m.pushed === 1 && m.sockets === 0) ? 'not-confirmed' : 'sent';",
+    "new": "return (m.pushed === 1 && m.sockets === 0) ? 'not-confirmed' : 'sent';",
+    "why": "a door that refused read as Sent",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-state-offline-sent",
+    "file": "server-account/src/staffMessage.js",
+    "old": "return m.pushed === 0 || (m.pushed === 1 && m.sockets === 0) ? 'not-confirmed' : 'sent';",
+    "new": "return m.pushed === 0 ? 'not-confirmed' : 'sent';",
+    "why": "a player with no socket read as Sent",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-moderator-reads-all",
+    "file": "server-account/src/staffMessage.js",
+    "old": "const own = who.role !== 'admin';",
+    "new": "const own = false;",
+    "why": "a Moderator reads every member's messages",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-page-unbounded",
+    "file": "server-account/src/staffMessage.js",
+    "old": ".bind(own ? me.id : null, target, before, STAFF_MESSAGES_PAGE + 1)",
+    "new": ".bind(own ? me.id : null, target, before, STAFF_MESSAGES_PAGE)",
+    "why": "a full page says no next",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-read-unaudited-once",
+    "file": "server-account/src/staffMessage.js",
+    "old": "await audit('messages-read', target, { own }, { onceIn: 10 * 60 }).run();",
+    "new": "await audit('messages-read', target, { own }, {}).run();",
+    "why": "every read a row",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-game-reads-others",
+    "file": "server-account/src/staffMessage.js",
+    "old": "FROM staff_messages WHERE target = ?1 AND ok_at IS NULL AND at > ?2",
+    "new": "FROM staff_messages WHERE ?1 IS NOT NULL AND ok_at IS NULL AND at > ?2",
+    "why": "the game handed another player's messages",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-game-reads-stale",
+    "file": "server-account/src/staffMessage.js",
+    "old": ".bind(player.id, nowS - STAFF_MESSAGE_SHOW_S, STAFF_MESSAGE_ASK_MAX + 1)",
+    "new": ".bind(player.id, nowS - STAFF_MESSAGE_SHOW_S - 1, STAFF_MESSAGE_ASK_MAX + 1)",
+    "why": "a message a day old shown again",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-game-reads-unbounded",
+    "file": "server-account/src/staffMessage.js",
+    "old": "messages: rows.slice(0, STAFF_MESSAGE_ASK_MAX).map(",
+    "new": "messages: rows.map(",
+    "why": "more than five at one ask",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-ok-on-others",
+    "file": "server-account/src/staffMessage.js",
+    "old": "WHERE id = ?1 AND target = ?2 AND ok_at IS NULL').bind(body.id, player.id, nowS)",
+    "new": "WHERE id = ?1 AND ?2 IS NOT NULL AND ok_at IS NULL').bind(body.id, player.id, nowS)",
+    "why": "an OK marks another player's message",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-hear-dropped",
+    "file": "server-account/src/sanctions.js",
+    "old": "    else hear?.(said);\n",
+    "new": "",
+    "why": "the hub's count never read: every message Sent",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-sweep-dropped",
+    "file": "server-account/src/cron.js",
+    "old": "  ['staff-messages', (ctx) =>",
+    "new": "  ['staff-messages-x', (ctx) =>",
+    "why": "the rows never swept",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-route-unwired",
+    "file": "server-account/src/staff.js",
+    "old": "  if (MESSAGE_ROUTES.includes(path)) return staffMessage(ctx, env, path, body, who, audit);",
+    "new": "",
+    "why": "the panel's message doors answer nothing",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-rate-status",
+    "file": "server-account/src/staff.js",
+    "old": "'staff-message-rate': 429,",
+    "new": "'staff-message-rate': 400,",
+    "why": "a held message answered as a bad body",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-hub-old-told",
+    "file": "server/src/staffMessage.js",
+    "old": "    if (a.sm !== 1) old++;\n    else if (room._send(ws, frame)) n++;",
+    "new": "    if (room._send(ws, frame)) n++;",
+    "why": "an old build sent the nudge and never counted",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-hub-everyone",
+    "file": "server/src/staffMessage.js",
+    "old": "for (const ws of [...(room._bySub().get(r.claims.s) ?? [])]) {",
+    "new": "for (const ws of [...room._all().keys()]) {",
+    "why": "every hub socket nudged",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-door-refuses-kind",
+    "file": "server/src/index.js",
+    "old": "kind !== 'mute' && kind !== 'smsg' && kind !== 'staffcut' && kind !== 'hide'",
+    "new": "kind !== 'mute' && kind !== 'staffcut' && kind !== 'hide'",
+    "why": "the relay's door refuses a staff message",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-door-count-dropped",
+    "file": "server/src/index.js",
+    "old": "return json({ ok: true, ...(kind === 'smsg' ? { n: said.n, old: said.old } : {}) });",
+    "new": "return json({ ok: true });",
+    "why": "the door says no count",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-hub-unrouted",
+    "file": "server/src/index.js",
+    "old": "    if (lawKindOf(body?.order) === 'smsg') return json(await takeStaffMessage(this, body.order, Date.now()));",
+    "new": "",
+    "why": "the hub takes a staff message as no order",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-hello-sm-unkept",
+    "file": "server/src/index.js",
+    "old": ", ...(m.sm === 1 && isSocialRoom(a.key) ? { sm: 1 } : {}), ...(who.hid ? { hid: 1, lk: 0 } : {}) }))",
+    "new": ", ...(who.hid ? { hid: 1, lk: 0 } : {}) }))",
+    "why": "the hello's `sm` never kept: every socket an old build",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-wire-sm-dropped",
+    "file": "src/net/wire.js",
+    "old": "    if (m.sm === 1) hello.sm = 1;",
+    "new": "",
+    "why": "the wire drops the hello's `sm`",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-order-mi-elsewhere",
+    "file": "src/net/identityToken.js",
+    "old": "  if (c.o !== 'smsg' && c.mi !== undefined) return false;\n",
+    "new": "",
+    "why": "another kind carries a message id",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-order-mi-unchecked",
+    "file": "src/net/identityToken.js",
+    "old": "if (c.o === 'smsg' && (typeof c.mi !== 'string' || !ID_RE.test(c.mi) || c.mu !== undefined",
+    "new": "if (c.o === 'smsg' && (c.mu !== undefined",
+    "why": "a staff message's order names no message",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-order-mute-field",
+    "file": "src/net/identityToken.js",
+    "old": "!ID_RE.test(c.mi) || c.mu !== undefined || c.lv !== undefined || c.dh !== undefined || c.bn !== undefined ||",
+    "new": "!ID_RE.test(c.mi) || c.lv !== undefined || c.dh !== undefined || c.bn !== undefined ||",
+    "why": "a staff message's order carries a mute",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-session-any-room",
+    "file": "src/net/online.js",
+    "old": "if (!primary || !isSocialRoom(room) || typeof m.mi !== 'string' || m.mi.length > 64) return;",
+    "new": "if (!primary || typeof m.mi !== 'string' || m.mi.length > 64) return;",
+    "why": "a cell room's nudge heard",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-session-hello-everywhere",
+    "file": "src/net/online.js",
+    "old": "    if (isSocialRoom(room)) frame.sm = 1;",
+    "new": "    frame.sm = 1;",
+    "why": "every room's hello says the box",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-game-shows-twice",
+    "file": "src/net/staffMessages.js",
+    "old": "if (typeof m?.id !== 'string' || seen.has(m.id) ||",
+    "new": "if (typeof m?.id !== 'string' ||",
+    "why": "a message shown again at every ask",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-game-ok-unsaid",
+    "file": "src/net/staffMessages.js",
+    "old": "      const said = io ? call(io, '/v1/safety/staff-message-ok', { id: m.id }) : null;",
+    "new": "      const said = null;",
+    "why": "the OK never said",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-game-unpaced",
+    "file": "src/net/staffMessages.js",
+    "old": "    if (gap > 0) {",
+    "new": "    if (false) {",
+    "why": "every nudge an ask",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-game-copy-dropped",
+    "file": "src/net/staffMessages.js",
+    "old": "        if (log?.push(STAFF_TAB, { text: staffMessageLine(one), at: one.at, system: true })) staffCopyShown(log);",
+    "new": "",
+    "why": "no copy on the Staff tab",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-box-ok-twice",
+    "file": "src/ui/staffMessageBox.js",
+    "old": "ok.onclick = () => { if (done) return; done = true;",
+    "new": "ok.onclick = () => { done = true;",
+    "why": "OK pressed twice is two OKs",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-box-name-dropped",
+    "file": "src/ui/staffMessageBox.js",
+    "old": "el('div', 'notice-row center inputbox-label', staffMessageFrom(from))",
+    "new": "el('div', 'notice-row center inputbox-label', '')",
+    "why": "the staff member's name not shown",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-FIX-more-unread",
+    "file": "src/net/staffMessages.js",
+    "old": "      more = r.ok && r.data?.more === true;",
+    "new": "      more = false;",
+    "why": "finding 7: the service's `more` unread - a sixth message never asked for",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-FIX-no-ask-after-ok",
+    "file": "src/net/staffMessages.js",
+    "old": "      void Promise.resolve(said).then(() => { if (!up && more) void ask(); });",
+    "new": "      void said;",
+    "why": "finding 7: nothing asked after the last box is OK'd",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-FIX-ask-whatever-more",
+    "file": "src/net/staffMessages.js",
+    "old": ".then(() => { if (!up && more) void ask(); });",
+    "new": ".then(() => { if (!up) void ask(); });",
+    "why": "finding 7: an ask after every OK, though the service said no more",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-FIX-more-never",
+    "file": "server-account/src/staffMessage.js",
+    "old": "STAFF_MESSAGE_SHOW_S, STAFF_MESSAGE_ASK_MAX + 1).all();",
+    "new": "STAFF_MESSAGE_SHOW_S, STAFF_MESSAGE_ASK_MAX).all();",
+    "why": "finding 7: the read stops at five, so `more` is never said",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-FIX-more-off-by-one",
+    "file": "server-account/src/staffMessage.js",
+    "old": "more: rows.length > STAFF_MESSAGE_ASK_MAX };",
+    "new": "more: rows.length >= STAFF_MESSAGE_ASK_MAX };",
+    "why": "finding 7: five waiting read as more",
+    "tests": [
+      "test/server/staffpanel5message.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-FIX-copy-off-bar",
+    "file": "src/net/staffMessages.js",
+    "old": ")) staffCopyShown(log);   // on the bar, to be read again",
+    "new": ")) void 0;   // on the bar, to be read again",
+    "why": "finding 8: the copy lands on a Staff tab nobody can open",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-FIX-copy-not-shown",
+    "file": "src/net/staffChat.js",
+    "old": "{ copied.add(log); log.setShown(STAFF_TAB, true); };",
+    "new": "{ copied.add(log); };",
+    "why": "finding 8: a copy kept but its tab left off the bar",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-MESSAGE-FIX-chat-hides-copy",
+    "file": "src/net/staffChat.js",
+    "old": "frozen() || open || copied.has(log));",
+    "new": "frozen() || open);",
+    "why": "finding 8: the staff chat's next read (or a freeze lifted) takes the copy's tab off the bar",
+    "tests": [
+      "test/net/staffpanel5message_client.test.js"
+    ]
+  }
+]

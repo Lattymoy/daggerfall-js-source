@@ -1,0 +1,97 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): WRITTEN IN THE STARS, step 2 of 2.
+-- The port's own script on DFU's machine (systems/questlines/qlLines.js). Started by the line's runner an hour after
+-- step 1 ends: the astrologer's word is in the journal at once. The giver is unnamed (an astrologer): a Spellcaster of
+-- the player's own town, at its temple. The act is the Firmament's (qlActs.js star-taken, three). Lore: canon - the
+-- Guardian constellations (the Warrior, the Mage, the Thief) and the Serpent that wanders among them; the Firmament's
+-- own signs are the port's (Firmament.md section 3).
+-- AUDIT QUESTLINES LINES-10: a Person is made fresh in each step's quest (a new name, in whatever town the player
+-- stands in), so this step's giver is introduced as NEW - sent on by the last step's - never spoken of as the same one.
+Quest: QLIF02
+DisplayName: A Constellation of Your Own
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>        _seer_ has put your chart away, half drawn.
+
+QuestComplete:  [1004]
+<ce>         "A purse for the one who wrote it. Go on."
+<ce>          _seer_ sets _gold_ gold upon your chart.
+
+QuestLogEntry:  [1010]
+%qdt:
+ The astrologer who read my first star has sent
+ me on to _seer_, who reads the sky at _temple_
+ in __temple_: one star is a beginning, and three
+ are a shape. I am to take three more stars on the
+ Firmament, then go to _temple_ for a reading.
+
+Message:  1011
+%qdt:
+ I have taken three more stars on the Firmament.
+ _seer_ is waiting to read them at _temple_ in
+ __temple_.
+
+Message:  1012
+<ce>        "One star is a point. Three are a shape. Take
+<ce>         three more, and then come back to be read."
+
+Message:  1013
+<ce>        _seer_ joins your stars with a stroke of the
+<ce>          pen, and turns the chart for you to see.
+<ce>
+<ce>       "A constellation. Small, but yours. The Warrior,
+<ce>        the Mage and the Thief keep their charges, and
+<ce>        the Serpent wanders where it likes and answers
+<ce>        to none of them. Which you follow is your own
+<ce>        affair now. The sky is yours to write."
+
+Message:  1014
+The astrologer at _temple_? Says someone in __temple_ is drawing new stars. Rubbish.
+<--->
+_seer_ reads the Firmament for anyone. Says it is changing. It is not.
+<--->
+Looking for _seer_? Try _temple_, on a clear night. Look up.
+
+-- Symbols used in the QRC file:
+--
+--              %qdt occurs 2 times.
+--            _seer_ occurs 7 times.
+--            _gold_ occurs 1 time.
+--          _temple_ occurs 5 times.
+--         __temple_ occurs 3 times.
+
+QBN:
+Item _gold_ gold range 100 to 200
+
+Person _seer_ group Spellcaster local anyInfo 1014
+Place _temple_ local temple
+
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	place npc _seer_ at _temple_
+	log 1010 step 0
+	start timer _wait_
+
+_stars_ task:
+	ql act star-taken 3
+	log 1011 step 1
+
+_clicked_ task:
+	clicked npc _seer_
+
+_early_ task:
+	when _clicked_ and not _stars_
+	say 1012
+	clear _clicked_ _early_
+
+_paid_ task:
+	when _clicked_ and _stars_
+	say 1013
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

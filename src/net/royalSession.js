@@ -7,39 +7,39 @@
 // is open; the room's words folded and drawn (net/royalLink.js, ui/siegeHud.js). A challenge is the profile card's own
 // Challenge button: on a contender who has challenged this player it accepts (`yes`), else it challenges (`ask`). In a
 // bout, the one opponent is the foe a melee swing reaches (the relay referees it); a mark or a step pulled back moves
-// the player; a bout won hands this player a `t1` receipt, kept and carried to the service (net/siegeClaims.js
+// the player; a bout won hands this player a `t1` receipt, kept and carried to the service (net/siege/siegeClaims.js
 // createRoyalClaims). Left at the week's end or by the player - the world's own room is joined again.
 //
 // The world is handed in, so the pins drive it with fakes. Not a DFU member. Ledger A (EVERY PALACE A SEAT's row).
 //
-// AUDIT-SEATS (2026-10-01): C1 - the tourney is LEFT as a siege is (net/siegeSession.js): by the player (the HUD's Leave,
+// AUDIT-SEATS (2026-10-01): C1 - the tourney is LEFT as a siege is (net/siege/siegeSession.js): by the player (the HUD's Leave,
 // the chat's `/leave`), once away from the crown's city BATTLE_AWAY_MS, when its socket closes for good, and at the
 // week's end - a player who pressed "Watch the Royal Tourney" on a Monday no longer stands in its room all week, the
 // city's peers and its Watch gone; the HUD drawn only in its room. C2 - the one mint slot cleared only while it is this
 // session's own. C3 - an unsettled ring said once and asked again on the siege's backing-off wait.
-import { royalRoomKey, ROYAL_RING } from './siegeRef.js';
+import { royalRoomKey, ROYAL_RING } from './siege/siegeRef.js';
 import { foldRoyal, royalHudModel, royalAskStands, ROYAL_STATE_EMPTY } from './royalLink.js';
-import { readRoyalReceipt } from './siegeReceipt.js';
-import { passRetryMs, BATTLE_AWAY_MS } from './siegeSession.js';
+import { readRoyalReceipt } from './siege/siegeReceipt.js';
+import { passRetryMs, BATTLE_AWAY_MS } from './siege/siegeSession.js';
 
 /** How long an unsettled ring waits before the pass is asked again, ms - the first wait (AUDIT-SEATS C3: doubling to
  *  siegeSession.js PASS_RETRY_MAX_MS). */
 export const ROYAL_PASS_RETRY_MS = 5000;
 /** The words. */
 export const ROYAL_SESSION_TEXT = Object.freeze({
-  notHere: (town) => `Go to ${town} to enter the Royal Tourney - its ring stands before the castle.`,
+  notHere: (town) => `Go to ${town} to enter the Royal Tourney. Its ring stands before the castle.`,
   old: 'The server does not keep Royal Tourneys yet.',
-  entered: (side) => (side === 'watch' ? 'You are watching the Royal Tourney. Nothing you do reaches it.' : 'You have entered the Royal Tourney. Challenge a contender from their card.'),
+  entered: (side) => (side === 'watch' ? 'You are watching the Royal Tourney as a spectator.' : 'You have entered the Royal Tourney. Challenge a contender from their card.'),
   left: 'You have left the Royal Tourney.',
   refused: (why) => `The Royal Tourney would not have you: ${why}`,
-  asked: (who) => `${who} challenges you to a bout - challenge them back from their card to accept.`,
+  asked: (who) => `${who} challenges you to a bout. Challenge them back from their card to accept.`,
   sent: (who) => `You challenge ${who} to a bout.`,
   away: (city) => `You have left ${city}, and the Royal Tourney with it.`,   // AUDIT-SEATS C1
-  closed: 'The Royal Tourney\'s door has closed on you - you have left it.',   // AUDIT-SEATS C1: its socket closed for good
+  closed: 'The connection to the Royal Tourney closed. You have left it.',   // AUDIT-SEATS C1: its socket closed for good
 });
 
 /**
- * THE SESSION. `online` (net/online.js), `pass(seat, field, watch)` and the bouts' `claims` (net/siegeClaims.js
+ * THE SESSION. `online` (net/online.js), `pass(seat, field, watch)` and the bouts' `claims` (net/siege/siegeClaims.js
  * createRoyalClaims, or null), `hud` (ui/siegeHud.js createSiegeHud, or null), `nowMs()` (AUDIT-SEATS C6: the relay's
  * clock), `movePlayer(pose)` (a wire pose), `say(text)`, `relayOk()` the relay keeps Royal Tourneys, `name(id)` a peer's
  * name; AUDIT-SEATS C1: `here(seat)` whether the player is still at the crown's city.

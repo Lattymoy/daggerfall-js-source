@@ -5,7 +5,7 @@
     "old": "&& hoursFirstHandles(env).has(player.handle.toLowerCase());",
     "new": "&& hoursFirstHandles(env).has(player.handle);",
     "tests": [
-      "test/hoursfirst.test.js"
+      "test/net/hoursfirst.test.js"
     ],
     "note": "A handle typed in another case than the list's (a player who wrote TERRA, the list terra) would hold nothing."
   },
@@ -15,7 +15,7 @@
     "old": "export const isHoursFirst = (player, env) =>\n  typeof player?.handle === 'string' && !!player.handle\n  && hoursFirstHandles(env).has(player.handle.toLowerCase());",
     "new": "export const isHoursFirst = (player, env) => hoursFirstHandles(env).has(String(player?.handle ?? player?.guest_name ?? '').toLowerCase());",
     "tests": [
-      "test/hoursfirst.test.js"
+      "test/net/hoursfirst.test.js"
     ],
     "note": "A guest whose generated name is a listed handle would wear Hour's First."
   },
@@ -25,19 +25,19 @@
     "old": "if (isHoursFirst(player, env) && !held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA);",
     "new": "if (!held.includes(HOURS_FIRST_AURA)) held.push(HOURS_FIRST_AURA);",
     "tests": [
-      "test/hoursfirst.test.js"
+      "test/net/hoursfirst.test.js"
     ],
     "note": "Every account would hold The First Hour."
   },
   {
     "name": "HOURSFIRST-another-paint",
     "file": "src/ui/playerBadge.js",
-    "old": "firsthour: 'hoursfirst' });",
-    "new": "firsthour: 'hourbreaker' });",
+    "old": "firsthour: 'hoursfirst', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden' });",
+    "new": "firsthour: 'hourbreaker', maelstrom: 'coilbreaker', beaconlight: 'kynbane', burningstair: 'wellheadwalker', firstlight: 'spirefirst', lilacwarren: 'wikimaid', witchfire: 'witchwarden' });",
     "tests": [
-      "test/hoursfirst.test.js"
+      "test/net/hoursfirst.test.js"
     ],
-    "note": "The First Hour's button would wear the Hourbreaker's gold, not its own title's rose gold."
+    "note": "The First Hour's button would wear the Hourbreaker's gold, not its own title's rose gold. WIKIMAID (re-aimed by content)."
   },
   {
     "name": "HOURSFIRST-the-gradient-turned",
@@ -45,7 +45,7 @@
     "old": "hoursfirst: Object.freeze([HOUR_DAWN, HOUR_PEARL, HOUR_SUN]),",
     "new": "hoursfirst: Object.freeze([HOUR_SUN, HOUR_PEARL, HOUR_DAWN]),",
     "tests": [
-      "test/hoursfirst.test.js"
+      "test/net/hoursfirst.test.js"
     ],
     "note": "The word would read from the dawn's white into the rose gold - the light going out."
   },
@@ -55,7 +55,7 @@
     "old": "  hoursfirst: HOUR_DAWN,    // HOURS-FIRST",
     "new": "  hoursfirst: HOUR_GOLD,    // HOURS-FIRST",
     "tests": [
-      "test/hoursfirst.test.js"
+      "test/net/hoursfirst.test.js"
     ],
     "note": "Two titles of one colour - a face that draws no gradient could not tell Hour's First from Hourbreaker."
   },
@@ -65,7 +65,7 @@
     "old": "turningLook('first', 'FH', FIRST_RGB, { forward: true, blaze: FIRST_BLAZE, rays: FIRST_RAY })",
     "new": "turningLook('first', 'FH', FIRST_RGB, { forward: false, blaze: FIRST_BLAZE, rays: FIRST_RAY })",
     "tests": [
-      "test/hoursfirst.test.js"
+      "test/net/hoursfirst.test.js"
     ],
     "note": "The First Hour's dial would turn back as the Remnant's does - the hands never set going again."
   },
@@ -75,7 +75,7 @@
     "old": "turningLook('first', 'FH', FIRST_RGB, { forward: true, blaze: FIRST_BLAZE, rays: FIRST_RAY })",
     "new": "turningLook('first', 'FH', FIRST_RGB, { forward: true, blaze: 0, rays: FIRST_RAY })",
     "tests": [
-      "test/hoursfirst.test.js"
+      "test/net/hoursfirst.test.js"
     ],
     "note": "The Hour's own mark no brighter than the rest."
   },
@@ -85,7 +85,7 @@
     "old": "turningLook('first', 'FH', FIRST_RGB,",
     "new": "turningLook('first', 'FH', TURNING_RGB,",
     "tests": [
-      "test/hoursfirst.test.js"
+      "test/net/hoursfirst.test.js"
     ],
     "note": "The First Hour would be cast in the Remnant's brass - not a different version."
   },
@@ -95,8 +95,8 @@
     "old": ",Temegast,Terra\"",
     "new": ",Temegast\"",
     "tests": [
-      "test/hoursfirst.test.js",
-      "test/serverpost_send.test.js"
+      "test/net/hoursfirst.test.js",
+      "test/tooling/serverpost_send.test.js"
     ],
     "note": "One of the first clear left out of the title, the aura and the gun."
   },
@@ -106,7 +106,7 @@
     "old": "{ forward: true, blaze: FIRST_BLAZE, rays: FIRST_RAY })",
     "new": "{ forward: true, blaze: FIRST_BLAZE })",
     "tests": [
-      "test/hoursfirst.test.js"
+      "test/net/hoursfirst.test.js"
     ],
     "note": "AUDIT HOURS-FIRST: the First Hour would be the Remnant's wheel in another colour, turned the other way - the first light's rays are what make it a different version."
   }

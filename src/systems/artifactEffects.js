@@ -27,19 +27,18 @@
 // MACE STATE is an activeEffects entry (kind 'artifact', key
 // 'maceOfMolagBal') - the same shape every other persistent modifier
 // takes, so the save carries it for free and liveStat reads its
-// strength mod through one added arm. RECORDED: DFU also raises the
-// attacker's strength MAX (ChangeStatMaxMod); the port's liveStat
-// clamps at 100 and has no max-mod channel, so a 100-strength
-// character gains nothing - the drain on the TARGET is exact.
+// strength mod through one added arm, and its strength MAX mod
+// (statMaxMods) through the max-mod layer every live entry has.
 
 import { savingThrow, ELEMENTS, EFFECT_FLAGS } from './spellcast.js';
-import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
 import { equipTableOf } from './equip.js';   // AUDIT 58: no lowerCondition - the Namira payload bills nothing (FormulaHelper.cs:707)
 import { ENCHANTMENT_TYPES } from '../formats/magicDef.js';   // the FallExe enum at its V3 home - never through enchantments.js (cycle)
-import { MOBILE_TYPES } from '../characters/mobileTypes.js';
+import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
 import { liveStat as liveStatOf, increaseDrainMagnitude } from './statMods.js';
-import { markWholeBlow } from './partyScale.js';   // AUDIT PSCALE1 DOORS-1: the Razor's strike is a kill
+import { markWholeBlow } from './party/partyScale.js';   // AUDIT PSCALE1 DOORS-1: the Razor's strike is a kill
 import { SOCIAL_GROUP_COUNT } from '../formats/factionFile.js';   // AUDIT 63 F6: the Masque raises ALL eleven groups (MasqueOfClavicusEffect.cs:39-43 over FactionFile.cs:552-566)
+import { localizedText } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
 
 /** ItemEnums.ArtifactsSubTypes (:238-262), the payload-bearing nine
  *  named; Hircine_Ring (3) has no effect class - lycanthropy reads it
@@ -60,9 +59,10 @@ export const SUMMON_DURABILITY_LOSS = 100;
 export const OGHMA_BONUS_POOL = 30;
 /** MaceOfMolagBalEffect.cs:36 - strikes decay after 12 game minutes. */
 export const MACE_MAX_INCREASE_ROUNDS = 12;
-/** The localized noMonstersNearby line, as a literal (the standing
- *  no-localization departure). */
+/** The localized noMonstersNearby line (SanguineRoseEffect.cs:51,
+ *  SkullOfCorruptionEffect.cs:89) - its English, and as the player reads it. */
 export const NO_MONSTERS_NEARBY_TEXT = 'There are no monsters nearby.';
+const noMonstersNearbyText = () => localizedText('noMonstersNearby', NO_MONSTERS_NEARBY_TEXT);
 
 /** WabbajackEffect.careerIDs (:23-41), the seventeen-entry table in
  *  the effect's own order, over the port's ONE mobile-type home. */
@@ -75,11 +75,13 @@ export const WABBAJACK_CAREER_IDS = Object.freeze([
 ]);
 
 /** The Mace's incumbent state, as the entry every persistent modifier
- *  is: minted on first strike, read by liveStat's 'artifact' arm. */
+ *  is: minted on first strike, read by liveStat's 'artifact' arm (its
+ *  statMods) and max-mod layer (its statMaxMods - the live effect's
+ *  StatMaxMods, MaceOfMolagBalEffect.cs:75/:138). */
 export function maceState(entity, mint = false) {
   let entry = (entity.activeEffects ?? []).find((a) => a.kind === 'artifact' && a.key === 'maceOfMolagBal' && !a.ended);
   if (!entry && mint) {
-    entry = { kind: 'artifact', key: 'maceOfMolagBal', statMods: {}, maxMagickaIncrease: 0, lastStrikeTime: 0 };
+    entry = { kind: 'artifact', key: 'maceOfMolagBal', statMods: {}, statMaxMods: {}, maxMagickaIncrease: 0, lastStrikeTime: 0 };
     (entity.activeEffects ??= []).push(entry);
   }
   return entry ?? null;
@@ -160,7 +162,11 @@ const HANDLERS = new Map([
     strikes({ target, item, rolls = Math.random }) {
       // AUDIT WBX F1 (2026-09-26): not the Oblivion Gate's boss - his stand-in's health is a placeholder (1e9; the relay
       // holds his), so the Razor's whole-health blow billed the Razor 1e9 condition (it broke, and enchantment wear took
-      // it from the pack) and a blow the wire refused (past GATE_DMG_WIRE_MAX), lost whole
+      // it from the pack) and a blow the wire refused (past GATE_DMG_WIRE_MAX), lost whole. FIELD BUGS 2026-10-19f
+      // STAND-IN-WHOLE: the wire carries a stand-in's whole now (gateBoss.js STAND_IN_WHOLE) and no Strikes payload bills
+      // wear on him (AUDIT WBX F2, enchantments.js) - and that is why it STAYS: the Razor's kill is paid in its own
+      // condition, the health it removes (MehrunesRazorEffect), and on a body the relay runs nothing would pay it - a
+      // free whole blow every failed save, its number the stand-in's whole on top of the swing's
       if (!target || !item || target.spareGear) return null;
       if (savingThrow(ELEMENTS.Magic, EFFECT_FLAGS.Magic, target, 0, rolls) !== 0) {
         const healthRemoved = target.health ?? 0;
@@ -174,10 +180,12 @@ const HANDLERS = new Map([
   /** MaceOfMolagBalEffect.cs - Strikes: while the target has spell
    *  points, drain up to the strike's damage into the wielder, any
    *  OVERFLOW above their max raising max itself; a dry target loses
-   *  1d6 strength, which the wielder gains. Held round: 12 game
-   *  minutes after the last strike, both increases reset. The
-   *  constant fold adds the magicka increase into mods.maxMagicka, so
-   *  it SUMS with every other producer through V2c's one modifier. */
+   *  1d6 strength, which the wielder gains - over their usual maximum
+   *  too ("more strength than he would have fully rested"). Held
+   *  round: 12 game minutes after the last strike, both increases
+   *  reset. The constant fold adds the magicka increase into
+   *  mods.maxMagicka, so it SUMS with every other producer through
+   *  V2c's one modifier. */
   [ARTIFACTS.MaceOfMolagBal, {
     constant({ entity, mods }) {
       const st = maceState(entity);
@@ -187,23 +195,44 @@ const HANDLERS = new Map([
       const st = maceState(entity);
       if (st && nowMinutes > (st.lastStrikeTime ?? 0) + MACE_MAX_INCREASE_ROUNDS) {
         st.maxMagickaIncrease = 0;
-        st.statMods = {};
+        st.statMaxMods = {};   // SetStatMaxMod(Strength, 0) (:75)
+        st.statMods = {};   // SetStatMod(Strength, 0) (:76)
       }
     },
+    /** MACE-MAX (FIELD BUGS 2026-10-13e): UnequipHeldItem's bundle sweep (EntityEffectManager.cs:1073-1083) - the
+     *  live effect is the Held bundle StartHeldItem assigned when the Mace was worn (:1045-1061, `FromEquippedItem`),
+     *  and taking the Mace off removes it with its mods, its max mods and its magicka increase; a Mace worn again
+     *  starts a fresh one. The entry is not item-pinned (a pin is stripped from the save - save.js - and DFU saves
+     *  this effect's state), so its end is this door, and the decay above never runs for a Mace no longer worn. */
+    unequipped({ entity }) {
+      const st = maceState(entity);
+      if (st) entity.activeEffects.splice(entity.activeEffects.indexOf(st), 1);
+    },
     strikes({ entity, target, damage, nowMinutes, rolls = Math.random }) {
-      if (!entity || !target || damage === 0) return null;
+      if (!entity || !target || damage === 0 || target.warded) return null;   // AUDIT FB1018f L1-2: a ward lands nothing, so it gives nothing (VAMPIRIC-WARD's law)
       if (savingThrow(ELEMENTS.Magic, EFFECT_FLAGS.Magic, target, 0, rolls) === 0) return null;
       const st = maceState(entity, true);
       if ((target.magicka ?? 0) > 0) {
         const drained = Math.min(target.magicka, damage);
         target.magicka -= drained;
         const overflow = (entity.magicka ?? 0) + drained - (entity.maxMagicka ?? 0);
-        if (overflow > 0) st.maxMagickaIncrease += overflow;
+        if (overflow > 0) {
+          // MACE-MAX: ChangeMaxMagickaModifier(overflow) AT ONCE (:117-123 - "Immediately set increase to spell
+          // point maximum to absorb all spell points drained"), beside the live effect's tally the constant fold
+          // re-applies every round. The tally alone moved the max at the next round, so a second strike in the same
+          // round measured its overflow against the old max and counted the first's again (two 10-point drains on
+          // a full pool: an increase of 30, not 20). The modifier is the one the live MaxMagicka accessor reads
+          // (chargen.js defineLiveMaxMagicka) and the fold rewrites from the tally.
+          entity.maxMagickaModifier = (entity.maxMagickaModifier ?? 0) + overflow;
+          st.maxMagickaIncrease += overflow;
+        }
         entity.magicka = (entity.magicka ?? 0) + drained;
       } else {
         // Random.Range(1, 7) - 1d6
         const strengthDrained = 1 + Math.min(5, Math.floor(rolls() * 6));
         drainStrength(target, strengthDrained);
+        // MACE-MAX: ChangeStatMaxMod then ChangeStatMod (:138-139) - the max too, or a wielder at 100 gains nothing
+        (st.statMaxMods ??= {}).strength = (st.statMaxMods.strength ?? 0) + strengthDrained;
         st.statMods.strength = (st.statMods.strength ?? 0) + strengthDrained;
       }
       st.lastStrikeTime = nowMinutes;
@@ -221,7 +250,7 @@ const HANDLERS = new Map([
   [ARTIFACTS.SanguineRose, {
     used({ ctx }) {
       const nearby = (ctx?.nearbyFoes?.(SUMMON_ENEMY_RANGE) ?? []).filter((n) => n.team !== 'PlayerAlly');
-      if (!nearby.length) { ctx?.say?.(NO_MONSTERS_NEARBY_TEXT); return null; }
+      if (!nearby.length) { ctx?.say?.(noMonstersNearbyText()); return null; }
       ctx?.spawnAlliedFoe?.(MT.Daedroth);
       return { durabilityLoss: SUMMON_DURABILITY_LOSS };
     },
@@ -268,13 +297,13 @@ const HANDLERS = new Map([
   [ARTIFACTS.SkullOfCorruption, {
     used({ ctx }) {
       const nearby = (ctx?.nearbyFoes?.(SUMMON_ENEMY_RANGE) ?? []).filter((n) => n.team !== 'PlayerAlly');
-      if (!nearby.length) { ctx?.say?.(NO_MONSTERS_NEARBY_TEXT); return null; }
+      if (!nearby.length) { ctx?.say?.(noMonstersNearbyText()); return null; }
       let nearest = nearby[0];
       for (const n of nearby.slice(1)) {
         if ((n.distance ?? Infinity) < (nearest.distance ?? Infinity)) nearest = n;
       }
-      if (nearest.team === 'PlayerAlly') { ctx?.say?.(NO_MONSTERS_NEARBY_TEXT); return null; }   // :67-71, unreachable past the filter
-      if (nearest.mobileType == null) { ctx?.say?.(NO_MONSTERS_NEARBY_TEXT); return null; }
+      if (nearest.team === 'PlayerAlly') { ctx?.say?.(noMonstersNearbyText()); return null; }   // :67-71, unreachable past the filter
+      if (nearest.mobileType == null) { ctx?.say?.(noMonstersNearbyText()); return null; }
       ctx?.spawnAlliedFoe?.(nearest.mobileType);
       return { durabilityLoss: SUMMON_DURABILITY_LOSS };
     },

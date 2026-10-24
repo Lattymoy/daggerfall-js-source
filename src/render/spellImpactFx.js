@@ -16,7 +16,7 @@
 //
 // Each burst also throws a short coloured light (`light()`) the host lights the walls with.
 //
-// The duel wall's law (render/duelWall.js, render/gateFx.js): ADDED onto the frame (ONE, ONE) so it only brightens,
+// The duel wall's law (render/duelWall.js, render/gate/gateFx.js): ADDED onto the frame (ONE, ONE) so it only brightens,
 // depth-tested against the world and never writing depth, fogged by the renderer's one fog block. One instanced quad
 // per spark, bolt segment, glint, ring or pool; the simulation is plain JS and the pass only draws what it is handed.
 // Not a DFU member.
@@ -39,6 +39,7 @@ export const FX_MAX_INSTANCES = 2400;
 export const FX_MAX_PARTS = 1500;
 /** The narrowest a spark may stand on the screen, as an angle of the eye's view - a burst across a hall still reads. */
 export const FX_MIN_RAD = 0.0016;
+const NO_HAZE = new Float32Array(8);   // BANTHA1: uJungleHaze off ([1].x 0)
 
 /** The colours: white-hot at birth, the element's colour, what it cools to; and the light it throws (colour x level).
  *  ART-COLOUR: for the five elements these are only the FIRST GUESS - each is replaced by its own missile art's colour
@@ -856,12 +857,17 @@ void main() {
 }`;
 
 /** THE PASS: one program, one quad, one instance buffer, re-filled per frame. */
+/** SHADER-STALL: the pass's one program, as its constructor builds it - what the warm starts ahead of the build
+ *  (scenes/hostMagic.js; render/glProgram.js startPrograms). */
+export const SPELL_IMPACT_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[SPELL_FX_VS, SPELL_FX_FS]]));
+
 export class SpellImpactPass {
   constructor(gl) {
     this.gl = gl;
-    this.prog = buildProgram(gl, SPELL_FX_VS, SPELL_FX_FS, 'spell impact');
+    const [[vs, fs]] = SPELL_IMPACT_PROGRAMS;
+    this.prog = buildProgram(gl, vs, fs, 'spell impact');
     this.u = {};
-    for (const n of ['uVP', 'uEye', 'uRight', 'uUp', 'uMinRad', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus']) this.u[n] = gl.getUniformLocation(this.prog, n);
+    for (const n of ['uVP', 'uEye', 'uRight', 'uUp', 'uMinRad', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']) this.u[n] = gl.getUniformLocation(this.prog, n);
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
     this.quad = gl.createBuffer();
@@ -888,7 +894,7 @@ export class SpellImpactPass {
   }
 
   /** Draw `count` instances of `buf` under this frame's camera and fog (`fog` the renderer's: mode, density, range,
-   *  camPos, focus). Leaves the renderer's baseline: no blend, depth written, faces culled. */
+   *  camPos, focus, haze). Leaves the renderer's baseline: no blend, depth written, faces culled. */
   draw(buf, count, proj, view, eye, fog = null) {
     this.drawn = 0;
     if (!(count > 0) || !proj || !view) return 0;
@@ -905,6 +911,7 @@ export class SpellImpactPass {
     gl.uniform2fv(u.uFogRange, fog?.range ?? [0, 1]);
     gl.uniform3fv(u.uCamPos, fog?.camPos ?? eye);
     if (u.uFocus) gl.uniform4fv(u.uFocus, fog?.focus ?? [0, 0, 0, 0]);
+    if (u.uJungleHaze) gl.uniform4fv(u.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1: the jungle's haze (renderer.setJungleHaze)
     gl.bindVertexArray(this.vao);
     gl.bindBuffer(gl.ARRAY_BUFFER, this.inst);
     gl.bufferSubData(gl.ARRAY_BUFFER, 0, buf, 0, count * FX_FLOATS);

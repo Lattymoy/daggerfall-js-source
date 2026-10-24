@@ -45,7 +45,7 @@ arrays, the same in every arm of an A/B).
 | allocated a frame (collected objects included) | - | 2.1 MB, 1.1 MB of it in the shadow replays |
 
 Outside the frame, on their own timers (a cost a second, not a frame - at ~0.4 fps here they read as a frame's): the
-music synth (~2.2 ms a second here), and the movable HUD's sweep (`ui/hudLayout.js`, ~31 `querySelectorAll` a sweep,
+music synth (~2.2 ms a second here), and the movable HUD's sweep (`ui/hud/hudLayout.js`, ~31 `querySelectorAll` a sweep,
 on a 250 ms interval AND from the HUD's frame tick, so about eight sweeps a second where four were meant).
 
 ## PERF-ON3 — the chat roster, derived once and not once a frame
@@ -73,7 +73,7 @@ online while the chat was open, for a list that had not changed.
   with the count, the tab's word and the open menu, before it builds its repaint key.
 
 After: 0.03 ms a frame at 500 online, 0.08 at 1,000 (a join every 30 frames: 0.04 and 0.12). Pins:
-`test/perfon3.test.js` (3) - the old rosterRows is the oracle over six seeded 260-step stories through every tab's
+`test/net/perfon3.test.js` (3) - the old rosterRows is the oracle over six seeded 260-step stories through every tab's
 source; the savings by identity and by count (no localeCompare); the panel repaints on every change it repainted on
 before. Mutants: `tools/mutants/perfon3.json`, 14, all dead; ACC3c-11 and GUILD1c's row mutants re-aimed by content.
 
@@ -101,7 +101,7 @@ no dynamic record no lantern's dynamic scan is asked: built every frame, a still
 2,000 flats paid 0.31 -> 0.78 ms a frame for lists nobody read (the audit's own measure). A lantern ABOUT TO DRAW
 a face then asks its placed batches of their quads, once a frame (`_candidateQuads`: none in that grown cube, and the
 batch leaves its lists - and a record left with no flat leaves them too). Never in the walk: the PERF-EXT review's law
-is that a still room drawn whole reads no placement a frame (`test/perfexta.test.js`), and the first cut of this slice,
+is that a still room drawn whole reads no placement a frame (`test/render/perfexta.test.js`), and the first cut of this slice,
 which asked every lantern's quads in the walk, broke it - its own suite said so. The faces and `_dynamicNear` then walk
 only the candidates, in the records' own order, and ask every question they asked before - so a face draws exactly
 what it drew. A sphere with a NaN on any axis is always a candidate (the planes never cull one; `cubeKeeps` carries the
@@ -110,7 +110,7 @@ and a lantern placed by a NaN gets none (its faces walk everything, as before). 
 axes or more is kept too (B5 - a plane meets it as a NaN), a negative radius reaches far + r (B6), and discard() empties
 every lantern's lists, so none holds a batch past the frame (B4).
 
-**Held.** `test/perfshadow1.test.js` (4): every draw of every frame - program, VAO, framebuffer, count, offset, order -
+**Held.** `test/render/perfshadow1.test.js` (4): every draw of every frame - program, VAO, framebuffer, count, offset, order -
 against the same pass with the pre-pass off, over random towns by night and day, steady and not; the saving by count (a
 far moving wood is read by the main pass and the air pass alone; a wood whose sphere holds four lanterns' cubes and no
 tree of it is dropped by one cube query a lantern, where every face walked its placements and bound its program); and
@@ -118,7 +118,7 @@ the cube against the real float32 planes at the edge of a face, near the origin 
 `tools/mutants/perfshadow1.json`: 19, all dead; and PERF-EXT's and WEEDS1's 98 records (`perfexta.json` 54,
 `perfextb.json` 36, `weeds1.json` 8 - 45 of them aimed at the replay, the rest at the renderer, the bounds, the world
 host and the flats' distance; AUDIT 637 D10: this line called them all the replay's) still die over it - 97 dead,
-PERF-EXT11-9 equivalent as recorded, re-run over the audited code. AUDIT 637's pins are `test/audit637_shadow.test.js`
+PERF-EXT11-9 equivalent as recorded, re-run over the audited code. AUDIT 637's pins are `test/render/audit637_shadow.test.js`
 (10): every far a light has, the far-96 case end to end, a 40-scene differential fuzz, a corner tree kept with its lean,
 the quads asked under the static cache, still and mixed frames by walk count, discard, and the degenerate edges -
 `tools/mutants/audit637.json` B1a-B6, all dead.
@@ -136,7 +136,7 @@ real-game A/B on a quiet machine.
 of PERF-URL's memo) before looking the key up in a table that forces a handful of keys (nine once the features load).
 0.09 ms a frame of `isOnlinePage` under it, offline, by the profile. The table first now, as `onlineForcedSetting` has
 asked it since AUDIT RETRO1 G2 (AUDIT 637 D8: not "always" - it read the page first at DISC22-A): two pure reads, the
-same answer. `test/perfurl2.test.js` (2); 3 mutants, dead. (A forced key - the sea's own switch is one - still reads the
+same answer. `test/systems/online/perfurl2.test.js` (2); 3 mutants, dead. (A forced key - the sea's own switch is one - still reads the
 page on every read: the rest of that door is item 4 below.)
 
 ## V8'S CEILING — the functions too big to optimize
@@ -207,7 +207,7 @@ container's CPU, or node/Chromium micro-benchmarks over the real modules where n
    shadow and air passes; V8 deoptimized the shadow replay once on it in node ("wrong call target"). A bound method
    kept on the renderer is the same call.~~ SHIPPED 2026-10-09: PERF-VAO1 (`Performance-Online.md`; no gain measured).
 
-7. **The spell effects' first use, per engine** (IMPACTFX; `01-Overview/Field-Bugs-2026-10-06b.md`) - the light's pass
+7. **The spell effects' first use, per engine** (IMPACTFX; `01-Overview/bugs/Field-Bugs-2026-10-06b.md`) - the light's pass
    is compiled inside the frame of the first landing an engine draws (6.8 ms on SwiftShader), not warmed at idle as the
    renderer's own on-demand programs are (PERF-WARM - AUDIT 637 D9: not every program is; the aura ring and the gate
    court's passes build in their first frame too), and each look's sound is baked on its first play (3-8 ms in node).

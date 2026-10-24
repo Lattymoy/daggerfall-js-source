@@ -1,0 +1,11 @@
+[
+  {
+    "name": "SHARE-REVEAL-the-reveal-stays-the-clickers",
+    "file": "src/systems/quest/machine.js",
+    "old": "'GetItem', 'RevealLocation']);",
+    "new": "'GetItem']);",
+    "tests": [
+      "test/systems/quest/fb1013e_sharereveal.test.js"
+    ]
+  }
+]

@@ -71,6 +71,6 @@ const d = (k) => ((m1[k] - m0[k]) * 1000 / FRAMES);
 const sorted = times.slice(1).sort((a, b) => a - b);
 console.log(`peers ${PEERS}  frames ${FRAMES}: per frame - layer JS ${(script / FRAMES).toFixed(3)} ms, recalc style ${d('RecalcStyleDuration').toFixed(3)} ms (${((m1.RecalcStyleCount - m0.RecalcStyleCount) / FRAMES).toFixed(2)}x), layout ${d('LayoutDuration').toFixed(3)} ms (${((m1.LayoutCount - m0.LayoutCount) / FRAMES).toFixed(2)}x), task ${d('TaskDuration').toFixed(3)} ms; frame interval p50 ${sorted[sorted.length >> 1].toFixed(1)} p95 ${sorted[Math.floor(sorted.length * 0.95)].toFixed(1)}`);
 if (errors.length) console.log('errors:', errors.join(' | '));
-// the bench judges its run (test/probehygiene.test.js T3): a page that threw, or a layer that did no work, is no measure
+// the bench judges its run (test/tooling/probehygiene.test.js T3): a page that threw, or a layer that did no work, is no measure
 if (errors.length || !(script > 0) || !Number.isFinite(d('TaskDuration'))) process.exitCode = 1;
 await browser.close(); await server.close();

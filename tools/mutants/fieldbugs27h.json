@@ -5,7 +5,7 @@
     "old": "() => { close(); return bag[arm](); }",
     "new": "() => { const r = bag[arm](); close(); return r; }",
     "tests": [
-      "test/escbook.test.js"
+      "test/ui/escbook.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "() => { close(); return bag[arm](); } : undefined);",
     "new": "() => { close(); return bag[arm](); } : () => close());",
     "tests": [
-      "test/escbook.test.js"
+      "test/ui/escbook.test.js"
     ]
   },
   {
@@ -23,16 +23,16 @@
     "old": "if (action === 'handoff') return;",
     "new": "if (action === 'handoff') { hooks.relock?.(); return; }",
     "tests": [
-      "test/escbook.test.js"
+      "test/ui/escbook.test.js"
     ]
   },
   {
     "name": "ESC-BOOK-stats-door-resumes",
-    "file": "src/ui/enhancedMenu.js",
-    "old": "b.onclick = () => { onAction('handoff'); if (fn() === false) onAction('resume'); };",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "b.onclick = () => { handoff(fn); };",
     "new": "b.onclick = () => { onAction('resume'); if (fn() === false) onAction('resume'); };",
     "tests": [
-      "test/escbook.test.js"
+      "test/ui/escbook.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "({ inventory: () => interiorInventory(), pause: () => interiorPauseHooks() });",
     "new": "({ inventory: () => interiorInventory() });",
     "tests": [
-      "test/f5quests.test.js"
+      "test/ui/f5quests.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "pause: pause ?? (() => pauseDoorHooks()),",
     "new": "pause: () => pauseDoorHooks(),",
     "tests": [
-      "test/escbook.test.js"
+      "test/ui/escbook.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (toPack) pack();",
     "new": "if (toPack) hooks.inventory?.();",
     "tests": [
-      "test/escbook.test.js"
+      "test/ui/escbook.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "} else if (w.stale) updateShieldTextures(item);",
     "new": "}",
     "tests": [
-      "test/shieldout.test.js"
+      "test/combat/shieldout.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "if (w.lastStep !== step - 1) w.stale = true;",
     "new": "if (w.lastStep !== step - 1) w.stale = false;",
     "tests": [
-      "test/shieldout.test.js"
+      "test/combat/shieldout.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "    w.stale = false;\n",
     "new": "",
     "tests": [
-      "test/shieldout.test.js"
+      "test/combat/shieldout.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "const safe = nearestSafeLocation(mapTable, px) ?? nearestSafeLocationAnywhere(maps, px);",
     "new": "const safe = nearestSafeLocation(mapTable, px);",
     "tests": [
-      "test/searise.test.js"
+      "test/player/searise.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "if (d2 < bestDist) { bestDist = d2; best = hit; }",
     "new": "if (!best) { bestDist = d2; best = hit; }",
     "tests": [
-      "test/searise.test.js"
+      "test/player/searise.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "  if (before >= 0 && typeof maps?.loadRegion === 'function') maps.loadRegion(before);\n",
     "new": "",
     "tests": [
-      "test/searise.test.js"
+      "test/player/searise.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    player.stopAutorun();   // SEA-RISE",
     "new": "    // player.stopAutorun();   // SEA-RISE",
     "tests": [
-      "test/searise.test.js"
+      "test/player/searise.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    this._autorun = false;\n    this._toggleRun = false;\n  }",
     "new": "    this._autorun = false;\n  }",
     "tests": [
-      "test/searise.test.js"
+      "test/player/searise.test.js"
     ]
   },
   {
@@ -140,34 +140,34 @@
     "old": "if (!_overlayHeld) _dwBreathTimer += dt;",
     "new": "_dwBreathTimer += dt;",
     "tests": [
-      "test/searise.test.js"
+      "test/player/searise.test.js"
     ]
   },
   {
     "name": "LIST-FIT-grid-tile",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": "  display: flex; align-items: center; justify-content: center; }",
     "new": "  align-items: center; justify-content: center; }",
     "tests": [
-      "test/listfit.test.js"
+      "test/ui/enhanced/listfit.test.js"
     ]
   },
   {
     "name": "MAP-KEEP-live-kept-on-restore",
-    "file": "src/systems/automap.js",
+    "file": "src/systems/automap/automap.js",
     "old": "  // cleared the whole store it had just restored.\n  _inside = false;\n  _liveKey = null;\n  _live = null;\n",
     "new": "  // cleared the whole store it had just restored.\n",
     "tests": [
-      "test/mapkeep.test.js"
+      "test/systems/automap/mapkeep.test.js"
     ]
   },
   {
     "name": "MAP-KEEP-teardown-forgets",
-    "file": "src/systems/automap.js",
+    "file": "src/systems/automap/automap.js",
     "old": "if (wasInside && getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0)",
     "new": "if (getInt('Map', 'AutomapNumberOfDungeons', 0, 100) === 0)",
     "tests": [
-      "test/mapkeep.test.js"
+      "test/systems/automap/mapkeep.test.js"
     ]
   },
   {
@@ -176,16 +176,16 @@
     "old": "{ fromLoad: !!opts.automapFromLoad }",
     "new": "{ fromLoad: false }",
     "tests": [
-      "test/mapkeep.test.js"
+      "test/systems/automap/mapkeep.test.js"
     ]
   },
   {
     "name": "MAP-KEEP-load-fresh",
     "file": "src/scenes/world.js",
-    "old": "{ locationKey: extras.locationKey, fromLoad: true }",
-    "new": "{ locationKey: extras.locationKey, fromLoad: false }",
+    "old": "{ locationKey: extras.locationKey, fromLoad: true, recorded: extras.dungeon ?? {} }",
+    "new": "{ locationKey: extras.locationKey, fromLoad: false, recorded: extras.dungeon ?? {} }",
     "tests": [
-      "test/mapkeep.test.js"
+      "test/systems/automap/mapkeep.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "          automapFromLoad: fromLoad,",
     "new": "          automapFromLoad: false,",
     "tests": [
-      "test/mapkeep.test.js"
+      "test/systems/automap/mapkeep.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "if (!bundle || bundle.bundleType === 'HeldMagicItem') return false;",
     "new": "if (!bundle) return false;",
     "tests": [
-      "test/buffend.test.js"
+      "test/ui/hud/buffend.test.js"
     ]
   },
   {
@@ -212,7 +212,7 @@
     "old": "entries.every((a) => !a.bundleDuel && !a.permanent && ENDABLE_KINDS.has(a.kind))",
     "new": "entries.every((a) => !a.permanent && ENDABLE_KINDS.has(a.kind))",
     "tests": [
-      "test/buffend.test.js"
+      "test/ui/hud/buffend.test.js"
     ]
   },
   {
@@ -221,7 +221,7 @@
     "old": "entries.every((a) => !a.bundleDuel",
     "new": "entries.some((a) => !a.bundleDuel",
     "tests": [
-      "test/buffend.test.js"
+      "test/ui/hud/buffend.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "...Object.values(BUFF_KINDS).filter((k) => k !== 'silenced'),",
     "new": "...Object.values(BUFF_KINDS),",
     "tests": [
-      "test/buffend.test.js"
+      "test/ui/hud/buffend.test.js"
     ]
   },
   {
@@ -239,169 +239,169 @@
     "old": "  if (!canEndBundle(bundle)) return null;\n  dispelBundle(entity, bundleId, { selfCast: true });",
     "new": "  if (!bundle) return null;\n  dispelBundle(entity, bundleId, { selfCast: true });",
     "tests": [
-      "test/buffend.test.js"
+      "test/ui/hud/buffend.test.js"
     ]
   },
   {
     "name": "BUFF-END-hud-all-endable",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "endable: canEndBundle(b),",
     "new": "endable: true,",
     "tests": [
-      "test/buffend.test.js"
+      "test/ui/hud/buffend.test.js"
     ]
   },
   {
     "name": "BUFF-END-tile-without-bundle",
-    "file": "src/ui/hudStatus.js",
+    "file": "src/ui/hud/hudStatus.js",
     "old": "endable: !!e.endable && e.bundleId != null",
     "new": "endable: !!e.endable",
     "tests": [
-      "test/buffend.test.js"
+      "test/ui/hud/buffend.test.js"
     ]
   },
   {
     "name": "BUFF-END-classic-any-button",
-    "file": "src/ui/hudLarge.js",
+    "file": "src/ui/hud/hudLarge.js",
     "old": "if (button !== 2 || windowUp || !cursorActive()) return false;\n  const at = hudPointer();",
     "new": "if (windowUp || !cursorActive()) return false;\n  const at = hudPointer();",
     "tests": [
-      "test/buffend.test.js"
+      "test/ui/hud/buffend.test.js"
     ]
   },
   {
     "name": "BUFF-END-classic-look-held",
-    "file": "src/ui/hudLarge.js",
+    "file": "src/ui/hud/hudLarge.js",
     "old": "if (button !== 2 || windowUp || !cursorActive()) return false;\n  const at = hudPointer();",
     "new": "if (button !== 2 || windowUp) return false;\n  const at = hudPointer();",
     "tests": [
-      "test/buffend.test.js"
+      "test/ui/hud/buffend.test.js"
     ]
   },
   {
     "name": "BUFF-END-classic-item-icon",
-    "file": "src/ui/hudLarge.js",
+    "file": "src/ui/hud/hudLarge.js",
     "old": "if (!hit?.endable) return false;",
     "new": "if (!hit) return false;",
     "tests": [
-      "test/buffend.test.js"
+      "test/ui/hud/buffend.test.js"
     ]
   },
   {
     "name": "BUFF-END-press-swings",
-    "file": "src/ui/hudLarge.js",
+    "file": "src/ui/hud/hudLarge.js",
     "old": "{ event?.preventDefault?.(); return true; }",
     "new": "{ return true; }",
     "tests": [
-      "test/buffend.test.js"
+      "test/ui/hud/buffend.test.js"
     ]
   },
   {
     "name": "BUFF-END-widget-ungated",
-    "file": "src/ui/enhancedHud.js",
+    "file": "src/ui/enhanced/enhancedHud.js",
     "old": "const ending = cursorActive() && !overlayOpen() && !controllerLook();",
     "new": "const ending = !overlayOpen() && !controllerLook();",
     "tests": [
-      "test/buffend.test.js"
+      "test/ui/hud/buffend.test.js"
     ]
   },
   {
     "name": "BUFF-END-stats-end-any",
-    "file": "src/ui/enhancedMenu.js",
-    "old": "    if (canEndBundle(b)) {\n      const end = el('button', 'act', 'End');",
-    "new": "    if (b) {\n      const end = el('button', 'act', 'End');",
+    "file": "src/ui/enhanced/enhancedMenu.js",
+    "old": "    if (canEndBundle(b)) {\n      const end = el('button', 'act', t('pause.effects.end', 'End'));",
+    "new": "    if (b) {\n      const end = el('button', 'act', t('pause.effects.end', 'End'));",
     "tests": [
-      "test/buffend.test.js"
+      "test/ui/hud/buffend.test.js"
     ]
   },
   {
     "name": "HOLD-STEP-no-first-wait",
-    "file": "src/ui/enhancedPort.js",
+    "file": "src/ui/enhanced/enhancedPort.js",
     "old": "Object.freeze({ delay: 400, every: 100, fast: 40, fastAfter: 10 })",
     "new": "Object.freeze({ delay: 100, every: 100, fast: 40, fastAfter: 10 })",
     "tests": [
-      "test/holdstep.test.js"
+      "test/ui/enhanced/holdstep.test.js"
     ]
   },
   {
     "name": "HOLD-STEP-late-quicken",
-    "file": "src/ui/enhancedPort.js",
+    "file": "src/ui/enhanced/enhancedPort.js",
     "old": "n < HOLD_REPEAT.fastAfter ? HOLD_REPEAT.every",
     "new": "n <= HOLD_REPEAT.fastAfter ? HOLD_REPEAT.every",
     "tests": [
-      "test/holdstep.test.js"
+      "test/ui/enhanced/holdstep.test.js"
     ]
   },
   {
     "name": "HOLD-STEP-four-digits",
-    "file": "src/ui/enhancedPort.js",
+    "file": "src/ui/enhanced/enhancedPort.js",
     "old": "\\d{1,3}\\s*$/.test",
     "new": "\\d{1,4}\\s*$/.test",
     "tests": [
-      "test/holdstep.test.js"
+      "test/ui/enhanced/holdstep.test.js"
     ]
   },
   {
     "name": "HOLD-STEP-unclamped",
-    "file": "src/systems/spellMaker.js",
+    "file": "src/systems/spell/spellMaker.js",
     "old": "next[field] = clampSetting(field, Number(value), effectKey);",
     "new": "next[field] = Number(value);",
     "tests": [
-      "test/holdstep.test.js"
+      "test/ui/enhanced/holdstep.test.js"
     ]
   },
   {
     "name": "HOLD-STEP-no-pair-rule",
-    "file": "src/systems/spellMaker.js",
+    "file": "src/systems/spell/spellMaker.js",
     "old": "  next[field] = clampSetting(field, Number(value), effectKey);   // ABSORB-NERF: the effect's own range\n  return applyPairRules(next, field);",
     "new": "  next[field] = clampSetting(field, Number(value), effectKey);\n  return next;",
     "tests": [
-      "test/holdstep.test.js"
+      "test/ui/enhanced/holdstep.test.js"
     ]
   },
   {
     "name": "HOLD-STEP-disabled-takes",
-    "file": "src/ui/spellMakerWindow.js",
+    "file": "src/ui/spell/spellMakerWindow.js",
     "old": "if (!this.enabled(field) || !Number.isFinite(Number(value))) return;",
     "new": "if (!Number.isFinite(Number(value))) return;",
     "tests": [
-      "test/holdstep.test.js"
+      "test/ui/enhanced/holdstep.test.js"
     ]
   },
   {
     "name": "HOLD-STEP-walk-skips-set",
-    "file": "src/ui/enhancedPort.js",
+    "file": "src/ui/enhanced/enhancedPort.js",
     "old": "if (b.down) out.push(b.down); if (b.set) out.push(b.set); if (b.up) out.push(b.up);",
     "new": "if (b.down) out.push(b.down); if (b.up) out.push(b.up);",
     "tests": [
-      "test/holdstep.test.js"
+      "test/ui/enhanced/holdstep.test.js"
     ]
   },
   {
     "name": "HOLD-STEP-release-clicks",
-    "file": "src/ui/enhancedPort.js",
+    "file": "src/ui/enhanced/enhancedPort.js",
     "old": "if (hold.n > 0) { swallowClick = true;",
     "new": "if (hold.n > 99999) { swallowClick = true;",
     "tests": [
-      "test/holdstep.test.js"
+      "test/ui/enhanced/holdstep.test.js"
     ]
   },
   {
     "name": "HOLD-STEP-view-no-setter",
-    "file": "src/ui/enhancedPorts.js",
+    "file": "src/ui/enhanced/enhancedPorts.js",
     "old": "set: live((v) => ed.setValue(field, v)),",
     "new": "set: undefined,",
     "tests": [
-      "test/holdstep.test.js"
+      "test/ui/enhanced/holdstep.test.js"
     ]
   },
   {
     "name": "HOLD-STEP-presses-what-stands-there",
-    "file": "src/ui/enhancedPort.js",
+    "file": "src/ui/enhanced/enhancedPort.js",
     "old": "      const fn = btn && !btn.disabled && btn.dataset.a != null ? acts[Number(btn.dataset.a)] : null;",
     "new": "      const fn = btn && !btn.disabled && btn.dataset.a != null ? acts[Number(btn.dataset.a)] : acts[h.pos];",
     "tests": [
-      "test/holdstep.test.js"
+      "test/ui/enhanced/holdstep.test.js"
     ]
   }
 ]

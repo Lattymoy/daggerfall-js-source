@@ -1,0 +1,312 @@
+[
+  {
+    "name": "CI-TIMES-name-unread",
+    "file": "tools/fileTimes.mjs",
+    "old": "export const fileEvent = (data, cwd = process.cwd()) => data?.nesting === 0 && !!data.file\n  && repoPath(data.file, cwd) === repoPath(resolve(cwd, String(data.name ?? '')), cwd);",
+    "new": "export const fileEvent = (data, cwd = process.cwd()) => data?.nesting === 0 && !!data.file;",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: a top-level test's time taken for its file's"
+  },
+  {
+    "name": "CI-TIMES-any-nesting",
+    "file": "tools/fileTimes.mjs",
+    "old": "data?.nesting === 0 && !!data.file",
+    "new": "data?.nesting >= 0 && !!data.file",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: a subtest named its file's path read as the file"
+  },
+  {
+    "name": "CI-TIMES-any-event",
+    "file": "tools/fileTimes.mjs",
+    "old": "  if (ev?.type !== 'test:complete' || !fileEvent(ev.data, cwd)) return null;",
+    "new": "  if (!fileEvent(ev?.data, cwd)) return null;",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: a pass or a fail event read as the file's time"
+  },
+  {
+    "name": "CI-TIMES-unrounded",
+    "file": "tools/fileTimes.mjs",
+    "old": "[repoPath(ev.data.file, cwd), Math.round(ms)]",
+    "new": "[repoPath(ev.data.file, cwd), ms]",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: the record in fractions of a millisecond"
+  },
+  {
+    "name": "CI-TIMES-negative-time",
+    "file": "tools/fileTimes.mjs",
+    "old": "  return Number.isFinite(ms) && ms >= 0 ?",
+    "new": "  return Number.isFinite(ms) ?",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: a negative time recorded"
+  },
+  {
+    "name": "CI-TIMES-held-dropped",
+    "file": "tools/fileTimes.mjs",
+    "old": "  const all = { ...held, ...times };",
+    "new": "  const all = { ...times };",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: a second runner's write loses the first's files"
+  },
+  {
+    "name": "CI-TIMES-held-over-new",
+    "file": "tools/fileTimes.mjs",
+    "old": "  const all = { ...held, ...times };",
+    "new": "  const all = { ...times, ...held };",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: a file timed again keeps its old time"
+  },
+  {
+    "name": "CI-TIMES-unsorted",
+    "file": "tools/fileTimes.mjs",
+    "old": "Object.fromEntries(Object.keys(all).sort().map(",
+    "new": "Object.fromEntries(Object.keys(all).map(",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: the record in run order, a diff of noise"
+  },
+  {
+    "name": "CI-TIMES-record-unwritten",
+    "file": "tools/failSummary.mjs",
+    "old": "  if (RECORD && Object.keys(times).length) {",
+    "new": "  if (false && RECORD) {",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: the shard records nothing"
+  },
+  {
+    "name": "CI-TIMES-path-left-in-env",
+    "file": "tools/failSummary.mjs",
+    "old": "delete process.env.TEST_TIMES_RECORD;\n",
+    "new": "\n",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: a runner a test starts writes its made files into the shard's record"
+  },
+  {
+    "name": "CI-TIMES-file-times-unkept",
+    "file": "tools/failSummary.mjs",
+    "old": "    if (timed) times[timed[0]] = timed[1];\n",
+    "new": "",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: the file events read and dropped"
+  },
+  {
+    "name": "CI-TIMES-reporter-off-with-summary",
+    "file": "tools/testShards.mjs",
+    "old": "...(summary || record ? summaryReporters(root) : [])",
+    "new": "...(summary ? summaryReporters(root) : [])",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: a record asked with the summary off writes nothing"
+  },
+  {
+    "name": "CI-TIMES-path-relative",
+    "file": "tools/testShards.mjs",
+    "old": "TEST_TIMES_RECORD: resolve(record) }",
+    "new": "TEST_TIMES_RECORD: record }",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: the record's path read against the runner's root, not the caller's"
+  },
+  {
+    "name": "CI-TIMES-env-always",
+    "file": "tools/testShards.mjs",
+    "old": "  const env = record ? { ...process.env, TEST_TIMES_RECORD: resolve(record) } : undefined;",
+    "new": "  const env = { ...process.env, TEST_TIMES_RECORD: resolve(record || '.') };",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: every runner given a record, wanted or not"
+  },
+  {
+    "name": "CI-TIMES-record-not-handed-on",
+    "file": "tools/testShards.mjs",
+    "old": "  return runTests(files, { times, extra: runnerFlags(argv.slice(1)), record });",
+    "new": "  return runTests(files, { times, extra: runnerFlags(argv.slice(1)) });",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: the shard's --record ignored"
+  },
+  {
+    "name": "CI-TIMES-bare-record-runs",
+    "file": "tools/testShards.mjs",
+    "old": "  if (at > 0 && !record) { console.error('--record wants the file to write the times to'); return 2; }\n",
+    "new": "",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: --record with no file runs on, recording nothing"
+  },
+  {
+    "name": "CI-TIMES-merge-record-under-base",
+    "file": "tools/testTimes.mjs",
+    "old": "    for (const r of records) if (ok(r?.[f])) t = Math.round(r[f]);",
+    "new": "    for (const r of records) if (ok(r?.[f]) && t === undefined) t = Math.round(r[f]);",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: a run's times never replace the old"
+  },
+  {
+    "name": "CI-TIMES-merge-base-dropped",
+    "file": "tools/testTimes.mjs",
+    "old": "    let t = ok(base?.[f]) ? base[f] : undefined;",
+    "new": "    let t;",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: a file this run did not time loses its time"
+  },
+  {
+    "name": "CI-TIMES-merge-gone-kept",
+    "file": "tools/testTimes.mjs",
+    "old": "  for (const f of [...new Set(files)].sort()) {",
+    "new": "  for (const f of [...new Set([...files, ...Object.keys(base ?? {})])].sort()) {",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: a file no longer in the suite kept"
+  },
+  {
+    "name": "CI-TIMES-merge-folders-unread",
+    "file": "tools/testTimes.mjs",
+    "old": "readdirSync(dir, { recursive: true })",
+    "new": "readdirSync(dir)",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: the downloaded records, a folder each, never read"
+  },
+  {
+    "name": "CI-TIMES-merge-base-unread",
+    "file": "tools/testTimes.mjs",
+    "old": "  const base = readTimes(root), files = testFiles(root);",
+    "new": "  const base = {}, files = testFiles(root);",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: the times the run was split by thrown away"
+  },
+  {
+    "name": "CI-TIMES-shards-newest-each",
+    "file": ".github/workflows/verify.yml",
+    "old": "          key: ${{ needs.times.outputs.key }}\n          fail-on-cache-miss: true\n",
+    "new": "          key: ${{ needs.times.outputs.key }}\n          restore-keys: test-times-\n          fail-on-cache-miss: true\n",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: a shard takes the newest it finds - eight shards, eight splits"
+  },
+  {
+    "name": "CI-TIMES-miss-runs-on",
+    "file": ".github/workflows/verify.yml",
+    "old": "          fail-on-cache-miss: true\n",
+    "new": "",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: a key gone between the lookup and the shard - the shard splits by other times"
+  },
+  {
+    "name": "CI-TIMES-shards-unrecorded",
+    "file": ".github/workflows/verify.yml",
+    "old": " --record \"$RUNNER_TEMP/test-times.json\"\n",
+    "new": "\n",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: no shard records"
+  },
+  {
+    "name": "CI-TIMES-upload-fails-the-shard",
+    "file": ".github/workflows/verify.yml",
+    "old": "        continue-on-error: true   # the next run's balance, never this run's verdict\n",
+    "new": "",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: an artifact service's hiccup turns a green shard red"
+  },
+  {
+    "name": "CI-TIMES-rerun-cannot-replace",
+    "file": ".github/workflows/verify.yml",
+    "old": "          overwrite: true   # a re-run of the shard replaces its own record\n",
+    "new": "",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: a re-run shard's upload refused - its record the first attempt's"
+  },
+  {
+    "name": "CI-TIMES-shards-ahead-of-lookup",
+    "file": ".github/workflows/verify.yml",
+    "old": "    needs: times\n    runs-on: ubuntu-latest\n",
+    "new": "    runs-on: ubuntu-latest\n",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: the shards start before the times are found"
+  },
+  {
+    "name": "CI-TIMES-lookup-downloads",
+    "file": ".github/workflows/verify.yml",
+    "old": "          restore-keys: test-times-\n          lookup-only: true\n",
+    "new": "          restore-keys: test-times-\n",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: the lookup downloads what it only names"
+  },
+  {
+    "name": "CI-TIMES-save-out-of-reach",
+    "file": ".github/workflows/test-times.yml",
+    "old": "          key: test-times-${{ github.run_id }}-${{ github.run_attempt }}",
+    "new": "          key: times-${{ github.run_id }}-${{ github.run_attempt }}",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: the saved times never found by the lookup's prefix"
+  },
+  {
+    "name": "CI-TIMES-records-merged-flat",
+    "file": ".github/workflows/test-times.yml",
+    "old": "          merge-multiple: false\n",
+    "new": "          merge-multiple: true\n",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: the eight records, one name, laid over each other - one shard's times survive"
+  },
+  {
+    "name": "CI-TIMES-check-waits",
+    "file": ".github/workflows/check.yml",
+    "old": "  check:\n    if: ${{ always() }}\n    needs: [verify]\n",
+    "new": "  check:\n    if: ${{ always() }}\n    needs: [verify, times]\n",
+    "tests": [
+      "test/tooling/citimes.test.js"
+    ],
+    "why": "CI-TIMES: the PR's check waits on the save"
+  }
+]

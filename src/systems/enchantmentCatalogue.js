@@ -10,7 +10,7 @@
 // spell maker has to supply.
 //
 // THE SIGN IS THE MECHANIC, and M3's own header described it
-// backwards - corrected there and pinned in test/enchanting.test.js.
+// backwards - corrected there and pinned in test/systems/enchanting.test.js.
 // A POWER costs POSITIVE points. A SIDE EFFECT costs NEGATIVE points,
 // so adding one to the total REDUCES it: taking a drawback BUYS you
 // budget. That is the whole trade the item maker offers, and it is
@@ -49,8 +49,10 @@
 // filter.
 
 import { SKILL_COUNT, SKILL_NAMES } from './skills.js';
-import { MOBILE_TYPES } from '../characters/mobileTypes.js';
-import { ENEMY_NAMES } from '../characters/enemyBasics.js';
+import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
+import { ENEMY_NAMES } from '../characters/enemy/enemyBasics.js';
+import { localizedStrings } from './textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language
+import { getLocalizedSpellName, getLocalizedEnemyName } from './textManager.js';   // L10N3e: a spell's and a soul's name, by their own ids
 
 /** The ClassicParam a SINGLE-cost effect mints (AbsorbsSpells:45 and
  *  its five siblings all write `ClassicParam = -1`). It is a real
@@ -183,6 +185,35 @@ export function enchantmentParamValues(type) {
  *  CastWhen* - Levitate, not spell zero. */
 export const defaultParam = (type) => enchantmentParamValues(type)[0];
 
+/** L10N3d: DFU reads both of an enchantment's names through TextManager
+ *  - GroupName is `GetLocalizedText(EffectKey)` (AbsorbsSpells.cs:35 and
+ *  every sibling) and each setting's SecondaryDisplayName
+ *  `GetLocalizedText(classicTextKeys[i])` (BadRepWith.cs:60 and every
+ *  sibling with a param list). These are the rows whose English the port
+ *  holds as DFU's table has it; the other names and labels are spelled
+ *  their own way here ("Absorbs Spells" for DFU's "Absorbs spells",
+ *  "During Winter" for "during Winter") and stay as they are. */
+const ENCHANTMENT_TEXT = localizedStrings({
+  FeatherWeight: 'Feather Weight', IncreasedWeightAllowance: 'Increased Weight Allowance',
+  commoners: 'Commoners', merchants: 'Merchants', scholars: 'Scholars', nobility: 'Nobility', underworld: 'Underworld', all: 'All',
+  add25Percent: '25% additional', add50Percent: '50% additional',
+  allTheTime: 'all the time', inSunlight: 'in sunlight', inHolyPlaces: 'in holy places', inDarknessLower: 'in darkness',
+  undead: 'Undead', daedra: 'Daedra', humanoid: 'Humanoid', animalsUpper: 'Animals',
+  atRange: 'at range', whenStrikes: 'when strikes',
+});
+/** Those effects' classicTextKeys, in ClassicParam order. */
+const REP_KEYS = ['commoners', 'merchants', 'scholars', 'nobility', 'underworld', 'all'];   // BadRepWith.cs / GoodRepWith.cs
+const VS_KEYS = ['undead', 'daedra', 'humanoid', 'animalsUpper'];                         // LowDamageVs.cs / PotentVs.cs
+const LABEL_KEYS = Object.freeze({
+  BadRepWith: REP_KEYS, GoodRepWith: REP_KEYS,
+  IncreasedWeightAllowance: ['add25Percent', 'add50Percent'],
+  ItemDeteriorates: ['allTheTime', 'inSunlight', 'inHolyPlaces'],
+  LowDamageVs: VS_KEYS, PotentVs: VS_KEYS,
+  RegensHealth: ['allTheTime', 'inSunlight', 'inDarknessLower'],
+  UserTakesDamage: ['inSunlight', 'inHolyPlaces'],
+  VampiricEffect: ['atRange', 'whenStrikes'],
+});
+
 /** The parameter labels DFU comments each cost with. A single-cost
  *  effect has none, and EnhancesSkill's are the skill names, which
  *  skills.js already owns - so it has none here either. */
@@ -193,14 +224,20 @@ export const defaultParam = (type) => enchantmentParamValues(type)[0];
  *  from there rather than copied. (DFU's own trailing comments beside
  *  the SoulBound costs are creature names too, but they are code
  *  comments carrying spawn notes, not what the window prints: two of
- *  them read "Dragonling", and so do the two rows the picker shows.) */
+ *  them read "Dragonling", and so do the two rows the picker shows.)
+ *  L10N3e: a soul's and a spell's name as DFU words them, in the
+ *  player's language - GetLocalizedEnemyName(Enemies[i].ID) (SoulBound
+ *  .cs:64) and GetLocalizedSpellName(id) (CastWhenUsed.cs:67, and
+ *  CastWhenHeld/CastWhenStrikes :67 alike), read here when a list is
+ *  asked for, so the picker's alpha sort orders them as it shows them,
+ *  as DFU's does. */
 export const enchantmentParams = (type) => {
   const row = ENCHANTMENT_COSTS[type];
   if (!row) return [];
   if (type === 'EnhancesSkill') return SKILL_NAMES;
-  if (type === 'SoulBound') return SOUL_NAMES;
-  if (row.labels) return row.labels;
-  if (row.spells) return row.spells.map(([, , name]) => name);
+  if (type === 'SoulBound') return SOUL_NAMES.map((name, id) => getLocalizedEnemyName(id, name));
+  if (row.labels) return LABEL_KEYS[type]?.map((key) => ENCHANTMENT_TEXT[key]) ?? row.labels;
+  if (row.spells) return row.spells.map(([id, , name]) => getLocalizedSpellName(id, name));
   return [];
 };
 export const enchantmentTypes = () => Object.keys(ENCHANTMENT_COSTS);
@@ -395,7 +432,19 @@ export const ITEM_MAKER_FLAGS = Object.freeze({
  *  carry NONE - the two weight effects and the two armor effects -
  *  and IncreasedWeightAllowance sets no flags line at all, which is
  *  the same thing. Those five plus SoulBound are the six that can
- *  appear on an item only ONCE. */
+ *  appear on an item only ONCE.
+ *
+ *  SIDE-ONCE (FIELD BUGS 2026-10-19f; the owner, 2026-10-19: "One copy
+ *  per setting") - A DEPARTURE, Port-Ledger A. DFU gives UserTakesDamage
+ *  and ItemDeteriorates AllowMultipleSecondaryInstances beside the
+ *  primary flag (UserTakesDamage.cs:35, ItemDeteriorates.cs:37), so the
+ *  secondary picker never left a taken setting out
+ *  (DaggerfallItemMakerWindow.cs:849-855): the same setting could be
+ *  picked many times, each copy adding its negative cost to the budget.
+ *  Here neither carries it - a setting is picked once (primaryPick), two
+ *  settings of one effect (in sunlight AND in holy places) still both.
+ *  No effect carries the flag now. A piece made before keeps its copies:
+ *  the item law counts by effect (itemLaw.js makerFindings, `many`). */
 export const ITEM_MAKER_EFFECT_FLAGS = Object.freeze({
   AbsorbsSpells: 1,
   BadReactionsFrom: 1,
@@ -411,14 +460,14 @@ export const ITEM_MAKER_EFFECT_FLAGS = Object.freeze({
   HealthLeech: 1,
   ImprovesTalents: 1,
   IncreasedWeightAllowance: 0,
-  ItemDeteriorates: 1 | 2,
+  ItemDeteriorates: 1,   // SIDE-ONCE: DFU's 1 | 2 - a setting once
   LowDamageVs: 1 | 8,
   PotentVs: 1 | 8,
   RegensHealth: 1,
   RepairsObjects: 1,
   SoulBound: 4,
   StrengthensArmor: 0,
-  UserTakesDamage: 1 | 2,
+  UserTakesDamage: 1,   // SIDE-ONCE: DFU's 1 | 2 - a setting once
   VampiricEffect: 1,
   WeakensArmor: 0,
 });
@@ -477,7 +526,8 @@ export function isExclusiveTo(type, list = [], param) {
  * PowersButton/SideEffectsButton_OnMouseClick's primary list
  * (:637-656). THREE filters, in DFU's order: an effect already on the
  * item unless it allows multiple primaries; a weapon-only effect on a
- * non-weapon; and anything the current lists are exclusive to.
+ * non-weapon; and anything the current lists are exclusive to. And a
+ * fourth of ours (SIDE-ONCE): an effect whose chooser would be empty.
  */
 export function primaryPickerList(selectingPowers, { item = null, powers = [], sideEffects = [], souls = null } = {}) {
   const own = selectingPowers ? powers : sideEffects;
@@ -496,7 +546,13 @@ export function primaryPickerList(selectingPowers, { item = null, powers = [], s
     if (!hasItemMakerFlag(type, ITEM_MAKER_FLAGS.AllowMultiplePrimaryInstances)
       && own.some((e) => e.type === type)) return false;
     if (hasItemMakerFlag(type, ITEM_MAKER_FLAGS.WeaponOnly) && item?.group !== 'Weapons') return false;
-    return !(isExclusiveTo(type, powers) || isExclusiveTo(type, sideEffects));
+    if (isExclusiveTo(type, powers) || isExclusiveTo(type, sideEffects)) return false;
+    // SIDE-ONCE (FIELD BUGS 2026-10-19f; the owner, 2026-10-19): an effect with no setting left to offer is not listed.
+    // DFU lists it and opens an empty chooser (DaggerfallItemMakerWindow.cs:644/:689 ask of the effect, never of its
+    // settings) - Health Leech with all three of its settings on (HealthLeech.cs:37 allows more than one, never one
+    // setting twice), User Takes Damage with both. A departure, Port-Ledger A, with the flags' above.
+    const pick = primaryPick(type, { powers, sideEffects, selectingPowers, souls });
+    return !(pick?.kind === 'choose' && pick.options.length === 0);
   });
 }
 
@@ -563,5 +619,7 @@ export function primaryPick(type, { powers = [], sideEffects = [], selectingPowe
  *  EffectKey IS the enum name; its English strings are that name with
  *  a space before each interior capital, which is the same derivation
  *  U10 made for the skill names. Derived rather than listed, so a
- *  name can never drift from the key it belongs to. */
-export const enchantmentName = (type) => type.replace(/([a-z])([A-Z])/g, '$1 $2');
+ *  name can never drift from the key it belongs to. L10N3d: a name
+ *  whose English is DFU's own reads its TextManager row (above). */
+export const enchantmentName = (type) =>
+  (Object.hasOwn(ENCHANTMENT_TEXT, type) ? ENCHANTMENT_TEXT[type] : type.replace(/([a-z])([A-Z])/g, '$1 $2'));

@@ -30,18 +30,22 @@
 //   naval-sinking     AUDIT NAV1 (the presentation) - a ship going down, A LOOP: the sea rushing into her (a low swell
 //                     that ebbs and comes again), her timbers groaning under it (two long moans, their pitch sagging),
 //                     and the air leaving her in bubbles - its tail crossfaded into its head, so it joins itself
+//   naval-whistle     NEAR-MISS (COMBAT-FEEL, 2026-10-17, the owner: "Improve and polish combat and visuals") - a ball
+//                     going by close: the air it tears, a rush through a narrow band that FALLS as it passes (its
+//                     Doppler - higher coming, lower going), swelling to the moment it is nearest and gone just after,
+//                     a faint tone riding the band; the tenth
 //
 //     node tools/navalSfx.mjs            # writes public/sfx/naval-*.wav
 //     node tools/navalSfx.mjs --raw=dir  # also the 44.1 kHz source
 //
 // DETERMINISTIC: every noise is a seeded PRNG (each clip its own seed), so re-running writes the same bytes - the rule
 // public/README.md sets for anything of ours that ships. Provenance: public/sfx/SOURCES.md; the doctrine allow-list
-// (test/doctrine.test.js) carries a row for each.
+// (test/tooling/doctrine.test.js) carries a row for each.
 
 import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { bake, writeWav8, DF_RATE } from './sndify.mjs';
-import { RATE, rng, seconds, buf, decay, attack, biquad, sweepLowpass, noise, mix, softClip, envelope } from './sfxSynth.mjs';
+import { RATE, rng, seconds, buf, decay, attack, biquad, sweepLowpass, noise, mix, softClip, envelope, bandSweep } from './sfxSynth.mjs';
 
 const OUT = 'public/sfx';
 
@@ -285,6 +289,27 @@ function sinking() {
   return softClip(out.slice(0, n), 1.5);
 }
 
+// ---- a ball going by close (NEAR-MISS) -------------------------------
+function whistle() {
+  const rand = rng(0x5ba11b7);
+  const LEN = 1, PASS = 0.55;
+  // the band's centre: from 1500 Hz coming to 620 going, the fall quickest at the pass (its Doppler)
+  const f = (t) => 1060 + 440 * Math.tanh(-(t - PASS) / 0.07);
+  // its level: swelling to the pass (an inverse square of the distance gone by), cut soon after
+  const swell = (i) => { const t = i / RATE; return attack(i, 30) / (1 + ((t - PASS) / (t < PASS ? 0.16 : 0.09)) ** 2); };
+  const rush = envelope(bandSweep(noise(seconds(LEN), rand), f, 4.5), swell);
+  const out = buf(LEN);
+  mix(out, rush, 0, 1);
+  // a broad rush under it - the air shoved aside
+  mix(out, envelope(biquad(noise(seconds(LEN), rand), { type: 'lowpass', f0: 900, q: 0.7 }), swell), 0, 0.35);
+  // the faint tone the band rides: a sine on the same fall, an octave's ninth below its top
+  const tone = buf(LEN);
+  let ph = 0;
+  for (let i = 0; i < tone.length; i++) { ph += (2 * Math.PI * f(i / RATE) * 0.9) / RATE; tone[i] = Math.sin(ph) * swell(i); }
+  mix(out, tone, 0, 0.12);
+  return softClip(out, 1.3);
+}
+
 // ---- write ----------------------------------------------------------
 export const CLIPS = [
   ['naval-cannon', cannon, 0.95],
@@ -296,6 +321,7 @@ export const CLIPS = [
   ['naval-runout', runout, 0.82],
   ['naval-ready', ready, 0.8],
   ['naval-sinking', sinking, 0.8],
+  ['naval-whistle', whistle, 0.8],   // COMBAT-FEEL NEAR-MISS
 ];
 
 const rawDir = process.argv.find((a) => a.startsWith('--raw='))?.split('=')[1] ?? null;

@@ -5,7 +5,7 @@
     "old": "    if (!covered) compPainted = null;\n",
     "new": "",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (pose && card.hmH != null && pose.hm !== card.hmH) card.hpH = null;\n",
     "new": "",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    card.hmH = pose ? pose.hm : null;\n",
     "new": "",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "pose.hm !== card.hmH) card.hpH = null;",
     "new": "pose.h !== card.hpH) card.hpH = null;",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": ".dfparty-card.mate .dfparty-facemark { opacity: 1; color: var(--bone, #e9e4d9); }\n",
     "new": "",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    facemark.setAttribute('aria-hidden', 'true');",
     "new": "    void 0;",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": ".dfparty-card.mate .dfparty-thin { display: none; }   /* COMPANION-KIT: the crew carry no stamina or magicka */\n",
     "new": ".dfparty-card.mate .dfparty-thin { display: none; }   /* COMPANION-KIT: the crew carry no stamina or magicka */\n.dfparty-card.mate .dfparty-where { opacity: .8; }\n",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      mateOrder.push(card.node);",
     "new": "      order.push(card.node);",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "  root.append(title, list, mateList);",
     "new": "  root.append(title, mateList, list);",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": ".dfparty-mates { display: flex; flex-direction: column; gap: 3px; flex: none; }",
     "new": ".dfparty-mates { display: flex; flex-direction: column; gap: 3px; }",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "gap: 3px; min-height: 0; overflow: hidden; padding-top: 14px;",
     "new": "gap: 3px; padding-top: 14px;",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "overflow: hidden; padding-top: 14px; margin-top: -14px; }",
     "new": "overflow: hidden; }",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": ".dfparty-list:empty, .dfparty-mates:empty { display: none; }\n",
     "new": "",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -122,115 +122,115 @@
     "old": "    if (!same(mateList, mateOrder)) mateList.replaceChildren(...mateOrder);\n",
     "new": "",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "WK-U8-scale-unread",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "  const dpr = clampDpr(screenDpr() * scale);",
     "new": "  const dpr = clampDpr(screenDpr());",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "WK-U8-dpr-dropped",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "return iconOf(e.i, { box: MATE_FX_BOX, dpr });",
     "new": "return iconOf(e.i, { box: MATE_FX_BOX });",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "WK-U8-picture-unsized",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "tile.append(showFitted(img, pics[k]));",
     "new": "img.src = pics[k].src; tile.append(img);",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "WK-U8-tile-12",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "width: ${MATE_FX_BOX}px; height: ${MATE_FX_BOX}px; box-shadow",
     "new": "width: 12px; height: 12px; box-shadow",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "WK-U8-img-forced",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": ".dfnaval-crew-fxe > img { image-rendering: pixelated; display: block; }",
     "new": ".dfnaval-crew-fxe > img { width: 12px; height: 12px; image-rendering: pixelated; display: block; }",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "WK-U8-never-refitted",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "join('')}@${dpr}`, () => {",
     "new": "join('')}`, () => {",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "WK-U8-box-not-the-icons",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "export const MATE_FX_BOX = 16;",
     "new": "export const MATE_FX_BOX = 12;",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "WK-U9-debuff-dark",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": ".dfnaval-crew-fxe.debuff { box-shadow: 0 0 0 1px #e2554c; }",
     "new": ".dfnaval-crew-fxe.debuff { box-shadow: 0 0 0 1px #6b1d14; }",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "WK-P1-packs-unread",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "  for (const c of Array.isArray(party) ? party : []) out.push(...lists(c?.items));\n",
     "new": "",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "WK-P1-vendor-misspelt",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "const NAVAL_VENDOR = 'NavalCombat';",
     "new": "const NAVAL_VENDOR = 'naval-combat';",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "WK-P1-resting-read",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "?.[NAVAL_VENDOR]?.party?.party;",
     "new": "?.[NAVAL_VENDOR]?.party?.resting;",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "WK-P1-malformed-thrown-on",
-    "file": "src/net/realmGoldLaw.js",
+    "file": "src/net/realm/realmGoldLaw.js",
     "old": "for (const c of Array.isArray(party) ? party : [])",
     "new": "for (const c of party ?? [])",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -239,7 +239,7 @@
     "old": "interiorFoePool().filter((f) => f.companion == null), interiorCtx.collider",
     "new": "interiorFoePool(), interiorCtx.collider",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -248,34 +248,34 @@
     "old": "dungeonCtx.foes.filter((f) => f.companion == null), dungeonCtx.collider",
     "new": "dungeonCtx.foes, dungeonCtx.collider",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "WK-P6-reach-unbounded",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "    if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }\n",
+    "old": "    if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }\n",
     "new": "",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "WK-P6-refusal-unsaid",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }",
+    "old": "if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }",
     "new": "if (distance > TREASURE_ACTIVATION_DISTANCE) { return true; }",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "WK-P6-refusal-not-spent",
     "file": "src/player/mobileEnemyActivate.js",
-    "old": "if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(TOO_FAR_AWAY_TEXT); return true; }",
-    "new": "if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(TOO_FAR_AWAY_TEXT); return false; }",
+    "old": "if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(tooFarAwayText()); return true; }",
+    "new": "if (distance > TREASURE_ACTIVATION_DISTANCE) { midScreen?.(tooFarAwayText()); return false; }",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -284,7 +284,7 @@
     "old": "if (distance > TREASURE_ACTIVATION_DISTANCE)",
     "new": "if (distance >= TREASURE_ACTIVATION_DISTANCE)",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -293,7 +293,7 @@
     "old": "setText(count, social?.party ? `${(social?.party?.members?.length ?? rows.length + 1)}/${PARTY_MAX}` : '');",
     "new": "setText(count, `${(social?.party?.members?.length ?? rows.length + 1)}/${PARTY_MAX}`);",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -302,7 +302,7 @@
     "old": "if (card.away || acct.startsWith('companion:')) continue;",
     "new": "if (card.away) continue;",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -311,7 +311,7 @@
     "old": "    if (gained > 0) floatHeal(card, gained);\n    card.hpH = pose ? pose.h : null;\n    paintFx(card, c.fx);",
     "new": "    card.hpH = pose ? pose.h : null;\n    paintFx(card, c.fx);",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -320,7 +320,7 @@
     "old": "    if (pose && card.hpH != null && pose.h < card.hpH) {\n      card.hitFlip = !card.hitFlip;",
     "new": "    if (false) {\n      card.hitFlip = !card.hitFlip;",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -329,7 +329,7 @@
     "old": "      if (ck !== compPainted) { painted = social.version; paintedPose = social.poseVersion ?? 0; paint(); return; }\n",
     "new": "",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -338,7 +338,7 @@
     "old": "/${Math.round(Number(c?.hm) || 0)}|${partyFxKey(c?.fx)}`",
     "new": "/${Math.round(Number(c?.hm) || 0)}`",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -347,34 +347,34 @@
     "old": ".dfparty-card.mate .dfparty-thin { display: none; }",
     "new": ".dfparty-card.mate .dfparty-thin { }",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "LD-NH-art-landing-ignored",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "set('fx', `${partyFxKey(fx)}#${pics.map((u) => (u ? 1 : 0)).join('')}@${dpr}`,",
     "new": "set('fx', `${partyFxKey(fx)}@${dpr}`,",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "LD-NH-debuff-unmarked",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": "`dfnaval-crew-fxe${e.d ? ' debuff' : ''}`",
     "new": "'dfnaval-crew-fxe'",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
     "name": "LD-NH-mate-bar-narrow",
-    "file": "src/ui/navalHud.js",
+    "file": "src/ui/naval/navalHud.js",
     "old": ".dfnaval-crew.mate { width: ${MATE_BAR_W}px; height: 5px; }",
     "new": ".dfnaval-crew.mate { height: 5px; }",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   },
   {
@@ -383,7 +383,7 @@
     "old": "    if (openCompanion(foe)) return true;",
     "new": "    openCompanion(foe); return true;",
     "tests": [
-      "test/auditwatchkit_ui.test.js"
+      "test/systems/auditwatchkit_ui.test.js"
     ]
   }
 ]

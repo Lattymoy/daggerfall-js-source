@@ -33,21 +33,21 @@
 
 import { callInEmpireDebt, SHIP_TYPES, SHIP_INTERIOR_MAP_IDS, LOAN_AMNESTY } from './banking.js';
 import { interiorSceneName, LOOT_CONTAINER_TYPES } from './sceneCache.js';   // RESTORE: a deed's room, by its own name; AUDIT REST III B4: a shop's shelf told from a chest
-import { BUILDING_KEY_0 } from './talkTopics.js';   // RESTORE: the no-key key a ship's room is filed under
-import { firstRestorable } from './saveSlots.js';   // RESTORE: the offline character a realm one came from, on this device
+import { BUILDING_KEY_0 } from './talk/talkTopics.js';   // RESTORE: the no-key key a ship's room is filed under
+import { firstRestorable } from './save/saveSlots.js';   // RESTORE: the offline character a realm one came from, on this device
 import { deductGold } from './court.js';
 import { LEVELING_CLASSIC, newCharacterLevelingSystem } from './oblivionLeveling.js';   // LEVEL-ONLINE-2: a character crossing levels the classic way
 import { levelUpSkillSumAnchor } from './advancement.js';   // LEVEL-ONLINE-2: ...from the start of the level it has
 import { isGoldPieces } from './inventory.js';
 import { crossFleetData } from './fleet.js';   // AUDIT SHIPYARDS L1-2: Come Sail Away's ships cross as a DFU deed does - kept, never sold
-import { COME_SAIL_AWAY_VENDOR } from './comeSailAway.js';   // ...her placed boats' record, by its vendor
-// AUDIT REALM2 S1: the allowance and the measure live in the law the service reads too (net/realmGoldLaw.js), which holds
+import { COME_SAIL_AWAY_VENDOR } from './comeSailAway/comeSailAway.js';   // ...her placed boats' record, by its vendor
+// AUDIT REALM2 S1: the allowance and the measure live in the law the service reads too (net/realm/realmGoldLaw.js), which holds
 // a customs character's first save to them - re-exported here, their home before it; AUDIT REALM2 T2, T3 and T5's
 // counting with them (every container, a boat's hold, a deed at what the realm's bank pays)
-import { REST_ITEM, restItemsOnline } from './restItems.js';   // AUDIT REST-PARTY B4: the supplies stay offline while their online sources are shut (REST-LOOT: open since 2026-10-05; the switch is the way back)
-import { liquidWorthOf, stashedItemLists, carriedItemLists, liquidWealthOf, deedsOf, customsAllowance, CUSTOMS_WEALTH_BASE, CUSTOMS_WEALTH_PER_LEVEL, CUSTOMS_HOUSE_PRICE } from '../net/realmGoldLaw.js';
-import { cardWorthOf, cardRecordWorth, decorOwnOf, isCardRecord, customsCardAllowance } from '../net/cardWorthLaw.js';   // CARDS9: the cards' customs, one law with the service's first save; AUDIT CARDS-6 A1/A2: a pack's worth, and the decor
-import { binderOf, binderDecks, collectionOf, deckHeldRefusal } from './iliacItems.js';   // AUDIT CARDS-6 A9: the copies the binder's decks need, kept last
+import { REST_ITEM, restItemsOnline } from './rest/restItems.js';   // AUDIT REST-PARTY B4: the supplies stay offline while their online sources are shut (REST-LOOT: open since 2026-10-05; the switch is the way back)
+import { liquidWorthOf, stashedItemLists, carriedItemLists, liquidWealthOf, deedsOf, customsAllowance, CUSTOMS_WEALTH_BASE, CUSTOMS_WEALTH_PER_LEVEL, CUSTOMS_HOUSE_PRICE } from '../net/realm/realmGoldLaw.js';
+import { cardWorthOf, cardRecordWorth, decorOwnOf, isCardRecord, customsCardAllowance } from '../net/card/cardWorthLaw.js';   // CARDS9: the cards' customs, one law with the service's first save; AUDIT CARDS-6 A1/A2: a pack's worth, and the decor
+import { binderOf, binderDecks, collectionOf, deckHeldRefusal } from './iliac/iliacItems.js';   // AUDIT CARDS-6 A9: the copies the binder's decks need, kept last
 
 export { stashedItemLists, liquidWealthOf, deedsOf, customsAllowance, CUSTOMS_WEALTH_BASE, CUSTOMS_WEALTH_PER_LEVEL, CUSTOMS_HOUSE_PRICE };
 const lists = (/** @type {any[]} */ ...ls) => ls.filter(Array.isArray);
@@ -155,13 +155,13 @@ export function applyCustoms(snap) {
 
 /**
  * CARDS9 (bible/11-Multiplayer/Tavern-Cards.md section 32): THE CARDS' CUSTOMS, in place (the realm's copy, as all of
- * customs is). A character brings cards worth no more than customsCardAllowance(level) (net/cardWorthLaw.js - the
+ * customs is). A character brings cards worth no more than customsCardAllowance(level) (net/card/cardWorthLaw.js - the
  * starter deck's worth and a sum a level); past it the DEAREST card goes first, one card at a time off its stack, until
  * the rest fit - a stash's before the wagon's before the pack's (customs' own order, carriedItemLists). The offline
  * character keeps every card. Answers `{ kept, worth, allowance }`: the cards that stayed behind, the worth carried
  * before, the allowance.
  *
- * AUDIT CARDS-6 A1: A SEALED PACK IS TAKEN AS A CARD, at its worth (net/cardWorthLaw.js CARD_PACK_WORTH, among the cards
+ * AUDIT CARDS-6 A1: A SEALED PACK IS TAKEN AS A CARD, at its worth (net/card/cardWorthLaw.js CARD_PACK_WORTH, among the cards
  * by it - the dearest first, one rule): customs had read template 581 alone, and a pack crossed to open online.
  * AUDIT CARDS-6 A2: AND WHAT STANDS AS THE OWNER'S OWN DECOR (DECOR2a's decorOwn, decorOwnOf) is taken FIRST among its
  * worth - out of the pack's reach, as a stash is - the item stays offline and the piece it stood as goes with it (REST
@@ -171,7 +171,7 @@ export function applyCustoms(snap) {
  * binder's "Starter Deck" naming cards the realm character no longer held. A card in the pack is spare while the pack
  * holds more of it than the deck that names the most of it (iliacItems.js binderDecks); one outside the pack is spare
  * already (a deck is dealt from the pack - deckHeldRefusal). What a deck still lost is said (applyCustoms' `decksShort`,
- * customsLines): the table deals no deck its binder cannot back, and says why (ui/cardBinderPage.js DECK_REFUSAL_WORDS
+ * customsLines): the table deals no deck its binder cannot back, and says why (ui/card/cardBinderPage.js DECK_REFUSAL_WORDS
  * 'not held').
  * @param {any} snap
  */
@@ -242,7 +242,7 @@ const REST_ITEM_IDS = new Set(Object.values(REST_ITEM));
  * are forced into oblivion"): A CHARACTER COMING IN IS A NEW ONLINE CHARACTER, so it crosses onto the online law's
  * system - Daggerfall's - the one law a new character's system goes through (oblivionLeveling.js
  * newCharacterLevelingSystem). It is run at the Bring online door beside applyCustoms, not inside it - customs is the
- * gold and the deeds, and its report keeps saying only that (ui/enhancedMenu.js bringOnline/customsNow say this line
+ * gold and the deeds, and its report keeps saying only that (ui/enhanced/enhancedMenu.js bringOnline/customsNow say this line
  * first). An Oblivion character's bar is dropped and its skill sum re-anchored at the START of the level it has
  * (advancement.js levelUpSkillSumAnchor) - Daggerfall's sum was never its measure, so read raw it could pay out
  * several levels at once or owe them; a level-up already earned is kept (the anchor is the pending level's, and the
@@ -277,7 +277,7 @@ const crossPieces = (/** @type {any} */ room) => {
 /**
  * RESTORE: EVERY DEED CROSSES, MARKED - a house's slot `crossed`, the ship's `shipCrossed` - with every piece in its
  * room set to pay nothing back. The realm's bank never buys a crossed deed back (banking.js), so it is no deed the
- * allowance counts (net/realmGoldLaw.js deedsOf). Answers what crossed, in the report's words: 'ship' and 'house' each.
+ * allowance counts (net/realm/realmGoldLaw.js deedsOf). Answers what crossed, in the report's words: 'ship' and 'house' each.
  * @param {any} snap
  */
 export function crossDeeds(snap) {
@@ -350,7 +350,7 @@ export function reclaimCustomsDeeds(realm, offline) {
 }
 
 /** RESTORE: the offline character a realm character came from, on this device - its newest save this build can restore
- *  (systems/saveSlots.js firstRestorable) - given to reclaimCustomsDeeds. Null when there is nothing to give back from. */
+ *  (systems/save/saveSlots.js firstRestorable) - given to reclaimCustomsDeeds. Null when there is nothing to give back from. */
 export function reclaimFromDevice(/** @type {any} */ realm, /** @type {unknown} */ origin, { find = firstRestorable } = {}) {
   if (typeof origin !== 'string' || !origin) return null;
   const offline = find((/** @type {any} */ e) => e?.snap?.characterId === origin)?.snap ?? null;
@@ -401,7 +401,7 @@ export function customsLines({ called, owed, wealth, allowance, taken, crossed =
   if (what) lines.push(`${what[0].toUpperCase()}${what.slice(1)} ${before ? 'will come' : 'came'} with you, every piece in ${crossed.length > 1 ? 'them' : 'it'}; the realm's bank does not buy back what comes through customs.`);
   // AUDIT SHIPYARDS L1-2: Come Sail Away's ships come too, by number - sailed in the realm, never sold there
   if (fleet > 0) lines.push(`${fleet === 1 ? 'Your boat' : `Your ${fleet} boats`} ${before ? 'will come' : 'came'} with you; no shipyard in the realm buys a boat that comes through customs.`);
-  if (restKept > 0) lines.push(`Your rest supplies ${before ? 'will stay' : 'stayed'} with your offline character - they are not yet sold in the realm.`);   // AUDIT REST-PARTY B4; AUDIT REST II H13: the Tonics, Salts, Draughts and Candles are rest supplies, not camping
+  if (restKept > 0) lines.push(`Your rest supplies ${before ? 'will stay' : 'stayed'} with your offline character. They are not yet sold in the realm.`);   // AUDIT REST-PARTY B4; AUDIT REST II H13: the Tonics, Salts, Draughts and Candles are rest supplies, not camping
   // CARDS9: the cards past the allowance, the dearest first
   if (cardsKept > 0) lines.push(`Your cards are worth ${cardsWorth} gold; the realm lets a character of this level bring ${cardAllowance}. ${cardsKept} ${cardsKept === 1 ? 'card' : 'cards'}, the dearest, ${before ? 'will stay' : 'stayed'} with your offline character.`);
   // AUDIT CARDS-6 A9: and a binder's deck left naming a card that stayed - the table deals it again once the binder holds it

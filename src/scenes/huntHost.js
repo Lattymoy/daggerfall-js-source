@@ -36,10 +36,10 @@ import {
   hideOfFoe, tierOpen, TIER_RANKS, knifeBand, SKINNING_KNIFE, KNIFE_CHECKS, KNIFE_REFUSALS, HIGH_HIDES_PER_DAY,
   HIGH_HIDE_TIER, TRACKER_M, KNIFE_WHERE, KNIFE_WHERE_WORDS, TRACE_ACT, storesFullIn, goneIn, fullWordsIn,
 } from '../net/professionLaw.js';
-import { enemyDisplayName } from '../characters/enemyBasics.js';
+import { enemyDisplayName } from '../characters/enemy/enemyBasics.js';
 import { createTraceAct } from '../systems/traceAct.js';
-import { actChecksRefusal, foragingToolIn } from '../systems/foragingInstall.js';
-import { materialLabel } from '../systems/profItems.js';
+import { actChecksRefusal, foragingToolIn } from '../systems/foraging/foragingInstall.js';
+import { materialLabel } from '../systems/professions/profItems.js';
 import { liveStat } from '../systems/statMods.js';
 import { getPref } from '../systems/uiPrefs.js';
 import { CORPSE_ACTIVATION_DISTANCE } from '../player/activate.js';
@@ -243,7 +243,7 @@ export function huntKind({ book, bodies, openLoot = null }) {
     actNote: (rep) => {
       if (!rep) return '';
       if (rep.clean) return ' (a clean pelt)';
-      if (rep.torn) return ' (a torn pelt - its part lost)';
+      if (rep.torn) return ' (a torn pelt, its part lost)';
       if (rep.score >= TRACE_ACT.clean) return rep.seconds < TRACE_ACT.minS ? ' (a true line, too quick for a clean pelt)' : ' (a true line, too slow for a clean pelt)';
       return '';
     },

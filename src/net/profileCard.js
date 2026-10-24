@@ -4,7 +4,7 @@
 // gear"): THE CARD A PLAYER HANDS OVER WHEN ASKED, and the law of when they hand it.
 //
 // WHAT IS ON IT is what their own character sheet shows, read by the producers that sheet reads
-// (ui/enhancedCharSheet.js sheetModel): the level, the eight attributes by liveStat over STAT_KEYS_ORDER, and the three
+// (ui/enhanced/enhancedCharSheet.js sheetModel): the level, the eight attributes by liveStat over STAT_KEYS_ORDER, and the three
 // vitals' maxima - health, fatigue at the sheet's /64 display figure, magicka. And the look they wear NOW
 // (net/remotePlayers.js composeLook): the room's copy rode their last hello, and a player who changed their armour in
 // this room still wore the old one there. It leaves through the wire's own projection (validCard), so what is sent is

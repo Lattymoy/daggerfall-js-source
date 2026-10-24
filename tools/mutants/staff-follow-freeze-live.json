@@ -1,0 +1,33 @@
+[
+  {
+    "name": "STAFF-FOLLOW-SHARD-hub-pulled-off-its-shard",
+    "file": "src/net/staffHook.js",
+    "old": "if (!isSocialRoom(hub.room)) hub.join(SOCIAL_ROOM, null);",
+    "new": "if (hub.room !== SOCIAL_ROOM) hub.join(SOCIAL_ROOM, null);",
+    "why": "the hook's hub link is asked back to the bus each frame, hops for ever and is never told `on` (mob: \"follow does not work\")",
+    "tests": [
+      "test/net/staffpanel5live_e2e.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-FREEZE-ASK-asked-inside-the-meter",
+    "file": "src/net/online.js",
+    "old": "this._leaseAskAt = Math.max(now, this._leaseAskAt + LEASE_FRAME_MIN_MS + LEASE_ASK_SLACK_MS) - LEASE_MS;",
+    "new": "this._leaseAskAt = -Infinity;",
+    "why": "a freeze heard a moment after the last lease ask is asked at once, dropped by the hub's meter, and reaches no other room until LEASE_MS on (mob: \"froze a player he still moves\")",
+    "tests": [
+      "test/net/staffpanel5live_e2e.test.js",
+      "test/net/staffpanel5_freeze_client.test.js"
+    ]
+  },
+  {
+    "name": "FOLLOW-OWN-ID-links-take-the-tab-id",
+    "file": "src/net/staffHook.js",
+    "old": "const ownId = () => ({ id: peerId(null), secret: peerSecret(null) });",
+    "new": "const ownId = () => ({});",
+    "why": "a follow's links say hello with the tab's id, the game's own, and the relay replaces the staff member's World tab and room (mob: \"need the follow dropping me to stop\")",
+    "tests": [
+      "test/net/staffpanel5drop_e2e.test.js"
+    ]
+  }
+]

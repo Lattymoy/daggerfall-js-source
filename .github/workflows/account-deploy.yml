@@ -37,40 +37,54 @@ on:
   push:
     branches: [main]
     # EVERY FILE OUTSIDE server-account/ THAT THE WORKER BUNDLES is
-    # listed, and test/accountdeploy.test.js walks the Worker's import
+    # listed, and test/server/accountdeploy.test.js walks the Worker's import
     # graph and holds this list to it. Only identityToken.js was listed
     # until ACC4 - a change to the name filter or the handle shape was
     # bundled into this Worker and did not deploy it.
     # INT1 (bible/06-Systems/Integrity-Arc.md): the judge reads every
-    # realm checkpoint through src/systems/itemLaw.js - the loot's own
+    # realm checkpoint through src/systems/item/itemLaw.js - the loot's own
     # records, spoils and Broker, one law at both ends - so that graph
-    # is listed too (the block after src/systems/wind.js).
+    # is listed too (the block after src/systems/wind/wind.js).
+    # DISCORD-CODE: and the deploy's last step runs tools/discordModCommands.mjs, so its own graph is listed (after this
+    # workflow's own line) - test/server/discord_setup.test.js holds it, and the commands it writes live under
+    # server-account/. No comment inside the list: the pins read it as one run of lines.
     paths:
       - "server-account/**"
       - "src/net/identityToken.js"
+      - "src/net/sessionPassLaw.js"
       - "src/net/staffTeleport.js"
       - "src/net/relayCfg.js"
+      - "src/net/staffCommands.js"
       - "src/net/hubShards.js"
       - "src/net/privateInterior.js"
+      - "src/net/instanceRoom.js"
       - "src/net/boatIdentity.js"
       - "src/net/handleShape.js"
       - "src/net/letterLaw.js"
       - "src/net/nameFilter.js"
       - "src/net/houseLaw.js"
       - "src/net/moderation.js"
+      - "src/net/safety/chatStamp.js"
+      - "src/net/safety/chatFeed.js"
+      - "src/net/grantMeasure.js"
+      - "src/net/grantLaw.js"
+      - "src/net/safety/safetyLaw.js"
+      - "src/net/safety/conduct.js"
       - "src/net/playClock.js"
       - "src/net/renown.js"
       - "src/net/npcChapterLaw.js"
       - "src/systems/gems.js"
-      - "src/systems/guildFactions.js"
+      - "src/systems/guild/guildFactions.js"
       - "src/net/homeLaw.js"
       - "src/net/decorLaw.js"
       - "src/world/npcFlatArchives.js"
       - "src/net/homeVoteLaw.js"
-      - "src/net/guildLaw.js"
+      - "src/net/guild/guildLaw.js"
+      - "src/net/repairLaw.js"
       - "src/net/hallLaw.js"
       - "src/net/heraldryLaw.js"
       - "src/net/townSeatLaw.js"
+      - "src/net/townEconLaw.js"
       - "src/net/tideLaw.js"
       - "src/net/fortLaw.js"
       - "src/net/watchReceipt.js"
@@ -78,54 +92,83 @@ on:
       - "src/net/motherlodeLaw.js"
       - "src/net/boardLaw.js"
       - "src/net/professionLaw.js"
+      - "src/net/firmament/firmamentLaw.js"
+      - "src/net/firmament/firmamentTree.js"
+      - "src/net/questlineClaims.js"
       - "src/net/nodeLaw.js"
+      - "src/world/ethericSea.js"
+      - "src/world/jungle/banthaArea.js"
       - "src/net/skyLaw.js"
       - "src/net/kingdomLaw.js"
+      - "src/net/busyLaw.js"
       - "src/net/recipeLaw.js"
       - "src/net/productRecord.js"
       - "src/net/marketLaw.js"
       - "src/net/vendorLaw.js"
       - "src/net/patronLaw.js"
       - "src/net/writLaw.js"
-      - "src/net/gateLaw.js"
+      - "src/net/craftWritLaw.js"
+      - "src/net/gate/gateLaw.js"
       - "src/formats/mapsTables.js"
-      - "src/systems/foragingCore.js"
+      - "src/systems/foraging/foragingCore.js"
       - "src/systems/gameDate.js"
-      - "src/systems/itemTemplatesData.js"
-      - "src/net/raidLaw.js"
-      - "src/net/gateReceipt.js"
+      - "src/systems/textManager.js"
+      - "src/net/festivalLaw.js"
+      - "src/systems/festival/festivalRows.js"
+      - "src/systems/holidayTables.js"
+      - "src/systems/localizedBook.js"
+      - "src/systems/translationPacks.js"
+      - "src/systems/quest/tables.js"
+      - "src/systems/quest/table.js"
+      - "src/systems/quest/parseUtils.js"
+      - "src/systems/quest/questPatches.js"
+      - "src/systems/item/itemTemplatesData.js"
+      - "src/net/raid/raidLaw.js"
+      - "src/net/gate/gateReceipt.js"
       - "src/net/bossBody.js"
       - "src/net/legalLaw.js"
-      - "src/net/raidReceipt.js"
-      - "src/net/serpentReceipt.js"
-      - "src/net/serpentHoardLaw.js"
-      - "src/net/arenaReceipt.js"
-      - "src/net/arenaLaw.js"
+      - "src/net/raid/raidReceipt.js"
+      - "src/net/serpent/serpentReceipt.js"
+      - "src/net/starfall/starReceipt.js"
+      - "src/net/starfall/starfallLaw.js"
+      - "src/net/serpent/serpentHoardLaw.js"
+      - "src/net/arena/arenaReceipt.js"
+      - "src/net/arena/arenaLaw.js"
       - "src/net/wire.js"
-      - "src/net/siegeRef.js"
-      - "src/net/siegeReceipt.js"
-      - "src/net/duelReceipt.js"
-      - "src/net/wildReceipt.js"
-      - "src/net/wildLaw.js"
-      - "src/systems/wildDropLaw.js"
-      - "src/systems/itemKinds.js"
-      - "src/net/gateMods.js"
+      - "src/net/eliteGates/egShape.js"
+      - "src/net/siege/siegeRef.js"
+      - "src/net/siege/siegeReceipt.js"
+      - "src/net/duel/duelReceipt.js"
+      - "src/net/wild/wildReceipt.js"
+      - "src/net/wild/wildLaw.js"
+      - "src/net/sea/seaBountyLaw.js"
+      - "src/net/sea/seaSeasonLaw.js"
+      - "src/net/sea/seaPrizeLaw.js"
+      - "src/systems/wild/wildDropLaw.js"
+      - "src/systems/wild/wildLeaf.js"
+      - "src/systems/item/itemKinds.js"
+      - "src/net/gate/gateMods.js"
       - "src/net/insignia.js"
       - "src/net/dice.js"
       - "src/net/holdemTable.js"
-      - "src/net/cardLaw.js"
-      - "src/net/cardReceipt.js"
-      - "src/net/iliacTable.js"
-      - "src/net/iliacHand.js"
-      - "src/net/iliacCards.js"
-      - "src/net/iliacReceipt.js"
-      - "src/net/cardWorthLaw.js"
-      - "src/net/realmTradeLaw.js"
+      - "src/net/card/cardLaw.js"
+      - "src/net/card/cardReceipt.js"
+      - "src/net/iliac/iliacTable.js"
+      - "src/net/iliac/iliacHand.js"
+      - "src/net/iliac/iliacCards.js"
+      - "src/net/iliac/iliacReceipt.js"
+      - "src/net/gambit/gambitTable.js"
+      - "src/net/gambit/gambitStakes.js"
+      - "src/net/gambit/gambitReceipt.js"
+      - "src/net/kingsGambit.js"
+      - "src/systems/mathf.js"
+      - "src/net/card/cardWorthLaw.js"
+      - "src/net/realm/realmTradeLaw.js"
       - "src/net/bagLaw.js"
-      - "src/net/guildVaultLaw.js"
+      - "src/net/guild/guildVaultLaw.js"
       - "src/net/canon.js"
-      - "src/net/realmGoldLaw.js"
-      - "src/net/realmSaveCodec.js"
+      - "src/net/realm/realmGoldLaw.js"
+      - "src/net/realm/realmSaveCodec.js"
       - "src/world/mat4.js"
       - "src/characters/nameGen.json"
       - "src/characters/dyes.js"
@@ -133,30 +176,64 @@ on:
       - "src/net/temperLaw.js"
       - "src/systems/potionRecipes.js"
       - "src/characters/itemTemplates.json"
-      - "src/net/sdReceipt.js"
-      - "src/net/sdMarks.js"
+      - "src/net/superDungeon/sdReceipt.js"
+      - "src/net/eliteGates/egReceipt.js"
+      - "src/net/eliteGates/egFeats.js"
+      - "src/net/eliteGates/egLaw.js"
+      - "src/net/eliteGates/egRoute.js"
+      - "src/net/eliteGates/egRouteProof.js"
+      - "src/net/eliteGates/egAscent.js"
+      - "src/net/eliteGates/egRoomLaw.js"
+      - "src/net/eliteGates/egWalkGraph.js"
+      - "src/net/superDungeon/sdBrain.js"
+      - "src/net/eliteGates/egSpanLaw.js"
+      - "src/net/eliteGates/egFragLaw.js"
+      - "src/net/eliteGates/egHeroFrags.js"
+      - "src/assets/egfrags/egRefFrag.law.json"
+      - "src/assets/egfrags/egheroOssuary.law.json"
+      - "src/assets/egfrags/egheroMistStair.law.json"
+      - "src/assets/egfrags/egheroGloam.law.json"
+      - "src/assets/egfrags/egheroEclipse.law.json"
+      - "src/assets/egfrags/egheroCaverns.law.json"
+      - "src/assets/egfrags/egheroStacks.law.json"
+      - "src/assets/egfrags/egheroColonnade.law.json"
+      - "src/assets/egfrags/egheroForgeGut.law.json"
+      - "src/assets/egfrags/egheroClanPit.law.json"
+      - "src/assets/egfrags/egheroDeepCaverns.law.json"
+      - "src/net/eliteGates/egPay.js"
+      - "src/net/eliteGates/egStartLaw.js"
+      - "src/net/superDungeon/sdMarks.js"
       - "src/net/postLaw.js"
-      - "src/systems/wind.js"
+      - "src/net/lostLaw.js"
+      - "src/systems/superDungeon/sdSpoils.js"
+      - "src/systems/eliteGates/egSpoils.js"
+      - "src/systems/eliteGates/egLordArms.js"
+      - "src/net/reportLaw.js"
+      - "src/net/hiddenSeen.js"
+      - "src/systems/wind/wind.js"
       - "src/ai/blowShapes.js"
       - "src/ai/cover.js"
       - "src/ai/foeBlows.js"
       - "src/ai/tactics.js"
       - "src/ai/tacticsClock.js"
       - "src/ai/tells.js"
-      - "src/characters/enemyBasics.js"
-      - "src/characters/enemyMotor.js"
+      - "src/characters/enemy/customEnemies.js"
+      - "src/characters/enemy/enemyBasics.js"
+      - "src/characters/enemy/enemyMotor.js"
       - "src/characters/equipRules.js"
       - "src/characters/equipTable.js"
-      - "src/characters/mobileTypes.js"
+      - "src/characters/mobile/mobileTypes.js"
       - "src/characters/nameHelper.js"
-      - "src/characters/paperdoll.js"
-      - "src/characters/paperdollArt.js"
+      - "src/characters/paperdoll/paperdoll.js"
+      - "src/characters/paperdoll/paperdollArt.js"
       - "src/characters/thunderlockIds.js"
       - "src/characters/weaponStates.js"
       - "src/characters/weapons.js"
+      - "src/combat/clawMetal.js"
       - "src/combat/enemyEquipment.js"
+      - "src/combat/enemyGroups.js"
       - "src/combat/formulas.js"
-      - "src/combat/gunFeel.js"
+      - "src/combat/gun/gunFeel.js"
       - "src/formats/blocksFile.js"
       - "src/formats/bsaFile.js"
       - "src/formats/characterRecord.js"
@@ -168,16 +245,18 @@ on:
       - "src/formats/magicDef.js"
       - "src/formats/mapsFile.js"
       - "src/formats/pakFile.js"
-      - "src/formats/saveTreeFile.js"
+      - "src/formats/save/saveTreeFile.js"
       - "src/formats/spellsStd.js"
       - "src/formats/umRandom.js"
       - "src/formats/woodsFile.js"
-      - "src/formats/worldDataDoor.js"
-      - "src/net/duelSession.js"
-      - "src/net/iliacCards.js"
+      - "src/formats/worldData/worldDataDoor.js"
+      - "src/net/duel/duelSession.js"
+      - "src/net/iliac/iliacCards.js"
+      - "src/player/bodyClamp.js"
       - "src/player/classSkins.js"
       - "src/player/climbing.js"
       - "src/player/exteriorSurface.js"
+      - "src/player/groundRay.js"
       - "src/player/motor.js"
       - "src/player/moveScanner.js"
       - "src/player/parkour.js"
@@ -185,20 +264,26 @@ on:
       - "src/systems/aetheric.js"
       - "src/systems/appRoot.js"
       - "src/systems/appStorage.js"
+      - "src/systems/arcanePaths.js"
       - "src/systems/armorMaterials.js"
       - "src/systems/artifactEffects.js"
       - "src/systems/ayleidStones.js"
       - "src/systems/blowTaken.js"
       - "src/systems/clothingStanding.js"
-      - "src/systems/comeSailAwayItems.js"
-      - "src/systems/comeSailAwayHulls.js"
+      - "src/systems/comeSailAway/comeSailAwayItems.js"
+      - "src/systems/comeSailAway/comeSailAwayHulls.js"
       - "src/systems/concealment.js"
       - "src/systems/conditionRepair.js"
       - "src/systems/courtRules.js"
       - "src/systems/createItemRows.js"
-      - "src/systems/deepWatersFishRows.js"
+      - "src/systems/deepWater/deepWatersFishRows.js"
       - "src/systems/effectBroker.js"
       - "src/systems/effects.js"
+      - "src/systems/eliteGates/weirKeyRow.js"
+      - "src/systems/enemyExpansion/dexIds.js"
+      - "src/systems/enemyExpansion/dexTableText.js"
+      - "src/systems/enemyExpansion/mudexTableText.js"
+      - "src/systems/enemyExpansion/dexCsv.js"
       - "src/systems/enchanting.js"
       - "src/systems/enchantmentCatalogue.js"
       - "src/systems/enchantments.js"
@@ -206,29 +291,33 @@ on:
       - "src/systems/equip.js"
       - "src/systems/features.js"
       - "src/systems/feudLedger.js"
-      - "src/systems/foragingLaw.js"
-      - "src/systems/gateSpoils.js"
+      - "src/systems/foraging/foragingLaw.js"
+      - "src/systems/gate/gateSpoils.js"
       - "src/systems/gilded.js"
       - "src/systems/harmMark.js"
-      - "src/systems/horseCartLaw.js"
-      - "src/systems/iliacItems.js"
+      - "src/systems/horse/horseCartLaw.js"
+      - "src/systems/iliac/iliacItems.js"
+      - "src/systems/iliac/iliacCardWords.js"
       - "src/systems/inventory.js"
       - "src/systems/inventorySession.js"
-      - "src/systems/itemDye.js"
-      - "src/systems/itemFields.js"
-      - "src/systems/itemLaw.js"
-      - "src/systems/itemIds.js"
+      - "src/systems/item/itemDye.js"
+      - "src/systems/item/foundMark.js"
+      - "src/systems/item/itemFields.js"
+      - "src/systems/item/itemLaw.js"
+      - "src/systems/item/itemIds.js"
+      - "src/systems/item/possessedItems.js"
       - "src/systems/bossCards.js"
-      - "src/systems/itemLock.js"
-      - "src/systems/itemTemplates.js"
+      - "src/systems/item/itemLock.js"
+      - "src/systems/item/itemTemplates.js"
       - "src/systems/legacy/heirloom.js"
       - "src/systems/legacy/houseName.js"
+      - "src/systems/legacy/legacyLaw.js"
       - "src/systems/livingWorld/keepsake.js"
       - "src/systems/livingWorld/seed.js"
-      - "src/systems/loot.js"
-      - "src/systems/lootDataTables.js"
-      - "src/systems/lootRarity.js"
-      - "src/combat/techniqueRoster.js"
+      - "src/systems/loot/loot.js"
+      - "src/systems/loot/lootDataTables.js"
+      - "src/systems/loot/lootRarity.js"
+      - "src/combat/technique/techniqueRoster.js"
       - "src/systems/masterSkills.js"
       - "src/systems/mentorMode.js"
       - "src/systems/modSaveData.js"
@@ -238,60 +327,67 @@ on:
       - "src/systems/naval/treasureCharts.js"
       - "src/systems/naval/harbourBoard.js"
       - "src/systems/naval/navalShips.js"
-      - "src/combat/bloodArt.js"
+      - "src/combat/blood/bloodArt.js"
       - "src/systems/nearbyObjects.js"
-      - "src/systems/onlineLane.js"
+      - "src/systems/online/onlineLane.js"
       - "src/systems/pageQuery.js"
-      - "src/systems/profTemplates.js"
+      - "src/systems/professions/profTemplates.js"
       - "src/systems/races.js"
       - "src/systems/racialLive.js"
       - "src/systems/rarityTier.js"
-      - "src/systems/restItemRows.js"
-      - "src/systems/rriIndex.js"
-      - "src/systems/rriItems.js"
-      - "src/systems/rriRealism.js"
+      - "src/systems/rest/restItemRows.js"
+      - "src/systems/roleplayRealismItems/rriIndex.js"
+      - "src/systems/roleplayRealismItems/rriItems.js"
+      - "src/systems/roleplayRealismItems/rriRealism.js"
       - "src/systems/sceneCache.js"
-      - "src/systems/settings.js"
-      - "src/systems/settingsDefaults.js"
+      - "src/systems/settings/settings.js"
+      - "src/systems/settings/settingsDefaults.js"
       - "src/systems/shotTally.js"
-      - "src/systems/sigil.js"
-      - "src/systems/sigilBroker.js"
-      - "src/systems/sigilSets.js"
+      - "src/systems/sigil/sigil.js"
+      - "src/systems/sigil/sigilBroker.js"
+      - "src/systems/sigil/sigilSets.js"
       - "src/systems/skillSoftcap.js"
       - "src/systems/skills.js"
       - "src/systems/soundClips.js"
       - "src/systems/specialAdvantages.js"
+      - "src/systems/spell/spellPower.js"
       - "src/systems/spellcast.js"
       - "src/systems/spellcost.js"
+      - "src/systems/starfall/starglassRow.js"
       - "src/systems/statMods.js"
+      - "src/systems/stolenGoods.js"
       - "src/systems/survival/difficulty.js"
       - "src/systems/survival/food.js"
       - "src/systems/survival/items.js"
       - "src/systems/survival/needs.js"
       - "src/systems/survival/switch.js"
       - "src/systems/survival/temperature.js"
+      - "src/systems/pistolet.js"
       - "src/systems/textureReplacement.js"
       - "src/systems/thunderlock.js"
       - "src/systems/timeScale.js"
       - "src/systems/transport.js"
-      - "src/systems/travelPace.js"
-      - "src/systems/travelPaths.js"
+      - "src/systems/travel/travelPace.js"
+      - "src/systems/travel/travelPaths.js"
       - "src/systems/uiPrefs.js"
-      - "src/systems/wagonKinds.js"
+      - "src/systems/wagon/wagonKinds.js"
       - "src/systems/walletItem.js"
-      - "src/systems/upkeepItemRows.js"
+      - "src/systems/upkeep/upkeepItemRows.js"
+      - "src/systems/upkeep/upkeepTiers.js"
       - "src/world/buildingNames.js"
       - "src/world/meshReader.js"
       - "src/world/perlin.js"
       - "src/world/puddleDry.js"
       - "src/world/puddleMask.js"
-      - "src/world/roadNetwork.js"
+      - "src/world/road/pathData.js"
+      - "src/world/road/roadNetwork.js"
       - "src/world/spawnedDungeons.js"
-      - "src/world/terrainSampler.js"
-      - "src/world/terrainSurface.js"
-      - "src/world/terrainTiles.js"
-      - "src/world/waterCorners.js"
-      - "src/systems/partyScale.js"
+      - "src/world/terrain/terrainSampler.js"
+      - "src/world/terrain/terrainSurface.js"
+      - "src/world/terrain/terrainTiles.js"
+      - "src/world/water/waterCorners.js"
+      - "src/world/weather.js"
+      - "src/systems/party/partyScale.js"
       - "src/systems/books.js"
       - "src/systems/booksData.js"
       - "src/formats/bookFile.js"
@@ -299,11 +395,19 @@ on:
       - "src/formats/rscTable.js"
       - "src/systems/portBooks.js"
       - "src/systems/potions.js"
-      - "src/systems/lootThemes.js"
+      - "src/systems/loot/lootThemes.js"
       - "vendor/class-skins/skins.json"
       - "vendor/foraging/ItemTemplates.json"
       - "vendor/iliac-puddle-no-more/ItemTemplates.json"
       - ".github/workflows/account-deploy.yml"
+      - "tools/discordModCommands.mjs"
+      - "tools/lib/isMain.mjs"
+      - "src/systems/legacy/revived.js"
+      - "src/poi/poiLaw.js"
+      - "src/poi/poiMesh.js"
+      - "src/poi/poiImage.js"
+      - "server/src/staffFeedLaw.js"
+      - "src/ui/touch/touchDevice.js"
   workflow_dispatch:
 
 permissions:
@@ -481,7 +585,7 @@ jobs:
             exit 0
           fi
           echo "before the migrations: $b"
-          { echo "The database before this deploy's migrations, should it need putting back:"; echo ""; echo "    npx wrangler d1 time-travel restore $DB_NAME --bookmark $b"; echo ""; } >> "$GITHUB_STEP_SUMMARY"
+          { echo "The database before this deploy's migrations, should it need putting back:"; echo ""; echo "    npx wrangler d1 time-travel restore $DB_NAME --bookmark $b"; echo ""; echo "then redeploy the Worker (its isolates keep the weeks they read settled - server-account/src/weekKept.js)."; echo ""; } >> "$GITHUB_STEP_SUMMARY"
 
       # SCALE4e (2026-10-10, PR #755's own deploy): AN OVERLOADED DATABASE
       # IS WAITED OUT, NOTHING ELSE IS. A merge that touches the relay and
@@ -494,7 +598,11 @@ jobs:
       # safe; it is asked again on that answer alone, after 20, 40, 60, 90
       # and 120 s (5.5 minutes, the 2026-10-06 storm's worst five). Any
       # other failure - a migration that does not apply - stops the deploy
-      # at once, as it always has.
+      # at once, as it always has. AUDIT LEAN-READS D3 (2026-10-20): D1
+      # answers code 7429 for a reset too - "D1 DB exceeded its CPU time
+      # limit and was reset" - and a migration that ran past the limit,
+      # asked again, resets the live database again, five more times. The
+      # overload is known by its words, and a reset is never asked again.
       - name: Apply migrations
         working-directory: server-account
         run: |
@@ -502,7 +610,11 @@ jobs:
           log="${RUNNER_TEMP:-/tmp}/migrations.log"
           for wait in 20 40 60 90 120 0; do
             if $WRANGLER d1 migrations apply "$DB_NAME" --remote 2>&1 | tee "$log"; then exit 0; fi
-            if ! grep -qiE 'overloaded|code: 7429' "$log"; then
+            if grep -qiE 'CPU time limit|was reset' "$log"; then
+              echo "::error::a migration ran past D1's CPU limit and the database was reset - never asked again; make the migration lighter"
+              exit 1
+            fi
+            if ! grep -qiE 'overloaded|queued for too long' "$log"; then
               echo "::error::the migrations failed, and not on an overloaded database - not retried"
               exit 1
             fi
@@ -562,7 +674,7 @@ jobs:
       # Worker with no signing key still hands out accounts and answers
       # `no-signing-key` on /v1/auth/token rather than minting something
       # the relay would refuse. That arm is pinned in
-      # test/accountworker.test.js and this is the moment it is for.
+      # test/server/accountworker.test.js and this is the moment it is for.
       # `secret put` redeploys the Worker with the binding, so the
       # window is seconds long and nothing is using the service yet.
       #
@@ -809,6 +921,34 @@ jobs:
             echo "- the Patreon webhook's URL: \`$base/v1/patreon/webhook\`"
           } >> "$GITHUB_STEP_SUMMARY"
 
+      # SAFE5 + SAFE8 (bible/11-Multiplayer/Chat-Safety-Arc.md): THE CHAT'S SAFETY HAS TWO SECRETS - the reviewer's
+      # ANTHROPIC_API_KEY (server-account/src/modAi.js) and the Discord bot's DISCORD_BOT_TOKEN (discord.js), each put
+      # on the Worker here on EVERY deploy from the repository's own secrets, so a key changed there reaches the service
+      # on the next push. An unset one is not an error: the reviewer reads nothing (MOD_AI is a switch over a key), and
+      # no card is posted - the cases still gather. One put for both, fed through jq as the Patreon pair is: neither
+      # value is ever echoed, written to a file, or an argument. The summary names the door Discord's application is
+      # given (its Interactions Endpoint URL), read off this deploy - never typed.
+      - name: Put the chat safety's secrets, where the repository has them
+        working-directory: server-account
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          set -euo pipefail
+          base="${{ steps.deploy.outputs.base }}"
+          if [ -z "${ANTHROPIC_API_KEY}" ] && [ -z "${DISCORD_BOT_TOKEN}" ]; then
+            echo "neither ANTHROPIC_API_KEY nor DISCORD_BOT_TOKEN is set for this repository - the reviewer and the Discord queue stay off"
+          else
+            jq -n 'env | {ANTHROPIC_API_KEY, DISCORD_BOT_TOKEN} | with_entries(select(.value != null and .value != ""))' | $WRANGLER secret bulk
+          fi
+          {
+            echo "### Chat safety"
+            echo ""
+            echo "- the reviewer's key: $([ -n "${ANTHROPIC_API_KEY}" ] && echo put || echo 'not among the repository secrets - the Worker keeps any key put before (AUDIT SAFE DISCORD-12)')"
+            echo "- the Discord bot's token: $([ -n "${DISCORD_BOT_TOKEN}" ] && echo put || echo 'not among the repository secrets - the Worker keeps any token put before')"
+            echo "- the Discord application's Interactions Endpoint URL: \`$base/v1/discord/interactions\`"
+          } >> "$GITHUB_STEP_SUMMARY"
+
       # ...AND PROVE IT LANDED, BY CONTENT. The client's deploy has been
       # verified this way since U60 and the relay's since SRV-N/CI, for
       # the same reason both times: a wrangler exit code of 0 over an
@@ -840,6 +980,72 @@ jobs:
           done
           echo "::error::the account service never reported $want - the deploy did not take"
           exit 1
+
+      # D1-NEAR (bible/11-Multiplayer/Scale-Arc.md; audited, 01-Overview/audits/Audit-D1-Near.md): WHERE THE
+      # WORKER ANSWERS FROM, WHAT A STATEMENT COSTS IT THERE, AND WHERE THE PRIMARY IS - SAID ON EVERY
+      # DEPLOY. SCALE1 left the Worker to Smart Placement on the word that it would run beside its
+      # database, and nothing said where it ran: on 2026-10-12 it ran in Sydney, a Pacific from the
+      # primary, and every statement on the primary paid the crossing.
+      #   - where it runs: Cloudflare's `cf-placement` on five health answers;
+      #   - what a statement costs it there: the median of five one-statement reads on the primary
+      #     (/v1/seats/sieges/live) less the median of five health answers, which ask the database
+      #     nothing - only answers that came (`-f`: an error answer is no statement), each bounded;
+      #   - where the primary is, by D1's own word: a `SELECT 1`'s answer names the data centre that
+      #     served it (`served_by_colo`) and whether that was the primary (`served_by_primary`).
+      # A REPORT AND NEVER A GATE (`continue-on-error`, and bounded by `timeout-minutes`): the header
+      # is Cloudflare's to rename and a runner's network is noisy. A primary not near the region
+      # wrangler.toml's [placement] names is the cue to change that line.
+      - name: Report where the account Worker runs
+        continue-on-error: true
+        timeout-minutes: 4
+        working-directory: server-account
+        run: |
+          set -uo pipefail
+          worker="${{ steps.deploy.outputs.base }}"
+          seen=""; health=(); read1=()
+          for i in 1 2 3 4 5; do
+            got=$(curl -fsS --max-time 10 -o /dev/null -D - -w 'took: %{time_total}\n' "$worker/v1/health" 2>/dev/null) || got=""
+            got=$(printf '%s\n' "$got" | tr -d '\r')
+            at=$(printf '%s\n' "$got" | sed -n 's/^cf-placement:[[:space:]]*//Ip')
+            at=${at%%$'\n'*}
+            seen="$seen ${at:-none}"
+            health+=("$(printf '%s\n' "$got" | sed -n 's/^took: //p')")
+            one=$(curl -fsS --max-time 10 -o /dev/null -w '%{time_total}' "$worker/v1/seats/sieges/live" 2>/dev/null) || one=""
+            read1+=("$one")
+          done
+          # the middle of the answers that came, in ms - nothing where none came; and how many came
+          mid() { printf '%s\n' "$@" | grep -E '^[0-9]+(\.[0-9]+)?$' | sort -n | awk '{ v[NR] = $1 } END { if (NR) printf "%d", v[int((NR + 1) / 2)] * 1000 + 0.5 }'; }
+          came() { printf '%s\n' "$@" | grep -cE '^[0-9]+(\.[0-9]+)?$'; }
+          h=$(mid "${health[@]}") || h=""
+          s=$(mid "${read1[@]}") || s=""
+          hn=$(came "${health[@]}") || hn=0
+          sn=$(came "${read1[@]}") || sn=0
+          if [ -n "$h" ] && [ -n "$s" ]; then
+            cost="one statement on the primary costs it ~$(( s > h ? s - h : 0 )) ms (medians: /v1/seats/sieges/live ${s} ms of ${sn} answers, /v1/health ${h} ms of ${hn})"
+          else
+            cost="one statement's cost unmeasured (of five, /v1/health answered ${hn} and /v1/seats/sieges/live ${sn})"
+          fi
+          d1=$(timeout 60 $WRANGLER d1 execute "$DB_NAME" --remote --command "SELECT 1" --json 2>/dev/null) || d1=""
+          colo=$(printf '%s' "$d1" | jq -r '.[0].meta.served_by_colo // empty' 2>/dev/null) || colo=""
+          region=$(printf '%s' "$d1" | jq -r '.[0].meta.served_by_region // empty' 2>/dev/null) || region=""
+          onprimary=$(printf '%s' "$d1" | jq -r '.[0].meta.served_by_primary' 2>/dev/null) || onprimary=""
+          if [ -n "$colo" ] && [ "$onprimary" = true ]; then
+            primary="D1's primary answered from ${colo} (${region:-its region unsaid})"
+          elif [ -n "$colo" ]; then
+            primary="a D1 replica answered from ${colo}, not the primary - where the primary is, unsaid"
+          else
+            primary="D1 did not say where its primary is"
+          fi
+          echo "cf-placement over five answers:$seen; $cost; $primary"
+          {
+            echo "### Where the account Worker runs"
+            echo ""
+            echo "\`cf-placement\` over five answers to /v1/health:$seen (wrangler.toml [placement] names the region; bible/11-Multiplayer/Scale-Arc.md D1-NEAR)"
+            echo ""
+            echo "From there, $cost - beside the primary it is D1's own time and a short hop, across an ocean 150 ms and more."
+            echo ""
+            echo "$primary - wrangler.toml [placement] should name the cloud region nearest it."
+          } >> "$GITHUB_STEP_SUMMARY"
 
       # ═══ AUDIT PRE-MERGE 0929 T-CI: THE SMOKE AGREES AS A PLAYER DOES ══
       #
@@ -956,16 +1162,36 @@ jobs:
           # above had read 500 and then 400 on its second try - the platform's first moments after a migration, not
           # the route. A 5xx comes from a batch that failed whole and wrote nothing, so the call is safe to send again.
           # One that still fails after half a minute is a route that is broken.
-          post() {
-            local out=$1 url=$2 data=$3 got=404
+          # SMOKE-HANG (2026-10-16, the owner's screenshot of PR #947's run): NO ANSWER (000) IS ASKED AGAIN TOO, as the
+          # guest mint's loops above already ask it. #950's run read homes/town and #947's homes/decor as 15 s with 0 bytes
+          # (curl 28) - the busiest reads on a database that sheds load (Scale-Arc PRIMARY-TRIPS) - and failed deploys
+          # whose Worker had taken and whose every other call answered. A hang that wrote is no false pass: a second
+          # first beat answers playedS above 0 and fails; a route that hangs every time still fails after seven asks.
+          # INT16: ONE RETRY FOR EVERY SMOKE CALL (`ask`, the call's own curl words after its file and URL): `post` the JSON
+          # calls', `put` the realm character's first save - a first save whose answer was lost (000) and landed answers its
+          # retry 409 `seq` 1, which the smoke reads as landed. One loop, so its law is pinned and mutated once.
+          # SMOKE-LOST (2026-10-18, the owner's screenshot of #1004's run: renown/xp -> 000, 503, then 200 `repeat`):
+          # A WRITE WHOSE ANSWER WAS LOST MAY HAVE LANDED. The first report hung 15 s and was credited; its retry was
+          # answered, rightly, as that report again - and the smoke, asking `credited` 1 of it, failed a deploy whose
+          # Worker had taken. So `ask` leaves `<out>.lost` when a try went unanswered (`lost <out>`), and the two calls
+          # that write before they are read - the first beat and the first report - take, after a lost try, the answer
+          # the landed write gives its retry. Never without one: an answer with no lost try before it is read whole.
+          ask() {
+            local out=$1 url=$2 got=404
+            shift 2
+            rm -f "$out.lost"
             for i in $(seq 1 7); do
-              got=$(curl -sS --max-time 15 -o "$out" -w '%{http_code}' -X POST "$url" -H 'content-type: application/json' -d "$data")
-              if [ "$got" != "404" ] && [ "${got#5}" = "$got" ]; then break; fi
+              got=$(curl -sS --max-time 15 -o "$out" -w '%{http_code}' "$@" "$url") || got=000
+              if [ "$got" != "404" ] && [ "$got" != "000" ] && [ "${got#5}" = "$got" ]; then break; fi
+              if [ "$got" = "000" ]; then : > "$out.lost"; fi
               echo "  $url -> $got (attempt $i, an old instance or the platform's first moments?)" >&2
               sleep 5
             done
             echo "$got"
           }
+          lost() { [ -e "$1.lost" ]; }
+          post() { ask "$1" "$2" -X POST -H 'content-type: application/json' -d "$3"; }
+          put() { ask "$1" "$2" -X PUT -H "authorization: Bearer $secret" -H "x-realm-lease: $4" -H 'x-realm-seq: 1' -d "$3"; }
 
           # ACC4: THE BEAT IS ONE UPDATE ... RETURNING with numbered
           # parameters. node:sqlite runs both; this asks D1 itself.
@@ -973,7 +1199,10 @@ jobs:
           echo "played -> $code"
           cat /tmp/beat.json || true
           echo
-          if [ "$code" != "200" ] || ! grep -q '"playedS":0' /tmp/beat.json; then
+          # SMOKE-LOST: a first beat that landed unanswered makes its retry the second beat, credited the seconds
+          # between them - no more than seven asks' 140
+          played=$(sed -n 's/.*"playedS":\([0-9]*\).*/\1/p' /tmp/beat.json)
+          if [ "$code" != "200" ] || ! { [ "$played" = "0" ] || { lost /tmp/beat.json && [ -n "$played" ] && [ "$played" -le 140 ]; }; }; then
             echo "::error::the time-played beat failed on the deployed Worker ($code) - a first beat must answer playedS 0"
             exit 1
           fi
@@ -995,16 +1224,32 @@ jobs:
           # repeat and credited nothing - a 404 is a route that did not
           # deploy, a 500 a migration that did not apply or a statement D1
           # will not run.
+          # INT16 (bible/06-Systems/Integrity-Arc.md section 7): AND A REPORT IS ITS SEAT'S - the account's realm character
+          # holding its lease, never a name the body makes up (a made-up one is refused 403 progress-seat before the batch
+          # runs). So the guest takes a realm character first, as a new player's tab does: made, and its first save at 1.
+          code=$(post /tmp/realm.json "$base/v1/realm/create" "{\"secret\":\"$secret\",\"name\":\"Deploy Smoke\"}")
+          rc=$(grep -o '"id":"r[0-9a-f]*"' /tmp/realm.json | head -1 | cut -d'"' -f4)
+          lease=$(grep -o '"lease":"[0-9a-f]*"' /tmp/realm.json | head -1 | cut -d'"' -f4)
+          echo "realm/create -> $code ($rc)"
+          if [ "$code" != "200" ] || [ -z "$rc" ] || [ -z "$lease" ]; then
+            echo "::error::the smoke's guest could not take a realm character ($code)"; cat /tmp/realm.json || true; exit 1
+          fi
+          code=$(put /tmp/realmsave.json "$base/v1/realm/$rc/data" '{"level":1,"goldPieces":100,"items":[]}' "$lease")
+          echo "realm first save -> $code"
+          if [ "$code" != "200" ] && ! { [ "$code" = "409" ] && grep -q '"seq":1' /tmp/realmsave.json; }; then
+            echo "::error::the smoke's realm character's first save was refused ($code)"; cat /tmp/realmsave.json || true; exit 1
+          fi
           rid=$(printf '%016x' "$(date +%s)")
-          code=$(post /tmp/renown.json "$base/v1/renown/xp" "{\"secret\":\"$secret\",\"character\":\"deploy-smoke\",\"xp\":1,\"rid\":\"$rid\"}")
+          code=$(post /tmp/renown.json "$base/v1/renown/xp" "{\"secret\":\"$secret\",\"character\":\"$rc\",\"xp\":1,\"rid\":\"$rid\"}")
           echo "renown/xp -> $code"
           cat /tmp/renown.json || true
           echo
-          if [ "$code" != "200" ] || ! grep -q '"credited":1' /tmp/renown.json; then
+          # SMOKE-LOST: a first report that landed unanswered is its retry's repeat, the track holding its 1 XP
+          if [ "$code" != "200" ] || ! { grep -q '"credited":1' /tmp/renown.json || { lost /tmp/renown.json && grep -q '"repeat":true' /tmp/renown.json && grep -q '"xp":1,' /tmp/renown.json; }; }; then
             echo "::error::a Renown report failed on the deployed Worker ($code) - a first report of 1 XP must be credited 1"
             exit 1
           fi
-          code=$(post /tmp/renown2.json "$base/v1/renown/xp" "{\"secret\":\"$secret\",\"character\":\"deploy-smoke\",\"xp\":1,\"rid\":\"$rid\"}")
+          code=$(post /tmp/renown2.json "$base/v1/renown/xp" "{\"secret\":\"$secret\",\"character\":\"$rc\",\"xp\":1,\"rid\":\"$rid\"}")
           echo "renown/xp again -> $code"
           if [ "$code" != "200" ] || ! grep -q '"credited":0' /tmp/renown2.json || ! grep -q '"repeat":true' /tmp/renown2.json; then
             echo "::error::a repeated Renown report was not answered as a repeat ($code)"; cat /tmp/renown2.json || true; exit 1
@@ -1016,9 +1261,17 @@ jobs:
           # is refused as homes-need-account, never taken (a 404 is a route
           # that did not deploy). Nothing is claimed here: a smoke that
           # bought a home would leave a building owned by nobody real.
+          # AUDIT LEAN-READS 2 D5: A DISPLAY READ SHED AS BUSY IS NO BROKEN DEPLOY. SLOW-SHED opens the shed on a slow
+          # D1 alone, and the shed answers every BUSY read (busyLaw.js) 503 with its Retry-After, asking no statement;
+          # `ask` waits seven tries through a short one, and a slow evening outlasts them - a deploy whose Worker had
+          # taken failed after it went live, its public key's check and Discord's step unrun. So a BUSY read's 503 after
+          # every try is said and passed; a route that did not deploy (404), a migration that did not apply (500) or a
+          # wrong answer still fails.
+          shed() { [ "$1" = "503" ] && echo "::warning::$2 was shed as busy through every try (a slow or overloaded D1: SLOW-SHED, BUSY-GATE) - the Worker answers; its answer was not read"; }
           code=$(post /tmp/homes.json "$base/v1/homes/town" "{\"secret\":\"$secret\",\"mapId\":1}")
           echo "homes/town -> $code"
-          if [ "$code" != "200" ] || ! grep -q '"homes":\[' /tmp/homes.json; then
+          if shed "$code" /v1/homes/town; then :
+          elif [ "$code" != "200" ] || ! grep -q '"homes":\[' /tmp/homes.json; then
             echo "::error::/v1/homes/town did not answer a town's homes ($code)"; cat /tmp/homes.json || true; exit 1
           fi
           code=$(post /tmp/claim.json "$base/v1/homes/claim" "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1,\"region\":0,\"character\":\"deploy-smoke\",\"price\":1}")
@@ -1033,13 +1286,54 @@ jobs:
           # did not deploy). Nothing is placed: a guest owns no home to place in.
           code=$(post /tmp/decor.json "$base/v1/homes/decor" "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1}")
           echo "homes/decor -> $code"
-          if [ "$code" != "200" ] || ! grep -q '"pieces":\[' /tmp/decor.json; then
+          if shed "$code" /v1/homes/decor; then :
+          elif [ "$code" != "200" ] || ! grep -q '"pieces":\[' /tmp/decor.json; then
             echo "::error::/v1/homes/decor did not answer a home's pieces ($code)"; cat /tmp/decor.json || true; exit 1
           fi
           code=$(post /tmp/place.json "$base/v1/homes/decor/place" "{\"secret\":\"$secret\",\"mapId\":1,\"buildingKey\":1,\"character\":\"deploy-smoke\",\"piece\":{}}")
           echo "homes/decor/place as a guest -> $code"
           if [ "$code" != "403" ] || ! grep -q '"homes-need-account"' /tmp/place.json; then
             echo "::error::/v1/homes/decor/place did not refuse a guest as homes-need-account ($code)"; cat /tmp/place.json || true; exit 1
+          fi
+          # LEAN-READS (AUDIT LEAN-READS D7): THE KEPT BOARDS ARE LIVE, on D1
+          # itself - a town's yards (home_yards and home_yards_ver, read by anyone) and the
+          # arena's board (arena_board_ver and arena_boards: read and
+          # counted). A 500 is a migration that did not apply, or a read
+          # D1 refuses that node:sqlite ran. AND KEPT (audit two, C3): a
+          # board's keep is a guarded upsert D1 runs after the answer is
+          # made, and a refused keep is caught - the answer stands, alike
+          # whether it ran or not - so the kept rows are asked of D1 itself
+          # (`kept`): a board at its version, in a shape. A write landing
+          # between the read and the ask is asked again, three times.
+          kept() { timeout 60 $WRANGLER d1 execute "$DB_NAME" --remote --command "$1" --json 2>/dev/null | jq -r '.[0].results[0].n // 0' 2>/dev/null || echo 0; }
+          n=$(kept "SELECT (SELECT COUNT(*) FROM home_yards_ver) = 0 OR EXISTS (SELECT 1 FROM home_yards y JOIN home_yards_ver v ON v.map_id = y.map_id WHERE y.built = v.ver AND y.shape IS NOT NULL) AS n")
+          if [ "$n" != "1" ]; then
+            echo "::error::no town's yards stand built in a shape on D1 - migration 0136's build did not run there"; exit 1
+          fi
+          # AUDIT LEAN-READS 2 D5: a town that stands yards, so the read answers off a row D1 itself built (a town with
+          # none answers before it reads any)
+          map=$(kept "SELECT y.map_id AS n FROM home_yards y JOIN home_yards_ver v ON v.map_id = y.map_id WHERE y.built = v.ver AND y.rows IS NOT NULL AND y.rows != '[]' LIMIT 1")
+          [ "$map" -gt 0 ] 2>/dev/null || map=1
+          code=$(post /tmp/yards.json "$base/v1/homes/yards" "{\"secret\":\"$secret\",\"mapId\":$map}")
+          echo "homes/yards (town $map) -> $code"
+          if shed "$code" /v1/homes/yards; then :
+          elif [ "$code" != "200" ] || ! grep -q '"yards":\[' /tmp/yards.json; then
+            echo "::error::/v1/homes/yards did not answer a town's yards ($code)"; cat /tmp/yards.json || true; exit 1
+          elif [ "$map" != "1" ] && ! grep -q '"yards":\[{' /tmp/yards.json; then
+            echo "::warning::town $map's built yards answered none - every piece the law's to hide?"
+          fi
+          code=$(post /tmp/arena.json "$base/v1/arena/board" "{\"secret\":\"$secret\"}")
+          echo "arena/board -> $code"
+          if [ "$code" != "200" ] || ! grep -q '"pvp":{' /tmp/arena.json; then
+            echo "::error::/v1/arena/board did not answer the arena's board ($code)"; cat /tmp/arena.json || true; exit 1
+          fi
+          for i in 1 2 3; do
+            n=$(kept "SELECT COUNT(*) AS n FROM arena_boards b JOIN arena_board_ver v ON v.id = 1 WHERE b.built = v.ver AND b.shape IS NOT NULL")
+            [ "$n" -ge 1 ] && break
+            [ "$i" = 3 ] || post /tmp/arena.json "$base/v1/arena/board" "{\"secret\":\"$secret\"}" >/dev/null
+          done
+          if [ "$n" -lt 1 ]; then
+            echo "::error::the arena's board was read but never kept on D1 - its keep (arena.js ARENA_BOARD_KEEP) is refused there"; exit 1
           fi
 
           # PATRON-LOAD II (2026-10-11, the owner's screenshot of #766's deploy: "register -> 500 {"error":"server"}"):
@@ -1064,6 +1358,27 @@ jobs:
             exit 1
           fi
           echo "VERIFIED: a password route runs on the real platform"
+          # LEAN-READS (AUDIT LEAN-READS D7): AND THE REGION'S TRADERS, a
+          # registered account's read - market_vendor_ver and market_vendor_boards read and kept
+          # by its upsert on D1 itself. A closed market reads no board.
+          code=$(post /tmp/vendors.json "$base/v1/market/vendors" "{\"secret\":\"$secret\",\"region\":17}")
+          echo "market/vendors -> $code"
+          if [ "$code" = "403" ] && grep -q '"market-closed"' /tmp/vendors.json; then
+            echo "::notice::the market is closed - the traders' board was not read"
+          elif shed "$code" /v1/market/vendors; then :
+          elif [ "$code" != "200" ] || ! grep -q '"rows":\[' /tmp/vendors.json; then
+            echo "::error::/v1/market/vendors did not answer the region's traders ($code)"; cat /tmp/vendors.json || true; exit 1
+          fi
+          if [ "$code" = "200" ]; then
+            for i in 1 2 3; do
+              n=$(kept "SELECT COUNT(*) AS n FROM market_vendor_boards b JOIN market_vendor_ver v ON v.region = b.region WHERE b.region = 17 AND b.built = v.ver AND b.shape IS NOT NULL")
+              [ "$n" -ge 1 ] && break
+              [ "$i" = 3 ] || post /tmp/vendors.json "$base/v1/market/vendors" "{\"secret\":\"$secret\",\"region\":17}" >/dev/null
+            done
+            if [ "$n" -lt 1 ]; then
+              echo "::error::the region's traders were read but never kept on D1 - their keep (market.js VENDOR_BOARD_KEEP) is refused there"; exit 1
+            fi
+          fi
 
       # AND THE PUBLIC KEY IS REACHABLE, which is what makes the minting
       # step's "nobody ever sees it" safe. A pair minted into a Worker
@@ -1110,3 +1425,37 @@ jobs:
             exit 1
           fi
           echo "and the relay's configured copy matches it"
+
+      # DISCORD-SETUP (bible/11-Multiplayer/Chat-Safety-Arc.md section 9): THE DISCORD END, SET BY THE DEPLOY - the
+      # application's Interactions Endpoint URL pointed at this deploy's door, and /mod registered in the server the
+      # moderators' channel is in, from the bot's token alone (tools/discordModCommands.mjs --setup: the application's id
+      # and public key are Discord's answer, the server the channel's). Every deploy, because both are idempotent and a
+      # changed /mod or a moved Worker then reaches Discord on the next push. LAST, so a refusal hides no check above it;
+      # and red when Discord refuses, because a service that deployed but cannot be pressed is the failure the setup
+      # exists for. Skipped, said, when the token, the channel or the public key is not set. The token is an env var
+      # here and in the tool, never an argument and never echoed.
+      - name: Point Discord at the service, where the repository has the bot's token
+        env:
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+        run: |
+          set -euo pipefail
+          toml=server-account/wrangler.toml
+          channel=$(grep -oP '^DISCORD_MOD_CHANNEL\s*=\s*"\K[^"]*' "$toml" || true)
+          key=$(grep -oP '^DISCORD_PUBLIC_KEY\s*=\s*"\K[^"]*' "$toml" || true)
+          if [ -z "${DISCORD_BOT_TOKEN}" ] || [ -z "$channel" ] || [ -z "$key" ]; then
+            echo "the bot's token, DISCORD_MOD_CHANNEL or DISCORD_PUBLIC_KEY is not set - Discord is left as it is"
+            exit 0
+          fi
+          # DISCORD-CODE: what was done is said either way; what stopped it (Discord's refusal, or the permissions the bot
+          # lacks in the moderators' channel) goes to the summary too - the tool's stderr, which never holds the token
+          err="$RUNNER_TEMP/discord-setup.err"
+          if out=$(DISCORD_MOD_CHANNEL="$channel" DISCORD_PUBLIC_KEY="$key" DISCORD_INTERACTIONS_URL="${{ steps.deploy.outputs.base }}/v1/discord/interactions" node tools/discordModCommands.mjs --setup 2> "$err"); then
+            echo "$out"
+            { echo ""; echo "### Discord"; echo ""; echo "$out"; } >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "$out"
+            cat "$err"
+            { echo ""; echo "### Discord"; echo ""; echo "$out"; echo ""; echo "**Not finished:** $(cat "$err")"; } >> "$GITHUB_STEP_SUMMARY"
+            echo "::error::Discord's setup did not finish - $(head -c 300 "$err")"
+            exit 1
+          fi

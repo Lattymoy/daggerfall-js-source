@@ -5,25 +5,25 @@
     "old": "  if (profPageAt(hooks.at)) {\n",
     "new": "  if (false) {\n",
     "tests": [
-      "test/classicpages.test.js"
+      "test/systems/classicpages.test.js"
     ]
   },
   {
     "name": "CLASSICPAGES-closed-opens-anyway",
     "file": "src/ui/pauseDoor.js",
-    "old": "    if (!profPagesShown()) { hudText(PROF_PAGES_CLOSED_LINE); return null; }\n",
+    "old": "    if (!profPagesShown()) { hudText(profPagesClosedLine()); return null; }\n",
     "new": "",
     "tests": [
-      "test/classicpages.test.js"
+      "test/systems/classicpages.test.js"
     ]
   },
   {
     "name": "CLASSICPAGES-closed-unsaid",
     "file": "src/ui/pauseDoor.js",
-    "old": "    if (!profPagesShown()) { hudText(PROF_PAGES_CLOSED_LINE); return null; }",
+    "old": "    if (!profPagesShown()) { hudText(profPagesClosedLine()); return null; }",
     "new": "    if (!profPagesShown()) { return null; }",
     "tests": [
-      "test/classicpages.test.js"
+      "test/systems/classicpages.test.js"
     ]
   },
   {
@@ -32,17 +32,17 @@
     "old": "export const profPageAt = (at) => PROF_PAGE_SECTIONS.some(([id]) => id === at);",
     "new": "export const profPageAt = (at) => !!at;",
     "tests": [
-      "test/classicpages.test.js"
+      "test/systems/classicpages.test.js"
     ]
   },
   {
     "name": "CLASSICPAGES-forge-never-offered",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "export const forgeOffered = () => profPagesShown();",
     "new": "export const forgeOffered = () => profPagesShown() && false;",
     "tests": [
-      "test/classicpages.test.js",
-      "test/audit29_client.test.js"
+      "test/systems/classicpages.test.js",
+      "test/net/audit29_client.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "    case 'Professions': return ctx.togglePause && ctx.sailing?.() !== true ? (ctx.togglePause({ at: 'professions', setPlayerPos }), true) : false;\n",
     "new": "",
     "tests": [
-      "test/classicpages.test.js"
+      "test/systems/classicpages.test.js"
     ],
     "note": "HELM-KEYS' merge (PIN MOVED): the arm asks whether the host sails, re-aimed by content."
   },
@@ -61,7 +61,7 @@
     "old": "ctx.togglePause({ at: 'professions', setPlayerPos })",
     "new": "ctx.togglePause({ at: 'stats', setPlayerPos })",
     "tests": [
-      "test/classicpages.test.js"
+      "test/systems/classicpages.test.js"
     ]
   },
   {
@@ -70,18 +70,18 @@
     "old": "  Object.freeze(['ArrowDown', 'Professions', 'BoatSailDown']),\n",
     "new": "",
     "tests": [
-      "test/classicpages.test.js",
-      "test/inputactions.test.js"
+      "test/systems/classicpages.test.js",
+      "test/systems/inputactions.test.js"
     ],
     "note": "HELM-KEYS' merge (PIN MOVED): the key is a default share on the down arrow now - its share is the binding."
   },
   {
     "name": "CLASSICPAGES-where-line-no-key",
     "file": "src/scenes/gatherHost.js",
-    "old": "${key ? ` (${key} opens your Professions)` : ''}",
+    "old": "${key ? ` ${key} opens your Professions.` : ''}",
     "new": "",
     "tests": [
-      "test/classicpages.test.js"
+      "test/systems/classicpages.test.js"
     ],
     "note": "AUDIT HOLDINGS (PIN MOVED): re-aimed by content to the line the audit's fix rewrote - its law the same."
   },
@@ -91,7 +91,7 @@
     "old": "ctx.togglePause && ctx.sailing?.() !== true ?",
     "new": "ctx.togglePause ?",
     "tests": [
-      "test/classicpages.test.js"
+      "test/systems/classicpages.test.js"
     ]
   }
 ]

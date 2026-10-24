@@ -57,6 +57,9 @@ function remember(c) {
 export function silverFindAt(kind, container, roll = Math.random) {
   if (!_finder || !FIND_KINDS.includes(kind)) return false;
   if (container == null || (typeof container !== 'string' && typeof container !== 'object') || container === '') return false;
+  // FB1013d: a container that holds no find - the remains of the house's fallen (scenes/legacyRemainsStand.js), the line's
+  // own list stood afresh at every visit, where a find rolled each time would pay for coming back
+  if (typeof container === 'object' && /** @type {any} */ (container).noFind === true) return false;
   if (seen(container)) return false;
   remember(container);
   if (!(roll() < findChanceOf(kind))) return false;

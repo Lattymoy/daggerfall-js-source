@@ -433,7 +433,7 @@
   },
   {
     "name": "TESA10-host-stale-slot",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPlacesHost.js",
     "old": "      if (at && had.capital.k === at.k && had.capital.s === at.s && (had.arena?.id ?? null) === (slot?.id ?? null) && (had.arena?.provinceIndex ?? null) === (slot?.provinceIndex ?? null)\n        && !!had.arena?.port === !!slot?.port) return had;",
     "new": "      if (at && had.capital.k === at.k && had.capital.s === at.s) return had;",
     "tests": [
@@ -442,16 +442,16 @@
   },
   {
     "name": "TESA10-host-not-deleted",
-    "file": "src/scenes/world.js",
-    "old": "        && !!had.arena?.port === !!slot?.port) return had;   // AUDIT-TESA A4-F2: its place made a port, its slot too\n      _locIndexGen += 1;\n      locationIndex.delete(key);",
-    "new": "        && !!had.arena?.port === !!slot?.port) return had;   // AUDIT-TESA A4-F2: its place made a port, its slot too\n      _locIndexGen += 1;",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "        && !!had.arena?.port === !!slot?.port) return had;   // AUDIT-TESA A4-F2: its place made a port, its slot too\n      host._locIndexGen += 1;\n      locationIndex.delete(key);",
+    "new": "        && !!had.arena?.port === !!slot?.port) return had;   // AUDIT-TESA A4-F2: its place made a port, its slot too\n      host._locIndexGen += 1;",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
   },
   {
     "name": "TESA10-host-no-slot",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPlacesHost.js",
     "old": "    const loc = synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: slot,",
     "new": "    const loc = synthesizeCapitalLocation(at, { base: _capitalBase, names: _capitalNames, blockOf: (name) => blocks.getBlockByName(name), px, py, arena: null,",
     "tests": [
@@ -460,7 +460,7 @@
   },
   {
     "name": "TESA10-host-politic",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPlacesHost.js",
     "old": "      where: { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) } });",
     "new": "      where: { regionIndex, regionName: REGION_NAMES[regionIndex], politic: regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) } });",
     "tests": [
@@ -496,16 +496,16 @@
   },
   {
     "name": "TESA10-sweep-every-frame",
-    "file": "src/scenes/world.js",
-    "old": "    if (fit === _capitalSwept && land === _capitalSweptLand) return;\n    const moved = _capitalSwept !== null;",
-    "new": "    const moved = _capitalSwept !== null;",
+    "file": "src/scenes/tamrielSweepsHost.js",
+    "old": "    if (fit === _swept.capital && land === _swept.capitalLand) return;\n    const moved = _swept.capital !== null;",
+    "new": "    const moved = _swept.capital !== null;",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]
   },
   {
     "name": "TESA10-sweep-only-new",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielSweepsHost.js",
     "old": "      if (rolled || cap !== !!had?.capital) again.push({ px: p.px, py: p.py });",
     "new": "      if (cap) again.push({ px: p.px, py: p.py });",
     "tests": [
@@ -514,8 +514,8 @@
   },
   {
     "name": "TESA10-sweep-not-queued",
-    "file": "src/scenes/world.js",
-    "old": "    queue.push(...again.sort(nearestFirstFrom(state.current)));\n    console.log(`[capitals]",
+    "file": "src/scenes/tamrielSweepsHost.js",
+    "old": "    host.queue.push(...again.sort(nearestFirstFrom(host.state.current)));\n    console.log(`[capitals]",
     "new": "    console.log(`[capitals]",
     "tests": [
       "test/tesa10_capitals.test.js"
@@ -649,9 +649,9 @@
   },
   {
     "name": "TESA10b-sweep-land-blind",
-    "file": "src/scenes/world.js",
-    "old": "    if (fit === _capitalSwept && land === _capitalSweptLand) return;",
-    "new": "    if (fit === _capitalSwept) return;",
+    "file": "src/scenes/tamrielSweepsHost.js",
+    "old": "    if (fit === _swept.capital && land === _swept.capitalLand) return;",
+    "new": "    if (fit === _swept.capital) return;",
     "tests": [
       "test/tesa10_capitals.test.js"
     ]

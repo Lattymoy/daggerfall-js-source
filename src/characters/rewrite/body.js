@@ -1,6 +1,6 @@
 // Vendored from project-final's Rewrite Engine (rewrite/rig/body.js) at C4a -
 // same-owner code, flat-pathed; byte-parity against the canonical copy
-// is pinned by test/rig.test.js over fixtures/bare-body-parity.json.
+// is pinned by test/characters/rig.test.js over fixtures/bare-body-parity.json.
 // Do not hand-diverge: upstream first, then re-vendor + re-capture.
 // Third-person body for the game. Posed + animated rig extracted from the body-anim lab:
 // full-body locomotion (pelvis bob/sway/twist + chest lean; legs IK from the moving hips to

@@ -22,7 +22,7 @@
 import { mapPixelToLongitudeLatitude, LOCATION_TYPES } from '../formats/mapsFile.js';
 import { hash32 } from './spawnedDungeons.js';
 import { PLACES_PER_PROVINCE } from './tamrielPlaces.js';   // TESA12: a province's slots
-import { ROAD_TYPES, TRACK_TYPES } from './roadNetwork.js';
+import { ROAD_TYPES, TRACK_TYPES } from './road/roadNetwork.js';
 
 /** The places' lane in the id's high 12 bits, and the first low number a place takes. */
 export const ARENA_PLACE_SALT = 0xa7;
@@ -43,7 +43,7 @@ export const ARENA_TEMPLATE_KINDS = Object.freeze({
 
 /**
  * TESA4 (world/arenaRoads.js): the places a road reaches - each stood place whose clone's type is a road or a track grade
- * (world/roadNetwork.js ROAD_TYPES, TRACK_TYPES), at its own pixel. Null for none.
+ * (world/road/roadNetwork.js ROAD_TYPES, TRACK_TYPES), at its own pixel. Null for none.
  * @param {?{ stood: Array<{ kind: string, bx: number, by: number }> }} pixels arenaPixels()'s
  * @returns {?Array<{ x: number, y: number, type: number }>}
  */

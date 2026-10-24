@@ -1,0 +1,216 @@
+[
+  {
+    "name": "TEMPLESTEPS-1-node-scale",
+    "file": "src/world/townStandIns.js",
+    "old": "export const RMBRP_BLOCK_SCALE = Object.freeze({ 53160: 1, 53170: 2 });",
+    "new": "export const RMBRP_BLOCK_SCALE = Object.freeze({ 53160: 1.25, 53170: 5 });",
+    "tests": [
+      "test/world/fb1015f_templesteps.test.js",
+      "test/world/wd3_standins.test.js"
+    ],
+    "note": "the FBX node's Lcl Scaling read into the blocks again (125, 250 x 2): the 4 m landing and the 16 m foundation"
+  },
+  {
+    "name": "TEMPLESTEPS-2-block-height",
+    "file": "src/world/townStandIns.js",
+    "old": "export const RMBRP_BLOCK_CM = Object.freeze([320, 160, 320]);",
+    "new": "export const RMBRP_BLOCK_CM = Object.freeze([320, 200, 320]);",
+    "tests": [
+      "test/world/fb1015f_templesteps.test.js"
+    ],
+    "note": "the blocks 20 cm taller each way: a lip at the temple's step, the stair's foot buried"
+  },
+  {
+    "name": "TEMPLESTEPS-3-sunk",
+    "file": "src/world/townStandIns.js",
+    "old": "  m.box(tex, [0, 0, 0], RMBRP_BLOCK_CM.map((c) => c * k), 0.5);",
+    "new": "  m.box(tex, [0, -0.5, 0], RMBRP_BLOCK_CM.map((c) => c * k), 0.5);",
+    "tests": [
+      "test/world/fb1015f_templesteps.test.js"
+    ],
+    "note": "the blocks sunk off their centre (AUDIT WD3 T1's band-aid): the landings under the step, the foundations under the floor"
+  },
+  {
+    "name": "TEMPLESTEPS-4-rock-scale-dropped",
+    "file": "src/world/townStandIns.js",
+    "old": "  const [x0, x1, down, up, z0, z1] = RMBRP_ROCKS[id].map((v) => v * RMBRP_ROCK_SCALE[id]);",
+    "new": "  const [x0, x1, down, up, z0, z1] = RMBRP_ROCKS[id].map((v) => v);",
+    "tests": [
+      "test/world/fb1015f_templesteps.test.js"
+    ],
+    "note": "the rocks the mesh alone again: most of the packs' rocks wholly under their ground"
+  },
+  {
+    "name": "TEMPLESTEPS-5-one-rock-scale",
+    "file": "src/world/townStandIns.js",
+    "old": "53036: 6, 53037: 4, 53038: 4, 53039: 4,",
+    "new": "53036: 6, 53037: 4, 53038: 1, 53039: 4,",
+    "tests": [
+      "test/world/fb1015f_templesteps.test.js"
+    ],
+    "note": "one rock (58 placements) a quarter of its prefab's size"
+  },
+  {
+    "name": "TEMPLESTEPS-6-rock-centred",
+    "file": "src/world/townStandIns.js",
+    "old": "  return boulderMesh(x1 - x0, up, down, z1 - z0, Number(id), (x0 + x1) / 2, (z0 + z1) / 2);",
+    "new": "  return boulderMesh(x1 - x0, up, down, z1 - z0, Number(id));",
+    "tests": [
+      "test/world/fb1015f_templesteps.test.js",
+      "test/world/wd3_standins.test.js"
+    ],
+    "note": "each boulder round its origin, not over its mesh's box: 53086 a metre east of the pack's rock"
+  },
+  {
+    "name": "TEMPLESTEPS-7-boulder-overshoot",
+    "file": "src/world/townStandIns.js",
+    "old": "r = k * (0.82 + rnd() * 0.18);",
+    "new": "r = k * (0.82 + rnd() * 0.3);",
+    "tests": [
+      "test/world/wd3_standins.test.js"
+    ],
+    "note": "the boulder's rim pushed out past its box again - half a metre past the pack's rock at its prefab's scale"
+  },
+  {
+    "name": "TEMPLESTEPS-8-stall-scale",
+    "file": "src/world/townStandIns.js",
+    "old": "export const RMBRP_STALL_SCALE = 0.75;",
+    "new": "export const RMBRP_STALL_SCALE = 1;",
+    "tests": [
+      "test/world/fb1015f_templesteps.test.js",
+      "test/world/wd3_standins.test.js"
+    ],
+    "note": "the stalls at the mesh's own size, a third over the prefab's"
+  },
+  {
+    "name": "TEMPLESTEPS-9-stall-off-origin",
+    "file": "src/world/townStandIns.js",
+    "old": "const X = (v) => v + dx, Y = (v) => v + dy, Z = (v) => v + dz;",
+    "new": "const X = (v) => v + dx + 2.35, Y = (v) => v + dy, Z = (v) => v + dz;",
+    "tests": [
+      "test/world/fb1015f_templesteps.test.js",
+      "test/world/wd3_standins.test.js"
+    ],
+    "note": "the stall built off its origin again, the mesh's width east of where Unity stands it (re-aimed by content, FIELD BUGS 2026-10-16b STALL-SHAPE: the stall is built over RMBRP_STALL_FRAME, every x through X)"
+  },
+  {
+    "name": "TEMPLESTEPS-10-top-covers",
+    "file": "src/world/townStandIns.js",
+    "old": "    if (q[1] - top < HILL_PATCH_SINK - 1e-4 && outsideHull(hull, q[0], q[2]) <= HILL_PATCH_MARGIN) return false;",
+    "new": "    if (q[1] - top < HILL_PATCH_SINK - 1e-4 && outsideHull(hull, q[0], q[2]) < 0) return false;",
+    "tests": [
+      "test/world/fb1015f_templesteps.test.js"
+    ],
+    "note": "a pad laid whatever its top covers: the crate at the house's wall under the pad's grass"
+  },
+  {
+    "name": "TEMPLESTEPS-11-bank-blind",
+    "file": "src/world/townStandIns.js",
+    "old": "          if (l1 * p[1] + l2 * q[1] + (1 - l1 - l2) * r[1] <= y - HILL_PATCH_SINK) continue;   // the bank passes under it",
+    "new": "          if (l1 * p[1] + l2 * q[1] + (1 - l1 - l2) * r[1] <= y + 100) continue;   // the bank passes under it",
+    "tests": [
+      "test/world/fb1015f_templesteps.test.js"
+    ],
+    "note": "the bank never yields: Merdale's flight under the pads again"
+  },
+  {
+    "name": "TEMPLESTEPS-12-bank-not-steepened",
+    "file": "src/world/townStandIns.js",
+    "old": "          slopes[i] = Math.max(slopes[i], need); slopes[j] = Math.max(slopes[j], need);",
+    "new": "          slopes[i] = Math.max(slopes[i], need);",
+    "tests": [
+      "test/world/fb1015f_templesteps.test.js"
+    ],
+    "note": "only one of a triangle's two rays steepened: the bank between them still over what it covers"
+  },
+  {
+    "name": "TEMPLESTEPS-13-open-blind",
+    "file": "src/world/townStandIns.js",
+    "old": "      if (y > Math.max(seat.topAt(x, z) ?? 0, 0) + HILL_PATCH_SINK) add(x, y, z, owner);",
+    "new": "      if (y > Math.max(seat.topAt(x, z) ?? 0, 0) + 1000) add(x, y, z, owner);",
+    "tests": [
+      "test/world/fb1015f_templesteps.test.js"
+    ],
+    "note": "no model's vertex left in the open: a pad buries the crate beside it"
+  },
+  {
+    "name": "TEMPLESTEPS-14-doors-blind",
+    "file": "src/world/townStandIns.js",
+    "old": "    for (const door of mesh.doors ?? []) {",
+    "new": "    for (const door of []) {",
+    "tests": [
+      "test/world/fb1015f_templesteps.test.js"
+    ],
+    "note": "the pads told no door: a bank stands over a neighbour's step"
+  },
+  {
+    "name": "TEMPLESTEPS-15-approach-metre",
+    "file": "src/world/curatedPlacements.js",
+    "old": "export const DOOR_APPROACH_M = 4;",
+    "new": "export const DOOR_APPROACH_M = 1;",
+    "tests": [
+      "test/world/fb1015f_templesteps.test.js"
+    ],
+    "note": "HILL-HOUSE's four metres a metre: the old sweep's reach"
+  },
+  {
+    "name": "TEMPLESTEPS-16-approach-middle",
+    "file": "src/world/townStandIns.js",
+    "old": "  const side = Math.max(half - 0.1, 0), pts = [];",
+    "new": "  const side = 0, pts = [];",
+    "tests": [
+      "test/world/fb1015f_templesteps.test.js"
+    ],
+    "note": "the approach its middle line alone: what stands by a jamb unread"
+  },
+  {
+    "name": "TEMPLESTEPS-17-approach-inward",
+    "file": "src/world/townStandIns.js",
+    "old": "  const foot = at(cx, footY, cz), tip = at(cx + door.normal.x, footY, cz + door.normal.z);",
+    "new": "  const foot = at(cx, footY, cz), tip = at(cx - door.normal.x, footY, cz + door.normal.z);",
+    "tests": [
+      "test/world/fb1015f_templesteps.test.js"
+    ],
+    "note": "the approach read into the building, not out of the door"
+  },
+  {
+    "name": "TEMPLESTEPS-18-door-head",
+    "file": "src/world/townStandIns.js",
+    "old": "  const v0 = door.vert0, v2 = door.vert2, footY = Math.min(v0.y, door.vert1.y, v2.y);",
+    "new": "  const v0 = door.vert0, v2 = door.vert2, footY = Math.max(v0.y, door.vert1.y, v2.y);",
+    "tests": [
+      "test/world/fb1015f_templesteps.test.js"
+    ],
+    "note": "the approach at the door's head (the old sweep read vert1 + a metre, the head on half the doors)"
+  },
+  {
+    "name": "TEMPLESTEPS-19-sweep-touch",
+    "file": "tools/townSolidsSweep.mjs",
+    "old": "export const TOUCH_M = 0.06;",
+    "new": "export const TOUCH_M = 0.6;",
+    "tests": [
+      "test/world/wd3_standins.test.js"
+    ],
+    "note": "a touch of 60 cm: the sweep blind to all but whole swallowings (needs ARENA2_PATH)"
+  },
+  {
+    "name": "TEMPLESTEPS-20-sweep-structures",
+    "file": "tools/townSolidsSweep.mjs",
+    "old": "export const RMBRP_STRUCTURES = Object.freeze([53160, 53170, ...Object.keys(RMBRP_DOCKS).map(Number), 53143, 53144, 53182, 53187, 53194, CITY_WALL_PIECE]);",
+    "new": "export const RMBRP_STRUCTURES = Object.freeze([53160, ...Object.keys(RMBRP_DOCKS).map(Number), 53143, 53144, 53182, 53187, 53194, CITY_WALL_PIECE]);",
+    "tests": [
+      "test/world/wd3_standins.test.js"
+    ],
+    "note": "the foundation out of the sweep's holders: a foundation drawn 16 m square unread (needs ARENA2_PATH)"
+  },
+  {
+    "name": "TEMPLESTEPS-21-sweep-curation-skipped",
+    "file": "tools/townSolidsSweep.mjs",
+    "old": "      curateBlockPlacements(dfBlock, vendor);",
+    "new": "",
+    "tests": [
+      "test/world/wd3_standins.test.js"
+    ],
+    "note": "the sweep reads the pack's own JSON, not the block the door serves: HILL-HOUSE's house back in its hills (needs ARENA2_PATH)"
+  }
+]

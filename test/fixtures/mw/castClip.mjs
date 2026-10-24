@@ -4,7 +4,7 @@
 // with the spellcast group and its idle appended after the file's last key: the three ranges' start / release / stop,
 // as Morrowind's base_anim.1st.kf carries them, at times a pin can step to.
 import { readFileSync } from 'node:fs';
-import { parseNif } from '../../../src/formats/mwNifFile.js';
+import { parseNif } from '../../../src/formats/morrowind/mwNifFile.js';
 import { writeNif } from '../../../tools/nifWrite.mjs';
 
 /** The keys appended, in file time. "<type> release" is where OpenMW casts (character.cpp handleTextKey). */

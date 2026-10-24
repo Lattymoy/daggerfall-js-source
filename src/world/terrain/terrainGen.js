@@ -1,0 +1,266 @@
+// ═══════════════════════════════════════════════════════════════════
+// EV7 — THE PIXEL KERNEL, one pure function. buildPixel's CPU-heavy
+// prologue ran ~84,000 perlinNoise calls per map pixel (33k in
+// generateSamples, up to 50k in generateTileData - the tile
+// classifier out-costs the heightmap itself) plus ~166k cubic
+// interpolations and 16k atans in layoutNature, all inside ONE task:
+// every await in buildPixel is a cache-warm microtask, so the whole
+// body landed on the frame the pixel was enqueued - the map-pixel
+// crossing hitch. This module is that prologue factored out VERBATIM,
+// in the exact inline order, so it can run on a Worker (terrainGenClient
+// / terrainGenWorker) or on this thread (the fallback IS the old path,
+// not a failure - the RA1 road-bake law).
+//
+// The inputs are the postMessage-safe half of buildPixel's world:
+// `woods` is any object answering the sampler's three-method surface
+// (getHeightMapValuesRange1Dim / getLargeHeightMapValuesRange /
+// getHeightMapValue - the worker owns its own WoodsFile from a copied
+// byte buffer), and the LOCATION half stays with the caller:
+// setLocationTiles needs BlocksFile+MapsFile, which are file objects
+// that do not cross a postMessage boundary, so the caller runs it
+// first and its tilemap + rect ride INTO the job as plain data.
+// ═══════════════════════════════════════════════════════════════════
+
+import { generateSamples, ghostSampler, HEIGHTMAP_DIMENSION } from './terrainSampler.js';
+import { buildTerrainGrid, convertTilemap } from './terrainSurface.js';
+import { assignTiles, blendLocationTerrain, calcAvgMaxHeight, generateTileData } from './terrainTiles.js';
+import { layoutNature } from './terrainNature.js';
+import { jungleLayout, jungleWhole } from './jungleNature.js';   // BANTHA1: the jungle over the pixel's own layout
+import { paintJungleTrails } from '../jungle/jungleTrails.js';   // JUNGLE-TRAILS: the jungle's own trails
+import { paintRoads, smoothRoadHeights, pathCorners } from '../road/roadPainter.js';
+import { MAP_W } from '../road/roadNetwork.js';
+import { arenaRoadByte, arenaRoadCorners, arenaJoinByte } from '../arenaRoads.js';   // TESA4: Arena's roads past the Bay; TESA5: their joins on it
+import { inBay } from '../tamriel/tamrielFrame.js';
+import { applyPicks } from '../worldOfDaggerfall/wodLocationLoader.js';   // WOD2: World of Daggerfall's smoothing arms
+import { createLandforms } from '../landforms.js';   // LANDFORM1-3: the port's own terrain, inside the kernel
+import { waterBedOf, bedHalo, bedNearEdge } from '../water/waterBed.js';   // AUDIT WATER-NEXT P1: the bed under the water, carved with the grid; F2: across its seams
+
+/**
+ * The whole CPU side of one streamed pixel, in buildPixel's own order:
+ * samples -> (location: avg + blend, over the PRE-SEEDED tilemap the
+ * caller's setLocationTiles wrote) -> tileData/assignTiles -> the
+ * grid with its ghost-row edge normals (EV4) and far-ring stride ->
+ * the converted tilemap bytes -> the nature layout.
+ *
+ * @param {object} job
+ * @param {object} job.woods - the sampler's three-method surface.
+ * @param {number} job.px
+ * @param {number} job.py
+ * @param {number} [job.stride] - 1 or the EV4 far-ring stride.
+ * @param {Uint8Array} job.tilemap - 128x128, location tiles already
+ *   set by the caller when the pixel carries one; mutated here.
+ * @param {?object} job.locationRect - setLocationTiles' answer.
+ * @param {boolean} job.hasLocation
+ * @param {number} job.climateType - the pixel's climate, for nature.
+ * @param {?{picks:Array<{flatten:boolean, rect:object}>}} [job.wod] -
+ *   WOD2: the World of Daggerfall instances the main thread's
+ *   pickLocations placed on this pixel, in order; null with the mod off.
+ * @param {?{archive:number, hidden:boolean}} [job.forests] - FOREST1: the
+ *   Real forests switch (null off, DFU's scatter): the climate's summer
+ *   nature archive, and whether the pixel's location is a place the woods
+ *   hide (a dungeon, a shrine) rather than one they draw back from (a town).
+ * @param {boolean} [job.landform] - LANDFORM1-3: the Landforms row (off,
+ *   DFU's kernel): the relief, and the paths cut into the land with this
+ *   kernel's own network - its rivers where they are painted.
+ * @param {?Uint8Array} [job.sites] - LANDFORM4: landforms.js landformSites, the game's own locations the shaped ground
+ *   is pulled to (the client's, never the job's: it rides beside the woods and the network).
+ * @param {?Uint8Array} [job.climates] - LANDFORM6: landforms.js landformClimates, the land each climate wears (the
+ *   client's, beside the sites).
+ * @param {?{nine:number[], hidden?:boolean}} [job.jungle] - BANTHA1: the
+ *   jungle's field about this pixel (world/jungle/jungleRegion.js jungleNine)
+ *   and whether its location is one the woods hide; null where the jungle
+ *   cannot reach or its row is off (world/terrain/jungleNature.js jungleLayout).
+ * @param {?{nature:number[], type:number[]}} [job.ecotone] - ECOTONE1: the
+ *   3x3 of pixels' climates about this one (world/terrain/terrainNature.js
+ *   layoutNature's `ecotone`), null with the Blended climates row off or
+ *   every neighbour this pixel's own climate.
+ * @param {?{px: number, py: number}} [job.flattenAt] - TESA11: a capital that spans several pixels (world/tamrielCapitals.js
+ *   `span`): the pixel whose average every one of its pixels is flattened to - its centre's - so they meet level.
+ * @returns {{samples: Float32Array, tilemap: Uint8Array,
+ *   positions: Float32Array, normals: Float32Array,
+ *   tilemapBytes: Uint8Array, avg: number, paths: ?Uint8Array,
+ *   nature: Array<{record:number,x:number,y:number,z:number}>, beach: ?Float32Array,
+ *   roadside: Array<any>}} `roadside` JUNGLE-ROADSIDE's pairs (world/jungle/jungleRoadside.js standPairs)
+ */
+/** TESA11: the averages a city over several pixels is flattened to, by its centre pixel and whether the ground is shaped -
+ *  kept while the kernel's inputs are the same (its woods, its network, its sites, its climates). */
+const _flatAverages = new Map();
+/** TESA11: the average height of a pixel's samples (and of DFU's own, the classic pass, where the ground is shaped) - the
+ *  pixel's own samples when this job is the pixel's (`own`), else generated for it once. */
+function flattenAverage(inputs, landforms, at, own) {
+  const key = `${at.px},${at.py}|${landforms ? 1 : 0}`, had = _flatAverages.get(key);
+  if (had && had.woods === inputs.woods && had.roads === inputs.roads && had.sites === inputs.sites && had.climates === inputs.climates) return had;
+  let samples = own?.samples ?? null, classic = own?.classic ?? null;
+  if (!samples) {
+    classic = landforms ? new Float32Array(HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION) : null;
+    samples = generateSamples(inputs.woods, at.px, at.py, HEIGHTMAP_DIMENSION, landforms, classic);
+  }
+  const out = { ...inputs, avg: calcAvgMaxHeight(samples)[0], classic: classic ? calcAvgMaxHeight(classic)[0] : null };
+  _flatAverages.set(key, out);
+  return out;
+}
+
+export function generatePixelTerrain({ woods, px, py, stride = 1, tilemap, locationRect = null, hasLocation = false, climateType, roads = null, sites = null, climates = null, wod = null, forests = null, landform = false, ecotone = null, bed = false, flattenAt = null, jungle = null }) {
+  // LANDFORM1-3: built from the network THIS kernel holds - the one the painter below paints - so the cut and the paint
+  // are the same roads; restrideGrid's ghost rows take the same landforms, so the edge normals read the shaped ground.
+  // LANDFORM4: and the sites this kernel holds (landforms.js landformSites, the client's to hand both threads); LANDFORM6:
+  // and the world's climates beside them.
+  const landforms = landform ? createLandforms({ woods, roads, sites, climates }) : null;
+  // AUDIT LANDFORMS D3: THE LANDFORMS MOVE THE GROUND, NEVER A TILE. A location's blend pulls its whole pixel toward the
+  // pixel's mean, and the landforms move that mean (a road's bed and a river's channel by centimetres, a massif in the
+  // pixel by up to 268 m - Chesterbrugh), so a beach sample the classifier read on the shaped blend crossed the beach
+  // line where DFU's did not: 359 tiles in 97 of the 314 coastal location pixels on the real data turned between sand
+  // and land. The tiles are classified on DFU's own samples through DFU's own blend - written in the same pass - and
+  // where they part from the shaped ground they part by at most 2.2 m (the Dunynak Excavation, 313 under 10 cm).
+  const classic = landforms && hasLocation ? new Float32Array(HEIGHTMAP_DIMENSION * HEIGHTMAP_DIMENSION) : null;
+  const samples = generateSamples(woods, px, py, HEIGHTMAP_DIMENSION, landforms, classic);
+  let avg = 0;
+  if (hasLocation) {
+    // TESA11: a city over several pixels stands on one ground - each of its pixels flattened to its centre's average
+    const flat = flattenAt ? flattenAverage({ woods, roads, sites, climates }, landforms, flattenAt, px === flattenAt.px && py === flattenAt.py ? { samples, classic } : null) : null;
+    avg = flat ? flat.avg : calcAvgMaxHeight(samples)[0];
+    blendLocationTerrain(samples, avg, locationRect);
+    if (classic) blendLocationTerrain(classic, flat?.classic ?? calcAvgMaxHeight(classic)[0], locationRect);
+  }
+  // ROADS 2: the one seam. Ground classified, squares not yet run, so a
+  // road tile lands over a known ground type and the marching squares
+  // blend around it. `roads` is null in a solo build with no network
+  // loaded and the pipeline is then byte-for-byte what it was.
+  const tileData = generateTileData(classic ?? samples, px, py);
+  // GRASS-PATH1: the painter's own record of which tiles it wrote, so
+  // the grass placer can keep off a path it cannot name by record.
+  let paths = null;
+  let arenaPainted = false;   // TESA4: whether Arena's roads reached this pixel's paint - the host's sweep asks
+  if (roads) {
+    paths = new Uint8Array(tilemap.length);
+    // ROAD-BEYOND: the network is the Bay's 1000 x 500 - a pixel past its east or west edge (TAMRIEL2) carries none of
+    // it, where `py * MAP_W + px` read the next or last row's own Bay pixel (2712 of them in a 60-pixel strip either
+    // side); a row above or below the Bay reads off the arrays' ends, which is none already
+    const onGrid = px >= 0 && px < MAP_W;
+    const i = py * MAP_W + px;
+    const at = (m) => (m && onGrid ? m[i] : 0);
+    // TESA4: past the Bay - north and south of it too - Arena's roads (world/arenaRoads.js), each byte and corner its
+    // layer's; none on the Bay, whose network is its own
+    const arena = !inBay(px, py);
+    // TESA5: on the Bay, a crossing's join alone - the Bay's road carried out to its edge (no corner: its runs are straight)
+    const join = arena ? 0 : arenaJoinByte(px, py);
+    const road = at(roads.roads) | (arena ? arenaRoadByte('roads', px, py) : join), track = at(roads.tracks) | (arena ? arenaRoadByte('tracks', px, py) : 0);
+    const arenaCorners = (kind) => (arena ? arenaRoadCorners(kind, px, py) : 0);
+    arenaPainted = !!(join || (arena && (road || track || arenaCorners('roads') || arenaCorners('tracks'))));
+    // ROADS 23: the mod's corners - a neighbour's diagonal brushes this
+    // pixel's corner tile - and its water, off unless the network says.
+    const c = (m) => (m ? pathCorners(m, px, py, MAP_W) : 0);
+    paintRoads(tileData, tilemap, road, track, hasLocation ? locationRect : null, 129, {
+      river: at(roads.rivers), stream: at(roads.streams), water: !!roads.water,
+      corners: { road: c(roads.roads) | arenaCorners('roads'), track: c(roads.tracks) | arenaCorners('tracks'), river: c(roads.rivers), stream: c(roads.streams) },
+      paths,   // GRASS-PATH1
+    });
+    // ROADS 10: the ground under the road is smoothed - after the paint,
+    // before the grid is built from the samples. The network carries the
+    // switch (`smooth`, default on, the design's SmoothRoads) so the
+    // worker needs no settings access.
+    if (roads.smooth !== false) smoothRoadHeights(samples, tilemap, 129, hasLocation ? locationRect : null);   // AUDIT 51: the mod skips the rect
+    if (roads.smooth !== false && classic) smoothRoadHeights(classic, tilemap, 129, locationRect);   // AUDIT LANDFORMS II H2: DFU's own samples as its nature reads them
+  }
+  // JUNGLE-TRAILS: the jungle's own trails worn into its corners before the squares run - dirt they blend, every tile
+  // they touch kept as a track's is (world/jungle/jungleTrails.js); the heights never moved
+  if (jungle) paths = paintJungleTrails(tileData, tilemap, paths, { px, py, nine: jungle.nine, whole: jungleWhole(jungle.nine), rect: hasLocation ? locationRect : null });
+  assignTiles(tileData, tilemap, true);
+  // WOD2: World of Daggerfall's "Smooth the terrain" arms
+  // (LocationLoader.cs:174-230). The mod runs on
+  // DaggerfallTerrain.OnPromoteTerrainData, which DFU raises AFTER the
+  // tiles are assigned (CompleteMapPixelDataUpdate) and the heights are
+  // pushed, and BEFORE the streamer lays the nature out - so here: the
+  // tiles keep the unflattened slope's pattern, and the grid, the
+  // collision floor and the nature below all read the levelled ground.
+  // The averages ride back for the objects' height (:238); a pixel with
+  // a real location starts from its own mean (MapData.averageHeight is
+  // only ever computed there), every other from 0.
+  const wodResult = wod && wod.picks.length ? applyPicks(samples, wod.picks, hasLocation ? avg : 0) : null;
+  if (classic && wodResult) applyPicks(classic, wod.picks);   // AUDIT LANDFORMS II H2: DFU's nature reads the ground a site levelled (above) - so the beach it asks is DFU's own samples levelled by the same picks
+  const tilemapBytes = convertTilemap(tilemap);
+  // PERF-EXT26: the one grid law, the restride's too; AUDIT WATER-NEXT P1: and the bed under its water, carved here
+  const grid = restrideGrid({ woods, px, py, stride, samples, landforms, bed: bed ? tilemapBytes : null });
+  // FOREST1's places - the location (hidden or not, as the caller says) and every World of Daggerfall SITE (the loader's
+  // rect is only the last), each its whole footprint; never a rock field or a mountain (AUDIT FOREST1 F1: the caller marks
+  // them `hide: false` and they are no place). BANTHA1: the jungle's clearings are the same places
+  const placesFor = (hidden) => [
+    ...(hasLocation && locationRect ? [{ ...locationRect, hide: !!hidden }] : []),
+    ...(wod?.picks ?? []).filter((p) => p.hide !== false).map(({ rect: r, bounds: b }) => (b
+      ? { xMin: b.xMin, xMax: b.xMax, yMin: b.yMin, yMax: b.yMax, hide: true }
+      : { xMin: r.x, xMax: r.x + r.width, yMin: r.y, yMax: r.y + r.height, hide: true })),
+  ];
+  const natureOpts = {
+    mapPixelX: px,
+    mapPixelY: py,
+    rawWorldHeight: woods.getHeightMapValue(px, py),
+    climateType,
+    // WOD2: the loader SETS MapData.locationRect to its site (:179/:208),
+    // and the nature layout reads that field - so the trees keep their
+    // clearance off a camp exactly as they keep it off a town.
+    locationRect: wodResult?.locationRect ?? locationRect,
+    // FOREST1: the places the woods close round or draw back from (placesFor, above), and the road painter's own track
+    // mask, which a forest keeps off (AUDIT FOREST1 F8).
+    forests: forests ? { archive: forests.archive, pois: placesFor(forests.hidden), paths } : null,
+    ecotone,   // ECOTONE1: the neighbours' climates - a border's tiles laid by the climate the ground's border gives them
+    // AUDIT LANDFORMS II H2: and its beach line asked of DFU's own blend, as the tiles' is (D3) - on the shaped blend a
+    // road's bed or a river's channel moved a coastal town's mean, and the line moved with it at 85 tiles in 43 of the
+    // 351 coastal location pixels (a tree there, none here; the scatter's records reshuffled after each). The flats
+    // still stand on the shaped ground.
+    beach: classic,
+  };
+  // BANTHA1: the jungle over the pixel's own layout - its tiles laid again by the jungle's law, its clearings FOREST1's
+  // places, its trees off the tracks as a forest's are; AUDIT BANTHA1 PERF-6: a pixel the jungle owns whole lays no
+  // layout of its own - every flat of it would be dropped
+  const { flats: nature, pairs: roadside } = jungleLayout(jungle && jungleWhole(jungle.nine) ? [] : layoutNature(samples, tilemap, natureOpts), samples, tilemap,
+    { ...natureOpts, jungle: jungle ? { nine: jungle.nine, pois: placesFor(jungle.hidden), paths, net: roads } : null });   // JUNGLE-ROADSIDE: and the network, its pairs astride the roads
+  return { samples, tilemap, positions: grid.positions, normals: grid.normals, bed: grid.bed, tilemapBytes, avg, nature,
+    paths,   // GRASS-PATH1: null when no network was present, as `withRoads` says, and no jungle trail ran (JUNGLE-TRAILS)
+    roadside,   // JUNGLE-ROADSIDE: the jungle's roadside pairs (jungleLayout's), beside the flats - [] where none stands
+    // ROADS 25: whether a network was PRESENT when this pixel was painted.
+    // The network loads asynchronously and the world starts building at
+    // once, so the first pixels can be painted with none - and were then
+    // kept, roadless, while the map (rebuilt on arrival) showed the roads.
+    withRoads: !!roads,
+    arenaRoads: arenaPainted,   // TESA4: Arena's roads reached its paint - painted again when their layer moves
+    wodAverages: wodResult ? wodResult.averages : null,   // WOD2: per pick, the normalized average its objects stand on
+    beach: classic,   // AUDIT LANDFORMS II H2: DFU's own blend in a location's pixel (null else) - the gathering nodes' beach line
+  };
+}
+
+/**
+ * PERF-EXT26 (2026-09-25, the players: "fps issues in the exterior but
+ * fine in the interior", "me too my friend.. don't know why. I got a
+ * RX6600"): A PIXEL'S GRID AT A STRIDE, from its samples as the pixel
+ * keeps them (post-blend, post-smoothing) and the ghost rows off the woods
+ * for its edge normals (EV4). The build above, the world host's ring-class
+ * swap (STREAM1's restride) and the terrain worker's `grid` job all run
+ * this one law, so a promotion built on the worker is the bytes one built
+ * on the main thread is, by construction.
+ * LANDFORM1-3: the ghost rows are the neighbours' SHAPED ground - `landforms` when the caller holds them (the build
+ * above), else made here from `landform` and the network (a promotion: the host's job, the worker's own network).
+ * AUDIT WATER-NEXT P1 (2026-10-07, Mac: "ensure ... performance is unaffected"): `bed` - the converted TileMap to carve
+ * the water's bed by (world/water/waterBed.js), or null for none - and the answer carries it (`bed`: the depths and the carved
+ * ground, null where no vertex is under water) beside the grid as it stood. WATER-NEXT 2 carved on the host's thread at
+ * every build and restride, 0.3 ms for a pixel with no water at all and a millisecond or two for a coast's; here it rides
+ * the worker with the grid it carves, the build's, the promotion's and the restride's alike.
+ * @param {{ woods: object, px: number, py: number, stride?: number, samples: Float32Array, landform?: boolean, roads?: ?object, sites?: ?Uint8Array, climates?: ?Uint8Array, landforms?: ?object, bed?: ?Uint8Array }} job
+ * @returns {{ positions: Float32Array, normals: Float32Array, bed: ?{depths: Float32Array, sheetDepths: Float32Array, positions: Float32Array, normals: Float32Array} }}
+ */
+export function restrideGrid({ woods, px, py, stride = 1, samples, landform = false, roads = null, sites = null, climates = null, landforms = null, bed = null }) {   // AUDIT WATER-NEXT P1: `bed` the TileMap to carve by
+  const lf = landforms ?? (landform ? createLandforms({ woods, roads, sites, climates }) : null);
+  const ghost = ghostSampler(woods, px, py, HEIGHTMAP_DIMENSION, lf);
+  const grid = buildTerrainGrid(samples, stride, ghost);
+  // AUDIT WATER-NEXT F2: a near grid's bed reads its neighbours' tiles across the seams (the ghost is their own kernel),
+  // where its water comes near an edge
+  const halo = bed && stride === 1 && bedNearEdge(bed) ? bedHalo(ghost, px, py) : null;
+  return { positions: grid.positions, normals: grid.normals, bed: bed ? gridBed(grid, bed, stride, halo) : null };
+}
+
+/** AUDIT WATER-NEXT P1: a grid's bed as the kernel answers it - the depths, the sheet's depths and the carved ground, the
+ *  grid untouched, and the seam's halo it was carved with (F2: kept by the host for a re-carve); null where no vertex is
+ *  under water (world/water/waterBed.js waterBedOf). The host's re-carve (Deep Waters' TileMap) takes the same shape. */
+export function gridBed(grid, bytes, stride = 1, halo = null) {
+  const carved = waterBedOf(grid, bytes, { stride, halo });
+  return carved ? { depths: carved.depths, sheetDepths: carved.sheetDepths, positions: carved.ground.positions, normals: carved.ground.normals, halo } : null;
+}

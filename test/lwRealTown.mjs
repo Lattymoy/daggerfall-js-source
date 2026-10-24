@@ -1,13 +1,13 @@
 // LW-WALLS / LW-SPACE (bible/06-Systems/Living-World.md): THE GAME'S OWN TOWNS, AS THE STREAMING HOST BUILDS THEM - a town
 // of ARENA2 replayed in Node with the host's own producers (scenes/world.js's population block, pinned word for word by
-// test/lwwalls_city.test.js): its location laid out (`layoutLocation`, on the enhanced skin with its water and its
+// test/systems/livingWorld/lwwalls_city.test.js): its location laid out (`layoutLocation`, on the enhanced skin with its water and its
 // mills - the living world's lane, each on by default), its navgrid off each block's automap and ground, every model's
 // static doors by the host's law into the location frame, its buildings' summaries and its MAPS row. For the pins that
 // read the game's data (skipped where ARENA2_PATH names none) and the probes that measure on it
 // (tools/livingCrowdProbe.mjs). Read-only over the data; nothing is written.
 import { readFileSync, existsSync } from 'node:fs';
 import { join } from 'node:path';
-import { CityNavigation, NAV_CELL } from '../src/world/cityNavigation.js';
+import { CityNavigation, NAV_CELL } from '../src/world/city/cityNavigation.js';
 import { MapsFile, getWorldClimateSettings, longitudeLatitudeToMapPixel, LOCATION_TYPES } from '../src/formats/mapsFile.js';
 import { BlocksFile } from '../src/formats/blocksFile.js';
 import { Arch3dFile } from '../src/formats/arch3dFile.js';
@@ -17,9 +17,9 @@ import { dfMeshToModel } from '../src/world/meshReader.js';
 import { patchSeams } from '../src/world/arch3dSeams.js';
 import { getStaticDoors } from '../src/world/staticDoors.js';
 import { buildingSummaries } from '../src/world/buildingSummaries.js';
-import { makeBuildingKey } from '../src/systems/talkTopics.js';
+import { makeBuildingKey } from '../src/systems/talk/talkTopics.js';
 import { trs, multiply } from '../src/world/mat4.js';
-import { hasPort } from '../src/systems/travelPorts.js';
+import { hasPort } from '../src/systems/travel/travelPorts.js';
 
 export const ARENA2 = process.env.ARENA2_PATH;
 export const skipReal = !ARENA2 || !existsSync(ARENA2) ? 'ARENA2_PATH not set or missing - real-data validation skipped' : false;
@@ -76,7 +76,7 @@ export function hostTown(dfLocation) {
     .map((b) => ({ key: b.buildingKey, type: b.buildingType, quality: b.quality, factionId: b.factionId }));
   const town = {
     mapId: md.mapId >>> 0, name: String(dfLocation.name ?? ''), px: p.x, py: p.y, type: md.locationType, region: dfLocation.regionIndex,
-    people: getWorldClimateSettings(maps.getClimateIndex(p.x, p.y))?.people, blocks: Math.max(1, loc.width * loc.height), port: hasPort(md.mapId),
+    people: getWorldClimateSettings(maps.getClimateIndex(p.x, p.y))?.people, blocks: Math.max(1, loc.width * loc.height), w: Math.max(1, loc.width), h: Math.max(1, loc.height), port: hasPort(md.mapId),   // WALL-WAY
   };
   return { nav, doors, buildings, town, gates };
 }

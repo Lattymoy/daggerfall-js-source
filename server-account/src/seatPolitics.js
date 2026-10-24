@@ -215,7 +215,9 @@ export const SEAT_RED_MAX = 20;
 /** The red announcements of the last day, oldest first (the seats' list carries them) - AUDIT SEATS-3 A4: the newest
  *  SEAT_RED_MAX of them, never a day's every row on every list. */
 export async function redOf(db, nowS) {
-  const { results = [] } = await db.prepare('SELECT seq, text, at FROM (SELECT seq, text, at FROM town_seat_red WHERE at > ? ORDER BY seq DESC LIMIT ?) ORDER BY seq')
-    .bind(nowS - SEAT_RED_S, SEAT_RED_MAX).all();
-  return results.map((r) => ({ id: Number(r.seq), text: r.text, at: Number(r.at) }));
+  return redFrom((await redRead(db, nowS).all()).results);
 }
+/** SEAT-BATCH (2026-10-16): redOf's statement and its answer apart, so the seats' list sends it in one batch. */
+export const redRead = (/** @type {any} */ db, /** @type {number} */ nowS) => db.prepare('SELECT seq, text, at FROM (SELECT seq, text, at FROM town_seat_red WHERE at > ? ORDER BY seq DESC LIMIT ?) ORDER BY seq')
+  .bind(nowS - SEAT_RED_S, SEAT_RED_MAX);
+export const redFrom = (/** @type {any[]} */ results = []) => results.map((r) => ({ id: Number(r.seq), text: r.text, at: Number(r.at) }));

@@ -5,17 +5,19 @@
 // restored, and where its door lets the player out.
 //
 // WAGONS2: the room is the caravan's own (world/caravanRoomModel.js), stood on the caravan at its pose and turned with
-// it, its pictures the caravan's - the built ones or its owner's paint (systems/wagonLooks.js) - uploaded here, its
+// it, its pictures the caravan's - the built ones or its owner's paint (systems/wagon/wagonLooks.js) - uploaded here, its
 // windows' glass cut out so the world is seen through them.
 import { CARAVAN_BUILDING_KEY, CARAVAN_TEXT, CARAVAN_ROOM_MODEL_ID, caravanRoomBlock, readCaravanRoom } from '../systems/caravanRoom.js';
 import { BUILDING_TYPES } from '../world/buildingNames.js';
 import { trs } from '../world/mat4.js';
 import { caravanRoomModel, CARAVAN_ENTER, CARAVAN_LANTERN } from '../world/caravanRoomModel.js';
 import { wagonArt, wagonLookArt, isGlassRecord, lookRecord, LOOK_RECORDS, LOOK_RECORD_STRIDE, TEX, WAGON_ARCHIVE } from '../world/wagonArt.js';
-import { readWagonLook, CARAVAN_INSIDE_LOOKS, CARAVAN_INSIDE_PARTS } from '../systems/wagonLooks.js';
+import { readWagonLook, CARAVAN_INSIDE_LOOKS, CARAVAN_INSIDE_PARTS } from '../systems/wagon/wagonLooks.js';
 import { toColor32 } from '../formats/color32Order.js';
+import { dfLook, lookSeed } from '../world/dfLook.js';   // DF-LOOK: the room's pictures in Daggerfall's colours
+import { wearPainted } from '../systems/studioArt/studioArt.js';   // STUDIO1: the studio's pictures over the painted ones
 import { quatRotate } from '../world/quat.js';
-import { WAGON_MODE } from '../systems/horseCartLaw.js';
+import { WAGON_MODE } from '../systems/horse/horseCartLaw.js';
 
 import { CARAVAN_STANDS_NATIVES, CARAVAN_STANDS_TURN, turnGap } from '../systems/caravanRoom.js';   // WAGONS2 (AUDIT): the room's caravan where it stands - FINAL AUDIT: and which way
 export { CARAVAN_STANDS_NATIVES };
@@ -41,8 +43,8 @@ export function caravanRoomRecords() {
   return out;
 }
 
-/** The pictures an inside paint (`look` - systems/wagonLooks.js) puts on the room's live records: `[record, picture]`,
- *  each part's built picture or its paint's. */
+/** The pictures an inside paint (`look` - systems/wagon/wagonLooks.js) puts on the room's live records: `[record, picture,
+ *  from]`, each part's built picture or its paint's - `from` the record it is (STUDIO1: whose replacement it wears). */
 export function caravanRoomPictures(look) {
   const l = readWagonLook(look);
   const built = new Map(wagonArt());
@@ -50,19 +52,23 @@ export function caravanRoomPictures(look) {
   for (const part of CARAVAN_INSIDE_PARTS) {
     const i = l[part[0]];
     const painted = i ? new Map(wagonLookArt(part, i, CARAVAN_INSIDE_LOOKS[part][i]).map(([rec, pic]) => [rec % LOOK_RECORD_STRIDE, pic])) : null;
-    for (const rec of LOOK_RECORDS[part]) out.push([lookRecord(rec, CARAVAN_LIVE_CHOICE), painted?.get(rec) ?? built.get(rec)]);
+    for (const rec of LOOK_RECORDS[part]) out.push([lookRecord(rec, CARAVAN_LIVE_CHOICE), painted?.get(rec) ?? built.get(rec), painted?.has(rec) ? lookRecord(rec, i) : rec]);
   }
   return out;
 }
 
 /** THE ROOM PAINTED: the live records given `look`'s pictures on the renderer - each let go first (the renderer keeps
- *  the first picture asked under a key) and uploaded again, opaque, a cut-out where the glass is. */
+ *  the first picture asked under a key) and uploaded again, opaque, a cut-out where the glass is. DF-LOOK: grained and
+ *  snapped to Daggerfall's palette, by its built record's seed (scenes/horseCartPool.js uploadWagonPicture's). STUDIO1:
+ *  the studio's picture of the record it is, where an artist drew one, as drawn. */
 export function paintCaravanRoom(renderer, look) {
   if (!renderer?.uploadTexture) return;
-  for (const [rec, pic] of caravanRoomPictures(look)) {
+  for (const [rec, pic, from] of caravanRoomPictures(look)) {
     const key = `${WAGON_ARCHIVE}_${rec}`;
-    renderer.evictTexture?.(key); renderer.evictTexture?.(`${key}#opaque`);
-    renderer.uploadTexture(WAGON_ARCHIVE, rec, toColor32(pic), isGlassRecord(rec) ? { cutout: true } : { opaque: true });
+    wearPainted(WAGON_ARCHIVE, from, () => toColor32(dfLook(pic, lookSeed(WAGON_ARCHIVE, rec % LOOK_RECORD_STRIDE))), (c32) => {
+      renderer.evictTexture?.(key); renderer.evictTexture?.(`${key}#opaque`);
+      renderer.uploadTexture(WAGON_ARCHIVE, rec, c32, isGlassRecord(rec) ? { cutout: true } : { opaque: true });
+    }, { slot: key });   // the live record's slot: a room repainted while a picture was on its way keeps its new paint
   }
 }
 

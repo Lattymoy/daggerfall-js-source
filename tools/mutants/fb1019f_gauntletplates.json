@@ -1,0 +1,232 @@
+[
+  {
+    "name": "GAUNTLET-PLATES-never-drawn",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      gauntletPlates(F, t);   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: and the Gauntlet's, each caster's\n",
+    "new": "",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "the bug: the objective names the plates and nothing marks them"
+  },
+  {
+    "name": "GAUNTLET-PLATES-cut-away",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      sh.y = egPlateY(spec, q);",
+    "new": "      sh.y = NaN;",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "drawn on the fight floors it covers - none, so the floor plan cuts it away"
+  },
+  {
+    "name": "GAUNTLET-PLATES-at-the-walkways-floor",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "      sh.y = egPlateY(spec, q);",
+    "new": "      sh.y = 0;",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "the mark at the walkway's floor, 2 m under the pillar's top its plate stands on"
+  },
+  {
+    "name": "GAUNTLET-PLATES-short-reach",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "sh.origin[1] = q.plate[1]; sh.r = EG_TOUCH_M;",
+    "new": "sh.origin[1] = q.plate[1]; sh.r = 1.5;",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "a mark smaller than the reach the room counts a member on it within"
+  },
+  {
+    "name": "GAUNTLET-PLATES-held-still-bright",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "sh.alpha = said?.[j] ? 0.35 : 0.85;",
+    "new": "sh.alpha = 0.85;",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "a plate whose Caster is silenced drawn as one still to hold"
+  },
+  {
+    "name": "GAUNTLET-PLATES-every-laid-pillar",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "j < (said ? Math.min(said.length, pillars.length) : pillars.length)",
+    "new": "j < pillars.length",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "the pillars the company was not given marked though the room's word says the company's"
+  },
+  {
+    "name": "GAUNTLET-PLATES-past-the-trial",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    if (stageNow !== 'trial' || F.pg?.obj !== 'gauntlet') return;",
+    "new": "    if (F.pg?.obj !== 'gauntlet') return;",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "the plates still marked once the door is open"
+  },
+  {
+    "name": "GAUNTLET-PLATES-before-the-trial",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    if (stageNow !== 'trial' || F.pg?.obj !== 'gauntlet') return;",
+    "new": "    if ((stageNow !== 'trial' && stageNow !== 'arrive') || F.pg?.obj !== 'gauntlet') return;",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "the plates marked while the company gathers, before the trial that asks for them"
+  },
+  {
+    "name": "GAUNTLET-PLATES-older-relay-unmarked",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    if (!said && !(F.pg.left > 0)) return;",
+    "new": "    if (!said) return;",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "a screen facing a relay before world232 (world231 or older) marks nothing - the bug again"
+  },
+  {
+    "name": "GAUNTLET-PLATES-older-relay-none-left-marked",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "    if (!said && !(F.pg.left > 0)) return;",
+    "new": "    if (false) return;",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "a screen facing a relay before world232 (world231 or older) marks every plate though no Caster is left"
+  },
+  {
+    "name": "GAUNTLET-PLATES-plateY-top-never-found",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "Math.hypot(x - d.x, z - d.z) <= d.r);",
+    "new": "Math.hypot(x - d.x, z - d.z) < 0);",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "from law 10 the plate stands on its pillar's top - read as none, it falls to the walkway's floor"
+  },
+  {
+    "name": "GAUNTLET-PLATES-plateY-stair-foot",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "return r.y0 + (r.y1 - r.y0) * u;",
+    "new": "return r.y0;",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "law 9's stair read at its foot"
+  },
+  {
+    "name": "GAUNTLET-PLATES-plateY-stair-head",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "return r.y0 + (r.y1 - r.y0) * u;",
+    "new": "return r.y1;",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "law 9's stair read at its head"
+  },
+  {
+    "name": "GAUNTLET-PLATES-word-not-at-wake",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": " P.silenced = F.gauntlet.map((g) => g.done);   // FIELD BUGS 2026-10-19f GAUNTLET-PLATES: each plate's word from the wake (trialStep's)",
+    "new": "",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "the wake's frame without each plate's word"
+  },
+  {
+    "name": "GAUNTLET-PLATES-word-not-stepped",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "      F.pg.silenced = F.gauntlet.map((g) => g.done);\n",
+    "new": "",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "the word never moves - a held plate never dims"
+  },
+  {
+    "name": "GAUNTLET-PLATES-old-line",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "t('eg.progress.gauntlet', 'Casters left: {n}. Hold a plate {s} s or slay its caster', { n: pg.left ?? 0, s: EG_SILENCE_MS / 1000 })",
+    "new": "`Casters left: ${pg.left ?? 0}`",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "the line counts casters, as a body count - and in English alone"
+  },
+  {
+    "name": "GAUNTLET-PLATES-line-seconds",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "s: EG_SILENCE_MS / 1000 }",
+    "new": "s: EG_SILENCE_MS / 100 }",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "the line's seconds not the room's"
+  },
+  {
+    "name": "GAUNTLET-PLATES-objective-unrouted",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "export const egObjectiveText = (spec) => (spec?.variant === 'gauntlet' ? t('eg.objective.gauntlet', \"Silence each caster: stand on its plate, or slay it.\") : egObjectiveOf(spec));",
+    "new": "export const egObjectiveText = (spec) => egObjectiveOf(spec);",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "the objective in English alone"
+  },
+  {
+    "name": "GAUNTLET-PLATES-tracker-law-english",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "      const obj = egObjectiveText(spec), prog",
+    "new": "      const obj = egObjectiveOf(spec), prog",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "the tracker's line left on the law's English"
+  },
+  {
+    "name": "GAUNTLET-PLATES-spire-chip-law-english",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "objective: E.sg === 'trial' && !watching ? egObjectiveText(spec) : ''",
+    "new": "objective: E.sg === 'trial' && !watching ? spec.objective : ''",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "the Spire HUD's chip left on the law's English"
+  },
+  {
+    "name": "GAUNTLET-PLATES-arrival-card-law-english",
+    "file": "src/ui/eliteGates/egSpireHud.js",
+    "old": "    sub: court ? spec.name : egObjectiveText(spec),",
+    "new": "    sub: court ? spec.name : spec.objective,",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "the arrival card left on the law's English"
+  },
+  {
+    "name": "GAUNTLET-PLATES-screen-old-words",
+    "file": "src/ui/eliteGates/egHud.js",
+    "old": "t('eg.objective.gauntlet', \"Silence each caster: stand on its plate, or slay it.\")",
+    "new": "t('eg.objective.gauntlet', 'Silence the casters.')",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "the bug's words on the screen: the objective names no plate"
+  },
+  {
+    "name": "GAUNTLET-PLATES-law-word-moved",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "gauntlet: 'Silence the casters.',",
+    "new": "gauntlet: \"Silence each caster: stand on its plate, or slay it.\",",
+    "tests": [
+      "test/scenes/eliteGates/fb1019f_gauntletplates.test.js"
+    ],
+    "why": "the hall's bytes moved: every Gauntlet's digest otherwise than the room's and every older screen's (section 22's law pin) - the words belong to the screen"
+  }
+]

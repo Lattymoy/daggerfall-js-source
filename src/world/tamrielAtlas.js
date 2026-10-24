@@ -15,8 +15,8 @@
 // next region's), off the page's thread. TESA13's own reader, the held map rolling its view a frame's budget at a time,
 // is retired: the map reads the places the regions laid (world/pastBayPlaces.js), and the budget went with it.
 // ═══════════════════════════════════════════════════════════════════
-import { inBay, tamrielFit } from './tamrielFrame.js';
-import { tamrielLandVersion } from './tamrielLand.js';
+import { inBay, tamrielFit } from './tamriel/tamrielFrame.js';
+import { tamrielLandVersion } from './tamriel/tamrielLand.js';
 import { arenaPlacesVersion } from './arenaPlaces.js';
 import { capitalsVersion } from './tamrielCapitals.js';
 

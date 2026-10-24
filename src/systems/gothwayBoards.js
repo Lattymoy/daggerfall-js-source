@@ -13,7 +13,7 @@ export const isGothwayGarden = (name) => GOTHWAY_RE.test(String(name ?? '').trim
 // privateers hold can see them") ───────────────────────────────────────────────────────────────────────────────────────
 // The boards stand at the town's NORTH ENTRANCE - where the road from Privateer's Hold comes in - one on each side of the
 // road, a few paces inside the border, facing north at whoever arrives. The road is found, not guessed: the town's own
-// walk grid (world/cityNavigation.js - its people walk the same cells; a road cell weighs ROAD_WEIGHT, a building's 0) is
+// walk grid (world/city/cityNavigation.js - its people walk the same cells; a road cell weighs ROAD_WEIGHT, a building's 0) is
 // read along the band of rows at its north edge, and the run of road nearest the town's middle is the way in.
 export const ROAD_WEIGHT = 15;
 /** How far in from the north border the boards stand, and how far beside the road's edge (metres). */

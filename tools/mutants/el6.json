@@ -5,7 +5,7 @@
     "old": "          if (lightPos && b.archive === SHADOW_LIGHT_FLATS) continue;   // EL6: a flame is the lantern, not its occluder\n",
     "new": "",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const SHADOW_LIGHT_FLATS = 210;",
     "new": "export const SHADOW_LIGHT_FLATS = 201;",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "          if (lightPos && b.archive === SHADOW_LIGHT_FLATS) continue;",
     "new": "          if (b.archive === SHADOW_LIGHT_FLATS) continue;",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (occluded()) discard;   // EL6\n  if (uRoomsLit > 0.5",
     "new": "  if (uRoomsLit > 0.5",
     "tests": [
-      "test/el6_field.test.js"
+      "test/render/el6_field.test.js"
     ],
     "note": "WAGONS2 (FINAL AUDIT, PIN MOVED): re-aimed by content."
   },
@@ -42,7 +42,7 @@
     "old": "export const AIR_EMIT_SLACK = 0.15;",
     "new": "export const AIR_EMIT_SLACK = 1000;",
     "tests": [
-      "test/el6_field.test.js"
+      "test/render/el6_field.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "    gl.activeTexture(gl.TEXTURE2);\n    gl.bindTexture(gl.TEXTURE_2D, this.frame.depth);\n    gl.uniform1i(prog.uDepth, 2);",
     "new": "    gl.activeTexture(gl.TEXTURE2);\n    gl.uniform1i(prog.uDepth, 2);",
     "tests": [
-      "test/el6_field.test.js"
+      "test/render/el6_field.test.js"
     ]
   },
   {
@@ -60,7 +60,7 @@
     "old": "  float ang = bayer4(gl_FragCoord.xy) * 1.5707963;",
     "new": "  float ang = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453) * 1.5707963;",
     "tests": [
-      "test/el6_field.test.js"
+      "test/render/el6_field.test.js"
     ]
   },
   {
@@ -69,7 +69,7 @@
     "old": "    c *= mix(1.0, texture(uAO, wuv).r, uAOMix);   // EL6: the crevice loses its light here, once, whole\n",
     "new": "",
     "tests": [
-      "test/audit_el.test.js"
+      "test/render/audit_el.test.js"
     ]
   },
   {
@@ -78,7 +78,7 @@
     "old": "    gl.uniform1f(PR.uAOMix, prepared ? AIR_AO_RESOLVE : 0);",
     "new": "    gl.uniform1f(PR.uAOMix, 0);",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -87,7 +87,7 @@
     "old": "gl.uniform1i(PR.uAO, 3);   // EL6",
     "new": "gl.uniform1i(PR.uAO, 0);   // EL6",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -96,7 +96,7 @@
     "old": "  e += (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;   // EL6: the dither, at the byte, zero-mean\n",
     "new": "",
     "tests": [
-      "test/el5_field.test.js"
+      "test/render/el5_field.test.js"
     ]
   },
   {
@@ -105,7 +105,7 @@
     "old": "    if (prepared) this._images();\n    else { this._blank(quad); this.measured = false; }\n    this.fresh = false;\n",
     "new": "    this._blank(quad); this.measured = false;\n    this.fresh = false;\n",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "old": "    this.f = f;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);",
     "new": "    this.f = null;\n    this.fresh = true;   // AUDIT VOL1: a world frame's inputs, for this resolve alone\n    this.rect.set(f.viewport);",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -123,7 +123,7 @@
     "old": "    this.stats.emitDraws = 0; this.stats.glares = 0; this.stats.shafts = false; this.stats.haze = false; this.stats.vol = false;   // this frame's, counted at the resolve\n",
     "new": "",
     "tests": [
-      "test/el6_field.test.js"
+      "test/render/el6_field.test.js"
     ]
   },
   {
@@ -132,7 +132,7 @@
     "old": "    this.measured = false;   // AUDIT-EL F10: set at the resolve, by whether the world drew",
     "new": "    this.measured = true;   // AUDIT-EL F10: set at the resolve, by whether the world drew",
     "tests": [
-      "test/el6_field.test.js"
+      "test/render/el6_field.test.js"
     ]
   },
   {
@@ -141,7 +141,7 @@
     "old": "      depths.push(depth); fbos.push(fb);",
     "new": "      depths.push(null); fbos.push(fb);",
     "tests": [
-      "test/el6_field.test.js"
+      "test/render/el6_field.test.js"
     ]
   },
   {
@@ -150,7 +150,7 @@
     "old": "  return textureLod(uDepth, (uRect.xy + wuv * uRect.zw) / uCanvas, 0.0).r;",
     "new": "  return textureLod(uDepth, wuv, 0.0).r;",
     "tests": [
-      "test/el6_field.test.js"
+      "test/render/el6_field.test.js"
     ]
   },
   {
@@ -159,7 +159,7 @@
     "old": "      gl.uniform4fv(prog.uRect, this.rect);\n      gl.uniform2fv(prog.uCanvas, this.canvas);\n    };",
     "new": "      gl.uniform2fv(prog.uCanvas, this.canvas);\n    };",
     "tests": [
-      "test/el6_field.test.js"
+      "test/render/el6_field.test.js"
     ]
   },
   {
@@ -168,7 +168,7 @@
     "old": "  float sky = depthAt(uv) >= 0.99999 ? 1.0 : 0.0;",
     "new": "  float sky = depthAt(uv) >= 0.5 ? 1.0 : 0.0;",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -177,7 +177,7 @@
     "old": "  vec3 lit = tex * (uAmbient + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)",
     "new": "  vec3 lit = tex * (uAmbient * 0.5 + uSunColor * (uSunScale * diff) + uMoonColor * (uMoonScale * mdiff)",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -186,7 +186,7 @@
     "old": "  return dwWaterFog(col, wp) + (bayer4(gl_FragCoord.xy) - ${BAYER_MEAN}) / 255.0;",
     "new": "  return dwWaterFog(col, wp);",
     "tests": [
-      "test/el6_field.test.js"
+      "test/render/el6_field.test.js"
     ]
   },
   {
@@ -195,7 +195,7 @@
     "old": "    if (length(rel) > dist + uPointLights[i].w) continue;   // EL6: a lantern farther than the ray reaches plus its range glows on no part of it\n",
     "new": "",
     "tests": [
-      "test/el6_field.test.js"
+      "test/render/el6_field.test.js"
     ]
   },
   {
@@ -204,7 +204,7 @@
     "old": "export const SHADOW_POINT_CASTERS = 12;   // FLICKER-FIX (2026-10-02): twelve, not eight - a lamp past the eight read the lo map (static casters only), so the player's and the townsfolk's shadows vanished for it and came back when it swapped in (+48 MB of depth layers). EL6: six; HQ1: eight - SC1's cache made a still caster nearly free.",
     "new": "export const SHADOW_POINT_CASTERS = 5;   // EL6",
     "tests": [
-      "test/el2_shadows.test.js"
+      "test/render/el2_shadows.test.js"
     ]
   },
   {
@@ -213,7 +213,7 @@
     "old": "    this._uploadAdapt(this._el[key].ao);   // EL6: the AO is the resolve's now (AUDIT-EL F2/F12's foreign-rect and unit-0 cases went with it)",
     "new": "    this._uploadAdapt(this._el[key].ao);   // EL6: the AO is the resolve's now (AUDIT-EL F2/F12's foreign-rect and unit-0 cases went with it)\n    this.gl.uniform1i(this.gl.getUniformLocation(this.program, 'uAO'), 12);",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   },
   {
@@ -222,7 +222,7 @@
     "old": "      this._air.prepare({   // EL6: the inputs alone - the images are drawn at the resolve, off the frame's depth",
     "new": "      if (false) this._air.prepare({   // EL6: the inputs alone - the images are drawn at the resolve, off the frame's depth",
     "tests": [
-      "test/el3_air.test.js"
+      "test/render/el3_air.test.js"
     ]
   }
 ]

@@ -15,7 +15,7 @@
 // Not ported (no port consumer): DiscardAllBlocks.
 
 import { BsaFile, DIRECTORY_TYPES } from './bsaFile.js';
-import { worldDataDoor } from './worldDataDoor.js';   // RR3b: WorldDataReplacement's four asks (BlocksFile.cs:214, :273, :385, :850)
+import { worldDataDoor } from './worldData/worldDataDoor.js';   // RR3b: WorldDataReplacement's four asks (BlocksFile.cs:214, :273, :385, :850)
 import { dryPuddles } from '../world/puddleDry.js';   // PUDDLE-DRY: a town's puddles are dry ground, served so to every reader
 
 export const BLOCK_TYPES = Object.freeze({
@@ -235,7 +235,7 @@ export class BlocksFile {
    * WD1: the block as BLOCKS.BSA holds it - read fresh, past the
    * world-data door (no building replacement laid on, no block served
    * from JSON) and without touching the block cache. What a mod's
-   * world-data diff is taken against (formats/worldDataJson.js).
+   * world-data diff is taken against (formats/worldData/worldDataJson.js).
    * @returns {object|null} the DFBlock, or null when the record fails to read.
    */
   readClassicBlock(block) {

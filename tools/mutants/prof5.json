@@ -5,8 +5,8 @@
     "old": "export const MARKET_LISTING_S = 72 * 3600;",
     "new": "export const MARKET_LISTING_S = 48 * 3600;",
     "tests": [
-      "test/prof5_law.test.js",
-      "test/prof5_service.test.js"
+      "test/net/prof5_law.test.js",
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "export const MARKET_ORDER_S = 7 * 86_400;",
     "new": "export const MARKET_ORDER_S = 6 * 86_400;",
     "tests": [
-      "test/prof5_law.test.js",
-      "test/prof5_service.test.js"
+      "test/net/prof5_law.test.js",
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "export const MARKET_LISTINGS_MAX = 30;",
     "new": "export const MARKET_LISTINGS_MAX = 31;",
     "tests": [
-      "test/prof5_law.test.js",
-      "test/prof5_service.test.js"
+      "test/net/prof5_law.test.js",
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -35,8 +35,8 @@
     "old": "export const MARKET_ORDERS_MAX = 20;",
     "new": "export const MARKET_ORDERS_MAX = 21;",
     "tests": [
-      "test/prof5_law.test.js",
-      "test/prof5_service.test.js"
+      "test/net/prof5_law.test.js",
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -45,8 +45,8 @@
     "old": "export const MARKET_PRICE_MAX = 1_000_000;",
     "new": "export const MARKET_PRICE_MAX = 999_999;",
     "tests": [
-      "test/prof5_law.test.js",
-      "test/prof5_service.test.js"
+      "test/net/prof5_law.test.js",
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -55,7 +55,7 @@
     "old": "export const MARKET_POSTS_MAX = 60;",
     "new": "export const MARKET_POSTS_MAX = 61;",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -64,8 +64,8 @@
     "old": "export const MARKET_TAX_PCT = 5;",
     "new": "export const MARKET_TAX_PCT = 4;",
     "tests": [
-      "test/prof5_law.test.js",
-      "test/prof5_service.test.js"
+      "test/net/prof5_law.test.js",
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -74,8 +74,8 @@
     "old": "export const MARKET_TITHE_PCT = 0;",
     "new": "export const MARKET_TITHE_PCT = 1;",
     "tests": [
-      "test/prof5_law.test.js",
-      "test/prof5_service.test.js"
+      "test/net/prof5_law.test.js",
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -84,7 +84,7 @@
     "old": "load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10",
     "new": "load: 10, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -93,7 +93,7 @@
     "old": "load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10",
     "new": "load: 20, pixelsAMark: 30, least: 2, baseS: 900, pixelsAMinute: 10",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -102,7 +102,7 @@
     "old": "load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10",
     "new": "load: 20, pixelsAMark: 25, least: 1, baseS: 900, pixelsAMinute: 10",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -111,7 +111,7 @@
     "old": "load: 20, pixelsAMark: 25, least: 2, baseS: 900, pixelsAMinute: 10",
     "new": "load: 20, pixelsAMark: 25, least: 2, baseS: 600, pixelsAMinute: 10",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -120,8 +120,8 @@
     "old": "export const priceOk = (n) => Number.isSafeInteger(n) && n >= 1 && n <= MARKET_PRICE_MAX;",
     "new": "export const priceOk = (n) => Number.isSafeInteger(n) && n >= 0 && n <= MARKET_PRICE_MAX;",
     "tests": [
-      "test/prof5_law.test.js",
-      "test/prof5_service.test.js"
+      "test/net/prof5_law.test.js",
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -130,7 +130,7 @@
     "old": "export const wearOk = (n) => Number.isSafeInteger(n) && n >= 1 && n <= WEAR_WHOLE;",
     "new": "export const wearOk = (n) => Number.isSafeInteger(n) && n >= 1 && n < WEAR_WHOLE;",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -139,8 +139,8 @@
     "old": "export const listingFee = (worth) => Math.max(1, Math.ceil(worth / 100));",
     "new": "export const listingFee = (worth) => Math.max(1, Math.floor(worth / 100));",
     "tests": [
-      "test/prof5_law.test.js",
-      "test/prof5_service.test.js"
+      "test/net/prof5_law.test.js",
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "export const listingFee = (worth) => Math.max(1, Math.ceil(worth / 100));",
     "new": "export const listingFee = (worth) => Math.max(0, Math.ceil(worth / 100));",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ],
     "equivalent": true,
     "why": "a listing's worth is at least one Mark (a price of 1 or more, a unit or more), so ceil(worth / 100) is at least 1 already: the floor is the record's guard, binding on no listing"
@@ -160,8 +160,8 @@
     "old": "export const saleTax = (total) => Math.floor((total * MARKET_TAX_PCT) / 100);",
     "new": "export const saleTax = (total) => Math.ceil((total * MARKET_TAX_PCT) / 100);",
     "tests": [
-      "test/prof5_law.test.js",
-      "test/prof5_service.test.js"
+      "test/net/prof5_law.test.js",
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -170,7 +170,7 @@
     "old": "export const sellerGets = (total, tithePct = MARKET_TITHE_PCT) => total - saleTax(total) - saleTithe(total, tithePct);",
     "new": "export const sellerGets = (total, tithePct = MARKET_TITHE_PCT) => total - saleTithe(total, tithePct);",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -179,7 +179,7 @@
     "old": "Number.isSafeInteger(y) && x >= 0 && x < 1000 && y >= 0 && y < 500;",
     "new": "Number.isSafeInteger(y) && x >= 0 && x <= 1000 && y >= 0 && y < 500;",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -188,7 +188,7 @@
     "old": "  const f = witnessedFact(rows, parseHubReport);\n  if (f.state !== 'none'",
     "new": "  const f = own ? { state: 'none' } : witnessedFact(rows, parseHubReport);\n  if (f.state !== 'none'",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -197,7 +197,7 @@
     "old": "  if (f.state !== 'none' && Number.isSafeInteger(f.x))",
     "new": "  if (factConfirmed(f) && Number.isSafeInteger(f.x))",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -206,7 +206,7 @@
     "old": "export const roadPixels = (a, b) => Math.round(Math.hypot(a.x - b.x, a.y - b.y));",
     "new": "export const roadPixels = (a, b) => Math.floor(Math.hypot(a.x - b.x, a.y - b.y));",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -215,7 +215,7 @@
     "old": "  const loads = Math.ceil(units / COURIER.load);",
     "new": "  const loads = Math.max(1, Math.floor(units / COURIER.load));",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -224,7 +224,7 @@
     "old": "  return Math.max(COURIER.least, Math.ceil((loads * (COURIER.pixelsAMark + pixels)) / COURIER.pixelsAMark));",
     "new": "  return Math.max(COURIER.least, Math.floor((loads * (COURIER.pixelsAMark + pixels)) / COURIER.pixelsAMark));",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -233,7 +233,7 @@
     "old": "export const courierSeconds = (pixels) => COURIER.baseS + 60 * Math.ceil(pixels / COURIER.pixelsAMinute);",
     "new": "export const courierSeconds = (pixels) => COURIER.baseS + 60 * Math.floor(pixels / COURIER.pixelsAMinute);",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -242,7 +242,7 @@
     "old": "  return Math.max(1, Math.min(WEAR_WHOLE - 1, Math.round((cur * WEAR_WHOLE) / max)));",
     "new": "  return Math.max(0, Math.min(WEAR_WHOLE - 1, Math.round((cur * WEAR_WHOLE) / max)));",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -251,7 +251,7 @@
     "old": "  if (max <= 0) return WEAR_WHOLE;",
     "new": "  if (max <= 0) return 1;",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -260,7 +260,7 @@
     "old": "  return Math.max(1, Math.min(maxCondition, Math.round((maxCondition * wear) / WEAR_WHOLE)));",
     "new": "  return Math.max(0, Math.min(maxCondition, Math.round((maxCondition * wear) / WEAR_WHOLE)));",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -269,7 +269,7 @@
     "old": "  return n % 2 ? at((n + 1) / 2) : (at(n / 2) + at(n / 2 + 1)) / 2;",
     "new": "  return n % 2 ? at((n + 1) / 2) : at(n / 2);",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -278,7 +278,7 @@
     "old": ".filter((r) => r && r.units > 0 && r.price > 0).sort((a, b) => a.price - b.price);",
     "new": ".filter((r) => r && r.units > 0 && r.price > 0);",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -287,7 +287,7 @@
     "old": "  for (let d = today - days + 1; d <= today; d++)",
     "new": "  for (let d = today - days; d < today; d++)",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -296,7 +296,7 @@
     "old": "export const marketOpen = (board, prof, marks) => board === true && prof === true && marks === true;",
     "new": "export const marketOpen = (board, prof, marks) => board === true && prof === true;",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -305,7 +305,7 @@
     "old": "  const all = [...MINED_KEYS, ...FOOD_KEYS, ...herbs].filter((k) => !UNYIELDED.includes(k)).map((k) => material(k)).filter(Boolean);",
     "new": "  const all = [...MINED_KEYS, ...FOOD_KEYS, ...herbs].filter((k) => !UNYIELDED.includes(k)).map((k) => material(k) ?? { key: k, family: 'herbs', tier: 1 });",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ],
     "equivalent": true,
     "why": "every registered key, food and herb template the catalogue walks, less the three nothing yields (AUDIT 30 UNYIELDED), has a standing under the law today (94 of 94 then; 112 of 112 since PROF7 - AUDIT 32 R12), so the filter removes nothing - it guards a later template the law gives no tier"
@@ -316,7 +316,7 @@
     "old": "  const sorted = [...(rows ?? [])].filter((r) => parse(r?.report))",
     "new": "  const sorted = [...(rows ?? [])].filter((r) => parseReport(r?.report))",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -325,8 +325,8 @@
     "old": "Object.freeze({ key: WOOL.key, marks: 3, counter: 'weavers' })",
     "new": "Object.freeze({ key: WOOL.key, marks: 4, counter: 'weavers' })",
     "tests": [
-      "test/prof5_law.test.js",
-      "test/prof5_service.test.js"
+      "test/net/prof5_law.test.js",
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -335,8 +335,8 @@
     "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']);",
     "new": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane', 'cloth:wool']);",
     "tests": [
-      "test/prof5_law.test.js",
-      "test/prof5_service.test.js"
+      "test/net/prof5_law.test.js",
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -345,7 +345,7 @@
     "old": "  'market-sale': 'move',",
     "new": "  'market-sale': 'mint',",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   },
   {
@@ -354,7 +354,7 @@
     "old": "  return boardOpenFor(player, env) && profOpenFor(player, env) && marksOpenFor(player, env);",
     "new": "  return boardOpenFor(player, env) && profOpenFor(player, env);",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -363,7 +363,7 @@
     "old": "  if (accountKind(player) !== 'linked') return { error: 'prof-need-account' };",
     "new": "  if (!player) return { error: 'prof-need-account' };",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -372,7 +372,7 @@
     "old": "  if (from === to) return { courier: 0, seconds: 0, road: 0 };",
     "new": "  if (from === to && false) return { courier: 0, seconds: 0, road: 0 };",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -381,7 +381,7 @@
     "old": "const witnessOf = (player, nowS) => (Number.isSafeInteger(player.registered_at) && player.registered_at <= nowS - WITNESS.ageS ? 1 : 0);",
     "new": "const witnessOf = () => 1;",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -390,7 +390,7 @@
     "old": "db.prepare(`UPDATE market_listings SET state = 'expired', closed_at = ?2 WHERE seller = ?1 AND state = 'open' AND expires_at <= ?2`).bind(me, nowS),",
     "new": "db.prepare(`UPDATE market_listings SET state = 'expired', closed_at = ?2 WHERE seller = ?1 AND state = 'open' AND expires_at < ?2`).bind(me, nowS),",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -399,7 +399,7 @@
     "old": "        db.prepare(`UPDATE products SET listed = 0 WHERE provenance = (SELECT provenance FROM market_listings WHERE id = ?1 AND rn = ?2)`).bind(l.id, nonce),\n      );\n      continue;",
     "new": "      );\n      continue;",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ],
     "note": "GATHER-SPEED/MARKET-SPEED (PIN MOVED): re-aimed by content - the reads batched."
   },
@@ -409,7 +409,7 @@
     "old": "        AND COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = market_sales.char_id AND material = market_sales.material), 0) + units <= ?4`)",
     "new": "        AND ?4 > 0`)",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ],
     "equivalent": true,
     "why": "AUDIT 30 S7: the settle's read leaves out a load whose Stores lack its room, so every load this UPDATE sees had room when it was read; the guard holds the cap against a write landing between the read and the batch (another tab's harvest), which no serial pin can stage"
@@ -420,7 +420,7 @@
     "old": "        : (family || tier) ? marketCatalogue().filter((c) => (!family || c.family === family) && (!tier || c.tier === tier)).map((c) => c.key)",
     "new": "        : (family || tier) ? marketCatalogue().filter((c) => (!tier || c.tier === tier)).map((c) => c.key)",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -429,7 +429,7 @@
     "old": "    if (moderator && reported.length) {",
     "new": "    if (reported.length) {",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ],
     "equivalent": true,
     "why": "the rows carry a report count only under the moderator's own spread; this first guard spares a reader the query, and changes no answer",
@@ -441,7 +441,7 @@
     "old": "rows: rows.map((l, i) => listingView(l, me, {\n        road: quotes[i], piece: pieceOf({ ...l, material: l.dfu_material }, l.wear), ...(moderator ? { reports: reports.get(l.id) ?? 0 } : {}),",
     "new": "rows: rows.map((l, i) => listingView(l, me, {\n        road: quotes[i], piece: pieceOf({ ...l, material: l.dfu_material }, l.wear), ...({ reports: reports.get(l.id) ?? 0 }),",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -450,7 +450,7 @@
     "old": "        CASE WHEN ?5 = 'material' THEN ?8 - MIN(?8, ${boughtHeld}) ELSE 1 END,\n        CASE WHEN ?5 = 'material' THEN MIN(?8, ${boughtHeld}) ELSE 0 END,",
     "new": "        CASE WHEN ?5 = 'material' THEN MIN(?8, ${boughtHeld}) ELSE 1 END,\n        CASE WHEN ?5 = 'material' THEN ?8 - MIN(?8, ${boughtHeld}) ELSE 0 END,",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -459,16 +459,18 @@
     "old": "        AND ${openSalesSql('?12')} < ?16",
     "new": "        AND ${openSalesSql('?12')} <= ?16",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
     "name": "PROF5-svc-anyones-piece",
     "file": "server-account/src/market.js",
+    "note": "INT19: pieceListRefusal answers another's piece before the record moves - this guard holds the race between them, pinned by a staged owner move",
     "old": "          OR (?5 = 'piece' AND EXISTS (SELECT 1 FROM products WHERE provenance = ?7 AND owner = ?1 AND listed = 0 AND (bought_with IS NULL OR bought_with = ?17))",
     "new": "          OR (?5 = 'piece' AND EXISTS (SELECT 1 FROM products WHERE provenance = ?7 AND listed = 0 AND (bought_with IS NULL OR bought_with = ?17))",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js",
+      "test/server/int19_crafted_record.test.js"
     ]
   },
   {
@@ -477,8 +479,8 @@
     "old": "WHERE seller = ?1 AND rid = ?3 AND n = ?4 AND currency = 'marks'`)",
     "new": "WHERE seller = ?1 AND rid = ?3 AND n = ?4 AND currency = 'marks' AND 0`)",
     "tests": [
-      "test/prof5_service.test.js",
-      "test/prof5_client.test.js"
+      "test/net/prof5_service.test.js",
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -487,16 +489,16 @@
     "old": "      : spendStatements(db, { player: me, character, materialSql: '?3', qtySql: '?4', guard: mine, binds: [key, units, rid, nonce] })) : []),",
     "new": "      : []) : []),",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
     "name": "PROF5-svc-own-bought",
     "file": "server-account/src/market.js",
-    "old": "  if (l.seller === me) return { error: 'market-own' };\n  // HOME-VENDOR: a trader's piece is bought at its trader alone",
-    "new": "  // HOME-VENDOR: a trader's piece is bought at its trader alone",
+    "old": "  if (l.seller === me) return { error: 'market-own' };\n  // STAFF-PANEL3-REALM: a seller held or banned sells nothing",
+    "new": "  // STAFF-PANEL3-REALM: a seller held or banned sells nothing",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -505,7 +507,7 @@
     "old": "  if (total + road.courier > max) return { error: 'market-price-moved' };",
     "new": "",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -514,7 +516,7 @@
     "old": "        AND COALESCE((SELECT balance FROM marks WHERE account = l.seller), 0) + ?17 <= ?18",
     "new": "        AND ?17 <= ?18",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -523,7 +525,7 @@
     "old": "          OR COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?3 AND material = l.material), 0) + ?4 <= ?19)`)\n      .bind(me, rid, character, units, total, tax, tithe, road.courier,",
     "new": "          OR ?4 <= ?19)`)\n      .bind(me, rid, character, units, total, tax, tithe, road.courier,",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -532,7 +534,7 @@
     "old": "    // the units out of the listing, bought first (the seller keeps its own for a cancel), and a listing sold out closed\n    db.prepare(`UPDATE market_listings SET own = own - MAX(0, ?4 - bought), bought = MAX(0, bought - ?4),",
     "new": "    // the units out of the listing, bought first (the seller keeps its own for a cancel), and a listing sold out closed\n    db.prepare(`UPDATE market_listings SET bought = bought - MAX(0, ?4 - own), own = MAX(0, own - ?4),",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -541,7 +543,7 @@
     "old": "        state = CASE WHEN own + bought = ?4 THEN 'sold' ELSE state END, closed_at = CASE WHEN own + bought = ?4 THEN ?5 ELSE closed_at END\n      WHERE id = ?6 AND ${sold}`).bind(me, rid, nonce, units, nowS, id),",
     "new": "        state = state, closed_at = CASE WHEN own + bought = ?4 THEN ?5 ELSE closed_at END\n      WHERE id = ?6 AND ${sold}`).bind(me, rid, nonce, units, nowS, id),",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -550,7 +552,7 @@
     "old": "      SELECT 'account', buyer, 'account', seller, 'market-sale', total - tax - tithe, day, at, buyer, listing, rid || ':sale'",
     "new": "      SELECT 'account', buyer, 'account', seller, 'market-sale', total - tithe, day, at, buyer, listing, rid || ':sale'",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -559,7 +561,7 @@
     "old": "      FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND tax > 0`).bind(me, rid, nonce),",
     "new": "      FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND tax < 0`).bind(me, rid, nonce),",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -568,8 +570,8 @@
     "old": "      FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND courier - ?4 > 0`).bind(me, rid, nonce, courierTithe),",
     "new": "      FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND courier - ?4 < 0`).bind(me, rid, nonce, courierTithe),",
     "tests": [
-      "test/prof5_service.test.js",
-      "test/prof5_client.test.js"
+      "test/net/prof5_service.test.js",
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -578,8 +580,8 @@
     "old": "      SELECT buyer, char_id, material, 'bought', units FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'material' AND delivered = 1",
     "new": "      SELECT buyer, char_id, material, 'bought', units FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'material'",
     "tests": [
-      "test/prof5_service.test.js",
-      "test/prof5_client.test.js"
+      "test/net/prof5_service.test.js",
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -588,17 +590,18 @@
     "old": "    db.prepare(`UPDATE products SET owner = ?1, credited = 0, listed = 0, bought_with = 'marks' WHERE provenance = (SELECT provenance FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'piece')`)",
     "new": "    db.prepare(`UPDATE products SET listed = 0 WHERE ?1 IS NOT NULL AND provenance = (SELECT provenance FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'piece')`)",
     "tests": [
-      "test/prof5_service.test.js",
-      "test/prof5_client.test.js"
+      "test/net/prof5_service.test.js",
+      "test/net/prof5_client.test.js"
     ]
   },
   {
     "name": "PROF5-svc-here-delivered",
     "file": "server-account/src/market.js",
-    "old": "      WHERE s.buyer = ?1 AND s.rid = ?2 AND s.n = ?3 AND s.kind = 'piece' AND s.from_region != s.to_region`).bind(me, rid, nonce, mintId(rand)),\n    // the price table (10.2's History) - a material's sale",
-    "new": "      WHERE s.buyer = ?1 AND s.rid = ?2 AND s.n = ?3 AND s.kind = 'piece'`).bind(me, rid, nonce, mintId(rand)),\n    // the price table (10.2's History) - a material's sale",
+    "note": "INT19 (PIN MOVED): re-aimed by content - the sale's batch lets the market's record of a crafted piece go after it",
+    "old": "      WHERE s.buyer = ?1 AND s.rid = ?2 AND s.n = ?3 AND s.kind = 'piece' AND s.from_region != s.to_region`).bind(me, rid, nonce, mintId(rand)),\n    ...pieceSoldSteps(",
+    "new": "      WHERE s.buyer = ?1 AND s.rid = ?2 AND s.n = ?3 AND s.kind = 'piece'`).bind(me, rid, nonce, mintId(rand)),\n    ...pieceSoldSteps(",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -607,7 +610,7 @@
     "old": "    db.prepare(`INSERT INTO market_prices (day, material, price, units)\n      SELECT day, material, price, units FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'material'\n",
     "new": "    db.prepare(`INSERT INTO market_prices (day, material, price, units)\n      SELECT day, material, price, units FROM market_sales WHERE buyer = ?1 AND rid = ?2 AND n = ?3 AND kind = 'material' AND 0\n",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -616,7 +619,7 @@
     "old": "          + own + bought <= ?6)`).bind(id, me, nowS, rid, nonce, STORES_MAX),",
     "new": "          + own + bought <= ?6 OR 1)`).bind(id, me, nowS, rid, nonce, STORES_MAX),",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -625,7 +628,7 @@
     "old": "    ...backToStores(db, id, nonce),\n    db.prepare(`UPDATE products SET listed = 0 WHERE provenance = (SELECT provenance FROM market_listings WHERE id = ?1 AND rn = ?2)`).bind(id, nonce),\n    // MARKET-ANY: a piece from a pack back",
     "new": "    ...backToStores(db, id, nonce),\n    // MARKET-ANY: a piece from a pack back",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -634,7 +637,7 @@
     "old": "FROM market_listings WHERE id = ?1 AND rn = ?2 AND kind = 'material' AND ${col} > 0",
     "new": "FROM market_listings WHERE id = ?1 AND rn = ?2 AND ${col} > 0",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -643,7 +646,7 @@
     "old": "      SELECT 'account', poster, 'escrow', id, 'order-escrow', escrow, ?4, at, poster, material, rid || ':escrow'",
     "new": "      SELECT 'account', poster, 'burn', NULL, 'order-escrow', escrow, ?4, at, poster, material, rid || ':escrow'",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -652,7 +655,7 @@
     "old": "        AND (SELECT COUNT(*) FROM market_orders WHERE poster = ?1 AND state = 'open') < ?13\n",
     "new": "        AND (SELECT COUNT(*) FROM market_orders WHERE poster = ?1 AND state = 'open') <= ?13\n",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -661,7 +664,7 @@
     "old": "        AND COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = o.poster AND char_id = o.char_id AND material = o.material), 0) + ?4 <= ?12",
     "new": "        AND ?4 <= ?12",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -670,7 +673,7 @@
     "old": "    db.prepare(`UPDATE market_orders SET left_units = left_units - ?3, escrow = escrow - price * ?3,",
     "new": "    db.prepare(`UPDATE market_orders SET left_units = left_units - ?3, escrow = escrow,",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -679,7 +682,7 @@
     "old": "      FROM market_fills WHERE filler = ?1 AND rid = ?2 AND n = ?3 AND tax > 0`).bind(me, rid, nonce),",
     "new": "      FROM market_fills WHERE filler = ?1 AND rid = ?2 AND n = ?3 AND tax < 0`).bind(me, rid, nonce),",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -688,7 +691,7 @@
     "old": "    ...spendStatements(db, { player: me, character, materialSql: '?3', qtySql: '?4', guard: filled, binds: [o.material, units, rid, nonce] }),",
     "new": "    db.prepare(`UPDATE prof_stores SET qty = qty - ?4 WHERE player = ?1 AND char_id = ?2 AND material = ?3 AND origin = 'own' AND ${filled}`).bind(me, character, o.material, units, rid, nonce),",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -697,7 +700,7 @@
     "old": "    db.prepare(`UPDATE market_orders SET escrow = 0, returned = 1 WHERE id = ?1 AND state != 'open' AND returned = 0",
     "new": "    db.prepare(`UPDATE market_orders SET returned = 1 WHERE id = ?1 AND state != 'open' AND returned = 0",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -706,7 +709,7 @@
     "old": "  if (Number(d.arrives_at) > nowS) return { error: 'market-on-road' };\n  if (d.item != null)",
     "new": "\n  if (d.item != null)",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -715,7 +718,7 @@
     "old": "  if (d.char_id !== character) return { error: 'market-other-character' };\n  if (Number(d.arrives_at) > nowS) return { error: 'market-on-road' };\n  if (d.item != null)",
     "new": "  if (Number(d.arrives_at) > nowS) return { error: 'market-on-road' };\n  if (d.item != null)",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -724,16 +727,16 @@
     "old": "  if (row.seller === player.id) return { error: 'market-own' };\n  if (l) await db.prepare('INSERT OR IGNORE INTO market_reports",
     "new": "  if (l) await db.prepare('INSERT OR IGNORE INTO market_reports",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
     "name": "PROF5-svc-anyone-removes",
     "file": "server-account/src/market.js",
-    "old": "  if (!canModerate(player, env)) return { error: 'not-moderator' };\n  if (!idOk(id)) return { error: 'bad-listing' };\n  const r = await",
-    "new": "  if (!idOk(id)) return { error: 'bad-listing' };\n  const r = await",
+    "old": "  if (!isDeveloper(player, env)) return { error: 'not-developer' };\n  /** @type {(how: { target",
+    "new": "  /** @type {(how: { target",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -742,7 +745,7 @@
     "old": "  const esc = await db.prepare(`SELECT COALESCE(SUM(CASE WHEN dst_kind = 'escrow' THEN amount ELSE 0 END), 0)\n    - COALESCE(SUM(CASE WHEN src_kind = 'escrow' THEN amount ELSE 0 END), 0) AS s FROM marks_ledger WHERE dst_kind = 'escrow' OR src_kind = 'escrow'`).first();",
     "new": "  const esc = await db.prepare('SELECT 0 AS s').first();",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -751,7 +754,7 @@
     "old": "    medians,\n  };",
     "new": "    medians: [],\n  };",
     "tests": [
-      "test/prof5_service.test.js"
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -760,16 +763,17 @@
     "old": "      if (had && r.data?.piece) { try { mint?.(r.data.piece, kind); }",
     "new": "      if (r.data?.piece) { try { mint?.(r.data.piece, kind); }",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
     "name": "PROF5-book-piece-lost",
     "file": "src/net/marketBook.js",
-    "old": "    if (had && !PIECE_GONE.includes(r?.error)) { try { piece.putBack(piece.item, piece.where); } catch (e) { console.warn('[market] put back', e); } }",
+    "note": "INT19 (PIN MOVED): re-aimed by content - a refused piece is put back by the realm act's undo (realmPieceAct)",
+    "old": "      try { piece.putBack(piece.item, piece.where); } catch (e) { console.warn('[market] put back', e); }\n",
     "new": "",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -778,7 +782,7 @@
     "old": "            else { try { putBack(l.item, l.where); } catch (e) { console.warn('[market] put back', e); } }",
     "new": "            else { /* kept */ }",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -787,7 +791,7 @@
     "old": "    if (Number.isSafeInteger(d.balance)) { state.balance = d.balance; try { marks?.set?.(d.balance); } catch { /* the Marks book's own */ } }",
     "new": "    if (Number.isSafeInteger(d.balance)) { state.balance = d.balance; }",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -796,7 +800,7 @@
     "old": "export const MARKET_CACHE_MS = 60_000;",
     "new": "export const MARKET_CACHE_MS = 0;",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -805,7 +809,7 @@
     "old": "stale: !r?.ok && !!hit?.data };",
     "new": "stale: false };",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -814,7 +818,7 @@
     "old": "const SHUT = Object.freeze(['market-closed', 'prof-need-account']);",
     "new": "const SHUT = Object.freeze(['prof-need-account']);",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -823,7 +827,7 @@
     "old": "  const once = (key, fn) => {\n    if (_busy) return _busyKey === key ? _busy : Promise.resolve({ ok: false, error: 'market-busy' });\n    _busyKey = key;\n    return (_busy = (async () => { try { return await fn(); } finally { _busy = null; _busyKey = null; } })());\n  };",
     "new": "  const once = (key, fn) => fn();",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -832,7 +836,7 @@
     "old": "        for (const d of state.road.filter((x) => x.kind === 'piece' && x.ready && x.character === me)) {",
     "new": "        for (const d of state.road.filter((x) => x.kind === 'piece' && x.ready && x.character === me && false)) {",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -841,7 +845,7 @@
     "old": "const RETRY = Object.freeze(['offline', 'server', 'rate']);",
     "new": "const RETRY = Object.freeze(['server', 'rate']);",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -850,7 +854,7 @@
     "old": "const courierOf = (row, units) => (row.region === m.region ? 0 : row.road ? courierFee(units, row.road.road) * (row.currency === 'gold' ? MARK_WORTH_GOLD : 1) : null);",
     "new": "const courierOf = (row, units) => (row.region === m.region ? 0 : row.road ? row.road.courier : null);",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -859,7 +863,7 @@
     "old": "listing: row.id, units, max: units * row.price + (courier ?? 0), hubs: m.hubs, ...at(), ...(gold ? { currency: 'gold' } : {}) }, m.mint),",
     "new": "listing: row.id, units, max: units * row.price, hubs: m.hubs, ...at(), ...(gold ? { currency: 'gold' } : {}) }, m.mint),",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -868,7 +872,7 @@
     "old": "  const where = (row) => (row.region === m.region ? 'here' : m.regionNameOf(row.region));",
     "new": "  const where = (row) => m.regionNameOf(row.region);",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -877,7 +881,7 @@
     "old": ": `Fee ${marksText(fee)}, kept if you cancel. Up for 72 hours",
     "new": ": `Fee kept if you cancel. Up for 72 hours",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -886,7 +890,7 @@
     "old": "    const count = () => intOf(st.fills[o.id] ?? Math.min(have, o.left), 1, most);",
     "new": "    const count = () => intOf(st.fills[o.id] ?? o.left, 1, o.left);",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -895,7 +899,7 @@
     "old": "    const road = roadNode();\n    if (road) box.append(road);",
     "new": "",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -904,7 +908,7 @@
     "old": "box.append(el('summary', null, MARKET_WORDS.suppliers), weaversNode());",
     "new": "box.append(el('summary', null, MARKET_WORDS.suppliers));",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -913,7 +917,7 @@
     "old": "  const marketShown = () => !!marketHost && (marketAtOpen || marketHost.book?.state?.open !== false || tab === 'market');",
     "new": "  const marketShown = () => !!marketHost;",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -922,7 +926,7 @@
     "old": "...(workShown() ? [['work', 'Work']] : []), ...(marketShown() ? [['market', 'Market']] : []), ...(vendorTab ? [['vendors', 'Vendors']] : []), ...(guildsShown() ? [['guilds', 'Guilds']] : []), ...(seatShown() ? [['seat', 'Seat']] : [])];",
     "new": "...(workShown() ? [['work', 'Work']] : []), ...(vendorTab ? [['vendors', 'Vendors']] : []), ...(guildsShown() ? [['guilds', 'Guilds']] : []), ...(seatShown() ? [['seat', 'Seat']] : [])];",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ],
     "note": "SEAT1b (PIN MOVED): re-aimed by content - the board's tabs gained the Seat tab after Guilds."
   },
@@ -932,7 +936,7 @@
     "old": "    if (it.maxCondition > 0) it.currentCondition = wearCondition(it.maxCondition, piece.wear);\n    const home = isCraftedFurniture(it);",
     "new": "    const home = isCraftedFurniture(it);",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -941,7 +945,7 @@
     "old": "          toldBalance(r?.data?.balance);   // PROF5 (FOUND): the Bank's balance told too; AUDIT 32 B3: and the market's",
     "new": "",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -950,7 +954,7 @@
     "old": "      gate: () => noticeGateCard(), sd: () => noticeSdCard(), answer: (note) => answerNote(note), work, market,\n",
     "new": "      gate: () => noticeGateCard(), sd: () => noticeSdCard(), answer: (note) => answerNote(note), work,\n",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ],
     "note": "SD2c (re-aimed by content): a found Super dungeon's note stands beside the gate's on the line."
   },
@@ -960,26 +964,26 @@
     "old": "filter((it) => it?.provenance && asMinted(it) && !tradeRefusal(it) && !isLocked(it) && !pieceKept(it.provenance))",
     "new": "filter((it) => it?.provenance && asMinted(it) && !pieceKept(it.provenance))",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
     "name": "PROF5-host-crafts-wait",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "  if ((book.pendingWithdrawals || book.pendingCrafts || book.pendingDeposits) && p.settle && Date.now() - _stores.settledAt > 30_000) {",
     "new": "  if ((book.pendingWithdrawals || book.pendingDeposits) && p.settle && Date.now() - _stores.settledAt > 30_000) {",
     "tests": [
-      "test/prof5_client.test.js",
-      "test/audit29_host.test.js"
+      "test/net/prof5_client.test.js",
+      "test/scenes/audit29_host.test.js"
     ]
   },
   {
     "name": "PROF5-host-plane-undressed",
-    "file": "src/ui/enhancedPlusStyle.js",
+    "file": "src/ui/enhanced/enhancedPlusStyle.js",
     "old": ".prof-grain { fill: none; stroke: #3b2a18;",
     "new": ".prof-grain { stroke: #3b2a18;",
     "tests": [
-      "test/prof5_client.test.js"
+      "test/net/prof5_client.test.js"
     ]
   },
   {
@@ -988,8 +992,8 @@
     "old": "CREATE TRIGGER IF NOT EXISTS marks_line_pays_to_account AFTER INSERT ON marks_ledger WHEN NEW.dst_kind = 'account'",
     "new": "CREATE TRIGGER IF NOT EXISTS marks_line_pays_to_account AFTER INSERT ON marks_ledger WHEN NEW.dst_kind IN ('account', 'escrow')",
     "tests": [
-      "test/prof5_law.test.js",
-      "test/prof5_service.test.js"
+      "test/net/prof5_law.test.js",
+      "test/net/prof5_service.test.js"
     ]
   },
   {
@@ -998,7 +1002,7 @@
     "old": "  marked     INTEGER NOT NULL DEFAULT 0 CHECK (marked IN (0, 1))\n);",
     "new": "  marked     INTEGER NOT NULL DEFAULT 0 CHECK (marked IN (0, 1)),\n  FOREIGN KEY (owner) REFERENCES players(id) ON DELETE CASCADE\n);",
     "tests": [
-      "test/prof5_law.test.js"
+      "test/net/prof5_law.test.js"
     ]
   }
 ]

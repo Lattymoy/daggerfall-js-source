@@ -55,7 +55,7 @@ byte (section 11).
 
 1. **Online, rest is a time machine that fights the shared world.** A rest raises the character's own clock
    (`src/systems/worldTick.js` `advanceOwnMinutes`, `raisedMinutes`), 10 minutes a sub-tick
-   (`src/systems/restSession.js` `MINUTES_PER_TICK`), an hour in 0.45 real seconds (`REST_WAIT_PER_HOUR` 0.75 over six
+   (`src/systems/rest/restSession.js` `MINUTES_PER_TICK`), an hour in 0.45 real seconds (`REST_WAIT_PER_HOUR` 0.75 over six
    sub-ticks). Everything personal races ahead; the world, the sky and every other player do not. LIVED1 and TIME made
    that coherent, and every reader of the character's time had to learn which clock it reads (`Online-Time-Arc.md`
    section 5). It is coherent; it is also the reason every timed system online has a second law.
@@ -69,7 +69,7 @@ byte (section 11).
    & Calories priced rough rests (Hard: half the recovery, two ambush rolls, stiff - `src/systems/survival/difficulty.js`),
    but the corner was still anywhere.
 4. **The party rest is machinery for a problem that goes away.** A vote, a 15 m gather, a mirrored rest window per
-   member, cooldowns, a stop that ends it for everyone (`src/systems/partyRestLaw.js`, `world.js` `partyRestGate` /
+   member, cooldowns, a stop that ends it for everyone (`src/systems/party/partyRestLaw.js`, `world.js` `partyRestGate` /
    `partyRestFollowTick`): all of it exists to keep several people's hours in step.
 5. **The campfire is a match.** A Campfire Kit's use is spent at the placing, the fire burns down in 480 world minutes
    and is gone (`src/systems/survival/camp.js` `placeCampItem`, `campExpired`; `src/scenes/camps.js` `tick`), and the
@@ -127,8 +127,9 @@ spot for a Bedroll. Climates & Calories off, the rest kinds still decide nothing
 - **The night interval.** A night passes at most once per **120 lived minutes of the character's clock** - ten real
   minutes of play, since lived time runs at TimeScale 12 - counted from the last night (OPEN 2). Inside it a rest is a
   **short rest**: the yield's healing lands, no clock moves, nothing ages [REST-SLEEP1: and the sleep need is paid as a
-  night of its kind pays it - As built]. The status widget shows **Rested** (a buff
-  tile, its minutes left at its foot, as NEED-TIER's need tiles say their stage) while the interval runs.
+  night of its kind pays it - As built]. The status widget shows **Next night** (a buff
+  tile, its minutes left at its foot, as NEED-TIER's need tiles say their stage) while the interval runs [AUDIT C&C,
+  2026-10-12: named "Rested" until then - online in Boons it stood beside the Well rested boon, a bank of sleep].
 - **Why a night and not zero.** Section 7's census found 29 systems that read rested time. Under a night each keeps
   DFU's meaning - a buff wears off overnight, a disease takes its day, hunger grows, a room's night is spent, a
   guild's wait counts - and the interval bounds how fast anyone can sleep through them: at 600 own minutes per ten
@@ -145,7 +146,7 @@ spot for a Bedroll. Climates & Calories off, the rest kinds still decide nothing
 | Short rest (inside the interval) | as the kind; nothing else | nothing [REST-SLEEP1: as the kind's night - As built] | no | none |
 
 Full is the recommendation (OPEN 3) - a fire is a sanctuary, and the fight before it was the price. The alternative
-is eight hours at DFU's rates (`src/systems/rest.js` `healthRecoveryRate` and the fatigue and magicka eighths), which
+is eight hours at DFU's rates (`src/systems/rest/rest.js` `healthRecoveryRate` and the fatigue and magicka eighths), which
 leaves a hurt character a second, short rest short of full. Climates & Calories off, every kind yields as a bed (no
 sleep need, no stiffness) - today's pricing.
 
@@ -193,10 +194,10 @@ same item; the name is the template's).
   stale owner's records are swept with the owner (`camps.js` `sweepOwners`), as today. The cap stays
   `CAMPS_PER_OWNER` 4, and a placing at it is never refused: it packs the owner's OLDEST camp away where it stands,
   its gear home as Pack gives it (FIELD BUGS 2026-10-04d CAMP-CAP - the refusal had locked characters out of camping
-  for good, `01-Overview/Field-Bugs-2026-10-04d.md`).
+  for good, `01-Overview/bugs/Field-Bugs-2026-10-04d.md`).
 - **The record.** `campWire` already carries `w` (0..255) and `k` 1 (fire): charges ride `w`, so a client one build
   behind still validates the record (`validCampRecord` refuses a new `k`, not a new meaning of `w`). Pick-up mints
-  541 with `currentCondition = w` (`mintCondition`'s field, `src/systems/itemTemplates.js`), the info card's "N uses
+  541 with `currentCondition = w` (`mintCondition`'s field, `src/systems/item/itemTemplates.js`), the info card's "N uses
   left" becoming "N nights of fuel".
 - **The tent unifies with it.** Camping Equipment's 50 uses are today spent per pitch; under REST a use is spent per
   night its owner sleeps in it, pitching free - one rule for both (OPEN 6).
@@ -219,13 +220,13 @@ rays). A dungeon's fires are permanent, never cold, never picked up.
 
 ### 4.1 Inputs (all already built per dungeon)
 
-- the block grid (`src/world/dungeonLayout.js` `layoutDungeon`: origin per block, the starting block flag, the block
+- the block grid (`src/world/dungeon/dungeonLayout.js` `layoutDungeon`: origin per block, the starting block flag, the block
   names - B for borders),
 - each block's markers (`src/world/rdbLayout.js` `layoutRdbBlock`): start (199.10), enter (199.8), random and fixed
   enemies (199.15/16), random treasure (199.19), quest spawn and item (199.11/18), fixed treasure (216); the water
   level; the action and exit doors,
 - the collider (`src/player/collider.js` `raycast`, `findClearFloor`) with the `'dungeon'` bucket filter,
-- the walkable-floor raster and its storeys (`src/systems/automapFloors.js` `deriveFloors`, `levelField`),
+- the walkable-floor raster and its storeys (`src/systems/automap/automapFloors.js` `deriveFloors`, `levelField`),
 - the existing fires (`dungeonHearths`: TEXTURE.210 records 0, 1, 20).
 
 ### 4.2 Candidates
@@ -267,7 +268,7 @@ Existing TEXTURE.210 fires are rest points too (2.1); the law only adds where no
   through `byFire` / `fireNear` with no new law.
 - **A target** keyed `dfire:<i>` (its index in the chosen list), named "Campfire", its plaque rows Rest and Cook.
 - **On the map:** the enhanced held map marks a fire once the row it stands in is revealed (the TP-SEEN shape,
-  `src/ui/automapSheet.js` `seenPortals`; a new mark kind in `src/ui/inkAutomap.js`); the compass takes them through
+  `src/ui/automap/automapSheet.js` `seenPortals`; a new mark kind in `src/ui/ink/inkAutomap.js`); the compass takes them through
   the dungeon's `nodeMarks` seam as the veins do. The classic 3D map gains a marker model per fire.
 - **Online:** nothing to sync - every client stands the same fires. No relay bump.
 
@@ -281,7 +282,7 @@ Existing TEXTURE.210 fires are rest points too (2.1); the law only adds where no
 - **A dungeon's bed is a rest point** (FIELD BUGS 2026-10-05 DUNGEON-BEDS, the Discord: "Beds in dungeons should count
   as beds so I can rest in a dungeon"). The page named no dungeon bed and the dungeon's point was a fire alone; its 108
   beds (Roleplay Realism's 41000-41002, 42 RDB blocks) are a bed's rest within a fire's reach of the box
-  (`restAct.js` bedInReach), as is a bed pressed below deck. `01-Overview/Field-Bugs-2026-10-05.md`.
+  (`restAct.js` bedInReach), as is a bed pressed below deck. `01-Overview/bugs/Field-Bugs-2026-10-05.md`.
 - **Rooms count nights** (OPEN 10). Today `checkRent` counts rested hours down and the room's own expiry counts the
   character's days (`src/systems/tavern.js`'s sweep), and the two can disagree (the room's text says it expired while
   the sweep keeps it). Online under REST a room rented for N days buys **N nights**: a night at its bed spends one,
@@ -292,7 +293,7 @@ Existing TEXTURE.210 fires are rest points too (2.1); the law only adds where no
 ## 6. The consumables that fill the gaps
 
 Each answers one gap and none replaces the fire. All are port templates in a new block, **1700-1709** (unused today;
-registered with `registerCustomTemplates` in UselessItems2, imported where `src/systems/save.js` reaches, as the
+registered with `registerCustomTemplates` in UselessItems2, imported where `src/systems/save/save.js` reaches, as the
 profession rows are), stackable unless they carry charges, and usable from the hotbar (`kind: 'use'`). Numbers are
 recommendations (OPEN 13).
 
@@ -307,7 +308,7 @@ recommendations (OPEN 13).
 | 1706 | **Sleeping Draught** | a hard night (Hard, rough) | the next night sleeps as a bed: full yield, no stiffness, the bed's sleep rate | 1, 0.2 kg, 45 | Alchemist, tavern; REST-LOOT: piles 2%, foes 1% |
 
 Already there, and kept in the family: the **Bandage** (DFU's 249; RRI bandaging heals the lesser of Medical/3 and 40%
-of maximum health and tallies Medical - `src/systems/rriKits.js` `useBandage`), stocked at every General Store and
+of maximum health and tallies Medical - `src/systems/roleplayRealismItems/rriKits.js` `useBandage`), stocked at every General Store and
 temple online; the **potions** (`src/systems/potions.js` - Healing, Stamina, Restore Power), the healing supply on
 shelves and in piles (`src/systems/healingSupply.js`); C&C's rations and waterskin.
 
@@ -315,10 +316,10 @@ shelves and in piles (`src/systems/healingSupply.js`); C&C's rations and watersk
 1. the template row, with `hitPoints` as its charges (`mintCondition`), `rarity` for the shelf, its world icon;
 2. a use handler (`registerItemUseHandler`, with `.usable` where gated) answering the kinds the UIs already know -
    `text`, `refused`, `closesWindow`, and for the Bedroll and the Ember Jar a placing kind beside `placeFire`;
-3. an info-card arm (`src/systems/itemInfo.js` and the enhanced card), or it falls to the generic misc text;
+3. an info-card arm (`src/systems/item/itemInfo.js` and the enhanced card), or it falls to the generic misc text;
 4. a shelf provider or a fixed count (`registerCustomItemsForGroup`, or the healing supply's fixed-count shape);
 5. loot hooks where listed (`registerTabledLootHandler` for piles J-O, `registerEnemyLootExtra` for foes);
-6. any new item field declared in `ITEM_FIELDS` (`src/systems/itemFields.js`; `test/rf5_itemfields.test.js` pins
+6. any new item field declared in `ITEM_FIELDS` (`src/systems/item/itemFields.js`; `test/systems/rf5_itemfields.test.js` pins
    that mints write nothing undeclared);
 7. the online essentials price arm; the hotbar already takes any item;
 8. crafted ones: a recipe row in `src/net/recipeLaw.js` (or a conversion in `src/net/professionLaw.js`), a `mintPiece`
@@ -326,7 +327,7 @@ shelves and in piles (`src/systems/healingSupply.js`); C&C's rations and watersk
    family list, and the account service picks the recipe up from the shared module (an `acct` bump, no migration
    unless a new Stores material is added).
 
-**Ship before anyone can see one.** `validLootItem` (`src/systems/loot.js`) refuses a template its build does not know,
+**Ship before anyone can see one.** `validLootItem` (`src/systems/loot/loot.js`) refuses a template its build does not know,
 and a container holding one reads "from a newer version" to an older client: the templates land a release before
 any shelf, pile, trade or Campfire record carries them.
 
@@ -351,7 +352,7 @@ The census (every system an online rest moves today; the night model's answer, a
 | 10 | Stiff (`survival/rest.js` `stiffen`) | set at waking, outlasted by the next rest | set; outlasted by the next night | lasts 4 h of play |
 | 11 | Skill checks (`src/systems/advancement.js`, `onRestFinished`) | open after 6 h since the last | a night always opens it | open at a rest if 6 h lived since the last |
 | 12 | Training cooldown (720 min) | a 12 h rest reopens it | two nights; at the fastest about 12 min of play | 1 h of play |
-| 13 | Guild rank wait (`src/systems/guilds.js`, 28 days) | 28 days' rest, about 2 real minutes | at the fastest about 11 h of play | 56 h of play |
+| 13 | Guild rank wait (`src/systems/guild/guilds.js`, 28 days) | 28 days' rest, about 2 real minutes | at the fastest about 11 h of play | 56 h of play |
 | 14 | Crime-guild letters (`src/systems/crimeGuilds.js`, 3 days) | a 3-day rest | at the fastest about 72 min of play, or OPEN 12's short wait | 6 h of play, or the short wait |
 | 15 | Curse quests (`src/systems/racialQuests.js`, 38 / 84 days) | rested days count | at the fastest about 15 / 34 h of play, or the short wait | 76 / 168 h of play, or the short wait |
 | 16 | Reputation drift (`worldTick.js` calendar arms) | a week's rest returns a point | nights count | weeks of play |
@@ -361,12 +362,12 @@ The census (every system an online rest moves today; the night model's answer, a
 | 20 | Conjured items (`src/systems/createItem.js` `removeExpiredItems`) | expire in sleep | the same | a night expires them |
 | 21 | Enemy alert decay (8 h, `encounters.js`) | an 8 h rest clears it | the same | stays up |
 | 22 | Rest-interruption encounters | every rested minute rolls | **one roll a night** (2.5) | one roll a rest |
-| 23 | Revenants' return (`src/systems/revenant.js`, 1-3 days) | a rest makes them due | nights count | play only |
+| 23 | Revenants' return (`src/systems/revenant/revenant.js`, 1-3 days) | a rest makes them due | nights count | play only |
 | 24 | Watch challenge cooldown and grace (`src/systems/standing.js`) | outwaited by a rest | nights count | play only |
 | 25 | Tavern meal gate (240 min) | a rest reopens it | the same | 20 min of play |
 | 26 | Quest clocks (`src/systems/quest/clock.js` `chargeSeconds`) | charged nothing (QCLOCK-WORLD) | unchanged | unchanged |
 | 27 | Quest raw readers: PlaySound's interval, the tombstone's week, GUARD-ONLINE's watch (`src/systems/quest/onlineGuard.js`) | come due after a rest | the same (a night is a raise on the raw clock) | play only; the guard's watch kept by standing in the hall |
-| 28 | Bounties (`src/systems/bountyBoard.js` `lapseBounties`) | **the event clock**: a rest does nothing | unchanged (about two real hours) | unchanged |
+| 28 | Bounties (`src/systems/bounty/bountyBoard.js` `lapseBounties`) | **the event clock**: a rest does nothing | unchanged (about two real hours) | unchanged |
 | 29 | A placed fire's burn-down (`camps.js`, world minutes) | the event clock; a rest at your own tent stokes it | unchanged; cold, not gone (section 3) | unchanged |
 
 **Raises that stay raises** (not rests, untouched by REST): fast travel and the journey's walk, training's own hours,
@@ -443,9 +444,9 @@ QCLOCK-WORLD's clock, online only - the gate is the quest hooks' `sharedClock`, 
   only waits its played days, where TIMEFREE froze it for ever. So the one harmful misreading is the first - R1 found
   two - and it is what the pins guard: the split, both tables, the 31 main-quest deadlines, and every vendored clock
   ticked online past the short wait - all 135 delays landed, not one of the 264 deadlines cut (266 and 133 since AUDIT REST-PARTY)
-  (`test/rest8_questwaits.test.js`).
-- **Pins:** `test/rest8_questwaits.test.js` (TIMEFREE's file re-aimed: the freeze assertions now "runs on played
-  time"), `test/rest8_audit_timefree.test.js` (AUDIT TIMEFREE's and AUDIT TIMEFREE II's, re-aimed the same way; T7
+  (`test/systems/quest/rest8_questwaits.test.js`).
+- **Pins:** `test/systems/quest/rest8_questwaits.test.js` (TIMEFREE's file re-aimed: the freeze assertions now "runs on played
+  time"), `test/systems/quest/rest8_audit_timefree.test.js` (AUDIT TIMEFREE's and AUDIT TIMEFREE II's, re-aimed the same way; T7
   retired with the freeze; R1's two, ticked). Campaigns `tools/mutants/rest8.json` (22) and
   `tools/mutants/rest8_audit_timefree.json` (14), all dead; `tools/mutants/qtlive1.json`'s one moved record re-aimed.
   `Online-Time-Arc.md` 6.3d is the law's page. The Online pane's sentence is REST9's (the words), and still says
@@ -487,9 +488,10 @@ QCLOCK-WORLD's clock, online only - the gate is the quest hooks' `sharedClock`, 
 - **R** rests at the rest point in reach; with none: "Find a fire or a bed to rest, or lay out a bedroll." In a
   dungeon with fires it adds the nearest's bearing on the compass.
 - **The channel ring** at the reticle, "Resting..."; broken: "Your rest is interrupted."
-- **The status widget**: **Rested** (a buff tile, its minutes left at its foot) through the night interval.
+- **The status widget**: **Next night** (a buff tile, its minutes left at its foot) through the night interval - "Rested"
+  until AUDIT C&C (`06-Systems/Climates-Calories.md`), which renamed it beside Boons' Well rested.
 - **The rest window** online: gone. Offline: unchanged.
-- **The Online pane** (`src/ui/enhancedMenu.js`) says it: rest at fires and beds; a rest is a night; quest waits and
+- **The Online pane** (`src/ui/enhanced/enhancedMenu.js`) says it: rest at fires and beds; a rest is a night; quest waits and
   deadlines as OPEN 12 settles.
 
 ---
@@ -601,7 +603,7 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
 (below). Each slice's tests are its Testing.md row; each law has its mutant list (`tools/mutants/rest3.json`,
 `rest5.json`, `rest6.json`, and the re-aimed SURV3/SURV-TIERS records for REST2).
 
-- **REST1 - the act** (`src/systems/restAct.js`; createRestDeps' `restAct`, `restNight`, `restShort`). As section 2,
+- **REST1 - the act** (`src/systems/rest/restAct.js`; createRestDeps' `restAct`, `restNight`, `restShort`). As section 2,
   with these readings: the channel is the rest window's own `channel` state (both skins), so the window being modal is
   what keeps the player still - no step can be taken inside it - and an enemy is the end-of-channel check (the enemy
   in reach, or a spawn latched while holding), not a per-frame poll. **The ambush (REST4) is not a separate draw:** the
@@ -611,7 +613,7 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
 - **REST2 - the Campfire** (`src/systems/survival/camp.js`, `src/scenes/camps.js`, `src/systems/survival/items.js`): as
   section 3 - the Pawn Shop's 0-2 and the online half price for a Campfire and Firewood came with AUDIT REST
   (`shopStock.js`, `tradeModes.js`); the port's taverns keep no shelf, so a tavern sells none.
-- **REST3 - dungeon fires** (`src/world/dungeonFires.js`; `tools/dungeonFireProbe.mjs` for the real dungeons, which
+- **REST3 - dungeon fires** (`src/world/dungeon/dungeonFires.js`; `tools/dungeonFireProbe.mjs` for the real dungeons, which
   this tree's container cannot read - run it with ARENA2_PATH). As section 4, with these readings: N counts the
   non-border blocks (a border block is a cap of rock, not a room); a 6 m height band stands in for 4.2's storey
   (`automapFloors.js` derives its storeys off the draw, after the fires must stand); no dungeon in the port is sealed,
@@ -622,7 +624,7 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
 - **REST5 - the party's night** (world.js `carryPartyNight`, `encounters.js` `quietNights`): as 2.6, with no relay
   bump - the night's stamp is the pose's `restStartedAt` (a rest's open stamps no start online), which an older client
   reads as its own "a rest just happened" cooldown. A follower inside their own night interval gets a short rest.
-- **REST6 - the consumables** (`src/systems/restItems.js`): as section 6, with these readings: the Bedroll is a laid
+- **REST6 - the consumables** (`src/systems/rest/restItems.js`): as section 6, with these readings: the Bedroll is a laid
   spot (not a camp record: nothing on the wire, nothing saved) and its Use begins the rest on it at once; the Candle is
   lit from the pack and the next rest is its kneel (both windows; offline too); the shelves are a General Store's and
   an Alchemist's (the port's temples, guilds and taverns keep no shelf), so the Candle and the Draught are the
@@ -630,7 +632,7 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
   the release the templates shipped in (section 6's last rule: the templates ship a release before any shelf, pile, foe
   or recipe carries them) - until REST-LOOT opened them (below); offline the shelves and the piles carry them with
   Climates & Calories.
-- **AUDIT REST** (2026-10-03, an independent pass over REST1-REST6; `test/auditrest.test.js`, `tools/mutants/auditrest.json`).
+- **AUDIT REST** (2026-10-03, an independent pass over REST1-REST6; `test/systems/survival/auditrest.test.js`, `tools/mutants/auditrest.json`).
   Fixed: a Campfire left standing in a dungeon was lost at the exit - the dungeon keeps nothing of mine, so it now comes
   back into the pack with its fuel (`camps.js` packOwnFires; an Ember Jar's goes with the dungeon); the Draught makes
   only a ROUGH night a bed's (a fire or a tent prices as one already, and a tent's fire stays tended) and is spent by
@@ -652,9 +654,9 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
   two-sided; the ceiling and wall rays are the guard).
 - **AUDIT REST-PARTY** (2026-10-03, the arc audited again with the party rest adapted to the night - four lenses: the
   act and the ambush, the Campfire and the supplies, the dungeon fires, the quest waits; the party by hand.
-  `test/auditrestparty.test.js`, `auditrestparty_camps.test.js`, `auditrestparty_quests.test.js`,
+  `test/systems/rest/auditrestparty.test.js`, `auditrestparty_camps.test.js`, `auditrestparty_quests.test.js`,
   `auditrestparty_fires.test.js`; `tools/mutants/auditrestparty*.json`, every mutant dead).
-  - **The party's night** (2.6), its decision lifted into `src/systems/partyRestLaw.js` (`nightMoved`,
+  - **The party's night** (2.6), its decision lifted into `src/systems/party/partyRestLaw.js` (`nightMoved`,
     `carriedNightAction`, `carriedRestKind`) and run on a table - REST5 had pinned it by regexes alone. P1: it carried
     members in a tavern, temple or guild hall, where TAVERN-REST1/GUILD-REST1 had taken the party's rest out (indoors
     "near" is the building, so one member's rented bed slept everyone in the house, a room's night spent or a bed got
@@ -665,7 +667,7 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
     rest kind, read off the open - an older build's window open lands on one three times in a thousand; still no relay
     bump), and a carried member sleeps the better of it and their own (`carriedRestKind`; a Sleeping Draught is its
     drinker's, never the party's). P3: a dead member was told they slept. P4: PARTY-REST-FAR1's word comes back online -
-    a mate who rests a night in the same place beyond 15 m is said once ("Ada rested a night without you - come within 15
+    a mate who rests a night in the same place beyond 15 m is said once ("Ada rested a night without you. Come within 15
     m of them to rest with the party."). P5: the vote's tally no longer counts online, where there is no vote.
   - **The ambush (REST4) never broke a night online - A1, the arc's worst.** Every host stands its resting encounter
     asynchronously (its art awaited), and the night ran as one synchronous call, so no foe joined a pool inside it: a
@@ -721,7 +723,7 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
 - **AUDIT REST II** (2026-10-03, Mac: "After this lets do a comprehensive audit. This needs to be perfection" - eight
   lenses over the whole pull request: the act and the night, the party's night, the Campfire and the supplies, the
   dungeon fires, the quest clocks, the four hosts and the frame, what the player is told, the merges and the tests;
-  every finding verified before it was fixed, each fix pinned red first and mutation-proven: `test/auditrest2_camps.test.js`,
+  every finding verified before it was fixed, each fix pinned red first and mutation-proven: `test/systems/auditrest2_camps.test.js`,
   `auditrest2_party.test.js`, `auditrest2_quests.test.js`, `auditrest2_fires.test.js`; `tools/mutants/auditrest2_*.json`).
   - **The Campfire's lifecycle (H).** H1, AUDIT REST-PARTY B1's own regression: a Recall or an anchor teleport out of a
     dungeon passes `cacheScene` false (a dungeon caches nothing, Teleport.cs), as the load does, so B1's load arm
@@ -803,7 +805,7 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
 - **AUDIT REST III** (2026-10-03, Mac: "Audit this and ensure its perfection" - six fresh lenses over every AUDIT REST II
   fix: the Campfire's lifecycle, the supplies and the shops, the party's night and the act, the quest clocks, the
   dungeon fires, and what the player and the next developer are told; every finding verified before it was fixed, each
-  fix pinned and mutation-proven: `test/auditrest3.test.js`, the E1, C6 and B1 pins in the files whose harness they
+  fix pinned and mutation-proven: `test/systems/auditrest3.test.js`, the E1, C6 and B1 pins in the files whose harness they
   ride (`auditrest2_fires`, `auditrest2_party`, `auditrest2_camps`); `tools/mutants/auditrest3.json`).
   - **Found and fixed.** E1 (medium): F1's joiner ran encounterSpot and the host ran it again - two trials of the same
     dice, so in a fire room 24-30 m across the joiner asked where the host stood nothing (its night broken for nothing,
@@ -854,9 +856,9 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
   ground's four, Hard's rough floor kept - and still moves no clock: nothing ages, nothing rolls, no fuel is spent, no
   night is stamped. ONE PAY: the minute law's sleeping branch is lifted into `survival/needs.js` `paySleep` (a minute
   through it is the same arithmetic as before, bit for bit), and the short rest pays through it
-  (`src/systems/restAct.js` `sleepShortRest`, called by createRestDeps' `restShort`, so both skins and the party's
+  (`src/systems/rest/restAct.js` `sleepShortRest`, called by createRestDeps' `restShort`, so both skins and the party's
   carried short rest take it). With the arc off there is no need to pay, and a vampire has none (the minute law freezes
-  the debt). `test/restsleep1_shortrest.test.js`, `tools/mutants/restsleep1.json` (11, all dead); SURV1's and AUDIT
+  the debt). `test/systems/survival/restsleep1_shortrest.test.js`, `tools/mutants/restsleep1.json` (11, all dead); SURV1's and AUDIT
   SURV's floor records re-aimed by content to the lifted lines.
 - **CAMP-ROLL** (2026-10-04, from play: *"In a party, or with other players. Every player spawns their own enemies when
   resting. What's a detailed way to handle this?"*, then *"Do it"*). 2.6 carried a member who stood by, but a member who
@@ -865,9 +867,9 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
   rester's own roll - AUDIT PSCALE1 COUNT-1), each hit standing a pack already sized for the party (`partyExtraFoes`).
   Four sleepers, up to four party-sized packs; underground, one host ask a sleeper (REST-SYNC). Now **the act's night is
   the camp's.** The members resting with the party within its 15 m whose acts open on a night say so on the pose -
-  `restStartedAt` with a camp mark (`src/systems/restAct.js` CAMP_MARKS: `open` 774 and `done` 773, beside the nights'
+  `restStartedAt` with a camp mark (`src/systems/rest/restAct.js` CAMP_MARKS: `open` 774 and `done` 773, beside the nights'
   775-777, never read as a night) and `rs` - and every client elects the same one roller with no message of its own:
-  the lowest account id among them (`src/systems/partyRestLaw.js` createCampWatch). The roller's night is DFU's, rolled
+  the lowest account id among them (`src/systems/party/partyRestLaw.js` createCampWatch). The roller's night is DFU's, rolled
   once at the odds it always had. Every other member's channel ends in a wait, "Resting with Ada..." (both skins; Esc
   or Stop ends it with nothing slept), which ends when the roller's night lands (slept as theirs through the bag's one
   carried-night sequence, `src/scenes/shared.js` createRestDeps `restCampNight`: their spot or mine, whichever is
@@ -886,7 +888,7 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
   interior bag carries none; the `?exterior` dev host (`exterior.js`) has no party. NOT DONE, and why: strangers, and
   members resting alone, at one fire still each roll - a stranger's stamps ride no pose I can read (the party pose goes
   to the party alone), and a member who chose to rest alone chose their own night. No relay change (the marks are
-  values of a field the pose carries). `test/camproll.test.js` (11), `tools/mutants/camproll.json` (32, all dead); the
+  values of a field the pose carries). `test/systems/camproll.test.js` (11), `tools/mutants/camproll.json` (32, all dead); the
   carried night's pins moved to the bag's sequence (`rest5_partynight`, `auditrestparty`, their mutants re-aimed by
   content), RESTFIX1's and REST6's window pins re-aimed, AUDIT REST III's C6 records aimed at the channel's own line,
   and AUDIT OW5b E1's stander scope given the two new names.
@@ -913,7 +915,7 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
   where each player stands (`campFromWire`: the sender's own boat is that peer's, one named by my id mine); a peer's
   word that only moves her keeps its camp standing. A camp on a deck is a fire to rest at and cook by like any other.
   THE FOUR HOSTS: `scenes/world.js` hands the boats; a building (`worldModes.js`) and a dungeon (`dungeonContext.js`)
-  stand no boat of the camps', the standalone street (`exterior.js`) no Come Sail Away. `test/deckcamp.test.js`,
+  stand no boat of the camps', the standalone street (`exterior.js`) no Come Sail Away. `test/systems/survival/deckcamp.test.js`,
   `tools/mutants/deckcamp.json` (20, all dead).
 - **REST-LOOT (2026-10-05, Mac: "the new resting items we added, along with majicka potions should be more common loot
   drops"; `Loot-Arc.md` section 19, LOOT-EASE)** - the switch is ON: the templates have been in every release since the
@@ -925,7 +927,7 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
   was the Ember Jar alone, 2) - before PLAIN-LOOT's three in four on a plain foe. The Bedroll stays the counter's,
   online's rest point bought. A full body's cap keeps a supply before a Common piece (`foeLootCap.js`
   `registerLootSupply`). The shut release stands behind the switch, every pin of it kept through
-  `_setRestItemsOnlineForTests` - the way back if an older client ever meets one. `test/rest6_consumables.test.js`
+  `_setRestItemsOnlineForTests` - the way back if an older client ever meets one. `test/systems/survival/rest6_consumables.test.js`
   (REST-LOOT), the customs pins re-aimed (`auditrest2_camps`, `auditrest3`, `auditrestparty_camps`);
   `tools/mutants/lootease.json`'s REST-LOOT rows, `rest6.json`'s switch record turned round.
 
@@ -964,7 +966,7 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
   tent wore under PROF9 too), and an old save's kit fire has no fuel of its own to keep. One kit, every night - what a
   Field Cook had before REST. No relay or account-service change: the service validates the spec's id, and its
   description is the client's (`net/professionLaw.js`, "A night at your own Campfire spends no fuel."). The dead
-  `keep` option leaves placeCampItem. Pinned in `test/prof9_client.test.js` (the law and the pool), seven mutants dead.
+  `keep` option leaves placeCampItem. Pinned in `test/systems/prof9_client.test.js` (the law and the pool), seven mutants dead.
 - 2026-10-03: AUDIT REST II (As built, "AUDIT REST II"): eight lenses, every finding verified and fixed, pinned red
   first and mutation-proven - the Campfire's lifecycle (H1-H15), the party's night and the act (P1-P9), the quest
   clocks (Q1-Q5, THE RULE), the dungeon fires (F1-F9), the tests and merges, and what the player is told.
@@ -981,9 +983,9 @@ Mac: "Go" - every recommendation of section 15 taken. Slices REST1-REST6 and RES
   roller off the pose, and the others wait on its night and sleep it, or break with its ambush.
 - 2026-10-05: REST-LOOT (As built; `Loot-Arc.md` section 19): `REST_ITEMS_ONLINE` on - the seven online from the
   shelves, the piles and the foes - and their loot wider and commoner.
-- 2026-10-06: GUARD-WINDOW (FIELD BUGS 2026-10-06c, `01-Overview/Field-Bugs-2026-10-06c.md`; Aru: "the three hours
+- 2026-10-06: GUARD-WINDOW (FIELD BUGS 2026-10-06c, `01-Overview/bugs/Field-Bugs-2026-10-06c.md`; Aru: "the three hours
   passed, the mage disappeared, but no enemies showed up"): N0B20Y02's `_S.12_` - the three-hour guard of "Protect an
   Honored Mage", which section 8's reading and AUDIT REST II's sweep called a delay - is a deadline by hand
   (ONLINE_DEADLINES): a window to act, and the Nightblades' 55-minute interval is longer than the 24-minute cut. 272
-  deadlines and 127 delays. `test/fb1006c_guardwindow.test.js`; `test/rest8_questwaits.test.js`,
-  `test/auditrest2_quests.test.js` and `test/auditrestparty_quests.test.js` moved with it.
+  deadlines and 127 delays. `test/systems/quest/fb1006c_guardwindow.test.js`; `test/systems/quest/rest8_questwaits.test.js`,
+  `test/systems/quest/auditrest2_quests.test.js` and `test/systems/quest/auditrestparty_quests.test.js` moved with it.

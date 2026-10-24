@@ -1,0 +1,212 @@
+[
+  {
+    "name": "RENOWN-GATE-offline-shut",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "=> !online || (Number.isSafeInteger(renown) && /** @type {number} */ (renown) >= min);",
+    "new": "=> (Number.isSafeInteger(renown) && /** @type {number} */ (renown) >= min);",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-unknown-open",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "=> !online || (Number.isSafeInteger(renown) && /** @type {number} */ (renown) >= min);",
+    "new": "=> !online || renown == null || (Number.isSafeInteger(renown) && /** @type {number} */ (renown) >= min);",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-the-renown-itself-shut",
+    "file": "src/systems/sigil/sigil.js",
+    "old": "=> !online || (Number.isSafeInteger(renown) && /** @type {number} */ (renown) >= min);",
+    "new": "=> !online || (Number.isSafeInteger(renown) && /** @type {number} */ (renown) > min);",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-elites-at-four",
+    "file": "src/systems/eliteFoes.js",
+    "old": "export const ELITE_FOE_MIN_RENOWN = 5;",
+    "new": "export const ELITE_FOE_MIN_RENOWN = 4;",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-elites-at-six",
+    "file": "src/systems/eliteFoes.js",
+    "old": "export const ELITE_FOE_MIN_RENOWN = 5;",
+    "new": "export const ELITE_FOE_MIN_RENOWN = 6;",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-elites-read-the-revenants-renown",
+    "file": "src/systems/eliteFoes.js",
+    "old": "export const eliteRenownOpen = (o) => renownOpens(ELITE_FOE_MIN_RENOWN, o);",
+    "new": "export const eliteRenownOpen = (o) => renownOpens(10, o);",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-elites-door-unread",
+    "file": "src/systems/eliteFoes.js",
+    "old": "export const eliteRenownOpen = (o) => renownOpens(ELITE_FOE_MIN_RENOWN, o);",
+    "new": "export const eliteRenownOpen = (o) => renownOpens(ELITE_FOE_MIN_RENOWN, { online: false });",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-world-roll-ungated",
+    "file": "src/systems/eliteFoes.js",
+    "old": "rolls() < ELITE_FOE_OVERWORLD_CHANCE && eliteRenownOpen();",
+    "new": "rolls() < ELITE_FOE_OVERWORLD_CHANCE;",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-world-roll-gate-before-the-draw",
+    "file": "src/systems/eliteFoes.js",
+    "old": "rolls() < ELITE_FOE_OVERWORLD_CHANCE && eliteRenownOpen();",
+    "new": "eliteRenownOpen() && rolls() < ELITE_FOE_OVERWORLD_CHANCE;",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-search-roll-ungated",
+    "file": "src/systems/searchables.js",
+    "old": "rolls() < SEARCH_ELITE_CHANCE && elitesAllowed() && eliteRenownOpen();",
+    "new": "rolls() < SEARCH_ELITE_CHANCE && elitesAllowed();",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-search-roll-gate-before-the-draw",
+    "file": "src/systems/searchables.js",
+    "old": "rolls() < SEARCH_ELITE_CHANCE && elitesAllowed() && eliteRenownOpen();",
+    "new": "eliteRenownOpen() && rolls() < SEARCH_ELITE_CHANCE && elitesAllowed();",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-revenants-at-nine",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "export const REVENANT_MIN_RENOWN = 10;",
+    "new": "export const REVENANT_MIN_RENOWN = 9;",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-return-back-to-half",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "export const REVENANT_RETURN_CHANCE = 0.4;",
+    "new": "export const REVENANT_RETURN_CHANCE = 0.5;",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-return-lower",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "export const REVENANT_RETURN_CHANCE = 0.4;",
+    "new": "export const REVENANT_RETURN_CHANCE = 0.35;",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-held-inverted",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "export const revenantHeld = (o) => !renownOpens(REVENANT_MIN_RENOWN, o);",
+    "new": "export const revenantHeld = (o) => renownOpens(REVENANT_MIN_RENOWN, o);",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-held-reads-the-elites-renown",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "export const revenantHeld = (o) => !renownOpens(REVENANT_MIN_RENOWN, o);",
+    "new": "export const revenantHeld = (o) => !renownOpens(5, o);",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-candidate-ungated",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (revenantHeld()) return false;   // RENOWN-GATE: held - none made, none runs (a flight that could make no revenant would only rob a kill), no ledger kept",
+    "new": "",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-return-ungated",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (revenantHeld()) return null;   // RENOWN-GATE: held - none returns, and none is claimed",
+    "new": "",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-lair-ungated",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (revenantHeld()) return null;   // RENOWN-GATE: held - none is at home, and none is claimed",
+    "new": "",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-rumor-ungated",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (revenantHeld()) return null;   // RENOWN-GATE: held - no word of a lair it is not at; the mill's turn, its answer unspent",
+    "new": "",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-marks-ungated",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (revenantHeld()) return [];   // RENOWN-GATE: held - no lair marked where none waits",
+    "new": "",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-hunts-ungated",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (revenantHeld()) return [];   // RENOWN-GATE: held - no hunt in the log for a lair none waits in",
+    "new": "",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-fester-ungated",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "    for (const r of held ? [] : livingRevenants()) {",
+    "new": "    for (const r of livingRevenants()) {",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-fester-held-days-caught-up",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  const held = revenantHeld();",
+    "new": "  const held = revenantHeld();\n  if (held) return up;",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-page-held-words-dropped",
+    "file": "src/ui/revenant/revenantPage.js",
+    "old": "  if (held) return { tag: 'Held', cls: 'is-waiting', line: `It will not come for you before Renown ${REVENANT_MIN_RENOWN}.` };",
+    "new": "",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-page-come-door-unread",
+    "file": "src/ui/revenant/revenantPage.js",
+    "old": "export function comeWords(r, now, held = revenantHeld()) {",
+    "new": "export function comeWords(r, now, held = false) {",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-page-lair-words-dropped",
+    "file": "src/ui/revenant/revenantPage.js",
+    "old": "  if (held) return r.lairKnown ? `Lair: ${r.lair.name}.` : 'Lair: unknown.';",
+    "new": "",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-page-lair-door-unread",
+    "file": "src/ui/revenant/revenantPage.js",
+    "old": "export function lairWords(r, held = revenantHeld()) {",
+    "new": "export function lairWords(r, held = false) {",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-page-note-unsaid",
+    "file": "src/ui/revenant/revenantPage.js",
+    "old": "    const how = revenantHeld()\n",
+    "new": "    const how = false\n",
+    "tests": ["test/systems/renowngate.test.js"]
+  },
+  {
+    "name": "RENOWN-GATE-betrayal-ungated",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "  if (revenantHeld()) return null;   // RENOWN-GATE: held - none turns on me where it stands (a hostile one stood); it stays sworn until the gate opens",
+    "new": "",
+    "tests": ["test/systems/renowngate.test.js"]
+  }
+]

@@ -1,38 +1,38 @@
 [
   {
     "name": "ARROW2-release-not-hidden",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "      if (playerWeapon.machine.isBow && evs.includes('done')) _bowReleaseHidden = true;",
     "new": "      if (false) _bowReleaseHidden = true;",
     "tests": [
-      "test/arrow2_bowhide.test.js"
+      "test/systems/arrow2_bowhide.test.js"
     ]
   },
   {
     "name": "ARROW2-classic-sprite-ignores-the-hide",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "      if (art && spriteShown()) drawFpsWeapon(",
     "new": "      if (art) drawFpsWeapon(",
     "tests": [
-      "test/arrow2_bowhide.test.js"
+      "test/systems/arrow2_bowhide.test.js"
     ]
   },
   {
     "name": "ARROW2-widget-fed-the-latched-shown",
-    "file": "src/combat/weaponRig.js",
-    "old": "shown: spriteShown(), castPlaying",
-    "new": "shown: shown(), castPlaying",
+    "file": "src/combat/weapon/weaponRig.js",
+    "old": "sheathed: playerWeapon.sheathed, shown: spriteShown(),",
+    "new": "sheathed: playerWeapon.sheathed, shown: shown(),",
     "tests": [
-      "test/arrow2_bowhide.test.js"
+      "test/systems/arrow2_bowhide.test.js"
     ]
   },
   {
     "name": "ARROW2-hide-never-lifts",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "    _bowReleaseHidden = false;   // ARROW2: the first Update past the cooldown writes ShowWeapons again\n",
     "new": "",
     "tests": [
-      "test/arrow2_bowhide.test.js"
+      "test/systems/arrow2_bowhide.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    const rest = m.isBow && m.bowIdleDrawn ? BOW_DRAWN_HOLD_FRAME : 0;",
     "new": "    const rest = 0;",
     "tests": [
-      "test/arrow2_bowhide.test.js"
+      "test/systems/arrow2_bowhide.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    if (m.isBow && m.frame !== rest && m.now >= m.cooldownUntil) {",
     "new": "    if (m.isBow && m.frame !== rest) {",
     "tests": [
-      "test/arrow2_bowhide.test.js"
+      "test/systems/arrow2_bowhide.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    m.acc = m.tick == null ? 0 : m.acc - tick;",
     "new": "    m.acc -= tick;",
     "tests": [
-      "test/arrow2_bowhide.test.js"
+      "test/systems/arrow2_bowhide.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    m.acc = m.tick == null ? 0 : m.acc - tick;",
     "new": "    m.acc = 0;",
     "tests": [
-      "test/arrow2_bowhide.test.js"
+      "test/systems/arrow2_bowhide.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    this.machine.bowIdleDrawn = this.machine.isBow && !getBool('Controls', 'BowDrawback');",
     "new": "    this.machine.bowIdleDrawn = false;",
     "tests": [
-      "test/arrow2_bowhide.test.js"
+      "test/systems/arrow2_bowhide.test.js"
     ]
   }
 ]

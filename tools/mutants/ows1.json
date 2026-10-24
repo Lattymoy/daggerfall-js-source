@@ -5,7 +5,7 @@
     "old": "mode: ship ? TRANSPORT_MODES.Ship : player.transportMode",
     "new": "mode: player.transportMode",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "yaw: ship ? csaBoatYaw(ship) : cam.yaw, mode:",
     "new": "yaw: cam.yaw, mode:",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "csaRuntime.state.CurrentBoat : null) ?? csaAboard.aboard?.boat ?? null;",
     "new": "csaRuntime.state.CurrentBoat : null) ?? null;",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "const csaBoatUnderMe = () => (csaRuntime?.isSailing() ? csaRuntime.state.CurrentBoat : null)",
     "new": "const csaBoatUnderMe = () => (null)",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "[0, 0, 1]); return Math.atan2(fw[0], fw[2]); };",
     "new": "[0, 0, 1]); return Math.atan2(fw[2], fw[0]); };",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "export const TRAV_SHIP = TRAV_MODES.indexOf('ship');",
     "new": "export const TRAV_SHIP = TRAV_MODES.indexOf('cart');",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
@@ -59,52 +59,52 @@
     "old": "export const isShipMark = (p) => p?.m === TRAV_SHIP;",
     "new": "export const isShipMark = (p) => p?.m >= TRAV_SHIP - 1;",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
     "name": "OWS1-hud-no-ship",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "    } else if (isShipKind(m)) {",
     "new": "    } else if (false) {",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
     "name": "OWS1-hud-kind-loose",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "export const isShipKind = (m) => /\\bship\\b/.test(m.kind ?? '');",
     "new": "export const isShipKind = (m) => /ship/.test(m.kind ?? '');",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
     "name": "OWS1-name-into-sail",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "(isShipKind(m) ? SHIP_MARK_RISE + 2 : NAME_ABOVE)",
     "new": "(isShipKind(m) ? NAME_ABOVE : NAME_ABOVE)",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
     "name": "OWS1-hull-above-the-point",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "g.moveTo(x - 7, y + 1); g.lineTo(x + 7, y + 1);",
     "new": "g.moveTo(x - 7, y - 1); g.lineTo(x + 7, y + 1);",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
     "name": "OWS1-sail-unfilled",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "g.moveTo(x - 1, y - SHIP_MARK_RISE); g.lineTo(x - 1, y - 1); g.lineTo(x + 6, y - 1); g.closePath();\n  g.fill(); g.stroke();",
     "new": "g.moveTo(x - 1, y - SHIP_MARK_RISE); g.lineTo(x - 1, y - 1); g.lineTo(x + 6, y - 1); g.closePath();\n  g.stroke();",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
@@ -114,7 +114,7 @@
     "new": "ship: !!r.ship,\n",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e): the line grew a field of its own (OW-KIN, OW-WHO, OW-HUBS, SEAT-TIP)",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
@@ -124,16 +124,16 @@
     "new": "${m.journey ? 1 : 0},${m.kin",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e): the line grew a field of its own (OW-KIN, OW-WHO, OW-HUBS, SEAT-TIP)",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
     "name": "OWS1-held-map-ring",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "    if (t.ship) inkShip(ctx, x, y);",
     "new": "    if (false) inkShip(ctx, x, y);",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
@@ -143,7 +143,7 @@
     "new": "...t.p, ship: false, kin:",
     "note": "re-aimed BY CONTENT (FIELD BUGS 2026-10-04e): the line grew a field of its own (OW-KIN, OW-WHO, OW-HUBS, SEAT-TIP)",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
@@ -152,25 +152,25 @@
     "old": "journey: t.journey, ship: t.ship })),",
     "new": "journey: t.journey })),",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
     "name": "OWS1-view-peer-no-ship",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "${isShipMark(t?.p) ? ' ship' : ''}${t?.p.tv",
     "new": "${t?.p.tv",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
     "name": "OWS1-view-book-no-ship",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/travelViewMarks.js",
     "old": "kind: `${kind}${ship ? ' ship' : ''}${t.p.tv",
     "new": "kind: `${kind}${t.p.tv",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   },
   {
@@ -179,7 +179,7 @@
     "old": "      if (onSea) holder._tvAt[1] = Math.max(holder._tvAt[1], tvSeaY() + lift);",
     "new": "      if (false) holder._tvAt[1] = Math.max(holder._tvAt[1], tvSeaY() + lift);",
     "tests": [
-      "test/ows1_ships.test.js"
+      "test/ui/ows1_ships.test.js"
     ]
   }
 ]

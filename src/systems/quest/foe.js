@@ -22,15 +22,16 @@ import { parseInt as questParseInt } from './parseUtils.js';
 import { foesTable } from './tables.js';
 import { GENDERS, getNameBankOfRegion, fullName, monsterName } from '../../characters/nameHelper.js';
 import { srand, randomRange } from '../../formats/dfRandom.js';
-import { ENEMY_BASICS, ENEMY_NAMES, isClassEnemyId } from '../../characters/enemyBasics.js';
+import { enemyDisplayName, isClassEnemyId } from '../../characters/enemy/enemyBasics.js';
+import { getLocalizedEnemyName } from '../textManager.js';   // L10N3e: the type name shown
 
 const MAX_SPAWN_COUNT = 8;
 
 // AUDIT 24 (wave 38): ENEMY_NAMES and isClassEnemyId moved to
-// characters/enemyBasics.js - the leaf that holds the rows they name,
+// characters/enemy/enemyBasics.js - the leaf that holds the rows they name,
 // which this file already imports. Re-exported so every existing
 // importer keeps working (ONE DFU MEMBER, ONE EXPORT).
-export { ENEMY_NAMES, isClassEnemyId } from '../../characters/enemyBasics.js';
+export { ENEMY_NAMES, isClassEnemyId } from '../../characters/enemy/enemyBasics.js';
 
 const DECL = [
   /(Foe|foe) (?<symbol>[a-zA-Z0-9_.-]+) is (?<count>\d+) (?<aFoe>\w+)/,
@@ -48,6 +49,7 @@ export class Foe extends QuestResource {
     this.deathTrigger = false;     // true when the enemy should instantly die (Foe.cs:42); NOT save state
     this.isRestrained = false;     // true if enemy restrained by quest
     this.killCount = 0;            // kills of this spawn; does NOT rearm
+    this.learnedKills = new Map(); // QUEST-AUDIT III KILL-ONCE: a party member's kills an envelope brought, not yet credited, by whose envelope - transient
     // Q3-iii name state (Foe.cs:45-46, SetFoeName)
     //
     // AUDIT 24 (wave 27), EXAMINED AND NOT A DIVERGENCE - recorded so
@@ -78,10 +80,15 @@ export class Foe extends QuestResource {
 
   /** ExpandMacro (Foe.cs:153-177): _symbol_ answers the TYPE name,
    *  =symbol_ the display name - the inversion is C#'s own. Stores
-   *  this foe as the quest's last resource for pronouns. */
+   *  this foe as the quest's last resource for pronouns.
+   *
+   *  L10N3e: the type name AS SHOWN. SetFoeName writes it through
+   *  GetLocalizedEnemyName(enemy.ID) (Foe.cs:276) and _symbol_ prints
+   *  it (:164); the port's `typeName` stays the canonical name the save
+   *  holds, so the lookup is made here, by the foe's MobileTypes id. */
   expandMacro(macroType) {
     this.parentQuest.lastResourceReferenced = this;
-    if (macroType === 1) return this.typeName;      // NameMacro1
+    if (macroType === 1) return getLocalizedEnemyName(this.foeType, this.typeName);      // NameMacro1
     if (macroType === 5) return this.displayName;   // DetailsMacro
     return false;
   }
@@ -94,8 +101,30 @@ export class Foe extends QuestResource {
   setRestrained() { this.isRestrained = true; }
   clearRestrained() { this.isRestrained = false; }
 
+  /** QUEST-AUDIT III KILL-ONCE (VERMIN-SHARED's "Said, not fixed"): a party member's kill of this Foe, counted on this
+   *  copy - their puppet's fall seen, their pose's word - unless their copy's envelope already brought it here
+   *  (`learnedKills`, machine.js updateSharedQuest's merge): each copy counted the kills it saw and the resync kept the
+   *  larger count, so an envelope that came before the credit counted one kill twice (a `killed 2` closed on one spider).
+   *  A credit the envelope never carried counts; the next envelope's larger count corrects any it held back. AUDIT QA3
+   *  E3: by WHOSE kill - `owner`, the member whose fall it is, spends only a kill their own envelope brought: a kill no
+   *  holder saw, learned, swallowed a third member's credit that no envelope ever corrects (a `killed 3` never closed).
+   *  Answers whether it counted. */
+  creditPartnerKill(owner = null) {
+    const key = owner == null ? '' : String(owner);
+    const n = this.learnedKills.get(key) ?? 0;
+    if (n > 0) { this.learnedKills.set(key, n - 1); return false; }
+    this.incrementKills();
+    return true;
+  }
+
   /** IncrementKills (Foe.cs:219-222). */
-  incrementKills(amount = 1) { this.killCount += amount; }
+  incrementKills(amount = 1) {
+    this.killCount += amount;
+    // QUEST-NOTE (2026-10-13, a player: "killed the mage in question, but DFO never popped up saying the mage was
+    // killed"): THE PORT'S OWN WORD - a quest's foe fell, told to the host (a notice and a chat line), whatever the
+    // quest's own script says or does not say. DFU tells nothing here; the script's `say` stays its own box.
+    this.parentQuest?.hooks?.questFoeKilled?.(this.parentQuest, this, amount);
+  }
 
   /** Kill (Foe.cs:224-227): flags every live instance to die; the
    *  behaviour mount zeroes entity health per instance (Q4). */
@@ -171,12 +200,13 @@ export class Foe extends QuestResource {
    *  monster seed ADDS DFRandom.random_range(1, 1000000) drawn from
    *  DFRandom's own current state, verbatim. */
   _setFoeName(world) {
-    // TextManager.GetLocalizedEnemyName; the enum-name fallback for a
-    // type missing from EnemyBasics is unreachable through the
-    // Quests-Foes table (every id is a real enemy)
-    this.typeName = ENEMY_BASICS[this.foeType]
-      ? ENEMY_NAMES[this.foeType < 128 ? this.foeType : 43 + this.foeType - 128]
-      : String(this.foeType);
+    // TextManager.GetLocalizedEnemyName's English - the CANONICAL name,
+    // saved; expandMacro shows it in the player's language (L10N3e). The
+    // enum-name fallback for a type missing from EnemyBasics is
+    // unreachable through the Quests-Foes table (every id is a real enemy).
+    // DEX1: a mod's foe (the table's new rows) by its custom name, as
+    // GetLocalizedEnemyName names it - enemyDisplayName is that one law
+    this.typeName = enemyDisplayName(this.foeType) ?? String(this.foeType);
     if (!isClassEnemyId(this.foeType)) {
       srand(this._range(1000) + randomRange(1, 1000000));
       this.displayName = monsterName(GENDERS.Male, this._rolls());

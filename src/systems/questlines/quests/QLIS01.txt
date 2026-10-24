@@ -1,0 +1,113 @@
+-- QL15 (2026-10-19; bible/06-Systems/Questlines-Arc.md section 4.5): THE HARBOURMASTER'S WORD, step 1 of 3 - the
+-- introduction to the sea (the Tutorials' `sea` group). Started by the line's runner, never offered by a questor: a
+-- harbourmaster's note is the offer and the word, the harbourmaster waiting where the player stood when it came
+-- (`local tavern`). The act: a port reached under sail (`ql act port-reached 1` - systems/questlines/qlActs.js, the
+-- harbour office's berth); then back to the harbourmaster for the purse. The giver is unnamed, as the registry's
+-- (qlLines.js "a harbourmaster").
+-- AUDIT QUESTLINES LINES-26: the letter signs off on one line, its sender's name and calling - DFU's pack names a
+-- quest letter by its last line (ItemHelper.cs:335-348, itemInfo.js questLetterName).
+Quest: QLIS01
+DisplayName: Under Sail
+-- Message panels
+QRC:
+
+QuestFail:  [1003]
+<ce>          The harbormaster has found another captain.
+
+QuestComplete:  [1004]
+<ce>         "Well sailed, captain." The harbormaster counts
+<ce>                  _gold_ gold into your hand.
+
+QuestLogEntry:  [1010]
+%qdt:
+ A note came from _master_, a harbormaster who
+ drinks at _tavern_ here in __tavern_ and needs a
+ captain. I am to take a ship out of any port and
+ bring her into the harbor of another, a quarter
+ league off or more, then come back to _tavern_ for
+ my purse.
+
+Message:  1011
+To whoever reads this with a ship in mind,
+
+     I have more cargo than captains, and more
+ captains in the taverns than at sea. Prove you are
+ not one of them. Take a ship - your own, or one
+ bought at a shipyard - out of any port, and bring
+ her into the harbor of another a quarter league
+ off or more. Not by the road. Sail.
+
+     Then come and find me at _tavern_, and
+ there is a purse in it.
+
+<ce>                             _master_, harbormaster
+
+Message:  1012
+<ce>           A runner from the docks tugs your sleeve and
+<ce>             presses a folded note into your hand. "From
+<ce>                 the harbormaster," the runner says.
+
+Message:  1013
+%qdt:
+ I have brought a ship into port under sail.
+ _master_ waits at _tavern_ in __tavern_ to hear
+ of it.
+
+Message:  1014
+<ce>         "Sailed yet? No? The sea is not in this tavern,
+<ce>          friend. Out of one port and into the harbor of
+<ce>          another, a quarter league off at the least, and
+<ce>          then we talk."
+
+Message:  1015
+<ce>         "Into port under your own sail! The coast needs
+<ce>          captains, and now it has one more. Come back
+<ce>          when you are ready for real work."
+
+Message:  1016
+The harbormaster drinks at _tavern_. Says nobody goes to sea any more.
+<--->
+_master_? Runs the harbor. Looking for a captain, if you can call yourself one.
+<--->
+There's a harbormaster at _tavern_ handing out work to anyone with a ship.
+
+QBN:
+Item _note_ letter used 1011
+Item _gold_ gold range 200 to 400
+
+Person _master_ group Resident1 anyInfo 1016
+Place _tavern_ local tavern
+
+Clock _word_ 00:30 01:30
+Clock _wait_ 30.00:00 0 flag 1 range 0 1
+
+--	Quest start-up:
+	place npc _master_ at _tavern_
+	start timer _word_
+
+_word_ task:
+	give pc _note_ notify 1012
+	log 1010 step 0
+	start timer _wait_
+
+_sailed_ task:
+	ql act port-reached 1
+	log 1013 step 1
+
+_qgclicked_ task:
+	clicked npc _master_
+
+_clearclick_ task:
+	when _qgclicked_ and not _sailed_
+	say 1014
+	clear _qgclicked_ _clearclick_
+
+_paid_ task:
+	when _sailed_ and _qgclicked_
+	say 1015
+	give pc _gold_
+	end quest
+
+_wait_ task:
+	say 1003
+	end quest

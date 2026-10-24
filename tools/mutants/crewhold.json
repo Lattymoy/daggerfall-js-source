@@ -5,7 +5,7 @@
     "old": "export const PLAYER_CREW_TOUGHNESS = 2 * SHIP_TOUGHNESS;",
     "new": "export const PLAYER_CREW_TOUGHNESS = SHIP_TOUGHNESS;",
     "tests": [
-      "test/crewhold.test.js"
+      "test/systems/naval/crewhold.test.js"
     ],
     "note": "a player's crew no tougher than a captain's - Mac's crew depleting as fast as before"
   },
@@ -15,7 +15,7 @@
     "old": "export const ballMen = (men, roll, tough = SHIP_TOUGHNESS) => (men > 0 ? Math.floor(men / tough + clamp(roll, 0, 0.999999)) : 0);",
     "new": "export const ballMen = (men, roll, tough = SHIP_TOUGHNESS) => (men > 0 ? Math.floor(men / SHIP_TOUGHNESS + clamp(roll, 0, 0.999999)) : 0);",
     "tests": [
-      "test/crewhold.test.js"
+      "test/systems/naval/crewhold.test.js"
     ],
     "note": "the toughness handed in ignored"
   },
@@ -25,7 +25,7 @@
     "old": "crew: ballMen(shotMen(gun, zone), r, tough) };\n}",
     "new": "crew: ballMen(shotMen(gun, zone), r) };\n}",
     "tests": [
-      "test/crewhold.test.js"
+      "test/systems/naval/crewhold.test.js"
     ],
     "note": "a hull hit's men over a captain's toughness on a player's ship"
   },
@@ -35,37 +35,37 @@
     "old": "s.wound += 1 / (player ? PLAYER_CREW_TOUGHNESS : SHIP_TOUGHNESS);",
     "new": "s.wound += 1 / SHIP_TOUGHNESS;",
     "tests": [
-      "test/crewhold.test.js"
+      "test/systems/naval/crewhold.test.js"
     ],
     "note": "her fire takes a player's men as a captain's"
   },
   {
     "name": "CREW-HOLD-ram-tough",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "export const ramMen = (dealt, roll, tough) => ballMen(dealt / RAM_A_MAN, roll, tough);",
     "new": "export const ramMen = (dealt, roll, tough) => ballMen(dealt / RAM_A_MAN, roll);",
     "tests": [
-      "test/crewhold.test.js"
+      "test/systems/naval/crewhold.test.js"
     ],
     "note": "a ram's men ignore the crew's toughness"
   },
   {
     "name": "CREW-HOLD-landHit-mine",
-    "file": "src/scenes/navalHost.js",
-    "old": "roll: random(), tough: PLAYER_CREW_TOUGHNESS, weight: e.weight });",
-    "new": "roll: random(), weight: e.weight });",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "roll: random(), tough: PLAYER_CREW_TOUGHNESS, weight: e.weight }));",
+    "new": "roll: random(), weight: e.weight }));",
     "tests": [
-      "test/crewhold.test.js"
+      "test/systems/naval/crewhold.test.js"
     ],
     "note": "a captain's ball on my boat takes her men as a captain's crew"
   },
   {
     "name": "CREW-HOLD-serpent-men",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const men = playerMen(hurt.crew ?? 0, random());",
     "new": "const men = hurt.crew ?? 0;",
     "tests": [
-      "test/crewhold.test.js"
+      "test/systems/naval/crewhold.test.js"
     ],
     "note": "the serpent's blow takes its men whole, outside the law"
   },
@@ -75,7 +75,7 @@
     "old": "? MOD_BUILDS[hull].broadside.length / Math.max(1, hullBuild(hull).broadside.length) : 1);",
     "new": "? 1 : 1);",
     "tests": [
-      "test/crewhold.test.js"
+      "test/systems/naval/crewhold.test.js"
     ],
     "note": "no weight - her five guns as five"
   },
@@ -85,7 +85,7 @@
     "old": "(MOD_BUILDS[hull] && (side === 'starboard' || side === 'port')",
     "new": "(MOD_BUILDS[hull]",
     "tests": [
-      "test/crewhold.test.js"
+      "test/systems/naval/crewhold.test.js"
     ],
     "note": " her chasers and barrels weighted too"
   },
@@ -95,37 +95,37 @@
     "old": "const k = (braced ? BRACE_TAKEN : 1) * (Number.isFinite(weight) && weight > 0 ? weight : 1);",
     "new": "const k = braced ? BRACE_TAKEN : 1;",
     "tests": [
-      "test/crewhold.test.js"
+      "test/systems/naval/crewhold.test.js"
     ],
     "note": "the ball's weight never laid on her harm"
   },
   {
     "name": "GALLEON-WEIGHT-launch",
     "file": "src/systems/naval/navalGunnery.js",
-    "old": "gun: solution.gun, weight: w, index };",
-    "new": "gun: solution.gun, weight: 1, index };",
+    "old": "gun: solution.gun, shot, weight: w, index };",
+    "new": "gun: solution.gun, shot, weight: 1, index };",
     "tests": [
-      "test/crewhold.test.js"
+      "test/systems/naval/crewhold.test.js"
     ],
     "note": "the launches drop the weight"
   },
   {
     "name": "GALLEON-WEIGHT-ball",
     "file": "src/systems/naval/navalShots.js",
-    "old": "gun: l.gun, weight: l.weight ?? 1, index: l.index,",
-    "new": "gun: l.gun, weight: 1, index: l.index,",
+    "old": "gun: l.gun, shot: l.shot ?? null, weight: l.weight ?? 1, index: l.index,",
+    "new": "gun: l.gun, shot: l.shot ?? null, weight: 1, index: l.index,",
     "tests": [
-      "test/crewhold.test.js"
+      "test/systems/naval/crewhold.test.js"
     ],
     "note": "the ball drops the weight"
   },
   {
     "name": "GALLEON-WEIGHT-hit",
     "file": "src/systems/naval/navalShots.js",
-    "old": "target: ship.t.id, gun: b.gun, weight: b.weight, point: ship.e.point,",
-    "new": "target: ship.t.id, gun: b.gun, point: ship.e.point,",
+    "old": "target: ship.t.id, gun: b.gun, shot: b.shot, t: flight(ship.e.t), weight: b.weight, point: ship.e.point,",
+    "new": "target: ship.t.id, gun: b.gun, shot: b.shot, t: flight(ship.e.t), point: ship.e.point,",
     "tests": [
-      "test/crewhold.test.js"
+      "test/systems/naval/crewhold.test.js"
     ],
     "note": "the hull hit drops the weight"
   },
@@ -135,7 +135,7 @@
     "old": "const w = shipBatteryWeight(a.hull, side, !!a.player);",
     "new": "const w = 1;",
     "tests": [
-      "test/crewhold.test.js"
+      "test/systems/naval/crewhold.test.js"
     ],
     "note": "the captains reckon a player's galleon by five guns"
   },
@@ -145,17 +145,17 @@
     "old": "    player: !!player,\n  });",
     "new": "    player: false,\n  });",
     "tests": [
-      "test/crewhold.test.js"
+      "test/systems/naval/crewhold.test.js"
     ],
     "note": "no measure says she is a player's"
   },
   {
     "name": "GALLEON-WEIGHT-my-volley",
-    "file": "src/scenes/navalHost.js",
+    "file": "src/scenes/naval/navalHost.js",
     "old": "const weight = shipBatteryWeight(hull, solution.side, isMine(shooter));",
     "new": "const weight = 1;",
     "tests": [
-      "test/crewhold.test.js"
+      "test/systems/naval/crewhold.test.js"
     ],
     "note": "my broadside fired at five guns' weight"
   }

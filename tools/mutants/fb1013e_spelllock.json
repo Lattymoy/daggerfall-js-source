@@ -1,0 +1,128 @@
+[
+  {
+    "name": "SPELL-LOCK-the-act-is-not-a-peers-word",
+    "file": "src/world/actionSystem.js",
+    "old": "      this.restoreSaveData([rec], { remote: true });",
+    "new": "      this.restoreSaveData([rec]);",
+    "tests": [
+      "test/world/fb1013e_spelllock.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-LOCK-a-peers-lock-past-the-ceiling-lands",
+    "file": "src/world/actionSystem.js",
+    "old": "  if (remote) return false;\n",
+    "new": "  if (remote) return true;\n",
+    "tests": [
+      "test/world/fb1013e_spelllock.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-LOCK-the-ceiling-forgets-the-starting-lock",
+    "file": "src/world/actionSystem.js",
+    "old": "  return Math.max(o?.startingLockValue | 0, o?.actionFlag",
+    "new": "  return Math.max(0, o?.actionFlag",
+    "tests": [
+      "test/world/fb1013e_spelllock.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-LOCK-the-ceiling-forgets-LockDoor",
+    "file": "src/world/actionSystem.js",
+    "old": "o?.actionFlag === ACTION_FLAGS.LockDoor ? ACTION_LOCK_VALUE : 0);",
+    "new": "o?.actionFlag === ACTION_FLAGS.LockDoor ? 0 : 0);",
+    "tests": [
+      "test/world/fb1013e_spelllock.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-LOCK-the-ceiling-itself-refused",
+    "file": "src/world/actionSystem.js",
+    "old": "  if (lock <= lockCeiling(o)) return true;",
+    "new": "  if (lock < lockCeiling(o)) return true;",
+    "tests": [
+      "test/world/fb1013e_spelllock.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-LOCK-the-own-save-keeps-any-lock",
+    "file": "src/world/actionSystem.js",
+    "old": "  return !(Number.isFinite(level) && lock > level);",
+    "new": "  return true;",
+    "tests": [
+      "test/world/fb1013e_spelllock.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-LOCK-the-own-level-refused",
+    "file": "src/world/actionSystem.js",
+    "old": "  return !(Number.isFinite(level) && lock > level);",
+    "new": "  return !(Number.isFinite(level) && lock >= level);",
+    "tests": [
+      "test/world/fb1013e_spelllock.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-LOCK-no-level-drops-every-lock",
+    "file": "src/world/actionSystem.js",
+    "old": "  return !(Number.isFinite(level) && lock > level);",
+    "new": "  return !(lock > level);",
+    "tests": [
+      "test/world/fb1013e_spelllock.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-LOCK-the-early-act-keeps-its-lock",
+    "file": "src/world/actionSystem.js",
+    "old": "if (rec) this._keepEarly(withoutLock(rec));",
+    "new": "if (rec) this._keepEarly(rec);",
+    "tests": [
+      "test/world/fb1013e_spelllock.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-LOCK-the-early-memory-keeps-its-lock",
+    "file": "src/world/actionSystem.js",
+    "old": "this._keepEarly(remote ? withoutLock(sa) : sa);",
+    "new": "this._keepEarly(sa);",
+    "tests": [
+      "test/world/fb1013e_spelllock.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-LOCK-the-building-memory-is-own",
+    "file": "src/world/interior/interiorShared.js",
+    "old": "ctx.actions?.restoreSaveData?.(acts, { remote: true });",
+    "new": "ctx.actions?.restoreSaveData?.(acts);",
+    "tests": [
+      "test/world/fb1013e_spelllock.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-LOCK-the-dungeon-memory-is-own",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "actions.restoreSaveData(w.actions, { remote: wire, level: playerEntity.level });",
+    "new": "actions.restoreSaveData(w.actions, { remote: false, level: playerEntity.level });",
+    "tests": [
+      "test/world/fb1013e_spelllock.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-LOCK-the-dungeon-save-has-no-level",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "actions.restoreSaveData(w.actions, { remote: wire, level: playerEntity.level });",
+    "new": "actions.restoreSaveData(w.actions, { remote: wire });",
+    "tests": [
+      "test/world/fb1013e_spelllock.test.js"
+    ]
+  },
+  {
+    "name": "SPELL-LOCK-the-building-cache-has-no-level",
+    "file": "src/scenes/worldModes.js",
+    "old": "      { level: playerEntity.level });   // SPELL-LOCK",
+    "new": "      {});   // SPELL-LOCK",
+    "tests": [
+      "test/world/fb1013e_spelllock.test.js"
+    ]
+  }
+]

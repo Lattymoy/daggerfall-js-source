@@ -40,9 +40,9 @@ import {
   ABYSS_MAGIC_LIGHT_SCALE, MAX_FLOOR_WAIT_FRAMES, PIT_RESTORE_GRACE_FRAMES, MOBILE_BEHAVIOUR,
 } from '../world/oceanHoles.js';
 import { worldCoordToMapPixel } from '../formats/mapsFile.js';
-import { NO_WATER_LEVEL } from '../world/deepWaterSwim.js';
+import { NO_WATER_LEVEL } from '../world/deepWater/deepWaterSwim.js';
 import { colorLerp } from '../systems/mathf.js';
-import { MOBILE_TYPES } from '../characters/mobileTypes.js';
+import { MOBILE_TYPES } from '../characters/mobile/mobileTypes.js';
 import { SITE_TYPES } from '../systems/quest/place.js';   // TryFindTemplate's GetSiteLinks(SiteTypes.Dungeon, mapId)
 
 const f32 = Math.fround;
@@ -226,7 +226,7 @@ export function createOceanHolesAbyss(deps) {
     if (isFlameEnemy(type)) { d.destroyFoe(foe); return; }
     if (!allowReplacement) return;
     const row = enemyRow(type);
-    const flag = foe.isClass && type >= 128 && type <= 146;
+    const flag = foe.isClass && type >= 128 && type <= 146;   // the mod's own range (AUDIT DEX C4): a custom class - Daggerfall Enemy Expansion's 384-398 - is a monster to it
     const flag2 = flag ? (row?.behaviour === MOBILE_BEHAVIOUR.General || row?.behaviour === MOBILE_BEHAVIOUR.Guard) : row?.behaviour === MOBILE_BEHAVIOUR.General;
     if (!foe.loadID || foe.questSpawn || !foe.demo || (!aquaticOnly && underwaterEnemyTypes().includes(type))
       || (aquaticOnly && row?.behaviour === MOBILE_BEHAVIOUR.Aquatic) || type === MOBILE_TYPES.DaedraSeducer || !flag2 || row?.noShadow || row?.glowColor) return;

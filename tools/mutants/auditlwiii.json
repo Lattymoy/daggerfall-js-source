@@ -5,7 +5,7 @@
     "old": "export const LANE_N = 80;",
     "new": "export const LANE_N = 40;",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    const p = laneAt(trip.way, s, dir * lane + side);",
     "new": "    const p = laneAt(trip.way, s, lane + side);",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const LANE_EASE_N = 400;",
     "new": "export const LANE_EASE_N = 160;",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "      fx = ux * u + wx * t; fz = uz * u + wz * t;",
     "new": "      fx = ux; fz = uz;",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      x = v[0] - e * ux * u * u + e * wx * t * t;",
     "new": "      x = v[0] - e * ux * u + e * wx * t;",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  return { x: x + fz * side, z: z - fx * side, yaw: Math.atan2(fx, fz) };",
     "new": "  return { x: x - fz * side, z: z + fx * side, yaw: Math.atan2(fx, fz) };",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      const axle = chordBehind(line, s, dir, hitchN);",
     "new": "      const axle = s - dir * hitchN;",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      const yaw = Math.hypot(horse.x - a.x, horse.z - a.z) > 1e-6 ? Math.atan2(horse.x - a.x, horse.z - a.z) : a.yaw;",
     "new": "      const yaw = a.yaw;",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "      s = chordBehind(line, axle, dir, WAGON_TAIL_N);",
     "new": "      s = axle - dir * WAGON_TAIL_N;",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "  let lo = 0, hi = step;",
     "new": "  let lo = dist, hi = dist + step;",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -95,72 +95,72 @@
     "old": "  for (let i = 0; i < 20; i++) { const mid = (lo + hi) / 2; if (far(mid) < dist) lo = mid; else hi = mid; }",
     "new": "  for (let i = 0; i < 4; i++) { const mid = (lo + hi) / 2; if (far(mid) < dist) lo = mid; else hi = mid; }",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
     "name": "AUDIT-LWIII-abreast-n",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "export const ABREAST_N = 120;",
     "new": "export const ABREAST_N = 40;",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
     "name": "AUDIT-LWIII-abreast-who",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "      const steps = a.pace > b.pace || (a.pace === b.pace && a.id > b.id);   // the one of the two that steps out",
     "new": "      const steps = a.pace > b.pace || a.id > b.id;   // the one of the two that steps out",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
     "name": "AUDIT-LWIII-abreast-way",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "      if (same <= 0) continue;",
     "new": "      if (same < -2) continue;",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ],
     "equivalent": true,
     "why": "the heading's weight below (Math.min(1, same * 2)) is not positive there either, so k stays as it was; the check is kept to skip the arithmetic"
   },
   {
     "name": "AUDIT-LWIII-abreast-gap",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "      const wAlong = Math.min(1, Math.max(0, (ABREAST_GAP_N + ABREAST_EASE_N - gap) / ABREAST_EASE_N));",
     "new": "      const wAlong = gap < ABREAST_GAP_N ? 1 : 0;",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
     "name": "AUDIT-LWIII-abreast-across",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "      const wAcross = Math.min(1, Math.max(0, (ABREAST_GAP_N + ABREAST_EASE_N / 2 - across) / (ABREAST_EASE_N / 2)));",
     "new": "      const wAcross = 1;",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
     "name": "AUDIT-LWIII-camp-slots",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "  return campTeam(trip, cx, cz, r, t, camp ? { k0: camp.k0, n: camp.teams, turn: camp.turn } : null);",
     "new": "  return campTeam(trip, cx, cz, r, t, null);",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
     "name": "AUDIT-LWIII-camp-k0",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "      k0 += k.wagons + k.packs;",
     "new": "      k0 += 0;",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "  const turn = slots ? slots.turn : campTurn(trip);",
     "new": "  const turn = campTurn(trip);",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "  const d = Math.max(r + CAMP_PARK_N, slots ? (all * CAMP_TEAM_ARC_N) / (Math.PI * 2) : 0);",
     "new": "  const d = r + CAMP_PARK_N;",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "      horses.push({ key: `${trip.id}:h${i}`, x: x + Math.cos(face) * CAMP_HORSE_SIDE_N, z: z - Math.sin(face) * CAMP_HORSE_SIDE_N, yaw: face, moving: false });",
     "new": "      horses.push({ key: `${trip.id}:h${i}`, x: x + Math.cos(face) * CAMP_HORSE_SIDE_N, z: z - Math.sin(face) * CAMP_HORSE_SIDE_N, yaw: face + Math.PI / 2, moving: false });",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "export const BODY_CLEAR_N = 14;",
     "new": "export const BODY_CLEAR_N = 0;",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "      if (out === 'f') nf = front; else if (out === 'b') nf = -back; else nr = (r < 0 ? -1 : 1) * half;",
     "new": "      if (out === 'f') nf = front; else if (out === 'b') nf = -back; else nr = half;",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -214,16 +214,16 @@
     "old": "    ...team.horses.map((h) => ({ c: h, back: HORSE_FOOT_N.half, front: HORSE_FOOT_N.half, half: HORSE_FOOT_N.side })),",
     "new": "",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
     "name": "AUDIT-LWIII-clear-foes",
-    "file": "src/scenes/livingRoads.js",
+    "file": "src/scenes/livingWorld/livingRoads.js",
     "old": "    if (team) ({ x, z } = clearOfTeam(x, z, team));",
     "new": "",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "    const clear = (/** @type {number} */ x, /** @type {number} */ z) => (team ? clearOfTeam(x, z, team) : { x, z });",
     "new": "    const clear = (/** @type {number} */ x, /** @type {number} */ z) => ({ x, z });",
     "tests": [
-      "test/auditlwiii_wagons.test.js"
+      "test/systems/livingWorld/auditlwiii_wagons.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "      if (!killed(rec) || f.fell.has(id)) continue;",
     "new": "      if (!rec.dead || f.fell.has(id)) continue;",
     "tests": [
-      "test/lw4b_roadFights.test.js"
+      "test/systems/livingWorld/lw4b_roadFights.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "    const foesFell = f.foes.filter((rec) => killed(rec)).length;",
     "new": "    const foesFell = f.foes.filter((rec) => rec.dead).length;",
     "tests": [
-      "test/lw4b_roadFights.test.js"
+      "test/systems/livingWorld/lw4b_roadFights.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "    if (armed.length && armed.every((rec) => killed(rec)) && foesStanding.length) {",
     "new": "    if (armed.length && armed.every((rec) => rec.dead) && foesStanding.length) {",
     "tests": [
-      "test/lw4b_roadFights.test.js"
+      "test/systems/livingWorld/lw4b_roadFights.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "level: o.level, allied: o.allied, loose: true, transient: true, managed: true }),",
     "new": "level: o.level, allied: o.allied, loose: true, transient: true }),",
     "tests": [
-      "test/lw4b_roadFights.test.js"
+      "test/systems/livingWorld/lw4b_roadFights.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "level: o.level, loose: true, transient: true, managed: true }),   // AUDIT LW-III",
     "new": "level: o.level, loose: true, transient: true }),   // AUDIT LW-III",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -286,7 +286,7 @@
     "old": "        if (s.rec?.dead && !killed(s.rec)) { stands.delete(id); continue; }",
     "new": "",
     "tests": [
-      "test/lw7b_beyond.test.js"
+      "test/scenes/lw7b_beyond.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": "      const gone = next - fall - held(fall, next);",
     "new": "      const gone = next - fall;",
     "tests": [
-      "test/auditlwiii_road.test.js"
+      "test/systems/livingWorld/auditlwiii_road.test.js"
     ],
     "equivalent": true,
     "why": "the loop's walk-on is overtaken by the next day's walk (at = the farther of the two) unless a night's stop stood past a whole day's walk - an inn is never more than INN_AHEAD_N (a pixel) ahead and dry ground the first on; kept so the loop and the end read the same minutes"
@@ -306,7 +306,7 @@
     "old": "    const gone = t - fall - held(fall, t);",
     "new": "    const gone = t - fall;",
     "tests": [
-      "test/auditlwiii_road.test.js"
+      "test/systems/livingWorld/auditlwiii_road.test.js"
     ]
   },
   {
@@ -315,7 +315,7 @@
     "old": "  return trip?.kind === 'merchant' && !trip.sea && t >= trip.outT0 - ESCORT_OFFER_MIN && t < trip.outT1;",
     "new": "  return trip?.kind === 'merchant' && !trip.turned && !trip.sea && t >= trip.outT0 - ESCORT_OFFER_MIN && t < trip.outT1;",
     "tests": [
-      "test/lw11_caravan.test.js"
+      "test/systems/livingWorld/lw11_caravan.test.js"
     ]
   },
   {
@@ -324,7 +324,7 @@
     "old": "if (yielded.has(trip.id) || !counterOf(trip) || robbedOf(trip.id) != null) continue;",
     "new": "if (yielded.has(trip.id) || !counterOf(trip)) continue;",
     "tests": [
-      "test/lw11_caravan.test.js"
+      "test/systems/livingWorld/lw11_caravan.test.js"
     ]
   },
   {
@@ -333,7 +333,7 @@
     "old": "...(maps ? [...maps, Math.floor(since / PATRON_HOUR_S)] :",
     "new": "...(maps ? [...maps, 0] :",
     "tests": [
-      "test/auditlwiii_road.test.js"
+      "test/systems/livingWorld/auditlwiii_road.test.js"
     ]
   },
   {
@@ -342,7 +342,7 @@
     "old": "      if (away) lent.push(res);\n      everyone.push(res);",
     "new": "      if (away) { lent.push(res); continue; }\n      everyone.push(res);",
     "tests": [
-      "test/auditlwiii_town.test.js"
+      "test/systems/livingWorld/auditlwiii_town.test.js"
     ]
   },
   {
@@ -351,7 +351,7 @@
     "old": "    this._spaceAlone(everyone, t);   // AUDIT LW-III",
     "new": "    this._spaceAlone(everyone.filter((r) => !lent.includes(r)), t);   // AUDIT LW-III",
     "tests": [
-      "test/auditlwiii_town.test.js"
+      "test/systems/livingWorld/auditlwiii_town.test.js"
     ]
   },
   {
@@ -360,7 +360,7 @@
     "old": "      this._circled.set(key, laid.flat());",
     "new": "      this._circled.set(key, laid.flat().slice(0, 0));",
     "tests": [
-      "test/auditlwiii_town.test.js"
+      "test/systems/livingWorld/auditlwiii_town.test.js"
     ]
   },
   {
@@ -369,7 +369,7 @@
     "old": "        dealt.members.forEach((m, i) => { if (!inInc(m.id) && (members.length < 2 || !members.includes(m))) this._holding.set(m.id, { spot, ...places[i] }); });",
     "new": "        dealt.members.forEach((m, i) => { if (!inInc(m.id) && members.length >= 2 && !members.includes(m)) this._holding.set(m.id, { spot, ...places[i] }); });",
     "tests": [
-      "test/auditlwiii_town.test.js"
+      "test/systems/livingWorld/auditlwiii_town.test.js"
     ]
   },
   {
@@ -378,7 +378,7 @@
     "old": "        dealt.members.forEach((m, i) => { if (!inInc(m.id) && (members.length < 2 || !members.includes(m))) this._holding.set(m.id, { spot, ...places[i] }); });",
     "new": "        dealt.members.forEach((m, i) => { if (!inInc(m.id) && members.length < 2 && members.includes(m)) this._holding.set(m.id, { spot, ...places[i] }); });",
     "tests": [
-      "test/auditlwiii_town.test.js"
+      "test/systems/livingWorld/auditlwiii_town.test.js"
     ]
   },
   {
@@ -387,7 +387,7 @@
     "old": "      const e = early ? at.next : at?.e;",
     "new": "      const e = at?.e;",
     "tests": [
-      "test/auditlwiii_town.test.js"
+      "test/systems/livingWorld/auditlwiii_town.test.js"
     ]
   },
   {
@@ -396,16 +396,16 @@
     "old": "      const d = d0 + i * gap;",
     "new": "      const d = Math.max(0, Math.min(far, rc + (i - (n - 1) / 2) * CIRCLE_APART)) + 0 * d0 * gap;",
     "tests": [
-      "test/auditlwiii_town.test.js"
+      "test/systems/livingWorld/auditlwiii_town.test.js"
     ]
   },
   {
     "name": "AUDIT-LWIII-deep-adopt",
-    "file": "src/scenes/deepRemains.js",
+    "file": "src/scenes/livingWorld/deepRemains.js",
     "old": "        if (kept) here.set(r.key, { pile: kept, n: deps.count?.(kept) ?? 0 });",
     "new": "",
     "tests": [
-      "test/auditlwiii_deep.test.js"
+      "test/scenes/auditlwiii_deep.test.js"
     ]
   },
   {
@@ -414,7 +414,7 @@
     "old": ", ...(typeof s.remainsKey === 'string' ? { remainsKey: s.remainsKey } : {}) };",
     "new": " };",
     "tests": [
-      "test/auditlwiii_deep.test.js"
+      "test/scenes/auditlwiii_deep.test.js"
     ]
   },
   {
@@ -423,7 +423,7 @@
     "old": "        ...(p.remainsKey ? { remainsKey: p.remainsKey } : {}),   // AUDIT LW-III",
     "new": "        // AUDIT LW-III",
     "tests": [
-      "test/auditlwiii_deep.test.js"
+      "test/scenes/auditlwiii_deep.test.js"
     ]
   },
   {
@@ -432,7 +432,7 @@
     "old": "      if (!own) for (const [id, c] of [...companies]) if (![...c.foes.values()].some((rec) => !rec.dead)) letGo(id);",
     "new": "",
     "tests": [
-      "test/auditlwiii_deep.test.js"
+      "test/scenes/auditlwiii_deep.test.js"
     ]
   },
   {
@@ -441,7 +441,7 @@
     "old": "r = deepRouteOf(stops, e ? { x: e.x, y: e.y, z: e.z } :",
     "new": "r = deepRouteOf(stops, e ? { x: e.x, z: e.z } :",
     "tests": [
-      "test/auditlwiii_deep.test.js"
+      "test/scenes/auditlwiii_deep.test.js"
     ]
   },
   {
@@ -450,7 +450,7 @@
     "old": "    const from = entry ? { x: entry.x, y: entry.y, z: entry.z } :",
     "new": "    const from = entry ? { x: entry.x, z: entry.z } :",
     "tests": [
-      "test/auditlwiii_deep.test.js"
+      "test/scenes/auditlwiii_deep.test.js"
     ]
   }
 ]

@@ -1,7 +1,7 @@
 // @ts-check
 // ═══════════════════════════════════════════════════════════════════
 // CSA-F (2026-09-27): COME SAIL AWAY'S WAVES, DRAWN - the wave object's
-// mesh (systems/comeSailAwayWaves.js) on the bundle's CurrentMaterial, its
+// mesh (systems/comeSailAway/comeSailAwayWaves.js) on the bundle's CurrentMaterial, its
 // shader Daggerfall/Dither/Wave as the bundle's compiled program has it:
 //
 //   - the frame, tiled ten times each way (_MainTex_ST), point-sampled and
@@ -31,7 +31,7 @@
 // mod's frames carry one level (m_MipCount 1), so a strip seen from a few
 // hundred metres picked one texel of dozens a pixel and boiled as the deck
 // bobbed the camera. Each paint is uploaded as its chain instead
-// (systems/comeSailAwayWaves.js wavePaintLevels): level 0 the paint itself,
+// (systems/comeSailAway/comeSailAwayWaves.js wavePaintLevels): level 0 the paint itself,
 // and past it the mean of the frame it composes, premultiplied - the snow at
 // its record's mean. The shader picks the level NEAREST_MIPMAP_NEAREST would
 // (GL ES 3.0 3.8.10, from the texel footprint): at level 0 - a texel a pixel
@@ -46,9 +46,9 @@
 // screen-space shadow.
 // ═══════════════════════════════════════════════════════════════════
 
-import { buildProgram } from './glProgram.js';
+import { buildProgram, startPrograms } from './glProgram.js';
 import { FOG_GLSL } from './fogGlsl.js';
-import { BAYER_8X8, WAVE_MATERIAL, wavePaintLevels, wavePictureMean } from '../systems/comeSailAwayWaves.js';
+import { BAYER_8X8, WAVE_MATERIAL, wavePaintLevels, wavePictureMean } from '../systems/comeSailAway/comeSailAwayWaves.js';
 import { WATER_LAYER_UNITS } from './waterSurface.js';   // FIELD BUGS 2026-09-29 (the sea) #4: the breakers' place in the sea's stack
 import { quatRotateInto } from '../world/quat.js';   // SHIP-FLAGS: quatRotate's answer, written in place
 const _flagP = [0, 0, 0], _flagN = [0, 0, 0];   // SHIP-FLAGS: the flag cubes' two scratch turns
@@ -297,9 +297,9 @@ export function softParticleTexture(size = 64) {
 }
 
 const locs = (gl, p, names) => Object.fromEntries(names.map((n) => [n, gl.getUniformLocation(p, n)]));
-const LIGHT_FOG = ['uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus'];   // TV1: and the travel view's focus (fogGlsl.js FOCUS_GLSL)
+const LIGHT_FOG = ['uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus', 'uJungleHaze'];   // TV1: and the travel view's focus (fogGlsl.js FOCUS_GLSL)
 
-/** #4: a chain of levels (systems/comeSailAwayWaves.js wavePaintLevels), every level uploaded - texelFetch reads it,
+/** #4: a chain of levels (systems/comeSailAway/comeSailAwayWaves.js wavePaintLevels), every level uploaded - texelFetch reads it,
  *  at a level the shader picks. */
 const uploadLevels = (gl, levels) => {
   const tex = gl.createTexture();
@@ -331,6 +331,11 @@ const uploadPicture = (gl, pic) => {
 };
 
 /** Come Sail Away's own passes, on the world renderer they draw beside. */
+/** SHADER-STALL: the particles' three programs (cut out, premultiplied, the cube) and the waves' one, as _ensurePart and
+ *  _ensureWave build them - what the warm starts ahead of the build (warmSteps; render/glProgram.js startPrograms). */
+export const CSA_PART_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[PART_VS, PART_CUT_FS], [PART_VS, PART_PREMUL_FS], [CUBE_VS, CUBE_FS]]));
+export const CSA_WAVE_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[WAVE_VS, WAVE_FS]]));
+
 export class ComeSailAwayRenderer {
   /** @param {any} renderer - render/renderer.js's (its frame's matrices, light and fog are these passes' too) */
   constructor(renderer) {
@@ -360,12 +365,22 @@ export class ComeSailAwayRenderer {
   }
   hasParticleTexture(name) { return this._partTex.has(name); }
 
+  /** PERF-COMPILE1's idle warm of the sea's four programs (scenes/world.js warmPrograms) - SHADER-STALL: each build once
+   *  the driver says its programs are done (render/warmPrograms.js's named steps), never an idle task waiting on them. */
+  warmSteps() {
+    return [
+      { start: () => startPrograms(this.gl, CSA_PART_PROGRAMS), run: () => { this._ensurePart(); }, need: () => !this._part },   // AUDIT SHADER-STALL: built by a draw first, the warm stands down
+      { start: () => startPrograms(this.gl, CSA_WAVE_PROGRAMS), run: () => { this._ensureWave(); }, need: () => !this._wave },
+    ];
+  }
+
   _ensurePart() {
     if (this._part) return this._part;
     const gl = this.gl;
-    const cut = buildProgram(gl, PART_VS, PART_CUT_FS, 'come sail away particles (cut out)');
-    const pre = buildProgram(gl, PART_VS, PART_PREMUL_FS, 'come sail away particles (premultiplied)');
-    const cube = buildProgram(gl, CUBE_VS, CUBE_FS, 'come sail away particles (cube)');
+    const [cutSrc, preSrc, cubeSrc] = CSA_PART_PROGRAMS;
+    const cut = buildProgram(gl, cutSrc[0], cutSrc[1], 'come sail away particles (cut out)');
+    const pre = buildProgram(gl, preSrc[0], preSrc[1], 'come sail away particles (premultiplied)');
+    const cube = buildProgram(gl, cubeSrc[0], cubeSrc[1], 'come sail away particles (cube)');
     const base = ['uProj', 'uView', 'uCamPos', 'uViewScale', 'uTex'];
     const stream = (stride, attrs) => {
       const vao = gl.createVertexArray(), vbo = gl.createBuffer();
@@ -398,6 +413,7 @@ export class ComeSailAwayRenderer {
     gl.uniform2fv(u.uFogRange, r._fogRange);
     if (r._dwFog) gl.uniform4fv(u.uDwFog, r._dwFog);
     if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);   // AUDIT DEEP R-1 (merged beside CSA-F): under the travel view the fog is the traveller's
+    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)
   }
 
   /** Streams the quads of `parts` ({ position, size, rotation, maxSize }) into the quad buffer; returns the vertex count. */
@@ -541,9 +557,10 @@ export class ComeSailAwayRenderer {
   _ensureWave() {
     if (this._wave) return this._wave;
     const gl = this.gl;
-    const p = buildProgram(gl, WAVE_VS, WAVE_FS, 'come sail away waves');
+    const [[vs, fs]] = CSA_WAVE_PROGRAMS;
+    const p = buildProgram(gl, vs, fs, 'come sail away waves');
     this._wave = { p, u: locs(gl, p, ['uProj', 'uView', 'uOrigin', 'uScale', 'uTile', 'uPaint', 'uSnow', 'uFrameSize', 'uSnowSize', 'uLastLevel', 'uScroll', 'uTileOffset',
-      'uColor', 'uCutoff', 'uDitherStart', 'uDitherEnd', 'uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus']),
+      'uColor', 'uCutoff', 'uDitherStart', 'uDitherEnd', 'uAmbient', 'uSunColor', 'uSunScale', 'uLightDir', 'uCamPos', 'uFogColor', 'uFogMode', 'uFogDensity', 'uFogRange', 'uDwFog', 'uFocus', 'uJungleHaze']),
     vao: gl.createVertexArray(), vbo: gl.createBuffer(), ebo: gl.createBuffer() };
     return this._wave;
   }
@@ -609,6 +626,7 @@ export class ComeSailAwayRenderer {
     gl.uniform2fv(u.uFogRange, r._fogRange);
     if (r._dwFog) gl.uniform4fv(u.uDwFog, r._dwFog);
     if (u.uFocus) gl.uniform4fv(u.uFocus, r._focus);   // AUDIT DEEP R-1 (merged beside CSA-F): under the travel view the fog is the traveller's
+    if (u.uJungleHaze && r._haze) gl.uniform4fv(u.uJungleHaze, r._haze);   // BANTHA1: the jungle's haze (render/hazeGlsl.js)
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this._frames.paints[spec.paint]);
     gl.uniform1i(u.uPaint, 0);

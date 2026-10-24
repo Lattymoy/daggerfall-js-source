@@ -1,0 +1,77 @@
+[
+  {
+    "name": "REPUTE-GATE-offline-too",
+    "file": "src/systems/quest/onlineRepute.js",
+    "old": "  if (!online || !pool) return pool;",
+    "new": "  if (!pool) return pool;",
+    "tests": [
+      "test/systems/quest/fb1015g_reputegate.test.js"
+    ]
+  },
+  {
+    "name": "REPUTE-GATE-above-not-at",
+    "file": "src/systems/quest/onlineRepute.js",
+    "old": "|| rep >= ONLINE_REPUTE_GATES[q.name]);",
+    "new": "|| rep > ONLINE_REPUTE_GATES[q.name]);",
+    "tests": [
+      "test/systems/quest/fb1015g_reputegate.test.js"
+    ]
+  },
+  {
+    "name": "REPUTE-GATE-any-key",
+    "file": "src/systems/quest/onlineRepute.js",
+    "old": "!Object.hasOwn(ONLINE_REPUTE_GATES, q.name) ||",
+    "new": "!(q.name in ONLINE_REPUTE_GATES) ||",
+    "tests": [
+      "test/systems/quest/fb1015g_reputegate.test.js"
+    ]
+  },
+  {
+    "name": "REPUTE-GATE-a-header-not-its-own",
+    "file": "src/systems/quest/onlineRepute.js",
+    "old": "N0B10Y03: 10,",
+    "new": "N0B10Y03: 1,",
+    "tests": [
+      "test/systems/quest/fb1015g_reputegate.test.js"
+    ]
+  },
+  {
+    "name": "REPUTE-GATE-a-third-quest",
+    "file": "src/systems/quest/onlineRepute.js",
+    "old": "N0B20Y02: 20 });",
+    "new": "N0B20Y02: 20, N0B20Y05: 20 });",
+    "tests": [
+      "test/systems/quest/fb1015g_reputegate.test.js"
+    ]
+  },
+  {
+    "name": "REPUTE-GATE-the-flow-offline",
+    "file": "src/systems/quest/offerFlow.js",
+    "old": "guild.getReputation(), !!this.deps.sharedClock?.());",
+    "new": "guild.getReputation(), false);",
+    "tests": [
+      "test/systems/quest/fb1015g_reputegate.test.js",
+      "test/systems/quest/questoffers.test.js"
+    ]
+  },
+  {
+    "name": "REPUTE-GATE-the-pool-ungated",
+    "file": "src/systems/quest/offerFlow.js",
+    "old": "    this.questPool = reputeGated(this.questLists.getGuildQuestPool(guildGroup, status, factionId, guild.getReputation(), rank),\n      guild.getReputation(), !!this.deps.sharedClock?.());",
+    "new": "    this.questPool = this.questLists.getGuildQuestPool(guildGroup, status, factionId, guild.getReputation(), rank);",
+    "tests": [
+      "test/systems/quest/fb1015g_reputegate.test.js",
+      "test/systems/quest/questoffers.test.js"
+    ]
+  },
+  {
+    "name": "REPUTE-GATE-the-bridge-door",
+    "file": "src/scenes/quest/questBridge.js",
+    "old": "    sharedClock: () => !!ctx.sharedClock?.(),   // REPUTE-GATE",
+    "new": "    _sharedClock: () => !!ctx.sharedClock?.(),   // REPUTE-GATE",
+    "tests": [
+      "test/systems/quest/fb1015g_reputegate.test.js",
+      "test/systems/quest/questbridge.test.js"
+    ]
+  }
+]

@@ -42,7 +42,7 @@
       "launcherPreload.cjs",
       "launcher/**",
       {
-        "from": "../src/ui",
+        "from": "../src/ui/menu",
         "to": "launcher",
         "filter": [
           "menuPad.js"
@@ -56,6 +56,7 @@
         ]
       },
       "lib/**",
+      "game-seed.json",
       {
         "from": "../dist",
         "to": "dist"

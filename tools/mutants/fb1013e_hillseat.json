@@ -1,0 +1,182 @@
+[
+  {
+    "name": "HILLSEAT-1-no-pad",
+    "file": "src/world/townStandIns.js",
+    "old": "  if (!pads) return null;",
+    "new": "  if (pads >= 0) return null;",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "the pads never built: TEMPASH3's houses hang up to 2.2 m over the median's slope again"
+  },
+  {
+    "name": "HILLSEAT-2-footprint-middle",
+    "file": "src/world/townStandIns.js",
+    "old": "  return { base, hull: hullXZ(pts) };",
+    "new": "  const h0 = hullXZ(pts), mx = h0.reduce((s, q) => s + q[0], 0) / h0.length, mz = h0.reduce((s, q) => s + q[1], 0) / h0.length;\n  return { base, hull: h0.map(([x, z]) => [mx + (x - mx) / 2, mz + (z - mz) / 2]) };",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "the footprint shrunk to its middle half (what fb1005_hills sampled): the walls' edges hang over the bank"
+  },
+  {
+    "name": "HILLSEAT-3-tolerance-widened",
+    "file": "src/world/townStandIns.js",
+    "old": "export const HILL_SEAT_TOLERANCE = 0.15;",
+    "new": "export const HILL_SEAT_TOLERANCE = 0.6;",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "a 0.6 m bar: the pad's top a fifth of a metre under the base, and the houses' edges 0.2 m over it"
+  },
+  {
+    "name": "HILLSEAT-4-world-not-drawn",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "if (hillPatch) { addStatic(hillPatch, originMatrix, false); ",
+    "new": "if (hillPatch) { ",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "the streaming host builds the pads and never draws them"
+  },
+  {
+    "name": "HILLSEAT-5-world-not-solid",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "addStatic(hillPatch, originMatrix, false); collider.addMesh(key, hillPatch.positions, hillPatch.indices, originMatrix, onFloatingFrame(host.state, ((o) => () => host.state.pixelTranslation(px, py, o))([0, 0, 0])));",
+    "new": "addStatic(hillPatch, originMatrix, false);",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "drawn but not solid: the player falls through the bank onto the hill's slope"
+  },
+  {
+    "name": "HILLSEAT-6-world-own-upload",
+    "file": "src/scenes/pixelBuild.js",
+    "old": "if (hillPatch) { addStatic(hillPatch, originMatrix, false);",
+    "new": "if (hillPatch) { models.push({ gpu: renderer.createMesh(hillPatch), local: originMatrix, _box: transformedAabb(localAabb(hillPatch.positions), originMatrix), _order: -2 });",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "the pads uploaded as a GPU mesh of their own, which destroyPixel never frees (a pixel's models are the pipeline's shared meshes)"
+  },
+  {
+    "name": "HILLSEAT-7-teardown-keeps-the-batch",
+    "file": "src/scenes/world.js",
+    "old": "if (p.staticBatch) { renderer.destroyMesh(p.staticBatch); p.staticBatch = null; }",
+    "new": "if (p.staticBatch) { p.staticBatch = null; }",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "destroyPixel drops the batch the pads ride without freeing it"
+  },
+  {
+    "name": "HILLSEAT-8-exterior-not-drawn",
+    "file": "src/scenes/exterior.js",
+    "old": "if (hillPatch) { drawList.push({ mesh: renderer.createMesh(hillPatch), matrix: originMatrix, order: -2, box: transformedAabb(localAabb(hillPatch.positions), originMatrix) }); ",
+    "new": "if (hillPatch) { ",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "the fixed city builds the pads and never draws them"
+  },
+  {
+    "name": "HILLSEAT-9-seat-not-laid",
+    "file": "src/world/townStandIns.js",
+    "old": "  seat.lay(patch);",
+    "new": "  void seat;",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "the trees read the hills alone: a tree on a pad stands in it"
+  },
+  {
+    "name": "HILLSEAT-10-seat-cells-stale",
+    "file": "src/world/townStandIns.js",
+    "old": "      cells = null;   // filed again on the next ask",
+    "new": "      void cells;",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "a laid mesh never filed: the seat's top answers the hills it filed first"
+  },
+  {
+    "name": "HILLSEAT-11-plane-padded",
+    "file": "src/world/townStandIns.js",
+    "old": "    if (hull.length < 3 || base < HILL_SEAT_PLANE) continue;",
+    "new": "    if (hull.length < 3) continue;",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "a model the author stood on the plane by a hill's foot gets a pad"
+  },
+  {
+    "name": "HILLSEAT-12-hung-padded",
+    "file": "src/world/townStandIns.js",
+    "old": "    if (base - high > HILL_SEAT_STAND || gap <= HILL_PATCH_SINK) continue;",
+    "new": "    if (gap <= HILL_PATCH_SINK) continue;",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "a model hung over the hill gets a pad raised to it"
+  },
+  {
+    "name": "HILLSEAT-13-held-padded",
+    "file": "src/world/townStandIns.js",
+    "old": "    if (base - high > HILL_SEAT_STAND || gap <= HILL_PATCH_SINK) continue;",
+    "new": "    if (base - high > HILL_SEAT_STAND) continue;",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "a model the hill already holds gets a pad anyway"
+  },
+  {
+    "name": "HILLSEAT-14-crossings-missed",
+    "file": "src/world/townStandIns.js",
+    "old": "if (s >= 0 && s <= 1 && u >= 0 && u <= 1) out.push([px + rx * s, pz + rz * s]);",
+    "new": "if (s > 2) out.push([px + rx * s, pz + rz * s]);",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "a crease of the drawn top crossing a footprint's edge unread: the model over it is judged held"
+  },
+  {
+    "name": "HILLSEAT-15-pits-missed",
+    "file": "src/world/townStandIns.js",
+    "old": "      if (inHull(hull, px, pz)) out.push([px, pz]);",
+    "new": "      if (false) out.push([px, pz]);",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "a corner of the drawn top inside a footprint unread: a pit under it is judged held"
+  },
+  {
+    "name": "HILLSEAT-16-bank-short",
+    "file": "src/world/townStandIns.js",
+    "old": "    while (d < reach && top",
+    "new": "    while (d < 0 && top",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "the bank stops a quarter metre out: its edge a cliff in the open over the hill's slope"
+  },
+  {
+    "name": "HILLSEAT-17-faces-down",
+    "file": "src/world/townStandIns.js",
+    "old": "    const s = c[1] < 0 ? -len : len;",
+    "new": "    const s = c[1] < 0 ? len : -len;",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "the bank's faces turned down: culled from above"
+  },
+  {
+    "name": "HILLSEAT-18-uv-block-frame",
+    "file": "src/world/townStandIns.js",
+    "old": "hillUvAt(on.placed.matrix)",
+    "new": "hillUvAt([1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1])",
+    "tests": [
+      "test/world/fb1013e_hillseat.test.js"
+    ],
+    "note": "the pad's grass laid in the block's frame, not the hill's: a seam where the bank meets the hill"
+  }
+]

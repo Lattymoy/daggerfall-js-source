@@ -1,83 +1,83 @@
 [
   {
     "name": "AUDIT-IT1-C2-the-carriage-map-restores-the-store",
-    "file": "src/ui/travelMapWindow.js",
+    "file": "src/ui/travel/travelMapWindow.js",
     "old": "    if (!this._carriageMap) Object.assign(this.popUp, travelMapPopUpState());",
     "new": "    Object.assign(this.popUp, travelMapPopUpState());",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
     "name": "AUDIT-IT1-C1-the-drivers-map-rides-the-store",
-    "file": "src/ui/travelMapWindow.js",
+    "file": "src/ui/travel/travelMapWindow.js",
     "old": "    this.filters = deps.immersive ? freshTravelMapFilters() : travelMapFilters();",
     "new": "    this.filters = travelMapFilters();",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
     "name": "AUDIT-IT1-C1-the-drivers-map-marks",
-    "file": "src/ui/travelMapWindow.js",
+    "file": "src/ui/travel/travelMapWindow.js",
     "old": "    if (this._it) return;   // AUDIT IT1 C1: CarriageMap has no MarkLocationHandler - its markedLocationId stays -1\n",
     "new": "",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
     "name": "AUDIT-IT1-C6-the-middle-click-under-the-popup",
-    "file": "src/ui/travelMapWindow.js",
+    "file": "src/ui/travel/travelMapWindow.js",
     "old": "      if (this.popUp || this.telePopUp || this.picker || this.top || this.infoBox) return true;",
     "new": "      if (this.telePopUp || this.picker || this.top || this.infoBox) return true;",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
     "name": "AUDIT-IT1-C4-show-only-docks-on-the-dots-alone",
-    "file": "src/ui/travelMapWindow.js",
+    "file": "src/ui/travel/travelMapWindow.js",
     "old": "    if (this._it) return this._it.kind === IT_POPUP.seafarer ? seafarerDiscovered(summary, checkLocationDiscovered(summary), this._it.settings) : checkLocationDiscovered(summary);",
     "new": "    if (this._it) return checkLocationDiscovered(summary);",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
     "name": "AUDIT-IT1-C3-the-countdown-under-the-box",
-    "file": "src/ui/travelPopUp.js",
+    "file": "src/ui/travel/travelPopUp.js",
     "old": "    if (this.top) return;   // AUDIT IT1 C3",
     "new": "    // AUDIT IT1 C3",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
     "name": "AUDIT-IT1-C7-the-box-ok-silent",
-    "file": "src/ui/travelPopUp.js",
+    "file": "src/ui/travel/travelPopUp.js",
     "old": "    this._click();\n    if (this.top === 'itPush') { this._click(); this.top = null;",
     "new": "    if (this.top === 'itPush') { this._click(); this.top = null;",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
     "name": "AUDIT-IT1-C7-onpush-one-click",
-    "file": "src/ui/travelPopUp.js",
+    "file": "src/ui/travel/travelPopUp.js",
     "old": "    if (this.top === 'itPush') { this._click(); this.top = null;",
     "new": "    if (this.top === 'itPush') { this.top = null;",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
     "name": "AUDIT-IT1-C5-i-on-every-popup",
-    "file": "src/ui/travelPopUp.js",
+    "file": "src/ui/travel/travelPopUp.js",
     "old": "    if (key === 'KeyI' && !this.coordsOnly && this._to) {",
     "new": "    if (key === 'KeyI' && !this.coordsOnly) {",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "          : (d.immersiveSettings?.() && !this._to) ? freshTravelMapPopUpState() : { ...travelMapPopUpState() },",
     "new": "          : { ...travelMapPopUpState() },",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "      this._itRefusal = null;   // AUDIT IT1 H-L1",
     "new": "      // AUDIT IT1 H-L1",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    if (deps.immersive) {\n      const [roads, tracks] = itMapPaths(deps.immersive.settings);",
     "new": "    if (deps.immersive && false) {\n      const [roads, tracks] = itMapPaths(deps.immersive.settings);",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      this.filters = { ...freshTravelMapFilters(), roads: !roads, tracks: !tracks };",
     "new": "      this.filters = { ...freshTravelMapFilters() };",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    if (this._it) return;   // AUDIT IT1 C1: CarriageMap has no MarkLocationHandler\n",
     "new": "",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "          markedMapId: this._it ? -1 : this.markedMapId,",
     "new": "          markedMapId: this.markedMapId,",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "for (let i = CLASSIC_BUILDING_SLOTS - 1; i >= slots.length; i--)",
     "new": "for (let i = CLASSIC_BUILDING_SLOTS - 1; i > slots.length; i--)",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "    for (const k of MODEL_SCALES) if (k in rmb.Misc3dObjectRecords[i])",
     "new": "    for (const k of MODEL_SCALES.slice(1)) if (k in rmb.Misc3dObjectRecords[i])",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "    if (counts && !(path[2] >= (counts[path[1]] ?? 0))) continue;\n",
     "new": "",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    if (kind !== 'i' || path?.length !== 3 || path[0] !== 'RmbBlock' || !ARRAYS.includes(path[1])) continue;",
     "new": "    if (kind !== 'i' || path?.length !== 3 || path[0] !== 'RmbBlock' || !ARRAYS.includes(path[1])) throw new Error('cannot lay');",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "    try { installImmersiveTravelGates(itPatches, itOwn, immersiveTravelLoaded); } catch (e) { console.error(`[worlddata] immersive travel's gate layer: ${e?.message ?? e}`); }",
     "new": "    installImmersiveTravelGates(itPatches, itOwn, immersiveTravelLoaded);",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "      const isOn = vendor === IMMERSIVE_TRAVEL_VENDOR ? immersiveTravelLoaded : () => modSetting(vendor, 'Enabled') === true;",
     "new": "      const isOn = () => modSetting(vendor, 'Enabled') === true;",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "export const immersiveTravelLoaded = () => modLatchedOn(IMMERSIVE_TRAVEL_VENDOR) ?? (modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true);",
     "new": "export const immersiveTravelLoaded = () => (modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true);",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "  if (!latchModLoaded(IMMERSIVE_TRAVEL_VENDOR, modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true)) return true;",
     "new": "  latchModLoaded(IMMERSIVE_TRAVEL_VENDOR, modSetting(IMMERSIVE_TRAVEL_VENDOR, 'Enabled') === true);",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -212,16 +212,16 @@
     "old": "  if (!(registerCustomFaction(drivers.id, drivers) && registerCustomFaction(sailors.id, sailors))) {",
     "new": "  if (!(registerCustomFaction(drivers.id, drivers) | registerCustomFaction(sailors.id, sailors))) {",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
     "name": "AUDIT-IT1-W1-the-sell-label",
-    "file": "src/ui/merchantServiceDoor.js",
+    "file": "src/ui/merchant/merchantServiceDoor.js",
     "old": "          { label: hooks.label ?? merchantServiceLabel(hooks.service), onClick:",
     "new": "          { label: merchantServiceLabel(hooks.service), onClick:",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -230,7 +230,7 @@
     "old": "      regionIndex: maps.getRegionIndexAt(px.x, px.y),\n    };\n  }\n  /** IT1: the mod's settings",
     "new": "      regionIndex: (maps.getPoliticIndex(px.x, px.y) | 0) - 128,\n    };\n  }\n  /** IT1: the mod's settings",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -239,16 +239,16 @@
     "old": "    if (sharedClockOn()) {\n      const nowMin = Math.floor(skyMinutes());\n      const cfb = careerFastTravelBlock(playerEntity, nowMin);   // HOOD-CAREER: bare-headed",
     "new": "    if (false) {\n      const nowMin = Math.floor(skyMinutes());\n      const cfb = careerFastTravelBlock(playerEntity, nowMin);   // HOOD-CAREER: bare-headed",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
     "name": "AUDIT-IT1-W6-indoors-silent",
     "file": "src/scenes/world.js",
-    "old": "    if ((modes?.mode ?? 'exterior') !== 'exterior') { townTalk.say(CANNOT_TRAVEL_INDOORS_TEXT); return null; }",
+    "old": "    if ((modes?.mode ?? 'exterior') !== 'exterior') { townTalk.say(localizedText('cannotTravelIndoors', CANNOT_TRAVEL_INDOORS_TEXT)); return null; }",
     "new": "    if ((modes?.mode ?? 'exterior') !== 'exterior') return null;",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   },
   {
@@ -257,17 +257,17 @@
     "old": "      if (isOnlinePage() && !opts?.travelShip) { townTalk.say(ONLINE_LAND_TRAVEL_REFUSAL);",
     "new": "      if (isOnlinePage() && !opts?.travelShip && !opts?.immersive) { townTalk.say(ONLINE_LAND_TRAVEL_REFUSAL);",
     "tests": [
-      "test/travelonline.test.js",
-      "test/it1_immersivetravel.test.js"
+      "test/systems/travel/travelonline.test.js",
+      "test/systems/guild/it1_immersivetravel.test.js"
     ]
   },
   {
     "name": "AUDIT-IT1-W4-the-row-says-next-load",
     "file": "src/systems/features.js",
-    "old": "modFeature('immersive-travel', 'Takes effect when the game is next started (an in-game Load keeps what it started with);",
-    "new": "modFeature('immersive-travel', 'Takes effect when the game next loads;",
+    "old": "modFeature('immersive-travel', () => t('features.mod.immersiveTravel.effect', 'Takes effect the next time you start the game; loading a save is not enough.",
+    "new": "modFeature('immersive-travel', () => t('features.mod.immersiveTravel.effect', 'Takes effect when the game next loads.",
     "tests": [
-      "test/auditit1.test.js"
+      "test/systems/auditit1.test.js"
     ]
   }
 ]

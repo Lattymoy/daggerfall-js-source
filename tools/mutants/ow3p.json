@@ -5,7 +5,7 @@
     "old": "      if (next.halt) { travelOptions?.messages?.pauseTravel(); tvSay(TRAVEL_VIEW_TEXT.partyHalted); }",
     "new": "      if (next.halt) { travelOptions?.interruptTravel(); tvSay(TRAVEL_VIEW_TEXT.partyHalted); }",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P1: a member's stop interrupts the leader and leaves the panel up - the leader frozen, still 'journeying', the halt never reaching the party."
   },
@@ -15,7 +15,7 @@
     "old": "      travelOptions?.messages?.pauseTravel();   // AUDIT OW3 P1",
     "new": "      travelOptions?.interruptTravel();   // AUDIT OW3 P1",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P1: a member halted by the party keeps the panel up, counts as journeying, and is never set out again."
   },
@@ -25,27 +25,27 @@
     "old": "  const walkJourneying = () => !!travelOptions?.isTravelActive && !!travelOptions.state?.autopilot;",
     "new": "  const walkJourneying = () => !!travelOptions?.isTravelActive;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P1: a journey stopped under a panel left up (a window over it, the Overworld brought down) reads as walking."
   },
   {
     "name": "OW3P1-halt-late",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "    if (leaderMustHalt(tw, stops, now)) return { tw: { ...tw, h: Math.round(now) }, halt: true };",
     "new": "    if (leaderMustHalt(tw, stops, now)) return { tw, halt: true };",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P1: the leader stops on a member's stop but the walk is not halted with it."
   },
   {
     "name": "OW3P1-halt-unsaid",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "{ tw: { ...tw, h: Math.round(now) }, halt: true }",
     "new": "{ tw: { ...tw, h: Math.round(now) }, halt: false }",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P1: the walk halts on a member's stop but the leader's own journey walks on."
   },
@@ -55,67 +55,67 @@
     "old": "    _walkLead = null;   // AUDIT OW3 P2",
     "new": "    // AUDIT OW3 P2",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P2: a journey begun with nobody gathered (or no longer the leader) leaves the old walk riding the pose."
   },
   {
     "name": "OW3P2-begin-carries-old",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "  if (live && sameWalkDest(live, { x: dest.pixel.x, y: dest.pixel.y, spot: !!dest.point })) {",
     "new": "  if (live) {",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P2: any journey after a halted walk sets the OLD walk out again - the members start for the old place."
   },
   {
     "name": "OW3P2-elsewhere-sets-out",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "  if (journeying) return { tw: mine ? { ...tw, go: Math.round(now), h: null } : null, halt: false };",
     "new": "  if (journeying) return { tw: { ...tw, go: Math.round(now), h: null }, halt: false };",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P2: the leader's next journey of any kind sets a halted walk out again - toward the old destination."
   },
   {
     "name": "OW3P2-forgotten-stays",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "  if (dest ? !mine : tw.sx == null) return { tw: null, halt: false };",
     "new": "  if (false) return { tw: null, halt: false };",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P2: a halted place walk with nothing left to resume stays halted - its members held for ever."
   },
   {
     "name": "OW3P2-elsewhere-walks-on",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "    if (!mine) return { tw: null, halt: false };\n",
     "new": "",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "A leader who takes a journey of another place keeps the walk - the members walk on to where the leader is not going."
   },
   {
     "name": "OW3P3-yes-outlives-walk",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "  return tw && mine && mine.at === tw.at ? mine : NO_WALK_ANSWER;",
     "new": "  return mine;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P3: a member's yes outlives its walk - their next journey of their own is stopped, their stops halt walks they never joined."
   },
   {
     "name": "OW3P3-follows-any-round",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "  return !!tw && !!mine && mine.at === tw.at && mine.yes && mine.go != null;",
     "new": "  return !!mine && mine.yes && mine.go != null;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P3: a member counts as following a round they never answered."
   },
@@ -125,27 +125,27 @@
     "old": "    _walkMine = memberAnswer(_walkMine, tw);   // AUDIT OW3 P3",
     "new": "    // AUDIT OW3 P3",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P3: the host never lets a stale yes go."
   },
   {
     "name": "OW3P3-leave-never",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "  if (journeying && !onWalk) return 'leave';\n",
     "new": "",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "A member who walks off somewhere else stays in the walk - their stops halt it, and the next set-out drags them back."
   },
   {
     "name": "OW3P4-asked-over-a-window",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "    return gathered && !journeying && free ? 'ask' : null;",
     "new": "    return gathered && !journeying ? 'ask' : null;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P4: the question comes up over whatever the member has open, in a fight, in a duel."
   },
@@ -155,7 +155,7 @@
     "old": "    && !worldMoveBusy() && !townTalk.overlay && !gamePaused()",
     "new": "    && !worldMoveBusy() && !gamePaused()",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P4: the question replaces (and disposes) an open window that does not pause."
   },
@@ -165,7 +165,7 @@
     "old": "    if (_walkBox && !walkAskStands({ tw, round: _walkBoxRound, now, danger: walkDanger() })) walkBoxDown();",
     "new": "",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P4: the question stays up after its round ended, the party dissolved, a new round began or its asking passed."
   },
@@ -175,47 +175,47 @@
     "old": "    if (_walkBox && !townTalk.containsOverlay(_walkBox)) { _walkBox = null; _walkBoxRound = null; }",
     "new": "",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P4: a question another window replaced is still 'up' - the member is never asked again this session."
   },
   {
     "name": "OW3P4-box-in-danger",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "now - tw.at <= PARTY_WALK_ASK_MS && !danger;",
     "new": "now - tw.at <= PARTY_WALK_ASK_MS;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P4: the question stands while a foe closes in or a duel begins."
   },
   {
     "name": "OW3P4-box-other-round",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "  return !!tw && tw.at === round && now",
     "new": "  return !!tw && now",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P4: the question of an old round answers a new one."
   },
   {
     "name": "OW3P5-ends-uncounted",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "    st.cleared++;   // AUDIT OW3 P5: the journey's end, counted\n",
     "new": "",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P5: Travel Options never says a journey ENDED - an arrival reads as a stop."
   },
   {
     "name": "OW3P5-spot-stop-ends",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "  if (!tw || ended) return { tw: null, halt: false };",
     "new": "  if (!tw || ended || !dest) return { tw: null, halt: false };",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P5: a spot walk's stop (its route nulled) is read, by the destination fields, as the walk's end - the party walks on."
   },
@@ -225,17 +225,17 @@
     "old": "const cleared = travelOptions?.cleared ?? 0, ended = cleared !== _walkCleared;",
     "new": "const cleared = travelOptions?.cleared ?? 0, ended = false;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P5: the host never reads an end - an arrival halts the party, a forgotten walk stays."
   },
   {
     "name": "OW3P3-released-stop-said",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "  const stop = was && following && !journeying;",
     "new": "  const stop = was && !journeying;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P3: a member released (the walk gone, a new round) in the breath their journey stopped still halts the leader's walk."
   },
@@ -245,17 +245,17 @@
     "old": "  const walkFree = () => !!travelOptions && (modes",
     "new": "  const walkFree = () => (modes",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "A member with Travel Options off is asked, says yes, and the start throws on the null mod."
   },
   {
     "name": "OW3P6-start-anyway",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "return free && (journeying || !mine.balk) ? 'start' : null;",
     "new": "return (journeying || !mine.balk) ? 'start' : null;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P6: a set-out starts the member's journey in a dungeon, under the death screen, mid-fight, over a window."
   },
@@ -265,7 +265,7 @@
     "old": "playerSpawned && playerEntity.health > 0 && !modes?.deathUp?.()\n",
     "new": "playerSpawned\n",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P6: a dead member is set out with the party, a journey under the death screen."
   },
@@ -275,37 +275,37 @@
     "old": "  const walkFree = () => !!travelOptions && (modes?.mode ?? 'exterior') === 'exterior' && playerSpawned",
     "new": "  const walkFree = () => !!travelOptions && playerSpawned",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P6: a member in a dungeon or a building is set out (the panel force-closed) or asked."
   },
   {
     "name": "OW3P7-no-grace",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "  return h.tw && now - h.at <= PARTY_WALK_GRACE_MS ? h : { acct, tw: null, at: h.at };",
     "new": "  return { acct, tw: null, at: h.at };",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P7: a moment without the leader's pose (a reconnect) drops every member out of the walk."
   },
   {
     "name": "OW3P7-grace-forever",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "  return h.tw && now - h.at <= PARTY_WALK_GRACE_MS ? h",
     "new": "  return h.tw ? h",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P7: a leader gone for good still walks the party."
   },
   {
     "name": "OW3P7-heard-from-anyone",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "  const h = held && held.acct === acct ? held : { acct, tw: null, at: -Infinity };",
     "new": "  const h = held ?? { acct, tw: null, at: -Infinity };",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P7: a new leader with no pose yet is believed to walk the old leader's walk."
   },
@@ -315,47 +315,47 @@
     "old": "present: memberPresent(leadRow), tw: leadRow?.p?.tw ?? null }, nowMs);",
     "new": "present: true, tw: leadRow?.p?.tw ?? null }, nowMs);",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P7: the host reads 'no pose' as 'no walk'."
   },
   {
     "name": "OW3P9-resume-new-round",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "    const w = { ...live, go: Math.round(now), h: null };",
     "new": "    const w = walkOf(dest, now);",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P9: the halted walk taken up again from the Overworld's flag is a NEW round - members who stopped over 60 m off are dropped."
   },
   {
     "name": "OW3P9-walking-set-out",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "    if (live.h == null && !moved) return live;\n",
     "new": "",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P9: the flag clicked while the party walks counts as a set-out."
   },
   {
     "name": "OW3P9-spot-point-stale",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "    if (dest.point) { w.sx = Math.round(dest.point.x); w.sz = Math.round(dest.point.z); }\n    return w;",
     "new": "    return w;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P9: a spot walk set out again sends the members to the old point, the leader to the new."
   },
   {
     "name": "OW3P10-asked-past-asking",
-    "file": "src/systems/partyWalk.js",
+    "file": "src/systems/party/partyWalk.js",
     "old": "  return !!tw && tw.at === round && now - tw.at <= PARTY_WALK_ASK_MS && !danger;",
     "new": "  return !!tw && tw.at === round && !danger;",
     "tests": [
-      "test/tv8_party_walk.test.js"
+      "test/systems/travel/tv8_party_walk.test.js"
     ],
     "note": "AUDIT OW3 P10: the question stays up past its asking - the member is never left behind."
   }

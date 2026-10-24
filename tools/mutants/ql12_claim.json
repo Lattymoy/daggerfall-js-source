@@ -1,0 +1,360 @@
+[
+  {
+    "name": "QL12-window-at-the-opening",
+    "file": "server-account/src/questlines.js",
+    "old": "const WINDOW = (x) => `${x}.at >= ${SINCE}",
+    "new": "const WINDOW = (x) => `${x}.at > ${SINCE}",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "AUDIT QUESTLINES: a receipt written at the line's opening's own second counts"
+  },
+  {
+    "name": "QL12-window-floor-ignored",
+    "file": "server-account/src/questlines.js",
+    "old": "${x}.at >= ${SINCE} AND ${x}.at < ${UNTIL}",
+    "new": "${x}.at < ${UNTIL}",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "a receipt from before the line's first opening witnesses nothing"
+  },
+  {
+    "name": "QL12-rite-no-fighter",
+    "file": "server-account/src/questlines.js",
+    "old": "(g.earned = 'rite' OR g.stones >= 2)",
+    "new": "(g.earned = 'rite')",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-rite-no-rite-receipt",
+    "file": "server-account/src/questlines.js",
+    "old": "(g.earned = 'rite' OR g.stones >= 2)",
+    "new": "(g.stones >= 2)",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-breach-the-rite-alone",
+    "file": "server-account/src/questlines.js",
+    "old": " AND g.earned != 'rite')`,",
+    "new": ")`,",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-rehearsal-stake-unread",
+    "file": "server-account/src/questlines.js",
+    "old": "'NOT EXISTS (SELECT 1 FROM eg_stakes k WHERE k.b = r.b AND k.rh = 1) AND NOT EXISTS",
+    "new": "'NOT EXISTS",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-rehearsal-end-unread",
+    "file": "server-account/src/questlines.js",
+    "old": " AND NOT EXISTS (SELECT 1 FROM eg_runs x WHERE x.b = r.b AND x.account = r.account AND x.rh = 1)'",
+    "new": "'",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-redoubts-two",
+    "file": "server-account/src/questlines.js",
+    "old": "ORDER BY r.at, r.b, r.w LIMIT 1 OFFSET 2)",
+    "new": "ORDER BY r.at, r.b, r.w LIMIT 1 OFFSET 1)",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-valkynaz-every-third",
+    "file": "server-account/src/questlines.js",
+    "old": "r.w % 5 = 0",
+    "new": "r.w % 3 = 0",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-hour-reads-serpents",
+    "file": "server-account/src/questlines.js",
+    "old": "hour: `(SELECT MIN(d.at) FROM sd_kills d",
+    "new": "hour: `(SELECT MIN(d.at) FROM serpent_kills d",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-serpent-reads-hours",
+    "file": "server-account/src/questlines.js",
+    "old": "serpent: `(SELECT MIN(z.at) FROM serpent_kills z",
+    "new": "serpent: `(SELECT MIN(z.at) FROM sd_kills z",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-title-alone",
+    "file": "server-account/src/questlines.js",
+    "old": "return [...Object.keys(l.witness).map(Number).filter((s) => s < l.titleAt), l.titleAt].sort((a, b) => a - b);",
+    "new": "return [l.titleAt];",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-title-again",
+    "file": "server-account/src/questlines.js",
+    "old": "WHERE id = ?1 AND (ql_titles & ?2) = 0\n",
+    "new": "WHERE id = ?1\n",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-title-bit",
+    "file": "server-account/src/questlines.js",
+    "old": "SET ql_titles = ql_titles | ?2",
+    "new": "SET ql_titles = ql_titles | 1",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-key-again",
+    "file": "server-account/src/questlines.js",
+    "old": "WHERE id = ?1 AND ql_key = 0\n",
+    "new": "WHERE id = ?1\n",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-key-any-choice",
+    "file": "server-account/src/questlines.js",
+    "old": "const keyAt = key && key.at === step && choice === key.choice ? statements.length : -1;",
+    "new": "const keyAt = key && key.at === step ? statements.length : -1;",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "a seal never pays the key - this end's own choice is read"
+  },
+  {
+    "name": "QL12-key-no-balance",
+    "file": "server-account/src/questlines.js",
+    "old": "SET eg_keys = eg_keys + 1, ql_key = 1",
+    "new": "SET eg_keys = eg_keys, ql_key = 1",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-after-gate-open",
+    "file": "server-account/src/questlines.js",
+    "old": ": after ? wholeSql(after) : '0';",
+    "new": ": after ? '1' : '0';",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "AUDIT QUESTLINES SERVICE-4: the Covens' Hoard's step behind the Burning Doors witnessed whole"
+  },
+  {
+    "name": "QL12-choice-never-kept",
+    "file": "server-account/src/questlines.js",
+    "old": "  if (choice !== null) {\n",
+    "new": "  if (false) {\n",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-choice-overwritten",
+    "file": "server-account/src/questlines.js",
+    "old": "AND done_at IS NOT NULL AND choice IS NULL'",
+    "new": "AND done_at IS NOT NULL'",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-guest-writes",
+    "file": "server-account/src/questlines.js",
+    "old": "  if (!player?.handle) return { why: 'guest' };\n",
+    "new": "",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-unpaid-claimed",
+    "file": "server-account/src/questlines.js",
+    "old": "  if (!qlStepClaimed(line, step)) return { why: 'unpaid' };\n",
+    "new": "",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-dev-for-all",
+    "file": "server-account/src/questlines.js",
+    "old": "return s === 'on' || (s === 'dev' && isDeveloper(player, env));",
+    "new": "return s !== 'off';",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-no-opening",
+    "file": "server-account/src/questlines.js",
+    "old": "  if (phase === 'open') { await opening.run(); return { opened: true }; }",
+    "new": "  if (phase === 'open') { return { opened: true }; }",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "an `open` writes the opening - the line's window"
+  },
+  {
+    "name": "QL12-titles-held-by-a-guest",
+    "file": "server-account/src/titles.js",
+    "old": "  if (typeof player?.handle === 'string' && player.handle) for (const t of QL_TITLES) if",
+    "new": "  for (const t of QL_TITLES) if",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-vocabulary-order",
+    "file": "src/net/identityToken.js",
+    "old": "'doorwarden', 'covenbane', 'weirwalker'",
+    "new": "'covenbane', 'doorwarden', 'weirwalker'",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-word",
+    "file": "src/ui/playerBadge.js",
+    "old": "satakalwitness: \"Satakal's Witness\",",
+    "new": "satakalwitness: 'Satakal Witness',",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ]
+  },
+  {
+    "name": "QL12-guest-open-refused",
+    "file": "server-account/src/questlines.js",
+    "old": "  if (phase === 'open') { await opening.run(); return { opened: true }; }\n  if (!qlStepClaimed(line, step)) return { why: 'unpaid' };\n  if (!player?.handle) return { why: 'guest' };",
+    "new": "  if (!player?.handle) return { why: 'guest' };\n  if (phase === 'open') { await opening.run(); return { opened: true }; }\n  if (!qlStepClaimed(line, step)) return { why: 'unpaid' };",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "AUDIT QUESTLINES SERVICE-1: a guest's opening is written"
+  },
+  {
+    "name": "QL12-one-receipt-two-steps",
+    "file": "server-account/src/questlines.js",
+    "old": "COALESCE((SELECT MAX(p.seen_at) + 1 FROM ql_steps p WHERE p.account = ?1 AND p.line = ?2 AND p.step < ?3), 0)",
+    "new": "0",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "AUDIT QUESTLINES SERVICE-5: newer than the receipt that witnessed an earlier step"
+  },
+  {
+    "name": "QL12-order-ceiling",
+    "file": "server-account/src/questlines.js",
+    "old": "${x}.at >= ${SINCE} AND ${x}.at < ${UNTIL}",
+    "new": "${x}.at >= ${SINCE}",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "AUDIT QUESTLINES SERVICE-5: older than the receipt that witnessed a later step"
+  },
+  {
+    "name": "QL12-step-window",
+    "file": "server-account/src/questlines.js",
+    "old": "(SELECT MIN(o.opened_at) FROM ql_steps o WHERE o.account = ?1 AND o.line = ?2)",
+    "new": "(SELECT MIN(o.opened_at) FROM ql_steps o WHERE o.account = ?1 AND o.line = ?2 AND o.step = ?3)",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "AUDIT QUESTLINES SERVICE-2: the LINE's first opening is the window, never the step's own"
+  },
+  {
+    "name": "QL12-held-title-never-told",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "const title = d.title ?? (c.lost ? d.titleHeld ?? null : null);",
+    "new": "const title = d.title ?? null;",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "AUDIT QUESTLINES SERVICE-7 (c)"
+  },
+  {
+    "name": "QL12-held-title-told-every-answer",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "const title = d.title ?? (c.lost ? d.titleHeld ?? null : null);",
+    "new": "const title = d.title ?? d.titleHeld ?? null;",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "AUDIT QUESTLINES SERVICE-7 (c)"
+  },
+  {
+    "name": "QL12-restored-end-never-lost",
+    "file": "src/systems/questlines/qlLineRunner.js",
+    "old": "if (c && (said == null || said === 'opened')) c.lost = true;",
+    "new": "",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "AUDIT QUESTLINES SERVICE-7 (c)"
+  },
+  {
+    "name": "QL12-service-answers-no-held-title",
+    "file": "server-account/src/questlines.js",
+    "old": "    ...(titled ? { title: law.title } : held ? { titleHeld: law.title } : {}),",
+    "new": "    ...(titled ? { title: law.title } : {}),",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "AUDIT QUESTLINES SERVICE-7 (c)"
+  },
+  {
+    "name": "B2-the-order-unasked",
+    "file": "server-account/src/questlines.js",
+    "old": "AND done_at IS NULL AND (${witness}) AND ${inOrder}`)",
+    "new": "AND done_at IS NULL AND (${witness})`)",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "AUDIT STARFALL B2: an end waits while an earlier witnessed step of its line is not done"
+  },
+  {
+    "name": "B2-the-steps-before-unread",
+    "file": "server-account/src/questlines.js",
+    "old": "return l ? Object.keys(l.witness).map(Number).filter((s) => s < step).sort((a, b) => a - b) : [];",
+    "new": "return [];",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "AUDIT STARFALL B2: the witnessed steps an end waits on are its line's before it"
+  },
+  {
+    "name": "B2-one-earlier-step-enough",
+    "file": "server-account/src/questlines.js",
+    "old": "AND b.done_at IS NOT NULL) = ${before.length}` : '1';",
+    "new": "AND b.done_at IS NOT NULL) >= 1` : '1';",
+    "tests": [
+      "test/server/ql12_claim.test.js"
+    ],
+    "why": "AUDIT STARFALL B2: every earlier witnessed step done, never one of them"
+  }
+]

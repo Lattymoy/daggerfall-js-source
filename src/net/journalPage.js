@@ -41,7 +41,7 @@ import { breakableNote } from '../systems/notebook.js';
 /** @typedef {{ head: string, lines: string[] }} Page */
 /** @typedef {{ formatting: string, text: string }} NoteToken */
 
-/** The token kinds that are a LINE of an entry - the chronicle's own set (ui/enhancedChronicle.js LINE_FORMATTINGS),
+/** The token kinds that are a LINE of an entry - the chronicle's own set (ui/enhanced/enhancedChronicle.js LINE_FORMATTINGS),
  *  less the break, which is a blank line here. */
 const LINE_TOKENS = new Set(['text', 'highlight', 'question', 'answer']);
 const DRAWN_TOKENS = new Set([...LINE_TOKENS, 'newline']);
@@ -65,7 +65,7 @@ export function pageOfNote(entry) {
 /** Why a page cannot be shown, in the journal's own words - the page law's word, said. */
 export function pageRefusalText(error) {
   if (error === 'no-words') return 'There is nothing written on this page.';
-  if (error === 'page-long') return `This page is too long to show - a page shows ${PAGE_LINES_MAX} lines at most.`;
+  if (error === 'page-long') return `This page is too long to show. A page holds at most ${PAGE_LINES_MAX} lines.`;
   if (error === 'line-long') return 'A line on this page is too long to show.';
   if (error === 'head-long') return 'The date on this page is too long to show.';
   return 'This page cannot be shown.';
@@ -167,13 +167,13 @@ export class PageOffers {
 /** The line that says a page is held out: whose, and how to read it (`how` - the host's word for turning to them: the
  *  key the F-menu is bound to, or a tap). */
 export function pageOfferText(name, how = null) {
-  return `${name || 'Someone'} holds out a page of their journal - ${how || 'turn to them'} to read it.`;
+  return `${name || 'Someone'} holds out a page of their journal: ${how || 'turn to them'} to read it.`;
 }
 
 /** The line the writer reads when a page went, and the ones for when it did not. */
 export const pageShownText = (name) => `You hold out the page to ${name || 'them'}.`;
 export const pageTooFarText = (name) => `${name || 'They'} ${name ? 'is' : 'are'} not near enough any more.`;
-export const PAGE_UNSUPPORTED_TEXT = 'The server cannot carry a page yet.';
+export const PAGE_UNSUPPORTED_TEXT = 'This server cannot share journal pages yet.';
 export const PAGE_NO_READERS_TEXT = 'No one is near enough to show it to.';
 /** The reader's line when the page they turned to read is no longer held out (it waited too long). */
 export const PAGE_GONE_TEXT = 'That page is no longer held out to you.';

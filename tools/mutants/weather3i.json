@@ -1,14 +1,14 @@
 [
- {"name": "WEATHER3i-taper-over-the-outline", "file": "src/systems/weatherMap.js",
-  "old": "  const f = core > 0 ? Math.min(1, d / core) : 1;", "new": "  const f = d / s.r;", "tests": ["test/weather3i_strength.test.js"]},
- {"name": "WEATHER3i-rings-fall-below-the-edge", "file": "src/systems/weatherMap.js",
-  "old": "  const f = core > 0 ? Math.min(1, d / core) : 1;", "new": "  const f = core > 0 ? d / core : 1;", "tests": ["test/weather3i_strength.test.js"]},
- {"name": "WEATHER3i-zero-core-nan", "file": "src/systems/weatherMap.js",
-  "old": "  const f = core > 0 ? Math.min(1, d / core) : 1;", "new": "  const f = Math.min(1, d / core);", "tests": ["test/weather3i_strength.test.js"]},
- {"name": "WEATHER3i-edge-moved", "file": "src/systems/weatherMap.js",
-  "old": "export const EDGE_INTENSITY = 0.2;", "new": "export const EDGE_INTENSITY = 0.3;", "tests": ["test/weather3i_strength.test.js"]},
- {"name": "WEATHER3i-sim-reads-raw", "file": "src/systems/weatherSim.js",
-  "old": "  const worn = wornAmong(_mapNear, at[0], at[1], (w, cx, cz) => ground(w, cx, cz, nowMinutes));", "new": "  const worn = wornAmong(_mapNear, at[0], at[1]);", "tests": ["test/weather3i_strength.test.js"]},
- {"name": "WEATHER3i-sim-loses-storm-word", "file": "src/systems/weatherSim.js",
-  "old": "_set(WEATHER_ENUM[worn.raw],", "new": "_set(WEATHER_ENUM[worn.word],", "tests": ["test/weather3i_strength.test.js"]}
+ {"name": "WEATHER3i-taper-over-the-outline", "file": "src/systems/weather/weatherMap.js",
+  "old": "  const f = core > 0 ? Math.min(1, d / core) : 1;", "new": "  const f = d / s.r;", "tests": ["test/systems/weather/weather3i_strength.test.js"]},
+ {"name": "WEATHER3i-rings-fall-below-the-edge", "file": "src/systems/weather/weatherMap.js",
+  "old": "  const f = core > 0 ? Math.min(1, d / core) : 1;", "new": "  const f = core > 0 ? d / core : 1;", "tests": ["test/systems/weather/weather3i_strength.test.js"]},
+ {"name": "WEATHER3i-zero-core-nan", "file": "src/systems/weather/weatherMap.js",
+  "old": "  const f = core > 0 ? Math.min(1, d / core) : 1;", "new": "  const f = Math.min(1, d / core);", "tests": ["test/systems/weather/weather3i_strength.test.js"]},
+ {"name": "WEATHER3i-edge-moved", "file": "src/systems/weather/weatherMap.js",
+  "old": "export const EDGE_INTENSITY = 0.2;", "new": "export const EDGE_INTENSITY = 0.3;", "tests": ["test/systems/weather/weather3i_strength.test.js"]},
+ {"name": "WEATHER3i-sim-reads-raw", "file": "src/systems/weather/weatherSim.js",
+  "old": "wornAmong(_mapNear, at[0], at[1], (w, cx, cz) => ground(w, cx, cz, nowMinutes))", "new": "wornAmong(_mapNear, at[0], at[1])", "tests": ["test/systems/weather/weather3i_strength.test.js"]},
+ {"name": "WEATHER3i-sim-loses-storm-word", "file": "src/systems/weather/weatherSim.js",
+  "old": "_set(WEATHER_ENUM[worn.raw],", "new": "_set(WEATHER_ENUM[worn.word],", "tests": ["test/systems/weather/weather3i_strength.test.js"]}
 ]

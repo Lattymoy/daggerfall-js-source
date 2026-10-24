@@ -17,7 +17,7 @@
 // A MATERIAL IS DFU'S OWN ITEM wherever DFU has one (law 2). An herb is
 // a plant template in one of DFU's two plant groups - PlantIngredients1,
 // named "(northern)" below template 18, and PlantIngredients2,
-// "(southern)" (systems/itemInfo.js itemNameParts) - and a two-group
+// "(southern)" (systems/item/itemInfo.js itemNameParts) - and a two-group
 // plant takes its pixel's region's (FALL.EXE's REGION_RACES: a Breton
 // region northern, a Redguard one southern), so the Stores keep such a
 // plant as two materials and a withdrawal is the item DFU's own loot
@@ -28,7 +28,7 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { REGION_RACES } from '../formats/mapsTables.js';
-import { attributeBand } from '../systems/foragingCore.js';   // Foraging's bands, one home (FORAGE0 14.4)
+import { attributeBand } from '../systems/foraging/foragingCore.js';   // Foraging's bands, one home (FORAGE0 14.4)
 import { renownRate } from './renown.js';   // MERGE 2: a writ's Renown at every source's rate (RENOWN-ACCOUNT)
 
 // ─── THE TEN (PROF0 3.1; CRAFT3, Professions-Arc 41.6) ───────────────
@@ -134,6 +134,9 @@ export const JOURNEYMAN_RANK = 50;
 export const SPEC_RANKS = Object.freeze([50, 100]);
 /** A change of mind: 1,000 Marks burnt, and the new one takes effect a week later (the old stands until then). */
 export const RESPEC = Object.freeze({ marks: 1000, days: 7 });
+/** MINE-PERKS (Professions-Arc 43): THE SURVEYOR's id - Mining 100's second choice, the Stonebreaker until MINE-PERKS,
+ *  whose id the tracks that chose it still hold (`spec100`, `respec_to`), so the id stands and the choice is new. */
+export const SURVEYOR = 'stonebreaker';
 /** `later`: the slice the choice waits for - named on its card, never chosen until then (AUDIT 29 A17). */
 const spec = (id, name, text, later = null) => Object.freeze(later ? { id, name, text, later } : { id, name, text });
 const pair = (a, b) => Object.freeze([a, b]);
@@ -142,10 +145,13 @@ const pair = (a, b) => Object.freeze([a, b]);
  *  merged craft offers its disciplines' (SPECIALISATIONS, below). */
 const OWN_CHOICES = Object.freeze({
   mining: Object.freeze({
-    50: pair(spec('prospector', 'Prospector', 'Surface veins within 200 m are marked on the compass; gems come a tenth more often.'),
-      spec('deep-delver', 'Deep Delver', 'Dungeon veins yield +50%.')),
-    100: pair(spec('motherlode-sense', 'Motherlode Sense', 'Motherlode warnings come 30 minutes ahead, not 10.'),   // PROF2b: its Motherlodes built - chosen as any
-      spec('stonebreaker', 'Stonebreaker', 'Quarrying yields Cut Stone directly.')),
+    // MINE-PERKS (Professions-Arc 43, the players' "Mining perks need buff" thread): the four made worth a choice - the
+    // Prospector's compass 500 m and its veins one by one on the Overworld, the Deep Delver's x2 and every vein of the
+    // dungeon on the compass, the day's Motherlodes on a Sense's map, and the Stonebreaker made the Surveyor (SURVEYOR)
+    50: pair(spec('prospector', 'Prospector', "Surface veins within 500 m are marked on the compass (a dungeon's within 200 m), and each vein on the Overworld by its ore; gems come a tenth more often."),
+      spec('deep-delver', 'Deep Delver', 'Dungeon veins yield double, and every vein in the dungeon is marked on the compass.')),
+    100: pair(spec('motherlode-sense', 'Motherlode Sense', "The day's Motherlodes are marked on your map from the day's start; warnings come 30 minutes ahead, not 10."),   // PROF2b: its Motherlodes built - chosen as any
+      spec(SURVEYOR, 'Surveyor', "You witness the ground yourself: unwitnessed veins can hold any ore of their land for you (a region's own ore still needs the other players). Quarrying yields Cut Stone directly.")),
   }),
   logging: Object.freeze({
     50: pair(spec('lumberjack', 'Lumberjack', 'Two chops fewer a tree (three at least).'),
@@ -173,13 +179,13 @@ const OWN_CHOICES = Object.freeze({
   }),
   smithing: Object.freeze({
     50: pair(spec('weaponsmith', 'Weaponsmith', 'Weapons +1 quality step.'),
-      spec('armoursmith', 'Armoursmith', 'Armour +1 quality step.')),
+      spec('armoursmith', 'Armoursmith', 'Armor +1 quality step.')),
     100: pair(spec('masterwright', 'Masterwright', 'Masterwork chance +5%.'),
       spec('quartermaster', 'Quartermaster', 'Ingots and repair kits x2.')),
   }),
   outfitting: Object.freeze({
     50: pair(spec('tailor', 'Tailor', 'Clothing +1 quality step.'),
-      spec('leatherworker', 'Leatherworker', 'Leather armour +1 quality step.')),
+      spec('leatherworker', 'Leatherworker', 'Leather armor +1 quality step.')),
     100: pair(spec('couturier', 'Couturier', 'Two-colour dyes.', 'two-colour'),   // PROF7: DFU's cloth takes one dye
       spec('saddler', 'Saddler', 'A wagon upgrade (Horse Cart and Cargo) of +100 kg.', 'wagon')),   // PROF7: DFU's wagon has one limit
   }),
@@ -202,7 +208,7 @@ const OWN_CHOICES = Object.freeze({
     50: pair(spec('brewer', 'Brewer', '3 potions a brew at Journeyman.'),
       spec('distiller', 'Distiller', 'Potent chance +10%.')),
     100: pair(spec('master-alchemist', 'Master Alchemist', 'Potent is +40%, not +25%.'),
-      spec('transmuter', 'Transmuter', 'Two of a DFU metal and a Mercury make one of the next up.')),
+      spec('transmuter', 'Transmuter', 'Two of a metal and a Mercury make one of the next metal up.')),
   }),
   enchanting: Object.freeze({
     50: pair(spec('efficient', 'Efficient', 'A further -5% cost.'),
@@ -219,7 +225,7 @@ const OWN_CHOICES = Object.freeze({
   jewelcrafting: Object.freeze({
     50: pair(spec('gemcutter', 'Gemcutter', 'A set gem adds +10% enchantment points.'),
       spec('goldsmith', 'Goldsmith', 'Silver counts as Gold.')),
-    100: pair(spec('master-jeweller', 'Master Jeweller', 'Jewellery Masterwork chance +5%.'),
+    100: pair(spec('master-jeweller', 'Master Jeweler', 'Jewelry Masterwork chance +5%.'),
       spec('lapidary', 'Lapidary', 'Siege-cracked Gems set as any gem.')),
   }),
 });
@@ -359,7 +365,7 @@ export const HERB_VALUES = Object.freeze([1, 2, 5]);
 /** A DFU item's material row: its key, family, tier, DFU group and template. @returns {MinedRow} */
 const dfu = (key, family, tier, group, templateIndex) => Object.freeze({ key, family, tier, group, templateIndex });
 /** A new template's (600-699, PROF0 4.8): its key, family, tier and template - DFU's picture it borrows, and the DFU
- *  dye that recolours it (systems/itemDye.js; `dye` a DYE_COLORS name, over the WeaponsAndArmor swatch, or null). A
+ *  dye that recolours it (systems/item/itemDye.js; `dye` a DYE_COLORS name, over the WeaponsAndArmor swatch, or null). A
  *  silver one is DFU's Silver - Unchanged, as a silver blade is (dyes.js). @returns {MinedRow} */
 const made = (key, family, tier, templateIndex, name, icon, dye) => Object.freeze({ key, family, tier, templateIndex, name, icon, dye });
 
@@ -409,7 +415,7 @@ export const STONES = Object.freeze([
 /** PROF11 (PROF0 4.5, 4.8: 675): MORTAR - made ten at a time at the mason's bench from 1 Sulphur, 1 Lead and 5 Rough
  *  Stone; tier 2, worth 2 Marks (4.8's tier value). 4.8's "DFU Lodestone, greyed" as Rough and Cut Stone are drawn: the
  *  grey lump as it is, undyed (DFU's Grey is a clothing dye - dyes.js CLOTHING_STARTS - and no metal's swatch is a
- *  stone's). Registered beside them (systems/profTemplates.js MASONRY_TEMPLATE_ROWS), never gathered: the bench's alone. */
+ *  stone's). Registered beside them (systems/professions/profTemplates.js MASONRY_TEMPLATE_ROWS), never gathered: the bench's alone. */
 export const MORTAR = made('stone:mortar', 'stone', 2, 675, 'Mortar', ICON_LODESTONE, null);
 /** PROF11: the stone the mason works - Rough Stone (the quarry's) and Cut Stone (the cut's). */
 export const ROUGH_STONE = STONES[0];
@@ -430,7 +436,7 @@ export const GEMS = Object.freeze([
 export const ICON_DIAMOND = Object.freeze([254, 3]);
 /** THE SIEGE-CRACKED GEM (4.7, 4.8: 678): a Siege Honour's Spoils, a gem only war yields - the Diamond's tier, on the
  *  Diamond's own picture. DECIDED (AUDIT-SEATS): undyed and without 4.8's "cracked overlay" - the icon's one door is a
- *  dye (systems/itemTemplates.js inventoryItemImage), no overlay crosses the renderers; the name says what it is.
+ *  dye (systems/item/itemTemplates.js inventoryItemImage), no overlay crosses the renderers; the name says what it is.
  *  Mining never strikes one: GEMS is the glint's table, and this row is not in it. */
 export const SIEGE_GEM = made('gem:siege', 'gems', gemTierOfPrice(500), 678, 'Siege-cracked Gem', ICON_DIAMOND, null);
 /** Every new template PROF2 registers, by template. */
@@ -488,10 +494,18 @@ export const ICON_WRAPPINGS = Object.freeze([254, 41]);
 export const ICON_SCALES = Object.freeze([254, 37]);
 export const ICON_FEATHER = Object.freeze([254, 53]);
 export const ICON_GARMENT = Object.freeze([204, 0]);
-/** DFU's MobileTypes (characters/mobileTypes.js, generated from DaggerfallUnityEnums.cs) of the ten foes 4.4 skins. */
+/** DFU's MobileTypes (characters/mobile/mobileTypes.js, generated from DaggerfallUnityEnums.cs) of the ten foes 4.4 skins. */
 const MOB = Object.freeze({
   Rat: 0, GiantBat: 3, GrizzlyBear: 4, SabertoothTiger: 5, Spider: 6, Slaughterfish: 11, Harpy: 13, GiantScorpion: 20,
   Dragonling: 34, DragonlingAlternate: 40, Dreugh: 41,
+});
+/** FIELD BUGS 2026-10-20h DEX-HIDES: Daggerfall Enemy Expansion's animals by their own ids (its MonsterBase.mdb.csv ID
+ *  column - bible/04-Characters/Enemy-Expansion.md section 5), the nine rows of Animal affinity among its fifty. The
+ *  classic ten skin every classic Animal row, and so do these: a DEX Bat, Wolf or Mudcrab carries its own id, never a
+ *  MobileTypes value, and was no body the knife knew. The Hell Hound (264) is a daedra and the Lizard Men and the Troll
+ *  are people - no hide, as no classic daedra or person gives one. */
+const DEX = Object.freeze({
+  Bat: 260, Wolf: 262, SnowWolf: 263, Dog: 267, BloodSpider: 271, Boar: 278, LandDreugh: 279, MountainLion: 280, Mudcrab: 281,
 });
 /** A DFU creature part a body may give (4.4's "a chance of the DFU ingredient"), at its price's tier as a gem is
  *  (PROF0 23's bands): Big Tooth 8 gold, Spider's Venom 22, Giant Scorpion Stinger 25, Dragon's Scales 375. */
@@ -509,25 +523,37 @@ export const PARTS = Object.freeze([
 const hide = (key, templateIndex, name, tier, icon, foes, part, meat, cures) =>
   Object.freeze({ ...made(key, 'hides', tier, templateIndex, name, icon, null), foes: Object.freeze(foes), part, meat, cures });
 /**
- * THE TEN HIDES (4.4, templates 655-664 in its order), each its foes, tier, DFU part (4.4's column), its butchery (C&C's
- * own animals: SURV2's MEAT_BY_TYPE - Rat, Giant Bat, Grizzly Bear, Sabretooth Tiger, Spider, Giant Scorpion - Raw Meat;
- * its FISH_BY_TYPE's Slaughterfish Raw Fish; the Harpy, the Dreugh and the Dragonling none, as C&C gives their bodies
- * none) and its cure: tiers 1-3 to Cured Leather, 4-6 to Hardened Leather (4.4) - but Spider Silk, woven to a Silk Bolt
+ * THE HIDES: the ten of 4.4 (templates 655-664 in its order) and DEX-HIDES' three (681-683), each its foes, tier, DFU
+ * part (4.4's column), its butchery (C&C's own animals: SURV2's MEAT_BY_TYPE - Rat, Giant Bat, Grizzly Bear, Sabretooth
+ * Tiger, Spider, Giant Scorpion - Raw Meat; its FISH_BY_TYPE's Slaughterfish Raw Fish; the Harpy, the Dreugh and the
+ * Dragonling none, as C&C gives their bodies none) and its cure: tiers 1-3 to Cured Leather, 4-6 to Hardened Leather (4.4) - but Spider Silk, woven to a Silk Bolt
  * (4.5), and Harpy Feathers, which fletch (9.3's arrows), never cure (PROF0 29).
+ * DEX-HIDES (FIELD BUGS 2026-10-20h): and Daggerfall Enemy Expansion's animals, each the hide of its family - the Bat's
+ * the Bat Leather (its career is the Giant Bat's), the Blood Spider's the Spider Silk, the Mountain Lion's the Tiger Pelt
+ * (the mod's own team for it is the Tigers), the Land Dreugh's the Dreugh Shell. Three families are none of the ten's, and
+ * a body that says "+1 Bear Hide" when a wolf was skinned is the wrong hide, so they take hides of their own (681-683):
+ * the WOLF PELT (the Wolf, the Snow Wolf and the Dog - the mod draws its dog as one of the wolves: their frames, their
+ * move and attack sounds, their team), the BOAR HIDE and the MUDCRAB CHITIN, each at the tier of its family's kin
+ * (the furs of the Bear and the Bat 2, the Rat's 1), its Big Tooth where a fang or a tusk is, and Raw Meat - C&C gives
+ * every body of Animal affinity its meat (survival/loot.js isAnimal, DEFAULT_ANIMAL_MEAT).
  */
 export const HIDES = Object.freeze([
   hide('hide:rat', 655, 'Rat Pelt', 1, ICON_HAIR, [MOB.Rat], null, 'food:meat', 'leather:cured'),
-  hide('hide:bat', 656, 'Bat Leather', 2, ICON_HAIR, [MOB.GiantBat], null, 'food:meat', 'leather:cured'),
+  hide('hide:bat', 656, 'Bat Leather', 2, ICON_HAIR, [MOB.GiantBat, DEX.Bat], null, 'food:meat', 'leather:cured'),
   hide('hide:bear', 657, 'Bear Hide', 2, ICON_HAIR, [MOB.GrizzlyBear], 'part:tooth', 'food:meat', 'leather:cured'),
-  hide('hide:tiger', 658, 'Tiger Pelt', 3, ICON_HAIR, [MOB.SabertoothTiger], 'part:tooth', 'food:meat', 'leather:cured'),
-  hide('hide:spider', 659, 'Spider Silk', 3, ICON_WRAPPINGS, [MOB.Spider], 'part:venom', 'food:meat', null),
+  hide('hide:tiger', 658, 'Tiger Pelt', 3, ICON_HAIR, [MOB.SabertoothTiger, DEX.MountainLion], 'part:tooth', 'food:meat', 'leather:cured'),
+  hide('hide:spider', 659, 'Spider Silk', 3, ICON_WRAPPINGS, [MOB.Spider, DEX.BloodSpider], 'part:venom', 'food:meat', null),
   hide('hide:scorpion', 660, 'Scorpion Chitin', 4, ICON_SCALES, [MOB.GiantScorpion], 'part:stinger', 'food:meat', 'leather:hardened'),
   hide('hide:slaughterfish', 661, 'Slaughterfish Scales', 4, ICON_SCALES, [MOB.Slaughterfish], null, 'food:fish', 'leather:hardened'),
   hide('hide:harpy', 662, 'Harpy Feathers', 5, ICON_FEATHER, [MOB.Harpy], null, null, null),
-  hide('hide:dreugh', 663, 'Dreugh Shell', 5, ICON_SCALES, [MOB.Dreugh], null, null, 'leather:hardened'),
+  hide('hide:dreugh', 663, 'Dreugh Shell', 5, ICON_SCALES, [MOB.Dreugh, DEX.LandDreugh], null, null, 'leather:hardened'),
   hide('hide:dragonling', 664, 'Dragonling Scale', 6, ICON_SCALES, [MOB.Dragonling, MOB.DragonlingAlternate], 'part:dragonscale', null, 'leather:hardened'),
+  hide('hide:wolf', 681, 'Wolf Pelt', 2, ICON_HAIR, [DEX.Wolf, DEX.SnowWolf, DEX.Dog], 'part:tooth', 'food:meat', 'leather:cured'),
+  hide('hide:boar', 682, 'Boar Hide', 2, ICON_HAIR, [DEX.Boar], 'part:tooth', 'food:meat', 'leather:cured'),
+  hide('hide:mudcrab', 683, 'Mudcrab Chitin', 1, ICON_SCALES, [DEX.Mudcrab], null, 'food:meat', 'leather:cured'),
 ]);
-/** The hide a foe's body gives, by its MobileTypes value, or null for a body no knife takes a hide from. */
+/** The hide a foe's body gives, by its MobileTypes value (or, DEX-HIDES, Daggerfall Enemy Expansion's own id), or null for a
+ *  body no knife takes a hide from. */
 export const hideOfFoe = (mobileType) => (Number.isSafeInteger(mobileType) ? HIDES.find((h) => h.foes.includes(mobileType)) ?? null : null);
 /** Hunting's Bear Hide - the Ram Kit's (PROF0 25). */
 export const BEAR_HIDE = HIDES[2];
@@ -638,7 +664,7 @@ export const ICON_ECTOPLASM = Object.freeze([254, 39]);
  * THE APOTHECARIES' SIXTEEN (4.5: "the sixteen DFU ingredients that DFU's potion recipes need and no gathering route
  * yields (FACT, POTION_RECIPES) ... at a fifth of DFU's price in Marks, rounded up"): each DFU's own ingredient in its own
  * group (itemTemplatesData.js; withdrawn, DFU's item - profItems.js mintMaterialItem), in 4.5's order, `value` its counter
- * price - 4.5's own numbers, pinned equal to a fifth of itemTemplates.json's basePrice rounded up (test/prof12_law.test.js)
+ * price - 4.5's own numbers, pinned equal to a fifth of itemTemplates.json's basePrice rounded up (test/systems/prof12_law.test.js)
  * - and its tier its price's, as a body's part is (gemTierOfPrice). The Stores' family the Essences': DECIDED, the
  * alchemist's and the enchanter's goods share one filter (8's "Essences"), no new one.
  */
@@ -673,10 +699,10 @@ export const ESSENCE_TEMPLATES = Object.freeze([ARCANE_ESSENCE]);
  * PROF12 (9.3: "the brewing act at an alchemy station"): WHERE THE ALCHEMY STATION STANDS. DECIDED: 9.3 names a station
  * and no shop - so a home's `alchemy` station (HOME-STATIONS' first, its 50,000 licence; a hall member's as the others'), or
  * an ALCHEMIST's, open for trade (DFU's own potion seller, its insideOpenShop latch - AUDIT 29 D4's law), at every other
- * station's use fee: 50 gold a brew or a transmutation, the purse's. The service cannot see the station (as it cannot see
+ * station's use fee: 50 gold a brew or a transmutation, the purse's (CRAFT-PAYS: 25 since 2026-10-21, below). The service cannot see the station (as it cannot see
  * the forge, PROF0 23): the inputs are the Stores' and their units the bound.
  */
-export const ALCHEMY_FEE = 50;
+export const ALCHEMY_FEE = 25;   // CRAFT-PAYS (Professions-Arc.md section 48): 50 until 2026-10-21 - a brew is a bottle, not a blade; a forge's 50 on a 50-gold potion was the margin's whole
 /**
  * PROF12 (9.3: "Disenchanting (new, at any enchanting station)"): WHERE IT IS DONE. DECIDED: a home's `enchant` station
  * (HOME-STATIONS', its 200,000 licence; a hall member's) or a MAGES GUILD hall - the house of DFU's own item maker - at the
@@ -775,8 +801,9 @@ export const glintsMax = (tier) => Math.ceil(strikesFor(tier) / 2);
 /** A gem: 3% a strike on the glint (a Prospector's x1.1), on a confirmed pixel or dungeon only. */
 export const GEM_CHANCE = 0.03;
 export const PROSPECTOR_GEM = 1.1;
-/** Deep Delver's dungeon veins, x1.5. */
-export const DEEP_DELVER_MULT = 1.5;
+/** Deep Delver's dungeon veins, x2 - MINE-PERKS (Professions-Arc 43; it was x1.5: "50% more from the veins is kinda
+ *  meh"). */
+export const DEEP_DELVER_MULT = 2;
 /** Rough Stone cut at the rock: two make one (PROF0 4.5; Quarryman's 1 : 1 is the bench's, not the rock's). */
 export const CUT_RATIO = 2;
 /** The Pick-Axe's attribute pair (FORAGE0 14.4): (INT + AGI) / 2 - Foraging's average, the IL's Agility. */
@@ -897,8 +924,12 @@ export const SAW_RECIPES = Object.freeze(LOGS.map((l) => recipe(`saw:${woodOf(l.
   { station: 'workbench', per: 2, more: Object.freeze({ profession: 'logging', spec: 'timberwright', per: 3 }), xp: null })));
 /** PROF7 (PROF0 4.4, 4.5, 29): a hide cures to its leather at the tanning rack - two a leather, a Tanner's one (a unit
  *  of work two hides, and a Tanner's makes two); Spider Silk weaves to a Silk Bolt at the loom, three a bolt. The rack
- *  and the loom are Outfitting's one station. No XP: a hide's was its skinning's, as a log's was its fall's (PROF0 25). */
-export const CURE_RECIPES = Object.freeze(HIDES.filter((h) => h.cures).map((h) => recipe(`cure:${h.key.slice('hide:'.length)}`, /** @type {string} */ (h.cures), [[h.key, 2]],
+ *  and the loom are Outfitting's one station. No XP: a hide's was its skinning's, as a log's was its fall's (PROF0 25).
+ *  DEX-HIDES (FIELD BUGS 2026-10-20h): by the hide's tier, the ten's order kept - a leather's cures stand cheapest first,
+ *  as a chain plans them (chainLaw.js producersOf), so the Mudcrab Chitin's stands beside the Rat Pelt's. AUDIT FB1021
+ *  L2-1: the Bear Hide last of its tier - it is the Ram Kit's too, and a chain for Cured Leather spent every one before a
+ *  Wolf Pelt or a Boar Hide. */
+export const CURE_RECIPES = Object.freeze(HIDES.filter((h) => h.cures).sort((a, b) => a.tier - b.tier || Number(a === BEAR_HIDE) - Number(b === BEAR_HIDE)).map((h) => recipe(`cure:${h.key.slice('hide:'.length)}`, /** @type {string} */ (h.cures), [[h.key, 2]],
   { station: 'loom', more: Object.freeze({ profession: 'hunting', spec: 'tanner', per: 2, rank: 50 }), xp: null })));
 export const WEAVE_RECIPES = Object.freeze([recipe('weave:silk', SILK.key, [['hide:spider', 3]], { station: 'loom', xp: null })]);
 /** PROF11 (PROF0 4.5): Mortar a mix makes - "ten at a time". */
@@ -984,13 +1015,40 @@ export function craftXpCap(profession, ranks) {
   const past = Object.entries(ranks ?? {}).filter(([p, r]) => p !== own && BY_ID.get(p)?.kind === 'crafting' && r > JOURNEYMAN_RANK).length;
   return past >= CRAFTS_ABOVE_JOURNEYMAN ? xpForRank(JOURNEYMAN_RANK + 1) - 1 : PROF_XP_MAX;
 }
+/** CRAFT-LIMIT-SAID (FIELD BUGS 2026-10-18f; the Discord, "Smithing stuck at 50": "it is literally 1xp off of levelling
+ *  up but everything I craft gives me 0xp"): THE LIMIT AS IT STANDS OVER ONE CRAFT'S TRACK, for the words that say it -
+ *  `cap` the most it may hold (craftXpCap's, which the service's decisions bind), `room` what the track at `xp` can still
+ *  take under it (none at the cap, as none at Master), and `by` the crafts past Journeyman that hold it there, in the
+ *  Professions tab's order - empty where the limit does not hold it. `ranks` every track's rank, as craftXpCap's. A
+ *  gathering track is never held (3.2: "Gathering is unlimited" - no decision of the service caps one).
+ *  AUDIT FB1018f L5-2: and `rank` THE RANK IT IS HELD AT - the cap's (Journeyman's 50 under the limit, Master's where none
+ *  holds it), or the track's own where it stands past its cap: a third craft that crossed with another before AUDIT
+ *  FB1018f L5-1 made the limit one decision (nothing lowers a track) is held at its 60, never "at rank 50". */
+export function craftLimit(profession, ranks, xp) {
+  const own = trackOf(profession), cap = BY_ID.get(own)?.kind === 'crafting' ? craftXpCap(profession, ranks) : PROF_XP_MAX;
+  const by = cap < PROF_XP_MAX ? PROFESSIONS.filter((p) => p.kind === 'crafting' && p.id !== own && (ranks?.[p.id] ?? 0) > JOURNEYMAN_RANK).map((p) => p.id) : [];
+  return { cap, room: Math.max(0, cap - (Number(xp) || 0)), by, rank: rankOfXp(Math.max(cap, Number(xp) || 0)) };
+}
+/** CRAFT-LIMIT-SAID: craftLimit read off a character's track views as the service answers them (its state's `tracks`,
+ *  an act's `track` - `{ profession, xp }`), each rank the service's own (rankOfXp of its XP) - the client's way to the
+ *  very limit the service's decision binds. A discipline asked is its craft's. */
+export function craftLimitOf(tracks, profession) {
+  const list = [...(tracks ?? [])].filter((v) => v && typeof v.profession === 'string');
+  const own = list.find((v) => v.profession === trackOf(profession));
+  return craftLimit(profession, Object.fromEntries(list.map((v) => [v.profession, rankOfXp(Number(v.xp))])), own?.xp ?? 0);
+}
+/** CRAFT-LIMIT-SAID: WHAT AN ACT CREDITS - the XP it earns, never past the `room` its track has left, never below none:
+ *  the account service's decision, `MAX(0, MIN(earned, cap - held))`, in the craft's, the smelt's, the temper's, the brew's
+ *  and the disenchant's own INSERT (server-account/src/professions.js, alchemy.js), which a station says before the act
+ *  (ui/craftXpWords.js). */
+export const creditedXp = (earned, room) => Math.max(0, Math.min(Number(earned) || 0, room));
 
 // ─── PROF11: THE BUILDER AND THE FORTIFIER - SEAT2b'S TO CALL (PROF0 3.3; SEAT0 7.5) ───
 //
 // Masonry's two seat choices act on what SEAT2b builds - the fortification projects (SEAT0 7.5: each tier's materials
 // delivered to the seat's stockpile by writs) and a capture's tier down ("When the seat changes hands each drops one
 // tier") - and no fortification stands yet. So the law and its helpers stand here, pure and pinned
-// (test/prof11_law.test.js), for SEAT2b to call; which member's choice stands for a seat (a project's Builder, a
+// (test/net/prof11_law.test.js), for SEAT2b to call; which member's choice stands for a seat (a project's Builder, a
 // capture's Fortifier) is SEAT2b's to say. Both are chosen now - they cost nothing until a seat reads them.
 
 /** The Builder (3.3: "fortification projects need 10% less stone"): the share of a project's stone taken off, percent. */

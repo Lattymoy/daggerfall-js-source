@@ -5,7 +5,7 @@
   "old": "      if (!Array.isArray(m.f) || m.f.length > SIEGE_ROLL_MAX) return null;",
   "new": "      if (!Array.isArray(m.f)) return null;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "!siegeHp(r[2]) || r[1] > r[2] ||",
   "new": "!siegeHp(r[2]) ||",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -23,7 +23,7 @@
   "old": "      if (r.length === 5 && r[4] !== 1 && r[4] !== 2) return null;",
   "new": "      if (r.length === 5 && r[4] > 3) return null;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -32,7 +32,7 @@
   "old": "    case 'hp': return isBody(m.id) && siegeHp(m.h) && siegeHp(m.m) && m.h <= m.m ?",
   "new": "    case 'hp': return isBody(m.id) && siegeHp(m.h) && siegeHp(m.m) ?",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "    case 'fell': return isBody(m.id) && isBody(m.by) && (isId(m.id) || isId(m.by)) ?",
   "new": "    case 'fell': return isBody(m.id) && (isId(m.id) || isId(m.by)) ?",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "      const p = validPose(m.p);\n      return p ? { k: 'up', id: m.id, p } : null;",
   "new": "      const p = validPose(m.p);\n      return { k: 'up', id: m.id, p };",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "    case 'no': return typeof m.m === 'string' && m.m.length > 0 && m.m.length <= 120 ?",
   "new": "    case 'no': return typeof m.m === 'string' && m.m.length > 0 ?",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "(m.v === 1 ? m.b.length !== 0 : m.b.length < 3 || m.b.length > 4)",
   "new": "(m.v === 1 ? m.b.length !== 0 : m.b.length > 4)",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "siegeCode(x[0]) && intIn(x[1], 0, 20) && siegeCode(x[2])",
   "new": "siegeCode(x[0]) && intIn(x[1], 0, 60) && siegeCode(x[2])",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -86,7 +86,7 @@
   "old": "      if (!intIn(m.th, 0, 180) || !Number.isSafeInteger(m.s)",
   "new": "      if (!intIn(m.th, 0, 1000) || !Number.isSafeInteger(m.s)",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -95,7 +95,7 @@
   "old": "!Number.isSafeInteger(m.e) || m.e <= m.s) return null;",
   "new": "!Number.isSafeInteger(m.e)) return null;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -104,7 +104,7 @@
   "old": "      if (!Array.isArray(m.n) || m.n.length !== 3 || !m.n.every((v) => intIn(v, 0, SIEGE_ROOM_MAX))) return null;",
   "new": "      if (!Array.isArray(m.n) || !m.n.every((v) => intIn(v, 0, SIEGE_ROOM_MAX))) return null;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -113,7 +113,7 @@
   "old": "      if (!SIEGE_END_RESULTS.includes(m.r) || (m.a !== 0 && m.a !== 1)) return null;",
   "new": "      if (typeof m.r !== 'string' || (m.a !== 0 && m.a !== 1)) return null;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -122,241 +122,241 @@
   "old": "      if (m.rc !== undefined && (typeof m.rc !== 'string' || !SIEGE_RC_RE.test(m.rc))) return null;",
   "new": "      if (m.rc !== undefined && typeof m.rc !== 'string') return null;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-fold-roll-side",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "      for (const [id, hp, max, down, side] of g.f) roll[id] = { hp, max, down: down === 1, side: SIDE[side ?? 0] ?? null };",
   "new": "      for (const [id, hp, max, down] of g.f) roll[id] = { hp, max, down: down === 1, side: null };",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-fold-hp-down",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "down: g.h > 0 ? false : (was?.down ?? false)",
   "new": "down: was?.down ?? false",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-fold-fell-at",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "fellAt: { ...s.fellAt, [g.id]: now }, heardAt: now };",
   "new": "fellAt: s.fellAt, heardAt: now };",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-fold-up",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "      return { ...s, roll: { ...s.roll, [g.id]: { hp: was?.max ?? 0, max: was?.max ?? 0, down: false, side: was?.side ?? null } }, heardAt: now };",
   "new": "      return s;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-fold-receipt",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "    case 'end': return { ...s, end: { r: g.r, a: g.a }, receipt: g.rc ?? s.receipt, heardAt: now };",
   "new": "    case 'end': return { ...s, end: { r: g.r, a: g.a }, receipt: g.rc ?? null, heardAt: now };",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-fold-no",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "    case 'no': return { ...s, no: g.m, heardAt: now };",
   "new": "    case 'no': return s;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-clock",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "  const t = Math.max(0, Math.ceil(ms / 1000)), ss",
   "new": "  const t = Math.max(0, Math.floor(ms / 1000)), ss",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-mark-contest",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "  if (by && by !== held && raise > 0) return `~ ${raise}/20`;",
   "new": "  if (by && raise > 0) return `~ ${raise}/20`;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-mark-side",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "  return held === 1 ? `^ ${tagOf(att)}` : held === 2 ? `o ${tagOf(def)}` : '-';",
   "new": "  return held === 1 ? `^ ${tagOf(att)}` : `o ${tagOf(def)}`;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-bar-joined",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "now < s.startMs ? `joined in ${siegeClockText(s.startMs - now)}` : siegeClockText(s.endMs - now);",
   "new": "siegeClockText(s.endMs - now);",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-bar-open",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "    throne = `THRONE ${held >= rule.banners && !barred ? 'OPEN ' : ''}${pct}% (${rule.banners} of ${s.banners.length}${s.gate ? ' + the Gatehouse' : ''})`;",
   "new": "    throne = `THRONE ${pct}% (${rule.banners} of ${s.banners.length}${s.gate ? ' + the Gatehouse' : ''})`;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-bar-pct",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "    const pct = Math.min(100, Math.floor((100 * s.throne) / rule.holdS));",
   "new": "    const pct = Math.min(100, Math.floor((100 * s.throne) / 180));",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-bar-tourney",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "  if (battle.kind === 'siege') {\n    const rule",
   "new": "  if (battle.kind !== 'nothing') {\n    const rule",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-sides",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "  for (const f of Object.values(s.roll)) if (f.side) n[f.side][f.down ? 1 : 0]++;",
   "new": "  for (const f of Object.values(s.roll)) if (f.side) n[f.side][0]++;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-self-watch",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "  if (watching) return [`Spectating - ${s.counts[2] ?? 0} of ${SIEGE_SPECTATORS_MAX}`];",
   "new": "  if (watching) return [];",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-self-bars",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "  const bars = f.max > 0 ? Math.round((10 * f.hp) / f.max) : 0;",
   "new": "  const bars = 10;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-self-wave",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "  if (f.down) out.push(",
   "new": "  if (false) out.push(",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-self-tier",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "siegeWaveMs({ tier, works: { walls: s.walls } }, f.side)",
   "new": "siegeWaveMs({ tier: 'palace', works: { walls: s.walls } }, f.side)",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-title-forfeit",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "  if (end.r === 'forfeit') return `${A} NEVER CAME - ${D} HOLDS ${seat}`;",
   "new": "  if (end.r === 'nothing') return `${A} NEVER CAME - ${D} HOLDS ${seat}`;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-title-absent",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "  if (end.r === 'absent') return `NEITHER SIDE CAME - ${D} KEEPS ${seat}`;",
   "new": "  if (end.r === 'nothing') return `NEITHER SIDE CAME - ${D} KEEPS ${seat}`;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-title-tourney",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "    if (end.r === 'defend') return `${D} WINS THE TOURNEY FOR ${seat}`;",
   "new": "    if (end.r === 'nothing') return `${D} WINS THE TOURNEY FOR ${seat}`;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-result-line",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "  const t = Math.max(0, Math.round(((s.heardAt || s.startMs) - s.startMs) / 1000));",
   "new": "  const t = 0;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-honour-spent",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "  if (honours.spent) return",
   "new": "  if (false) return",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-honour-none",
-  "file": "src/net/siegeLink.js",
-  "old": "  if (!honours) return 'No Honours this battle:",
-  "new": "  if (honours === 7) return 'No Honours this battle:",
+  "file": "src/net/siege/siegeLink.js",
+  "old": "if (!honours) return 'No Honors this battle:",
+  "new": "if (honours === 7) return 'No Honors this battle:",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-model-claim",
-  "file": "src/net/siegeLink.js",
+  "file": "src/net/siege/siegeLink.js",
   "old": "    claim: !watching && honours === undefined && claimable,",
   "new": "    claim: honours === undefined && claimable,",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-model-kept",
-  "file": "src/net/siegeLink.js",
-  "old": "honours === undefined ? (claimable ? 'Your receipt is kept - claim it for your Honours.' : '')",
+  "file": "src/net/siege/siegeLink.js",
+  "old": "honours === undefined ? (claimable ? 'Your receipt is saved. Claim it for your Honors.' : '')",
   "new": "honours === undefined ? ''",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -365,7 +365,7 @@
   "old": "  const put = (k, text) => { if (said.get(k) !== text) { said.set(k, text); parts[k].textContent = text; } };",
   "new": "  const put = (k, text) => { if (said.get(k) === text) { said.set(k, text); parts[k].textContent = text; } };",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -374,7 +374,7 @@
   "old": "      parts.card.style.display = m.card ? '' : 'none';",
   "new": "      parts.card.style.display = '';",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -383,7 +383,7 @@
   "old": "        parts.claim.style.display = m.card.claim ? '' : 'none';",
   "new": "        parts.claim.style.display = '';",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -392,88 +392,88 @@
   "old": "    hide() { if (root) root.style.display = 'none'; },",
   "new": "    hide() { root?.remove?.(); },",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-claims-unsigned",
-  "file": "src/net/siegeClaims.js",
+  "file": "src/net/siege/siegeClaims.js",
   "old": "  const live = (r, nowS) => { const c = read(r); return !!c && c.signed && c.e > nowS; };",
   "new": "  const live = (r, nowS) => { const c = read(r); return !!c && c.e > nowS; };",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-claims-expired",
-  "file": "src/net/siegeClaims.js",
+  "file": "src/net/siege/siegeClaims.js",
   "old": "  const live = (r, nowS) => { const c = read(r); return !!c && c.signed && c.e > nowS; };",
   "new": "  const live = (r, nowS) => { const c = read(r); return !!c && c.signed; };",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-claims-once",
-  "file": "src/net/siegeClaims.js",
+  "file": "src/net/siege/siegeClaims.js",
   "old": "      if (!live(r, nowS) || kept.includes(r)) return false;",
   "new": "      if (!live(r, nowS)) return false;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-claims-bound",
-  "file": "src/net/siegeClaims.js",
+  "file": "src/net/siege/siegeClaims.js",
   "old": "      if (kept.length > max) kept = kept.slice(-max);",
   "new": "      if (false) kept = kept.slice(-max);",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-claims-retry",
-  "file": "src/net/siegeClaims.js",
+  "file": "src/net/siege/siegeClaims.js",
   "old": "      if (busy || (!force && now - offeredAt < SIEGE_CLAIM_RETRY_MS)) return 0;",
   "new": "      if (busy) return 0;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-claims-me",
-  "file": "src/net/siegeClaims.js",
+  "file": "src/net/siege/siegeClaims.js",
   "old": "          if (!mine(read(r), who)) continue;",
   "new": "          if (false) continue;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-claims-twice",
-  "file": "src/net/siegeClaims.js",
+  "file": "src/net/siege/siegeClaims.js",
   "old": "  if (r?.error === 'honours-twice' || r?.error === 'battle-none' || r?.error === 'battle-void') return true;",
   "new": "  if (r?.error === 'battle-none' || r?.error === 'battle-void') return true;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-claims-mend",
-  "file": "src/net/siegeClaims.js",
+  "file": "src/net/siege/siegeClaims.js",
   "old": "|| r?.error === 'battle-void') return true;   // AUDIT-SEATS S3: void at its Turning\n  if (r?.error === 'receipt') return !MENDABLE.includes(r?.why);",
   "new": "|| r?.error === 'battle-void') return true;   // AUDIT-SEATS S3: void at its Turning\n  if (r?.error === 'receipt') return true;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-claims-said",
-  "file": "src/net/siegeClaims.js",
+  "file": "src/net/siege/siegeClaims.js",
   "old": "          onClaimed?.(a, r);   // AUDIT-SEATS C7",
   "new": "          void a;   // AUDIT-SEATS C7",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -482,7 +482,7 @@
   "old": "  const throne = step(face.at, face.out, SIEGE_FIELD.thronePaceM);",
   "new": "  const throne = face.at;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -491,7 +491,7 @@
   "old": "export const SIEGE_FIELD = Object.freeze({ thronePaceM: 1.5, defendCampM: 12,",
   "new": "export const SIEGE_FIELD = Object.freeze({ thronePaceM: 1.5, defendCampM: 8,",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -500,7 +500,7 @@
   "old": "    if (d > far) { far = d; gate = m; }",
   "new": "    if (d > far && !gate) { far = d; gate = m; }",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -509,7 +509,7 @@
   "old": "    attack = step(gate, inward, -SIEGE_FIELD.attackCampM);",
   "new": "    attack = step(gate, inward, SIEGE_FIELD.attackCampM);",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -518,7 +518,7 @@
   "old": "    gateBanner = step(centre, away, SIEGE_FIELD.openGateM);",
   "new": "    gateBanner = step(throne, away, SIEGE_FIELD.openGateM);",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -527,7 +527,7 @@
   "old": "  const at = noticeBoardIndex(boards, bounty, centre);",
   "new": "  const at = noticeBoardIndex(boards, new Set(), centre);",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -536,7 +536,7 @@
   "old": "  const market = at >= 0 && boards[at].box.length >= 6 ? boxMid(boards[at].box) : centre;",
   "new": "  const market = at >= 0 && boards[at].box.length >= 6 ? boxMid(boards[0].box) : centre;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -545,7 +545,7 @@
   "old": "      if (area > big) { big = area; temple = step(f.at, f.out, SIEGE_FIELD.templePaceM); }",
   "new": "      if (big < 0) { big = area; temple = step(f.at, f.out, SIEGE_FIELD.templePaceM); }",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -554,7 +554,7 @@
   "old": "  if (tier === 'crown') banners.push(step(face.at, face.out, SIEGE_FIELD.squareM));",
   "new": "  if (tier === 'nothing') banners.push(step(face.at, face.out, SIEGE_FIELD.squareM));",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -563,7 +563,7 @@
   "old": "  return (cx - mx) * ox + (cz - mz) * oz < 0 ? [-ox, -oz] : [ox, oz];",
   "new": "  return false ? [-ox, -oz] : [ox, oz];",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -572,7 +572,7 @@
   "old": "Math.round((499 - py) * PIXEL_UNITS + p[1] * SIEGE_UNITS_PER_M)",
   "new": "Math.round((500 - py) * PIXEL_UNITS + p[1] * SIEGE_UNITS_PER_M)",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -581,142 +581,142 @@
   "old": "    for (let i = 0; i < count; i++) if (list[i]?.buildingType === type) out.push(makeKey(b.x ?? 0, b.y ?? 0, i));",
   "new": "    for (let i = 0; i < list.length; i++) if (list[i]?.buildingType === type) out.push(makeKey(b.x ?? 0, b.y ?? 0, i));",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-ses-old",
-  "file": "src/net/siegeSession.js",
+  "file": "src/net/siege/siegeSession.js",
   "old": "      if (!relayOk()) { say(SIEGE_SESSION_TEXT.old); return false; }",
   "new": "      if (false) { say(SIEGE_SESSION_TEXT.old); return false; }",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-ses-retry",
-  "file": "src/net/siegeSession.js",
+  "file": "src/net/siege/siegeSession.js",
   "old": "s.retryAt = nowMs() + passRetryMs(s.tries);",
   "new": "s.retryAt = nowMs();",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-ses-mint",
-  "file": "src/net/siegeSession.js",
+  "file": "src/net/siege/siegeSession.js",
   "old": "    online.mintSiegePass = s.mint;",
   "new": "    online.mintSiegePass = null;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-ses-in-once",
-  "file": "src/net/siegeSession.js",
+  "file": "src/net/siege/siegeSession.js",
   "old": "      else if (!s.sentIn) s.sentIn = online.sendSiege({ k: 'in' });",
   "new": "      else online.sendSiege({ k: 'in' });",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-ses-reconnect",
-  "file": "src/net/siegeSession.js",
+  "file": "src/net/siege/siegeSession.js",
   "old": "      if (!open) s.sentIn = false;",
   "new": "      if (false) s.sentIn = false;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-ses-window",
-  "file": "src/net/siegeSession.js",
+  "file": "src/net/siege/siegeSession.js",
   "old": "      if (s.window && now >= s.window) { api.leave(); return; }",
   "new": "      if (false) { api.leave(); return; }",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-ses-room",
-  "file": "src/net/siegeSession.js",
+  "file": "src/net/siege/siegeSession.js",
   "old": "      if (!s || room !== s.room) return;",
   "new": "      if (!s) return;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-ses-back",
-  "file": "src/net/siegeSession.js",
+  "file": "src/net/siege/siegeSession.js",
   "old": "      if (g.k === 'back') movePlayer(g.p);",
   "new": "      if (false) movePlayer(g.p);",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-ses-up-me",
-  "file": "src/net/siegeSession.js",
+  "file": "src/net/siege/siegeSession.js",
   "old": "      if (g.k === 'up' && g.id === online.id && g.p) movePlayer(g.p);",
   "new": "      if (g.k === 'up' && g.p) movePlayer(g.p);",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-ses-keep",
-  "file": "src/net/siegeSession.js",
+  "file": "src/net/siege/siegeSession.js",
   "old": "      if (g.k === 'end' && g.rc && readSiegeReceipt(g.rc) && claims) {",
   "new": "      if (false) {",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-ses-foe-side",
-  "file": "src/net/siegeSession.js",
+  "file": "src/net/siege/siegeSession.js",
   "old": "      return !!f && !!f.side && f.side !== s.side && !f.down;",
   "new": "      return !!f && !f.down;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-ses-foe-down",
-  "file": "src/net/siegeSession.js",
+  "file": "src/net/siege/siegeSession.js",
   "old": "      return !!f && !!f.side && f.side !== s.side && !f.down;",
   "new": "      return !!f && !!f.side && f.side !== s.side;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-ses-watch",
-  "file": "src/net/siegeSession.js",
+  "file": "src/net/siege/siegeSession.js",
   "old": "      if (!s || s.side === 'watch') return false;\n      if (isSiegeNpcId(id))",
   "new": "      if (!s) return false;\n      if (isSiegeNpcId(id))",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-ses-heal",
-  "file": "src/net/siegeSession.js",
+  "file": "src/net/siege/siegeSession.js",
   "old": "      if (!f || (heal ? f.side !== s.side : !api.isFoe(to))) return false;",
   "new": "      if (!f || (heal ? false : !api.isFoe(to))) return false;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
   "name": "SEAT2a4-ses-refuse-leave",
-  "file": "src/net/siegeSession.js",
+  "file": "src/net/siege/siegeSession.js",
   "old": "      say(SIEGE_SESSION_TEXT.refused(r?.text ?? 'it is not open'));\n      api.leave({ quiet: true });",
   "new": "      say(SIEGE_SESSION_TEXT.refused(r?.text ?? 'it is not open'));",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -725,7 +725,7 @@
   "old": "    if (isBattleRoom(this.room) && this._siegePass) frame.sp = this._siegePass;",
   "new": "    if (this._siegePass) frame.sp = this._siegePass;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -734,7 +734,7 @@
   "old": "      if (room === this.room && isBattleRoom(room) && this.mintSiegePass) {",
   "new": "      if (room === this.room && this.mintSiegePass) {",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -743,7 +743,7 @@
   "old": "    if (!g || !isBattleRoom(this.room) || !(isRoyalRoom(this.room) ? this.royalOk : this.siegeOk) || this.status !== 'open' || !this._ws) return false;",
   "new": "    if (!g || !isBattleRoom(this.room) || this.status !== 'open' || !this._ws) return false;",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -752,7 +752,7 @@
   "old": "      if (!primary || !isBattleRoom(room)) return;   // CROWN1 part two: a Royal Tourney's room's words too\n      const g = validSiegeOut(m);",
   "new": "      if (!primary) return;\n      const g = validSiegeOut(m);",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  },
  {
@@ -761,7 +761,7 @@
   "old": "...(r?.why ? { why: r.why } : {}), text: accountRefusalText(r?.error) };   // the rung",
   "new": "text: accountRefusalText(r?.error) };   // the rung",
   "tests": [
-   "test/seat2a_siege_play.test.js"
+   "test/net/siege/seat2a_siege_play.test.js"
   ]
  }
 ]

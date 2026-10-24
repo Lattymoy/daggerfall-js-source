@@ -1,110 +1,110 @@
 [
   {
     "name": "D23A-automap-draws-no-party",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "        party: partyHere(),   // DISC23-A\n",
     "new": "        party: [],\n",
     "tests": [
-      "test/disc23a_party_plans.test.js"
+      "test/ui/ink/disc23a_party_plans.test.js"
     ]
   },
   {
     "name": "D23A-every-storey",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "      if (!solidOn && sheetAt(f, m.feet[1]) !== index) continue;\n",
     "new": "",
     "tests": [
-      "test/disc23a_party_plans.test.js"
+      "test/ui/ink/disc23a_party_plans.test.js"
     ]
   },
   {
     "name": "D23A-plan-y-with-z",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "      out.push({ x, z, y: m.feet[1], yaw: m.yaw, name: m.name });",
     "new": "      out.push({ x, z: -z, y: m.feet[1], yaw: m.yaw, name: m.name });",
     "tests": [
-      "test/disc23a_party_plans.test.js"
+      "test/ui/ink/disc23a_party_plans.test.js"
     ]
   },
   {
     "name": "D23A-no-strip-dot",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "      paintFloorStripParty(ctx, strip, partyStoreys(), PARTY_MARK_CSS);   // DISC23-A: and which floors they are on\n",
     "new": "",
     "tests": [
-      "test/disc23a_party_plans.test.js"
+      "test/ui/ink/disc23a_party_plans.test.js"
     ]
   },
   {
     "name": "D23A-breathes-only-here",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "    breathes() { return !!entranceHere() || echoesBreathe() || readPartyBodies(deps.party).length > 0",
     "new": "    breathes() { return !!entranceHere() || echoesBreathe() || partyHere().length > 0",
     "tests": [
-      "test/disc23a_party_plans.test.js"
+      "test/ui/ink/disc23a_party_plans.test.js"
     ]
   },
   {
     "name": "D23A-no-party-hover",
-    "file": "src/ui/automapSheet.js",
+    "file": "src/ui/automap/automapSheet.js",
     "old": "          if ((x - px) ** 2 + (y - py) ** 2 <= MARK_REACH * MARK_REACH) return { label: m.name, cursor: '' };\n",
     "new": "",
     "tests": [
-      "test/disc23a_party_plans.test.js"
+      "test/ui/ink/disc23a_party_plans.test.js"
     ]
   },
   {
     "name": "D23A-town-draws-no-party",
-    "file": "src/ui/townSheet.js",
+    "file": "src/ui/town/townSheet.js",
     "old": "        party: partyOnSheet(),   // DISC23-A\n",
     "new": "        party: [],\n",
     "tests": [
-      "test/disc23a_party_plans.test.js"
+      "test/ui/ink/disc23a_party_plans.test.js"
     ]
   },
   {
     "name": "D23A-town-z-down",
-    "file": "src/ui/townSheet.js",
+    "file": "src/ui/town/townSheet.js",
     "old": "x: m.feet[0] / WORLD_PER_PX, y: sheetY(h, m.feet[2] / WORLD_PER_PX)",
     "new": "x: m.feet[0] / WORLD_PER_PX, y: m.feet[2] / WORLD_PER_PX",
     "tests": [
-      "test/disc23a_party_plans.test.js"
+      "test/ui/ink/disc23a_party_plans.test.js"
     ]
   },
   {
     "name": "D23A-town-never-breathes",
-    "file": "src/ui/townSheet.js",
+    "file": "src/ui/town/townSheet.js",
     "old": "      return readPartyBodies(deps.party).length > 0 || (!!deps.homesVersion",
     "new": "      return false || (!!deps.homesVersion",
     "tests": [
-      "test/disc23a_party_plans.test.js"
+      "test/ui/ink/disc23a_party_plans.test.js"
     ]
   },
   {
     "name": "D23A-caret-facing-lost",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "    paintCaret(ctx, m.x, m.y, m.yaw ?? 0, { fill: pen.fill, halo: pen.halo });",
     "new": "    paintCaret(ctx, m.x, m.y, 0, { fill: pen.fill, halo: pen.halo });",
     "tests": [
-      "test/disc23a_party_plans.test.js"
+      "test/ui/ink/disc23a_party_plans.test.js"
     ]
   },
   {
     "name": "D23A-no-name",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "    ctx.fillText(m.name, m.x, ly);\n",
     "new": "",
     "tests": [
-      "test/disc23a_party_plans.test.js"
+      "test/ui/ink/disc23a_party_plans.test.js"
     ]
   },
   {
     "name": "D23A-party-over-player-automap",
-    "file": "src/ui/inkAutomap.js",
+    "file": "src/ui/ink/inkAutomap.js",
     "old": "  // DISC23-A: the party members on this storey, under the player's own caret\n  if (opts.party?.length && opts.partyFill) {",
     "new": "  // DISC23-A: the party members on this storey, under the player's own caret\n  if (opts.party?.length && opts.partyFill && false) {",
     "tests": [
-      "test/disc23a_party_plans.test.js"
+      "test/ui/ink/disc23a_party_plans.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    if (!Number.isFinite(x) || !Number.isFinite(y) || !Number.isFinite(z)) continue;\n",
     "new": "",
     "tests": [
-      "test/disc23a_party_plans.test.js"
+      "test/ui/ink/disc23a_party_plans.test.js"
     ]
   },
   {
@@ -122,25 +122,25 @@
     "old": "name: String(r.name ?? '').trim() || PARTY_LEGEND_TEXT, feet: [x, y, z]",
     "new": "name: String(r.name ?? '').trim(), feet: [x, y, z]",
     "tests": [
-      "test/disc23a_party_plans.test.js"
+      "test/ui/ink/disc23a_party_plans.test.js"
     ]
   },
   {
     "name": "D23A-door-drops-party",
-    "file": "src/ui/automapDoor.js",
+    "file": "src/ui/automap/automapDoor.js",
     "old": "        party: deps.party ?? null,   // DISC23-A: the party members whose bodies stand in this level (the classic 3D arm ignores it)\n",
     "new": "",
     "tests": [
-      "test/disc23a_party_plans.test.js"
+      "test/ui/ink/disc23a_party_plans.test.js"
     ]
   },
   {
     "name": "D23A-town-door-drops-party",
-    "file": "src/ui/townMapDoor.js",
-    "old": "        party: deps.townParty ?? null,   // DISC23-A: the party in these streets, feet in the location's frame (the classic window ignores it)\n",
+    "file": "src/ui/town/townMapDoor.js",
+    "old": "    party: deps.townParty ?? null,   // DISC23-A: the party in these streets, feet in the location's frame (the classic window ignores it)\n",
     "new": "",
     "tests": [
-      "test/disc23a_party_plans.test.js"
+      "test/ui/ink/disc23a_party_plans.test.js"
     ]
   }
 ]

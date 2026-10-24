@@ -2,10 +2,12 @@
 // shipped: Daggerfall's Privateer's Hold), read off the CONFIGURED cell exactly as the classic start reads it, so a
 // custom start cell moves it with the start. PH1 (worldModes.js, the online death's in-place respawn) asks it here;
 // world.js's D-ONLINE2 respawn and its ONLINE-UNDERGROUND-LOAD1 load read the same two keys inline (pinned there by
-// text). HOLD-SOLO (FIELD BUGS 2026-10-07b, the room it never shares) asks the SHIPPED cell's (isTutorialHold, below).
-import { getInt } from './settings.js';
-import { SETTINGS_DEFAULTS } from './settingsDefaults.js';
+// text). HOLD-SOLO (FIELD BUGS 2026-10-07b) took the shipped cell's dungeon out of the shared world; HOLD-SHARED
+// (2026-10-12) put it back, and nothing here keys a room. HOLD-ONCE (2026-10-12) asks isPrivateersHold, below: the Hold
+// itself by its map id, never the configured cell.
+import { getInt } from './settings/settings.js';
 import { longitudeLatitudeToMapPixel } from '../formats/mapsFile.js';
+import { PRIVATEERS_HOLD_MAP_ID } from '../world/dungeon/dungeonTextures.js';
 
 /** A map pixel ({ x, y }) is the classic start's cell. */
 export const isStartCell = (px) => !!px && px.x === getInt('Startup', 'StartCellX') && px.y === getInt('Startup', 'StartCellY');
@@ -19,13 +21,10 @@ function pixelOf(loc) {
 /** A location stands on the classic start's cell. */
 export const isStartDungeon = (loc) => isStartCell(pixelOf(loc));
 
-/** AUDIT FB1007b H1: the classic start's cell as SHIPPED (settings.cfg's own 109/158). */
-export const SHIPPED_START_CELL = Object.freeze({ x: Number(SETTINGS_DEFAULTS.Startup.StartCellX), y: Number(SETTINGS_DEFAULTS.Startup.StartCellY) });
+/** HOLD-ONCE: a location is Daggerfall's Privateer's Hold - by its map id, so a custom start cell (a setting) moves
+ *  the classic start and PH1 but never which dungeon is the Hold. */
+export const isPrivateersHold = (loc) => ((loc?.mapTableData?.mapId ?? 0) >>> 0) === PRIVATEERS_HOLD_MAP_ID;
 
-/** AUDIT FB1007b H1: THE DUNGEON NO ONE SHARES is the shipped start's - Daggerfall's Privateer's Hold - never a player's
- *  own start cell: that is a setting (the settings screen, the New Game pane), and online a setting that keyed no room
- *  took any dungeon a player named out of the shared world, fresh at every entry and its loot rolled anew. */
-export function isTutorialHold(loc) {
-  const px = pixelOf(loc);
-  return !!px && px.x === SHIPPED_START_CELL.x && px.y === SHIPPED_START_CELL.y;
-}
+/** HOLD-ONCE: the word at a way back into the Hold, refused online. */
+export const HOLD_ONCE_TEXT = 'You cannot go back into Privateer\'s Hold.';
+

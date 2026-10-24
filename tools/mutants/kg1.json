@@ -1,0 +1,884 @@
+[
+  {
+    "name": "KG1-cols",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_COLS = 15;",
+    "new": "export const KG_COLS = 16;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-zone-top",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_ZONE_TOP = 3;",
+    "new": "export const KG_ZONE_TOP = 2;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-fire-bite",
+    "file": "src/net/kingsGambit.js",
+    "old": "Object.freeze({ fire: 8, spikes: 6, poison: 5 })",
+    "new": "Object.freeze({ fire: 9, spikes: 6, poison: 5 })",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-max-hazards",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_MAX_HAZARDS = 14;",
+    "new": "export const KG_MAX_HAZARDS = 13;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-map-tries",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_MAP_TRIES = 30;",
+    "new": "export const KG_MAP_TRIES = 29;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-playable-share",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_PLAYABLE_SHARE = 0.97;",
+    "new": "export const KG_PLAYABLE_SHARE = 0.98;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-min-cost",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_MIN_COST = 6;",
+    "new": "export const KG_MIN_COST = 7;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-ranged-cost",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_RANGED_COST_FACTOR = 1.35;",
+    "new": "export const KG_RANGED_COST_FACTOR = 1.3;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-ranged-damage",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_RANGED_DAMAGE_FACTOR = 0.75;",
+    "new": "export const KG_RANGED_DAMAGE_FACTOR = 0.8;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-king-hp",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_KING_HP = 70;",
+    "new": "export const KG_KING_HP = 71;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-class-level",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_CLASS_LEVEL = 6;",
+    "new": "export const KG_CLASS_LEVEL = 7;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-ranged-classes",
+    "file": "src/net/kingsGambit.js",
+    "old": "Object.freeze([128, 131, 141, 142]);",
+    "new": "Object.freeze([128, 131, 141]);",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-actions",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_ACTIONS_PER_TURN = 2;",
+    "new": "export const KG_ACTIONS_PER_TURN = 3;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-potion-heal",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_POTION_HEAL = 30;",
+    "new": "export const KG_POTION_HEAL = 29;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-move-range",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_MOVE_RANGE = 3;",
+    "new": "export const KG_MOVE_RANGE = 4;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-ranged-range",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_RANGED_RANGE = 4;",
+    "new": "export const KG_RANGED_RANGE = 5;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-sight-samples",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_SIGHT_SAMPLES = 4;",
+    "new": "export const KG_SIGHT_SAMPLES = 3;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-blow-low",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_BLOW_LOW = 0.8;",
+    "new": "export const KG_BLOW_LOW = 0.75;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-autofill-ranged",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_AUTOFILL_RANGED = 2;",
+    "new": "export const KG_AUTOFILL_RANGED = 3;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-autofill-lean",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_AUTOFILL_LEAN = 0.5;",
+    "new": "export const KG_AUTOFILL_LEAN = 0.4;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-atk-half-up",
+    "file": "src/net/kingsGambit.js",
+    "old": "const atk = Math.max(1, roundToInt(f32(",
+    "new": "const atk = Math.max(1, Math.round(f32(",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-hp-rounded",
+    "file": "src/net/kingsGambit.js",
+    "old": "Math.max(1, Math.trunc((row.minHealth + row.maxHealth) / 2))",
+    "new": "Math.max(1, Math.round((row.minHealth + row.maxHealth) / 2))",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-king-costs",
+    "file": "src/net/kingsGambit.js",
+    "old": "cost: king ? 0 : Math.max(KG_MIN_COST, roundToInt(worth))",
+    "new": "cost: king ? 1 : Math.max(KG_MIN_COST, roundToInt(worth))",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-monsters-ranged",
+    "file": "src/net/kingsGambit.js",
+    "old": "    if (id < 128) ranged = row.hasRangedAttack1 === true;",
+    "new": "    if (id < 128) ranged = true;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-every-calling",
+    "file": "src/net/kingsGambit.js",
+    "old": "    else if (KG_RANGED_CLASSES.includes(id)) ranged = true;\n    else continue;",
+    "new": "    else ranged = true;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-sort-no-name",
+    "file": "src/net/kingsGambit.js",
+    "old": "a.cost - b.cost || ordinal(a.name, b.name) || a.id - b.id",
+    "new": "a.cost - b.cost || a.id - b.id",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-dragonlings-by-id",
+    "file": "src/net/kingsGambit.js",
+    "old": "a.cost - b.cost || ordinal(a.name, b.name) || a.id - b.id",
+    "new": "a.cost - b.cost || ordinal(a.name, b.name) || b.id - a.id",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-army-thirteen",
+    "file": "src/net/kingsGambit.js",
+    "old": "  if (ids.length > KG_MAX_UNITS) return 'units';",
+    "new": "  if (ids.length >= KG_MAX_UNITS) return 'units';",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-army-points",
+    "file": "src/net/kingsGambit.js",
+    "old": "  return armyCost(ids) > budget ? 'points' : null;",
+    "new": "  return armyCost(ids) >= budget ? 'points' : null;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-recruit-room",
+    "file": "src/net/kingsGambit.js",
+    "old": "  return !!u && army.length < KG_MAX_UNITS && armyCost(army) + u.cost <= budget;",
+    "new": "  return !!u && army.length <= KG_MAX_UNITS && armyCost(army) + u.cost <= budget;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-autofill-tie",
+    "file": "src/net/kingsGambit.js",
+    "old": "    if (v.cost > u.cost) u = v;",
+    "new": "    if (v.cost >= u.cost) u = v;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-autofill-lean-first",
+    "file": "src/net/kingsGambit.js",
+    "old": "if (out.filter((id) => rosterUnit(id)?.ranged).length < KG_AUTOFILL_RANGED && f32(nextDouble(rand32)) < f32(KG_AUTOFILL_LEAN)) {",
+    "new": "if (f32(nextDouble(rand32)) < f32(KG_AUTOFILL_LEAN) && out.filter((id) => rosterUnit(id)?.ranged).length < KG_AUTOFILL_RANGED) {",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-autofill-unspent",
+    "file": "src/net/kingsGambit.js",
+    "old": "    money -= u.cost;\n",
+    "new": "",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-no-mirror",
+    "file": "src/net/kingsGambit.js",
+    "old": "    tiles[cellIndex(KG_COLS - 1 - c, KG_ROWS - 1 - r)] = t;\n",
+    "new": "",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-wall-last-column",
+    "file": "src/net/kingsGambit.js",
+    "old": "  if (c >= 1 && c <= KG_COLS - 2 && r >= KG_ZONE_TOP",
+    "new": "  if (c >= 1 && c <= KG_COLS - 1 && r >= KG_ZONE_TOP",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-wall-first-column",
+    "file": "src/net/kingsGambit.js",
+    "old": "  if (c >= 1 && c <= KG_COLS - 2 && r >= KG_ZONE_TOP",
+    "new": "  if (c >= 0 && c <= KG_COLS - 2 && r >= KG_ZONE_TOP",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-wall-on-anything",
+    "file": "src/net/kingsGambit.js",
+    "old": " && tiles[cellIndex(c, r)] === KG_TILE.floor) setTile(tiles, c, r, KG_TILE.wall);",
+    "new": ") setTile(tiles, c, r, KG_TILE.wall);",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-chunk-shape-3",
+    "file": "src/net/kingsGambit.js",
+    "old": "    else if (shape === 3) { placeWallCell(tiles, c + 1, r); placeWallCell(tiles, c, r + 1); }",
+    "new": "    else if (shape === 3) { placeWallCell(tiles, c + 1, r); }",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-chunk-rows",
+    "file": "src/net/kingsGambit.js",
+    "old": "const c = rand(rand32, 1, 14), r = rand(rand32, 3, 7), shape = rand(rand32, 0, 5);",
+    "new": "const c = rand(rand32, 1, 14), r = rand(rand32, 3, 8), shape = rand(rand32, 0, 5);",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-pillar-spacing",
+    "file": "src/net/kingsGambit.js",
+    "old": "for (let c = 1; c < 14; c += 3) setTile(tiles, c, r, KG_TILE.pillar);",
+    "new": "for (let c = 1; c < 14; c += 4) setTile(tiles, c, r, KG_TILE.pillar);",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-guard-doorway",
+    "file": "src/net/kingsGambit.js",
+    "old": "      const k = rand(rand32, 1, 4);",
+    "new": "      const k = rand(rand32, 1, 5);",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-guard-post",
+    "file": "src/net/kingsGambit.js",
+    "old": "      setTile(tiles, 5, 6, KG_TILE.wall);",
+    "new": "      setTile(tiles, 6, 6, KG_TILE.wall);",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-moat-bridge",
+    "file": "src/net/kingsGambit.js",
+    "old": "      const k = rand(rand32, 2, 6);",
+    "new": "      const k = rand(rand32, 2, 7);",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-head-unchecked",
+    "file": "src/net/kingsGambit.js",
+    "old": "  if (dist[cellIndex(kc, KG_ROWS - 1 - kr)] >= KG_UNREACHABLE) return false;\n",
+    "new": "",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-hazard-on-centre",
+    "file": "src/net/kingsGambit.js",
+    "old": "    if ((c !== mc || r !== mr) && freeForHazard(board, c, r) && freeForHazard(board, mc, mr)) {",
+    "new": "    if (freeForHazard(board, c, r) && freeForHazard(board, mc, mr)) {",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-hazard-mirror-unchecked",
+    "file": "src/net/kingsGambit.js",
+    "old": "    if ((c !== mc || r !== mr) && freeForHazard(board, c, r) && freeForHazard(board, mc, mr)) {",
+    "new": "    if ((c !== mc || r !== mr) && freeForHazard(board, c, r)) {",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-hazard-under-piece",
+    "file": "src/net/kingsGambit.js",
+    "old": "  return isPassable(board.tiles, c, r) && !hazardAt(board, c, r) && !pieceAt(board, c, r);",
+    "new": "  return isPassable(board.tiles, c, r) && !hazardAt(board, c, r);",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-back-row-king-column",
+    "file": "src/net/kingsGambit.js",
+    "old": "    if (c !== kc) back.push([c, kr]);",
+    "new": "    back.push([c, kr]);",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-melee-front-first",
+    "file": "src/net/kingsGambit.js",
+    "old": "u.ranged ? (back.shift() ?? front.shift() ?? middle.shift()) : (middle.shift() ?? front.shift() ?? back.shift())",
+    "new": "u.ranged ? (back.shift() ?? front.shift() ?? middle.shift()) : (front.shift() ?? middle.shift() ?? back.shift())",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-ranged-middle-first",
+    "file": "src/net/kingsGambit.js",
+    "old": "u.ranged ? (back.shift() ?? front.shift() ?? middle.shift()) : (middle.shift() ?? front.shift() ?? back.shift())",
+    "new": "u.ranged ? (middle.shift() ?? back.shift() ?? front.shift()) : (middle.shift() ?? front.shift() ?? back.shift())",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-cheapest-first",
+    "file": "src/net/kingsGambit.js",
+    "old": "ids.map(rosterUnit).sort((a, b) => b.cost - a.cost || a.id - b.id)",
+    "new": "ids.map(rosterUnit).sort((a, b) => a.cost - b.cost || a.id - b.id)",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-guest-unmirrored-columns",
+    "file": "src/net/kingsGambit.js",
+    "old": "    if (side === 1) { col = KG_COLS - 1 - col; row = KG_ROWS - 1 - row; }",
+    "new": "    if (side === 1) { row = KG_ROWS - 1 - row; }",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-centre-out-upper-first",
+    "file": "src/net/kingsGambit.js",
+    "old": "    if (mid - i >= 0) out.push(mid - i);\n    if (mid + i < KG_COLS) out.push(mid + i);",
+    "new": "    if (mid + i < KG_COLS) out.push(mid + i);\n    if (mid - i >= 0) out.push(mid - i);",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-guest-first",
+    "file": "src/net/kingsGambit.js",
+    "old": "pieces, turn: 0, actions: KG_ACTIONS_PER_TURN, round: 1,",
+    "new": "pieces, turn: 1, actions: KG_ACTIONS_PER_TURN, round: 1,",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-potions-fixed",
+    "file": "src/net/kingsGambit.js",
+    "old": "potions: potions.slice(), ending: false, over: null };",
+    "new": "potions: [KG_POTIONS_PER_SIDE, KG_POTIONS_PER_SIDE], ending: false, over: null };",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-budget-bound",
+    "file": "src/net/kingsGambit.js",
+    "old": "budgets[s] >= 0 && budgets[s] <= KG_BUDGET_MAX",
+    "new": "budgets[s] >= 0 && budgets[s] < KG_BUDGET_MAX",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-potions-bound",
+    "file": "src/net/kingsGambit.js",
+    "old": "potions[s] >= 0 && potions[s] <= KG_POTIONS_MAX",
+    "new": "potions[s] >= 0 && potions[s] < KG_POTIONS_MAX",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-top-draw-refused",
+    "file": "src/net/kingsGambit.js",
+    "old": "    if (!Number.isInteger(v) || v < 0 || v > 0xFFFFFFFF || ++draws",
+    "new": "    if (!Number.isInteger(v) || v < 0 || v >= 0xFFFFFFFF || ++draws",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-out-of-turn",
+    "file": "src/net/kingsGambit.js",
+    "old": "  if (side !== state.turn) return 'turn';\n",
+    "new": "",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-potion-on-full",
+    "file": "src/net/kingsGambit.js",
+    "old": "  if (p.hp >= p.maxHp) return 'full';",
+    "new": "  if (p.hp > p.maxHp) return 'full';",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-last-potion",
+    "file": "src/net/kingsGambit.js",
+    "old": "  return state.potions[side] > 0 ? null : 'potions';",
+    "new": "  return state.potions[side] >= 0 ? null : 'potions';",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-sight-sees-start",
+    "file": "src/net/kingsGambit.js",
+    "old": "    if ((c !== c1 || r !== r1) && (c !== c2 || r !== r2) && blocksSight(tiles, c, r)) return false;",
+    "new": "    if ((c !== c2 || r !== r2) && blocksSight(tiles, c, r)) return false;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-sight-sees-end",
+    "file": "src/net/kingsGambit.js",
+    "old": "    if ((c !== c1 || r !== r1) && (c !== c2 || r !== r2) && blocksSight(tiles, c, r)) return false;",
+    "new": "    if ((c !== c1 || r !== r1) && blocksSight(tiles, c, r)) return false;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-water-blocks-sight",
+    "file": "src/net/kingsGambit.js",
+    "old": "return t === KG_TILE.wall || t === KG_TILE.pillar; };",
+    "new": "return t === KG_TILE.wall || t === KG_TILE.pillar || t === KG_TILE.water; };",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-round-div-floor",
+    "file": "src/net/kingsGambit.js",
+    "old": "  const q = Math.trunc((2 * Math.abs(num) + den) / (2 * den));",
+    "new": "  const q = Math.trunc((2 * Math.abs(num)) / (2 * den));",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-walk-four",
+    "file": "src/net/kingsGambit.js",
+    "old": "    if (d >= KG_MOVE_RANGE) continue;",
+    "new": "    if (d > KG_MOVE_RANGE) continue;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-walk-through-pieces",
+    "file": "src/net/kingsGambit.js",
+    "old": " && !steps.has(cellIndex(nx, ny)) && !pieceAt(board, nx, ny)) {",
+    "new": " && !steps.has(cellIndex(nx, ny))) {",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-steps-order",
+    "file": "src/net/kingsGambit.js",
+    "old": "Object.freeze([Object.freeze([1, 0]), Object.freeze([-1, 0]), Object.freeze([0, 1]), Object.freeze([0, -1])]);",
+    "new": "Object.freeze([Object.freeze([-1, 0]), Object.freeze([1, 0]), Object.freeze([0, 1]), Object.freeze([0, -1])]);",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-blow-half-up",
+    "file": "src/net/kingsGambit.js",
+    "old": "  return Math.max(1, roundToInt(f32(f32(atk) * m)));",
+    "new": "  return Math.max(1, Math.round(f32(f32(atk) * m)));",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-kill-below-zero",
+    "file": "src/net/kingsGambit.js",
+    "old": "    const killed = t.hp <= 0;",
+    "new": "    const killed = t.hp < 0;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-potion-overheals",
+    "file": "src/net/kingsGambit.js",
+    "old": "    const healed = Math.min(KG_POTION_HEAL, p.maxHp - p.hp);",
+    "new": "    const healed = KG_POTION_HEAL;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-over-ends-turn",
+    "file": "src/net/kingsGambit.js",
+    "old": "  if (!st.over && st.actions <= 0) st.ending = true;",
+    "new": "  if (st.actions <= 0) st.ending = true;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-king-no-matter",
+    "file": "src/net/kingsGambit.js",
+    "old": "  const fallen = !king[1] || !any[1] ? 1 : !king[0] || !any[0] ? 0 : -1;",
+    "new": "  const fallen = !any[1] ? 1 : !any[0] ? 0 : -1;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-hazards-both-sides",
+    "file": "src/net/kingsGambit.js",
+    "old": "    if (p.side !== side) continue;\n    const h = hazardAt(st, p.col, p.row);",
+    "new": "    const h = hazardAt(st, p.col, p.row);",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-warnings-bite",
+    "file": "src/net/kingsGambit.js",
+    "old": "    if (!h || !h.active) continue;",
+    "new": "    if (!h) continue;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-round-after-host",
+    "file": "src/net/kingsGambit.js",
+    "old": "  if (side === 1) {\n    st.round++;",
+    "new": "  if (side === 0) {\n    st.round++;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-tick-odd-rounds",
+    "file": "src/net/kingsGambit.js",
+    "old": "    if (st.round % KG_HAZARD_SPAWN_EVERY === 0) {",
+    "new": "    if (st.round % KG_HAZARD_SPAWN_EVERY === 1) {",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-thirteen-take-a-pair",
+    "file": "src/net/kingsGambit.js",
+    "old": "      if (st.hazards.length + 2 <= KG_MAX_HAZARDS) {",
+    "new": "      if (st.hazards.length + 2 < KG_MAX_HAZARDS) {",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-warnings-never-armed",
+    "file": "src/net/kingsGambit.js",
+    "old": "      for (const h of st.hazards) h.active = true;\n",
+    "new": "",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-actions-not-renewed",
+    "file": "src/net/kingsGambit.js",
+    "old": "  st.actions = KG_ACTIONS_PER_TURN;\n  events.push",
+    "new": "  events.push",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-lean-f64",
+    "file": "src/net/kingsGambit.js",
+    "old": "f32(nextDouble(rand32)) < f32(KG_AUTOFILL_LEAN)",
+    "new": "nextDouble(rand32) < KG_AUTOFILL_LEAN",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-autofill-unchecked",
+    "file": "src/net/kingsGambit.js",
+    "old": "  const rand32 = checkedRand32(source);\n  let money",
+    "new": "  const rand32 = source;\n  let money",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-army-holes",
+    "file": "src/net/kingsGambit.js",
+    "old": "if (!Array.isArray(ids) || !Array.from(ids).every(Number.isInteger)) return 'shape';",
+    "new": "if (!Array.isArray(ids) || !ids.every(Number.isInteger)) return 'shape';",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-armies-holes",
+    "file": "src/net/kingsGambit.js",
+    "old": "if (SIDES.some((s) => armyRefusal(armies[s], budgets[s]) !== null)) return null;",
+    "new": "if (armies.some((a, s) => armyRefusal(a, budgets[s]) !== null)) return null;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-potions-holes",
+    "file": "src/net/kingsGambit.js",
+    "old": "!SIDES.every((s) => Number.isInteger(potions[s]) && potions[s] >= 0 && potions[s] <= KG_POTIONS_MAX)",
+    "new": "!potions.every((n) => Number.isInteger(n) && n >= 0 && n <= KG_POTIONS_MAX)",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-budgets-holes",
+    "file": "src/net/kingsGambit.js",
+    "old": "!SIDES.every((s) => Number.isInteger(budgets[s]) && budgets[s] >= 0 && budgets[s] <= KG_BUDGET_MAX)",
+    "new": "!budgets.every((b) => Number.isInteger(b) && b >= 0 && b <= KG_BUDGET_MAX)",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-shot-adjacent",
+    "file": "src/net/kingsGambit.js",
+    "old": "shot: p.ranged && distance(p.col, p.row, t.col, t.row) > 1",
+    "new": "shot: p.ranged",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-blow-f64",
+    "file": "src/net/kingsGambit.js",
+    "old": "const m = f32(f32(KG_BLOW_LOW) + f32(f32(u) * f32(KG_BLOW_SPREAD)));",
+    "new": "const m = KG_BLOW_LOW + u * KG_BLOW_SPREAD;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-blow-u-wide",
+    "file": "src/net/kingsGambit.js",
+    "old": "f32(f32(u) * f32(KG_BLOW_SPREAD))",
+    "new": "f32(u * f32(KG_BLOW_SPREAD))",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-hazard-tries-39",
+    "file": "src/net/kingsGambit.js",
+    "old": "  for (let i = 0; i < KG_HAZARD_TRIES; i++) {",
+    "new": "  for (let i = 1; i < KG_HAZARD_TRIES; i++) {",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-hazard-on-water",
+    "file": "src/net/kingsGambit.js",
+    "old": "  return isPassable(board.tiles, c, r) && !hazardAt(board, c, r) && !pieceAt(board, c, r);",
+    "new": "  return inBounds(c, r) && !blocksSight(board.tiles, c, r) && !hazardAt(board, c, r) && !pieceAt(board, c, r);",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-sight-past-2",
+    "file": "src/net/kingsGambit.js",
+    "old": "return !(p.ranged && d > 1 && !hasLineOfSight(",
+    "new": "return !(p.ranged && d > 2 && !hasLineOfSight(",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-sight-past-3",
+    "file": "src/net/kingsGambit.js",
+    "old": "return !(p.ranged && d > 1 && !hasLineOfSight(",
+    "new": "return !(p.ranged && d > 3 && !hasLineOfSight(",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-potion-spend-host",
+    "file": "src/net/kingsGambit.js",
+    "old": "    st.potions[side]--;",
+    "new": "    st.potions[0]--;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-potion-left-host",
+    "file": "src/net/kingsGambit.js",
+    "old": "  return state.potions[side] > 0 ? null : 'potions';",
+    "new": "  return state.potions[0] > 0 ? null : 'potions';",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-moat-bridge-divisor",
+    "file": "src/net/kingsGambit.js",
+    "old": "      const k = rand(rand32, 2, 6);",
+    "new": "      const k = rand(rand32, 2, 4);",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-rand-bound-500",
+    "file": "src/net/kingsGambit.js",
+    "old": "export const KG_RAND_DRAWS_MAX = 100_000;",
+    "new": "export const KG_RAND_DRAWS_MAX = 500;",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  },
+  {
+    "name": "KG1-rand-negative",
+    "file": "src/net/kingsGambit.js",
+    "old": "    if (!Number.isInteger(v) || v < 0 || v > 0xFFFFFFFF || ++draws > KG_RAND_DRAWS_MAX)",
+    "new": "    if (!Number.isInteger(v) || v > 0xFFFFFFFF || ++draws > KG_RAND_DRAWS_MAX)",
+    "tests": [
+      "test/net/kg1_law.test.js"
+    ]
+  }
+]

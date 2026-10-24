@@ -393,7 +393,7 @@
   },
   {
     "name": "TESA15-tracks-hidden-at-far",
-    "file": "src/ui/inkMap.js",
+    "file": "src/ui/ink/inkMap.js",
     "old": "if (band === 'far') stroke(tracks, FAR_TRACK_PEN, PEN.soft); else",
     "new": "if (band === 'far') void 0; else",
     "tests": [
@@ -403,7 +403,7 @@
   },
   {
     "name": "TESA15-the-add-not-installed",
-    "file": "src/world/terrainGenClient.js",
+    "file": "src/world/terrain/terrainGenClient.js",
     "old": "    installArenaRoads(layer, reset ? null : add);",
     "new": "    installArenaRoads(layer);",
     "tests": [
@@ -433,7 +433,7 @@
   },
   {
     "name": "TESA15-the-world-holds-nothing",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPlacesHost.js",
     "old": "standing: { pixels: arenaPixels, towns: tamrielRoadTowns, spec: tamrielRoadsSpec, capitals: () => !!_capitalBase, held: tamrielRoadHeld } }) : null;",
     "new": "standing: { pixels: arenaPixels, towns: tamrielRoadTowns, spec: tamrielRoadsSpec, capitals: () => !!_capitalBase } }) : null;",
     "tests": [

@@ -7,7 +7,9 @@
 // build lives here once, with the renderer that counts what it costs.
 import { readFileSync } from 'node:fs';
 import { fpSkeletonPath, FP_CLIP_PATH } from '../../../src/combat/fpArm.js';
+import { makeVendoredArchive } from '../../../src/systems/urlArchive.js';
 import { bodyRec } from './bodyRec.mjs';   // MWNPC1: a pure module, so the browser probe's fixture writes the same records
+import { retailSkeleton } from './retailRig.mjs';
 
 export { bodyRec };
 
@@ -29,6 +31,38 @@ export function fixtureBodyDeps() {
     loadMorrowindArchives: async () => [{ has: (p) => files.has(p), get: (p) => files.get(p) }],
     storedMorrowindNames: async () => ['armfp.esm'],
     loadMorrowindFile: async () => all,
+  };
+}
+
+const cat = (...a) => { const out = new Uint8Array(a.reduce((n, b) => n + b.length, 0)); let o = 0; for (const b of a) { out.set(b, o); o += b.length; } return out; };
+
+/** AUDIT MW-HEADS1 + MW-FOLK1: THE PORT'S OWN ARCHIVE as the page serves it - systems/ownMwAssets.js's door
+ *  (makeVendoredArchive) over the shipped tree's own files (`src/assets/mw/`, a Data Files tree), at the Data Files
+ *  paths given, read off the disk. */
+export function shippedArchive(paths) {
+  const root = new URL('../../../src/assets/mw/', import.meta.url);
+  return makeVendoredArchive(Object.fromEntries(paths.map((p) => [p, p])), async (p) => new Uint8Array(readFileSync(new URL(p, root))));
+}
+
+/** AUDIT MW-HEADS1 + MW-FOLK1: the fixture body rig on RETAIL'S skeleton (test/fixtures/mw/retailRig.mjs - its part
+ *  nodes, so a head hangs at Head and an outfit binds by its bones' names), either sex's, with `records` BODY records
+ *  added to the ESM, `files` added to the fixture archive, and the archives `before` it (the port's own: dataSource.js
+ *  ranks it ahead of every .bsa). `asked` counts the portrait reads (the measured face match's). */
+export function retailBodyDeps({ records = [], files = [], before = [], asked = null } = {}) {
+  const f = fixtureFile;
+  const all = new Map([
+    [fpSkeletonPath({}), f('armfp.nif')], [fpSkeletonPath({ female: true }), f('armfp.nif')], [FP_CLIP_PATH, f('armfpidle.kf')],
+    ['meshes/fixture/armfphand.nif', f('armfphand.nif')], ['meshes/fixture/armfparm.nif', f('armfparm.nif')],
+    ['meshes/xbase_anim.nif', retailSkeleton()], ['meshes/xbase_anim.kf', f('armfpidle.kf')],
+    ['meshes/base_anim_female.nif', retailSkeleton()], ['meshes/base_anim_female.kf', f('armfpidle.kf')],
+    ...files,
+  ]);
+  const base = fixtureBodyDeps();
+  return {
+    loadMorrowindArchives: async () => [...before, { has: (p) => all.has(p), get: (p) => all.get(p) }],
+    storedMorrowindNames: async () => ['armfp.esm'],
+    loadMorrowindFile: async () => cat(await base.loadMorrowindFile(), ...records),
+    ...(asked ? { fetchArena2Bytes: async () => { asked.n++; throw new Error('no ARENA2 here'); } } : {}),
   };
 }
 

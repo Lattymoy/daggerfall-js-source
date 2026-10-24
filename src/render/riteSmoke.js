@@ -3,7 +3,7 @@
 // from the omen until the breach opens, seen across the omen's ring: a dark plume rising from the altar's flame,
 // widening and leaning as it climbs, churning upward. Design: bible/11-Multiplayer/World-Bosses.md section 19 D.
 //
-// The gate's beacon's law (render/gatePass.js): fixed geometry (its column), every placement a uniform, the clock
+// The gate's beacon's law (render/gate/gatePass.js): fixed geometry (its column), every placement a uniform, the clock
 // handed wrapped and every rate whole cycles over it - the smoke's noise TILES along the column, and each octave climbs
 // a whole number of columns over SMOKE_CLOCK_PERIOD, so the wrap never shows. The column's rows and its noise run on
 // the billows' own height (smokeBillowOf), so its billows grow as they climb, and the biggest bulge its outline
@@ -191,16 +191,22 @@ function mat4Multiply(out, a, b) {
 }
 const NO_FOG_RANGE = new Float32Array([0, 1]);
 const NO_FOCUS = new Float32Array(4);
+const NO_HAZE = new Float32Array(8);   // AUDIT BANTHA1 HAZE-3: uJungleHaze off ([1].x 0)
 const ORIGIN = new Float32Array([0, 0, 0]);
+
+/** FIRST-USE (#1144): the pass's one program, as its constructor builds it - what the rite's door waits on
+ *  (render/glProgram.js compiledPass). */
+export const RITE_SMOKE_PROGRAMS = /** @type {ReadonlyArray<readonly [string, string]>} */ (Object.freeze([[SMOKE_VS, SMOKE_FS]]));
 
 /** The rite's pillars of smoke, one foreign pass. */
 export class RiteSmokeRenderer {
   /** @param {WebGL2RenderingContext} gl */
   constructor(gl) {
     this.gl = gl;
-    this.program = buildProgram(gl, SMOKE_VS, SMOKE_FS, 'rite smoke');
+    const [[vs, fs]] = RITE_SMOKE_PROGRAMS;
+    this.program = buildProgram(gl, vs, fs, 'rite smoke');
     this.u = {};
-    for (const n of ['uVP', 'uOrigin', 'uEye', 'uTime', 'uFade', 'uLight', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus']) this.u[n] = gl.getUniformLocation(this.program, n);
+    for (const n of ['uVP', 'uOrigin', 'uEye', 'uTime', 'uFade', 'uLight', 'uFogMode', 'uFogDensity', 'uFogRange', 'uCamPos', 'uFocus', 'uJungleHaze']) this.u[n] = gl.getUniformLocation(this.program, n);
     const verts = smokeVertices();
     this.vao = gl.createVertexArray();
     gl.bindVertexArray(this.vao);
@@ -239,6 +245,7 @@ export class RiteSmokeRenderer {
     gl.uniform2fv(U.uFogRange, fog?.range ?? NO_FOG_RANGE);
     gl.uniform3fv(U.uCamPos, fog?.camPos ?? eye ?? ORIGIN);
     if (U.uFocus) gl.uniform4fv(U.uFocus, fog?.focus ?? NO_FOCUS);   // AUDIT DEEP R-1: under the travel view the fog is the traveller's (fogGlsl.js FOCUS_GLSL)
+    if (U.uJungleHaze) gl.uniform4fv(U.uJungleHaze, fog?.haze ?? NO_HAZE);   // BANTHA1 (AUDIT BANTHA1 HAZE-3): the jungle's haze (renderer.setJungleHaze); none handed, off
     gl.bindVertexArray(this.vao);
     for (const s of list) {
       gl.uniform3f(U.uOrigin, s.origin[0], s.origin[1], s.origin[2]);

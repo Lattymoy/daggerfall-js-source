@@ -1,7 +1,7 @@
 // SURV-TIERS - THE CLIMATES & CALORIES TILE, IN A REAL BROWSER, WITH NO ARENA2.
 //
 // The node pins hold the row, the table and the shelf to one another
-// (test/survtiers.test.js); what they cannot do is press the bar. This
+// (test/systems/survival/survtiers.test.js); what they cannot do is press the bar. This
 // does: the Settings screen (ORG2: the Gameplay tab) draws the tile as Off | Casual | Hard with
 // Casual pressed on a fresh shelf, each press writes the tier's STORED
 // value (Off the old switch's own `false`, Casual nothing - the default
@@ -38,7 +38,7 @@ const open = async (shelf = null) => {
     await page.locator('.px-acctstage').click({ position: { x: 5, y: 5 } });
     await page.waitForSelector('.px-acctstage', { state: 'detached' });
   }
-  await page.locator('.doorbtn.door-settings').first().click();   // ORG2: the Features rows are Settings' tabs
+  await page.locator(':is(.doorbtn, .px-homelink).door-settings').first().click();   // UI-CALM II: the foot's plaque on the enhanced door. ORG2: the Features rows are Settings' tabs
   await page.locator('#enhanced-menu .subbtn').filter({ hasText: /^Gameplay/ }).first().click();
   await page.waitForSelector('.ft-tile');
   const tile = page.locator('.ft-tile').filter({ hasText: 'Climates & Calories' }).first();

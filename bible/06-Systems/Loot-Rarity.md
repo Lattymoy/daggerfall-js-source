@@ -15,8 +15,8 @@ player meets. The online lane forces it on with every other
 enhancement (OL1), as it always did. Off, not one field is written and
 not one read moves - so the 1:1 lane is one press away, not lost.
 
-One module: `src/systems/lootRarity.js`. One pin file:
-`test/lr1_lootrarity.test.js` (20). One tuning table: `RARITY_WEIGHTS`
+One module: `src/systems/loot/lootRarity.js`. One pin file:
+`test/systems/lr1_lootrarity.test.js` (20). One tuning table: `RARITY_WEIGHTS`
 and `SOURCE_MULT`, per mille.
 
 ## The ladder
@@ -149,6 +149,18 @@ unknown-key abort) affix-aware. Two lists, one wearer.
   of Dawn`, `Foxglove`, `King's Mark`, `Archmage's Loop`. A Legendary
   is named like an artifact: `itemLongName` returns it without the
   material prefix (one gated arm on ResolveItemLongName's early return).
+  MAT-SHOW: the metal is not gone. A Rare or better piece of armour or
+  a weapon still puts it on `itemNameParts().material`, the same dim
+  sub-line a plain sword uses (`itemInfo.js:"if (!material || withholdsMaterialPrefix(item) || namesItsMetal(item, material)) return name;"`;
+  AUDIT PISTOLET C9: an item whose own name already says its metal - the Dwarven Pistolet, the Dwarven Thunderlock -
+  takes no second, a Magic's or a Rare's too: "Soldier's Dwarven Pistolet", PISTOLET-NAMES).
+  The long name stays `Wyrmbane`, not `Dwarven Wyrmbane`. An artifact
+  still says nothing of its metal. Handed down by Project Legacy it stays
+  its own name under the house, `Hlaalu's Wyrmbane`, the metal still on
+  the sub-line (`itemInfo.js:"const whole = parts.material && !bare ?"`).
+  The container's material menu finds a piece only by a metal its card
+  says (`itemInfo.js:"export const itemSaysMaterial ="`), so it never picks
+  out an unidentified Magic piece or an artifact by its metal.
 
 ## Identify is Daggerfall's own
 
@@ -157,12 +169,14 @@ flavour from `RARE_FLAVOURS` by group - a weapon strikes or drinks, a
 piece of armour or jewellery holds; a Legendary its record's), so DFU's
 own IsIdentified law (`tradeModes.itemIsIdentified`: an enchanted item
 is unidentified until identified) makes it drop UNIDENTIFIED with no
-new mechanism: it reads as its bare template with no material and no
-affix lines (`ResolveItemName`'s early return), the tooltip says the
+new mechanism: it reads as its bare template with no affix lines
+(`ResolveItemName`'s early return), the tooltip says the
 tier and "Unidentified", and the Identify spell or the Mages Guild's
-service reveals it. A Magic-tier item with only numeric affixes has no
-enchantment and reads at once. The affixes WORK while unidentified -
-DFU's enchantments do too.
+service reveals it. MAT-SHOW: a Rare or better piece of armour or a
+weapon still says its metal on that sub-line while it is unidentified.
+A piece below Rare, and an artifact, keep the withhold. A Magic-tier
+item with only numeric affixes has no enchantment and reads at once.
+The affixes WORK while unidentified - DFU's enchantments do too.
 
 The enhanced pack names through `resolveItemName` now (it showed
 `item.name` raw before, which named a magic item before the Identify
@@ -215,7 +229,7 @@ snapshot copies items as they are); `affixes` joins
 field and reads Common.
 
 The Loot arc II (`Loot-II-Arc.md`) adds four fields, each declared in
-`systems/itemFields.js` and absent on every piece that has none - so
+`systems/item/itemFields.js` and absent on every piece that has none - so
 an older save and an older peer read as before: `cursed` (LOOT16, a
 cursed find's drawback - `validCurse`), `honed` (LOOT17, the hones a
 piece has taken), `junk` (LOOT18, the player's mark - the lock's twin)
@@ -366,7 +380,7 @@ but the suite's only wire pin was that `affixes` is a declared array
 field and that a string there is refused. Nothing would have caught a
 tier, an affix list, a Legendary's record or an affix-bought price lost
 on the way across, in either door. Four pins now cover both doors by
-execution (`test/lr1_lootrarity.test.js`, AUDIT-LR), and two mutants
+execution (`test/systems/lr1_lootrarity.test.js`, AUDIT-LR), and two mutants
 were run and killed: the value floor turned into a ceiling, and the
 affix list's check removed.
 
@@ -419,9 +433,9 @@ flip alone would have done nothing for him - or for any existing
 player - and the switch would have looked broken. Fixed at the root
 (the shelf persists overrides, not defaults) with a one-time stamped
 adoption for the shelves already written: PREF1, recorded in
-`10-UI/Features-Arc.md` and pinned in `test/pref1_shelf.test.js`.
+`10-UI/Features-Arc.md` and pinned in `test/systems/pref1_shelf.test.js`.
 
-**The trap this had to avoid.** `test/lr1_lootrarity.test.js` drives
+**The trap this had to avoid.** `test/systems/lr1_lootrarity.test.js` drives
 its OFF half through a helper that was a bare `_resetForTests()`. With
 the row shipping ON, that helper stops meaning "off" - every "off is
 DFU exactly" pin in the file would have gone on testing the ON path, in
@@ -429,11 +443,31 @@ silence, and passing. The helper presses the switch off explicitly now.
 
 ## RARITY-WEAR (FIELD BUGS 2026-10-01) - NO SLOT, NO TIER
 
-Cruor's King's Mark came out a Wand and could not be worn (`01-Overview/Field-Bugs-2026-10-01.md` part four #4). A
+Cruor's King's Mark came out a Wand and could not be worn (`01-Overview/bugs/Field-Bugs-2026-10-01.md` part four #4). A
 Legendary record names the piece a maker minted and never picks the base; the Gate's spoils and a town's thanks drew a
-jewel over all eight Jewellery templates (`systems/gateSpoils.js` spoilsBase), and the eighth, the Wand, has no slot
+jewel over all eight Jewellery templates (`systems/gate/gateSpoils.js` spoilsBase), and the eighth, the Wand, has no slot
 (GetJewelleryEquipSlot's None). Every affix and a Held enchantment read worn pieces alone, so one jewel in eight was a
 tier read by nothing. Now `systems/equip.js` wearableItem (GetEquipSlot on an empty table) is the one law: the ladder
 grades no piece it refuses (`rarityEligible`), the spoils' base is made again on one, and a save's rolled wands load as
 the Amulet - the same weight and condition (`repairRarityBases`, `RARITY_HOME`). The Jewellery records still name no
-templates: a King's Mark lands on any wearable jewel. `test/fb1001_wand.test.js`.
+templates: a King's Mark lands on any wearable jewel. `test/systems/fb1001_wand.test.js`.
+
+## HELD-BASE (FIELD BUGS 2026-10-18f) - DFU'S OWN MAGIC, ON A PIECE A SLOT TAKES
+
+RARITY-WEAR's last sentence, "DFU's own wands (MAGIC.DEF's, Use a cast) ... stay wands", was not yet true: DFU's
+CreateRegularMagicItem (ItemBuilder.cs:555-582, `loot.js` createRegularMagicItem) draws a magic item's base off the
+template's group byte and never asks what its power needs. Group 0 holds the religious items and the Jewellery, group 1
+the Jewellery, and no slot takes a religious item or the Wand (`equip.js` wearableItem). MAGIC.DEF's Enhances Skill, Cast
+When Held and Absorbs Spells rows are read on a worn piece alone, so "%it of Venom Spitting" landed on a Holy Tome or a
+Wand one draw in six (9 in 56) and the ten Cast When Held and Absorbs Spells rows on a Wand one in forty - a power that
+never once reached its holder. Now a piece whose powers need wearing (`powersNeedWearing`: live rows, none answering the
+Used payload - `enchantments.js` worksUnworn) has its base drawn again, as DFU draws again over an Arrow, up to
+MAGIC_BASE_DRAWS (64) and then armour; a draw that was wearable is the draw it was, and a Used cast keeps any base (a
+Leaping Wand, a Silent Holy Tome). A piece already held keeps its base: a load that moved it would move its print
+(`templateIndex:material`, `server-account/src/judge.js` ledgerPrintOf), which the realm ledger reads as forged
+(`ledger.js` ledgerStep) - AUDIT FB1018f L1-1 took out the save repair this first carried; such pieces are not mended
+(decided - Mac, 2026-10-19: "Stop with the decisions for me"). RARITY-WEAR's own 140-to-133 repair above moved the print the same way for a Wand the service held
+through it (a vault's, a market's), and the next checkpoint read it as forged: the ledger now takes that one move as
+the piece (`lootRarity.js` rehomedPrint, RARITY_HOMED_FROM). A piece with a Used cast and a worn power takes a wearable
+base too. Over 600 days of a quality-10 guild shelf, 52 of 4,200 pieces were
+such duds before, none now. A departure (Port-Ledger A, HELD-BASE). `test/systems/loot/fb1018f_heldbase.test.js`.

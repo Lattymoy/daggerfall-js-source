@@ -3,7 +3,7 @@
 // Seats-Arc.md 6.1: "The blow - a claim {target, weapon kind, material, spell?} ... bows 60 m"; "Spells - at most 3
 // damaging casts in 5 seconds, each clamped to 60; Teleport, Recall and Levitate do nothing in a siege room; healing a
 // side-mate is allowed (ALLY-CAST's frame), clamped to 40 a cast"; "Horses are dismounted on entry"). SEAT2a part four
-// sent the melee swing alone (its `r` always a swing's); PVP-REF's referee (net/siegeRef.js refereeBlow, refereeCast)
+// sent the melee swing alone (its `r` always a swing's); PVP-REF's referee (net/siege/siegeRef.js refereeBlow, refereeCast)
 // already judges a shaft at a shaft's reach and a cast's damage or heal - this is the client's half of the rest:
 //
 //   - A SHAFT: the blow an arrow lands is a shaft's (SIEGE_HIT.Shaft - the referee refuses a shaft from anything but a
@@ -19,7 +19,7 @@
 //
 // Pure but for the one spell door (handed in for the pins), the stand-in and the rolls. Not a DFU member. Ledger A (EVERY
 // PALACE A SEAT's row).
-import { SIEGE_HIT, SIEGE_CASTS } from '../net/siegeRef.js';
+import { SIEGE_HIT, SIEGE_CASTS } from '../net/siege/siegeRef.js';
 import { duelSpellOf } from './duelCombat.js';
 import { applySpell } from '../systems/effects.js';
 
@@ -34,13 +34,14 @@ export const SIEGE_BARRED_EFFECTS = Object.freeze([43, 14]);
 export const siegeSpellBarred = (sp) => (Array.isArray(sp?.effects) ? sp.effects : []).some((e) => e && SIEGE_BARRED_EFFECTS.includes(e.type));
 /** The wards' line, and the saddle's. */
 export const SIEGE_SPELL_BARRED_TEXT = 'Teleport, Recall and Levitate do nothing on a battlefield.';
-export const SIEGE_DISMOUNT_TEXT = 'No horse is ridden on a battlefield - you go on foot.';
+export const SIEGE_DISMOUNT_TEXT = "You can't ride a horse on a battlefield.";
 
 /**
  * THE NUMBERS A SPELL CARRIES TO THE REFEREE: `{ harm, heal }` - what its harmful families (duelSpellOf) deal at once (at
  * its own range, its save rolled as any caster's spell's) and what its Heal Health restores (as ALLY-CAST's receiver
- * lands a gift: a self-cast, no save), landed through `apply` (systems/effects.js applySpell) at `level` on `standIn` (a
- * body of the caster's own sheet - the target's protections are not a number this client has; the referee clips), `caster`
+ * lands a gift: a self-cast, no save), landed through `apply` (systems/effects.js applySpell) at `level` on `standIn` (the
+ * neutral one, combat/duelCombat.js duelStandIn - AUDIT C&C H5: a body of the caster's own sheet saved against its spell
+ * with its own willpower and race; the target's protections are not a number this client has; the referee clips), `caster`
  * the casting entity. Whole numbers, never negative; a spell that throws counts nothing. The stand-in keeps nothing.
  * @param {any} sp @param {number} level @param {any} standIn @param {any} [caster]
  * @param {{ apply?: Function, rolls?: () => number }} [o]

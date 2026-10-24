@@ -5,7 +5,7 @@
     "old": "    if (POSE_DEFAULTS[k] === v) continue;\n",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "every default said - the slim pose no slimmer"
   },
@@ -15,7 +15,7 @@
     "old": "export const POSE_DEFAULTS = Object.freeze({ mv: 0, wd: 0, an: 0, as: 0, am: 0, sr: 0, cn: 0, cr: 0, ce: 4, ar: 0, fk: 0 });",
     "new": "export const POSE_DEFAULTS = Object.freeze({ mv: 0, wd: 0, an: 0, as: 0, am: 0, sr: 0, cn: 0, cr: 0, ce: 0, ar: 0, fk: 0 });",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the cast's element dropped at Fire - a reader fills Magic back"
   },
@@ -25,7 +25,7 @@
     "old": "    const r = native && (k === 'x' || k === 'z') ? Math.round(v) : k === 'x' || k === 'y' || k === 'z' ? Math.round(v * SLIM_SCENE_STEPS) / SLIM_SCENE_STEPS : ",
     "new": "    const r = k === 'x' || k === 'y' || k === 'z' ? v : ",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the place whole bytes of a double"
   },
@@ -35,7 +35,7 @@
     "old": "k === 'yaw' || k === 'pitch' ? Math.round(v * 1e4) / 1e4 : v;",
     "new": "k === 'yaw' || k === 'pitch' ? Math.round(v * 1e2) / 1e2 : v;",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the turn to a hundredth - a peer's facing steps"
   },
@@ -45,7 +45,7 @@
     "old": "    if (m.w2 === 1) hello.w2 = 1;\n",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the hello's offer dropped at the door"
   },
@@ -55,7 +55,7 @@
     "old": "    if (m.w2 === 1) hello.w2 = 1;\n",
     "new": "    if (m.w2 !== undefined && m.w2 !== 1) return { error: 'bad wire' };\n    if (m.w2 === 1) hello.w2 = 1;\n",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a later build's offer refused - it cannot get in on the wire both know"
   },
@@ -65,17 +65,17 @@
     "old": "    if (m.w2 === 1) hello.w2 = 1;\n",
     "new": "    if (m.w2) hello.w2 = 1;\n",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "any truthy offer read as this one"
   },
   {
     "name": "SCALE5b-attach-unwritten",
     "file": "server/src/index.js",
-    "old": "...(m.w2 === 1 ? { w2: 1 } : {})",
+    "old": "...(m.w2 === 1 ? { w2: 1 } : {}), ",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the socket's offer never kept - every listener the first wire's"
   },
@@ -85,7 +85,7 @@
     "old": "      if (b.w2) this._owe(other, entry ??= JSON.stringify([a.id, slimPose(m.p, a.key)]));",
     "new": "      if (b.w2) this._send(other, JSON.stringify({ t: 'poses', l: [[a.id, slimPose(m.p, a.key)]] }));",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a batch a pose - the second wire's frame count the first's"
   },
@@ -95,7 +95,7 @@
     "old": "entry ??= JSON.stringify([a.id, slimPose(m.p, a.key)])",
     "new": "entry ??= JSON.stringify([a.id, m.p])",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the whole pose in the batch"
   },
@@ -105,7 +105,7 @@
     "old": "      else this._send(other, out ??= JSON.stringify({ t: 'pose', id: a.id, p: m.p }));",
     "new": "      else this._send(other, out ??= JSON.stringify({ t: 'pose', id: a.id, p: slimPose(m.p, a.key) }));",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "an old tab handed the slim pose"
   },
@@ -115,7 +115,7 @@
     "old": "    if (this._owed.size && this._owed.has(ws)) this._flushOwedOf(ws);",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a leave overtakes the pose said before it"
   },
@@ -125,7 +125,7 @@
     "old": "  _forget(ws) { this._owed.delete(ws); ",
     "new": "  _forget(ws) { ",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a socket gone still owed its batch"
   },
@@ -135,7 +135,7 @@
     "old": "    if (ms <= POSE_BATCH_MS) { if (!this._owedSoon) this._owedSoon = setTimeout(() => this._flushOwed(), POSE_BATCH_MS); }",
     "new": "    if (ms <= POSE_BATCH_MS) { /* none */ }",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the batch waits for some other frame to carry it"
   },
@@ -145,7 +145,7 @@
     "old": "    if (ms <= POSE_BATCH_MS) { if (!this._owedSoon) this._owedSoon = setTimeout(() => this._flushOwed(), POSE_BATCH_MS); }",
     "new": "    if (ms <= POSE_BATCH_MS) { this._owedSoon = setTimeout(() => this._flushOwed(), POSE_BATCH_MS); }",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a timer a pose"
   },
@@ -155,7 +155,7 @@
     "old": "    else if (!this._owedSoon && !this._owedLate) this._owedLate = setTimeout(() => this._flushOwed(), ms);",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a channel's owed roster waits for a line to carry it"
   },
@@ -165,7 +165,7 @@
     "old": "    else if (!this._owedSoon && !this._owedLate) this._owedLate = setTimeout(() => this._flushOwed(), ms);",
     "new": "    else if (!this._owedSoon && !this._owedLate) this._owedSoon = setTimeout(() => this._flushOwed(), POSE_BATCH_MS);",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the roster at a pose's cadence - twenty frames a second where one would do"
   },
@@ -175,27 +175,27 @@
     "old": "    if (q.length >= WIRE2_BATCH_MAX) { this._flushOwedOf(ws); return; }",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a queue past what a reader takes"
   },
   {
     "name": "SCALE5b-join-at-once",
     "file": "server/src/index.js",
-    "old": "        this._fanRoster(ws, said);",
-    "new": "        this._fanBut(ws, said);",
+    "old": "if (!who.hid) this._fanRoster(ws, said);",
+    "new": "if (!who.hid) this._fanBut(ws, said);",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a channel's join said at once to the second wire"
   },
   {
     "name": "SCALE5b-leave-at-once",
     "file": "server/src/index.js",
-    "old": "    if (isChatRoom(a.key)) this._fanRoster(ws, out); else this._fanBut(ws, out);",
-    "new": "    this._fanBut(ws, out);",
+    "old": "if (isChatRoom(a.key)) this._fanRoster(ws, out); else this._fanBut(ws, out);",
+    "new": "this._fanBut(ws, out);",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a channel's leave said at once to the second wire"
   },
@@ -205,7 +205,7 @@
     "old": "    if (run.length) { f.push(`{\"t\":\"poses\",\"l\":[${run.join(',')}]}`); run = []; }\n    f.push(s);",
     "new": "    f.push(s);",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a pose said before a leave lands after it"
   },
@@ -215,7 +215,7 @@
     "old": "  return f.length === 1 ? f[0] : `{\"t\":\"fb\",\"f\":[${f.join(',')}]}`;",
     "new": "  return `{\"t\":\"fb\",\"f\":[${f.join(',')}]}`;",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "one frame wrapped in a batch - its bytes and a reader's walk for nothing"
   },
@@ -225,7 +225,7 @@
     "old": "  for (const s of items) if (s.charCodeAt(0) !== 91) { poses = false; break; }",
     "new": "  for (const s of items) if (s.charCodeAt(0) !== 91) { break; }",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "frames read as poses"
   },
@@ -235,7 +235,7 @@
     "old": "    if (this.wire2) frame.w2 = 1;",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the session never offers"
   },
@@ -245,7 +245,7 @@
     "old": "    if (m.t === 'poses') { this._poses(m, room); return; }   // SCALE5b: the second wire's batch of poses",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a batch read as an unknown frame"
   },
@@ -255,7 +255,7 @@
     "old": "    if (m.t === 'fb') { this._batch(m, room); return; }      // SCALE5b: and of frames",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a frame batch read as an unknown frame"
   },
@@ -265,7 +265,7 @@
     "old": "    for (let i = 0; i < f.length && left > 0; i++) {",
     "new": "    for (let i = 1; i < f.length && left > 0; i++) {",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a frame batch's first frame lost"
   },
@@ -275,7 +275,7 @@
     "old": "      else { left--; if (x.t !== 'fb') this._frame(x, room); }",
     "new": "      else { if (x.t !== 'fb') this._frame(x, room); }",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a relay's frame batch read however long"
   },
@@ -285,7 +285,7 @@
     "old": "      if (x.t === 'poses') left -= Math.max(1, this._poses(x, room, left));",
     "new": "      if (x.t === 'poses') this._poses(x, room, left);",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a batch's poses counted against nothing"
   },
@@ -295,7 +295,7 @@
     "old": "      else { left--; if (x.t !== 'fb') this._frame(x, room); }",
     "new": "      else { left--; if (x.t === 'fb') this._batch(x, room); else this._frame(x, room); }",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a batch read within a batch - a relay nests its way past the bound"
   },
@@ -305,7 +305,7 @@
     "old": "    let i = 0;\n    for (; i < l.length && i < max; i++) {",
     "new": "    let i = 1;\n    for (; i < l.length && i < max; i++) {",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a batch's first pose lost"
   },
@@ -315,7 +315,7 @@
     "old": "    for (; i < l.length && i < max; i++) {",
     "new": "    for (; i < l.length; i++) {",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a relay's batch read however long"
   },
@@ -325,7 +325,7 @@
     "old": "      if (Array.isArray(e)) this._frame({ t: 'pose', id: e[0], p: e[1] }, room);",
     "new": "      this._frame({ t: 'pose', id: e[0], p: e[1] }, room);",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "an entry that is no array read - a null entry throws out of the batch, and the poses after it are lost"
   },
@@ -335,7 +335,7 @@
     "old": "      wire2: true,   // SCALE5b: the second wire",
     "new": "      wire2: false,   // SCALE5b: the second wire",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the presence session never asks"
   },
@@ -345,7 +345,7 @@
     "old": "presence: false, wave: pageWave, wire2: true });   // SCALE2c: the page's one wave; SCALE5b: the second wire\n      link.onChat",
     "new": "presence: false, wave: pageWave });   // SCALE2c: the page's one wave; SCALE5b: the second wire\n      link.onChat",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a chat link never asks"
   },
@@ -355,7 +355,7 @@
     "old": "    if ((was?.id || null) !== (a?.id || null) || (was?.since ?? 0) !== (a?.since ?? 0)) this._hostMemo = undefined;",
     "new": "    if (false) this._hostMemo = undefined;",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the kept host never asked again after a hello or a close"
   },
@@ -367,7 +367,7 @@
     "equivalent": true,
     "why": "A socket's hello stamp (`since`) is written by its hello alone, in the one `_setAttach` that gives it its id - so a stamp never moves without the id moving with it, and the id's clause forgets the host first. Kept: a later door that writes a stamp on its own is answered by it.",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a reconnect's new hello stamp leaves the host as it stood"
   },
@@ -377,7 +377,7 @@
     "old": "    this._all();   // a walk due past IDX_TRUST_MS runs first",
     "new": "    // a walk due past IDX_TRUST_MS runs first",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the kept host answered over a room whose walk is due"
   },
@@ -387,7 +387,7 @@
     "old": "    if (moved) { this._acctIdx = null; this._subIdx = null; this._idIdx = null; this._giIdx = null; this._hostMemo = undefined; }",
     "new": "    if (moved) { this._acctIdx = null; this._subIdx = null; this._idIdx = null; this._giIdx = null; }",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a socket the runtime let go still the host SCALE5c (re-aimed by content): the guild index rebuilt beside it"
   },
@@ -397,7 +397,7 @@
     "old": "    if (this._all().get(except)?.id !== host) return host;",
     "new": "    return host;",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the host asked without itself answers itself"
   },
@@ -407,7 +407,7 @@
     "old": "    keyMove(this._idIdx, ws, was?.id || null, a?.id || null);   // SCALE5b: and the id index",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a hello's id never in the index"
   },
@@ -417,7 +417,7 @@
     "old": "    if (moved) { this._acctIdx = null; this._subIdx = null; this._idIdx = null; this._giIdx = null; this._hostMemo = undefined; }",
     "new": "    if (moved) { this._acctIdx = null; this._subIdx = null; this._giIdx = null; this._hostMemo = undefined; }",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a socket the runtime let go still a target SCALE5c (re-aimed by content): the guild index rebuilt beside it"
   },
@@ -427,7 +427,7 @@
     "old": "    for (const ws of s) { if (ws === except) continue; const q = this._idxSeq.get(ws) ?? 0;",
     "new": "    for (const ws of s) { const q = this._idxSeq.get(ws) ?? 0;",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a frame directed back at its sender"
   },
@@ -439,7 +439,7 @@
     "equivalent": true,
     "why": "Two sockets hold one id only between a reconnect's hello finding its old socket and replacing it (`_withId`, then `id: null`), and nothing asks `_idFirst` there; an id's set and the index are both kept in the order the same doors move them. Kept: the order is the copy-and-search's, and a door that ever leaves two of one id is answered by it.",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the set's order for the index's"
   },
@@ -449,7 +449,7 @@
     "old": "    const s = id ? this._byId().get(id) : null;   // SCALE5b: the id's own sockets, never a walk of every socket\n    if (!s) return [];",
     "new": "    const s = id ? this._byId().get(id) : null;   // SCALE5b: the id's own sockets, never a walk of every socket\n    if (!s || s) return [];",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a reconnect's old socket never found - two sockets of one id in the room"
   },
@@ -459,7 +459,7 @@
     "old": "await this._sweep(); this._swept = this.state.getWebSockets().length === 0;",
     "new": "await this._sweep();",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "every drained room swept again at its next hello"
   },
@@ -469,7 +469,7 @@
     "old": "      this._swept = false;   // SCALE5b: this hello writes",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a room swept once is never swept at an empty hello again"
   },
@@ -479,7 +479,7 @@
     "old": "      if (!others.length && !carried && !this._swept) {",
     "new": "      if (!others.length && !carried) {",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the drained room swept twice"
   },
@@ -489,7 +489,7 @@
     "old": "      if (b.w2 && outs.length > 1) { this._metrics.c.owed",
     "new": "      if (false) { this._metrics.c.owed",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a beat a send a frame to the second wire"
   },
@@ -499,17 +499,17 @@
     "old": "      if (b.w2 && outs.length > 1) { this._metrics.c.owed",
     "new": "      if (b.w2 && outs.length > 0) { this._metrics.c.owed",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "one frame counted a batch (wire2Batch says it as itself, so only the count tells)"
   },
   {
     "name": "SCALE5b-foes-walk-first",
     "file": "server/src/index.js",
-    "old": "    if (!ahead.pass) { this._metrics.c.drops++; return ahead.bucket; }   // SCALE5b: not one listener's worth - no walk\n",
+    "old": "    if (!ahead.pass) return { bucket: ahead.bucket, pass: false, fan: per };   // SCALE5b: not one listener's worth - no walk\n",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "every refused frame walks the room first"
   },
@@ -519,7 +519,7 @@
     "old": "    for (const [other, b] of this._all()) if (other !== ws && b.id && (!reach || reach(b.pose))) listeners.push(other);",
     "new": "    for (const [other, b] of this._all()) if (other !== ws && b.id) listeners.push(other);",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a cell's foes to sockets out of range"
   },
@@ -529,17 +529,17 @@
     "old": "    for (const [other, b] of this._all()) if (other !== ws && b.id && (!reach || reach(b.pose))) listeners.push(other);",
     "new": "    for (const [other, b] of this._all()) if (b.id && (!reach || reach(b.pose))) listeners.push(other);",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the sender hears its own foes"
   },
   {
     "name": "SCALE5b-foes-drop-uncounted",
     "file": "server/src/index.js",
-    "old": "    if (!ahead.pass) { this._metrics.c.drops++; return ahead.bucket; }",
-    "new": "    if (!ahead.pass) { return ahead.bucket; }",
+    "old": "    this._metrics.c.held++;\n",
+    "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a drop below one listener's worth never counted"
   },
@@ -549,7 +549,7 @@
     "old": "    this._metrics.c.foes++;   // SCALE5b: the frames by type\n",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a foes frame uncounted"
   },
@@ -559,7 +559,7 @@
     "old": "{ if (!walked || request.headers.get(LAYER_LAST_HEADER) === '1') this._metrics.c.full++; this._metricsTick(); const full = json({ error: 'room full' }, 503);",
     "new": "{ this._metricsTick(); const full = json({ error: 'room full' }, 503);",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a room full counted nowhere, as before SCALE5d (re-aimed by content): the refusal said full for the layer walk"
   },
@@ -569,7 +569,7 @@
     "old": "c.full, c.drops, Math.max(c.peak, sockets), c.foes,",
     "new": "c.full, c.drops, sockets, c.foes,",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the window's peak the count at its end"
   },
@@ -579,7 +579,7 @@
     "old": "c.full, c.drops, Math.max(c.peak, sockets), c.foes,",
     "new": "c.full, c.drops, c.peak, c.foes,",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a peak under the sockets the room holds"
   },
@@ -589,7 +589,7 @@
     "old": "    if (n > this._metrics.c.peak) this._metrics.c.peak = n;",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the peak only what an adopt saw"
   },
@@ -599,7 +599,7 @@
     "old": " + c.refusals + c.full > 0; }",
     "new": " + c.refusals > 0; }",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a window that only refused a full room says nothing"
   },
@@ -609,7 +609,7 @@
     "old": "c.full, c.drops, Math.max(c.peak, sockets), c.foes, c.hits, c.chats, c.owed, c.batches],",
     "new": "c.drops, c.full, Math.max(c.peak, sockets), c.foes, c.hits, c.chats, c.owed, c.batches],",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "two doubles swapped - a dashboard reads the wrong column"
   },
@@ -619,7 +619,7 @@
     "old": "    this._metrics.c.batches++;\n    this._send(ws, wire2Batch(q));",
     "new": "    this._send(ws, wire2Batch(q));",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a batch frame uncounted"
   },
@@ -629,7 +629,7 @@
     "old": "    q.push(item);\n    this._metrics.c.owed++;",
     "new": "    q.push(item);",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "an item owed uncounted"
   },
@@ -639,7 +639,7 @@
     "old": "      this._metrics.c.hits++;   // SCALE5b: the frames by type",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a blow uncounted"
   },
@@ -649,7 +649,7 @@
     "old": "      this._metrics.c.chats++;   // SCALE5b: the frames by type",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a line uncounted"
   },
@@ -659,7 +659,7 @@
     "old": "      if (!mayRelayCfg(a.glyphs)) {",
     "new": "      if (false) {",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "anyone sets the relay's settings"
   },
@@ -669,7 +669,7 @@
     "old": "export const mayRelayCfg = (glyphs) => Array.isArray(glyphs) && glyphs.includes('dev');",
     "new": "export const mayRelayCfg = (glyphs) => Array.isArray(glyphs) && glyphs.some((g) => g === 'dev' || g === 'dm');",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a Dungeon Master sets the relay's settings"
   },
@@ -679,7 +679,7 @@
     "old": "      await this.state.storage.put('relaycfg', cfg);\n",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a setting forgotten at the next wake"
   },
@@ -689,7 +689,7 @@
     "old": "      this._relayCfg = cfg; this._herald = undefined; this._bodyCfg = undefined;",
     "new": "      this._herald = undefined; this._bodyCfg = undefined;",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the hub's own herald on the old setting"
   },
@@ -699,7 +699,7 @@
     "old": "      if (m.v === null) delete cfg[m.k]; else cfg[m.k] = m.v;",
     "new": "      if (m.v !== null) cfg[m.k] = m.v;",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a setting never handed back to the var"
   },
@@ -709,7 +709,7 @@
     "old": "  if (typeof held === 'string') return held;\n",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the var over the hub's setting"
   },
@@ -719,7 +719,7 @@
     "old": "  if (m.v === null) return { k: m.k, v: null };\n",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "no hand-back"
   },
@@ -729,7 +729,7 @@
     "old": "  if (typeof m.v !== 'string' || m.v.length > RELAY_CFG_VALUE_MAX) return null;\n  return { k: m.k, v: m.v };\n}\n\n/**\n * The hub's answer",
     "new": "  if (typeof m.v !== 'string') return null;\n  return { k: m.k, v: m.v };\n}\n\n/**\n * The hub's answer",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a setting of any length"
   },
@@ -739,7 +739,7 @@
     "old": "    void this._relayCfgFresh(now);   // SCALE5b: the line the count runs by, as the hub holds it - AUDIT SCALE II R1-2: asked ahead, never awaited by the beat\n    const end = gateTimes",
     "new": "    const end = gateTimes",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a gate's court never asks the hub"
   },
@@ -749,7 +749,7 @@
     "old": "    const now = Date.now();\n    void this._relayCfgFresh(now);   // SCALE5b: the line the count runs by, as the hub holds it - AUDIT SCALE II R1-2: asked ahead, never awaited by the beat\n    try {\n      // INT12",
     "new": "    const now = Date.now();\n    try {\n      // INT12",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "an Abyss realm never asks the hub"
   },
@@ -759,7 +759,7 @@
     "old": "    void this._relayCfgFresh(now);   // SCALE5b: the line the count runs by, as the hub holds it - AUDIT SCALE II R1-2: asked ahead, never awaited by the beat\n    let at = Infinity, live = false;",
     "new": "    let at = Infinity, live = false;",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a serpent's cell never asks the hub"
   },
@@ -769,7 +769,7 @@
     "old": "    if (now - this._relayCfgAt < RELAY_CFG_TTL_MS) return;\n",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a boss's room asks the hub every beat"
   },
@@ -779,7 +779,7 @@
     "old": "{ this._relayCfg = v; this._bodyCfg = undefined; }",
     "new": "{ this._relayCfg = v; }",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a boss's room keeps the line it read first"
   },
@@ -789,7 +789,7 @@
     "old": "    if (this._herald === undefined || this._heraldCfg !== this._relayCfg) {",
     "new": "    if (this._herald === undefined) {",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the herald built before the hub's settings were read keeps the var's roles"
   },
@@ -799,7 +799,7 @@
     "old": "      if (primary) this.relayCfgOk = relayCfgSupported(relayV);   // SCALE5b",
     "new": "      if (primary) this.relayCfgOk = true;   // SCALE5b",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a setting sent to a relay that does not know it"
   },
@@ -809,7 +809,7 @@
     "old": "      if (!mayRelayCfg(staffGlyphs())) { say('Only a developer may change the relay\\'s settings.'); return; }\n",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the world host sends anyone's /relay"
   },
@@ -819,7 +819,7 @@
     "old": "  if (name === 'relay') return parseRelayCfgCommand(rest);   // SCALE5b\n",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "/relay takes nothing after it"
   },
@@ -829,7 +829,7 @@
     "old": "if (!whole && !this._rfOn.get(h.ws) && !haloPoseDue(",
     "new": "if (!whole && !haloPoseDue(",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "The relay's referee word read nowhere - a halo whose cell judges poses thinned by HALO-THIN's law. Re-aimed by content at the merge past main's HALO-THIN, the halos' one law now."
   },
@@ -839,7 +839,7 @@
     "old": "      if (ws && (m.on === 1 || m.on === 0)) this._rfOn.set(ws, m.on === 1);",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the cell's later word unread"
   },
@@ -849,7 +849,7 @@
     "old": "      const rf = isCellRoom(a.key) && this._refereesPoses() ? ',\"rf\":1' : '';",
     "new": "      const rf = '';",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a newcomer never told its cell judges"
   },
@@ -859,7 +859,7 @@
     "old": "    if (posed && isCellRoom(a.key) && this._refereesPoses() !== this._rfSaid) this._rfSay();",
     "new": "",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a referee begun never said"
   },
@@ -869,7 +869,7 @@
     "old": "    if (posed && isCellRoom(a.key) && this._refereesPoses() !== this._rfSaid) this._rfSay();",
     "new": "    if (posed && isCellRoom(a.key)) this._rfSay();",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the word said every pose"
   },
@@ -879,7 +879,7 @@
     "old": "    for (const [ws, b] of this._all()) if (b.id && b.w2) this._send(ws, out);\n  }\n  /** SCALE5b: A BEAT'S",
     "new": "    for (const [ws, b] of this._all()) if (b.id) this._send(ws, out);\n  }\n  /** SCALE5b: A BEAT'S",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the word to an old tab that cannot read it"
   },
@@ -889,7 +889,7 @@
     "old": "  _refereesPoses() { return !!(this._duelRef?.bouts?.size || this._wildRef?.fighters?.size || this._serpents?.size); }",
     "new": "  _refereesPoses() { return !!(this._duelRef?.bouts?.size || this._wildRef?.fighters?.size); }",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "a serpent's fight not a referee"
   },
@@ -899,7 +899,7 @@
     "old": "  _refereesPoses() { return !!(this._duelRef?.bouts?.size || this._wildRef?.fighters?.size || this._serpents?.size); }",
     "new": "  _refereesPoses() { return !!(this._duelRef?.bouts?.size || this._serpents?.size); }",
     "tests": [
-      "test/scale5b.test.js"
+      "test/net/scale5b.test.js"
     ],
     "note": "the Wild zone not a referee"
   }

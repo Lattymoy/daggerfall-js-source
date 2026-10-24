@@ -1,0 +1,398 @@
+[
+  {
+    "name": "EGAUD-wyrm-perches-never-flown",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "        if (k && egHas(L, EG_FL.grounded) && !L.groundedUntil) L.groundedUntil = now;\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-wyrm-burst-raises",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "      if (ph === 2 && L.hp / L.max > PHASE_AT[1]) {\n        const have = egObjsOf(F, 'pillar');",
+    "new": "      if (ph === 2) {\n        const have = egObjsOf(F, 'pillar');",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-spellmaster-burst-runes",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "      if (ph === 2 && L.hp / L.max > PHASE_AT[1]) examination(",
+    "new": "      if (ph === 2) examination(",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-caged-escape-planned",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "    if (cage && cage[2] > now && egInBlow(blow, m.x, m.z)) return true;\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-caged-told-not-cut",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "    for (const b of [...F.blows]) if (!b.ch && b.at > now && egInBlow(b, bound.x, bound.z)) egCut(F, b.i, out, now);\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-chain-lead-raw",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": "    if (ol > 0) blow.ol = Math.min(EG_OUTLINE_MAX_MS, Math.round(ol)); else delete blow.ol;",
+    "new": "    blow.ol = Math.max(0, ol);",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-pool-unweighed",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "  if (B.pool) pools[0] = [B.pool.r, B.pool.ms, 0, 0];\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-binder-guard-glint",
+    "file": "src/world/eliteGates/egTelegraph.js",
+    "old": "export const egRimOf = (band, fl, lord = true) => ((fl & EG_FL.lit) !== 0 && lord ?",
+    "new": "export const egRimOf = (band, fl, lord = true) => ((fl & EG_FL.lit) !== 0 ?",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-wind-beat-grace-all",
+    "file": "src/scenes/eliteGates/egFight.js",
+    "old": "export const egWindGraceMs = (fl) => ((fl & EG_FL.mirror) !== 0 ? EG_WIND_GRACE_MS : EG_WIND_WAY_MS);",
+    "new": "export const egWindGraceMs = (fl) => EG_WIND_GRACE_MS;",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-wyrm-reach-40",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "export const EG_WYRM_REACH_M = 64;",
+    "new": "export const EG_WYRM_REACH_M = 40;",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-lattice-rounded-down",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "n = Math.max(3, Math.ceil((2 * f.r) / W))",
+    "new": "n = Math.max(3, Math.floor((2 * f.r) / W))",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-lattice-row-cooldown",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "    L.cds[B.nm] = now + Math.max(B.cd ?? 0, made?.cd ?? 0);",
+    "new": "    L.cds[B.nm] = now + (B.cd ?? 0);",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-conquest-tell-short",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": "export const EG_CONQUEST_TELL_MS = 4000;",
+    "new": "export const EG_CONQUEST_TELL_MS = 3500;",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-ring-inside-theirs",
+    "file": "src/net/eliteGates/egBodies.js",
+    "old": ": duel.length ? (x, z) => base(x, z) && Math.hypot(x - ring[0], z - ring[1]) >= ring[2] + EG_RING_KEEP_M : base;",
+    "new": ": base;",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-void-drop-3",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "export const EG_VOID_DROP_M = EG_DROP_CM / 100 + 0.25;",
+    "new": "export const EG_VOID_DROP_M = 3;",
+    "tests": [
+      "test/net/eliteGates/egperfect_audit.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-scriptorium-unawaited",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "['yard', 'athenaeum', 'deepway', 'scriptorium'].includes(spec?.kind)",
+    "new": "['yard', 'athenaeum', 'deepway'].includes(spec?.kind)",
+    "tests": [
+      "test/net/eliteGates/egperfect_audit.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-scriptorium-ground-unread",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    if ((spec.kind === 'scriptorium' ? inHall.filter((b) => egOnTrialGround(spec, b)) : here).length) delete F.await;",
+    "new": "    if (here.length) delete F.await;",
+    "tests": [
+      "test/net/eliteGates/egperfect_audit.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-deserter-unheld",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "    deserterGoal: () => { if (F.await != null) return null;",
+    "new": "    deserterGoal: () => {",
+    "tests": [
+      "test/net/eliteGates/egperfect_audit.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-plate-zoneless",
+    "file": "src/net/eliteGates/egAscent.js",
+    "old": "(u.kind === 'plate' && !plate)",
+    "new": "u.kind === 'plate'",
+    "tests": [
+      "test/net/eliteGates/egperfect_audit.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-tube-mouth-only",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": " || (Math.abs(x - T.x) <= T.halfW && z >= T.z0 && z <= T.z1);",
+    "new": ";",
+    "tests": [
+      "test/net/eliteGates/egperfect_tube.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-pend-reach-path",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "if (B.hits(b, t + u, xs, ay + EG_JUMP_MPS * u - 0.5 * EG_JUMP_G * u * u, lz + d0 + v * u)) return false;",
+    "new": "if (B.hits(b, t + u, xs, b.y, lz + (reach * k) / EG_SOLVE_FLIGHT_N)) return false;",
+    "tests": [
+      "test/net/eliteGates/egperfect_audit.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-pend-twelve",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "export const EG_SOLVE_FLIGHT_N = 24;",
+    "new": "export const EG_SOLVE_FLIGHT_N = 12;",
+    "tests": [
+      "test/net/eliteGates/egperfect_audit.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-z-link-any-heading",
+    "file": "src/net/eliteGates/egRouteProof.js",
+    "old": "|| s.hd % 2 === 1 || s.z < z0",
+    "new": "|| s.z < z0",
+    "tests": [
+      "test/net/eliteGates/egperfect_audit.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-rails-period-half",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "phase: (q % 2) * Math.round(Math.PI * 1000) });",
+    "new": "phase: (q % 2) * (P / 2) });",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken_unit.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-gust-in-approach",
+    "file": "src/net/eliteGates/egAscent.js",
+    "old": "const APPROACH_NOT = Object.freeze(['drop', 'riser', 'gust']);",
+    "new": "const APPROACH_NOT = Object.freeze(['drop', 'riser']);",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-long-run-one-bridge",
+    "file": "src/net/eliteGates/egAscent.js",
+    "old": "const n = Math.max(1, Math.min(Math.ceil(run / split), Math.floor(run / EG_BROKEN_CHUNK_CM)));",
+    "new": "const n = 1;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-high-road-drop",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "const hiNot = (k) => law >= EG_BROKEN_LAW && k === 'drop'",
+    "new": "const hiNot = (k) => false",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-swing-joined-untested",
+    "file": "src/net/eliteGates/egAscent.js",
+    "old": "const near = (v, b, j) => (j ? !b.brk || egAscentApart(v, b, EG_BROKEN_CLEAR_CM) : egAscentApart(v, b));",
+    "new": "const near = (v, b, j) => j || egAscentApart(v, b);",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-jumpless-kept",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "const leaps = (q) => law < EG_BROKEN_LAW || (q.route?.links ?? []).some((l) => l.kind === 'span');",
+    "new": "const leaps = (q) => true;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-lone-still",
+    "file": "src/net/eliteGates/egAscent.js",
+    "old": "const pool = want === 1 && kinds.some((q) => q !== 'still') ? kinds.filter((q) => q !== 'still') : kinds;",
+    "new": "const pool = kinds;",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-fork-first-always",
+    "file": "src/net/eliteGates/egAscent.js",
+    "old": "H.law >= EG_BROKEN_LAW && !H.lean ? [",
+    "new": "H.law >= EG_BROKEN_LAW ? [",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-break-middle-only",
+    "file": "src/net/eliteGates/egAscent.js",
+    "old": "const EG_BROKEN_SLIDES = Object.freeze([0.5, 0.25, 0.75, 0, 1]);",
+    "new": "const EG_BROKEN_SLIDES = Object.freeze([0.5]);",
+    "tests": [
+      "test/net/eliteGates/egperfect_broken.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-ring-side-whole-open",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "    walls = walls.flatMap(([s0, s1]) => [[s0, Math.min(s1, t - h)], [Math.max(s0, t + h), s1]]).filter(([s0, s1]) => s1 - s0 > 1e-3);",
+    "new": "    walls = [];",
+    "tests": [
+      "test/world/eliteGates/egperfect_audit_screen.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-ring-passage-alcove",
+    "file": "src/net/eliteGates/egWalkGraph.js",
+    "old": "    if (spec.frags && !spec.frags.some((f) => f.cls === 'chamber' && Math.abs(f.x - d.x) < 0.01 && a.z > f.z0 && a.z < f.z1)) continue;\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egperfect_audit_screen.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-clamp-side-open",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "return Math.abs((x - a.x) * (az / al) - (z - a.z) * (ax / al)) <= EG_RING_DOOR.w / 2 - r &&",
+    "new": "return Math.abs((x - a.x) * (az / al) - (z - a.z) * (ax / al)) <= 3 &&",
+    "tests": [
+      "test/world/eliteGates/egperfect_audit_screen.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-end-piece-unread",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "    || (spec.steps ?? []).some((q) => Math.abs(q.y - y) < H && Math.abs(px - q.x) <= q.w / 2 && Math.abs(pz - q.z) <= q.d / 2)\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egperfect_audit_screen.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-ends-all-closed",
+    "file": "src/world/eliteGates/egHall.js",
+    "old": "  return (met(l.ax - ux * 0.25, l.az - uz * 0.25) ? 0 : 1) | (met(l.bx + ux * 0.25, l.bz + uz * 0.25) ? 0 : 2);",
+    "new": "  return 0;",
+    "tests": [
+      "test/world/eliteGates/egperfect_audit_screen.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-hang-box-shifted",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "    if (B) over(B[0], B[2], B[3], B[5], B[1] + EG_HANG_SLAB);",
+    "new": "    if (B) over(q.x + B[0], q.z + B[2], q.x + B[3], q.z + B[5], q.y + B[1] + EG_HANG_SLAB);",
+    "tests": [
+      "test/world/eliteGates/egperfect_audit_screen.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-turned-column-on-leap",
+    "file": "src/world/eliteGates/egPlatformModel.js",
+    "old": "const along = s.hd % 2 === 1, side = along ? (r() < 0.5 ? 0 : 2) : r() < 0.5 ? 1 : 3",
+    "new": "const along = false, side = r() < 0.5 ? 1 : 3",
+    "tests": [
+      "test/world/eliteGates/egperfect_audit_screen.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-ghosts-never-aimed",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "    if (ghostHall === null) return;\n    let hs = null;",
+    "new": "    return;\n    let hs = null;",
+    "tests": [
+      "test/world/eliteGates/egperfect_audit_screen.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-ghosts-circle-order",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": ".sort((a, b) => off(a.st) - off(b.st) || a.k - b.k)",
+    "new": ".sort((a, b) => a.k - b.k)",
+    "tests": [
+      "test/world/eliteGates/egperfect_audit_screen.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-ghosts-pass-untold",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "    pass?.ghosts(ghostKinds());\n",
+    "new": "",
+    "tests": [
+      "test/world/eliteGates/egperfect_audit_screen.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-hang-reach-down-short",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "export const EG_HANG_HALF = Object.freeze({ x: 3.5, z: 1.05, down: 1.6,",
+    "new": "export const EG_HANG_HALF = Object.freeze({ x: 3.5, z: 1.05, down: 1.4,",
+    "tests": [
+      "test/world/eliteGates/egperfect_audit_screen.test.js"
+    ]
+  },
+  {
+    "name": "EGAUD-never-let-be",
+    "file": "src/net/eliteGates/egLords.js",
+    "old": " if (tried.size) L.shun = [target.sub, now + EG_SHUN_MS]; continue; }",
+    "new": " continue; }",
+    "tests": [
+      "test/net/eliteGates/egperfect_lords.test.js"
+    ]
+  }
+]

@@ -77,7 +77,7 @@ the sky. That was true of the SKY alone: the lab's front also eases the
 world's terms and holds the particles off until the deck is in, and
 none of that had crossed - the drops, the sun scale, the fog and the
 grass dim snapped on the sim's cut under a sky that took WIND1's lead
-to turn. WX2 (`systems/weatherFront.js`, 2026-09-03) ports that half
+to turn. WX2 (`systems/weather/weatherFront.js`, 2026-09-03) ports that half
 onto the game's own front; see `Rendering.md` WX2. The lab's slider
 still gives way to the game's clock.
 

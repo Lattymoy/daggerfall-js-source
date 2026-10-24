@@ -1,6 +1,6 @@
 // @ts-check
 // SHIP-LIFE (2026-09-30, Mac's item 1 of the six-part sea ask: ships that berth at ports, depart, voyage and keep
-// their own errands; `01-Overview/Handoff-Naval-Crew-and-Ship-Life.md` slice E) - A SHIP GOING SOMEWHERE. The port's
+// their own errands; `01-Overview/handoffs/Handoff-Naval-Crew-and-Ship-Life.md` slice E) - A SHIP GOING SOMEWHERE. The port's
 // own; pure - the host hands the water, a town's footprint and the ships' clocks, and gets back berths, paths and the
 // plan a captain sails by when no fight is hers.
 //
@@ -35,7 +35,7 @@
 // of the dark, where the last ships in of the evening pass.
 
 import { hash32 } from '../../world/spawnedDungeons.js';
-import { mulberry32 } from '../../combat/bloodArt.js';
+import { mulberry32 } from '../../combat/blood/bloodArt.js';
 import { hullBuild, MOD_CARRACK_BUILD } from './navalShips.js';
 
 /** How far past the town's rect a berth may lie (m), the shore scan's grid (m), the water kept between a berth's hull
@@ -158,6 +158,31 @@ export function footprintClear(pos, yaw, hull, isWater) {
   return true;
 }
 
+/** QUAY-CROSSING: how far a berth's quay stands in from her side (quays.js QUAY_GAP + QUAY_WIDTH) and past her ends
+ *  (quays.js QUAY_ENDS) (m) - `quayBox`'s. */
+export const BERTH_QUAY_IN = 5.3;
+export const BERTH_QUAY_ENDS = 3;
+/** QUAY-CROSSING: a berth's ship and her quay in the scene - four corners [x, z], in order round them: her seaward side
+ *  to the quay's back, its ends past her bow and her stern. */
+export function quayBox(pos, yaw, normal, hull = BERTH_HULL) {
+  const { halfWidth, bowZ, aftZ } = berthSize(hull);
+  const fx = Math.sin(yaw), fz = Math.cos(yaw), lx = -normal[0], lz = -normal[1];
+  return [[aftZ - BERTH_QUAY_ENDS, -halfWidth], [bowZ + BERTH_QUAY_ENDS, -halfWidth], [bowZ + BERTH_QUAY_ENDS, halfWidth + BERTH_QUAY_IN], [aftZ - BERTH_QUAY_ENDS, halfWidth + BERTH_QUAY_IN]]
+    .map(([z, x]) => [pos[0] + fx * z + lx * x, pos[1] + fz * z + lz * x]);
+}
+/** Whether two convex quads overlap (separating axes; touching is apart). */
+export function boxesMeet(a, b) {
+  for (const box of [a, b]) {
+    for (let i = 0; i < 4; i++) {
+      const [px, pz] = box[i], [qx, qz] = box[(i + 1) % 4], ax = pz - qz, az = qx - px;
+      const span = (q) => q.map(([x, z]) => x * ax + z * az);
+      const sa = span(a), sb = span(b);
+      if (Math.max(...sa) <= Math.min(...sb) || Math.max(...sb) <= Math.min(...sa)) return false;
+    }
+  }
+  return true;
+}
+
 /**
  * A port town's harbour off the terrain: `rect` the town's footprint in the scene ({ minX, maxX, minZ, maxZ }),
  * `isWater(x, z, hull)`. Answers `{ berths: [{ pos: [x, z], yaw, normal: [x, z], approach: [x, z] }], mouth: [x, z],
@@ -193,7 +218,7 @@ export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deep
     }
   }
   cands.sort((a, b) => a.d - b.d || a.pos[0] - b.pos[0] || a.pos[1] - b.pos[1]);
-  const berths = [];
+  const berths = [], boxes = [];
   for (const c of cands) {
     if (berths.length >= max) break;
     if (berths.some((b) => dist2(b.pos, c.pos) < length * BERTH_SPACING)) continue;
@@ -204,6 +229,11 @@ export function findHarbour({ rect, isWater: own, hull = BERTH_HULL, deep = deep
       const back = length * APPROACH_LENGTHS;
       const approach = [c.pos[0] - Math.sin(yaw) * back + c.normal[0] * APPROACH_OUT, c.pos[1] - Math.cos(yaw) * back + c.normal[1] * APPROACH_OUT];
       if (!footprintClear(approach, yaw, hull, isWater)) continue;
+      // QUAY-CROSSING: her quay never laid across another berth's - round a point of land two berths BERTH_SPACING
+      // apart turned to each other stood their quays' ends one over the other
+      const box = quayBox(c.pos, yaw, c.normal, hull);
+      if (boxes.some((o) => boxesMeet(o, box))) continue;
+      boxes.push(box);
       berths.push({ pos: c.pos, yaw, normal: c.normal, approach });
       break;
     }

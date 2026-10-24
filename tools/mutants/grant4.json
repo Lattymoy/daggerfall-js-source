@@ -1,0 +1,453 @@
+[
+  {
+    "name": "GRANT4-room-socket-not-here",
+    "file": "server/src/index.js",
+    "old": "    if (isWorldRoom(a.key) || (p && cellRoomOfWire(p.x, p.z) === a.key)) return true;",
+    "new": "    if (p && cellRoomOfWire(p.x, p.z) === a.key) return true;",
+    "why": "a world room's socket told `cell`",
+    "tests": [
+      "test/net/grant4_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-room-pixel-off-a-scene",
+    "file": "server/src/index.js",
+    "old": "    const px = isWorldRoom(a.key) ? [0, 0] : mapPixelOfWire(a.pose.x, a.pose.z);",
+    "new": "    const px = mapPixelOfWire(a.pose.x, a.pose.z);",
+    "why": "a room's grant names a pixel read off a scene's pose",
+    "tests": [
+      "test/net/grant4_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-room-open-kinds",
+    "file": "server/src/index.js",
+    "old": "    if (isWorldRoom(a.key) && GRANT_OPEN_KINDS.includes(ask.kind)) {",
+    "new": "    if (false && GRANT_OPEN_KINDS.includes(ask.kind)) {",
+    "why": "an encounter granted indoors",
+    "tests": [
+      "test/net/grant4_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-carry-into-room",
+    "file": "server/src/index.js",
+    "old": "const ok = isCellRoom(a.key) && isCellRoom(gr.q) && gr.o === a.id",
+    "new": "const ok = gr.o === a.id",
+    "why": "a grant carried into or out of a world room",
+    "tests": [
+      "test/net/grant4_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT9-ungranted-passes",
+    "file": "server/src/index.js",
+    "old": "      if (!Array.isArray(r.gr)) return !asker || r.d === 1 || r.t === undefined || allies.has(r.i);",
+    "new": "      if (!Array.isArray(r.gr)) return true;",
+    "why": "a live record with no grant passes the strip",
+    "tests": [
+      "test/net/grant4_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT9-ally-stripped",
+    "file": "server/src/index.js",
+    "old": "      if (!Array.isArray(r.gr)) return !asker || r.d === 1 || r.t === undefined || allies.has(r.i);",
+    "new": "      if (!Array.isArray(r.gr)) return !asker || r.d === 1 || r.t === undefined;",
+    "why": "an ally with no grant stripped",
+    "tests": [
+      "test/net/grant4_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT9-sender-unchecked",
+    "file": "server/src/index.js",
+    "old": "      return !!v && v.gr.o === a.id && Number.isInteger(i)",
+    "new": "      return !!v && Number.isInteger(i)",
+    "why": "another's grant passes the strip",
+    "tests": [
+      "test/net/grant4_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT9-member-bound",
+    "file": "server/src/index.js",
+    "old": "i >= 0 && i < v.gr.n && (v.gr.h < 0",
+    "new": "i >= 0 && i <= v.gr.n && (v.gr.h < 0",
+    "why": "a member past its grant passes the strip",
+    "tests": [
+      "test/net/grant4_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT9-marks-unchecked",
+    "file": "server/src/index.js",
+    "old": "(v.gr.h < 0 || i === v.gr.h) && grantMarksAllow(v.gr, i, r);",
+    "new": "(v.gr.h < 0 || i === v.gr.h);",
+    "why": "a forged elite passes the strip",
+    "tests": [
+      "test/net/grant4_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT9-switch-unread",
+    "file": "server/src/index.js",
+    "old": "relayCfgValue(this._relayCfg, this.env, 'grantStrip') === 'on' && (kind === 'own'",
+    "new": "true && (kind === 'own'",
+    "why": "the strip runs with its switch off",
+    "tests": [
+      "test/net/grant4_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT8-switch-unread",
+    "file": "server/src/index.js",
+    "old": "k = grantKindRolled(ask.kind, relayCfgValue(this._relayCfg, this.env, 'grantRoll') === 'on');",
+    "new": "k = ask.kind;",
+    "why": "an encounter's grant never rolled",
+    "tests": [
+      "test/net/grant4_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT8-encr-asked",
+    "file": "src/net/grantLaw.js",
+    "old": "!Object.hasOwn(GRANT_KINDS, m.kind) || m.kind === 'encr') return null;",
+    "new": "!Object.hasOwn(GRANT_KINDS, m.kind)) return null;",
+    "why": "`encr` asked by name",
+    "tests": [
+      "test/net/grant4_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT8-every-kind-rolled",
+    "file": "src/net/grantLaw.js",
+    "old": "(k === 'enc' && roll ? 'encr' : k)",
+    "new": "(roll ? 'encr' : k)",
+    "why": "a camp's grant rolled as an encounter's",
+    "tests": [
+      "test/net/grant4_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-watch-record-early",
+    "file": "src/scenes/grantHost.js",
+    "old": "    if (!g._grantDone && now() - g._grantAt < wait) return false;\n",
+    "new": "",
+    "why": "a watchman rides before his grant",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-watch-unasked",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (onWatch && _net.grants && !_net.grants.watchReady(f, _grantPool)) continue;",
+    "new": "      void _grantPool;",
+    "why": "the watch never asks a grant",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-watch-grant-any-species",
+    "file": "src/scenes/grantHost.js",
+    "old": "    if (gr.k === 'watch' && r.t !== KNIGHT_CITYWATCH_ID) return 'dice';",
+    "new": "",
+    "why": "a watch grant stands a monster",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-watch-never-freed",
+    "file": "src/scenes/grantHost.js",
+    "old": "{ watchmen.delete(g); ended(g); }",
+    "new": "{ watchmen.delete(g); }",
+    "why": "a watchman gone, his grant still counted",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-kept-unasked",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "kept: eliteFoe === true || Number.isInteger(champion),",
+    "new": "kept: false,",
+    "why": "a saved elite asks its shape's kind",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-markless-judged",
+    "file": "src/net/grantLaw.js",
+    "old": "GRANT_MARKLESS.includes(g.k) || ((!z",
+    "new": "((!z",
+    "why": "a kept stand's own marks refused",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js",
+      "test/scenes/grant3_pool.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-carry-into-room-client",
+    "file": "src/scenes/grantHost.js",
+    "old": "carryTo = from && isCellRoom(s.room) ? s.room : null;",
+    "new": "carryTo = from ? s.room : null;",
+    "why": "a cell's grants carried into a room",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-carry-out-of-room-client",
+    "file": "src/scenes/grantHost.js",
+    "old": "g.q !== room && isCellRoom(g.q));",
+    "new": "g.q !== room);",
+    "why": "a room's grants carried into a cell",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-free-elsewhere",
+    "file": "src/scenes/grantHost.js",
+    "old": "if (!gr._dead && gr.q === open()?.room) post('free', gr.g);",
+    "new": "if (!gr._dead) post('free', gr.g);",
+    "why": "a free sent to a room that does not hold it",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-expired-kept",
+    "file": "src/scenes/grantHost.js",
+    "old": "{ g._dead = true; live.delete(g); }",
+    "new": "g._dead = true;",
+    "why": "an expired grant kept as mine",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT6-owner-stands-ungranted",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (grantAsk && !gm && _net?.grants?.enforcing()) return null;",
+    "new": "",
+    "why": "while enforcing, a stand with no grant stands",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT6-welcome-not-waited",
+    "file": "src/scenes/grantHost.js",
+    "old": "    if (!(open() || unsaid()) || !Object.hasOwn(GRANT_KINDS, kind)) return null;",
+    "new": "    if (!open() || !Object.hasOwn(GRANT_KINDS, kind)) return null;",
+    "why": "a stand made while the welcome is owed asks nothing",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT6-welcome-not-polled",
+    "file": "src/scenes/grantHost.js",
+    "old": "    if (!open() && unsaid() && polls * MODE_POLL_MS < wait) { setTimeout(() => flush(kind, polls + 1), MODE_POLL_MS); return; }\n",
+    "new": "",
+    "why": "the owed welcome not waited for",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT6-closed-socket-waits",
+    "file": "src/scenes/grantHost.js",
+    "old": "return !!s && s.status === 'open' && s.grantMode == null",
+    "new": "return !!s && s.grantMode == null",
+    "why": "a socket not open holds every stand",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT6-verdict-not-awaited",
+    "file": "src/scenes/grantHost.js",
+    "old": "const v = verdicts.get(`${from}|${g}`) ?? await heardOf(`${from}|${g}`);",
+    "new": "const v = verdicts.get(`${from}|${g}`);",
+    "why": "a grant not yet heard called unheard at once",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT6-level-slack-dropped",
+    "file": "src/scenes/grantHost.js",
+    "old": "r.l > gr.l + GRANT_LEVEL_SLACK) return 'dice';",
+    "new": "r.l > gr.l) return 'dice';",
+    "why": "a level since its checkpoint refused",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT6-every-refusal-stood-down",
+    "file": "src/scenes/grantHost.js",
+    "old": "const standsDown = (why) => !!why && enforcing() && GRANT_STANDDOWN_REASONS.includes(why);",
+    "new": "const standsDown = (why) => !!why && enforcing();",
+    "why": "an honest client's timing stood down",
+    "tests": [
+      "test/scenes/grant3_pool.test.js"
+    ]
+  },
+  {
+    "name": "GRANT8-owner-own-roll",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "        if (t >= 0 && ENEMY_BASICS[t]?.maleTexture) { mobileType = t; basics = ENEMY_BASICS[t]; }",
+    "new": "        if (false) { mobileType = t; basics = ENEMY_BASICS[t]; }",
+    "why": "an encr owner stands its own roll",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT8-reader-unchecked",
+    "file": "src/scenes/grantHost.js",
+    "old": "      if (r.t !== grantSpecies(gr, i, c, false) && r.t !== grantSpecies(gr, i, c, true)) return 'dice';",
+    "new": "      void c; void i;",
+    "why": "an encr member of another species believed",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-dungeon-unenforced",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (ask && !gm && grants?.()?.enforcing()) return null;\n",
+    "new": "",
+    "why": "the dungeon's stand with no grant stands while enforcing",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-dungeon-frame-grants",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "f: out, ...(gs.length ? { gs } : {}), ...(qf.length ? { qf } : {})",
+    "new": "f: out, ...(qf.length ? { qf } : {})",
+    "why": "the dungeon's frame carries no grant",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-building-ungranted",
+    "file": "src/scenes/world.js",
+    "old": "      grants,   // GRANT4: the building's own stands on their grants",
+    "new": "      // GRANT4: the building's own stands on their grants",
+    "why": "the building's pool never handed the grants",
+    "tests": [
+      "test/scenes/grant4_lanes.test.js"
+    ]
+  },
+  {
+    "name": "GRANT6-session-mode-off",
+    "file": "src/net/online.js",
+    "old": "        this.grantMode = null;   // GRANT2: likewise",
+    "new": "        this.grantMode = 'off';   // GRANT2: likewise",
+    "why": "a socket's law said off before its welcome",
+    "tests": [
+      "test/net/grant2_client.test.js"
+    ]
+  },
+  {
+    "name": "GRANT6-session-asks-unsaid",
+    "file": "src/net/online.js",
+    "old": "    if (!this.grantMode || this.grantMode === 'off' || !streamsFoes(this.room)",
+    "new": "    if (this.grantMode === 'off' || !streamsFoes(this.room)",
+    "why": "an ask sent before the law is said",
+    "tests": [
+      "test/net/grant2_client.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-session-room-law",
+    "file": "src/net/online.js",
+    "old": "relaySupportsGrant(relayV) && streamsFoes(room) && typeof m.gm",
+    "new": "relaySupportsGrant(relayV) && isCellRoom(room) && typeof m.gm",
+    "why": "a world room's welcome read as no law",
+    "tests": [
+      "test/net/grant2_client.test.js"
+    ]
+  },
+  {
+    "name": "GRANT7-guest-counted",
+    "file": "server-account/src/grants.js",
+    "old": "      if (p && credibleReporter(p, nowS)) counted.push(id);",
+    "new": "      if (p) counted.push(id);",
+    "why": "a guest's or a sprout's tally counted",
+    "tests": [
+      "test/server/grant7_case.test.js"
+    ]
+  },
+  {
+    "name": "GRANT7-timing-counted",
+    "file": "server-account/src/grants.js",
+    "old": "AND at > ?2 AND reason IN (${inReasons}) GROUP BY",
+    "new": "AND at > ?2 AND (1 OR reason IN (${inReasons})) GROUP BY",
+    "why": "a timing word counted against a sender",
+    "tests": [
+      "test/server/grant7_case.test.js"
+    ]
+  },
+  {
+    "name": "GRANT7-case-a-reports",
+    "file": "server-account/src/grants.js",
+    "old": "const caseId = await openCaseFor(ctx, env, sender, 'review', 'spawn');",
+    "new": "const caseId = await openCaseFor(ctx, env, sender, 'report', 'spawn');",
+    "why": "the grant case a report's",
+    "tests": [
+      "test/server/grant7_case.test.js"
+    ]
+  },
+  {
+    "name": "GRANT7-line-every-batch",
+    "file": "server-account/src/grants.js",
+    "old": "    if (await db.prepare('SELECT 1 AS y FROM mod_case_lines WHERE case_id = ?1 AND tab = ?2 AND at > ?3').bind(caseId, GRANT_CASE_TAB, since).first()) continue;   // one line a window\n",
+    "new": "",
+    "why": "a line every batch",
+    "tests": [
+      "test/server/grant7_case.test.js"
+    ]
+  },
+  {
+    "name": "GRANT5-rate-no-room",
+    "file": "server-account/src/grants.js",
+    "old": "(/** @type {number} */ (perHour) * GRANT_SUGGEST_ROOM) / 3600",
+    "new": "/** @type {number} */ (perHour) / 3600",
+    "why": "a rate suggested at the measure itself",
+    "tests": [
+      "test/server/grant7_case.test.js"
+    ]
+  },
+  {
+    "name": "GRANT5-ceiling-no-room",
+    "file": "server-account/src/grants.js",
+    "old": "Math.ceil(/** @type {number} */ (most) * GRANT_SUGGEST_ROOM)",
+    "new": "Math.ceil(/** @type {number} */ (most))",
+    "why": "a ceiling suggested at the most a cell held",
+    "tests": [
+      "test/server/grant7_case.test.js"
+    ]
+  },
+  {
+    "name": "GRANT-star-in-a-room",
+    "file": "src/net/grantLaw.js",
+    "old": "'encr', 'star']);",
+    "new": "'encr']);",
+    "tests": [
+      "test/scenes/grant3_pool.test.js"
+    ],
+    "note": "STAR-TUNE: a world room mints a star's kind"
+  }
+]

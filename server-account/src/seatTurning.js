@@ -35,19 +35,21 @@
 // EVERY CLOCK IS AN ARGUMENT, as in accounts.js.
 // ═════════════════════════════════════════════════════════════════════
 import { confirmedSeats, seatsOpenFor } from './townSeats.js';
-import { gatherStandings, seatGuildsOf, holdsOf, battlesOf, agreedGateRegions, allIn } from './seatInfluence.js';   // SEAT-CAP: allIn, every guild list read IN_CHUNK at a time
-import { activeIn, edictsOf } from './seatHolding.js';
+import { gatherStandings, seatGuildsOf, agreedGateRegions, allIn, holdsRead, holdsFrom, battlesRead, battlesFrom } from './seatInfluence.js';   // SEAT-CAP: allIn, every guild list read IN_CHUNK at a time
+import { activeIn, edictsOf, edictsRead, edictsFrom } from './seatHolding.js';
+import { redRead, redFrom } from './seatPolitics.js';   // SEAT-BATCH: the list's red lines, in its one batch
 import { windowOf } from './seatBattles.js';   // SEAT2a: the holder's window, frozen into its battle
 import { royalTurning } from './seatRoyal.js';   // CROWN1 part two: a Royal Tourney's champion named
 import { incursionStatements } from './seatIncursion.js';   // AUDIT-SEATS: a Daedric Incursion's Marks
 import { fortsSeasonStatements, campsSpent, fortTiersOf, fortsLapsedStatements, campsWorn } from './seatForts.js';   // SEAT2b: a Season's wear, the Siege Camps spent; part two: a holder's Shrine; AUDIT SEATS-2 S5, S4: a lapse's projects fallen, the worn gate's Rams
 import { shrineStanding, marketHallTitheCap } from '../../src/net/fortLaw.js';   // SEAT2b part two (7.5): the Shrine's Standing a week
+import { weekSettled, keepWeekSettled } from './weekKept.js';   // PRIMARY-FOLD: a week read settled, kept
 import { swordsSettled } from './seatSiege.js';   // AUDIT-SEATS S3: a void battle's Sellsword escrow home
-import { gameDayAt, gateTimes } from '../../src/net/gateLaw.js';
+import { gameDayAt, gateTimes } from '../../src/net/gate/gateLaw.js';
 import { guildActorOf } from './guilds.js';
 import { mustChange } from './realm.js';
 import { utcDay } from '../../src/net/marksLaw.js';
-import { GUILD_RANK_MASTER } from '../../src/net/guildLaw.js';
+import { GUILD_RANK_MASTER } from '../../src/net/guild/guildLaw.js';
 import { seatWeekOf, seatWeekStartMs, seatKeyOk, turningPlan, seatGlyphsOf, seatTitleOf, SEAT_WEEK_MS, STANDING_START, placeBattles, atSiegeWindow, CROWN_SEAT_REGIONS, conscriptionDue,
   fealtyReckoning, fealtyTribute, TITHE_CAP, seasonEndingAt, seasonStanding, seasonTitles, seasonOf, seasonRibbons, keptWholeSeason } from '../../src/net/townSeatLaw.js';
 import { tideAt } from '../../src/net/tideLaw.js';   // SEASON1 part two: the Tides
@@ -438,22 +440,26 @@ async function guildmastersOf(db, guilds) {
 
 /** THE SEATS AS THE MAP AND THE ARRIVAL NEED THEM: each listed seat with its holder and this week's battle at it (a
  *  Contested seat's Tourney, a held seat's siege), or null. SEAT1d: the holder with the Edict that rules this week (the
- *  client's shops, its arrival and its Festival read it), or null. */
-export async function seatsWithHolders(db, seats, nowS) {
-  const holds = await holdsOf(db);
-  const battles = await battlesOf(db, weekAt(nowS));
-  const edicts = await edictsOf(db, weekAt(nowS));
+ *  client's shops, its arrival and its Festival read it), or null. And the day's red lines (seatPolitics.js redOf).
+ *  SEAT-BATCH (2026-10-16, the account database's primary at its ceiling of round trips - bible/11-Multiplayer/
+ *  Scale-Arc.md SEAT-BATCH): the six reads in ONE batch, where each was a round trip of its own - every list asked the
+ *  primary seven times past its session's lookup, and the primary's ceiling is its round trips, not its rows. Answers
+ *  `{ seats, red }`. */
+export async function seatsBoard(db, seats, nowS) {
+  const week = weekAt(nowS);
   // SEAT2b part two (7.5): each seat's works standing now - a project whose day has come counts (seatForts.js fortTierAt's
   // rule, read and never written) - so every client knows a members' Harbour, the Watchtowers and the crafting halls
-  const { results: fortRows = [] } = await db.prepare(`SELECT key, work, CASE WHEN building IS NOT NULL AND stands_at IS NOT NULL AND stands_at <= ?1
-    THEN building ELSE tier END AS t FROM town_seat_forts WHERE tier > 0 OR (building IS NOT NULL AND stands_at IS NOT NULL AND stands_at <= ?1)`).bind(nowS).all();
+  const fortsRead = db.prepare(`SELECT key, work, CASE WHEN building IS NOT NULL AND stands_at IS NOT NULL AND stands_at <= ?1
+    THEN building ELSE tier END AS t FROM town_seat_forts WHERE tier > 0 OR (building IS NOT NULL AND stands_at IS NOT NULL AND stands_at <= ?1)`).bind(nowS);
+  const [heldRes, rightsRes, revoltsRes, edictsRes, fortsRes, redRes] = await db.batch([holdsRead(db), ...battlesRead(db, week), edictsRead(db, week), fortsRead, redRead(db, nowS)]);
+  const holds = holdsFrom(heldRes?.results), battles = battlesFrom(rightsRes?.results, revoltsRes?.results), edicts = edictsFrom(edictsRes?.results);
   const forts = new Map();
-  for (const r of fortRows) if (Number(r.t) > 0) { const k = Number(r.key); forts.set(k, { ...(forts.get(k) ?? {}), [r.work]: Number(r.t) }); }
-  return seats.map((s) => {
+  for (const r of fortsRes?.results ?? []) if (Number(r.t) > 0) { const k = Number(r.key); forts.set(k, { ...(forts.get(k) ?? {}), [r.work]: Number(r.t) }); }
+  return { red: redFrom(redRes?.results), seats: seats.map((s) => {
     const h = holds.get(s.key) ?? null;
     const e = edicts.get(s.key);
     return { ...s, holder: h ? { ...h, edict: e && e.guild === h.guild.id ? e.edict : null } : null, battle: battles.get(s.key) ?? null, ...(forts.has(s.key) ? { forts: forts.get(s.key) } : {}) };
-  });
+  }) };
 }
 
 /**
@@ -489,12 +495,13 @@ export const SETTLE_LEASE_S = 60;
  * its batch committed, and the next began another, so the week never settled and the database drowned with it. Here a
  * caller that finds a week due takes the one lease (`town_seat_settling`, SETTLE_LEASE_S) and settles, freeing it after;
  * a caller that finds the lease held settles nothing and is told so - `{ settled, pending }`, `pending` while another
- * holds the Turning. Nothing due costs the one read it always did.
+ * holds the Turning. Nothing due costs the one read it always did - once a week an isolate, since PRIMARY-FOLD (weekKept.js).
  * @param {any} db @param {number} nowS @param {number|null} [zero]
  */
 export async function settleDueOnce(db, nowS, zero = null) {
+  if (weekSettled(db, 'seats', weekAt(nowS))) return { settled: 0, pending: false };   // PRIMARY-FOLD: this isolate read the week settled (weekKept.js)
   const last = (await db.prepare('SELECT MAX(week) AS w FROM town_seat_weeks').first())?.w;
-  if (last != null && Number(last) + 1 >= weekAt(nowS)) return { settled: 0, pending: false };
+  if (last != null && Number(last) + 1 >= weekAt(nowS)) { keepWeekSettled(db, 'seats', weekAt(nowS)); return { settled: 0, pending: false }; }
   // D1-LOAD: a lease held is READ, never asked of the one writer - every seat request that finds the week due while
   // another settles (every client's list at the Turning) asked an INSERT that changed nothing, each one the writer's turn
   const held = await db.prepare('SELECT until FROM town_seat_settling WHERE id = 1').first();

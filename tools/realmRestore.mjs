@@ -6,7 +6,7 @@
 // From CUSTOMS-CARRY's arrival on main (2026-09-29 03:09:50 UTC) until HOUSE-LOSS, customs carried an offline
 // character's online home, guild place and Renown track to its realm id before the first save was sent, and the door's
 // Delete on a character whose first save never landed took them with it - the home's pieces and hidden furniture by the
-// tables' cascade - and left the census spent (bible/01-Overview/Field-Bugs-2026-09-29.md, HOUSE-LOSS). Those rows are
+// tables' cascade - and left the census spent (bible/01-Overview/bugs/Field-Bugs-2026-09-29.md, HOUSE-LOSS). Those rows are
 // gone from the database; D1 Time Travel still holds them. The operator's workflow (.github/workflows/realm-restore.yml)
 // reads a snapshot from before the loss (THEN) and the database as it stands (NOW), and this plans what comes back.
 //
@@ -26,8 +26,10 @@
 
 import { readFileSync, writeFileSync } from 'node:fs';
 import { DatabaseSync } from 'node:sqlite';
-import { GUILD_MEMBERS_MAX, GUILD_RANK_MASTER } from '../src/net/guildLaw.js';
+import { GUILD_MEMBERS_MAX, GUILD_RANK_MASTER } from '../src/net/guild/guildLaw.js';
 import { isMain } from './lib/isMain.mjs';   // AUDIT 68: the one "am I the program" test
+import { lit } from './lib/sqlLit.mjs';
+import { reseatRestored } from './yardReseat.mjs';
 
 /** The realm's own ids (server-account/src/realm.js REALM_ID_RE): a home under one is a realm character's, never lost here. */
 const REALM_ID_RE = /^r[0-9a-f]{20}$/;
@@ -42,14 +44,8 @@ export function loadDump(/** @type {string} */ sql) {
   return db;
 }
 
-/** One SQL literal. The tables hold text and whole numbers; anything else is refused rather than guessed at. */
-export function lit(/** @type {unknown} */ v) {
-  if (v === null || v === undefined) return 'NULL';
-  if (typeof v === 'number' && Number.isSafeInteger(v)) return String(v);
-  if (typeof v === 'bigint') return String(v);
-  if (typeof v === 'string') return `'${v.replace(/'/g, "''")}'`;
-  throw new Error(`realmRestore: a value no restore writes: ${typeof v}`);
-}
+/** One SQL literal (tools/lib/sqlLit.mjs, its one home since PURSE-BACK - handed on for this tool's readers). */
+export { lit };
 /** AUDIT HOME-VOTE II A6: a home's row as it is put back - every column of the snapshot's but its `score`. */
 export const homeRowOf = (/** @type {Record<string, unknown>} */ home) => {
   const { score: _score, ...row } = home;
@@ -129,7 +125,13 @@ export function planRestore({ then, now, handles = new Map() }) {
         if (!nowHome) sql.push(insert('homes', homeRowOf(home)));
         // the house back - or, bought again by the same account since, its pieces and hidden list back into it
         const pieces = all(then, 'SELECT * FROM home_decor WHERE map_id = ? AND building_key = ?', home.map_id, home.building_key);
-        for (const p of pieces) sql.push(insert('home_decor', p));
+        // STALL-SHAPE's audit: a yard's stall or boulder from before migration 0121 comes back re-seated, as 0121 left
+        // every other (tools/yardReseat.mjs reseatRestored)
+        for (const p of pieces) {
+          const back = reseatRestored(p);
+          sql.push(insert('home_decor', back.row));
+          if (back.unsure) notes.push(`${who(player)}: yard piece ${p.id} at ${place} (model ${p.model}) is written as the snapshot holds it - placed between TEMPLE-STEPS' deploy and STALL-SHAPE's, against either stand-in; if it was TEMPLE-STEPS' and the snapshot is from before migration 0121 ran, it stands 0.26 m further back than it was put`);
+        }
         const hidden = all(then, 'SELECT * FROM home_hidden WHERE map_id = ? AND building_key = ?', home.map_id, home.building_key);
         for (const h of hidden) sql.push(insert('home_hidden', h));
         entry.homes.push({ building: place, rebought: !!nowHome });

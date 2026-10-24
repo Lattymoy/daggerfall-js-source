@@ -2,100 +2,111 @@
   {
     "name": "MENU-CLIMATE-the-numbers-back-one-up",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "  [CLIMATES.Ocean]: 'b', [CLIMATES.Desert]: 's', [CLIMATES.Desert2]: 's', [CLIMATES.Mountain]: 'ne', [CLIMATES.Rainforest]: 'b',\n  [CLIMATES.Swamp]: 'se', [CLIMATES.Subtropical]: 'b', [CLIMATES.MountainWoods]: 'ne', [CLIMATES.Woodlands]: 'n', [CLIMATES.HauntedWoodlands]: 'n',",
-    "new": "  224: 'b', 225: 's', 226: 's', 227: 'ne', 228: 'b', 229: 'se', 230: 'b', 231: 'ne', 232: 'n', 233: 'n',",
+    "old": "  [CLIMATES.Desert2]: 's', [CLIMATES.Desert]: 's', [CLIMATES.Subtropical]: 's', [CLIMATES.Rainforest]: 'se', [CLIMATES.Swamp]: 'se',\n  [CLIMATES.Woodlands]: 'n', [CLIMATES.HauntedWoodlands]: 'n', [CLIMATES.MountainWoods]: 'n', [CLIMATES.Mountain]: 'n',",
+    "new": "  226: 's', 225: 's', 230: 's', 228: 'se', 229: 'se',\n  232: 'n', 233: 'n', 231: 'n', 227: 'n',",
     "tests": [
-      "test/fb0930_cc_menuclimate.test.js"
-    ]
+      "test/systems/survival/fb0930_cc_menuclimate.test.js"
+    ],
+    "why": "MENU-CLIMATE: keyed by the enum's names - written as numbers one up, every climate keys the one before it (AUDIT C&C I8: re-aimed at the mod's own fallback table)"
   },
   {
     "name": "MENU-CLIMATE-the-desert-eats-bananas",
     "file": "src/systems/survival/tavernMenu.js",
     "old": "[CLIMATES.Desert]: 's'",
-    "new": "[CLIMATES.Desert]: 'b'",
+    "new": "[CLIMATES.Desert]: 'se'",
     "tests": [
-      "test/fb0930_cc_menuclimate.test.js"
-    ]
+      "test/systems/survival/fb0930_cc_menuclimate.test.js"
+    ],
+    "why": "the desert keys the South's - the bananas are the SouthEast's (AUDIT C&C I8: re-aimed, the bay's key is Balfiera's now)"
   },
   {
     "name": "MENU-CLIMATE-the-mountain-drinks-camel-milk",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "[CLIMATES.Mountain]: 'ne'",
+    "old": "[CLIMATES.Mountain]: 'n'",
     "new": "[CLIMATES.Mountain]: 's'",
     "tests": [
-      "test/fb0930_cc_menuclimate.test.js"
-    ]
+      "test/systems/survival/fb0930_cc_menuclimate.test.js"
+    ],
+    "why": "a mountain no region names keys the North's (AUDIT C&C I8: re-aimed, it keyed the NorthEast's)"
   },
   {
-    "name": "MENU-CLIMATE-the-ocean-falls-to-the-default",
+    "name": "MENU-CLIMATE-the-ocean-served-balfiera-again",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "  [CLIMATES.Ocean]: 'b', ",
-    "new": "  ",
+    "old": "export const MENU_KEY_BY_CLIMATE = Object.freeze({\n  [CLIMATES.Desert2]: 's',",
+    "new": "export const MENU_KEY_BY_CLIMATE = Object.freeze({\n  [CLIMATES.Ocean]: 'b', [CLIMATES.Desert2]: 's',",
     "tests": [
-      "test/fb0930_cc_menuclimate.test.js"
-    ]
+      "test/systems/survival/fb0930_cc_menuclimate.test.js"
+    ],
+    "why": "AUDIT C&C I8: the mod's switch names no Ocean, which falls to its default, the North's - SURV5's table had keyed it to Balfiera's (was MENU-CLIMATE-the-ocean-falls-to-the-default, which is the law now)"
   },
   {
-    "name": "MENU-CLIMATE-the-swamp-eats-bananas",
+    "name": "MENU-CLIMATE-the-swamp-eats-dunmer-dishes",
     "file": "src/systems/survival/tavernMenu.js",
     "old": "[CLIMATES.Swamp]: 'se'",
-    "new": "[CLIMATES.Swamp]: 'b'",
+    "new": "[CLIMATES.Swamp]: 'ne'",
     "tests": [
-      "test/fb0930_cc_menuclimate.test.js"
-    ]
+      "test/systems/survival/fb0930_cc_menuclimate.test.js"
+    ],
+    "why": "AUDIT C&C I8: the swamp keys the SouthEast's bananas and lizard - SURV5 served it the Dunmer dishes the mod gives the NorthEast (was MENU-CLIMATE-the-swamp-eats-bananas, which is the law now)"
   },
   {
     "name": "MENU-CLIMATE-the-woodlands-eat-bruma-rabbit",
     "file": "src/systems/survival/tavernMenu.js",
     "old": "[CLIMATES.Woodlands]: 'n'",
-    "new": "[CLIMATES.Woodlands]: 'ne'",
+    "new": "[CLIMATES.Woodlands]: 'o'",
     "tests": [
-      "test/fb0930_cc_menuclimate.test.js"
-    ]
+      "test/systems/survival/fb0930_cc_menuclimate.test.js"
+    ],
+    "why": "the woodlands key the North's - Bruma rabbit is the Orcs' (AUDIT C&C I8: re-aimed)"
   },
   {
     "name": "MENU-CLIMATE-the-mountain-woods-eat-bananas",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "[CLIMATES.MountainWoods]: 'ne'",
-    "new": "[CLIMATES.MountainWoods]: 'b'",
+    "old": "[CLIMATES.MountainWoods]: 'n'",
+    "new": "[CLIMATES.MountainWoods]: 'se'",
     "tests": [
-      "test/fb0930_cc_menuclimate.test.js"
-    ]
+      "test/systems/survival/fb0930_cc_menuclimate.test.js"
+    ],
+    "why": "the mountain woods key the North's (AUDIT C&C I8: re-aimed, they keyed the NorthEast's)"
   },
   {
     "name": "MENU-CLIMATE-the-rainforest-eats-carrot-cake",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "[CLIMATES.Rainforest]: 'b'",
-    "new": "[CLIMATES.Rainforest]: 'ne'",
+    "old": "[CLIMATES.Rainforest]: 'se'",
+    "new": "[CLIMATES.Rainforest]: 'o'",
     "tests": [
-      "test/fb0930_cc_menuclimate.test.js"
-    ]
+      "test/systems/survival/fb0930_cc_menuclimate.test.js"
+    ],
+    "why": "the rainforest keys the SouthEast's - the carrot cake is the Orcs' (AUDIT C&C I8: re-aimed, it keyed Balfiera's)"
   },
   {
     "name": "MENU-CLIMATE-the-subtropics-eat-dunmeri-horse",
     "file": "src/systems/survival/tavernMenu.js",
-    "old": "[CLIMATES.Subtropical]: 'b'",
-    "new": "[CLIMATES.Subtropical]: 'se'",
+    "old": "[CLIMATES.Subtropical]: 's'",
+    "new": "[CLIMATES.Subtropical]: 'ne'",
     "tests": [
-      "test/fb0930_cc_menuclimate.test.js"
-    ]
+      "test/systems/survival/fb0930_cc_menuclimate.test.js"
+    ],
+    "why": "the subtropics key the South's - the Dunmeri horse is the NorthEast's (AUDIT C&C I8: re-aimed, they keyed Balfiera's)"
   },
   {
     "name": "MENU-CLIMATE-the-haunted-woods-eat-bruma-rabbit",
     "file": "src/systems/survival/tavernMenu.js",
     "old": "[CLIMATES.HauntedWoodlands]: 'n'",
-    "new": "[CLIMATES.HauntedWoodlands]: 'ne'",
+    "new": "[CLIMATES.HauntedWoodlands]: 'o'",
     "tests": [
-      "test/fb0930_cc_menuclimate.test.js"
-    ]
+      "test/systems/survival/fb0930_cc_menuclimate.test.js"
+    ],
+    "why": "the haunted woods key the North's - Bruma rabbit is the Orcs' (AUDIT C&C I8: re-aimed)"
   },
   {
     "name": "MENU-CLIMATE-the-dakfron-eats-bananas",
     "file": "src/systems/survival/tavernMenu.js",
     "old": "[CLIMATES.Desert2]: 's'",
-    "new": "[CLIMATES.Desert2]: 'b'",
+    "new": "[CLIMATES.Desert2]: 'se'",
     "tests": [
-      "test/fb0930_cc_menuclimate.test.js"
-    ]
+      "test/systems/survival/fb0930_cc_menuclimate.test.js"
+    ],
+    "why": "the Dak'fron keys the South's - the bananas are the SouthEast's (AUDIT C&C I8: re-aimed)"
   }
 ]

@@ -5,7 +5,7 @@
     "old": "  if (ai.swims) return true;\n",
     "new": "  if (ai.swims && false) return true;\n",
     "tests": [
-      "test/waterfoes.test.js"
+      "test/systems/waterfoes.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "y + (ai.centreOffset ?? 0) < seaY",
     "new": "y < seaY",
     "tests": [
-      "test/waterfoes.test.js"
+      "test/systems/waterfoes.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "f.ai.unreachable = !!aboard && foeInWater(f, seaY);",
     "new": "f.ai.unreachable = foeInWater(f, seaY);",
     "tests": [
-      "test/waterfoes.test.js"
+      "test/systems/waterfoes.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "for (const f of foes) if (f?.ai) f.ai.unreachable = !!aboard && foeInWater(f, seaY);",
     "new": "for (const f of foes) if (f?.ai && aboard) f.ai.unreachable = foeInWater(f, seaY);",
     "tests": [
-      "test/waterfoes.test.js"
+      "test/systems/waterfoes.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    if (f.ai.unreachable) continue;\n",
     "new": "\n",
     "tests": [
-      "test/waterfoes.test.js"
+      "test/systems/waterfoes.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "aboard: playerAfloat() && !(walkMode && playerSpawned && player.isPlayerSwimming)",
     "new": "aboard: playerAfloat()",
     "tests": [
-      "test/waterfoes.test.js"
+      "test/systems/waterfoes.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "if (!foeAlerted(f) || !f.ai.feet || f.ai.unreachable) continue;",
     "new": "if (!foeAlerted(f) || !f.ai.feet) continue;",
     "tests": [
-      "test/waterfoes.test.js"
+      "test/systems/waterfoes.test.js"
     ]
   }
 ]

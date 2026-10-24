@@ -1,0 +1,164 @@
+[
+  {
+    "name": "HOUSE-BUSH-not-asked",
+    "file": "src/world/rmbFlats.js",
+    "old": "      if (sceneryUnderRoof(autoMap, x, y, held)) continue;   // HOUSE-BUSH: a cell its author left under a house\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1018f_housebush.test.js"
+    ],
+    "why": "the report itself: the bush in the house at Penwall Derry's east gate stands, as DFU stands it"
+  },
+  {
+    "name": "HOUSE-BUSH-no-automap-handed",
+    "file": "src/world/rmbFlats.js",
+    "old": "  const autoMap = rmb.fldHeader.autoMapData;   // HOUSE-BUSH",
+    "new": "  const autoMap = null;   // HOUSE-BUSH",
+    "tests": [
+      "test/world/fb1018f_housebush.test.js"
+    ],
+    "why": "the walk asks with no automap: no footprint is ever read"
+  },
+  {
+    "name": "HOUSE-BUSH-any-cell",
+    "file": "src/world/rmbFlats.js",
+    "old": "  for (const r of [row - 1, row]) for (const c of [col - 1, col]) if (quarterOf(autoMap[r * AUTOMAP_SIDE + c]) === null) return false;\n  return held(row * AUTOMAP_SIDE + col);",
+    "new": "  return [row - 1, row].some((r) => [col - 1, col].some((c) => quarterOf(autoMap[r * AUTOMAP_SIDE + c]) !== null)) && held(row * AUTOMAP_SIDE + col);",
+    "tests": [
+      "test/world/fb1018f_housebush.test.js"
+    ],
+    "why": "a foot on a footprint's edge or corner taken too - the cells the author planted against a wall"
+  },
+  {
+    "name": "HOUSE-BUSH-row-a-tile-north",
+    "file": "src/world/rmbFlats.js",
+    "old": "  const col = AUTOMAP_PER_TILE * x, row = AUTOMAP_SIDE - AUTOMAP_PER_TILE * (y + 1);",
+    "new": "  const col = AUTOMAP_PER_TILE * x, row = AUTOMAP_SIDE - AUTOMAP_PER_TILE * y;",
+    "tests": [
+      "test/world/fb1018f_housebush.test.js"
+    ],
+    "why": "the foot read a tile off its own row (the scenery's z is 256y + 256, the tile's north edge)"
+  },
+  {
+    "name": "HOUSE-BUSH-transposed",
+    "file": "src/world/rmbFlats.js",
+    "old": "  const col = AUTOMAP_PER_TILE * x, row = AUTOMAP_SIDE - AUTOMAP_PER_TILE * (y + 1);",
+    "new": "  const col = AUTOMAP_PER_TILE * y, row = AUTOMAP_SIDE - AUTOMAP_PER_TILE * (x + 1);",
+    "tests": [
+      "test/world/fb1018f_housebush.test.js"
+    ],
+    "why": "the automap read across its diagonal"
+  },
+  {
+    "name": "HOUSE-BUSH-west-rim-unguarded",
+    "file": "src/world/rmbFlats.js",
+    "old": "  if (col < 1 || row < 1 || col >= AUTOMAP_SIDE || row >= AUTOMAP_SIDE) return false;",
+    "new": "  if (row < 1 || col >= AUTOMAP_SIDE || row >= AUTOMAP_SIDE) return false;",
+    "tests": [
+      "test/world/fb1018f_housebush.test.js"
+    ],
+    "why": "a foot on the block's west rim reads the row above's last cell as its west neighbour"
+  },
+  {
+    "name": "HOUSE-BUSH-any-byte",
+    "file": "src/world/rmbFlats.js",
+    "old": "if (quarterOf(autoMap[r * AUTOMAP_SIDE + c]) === null) return false;",
+    "new": "if (!autoMap[r * AUTOMAP_SIDE + c]) return false;",
+    "tests": [
+      "test/world/fb1018f_housebush.test.js"
+    ],
+    "why": "every byte not street a building - a ground flat's mark, a ship and a special among them"
+  },
+  {
+    "name": "HOUSE-BUSH-short-automap-read",
+    "file": "src/world/rmbFlats.js",
+    "old": "  if (!autoMap || autoMap.length < AUTOMAP_SIDE * AUTOMAP_SIDE || !held) return false;",
+    "new": "  if (!autoMap || !held) return false;",
+    "tests": [
+      "test/world/fb1018f_housebush.test.js"
+    ],
+    "why": "a grid that is not an RMB automap read as one"
+  },
+  {
+    "name": "HOUSE-BUSH-held-unread",
+    "file": "src/world/rmbFlats.js",
+    "old": "  return held(row * AUTOMAP_SIDE + col);   // the four are one footprint: architecture, side by side",
+    "new": "  return true;",
+    "tests": [
+      "test/world/fb1018f_housebush.test.js"
+    ],
+    "why": "AUDIT FB1018f L4-1: every footprint the automap draws a roof - TEMPBSE0's and TEMPBSC0's phantom houses take the scenery their authors planted on open ground"
+  },
+  {
+    "name": "HOUSE-BUSH-every-run-held",
+    "file": "src/world/rmbFlats.js",
+    "old": "  return (i) => run[i] >= 0 && held.has(run[i]);",
+    "new": "  return (i) => run[i] >= 0;",
+    "tests": [
+      "test/world/fb1018f_housebush.test.js"
+    ],
+    "why": "AUDIT FB1018f L4-1: a footprint no building of the block stands on held as one"
+  },
+  {
+    "name": "HOUSE-BUSH-walk-builds-no-held",
+    "file": "src/world/rmbFlats.js",
+    "old": "  const held = heldFootprints(autoMap, rmb.subRecords);",
+    "new": "  const held = () => true;",
+    "tests": [
+      "test/world/fb1018f_housebush.test.js"
+    ],
+    "why": "AUDIT FB1018f L4-1: the walk asks the automap alone - 26 cells taken, 8 of them under phantom houses"
+  },
+  {
+    "name": "HOUSE-BUSH-footprint-one-cell",
+    "file": "src/world/rmbFlats.js",
+    "old": "        if (run[kk] < 0 && quarterOf(autoMap[kk]) !== null) { run[kk] = runs; open.push(kk); }\n",
+    "new": "",
+    "tests": [
+      "test/world/fb1018f_housebush.test.js"
+    ],
+    "why": "AUDIT FB1018f L4-1: a footprint read as the one cell its building's origin falls in"
+  },
+  {
+    "name": "HOUSE-BUSH-origin-transposed",
+    "file": "src/world/rmbFlats.js",
+    "old": "    const c = Math.floor(s.xPos / 64), r = Math.floor(s.zPos / 64);",
+    "new": "    const c = Math.floor(s.zPos / 64), r = Math.floor(s.xPos / 64);",
+    "tests": [
+      "test/world/fb1018f_housebush.test.js"
+    ],
+    "why": "AUDIT FB1018f L4-1: a building's origin read across the automap's diagonal"
+  },
+  {
+    "name": "HOUSE-BUSH-no-held-takes",
+    "file": "src/world/rmbFlats.js",
+    "old": "AUTOMAP_SIDE * AUTOMAP_SIDE || !held) return false;",
+    "new": "AUTOMAP_SIDE * AUTOMAP_SIDE) return false;",
+    "tests": [
+      "test/world/fb1018f_housebush.test.js"
+    ],
+    "why": "AUDIT FB1018f L4-1: with no word of the block's buildings, the law still asked"
+  },
+  {
+    "name": "HOUSE-BUSH-north-rim-unguarded",
+    "file": "src/world/rmbFlats.js",
+    "old": "if (col < 1 || row < 1 ||",
+    "new": "if (col < 1 ||",
+    "tests": [
+      "test/world/fb1018f_housebush.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT FB1018f L4-7: at row 0 the north pair reads a negative index, undefined, which quarterOf answers null - the foot is refused either way. The guard is kept: it says the rim law rather than leaning on an out-of-range read"
+  },
+  {
+    "name": "HOUSE-BUSH-far-rims-unguarded",
+    "file": "src/world/rmbFlats.js",
+    "old": " || col >= AUTOMAP_SIDE || row >= AUTOMAP_SIDE) return false;",
+    "new": ") return false;",
+    "tests": [
+      "test/world/fb1018f_housebush.test.js"
+    ],
+    "equivalent": true,
+    "why": "AUDIT FB1018f L4-7: the walk's 16 x 16 cells put a foot at column and row 60 at most, so the far rims are never reached from collectBlockFlats; kept for a caller that asks past them"
+  }
+]

@@ -4,76 +4,76 @@
     "file": "src/systems/equip.js",
     "old": "export const wearableItem = (item) => !!item && createEquipTable().getEquipSlot(numeric(item)) !== EQUIP_SLOTS.None;",
     "new": "export const wearableItem = (item) => !!item;",
-    "tests": ["test/fb1001_wand.test.js"]
+    "tests": ["test/systems/fb1001_wand.test.js"]
   },
   {
     "name": "RARITY-WEAR-the-wand-graded",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "  if (!wearableItem(item)) return false;   // RARITY-WEAR",
     "new": "  if (false) return false;   // RARITY-WEAR",
-    "tests": ["test/fb1001_wand.test.js"]
+    "tests": ["test/systems/fb1001_wand.test.js"]
   },
   {
     "name": "RARITY-WEAR-the-spoils-base-not-made-again",
-    "file": "src/systems/gateSpoils.js",
+    "file": "src/systems/gate/gateSpoils.js",
     "old": "(!templateByIndex(item?.templateIndex) || !wearableItem(item))",
     "new": "!templateByIndex(item?.templateIndex)",
-    "tests": ["test/fb1001_wand.test.js"]
+    "tests": ["test/systems/fb1001_wand.test.js"]
   },
   {
     "name": "RARITY-WEAR-the-base-made-again-when-wearable",
-    "file": "src/systems/gateSpoils.js",
+    "file": "src/systems/gate/gateSpoils.js",
     "old": "(!templateByIndex(item?.templateIndex) || !wearableItem(item))",
     "new": "(!templateByIndex(item?.templateIndex) || wearableItem(item))",
-    "tests": ["test/fb1001_wand.test.js"]
+    "tests": ["test/systems/fb1001_wand.test.js"]
   },
   {
     "name": "RARITY-WEAR-no-repair-on-load",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": "    const n = repairRarityBases(list);",
     "new": "    const n = 0;",
-    "tests": ["test/fb1001_wand.test.js"]
+    "tests": ["test/systems/fb1001_wand.test.js"]
   },
   {
     "name": "RARITY-WEAR-a-dfu-wand-moved",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "    if (!it || typeof it !== 'object' || !ROLLED_TIERS.includes(it.rarity) || !Object.isExtensible(it)) continue;\n    const home = RARITY_HOME[it.group];",
     "new": "    if (!it || typeof it !== 'object' || !Object.isExtensible(it)) continue;\n    const home = RARITY_HOME[it.group];",
-    "tests": ["test/fb1001_wand.test.js"]
+    "tests": ["test/systems/fb1001_wand.test.js"]
   },
   {
     "name": "RARITY-WEAR-a-wearable-piece-moved",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "    if (home == null || wearableItem(it)) continue;",
     "new": "    if (home == null) continue;",
-    "tests": ["test/fb1001_wand.test.js"]
+    "tests": ["test/systems/fb1001_wand.test.js"]
   },
   {
     "name": "RARITY-WEAR-the-magic-name-kept",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "it.name === rarityName(from, it.rarity, it.affixes)) it.name = rarityName(it, it.rarity, it.affixes);",
     "new": "it.name === rarityName(from, it.rarity, it.affixes)) it.name = rarityName(from, it.rarity, it.affixes);",
-    "tests": ["test/fb1001_wand.test.js"]
+    "tests": ["test/systems/fb1001_wand.test.js"]
   },
   {
     "name": "RARITY-WEAR-the-legendary-renamed",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "    if (it.rarity !== 'legendary' && Array.isArray(it.affixes) && it.name === rarityName(from, it.rarity, it.affixes))",
     "new": "    if (Array.isArray(it.affixes))",
-    "tests": ["test/fb1001_wand.test.js"]
+    "tests": ["test/systems/fb1001_wand.test.js"]
   },
   {
     "name": "RARITY-WEAR-the-price-unmoved",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "    if (Number.isFinite(it.value)) it.value += itemBaseValue(it) - itemBaseValue(from);",
     "new": "    if (Number.isFinite(it.value)) it.value += 0;",
-    "tests": ["test/fb1001_wand.test.js"]
+    "tests": ["test/systems/fb1001_wand.test.js"]
   },
   {
     "name": "RARITY-WEAR-the-home-another-jewel",
-    "file": "src/systems/lootRarity.js",
+    "file": "src/systems/loot/lootRarity.js",
     "old": "export const RARITY_HOME = Object.freeze({ Jewellery: 133 });",
     "new": "export const RARITY_HOME = Object.freeze({ Jewellery: 137 });",
-    "tests": ["test/fb1001_wand.test.js"]
+    "tests": ["test/systems/fb1001_wand.test.js"]
   }
 ]

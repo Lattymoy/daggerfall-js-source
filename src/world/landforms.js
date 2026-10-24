@@ -122,12 +122,12 @@
 // (1.25 m - STREAMING_TERRAIN_SCALE).
 // ═══════════════════════════════════════════════════════════════════
 
-import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, kernelTerms, sampleKernel, generateSamples, cubicInterpolator } from './terrainSampler.js';
-import { BEACH_JITTER, WORLD_MAP_TILE_DIM, blendLocationTerrain, locationFootprintRect } from './terrainTiles.js';
-import { DIR_DELTA, MAP_W, MAP_H } from './roadNetwork.js';
+import { SCALED_OCEAN_ELEVATION, SCALED_BEACH_ELEVATION, BASE_HEIGHT_SCALE, NOISE_MAP_SCALE, EXTRA_NOISE_SCALE, MAX_TERRAIN_HEIGHT, HEIGHTMAP_DIMENSION, TERRAIN_SIZE, STREAMING_TERRAIN_SCALE, kernelTerms, kernelWindows, sampleKernel, generateSamples, cubicInterpolator } from './terrain/terrainSampler.js';
+import { BEACH_JITTER, WORLD_MAP_TILE_DIM, blendLocationTerrain, locationFootprintRect } from './terrain/terrainTiles.js';
+import { DIR_DELTA, MAP_W, MAP_H } from './road/roadNetwork.js';
 import { perlinNoise } from './perlin.js';
 import { CLIMATES } from '../formats/mapsTables.js';
-import { inEtherLaw, etherClimateAt } from './ethericSea.js';   // AUDIT CAPTAIN'S SEA G3: the Etheric Sea's climates past the table (worker-safe)
+import { inEtherLaw, etherClimateAt } from './ethericSea.js';   // AUDIT CAPTAIN'S SEA G3: the Eltheric Ocean's climates past the table (worker-safe)
 
 
 /** At or under this, a height is DFU's: the beach line with its jitter, the highest height the tile classifier can
@@ -178,6 +178,10 @@ export const LANDFORM_DIALS = Object.freeze({
   // `high` (kernel units) at most on the high ground - 200 m in the mountains, 140 m in the mountain woods - and lower
   // on the low ground by the land's own `upland`; where two meet the taller stands. Centred as the hills are (PEAK_MEAN),
   // so the land's average height stays DFU's, lifted; at most some 30 degrees on a bell's flank.
+  // MOUNTAINS-SHARP (2026-10-14, the owner: "Mountains shape (Dragontail/Wrothgarian). More pointy, less rounded (sharp),
+  // more height"): the mountain land's own - the Dragontail and the Wrothgarian Mountains are CLIMATE.PAK's Mountain -
+  // stand `sharp` peaks, (1 - q)^2 from summit to foot (a point on top, flanks that steepen toward it, easing out at
+  // the foot), twice as tall (400 m), on ridges 1.4 times as tall (`high` 112); the mountain woods keep their bells.
   // LANDFORM6: THE LAND WEARS ITS CLIMATE - each climate's hills: `low`/`high` their height (kernel units, either side of
   // the land) where the region field lies flat and where it rolls hardest, `upland` how much taller on the high ground,
   // and their `shape` (shapeRaw); a desert's `rockFrom` the slow rock field's level past which its sand gives way to mesas
@@ -187,7 +191,7 @@ export const LANDFORM_DIALS = Object.freeze({
   lands: Object.freeze({
     woodlands: Object.freeze({ low: 4, high: 48, upland: 1.6, shape: 'rolling' }),
     mountainWoods: Object.freeze({ low: 8, high: 56, upland: 1.6, shape: 'foothills', peaks: Object.freeze({ cell: 380, fill: 0.34, high: 112 }) }),
-    mountain: Object.freeze({ low: 16, high: 80, upland: 1.6, shape: 'ridged', peaks: Object.freeze({ cell: 360, fill: 0.5, high: 160 }) }),
+    mountain: Object.freeze({ low: 16, high: 112, upland: 1.6, shape: 'ridged', peaks: Object.freeze({ cell: 360, fill: 0.5, high: 320, sharp: true }) }),
     desert: Object.freeze({ low: 6, high: 26, upland: 1.3, shape: 'desert', rockFrom: 0.3 }),
     desert2: Object.freeze({ low: 6, high: 30, upland: 1.3, shape: 'desert', rockFrom: -0.1 }),
     rainforest: Object.freeze({ low: 8, high: 50, upland: 1.4, shape: 'knolls', cell: 120, fill: 0.62, edge: 0.88, roll: 0.15 }),
@@ -338,11 +342,11 @@ export function hillsTopOf(climate) {
 }
 
 /** LANDFORM5/6: the most a hill stands over (or a dale under) the land anywhere, in kernel units - the mountains' top
- *  (128 units, 160 m). */
+ *  (MOUNTAINS-SHARP: their tallest ridge and peak, 499.2 units, 624 m). */
 export const HILLS_TOP = Math.max(...LANDS.map(landTop));
 
 /** LANDFORM1: the highest the landforms stand anything, in kernel units - DFU's ceiling, the most the lift adds and the
- *  tallest hill (about 3,180 m). Only WOODS.WLD's one glitch byte reaches it (the header, THE CEILING). */
+ *  tallest hill (MOUNTAINS-SHARP: about 3,644 m). Only WOODS.WLD's one glitch byte reaches it (the header, THE CEILING). */
 export const LANDFORM_CEILING = MAX_TERRAIN_HEIGHT + reliefLift(LOW_TOP) + HILLS_TOP;
 
 /** LANDFORM5: the octaves' offsets into the noise, so no two octaves (and neither field) share a lattice. */
@@ -532,11 +536,15 @@ function knolls(wx, wy, rock, land) {
  *  0.725 tall on average, its bell averages 0.2974 of that over its ellipse (1/2 - 2/pi^2), and the ellipse covers
  *  pi r^2 / lean of the cell - E[r^2] = 0.1116 cell^2, E[1/lean] = ln(1.4)/0.4 = 0.84118. Overlaps (the taller kept) are rare. */
 export const PEAK_MEAN = 0.725 * (0.5 - 2 / (Math.PI * Math.PI)) * Math.PI * (0.0576 + 0.0864 * 0.5 + 0.0324 / 3) * 0.8411805915530323;   // ln(1.4)/0.4, written out: the ground asks no engine's own logarithm (AUDIT LANDFORMS III A8)
+/** MOUNTAINS-SHARP: the same for a `sharp` peak - (1 - q)^2 averages 1/6 over its ellipse, where the bell averages
+ *  1/2 - 2/pi^2. */
+export const PEAK_MEAN_SHARP = PEAK_MEAN / (6 * (0.5 - 2 / (Math.PI * Math.PI)));
 
 /** LANDFORM8: a mountain land's rounded peaks at a warped point - 0..1 of its `peaks.high`: one bell to a cell of the
  *  cells `fill` holds, at its own place, girth, height and lean (an ellipse up to 1.4 to 1, turned its own way); the
- *  taller where two meet. World-placed (cellHash): one number from every pixel and every client. */
-export function peakField(wx, wy, cell, fill) {
+ *  taller where two meet. World-placed (cellHash): one number from every pixel and every client. MOUNTAINS-SHARP:
+ *  `sharp`, each is (1 - q)^2 instead of the bell - pointed on top - at the same place, girth, height and lean. */
+export function peakField(wx, wy, cell, fill, sharp = false) {
   const fx = wx / cell, fy = wy / cell, cx = Math.floor(fx), cy = Math.floor(fy);
   // a peak's centre lies 0.15..0.85 into its cell and its radius is at most 0.42 - it reaches at most 0.27 past its cell
   const i0 = fx - cx < 0.3 ? -1 : 0, i1 = fx - cx > 0.7 ? 1 : 0, j0 = fy - cy < 0.3 ? -1 : 0, j1 = fy - cy > 0.7 ? 1 : 0;
@@ -554,7 +562,8 @@ export function peakField(wx, wy, cell, fill) {
       const ru = dx * ca + dy * sa, rv = (dy * ca - dx * sa) * lean;
       const q = Math.sqrt(ru * ru + rv * rv) / r;
       if (!(q < 1)) continue;
-      const v = (0.45 + 0.55 * cellHash(ix, iy, 17)) * (0.5 + 0.5 * cosPi(q));
+      const t = 1 - q;
+      const v = (0.45 + 0.55 * cellHash(ix, iy, 17)) * (sharp ? t * t : 0.5 + 0.5 * cosPi(q));
       if (v > best) best = v;
     }
   }
@@ -630,7 +639,7 @@ function landShape(j, wx, wy, gx, gy, rock) {
   return saturate((shapeRaw(land.shape, wx, wy, gx, gy, rock, land) - norm[0]) * norm[1]);
 }
 
-/** AUDIT CAPTAIN'S SEA G3: a node's land in the Etheric Sea's law - its isle's climate's (world/ethericSea.js
+/** AUDIT CAPTAIN'S SEA G3: a node's land in the Eltheric Ocean's law - its isle's climate's (world/ethericSea.js
  *  etherClimateAt; the Ocean's woodlands at sea) - remembered for the last few nodes (a pixel's samples ask the same
  *  four, and the law's isle read is a cache lookup); outside the law the table's, held to the map as ever. */
 const _etherLand = new Map();
@@ -656,7 +665,7 @@ function landShares(gx, gy, climates, span) {
   // a world of another hDim read its climates off 128-sample pixels
   const fx = gx / span - 0.5, fy = MAP_H + 0.5 - gy / span;
   const ix = Math.floor(fx), iy = Math.floor(fy);
-  // the four nodes, their coordinates held to the map - AUDIT CAPTAIN'S SEA G3: a node in the Etheric Sea's law its isle's
+  // the four nodes, their coordinates held to the map - AUDIT CAPTAIN'S SEA G3: a node in the Eltheric Ocean's law its isle's
   // own climate (every isle wore the land of the Bay's corner pixel, held to the map, whatever its climate)
   let l00, l10, l01, l11;
   if (inEtherLaw(ix, iy) || inEtherLaw(ix + 1, iy + 1)) {
@@ -724,7 +733,8 @@ export function hillsAt(gx, gy, macro, low, lattice = null, climates = null, out
     sum += amp * landShape(j, wx, wy, gx, gy, rock);
     if (land.peaks) {   // LANDFORM8: a mountain land's rounded peaks, on its hills - taller on the high ground
       const pa = w * land.peaks.high * (1 + (land.upland - 1) * up) / land.upland;   // the land's own upland: low ground's peaks lower
-      sum += pa * (peakField(wx, wy, land.peaks.cell, land.peaks.fill) - land.peaks.fill * PEAK_MEAN);   // centred: the land's mean stays its own
+      const sharp = !!land.peaks.sharp;   // MOUNTAINS-SHARP
+      sum += pa * (peakField(wx, wy, land.peaks.cell, land.peaks.fill, sharp) - land.peaks.fill * (sharp ? PEAK_MEAN_SHARP : PEAK_MEAN));   // centred: the land's mean stays its own
       deep += pa;   // a river's valley carves a peak down as it carves a hill (AUDIT LANDFORMS III C1)
     }
   }
@@ -902,6 +912,78 @@ export function reliefByteHeight(byte, fade = 1) {
 }
 
 /**
+ * AUDIT PRECIP AIR-3: THE MEAN GROUND of pixel (px, py) at a point (x, y) of its sample space (0..span, y north), in
+ * kernel units - what the landforms stand their hills on: DFU's two bicubic terms without the ground noise, held to the
+ * sea and to DFU's ceiling as the shaper is handed them (sampleKernel), and with `landforms` the relief's lift its own
+ * `low` earns, faded beside the sea. The hills are centred (hillsAt: a land's mean is its own), so this is the middle of
+ * the ground the player walks wherever it stands - the height a reader that has a place and no feet (the air:
+ * systems/weather/airTemperature.js) asks the ground. The byte alone (DFU's base term at the pixel) stood 110 m to 900 m
+ * under it in High Rock's and Hammerfell's ranges.
+ * @returns {(x: number, y: number) => number}
+ */
+export function meanGroundField(woods, px, py, landforms, hDim = HEIGHTMAP_DIMENSION) {
+  const { base, noise } = kernelTerms(woods, px, py, hDim);
+  const fade = landforms ? cliffFade(woods, px, py, hDim) : null;
+  return (x, y) => {
+    const low = base(x, y) * BASE_HEIGHT_SCALE;
+    let h = low + noise(x, y) * NOISE_MAP_SCALE;
+    h = h < SCALED_OCEAN_ELEVATION ? SCALED_OCEAN_ELEVATION : h > MAX_TERRAIN_HEIGHT ? MAX_TERRAIN_HEIGHT : h;
+    return landforms ? h + reliefLift(low) * (fade ? fade(x, y) : 1) : h;
+  };
+}
+
+/** DFU's cubic (cubicInterpolator) over [a, b] of its fraction as its four Bernstein coefficients, into `out` - a cubic
+ *  piece lies inside its control polygon's hull, so the largest is a bound on it there. */
+function cubicBernstein(v0, v1, v2, v3, a, b, out, o = 0) {
+  const A = (v3 - v2) - (v0 - v1), B = (v0 - v1) - A, C = v2 - v0, D = v1, w = b - a;
+  const d = ((A * a + B) * a + C) * a + D, c = w * ((3 * A * a + 2 * B) * a + C), q = w * w * (3 * A * a + B), p = w * w * w * A;
+  out[o] = d; out[o + 1] = d + c / 3; out[o + 2] = d + (2 * c + q) / 3; out[o + 3] = p + q + c + d;
+}
+const _rows = new Float64Array(16), _net = new Float64Array(4);
+/** The Bernstein net of a DFU bicubic (`at(i, j)`: its control i along x, j along y in the cubic's own order) over
+ *  [x0, x1] x [y0, y1] of its unit square, times `k`, added into `into` (16, x index fastest). */
+function bicubicNet(at, x0, x1, y0, y1, k, into) {
+  for (let j = 0; j < 4; j++) cubicBernstein(at(0, j), at(1, j), at(2, j), at(3, j), x0, x1, _rows, j * 4);
+  for (let i = 0; i < 4; i++) {
+    cubicBernstein(_rows[i], _rows[4 + i], _rows[8 + i], _rows[12 + i], y0, y1, _net);
+    for (let l = 0; l < 4; l++) into[l * 4 + i] += k * _net[l];
+  }
+}
+const _sum = new Float64Array(16), _low = new Float64Array(16);
+/**
+ * AUDIT PRECIP PACK-1: THE HIGHEST pixel (px, py)'s own ground can stand, in kernel units - a BOUND, never a sample. DFU's
+ * height is its two terms' bicubic pieces (the small heightmap's one over the pixel, the large one's three by three),
+ * each bounded by its Bernstein net, summed piece by piece; then the ground noise's whole amplitude, the ocean's floor
+ * and DFU's ceiling as sampleKernel holds them; with `landforms` the lift the highest `low` earns (reliefLift rises with
+ * it) and the tallest hill of the lands its samples blend (landShares' four nodes about any sample of it: the 3x3's
+ * climates, `climates` the landforms' table - null the tallest of any land's, a bound whatever the table). The pixel's own: a town's level or a road's bed is made of the ground about
+ * it (a site reaches no further than the pixels beside its own - sitesAbout), so a reader bounding a SAMPLE takes the
+ * 3x3's (systems/weather/snowpack.js).
+ * @returns {number}
+ */
+export function groundTopOf(woods, px, py, landforms, climates = null, hDim = HEIGHTMAP_DIMENSION) {
+  const { shmAt, lhmAt } = kernelWindows(woods, px, py);
+  const base = (i, j) => shmAt(i, 3 - j);   // kernelTerms' `base`: its rows run x4 (c 0) .. x1 (c 3) as its fraction runs north
+  let top = -Infinity, lowTop = -Infinity;
+  _low.fill(0);
+  bicubicNet(base, 0, 1, 0, 1, BASE_HEIGHT_SCALE, _low);
+  for (let k = 0; k < 16; k++) if (_low[k] > lowTop) lowTop = _low[k];
+  for (let iy = 0; iy < 3; iy++) {
+    for (let ix = 0; ix < 3; ix++) {
+      _sum.fill(0);
+      bicubicNet(base, ix / 3, (ix + 1) / 3, iy / 3, (iy + 1) / 3, BASE_HEIGHT_SCALE, _sum);
+      bicubicNet((i, j) => lhmAt(ix + i, iy + j), 0, 1, 0, 1, NOISE_MAP_SCALE, _sum);
+      for (let k = 0; k < 16; k++) if (_sum[k] > top) top = _sum[k];
+    }
+  }
+  let h = Math.min(MAX_TERRAIN_HEIGHT, Math.max(SCALED_OCEAN_ELEVATION, top + EXTRA_NOISE_SCALE));
+  if (!landforms) return h;
+  let hill = climates ? 0 : HILLS_TOP;
+  if (climates) for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) hill = Math.max(hill, LAND_TOP[etherLandAt(px + dx, py + dy, climates)]);
+  return h + reliefLift(lowTop) + hill;
+}
+
+/**
  * LANDFORM1: how far the landforms move DFU's ground at a point of a pixel, in kernel units - what a height written in
  * one frame is moved by to stand on the other (world.js groundFrameHeight and restandHeight: a save, a cached scene,
  * an anchor). The one step DFU takes after the kernel that moves a point's ground - a location's blend, which lerps
@@ -982,7 +1064,7 @@ export function landformLiftField(woods, px, py, locationRect = null, hDim = HEI
  * @param {?Uint8Array} [o.sites] - LANDFORM4: landformSites' table, the game's own locations; null pulls no ground (a
  *   world whose map table is not read - a test, a tool).
  * @param {boolean} [o.hills] - LANDFORM5: false leaves the hills out - the land the paths' own pins read their cuts on
- *   (test/auditlandforms.test.js); no kernel of the game passes it.
+ *   (test/world/terrain/auditlandforms.test.js); no kernel of the game passes it.
  * @param {?Uint8Array} [o.climates] - LANDFORM6: landformClimates' table, the land each climate wears; null stands every
  *   sample in woodlands (a test, a tool).
  * @param {number} [o.hDim]

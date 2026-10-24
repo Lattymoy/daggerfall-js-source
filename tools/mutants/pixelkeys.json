@@ -1,0 +1,30 @@
+[
+  {
+    "name": "PK-keys-collide",
+    "file": "src/world/pixelKeys.js",
+    "old": "  const n = (px + PIXEL_KEY_SPAN) * (2 * PIXEL_KEY_SPAN) + (py + PIXEL_KEY_SPAN);",
+    "new": "  const n = (px + PIXEL_KEY_SPAN) * PIXEL_KEY_SPAN + (py + PIXEL_KEY_SPAN);",
+    "tests": ["test/world/pixelkeys.test.js"]
+  },
+  {
+    "name": "PK-span-unguarded",
+    "file": "src/world/pixelKeys.js",
+    "old": " && Math.abs(px) < PIXEL_KEY_SPAN && Math.abs(py) < PIXEL_KEY_SPAN)) return",
+    "new": ")) return",
+    "tests": ["test/world/pixelkeys.test.js"]
+  },
+  {
+    "name": "PK-fractions-kept",
+    "file": "src/world/pixelKeys.js",
+    "old": "  if (!(Number.isInteger(px) && Number.isInteger(py) && Math.abs(px)",
+    "new": "  if (!(Number.isFinite(px) && Number.isFinite(py) && Math.abs(px)",
+    "tests": ["test/world/pixelkeys.test.js"]
+  },
+  {
+    "name": "PK-soundings-make-their-own",
+    "file": "src/scenes/world.js",
+    "old": "    return built.get(pixelKeyText(state.mapOrigin.x + Math.floor((x - c[0]) / TERRAIN_SIZE), state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE))) ?? null;",
+    "new": "    return built.get(`${state.mapOrigin.x + Math.floor((x - c[0]) / TERRAIN_SIZE)},${state.mapOrigin.y - Math.floor((z - c[2]) / TERRAIN_SIZE)}`) ?? null;",
+    "tests": ["test/world/pixelkeys.test.js"]
+  }
+]

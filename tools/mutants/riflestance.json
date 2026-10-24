@@ -1,0 +1,146 @@
+[
+  {
+    "name": "RIFLE-STANCE-no-hold-after-the-shot",
+    "file": "src/combat/gun/rifleStance.js",
+    "old": "  const up = shooting || combat || since < RIFLE_EASE.hold;",
+    "new": "  const up = shooting || combat;",
+    "tests": [
+      "test/combat/riflestance.test.js"
+    ]
+  },
+  {
+    "name": "RIFLE-STANCE-fight-ignored",
+    "file": "src/combat/gun/rifleStance.js",
+    "old": "  const up = shooting || combat || since < RIFLE_EASE.hold;",
+    "new": "  const up = shooting || since < RIFLE_EASE.hold;",
+    "tests": [
+      "test/combat/riflestance.test.js"
+    ]
+  },
+  {
+    "name": "RIFLE-STANCE-the-sword-s-grip",
+    "file": "src/characters/ownModels/ownWeaponModels.js",
+    "old": "  const a = [0, c, -s, 0, s, c, 1, 0, 0];",
+    "new": "  const a = [1, 0, 0, 0, c, -s, 0, s, c];",
+    "tests": [
+      "test/combat/riflestance.test.js"
+    ]
+  },
+  {
+    "name": "RIFLE-STANCE-aim-is-low",
+    "file": "src/combat/gun/rifleStance.js",
+    "old": "  const lo = stanceFrame(f, stances.low), hi = stanceFrame(f, stances.aim);",
+    "new": "  const lo = stanceFrame(f, stances.low), hi = stanceFrame(f, stances.low);",
+    "tests": [
+      "test/combat/riflestance.test.js"
+    ]
+  },
+  {
+    "name": "RIFLE-STANCE-left-hand-off-the-gun",
+    "file": "src/combat/gun/rifleStance.js",
+    "old": "  const forend = add(grip, apply(G, RIFLE_HOLD.forend));",
+    "new": "  const forend = grip;",
+    "tests": [
+      "test/combat/riflestance.test.js"
+    ]
+  },
+  {
+    "name": "RIFLE-STANCE-attitude-not-undone",
+    "file": "src/combat/gun/rifleStance.js",
+    "old": "  const Rwb = mat33Mul(G, transpose(turnOf(A)));",
+    "new": "  const Rwb = mat33Mul(G, turnOf(A));",
+    "tests": [
+      "test/combat/riflestance.test.js"
+    ]
+  },
+  {
+    "name": "RIFLE-STANCE-first-person-reads-the-shoulder",
+    "file": "src/combat/gun/rifleStance.js",
+    "old": "  if (view === 'first') {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/combat/riflestance.test.js"
+    ]
+  },
+  {
+    "name": "RIFLE-STANCE-held-while-sheathing",
+    "file": "src/combat/fpArm.js",
+    "old": "      && upper !== UPPER_BODY.Equipping && upper !== UPPER_BODY.Unequipping && !(cam && (cam.seat || cam.saddle));",
+    "new": "      && upper !== UPPER_BODY.Equipping && !(cam && (cam.seat || cam.saddle));",
+    "tests": [
+      "test/combat/riflestance.test.js"
+    ]
+  },
+  {
+    "name": "RIFLE-STANCE-third-not-held",
+    "file": "src/combat/fpArm.js",
+    "old": "            hold: rifleHold('third', t),   // RIFLE-STANCE: the long gun in the hands",
+    "new": "            hold: null,   // RIFLE-STANCE: the long gun in the hands",
+    "tests": [
+      "test/combat/riflestance.test.js"
+    ]
+  },
+  {
+    "name": "RIFLE-STANCE-hold-slot-unread",
+    "file": "src/formats/morrowind/mwFirstPerson.js",
+    "old": "  assembly.holdFit = hold ? hold(skeleton, pose, GRAPH_ROOT, fns.skelMats) : null;",
+    "new": "  assembly.holdFit = null;",
+    "tests": [
+      "test/combat/riflestance.test.js"
+    ]
+  },
+  {
+    "name": "RIFLE-STANCE-no-attitude-on-the-part",
+    "file": "src/combat/fpArm.js",
+    "old": "...(own.attitude ? { preTransform: own.attitude } : {}) });",
+    "new": "});",
+    "tests": [
+      "test/combat/riflestance.test.js"
+    ]
+  },
+  {
+    "name": "RIFLE-STANCE-left-palm-down",
+    "file": "src/combat/gun/rifleStance.js",
+    "old": "      L: { at: wristL, fingers: fingersL, palm: top,",
+    "new": "      L: { at: wristL, fingers: fingersL, palm: top.map((v) => -v),",
+    "tests": [
+      "test/combat/riflestance.test.js"
+    ]
+  },
+  {
+    "name": "RIFLE-STANCE-harm-never-recorded",
+    "file": "src/systems/harmMark.js",
+    "old": "  _harmAt = now;",
+    "new": "",
+    "tests": [
+      "test/combat/riflestance.test.js"
+    ]
+  },
+  {
+    "name": "RIFLE-STANCE-held-while-drawing",
+    "file": "src/combat/fpArm.js",
+    "old": "      && upper !== UPPER_BODY.Equipping && upper !== UPPER_BODY.Unequipping && !(cam && (cam.seat || cam.saddle));",
+    "new": "      && upper !== UPPER_BODY.Unequipping && !(cam && (cam.seat || cam.saddle));",
+    "tests": [
+      "test/combat/riflestance.test.js"
+    ]
+  },
+  {
+    "name": "RIFLE-AIM-LOW-the-old-row",
+    "file": "src/combat/gun/rifleStance.js",
+    "old": "    aim: Object.freeze({ grip: Object.freeze([0.13, 0.40, -0.28]), pitch: 4, yaw: 0, cant: 0,",
+    "new": "    aim: Object.freeze({ grip: Object.freeze([0.13, 0.40, -0.17]), pitch: 0, yaw: 0, cant: 0,",
+    "tests": [
+      "test/combat/riflestance.test.js"
+    ]
+  },
+  {
+    "name": "RIFLE-AIM-LOW-level",
+    "file": "src/combat/gun/rifleStance.js",
+    "old": "    aim: Object.freeze({ grip: Object.freeze([0.13, 0.40, -0.28]), pitch: 4, yaw: 0, cant: 0,",
+    "new": "    aim: Object.freeze({ grip: Object.freeze([0.13, 0.40, -0.28]), pitch: 0, yaw: 0, cant: 0,",
+    "tests": [
+      "test/combat/riflestance.test.js"
+    ]
+  }
+]

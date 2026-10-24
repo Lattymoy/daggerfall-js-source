@@ -1,0 +1,110 @@
+[
+  {
+    "name": "CREW-MUSTER-my-crew-at-the-helms-range-alone",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "const e = boardable(boat); if (e) { toward = e.ship.pos; way = 'board'; } }",
+    "new": "const e = boardable(boat, { anySpeed: true }); if (e) { toward = e.ship.pos; way = 'board'; } }",
+    "tests": [
+      "test/systems/naval/fb1014_crewmuster.test.js"
+    ]
+  },
+  {
+    "name": "CREW-MUSTER-my-boarding-told-the-repel",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "const e = boardable(boat); if (e) { toward = e.ship.pos; way = 'board'; } }",
+    "new": "const e = boardable(boat); if (e) { toward = e.ship.pos; way = 'repel'; } }",
+    "tests": [
+      "test/systems/naval/fb1014_crewmuster.test.js"
+    ]
+  },
+  {
+    "name": "CREW-MUSTER-a-ship-closing-on-me-told-the-boarding",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (toward) way = 'repel';   // CREW-MUSTER: she comes over our rail",
+    "new": "if (toward) way = 'board';   // CREW-MUSTER: she comes over our rail",
+    "tests": [
+      "test/systems/naval/fb1014_crewmuster.test.js"
+    ]
+  },
+  {
+    "name": "CREW-MUSTER-her-board-course-told-the-repel",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (pos) { toward = Number.isFinite(yaw) ? abeam(e, pos, yaw) : pos; way = 'board'; }",
+    "new": "if (pos) { toward = Number.isFinite(yaw) ? abeam(e, pos, yaw) : pos; way = 'repel'; }",
+    "tests": [
+      "test/systems/naval/fb1014_crewmuster.test.js"
+    ]
+  },
+  {
+    "name": "CREW-MUSTER-her-crew-at-the-helms-range-alone",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (helm ? boardingGap(helm, e) != null : footReach(e, from)) {",
+    "new": "if (helm ? boardingGap(helm, e, { anySpeed: true }) != null : footReach(e, from)) {",
+    "tests": [
+      "test/systems/naval/fb1014_crewmuster.test.js"
+    ]
+  },
+  {
+    "name": "CREW-MUSTER-her-crew-never-at-my-feet",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "if (helm ? boardingGap(helm, e) != null : footReach(e, from)) {",
+    "new": "if (helm ? boardingGap(helm, e) != null : false) {",
+    "tests": [
+      "test/systems/naval/fb1014_crewmuster.test.js"
+    ]
+  },
+  {
+    "name": "CREW-MUSTER-her-crew-told-the-boarding",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "toward = helm ? abeam(e, from, yawOfRot(helm.GameObject.rotation)) : from; way = 'repel'; }",
+    "new": "toward = helm ? abeam(e, from, yawOfRot(helm.GameObject.rotation)) : from; way = 'board'; }",
+    "tests": [
+      "test/systems/naval/fb1014_crewmuster.test.js"
+    ]
+  },
+  {
+    "name": "CREW-MUSTER-the-boarding-reach-blind-to-the-way",
+    "file": "src/scenes/naval/navalHost.js",
+    "old": "    if (!anySpeed && Math.hypot(pose.velocity[0], pose.velocity[2]) > BOARD_SPEED) return null;",
+    "new": "",
+    "tests": [
+      "test/systems/naval/fb1014_crewmuster.test.js"
+    ]
+  },
+  {
+    "name": "CREW-MUSTER-the-grapples-sides-swapped",
+    "file": "src/scenes/world.js",
+    "old": "(key === grapple.shipId ? (grapple.kind === 'board' ? 'repel' : 'board') : grapple.kind)",
+    "new": "(key === grapple.shipId ? grapple.kind : (grapple.kind === 'board' ? 'repel' : 'board'))",
+    "tests": [
+      "test/systems/naval/fb1014_crewmuster.test.js"
+    ]
+  },
+  {
+    "name": "CREW-MUSTER-the-hosts-way-unread",
+    "file": "src/scenes/world.js",
+    "old": "grapple.kind) : ship.way ?? null;",
+    "new": "grapple.kind) : null;",
+    "tests": [
+      "test/systems/naval/fb1014_crewmuster.test.js"
+    ]
+  },
+  {
+    "name": "CREW-MUSTER-the-crew-host-drops-the-way",
+    "file": "src/scenes/naval/navalCrew.js",
+    "old": "ship.way = ship.toward ? w.way ?? null : null;",
+    "new": "ship.way = null;",
+    "tests": [
+      "test/systems/naval/fb1014_crewmuster.test.js"
+    ]
+  },
+  {
+    "name": "CREW-MUSTER-one-list-for-both-sides",
+    "file": "src/systems/naval/crewLife.js",
+    "old": "(way ? CREW_BLURBS[way] : battle ? CREW_BLURBS.battle",
+    "new": "(way ? CREW_BLURBS.repel : battle ? CREW_BLURBS.battle",
+    "tests": [
+      "test/systems/naval/fb1014_crewmuster.test.js"
+    ]
+  }
+]

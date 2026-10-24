@@ -5,7 +5,7 @@
     "old": "move.turn = Math.atan2(n[2] * grip.normal[0] - n[0] * grip.normal[2], n[0] * grip.normal[0] + n[2] * grip.normal[2]);",
     "new": "move.turn = Math.atan2(n[0] * grip.normal[2] - n[2] * grip.normal[0], n[0] * grip.normal[0] + n[2] * grip.normal[2]);",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    // held on replayed the last step's catch, launch and turn once a frame for as long as the window stood\n    if (this.climbEvents.length) this.climbEvents = [];",
     "new": "    // held on replayed the last step's catch, launch and turn once a frame for as long as the window stood",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    this._climbCarried[0] += dx; this._climbCarried[1] += dy; this._climbCarried[2] += dz;   // AUDIT CLIMB-ARC F8\n",
     "new": "",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "        this._climbCarried[0] += this.pos[0] - x0; this._climbCarried[1] += this.pos[1] - y0; this._climbCarried[2] += this.pos[2] - z0;\n",
     "new": "",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "    const f = this.bodyFeetAt();\n    return [f[0] - this._climbCarried[0], f[1] - this._climbCarried[1], f[2] - this._climbCarried[2]];",
     "new": "    return [this.pos[0], this.pos[1], this.pos[2]];",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "    return [f[0] - this._climbCarried[0], f[1] - this._climbCarried[1], f[2] - this._climbCarried[2]];",
     "new": "    return [f[0], f[1], f[2]];",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "    this._pkOffEdge = null; this._pkLeap = null;   // AUDIT CLIMB-ARC L6: and the late press and the flight with it\n",
     "new": "",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    this._pkOffEdge = null;   // AUDIT CLIMB-ARC L6: nor a run off an edge (a press after it is no late leap)...\n",
     "new": "",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    this._pkLeap = null;      // ...nor a leap's flight (the catch looks no old way)\n",
     "new": "",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "      this._pkOffEdge = null; this._pkLeap = null;   // AUDIT CLIMB-ARC L6: a Jump pressed under the freeze is no late leap after it\n",
     "new": "",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    if (input.jump) this._pkJumpLatch = true;\n",
     "new": "",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "      this._pkLaunch(dir, ...this._pkRunLeapSpeeds(pk, dir));",
     "new": "      this._pkLaunch([Math.sin(yaw), 0, Math.cos(yaw)], ...this._pkRunLeapSpeeds(pk, [Math.sin(yaw), 0, Math.cos(yaw)]));",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "      if (o.ok == null) o.ok = !this.jumping && senseDrop(this.collider, o.at, o.dir, CAPSULE_RADIUS, PARKOUR_RUNLEAP_EDGE);",
     "new": "      if (o.ok == null) o.ok = !this.jumping;",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "      this._pkOffEdge = this.isRunning && input.forward > 0 && !this.crouching && this._pkAtPace()",
     "new": "      this._pkOffEdge = this.isRunning && input.forward > 0 && this._pkAtPace()",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    if (!move && !air && fwd && this.isRunning && !this.crouching && this._pkAtPace()) {",
     "new": "    if (!move && !air && fwd && this.isRunning && !this.crouching) {",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -140,25 +140,25 @@
     "old": "wallRunHeight(skill, inputs.jumping ?? 0)",
     "new": "wallRunHeight(inputs.climbing ?? 0, inputs.jumping ?? 0)",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
     "name": "L8-leaps-under-slowfall",
     "file": "src/player/motor.js",
-    "old": "_pkMayLeap() { return !this.slowFalling && !this.onExteriorWater; }",
-    "new": "_pkMayLeap() { return !this.onExteriorWater; }",
+    "old": "_pkMayLeap() { return !this.slowFalling && !this.onExteriorWater && this.parkour?.leap?.() !== false; }",
+    "new": "_pkMayLeap() { return !this.onExteriorWater && this.parkour?.leap?.() !== false; }",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
     "name": "L8-leaps-wading-outdoor-water",
     "file": "src/player/motor.js",
-    "old": "_pkMayLeap() { return !this.slowFalling && !this.onExteriorWater; }",
-    "new": "_pkMayLeap() { return !this.slowFalling; }",
+    "old": "_pkMayLeap() { return !this.slowFalling && !this.onExteriorWater && this.parkour?.leap?.() !== false; }",
+    "new": "_pkMayLeap() { return !this.slowFalling && this.parkour?.leap?.() !== false; }",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -167,7 +167,7 @@
     "old": "    return [Math.max(along, run + JUMP_SPEED * JUMP_FWD_BOOST), Math.max(up, JUMP_SPEED * boost)];",
     "new": "    return [along, up];",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "Math.max(up, JUMP_SPEED * boost)];",
     "new": "up];",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "} else if (this.enhancedJumping?.() && !this._pkLeap && !this.techFlight) {",
     "new": "} else if (this.enhancedJumping?.() && !this.techFlight) {",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -194,7 +194,7 @@
     "old": "this.parkoured = this.parkoured ? [].concat(this.parkoured, 'catch') : 'catch';",
     "new": "this.parkoured = 'catch';",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -203,7 +203,7 @@
     "old": "this.parkoured = this.parkoured ? [].concat(this.parkoured, 'leap') : 'leap';",
     "new": "this.parkoured = 'leap';",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ],
     "equivalent": true,
     "why": "No frame bills a move before a launch: every launch (the eject, the running leap, the late press) asks a fresh Jump, every billed move before it in the frame latches the Jump (_parkourBegin's _pkJumpLatch, a grab's), and a frame's input is one input - so the frame's flag is always empty when _pkLaunch writes it. Kept as the list's form; the catch's and a move's concat (the reachable ones) are pinned."
@@ -214,7 +214,7 @@
     "old": "if (move.bill !== false) this.parkoured = this.parkoured ? [].concat(this.parkoured, move.kind) : move.kind;",
     "new": "if (move.bill !== false) this.parkoured = move.kind;",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "    this._parkourAdvance(dt, true);   // AUDIT CLIMB-ARC L16",
     "new": "    this._parkourAdvance(dt);   // AUDIT CLIMB-ARC L16",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "        : m.wall ? { mode: 'climb', normal: m.wall.normal, lipY: null } : null) : w;",
     "new": "        : null) : w;",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "        if (m.kind === 'lower' && this._wall) this._wall.upRefused = true;\n",
     "new": "",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "        if (!move && fwd && ledge.rise > PARKOUR_VAULT_MAX) {",
     "new": "        if (false) {",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "      const d = this.climb?.isClimbing ? this._climbWallDir : null;",
     "new": "      const d = null;",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "    if (this._bodyYaw != null) { this._bodyYawOff = wrap(this._bodyYaw - viewYaw); this._bodyYaw = null; }\n    const off = this._bodyYawOff * (1 - k);\n    this._bodyYawOff = Math.abs(off) < 1e-3 ? null : off;",
     "new": "    if (this._bodyYaw != null) { this._bodyYawOff = wrap(this._bodyYaw - viewYaw); this._bodyYaw = null; }\n    const off = this._bodyYawOff * (1 - k);\n    this._bodyYawOff = null;\n    if (Math.abs(off) >= 1e-3) this._bodyYaw = viewYaw + off;",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "      if (h.key == null && collider.restFloor) { const rf = collider.restFloor(px, pz); if (Number.isFinite(rf)) top = Math.max(top, rf); }\n",
     "new": "",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -286,7 +286,7 @@
     "old": "    stand: true,   // AUDIT CLIMB-ARC D4",
     "new": "    stand: false,   // AUDIT CLIMB-ARC D4",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": " && !onRun(g)) return g;",
     "new": ") return g;",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -304,7 +304,7 @@
     "old": "    const g = senseGrip(collider, [at.face[0] + tt[0] * PARKOUR_HAND_SPAN, at.lipY, at.face[2] + tt[2] * PARKOUR_HAND_SPAN], at.normal, at.lipY, opts, false);",
     "new": "    const g = senseGrip(collider, [held.face[0] + t[0] * (runs + PARKOUR_HAND_SPAN), held.lipY, held.face[2] + t[2] * (runs + PARKOUR_HAND_SPAN)], n, held.lipY, opts, false);",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -313,7 +313,7 @@
     "old": "{ up, to, grip, normal: n, key: hit.key ?? null } : null;",
     "new": "{ up, to, grip, normal: n } : null;",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -322,7 +322,7 @@
     "old": "    key: run.grip?.key ?? run.key ?? null,",
     "new": "    key: run.grip?.key ?? null,",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -331,79 +331,79 @@
     "old": "    const y = floorAt(collider, feet[0] + dir[0] * s, prev + PARKOUR_TOP_PROBE, feet[2] + dir[2] * s, reach);",
     "new": "    const y = floorAt(collider, feet[0] + dir[0] * s, feet[1] + PARKOUR_TOP_PROBE, feet[2] + dir[2] * s, reach);",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
     "name": "F5-the-semi-implicit-spring",
-    "file": "src/player/climbFeel.js",
+    "file": "src/player/climb/climbFeel.js",
     "old": "  const w = Math.sqrt(k), y = x - target, e = Math.exp(-w * dt), c = v + w * y;\n  return [target + (y + c * dt) * e, (v - w * c * dt) * e];",
     "new": "  const c = 2 * Math.sqrt(k);\n  v += (-k * (x - target) - c * v) * dt;\n  x += v * dt;\n  return [x, v];",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
     "name": "F5-a-long-frame-cut-to-1/20",
-    "file": "src/player/climbFeel.js",
+    "file": "src/player/climb/climbFeel.js",
     "old": "dt = Math.min(Math.max(dt, 0), 0.25);",
     "new": "dt = Math.min(Math.max(dt, 0), 1 / 20);",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
     "name": "F9-the-leap-dips-at-its-push-off",
-    "file": "src/player/climbFeel.js",
+    "file": "src/player/climb/climbFeel.js",
     "old": "        if (e.kind === 'catch' || e.kind === 'reach') {",
     "new": "        if (e.kind === 'catch' || e.kind === 'reach' || e.kind === 'leap') {",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
     "name": "F9-no-dip-at-the-leap's-hold",
-    "file": "src/player/climbFeel.js",
+    "file": "src/player/climb/climbFeel.js",
     "old": "        if (this.move?.kind === 'leap') this._dip(this.move.speed ?? 0);   // AUDIT CLIMB-ARC F9: the leap lands on its hold\n",
     "new": "",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
     "name": "nit-_turnTo-replaces-the-owed-turn",
-    "file": "src/player/climbFeel.js",
+    "file": "src/player/climb/climbFeel.js",
     "old": "    this.turnLeft += wrap(target - (yaw + this.turnLeft));",
     "new": "    this.turnLeft = wrap(target - (yaw + this.turnLeft));",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
     "name": "F2/F4-held-ignored",
-    "file": "src/player/climbFeel.js",
+    "file": "src/player/climb/climbFeel.js",
     "old": "      if (!m || held) return;",
     "new": "      if (!m) return;",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
     "name": "F3-the-feel-reads-the-physics-feet",
-    "file": "src/player/climbFeel.js",
+    "file": "src/player/climb/climbFeel.js",
     "old": "    const p = m.climbTrackPos?.() ?? m.pos;   // AUDIT CLIMB-ARC F3/F8",
     "new": "    const p = m.pos;   // AUDIT CLIMB-ARC F3/F8",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
     "name": "F3/F8-the-sounds-read-the-physics-feet",
-    "file": "src/player/climbSounds.js",
+    "file": "src/player/climb/climbSounds.js",
     "old": "    const p = m.climbTrackPos?.() ?? m.pos;   // AUDIT CLIMB-ARC F3/F8",
     "new": "    const p = m.pos;   // AUDIT CLIMB-ARC F3/F8",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -412,16 +412,16 @@
     "old": "    this.turnYaw += dyaw;\n    this.residualPitch += dpitch;",
     "new": "    this.residualYaw += dyaw;\n    this.residualPitch += dpitch;",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
     "name": "F7-the-swing's-events-kept-on-the-wall",
-    "file": "src/combat/weaponRig.js",
+    "file": "src/combat/weapon/weaponRig.js",
     "old": "      const evs = _climbing ? (playerWeapon.update(dt), []) : playerWeapon.update(dt);",
     "new": "      const evs = playerWeapon.update(dt);",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -430,7 +430,7 @@
     "old": "drawEotbBody(canvas, { proj, view, eye, feet, yaw: viewYaw, face });",
     "new": "drawEotbBody(canvas, { proj, view, eye, feet, yaw, face });",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -439,7 +439,7 @@
     "old": "yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw, face: tvFace });",
     "new": "yaw: player.bodyYawFor(cam.yaw), face: tvFace });",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -448,7 +448,7 @@
     "old": "yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });",
     "new": "yaw: player.bodyYawFor(cam.yaw) });",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -457,25 +457,25 @@
     "old": "yaw: player.bodyYawFor(cam.yaw), viewYaw: cam.yaw });",
     "new": "yaw: player.bodyYawFor(cam.yaw) });",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
     "name": "N2-the-beast-walks-on-the-wall",
-    "file": "src/net/peerRiders.js",
+    "file": "src/net/peer/peerRiders.js",
     "old": "stopped: !peerMoving(pose), sheathed: !pose?.wd });",
     "new": "stopped: !pose?.mv, sheathed: !pose?.wd });",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
     "name": "N2-the-beast-faces-the-camera's-yaw",
-    "file": "src/net/peerRiders.js",
+    "file": "src/net/peer/peerRiders.js",
     "old": "    const yaw = peerBodyYaw(pose), view = viewOf(yaw, feet, eye);   // AUDIT CLIMB-ARC N2: a beast on the wall faces it",
     "new": "    const yaw = pose.yaw, view = viewOf(yaw, feet, eye);   // AUDIT CLIMB-ARC N2: a beast on the wall faces it",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ],
     "note": "SPRITE-FACE (re-aimed by content): the beast's facing named once, its view and its aura's facing off it."
   },
@@ -485,25 +485,25 @@
     "old": "this._climbSounds.update(peer.id, peer.shown, f, getPref('peerFootsteps') !== false && peerInEarshot(f, eye));",
     "new": "if (getPref('peerFootsteps') === false) return; this._climbSounds.update(peer.id, peer.shown, f, peerInEarshot(f, eye));",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
     "name": "N6-no-cue-floor",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "    const cueOk = t - (s.cueAt ?? -Infinity) >= PEER_CUE_MS;",
     "new": "    const cueOk = true;",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
     "name": "N6-no-rhythm-floor",
-    "file": "src/net/peerClimb.js",
+    "file": "src/net/peer/peerClimb.js",
     "old": "const rhythmOk = () => { if (t - (s.rhythmAt ?? -Infinity) < PEER_RHYTHM_MS) return false; s.rhythmAt = t; return true; };",
     "new": "const rhythmOk = () => true;",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -512,7 +512,7 @@
     "old": ", hs: 1 , cl: 3, cw: -3.141592653589792, ck: 8, cy: -600, cd: 600});",
     "new": ", hs: 1 });",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -521,7 +521,7 @@
     "old": "climbFeel.frame(dt, _overlayHeld || _seasonHeld);",
     "new": "climbFeel.frame(dt);",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -530,7 +530,7 @@
     "old": "climbFeel.frame(dt, _overlayHeld);",
     "new": "climbFeel.frame(dt);",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -539,7 +539,7 @@
     "old": "host.climbFeel?.frame(dt, overlayHeld);",
     "new": "host.climbFeel?.frame(dt);",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -548,7 +548,7 @@
     "old": "    climbFeel.reset();   // AUDIT CLIMB-ARC F6: no climb's turn or cue rides a teleport\n",
     "new": "",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -557,7 +557,7 @@
     "old": "      climbFeel.reset();   // AUDIT CLIMB-ARC F6: nor the old climb's turn and cues a load\n",
     "new": "",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -566,7 +566,7 @@
     "old": "{ climbFeel.reset(); cameraRecoiler.reset(); return _ctxQuickLoad.apply(ctx, args); };",
     "new": "{ cameraRecoiler.reset(); return _ctxQuickLoad.apply(ctx, args); };",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -575,7 +575,7 @@
     "old": "    const aimed = aimView ?? view;",
     "new": "    const aimed = view;",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -584,7 +584,7 @@
     "old": "climbRigInput(player, cam.yaw), aimView);",
     "new": "climbRigInput(player, cam.yaw));",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -593,7 +593,7 @@
     "old": "climbRigInput(player, cam.yaw), aimView);",
     "new": "climbRigInput(player, cam.yaw));",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -602,7 +602,7 @@
     "old": "resolvePlayerHit(eye, inView, playerFeet, [-aimed[2], -aimed[6], -aimed[10]]);",
     "new": "resolvePlayerHit(eye, inView, playerFeet, [-view[2], -view[6], -view[10]]);",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -611,7 +611,7 @@
     "old": "    climbFeel,   // AUDIT CLIMB-ARC F11",
     "new": "    // climbFeel,   // AUDIT CLIMB-ARC F11",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -620,7 +620,7 @@
     "old": "  for (const kind of [].concat(activity.parkoured || [])) {",
     "new": "  for (const kind of activity.parkoured ? [[].concat(activity.parkoured).pop()] : []) {",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -629,7 +629,7 @@
     "old": "if (FIXED_POINT_STOP && low[0] === sx && low[1] === sy && low[2] === sz) break;",
     "new": "if (FIXED_POINT_STOP && low[1] === sy && low[2] === sz) break;",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   },
   {
@@ -638,7 +638,7 @@
     "old": "        this._pkEmit('hold', { mode: 'hang', normal: [w.normal[0], 0, w.normal[2]] });\n",
     "new": "",
     "tests": [
-      "test/auditclimbarc.test.js"
+      "test/systems/auditclimbarc.test.js"
     ]
   }
 ]

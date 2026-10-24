@@ -30,7 +30,7 @@
 // owner: freed with the host that raised it, through the plaque's teardown every host already calls
 // (ui/worldPlaque.js destroyWorldPlaque, beside quick loot's own reset).
 //
-// WHERE IT STANDS: on the mid-screen label's own line (the classic label's top edge, ui/enhancedHudText.js
+// WHERE IT STANDS: on the mid-screen label's own line (the classic label's top edge, ui/enhanced/enhancedHudText.js
 // midTextTopPx), centred - in the BAND between what stands under the crosshair and what stands at the foot. Above it:
 // the plaque (which is still listing the pile the press took from), its stat panel, the profession act's panel, and the
 // mid-screen line itself while it says something (a refusal said beside the cards). Below it: the HUD's bottom block
@@ -39,20 +39,20 @@
 // a card stands, so a plaque that grows or shrinks as the player looks along a pile carries the feed with it rather
 // than covering it. tools/pickupFeedProbe.mjs photographed the first cut's fourth card under the hotbar at 1280x800.
 import { isEnhanced } from '../systems/uiSkin.js';
-import { itemNameParts } from '../systems/itemInfo.js';   // RF6: the long name's name part - the word the plaque's row and the take's line both wear
-import { rarityAttr } from '../systems/lootRarity.js';   // LR1: the tier the plaque's row wears
+import { itemNameParts } from '../systems/item/itemInfo.js';   // RF6: the long name's name part - the word the plaque's row and the take's line both wear
+import { rarityAttr } from '../systems/loot/lootRarity.js';   // LR1: the tier the plaque's row wears
 import { announces, isAcquired } from '../systems/acquireWatch.js';   // LOOT-BANNER: a new rare-or-better piece is the banner's
 import { isGoldPieces } from '../systems/inventory.js';
-import { inventoryItemImage } from '../systems/itemTemplates.js';
+import { inventoryItemImage } from '../systems/item/itemTemplates.js';
 import { requestFittedIcon, fittedImg } from './textureCanvas.js';   // UI1: the pack's own fitted, cached icon door - decoded once, never per frame
 import { screenDpr } from './iconFit.js';
 import { PIXEL_STACK, PIXEL_FONT_CSS, PIXELIFY_FIVE_FACE, PIXEL_TEXT_SHADOW } from './pixelifyFive.js';
-import { rarityVarsCss } from './enhancedPlusStyle.js';   // RARITY-UI: the tiers' colours, the one table
-import { FRAME_TONES, PLUS_THEMES, hudVeil, HUD_VEIL_LIGHT } from './enhancedFrame.js';   // LOOT-BANNER: the veil's law, shared
+import { rarityVarsCss } from './enhanced/enhancedPlusStyle.js';   // RARITY-UI: the tiers' colours, the one table
+import { FRAME_TONES, PLUS_THEMES, hudVeil, HUD_VEIL_LIGHT } from './enhanced/enhancedFrame.js';   // LOOT-BANNER: the veil's law, shared
 import { midScreenText } from './midScreenText.js';
-import { ENHANCED_MID_TEXT_ID, midTextTopPx } from './enhancedHudText.js';
-import { crosshairCentreY, CROSSHAIR_ARM } from './hudCrosshair.js';
-import { hudReticle } from './hud.js';   // the reticle's own two terms, from their home (the plaque's anchor reads the same)
+import { ENHANCED_MID_TEXT_ID, midTextTopPx } from './enhanced/enhancedHudText.js';
+import { crosshairCentreY, CROSSHAIR_ARM } from './hud/hudCrosshair.js';
+import { hudReticle } from './hud/hud.js';   // the reticle's own two terms, from their home (the plaque's anchor reads the same)
 import { armDrawWatchdog, disarmDraw } from './drawWatchdog.js';
 import { haulWords, HAUL_ICON_BOX, LODE_ICON_BOX } from './haulCards.js';   // HAUL-CARDS: a gather's, a strike's and a claim's cards - their words
 
@@ -82,12 +82,12 @@ export const PICKUP_FEED_STYLE_ID = 'enhanced-pickupfeed-style';
 
 /** WHAT STANDS UNDER THE CROSSHAIR, which the feed stands below rather than over: the plaque (ui/worldPlaque.js
  *  `.wplaque`, `.on` while it shows) and its stat panel (absolutely placed, so it can reach past the plaque's own foot),
- *  and the profession act's panel (ui/profHud.js `.prof-meter`, hidden between acts). The mid-screen label is the
+ *  and the profession act's panel (ui/professions/profHud.js `.prof-meter`, hidden between acts). The mid-screen label is the
  *  fourth, while it says something - measured by its id below. */
 export const PICKUP_KEEP_ABOVE = Object.freeze(['.wplaque.on', '.wplaque.on .wplaque-stats', '.prof-meter:not([hidden])']);
-/** WHAT STANDS AT THE FOOT, which the feed stands above: the HUD's bottom block (ui/enhancedHud.js `.hud-bottom` - the
- *  vitals and the hotbar) and a profession's prompt over it (ui/profHud.js `.prof-prompt`, empty between nodes). A
- *  docked large HUD's bar is the third, read off the reticle's own terms (ui/hud.js hudReticle). */
+/** WHAT STANDS AT THE FOOT, which the feed stands above: the HUD's bottom block (ui/enhanced/enhancedHud.js `.hud-bottom` - the
+ *  vitals and the hotbar) and a profession's prompt over it (ui/professions/profHud.js `.prof-prompt`, empty between nodes). A
+ *  docked large HUD's bar is the third, read off the reticle's own terms (ui/hud/hud.js hudReticle). */
 export const PICKUP_KEEP_BELOW = Object.freeze(['.hud .hud-bottom', '.prof-prompt']);
 
 /** The words a card says for one pickup, whole. Gold is "+N Gold"; anything else is "+" and its name, the count beside it. */
@@ -209,7 +209,7 @@ export function pickupFeedLayout({ base, upper = 0, lower = Infinity, cardH = 0,
 const T = FRAME_TONES;
 const rgbOf = (hex) => [1, 3, 5].map((i) => parseInt(String(hex).slice(i, i + 2), 16)).join(',');
 /** AUDIT HAUL-CARDS C4: the feed is words over the world, in brass, parchment and the tiers' colours - a veil lighter than
- *  HUD_VEIL_LIGHT (Stone's panel, 0.10) dropped them to 2:1; such a theme's feed wears its ink (ui/enhancedFrame.js hudVeil -
+ *  HUD_VEIL_LIGHT (Stone's panel, 0.10) dropped them to 2:1; such a theme's feed wears its ink (ui/enhanced/enhancedFrame.js hudVeil -
  *  moved there at LOOT-BANNER, its second reader). */
 export const PICKUP_VEIL_LIGHT = HUD_VEIL_LIGHT;
 const THEME_TINTS = Object.entries(PLUS_THEMES).filter(([, th]) => th.panel)

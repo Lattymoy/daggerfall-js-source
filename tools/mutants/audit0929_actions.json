@@ -5,7 +5,7 @@
     "old": "  if (len > 0 && dy / len < WALK_ON_DIR_Y) return 'WalkOn';",
     "new": "  if (false) return 'WalkOn';",
     "tests": [
-      "test/audit0929_actions.test.js"
+      "test/player/audit0929_actions.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (wish && !(wish[0] * dx + wish[1] * dz > 0)) {",
     "new": "  if (false) {",
     "tests": [
-      "test/audit0929_actions.test.js"
+      "test/player/audit0929_actions.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  if (o.triggerFlag === TRIGGER_FLAGS.Collision01 && ownSurfaceUnderFeet(surfaces, o.key, feet)) return 'WalkOn';\n  return 'WalkInto';\n}",
     "new": "  if (ownSurfaceUnderFeet(surfaces, o.key, feet)) return 'WalkOn';\n  return 'WalkInto';\n}",
     "tests": [
-      "test/audit0929_actions.test.js"
+      "test/player/audit0929_actions.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "  if (!at) return null;\n  const dx",
     "new": "  if (!at) return 'WalkInto';\n  const dx",
     "tests": [
-      "test/audit0929_actions.test.js"
+      "test/player/audit0929_actions.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      for (let i = 0; i < n; i++) {\n        let ly = feet[1] + CAPSULE_RADIUS + (axis * i) / (n - 1) - t[1];",
     "new": "      for (let i = 0; i < 1; i++) {\n        let ly = feet[1] + CAPSULE_RADIUS + (axis * i) / (n - 1) - t[1];",
     "tests": [
-      "test/audit0929_actions.test.js"
+      "test/player/audit0929_actions.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "              if (!(len > 0 && cy / len < beneath)) continue;",
     "new": "              /* beneath unfiltered */",
     "tests": [
-      "test/audit0929_actions.test.js"
+      "test/player/audit0929_actions.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      if (standable && hasActionCollision(standable)) triggerSurfaces.addMesh(",
     "new": "      if (standable?.triggerFlag === TRIGGER_FLAGS.Collision01) triggerSurfaces.addMesh(",
     "tests": [
-      "test/disc29_throne.test.js"
+      "test/world/disc29_throne.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "      wish = _wish;",
     "new": "      /* no press */",
     "tests": [
-      "test/audit0929_actions.test.js"
+      "test/player/audit0929_actions.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "    this.moveStrafe = input.strafe || 0; this.moveYaw = yaw;",
     "new": "    this.moveStrafe = input.strafe || 0;",
     "tests": [
-      "test/audit0929_actions.test.js"
+      "test/player/audit0929_actions.test.js"
     ]
   },
   {
@@ -86,18 +86,18 @@
     "old": "    yaw: Number.isFinite(player.moveYaw) ? player.moveYaw : NaN,",
     "new": "    yaw: NaN,",
     "tests": [
-      "test/audit0929_actions.test.js",
-      "test/ww2_idlebob.test.js"
+      "test/player/audit0929_actions.test.js",
+      "test/player/ww2_idlebob.test.js"
     ]
   },
   {
     "name": "AUDIT0929-D3-the-stashes-unrepaired",
-    "file": "src/systems/save.js",
+    "file": "src/systems/save/save.js",
     "old": ", ...stashedItemLists(snap), ...heldItemLists(snap)];",
     "new": ", ...heldItemLists(snap)];",
     "tests": [
-      "test/disc29_rarity.test.js",
-      "test/disc21.test.js"
+      "test/systems/disc29_rarity.test.js",
+      "test/systems/disc21.test.js"
     ]
   }
 ]

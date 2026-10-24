@@ -15,7 +15,7 @@ const WINDOW_MS = 1000;
 
 let open = null;       // the frame in flight: its start, ms
 let openAt = null;     // SCRIPT-SPLIT: when the host's callback really began (performance.now() at frameBegin)
-let samples = [];      // [end ms, busy ms, in-frame ms, before ms, stream ms] within the window
+let samples = [];      // [end ms, busy ms, in-frame ms, before ms, stream ms, the frame's stamp] within the window
 // PERF-EXT24: the stream build's slices run in their own animation-frame
 // callback AFTER a host's frameEnd, so no sample ever held them: frameCpu,
 // the FPS counter's script ms and `?perf=cpu` all read a streaming frame
@@ -138,9 +138,10 @@ export function frameEnd(now = (typeof performance !== 'undefined' ? performance
   const before = Math.max(0, at - open);
   const stream = lent;
   lent = 0;
+  const stamp = open;   // FB1018D HITCH-KEEP (AUDIT FB1018D L2-1): the rAF stamp the frame began at - the counter's own for that frame
   open = null;
   openAt = null;
-  samples.push([now, busy, inFrame, before, stream]);
+  samples.push([now, busy, inFrame, before, stream, stamp]);
   const cut = now - WINDOW_MS;
   let i = 0;
   while (i < samples.length && samples[i][0] < cut) i++;
@@ -156,6 +157,18 @@ export function frameCpu() {
   const n = samples.length;
   // SCRIPT-SPLIT: the mean's three parts beside it - `inFrameMs + beforeMs + streamMs === meanMs`
   return { meanMs: sum / n, worstMs: worst, frames: n, inFrameMs: inFrame / n, beforeMs: before / n, streamMs: stream / n };
+}
+
+/** FB1018D HITCH-KEEP (AUDIT FB1018D L2-1): ONE FRAME'S SCRIPT, by the rAF stamp it began at - its script and SCRIPT-SPLIT's
+ *  three parts, which sum to it - or null for a frame no host stamped (the menu, a capped one) or one past the window.
+ *  The counter asks for the frame that opened a long gap, the tick after it: the second's worst sample was another
+ *  frame's whenever a heavy frame that was no hitch shared the second. */
+export function frameSampleAt(stamp) {
+  for (let i = samples.length - 1; i >= 0; i--) {
+    const [, b, f, w, l, at] = samples[i];
+    if (at === stamp) return { ms: b, inFrameMs: f, beforeMs: w, streamMs: l };
+  }
+  return null;
 }
 
 export function _resetFrameClock() { open = null; openAt = null; samples = []; lent = 0; lastOwn = 0; intervalCount = 0; intervalAt = 0; lastBegin = null; begun = 0; }

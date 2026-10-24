@@ -18,19 +18,20 @@ import { createTamrielAtlas, atlasStamp, ATLAS_TILE, ATLAS_TILES_KEPT } from '..
 import { beyondKey, beyondPixel, setArenaRoads, arenaRoadsVersion } from '../src/world/arenaRoads.js';
 import { arenaPlacesVersion } from '../src/world/arenaPlaces.js';
 import { capitalsVersion } from '../src/world/tamrielCapitals.js';
-import { tamrielLandVersion } from '../src/world/tamrielLand.js';
-import { tamrielFit, inBay } from '../src/world/tamrielFrame.js';
-import { DIR } from '../src/world/roadNetwork.js';
-import { PEN, BAND_MARKS, toPaper, FAR_TRACK_PEN } from '../src/ui/inkMap.js';
+import { tamrielLandVersion } from '../src/world/tamriel/tamrielLand.js';
+import { tamrielFit, inBay } from '../src/world/tamriel/tamrielFrame.js';
+import { DIR } from '../src/world/road/roadNetwork.js';
+import { PEN, BAND_MARKS, toPaper, FAR_TRACK_PEN } from '../src/ui/ink/inkMap.js';
 import { LOCATION_TYPES } from '../src/formats/mapsFile.js';
 import { plateauDry, spawnPlateauFloor, SPAWN_DRY_ELEVATION, DRY_COLUMN_STRIDE, DRY_MARGIN } from '../src/world/spawnedDungeons.js';
-import { HEIGHTMAP_DIMENSION } from '../src/world/terrainSampler.js';
+import { HEIGHTMAP_DIMENSION } from '../src/world/terrain/terrainSampler.js';
+import { hostText } from './hostText.mjs';   // HOST-SPLIT (at the merge of main): the world host read whole - its pixel build stands in scenes/pixelBuild.js
 
 const T = LOCATION_TYPES;
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 afterEach(() => { setArenaRoads(null); });
 
-/** A recording 2D context: every call and every style set, in order (test/heldmap.test.js's own). */
+/** A recording 2D context: every call and every style set, in order (test/ui/heldmap.test.js's own). */
 function recordingCtx() {
   const calls = [];
   const state = {};
@@ -136,7 +137,7 @@ test('TESA13 the roads: the ink carries them off the installed layer - PIN MOVED
 
 // ── THE GROUND ──────────────────────────────────────────────────
 
-/** A height map of bytes, its noise map flat (test/spawnshore.test.js's own). */
+/** A height map of bytes, its noise map flat (test/world/terrain/spawnshore.test.js's own). */
 const woodsOf = (byteAt, large = 0) => ({
   getHeightMapValue: byteAt,
   getHeightMapValuesRange1Dim(x0, y0, dim) { const d = new Uint8Array(dim * dim); for (let y = 0; y < dim; y++) for (let x = 0; x < dim; x++) d[x + y * dim] = byteAt(x0 + x, y0 + y); return d; },
@@ -316,7 +317,7 @@ test('TESA13 the marks: painted in to the Bay\'s scale, every halo before every 
 
 // ── THE HOST AND THE WINDOW ─────────────────────────────────────
 
-const W = read('src/scenes/world.js');
+const W = hostText('src/scenes/world.js');
 
 // RETIRED (TESA15): 'the host: the map's read is _locationToBuild's order' over world.js's own atlas - the map's places
 // are the roads' regions' now, and _locationToBuild's order is held where they are rolled (test/tesa15_mapfidelity.test.js:

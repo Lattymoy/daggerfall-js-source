@@ -1,0 +1,974 @@
+[
+  {
+    "name": "KG2-amateur-stake",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "key: 'amateur', stake: 10,",
+    "new": "key: 'amateur', stake: 11,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-amateur-budget",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "stake: 10, budget: 220,",
+    "new": "stake: 10, budget: 221,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-amateur-potions",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "budget: 220, potions: 2,",
+    "new": "budget: 220, potions: 3,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-amateur-blunder",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "potions: 2, blunder: 0.35 }",
+    "new": "potions: 2, blunder: 0.36 }",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-seasoned-stake",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "key: 'seasoned', stake: 50,",
+    "new": "key: 'seasoned', stake: 51,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-seasoned-budget",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "stake: 50, budget: 300,",
+    "new": "stake: 50, budget: 299,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-seasoned-potions",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "budget: 300, potions: 3,",
+    "new": "budget: 300, potions: 2,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-seasoned-blunder",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "potions: 3, blunder: 0.15 }",
+    "new": "potions: 3, blunder: 0.16 }",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-veteran-stake",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "key: 'veteran', stake: 200,",
+    "new": "key: 'veteran', stake: 201,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-veteran-budget",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "stake: 200, budget: 360,",
+    "new": "stake: 200, budget: 361,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-veteran-potions",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "budget: 360, potions: 3,",
+    "new": "budget: 360, potions: 4,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-veteran-blunder",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "potions: 3, blunder: 0.05 }",
+    "new": "potions: 3, blunder: 0.06 }",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-grandmaster-stake",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "key: 'grandmaster', stake: 1000,",
+    "new": "key: 'grandmaster', stake: 999,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-grandmaster-budget",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "stake: 1000, budget: 450,",
+    "new": "stake: 1000, budget: 449,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-grandmaster-potions",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "budget: 450, potions: 4,",
+    "new": "budget: 450, potions: 3,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-grandmaster-blunder",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "potions: 4, blunder: 0 }",
+    "new": "potions: 4, blunder: 0.01 }",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-hash-multiplier",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "Object.freeze([73856093, 0x127409F])",
+    "new": "Object.freeze([73856094, 0x127409F])",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-hash-xor",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "0x127409F]);",
+    "new": "0x127409E]);",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-band-amateur",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "Object.freeze([40, 75, 93])",
+    "new": "Object.freeze([41, 75, 93])",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-band-seasoned",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "[40, 75, 93]",
+    "new": "[40, 76, 93]",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-band-veteran",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "75, 93]);",
+    "new": "75, 92]);",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-tier-negative-kept",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "const h = (((Math.imul(seed | 0, GAMBIT_TIER_HASH[0]) ^ GAMBIT_TIER_HASH[1]) % 100) + 100) % 100;",
+    "new": "const h = (Math.imul(seed | 0, GAMBIT_TIER_HASH[0]) ^ GAMBIT_TIER_HASH[1]) % 100;",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-tier-unwrapped",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "Math.imul(seed | 0, GAMBIT_TIER_HASH[0])",
+    "new": "((seed | 0) * GAMBIT_TIER_HASH[0])",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-tier-last-band",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "GAMBIT_TIERS[band < 0 ? GAMBIT_TIERS.length - 1 : band]",
+    "new": "GAMBIT_TIERS[band < 0 ? GAMBIT_TIERS.length - 2 : band]",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-band-le",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "findIndex((b) => h < b)",
+    "new": "findIndex((b) => h <= b)",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-army-budget",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "autoFill([], tier.budget, rand32)",
+    "new": "autoFill([], KG_POINT_BUDGET, rand32)",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-deal-potions",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "potions: [KG_POTIONS_PER_SIDE, tier.potions]",
+    "new": "potions: [tier.potions, KG_POTIONS_PER_SIDE]",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-deal-budgets",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "budgets: [KG_POINT_BUDGET, tier.budget]",
+    "new": "budgets: [tier.budget, tier.budget]",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-deal-sides",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "armies: [army, regularArmy(tier, rand32)]",
+    "new": "armies: [regularArmy(tier, rand32), army]",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-strike-chance",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "GAMBIT_BLUNDER_STRIKE = 0.5;",
+    "new": "GAMBIT_BLUNDER_STRIKE = 0.6;",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-strike-drawn-always",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "if (foes.length > 0 && value(rand32) < f32(GAMBIT_BLUNDER_STRIKE)) {",
+    "new": "if (value(rand32) < f32(GAMBIT_BLUNDER_STRIKE) && foes.length > 0) {",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-strike-le",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "value(rand32) < f32(GAMBIT_BLUNDER_STRIKE)) {",
+    "new": "value(rand32) <= f32(GAMBIT_BLUNDER_STRIKE)) {",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-blunder-walk-none",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "  if (!cells.length) return null;\n  const [col, row]",
+    "new": "  const [col, row]",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-blunder-float64",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "if (value(rand32) < f32(tier.blunder)) return blunder(state, mine, rand32);",
+    "new": "if (nextDouble(rand32) < tier.blunder) return blunder(state, mine, rand32);",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-blunder-le",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "if (value(rand32) < f32(tier.blunder))",
+    "new": "if (value(rand32) <= f32(tier.blunder))",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-blunder-first-piece",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "const p = mine[drawBelow(mine.length, rand32)];",
+    "new": "const p = mine[drawBelow(mine.length - 1, rand32)];",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-blunder-first-foe",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "target: foes[drawBelow(foes.length, rand32)].id",
+    "new": "target: foes[0].id",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-blunder-draw-skipped",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "  if (value(rand32) < f32(tier.blunder)) return",
+    "new": "  if (tier.blunder > 0 && value(rand32) < f32(tier.blunder)) return",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-potion-line-king",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "Object.freeze({ king: 0.5, other: 0.3 })",
+    "new": "Object.freeze({ king: 0.49, other: 0.3 })",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-potion-line-other",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "other: 0.3 })",
+    "new": "other: 0.29 })",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-potion-at-line",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "if (share <= f32(p.king ?",
+    "new": "if (share < f32(p.king ?",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-potion-tie-last",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "&& share < low) { drinker = p; low = share; }",
+    "new": "&& share <= low) { drinker = p; low = share; }",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-potion-none-held",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "if (state.potions[side] > 0) {",
+    "new": "if (state.potions[side] >= 0) {",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-potion-kings-line",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "f32(p.king ? GAMBIT_POTION_LINE.king : GAMBIT_POTION_LINE.other)",
+    "new": "f32(GAMBIT_POTION_LINE.other)",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-escape-warning",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "if (!h || !h.active || !(lastAction",
+    "new": "if (!h || !(lastAction",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-escape-not-last",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "!(lastAction || p.hp <= KG_HAZARD_DAMAGE[h.kind])",
+    "new": "!(p.hp <= KG_HAZARD_DAMAGE[h.kind])",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-escape-lt",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "p.hp <= KG_HAZARD_DAMAGE[h.kind]",
+    "new": "p.hp < KG_HAZARD_DAMAGE[h.kind]",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-last-action",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "const lastAction = state.actions === 1;",
+    "new": "const lastAction = state.actions === 2;",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-escape-warning-cell",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "if (hazardAt(state, c, r)) continue;",
+    "new": "if (hazardAt(state, c, r)?.active) continue;",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-escape-king-near",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "(p.king ? near : -near)",
+    "new": "(p.king ? -near : near)",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-escape-no-jitter",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "const score = f32((p.king ? near : -near) + f32(value(rand32) * f32(GAMBIT_JITTER)));",
+    "new": "const score = f32(p.king ? near : -near);",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-escape-tie-last",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "if (score > best) { best = score; cell = [c, r]; }",
+    "new": "if (score >= best) { best = score; cell = [c, r]; }",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-potion-never",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "    if (drinker) return { type: 'potion', piece: drinker.id };",
+    "new": "    if (drinker && false) return { type: 'potion', piece: drinker.id };",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-blow-king",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "Object.freeze({ king: 40, kill: 30 })",
+    "new": "Object.freeze({ king: 39, kill: 30 })",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-blow-king-up",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "({ king: 40, kill",
+    "new": "({ king: 41, kill",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-blow-kill",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "kill: 30 })",
+    "new": "kill: 29 })",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-blow-kill-up",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "kill: 30 })",
+    "new": "kill: 31 })",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-blow-kill-lt",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "if (t.hp <= p.atk) score",
+    "new": "if (t.hp < p.atk) score",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-blow-tie-last",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "if (score > best) { best = score; striker = p; struck = t; }",
+    "new": "if (score >= best) { best = score; striker = p; struck = t; }",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-blow-no-draw",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "let score = f32(p.atk + value(rand32));",
+    "new": "let score = f32(p.atk);",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-alarm",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "alarm: 4, flee: 5",
+    "new": "alarm: 3, flee: 5",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-alarm-up",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "alarm: 4,",
+    "new": "alarm: 5,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-flee",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "flee: 5,",
+    "new": "flee: 4,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-flee-up",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "flee: 5,",
+    "new": "flee: 6,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-stay",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "stay: -100,",
+    "new": "stay: 0,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-reach",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "reach: 50,",
+    "new": "reach: 49,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-reach-up",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "reach: 50,",
+    "new": "reach: 51,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-king",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "king: 20,",
+    "new": "king: 19,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-king-up",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "king: 20,",
+    "new": "king: 21,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-space",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "space: 0.5,",
+    "new": "space: 0.4,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-space-up",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "space: 0.5,",
+    "new": "space: 0.6,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-space-max",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "spaceMax: 20,",
+    "new": "spaceMax: 19,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-close",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "close: 3 })",
+    "new": "close: 2 })",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-close-up",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "close: 3 })",
+    "new": "close: 4 })",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-flee-nearer",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "here <= W.alarm && there > here ?",
+    "new": "here <= W.alarm && there >= here ?",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-alarm-lt",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "here <= W.alarm &&",
+    "new": "here < W.alarm &&",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-king-any",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "if (f.king) kingInRange = true;",
+    "new": "kingInRange = true;",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-ranged-melee",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "(p.ranged ? f32(W.space * Math.min(there, W.spaceMax)) : 0)",
+    "new": "f32(W.space * Math.min(there, W.spaceMax))",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-away",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "f32((here - there) * W.close)",
+    "new": "f32((there - here) * W.close)",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-tie-last",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "if (score > top) { top = score; mover = p; to = [c, r]; }",
+    "new": "if (score >= top) { top = score; mover = p; to = [c, r]; }",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-zero-moves",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "let top = f32(0), mover",
+    "new": "let top = f32(-1), mover",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-no-jitter",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "score = f32(score + f32(value(rand32) * f32(GAMBIT_JITTER)));",
+    "new": "score = f32(score);",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-jitter",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "GAMBIT_JITTER = 0.1;",
+    "new": "GAMBIT_JITTER = 0.2;",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-hazard-warning",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "Object.freeze({ warning: 8, active: 40 })",
+    "new": "Object.freeze({ warning: 7, active: 40 })",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-hazard-warning-up",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "warning: 8,",
+    "new": "warning: 9,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-hazard-active",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "active: 40 })",
+    "new": "active: 39 })",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-hazard-active-up",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "active: 40 })",
+    "new": "active: 41 })",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-hazard-any-active",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "return !h ? 0 : h.active ? GAMBIT_HAZARD_PENALTY.active : GAMBIT_HAZARD_PENALTY.warning;",
+    "new": "return !h ? 0 : GAMBIT_HAZARD_PENALTY.active;",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-maps-mine",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "const maps = foes.map((f) => pathMap(state.tiles, f.col, f.row));",
+    "new": "const maps = mine.map((f) => pathMap(state.tiles, f.col, f.row));",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-nearest-max",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "maps.reduce((m, d) => Math.min(m, d[cellIndex(c, r)]), KG_UNREACHABLE)",
+    "new": "maps.reduce((m, d) => Math.min(m, d[cellIndex(c, r)]), 0)",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-step-ending",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "if (!state || state.over || state.turn !== side || state.ending || state.actions <= 0 || !playable(tier)) return null;",
+    "new": "if (!state || state.over || state.turn !== side || !playable(tier)) return null;",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-step-refused-kept",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "if (out?.state) return { cmd, state: out.state, events: out.events };",
+    "new": "if (out) return { cmd, state: out.state ?? state, events: out.events ?? [] };",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-step-game-dice",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "const out = cmd ? gambitAct(state, side, cmd, gameRand) : null;",
+    "new": "const out = cmd ? gambitAct(state, side, cmd, aiRand) : null;",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-jitter-bridges",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "GAMBIT_JITTER = 0.1;",
+    "new": "GAMBIT_JITTER = 0.6;",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-king-none",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "reach: 50, king: 20,",
+    "new": "reach: 50, king: 0,",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-bite-per-kind",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "p.hp <= KG_HAZARD_DAMAGE[h.kind]",
+    "new": "p.hp <= KG_HAZARD_DAMAGE.fire",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-escape-boxed-stops",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "if (cell) return { type: 'move', piece: p.id, col: cell[0], row: cell[1] };",
+    "new": "if (cell) return { type: 'move', piece: p.id, col: cell[0], row: cell[1] }; else break;",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-escape-last-first",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "  for (const p of mine) {\n    const h = hazardAt",
+    "new": "  for (const p of mine.slice().reverse()) {\n    const h = hazardAt",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-move-score-f64",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "score = f32(score + f32(value(rand32) * f32(GAMBIT_JITTER)));",
+    "new": "score = score + value(rand32) * GAMBIT_JITTER;",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-escape-score-f64",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "const score = f32((p.king ? near : -near) + f32(value(rand32) * f32(GAMBIT_JITTER)));",
+    "new": "const score = (p.king ? near : -near) + value(rand32) * GAMBIT_JITTER;",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-blow-score-f64",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "let score = f32(p.atk + value(rand32));",
+    "new": "let score = p.atk + nextDouble(rand32);",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-strike-coin-f64",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "value(rand32) < f32(GAMBIT_BLUNDER_STRIKE)",
+    "new": "nextDouble(rand32) < GAMBIT_BLUNDER_STRIKE",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-blunder-foe-index",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "foes[drawBelow(foes.length, rand32)]",
+    "new": "foes[foes.length - 1 - drawBelow(foes.length, rand32)]",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-step-unchecked",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "  try { cmd = regularAction(state, side, tier, checkedRand32(aiRand)); } catch { return null; }",
+    "new": "  cmd = regularAction(state, side, tier, aiRand);",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-action-any-tier",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "  if (!state || !playable(tier)) return null;",
+    "new": "  if (!state) return null;",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-step-any-tier",
+    "file": "src/systems/gambit/gambitPatrons.js",
+    "old": "state.actions <= 0 || !playable(tier)) return null;",
+    "new": "state.actions <= 0) return null;",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-measure-kings-stopped",
+    "file": "tools/kgMeasure.mjs",
+    "old": "    if (st.round > rounds) return { end: st.pieces.every((p) => p.king) ? 'kings' : 'long', rounds: st.round };",
+    "new": "    if (st.round > rounds) return { end: 'long', rounds: st.round };\n    if (st.pieces.every((p) => p.king)) return { end: 'kings', rounds: st.round };",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  },
+  {
+    "name": "KG2-measure-seeds-unmixed",
+    "file": "tools/kgMeasure.mjs",
+    "old": "export const gameSeed = (seed, g) => mix32((Math.imul(seed, 1000003) + Math.imul(g, 7919) + 1) >>> 0) || 1;",
+    "new": "export const gameSeed = (seed, g) => (Math.imul(seed, 1000003) + Math.imul(g, 7919) + 1) >>> 0;",
+    "tests": [
+      "test/tooling/kg2_patrons.test.js"
+    ]
+  }
+]

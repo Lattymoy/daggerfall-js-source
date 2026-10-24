@@ -1,7 +1,7 @@
 # The Dwarven Thunderlock — the port's own weapon
 
 `src/systems/thunderlock.js` + `src/characters/thunderlockIds.js` +
-`src/combat/thunderlockArt.js` + `src/combat/gunSheet.js`
+`src/combat/thunderlockArt.js` + `src/combat/gun/gunSheet.js`
 (Mac, 2026-09-19)
 
 > "The weapon itself will be called Dwarven Thunderlock. Ammo: Dwemer
@@ -40,7 +40,7 @@ Mac's call and the weapon's nature agreed.
 
 **It cost one duplicate to find out.** `hostCombat.js` carried a
 *second* copy of the weapon-to-skill table — the duplicate
-`test/audit24_onehome.test.js`'s ratchet had been naming for months —
+`test/systems/talk/audit24_onehome.test.js`'s ratchet had been naming for months —
 and that copy answered `null`, so `isBowWeapon` said false and the gun
 fell through to the melee arc in every host. The table is one table
 now; `hostCombat.js` re-exports its door, `weaponSkillUsed`.
@@ -77,18 +77,18 @@ door.
 
 `characters/thunderlockIds.js` holds the four numbers and the
 ammunition link, and imports **nothing**. `systems/thunderlock.js` is
-the weapon's home, but it reaches `systems/itemTemplates.js` to
+the weapon's home, but it reaches `systems/item/itemTemplates.js` to
 register its rows, and *that* file imports `characters/weapons.js` for
 the condition ladder — so a `weapons.js` that wanted the indices from
 the home would close a cycle and leave one of the three holding an
 undefined const on the way up. `systems/inventory.js` is upstream too.
-The leaf breaks both. Same answer as `combat/weaponAlign.js`.
+The leaf breaks both. Same answer as `combat/weapon/weaponAlign.js`.
 
 ## The art
 
 Its first-person art is **a sheet, not a CIF**
 (`combat/thunderlockArt.js`), sliced by the laws the lab settled
-(`combat/gunSheet.js`) and handed back in the *same shape*
+(`combat/gun/gunSheet.js`) and handed back in the *same shape*
 `loadFpsWeaponArt` answers — so `drawFpsWeapon`, the rig and Weapon
 Widget's clone read it without any of them learning that a second kind
 of weapon art exists. Two records: 0 is the idle pose, 1 the six fire
@@ -136,6 +136,11 @@ brass, lit brass, the flash core, a hole): each comes out cooler than
 it went in, the flash *gains* blue, the lit metal takes more than the
 shadowed, and alpha is never written.
 
+While the gun's blow carries an element (WEAPON-GLOW1, `05-Combat/Weapon-Glow.md`
+- a Ruby set in it, say), it swings the PLAIN frames under the element's
+outline (`plainWeaponType`): the shimmer is the enchanted look, and the
+outline is the more that is known.
+
 ## How you get one
 
 > "This weapon wont be available for purchase and should be one of the
@@ -144,7 +149,7 @@ shadowed, and alpha is never written.
 **Not for sale, and that takes no code.** A shop's shelf is built from
 `GROUP_TEMPLATE_INDICES`, DFU's own group enum table, and a custom
 template is not in it — the survival mod had to *add* its provisions
-to the shelves deliberately. `test/thunderlock.test.js` pins that as a
+to the shelves deliberately. `test/systems/thunderlock.test.js` pins that as a
 law rather than an accident. (SHOP-PELLETS, 2026-10-07: the GUN stays
 so, by Mac's word above; its SHOT is sold now, at Mac's later word -
 "allowing the purchase of the ammunition in stores" - section
@@ -187,6 +192,46 @@ does not roll up as *Wyrmbane*, a blade forged for a dragon hunt.
 Nothing in DFU's own pool sets that flag, so the classic pairings are
 exactly what they were: a dagger can still be Wyrmbane or
 Nightwhisper.
+
+## PISTOLET: rarer, and a second gun beside it (2026-10-21)
+
+The owner, giving the Dwarven Pistolet its numbers: *"make the thunderlock in general more rare along with the new hand
+cannon"*. The Thunderlock's unique find keeps its weight and mints EITHER gun now, each half the time (`GUN_SHARE`, its
+one mint draw picking the gun and counting the Pellets - `systems/thunderlock.js`), so each turns up half as often as
+the Thunderlock did, at every source, and every seed draws what it drew. (The first cut was two finds at `FIND_WEIGHT`
+0.5, neither half nor seed-stable: AUDIT PISTOLET A5/A8/C2/C3/D6.) The Pistolet eats this weapon's Pellet, flies the
+same orb and runs this weapon's machine - and the rig's gun functions serve both (`heldFeel()`, `heldSfx()`). Its record
+is `Dwarven-Pistolet.md`.
+
+**A left-handed player's Thunderlock is drawn in the mirror** (PISTOLET, AUDIT PISTOLET D33). `gunFrameRect` mirrored the
+gun's place and the lab mirrored its whole sprite, but the game drew the texture unflipped, so a left-handed player's
+Thunderlock sat on the left as a RIGHT hand, its forearm cut mid-screen. The rig reads the source rect right to left
+under the same switch (`handsLaw.js MIRROR_UV`, the melee pair's door), and its muzzle light comes from the side the gun
+is drawn on.
+
+**The Last Lock claims both guns** (AUDIT PISTOLET C5): this weapon's exclusive Legendary record names the Pistolet's
+template beside its own, so a Legendary Pistolet is The Last Lock rather than a blade's record.
+
+## GUNS-UNFOUND: found no more (2026-10-23)
+
+The owner: *"So I want to remove the thunderlock and pistolet from the loot pool and revert the gilded weapon from the
+serpent. Dont remove them from players who have them, but it should no longer be able to drop. Ammo should still
+drop"*. Neither gun drops now, from any source:
+
+- **The find mints its Pellets alone** (`systems/thunderlock.js`). It stays registered - its id, weight, tier and place
+  among the finds - and its mint still takes its ONE draw, which counts the Pellets (6-18) as it always did. So every
+  draw before it, and every list it does not fire on, is what it was (Loot-II-Arc law 9); a list it fires on loses only
+  the gun's own tier roll, as it loses the gun. The ammunition still drops at the rows above, and the shops still sell it
+  (SHOP-PELLETS). `GUN_SHARE` and `setSecondGun` are gone: `systems/pistolet.js` hands the find nothing.
+- **The Gilded records mint no gun**: the Hourlock is a Dwarven Long Bow and the Sunken Sovereign the Ebony Saber again
+  (`06-Systems/Gilded.md` section 9).
+- **A held gun is the player's.** Nothing reads a gun out of a pack: the templates, the art, the machine, the Pellet and
+  the item law stay, and a gun Hourlock or gold Pistolet a save holds stays lawful as its record's era
+  (`HOURLOCK_GUN_ERA`, `SOVEREIGN_PISTOLET_ERA`).
+- **The Last Lock** stays registered, so a Legendary gun already held keeps its power and its codex row; no gun drops to
+  roll up as it, so its codex hint says "No longer found".
+
+Still minted, and only here: the loot test character's rows (`systems/testRoom.js`), a bench, not a drop.
 
 ## FIELD-GUN: the two the audit walked past
 
@@ -254,7 +299,7 @@ those were found the same way, by a person looking at the picture.
 
 Two faults stacked, and the first hid the second.
 
-**FIELD-GUN5.** `characters/paperdoll.js`'s `getTemplate` is a `Map`
+**FIELD-GUN5.** `characters/paperdoll/paperdoll.js`'s `getTemplate` is a `Map`
 built once from the frozen DFU JSON, so it is blind to
 `registerCustomTemplates` — and `composeDoll` filters the worn list on
 it answering. The gun was dropped from the draw list before anything
@@ -288,13 +333,13 @@ because the second form says nothing about where on the doll it is.
 
 The largest of the three, and the one that says most about how this
 was built. **The lab settled the recoil, the shake and the reload
-lower, and then kept them.** `combat/weaponRig.js` — the thing that
+lower, and then kept them.** `combat/weapon/weaponRig.js` — the thing that
 actually draws the weapon, in all four hosts — had none of the three.
 The sprite arrived, the sounds arrived, and the weapon sat dead still
 while it fired.
 
-So the two machines moved to `combat/gunFeel.js` and the lab
-re-exports them, exactly as `combat/gunSheet.js` already works for the
+So the two machines moved to `combat/gun/gunFeel.js` and the lab
+re-exports them, exactly as `combat/gun/gunSheet.js` already works for the
 slicing laws. Tuning the lab now tunes the game, because there is one
 copy of each number.
 
@@ -419,7 +464,7 @@ moved.
 `thunderlockArt.js` hands over an **anchor-sized record** now, with
 the union beside it, and both draw sites expand at the moment of
 drawing — exactly the shape the lab has always had. `unionDrawRect`
-moved into `combat/gunSheet.js` so the lab reads the game's copy
+moved into `combat/gun/gunSheet.js` so the lab reads the game's copy
 rather than keeping its own.
 
 And the raise moved onto `_tlAdjust`, the one channel **both** draws
@@ -464,15 +509,15 @@ corrected; they converge by becoming one implementation.
 
 ### What moved
 
-`gun-proto.html`'s draw block is `combat/gunViewmodel.js` now, and
+`gun-proto.html`'s draw block is `combat/gun/gunViewmodel.js` now, and
 both sides call it:
 
 | was | is |
 | --- | --- |
 | lab's `createWidgetRig` / `widgetRigStep` | `createGunRig` / `gunRigStep` |
 | lab's `labMotion` / `labWidgetSettings` | `gunMotion` / `gunWidgetSettings` |
-| lab's `placeSprite` | `combat/gunPlacement.js` |
-| lab's `unionDrawRect` | `combat/gunSheet.js` |
+| lab's `placeSprite` | `combat/gun/gunPlacement.js` |
+| lab's `unionDrawRect` | `combat/gun/gunSheet.js` |
 | the lab's draw block | `gunFrameRect` |
 
 The lab imports every one of them back. **It is no longer a thing the
@@ -590,7 +635,7 @@ frames *is* the gun. Barrel, hand and flash brighten together and fall
 away over the smoke — one lamp switching on, not a sprite special-cased.
 
 **Why it lit nothing:** because the curve lived in `src/tools/`. It has
-moved to `combat/gunFeel.js` with the rest of the feel (`MUZZLE_CURVE`,
+moved to `combat/gun/gunFeel.js` with the rest of the feel (`MUZZLE_CURVE`,
 `muzzleGlow`), and the lab's own `muzzleLight(state, frame)` now asks
 the same question in its machine's words — one home, two spellings.
 
@@ -833,7 +878,7 @@ Mac, 2026-09-20: *"Shrink the inventory icon for the pellet ammo."*
 
 ### Fitting the cell was never the question
 
-The list cell is 50x38, and `makeIconDrawer` (`src/ui/itemScroller.js`)
+The list cell is 50x38, and `makeIconDrawer` (`src/ui/item/itemScroller.js`)
 never *enlarges*:
 
 ```js
@@ -1115,7 +1160,7 @@ is its Blender source.
 
 `tools/fbxRead.mjs` reads the binary FBX container; `tools/fbxMesh.mjs`
 bakes one Geometry/Model pair into **the shape `flattenNif` already
-emits** (`src/formats/mwNifMesh.js:"@returns {{name:string"` — positions / normals /
+emits** (`src/formats/morrowind/mwNifMesh.js:"@returns {{name:string"` — positions / normals /
 uvs / colors / indices / material). Not a second mesh format: the same
 one, so the Morrowind lane's whole downstream needs no new consumer.
 
@@ -1205,7 +1250,7 @@ MW1 said the bake existed and nothing drew it. This draws it.
 
 ### The mesh becomes a NIF, because that is where a part goes in
 
-`bindPartsInto` (`src/formats/mwFirstPerson.js`) does
+`bindPartsInto` (`src/formats/morrowind/mwFirstPerson.js`) does
 `parseNif(part.bytes)` and hands the result to `bindPart`. **A part IS
 NIF bytes.** The obvious alternative — teach the bind to take
 pre-flattened batches beside NIF bytes — is the wrong one, and this
@@ -1315,7 +1360,7 @@ patina.
 
 Three seams, and not one of them is new machinery:
 
-1. **`src/characters/ownWeaponModels.js`** — the weapons Morrowind does
+1. **`src/characters/ownModels/ownWeaponModels.js`** — the weapons Morrowind does
    not have, by template index. A **table, not a branch**: the
    Thunderlock is explicitly *"THE FIRST ONE OF ITS KIND"*, and the
    second one must not be a second `if` in somebody else's function. A
@@ -1487,7 +1532,8 @@ animations. What nobody has done is **look at it in the arm**: the
 `BoneOffset` a Morrowind weapon can carry to nudge itself on the bone is
 absent, so the grip sits exactly at the bone's origin, and whether that
 reads as *held* rather than *floating* is a question for eyes on a
-running build, not for a pin.
+running build, not for a pin. (RIFLE-STANCE, 2026-10-17, at the end of this record: the gun is held by its grip
+through an attitude on the part, and both hands are solved onto it.)
 
 ## FIELD-GUN19: the flash was white and the shot came out high
 
@@ -1638,7 +1684,7 @@ the missile's anchor. (The thrown torch had already done this by hand -
 `droppedTorches.js` lowers its projectile by half its texture height -
 which is the same law written once more; it stays as it is, cited.)
 
-**Pinned** in `test/thunderlock.test.js` (+2, 39): `centredBase` by
+**Pinned** in `test/systems/thunderlock.test.js` (+2, 39): `centredBase` by
 value (half the height, not the width; no size yet is the position
 itself), every batch build in the three lanes taking it - counted per
 file, the fourth host's and the world hosts' by their exact lines, the
@@ -1746,12 +1792,13 @@ grip at the origin, and no `BoneOffset` nudges it - was chosen against a
 rendered preview, never against the bone; MW1 and MW3 both say so. Eyes
 on a build decide whether it reads as held and pointing forward. If it
 does not, the fix is a `BoneOffset` node in the bake, not a change to
-the attach. (2) The crossbow animation's timing against the gun's
+the attach. (RIFLE-STANCE, 2026-10-17, below: decided by eyes on renders of the retail rig - the gun rode the fist as a
+sword's grip, rolled onto its side - and fixed by an attitude on the part, `GUN_GRIP_ATTITUDE`, the torch's shape.) (2) The crossbow animation's timing against the gun's
 1.7 s reload is the same eyes' question. (MW-GUN-FEEL, 2026-10-07, below:
 the reload is the gun's own now - a pump laid over the borrowed groups -
 and the breech no longer opens before the bang.)
 
-**Pins** (`test/fieldgunmwaudit.test.js`, 6): the hold and the voice
+**Pins** (`test/combat/fieldgunmwaudit.test.js`, 6): the hold and the voice
 under the arm (held at the click, released with the bang and the flash
 on the same frame, once), the classic lane untouched and third person
 held like first, the never-swallowed ceiling, the muzzle door in both
@@ -1788,7 +1835,7 @@ dye (`textureReplacementRect`, `hasTextureReplacement`, `textureReplacementBytes
 A classic weapon's icon IS its doll layer - `GetInventoryTextureArchive` hands back the `PlayerTextureArchive` the doll
 draws from, which is why a classic icon carries the fist's notch. The gun's doll layer was made the same way
 (`tools/gunPaperdoll.mjs`), with an ellipse punched out of its grip where the fist closes: right on the doll, wrong in a
-list, where it read as a gun broken in two. `systems/itemTemplates.js` `registerOwnItemImage` / `ownItemImage`: a weapon
+list, where it read as a gun broken in two. `systems/item/itemTemplates.js` `registerOwnItemImage` / `ownItemImage`: a weapon
 of the port's own answers its own picture by job - `forPaperDoll` on the doll (`ui/paperDoll.js`), not in a list
 (`inventoryItemImage`, the one door every list asks) - and DFU's ladder answers everything else as before.
 `systems/thunderlock.js` ART_RECORDS: 0 the doll layer, 1 the whole gun, 2 and 3 the Hourlock's gold pair.
@@ -1821,10 +1868,10 @@ from the loop's centroid with each edge taken back (so the cap's winding agrees 
 OUT), its vertices its own with the cap's one flat normal - a hard edge, so the unwrap gives it an island and the
 occlusion bake darkens a recessed one (a muzzle's bore reads dark). `tools/bakeThunderlock.mjs` caps before it unwraps;
 the shipped NIF is 360 triangles and no boundary (it was 295 and eleven loops). The Hourlock's twin
-(`thunderlock_gilded.nif` over `thunderlock_gilded.dds`, `characters/ownWeaponModels.js` OWN_MW_GILDED) is the same
+(`thunderlock_gilded.nif` over `thunderlock_gilded.dds`, `characters/ownModels/ownWeaponModels.js` OWN_MW_GILDED) is the same
 capped mesh in gold leaf (`tools/meshTexture.mjs` GILDED_BANDS).
 
-**Pins** (`test/thunderlockart.test.js`, 4; `tools/mutants/thunderlockart.json`, 11 dead): the stand-in's dye, the
+**Pins** (`test/systems/thunderlockart.test.js`, 4; `tools/mutants/thunderlockart.json`, 11 dead): the stand-in's dye, the
 pictures by job (and the Hourlock's gold layer through the doll's own door; a hotbar slot of shot with its count and
 no bar), the derivation pixel for pixel (the pellet left Mac's 12px ball), the mesh
 closed (an open cube capped facing out; the shipped gun and its twin with no boundary). Moved: FIELD-GUN-MW2's preload
@@ -1852,7 +1899,7 @@ stays a find: the shelf still names nothing of it, and `thunderlock.test.js` sto
 finds none.
 
 A departure of kind (Port-Ledger section A): a shelf carries a thing DFU's never does. **Pins**
-(`test/shoppellets.test.js`, 3; `tools/mutants/shoppellets.json`, 7 dead) - and the four that enumerate a Weapon Smith's,
+(`test/systems/shoppellets.test.js`, 3; `tools/mutants/shoppellets.json`, 7 dead) - and the four that enumerate a Weapon Smith's,
 an Armorer's or a General Store's shelf moved with it, each saying so.
 
 ## MW-GUN-FEEL (2026-10-07): the kick and the reload, under the Morrowind arm
@@ -1865,14 +1912,14 @@ after the bang the hands stood still for the whole 1.7 s reload, the pump's two 
 clacks rode the machine's cooldown, which begins at its sixth frame (0.43 s after the click) - before a crossbow's
 release - so the breech was heard OPENING BEFORE THE BANG. AUDIT FIELD-GUN-MW recorded that and left it; it is paid.
 
-**One pose over the whole viewmodel** (`combat/gunFeel.js` `armGunPose`, `armKickMatrix`; `combat/fpArm.js`
+**One pose over the whole viewmodel** (`combat/gun/gunFeel.js` `armGunPose`, `armKickMatrix`; `combat/fpArm.js`
 `setGunFeel`): the gun's kick and its reload as `{ pitch, back, down }` in the eye's own axes, turned about the shoulder
 (`ARM_GUN_FEEL.pivot`) and laid IN FRONT of the lens at the first-person draw (`K x lens`) - the arms and the gun move
 as one and nothing else in the pass does. Not through the neck (`poseAssembly`'s `neckPitch`/`neckOffset`): glued arms
 take no look there by IG4's construction, and a kick is not a look. The frame record carries the moved view, so the
 muzzle (`weaponMuzzle`) and a held sheet's corners stand where the eye sees them.
 
-**The same spring** (`combat/weaponRig.js` `thunderlockFeel`): the classic lane's recoil (`createRecoil`, Mac's kick 5,
+**The same spring** (`combat/weapon/weaponRig.js` `thunderlockFeel`): the classic lane's recoil (`createRecoil`, Mac's kick 5,
 stiffness 400, damping 36) is stepped once and both views read it - a kick tuned on the lab's panel moves the sprite and
 the arm. Its 5 px peak is 3 degrees of muzzle climb and 2.5 cm into the shoulder; under a thousandth of a pixel
 (`ARM_KICK_REST_PX`) the spring's endless tail is rest, so the arm's pose can be none again.
@@ -1888,8 +1935,107 @@ These are JUDGEMENTS stated as ones, like `roomShake` - the lab's numbers are pi
 are degrees and metres, and no conversion between the two is honest. They are one frozen row, `ARM_GUN_FEEL`, for Mac to
 move once he has seen them on his own Morrowind data; this container has none to look through.
 
-**Pins** (`test/mwgunfeel.test.js`, 5; `tools/mutants/mwgunfeel.json`, 11 dead): the pose (the kick, the pump's shape,
+**Pins** (`test/combat/mwgunfeel.test.js`, 5; `tools/mutants/mwgunfeel.json`, 11 dead): the pose (the kick, the pump's shape,
 nothing outside the reload, the tail at rest), the matrix (turned about the shoulder, back toward the eye, down),
 the arm (the drawn view IS `K x lens`, built and drawn on the fixture rig; a still pose is none), the rig under a
 stubbed arm (no clack before the bang, the kick on the shot, the pump at its depth mid-reload, still at the ready) and
 the classic lane unmoved.
+
+## RIFLE-STANCE (2026-10-17): held as a long gun, the low ready and the aim
+
+Mac: "adjust the held animation for the thunderlock on the morrowind model. It should be like a rifle being held in an
+idle stance and a ready stance when in combat."
+
+Morrowind has no gun, so the arms played the crossbow's groups (`animateAs: 10`) with whatever a crossbow clip does with
+a crossbow - and the gun, baked with its barrel along the Weapon Bone's +Y, rode the fist the way a sword's grip does:
+its long axis through the fist, its grip sticking sideways into the palm, rolled onto its side (measured at the retail
+rest: the sights to the actor's right). The record had said twice that the orientation was chosen against a preview and
+never against the bone. It is decided now, and the arms are no longer the clip's while the gun is drawn.
+
+**Held by its grip** (`characters/ownModels/ownWeaponModels.js` `GUN_GRIP_ATTITUDE`, the part's `preTransform` through the
+resolve's own-model arm - the torch's LIGHT_ATTITUDE shape). Morrowind's Weapon Bone runs its +Y out of the fist's thumb
+side and its +X down the hand toward the fingers. A pistol grip goes through the fist: the gun's top to the thumb's side,
+its barrel along the hand toward the knuckles - turned 18 degrees up toward the thumb, the grip's rake - its right to the
+back of the hand, the middle of the shipped grip (0, -2.5, -3.5) at the bone's origin, the fist's middle. Measured at the
+retail rest, the barrel now runs within 35 degrees of the hand's own way, where the bake's ran across it at 90. The
+muzzle (`weaponMuzzle`) reads the posed vertices, so it followed for free; the holster's bare gun is its own part and is
+unchanged. The Hourlock spreads the same row.
+
+**Solved onto the gun** (`combat/gun/rifleStance.js`, through `poseAssembly`'s new `hold` slot - after the climb's, before the
+matrices). Each frame the gun's frame is placed in one of two stances and eased between them, and the climb rig's own
+solver (`combat/climbRig.js` `applyClimbRig`) puts the hands on it: the right wrist where the grip in the hand puts it (read
+off the Weapon Bone in the hand, the fingers' way and the palm's, every frame), the left palm up under the forend
+(`RIFLE_HOLD.forend`, the front of the forend under the receiver, 13.5 units out), each elbow its stance's way, the
+fingers closed. It holds no number about a skeleton: the body's frame is read off its shoulders and spine, every
+distance is a share of the right arm's own length.
+
+| stance | third person (from the right shoulder) | first person (from the eye) |
+|---|---|---|
+| LOW, the idle | the forend at the belt, the muzzle 30 degrees down and 30 across toward the left foot, canted 10; the elbows back at the sides | lowered, its forward half across the bottom of the picture toward the left, 12 down and 25 across |
+| AIM, in a fight | level down the body's forward at the collar, its sights up; the right elbow out, the left under the forend | right of the middle and under the crosshair, 4 degrees down the lens, the left hand's fingers on the forend in view (RIFLE-AIM-LOW, below; it was level, at 0.17 of the arm under the eye) |
+
+Third person reads the body's frame (right from shoulder to shoulder, up the spine); first person the lens's (it looks
+down the rig's +Y), and its stances are pulled in toward the shoulders so both hands reach from under the eye and the gun
+stays in the 60-degree lens. The legs, the spine and the head keep the body's walk (since BODY-MOTION the body's own gait over the clip's - `04-Characters/Body-Motion.md`; the hold is solved over it, after its slot).
+
+**When** (`combat/fpArm.js` `stepRifle`, `rifleStanceStep`): held while the gun is in the hands and nothing else has them -
+not during the draw or the sheathe (the clip carries the gun from the holster and back), not on the stone, a seat, a
+saddle, under a sheet, with a spell or dead; on over 0.16 s, off over 0.1. The aim comes up over 0.12 s while it shoots,
+stays for 6 s after the last shot, and stays while the fight's own signal stands - a foe's harm on the player within 12 s
+(`systems/harmMark.js` `playerHarmedWithin`, handed in by the rig every frame: `combat/weapon/weaponRig.js`
+`setCombatReady`). There is no "in combat" flag in the port; the harm mark is the one signal a fight leaves without a
+host, and its two-minute mark (a revenant's credit) is far past a fight. Then down over 0.55 s. A peer's body takes its
+own shots' aim; no combat bit rides the wire.
+
+**Measured** on the vendored retail biped in the port's own steel plate, rendered offline (the poses read off the
+assembly, rasterised): both wrists on their holds in both stances (reach misses 0); the low ready's barrel 30 degrees
+down and 30 across, the aim's level within 1.5 degrees of the body's forward with its sights up; the left palm facing the
+gun's top. First person, on the MW-STEEL4 stand-in with a camera at the eye: the aim down the lens, its muzzle and the
+left hand in the picture; the low ready's muzzle in the picture and lower.
+
+**Not verified here, and said plainly.** This container has no Morrowind data: the first-person stances are tuned on the
+stand-in (retail's third-person bones with a camera node), not on `xbase_anim.1st.nif`, whose shoulders may sit
+differently under its eye. They are one frozen row, `RIFLE_STANCES.first`, beside the third person's, for Mac to move on
+his own data. No recoil is added to the third-person body (the first person keeps MW-GUN-FEEL's kick and pump over
+the whole viewmodel); the borrowed crossbow groups still time the shot and the draw.
+
+**Pins** (`test/combat/riflestance.test.js`, 6; `tools/mutants/riflestance.json`, 14 dead): the step law; the grip (the
+attitude a turn, both guns, the resolve's part, the barrel along the hand); both stances on retail's bones in the plate
+through the `hold` slot (the angles, the grip, both hands, the left palm at the forend, a share between); the first
+person in the lens; the fight's signal; and the live arm with the shipped gun (no hold through the draw, held drawn, the
+fight up and down, off through the sheathe). PIN MOVED: `climb6` C16 (the hook between the neck and the matrices takes
+the `hold` line). Mutant records whose anchor this slice moved, re-aimed by content and re-run (both dead): `rvn10`'s
+`RVN10-end-keeps-low` and `RVN10-end-keeps-fights` (`endPlayerFights` forgets the harm's time too).
+
+PISTOL-STANCE (2026-10-22, `Dwarven-Pistolet.md`): the arm reaches this stance through `combat/gun/gunHold.js` now, which
+hands each gun the stance its row's `holdAs` names - the Thunderlock's `'rifle'` this one, the Pistolet's `'pistol'` its
+own one-handed hold. This stance, its step and its eases are unchanged; the riflestance pins pass as they stood.
+
+## RIFLE-AIM-LOW (2026-10-18): the first-person aim under the crosshair
+
+Mac: "the thunderlock in first person (morrowind) when shooting/aiming sits too high on the screen."
+
+RIFLE-STANCE's first-person aim held the grip 0.17 of the arm's length under the eye with the barrel level down the
+lens. A level barrel runs off toward the picture's vanishing point, which is the crosshair, so the long gun climbed the
+picture as it went: measured on the MW-STEEL4 stand-in (the posed gun's vertices through the 60-degree lens), its top
+stood 0.20 of the half-height ABOVE the middle - over the crosshair, the moment the aim came up to shoot. Lowering the
+grip alone brings it down slowly, the far end still converging on the middle (0.32 of the arm under the eye left its
+top just 0.115 under it); a few degrees of barrel down stops the climb.
+
+`RIFLE_STANCES.first.aim` holds the grip 0.28 of the arm under the eye and the barrel 4 degrees down the lens: the whole
+gun under the crosshair, its highest point 0.17 of the half-height below the middle (8% of the picture), right of it as
+before. The left hand is seen where it holds - its fingers on the forend, at 0.84 of the half-height down - with its
+wrist under the picture's edge; pushed further out to keep the wrist in view, the left arm no longer reached the forend
+on the stand-in, so it was not. Both wrists on their holds. The low ready (12 down, 25 across) is lower still and
+unchanged; so is third person.
+
+The stance is placed from the eye in shares of the arm, so where the gun lands on the picture holds on any skeleton
+whose arms reach it - `xbase_anim.1st.nif` included, though this container has none to look through. The gun's kick
+(MW-GUN-FEEL, 3 degrees of muzzle climb) rides over the aim as before. It is still one frozen row for Mac to move.
+
+**Pins** (`test/combat/riflestance.test.js`, 7): the new test reads the posed gun's every vertex on the picture - its
+top at least 0.15 of the half-height under the middle, its muzzle and the left fingers in the picture, both wrists on
+their holds, the low ready lower still. PIN MOVED: the first-person test's aim is 4 degrees down the lens (it was level
+within 1.5) and its left hand is read by its fingers on the forend (it read the wrist, now under the picture's edge).
+`tools/mutants/riflestance.json`: 16 dead - the two new, `RIFLE-AIM-LOW-the-old-row` (the stance as it was: the pins
+fail on it) and `RIFLE-AIM-LOW-level` (the barrel level again).

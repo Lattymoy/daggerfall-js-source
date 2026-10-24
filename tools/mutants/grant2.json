@@ -1,0 +1,192 @@
+[
+  {
+    "name": "GRANT2-pose-cell-unchecked",
+    "file": "server/src/index.js",
+    "old": "    if (isWorldRoom(a.key) || (p && cellRoomOfWire(p.x, p.z) === a.key)) return true;",
+    "new": "    if (isWorldRoom(a.key) || p) return true;",
+    "why": "a halo's pose minted a grant for a cell it does not stand in",
+    "tests": [
+      "test/net/grant2_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-renown-not-the-tokens",
+    "file": "server/src/index.js",
+    "old": "r = renownIssuable(a.lv) ? a.lv : 0;",
+    "new": "r = 0;",
+    "why": "every grant minted at Renown 0 - no elite ever",
+    "tests": [
+      "test/net/grant2_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-grant-unsigned",
+    "file": "server/src/index.js",
+    "old": "const out = sg ? { ...gr, sg } : gr;",
+    "new": "const out = gr;",
+    "why": "the grant goes out unsigned",
+    "tests": [
+      "test/net/grant2_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-refusal-said-measuring",
+    "file": "server/src/index.js",
+    "old": "    if (gate.refusal && mode === 'enforce') {",
+    "new": "    if (gate.refusal) {",
+    "why": "measuring refuses asks",
+    "tests": [
+      "test/net/grant2_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-bucket-not-kept",
+    "file": "server/src/index.js",
+    "old": "    if (gate.bucket) G.buckets.set(key, gate.bucket);\n",
+    "new": "",
+    "why": "every ask meets a full bucket",
+    "tests": [
+      "test/net/grant2_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-live-not-counted",
+    "file": "server/src/index.js",
+    "old": "    G.liveN += n;\n    return out;",
+    "new": "    return out;",
+    "why": "the cell's ceiling never fills",
+    "tests": [
+      "test/net/grant2_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-window-not-begun-again",
+    "file": "server/src/index.js",
+    "old": "    G.w = newGrantMeasure(now);\n",
+    "new": "",
+    "why": "a window posted again and again",
+    "tests": [
+      "test/net/grant2_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-off-ignored",
+    "file": "server/src/index.js",
+    "old": "    if (mode === 'off') { this._send(ws, JSON.stringify({ t: 'grant', k: 'off', id: ask.id })); return; }\n",
+    "new": "",
+    "why": "off mints all the same",
+    "tests": [
+      "test/net/grant2_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-welcome-silent",
+    "file": "server/src/index.js",
+    "old": "\"v\":${JSON.stringify(RELAY_VERSION)}${rf}${gm}${a.ly ?",
+    "new": "\"v\":${JSON.stringify(RELAY_VERSION)}${rf}${a.ly ?",
+    "why": "no welcome says the law's mode",
+    "tests": [
+      "test/net/grant2_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-unknown-setting-enforces",
+    "file": "src/net/grantLaw.js",
+    "old": "(v === 'off' || v === 'enforce' ? v : 'measure')",
+    "new": "(v === 'off' || v === 'measure' ? v : 'enforce')",
+    "why": "a setting nobody wrote enforces",
+    "tests": [
+      "test/net/grant2_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-ask-most-ignored",
+    "file": "src/net/grantLaw.js",
+    "old": "  if (!intIn(m.n, 1, GRANT_KINDS[/** @type {keyof typeof GRANT_KINDS} */ (m.kind)].max)) return null;",
+    "new": "  if (!intIn(m.n, 1, 8)) return null;",
+    "why": "an encounter of five asked",
+    "tests": [
+      "test/net/grant2_relay.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-ceiling-counted-as-bucket",
+    "file": "src/net/grantMeasure.js",
+    "old": "  if (refusal === 'bucket') row.bucket = capped(row.bucket + 1);",
+    "new": "  if (refusal) row.bucket = capped(row.bucket + 1);",
+    "why": "the cell's refusals said to be the account's",
+    "tests": [
+      "test/server/grant2_service.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-members-unbounded",
+    "file": "src/net/grantMeasure.js",
+    "old": "&& count(r.members) && r.members <= r.asks * GRANT_KINDS[/** @type {keyof typeof GRANT_KINDS} */ (r.k)].max",
+    "new": "&& count(r.members)",
+    "why": "a window claiming more members than its asks could",
+    "tests": [
+      "test/server/grant2_service.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-signature-unchecked",
+    "file": "src/net/grantMeasure.js",
+    "old": "  if (!good) return { error: 'grant-signature' };\n",
+    "new": "",
+    "why": "anyone feeds the measure",
+    "tests": [
+      "test/server/grant2_service.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-batch-kept-twice",
+    "file": "server-account/src/grants.js",
+    "old": "  if (!kept?.meta?.changes) return { ok: true, read: false };\n",
+    "new": "",
+    "why": "a window posted twice counted twice",
+    "tests": [
+      "test/server/grant2_service.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-client-version-unchecked",
+    "file": "src/net/online.js",
+    "old": "if (primary) this.grantMode = relaySupportsGrant(relayV) && streamsFoes(room)",
+    "new": "if (primary) this.grantMode = streamsFoes(room)",
+    "why": "an older relay asked - and the socket closed",
+    "tests": [
+      "test/net/grant2_client.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-client-bucket-not-kept",
+    "file": "src/net/online.js",
+    "old": "    this._grantBucket = gate.bucket; this.stats.sent++;\n",
+    "new": "    this.stats.sent++;\n",
+    "why": "asks past the relay's bucket sent and dropped there",
+    "tests": [
+      "test/net/grant2_client.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-camp-kind-dropped",
+    "file": "src/scenes/world.js",
+    "old": "grantKind: hit.fixed ? 'bounty' : hit.kind === 'band' ? 'band' : 'camp',",
+    "new": "grantKind: hit.fixed ? 'bounty' : hit.kind === 'band' ? 'band' : 'enc',",
+    "why": "a camp asks an encounter's grant",
+    "tests": [
+      "test/net/grant2_client.test.js"
+    ]
+  },
+  {
+    "name": "GRANT2-revenant-kind-dropped",
+    "file": "src/scenes/world.js",
+    "old": "grantKind: hit.revenant ? 'rev' : 'enc',",
+    "new": "grantKind: 'enc',",
+    "why": "a revenant asks an encounter's grant",
+    "tests": [
+      "test/net/grant2_client.test.js"
+    ]
+  }
+]

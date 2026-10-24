@@ -1,11 +1,11 @@
 [
-  { "name": "RESTCHANNELHEAL-half-priced-heals-whole", "file": "src/systems/restAct.js", "old": "const frac = restPricedWhole(kind, rules) ? 1 : 0.5;", "new": "const frac = restPricedWhole(kind, rules) ? 1 : 1;", "tests": ["test/restchannelheal.test.js"] },
-  { "name": "RESTCHANNELHEAL-the-bar-may-lower", "file": "src/systems/restAct.js", "old": "if (!((entity[key] ?? 0) >= want)) entity[key] = want;", "new": "entity[key] = want;", "tests": ["test/restchannelheal.test.js"] },
-  { "name": "RESTCHANNELHEAL-a-kneel-heals", "file": "src/systems/restAct.js", "old": "if (!opened || opened.meditate ||", "new": "if (!opened ||", "tests": ["test/restchannelheal.test.js"] },
-  { "name": "RESTCHANNELHEAL-magicka-dropped", "file": "src/systems/restAct.js", "old": "for (const key of ['health', 'fatigue', 'magicka'])", "new": "for (const key of ['health', 'fatigue'])", "tests": ["test/restchannelheal.test.js"] },
-  { "name": "RESTCHANNELHEAL-a-stale-plan-kept", "file": "src/scenes/shared.js", "old": "      _channel = null;   // REST-CHANNEL-HEAL", "new": "      // REST-CHANNEL-HEAL", "tests": ["test/restchannelheal.test.js"] },
-  { "name": "RESTCHANNELHEAL-classic-never-opened", "file": "src/ui/restWindow.js", "old": "    this.deps.restChannelOpen?.();", "new": "    void 0;", "tests": ["test/restchannelheal.test.js"] },
-  { "name": "RESTCHANNELHEAL-enhanced-never-opened", "file": "src/ui/enhancedRest.js", "old": "    deps.restChannelOpen?.();", "new": "    void 0;", "tests": ["test/restchannelheal.test.js"] },
-  { "name": "RESTCHANNELHEAL-classic-mark-unmoved", "file": "src/ui/restWindow.js", "old": "else { this._actHealth = channelHealTick(", "new": "else { void channelHealTick(", "tests": ["test/restchannelheal.test.js"] },
-  { "name": "RESTCHANNELHEAL-enhanced-mark-unmoved", "file": "src/ui/enhancedRest.js", "old": "else { overlay._actHealth = channelHealTick(", "new": "else { void channelHealTick(", "tests": ["test/restchannelheal.test.js"] }
+  { "name": "RESTCHANNELHEAL-half-priced-heals-whole", "file": "src/systems/rest/restAct.js", "old": "const frac = restPricedWhole(kind, rules) ? 1 : 0.5;", "new": "const frac = restPricedWhole(kind, rules) ? 1 : 1;", "tests": ["test/systems/survival/restchannelheal.test.js"] },
+  { "name": "RESTCHANNELHEAL-the-bar-may-lower", "file": "src/systems/rest/restAct.js", "old": "if (!((entity[key] ?? 0) >= want)) entity[key] = want;", "new": "entity[key] = want;", "tests": ["test/systems/survival/restchannelheal.test.js"] },
+  { "name": "RESTCHANNELHEAL-a-kneel-heals", "file": "src/systems/rest/restAct.js", "old": "if (!opened || opened.meditate ||", "new": "if (!opened ||", "tests": ["test/systems/survival/restchannelheal.test.js"] },
+  { "name": "RESTCHANNELHEAL-magicka-dropped", "file": "src/systems/rest/restAct.js", "old": "for (const key of ['health', 'fatigue', 'magicka'])", "new": "for (const key of ['health', 'fatigue'])", "tests": ["test/systems/survival/restchannelheal.test.js"] },
+  { "name": "RESTCHANNELHEAL-a-stale-plan-kept", "file": "src/scenes/shared.js", "old": "      _channel = null;   // REST-CHANNEL-HEAL", "new": "      // REST-CHANNEL-HEAL", "tests": ["test/systems/survival/restchannelheal.test.js"] },
+  { "name": "RESTCHANNELHEAL-classic-never-opened", "file": "src/ui/restWindow.js", "old": "    this.deps.restChannelOpen?.();", "new": "    void 0;", "tests": ["test/systems/survival/restchannelheal.test.js"] },
+  { "name": "RESTCHANNELHEAL-enhanced-never-opened", "file": "src/ui/enhanced/enhancedRest.js", "old": "    deps.restChannelOpen?.();", "new": "    void 0;", "tests": ["test/systems/survival/restchannelheal.test.js"] },
+  { "name": "RESTCHANNELHEAL-classic-mark-unmoved", "file": "src/ui/restWindow.js", "old": "else { this._actHealth = channelHealTick(", "new": "else { void channelHealTick(", "tests": ["test/systems/survival/restchannelheal.test.js"] },
+  { "name": "RESTCHANNELHEAL-enhanced-mark-unmoved", "file": "src/ui/enhanced/enhancedRest.js", "old": "else { overlay._actHealth = channelHealTick(", "new": "else { void channelHealTick(", "tests": ["test/systems/survival/restchannelheal.test.js"] }
 ]

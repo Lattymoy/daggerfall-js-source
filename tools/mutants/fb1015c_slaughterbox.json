@@ -1,0 +1,29 @@
+[
+  {
+    "name": "SLAUGHTER-BOX-the-swimmers-drawn",
+    "file": "src/systems/searchables.js",
+    "old": "t >= 0 && !WATER_SPECIES.has(t)))];",
+    "new": "t >= 0))];",
+    "tests": [
+      "test/systems/search1_searchables.test.js"
+    ]
+  },
+  {
+    "name": "SLAUGHTER-BOX-a-species-out-of-the-set",
+    "file": "src/characters/dungeonEnemies.js",
+    "old": "  MOBILE_TYPES.Slaughterfish, MOBILE_TYPES.Dreugh, MOBILE_TYPES.Lamia,\n]);",
+    "new": "  MOBILE_TYPES.Dreugh, MOBILE_TYPES.Lamia,\n]);",
+    "tests": [
+      "test/systems/search1_searchables.test.js"
+    ]
+  },
+  {
+    "name": "SLAUGHTER-BOX-the-wild-halls-own-copy-back",
+    "file": "src/systems/wild/wildDungeons.js",
+    "old": "    const list = WATER_SPECIES.has(e.mobileType) ? WILD_HALL_FOES.water : pool;",
+    "new": "    const list = new Set([11, 41, 42]).has(e.mobileType) ? WILD_HALL_FOES.water : pool;",
+    "tests": [
+      "test/systems/search1_searchables.test.js"
+    ]
+  }
+]

@@ -335,8 +335,8 @@
   {
     "name": "TESA7-name-inn-kind",
     "file": "src/world/tamrielCountry.js",
-    "old": "        case '%v': return `${draw(TAVERNS_A)} ${draw(TAVERNS_B)} ${draw(TAVERN_KINDS)}`;",
-    "new": "        case '%v': return `${draw(TAVERNS_A)} ${draw(TAVERNS_B)}`;",
+    "old": "        case '%v': return `${draw(tavernsA())} ${draw(tavernsB())} ${draw(TAVERN_KINDS)}`;",
+    "new": "        case '%v': return `${draw(tavernsA())} ${draw(tavernsB())}`;",
     "tests": [
       "test/tesa7_country.test.js"
     ]
@@ -505,7 +505,7 @@
   },
   {
     "name": "TESA7-host-bank-clamp",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPlacesHost.js",
     "old": "countryName(pick.type, provinceNameBank(provinceKeyBeyondBay(px, py)) ?? getNameBankOfRegion(regionIndex), countryNameSeed(px, py))",
     "new": "countryName(pick.type, getNameBankOfRegion(regionIndex), countryNameSeed(px, py))",
     "tests": [
@@ -514,7 +514,7 @@
   },
   {
     "name": "TESA7-host-stale-kept",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPlacesHost.js",
     "old": "      if (at && had.country.type === at.pick.type && had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name) return had;",
     "new": "      if (had) return had;",
     "tests": [
@@ -523,7 +523,7 @@
   },
   {
     "name": "TESA7-host-kind-kept",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPlacesHost.js",
     "old": "      if (at && had.country.type === at.pick.type && had.country.template === at.pick.template.mapTableData?.mapId && had.name === at.name) return had;",
     "new": "      if (at) return had;",
     "tests": [
@@ -532,8 +532,8 @@
   },
   {
     "name": "TESA7-host-not-deleted",
-    "file": "src/scenes/world.js",
-    "old": "      _locIndexGen += 1;\n      locationIndex.delete(key);\n    }\n    if (!at) return null;\n    const { pick, regionIndex, name } = at;",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "      host._locIndexGen += 1;\n      locationIndex.delete(key);\n    }\n    if (!at) return null;\n    const { pick, regionIndex, name } = at;",
     "new": "    }\n    if (!at) return null;\n    const { pick, regionIndex, name } = at;",
     "tests": [
       "test/tesa7_country.test.js"
@@ -541,16 +541,16 @@
   },
   {
     "name": "TESA7-host-not-indexed",
-    "file": "src/scenes/world.js",
-    "old": "    const loc = synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) });\n    if (!loc) return null;\n    _locIndexGen += 1;\n    locationIndex.set(key, loc);",
-    "new": "    const loc = synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) });\n    if (!loc) return null;\n    _locIndexGen += 1;",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "    const loc = synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) });\n    if (!loc) return null;\n    host._locIndexGen += 1;\n    locationIndex.set(key, loc);",
+    "new": "    const loc = synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex, climate: getWorldClimateSettings(maps.getClimateIndex(px, py)) });\n    if (!loc) return null;\n    host._locIndexGen += 1;",
     "tests": [
       "test/tesa7_country.test.js"
     ]
   },
   {
     "name": "TESA7-host-politic",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/tamrielPlacesHost.js",
     "old": "synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: 128 + regionIndex,",
     "new": "synthesizeCountryLocation(pick.template, { px, py, type: pick.type, name }, { regionIndex, regionName: REGION_NAMES[regionIndex], politic: regionIndex,",
     "tests": [
@@ -559,8 +559,8 @@
   },
   {
     "name": "TESA7-host-rates-dry",
-    "file": "src/scenes/world.js",
-    "old": "(x, y, c) => isWaterPixel(c, woods.getHeightMapValue(x, y))));",
+    "file": "src/scenes/tamrielPlacesHost.js",
+    "old": "(x, y, c) => isWaterPixel(c, host.woods.getHeightMapValue(x, y))));",
     "new": "() => false));",
     "tests": [
       "test/tesa7_country.test.js"
@@ -569,8 +569,8 @@
   {
     "name": "TESA7-modes-deed-sold",
     "file": "src/scenes/worldModes.js",
-    "old": "    if (isCountryPlaceId(dir.mapId)) return [];   // TESA7",
-    "new": "    // TESA7",
+    "old": "isEtherPlaceId(dir.mapId) || isArenaPlaceId(dir.mapId) || isCountryPlaceId(dir.mapId)) return [];",
+    "new": "isEtherPlaceId(dir.mapId) || isArenaPlaceId(dir.mapId)) return [];",
     "tests": [
       "test/tesa7_country.test.js"
     ]

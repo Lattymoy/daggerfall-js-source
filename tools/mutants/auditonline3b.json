@@ -1,0 +1,164 @@
+[
+  {
+    "name": "C1-the-crossing-keeps-the-old-overworld-word",
+    "file": "src/net/online.js",
+    "old": "      old.owOk = this.owOk; old.owGraveOk = this.owGraveOk; this.owOk = !!h.owOk; this.owGraveOk = !!h.owGraveOk;\n",
+    "new": "",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  },
+  {
+    "name": "C1-a-halo-keeps-no-grave-word",
+    "file": "src/net/online.js",
+    "old": "h.owOk = relaySupportsOverworld(relayV); h.owGraveOk = relaySupportsOwGraves(relayV); }",
+    "new": "h.owOk = relaySupportsOverworld(relayV); }",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  },
+  {
+    "name": "A7-the-hello-forgets-the-death",
+    "file": "src/net/online.js",
+    "old": "...(this._dead ? { mv: 0, dd: 1 } : {}), ",
+    "new": "",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  },
+  {
+    "name": "A7-the-death-unmarked",
+    "file": "src/net/online.js",
+    "old": "    this._dead = true;\n",
+    "new": "",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  },
+  {
+    "name": "A7-a-rise-stays-dead",
+    "file": "src/net/online.js",
+    "old": "this._pose = pose; this._dead = false;",
+    "new": "this._pose = pose;",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  },
+  {
+    "name": "A7-a-leave-stays-dead",
+    "file": "src/net/online.js",
+    "old": "    this._dead = false;   // AUDIT ONLINE 3 (the second read) A7: the next room's hello is a new life's",
+    "new": "    // AUDIT ONLINE 3 (the second read) A7: the next room's hello is a new life's",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  },
+  {
+    "name": "A1-an-introduction-laid-over-a-body",
+    "file": "src/net/remotePlayers.js",
+    "old": "    if (how?.intro && this._corpseNear(peer, pose)) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  },
+  {
+    "name": "A1-the-introduction-cries",
+    "file": "src/net/remotePlayers.js",
+    "old": "this.addCorpse(peer, pose, room, { quiet: !!how?.intro });",
+    "new": "this.addCorpse(peer, pose, room);",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  },
+  {
+    "name": "A1-any-body-of-theirs-anywhere",
+    "file": "src/net/remotePlayers.js",
+    "old": "      return Math.hypot(a[0] - b[0], a[2] - b[2]) < CORPSE_SAME_M;\n",
+    "new": "      return true;\n",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  },
+  {
+    "name": "A1-a-stranger-s-body-is-theirs",
+    "file": "src/net/remotePlayers.js",
+    "old": "      if (c.dead || !((peer?.acct && c.acct === peer.acct) || (peer?.id && c.id === peer.id))) return false;\n",
+    "new": "      if (c.dead) return false;\n",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  },
+  {
+    "name": "A4-an-old-death-fells-the-living",
+    "file": "src/net/online.js",
+    "old": "    if (have && dead?.dd && this._heardSince(have, dead)) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  },
+  {
+    "name": "A4-heard-only-once-timed",
+    "file": "src/net/online.js",
+    "old": "const last = p.timed ? p.tsRaw : p.pose?.ts;",
+    "new": "const last = p.timed ? p.tsRaw : null;",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  },
+  {
+    "name": "A5-a-roster-from-before-stands-the-dead",
+    "file": "src/net/online.js",
+    "old": "    if (dead && !dead.dd && this._diedSince(id, dead, now)) return;\n",
+    "new": "",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  },
+  {
+    "name": "P2-the-set-s-eviction-on-a-map",
+    "file": "src/net/online.js",
+    "old": "this._fallen.delete(this._fallen.keys().next().value)",
+    "new": "this._fallen.delete(this._fallen.values().next().value)",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  },
+  {
+    "name": "P9-the-reintroduced-laid-undressed",
+    "file": "src/net/online.js",
+    "old": " if (dead?.dd) this._fell(id, this.peers.get(id), dead, room, now, true); return; }",
+    "new": " if (dead?.dd) this._fell(id, null, dead, room, now, true); return; }",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  },
+  {
+    "name": "T1-the-mint-s-timer-kept",
+    "file": "src/net/online.js",
+    "old": "      ]).finally(() => clearTimeout(timer));\n",
+    "new": "      ]);\n",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  },
+  {
+    "name": "B-F2-1-the-minter-on-the-wall-clock",
+    "file": "src/scenes/world.js",
+    "old": "onIssued: adoptIssued, now: steadyNow,",
+    "new": "onIssued: adoptIssued,",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  },
+  {
+    "name": "P1-the-page-s-clock-the-wall",
+    "file": "src/net/online.js",
+    "old": "export const steadyNow = steadyClock();",
+    "new": "export const steadyNow = () => Date.now();",
+    "tests": [
+      "test/net/auditonline3b.test.js"
+    ]
+  }
+]

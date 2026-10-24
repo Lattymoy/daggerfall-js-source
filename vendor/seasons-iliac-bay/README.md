@@ -38,8 +38,8 @@ exported PNGs.
 
 So the textures reach the game the way ARENA2 does: FROM THE PLAYER'S
 OWN COPY OF THE MOD, at play time, and never from this repository.
-`test/doctrine.test.js` keeps it so (no tracked raster without an
-allow-list row), and `test/seasonsIliacBay.test.js` pins this folder's
+`test/tooling/doctrine.test.js` keeps it so (no tracked raster without an
+allow-list row), and `test/systems/seasonsIliacBay.test.js` pins this folder's
 tracked contents to exactly the manifest and this note.
 
 **The script.** `SeasonHelper` ships as a compiled DLL (`Seasons of the
@@ -60,7 +60,7 @@ Unity texture pack) and point it at a folder holding EITHER:
 1. the mod's **`seasons of the iliac bay.dfmod`** - the file Nexus
    ships and DFU loads (that file by name; other mods' bundles in the
    same folder are left alone). The port reads the bundle itself
-   (`src/formats/unityBundle.js`: UnityFS 7, LZ4 blocks, SerializedFile
+   (`src/formats/unity/unityBundle.js`: UnityFS 7, LZ4 blocks, SerializedFile
    21 with its type tree, RGBA32 and DXT5 textures) and takes the
    textures out exactly as DFU's mod system hands them to the script;
    or

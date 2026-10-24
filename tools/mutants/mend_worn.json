@@ -2,37 +2,38 @@
   {
     "name": "MEND-WORN-dfu-walk",
     "file": "src/systems/enchantments.js",
-    "old": "      const it = repairsObjectsTarget(entity.items, { allowMagicRepairs: ctx?.allowMagicRepairs ?? false });\n      if (!it) return;\n      repoolWeapon(it);\n      it.currentCondition = Math.min(it.maxCondition, it.currentCondition + (mendsOnPool(it) ? POOL_WEAPON_MEND : CONDITION_AMOUNT));\n",
+    "old": "      const it = repairsObjectsTarget(entity.items, { allowMagicRepairs: ctx?.allowMagicRepairs ?? false });\n      if (!it) return;\n      repoolWeapon(it);\n      const was = it.currentCondition;\n      it.currentCondition = Math.min(it.maxCondition, it.currentCondition + repairsObjectsMend(it));\n      creditOwnMend(it, was);   // MEND-THIRD: the ring is its wearer's own mend - a third of it past a found piece's mark sells\n",
     "new": "      for (const it of entity.items ?? []) {\n        if (it && it.currentCondition != null && it.maxCondition != null && it.currentCondition < it.maxCondition) {\n          if (isEnchantedItem(it) && !(ctx?.allowMagicRepairs ?? false)) continue;\n          it.currentCondition += 1;\n          return;\n        }\n      }\n",
     "tests": [
-      "test/mend_worn.test.js"
-    ]
+      "test/systems/mend_worn.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-16b MEND-ARMOUR (PIN MOVED): re-aimed by content - the tick mends repairsObjectsMend, every piece a fiftieth of its own condition."
   },
   {
     "name": "MEND-WORN-pack-order",
     "file": "src/systems/enchantments.js",
-    "old": "    if (!best || mendOrder(it, best) < 0) best = it;",
-    "new": "    if (!best) best = it;",
+    "old": "(tier === bestTier && mendOrder(it, best) < 0)) { best = it; bestTier = tier; }",
+    "new": "(tier === bestTier && false)) { best = it; bestTier = tier; }",
     "tests": [
-      "test/mend_worn.test.js"
+      "test/systems/mend_worn.test.js"
     ]
   },
   {
     "name": "MEND-WORN-order-worn-dropped",
-    "file": "src/systems/itemTemplates.js",
+    "file": "src/systems/item/itemTemplates.js",
     "old": "export const mendOrder = (a, b) => wornFirst(b) - wornFirst(a) || conditionShare(a) - conditionShare(b);",
     "new": "export const mendOrder = (a, b) => conditionShare(a) - conditionShare(b);",
     "tests": [
-      "test/mend_worn.test.js"
+      "test/systems/mend_worn.test.js"
     ]
   },
   {
     "name": "MEND-WORN-order-least-worn",
-    "file": "src/systems/itemTemplates.js",
+    "file": "src/systems/item/itemTemplates.js",
     "old": "wornFirst(b) - wornFirst(a) || conditionShare(a) - conditionShare(b);",
     "new": "wornFirst(b) - wornFirst(a) || conditionShare(b) - conditionShare(a);",
     "tests": [
-      "test/mend_worn.test.js"
+      "test/systems/mend_worn.test.js"
     ]
   },
   {
@@ -41,7 +42,7 @@
     "old": "    if (templateByIndex(it.templateIndex)?.isNotRepairable) continue;\n",
     "new": "",
     "tests": [
-      "test/mend_worn.test.js"
+      "test/systems/mend_worn.test.js"
     ]
   },
   {
@@ -50,62 +51,68 @@
     "old": "    if (isEnchantedItem(it) && !allowMagicRepairs) continue;\n",
     "new": "",
     "tests": [
-      "test/mend_worn.test.js"
+      "test/systems/mend_worn.test.js"
     ]
   },
   {
     "name": "MEND-WORN-a-point-on-the-pool",
     "file": "src/systems/enchantments.js",
-    "old": "it.currentCondition + (mendsOnPool(it) ? POOL_WEAPON_MEND : CONDITION_AMOUNT));",
+    "old": "it.currentCondition + repairsObjectsMend(it));",
     "new": "it.currentCondition + CONDITION_AMOUNT);",
     "tests": [
-      "test/mend_worn.test.js"
-    ]
+      "test/systems/mend_worn.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-16b MEND-ARMOUR (PIN MOVED): re-aimed by content - a pool weapon's 32 is one case of every piece's fiftieth now; DFU's point restored on every piece."
   },
   {
-    "name": "MEND-WORN-uses-on-the-pool",
+    "name": "MEND-WORN-uses-on-the-share",
     "file": "src/systems/enchantments.js",
-    "old": "const mendsOnPool = (it) => it.group === 'Weapons' && !it.magic && !it.artifact;",
-    "new": "const mendsOnPool = (it) => it.group === 'Weapons' && !it.artifact;",
+    "old": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
+    "new": "export const repairsObjectsMend = (it) => (it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
     "tests": [
-      "test/mend_worn.test.js"
-    ]
+      "test/systems/mend_worn.test.js",
+      "test/systems/fb1016b_mendarmour.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-16b MEND-ARMOUR's audit): uses keep the point - a magic item's uses on the share"
   },
   {
-    "name": "MEND-WORN-artifact-on-the-pool",
+    "name": "MEND-WORN-artifact-on-the-share",
     "file": "src/systems/enchantments.js",
-    "old": "const mendsOnPool = (it) => it.group === 'Weapons' && !it.magic && !it.artifact;",
-    "new": "const mendsOnPool = (it) => it.group === 'Weapons' && !it.magic;",
+    "old": "export const repairsObjectsMend = (it) => (it.magic || it.artifact ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
+    "new": "export const repairsObjectsMend = (it) => (it.magic ? CONDITION_AMOUNT : Math.max(CONDITION_AMOUNT, Math.round(it.maxCondition / MEND_SHARE_OF)));",
     "tests": [
-      "test/mend_worn.test.js"
-    ]
+      "test/systems/mend_worn.test.js"
+    ],
+    "note": "PIN MOVED (FIELD BUGS 2026-10-16b MEND-ARMOUR's audit): an artifact's uses on the share"
   },
   {
     "name": "MEND-WORN-past-its-condition",
     "file": "src/systems/enchantments.js",
-    "old": "      it.currentCondition = Math.min(it.maxCondition, it.currentCondition + (mendsOnPool(it) ? POOL_WEAPON_MEND : CONDITION_AMOUNT));",
-    "new": "      it.currentCondition = it.currentCondition + (mendsOnPool(it) ? POOL_WEAPON_MEND : CONDITION_AMOUNT);",
+    "old": "      it.currentCondition = Math.min(it.maxCondition, it.currentCondition + repairsObjectsMend(it));",
+    "new": "      it.currentCondition = it.currentCondition + repairsObjectsMend(it);",
     "tests": [
-      "test/mend_worn.test.js"
-    ]
+      "test/systems/mend_worn.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-16b MEND-ARMOUR (PIN MOVED): re-aimed by content - the cap on the one law's line."
   },
   {
     "name": "MEND-WORN-row-pool-kept",
     "file": "src/systems/enchantments.js",
-    "old": "      repoolWeapon(it);\n      it.currentCondition = Math.min(",
-    "new": "      it.currentCondition = Math.min(",
+    "old": "      repoolWeapon(it);\n      const was = it.currentCondition;\n      it.currentCondition = Math.min(",
+    "new": "      const was = it.currentCondition;\n      it.currentCondition = Math.min(",
     "tests": [
-      "test/mend_worn.test.js"
+      "test/systems/mend_worn.test.js"
     ]
   },
   {
     "name": "MEND-WORN-another-rows-share",
     "file": "src/systems/enchantments.js",
-    "old": "export const POOL_WEAPON_MEND = Math.round(WEAPON_CONDITION_POOL / ITEM_TEMPLATES[WEAPONS.Dagger].hitPoints);",
-    "new": "export const POOL_WEAPON_MEND = Math.round(WEAPON_CONDITION_POOL / ITEM_TEMPLATES[WEAPONS.Long_Bow].hitPoints);",
+    "old": "export const MEND_SHARE_OF = ITEM_TEMPLATES[WEAPONS.Dagger].hitPoints;",
+    "new": "export const MEND_SHARE_OF = ITEM_TEMPLATES[WEAPONS.Long_Bow].hitPoints;",
     "tests": [
-      "test/mend_worn.test.js"
-    ]
+      "test/systems/mend_worn.test.js"
+    ],
+    "note": "FIELD BUGS 2026-10-16b MEND-ARMOUR (PIN MOVED): re-aimed by content - POOL_WEAPON_MEND (the pool over the Dagger row) is MEND_SHARE_OF (the Dagger row) now."
   },
   {
     "name": "MEND-WORN-a-foes-ring",
@@ -113,7 +120,7 @@
     "old": "      if (!entity.isPlayer || round % CONDITION_PER_ROUNDS !== 0) return;",
     "new": "      if (round % CONDITION_PER_ROUNDS !== 0) return;",
     "tests": [
-      "test/mend_worn.test.js"
+      "test/systems/mend_worn.test.js"
     ]
   },
   {
@@ -122,7 +129,7 @@
     "old": "      if (!entity.isPlayer || round % CONDITION_PER_ROUNDS !== 0) return;",
     "new": "      if (!entity.isPlayer) return;",
     "tests": [
-      "test/mend_worn.test.js"
+      "test/systems/mend_worn.test.js"
     ]
   },
   {
@@ -131,7 +138,7 @@
     "old": "    .sort(mendOrder);",
     "new": "    .sort((a, b) => a.currentCondition / a.maxCondition - b.currentCondition / b.maxCondition);",
     "tests": [
-      "test/mend_worn.test.js"
+      "test/systems/mend_worn.test.js"
     ]
   }
 ]

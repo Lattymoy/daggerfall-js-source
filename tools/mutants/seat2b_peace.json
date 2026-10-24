@@ -5,8 +5,8 @@
     "old": "(siegewright ? SIEGEWRIGHT_DAYS : 0)",
     "new": "(siegewright ? 0 : 0)",
     "tests": [
-      "test/seat2b_peace_law.test.js",
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_law.test.js",
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -15,8 +15,8 @@
     "old": "export const SIEGEWRIGHT_DAYS = 1;",
     "new": "export const SIEGEWRIGHT_DAYS = 2;",
     "tests": [
-      "test/seat2b_peace_law.test.js",
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_law.test.js",
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -25,8 +25,8 @@
     "old": "Number(s.influence) >= line",
     "new": "Number(s.influence) > line",
     "tests": [
-      "test/seat2b_peace_law.test.js",
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_law.test.js",
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -35,8 +35,8 @@
     "old": "filter((s) => s && s.guild !== holder && Number(s.influence) >= line)",
     "new": "filter((s) => s && Number(s.influence) >= line)",
     "tests": [
-      "test/seat2b_peace_law.test.js",
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_law.test.js",
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -45,8 +45,8 @@
     "old": ".sort((a, b) => b.influence - a.influence ||",
     "new": ".sort((a, b) => a.influence - b.influence ||",
     "tests": [
-      "test/seat2b_peace_law.test.js",
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_law.test.js",
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -55,8 +55,8 @@
     "old": "if (share == null || !(Number(defence) > 0)) return [];",
     "new": "if (share == null) return [];",
     "tests": [
-      "test/seat2b_peace_law.test.js",
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_law.test.js",
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -65,8 +65,8 @@
     "old": "share <= 0.25 ? 'a quarter' : 'half'",
     "new": "share < 0.25 ? 'a quarter' : 'half'",
     "tests": [
-      "test/seat2b_peace_law.test.js",
-      "test/seat2b_peace_client.test.js"
+      "test/net/seat2b_peace_law.test.js",
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
@@ -75,7 +75,7 @@
     "old": "for (let dy = -1; dy <= 1; dy++) for (let dx = -1; dx <= 1; dx++) if (isWater(px + dx, py + dy)) return true;",
     "new": "if (isWater(px, py)) return true;",
     "tests": [
-      "test/seat2b_peace_law.test.js"
+      "test/net/seat2b_peace_law.test.js"
     ]
   },
   {
@@ -84,7 +84,7 @@
     "old": "  if (port) return true;\n  if (!Number.isFinite(px)",
     "new": "  if (!Number.isFinite(px)",
     "tests": [
-      "test/seat2b_peace_law.test.js"
+      "test/net/seat2b_peace_law.test.js"
     ]
   },
   {
@@ -93,7 +93,7 @@
     "old": "!!guild && seat?.holder?.guild?.id === guild && harbourPort(",
     "new": "!!guild && harbourPort(",
     "tests": [
-      "test/seat2b_peace_law.test.js"
+      "test/net/seat2b_peace_law.test.js"
     ]
   },
   {
@@ -102,8 +102,8 @@
     "old": "  add('shrine', Math.max(0, Math.trunc(Number(shrine) || 0)));",
     "new": "",
     "tests": [
-      "test/seat2b_peace_law.test.js",
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_law.test.js",
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -112,7 +112,7 @@
     "old": "add('shrine', Math.max(0, Math.trunc(Number(shrine) || 0)));",
     "new": "add('shrine', Math.trunc(Number(shrine) || 0));",
     "tests": [
-      "test/seat2b_peace_law.test.js"
+      "test/net/seat2b_peace_law.test.js"
     ]
   },
   {
@@ -121,7 +121,7 @@
     "old": "shrine: s.holder.shrine ?? 0,",
     "new": "shrine: 0,",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -130,7 +130,7 @@
     "old": "${s.shrine > 0 ? ` (its Shrine's ${s.shrine.toLocaleString('en-US')})` : ''}",
     "new": "",
     "tests": [
-      "test/seat2b_peace_law.test.js"
+      "test/net/seat2b_peace_law.test.js"
     ]
   },
   {
@@ -139,8 +139,8 @@
     "old": "'Ram Kit', ICON_IRON, null), value: 108 });",
     "new": "'Ram Kit', ICON_IRON, null) });",
     "tests": [
-      "test/seat2b_peace_law.test.js",
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_law.test.js",
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "export const NO_PACK_FORM = Object.freeze(['work:ram', 'essence:arcane']);",
     "new": "export const NO_PACK_FORM = Object.freeze(['essence:arcane']);",
     "tests": [
-      "test/seat2b_peace_law.test.js"
+      "test/net/seat2b_peace_law.test.js"
     ]
   },
   {
@@ -158,8 +158,8 @@
     "old": "export const isSiegewright = (specs) => specs?.[100] === 'siegewright';",
     "new": "export const isSiegewright = (specs) => specs?.[100] === 'master-joiner';",
     "tests": [
-      "test/seat2b_peace_law.test.js",
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_law.test.js",
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -168,8 +168,8 @@
     "old": "value: r.value ?? TIER_VALUES[r.tier - 1],",
     "new": "value: TIER_VALUES[r.tier - 1],",
     "tests": [
-      "test/seat2b_peace_law.test.js",
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_law.test.js",
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "fortStandsAt(nowS, r.building, { siegewright: r.siegewright })",
     "new": "fortStandsAt(nowS, r.building)",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "stands_at = NULL, builder = 0, siegewright = 0 WHERE key = ? AND work = ?",
     "new": "stands_at = NULL, builder = 0 WHERE key = ? AND work = ?",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": "builder = 0, siegewright = 0, guild_id = NULL WHERE key = ?1",
     "new": "builder = 0, guild_id = NULL WHERE key = ?1",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "nowS, siegewright ? 1 : 0),",
     "new": "nowS, 0),",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "return r.building != null && r.stands_at != null && Number(r.stands_at) <= nowS ? Number(r.building) : Number(r.tier);",
     "new": "return Number(r.tier);",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "influence: per * gates, gates }",
     "new": "influence: per, gates }",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "if (rg === Number(region)) n++;",
     "new": "n++;",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "if (shrine && shrine.guild === g && shrine.influence > 0)",
     "new": "if (shrine && shrine.influence > 0)",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "shrine: await shrineOf(db, seat, week, nowS) });",
     "new": "shrine: null });",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "const towerTier = holder && mine?.guild === holder.guild.id ? await fortTierAt(",
     "new": "const towerTier = holder ? await fortTierAt(",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -268,7 +268,7 @@
     "old": "return { shrine: shrineStanding(f.shrine ?? 0), titheCap:",
     "new": "return { shrine: 0, titheCap:",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -277,7 +277,7 @@
     "old": "battle: battles.get(s.key) ?? null, ...(forts.has(s.key) ? { forts: forts.get(s.key) } : {}) };",
     "new": "battle: battles.get(s.key) ?? null };",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -286,7 +286,7 @@
     "old": "CASE WHEN building IS NOT NULL AND stands_at IS NOT NULL AND stands_at <= ?1\n    THEN building",
     "new": "CASE WHEN building IS NOT NULL\n    THEN building",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -295,7 +295,7 @@
     "old": "return held ? stationSteps(profession, await fortTiersOf(db, seat, nowS)) : 0;",
     "new": "return stationSteps(profession, await fortTiersOf(db, seat, nowS));",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -304,7 +304,7 @@
     "old": "qualitySteps(r, { clean: clean === true, spec50: specs[50], heartwood: wood }) + halls)",
     "new": "qualitySteps(r, { clean: clean === true, spec50: specs[50], heartwood: wood }))",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -313,7 +313,7 @@
     "old": "  const siege = r.kind === 'siege';\n",
     "new": "  const siege = false;\n",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S5 (RE-AIMED): siegeOrigin gone."
   },
@@ -323,7 +323,7 @@
     "old": "THEN 'bought' ELSE 'own' END, count FROM prof_crafts",
     "new": "THEN 'own' ELSE 'own' END, count FROM prof_crafts",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ],
     "note": "AUDIT PROF-541 R2-S5 (RE-AIMED): the origin in the kit's INSERT."
   },
@@ -333,7 +333,7 @@
     "old": "if (siege) held.push(`COALESCE((SELECT SUM(qty) FROM prof_stores",
     "new": "if (false) held.push(`COALESCE((SELECT SUM(qty) FROM prof_stores",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -342,7 +342,7 @@
     "old": "  if (siege) return { error: 'stores-full', material: RAM_KIT.key };",
     "new": "",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -351,7 +351,7 @@
     "old": "if (!fortMaterialOk(key) && key !== RAM_KIT_KEY) return { error: 'bad-material' };",
     "new": "if (!fortMaterialOk(key)) return { error: 'bad-material' };",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -360,7 +360,7 @@
     "old": "    if (key === RAM_KIT_KEY && !camp) return { error: 'bad-material' };\n",
     "new": "",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -369,7 +369,7 @@
     "old": "  } else if (key === RAM_KIT_KEY) return { error: 'bad-material' };",
     "new": "  }",
     "tests": [
-      "test/seat2b_peace_service.test.js"
+      "test/net/seat2b_peace_service.test.js"
     ]
   },
   {
@@ -378,7 +378,7 @@
     "old": "nowMs() - towersAt >= SEAT_TOWERS_EVERY_MS && towerSeats(guild).length > 0;",
     "new": "nowMs() - towersAt >= SEAT_TOWERS_EVERY_MS;",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
@@ -387,7 +387,7 @@
     "old": "nowMs() - towersAt >= SEAT_TOWERS_EVERY_MS &&",
     "new": "nowMs() - towersAt >= 0 &&",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
@@ -396,7 +396,7 @@
     "old": "            if (said.includes(id)) continue;\n",
     "new": "",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
@@ -405,7 +405,7 @@
     "old": "try { storage?.setItem?.(SEAT_TOWERS_KEY, JSON.stringify(towersSaid)); } catch { /* this page keeps them */ }",
     "new": "",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
@@ -414,7 +414,7 @@
     "old": "towersSaid = [...said, id].slice(-SEAT_TOWERS_SAID_MAX);",
     "new": "towersSaid = [...said, id];",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
@@ -423,7 +423,7 @@
     "old": "const id = `${week}:${s.key}:${w.guild}:${w.share}`;",
     "new": "const id = `${week}:${s.key}:${w.guild}`;",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
@@ -432,7 +432,7 @@
     "old": "Number(s?.forts?.watchtowers ?? 0) >= 1",
     "new": "Number(s?.forts?.watchtowers ?? 0) >= 0",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
@@ -441,7 +441,7 @@
     "old": "{ holder: s.holder ?? null, battle: s.battle ?? null, forts: s.forts ?? null }",
     "new": "{ holder: s.holder ?? null, battle: s.battle ?? null }",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
@@ -450,7 +450,7 @@
     "old": "for (const w of Array.isArray(data?.towers) ? data.towers : []) list.append(",
     "new": "for (const w of []) list.append(",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
@@ -459,7 +459,7 @@
     "old": "...(Number.isSafeInteger(seat) && seat >= 0 ? { seat } : {}),   // SEAT2b part two",
     "new": "// SEAT2b part two",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
@@ -468,7 +468,7 @@
     "old": "Number.isSafeInteger(seat) && seat >= 0 ? { seat }",
     "new": "Number.isSafeInteger(seat) ? { seat }",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
@@ -477,43 +477,43 @@
     "old": ", ...(seat == null ? {} : { seat }), ...(cracked === true",
     "new": ", ...(cracked === true",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
     "name": "SEAT2b2-harbour-word-truthy",
-    "file": "src/systems/travelPorts.js",
+    "file": "src/systems/travel/travelPorts.js",
     "old": "try { return _seatHarbour(mapId) === true; } catch { return false; }",
     "new": "try { return !!_seatHarbour(mapId); } catch { return false; }",
     "tests": [
-      "test/seat2b_peace_law.test.js"
+      "test/net/seat2b_peace_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2-harbour-throw-a-port",
-    "file": "src/systems/travelPorts.js",
+    "file": "src/systems/travel/travelPorts.js",
     "old": "try { return _seatHarbour(mapId) === true; } catch { return false; }",
     "new": "try { return _seatHarbour(mapId) === true; } catch { return true; }",
     "tests": [
-      "test/seat2b_peace_law.test.js"
+      "test/net/seat2b_peace_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2-harbour-unasked",
-    "file": "src/systems/travelPorts.js",
+    "file": "src/systems/travel/travelPorts.js",
     "old": "  if (hasPort(mapId)) return true;\n  if (mapId == null || !Number.isFinite(mapId)) return false;\n  try {",
     "new": "  return hasPort(mapId);\n  try {",
     "tests": [
-      "test/seat2b_peace_law.test.js"
+      "test/net/seat2b_peace_law.test.js"
     ]
   },
   {
     "name": "SEAT2b2-stored-words",
     "file": "src/systems/smithItems.js",
-    "old": "`You made a ${name} - it waits in your Stores`",
+    "old": "`You made a ${name}. It waits in your Stores`",
     "new": "`You made a ${name}`",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
@@ -522,7 +522,7 @@
     "old": "  setSeatHarbours((mapId) => harbourPortFor(seatHere(mapId), guildBook?.guild?.id ?? null));\n",
     "new": "",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
@@ -531,7 +531,7 @@
     "old": "{ const g = guildBook?.guild?.id ?? null; if (g && seatBook?.towersDue(g)) seatBook.towers(g, (t) => townTalk.say(t, 6)).catch(() => {}); }",
     "new": "",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
@@ -540,7 +540,7 @@
     "old": "name: typeof playerEntity?.name === 'string' ? playerEntity.name : null, seat }, profMintCraft);",
     "new": "name: typeof playerEntity?.name === 'string' ? playerEntity.name : null }, profMintCraft);",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
@@ -549,7 +549,7 @@
     "old": "const made = rec?.kind === 'siege' ? storedText(rec.name, Number(r.data.count) || 1) : craftedText(mintPieces(r.data));",
     "new": "const made = craftedText(mintPieces(r.data));",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
@@ -558,26 +558,26 @@
     "old": "port: coastalAt(town.px, town.py, seaPixel, csaIsPortTown(town.px, town.py)),",
     "new": "port: csaIsPortTown(town.px, town.py),",
     "tests": [
-      "test/seat2b_peace_client.test.js",
-      "test/seat1b_client.test.js"
+      "test/ui/seat2b_peace_client.test.js",
+      "test/net/seat1b_client.test.js"
     ]
   },
   {
     "name": "SEAT2b2-stores-stock-words",
-    "file": "src/ui/profPages.js",
-    "old": ": pick.family === 'siege' ? SIEGE_STAYS_LINE : STOCK_STAYS_LINE);",
-    "new": ": STOCK_STAYS_LINE);",
+    "file": "src/ui/professions/profPages.js",
+    "old": ": pick.family === 'siege' ? siegeStaysLine() : stockStaysLine());",
+    "new": ": stockStaysLine());",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   },
   {
     "name": "SEAT2b2-to-message-list-alone",
-    "file": "src/systems/travelOptions.js",
+    "file": "src/systems/travel/travelOptions.js",
     "old": "hasPort: (mapId) => hasPortFor(mapId),",
     "new": "hasPort: (mapId) => hasPortFor(mapId) && false,",
     "tests": [
-      "test/seat2b_peace_client.test.js"
+      "test/ui/seat2b_peace_client.test.js"
     ]
   }
 ]

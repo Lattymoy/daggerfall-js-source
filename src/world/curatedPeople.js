@@ -1,4 +1,4 @@
-// QUEST-AUDIT II TEMPLE-SUMMONER (bible/01-Overview/Quest-Audit-II.md; the owner, on the audit's findings: "Restore
+// QUEST-AUDIT II TEMPLE-SUMMONER (bible/01-Overview/audits/Quest-Audit-II.md; the owner, on the audit's findings: "Restore
 // the summoner"): THE DAEDRA SUMMONER OF EVERY BEAUTIFUL VILLAGES TEMPLE.
 //
 // Every Daggerfall temple stands its deity's Daedra summoner (factions 456-498 - guildServices.js NPC_SERVICE's
@@ -11,14 +11,14 @@
 // entrance of the room, and taking no click meant for another (AUDIT QA2: at the 1.5 m bound beside the priest it took
 // 5-24% of the clicks aimed at the temple's questor).
 //
-// Applied where a block becomes the port's (formats/worldDataReplacement.js getDFBlockReplacementData), once, for every
+// Applied where a block becomes the port's (formats/worldData/worldDataReplacement.js getDFBlockReplacementData), once, for every
 // consumer at once - the room's people, the guild's services, the questor pool's walk: a block laid under a listed name
 // (the door's `servedName` - AUDIT QA2: a pack's JSON names itself, and TEMPASA2's says TEMPAS2.RMB) served by the
 // listed pack, its record a temple of the listed deity with no summoner of its own (a later version of the pack that
 // stands one keeps its own). Daggerfall's own blocks, and any other pack's, are as they were. A curation of the mod's
 // data (Port-Ledger A, TEMPLE-SUMMONER); DFU with the mod stands none.
 
-import { NPC_SERVICE } from '../systems/guildNpcServices.js';
+import { NPC_SERVICE } from '../systems/guild/guildNpcServices.js';
 
 export const TEMPLE_SUMMONER_VENDOR = 'beautiful-villages';
 /** The Mages Guild's summoner - a DaedraSummoning person of no temple. */

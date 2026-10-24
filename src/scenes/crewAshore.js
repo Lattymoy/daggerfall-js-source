@@ -27,8 +27,15 @@
 //    only once the portal has closed on it) and JUMPS through a pair (a catch-up: one opens where it was, one where it
 //    stands again). A change of place lifts the party at once - the place it leaves is going.
 //  - REVENANT-COMPANION: the layer stands any party of the crew's shape - the sworn revenants' too
-//    (systems/revenantCompanions.js) - a member's own `key` and `title` where it has them.
+//    (systems/revenant/revenantCompanions.js) - a member's own `key` and `title` where it has them.
+//  - WAGON-ALIGHT (FIELD BUGS 2026-10-18, Nauya: "when they dismount from the wagon, they just drop down inside of it, and
+//    they get stuck in your wagon unable to help you or move out of it"): a body whose seat in the wagon's back goes
+//    (the wagon parked, its team told to wait, a player given the seat) GETS DOWN as a player rider does - over the side
+//    behind it (systems/wagon/wagonSeats.js getDownPoint), the step swept from the seat by the place's `spot` - and the
+//    parked wagon's box never stands round it (`capsules`, scenes/horseCartPool.js capsuleInBox). The seat was only ever
+//    read by the motor, so a seat that went left the body where it sat, inside the box the wagon then stood round it.
 import { companionSlot } from '../systems/naval/crewCompanions.js';
+import { getDownPoint, GET_DOWN_REACH } from '../systems/wagon/wagonSeats.js';
 
 /** A companion further than this from the player (m, on the ground's plane) is stood behind the player again. */
 export const CATCH_UP_M = 40;
@@ -44,6 +51,18 @@ export const TRAIL_MAX = 64;
 export const TRAIL_JUMP_M = 8;
 
 export const companionKeyOf = (c) => c.key ?? `${c.boat}:${c.name}`;
+/** FB1012d ALLY-RACE (bible/01-Overview/bugs/Field-Bugs-2026-10-12d.md): A COMPANION IS ONE PERSON - the seed his body's
+ *  race, face, head, hair and clothes are drawn by (characters/foeBodies.js ownPerson, which foeSeed reads before the
+ *  stand's own): a member's own where the party keeps one (a sworn revenant's - its record's, revenantCompanions.js
+ *  memberOf), else his party key's - his boat and his name, his for life (shipCrew.js handName) - so every door, every
+ *  load and every machine stands the same man. */
+export function companionPerson(c) {
+  if (Number.isInteger(c?.person) && c.person >= 0 && c.person <= 0xffffffff) return c.person;
+  const k = companionKeyOf(c);
+  let h = 0x811c9dc5;
+  for (let i = 0; i < k.length; i++) h = Math.imul(h ^ k.charCodeAt(i), 0x01000193);
+  return h >>> 0;
+}
 
 /**
  * @param {{
@@ -60,12 +79,12 @@ export const companionKeyOf = (c) => c.key ?? `${c.boat}:${c.name}`;
  * }} deps
  *
  * WAGONS1: `seat(i, n)` - where the `i`th of `n` rides when the player's wagon carries companions in its back
- * (systems/wagonSeats.js companionSeats; null: on foot, at heel). A body with a seat takes no step (characters/
+ * (systems/wagon/wagonSeats.js companionSeats; null: on foot, at heel). A body with a seat takes no step (characters/
  * enemyMotor.js update) and is never caught up: it is where the wagon is. WAGONS2: `seatDraw(i, n)` - where that seat
  * is DRAWN (the wagon grown under the Overworld): the sprite stands there, the body on the seat itself.
  */
 export function createCrewAshore(deps) {
-  /** @type {Map<string, { c: any, rec: any, remove: (rec: any) => void, has: ((rec: any) => boolean) | null, fx: any }>} */
+  /** @type {Map<string, { c: any, rec: any, remove: (rec: any) => void, has: ((rec: any) => boolean) | null, fx: any, sat?: { feet: number[], yaw: number } | null }>} */
   const stood = new Map();
   const pending = new Set();
   let placeKey, epoch = 0;
@@ -112,6 +131,22 @@ export function createCrewAshore(deps) {
   const seatOf = (i, n) => () => deps.seat?.(i, n) ?? null;
   /** WAGONS2: and where the draw stands it - the host's seat as the wagon is drawn (grown under the Overworld), or null. */
   const seatDrawOf = (i, n) => () => deps.seatDraw?.(i, n) ?? null;
+  /** WAGON-ALIGHT: `s` down from the seat it last sat in (`s.sat`) - stood where a player rider gets down from it, the step
+   *  swept from the seat (the place's `spot`: never into a wall), and the motor stood afresh there (resumeLive: no fall
+   *  billed from the bed, no target or route held from the seat). A body moved off its seat by something else (further
+   *  than GET_DOWN_REACH from it - wagonRiders.js getDown's own guard) stays where it is. */
+  function getDown(s, place) {
+    const sat = s.sat, ai = s.rec.ai;
+    s.sat = null;
+    const f = ai.feet;
+    if (!sat || Math.hypot(f[0] - sat.feet[0], f[2] - sat.feet[2]) > GET_DOWN_REACH) return;
+    const to = getDownPoint(sat);
+    const at = place?.spot ? place.spot(sat.feet, to[0] - sat.feet[0], to[2] - sat.feet[2]) : to;
+    f[0] = at[0]; f[1] = at[1]; f[2] = at[2];
+    if (typeof ai.resumeLive === 'function') ai.resumeLive();
+    else { ai.target = null; ai.path = null; ai.velY = 0; }
+    ai._restGrounded = false;
+  }
   /** The motor's follow handle: the leader's live feet, and how near this one keeps. */
   const followOf = (i) => ({ feet: () => deps.leader()?.feet ?? null, stop: HEEL_M + i * HEEL_STEP_M, trail: () => trail });   // COMPANION-TRAIL
 
@@ -149,7 +184,10 @@ export function createCrewAshore(deps) {
       rec.ai.follow = followOf(i);
       rec.ai.seat = deps.seat ? seatOf(i, list.length) : null;   // WAGONS1
       rec.ai.seatDraw = deps.seatDraw ? seatDrawOf(i, list.length) : null;   // WAGONS2: drawn in the grown wagon
-      if (place && L && !rec.ai.seat?.()) {
+      const seat = rec.ai.seat?.() ?? null;
+      if (seat) s.sat = { feet: [seat.feet[0], seat.feet[1], seat.feet[2]], yaw: seat.yaw };   // WAGON-ALIGHT: where it sits, kept for its getting down
+      else if (s.sat) getDown(s, place);
+      if (place && L && !seat) {
         const f = rec.ai.feet;
         // AUDIT CC-A3: a floor away counts only while the leader stands on one - levitating, swimming or in the air, the
         // body stood at his height would only fall and be stood up there again
@@ -179,6 +217,7 @@ export function createCrewAshore(deps) {
         if (!rec) return;
         if (was !== epoch || !party.isAshore(c.boat, c.name) || deps.party() !== party) { place.remove(rec); return; }   // the place changed under the stand, or he went back
         rec.companion = k;
+        rec.person = companionPerson(c);   // FB1012d ALLY-RACE: his own person in every place - never the stand's draw
         rec.shipmate = true;
         if (rec.entity) {
           rec.entity.name = /** @type {any} */ (c).title ?? c.name;   // REVENANT-COMPANION: a sworn one's own name
@@ -202,6 +241,9 @@ export function createCrewAshore(deps) {
     frame,
     /** The companions standing here - their bodies (the bars' list). */
     bodies: () => [...stood.values()].map((s) => s.rec),
+    /** WAGON-ALIGHT: their capsules (`{ feet, height }`) - the parked wagon's box never stands round one
+     *  (scenes/horseCartPool.js capsuleInBox). */
+    capsules: () => [...stood.values()].filter((s) => s.rec.ai?.feet).map((s) => ({ feet: s.rec.ai.feet, height: s.rec.ai.height })),
     /** Everyone out of the place (the naval arc switched off, a new game) - the party keeps them. */
     clear() { liftAll(); placeKey = undefined; epoch++; trail.length = 0; leaderWas = null; },
     /** COMPANION-TRAIL: the leader's crumbs in this place (tests). */

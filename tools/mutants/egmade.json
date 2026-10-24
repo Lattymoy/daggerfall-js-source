@@ -1,0 +1,531 @@
+[
+  {
+    "name": "EGMADE-the-court-named-the-hour",
+    "file": "src/systems/madeLevel.js",
+    "old": "madeLevelOf = (loc) => (isGateArena(loc) ? 'court'",
+    "new": "madeLevelOf = (loc) => (isGateArena(loc) ? 'hour'",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-court-refuses-a-recall",
+    "file": "src/systems/madeLevel.js",
+    "old": "court: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', portalStone",
+    "new": "court: row({ save: 'refused', rest: 'refused', automap: 'off', mark: 'refused', recall: 'refused', portalStone",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-spire-glides",
+    "file": "src/systems/madeLevel.js",
+    "old": "levitate: 'banned', slowfall: 'banned', techFlight",
+    "new": "levitate: 'banned', slowfall: null, techFlight",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-hour-unwarded",
+    "file": "src/systems/madeLevel.js",
+    "old": "regen: 'off', levitate: 'banned',\n    runLeap: 'refused', resurrect: 'refused', death: 'final'",
+    "new": "regen: 'off', levitate: null,\n    runLeap: 'refused', resurrect: 'refused', death: 'final'",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-a-thrown-traverse-believed",
+    "file": "src/systems/madeLevel.js",
+    "old": "try { return !!_traverse?.(); } catch { return false; }",
+    "new": "try { return !!_traverse?.(); } catch { return true; }",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-any-word-a-level",
+    "file": "src/systems/madeLevel.js",
+    "old": "return MADE_LEVELS.includes(v) ? /** @type {'court'|'hour'|'spire'} */ (v) : null;",
+    "new": "return /** @type {any} */ (v);",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-no-level-no-zero",
+    "file": "src/systems/madeLevel.js",
+    "old": "  return NONE_IS_ZERO.has(rule) ? 0 : null;\n}",
+    "new": "  return null;\n}",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-mode-machine-everywhere",
+    "file": "src/scenes/worldModes.js",
+    "old": "madeLevel: () => (mode === 'dungeon' ? madeLevelOf(dungeonLoc) : null),",
+    "new": "madeLevel: () => madeLevelOf(dungeonLoc),",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-companions-ask-the-court-again",
+    "file": "src/scenes/world.js",
+    "old": "    if (madeRuleHere('companions') === 'out') return null;",
+    "new": "    if (modes?.gateArenaDay?.() != null) return null;",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-slow-fall-unbanned",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "hasActiveEffect(playerEntity, 'slowfall') && madeLevelRule(_made, 'slowfall') !== 'banned'; }",
+    "new": "hasActiveEffect(playerEntity, 'slowfall'); }",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-stendarr-in-the-spire",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "    if (madeLevelRule(_made, 'avoidDeath') === 'refused') return false;",
+    "new": "    if (false) return false;",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-screen-states-the-penalty",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "penalty: madeLevelRule(_made, 'deathPenalty') !== 'none' });",
+    "new": "penalty: true });",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-respawn-takes-the-penalty",
+    "file": "src/scenes/world.js",
+    "old": "const goldLost = wildRise || madeRuleHere('deathPenalty') === 'none' ? 0 : applyDeathPenalty(playerEntity);",
+    "new": "const goldLost = wildRise ? 0 : applyDeathPenalty(playerEntity);",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-court-law-asked-again",
+    "file": "src/scenes/world.js",
+    "old": "setCourtRules(madeRuleHere('regen') === 'off');",
+    "new": "setCourtRules(modes?.gateArenaDay?.() != null);",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js",
+      "test/net/eliteGates/egplay_client.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-spire-unwarded",
+    "file": "src/scenes/world.js",
+    "old": "registerLevitateWard(() => inSiegeRoom() || madeRuleHere('levitate') === 'banned');",
+    "new": "registerLevitateWard(() => inSiegeRoom());",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js",
+      "test/net/eliteGates/egplay_client.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-hour-voice-lost",
+    "file": "src/scenes/world.js",
+    "old": "if (madeRuleHere('says') === 'hour') sdSay(t); else setMidScreenText(t); }",
+    "new": "setMidScreenText(t); }",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js",
+      "test/world/sd26_dungeon.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-unstuck-walks-out-of-the-court",
+    "file": "src/scenes/world.js",
+    "old": "          if (madeUnstuck === 'refused') { say(madeSaysHere('unstuck')); return true; }\n",
+    "new": "",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js",
+      "test/tooling/gatefbx.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-a-resurrect-in-the-hour",
+    "file": "src/scenes/world.js",
+    "old": "const rez = social?.acct && madeRuleHere('resurrect') !== 'refused' ? rezFor(",
+    "new": "const rez = social?.acct ? rezFor(",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js",
+      "test/net/superDungeon/sd12_onelife.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-a-portal-in-a-made-level",
+    "file": "src/scenes/world.js",
+    "old": "if (_mode() !== 'exterior' || madeRuleHere('portalStone') === 'refused') return PORTAL_TEXT.notHere;",
+    "new": "if (_mode() !== 'exterior') return PORTAL_TEXT.notHere;",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-pause-saves-in-the-spire",
+    "file": "src/scenes/dungeonContext.js",
+    "old": "savingPrevented: () => madeLevelRule(_made, 'save') === 'refused' || isArenaFloor(dfLocation),",
+    "new": "savingPrevented: () => isGateArena(dfLocation) || isArenaFloor(dfLocation),",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js",
+      "test/scenes/arena2_hosts.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-screen-ignores-penalty",
+    "file": "src/ui/deathScreen.js",
+    "old": "this.goldLoss = respawns && penalty !== false ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
+    "new": "this.goldLoss = respawns ? deathGoldLoss(goldPiecesOf(entity)) : 0;",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-flight-unrefused",
+    "file": "src/combat/techniques.js",
+    "old": "    if (madeRuleHere('techFlight') === 'refused' && madeOnTraverse()) return madeSaysHere('techFlight');",
+    "new": "    if (false) return madeSaysHere('techFlight');",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-a-leap-refused-on-a-fight-floor",
+    "file": "src/combat/techniques.js",
+    "old": "if (madeRuleHere('techFlight') === 'refused' && madeOnTraverse()) return",
+    "new": "if (madeRuleHere('techFlight') === 'refused') return",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-count-everywhere",
+    "file": "src/systems/eliteGates/spireKit.js",
+    "old": "if (madeRuleHere('potions') !== 'counted' || !_law || !isRestoringPotion(item)) return null;",
+    "new": "if (!_law || !isRestoringPotion(item)) return null;",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-no-buffer",
+    "file": "src/player/motor.js",
+    "old": "const jBuffered = fBuf > 0 && this.grounded && this._jfBuf <= fBuf;",
+    "new": "const jBuffered = false;",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-no-late-press",
+    "file": "src/player/motor.js",
+    "old": "const jLate = fLate > 0 && !this.grounded && !this.jumping && jFresh && this._jfAir <= fLate;",
+    "new": "const jLate = false;",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-forgiven-everywhere",
+    "file": "src/player/motor.js",
+    "old": "const fBuf = jumpForgiven(_jfBufferOf), fLate = jumpForgiven(_jfLateOf);",
+    "new": "const fBuf = 0.12, fLate = 0.12;",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-a-fight-floor-traversed",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      return !egOnFight(spec, egLocalX(spec, at.sx), at.z, 0, at.y);",
+    "new": "      return true;",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-spec-never-asked",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (!E.b || !(E.h > 0) || E.end) return;\n    if (!lawForeign(E) && digestOff(E)) lawOff.add(E.b);",
+    "new": "    return;",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-spec-asked-every-frame",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "      if (lawGot.has(k) || Date.now() - (lawAsked.get(k) ?? -Infinity) < EG_SPEC_ASK_MS) continue;",
+    "new": "      if (lawGot.has(k)) continue;",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-circle-never-rebuilt",
+    "file": "src/scenes/eliteGates/egClient.js",
+    "old": "    if (await swapTo(E, c)) lawBuilt = key;",
+    "new": "    lawBuilt = key;",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js"
+    ]
+  },
+  {
+    "name": "EGMADE-the-given-hall-unread",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "  if (given) return given;",
+    "new": "  if (false) return given;",
+    "tests": [
+      "test/systems/eliteGates/egmade_law.test.js",
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-the-gap-kept",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "{ if (!moves || moves(o, k, v)) o[k] = v + gap; }",
+    "new": "{ /* kept */ }",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-the-open-moved",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "const KEPT = new Set(['op', 'endAt',",
+    "new": "const KEPT = new Set(['endAt',",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-a-frozen-spec-walked",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "    if (seen.has(o) || Object.isFrozen(o)) return;",
+    "new": "    if (seen.has(o)) return;",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-the-sealed-hour-moved",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "  if (!B || !(gap > 0) || !(B.wk > 0) || B.end) return 0;",
+    "new": "  if (!B || !(gap > 0) || B.end) return 0;",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-no-hold",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "  if (egBetween(B)) { egHoldBegin(B, last, now); return 'hold'; }\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-the-company-never-releases",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "  return !L.length || L.every(([sub]) => present.has(sub));",
+    "new": "  return !L.length;",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-the-release-gives-nothing",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "  const gap = egGiveBack(B, Math.max(0, now - h.at), now, found ? (_o, _k, v) => v <= h.at || found.has(v) : null);",
+    "new": "  const gap = 0;",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-the-count-runs-through-the-hold",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "  if (B.cnt) B.cnt = egCountHold(B.cnt, at);\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-the-count-never-runs-again",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "  if (h.ran && B.cnt) B.cnt = egCountRun(B.cnt, now);\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-a-held-alarm-kept",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "  return Number.isFinite(last) && now - last > EG_GAP_MS ? egGiveBack(B, now - last, now, (o, k, v) => v <= last || v > now) : 0;",
+    "new": "  return 0;",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-every-law-known",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "export const egLawKnown = (/** @type {any} */ v) => Number.isSafeInteger(v) && Object.hasOwn(EG_LAWS, String(v));",
+    "new": "export const egLawKnown = (/** @type {any} */ v) => v != null;",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-the-seed-another",
+    "file": "src/net/eliteGates/egDurable.js",
+    "old": "  return ((mac[0] << 24) | (mac[1] << 16) | (mac[2] << 8) | mac[3]) >>> 0;",
+    "new": "  return ((mac[1] << 24) | (mac[0] << 16) | (mac[2] << 8) | mac[3]) >>> 0;",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-a-woken-room-unresumed",
+    "file": "server/src/index.js",
+    "old": "        if (this._eg) await this._egResume(this._eg, Date.now());   // EG-H2",
+    "new": "        if (this._eg) void 0;   // EG-H2",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-the-hold-never-holds",
+    "file": "server/src/index.js",
+    "old": "      if (!egHoldDone(B, now, this._egPresent(B, now))) { await this.state.storage.setAlarm(now + 1000); return true; }\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-the-opener-keeps-its-stake",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  if (why === 'void' && !B.mem[B.s]?.in) owe(B, B.s, { q: 'v' });",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-sent-before-kept",
+    "file": "server/src/index.js",
+    "old": "    await this._egSave(B, Date.now(), true);   // EG-H2 (section 22): kept BEFORE the receipts go out\n",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-the-seed-the-csprng",
+    "file": "server/src/index.js",
+    "old": "{ c: B.rs ? await egReceiptSeed(",
+    "new": "{ c: false ? await egReceiptSeed(",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-the-drain-unread",
+    "file": "server/src/index.js",
+    "old": "if ((await this._egDraining()) || full) {",
+    "new": "if (full) {",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-the-cap-unread",
+    "file": "server/src/index.js",
+    "old": "|| full) { await this._egShut(ws, a, c, now); return; }",
+    "new": "|| false) { await this._egShut(ws, a, c, now); return; }",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-a-shut-road-keeps-the-stake",
+    "file": "server/src/index.js",
+    "old": "      this._send(ws, JSON.stringify({ t: 'eg', k: 'rcpt', r }));\n    }\n    return ans?.body ?? null;",
+    "new": "    }\n    return ans?.body ?? null;",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-the-live-list-unkept",
+    "file": "server/src/index.js",
+    "old": "    await this._egLiveAdd(c.eb, { egv: Number.isSafeInteger(res.egv) ? res.egv : 0, until: call.op + EG_LAST_WORD_MS }, now);",
+    "new": "    void call;",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-a-far-hall-answered",
+    "file": "server/src/index.js",
+    "old": "      if (B.end || (hc !== c && hc !== c + 1)) return;",
+    "new": "      if (B.end) return;",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-a-trial-between",
+    "file": "server/src/index.js",
+    "old": "      if (!st || st.sg === 'trial') between = false;",
+    "new": "      if (!st) between = false;",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-any-drain-word-taken",
+    "file": "server/src/index.js",
+    "old": "return v === 'on' || v === 'off' ? null : 'egDrain is on",
+    "new": "return v != null ? null : 'egDrain is on",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-the-beat-closures-cloned",
+    "file": "src/net/eliteGates/egBrain.js",
+    "old": "  Object.defineProperty(F, 'legionCtx', { value: legionCtx, enumerable: false, writable: true, configurable: true });",
+    "new": "  F.legionCtx = legionCtx;",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  },
+  {
+    "name": "EGDUR-the-spec-word-refused",
+    "file": "src/net/wire.js",
+    "old": "    case 'spec': return intIn(m.h, 1, EG_HALL_WIRE_MAX) ? { k: 'spec', h: m.h } : null;",
+    "new": "    case 'spec': return null;",
+    "tests": [
+      "test/net/eliteGates/egdur_relay.test.js"
+    ]
+  }
+]

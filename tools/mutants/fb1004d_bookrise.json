@@ -1,31 +1,31 @@
 [
   {
     "name": "BOOK-RISE-the-close-not-kept",
-    "file": "src/ui/enhancedBook.js",
+    "file": "src/ui/enhanced/enhancedBook.js",
     "old": "      if (closing) closeBook(book, now());\n",
     "new": "",
     "tests": [
-      "test/fb1004d_bookrise.test.js"
+      "test/ui/enhanced/fb1004d_bookrise.test.js"
     ],
     "note": "the field's bug back: an exit in the rise is dropped by closeBook and refused for good by the latch"
   },
   {
     "name": "BOOK-RISE-kept-only-once-the-book-stands-open",
-    "file": "src/ui/enhancedBook.js",
+    "file": "src/ui/enhanced/enhancedBook.js",
     "old": "      if (closing) closeBook(book, now());",
     "new": "      if (closing && book.phase === 'idle') closeBook(book, now());",
     "tests": [
-      "test/fb1004d_bookrise.test.js"
+      "test/ui/enhanced/fb1004d_bookrise.test.js"
     ],
     "note": "the kept close waits out the cover's opening too - the book shuts, but past the rise left, the shut and the sink"
   },
   {
     "name": "BOOK-RISE-E-not-the-face's-exit",
-    "file": "src/ui/enhancedBook.js",
+    "file": "src/ui/enhanced/enhancedBook.js",
     "old": "  if (code === 'Escape' || code === 'Enter' || code === 'KeyE') { exit(); return true; }",
     "new": "  if (code === 'Escape' || code === 'Enter') { exit(); return true; }",
     "tests": [
-      "test/fb1004d_bookrise.test.js"
+      "test/ui/enhanced/fb1004d_bookrise.test.js"
     ],
     "note": "the activation key no longer shuts the book it opened"
   },
@@ -35,17 +35,17 @@
     "old": "      else if (code === 'Escape' || code === 'Enter' || code === 'KeyE') exit();",
     "new": "      else if (code === 'Escape' || code === 'Enter') exit();",
     "tests": [
-      "test/fb1004d_bookrise.test.js"
+      "test/ui/enhanced/fb1004d_bookrise.test.js"
     ],
     "note": "E pressed while the face's chunk is still in flight is lost, and the book rises over the press"
   },
   {
     "name": "BOOK-RISE-the-tap-beside-the-book-not-an-exit",
-    "file": "src/ui/enhancedBook.js",
+    "file": "src/ui/enhanced/enhancedBook.js",
     "old": "  if (hit === 'outside') { exit(); return; }",
     "new": "  if (hit === 'outside') { return; }",
     "tests": [
-      "test/fb1004d_bookrise.test.js"
+      "test/ui/enhanced/fb1004d_bookrise.test.js"
     ],
     "note": "a tap beside the book (and any tap during its travel) closes nothing"
   },
@@ -55,7 +55,7 @@
     "old": "    unregister = registerOverlay(exit);",
     "new": "    unregister = () => {};",
     "tests": [
-      "test/fb1004d_bookrise.test.js"
+      "test/ui/enhanced/fb1004d_bookrise.test.js"
     ],
     "note": "PX28's Tab finds nothing to put away"
   },
@@ -65,7 +65,7 @@
     "old": "    close: exit,",
     "new": "    close() {},",
     "tests": [
-      "test/fb1004d_bookrise.test.js"
+      "test/ui/enhanced/fb1004d_bookrise.test.js"
     ],
     "note": "a host's close arm leaves the book standing"
   }

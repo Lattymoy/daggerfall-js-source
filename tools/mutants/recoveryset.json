@@ -1,0 +1,434 @@
+[
+  {
+    "name": "RS-the-size",
+    "file": "server-account/src/password.js",
+    "old": "export const RECOVERY_SET_SIZE = 8;",
+    "new": "export const RECOVERY_SET_SIZE = 7;",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-one-code-hashed-eight-times",
+    "file": "server-account/src/password.js",
+    "old": "codes.map((c) => hashPassword(codeForHashing(c), { subtle, rand }, RECOVERY_CODE_ITERS))",
+    "new": "codes.map(() => hashPassword(codeForHashing(codes[0]), { subtle, rand }, RECOVERY_CODE_ITERS))",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-tag",
+    "file": "server-account/src/password.js",
+    "old": "const SET_TAG = 'codes';",
+    "new": "const SET_TAG = 'set';",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-single-code-counted-as-none",
+    "file": "server-account/src/password.js",
+    "old": "  return parseStored(stored) ? 1 : null;\n}",
+    "new": "  return null;\n}",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-a-broken-set-counted",
+    "file": "server-account/src/password.js",
+    "old": "return hashes.every((h) => parseStored(h)) ? hashes : null;",
+    "new": "return hashes;",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-rest-keeps-the-spent-one",
+    "file": "server-account/src/password.js",
+    "old": "{ ok: true, rest: set.filter((_, j) => j !== i) }",
+    "new": "{ ok: true, rest: set }",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-throwaway-skipped-for-a-set",
+    "file": "server-account/src/password.js",
+    "old": "    verifyPassword(guess, set ? null : stored, { subtle }),\n",
+    "new": "    set ? false : verifyPassword(guess, stored, { subtle }),\n",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-slots-only-the-sets",
+    "file": "server-account/src/password.js",
+    "old": "Array.from({ length: Math.max(RECOVERY_SET_SIZE, set?.length ?? 0) }",
+    "new": "Array.from({ length: set?.length ?? 0 }",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-a-throwaway-at-the-passwords-cost",
+    "file": "server-account/src/password.js",
+    "old": "...slots.map((h) => verifyPassword(guess, h, { subtle }, RECOVERY_CODE_ITERS)),",
+    "new": "...slots.map((h) => verifyPassword(guess, h, { subtle })),",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-throwaway-at-its-row",
+    "file": "server-account/src/password.js",
+    "old": "  const iters = parsed?.iters ?? throwawayIters;",
+    "new": "  const iters = parsed?.iters ?? PBKDF2_ITERS;",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-registering-mints-one",
+    "file": "server-account/src/accounts.js",
+    "old": "  const codes = set ? mintRecoverySet(rand) : [mintRecoveryCode(rand)];",
+    "new": "  const codes = set ? mintRecoverySet(rand, 1) : [mintRecoveryCode(rand)];",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-every-spend-mints",
+    "file": "server-account/src/accounts.js",
+    "old": "  const fresh = set && !rest?.length ? mintRecoverySet(rand) : null;",
+    "new": "  const fresh = set ? mintRecoverySet(rand) : null;",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-last-leaves-none",
+    "file": "server-account/src/accounts.js",
+    "old": "  const fresh = set && !rest?.length ? mintRecoverySet(rand) : null;",
+    "new": "  const fresh = set && !rest ? mintRecoverySet(rand) : null;",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-a-spent-code-still-opens",
+    "file": "server-account/src/accounts.js",
+    "old": "fresh ? hashRecoverySet(fresh, { subtle, rand }) : joinRecoverySet(rest),",
+    "new": "fresh ? hashRecoverySet(fresh, { subtle, rand }) : player.recovery_hash,",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-no-password-asked",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (!await verifyPassword(password, player.password, { subtle })) return { error: 'bad-login' };\n  await clearRate({ db }, `login:${player.handle_lc}`);\n  if (recoveryLeft(",
+    "new": "  await clearRate({ db }, `login:${player.handle_lc}`);\n  if (recoveryLeft(",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-old-set-kept",
+    "file": "server-account/src/accounts.js",
+    "old": ".bind(rc, player.id, player.recovery_hash ?? null).run();",
+    "new": ".bind(player.recovery_hash ?? null, player.id, player.recovery_hash ?? null).run();",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-no-rate",
+    "file": "server-account/src/accounts.js",
+    "old": "  if (!player.password) return { error: 'not-registered' };\n  if (await overRate({ db, nowS }, `login:${player.handle_lc}`)) return { error: 'rate' };\n  if (!await verifyPassword(password,",
+    "new": "  if (!player.password) return { error: 'not-registered' };\n  if (!await verifyPassword(password,",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-write-unguarded",
+    "file": "server-account/src/accounts.js",
+    "old": "'UPDATE players SET recovery_hash = ? WHERE id = ? AND recovery_hash IS ?').bind(rc, player.id, player.recovery_hash ?? null)",
+    "new": "'UPDATE players SET recovery_hash = ? WHERE id = ?').bind(rc, player.id)",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-view-says-no-count",
+    "file": "server-account/src/accounts.js",
+    "old": "    recoveryLeft: recoveryLeft(player.recovery_hash),\n",
+    "new": "",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-route-unnamed",
+    "file": "server-account/src/service.js",
+    "old": "  '/v1/account/recovery-codes',\n",
+    "new": "",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-route-gone",
+    "file": "server-account/src/index.js",
+    "old": "      if (path === '/v1/account/recovery-codes' && request.method === 'POST') {",
+    "new": "      if (path === '/v1/account/recovery-codes-gone' && request.method === 'POST') {",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-a-wrong-passwords-status",
+    "file": "server-account/src/index.js",
+    "old": "r.error === 'rate' ? 429 : r.error === 'bad-login' || r.error === 'bad-code' ? 401 : r.error === 'codes-moved' ? 409 : 400, origin)",
+    "new": "r.error === 'rate' ? 429 : r.error === 'bad-code' ? 401 : r.error === 'codes-moved' ? 409 : 400, origin)",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-codes-moved-unsaid",
+    "file": "src/net/accountClient.js",
+    "old": "  'codes-moved': () => t('account.refusal.codesMoved', 'Your recovery codes changed in the meantime. Try again.'),",
+    "new": "",
+    "tests": [
+      "test/server/recoveryset.test.js",
+      "test/server/accountflow.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-stage-gone",
+    "file": "src/ui/accountFlow.js",
+    "old": "  'codes',      // RECOVERY-SET: a new set of recovery codes, behind the password\n",
+    "new": "",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-no-password-field",
+    "file": "src/ui/accountFlow.js",
+    "old": "  codes: ['oldPassword', 'code'],",
+    "new": "  codes: ['code'],",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-password-not-sent",
+    "file": "src/ui/accountFlow.js",
+    "old": "newRecoveryCodes(door(), pw('oldPassword'), v('code'))",
+    "new": "newRecoveryCodes(door(), '', v('code'))",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-codes-kept",
+    "file": "src/ui/accountFlow.js",
+    "old": "    self.recoveryCodes = null;\n    self.codesFor = '';\n    self.note = ''; self.error = '';",
+    "new": "    self.codesFor = '';\n    self.note = ''; self.error = '';",
+    "tests": [
+      "test/server/recoveryset.test.js",
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-old-word-ignored",
+    "file": "src/ui/accountFlow.js",
+    "old": "  return typeof d?.recoveryCode === 'string' && d.recoveryCode ? [d.recoveryCode] : [];",
+    "new": "  return [];",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-sets-junk-kept",
+    "file": "src/ui/accountFlow.js",
+    "old": "return d.recoveryCodes.filter((c) => typeof c === 'string' && c);",
+    "new": "return d.recoveryCodes;",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-refusal-swallowed",
+    "file": "src/ui/accountFlow.js",
+    "old": "    const r = await ask(() => newRecoveryCodes(door(), pw('oldPassword'), v('code')));\n    if (!r) return false;\n    if (!r.ok) return refuse(accountRefusalText(r.error));",
+    "new": "    const r = await ask(() => newRecoveryCodes(door(), pw('oldPassword'), v('code')));\n    if (!r) return false;\n    if (!r.ok) return refuse(accountRefusalText('server'));",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-count-unsaid",
+    "file": "src/ui/accountFlow.js",
+    "old": "      if (self.stage === 'in' && !self.error && Number.isSafeInteger(r.data.codesLeft)) {",
+    "new": "      if (false) {",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-an-empty-code-stage",
+    "file": "src/ui/accountFlow.js",
+    "old": "    if (!codes.length) {\n      await self.start();",
+    "new": "    if (false) {\n      await self.start();",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-whose-unsaid",
+    "file": "src/ui/accountFlow.js",
+    "old": "    self.codesFor = self.account?.handle ?? '';",
+    "new": "    self.codesFor = '';",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-file-unnumbered",
+    "file": "src/ui/accountFlow.js",
+    "old": "...codes.map((c, i) => `${i + 1}. ${c}`),",
+    "new": "...codes.map((c) => c),",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-name-unsanitised",
+    "file": "src/ui/accountFlow.js",
+    "old": "String(handle || 'account').replace(/[^\\w-]+/g, '').toLowerCase()",
+    "new": "String(handle || 'account').toLowerCase()",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-row-gone",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "  function recoveryRow() {\n    if (!flow.account?.handle || !Number.isSafeInteger(flow.account.recoveryLeft)) return;",
+    "new": "  function recoveryRow() {\n    return;",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-row-for-a-guest",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "    if (!flow.account?.handle || !Number.isSafeInteger(flow.account.recoveryLeft)) return;",
+    "new": "    if (!Number.isSafeInteger(flow.account?.recoveryLeft)) return;",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ],
+    "equivalent": true,
+    "why": "a guest's view counts no codes - null, never a number (accountView over a NULL recovery_hash; pinned by AUDIT RECOVERY-SET C11) - so the count's own guard already draws no row for one; the handle check is kept so the row is never a guest's whatever the service answers"
+  },
+  {
+    "name": "RS-the-act-gone",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "    row.append(act(t('account.card.act.makeCodes', 'Make new codes'), () => flow.go('codes'), { disabled: !!flow.busy, key: 'codes' }));\n",
+    "new": "",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-act-for-an-old-service",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "    if (!flow.account?.handle || !Number.isSafeInteger(flow.account.recoveryLeft)) return;",
+    "new": "    if (!flow.account?.handle) return;",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-copy-writes-nothing",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "await globalThis.navigator.clipboard.writeText(recoveryCodesText(flow.codesFor, flow.recoveryCodes ?? []));",
+    "new": "await globalThis.navigator.clipboard.writeText('');",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-save-names-no-file",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "      link.href = url; link.download = name;\n",
+    "new": "      link.href = url;\n",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-save-never-asked",
+    "file": "src/ui/enhanced/enhancedAccount.js",
+    "old": "      doc.body.append(link); link.click(); link.remove();\n",
+    "new": "      doc.body.append(link); link.remove();\n",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-one-salt",
+    "file": "server-account/src/password.js",
+    "old": "hashPassword(codeForHashing(c), { subtle, rand }, RECOVERY_CODE_ITERS)",
+    "new": "hashPassword(codeForHashing(c), { subtle, rand: () => {} }, RECOVERY_CODE_ITERS)",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-the-single-code-refused",
+    "file": "server-account/src/password.js",
+    "old": "  if (!set) return { ok: one, rest: null };",
+    "new": "  if (!set) return { ok: false, rest: null };",
+    "tests": [
+      "test/server/recoveryset.test.js",
+      "test/server/audit_recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-no-set-for-a-single-code",
+    "file": "server-account/src/accounts.js",
+    "old": "  const fresh = set && !rest?.length ? mintRecoverySet(rand) : null;",
+    "new": "  const fresh = set && rest && !rest.length ? mintRecoverySet(rand) : null;",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ]
+  },
+  {
+    "name": "RS-a-non-code-refused-at-the-match",
+    "file": "server-account/src/password.js",
+    "old": "  if (!canon) return { ok: false, rest: null };",
+    "new": "",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ],
+    "equivalent": true,
+    "why": "recover refuses a code that does not canonicalise itself (`!canon` beside `!ok`), and so does newRecoveryCodes; and the empty guess this would let through matches no hash hashPassword can write (AUDIT-PW P1 refuses to hash nothing). Kept so the match says what it answers for a non-code without leaning on either caller"
+  },
+  {
+    "name": "RS-a-longer-set-read-short",
+    "file": "server-account/src/password.js",
+    "old": "Array.from({ length: Math.max(RECOVERY_SET_SIZE, set?.length ?? 0) }",
+    "new": "Array.from({ length: RECOVERY_SET_SIZE }",
+    "tests": [
+      "test/server/recoveryset.test.js"
+    ],
+    "equivalent": true,
+    "why": "no writer makes a set longer than eight (register, newRecoveryCodes and a recovery's fresh set mint RECOVERY_SET_SIZE; a recovery writes fewer). Kept so a longer set, were one ever written, is still read whole and at the same work for every slot"
+  }
+]

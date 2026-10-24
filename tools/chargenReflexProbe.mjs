@@ -28,7 +28,7 @@
 //
 //     node tools/chargenReflexProbe.mjs
 import { chromium } from 'playwright';
-import { ENHANCED_CSS, ENHANCED_TOKENS } from '../src/ui/enhancedStyle.js';
+import { ENHANCED_CSS, ENHANCED_TOKENS } from '../src/ui/enhanced/enhancedStyle.js';
 const BUG = process.env.SHOW_BUG === '1';
 const FIX = BUG ? `
 /* the shipped-before state, for re-proving the bug */

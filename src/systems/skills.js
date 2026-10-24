@@ -7,6 +7,7 @@
 // nothing - so this cannot cycle; rest.js's copy imports skills.js
 // and would).
 import { SPECIAL_ABILITY_BITS } from './specialAdvantages.js';
+import { localizedStrings, localizedText, getLocalizedTextWithReversion, TextCollections } from './textManager.js';   // L10N3d: GetSkillName's words
 // SOFTCAP1: two more leaves (neither imports anything) - the softcap's law
 // and mentor mode's overlay.
 import { effectiveSkill, overcapTallyWeight, movementTallyWeight, SKILL_SOFT_CAP, SKILL_HARD_CAP } from './skillSoftcap.js';   // MOVE-REAL: the movement skills' own weight
@@ -43,9 +44,28 @@ export const SKILL_KEYS = Object.freeze(Object.entries(SKILLS).reduce((a, [k, v]
  *  before each interior capital, and Hand-to-Hand hyphenated. The
  *  port printed the raw enum key, so the char sheet and the new
  *  chargen skills screen read "ShortBlade" and "BluntWeapon" where
- *  classic reads "Short Blade" and "Blunt Weapon". */
-export const SKILL_NAMES = Object.freeze(SKILL_KEYS.map((k) =>
-  (k === 'HandToHand' ? 'Hand-to-Hand' : k.replace(/([a-z])([A-Z])/g, '$1 $2'))));
+ *  classic reads "Short Blade" and "Blunt Weapon".
+ *  L10N3d: GetSkillName's keys (TextProvider.cs:415-483), each word read
+ *  in the player's language when a window reads it - an element of the
+ *  array is a getter. Orcish and Daedric read their skill rows and revert
+ *  to the language's own name (GetLocalizedTextWithReversion) where a pack
+ *  predates them. Pickpocket stays the port's English; DFU ships
+ *  "Pickpocketing". */
+const SKILL_TEXT = localizedStrings({
+  medical: 'Medical', etiquette: 'Etiquette', streetwise: 'Streetwise', jumping: 'Jumping', orcishSkill: 'Orcish', harpy: 'Harpy',
+  giantish: 'Giantish', dragonish: 'Dragonish', nymph: 'Nymph', daedricSkill: 'Daedric', spriggan: 'Spriggan', centaurian: 'Centaurian',
+  impish: 'Impish', lockpicking: 'Lockpicking', mercantile: 'Mercantile', pickpocket: 'Pickpocket', stealth: 'Stealth',
+  swimming: 'Swimming', climbing: 'Climbing', backstabbing: 'Backstabbing', dodging: 'Dodging', running: 'Running',
+  destruction: 'Destruction', restoration: 'Restoration', illusion: 'Illusion', alteration: 'Alteration', thaumaturgy: 'Thaumaturgy',
+  mysticism: 'Mysticism', shortBlade: 'Short Blade', longBlade: 'Long Blade', handToHand: 'Hand-to-Hand', axe: 'Axe',
+  bluntWeapon: 'Blunt Weapon', archery: 'Archery', criticalStrike: 'Critical Strike',
+});
+const skillWord = (k) => {
+  if (k === 'Orcish') return getLocalizedTextWithReversion('orcishSkill', TextCollections.Internal, false, localizedText('orcish', 'Orcish'));
+  if (k === 'Daedric') return getLocalizedTextWithReversion('daedricSkill', TextCollections.Internal, false, localizedText('daedric', 'Daedric'));
+  return SKILL_TEXT[k[0].toLowerCase() + k.slice(1)];
+};
+export const SKILL_NAMES = Object.freeze(SKILL_KEYS.reduce((a, k, id) => Object.defineProperty(a, id, { enumerable: true, get: () => skillWord(k) }), []));
 
 /** DaggerfallUnityItem.GetWeaponSkillUsed -> skill id, by name. */
 export const WEAPON_SKILL = Object.freeze({

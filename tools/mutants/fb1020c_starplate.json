@@ -1,0 +1,62 @@
+[
+  {
+    "name": "STAR-PLATE-dropped-again",
+    "file": "src/ui/town/townSheet.js",
+    "old": "        if (!s) return;",
+    "new": "        if (!s || s.replaced) return;",
+    "tests": [
+      "test/ui/ink/fb1020c_starplate.test.js"
+    ],
+    "why": "the report itself: a plate the solver gave up on is dropped, and a building an NPC marked on a crowded plan has no mark"
+  },
+  {
+    "name": "STAR-PLATE-star-for-the-parted",
+    "file": "src/ui/town/townSheet.js",
+    "old": "          text: s.replaced ? STAR_PLATE : n.text, name: n.text,",
+    "new": "          text: !s.replaced ? STAR_PLATE : n.text, name: n.text,",
+    "tests": [
+      "test/ui/ink/fb1020c_starplate.test.js"
+    ],
+    "why": "the star the wrong way round: every placed name lettered \"*\", the surrendered one by its name"
+  },
+  {
+    "name": "STAR-PLATE-star-unnamed",
+    "file": "src/ui/town/townSheet.js",
+    "old": "          text: s.replaced ? STAR_PLATE : n.text, name: n.text,",
+    "new": "          text: s.replaced ? STAR_PLATE : n.text,",
+    "tests": [
+      "test/ui/ink/fb1020c_starplate.test.js"
+    ],
+    "why": "the star keeps no name: the pointer over it reads \"*\" where DFU's tooltip names the building"
+  },
+  {
+    "name": "STAR-PLATE-hover-reads-the-star",
+    "file": "src/ui/town/townSheet.js",
+    "old": "            return { label: p.name ?? p.text, cursor: 'pointer' };",
+    "new": "            return { label: p.text, cursor: 'pointer' };",
+    "tests": [
+      "test/ui/ink/fb1020c_starplate.test.js"
+    ],
+    "why": "the hover answers the lettered word, so a star is named \"*\""
+  },
+  {
+    "name": "STAR-PLATE-another-word",
+    "file": "src/ui/nameplateLayout.js",
+    "old": "export const STAR_PLATE = '*';",
+    "new": "export const STAR_PLATE = '+';",
+    "tests": [
+      "test/ui/ink/fb1020c_starplate.test.js"
+    ],
+    "why": "the surrender lettered in a word that is not ExteriorAutomap's \"*\""
+  },
+  {
+    "name": "STAR-PLATE-classic-own-literal",
+    "file": "src/ui/exteriorAutomapWindow.js",
+    "old": "drawText(renderer, font, r.replaced ? STAR_PLATE : p.text,",
+    "new": "drawText(renderer, font, r.replaced ? '*' : p.text,",
+    "tests": [
+      "test/ui/ink/fb1020c_starplate.test.js"
+    ],
+    "why": "the classic window keeps a second copy of the word - the drift the one home exists to stop (the by-source pin)"
+  }
+]

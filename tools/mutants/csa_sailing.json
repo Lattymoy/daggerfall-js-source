@@ -1,86 +1,760 @@
 [
-  {"name": "CSA-D-movespeed-arms-swapped", "file": "src/systems/comeSailAway.js", "old": "    return state.sailPosition === 0 ? oarSpeed(b, hurt) : sailSpeed(b, hurt);", "new": "    return state.sailPosition !== 0 ? oarSpeed(b, hurt) : sailSpeed(b, hurt);", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-moveaccel-back-no-oars", "file": "src/systems/comeSailAway.js", "old": "(state.oarThrottle !== 0 || !!deps.input?.toggleAutorun || (has('Run')", "new": "(state.oarThrottle > 0 || !!deps.input?.toggleAutorun || (has('Run')", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-moveaccel-coast-oars", "file": "src/systems/comeSailAway.js", "old": "    const coast = f(f(f(f(HANDLING.moveAccelSail * handlingMod('SailMoveAcceleration')) * state.boatCargoMod) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.coast : 1));\n", "new": "    const coast = f(f(f(f(HANDLING.moveAccelOar * handlingMod('OarMoveAcceleration')) * state.boatCargoMod) * f(b.modifierMoveAccelerationOar)) * (responsive() ? HELM_WAY.coast : 1));\n", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-turnspeed-arms-swapped", "file": "src/systems/comeSailAway.js", "old": "if (state.sailPosition === 0) return f(f(f(HANDLING.turnSpeedOar", "new": "if (state.sailPosition !== 0) return f(f(f(HANDLING.turnSpeedOar", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-turnaccel-oars-never", "file": "src/systems/comeSailAway.js", "old": "if (state.sailPosition === 0 && (has('MoveRight') || has('MoveLeft'))) {", "new": "if (state.sailPosition === 0 && has('Run')) {", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-canturnleft-quadrant", "file": "src/systems/comeSailAway.js", "old": "      if ((num >= 0 && num2 < 0) || (num < 0 && num2 >= 0)) return false;", "new": "      if ((num >= 0 && num2 < 0)) return false;", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-canturnright-quadrant", "file": "src/systems/comeSailAway.js", "old": "      if ((num >= 0 && num2 >= 0) || (num < 0 && num2 < 0)) return false;", "new": "      if ((num >= 0 && num2 >= 0)) return false;", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-beached-three", "file": "src/systems/comeSailAway.js", "old": "      if (num > 3) return true;", "new": "      if (num > 2) return true;", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-canSail-any", "file": "src/systems/comeSailAway.js", "old": "const CanSail = (boat) => boat.NodeTileMapIndices.every((v) => v === 0);", "new": "const CanSail = (boat) => boat.NodeTileMapIndices.some((v) => v === 0);", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-forward-node-bow", "file": "src/systems/comeSailAway.js", "old": "if ((state.oarThrottle > 0 || deps.input?.toggleAutorun) && IsNodeOnWater(boat, 0)) num3 = 1;", "new": "if ((state.oarThrottle > 0 || deps.input?.toggleAutorun) && IsNodeOnWater(boat, 1)) num3 = 1;", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-back-node-bow", "file": "src/systems/comeSailAway.js", "old": "else if (state.oarThrottle < 0 && IsNodeOnWater(boat, 2)) num3 = -1;", "new": "else if (state.oarThrottle < 0 && IsNodeOnWater(boat, 1)) num3 = -1;", "tests": ["test/csa_sailing.test.js", "test/fb1002_seaheld.test.js"]},
-  {"name": "CSA-D-strafe-right-node", "file": "src/systems/comeSailAway.js", "old": "if (has('MoveRight') && IsNodeOnWater(boat, 2)) num4 = 0.5;", "new": "if (has('MoveRight') && IsNodeOnWater(boat, 3)) num4 = 0.5;", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-strafe-full", "file": "src/systems/comeSailAway.js", "old": "if (has('MoveRight') && IsNodeOnWater(boat, 2)) num4 = 0.5;", "new": "if (has('MoveRight') && IsNodeOnWater(boat, 2)) num4 = 1;", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-back-steer-not-reversed", "file": "src/systems/comeSailAway.js", "old": "        if (has('MoveRight')) num5 = -1;\n        else if (has('MoveLeft')) num5 = 1;", "new": "        if (has('MoveRight')) num5 = 1;\n        else if (has('MoveLeft')) num5 = -1;", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-fatigue-left-turns", "file": "src/systems/comeSailAway.js", "old": "(vSqrMagnitude(state.MoveVectorTarget) > 0 || state.TurnTarget > 0)", "new": "(vSqrMagnitude(state.MoveVectorTarget) > 0 || state.TurnTarget !== 0)", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-fatigue-crewed-too", "file": "src/systems/comeSailAway.js", "old": "if (!boat.crewed && (vSqrMagnitude(state.MoveVectorTarget) > 0", "new": "if ((vSqrMagnitude(state.MoveVectorTarget) > 0", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-fatigue-timer-strict", "file": "src/systems/comeSailAway.js", "old": "if (state.oarModeTimer >= OAR_MODE_TIME) {", "new": "if (state.oarModeTimer > OAR_MODE_TIME) {", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-turn-refusal-zero", "file": "src/systems/comeSailAway.js", "old": "        state.TurnTarget = 0 - num5;\n        state.TurnCurrent = state.TurnTarget;\n      }\n      const rudder = rudderOf(boat);", "new": "        state.TurnTarget = 0;\n        state.TurnCurrent = state.TurnTarget;\n      }\n      const rudder = rudderOf(boat);", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-turn-refusal-not-at-once", "file": "src/systems/comeSailAway.js", "old": "        state.TurnTarget = 0 - num5;\n        state.TurnCurrent = state.TurnTarget;\n      }\n      const rudder = rudderOf(boat);", "new": "        state.TurnTarget = 0 - num5;\n      }\n      const rudder = rudderOf(boat);", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-velocity-no-speed", "file": "src/systems/comeSailAway.js", "old": "state.velocityTarget = vScale(state.MoveVectorTarget, moveSpeed());", "new": "state.velocityTarget = vScale(state.MoveVectorTarget, 1);", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-collision-no-push", "file": "src/systems/comeSailAway.js", "old": "state.MoveVectorCurrent = vAdd(vProjectOnPlane(state.MoveVectorCurrent, state.CollisionVector), state.CollisionVector);", "new": "state.MoveVectorCurrent = vProjectOnPlane(state.MoveVectorCurrent, state.CollisionVector);", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-collision-zero-point-both", "file": "src/systems/comeSailAway.js", "old": "    sweep(vSub(val2, val3), true);", "new": "    sweep(vSub(val2, val3), false);", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-collision-own-root", "file": "src/systems/comeSailAway.js", "old": "        if (hit.root === boat.GameObject || hit.terrain || hit.entity) continue;", "new": "        if (hit.terrain || hit.entity) continue;", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-collision-terrain", "file": "src/systems/comeSailAway.js", "old": "        if (hit.root === boat.GameObject || hit.terrain || hit.entity) continue;", "new": "        if (hit.root === boat.GameObject || hit.entity) continue;", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-collision-entity", "file": "src/systems/comeSailAway.js", "old": "        if (hit.root === boat.GameObject || hit.terrain || hit.entity) continue;", "new": "        if (hit.root === boat.GameObject || hit.terrain) continue;", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-collision-radius-length", "file": "src/systems/comeSailAway.js", "old": "    const x = f(local.extent[0]);", "new": "    const x = f(local.extent[2]);", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-collision-length-full", "file": "src/systems/comeSailAway.js", "old": "vScale(quatRotate(boat.MeshObject.rotation, [0, 0, 1]), f(f(local.extent[2]) - x));", "new": "vScale(quatRotate(boat.MeshObject.rotation, [0, 0, 1]), f(local.extent[2]));", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-collision-not-flattened", "file": "src/systems/comeSailAway.js", "old": "const off = vNormalized(vProjectOnPlane(vSub(hit.start ? center : boat.GameObject.position, hit.point), V_UP));", "new": "const off = vNormalized(vSub(hit.start ? center : boat.GameObject.position, hit.point));", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-collision-cleared-never", "file": "src/systems/comeSailAway.js", "old": "    } else state.CollisionVector = [0, 0, 0];\n  }", "new": "    }\n  }", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-cargo-female-male", "file": "src/systems/comeSailAway.js", "old": "(deps.entity?.isFemale?.() ? CARGO_WEIGHTS.female : CARGO_WEIGHTS.male)", "new": "(deps.entity?.isFemale?.() ? CARGO_WEIGHTS.male : CARGO_WEIGHTS.female)", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-cargo-said-every-time", "file": "src/systems/comeSailAway.js", "old": "    if (state.lastWeight !== num) {", "new": "    if (true) {", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-cargo-bigger-boat-half", "file": "src/systems/comeSailAway.js", "old": "      if (state.boatCargoMod < 0.5) deps.midScreenText(\"You're going to need a bigger boat\", 3);", "new": "      if (state.boatCargoMod < 0.3) deps.midScreenText(\"You're going to need a bigger boat\", 3);", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-cargo-carried-uncounted", "file": "src/systems/comeSailAway.js", "old": "    if (setting('Cargo.PlayerCarriedWeight', true)) num = f(num + f(deps.entity?.carriedWeight?.() ?? 0));", "new": "    if (false) num = f(num + f(deps.entity?.carriedWeight?.() ?? 0));", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-cargo-horse-default-on", "file": "src/systems/comeSailAway.js", "old": "    if (setting('Cargo.HorseItem', false) && deps.transport?.hasHorse?.()) num = f(num + CARGO_WEIGHTS.horse);", "new": "    if (deps.transport?.hasHorse?.()) num = f(num + CARGO_WEIGHTS.horse);", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-clamp-nan-min", "file": "src/systems/comeSailAway.js", "old": "export function mathfClamp(v, min, max) {\n  if (v < min) return min;", "new": "export function mathfClamp(v, min, max) {\n  if (!(v >= min)) return min;", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-position-nan-assigned", "file": "src/systems/comeSailAway.js", "old": "  if (!p.every(Number.isFinite)) { log?.(`transform.position assign attempt", "new": "  if (false) { log?.(`transform.position assign attempt", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-temp-ship-when-owned", "file": "src/systems/comeSailAway.js", "old": "    if (boat.crewed && !deps.ship?.owns?.()) {", "new": "    if (boat.crewed) {", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-temp-ship-scenes-kept", "file": "src/systems/comeSailAway.js", "old": "    for (const scene of TEMPORARY_SHIP_SCENES) deps.ship?.removePermanentScene?.(scene);", "new": "", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-crew-not-swapped", "file": "src/systems/comeSailAway.js", "old": "    boat.IdleObject?.setActive(false);\n    boat.ActiveObject?.setActive(true);", "new": "", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-footsteps-left-on", "file": "src/systems/comeSailAway.js", "old": "    deps.helm.footsteps?.(false);", "new": "", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-disembark-no-wait", "file": "src/systems/comeSailAway.js", "old": "    co.phase = 'unparent';\n    endOfFrameQueue.push(() => resumeStopSailing(co));", "new": "    co.phase = 'unparent';\n    resumeStopSailing(co);\n    endOfFrameQueue.push(() => resumeStopSailing(co));", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-disembark-no-hold", "file": "src/systems/comeSailAway.js", "old": "      if (deps.helm.frozen()) {\n        if (!state.AllBoats.includes(co.boatlast))", "new": "      if (false) {\n        if (!state.AllBoats.includes(co.boatlast))", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-disembark-twice", "file": "src/systems/comeSailAway.js", "old": "  function StopSailingDelayed() {\n    if (state.disembarking != null) return;", "new": "  function StopSailingDelayed() {", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-helm-no-pin", "file": "src/systems/comeSailAway.js", "old": "    if (!vEquals(deps.player().position, drive)) deps.helm.setPlayerPosition(drive);", "new": "", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-helm-no-freeze", "file": "src/systems/comeSailAway.js", "old": "    deps.helm.freeze(1);\n", "new": "", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-helm-transport-stays", "file": "src/systems/comeSailAway.js", "old": "if (deps.input?.started?.(BOAT_ACTIONS.disembark) || deps.input?.started?.('Transport')) StopSailingDelayed();", "new": "if (deps.input?.started?.(BOAT_ACTIONS.disembark)) StopSailingDelayed();", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-helm-light-held", "file": "src/systems/comeSailAway.js", "old": "    if (deps.input?.started?.(BOAT_ACTIONS.toggleLight)) setLights(boat, !boat.LightOn);", "new": "    if (deps.input?.started?.(BOAT_ACTIONS.toggleLight) || boat.LightOn) setLights(boat, !boat.LightOn);", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-stop-freeze-kept", "file": "src/systems/comeSailAway.js", "old": "    deps.helm.freeze(0);\n    raise('OnUpdateSailing', false);", "new": "    raise('OnUpdateSailing', false);", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-child-not-turned", "file": "src/systems/comeSailAway.js", "old": "      deps.helm.turnPlayer(yawDelta(before, after));", "new": "", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-rider-not-carried", "file": "src/systems/comeSailAway.js", "old": "      enemy.setPosition(carriedPoint(before, after, enemy.position()));", "new": "", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-rider-airborne", "file": "src/systems/comeSailAway.js", "old": "          if (boat != null && enemy.grounded()) {", "new": "          if (boat != null) {", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-rider-any-node", "file": "src/systems/comeSailAway.js", "old": "if (hit.node != null && hit.node === allBoat.MeshObject && hit.collider === allBoat.MeshCollider) { boat = allBoat; break; }", "new": "if (hit.root === allBoat.GameObject) { boat = allBoat; break; }", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-rider-dead-kept", "file": "src/systems/comeSailAway.js", "old": "      for (const k of [...state.parentedObjects.keys()]) if (!live.has(k)) state.parentedObjects.delete(k);", "new": "", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-activate-any-reach", "file": "src/systems/comeSailAway.js", "old": "    if (!(hit.distance <= ACTIVATION_DISTANCE)) return false;", "new": "", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-rudder-pack-while-driving", "file": "src/systems/comeSailAway.js", "old": "        if (state.CurrentBoat != null && state.CurrentBoat === boat) deps.midScreenText('You cannot pack a boat you are driving!', 1.5);", "new": "        if (false) deps.midScreenText('You cannot pack a boat you are driving!', 1.5);", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-board-next-sibling", "file": "src/systems/comeSailAway.js", "old": "  const child = parent.getChild(parent.children.indexOf(triggerNode) - 1);", "new": "  const child = triggerNode;", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-board-no-align", "file": "src/systems/comeSailAway.js", "old": "    deps.helm.alignToGround?.(3);", "new": "", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-model-name-uncut", "file": "src/systems/comeSailAway.js", "old": "  if (pos > 0 && pos < n.length - 1) n = n.slice(0, pos + 1);", "new": "", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-fasttravel-no-pack", "file": "src/systems/comeSailAway.js", "old": "      if (currentBoat.packable) PackBoat(currentBoat, true);", "new": "", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-startload-riders-kept", "file": "src/systems/comeSailAway.js", "old": "  function OnStartLoad() {\n    state.parentedObjects.clear();", "new": "  function OnStartLoad() {", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-death-reset-said", "file": "src/systems/comeSailAway.js", "old": "  function OnPlayerDeath() {\n    if (isSailing()) StopSailing();\n    else ResetTimeScale(false);", "new": "  function OnPlayerDeath() {\n    if (isSailing()) StopSailing();\n    else ResetTimeScale(true);", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-reset-ignores-unity-scale", "file": "src/systems/comeSailAway.js", "old": "    if (state.timeScaleIndex !== 0 || f(deps.timeScale?.() ?? 1) !== 1) {", "new": "    if (state.timeScaleIndex !== 0) {", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-restore-no-helm", "file": "src/systems/comeSailAway.js", "old": "      StartSailing(boat);\n      if (data.sailPosition > 0) RaiseSails();", "new": "      if (data.sailPosition > 0) RaiseSails();", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-restore-sail-not-stopped", "file": "src/systems/comeSailAway.js", "old": "  function applySaveData(dataIn) {\n    if (isSailing()) StopSailing();", "new": "  function applySaveData(dataIn) {", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-origin-helm-not-pinned", "file": "src/systems/comeSailAway.js", "old": "    if (boat === state.CurrentBoat) {\n      deps.helm.setPlayerPosition(boat.DrivePosition.position);", "new": "    if (boat === state.CurrentBoat) {", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-vequals-exact", "file": "src/systems/comeSailAway.js", "old": "export const vEquals = (a, b) => vSqrMagnitude(vSub(a, b)) < K_EPSILON_SQ;", "new": "export const vEquals = (a, b) => vSqrMagnitude(vSub(a, b)) === 0;", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-projectonplane-sign", "file": "src/systems/comeSailAway.js", "old": "  return [0, 1, 2].map((i) => f(f(v[i]) - f(f(f(n[i]) * d) / sqrMag)));", "new": "  return [0, 1, 2].map((i) => f(f(v[i]) + f(f(f(n[i]) * d) / sqrMag)));", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-movetowards-no-snap", "file": "src/systems/comeSailAway.js", "old": "  if (sqdist === 0 || (md >= 0 && sqdist <= f(md * md))) return target.map((t) => f(t));", "new": "  if (sqdist === 0) return target.map((t) => f(t));", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-mathf-movetowards-sign", "file": "src/systems/comeSailAway.js", "old": "  return f(f(current) + f((d >= 0 ? 1 : -1) * f(maxDelta)));", "new": "  return f(f(current) + f((d > 0 ? 1 : -1) * f(maxDelta)));", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-yaw-unwrapped", "file": "src/systems/comeSailAway.js", "old": "  return d < 0 ? d + 360 : d;", "new": "  return d;", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-input-no-animation-mod", "file": "src/systems/comeSailAway.js", "old": "state.inputCurrent = vMoveTowards(state.inputCurrent, inputTarget(), f(f(boat.modifierAnimation) * f(1 * dt())));", "new": "state.inputCurrent = vMoveTowards(state.inputCurrent, inputTarget(), f(1 * dt()));", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-beached-moves", "file": "src/systems/comeSailAway.js", "old": "    if (!IsBeached(boat)) {\n      // QUAYS (the port's own", "new": "    if (true) {\n      // QUAYS (the port's own", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-pause-unmarked", "file": "src/systems/comeSailAway.js", "old": "    if (paused) { state.wasPaused = true; return; }", "new": "    if (paused) return;", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-late-pause-open", "file": "src/systems/comeSailAway.js", "old": "  function lateUpdate({ paused = false, activateComplete = false } = {}) {\n    animate();   // the Animators, after every Update and before every LateUpdate, as Unity steps them\n    simulateParticles();   // CSA-F: then the particle systems (PreLateUpdate's ParticleSystemBeginUpdateAll)\n    if (paused) return;", "new": "  function lateUpdate({ paused = false, activateComplete = false } = {}) {\n    animate();   // the Animators, after every Update and before every LateUpdate, as Unity steps them\n    simulateParticles();   // CSA-F: then the particle systems (PreLateUpdate's ParticleSystemBeginUpdateAll)", "tests": ["test/csa_sailing.test.js", "test/csa_placing.test.js"]},
-  {"name": "CSA-D-fixed-pause-open", "file": "src/systems/comeSailAway.js", "old": "  function fixedUpdate({ paused = false } = {}) {\n    if (paused) return;", "new": "  function fixedUpdate({ paused = false } = {}) {", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-nodes-no-collision", "file": "src/systems/comeSailAway.js", "old": "      UpdateBoatNodes(state.CurrentBoat);\n      CheckCollision(state.CurrentBoat);", "new": "      UpdateBoatNodes(state.CurrentBoat);", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-beached-update-no-stop", "file": "src/systems/comeSailAway.js", "old": "      state.MoveVectorCurrent = [0, 0, 0];\n      state.MoveVectorTarget = [0, 0, 0];\n      ResetTimeScale();\n    }\n    if (state.timeScaleIndex !== 0 && deps.enemiesNearby?.()) {", "new": "      ResetTimeScale();\n    }\n    if (state.timeScaleIndex !== 0 && deps.enemiesNearby?.()) {", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-sweep-overlap-as-hit", "file": "src/player/collider.js", "old": "      if (overlap) { out.push({ key, dist: 0, point: [0, 0, 0] }); continue; }", "new": "", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-sweep-no-radius", "file": "src/player/collider.js", "old": "      if (Number.isFinite(best)) out.push({ key, dist: Math.max(0, best - radius), point: bestPoint });", "new": "      if (Number.isFinite(best)) out.push({ key, dist: best, point: bestPoint });", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-sweep-skip-ignored", "file": "src/player/collider.js", "old": "      if (skip && skip.has(key)) continue;\n      const t = bucket.t();\n      const R = bucket.r ? bucket.r() : null;   // AUDIT NAV1 (#12): a mover's - its box as it stands turned, the start turned back", "new": "      const t = bucket.t();\n      const R = bucket.r ? bucket.r() : null;   // AUDIT NAV1 (#12): a mover's - its box as it stands turned, the start turned back", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-pin-span-kept", "file": "src/player/motor.js", "old": "    this._prevPos[0] = x; this._prevPos[1] = y; this._prevPos[2] = z;\n    this._eyeFeetY = null;", "new": "    this._eyeFeetY = null;", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-autorun-unwritable", "file": "src/player/motor.js", "old": "  set toggleAutorun(v) { this._autorun = !!v; }", "new": "  set toggleAutorun(v) { }", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-race-boat-no-rival", "file": "src/player/activationRace.js", "old": "Math.min(lootD, dropD, torchD, wagonD, horseCartD, campD, waterD, gateD, brokerD, boatD, doorDistance);", "new": "Math.min(lootD, dropD, torchD, wagonD, horseCartD, campD, waterD, gateD, brokerD, doorDistance);", "tests": ["test/csa_sailing.test.js"]},
-  {"name": "CSA-D-race-boat-before-hcc", "file": "src/player/activationRace.js", "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch,", "new": "  return firmFirst([gate, broker, camp, water, wagon, boat, horseCart, torch,", "tests": ["test/csa_sailing.test.js"]}
+  {
+    "name": "CSA-D-movespeed-arms-swapped",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    return state.sailPosition === 0 ? oarSpeed(b, hurt) : sailSpeed(b, hurt);",
+    "new": "    return state.sailPosition !== 0 ? oarSpeed(b, hurt) : sailSpeed(b, hurt);",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-moveaccel-back-no-oars",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "(state.oarThrottle !== 0 || !!deps.input?.toggleAutorun || (has('Run')",
+    "new": "(state.oarThrottle > 0 || !!deps.input?.toggleAutorun || (has('Run')",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-moveaccel-coast-oars",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    const coast = f(f(f(f(HANDLING.moveAccelSail * handlingMod('SailMoveAcceleration')) * state.boatCargoMod) * f(b.modifierMoveAccelerationSail)) * (responsive() ? HELM_WAY.coast : 1));\n",
+    "new": "    const coast = f(f(f(f(HANDLING.moveAccelOar * handlingMod('OarMoveAcceleration')) * state.boatCargoMod) * f(b.modifierMoveAccelerationOar)) * (responsive() ? HELM_WAY.coast : 1));\n",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-turnspeed-arms-swapped",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "if (state.sailPosition === 0) return f(f(f(f(HANDLING.turnSpeedOar",
+    "new": "if (state.sailPosition !== 0) return f(f(f(f(HANDLING.turnSpeedOar",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-turnaccel-oars-never",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "if (state.sailPosition === 0 && (has('MoveRight') || has('MoveLeft'))) {",
+    "new": "if (state.sailPosition === 0 && has('Run')) {",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-canturnleft-quadrant",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      if ((num >= 0 && num2 < 0) || (num < 0 && num2 >= 0)) return false;",
+    "new": "      if ((num >= 0 && num2 < 0)) return false;",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-canturnright-quadrant",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      if ((num >= 0 && num2 >= 0) || (num < 0 && num2 < 0)) return false;",
+    "new": "      if ((num >= 0 && num2 >= 0)) return false;",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-beached-three",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      if (num > 3) return true;",
+    "new": "      if (num > 2) return true;",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-canSail-any",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "const CanSail = (boat) => boat.NodeTileMapIndices.every((v) => v === 0);",
+    "new": "const CanSail = (boat) => boat.NodeTileMapIndices.some((v) => v === 0);",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-forward-node-bow",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "if ((state.oarThrottle > 0 || deps.input?.toggleAutorun) && IsNodeOnWater(boat, 0)) num3 = 1;",
+    "new": "if ((state.oarThrottle > 0 || deps.input?.toggleAutorun) && IsNodeOnWater(boat, 1)) num3 = 1;",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-back-node-bow",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "else if (state.oarThrottle < 0 && IsNodeOnWater(boat, 2)) num3 = -1;",
+    "new": "else if (state.oarThrottle < 0 && IsNodeOnWater(boat, 1)) num3 = -1;",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js",
+      "test/world/terrain/fb1002_seaheld.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-strafe-right-node",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "if (has('MoveRight') && IsNodeOnWater(boat, 2)) num4 = 0.5;",
+    "new": "if (has('MoveRight') && IsNodeOnWater(boat, 3)) num4 = 0.5;",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-strafe-full",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "if (has('MoveRight') && IsNodeOnWater(boat, 2)) num4 = 0.5;",
+    "new": "if (has('MoveRight') && IsNodeOnWater(boat, 2)) num4 = 1;",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-back-steer-not-reversed",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "        if (has('MoveRight')) num5 = -1;\n        else if (has('MoveLeft')) num5 = 1;",
+    "new": "        if (has('MoveRight')) num5 = 1;\n        else if (has('MoveLeft')) num5 = -1;",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-fatigue-left-turns",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "(vSqrMagnitude(state.MoveVectorTarget) > 0 || state.TurnTarget > 0)",
+    "new": "(vSqrMagnitude(state.MoveVectorTarget) > 0 || state.TurnTarget !== 0)",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-fatigue-crewed-too",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "if (!boat.crewed && (vSqrMagnitude(state.MoveVectorTarget) > 0",
+    "new": "if ((vSqrMagnitude(state.MoveVectorTarget) > 0",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-fatigue-timer-strict",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "if (state.oarModeTimer >= OAR_MODE_TIME) {",
+    "new": "if (state.oarModeTimer > OAR_MODE_TIME) {",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-turn-refusal-zero",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "        state.TurnTarget = 0 - num5;\n        state.TurnCurrent = state.TurnTarget;\n      }\n      const rudder = rudderOf(boat);",
+    "new": "        state.TurnTarget = 0;\n        state.TurnCurrent = state.TurnTarget;\n      }\n      const rudder = rudderOf(boat);",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-turn-refusal-not-at-once",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "        state.TurnTarget = 0 - num5;\n        state.TurnCurrent = state.TurnTarget;\n      }\n      const rudder = rudderOf(boat);",
+    "new": "        state.TurnTarget = 0 - num5;\n      }\n      const rudder = rudderOf(boat);",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-velocity-no-speed",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "state.velocityTarget = vScale(state.MoveVectorTarget, moveSpeed());",
+    "new": "state.velocityTarget = vScale(state.MoveVectorTarget, 1);",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-collision-no-push",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "state.MoveVectorCurrent = vAdd(vProjectOnPlane(state.MoveVectorCurrent, state.CollisionVector), state.CollisionVector);",
+    "new": "state.MoveVectorCurrent = vProjectOnPlane(state.MoveVectorCurrent, state.CollisionVector);",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-collision-zero-point-both",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    sweep(vSub(val2, val3), true);",
+    "new": "    sweep(vSub(val2, val3), false);",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-collision-own-root",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "        if (hit.root === boat.GameObject || hit.terrain || hit.entity) continue;",
+    "new": "        if (hit.terrain || hit.entity) continue;",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-collision-terrain",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "        if (hit.root === boat.GameObject || hit.terrain || hit.entity) continue;",
+    "new": "        if (hit.root === boat.GameObject || hit.entity) continue;",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-collision-entity",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "        if (hit.root === boat.GameObject || hit.terrain || hit.entity) continue;",
+    "new": "        if (hit.root === boat.GameObject || hit.terrain) continue;",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-collision-radius-length",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    const x = f(local.extent[0]);",
+    "new": "    const x = f(local.extent[2]);",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-collision-length-full",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "vScale(quatRotate(boat.MeshObject.rotation, [0, 0, 1]), f(f(local.extent[2]) - x));",
+    "new": "vScale(quatRotate(boat.MeshObject.rotation, [0, 0, 1]), f(local.extent[2]));",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-collision-not-flattened",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "const off = vNormalized(vProjectOnPlane(vSub(hit.start ? center : boat.GameObject.position, hit.point), V_UP));",
+    "new": "const off = vNormalized(vSub(hit.start ? center : boat.GameObject.position, hit.point));",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-collision-cleared-never",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    } else state.CollisionVector = [0, 0, 0];\n  }",
+    "new": "    }\n  }",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-cargo-female-male",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "(deps.entity?.isFemale?.() ? CARGO_WEIGHTS.female : CARGO_WEIGHTS.male)",
+    "new": "(deps.entity?.isFemale?.() ? CARGO_WEIGHTS.male : CARGO_WEIGHTS.female)",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-cargo-said-every-time",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (state.lastWeight !== num) {",
+    "new": "    if (true) {",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-cargo-bigger-boat-half",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "export const cargoModWords = (mod) => (mod < 0.5 ? \"You're going to need a bigger boat\"",
+    "new": "export const cargoModWords = (mod) => (mod < 0.3 ? \"You're going to need a bigger boat\"",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-cargo-carried-uncounted",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (setting('Cargo.PlayerCarriedWeight', true)) num = f(num + f(deps.entity?.carriedWeight?.() ?? 0));",
+    "new": "    if (false) num = f(num + f(deps.entity?.carriedWeight?.() ?? 0));",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-cargo-horse-default-on",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (setting('Cargo.HorseItem', false) && deps.transport?.hasHorse?.()) num = f(num + CARGO_WEIGHTS.horse);",
+    "new": "    if (deps.transport?.hasHorse?.()) num = f(num + CARGO_WEIGHTS.horse);",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-clamp-nan-min",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "export function mathfClamp(v, min, max) {\n  if (v < min) return min;",
+    "new": "export function mathfClamp(v, min, max) {\n  if (!(v >= min)) return min;",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-position-nan-assigned",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  if (!p.every(Number.isFinite)) { log?.(`transform.position assign attempt",
+    "new": "  if (false) { log?.(`transform.position assign attempt",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-temp-ship-when-owned",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (boat.crewed && !deps.ship?.owns?.()) {",
+    "new": "    if (boat.crewed) {",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-temp-ship-scenes-kept",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    for (const scene of TEMPORARY_SHIP_SCENES) deps.ship?.removePermanentScene?.(scene);",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-crew-not-swapped",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    boat.IdleObject?.setActive(false);\n    boat.ActiveObject?.setActive(true);",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-footsteps-left-on",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    deps.helm.footsteps?.(false);",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-disembark-no-wait",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    co.phase = 'unparent';\n    endOfFrameQueue.push(() => resumeStopSailing(co));",
+    "new": "    co.phase = 'unparent';\n    resumeStopSailing(co);\n    endOfFrameQueue.push(() => resumeStopSailing(co));",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-disembark-no-hold",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      if (deps.helm.frozen()) {\n        if (!state.AllBoats.includes(co.boatlast))",
+    "new": "      if (false) {\n        if (!state.AllBoats.includes(co.boatlast))",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-disembark-twice",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  function StopSailingDelayed() {\n    if (state.disembarking != null) return;",
+    "new": "  function StopSailingDelayed() {",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-helm-no-pin",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (!vEquals(deps.player().position, drive)) deps.helm.setPlayerPosition(drive);",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-helm-no-freeze",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    deps.helm.freeze(1);\n",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-helm-transport-stays",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "if (deps.input?.started?.(BOAT_ACTIONS.disembark) || deps.input?.started?.('Transport')) StopSailingDelayed();",
+    "new": "if (deps.input?.started?.(BOAT_ACTIONS.disembark)) StopSailingDelayed();",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-helm-light-held",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (deps.input?.started?.(BOAT_ACTIONS.toggleLight)) setLights(boat, !boat.LightOn);",
+    "new": "    if (deps.input?.started?.(BOAT_ACTIONS.toggleLight) || boat.LightOn) setLights(boat, !boat.LightOn);",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-stop-freeze-kept",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    deps.helm.freeze(0);\n    raise('OnUpdateSailing', false);",
+    "new": "    raise('OnUpdateSailing', false);",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-child-not-turned",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      deps.helm.turnPlayer(yawDelta(before, after));",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-rider-not-carried",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      enemy.setPosition(carriedPoint(before, after, enemy.position()));",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-rider-airborne",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "          if (boat != null && enemy.grounded()) {",
+    "new": "          if (boat != null) {",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-rider-any-node",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "if (hit.node != null && hit.node === allBoat.MeshObject && hit.collider === allBoat.MeshCollider) { boat = allBoat; break; }",
+    "new": "if (hit.root === allBoat.GameObject) { boat = allBoat; break; }",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-rider-dead-kept",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      for (const k of [...state.parentedObjects.keys()]) if (!live.has(k)) state.parentedObjects.delete(k);",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-activate-any-reach",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (!(hit.distance <= ACTIVATION_DISTANCE)) return false;",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-rudder-pack-while-driving",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "        if (state.CurrentBoat != null && state.CurrentBoat === boat) deps.midScreenText('You cannot pack a boat you are driving!', 1.5);",
+    "new": "        if (false) deps.midScreenText('You cannot pack a boat you are driving!', 1.5);",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-board-next-sibling",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  const child = parent.getChild(parent.children.indexOf(triggerNode) - 1);",
+    "new": "  const child = triggerNode;",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-board-no-align",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    deps.helm.alignToGround?.(3);",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-model-name-uncut",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  if (pos > 0 && pos < n.length - 1) n = n.slice(0, pos + 1);",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-fasttravel-no-pack",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      if (currentBoat.packable) PackBoat(currentBoat, true);",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-startload-riders-kept",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  function OnStartLoad() {\n    state.parentedObjects.clear();",
+    "new": "  function OnStartLoad() {",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-death-reset-said",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  function OnPlayerDeath() {\n    if (isSailing()) StopSailing();\n    else ResetTimeScale(false);",
+    "new": "  function OnPlayerDeath() {\n    if (isSailing()) StopSailing();\n    else ResetTimeScale(true);",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-reset-ignores-unity-scale",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (state.timeScaleIndex !== 0 || f(deps.timeScale?.() ?? 1) !== 1) {",
+    "new": "    if (state.timeScaleIndex !== 0) {",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-restore-no-helm",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      StartSailing(boat);\n      if (data.sailPosition > 0) RaiseSails();",
+    "new": "      if (data.sailPosition > 0) RaiseSails();",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-restore-sail-not-stopped",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  function applySaveData(dataIn) {\n    if (isSailing()) StopSailing();",
+    "new": "  function applySaveData(dataIn) {",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-origin-helm-not-pinned",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (boat === state.CurrentBoat) {\n      deps.helm.setPlayerPosition(boat.DrivePosition.position);",
+    "new": "    if (boat === state.CurrentBoat) {",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-vequals-exact",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "export const vEquals = (a, b) => vSqrMagnitude(vSub(a, b)) < K_EPSILON_SQ;",
+    "new": "export const vEquals = (a, b) => vSqrMagnitude(vSub(a, b)) === 0;",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-projectonplane-sign",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  return [0, 1, 2].map((i) => f(f(v[i]) - f(f(f(n[i]) * d) / sqrMag)));",
+    "new": "  return [0, 1, 2].map((i) => f(f(v[i]) + f(f(f(n[i]) * d) / sqrMag)));",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-movetowards-no-snap",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  if (sqdist === 0 || (md >= 0 && sqdist <= f(md * md))) return target.map((t) => f(t));",
+    "new": "  if (sqdist === 0) return target.map((t) => f(t));",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-mathf-movetowards-sign",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  return f(f(current) + f((d >= 0 ? 1 : -1) * f(maxDelta)));",
+    "new": "  return f(f(current) + f((d > 0 ? 1 : -1) * f(maxDelta)));",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-yaw-unwrapped",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  return d < 0 ? d + 360 : d;",
+    "new": "  return d;",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-input-no-animation-mod",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "state.inputCurrent = vMoveTowards(state.inputCurrent, inputTarget(), f(f(boat.modifierAnimation) * f(1 * dt())));",
+    "new": "state.inputCurrent = vMoveTowards(state.inputCurrent, inputTarget(), f(1 * dt()));",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-beached-moves",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (!IsBeached(boat)) {\n      // QUAYS (the port's own",
+    "new": "    if (true) {\n      // QUAYS (the port's own",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-pause-unmarked",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "    if (paused) { state.wasPaused = true; return; }",
+    "new": "    if (paused) return;",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-late-pause-open",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  function lateUpdate({ paused = false, activateComplete = false } = {}) {\n    animate();   // the Animators, after every Update and before every LateUpdate, as Unity steps them\n    simulateParticles();   // CSA-F: then the particle systems (PreLateUpdate's ParticleSystemBeginUpdateAll)\n    if (paused) return;",
+    "new": "  function lateUpdate({ paused = false, activateComplete = false } = {}) {\n    animate();   // the Animators, after every Update and before every LateUpdate, as Unity steps them\n    simulateParticles();   // CSA-F: then the particle systems (PreLateUpdate's ParticleSystemBeginUpdateAll)",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js",
+      "test/systems/comeSailAway/csa_placing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-fixed-pause-open",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "  function fixedUpdate({ paused = false } = {}) {\n    if (paused) return;",
+    "new": "  function fixedUpdate({ paused = false } = {}) {",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-nodes-no-collision",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      UpdateBoatNodes(state.CurrentBoat);\n      CheckCollision(state.CurrentBoat);",
+    "new": "      UpdateBoatNodes(state.CurrentBoat);",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-beached-update-no-stop",
+    "file": "src/systems/comeSailAway/comeSailAway.js",
+    "old": "      state.MoveVectorCurrent = [0, 0, 0];\n      state.MoveVectorTarget = [0, 0, 0];\n      ResetTimeScale();\n    }\n    if (state.timeScaleIndex !== 0 && deps.enemiesNearby?.()) {",
+    "new": "      ResetTimeScale();\n    }\n    if (state.timeScaleIndex !== 0 && deps.enemiesNearby?.()) {",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-sweep-overlap-as-hit",
+    "file": "src/player/collider.js",
+    "old": "      if (overlap) { out.push({ key, dist: 0, point: [0, 0, 0] }); continue; }",
+    "new": "",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-sweep-no-radius",
+    "file": "src/player/collider.js",
+    "old": "      if (Number.isFinite(best)) out.push({ key, dist: Math.max(0, best - radius), point: bestPoint });",
+    "new": "      if (Number.isFinite(best)) out.push({ key, dist: best, point: bestPoint });",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-sweep-skip-ignored",
+    "file": "src/player/collider.js",
+    "old": "      if (skip && skip.has(key)) continue;\n      const t = bucket.t();\n      const R = bucket.r ? bucket.r() : null;   // AUDIT NAV1 (#12): a mover's - its box as it stands turned, the start turned back",
+    "new": "      const t = bucket.t();\n      const R = bucket.r ? bucket.r() : null;   // AUDIT NAV1 (#12): a mover's - its box as it stands turned, the start turned back",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-pin-span-kept",
+    "file": "src/player/motor.js",
+    "old": "    this._prevPos[0] = x; this._prevPos[1] = y; this._prevPos[2] = z;\n    this._eyeFeetY = null;",
+    "new": "    this._eyeFeetY = null;",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-autorun-unwritable",
+    "file": "src/player/motor.js",
+    "old": "  set toggleAutorun(v) { this._autorun = !!v; }",
+    "new": "  set toggleAutorun(v) { }",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-race-boat-no-rival",
+    "file": "src/player/activationRace.js",
+    "old": "Math.min(lootD, dropD, torchD, wagonD, horseCartD, campD, waterD, gateD, brokerD, boatD, doorDistance);",
+    "new": "Math.min(lootD, dropD, torchD, wagonD, horseCartD, campD, waterD, gateD, brokerD, doorDistance);",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  },
+  {
+    "name": "CSA-D-race-boat-before-hcc",
+    "file": "src/player/activationRace.js",
+    "old": "  return firmFirst([gate, broker, camp, water, wagon, horseCart, boat, torch,",
+    "new": "  return firmFirst([gate, broker, camp, water, wagon, boat, horseCart, torch,",
+    "tests": [
+      "test/systems/comeSailAway/csa_sailing.test.js"
+    ]
+  }
 ]

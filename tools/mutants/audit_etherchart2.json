@@ -1,0 +1,506 @@
+[
+  {
+    "name": "AE-U1-height",
+    "file": "src/ui/etherChartWindow.js",
+    "old": ".dfchart-win { width: min(96vw, 1100px); max-width: 96vw; height: min(92vh, 900px); }",
+    "new": ".dfchart-win { width: min(96vw, 1100px); max-width: 96vw; }",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-U1-room",
+    "file": "src/ui/etherChartWindow.js",
+    "old": ".dfchart-stage { position: relative; flex: 1 1 auto; min-height: 120px; }",
+    "new": ".dfchart-stage { position: relative; height: 64vh; }",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-U1-hint",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  .dfchart-hint { display: none; }\n",
+    "new": "",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-U1-once",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "if (doc.getElementById?.(ETHER_CHART_STYLE_ID)) return;",
+    "new": "void 0;",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-U2-caret",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  if (m.ship.on) {\n    const x = Math.round(m.ship.x);",
+    "new": "  if (!m.ship.on) {\n    const x = Math.round(m.ship.x);",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-U2-bounds",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "for (const seg of m.ruler) if (seg.x0 > 0) { g.moveTo(",
+    "new": "for (const seg of m.ruler) if (seg.x0 > 1e9) { g.moveTo(",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-U2-ticks",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "for (const x of m.grid.xs) { g.moveTo(Math.round(x) + 0.5, h - 4);",
+    "new": "for (const x of []) { g.moveTo(Math.round(x) + 0.5, h - 4);",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-U3-edge",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "    g.strokeStyle = EDGE_LINE; g.lineWidth = 1.5; g.beginPath();",
+    "new": "    g.strokeStyle = 'rgba(0,0,0,0)'; g.lineWidth = 1.5; g.beginPath();",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-U5-key",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "const at = `${sc.words}:${sc.px}:${dpr}`;",
+    "new": "const at = `${sc.px}:${dpr}`;",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-U9-spot",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "box: fits.find((b) => ![...placed, ...ring].some((p) => overlaps(b, p))) ?? fits[0] ?? spots[0] };",
+    "new": "box: spots[0] };",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-U10-landing",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "fonts?.addEventListener?.('loadingdone', landed);",
+    "new": "void 0;",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-U11-order",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "    showScale(scaleBar(view.zoom));",
+    "new": "    void 0;",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-U11-watch",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "roomWatch?.observe(stage);",
+    "new": "void roomWatch;",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T1-fallback",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "      if (clear.length) {\n        t.box = clear.reduce((best, b)",
+    "new": "      {\n        t.box = (clear.length ? clear : corners).reduce((best, b)",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-fill-grey",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "g.fillStyle = KIND_COLOURS[kind] ?? KIND_COLOURS.rock; g.fill();",
+    "new": "g.fillStyle = KIND_COLOURS.rock; g.fill();",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-rock-ink",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "g.strokeStyle = KIND_COLOURS.rock; g.lineWidth = s * 0.8; g.stroke();",
+    "new": "g.strokeStyle = INK; g.lineWidth = s * 0.8; g.stroke();",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-ink-off",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  g.strokeStyle = INK; g.lineWidth = 1.5; g.stroke();\n  if (kind === 'port'",
+    "new": "  g.lineWidth = 1.5;\n  if (kind === 'port'",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-depth-one",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "g.fillStyle = DEPTH_TONES[d.id] ?? DEPTH_TONES.abyss; g.fillRect(d.x0",
+    "new": "g.fillStyle = DEPTH_TONES.abyss; g.fillRect(d.x0",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-ship-off",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  if (s.on) paintShip(g, s.x, s.y, s.yaw);",
+    "new": "  if (!s.on) paintShip(g, s.x, s.y, s.yaw);",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-heading",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "g.save(); g.translate(x, y); g.rotate(yaw); g.scale(k, k);",
+    "new": "g.save(); g.translate(x, y); g.rotate(-yaw); g.scale(k, k);",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-pointer-way",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "g.save(); g.translate(e.x, e.y); g.rotate(e.a);",
+    "new": "g.save(); g.translate(e.x, e.y); g.rotate(-e.a);",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-home",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "if (i.home) { g.beginPath(); g.arc(i.x, i.y, i.icon + 3.5, 0, TAU);",
+    "new": "if (false) { g.beginPath(); g.arc(i.x, i.y, i.icon + 3.5, 0, TAU);",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-bearing",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "g.beginPath(); g.moveTo(s.x, s.y); g.lineTo(p.x, p.y); g.stroke();",
+    "new": "g.beginPath(); g.stroke();",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-pick-ring",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "g.beginPath(); g.arc(p.x, p.y, p.r + 5, 0, TAU);",
+    "new": "g.beginPath();",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-card",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "g.font = CHART_FONT.name; g.fillStyle = '#f6e2b0'; g.fillText(p.title,",
+    "new": "g.font = CHART_FONT.name; g.fillStyle = '#f6e2b0'; void (p.title,",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-wash-swap",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "g.fillStyle = t.sails ? 'rgba(224,83,63,0.16)' : 'rgba(150,150,175,0.06)';",
+    "new": "g.fillStyle = t.sails ? 'rgba(150,150,175,0.06)' : 'rgba(224,83,63,0.16)';",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-sunk-dash",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "g.setLineDash(t.sails ? [] : [5, 4]); g.lineWidth = 2;",
+    "new": "g.setLineDash([]); g.lineWidth = 2;",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-name-east",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "halo(g, capFirst(i.name), i.box[0], (i.box[1] + i.box[3]) / 2,",
+    "new": "halo(g, capFirst(i.name), i.x + i.r + 4, (i.box[1] + i.box[3]) / 2,",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-halo-align",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "function halo(g, text, x, y, fill, align = 'left') {",
+    "new": "function halo(g, text, x, y, fill, align = 'right') {",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-baseline",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  // every word, last\n  g.textBaseline = 'middle';",
+    "new": "  // every word, last\n  g.textBaseline = 'top';",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-land",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "if (i.land < i.icon * 1.6) continue;",
+    "new": "continue;",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-void",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "if (sea[0] > 0 || sea[1] > 0 || sea[3] < h) { g.fillStyle = VOID_TONE;",
+    "new": "if (false) { g.fillStyle = VOID_TONE;",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-key-port",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "else paintMark(g, what, x, y, what === 'port' ? 4.5 : 4);",
+    "new": "else paintMark(g, 'port', x, y, what === 'port' ? 4.5 : 4);",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-key-sunk",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "paintHaunt(g, { x, y, r: 6, sails: what === 'haunt' });",
+    "new": "paintHaunt(g, { x, y, r: 6, sails: true });",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T2-key-word",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "keyRow('wild', () => t('sea.chart.key.wild', 'Wild isle'))",
+    "new": "keyRow('wild', () => t('sea.chart.key.wild', 'Ruin'))",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T3-ruler-face",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "g.textBaseline = 'middle'; g.textAlign = 'center'; g.font = CHART_FONT.small;",
+    "new": "g.textBaseline = 'middle'; g.textAlign = 'center'; g.font = CHART_FONT.name;",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T3-haunt-sub",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "pw = Math.max(tw, width(t.sub, CHART_FONT.small)) + 12;",
+    "new": "pw = Math.max(tw, width(t.sub)) + 12;",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T3-name-small",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  g.font = CHART_FONT.name;\n  for (const i of m.isles) if (i.label && i.box) halo(",
+    "new": "  g.font = CHART_FONT.small;\n  for (const i of m.isles) if (i.label && i.box) halo(",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T3-card-words",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "width(words, CHART_FONT.small)) + 16",
+    "new": "width(words)) + 16",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T3-pointer",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "tw = width(words, CHART_FONT.small);",
+    "new": "tw = width(words);",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T4-west",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "[i.x - i.r - 4 - tw, i.y - LABEL_H / 2, i.x - i.r - 4, i.y + LABEL_H / 2],",
+    "new": "[i.x - i.r - 4 - tw + 8, i.y - LABEL_H / 2, i.x - i.r - 4, i.y + LABEL_H / 2],",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T4-gap",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "[i.x + i.r + 4, i.y - LABEL_H / 2, i.x + i.r + 4 + tw,",
+    "new": "[i.x + i.r + 2, i.y - LABEL_H / 2, i.x + i.r + 4 + tw,",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T5-filter",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "    if (on(x, y, r)) haunts.push({",
+    "new": "    if (true) haunts.push({",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T5-floor",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "cy = Math.max(CHART_MARGIN + LABEL_H / 2, t.y - t.r - 10);",
+    "new": "cy = t.y - t.r - 10;",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T5-plate-floor",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "vy0 = Math.max(t.y - t.r, 0),",
+    "new": "vy0 = t.y - t.r,",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T6-order",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "  for (const i of ports) letter(i);\n  for (const t of haunts) nameHaunt(t);\n",
+    "new": "  for (const i of ports) letter(i);\n  for (const i of lesser) letter(i);\n  for (const t of haunts) nameHaunt(t);\n",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T6-ring",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "onChart(box) && !ring.some((p) => overlaps(box, p))",
+    "new": "onChart(box)",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T7-title",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "const title = capFirst(named.name), words =",
+    "new": "const title = named.name, words =",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T10-finger",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "b.style.flex = '0 0 auto'; b.style.minWidth = '44px';",
+    "new": "b.style.flex = '1 1 100%'; b.style.minWidth = '0';",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T10-role",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "canvas.setAttribute('role', 'img');",
+    "new": "void 0;",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-T6-edge",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "i.box = free.find((box) => onChart(box) && !ring",
+    "new": "i.box = free.find((box) => !ring",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-C4-pointer-first",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "    placed.push(ship.label.box, [e.x - 16, e.y - 16, e.x + 16, e.y + 16]);",
+    "new": "    void e;",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-C7-chart-side",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "?? free.find(onChart) ?? free[0];",
+    "new": "?? free[0];",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-C8-hers",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "if (hers && !taken(box)) { t.box = box; t.at = [cx, cy]; }",
+    "new": "if (!taken(box)) { t.box = box; t.at = [cx, cy]; }",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-C10-port-marks",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "!(port ? portMarks : marks).some(",
+    "new": "!marks.some(",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  },
+  {
+    "name": "AE-C11-note",
+    "file": "src/ui/etherChartWindow.js",
+    "old": "noteLine.textContent = isle ? isleWords(isle, { px: word.px + 0.5, py: word.py + 0.5 }) : ''; draw(); },",
+    "new": "draw(); },",
+    "tests": [
+      "test/ui/audit_etherchart2.test.js"
+    ]
+  }
+]

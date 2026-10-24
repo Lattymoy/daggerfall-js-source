@@ -1,141 +1,141 @@
 [
   {
     "name": "OW6-S-warn-short",
-    "file": "src/systems/travelThreat.js",
+    "file": "src/systems/travel/travelThreat.js",
     "old": "export const THREAT_WARN_S = 0.6;",
     "new": "export const THREAT_WARN_S = 1.2;",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "OW6-HALF (2026-10-01): the warning back at 1.2 s - the hold begins twice as far out as the player asked."
   },
   {
     "name": "OW6-S-inside-always-held",
-    "file": "src/systems/travelThreat.js",
+    "file": "src/systems/travel/travelThreat.js",
     "old": "  if (d <= reach) return along >= 0 ? 0 : Infinity;",
     "new": "  if (d <= reach) return 0;",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "A traveller leaving a band's sight held at walking pace all the way out."
   },
   {
     "name": "OW6-S-passing-counted",
-    "file": "src/systems/travelThreat.js",
+    "file": "src/systems/travel/travelThreat.js",
     "old": "  if (disc < 0) return Infinity;   // the way passes it by",
     "new": "  if (disc < 0) return Math.max(0, d - reach);",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "A band beside the road, which the way never comes near, slows the journey."
   },
   {
     "name": "OW6-S-root-sign",
-    "file": "src/systems/travelThreat.js",
+    "file": "src/systems/travel/travelThreat.js",
     "old": "  const enter = along - Math.sqrt(disc);",
     "new": "  const enter = along + Math.sqrt(disc);",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "The far crossing taken for the near: slowed only once past the band."
   },
   {
     "name": "OW6-S-behind-counted",
-    "file": "src/systems/travelThreat.js",
+    "file": "src/systems/travel/travelThreat.js",
     "old": "  return enter >= 0 ? enter : Infinity;   // both crossings behind: it is behind the traveller",
     "new": "  return Math.abs(enter);",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "A band behind slows the traveller riding away from it."
   },
   {
     "name": "OW6-S-no-way-full-distance",
-    "file": "src/systems/travelThreat.js",
+    "file": "src/systems/travel/travelThreat.js",
     "old": "  if (!heading) return Math.max(0, d - reach);",
     "new": "  if (!heading) return d;",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "Without a way, the reach forgotten."
   },
   {
     "name": "OW6-S-no-fives",
-    "file": "src/systems/travelThreat.js",
+    "file": "src/systems/travel/travelThreat.js",
     "old": "export const threatStep = (n) => (n >= 5 ? Math.floor(n / 5) * 5 : Math.max(1, Math.floor(n)));",
     "new": "export const threatStep = (n) => Math.max(1, Math.floor(n));",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "Rates off the spinner's ladder (x37)."
   },
   {
     "name": "OW6-S-under-walking",
-    "file": "src/systems/travelThreat.js",
+    "file": "src/systems/travel/travelThreat.js",
     "old": "export const threatStep = (n) => (n >= 5 ? Math.floor(n / 5) * 5 : Math.max(1, Math.floor(n)));",
     "new": "export const threatStep = (n) => (n >= 5 ? Math.floor(n / 5) * 5 : Math.floor(n));",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "Held to x0: the governor stops the journey, which is the encounter's to do."
   },
   {
     "name": "OW6-S-chaser-pace-dropped",
-    "file": "src/systems/travelThreat.js",
+    "file": "src/systems/travel/travelThreat.js",
     "old": "    const closing = speedMps + (t.mps > 0 ? t.mps : 0);",
     "new": "    const closing = speedMps;",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "A chaser's own run uncounted: it closes faster than the warning."
   },
   {
     "name": "OW6-S-chaser-behind-never",
-    "file": "src/systems/travelThreat.js",
+    "file": "src/systems/travel/travelThreat.js",
     "old": "    const m = t.chasing ? Math.max(0, Math.hypot(t.dx, t.dz) - t.reach) : metresToReach(t.dx, t.dz, t.reach, heading);",
     "new": "    const m = metresToReach(t.dx, t.dz, t.reach, heading);",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "A band chasing from behind never slows the journey."
   },
   {
     "name": "OW6-S-first-not-worst",
-    "file": "src/systems/travelThreat.js",
+    "file": "src/systems/travel/travelThreat.js",
     "old": "    if (near === null || r < rate) { rate = r; best = m; near = t; }",
     "new": "    if (near === null) { rate = r; best = m; near = t; }",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "The first enemy listed holds, not the nearest."
   },
   {
     "name": "OW6-S-view-cap-unmet",
     "file": "src/scenes/world.js",
-    "old": "    const rate = Math.min(load, foeCap);   // OW6: the ground's cap and the enemies', the lower",
-    "new": "    const rate = load;",
+    "old": "    const rate = Math.min(load, foeCap, town);   // OW6: the ground's cap and the enemies', the lower",
+    "new": "    const rate = Math.min(load, town);",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "Under the view the enemies' cap is never met."
   },
   {
     "name": "OW6-S-classic-ungoverned",
     "file": "src/scenes/world.js",
-    "old": "      const rate = csaHoldsTimeScale() ? null : (foes.strangerRate ? Math.min(foePaced(foes.cap, travelAsked), foes.strangerRate) : foePaced(foes.cap, travelAsked));",
+    "old": "      const rate = csaHoldsTimeScale() ? null : (foes.strangerRate ? Math.min(foeRate(foes, travelAsked), foes.strangerRate) : foeRate(foes, travelAsked));",
     "new": "      const rate = csaHoldsTimeScale() ? null : travelAsked;",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "The classic skin's journey never slows."
   },
   {
     "name": "OW6-S-reason-always-load",
     "file": "src/scenes/world.js",
-    "old": "    tvHeldWhy = tvHeld == null ? null : foeCap < load ? 'foes' : 'load';",
-    "new": "    tvHeldWhy = tvHeld == null ? null : 'load';",
+    "old": "    tvHeldWhy = tvHeld == null ? null : town < Math.min(load, foeCap) ? 'town' : foeCap < load ? 'foes' : 'load';",
+    "new": "    tvHeldWhy = tvHeld == null ? null : town < Math.min(load, foeCap) ? 'town' : 'load';",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "The panel says the land is loading while an enemy holds the journey."
   },
@@ -145,7 +145,7 @@
     "old": "if (_tvAttack?.kind === 'band' && _tvAttack.id === c.band.id) continue; const [dx, dz] = rel(c.pos.x, c.pos.z); out.push({ dx, dz, reach: BAND_CONTACT_M, chasing: true, mps: BAND_CHASE_MPS });",
     "new": "if (_tvAttack?.kind === 'band' && _tvAttack.id === c.band.id) continue;",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "A band chasing the traveller never slows them."
   },
@@ -155,7 +155,7 @@
     "old": "    if (up && warmAshesOn() && csaOn() && raidQuarry()) {",
     "new": "    if (false) {",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "A raider's lookout never slows a crossing."
   },
@@ -165,7 +165,7 @@
     "old": "      if (!foeAlerted(f) || !f.ai.feet || f.ai.unreachable) continue;",
     "new": "      if (!f.ai?.feet || f.ai.unreachable) continue;",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "A friend, a pacified foe or the dead slows the journey."
   },
@@ -175,18 +175,18 @@
     "old": "    if (why === 'foes' && _slowWas !== 'foes' && t - _slowSaidAt >= JOURNEY_SLOW_SAY_MS) { tvSay(TRAVEL_VIEW_TEXT.enemiesSlow, 3); _slowSaidAt = t; }",
     "new": "    if (why === 'foes') { tvSay(TRAVEL_VIEW_TEXT.enemiesSlow, 3); _slowSaidAt = t; }",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "The line said every frame the journey is held."
   },
   {
     "name": "OW6-S-reason-unshown",
-    "file": "src/ui/enhancedTravelControl.js",
+    "file": "src/ui/enhanced/enhancedTravelControl.js",
     "old": "  const foesHold = held != null && state.heldWhy === 'foes';",
     "new": "  const foesHold = false;",
     "tests": [
-      "test/tv2_click_to_move.test.js",
-      "test/enemy_pace.test.js"
+      "test/systems/travel/tv2_click_to_move.test.js",
+      "test/ui/enhanced/enemy_pace.test.js"
     ],
     "note": "The panel never says an enemy holds the journey. ENEMY-PACE (re-aimed by content): the general readout no longer shows the enemies' hold (the merge's deliberate change - its title says only the land's or the ground's); the panel says it with the near-enemies row, shown only while the enemies hold - so the mutant hides that row for good."
   },
@@ -196,17 +196,17 @@
     "old": "  return !!f && !f.dead && !!f.ai && (f.ai.isHostile ?? true) && mobileTeamOf(f.entity) !== 'PlayerAlly';",
     "new": "  return !!f && !f.dead && !!f.ai && mobileTeamOf(f.entity) !== 'PlayerAlly';",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "A pacified foe reads hostile."
   },
   {
     "name": "OW6-S-keys-uncapped",
     "file": "src/scenes/world.js",
-    "old": "    const rate = Math.min(load, foeCap);   // OW6: the ground's cap and the enemies', the lower",
-    "new": "    const rate = journey ? Math.min(load, foeCap) : load;",
+    "old": "    const rate = Math.min(load, foeCap, town);   // OW6: the ground's cap and the enemies', the lower",
+    "new": "    const rate = journey ? Math.min(load, foeCap, town) : Math.min(load, town);",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "TV-WASD's keys' travel runs at the spinner's rate straight into a band's sight."
   },
@@ -216,7 +216,7 @@
     "old": "keys ? _tvWalkYaw : null;",
     "new": "null;",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "The keys' way unread: a band behind the traveller holds a walk away from it."
   },
@@ -226,7 +226,7 @@
     "old": "          _tvWalkYaw = way;   // OW6: the way the keys go, for the enemies' cap (travelViewGovern reads it next frame)\n",
     "new": "",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "The keys' way never kept: the cap reads no heading for them."
   },
@@ -236,7 +236,7 @@
     "old": "{ tvSay(TRAVEL_VIEW_TEXT.enemiesSlow, 3); _slowSaidAt = t; }",
     "new": "{ townTalk.say(TRAVEL_VIEW_TEXT.enemiesSlow, 3); _slowSaidAt = t; }",
     "tests": [
-      "test/ow5_audit.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "The enemies' line said past tvSay: at x20 its three seconds last a sixth of one (AUDIT OW5 G2's law)."
   },
@@ -246,7 +246,7 @@
     "old": "worldTimeScale() !== (tvHeld ?? travelAsked)) setWorldTimeScale(tvHeld ?? travelAsked);",
     "new": "worldTimeScale() !== travelAsked) setWorldTimeScale(travelAsked);",
     "tests": [
-      "test/ow5_audit.test.js"
+      "test/player/eyeOfTheBeholder/ow5_audit.test.js"
     ],
     "note": "A First-Person crossing's restore (AUDIT OW5 G5) sets the mod's ask over the enemies' hold, every frame."
   },
@@ -256,7 +256,7 @@
     "old": "      const rate = csaHoldsTimeScale() ? null : (foes.strangerRate ?",
     "new": "      const rate = (foes.strangerRate ?",
     "tests": [
-      "test/ow6_slowdown.test.js"
+      "test/systems/travel/ow6_slowdown.test.js"
     ],
     "note": "The classic skin's cap sets the clock over Come Sail Away's own helm time step."
   }

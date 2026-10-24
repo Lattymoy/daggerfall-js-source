@@ -1,0 +1,146 @@
+[
+  {
+    "name": "HOLD-storage-unsaid",
+    "file": "src/systems/comeSailAway/comeSailAwayItems.js",
+    "old": "playerOwned: cargo.playerOwned !== false, storage: true });",
+    "new": "playerOwned: cargo.playerOwned !== false });",
+    "tests": [
+      "test/scenes/holddoor.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-title-unread",
+    "file": "src/ui/enhanced/enhancedInventory.js",
+    "old": "|| (kind === 'storage' && typeof deps.loot?.title === 'string' && deps.loot.title) || REMOTE_TITLE[kind],",
+    "new": "|| REMOTE_TITLE[kind],",
+    "tests": [
+      "test/scenes/holddoor.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-helm-unread",
+    "file": "src/scenes/holdDoor.js",
+    "old": "    if (r?.isSailing?.() && r.state?.CurrentBoat) return r.state.CurrentBoat;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/holddoor.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-deck-unread",
+    "file": "src/scenes/holdDoor.js",
+    "old": "    if (deck) return deck;\n",
+    "new": "",
+    "tests": [
+      "test/scenes/holddoor.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-cabin-unread",
+    "file": "src/scenes/holdDoor.js",
+    "old": "    return cabin ? afloat(cabin.uid) : null;",
+    "new": "    return null;",
+    "tests": [
+      "test/scenes/holddoor.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-rowboat-a-hold",
+    "file": "src/scenes/holdDoor.js",
+    "old": "export const HULL_HOLDS = Object.freeze([false, true, true, true, true]);",
+    "new": "export const HULL_HOLDS = Object.freeze([true, true, true, true, true]);",
+    "tests": [
+      "test/scenes/holddoor.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-laid-up-unread",
+    "file": "src/scenes/holdDoor.js",
+    "old": "    const items = r.laidUpHold(uid);",
+    "new": "    const items = [];",
+    "tests": [
+      "test/scenes/holddoor.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-parts-left-in-hold",
+    "file": "src/scenes/holdDoor.js",
+    "old": "    const onClose = parts ? () =>",
+    "new": "    const onClose = false ? () =>",
+    "tests": [
+      "test/scenes/holddoor.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-last-helm-forgotten",
+    "file": "src/scenes/holdDoor.js",
+    "old": "      if (b?.uid != null && holdsCargo(b.hull)) lastHelm = b.uid;",
+    "new": "      if (b?.uid != null && holdsCargo(b.hull)) lastHelm = null;",
+    "tests": [
+      "test/scenes/holddoor.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-rowboat-picked",
+    "file": "src/scenes/holdDoor.js",
+    "old": "const mine = ships().filter((s) => holdsCargo(s.hull) && (afloat(s.uid)",
+    "new": "const mine = ships().filter((s) => (afloat(s.uid)",
+    "tests": [
+      "test/scenes/holddoor.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-fleet-act-refused",
+    "file": "src/scenes/fleetHost.js",
+    "old": "      return said(true, t('naval.hold.opened', 'Hold opened.'), () => !!deps.openHold(uid));",
+    "new": "      return said(false, t('naval.hold.opened', 'Hold opened.'));",
+    "tests": [
+      "test/scenes/holddoor.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-fleet-button-unshown",
+    "file": "src/ui/fleetPage.js",
+    "old": "  if (s.hold) acts.append(button(el, 'Hold', null, () => act('hold')));",
+    "new": "  if (false) acts.append(button(el, 'Hold', null, () => act('hold')));",
+    "tests": [
+      "test/scenes/holddoor.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-helm-button-unshown",
+    "file": "src/ui/enhanced/enhancedHelm.js",
+    "old": "  if (h.cargo) out.push({ act: 'cargo', label: 'Hold', kind: 'hook' });",
+    "new": "  if (false) out.push({ act: 'cargo', label: 'Hold', kind: 'hook' });",
+    "tests": [
+      "test/scenes/holddoor.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-key-unread",
+    "file": "src/scenes/world.js",
+    "old": "&& hccActionPressed('ShipHold')) holdDoor.press();",
+    "new": "&& hccActionPressed('ShipHold')) holdDoor.frame();",
+    "tests": [
+      "test/scenes/holddoor.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-wheel-unhooked",
+    "file": "src/scenes/world.js",
+    "old": "    cargo: () => { const b = csaRuntime?.state?.CurrentBoat; if (b) holdDoor.openBoat(b); },   // CARGO-ANYWHERE: her hold, from the wheel\n",
+    "new": "",
+    "tests": [
+      "test/scenes/holddoor.test.js"
+    ]
+  },
+  {
+    "name": "HOLD-key-unbound",
+    "file": "src/systems/inputActions.js",
+    "old": "  ['F4', 'ShipHold'],   // CARGO-ANYWHERE: the ship's hold, from anywhere\n",
+    "new": "",
+    "tests": [
+      "test/scenes/holddoor.test.js"
+    ]
+  }
+]

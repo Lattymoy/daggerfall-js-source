@@ -1,29 +1,29 @@
 [
   {
     "name": "ROCK-FOOT-the-ground-unasked",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "  for (let i = 0; i < n; i++) if (above[i] >= 0) add(w[i * 3], w[i * 3 + 1], w[i * 3 + 2]);",
     "new": "  for (let i = 0; i < n; i++) add(w[i * 3], w[i * 3 + 1], w[i * 3 + 2]);",
     "tests": [
-      "test/fb1001_rockfoot.test.js"
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
     ]
   },
   {
     "name": "ROCK-FOOT-the-cut-at-the-ground-left-out",
-    "file": "src/world/terrainNature.js",
+    "file": "src/world/terrain/terrainNature.js",
     "old": "      if ((above[a] >= 0) === (above[b] >= 0)) continue;",
     "new": "      continue;",
     "tests": [
-      "test/fb1001_rockfoot.test.js"
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
     ]
   },
   {
     "name": "ROCK-FOOT-the-whole-box-carried",
-    "file": "src/scenes/world.js",
+    "file": "src/scenes/pixelBuild.js",
     "old": "{ const foot = rockFootprint(cpu.positions, cpu.indices, m.matrix, samples); if (foot) pixelRocks.push(foot); }",
     "new": "pixelRocks.push(box);",
     "tests": [
-      "test/prof2_client.test.js"
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    for (const { i } of order) {\n      for (const [tx, tz] of footTargets(pieces[i], x, z)) {",
     "new": "    for (const { i } of order.slice(0, 1)) {\n      for (const [tx, tz] of footTargets(pieces[i], x, z)) {",
     "tests": [
-      "test/fb1001_rockfoot.test.js"
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "  return [[x, z], ...sides.map(({ a }) => [cx + Math.cos(a) * far, cz + Math.sin(a) * far])];",
     "new": "  return [[x, z]];",
     "tests": [
-      "test/fb1001_rockfoot.test.js"
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "  sides.sort((p, q) => p.off - q.off || p.a - q.a);\n",
     "new": "",
     "tests": [
-      "test/fb1001_rockfoot.test.js"
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "  out.push(...stones);",
     "new": "  out.unshift(...stones);",
     "tests": [
-      "test/fb1001_rockfoot.test.js"
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (where) return { ...plan, ready: false, rest: where };\n",
     "new": "",
     "tests": [
-      "test/fb1001_settlesaid.test.js"
+      "test/scenes/fb1001_settlesaid.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "(n.what === 'dvein' ? null : actChecksRefusal(GROUND_WHERE, GROUND_WHERE_WORDS))",
     "new": "(actChecksRefusal(GROUND_WHERE, GROUND_WHERE_WORDS))",
     "tests": [
-      "test/fb1001_settlesaid.test.js"
+      "test/scenes/fb1001_settlesaid.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "export const GROUND_WHERE = Object.freeze(['town']);",
     "new": "export const GROUND_WHERE = Object.freeze([]);",
     "tests": [
-      "test/fb1001_settlesaid.test.js"
+      "test/scenes/fb1001_settlesaid.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    where: () => actChecksRefusal(GROUND_WHERE, GROUND_WHERE_WORDS),   // SETTLE-SAID\n",
     "new": "",
     "tests": [
-      "test/fb1001_settlesaid.test.js"
+      "test/scenes/fb1001_settlesaid.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    where: () => actChecksRefusal(GROUND_WHERE, GROUND_WHERE_WORDS),   // SETTLE-SAID\n",
     "new": "",
     "tests": [
-      "test/fb1001_settlesaid.test.js"
+      "test/scenes/fb1001_settlesaid.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "        if (taken.some((t) => Math.hypot(t[0] - foot[0], t[1] - foot[1]) < NODE_SPACING_M)) continue;\n",
     "new": "",
     "tests": [
-      "test/fb1001_rockfoot.test.js"
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "        taken.push(foot);\n",
     "new": "",
     "tests": [
-      "test/fb1001_rockfoot.test.js"
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
     ]
   },
   {
@@ -131,8 +131,8 @@
     "old": "  [CLIMATES.Woodlands]: counts(12, 8, 4, 3),",
     "new": "  [CLIMATES.Woodlands]: counts(12, 8, 4, 1),",
     "tests": [
-      "test/prof1_law.test.js",
-      "test/fb1001_rockfoot.test.js"
+      "test/systems/foraging/prof1_law.test.js",
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
     ]
   },
   {
@@ -141,9 +141,9 @@
     "old": "  [CLIMATES.Mountain]: counts(4, 4, 12, 5),",
     "new": "  [CLIMATES.Mountain]: counts(4, 4, 12, 3),",
     "tests": [
-      "test/prof1_law.test.js",
-      "test/prof2_law.test.js",
-      "test/prof2_service.test.js"
+      "test/systems/foraging/prof1_law.test.js",
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_service.test.js"
     ]
   },
   {
@@ -152,8 +152,8 @@
     "old": "at: () => castAt(host.eye()),",
     "new": "at: () => { const { pos, dir } = host.eye(); const l = Math.hypot(dir[0], dir[2]) || 1; return [pos[0] + (dir[0] / l) * CAST_AHEAD_M, pos[1] - 0.6, pos[2] + (dir[2] / l) * CAST_AHEAD_M]; },",
     "tests": [
-      "test/fb1001_lifeskills.test.js",
-      "test/prof8_client.test.js"
+      "test/scenes/fb1001_lifeskills.test.js",
+      "test/world/terrain/prof8_client.test.js"
     ]
   },
   {
@@ -162,7 +162,7 @@
     "old": "  const rise = Math.max(-CAST_RISE_M, Math.min(CAST_RISE_M, (dir[1] / l) * CAST_AHEAD_M));",
     "new": "  const rise = (dir[1] / l) * CAST_AHEAD_M;",
     "tests": [
-      "test/fb1001_lifeskills.test.js"
+      "test/scenes/fb1001_lifeskills.test.js"
     ]
   },
   {
@@ -171,7 +171,7 @@
     "old": "    seen.sort((a, b) => Number(a.yields) - Number(b.yields) || a.ang - b.ang);",
     "new": "    seen.sort((a, b) => a.ang - b.ang);",
     "tests": [
-      "test/fb1001_lifeskills.test.js"
+      "test/scenes/fb1001_lifeskills.test.js"
     ]
   },
   {
@@ -180,7 +180,7 @@
     "old": "lift: 0, reach: CAST_REACH_M, yields: true }];",
     "new": "lift: 0, reach: CAST_REACH_M }];",
     "tests": [
-      "test/fb1001_lifeskills.test.js"
+      "test/scenes/fb1001_lifeskills.test.js"
     ]
   },
   {
@@ -189,7 +189,7 @@
     "old": "    if (deps.settled) {\n",
     "new": "    if (false) {\n",
     "tests": [
-      "test/fb1001_lifeskills.test.js"
+      "test/scenes/fb1001_lifeskills.test.js"
     ]
   },
   {
@@ -198,7 +198,7 @@
     "old": "rec.nodes.filter((n) => !kindOf(n)?.where || !deps.settled(",
     "new": "rec.nodes.filter((n) => !deps.settled(",
     "tests": [
-      "test/fb1001_lifeskills.test.js"
+      "test/scenes/fb1001_lifeskills.test.js"
     ]
   },
   {
@@ -207,7 +207,7 @@
     "old": "inLocationRect: isInLocationRect(wc.x, wc.z, locationWorldRect(loc, p.x, p.y)), inside: false }); },   // SETTLE-STAND",
     "new": "inLocationRect: (() => { const r = locationWorldRect(loc, p.x, p.y); return wc.x >= r.minX && wc.x <= r.maxX && wc.z >= r.minZ && wc.z <= r.maxZ; })(), inside: false }); },   // SETTLE-STAND",
     "tests": [
-      "test/fb1001_lifeskills.test.js"
+      "test/scenes/fb1001_lifeskills.test.js"
     ]
   },
   {
@@ -216,7 +216,7 @@
     "old": "isPlayerInTown(loc.mapTableData?.locationType, { mustBeInLocationRect: true, mustBeOutside: true, inLocationRect: isInLocationRect(wc.x, wc.z",
     "new": "isPlayerInTown(0, { mustBeInLocationRect: true, mustBeOutside: true, inLocationRect: isInLocationRect(wc.x, wc.z",
     "tests": [
-      "test/fb1001_lifeskills.test.js"
+      "test/scenes/fb1001_lifeskills.test.js"
     ]
   },
   {
@@ -225,7 +225,7 @@
     "old": "      if (t.node.yields === true && ready.length) { passedCast = t; passedCastAt = deps.nowMs(); return false; }\n",
     "new": "",
     "tests": [
-      "test/fb1001_lifeskills.test.js"
+      "test/scenes/fb1001_lifeskills.test.js"
     ]
   },
   {
@@ -234,7 +234,7 @@
     "old": "cast = deps.nowMs() - passedCastAt <= CAST_HANDBACK_MS ? passedCast : null;",
     "new": "cast = passedCast;",
     "tests": [
-      "test/fb1001_lifeskills.test.js"
+      "test/scenes/fb1001_lifeskills.test.js"
     ]
   },
   {
@@ -243,8 +243,8 @@
     "old": "        if (plan?.ready) return start(cast, plan) || true;\n",
     "new": "",
     "tests": [
-      "test/fb1001_lifeskills.test.js",
-      "test/fb0930b_fishtired.test.js"
+      "test/scenes/fb1001_lifeskills.test.js",
+      "test/systems/fb0930b_fishtired.test.js"
     ]
   },
   {
@@ -253,7 +253,7 @@
     "old": "      if (target.node.yields === true && ray && ray.distance <= ray.reach) return null;",
     "new": "",
     "tests": [
-      "test/fb1001_lifeskills.test.js"
+      "test/scenes/fb1001_lifeskills.test.js"
     ],
     "note": "MERGE of PROF-MENU: the plaque lists the cast over a door, the crew or a chest in reach - their plaque lost on any pier."
   },
@@ -263,7 +263,7 @@
     "old": "      if (chosen) return pressRow(t, chosen);\n",
     "new": "      if (chosen && t.node.yields !== true) return pressRow(t, chosen);\n",
     "tests": [
-      "test/fb1001_lifeskills.test.js"
+      "test/scenes/fb1001_lifeskills.test.js"
     ],
     "note": "MERGE of PROF-MENU: a cast the plaque lit (nothing else under the look) is passed on as if unlit."
   },
@@ -273,7 +273,7 @@
     "old": "        if (!onPixel(foot[0], foot[1]) || insideRocks(solid, foot[0], foot[1])) continue;   // FOOT-IN; ROCK-NEAR\n",
     "new": "        if (insideRocks(solid, foot[0], foot[1])) continue;   // FOOT-IN; ROCK-NEAR\n",
     "tests": [
-      "test/fb1001_rockfoot.test.js"
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
     ]
   },
   {
@@ -282,7 +282,7 @@
     "old": "x <= TERRAIN_SIZE - FOOT_INSET_M && z >= FOOT_INSET_M && z <= TERRAIN_SIZE - FOOT_INSET_M;",
     "new": "z >= FOOT_INSET_M;",
     "tests": [
-      "test/fb1001_rockfoot.test.js"
+      "test/world/worldOfDaggerfall/fb1001_rockfoot.test.js"
     ]
   },
   {
@@ -291,7 +291,7 @@
     "old": "              if (!k || !(k.mark ? k.mark(n, markCtx) : !k.gone(n))) continue;\n",
     "new": "              if (!k) continue;\n",
     "tests": [
-      "test/gatherow.test.js"
+      "test/scenes/gatherow.test.js"
     ]
   },
   {
@@ -300,7 +300,7 @@
     "old": "if (!(groupsAt !== null && now - groupsAt < GROUP_REFRESH_MS && now >= groupsAt)) {",
     "new": "if (!(groupsAt !== null)) {",
     "tests": [
-      "test/gatherow.test.js"
+      "test/scenes/gatherow.test.js"
     ]
   },
   {
@@ -309,7 +309,7 @@
     "old": "if (!(groupsAt !== null && now - groupsAt < GROUP_REFRESH_MS && now >= groupsAt)) {",
     "new": "if (true) {",
     "tests": [
-      "test/gatherow.test.js"
+      "test/scenes/gatherow.test.js"
     ]
   },
   {
@@ -318,7 +318,7 @@
     "old": "            for (const n of g.nodes) { const e = Math.hypot(n.local[0] - cx, n.local[2] - cz); if (e < best) { best = e; at = n; } }\n",
     "new": "",
     "tests": [
-      "test/gatherow.test.js"
+      "test/scenes/gatherow.test.js"
     ]
   },
   {
@@ -327,16 +327,16 @@
     "old": "            if (!(d <= GROUP_M)) continue;\n            all.push(",
     "new": "            all.push(",
     "tests": [
-      "test/gatherow.test.js"
+      "test/scenes/gatherow.test.js"
     ]
   },
   {
     "name": "GATHER-OW-the-cap-unasked",
     "file": "src/scenes/gatherHost.js",
-    "old": "groupsKept = all.slice(0, GROUP_MAX);",
-    "new": "groupsKept = all;",
+    "old": "groupsKept = [...all.slice(0, GROUP_MAX), ...ones",
+    "new": "groupsKept = [...all, ...ones",
     "tests": [
-      "test/gatherow.test.js"
+      "test/scenes/gatherow.test.js"
     ]
   },
   {
@@ -345,43 +345,43 @@
     "old": "if (book.state.open === true && isVec3(pos) && !dungeon) {",
     "new": "if (isVec3(pos)) {",
     "tests": [
-      "test/gatherow.test.js"
+      "test/scenes/gatherow.test.js"
     ]
   },
   {
     "name": "GATHER-OW-never-filtered",
-    "file": "src/systems/travelViewFilters.js",
+    "file": "src/systems/travel/travelViewFilters.js",
     "old": "  if (k === 'gather') return 'gathering';   // GATHER-OW\n",
     "new": "",
     "tests": [
-      "test/gatherow.test.js"
+      "test/scenes/gatherow.test.js"
     ]
   },
   {
     "name": "GATHER-OW-the-dot",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "  if (k === 'gather') return k;   // GATHER-OW: a profession's group of nodes\n",
     "new": "",
     "tests": [
-      "test/gatherow.test.js"
+      "test/scenes/gatherow.test.js"
     ]
   },
   {
     "name": "GATHER-OW-the-brass",
-    "file": "src/ui/travelViewHud.js",
+    "file": "src/ui/travel/travelViewHud.js",
     "old": "const color = look === 'gather' ? (m.color ?? C.brass) : look === 'party'",
     "new": "const color = look === 'gather' ? C.brass : look === 'party'",
     "tests": [
-      "test/gatherow.test.js"
+      "test/scenes/gatherow.test.js"
     ]
   },
   {
     "name": "GATHER-OW-the-world-asks-none",
-    "file": "src/scenes/world.js",
-    "old": " for (const g of gatherHost?.overworldGroups(walkMode ? player.pos : cam.pos) ?? []) marks.push(g);",
+    "file": "src/scenes/travelViewMarks.js",
+    "old": " for (const g of host.gatherHost?.overworldGroups(walkMode ? player.pos : cam.pos) ?? []) marks.push(g);",
     "new": "",
     "tests": [
-      "test/gatherow.test.js"
+      "test/scenes/gatherow.test.js"
     ]
   },
   {
@@ -390,9 +390,9 @@
     "old": "  [CLIMATES.Woodlands]: counts(12, 8, 4, 3),",
     "new": "  [CLIMATES.Woodlands]: counts(6, 4, 2, 3),",
     "tests": [
-      "test/prof1_law.test.js",
-      "test/prof1_client.test.js",
-      "test/prof1_service.test.js"
+      "test/systems/foraging/prof1_law.test.js",
+      "test/systems/prof1_client.test.js",
+      "test/net/prof1_service.test.js"
     ]
   },
   {
@@ -401,8 +401,8 @@
     "old": "  [CLIMATES.Mountain]: counts(4, 4, 12, 5),",
     "new": "  [CLIMATES.Mountain]: counts(4, 4, 6, 5),",
     "tests": [
-      "test/prof2_law.test.js",
-      "test/prof2_client.test.js"
+      "test/net/prof2_law.test.js",
+      "test/net/prof2_client.test.js"
     ]
   },
   {
@@ -411,7 +411,7 @@
     "old": "        g.mark.at[0] = g.local[0] + tr[0]; g.mark.at[1] = g.local[1] + tr[1] + GROUP_LIFT_M; g.mark.at[2] = g.local[2] + tr[2];\n",
     "new": "        if (!g.placed) { g.placed = true; g.mark.at[0] = g.local[0] + tr[0]; g.mark.at[1] = g.local[1] + tr[1] + GROUP_LIFT_M; g.mark.at[2] = g.local[2] + tr[2]; }\n",
     "tests": [
-      "test/gatherow.test.js"
+      "test/scenes/gatherow.test.js"
     ]
   },
   {
@@ -420,7 +420,7 @@
     "old": "        if (stood.get(pixelKey(g.s.entry.px, g.s.entry.py)) !== g.s) continue;   // its pixel torn down or stood again since\n",
     "new": "",
     "tests": [
-      "test/gatherow.test.js"
+      "test/scenes/gatherow.test.js"
     ]
   },
   {
@@ -429,7 +429,7 @@
     "old": ", ...(m.color ? { color: m.color } : {}), badge:",
     "new": ", badge:",
     "tests": [
-      "test/gatherow.test.js"
+      "test/scenes/gatherow.test.js"
     ]
   }
 ]

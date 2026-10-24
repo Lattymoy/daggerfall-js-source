@@ -1,0 +1,232 @@
+[
+  {
+    "name": "GRANT3-heir-past-handed-member",
+    "file": "src/net/grantLaw.js",
+    "old": "if (!gr || !intIn(x.i, 0, gr.n - 1) || (gr.h >= 0 && gr.h !== x.i) || typeof x.to",
+    "new": "if (!gr || !intIn(x.i, 0, gr.n - 1) || typeof x.to",
+    "why": "a handed grant's heir asked for a member it does not stand",
+    "tests": [
+      "test/net/grant3_asks.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-carried-cell-unchanged",
+    "file": "src/net/grantLaw.js",
+    "old": "({ ...grantRenewed(g, nowMs), g: n, q })",
+    "new": "({ ...grantRenewed(g, nowMs), g: n })",
+    "why": "a carried grant still names the cell it left",
+    "tests": [
+      "test/net/grant3_asks.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-renewed-expiry-unmoved",
+    "file": "src/net/grantLaw.js",
+    "old": "p: [g.p[0], g.p[1]], x: nowMs + GRANT_TTL_MS });",
+    "new": "p: [g.p[0], g.p[1]], x: g.x });",
+    "why": "a renewal signs the old expiry again",
+    "tests": [
+      "test/net/grant3_asks.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-member-handed-twice",
+    "file": "server/src/index.js",
+    "old": " && now <= gr.x && !live.handed?.has(i) && await grantSignedHere(",
+    "new": " && now <= gr.x && await grantSignedHere(",
+    "why": "one member handed on to two heirs",
+    "tests": [
+      "test/net/grant3_asks.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-renew-anothers",
+    "file": "server/src/index.js",
+    "old": "      if (live) { if (live.gr.o === a.id) grs.push(",
+    "new": "      if (live) { if (live) grs.push(",
+    "why": "a socket renews another's grant",
+    "tests": [
+      "test/net/grant3_asks.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-free-anothers",
+    "file": "server/src/index.js",
+    "old": "      if (!live || live.gr.o !== a.id) continue;\n      G.live.delete(g);",
+    "new": "      if (!live) continue;\n      G.live.delete(g);",
+    "why": "a socket frees another's grant off the cell's count",
+    "tests": [
+      "test/net/grant3_asks.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-carry-forged",
+    "file": "server/src/index.js",
+    "old": " && now <= gr.x && await grantSignedHere(gr, key, env);",
+    "new": " && now <= gr.x;",
+    "why": "a carried grant no relay signed is signed here",
+    "tests": [
+      "test/net/grant3_asks.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-tally-under-socket",
+    "file": "server/src/index.js",
+    "old": "      const sender = subs.get(row.o);",
+    "new": "      const sender = row.o;",
+    "why": "a tally kept under the sender's socket id, not its account",
+    "tests": [
+      "test/net/grant3_asks.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-second-tally-kept",
+    "file": "server/src/index.js",
+    "old": "    if (now - last < GRANT_TALLY_MS - GRANT_SKEW_MS) return;",
+    "new": "    if (now - last < 0) return;",
+    "why": "a reader's second tally inside its window is folded too",
+    "tests": [
+      "test/net/grant3_asks.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-ally-marked",
+    "file": "src/net/grantLaw.js",
+    "old": "export const GRANT_MARKLESS = Object.freeze(['quest', 'ally', 'rev', 'watch', 'kept']);",
+    "new": "export const GRANT_MARKLESS = Object.freeze(['quest', 'rev', 'watch', 'kept']);",
+    "why": "an ally's grant rolls an elite or a champion",
+    "tests": [
+      "test/scenes/grant3_pool.test.js"
+    ]
+  },
+  {
+    "name": "GRANT4-shape-order",
+    "file": "src/net/grantLaw.js",
+    "old": "  if (o?.revenant) return 'rev';\n  if (o?.kept) return 'kept';\n  if (o?.managed) return 'managed';",
+    "new": "  if (o?.managed) return 'managed';\n  if (o?.revenant) return 'rev';\n  if (o?.kept) return 'kept';",
+    "why": "a managed revenant asks a managed stand's grant",
+    "tests": [
+      "test/scenes/grant3_pool.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-stand-per-ask",
+    "file": "src/scenes/grantHost.js",
+    "old": "    const max = GRANT_KINDS[/** @type {keyof typeof GRANT_KINDS} */ (kind)].max;",
+    "new": "    const max = 1;",
+    "why": "every stand its own ask - a camp of six spends six",
+    "tests": [
+      "test/scenes/grant3_pool.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-champion-ignored",
+    "file": "src/scenes/exteriorFoes.js",
+    "old": "      if (gm && !revenant && champion === undefined && capped) champion = gm.gr.c[gm.i] >= 0 ? gm.gr.c[gm.i] : null;",
+    "new": "",
+    "why": "a member stands without its grant's champion",
+    "tests": [
+      "test/scenes/grant3_pool.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-free-never-asked",
+    "file": "src/scenes/grantHost.js",
+    "old": "    if (!gr._dead && gr.q === open()?.room) post('free', gr.g);",
+    "new": "    void post;",
+    "why": "a grant's last member gone and the cell still counts it",
+    "tests": [
+      "test/scenes/grant3_pool.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-marks-unchecked",
+    "file": "src/scenes/grantHost.js",
+    "old": "      ?? (!grantMarksAllow(v.gr, i, r) ? 'marks' : null)\n",
+    "new": "\n",
+    "why": "a forged elite stands untallied",
+    "tests": [
+      "test/scenes/grant3_pool.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-species-unchecked",
+    "file": "src/scenes/grantHost.js",
+    "old": "      if (set && !set.has(r.t)) return 'dice';",
+    "new": "      if (set && false) return 'dice';",
+    "why": "a species its pixel's tables do not hold stands untallied",
+    "tests": [
+      "test/scenes/grant3_pool.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-reader-sender-unchecked",
+    "file": "src/scenes/grantHost.js",
+    "old": "grantRefusal(v.gr, { from, cell: cell ?? session()?.room ?? '',",
+    "new": "grantRefusal(v.gr, { from: v.gr.o, cell: cell ?? session()?.room ?? '',",
+    "why": "a grant under another's name believed",
+    "tests": [
+      "test/scenes/grant3_pool.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-tally-never-handed",
+    "file": "src/scenes/grantHost.js",
+    "old": "    if (rows.length) send({ k: 'tally', rows });",
+    "new": "    void rows;",
+    "why": "a reader's tally kept at home",
+    "tests": [
+      "test/scenes/grant3_pool.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-heir-never-asked",
+    "file": "src/scenes/grantHost.js",
+    "old": "post('heir', { gr: wireGrant(gr), i: f._grantI, to });",
+    "new": "void 0;",
+    "why": "a foe handed on without asking its member for its heir",
+    "tests": [
+      "test/scenes/grant3_pool.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-heir-grant-before-foe-dropped",
+    "file": "src/scenes/grantHost.js",
+    "old": "    heirGrants.set(k, { gr, at: now() });",
+    "new": "",
+    "why": "a handed grant come before its foe is never tied",
+    "tests": [
+      "test/scenes/grant3_pool.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-heir-foe-before-grant-dropped",
+    "file": "src/scenes/grantHost.js",
+    "old": "    heirWaits.set(k, { f, at: now(), k: m.k });",
+    "new": "",
+    "why": "a foe come before its handed grant is never tied",
+    "tests": [
+      "test/scenes/grant3_pool.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-level-law-off",
+    "file": "src/scenes/grantHost.js",
+    "old": "    if (LEVELLED_KINDS.has(gr.k) && isClassEnemyId(r.t) && gr.l > 0 && Number.isInteger(r.l) && r.l > gr.l + GRANT_LEVEL_SLACK) return 'dice';",
+    "new": "    void GRANT_LEVEL_SLACK;",
+    "why": "a class foe over the owner's level stands",
+    "tests": [
+      "test/scenes/grant3_pool.test.js"
+    ]
+  },
+  {
+    "name": "GRANT3-missing-key-a-forgery",
+    "file": "src/scenes/grantHost.js",
+    "old": "    if (ok === null) return null;\n",
+    "new": "",
+    "why": "a grant read while the key cannot be had tallied unsigned",
+    "tests": [
+      "test/scenes/grant3_pool.test.js"
+    ]
+  }
+]

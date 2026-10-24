@@ -5,9 +5,9 @@
     "old": "      if (!rows.some(pressable) && ray && ray.distance <= ray.reach) return null;\n",
     "new": "",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -16,9 +16,9 @@
     "old": "if (!plan || deps.plaque?.()) hud.setPrompt(null);",
     "new": "if (!plan) hud.setPrompt(null);",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -27,9 +27,9 @@
     "old": "const lit = deps.lit?.(menuKey(t)) ?? null;",
     "new": "const lit = null;",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -38,9 +38,9 @@
     "old": "if (click) return chosen ? pressRow(t, chosen, true) : false;",
     "new": "if (click) return chosen ? pressRow(t, chosen) : false;",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -49,9 +49,9 @@
     "old": "if (click) return chosen ? pressRow(t, chosen, true) : false;",
     "new": "if (click && chosen) return pressRow(t, chosen, true);",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -60,9 +60,9 @@
     "old": "if (ready.length > 1 && deps.choose?.(",
     "new": "if (false && deps.choose?.(",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -71,9 +71,9 @@
     "old": "if (now) pressRow(t, now, true); })) return true;",
     "new": "if (now) pressRow(t, now); })) return true;",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -82,9 +82,9 @@
     "old": "        ...(start > 0 ? { actionsStart: start } : {}),\n",
     "new": "",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -93,9 +93,9 @@
     "old": "actions: rows.map((p) => (pressable(p) ? { id: p.id, label: p.verb } : { id: p.id, label: p.verb, disabled: true, why: p.rest ?? '' })),",
     "new": "actions: rows.filter(pressable).map((p) => ({ id: p.id, label: p.verb })),",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -104,9 +104,9 @@
     "old": "deps.step?.(at >= rows.length - 1 ? -at : 1);",
     "new": "deps.step?.(1);",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -115,9 +115,9 @@
     "old": "if (input.choice && rows.length > 1 && deps.plaque?.()) {",
     "new": "if (input.choice && rows.length > 1) {",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -126,9 +126,9 @@
     "old": "      if (!took && !passedOn) passedOn = rows.map((r) => needLine(r, rank)).find(Boolean) ?? '';\n",
     "new": "",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -137,9 +137,9 @@
     "old": "name: a.disabled ? (a.why === '' ? a.label : ",
     "new": "name: a.disabled ? (false ? a.label : ",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -148,9 +148,9 @@
     "old": "return [{ ...herbs, id: 'herbs' }, { ...food, id: 'food' }];",
     "new": "return [{ ...herbs, id: 'herbs' }];",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -159,9 +159,9 @@
     "old": "return [skin, { ...search, profession: 'hunting', id: 'search', ...(key ? { open: () => openLoot?.(key) } : {}) }];",
     "new": "return [skin];",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -170,9 +170,9 @@
     "old": "const used = usedTool ?? (byPress || null);",
     "new": "const used = usedTool;",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -181,9 +181,9 @@
     "old": "(key) => gatherHost?.hoverName?.(key) ?? null,   // PROF-MENU",
     "new": "(key) => null,   // PROF-MENU",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -192,9 +192,9 @@
     "old": "const profHoverOver = (ray) => gatherHost?.hoverHit?.(ray) ?? ray;",
     "new": "const profHoverOver = (ray) => ray;",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -203,9 +203,9 @@
     "old": "plaque: () => worldPlaqueOn(),",
     "new": "plaque: () => false,",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -214,9 +214,9 @@
     "old": "!naval?.takesActivate?.() && profClickPress();",
     "new": "!naval?.takesActivate?.() && false;",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -225,9 +225,9 @@
     "old": "onPick: (i) => { close(); pick(i); }, onCancel: close });",
     "new": "onPick: (i) => { pick(i); close(); }, onCancel: close });",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -236,9 +236,9 @@
     "old": "    if (!interact && !pressCast && !actClick && !host.profActing?.() && host.profClick?.()) return true;\n    // AUDIT 32 H5: and a click mid-act is the act's (D3's law for E) - it opened the body's loot under the knife.",
     "new": "    // AUDIT 32 H5: and a click mid-act is the act's (D3's law for E) - it opened the body's loot under the knife.",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -247,9 +247,9 @@
     "old": "return opts.profHoverPick?.(ray) ?? ray;",
     "new": "return ray;",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -258,9 +258,9 @@
     "old": "return opts.profHoverName?.(key) ?? _namer(key, hit);",
     "new": "return _namer(key, hit);",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   },
   {
@@ -269,9 +269,9 @@
     "old": "  _nudge += Math.trunc(n);\n",
     "new": "",
     "tests": [
-      "test/fb0930b_toolsaid.test.js",
-      "test/audit32_client.test.js",
-      "test/prof7_client.test.js"
+      "test/systems/fb0930b_toolsaid.test.js",
+      "test/scenes/audit32_client.test.js",
+      "test/systems/prof7_client.test.js"
     ]
   }
 ]

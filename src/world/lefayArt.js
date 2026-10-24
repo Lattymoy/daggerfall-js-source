@@ -1,6 +1,6 @@
 // @ts-check
 // LEFAY1 (2026-10-08): THE MONUMENT'S OWN ART, MADE AT BOOT - the stone of the monument to Julian LeFay
-// (world/lefayMonument.js) is the port's, so it is made here from noise the moment a host asks (world/gateArt.js's
+// (world/lefayMonument.js) is the port's, so it is made here from noise the moment a host asks (world/gate/gateArt.js's
 // law: pictures of the port's own under a pseudo-archive far above any classic one, no renderer and no GL in this
 // file - pixels and numbers).
 //
@@ -23,7 +23,7 @@ export const LEFAY_ART_SIZE = 64;
 export const LEFAY_PLAQUE_W = 160;
 export const LEFAY_PLAQUE_H = 128;
 
-/** mulberry32, the port's seeded rng (world/gateArt.js's own), kept here so the art is the monument's alone. */
+/** mulberry32, the port's seeded rng (world/gate/gateArt.js's own), kept here so the art is the monument's alone. */
 function rng(seed) {
   let a = seed >>> 0;
   return () => {
@@ -188,7 +188,8 @@ export function lefayPlaqueArt(lines = LEFAY_TEXT.plaque, seed = 0x91a0) {
   return img;
 }
 
-/** Every picture the monument wears, by record - what a host uploads under LEFAY_ARCHIVE before it draws. */
+/** Every picture the monument wears, by record - what a host uploads under LEFAY_ARCHIVE before it draws.
+ *  @type {() => Array<[number, { width: number, height: number, colors: Uint8Array }]>} */
 export const lefayArt = () => [
   [LEFAY_GRANITE, lefayGraniteArt()],
   [LEFAY_MARBLE, lefayMarbleArt()],

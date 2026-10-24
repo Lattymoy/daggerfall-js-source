@@ -1,0 +1,206 @@
+[
+  {
+    "name": "FIRM1-stars-two-a-level",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "export const STARS_PER_RENOWN = 2;",
+    "new": "export const STARS_PER_RENOWN = 1;",
+    "tests": [
+      "test/net/firmament/firm1_law.test.js",
+      "test/net/firm1_service.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-craft-pays-combat",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "  return c.combat <= stars && c.combat + c.life <= stars + craft;",
+    "new": "  return c.combat <= stars + craft && c.combat + c.life <= stars + craft;",
+    "tests": [
+      "test/net/firmament/firm1_law.test.js",
+      "test/net/firm1_service.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-path-unchecked",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "  if (reachFrom(start, set).size !== set.size) return 'firm-path';",
+    "new": "",
+    "tests": [
+      "test/net/firmament/firm1_law.test.js",
+      "test/net/firm1_service.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-keystone-walked-through",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "const passable = (key, start) => { const n = firmNode(key); return !!n && n.kind !== 'keystone' && (n.kind !== 'start' || key === start); };",
+    "new": "const passable = (key, start) => { const n = firmNode(key); return !!n && (n.kind !== 'start' || key === start); };",
+    "tests": [
+      "test/net/firmament/firm1_law.test.js"
+    ],
+    "equivalent": true,
+    "why": "Every keystone in this sky is a road's end (one line, pinned by test/net/firmament/firm1_law.test.js), so nothing lies beyond one to walk to through it. Kept for a sky that ever hangs a star past a keystone."
+  },
+  {
+    "name": "FIRM1-blow-group-uncapped",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "  let pct = Math.max(BLOW_FLOOR, Math.min(BLOW_CAP, gain) + price);",
+    "new": "  let pct = Math.max(BLOW_FLOOR, gain + price);",
+    "tests": [
+      "test/net/firmament/firm1_law.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-cap-unheld",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "    out[k] = Math.max(d.min, Math.min(d.max, v));",
+    "new": "    out[k] = v;",
+    "tests": [
+      "test/net/firmament/firm1_law.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-refund-always-free",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "export const refundSilver = (removed, renown) => (clampInt(renown ?? 1, 1, FIRM_RENOWN_MAX) < REFUND_FREE_BELOW_RENOWN ? 0 : Math.max(0, removed | 0) * REFUND_SILVER_PER_STAR);",
+    "new": "export const refundSilver = () => 0;",
+    "tests": [
+      "test/net/firmament/firm1_law.test.js",
+      "test/net/firm1_service.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-svc-no-burn",
+    "file": "server-account/src/firmament.js",
+    "old": "  const silver = refundSilver(prev.start ? removed.length : 0, purses.renown);",
+    "new": "  const silver = 0;",
+    "tests": [
+      "test/net/firm1_service.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-svc-harvest-xp-plain",
+    "file": "server-account/src/professions.js",
+    "old": "  const xp = scaleXp(harvestXp(xpTier ?? tier, rank, clean), xpPct(firm, profession));",
+    "new": "  const xp = harvestXp(xpTier ?? tier, rank, clean);",
+    "tests": [
+      "test/net/firm1_service.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-powers-awake-in-duels",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "export const firmamentAwake = (e) => mine(e) && firmamentInForce() && !sigilDueling() && !e?._mentor;",
+    "new": "export const firmamentAwake = (e) => mine(e) && firmamentInForce() && !e?._mentor;",
+    "tests": [
+      "test/systems/firm1_powers.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-live-offline-too",
+    "file": "src/systems/firmamentLive.js",
+    "old": "export const firmamentInForce = () => _online && !!_tree.start;",
+    "new": "export const firmamentInForce = () => !!_tree.start;",
+    "tests": [
+      "test/systems/firm1_powers.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-powers-blow-plain",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "  return Math.max(1, damage + shareOf(weapon ?? attacker, damage, pct, !info?.estimate));",
+    "new": "  return damage;",
+    "tests": [
+      "test/systems/firm1_powers.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-herb-window-plain",
+    "file": "src/systems/herbAct.js",
+    "old": "  const sky = firmActMult('herbalism');",
+    "new": "  const sky = 1;",
+    "tests": [
+      "test/systems/firm1_powers.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-book-drops-queued",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "      while (queued) { const next = queued; queued = null; r = await send(next); }",
+    "new": "      queued = null;",
+    "tests": [
+      "test/net/firmament/firm1_book.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-respec-free",
+    "file": "server-account/src/firmament.js",
+    "old": "(payFromSave(save, FIRM_RESPEC_GOLD, region ?? null) ? null : 'realm-gold')",
+    "new": "(payFromSave(save, 0, region ?? null) ? null : 'realm-gold')",
+    "tests": [
+      "test/net/firm1_service.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-respec-gold-not-given-back",
+    "file": "src/net/firmament/firmamentBook.js",
+    "old": "r = await realm.act({ reserve: walletReserve(w, FIRM_RESPEC_GOLD).reserve,",
+    "new": "r = await realm.act({ reserve: () => { w.pay(FIRM_RESPEC_GOLD); return () => {}; },",
+    "tests": [
+      "test/net/firmament/firm1_book.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-small-star-raw-points",
+    "file": "src/net/firmament/firmamentTree.js",
+    "old": "    if (ATTRS.includes(k)) put(`pct.${k}`, v);",
+    "new": "    if (ATTRS.includes(k)) put(k, v);",
+    "tests": [
+      "test/systems/firm1_powers.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-wild-strike-with-the-sky",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "  try { computeEntityMods(entity); return fn(); } finally { _quiet = false; entity._mods = kept; }",
+    "new": "  try { return fn(); } finally { _quiet = false; entity._mods = kept; }",
+    "tests": [
+      "test/systems/firm1_powers.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-build-code-any-sky",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "  if (m[1] !== SKY_TAG) return { error: 'build-sky' };",
+    "new": "  if (m[1] === '') return { error: 'build-sky' };",
+    "tests": [
+      "test/net/firmament/firm1_law.test.js"
+    ]
+  },
+  {
+    "name": "FIRM1-build-code-drops-runs",
+    "file": "src/net/firmament/firmamentLaw.js",
+    "old": "  const raw = m[2].replace(/\\.(.)/g, (_, n) => 'A'.repeat(Math.max(0, B64.indexOf(n))));",
+    "new": "  const raw = m[2].replace(/\\.(.)/g, '');",
+    "tests": [
+      "test/net/firmament/firm1_law.test.js"
+    ]
+  },
+  {
+    "name": "FIRM-MAX-no-lift",
+    "file": "src/systems/firmamentPowers.js",
+    "old": "    if (v > 0) mods.statMax[a] = v;",
+    "new": "",
+    "tests": [
+      "test/systems/firm1_powers.test.js"
+    ]
+  },
+  {
+    "name": "FIRM-MAX-ceiling-unread",
+    "file": "src/systems/statMods.js",
+    "old": "  maxMod += entity._mods?.statMax?.[statName] ?? 0;",
+    "new": "",
+    "tests": [
+      "test/systems/firm1_powers.test.js"
+    ]
+  }
+]

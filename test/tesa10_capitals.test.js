@@ -27,15 +27,16 @@ import { LAIR_INDEX_BASE } from '../src/world/tamrielDungeons.js';
 import { standArenaPixels } from '../src/world/arenaPlaces.js';
 import { buildImperialTower, buildTalosBridge } from '../src/world/capitalImperial.js';
 import { imperialTile, imperialClosed, IMPERIAL_SLICE_NAMES } from '../src/world/imperialCity.js';
-import { setTamrielFit, pictureToBay, inBay, tamrielFit as tamrielFitNow } from '../src/world/tamrielFrame.js';
-import { setTamrielTrace, tamrielLandVersion, provinceKeyBeyondBay } from '../src/world/tamrielLand.js';
-import { CITIES } from '../src/world/tamrielGeography.js';
-import { blockFromJson } from '../src/formats/worldDataReplacement.js';
+import { setTamrielFit, pictureToBay, inBay, tamrielFit as tamrielFitNow } from '../src/world/tamriel/tamrielFrame.js';
+import { setTamrielTrace, tamrielLandVersion, provinceKeyBeyondBay } from '../src/world/tamriel/tamrielLand.js';
+import { CITIES } from '../src/world/tamriel/tamrielGeography.js';
+import { blockFromJson } from '../src/formats/worldData/worldDataReplacement.js';
 import { layoutRmbBlock } from '../src/world/rmbLayout.js';
 import { customModelFor } from '../src/world/customModels.js';
 import { hash32 } from '../src/world/spawnedDungeons.js';
 import { LOCATION_TYPES, mapPixelToLongitudeLatitude } from '../src/formats/mapsFile.js';
 import { capitalsOn } from '../src/scenes/shared.js';
+import { hostText } from './hostText.mjs';   // HOST-SPLIT (at the merge of main): the world host read whole - its pixel build stands in scenes/pixelBuild.js
 
 const read = (p) => readFileSync(new URL(`../${p}`, import.meta.url), 'utf8');
 afterEach(() => setTamrielFit(null));
@@ -162,9 +163,9 @@ test('TESA10 the port blocks: the lake all water, the garden grass with a tree i
   assert.deepEqual(laid.models.map((m) => m.modelIdNum), [CAPITAL_MODELS.whiteGoldTower, CAPITAL_MODELS.palaceWall, CAPITAL_MODELS.tombs, CAPITAL_MODELS.cityWall, CAPITAL_MODELS.districtWalls]);
   for (const m of laid.models) assert.deepEqual([...m.matrix.slice(12, 15)].map((v) => +v.toFixed(3)), [102.4, 0, 0]);
   assert.deepEqual(miscModelAt(5, 51.2, 25.6), { ModelId: '5', ModelIdNum: 5, ObjectType: 0, XPos: 2048, YPos: -4, ZPos: 1024 - 4096, XRotation: 0, YRotation: 0, ZRotation: 0 });
-  // the stamp's own flips (world/terrainTiles.js setLocationTiles, world/cityNavigation.js setBlockData) - pinned at their source
-  assert.match(read('src/world/terrainTiles.js'), /const tile = groundTiles\[tileX\]\[\(RMB_TILES_PER_BLOCK - 1\) - tileY\];/);
-  assert.match(read('src/world/cityNavigation.js'), /const worldRow = yBlock \* NAV_CELLS_PER_BLOCK \+ \(NAV_CELLS_PER_BLOCK - 1 - y\);/);
+  // the stamp's own flips (world/terrain/terrainTiles.js setLocationTiles, world/city/cityNavigation.js setBlockData) - pinned at their source
+  assert.match(read('src/world/terrain/terrainTiles.js'), /const tile = groundTiles\[tileX\]\[\(RMB_TILES_PER_BLOCK - 1\) - tileY\];/);
+  assert.match(read('src/world/city/cityNavigation.js'), /const worldRow = yBlock \* NAV_CELLS_PER_BLOCK \+ \(NAV_CELLS_PER_BLOCK - 1 - y\);/);
   const one = portBlockJson('X.RMB', { tile: (x, z) => (z < 51.2 ? 3 : 2) });
   const converted = blockFromJson(one, 1).rmbBlock.fldHeader.groundData.groundTiles;
   assert.equal(converted[0][15].textureRecord, 3, 'data row 15 is the block\'s near edge (z 0..6.4)');
@@ -261,7 +262,7 @@ test('TESA10 the pictures: the port\'s own, 64 x 64, opaque, the same every time
 
 // ── THE HOST ────────────────────────────────────────────────────
 
-const W = read('src/scenes/world.js');
+const W = hostText('src/scenes/world.js');
 const lift = (head) => { const i = W.indexOf(head); assert.ok(i > 0, head); return W.slice(i, W.indexOf('\n  }\n', i) + 4); };
 
 test('TESA10 the host by source: the base and the blocks off the game\'s rows before they go, under its door; past the Bay a capital first, before Arena\'s place', () => {
@@ -282,9 +283,9 @@ test('TESA10 the host\'s ask: the capital on its pixel stood once, its region th
     const _capitalBase = ${open ? 'base' : 'null'}, _capitalNames = names, _arenaTemplates = {}, locationIndex = new Map();
     const arenaPlaceOnPixel = () => (arena.on ? arena.place : null), blocks = { getBlockByName: () => null };
     const maps = { getRegionIndexAt: () => 23, getClimateIndex: () => 231 }, REGION_NAMES = { 23: 'Wrothgarian Mountains' }, getWorldClimateSettings = (c) => ({ worldClimate: c });
-    let _locIndexGen = 0;
+    const host = { _locIndexGen: 0 };   // PIN MOVED (HOST-SPLIT, at the merge of main): the place law is scenes/tamrielPlacesHost.js's, the index's generation the host's live name
     ${lift('  function capitalLocationAt(px, py) {')}
-    return { capitalLocationAt, index: locationIndex, gen: () => _locIndexGen };`)(capitalOnPixel, synthesizeCapitalLocation, base, names, arena);
+    return { capitalLocationAt, index: locationIndex, gen: () => host._locIndexGen };`)(capitalOnPixel, synthesizeCapitalLocation, base, names, arena);
   const arena = { on: false, place: null };
   const h = make(true, arena);
   const loc = h.capitalLocationAt(2177, 612);
@@ -316,8 +317,8 @@ test('TESA10 the sweep: on the frame, when the fit moves, every built pixel past
     const built = new Map([['2177,612', { px: 2177, py: 612 }], ['2300,600', { px: 2300, py: 600 }], ['5,5', { px: 5, py: 5 }], ['1385,465', { px: 1385, py: 465 }]]);
     const locationIndex = new Map([['2177,612', { capital: { k: 0 } }]]), destroyed = [], queue = [], state = { current: { x: 2177, y: 612 } };
     const walkMode = false, playerSpawned = false, nearestFirstFrom = () => () => 0, destroyPixel = (x, y) => destroyed.push(x + ',' + y);
-    let _seasonHoldKey = null, _capitalSwept = null, _capitalSweptLand = -1;
-    const _countryTemplates = rolled ? {} : null, _lairTemplates = null;
+    const _swept = { arena: null, capital: null, capitalLand: -1 };   // PIN MOVED (HOST-SPLIT, at the merge of main): the sweep is scenes/tamrielSweepsHost.js's, its live names the host's
+    const host = { built, locationIndex, queue, state, walkMode, playerSpawned, _seasonHoldKey: null, _countryTemplates: rolled ? {} : null, _lairTemplates: null };
     ${sweep}
     return { sweep: sweepCapitalPixels, destroyed, queue };`)(cop, tf, tlv, otb, rolled);
   setTamrielFit({ ox: 38 * 15.5, oy: 57 * 15.5, ppu: 15.5 });

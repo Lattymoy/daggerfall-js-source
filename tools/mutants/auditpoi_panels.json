@@ -1,0 +1,506 @@
+[
+  {
+    "name": "AUDITPOI-U1-held-while-anything-is-focused",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "return isTextEntryTarget(a) && !UNTYPED.has(a.type) && typeof n.contains === 'function' && n.contains(a); };",
+    "new": "return !!a && a !== doc.body && typeof n.contains === 'function' && n.contains(a); };",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U1-a-ticked-box-holds-the-dock",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "return isTextEntryTarget(a) && !UNTYPED.has(a.type) && typeof",
+    "new": "return isTextEntryTarget(a) && typeof",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U1-a-typed-field-drawn-over",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "    if (!typingIn(right)) renderRight();",
+    "new": "    renderRight();",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U1-remove-reads-the-selection",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "() => removePart(sel.id, part.key)));",
+    "new": "() => removeSelection()));",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U1-a-light-by-its-place-alone",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "if (JSON.stringify(edit.docOf(d.id)?.lights) === drawn) edit.edit(",
+    "new": "edit.edit(",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U1-a-light-added-twice",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "if ((edit.docOf(d.id)?.lights?.length ?? 0) === lightsDrawn) edit.edit(",
+    "new": "edit.edit(",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U1-close-by-what-closing-is-now",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "() => closePoi(id, asked)));",
+    "new": "() => closePoi(id, closing === id)));",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U2-a-send-marks-the-screen-saved",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "edit.markSaved(id, { rev, state: 'submitted', doc: held });",
+    "new": "edit.markSaved(id, { rev, state: 'submitted' });",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U2-a-take-back-marks-the-screen-saved",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "edit.markSaved(id, { rev, state: 'draft', doc: held });",
+    "new": "edit.markSaved(id, { rev, state: 'draft' });",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U3-save-offered-on-a-submission",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "    if (entry.state === 'submitted') save.disabled = true;\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U3-the-key-saves-beside-a-submission",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "    if (e.state === 'submitted') { say(withdrawFirstText(), 'bad'); return false; }\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U4-sent-back-opened-as-a-draft",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "state: mine ? mine.state : live ? 'live' : sentBack ? 'rejected' : 'draft' });",
+    "new": "state: mine ? mine.state : live ? 'live' : 'draft' });",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U4-sent-with-no-revision",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "if ((edit.dirty(id) || e0.rev == null) && !(await saveNow(id, true))) return;",
+    "new": "if (edit.dirty(id) && !(await saveNow(id, true))) return;",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U4-anothers-opened-as-mine-saved",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "...(others ? { saved: null } : {}), ",
+    "new": "",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-P6-the-live-base-over-mine",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "base: mine ? (mine.base ?? null) : sentBack",
+    "new": "base: mine ? (h.liveRev ?? null) : sentBack",
+    "tests": ["test/poi/auditpoi_panels.test.js", "test/poi/poi3b_panel.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U5-the-key-saves-while-checking",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "    if (checking) { say(t('poi.editor.stillChecking',",
+    "new": "    if (false) { say(t('poi.editor.stillChecking',",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U5-an-unchanged-draft-saved",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "    if (!always && !edit.dirty(id)) return false;\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U5-two-acts-at-once",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "    if (going.has(id)) return false;\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U6-the-keys-taken-from-the-field",
+    "file": "src/ui/poi/poiUvPanel.js",
+    "old": "    if (isTextEntryTarget(e.target)) return;\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U7-the-cancelled-result-worn",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "        if (dlg.closed()) return false;\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U7-closed-twice",
+    "file": "src/ui/poi/poiUvPanel.js",
+    "old": "function close() { if (closed) return; closed = true; ed.dispose(); root.remove?.(); onClose(); }",
+    "new": "function close() { closed = true; ed.dispose(); root.remove?.(); onClose(); }",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U7-two-presses-two-dialogs",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "    if (!part || uvDialog || uvOpening) return;",
+    "new": "    if (!part || uvDialog) return;",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U7-opened-over-a-part-dressed-anew",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": " || !edit.docOf(id)?.parts.some((p) => p.key === key && p.mesh === part.mesh)) return;",
+    "new": ") return;",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U7-applied-said-for-a-part-gone",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "        if (!edit.docOf(id)?.parts.some((q) => q.key === key)) { say(t('poi.editor.uvGone',",
+    "new": "        if (false) { say(t('poi.editor.uvGone',",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U8-the-off-rule-misses-the-uv-editor",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": ", .dfpoi[data-on=\"0\"] .dfpoi-uv { display: none; }",
+    "new": " { display: none; }",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U8-leaving-closes-nothing",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "      dialogsClosed(); uvDialog?.close(); closing = null;",
+    "new": "      closing = null;",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U8-opened-over-the-game",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "    if (root.dataset.on !== '1' || !edit",
+    "new": "    if (!edit",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U9-a-pack-pressed-twice-goes-twice",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "    go.disabled = true;\n    said.replaceChildren();",
+    "new": "    said.replaceChildren();",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U9-cancel-stops-nothing",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "(dialog === box ? fn(...args) : Promise.resolve({ ok: false, error: 'cancelled' }));",
+    "new": "(fn(...args));",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U9-a-cancelled-pack-opened",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "    if (!mine()) { if (r) say(t('poi.pack.stopped',",
+    "new": "    if (false) { if (r) say(t('poi.pack.stopped',",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U9-a-cancelled-import-placed",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "      if (!mine()) { if (r) say(t('poi.editor.importStopped',",
+    "new": "      if (false) { if (r) say(t('poi.editor.importStopped',",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U10-the-split-re-arms-the-upload",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "      if (uploading) return;\n      prep = prepareImport(",
+    "new": "      prep = prepareImport(",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U10-make-and-the-files-not-held",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "      place.disabled = true; splitSel.disabled = true; files.disabled = true;",
+    "new": "      place.disabled = true;",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U11-a-stale-place-placed",
+    "file": "src/ui/poi/poiLibraryPanel.js",
+    "old": "    // nothing is placed and no dialog opened since is closed\n    if (dialog !== at) return;\n",
+    "new": "    // nothing is placed and no dialog opened since is closed\n",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U11-a-stale-change-opens-a-row",
+    "file": "src/ui/poi/poiLibraryPanel.js",
+    "old": "    if (dialog !== at) return;   // AUDIT POI U11: for the library that asked\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U11-a-stale-keep-closes-the-new-one",
+    "file": "src/ui/poi/poiLibraryPanel.js",
+    "old": "      if (dialog !== self) return;\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U11-the-row-drawn-from-the-entry",
+    "file": "src/ui/poi/poiLibraryPanel.js",
+    "old": "name.value = typed.name;",
+    "new": "name.value = item.name;",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U11-a-save-ends-another-rows-change",
+    "file": "src/ui/poi/poiLibraryPanel.js",
+    "old": "      if (editing === typed) editing = null;",
+    "new": "      editing = null;",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U12-the-history-opened-anew",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    await loadHistory(h.id);",
+    "new": "    await openHistory(h.id);",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U12-a-word-sent-twice",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    if (deciding.has(key)) return;\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U12-the-decide-buttons-drawn-free",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    approve.disabled = reject.disabled = deciding.has(`${item.id}:${item.rev}`);",
+    "new": "    void approve; void reject;",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U12-the-put-back-drawn-free",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "      b.disabled = rolling;",
+    "new": "      void rolling;",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U12-the-look-let-go-before-the-refusal",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    const id = item.id;\n    // AUDIT POI U12: refused before anything moves",
+    "new": "    const id = item.id;\n    if (looking && looking.id !== id) edit.showAs(looking.id, undefined);\n    // AUDIT POI U12: refused before anything moves",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-C1-poi-changed-said-and-left",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "      if (r.error === 'poi-changed' || r.error === 'poi-state') { endLook(item); await refreshQueue(); } else drawQueue();",
+    "new": "      drawQueue();",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-C1-the-hash-not-sent",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "word || null, item.docSha ?? null)",
+    "new": "word || null)",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-C2-a-put-back-unsaid",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": ": rev.kind === 'rollback' ? t('poi.review.kindRollback',",
+    "new": ": rev.kind === 'rollback-not' ? t('poi.review.kindRollback',",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-C2-a-taken-back-retirement-unsaid",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": ": state === 'withdrawn' ? t('poi.review.withdrawn',",
+    "new": ": state === 'withdrawn-not' ? t('poi.review.withdrawn',",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-C2-put-back-offered-with-no-document",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": " && !live && rev.kind === 'doc' && rev.doc) {",
+    "new": " && !live) {",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-C3-the-bound-unsaid",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    if (queue?.length && more) rows.push(",
+    "new": "    if (false) rows.push(",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-C4-every-refusal-a-failed-fetch",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "say(r.code && r.code !== 'export-fetch' ? packErrorText(r) : t('poi.export.failed',",
+    "new": "say(false ? packErrorText(r) : t('poi.export.failed',",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-C5-the-refusal-unsaid-in-the-dialog",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": " said.replaceChildren(...packRefusalRows(pack, r));",
+    "new": "",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-C7-the-feed-not-asked-after-a-verdict",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    feed?.refresh?.();   // AUDIT POI C7: the world on this screen",
+    "new": "    void feed;   // AUDIT POI C7: the world on this screen",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-C7-the-feed-not-asked-after-a-put-back",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    feed?.refresh?.();   // AUDIT POI C7\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T8-the-law-drawn-over-the-word",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    if (isTextEntryTarget(a) && dialog.contains?.(a)) return;\n",
+    "new": "\n",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T8-the-law-held-for-a-pressed-button",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    if (isTextEntryTarget(a) && dialog.contains?.(a)) return;",
+    "new": "    if (a && a !== doc.body && dialog.contains?.(a)) return;",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T8-something-after-a-retirement",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    edit.showAs(id, looking.after ? undefined : null);",
+    "new": "    edit.showAs(id, undefined);",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T8-something-before-a-new-poi",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    edit.showAs(looking.id, d ? (showing === 'after' ? undefined : d) : null);",
+    "new": "    edit.showAs(looking.id, d ? (showing === 'after' ? undefined : d) : undefined);",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T8-history-offered-on-a-new-poi",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "    if (edit.entryOf(d.id)?.state !== 'new' || edit.entryOf(d.id)?.saved) more.append(",
+    "new": "    if (true) more.append(",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T8-put-back-offered-to-a-builder",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    if (me.approver && rev.state === 'approved'",
+    "new": "    if (rev.state === 'approved'",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T8-the-stale-warning-on-every-one",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    if (item.stale) r.append(",
+    "new": "    if (true) r.append(",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T8-the-look-overwrites-unsaved-work",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    if (item.kind !== 'retire' && edit.has(id) && edit.dirty(id)) { say(",
+    "new": "    if (false) { say(",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-T8-open-this-one-overwrites-unsaved-work",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    if (edit.has(h.id) && edit.dirty(h.id)) { say(",
+    "new": "    if (false) { say(",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U13-one-materials",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "{materials, plural, one {# material} other {# materials}}', { name: p.name",
+    "new": "{materials} materials', { name: p.name",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U13-one-triangles",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "{triangles, plural, one {{triangles, number} triangle} other {{triangles, number} triangles}}, {materials, plural",
+    "new": "{triangles, number} triangles, {materials, plural",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U13-the-speed-a-plain-argument",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "'Eye {speed, number} m/s'",
+    "new": "'Eye {speed} m/s'",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U13-its-model-has-1-materials",
+    "file": "src/poi/poiText.js",
+    "old": "'Its model has {want, plural, one {# material} other {# materials}}; the part has {have}.'",
+    "new": "'Its model has {want} materials; the part has {have}.'",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U13-a-accessor",
+    "file": "src/poi/poiText.js",
+    "old": "'This model refers to {what, select, accessor {an accessor} bufferView {a buffer view} buffer {a buffer} image {an image} texture {a texture} node {a node} skin {a skin} joint {a joint} vertex {a vertex} other {a piece of itself}} that is not there.'",
+    "new": "'This model refers to a {what} that is not there.'",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U13-a-accessor-past-its-end",
+    "file": "src/poi/poiText.js",
+    "old": "'This model\\'s data is cut short: {what, select, accessor {an accessor} bufferView {a buffer view} other {a piece of it}} runs past its end.'",
+    "new": "'This model\\'s data is cut short: a {what} runs past its end.'",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U13-its-tags-are-now-nothing",
+    "file": "src/poi/poiText.js",
+    "old": "return to ? t('poi.diff.tags', 'Its tags are now: {to}.', { to }) : t('poi.diff.tagsNone', 'Its tags were all taken off.');",
+    "new": "return t('poi.diff.tags', 'Its tags are now: {to}.', { to });",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U13-the-tags-joined-in-english",
+    "file": "src/poi/poiText.js",
+    "old": "const to = listText(Array.isArray(a.tags) ? a.tags : []);",
+    "new": "const to = (Array.isArray(a.tags) ? a.tags : []).join(', ');",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U13-a-mark-shown-with-an-empty-label",
+    "file": "src/poi/poiText.js",
+    "old": "    : a.label ? t('poi.diff.markerShown',",
+    "new": "    : true ? t('poi.diff.markerShown',",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  },
+  {
+    "name": "AUDITPOI-U13-a-parts-changes-joined-in-english",
+    "file": "src/poi/poiText.js",
+    "old": "what: listText(a.what.map((w) => PART_WHAT[w]?.() ?? w)) })",
+    "new": "what: a.what.map((w) => PART_WHAT[w]?.() ?? w).join(', ') })",
+    "tests": ["test/poi/auditpoi_panels.test.js"]
+  }
+]

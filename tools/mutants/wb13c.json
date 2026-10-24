@@ -1,229 +1,229 @@
 [
   {
     "name": "WB13c-move-for-any-blow",
-    "file": "src/ui/gateBossBar.js",
-    "old": "move: !!aimed && aimed === P.atk[A.key].name }",
+    "file": "src/ui/gate/gateBossBar.js",
+    "old": "move: !!aimed && aimed === PC.atk[A.key].name }",
     "new": "move: !!aimed }",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-the-plate-for-his-own-fire",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "dagon: isDagons(A), move:",
     "new": "dagon: !!A.el, move:",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-the-fade-at-once",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "const alpha = s.fell ? Math.max(0, Math.min(1, 1 - (since - FELL_HOLD_MS) / FELL_FADE_MS)) : 1;",
     "new": "const alpha = s.fell ? 0 : 1;",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-the-line-empty-at-the-landing",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "t: now < atk.at ? tel.t : 1,",
     "new": "t: now < atk.at ? tel.t : 0,",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-the-ghost-on-the-fill",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "  shown.g = stepGhost(shown.g, frac * 100, dt);",
     "new": "  shown.g = { at: frac * 100, pct: frac * 100, hold: 0 };",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-the-epithet-uncoloured",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "const subColor = model.epithet ? model.epithetColor ?? '' : '';",
     "new": "const subColor = '';",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-the-wrath-never-near",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "const near = !!model.wrath && !!model.wrathNear;",
     "new": "const near = false;",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-the-break-flash-held",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "flashing(shown.breakAt, now, FLASH_MS.wardBreak) ? ' wbreak' : ''",
     "new": "shown.breakAt !== null ? ' wbreak' : ''",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-a-flash-at-his-fall",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "if (shown.warded && !model.warded && !model.fallen) shown.breakAt = now;",
     "new": "if (shown.warded && !model.warded) shown.breakAt = now;",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-cleared-at-once",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "if (shown.outAt === null) shown.outAt = now;\n    else if (now - shown.outAt >= CALLOUT_OUT_MS)",
     "new": "if (shown.outAt === null) shown.outAt = now - CALLOUT_OUT_MS;\n    if (now - shown.outAt >= CALLOUT_OUT_MS)",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-the-entrance-on-every-tick",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "if (fresh) shown.inAt = now;",
     "new": "shown.inAt = now;",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-move-never-shown",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "${shown.move ? ' aimed' : ''}",
     "new": "",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-every-spent-mark-flashing",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "(shown.spentNew?.[i] && flashing(shown.spentAt, now, FLASH_MS.spent) ? 'wb-boss-mark spent now' : 'wb-boss-mark spent')",
     "new": "'wb-boss-mark spent now'",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-the-flash-on-a-late-joiner",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "if (shown.spent !== null) { shown.spentNew = [...spent].map((c, i) => c === '1' && shown.spent[i] !== '1'); shown.spentAt = now; }",
     "new": "{ shown.spentNew = [...spent].map((c, i) => c === '1' && shown.spent?.[i] !== '1'); shown.spentAt = now; }",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-the-old-callout-left-in-the-node",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "    shown = { ...SHOWN(), vis: shown.vis };\n    parts.calloutText.textContent = '';\n",
     "new": "    shown = { ...SHOWN(), vis: shown.vis };\n",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-no-entrance-the-second-time",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "    shown = { ...SHOWN(), vis: shown.vis };",
     "new": "    shown = { ...SHOWN(), vis: shown.vis, introAt: shown.introAt };",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-the-landscape-rules-lost",
-    "file": "src/ui/gateBossBar.js",
+    "file": "src/ui/gate/gateBossBar.js",
     "old": "@media (max-height: 480px) {\n  .wb-boss-bar { top: 44px; }",
     "new": "@media (max-height: 1px) {\n  .wb-boss-bar { top: 44px; }",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-the-bar-over-the-veil",
-    "file": "src/scenes/gateCourt.js",
-    "old": "peril?.name ?? null), { hidden: hudHidden() || veiled() });",
-    "new": "peril?.name ?? null), { hidden: hudHidden() });",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "flameMine: !!F && !!fp && flameCourtMine(F, t, fp) }), { hidden: hudHidden() || veiled() });",
+    "new": "flameMine: !!F && !!fp && flameCourtMine(F, t, fp) }), { hidden: hudHidden() });",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-move-never-asked",
-    "file": "src/scenes/gateCourt.js",
-    "old": "drawGateBossBar(bossBarModel(s, t, bossOf(s), peril?.name ?? null)",
-    "new": "drawGateBossBar(bossBarModel(s, t, bossOf(s), null)",
+    "file": "src/scenes/gate/gateCourt.js",
+    "old": "drawGateBossBar(bossBarModel(s, t, bossOf(s), onMe?.name ?? null,",
+    "new": "drawGateBossBar(bossBarModel(s, t, bossOf(s), null,",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-the-chart-fold-never-sideways",
-    "file": "src/ui/gateDamageChart.js",
+    "file": "src/ui/gate/gateDamageChart.js",
     "old": "@media (max-width: 640px), (max-height: 480px) {",
     "new": "@media (max-width: 640px) {",
     "tests": [
-      "test/wb13c_hud.test.js",
-      "test/gateheal.test.js",
-      "test/audit_wb11.test.js"
+      "test/ui/gate/wb13c_hud.test.js",
+      "test/net/gate/gateheal.test.js",
+      "test/net/gate/audit_wb11.test.js"
     ]
   },
   {
     "name": "WB13c-the-entrance-for-ever",
-    "file": "src/ui/gateDamageChart.js",
+    "file": "src/ui/gate/gateDamageChart.js",
     "old": "entering: shown < CHART_IN_MS,",
     "new": "entering: true,",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-all-rows-at-once",
-    "file": "src/ui/gateDamageChart.js",
+    "file": "src/ui/gate/gateDamageChart.js",
     "old": "animation-delay: ${i * CHART_ROW_STEP_MS}ms;",
     "new": "animation-delay: 0ms;",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-the-party-covered",
-    "file": "src/ui/gateMarksView.js",
+    "file": "src/ui/gate/gateMarksView.js",
     "old": "  body:has(.dfparty:not([style*=\"display: none\"])) .wb-marks-card { right: 220px; }",
     "new": "  body:has(.dfparty:not([style*=\"display: none\"])) .wb-marks-card { right: 18px; }",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-the-tips-small-and-slanted",
-    "file": "src/ui/gateMarksView.js",
+    "file": "src/ui/gate/gateMarksView.js",
     "old": ".wb-marks-tip { font-size: 13px; opacity: 0.85; color: #e9c9a6; }",
     "new": ".wb-marks-tip { font-size: 12px; font-style: italic; opacity: 0.8; color: #e9c9a6; }",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
     "name": "WB13c-a-screen-that-never-asks",
-    "file": "src/ui/gateGroundView.js",
+    "file": "src/ui/gate/gateGroundView.js",
     "old": "    if (doc.head) injectEnhancedFonts(doc);   // WB13c: Cormorant on the classic skin too (it came only if another window had asked)\n",
     "new": "",
     "tests": [
-      "test/wb13c_hud.test.js"
+      "test/ui/gate/wb13c_hud.test.js"
     ]
   },
   {
@@ -232,7 +232,7 @@
     "old": "          if (e.pointerType !== 'mouse') this._tapTip(px, py, e.clientX, e.clientY);   // WB13c: a finger has no hover\n",
     "new": "",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -241,7 +241,7 @@
     "old": "if (this._tipUntil !== null && this._clock >= this._tipUntil) {",
     "new": "if (false) {",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -250,7 +250,7 @@
     "old": "if (e.pointerType !== 'mouse') this._tapTip(",
     "new": "if (true) this._tapTip(",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   },
   {
@@ -259,7 +259,7 @@
     "old": "{ if (e.pointerType !== 'mouse' && this._tipUntil !== null) return; this._hoverAt = null; this._showTip(null); }",
     "new": "{ this._hoverAt = null; this._showTip(null); }",
     "tests": [
-      "test/eventtip.test.js"
+      "test/ui/eventtip.test.js"
     ]
   }
 ]

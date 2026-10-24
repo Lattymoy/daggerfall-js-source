@@ -2,37 +2,38 @@
   {
     "name": "ROOF-SHELTER-the-roof-ignores-the-street-again",
     "file": "src/systems/survival/temperature.js",
-    "old": "    return Math.abs(street) < Math.abs(roofed) ? street : roofed;",
-    "new": "    return roofed;",
+    "old": "return Math.max(-Math.abs(roofed), Math.min(Math.abs(roofed), street)) || 0;",
+    "new": "return roofed;",
     "tests": [
-      "test/fb0930_cc_roof.test.js"
+      "test/systems/survival/fb0930_cc_roof.test.js"
     ]
   },
   {
     "name": "ROOF-SHELTER-the-street-always",
     "file": "src/systems/survival/temperature.js",
-    "old": "    return Math.abs(street) < Math.abs(roofed) ? street : roofed;",
-    "new": "    return street;",
+    "old": "return Math.max(-Math.abs(roofed), Math.min(Math.abs(roofed), street)) || 0;",
+    "new": "return street;",
     "tests": [
-      "test/fb0930_cc_roof.test.js"
+      "test/systems/survival/fb0930_cc_roof.test.js"
     ]
   },
   {
-    "name": "ROOF-SHELTER-a-tie-goes-to-the-street",
+    "name": "ROOF-SHELTER-the-milder-by-size-across-nought",
     "file": "src/systems/survival/temperature.js",
-    "old": "    return Math.abs(street) < Math.abs(roofed) ? street : roofed;",
-    "new": "    return Math.abs(street) <= Math.abs(roofed) ? street : roofed;",
+    "old": "return Math.max(-Math.abs(roofed), Math.min(Math.abs(roofed), street)) || 0;",
+    "new": "return Math.abs(street) < Math.abs(roofed) ? street : roofed;",
     "tests": [
-      "test/fb0930_cc_roof.test.js"
-    ]
+      "test/systems/survival/fb0930_cc_roof.test.js"
+    ],
+    "why": "AUDIT C&C T4: the old rule - the milder by size crossed nought, so a desert inn read +30 in the rain and -28 when overcast"
   },
   {
     "name": "ROOF-SHELTER-the-milder-by-value-not-by-size",
     "file": "src/systems/survival/temperature.js",
-    "old": "    return Math.abs(street) < Math.abs(roofed) ? street : roofed;",
-    "new": "    return street < roofed ? street : roofed;",
+    "old": "return Math.max(-Math.abs(roofed), Math.min(Math.abs(roofed), street)) || 0;",
+    "new": "return street < roofed ? street : roofed;",
     "tests": [
-      "test/fb0930_cc_roof.test.js"
+      "test/systems/survival/fb0930_cc_roof.test.js"
     ]
   },
   {
@@ -41,7 +42,7 @@
     "old": "    const street = climate + season + hourTemperature(hour, climateIndex) + (WEATHER_TEMP[weather] ?? 0);",
     "new": "    const street = climate + season + hourTemperature(hour, climateIndex);",
     "tests": [
-      "test/fb0930_cc_roof.test.js"
+      "test/systems/survival/fb0930_cc_roof.test.js"
     ]
   },
   {
@@ -50,7 +51,7 @@
     "old": "    const street = climate + season + hourTemperature(hour, climateIndex) + (WEATHER_TEMP[weather] ?? 0);",
     "new": "    const street = climate + season + (WEATHER_TEMP[weather] ?? 0);",
     "tests": [
-      "test/fb0930_cc_roof.test.js"
+      "test/systems/survival/fb0930_cc_roof.test.js"
     ]
   }
 ]

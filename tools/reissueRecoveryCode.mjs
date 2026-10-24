@@ -9,8 +9,9 @@
 // with a fresh code:
 //   1. the operator mints a code here and sets ONLY its hash on the account (.github/workflows/account-recovery.yml);
 //   2. the player spends the code in the game's "Forgot password" form and picks their own password;
-//   3. that spend mints the player a new code and signs every device out (accounts.js `recover`), so the code the
-//      operator saw is dead the moment it is used.
+//   3. that spend mints the player new codes - eight on a build that has the set, one on a build from before it
+//      (RECOVERY-SET) - and signs every device out (accounts.js `recover`), so the code the operator saw is dead the
+//      moment it is used.
 // Nothing else on the row is touched: the id, the saves, the Founder (FOUNDER3 reads `created_at`) all stay.
 //
 //   node tools/reissueRecoveryCode.mjs <handle>                mint a code: print it (for the player) and its hash
@@ -58,7 +59,7 @@ async function main(argv) {
   console.log(`Recovery code for ${handle} - give it to the player privately; it works once:\n\n  ${code}\n`);
   console.log(`Its hash - the workflow's \`hash\` input (not a secret):\n\n  ${hash}\n`);
   console.log(`Then: Actions > "Account recovery" > Run workflow, with handle ${handle} and that hash. The player uses`);
-  console.log('"Forgot password" in the game with the code, picks a new password, and is shown a new code to keep.');
+  console.log('"Forgot password" in the game with the code, picks a new password, and is shown new recovery codes to keep.');
 }
 
 if (isMain(import.meta.url)) {

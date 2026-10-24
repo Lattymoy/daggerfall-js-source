@@ -5,7 +5,7 @@
     "old": "      if (this.casterOf[i] === -1) this.casterOf[i] = casterWord(SHADOW_POINT_CASTERS + j, far);   // LA-SHADOW4: the map's far with it\n",
     "new": "",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "const fresh = !same || sl[o + 3] !== far;",
     "new": "const fresh = true || sl[o + 3] !== far;",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "      if (!ShadowPass._castsAt(L, f.carried, i)) continue;\n      for (let j = 0; j < cap; j++) {",
     "new": "      if (!ShadowPass._castsAt(L, f.carried, i) || this.casterOf[i] >= 0) continue;\n      for (let j = 0; j < cap; j++) {",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "if (!taken[j] && samePlace(sl, j * 4, L, i * 4)) { slotOf[i] = j; taken[j] = 1; break; }",
     "new": "if (!taken[j] && j === i) { slotOf[i] = j; taken[j] = 1; break; }",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
@@ -41,16 +41,16 @@
     "old": "let sig = null, draw = fresh;",
     "new": "let sig = null, draw = fresh && rebuilds-- > 0;",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
     "name": "DISC15-no-rebuild-budget",
     "file": "src/render/shadowPass.js",
-    "old": "if (!fresh && rebuilds > 0) {",
-    "new": "if (!fresh) {",
+    "old": "      if (!fresh && (!minded || rebuilds > 0)) {",
+    "new": "      if (!fresh) {",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "this._everyLightPrev = this._everyLightNow; this._everyLightNow = false;",
     "new": "this._everyLightPrev = this._everyLightNow;",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "    if (cut) sp.discard();",
     "new": "    ",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "return !(carried && carried[i]) && w > 0 && w <= SHADOW_CASTER_MAX_RANGE;",
     "new": "return w > 0 && w <= SHADOW_CASTER_MAX_RANGE;",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "return !(carried && carried[i]) && w > 0 && w <= SHADOW_CASTER_MAX_RANGE;",
     "new": "return !(carried && carried[i]) && w > 0;",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "    this.loTex = this._depthArray(1, 6, gl.LINEAR);\n",
     "new": "    this.loTex = this._depthArray(SHADOW_LO_SIZE, 6 * SHADOW_LO_STEP, gl.LINEAR);\n",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "    this.loTex = this._depthArray(1, 6, gl.LINEAR);\n",
     "new": "    this.loTex = null;\n",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "    if (want <= this._loCap) return;\n",
     "new": "    if (this._loCap > 0) return;\n",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "    float sh = k >= 0 ? casterShadowAt(k, uPointLights[i], wp, n)",
     "new": "    float sh = k >= 0 ? pointShadowAt(k, wp, n)",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "    renderer.everyLightCasts();   // DISC15",
     "new": "    // renderer.everyLightCasts();   // DISC15",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "    gl.bindTexture(gl.TEXTURE_2D_ARRAY, this.loTex);   // DISC15",
     "new": "    // DISC15",
     "tests": [
-      "test/disc15.test.js"
+      "test/render/disc15.test.js"
     ]
   }
 ]

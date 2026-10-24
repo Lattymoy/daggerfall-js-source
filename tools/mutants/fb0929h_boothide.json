@@ -4,41 +4,41 @@
     "file": "src/scenes/world.js",
     "old": "  /** REALM P1.3: THE REALM'S CHECKPOINT - the character composed by the standing host",
     "new": "  if (realmSession) whenPageHides(globalThis.document, () => { if (online) onlineCheckpoint(); });\n  /** REALM P1.3: THE REALM'S CHECKPOINT - the character composed by the standing host",
-    "tests": ["test/fb0929h_boothide.test.js"]
+    "tests": ["test/scenes/fb0929h_boothide.test.js"]
   },
   {
     "name": "BOOT-HIDE-exit-save-handed-to-the-page-where-it-is-named",
     "file": "src/scenes/world.js",
-    "old": "  /** REALM P0.5 (systems/onlineCheckpoint.js): THE CHARACTER SAVED AS IT PLAYS ONLINE",
-    "new": "  addEventListener('beforeunload', exitAutosave);\n  /** REALM P0.5 (systems/onlineCheckpoint.js): THE CHARACTER SAVED AS IT PLAYS ONLINE",
-    "tests": ["test/fb0929h_boothide.test.js"]
+    "old": "  /** REALM P0.5 (systems/online/onlineCheckpoint.js): THE CHARACTER SAVED AS IT PLAYS ONLINE",
+    "new": "  addEventListener('beforeunload', exitAutosave);\n  /** REALM P0.5 (systems/online/onlineCheckpoint.js): THE CHARACTER SAVED AS IT PLAYS ONLINE",
+    "tests": ["test/scenes/fb0929h_boothide.test.js"]
   },
   {
     "name": "BOOT-HIDE-saved-soon-handed-in-at-the-checkpoint",
     "file": "src/scenes/world.js",
     "old": "  /** REALM P1.3: THE REALM'S CHECKPOINT - the character composed by the standing host",
     "new": "  saveSoon.ready(() => onlineCheckpoint());\n  /** REALM P1.3: THE REALM'S CHECKPOINT - the character composed by the standing host",
-    "tests": ["test/fb0929h_boothide.test.js", "test/profsave.test.js"]
+    "tests": ["test/scenes/fb0929h_boothide.test.js", "test/systems/online/profsave.test.js"]
   },
   {
     "name": "BOOT-HIDE-title-exit-at-the-checkpoint",
     "file": "src/scenes/world.js",
     "old": "  /** REALM P1.3: THE REALM'S CHECKPOINT - the character composed by the standing host",
     "new": "  if (realmSession) setBeforeTitleExit(async () => { onlineCheckpoint(); });\n  /** REALM P1.3: THE REALM'S CHECKPOINT - the character composed by the standing host",
-    "tests": ["test/fb0929h_boothide.test.js"]
+    "tests": ["test/scenes/fb0929h_boothide.test.js"]
   },
   {
     "name": "BOOT-HIDE-the-page-hide-door-dropped",
     "file": "src/scenes/world.js",
     "old": "    whenPageHides(globalThis.document, () => { if (online) onlineCheckpoint(); });\n",
     "new": "",
-    "tests": ["test/fb0929h_boothide.test.js"]
+    "tests": ["test/scenes/fb0929h_boothide.test.js"]
   },
   {
     "name": "BOOT-HIDE-the-exit-save-never-handed-to-the-page",
     "file": "src/scenes/world.js",
     "old": "  addEventListener('beforeunload', exitAutosave);\n",
     "new": "",
-    "tests": ["test/fb0929h_boothide.test.js", "test/oneseat.test.js", "test/auditduel1.test.js"]
+    "tests": ["test/scenes/fb0929h_boothide.test.js", "test/net/oneseat.test.js", "test/combat/auditduel1.test.js"]
   }
 ]

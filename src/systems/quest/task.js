@@ -138,14 +138,14 @@ export class Task {
       // machine error-terminates the quest) - never a silent rearm.
       const targetTask = this.parentQuest.getTask(this.targetSymbol);
       if (targetTask.getTriggerValue()) this.clear();
-      else this._rearmActions();
+      else this._rearmActions({ persist: true });   // QUEST-AUDIT III MUTE-HELD: the persisting re-arm (actions.js MuteNpc)
     }
 
     this.prevTriggered = this.getTriggerValue();
   }
 
-  _rearmActions() {
-    for (const action of this.actions) action.rearmAction();
+  _rearmActions(opts) {
+    for (const action of this.actions) action.rearmAction(opts);
   }
 
   disposeActions() {

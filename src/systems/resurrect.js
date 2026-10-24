@@ -8,7 +8,8 @@
 // party pose carries `rz: {to, at}` for RESURRECT_HOLD_MS, and the fallen player's own client, reading its party's
 // poses each frame of the death screen, rises when a NEW `rz` names it. ALLY-CAST's law holds: party members alone,
 // and the receiving client decides.
-import { buildCustomSpell } from './spellMaker.js';
+import { buildCustomSpell } from './spell/spellMaker.js';
+import { t } from './textManager.js';   // REZ-BLOODLINE: the caster's refusal in the player's language (L10N4)
 
 export const RESURRECT_TYPE = 45;
 export const RESURRECT_SUBTYPE = 255;
@@ -71,6 +72,9 @@ export const RESURRECT_TEXT = Object.freeze({
   cast: (name) => `You call ${name || 'your companion'} back from death.`,
   raised: (name) => `${name || 'A companion'} has brought you back from death.`,
   spared: (n) => `Death takes none of your gold: the ${n.toLocaleString('en-US')} it claimed stay in your purse.`,   // AUDIT 28 B5: the screen's loss, withdrawn
+  // REZ-BLOODLINE (FIELD BUGS 2026-10-16b): a body whose death is decided for good (their pose's `fg` - net/wire.js
+  // validPartyPose): said to the caster, and nothing spent
+  forGood: (name) => t('resurrect.forGood', '{name} has fallen for good. No spell will raise them now.', { name: name || t('resurrect.companion', 'Your companion') }),
 });
 
 /** Does this spell carry the Resurrect effect? */

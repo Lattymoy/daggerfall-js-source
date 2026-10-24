@@ -1,164 +1,164 @@
 [
   {
     "name": "WB10a-a-plain-song-read-as-pressed",
-    "file": "src/systems/songPlayer.js",
+    "file": "src/systems/song/songPlayer.js",
     "old": "  if (!p || typeof p !== 'object') return null;\n  const out = {};",
     "new": "  if (!p) return null;\n  const out = {};",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   },
   {
     "name": "WB10a-the-ceiling-past-the-clip",
-    "file": "src/systems/songPlayer.js",
+    "file": "src/systems/song/songPlayer.js",
     "old": "  ceiling: [PRESS_CEILING_MIN, 0, 0],",
     "new": "  ceiling: [PRESS_CEILING_MIN, 12, 0],",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   },
   {
     "name": "WB10a-the-press-never-routed",
-    "file": "src/systems/songPlayer.js",
+    "file": "src/systems/song/songPlayer.js",
     "old": "    this._routePress(songPress(song));",
     "new": "    this._routePress(null);",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   },
   {
     "name": "WB10a-a-plain-song-left-on-the-press",
-    "file": "src/systems/songPlayer.js",
+    "file": "src/systems/song/songPlayer.js",
     "old": "    let to = this._fader;\n    if (press &&",
     "new": "    let to = this._levelTo ?? this._fader;\n    if (press &&",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   },
   {
     "name": "WB10a-the-press-rebuilt-each-song",
-    "file": "src/systems/songPlayer.js",
+    "file": "src/systems/song/songPlayer.js",
     "old": "      if (!this._press) {\n        const comp",
     "new": "      if (true) {\n        const comp",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   },
   {
     "name": "WB10a-the-drive-not-into-the-curve",
-    "file": "src/systems/songPlayer.js",
+    "file": "src/systems/song/songPlayer.js",
     "old": "      out.gain.value = press.out / (ceil * CEILING_DRIVE);",
     "new": "      out.gain.value = press.out;",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   },
   {
     "name": "WB10a-the-curves-drive-dropped",
-    "file": "src/systems/songPlayer.js",
+    "file": "src/systems/song/songPlayer.js",
     "old": "  for (let i = 0; i < n; i++) c[i] = Math.tanh(CEILING_DRIVE * ((2 * i) / (n - 1) - 1));",
     "new": "  for (let i = 0; i < n; i++) c[i] = Math.tanh((2 * i) / (n - 1) - 1);",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   },
   {
     "name": "WB10a-the-ceiling-not-over-music-gain",
-    "file": "src/systems/songPlayer.js",
+    "file": "src/systems/song/songPlayer.js",
     "old": "export const ceilingAmplitude = (dbfs) => Math.pow(10, dbfs / 20) / MUSIC_GAIN;",
     "new": "export const ceilingAmplitude = (dbfs) => Math.pow(10, dbfs / 20);",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   },
   {
     "name": "WB10a-a-song-without-its-press",
-    "file": "src/systems/gateScore.js",
+    "file": "src/systems/gate/gateScore.js",
     "old": "  }, SCORE_LEVEL.war2, SCORE_PRESS.war2);",
     "new": "  }, SCORE_LEVEL.war2);",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   },
   {
     "name": "WB10a-the-ceiling-at-the-clip",
-    "file": "src/systems/gateScore.js",
+    "file": "src/systems/gate/gateScore.js",
     "old": "release: 0.25, ceiling: -1 });",
     "new": "release: 0.25, ceiling: 0 });",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   },
   {
     "name": "WB10a-the-pizzicato-back",
-    "file": "src/systems/gateScore.js",
+    "file": "src/systems/gate/gateScore.js",
     "old": "export const SCORE_PROGRAMS = Object.freeze({ ostinato: 57,",
     "new": "export const SCORE_PROGRAMS = Object.freeze({ ostinato: 45,",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   },
   {
     "name": "WB10a-the-hi-hat-back",
-    "file": "src/systems/gateScore.js",
+    "file": "src/systems/gate/gateScore.js",
     "old": "highFloorTom: 43, tom: 45, lowMidTom: 47",
     "new": "highFloorTom: 43, tom: 42, lowMidTom: 47",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   },
   {
     "name": "WB10a-the-bell-rung-high",
-    "file": "src/systems/gateScore.js",
+    "file": "src/systems/gate/gateScore.js",
     "old": "      if (bar % 8 === 0) w.note('bells', bar, 0, 4, 'D3', 96);",
     "new": "      if (bar % 8 === 0) w.note('bells', bar, 0, 4, 'D5', 96);",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   },
   {
     "name": "WB10a-the-theme-an-octave-up",
-    "file": "src/systems/gateScore.js",
+    "file": "src/systems/gate/gateScore.js",
     "old": "    themeBars(w, 24, THEME_A, 'brass', 120);",
     "new": "    themeBars(w, 24, THEME_A, 'brass', 120, 1);",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   },
   {
     "name": "WB10a-the-arpeggio-back",
-    "file": "src/systems/gateScore.js",
+    "file": "src/systems/gate/gateScore.js",
     "old": "ost: ['D3', 'D3', 'D3', 'D3', 'D3', 'D3', 'Bb2', 'A2']",
     "new": "ost: ['D3', 'D3', 'A3', 'D3', 'Bb3', 'D3', 'A3', 'F3']",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   },
   {
     "name": "WB10a-a-third-in-the-stab",
-    "file": "src/systems/gateScore.js",
+    "file": "src/systems/gate/gateScore.js",
     "old": "stab: ['D3', 'A3', 'D4'] }",
     "new": "stab: ['D3', 'F3', 'A3'] }",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   },
   {
     "name": "WB10a-the-major-bflat-back",
-    "file": "src/systems/gateScore.js",
+    "file": "src/systems/gate/gateScore.js",
     "old": "str: ['Db4', 'F4', 'Bb4']",
     "new": "str: ['D4', 'F4', 'Bb4']",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   },
   {
     "name": "WB10a-the-neapolitan-before-his-wrath",
-    "file": "src/systems/gateScore.js",
+    "file": "src/systems/gate/gateScore.js",
     "old": "const WAR_A = Object.freeze(['Dm', 'Bbm', 'Dm', 'Bbm', 'Gm', 'Dm', 'A', 'A']);",
     "new": "const WAR_A = Object.freeze(['Dm', 'Bbm', 'Dm', 'Bbm', 'Gm', 'Eb', 'A', 'A']);",
     "tests": [
-      "test/wb10a_gate_score.test.js"
+      "test/systems/gate/wb10a_gate_score.test.js"
     ]
   }
 ]

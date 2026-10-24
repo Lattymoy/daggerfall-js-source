@@ -1,0 +1,162 @@
+[
+  {
+    "name": "ARENAB-pve-in",
+    "file": "server-account/migrations/0139_arena_board.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS arena_board_pve_in AFTER INSERT ON arena_pve BEGIN UPDATE arena_board_ver SET ver = ver + 1 WHERE id = 1; END;\n",
+    "new": "",
+    "tests": [
+      "test/server/arena_board.test.js"
+    ],
+    "note": "a ladder bout recorded leaves the board kept"
+  },
+  {
+    "name": "ARENAB-pve-up",
+    "file": "server-account/migrations/0139_arena_board.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS arena_board_pve_up AFTER UPDATE ON arena_pve BEGIN UPDATE arena_board_ver SET ver = ver + 1 WHERE id = 1; END;\n",
+    "new": "",
+    "tests": [
+      "test/server/arena_board.test.js"
+    ],
+    "note": "a run voided leaves the climb kept"
+  },
+  {
+    "name": "ARENAB-pve-out",
+    "file": "server-account/migrations/0139_arena_board.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS arena_board_pve_out AFTER DELETE ON arena_pve BEGIN UPDATE arena_board_ver SET ver = ver + 1 WHERE id = 1; END;\n",
+    "new": "",
+    "tests": [
+      "test/server/arena_board.test.js"
+    ],
+    "note": "an account gone keeps its ladder on the board"
+  },
+  {
+    "name": "ARENAB-pvp-in",
+    "file": "server-account/migrations/0139_arena_board.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS arena_board_pvp_in AFTER INSERT ON arena_pvp BEGIN UPDATE arena_board_ver SET ver = ver + 1 WHERE id = 1; END;\n",
+    "new": "",
+    "tests": [
+      "test/server/arena_board.test.js"
+    ],
+    "note": "a players' bout leaves the rated board kept"
+  },
+  {
+    "name": "ARENAB-pvp-up",
+    "file": "server-account/migrations/0139_arena_board.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS arena_board_pvp_up AFTER UPDATE ON arena_pvp BEGIN UPDATE arena_board_ver SET ver = ver + 1 WHERE id = 1; END;\n",
+    "new": "",
+    "tests": [
+      "test/server/arena_board.test.js"
+    ],
+    "note": "an account gone keeps its side of a players' bout on the board"
+  },
+  {
+    "name": "ARENAB-member-in",
+    "file": "server-account/migrations/0139_arena_board.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS arena_board_member_in AFTER INSERT ON arena_members BEGIN UPDATE arena_board_ver SET ver = ver + 1 WHERE id = 1; END;\n",
+    "new": "",
+    "tests": [
+      "test/server/arena_board.test.js"
+    ],
+    "note": "a banner joined leaves the members kept"
+  },
+  {
+    "name": "ARENAB-member-up",
+    "file": "server-account/migrations/0139_arena_board.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS arena_board_member_up AFTER UPDATE ON arena_members BEGIN UPDATE arena_board_ver SET ver = ver + 1 WHERE id = 1; END;\n",
+    "new": "",
+    "tests": [
+      "test/server/arena_board.test.js"
+    ],
+    "note": "a banner left leaves the members kept"
+  },
+  {
+    "name": "ARENAB-version-unread",
+    "file": "server-account/src/arena.js",
+    "old": "  const shared = kept && Number(kept.built) === Number(kept.ver) && kept.shape === ARENA_BOARD_SHAPE ? arenaSharedOf(kept.rows) : null;",
+    "new": "  const shared = kept && kept.shape === ARENA_BOARD_SHAPE ? arenaSharedOf(kept.rows) : null;",
+    "tests": [
+      "test/server/arena_board.test.js"
+    ],
+    "note": "the board kept through every write"
+  },
+  {
+    "name": "ARENAB-shape-unread",
+    "file": "server-account/src/arena.js",
+    "old": "  const shared = kept && Number(kept.built) === Number(kept.ver) && kept.shape === ARENA_BOARD_SHAPE ? arenaSharedOf(kept.rows) : null;",
+    "new": "  const shared = kept && Number(kept.built) === Number(kept.ver) ? arenaSharedOf(kept.rows) : null;",
+    "tests": [
+      "test/server/arena_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS B1: another deploy's counts served by this one's"
+  },
+  {
+    "name": "ARENAB-keep-unguarded",
+    "file": "server-account/src/arena.js",
+    "old": "SELECT ?1, ?2, ?3, ?4 WHERE (SELECT ver FROM arena_board_ver WHERE id = 1) = ?2",
+    "new": "SELECT ?1, ?2, ?3, ?4 WHERE ?2 IS NOT NULL",
+    "tests": [
+      "test/server/arena_board.test.js"
+    ],
+    "note": "a slow count put over a newer one"
+  },
+  {
+    "name": "ARENAB-keep-rewrites",
+    "file": "server-account/src/arena.js",
+    "old": "rows = excluded.rows WHERE NOT (built = excluded.built AND shape IS excluded.shape)`;",
+    "new": "rows = excluded.rows`;",
+    "tests": [
+      "test/server/arena_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS B2: every caller that missed rewrites the season's board"
+  },
+  {
+    "name": "ARENAB-keep-before-caller",
+    "file": "server-account/src/arena.js",
+    "old": "    if (later) later.push(keep); else await keep();",
+    "new": "    await keep();",
+    "tests": [
+      "test/server/arena_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS D5: the board kept before the caller's own reads - those wait for the keep's position"
+  },
+  {
+    "name": "ARENAB-season-rows-moved",
+    "file": "server-account/migrations/0139_arena_board.sql",
+    "old": "CREATE TRIGGER IF NOT EXISTS arena_board_pve_in AFTER INSERT ON arena_pve BEGIN UPDATE arena_board_ver SET ver = ver + 1 WHERE id = 1; END;",
+    "new": "CREATE TRIGGER IF NOT EXISTS arena_board_pve_in AFTER INSERT ON arena_pve BEGIN UPDATE arena_board_ver SET ver = ver + 1 WHERE id = 1; UPDATE arena_boards SET rows = rows; END;",
+    "tests": [
+      "test/server/arena_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS D4: a bout rewrites every season's board"
+  },
+  {
+    "name": "ARENAB-last-swapped",
+    "file": "server-account/src/arena.js",
+    "old": "    standingRows: { now: [at(5), at(6)], last: [at(7), at(8)] },",
+    "new": "    standingRows: { now: [at(7), at(8)], last: [at(5), at(6)] },",
+    "tests": [
+      "test/server/arena_board.test.js"
+    ],
+    "note": "last season's points read as this season's"
+  },
+  {
+    "name": "ARENAB-rosters-swapped",
+    "file": "server-account/src/arena.js",
+    "old": "    rosters: { red: at(9), blue: at(10) }, counts: at(11),",
+    "new": "    rosters: { red: at(10), blue: at(9) }, counts: at(11),",
+    "tests": [
+      "test/server/arena_board.test.js"
+    ],
+    "note": "the banners' rosters crossed"
+  },
+  {
+    "name": "ARENAB2-standings-kept-worked",
+    "file": "server-account/src/arena.js",
+    "old": "    standingRows: { now: [at(5), at(6)], last: [at(7), at(8)] },",
+    "new": "    standingRows: { now: [at(5), at(6)], last: [at(7), at(8)] }, standings: standingsFrom(at(5), at(6)),",
+    "tests": [
+      "test/server/arena_board.test.js"
+    ],
+    "note": "AUDIT LEAN-READS 2 B5: a worked-out count kept - JavaScript no shape hashes, served by a deploy that works it out otherwise"
+  }
+]

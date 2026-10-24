@@ -8,7 +8,7 @@ import { chromium } from 'playwright';
 import { createServer } from 'vite';
 import { execFileSync } from 'node:child_process';
 import { mkdirSync, writeFileSync, rmSync, readdirSync } from 'node:fs';
-import { TITLE_IMPACT_TIME } from '../src/ui/introCue.js';
+import { TITLE_IMPACT_TIME } from '../src/ui/intro/introCue.js';
 
 const out = process.argv[2] ?? 'test-harness/intro';
 const frames = `${out}/frames`;

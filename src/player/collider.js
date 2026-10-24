@@ -59,8 +59,15 @@ const SUBSTEP_LEN = CAPSULE_RADIUS * 0.75;
  *  whole motion, however long. */
 export const EXACT_SWEEP_MAX = SUBSTEPS_MAX * SUBSTEP_LEN;
 const GROUND_NY = Math.cos((SLOPE_LIMIT_DEG * Math.PI) / 180);
+/** DOOR-JAM (FIELD BUGS 2026-10-14b): the least push the sideways pass's resolve gives a body for move() to report a
+ *  side contact (`sides`, CharacterController.collisionFlags' CollidedSides), metres - under it the body only rested
+ *  against what it touches. */
+export const SIDE_CONTACT = 1e-4;
 const TAN_SLOPE_LIMIT = Math.tan((SLOPE_LIMIT_DEG * Math.PI) / 180);   // AUDIT LANDFORMS II I3: the terrain floor snap's reach
-const SKIN = 0.02;
+/** The resolve's contact skin: a face within a sphere's radius + SKIN is met (it grounds, it is leaned on), and pushed
+ *  out only to the radius (_resolveSphere). DECOR-CLEAR (player/lateSolid.js): a face deeper in than the skin is one a
+ *  body is IN, not one it rests on. */
+export const SKIN = 0.02;
 
 /** The slack on the broad-phase box, in world units: the triangles' own arithmetic is float, so the box is grown by
  *  a hair rather than trusted to the last bit. Far below CELL, so it costs nothing in rejects. */
@@ -118,7 +125,7 @@ function rayMarks(bucket) {
   if (bucket.markEpoch !== MARK_EPOCH) { m.fill(0); bucket.markEpoch = MARK_EPOCH; }
   return m;
 }
-/** FB0930-FRAME: the pin's door to the stamp - test/fb0930_frame.test.js walks a bucket across the wrap. */
+/** FB0930-FRAME: the pin's door to the stamp - test/player/fb0930_frame.test.js walks a bucket across the wrap. */
 export function _setRayStampForTest(n) { RAY_STAMP = n; }
 /** PERF-CLIMB: the resolve's fixed-point stop (_resolveCapsule), on unless a pin turns it off to hold the answers the
  *  same with it and without it. */
@@ -188,9 +195,10 @@ export function onFloatingFrame(frame, translation) {
 }
 const RAY_NEAR = [];      // raycastHit's candidates
 const SPHERE_NEAR = [];   // the sphere walks' (never nested in a ray's walk, nor a ray in theirs)
-/** Where a bucket is filed (`bucket.lvl`): nothing yet, the fine cells, the coarse cells, `always`. A bucket's box only
- *  grows, so its level only rises - and at a level, the cells it covers only gain. */
-const FILED_NONE = 0, FILED_FINE = 1, FILED_COARSE = 2, FILED_ALWAYS = 3;
+/** Where a bucket is filed (`bucket.lvl`): nothing yet, the fine cells, the coarse cells, `always`, `posed` (SEA-DROPS: a
+ *  posed mover's, filed there at its birth and never elsewhere). A bucket's box only grows, so its level only rises - and
+ *  at a level, the cells it covers only gain. */
+const FILED_NONE = 0, FILED_FINE = 1, FILED_COARSE = 2, FILED_ALWAYS = 3, FILED_POSED = 4;
 /** File `bucket` under every cell of `size` its XZ box (moved by ox, oz) covers, in `into` - or answer false when that is
  *  over `spanMax` cells (or not finite) and nothing was filed. PERF-COL2 (AUDIT): a bucket filed at this level before
  *  (`bucket.lvl`, its cells then `bucket.bx0`..`bz1`) is filed under the cells its grown box gained alone; one filed at
@@ -223,6 +231,7 @@ function fileBox(bucket, ox, oz, size, spanMax, into, lvl) {
 function fileBucket(broad, bucket) {
   let ox = 0, oz = 0;
   if (bucket.moves) {
+    if (bucket.posed) { filePosed(broad, bucket); return; }   // SEA-DROPS
     if (bucket.frame === null || bucket.r) { fileAlways(broad, bucket); return; }
     // PERF-COL2: riding a floating frame, unturned - filed where it stands now, while its frame stands
     const t = bucket.t();
@@ -245,11 +254,24 @@ function fileAlways(broad, bucket) {
   a.splice(at, 0, bucket);
   bucket.lvl = FILED_ALWAYS;
 }
+/** SEA-DROPS: `posed` in the walk's order, each bucket once - and every posed box made again at the next query (a new
+ *  bucket, a grown one). */
+function filePosed(broad, bucket) {
+  broad.poseSeen = -1;
+  if (bucket.lvl === FILED_POSED) return;
+  const a = broad.posed;
+  let at = a.length;
+  while (at > 0 && a[at - 1].ord > bucket.ord) at--;
+  a.splice(at, 0, bucket);
+  bucket.lvl = FILED_POSED;
+}
 /** File the collider's buckets: `all` in Map order (each bucket's `ord` its place in it), `always` the buckets every
  *  query asks, `cells` the standing ones by broad cell, `coarseCells` (PERF-COL2) the ones too wide for those by coarse cell,
- *  and `frames` (PERF-COL2) one sentinel a floating frame - a bucket riding it, and where it stood when filed. */
+ *  and `frames` (PERF-COL2) one sentinel a floating frame - a bucket riding it, and where it stood when filed. SEA-DROPS:
+ *  `posed` the posed movers, `poseSeen` the collider's pose count their boxes (`wbox`) and their union (`poseUnion`) were
+ *  made at (-1: none yet). */
 function buildBroad(buckets) {
-  const broad = { all: [], always: [], cells: new Map(), coarseCells: new Map(), frames: [] };
+  const broad = { all: [], always: [], cells: new Map(), coarseCells: new Map(), frames: [], posed: [], poseSeen: -1, poseUnion: new Float64Array(4) };
   for (const bucket of buckets.values()) {
     bucket.ord = broad.all.length;
     broad.all.push(bucket);
@@ -430,7 +452,7 @@ function wideOnRay(bucket, ox, oy, oz, dir, reach) {
   return out;
 }
 /** OW-WOD-LAG: how many wide faces the tree hands a sphere of radius `r` at a WORLD point in bucket `key` (no mover's
- *  turn) - the query's own walk, counted: the pin that the tree culls (test/ow_wod.test.js). */
+ *  turn) - the query's own walk, counted: the pin that the tree culls (test/world/worldOfDaggerfall/ow_wod.test.js). */
 export function wideCandidates(collider, key, p, r) {
   const bucket = collider._buckets.get(key);
   if (!bucket || !bucket.wide.length) return 0;
@@ -580,6 +602,65 @@ function turnedBox(bucket, t, R, out) {
   }
   return out;
 }
+/** SEA-DROPS: how far a turn handed to addMesh may stray from a rotation's own and still be one, over a box's own
+ *  coordinates (world/csaCarry's CSA_RIGID_EPS is 1e-5) - the query turns back by R's transpose, so a box's corner far
+ *  from its own origin is met up to this much of its distance from where the turned box puts it. */
+const MOVER_TURN_EPS = 1e-4;
+/**
+ * SEA-DROPS (2026-10-23, the owner: "while at sea players encounter on and off persistent frame drops"): WHETHER A
+ * MOVER'S BUCKET, AS IT STANDS NOW, CAN REACH A QUERY WHOSE WORLD BOX IS [x0, x1] x [z0, z1].
+ *
+ * A boat's buckets move and turn (AUDIT NAV1 #12, the world host's csaSyncColliders), so none is filed by place and
+ * every query was handed every one of them - each turned back into its frame (intoBucket) and its box asked there
+ * (segmentHitsBox, sphereTouchesBox). At sea that is my own boat's ~45 buckets, and ~19 more for each ship within the
+ * naval host's COLLIDE_RANGE, for every ray and sphere of the deep's foes hundreds of metres off: their obstacle and
+ * clear-path casts run 600-850 rays a frame while a fresh water's spawns settle (measured in the real game - SwiftShader,
+ * 160 x 90 - at 51 movers: the collider's rays 7.2 ms a frame, three quarters of it the movers' buckets).
+ *
+ * Here a mover is asked once, from its world box: its own box carried by its translation, or by its turn as turnedBox
+ * bounds it (|R| on the half extents), grown on every side by the query's own skins and MOVER_TURN_EPS of its
+ * coordinates' size. Every query's own test is a box (grown by its skin, or by its reach) asked in the bucket's frame -
+ * a point that test can meet is the image of a point of that grown box, which stands inside this one; and every
+ * query's world box holds what it asks (FB0930-FRAME's law, which the standing buckets' filing already reads) - so a
+ * mover this answers no for is one whose own test would have answered no: the same answers, the same order (the walk's,
+ * a bucket skipped and none moved). A box that is not finite (an empty bucket's, a widened one) or a translation that is not is handed on,
+ * as every mover was.
+ */
+function moverReaches(b, x0, x1, z0, z1) {
+  const w = moverBox(b, MOVER_BOX);
+  return !(w[1] < x0 || w[0] > x1 || w[3] < z0 || w[2] > z1);   // NaN anywhere answers every compare false: handed on
+}
+/** SEA-DROPS: a mover's world box where it stands now, into `out` as [x0, x1, z0, z1] - grown by the skins and the
+ *  turn's stray; unbounded (its pose unread) where its own box is not finite. */
+function moverBox(b, out) {
+  const mn = b.min, mx = b.max;
+  const big = Math.max(Math.abs(mn[0]), Math.abs(mn[1]), Math.abs(mn[2]), Math.abs(mx[0]), Math.abs(mx[1]), Math.abs(mx[2]));
+  if (!(big < Infinity)) { out[0] = -Infinity; out[1] = Infinity; out[2] = -Infinity; out[3] = Infinity; return out; }   // no box to carry (an empty bucket's is inverted, a widened one's unbounded): handed on
+  const e = 2 * (2 * BOX_SKIN + MOVER_TURN_EPS * big);   // the skins, and the turn's own stray, doubled for |R|'s sum and the floats
+  const t = b.t();
+  const R = b.r ? b.r() : null;
+  if (R) {
+    const cx = (mn[0] + mx[0]) / 2, cy = (mn[1] + mx[1]) / 2, cz = (mn[2] + mx[2]) / 2;
+    const hx = (mx[0] - mn[0]) / 2, hy = (mx[1] - mn[1]) / 2, hz = (mx[2] - mn[2]) / 2;
+    const wx = t[0] + R[0] * cx + R[3] * cy + R[6] * cz, ex = Math.abs(R[0]) * hx + Math.abs(R[3]) * hy + Math.abs(R[6]) * hz + e;   // turnedBox's row x
+    const wz = t[2] + R[2] * cx + R[5] * cy + R[8] * cz, ez = Math.abs(R[2]) * hx + Math.abs(R[5]) * hy + Math.abs(R[8]) * hz + e;   // and row z
+    out[0] = wx - ex; out[1] = wx + ex; out[2] = wz - ez; out[3] = wz + ez;
+  } else {
+    out[0] = mn[0] + t[0] - e; out[1] = mx[0] + t[0] + e; out[2] = mn[2] + t[2] - e; out[3] = mx[2] + t[2] + e;
+  }
+  return out;
+}
+const MOVER_BOX = new Float64Array(4);
+/** SEA-DROPS: the posed movers' boxes made where they stand, and their union, at the collider's pose count `seen`. */
+function posedBoxes(broad, seen) {
+  const u = broad.poseUnion;
+  u[0] = Infinity; u[1] = -Infinity; u[2] = Infinity; u[3] = -Infinity;
+  for (const b of broad.posed) {
+    const w = moverBox(b, (b.wbox ??= new Float64Array(4)));
+    u[0] = Math.min(u[0], w[0]); u[1] = Math.max(u[1], w[1]); u[2] = Math.min(u[2], w[2]); u[3] = Math.max(u[3], w[3]);   // a NaN poisons the union: every posed bucket asked by its own
+  }
+  broad.poseSeen = seen;
+}
 const LOCAL = [0, 0, 0];   // a query's point in the bucket it is asking - one scratch (no query re-enters another here)
 const LOCAL_DIR = [0, 0, 0];   // and a ray's direction there
 const TURNED_BOX = [0, 0, 0, 0, 0, 0];
@@ -608,7 +689,16 @@ export class Collider {
     this._broad = null;   // FB0930-FRAME: the buckets filed by broad cell (buildBroad), dropped by every addMesh and removeBucket
     /** @type {any} TACT1: the billboards' cover (ai/cover.js createCoverIndex) - beside the meshes, never in them; null for none */
     this.cover = null;
+    /** @type {any} ROCK-CLEAR: the gate its late solids go through (player/lateSolid.js lateSolidsOf, which sets it) - the
+     *  parts it holds back from the body are a bucket's not yet stood, and leave with the bucket; null for none */
+    this.late = null;
+    this._poseCount = 0;   // SEA-DROPS: moved by posesMoved - the posed movers' boxes are kept while it stands
   }
+
+  /** SEA-DROPS: THE POSED MOVERS MAY STAND ELSEWHERE NOW - every bucket laid with addMesh's `posed` has its world box made
+   *  again where it stands at the next query, and kept until this is asked again. Its host asks it whenever it has moved
+   *  them, before any query reads them (the world host's csaSyncColliders, after each sync carries its boats' buckets). */
+  posesMoved() { this._poseCount++; }
 
   /** FB0930-FRAME: the buckets a query whose WORLD box is [x0, x1] x [z0, z1] (y unbounded) can reach, in the walk's
    *  order, into `out` - those after `afterOrd` alone (_resolveSphere's re-gather). Every bucket that moves and every
@@ -617,7 +707,9 @@ export class Collider {
    *  PERF-COL2: a bucket riding a floating frame (onFloatingFrame) is a standing one while its frame stands - filed
    *  where it stood at the filing, which is made again the first query after its frame moved - and a bucket too wide
    *  for the fine cells is filed on the coarse ones; only a mover's that turns or rides nothing, and one too wide for
-   *  either, are asked by every query. */
+   *  either, are asked by every query. SEA-DROPS: and a mover among those is handed to a query only where its box, as
+   *  it stands now, reaches the query's (moverReaches); a posed mover where the box kept since its host last moved it
+   *  does - and none of them where their union's does not. */
   _near(x0, x1, z0, z1, out, afterOrd = -1) {
     let broad = this._broad;
     if (broad !== null && framesMoved(broad)) broad = null;   // PERF-COL2: a floating frame that moved since the filing - its buckets filed again where they stand
@@ -631,8 +723,22 @@ export class Collider {
       return out;
     }
     const stamp = ++BROAD_STAMP;
-    for (const b of broad.always) if (b.ord > afterOrd) { b._broadStamp = stamp; out.push(b); }   // PERF-COL2 (AUDIT): stamped - a bucket a grown box carried here is in finer cells too
+    for (const b of broad.always) if (b.ord > afterOrd && (!b.moves || moverReaches(b, x0, x1, z0, z1))) { b._broadStamp = stamp; out.push(b); }   // PERF-COL2 (AUDIT): stamped - a bucket a grown box carried here is in finer cells too; SEA-DROPS: a mover where it stands now
     let sorted = true;
+    const posed = broad.posed;
+    if (posed.length) {   // SEA-DROPS: the posed movers, by the boxes kept since their host last moved them
+      if (broad.poseSeen !== this._poseCount) posedBoxes(broad, this._poseCount);
+      const u = broad.poseUnion;
+      if (!(u[1] < x0 || u[0] > x1 || u[3] < z0 || u[2] > z1)) {
+        for (let i = 0; i < posed.length; i++) {
+          const b = posed[i], w = b.wbox;
+          if (b.ord <= afterOrd || w[1] < x0 || w[0] > x1 || w[3] < z0 || w[2] > z1) continue;   // a NaN box is handed on
+          b._broadStamp = stamp;
+          if (out.length && out[out.length - 1].ord > b.ord) sorted = false;
+          out.push(b);
+        }
+      }
+    }
     for (let gx = cx0; gx <= cx1; gx++) {
       for (let gz = cz0; gz <= cz1; gz++) {
         const list = broad.cells.get(cellKey(gx, gz));
@@ -724,8 +830,14 @@ export class Collider {
    * bucket's frame, and brings a contact, a normal or a push back out; a
    * bucket with no turn (every bucket but a mover's) is walked exactly as
    * it was.
+   *
+   * SEA-DROPS: `posed` - a mover whose host asks posesMoved() whenever it
+   * has moved it (its translation's or its turn's answer changed), before
+   * any query: its world box is made once a move and kept, and a query
+   * far from every posed mover asks none of them. A mover laid without it
+   * is asked from where it stands at every query (moverReaches).
    */
-  addMesh(bucketKey, positions, indices, matrix, translation = null, rotation = null) {
+  addMesh(bucketKey, positions, indices, matrix, translation = null, rotation = null, posed = false) {
     let bucket = this._buckets.get(bucketKey);
     const fresh = !bucket;
     if (!bucket) {
@@ -733,7 +845,7 @@ export class Collider {
       // OWN space (the translation is applied to the RAY, as the DDA
       // already does), kept as the triangles go in - one compare per
       // vertex, paid once at load, against a walk paid per ray.
-      bucket = { key: bucketKey, moves: !!(translation || rotation), frame: FRAME_OF.get(translation) ?? null, ord: -1, _broadStamp: 0, lvl: FILED_NONE, bx0: 0, bx1: -1, bz0: 0, bz1: -1, tris: [], yLo: [], yHi: [], part: [], parts: 0, rayMark: null, grid: new Map(), wide: [], wideTree: null, t: translation || (() => ZERO3), r: rotation, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };   // AUDIT BRANCH (WoD) B1; OW-WOD-LAG: the wide triangles, and their tree (built when first asked); FB0930-FRAME: its key, whether it moves, its place in the walk
+      bucket = { key: bucketKey, moves: !!(translation || rotation), frame: FRAME_OF.get(translation) ?? null, ord: -1, _broadStamp: 0, lvl: FILED_NONE, bx0: 0, bx1: -1, bz0: 0, bz1: -1, tris: [], yLo: [], yHi: [], part: [], parts: 0, rayMark: null, posed: !!posed && !!(translation || rotation), wbox: null, grid: new Map(), wide: [], wideTree: null, t: translation || (() => ZERO3), r: rotation, min: [Infinity, Infinity, Infinity], max: [-Infinity, -Infinity, -Infinity] };   // AUDIT BRANCH (WoD) B1; OW-WOD-LAG: the wide triangles, and their tree (built when first asked); FB0930-FRAME: its key, whether it moves, its place in the walk
       this._buckets.set(bucketKey, bucket);
     }
     const m = matrix;
@@ -809,6 +921,7 @@ export class Collider {
   removeBucket(bucketKey) {
     if (this._buckets.delete(bucketKey)) this._broad = null;   // FB0930-FRAME: the filing is dropped with it
     this.cover?.remove(bucketKey);   // TACT1: a bucket's cover leaves with it
+    this.late?.forget(bucketKey);   // ROCK-CLEAR: and its parts held back from the body - a pixel streamed out stands none of them later
   }
 
   /** AUDIT CLIMB1 F5: where a bucket stands now - `{ t, r }`, its translation and its turn (r null for an unturned
@@ -876,7 +989,7 @@ export class Collider {
    * the caller's own - which is written and returned in place of a fresh
    * result, the normal into the caller's array ([0, 0, 0] on a miss).
    * The travel steering casts a dozen feelers a frame through here
-   * (systems/travelSteer.js createColliderProbe) and owns one result for
+   * (systems/travel/travelSteer.js createColliderProbe) and owns one result for
    * all of them. Without it the answer is the one it always was.
    */
   raycastHit(origin, dirW, maxDist, filter = null, out = null) {
@@ -1433,7 +1546,7 @@ export class Collider {
     // ground-ness and whether any ceiling-ish contact happened.
     // AUDIT DECOR-SHELL 1: `skip`, a Set of bucket keys the sphere
     // passes through - the ray's own filter, for the decorator's flying
-    // eye (scenes/decorTool.js flyClip), which looks through a piece
+    // eye (scenes/decor/decorTool.js flyClip), which looks through a piece
     // being moved. Null (every body) is the resolve exactly as it was.
     // SH1 (2026-09-12, Mac: "you can immediately walk over things (like
     // interior tables, tree trunks, etc)"): `standCeil` is the highest
@@ -1853,7 +1966,8 @@ export class Collider {
    * so no component ever exceeds a fraction of the radius - a sphere
    * displaced past a surface in one step never contacts it (tunneling;
    * surfaced by starved-frame dt spikes in the headless harness).
-   * @returns {{grounded:boolean, hitCeiling:boolean}}
+   * @returns {{grounded:boolean, hitCeiling:boolean, sides?:boolean}} `sides`: the sweep met something on the body's
+   *   sides (CollisionFlags.CollidedSides - DOOR-JAM, _moveStep)
    */
   /** AUDIT (the pre-merge audit, S2): `keepFloor` - a FOE's move (enemyMotor passes it): a body held down by a ceiling
    *  keeps the floor its lower sphere was set on (SQUEEZE1), whatever its height. The player's stances never pass it.
@@ -1877,12 +1991,13 @@ export class Collider {
       // here says no. Past the cap the remainder is taken as a single step, which is what a teleport is: the sweep
       // stops being exact for a motion no frame can produce anyway, and no number can buy an unbounded loop.
       const n = Math.min(SUBSTEPS_MAX, Math.ceil(maxComp / maxStep));
-      const out = { grounded: false, hitCeiling: false, pushedDown: false, groundKey: null };
+      const out = { grounded: false, hitCeiling: false, pushedDown: false, groundKey: null, sides: false };
       for (let i = 0; i < n; i++) {
         const r = this._moveStep(feet, dx / n, dy / n, dz / n, height, snap);
         out.grounded = r.grounded;
         out.groundKey = r.groundKey ?? null;
         out.hitCeiling = out.hitCeiling || r.hitCeiling;
+        out.sides = out.sides || r.sides;   // DOOR-JAM: one Move's CollidedSides is any contact along the whole of it
       }
       return out;
     }
@@ -1933,7 +2048,7 @@ export class Collider {
     //      RISING capsule off its pre-jump horizontal resolve, and
     //      the motor's velY clamp then killed every jump at one frame
     //      (apex 0.069 = one tick of 4.5/60 - the live "can't jump").
-    const out = { grounded: false, hitCeiling: false, pushedDown: false };
+    const out = { grounded: false, hitCeiling: false, pushedDown: false, sides: false };
 
     // Horizontal (phase-local flags; only the block test reads them).
     const beforeX = feet[0];
@@ -1953,6 +2068,14 @@ export class Collider {
     if (hOut.refused) { feet[0] = beforeX; feet[2] = beforeZ; }
     const movedSq = (feet[0] - beforeX) ** 2 + (feet[2] - beforeZ) ** 2;
     const wantedSq = dx * dx + dz * dz;
+    // DOOR-JAM (FIELD BUGS 2026-10-14b): CharacterController.collisionFlags' CollidedSides - the sideways pass met
+    // something on the body's sides: the resolve pushed the pass off where the motion put it by more than SIDE_CONTACT,
+    // along a face steeper than the slope limit (the collider's own wall law, GROUND_NY) - never a floor or a walkable
+    // slope the lower sphere rides. A pass the resolve refused is back where it began, the whole motion off. Read by
+    // EnemyMotor.HeightAdjust (characters/enemy/enemyMotor.js _heightAdjust).
+    const sideX = feet[0] - (beforeX + dx), sideY = feet[1] - entryY, sideZ = feet[2] - (beforeZ + dz);
+    const sideSq = sideX * sideX + sideZ * sideZ;
+    let sides = sideSq > SIDE_CONTACT * SIDE_CONTACT && sideY / Math.sqrt(sideSq + sideY * sideY) < GROUND_NY;
 
     // Step-up: only while not rising (Unity steps a grounded/falling
     // controller). The ASCENDING lift ladder takes the SMALLEST clear
@@ -2020,12 +2143,16 @@ export class Collider {
           if (probeY <= entryY) break;
         }
         if (!landed) continue;
+        // DOOR-JAM: a step climbed is the controller's own up-forward-down, no side contact - a rung that carried the
+        // body on along its motion. One the resolve threw back as far (a head under a lintel's edge) is not a step.
+        if ((landed[0] - beforeX) * dx + (landed[2] - beforeZ) * dz >= 0.5 * wantedSq) sides = false;
         feet[0] = landed[0];
         feet[1] = landed[1];
         feet[2] = landed[2];
         break;
       }
     }
+    out.sides = sides;
 
     // Vertical - the frame's TRUTH for grounded/ceiling.
     const vx0 = feet[0], vy0 = feet[1], vz0 = feet[2];

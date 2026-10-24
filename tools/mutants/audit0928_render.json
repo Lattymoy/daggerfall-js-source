@@ -5,7 +5,7 @@
     "old": "      mesh._vertGen = (mesh._vertGen ?? 0) + 1;\n",
     "new": "",
     "tests": [
-      "test/audit0928_render.test.js"
+      "test/render/audit0928_render.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "    if (!was || was.length !== positions.length || !was.every((v, i) => v === positions[i])) {",
     "new": "    if (true) {",
     "tests": [
-      "test/audit0928_render.test.js"
+      "test/render/audit0928_render.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "    r.dynamic = moved || reshaped || r.cut > 0;   // SC1",
     "new": "    r.dynamic = moved || r.cut > 0;   // SC1",
     "tests": [
-      "test/audit0928_render.test.js"
+      "test/render/audit0928_render.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "    if (mesh._vertSeen === undefined) { mesh._vertSeen = g; return false; }\n",
     "new": "",
     "tests": [
-      "test/audit0928_render.test.js"
+      "test/render/audit0928_render.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "      const wodSel = wodLit || csaLit.length ? _wodSelect(n, _csaFill(wodLit ? _wodFill(n) : n, csaLit)) : null;",
     "new": "      const wodSel = wodLit || csaLit.length ? _wodSelect(n, wodLit ? _wodFill(n) : n) : null;",
     "tests": [
-      "test/audit0928_render.test.js"
+      "test/render/audit0928_render.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "      const wodSel = wodLit || csaLit.length ? _wodSelect(n, _csaFill(",
     "new": "      const wodSel = wodLit ? _wodSelect(n, _csaFill(",
     "tests": [
-      "test/audit0928_render.test.js"
+      "test/render/audit0928_render.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "      const wodSel = wodLit || csaLit.length ? _wodSelect(0, _csaFill(wodLit ? _wodFill(0) : 0, csaLit)) : null;",
     "new": "      const wodSel = wodLit ? _wodSelect(0, _wodFill(0)) : null;",
     "tests": [
-      "test/audit0928_render.test.js"
+      "test/render/audit0928_render.test.js"
     ]
   },
   {
@@ -68,16 +68,16 @@
     "old": "      e.x = l.x; e.y = l.y; e.z = l.z; e.wodRange = l.range; e.wodColor = l.color;",
     "new": "      e.x = l.x; e.y = l.y; e.z = l.z; e.wodRange = l.range; e.wodColor = CITY_LIGHT_COLOR_F32;",
     "tests": [
-      "test/audit0928_render.test.js"
+      "test/render/audit0928_render.test.js"
     ]
   },
   {
     "name": "AUDIT0928-R2-boats-the-players-extras-again",
     "file": "src/scenes/world.js",
-    "old": "thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...(naval?.enabled ? naval.lights() : []), ...peerTorchLights(), ...(gatePool?.lights() ?? []), ...(riteHost?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // PEERLIGHT1: the others' torches, right after my own hand lights   // X11 candle;",
-    "new": "thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...csaLit, ...(naval?.enabled ? naval.lights() : []), ...peerTorchLights(), ...(gatePool?.lights() ?? []), ...(riteHost?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // PEERLIGHT1: the others' torches, right after my own hand lights   // X11 candle;",
+    "old": "thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...(naval?.enabled ? naval.lights() : []), ...peerTorchLights(), ...(gatePool?.lights() ?? []), ...(riteHost?.lights() ?? []), ...(starfall?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // PEERLIGHT1: the others' torches, right after my own hand lights   // X11 candle;",
+    "new": "thunderlockMuzzleLight(playerEntity, player.feetAt(), cam.yaw), ...csaLit, ...(naval?.enabled ? naval.lights() : []), ...peerTorchLights(), ...(gatePool?.lights() ?? []), ...(riteHost?.lights() ?? []), ...(starfall?.lights() ?? []), ...camps.lights(), ...droppedTorches.lights());   // PEERLIGHT1: the others' torches, right after my own hand lights   // X11 candle;",
     "tests": [
-      "test/audit0928_render.test.js"
+      "test/render/audit0928_render.test.js"
     ]
   },
   {
@@ -86,17 +86,17 @@
     "old": "      gl.uniform1f(bc.uColumnOn, 0);\n      this._bbColumnOn = 0;\n",
     "new": "      gl.uniform1f(bc.uColumnOn, 0);\n",
     "tests": [
-      "test/dwf_audit.test.js",
-      "test/la_cost.test.js"
+      "test/scenes/dwf_audit.test.js",
+      "test/render/la_cost.test.js"
     ]
   },
   {
     "name": "AUDIT0928-N7-classic-flats-lose-the-flash-term",
     "file": "src/render/renderer.js",
-    "old": "${COLUMN_GLSL}\n${HIT_FLASH_GLSL}\n${ELITE_GLOW_GLSL}\n${GLINT_GLSL}\n${FLAT_DISSOLVE_GLSL}\nvoid main() {\n  // ECV1",
-    "new": "${COLUMN_GLSL}\n${ELITE_GLOW_GLSL}\n${GLINT_GLSL}\n${FLAT_DISSOLVE_GLSL}\nvoid main() {\n  // ECV1",
+    "old": "${COLUMN_GLSL}\n${HIT_FLASH_GLSL}\n${ELITE_GLOW_GLSL}\n${GLINT_GLSL}\n${FLAT_DISSOLVE_GLSL}\n${FLAT_CRACK_GLSL}\nvoid main() {\n  // ECV1",
+    "new": "${COLUMN_GLSL}\n${ELITE_GLOW_GLSL}\n${GLINT_GLSL}\n${FLAT_DISSOLVE_GLSL}\n${FLAT_CRACK_GLSL}\nvoid main() {\n  // ECV1",
     "tests": [
-      "test/dwf_audit.test.js"
+      "test/scenes/dwf_audit.test.js"
     ]
   }
 ]

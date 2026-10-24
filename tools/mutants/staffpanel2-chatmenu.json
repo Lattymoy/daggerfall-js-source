@@ -1,0 +1,302 @@
+[
+  {
+    "name": "STAFF-PANEL2-CHATMENU-freeze-for-moderator",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "...(admin ? ['freeze'] : [])",
+    "new": "...(true ? ['freeze'] : [])",
+    "why": "a Moderator's line menu offers Freeze, an Admin's act",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-tp-for-moderator",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "...(admin || fang ? ['tp'] : [])",
+    "new": "...(true ? ['tp'] : [])",
+    "why": "a Moderator's line menu offers TP (Admin and Shadow Fang only)",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-shield-no-acts",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "if (!admin && !fang && !g.includes('mod')) return [];",
+    "new": "if (!admin && !fang) return [];",
+    "why": "a Moderator (the shield) gets no acts - and keeps Report",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-anyone-acts",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "if (!admin && !fang && !g.includes('mod')) return [];",
+    "new": "if (false) return [];",
+    "why": "a player or a Dungeon Master gets staff acts and loses Report",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-no-id-guard",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "    if (!ID_RE.test(sub)) return [];\n",
+    "new": "",
+    "why": "an account the wire's law cannot name is acted on",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-follow-by-name",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "Promise.resolve().then(() => f(sub))",
+    "new": "Promise.resolve().then(() => f(name))",
+    "why": "Follow names the player by the name the line showed",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-row-silent-without-panel",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "if (ok === false) sayActive(",
+    "new": "if (ok === 'no') sayActive(",
+    "why": "Follow with no Staff Panel over the game does nothing and says nothing (mob: \"why doesnt follow work?\")",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL5-FOLLOW-row-unwired",
+    "file": "src/scenes/world.js",
+    "old": ", follow: () => staffFollow.follow });",
+    "new": " });",
+    "why": "the game hands the chat menu no follow, so the Follow row never shows",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-follow-error-unsaid",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": ".catch((e) => sayActive(String(e?.message ?? e)));",
+    "new": ".catch(() => {});",
+    "why": "a Follow the hook refuses is never said",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-follow-without-hook",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "if (act === 'follow') return typeof f === 'function' ?",
+    "new": "if (act === 'follow') return true ?",
+    "why": "Follow shows with no staff hook",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-tp-without-socket",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "typeof teleport === 'function' && typeof line.id === 'string' && line.id ?",
+    "new": "typeof teleport === 'function' ?",
+    "why": "TP offered for a line with no socket on it",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-tp-by-name",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "    teleport?.(line.id);\n",
+    "new": "    teleport?.(line.name);\n",
+    "why": "TP asks by the name the line showed",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-tp-socket-check-dropped",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "if (typeof p?.sub === 'string' && p.sub !== line.sub) { sayActive(STAFF_TP_ERROR_TEXT.offline); return; }",
+    "new": "if (false) { sayActive(STAFF_TP_ERROR_TEXT.offline); return; }",
+    "why": "TP goes to a socket a room here holds under another account",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-mute-by-name",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "run: () => { void muteFor(sub, name, m); }",
+    "new": "run: () => { void muteFor(name, name, m); }",
+    "why": "Mute asks for the name, not the line's account",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-mute-length-lost",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "export const STAFF_MUTE_MINUTES = Object.freeze([30, 60, 24 * 60, 7 * 24 * 60]);",
+    "new": "export const STAFF_MUTE_MINUTES = Object.freeze([30, 60, 24 * 60, 7 * 24 * 600]);",
+    "why": "a mute length past the design's 7 days (and MOD1's bound)",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-mute-said-wrong",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "sayActive(await muteNamed({ sub, name }, minutes, { links: allLinks(), mute, refusal: accountRefusalText })",
+    "new": "sayActive(await muteNamed({ sub, name }, minutes, { links: [], mute, refusal: accountRefusalText })",
+    "why": "a line menu's mute is never carried to the rooms",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-ban-without-confirm",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "menu: banLevel(sub, name, d) }",
+    "new": "run: () => { void host.command(log()?.active, { op: 'ban', name: `#${sub}`, days: d }); } }",
+    "why": "a ban's length bans at once, with no confirm",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-ban-by-name",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "{ op: 'ban', name: `#${sub}`, days }",
+    "new": "{ op: 'ban', name, days }",
+    "why": "the confirm bans by the name the line showed",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-ban-forever-timed",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "export const STAFF_BAN_DAYS = Object.freeze([1, 7, 30, 0]);",
+    "new": "export const STAFF_BAN_DAYS = Object.freeze([1, 7, 30, 3650]);",
+    "why": "For good is a timed ban",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-ban-reason-by-name",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "const cmd = `/ban #${sub} ${days || 'perm'}: `;",
+    "new": "const cmd = `/ban ${name} ${days || 'perm'}: `;",
+    "why": "the reason's command names the player by name",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-ban-reason-overwrites",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "if (p?.restore?.(cmd) === true) p.input?.focus?.();\n        else sayActive(",
+    "new": "p?.restore?.(cmd); p.input?.focus?.();\n        if (false) sayActive(",
+    "why": "a busy field is not told how to give a reason",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-hand-any-origin",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "win.postMessage({ dfoStaff: 'act', act, sub, name }, origin);",
+    "new": "win.postMessage({ dfoStaff: 'act', act, sub, name }, '*');",
+    "why": "the act is posted to any origin",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-hand-by-name",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "win.postMessage({ dfoStaff: 'act', act, sub, name }, origin);",
+    "new": "win.postMessage({ dfoStaff: 'act', act, sub: name, name }, origin);",
+    "why": "the Staff Panel is handed the name for the account",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-hand-null-origin",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "!origin || origin === 'null' ||",
+    "new": "!origin ||",
+    "why": "an opaque origin ('null') is posted to",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-tp-tooltip-unseen",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "const STAFF_SEEN = Object.freeze(['tp', 'message', 'mute', 'freeze', 'ban']);",
+    "new": "const STAFF_SEEN = Object.freeze(['message', 'mute', 'freeze', 'ban']);",
+    "why": "TP's tooltip says the player does not see it",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-report-for-staff",
+    "file": "src/scenes/chatSafetyHost.js",
+    "old": "      rows.push(...staffRows(line, name));\n",
+    "new": "",
+    "why": "staff get no acts in their line menu",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-panel-level-closes",
+    "file": "src/ui/chatPanel.js",
+    "old": "if (Array.isArray(a.menu)) { fill(a.menu); return; } ",
+    "new": "",
+    "why": "a row with a second level closes the menu and opens nothing",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-panel-no-tooltip",
+    "file": "src/ui/chatPanel.js",
+    "old": "        if (a.title) b.title = String(a.title);\n",
+    "new": "",
+    "why": "a row's tooltip is never set",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-world-no-glyphs",
+    "file": "src/scenes/world.js",
+    "old": "glyphs: () => _staffGlyphs, teleport:",
+    "new": "glyphs: () => [], teleport:",
+    "why": "the host never learns my glyphs: no staff acts in game",
+    "tests": [
+      "test/net/safety/safe_client.test.js"
+    ]
+  },
+  {
+    "name": "STAFF-PANEL2-CHATMENU-world-tp-by-name",
+    "file": "src/scenes/world.js",
+    "old": "client.ask({ ...(typeof name === 'string' ? target : { id: name.id }), nt: 1 })",
+    "new": "client.ask({ ...target, nt: 1 })",
+    "why": "a chat line's TP asks by an object as a name, never by the socket",
+    "tests": [
+      "test/net/staffTeleport.test.js"
+    ]
+  }
+]

@@ -1,0 +1,86 @@
+[
+  {
+    "name": "FB1012d-the-seed-ignores-the-person",
+    "file": "src/characters/foeBodies.js",
+    "old": "  const own = ownPerson(f);   // FB1012d ALLY-RACE: a person of their own is drawn as themselves, never as this stand",
+    "new": "  const own = null;",
+    "tests": ["test/scenes/fb1012d_allyrace.test.js"]
+  },
+  {
+    "name": "FB1012d-the-layer-stamp-unread",
+    "file": "src/characters/foeBodies.js",
+    "old": "  const p = f?.person ?? f?.entity?.revenant?.person;",
+    "new": "  const p = f?.entity?.revenant?.person;",
+    "tests": ["test/scenes/fb1012d_allyrace.test.js"]
+  },
+  {
+    "name": "FB1012d-the-revenant-stamp-unread",
+    "file": "src/characters/foeBodies.js",
+    "old": "  const p = f?.person ?? f?.entity?.revenant?.person;",
+    "new": "  const p = f?.person;",
+    "tests": ["test/scenes/fb1012d_allyrace.test.js"]
+  },
+  {
+    "name": "FB1012d-the-layer-stamps-nothing",
+    "file": "src/scenes/crewAshore.js",
+    "old": "        rec.person = companionPerson(c);   // FB1012d ALLY-RACE: his own person in every place - never the stand's draw",
+    "new": "        rec.person = undefined;",
+    "tests": ["test/scenes/fb1012d_allyrace.test.js"]
+  },
+  {
+    "name": "FB1012d-a-members-own-person-unread",
+    "file": "src/scenes/crewAshore.js",
+    "old": "  if (Number.isInteger(c?.person) && c.person >= 0 && c.person <= 0xffffffff) return c.person;",
+    "new": "  if (false) return c.person;",
+    "tests": ["test/scenes/fb1012d_allyrace.test.js"]
+  },
+  {
+    "name": "FB1012d-the-key-only-the-boat",
+    "file": "src/scenes/crewAshore.js",
+    "old": "  const k = companionKeyOf(c);\n  let h = 0x811c9dc5;",
+    "new": "  const k = String(c?.boat);\n  let h = 0x811c9dc5;",
+    "tests": ["test/scenes/fb1012d_allyrace.test.js"]
+  },
+  {
+    "name": "FB1012d-born-off-the-id-not-the-body",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "      person: rec ? foeSeed(rec) : revenantPerson({ id }),",
+    "new": "      person: revenantPerson({ id }),",
+    "tests": ["test/scenes/fb1012d_allyrace.test.js"]
+  },
+  {
+    "name": "FB1012d-the-stamp-without-its-person",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "sigBlow: signatureStamp(r), person: revenantPerson(r), dread: r.dread === true });",
+    "new": "sigBlow: signatureStamp(r), dread: r.dread === true });",
+    "tests": ["test/scenes/fb1012d_allyrace.test.js"]
+  },
+  {
+    "name": "FB1012d-the-save-gives-the-ids-person",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "    person: revenantPerson(r),   // FB1012d ALLY-RACE: its person kept (an older record's, its id's)",
+    "new": "    person: revenantPerson({ id: r.id }),",
+    "tests": ["test/scenes/fb1012d_allyrace.test.js"]
+  },
+  {
+    "name": "FB1012d-the-kept-person-unread",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "export const revenantPerson = (r) => (isU32(r?.person) ? r.person : hashStr(`${r?.id}|person`));",
+    "new": "export const revenantPerson = (r) => hashStr(`${r?.id}|person`);",
+    "tests": ["test/scenes/fb1012d_allyrace.test.js"]
+  },
+  {
+    "name": "FB1012d-an-older-record-a-new-person-each-load",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "export const revenantPerson = (r) => (isU32(r?.person) ? r.person : hashStr(`${r?.id}|person`));",
+    "new": "export const revenantPerson = (r) => (isU32(r?.person) ? r.person : (Math.random() * 0xffffffff) >>> 0);",
+    "tests": ["test/scenes/fb1012d_allyrace.test.js"]
+  },
+  {
+    "name": "FB1012d-the-sworn-member-without-its-person",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "  m.person = revenantPerson(r);",
+    "new": "  m.person = undefined;",
+    "tests": ["test/scenes/fb1012d_allyrace.test.js"]
+  }
+]

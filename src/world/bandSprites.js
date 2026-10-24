@@ -3,8 +3,8 @@
 // OW-FOES - THE BANDS, SEEN (bible/06-Systems/Travel-View.md).
 //
 // The player's ask (2026-09-29): "when you go near the encounters let the sprites slowly show up the same the players
-// sprite is on the map". A roaming band (systems/travelBands.js) was a dot and a label on the Overworld; near enough,
-// it now stands as its lead monster - the enemy's own animated, eight-way sprite (characters/mobileUnit.js, the same
+// sprite is on the map". A roaming band (systems/travel/travelBands.js) was a dot and a label on the Overworld; near enough,
+// it now stands as its lead monster - the enemy's own animated, eight-way sprite (characters/mobile/mobileUnit.js, the same
 // MobileUnit a monster-skinned player wears, net/remotePlayers.js) - grown as the traveller's own sprite is
 // (player/travelCamera.js tvOwnGrow: a party's icon from the Overworld's height), and faded in:
 //   - by distance: nothing past BAND_SPRITE_FAR_M, whole inside BAND_SPRITE_NEAR_M, smoothstepped between,
@@ -14,8 +14,9 @@
 // Only under the Overworld: on the ground the band is the real foes it stands as (world.js bandStand).
 // Pointer-free and outside the overlay stack, as every mark of the view.
 // ═══════════════════════════════════════════════════════════════════
-import { MobileUnit } from '../characters/mobileUnit.js';
-import { ENEMY_BASICS } from '../characters/enemyBasics.js';
+import { MobileUnit } from '../characters/mobile/mobileUnit.js';
+import { ENEMY_BASICS } from '../characters/enemy/enemyBasics.js';
+import { setupFoeLook } from '../characters/enemy/foeLook.js';   // AUDIT DEX B6: SetupDemoEnemy.cs:129-151, the mobile's renderer
 import { mobileBillboardSize } from './rmbFlats.js';
 
 /** Past this (m) a band is only its mark. */
@@ -110,7 +111,9 @@ export function createBandSprites({ renderer, getTexture, uploadRecordFrame }) {
       const g = Math.max(1, grow || 1);
       const size = { w: (out.flip ? -sz.w : sz.w) * g, h: sz.h * g };
       if (!r.batch) {
-        r.batch = renderer?.createBillboardBatch?.(archive, rkey, size, [[0, 0, 0]]) ?? null;
+        // AUDIT DEX B6: dressed as SetupDemoEnemy dresses a mobile, as the hosts' foes are - a Spectral row's band (the
+        // mod's Will-o'-wisp and Faded Ghost) its ghost, a NoShadow row's (the vampires) casting none; the band stood opaque
+        r.batch = setupFoeLook(renderer?.createBillboardBatch?.(archive, rkey, size, [[0, 0, 0]]) ?? null, b.mobileType);
         if (!r.batch) continue;
         r.batch.origin = [0, 0, 0];
       } else {

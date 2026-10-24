@@ -1,7 +1,7 @@
 // @ts-check
 // SIGIL-UI (2026-09-26): THE RUNE - the one picture a sigil wears, a leaf with no imports so the stylesheet
-// (ui/enhancedPlusStyle.js, which node tests import for its CSS alone) can paint a tile's corner with it without
-// pulling the sigil's law (systems/sigil.js registers a blow modifier when it loads) into every page that reads CSS.
+// (ui/enhanced/enhancedPlusStyle.js, which node tests import for its CSS alone) can paint a tile's corner with it without
+// pulling the sigil's law (systems/sigil/sigil.js registers a blow modifier when it loads) into every page that reads CSS.
 /** The rune: an octagonal ring with a four-point star at its heart - drawn on the pixel grid, never scaled past it. */
 export const SIGIL_RUNE_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16" shape-rendering="crispEdges">'
   // the ring - an octagon two pixels thick (outer edge clockwise, inner hole cut by the even-odd rule)
@@ -11,7 +11,7 @@ export const SIGIL_RUNE_SVG = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="
   + '<rect fill="currentColor" x="7" y="4" width="2" height="8"/><rect fill="currentColor" x="4" y="7" width="8" height="2"/>'
   + '<rect fill="currentColor" x="6" y="6" width="4" height="4"/></svg>';
 /** AUDIT MERGE-PLUS D5: the rune a TILE'S CORNER wears - the same pixels in the sigil's teal with the kit's black
- *  outline drawn in (the padlock's way, ui/enhancedPlusStyle.js LOCK_GLYPH_SVG): it was a CSS mask over the colour,
+ *  outline drawn in (the padlock's way, ui/enhanced/enhancedPlusStyle.js LOCK_GLYPH_SVG): it was a CSS mask over the colour,
  *  and a masked glyph's drop shadow is clipped by its own mask, so the outline that kept it legible on a lit tile
  *  never drew. One pixel of margin all round holds the outline. */
 export const SIGIL_RUNE_TILE_SVG = SIGIL_RUNE_SVG
@@ -32,5 +32,5 @@ export function sigilRuneTileUrl(colour) {
   return u;
 }
 /** UI3: the same rune as a picture's source (an `<img>`'s src, not a background) - a set power's tile in the HUD's
- *  status widget (ui/hudStatus.js). The colour law is the corner rune's: a colour that is not `#rrggbb` is the teal. */
+ *  status widget (ui/hud/hudStatus.js). The colour law is the corner rune's: a colour that is not `#rrggbb` is the teal. */
 export const sigilRuneTileSrc = (colour) => sigilRuneTileUrl(colour).slice(5, -2);

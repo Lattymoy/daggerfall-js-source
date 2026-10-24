@@ -45,7 +45,7 @@
 //
 // Plain Node, no Electron imports - the preload requires it, and the
 // repo's own `node --test` suite exercises it directly
-// (test/filestorage.test.js).
+// (test/systems/save/filestorage.test.js).
 
 'use strict';
 
@@ -54,7 +54,7 @@ const path = require('node:path');
 
 // The prefixes are saveSlots.js's exports, restated because this file
 // is CommonJS in the shell and must not import the ESM game. The pin
-// in test/filestorage.test.js asserts the two spellings agree.
+// in test/systems/save/filestorage.test.js asserts the two spellings agree.
 const SAVE_DATA_PREFIX = 'dagger.save.';
 const SAVE_INFO_PREFIX = 'dagger.saveinfo.';
 const SAVE_SHOT_PREFIX = 'dagger.saveshot.';
@@ -185,7 +185,7 @@ function writeAtomic(file, data) {
  *             removeItem:(k:string)=>void,
  *             rescan:()=>void, root:string }}
  */
-function createFileStorage(root, { scanTtlMs = 2000 } = {}) {
+function createFileStorage(root, { scanTtlMs = 2000, readTtlMs = 1000 } = {}) {
   const savesDir = path.join(root, SAVES_DIR);
   const prefsDir = path.join(root, PREFS_DIR);
   const slotDir = (n) => path.join(savesDir, `SAVE${n}`);
@@ -226,9 +226,24 @@ function createFileStorage(root, { scanTtlMs = 2000 } = {}) {
   // MID-SWEEP could shift key(i) under the caller - one sweep runs
   // in microseconds, so a fresh scan at its first length() covers it
   // and the TTL blocks another until long after it ends.
+  // ---- the read cache (STORE-CACHE) ----
+  // localStorage answers getItem from memory, and the game's readers
+  // are written against that: the professions' book asks the signed-in
+  // session for every harvest node near the player, every frame, and
+  // the remains waypoint, the claims and the weapon's glyphs each read
+  // their key a frame too. Over files every one of those was a
+  // readFileSync - 19% of the main thread in a town on the live client
+  // (2026-10-11). A pref or slot file's text is kept here as last read
+  // or written, and read from disk again after readTtlMs - so a file
+  // edited or copied in by hand is seen within it, and at once by the
+  // next enumeration sweep, whose rescan empties this. The screenshot
+  // is never kept: it is read only to be shown, and its spelling is
+  // the disk's to say.
+  const read = new Map();   // key -> { value, at }
   let keys = [];
   let lastScan = 0;
   const rescan = () => {
+    read.clear();
     keys = [];
     const seen = new Set();
     const push = (k) => { if (!seen.has(k)) { seen.add(k); keys.push(k); } };
@@ -285,10 +300,17 @@ function createFileStorage(root, { scanTtlMs = 2000 } = {}) {
 
     getItem(key) {
       key = String(key);
+      const kept = read.get(key);
+      const now = Date.now();
+      if (kept && now >= kept.at && now - kept.at < readTtlMs) return kept.value;
       const at = fileOf(key);
+      if (at.pref || at.file) {
+        let value;
+        try { value = fs.readFileSync(at.pref ?? at.file, 'utf8'); } catch { value = null; }   // absent reads as null
+        read.set(key, { value, at: now });
+        return value;
+      }
       try {
-        if (at.pref) return fs.readFileSync(at.pref, 'utf8');
-        if (at.file) return fs.readFileSync(at.file, 'utf8');
         const shot = shotFileOn(at.shotDir);
         if (!shot) return null;
         if (!shot.mime) return fs.readFileSync(shot.path, 'utf8');   // the verbatim fallback
@@ -301,7 +323,9 @@ function createFileStorage(root, { scanTtlMs = 2000 } = {}) {
       value = String(value);
       const at = fileOf(key);
       if (at.pref || at.file) {
+        read.delete(key);   // a write that throws may still have moved the file: read it again
         writeAtomic(at.pref ?? at.file, value);
+        read.set(key, { value, at: Date.now() });
       } else {
         // The screenshot: a decodable jpeg/png data URL becomes a
         // real image file; anything else - including image MIMEs we
@@ -327,6 +351,7 @@ function createFileStorage(root, { scanTtlMs = 2000 } = {}) {
     removeItem(key) {
       key = String(key);
       const at = fileOf(key);
+      read.delete(key);   // not null: a remove that fails leaves the file, and the next read says so
       try {
         if (at.pref || at.file) fs.rmSync(at.pref ?? at.file, { force: true });
         else for (const [name] of SHOT_FILES) fs.rmSync(path.join(at.shotDir, name), { force: true });

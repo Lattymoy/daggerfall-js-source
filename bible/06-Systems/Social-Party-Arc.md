@@ -29,7 +29,7 @@ colour's one home, the one SOCIAL Ledger row).
 onlineLane.js` - the skin enhanced, every enhancement on), so every surface
 below is the enhanced skin's DOM beside the chat; the classic skin never
 runs online and gets no social surface. The classic TRAVEL MAP is reached
-from the enhanced lane's fork (`ui/travelMapDoor.js`) and gets the party's
+from the enhanced lane's fork (`ui/travel/travelMapDoor.js`) and gets the party's
 dots in its own idiom.
 
 ## The two decisions everything else follows from
@@ -165,8 +165,8 @@ kilobyte, and a friend list that forgets people is worse. Outside the hub
 a social act or a party pose is junk (a correct client sends none there),
 counted and struck out like every other frame that should not have come.
 
-RELAY_VERSION `world78`; the law's row is in `test/relayversion.test.js`.
-`test/soc1_hub.test.js` - 17 pins over the fake Durable Object and the
+RELAY_VERSION `world78`; the law's row is in `test/net/relayversion.test.js`.
+`test/net/soc1_hub.test.js` - 17 pins over the fake Durable Object and the
 wire's projections, every frame the hub sends checked through the client's
 own door.
 
@@ -213,7 +213,7 @@ flag: a line nobody sent); `composePartyPose` reads the travel pixel (the
 place's own inside a dungeon), the place's name, the six vitals and the
 look; `partyFrame` rides the chat frame once a second while I sit in a
 party, composing at most twice a second and leaving the send to the
-link's own floor and change check. `test/soc2_session.test.js` - 8 pins
+link's own floor and change check. `test/net/soc2_session.test.js` - 8 pins
 over a fake socket and plain frames.
 
 ## SOC3 - the social button and the friends + party panel
@@ -265,7 +265,7 @@ rate-gated answer leaves it up with a "try again" note. A send the link
 refuses (SOCIAL_HZ_MAX at home) keeps its button exactly as it was; the
 hub's own refusal stands under the header until a fresh picture clears
 it. No uiPrefs key: the panel does not remember its state across
-sessions. `test/soc3_socialpanel.test.js` - 16 pins at SOC3, 27 since
+sessions. `test/net/soc3_socialpanel.test.js` - 16 pins at SOC3, 27 since
 AUDIT SOC (the section below), over a fake document
 and window with a REAL SocialState fed real hub frames; 7 mutants walked,
 7 killed.
@@ -306,7 +306,7 @@ lane draws its names through `ui/nameLayer.js` on the same seam, with
 `blocked` appended behind `colorOf` so this law holds as written), and
 `world.js` hands it `(id) => social?.colorOf(id) ?? null`: my party's
 tabs in PARTY_GREEN, a friend who is not in my party white (a friend is a
-list, a party is a formation). `test/soc4_partyhud.test.js` - 8 pins at SOC4, 10 since AUDIT SOC,
+list, a party is a formation). `test/net/soc4_partyhud.test.js` - 8 pins at SOC4, 10 since AUDIT SOC,
 the portrait proved twice (an injected loader seam, and `createFaceLoader`
 over a CIF synthesized byte by byte through the real `CifRciFile` walk and
 the real `bitmapToColor32`).
@@ -370,7 +370,7 @@ player would have lit a torch on the press that opened the F-menu. The
 toggle's shipped default is **O** now (free in DFU's defaults, unused by
 the mod's other two keys and by every other vendored mod), its pins say
 so, and a player who rebound it keeps their own. Mac named F for the
-social key, so the port's action keeps it. `test/soc5_interact.test.js` -
+social key, so the port's action keeps it. `test/ui/soc5_interact.test.js` -
 9 pins at SOC5, 16 since AUDIT SOC; 16 mutants driven, 16 dead.
 
 
@@ -378,11 +378,11 @@ social key, so the port's action keeps it. `test/soc5_interact.test.js` -
 the plaque's own (`ui/socialMenu.js socialPlaqueRows`): a player's list starts unlit, the wheel or F lights a row,
 the activate key or F presses it through the card's door, and a refused row shows and says its reason. F opens the
 card only where the plaque cannot serve - touch, the classic skin, a player a nearer thing hid from its race.
-Record: `01-Overview/Field-Bugs-2026-09-23.md`.
+Record: `01-Overview/bugs/Field-Bugs-2026-09-23.md`.
 ## SOC6 - the party on the map
 
 **One seam, two drawings.** The travel map's one dep bag (`world.js`
-buildTravelMapWindow -> `ui/travelMapDoor.js`) carries `party: () =>
+buildTravelMapWindow -> `ui/travel/travelMapDoor.js`) carries `party: () =>
 [{acct, name, px, py, in, loc, online, leader}]` - a FUNCTION, read on
 each window's own refresh and never snapshot at open, because members
 travel, step into a dungeon, drop and join while a map is up.
@@ -415,7 +415,7 @@ on top does not freeze a walking friend. No legend there: TRAV0I00's
 bottom bar is baked art with no room for a fifth meaning, so the classic
 sheet says the one thing it can (a dot) and the enhanced map, which owns
 its chrome, carries the legend and the names. A marker is hover-only;
-clicking still picks the nearest location. `test/soc6_partymap.test.js` -
+clicking still picks the nearest location. `test/ui/soc6_partymap.test.js` -
 14 pins at SOC6, 18 since AUDIT SOC; 29 mutants driven, 29 dead (the first pass left one survivor -
 the classic bounds removed - closed by the two members whose offsets wrap
 onto the wrong row).
@@ -480,7 +480,7 @@ with the file and the line, and every finding either fixed and pinned or
 refused with its reason below. The hub was then driven a second time over
 REAL sockets against workerd (`wrangler dev`, the local relay LOCALDEV1
 made runnable), with the audit's own flows added to the driver, and came
-back clean. Pinned in `test/auditsoc.test.js` (15) and in the slices' own
+back clean. Pinned in `test/net/auditsoc.test.js` (15) and in the slices' own
 files where a pin already stood; mutated by `tools/mutants/auditsoc.json`
 (46: 45 dead, 1 equivalent as recorded).
 
@@ -691,7 +691,7 @@ container).
   under 840 wide the panel opened over the chat box. Every control is 44
   under the touch skin (desktop sizes pinned unchanged, no horizontal
   overflow at 430), and under 840 the panel stands below the box.
-- **C9, no phone control for F.** `ui/touch.js` draws a button when the
+- **C9, no phone control for F.** `ui/touch/touch.js` draws a button when the
   host hands it `socialInteract` - the host's own door, never a synthetic
   key - beside the mode button.
 - **C10/D5, the legend on the chips.** The overworld's party legend was
@@ -776,6 +776,10 @@ on the FPS counter, the tabs under 44px) - **54 dead, 1 equivalent as
 recorded** (the single-read party miss: every caller of `_party` that
 finds a miss clears what named it in the same act, and the picture's batch
 is the path that read a swept party per frame). Pinned in
-`test/auditsoc.test.js` (15) and in the slices' own files (soc1 18, soc3
+`test/net/auditsoc.test.js` (15) and in the slices' own files (soc1 18, soc3
 27, soc4 10, soc5 16, soc6 18, chat1, rosterg, world1, world5, macfive,
 audit39). The bundle is `world79`.
+
+### A ping, and the floor's route
+
+A press of the ping (the middle button, by default; auto-run's default is F3) names the point the look hits, for five seconds, fading in and then out, with a chime. The mark is a map pin of one size at any distance, and it shows through walls. Who placed it is written above the pin. What it names, and how far it is, is written under the pin. A new ping of my own retires mine; a mate's ping retires only that mate's. Anyone in the party who is standing in the same place hears it: the same dungeon or building, or, outdoors, the same map pixel. The point rides the pose as `pg` (`wire.js:"out.pg = {"`), and may name what was looked at; a relay that does not know the field drops it and stays up. The dotted line is not laid for my own point. A middle click on a mate's icon follows it, and the mark stays up until that click comes again. Lifting the line leaves the mark for whatever of its five seconds remains. The line runs in a dungeon on the navmesh — the dungeon's bake when Enhanced AI has one, otherwise a bake from the player's own feet — and in the open air along the ground, around a building or a rock. Standing on the point hides the line until the walker steps off. It draws nothing when no path exists. Outdoors the look meets the ground itself, so a hill is taken on the near side. A building or a door stops it, and a tree or a rock does not eat the click; the look reaches further than it does indoors, and further again from the travel view, whose middle button places a ping. A ping on a door, a chest, a sarcophagus, a shelf, a foe, a person or another player shows the name the plaque would, and the distance, and an elite's name wears the elite outline's blue. The pin stands on the point the look hit. A look that meets a dungeon wall names the ground in front of that face. There is no line in a house. An outdoor mark, once heard, keeps drawing while the player is outdoors, even in another map pixel. `test/systems/party/partyPing.test.js`.

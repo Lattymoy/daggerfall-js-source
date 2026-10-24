@@ -76,7 +76,7 @@
 //   GROUP BY route, status ORDER BY n DESC
 // ═══════════════════════════════════════════════════════════════════
 
-import { ROUTES, savePathOf, realmPathOf, DB_ROOT } from './service.js';
+import { ROUTES, savePathOf, realmPathOf, DB_ROOT, noteD1Wait, SLOW_SHED_TRIP_CAP_MS } from './service.js';   // SLOW-SHED: a request's D1 wait heard by the isolate's shed
 import { HEARTBEAT_PARTS } from './heartbeat.js';
 
 /** The route as a TEMPLATE: a served path as it stands, a save slot or a realm character's save by its shape - never
@@ -149,7 +149,7 @@ function timedStatement(/** @type {any} */ stmt, /** @type {any} */ tally, /** @
             const r = await v.apply(target, args);
             if (key === 'all' || key === 'run') noteMeta(r, tally, sql);   // rows (`raw`), or a column (`first('c')`), carry no meta
             return r;
-          } finally { add(tally, 'ms', Date.now() - started); }
+          } finally { tripDone(tally, Date.now() - started); }   // SLOW-SHED (AUDIT LEAN-READS C1): a statement awaited is a trip
         };
       }
       return v.bind(target);
@@ -158,6 +158,15 @@ function timedStatement(/** @type {any} */ stmt, /** @type {any} */ tally, /** @
   REAL.set(timed, stmt);
   SQL.set(timed, sql);
   return timed;
+}
+
+/** A round trip to D1 ended after `ms`: its wait on the tally (`ms`, the metrics point's), one trip, and SLOW-SHED's
+ *  measure of it, at most SLOW_SHED_TRIP_CAP_MS (`capped` - AUDIT LEAN-READS C4, a trip's own cap: one heavy statement
+ *  among a request's quick ones is no queue either). A trip that threw counts as one: it waited all the same. */
+function tripDone(/** @type {any} */ tally, /** @type {number} */ ms) {
+  add(tally, 'ms', ms);
+  add(tally, 'trips', 1);
+  add(tally, 'capped', Math.min(ms, SLOW_SHED_TRIP_CAP_MS));
 }
 
 /** D1 with its statements counted: a statement prepared is one, a batch counts each of its own (they were prepared
@@ -180,7 +189,7 @@ export function countedDb(/** @type {any} */ db, /** @type {{ n: number }} */ ta
             const rs = await batch.call(target, Array.isArray(list) ? list.map((st) => REAL.get(st) ?? st) : list, ...rest);
             if (Array.isArray(rs)) rs.forEach((r, i) => noteMeta(r, tally, Array.isArray(list) ? SQL.get(list[i]) : null));
             return rs;
-          } finally { add(tally, 'ms', Date.now() - started); }
+          } finally { tripDone(tally, Date.now() - started); }   // SLOW-SHED (AUDIT LEAN-READS C1): and a batch one, whatever it carries
         };
       }
       if (key === 'withSession') {
@@ -210,14 +219,15 @@ async function refusalOf(/** @type {Response} */ res) {
  * @param {Request} request @param {any} env
  * @param {(request: Request, env: any, said: { parts: string }) => Promise<Response>} serve
  */
-export async function measured(request, env, serve) {
+export async function measured(request, env, serve, exec = null) {
   const sink = env?.METRICS;
   const said = { parts: '' };
-  if (!sink || typeof sink.writeDataPoint !== 'function') return serve(request, env, said);
+  if (!sink || typeof sink.writeDataPoint !== 'function') return serve(request, env, said, exec);   // AUDIT SAFE DISCORD-4: the Worker's ExecutionContext, for what follows an answer
   const started = Date.now();
-  const tally = { n: 0, ms: 0, rr: 0, rw: 0, replica: 0, tables: /** @type {Record<string, number>} */ ({}) };
+  const tally = { n: 0, ms: 0, trips: 0, capped: 0, rr: 0, rw: 0, replica: 0, tables: /** @type {Record<string, number>} */ ({}) };
   const counted = env.DB ? { ...env, DB: countedDb(env.DB, tally) } : env;
-  const res = await serve(request, counted, said);
+  const res = await serve(request, counted, said, exec);
+  noteD1Wait(tally.capped, tally.trips, Date.now());   // SLOW-SHED: the isolate's shed hears how long the database made it wait, a trip at a time
   const parts = typeof said.parts === 'string' ? said.parts : '';   // AUDIT SCALE II A-3: the service's own word on the body it read
   try {
     const route = routeLabel(new URL(request.url).pathname);

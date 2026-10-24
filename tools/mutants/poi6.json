@@ -1,0 +1,191 @@
+[
+  {
+    "name": "POI6-parts-matched-by-place",
+    "file": "src/poi/poiDiff.js",
+    "old": "  const was = new Map((before.parts ?? []).map((q) => [q.key, q]));",
+    "new": "  const was = new Map((before.parts ?? []).map((q, i) => [after.parts?.[i]?.key ?? i, q]));",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-the-sign-read-as-a-turn",
+    "file": "src/poi/poiDiff.js",
+    "old": "  return (2 * Math.atan2(Math.hypot(x, y, z), Math.abs(w)) * 180) / Math.PI;",
+    "new": "  return (2 * Math.atan2(Math.hypot(x, y, z), w) * 180) / Math.PI;",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-the-turn-not-mirrored",
+    "file": "src/poi/gltfExport.js",
+    "old": "export const mirrorQuatX = (q) => [q[0], -q[1] + 0, -q[2] + 0, q[3]];",
+    "new": "export const mirrorQuatX = (q) => [q[0], q[1], q[2], q[3]];",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-the-winding-kept",
+    "file": "src/poi/gltfExport.js",
+    "old": "idx[i + 1] = mesh.indices[sm.start + i + 2]; idx[i + 2] = mesh.indices[sm.start + i + 1];",
+    "new": "idx[i + 1] = mesh.indices[sm.start + i + 1]; idx[i + 2] = mesh.indices[sm.start + i + 2];",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-the-normals-unmirrored",
+    "file": "src/poi/gltfExport.js",
+    "old": "      nor[v * 3] = -mesh.normals[v * 3] + 0;",
+    "new": "      nor[v * 3] = mesh.normals[v * 3];",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-the-glow-strength-dropped",
+    "file": "src/poi/gltfExport.js",
+    "old": "      if (k > 1) { out.extensions =",
+    "new": "      if (false) { out.extensions =",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-webp-not-required",
+    "file": "src/poi/gltfExport.js",
+    "old": "used.add('EXT_texture_webp'); required.add('EXT_texture_webp'); }",
+    "new": "used.add('EXT_texture_webp'); }",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-the-pack-hash-unchecked",
+    "file": "src/poi/poiPack.js",
+    "old": "    if ((await poiSha256(bytes, subtle)) !== m[1]) return { ok: false, code: 'pack-asset-hash', sha: m[1] };\n",
+    "new": "\n",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-a-missing-asset-passed",
+    "file": "src/poi/poiPack.js",
+    "old": "    for (const s of textures) if (assets.get(s)?.kind !== 'texture') return { ok: false, code: 'pack-missing-asset', sha: s, name: String(d.name) };\n",
+    "new": "\n",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-the-law-unasked",
+    "file": "src/poi/poiPack.js",
+    "old": "  for (const [i, d] of pois.entries()) { const ps = poiDocProblems(d); if (ps.length) return { code: 'pack-bad-poi', index: i, name: String(d?.name ?? ''), problem: ps[0], problems: ps }; }\n",
+    "new": "\n",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-an-entry-not-reminted",
+    "file": "src/poi/poiTransfer.js",
+    "old": "    const r = await shelve(k < 0 ? entry : { ...entry, id });",
+    "new": "    const r = await shelve(entry);",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-a-known-poi-opened-as-new",
+    "file": "src/poi/poiTransfer.js",
+    "old": "      open.push({ id: doc.id, doc, saved: live, base: h.data.liveRev ?? null, state: h.data.liveRev ? 'live' : 'draft' });",
+    "new": "      open.push({ id: doc.id, doc, saved: null, base: null, state: 'new' });",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-the-queue-for-a-builder",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "      ...(me.approver ? [btn(t('poi.review.title', 'Approvals')",
+    "new": "      ...(true ? [btn(t('poi.review.title', 'Approvals')",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-sent-back-without-a-word",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    if (verdict === 'reject' && !word) { say(t('poi.review.needWord', 'Say why it goes back. The builder reads it.'), 'bad'); return; }\n",
+    "new": "\n",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-before-and-after-never-swapped",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    edit.showAs(looking.id, d ? (showing === 'after' ? undefined : d) : null);",
+    "new": "    edit.showAs(looking.id, undefined);",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-opened-as-saved",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "doc: structuredClone(rev.doc), saved: live, base:",
+    "new": "doc: structuredClone(rev.doc), base:",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-put-back-at-the-first-press",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "    if (puttingBack !== rev.rev) { puttingBack = rev.rev; drawHistory(); return; }\n",
+    "new": "\n",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-the-law-report-never-redrawn",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "() => { schedule(); review?.learned(); });",
+    "new": "() => schedule());",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-what-is-shown-ignored",
+    "file": "src/poi/poiEdit.js",
+    "old": "      for (const [id, d] of shown) out.set(id, d === null ? null : { doc: d, rev: 0 });\n",
+    "new": "\n",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-the-pack-overwrites-unsaved-work",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "      if (edit.has(o.id) && edit.dirty(o.id)) { kept++; continue; }\n",
+    "new": "\n",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  },
+  {
+    "name": "POI6-the-look-left-open",
+    "file": "src/ui/poi/poiReviewPanel.js",
+    "old": "edit.entryOf(item.id)?.state === 'submitted') edit.close(item.id);",
+    "new": "edit.entryOf(item.id)?.state === 'submitted') void 0;",
+    "tests": [
+      "test/poi/poi6_review.test.js"
+    ]
+  }
+]

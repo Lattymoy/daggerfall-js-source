@@ -5,7 +5,7 @@
     "old": "  if (row.lease !== lease) return { error: 'lease' };\n",
     "new": "",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "  if (seq !== row.seq + 1) return { error: 'seq', seq: row.seq };",
     "new": "  void 0;",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "  await freeOthers({ db }, playerId, id);\n  const row = await db.prepare('SELECT seq, bytes, origin_id FROM realm_characters WHERE id = ? AND player = ?')",
     "new": "  const row = await db.prepare('SELECT seq, bytes, origin_id FROM realm_characters WHERE id = ? AND player = ?')",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ],
     "note": "LEGACY7 (PIN MOVED): re-aimed by content - the refusal above it names a tombstone now."
   },
@@ -33,7 +33,7 @@
     "old": "  if (!wrote.meta.changes) return { error: 'too-many-characters' };\n  await freeOthers({ db }, playerId, id);",
     "new": "  if (!wrote.meta.changes) return { error: 'too-many-characters' };",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "AND dead_at IS NULL) < ?',\n    ).bind(id, playerId, n,",
     "new": "AND dead_at IS NULL) < ? + 100',\n    ).bind(id, playerId, n,",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ],
     "note": "LEGACY7 (PIN MOVED): re-aimed by content - the bound counts the living, and a birth names its line and person."
   },
@@ -52,7 +52,7 @@
     "old": "' AND (EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 0)'",
     "new": "' AND (1 OR EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 0)'",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   },
   {
@@ -61,7 +61,7 @@
     "old": "' AND (EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ? AND spent = 0)'",
     "new": "' AND (EXISTS (SELECT 1 FROM realm_census WHERE player = ? AND char_id = ?)'",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "!ORIGIN_ID_RE.test(origin) || REALM_ID_RE.test(origin)) return { error: 'body' };",
     "new": "!ORIGIN_ID_RE.test(origin)) return { error: 'body' };",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "`${realmPrefix(playerId)}${id}/${seq}-${tag}`",
     "new": "`${realmPrefix(playerId)}${id}/0`",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   },
   {
@@ -88,7 +88,7 @@
     "old": "  const object = await bucket.get(row.obj);\n  return object ? { ok: true, object, seq: row.seq } : { error: 'no-data' };",
     "new": "  const object = await bucket.get(row.prev);\n  return object ? { ok: true, object, seq: row.seq } : { error: 'no-data' };",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   },
   {
@@ -97,7 +97,7 @@
     "old": "    id: r.id, name: r.name, summary, seq: r.seq, bytes: r.bytes,",
     "new": "    id: r.id, name: r.name, summary, seq: r.seq, bytes: r.bytes, lease: r.lease,",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   },
   {
@@ -106,7 +106,7 @@
     "old": "'UPDATE realm_characters SET lease = NULL WHERE id = ? AND player = ? AND lease = ?').bind(id, playerId, lease)",
     "new": "'UPDATE realm_characters SET lease = NULL WHERE id = ? AND player = ? AND ? IS NOT NULL').bind(id, playerId, lease)",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   },
   {
@@ -115,7 +115,7 @@
     "old": "  if (!bucket) return;\n  await dropObjects(bucket, named);",
     "new": "  if (bucket) return;\n  await dropObjects(bucket, named);",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   },
   {
@@ -124,7 +124,7 @@
     "old": "  const json = JSON.stringify(s);",
     "new": "  const json = JSON.stringify(v);",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   },
   {
@@ -133,16 +133,16 @@
     "old": "'no-realm-character': 404, 'no-data': 404, lease: 409, seq: 409,",
     "new": "'no-realm-character': 404, 'no-data': 404, lease: 400, seq: 409,",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   },
   {
     "name": "REALM1-cors-shut",
     "file": "server-account/src/index.js",
-    "old": "'content-type, authorization, x-realm-lease, x-realm-seq, x-realm-summary, x-d1-bookmark'",
+    "old": "'content-type, authorization, x-realm-lease, x-realm-seq, x-realm-summary, x-d1-bookmark, if-none-match, x-session-pass, x-staff-session'",
     "new": "'content-type, authorization'",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ],
     "note": "SCALE4g (2026-10-10) re-aimed it by content."
   },
@@ -152,7 +152,7 @@
     "old": "                'access-control-expose-headers': 'x-realm-seq',\n",
     "new": "",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   },
   {
@@ -161,7 +161,7 @@
     "old": "/^\\/v1\\/realm\\/(r[0-9a-f]{20})\\/data$/",
     "new": "/^\\/v1\\/realm\\/([A-Za-z0-9_-]{4,64})\\/data$/",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   },
   {
@@ -170,7 +170,7 @@
     "old": "      ...customsCarry(db, playerId, origin, id),\n",
     "new": "",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   },
   {
@@ -179,7 +179,7 @@
     "old": "export const CHARACTER_TABLES = Object.freeze(['renown_tracks', 'homes', 'guild_members']);",
     "new": "export const CHARACTER_TABLES = Object.freeze(['renown_tracks']);",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   },
   {
@@ -188,7 +188,7 @@
     "old": "  if (typeof bucket.list !== 'function') return;",
     "new": "  if (typeof bucket.list === 'function') return;",
     "tests": [
-      "test/realm1.test.js"
+      "test/server/realm1.test.js"
     ]
   }
 ]

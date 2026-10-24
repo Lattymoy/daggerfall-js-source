@@ -1,0 +1,570 @@
+[
+  {
+    "name": "EG6A-the-ground-dropped",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "      if (p.ground != null) { edge += p.ground; continue; }   // EG6a: still ground run over - no step",
+    "new": "      if (p.ground != null) { continue; }   // EG6a: still ground run over - no step",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-a-piece-s-own-x-lost",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "x: x == null ? x0 : x0 + x, y, z,",
+    "new": "x: x0, y, z,",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-roads-out-of-count",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "const s = { i: i ?? steps.length, kind,",
+    "new": "const s = { i: steps.length, kind,",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-a-section-s-span-forgotten",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "    const span = sec.span ?? k;",
+    "new": "    const span = k;",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-hall-s-fields-unsaid",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "steps.push(spire ? Object.assign(s, { gap, road: spec.road, kit, after: 0 }) : s);",
+    "new": "steps.push(s);",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-ground-run-over-unsaid",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "      if (edge !== L.edge) { L.y = y; said({ ground: edge - L.edge }); L.edge = edge; }",
+    "new": "      if (edge !== L.edge) { L.y = y; L.edge = edge; }",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-an-island-s-height-unsaid",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "      if (L.y !== L.said) said({ ground: 0 });",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-span-never-counted",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "      L.edge = z + checkR;\n      span++;",
+    "new": "      L.edge = z + checkR;",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-riser-twice",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "const riserAt = count >= 5 && !risen ? egDieBetween(r, 2, count - 2) : -1;",
+    "new": "const riserAt = count >= 5 ? egDieBetween(r, 2, count - 2) : -1;",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-a-crumble-stepping-under",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "{ if (L.y > L.base) L.y = Math.max(L.base, L.y - drop); step('crumble', gap(), { x, kit }); }",
+    "new": "{ if (L.y > L.base) L.y = L.y - drop - 1; step('crumble', gap(), { x, kit }); }",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-a-road-begun-on-the-last",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "    if (!roads.has(k)) roads.set(k, { spec: { road: k, start: { ...from }, checkR, toEnd: 0, sections: [{ span, pieces: [] }] }, edge: from.z + from.r, y: from.y, said: from.y, base: floors ? from.y : 0 });",
+    "new": "    if (!roads.has(k)) roads.set(k, { spec: { road: k, start: { ...start }, checkR, toEnd: 0, sections: [{ span, pieces: [] }] }, edge: start.z + start.r, y: start.y, said: start.y, base: floors ? start.y : 0 });",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-roads-laid-unsorted",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "lay() { return [...this.courses().flatMap((c) => c.steps), ...free.map((q) => ({ ...q }))].sort((a, b) => a.i - b.i); },",
+    "new": "lay() { return [...this.courses().flatMap((c) => c.steps), ...free.map((q) => ({ ...q }))]; },",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-gap-out-of-the-envelope",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "export const EG_GAP_MAX_CM = 320;",
+    "new": "export const EG_GAP_MAX_CM = 330;",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-bound-at-the-span-build",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "  return { reach: (EG_FAST_RUN_MPS + EG_JUMP_MPS * EG_JUMP_FWD) * air + 2 * EG_BODY_R, air };",
+    "new": "  return { reach: (EG_SPAN_RUN_MPS + EG_JUMP_MPS * EG_JUMP_FWD) * air + 2 * EG_BODY_R, air };",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-no-jump-spell",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "export const EG_FAST_JUMP_X = 1 + (100 * 0.5) / 100 + 0.6 + 0.1 + 0.1;",
+    "new": "export const EG_FAST_JUMP_X = 1 + (100 * 0.5) / 100 + 0.1 + 0.1;",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-no-fleetfoot",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "export const EG_FAST_RUN_MPS = ((100 + 150) / 39.5) * (1.35 + 100 / 200) * 1.1;",
+    "new": "export const EG_FAST_RUN_MPS = ((100 + 150) / 39.5) * (1.35 + 100 / 200);",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-slack-narrowed",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "export const EG_CROSS_SLACK = 0.15;",
+    "new": "export const EG_CROSS_SLACK = 0.1;",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-no-leap-past-a-piece",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "    for (let j = k; j < m; j++) {\n      const pk = path[k], pj = path[j];",
+    "new": "    for (let j = k; j < k + 1; j++) {\n      const pk = path[k], pj = path[j];",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-no-wait-counted",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "      while (w < EG_SOLVE_HORIZON_S && !jumpLands(leap, E[k] + w, B)) w += EG_SOLVE_STEP_S;",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-leap-lands-at-its-launch",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "nz0 = b ? b.z + PB.dz - b.d / 2 : pair.to ?? pair.edge,",
+    "new": "nz0 = b ? b.z + PB.dz - b.d / 2 : pair.edge,",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-leap-from-the-landing-s-height",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "const ay = (pair.ay ?? (a ? a.y : (b ? b.y : 0)))",
+    "new": "const ay = ((a ? a.y : (b ? b.y : 0)))",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-leap-short",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "export const EG_FAST_LEAP_M = 30;",
+    "new": "export const EG_FAST_LEAP_M = 10;",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-run-doubled",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "      const at = E[k] + w + (zn[j + 1] - zn[k]) / run;",
+    "new": "      const at = E[k] + w + (zn[j + 1] - zn[k]) / run / 2;",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-bridges-unrun",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "  return Em === Infinity ? Infinity : Em - t0 + Math.max(0, len - (zn[m] - zn[0])) / run + across;",
+    "new": "  return Em === Infinity ? Infinity : Em - t0 + Math.max(0, len - (zn[m] - zn[0])) / run;",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-low-road-without-its-trunk",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "fork ? roadOf(p) === 1 || (roadOf(p) === 0 && launch(p) < spec.fork.z - 0.01) : roadOf(p) === road));\n  const last",
+    "new": "fork ? roadOf(p) === 1 : roadOf(p) === road));\n  const last",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-bound-unslacked",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "export const egCrossMin = (spec, road = 0) => Math.round(egFastCross(spec, road) * (1 - EG_CROSS_SLACK) * 1000);",
+    "new": "export const egCrossMin = (spec, road = 0) => Math.round(egFastCross(spec, road) * 1000);",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-another-answer-than-the-windows",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "export const egJumpLands = (pair, t, B = SPAN_BUILD) => jumpLands(pair, t, B);",
+    "new": "export const egJumpLands = (pair, t, B = SPAN_BUILD) => jumpLands(pair, t, FAST_BUILD);",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-low-road-begun-on-the-plate",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "  const start = road === 0 ? spec?.arrive : isles.shift();",
+    "new": "  const start = spec?.arrive;",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-end-plate-s-middle",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": ": road !== 0 ? last.z + last.d / 2 : spec.end ? spec.end.z - spec.end.r : spec.len;",
+    "new": ": road !== 0 ? last.z + last.d / 2 : spec.end ? spec.end.z : spec.len;",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-low-road-s-end-its-middle",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": ": road !== 0 ? last.z + last.d / 2 : spec.end",
+    "new": ": road !== 0 ? last.z : spec.end",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-a-road-s-steps-mixed",
+    "file": "src/net/eliteGates/egSpanLaw.js",
+    "old": "  const steps = (spec?.steps ?? []).filter((s) => (s.road ?? 0) === road),",
+    "new": "  const steps = (spec?.steps ?? []).filter((s) => (s.road ?? 0) <= road),",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-hall-s-steps-apart-from-its-courses",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "  P.steps = S.lay();",
+    "new": "  P.steps = S.lay().filter((q) => q.road === 0);",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-low-road-on-the-high-road-s-spec",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    S.road(road, { x: LX, y: yF, z: zc, r: ISLE_R });",
+    "new": "",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-high-road-s-tail-on-the-low",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "    road = EG_ROAD.high;\n    S.road(road);",
+    "new": "    road = EG_ROAD.high;",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-a-passage-s-kit-lost",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "S.step(k, gap, { ...o, x: X + (o.x ?? xRoad), kit: kitNow });",
+    "new": "S.step(k, gap, { ...o, x: X + (o.x ?? xRoad), kit: '' });",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-hall-s-ground-unsaid",
+    "file": "src/net/eliteGates/egLaw.js",
+    "old": "  const run = (k, n) => { S.at(edge, y); S.run(k, n, X + xRoad, kitNow); edge = S.edge; y = S.y; if (n > 0) stepEdge = edge; };",
+    "new": "  const run = (k, n) => { S.run(k, n, X + xRoad, kitNow); edge = S.edge; y = S.y; if (n > 0) stepEdge = edge; };",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-measure-on-the-high-road",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  return egCrossMin(spec, road);",
+    "new": "  return egCrossMin(spec, 0);",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-a-court-s-bound",
+    "file": "src/net/eliteGates/egFair.js",
+    "old": "  if (!spec?.arrive || !spec?.end) return 0;\n  return egCrossMin(spec, road);",
+    "new": "  if (!spec?.arrive) return 0;\n  return egCrossMin(spec, road);",
+    "tests": [
+      "test/net/eliteGates/eg6a_span.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-breath-across-the-hall",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "export const EG_GUST_REACH_M = 6;",
+    "new": "export const EG_GUST_REACH_M = 40;",
+    "tests": [
+      "test/world/eliteGates/eg6a_screen.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-runs-one-section",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "      if (q.kind !== 'gust') { run = null; continue; }",
+    "new": "      if (q.kind !== 'gust') continue;",
+    "tests": [
+      "test/world/eliteGates/eg6a_screen.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-roads-one-breath",
+    "file": "src/world/eliteGates/egLook.js",
+    "old": "      if ((q.road ?? 0) !== road) continue;\n      if (q.kind !== 'gust')",
+    "new": "      if (q.kind !== 'gust')",
+    "tests": [
+      "test/world/eliteGates/eg6a_screen.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-reach-unasked",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "const g = gusts.find((q) => Math.abs(rx - q.spec.x0 - q.x) <= EG_GUST_REACH_M && rz >= q.z0 && rz <= q.z1 && egGustStorey(q, ry));",
+    "new": "const g = gusts.find((q) => rz >= q.z0 && rz <= q.z1 && egGustStorey(q, ry));",
+    "tests": [
+      "test/world/eliteGates/eg6a_screen.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-arrival-plate-a-stone",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "for (let k = road === 0 ? 1 : 0; k < at.length; k++) stones.push(",
+    "new": "for (let k = 0; k < at.length; k++) stones.push(",
+    "tests": [
+      "test/world/eliteGates/eg6a_screen.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-low-road-crossed-without-its-trunk",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "  const path = egSpanPairs(spec).filter((p) => (fork ? roadOf(p) === 1 || (roadOf(p) === 0 && launch(p) < spec.fork.z - 0.01) : roadOf(p) === road));",
+    "new": "  const path = egSpanPairs(spec).filter((p) => (fork ? roadOf(p) === 1 : roadOf(p) === road));",
+    "tests": [
+      "test/tooling/eg6a_sweep.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-a-riser-jumped",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "const parkour = { enabled: () => true, leap:",
+    "new": "const parkour = { enabled: () => false, leap:",
+    "tests": [
+      "test/tooling/eg6a_sweep.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-a-stair-leapt-down",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "    if (b && by - ay < -0.3 && STILL.has(b.kind) && (!a || STILL.has(a.kind))) {",
+    "new": "    if (false) {",
+    "tests": [
+      "test/tooling/eg6a_sweep.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-a-gap-in-the-ground-walked",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "        const go = !jumped && me().z >= here[1] - EDGE_M;",
+    "new": "        const go = false;",
+    "tests": [
+      "test/tooling/eg6a_sweep.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-a-pendulum-judged-at-its-middle",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "    if (b?.kind !== 'pend') return true;\n    const A = aimOf(pi, u, lane);",
+    "new": "    return true;\n    const A = aimOf(pi, u, lane);",
+    "tests": [
+      "test/tooling/eg6a_sweep.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-a-beat-landed-on-to-fall",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "    if (!(p.b && TIMED.has(p.b.kind) && nx && nx.a === p.b && depth < 8)) return true;",
+    "new": "    if (true) return true;",
+    "tests": [
+      "test/tooling/eg6a_sweep.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-a-fall-called-a-crossing",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "        if (!r.ok) { bad++; log(",
+    "new": "        if (!r.ok) { log(",
+    "tests": [
+      "test/tooling/eg6a_sweep.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-exit-always-clean",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "  return bad ? 1 : 0;\n}",
+    "new": "  return 0;\n}",
+    "tests": [
+      "test/tooling/eg6a_sweep.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-golden-seeds-unswept",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "export const sweepSeeds = (n, from = 1, golden = false) => [...new Set([...Array.from({ length: n }, (_, i) => from + i), ...(golden ? SWEEP_GOLDEN : [])])];",
+    "new": "export const sweepSeeds = (n, from = 1) => [...new Set([...Array.from({ length: n }, (_, i) => from + i)])];",
+    "tests": [
+      "test/tooling/eg6a_sweep.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-sweep-at-a-faster-build",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "export const SWEEP_BUILD = Object.freeze({ speed: 10, running: 0, swimming: 30 });",
+    "new": "export const SWEEP_BUILD = Object.freeze({ speed: 40, running: 20, swimming: 30 });",
+    "tests": [
+      "test/tooling/eg6a_sweep.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-sweep-left-out-of-verify",
+    "file": ".github/workflows/verify.yml",
+    "old": "  sweep:\n    uses: ./.github/workflows/eg-sweep.yml\n",
+    "new": "  nosweep:\n    uses: ./.github/workflows/eg-sweep.yml\n",
+    "tests": [
+      "test/tooling/eg6a_sweep.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-nightly-at-25",
+    "file": ".github/workflows/eg-sweep.yml",
+    "old": "--seeds ${{ inputs.seeds || 500 }} --golden",
+    "new": "--seeds ${{ inputs.seeds || 25 }} --golden",
+    "tests": [
+      "test/tooling/eg6a_sweep.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-relay-deployed-on-25",
+    "file": ".github/workflows/relay-deploy.yml",
+    "old": "      build: false\n      sweep: 500\n",
+    "new": "      build: false\n      sweep: 25\n",
+    "tests": [
+      "test/tooling/eg6a_sweep.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-jump-pressed-short",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "const EDGE_M = 0; ",
+    "new": "const EDGE_M = 0.3; ",
+    "tests": [
+      "test/tooling/eg6a_sweep.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-side-lane-refused",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "const level = onGround(key) && b && me().y >= b.y - 0.3;",
+    "new": "const level = false;",
+    "tests": [
+      "test/tooling/eg6a_sweep.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-rail-jumped-past",
+    "file": "tools/egSpanSolve.mjs",
+    "old": "      across = !jumped && onB();",
+    "new": "      across = false;",
+    "tests": [
+      "test/tooling/eg6a_sweep.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-a-gust-launched-into",
+    "file": "tools/egSpanSolve.mjs",
+    "old": " && (turn || !gusty((p.b ?? p.a)?.road ?? 0, lzOf(p, u, lane), u - 0.2, u + airOf(p) + 0.1, (p.b ?? p.a)?.x ?? null)) && ",
+    "new": " && ",
+    "tests": [
+      "test/tooling/eg6a_sweep.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-banner-on-the-other-road",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": " && Math.abs(isl.x - g.x) <= EG_GUST_REACH_M) { const v = sdVaneAt",
+    "new": " && true) { const v = sdVaneAt",
+    "tests": [
+      "test/world/eliteGates/eg6a_screen.test.js"
+    ]
+  },
+  {
+    "name": "EG6A-the-world-host-draws-the-ghosts-again",
+    "file": "src/scenes/world.js",
+    "old": "b = !!sdSpoilsPool?.drawPass(proj, view, eye, t, fog); if (a || b) renderer.markForeignPass(); }",
+    "new": "b = !!sdSpoilsPool?.drawPass(proj, view, eye, t, fog), g = !!modes?.dungeonCtx?.egSpanDraw?.(proj, view, fog); if (a || b || g) renderer.markForeignPass(); }",
+    "tests": [
+      "test/world/eliteGates/eg6a_screen.test.js"
+    ]
+  },
+  {
+    "name": "EGSWEEP-gust-every-storey",
+    "file": "src/scenes/eliteGates/egSpan.js",
+    "old": "export const egGustStorey = (g, ry) => (g.spec.law ?? 0) < 9 ||",
+    "new": "export const egGustStorey = (g, ry) => true ||",
+    "why": "a law 9 Gust pushes a bridge a storey over it (band 3 seed 210)",
+    "tests": [
+      "test/world/eliteGates/eg6a_screen.test.js"
+    ]
+  }
+]

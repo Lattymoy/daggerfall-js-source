@@ -1,0 +1,212 @@
+[
+  {
+    "name": "POI4B-the-entry-read-as-a-poi",
+    "file": "src/poi/poiLaw.js",
+    "old": "  if (typeof raw.id !== 'string' || !(shelf ? POI_SHELF_ID_RE : POI_ID_RE).test(raw.id)) say('id', 'id');",
+    "new": "  if (typeof raw.id !== 'string' || !(POI_ID_RE).test(raw.id)) say('id', 'id');",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-the-picture-unread",
+    "file": "src/poi/poiLaw.js",
+    "old": "POI_SHA_RE.test(raw.thumb))) say('thumb', 'texture-ref'); }",
+    "new": "POI_SHA_RE.test(raw.thumb))) void 0; }",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-the-picture-unchecked",
+    "file": "src/poi/poiLaw.js",
+    "old": "  if (doc?.thumb != null) {",
+    "new": "  if (false) {",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-another-builder-changes-it",
+    "file": "server-account/src/poi.js",
+    "old": "      if (had.by !== player.id && !roles.approver) return { error: 'poi-not-author' };\n",
+    "new": "\n",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ],
+    "note": "AUDIT POI (lane A): re-aimed by content - S8 put the shelve in a two-pass loop, the line indented under it."
+  },
+  {
+    "name": "POI4B-taken-off-by-anyone",
+    "file": "server-account/src/poi.js",
+    "old": "  if (r.by !== player.id && !roles.approver) return { error: 'poi-not-author' };\n  const w = await ctx.db.prepare('UPDATE poi_shelf SET gone_at",
+    "new": "  const w = await ctx.db.prepare('UPDATE poi_shelf SET gone_at",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ],
+    "note": "AUDIT POI (lane A): re-aimed by content - S7 checks the take-off's changes (`const w`)."
+  },
+  {
+    "name": "POI4B-a-taken-off-entry-listed",
+    "file": "server-account/src/poi.js",
+    "old": "    WHERE gone_at IS NULL ORDER BY updated_at DESC, id",
+    "new": "    ORDER BY updated_at DESC, id",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-the-triangles-uncounted",
+    "file": "server-account/src/poi.js",
+    "old": "(Number(facts.get(part.mesh)?.triangles) || 0)",
+    "new": "0",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-the-count-unbounded",
+    "file": "server-account/src/poi.js",
+    "old": "WHERE by = ?8 AND gone_at IS NULL) < ${POI_SHELF_MAX}",
+    "new": "WHERE by = ?8 AND gone_at IS NULL) < ${POI_SHELF_MAX * 2}",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ],
+    "note": "AUDIT POI (lane A): re-aimed by content - S8/S10 count the shelf's room in the statement that puts the entry."
+  },
+  {
+    "name": "POI4B-the-path-takes-a-poi-id",
+    "file": "server-account/src/service.js",
+    "old": "  m = /^shelf\\/(lib-[0-9a-f]{12})$/.exec(rest);",
+    "new": "  m = /^shelf\\/([a-z]+-[0-9a-f]{12})$/.exec(rest);",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-the-facing-reversed",
+    "file": "src/poi/poiThumb.js",
+    "old": "  const front = (area > 0) !== q.mirrored;",
+    "new": "  const front = (area < 0) !== q.mirrored;",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-the-mirror-unturned",
+    "file": "src/poi/poiThumb.js",
+    "old": "    const mirrored = s[0] * s[1] * s[2] < 0;",
+    "new": "    const mirrored = false;",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-the-cut-ignored",
+    "file": "src/poi/poiThumb.js",
+    "old": "    if (mat.alpha === 'cutout' && a < (mat.cutoff ?? 0.5)) return;\n",
+    "new": "\n",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-the-zlib-check-wrong",
+    "file": "src/poi/poiThumb.js",
+    "old": "  z.set(be32(adler32(raw)), 2 + deflated.length);",
+    "new": "  z.set(be32(adler32(raw) ^ 1), 2 + deflated.length);",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-uploaded-before-the-law",
+    "file": "src/poi/poiShelf.js",
+    "old": "  if (own.length) return { ok: false, error: 'poi-doc', problems: own };\n",
+    "new": "\n",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-the-picture-not-worn",
+    "file": "src/poi/poiShelf.js",
+    "old": "    item.thumb = r.data.sha;\n",
+    "new": "\n",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-the-problems-dropped",
+    "file": "src/poi/poiService.js",
+    "old": "      ...(Array.isArray(data?.problems) ? { problems: data.problems } : {}), status: res.status };",
+    "new": "      status: res.status };",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-change-offered-on-anothers",
+    "file": "src/ui/poi/poiLibraryPanel.js",
+    "old": "  const mayChange = (item) => mine(item) || me.approver;",
+    "new": "  const mayChange = () => true;",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-mine-by-case",
+    "file": "src/ui/poi/poiLibraryPanel.js",
+    "old": "String(item.by ?? '').toLowerCase() === me.handle.toLowerCase()",
+    "new": "String(item.by ?? '') === me.handle",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-the-search-any-word",
+    "file": "src/ui/poi/poiLibraryPanel.js",
+    "old": "  return words.every((w) => hay.includes(w));",
+    "new": "  return words.some((w) => hay.includes(w));",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-taken-off-at-the-first-press",
+    "file": "src/ui/poi/poiLibraryPanel.js",
+    "old": "    if (dropping !== it.id) { dropping = it.id; draw(); return; }\n",
+    "new": "\n",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-the-lights-left-behind",
+    "file": "src/ui/poi/poiEditorPanel.js",
+    "old": "lights: structuredClone(d.lights ?? []) }); }));",
+    "new": "lights: [] }); }));",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-the-turn-dropped",
+    "file": "src/scenes/poiEditorHost.js",
+    "old": "            t: [local[0] + off[0], local[1] + off[1], local[2] + off[2]], r: piece.r, s: piece.s,",
+    "new": "            t: [local[0] + off[0], local[1] + off[1], local[2] + off[2]], s: piece.s,",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  },
+  {
+    "name": "POI4B-the-lights-dropped",
+    "file": "src/scenes/poiEditorHost.js",
+    "old": "        for (const l of asset.lights ?? []) doc.lights.push(",
+    "new": "        for (const l of []) doc.lights.push(",
+    "tests": [
+      "test/poi/poi4b_library.test.js"
+    ]
+  }
+]

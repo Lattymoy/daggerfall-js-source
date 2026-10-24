@@ -18,7 +18,7 @@ import { SnowCoverage, BasicRoadsTerrain, roadCorners, snowfallSettings, winterA
 import { SnowfallRuntime } from '../systems/snowfallRuntime.js';
 import { SnowfallSurface } from '../render/snowfallSurface.js';
 import { getWorldClimateSettings, worldCoordToMapPixel } from '../formats/mapsFile.js';
-import { getLocationTerrainTileOrigin } from '../world/terrainTiles.js';
+import { getLocationTerrainTileOrigin } from '../world/terrain/terrainTiles.js';
 import { weatherFlags } from '../world/weather.js';   // WeatherManager.IsSnowing, from its one home
 import { APP_ROOT } from '../systems/appRoot.js';
 import { winterGroundSnowless, dfmodGeneration } from '../systems/dfmodTextures.js';   // SNOWLESS1
@@ -118,7 +118,7 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     // (climateSwaps.js groundIsSnowy) - the mod's unmasked ground counts as snowed, and laid snow over the desert's edge
     const snowless = cs?.climateType === 0 || winterGroundSnowless(winterArchive);
     const t = {
-      mapX: px.x, mapY: px.y, size, stamp, seen: frameNo, replaced: null,
+      mapX: px.x, mapY: px.y, size, stamp, seen: frameNo, replaced: false,
       tileMap: ground.tileMap(p),
       winterArchive,
       origin: (out) => ground.translation(p, out),
@@ -144,7 +144,9 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     byPixel.set(key, t);
     // OnPromoteTerrainData: its ground was rebuilt. The event is never the runtime's own frame's (DFU raises it from the
     // streaming world's), so one found while a build asked for the tile is heard when that frame is done (flushPromotions)
-    if (was && was !== t) { t.replaced = was; if (runtime) promotions.push(t, was); }
+    // SNOW-HOLD (FIELD BUGS 2026-10-21b): `replaced` says THAT it replaced one - the old tile goes to the runtime through
+    // `promotions` alone; held here, each tile kept the one before it, and every rebuild of a pixel stood in one chain
+    if (was && was !== t) { t.replaced = true; if (runtime) promotions.push(t, was); }
     return t;
   }
   /** The rebuilds found since the runtime last heard: each a tile replacing the one its map pixel stood before. */
@@ -186,6 +188,20 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
     for (const k of bodies.keys()) if (!lying.has(k)) bodies.delete(k);
   }
 
+  /** SHADER-STALL (render/glProgram.js startPrograms): the snow's surface, made the first time its program's compile is
+   *  done (`snowReady`, started as the masks land) - the frame the masks landed in waited the whole compile, 0.3-5.6 s of
+   *  the real game's first seconds here. Built where AUDIT ENVIRONS I5 built it: a driver that will not build the program
+   *  costs the snow, never the frame. */
+  let snowReady = null, albedoIn = null;
+  function makeSurface() {
+    snowReady = null;
+    try {   // AUDIT ENVIRONS I5: the snow's program built now, beside its surface - a driver that will not build it costs the snow, never the frame
+      renderer.prepareTerrainSnow?.();
+      surface = new SnowfallSurface(gl, renderer);
+      if (albedoIn) surface.setAlbedo(albedoIn);
+    } catch (e) { surface?.dispose(); surface = null; console.warn('[snowfall] the snow surface would not build - the snow is kept, never drawn:', e?.message ?? e); }
+  }
+
   function start() {
     if (asked || !enhanced || !world) return;
     asked = true;
@@ -194,11 +210,9 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
         if (disposed) return;   // a later boot's host stands now
         runtime = new SnowfallRuntime({ world, coverage: new SnowCoverage(masks), settings: readSettings() });
         if (gl && renderer) {
-          try {   // AUDIT ENVIRONS I5: the snow's program built now, beside its surface - a driver that will not build it costs the snow, never the frame
-            renderer.prepareTerrainSnow?.();
-            surface = new SnowfallSurface(gl, renderer);
-            if (albedo) surface.setAlbedo(albedo);
-          } catch (e) { surface?.dispose(); surface = null; console.warn('[snowfall] the snow surface would not build - the snow is kept, never drawn:', e?.message ?? e); }
+          albedoIn = albedo;
+          snowReady = renderer.startTerrainSnow?.() ?? (() => true);   // SHADER-STALL: its program started now, the surface made once it is compiled
+          if (snowReady()) makeSurface();
         }
         if (pending) { runtime.restoreSaveData(pending, 0); pending = null; }
         completePending = true;   // the mod's late Initialize: RestoreTrackData, then CompleteSession - on the frame's own clock
@@ -285,6 +299,7 @@ export function createSnowfallHost({ gl = null, renderer = null, enhanced = fals
       gameSecondsNow = Math.floor(f.seconds ?? 0);
       start();
       if (!runtime) return;
+      if (snowReady?.()) makeSurface();   // SHADER-STALL: the surface the frame its program is compiled
       try { tick(f); } catch (e) {
         broken = true; surface?.dispose(); surface = null;
         console.warn('[snowfall] a snow frame threw - the snow stops here, its save kept:', e?.stack ?? e);
@@ -340,7 +355,7 @@ export function snowfallNetwork(net, x, y) {
 /** BasicRoadsTerrain.TryCreate's authored scan: every block of `location` marked from its tile origin
  *  (TerrainHelper.GetLocationTerrainTileOrigin). Throws where a block will not read ("Authored block unavailable") -
  *  the pixel is then not classified, and no road or track lies under its snow. The block's name is BlocksFile.CheckName's,
- *  as the ground stamped under it is (world/terrainTiles.js setLocationTiles). */
+ *  as the ground stamped under it is (world/terrain/terrainTiles.js setLocationTiles). */
 export function authoredTiles(location, mapsFile, blocksFile, authored = new Uint8Array(16384)) {
   const o = getLocationTerrainTileOrigin(location);
   const { width, height } = location.exterior.exteriorData;

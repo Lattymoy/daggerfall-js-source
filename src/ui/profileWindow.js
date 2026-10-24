@@ -9,7 +9,7 @@
 //   - the NAME the room knows them by;
 //   - their level, race and class, the eight attributes and the three vitals' maxima - THEIR word, the card their own
 //     game hands over when asked (net/profileCard.js composeCard: what their character sheet shows);
-//   - what they WEAR, slot by slot, named as the pack names an item (systems/itemInfo.js itemLongName) - off the card's
+//   - what they WEAR, slot by slot, named as the pack names an item (systems/item/itemInfo.js itemLongName) - off the card's
 //     look when it came, and off the room's copy of their look until it does (or if it never does).
 // So the card is useful the moment it opens: the gear and the badges are the room's already, and the sheet arrives a
 // frame later. A peer whose game cannot answer (the relay is older, or they did not) keeps the room's half, and a line
@@ -22,23 +22,34 @@
 // Not a DFU member: Daggerfall Unity has no other players. Ledger A (ONLINE).
 import { isTextEntryTarget } from './input.js';
 import { titleBadge, glyphBadges, glyphSvgNode, paintTitle } from './playerBadge.js';
+import { profileIconNode } from './profileIcons.js';   // WITCH1: the profile icon a player wears
+import { readIcon } from '../net/wire.js';   // WITCH1: read by the wire's own law - a word the vocabulary holds, or none
 import { PIXELIFY_FIVE_FACE, PIXEL_FONT_CSS } from './pixelifyFive.js';
-import { EQUIP_SLOTS } from '../characters/paperdoll.js';
-import { itemLongName } from '../systems/itemInfo.js';
-import { raceDisplayName } from '../systems/talkSession.js';
+import { EQUIP_SLOTS } from '../characters/paperdoll/paperdoll.js';
+import { itemLongName } from '../systems/item/itemInfo.js';
+import { raceDisplayName } from '../systems/talk/talkSession.js';
 import { STAT_KEYS_ORDER } from '../systems/chargen.js';
-import { duelRecordText } from '../net/duelRecord.js';   // DUEL1: the duelling record's words, the account card's own
+import { duelRecordText } from '../net/duel/duelRecord.js';   // DUEL1: the duelling record's words, the account card's own
 import { renownText } from '../net/renown.js';   // RENOWN1: Renown, left of the name
-import { guildTagText } from '../net/guildLaw.js';   // GUILD1c: the guild's tag, right of the name
+import { guildTagText } from '../net/guild/guildLaw.js';   // GUILD1c: the guild's tag, right of the name
+import { localizedStrings, t } from '../systems/textManager.js';   // L10N3d: DFU's Internal_Strings, read in the player's language; STAR7: the stars' line through the core
 import { houseLine } from '../net/houseLaw.js';   // LEGACY7: the house, under the name
 
 export const PROFILE_STYLE_ID = 'dagger-profile-style';
 
 /** The attributes as the classic sheet labels them, in STAT_KEYS_ORDER - the card's own order (net/wire.js CARD_ATTRS). */
-export const ATTR_SHORT = Object.freeze(['STR', 'INT', 'WIL', 'AGI', 'END', 'PER', 'SPD', 'LUC']);
-export const ATTR_LABELS = Object.freeze(['Strength', 'Intelligence', 'Willpower', 'Agility', 'Endurance', 'Personality', 'Speed', 'Luck']);
+/** L10N3d: TextProvider.GetAbbreviatedStatName / GetStatName (:537-576) and the vitals' rows, read in the player's
+ *  language when the card reads them - each element a getter by DFU's key. */
+const CARD_WORDS = localizedStrings({
+  STR: 'STR', INT: 'INT', WIL: 'WIL', AGI: 'AGI', END: 'END', PER: 'PER', SPD: 'SPD', LUC: 'LUC',
+  strength: 'Strength', intelligence: 'Intelligence', willpower: 'Willpower', agility: 'Agility', endurance: 'Endurance',
+  personality: 'Personality', speed: 'Speed', luck: 'Luck', health: 'Health', fatigue: 'Fatigue', magicka: 'Magicka',
+});
+const cardWords = (keys) => Object.freeze(keys.reduce((a, k, i) => Object.defineProperty(a, i, { enumerable: true, get: () => CARD_WORDS[k] }), []));
+export const ATTR_SHORT = cardWords(['STR', 'INT', 'WIL', 'AGI', 'END', 'PER', 'SPD', 'LUC']);
+export const ATTR_LABELS = cardWords(['strength', 'intelligence', 'willpower', 'agility', 'endurance', 'personality', 'speed', 'luck']);
 /** The card's three vitals, in its order. */
-export const VITAL_LABELS = Object.freeze(['Health', 'Fatigue', 'Magicka']);
+export const VITAL_LABELS = cardWords(['health', 'fatigue', 'magicka']);
 
 /** WHAT THEY WEAR, in the order a reader looks a figure over - head to foot, then the hands, then the trinkets - each
  *  slot the look can carry (net/wire.js LOOK_GROUPS: clothing, armour, weapons, jewellery) under the word a player
@@ -105,8 +116,8 @@ export const PROFILE_STATES = Object.freeze(['asking', 'answered', 'silent', 'un
 /** The line under the card for each state - the one place its words live. */
 export function profileNote(state, who = 'They') {
   if (state === 'asking') return `Asking ${who} for their card...`;
-  if (state === 'silent') return `${who} did not answer - this is what they wear.`;
-  if (state === 'unsupported') return `The server cannot carry a card yet - this is what ${who} wears.`;
+  if (state === 'silent') return `${who} did not answer. This is what they are wearing.`;
+  if (state === 'unsupported') return `Their card is not available yet. This is what ${who} is wearing.`;
   return null;
 }
 
@@ -143,6 +154,12 @@ export function profileSdLine(record) {
   const n = record && typeof record === 'object' ? record.sds?.broken : null;
   return Number.isSafeInteger(n) && n > 0 ? `Hours broken: ${n}` : null;
 }
+/** STAR7: the fallen stars they held - each a master's fall the relay signed and the service counted once - off the same
+ *  record, said only once there is one. */
+export function profileStarLine(record) {
+  const n = record && typeof record === 'object' ? record.stars?.held : null;
+  return Number.isSafeInteger(n) && n > 0 ? t('starfall.card.profile', 'Stars held: {n}', { n }) : null;
+}
 /** AUDIT RENOWN1 UI-3: a view with the peer's Renown as the session knows it NOW - the level rises on a renown frame
  *  while the card stands open, and the card showed the level it was opened with. A level the session does not know
  *  leaves the view's own. */
@@ -166,6 +183,7 @@ export function profileView({ name = null, peer = null, look = null, card = null
     guild: guildTagText(peer?.gt),   // GUILD1c: the tag the relay stamped off their signed token - "<HND>", or null
     house: houseLine(peer?.house),   // LEGACY7: the house the relay stamped - "☠ Ysolde II of House Hlaalu", or null
     title: titleBadge(peer),
+    icon: readIcon(peer),   // WITCH1: the profile icon the relay stamped off their signed token - null for their face
     glyphs: glyphBadges(peer),
     line: [card ? `Level ${card.level}` : null, race, klass].filter(Boolean).join(' '),
     attrs: card ? STAT_KEYS_ORDER.map((key, i) => ({ key, short: ATTR_SHORT[i], label: ATTR_LABELS[i], value: card.attrs[i] })) : [],
@@ -176,7 +194,7 @@ export function profileView({ name = null, peer = null, look = null, card = null
     // DUEL1 (Mac: "When inspecting a player, they should be able to send an invite to duel"; "Add a dueling K/D to the
     // ... player inspect profile"): the Challenge button's state as the host's duel law says it ({ label, enabled, why }
     // - null: no button, offline or on a relay that cannot carry a duel), and their record's line - the account
-    // service's count, read by the account the relay stamped on their card (net/duelRecord.js), never the card's word
+    // service's count, read by the account the relay stamped on their card (net/duel/duelRecord.js), never the card's word
     duel: duel && typeof duel.label === 'string' ? { label: duel.label, enabled: !!duel.enabled, why: duel.enabled ? null : (duel.why ?? null) } : null,
     // LEGACY7 part three: the Propose button's state as the house's law says it - the duel's shape (null: no button)
     wed: wed && typeof wed.label === 'string' ? { label: wed.label, enabled: !!wed.enabled, why: wed.enabled ? null : (wed.why ?? null) } : null,
@@ -185,6 +203,7 @@ export function profileView({ name = null, peer = null, look = null, card = null
     raids: profileRaidLine(record),   // RAID4
     serpents: profileSerpentLine(record),   // AUDIT SERPENT D4
     hours: profileSdLine(record),   // SD9b
+    stars: profileStarLine(record),   // STAR7
   };
 }
 
@@ -201,6 +220,7 @@ ${PIXELIFY_FIVE_FACE}
   max-height: calc(100vh - 28px); overflow-y: auto; container-type: inline-size; }
 .dfprofile-card:focus { outline: none; }
 .dfprofile-head { text-align: center; padding-bottom: 8px; border-bottom: 1px solid var(--iron, #2b323b); }
+.dfprofile-icon { display: block; margin: 0 auto 6px; width: 56px; height: 56px; }   /* WITCH1 */
 .dfprofile-title { font-size: 12px; letter-spacing: .08em; text-transform: uppercase; line-height: 1.4;
   width: fit-content; max-width: 100%; margin-inline: auto; }   /* SHADOW-FANG (AUDIT A1): the word's own width - a gradient title's stops span the word, not the card */
 /* PROFILE-UI: where the Renown, the name and the tag will not stand on one line, the line breaks BETWEEN them - the tag
@@ -287,6 +307,8 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
   const paint = (v) => {
     card.replaceChildren();
     const head = el('div', 'dfprofile-head');
+    const icon = v.icon ? profileIconNode(doc, v.icon, 'dfprofile-icon', 56) : null;   // WITCH1: the icon they wear, over the name
+    if (icon) head.append(icon);
     if (v.title) head.append(paintTitle(el('div', 'dfprofile-title', v.title.text), v.title));   // SHADOW-FANG: its colour, or its gradient
     const nm = el('div', 'dfprofile-name');
     nm.id = 'dfprofile-name-node';
@@ -305,7 +327,7 @@ export function createProfileWindow({ canOpen = () => true, onOpen = null, onClo
     if (v.line) head.append(el('div', 'dfprofile-line', v.line));
     // PROFILE-UI: their record - the duels (DUEL1), the gates closed (WB5b), the towns defended (RAID4), the serpents slain
     // (AUDIT SERPENT D4) - a row of plaques, each its own words, where four dim lines stood one under another
-    const facts = [['dfprofile-duels', v.duels], ['dfprofile-gates', v.gates], ['dfprofile-raids', v.raids], ['dfprofile-serpents', v.serpents], ['dfprofile-hours', v.hours]].filter(([, t]) => t);
+    const facts = [['dfprofile-duels', v.duels], ['dfprofile-gates', v.gates], ['dfprofile-raids', v.raids], ['dfprofile-serpents', v.serpents], ['dfprofile-hours', v.hours], ['dfprofile-stars', v.stars]].filter(([, t]) => t);   // STAR7: and the fallen stars held
     if (facts.length) {
       const record = el('div', 'dfprofile-facts');
       for (const [cls, t] of facts) record.append(el('div', `dfprofile-fact ${cls}`, t));

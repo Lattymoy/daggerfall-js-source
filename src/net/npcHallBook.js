@@ -22,10 +22,11 @@
 // ═══════════════════════════════════════════════════════════════════
 
 import { BUILDING_TYPES } from '../world/buildingNames.js';
-import { GUILD_FACTION_IDS } from '../systems/guildFactions.js';
-import { guildGroupOfFaction } from '../systems/guilds.js';
-import { createGuildForGroup } from '../systems/guildVariants.js';
+import { GUILD_FACTION_IDS } from '../systems/guild/guildFactions.js';
+import { guildGroupOfFaction } from '../systems/guild/guilds.js';
+import { createGuildForGroup } from '../systems/guild/guildVariants.js';
 import { isRollFaction, hallReportOf } from './npcChapterLaw.js';
+import { turnedDayOf } from './dayTurn.js';   // DAY-TURN
 
 /** Where this device keeps the day it last reported each town: { [mapId]: UTC day } - HALL_DONE past the day for a town
  *  the service has counted or struck, which is never reported again (an account's first answer stands for ever). */
@@ -78,9 +79,9 @@ export function chapterFactionOf(id, factionDict) {
 /**
  * THE HALL BOOK. `witness({ key, region, factions })` reports a town once a UTC day (answers whether a report was sent);
  * a refusal in HALL_STOPS stops it for the page. Quiet either way - the town is the same town.
- * @param {{ door: { witness: (hall: any) => Promise<any> }, storage?: any, nowMs?: () => number }} o
+ * @param {{ door: { witness: (hall: any) => Promise<any> }, storage?: any, nowMs?: () => number, turnMs?: number }} o
  */
-export function createHallBook({ door, storage = null, nowMs = () => Date.now() }) {
+export function createHallBook({ door, storage = null, nowMs = () => Date.now(), turnMs = 0 }) {
   /** @type {Record<string, number> | null} */
   let reported = null;
   let stopped = false;
@@ -97,7 +98,7 @@ export function createHallBook({ door, storage = null, nowMs = () => Date.now() 
     reported = Object.fromEntries(Object.entries(t).sort((a, b) => b[1] - a[1]).slice(0, HALL_REPORTED_MAX));
     try { storage?.setItem?.(HALL_REPORTED_KEY, JSON.stringify(reported)); } catch { /* this page keeps it */ }
   };
-  const dayNow = () => Math.floor(nowMs() / 86_400_000);
+  const dayNow = () => turnedDayOf(nowMs(), turnMs);   // DAY-TURN: once a day, the day turned at this page's moment
   return {
     get stopped() { return stopped; },
     /** @param {any} report */

@@ -5,7 +5,7 @@
   "old": "const STEEL_CLASSES = new Set([MOBILE_TYPES.Knight, MOBILE_TYPES.Warrior,",
   "new": "const STEEL_CLASSES = new Set([MOBILE_TYPES.Warrior,",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
@@ -14,7 +14,7 @@
   "old": "    if (mobileType === MOBILE_TYPES.Knight_CityWatch) items.push({ templateIndex: ARMOR_ENUM.Helm,",
   "new": "    if (false) items.push({ templateIndex: ARMOR_ENUM.Helm,",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
@@ -23,16 +23,16 @@
   "old": "  if (!has.has(EQUIP_SLOTS.Feet)) items.push({ templateIndex: pick(W.feet, mix(h ^ 0xc3))",
   "new": "  if (true) items.push({ templateIndex: pick(W.feet, mix(h ^ 0xc3))",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
   "name": "MWNPC10b-creature-a-person",
   "file": "src/characters/foeBodies.js",
-  "old": "  if (!orc && !vampire && !wolf && !(mobileType >= 128)) return (rec._mwRosterLook = creatureLook({ mobileType }));\n",
+  "old": "  if (!orc && !vampire && !wolf && !mod && !isClassEnemyId(mobileType)) return (rec._mwRosterLook = creatureLook({ mobileType }));\n",
   "new": "",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
@@ -41,7 +41,7 @@
   "old": "  if (rec._mwRosterMob === mobileType && rec._mwRosterG === gender && rec._mwRosterSeed === seed && rec._mwRosterRace === race) return rec._mwRosterLook;",
   "new": "  if (false) return rec._mwRosterLook;",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
@@ -50,7 +50,7 @@
   "old": "const h = mix((seed >>> 0) ^ mix((mobileType | 0) + 0x9e3779b9));",
   "new": "const h = mix(mix((mobileType | 0) + 0x9e3779b9));",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
@@ -59,7 +59,7 @@
   "old": "  const g = gender === 'female' ? 'female' : 'male';\n  const items",
   "new": "  const g = 'male';\n  const items",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
@@ -68,7 +68,7 @@
   "old": "seed: idSeed(n.id), kind: n.kind,",
   "new": "seed: 0, kind: n.kind,",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
@@ -77,7 +77,7 @@
   "old": "        bodiesLane.offer(rosterActor(b, { id: b.id,",
   "new": "        void (rosterActor(b, { id: b.id,",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
@@ -86,7 +86,7 @@
   "old": "dead: b.down ? 1 + (b.seed % 3) : 0, scale: b.look.scale }), b.batch);",
   "new": "dead: b.down ? 1 + (b.seed % 3) : 0, scale: 1 }), b.batch);",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
@@ -95,7 +95,7 @@
   "old": "moving: b.act === 'walk',",
   "new": "moving: false,",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
@@ -104,7 +104,7 @@
   "old": "swingKey: b.down || !(b.atk > 0) ? null : b.atk,",
   "new": "swingKey: b.down ? null : b.atk,",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
@@ -113,7 +113,7 @@
   "old": "hitKey: b.down ? null : b.hurtAt,",
   "new": "hitKey: null,",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
@@ -122,7 +122,7 @@
   "old": "dead: b.down ? 1 + (b.seed % 3) : 0,",
   "new": "dead: 0,",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
@@ -131,7 +131,7 @@
   "old": "    leave() { clear(); bodiesLane.destroy(); },",
   "new": "    leave() { clear(); },",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
@@ -140,70 +140,70 @@
   "old": "    offsetBodies(o) { bodiesLane.offsetAll(o); },",
   "new": "    offsetBodies(o) { void o; },",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
   "name": "MWNPC10b-crew-facing-lost",
-  "file": "src/scenes/navalCrew.js",
+  "file": "src/scenes/naval/navalCrew.js",
   "old": "        s.yaw = Math.atan2(_dir[0], _dir[2]);   // MWNPC10: kept - his body faces it\n",
   "new": "",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
   "name": "MWNPC10b-crew-blows-uncounted",
-  "file": "src/scenes/navalCrew.js",
+  "file": "src/scenes/naval/navalCrew.js",
   "old": "        if (member.swing && !s.swinging) s.swings++;   // MWNPC10: each swing begun, one blow\n",
   "new": "",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
   "name": "MWNPC10b-crew-unveiled",
-  "file": "src/scenes/navalCrew.js",
+  "file": "src/scenes/naval/navalCrew.js",
   "old": "{ id: s.id, look, feet: s.origin, yaw: s.yaw, moving: !!m.moving, swingKey: s.swings || null }), s.batch, ship.boat.conceal ?? null);",
   "new": "{ id: s.id, look, feet: s.origin, yaw: s.yaw, moving: !!m.moving, swingKey: s.swings || null }), s.batch, null);",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
   "name": "MWNPC10b-crew-below-bodied",
-  "file": "src/scenes/navalCrew.js",
+  "file": "src/scenes/naval/navalCrew.js",
   "old": "        if (!s?.batch || !s.unit || m.below) continue;",
   "new": "        if (!s?.batch || !s.unit) continue;",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
   "name": "MWNPC10b-crew-one-look",
-  "file": "src/scenes/navalCrew.js",
+  "file": "src/scenes/naval/navalCrew.js",
   "old": "seed: Math.imul((ship.seed | 0) + i, 0x9e3779b1) >>> 0 });",
   "new": "seed: 0 });",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
   "name": "MWNPC10b-crew-lane-kept",
-  "file": "src/scenes/navalCrew.js",
+  "file": "src/scenes/naval/navalCrew.js",
   "old": "clear() { for (const ship of ships.values()) standDown(ship); ships.clear(); bodiesLane.destroy(); },",
   "new": "clear() { for (const ship of ships.values()) standDown(ship); ships.clear(); },",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
   "name": "MWNPC10b-crew-veiled-undrawn",
-  "file": "src/scenes/navalCrew.js",
+  "file": "src/scenes/naval/navalCrew.js",
   "old": "    drawVeiledBodies() { bodiesLane.drawVeiled(); },",
   "new": "    drawVeiledBodies() {},",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
@@ -212,7 +212,7 @@
   "old": "    siegeNpcs?.drawBodies(canvas, proj, view, mwv.eye, dt);   // MWNPC10:",
   "new": "    void 0;   // MWNPC10:",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  },
  {
@@ -221,7 +221,7 @@
   "old": "    navalCrew.drawBodies(canvas, proj, view, mwv.eye, foeDt);   // MWNPC10:",
   "new": "    void 0;   // MWNPC10:",
   "tests": [
-   "test/mwnpc10b_rosters.test.js"
+   "test/systems/mwnpc10b_rosters.test.js"
   ]
  }
 ]

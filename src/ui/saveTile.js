@@ -43,6 +43,8 @@
 // law ("NEVER TRAPS"), on a surface a player reaches far more often.
 // ═══════════════════════════════════════════════════════════════════
 
+import { t, localizedText } from '../systems/textManager.js';   // L10N4: the tile's words in the player's language (a leaf - it imports nothing)
+
 /** The cloud states a tile can be in. `off` draws no cloud line at all
  *  - ACC0's wall is at cloud saves, and a player with no account is not
  *  nagged on every tile about a feature they have not asked for.
@@ -74,7 +76,7 @@ export const CLOUD_STATES = Object.freeze(['off', 'none', 'saved', 'busy', 'bad'
  * that stamped each save (`realTime`, ms). This names the fact for the
  * player and decides nothing - bible ACC2 D5 refused a sync that takes
  * the newer by itself, and it still does: the restore is the player's
- * press (ui/enhancedMenu.js), and `pullSlot` never overwrites a slot.
+ * press (ui/enhanced/enhancedMenu.js), and `pullSlot` never overwrites a slot.
  *
  * @param {{gameTime?: number, realTime?: number}|null|undefined} card  the service's row
  * @param {{gameTime?: number, realTime?: number}|null|undefined} local  this device's slot's `dateAndTime`
@@ -93,7 +95,7 @@ export function newerBackup(card, local) {
 /**
  * ═══ THE CLOUD LINE'S STATE, DECIDED WHERE NODE CAN REACH IT ═══════
  *
- * AUDIT-312 F3: this decision lived inside `ui/enhancedMenu.js`, which
+ * AUDIT-312 F3: this decision lived inside `ui/enhanced/enhancedMenu.js`, which
  * is DOM and a boot and which no node pin can drive - so three mutants
  * that change what a player is told about their own backup all
  * SURVIVED the whole suite (an unfinished upload reading as a finished
@@ -157,18 +159,18 @@ export function cloudStateOf({ signedIn = false, characterId = null, card = null
 export function agoText(thenS, nowS) {
   if (!Number.isFinite(thenS) || !Number.isFinite(nowS)) return '';
   const d = Math.max(0, Math.floor(nowS - thenS));
-  if (d < 90) return 'just now';
+  if (d < 90) return t('menu.save.agoNow', 'just now');
   // FLOOR, NOT ROUND, and the reason is that rounding made the singular
   // unreachable: past the 90-second threshold `Math.round(d / 60)` is
   // never 1, so "1 minute ago" was a branch nothing could reach. It is
   // also the more honest direction - an hour and fifty minutes reading
   // as "1 hour ago" overstates nothing, and "2 hours ago" would.
   const m = Math.floor(d / 60);
-  if (m < 60) return `${m} minute${m === 1 ? '' : 's'} ago`;
+  if (m < 60) return t('menu.save.agoMinutes', '{n, plural, one {# minute ago} other {# minutes ago}}', { n: m });
   const h = Math.floor(d / 3600);
-  if (h < 24) return `${h} hour${h === 1 ? '' : 's'} ago`;
+  if (h < 24) return t('menu.save.agoHours', '{n, plural, one {# hour ago} other {# hours ago}}', { n: h });
   const days = Math.floor(d / 86400);
-  return `${days} day${days === 1 ? '' : 's'} ago`;
+  return t('menu.save.agoDays', '{n, plural, one {# day ago} other {# days ago}}', { n: days });
 }
 
 /** The line under the name: what a player would say about a character.
@@ -176,7 +178,7 @@ export function agoText(thenS, nowS) {
 export const tileLine = (save) => [
   save?.race ?? null,
   save?.career ?? null,
-  save?.level ? `level ${save.level}` : null,
+  save?.level ? t('menu.save.level', 'level {level}', { level: save.level }) : null,
 ].filter(Boolean).join(' · ');
 
 /** ...and the line under THAT: when, in the world's own calendar. */
@@ -220,7 +222,7 @@ export function saveFromCard(card, dateFrom, dateText) {
     // answer to that.
     characterId: card?.characterId ?? null,
     saveName: card?.saveName ?? '',
-    name: card?.characterName || 'Unnamed',
+    name: card?.characterName || t('menu.save.unnamed', 'Unnamed'),
     when: date && dateText ? dateText(date) : null,
     hour: date ? `${String(date.hour).padStart(2, '0')}:${String(date.minute).padStart(2, '0')}` : null,
   };
@@ -281,7 +283,7 @@ export function saveTile(doc, save, { actions = [], cloud = null, face = null, c
   // simply gives way to a long name and ellipsises, which is the right
   // order of precedence: the character is who you are looking for.
   const top = el('div', 'svtop');
-  top.append(el('h3', null, save?.name || 'Unnamed'));
+  top.append(el('h3', null, save?.name || t('menu.save.unnamed', 'Unnamed')));
   if (save?.saveName) top.append(el('span', 'svslot', save.saveName));
   who.append(top);
   if (save?.house) who.append(el('p', 'svhouse', save.house));   // LEGACY7: the house, under the name (net/houseLaw.js houseLine)
@@ -292,8 +294,8 @@ export function saveTile(doc, save, { actions = [], cloud = null, face = null, c
 
   const dl = el('dl', 'stats');
   const row = (k, v) => { if (v != null) dl.append(el('dt', null, k), el('dd', null, String(v))); };
-  row('Health', save?.maxHealth ? `${save.health} / ${save.maxHealth}` : save?.health);
-  row('Gold', Number.isFinite(save?.gold) ? save.gold.toLocaleString() : null);
+  row(localizedText('health', 'Health'), save?.maxHealth ? `${save.health} / ${save.maxHealth}` : save?.health);
+  row(t('menu.save.gold', 'Gold'), Number.isFinite(save?.gold) ? save.gold.toLocaleString() : null);
   if (dl.childNodes.length) who.append(dl);
   root.append(who);
 
@@ -310,24 +312,24 @@ export function saveTile(doc, save, { actions = [], cloud = null, face = null, c
     const state = CLOUD_STATES.includes(cloud.state) ? cloud.state : 'none';
     const bar = el('div', `svcloud is-${state}`);
     const said = {
-      none: 'Not backed up',
-      saved: cloud.when ? `Backed up · ${cloud.when}` : 'Backed up',
-      busy: 'Backing up…',
+      none: t('menu.cloud.none', 'Not backed up'),
+      saved: cloud.when ? t('menu.cloud.savedWhen', 'Backed up · {when}', { when: cloud.when }) : t('menu.cloud.saved', 'Backed up'),
+      busy: t('menu.cloud.busy', 'Backing up…'),
       // A REFUSAL IS THE SERVICE'S OWN SENTENCE, handed in - this file
       // owns no words about why a backup failed.
-      bad: cloud.why || 'Could not back up',
+      bad: cloud.why || t('menu.cloud.bad', 'Could not back up'),
       // ...and the same for a WAIT. AUDIT-312 F2: the sentence for a
       // pre-CHARID1 card has existed since ACC2b and had no surface
       // that could show it, because the tile fell straight to `off`.
-      wait: cloud.why || 'Not backed up yet',
+      wait: cloud.why || t('menu.cloud.wait', 'Not backed up yet'),
       // ACC2c: and the one line a cloud-only tile carries. It says
       // WHERE the save is rather than that it is safe - "Backed up"
       // under a tile whose only copy is the backup would be telling a
       // player they have two of something they have one of.
-      only: cloud.when ? `Only in your backup · ${cloud.when}` : 'Only in your backup',
+      only: cloud.when ? t('menu.cloud.onlyWhen', 'Only in your backup · {when}', { when: cloud.when }) : t('menu.cloud.only', 'Only in your backup'),
       // FIELD 2026-09-27: the backup is a LATER save of this slot, from another device - the line says which copy
       // is ahead, because "Backed up" here told a player his older save was the safe one.
-      newer: cloud.when ? `Newer backup · ${cloud.when}` : 'Newer backup',
+      newer: cloud.when ? t('menu.cloud.newerWhen', 'Newer backup · {when}', { when: cloud.when }) : t('menu.cloud.newer', 'Newer backup'),
     }[state];
     bar.append(el('span', 'svsay', said));
     for (const a of cloud.actions ?? []) bar.append(actionButton(el, a));

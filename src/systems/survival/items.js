@@ -10,14 +10,16 @@
 // spoiled past stale, its own world icon - the mod's spoiled pictures,
 // archive = template, record 0 mouldy / 1 rotten - exactly DFU's
 // item-level world-texture override (DaggerfallUnityItem.cs:1730), so
-// the inventory needs no new law to draw it. A waterskin carries
+// the inventory needs no new law to draw it (food.js dressFood, which
+// every stage change runs - AUDIT C&C I5). A waterskin carries
 // `water` (kg), which the weight law adds and the name reads. Camping
 // equipment and the campfire carry their condition as USES.
-import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields, ITEM_TEMPLATES } from '../itemTemplates.js';
+import { registerCustomTemplates, templateByIndex, mintCondition, setItemFields, ITEM_TEMPLATES } from '../item/itemTemplates.js';
 import { addVendorTextures, vendorTextureCount } from '../textureReplacement.js';
+import { DYE_COLORS } from '../../characters/dyes.js';   // AUDIT C&C I7: the start's clothes, in CreateMensClothing's default dye
 const dice100 = (chance, roll01) => Math.floor(roll01 * 100) < chance;   // Dice100's line; no combat import (the formulas -> equip cycle)
 import {
-  TEMPLATE, SURVIVAL_GROUP, FOOD, isFood, foodOf, foodStage, foodName, foodSatiety, eatLaw, sickenFromMeal, rotOnce,
+  TEMPLATE, SURVIVAL_GROUP, FOOD, isFood, foodOf, foodStage, foodName, foodSatiety, eatLaw, sickenFromMeal, rotOnce, dressFood, VENDOR_ICON_FILES,
   isWaterskin, waterIn, waterskinName, drinkFrom, refillSkins, DRINK_RELIEF, WATERSKIN_CAPACITY_KG, FOOD_STAGE,
 } from './food.js';
 import { survivalOf, NEED } from './needs.js';
@@ -39,10 +41,16 @@ export const SURVIVAL_TEMPLATES = Object.freeze([
   { index: TEMPLATE.Apple, name: 'Apple', baseWeight: 0.1, hitPoints: 90, basePrice: 1, rarity: 3, worldTextureArchive: 213, worldTextureRecord: 1 },
   { index: TEMPLATE.Orange, name: 'Orange', baseWeight: 0.1, hitPoints: 90, basePrice: 2, rarity: 3, worldTextureArchive: 213, worldTextureRecord: 0 },
   { index: TEMPLATE.Bread, name: 'Bread', baseWeight: 1.5, hitPoints: 95, basePrice: 5, rarity: 3, worldTextureArchive: 211, worldTextureRecord: 31 },
-  { index: TEMPLATE.RawFish, name: 'Raw Fish', baseWeight: 2.0, hitPoints: 50, basePrice: 4, rarity: 20, worldTextureArchive: 211, worldTextureRecord: 9 },
-  { index: TEMPLATE.CookedFish, name: 'Cooked Fish', baseWeight: 1.5, hitPoints: 80, basePrice: 6, rarity: 10, worldTextureArchive: 211, worldTextureRecord: 10 },
-  { index: TEMPLATE.Meat, name: 'Meat', baseWeight: 2.0, hitPoints: 90, basePrice: 15, rarity: 20, worldTextureArchive: 211, worldTextureRecord: 40 },
-  { index: TEMPLATE.RawMeat, name: 'Raw Meat', baseWeight: 2.0, hitPoints: 60, basePrice: 8, rarity: 40, worldTextureArchive: 538, worldTextureRecord: 2 },
+  // CRAFT-PAYS (2026-10-21, the Discord's #feature-feedback: "Food is too heavy. Especially meat... meat should reduce in
+  // weight once cooked becasue most of that weight will be water"; bible/06-Systems/Professions-Arc.md section 48): the
+  // mod's raw meat and raw fish weighed two kilos a piece and kept it all through the fire. A cut is a kilo, and cooked it
+  // is half that - the water gone - so a cooked Meat weighs a quarter of what it did and a Cooked Fish a third (AUDIT
+  // CRAFT-WRITS T7: "a quarter" was the Meat's alone). The dishes stand on these rows
+  // (professions/profTemplates.js DISH_TEMPLATE_ROWS) and lighten with them; Bread and Rations are the mod's.
+  { index: TEMPLATE.RawFish, name: 'Raw Fish', baseWeight: 1.0, hitPoints: 50, basePrice: 4, rarity: 20, worldTextureArchive: 211, worldTextureRecord: 9 },
+  { index: TEMPLATE.CookedFish, name: 'Cooked Fish', baseWeight: 0.5, hitPoints: 80, basePrice: 6, rarity: 10, worldTextureArchive: 211, worldTextureRecord: 10 },
+  { index: TEMPLATE.Meat, name: 'Meat', baseWeight: 0.5, hitPoints: 90, basePrice: 15, rarity: 20, worldTextureArchive: 211, worldTextureRecord: 40 },
+  { index: TEMPLATE.RawMeat, name: 'Raw Meat', baseWeight: 1.0, hitPoints: 60, basePrice: 8, rarity: 40, worldTextureArchive: 538, worldTextureRecord: 2 },
   { index: TEMPLATE.Waterskin, name: 'Waterskin', baseWeight: 0.5, hitPoints: 10, basePrice: 10, rarity: 1, worldTextureArchive: 539, worldTextureRecord: 0 },
   { index: TEMPLATE.Skillet, name: 'Skillet', baseWeight: 5.0, hitPoints: 100, basePrice: 60, rarity: 5, worldTextureArchive: 218, worldTextureRecord: 4 },
   // AUDIT REST II H7: its condition is its FUEL (REST2's nights), never wear - a repair counter refilled eight nights for
@@ -51,14 +59,9 @@ export const SURVIVAL_TEMPLATES = Object.freeze([
 ]);
 registerCustomTemplates(SURVIVAL_TEMPLATES);
 
-/** The mod's own icons: the spoiled faces of each food (record 0
- *  mouldy, 1 rotten and worse), raw meat's three, the waterskin. */
-export const VENDOR_ICON_FILES = Object.freeze([
-  '532_0-0', '532_1-0', '533_0-0', '533_1-0', '534_0-0', '534_1-0', '535_0-0', '535_1-0',
-  '536_0-0', '536_1-0', '537_0-0', '537_1-0', '538_0-0', '538_1-0', '538_2-0', '539_0-0',
-]);
 /** SURV-TENT: the mod's TENT RESKINS, which are a different KIND of
- *  vendored file from the icons above. The camp stands the mod's own
+ *  vendored file from the icons (food.js VENDOR_ICON_FILES, the picture
+ *  law's own list). The camp stands the mod's own
  *  model (41606, `camp.js` TENT_MODEL) and the mod dresses it by
  *  overriding two records of REAL ARENA2 archives - a 32x32 tan canvas
  *  at 50_7-0 and a 64x8 dark pole at 67_10-0 - the way a texture pack
@@ -95,32 +98,20 @@ export function createSurvivalItem(templateIndex, { stackCount = 1, water = null
   if (!t?.custom) return null;
   const item = mintCondition(setItemFields({ group: SURVIVAL_GROUP, templateIndex, material: 0, flags: 0, variant: 0, message: 0, stackCount: t.stackable ? Math.max(1, stackCount) : 1 }));
   if (condition != null) item.currentCondition = Math.max(0, Math.min(item.maxCondition ?? condition, condition));   // SURV3: the port's condition field (mintCondition), not a field of its own - the uses the pool reads
-  if (isWaterskin(item)) item.water = water == null ? WATERSKIN_CAPACITY_KG : Math.max(0, Math.min(WATERSKIN_CAPACITY_KG, water));   // named by its template at the mint (the shelf's law); the name follows the water once it is drunk from or filled
+  if (isWaterskin(item)) {
+    item.water = water == null ? WATERSKIN_CAPACITY_KG : Math.max(0, Math.min(WATERSKIN_CAPACITY_KG, water));
+    // AUDIT C&C I11: named by its water at the mint, as a drink or a fill names it - the shelf's empty skin read
+    // "Waterskin" until its first fill, where a skin drunk dry reads "Empty Waterskin"
+    item.name = waterskinName(item);
+  }
   if (isFood(item) && stage > 0) { for (let i = 0; i < stage; i++) spoilFood(item); }
   return item;
 }
 
-/** Spoil a food one stage and dress it: the name and, past stale, the
- *  mod's own picture (record 0 mouldy, 1 rotten and putrid). */
-export function spoilFood(item) {
-  if (!rotOnce(item)) return false;
-  dressFood(item);
-  return true;
-}
-export function dressFood(item) {
-  if (!isFood(item)) return item;
-  item.name = foodName(item);
-  const s = foodStage(item);
-  const t = templateByIndex(item.templateIndex);
-  if (s >= FOOD_STAGE.Mouldy && VENDOR_ICON_FILES.includes(`${item.templateIndex}_${s === FOOD_STAGE.Mouldy ? 0 : 1}-0`)) {
-    item.worldTextureArchive = item.templateIndex;
-    item.worldTextureRecord = s === FOOD_STAGE.Mouldy ? 0 : 1;
-  } else {
-    delete item.worldTextureArchive; delete item.worldTextureRecord;
-    if (t) { item.worldTextureArchive = undefined; item.worldTextureRecord = undefined; }
-  }
-  return item;
-}
+/** Spoil a food one stage, dressed: food.js rotOnce - AUDIT C&C I5: the one law, which dresses every stage it turns
+ *  (the minute law's rot in the pack too), so a corpse's turning meat and the pack's bread are named and pictured
+ *  alike. */
+export const spoilFood = rotOnce;
 
 // ---- THE USE HANDLERS (systems/useItem.js hands these items here) ----
 export const SURVIVAL_USE_TEXT = Object.freeze({
@@ -253,7 +244,9 @@ export const isDrySourceFlat = (archive, record) => (DRY_SOURCE_FLATS[archive] ?
 
 // ---- THE SHOPS AND THE START -----------------------------------------
 /** A general store's provisions shelf: rations, bread, fruit, a skin or
- *  two, a fire kit, and camping gear and a skillet in a better shop. */
+ *  two (sold empty, and named so - AUDIT C&C I11), two to four Campfires
+ *  on the counter's shelf (REST2), and camping gear and a skillet in a
+ *  better shop. */
 export function provisionsStock(quality = 5, rolls = Math.random, { campfires = true } = {}) {   // AUDIT REST II H8: `campfires` - the counter's shelf alone
   const n = (min, max) => min + Math.floor(rolls() * (max - min + 1));
   const out = [];
@@ -268,20 +261,41 @@ export function provisionsStock(quality = 5, rolls = Math.random, { campfires = 
   return out.filter(Boolean);
 }
 
-/** A new character sets out with two sacks of rations, a full skin and
- *  worn camping gear (half its uses gone) - the mod's own start,
- *  with the shipwreck's cold-and-wet arm left to the host. */
-export function startingProvisions() {
+/** The road's clothes the mod's start hands a new character (ItemEnums MensClothing / WomensClothing): Shoes, and a
+ *  Formal cloak. */
+const START_SHOES = Object.freeze({ male: 147, female: 186 });
+const START_CLOAK = Object.freeze({ male: 155, female: 192 });
+/** CreateMensClothing / CreateWomensClothing(item, race) as the mod calls them - the default dye (Blue) and the
+ *  variant it is handed - minted as the kit mints its clothes (setItemFields, mintCondition), then worn to a quarter of
+ *  its condition (`currentCondition /= 4`, C# integer division). */
+function wornStartClothing(female, templateIndex, variant) {
+  const item = mintCondition(setItemFields({ group: female ? 'WomensClothing' : 'MensClothing', templateIndex, variant, dye: DYE_COLORS.Blue }));
+  item.currentCondition = Math.trunc(item.currentCondition / 4);
+  return item;
+}
+
+/** A new character sets out with the mod's own start (ClimateCalories.cs OnStartGame, then NewCharEffects): two
+ *  sacks of rations and a full skin; a Formal cloak drawn hood up and a pair of Shoes, of the character's own
+ *  wardrobe, each at a quarter of its condition and in the pack, not worn; worn camping gear (half its uses gone) -
+ *  and the port's Campfire. AUDIT C&C I7: the shoes and the cloak were left out of "the mod's own start". The mod's
+ *  other arm, the shipwreck's (a start in Privateer's Hold: the shoes alone, the gear at three uses, soaked through
+ *  and told to dry at the campfire), is not taken: this kit is minted at chargen, which is not told where the
+ *  character will stand - the host picks the start (world.js, StartInDungeon on the start cell) while the wizard
+ *  runs - so every new character takes the mod's ordinary arm. */
+export function startingProvisions(entity = null) {
+  const female = entity?.gender === 'female';
   return [
     createSurvivalItem(TEMPLATE.Rations, { stackCount: 2 }),
     createSurvivalItem(TEMPLATE.Waterskin),
+    wornStartClothing(female, female ? START_CLOAK.female : START_CLOAK.male, 1),   // cloak.CurrentVariant = 1: its hood up (temperature.js HOODED_CLOAK_VARIANTS)
+    wornStartClothing(female, female ? START_SHOES.female : START_SHOES.male, 0),   // Range(0, variants): the Shoes have none, so 0
     createSurvivalItem(TEMPLATE.CampingEquipment, { condition: Math.trunc(CAMPING_USES / 2) }),
     createSurvivalItem(TEMPLATE.Campfire),   // REST2: a full Campfire - the rest's tool, not two lights of a kit
   ];
 }
 
 /** REST2 (bible/06-Systems/Rest-Arc.md section 3): ONLINE THE CAMPFIRE IS THE REST'S, NOT THE ARC'S. A rest online is
- *  an act at a fire or a bed (systems/restAct.js), so with the arc Off a General Store still stocks two to four, and a
+ *  an act at a fire or a bed (systems/rest/restAct.js), so with the arc Off a General Store still stocks two to four, and a
  *  new character still sets out with one. */
 export function campfireStock(rolls = Math.random, lo = 2, hi = 4) {   // AUDIT REST: a Pawn Shop's 0-2 (Rest-Arc.md section 3)
   const out = [];
@@ -305,4 +319,4 @@ export function ensureEndlessProvisions(items) {
   return items;
 }
 
-export { TEMPLATE, FOOD, foodOf, foodSatiety, isFood, isWaterskin, waterIn, NEED };
+export { TEMPLATE, FOOD, foodOf, foodSatiety, isFood, isWaterskin, waterIn, NEED, dressFood, VENDOR_ICON_FILES };   // AUDIT C&C I5: the dress law and its icons are food.js's now

@@ -5,7 +5,7 @@
     "old": "export const MERIT_WRIT = 100;",
     "new": "export const MERIT_WRIT = 90;",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -14,7 +14,7 @@
     "old": "export const MERIT_RECEIPT = 50;",
     "new": "export const MERIT_RECEIPT = 40;",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -23,7 +23,7 @@
     "old": "export const MERIT_TENURE_S = 7 * 86_400;",
     "new": "export const MERIT_TENURE_S = 6 * 86_400;",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -32,7 +32,7 @@
     "old": "export const MERIT_CAP_WEEK = 600;",
     "new": "export const MERIT_CAP_WEEK = 700;",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -41,7 +41,7 @@
     "old": "export const MERIT_SOURCES = Object.freeze(['writ', ...RECEIPT_KINDS]);",
     "new": "export const MERIT_SOURCES = Object.freeze(['writ', 'gate']);",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -50,7 +50,7 @@
     "old": "=> seatWeekOf(nowS * 1000);",
     "new": "=> seatWeekOf(nowS * 1000 + 86_400_000);",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -59,7 +59,7 @@
     "old": "Math.max(0, Math.min(q, /** @type {number} */ (own)))",
     "new": "Math.max(0, /** @type {number} */ (own))",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -68,7 +68,7 @@
     "old": "Math.max(0, Math.min(q, /** @type {number} */ (own)))",
     "new": "Math.min(q, /** @type {number} */ (own))",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -77,7 +77,7 @@
     "old": "return Math.floor((MERIT_WRIT * Math.max(0,",
     "new": "return Math.round((MERIT_WRIT * Math.max(0,",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -86,7 +86,7 @@
     "old": "/** @type {number} */ (qty) < 1 ||",
     "new": "/** @type {number} */ (qty) < 0 ||",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -95,7 +95,7 @@
     "old": "if (!Number.isSafeInteger(qty) || /** @type {number} */ (qty) < 1 || !Number.isSafeInteger(own)) return 0;",
     "new": "if (!Number.isSafeInteger(qty) || /** @type {number} */ (qty) < 1 || own == null) return 0;",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -104,7 +104,7 @@
     "old": "=> `m:${day}:${region}:${faction}:${character}`;",
     "new": "=> `m:${day}:${faction}:${region}:${character}`;",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -113,7 +113,7 @@
     "old": "gateHash(MEMBER_WRIT_SALT, day, region, faction, ...id, slot, k)",
     "new": "gateHash(MEMBER_WRIT_SALT, day, region, faction, slot, k)",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -122,7 +122,7 @@
     "old": "export const MEMBER_WRIT_SALT = 0x3e17;",
     "new": "export const MEMBER_WRIT_SALT = 0x4a11;",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -131,7 +131,7 @@
     "old": "const w = courtWrits(day, region, 2, own.length ? own : table,",
     "new": "const w = courtWrits(day, region, 2, table,",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "/ 4294967296)[1];\n  return w ? { ...w, slot: 0 } : null;",
     "new": "/ 4294967296)[0];\n  return w ? { ...w, slot: 0 } : null;",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "if (!isRollFaction(faction) || typeof character !== 'string' || !REALM_CHARACTER_RE.test(character) || !table?.length) return null;",
     "new": "if (!isRollFaction(faction) || typeof character !== 'string' || !table?.length) return null;",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -158,9 +158,9 @@
     "old": "=> kind === 'hall' || kind === 'member';",
     "new": "=> kind === 'hall';",
     "tests": [
-      "test/chap3a_merit.test.js",
-      "test/chap2_halls.test.js",
-      "test/chap2b_receipts.test.js"
+      "test/net/chap3a_merit.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/chap2b_receipts.test.js"
     ]
   },
   {
@@ -169,7 +169,7 @@
     "old": "const days = Math.ceil((m.from - nowS) / 86_400);",
     "new": "const days = Math.floor((m.from - nowS) / 86_400);",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -178,7 +178,7 @@
     "old": "  if (m.from != null && m.from > nowS) {\n    const days",
     "new": "  if (m.from != null && m.from > nowS && !m.elsewhere) {\n    const days",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -187,7 +187,7 @@
     "old": "if (m.from != null && m.from > nowS) {",
     "new": "if (m.from != null && m.from >= nowS) {",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -196,7 +196,7 @@
     "old": " AND member = 1 AND dormant = 0 AND joined_at <= ?8 - ?10)",
     "new": " AND member = 1 AND dormant = 0)",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -205,7 +205,7 @@
     "old": "AND joined_at <= ?8 - ?10)",
     "new": "AND joined_at < ?8 - ?10)",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -214,7 +214,7 @@
     "old": "AND faction_id = ?3 AND member = 1 AND dormant = 0 AND joined_at",
     "new": "AND faction_id = ?3 AND dormant = 0 AND joined_at",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -223,7 +223,7 @@
     "old": "WHERE char_id = ?2 AND player = ?1 AND faction_id = ?3",
     "new": "WHERE char_id = ?2 AND faction_id = ?3",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ],
     "equivalent": true,
     "why": "The character's standing clause beside it asks the account (realm_characters: id = the character AND player = the account), and a Roll row's player is always its character's account (npcRoll.js writes a character's rows only under its own account; a delete or an undone crossing takes them with it) - so a Roll row of the character with another account's name cannot stand beside a realm character of this one."
@@ -234,7 +234,7 @@
     "old": "      AND EXISTS (SELECT 1 FROM realm_characters WHERE id = ?2 AND player = ?1 AND dead_at IS NULL)\n",
     "new": "",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -243,7 +243,7 @@
     "old": "\n      AND NOT EXISTS (SELECT 1 FROM npc_chapter_merit WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region <> ?4)`)",
     "new": "`)",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -252,7 +252,7 @@
     "old": "WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region <> ?4)",
     "new": "WHERE account = ?1 AND faction = ?3 AND region <> ?4)",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -261,7 +261,7 @@
     "old": "WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0))",
     "new": "WHERE week = ?5 AND char_id = ?2 AND faction = ?3 AND region = ?4), 0))",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -270,7 +270,7 @@
     "old": "WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0))",
     "new": "WHERE week = ?5 AND account = ?1 AND faction = ?3), 0))",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ],
     "equivalent": true,
     "why": "The week's one chapter of a guild (the NOT EXISTS clause beside it) lets no line through while the account holds a line of the guild in another region this week, so whenever a line can be written the guild's lines this week are all this region's: the cap's sum over every region equals its sum over this one."
@@ -281,7 +281,7 @@
     "old": "WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0))",
     "new": "WHERE account = ?1 AND faction = ?3 AND region = ?4), 0))",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -290,7 +290,7 @@
     "old": "WHERE got >= 1 AND ${guard}",
     "new": "WHERE got >= 0 AND ${guard}",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ],
     "equivalent": true,
     "why": "Merit's table holds CHECK (amount >= 1) and the line is an INSERT OR IGNORE: a line of 0 the looser bound lets through is the CHECK's to refuse, and the IGNORE drops that one row as the WHERE did - no row, no error, either way."
@@ -301,7 +301,7 @@
     "old": "(SELECT CAST(MIN(${amountSql}, ?9 - COALESCE((SELECT SUM(amount) FROM npc_chapter_merit\n        WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0)) AS INTEGER) AS got)",
     "new": "(SELECT MIN(${amountSql}, ?9 - COALESCE((SELECT SUM(amount) FROM npc_chapter_merit\n        WHERE week = ?5 AND account = ?1 AND faction = ?3 AND region = ?4), 0)) AS got)",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -310,7 +310,7 @@
     "old": "WHERE got >= 1 AND ${guard}",
     "new": "WHERE got >= 1",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -319,7 +319,7 @@
     "old": ".bind(player, character, faction, region, meritWeekOf(nowS), source,",
     "new": ".bind(player, character, faction, region, meritWeekOf(nowS) + 1, source,",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -328,7 +328,7 @@
     "old": "elsewhere: mine.some((/** @type {any} */ r) => Number(r.region) !== region)",
     "new": "elsewhere: mine.some((/** @type {any} */ r) => Number(r.region) === region)",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -337,7 +337,7 @@
     "old": "from: from !== null && from > nowS ? from : null",
     "new": "from",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -346,7 +346,7 @@
     "old": "merit: Number(mine.find((/** @type {any} */ r) => Number(r.region) === region)?.n ?? 0)",
     "new": "merit: Number(mine[0]?.n ?? 0)",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -355,7 +355,7 @@
     "old": "FROM npc_chapter_merit WHERE week = ?1 AND account = ?2 GROUP BY faction, region",
     "new": "FROM npc_chapter_merit WHERE ?1 = ?1 AND account = ?2 GROUP BY faction, region",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -364,7 +364,7 @@
     "old": "const here = members.filter((f) => chapters.has(f));",
     "new": "const here = members;",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -373,7 +373,7 @@
     "old": "...own.map((c) => meritStatement(db, {",
     "new": "...own.filter(() => false).map((c) => meritStatement(db, {",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -382,7 +382,7 @@
     "old": "const own = credits.filter((c) => c.ref === receiptRef(kind, id));",
     "new": "const own = credits;",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -391,7 +391,7 @@
     "old": "AND ref = ?7 AND tag = ?12)', binds: [meritOfReceipt(own.length), tag],",
     "new": "AND ref = ?7 AND ?12 = ?12)', binds: [meritOfReceipt(own.length), tag],",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ],
     "equivalent": true,
     "why": "A receipt's lines are claimed once (the gate's and the raid's own rows answer a repeat 'claimed' before any credit) and written once on their key (INSERT OR IGNORE), and its Merit once on the act's (UNIQUE (char_id, faction, source, ref)): a credit line of this receipt that stands from an earlier write is this receipt's own, so the Merit it guards is the same act's - the tag names which write made it, which no path through the routes can make differ from this one (creditReceipt answers 'credited' where every line stood)."
@@ -402,9 +402,9 @@
     "old": "merit: await meritOfAct(db, character, kind, receiptRef(kind, id)),",
     "new": "merit: [],",
     "tests": [
-      "test/chap3a_merit.test.js",
-      "test/chap2_halls.test.js",
-      "test/chap2b_receipts.test.js"
+      "test/net/chap3a_merit.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/chap2b_receipts.test.js"
     ]
   },
   {
@@ -413,7 +413,7 @@
     "old": "player: player.id, character, faction: c.faction, region, source: kind, ref: c.ref,",
     "new": "player: player.id, character, faction: c.faction, region, source: 'gate', ref: c.ref,",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -422,7 +422,7 @@
     "old": "binds: [meritOfReceipt(own.length), tag],",
     "new": "binds: [100, tag],",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -431,7 +431,7 @@
     "old": "  await postMemberWrits(db, day, region, nowS, character, members, zero);\n",
     "new": "",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ],
     "note": "CHAP6a: re-aimed by content (the Season's event beside it)."
   },
@@ -441,7 +441,7 @@
     "old": "const want = members.filter((f) => chapters.has(f) && !events.get(f)?.shut);",
     "new": "const want = members.filter((f) => !events.get(f)?.shut);",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ],
     "note": "CHAP6a: re-aimed by content (the Season's event beside it)."
   },
@@ -451,7 +451,7 @@
     "old": "const missing = want.filter((f) => !posted.has(f));",
     "new": "const missing = want;",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ],
     "equivalent": true,
     "why": "A member's own writ's id is its key (memberWritId, INSERT OR IGNORE): a writ drawn again for a guild already posted today is the same writ under the same id, and is ignored - the read spares the region's ground read, never a second row."
@@ -462,16 +462,16 @@
     "old": "const members = halls ? await membersOf(db, player.id, character) : [];",
     "new": "const members = await membersOf(db, player.id, character);",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
     "name": "CHAP3A-LIST-OWNER",
     "file": "server-account/src/professions.js",
-    "old": "AND (owner = '' OR owner = ?3) ORDER BY kind, faction, slot\")",
-    "new": "ORDER BY kind, faction, slot\")",
+    "old": "AND owner IN ('', ?3) ORDER BY +kind, faction, slot\")",
+    "new": "ORDER BY +kind, faction, slot\")",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -480,7 +480,7 @@
     "old": "(w.kind === 'member' ? members.includes(Number(w.faction))",
     "new": "(w.kind === 'member' ? true",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -489,7 +489,7 @@
     "old": "if (w.kind === 'member' && (w.owner !== character || !(await membersOf(",
     "new": "if (w.kind === 'member' && (!(await membersOf(",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -498,7 +498,7 @@
     "old": "(w.owner !== character || !(await membersOf(db, player.id, character)).includes(Number(w.faction)))) return { error: 'no-writ' };",
     "new": "(w.owner !== character)) return { error: 'no-writ' };",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -507,7 +507,7 @@
     "old": "if (w.kind !== 'court' && hallHidden(Number(w.faction)) && !(await hiddenMemberships(",
     "new": "if (w.kind === 'hall' && hallHidden(Number(w.faction)) && !(await hiddenMemberships(",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ],
     "equivalent": true,
     "why": "A member's own writ is refused 'no-writ' just above to any character not on its Roll as the guild's member (membersOf, the owner's own account, standing), which a hidden guild's member check (hiddenMemberships) can only repeat for the same row."
@@ -518,7 +518,7 @@
     "old": "if (w.kind !== 'court' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };",
     "new": "if (w.kind === 'hall' && !chaptersOpenFor(player, env)) return { error: 'chapters-closed' };",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -527,7 +527,7 @@
     "old": "...(w.kind === 'member' ? [meritStatement(db, {",
     "new": "...(false ? [meritStatement(db, {",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -536,7 +536,7 @@
     "old": "(qty - MIN(qty, COALESCE((SELECT b.qty FROM prof_stores b",
     "new": "(qty - MIN(0, COALESCE((SELECT b.qty FROM prof_stores b",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -545,7 +545,7 @@
     "old": "binds: [id, nonce, merit],",
     "new": "binds: [id, nonce, 50],",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ],
     "note": "AUDIT CHAP5: re-aimed by content at the code its fixes moved."
   },
@@ -555,7 +555,7 @@
     "old": "...(w.kind === 'member' ? { merit: (await meritOfAct(db, w.filled_char, 'writ', w.id))[0]?.amount ?? 0 } : {}),",
     "new": "...({}),",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -564,7 +564,7 @@
     "old": "...(w.kind !== 'court' ? [   // CHAP3a: a member's own writ as a hall writ",
     "new": "...(w.kind === 'hall' ? [   // CHAP3a: a member's own writ as a hall writ",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -573,7 +573,7 @@
     "old": "merit: await meritAsks(db, player.id, character, region, nowS, members),",
     "new": "merit: [],",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -582,9 +582,9 @@
     "old": "if (isChapterWrit(d.writ?.kind)) rollTracker?.refresh();",
     "new": "if (d.writ?.kind === 'hall') rollTracker?.refresh();",
     "tests": [
-      "test/chap3a_merit.test.js",
-      "test/chap2_halls.test.js",
-      "test/chap2b_receipts.test.js"
+      "test/net/chap3a_merit.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/chap2b_receipts.test.js"
     ]
   },
   {
@@ -593,16 +593,16 @@
     "old": "const merit = hall && Number(d.merit) > 0 ?",
     "new": "const merit = hall && Number(d.merit) >= 0 ?",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
     "name": "CHAP3A-CARD-KIND",
     "file": "src/ui/noticeWindow.js",
-    "old": "el('span', 'writ-kind', own ? 'Your chapter writ' : poster ? 'Chapter writ' : 'Court writ')",
-    "new": "el('span', 'writ-kind', poster ? 'Chapter writ' : 'Court writ')",
+    "old": "{ return w.kind === 'member' ? 'Your chapter writ' : isChapterWrit(w.kind) ? 'Chapter writ' : 'Court writ'; }",
+    "new": "{ return isChapterWrit(w.kind) ? 'Chapter writ' : 'Court writ'; }",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -611,9 +611,9 @@
     "old": "const poster = isChapterWrit(w.kind) ? hallPosterName(w.faction) ?? 'guild' : null;",
     "new": "const poster = w.kind === 'hall' ? hallPosterName(w.faction) ?? 'guild' : null;",
     "tests": [
-      "test/chap3a_merit.test.js",
-      "test/chap2_halls.test.js",
-      "test/chap2b_receipts.test.js"
+      "test/net/chap3a_merit.test.js",
+      "test/net/chap2_halls.test.js",
+      "test/net/chap2b_receipts.test.js"
     ]
   },
   {
@@ -622,8 +622,8 @@
     "old": "${own && earns ? `, standing and Merit with the ${poster}` : poster",
     "new": "${own && earns ? ` and standing with the ${poster}` : poster",
     "tests": [
-      "test/chap3a_merit.test.js",
-      "test/audit_chap3.test.js"
+      "test/net/chap3a_merit.test.js",
+      "test/net/audit_chap3.test.js"
     ]
   },
   {
@@ -632,8 +632,8 @@
     "old": "    if (merit) card.append(el('p', 'notice-merit', `${meritLineOf(merit, nowS())}.`));   // CHAP3a: the account's Merit here (W12: a sentence)\n",
     "new": "",
     "tests": [
-      "test/chap3a_merit.test.js",
-      "test/guild3_plain.test.js"
+      "test/net/chap3a_merit.test.js",
+      "test/net/guild3_plain.test.js"
     ]
   },
   {
@@ -642,7 +642,7 @@
     "old": "CHECK (kind IN ('court', 'hall', 'member'))",
     "new": "CHECK (kind IN ('court', 'hall'))",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -651,7 +651,7 @@
     "old": "UNIQUE (day, region, kind, faction, owner, slot)",
     "new": "UNIQUE (day, region, kind, faction, slot)",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -660,7 +660,7 @@
     "old": "  UNIQUE (char_id, faction, source, ref)\n",
     "new": "  ref2 TEXT\n",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -669,7 +669,7 @@
     "old": "  UNIQUE (char_id, faction, source, ref)",
     "new": "  UNIQUE (faction, source, ref)",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   },
   {
@@ -678,7 +678,7 @@
     "old": "CHECK (source IN ('writ', 'gate', 'raid'))",
     "new": "CHECK (source IN ('writ', 'gate'))",
     "tests": [
-      "test/chap3a_merit.test.js"
+      "test/net/chap3a_merit.test.js"
     ]
   }
 ]

@@ -5,8 +5,8 @@
     "old": "  product('longsword', 'Longsword', 'weapon', 120, 3, [[COPPER, 1], [LEATHER, 1]]),",
     "new": "  product('longsword', 'Longsword', 'weapon', 120, 3, [[COPPER, 1]]),",
     "tests": [
-      "test/prof3_law.test.js",
-      "test/prof3_service.test.js"
+      "test/net/prof3_law.test.js",
+      "test/net/prof3_service.test.js"
     ]
   },
   {
@@ -15,7 +15,7 @@
     "old": "product('cuirass', 'Cuirass', 'plate', 102, 6, [[LEATHER, 2]])",
     "new": "product('cuirass', 'Cuirass', 'plate', 102, 6, [[LEATHER, 1]])",
     "tests": [
-      "test/prof3_law.test.js"
+      "test/net/prof3_law.test.js"
     ]
   },
   {
@@ -24,7 +24,7 @@
     "old": "Math.ceil(p.ingots * 0.75)",
     "new": "Math.floor(p.ingots * 0.75)",
     "tests": [
-      "test/prof3_law.test.js"
+      "test/net/prof3_law.test.js"
     ]
   },
   {
@@ -33,7 +33,7 @@
     "old": "  ...CHAIN.map((p) => recipeOf(p, 'ingot:steel')),",
     "new": "  ...CHAIN.flatMap((p) => SMITH_INGOTS.map((metal) => recipeOf(p, metal))),",
     "tests": [
-      "test/prof3_law.test.js"
+      "test/net/prof3_law.test.js"
     ]
   },
   {
@@ -42,7 +42,7 @@
     "old": "const TOOL_TIER = Object.freeze({ spade: 2 });",
     "new": "const TOOL_TIER = Object.freeze({});",
     "tests": [
-      "test/prof3_law.test.js"
+      "test/net/prof3_law.test.js"
     ]
   },
   {
@@ -51,7 +51,7 @@
     "old": "'ingot:daedric': 9, 'ingot:warforged': 7,",
     "new": "'ingot:daedric': 9, 'ingot:warforged': 1,",
     "tests": [
-      "test/prof3_law.test.js"
+      "test/net/prof3_law.test.js"
     ]
   },
   {
@@ -60,8 +60,8 @@
     "old": "p.kind === 'plate' || p.kind === 'shield' ? ARMOR_PLATE + m",
     "new": "p.kind === 'plate' ? ARMOR_PLATE + m",
     "tests": [
-      "test/prof3_law.test.js",
-      "test/prof3_client.test.js"
+      "test/net/prof3_law.test.js",
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
@@ -70,7 +70,7 @@
     "old": "Object.freeze({ upTo: Infinity, odds: Object.freeze([0, 0, 40, 52, 8]) }),",
     "new": "Object.freeze({ upTo: Infinity, odds: Object.freeze([0, 0, 40, 55, 5]) }),",
     "tests": [
-      "test/prof3_law.test.js"
+      "test/net/prof3_law.test.js"
     ]
   },
   {
@@ -79,7 +79,7 @@
     "old": "const odds = [...QUALITY_ROWS.find((r) => Math.max(0, margin) <= r.upTo).odds];",
     "new": "const odds = [...QUALITY_ROWS.find((r) => margin < r.upTo).odds];",
     "tests": [
-      "test/prof3_law.test.js"
+      "test/net/prof3_law.test.js"
     ]
   },
   {
@@ -88,8 +88,8 @@
     "old": "for (let q = 0; q < MASTERWORK && left > 0; q++)",
     "new": "for (let q = MASTERWORK - 1; q >= 0 && left > 0; q--)",
     "tests": [
-      "test/prof3_law.test.js",
-      "test/prof3_service.test.js"
+      "test/net/prof3_law.test.js",
+      "test/net/prof3_service.test.js"
     ]
   },
   {
@@ -98,8 +98,8 @@
     "old": "  let steps = clean ? 1 : 0;",
     "new": "  let steps = clean ? 2 : 0;",
     "tests": [
-      "test/prof3_law.test.js",
-      "test/prof3_service.test.js"
+      "test/net/prof3_law.test.js",
+      "test/net/prof3_service.test.js"
     ]
   },
   {
@@ -108,8 +108,8 @@
     "old": "(spec50 === 'weaponsmith' && r.family === 'weapons')",
     "new": "(spec50 === 'weaponsmith')",
     "tests": [
-      "test/prof3_law.test.js",
-      "test/prof3_service.test.js"
+      "test/net/prof3_law.test.js",
+      "test/net/prof3_service.test.js"
     ]
   },
   {
@@ -118,8 +118,8 @@
     "old": "  if (r.metal === WARFORGED || r.leather === HARDENED_LEATHER.key || (heartwood && takesHeartwood(r))) steps++;\n",
     "new": "  if (r.leather === HARDENED_LEATHER.key || (heartwood && takesHeartwood(r))) steps++;\n",
     "tests": [
-      "test/prof3_law.test.js",
-      "test/prof3_service.test.js"
+      "test/net/prof3_law.test.js",
+      "test/net/prof3_service.test.js"
     ]
   },
   {
@@ -128,8 +128,8 @@
     "old": "export const craftQuality = (rolled, steps) => Math.min(MASTERWORK, rolled + Math.max(0, steps));",
     "new": "export const craftQuality = (rolled, steps) => rolled + Math.max(0, steps);",
     "tests": [
-      "test/prof3_law.test.js",
-      "test/prof3_service.test.js"
+      "test/net/prof3_law.test.js",
+      "test/net/prof3_service.test.js"
     ]
   },
   {
@@ -138,8 +138,8 @@
     "old": "  Object.freeze({ condition: 1.15, weight: 0.95, rarity: null }),",
     "new": "  Object.freeze({ condition: 1.15, weight: 1, rarity: null }),",
     "tests": [
-      "test/prof3_law.test.js",
-      "test/prof3_client.test.js"
+      "test/net/prof3_law.test.js",
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
@@ -148,7 +148,7 @@
     "old": "  return (tier < topTierOf(rank) - 2 ? Math.floor(xp / 4) : xp) + (first ? FIRST_CRAFT_XP : 0);",
     "new": "  return xp + (first ? FIRST_CRAFT_XP : 0);",
     "tests": [
-      "test/prof3_law.test.js"
+      "test/net/prof3_law.test.js"
     ]
   },
   {
@@ -157,7 +157,7 @@
     "old": "((r.kind === 'kit' && spec100 === 'quartermaster') || (r.kind === 'dish'",
     "new": "((spec100 === 'quartermaster') || (r.kind === 'dish'",
     "tests": [
-      "test/prof3_law.test.js"
+      "test/net/prof3_law.test.js"
     ],
     "note": "PROF9 (RE-AIMED by content): the fire's code beside it."
   },
@@ -167,7 +167,7 @@
     "old": "  const w = HEAT_ACT.bandW * band;",
     "new": "  const w = HEAT_ACT.bandW;",
     "tests": [
-      "test/prof3_law.test.js"
+      "test/net/prof3_law.test.js"
     ]
   },
   {
@@ -176,7 +176,7 @@
     "old": "  let n = whole.slice(0, MAKER_MAX);",
     "new": "  let n = whole;",
     "tests": [
-      "test/prof3_law.test.js"
+      "test/net/prof3_law.test.js"
     ]
   },
   {
@@ -185,7 +185,7 @@
     "old": "  if (!item || typeof item.provenance !== 'string' || !PROVENANCE_RE.test(item.provenance)) return Number.isInteger(item?.quality) && item.quality > 1 && item.quality < MASTERWORK ? [QUALITY_NAMES[item.quality]] : [];",
     "new": "  if (!item) return [];",
     "tests": [
-      "test/prof3_law.test.js"
+      "test/net/prof3_law.test.js"
     ]
   },
   {
@@ -194,8 +194,8 @@
     "old": "const stock = (counter) => (m) => Object.freeze({ key: m.key, marks: 2 * TIER_VALUES[m.tier - 1], counter });",
     "new": "const stock = (counter) => (m) => Object.freeze({ key: m.key, marks: TIER_VALUES[m.tier - 1], counter });",
     "tests": [
-      "test/prof3_law.test.js",
-      "test/prof3_service.test.js"
+      "test/net/prof3_law.test.js",
+      "test/net/prof3_service.test.js"
     ]
   },
   {
@@ -204,8 +204,8 @@
     "old": "export const withdrawable = (key) => !NO_PACK_FORM.includes(key);",
     "new": "export const withdrawable = (key) => !!key;",
     "tests": [
-      "test/prof3_law.test.js",
-      "test/prof3_service.test.js"
+      "test/net/prof3_law.test.js",
+      "test/net/prof3_service.test.js"
     ],
     "equivalent": true,
     "why": "PROF7: every material the Stores hold has its template now (655-671 the last) - NO_PACK_FORM is empty, so withdrawable() already answers true for every key. The gate is kept as the door a future material with no pack form would need; PROF7-a-hide-held-back (prof7.json) pins the list itself."
@@ -216,7 +216,7 @@
     "old": "  for (const k of ['n', 'k', 't', 'o', 'd', 'b', 'w', 'y', 'e']) if (c[k] !== undefined) return false;\n",
     "new": "",
     "tests": [
-      "test/prof3_law.test.js"
+      "test/net/prof3_law.test.js"
     ]
   },
   {
@@ -225,7 +225,7 @@
     "old": "(!rollsQuality(r) ? c.q !== -1 : (c.q < 0 || c.q > MASTERWORK) && !(r.kind === 'kit' && c.q === -1))",
     "new": "(c.q < -1 || c.q > MASTERWORK)",
     "tests": [
-      "test/prof3_law.test.js"
+      "test/net/prof3_law.test.js"
     ]
   },
   {
@@ -234,7 +234,7 @@
     "old": "  if (!good) return { ok: false, why: 'signature' };\n",
     "new": "",
     "tests": [
-      "test/prof3_law.test.js"
+      "test/net/prof3_law.test.js"
     ]
   },
   {
@@ -243,7 +243,7 @@
     "old": "  if (!recipeOpen(r, rank, specs)) return { error: 'prof-rank' };\n",
     "new": "",
     "tests": [
-      "test/prof3_service.test.js"
+      "test/net/prof3_service.test.js"
     ]
   },
   {
@@ -252,7 +252,7 @@
     "old": "qualitySteps(r, { clean: clean === true, spec50: specs[50], heartwood: wood })",
     "new": "qualitySteps(r, { clean: !!clean, spec50: specs[50], heartwood: wood })",
     "tests": [
-      "test/prof3_service.test.js"
+      "test/net/prof3_service.test.js"
     ]
   },
   {
@@ -261,8 +261,8 @@
     "old": "FROM (SELECT CASE WHEN EXISTS (SELECT 1 FROM prof_crafts WHERE player = ?1 AND char_id = ?2 AND ${madeBefore}) THEN 0 ELSE 1 END AS f)",
     "new": "FROM (SELECT 0 AS f)",
     "tests": [
-      "test/prof3_service.test.js",
-      "test/prof3_client.test.js"
+      "test/net/prof3_service.test.js",
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
@@ -271,18 +271,19 @@
     "old": "      WHERE ${held.join(' AND ')}`).bind(...binds),\n    // the pieces, each its provenance id",
     "new": "      WHERE 1`).bind(...binds),\n    // the pieces, each its provenance id",
     "tests": [
-      "test/prof3_service.test.js"
+      "test/net/prof3_service.test.js"
     ],
     "note": "AUDIT PROF-541 (RE-AIMED by content): the pieces minted before the spends now."
   },
   {
     "name": "PROF3-svc-uncapped-xp",
     "file": "server-account/src/professions.js",
-    "old": "MAX(0, MIN(?10 + f * ?13, ${Number(cap)} - COALESCE(",
-    "new": "MAX(0, MIN(?10 + f * ?13, ${Number(999999)} - COALESCE(",
+    "old": "MAX(0, MIN(?10 + f * ?13, ${cap} - COALESCE(",
+    "new": "MAX(0, MIN(?10 + f * ?13, 999999 - COALESCE(",
     "tests": [
-      "test/prof3_service.test.js"
-    ]
+      "test/net/prof3_service.test.js"
+    ],
+    "note": "AUDIT FB1018f L5-1: re-aimed by content - the cap read in the statement (craftCapSql), no longer bound."
   },
   {
     "name": "PROF3-svc-one-kit",
@@ -290,7 +291,7 @@
     "old": "  const count = craftCount(r, specs[100], specs[50]);   // PROF9: a Cook's dish two\n",
     "new": "  const count = 1;\n",
     "tests": [
-      "test/prof3_service.test.js"
+      "test/net/prof3_service.test.js"
     ],
     "note": "PROF9 (RE-AIMED by content): the fire's code beside it."
   },
@@ -300,18 +301,18 @@
     "old": "  const key = await signingKey(env, subtle);\n  const u = dye ?? null;",
     "new": "  const key = null;\n  const u = dye ?? null;",
     "tests": [
-      "test/prof3_service.test.js"
+      "test/net/prof3_service.test.js"
     ]
   },
   {
     "name": "PROF3-svc-product-owner",
     "file": "server-account/src/professions.js",
-    "old": "      SELECT ?4, ?1, ?2, ?6, ?7, ?8, ?9, quality, seed, ?10, at, ?11, dye, ?12, ${boughtWith} FROM prof_crafts",
-    "new": "      SELECT ?4, ?2, ?2, ?6, ?7, ?8, ?9, quality, seed, ?10, at, ?11, dye, ?12, ${boughtWith} FROM prof_crafts",
+    "old": "      SELECT ?4, ?1, ?2, ?6, ?7, ?8, ?9, quality, seed, ?10, at, ?11, dye, ?12, ${boughtWith}, ${looseWall} FROM prof_crafts",
+    "new": "      SELECT ?4, ?2, ?2, ?6, ?7, ?8, ?9, quality, seed, ?10, at, ?11, dye, ?12, ${boughtWith}, ${looseWall} FROM prof_crafts",
     "tests": [
-      "test/prof3_service.test.js"
+      "test/net/prof3_service.test.js"
     ],
-    "note": "PROF9 (RE-AIMED by content): the fire's code beside it. AUDIT PROF-541 (RE-AIMED by content): bought_with beside it."
+    "note": "FB1020h ESSENCE-LOOSE (RE-AIMED by content): the goods' mark (looseWall) beside bought_with. PROF9 (RE-AIMED by content): the fire's code beside it. AUDIT PROF-541 (RE-AIMED by content): bought_with beside it."
   },
   {
     "name": "PROF3-svc-stock-free",
@@ -319,7 +320,7 @@
     "old": "      WHERE COALESCE((SELECT balance FROM marks WHERE account = ?1), 0) >= ?6\n        AND COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?4), 0) + ?5 <= ?9`)",
     "new": "      WHERE COALESCE((SELECT SUM(qty) FROM prof_stores WHERE player = ?1 AND char_id = ?2 AND material = ?4), 0) + ?5 <= ?9`)",
     "tests": [
-      "test/prof3_service.test.js"
+      "test/net/prof3_service.test.js"
     ]
   },
   {
@@ -328,7 +329,7 @@
     "old": "      SELECT player, char_id, material, 'bought', qty FROM prof_stock WHERE player = ?1 AND rid = ?2 AND n = ?3",
     "new": "      SELECT player, char_id, material, 'own', qty FROM prof_stock WHERE player = ?1 AND rid = ?2 AND n = ?3",
     "tests": [
-      "test/prof3_service.test.js"
+      "test/net/prof3_service.test.js"
     ]
   },
   {
@@ -337,7 +338,7 @@
     "old": "  if (!Number.isSafeInteger(qty) || qty < 1 || qty > STOCK_MAX) return { error: 'bad-qty' };\n  if (!marksOpenFor(player, env)) return { error: 'marks-closed' };",
     "new": "  if (!Number.isSafeInteger(qty) || qty < 1 || qty > STOCK_MAX) return { error: 'bad-qty' };",
     "tests": [
-      "test/prof3_service.test.js"
+      "test/net/prof3_service.test.js"
     ]
   },
   {
@@ -346,7 +347,7 @@
     "old": "  if (!withdrawable(key)) return { error: 'prof-no-pack-form' };   // PROF3: the smith's stock waits for its professions' templates\n",
     "new": "",
     "tests": [
-      "test/prof3_service.test.js"
+      "test/net/prof3_service.test.js"
     ],
     "equivalent": true,
     "why": "PROF7: NO_PACK_FORM is empty, so the service's `prof-no-pack-form` refusal cannot be reached - kept as the door a future material with no pack form would need. PROF7-a-hide-held-back pins the list it reads."
@@ -357,7 +358,7 @@
     "old": "  recipe('metal:brass', 'metal:brass', [['metal:copper', 1], ['metal:tin', 1]]),   // Brass is a metal, not an ingot (PROF3)",
     "new": "  recipe('metal:brass', 'metal:brass', [['metal:copper', 1], ['metal:tin', 1]], { more: QUARTERMASTER }),   // Brass is a metal, not an ingot (PROF3)",
     "tests": [
-      "test/prof3_service.test.js"
+      "test/net/prof3_service.test.js"
     ]
   },
   {
@@ -366,7 +367,7 @@
     "old": "material = ?6), 0) + ${per} * ?5 <= ?7`).bind(...binds),",
     "new": "material = ?6), 0) + ?5 <= ?7`).bind(...binds),",
     "tests": [
-      "test/prof3_service.test.js"
+      "test/net/prof3_service.test.js"
     ]
   },
   {
@@ -375,7 +376,7 @@
     "old": "      if (!had) return { ok: true, data: r.data, elsewhere: true };\n      try { mint(r.data, w); }",
     "new": "      try { mint(r.data, w); }",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
@@ -384,7 +385,7 @@
     "old": "    if (keptAnswer(r)) return { ok: false, error: r?.error ?? 'offline', kept: true };\n    kept.crafts = kept.crafts.filter((x) => x.rid !== w.rid);",
     "new": "    return { ok: false, error: r?.error ?? 'offline', kept: true };\n    kept.crafts = kept.crafts.filter((x) => x.rid !== w.rid);",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
@@ -393,16 +394,16 @@
     "old": "      if (_craftBusy) return { ok: false, error: 'prof-busy' };\n",
     "new": "",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
     "name": "PROF3-piece-rarity-random",
     "file": "src/systems/smithItems.js",
-    "old": "applyRarity(item, eff.rarity, seededRng(seed >>> 0), null, { fits })",
-    "new": "applyRarity(item, eff.rarity, Math.random, null, { fits })",
+    "old": "      const rolls = seededRng(seed >>> 0);\n      applyRarity(item, eff.rarity, rolls, null, { fits });",
+    "new": "      const rolls = seededRng(seed >>> 0);\n      applyRarity(item, eff.rarity, Math.random, null, { fits });",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
@@ -411,7 +412,7 @@
     "old": "    item.maxCondition = item.currentCondition = Math.max(1, Math.round(item.maxCondition * eff.condition));\n",
     "new": "",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
@@ -420,7 +421,7 @@
     "old": "    if (q === MASTERWORK && mark) item.name = templateByIndex(r.templateIndex)?.name ?? item.name;   // the mark is its name (itemNameParts)\n",
     "new": "",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
@@ -429,16 +430,16 @@
     "old": "    item.maxCondition = item.currentCondition = TOOL_LIFE[q];",
     "new": "    item.maxCondition = item.currentCondition = 50;",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
     "name": "PROF3-kit-least-worn",
-    "file": "src/systems/itemTemplates.js",
+    "file": "src/systems/item/itemTemplates.js",
     "old": "wornFirst(b) - wornFirst(a) || conditionShare(a) - conditionShare(b);",
     "new": "wornFirst(b) - wornFirst(a) || conditionShare(b) - conditionShare(a);",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
@@ -447,7 +448,7 @@
     "old": "  it.currentCondition = Math.min(kitCeiling(it, kit), it.currentCondition + Math.ceil(it.maxCondition * (kit.fieldKit === true ? FIELD_KIT_REPAIR : KIT_REPAIR)));",
     "new": "  it.currentCondition = it.currentCondition + Math.ceil(it.maxCondition * (kit.fieldKit === true ? FIELD_KIT_REPAIR : KIT_REPAIR));",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
@@ -456,7 +457,7 @@
     "old": "  if (i >= 0) items.splice(i, 1);\n  return { item: it, before, after: conditionShare(it), from, to: conditionPercentage(it) };",
     "new": "  return { item: it, before, after: conditionShare(it), from, to: conditionPercentage(it) };",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
@@ -465,16 +466,16 @@
     "old": "|| (m === 1 && item.material === ARMOR_CHAIN)",
     "new": "",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
     "name": "PROF3-name-no-mark",
-    "file": "src/systems/itemInfo.js",
+    "file": "src/systems/item/itemInfo.js",
     "old": "  if ((item?.quality === 4 || item?.marked === true) && typeof item.maker === 'string' && item.maker && makerMark(item.maker) === item.maker\n    && typeof item.provenance === 'string' && PROVENANCE_RE.test(item.provenance)) return",
     "new": "  if (false) return",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
@@ -483,7 +484,7 @@
     "old": "      if (st.done || at - st.lastAt < HEAT_ACT.gapS) return null;",
     "new": "      if (st.done) return null;",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
@@ -492,34 +493,34 @@
     "old": "      const hit = !gentle && g >= st.lo && g <= st.hi;",
     "new": "      const hit = g >= st.lo && g <= st.hi;",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
     "name": "PROF3-page-stock-at-home",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "      if (sale && have < inp.n && forge.kind === 'shop') counterBuy(line, { el, p, state: _anvil,",
     "new": "      if (sale && have < inp.n) counterBuy(line, { el, p, state: _anvil,",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
     "name": "PROF3-page-quick-clean",
-    "file": "src/ui/profPages.js",
-    "old": "        _anvil.act = createHeatAct({ band: p.heatBand?.() ?? 1 });\n        _anvil.actRecipe = r.id; _anvil.actWood = _anvil.heartwood && takesHeartwood(r);\n        rerender();\n      };\n      const quick = el('button', 'act', 'Quick craft');\n      quick.type = 'button';\n      quick.disabled = !ready;\n      quick.onclick = () => { void finish(false); };",
-    "new": "        _anvil.act = createHeatAct({ band: p.heatBand?.() ?? 1 });\n        _anvil.actRecipe = r.id; _anvil.actWood = _anvil.heartwood && takesHeartwood(r);\n        rerender();\n      };\n      const quick = el('button', 'act', 'Quick craft');\n      quick.type = 'button';\n      quick.disabled = !ready;\n      quick.onclick = () => { void finish(true); };",
+    "file": "src/ui/professions/profPages.js",
+    "old": "        _anvil.act = createHeatAct({ band: p.heatBand?.() ?? 1 });\n        _anvil.actRecipe = r.id; _anvil.actWood = _anvil.heartwood && takesHeartwood(r);\n        rerender();\n      };\n      const quick = el('button', 'act', quickWord());\n      quick.type = 'button';\n      quick.disabled = !ready;\n      quick.onclick = () => { void finish(false); };",
+    "new": "        _anvil.act = createHeatAct({ band: p.heatBand?.() ?? 1 });\n        _anvil.actRecipe = r.id; _anvil.actWood = _anvil.heartwood && takesHeartwood(r);\n        rerender();\n      };\n      const quick = el('button', 'act', quickWord());\n      quick.type = 'button';\n      quick.disabled = !ready;\n      quick.onclick = () => { void finish(true); };",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
     "name": "PROF3-page-withdraw-stock",
-    "file": "src/ui/profPages.js",
+    "file": "src/ui/professions/profPages.js",
     "old": "    go.disabled = _stores.busy || !withdrawable(pick.material);",
     "new": "    go.disabled = _stores.busy;",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
@@ -528,7 +529,7 @@
     "old": "    const pieces = mintPieces(data).filter((it) => !it.provenance || !have.has(it.provenance));",
     "new": "    const pieces = mintPieces(data);",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
@@ -537,7 +538,7 @@
     "old": "        settle: () => profBook.settle(profMint, profMintCraft),",
     "new": "        settle: () => profBook.settle(profMint),",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   },
   {
@@ -546,7 +547,7 @@
     "old": "    cancel() { st.done = true; },",
     "new": "    cancel() { },",
     "tests": [
-      "test/prof3_client.test.js"
+      "test/systems/prof3_client.test.js"
     ]
   }
 ]

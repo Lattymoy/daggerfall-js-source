@@ -9,12 +9,12 @@
 // player's Daggerfall files, the same Tamriel on every client, online and off. Nothing of Arena is read. The module's
 // names keep TESA's (`arena...`): a save's and a discovery's ids, and the host's seams, are the same lane.
 //
-// ON THE TRACE ONLY. The places stand on the picture's land (world/tamrielLand.js); with the authored shape
+// ON THE TRACE ONLY. The places stand on the picture's land (world/tamriel/tamrielLand.js); with the authored shape
 // (`?tamrieltrace=off`, or the few hundred milliseconds before the trace lands) none do, and the ink draws TAMRIEL1's
 // cities as it always did.
 // ═══════════════════════════════════════════════════════════════════
-import { tamrielTrace, tamrielLandVersion } from './tamrielLand.js';
-import { pictureToBay, bayToPicture, inBay, tamrielFit } from './tamrielFrame.js';
+import { tamrielTrace, tamrielLandVersion } from './tamriel/tamrielLand.js';
+import { pictureToBay, bayToPicture, inBay, tamrielFit } from './tamriel/tamrielFrame.js';
 import { makeTamrielPlaces, provinceLand } from './tamrielPlaces.js';   // TESA12: the port's own places
 import { capitalPin, capitalOnPixel } from './tamrielCapitals.js';   // TESA10: a capital's place stands on the capital; TESA11: and no other on any of its pixels
 
@@ -29,7 +29,7 @@ export const PIXEL_REACH = 3;
 export const SHORE_REACH = 100;
 const RING8 = Object.freeze([[1, 0], [-1, 0], [0, 1], [0, -1], [1, 1], [1, -1], [-1, 1], [-1, -1]]);
 /** TESA6: is a Bay pixel the picture's sea - its centre off the trace's land, or off the picture (the ground's own law
- *  past the Bay, world/tamrielGround.js: the trace's sea is water). */
+ *  past the Bay, world/tamriel/tamrielGround.js: the trace's sea is water). */
 export function pictureSea(trace, x, y) {
   const [px, py] = bayToPicture(x + 0.5, y + 0.5);
   const ix = Math.floor(px), iy = Math.floor(py);
@@ -89,7 +89,7 @@ function nearestPixel(x, y, reach, ok, from = 0) {
  * (`pinned: true`) - so its roads, its ink and a portal's end lead to the city the port built there; a port pinned beside
  * the picture's sea a port still (TESA10b). TESA11: no other place stands on a pixel `reserved` says a
  * capital stands on (the rest of a capital over several pixels - its pin the centre's).
- * @param {ReturnType<typeof makeTamrielPlaces>} model @param {import('./tamrielLand.js').TamrielTrace} trace
+ * @param {ReturnType<typeof makeTamrielPlaces>} model @param {import('./tamriel/tamrielLand.js').TamrielTrace} trace
  * @param {((place: any) => ({ px: number, py: number } | null)) | null} [pinned]
  * @param {((bx: number, by: number) => boolean) | null} [reserved]
  */

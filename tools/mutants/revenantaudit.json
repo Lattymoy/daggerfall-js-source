@@ -1,137 +1,137 @@
 [
   {
     "name": "AUDIT-A1-a-judged-one-ranks",
-    "file": "src/systems/revenant.js",
+    "file": "src/systems/revenant/revenant.js",
     "old": "  if (r && (r.defeated || r.sworn)) return null;\n",
     "new": "",
     "tests": [
-      "test/revenant_audit.test.js"
+      "test/systems/revenant/revenant_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-A6-one-standing-buried",
-    "file": "src/systems/revenant.js",
+    "file": "src/systems/revenant/revenant.js",
     "old": "x !== keep && !x.out && !x.took?.length)",
     "new": "x !== keep && !x.took?.length)",
     "tests": [
-      "test/revenant_audit.test.js"
+      "test/systems/revenant/revenant_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-A7-a-runner-keeps-a-tally",
-    "file": "src/systems/revenant.js",
+    "file": "src/systems/revenant/revenant.js",
     "old": "r.rank >= 3 && (r.kills | 0) >= 2 ? 'taunt_risen'",
     "new": "r.rank >= 3 ? 'taunt_risen'",
     "tests": [
-      "test/revenant_audit.test.js"
+      "test/systems/revenant/revenant_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-A4-the-mirror-s-pack",
-    "file": "src/systems/revenant.js",
+    "file": "src/systems/revenant/revenant.js",
     "old": "    if (!r.gone && r.companion) r.companion.items = s?.companion?.items ? s.companion.items.slice() : [];\n",
     "new": "",
     "tests": [
-      "test/revenant_audit.test.js"
+      "test/systems/revenant/revenant_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-A5-the-pack-destroyed",
-    "file": "src/systems/revenantCompanions.js",
-    "old": "    for (const it of items) { if (isGoldPieces(it)) addGoldPieces(_player, it.stackCount ?? 1); else addItem(_player.items, it); }",
-    "new": "    void items;",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "  for (const it of items) { if (isGoldPieces(it)) addGoldPieces(_player, it.stackCount ?? 1); else addItem(_player.items, it); }",
+    "new": "  void items;",
     "tests": [
-      "test/revenant_audit.test.js"
+      "test/systems/revenant/revenant_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-A9-a-beast-s-body-dropped",
-    "file": "src/systems/revenant.js",
+    "file": "src/systems/revenant/revenant.js",
     "old": "speech: v.speech, body: v.speech ? body : [v.body, body].filter(Boolean).join(' '),",
     "new": "speech: v.speech, body: v.speech ? body : v.body,",
     "tests": [
-      "test/revenant_audit.test.js"
+      "test/systems/revenant/revenant_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-A2-the-load-keeps-the-mark",
-    "file": "src/systems/revenant.js",
-    "old": "_state.mirrorId = null; _lastSlew = null; clearPlayerHarm(); endPlayerFights(); },   // the last game's harm",
-    "new": "_state.mirrorId = null; _lastSlew = null; endPlayerFights(); },   // the last game's harm",
+    "file": "src/systems/revenant/revenant.js",
+    "old": "_state.mirrorId = null; _lastSlew = null; clearPlayerHarm(); endPlayerFights(); forgetBodies(); },   // the last game's harm",
+    "new": "_state.mirrorId = null; _lastSlew = null; endPlayerFights(); forgetBodies(); },   // the last game's harm",
     "tests": [
-      "test/revenant_audit.test.js"
+      "test/systems/revenant/revenant_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-A10-a-skeleton-a-wit",
-    "file": "src/systems/revenantPersonality.js",
+    "file": "src/systems/revenant/revenantPersonality.js",
     "old": "BEASTS.has(mobileType) || MUTE_KINDS.has(mobileType) ? 'beast'",
     "new": "BEASTS.has(mobileType) ? 'beast'",
     "tests": [
-      "test/revenant_audit.test.js"
+      "test/systems/revenant/revenant_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-A11-a-dollar-a-pattern",
-    "file": "src/systems/revenantPersonality.js",
+    "file": "src/systems/revenant/revenantPersonality.js",
     "old": "const fill = (s, vars) => s.replace(PLACEHOLDER, (_, k) => String(vars[k]));",
     "new": "const fill = (s, vars) => s.replace(/\\{p\\}/g, vars.p).replace(PLACEHOLDER, (_, k) => String(vars[k]));",
     "tests": [
-      "test/revenant_audit.test.js"
+      "test/systems/revenant/revenant_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-B1-the-wait-runs-under-the-window",
-    "file": "src/systems/revenantFate.js",
+    "file": "src/systems/revenant/revenantFate.js",
     "old": "  if (typeof j === 'function' ? j() : j) return null;\n",
     "new": "",
     "tests": [
-      "test/revenant_audit.test.js"
+      "test/systems/revenant/revenant_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-B6-the-pack-copied",
-    "file": "src/systems/revenantFate.js",
+    "file": "src/systems/revenant/revenantFate.js",
     "old": "  if (f.entity) f.entity.items = [];",
     "new": "",
     "tests": [
-      "test/revenant_audit.test.js"
+      "test/systems/revenant/revenant_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-C4-days-of-rest",
-    "file": "src/systems/revenantCompanions.js",
-    "old": "  if (stateOf(r) === 'resting' && Number.isFinite(now) && until - now > REVENANT_REST_MIN) {",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "  if (stateOf(r) === 'resting' && Number.isFinite(now) && until - now > most) {",
     "new": "  if (false) {",
     "tests": [
-      "test/revenant_audit.test.js"
+      "test/systems/revenant/revenant_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-C6-two-of-it",
-    "file": "src/systems/revenantCompanions.js",
+    "file": "src/systems/revenant/revenantCompanions.js",
     "old": "get party() { const list = revenantsWithYou().filter((r) => !held(r.id));",
     "new": "get party() { const list = revenantsWithYou();",
     "tests": [
-      "test/revenant_audit.test.js"
+      "test/systems/revenant/revenant_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-C5-the-member-kept",
-    "file": "src/systems/revenantCompanions.js",
-    "old": "c.loyalty = movedLoyalty(c.loyalty, LOYALTY.KNOCKED); });   // RVN11: a fall -8\n      forgetSwornMember(id);\n      return true;",
-    "new": "c.loyalty = movedLoyalty(c.loyalty, LOYALTY.KNOCKED); });   // RVN11: a fall -8\n      return true;",
+    "file": "src/systems/revenant/revenantCompanions.js",
+    "old": "its rest and its loss as its sky bears them\n      forgetSwornMember(id);\n      return true;",
+    "new": "its rest and its loss as its sky bears them\n      return true;",
     "tests": [
-      "test/revenant_audit.test.js"
+      "test/systems/revenant/revenant_audit.test.js"
     ]
   },
   {
     "name": "AUDIT-D1-enter-over-back",
-    "file": "src/ui/revenantFateView.js",
+    "file": "src/ui/revenant/revenantFateView.js",
     "old": "if (k === 'enter' && picked && !e?.target?.closest?.('button'))",
     "new": "if (k === 'enter' && picked)",
     "tests": [
-      "test/revenant_audit.test.js"
+      "test/systems/revenant/revenant_audit.test.js"
     ]
   },
   {
@@ -140,7 +140,7 @@
     "old": "      gl.uniform4f(this.bbUDissolve, 0, 0, 0, 0);   // DISSOLVE: every flat whole until a burning one says otherwise",
     "new": "      // DISSOLVE",
     "tests": [
-      "test/revenant_companions.test.js"
+      "test/systems/revenant/revenant_companions.test.js"
     ]
   },
   {
@@ -149,7 +149,7 @@
     "old": "  if (s > DISSOLVE_SHADOWLESS) { if (!batch.noShadow)",
     "new": "  if (s > 2) { if (!batch.noShadow)",
     "tests": [
-      "test/revenant_companions.test.js"
+      "test/systems/revenant/revenant_companions.test.js"
     ]
   },
   {
@@ -158,7 +158,7 @@
     "old": "audio?.play3dId?.(PORTAL_SOUND, at, 0.9, { maxDistance: 24 })",
     "new": "audio?.play3d?.(PORTAL_SOUND, at, 0.9, { maxDistance: 24 })",
     "tests": [
-      "test/revenant_audit.test.js"
+      "test/systems/revenant/revenant_audit.test.js"
     ]
   }
 ]

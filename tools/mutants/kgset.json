@@ -1,0 +1,125 @@
+[
+  {
+    "name": "KGSET-painter-words-english",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "export function paintIliacCard(ctx, card, w, h, words = cardWords(card), { picture = false } = {}) {",
+    "new": "export function paintIliacCard(ctx, card, w, h, words = { rules: '', flavor: '' }, { picture = false } = {}) {",
+    "tests": [
+      "test/systems/kgset_cards.test.js",
+      "test/net/iliac/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "KGSET-face-cache-stale",
+    "file": "src/ui/card/cardBinderPage.js",
+    "old": "  if (_facesRev !== textRevision()) { _faces.clear(); _facesRev = textRevision(); }",
+    "new": "  if (_facesRev < 0) { _facesRev = textRevision(); }",
+    "tests": [
+      "test/systems/kgset_cards.test.js"
+    ]
+  },
+  {
+    "name": "KGSET-binder-look-rules",
+    "file": "src/ui/card/cardBinderPage.js",
+    "old": "    words.append(el('div', null, look.name), el('div', null, cardRules(look)));",
+    "new": "    words.append(el('div', null, look.name), el('div', null, look.name));",
+    "tests": [
+      "test/systems/kgset_cards.test.js"
+    ]
+  },
+  {
+    "name": "KGSET-binder-tile-title",
+    "file": "src/ui/card/cardBinderPage.js",
+    "old": "    tile.title = `${c.name} - ${cardRules(c)}`;",
+    "new": "    tile.title = `${c.name}`;",
+    "tests": [
+      "test/systems/kgset_cards.test.js"
+    ]
+  },
+  {
+    "name": "KGSET-item-flavor",
+    "file": "src/systems/iliac/iliacItems.js",
+    "old": "  const flavor = cardFlavor(c);",
+    "new": "  const flavor = c.flavor;",
+    "tests": [
+      "test/systems/kgset_cards.test.js",
+      "test/systems/item/auditcards5_items.test.js"
+    ]
+  },
+  {
+    "name": "KGSET-hud-title",
+    "file": "src/ui/iliacTableHud.js",
+    "old": "title: card ? `${card.name} - ${cardRules(card)}` : '?',",
+    "new": "title: card ? `${card.name}` : '?',",
+    "tests": [
+      "test/systems/kgset_cards.test.js"
+    ]
+  },
+  {
+    "name": "KGSET-words-index",
+    "file": "src/systems/iliac/iliacCardWords.js",
+    "old": "export const cardRules = (card) => wordsOf(card)?.[0]() ?? '';",
+    "new": "export const cardRules = (card) => wordsOf(card)?.[1]() ?? '';",
+    "tests": [
+      "test/systems/kgset_cards.test.js",
+      "test/systems/loot/cards8_catalog.test.js"
+    ]
+  },
+  {
+    "name": "KGSET-words-own-ids",
+    "file": "src/systems/iliac/iliacCardWords.js",
+    "old": "const wordsOf = (/** @type {any} */ card) => (typeof card?.id === 'string' && Object.hasOwn(WORDS, card.id) ? WORDS[card.id] : null);",
+    "new": "const wordsOf = (/** @type {any} */ card) => WORDS[card?.id] ?? null;",
+    "tests": [
+      "test/systems/kgset_cards.test.js"
+    ]
+  },
+  {
+    "name": "KGSET-foe-spider",
+    "file": "src/systems/card/cardSources.js",
+    "old": "[M.Spider]: 'spider', ",
+    "new": "",
+    "tests": [
+      "test/systems/kgset_cards.test.js",
+      "test/systems/cards9_sources.test.js"
+    ]
+  },
+  {
+    "name": "KGSET-ranger-beasts",
+    "file": "src/net/iliac/iliacCards.js",
+    "old": "pick: 'strongest', tag: 'beast', n: 2 }] }",
+    "new": "pick: 'strongest', n: 2 }] }",
+    "tests": [
+      "test/systems/kgset_cards.test.js",
+      "test/systems/loot/cards8_catalog.test.js"
+    ]
+  },
+  {
+    "name": "KGSET-bear-muzzle",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "    oval(ctx, 0, 0.21, 0.19, 0.15); oval(ctx, 0, 0.21, 0.15, 0.115);\n",
+    "new": "",
+    "tests": [
+      "test/net/iliac/cards8_faces.test.js"
+    ]
+  },
+  {
+    "name": "KGSET-balance-deck-law",
+    "file": "tools/iliacBalance.mjs",
+    "old": "    if ((held.get(c.id) ?? 0) >= most) continue;\n",
+    "new": "",
+    "tests": [
+      "test/systems/kgset_cards.test.js"
+    ]
+  },
+  {
+    "name": "KGSET-wrap-nbsp",
+    "file": "src/render/iliacCardFaces.js",
+    "old": "    const words = para.split(CARD_BREAK).filter(Boolean);",
+    "new": "    const words = para.split(/\\s+/).filter(Boolean);",
+    "tests": [
+      "test/systems/kgset_cards.test.js"
+    ],
+    "note": "the words split at a no-break space again - French's colon wrapped onto the next line's head"
+  }
+]

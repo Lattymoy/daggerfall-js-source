@@ -31,7 +31,7 @@ on a clock nobody moves - the sky, the event clock, real time, a UTC day - or on
 | The full moon | thirty minutes held in the beast; two such nights four hours apart, then none for twenty-eight | sky | a Hircine ring | left - TIME 6.1, SKY-SLOW; OPEN 3 |
 | The Sea Serpent | every four real hours, a fifteen-minute door, a ship needed; at worst 3 h 45 min | event (the relay's law) | nothing | left - OPEN 5 |
 | An Oblivion gate | every two real hours, ten minutes' entry; at worst 1 h 50 min | event (the relay's law) | nothing | left - TIME OPEN 6 |
-| The respawn of a dungeon's foes and chests | one real hour (`wire.js` RESPAWN_MS) | real (the relay's law) | nothing | left - TIME OPEN 8 |
+| The respawn of a dungeon's foes and chests | half a real hour in the zone's halls and an Abyss Dungeon (`wire.js` RESPAWN_MS - an hour until RESPAWN-30, 2026-10-14); twenty minutes in a normal dungeon, forty in an elite (`dungeonRespawn.js`) | real (the relay's law) | nothing | left - TIME OPEN 8 |
 | The Sigil Broker's Regalia | twelve stones: twelve gates, a real day at every one | event; the stock a UTC day | nothing | left - SS2 (Mac doubled the prices) |
 | A Motherlode | three a UTC day, two hours each; gaps of up to about twelve hours | UTC | nothing | left - `Professions-Arc.md` |
 | A profession's nodes, harvests and specialisation | a node back at UTC midnight, sixty harvests a day, a respec seven real days | UTC, real | nothing | left - `Professions-Arc.md` |
@@ -58,8 +58,8 @@ deposits, loans, letters of credit, the Marks exchange and a ship's sale; the pa
 quest-givers and the main quest's S0000012 messenger forty-five; the library's 9-23 twenty-five. OL4's own record named
 the bank and the library a follow-up ("Recorded, not carried", `Online-Arc.md` OL4); this carries it, with the palace.
 
-Pins: `test/ol6_service_hours.test.js` (with DFU's own rows for the three and Suns Rest, AUDIT WAITS O1);
-`test/lockpicking.test.js` PIN MOVED (the palace's and the bank's online answers). `tools/mutants/ol6.json` 11, all
+Pins: `test/systems/ol6_service_hours.test.js` (with DFU's own rows for the three and Suns Rest, AUDIT WAITS O1);
+`test/systems/lockpicking.test.js` PIN MOVED (the palace's and the bank's online answers). `tools/mutants/ol6.json` 11, all
 dead; OL4's list 15, all dead, OL5's record re-aimed by content.
 
 ## 3. WAIT2 - WAVE-WAIT: a wave the quest waits on comes on the short wait
@@ -90,7 +90,7 @@ prompt; his mute ends earlier, when `_S.06_` sends the messenger), and it was se
   harasser's gap brings the harm sooner, not the story. Of the 42 unread waves longer than the short wait, 39 have no
   `killed` reader at all; the other three's kills only say a line or end their own wave.
 
-Pins: `test/wavewait_quests.test.js` (the real scripts, parsed and ticked). `tools/mutants/wavewait.json` 19, all dead.
+Pins: `test/systems/quest/wavewait_quests.test.js` (the real scripts, parsed and ticked). `tools/mutants/wavewait.json` 19, all dead.
 
 ## 4. WAIT3 - SUMMON-NAME: online the summoner calls the prince you name
 
@@ -105,13 +105,16 @@ asks in its own words; its "Today is %dat, the day of summoning for %dae" would 
 vendored rows, `SUMMON_BY_NAME_ROWS`, for a record with no second sentence). The Yes is DFU's summoning of that prince,
 whole: the price off the summoner's regard (200,000 less a thousand a point), the chance off the prince's own regard and
 his weather - read at the Yes, the sky the summoning is made under (AUDIT WAITS S1) - Sheogorath's gatecrash, the prince
-met before, the gold gone before the roll, the quest he offers and his film.
+met before, the gold gone whatever the roll, the quest he offers and his film. (SUMMON-OFFER,
+`01-Overview/bugs/Field-Bugs-2026-10-14.md`: the gold and the Summoned flag are taken only once his quest is made - in a
+region where it cannot be, a palace it wants and the region lacks, the summoning spends and records nothing, and says
+so. DFU's own order left that hole; naming a prince from any region made it a common one.)
 
 A witches' coven keeps its own law - one prince a day, drawn (the event clock's day online, TIME1) - and Glenmoril its
 Hircine; they are told apart by the summoner's faction, as DFU's own service tells them (AUDIT WAITS S5), so a coven
 never opens the list. Without the list's art loaded the summoner falls back to DFU's day. Offline: DFU's day.
 
-Pins: `test/summonname_online.test.js`. `tools/mutants/summonname.json` 20, all dead; DAEDRA1's two records in the
+Pins: `test/systems/summonname_online.test.js`. `tools/mutants/summonname.json` 20, all dead; DAEDRA1's two records in the
 moved Yes re-aimed by content, its 13 all dead.
 
 ## 5. WAIT4 - BANISH-SKY: a banishment's thirty days are the calendar's the player sees
@@ -147,7 +150,7 @@ thirty days the call named, of the calendar the player sees:
 
 The other reading of REP3 - keep its "~2.5 real days" and say sixty days on the calendar - is OPEN 4.
 
-Pins: `test/banishsky_standing.test.js`; the census rows (`test/fixtures/time1_census.json`, the sky's law both
+Pins: `test/systems/banishsky_standing.test.js`; the census rows (`test/fixtures/time1_census.json`, the sky's law both
 ways). `tools/mutants/banishsky.json` 21, all dead (with REP3's and AUDIT REP's lists, two records re-aimed by
 content: 49).
 
@@ -162,7 +165,7 @@ Each of these is somebody's recorded call; the sweep only measured it again (sec
 - **The full moon** - TIME 6.1 (the change holds while the moon is up) and OPEN 2 there; SKY-SLOW's record lists the
   night's thirty minutes. See OPEN 3.
 - **The gate, the respawn, the serpent** - TIME OPEN 6 and 8, and the serpent's own arc: their laws are in the relay's
-  bundle (`net/gateLaw.js`, `net/wire.js` RESPAWN_MS, `net/serpentLaw.js`), so any change is a relay deploy that drops
+  bundle (`net/gate/gateLaw.js`, `net/wire.js` RESPAWN_MS, `net/serpent/serpentLaw.js`), so any change is a relay deploy that drops
   every connected player. See OPEN 5.
 - **The Broker's prices** (SS2), **the professions' UTC days and respec** and **the Seats' weeks** - their arcs' calls,
   each an economy's pace rather than a wait.
@@ -247,15 +250,15 @@ comments and pins saying more, or less, than the code. Each fix is pinned and ea
   and guild halls keep R1; narrowed. **O4** - the night-clerk paragraph spoke of shops alone, and UpdateNpcPresence's
   docblock of DFU's hours where it reads the effective ones.
 
-Pins and mutants: `test/wavewait_quests.test.js` 8 (`wavewait.json` 19), `test/summonname_online.test.js` 6
-(`summonname.json` 20), `test/banishsky_standing.test.js` 7 (`banishsky.json` 21; with REP3's and AUDIT REP's, 49),
-`test/ol6_service_hours.test.js` 5 (`ol6.json` 11); DAEDRA1's 13 and OL4's 15 run again, all dead.
+Pins and mutants: `test/systems/quest/wavewait_quests.test.js` 8 (`wavewait.json` 19), `test/systems/summonname_online.test.js` 6
+(`summonname.json` 20), `test/systems/banishsky_standing.test.js` 7 (`banishsky.json` 21; with REP3's and AUDIT REP's, 49),
+`test/systems/ol6_service_hours.test.js` 5 (`ol6.json` 11); DAEDRA1's 13 and OL4's 15 run again, all dead.
 
 ## OPEN - Mac's calls
 
 1. **Loiter and the night interval.** LOITER-ANYWHERE (2026-10-04) put DFU's Loiter back online - 1.25 real seconds a
    game hour up to the Loiter limit (3 hours by default, 12 at most) - and a loiter moves the character's own clock.
-   REST's night interval counts that clock (`systems/restAct.js nightDue`), so a three-hour loiter makes the next
+   REST's night interval counts that clock (`systems/rest/restAct.js nightDue`), so a three-hour loiter makes the next
    night due at once: Loiter, night, Loiter, night passes a rank's twenty-eight days in about fifteen minutes of
    presses, and REST's bound of eleven hours of play does not hold. Either it stands - the own clock is the player's to
    spend - or the interval counts lived minutes alone and the rank wait is eleven hours of play again. Recommended:
@@ -267,7 +270,8 @@ Pins and mutants: `test/wavewait_quests.test.js` 8 (`wavewait.json` 19), `test/s
 4. **Banishment's length.** Built: REP3's thirty days, of the calendar the player sees (thirty real hours).
    The alternative: REP3's "~2.5 real days", said as sixty days of that calendar.
 5. **The cadences the relay keeps** - the serpent's four hours and fifteen-minute door, the gate's ten minutes'
-   entry, the hour's respawn. Recommended: leave until a relay deploy happens for its own reason, then decide with it.
+   entry. Recommended: leave until a relay deploy happens for its own reason, then decide with it. The respawn is
+   decided: Mac halved it to half an hour (RESPAWN-30, relay world202 - `bible/01-Overview/handoffs/Five-Asks-2026-10-14.md`).
 
 ## Record
 
